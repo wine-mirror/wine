@@ -17,14 +17,17 @@ debug_channels ()
 @ stub CertAddEncodedCertificateToSystemStoreW
 @ stub CertAddEnhancedKeyUsageIdentifier
 @ stub CertAddSerializedElementToStore
+@ stub CertAddStoreToCollection
 @ stub CertAlgIdToOID
 @ stub CertCloseStore
 @ stub CertCompareCertificate
 @ stub CertCompareCertificateName
 @ stub CertCompareIntegerBlob
 @ stub CertComparePublicKeyInfo
+@ stub CertControlStore
 @ stub CertCreateCRLContext
 @ stub CertCreateCTLContext
+@ stub CertCreateCertificateChainEngine
 @ stub CertCreateCertificateContext
 @ stub CertDeleteCRLFromStore
 @ stub CertDeleteCTLFromStore
@@ -46,6 +49,8 @@ debug_channels ()
 @ stub CertFindSubjectInCTL
 @ stub CertFreeCRLContext
 @ stub CertFreeCTLContext
+@ stub CertFreeCertificateChain
+@ stub CertFreeCertificateChainEngine
 @ stub CertFreeCertificateContext
 @ stub CertGetCRLContextProperty
 @ stub CertGetCRLFromStore
@@ -55,6 +60,7 @@ debug_channels ()
 @ stub CertGetIntendedKeyUsage
 @ stub CertGetIssuerCertificateFromStore
 @ stub CertGetPublicKeyLength
+@ stub CertGetCertificateChain
 @ stub CertGetSubjectCertificateFromStore
 @ stub CertIsRDNAttrsInCertificateName
 @ stub CertNameToStrA
@@ -94,6 +100,7 @@ debug_channels ()
 @ stub CryptEncodeObject
 @ stub CryptEncryptMessage
 @ stub CryptEnumOIDFunction
+@ stub CryptEnumOIDInfo
 @ stub CryptEnumProvidersU
 @ stub CryptExportPKCS8
 @ stub CryptExportPublicKeyInfo
@@ -161,13 +168,21 @@ debug_channels ()
 @ stub CryptVerifyMessageSignatureWithKey
 @ stub CryptVerifySignatureU
 @ stub I_CryptAllocTls
+@ stdcall I_CryptCreateLruCache(long) I_CryptCreateLruCache
+@ stub I_CryptCreateLruEntry
 @ stub I_CryptDetachTls
+@ stdcall I_CryptFindLruEntryData(long) I_CryptFindLruEntryData
+@ stdcall I_CryptFlushLruCache(long) I_CryptFlushLruCache
+@ stdcall I_CryptFreeLruCache(long) I_CryptFreeLruCache
 @ stub I_CryptGetDefaultCryptProv
 @ stub I_CryptGetDefaultCryptProvForEncrypt
 @ stub I_CryptGetOssGlobal
 @ stub I_CryptGetTls
+@ stub I_CryptInsertLruEntry
 @ stub I_CryptInstallOssGlobal
+@ stub I_CryptReleaseLruEntry
 @ stub I_CryptSetTls
+@ stub I_CryptUninstallOssGlobal
 @ stub PFXExportCertStore
 @ stub PFXImportCertStore
 @ stub RegCreateHKCUKeyExU
