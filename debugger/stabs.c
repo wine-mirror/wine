@@ -229,6 +229,7 @@ DEBUG_FreeIncludes(void)
   DBG_free(include_defs);
   include_defs = NULL;
   num_include_def = 0;
+  num_alloc_include_def = 0;
   DBG_free(cu_vector);
   cu_vector = NULL;
   cu_nrofentries = 0;
