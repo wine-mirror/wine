@@ -2236,6 +2236,26 @@ char *MSVCRT_gets(char *buf)
 }
 
 /*********************************************************************
+ *		_getws (MSVCRT.@)
+ */
+WCHAR* MSVCRT__getws(WCHAR* buf)
+{
+    MSVCRT_wint_t cc;
+    WCHAR* ws = buf;
+
+    for (cc = MSVCRT_fgetwc(MSVCRT_stdin); cc != MSVCRT_WEOF && cc != '\n';
+         cc = MSVCRT_fgetwc(MSVCRT_stdin))
+    {
+        if (cc != '\r')
+            *buf++ = (WCHAR)cc;
+    }
+    *buf = '\0';
+
+    TRACE("got '%s'\n", debugstr_w(ws));
+    return ws;
+}
+
+/*********************************************************************
  *		putc (MSVCRT.@)
  */
 int MSVCRT_putc(int c, MSVCRT_FILE* file)

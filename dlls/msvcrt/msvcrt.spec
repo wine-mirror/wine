@@ -262,7 +262,7 @@ init    MSVCRT_Init
 @ forward _getpid kernel32.GetCurrentProcessId
 @ stub _getsystime #(ptr)
 @ cdecl _getw(ptr) _getw
-@ stub _getws #(wstr)
+@ cdecl _getws(ptr) MSVCRT__getws
 @ cdecl _global_unwind2(ptr) _global_unwind2
 @ cdecl _heapadd (ptr long) _heapadd
 @ cdecl _heapchk() _heapchk
