@@ -1339,12 +1339,14 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     {
         /* walk up to the first unowned window */
         HWND tmp = GetAncestor( hWnd, GA_ROOTOWNER );
-        wndTemp = WIN_FindWndPtr( tmp );
-        /* and set last active owned popup */
-        wndTemp->hwndLastActive = hWnd;
+        if ((wndTemp = WIN_FindWndPtr( tmp )))
+        {
+            /* and set last active owned popup */
+            wndTemp->hwndLastActive = hWnd;
 
-        wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
-        WIN_ReleaseWndPtr(wndTemp);
+            wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
+            WIN_ReleaseWndPtr(wndTemp);
+        }
         SendMessageA( hWnd, WM_NCACTIVATE, TRUE, 0 );
         SendMessageA( hWnd, WM_ACTIVATE,
 		 MAKEWPARAM( (fMouse) ? WA_CLICKACTIVE : WA_ACTIVE, wIconized),
