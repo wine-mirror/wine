@@ -1215,23 +1215,11 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     return WIN_CreateWindowEx( (CREATESTRUCTA *)&cs, classAtom, TRUE, TRUE );
 }
 
-
-/***********************************************************************
- *           WIN_CheckFocus
- */
-static void WIN_CheckFocus( WND* pWnd )
-{
-    if( GetFocus16() == pWnd->hwndSelf )
-	SetFocus16( (pWnd->dwStyle & WS_CHILD) ? pWnd->parent->hwndSelf : 0 ); 
-}
-
 /***********************************************************************
  *           WIN_SendDestroyMsg
  */
 static void WIN_SendDestroyMsg( WND* pWnd )
 {
-    WIN_CheckFocus(pWnd);
-
     if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret();
     USER_Driver.pResetSelectionOwner( pWnd, TRUE ); 
 
@@ -1312,7 +1300,6 @@ static void WIN_SendDestroyMsg( WND* pWnd )
        * Cleanup
        */
       HeapFree(GetProcessHeap(), 0, pWndArray);
-      WIN_CheckFocus(pWnd);	
     }
     else
       WARN("\tdestroyed itself while in WM_DESTROY!\n");
@@ -1335,16 +1322,41 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 {
     WND * wndPtr;
     BOOL retvalue;
+    HWND h;
+    BOOL bFocusSet = FALSE;
 
     TRACE("(%04x)\n", hwnd);
-    
-      /* Initialization */
+
+    /* Initialization */
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (wndPtr == pWndDesktop)
     {
         retvalue = FALSE; /* Can't destroy desktop */
 	goto end;
+    }
+
+    /* Look whether the focus is within the tree of windows we will
+     * be destroying.
+     */
+    h = GetFocus16();
+    while (h && (GetWindowLongA(h,GWL_STYLE) & WS_CHILD))
+    {
+	if (h == hwnd)
+	{
+	    SetFocus(GetWindowLongA(hwnd,GWL_HWNDPARENT));
+	    bFocusSet = TRUE;
+	    break;
+	}
+	h = GetWindowLongA(h,GWL_HWNDPARENT);
+    }
+    /* If the focus is on the window we will destroy and it has no parent,
+     * set the focus to 0.
+     */
+    if (! bFocusSet && (h == hwnd))
+    {                   
+	if (!(GetWindowLongA(h,GWL_STYLE) & WS_CHILD))
+	    SetFocus(0);
     }
 
       /* Call hooks */
