@@ -115,6 +115,255 @@ static const INT10_MODE *INT10_FindMode( WORD mode )
 
 
 /**********************************************************************
+ *         INT10_FillControllerInformation
+ *
+ * Fill 256-byte (VBE1.x) or 512-byte buffer (VBE2.0+) with
+ * capabilities of the video controller.
+ */
+static void INT10_FillControllerInformation( BYTE *buffer )
+{
+    /*
+     * FIXME: Move VESA info stuff here from dosmem.
+     */
+    memcpy(buffer, &BIOS_EXTRA_PTR->vesa_info, sizeof(VESAINFO));
+}
+
+
+/**********************************************************************
+ *         INT10_FillModeInformation
+ *
+ * Fill 256-byte buffer with extended information about display mode.
+ *
+ * Returns FALSE if mode is unknown and TRUE is mode is known
+ * even if it is not supported.
+ */
+static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
+{
+    const INT10_MODE *ptr = INT10_FindMode( mode );
+    if (!ptr)
+        return FALSE;
+
+    /*
+     * 00 - WORD: mode attributes
+     * Bits:
+     *     0 - Mode supported by present hardware configuration.
+     *     1 - Optional information available. Must be =1 for VBE v1.2+.
+     *     2 - BIOS output supported.
+     *         Int10 functions 01, 02, 06, 07, 09, 0a and 0e are supported.
+     *     3 - Set if color, clear if monochrome.
+     *     4 - Set if graphics mode, clear if text mode.
+     *     5 - Mode is not VGA-compatible if set.
+     *         VGA-compatible modes support standard VGA I/O ports.
+     *     6 - Bank-switched (or windowed) mode is not supported if set.
+     *     7 - Linear framebuffer mode supported.
+     *     8 - Double scanning supported.
+     *     9 - Interlaced operation supported.
+     *    10 - Triple buffering supported.
+     *    11 - Stereoscopic display supported.
+     *    12 - Dual display start address supported.
+     * 13-15 - Reserved.
+     */
+    {
+        WORD attr = 0x000a; /* color mode, optional info */
+
+        /*
+         * FIXME: Attribute handling is incomplete.
+         */
+
+        /* Mode supported? FIXME: correct value */
+        attr |= 0x0001;
+
+        /* Graphical mode? */
+        if (ptr->Depth) 
+            attr |= 0x0010;
+
+        /* Not VGA-compatible? */
+        if (mode > 0xff)
+            attr |= 0x0020;
+
+        *(WORD*)(buffer + 0) = attr;
+    }
+
+    /*
+     * 02 - BYTE[2]: window attributes, window A and window B
+     * Bits:
+     *   0 - Window exists.
+     *   1 - Window is readable.
+     *   2 - Window is writable.
+     * 3-7 - Reserved.
+     */
+    buffer[2] = 0x07; /* window A exists, readable and writable */
+    buffer[3] = 0x00; /* window B not supported */
+
+    /* 04 - WORD: window granularity in KB */
+    *(WORD*)(buffer + 4) = 64;
+
+    /* 06 - WORD: window size in KB */
+    *(WORD*)(buffer + 6) = 64;
+
+    /* 08 - WORD[2]: start segments, window A and window B */
+    *(WORD*)(buffer +  8) = 0xa000; /* window A segment */
+    *(WORD*)(buffer + 10) = 0x0000; /* window B not supported */
+
+    /* 12 - DWORD: window positioning function */
+    *(DWORD*)(buffer + 12) = 0; /* not supported */
+    
+    /* 16 - WORD: bytes per scan line */
+    *(WORD*)(buffer + 16) = 0; /* FIXME */
+
+    /* 18 - WORD: width in pixels (graphics) or characters (text) */
+    *(WORD*)(buffer + 18) = ptr->Width;
+
+    /* 20 - WORD: height in pixels (graphics) or characters (text) */
+    *(WORD*)(buffer + 20) = ptr->Height;
+
+    /* 22 - BYTE: width of character cell in pixels */
+    buffer[22] = 0; /* FIXME */
+
+    /* 23 - BYTE: height of character cell in pixels */
+    buffer[23] = 0; /* FIXME */
+
+    /* 24 - BYTE: number of memory planes */
+    buffer[24] = 1; /* FIXME */
+
+    /* 25 - BYTE: number of bits per pixel */
+    buffer[25] = ptr->Depth; /* FIXME: text modes? reserved bits? */
+
+    /* 26 - BYTE: number of banks */
+    buffer[26] = 1; /* FIXME */
+
+    /*
+     * 27 - BYTE: memory model type
+     * Values (hex):
+     *    00 - Text mode
+     *    01 - CGA graphics
+     *    02 - Hercules graphics
+     *    03 - Planar
+     *    04 - Packed pixel
+     *    05 - Non-chain 4, 256 color
+     *    06 - Direct color
+     *    07 - YUV
+     * 08-0F - Reserved for VESA.
+     * 10-FF - OEM memory models.
+     */
+    if (!ptr->Depth)
+        buffer[27] = 0; /* text mode */
+    else
+        buffer[27] = 3; /* FIXME */
+
+    /* 28 - BYTE: size of bank in KB */
+    buffer[28] = 0; /* FIXME */
+
+    /* 29 - BYTE: number of image pages (less one) in video RAM */
+    buffer[29] = 0; /* FIXME */
+
+    /* 30 - BYTE: reserved (0x00 for VBE 1.0-2.0, 0x01 for VBE 3.0) */
+    buffer[30] = 0x01;
+
+    /* 
+     * 31 - BYTE: red mask size 
+     * Size of red color component in bits.
+     * Used only when memory model is direct color, otherwise set to zero.
+     */
+    buffer[31] = 0; /* FIXME */
+
+    /*
+     * 32 - BYTE: red field position 
+     * Bit position of the least significant bit of red color component.
+     * Used only when memory model is direct color, otherwise set to zero.
+     */
+    buffer[32] = 0; /* FIXME */
+
+    /* 33 - BYTE: green mask size */
+    buffer[33] = 0; /* FIXME */
+
+    /* 34 - BYTE: green field position */
+    buffer[34] = 0; /* FIXME */
+
+    /* 35 - BYTE: blue mask size */
+    buffer[35] = 0; /* FIXME */
+    
+    /* 36 - BYTE: blue field position */
+    buffer[36] = 0;
+
+    /* 37 - BYTE: reserved mask size */
+    buffer[37] = 0;
+
+    /* 38 - BYTE: reserved mask position */
+    buffer[38] = 0;
+
+    /*
+     * 39 - BYTE: direct color mode info 
+     * Bits:
+     * 0 - Set if color ramp is programmable.
+     * 1 - Set if bytes in reserved field may be used by application.
+     */
+    buffer[39] = 0; /* not supported */
+
+    /* 40 - DWORD: physical address of linear video buffer */
+    *(DWORD*)(buffer + 40) = 0; /* not supported */
+
+    /* 44 - DWORD: reserved, always zero */
+    *(DWORD*)(buffer + 44) = 0;
+
+    /* 48 - WORD: reserved, always zero */
+    *(WORD*)(buffer + 48) = 0;
+
+    /* 50 - WORD: bytes per scan line in linear modes */
+    *(WORD*)(buffer + 50) = *(WORD*)(buffer + 16);
+
+    /* 52 - BYTE: number of images (less one) for banked video modes */
+    buffer[52] = 0; /* FIXME */
+
+    /* 53 - BYTE: number of images (less one) for linear video modes */
+    buffer[53] = buffer[52];
+
+    /* 54 - BYTE: red mask size (linear modes) */
+    buffer[54] = buffer[31];
+
+    /* 55 - BYTE: red field position (linear modes) */
+    buffer[55] = buffer[32];
+
+    /* 56 - BYTE: green mask size (linear modes) */
+    buffer[56] = buffer[33];
+
+    /* 57 - BYTE: green field size (linear modes) */
+    buffer[57] = buffer[34];
+
+    /* 58 - BYTE: blue mask size (linear modes) */
+    buffer[58] = buffer[35];
+
+    /* 59 - BYTE: blue field position (linear modes) */
+    buffer[59] = buffer[36];
+
+    /* 60 - BYTE: reserved mask size (linear modes) */
+    buffer[60] = buffer[37];
+
+    /* 61 - BYTE: reserved mask position (linear modes) */
+    buffer[61] = buffer[38];
+
+    /* 62 - DWORD: maximum pixel clock for graphics video mode, in Hz */
+    *(DWORD*)(buffer + 62) = 0; /* FIXME */
+
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *         INT10_FillStateInformation
+ *
+ * Fill 64-byte buffer with VGA state and functionality information.
+ */
+static void INT10_FillStateInformation( BYTE *buffer, BIOSDATA *data )
+{
+    /*
+     * FIXME: Move VGA info stuff here from dosmem.
+     */
+     memcpy( buffer, &BIOS_EXTRA_PTR->vid_state, sizeof(VIDEOSTATE) );
+}
+
+
+/**********************************************************************
  *         INT10_SetVideoMode
  *
  * Change current video mode to any VGA or VESA mode.
@@ -246,18 +495,30 @@ static void INT10_HandleVESA( CONTEXT86 *context )
 
     switch(AL_reg(context)) {
 
-    case 0x00: /* GET SuperVGA INFORMATION */
-        TRACE("VESA GET SuperVGA INFORMATION\n");
-        memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-               &BIOS_EXTRA_PTR->vesa_info, sizeof(VESAINFO));
-        SET_AL( context, 0x4f );
-        SET_AH( context, 0x00 ); /* 0x00 = successful 0x01 = failed */
+    case 0x00: /* RETURN CONTROLLER INFORMATION */
+        TRACE( "VESA RETURN CONTROLLER INFORMATION\n" );
+        {
+            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
+                                           context->SegEs, 
+                                           context->Edi);
+            INT10_FillControllerInformation( ptr );
+            SET_AL( context, 0x4f );
+            SET_AH( context, 0x00 ); /* 0x00 = successful 0x01 = failed */
+        }
         break;
 
-    case 0x01: /* GET SuperVGA MODE INFORMATION */
-        FIXME("VESA GET SuperVGA Mode Information - Not supported\n");
-        SET_AL( context, 0x4f );
-        SET_AH( context, 0x01 ); /* 0x00 = successful 0x01 = failed */
+    case 0x01: /* RETURN MODE INFORMATION */
+        TRACE( "VESA RETURN MODE INFORMATION %04x\n", CX_reg(context) );
+        {
+            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
+                                           context->SegEs, 
+                                           context->Edi);
+            SET_AL( context, 0x4f );
+            if (INT10_FillModeInformation( ptr, CX_reg(context) ))
+                SET_AH( context, 0x00 ); /* status: success */
+            else
+                SET_AH( context, 0x01 ); /* status: failed */
+        }
         break;
 
     case 0x02: /* SET SuperVGA VIDEO MODE */
@@ -802,12 +1063,13 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 
     case 0x1b: /* FUNCTIONALITY/STATE INFORMATION */
         TRACE("Get functionality/state information\n");
-        if (BX_reg(context) == 0x0)
+        if (BX_reg(context) == 0x0000)
         {
-          SET_AL( context, 0x1b );
-          /* Copy state information structure to ES:DI */
-          memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
-                 &BIOS_EXTRA_PTR->vid_state,sizeof(VIDEOSTATE));
+            BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
+                                           context->SegEs, 
+                                           context->Edi);
+            SET_AL( context, 0x1b ); /* Function is supported */
+            INT10_FillStateInformation( ptr, data );
         }
         break;
 
