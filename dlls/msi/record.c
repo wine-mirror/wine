@@ -349,7 +349,7 @@ UINT WINAPI MsiRecordSetStringA( MSIHANDLE handle, unsigned int iField, LPCSTR s
         return ERROR_INVALID_FIELD;
 
     len = MultiByteToWideChar( CP_ACP, 0, szValue, -1, NULL, 0 );
-    str = HeapAlloc( GetProcessHeap(), 0, len );
+    str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, szValue, -1, str, len );
     MSI_FreeField( &rec->fields[iField] );
     rec->fields[iField].type = MSIFIELD_WSTR;
@@ -372,7 +372,7 @@ UINT WINAPI MsiRecordSetStringW( MSIHANDLE handle, unsigned int iField, LPCWSTR 
     if( iField > rec->count )
         return ERROR_INVALID_FIELD;
 
-    str = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(szValue) + 1)*sizeof str[0]);
+    str = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(szValue) + 1)*sizeof (WCHAR));
     lstrcpyW( str, szValue );
 
     MSI_FreeField( &rec->fields[iField] );
