@@ -32,7 +32,7 @@
 *	drive		0x23/25		drive		(usual)
 *	drive		0x25/25		drive		(lnk/persistant)
 *	drive		0x29/25		drive
-*	control/printer	0x2E
+*	shell extension	0x2E		mycomp
 *	drive		0x2F		drive		(lnk/persistant)
 *	folder/file	0x30		folder/file (1)	(lnk/persistant)
 *	folder		0x31		folder		(usual)
@@ -40,8 +40,9 @@
 *	workgroup	0x41		network (3)
 *	computer	0x42		network (4)
 *	whole network	0x47		network (5)
+*	MSITStore	0x61		htmlhlp (7)	
 *	history/favorites 0xb1		file
-*	share		0xc3		metwork (6)
+*	share		0xc3		network (6)
 *
 * guess: the persistant elements are non tracking
 *
@@ -51,6 +52,8 @@
 * (4) one string	"\\sirius"
 * (5) one string	"whole network" 
 * (6) one string	"\\sirius\c"
+* (7) contains string   "mk:@MSITStore:C:\path\file.chm::/path/filename.htm"
+*		GUID	871C5380-42A0-1069-A2EA-08002B30309D
 */
 
 #define PT_DESKTOP	0x00 /* internal */
@@ -76,8 +79,9 @@ typedef struct tagPIDLDATA
 {	PIDLTYPE type;			/*00*/
 	union
 	{ struct
-	  { BYTE dummy;
-	    GUID guid;
+	  { BYTE dummy;			/*01*/
+	    GUID guid;			/*02*/
+	    BYTE dummy1;		/*18*/
 	  } mycomp;
 	  struct
 	  { CHAR szDriveName[20];	/*01*/
@@ -98,6 +102,11 @@ typedef struct tagPIDLDATA
 	  { WORD dummy;		/*01*/
 	    CHAR szNames[1];	/*03*/
 	  } network;
+	  struct
+	  { WORD dummy;		/*01*/
+	    DWORD dummy1;	/*02*/
+	    CHAR szName[1];	/*06*/ /* teminated by 0x00 0x00 */
+	  } htmlhelp;
 	}u;
 } PIDLDATA, *LPPIDLDATA;
 #include "poppack.h"
@@ -108,10 +117,12 @@ typedef struct tagPIDLDATA
  * return value is strlen()
  */
 DWORD WINAPI _ILGetDrive(LPCITEMIDLIST,LPSTR,UINT16);
+/*
 DWORD WINAPI _ILGetItemText(LPCITEMIDLIST,LPSTR,UINT16);
 DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST,LPSTR,DWORD);
 DWORD WINAPI _ILGetValueText(LPCITEMIDLIST,LPSTR,DWORD);
 DWORD WINAPI _ILGetPidlPath(LPCITEMIDLIST,LPSTR,DWORD);
+*/
 
 /*
  * getting special values from simple pidls
@@ -129,22 +140,22 @@ BOOL WINAPI _ILIsMyComputer(LPCITEMIDLIST);
 BOOL WINAPI _ILIsDrive(LPCITEMIDLIST);
 BOOL WINAPI _ILIsFolder(LPCITEMIDLIST);
 BOOL WINAPI _ILIsValue(LPCITEMIDLIST);
+BOOL WINAPI _ILIsSpecialFolder (LPCITEMIDLIST pidl);
+BOOL WINAPI _ILIsPidlSimple ( LPCITEMIDLIST pidl);
 
 /*
  * simple pidls from strings
  */
 LPITEMIDLIST WINAPI _ILCreateDesktop(void);
 LPITEMIDLIST WINAPI _ILCreateMyComputer(void);
+LPITEMIDLIST WINAPI _ILCreateIExplore(void);
 LPITEMIDLIST WINAPI _ILCreateDrive(LPCSTR);
-LPITEMIDLIST WINAPI _ILCreateFolder(LPCSTR, LPCSTR);
-LPITEMIDLIST WINAPI _ILCreateValue(LPCSTR, LPCSTR);
+LPITEMIDLIST WINAPI _ILCreateFolder(WIN32_FIND_DATAA * stffile);
+LPITEMIDLIST WINAPI _ILCreateValue(WIN32_FIND_DATAA * stffile);
+LPITEMIDLIST WINAPI _ILCreateSpecial(LPCSTR szGUID);
 
-/*
- * raw pidl handling (binary) 
- *
- * data is binary / sizes are bytes
- */
-DWORD WINAPI _ILGetData(PIDLTYPE,LPCITEMIDLIST,LPVOID,UINT);
+DWORD WINAPI _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize);
+
 LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPCVOID,UINT16);
 
 /*
@@ -153,8 +164,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPCVOID,UINT16);
 LPPIDLDATA WINAPI _ILGetDataPointer(LPCITEMIDLIST);
 LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
 LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
-
-LPITEMIDLIST WINAPI ILFindChild(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2);
+REFIID WINAPI _ILGetGUIDPointer(LPCITEMIDLIST pidl);
 
 void pdump (LPCITEMIDLIST pidl);
 BOOL pcheck (LPCITEMIDLIST pidl);

@@ -7,6 +7,7 @@
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"
 #include "wine/obj_shellfolder.h"
+#include "wine/undocshell.h"
 
 #include "heap.h"
 #include "debugtools.h"
@@ -111,7 +112,7 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 	MENUINFO	MenuInfo;
 	LPFMINFO	menudata;
 
-	TRACE("\n");
+	TRACE("0x%04x %p\n", hmenu, pAlternatePidl);
 
 	MenuInfo.cbSize = sizeof(MENUINFO);
 	MenuInfo.fMask = MIM_MENUDATA;
@@ -765,26 +766,27 @@ BOOL _SHIsMenuSeparator(HMENU hm, int i)
 	mii.fMask = MIIM_TYPE;
 	mii.cch = 0;    /* WARNING: We MUST initialize it to 0*/
 	if (!GetMenuItemInfoA(hm, i, TRUE, &mii))
-	{ return(FALSE);
+	{
+	  return(FALSE);
 	}
 
 	if (mii.fType & MFT_SEPARATOR)
-	{ return(TRUE);
+	{
+	  return(TRUE);
 	}
 
-        return(FALSE);
+	return(FALSE);
 }
-#define MM_ADDSEPARATOR         0x00000001L
-#define MM_SUBMENUSHAVEIDS      0x00000002L
+
 HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAdjust, UINT uIDAdjustMax, ULONG uFlags)
 {	int		nItem;
 	HMENU		hmSubMenu;
 	BOOL		bAlreadySeparated;
-	MENUITEMINFOA miiSrc;
+	MENUITEMINFOA	miiSrc;
 	char		szName[256];
 	UINT		uTemp, uIDMax = uIDAdjust;
 
-	FIXME("hmenu1=0x%04x hmenu2=0x%04x 0x%04x 0x%04x 0x%04x  0x%04lx stub\n",
+	TRACE("hmenu1=0x%04x hmenu2=0x%04x 0x%04x 0x%04x 0x%04x  0x%04lx\n",
 		 hmDst, hmSrc, uInsert, uIDAdjust, uIDAdjustMax, uFlags);
 
 	if (!hmDst || !hmSrc)
@@ -792,15 +794,20 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
 	}
 
 	nItem = GetMenuItemCount(hmDst);
-	if (uInsert >= (UINT)nItem)
-	{ uInsert = (UINT)nItem;
+
+	if (uInsert >= (UINT)nItem)	/* insert position inside menu? */
+	{
+	  uInsert = (UINT)nItem;	/* append on the end */
 	  bAlreadySeparated = TRUE;
 	}
 	else
-	{ bAlreadySeparated = _SHIsMenuSeparator(hmDst, uInsert);;
+	{
+	  bAlreadySeparated = _SHIsMenuSeparator(hmDst, uInsert);;
 	}
+
 	if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
-	{ /* Add a separator between the menus */
+	{
+	  /* Add a separator between the menus */
 	  InsertMenuA(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 	  bAlreadySeparated = TRUE;
 	}
@@ -808,83 +815,104 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
 
 	/* Go through the menu items and clone them*/
 	for (nItem = GetMenuItemCount(hmSrc) - 1; nItem >= 0; nItem--)
-	{ miiSrc.cbSize = sizeof(MENUITEMINFOA);
-	  miiSrc.fMask = MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_CHECKMARKS | MIIM_TYPE | MIIM_DATA;
-	  /* We need to reset this every time through the loop in case
-	  menus DON'T have IDs*/
+	{
+	  miiSrc.cbSize = sizeof(MENUITEMINFOA);
+	  miiSrc.fMask =  MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_CHECKMARKS | MIIM_TYPE | MIIM_DATA;
+
+	  /* We need to reset this every time through the loop in case menus DON'T have IDs*/
 	  miiSrc.fType = MFT_STRING;
 	  miiSrc.dwTypeData = szName;
 	  miiSrc.dwItemData = 0;
 	  miiSrc.cch = sizeof(szName);
 
 	  if (!GetMenuItemInfoA(hmSrc, nItem, TRUE, &miiSrc))
-	  { continue;
+	  {
+	    continue;
 	  }
+
+/*	  TRACE("found menu=0x%04x %s id=0x%04x mask=0x%08x smenu=0x%04x\n", hmSrc, debugstr_a(miiSrc.dwTypeData), miiSrc.wID, miiSrc.fMask,  miiSrc.hSubMenu);
+*/
 	  if (miiSrc.fType & MFT_SEPARATOR)
-	  { /* This is a separator; don't put two of them in a row*/
+	  {
+	    /* This is a separator; don't put two of them in a row */
 	    if (bAlreadySeparated)
-	    { continue;
-	    }
+	      continue;
+
 	    bAlreadySeparated = TRUE;
 	  }
 	  else if (miiSrc.hSubMenu)
-	  { if (uFlags & MM_SUBMENUSHAVEIDS)
-	    { /* Adjust the ID and check it*/
-	      miiSrc.wID += uIDAdjust;
-	      if (miiSrc.wID > uIDAdjustMax)
-	      { continue;
-	      }
-	      if (uIDMax <= miiSrc.wID)
-	      { uIDMax = miiSrc.wID + 1;
-	      }
+	  {
+	    if (uFlags & MM_SUBMENUSHAVEIDS)
+	    {
+	      miiSrc.wID += uIDAdjust;			/* add uIDAdjust to the ID */
+
+	      if (miiSrc.wID > uIDAdjustMax)		/* skip ID's higher uIDAdjustMax */
+	        continue;
+
+	      if (uIDMax <= miiSrc.wID)			/* remember the highest ID */
+	        uIDMax = miiSrc.wID + 1;
 	    }
 	    else
-	    { /* Don't set IDs for submenus that didn't have them already */
-	      miiSrc.fMask &= ~MIIM_ID;
+	    {
+	      miiSrc.fMask &= ~MIIM_ID;			/* Don't set IDs for submenus that didn't have them already */
 	    }
 	    hmSubMenu = miiSrc.hSubMenu;
+
 	    miiSrc.hSubMenu = CreatePopupMenu();
-	    if (!miiSrc.hSubMenu)
-	    { return(uIDMax);
-	    }
-	    uTemp = Shell_MergeMenus(miiSrc.hSubMenu, hmSubMenu, 0, uIDAdjust, uIDAdjustMax, uFlags&MM_SUBMENUSHAVEIDS);
+
+	    if (!miiSrc.hSubMenu) return(uIDMax);
+
+	    uTemp = Shell_MergeMenus(miiSrc.hSubMenu, hmSubMenu, 0, uIDAdjust, uIDAdjustMax, uFlags & MM_SUBMENUSHAVEIDS);
+
 	    if (uIDMax <= uTemp)
-	    { uIDMax = uTemp;
-	    }
+	      uIDMax = uTemp;
+
 	    bAlreadySeparated = FALSE;
 	  }
-	  else
-	  { /* Adjust the ID and check it*/
-	    miiSrc.wID += uIDAdjust;
-	    if (miiSrc.wID > uIDAdjustMax)
-	    { continue;
-	    }
-	    if (uIDMax <= miiSrc.wID)
-	    { uIDMax = miiSrc.wID + 1;
-	    }
+	  else						/* normal menu item */
+	  {
+	    miiSrc.wID += uIDAdjust;			/* add uIDAdjust to the ID */
+
+	    if (miiSrc.wID > uIDAdjustMax)		/* skip ID's higher uIDAdjustMax */
+	      continue;
+
+	    if (uIDMax <= miiSrc.wID)			/* remember the highest ID */
+	      uIDMax = miiSrc.wID + 1;
+
 	    bAlreadySeparated = FALSE;
 	  }
+
+/*	  TRACE("inserting menu=0x%04x %s id=0x%04x mask=0x%08x smenu=0x%04x\n", hmDst, debugstr_a(miiSrc.dwTypeData), miiSrc.wID, miiSrc.fMask, miiSrc.hSubMenu);
+*/
 	  if (!InsertMenuItemA(hmDst, uInsert, TRUE, &miiSrc))
-	  { return(uIDMax);
+	  {
+	    return(uIDMax);
 	  }
 	}
 
 	/* Ensure the correct number of separators at the beginning of the
 	inserted menu items*/
 	if (uInsert == 0)
-	{ if (bAlreadySeparated)
-	  { DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
+	{
+	  if (bAlreadySeparated)
+	  {
+	    DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
 	  }
 	}
 	else
-	{ if (_SHIsMenuSeparator(hmDst, uInsert-1))
-	  { if (bAlreadySeparated)
-	    { DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
+	{
+	  if (_SHIsMenuSeparator(hmDst, uInsert-1))
+	  {
+	    if (bAlreadySeparated)
+	    {
+	      DeleteMenu(hmDst, uInsert, MF_BYPOSITION);
 	    }
 	  }
 	  else
-	  { if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
-	    { /* Add a separator between the menus*/
+	  {
+	    if ((uFlags & MM_ADDSEPARATOR) && !bAlreadySeparated)
+	    {
+	      /* Add a separator between the menus*/
 	      InsertMenuA(hmDst, uInsert, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 	    }
 	  }

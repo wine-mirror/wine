@@ -75,7 +75,7 @@ init	Shell32LibMain
   67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus
   68 stdcall SHGetSettings(ptr long long) SHGetSettings
   69 stub SHGetNetResource
-  70 stub SHCreateDefClassObject
+  70 stdcall SHCreateDefClassObject(long long long long long)SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
   72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexA # ASCII!!!
   73 stub SHShellFolderView_Message
@@ -83,7 +83,7 @@ init	Shell32LibMain
   75 stdcall PathYetAnotherMakeUniqueName(ptr ptr) PathYetAnotherMakeUniqueNameA
   76 stub DragQueryInfo
   77 stdcall SHMapPIDLToSystemImageListIndex(long long long) SHMapPIDLToSystemImageListIndex
-  78 stdcall OleStrToStrN(str long wstr long) OleStrToStrN
+  78 stdcall OleStrToStrN(str long wstr long) OleStrToStrNAW
   79 stdcall StrToOleStrN(wstr long str long) StrToOleStrNAW
   80 stdcall DragFinish(long) DragFinish
   81 stdcall DragQueryFile(long long ptr long) DragQueryFileA
@@ -152,7 +152,7 @@ init	Shell32LibMain
  144 stdcall FileMenu_GetItemExtent (long long) FileMenu_GetItemExtent
  145 stdcall PathFindOnPath (ptr ptr) PathFindOnPathAW
  146 stdcall RLBuildListOfPaths()RLBuildListOfPaths
- 147 stdcall SHCLSIDFromString(long long) SHCLSIDFromString
+ 147 stdcall SHCLSIDFromString(long long) SHCLSIDFromStringAW
  148 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIconA   # exported by name
  149 stdcall SHFind_InitMenuPopup(long long long long) SHFind_InitMenuPopup
  150 stub ExtractAssociatedIconExA   # exported by name
@@ -180,7 +180,7 @@ init	Shell32LibMain
  172 stub SHCreateLinks
  173 stdcall SHValidateUNC(long long long)SHValidateUNC
  174 stdcall SHCreateShellFolderViewEx (ptr ptr) SHCreateShellFolderViewEx
- 175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPath
+ 175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPathAW
  176 stdcall SHSetInstanceExplorer (long) SHSetInstanceExplorer
  177 stub DAD_SetDragImageFromListView
  178 stub SHObjectProperties

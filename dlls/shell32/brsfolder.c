@@ -17,6 +17,7 @@
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"
 #include "wine/obj_shellfolder.h"
+#include "wine/undocshell.h"
 
 #include "pidl.h"
 #include "shell32_main.h"
@@ -253,7 +254,7 @@ BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	    switch (wParam)
 	    { case IDOK:
 		pdump ( pidlRet );
-		_ILGetPidlPath (pidlRet, lpBrowseInfo->pszDisplayName, MAX_PATH);
+		SHGetPathFromIDListA(pidlRet, lpBrowseInfo->pszDisplayName);
 	        EndDialog(hWnd, (DWORD) ILClone(pidlRet));
 	        return TRUE;
 

@@ -73,8 +73,8 @@ typedef struct
 } ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
 #include "poppack.h"
 
-DWORD WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
-DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
+BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
+BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define  SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
 

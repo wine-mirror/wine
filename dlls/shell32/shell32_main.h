@@ -36,6 +36,7 @@ extern HIMAGELIST (WINAPI* pImageList_Create) (INT,INT,UINT,INT,INT);
 extern BOOL	(WINAPI* pImageList_Draw) (HIMAGELIST himl, int i, HDC hdcDest, int x, int y, UINT fStyle);
 extern HICON	(WINAPI* pImageList_GetIcon) (HIMAGELIST, INT, UINT);
 extern INT	(WINAPI* pImageList_GetImageCount)(HIMAGELIST);
+extern COLORREF (WINAPI *pImageList_SetBkColor)(HIMAGELIST, COLORREF);
 
 extern LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT);  
 extern BOOL	(WINAPI* pCOMCTL32_Free) (LPVOID);  
@@ -52,23 +53,6 @@ extern LPVOID	(WINAPI* pDPA_DeletePtr) (const HDPA hdpa, INT i);
 extern HICON (WINAPI *pLookupIconIdFromDirectoryEx)(LPBYTE dir, BOOL bIcon, INT width, INT height, UINT cFlag);
 extern HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, DWORD dwVersion, INT width, INT height,UINT cFlag);
 
-/* undocumented WINAPI functions not globaly exported */
-LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl);
-LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl);
-LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST iil1,LPCITEMIDLIST iil2);
-LPITEMIDLIST WINAPI ILFindLastID(LPITEMIDLIST pidl);
-DWORD WINAPI ILGetSize(LPITEMIDLIST pidl);
-BOOL WINAPI ILGetDisplayName(LPCITEMIDLIST pidl,LPSTR path);
-DWORD WINAPI ILFree(LPITEMIDLIST pidl);
-
-HRESULT WINAPI SHILCreateFromPathA (LPSTR path, LPITEMIDLIST * ppidl, DWORD attributes);
-HRESULT WINAPI SHILCreateFromPathW (LPWSTR path, LPITEMIDLIST * ppidl, DWORD attributes);
-HRESULT WINAPI SHILCreateFromPathAW (LPVOID path, LPITEMIDLIST * ppidl, DWORD attributes);
-
-LPITEMIDLIST WINAPI ILCreateFromPathA(LPSTR path);
-LPITEMIDLIST WINAPI ILCreateFromPathW(LPWSTR path);
-LPITEMIDLIST WINAPI ILCreateFromPathAW(LPVOID path);
-
 BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
 HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
 
@@ -82,43 +66,51 @@ BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT *
 BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len);
 BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len );
 BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
+BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len);
+BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest);
 
-DWORD 		WINAPI ParseFieldA(LPCSTR src,DWORD field,LPSTR dst,DWORD len);
+DWORD 	WINAPI ParseFieldA(LPCSTR src,DWORD field,LPSTR dst,DWORD len);
 
 HGLOBAL	WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID);
-LPVOID		WINAPI SHLockShared(HANDLE hmem, DWORD procID);
-BOOL		WINAPI SHUnlockShared(HANDLE pmem);
+LPVOID	WINAPI SHLockShared(HANDLE hmem, DWORD procID);
+BOOL	WINAPI SHUnlockShared(HANDLE pmem);
 HANDLE	WINAPI SHFreeShared(HANDLE hmem, DWORD procID);
 
 /****************************************************************************
  * Class constructors
  */
-extern LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT cidl);
-extern LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT, const FORMATETC []);
+LPDATAOBJECT	IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST myPidl, LPITEMIDLIST * apidl, UINT cidl);
+LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT, const FORMATETC []);
 
-extern LPCLASSFACTORY	IClassFactory_Constructor(REFCLSID);
-extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT);
-extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
-extern LPSHELLLINK	IShellLink_Constructor(BOOL);
-extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
-extern LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
-extern HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);
+LPCLASSFACTORY	IClassFactory_Constructor(REFCLSID);
+IContextMenu *	IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, LPCITEMIDLIST *aPidls, UINT uItemCount);
+IContextMenu *	ISvBgCm_Constructor(void);
+LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER);
+LPSHELLLINK	IShellLink_Constructor(BOOL);
+
+IShellFolder * ISF_Desktop_Constructor(void);
+
+/* 3th parameter */
+#define EIDL_DESK	0
+#define EIDL_MYCOMP	1
+#define EIDL_FILE	2
+
+LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD,DWORD);
+
+LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
+HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);	
 
 /* fixme: rename the functions when the shell32.dll has it's own exports namespace */
 HRESULT WINAPI  SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI  SHELL32_DllCanUnloadNow(void);
+LRESULT WINAPI SHCoCreateInstance(LPSTR,REFCLSID,LPUNKNOWN,REFIID,LPVOID *);
 
-/* elements of this structure are accessed directly from within shell32 */
-typedef struct 
-{
-	ICOM_VTABLE(IShellFolder)*	lpvtbl;
-	DWORD				ref;
-	ICOM_VTABLE(IPersistFolder)*	lpvtblPersistFolder;
+/* fixme: move away */
+#define ResultFromShort(i) MAKE_SCODE(SEVERITY_SUCCESS, 0, (USHORT)(i))
 
-	LPSTR				sMyPath;
-	LPITEMIDLIST			pMyPidl;
-	LPITEMIDLIST			mpidl;
-} IGenericSFImpl;
-extern LPSHELLFOLDER	IShellFolder_Constructor(IGenericSFImpl*,LPITEMIDLIST);
+/* menu merging */
+#define MM_ADDSEPARATOR         0x00000001L
+#define MM_SUBMENUSHAVEIDS      0x00000002L
+HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAdjust, UINT uIDAdjustMax, ULONG uFlags);
 
 #endif

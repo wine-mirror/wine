@@ -41,7 +41,7 @@ extern UINT cfShellIDList;
 typedef struct
 {	UINT cidl;
 	UINT aoffset[1];
-} CIDA, *LPCIDA;
+} CIDA, *LPCIDA,*LPIDA;
 
 #define CFSTR_SHELLIDLISTOFFSET "Shell Object Offsets"    /* CF_OBJECTPOSITIONS */
 #define CFSTR_NETRESOURCES      "Net Resource"            /* CF_NETRESOURCE */
@@ -299,6 +299,11 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID pv, int cb);
 #define  SHGetDataFromIDList WINELIB_NAME_AW(SHGetDataFromIDList)
 
+BOOL WINAPI SHGetSpecialFolderPathA (HWND hwndOwner,LPSTR szPath,DWORD csidl,BOOL bCreate);
+BOOL WINAPI SHGetSpecialFolderPathW (HWND hwndOwner,LPWSTR szPath,DWORD csidl,BOOL bCreate);
+#define  SHGetSpecialFolderPath WINELIB_NAME_AW(SHGetSpecialFolderPath)
+
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDLIST * ppidl);
 
 /****************************************************************************
 * shlview structures
