@@ -75,13 +75,14 @@ LISTVIEW_DeleteAllItems (WND *wndPtr)
 
 	/* get item pointer */
 	lpItem = (LISTVIEW_ITEM*)DPA_GetPtr (infoPtr->hdpaItems, nItem);
+	if (lpItem) {
+	    /* delete item strings */
+	    if ((lpItem->pszText) && (lpItem->pszText != LPSTR_TEXTCALLBACK32A))
+		COMCTL32_Free (lpItem->pszText);
 
-	/* delete item strings */
-	if ((lpItem->pszText) && (lpItem->pszText != LPSTR_TEXTCALLBACK32A))
-	    COMCTL32_Free (lpItem->pszText);
-
-	/* free item data */
-	COMCTL32_Free (lpItem);
+	    /* free item data */
+	    COMCTL32_Free (lpItem);
+	}
     }
 
     DPA_DeleteAllPtrs (infoPtr->hdpaItems);
@@ -219,7 +220,7 @@ LISTVIEW_GetColumn32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (lpcol->mask & LVCF_WIDTH)
 	lpcol->cx = hdi.cxy;
 
-    if ((lpcol->mask & LVCF_TEXT) && (lpcol->pszText))
+    if ((lpcol->mask & LVCF_TEXT) && (lpcol->pszText) && (hdi.pszText))
 	lstrcpyn32A (lpcol->pszText, hdi.pszText, lpcol->cchTextMax);
 
     if (lpcol->mask & LVCF_IMAGE)
@@ -420,8 +421,18 @@ LISTVIEW_GetNextItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     INT32 nStart = (INT32)wParam;
     UINT32 uFlags = (UINT32)LOWORD(lParam);
 
-    FIXME (listview, "(%d, 0x%x); empty stub!\n", nStart, uFlags);
+    FIXME (listview, "(%d, 0x%x): semi stub!\n", nStart, uFlags);
 
+    if (infoPtr->nItemCount <= 0)
+	return -1;
+
+    /* just a simple (preliminary) hack */
+    if (nStart == -1)
+	return 0;
+    else if (nStart < infoPtr->nItemCount - 1)
+	return nStart + 1;
+    else
+	return -1;
 
     return -1;
 }
@@ -575,6 +586,7 @@ LISTVIEW_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	return -1;
 
     FIXME (listview, "(%d %p)\n", lpItem->iItem, lpItem);
+    FIXME (listview, "(%p %p)\n", infoPtr, infoPtr->hdpaItems);
 
     lpListItem = (LISTVIEW_ITEM*)COMCTL32_Alloc (infoPtr->nColumnCount * sizeof(LISTVIEW_ITEM));
     nIndex = DPA_InsertPtr (infoPtr->hdpaItems, lpItem->iItem, lpListItem);
