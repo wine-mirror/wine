@@ -72,11 +72,10 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 /* Get DDSCAPS of surface (shortcutmacro) */
 #define SDDSCAPS(iface) ((iface)->s.surface_desc.ddsCaps.dwCaps)
 
-
 /* Get the number of bytes per pixel for a given surface */
-#define GET_BPP(desc) (desc.ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ? \
-		       1 :                                                                    \
-		       desc.ddpfPixelFormat.x.dwRGBBitCount / 8)
+#define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:(pf.x.dwRGBBitCount/8))
+
+#define GET_BPP(desc) PFGET_BPP(desc.ddpfPixelFormat)
 
 /* Where do these GUIDs come from?  mkuuid.
  * They exist solely to distinguish between the targets Wine support,
@@ -676,7 +675,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Lock(
                
 		lpddsd->y.lpSurface = (LPVOID) ((char *) This->s.surface_desc.y.lpSurface +
 			(lprect->top*This->s.surface_desc.lPitch) +
-						(lprect->left*(This->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8)));
+			lprect->left*GET_BPP(This->s.surface_desc));
 	} else {
 		assert(This->s.surface_desc.y.lpSurface);
 	}
@@ -2891,8 +2890,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 	/* if i == 32 or maximum ... return error */
 	This->e.dga.vpmask|=(1<<i);
 	lpddsd->lPitch = (*ilpdsf)->s.surface_desc.lPitch = 
-		This->e.dga.fb_width*
-		(This->d.directdraw_pixelformat.x.dwRGBBitCount/8);
+		This->e.dga.fb_width*PFGET_BPP(This->d.directdraw_pixelformat);
 
 	(*ilpdsf)->s.surface_desc.y.lpSurface =
 	    This->e.dga.fb_addr + i*fbheight*lpddsd->lPitch;
@@ -3051,7 +3049,7 @@ static XImage *create_xshmimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl*
 	    HEAP_ZERO_MEMORY,
 	    lpdsf->s.surface_desc.dwWidth *
 	    lpdsf->s.surface_desc.dwHeight *
-	    (This->d.directdraw_pixelformat.x.dwRGBBitCount)
+	    PFGET_BPP(This->d.directdraw_pixelformat)
 	);
     } else {
 	lpdsf->s.surface_desc.y.lpSurface = img->data;
@@ -3075,14 +3073,14 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 	    GetProcessHeap(),HEAP_ZERO_MEMORY,
 	    lpdsf->s.surface_desc.dwWidth *
 	    lpdsf->s.surface_desc.dwHeight *
-	    (This->d.directdraw_pixelformat.x.dwRGBBitCount / 8)
+	    PFGET_BPP(This->d.directdraw_pixelformat)
 	);
 
 	if (This->d.pixel_convert != NULL) {
 	    img_data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 		lpdsf->s.surface_desc.dwWidth *
 		lpdsf->s.surface_desc.dwHeight *
-		(This->d.screen_pixelformat.x.dwRGBBitCount / 8)
+		PFGET_BPP(This->d.screen_pixelformat)
 	    );
 	} else {
 	    img_data = lpdsf->s.surface_desc.y.lpSurface;
@@ -3098,16 +3096,15 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
 	    lpdsf->s.surface_desc.dwWidth,
 	    lpdsf->s.surface_desc.dwHeight,
 	    32,
-	    lpdsf->s.surface_desc.dwWidth * (This->d.screen_pixelformat.x.dwRGBBitCount / 8)
+	    lpdsf->s.surface_desc.dwWidth* PFGET_BPP(This->d.screen_pixelformat)
 	);
 #ifdef HAVE_LIBXXSHM
     }
 #endif
-    if (This->d.pixel_convert != NULL) {
-	lpdsf->s.surface_desc.lPitch = (This->d.directdraw_pixelformat.x.dwRGBBitCount / 8) * lpdsf->s.surface_desc.dwWidth;
-    } else {
+    if (This->d.pixel_convert != NULL)
+	lpdsf->s.surface_desc.lPitch = PFGET_BPP(This->d.directdraw_pixelformat) * lpdsf->s.surface_desc.dwWidth;
+    else
 	lpdsf->s.surface_desc.lPitch = img->bytes_per_line;
-    }
     return img;
 }
 
@@ -4438,7 +4435,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
 	lpddsfd->dwHeight = This->d.height;
 	lpddsfd->dwWidth = This->d.width;
-	lpddsfd->lPitch = This->e.dga.fb_width*This->d.directdraw_pixelformat.x.dwRGBBitCount/8;
+	lpddsfd->lPitch = This->e.dga.fb_width*PFGET_BPP(This->d.directdraw_pixelformat);
 	lpddsfd->dwBackBufferCount = 1;
 	lpddsfd->x.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
@@ -4455,7 +4452,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetDisplayMode(
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
 	lpddsfd->dwHeight = This->d.height;
 	lpddsfd->dwWidth = This->d.width;
-	lpddsfd->lPitch = lpddsfd->dwWidth * This->d.directdraw_pixelformat.x.dwRGBBitCount/8;
+	lpddsfd->lPitch = lpddsfd->dwWidth * PFGET_BPP(This->d.directdraw_pixelformat);
 	lpddsfd->dwBackBufferCount = 1;
 	lpddsfd->x.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
