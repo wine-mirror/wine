@@ -180,7 +180,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     /* Resize the window */
     SetWindowPos(hwnd, 0, 0, 0, wwidth, wheight,
 		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
-    
+
     /* Position the icon */
     SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDICON), 0, ileft, (tiheight - iheight) / 2, 0, 0,
 		 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
@@ -204,6 +204,23 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
 	    bpos += bw + bspace;
 	}
     }
+
+    /* handle modal MessageBoxes */
+    if (lpmb->dwStyle & (MB_TASKMODAL|MB_SYSTEMMODAL))
+    {
+	FIXME("%s modal msgbox ! Not modal yet.\n",
+		lpmb->dwStyle & MB_TASKMODAL ? "task" : "system");
+	/* Probably do EnumTaskWindows etc. here for TASKMODAL
+	 * and work your way up to the top - I'm lazy (HWND_TOP) */
+	SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
+			SWP_NOSIZE | SWP_NOMOVE);
+	if (lpmb->dwStyle & MB_TASKMODAL)
+	    /* at least MB_TASKMODAL seems to imply a ShowWindow */
+	    ShowWindow(hwnd, SW_SHOW);
+    }
+    if (lpmb->dwStyle & MB_APPLMODAL)
+	FIXME("app modal msgbox ! Not modal yet.\n");
+    
     return hFont;
 }
 
@@ -240,7 +257,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
 
    default:
      /* Ok. Ignore all the other messages */
-     TRACE("Message number %i is being ignored.\n", message);
+     TRACE("Message number 0x%04x is being ignored.\n", message);
     break;
   }
   return 0;
