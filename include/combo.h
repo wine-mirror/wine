@@ -61,8 +61,7 @@ typedef struct
 
 LRESULT WINAPI ComboWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
-BOOL 	COMBO_FlipListbox( LPHEADCOMBO, BOOL );
-HWND 	COMBO_GetLBWindow( struct tagWND * );
+BOOL 	COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL );
 LRESULT COMBO_Directory( LPHEADCOMBO, UINT, LPSTR, BOOL );
 
 #endif /* __WINE_COMBO_H */
