@@ -26,6 +26,7 @@
         User provides for DirectDraw capabilities based on drawing to a
         Wine window. It uses the User DirectDrawSurface implementation
         for primary and backbuffer surfaces.
+      </para>     
       <para>
         XVidMode attempt to use the XFree86 VidMode extension to set the
         display resolution to match the parameters to SetDisplayMode.
