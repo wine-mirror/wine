@@ -108,7 +108,7 @@ static void do_signal( struct handler *handler )
 {
     if (!handler->pending)
     {
-        char dummy;
+        char dummy = 0;
         handler->pending = 1;
         write( handler->pipe_write, &dummy, 1 );
     }
