@@ -209,14 +209,19 @@ int main(int argc, char *argv[])
 	{
 		WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 
-		if(!strcasecmp(argv[i], "/i"))
+		if(!strncasecmp(argv[i], "/i", 2))
 		{
+			char *argvi = argv[i];
 			FunctionInstall = TRUE;
-			i++;
-			if(i >= argc)
-				ShowUsage(1);
-			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			GotProductCode = GetProductCode(argv[i], &PackageName, &ProductCode);
+			if(strlen(argvi) > 2)
+				argvi += 2;
+			else {
+				i++;
+				if(i >= argc)
+					ShowUsage(1);
+				WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
+			}
+			GotProductCode = GetProductCode(argvi, &PackageName, &ProductCode);
 		}
 		else if(!strcasecmp(argv[i], "/a"))
 		{
