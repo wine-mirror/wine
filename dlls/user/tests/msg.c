@@ -1899,6 +1899,7 @@ static const struct message WmPaint[] = {
 static void test_paint_messages(void)
 {
     RECT rect;
+    MSG msg;
     HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
     HRGN hrgn2 = CreateRectRgn( 0, 0, 0, 0 );
     HWND hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
@@ -1980,6 +1981,50 @@ static void test_paint_messages(void)
     SetRectRgn( hrgn, 0, 0, 50, 50 );
     RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOERASE | RDW_UPDATENOW );
     ok_sequence( WmPaint, "Paint", FALSE );
+
+    flush_sequence();
+    SetRectRgn( hrgn, -4, -4, -2, -2 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
+    SetRectRgn( hrgn, -4, -4, -3, -3 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOFRAME | RDW_ERASENOW );
+    ok_sequence( WmEmptySeq, "EmptySeq", FALSE );
+
+    flush_sequence();
+    SetRectRgn( hrgn, -4, -4, -2, -2 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
+    SetRectRgn( hrgn, -4, -4, -3, -3 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOFRAME );
+    SetRectRgn( hrgn, 0, 0, 1, 1 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_UPDATENOW );
+    ok_sequence( WmPaint, "Paint", TRUE );
+
+    flush_sequence();
+    SetRectRgn( hrgn, -4, -4, -1, -1 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
+    RedrawWindow( hwnd, NULL, 0, RDW_ERASENOW );
+    /* make sure no WM_PAINT was generated */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmInvalidateRgn, "InvalidateRgn", FALSE );
+
+    flush_sequence();
+    SetRectRgn( hrgn, -4, -4, -1, -1 );
+    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        if (msg.hwnd == hwnd && msg.message == WM_PAINT)
+        {
+            /* GetUpdateRgn must return empty region since only nonclient area is invalidated */
+            INT ret = GetUpdateRgn( hwnd, hrgn, FALSE );
+            ok( ret == NULLREGION, "Invalid GetUpdateRgn result %d\n", ret );
+            ret = GetUpdateRect( hwnd, &rect, FALSE );
+            ok( ret, "Invalid GetUpdateRect result %d\n", ret );
+            /* this will send WM_NCPAINT and validate the non client area */
+            ret = GetUpdateRect( hwnd, &rect, TRUE );
+            ok( !ret, "Invalid GetUpdateRect result %d\n", ret );
+        }
+        else DispatchMessage( &msg );
+    }
+    ok_sequence( WmInvalidateRgn, "InvalidateRgn", FALSE );
 
     DeleteObject( hrgn );
     DeleteObject( hrgn2 );

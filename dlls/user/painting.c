@@ -314,8 +314,15 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
  */
 BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
+    WND *wndPtr;
+    BOOL ret = FALSE;
     HRGN update_rgn = CreateRectRgn( 0, 0, 0, 0 );
-    INT retval = GetUpdateRgn( hwnd, update_rgn, erase );
+
+    if (GetUpdateRgn( hwnd, update_rgn, erase ) == ERROR)
+    {
+        DeleteObject( update_rgn );
+        return FALSE;
+    }
 
     if (rect)
     {
@@ -332,7 +339,13 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
     }
     DeleteObject( update_rgn );
 
-    return (retval != ERROR && retval != NULLREGION);
+    wndPtr = WIN_GetPtr( hwnd );
+    if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+    {
+        ret = (wndPtr->hrgnUpdate != 0);
+        WIN_ReleasePtr( wndPtr );
+    }
+    return ret;
 }
 
 
