@@ -832,7 +832,7 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
    'w','h','e','r','e',' ','S','e','q','u','e','n','c','e',' ',
        '=',' ','%','i',0};
 
-    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, -1);
+    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, seq);
 
     if (rc == ERROR_SUCCESS)
     {
@@ -1832,7 +1832,7 @@ static int load_component(MSIPACKAGE* package, MSIRECORD * row)
     sz = 96;       
     MSI_RecordGetStringW(row,6,package->components[index].KeyPath,&sz);
 
-    package->components[index].State = INSTALLSTATE_UNKNOWN;
+    package->components[index].State = INSTALLSTATE_ABSENT;
     package->components[index].Enabled = TRUE;
     package->components[index].FeatureState= FALSE;
 
@@ -1894,7 +1894,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
         MSI_RecordGetStringW(row,7,package->features[index].Directory,&sz);
 
     package->features[index].Attributes= MSI_RecordGetInteger(row,8);
-    package->features[index].State = INSTALLSTATE_UNKNOWN;
+    package->features[index].State = INSTALLSTATE_ABSENT;
 
     /* load feature components */
 
@@ -2346,6 +2346,68 @@ static LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name,
     return path;
 }
 
+static UINT SetFeatureStates(MSIPACKAGE *package)
+{
+    LPWSTR level;
+    INT install_level;
+    DWORD i;
+    INT j;
+    LPWSTR override = NULL;
+    static const WCHAR all[]={'A','L','L',0};
+    static const WCHAR szlevel[] = {
+        'I','N','S','T','A','L','L','L','E','V','E','L',0};
+    static const WCHAR szAddLocal[] = {
+        'A','D','D','L','O','C','A','L',0};
+
+    /* I do not know if this is where it should happen.. but */
+
+    TRACE("Checking Install Level\n");
+
+    level = load_dynamic_property(package,szlevel,NULL);
+    if (level)
+    {
+        install_level = atoiW(level);
+        HeapFree(GetProcessHeap(), 0, level);
+    }
+    else
+        install_level = 1;
+
+    override = load_dynamic_property(package,szAddLocal,NULL);
+   
+    /*
+     * Components FeatureState defaults to FALSE. The idea is we want to 
+     * enable the component is ANY feature that uses it is enabled to install
+     */
+    for(i = 0; i < package->loaded_features; i++)
+    {
+        BOOL feature_state= ((package->features[i].Level > 0) &&
+                             (package->features[i].Level <= install_level));
+
+        if (override && (strcmpiW(override,all)==0 || 
+                         strstrW(override,package->features[i].Feature)))
+        {
+            TRACE("Override of install level found\n");
+            feature_state = TRUE;
+        }
+        package->features[i].Enabled = feature_state;
+
+        TRACE("Feature %s has a state of %i\n",
+               debugstr_w(package->features[i].Feature), feature_state);
+        for( j = 0; j < package->features[i].ComponentCount; j++)
+        {
+            package->components[package->features[i].Components[j]].FeatureState
+            |= feature_state;
+        }
+    } 
+    if (override)
+        HeapFree(GetProcessHeap(),0,override);
+    /* 
+     * So basically we ONLY want to install a component if its Enabled AND
+     * FeatureState are both TRUE 
+     */
+    return ERROR_SUCCESS;
+}
+
 /* 
  * Alot is done in this function aside from just the costing.
  * The costing needs to be implemented at some point but for now I am going
@@ -2576,7 +2638,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         MSI_SetPropertyW(package,szlevel, szOne);
     else
         HeapFree(GetProcessHeap(),0,level);
-    return ERROR_SUCCESS;
+
+    return SetFeatureStates(package);
+
 }
 
 /*
@@ -3490,65 +3554,9 @@ static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data)
 
 static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
 {
-    LPWSTR level;
-    INT install_level;
-    DWORD i;
-    INT j;
-    LPWSTR override = NULL;
-    static const WCHAR all[]={'A','L','L',0};
-    static const WCHAR szlevel[] = {
-        'I','N','S','T','A','L','L','L','E','V','E','L',0};
-    static const WCHAR szAddLocal[] = {
-        'A','D','D','L','O','C','A','L',0};
-
-    /* I do not know if this is where it should happen.. but */
-
-    TRACE("Checking Install Level\n");
-
-    level = load_dynamic_property(package,szlevel,NULL);
-    if (level)
-    {
-        install_level = atoiW(level);
-        HeapFree(GetProcessHeap(), 0, level);
-    }
-    else
-        install_level = 1;
-
-    override = load_dynamic_property(package,szAddLocal,NULL);
-   
-    /*
-     * Components FeatureState defaults to FALSE. The idea is we want to 
-     * enable the component is ANY feature that uses it is enabled to install
-     */
-    for(i = 0; i < package->loaded_features; i++)
-    {
-        BOOL feature_state= ((package->features[i].Level > 0) &&
-                             (package->features[i].Level <= install_level));
-
-        if (override && (strcmpiW(override,all)==0 || 
-                         strstrW(override,package->features[i].Feature)))
-        {
-            TRACE("Override of install level found\n");
-            feature_state = TRUE;
-            package->features[i].Enabled = feature_state;
-        }
-
-        TRACE("Feature %s has a state of %i\n",
-               debugstr_w(package->features[i].Feature), feature_state);
-        for( j = 0; j < package->features[i].ComponentCount; j++)
-        {
-            package->components[package->features[i].Components[j]].FeatureState
-            |= feature_state;
-        }
-    } 
-    if (override)
-        HeapFree(GetProcessHeap(),0,override);
-    /* 
-     * So basically we ONLY want to install a component if its Enabled AND
-     * FeatureState are both TRUE 
-     */
     return ERROR_SUCCESS;
 }
+
 
 static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 {
@@ -5056,8 +5064,9 @@ UINT MSI_GetFeatureStateW(MSIPACKAGE *package, LPWSTR szFeature,
         if (package->features[index].Enabled)
             *piAction = INSTALLSTATE_LOCAL;
         else
-            *piAction = INSTALLSTATE_UNKNOWN;
+            *piAction = package->features[index].State;
     }
+    TRACE("returning %i %i\n",*piInstalled,*piAction);
 
     return ERROR_SUCCESS;
 }
