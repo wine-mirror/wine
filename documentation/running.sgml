@@ -136,14 +136,12 @@ Options:
       <title>Explorer-like graphical Wine environments</title>
 
       <para>
-	If you don't feel like manually invoking Wine for every program
-	you want to run and instead want to have an integrated graphical
-	interface to run your Windows programs in, then installing e.g.
-	<ulink url="http://www.calmira.org">Calmira</ulink>, a
-	Win95-Explorer-like shell replacement, would probably be a great
-	idea. Calmira might still have a few problems running on Wine,
-	though. Other usable Explorer replacements should be listed here
-	in the future.
+	If you prefer using a graphical interface to manage your
+	files you might want to consider using Winefile.  This Winelib
+	application comes with Wine and can be found with the other
+	Wine programs.  It is a useful way to view your drive configuration 
+	and locate files, plus you can execute programs directly from 
+	Winefile.  Please note, many functions are not yet implemented.
       </para>
     </sect1>
 	
