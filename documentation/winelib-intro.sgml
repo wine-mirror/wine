@@ -197,6 +197,12 @@
                 likely, just for reference at a later point. If you use a 
                 version control system you're already covered.
               </para>
+              <para>
+                If you have already modified your source files and you want
+                to make sure that winemaker will not make further changes to
+                them then you can use the --nosource-fix option to protect 
+                them.
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -366,6 +372,12 @@
                     </para>
                   </listitem>
                 </itemizedlist>
+              </para>
+              <para>
+                If you find yourself modifying the Makefile.in to specify the
+                location of the Wine header or library files then go back to
+                the previous step (the configure script) and use the various
+                --with-wine-* options to specify where they are.
               </para>
             </listitem>
           </varlistentry>

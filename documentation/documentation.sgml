@@ -201,7 +201,9 @@ SEE ALSO
             with the <literal>&amp;lt;</literal> entity.  Each time
             the SGML processor encounters <literal>&amp;lt;</literal>,
             it will place a literal <quote>&lt;</quote> in the output
-            document.
+            document. Similarly you must use the <literal>&amp;gt;</literal> 
+            and <literal>&amp;amp;</literal> entities for the 
+            <quote>&gt;</quote> and <quote>&amp;</quote> characters.
           </para>
           <para>
             The final term you'll need to know when writing simple
@@ -1012,6 +1014,23 @@ SEE ALSO
             distribution seems to handle its SGML environment
             differently, installing it into different paths, and
             naming its packages according to its own whims.
+          </para>
+          <para>
+            The following packages seems to be sufficient for RedHat 7.1.  You
+            will want to be careful about the order in which you install the
+            rpms.
+            <itemizedlist>
+              <listitem><para>sgml-common-*.rpm</para></listitem>
+              <listitem><para>openjade-*.rpm</para></listitem>
+              <listitem><para>perl-SGMLSpm-*.rpm</para></listitem>
+              <listitem><para>docbook-dtd*.rpm</para></listitem>
+              <listitem><para>docbook-style-dsssl-*.rpm</para></listitem>
+              <listitem><para>tetex-*.rpm</para></listitem>
+              <listitem><para>jadetex-*.rpm</para></listitem>
+              <listitem><para>docbook-utils-*.rpm</para></listitem>
+            </itemizedlist>
+            You can also use ghostscript to view the ps format output and 
+            Adobe Acrobat 4 to view the pdf file.
           </para>
         </sect3>
 

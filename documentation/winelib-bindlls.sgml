@@ -3,15 +3,104 @@
     <sect1 id="bindlls-intro">
       <title id="binary-dlls-intro.title">Introduction</title>
       <para>
-        describe the problem, 
-        use an example and reuse it in the following sections...
+        For one reason or another you may find yourself with a Linux shared
+        library that you want to use as if it was a Windows Dll.  There are
+        various reasons for this including the following:
+        <itemizedlist>
+          <listitem>
+            <para>
+              You are porting a large application that uses several third-party
+              libraries.  One is available on Linux but you are not yet ready
+              to link to it directly as a Linux shared library.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              (The ODBC interface in WINE).  There is a well-defined interface
+              available and there are several Linux solutions that are
+              available for it.
+            </para>
+          </listitem>
+        </itemizedlist>
       </para>
+      <para>
+        The process for dealing with these situations is actually quite simple.
+        You need to write a spec file that will describe the library's 
+        interface in the same format as a Dll (primarily what functions it
+        exports).  Also you will want to write a small wrapper around the
+        library.  We combine these to form a Wine builtin Dll that links to the
+        Linux library.
+      </para>
+      <para>
+        In this section we will look at two examples.  The first example is
+        extremely simple and leads into the subject in "baby steps".  The
+        second example is the ODBC interface proxy in Wine.  The files to which
+        we will refer for the ODBC example are currently in the 
+        <filename class="Directory">dlls/odbc32</filename> directory of the
+        Wine source.
+      </para>
+      <para>
+         The first example is based very closely on a real case (the names
+         of the functions etc. have been changed to protect the innocent).
+         A large Windows application includes a DLL that links to a third-party
+         DLL.  For various reasons the third-party DLL does not work too well
+         under Wine.  However the third-party DLL is also available for the
+         Linux environment.  Conveniently the DLL and Linux shared library 
+         export only a small number of functions and the application only uses
+         one of those.
+       </para>
+       <para>
+         Specifically, the application calls a function:
+<programlisting>
+signed short WINAPI MyWinFunc (unsigned short a, void *b, void *c,
+        unsigned long *d, void *e, unsigned char f, char g,
+        unsigned char *h);
+</programlisting>
+         and the linux library exports a corresponding function:
+<programlisting>
+signed short MyLinuxFunc (unsigned short a, void *b, void *c,
+        unsigned short *d, void *e, char g, unsigned char *h);
+</programlisting>
+       </para>
     </sect1>
 
     <sect1 id="bindlls-spec">
       <title id="bindlls-spec.title">Writing the spec file</title>
       <para>
-        give an example...
+        Start by writing the spec file.  This file will describe the interface
+        as if it was a dll.  See elsewhere for the details of the format of
+        a spec file.
+      </para>
+      <para>
+        In the simple example we want a Wine builtin Dll that corresponds to
+        the MyWin Dll.  The spec file is <filename>libMyWin.spec</filename> and
+        looks like this.
+<programlisting>
+#
+# File: libMyWin.spec
+#
+# some sort of copyright
+#
+# Wine spec file for the libMyWin builtin library (a minimal wrapper around the
+# linux library libMyLinux)
+#
+# For further details of wine spec files see the Winelib documentation at
+# www.winehq.com
+
+name    MyWin
+type    win32
+mode    dll
+
+2 stdcall _MyWinFunc@32 (long ptr ptr ptr ptr long long ptr) MyProxyWinFunc
+
+# End of file
+</programlisting>
+        Notice that the arguments are flagged as long even though they are
+        smaller than that.
+      </para>
+      <para>
+        In the case of the ODBC example you can see this in the file 
+        <filename>odbc32.spec</filename>.
       </para>
     </sect1>
 
@@ -25,7 +114,122 @@
     <sect1 id="bindlls-wrapper">
       <title id="bindlls-wrapper.title">Writing the wrapper</title>
       <para>
-        give an example
+        Firstly we will look at the simple example.  The main complication of
+        this case is the slightly different argument lists.  The f parameter
+        does not have to be passed to the Linux function and the d parameter
+        (theoretically) has to be converted between unsigned long * and
+        unsigned short *.  Doing this ensures that the "high" bits of the
+        returned value are set correctly.
+        <programlisting>
+/*
+ * File: MyWin.c
+ *
+ * Copyright (c) The copyright holder.
+ *
+ * Basic WINE wrapper for the linux &lt;3rd party library&gt; so that it can be
+ * used by &lt;the application&gt;
+ *
+ * Currently this file makes no attempt to be a full wrapper for the &lt;3rd
+ * party library&gt;; it only exports enough for our own use.
+ *
+ * Note that this is a Unix file; please don't go converting it to DOS format
+ * (e.g. converting line feeds to Carriage return/Line feed).
+ *
+ * This file should be built in a Wine environment as a WineLib library, 
+ * linked to the Linux &lt;3rd party&gt; libraries (currently libxxxx.so and 
+ * libyyyy.so)
+ */
+
+#include &lt; &lt;3rd party linux header&gt; &gt;
+#include &lt;windef.h&gt; /* Part of the Wine header files */
+
+signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
+                unsigned long *d, void *e, unsigned char f, char g, 
+                unsigned char *h)
+/* This declaration is as defined in the spec file.  It is deliberately not
+ * specified in terms of &lt;3rd party&gt; types since we are messing about here
+ * between two operating systems (making it look like a Windows thing when
+ * actually it is a Linux thing).  In this way the compiler will point out any
+ * inconsistencies.
+ * For example the fourth argument needs care
+ */
+{
+    unsigned short d1;
+    signed short ret;
+
+    d1 = (unsigned short) *d;
+    ret = &lt;3rd party linux function&gt; (a, b, c, &amp;d1, e, g, h);
+    *d = d1;
+
+    return ret;
+}
+
+/* End of file */
+        </programlisting>
+      </para>
+      <para>
+        For a more extensive case we can use the ODBC example.  This is
+        implemented as a header file 
+        (<filename class="HeaderFile">proxyodbc.h</filename>) and the actual
+        C source file (<filename>proxyodbc.c</filename>).  Although the file
+        is quite long it is extremely simple in structure.
+      </para>
+      <para>
+        The MAIN_OdbcInit function is the function that was named in the
+        <link linkend="bindlls-spec">spec file</link> as the init function.
+        On the process attach event the function dynamically links to the
+        desired Linux ODBC library (since there are several available) and
+        builds a list of function pointers.  It unlinks on the process
+        detach event.
+      </para>
+      <para>
+        Then each of the functions simply calls the appropriate Linux function
+        through the function pointer that was set up during initialisation.
+      </para>
+    </sect1>
+
+    <sect1 id="bindlls-building">
+      <title id="binary-dlls-building.title">Building</title>
+      <para>
+        So how dow we actually build the Wine builtin Dll?  The easiest way is
+        to get Winemaker to do the hard work for us.  For the simple example we
+        have two source files (the wrapper and the spec file).  We also have
+        the 3rd party header and library files of course.
+      </para>
+      <para>
+        Put the two source files in a suitable directory and then use 
+        winemaker to create the build framework, including configure script,
+        makefile etc.  You will want to use the following options of 
+        winemaker:
+        <itemizedlist>
+          <listitem>
+            <para>
+              --nosource-fix and --nogenerate-specs (requires winemaker version
+              0.5.8 or later) to ensure that the two files are not modified.
+              (If using an older version of winemaker then make the two files
+              readonly and ignore the complaints about being unable to modify
+              them).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              --dll --single-target MyWin --nomfc to specify the target
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              -DMightNeedSomething -I3rd_party_include -L3rd_party_lib -lxxxx
+              -lyyyy where these are the locations of the header files etc.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <para>
+        After running winemaker I like to edit the Makefile.in to add the line
+        CEXTRA = -Wall just before the DEFINES =.
+      </para>
+      <para>
+        Then simply run the configure and make as normal (described elsewhere).
       </para>
     </sect1>
   </chapter>
