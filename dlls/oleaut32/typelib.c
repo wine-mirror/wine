@@ -1512,7 +1512,7 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
         case VT_BSTR    :{
             char * ptr;
             MSFT_ReadLEDWords(&size, sizeof(INT), pcx, DO_NOT_SEEK );
-	    if(size <= 0) {
+	    if(size < 0) {
 	        FIXME("BSTR length = %d?\n", size);
 	    } else {
                 ptr=TLB_Alloc(size);/* allocate temp buffer */
