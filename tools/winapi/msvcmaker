@@ -673,7 +673,6 @@ sub _generate_dsp {
 	if($wine) {
 	    push @defines2, "_\U${project}\E_";
 	    push @defines2, qw(__WINESRC__) if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
-	    push @defines2, qw(__WINE_USE_MSVCRT);
 	    if ($msvc_headers) {
 	    	push @defines2, qw(__WINE_USE_NATIVE_HEADERS);
 	    }

@@ -15,19 +15,16 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * This file contains tests to ensure consystencies between symbols
- * defined in the msvcrt headers, and corresponding duplciated
+ * This file contains tests to ensure the consistency between symbols
+ * defined in the regular msvcrt headers, and the corresponding duplicated
  * symbol defined in msvcrt.h (prefixed by MSVCRT_).
  */
 
-#define __WINE_MSVCRT_TEST
 #include "dos.h"
 #include "math.h"
 #include "stdlib.h"
-#include "eh.h"
 #include "io.h"
 #include "errno.h"
-#include "unistd.h"
 #include "fcntl.h"
 #include "malloc.h"
 #include "limits.h"
@@ -42,7 +39,6 @@
 #include "float.h"
 #include "stddef.h"
 #include "mbstring.h"
-#include "sys/unistd.h"
 #include "sys/locking.h"
 #include "sys/utime.h"
 #include "sys/types.h"
@@ -50,14 +46,18 @@
 #include "sys/timeb.h"
 #include "direct.h"
 #include "conio.h"
-#include "dirent.h"
 #include "process.h"
 #include "string.h"
 #include "time.h"
 #include "locale.h"
 #include "setjmp.h"
-#include "msvcrt.h"
 #include "wine/test.h"
+
+#ifdef __WINE_USE_MSVCRT
+/* Wine-specific msvcrt headers */
+#define __WINE_MSVCRT_TEST
+#include "eh.h"
+#include "msvcrt.h"
 
 #ifdef __GNUC__
 #define TYPEOF(type) typeof(type)
@@ -453,9 +453,13 @@ void test_defines()
 #endif
 }
 
+#endif /* __WINE_USE_MSVCRT */
+
 START_TEST(headers)
 {
+#ifdef __WINE_USE_MSVCRT
     test_types();
     test_structs();
     test_defines();
+#endif
 }
