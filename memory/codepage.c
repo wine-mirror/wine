@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "winbase.h"
 #include "winerror.h"
@@ -16,48 +17,73 @@
 DEFAULT_DEBUG_CHANNEL(string);
 
 /* current code pages */
-static unsigned int ansi_cp = 1252;  /* Windows 3.1 ISO Latin */
-static unsigned int oem_cp = 437;    /* MS-DOS United States */
-static unsigned int mac_cp = 10000;  /* Mac Roman */
-
 static const union cptable *ansi_cptable;
 static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
 
+/* retrieve a code page table from the locale info */
+static const union cptable *get_locale_cp( LCID lcid, LCTYPE type )
+{
+    const union cptable *table = NULL;
+    char buf[32];
+
+    if (GetLocaleInfoA( lcid, type, buf, sizeof(buf) )) table = cp_get_table( atoi(buf) );
+    return table;
+}
+
+/* setup default codepage info before we can get at the locale stuff */
+static void init_codepages(void)
+{
+    ansi_cptable = cp_get_table( 1252 );
+    oem_cptable  = cp_get_table( 437 );
+    mac_cptable  = cp_get_table( 10000 );
+    assert( ansi_cptable );
+    assert( oem_cptable );
+    assert( mac_cptable );
+}
 
 /* find the table for a given codepage, handling CP_ACP etc. pseudo-codepages */
 static const union cptable *get_codepage_table( unsigned int codepage )
 {
     const union cptable *ret = NULL;
 
-    if (!ansi_cptable)  /* initialize them */
-    {
-        /* FIXME: should load from the registry */
-        ansi_cptable = cp_get_table( ansi_cp );
-        oem_cptable = cp_get_table( oem_cp );
-        mac_cptable = cp_get_table( mac_cp );
-        assert( ansi_cptable );
-        assert( oem_cptable );
-        assert( mac_cptable );
-    }
+    if (!ansi_cptable) init_codepages();
 
     switch(codepage)
     {
     case CP_ACP:        return ansi_cptable;
     case CP_OEMCP:      return oem_cptable;
     case CP_MACCP:      return mac_cptable;
-    case CP_THREAD_ACP: return ansi_cptable; /* FIXME */
+    case CP_THREAD_ACP: return get_locale_cp( GetThreadLocale(), LOCALE_IDEFAULTANSICODEPAGE );
     case CP_UTF7:
     case CP_UTF8:
         break;
     default:
-        if (codepage == ansi_cp) return ansi_cptable;
-        if (codepage == oem_cp) return oem_cptable;
-        if (codepage == mac_cp) return mac_cptable;
+        if (codepage == ansi_cptable->info.codepage) return ansi_cptable;
+        if (codepage == oem_cptable->info.codepage) return oem_cptable;
+        if (codepage == mac_cptable->info.codepage) return mac_cptable;
         ret = cp_get_table( codepage );
         break;
     }
     return ret;
+}
+
+/* initialize default code pages from locale info */
+/* FIXME: should be done in init_codepages, but it can't right now */
+/* since it needs KERNEL32 to be loaded for the locale info. */
+void CODEPAGE_Init(void)
+{
+    const union cptable *table;
+    LCID lcid = GetUserDefaultLCID();
+
+    if (!ansi_cptable) init_codepages();  /* just in case */
+    
+    if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTANSICODEPAGE ))) ansi_cptable = table;
+    if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTMACCODEPAGE ))) mac_cptable = table;
+    if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTCODEPAGE ))) oem_cptable = table;
+
+    TRACE( "ansi=%03d oem=%03d mac=%03d\n", ansi_cptable->info.codepage,
+           oem_cptable->info.codepage, mac_cptable->info.codepage );
 }
 
 /******************************************************************************
@@ -68,7 +94,8 @@ static const union cptable *get_codepage_table( unsigned int codepage )
  */
 UINT WINAPI GetACP(void)
 {
-    return ansi_cp;
+    if (!ansi_cptable) init_codepages();
+    return ansi_cptable->info.codepage;
 }
 
 
@@ -77,7 +104,8 @@ UINT WINAPI GetACP(void)
  */
 UINT WINAPI GetOEMCP(void)
 {
-    return oem_cp;
+    if (!oem_cptable) init_codepages();
+    return oem_cptable->info.codepage;
 }
 
 
@@ -105,6 +133,7 @@ BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
  */
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {
+    if (!ansi_cptable) init_codepages();
     return is_dbcs_leadbyte( ansi_cptable, testchar );
 }
 

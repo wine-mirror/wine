@@ -15,6 +15,7 @@
 #include "miscemu.h"
 #include "global.h"
 
+extern void CODEPAGE_Init(void);
 
 /***********************************************************************
  *           KERNEL process initialisation routine
@@ -22,6 +23,9 @@
 static BOOL process_attach(void)
 {
     HMODULE16 hModule;
+
+    /* Setup codepage info */
+    CODEPAGE_Init();
 
     /* Initialize DOS memory */
     if (!DOSMEM_Init(0)) return FALSE;
