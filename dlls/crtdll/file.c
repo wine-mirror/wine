@@ -193,7 +193,7 @@ INT __cdecl CRTDLL__access(LPCSTR filename, INT mode)
 {
   DWORD attr = GetFileAttributesA(filename);
 
-  if (attr == -1)
+  if (attr == 0xffffffff)
   {
     if (!filename)
     {
@@ -503,6 +503,41 @@ int __cdecl CRTDLL__fstat(int fd, struct _stat* buf)
 
 
 /*********************************************************************
+ *                  _futime        (CRTDLL.115)
+ * 
+ * Set the file access/modification times on an open file.
+ */
+INT __cdecl CRTDLL__futime(INT fd, struct _utimbuf *t)
+{
+  HANDLE hand = __CRTDLL__fdtoh(fd);
+  FILETIME at, wt;
+
+  if (!t)
+  {
+    time_t currTime;
+    CRTDLL_time(&currTime);
+    RtlSecondsSince1970ToTime( currTime, &at );
+    memcpy( &wt, &at, sizeof(wt) );
+  }
+  else
+  {
+    RtlSecondsSince1970ToTime( t->actime, &at );
+    if (t->actime == t->modtime)
+      memcpy( &wt, &at, sizeof(wt) );
+    else
+      RtlSecondsSince1970ToTime( t->modtime, &wt );
+  }
+
+  if (!SetFileTime( hand, NULL, &at, &wt ))
+  {
+    __CRTDLL__set_errno(GetLastError());
+    return -1 ;
+  }
+  return 0;
+}
+
+
+/*********************************************************************
  *                  _get_osfhandle     (CRTDLL.117)
  *
  * Return a Win32 HANDLE from a file descriptor.
@@ -564,7 +599,7 @@ INT __cdecl CRTDLL__isatty(INT fd)
  */
 LONG __cdecl CRTDLL__lseek( INT fd, LONG offset, INT whence)
 {
-  LONG ret;
+  DWORD ret;
   HANDLE hand = __CRTDLL__fdtoh(fd);
 
   TRACE(":fd (%d) handle (%d)\n",fd,hand);
@@ -860,6 +895,25 @@ INT __cdecl CRTDLL__umask(INT umask)
   TRACE("umask (%d)\n",umask);
   __CRTDLL_umask = umask;
   return old_umask;
+}
+
+
+/*********************************************************************
+ *                  _utime         (CRTDLL.314)
+ * 
+ * Set the file access/modification times on a file.
+ */
+INT __cdecl CRTDLL__utime(LPCSTR path, struct _utimbuf *t)
+{
+  INT fd = CRTDLL__open( path, _O_WRONLY | _O_BINARY );
+
+  if (fd > 0)
+  {
+    INT retVal = CRTDLL__futime(fd, t);
+    CRTDLL__close(fd);
+    return retVal;
+  }
+  return -1;
 }
 
 

@@ -71,6 +71,18 @@
 #define _FREEENTRY    0
 #define _USEDENTRY    1
 
+/* fpclass constants */
+#define _FPCLASS_SNAN 1
+#define _FPCLASS_QNAN 2
+#define _FPCLASS_NINF 4
+#define _FPCLASS_NN   8
+#define _FPCLASS_ND   16
+#define _FPCLASS_NZ   32
+#define _FPCLASS_PZ   64
+#define _FPCLASS_PD   128
+#define _FPCLASS_PN   256
+#define _FPCLASS_PINF 512
+
 /* CRTDLL Globals */
 extern INT  CRTDLL_doserrno;
 extern INT  CRTDLL_errno;
@@ -170,6 +182,12 @@ typedef struct _heapinfo
   int    _useflag;
 } _HEAPINFO;
 
+struct _utimbuf
+{
+  time_t actime;
+  time_t modtime;
+};
+
 typedef VOID (*sig_handler_type)(VOID);
 
 typedef VOID (*new_handler_type)(VOID);
@@ -251,6 +269,7 @@ INT    __cdecl CTRDLL__creat( LPCSTR path, INT flags );
 INT    __cdecl CRTDLL__eof( INT fd );
 LONG   __cdecl CRTDLL__tell(INT fd);
 INT    __cdecl CRTDLL__umask(INT umask);
+INT    __cdecl CRTDLL__utime(LPCSTR path, struct _utimbuf *t);
 INT    __cdecl CRTDLL__unlink( LPCSTR pathname );
 INT    __cdecl CRTDLL_rename( LPCSTR oldpath,LPCSTR newpath );
 int    __cdecl CRTDLL__stat(  LPCSTR filename, struct _stat * buf );
@@ -261,6 +280,7 @@ INT    __cdecl CRTDLL__setmode( INT fh,INT mode );
 INT    __cdecl CRTDLL_remove( LPCSTR path );
 INT    __cdecl CRTDLL__commit( INT fd );
 INT    __cdecl CRTDLL__fstat( int file, struct _stat* buf );
+INT    __cdecl CRTDLL__futime( INT fd, struct _utimbuf *t );
 HANDLE __cdecl CRTDLL__get_osfhandle( INT fd );
 
 /* CRTDLL_main.c */
@@ -276,6 +296,7 @@ UINT   __cdecl CRTDLL__rotl( UINT x,INT shift );
 DWORD  __cdecl CRTDLL__lrotl( DWORD x,INT shift );
 DWORD  __cdecl CRTDLL__lrotr( DWORD x,INT shift );
 DWORD  __cdecl CRTDLL__rotr( UINT x,INT shift );
+double __cdecl CRTDLL__scalb( double x, LONG y );
 INT    __cdecl CRTDLL__mbsicmp( unsigned char *x,unsigned char *y );
 INT    __cdecl CRTDLL_vswprintf( LPWSTR buffer, LPCWSTR spec, va_list args );
 VOID   __cdecl CRTDLL_longjmp( jmp_buf env, int val );
@@ -316,10 +337,12 @@ UINT   __cdecl CRTDLL__control87( UINT, UINT );
 UINT   __cdecl CRTDLL__controlfp( UINT, UINT );
 double __cdecl CRTDLL__copysign(double x, double sign);
 INT    __cdecl CRTDLL__finite( double d );
+INT    __cdecl CRTDLL__fpclass( double d );
 VOID   __cdecl CRTDLL__fpreset( void );
 INT    __cdecl CRTDLL__isnan( double d );
 LPVOID __cdecl CRTDLL__lsearch( LPVOID match, LPVOID start, LPUINT array_size,
                                 UINT elem_size, comp_func cf );
+VOID   __cdecl CRTDLL__purecall( VOID );
 
 /* CRTDLL_mem.c */
 LPVOID  __cdecl CRTDLL_new( DWORD size );

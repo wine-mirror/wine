@@ -130,6 +130,156 @@ void __CRTDLL__set_errno(ULONG err)
   }
 }
 
+#if defined(__GNUC__) && defined(__i386__)
+#define FPU_DOUBLE(var) double var; \
+  __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var) : )
+#define FPU_DOUBLES(var1,var2) double var1,var2; \
+  __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var2) : ); \
+  __asm__ __volatile__( "fstpl %0;fwait" : "=m" (var1) : )
+#else
+#define FPU_DOUBLE(var) double var = quiet_nan(); \
+  FIXME(":not implemented\n");
+#define FPU_DOUBLES(var1,var2) double var1,var2; \
+  var1=var2=quiet_nan(); FIXME(":not implemented\n")
+#endif
+
+/*********************************************************************
+ *                  _CIacos             (CRTDLL.004)
+ */
+double __cdecl CRTDLL__CIacos(void)
+{
+  FPU_DOUBLE(x);
+  return acos(x);
+}
+
+
+/*********************************************************************
+ *                  _CIasin             (CRTDLL.005)
+ */
+double __cdecl CRTDLL__CIasin(void)
+{
+  FPU_DOUBLE(x);
+  return asin(x);
+}
+
+
+/*********************************************************************
+ *                  _CIatan             (CRTDLL.006)
+ */
+double __cdecl CRTDLL__CIatan(void)
+{
+  FPU_DOUBLE(x);
+  return atan(x);
+}
+
+/*********************************************************************
+ *                  _CIatan2            (CRTDLL.007)
+ */
+double __cdecl CRTDLL__CIatan2(void)
+{
+  FPU_DOUBLES(x,y);
+  return atan2(x,y);
+}
+
+
+/*********************************************************************
+ *                  _CIcos             (CRTDLL.008)
+ */
+double __cdecl CRTDLL__CIcos(void)
+{
+  FPU_DOUBLE(x);
+  return cos(x);
+}
+
+/*********************************************************************
+ *                  _CIcosh            (CRTDLL.009)
+ */
+double __cdecl CRTDLL__CIcosh(void)
+{
+  FPU_DOUBLE(x);
+  return cosh(x);
+}
+
+/*********************************************************************
+ *                  _CIexp             (CRTDLL.010)
+ */
+double __cdecl CRTDLL__CIexp(void)
+{
+  FPU_DOUBLE(x);
+  return exp(x);
+}
+
+/*********************************************************************
+ *                  _CIfmod            (CRTDLL.011)
+ */
+double __cdecl CRTDLL__CIfmod(void)
+{
+  FPU_DOUBLES(x,y);
+  return fmod(x,y);
+}
+
+/*********************************************************************
+ *                  _CIlog             (CRTDLL.012)
+ */
+double __cdecl CRTDLL__CIlog(void)
+{
+  FPU_DOUBLE(x);
+  return log(x);
+}
+
+/*********************************************************************
+ *                  _CIlog10           (CRTDLL.013)
+ */
+double __cdecl CRTDLL__CIlog10(void)
+{
+  FPU_DOUBLE(x);
+  return log10(x);
+}
+
+/*********************************************************************
+ *                  _CIsin             (CRTDLL.015)
+ */
+double __cdecl CRTDLL__CIsin(void)
+{
+  FPU_DOUBLE(x);
+  return sin(x);
+}
+
+/*********************************************************************
+ *                  _CIsinh            (CRTDLL.016)
+ */
+double __cdecl CRTDLL__CIsinh(void)
+{
+  FPU_DOUBLE(x);
+  return sinh(x);
+}
+
+/*********************************************************************
+ *                  _CIsqrt            (CRTDLL.017)
+ */
+double __cdecl CRTDLL__CIsqrt(void)
+{
+  FPU_DOUBLE(x);
+  return sqrt(x);
+}
+
+/*********************************************************************
+ *                  _CItan             (CRTDLL.018)
+ */
+double __cdecl CRTDLL__CItan(void)
+{
+  FPU_DOUBLE(x);
+  return tan(x);
+}
+
+/*********************************************************************
+ *                  _CItanh            (CRTDLL.019)
+ */
+double __cdecl CRTDLL__CItanh(void)
+{
+  FPU_DOUBLE(x);
+  return tanh(x);
+}
 
 /*********************************************************************
  *                  _GetMainArgs  (CRTDLL.022)
@@ -208,6 +358,37 @@ LPSTR * __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 		CRTDLL_argc_dll);
 	CRTDLL_environ_dll = *environ = GetEnvironmentStringsA();
 	return environ;
+}
+
+
+/*********************************************************************
+ *                  _fpclass         (CRTDLL.105)
+ *
+ * Return the FP classification of d.
+ */
+INT __cdecl CRTDLL__fpclass(double d)
+{
+  switch (fpclassify( d ))
+  {
+  case FP_NAN: return _FPCLASS_QNAN;
+  case FP_INFINITE:
+    if (signbit(d))
+      return _FPCLASS_NINF;
+    return _FPCLASS_PINF;
+  case FP_SUBNORMAL:
+    if (signbit(d))
+      return _FPCLASS_ND;
+    return _FPCLASS_PD;
+  case FP_ZERO:
+    if (signbit(d))
+      return _FPCLASS_NZ;
+    return _FPCLASS_PZ;
+  case FP_NORMAL:
+  default:
+    if (signbit(d))
+      return _FPCLASS_NN;
+    return _FPCLASS_PN;
+  }
 }
 
 
@@ -322,6 +503,19 @@ DWORD __cdecl CRTDLL__rotr(UINT x,INT shift)
 {
     shift &= 0x1f;
     return (x >> shift) | (x << (32-shift));
+}
+
+
+/*********************************************************************
+ *                  _scalb          (CRTDLL.259)
+ *
+ * Return x*2^y.
+ */
+double  __cdecl CRTDLL__scalb(double x, LONG y)
+{
+  /* Note - Can't forward directly as libc expects y as double */
+  double y2 = (double)y;
+  return scalb( x, y2 );
 }
 
 
@@ -1000,3 +1194,15 @@ INT __cdecl  CRTDLL__isnan(double d)
    */
   return isnan(d)?1:0;
 }
+
+
+/*********************************************************************
+ *                  _purecall           (CRTDLL.249)
+ *
+ * Abort program after pure virtual function call.
+ */
+VOID __cdecl CRTDLL__purecall(VOID)
+{
+  CRTDLL__amsg_exit( 6025 );
+}
+
