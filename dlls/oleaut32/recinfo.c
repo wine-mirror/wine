@@ -28,23 +28,118 @@
 #include "oaidl.h"
 #include "oleauto.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+typedef struct {
+    enum VARENUM vt;
+    VARKIND varkind;
+    ULONG offset;
+    BSTR name;
+} fieldstr;
 
 typedef struct {
     IRecordInfoVtbl *lpVtbl;
     ULONG ref;
 
     GUID guid;
-    TYPEATTR typeattr;
     UINT lib_index;
+    WORD n_vars;
+    ULONG size;
     BSTR name;
-    BSTR *field_names;
+    fieldstr *fields;
     ITypeInfo *pTypeInfo;
 } IRecordInfoImpl;
 
-static HRESULT WINAPI IRecordInfoImpl_QueryInterface(IRecordInfo *iface, REFIID riid, void **ppvObject)
+static HRESULT copy_to_variant(void *src, VARIANT *pvar, enum VARENUM vt)
+{
+    TRACE("%p %p %d\n", src, pvar, vt);
+
+#define CASE_COPY(x) \
+    case VT_ ## x: \
+        V_ ## x(pvar) = *(typeof(V_ ## x(pvar))*)src; \
+        break 
+
+    switch(vt) {
+        CASE_COPY(I2);
+        CASE_COPY(I4);
+        CASE_COPY(R4);
+        CASE_COPY(R8);
+        CASE_COPY(CY);
+        CASE_COPY(DATE);
+        CASE_COPY(BSTR);
+        CASE_COPY(ERROR);
+        CASE_COPY(BOOL);
+        CASE_COPY(DECIMAL);
+        CASE_COPY(I1);
+        CASE_COPY(UI1);
+        CASE_COPY(UI2);
+        CASE_COPY(UI4);
+        CASE_COPY(I8);
+        CASE_COPY(UI8);
+        CASE_COPY(INT);
+        CASE_COPY(UINT);
+        CASE_COPY(INT_PTR);
+        CASE_COPY(UINT_PTR);
+    default:
+        FIXME("Not supported type: %d\n", vt);
+        return E_NOTIMPL;
+    };
+#undef CASE_COPY
+
+    V_VT(pvar) = vt;
+    return S_OK;
+}
+
+static HRESULT copy_from_variant(VARIANT *src, void *dest, enum VARENUM vt)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    TRACE("(%p(%d) %p %d)\n", src, V_VT(src), dest, vt);
+
+    hres = VariantChangeType(&var, src, 0, vt);
+    if(FAILED(hres))
+        return hres;
+
+#define CASE_COPY(x) \
+    case VT_ ## x: \
+        *(typeof(V_ ## x(&var))*)dest = V_ ## x(&var); \
+        break
+
+    switch(vt) {
+        CASE_COPY(I2);
+        CASE_COPY(I4);
+        CASE_COPY(R4);
+        CASE_COPY(R8);
+        CASE_COPY(CY);
+        CASE_COPY(DATE);
+        CASE_COPY(BSTR);
+        CASE_COPY(ERROR);
+        CASE_COPY(BOOL);
+        CASE_COPY(DECIMAL);
+        CASE_COPY(I1);
+        CASE_COPY(UI1);
+        CASE_COPY(UI2);
+        CASE_COPY(UI4);
+        CASE_COPY(I8);
+        CASE_COPY(UI8);
+        CASE_COPY(INT);
+        CASE_COPY(UINT);
+        CASE_COPY(INT_PTR);
+        CASE_COPY(UINT_PTR);
+    default:
+        FIXME("Not supported type: %d\n", V_VT(&var));
+        return E_NOTIMPL;
+    };
+#undef CASE_COPY
+    return S_OK;
+}
+
+static HRESULT WINAPI IRecordInfoImpl_QueryInterface(IRecordInfo *iface, REFIID riid,
+                                                void **ppvObject)
 {
     TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
 
@@ -72,11 +167,13 @@ static ULONG WINAPI IRecordInfoImpl_Release(IRecordInfo *iface)
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) -> %ld\n", This, ref);
+
     if(!ref) {
         int i;
-        for(i=0; i<This->typeattr.cVars; i++)
-            HeapFree(GetProcessHeap(), 0, This->field_names[i]);
+        for(i=0; i<This->n_vars; i++)
+            SysFreeString(This->fields[i].name);
         HeapFree(GetProcessHeap(), 0, This->name);
+        HeapFree(GetProcessHeap(), 0, This->fields);
         ITypeInfo_Release(This->pTypeInfo);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -86,27 +183,86 @@ static ULONG WINAPI IRecordInfoImpl_Release(IRecordInfo *iface)
 static HRESULT WINAPI IRecordInfoImpl_RecordInit(IRecordInfo *iface, PVOID pvNew)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%p) stub\n", This, pvNew);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pvNew);
+
+    if(!pvNew)
+        return E_INVALIDARG;
+
+    memset(pvNew, 0, This->size);
+    return S_OK;
 }
 
 static HRESULT WINAPI IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvExisting)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%p) stub\n", This, pvExisting);
-    return E_NOTIMPL;
+    int i;
+    PVOID var;
+
+    TRACE("(%p)->(%p)\n", This, pvExisting);
+
+    if(!pvExisting)
+        return E_INVALIDARG;
+
+    for(i=0; i<This->n_vars; i++) {
+        if(This->fields[i].varkind != VAR_PERINSTANCE) {
+            ERR("varkind != VAR_PERINSTANCE\n");
+            continue;
+        }
+        var = ((PBYTE)pvExisting)+This->fields[i].offset;
+        switch(This->fields[i].vt) {
+            case VT_BSTR:
+                /* NOTE: Windows implementatino reads DWORD (len) before string,
+                 *       but it seems to do nothing with this */
+                *(BSTR*)var = NULL;
+                break;
+            case VT_I2:
+            case VT_I4:
+            case VT_R8:
+            case VT_CY:
+            case VT_DATE:
+            case VT_ERROR:
+            case VT_BOOL:
+            case VT_DECIMAL:
+            case VT_I1:
+            case VT_UI1:
+            case VT_UI2:
+            case VT_UI4:
+            case VT_I8:
+            case VT_UI8:
+            case VT_INT:
+            case VT_UINT:
+                break;
+            case VT_INT_PTR:
+            case VT_UINT_PTR:
+                *(void**)var = NULL;
+                break;
+            default:
+                FIXME("Not supported vt = %d\n", This->fields[i].vt);
+                break;
+        }
+    }
+    
+    return S_OK;
 }
 
-static HRESULT WINAPI IRecordInfoImpl_RecordCopy(IRecordInfo *iface, PVOID pvExisting, PVOID pvNew)
+static HRESULT WINAPI IRecordInfoImpl_RecordCopy(IRecordInfo *iface, PVOID pvExisting,
+                                                PVOID pvNew)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%p %p) stub\n", This, pvExisting, pvNew);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, pvExisting, pvNew);
+    
+    if(!pvExisting || !pvNew)
+        return E_INVALIDARG;
+
+    memcpy(pvExisting, pvNew, This->size);
+    return S_OK;
 }
 
 static HRESULT WINAPI IRecordInfoImpl_GetGuid(IRecordInfo *iface, GUID *pguid)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
+
     TRACE("(%p)->(%p)\n", This, pguid);
 
     if(!pguid)
@@ -121,6 +277,7 @@ static HRESULT WINAPI IRecordInfoImpl_GetName(IRecordInfo *iface, BSTR *pbstrNam
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
 
     TRACE("(%p)->(%p)\n", This, pbstrName);
+
     if(!pbstrName)
         return E_INVALIDARG;
 
@@ -137,7 +294,7 @@ static HRESULT WINAPI IRecordInfoImpl_GetSize(IRecordInfo *iface, ULONG *pcbSize
     if(!pcbSize)
         return E_INVALIDARG;
     
-    *pcbSize = This->typeattr.cbSizeInstance;
+    *pcbSize = This->size;
     return S_OK;
 }
 
@@ -160,39 +317,104 @@ static HRESULT WINAPI IRecordInfoImpl_GetField(IRecordInfo *iface, PVOID pvData,
                                                 LPCOLESTR szFieldName, VARIANT *pvarField)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%p %s %p) stub\n", This, pvData, debugstr_w(szFieldName), pvarField);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IRecordInfoImpl_GetFieldNoCopy(IRecordInfo *iface, PVOID pvData, LPCOLESTR szFieldName,
-                                                    VARIANT *pvarField, PVOID *ppvDataCArray)
-{
-    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%p %s %p %p) stub\n", This, pvData, debugstr_w(szFieldName), pvarField, ppvDataCArray);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IRecordInfoImpl_PutField(IRecordInfo *iface, ULONG wFlags, PVOID pvData, LPCOLESTR szFieldName,
-                                               VARIANT *pvarField)
-{
-    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%08lx %p %s %p) stub\n", This, wFlags, pvData, debugstr_w(szFieldName), pvarField);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IRecordInfoImpl_PutFieldNoCopy(IRecordInfo *iface, ULONG wFlags, PVOID pvData, LPCOLESTR szFieldName,
-                                                     VARIANT *pvarField)
-{
-    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%08lx %p %s %p) stub\n", This, wFlags, pvData, debugstr_w(szFieldName), pvarField);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IRecordInfoImpl_GetFieldNames(IRecordInfo *iface, ULONG *pcNames, BSTR *rgBstrNames)
-{
-    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    ULONG n = This->typeattr.cVars;
     int i;
+
+    TRACE("(%p)->(%p %s %p)\n", This, pvData, debugstr_w(szFieldName), pvarField);
+
+    if(!pvData || !szFieldName || !pvarField)
+        return E_INVALIDARG;
+
+    for(i=0; i<This->n_vars; i++)
+        if(!strcmpW(This->fields[i].name, szFieldName))
+            break;
+    if(i == This->n_vars)
+        return TYPE_E_FIELDNOTFOUND;
+    
+    VariantClear(pvarField);
+    return copy_to_variant(((PBYTE)pvData)+This->fields[i].offset, pvarField,
+            This->fields[i].vt);
+}
+
+static HRESULT WINAPI IRecordInfoImpl_GetFieldNoCopy(IRecordInfo *iface, PVOID pvData,
+                            LPCOLESTR szFieldName, VARIANT *pvarField, PVOID *ppvDataCArray)
+{
+    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
+    int i;
+
+    TRACE("(%p)->(%p %s %p %p)\n", This, pvData, debugstr_w(szFieldName), pvarField, ppvDataCArray);
+
+    if(!pvData || !szFieldName || !pvarField)
+        return E_INVALIDARG;
+
+    for(i=0; i<This->n_vars; i++)
+        if(!strcmpW(This->fields[i].name, szFieldName))
+            break;
+    if(i == This->n_vars)
+        return TYPE_E_FIELDNOTFOUND;
+
+    VariantClear(pvarField);
+    V_VT(pvarField) = VT_BYREF|This->fields[i].vt;
+    V_BYREF(pvarField) = ((PBYTE)pvData)+This->fields[i].offset;
+    *ppvDataCArray = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI IRecordInfoImpl_PutField(IRecordInfo *iface, ULONG wFlags, PVOID pvData,
+                                            LPCOLESTR szFieldName, VARIANT *pvarField)
+{
+    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
+    int i;
+
+    TRACE("(%p)->(%08lx %p %s %p)\n", This, wFlags, pvData, debugstr_w(szFieldName),
+                                    pvarField);
+
+    if(!pvData || !szFieldName || !pvarField
+            || (wFlags != INVOKE_PROPERTYPUTREF && wFlags != INVOKE_PROPERTYPUT))
+        return E_INVALIDARG;
+
+    if(wFlags == INVOKE_PROPERTYPUTREF) {
+        FIXME("wFlag == INVOKE_PROPERTYPUTREF not supported\n");
+        return E_NOTIMPL;
+    }
+
+    for(i=0; i<This->n_vars; i++)
+        if(!strcmpW(This->fields[i].name, szFieldName))
+            break;
+    if(i == This->n_vars)
+        return TYPE_E_FIELDNOTFOUND;
+
+    return copy_from_variant(pvarField, ((PBYTE)pvData)+This->fields[i].offset,
+            This->fields[i].vt);
+}
+
+static HRESULT WINAPI IRecordInfoImpl_PutFieldNoCopy(IRecordInfo *iface, ULONG wFlags,
+                PVOID pvData, LPCOLESTR szFieldName, VARIANT *pvarField)
+{
+    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
+    int i;
+
+    FIXME("(%p)->(%08lx %p %s %p) stub\n", This, wFlags, pvData, debugstr_w(szFieldName), pvarField);
+
+    if(!pvData || !szFieldName || !pvarField
+            || (wFlags != INVOKE_PROPERTYPUTREF && wFlags != INVOKE_PROPERTYPUT))
+        return E_INVALIDARG;
+
+    for(i=0; i<This->n_vars; i++)
+        if(!strcmpW(This->fields[i].name, szFieldName))
+            break;
+    if(i == This->n_vars)
+        return TYPE_E_FIELDNOTFOUND;
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IRecordInfoImpl_GetFieldNames(IRecordInfo *iface, ULONG *pcNames,
+                                                BSTR *rgBstrNames)
+{
+    IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
+    ULONG n = This->n_vars;
+    int i;
+
     TRACE("(%p)->(%p %p)\n", This, pcNames, rgBstrNames);
 
     if(!pcNames)
@@ -203,7 +425,7 @@ static HRESULT WINAPI IRecordInfoImpl_GetFieldNames(IRecordInfo *iface, ULONG *p
 
     if(rgBstrNames) {
         for(i=0; i<n; i++)
-            rgBstrNames[i] = SysAllocString(This->field_names[i]);
+            rgBstrNames[i] = SysAllocString(This->fields[i].name);
     }
     
     *pcNames = n;
@@ -213,29 +435,45 @@ static HRESULT WINAPI IRecordInfoImpl_GetFieldNames(IRecordInfo *iface, ULONG *p
 static BOOL WINAPI IRecordInfoImpl_IsMatchingType(IRecordInfo *iface, IRecordInfo *pRecordInfo)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
+
     FIXME("(%p)->(%p) stub\n", This, pRecordInfo);
+
     return FALSE;
 }
 
 static PVOID WINAPI IRecordInfoImpl_RecordCreate(IRecordInfo *iface)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p) stub\n", This);
-    return NULL;
+
+    TRACE("(%p)\n", This);
+
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->size);
 }
 
-static HRESULT WINAPI IRecordInfoImpl_RecordCreateCopy(IRecordInfo *iface, PVOID pvSource, PVOID *ppvDest)
+static HRESULT WINAPI IRecordInfoImpl_RecordCreateCopy(IRecordInfo *iface, PVOID pvSource,
+                                                    PVOID *ppvDest)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%p %p) stub\n", This, pvSource, ppvDest);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, pvSource, ppvDest);
+
+    if(!pvSource || !ppvDest)
+        return E_INVALIDARG;
+    
+    *ppvDest = IRecordInfo_RecordCreate(iface);
+    return IRecordInfo_RecordCopy(iface, pvSource, *ppvDest);
 }
 
 static HRESULT WINAPI IRecordInfoImpl_RecordDestroy(IRecordInfo *iface, PVOID pvRecord)
 {
     IRecordInfoImpl *This = (IRecordInfoImpl*)iface;
-    FIXME("(%p)->(%p) stub\n", This, pvRecord);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pvRecord);
+
+    if(!HeapFree(GetProcessHeap(), 0, pvRecord))
+        return E_INVALIDARG;
+
+    return S_OK;
 }
 
 static IRecordInfoVtbl IRecordInfoImplVtbl = {
@@ -343,9 +581,11 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
     ret->lpVtbl = &IRecordInfoImplVtbl;
     ret->ref = 1;
     ret->pTypeInfo = pTypeInfo;
-    memcpy(&ret->guid, &guid, sizeof(GUID));
-    memcpy(&ret->typeattr, typeattr, sizeof(TYPEATTR));
+    ret->n_vars = typeattr->cVars;
+    ret->size = typeattr->cbSizeInstance;
     ITypeInfo_ReleaseTypeAttr(pTypeInfo, typeattr);
+
+    memcpy(&ret->guid, &guid, sizeof(GUID));
 
     /* NOTE: Windows implementation calls ITypeInfo::GetCantainingTypeLib and
      *       ITypeLib::GetLibAttr, but we currently don't need this.
@@ -357,15 +597,19 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
         ret->name = NULL;
     }
 
-    ret->field_names = HeapAlloc(GetProcessHeap(), 0, ret->typeattr.cVars*sizeof(BSTR));
-    for(i = 0; i<ret->typeattr.cVars; i++) {
+    ret->fields = HeapAlloc(GetProcessHeap(), 0, ret->n_vars*sizeof(VARDESC));
+    for(i = 0; i<ret->n_vars; i++) {
         VARDESC *vardesc;
         hres = ITypeInfo_GetVarDesc(pTypeInfo, i, &vardesc);
         if(FAILED(hres)) {
             WARN("GetVarDesc failed\n");
             continue;
         }
-        hres = ITypeInfo_GetDocumentation(pTypeInfo, vardesc->memid, ret->field_names+i, NULL, NULL, NULL);
+        ret->fields[i].vt = vardesc->elemdescVar.tdesc.vt;
+        ret->fields[i].varkind = vardesc->varkind;
+        ret->fields[i].offset = vardesc->u.oInst;
+        hres = ITypeInfo_GetDocumentation(pTypeInfo, vardesc->memid, &ret->fields[i].name,
+                NULL, NULL, NULL);
         if(FAILED(hres))
             WARN("GetDocumentation failed: %08lx\n", hres);
         ITypeInfo_ReleaseVarDesc(pTypeInfo, vardesc);
