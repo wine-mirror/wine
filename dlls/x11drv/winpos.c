@@ -722,8 +722,8 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     if(!(winpos->flags & SWP_NOZORDER) && winpos->hwnd != winpos->hwndInsertAfter)
     {
-        if ( WIN_UnlinkWindow( winpos->hwnd ) )
-            WIN_LinkWindow( winpos->hwnd, winpos->hwndInsertAfter );
+        HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
+        if (parent) WIN_LinkWindow( winpos->hwnd, parent, winpos->hwndInsertAfter );
     }
 
     /* Reset active DCEs */

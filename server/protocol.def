@@ -40,6 +40,7 @@ struct request_max_size
 #define REQUEST_MAX_VAR_SIZE  1024
 
 typedef int handle_t;
+typedef unsigned int user_handle_t;
 
 /* definitions of the event data depending on the event code */
 struct debug_event_exception
@@ -1197,7 +1198,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(send_message)
     void*           id;        /* thread id */
     int             type;      /* message type (see below) */
-    handle_t        win;       /* window handle */
+    user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
     unsigned int    wparam;    /* parameters */
     unsigned int    lparam;    /* parameters */
@@ -1225,12 +1226,12 @@ enum message_type
 /* Get a message from the current queue */
 @REQ(get_message)
     int             flags;     /* see below */
-    handle_t        get_win;   /* window handle to get */
+    user_handle_t   get_win;   /* window handle to get */
     unsigned int    get_first; /* first message code to get */
     unsigned int    get_last;  /* last message code to get */
 @REPLY
     int             type;      /* message type */
-    handle_t        win;       /* window handle */
+    user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
     unsigned int    wparam;    /* parameters */
     unsigned int    lparam;    /* parameters */
@@ -1263,13 +1264,13 @@ enum message_type
 
 /* Cleanup a queue when a window is deleted */
 @REQ(cleanup_window_queue)
-    handle_t        win;       /* window handle */
+    user_handle_t   win;       /* window handle */
 @END
 
 
 /* Set a window timer */
 @REQ(set_win_timer)
-    handle_t        win;       /* window handle */
+    user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
     unsigned int    id;        /* timer id */
     unsigned int    rate;      /* timer rate in ms */
@@ -1279,7 +1280,7 @@ enum message_type
 
 /* Kill a window timer */
 @REQ(kill_win_timer)
-    handle_t        win;       /* window handle */
+    user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
     unsigned int    id;        /* timer id */
 @END
@@ -1383,6 +1384,7 @@ enum message_type
     handle_t       handle;
 @END
 
+
 @REQ(get_named_pipe_info)
     handle_t       handle;
 @REPLY
@@ -1392,3 +1394,41 @@ enum message_type
     unsigned int   insize;
 @END
 
+
+/* Create the desktop window */
+@REQ(create_desktop_window)
+@REPLY
+    user_handle_t  handle;      /* handle to the window */
+@END
+
+
+/* Create a window */
+@REQ(create_window)
+@REPLY
+    user_handle_t  handle;      /* handle to the window */
+@END
+
+
+/* Link a window into the tree */
+@REQ(link_window)
+    user_handle_t  handle;      /* handle to the window */
+    user_handle_t  parent;      /* handle to the parent */
+    user_handle_t  previous;    /* previous child in Z-order */
+@REPLY
+@END
+
+
+/* Destroy a window */
+@REQ(destroy_window)
+    user_handle_t  handle;      /* handle to the window */
+@END
+
+
+/* Get information from a window handle */
+@REQ(get_window_info)
+    user_handle_t  handle;      /* handle to the window */
+@REPLY
+    user_handle_t  full_handle; /* full 32-bit handle */
+    void*          pid;         /* process owning the window */
+    void*          tid;         /* thread owning the window */
+@END

@@ -55,6 +55,7 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
 
     /* patch the desktop window queue to point to our queue */
     win = WIN_FindWndPtr( hwnd );
+    win->tid = GetCurrentThreadId();
     win->hmemTaskQ = InitThreadInput16( 0, 0 );
     X11DRV_register_window( display, hwnd, win->pDriverData );
     WIN_ReleaseWndPtr( win );

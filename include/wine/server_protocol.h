@@ -38,6 +38,7 @@ struct request_max_size
 #define REQUEST_MAX_VAR_SIZE  1024
 
 typedef int handle_t;
+typedef unsigned int user_handle_t;
 
 
 struct debug_event_exception
@@ -1340,7 +1341,7 @@ struct send_message_request
     struct request_header __header;
     void*           id;
     int             type;
-    handle_t        win;
+    user_handle_t   win;
     unsigned int    msg;
     unsigned int    wparam;
     unsigned int    lparam;
@@ -1370,11 +1371,11 @@ struct get_message_request
 {
     struct request_header __header;
     int             flags;
-    handle_t        get_win;
+    user_handle_t   get_win;
     unsigned int    get_first;
     unsigned int    get_last;
     int             type;
-    handle_t        win;
+    user_handle_t   win;
     unsigned int    msg;
     unsigned int    wparam;
     unsigned int    lparam;
@@ -1412,7 +1413,7 @@ struct get_message_reply_request
 struct cleanup_window_queue_request
 {
     struct request_header __header;
-    handle_t        win;
+    user_handle_t   win;
 };
 
 
@@ -1420,7 +1421,7 @@ struct cleanup_window_queue_request
 struct set_win_timer_request
 {
     struct request_header __header;
-    handle_t        win;
+    user_handle_t   win;
     unsigned int    msg;
     unsigned int    id;
     unsigned int    rate;
@@ -1432,7 +1433,7 @@ struct set_win_timer_request
 struct kill_win_timer_request
 {
     struct request_header __header;
-    handle_t        win;
+    user_handle_t   win;
     unsigned int    msg;
     unsigned int    id;
 };
@@ -1549,6 +1550,7 @@ struct disconnect_named_pipe_request
     handle_t       handle;
 };
 
+
 struct get_named_pipe_info_request
 {
     struct request_header __header;
@@ -1559,6 +1561,50 @@ struct get_named_pipe_info_request
     unsigned int   insize;
 };
 
+
+
+struct create_desktop_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+};
+
+
+
+struct create_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+};
+
+
+
+struct link_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    user_handle_t  parent;
+    user_handle_t  previous;
+};
+
+
+
+struct destroy_window_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+};
+
+
+
+struct get_window_info_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    user_handle_t  full_handle;
+    void*          pid;
+    void*          tid;
+};
 
 
 enum request
@@ -1686,6 +1732,11 @@ enum request
     REQ_wait_named_pipe,
     REQ_disconnect_named_pipe,
     REQ_get_named_pipe_info,
+    REQ_create_desktop_window,
+    REQ_create_window,
+    REQ_link_window,
+    REQ_destroy_window,
+    REQ_get_window_info,
     REQ_NB_REQUESTS
 };
 
@@ -1816,8 +1867,13 @@ union generic_request
     struct wait_named_pipe_request wait_named_pipe;
     struct disconnect_named_pipe_request disconnect_named_pipe;
     struct get_named_pipe_info_request get_named_pipe_info;
+    struct create_desktop_window_request create_desktop_window;
+    struct create_window_request create_window;
+    struct link_window_request link_window;
+    struct destroy_window_request destroy_window;
+    struct get_window_info_request get_window_info;
 };
 
-#define SERVER_PROTOCOL_VERSION 51
+#define SERVER_PROTOCOL_VERSION 52
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -27,6 +27,7 @@
 #include "process.h"
 #include "thread.h"
 #include "request.h"
+#include "user.h"
 
 
 /* thread queues */
@@ -179,6 +180,7 @@ static void cleanup_thread( struct thread *thread )
         release_object( thread->queue );
         thread->queue = NULL;
     }
+    destroy_thread_windows( thread );
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
     {
         if (thread->inflight[i].client != -1)

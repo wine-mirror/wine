@@ -16,6 +16,7 @@
 #include "thread.h"
 #include "process.h"
 #include "request.h"
+#include "user.h"
 
 enum message_kind { SEND_MESSAGE, POST_MESSAGE, COOKED_HW_MESSAGE, RAW_HW_MESSAGE };
 #define NB_MSG_KINDS (RAW_HW_MESSAGE+1)
@@ -40,7 +41,7 @@ struct message
     struct message        *next;      /* next message in list */
     struct message        *prev;      /* prev message in list */
     enum message_type      type;      /* message type */
-    handle_t               win;       /* window handle */
+    user_handle_t          win;       /* window handle */
     unsigned int           msg;       /* message code */
     unsigned int           wparam;    /* parameters */
     unsigned int           lparam;    /* parameters */
@@ -65,7 +66,7 @@ struct timer
     struct timer   *prev;      /* prev timer in list */
     struct timeval  when;      /* next expiration */
     unsigned int    rate;      /* timer rate in ms */
-    handle_t        win;       /* window handle */
+    user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
     unsigned int    id;        /* timer id */
     unsigned int    lparam;    /* lparam for message */
@@ -550,7 +551,7 @@ static void restart_timer( struct msg_queue *queue, struct timer *timer )
 }
 
 /* find an expired timer matching the filtering parameters */
-static struct timer *find_expired_timer( struct msg_queue *queue, handle_t win,
+static struct timer *find_expired_timer( struct msg_queue *queue, user_handle_t win,
                                          unsigned int get_first, unsigned int get_last,
                                          int remove )
 {
@@ -568,7 +569,8 @@ static struct timer *find_expired_timer( struct msg_queue *queue, handle_t win,
 }
 
 /* kill a timer */
-static int kill_timer( struct msg_queue *queue, handle_t win, unsigned int msg, unsigned int id )
+static int kill_timer( struct msg_queue *queue, user_handle_t win,
+                       unsigned int msg, unsigned int id )
 {
     struct timer *timer;
 
@@ -597,11 +599,14 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
 }
 
 /* remove all messages and timers belonging to a certain window */
-static void cleanup_window( struct msg_queue *queue, handle_t win )
+void queue_cleanup_window( struct thread *thread, user_handle_t win )
 {
+    struct msg_queue *queue = thread->queue;
     struct timer *timer;
     struct message *msg;
     int i;
+
+    if (!queue) return;
 
     /* remove timers */
     timer = queue->first_timer;
@@ -818,7 +823,8 @@ static void return_message_to_app( struct msg_queue *queue, struct get_message_r
 }
 
 
-inline static struct message *find_matching_message( const struct message_list *list, handle_t win,
+inline static struct message *find_matching_message( const struct message_list *list,
+                                                     user_handle_t win,
                                                      unsigned int first, unsigned int last )
 {
     struct message *msg;
@@ -981,7 +987,7 @@ DECL_HANDLER(get_message_reply)
 /* cleanup a queue when a window is deleted */
 DECL_HANDLER(cleanup_window_queue)
 {
-    if (current->queue) cleanup_window( current->queue, req->win );
+    queue_cleanup_window( current, req->win );
 }
 
 

@@ -16,6 +16,7 @@
     "void*"         => "%p",
     "time_t"        => "%ld",
     "handle_t"      => "%d",
+    "user_handle_t" => "%08x",
 );
 
 my @requests = ();

@@ -478,30 +478,6 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 }
 
 /***********************************************************************
- *		GetWindowThreadProcessId (USER32.@)
- */
-DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
-{
-    DWORD retvalue;
-    MESSAGEQUEUE *queue;
-
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
-
-    queue = QUEUE_Lock( wndPtr->hmemTaskQ );
-    WIN_ReleaseWndPtr(wndPtr);
-
-    if (!queue) return 0;
-
-    if ( process ) *process = (DWORD)queue->teb->pid;
-    retvalue = (DWORD)queue->teb->tid;
-
-    QUEUE_Unlock( queue );
-    return retvalue;
-}
-
-
-/***********************************************************************
  *		InitThreadInput (USER.409)
  */
 HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )

@@ -29,6 +29,7 @@ typedef struct tagWND
     struct tagCLASS *class;       /* Window class */
     HWINDOWPROC    winproc;       /* Window procedure */
     DWORD          dwMagic;       /* Magic number (must be WND_MAGIC) */
+    DWORD          tid;           /* Owner thread id */
     HWND         hwndSelf;      /* Handle of this window */
     HINSTANCE    hInstance;     /* Window hInstance (from CreateWindow) */
     RECT         rectClient;    /* Client area rel. to parent client area */
@@ -86,8 +87,8 @@ extern void   WIN_ReleaseWndPtr(WND *wndPtr);
 extern void   WIN_UpdateWndPtr(WND **oldPtr,WND *newPtr);
 extern void   WIN_DumpWindow( HWND hwnd );
 extern void   WIN_WalkWindows( HWND hwnd, int indent );
-extern BOOL WIN_UnlinkWindow( HWND hwnd );
-extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
+extern void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter );
+extern void WIN_UnlinkWindow( HWND hwnd );
 extern HWND WIN_FindWinToRepaint( HWND hwnd );
 extern void WIN_DestroyThreadWindows( HWND hwnd );
 extern BOOL WIN_CreateDesktopWindow(void);

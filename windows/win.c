@@ -9,6 +9,7 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/server.h"
 #include "wine/unicode.h"
 #include "win.h"
 #include "heap.h"
@@ -37,6 +38,8 @@ static HWND hwndSysModal = 0;
 
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
+
+static void *user_handles[65536];
 
 /* thread safeness */
 extern SYSLEVEL USER_SysLevel;  /* FIXME */
@@ -70,6 +73,80 @@ void WIN_RestoreWndsLock( int ipreviousLocks )
 }
 
 /***********************************************************************
+ *           create_window_handle
+ *
+ * Create a window handle with the server.
+ */
+static WND *create_window_handle( BOOL desktop, INT size )
+{
+    BOOL res;
+    unsigned int handle = 0;
+    WND *win = HeapAlloc( GetProcessHeap(), 0, size );
+
+    if (!win) return NULL;
+
+    USER_Lock();
+
+    if (desktop)
+    {
+        SERVER_START_REQ( create_desktop_window )
+        {
+            if ((res = !SERVER_CALL_ERR())) handle = req->handle;
+        }
+        SERVER_END_REQ;
+    }
+    else
+    {
+        SERVER_START_REQ( create_window )
+        {
+            if ((res = !SERVER_CALL_ERR())) handle = req->handle;
+        }
+        SERVER_END_REQ;
+    }
+
+    if (!res)
+    {
+        USER_Unlock();
+        HeapFree( GetProcessHeap(), 0, win );
+        return NULL;
+    }
+    user_handles[LOWORD(handle)] = win;
+    win->hwndSelf = (HWND)handle;
+    win->dwMagic = WND_MAGIC;
+    win->irefCount = 1;
+    return win;
+}
+
+
+/***********************************************************************
+ *           free_window_handle
+ *
+ * Free a window handle.
+ */
+static WND *free_window_handle( HWND hwnd )
+{
+    WND *ptr;
+
+    USER_Lock();
+    if ((ptr = user_handles[LOWORD(hwnd)]))
+    {
+        SERVER_START_REQ( destroy_window )
+        {
+            req->handle = hwnd;
+            if (!SERVER_CALL_ERR())
+                user_handles[LOWORD(hwnd)] = NULL;
+            else
+                ptr = NULL;
+        }
+        SERVER_END_REQ;
+    }
+    USER_Unlock();
+    if (ptr) HeapFree( GetProcessHeap(), 0, ptr );
+    return ptr;
+}
+
+
+/***********************************************************************
  *           WIN_FindWndPtr
  *
  * Return a pointer to the WND structure corresponding to a HWND.
@@ -77,33 +154,34 @@ void WIN_RestoreWndsLock( int ipreviousLocks )
 WND * WIN_FindWndPtr( HWND hwnd )
 {
     WND * ptr;
-    
-    if (!hwnd || HIWORD(hwnd)) goto error2;
-    ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
-    /* Lock all WND structures for thread safeness*/
-    USER_Lock();
-    /*and increment destruction monitoring*/
-     ptr->irefCount++;
 
-    if (ptr->dwMagic != WND_MAGIC) goto error;
-    if (ptr->hwndSelf != hwnd)
+    if (!hwnd) return NULL;
+
+    USER_Lock();
+    if (!(ptr = user_handles[LOWORD(hwnd)]))
     {
-        ERR("Can't happen: hwnd %04x self pointer is %04x\n",hwnd, ptr->hwndSelf );
+        /* check other processes */
+        if (IsWindow( hwnd ))
+        {
+            ERR( "window %04x belongs to other process\n", hwnd );
+            /* DbgBreakPoint(); */
+        }
         goto error;
     }
-    /* returns a locked pointer */
+    if (ptr->dwMagic != WND_MAGIC) goto error;
+    /* verify that handle highword (if any) matches the window */
+    if (HIWORD(hwnd) && hwnd != ptr->hwndSelf) goto error;
+    /*and increment destruction monitoring*/
+     ptr->irefCount++;
     return ptr;
+
  error:
     /* Unlock all WND structures for thread safeness*/
     USER_Unlock();
-    /* and decrement destruction monitoring value */
-     ptr->irefCount--;
-
-error2:
-    if ( hwnd!=0 )
-      SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+    SetLastError( ERROR_INVALID_WINDOW_HANDLE );
     return NULL;
 }
+
 
 /***********************************************************************
  *           WIN_LockWndPtr
@@ -140,8 +218,7 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
      if(wndPtr->irefCount == 0 && !wndPtr->dwMagic)
      {
          /* Release memory */
-         USER_HEAP_FREE( wndPtr->hwndSelf);
-         wndPtr->hwndSelf = 0;
+         free_window_handle( wndPtr->hwndSelf );
      }
      else if(wndPtr->irefCount < 0)
      {
@@ -173,27 +250,9 @@ void WIN_UpdateWndPtr(WND **oldPtr, WND *newPtr)
  *
  * Remove a window from the siblings linked list.
  */
-BOOL WIN_UnlinkWindow( HWND hwnd )
-{    
-    WND *wndPtr, **ppWnd;
-    BOOL ret = FALSE;
-
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    else if(!wndPtr->parent)
-    {
-        WIN_ReleaseWndPtr(wndPtr);
-        return FALSE;
-    }
-
-    ppWnd = &wndPtr->parent->child;
-    while (*ppWnd && *ppWnd != wndPtr) ppWnd = &(*ppWnd)->next;
-    if (*ppWnd)
-    {
-        *ppWnd = wndPtr->next;
-        ret = TRUE;
-    }
-    WIN_ReleaseWndPtr(wndPtr);
-    return ret;
+void WIN_UnlinkWindow( HWND hwnd )
+{
+    WIN_LinkWindow( hwnd, 0, 0 );
 }
 
 
@@ -203,38 +262,62 @@ BOOL WIN_UnlinkWindow( HWND hwnd )
  * Insert a window into the siblings linked list.
  * The window is inserted after the specified window, which can also
  * be specified as HWND_TOP or HWND_BOTTOM.
+ * If parent is 0, window is unlinked from the tree.
  */
-BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
-{    
-    WND *wndPtr, **ppWnd;
+void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
+{
+    WND *wndPtr, **ppWnd, *parentPtr = NULL;
+    BOOL ret;
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    else if(!wndPtr->parent)
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
+    if (parent && !(parentPtr = WIN_FindWndPtr( parent )))
     {
         WIN_ReleaseWndPtr(wndPtr);
-        return FALSE;
+        return;
     }
-    if ((hwndInsertAfter == HWND_TOP) || (hwndInsertAfter == HWND_BOTTOM))
+
+    SERVER_START_REQ( link_window )
     {
-        ppWnd = &wndPtr->parent->child;  /* Point to first sibling hwnd */
-	if (hwndInsertAfter == HWND_BOTTOM)  /* Find last sibling hwnd */
-	    while (*ppWnd) ppWnd = &(*ppWnd)->next;
+        req->handle   = hwnd;
+        req->parent   = parent;
+        req->previous = hwndInsertAfter;
+        ret = !SERVER_CALL_ERR();
     }
-    else  /* Normal case */
+    SERVER_END_REQ;
+    if (!ret) goto done;
+
+    /* first unlink it if it is linked */
+    if (wndPtr->parent)
     {
-	WND * afterPtr = WIN_FindWndPtr( hwndInsertAfter );
-            if (!afterPtr)
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-                return FALSE;
-            }
-        ppWnd = &afterPtr->next;
-        WIN_ReleaseWndPtr(afterPtr);
+        ppWnd = &wndPtr->parent->child;
+        while (*ppWnd && *ppWnd != wndPtr) ppWnd = &(*ppWnd)->next;
+        if (*ppWnd) *ppWnd = wndPtr->next;
     }
-    wndPtr->next = *ppWnd;
-    *ppWnd = wndPtr;
-    WIN_ReleaseWndPtr(wndPtr);
-    return TRUE;
+
+    wndPtr->parent = parentPtr;
+
+    if (parentPtr)
+    {
+        if ((hwndInsertAfter == HWND_TOP) || (hwndInsertAfter == HWND_BOTTOM))
+        {
+            ppWnd = &parentPtr->child;  /* Point to first sibling hwnd */
+            if (hwndInsertAfter == HWND_BOTTOM)  /* Find last sibling hwnd */
+                while (*ppWnd) ppWnd = &(*ppWnd)->next;
+        }
+        else  /* Normal case */
+        {
+            WND * afterPtr = WIN_FindWndPtr( hwndInsertAfter );
+            if (!afterPtr) goto done;
+            ppWnd = &afterPtr->next;
+            WIN_ReleaseWndPtr(afterPtr);
+        }
+        wndPtr->next = *ppWnd;
+        *ppWnd = wndPtr;
+    }
+
+ done:
+    WIN_ReleaseWndPtr( parentPtr );
+    WIN_ReleaseWndPtr( wndPtr );
 }
 
 
@@ -416,17 +499,16 @@ BOOL WIN_CreateDesktopWindow(void)
                                    &wndExtra, &winproc, &clsStyle, &dce )))
         return FALSE;
 
-    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND) + wndExtra );
-    if (!hwndDesktop) return FALSE;
-    pWndDesktop = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
+    pWndDesktop = create_window_handle( TRUE, sizeof(WND) + wndExtra );
+    if (!pWndDesktop) return FALSE;
+    hwndDesktop = pWndDesktop->hwndSelf;
 
+    pWndDesktop->tid               = 0;  /* nobody owns the desktop */
     pWndDesktop->next              = NULL;
     pWndDesktop->child             = NULL;
     pWndDesktop->parent            = NULL;
     pWndDesktop->owner             = 0;
     pWndDesktop->class             = class;
-    pWndDesktop->dwMagic           = WND_MAGIC;
-    pWndDesktop->hwndSelf          = hwndDesktop;
     pWndDesktop->hInstance         = 0;
     pWndDesktop->rectWindow.left   = 0;
     pWndDesktop->rectWindow.top    = 0;
@@ -452,7 +534,6 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->userdata          = 0;
     pWndDesktop->winproc           = winproc;
     pWndDesktop->cbWndExtra        = wndExtra;
-    pWndDesktop->irefCount         = 0;
 
     cs.lpCreateParams = NULL;
     cs.hInstance      = 0;
@@ -470,6 +551,7 @@ BOOL WIN_CreateDesktopWindow(void)
     if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE )) return FALSE;
 
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
+    WIN_ReleaseWndPtr( pWndDesktop );
     return TRUE;
 }
 
@@ -613,15 +695,17 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Create the window structure */
 
-    if (!(hwnd = USER_HEAP_ALLOC( sizeof(*wndPtr) + wndExtra - sizeof(wndPtr->wExtra) )))
+    if (!(wndPtr = create_window_handle( FALSE,
+                                         sizeof(*wndPtr) + wndExtra - sizeof(wndPtr->wExtra) )))
     {
 	TRACE("out of memory\n" );
 	return 0;
     }
+    hwnd = wndPtr->hwndSelf;
 
     /* Fill the window structure */
 
-    wndPtr = WIN_LockWndPtr((WND *) USER_HEAP_LIN_ADDR( hwnd ));
+    wndPtr->tid   = GetCurrentThreadId();
     wndPtr->next  = NULL;
     wndPtr->child = NULL;
 
@@ -643,8 +727,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     wndPtr->class          = classPtr;
     wndPtr->winproc        = winproc;
-    wndPtr->dwMagic        = WND_MAGIC;
-    wndPtr->hwndSelf       = hwnd;
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
     wndPtr->hmemTaskQ      = InitThreadInput16( 0, 0 );
@@ -664,7 +746,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
 			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;
     wndPtr->cbWndExtra     = wndExtra;
-    wndPtr->irefCount      = 1;
 
     if (wndExtra) memset( wndPtr->wExtra, 0, wndExtra);
 
@@ -685,7 +766,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         if (ret)
 	{
 	    TRACE("CBT-hook returned 0\n");
-	    USER_HEAP_FREE( hwnd );
+            free_window_handle( hwnd );
             CLASS_RemoveWindow( classPtr );
             hwnd =  0;
             goto end;
@@ -1978,14 +2059,64 @@ BOOL16 WINAPI IsWindow16( HWND16 hwnd )
  */
 BOOL WINAPI IsWindow( HWND hwnd )
 {
-    WND * wndPtr;
-    BOOL retvalue;
-    
-    if(!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    retvalue = (wndPtr->dwMagic == WND_MAGIC);
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
-    
+    WND *ptr;
+    BOOL ret = FALSE;
+
+    USER_Lock();
+    if ((ptr = user_handles[LOWORD(hwnd)]))
+    {
+        ret = ((ptr->dwMagic == WND_MAGIC) && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf));
+    }
+    USER_Unlock();
+
+    if (!ret)  /* check other processes */
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = hwnd;
+            ret = !SERVER_CALL_ERR();
+        }
+        SERVER_END_REQ;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *		GetWindowThreadProcessId (USER32.@)
+ */
+DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
+{
+    WND *ptr;
+    DWORD tid = 0;
+
+    USER_Lock();
+    if ((ptr = user_handles[LOWORD(hwnd)]))
+    {
+        if ((ptr->dwMagic == WND_MAGIC) && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf))
+        {
+            /* got a valid window */
+            tid = ptr->tid;
+            if (process) *process = GetCurrentProcessId();
+        }
+        else SetLastError( ERROR_INVALID_WINDOW_HANDLE);
+        USER_Unlock();
+        return tid;
+    }
+    USER_Unlock();
+
+    /* check other processes */
+    SERVER_START_REQ( get_window_info )
+    {
+        req->handle = hwnd;
+        if (!SERVER_CALL_ERR())
+        {
+            tid = (DWORD)req->tid;
+            if (process) *process = (DWORD)req->pid;
+        }
+    }
+    SERVER_END_REQ;
+    return tid;
 }
 
 
@@ -2071,11 +2202,13 @@ HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
 HWND WINAPI SetParent( HWND hwnd, HWND parent )
 {
     WND *wndPtr;
-    WND *pWndParent;
     DWORD dwStyle;
     HWND retvalue;
 
-    if (hwnd == GetDesktopWindow()) /* sanity check */
+    if (!parent) parent = GetDesktopWindow();
+
+    /* sanity checks */
+    if (hwnd == GetDesktopWindow() || !IsWindow( parent ))
     {
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
@@ -2088,38 +2221,24 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
 
     dwStyle = wndPtr->dwStyle;
 
-    if (!parent) parent = GetDesktopWindow();
-
-    if (!(pWndParent = WIN_FindWndPtr(parent)))
-    {
-        WIN_ReleaseWndPtr( wndPtr );
-        return 0;
-    }
-
     /* Windows hides the window first, then shows it again
      * including the WM_SHOWWINDOW messages and all */
     if (dwStyle & WS_VISIBLE) ShowWindow( hwnd, SW_HIDE );
 
     retvalue = wndPtr->parent->hwndSelf;  /* old parent */
-    if (pWndParent != wndPtr->parent)
+    if (parent != retvalue)
     {
-        WIN_UnlinkWindow(wndPtr->hwndSelf);
-        wndPtr->parent = pWndParent;
+        WIN_LinkWindow( hwnd, parent, HWND_TOP );
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
-            if( !( wndPtr->dwStyle & WS_CHILD ) )
+            if (!(dwStyle & WS_CHILD))
             {
-                if( wndPtr->wIDmenu != 0)
-                {
-                    DestroyMenu( (HMENU) wndPtr->wIDmenu );
-                    wndPtr->wIDmenu = 0;
-                }
+                HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
+                if (menu) DestroyMenu( menu );
             }
         }
-        WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
     }
-    WIN_ReleaseWndPtr( pWndParent );
     WIN_ReleaseWndPtr( wndPtr );
 
     /* SetParent additionally needs to make hwnd the topmost window
@@ -2828,45 +2947,36 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 
     if (!IsIconic( hQueryWnd ))
     {
-        WND *ptrWnd, *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd);
-
-        tempRect = ptrQueryWnd->rectClient;
-        if(ptrQueryWnd->parent)
-            MapWindowPoints( ptrQueryWnd->parent->hwndSelf, 0,
-                             (LPPOINT)&tempRect, 2 );
+        GetClientRect( hQueryWnd, &tempRect );
+        MapWindowPoints( hQueryWnd, 0, (LPPOINT)&tempRect, 2 );
 
         if (PtInRect( &tempRect, pt))
         {
+            int i;
+            HWND *list = WIN_ListChildren( hQueryWnd );
+
             wParam = 0;
 
-            for (ptrWnd = WIN_LockWndPtr(ptrQueryWnd->child); ptrWnd ;WIN_UpdateWndPtr(&ptrWnd,ptrWnd->next))
+            if (list)
             {
-                if( ptrWnd->dwStyle & WS_VISIBLE )
+                for (i = 0; list[i]; i++)
                 {
-                    GetWindowRect( ptrWnd->hwndSelf, &tempRect );
-                    if (PtInRect( &tempRect, pt )) break;
+                    if (GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)
+                    {
+                        GetWindowRect( list[i], &tempRect );
+                        if (PtInRect( &tempRect, pt )) break;
+                    }
                 }
+                if (list[i])
+                {
+                    if (IsWindowEnabled( list[i] ))
+                        bResult = DRAG_QueryUpdate( list[i], spDragInfo, bNoSend );
+                }
+                HeapFree( GetProcessHeap(), 0, list );
             }
-
-            if(ptrWnd)
-            {
-                TRACE_(msg)("hwnd = %04x, %d %d - %d %d\n",
-                            ptrWnd->hwndSelf, ptrWnd->rectWindow.left, ptrWnd->rectWindow.top,
-                            ptrWnd->rectWindow.right, ptrWnd->rectWindow.bottom );
-                if( !(ptrWnd->dwStyle & WS_DISABLED) )
-                    bResult = DRAG_QueryUpdate(ptrWnd->hwndSelf, spDragInfo, bNoSend);
-
-                WIN_ReleaseWndPtr(ptrWnd);
-            }
-
-            if(bResult)
-            {
-                WIN_ReleaseWndPtr(ptrQueryWnd);
-                return bResult;
-            }
+            if(bResult) return bResult;
         }
         else wParam = 1;
-        WIN_ReleaseWndPtr(ptrQueryWnd);
     }
     else wParam = 1;
 

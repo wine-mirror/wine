@@ -36,7 +36,9 @@ C_SRCS = \
 	thread.c \
 	timer.c \
 	trace.c \
-	unicode.c
+	unicode.c \
+	user.c \
+	window.c
 
 PROGRAMS = wineserver
 

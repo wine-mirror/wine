@@ -1459,7 +1459,7 @@ static void dump_send_message_request( const struct send_message_request *req )
 {
     fprintf( stderr, " id=%p,", req->id );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%08x,", req->wparam );
     fprintf( stderr, " lparam=%08x,", req->lparam );
@@ -1475,7 +1475,7 @@ static void dump_send_message_request( const struct send_message_request *req )
 static void dump_get_message_request( const struct get_message_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " get_win=%d,", req->get_win );
+    fprintf( stderr, " get_win=%08x,", req->get_win );
     fprintf( stderr, " get_first=%08x,", req->get_first );
     fprintf( stderr, " get_last=%08x", req->get_last );
 }
@@ -1483,7 +1483,7 @@ static void dump_get_message_request( const struct get_message_request *req )
 static void dump_get_message_reply( const struct get_message_request *req )
 {
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " wparam=%08x,", req->wparam );
     fprintf( stderr, " lparam=%08x,", req->lparam );
@@ -1517,12 +1517,12 @@ static void dump_get_message_reply_reply( const struct get_message_reply_request
 
 static void dump_cleanup_window_queue_request( const struct cleanup_window_queue_request *req )
 {
-    fprintf( stderr, " win=%d", req->win );
+    fprintf( stderr, " win=%08x", req->win );
 }
 
 static void dump_set_win_timer_request( const struct set_win_timer_request *req )
 {
-    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " id=%08x,", req->id );
     fprintf( stderr, " rate=%08x,", req->rate );
@@ -1531,7 +1531,7 @@ static void dump_set_win_timer_request( const struct set_win_timer_request *req 
 
 static void dump_kill_win_timer_request( const struct kill_win_timer_request *req )
 {
-    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " win=%08x,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
     fprintf( stderr, " id=%08x", req->id );
 }
@@ -1650,6 +1650,48 @@ static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_req
     fprintf( stderr, " maxinstances=%08x,", req->maxinstances );
     fprintf( stderr, " outsize=%08x,", req->outsize );
     fprintf( stderr, " insize=%08x", req->insize );
+}
+
+static void dump_create_desktop_window_request( const struct create_desktop_window_request *req )
+{
+}
+
+static void dump_create_desktop_window_reply( const struct create_desktop_window_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_create_window_request( const struct create_window_request *req )
+{
+}
+
+static void dump_create_window_reply( const struct create_window_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_link_window_request( const struct link_window_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " parent=%08x,", req->parent );
+    fprintf( stderr, " previous=%08x", req->previous );
+}
+
+static void dump_destroy_window_request( const struct destroy_window_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_get_window_info_request( const struct get_window_info_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_get_window_info_reply( const struct get_window_info_request *req )
+{
+    fprintf( stderr, " full_handle=%08x,", req->full_handle );
+    fprintf( stderr, " pid=%p,", req->pid );
+    fprintf( stderr, " tid=%p", req->tid );
 }
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
@@ -1776,6 +1818,11 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_wait_named_pipe_request,
     (dump_func)dump_disconnect_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
+    (dump_func)dump_create_desktop_window_request,
+    (dump_func)dump_create_window_request,
+    (dump_func)dump_link_window_request,
+    (dump_func)dump_destroy_window_request,
+    (dump_func)dump_get_window_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1902,6 +1949,11 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_named_pipe_info_reply,
+    (dump_func)dump_create_desktop_window_reply,
+    (dump_func)dump_create_window_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_get_window_info_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2028,6 +2080,11 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "wait_named_pipe",
     "disconnect_named_pipe",
     "get_named_pipe_info",
+    "create_desktop_window",
+    "create_window",
+    "link_window",
+    "destroy_window",
+    "get_window_info",
 };
 
 /* ### make_requests end ### */

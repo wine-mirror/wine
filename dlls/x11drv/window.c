@@ -863,9 +863,9 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
            (unsigned int)data->whole_window, (unsigned int)data->client_window );
 
     if ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
-        WIN_LinkWindow( hwnd, HWND_BOTTOM );
+        WIN_LinkWindow( hwnd, wndPtr->parent->hwndSelf, HWND_BOTTOM );
     else
-        WIN_LinkWindow( hwnd, HWND_TOP );
+        WIN_LinkWindow( hwnd, wndPtr->parent->hwndSelf, HWND_TOP );
 
     WIN_ReleaseWndPtr( wndPtr );
 
@@ -997,9 +997,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
     {
         struct x11drv_win_data *data = wndPtr->pDriverData;
 
-        WIN_UnlinkWindow(wndPtr->hwndSelf);
-        wndPtr->parent = pWndParent;
-        WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
+        WIN_LinkWindow( hwnd, parent, HWND_TOP );
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
