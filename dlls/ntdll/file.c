@@ -49,14 +49,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.@]
  *                 ZwOpenFile				[NTDLL.@]
- * FUNCTION: Opens a file
- * ARGUMENTS:
- *  FileHandle		Variable that receives the file handle on return
- *  DesiredAccess	Access desired by the caller to the file
- *  ObjectAttributes	Structue describing the file to be opened
- *  IoStatusBlock	Receives details about the result of the operation
- *  ShareAccess		Type of shared access the caller requires
- *  OpenOptions		Options for the file open
+ *
+ * Open a file.
+ *
+ * PARAMS
+ *  FileHandle       [O] Variable that receives the file handle on return
+ *  DesiredAccess    [I] Access desired by the caller to the file
+ *  ObjectAttributes [I] Structue describing the file to be opened
+ *  IoStatusBlock    [O] Receives details about the result of the operation
+ *  ShareAccess      [I] Type of shared access the caller requires
+ *  OpenOptions      [I] Options for the file open
+ *
+ * RETURNS
+ *  Success: 0. FileHandle and IoStatusBlock are updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtOpenFile(
 	OUT PHANDLE FileHandle,
@@ -118,22 +124,26 @@ NTSTATUS WINAPI NtOpenFile(
 /**************************************************************************
  *		NtCreateFile				[NTDLL.@]
  *		ZwCreateFile				[NTDLL.@]
- * FUNCTION: Either causes a new file or directory to be created, or it opens
- *  an existing file, device, directory or volume, giving the caller a handle
- *  for the file object. This handle can be used by subsequent calls to
- *  manipulate data within the file or the file object's state of attributes.
- * ARGUMENTS:
- *	FileHandle		Points to a variable which receives the file handle on return
- *	DesiredAccess		Desired access to the file
- *	ObjectAttributes	Structure describing the file
- *	IoStatusBlock		Receives information about the operation on return
- *	AllocationSize		Initial size of the file in bytes
- *	FileAttributes		Attributes to create the file with
- *	ShareAccess		Type of shared access the caller would like to the file
- *	CreateDisposition	Specifies what to do, depending on whether the file already exists
- *	CreateOptions		Options for creating a new file
- *	EaBuffer		Undocumented
- *	EaLength		Undocumented
+ *
+ * Either create a new file or directory, or open an existing file, device,
+ * directory or volume.
+ *
+ * PARAMS
+ *	FileHandle        [O] Points to a variable which receives the file handle on return
+ *	DesiredAccess     [I] Desired access to the file
+ *	ObjectAttributes  [I] Structure describing the file
+ *	IoStatusBlock     [O] Receives information about the operation on return
+ *	AllocationSize    [I] Initial size of the file in bytes
+ *	FileAttributes    [I] Attributes to create the file with
+ *	ShareAccess       [I] Type of shared access the caller would like to the file
+ *	CreateDisposition [I] Specifies what to do, depending on whether the file already exists
+ *	CreateOptions     [I] Options for creating a new file
+ *	EaBuffer          [I] Undocumented
+ *	EaLength          [I] Undocumented
+ *
+ * RETURNS
+ *  Success: 0. FileHandle and IoStatusBlock are updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtCreateFile(
 	OUT PHANDLE FileHandle,
@@ -332,21 +342,26 @@ static void FILE_AsyncReadService(async_private *ovp)
  *  NtReadFile					[NTDLL.@]
  *  ZwReadFile					[NTDLL.@]
  *
- * Parameters
- *   HANDLE32 		hFile
- *   HANDLE32 		hEvent 		OPTIONAL
- *   PIO_APC_ROUTINE 	apc      	OPTIONAL
- *   PVOID 		apc_user 	OPTIONAL
- *   PIO_STATUS_BLOCK 	io_status
- *   PVOID 		buffer
- *   ULONG 		length
- *   PLARGE_INTEGER 	offset   	OPTIONAL
- *   PULONG 		key 		OPTIONAL
+ * Read from an open file handle.
  *
- * IoStatusBlock->Information contains the number of bytes read on return.
+ * PARAMS
+ *  FileHandle    [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  Event         [I] Event to signal upon completion (or NULL)
+ *  ApcRoutine    [I] Callback to call upon completion (or NULL)
+ *  ApcContext    [I] Context for ApcRoutine (or NULL)
+ *  IoStatusBlock [O] Receives information about the operation on return
+ *  Buffer        [O] Destination for the data read
+ *  Length        [I] Size of Buffer
+ *  ByteOffset    [O] Destination for the new file pointer position (or NULL)
+ *  Key           [O] Function unknown (may be NULL)
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock is updated, and the Information member contains
+ *           The number of bytes read.
+ *  Failure: An NTSTATUS error code describing the error.
  */
-NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent, 
-                           PIO_APC_ROUTINE apc, void* apc_user, 
+NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
+                           PIO_APC_ROUTINE apc, void* apc_user,
                            PIO_STATUS_BLOCK io_status, void* buffer, ULONG length,
                            PLARGE_INTEGER offset, PULONG key)
 {
@@ -371,7 +386,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         io_status->u.Status = NtCreateEvent(&hEvent, SYNCHRONIZE, NULL, 0, 0);
         if (io_status->u.Status) return io_status->u.Status;
     }
-        
+
     if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
     {
         async_fileio*   ovp;
@@ -495,16 +510,23 @@ static void FILE_AsyncWriteService(struct async_private *ovp)
  *  NtWriteFile					[NTDLL.@]
  *  ZwWriteFile					[NTDLL.@]
  *
- * Parameters
- *   HANDLE32 		hFile
- *   HANDLE32 		hEvent 		OPTIONAL
- *   PIO_APC_ROUTINE 	apc      	OPTIONAL
- *   PVOID 		apc_user 	OPTIONAL
- *   PIO_STATUS_BLOCK 	io_status
- *   PVOID 		buffer
- *   ULONG 		length
- *   PLARGE_INTEGER 	offset   	OPTIONAL
- *   PULONG 		key 		OPTIONAL
+ * Write to an open file handle.
+ *
+ * PARAMS
+ *  FileHandle    [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  Event         [I] Event to signal upon completion (or NULL)
+ *  ApcRoutine    [I] Callback to call upon completion (or NULL)
+ *  ApcContext    [I] Context for ApcRoutine (or NULL)
+ *  IoStatusBlock [O] Receives information about the operation on return
+ *  Buffer        [I] Source for the data to write
+ *  Length        [I] Size of Buffer
+ *  ByteOffset    [O] Destination for the new file pointer position (or NULL)
+ *  Key           [O] Function unknown (may be NULL)
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock is updated, and the Information member contains
+ *           The number of bytes written.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                             PIO_APC_ROUTINE apc, void* apc_user,
@@ -580,7 +602,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         FILE_POSITION_INFORMATION   fpi;
 
         fpi.CurrentByteOffset = *offset;
-        io_status->u.Status = NtSetInformationFile(hFile, io_status, &fpi, sizeof(fpi), 
+        io_status->u.Status = NtSetInformationFile(hFile, io_status, &fpi, sizeof(fpi),
                                                    FilePositionInformation);
         if (io_status->u.Status)
         {
@@ -605,6 +627,24 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 /**************************************************************************
  *		NtDeviceIoControlFile			[NTDLL.@]
  *		ZwDeviceIoControlFile			[NTDLL.@]
+ *
+ * Perform an I/O control operation on an open file handle.
+ *
+ * PARAMS
+ *  DeviceHandle     [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  Event            [I] Event to signal upon completion (or NULL)
+ *  ApcRoutine       [I] Callback to call upon completion (or NULL)
+ *  ApcContext       [I] Context for ApcRoutine (or NULL)
+ *  IoStatusBlock    [O] Receives information about the operation on return
+ *  IoControlCode    [I] Control code for the operation to perform
+ *  InputBuffer      [I] Source for any input data required (or NULL)
+ *  InputBufferSize  [I] Size of InputBuffer
+ *  OutputBuffer     [O] Source for any output data returned (or NULL)
+ *  OutputBufferSize [I] Size of OutputBuffer
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock is updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
                                       PIO_APC_ROUTINE UserApcRoutine, 
@@ -678,6 +718,19 @@ NTSTATUS WINAPI NtFsControlFile(
 /******************************************************************************
  *  NtSetVolumeInformationFile		[NTDLL.@]
  *  ZwSetVolumeInformationFile		[NTDLL.@]
+ *
+ * Set volume information for an open file handle.
+ *
+ * PARAMS
+ *  FileHandle         [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  IoStatusBlock      [O] Receives information about the operation on return
+ *  FsInformation      [I] Source for volume information
+ *  Length             [I] Size of FsInformation
+ *  FsInformationClass [I] Type of volume information to set
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock is updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtSetVolumeInformationFile(
 	IN HANDLE FileHandle,
@@ -694,6 +747,19 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 /******************************************************************************
  *  NtQueryInformationFile		[NTDLL.@]
  *  ZwQueryInformationFile		[NTDLL.@]
+ *
+ * Get information about an open file handle.
+ *
+ * PARAMS
+ *  FileHandle           [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  IoStatusBlock        [O] Receives information about the operation on return
+ *  FileInformation      [O] Destination for file information
+ *  Length               [I] Size of FileInformation
+ *  FileInformationClass [I] Type of file information to get
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock and FileInformation are updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtQueryInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
                                        PVOID ptr, LONG len,
@@ -815,9 +881,22 @@ NTSTATUS WINAPI NtQueryInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
 /******************************************************************************
  *  NtSetInformationFile		[NTDLL.@]
  *  ZwSetInformationFile		[NTDLL.@]
+ *
+ * Set information about an open file handle.
+ *
+ * PARAMS
+ *  FileHandle           [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  IoStatusBlock        [O] Receives information about the operation on return
+ *  FileInformation      [I] Source for file information
+ *  Length               [I] Size of FileInformation
+ *  FileInformationClass [I] Type of file information to set
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock is updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
-                                     PVOID ptr, ULONG len, 
+                                     PVOID ptr, ULONG len,
                                      FILE_INFORMATION_CLASS class)
 {
     NTSTATUS    status = STATUS_INVALID_PARAMETER_3;
@@ -825,7 +904,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
     TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", hFile, io_status, ptr, len, class);
 
     switch (class)
-    {   
+    {
     case FilePositionInformation:
         if (len >= sizeof(FILE_POSITION_INFORMATION))
         {
@@ -855,7 +934,6 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
 /******************************************************************************
  *  NtQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile	[NTDLL.@]
- *  ZwQueryDirectoryFile
  */
 NTSTATUS WINAPI NtQueryDirectoryFile(
 	IN HANDLE FileHandle,
@@ -880,6 +958,19 @@ NTSTATUS WINAPI NtQueryDirectoryFile(
 /******************************************************************************
  *  NtQueryVolumeInformationFile		[NTDLL.@]
  *  ZwQueryVolumeInformationFile		[NTDLL.@]
+ *
+ * Get volume information for an open file handle.
+ *
+ * PARAMS
+ *  FileHandle         [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  IoStatusBlock      [O] Receives information about the operation on return
+ *  FsInformation      [O] Destination for volume information
+ *  Length             [I] Size of FsInformation
+ *  FsInformationClass [I] Type of volume information to set
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock and FsInformation are updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	IN HANDLE FileHandle,
@@ -973,6 +1064,16 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 
 /******************************************************************
  *		NtFlushBuffersFile  (NTDLL.@)
+ *
+ * Flush any buffered data on an open file handle.
+ *
+ * PARAMS
+ *  FileHandle         [I] Handle returned from ZwOpenFile() or ZwCreateFile()
+ *  IoStatusBlock      [O] Receives information about the operation on return
+ *
+ * RETURNS
+ *  Success: 0. IoStatusBlock is updated.
+ *  Failure: An NTSTATUS error code describing the error.
  */
 NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock )
 {
@@ -1000,8 +1101,8 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
  *
  */
 NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
-                            PIO_APC_ROUTINE apc, void* apc_user, 
-                            PIO_STATUS_BLOCK io_status, PLARGE_INTEGER offset, 
+                            PIO_APC_ROUTINE apc, void* apc_user,
+                            PIO_STATUS_BLOCK io_status, PLARGE_INTEGER offset,
                             PLARGE_INTEGER count, ULONG* key, BOOLEAN dont_wait,
                             BOOLEAN exclusive )
 {
