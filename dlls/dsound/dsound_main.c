@@ -2,7 +2,7 @@
  * 
  * Copyright 1998 Marcus Meissner
  * Copyright 1998 Rob Riggs
- * Copyright 2000 Ove Kåven, TransGaming Technologies, Inc.
+ * Copyright 2000-2001 TransGaming Technologies, Inc.
  */
 /*
  * Most thread locking is complete. There may be a few race
@@ -971,6 +971,8 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundBufferImpl *dsb)
 		HRESULT merr = DS_OK;
 		/* Start in pause mode, to allow buffers to get filled */
 		waveOutPause(dsb->dsound->hwo);
+		if (dsb->state == STATE_PLAYING) dsb->state = STATE_STARTING;
+		else if (dsb->state == STATE_STOPPING) dsb->state = STATE_STOPPED;
 		/* use fragments of 10ms (1/100s) each (which should get us within
 		 * the documented write cursor lead of 10-15ms) */
 		buflen = ((dsb->wfx.nAvgBytesPerSec / 100) & ~3) * DS_HEL_FRAGS;
@@ -1126,6 +1128,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 			err = IDsDriver_CreateSoundBuffer(primarybuf->dsound->driver,&(primarybuf->wfx),primarybuf->dsbd.dwFlags,0,
 							  &(primarybuf->buflen),&(primarybuf->buffer),
 							  (LPVOID)&(primarybuf->hwbuf));
+			if (primarybuf->state == STATE_PLAYING) primarybuf->state = STATE_STARTING;
+			else if (primarybuf->state == STATE_STOPPING) primarybuf->state = STATE_STOPPED;
 		}
 	}
 	DSOUND_RecalcFormat(primarybuf);
@@ -1768,30 +1772,29 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
                 ds3db = (IDirectSound3DBufferImpl*)HeapAlloc(GetProcessHeap(),
                         0,sizeof(*ds3db));
                 ds3db->ref = 1;
-                ds3db->dsb = (*ippdsb);
+                ds3db->dsb = This;
                 ICOM_VTBL(ds3db) = &ds3dbvt;
 		InitializeCriticalSection(&ds3db->lock);
 
-		ds3db->ds3db = This;
 		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)This);
 
                 ds3db->ds3db.dwSize = sizeof(DS3DBUFFER);
-                ds3db->ds3db.vPosition.x.x = 0.0;
-                ds3db->ds3db.vPosition.y.y = 0.0;
-                ds3db->ds3db.vPosition.z.z = 0.0;
-                ds3db->ds3db.vVelocity.x.x = 0.0;
-                ds3db->ds3db.vVelocity.y.y = 0.0;
-                ds3db->ds3db.vVelocity.z.z = 0.0;
+                ds3db->ds3db.vPosition.u1.x = 0.0;
+                ds3db->ds3db.vPosition.u2.y = 0.0;
+                ds3db->ds3db.vPosition.u3.z = 0.0;
+                ds3db->ds3db.vVelocity.u1.x = 0.0;
+                ds3db->ds3db.vVelocity.u2.y = 0.0;
+                ds3db->ds3db.vVelocity.u3.z = 0.0;
                 ds3db->ds3db.dwInsideConeAngle = DS3D_DEFAULTCONEANGLE;
                 ds3db->ds3db.dwOutsideConeAngle = DS3D_DEFAULTCONEANGLE;
-                ds3db->ds3db.vConeOrientation.x.x = 0.0;
-                ds3db->ds3db.vConeOrientation.y.y = 0.0;
-                ds3db->ds3db.vConeOrientation.z.z = 0.0;
+                ds3db->ds3db.vConeOrientation.u1.x = 0.0;
+                ds3db->ds3db.vConeOrientation.u2.y = 0.0;
+                ds3db->ds3db.vConeOrientation.u3.z = 0.0;
                 ds3db->ds3db.lConeOutsideVolume = DS3D_DEFAULTCONEOUTSIDEVOLUME;                ds3db->ds3db.flMinDistance = DS3D_DEFAULTMINDISTANCE;
                 ds3db->ds3db.flMaxDistance = DS3D_DEFAULTMAXDISTANCE;
                 ds3db->ds3db.dwMode = DS3DMODE_NORMAL;
-                ds3db->buflen = ((*ippdsb)->buflen * primarybuf->wfx.nBlockAlign) /
-                        (*ippdsb)->wfx.nBlockAlign;
+                ds3db->buflen = (This->buflen * primarybuf->wfx.nBlockAlign) /
+                        This->wfx.nBlockAlign;
                 ds3db->buffer = HeapAlloc(GetProcessHeap(), 0, ds3db->buflen);
                 if (ds3db->buffer == NULL) {
                         ds3db->buflen = 0;
@@ -2068,17 +2071,17 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		InitializeCriticalSection(&ds3db->lock);
 
 		ds3db->ds3db.dwSize = sizeof(DS3DBUFFER);
-		ds3db->ds3db.vPosition.x.x = 0.0;
-		ds3db->ds3db.vPosition.y.y = 0.0;
-		ds3db->ds3db.vPosition.z.z = 0.0;
-		ds3db->ds3db.vVelocity.x.x = 0.0;
-		ds3db->ds3db.vVelocity.y.y = 0.0;
-		ds3db->ds3db.vVelocity.z.z = 0.0;
+		ds3db->ds3db.vPosition.u1.x = 0.0;
+		ds3db->ds3db.vPosition.u2.y = 0.0;
+		ds3db->ds3db.vPosition.u3.z = 0.0;
+		ds3db->ds3db.vVelocity.u1.x = 0.0;
+		ds3db->ds3db.vVelocity.u2.y = 0.0;
+		ds3db->ds3db.vVelocity.u3.z = 0.0;
 		ds3db->ds3db.dwInsideConeAngle = DS3D_DEFAULTCONEANGLE;
 		ds3db->ds3db.dwOutsideConeAngle = DS3D_DEFAULTCONEANGLE;
-		ds3db->ds3db.vConeOrientation.x.x = 0.0;
-		ds3db->ds3db.vConeOrientation.y.y = 0.0;
-		ds3db->ds3db.vConeOrientation.z.z = 0.0;
+		ds3db->ds3db.vConeOrientation.u1.x = 0.0;
+		ds3db->ds3db.vConeOrientation.u2.y = 0.0;
+		ds3db->ds3db.vConeOrientation.u3.z = 0.0;
 		ds3db->ds3db.lConeOutsideVolume = DS3D_DEFAULTCONEOUTSIDEVOLUME;
 		ds3db->ds3db.flMinDistance = DS3D_DEFAULTMINDISTANCE;
 		ds3db->ds3db.flMaxDistance = DS3D_DEFAULTMAXDISTANCE;
@@ -2870,7 +2873,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	return slen;
 }
 
-static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen)
+static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen, BOOL recover)
 {
 	INT			i, len, maxlen = 0;
 	IDirectSoundBufferImpl	*dsb;
@@ -2888,7 +2891,7 @@ static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen)
 				DSOUND_MixCancel(dsb, writepos);
 				dsb->state = STATE_STOPPED;
 			} else {
-				if (dsb->state == STATE_STARTING)
+				if ((dsb->state == STATE_STARTING) || recover)
 					dsb->primary_mixpos = writepos;
 				len = DSOUND_MixOne(dsb, playpos, writepos, mixlen);
 				if (dsb->state == STATE_STARTING)
@@ -3015,7 +3018,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 			}
 
 			/* do the mixing */
-			frag = DSOUND_MixToPrimary(playpos, writepos, maxq);
+			frag = DSOUND_MixToPrimary(playpos, writepos, maxq, paused);
 			if (forced) frag = maxq - inq;
 			primarybuf->buf_mixpos += frag;
 			while (primarybuf->buf_mixpos >= primarybuf->buflen)
@@ -3092,7 +3095,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		/* do the mixing */
 		if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
 			DWORD frag, maxq = DS_SND_QUEUE * dsound->fraglen;
-			frag = DSOUND_MixToPrimary(primarybuf->playpos, writepos, maxq);
+			frag = DSOUND_MixToPrimary(primarybuf->playpos, writepos, maxq, FALSE);
 			mixq = frag / dsound->fraglen;
 			if (frag - (mixq * dsound->fraglen))
 				mixq++;
