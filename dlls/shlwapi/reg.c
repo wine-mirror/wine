@@ -34,8 +34,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+/* Key/Value names for MIME content types */
 static const char *lpszContentTypeA = "Content Type";
 static const WCHAR lpszContentTypeW[] = { 'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
+
+static const char *szMimeDbContentA = "MIME\\Database\\Content Type\\";
+static const WCHAR szMimeDbContentW[] = { 'M', 'I', 'M','E','\\',
+  'D','a','t','a','b','a','s','e','\\','C','o','n','t','e','n','t',
+  ' ','T','y','p','e','\\', '0' };
+static const DWORD dwLenMimeDbContent = 27; /* strlen of szMimeDbContentA/W */
+
+static const char *szExtensionA = "Extension";
+static const WCHAR szExtensionW[] = { 'E', 'x', 't','e','n','s','i','o','n','\0' };
 
 /* internal structure of what the HUSKEY points to */
 typedef struct {
@@ -1482,8 +1492,8 @@ LONG WINAPI SHEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpszValue,
   TRACE("(hkey=0x%08x,%ld,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
         debugstr_a(lpszValue), pwLen, pwType, pvData, pcbData);
 
- return RegEnumValueA(hKey, dwIndex, lpszValue, pwLen, NULL,
-                      pwType, pvData, pcbData);
+  return RegEnumValueA(hKey, dwIndex, lpszValue, pwLen, NULL,
+                       pwType, pvData, pcbData);
 }
 
 /*************************************************************************
@@ -1531,7 +1541,7 @@ DWORD WINAPI SHLWAPI_206(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
 /*************************************************************************
  * @   [SHLWAPI.320]
  *
- * Set a content type in the registry.
+ * Set a MIME content type in the registry.
  *
  * PARAMS
  *   hKey       [I] Handle to registry key
@@ -1580,7 +1590,7 @@ BOOL WINAPI SHLWAPI_321(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 /*************************************************************************
  * @   [SHLWAPI.322]
  *
- * Delete a content type from the registry.
+ * Delete a MIME content type from the registry.
  *
  * PARAMS
  *   lpszSubKey [I] Name of sub key
@@ -1606,6 +1616,170 @@ BOOL WINAPI SHLWAPI_323(LPCWSTR lpszSubKey)
   return ret ? FALSE : TRUE;
 }
 
+/*************************************************************************
+ * @   [SHLWAPI.328]
+ *
+ * Get the registry path to a MIME content key.
+ *
+ * PARAMS
+ *   lpszType   [I] Content type to get the path for
+ *   lpszBuffer [O] Destination for path
+ *   dwLen      [I] Length of lpszBuffer
+ *
+ * RETURNS
+ *   Success: TRUE. lpszBuffer contains the full path.
+ *   Failure: FALSE.
+ *
+ * NOTES
+ *   The base path for the key is "MIME\Database\Content Type\"
+ */
+BOOL SHLWAPI_328(LPCSTR lpszType, LPSTR lpszBuffer, DWORD dwLen)
+{
+  TRACE("(%s,%p,%ld)\n", debugstr_a(lpszType), lpszBuffer, dwLen);
+
+  if (dwLen > dwLenMimeDbContent && lpszType && lpszBuffer)
+  {
+    DWORD dwStrLen = strlen(lpszType);
+
+    if (dwStrLen < dwLen - dwLenMimeDbContent)
+    {
+      memcpy(lpszBuffer, szMimeDbContentA, dwLenMimeDbContent);
+      memcpy(lpszBuffer + dwLenMimeDbContent, lpszType, dwStrLen + 1);
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/*************************************************************************
+ * @   [SHLWAPI.329]
+ *
+ * Unicode version of SHLWAPI_328.
+ */
+BOOL SHLWAPI_329(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
+{
+  TRACE("(%s,%p,%ld)\n", debugstr_w(lpszType), lpszBuffer, dwLen);
+
+  if (dwLen > dwLenMimeDbContent && lpszType && lpszBuffer)
+  {
+    DWORD dwStrLen = strlenW(lpszType);
+
+    if (dwStrLen < dwLen - dwLenMimeDbContent)
+    {
+      memcpy(lpszBuffer, szMimeDbContentA, dwLenMimeDbContent * sizeof(WCHAR));
+      memcpy(lpszBuffer + dwLenMimeDbContent, lpszType, (dwStrLen + 1) * sizeof(WCHAR));
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/*************************************************************************
+ * @   [SHLWAPI.324]
+ *
+ * Set the file extension for a MIME content key.
+ *
+ * PARAMS
+ *   lpszExt  [I] File extension to set
+ *   lpszType [I] Content type to set the extension for
+ *
+ * RETURNS
+ *   Success: TRUE. The file extension is set in the registry.
+ *   Failure: FALSE.
+ */
+BOOL WINAPI SHLWAPI_324(LPCSTR lpszExt, LPCSTR lpszType)
+{
+  DWORD dwLen;
+  char szKey[MAX_PATH];
+
+  TRACE("(%s,%s)\n", debugstr_a(lpszExt), debugstr_a(lpszType));
+
+  if (!SHLWAPI_328(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+    return FALSE;
+
+  dwLen = strlen(lpszExt) + 1;
+
+  if (SHSetValueA(HKEY_CLASSES_ROOT, szKey, szExtensionA, REG_SZ, lpszExt, dwLen))
+    return FALSE;
+  return TRUE;
+}
+
+/*************************************************************************
+ * @   [SHLWAPI.325]
+ *
+ * Unicode version of SHLWAPI_324.
+ */
+BOOL WINAPI SHLWAPI_325(LPCWSTR lpszExt, LPCWSTR lpszType)
+{
+  DWORD dwLen;
+  WCHAR szKey[MAX_PATH];
+
+  TRACE("(%s,%s)\n", debugstr_w(lpszExt), debugstr_w(lpszType));
+
+  /* Get the full path to the key */
+  if (!SHLWAPI_329(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+    return FALSE;
+
+  dwLen = (lstrlenW(lpszExt) + 1) * sizeof(WCHAR);
+
+  if (SHSetValueW(HKEY_CLASSES_ROOT, szKey, szExtensionW, REG_SZ, lpszExt, dwLen))
+    return FALSE;
+  return TRUE;
+}
+
+/*************************************************************************
+ * @   [SHLWAPI.326]
+ *
+ * Delete a file extension from a MIME content type.
+ *
+ * PARAMS
+ *   lpszType [I] Content type to delete the extension for
+ *
+ * RETURNS
+ *   Success: TRUE. The file extension is deleted from the registry.
+ *   Failure: FALSE. The extension may have been removed but the key remains.
+ *
+ * NOTES
+ *   If deleting the extension leaves an orphan key, the key is removed also.
+ */
+BOOL WINAPI SHLWAPI_326(LPCSTR lpszType)
+{
+  char szKey[MAX_PATH];
+
+  TRACE("(%s)\n", debugstr_a(lpszType));
+
+  if (!SHLWAPI_328(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+    return FALSE;
+
+  if (!SHDeleteValueA(HKEY_CLASSES_ROOT, szKey, szExtensionA))
+    return FALSE;
+
+  if (!SHDeleteOrphanKeyA(HKEY_CLASSES_ROOT, szKey))
+    return FALSE;
+  return TRUE;
+}
+
+/*************************************************************************
+ * @   [SHLWAPI.327]
+ *
+ * Unicode version of SHLWAPI_326.
+ */
+BOOL WINAPI SHLWAPI_327(LPCWSTR lpszType)
+{
+  WCHAR szKey[MAX_PATH];
+
+  TRACE("(%s)\n", debugstr_w(lpszType));
+
+  if (!SHLWAPI_329(lpszType, szKey, MAX_PATH)) /* Get full path to the key */
+    return FALSE;
+
+  if (!SHDeleteValueW(HKEY_CLASSES_ROOT, szKey, szExtensionW))
+    return FALSE;
+
+  if (!SHDeleteOrphanKeyW(HKEY_CLASSES_ROOT, szKey))
+    return FALSE;
+  return TRUE;
+}
 
 /*************************************************************************
  * SHRegDuplicateHKey   [SHLWAPI.@]
