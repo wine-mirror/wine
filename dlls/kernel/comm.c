@@ -68,6 +68,10 @@
 
 #include "debugtools.h"
 
+#ifdef HAVE_LINUX_SERIAL_H
+#include <linux/serial.h>
+#endif
+
 DEFAULT_DEBUG_CHANNEL(comm);
 
 #if !defined(TIOCINQ) && defined(FIONREAD)
@@ -911,6 +915,29 @@ BOOL WINAPI SetCommState(
 			break;		
 #endif
        	        default:
+#if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCSSERIAL)
+			{   struct serial_struct nuts;
+			    int arby;
+			    ioctl(fd, TIOCGSERIAL, &nuts);
+			    nuts.custom_divisor = nuts.baud_base / lpdcb->BaudRate;
+			    if (!(nuts.custom_divisor)) nuts.custom_divisor = 1;
+			    arby = nuts.baud_base / nuts.custom_divisor;
+			    nuts.flags &= ~ASYNC_SPD_MASK;
+			    nuts.flags |= ASYNC_SPD_CUST;
+			    WARN("You (or a program acting at your behest) have specified\n"
+                                 "a non-standard baud rate %ld.  Wine will set the rate to %d,\n"
+                                 "which is as close as we can get by our present understanding of your\n"
+                                 "hardware. I hope you know what you are doing.  Any disruption Wine\n"
+                                 "has caused to your linux system can be undone with setserial \n"
+                                 "(see man setserial). If you have incapacitated a Hayes type modem,\n"
+                                 "reset it and it will probably recover.\n", lpdcb->BaudRate, arby);
+  			    ioctl(fd, TIOCSSERIAL, &nuts);
+			    port.c_cflag |= B38400;
+ 			}
+ 			break;
+#endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
+ 			
+			
                         COMM_SetCommError(handle,IE_BAUDRATE);
 			close( fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
