@@ -181,7 +181,7 @@ int __cdecl MSVCRT__vsnwprintf(WCHAR *str, unsigned int len,
       case (WCHAR)L'c':
         if (written++ >= len)
           return -1;
-        *str++ = va_arg(valist, WCHAR);
+        *str++ = (WCHAR)va_arg(valist, int);
         iter++;
         break;
 
