@@ -41,6 +41,20 @@ typedef struct tagSTATSTG {
     DWORD	reserved;
 } STATSTG;
 
+typedef struct tagSTATSTG16 {
+    LPOLESTR16	pwcsName;
+    DWORD	type;
+    ULARGE_INTEGER cbSize;
+    FILETIME	mtime;
+    FILETIME	ctime;
+    FILETIME	atime;
+    DWORD	grfMode;
+    DWORD	grfLocksSupported;
+    CLSID	clsid;
+    DWORD	grfStateBits;
+    DWORD	reserved;
+} STATSTG16;
+
 typedef LPOLESTR16 *SNB16;
 typedef LPOLESTR *SNB;
 
