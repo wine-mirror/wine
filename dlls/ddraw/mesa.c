@@ -253,6 +253,9 @@ void set_render_state(IDirect3DDeviceImpl* This,
 
 	    case D3DRENDERSTATE_TEXTUREMAPBLEND:    /* 21 */
 	        switch ((D3DTEXTUREBLEND) dwRenderState) {
+		    case D3DTBLEND_DECAL:
+		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+			break;
 		    case D3DTBLEND_MODULATE:
 		    case D3DTBLEND_MODULATEALPHA:
 		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
