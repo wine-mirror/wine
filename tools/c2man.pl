@@ -65,129 +65,11 @@ my @months = ( "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 my $year = $datetime[5] + 1900;
 my $date = "$months[$datetime[4]] $year";
 
-sub usage
-{
-  print "\nCreate API Documentation from Wine source code.\n\n",
-        "Usage: c2man.pl [options] {-w <spec>} {-I <include>} {<source>}\n",
-        "Where: <spec> is a .spec file giving a DLL's exports.\n",
-        "       <include> is an include directory used by the DLL.\n",
-        "       <source> is a source file of the DLL.\n",
-        "       The above can be given multiple times on the command line, as appropriate.\n",
-        "Options:\n",
-        " -Th      : Output HTML instead of a man page\n",
-        " -Ts      : Output SGML (Docbook source) instead of a man page\n",
-        " -o <dir> : Create output in <dir>, default is \"",$opt_output_directory,"\"\n",
-        " -s <sect>: Set manual section to <sect>, default is ",$opt_manual_section,"\n",
-        " -e       : Output \"FIXME\" documentation from empty comments.\n",
-        " -v       : Verbosity. Can be given more than once for more detail.\n";
-}
-
-# Print usage if we're called with no args
-if( @ARGV == 0)
-{
-  usage();
-}
-
-# Process command line options
-while(defined($_ = shift @ARGV))
-{
-  if( s/^-// )
-  {
-    # An option.
-    for ($_)
-    {
-      /^o$/  && do { $opt_output_directory = shift @ARGV; last; };
-      s/^S// && do { $opt_manual_section   = $_;          last; };
-      /^Th$/ && do { $opt_output_format  = "h";           last; };
-      /^Ts$/ && do { $opt_output_format  = "s";           last; };
-      /^v$/  && do { $opt_verbose++;                      last; };
-      /^e$/  && do { $opt_output_empty = 1;               last; };
-      /^L$/  && do { last; };
-      /^w$/  && do { @opt_spec_file_list = (@opt_spec_file_list, shift @ARGV); last; };
-      s/^I// && do { if ($_ ne ".") {
-                       my $include = $_."/*.h";
-                       $include =~ s/\/\//\//g;
-                       my $have_headers = `ls $include >/dev/null 2>&1`;
-                       if ($? >> 8 == 0) { @opt_header_file_list = (@opt_header_file_list, $include); }
-                     }
-                     last;
-                   };
-      s/^R// && do { if ($_ =~ /^\//) { $opt_wine_root_dir = $_; }
-                     else { $opt_wine_root_dir = `cd $pwd/$_ && pwd`; }
-                     $opt_wine_root_dir =~ s/\n//;
-                     $opt_wine_root_dir =~ s/\/\//\//g;
-                     if (! $opt_wine_root_dir =~ /\/$/ ) { $opt_wine_root_dir = $opt_wine_root_dir."/"; };
-                     last;
-             };
-      die "Unrecognised option $_\n";
-    }
-  }
-  else
-  {
-    # A source file.
-    push (@opt_source_file_list, $_);
-  }
-}
-
-# Remove duplicate include directories
-my %htmp;
-@opt_header_file_list = grep(!$htmp{$_}++, @opt_header_file_list);
-
-if ($opt_verbose > 3)
-{
-  print "Output dir:'".$opt_output_directory."'\n";
-  print "Section   :'".$opt_manual_section."'\n";
-  print "Format  :'".$opt_output_format."'\n";
-  print "Root    :'".$opt_wine_root_dir."'\n";
-  print "Spec files:'@opt_spec_file_list'\n";
-  print "Includes  :'@opt_header_file_list'\n";
-  print "Sources   :'@opt_source_file_list'\n";
-}
-
-if (@opt_spec_file_list == 0)
-{
-  exit 0; # Don't bother processing non-dll files
-}
-
-# Read in each .spec files exports and other details
-while(my $spec_file = shift @opt_spec_file_list)
-{
-  process_spec_file($spec_file);
-}
-
-if ($opt_verbose > 3)
-{
-    foreach my $spec_file ( keys %spec_files )
-    {
-        print "in '$spec_file':\n";
-        my $spec_details = $spec_files{$spec_file}[0];
-        my $exports = $spec_details->{EXPORTS};
-        for (@$exports)
-        {
-           print @$_[0].",".@$_[1].",".@$_[2].",".@$_[3]."\n";
-        }
-    }
-}
-
-# Extract and output the comments from each source file
-while(defined($_ = shift @opt_source_file_list))
-{
-  process_source_file($_);
-}
-
-# Write the index files for each spec
-process_index_files();
-
-# Write the master index file
-output_master_index_files();
-
-exit 0;
-
 
 # Generate the list of exported entries for the dll
-sub process_spec_file
+sub process_spec_file($)
 {
-  my $spec_name = shift(@_);
+  my $spec_name = shift;
   my $dll_name  = $spec_name;
   $dll_name =~ s/\..*//;       # Strip the file extension
   my $uc_dll_name  = uc $dll_name;
@@ -308,9 +190,9 @@ sub process_spec_file
 }
 
 # Read each source file, extract comments, and generate API documentation if appropriate
-sub process_source_file
+sub process_source_file($)
 {
-  my $source_file = shift(@_);
+  my $source_file = shift;
   my $source_details =
   {
     CONTRIBUTORS => [ ],
@@ -546,9 +428,9 @@ sub process_source_file
 }
 
 # Standardise a comments text for consistency
-sub process_comment_text
+sub process_comment_text($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
   my $i = 0;
 
   for (@{$comment->{TEXT}})
@@ -619,9 +501,9 @@ sub process_comment_text
 }
 
 # Standardise our comment and output it if it is suitable.
-sub process_comment
+sub process_comment($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
 
   # Don't process this comment if the function isn't exported
   my $spec_details = $spec_files{$comment->{DLL_NAME}}[0];
@@ -979,9 +861,9 @@ sub process_comment
 }
 
 # process our extra comment and output it if it is suitable.
-sub process_extra_comment
+sub process_extra_comment($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
 
   my $spec_details = $spec_files{$comment->{DLL_NAME}}[0];
 
@@ -1080,9 +962,9 @@ sub process_extra_comment
 }
 
 # Write a standardised comment out in the appropriate format
-sub output_comment
+sub output_comment($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
 
   if ($opt_verbose > 0)
   {
@@ -1114,7 +996,7 @@ sub output_comment
 }
 
 # Write out an index file for each .spec processed
-sub process_index_files
+sub process_index_files()
 {
   foreach my $spec_file (keys %spec_files)
   {
@@ -1134,9 +1016,9 @@ sub process_index_files
 }
 
 # Write a spec files documentation out in the appropriate format
-sub output_spec
+sub output_spec($)
 {
-  my $spec_details = shift(@_);
+  my $spec_details = shift;
 
   if ($opt_verbose > 2)
   {
@@ -1359,9 +1241,9 @@ sub output_spec
 # This is to allow new types of output to be added easily.
 
 # Open the api file
-sub output_open_api_file
+sub output_open_api_file($)
 {
-  my $output_name = shift(@_);
+  my $output_name = shift;
   $output_name = $opt_output_directory."/".$output_name;
 
   if ($opt_output_format eq "h")
@@ -1380,15 +1262,15 @@ sub output_open_api_file
 }
 
 # Close the api file
-sub output_close_api_file
+sub output_close_api_file()
 {
   close (OUTPUT);
 }
 
 # Output the api file header
-sub output_api_header
+sub output_api_header($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
 
   if ($opt_output_format eq "h")
   {
@@ -1414,7 +1296,7 @@ sub output_api_header
   }
 }
 
-sub output_api_footer
+sub output_api_footer($)
 {
   if ($opt_output_format eq "h")
   {
@@ -1433,10 +1315,10 @@ sub output_api_footer
   }
 }
 
-sub output_api_section_start
+sub output_api_section_start($$)
 {
-  my $comment = shift(@_);
-  my $section_name = shift(@_);
+  my $comment = shift;
+  my $section_name = shift;
 
   if ($opt_output_format eq "h")
   {
@@ -1452,14 +1334,14 @@ sub output_api_section_start
   }
 }
 
-sub output_api_section_end
+sub output_api_section_end()
 {
   # Not currently required by any output formats
 }
 
-sub output_api_name
+sub output_api_name($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
 
   output_api_section_start($comment,"NAME");
 
@@ -1487,9 +1369,9 @@ sub output_api_name
   output_api_section_end();
 }
 
-sub output_api_synopsis
+sub output_api_synopsis($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
   my @fmt;
 
   output_api_section_start($comment,"SYNOPSIS");
@@ -1565,9 +1447,9 @@ sub output_api_synopsis
   output_api_section_end();
 }
 
-sub output_api_comment
+sub output_api_comment($)
 {
-  my $comment = shift(@_);
+  my $comment = shift;
   my $open_paragraph = 0;
   my $open_raw = 0;
   my $param_docs = 0;
@@ -1799,7 +1681,7 @@ sub output_api_comment
 }
 
 # Create the master index file
-sub output_master_index_files
+sub output_master_index_files()
 {
   if ($opt_output_format eq "")
   {
@@ -1920,9 +1802,9 @@ sub output_master_index_files
 }
 
 # Write the master wine-api.sgml, linking it to each dll.
-sub output_sgml_master_file
+sub output_sgml_master_file($)
 {
-  my $dlls = shift(@_);
+  my $dlls = shift;
 
   output_open_api_file("wine-api");
   print OUTPUT "<!-- Generated file - DO NOT EDIT! -->\n";
@@ -1949,9 +1831,9 @@ sub output_sgml_master_file
 }
 
 # Produce the sgml for the dll chapter from the generated files
-sub output_sgml_dll_file
+sub output_sgml_dll_file($)
 {
-  my $spec_details = shift(@_);
+  my $spec_details = shift;
 
   # Make a list of all the documentation files to include
   my $exports = $spec_details->{EXPORTS};
@@ -1993,7 +1875,7 @@ sub output_sgml_dll_file
 }
 
 # Write the html index files containing the function names
-sub output_html_index_files
+sub output_html_index_files()
 {
   if ($opt_output_format ne "h")
   {
@@ -2056,7 +1938,7 @@ sub output_html_index_files
 }
 
 # Output the stylesheet for HTML output
-sub output_html_stylesheet
+sub output_html_stylesheet()
 {
   if ($opt_output_format ne "h")
   {
@@ -2151,3 +2033,127 @@ HERE_TARGET
   print CSS $css;
   close(CSS);
 }
+
+
+sub usage()
+{
+  print "\nCreate API Documentation from Wine source code.\n\n",
+        "Usage: c2man.pl [options] {-w <spec>} {-I <include>} {<source>}\n",
+        "Where: <spec> is a .spec file giving a DLL's exports.\n",
+        "       <include> is an include directory used by the DLL.\n",
+        "       <source> is a source file of the DLL.\n",
+        "       The above can be given multiple times on the command line, as appropriate.\n",
+        "Options:\n",
+        " -Th      : Output HTML instead of a man page\n",
+        " -Ts      : Output SGML (Docbook source) instead of a man page\n",
+        " -o <dir> : Create output in <dir>, default is \"",$opt_output_directory,"\"\n",
+        " -s <sect>: Set manual section to <sect>, default is ",$opt_manual_section,"\n",
+        " -e       : Output \"FIXME\" documentation from empty comments.\n",
+        " -v       : Verbosity. Can be given more than once for more detail.\n";
+}
+
+
+#
+# Main
+#
+
+# Print usage if we're called with no args
+if( @ARGV == 0)
+{
+  usage();
+}
+
+# Process command line options
+while(defined($_ = shift @ARGV))
+{
+  if( s/^-// )
+  {
+    # An option.
+    for ($_)
+    {
+      /^o$/  && do { $opt_output_directory = shift @ARGV; last; };
+      s/^S// && do { $opt_manual_section   = $_;          last; };
+      /^Th$/ && do { $opt_output_format  = "h";           last; };
+      /^Ts$/ && do { $opt_output_format  = "s";           last; };
+      /^v$/  && do { $opt_verbose++;                      last; };
+      /^e$/  && do { $opt_output_empty = 1;               last; };
+      /^L$/  && do { last; };
+      /^w$/  && do { @opt_spec_file_list = (@opt_spec_file_list, shift @ARGV); last; };
+      s/^I// && do { if ($_ ne ".") {
+                       my $include = $_."/*.h";
+                       $include =~ s/\/\//\//g;
+                       my $have_headers = `ls $include >/dev/null 2>&1`;
+                       if ($? >> 8 == 0) { @opt_header_file_list = (@opt_header_file_list, $include); }
+                     }
+                     last;
+                   };
+      s/^R// && do { if ($_ =~ /^\//) { $opt_wine_root_dir = $_; }
+                     else { $opt_wine_root_dir = `cd $pwd/$_ && pwd`; }
+                     $opt_wine_root_dir =~ s/\n//;
+                     $opt_wine_root_dir =~ s/\/\//\//g;
+                     if (! $opt_wine_root_dir =~ /\/$/ ) { $opt_wine_root_dir = $opt_wine_root_dir."/"; };
+                     last;
+             };
+      die "Unrecognised option $_\n";
+    }
+  }
+  else
+  {
+    # A source file.
+    push (@opt_source_file_list, $_);
+  }
+}
+
+# Remove duplicate include directories
+my %htmp;
+@opt_header_file_list = grep(!$htmp{$_}++, @opt_header_file_list);
+
+if ($opt_verbose > 3)
+{
+  print "Output dir:'".$opt_output_directory."'\n";
+  print "Section   :'".$opt_manual_section."'\n";
+  print "Format  :'".$opt_output_format."'\n";
+  print "Root    :'".$opt_wine_root_dir."'\n";
+  print "Spec files:'@opt_spec_file_list'\n";
+  print "Includes  :'@opt_header_file_list'\n";
+  print "Sources   :'@opt_source_file_list'\n";
+}
+
+if (@opt_spec_file_list == 0)
+{
+  exit 0; # Don't bother processing non-dll files
+}
+
+# Read in each .spec files exports and other details
+while(my $spec_file = shift @opt_spec_file_list)
+{
+  process_spec_file($spec_file);
+}
+
+if ($opt_verbose > 3)
+{
+    foreach my $spec_file ( keys %spec_files )
+    {
+        print "in '$spec_file':\n";
+        my $spec_details = $spec_files{$spec_file}[0];
+        my $exports = $spec_details->{EXPORTS};
+        for (@$exports)
+        {
+           print @$_[0].",".@$_[1].",".@$_[2].",".@$_[3]."\n";
+        }
+    }
+}
+
+# Extract and output the comments from each source file
+while(defined($_ = shift @opt_source_file_list))
+{
+  process_source_file($_);
+}
+
+# Write the index files for each spec
+process_index_files();
+
+# Write the master index file
+output_master_index_files();
+
+exit 0;
