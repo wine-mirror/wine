@@ -20,7 +20,6 @@
  */
 
 #include "config.h"
-#define _GNU_SOURCE     /* for round() in math.h */
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -85,17 +84,17 @@ void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
         right=600 * log(((double)volpan->dwTotalRightAmpFactor) / 0xffff) / log(2);
     if (left<right)
     {
-        volpan->lVolume=round(right);
+        volpan->lVolume=right;
         volpan->dwVolAmpFactor=volpan->dwTotalRightAmpFactor;
     }
     else
     {
-        volpan->lVolume=round(left);
+        volpan->lVolume=left;
         volpan->dwVolAmpFactor=volpan->dwTotalLeftAmpFactor;
     }
     if (volpan->lVolume < -10000)
         volpan->lVolume=-10000;
-    volpan->lPan=round(right-left);
+    volpan->lPan=right-left;
     if (volpan->lPan < -10000)
         volpan->lPan=-10000;
 
