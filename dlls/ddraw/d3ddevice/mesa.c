@@ -2314,6 +2314,13 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     memcpy(object->view_mat , id_mat, 16 * sizeof(float));
     memcpy(object->proj_mat , id_mat, 16 * sizeof(float));
 
+    /* Initialisation */
+    TRACE(" setting current context\n");
+    LEAVE_GL();
+    object->set_context(object);
+    ENTER_GL();
+    TRACE(" current context set\n");
+
     /* allocate the clipping planes */
     glGetIntegerv(GL_MAX_CLIP_PLANES,&max_clipping_planes);
     if (max_clipping_planes>32) {
@@ -2324,14 +2331,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     TRACE(" capable of %d clipping planes\n", (int)object->max_clipping_planes );
     object->clipping_planes = (d3d7clippingplane*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->max_clipping_planes * sizeof(d3d7clippingplane));
 
-    /* Initialisation */
-    TRACE(" setting current context\n");
-    LEAVE_GL();
-    object->set_context(object);
-    ENTER_GL();
-    TRACE(" current context set\n");
-
     glHint(GL_FOG_HINT,GL_NICEST);
+    
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);
