@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include "windef.h"
 
 /* Request structures */
 
@@ -22,6 +23,9 @@
 #define IN  /*nothing*/
 #define OUT /*nothing*/
 
+
+/* a path name for server requests (Unicode) */
+typedef WCHAR path_t[MAX_PATH+1];
 
 /* Create a new process from the context of the parent */
 struct new_process_request
@@ -829,6 +833,138 @@ struct write_process_memory_request
 };
 
 
+/* Create a registry key */
+struct create_key_request
+{
+    IN  int          parent;       /* handle to the parent key */
+    IN  unsigned int access;       /* desired access rights */
+    IN  unsigned int options;      /* creation options */
+    IN  time_t       modif;        /* last modification time */
+    OUT int          hkey;         /* handle to the created key */
+    OUT int          created;      /* has it been newly created? */
+    IN  path_t       name;         /* key name */
+    IN  WCHAR        class[1];     /* class name */
+};
+
+
+/* Open a registry key */
+struct open_key_request
+{
+    IN  int          parent;       /* handle to the parent key */
+    IN  unsigned int access;       /* desired access rights */
+    OUT int          hkey;         /* handle to the open key */
+    IN  path_t       name;         /* key name */
+};
+
+
+/* Delete a registry key */
+struct delete_key_request
+{
+    IN  int          hkey;         /* handle to the parent key */
+    IN  path_t       name;         /* key name */
+};
+
+
+/* Close a registry key */
+struct close_key_request
+{
+    IN  int          hkey;          /* key to close */
+};
+
+
+/* Enumerate registry subkeys */
+struct enum_key_request
+{
+    IN  int          hkey;         /* handle to registry key */
+    IN  int          index;        /* index of subkey */
+    OUT time_t       modif;        /* last modification time */
+    OUT path_t       name;         /* subkey name */
+    OUT WCHAR        class[1];     /* class name */
+};
+
+
+/* Query information about a registry key */
+struct query_key_info_request
+{
+    IN  int          hkey;         /* handle to registry key */
+    OUT int          subkeys;      /* number of subkeys */
+    OUT int          max_subkey;   /* longest subkey name */
+    OUT int          max_class;    /* longest class name */
+    OUT int          values;       /* number of values */
+    OUT int          max_value;    /* longest value name */
+    OUT int          max_data;     /* longest value data */
+    OUT time_t       modif;        /* last modification time */
+    OUT WCHAR        class[1];     /* class name */
+};
+
+
+/* Set a value of a registry key */
+struct set_key_value_request
+{
+    IN  int          hkey;         /* handle to registry key */
+    IN  int          type;         /* value type */
+    IN  int          len;          /* value data len */
+    IN  path_t       name;         /* value name */
+    IN  unsigned char data[1];     /* value data */
+};
+
+
+/* Retrieve the value of a registry key */
+struct get_key_value_request
+{
+    IN  int          hkey;         /* handle to registry key */
+    OUT int          type;         /* value type */
+    OUT int          len;          /* value data len */
+    IN  WCHAR        name[1];      /* value name */
+    OUT unsigned char data[1];     /* value data */
+};
+
+
+/* Enumerate a value of a registry key */
+struct enum_key_value_request
+{
+    IN  int          hkey;         /* handle to registry key */
+    IN  int          index;        /* value index */
+    OUT int          type;         /* value type */
+    OUT int          len;          /* value data len */
+    OUT path_t       name;         /* value name */
+    OUT unsigned char data[1];     /* value data */
+};
+
+
+/* Delete a value of a registry key */
+struct delete_key_value_request
+{
+    IN  int          hkey;         /* handle to registry key */
+    IN  path_t       name;         /* value name */
+};
+
+
+/* Load a registry branch from a file */
+struct load_registry_request
+{
+    IN  int          hkey;         /* root key to load to */
+    IN  int          file;         /* file to load from */
+    IN  path_t       name;         /* subkey name */
+};
+
+
+/* Save a registry branch to a file */
+struct save_registry_request
+{
+    IN  int          hkey;         /* key to save */
+    IN  int          file;         /* file to save to */
+};
+
+
+/* Set the current and saving level for the registry */
+struct set_registry_levels_request
+{
+    IN  int          current;      /* new current level */
+    IN  int          saving;       /* new saving level */
+};
+
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -907,6 +1043,19 @@ enum request
     REQ_DEBUG_PROCESS,
     REQ_READ_PROCESS_MEMORY,
     REQ_WRITE_PROCESS_MEMORY,
+    REQ_CREATE_KEY,
+    REQ_OPEN_KEY,
+    REQ_DELETE_KEY,
+    REQ_CLOSE_KEY,
+    REQ_ENUM_KEY,
+    REQ_QUERY_KEY_INFO,
+    REQ_SET_KEY_VALUE,
+    REQ_GET_KEY_VALUE,
+    REQ_ENUM_KEY_VALUE,
+    REQ_DELETE_KEY_VALUE,
+    REQ_LOAD_REGISTRY,
+    REQ_SAVE_REGISTRY,
+    REQ_SET_REGISTRY_LEVELS,
     REQ_NB_REQUESTS
 };
 

@@ -19,10 +19,11 @@ C_SRCS = \
 	pipe.c \
 	process.c \
 	ptrace.c \
+	registry.c \
 	request.c \
-	snapshot.c \
 	select.c \
 	semaphore.c \
+	snapshot.c \
 	sock.c \
 	socket.c \
 	thread.c \

@@ -29,6 +29,7 @@ int main( int argc, char *argv[] )
     create_initial_thread( fd );
     if (debug_level) fprintf( stderr, "Server: exiting (pid=%ld)\n", (long) getpid() );
 
+    close_registry();
 #ifdef DEBUG_OBJECTS
     dump_objects();  /* dump any remaining objects */
 #endif

@@ -66,7 +66,7 @@ struct object
 };
 
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
-extern char *mem_strdup( const char *str );
+extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops );
 extern const char *get_object_name( struct object *obj );
 extern void *create_named_object( const struct object_ops *ops, const char *name, size_t len );
@@ -162,6 +162,10 @@ extern void debug_exit_thread( struct thread *thread, int exit_code );
 /* mapping functions */
 
 extern int get_page_size(void);
+
+/* registry functions */
+
+extern void close_registry(void);
 
 extern int debug_level;
 

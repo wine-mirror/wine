@@ -58,6 +58,14 @@ static inline size_t get_req_strlen( const char *str )
     return p - str;
 }
 
+/* same as above for Unicode */
+static inline size_t get_req_strlenW( const WCHAR *str )
+{
+    const WCHAR *p = str;
+    while (*p && ((char *)p < (char *)current->buffer + MAX_REQUEST_LENGTH - 2)) p++;
+    return p - str;
+}
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -134,6 +142,19 @@ DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
 DECL_HANDLER(read_process_memory);
 DECL_HANDLER(write_process_memory);
+DECL_HANDLER(create_key);
+DECL_HANDLER(open_key);
+DECL_HANDLER(delete_key);
+DECL_HANDLER(close_key);
+DECL_HANDLER(enum_key);
+DECL_HANDLER(query_key_info);
+DECL_HANDLER(set_key_value);
+DECL_HANDLER(get_key_value);
+DECL_HANDLER(enum_key_value);
+DECL_HANDLER(delete_key_value);
+DECL_HANDLER(load_registry);
+DECL_HANDLER(save_registry);
+DECL_HANDLER(set_registry_levels);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -214,6 +235,19 @@ static const struct handler {
     { (void(*)())req_debug_process, sizeof(struct debug_process_request) },
     { (void(*)())req_read_process_memory, sizeof(struct read_process_memory_request) },
     { (void(*)())req_write_process_memory, sizeof(struct write_process_memory_request) },
+    { (void(*)())req_create_key, sizeof(struct create_key_request) },
+    { (void(*)())req_open_key, sizeof(struct open_key_request) },
+    { (void(*)())req_delete_key, sizeof(struct delete_key_request) },
+    { (void(*)())req_close_key, sizeof(struct close_key_request) },
+    { (void(*)())req_enum_key, sizeof(struct enum_key_request) },
+    { (void(*)())req_query_key_info, sizeof(struct query_key_info_request) },
+    { (void(*)())req_set_key_value, sizeof(struct set_key_value_request) },
+    { (void(*)())req_get_key_value, sizeof(struct get_key_value_request) },
+    { (void(*)())req_enum_key_value, sizeof(struct enum_key_value_request) },
+    { (void(*)())req_delete_key_value, sizeof(struct delete_key_value_request) },
+    { (void(*)())req_load_registry, sizeof(struct load_registry_request) },
+    { (void(*)())req_save_registry, sizeof(struct save_registry_request) },
+    { (void(*)())req_set_registry_levels, sizeof(struct set_registry_levels_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

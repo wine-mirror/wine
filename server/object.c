@@ -55,6 +55,15 @@ void *mem_alloc( size_t size )
     return ptr;
 }
 
+/* duplicate a block of memory */
+void *memdup( const void *data, size_t len )
+{
+    void *ptr = mem_alloc( len );
+    if (ptr) memcpy( ptr, data, len );
+    return ptr;
+}
+
+
 /*****************************************************************/
 
 static int get_name_hash( const char *name, size_t len )

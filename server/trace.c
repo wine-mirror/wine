@@ -4,6 +4,7 @@
  * Copyright (C) 1999 Alexandre Julliard
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -35,14 +36,26 @@ static void dump_bytes( const unsigned char *ptr, int len )
     fputc( '}', stderr );
 }
 
+static void dump_unicode_string( const WCHAR *str )
+{
+    fprintf( stderr, "L\"" );
+    while (*str)
+    {
+        fprintf( stderr, "%c", isprint( (char)*str ) ? (char )*str : '?' );
+        str++;
+    }
+    fprintf( stderr, "\"" );
+}
+
+
 /* dumping for functions for requests that have a variable part */
 
-static void dump_varargs_select( struct select_request *req )
+static void dump_varargs_select_request( struct select_request *req )
 {
     dump_ints( req->handles, req->count );
 }
 
-static void dump_varargs_get_apcs( struct get_apcs_request *req )
+static void dump_varargs_get_apcs_reply( struct get_apcs_request *req )
 {
     int i;
     for (i = 0; i < 2 * req->count; i++)
@@ -50,23 +63,37 @@ static void dump_varargs_get_apcs( struct get_apcs_request *req )
     fprintf( stderr, "}" );
 }
 
-static void dump_varargs_get_socket_event( struct get_socket_event_request *req )
+static void dump_varargs_get_socket_event_reply( struct get_socket_event_request *req )
 {
     dump_ints( req->errors, FD_MAX_EVENTS );
 }
 
-static void dump_varargs_read_process_memory( struct read_process_memory_request *req )
+static void dump_varargs_read_process_memory_reply( struct read_process_memory_request *req )
 {
     int count = MIN( req->len, get_req_size( req->data, sizeof(int) ) );
     dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
 }
 
-static void dump_varargs_write_process_memory( struct write_process_memory_request *req )
+static void dump_varargs_write_process_memory_request( struct write_process_memory_request *req )
 {
     int count = MIN( req->len, get_req_size( req->data, sizeof(int) ) );
     dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
 }
 
+static void dump_varargs_set_key_value_request( struct set_key_value_request *req )
+{
+    dump_bytes( req->data, req->len );
+}
+
+static void dump_varargs_get_key_value_reply( struct get_key_value_request *req )
+{
+    dump_bytes( req->data, req->len );
+}
+
+static void dump_varargs_enum_key_value_reply( struct enum_key_value_request *req )
+{
+    dump_bytes( req->data, req->len );
+}
 
 typedef void (*dump_func)( const void *req );
 
@@ -243,7 +270,7 @@ static void dump_get_apcs_reply( struct get_apcs_request *req )
 {
     fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " apcs=" );
-    dump_varargs_get_apcs( req );
+    dump_varargs_get_apcs_reply( req );
 }
 
 static void dump_close_handle_request( struct close_handle_request *req )
@@ -301,7 +328,7 @@ static void dump_select_request( struct select_request *req )
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " timeout=%d,", req->timeout );
     fprintf( stderr, " handles=" );
-    dump_varargs_select( req );
+    dump_varargs_select_request( req );
 }
 
 static void dump_select_reply( struct select_request *req )
@@ -565,7 +592,7 @@ static void dump_get_socket_event_reply( struct get_socket_event_request *req )
     fprintf( stderr, " pmask=%08x,", req->pmask );
     fprintf( stderr, " state=%08x,", req->state );
     fprintf( stderr, " errors=" );
-    dump_varargs_get_socket_event( req );
+    dump_varargs_get_socket_event_reply( req );
 }
 
 static void dump_enable_socket_event_request( struct enable_socket_event_request *req )
@@ -803,7 +830,7 @@ static void dump_read_process_memory_request( struct read_process_memory_request
 static void dump_read_process_memory_reply( struct read_process_memory_request *req )
 {
     fprintf( stderr, " data=" );
-    dump_varargs_read_process_memory( req );
+    dump_varargs_read_process_memory_reply( req );
 }
 
 static void dump_write_process_memory_request( struct write_process_memory_request *req )
@@ -814,7 +841,156 @@ static void dump_write_process_memory_request( struct write_process_memory_reque
     fprintf( stderr, " first_mask=%08x,", req->first_mask );
     fprintf( stderr, " last_mask=%08x,", req->last_mask );
     fprintf( stderr, " data=" );
-    dump_varargs_write_process_memory( req );
+    dump_varargs_write_process_memory_request( req );
+}
+
+static void dump_create_key_request( struct create_key_request *req )
+{
+    fprintf( stderr, " parent=%d,", req->parent );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " options=%08x,", req->options );
+    fprintf( stderr, " modif=%ld,", req->modif );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+    fprintf( stderr, "," );
+    fprintf( stderr, " class=" );
+    dump_unicode_string( req->class );
+}
+
+static void dump_create_key_reply( struct create_key_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " created=%d", req->created );
+}
+
+static void dump_open_key_request( struct open_key_request *req )
+{
+    fprintf( stderr, " parent=%d,", req->parent );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_open_key_reply( struct open_key_request *req )
+{
+    fprintf( stderr, " hkey=%d", req->hkey );
+}
+
+static void dump_delete_key_request( struct delete_key_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_close_key_request( struct close_key_request *req )
+{
+    fprintf( stderr, " hkey=%d", req->hkey );
+}
+
+static void dump_enum_key_request( struct enum_key_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " index=%d", req->index );
+}
+
+static void dump_enum_key_reply( struct enum_key_request *req )
+{
+    fprintf( stderr, " modif=%ld,", req->modif );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+    fprintf( stderr, "," );
+    fprintf( stderr, " class=" );
+    dump_unicode_string( req->class );
+}
+
+static void dump_query_key_info_request( struct query_key_info_request *req )
+{
+    fprintf( stderr, " hkey=%d", req->hkey );
+}
+
+static void dump_query_key_info_reply( struct query_key_info_request *req )
+{
+    fprintf( stderr, " subkeys=%d,", req->subkeys );
+    fprintf( stderr, " max_subkey=%d,", req->max_subkey );
+    fprintf( stderr, " max_class=%d,", req->max_class );
+    fprintf( stderr, " values=%d,", req->values );
+    fprintf( stderr, " max_value=%d,", req->max_value );
+    fprintf( stderr, " max_data=%d,", req->max_data );
+    fprintf( stderr, " modif=%ld,", req->modif );
+    fprintf( stderr, " class=" );
+    dump_unicode_string( req->class );
+}
+
+static void dump_set_key_value_request( struct set_key_value_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " len=%d,", req->len );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+    fprintf( stderr, "," );
+    fprintf( stderr, " data=" );
+    dump_varargs_set_key_value_request( req );
+}
+
+static void dump_get_key_value_request( struct get_key_value_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_get_key_value_reply( struct get_key_value_request *req )
+{
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " len=%d,", req->len );
+    fprintf( stderr, " data=" );
+    dump_varargs_get_key_value_reply( req );
+}
+
+static void dump_enum_key_value_request( struct enum_key_value_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " index=%d", req->index );
+}
+
+static void dump_enum_key_value_reply( struct enum_key_value_request *req )
+{
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " len=%d,", req->len );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+    fprintf( stderr, "," );
+    fprintf( stderr, " data=" );
+    dump_varargs_enum_key_value_reply( req );
+}
+
+static void dump_delete_key_value_request( struct delete_key_value_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_load_registry_request( struct load_registry_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " file=%d,", req->file );
+    fprintf( stderr, " name=" );
+    dump_unicode_string( req->name );
+}
+
+static void dump_save_registry_request( struct save_registry_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " file=%d", req->file );
+}
+
+static void dump_set_registry_levels_request( struct set_registry_levels_request *req )
+{
+    fprintf( stderr, " current=%d,", req->current );
+    fprintf( stderr, " saving=%d", req->saving );
 }
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
@@ -891,6 +1067,19 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_debug_process_request,
     (dump_func)dump_read_process_memory_request,
     (dump_func)dump_write_process_memory_request,
+    (dump_func)dump_create_key_request,
+    (dump_func)dump_open_key_request,
+    (dump_func)dump_delete_key_request,
+    (dump_func)dump_close_key_request,
+    (dump_func)dump_enum_key_request,
+    (dump_func)dump_query_key_info_request,
+    (dump_func)dump_set_key_value_request,
+    (dump_func)dump_get_key_value_request,
+    (dump_func)dump_enum_key_value_request,
+    (dump_func)dump_delete_key_value_request,
+    (dump_func)dump_load_registry_request,
+    (dump_func)dump_save_registry_request,
+    (dump_func)dump_set_registry_levels_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -966,6 +1155,19 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_read_process_memory_reply,
+    (dump_func)0,
+    (dump_func)dump_create_key_reply,
+    (dump_func)dump_open_key_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_enum_key_reply,
+    (dump_func)dump_query_key_info_reply,
+    (dump_func)0,
+    (dump_func)dump_get_key_value_reply,
+    (dump_func)dump_enum_key_value_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)0,
     (dump_func)0,
 };
 
@@ -1043,6 +1245,19 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "debug_process",
     "read_process_memory",
     "write_process_memory",
+    "create_key",
+    "open_key",
+    "delete_key",
+    "close_key",
+    "enum_key",
+    "query_key_info",
+    "set_key_value",
+    "get_key_value",
+    "enum_key_value",
+    "delete_key_value",
+    "load_registry",
+    "save_registry",
+    "set_registry_levels",
 };
 
 /* ### make_requests end ### */
