@@ -1729,7 +1729,6 @@ static BOOL LISTVIEW_InitSubItem(HWND hwnd, LISTVIEW_SUBITEM *lpSubItem,
     if (!(lpLVItem->mask & LVIF_INDENT))
     {
       bResult = TRUE;
-      ZeroMemory(lpSubItem, sizeof(LISTVIEW_SUBITEM));
 
       lpSubItem->iSubItem = lpLVItem->iSubItem;
 
@@ -1799,6 +1798,7 @@ static BOOL LISTVIEW_AddSubItem(HWND hwnd, LPLVITEMA lpLVItem)
       lpSubItem = (LISTVIEW_SUBITEM *)COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM));
       if (lpSubItem != NULL)
       {
+	ZeroMemory(lpSubItem, sizeof(LISTVIEW_SUBITEM));
         if (LISTVIEW_InitSubItem(hwnd, lpSubItem, lpLVItem) != FALSE)
         {
           nPosition = LISTVIEW_FindInsertPosition(hdpaSubItems, 
@@ -1964,9 +1964,12 @@ static BOOL LISTVIEW_SetItem(HWND hwnd, LPLVITEMA lpLVItem)
                  * however is required if the used directly calls SetItem
                  * to set the selection.
                  */
-                LISTVIEW_RemoveSelections(hwnd, 0, lpLVItem->iItem-1);
-                LISTVIEW_RemoveSelections(hwnd, lpLVItem->iItem + 1, 
-                                          GETITEMCOUNT(infoPtr));
+                if (lStyle & LVS_SINGLESEL)
+                {
+                  LISTVIEW_RemoveSelections(hwnd, 0, lpLVItem->iItem-1);
+                  LISTVIEW_RemoveSelections(hwnd, lpLVItem->iItem + 1, 
+                                            GETITEMCOUNT(infoPtr));
+                }
 	      }
 	      else if (nmlv.uNewState & LVIS_FOCUSED)
               {
@@ -2296,7 +2299,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   ExtTextOutA(hdc, rcItem.left + 1, rcItem.top, ETO_OPAQUE | ETO_CLIPPED, 
               &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
 
-  if (FullSelect)
+  if ((FullSelect)&&(Header_GetItemCount(infoPtr->hwndHeader) > 1))
   {
     /* fill in the gap */
     RECT rec;
