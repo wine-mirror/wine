@@ -41,7 +41,7 @@ static void get_download_name(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA
     len = strlen((char*)potm + (ptrdiff_t)potm->otmpFullName) + 1;
     *str = HeapAlloc(GetProcessHeap(),0,len);
     strcpy(*str, (char*)potm + (ptrdiff_t)potm->otmpFullName);
- 
+
     p = *str;
     while((p = strchr(p, ' ')))
         *p = '_';
@@ -55,7 +55,7 @@ static void get_download_name(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA
 static DOWNLOAD *is_font_downloaded(PSDRV_PDEVICE *physDev, char *ps_name)
 {
     DOWNLOAD *pdl;
-    
+
     for(pdl = physDev->downloaded_fonts; pdl; pdl = pdl->next)
         if(!strcmp(pdl->ps_name, ps_name))
 	    break;

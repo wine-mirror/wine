@@ -230,7 +230,7 @@ static void EMS_map_multiple( CONTEXT86 *context )
   for(i=0; i<CX_reg(context) && !status; i++, ptr += 2)
     switch(AL_reg(context)) {
     case 0x00:
-      status = EMS_map( ptr[1], 
+      status = EMS_map( ptr[1],
                        DX_reg(context), ptr[0] );
       break;
     case 0x01:
@@ -238,7 +238,7 @@ static void EMS_map_multiple( CONTEXT86 *context )
                        DX_reg(context), ptr[0] );
       break;
     default:
-      status = 0x8f; /* status: undefined subfunction */    
+      status = 0x8f; /* status: undefined subfunction */
     }
 
   AH_reg(context) = status;
@@ -292,7 +292,7 @@ static void EMS_save_context( CONTEXT86 *context )
     EMS_record->mapping_save_area[h][i].hindex = EMS_record->mapping[i].hindex;
     EMS_record->mapping_save_area[h][i].logical_page = EMS_record->mapping[i].logical_page;
   }
-  
+
   AX_reg(context) = 0; /* status: ok */
 }
 
@@ -316,8 +316,8 @@ static void EMS_restore_context( CONTEXT86 *context )
       return;
     }
   }
-  
-  AX_reg(context) = 0; /* status: ok */  
+
+  AX_reg(context) = 0; /* status: ok */
 }
 
 /**********************************************************************
@@ -370,7 +370,7 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
     break;
 
   case 0x47: /* EMS - SAVE MAPPING CONTEXT */
-    EMS_init(); 
+    EMS_init();
     EMS_save_context(context);
     break;
 
@@ -423,7 +423,7 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
     if(AL_reg(context) == 0x01) {
       EMS_init();
       /* unallocated raw pages */
-      BX_reg(context) = EMS_MAX_PAGES - EMS_record->used_pages; 
+      BX_reg(context) = EMS_MAX_PAGES - EMS_record->used_pages;
       /* total number raw pages */
       DX_reg(context) = EMS_MAX_PAGES;
       /* status: ok */

@@ -446,7 +446,7 @@ void  output_makefile (void)
 
   if (globals.forward_dll)
     fprintf (specfile,"#import %s.dll\n", globals.forward_dll);
-    
+
   fclose (makefile);
 }
 

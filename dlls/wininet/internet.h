@@ -257,11 +257,11 @@ void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONA lpwhs);
 void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr);
 
 VOID SendAsyncCallback(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
-                             DWORD dwContext, DWORD dwInternetStatus, LPVOID 
+                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
 VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
-                             DWORD dwContext, DWORD dwInternetStatus, LPVOID 
+                             DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
 

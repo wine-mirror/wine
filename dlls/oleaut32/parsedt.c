@@ -689,8 +689,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
         tm->tm_mon   = 11; /* December, as tm_mon is 0..11 */
         tm->tm_mday  = 30;
     }
-       
-       
+
+
 #ifdef DATEDEBUG
 	printf("DecodeDateTime- mask %08x (%08x)", fmask, DTK_DATE_M);
 	printf(" set y%04d m%02d d%02d", tm->tm_year, (tm->tm_mon+1), tm->tm_mday);
@@ -1344,6 +1344,3 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
 	}
 	return NULL;
 }
-
-
-

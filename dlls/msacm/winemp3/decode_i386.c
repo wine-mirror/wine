@@ -1,5 +1,5 @@
-/* 
- * Mpeg Layer-1,2,3 audio decoder 
+/*
+ * Mpeg Layer-1,2,3 audio decoder
  * ------------------------------
  * copyright (c) 1995,1996,1997 by Michael Hipp, All rights reserved.
  * See also 'README'
@@ -67,7 +67,7 @@ int synth_1to1(real *bandPtr,int channel,unsigned char *out,int *pnt)
   short *samples = (short *) (out + *pnt);
 
   real *b0,(*buf)[0x110];
-  int clip = 0; 
+  int clip = 0;
   int bo1;
 
   bo = gmp->synth_bo;
@@ -94,7 +94,7 @@ int synth_1to1(real *bandPtr,int channel,unsigned char *out,int *pnt)
   }
 
   gmp->synth_bo = bo;
-  
+
   {
     register int j;
     real *window = decwin + 16 - bo1;

@@ -37,7 +37,7 @@ typedef struct IDragSourceHelper IDragSourceHelper,*LPDRAGSOURCEHELPER;
 /*****************************************************************************
  * IDragSourceHelper interface
  */
- 
+
 typedef struct {
     SIZE        sizeDragImage;
     POINT       ptOffset;
@@ -98,8 +98,3 @@ ICOM_DEFINE(IDropTargetHelper,IUnknown)
 #endif /* defined(__cplusplus) */
 
 #endif /*  __WINE_WINE_OBJ_DRAGDROPHELPER_H */
-
-
-
-
-

@@ -19,7 +19,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * This version deliberately differs in error handling compared to the 
+ * This version deliberately differs in error handling compared to the
  * windows version.
  */
 
@@ -34,7 +34,7 @@
  *
  *  Note the complication that this version may be passed unix format file names
  *  which might be mistaken for flags.  Conveniently the Windows version
- *  requires each flag to be separate (e.g. no /su ) and so we will simply 
+ *  requires each flag to be separate (e.g. no /su ) and so we will simply
  *  assume that anything longer than /. is a filename.
  */
 

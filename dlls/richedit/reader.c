@@ -615,7 +615,7 @@ RTFFont	*fp;
 	        rtfClass = rtfText;
 	    return;
 	}
-	
+
 	/* first check for pushed token from RTFUngetToken() */
 
 	if (pushedClass >= 0)
