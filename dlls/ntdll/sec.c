@@ -56,7 +56,7 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
 		nSubAuthority4, nSubAuthority5,	nSubAuthority6, nSubAuthority7, pSid);
 
-	if (!(*pSid = HeapAlloc( GetProcessHeap(), 0, RtlLengthRequiredSid(nSubAuthorityCount))))
+	if (!(*pSid = RtlAllocateHeap( GetProcessHeap(), 0, RtlLengthRequiredSid(nSubAuthorityCount))))
 	  return FALSE;
 
 	(*pSid)->Revision = SID_REVISION;
@@ -126,7 +126,7 @@ BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2)
 DWORD WINAPI RtlFreeSid(PSID pSid) 
 {
 	TRACE("(%p)\n", pSid);
-	HeapFree( GetProcessHeap(), 0, pSid );
+	RtlFreeHeap( GetProcessHeap(), 0, pSid );
 	return STATUS_SUCCESS;
 }
 
@@ -719,7 +719,9 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
         ANSI_STRING AnsiStr;
 
 	FIXME("(%p %p)\n", UnicodeSID, pSid);
-	dump_UnicodeString(UnicodeSID, FALSE);
+        if (UnicodeSID)
+            TRACE("%p(<OUT>) (%u %u)\n",
+                  UnicodeSID->Buffer, UnicodeSID->Length, UnicodeSID->MaximumLength);
 
         RtlInitAnsiString(&AnsiStr, GenSID);
         return RtlAnsiStringToUnicodeString(UnicodeSID, &AnsiStr, TRUE);

@@ -13,11 +13,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
+#include "ntddk.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -252,11 +249,20 @@ LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim )
  */
 INT __cdecl NTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
 {
-    INT ret;
-    if (n <= 0) return 0;
-    ret = WideCharToMultiByte( CP_ACP, 0, src, -1, dst, dst ? n : 0, NULL, NULL );
-    if (!ret) return n;  /* overflow */
-    return ret - 1;  /* do not count terminating NULL */
+    DWORD len;
+
+    if (!dst)
+    {
+        RtlUnicodeToMultiByteSize( &len, src, strlenW(src)*sizeof(WCHAR) );
+        return len;
+    }
+    else
+    {
+        if (n <= 0) return 0;
+        RtlUnicodeToMultiByteN( dst, n, &len, src, strlenW(src)*sizeof(WCHAR) );
+        if (len < n) dst[len] = 0;
+    }
+    return len;
 }
 
 
@@ -265,11 +271,19 @@ INT __cdecl NTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
  */
 INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
 {
-    INT ret;
-    if (n <= 0) return 0;
-    ret = MultiByteToWideChar( CP_ACP, 0, src, -1, dst, dst ? n : 0 );
-    if (!ret) return n;  /* overflow */
-    return ret - 1;  /* do not count terminating NULL */
+    DWORD len;
+
+    if (!dst)
+    {
+        RtlMultiByteToUnicodeSize( &len, src, strlen(src) );
+    }
+    else
+    {
+        if (n <= 0) return 0;
+        RtlMultiByteToUnicodeN( dst, n*sizeof(WCHAR), &len, src, strlen(src) );
+        if (len / sizeof(WCHAR) < n) dst[len / sizeof(WCHAR)] = 0;
+    }
+    return len / sizeof(WCHAR);
 }
 
 
@@ -279,11 +293,21 @@ INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
  */
 INT __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
 {
-    LPSTR sA = HEAP_strdupWtoA(GetProcessHeap(),0,s),endA;
-    INT	ret = strtol(sA,&endA,base);
+    UNICODE_STRING uni;
+    ANSI_STRING ansi;
+    INT ret;
+    LPSTR endA;
 
-    HeapFree(GetProcessHeap(),0,sA);
-    if (end) *end = ((LPWSTR)s)+(endA-sA); /* pointer magic checked. */
+    RtlInitUnicodeString( &uni, s );
+    RtlUnicodeStringToAnsiString( &ansi, &uni, TRUE );
+    ret = strtol( ansi.Buffer, &endA, base );
+    if (end)
+    {
+        DWORD len;
+        RtlMultiByteToUnicodeSize( &len, ansi.Buffer, endA - ansi.Buffer );
+        *end = (LPWSTR)s + len/sizeof(WCHAR);
+    }
+    RtlFreeAnsiString( &ansi );
     return ret;
 }
 
@@ -294,11 +318,21 @@ INT __cdecl NTDLL_wcstol(LPCWSTR s,LPWSTR *end,INT base)
  */
 INT __cdecl NTDLL_wcstoul(LPCWSTR s,LPWSTR *end,INT base)
 {
-    LPSTR sA = HEAP_strdupWtoA(GetProcessHeap(),0,s),endA;
-    INT	ret = strtoul(sA,&endA,base);
+    UNICODE_STRING uni;
+    ANSI_STRING ansi;
+    INT ret;
+    LPSTR endA;
 
-    HeapFree(GetProcessHeap(),0,sA);
-    if (end) *end = ((LPWSTR)s)+(endA-sA); /* pointer magic checked. */
+    RtlInitUnicodeString( &uni, s );
+    RtlUnicodeStringToAnsiString( &ansi, &uni, TRUE );
+    ret = strtoul( ansi.Buffer, &endA, base );
+    if (end)
+    {
+        DWORD len;
+        RtlMultiByteToUnicodeSize( &len, ansi.Buffer, endA - ansi.Buffer );
+        *end = (LPWSTR)s + len/sizeof(WCHAR);
+    }
+    RtlFreeAnsiString( &ansi );
     return ret;
 }
 

@@ -25,23 +25,6 @@ void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *oa)
 	    oa->Attributes, oa->RootDirectory, oa->SecurityDescriptor);
 }
 
-void dump_UnicodeString(const UNICODE_STRING *us, BOOLEAN showstring)
-{
-	if (us)
-	{
-	  if (showstring)
-	    TRACE("%p %p(%s) (%u %u)\n", us, us->Buffer, debugstr_us(us), us->Length, us->MaximumLength);
-	  else
-	    TRACE("%p %p(<OUT>) (%u %u)\n", us, us->Buffer, us->Length, us->MaximumLength);
-	}
-}
-
-LPCSTR debugstr_as( const STRING *str )
-{
-    if (!str) return "<null>";
-    return debugstr_an(str->Buffer, str->Length);
-}
-
 LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";

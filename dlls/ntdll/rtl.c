@@ -261,14 +261,13 @@ BOOLEAN WINAPI RtlFreeHeap(
 	
 /******************************************************************************
  *  RtlDestroyHeap		[NTDLL.@]
- *
- * FIXME: prototype guessed
  */
-BOOLEAN WINAPI RtlDestroyHeap(
+HANDLE WINAPI RtlDestroyHeap(
 	HANDLE Heap)
 {
 	TRACE("(0x%08x) semi stub\n", Heap);
-	return HeapDestroy(Heap);
+	if (!HeapDestroy(Heap)) return Heap;
+        return 0;
 }
 	
 /*

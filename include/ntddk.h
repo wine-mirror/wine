@@ -583,7 +583,7 @@ DWORD WINAPI RtlGetAce(
 
 /*	string functions */
 
-DWORD       WINAPI RtlAnsiStringToUnicodeSize(PSTRING);
+DWORD       WINAPI RtlAnsiStringToUnicodeSize(const STRING*);
 NTSTATUS    WINAPI RtlAnsiStringToUnicodeString(UNICODE_STRING*,const STRING *,BOOLEAN);
 NTSTATUS    WINAPI RtlAppendAsciizToString(STRING*,LPCSTR);
 NTSTATUS    WINAPI RtlAppendStringToString(STRING*,const STRING*);
@@ -606,7 +606,7 @@ void        WINAPI RtlInitString(PSTRING,LPCSTR);
 void        WINAPI RtlInitUnicodeString(PUNICODE_STRING,LPCWSTR);
 NTSTATUS    WINAPI RtlMultiByteToUnicodeN(LPWSTR,DWORD,LPDWORD,LPCSTR,DWORD);
 NTSTATUS    WINAPI RtlMultiByteToUnicodeSize(DWORD*,LPCSTR,UINT);
-UINT        WINAPI RtlOemStringToUnicodeSize(PSTRING);
+UINT        WINAPI RtlOemStringToUnicodeSize(const STRING*);
 NTSTATUS    WINAPI RtlOemStringToUnicodeString(UNICODE_STRING*,const STRING*,BOOLEAN);
 NTSTATUS    WINAPI RtlOemToUnicodeN(LPWSTR,DWORD,LPDWORD,LPCSTR,DWORD);
 BOOLEAN     WINAPI RtlPrefixString(const STRING*,const STRING*,BOOLEAN);
@@ -712,24 +712,17 @@ typedef struct
 	ULONG	Unknown[11];
 } RTL_HEAP_DEFINITION, *PRTL_HEAP_DEFINITION;
 
-HANDLE WINAPI RtlCreateHeap(
-	ULONG Flags,
-	PVOID BaseAddress,
-	ULONG SizeToReserve,
-	ULONG SizeToCommit,
-	PVOID Unknown,
-	PRTL_HEAP_DEFINITION Definition);
-
-PVOID WINAPI RtlAllocateHeap(
-	HANDLE Heap,
-	ULONG Flags,
-	ULONG Size);
-
-
-BOOLEAN WINAPI RtlFreeHeap(
-	HANDLE Heap,
-	ULONG Flags,
-	PVOID Address);
+HANDLE    WINAPI RtlCreateHeap(ULONG,PVOID,ULONG,ULONG,PVOID,PRTL_HEAP_DEFINITION);
+HANDLE    WINAPI RtlDestroyHeap(HANDLE);
+PVOID     WINAPI RtlAllocateHeap(HANDLE,ULONG,ULONG);
+BOOLEAN   WINAPI RtlFreeHeap(HANDLE,ULONG,PVOID);
+PVOID     WINAPI RtlReAllocateHeap(HANDLE,ULONG,PVOID,ULONG);
+ULONG     WINAPI RtlCompactHeap(HANDLE,ULONG);
+BOOLEAN   WINAPI RtlLockHeap(HANDLE);
+BOOLEAN   WINAPI RtlUnlockHeap(HANDLE);
+ULONG     WINAPI RtlSizeHeap(HANDLE,ULONG,PVOID);
+BOOLEAN   WINAPI RtlValidateHeap(HANDLE,ULONG,PCVOID);
+ULONG     WINAPI RtlGetProcessHeaps(ULONG,HANDLE*);
 
 /*	exception */
 

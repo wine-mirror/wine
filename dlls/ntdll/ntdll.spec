@@ -60,8 +60,9 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub LdrUnloadDll
 @ stub LdrVerifyImageMatchesChecksum
 @ stub NPXEMULATORTABLE
-@ stub NlsMbCodePageTag
-@ stub NlsMbOemCodePageTag
+@ extern NlsAnsiCodePage NlsAnsiCodePage
+@ extern NlsMbCodePageTag NlsMbCodePageTag
+@ extern NlsMbOemCodePageTag NlsMbOemCodePageTag
 @ stdcall NtAcceptConnectPort(long long long long long long) NtAcceptConnectPort
 @ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub NtAccessCheckAndAuditAlarm
@@ -1034,3 +1035,6 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 
 # Server interface
 @ cdecl -norelay wine_server_call(ptr) wine_server_call
+
+# Codepages
+@ cdecl __wine_init_codepages(ptr ptr) __wine_init_codepages

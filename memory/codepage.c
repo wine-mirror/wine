@@ -74,14 +74,16 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 /* since it needs KERNEL32 to be loaded for the locale info. */
 void CODEPAGE_Init(void)
 {
+    extern void __wine_init_codepages( const union cptable *ansi, const union cptable *oem );
     const union cptable *table;
     LCID lcid = GetUserDefaultLCID();
 
     if (!ansi_cptable) init_codepages();  /* just in case */
-    
+
     if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTANSICODEPAGE ))) ansi_cptable = table;
     if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTMACCODEPAGE ))) mac_cptable = table;
     if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTCODEPAGE ))) oem_cptable = table;
+    __wine_init_codepages( ansi_cptable, oem_cptable );
 
     TRACE( "ansi=%03d oem=%03d mac=%03d\n", ansi_cptable->info.codepage,
            oem_cptable->info.codepage, mac_cptable->info.codepage );
