@@ -35,6 +35,6 @@ EXTRASUBDIRS = \
 
 @MAKE_DLL_RULES@
 
-depend $(RC_SRCS:.rc=.res): $(MC_SRCS:.mc=.rc)
+kernel.res: $(MC_SRCS:.mc=.mc.rc)
 
 ### Dependencies:

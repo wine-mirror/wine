@@ -60,6 +60,7 @@ WINEBUILD = $(TOPOBJDIR)/tools/winebuild/winebuild
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc
 WMC       = $(TOPOBJDIR)/tools/wmc/wmc
+LDPATH    = LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH"
 DLLDIR    = $(TOPOBJDIR)/dlls
 @SET_MAKE@
 
@@ -156,7 +157,7 @@ DLLS = \
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .res .spec .spec.c .spec.o .glue.c
+.SUFFIXES: .mc .rc .mc.rc .res .spec .spec.c .spec.o .glue.c
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
@@ -170,17 +171,17 @@ DLLS = \
 .S.o:
 	$(CC) -c -o $*.o $<  
 
-.mc.rc:
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WMC) -i -H /dev/null -o $@ $<
+.mc.mc.rc:
+	$(LDPATH) $(WMC) -i -H /dev/null -o $@ $<
 
 .rc.res:
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
+	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
 
 .spec.spec.c:
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WINEBUILD) @DLLFLAGS@ -o $@ -spec $<
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -spec $<
 
 .c.glue.c:
-	LD_LIBRARY_PATH="$(TOPOBJDIR):$$LD_LIBRARY_PATH" $(WINEBUILD) @DLLFLAGS@ -o $@ -glue $<
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -glue $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
@@ -252,8 +253,8 @@ winapi_check::
 $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
-depend: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) $(GEN_C_SRCS) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
+depend: $(MAKEDEP) $(GEN_C_SRCS) $(SUBDIRS:%=%/__depend__)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(MC_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
 
 # Rules for cleaning
 
@@ -264,7 +265,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.rc) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS)
 
 # Rules for installing
 
@@ -282,7 +283,7 @@ $(GLUE:.c=.glue.c): $(WINEBUILD) $(TOPSRCDIR)/include/builtin16.h
 
 $(RC_SRCS:.rc=.res): $(WRC)
 
-$(MC_SRCS:.mc=.rc): $(WMC)
+$(MC_SRCS:.mc=.mc.rc): $(WMC)
 
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)
