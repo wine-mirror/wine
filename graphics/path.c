@@ -540,8 +540,8 @@ void PATH_DestroyGdiPath(GdiPath *pPath)
 {
    assert(pPath!=NULL);
 
-   HeapFree( GetProcessHeap(), 0, pPath->pPoints );
-   HeapFree( GetProcessHeap(), 0, pPath->pFlags );
+   if (pPath->pPoints) HeapFree( GetProcessHeap(), 0, pPath->pPoints );
+   if (pPath->pFlags) HeapFree( GetProcessHeap(), 0, pPath->pFlags );
 }
 
 /* PATH_AssignGdiPath
