@@ -958,19 +958,26 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
         infoPtr->uNumItem++;
         infoPtr->items = COMCTL32_Alloc (sizeof (HEADER_ITEM) * infoPtr->uNumItem);
-        /* pre insert copy */
-        if (nItem > 0) {
-            memcpy (&infoPtr->items[0], &oldItems[0],
-                    nItem * sizeof(HEADER_ITEM));
+        if (nItem == 0) {
+            memcpy (&infoPtr->items[1], &oldItems[0],
+                    (infoPtr->uNumItem-1) * sizeof(HEADER_ITEM));
         }
+        else
+        {
+              /* pre insert copy */
+            if (nItem > 0) {
+                 memcpy (&infoPtr->items[0], &oldItems[0],
+                         nItem * sizeof(HEADER_ITEM));
+            }
 
-        /* post insert copy */
-        if (nItem < infoPtr->uNumItem - 1) {
-            memcpy (&infoPtr->items[nItem+1], &oldItems[nItem],
-                    (infoPtr->uNumItem - nItem) * sizeof(HEADER_ITEM));
+            /* post insert copy */
+            if (nItem < infoPtr->uNumItem - 1) {
+                memcpy (&infoPtr->items[nItem+1], &oldItems[nItem],
+                        (infoPtr->uNumItem - nItem - 1) * sizeof(HEADER_ITEM));
+            }
         }
-
-	COMCTL32_Free (oldItems);
+    
+        COMCTL32_Free (oldItems);
     }
 
     lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
@@ -998,6 +1005,10 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpItem->fmt == 0)
 	lpItem->fmt = HDF_LEFT;
 
+    if (!(lpItem->fmt &HDF_STRING) && (phdi->mask & HDI_TEXT))
+      {
+	lpItem->fmt |= HDF_STRING;
+      }
     if (phdi->mask & HDI_BITMAP)
         lpItem->hbm = phdi->hbm;
 
