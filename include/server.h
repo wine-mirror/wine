@@ -1046,18 +1046,8 @@ struct enum_key_request
 {
     REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
-    IN  int          index;        /* index of subkey */
-    OUT time_t       modif;        /* last modification time */
-    OUT path_t       name;         /* subkey name */
-    OUT WCHAR        class[1];     /* class name */
-};
-
-
-/* Query information about a registry key */
-struct query_key_info_request
-{
-    REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to registry key */
+    IN  int          index;        /* index of subkey (or -1 for current key) */
+    IN  int          full;         /* return the full info? */
     OUT int          subkeys;      /* number of subkeys */
     OUT int          max_subkey;   /* longest subkey name */
     OUT int          max_class;    /* longest class name */
@@ -1065,8 +1055,8 @@ struct query_key_info_request
     OUT int          max_value;    /* longest value name */
     OUT int          max_data;     /* longest value data */
     OUT time_t       modif;        /* last modification time */
-    OUT path_t       name;         /* key name */
-    OUT WCHAR        class[1];     /* class name */
+    OUT VARARG(name,unicode_len_str);  /* key name */
+    OUT VARARG(class,unicode_str);     /* class name */
 };
 
 
@@ -1429,7 +1419,6 @@ enum request
     REQ_OPEN_KEY,
     REQ_DELETE_KEY,
     REQ_ENUM_KEY,
-    REQ_QUERY_KEY_INFO,
     REQ_SET_KEY_VALUE,
     REQ_GET_KEY_VALUE,
     REQ_ENUM_KEY_VALUE,
@@ -1545,7 +1534,6 @@ union generic_request
     struct open_key_request open_key;
     struct delete_key_request delete_key;
     struct enum_key_request enum_key;
-    struct query_key_info_request query_key_info;
     struct set_key_value_request set_key_value;
     struct get_key_value_request get_key_value;
     struct enum_key_value_request enum_key_value;
@@ -1574,7 +1562,7 @@ union generic_request
     struct set_serial_info_request set_serial_info;
 };
 
-#define SERVER_PROTOCOL_VERSION 24
+#define SERVER_PROTOCOL_VERSION 25
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1648,13 +1636,13 @@ static inline void server_strcpyAtoW( WCHAR *dst, const char *src )
 }
 
 /* get a pointer to the variable part of the request */
-inline static void *server_data_ptr( void *req )
+inline static void *server_data_ptr( const void *req )
 {
     return (union generic_request *)req + 1;
 }
 
 /* get the size of the variable part of the request */
-inline static size_t server_data_size( void *req )
+inline static size_t server_data_size( const void *req )
 {
     return ((struct request_header *)req)->var_size;
 }

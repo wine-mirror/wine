@@ -168,170 +168,147 @@ NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
 
 
 /******************************************************************************
+ *     fill_key_info
+ *
+ * Helper function for NtQueryKey and NtEnumerateKey
+ */
+static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWORD length,
+                               DWORD *result_len, const struct enum_key_request *req )
+{
+    WCHAR *name_ptr = server_data_ptr(req);
+    int name_size = *name_ptr++;
+    WCHAR *class_ptr = (WCHAR *)((char *)name_ptr + name_size);
+    int class_size = server_data_size(req) - sizeof(WCHAR) - name_size;
+    int fixed_size;
+    FILETIME modif;
+
+    RtlSecondsSince1970ToTime( req->modif, &modif );
+
+    switch(info_class)
+    {
+    case KeyBasicInformation:
+        {
+            KEY_BASIC_INFORMATION keyinfo;
+            fixed_size = sizeof(keyinfo) - sizeof(keyinfo.Name);
+            keyinfo.LastWriteTime = modif;
+            keyinfo.TitleIndex = 0;
+            keyinfo.NameLength = name_size;
+            memcpy( info, &keyinfo, min( length, fixed_size ) );
+            class_size = 0;
+        }
+        break;
+    case KeyFullInformation:
+        {
+            KEY_FULL_INFORMATION keyinfo;
+            fixed_size = sizeof(keyinfo) - sizeof(keyinfo.Class);
+            keyinfo.LastWriteTime = modif;
+            keyinfo.TitleIndex = 0;
+            keyinfo.ClassLength = class_size;
+            keyinfo.ClassOffset = keyinfo.ClassLength ? fixed_size : -1;
+            keyinfo.SubKeys = req->subkeys;
+            keyinfo.MaxNameLen = req->max_subkey;
+            keyinfo.MaxClassLen = req->max_class;
+            keyinfo.Values = req->values;
+            keyinfo.MaxValueNameLen = req->max_value;
+            keyinfo.MaxValueDataLen = req->max_data;
+            memcpy( info, &keyinfo, min( length, fixed_size ) );
+            name_size = 0;
+        }
+        break;
+    case KeyNodeInformation:
+        {
+            KEY_NODE_INFORMATION keyinfo;
+            fixed_size = sizeof(keyinfo) - sizeof(keyinfo.Name);
+            keyinfo.LastWriteTime = modif;
+            keyinfo.TitleIndex = 0;
+            keyinfo.ClassLength = class_size;
+            keyinfo.ClassOffset = fixed_size + name_size;
+            if (!keyinfo.ClassLength || keyinfo.ClassOffset > length) keyinfo.ClassOffset = -1;
+            keyinfo.NameLength = name_size;
+            memcpy( info, &keyinfo, min( length, fixed_size ) );
+        }
+        break;
+    default:
+        FIXME("Information class not implemented\n");
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    *result_len = fixed_size + name_size + class_size;
+    if (length <= fixed_size) return STATUS_BUFFER_OVERFLOW;
+    length -= fixed_size;
+
+    /* copy the name */
+    if (name_size)
+    {
+        memcpy( (char *)info + fixed_size, name_ptr, min(length,name_size) );
+        if (length < name_size) return STATUS_BUFFER_OVERFLOW;
+        length -= name_size;
+    }
+
+    /* copy the class */
+    if (class_size)
+    {
+        memcpy( (char *)info + fixed_size + name_size, class_ptr, min(length,class_size) );
+        if (length < class_size) return STATUS_BUFFER_OVERFLOW;
+    }
+    return STATUS_SUCCESS;
+}
+
+
+
+/******************************************************************************
  * NtEnumerateKey [NTDLL]
  * ZwEnumerateKey
  *
  * NOTES
  *  the name copied into the buffer is NOT 0-terminated 
  */
-NTSTATUS WINAPI NtEnumerateKey(
-	HANDLE KeyHandle,
-	ULONG Index,
-	KEY_INFORMATION_CLASS KeyInformationClass,
-	PVOID KeyInformation,
-	ULONG Length,
-	PULONG ResultLength)
+NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLASS info_class,
+                                void *info, DWORD length, DWORD *result_len )
 {
-	struct enum_key_request *req = get_req_buffer();
-	NTSTATUS ret;
+    NTSTATUS ret;
 
-	TRACE("(0x%08x,0x%08lx,0x%08x,%p,0x%08lx,%p)\n",
-	KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
+    /* -1 means query key, so avoid it here */
+    if (index == (ULONG)-1) return STATUS_NO_MORE_ENTRIES;
 
-	req->hkey = KeyHandle;
-	req->index = Index;
-	if ((ret = server_call_noerr(REQ_ENUM_KEY)) != STATUS_SUCCESS) return ret;
-
-	switch (KeyInformationClass)
-	{
-	  case KeyBasicInformation:
-	    {
-	      PKEY_BASIC_INFORMATION kbi = KeyInformation;
-	      UINT NameLength = strlenW(req->name) * sizeof(WCHAR);
-	      *ResultLength = sizeof(KEY_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
-	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
-
-	      RtlSecondsSince1970ToTime(req->modif, &kbi->LastWriteTime);
-	      kbi->TitleIndex = 0;
-	      kbi->NameLength = NameLength;
-	      memcpy (kbi->Name, req->name, NameLength);
-	    }
-	    break;
-	  case KeyFullInformation:
-	    {
-	      PKEY_FULL_INFORMATION kfi = KeyInformation;
-	      kfi->ClassLength = strlenW(req->class) * sizeof(WCHAR);
-	      kfi->ClassOffset = (kfi->ClassLength) ?
-	        sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) : 0xffffffff;
-	      *ResultLength = sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) + kfi->ClassLength;
-	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
-
-	      RtlSecondsSince1970ToTime(req->modif, &kfi->LastWriteTime);
-	      kfi->TitleIndex = 0;
-/*	      kfi->SubKeys = req->subkeys;
-	      kfi->MaxNameLength = req->max_subkey;
-	      kfi->MaxClassLength = req->max_class;
-	      kfi->Values = req->values;
-	      kfi->MaxValueNameLen = req->max_value;
-	      kfi->MaxValueDataLen = req->max_data;
-*/
-	      FIXME("incomplete\n");
-	      if (kfi->ClassLength) memcpy (kfi->Class, req->class, kfi->ClassLength);
-	    }
-	    break;
-	  case KeyNodeInformation:
-	    {
-	      PKEY_NODE_INFORMATION kni = KeyInformation;
-	      kni->ClassLength = strlenW(req->class) * sizeof(WCHAR);
-	      kni->NameLength = strlenW(req->name) * sizeof(WCHAR);
-	      kni->ClassOffset = (kni->ClassLength) ?
-	        sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength : 0xffffffff;
-
-	      *ResultLength = sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength + kni->ClassLength;
-	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
-
-	      RtlSecondsSince1970ToTime(req->modif, &kni->LastWriteTime);
-	      kni->TitleIndex = 0;
-	      memcpy (kni->Name, req->name, kni->NameLength);
-	      if (kni->ClassLength) memcpy ((char *) KeyInformation + kni->ClassOffset, req->class, kni->ClassLength);
-	    }
-	    break;
-	  default:
-	    FIXME("KeyInformationClass not implemented\n");
-	    return STATUS_UNSUCCESSFUL;
-	}
-	TRACE("buf=%lu len=%lu\n", Length, *ResultLength);
-	return ret;
+    SERVER_START_REQ
+    {
+        struct enum_key_request *req = server_alloc_req( sizeof(*req), REQUEST_MAX_VAR_SIZE );
+        req->hkey  = handle;
+        req->index = index;
+        req->full  = (info_class == KeyFullInformation);
+        if (!(ret = server_call_noerr( REQ_ENUM_KEY )))
+        {
+            ret = fill_key_info( info_class, info, length, result_len, req );
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
+
 
 /******************************************************************************
  * NtQueryKey [NTDLL]
  * ZwQueryKey
  */
-NTSTATUS WINAPI NtQueryKey(
-	HANDLE KeyHandle,
-	KEY_INFORMATION_CLASS KeyInformationClass,
-	PVOID KeyInformation,
-	ULONG Length,
-	PULONG ResultLength)
+NTSTATUS WINAPI NtQueryKey( HANDLE handle, KEY_INFORMATION_CLASS info_class,
+                            void *info, DWORD length, DWORD *result_len )
 {
-	struct query_key_info_request *req = get_req_buffer();
-	NTSTATUS ret;
-	
-	TRACE("(0x%08x,0x%08x,%p,0x%08lx,%p) stub\n",
-	KeyHandle, KeyInformationClass, KeyInformation, Length, ResultLength);
-	
-	req->hkey = KeyHandle;
-	if ((ret = server_call_noerr(REQ_QUERY_KEY_INFO)) != STATUS_SUCCESS) return ret;
-	
-	switch (KeyInformationClass)
-	{
-	  case KeyBasicInformation:
-	    {
-	      PKEY_BASIC_INFORMATION kbi = KeyInformation;
-	      UINT NameLength = strlenW(req->name) * sizeof(WCHAR);
-	      *ResultLength = sizeof(KEY_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
-	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
+    NTSTATUS ret;
 
-	      RtlSecondsSince1970ToTime(req->modif, &kbi->LastWriteTime);
-	      kbi->TitleIndex = 0;
-	      kbi->NameLength = NameLength;
-	      memcpy (kbi->Name, req->name, NameLength);
-	    }
-	    break;
-	  case KeyFullInformation:
-	    {
-	      PKEY_FULL_INFORMATION kfi = KeyInformation;
-	      kfi->ClassLength = strlenW(req->class) * sizeof(WCHAR);
-	      kfi->ClassOffset = (kfi->ClassLength) ?
-	        sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) : 0xffffffff;
-
-	      *ResultLength = sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) + kfi->ClassLength;
-	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
-
-	      RtlSecondsSince1970ToTime(req->modif, &kfi->LastWriteTime);
-	      kfi->TitleIndex = 0;
-	      kfi->SubKeys = req->subkeys;
-	      kfi->MaxNameLen = req->max_subkey;
-	      kfi->MaxClassLen = req->max_class;
-	      kfi->Values = req->values;
-	      kfi->MaxValueNameLen = req->max_value;
-	      kfi->MaxValueDataLen = req->max_data;
-	      if(kfi->ClassLength) memcpy ((char *) KeyInformation + kfi->ClassOffset, req->class, kfi->ClassLength);
-	    }
-	    break;
-	  case KeyNodeInformation:
-	    {
-	      PKEY_NODE_INFORMATION kni = KeyInformation;
-	      kni->ClassLength = strlenW(req->class) * sizeof(WCHAR);
-	      kni->NameLength = strlenW(req->name) * sizeof(WCHAR);
-	      kni->ClassOffset = (kni->ClassLength) ?
-	        sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength : 0xffffffff;
-
-	      *ResultLength = sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength + kni->ClassLength;
-	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
-
-	      RtlSecondsSince1970ToTime(req->modif, &kni->LastWriteTime);
-	      kni->TitleIndex = 0;
-	      memcpy (kni->Name, req->name, kni->NameLength);
-	      if(kni->ClassLength) memcpy ((char *) KeyInformation + kni->ClassOffset, req->class, kni->ClassLength);
-	    }
-	    break;
-	  default:
-	    FIXME("KeyInformationClass not implemented\n");
-	    return STATUS_UNSUCCESSFUL;
-	}
-	return ret;
+    SERVER_START_REQ
+    {
+        struct enum_key_request *req = server_alloc_req( sizeof(*req), REQUEST_MAX_VAR_SIZE );
+        req->hkey  = handle;
+        req->index = -1;
+        req->full  = (info_class == KeyFullInformation);
+        if (!(ret = server_call_noerr( REQ_ENUM_KEY )))
+        {
+            ret = fill_key_info( info_class, info, length, result_len, req );
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************
@@ -489,8 +466,6 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
                                  KEY_VALUE_INFORMATION_CLASS info_class,
                                  void *info, DWORD length, DWORD *result_len )
 {
-
-
     NTSTATUS ret;
     char *data_ptr;
     int fixed_size = 0, data_len = 0, offset = 0, type = 0, total_len = 0;
@@ -523,7 +498,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     do
     {
         size_t reqlen = min( data_len, REQUEST_MAX_VAR_SIZE );
-        reqlen = max( reqlen, name->Length );
+        reqlen = max( reqlen, name->Length + sizeof(WCHAR) );
 
         SERVER_START_REQ
         {
@@ -554,7 +529,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 
     *result_len = total_len + fixed_size;
 
-    if (!data_len) ret = STATUS_BUFFER_OVERFLOW;
+    if (offset < total_len) ret = STATUS_BUFFER_OVERFLOW;
     if (length < fixed_size) ret = STATUS_BUFFER_OVERFLOW;
 
     switch(info_class)

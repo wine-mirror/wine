@@ -560,57 +560,80 @@ static struct key *create_key( struct key *key, WCHAR *name, WCHAR *class,
     return key;
 }
 
-/* find a subkey of a given key by its index */
-static void enum_key( struct key *parent, int index, WCHAR *name, WCHAR *class, time_t *modif )
+/* query information about a key or a subkey */
+static size_t enum_key( struct key *key, int index, struct enum_key_request *req )
 {
-    struct key *key;
-
-    if ((index < 0) || (index > parent->last_subkey)) set_error( STATUS_NO_MORE_ENTRIES );
-    else
-    {
-        key = parent->subkeys[index];
-        *modif = key->modif;
-        strcpyW( name, key->name );
-        if (key->class) strcpyW( class, key->class );  /* FIXME: length */
-        else *class = 0;
-        if (debug_level > 1) dump_operation( key, NULL, "Enum" );
-    }
-}
-
-/* query information about a key */
-static void query_key( struct key *key, struct query_key_info_request *req )
-{
-    int i, len;
+    int i;
+    size_t len, namelen, classlen;
     int max_subkey = 0, max_class = 0;
     int max_value = 0, max_data = 0;
+    WCHAR *data = get_req_data(req);
 
-    for (i = 0; i <= key->last_subkey; i++)
+    if (index != -1)  /* -1 means use the specified key directly */
     {
-        struct key *subkey = key->subkeys[i];
-        len = strlenW( subkey->name );
-        if (len > max_subkey) max_subkey = len;
-        if (!subkey->class) continue;
-        len = strlenW( subkey->class );
-        if (len > max_class) max_class = len;
+        if ((index < 0) || (index > key->last_subkey))
+        {
+            set_error( STATUS_NO_MORE_ENTRIES );
+            return 0;
+        }
+        key = key->subkeys[index];
     }
-    for (i = 0; i <= key->last_value; i++)
+
+    if (req->full)
     {
-        len = strlenW( key->values[i].name );
-        if (len > max_value) max_value = len;
-        len = key->values[i].len;
-        if (len > max_data) max_data = len;
+        for (i = 0; i <= key->last_subkey; i++)
+        {
+            struct key *subkey = key->subkeys[i];
+            len = strlenW( subkey->name );
+            if (len > max_subkey) max_subkey = len;
+            if (!subkey->class) continue;
+            len = strlenW( subkey->class );
+            if (len > max_class) max_class = len;
+        }
+        for (i = 0; i <= key->last_value; i++)
+        {
+            len = strlenW( key->values[i].name );
+            if (len > max_value) max_value = len;
+            len = key->values[i].len;
+            if (len > max_data) max_data = len;
+        }
+        req->max_subkey = max_subkey;
+        req->max_class  = max_class;
+        req->max_value  = max_value;
+        req->max_data   = max_data;
     }
-    req->subkeys    = key->last_subkey + 1;
-    req->max_subkey = max_subkey;
-    req->max_class  = max_class;
-    req->values     = key->last_value + 1;
-    req->max_value  = max_value;
-    req->max_data   = max_data;
-    req->modif      = key->modif;
-    strcpyW( req->name, key->name);
-    if (key->class) strcpyW( req->class, key->class );  /* FIXME: length */
-    else req->class[0] = 0;
-    if (debug_level > 1) dump_operation( key, NULL, "Query" );
+    else
+    {
+        req->max_subkey = 0;
+        req->max_class  = 0;
+        req->max_value  = 0;
+        req->max_data   = 0;
+    }
+    req->subkeys = key->last_subkey + 1;
+    req->values  = key->last_value + 1;
+    req->modif   = key->modif;
+
+    namelen = strlenW(key->name) * sizeof(WCHAR);
+    classlen = key->class ? strlenW(key->class) * sizeof(WCHAR) : 0;
+
+    len = namelen + classlen + sizeof(WCHAR);
+    if (len > get_req_data_size(req))
+    {
+        len = get_req_data_size(req);
+        if (len < sizeof(WCHAR)) return 0;
+    }
+
+    *data++ = namelen;
+    len -= sizeof(WCHAR);
+    if (len > namelen)
+    {
+        memcpy( data, key->name, namelen );
+        memcpy( (char *)data + namelen, key->class, min(classlen,len-namelen) );
+    }
+    else memcpy( data, key->name, len );
+
+    if (debug_level > 1) dump_operation( key, NULL, "Enum" );
+    return len + sizeof(WCHAR);
 }
 
 /* delete a key and its values */
@@ -1537,30 +1560,28 @@ DECL_HANDLER(create_key)
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     req->hkey = -1;
+    if (!(name = copy_req_path( req, &len ))) return;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
-        if ((name = copy_req_path( req, &len )))
+        if (len == get_req_data_size(req))  /* no class specified */
         {
-            if (len == get_req_data_size(req))  /* no class specified */
-            {
-                key = create_key( parent, name, NULL, req->options, req->modif, &req->created );
-            }
-            else
-            {
-                const WCHAR *class_ptr = (WCHAR *)((char *)get_req_data(req) + len);
+            key = create_key( parent, name, NULL, req->options, req->modif, &req->created );
+        }
+        else
+        {
+            const WCHAR *class_ptr = (WCHAR *)((char *)get_req_data(req) + len);
 
-                if ((class = req_strdupW( req, class_ptr, get_req_data_size(req) - len )))
-                {
-                    key = create_key( parent, name, class, req->options,
-                                      req->modif, &req->created );
-                    free( class );
-                }
-            }
-            if (key)
+            if ((class = req_strdupW( req, class_ptr, get_req_data_size(req) - len )))
             {
-                req->hkey = alloc_handle( current->process, key, access, 0 );
-                release_object( key );
+                key = create_key( parent, name, class, req->options,
+                                  req->modif, &req->created );
+                free( class );
             }
+        }
+        if (key)
+        {
+            req->hkey = alloc_handle( current->process, key, access, 0 );
+            release_object( key );
         }
         release_object( parent );
     }
@@ -1602,26 +1623,15 @@ DECL_HANDLER(delete_key)
 DECL_HANDLER(enum_key)
 {
     struct key *key;
+    size_t len = 0;
 
-    req->name[0] = req->class[0] = 0;
-    if ((key = get_hkey_obj( req->hkey, KEY_ENUMERATE_SUB_KEYS )))
+    if ((key = get_hkey_obj( req->hkey,
+                             req->index == -1 ? KEY_QUERY_VALUE : KEY_ENUMERATE_SUB_KEYS )))
     {
-        enum_key( key, req->index, req->name, req->class, &req->modif );
+        len = enum_key( key, req->index, req );
         release_object( key );
     }
-}
-
-/* query information about a registry key */
-DECL_HANDLER(query_key_info)
-{
-    struct key *key;
-
-    req->name[0] = req->class[0] = 0;
-    if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
-    {
-        query_key( key, req );
-        release_object( key );
-    }
+    set_req_data_size( req, len );
 }
 
 /* set a value of a registry key */
@@ -1631,15 +1641,13 @@ DECL_HANDLER(set_key_value)
     WCHAR *name;
     size_t len;
 
+    if (!(name = copy_req_path( req, &len ))) return;
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        if ((name = copy_req_path( req, &len )))
-        {
-            size_t datalen = get_req_data_size(req) - len;
-            const char *data = (char *)get_req_data(req) + len;
+        size_t datalen = get_req_data_size(req) - len;
+        const char *data = (char *)get_req_data(req) + len;
 
-            set_value( key, name, req->type, req->total, req->offset, datalen, data );
-        }
+        set_value( key, name, req->type, req->total, req->offset, datalen, data );
         release_object( key );
     }
 }
@@ -1649,19 +1657,17 @@ DECL_HANDLER(get_key_value)
 {
     struct key *key;
     WCHAR *name;
-    size_t len;
+    size_t len = 0, tmp;
 
     req->len = 0;
+    if (!(name = copy_req_path( req, &tmp ))) return;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        if ((name = copy_req_path( req, &len )))
-        {
-            len = get_value( key, name, req->offset, get_req_data_size(req),
-                             &req->type, &req->len, get_req_data(req) );
-            set_req_data_size( req, len );
-        }
+        len = get_value( key, name, req->offset, get_req_data_size(req),
+                         &req->type, &req->len, get_req_data(req) );
         release_object( key );
     }
+    set_req_data_size( req, len );
 }
 
 /* enumerate the value of a registry key */

@@ -94,7 +94,7 @@ static void dump_exc_record( const EXCEPTION_RECORD *rec )
     fprintf( stderr, "{code=%lx,flags=%lx,rec=%p,addr=%p,params={",
              rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionRecord,
              rec->ExceptionAddress );
-    for (i = 0; i < rec->NumberParameters; i++)
+    for (i = 0; i < min(rec->NumberParameters,EXCEPTION_MAXIMUM_PARAMETERS); i++)
     {
         if (i) fputc( ',', stderr );
         fprintf( stderr, "%lx", rec->ExceptionInformation[i] );
@@ -156,12 +156,12 @@ static size_t dump_varargs_string( const void *req )
 static size_t dump_varargs_unicode_len_str( const void *req )
 {
     const WCHAR *str = get_data(req);
-    WCHAR len = *str++;
+    int len = *str++ + sizeof(WCHAR);
     len = min( len, get_size(req) );
     fprintf( stderr, "L\"" );
-    dump_strW( str, len / sizeof(WCHAR), stderr, "\"\"" );
+    if (len >= sizeof(WCHAR)) dump_strW( str, (len / sizeof(WCHAR)) - 1, stderr, "\"\"" );
     fputc( '\"', stderr );
-    return len + sizeof(WCHAR);
+    return len;
 }
 
 static size_t dump_varargs_unicode_str( const void *req )
@@ -1184,25 +1184,11 @@ static void dump_delete_key_request( const struct delete_key_request *req )
 static void dump_enum_key_request( const struct enum_key_request *req )
 {
     fprintf( stderr, " hkey=%d,", req->hkey );
-    fprintf( stderr, " index=%d", req->index );
+    fprintf( stderr, " index=%d,", req->index );
+    fprintf( stderr, " full=%d", req->full );
 }
 
 static void dump_enum_key_reply( const struct enum_key_request *req )
-{
-    fprintf( stderr, " modif=%ld,", req->modif );
-    fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
-    fprintf( stderr, "," );
-    fprintf( stderr, " class=" );
-    dump_unicode_string( req, req->class );
-}
-
-static void dump_query_key_info_request( const struct query_key_info_request *req )
-{
-    fprintf( stderr, " hkey=%d", req->hkey );
-}
-
-static void dump_query_key_info_reply( const struct query_key_info_request *req )
 {
     fprintf( stderr, " subkeys=%d,", req->subkeys );
     fprintf( stderr, " max_subkey=%d,", req->max_subkey );
@@ -1212,10 +1198,10 @@ static void dump_query_key_info_reply( const struct query_key_info_request *req 
     fprintf( stderr, " max_data=%d,", req->max_data );
     fprintf( stderr, " modif=%ld,", req->modif );
     fprintf( stderr, " name=" );
-    dump_path_t( req, &req->name );
-    fprintf( stderr, "," );
+    cur_pos += dump_varargs_unicode_len_str( req );
+    fputc( ',', stderr );
     fprintf( stderr, " class=" );
-    dump_unicode_string( req, req->class );
+    cur_pos += dump_varargs_unicode_str( req );
 }
 
 static void dump_set_key_value_request( const struct set_key_value_request *req )
@@ -1574,7 +1560,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_key_request,
     (dump_func)dump_delete_key_request,
     (dump_func)dump_enum_key_request,
-    (dump_func)dump_query_key_info_request,
     (dump_func)dump_set_key_value_request,
     (dump_func)dump_get_key_value_request,
     (dump_func)dump_enum_key_value_request,
@@ -1686,7 +1671,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_key_reply,
     (dump_func)0,
     (dump_func)dump_enum_key_reply,
-    (dump_func)dump_query_key_info_reply,
     (dump_func)0,
     (dump_func)dump_get_key_value_reply,
     (dump_func)dump_enum_key_value_reply,
@@ -1798,7 +1782,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_key",
     "delete_key",
     "enum_key",
-    "query_key_info",
     "set_key_value",
     "get_key_value",
     "enum_key_value",

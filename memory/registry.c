@@ -289,32 +289,58 @@ DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_len,
                             LPDWORD reserved, LPWSTR class, LPDWORD class_len, FILETIME *ft )
 {
-    DWORD ret, len, cls_len;
-    struct enum_key_request *req = get_req_buffer();
+    NTSTATUS status;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_NODE_INFORMATION *info = (KEY_NODE_INFORMATION *)buffer;
+    DWORD total_size;
 
     TRACE( "(0x%x,%ld,%p,%p(%ld),%p,%p,%p,%p)\n", hkey, index, name, name_len,
            name_len ? *name_len : -1, reserved, class, class_len, ft );
 
     if (reserved) return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    req->index = index;
-    if ((ret = reg_server_call( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
+    status = NtEnumerateKey( hkey, index, KeyNodeInformation,
+                             buffer, sizeof(buffer), &total_size );
 
-    len = strlenW( req->name ) + 1;
-    cls_len = strlenW( req->class ) + 1;
-    if (len > *name_len) return ERROR_MORE_DATA;
-    if (class_len && (cls_len > *class_len)) return ERROR_MORE_DATA;
-
-    memcpy( name, req->name, len * sizeof(WCHAR) );
-    *name_len = len - 1;
-    if (class_len)
+    while (status == STATUS_BUFFER_OVERFLOW)
     {
-        if (class) memcpy( class, req->class, cls_len * sizeof(WCHAR) );
-        *class_len = cls_len - 1;
+        /* retry with a dynamically allocated buffer */
+        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+        if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        info = (KEY_NODE_INFORMATION *)buf_ptr;
+        status = NtEnumerateKey( hkey, index, KeyNodeInformation,
+                                 buf_ptr, total_size, &total_size );
     }
-    if (ft) RtlSecondsSince1970ToTime( req->modif, ft );
-    return ERROR_SUCCESS;
+
+    if (!status)
+    {
+        DWORD len = info->NameLength / sizeof(WCHAR);
+        DWORD cls_len = info->ClassLength / sizeof(WCHAR);
+
+        if (ft) *ft = info->LastWriteTime;
+
+        if (len >= *name_len || (class_len && (cls_len >= *class_len)))
+            status = STATUS_BUFFER_OVERFLOW;
+        else
+        {
+            *name_len = len;
+            memcpy( name, info->Name, info->NameLength );
+            name[len] = 0;
+            if (class_len)
+            {
+                *class_len = cls_len;
+                if (class)
+                {
+                    memcpy( class, buf_ptr + info->ClassOffset, info->ClassLength );
+                    class[cls_len] = 0;
+                }
+            }
+        }
+    }
+
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -324,32 +350,64 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
 DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len,
                             LPDWORD reserved, LPSTR class, LPDWORD class_len, FILETIME *ft )
 {
-    DWORD ret, len, cls_len;
-    struct enum_key_request *req = get_req_buffer();
+    NTSTATUS status;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_NODE_INFORMATION *info = (KEY_NODE_INFORMATION *)buffer;
+    DWORD total_size;
 
     TRACE( "(0x%x,%ld,%p,%p(%ld),%p,%p,%p,%p)\n", hkey, index, name, name_len,
            name_len ? *name_len : -1, reserved, class, class_len, ft );
 
     if (reserved) return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    req->index = index;
-    if ((ret = reg_server_call( REQ_ENUM_KEY )) != ERROR_SUCCESS) return ret;
+    status = NtEnumerateKey( hkey, index, KeyNodeInformation,
+                             buffer, sizeof(buffer), &total_size );
 
-    len = strlenW( req->name ) + 1;
-    cls_len = strlenW( req->class ) + 1;
-    if (len > *name_len) return ERROR_MORE_DATA;
-    if (class_len && (cls_len > *class_len)) return ERROR_MORE_DATA;
-
-    memcpyWtoA( name, req->name, len );
-    *name_len = len - 1;
-    if (class_len)
+    while (status == STATUS_BUFFER_OVERFLOW)
     {
-        if (class) memcpyWtoA( class, req->class, cls_len );
-        *class_len = cls_len - 1;
+        /* retry with a dynamically allocated buffer */
+        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+        if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        info = (KEY_NODE_INFORMATION *)buf_ptr;
+        status = NtEnumerateKey( hkey, index, KeyNodeInformation,
+                                 buf_ptr, total_size, &total_size );
     }
-    if (ft) RtlSecondsSince1970ToTime( req->modif, ft );
-    return ERROR_SUCCESS;
+
+    if (!status)
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
+                                         NULL, 0, NULL, NULL );
+        DWORD cls_len = WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->ClassOffset),
+                                             info->ClassLength / sizeof(WCHAR),
+                                             NULL, 0, NULL, NULL );
+
+        if (ft) *ft = info->LastWriteTime;
+
+        if (len >= *name_len || (class_len && (cls_len >= *class_len)))
+            status = STATUS_BUFFER_OVERFLOW;
+        else
+        {
+            *name_len = len;
+            WideCharToMultiByte( CP_ACP, 0, info->Name, info->NameLength/sizeof(WCHAR),
+                                 name, len, NULL, NULL );
+            name[len] = 0;
+            if (class_len)
+            {
+                *class_len = cls_len;
+                if (class)
+                {
+                    WideCharToMultiByte( CP_ACP, 0, (WCHAR *)(buf_ptr + info->ClassOffset),
+                                         info->ClassLength / sizeof(WCHAR),
+                                         class, cls_len, NULL, NULL );
+                    class[cls_len] = 0;
+                }
+            }
+        }
+    }
+
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -398,9 +456,10 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
                                LPDWORD values, LPDWORD max_value, LPDWORD max_data,
                                LPDWORD security, FILETIME *modif )
 {
-    DWORD ret;
-    struct query_key_info_request *req = get_req_buffer();
-
+    NTSTATUS status;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_FULL_INFORMATION *info = (KEY_FULL_INFORMATION *)buffer;
+    DWORD total_size;
 
     TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
@@ -408,27 +467,48 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
     if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
         return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    if ((ret = reg_server_call( REQ_QUERY_KEY_INFO )) != ERROR_SUCCESS) return ret;
+    status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
 
     if (class)
     {
-        if (class_len && (strlenW(req->class) + 1 > *class_len))
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
         {
-            *class_len = strlenW(req->class);
-            return ERROR_MORE_DATA;
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_FULL_INFORMATION *)buf_ptr;
+            status = NtQueryKey( hkey, KeyFullInformation, buf_ptr, total_size, &total_size );
         }
-        strcpyW( class, req->class );
+
+        if (!status)
+        {
+            if (class_len && (info->ClassLength/sizeof(WCHAR) + 1 > *class_len))
+            {
+                status = STATUS_BUFFER_OVERFLOW;
+            }
+            else
+            {
+                memcpy( class, buf_ptr + info->ClassOffset, info->ClassLength );
+                class[info->ClassLength/sizeof(WCHAR)] = 0;
+            }
+        }
     }
-    if (class_len) *class_len = strlenW( req->class );
-    if (subkeys) *subkeys = req->subkeys;
-    if (max_subkey) *max_subkey = req->max_subkey;
-    if (max_class) *max_class = req->max_class;
-    if (values) *values = req->values;
-    if (max_value) *max_value = req->max_value;
-    if (max_data) *max_data = req->max_data;
-    if (modif) RtlSecondsSince1970ToTime( req->modif, modif );
-    return ERROR_SUCCESS;
+
+    if (!status || status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (class_len) *class_len = info->ClassLength / sizeof(WCHAR);
+        if (subkeys) *subkeys = info->SubKeys;
+        if (max_subkey) *max_subkey = info->MaxNameLen;
+        if (max_class) *max_class = info->MaxClassLen;
+        if (values) *values = info->Values;
+        if (max_value) *max_value = info->MaxValueNameLen;
+        if (max_data) *max_data = info->MaxValueDataLen;
+        if (modif) *modif = info->LastWriteTime;
+    }
+
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -440,9 +520,10 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
                                LPDWORD values, LPDWORD max_value, LPDWORD max_data,
                                LPDWORD security, FILETIME *modif )
 {
-    DWORD ret;
-    struct query_key_info_request *req = get_req_buffer();
-
+    NTSTATUS status;
+    char buffer[256], *buf_ptr = buffer;
+    KEY_FULL_INFORMATION *info = (KEY_FULL_INFORMATION *)buffer;
+    DWORD total_size;
 
     TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
@@ -450,27 +531,55 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
     if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
         return ERROR_INVALID_PARAMETER;
 
-    req->hkey = hkey;
-    if ((ret = reg_server_call( REQ_QUERY_KEY_INFO )) != ERROR_SUCCESS) return ret;
+    status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
 
-    if (class)
+    if (class || class_len)
     {
-        if (class_len && (strlenW(req->class) + 1 > *class_len))
+        /* retry with a dynamically allocated buffer */
+        while (status == STATUS_BUFFER_OVERFLOW)
         {
-            *class_len = strlenW(req->class);
-            return ERROR_MORE_DATA;
+            if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+            if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_FULL_INFORMATION *)buf_ptr;
+            status = NtQueryKey( hkey, KeyFullInformation, buf_ptr, total_size, &total_size );
         }
-        lstrcpyWtoA( class, req->class );
+
+        if (!status)
+        {
+            DWORD len = WideCharToMultiByte( CP_ACP, 0,
+                                             (WCHAR *)(buf_ptr + info->ClassOffset),
+                                             info->ClassLength/sizeof(WCHAR),
+                                             NULL, 0, NULL, NULL );
+            if (class_len)
+            {
+                if (len + 1 > *class_len) status = STATUS_BUFFER_OVERFLOW;
+                *class_len = len;
+            }
+            if (class && !status)
+            {
+                WideCharToMultiByte( CP_ACP, 0,
+                                     (WCHAR *)(buf_ptr + info->ClassOffset),
+                                     info->ClassLength/sizeof(WCHAR),
+                                     class, len, NULL, NULL );
+                class[len] = 0;
+            }
+        }
     }
-    if (class_len) *class_len = strlenW( req->class );
-    if (subkeys) *subkeys = req->subkeys;
-    if (max_subkey) *max_subkey = req->max_subkey;
-    if (max_class) *max_class = req->max_class;
-    if (values) *values = req->values;
-    if (max_value) *max_value = req->max_value;
-    if (max_data) *max_data = req->max_data;
-    if (modif) RtlSecondsSince1970ToTime( req->modif, modif );
-    return ERROR_SUCCESS;
+
+    if (!status || status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (subkeys) *subkeys = info->SubKeys;
+        if (max_subkey) *max_subkey = info->MaxNameLen;
+        if (max_class) *max_class = info->MaxClassLen;
+        if (values) *values = info->Values;
+        if (max_value) *max_value = info->MaxValueNameLen;
+        if (max_data) *max_data = info->MaxValueDataLen;
+        if (modif) *modif = info->LastWriteTime;
+    }
+
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -689,7 +798,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
     NTSTATUS status;
     UNICODE_STRING name_str;
     DWORD total_size;
-    char buffer[256];
+    char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
     static const int info_size = sizeof(*info) - sizeof(info->Data);
 
@@ -709,16 +818,15 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
 
     if (data)
     {
-        char *buf_ptr = buffer;
         /* retry with a dynamically allocated buffer */
         while (status == STATUS_BUFFER_OVERFLOW && total_size - info_size <= *count)
         {
             if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
             if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
-                status = STATUS_NO_MEMORY;
-            else
-                status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
-                                          buf_ptr, total_size, &total_size );
+                return ERROR_NOT_ENOUGH_MEMORY;
+            info = (KEY_VALUE_PARTIAL_INFORMATION *)buf_ptr;
+            status = NtQueryValueKey( hkey, &name_str, KeyValuePartialInformation,
+                                      buf_ptr, total_size, &total_size );
         }
 
         if (!status)
@@ -732,13 +840,14 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
                 if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
             }
         }
-        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+        else if (status != STATUS_BUFFER_OVERFLOW) goto done;
     }
 
     if (type) *type = info->Type;
     if (count) *count = total_size - info_size;
 
  done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
     return RtlNtStatusToDosError(status);
 }
 
@@ -756,7 +865,7 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
     ANSI_STRING nameA;
     UNICODE_STRING nameW;
     DWORD total_size;
-    char buffer[256];
+    char buffer[256], *buf_ptr = buffer;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
     static const int info_size = sizeof(*info) - sizeof(info->Data);
 
@@ -767,7 +876,8 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
 
     RtlInitAnsiString( &nameA, name );
     /* FIXME: should use Unicode buffer in TEB */
-    if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE ))) goto done;
+    if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
+        return RtlNtStatusToDosError(status);
 
     status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
                               buffer, sizeof(buffer), &total_size );
@@ -777,16 +887,18 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
      * because we need to compute the length of the ASCII string. */
     if (data || is_string(info->Type))
     {
-        char *buf_ptr = buffer;
         /* retry with a dynamically allocated buffer */
         while (status == STATUS_BUFFER_OVERFLOW)
         {
             if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
             if (!(buf_ptr = HeapAlloc( GetProcessHeap(), 0, total_size )))
+            {
                 status = STATUS_NO_MEMORY;
-            else
-                status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
-                                          buf_ptr, total_size, &total_size );
+                goto done;
+            }
+            info = (KEY_VALUE_PARTIAL_INFORMATION *)buf_ptr;
+            status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                                      buf_ptr, total_size, &total_size );
         }
 
         if (!status)
@@ -812,23 +924,16 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
                 total_size = len + info_size;
             }
             else if (data) memcpy( data, buf_ptr + info_size, total_size - info_size );
-
-            /* if the type is REG_SZ and data is not 0-terminated
-             * and there is enough space in the buffer NT appends a \0 */
-            if (total_size - info_size <= *count-sizeof(WCHAR) && is_string(info->Type))
-            {
-                WCHAR *ptr = (WCHAR *)(data + total_size - info_size);
-                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
-            }
         }
-        if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+        else if (status != STATUS_BUFFER_OVERFLOW) goto done;
     }
 
     if (type) *type = info->Type;
     if (count) *count = total_size - info_size;
-    RtlFreeUnicodeString( &nameW );
 
  done:
+    if (buf_ptr != buffer) HeapFree( GetProcessHeap(), 0, buf_ptr );
+    RtlFreeUnicodeString( &nameW );
     return RtlNtStatusToDosError(status);
 }
 
