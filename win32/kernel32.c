@@ -22,7 +22,6 @@
 #include "heap.h"
 #include "selectors.h"
 #include "task.h"
-#include "win.h"
 #include "file.h"
 #include "debug.h"
 #include "flatthunk.h"

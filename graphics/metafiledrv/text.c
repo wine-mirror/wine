@@ -6,13 +6,8 @@
  */
 
 #include <stdlib.h>
-#include "windows.h"
-#include "dc.h"
-#include "gdi.h"
-#include "callback.h"
-#include "heap.h"
+#include "windef.h"
 #include "metafile.h"
-#include "metafiledrv.h"
 #include "debug.h"
 #include "xmalloc.h"
 

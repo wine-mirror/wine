@@ -207,7 +207,7 @@
 #define PARTITION_EXTENDED              0x05      /* Extended partition entry */
 #define PARTITION_HUGE                  0x06      /* Huge partition MS-DOS V4 */
 #define PARTITION_IFS                   0x07      /* IFS Partition */
-#define PARTITION_FAT                 0x0B      /* FAT32 */
+#define PARTITION_FAT32                 0x0B      /* FAT32 */
 #define PARTITION_FAT32_XINT13          0x0C      /* FAT32 using extended int13 services */
 #define PARTITION_XINT13                0x0E      /* Win95 partition using extended int13 services */
 #define PARTITION_XINT13_EXTENDED       0x0F      /* Same as type 5 but uses extended int13 services */

@@ -76,7 +76,7 @@ static HRESULT WINAPI ISFDropTarget_QueryInterface(
 	}   
 
 	if(*ppvObj)
-	{ IDropTarget_AddRef((ISFDropTarget*)*ppvObj);
+	{ IDropTarget_AddRef((IDropTarget*)*ppvObj);
 	  TRACE(shell,"-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}

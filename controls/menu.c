@@ -561,13 +561,11 @@ static MENUITEM *MENU_FindItemByCoords( POPUPMENU *menu,
 					POINT pt, UINT *pos )
 {
     MENUITEM *item;
-    WND *wndPtr;
     UINT i;
+    RECT wrect;
 
-    if (!(wndPtr = WIN_FindWndPtr( menu->hWnd ))) return NULL;
-    pt.x -= wndPtr->rectWindow.left;
-    pt.y -= wndPtr->rectWindow.top;
-    WIN_ReleaseWndPtr(wndPtr);
+    if (!GetWindowRect(menu->hWnd,&wrect)) return NULL;
+    pt.x -= wrect.left;pt.y -= wrect.top;
     item = menu->items;
     for (i = 0; i < menu->nItems; i++, item++)
     {
@@ -4281,7 +4279,7 @@ BOOL WINAPI GetMenuItemRect (HWND hwnd, HMENU hMenu, UINT uItem,
 	 if (itemMenu == NULL) 
 	     return FALSE;
 
-	 if(itemMenu->hWnd == NULL)
+	 if(itemMenu->hWnd == 0)
 	     return FALSE;
 	 referenceHwnd = itemMenu->hWnd;
      }
