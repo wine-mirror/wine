@@ -27,33 +27,18 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "windows.h"
 #include "winerror.h"
+#include "ole.h"
 #include "ole2.h"
 #include "debug.h"
 #include "file.h"
 #include "heap.h"
 #include "ldt.h"
 #include "winreg.h"
-
-#define INITGUID
-
-/* FIXME: we include all the header files containing GUIDs 
- * so that the corresponding variables get defined. But they 
- * don't even all belong to the same DLL !!!
- */
-#include "objbase.h"
-#include "servprov.h"
-#include "shlobj.h"
-#include "ddraw.h"
-#include "d3d.h"
-#include "dinput.h"
-#include "dsound.h"
-#include "dplay.h"
 
 #include "objbase.h"
 
