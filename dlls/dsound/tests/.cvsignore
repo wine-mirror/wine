@@ -1,4 +1,5 @@
 Makefile
 dsound.ok
 dsound_test.exe.spec.c
+propset.ok
 testlist.c
