@@ -209,7 +209,8 @@ ULONG WINAPI CStdStubBuffer_Release(IRpcStubBuffer *This) \
   for (c=0; c<sz; c++) if (!name##_CHECK_IID(c)) { (index)=c; return 1; } \
   return 0;
 
-#if defined(__WINESRC__) && defined(__WINE_WINE_OBJ_OLEAUT_H)
+#if 0
+
 /* see http://msdn.microsoft.com/library/en-us/dnmsj99/html/com0199.asp?frame=true */
 
 RPCRTAPI HRESULT RPC_ENTRY
