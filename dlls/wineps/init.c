@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -33,11 +34,17 @@
 #include "winspool.h"
 #include "winerror.h"
 
-#ifdef HAVE_CUPS
-# include <cups/cups.h>
+WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
+
+#ifdef HAVE_CUPS_CUPS_H
+#include <cups/cups.h>
+
+#ifndef CUPS_SONAME
+#define CUPS_SONAME "libcups.so"
 #endif
 
-WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
+static void *cupshandle = NULL;
+#endif
 
 static PSDRV_DEVMODEA DefaultDevmode =
 {
@@ -127,12 +134,25 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 		HeapDestroy(PSDRV_Heap);
 		return FALSE;
 	    }
+#ifdef HAVE_CUPS_CUPS_H
+	    /* dynamically load CUPS if not yet loaded */
+	    if (!cupshandle) {
+		cupshandle = wine_dlopen(CUPS_SONAME, RTLD_NOW, NULL, 0);
+		if (!cupshandle) cupshandle = (void*)-1;
+	    }
+#endif
             break;
 
 	case DLL_PROCESS_DETACH:
 
 	    DeleteObject( PSDRV_DefaultFont );
 	    HeapDestroy( PSDRV_Heap );
+#ifdef HAVE_CUPS_CUPS_H
+	    if (cupshandle && (cupshandle != (void*)-1)) {
+		wine_dlclose(cupshandle, NULL, 0);
+		cupshandle = NULL;
+	    }
+#endif
             break;
     }
 
@@ -491,24 +511,28 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	goto cleanup;
     }
 
-#ifdef HAVE_CUPS
-    {
-	ppd = cupsGetPPD(name);
+#ifdef HAVE_CUPS_CUPS_H
+    if (cupshandle != (void*)-1) {
+	typeof(cupsGetPPD) * pcupsGetPPD = NULL;
 
-	if (ppd) {
-	    needed=strlen(ppd)+1;
-	    ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
-	    memcpy(ppdFileName, ppd, needed);
-	    ppdType=REG_SZ;
-	    res = ERROR_SUCCESS;
-	    /* we should unlink() that file later */
-	} else {
-	    res = ERROR_FILE_NOT_FOUND;
-	    WARN("Did not find ppd for %s\n",name);
+	pcupsGetPPD = wine_dlsym(cupshandle, "cupsGetPPD", NULL, 0);
+	if (pcupsGetPPD) {
+	    ppd = pcupsGetPPD(name);
+
+	    if (ppd) {
+		needed=strlen(ppd)+1;
+		ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
+		memcpy(ppdFileName, ppd, needed);
+		ppdType=REG_SZ;
+		res = ERROR_SUCCESS;
+		/* we should unlink() that file later */
+	    } else {
+		res = ERROR_FILE_NOT_FOUND;
+		WARN("Did not find ppd for %s\n",name);
+	    }
 	}
     }
 #endif
-
     if (!ppdFileName) {
         res = GetPrinterDataA(hPrinter, "PPD File", NULL, NULL, 0, &needed);
         if ((res==ERROR_SUCCESS) || (res==ERROR_MORE_DATA)) {

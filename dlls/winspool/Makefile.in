@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winspool.drv
 IMPORTS   = advapi32 kernel32
-EXTRALIBS = @CUPSLIBS@
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -56,8 +56,8 @@
 /* Define if we have linux/input.h AND it contains the INPUT event API */
 #undef HAVE_CORRECT_LINUXINPUT_H
 
-/* Define if we have CUPS */
-#undef HAVE_CUPS
+/* Define to 1 if you have the <cups/cups.h> header file. */
+#undef HAVE_CUPS_CUPS_H
 
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
@@ -685,6 +685,9 @@
 
 /* The size of a `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* Define to the soname of the libcups library. */
+#undef SONAME_LIBCUPS
 
 /* Define to the soname of the libfreetype library. */
 #undef SONAME_LIBFREETYPE

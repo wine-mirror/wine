@@ -23,14 +23,19 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+#include "wine/library.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
-#ifdef HAVE_CUPS
+#ifdef HAVE_CUPS_CUPS_H
 # include <cups/cups.h>
+# ifndef CUPS_SONAME
+#  define CUPS_SONAME "libcups.so"
+# endif
 #endif
 #include "winspool.h"
 #include "winbase.h"
@@ -115,21 +120,39 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     }
 }
 
-#ifdef HAVE_CUPS
+#ifdef HAVE_CUPS_CUPS_H
 BOOL
 CUPS_LoadPrinters(void) {
+    typeof(cupsGetPrinters) *pcupsGetPrinters = NULL;
+    typeof(cupsGetDefault) *pcupsGetDefault = NULL;
+    typeof(cupsGetPPD) *pcupsGetPPD = NULL;
     char		**printers;
     int			i,nrofdests,hadprinter = FALSE;
     PRINTER_INFO_2A	pinfo2a;
-    const char*		def = cupsGetDefault();
+    const char*		def;
+    void *cupshandle = NULL;
 
-    nrofdests = cupsGetPrinters(&printers);
+    cupshandle = wine_dlopen(CUPS_SONAME, RTLD_NOW, NULL, 0);
+    if (!cupshandle) 
+	return FALSE;
+
+#define DYNCUPS(x) 					\
+    	p##x = wine_dlsym(cupshandle, #x, NULL,0);	\
+	if (!p##x) return FALSE;
+
+    DYNCUPS(cupsGetDefault);
+    DYNCUPS(cupsGetPPD);
+    DYNCUPS(cupsGetPrinters);
+#undef DYNCUPS
+
+    def = pcupsGetDefault();
 
     if (def && !strcmp(def,"none")) /* CUPS has "none" for no default printer */
     	def = NULL;
 
+    nrofdests = pcupsGetPrinters(&printers);
     for (i=0;i<nrofdests;i++) {
-	const char *ppd = cupsGetPPD(printers[i]);
+	const char *ppd = pcupsGetPPD(printers[i]);
 	char	*port,*devline;
 
 	if (!ppd) {
@@ -180,6 +203,7 @@ CUPS_LoadPrinters(void) {
 	}
 	HeapFree(GetProcessHeap(),0,port);
     }
+    wine_dlclose(cupshandle, NULL, 0);
     return hadprinter;
 }
 #endif
@@ -341,7 +365,7 @@ WINSPOOL_LoadSystemPrinters() {
 	ERR("Failed adding PS Driver (%ld)\n",GetLastError());
         return;
     }
-#ifdef HAVE_CUPS
+#ifdef HAVE_CUPS_CUPS_H
     /* If we have any CUPS based printers, skip looking for printcap printers */
     if (CUPS_LoadPrinters())
 	return;
@@ -1827,7 +1851,7 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
     RegCloseKey(hkeyPrinter);
     RegCloseKey(hkeyPrinters);
 
-    TRACE("returing %d needed = %ld\n", ret, needed);
+    TRACE("returning %d needed = %ld\n", ret, needed);
     if(pcbNeeded) *pcbNeeded = needed;
     if(!ret)
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -2544,10 +2568,12 @@ BOOL WINAPI EnumJobsA(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
 		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
 		      LPDWORD pcReturned)
 {
-    FIXME("stub\n");
+    FIXME("(%p,first=%ld,no=%ld,level=%ld,job=%p,cb=%ld,%p,%p), stub!\n",
+	hPrinter, FirstJob, NoJobs, Level, pJob, cbBuf, pcbNeeded, pcReturned
+    );
     if(pcbNeeded) *pcbNeeded = 0;
     if(pcReturned) *pcReturned = 0;
-    return TRUE;
+    return FALSE;
 }
 
 
@@ -2559,10 +2585,12 @@ BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
 		      DWORD Level, LPBYTE pJob, DWORD cbBuf, LPDWORD pcbNeeded,
 		      LPDWORD pcReturned)
 {
-    FIXME("stub\n");
+    FIXME("(%p,first=%ld,no=%ld,level=%ld,job=%p,cb=%ld,%p,%p), stub!\n",
+	hPrinter, FirstJob, NoJobs, Level, pJob, cbBuf, pcbNeeded, pcReturned
+    );
     if(pcbNeeded) *pcbNeeded = 0;
     if(pcReturned) *pcReturned = 0;
-    return TRUE;
+    return FALSE;
 }
 
 /*****************************************************************************

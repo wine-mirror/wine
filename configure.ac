@@ -362,17 +362,6 @@ then
 fi
 AC_SUBST(CURSESLIBS)
 
-CUPSLIBS=""
-dnl **** Check for CUPS ****
-wine_cv_warn_cups_h=no
-AC_CHECK_LIB(cups,cupsGetPPD,
-	[AC_CHECK_HEADER(cups/cups.h,
-	    [AC_DEFINE(HAVE_CUPS, 1, [Define if we have CUPS])
-	    CUPSLIBS="-lcups"],
-            wine_cv_warn_cups_h=yes)]
-)
-AC_SUBST(CUPSLIBS)
-
 dnl **** Check for SANE ****
 AC_CHECK_PROG(sane_devel,sane-config,sane-config,no)
 if test "$sane_devel" = "no"
@@ -856,6 +845,7 @@ then
   WINE_GET_SONAME(Xext,XextCreateExtension,[$X_LIBS -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrender,XRenderQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
+  WINE_GET_SONAME(cups,cupsGetDefault)
 fi
 
 
@@ -969,6 +959,7 @@ dnl **** Check for header files ****
 AC_CHECK_HEADERS(\
 	arpa/inet.h \
 	arpa/nameser.h \
+	cups/cups.h \
 	direct.h \
 	elf.h \
 	float.h \
@@ -1595,14 +1586,6 @@ then
   echo "*** Warning: you explicitly linked in a thread-safe OpenGL version. If you"
   echo "*** experience unusual crashes on DirectDraw games, try first to disable OpenGL"
   echo "*** support before reporting bugs."
-fi
-
-if test "$wine_cv_warn_cups_h" = "yes"
-then
-  echo
-  echo "*** Note: You have cups runtime libraries, but no development"
-  echo "*** libraries. Install the cups-devel package or whichever package"
-  echo "*** contains cups.h to enable CUPS support in Wine."
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
