@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winetest.exe
-APPMODE   = gui
-IMPORTS   = comctl32 user32 wsock32
+APPMODE   = -mwindows
+IMPORTS   = comctl32 wsock32
 
 C_SRCS = \
 	gui.c \

@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winecfg.exe
-APPMODE   = gui
-IMPORTS   = comdlg32 comctl32 user32 advapi32
+APPMODE   = -mwindows
+IMPORTS   = comctl32
 
 C_SRCS = \
 	appdefaults.c \

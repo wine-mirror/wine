@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winhelp.exe
-APPMODE   = gui
-IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32
+APPMODE   = -mwindows
 PROGRAMS  = hlp2sgml
 
 C_SRCS = \

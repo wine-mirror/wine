@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wcmd.exe
-APPMODE   = cui
-IMPORTS   = shell32 user32 kernel32
+APPMODE   = -mconsole
+IMPORTS   = shell32
 
 C_SRCS = \
 	batch.c \

@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winver.exe
-APPMODE   = gui
-IMPORTS   = shell32 kernel32
+APPMODE   = -mwindows
 
 C_SRCS = winver.c
 

@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winevdm.exe
-APPMODE   = cui
-IMPORTS   = winedos kernel32
+APPMODE   = -mconsole
+IMPORTS   = winedos
 
 C_SRCS = \
 	winevdm.c

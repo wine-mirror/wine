@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regsvr32.exe
-APPMODE   = cui
-IMPORTS   = kernel32
+APPMODE   = -mconsole
 
 C_SRCS = \
 	regsvr32.c

@@ -15,21 +15,16 @@ ALL_OBJS    = $(OBJS) $(MODULE).dbg.o
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 BASEMODULE  = $(MODULE:.exe=)
 TESTIMPORTS = $(DELAYIMPORTS) $(IMPORTS)
-RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR) $(PLTESTPROGRAM:%=-p %)
+RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR)
 
 @MAKE_RULES@
 
 all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 
-# Rule for main module spec file
-
-$(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe $(MODULE) $(APPMODE:%=--mode %) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
-
 # Rules for .so main module
 
-$(MODULE).so: $(MODULE).spec.o $(ALL_OBJS) Makefile.in
-	$(LDDLL) $(MODULE).spec.o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(ALL_LIBS) -lc
+$(MODULE).so: $(ALL_OBJS) $(RC_SRCS:.rc=.res) Makefile.in
+	WINEBUILD=$(WINEBUILD) $(WINEGCC) $(APPMODE) $(ALL_OBJS) $(RC_SRCS:.rc=.res) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(IMPORTS:%=-l%) $(ALL_LIBS) -lc
 
 $(BASEMODULE): $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
@@ -37,7 +32,7 @@ $(BASEMODULE): $(WINEWRAPPER)
 # Rules for .exe main module
 
 $(MODULE): $(ALL_OBJS) $(RCOBJS) Makefile.in
-	$(CC) $(ALL_OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+	$(CC) $(APPMODE) $(ALL_OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for testing
 

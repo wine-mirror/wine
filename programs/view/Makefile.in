@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = view.exe
-APPMODE   = gui
-IMPORTS   = comdlg32 user32 gdi32 kernel32
+APPMODE   = -mwindows
 
 C_SRCS = \
 	init.c \
