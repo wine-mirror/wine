@@ -287,271 +287,6 @@ typedef struct
 /* DIB Section sync state */
 enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };
 
-extern int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse,
-				      WORD depth, const BITMAPINFO *info,
-				      int *nColors );
-extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
-extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
-extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
-extern INT X11DRV_CoerceDIBSection2(HBITMAP bmp,INT,BOOL);
-extern INT X11DRV_LockDIBSection2(HBITMAP bmp,INT,BOOL);
-extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
-
-extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
-                                           VOID **bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
-extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
-extern INT X11DRV_DIB_Coerce(struct tagBITMAPOBJ *,INT,BOOL);
-extern INT X11DRV_DIB_Lock(struct tagBITMAPOBJ *,INT,BOOL);
-extern void X11DRV_DIB_Unlock(struct tagBITMAPOBJ *,BOOL);
-void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                               DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
-                               DWORD width, DWORD height);
-struct _DCICMD;
-extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lpOutData);
-
-/**************************************************************************
- * X11 GDI driver
- */
-
-extern void X11DRV_GDI_Initialize( Display *display );
-extern void X11DRV_GDI_Finalize(void);
-
-extern Display *gdi_display;  /* display to use for all GDI functions */
-
-/* X11 GDI palette driver */
-
-#define X11DRV_PALETTE_FIXED    0x0001 /* read-only colormap - have to use XAllocColor (if not virtual) */
-#define X11DRV_PALETTE_VIRTUAL  0x0002 /* no mapping needed - pixel == pixel color */
-
-#define X11DRV_PALETTE_PRIVATE  0x1000 /* private colormap, identity mapping */
-#define X11DRV_PALETTE_WHITESET 0x2000
-
-extern Colormap X11DRV_PALETTE_PaletteXColormap;
-extern UINT16 X11DRV_PALETTE_PaletteFlags;
-
-extern int *X11DRV_PALETTE_PaletteToXPixel;
-extern int *X11DRV_PALETTE_XPixelToPalette;
-
-extern int X11DRV_PALETTE_mapEGAPixel[16];
-
-extern int X11DRV_PALETTE_Init(void);
-extern void X11DRV_PALETTE_Cleanup(void);
-extern BOOL X11DRV_IsSolidColor(COLORREF color);
-
-extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
-extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
-
-/* GDI escapes */
-
-#define X11DRV_ESCAPE 6789
-enum x11drv_escape_codes
-{
-    X11DRV_GET_DISPLAY,      /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,     /* get current drawable for a DC */
-    X11DRV_GET_FONT,         /* get current X font for a DC */
-    X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
-    X11DRV_START_EXPOSURES,  /* start graphics exposures */
-    X11DRV_END_EXPOSURES,    /* end graphics exposures */
-};
-
-struct x11drv_escape_set_drawable
-{
-    enum x11drv_escape_codes code;         /* escape code (X11DRV_SET_DRAWABLE) */
-    Drawable                 drawable;     /* X drawable */
-    int                      mode;         /* ClipByChildren or IncludeInferiors */
-    POINT                    org;          /* origin of DC relative to drawable */
-    POINT                    drawable_org; /* origin of drawable relative to screen */
-};
-
-/**************************************************************************
- * X11 USER driver
- */
-
-struct x11drv_thread_data
-{
-    Display *display;
-    HANDLE   display_fd;
-    int      process_event_count;  /* recursion count for event processing */
-    Cursor   cursor;               /* current cursor */
-    Window   cursor_window;        /* current window that contains the cursor */
-    HWND     last_focus;           /* last window that had focus */
-    XIM      xim;                  /* input method */
-    Window   selection_wnd;        /* window used for selection interactions */
-};
-
-extern struct x11drv_thread_data *x11drv_init_thread_data(void);
-
-inline static struct x11drv_thread_data *x11drv_thread_data(void)
-{
-    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
-    if (!data) data = x11drv_init_thread_data();
-    return data;
-}
-
-inline static Display *thread_display(void) { return x11drv_thread_data()->display; }
-
-extern Visual *visual;
-extern Window root_window;
-extern DWORD desktop_tid;
-extern unsigned int screen_width;
-extern unsigned int screen_height;
-extern unsigned int screen_depth;
-extern unsigned int text_caps;
-extern int use_xkb;
-extern int use_take_focus;
-extern int managed_mode;
-
-/* atoms */
-
-enum x11drv_atoms
-{
-    FIRST_XATOM = XA_LAST_PREDEFINED + 1,
-    XATOM_CLIPBOARD = FIRST_XATOM,
-    XATOM_COMPOUND_TEXT,
-    XATOM_MULTIPLE,
-    XATOM_SELECTION_DATA,
-    XATOM_TARGETS,
-    XATOM_TEXT,
-    XATOM_UTF8_STRING,
-    XATOM_RAW_ASCENT,
-    XATOM_RAW_DESCENT,
-    XATOM_RAW_CAP_HEIGHT,
-    XATOM_WM_PROTOCOLS,
-    XATOM_WM_DELETE_WINDOW,
-    XATOM_WM_TAKE_FOCUS,
-    XATOM_KWM_DOCKWINDOW,
-    XATOM_DndProtocol,
-    XATOM_DndSelection,
-    XATOM__MOTIF_WM_HINTS,
-    XATOM__KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR,
-    XATOM__NET_WM_MOVERESIZE,
-    XATOM__NET_WM_PID,
-    XATOM__NET_WM_PING,
-    XATOM__NET_WM_NAME,
-    XATOM__NET_WM_WINDOW_TYPE,
-    XATOM__NET_WM_WINDOW_TYPE_UTILITY,
-    XATOM_XdndAware,
-    XATOM_XdndEnter,
-    XATOM_XdndPosition,
-    XATOM_XdndStatus,
-    XATOM_XdndLeave,
-    XATOM_XdndFinished,
-    XATOM_XdndDrop,
-    XATOM_XdndActionCopy,
-    XATOM_XdndActionMove,
-    XATOM_XdndActionLink,
-    XATOM_XdndActionAsk,
-    XATOM_XdndActionPrivate,
-    XATOM_XdndSelection,
-    XATOM_XdndTarget,
-    XATOM_XdndTypeList,
-    XATOM_WCF_DIB,
-    XATOM_image_gif,
-    XATOM_text_html,
-    XATOM_text_plain,
-    XATOM_text_rtf,
-    XATOM_text_richtext,
-    NB_XATOMS
-};
-
-extern Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
-
-#define x11drv_atom(name) (X11DRV_Atoms[XATOM_##name - FIRST_XATOM])
-
-/* X11 event driver */
-
-typedef void (*x11drv_event_handler)( HWND hwnd, XEvent *event );
-
-extern void X11DRV_register_event_handler( int type, x11drv_event_handler handler );
-
-extern void X11DRV_ButtonPress( HWND hwnd, XEvent *event );
-extern void X11DRV_ButtonRelease( HWND hwnd, XEvent *event );
-extern void X11DRV_MotionNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_EnterNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_KeyEvent( HWND hwnd, XEvent *event );
-extern void X11DRV_KeymapNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_Expose( HWND hwnd, XEvent *event );
-extern void X11DRV_MapNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_UnmapNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
-extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event );
-extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event );
-extern void X11DRV_MappingNotify( HWND hWnd, XEvent *event );
-extern void X11DRV_DGAMotionEvent( HWND hwnd, XEvent *event );
-extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XEvent *event );
-extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XEvent *event );
-
-extern DWORD EVENT_x11_time_to_win32_time(Time time);
-
-/* X11 driver private messages, must be in the range 0x80001000..0x80001fff */
-enum x11drv_window_messages
-{
-    WM_X11DRV_ACQUIRE_SELECTION = 0x80001000
-};
-
-/* x11drv private window data */
-struct x11drv_win_data
-{
-    HWND    hwnd;           /* hwnd that this private data belongs to */
-    Window  whole_window;   /* X window for the complete window */
-    Window  icon_window;    /* X window for the icon */
-    RECT    window_rect;    /* USER window rectangle relative to parent */
-    RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
-    RECT    client_rect;    /* client area relative to whole window */
-    XIC     xic;            /* X input context */
-    BOOL    managed;        /* is window managed? */
-    HBITMAP hWMIconBitmap;
-    HBITMAP hWMIconMask;
-};
-
-extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
-extern POINT X11DRV_get_client_area_offset( HWND hwnd );
-extern Window X11DRV_get_whole_window( HWND hwnd );
-extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
-extern XIC X11DRV_get_ic( HWND hwnd );
-
-
-/* X context to associate a hwnd to an X window */
-extern XContext winContext;
-
-extern void X11DRV_InitClipboard(void);
-extern void X11DRV_AcquireClipboard(HWND hWndClipWindow);
-extern void X11DRV_SetFocus( HWND hwnd );
-extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
-
-typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );
-
-extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
-extern int X11DRV_check_error(void);
-extern void X11DRV_set_iconic_state( HWND hwnd );
-extern void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect );
-extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect );
-extern void X11DRV_create_desktop_thread(void);
-extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
-extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );
-extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
-                                         UINT swp_flags, const RECT *new_client_rect,
-                                         const RECT *new_whole_rect );
-extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
-                                   const RECT *rectClient, UINT swp_flags, const RECT *validRects );
-extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
-
-extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);
-extern void X11DRV_Settings_AddDepthModes(void);
-extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq);
-extern int X11DRV_Settings_CreateDriver(LPDDHALINFO info);
-extern LPDDHALMODEINFO X11DRV_Settings_CreateModes(unsigned int max_modes, int reserve_depths);
-unsigned int X11DRV_Settings_GetModeCount(void);
-void X11DRV_Settings_Init(void);
-extern void X11DRV_Settings_SetDefaultMode(int mode);
-LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name, 
-                                            int (*pNewGCM)(void), 
-                                            void (*pNewSCM)(int), 
-                                            unsigned int nmodes, 
-                                            int reserve_depths);
-
-
-
 typedef struct {
     void (*Convert_5x5_asis)(int width, int height,
                              const void* srcbits, int srclinebytes,
@@ -682,5 +417,275 @@ typedef struct {
 extern const dib_conversions dib_normal, dib_src_byteswap, dib_dst_byteswap;
 
 extern INT X11DRV_DIB_MaskToShift(DWORD mask);
+extern int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse,
+				      WORD depth, const BITMAPINFO *info,
+				      int *nColors );
+extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
+extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
+extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
+extern INT X11DRV_CoerceDIBSection2(HBITMAP bmp,INT,BOOL);
+extern INT X11DRV_LockDIBSection2(HBITMAP bmp,INT,BOOL);
+extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
+
+extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
+                                           VOID **bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
+extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
+extern INT X11DRV_DIB_Coerce(struct tagBITMAPOBJ *,INT,BOOL);
+extern INT X11DRV_DIB_Lock(struct tagBITMAPOBJ *,INT,BOOL);
+extern void X11DRV_DIB_Unlock(struct tagBITMAPOBJ *,BOOL);
+void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
+                               DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
+                               DWORD width, DWORD height);
+struct _DCICMD;
+extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lpOutData);
+
+/**************************************************************************
+ * X11 GDI driver
+ */
+
+extern void X11DRV_GDI_Initialize( Display *display );
+extern void X11DRV_GDI_Finalize(void);
+
+extern Display *gdi_display;  /* display to use for all GDI functions */
+
+/* X11 GDI palette driver */
+
+#define X11DRV_PALETTE_FIXED    0x0001 /* read-only colormap - have to use XAllocColor (if not virtual) */
+#define X11DRV_PALETTE_VIRTUAL  0x0002 /* no mapping needed - pixel == pixel color */
+
+#define X11DRV_PALETTE_PRIVATE  0x1000 /* private colormap, identity mapping */
+#define X11DRV_PALETTE_WHITESET 0x2000
+
+extern Colormap X11DRV_PALETTE_PaletteXColormap;
+extern UINT16 X11DRV_PALETTE_PaletteFlags;
+
+extern int *X11DRV_PALETTE_PaletteToXPixel;
+extern int *X11DRV_PALETTE_XPixelToPalette;
+
+extern int X11DRV_PALETTE_mapEGAPixel[16];
+
+extern int X11DRV_PALETTE_Init(void);
+extern void X11DRV_PALETTE_Cleanup(void);
+extern BOOL X11DRV_IsSolidColor(COLORREF color);
+
+extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
+extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
+
+/* GDI escapes */
+
+#define X11DRV_ESCAPE 6789
+enum x11drv_escape_codes
+{
+    X11DRV_GET_DISPLAY,      /* get X11 display for a DC */
+    X11DRV_GET_DRAWABLE,     /* get current drawable for a DC */
+    X11DRV_GET_FONT,         /* get current X font for a DC */
+    X11DRV_SET_DRAWABLE,     /* set current drawable for a DC */
+    X11DRV_START_EXPOSURES,  /* start graphics exposures */
+    X11DRV_END_EXPOSURES,    /* end graphics exposures */
+};
+
+struct x11drv_escape_set_drawable
+{
+    enum x11drv_escape_codes code;         /* escape code (X11DRV_SET_DRAWABLE) */
+    Drawable                 drawable;     /* X drawable */
+    int                      mode;         /* ClipByChildren or IncludeInferiors */
+    POINT                    org;          /* origin of DC relative to drawable */
+    POINT                    drawable_org; /* origin of drawable relative to screen */
+};
+
+/**************************************************************************
+ * X11 USER driver
+ */
+
+struct x11drv_thread_data
+{
+    Display *display;
+    HANDLE   display_fd;
+    int      process_event_count;  /* recursion count for event processing */
+    Cursor   cursor;               /* current cursor */
+    Window   cursor_window;        /* current window that contains the cursor */
+    HWND     last_focus;           /* last window that had focus */
+    XIM      xim;                  /* input method */
+    Window   selection_wnd;        /* window used for selection interactions */
+};
+
+extern struct x11drv_thread_data *x11drv_init_thread_data(void);
+
+inline static struct x11drv_thread_data *x11drv_thread_data(void)
+{
+    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
+    if (!data) data = x11drv_init_thread_data();
+    return data;
+}
+
+inline static Display *thread_display(void) { return x11drv_thread_data()->display; }
+
+extern Visual *visual;
+extern Window root_window;
+extern DWORD desktop_tid;
+extern unsigned int screen_width;
+extern unsigned int screen_height;
+extern unsigned int screen_depth;
+extern unsigned int text_caps;
+extern int use_xkb;
+extern int use_take_focus;
+extern int managed_mode;
+
+extern BYTE key_state_table[256];
+extern POINT cursor_pos;
+
+/* atoms */
+
+enum x11drv_atoms
+{
+    FIRST_XATOM = XA_LAST_PREDEFINED + 1,
+    XATOM_CLIPBOARD = FIRST_XATOM,
+    XATOM_COMPOUND_TEXT,
+    XATOM_MULTIPLE,
+    XATOM_SELECTION_DATA,
+    XATOM_TARGETS,
+    XATOM_TEXT,
+    XATOM_UTF8_STRING,
+    XATOM_RAW_ASCENT,
+    XATOM_RAW_DESCENT,
+    XATOM_RAW_CAP_HEIGHT,
+    XATOM_WM_PROTOCOLS,
+    XATOM_WM_DELETE_WINDOW,
+    XATOM_WM_TAKE_FOCUS,
+    XATOM_KWM_DOCKWINDOW,
+    XATOM_DndProtocol,
+    XATOM_DndSelection,
+    XATOM__MOTIF_WM_HINTS,
+    XATOM__KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR,
+    XATOM__NET_WM_MOVERESIZE,
+    XATOM__NET_WM_PID,
+    XATOM__NET_WM_PING,
+    XATOM__NET_WM_NAME,
+    XATOM__NET_WM_WINDOW_TYPE,
+    XATOM__NET_WM_WINDOW_TYPE_UTILITY,
+    XATOM_XdndAware,
+    XATOM_XdndEnter,
+    XATOM_XdndPosition,
+    XATOM_XdndStatus,
+    XATOM_XdndLeave,
+    XATOM_XdndFinished,
+    XATOM_XdndDrop,
+    XATOM_XdndActionCopy,
+    XATOM_XdndActionMove,
+    XATOM_XdndActionLink,
+    XATOM_XdndActionAsk,
+    XATOM_XdndActionPrivate,
+    XATOM_XdndSelection,
+    XATOM_XdndTarget,
+    XATOM_XdndTypeList,
+    XATOM_WCF_DIB,
+    XATOM_image_gif,
+    XATOM_text_html,
+    XATOM_text_plain,
+    XATOM_text_rtf,
+    XATOM_text_richtext,
+    NB_XATOMS
+};
+
+extern Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
+
+#define x11drv_atom(name) (X11DRV_Atoms[XATOM_##name - FIRST_XATOM])
+
+/* X11 event driver */
+
+typedef void (*x11drv_event_handler)( HWND hwnd, XEvent *event );
+
+extern void X11DRV_register_event_handler( int type, x11drv_event_handler handler );
+
+extern void X11DRV_ButtonPress( HWND hwnd, XEvent *event );
+extern void X11DRV_ButtonRelease( HWND hwnd, XEvent *event );
+extern void X11DRV_MotionNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_EnterNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_KeyEvent( HWND hwnd, XEvent *event );
+extern void X11DRV_KeymapNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_Expose( HWND hwnd, XEvent *event );
+extern void X11DRV_MapNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_UnmapNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event );
+extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event );
+extern void X11DRV_MappingNotify( HWND hWnd, XEvent *event );
+extern void X11DRV_DGAMotionEvent( HWND hwnd, XEvent *event );
+extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XEvent *event );
+extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XEvent *event );
+
+extern DWORD EVENT_x11_time_to_win32_time(Time time);
+
+/* X11 driver private messages, must be in the range 0x80001000..0x80001fff */
+enum x11drv_window_messages
+{
+    WM_X11DRV_ACQUIRE_SELECTION = 0x80001000
+};
+
+/* x11drv private window data */
+struct x11drv_win_data
+{
+    HWND    hwnd;           /* hwnd that this private data belongs to */
+    Window  whole_window;   /* X window for the complete window */
+    Window  icon_window;    /* X window for the icon */
+    RECT    window_rect;    /* USER window rectangle relative to parent */
+    RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
+    RECT    client_rect;    /* client area relative to whole window */
+    XIC     xic;            /* X input context */
+    BOOL    managed;        /* is window managed? */
+    HBITMAP hWMIconBitmap;
+    HBITMAP hWMIconMask;
+};
+
+extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
+extern POINT X11DRV_get_client_area_offset( HWND hwnd );
+extern Window X11DRV_get_whole_window( HWND hwnd );
+extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
+extern XIC X11DRV_get_ic( HWND hwnd );
+
+
+/* X context to associate a hwnd to an X window */
+extern XContext winContext;
+
+extern void X11DRV_InitClipboard(void);
+extern void X11DRV_AcquireClipboard(HWND hWndClipWindow);
+extern void X11DRV_SetFocus( HWND hwnd );
+extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
+extern void X11DRV_InitKeyboard(void);
+extern void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,
+                                        DWORD dwExtraInfo, UINT injected_flags );
+extern void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
+                                     DWORD data, DWORD time, DWORD extra_info, UINT injected_flags );
+
+typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );
+
+extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
+extern int X11DRV_check_error(void);
+extern void X11DRV_set_iconic_state( HWND hwnd );
+extern void X11DRV_window_to_X_rect( struct x11drv_win_data *data, RECT *rect );
+extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect );
+extern void X11DRV_create_desktop_thread(void);
+extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
+extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );
+extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
+                                         UINT swp_flags, const RECT *new_client_rect,
+                                         const RECT *new_whole_rect );
+extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
+                                   const RECT *rectClient, UINT swp_flags, const RECT *validRects );
+extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
+
+extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);
+extern void X11DRV_Settings_AddDepthModes(void);
+extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq);
+extern int X11DRV_Settings_CreateDriver(LPDDHALINFO info);
+extern LPDDHALMODEINFO X11DRV_Settings_CreateModes(unsigned int max_modes, int reserve_depths);
+unsigned int X11DRV_Settings_GetModeCount(void);
+void X11DRV_Settings_Init(void);
+extern void X11DRV_Settings_SetDefaultMode(int mode);
+LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name, 
+                                            int (*pNewGCM)(void), 
+                                            void (*pNewSCM)(int), 
+                                            unsigned int nmodes, 
+                                            int reserve_depths);
 
 #endif  /* __WINE_X11DRV_H */

@@ -951,3 +951,32 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         return 0;
     }
 }
+
+
+/***********************************************************************
+ *		X11DRV_SendInput  (X11DRV.@)
+ */
+UINT X11DRV_SendInput( UINT count, LPINPUT inputs, int size )
+{
+    UINT i;
+
+    for (i = 0; i < count; i++, inputs++)
+    {
+        switch(inputs->type)
+        {
+        case INPUT_MOUSE:
+            X11DRV_send_mouse_input( 0, inputs->u.mi.dwFlags, inputs->u.mi.dx, inputs->u.mi.dy,
+                                     inputs->u.mi.mouseData, inputs->u.mi.time,
+                                     inputs->u.mi.dwExtraInfo, LLMHF_INJECTED );
+            break;
+        case INPUT_KEYBOARD:
+            X11DRV_send_keyboard_input( inputs->u.ki.wVk, inputs->u.ki.wScan, inputs->u.ki.dwFlags,
+                                        inputs->u.ki.time, inputs->u.ki.dwExtraInfo, LLKHF_INJECTED );
+            break;
+        case INPUT_HARDWARE:
+            FIXME( "INPUT_HARDWARE not supported\n" );
+            break;
+        }
+    }
+    return count;
+}

@@ -394,6 +394,8 @@ static BOOL process_attach(void)
     X11DRV_XF86DGA2_Init();
 #endif
 
+    X11DRV_InitKeyboard();
+
     return TRUE;
 }
 

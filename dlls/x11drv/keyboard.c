@@ -48,17 +48,47 @@
 #include "winnls.h"
 #include "win.h"
 #include "x11drv.h"
+#include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
-WINE_DECLARE_DEBUG_CHANNEL(dinput);
+
+typedef union
+{
+    struct
+    {
+#ifndef BITFIELDS_BIGENDIAN
+        unsigned long count : 16;
+#endif
+        unsigned long code : 8;
+        unsigned long extended : 1;
+        unsigned long unused : 2;
+        unsigned long win_internal : 2;
+        unsigned long context : 1;
+        unsigned long previous : 1;
+        unsigned long transition : 1;
+#ifdef BITFIELDS_BIGENDIAN
+        unsigned long count : 16;
+#endif
+    } lp1;
+    unsigned long lp2;
+} KEYLP;
+
+/* key state table bits:
+  0x80 -> key is pressed
+  0x40 -> key got pressed since last time
+  0x01 -> key is toggled
+*/
+BYTE key_state_table[256];
+
+static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
+                                or a WM_KEYUP message */
 
 static int min_keycode, max_keycode, keysyms_per_keycode;
 static WORD keyc2vkey[256], keyc2scan[256];
 
-static LPBYTE pKeyStateTable;
 static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
 static int kcControl, kcAlt, kcShift, kcNumLock, kcCapsLock; /* keycodes */
 
@@ -1005,19 +1035,85 @@ static BOOL NumState=FALSE, CapsState=FALSE;
 
 
 /***********************************************************************
- *           send_keyboard_input
+ *           X11DRV_send_keyboard_input
  */
-static void send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time )
+void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,
+                                 DWORD dwExtraInfo, UINT injected_flags )
 {
-    INPUT input;
+    UINT message;
+    KEYLP keylp;
+    KBDLLHOOKSTRUCT hook;
 
-    input.type             = WINE_INTERNAL_INPUT_KEYBOARD;
-    input.u.ki.wVk         = wVk;
-    input.u.ki.wScan       = wScan;
-    input.u.ki.dwFlags     = dwFlags;
-    input.u.ki.time        = time;
-    input.u.ki.dwExtraInfo = 0;
-    SendInput( 1, &input, sizeof(input) );
+    keylp.lp2 = 0;
+    keylp.lp1.count = 1;
+    keylp.lp1.code = wScan;
+    keylp.lp1.extended = (dwFlags & KEYEVENTF_EXTENDEDKEY) != 0;
+    keylp.lp1.win_internal = 0; /* this has something to do with dialogs,
+                                * don't remember where I read it - AK */
+                                /* it's '1' under windows, when a dialog box appears
+                                 * and you press one of the underlined keys - DF*/
+
+    /* note that there is a test for all this */
+    if (dwFlags & KEYEVENTF_KEYUP )
+    {
+        message = WM_KEYUP;
+        if ((key_state_table[VK_MENU] & 0x80) &&
+            ((wVk == VK_MENU) || (wVk == VK_CONTROL) || !(key_state_table[VK_CONTROL] & 0x80)))
+        {
+            if( TrackSysKey == VK_MENU || /* <ALT>-down/<ALT>-up sequence */
+                (wVk != VK_MENU)) /* <ALT>-down...<something else>-up */
+                message = WM_SYSKEYUP;
+            TrackSysKey = 0;
+        }
+        key_state_table[wVk] &= ~0x80;
+        keylp.lp1.previous = 1;
+        keylp.lp1.transition = 1;
+    }
+    else
+    {
+        keylp.lp1.previous = (key_state_table[wVk] & 0x80) != 0;
+        keylp.lp1.transition = 0;
+        if (!(key_state_table[wVk] & 0x80)) key_state_table[wVk] ^= 0x01;
+        key_state_table[wVk] |= 0xc0;
+
+        message = WM_KEYDOWN;
+        if ((key_state_table[VK_MENU] & 0x80) && !(key_state_table[VK_CONTROL] & 0x80))
+        {
+            message = WM_SYSKEYDOWN;
+            TrackSysKey = wVk;
+        }
+    }
+
+    keylp.lp1.context = (key_state_table[VK_MENU] & 0x80) != 0; /* 1 if alt */
+
+    TRACE_(key)(" wParam=%04x, lParam=%08lx, InputKeyState=%x\n",
+                wVk, keylp.lp2, key_state_table[wVk] );
+
+    hook.vkCode      = wVk;
+    hook.scanCode    = wScan;
+    hook.flags       = (keylp.lp2 >> 24) | injected_flags;
+    hook.time        = time;
+    hook.dwExtraInfo = dwExtraInfo;
+    if (HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
+
+    SERVER_START_REQ( send_message )
+    {
+        req->id       = GetCurrentThreadId();
+        req->type     = MSG_HARDWARE;
+        req->flags    = 0;
+        req->win      = 0;
+        req->msg      = message;
+        req->wparam   = wVk;
+        req->lparam   = keylp.lp2;
+        req->x        = cursor_pos.x;
+        req->y        = cursor_pos.y;
+        req->time     = time;
+        req->info     = dwExtraInfo;
+        req->timeout  = -1;
+        req->callback = NULL;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
 }
 
 
@@ -1039,30 +1135,31 @@ static void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, DWORD event_
        don't treat it. It's from the same key press. Then the state goes to ON.
        And from there, a 'release' event will switch off the toggle key. */
     *State=FALSE;
-    TRACE("INTERM : don\'t treat release of toggle key. InputKeyStateTable[%#x] = %#x\n",vkey,pKeyStateTable[vkey]);
+    TRACE("INTERM : don't treat release of toggle key. key_state_table[%#x] = %#x\n",
+          vkey,key_state_table[vkey]);
   } else
     {
         down = (vkey==VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0);
         up = (vkey==VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0) | KEYEVENTF_KEYUP;
-	if ( pKeyStateTable[vkey] & 0x1 ) /* it was ON */
+	if ( key_state_table[vkey] & 0x1 ) /* it was ON */
 	  {
 	    if (Evtype!=KeyPress)
 	      {
 		TRACE("ON + KeyRelease => generating DOWN and UP messages.\n");
-	        send_keyboard_input( vkey, scan, down, event_time );
-	        send_keyboard_input( vkey, scan, up, event_time );
+	        X11DRV_send_keyboard_input( vkey, scan, down, event_time, 0, 0 );
+	        X11DRV_send_keyboard_input( vkey, scan, up, event_time, 0, 0 );
 		*State=FALSE;
-		pKeyStateTable[vkey] &= ~0x01; /* Toggle state to off. */
+		key_state_table[vkey] &= ~0x01; /* Toggle state to off. */
 	      }
 	  }
 	else /* it was OFF */
 	  if (Evtype==KeyPress)
 	    {
 	      TRACE("OFF + Keypress => generating DOWN and UP messages.\n");
-	      send_keyboard_input( vkey, scan, down, event_time );
-	      send_keyboard_input( vkey, scan, up, event_time );
+	      X11DRV_send_keyboard_input( vkey, scan, down, event_time, 0, 0 );
+	      X11DRV_send_keyboard_input( vkey, scan, up, event_time, 0, 0 );
 	      *State=TRUE; /* Goes to intermediary state before going to ON */
-	      pKeyStateTable[vkey] |= 0x01; /* Toggle state to on. */
+	      key_state_table[vkey] |= 0x01; /* Toggle state to on. */
 	    }
     }
 }
@@ -1076,15 +1173,15 @@ static void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, DWORD event_
 inline static void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
 {
     /* Do something if internal table state != X state for keycode */
-    if (((pKeyStateTable[vkey] & 0x80)!=0) != state)
+    if (((key_state_table[vkey] & 0x80)!=0) != state)
     {
         TRACE("Adjusting state for vkey %#.2x. State before %#.2x\n",
-              vkey, pKeyStateTable[vkey]);
+              vkey, key_state_table[vkey]);
 
         /* Fake key being pressed inside wine */
-        send_keyboard_input( vkey, 0, state? 0 : KEYEVENTF_KEYUP, time );
+        X11DRV_send_keyboard_input( vkey, 0, state? 0 : KEYEVENTF_KEYUP, time, 0, 0 );
 
-        TRACE("State after %#.2x\n",pKeyStateTable[vkey]);
+        TRACE("State after %#.2x\n",key_state_table[vkey]);
     }
 }
 
@@ -1213,20 +1310,20 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
       KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, event->type, event_time );
       break;
     case VK_CAPITAL:
-      TRACE("Caps Lock event. (type %d). State before : %#.2x\n",event->type,pKeyStateTable[vkey]);
+      TRACE("Caps Lock event. (type %d). State before : %#.2x\n",event->type,key_state_table[vkey]);
       KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, event->type, event_time );
-      TRACE("State after : %#.2x\n",pKeyStateTable[vkey]);
+      TRACE("State after : %#.2x\n",key_state_table[vkey]);
       break;
     default:
         /* Adjust the NUMLOCK state if it has been changed outside wine */
-	if (!(pKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
+	if (!(key_state_table[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  {
 	    TRACE("Adjusting NumLock state.\n");
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, event_time );
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, event_time );
 	  }
         /* Adjust the CAPSLOCK state if it has been changed outside wine */
-	if (!(pKeyStateTable[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
+	if (!(key_state_table[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
 	  {
               TRACE("Adjusting Caps Lock state.\n");
 	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyPress, event_time );
@@ -1243,7 +1340,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 	if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
 	if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
-        send_keyboard_input( vkey & 0xff, bScan, dwFlags, event_time );
+        X11DRV_send_keyboard_input( vkey & 0xff, bScan, dwFlags, event_time, 0, 0 );
     }
    }
 }
@@ -1359,9 +1456,9 @@ X11DRV_KEYBOARD_DetectLayout (void)
 }
 
 /**********************************************************************
- *		InitKeyboard (X11DRV.@)
+ *		X11DRV_InitKeyboard
  */
-void X11DRV_InitKeyboard( BYTE *key_state_table )
+void X11DRV_InitKeyboard(void)
 {
     Display *display = thread_display();
     KeySym *ksp;
@@ -1373,8 +1470,6 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
     int keyc, i, keyn, syms;
     char ckey[4]={0,0,0,0};
     const char (*lkey)[MAIN_LEN][4];
-
-    pKeyStateTable = key_state_table;
 
     wine_tsx11_lock();
     XDisplayKeycodes(display, &min_keycode, &max_keycode);
@@ -1572,6 +1667,19 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 }
 
 
+/**********************************************************************
+ *		GetAsyncKeyState (X11DRV.@)
+ */
+SHORT X11DRV_GetAsyncKeyState(INT key)
+{
+    SHORT retval = ((key_state_table[key] & 0x40) ? 0x0001 : 0) |
+                   ((key_state_table[key] & 0x80) ? 0x8000 : 0);
+    key_state_table[key] &= ~0x40;
+    TRACE_(key)("(%x) -> %x\n", key, retval);
+    return retval;
+}
+
+
 /***********************************************************************
  *		GetKeyboardLayoutList (X11DRV.@)
  */
@@ -1713,7 +1821,7 @@ void X11DRV_MappingNotify( HWND dummy, XEvent *event )
     wine_tsx11_lock();
     XRefreshKeyboardMapping(&event->xmapping);
     wine_tsx11_unlock();
-    X11DRV_InitKeyboard( pKeyStateTable );
+    X11DRV_InitKeyboard();
 
     hwnd = GetFocus();
     if (!hwnd) hwnd = GetActiveWindow();

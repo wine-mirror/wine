@@ -83,19 +83,19 @@ static BOOL load_driver(void)
         ExitProcess(1);
     }
 
-    GET_USER_FUNC(InitKeyboard);
-    GET_USER_FUNC(VkKeyScanEx);
-    GET_USER_FUNC(MapVirtualKeyEx);
+    GET_USER_FUNC(ActivateKeyboardLayout);
+    GET_USER_FUNC(Beep);
+    GET_USER_FUNC(GetAsyncKeyState);
     GET_USER_FUNC(GetKeyNameText);
-    GET_USER_FUNC(ToUnicodeEx);
-    GET_USER_FUNC(GetKeyboardLayoutList);
     GET_USER_FUNC(GetKeyboardLayout);
+    GET_USER_FUNC(GetKeyboardLayoutList);
     GET_USER_FUNC(GetKeyboardLayoutName);
     GET_USER_FUNC(LoadKeyboardLayout);
-    GET_USER_FUNC(ActivateKeyboardLayout);
+    GET_USER_FUNC(MapVirtualKeyEx);
+    GET_USER_FUNC(SendInput);
+    GET_USER_FUNC(ToUnicodeEx);
     GET_USER_FUNC(UnloadKeyboardLayout);
-    GET_USER_FUNC(Beep);
-    GET_USER_FUNC(InitMouse);
+    GET_USER_FUNC(VkKeyScanEx);
     GET_USER_FUNC(SetCursor);
     GET_USER_FUNC(GetCursorPos);
     GET_USER_FUNC(SetCursorPos);
@@ -243,12 +243,6 @@ static BOOL process_attach(void)
 
     /* Create desktop window */
     if (!WIN_CreateDesktopWindow()) return FALSE;
-
-    /* Initialize keyboard driver */
-    if (USER_Driver.pInitKeyboard) USER_Driver.pInitKeyboard( InputKeyStateTable );
-
-    /* Initialize mouse driver */
-    if (USER_Driver.pInitMouse) USER_Driver.pInitMouse( InputKeyStateTable );
 
     return TRUE;
 }

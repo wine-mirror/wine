@@ -62,23 +62,23 @@ struct tagCURSORICONINFO;
 
 typedef struct tagUSER_DRIVER {
     /* keyboard functions */
-    void   (*pInitKeyboard)(LPBYTE);
-    SHORT  (*pVkKeyScanEx)(WCHAR, HKL);
-    UINT   (*pMapVirtualKeyEx)(UINT, UINT, HKL);
+    HKL    (*pActivateKeyboardLayout)(HKL, UINT);
+    void   (*pBeep)(void);
+    SHORT  (*pGetAsyncKeyState)(INT);
     INT    (*pGetKeyNameText)(LONG, LPWSTR, INT);
-    INT    (*pToUnicodeEx)(UINT, UINT, LPBYTE, LPWSTR, int, UINT, HKL);
-    UINT   (*pGetKeyboardLayoutList)(INT, HKL *);
     HKL    (*pGetKeyboardLayout)(DWORD);
+    UINT   (*pGetKeyboardLayoutList)(INT, HKL *);
     BOOL   (*pGetKeyboardLayoutName)(LPWSTR);
     HKL    (*pLoadKeyboardLayout)(LPCWSTR, UINT);
-    HKL    (*pActivateKeyboardLayout)(HKL, UINT);
+    UINT   (*pMapVirtualKeyEx)(UINT, UINT, HKL);
+    UINT   (*pSendInput)(UINT, LPINPUT, int);
+    INT    (*pToUnicodeEx)(UINT, UINT, LPBYTE, LPWSTR, int, UINT, HKL);
     BOOL   (*pUnloadKeyboardLayout)(HKL);
-    void   (*pBeep)(void);
+    SHORT  (*pVkKeyScanEx)(WCHAR, HKL);
     /* mouse functions */
-    void   (*pInitMouse)(LPBYTE);
     void   (*pSetCursor)(struct tagCURSORICONINFO *);
-    void   (*pGetCursorPos)(LPPOINT);
-    void   (*pSetCursorPos)(INT,INT);
+    BOOL   (*pGetCursorPos)(LPPOINT);
+    BOOL   (*pSetCursorPos)(INT,INT);
     /* screen saver functions */
     BOOL   (*pGetScreenSaveActive)(void);
     void   (*pSetScreenSaveActive)(BOOL);
@@ -119,8 +119,6 @@ typedef struct tagUSER_DRIVER {
 extern USER_DRIVER USER_Driver;
 
 extern HMODULE user32_module;
-extern BYTE InputKeyStateTable[256];
-extern BYTE AsyncKeyStateTable[256];
 extern DWORD USER16_AlertableWait;
 
 extern BOOL CLIPBOARD_ReleaseOwner(void);
