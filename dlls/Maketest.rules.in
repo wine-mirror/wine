@@ -50,7 +50,7 @@ $(MODULE): $(OBJS) $(RCOBJS) $(IMPORTLIBS) Makefile.in
 
 # Rules for building test list
 
-$(TESTLIST): Makefile.in
+$(TESTLIST): Makefile.in $(TOPSRCDIR)/tools/make_ctests
 	$(TOPSRCDIR)/tools/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
 
 depend: $(TESTLIST)
