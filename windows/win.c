@@ -1762,10 +1762,12 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 						type, WIN_PROC_WINDOW );
 		goto end;
 	case GWL_STYLE:
+                retval = wndPtr->dwStyle;
 	       	style.styleOld = wndPtr->dwStyle;
 		style.styleNew = newval;
                 SendMessageA(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
 		wndPtr->dwStyle = style.styleNew;
+                if (USER_Driver.pSetWindowStyle) USER_Driver.pSetWindowStyle( hwnd, retval );
                 SendMessageA(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
                 retval = style.styleOld;
                 goto end;

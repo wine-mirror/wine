@@ -685,6 +685,29 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 
 
 /***********************************************************************
+ *		SetWindowStyle   (X11DRV.@)
+ *
+ * Update the X state of a window to reflect a style change
+ */
+void X11DRV_SetWindowStyle( HWND hwnd, LONG oldStyle )
+{
+    Display *display = thread_display();
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return;
+
+    if ((wndPtr->dwStyle & WS_VISIBLE) && (!(oldStyle & WS_VISIBLE)))
+    {
+        if (!IsRectEmpty( &wndPtr->rectWindow ))
+        {
+            TRACE( "mapping win %x\n", hwnd );
+            TSXMapWindow( display, get_whole_window(wndPtr) );
+        }
+    }
+    WIN_ReleaseWndPtr(wndPtr);
+}
+
+
+/***********************************************************************
  *		SetWindowPos   (X11DRV.@)
  */
 BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )

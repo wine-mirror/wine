@@ -90,6 +90,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl SetWindowPos(ptr) X11DRV_SetWindowPos
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
+@ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText
 @ cdecl ShowWindow(long long) X11DRV_ShowWindow
 @ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove

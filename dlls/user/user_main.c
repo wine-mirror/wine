@@ -98,6 +98,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(SetWindowPos);
     GET_USER_FUNC(SetWindowRgn);
     GET_USER_FUNC(SetWindowIcon);
+    GET_USER_FUNC(SetWindowStyle);
     GET_USER_FUNC(SetWindowText);
     GET_USER_FUNC(ShowWindow);
     GET_USER_FUNC(SysCommandSizeMove);
