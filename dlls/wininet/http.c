@@ -1348,7 +1348,12 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         /* If we don't have a path we set it to root */
         if (NULL == lpwhr->lpszPath)
             lpwhr->lpszPath = WININET_strdup("/");
-
+        else /* remove \r and \n*/
+        {
+            int nLen = strlen(lpwhr->lpszPath);
+            while ((nLen > 0) && ((lpwhr->lpszPath[nLen-1] == '\r')||(lpwhr->lpszPath[nLen-1] == '\n')))
+                lpwhr->lpszPath[--nLen]='\0';
+        }
         if(strncmp(lpwhr->lpszPath, "http://", sizeof("http://") -1) != 0
            && lpwhr->lpszPath[0] != '/') /* not an absolute path ?? --> fix it !! */
         {
