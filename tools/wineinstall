@@ -160,6 +160,8 @@ then {
     echo "Warning !! wine binary (still) found, which may indicate"
     echo "a (conflicting) previous installation."
     echo "You might want to abort and uninstall Wine first."
+    echo "(If you previously tried to install from source manually, "
+    echo "run 'make uninstall' from the wine root directory)"
     std_sleep
   fi
 
