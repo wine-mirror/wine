@@ -1393,8 +1393,11 @@ typedef DWORD CALLBACK (*PFN_DIAL_HANDLER) (HWND,LPCSTR,DWORD,LPDWORD);
 INTERNETAPI BOOL WINAPI InternetSetDialStateA(LPCSTR ,DWORD ,DWORD);
 INTERNETAPI BOOL WINAPI InternetSetDialStateW(LPCWSTR ,DWORD ,DWORD);
 #define InternetSetDialState WINELIB_NAME_AW(InternetSetDialState)
-
 #define INTERNET_DIALSTATE_DISCONNECTED     1
+
+BOOLAPI InternetCheckConnectionA(LPCSTR lpszUrl,DWORD dwFlags,DWORD dwReserved);
+BOOLAPI InternetCheckConnectionW(LPCWSTR lpszUrl,DWORD dwFlags,DWORD dwReserved); 
+#define InternetCheckConnection WINELIB_NAME_AW(InternetCheckConnection)
 
 #if defined(__cplusplus)
 }
