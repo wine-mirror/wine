@@ -452,7 +452,10 @@ HRESULT WINAPI CLSIDFromString16(
   int	i;
   BYTE table[256];
 
-  TRACE("%s -> %p\n", idstr, id);
+  if (!s)
+	  s = "{00000000-0000-0000-0000-000000000000}";
+
+  TRACE("%s -> %p\n", s, id);
 
   /* quick lookup table */
   memset(table, 0, 256);
@@ -467,7 +470,7 @@ HRESULT WINAPI CLSIDFromString16(
 
   /* in form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} */
 
-  if (strlen(idstr) != 38)
+  if (strlen(s) != 38)
     return OLE_ERROR_OBJECT;
 
   p = (BYTE *) id;
