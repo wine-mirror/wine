@@ -1250,7 +1250,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     {
         if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
         {
-            SetLastError(ov.Internal);
+            SetLastError(RtlNtStatusToDosError(ov.Internal));
             ret = (ov.Internal==STATUS_SUCCESS);
         }
     }
@@ -1310,7 +1310,7 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
     {
         if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
         {
-            SetLastError(ov.Internal);
+            SetLastError(RtlNtStatusToDosError(ov.Internal));
             ret = (ov.Internal==STATUS_SUCCESS);
         }
     }
