@@ -35,6 +35,7 @@ IDL_INCLUDES = \
 
 WINDOWS_INCLUDES = \
 	accctrl.h \
+	aclapi.h \
 	audevcod.h \
 	aviriff.h \
 	basetsd.h \
