@@ -171,15 +171,12 @@
             to leave off the trailing slash!
           </para>
           <para>
-            <programlisting>
-"Type" = "floppy|hd|cdrom|network" &lt;--- the |'s mean "Type = '&lt;one of the options&gt;'"
-            </programlisting>
-          </para>
-          <para>
+            <programlisting>"Type" = "floppy|hd|cdrom|network"</programlisting>
             Sets up the type of drive Wine will see it as. Type must
             equal one of the four <literal>floppy</literal>,
             <literal>hd</literal>, <literal>cdrom</literal>, or
             <literal>network</literal>. They are self-explanatory.
+            (The |'s mean "Type = '&lt;one of the options&gt;'".)
           </para>
           <para>
             <programlisting>"Label" = "blah"</programlisting> Defines the

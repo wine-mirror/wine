@@ -30,13 +30,13 @@
     (make formatting-instruction data: "-->")))
 
 ;; Customize the body tag attributes
-(define %body-attr% 
-  (list
-   (list "BGCOLOR" "#555555")
-   (list "TEXT" "#000000")
-   (list "LINK" "#0000FF")
-   (list "VLINK" "#840084")
-   (list "ALINK" "#0000FF")))
+;;(define %body-attr% 
+;;  (list
+ ;;  (list "BGCOLOR" "#555555")
+;;   (list "TEXT" "#000000")
+;;   (list "LINK" "#0000FF")
+;;   (list "VLINK" "#840084")
+;;   (list "ALINK" "#0000FF")))
 
 </style-specification-body>
 </style-specification>

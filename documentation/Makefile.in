@@ -57,7 +57,7 @@ $(BOOKNAME)/index.html: $(BOOK_SRCS)
 	$(DB2HTML) $(BOOKNAME).sgml
 
 $(BOOKNAME).pdf: $(BOOK_SRCS)
-	db2pdf $(BOOKNAME).sgml > /dev/null
+	db2pdf -d ./print.dsl $(BOOKNAME).sgml > /dev/null
 
 $(BOOKNAME).ps: $(BOOK_SRCS)
 	db2ps $(BOOKNAME).sgml > /dev/null

@@ -90,8 +90,7 @@
         <para>
           The Wine Users Guide will focus on running precompiled
           Windows applications using the Wine emulator.
-          <ulink url="http://wine.codeweavers.com/docs/winelib-user/">
-            The Winelib Users Guide</ulink> will cover Winelib
+            The Winelib Users Guide will cover Winelib
             applications.
         </para>
 

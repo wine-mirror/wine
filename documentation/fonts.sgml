@@ -435,8 +435,10 @@ default-resolutions = 75,75,100,100
             my Windows fonts on my Win95 <medialabel>C:</medialabel>
             drive live; could be e.g.
             <filename>/mnt/dosC/windows/system</filename> for Win31.
+          </para>
+          <para>
             In <filename>/c/windows/fonts/fonts.scale</filename> I
-            have
+            have:
           </para>
           <programlisting>
 14

@@ -55,8 +55,8 @@
           themselves, the Wine team will make the automated Wine
           installation script, <filename>tools/wineinstall</filename>,
           do everything we find necessary to do; running the
-          conventional <command>configure && make depend && make && make
-            install</command> cycle is thus not recommended, unless
+          conventional <userinput>configure && make depend && make && make
+            install</userinput> cycle is thus not recommended, unless
           you know what you're doing. At the moment,
           <filename>tools/wineinstall</filename> is able to create a
           configuration file, install the registry, and create the
@@ -84,53 +84,17 @@
           correctly.
         </para>
 
-        <informaltable frame="none">
-          <tgroup cols="5">
-            <tbody>
-              <row>
-                <entry>C:\</entry>
-                <entry></entry><entry></entry><entry></entry>
-                <entry>Root directory of primary disk drive</entry>
-              </row>
-              <row>
-                <entry></entry>
-                <entry>Windows\</entry>
-                <entry></entry><entry></entry>
-                <entry>Windows directory, containing .INI files, accessories, etc</entry>
-              </row>
-              <row>
-                <entry></entry><entry></entry>
-                <entry valign="middle">System\</entry>
-                <entry></entry>
-                <entry><literallayout>Win3.x/95/98/ME directory for common DLLs
-WinNT/2000 directory for common 16-bit DLLs</literallayout></entry>
-              </row>
-              <row>
-                <entry></entry><entry></entry>
-                <entry>System32\</entry>
-                <entry></entry>
-                <entry>WinNT/2000 directory for common 32-bit DLLs</entry>
-              </row>
-              <row>
-                <entry></entry><entry></entry>
-                <entry>Start Menu\</entry>
-                <entry></entry>
-                <entry>Program launcher directory structure</entry>
-              </row>
-              <row>
-                <entry></entry><entry></entry><entry></entry>
-                <entry>Programs\</entry>
-                <entry>Program launcher links (.LNK files) to applications</entry>
-              </row>
-              <row>
-                <entry></entry>
-                <entry>Program Files\</entry>
-                <entry></entry><entry></entry>
-                <entry>Application binaries (.EXE and .DLL files)</entry>
-              </row>
-            </tbody>
-          </tgroup>
-        </informaltable>
+<programlisting>
+C:\                Root directory of primary disk drive
+  Windows\         Windows directory, containing .INI files,
+                     accessories, etc.
+  System\          Win3.x/95/98/ME directory for common DLLs
+                     WinNT/2000 directory for common 16-bit DLLs
+  System32\        WinNT/2000 directory for common 32-bit DLLs
+  Start Menu\      Program launcher directory structure
+    Programs\      Program launcher links (.LNK files) to applications
+  Program Files\   Application binaries (.EXE and .DLL files)
+</programlisting>
 
         <para>
           Wine emulates drives by placing their virtual drive roots to
@@ -246,9 +210,11 @@ WinNT/2000 directory for common 16-bit DLLs</literallayout></entry>
             Use <filename>tools/wineinstall</filename> to compile Wine
             and install the default registry. Or if you prefer to do
             it yourself, compile <filename>programs/regapi</filename>,
-            and run:   <command>programs/regapi/regapi setValue &lt;
-            winedefault.reg</command>
+            and run: 
           </para>
+		  <screen>
+			<userinput>programs/regapi/regapi setValue &lt; winedefault.reg</userinput>
+		  </screen>
         </listitem>
         <listitem>
           <para>
@@ -569,13 +535,9 @@ drwxrwxr-x  41 sle      sle         16384 Dec 30  1998 windows</computeroutput>
       </para>
 
       <para>
-        <warning>
-          <title>Warning/Warning/Warning!!!!!!</title>
-          <para>
-            <screen>
-THIS MAY TRASH YOUR SYSTEM IF USED INCORRECTLY
-THIS MAY TRASH YOUR SYSTEM IF USED CORRECTLY
-            </screen>
+        <warning><title>Warning/Warning/Warning!!!!!!</title>
+          <para>This may trash your system if used incorrectly.  It may
+		  even trash your system when used <emphasis>correctly</>!
           </para>
         </warning>
       </para>
@@ -629,7 +591,7 @@ THIS MAY TRASH YOUR SYSTEM IF USED CORRECTLY
         <orderedlist>
           <listitem>
             <para>
-              Your SCSI card must be supported under linux. This will
+              Your SCSI card must be supported under Linux. This will
               not work with an unknown SCSI card. Even for cheap'n
               crappy "scanner only" controllers some special Linux
               drivers exist on the net.
@@ -710,7 +672,7 @@ THIS MAY TRASH YOUR SYSTEM IF USED CORRECTLY
         </para>
         <para>
           <programlisting>
-ipplus.exe &lt;---> (TWAIN INTERFACE) &lt;---> (TWAIN DATA SOURCE . ASPI) -> WINASPI
+ipplus.exe &lt;-&gt; (TWAIN INTERFACE) &lt;-&gt; (TWAIN DATA SOURCE.ASPI) -&gt; WINASPI
           </programlisting>
         </para>
       </sect2>
@@ -718,7 +680,7 @@ ipplus.exe &lt;---> (TWAIN INTERFACE) &lt;---> (TWAIN DATA SOURCE . ASPI) -> WIN
       <sect2>
         <title>NOTES/BUGS</title>
         <para>
-          The biggest is that it only works under linux at the moment.
+          The biggest is that it only works under Linux at the moment.
         </para>
         <para>
           The ASPI code has only been tested with:

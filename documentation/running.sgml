@@ -33,7 +33,8 @@ Options:
    --help,-h        Show this help message
    --managed        Allow the window manager to manage created windows
    --version,-v     Display the Wine version
-   --winver         Version to imitate (win95,nt40,win31,nt2k,win98,nt351,win30,win20)
+   --winver         Version to imitate
+                    (win95,nt40,win31,nt2k,win98,nt351,win30,win20)
         </screen>
       </para>
 
@@ -170,29 +171,83 @@ Options:
           in Wine.  More channels might be added to (or subtracted
           from) later versions.
         </para>
-        <screen>
-all       accel     advapi    animate   aspi      atom      avifile   bitblt   
-bitmap    caret     cdrom     class     clipboard clipping  combo     comboex  
-comm      commctrl  commdlg   console   crtdll    cursor    datetime  dc       
-ddeml     ddraw     debug     debugstr  delayhlp  dialog    dinput    dll      
-dosfs     dosmem    dplay     driver    dsound    edit      elfdll    enhmetafile
-event     exec      file      fixup     font      gdi       global    graphics 
-header    heap      hook      hotkey    icmp      icon      imagehlp  imagelist
-imm       int       int10     int16     int17     int19     int21     int31    
-io        ipaddress joystick  key       keyboard  ldt       listbox   listview 
-local     mci       mcianim   mciavi    mcicda    mcimidi   mciwave   mdi      
-menu      message   metafile  midi      mmaux     mmio      mmsys     mmtime   
-module    monthcal  mpr       msacm     msg       msvideo   nativefont nonclient
-ntdll     odbc      ole       opengl    pager     palette   pidl      print    
-process   profile   progress  prop      propsheet psapi     psdrv     ras      
-rebar     reg       region    relay     resource  richedit  scroll    segment  
-seh       selector  sendmsg   server    setupapi  setupx    shell     snoop    
-sound     static    statusbar storage   stress    string    syscolor  system   
-tab       tape      tapi      task      text      thread    thunk     timer    
-toolbar   toolhelp  tooltips  trackbar  treeview  ttydrv    tweak     typelib  
-updown    ver       virtual   vxd       wave      win       win16drv  win32    
-wing      wininet   winsock   winspool  wnet      x11       x11drv    
-        </screen>
+
+		<table frame="none"><title>Debug Channels</title>
+		<tgroup cols=5 align="left">
+		<tbody>
+<row><entry>
+all</><entry>accel</><entry>advapi</><entry>animate</><entry>aspi</>
+</row><row><entry>
+atom</><entry>avifile</><entry> bitblt</><entry> bitmap</><entry> caret</>
+</row><row><entry> 
+cdrom</><entry>class</><entry> clipboard</><entry> clipping</><entry>combo</>
+</row><row><entry> 
+comboex</><entry> comm</><entry>commctrl</><entry>commdlg</><entry> console</>
+</row><row><entry> 
+crtdll</><entry>cursor</><entry>datetime</><entry>dc</><entry> ddeml</>
+</row><row><entry> 
+ddraw</><entry> debug</><entry> debugstr</><entry>delayhlp</><entry>dialog</>
+</row><row><entry> 
+dinput</><entry>dll</><entry> dosfs</><entry>dosmem</><entry>dplay</>
+</row><row><entry> 
+driver</><entry>dsound</><entry>edit</><entry>elfdll</><entry>enhmetafile</>
+</row><row><entry> 
+event</><entry>exec</><entry>file</><entry>fixup</><entry>font</>
+</row><row><entry> 
+gdi</><entry> global</><entry>graphics</><entry> header</><entry>heap</>
+</row><row><entry> 
+hook</><entry>hotkey</><entry>icmp</><entry>icon</><entry>imagehlp</>
+</row><row><entry> 
+imagelist</><entry> imm</><entry>int</><entry>int10</><entry>int16</>
+</row><row><entry> 
+int17</><entry>int19</><entry>int21</><entry>int31</><entry> io</>
+</row><row><entry> 
+ipaddress</><entry>joystick</><entry>key</><entry>keyboard</><entry>ldt</>
+</row><row><entry> 
+listbox</><entry> listview</><entry> local</><entry>mci</><entry>mcianim</>
+</row><row><entry> 
+mciavi</><entry>mcicda</><entry> mcimidi</><entry> mciwave</><entry> mdi</>
+</row><row><entry> 
+menu</><entry> message</><entry> metafile</><entry>midi</><entry> mmaux</>
+</row><row><entry> 
+mmio</><entry> mmsys</><entry> mmtime</><entry> module</><entry>monthcal</>
+</row><row><entry> 
+mpr</><entry> msacm</><entry> msg</><entry> msvideo</><entry> nativefont</>
+</row><row><entry> 
+nonclient</><entry> ntdll</><entry> odbc</><entry> ole</><entry> opengl</>
+</row><row><entry> 
+pager</><entry> palette</><entry> pidl</><entry> print</><entry> process</>
+</row><row><entry> 
+profile</><entry> progress</><entry>prop</><entry> propsheet</><entry>psapi</>
+</row><row><entry> 
+psdrv</><entry> ras</><entry> rebar</><entry> reg</><entry> region</>
+</row><row><entry> 
+relay</><entry> resource</><entry>richedit</><entry>scroll</><entry>segment</>
+</row><row><entry> 
+seh</><entry>selector</><entry>sendmsg</><entry> server</><entry>setupapi</>
+</row><row><entry> 
+setupx</><entry>shell</><entry> snoop</><entry> sound</><entry>static</>
+</row><row><entry> 
+statusbar</><entry>storage</><entry> stress</><entry> string</><entry>syscolor</>
+</row><row><entry> 
+system</><entry> tab</><entry>tape</><entry>tapi</><entry>task</>
+</row><row><entry> 
+text</><entry>thread</><entry>thunk</><entry>timer</><entry> toolbar</>
+</row><row><entry> 
+toolhelp</><entry>tooltips</><entry>trackbar</><entry>treeview</><entry>ttydrv</>
+</row><row><entry> 
+tweak</><entry>typelib</><entry> updown</><entry>ver</><entry>virtual</>
+</row><row><entry> 
+vxd</><entry>wave</><entry>win</><entry>win16drv</><entry>win32</>
+</row><row><entry> 
+wing</><entry>wininet</><entry> winsock</><entry> winspool</><entry>wnet</>
+</row><row><entry> 
+x11</><entry> x11drv</>
+</row>
+		</tbody>
+		</tgroup>
+		</table>
+
         <para>
           For more details about debug channels, check out the
           <ulink url="http://wine.codeweavers.com/docs/wine-devel/">

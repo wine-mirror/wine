@@ -78,9 +78,7 @@
         this may be a little risky, depending on how far the unstable
         distribution has diverged from the stable one.  You can find a
         list of Wine binary packages for the various Debian releases
-        using the
-        <ulink url="http://cgi.debian.org/cgi-bin/search_packages.pl?keywords=wine&amp;searchon=names&amp;version=all&amp;release=all">
-          package search engine</ulink> at <ulink url="http://www.debian.org">
+        using the package search engine at <ulink url="http://www.debian.org">
           www.debian.org</ulink>.
       </para>
 

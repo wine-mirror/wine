@@ -45,26 +45,26 @@ tar czf wine-set-html.tgz wine-doc
 cp wine-set-html.tgz $WWWDIR
 
 ## Create PostScript tarball
-echo "db2ps wine-user.sgml"
-db2ps wine-user.sgml > /dev/null 2>&1
-echo "db2ps wine-devel.sgml"
-db2ps wine-devel.sgml > /dev/null 2>&1
-echo "db2ps winelib-user.sgml"
-db2ps winelib-user.sgml > /dev/null 2>&1
-echo "db2ps wine-pkg.sgml"
-db2ps wine-pkg.sgml > /dev/null 2>&1
+echo "db2ps -d ./print.dsl wine-user.sgml"
+db2ps -d ./print.dsl wine-user.sgml > /dev/null 2>&1
+echo "db2ps -d ./print.dsl wine-devel.sgml"
+db2ps -d ./print.dsl wine-devel.sgml > /dev/null 2>&1
+echo "db2ps -d ./print.dsl winelib-user.sgml"
+db2ps -d ./print.dsl winelib-user.sgml > /dev/null 2>&1
+echo "db2ps -d ./print.dsl wine-pkg.sgml"
+db2ps -d ./print.dsl wine-pkg.sgml > /dev/null 2>&1
 tar czf winedoc-ps.tgz wine-user.ps wine-devel.ps winelib-user.ps wine-pkg.ps
 cp winedoc-ps.tgz $WWWDIR
 
 ## Create PDF tarball
-echo "db2pdf wine-user.sgml"
-db2pdf wine-user.sgml > /dev/null 2>&1
-echo "db2pdf wine-devel.sgml"
-db2pdf wine-devel.sgml > /dev/null 2>&1
-echo "db2pdf winelib-user.sgml"
-db2pdf winelib-user.sgml > /dev/null 2>&1
-echo "db2pdf wine-pkg.sgml"
-db2pdf wine-pkg.sgml > /dev/null 2>&1
+echo "db2pdf -d ./print.dsl wine-user.sgml"
+db2pdf -d ./print.dsl wine-user.sgml > /dev/null 2>&1
+echo "db2pdf -d ./print.dsl wine-devel.sgml"
+db2pdf -d ./print.dsl wine-devel.sgml > /dev/null 2>&1
+echo "db2pdf -d ./print.dsl winelib-user.sgml"
+db2pdf -d ./print.dsl winelib-user.sgml > /dev/null 2>&1
+echo "db2pdf -d ./print.dsl wine-pkg.sgml"
+db2pdf -d ./print.dsl wine-pkg.sgml > /dev/null 2>&1
 tar czf winedoc-pdf.tgz wine-user.pdf wine-devel.pdf winelib-user.pdf wine-pkg.pdf
 cp winedoc-pdf.tgz $WWWDIR
 
