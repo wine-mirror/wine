@@ -19,7 +19,6 @@
 #include "bitmap.h"
 #include "brush.h"
 #include "font.h"
-#include "heap.h"
 #include "local.h"
 #include "palette.h"
 #include "pen.h"
@@ -873,8 +872,9 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
     };
     
     INT16 i, retval = 0;
-    LOGPEN16 *pen;
-    LOGBRUSH16 *brush = NULL;
+    LOGPEN16 pen;
+    LOGBRUSH16 brush;
+    SEGPTR segptr;
 
     TRACE("%04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
@@ -882,47 +882,44 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
     {
     case OBJ_PEN:
         /* Enumerate solid pens */
-        if (!(pen = SEGPTR_NEW(LOGPEN16))) break;
+        segptr = MapLS( &pen );
         for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
         {
-            pen->lopnStyle   = PS_SOLID;
-            pen->lopnWidth.x = 1;
-            pen->lopnWidth.y = 0;
-            pen->lopnColor   = solid_colors[i];
-            retval = GDI_CallTo16_word_ll( lpEnumFunc, SEGPTR_GET(pen), lParam );
-            TRACE("solid pen %08lx, ret=%d\n",
-                         solid_colors[i], retval);
+            pen.lopnStyle   = PS_SOLID;
+            pen.lopnWidth.x = 1;
+            pen.lopnWidth.y = 0;
+            pen.lopnColor   = solid_colors[i];
+            retval = GDI_CallTo16_word_ll( lpEnumFunc, segptr, lParam );
+            TRACE("solid pen %08lx, ret=%d\n", solid_colors[i], retval);
             if (!retval) break;
         }
-        SEGPTR_FREE(pen);
+        UnMapLS( segptr );
         break;
 
     case OBJ_BRUSH:
         /* Enumerate solid brushes */
-        if (!(brush = SEGPTR_NEW(LOGBRUSH16))) break;
+        segptr = MapLS( &brush );
         for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
         {
-            brush->lbStyle = BS_SOLID;
-            brush->lbColor = solid_colors[i];
-            brush->lbHatch = 0;
-            retval = GDI_CallTo16_word_ll( lpEnumFunc, SEGPTR_GET(brush), lParam );
-            TRACE("solid brush %08lx, ret=%d\n",
-                         solid_colors[i], retval);
+            brush.lbStyle = BS_SOLID;
+            brush.lbColor = solid_colors[i];
+            brush.lbHatch = 0;
+            retval = GDI_CallTo16_word_ll( lpEnumFunc, segptr, lParam );
+            TRACE("solid brush %08lx, ret=%d\n", solid_colors[i], retval);
             if (!retval) break;
         }
 
         /* Now enumerate hatched brushes */
         if (retval) for (i = HS_HORIZONTAL; i <= HS_DIAGCROSS; i++)
         {
-            brush->lbStyle = BS_HATCHED;
-            brush->lbColor = RGB(0,0,0);
-            brush->lbHatch = i;
-            retval = GDI_CallTo16_word_ll( lpEnumFunc, SEGPTR_GET(brush), lParam );
-            TRACE("hatched brush %d, ret=%d\n",
-                         i, retval);
+            brush.lbStyle = BS_HATCHED;
+            brush.lbColor = RGB(0,0,0);
+            brush.lbHatch = i;
+            retval = GDI_CallTo16_word_ll( lpEnumFunc, segptr, lParam );
+            TRACE("hatched brush %d, ret=%d\n", i, retval);
             if (!retval) break;
         }
-        SEGPTR_FREE(brush);
+        UnMapLS( segptr );
         break;
 
     default:

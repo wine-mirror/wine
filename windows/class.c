@@ -24,7 +24,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "win.h"
 #include "user.h"
 #include "controls.h"
@@ -45,6 +44,7 @@ typedef struct tagCLASS
     INT              cbClsExtra;    /* Class extra bytes */
     INT              cbWndExtra;    /* Window extra bytes */
     LPWSTR           menuName;      /* Default menu name (Unicode followed by ASCII) */
+    SEGPTR           segMenuName;   /* Default menu name as SEGPTR */
     struct tagDCE   *dce;           /* Class DCE (if CS_CLASSDC) */
     HINSTANCE        hInstance;     /* Module that created the task */
     HICON            hIcon;         /* Default icon */
@@ -163,6 +163,20 @@ inline static LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
 
 
 /***********************************************************************
+ *           CLASS_GetMenuName16
+ *
+ * Get the menu name as a SEGPTR.
+ */
+inline static SEGPTR CLASS_GetMenuName16( CLASS *classPtr )
+{
+    if (!HIWORD(classPtr->menuName)) return (SEGPTR)classPtr->menuName;
+    if (!classPtr->segMenuName)
+        classPtr->segMenuName = MapLS( CLASS_GetMenuNameA(classPtr) );
+    return classPtr->segMenuName;
+}
+
+
+/***********************************************************************
  *           CLASS_GetMenuNameW
  *
  * Get the menu name as a Unicode string.
@@ -180,12 +194,14 @@ inline static LPWSTR CLASS_GetMenuNameW( CLASS *classPtr )
  */
 static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
 {
-    if (HIWORD(classPtr->menuName)) SEGPTR_FREE( classPtr->menuName );
+    UnMapLS( classPtr->segMenuName );
+    classPtr->segMenuName = 0;
+    if (HIWORD(classPtr->menuName)) HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     if (HIWORD(name))
     {
         DWORD lenA = strlen(name) + 1;
         DWORD lenW = MultiByteToWideChar( CP_ACP, 0, name, lenA, NULL, 0 );
-        classPtr->menuName = SEGPTR_ALLOC( lenA + lenW*sizeof(WCHAR) );
+        classPtr->menuName = HeapAlloc( GetProcessHeap(), 0, lenA + lenW*sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, name, lenA, classPtr->menuName, lenW );
         memcpy( classPtr->menuName + lenW, name, lenA );
     }
@@ -200,12 +216,14 @@ static void CLASS_SetMenuNameA( CLASS *classPtr, LPCSTR name )
  */
 static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
 {
-    if (HIWORD(classPtr->menuName)) SEGPTR_FREE( classPtr->menuName );
+    UnMapLS( classPtr->segMenuName );
+    classPtr->segMenuName = 0;
+    if (HIWORD(classPtr->menuName)) HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     if (HIWORD(name))
     {
         DWORD lenW = strlenW(name) + 1;
         DWORD lenA = WideCharToMultiByte( CP_ACP, 0, name, lenW, NULL, 0, NULL, NULL );
-        classPtr->menuName = SEGPTR_ALLOC( lenA + lenW*sizeof(WCHAR) );
+        classPtr->menuName = HeapAlloc( GetProcessHeap(), 0, lenA + lenW*sizeof(WCHAR) );
         memcpy( classPtr->menuName, name, lenW*sizeof(WCHAR) );
         WideCharToMultiByte( CP_ACP, 0, name, lenW,
                              (char *)(classPtr->menuName + lenW), lenA, NULL, NULL );
@@ -245,6 +263,7 @@ static BOOL CLASS_FreeClass( CLASS *classPtr )
     GlobalDeleteAtom( classPtr->atomName );
     WINPROC_FreeProc( classPtr->winprocA, WIN_PROC_CLASS );
     WINPROC_FreeProc( classPtr->winprocW, WIN_PROC_CLASS );
+    UnMapLS( classPtr->segMenuName );
     HeapFree( GetProcessHeap(), 0, classPtr->menuName );
     HeapFree( GetProcessHeap(), 0, classPtr );
     return TRUE;
@@ -789,8 +808,10 @@ LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
         release_class_ptr( class );
         return ret;
     case GCL_MENUNAME:
-        ret = GetClassLongA( hwnd, offset );
-        return (LONG)SEGPTR_GET( (void *)ret );
+        if (!(class = get_class_ptr( hwnd, FALSE ))) return 0;
+        ret = (LONG)CLASS_GetMenuName16( class );
+        release_class_ptr( class );
+        return ret;
     default:
         return GetClassLongA( hwnd, offset );
     }
@@ -1094,9 +1115,7 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc
     wc->hCursor       = classPtr->hCursor;
     wc->hbrBackground = classPtr->hbrBackground;
     wc->lpszClassName = name;
-    wc->lpszMenuName  = (SEGPTR)CLASS_GetMenuNameA( classPtr );
-    if (HIWORD(wc->lpszMenuName))  /* Make it a SEGPTR */
-        wc->lpszMenuName = SEGPTR_GET( (LPSTR)wc->lpszMenuName );
+    wc->lpszMenuName  = CLASS_GetMenuName16( classPtr );
     return TRUE;
 }
 
@@ -1206,10 +1225,8 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16
     wc->hCursor       = classPtr->hCursor;
     wc->hbrBackground = classPtr->hbrBackground;
     wc->lpszClassName = (SEGPTR)0;
-    wc->lpszMenuName  = (SEGPTR)CLASS_GetMenuNameA( classPtr );
-    if (HIWORD(wc->lpszMenuName))  /* Make it a SEGPTR */
-        wc->lpszMenuName = SEGPTR_GET( (LPSTR)wc->lpszMenuName );
-    wc->lpszClassName  = name;
+    wc->lpszMenuName  = CLASS_GetMenuName16( classPtr );
+    wc->lpszClassName = name;
 
     /* We must return the atom of the class here instead of just TRUE. */
     return atom;

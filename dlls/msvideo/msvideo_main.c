@@ -20,7 +20,6 @@
 #include "vfw16.h"
 #include "wine/winbase16.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "stackframe.h"
 
 DEFAULT_DEBUG_CHANNEL(msvideo);
@@ -220,19 +219,20 @@ HIC VFWAPI ICOpen(DWORD fccType,DWORD fccHandler,UINT wMode) {
 HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler, BOOL bFrom32) {
 	char	type[5],handler[5],codecname[20];
 	HIC16	hic;
-	ICOPEN*  icopen = SEGPTR_NEW(ICOPEN);
+        ICOPEN icopen;
+        SEGPTR seg_icopen;
 	WINE_HIC	*whic;
 
 	memcpy(type,&fccType,4);type[4]=0;
 	memcpy(handler,&fccHandler,4);handler[4]=0;
 	TRACE("(%s,%s,%d,%p,%d)\n",type,handler,wMode,lpfnHandler,bFrom32?32:16);
-	
-	icopen->fccType		= fccType;
-	icopen->fccHandler	= fccHandler;
-	icopen->dwSize		= sizeof(ICOPEN);
-	icopen->dwFlags		= wMode;
-	
-	sprintf(codecname,"%s.%s",type,handler);
+
+        icopen.fccType    = fccType;
+        icopen.fccHandler = fccHandler;
+        icopen.dwSize     = sizeof(ICOPEN);
+        icopen.dwFlags    = wMode;
+
+        sprintf(codecname,"%s.%s",type,handler);
 
 	hic = GlobalAlloc16(GHND,sizeof(WINE_HIC));
 	if (!hic)
@@ -253,7 +253,9 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
 	/* return value is not checked */
 	MSVIDEO_SendMessage(hic,DRV_ENABLE,0L,0L,bFrom32);
 
-	whic->hdrv = MSVIDEO_SendMessage(hic,DRV_OPEN,0,(LPARAM)(SEGPTR_GET(icopen)),FALSE);
+        seg_icopen = MapLS( &icopen );
+        whic->hdrv = MSVIDEO_SendMessage(hic,DRV_OPEN,0,seg_icopen,FALSE);
+        UnMapLS( seg_icopen );
 	if (whic->hdrv == 0) {
 		WARN("DRV_OPEN failed for hic 0x%08lx\n",(DWORD)hic);
 		GlobalFree16(hic);
@@ -504,26 +506,28 @@ DWORD VFWAPIV ICCompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiOutp
 						   LPBITMAPINFOHEADER lpbiPrev, LPVOID lpPrev) {
 
 	DWORD ret;
-	ICCOMPRESS *iccmp = SEGPTR_NEW(ICCOMPRESS);
+        ICCOMPRESS iccmp;
+        SEGPTR seg_iccmp;
 
-	TRACE("(0x%08lx,%ld,%p,%p,%p,%p,...)\n",(DWORD)hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
+        TRACE("(0x%08lx,%ld,%p,%p,%p,%p,...)\n",(DWORD)hic,dwFlags,lpbiOutput,lpData,lpbiInput,lpBits);
 
-	iccmp->dwFlags		= dwFlags;
+        iccmp.dwFlags     = dwFlags;
 
-	iccmp->lpbiOutput	= lpbiOutput;
-	iccmp->lpOutput		= lpData;
-	iccmp->lpbiInput		= lpbiInput;
-	iccmp->lpInput		= lpBits;
+        iccmp.lpbiOutput  = lpbiOutput;
+        iccmp.lpOutput    = lpData;
+        iccmp.lpbiInput   = lpbiInput;
+        iccmp.lpInput     = lpBits;
 
-	iccmp->lpckid		= lpckid;
-	iccmp->lpdwFlags		= lpdwFlags;
-	iccmp->lFrameNum		= lFrameNum;
-	iccmp->dwFrameSize	= dwFrameSize;
-	iccmp->dwQuality		= dwQuality;
-	iccmp->lpbiPrev		= lpbiPrev;
-	iccmp->lpPrev		= lpPrev;
-	ret = ICSendMessage16(hic,ICM_COMPRESS,(DWORD)SEGPTR_GET(iccmp),sizeof(ICCOMPRESS));
-	SEGPTR_FREE(iccmp);
+        iccmp.lpckid      = lpckid;
+        iccmp.lpdwFlags   = lpdwFlags;
+        iccmp.lFrameNum   = lFrameNum;
+        iccmp.dwFrameSize = dwFrameSize;
+        iccmp.dwQuality   = dwQuality;
+        iccmp.lpbiPrev    = lpbiPrev;
+        iccmp.lpPrev      = lpPrev;
+        seg_iccmp = MapLS( &iccmp );
+        ret = ICSendMessage16(hic,ICM_COMPRESS,seg_iccmp,sizeof(ICCOMPRESS));
+        UnMapLS( seg_iccmp );
 	return ret;
 }
 
@@ -560,23 +564,23 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
  *		_ICDecompress			[MSVIDEO.230]
  */
 DWORD VFWAPIV ICDecompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiFormat,
-							 LPVOID lpData, LPBITMAPINFOHEADER lpbi, LPVOID lpBits) {
-
-	ICDECOMPRESS *icd = SEGPTR_NEW(ICDECOMPRESS);
+                             LPVOID lpData, LPBITMAPINFOHEADER lpbi, LPVOID lpBits)
+{
+        ICDECOMPRESS icd;
+        SEGPTR segptr;
 	DWORD ret;
 	
 	TRACE("(0x%08lx,%ld,%p,%p,%p,%p)\n",(DWORD)hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
 
-	icd->dwFlags = dwFlags;
-	icd->lpbiInput = lpbiFormat;
-	icd->lpInput = lpData;
-	icd->lpbiOutput = lpbi;
-	icd->lpOutput = lpBits;
-	icd->ckid = 0;
-
-	ret = ICSendMessage16(hic,ICM_DECOMPRESS,(DWORD)SEGPTR_GET(icd),sizeof(ICDECOMPRESS));
-
-	SEGPTR_FREE(icd);
+        icd.dwFlags = dwFlags;
+        icd.lpbiInput = lpbiFormat;
+        icd.lpInput = lpData;
+        icd.lpbiOutput = lpbi;
+        icd.lpOutput = lpBits;
+        icd.ckid = 0;
+        segptr = MapLS( &icd );
+        ret = ICSendMessage16(hic,ICM_DECOMPRESS,segptr,sizeof(ICDECOMPRESS));
+        UnMapLS( segptr );
 	return ret;
 }
 
@@ -996,6 +1000,7 @@ LRESULT VFWAPIV ICMessage16(void) {
 	UINT16 msg;
 	UINT16 cb;
 	LPWORD lpData;
+        SEGPTR segData;
 	LRESULT ret;
 	UINT16 i;
 
@@ -1006,7 +1011,7 @@ LRESULT VFWAPIV ICMessage16(void) {
 	msg = VA_ARG16(valist, UINT16);
 	cb  = VA_ARG16(valist, UINT16);
 
-	lpData = SEGPTR_ALLOC(cb);
+	lpData = HeapAlloc( GetProcessHeap(), 0, cb );
 
 	TRACE("0x%08lx, %u, %u, ...)\n",(DWORD)hic,msg,cb);
 
@@ -1015,9 +1020,10 @@ LRESULT VFWAPIV ICMessage16(void) {
 	}
 		
 	VA_END16(valist);
-	ret = ICSendMessage16(hic, msg, (DWORD)(SEGPTR_GET(lpData)), (DWORD)cb);
-
-	SEGPTR_FREE(lpData);
+        segData = MapLS( lpData );
+        ret = ICSendMessage16(hic, msg, segData, (DWORD)cb);
+        UnMapLS( segData );
+        HeapFree( GetProcessHeap(), 0, lpData );
 	return ret;
 }
 
@@ -1089,30 +1095,31 @@ DWORD VFWAPIV ICDrawBegin16(
 	DWORD		    dwScale) /* [in] */
 {
 	DWORD ret;
-	ICDRAWBEGIN16* icdb = SEGPTR_NEW(ICDRAWBEGIN16); /* SEGPTR for mapper to deal with */
+        ICDRAWBEGIN16 icdb;
+        SEGPTR seg_icdb;
 
 	TRACE("(0x%08lx,%ld,0x%08lx,0x%08lx,0x%08lx,%u,%u,%u,%u,%p,%u,%u,%u,%u,%ld,%ld)\n",
 		  (DWORD)hic, dwFlags, (DWORD)hpal, (DWORD)hwnd, (DWORD)hdc, xDst, yDst, dxDst, dyDst,
 		  lpbi, xSrc, ySrc, dxSrc, dySrc, dwRate, dwScale);
 
-	icdb->dwFlags = dwFlags;
-	icdb->hpal = hpal;
-	icdb->hwnd = hwnd;
-	icdb->hdc = hdc;
-	icdb->xDst = xDst;
-	icdb->yDst = yDst;
-	icdb->dxDst = dxDst;
-	icdb->dyDst = dyDst;
-	icdb->lpbi = lpbi; /* Keep this as SEGPTR for the mapping code to deal with */
-	icdb->xSrc = xSrc;
-	icdb->ySrc = ySrc;
-	icdb->dxSrc = dxSrc;
-	icdb->dySrc = dySrc;
-	icdb->dwRate = dwRate;
-	icdb->dwScale = dwScale;
-	
-	ret = (DWORD)ICSendMessage16(hic,ICM_DRAW_BEGIN,(DWORD)SEGPTR_GET(icdb),sizeof(ICDRAWBEGIN16));
-	SEGPTR_FREE(icdb);
+        icdb.dwFlags = dwFlags;
+        icdb.hpal = hpal;
+        icdb.hwnd = hwnd;
+        icdb.hdc = hdc;
+        icdb.xDst = xDst;
+        icdb.yDst = yDst;
+        icdb.dxDst = dxDst;
+        icdb.dyDst = dyDst;
+        icdb.lpbi = lpbi; /* Keep this as SEGPTR for the mapping code to deal with */
+        icdb.xSrc = xSrc;
+        icdb.ySrc = ySrc;
+        icdb.dxSrc = dxSrc;
+        icdb.dySrc = dySrc;
+        icdb.dwRate = dwRate;
+        icdb.dwScale = dwScale;
+        seg_icdb = MapLS( &icdb );
+        ret = (DWORD)ICSendMessage16(hic,ICM_DRAW_BEGIN,seg_icdb,sizeof(ICDRAWBEGIN16));
+        UnMapLS( seg_icdb );
 	return ret;
 }
 
@@ -1144,16 +1151,20 @@ DWORD VFWAPIV ICDraw16(
 	DWORD cbData, 
 	LONG lTime) 
 {
-	ICDRAW* icd = SEGPTR_NEW(ICDRAW); /* SEGPTR for mapper to deal with */
+        DWORD ret;
+        ICDRAW icd;
+        SEGPTR seg_icd;
 
-	TRACE("(0x%08lx,0x%08lx,%p,%p,%ld,%ld)\n",(DWORD)hic,dwFlags,lpFormat,lpData,cbData,lTime);
-	icd->dwFlags = dwFlags;
-	icd->lpFormat = lpFormat;
-	icd->lpData = lpData;
-	icd->cbData = cbData;
-	icd->lTime = lTime;
-
-	return ICSendMessage16(hic,ICM_DRAW,(DWORD)SEGPTR_GET(icd),sizeof(ICDRAW));
+        TRACE("(0x%08lx,0x%08lx,%p,%p,%ld,%ld)\n",(DWORD)hic,dwFlags,lpFormat,lpData,cbData,lTime);
+        icd.dwFlags = dwFlags;
+        icd.lpFormat = lpFormat;
+        icd.lpData = lpData;
+        icd.cbData = cbData;
+        icd.lTime = lTime;
+        seg_icd = MapLS( &icd );
+        ret = ICSendMessage16(hic,ICM_DRAW,seg_icd,sizeof(ICDRAW));
+        UnMapLS( seg_icd );
+        return ret;
 }
 
 /***********************************************************************

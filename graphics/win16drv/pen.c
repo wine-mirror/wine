@@ -5,7 +5,6 @@
  */
 
 #include "win16drv.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv);
@@ -35,7 +34,7 @@ HPEN WIN16DRV_PEN_SelectObject( DC * dc, HPEN hpen )
     {
         nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_PEN,
                                   &lPen16, 0, 0); 
-	physDev->PenInfo = SEGPTR_ALLOC( nSize );
+	physDev->PenInfo = HeapAlloc( GetProcessHeap(), 0, nSize );
     }
 
     nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_PEN,

@@ -8,6 +8,7 @@
 
 #include <string.h>
 
+#include "wine/windef16.h"
 #include "ole2.h"
 #include "oleauto.h"
 #include "windef.h"
@@ -16,7 +17,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#include "heap.h"
 #include "ole2disp.h"
 #include "olectl.h"
 
@@ -33,8 +33,8 @@ DEFAULT_DEBUG_CHANNEL(ole);
  */
 static BSTR16 BSTR_AllocBytes(int n)
 {
-    void *ptr = SEGPTR_ALLOC(n);
-    return (BSTR16)SEGPTR_GET(ptr);
+    void *ptr = HeapAlloc( GetProcessHeap(), 0, n );
+    return (BSTR16)MapLS(ptr);
 }
 
 /******************************************************************************
@@ -42,7 +42,9 @@ static BSTR16 BSTR_AllocBytes(int n)
  */
 static void BSTR_Free(BSTR16 in)
 {
-    SEGPTR_FREE( MapSL((SEGPTR)in) );
+    void *ptr = MapSL( (SEGPTR)in );
+    UnMapLS( (SEGPTR)in );
+    HeapFree( GetProcessHeap(), 0, ptr );
 }
 
 /******************************************************************************

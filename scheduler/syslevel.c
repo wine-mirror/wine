@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include "ntddk.h"
 #include "syslevel.h"
-#include "heap.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -33,12 +32,13 @@ VOID WINAPI GetpWin16Lock(SYSLEVEL **lock)
  */
 SEGPTR WINAPI GetpWin16Lock16(void)
 {
+    static SYSLEVEL *w16Mutex;
     static SEGPTR segpWin16Mutex;
+
     if (!segpWin16Mutex)
     {
-        SYSLEVEL **w16Mutex = SEGPTR_ALLOC(sizeof(SYSLEVEL *));
-        *w16Mutex = &Win16Mutex;
-        segpWin16Mutex = SEGPTR_GET(w16Mutex);
+        w16Mutex = &Win16Mutex;
+        segpWin16Mutex = MapLS( &w16Mutex );
     }
     return segpWin16Mutex;
 }

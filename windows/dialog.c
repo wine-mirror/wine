@@ -42,10 +42,10 @@ typedef struct
     INT16      y;
     INT16      cx;
     INT16      cy;
-    UINT     id;
+    UINT       id;
     LPCSTR     className;
     LPCSTR     windowName;
-    LPVOID     data;
+    LPCVOID    data;
 } DLG_CONTROL_INFO;
 
   /* Dialog template */
@@ -296,26 +296,21 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 	p += strlen(p) + 1;
     }
 
-    if (*p)
-    {
-        /* Additional CTLDATA available for this control. */
-        info->data = SEGPTR_ALLOC(*p);
-        memcpy( info->data, p + 1, *p );
-    }
+    if (*p) info->data = p + 1;
     else info->data = NULL;
 
     p += *p + 1;
 
     if(int_id)
-      TRACE("   %s %04x %d, %d, %d, %d, %d, %08lx, %08lx\n", 
+      TRACE("   %s %04x %d, %d, %d, %d, %d, %08lx, %p\n",
 		      info->className,  LOWORD(info->windowName),
 		      info->id, info->x, info->y, info->cx, info->cy,
-		      info->style, (DWORD)SEGPTR_GET(info->data) );
+		      info->style, info->data );
     else
-      TRACE("   %s '%s' %d, %d, %d, %d, %d, %08lx, %08lx\n", 
+      TRACE("   %s '%s' %d, %d, %d, %d, %d, %08lx, %p\n",
 		      info->className,  info->windowName,
 		      info->id, info->x, info->y, info->cx, info->cy,
-		      info->style, (DWORD)SEGPTR_GET(info->data) );
+		      info->style, info->data );
 
     return p;
 }
@@ -414,7 +409,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
             DPRINTF("\n");
             TRACE("  END\n" );
         }
-        info->data = (LPVOID)(p + 1);
+        info->data = p + 1;
         p += GET_WORD(p) / sizeof(WORD);
     }
     else info->data = NULL;
@@ -444,6 +439,8 @@ static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLAT
         if (!win32)
         {
             HINSTANCE16 instance;
+            SEGPTR segptr;
+
             template = DIALOG_GetControl16( template, &info );
             if (HIWORD(info.className) && !strcmp( info.className, "EDIT") &&
                 !(GetWindowLongW( hwnd, GWL_STYLE ) & DS_LOCALEDIT))
@@ -462,6 +459,7 @@ static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLAT
             }
             else instance = (HINSTANCE16)hInst;
 
+            segptr = MapLS( info.data );
             hwndCtrl = WIN_Handle32( CreateWindowEx16( info.exStyle | WS_EX_NOPARENTNOTIFY,
                                                        info.className, info.windowName,
                                                        info.style | WS_CHILD,
@@ -470,9 +468,8 @@ static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLAT
                                                        MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
                                                        MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
                                                        WIN_Handle16(hwnd), (HMENU16)info.id,
-                                                       instance, (LPVOID)SEGPTR_GET(info.data) ));
-
-	    if (info.data) SEGPTR_FREE(info.data);
+                                                       instance, (LPVOID)segptr ));
+            UnMapLS( segptr );
         }
         else
         {
@@ -493,7 +490,7 @@ static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLAT
                                           MulDiv(info.cx, dlgInfo->xBaseUnit, 4),
                                           MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
                                           hwnd, (HMENU)info.id,
-                                          hInst, info.data );
+                                          hInst, (LPVOID)info.data );
         }
         if (!hwndCtrl) return FALSE;
 

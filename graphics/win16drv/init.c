@@ -13,7 +13,6 @@
 #include "win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"
-#include "heap.h"
 #include "font.h"
 #include "debugtools.h"
 

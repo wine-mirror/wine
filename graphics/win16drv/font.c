@@ -10,7 +10,6 @@
 #include "wine/winbase16.h"
 #include "win16drv.h"
 #include "font.h"
-#include "heap.h"
 #include "gdi.h"
 #include "debugtools.h"
 
@@ -97,12 +96,12 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont)
     if( physDev->FontInfo && 
 	HeapSize( GetProcessHeap(), 0, physDev->FontInfo ) < nSize )
     {
-        SEGPTR_FREE( physDev->FontInfo );
+        HeapFree( GetProcessHeap(), 0, physDev->FontInfo );
 	physDev->FontInfo = NULL;
     }
     
     if( !physDev->FontInfo )
-        physDev->FontInfo = SEGPTR_ALLOC( nSize );
+        physDev->FontInfo = HeapAlloc( GetProcessHeap(), 0, nSize );
 
 
     nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_FONT,

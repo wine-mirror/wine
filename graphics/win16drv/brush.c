@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include "win16drv.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv);
@@ -32,7 +31,7 @@ HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
     {
         nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_BRUSH,
                                   &lBrush16, 0, 0); 
-	physDev->BrushInfo = SEGPTR_ALLOC( nSize );
+	physDev->BrushInfo = HeapAlloc( GetProcessHeap(), 0, nSize );
     }
 
 

@@ -6,7 +6,6 @@
 
 #include "wine/winuser16.h"
 #include "winerror.h"
-#include "heap.h"
 #include "hook.h"
 #include "message.h"
 #include "spy.h"
@@ -34,25 +33,24 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
         /* first the WH_CALLWNDPROC hook */
         if (HOOK_IsHooked( WH_CALLWNDPROC ))
         {
-            CWPSTRUCT16 *cwp;
+            CWPSTRUCT16 cwp;
+            SEGPTR seg_cwp;
 
-            if ((cwp = SEGPTR_NEW(CWPSTRUCT16)))
+            cwp.hwnd    = hwnd16;
+            cwp.message = msg;
+            cwp.wParam  = wparam;
+            cwp.lParam  = lparam;
+            seg_cwp = MapLS( &cwp );
+            HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 1, seg_cwp );
+            UnMapLS( seg_cwp );
+            if (cwp.hwnd != hwnd16)
             {
-                cwp->hwnd    = hwnd16;
-                cwp->message = msg;
-                cwp->wParam  = wparam;
-                cwp->lParam  = lparam;
-                HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 1, SEGPTR_GET(cwp) );
-                if (cwp->hwnd != hwnd16)
-                {
-                    hwnd16 = cwp->hwnd;
-                    hwnd = WIN_Handle32( hwnd16 );
-                }
-                msg    = cwp->message;
-                wparam = cwp->wParam;
-                lparam = cwp->lParam;
-                SEGPTR_FREE( cwp );
+                hwnd16 = cwp.hwnd;
+                hwnd = WIN_Handle32( hwnd16 );
             }
+            msg    = cwp.message;
+            wparam = cwp.wParam;
+            lparam = cwp.lParam;
         }
 
         if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWL_WNDPROC ))) return 0;

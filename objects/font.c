@@ -10,8 +10,8 @@
 #include <assert.h>
 #include "winerror.h"
 #include "winnls.h"
+#include "wine/unicode.h"
 #include "font.h"
-#include "heap.h"
 #include "options.h"
 #include "debugtools.h"
 #include "gdi.h"
@@ -694,31 +694,23 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 
     if (enum_func)
     {
-	LPNEWTEXTMETRICEX16 lptm16 = SEGPTR_ALLOC( sizeof(NEWTEXTMETRICEX16) );
-	if( lptm16 )
-	{
-	    LPENUMLOGFONTEX16 lplf16 = SEGPTR_ALLOC( sizeof(ENUMLOGFONTEX16) );
-	    if( lplf16 )
-	    {
-		fontEnum16	fe16;
-		LOGFONTW        lfW;
-		FONT_LogFont16ToW(plf, &lfW);
+        NEWTEXTMETRICEX16 tm16;
+        ENUMLOGFONTEX16 lf16;
+        fontEnum16 fe16;
+        LOGFONTW lfW;
+        FONT_LogFont16ToW(plf, &lfW);
 
-		fe16.lpLogFontParam = plf;
-		fe16.lpEnumFunc = efproc;
-		fe16.lpData = lParam;
-		
-		fe16.lpTextMetric = lptm16;
-		fe16.lpLogFont = lplf16;
-		fe16.segTextMetric = SEGPTR_GET(lptm16);
-		fe16.segLogFont = SEGPTR_GET(lplf16);
+        fe16.lpLogFontParam = plf;
+        fe16.lpEnumFunc = efproc;
+        fe16.lpData = lParam;
+        fe16.lpTextMetric = &tm16;
+        fe16.lpLogFont = &lf16;
+        fe16.segTextMetric = MapLS( &tm16 );
+        fe16.segLogFont = MapLS( &lf16 );
 
-		retVal = enum_func( hDC, &lfW, FONT_EnumInstance16,
-				    (LPARAM)&fe16 );
-		SEGPTR_FREE(lplf16);
-	    }
-	    SEGPTR_FREE(lptm16);
-	}
+        retVal = enum_func( hDC, &lfW, FONT_EnumInstance16, (LPARAM)&fe16 );
+        UnMapLS( fe16.segTextMetric );
+        UnMapLS( fe16.segLogFont );
     }
     return retVal;
 }

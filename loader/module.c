@@ -804,13 +804,13 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
     {
 	args++;
 	arglen = strlen(args);
-	cmdline = SEGPTR_ALLOC( 2 + arglen );
+	cmdline = HeapAlloc( GetProcessHeap(), 0, 2 + arglen );
 	cmdline[0] = (BYTE)arglen;
 	strcpy( cmdline + 1, args );
     }
     else
     {
-	cmdline = SEGPTR_ALLOC( 2 );
+	cmdline = HeapAlloc( GetProcessHeap(), 0, 2 );
 	cmdline[0] = cmdline[1] = 0;
     }
 
@@ -819,22 +819,22 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
     if (SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL ))
     {
         LOADPARAMS16 params;
-        WORD *showCmd = SEGPTR_ALLOC( 2*sizeof(WORD) );
+        WORD showCmd[2];
         showCmd[0] = 2;
         showCmd[1] = nCmdShow;
 
         params.hEnvironment = 0;
-        params.cmdLine = SEGPTR_GET(cmdline);
-        params.showCmd = SEGPTR_GET(showCmd);
+        params.cmdLine = MapLS( cmdline );
+        params.showCmd = MapLS( showCmd );
         params.reserved = 0;
 
         ret = LoadModule16( buffer, &params );
-
-        SEGPTR_FREE( showCmd );
-        SEGPTR_FREE( cmdline );
+        UnMapLS( params.cmdLine );
+        UnMapLS( params.showCmd );
     }
     else ret = GetLastError();
 
+    HeapFree( GetProcessHeap(), 0, cmdline );
     if (name != lpCmdLine) HeapFree( GetProcessHeap(), 0, name );
 
     if (ret == 21)  /* 32-bit module */

@@ -10,7 +10,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
-#include "heap.h"
 
 /* size of buffer needed to store an atom string */
 #define ATOM_BUFFER_SIZE 256
@@ -289,19 +288,20 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
 
     if (list)
     {
-        char *string = SEGPTR_ALLOC( ATOM_BUFFER_SIZE );
+        char string[ATOM_BUFFER_SIZE];
+        SEGPTR segptr = MapLS( string );
         for (i = 0; i < count; i++)
         {
             if (list[i].string)  /* it was a string originally */
             {
                 if (!GlobalGetAtomNameA( list[i].atom, string, ATOM_BUFFER_SIZE )) continue;
-                ret = PROP_CallTo16_word_wlw( func, hwnd, SEGPTR_GET(string), list[i].handle );
+                ret = PROP_CallTo16_word_wlw( func, hwnd, segptr, list[i].handle );
             }
             else
                 ret = PROP_CallTo16_word_wlw( func, hwnd, list[i].atom, list[i].handle );
             if (!ret) break;
         }
-        SEGPTR_FREE( string );
+        UnMapLS( segptr );
         HeapFree( GetProcessHeap(), 0, list );
     }
     return ret;

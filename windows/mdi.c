@@ -544,24 +544,21 @@ static HWND MDICreateChild( HWND parent, MDICLIENTINFO *ci,
     }
     else
     {
-    	MDICREATESTRUCT16 *cs16;
-        LPSTR title, cls;
+        MDICREATESTRUCT16 cs16;
+        SEGPTR title, cls, seg_cs16;
 
         WIN_ReleaseWndPtr( wndParent );
-        cs16 = SEGPTR_NEW(MDICREATESTRUCT16);
-        STRUCT32_MDICREATESTRUCT32Ato16( cs, cs16 );
-        title = SEGPTR_STRDUP( cs->szTitle );
-        cls   = SEGPTR_STRDUP( cs->szClass );
-        cs16->szTitle = SEGPTR_GET(title);
-        cs16->szClass = SEGPTR_GET(cls);
-
+        STRUCT32_MDICREATESTRUCT32Ato16( cs, &cs16 );
+        cs16.szTitle = title = MapLS( cs->szTitle );
+        cs16.szClass = cls = MapLS( cs->szClass );
+        seg_cs16 = MapLS( &cs16 );
         hwnd = WIN_Handle32( CreateWindow16( cs->szClass, cs->szTitle, style,
-                                             cs16->x, cs16->y, cs16->cx, cs16->cy,
+                                             cs16.x, cs16.y, cs16.cx, cs16.cy,
                                              WIN_Handle16(parent), (HMENU)wIDmenu,
-                                             cs16->hOwner, (LPVOID)SEGPTR_GET(cs16) ));
-        SEGPTR_FREE( title );
-        SEGPTR_FREE( cls );
-        SEGPTR_FREE( cs16 );
+                                             cs16.hOwner, (LPVOID)seg_cs16 ));
+        UnMapLS( seg_cs16 );
+        UnMapLS( title );
+        UnMapLS( cls );
     }
 
     /* MDI windows are WS_CHILD so they won't be activated by CreateWindow */
