@@ -8,7 +8,8 @@
 #define __WINE_WINPROC_H
 
 #include "windef.h"
-#include "wine/windef16.h"
+#include "wine/winbase16.h"
+#include "winnls.h"
 
 typedef enum
 {
@@ -76,4 +77,45 @@ extern void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam,
                                      LPARAM lParam, MSGPARAM16* pm16 );
 extern void WINPROC_UnmapMsg32WTo16( HWND hwnd, UINT msg, WPARAM wParam,
                                      LPARAM lParam, MSGPARAM16* pm16 );
+
+/* map a Unicode string to a 16-bit pointer */
+inline static SEGPTR map_str_32W_to_16( LPCWSTR str )
+{
+    LPSTR ret;
+    INT len;
+
+    if (!HIWORD(str)) return (SEGPTR)LOWORD(str);
+    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    return MapLS(ret);
+}
+
+/* unmap a Unicode string that was converted to a 16-bit pointer */
+inline static void unmap_str_32W_to_16( SEGPTR str )
+{
+    if (!HIWORD(str)) return;
+    HeapFree( GetProcessHeap(), 0, MapSL(str) );
+    UnMapLS( str );
+}
+
+/* map a 16-bit pointer to a Unicode string */
+inline static LPWSTR map_str_16_to_32W( SEGPTR str )
+{
+    LPWSTR ret;
+    INT len;
+
+    if (!HIWORD(str)) return (LPWSTR)(ULONG_PTR)LOWORD(str);
+    len = MultiByteToWideChar( CP_ACP, 0, MapSL(str), -1, NULL, 0 );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        MultiByteToWideChar( CP_ACP, 0, MapSL(str), -1, ret, len );
+    return ret;
+}
+
+/* unmap a 16-bit pointer that was converted to a Unicode string */
+inline static void unmap_str_16_to_32W( LPCWSTR str )
+{
+    if (HIWORD(str)) HeapFree( GetProcessHeap(), 0, (void *)str );
+}
+
 #endif  /* __WINE_WINPROC_H */

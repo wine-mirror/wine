@@ -51,768 +51,525 @@ typedef struct
   /* This should probably reside in USER heap */
 static HANDLE16 HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
 
-typedef VOID (*HOOK_MapFunc)(INT, INT, WPARAM *, LPARAM *);
-typedef VOID (*HOOK_UnMapFunc)(INT, INT, WPARAM, LPARAM, WPARAM,
-			       LPARAM);
+/* ### start build ### */
+extern LONG CALLBACK HOOK_CallTo16_long_wwl(HOOKPROC16,WORD,WORD,LONG);
+/* ### stop build ### */
+
 
 /***********************************************************************
- *           HOOK_Map16To32Common
+ *           call_hook_16
  */
-static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
-				 LPARAM *plParam, BOOL bA )
+inline static LRESULT call_hook_16( HOOKPROC16 proc, INT id, INT code, WPARAM wparam, LPARAM lparam )
 {
+    LRESULT ret = HOOK_CallTo16_long_wwl( proc, code, wparam, lparam );
+    /* Grrr. While the hook procedure is supposed to have an LRESULT return
+       value even in Win16, it seems that for those hook types where the 
+       return value is interpreted as BOOL, Windows doesn't actually check
+       the HIWORD ...  Some buggy Win16 programs, notably WINFILE, rely on
+       that, because they neglect to clear DX ... */
+    if (id != WH_JOURNALPLAYBACK) ret = LOWORD( ret );
+    return ret;
+}
 
-   switch( id )
-   {
-	case WH_MSGFILTER:
-	case WH_SYSMSGFILTER: 
-	case WH_GETMESSAGE: 
-	case WH_JOURNALRECORD:
+
+/***********************************************************************
+ *           call_hook_16_to_32
+ *
+ * Convert hook params to 32-bit and call 32-bit hook procedure
+ */
+static LRESULT call_hook_16_to_32( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM lparam,
+                                   BOOL unicode )
+{
+    LRESULT ret = 0;
+
+    switch( id )
+    {
+    case WH_MSGFILTER:
+    case WH_SYSMSGFILTER:
+    case WH_JOURNALRECORD:
+    {
+        MSG16 *msg16 = MapSL(lparam);
+        MSG msg32;
+
+        STRUCT32_MSG16to32( msg16, &msg32 );
+        ret = proc( code, wparam, (LPARAM)&msg32 );
+        break;
+    }
+
+    case WH_GETMESSAGE:
+    {
+        MSG16 *msg16 = MapSL(lparam);
+        MSG msg32;
+
+        STRUCT32_MSG16to32( msg16, &msg32 );
+        ret = proc( code, wparam, (LPARAM)&msg32 );
+        STRUCT32_MSG32to16( &msg32, msg16 );
+        break;
+    }
+
+    case WH_JOURNALPLAYBACK:
+    {
+        EVENTMSG16 *em16 = MapSL(lparam);
+        EVENTMSG em32;
+
+        em32.message = em16->message;
+        em32.paramL  = em16->paramL;
+        em32.paramH  = em16->paramH;
+        em32.time    = em16->time;
+        em32.hwnd    = 0;  /* FIXME */
+        ret = proc( code, wparam, (LPARAM)&em32 );
+        break;
+    }
+
+    case WH_CALLWNDPROC:
+    {
+        CWPSTRUCT16 *cwp16 = MapSL(lparam);
+        CWPSTRUCT cwp32;
+
+        cwp32.hwnd   = WIN_Handle32(cwp16->hwnd);
+        cwp32.lParam = cwp16->lParam;
+
+        if (unicode)
+            WINPROC_MapMsg16To32W( cwp32.hwnd, cwp16->message, cwp16->wParam,
+                                   &cwp32.message, &cwp32.wParam, &cwp32.lParam );
+        else
+            WINPROC_MapMsg16To32A( cwp32.hwnd, cwp16->message, cwp16->wParam,
+                                   &cwp32.message, &cwp32.wParam, &cwp32.lParam );
+
+        ret = proc( code, wparam, (LPARAM)&cwp32 );
+
+        if (unicode)
+            WINPROC_UnmapMsg16To32W( cwp32.hwnd, cwp32.message, cwp32.wParam, cwp32.lParam, 0 );
+        else
+            WINPROC_UnmapMsg16To32A( cwp32.hwnd, cwp32.message, cwp32.wParam, cwp32.lParam, 0 );
+        break;
+    }
+
+    case WH_CBT:
+        switch (code)
         {
-            LPMSG16 lpmsg16 = MapSL(*plParam);
-            LPMSG lpmsg32 = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpmsg32) );
-	
-            STRUCT32_MSG16to32( lpmsg16, lpmsg32 );
-            *plParam = (LPARAM)lpmsg32;
-	    break;
-        } 
-
-	case WH_JOURNALPLAYBACK:
-        {
-            LPEVENTMSG16 lpem16 = MapSL(*plParam);
-            LPEVENTMSG lpem32 = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpem32) );
-
-            lpem32->message = lpem16->message;
-            lpem32->paramL = lpem16->paramL;
-            lpem32->paramH = lpem16->paramH;
-            lpem32->time = lpem16->time;
-            lpem32->hwnd = 0;	/* FIXME */
-
-            *plParam = (LPARAM)lpem32;
-	    break;
-        } 
-
-	case WH_CALLWNDPROC:
-	{
-	    LPCWPSTRUCT16   lpcwp16 = MapSL(*plParam);
-	    LPCWPSTRUCT   lpcwp32 = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpcwp32) );
-	    
-	    lpcwp32->hwnd = WIN_Handle32(lpcwp16->hwnd);
-	    lpcwp32->lParam = lpcwp16->lParam;
-	    
-            if (bA) WINPROC_MapMsg16To32A( lpcwp32->hwnd, lpcwp16->message, lpcwp16->wParam,
-                                           &lpcwp32->message, &lpcwp32->wParam,
-                                           &lpcwp32->lParam );
-            else WINPROC_MapMsg16To32W( lpcwp32->hwnd,lpcwp16->message, lpcwp16->wParam,
-                                        &lpcwp32->message, &lpcwp32->wParam,
-                                        &lpcwp32->lParam );
-	    *plParam = (LPARAM)lpcwp32;
-	    break;
-	}
-
-	case WH_CBT:
-	  switch (code)
-	  {
-	    case HCBT_CREATEWND:
-	    {
-		LPCBT_CREATEWND16  lpcbtcw16 = MapSL(*plParam);
-		LPCREATESTRUCT16   lpcs16 = MapSL((SEGPTR)lpcbtcw16->lpcs);
-		LPCBT_CREATEWNDA lpcbtcw32 = HeapAlloc( GetProcessHeap(), 0,
-							  sizeof(*lpcbtcw32) );
-		lpcbtcw32->lpcs = HeapAlloc( GetProcessHeap(), 0,
-					     sizeof(*lpcbtcw32->lpcs) );
-
-		STRUCT32_CREATESTRUCT16to32A( lpcs16,
-					     (LPCREATESTRUCTA)lpcbtcw32->lpcs );
-
-		if (HIWORD(lpcs16->lpszName))
-		    lpcbtcw32->lpcs->lpszName = 
-			(bA) ? MapSL(lpcs16->lpszName)
-			     : HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                MapSL(lpcs16->lpszName) );
-		else
-		    lpcbtcw32->lpcs->lpszName = (LPCSTR)lpcs16->lpszName;
-
-		if (HIWORD(lpcs16->lpszClass))
-		    lpcbtcw32->lpcs->lpszClass =
-			(bA) ? MapSL(lpcs16->lpszClass)
-			     : HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                MapSL(lpcs16->lpszClass) );
-		else
-		    lpcbtcw32->lpcs->lpszClass = (LPCSTR)lpcs16->lpszClass;
-
-		lpcbtcw32->hwndInsertAfter = WIN_Handle32( lpcbtcw16->hwndInsertAfter );
-
-		*plParam = (LPARAM)lpcbtcw32;
-		break;
-	    } 
-	    case HCBT_ACTIVATE:
+        case HCBT_CREATEWND:
             {
-                LPCBTACTIVATESTRUCT16 lpcas16 = MapSL(*plParam);
-                LPCBTACTIVATESTRUCT lpcas32 = HeapAlloc( GetProcessHeap(), 0,
-                                                           sizeof(*lpcas32) );
-                lpcas32->fMouse = lpcas16->fMouse;
-                lpcas32->hWndActive = WIN_Handle32(lpcas16->hWndActive);
-                *plParam = (LPARAM)lpcas32;
+                CBT_CREATEWNDA cbtcw32;
+                CREATESTRUCTA cs32;
+                CBT_CREATEWND16 *cbtcw16 = MapSL(lparam);
+                CREATESTRUCT16 *cs16 = MapSL( (SEGPTR)cbtcw16->lpcs );
+
+                cbtcw32.lpcs = &cs32;
+                cbtcw32.hwndInsertAfter = WIN_Handle32( cbtcw16->hwndInsertAfter );
+                STRUCT32_CREATESTRUCT16to32A( cs16, &cs32 );
+
+                if (unicode)
+                {
+                    cs32.lpszName = (LPSTR)map_str_16_to_32W( cs16->lpszName );
+                    cs32.lpszClass = (LPSTR)map_str_16_to_32W( cs16->lpszClass );
+                    ret = proc( code, wparam, (LPARAM)&cbtcw32 );
+                    unmap_str_16_to_32W( (LPWSTR)cs32.lpszName );
+                    unmap_str_16_to_32W( (LPWSTR)cs32.lpszClass );
+                }
+                else
+                {
+                    cs32.lpszName = MapSL( cs16->lpszName );
+                    cs32.lpszClass = MapSL( cs16->lpszClass );
+                    ret = proc( code, wparam, (LPARAM)&cbtcw32 );
+                }
+                cbtcw16->hwndInsertAfter = WIN_Handle16( cbtcw32.hwndInsertAfter );
                 break;
             }
-            case HCBT_CLICKSKIPPED:
+        case HCBT_ACTIVATE:
             {
-                LPMOUSEHOOKSTRUCT16 lpms16 = MapSL(*plParam);
-                LPMOUSEHOOKSTRUCT lpms32 = HeapAlloc( GetProcessHeap(), 0,
-                                                        sizeof(*lpms32) );
+                CBTACTIVATESTRUCT16 *cas16 = MapSL(lparam);
+                CBTACTIVATESTRUCT cas32;
+                cas32.fMouse = cas16->fMouse;
+                cas32.hWndActive = WIN_Handle32(cas16->hWndActive);
+                ret = proc( code, wparam, (LPARAM)&cas32 );
+                break;
+            }
+        case HCBT_CLICKSKIPPED:
+            {
+                MOUSEHOOKSTRUCT16 *ms16 = MapSL(lparam);
+                MOUSEHOOKSTRUCT ms32;
 
-                CONV_POINT16TO32( &lpms16->pt, &lpms32->pt );
-
+                ms32.pt.x = ms16->pt.x;
+                ms32.pt.y = ms16->pt.y;
                 /* wHitTestCode may be negative, so convince compiler to do
                    correct sign extension. Yay. :| */
-                lpms32->wHitTestCode = (INT)((INT16)lpms16->wHitTestCode);
-
-                lpms32->dwExtraInfo = lpms16->dwExtraInfo;
-                lpms32->hwnd = WIN_Handle32( lpms16->hwnd );
-                *plParam = (LPARAM)lpms32;
+                ms32.wHitTestCode = (INT)(INT16)ms16->wHitTestCode;
+                ms32.dwExtraInfo = ms16->dwExtraInfo;
+                ms32.hwnd = WIN_Handle32( ms16->hwnd );
+                ret = proc( code, wparam, (LPARAM)&ms32 );
                 break;
             }
-            case HCBT_MOVESIZE:
+        case HCBT_MOVESIZE:
             {
-                LPRECT16 lprect16 = MapSL(*plParam);
-                LPRECT lprect32 = HeapAlloc( GetProcessHeap(), 0,
-                                               sizeof(*lprect32) );
+                RECT16 *rect16 = MapSL(lparam);
+                RECT rect32;
 
-                CONV_RECT16TO32( lprect16, lprect32 );
-                *plParam = (LPARAM)lprect32;
+                CONV_RECT16TO32( rect16, &rect32 );
+                ret = proc( code, wparam, (LPARAM)&rect32 );
                 break;
             }
-	  } 
-	  break;
-
-	case WH_MOUSE:
-        {
-            LPMOUSEHOOKSTRUCT16 lpms16 = MapSL(*plParam);
-            LPMOUSEHOOKSTRUCT lpms32 = HeapAlloc( GetProcessHeap(), 0,
-                                                    sizeof(*lpms32) );
-
-            CONV_POINT16TO32( &lpms16->pt, &lpms32->pt );
-
-            /* wHitTestCode may be negative, so convince compiler to do
-               correct sign extension. Yay. :| */
-            lpms32->wHitTestCode = (INT)((INT16)lpms16->wHitTestCode);
-            lpms32->dwExtraInfo = lpms16->dwExtraInfo;
-            lpms32->hwnd = WIN_Handle32(lpms16->hwnd);
-            *plParam = (LPARAM)lpms32;
-	    break;
-        } 
-
-	case WH_DEBUG:
-        {
-            LPDEBUGHOOKINFO16 lpdh16 = MapSL(*plParam);
-            LPDEBUGHOOKINFO lpdh32 = HeapAlloc( GetProcessHeap(), 0,
-                                                  sizeof(*lpdh32) );
-
-            lpdh32->idThread = 0;               /* FIXME */
-            lpdh32->idThreadInstaller = 0;	/* FIXME */
-            lpdh32->lParam = lpdh16->lParam;	/* FIXME Check for sign ext */
-            lpdh32->wParam = lpdh16->wParam;
-            lpdh32->code = lpdh16->code;
-	  
-            /* do sign extension if it was WH_MSGFILTER */
-            if (*pwParam == 0xffff) *pwParam = WH_MSGFILTER;
-
-            *plParam = (LPARAM)lpdh32;
-	    break;
         }
+        break;
 
-	case WH_SHELL:
-	case WH_KEYBOARD:
-	    break;
+    case WH_MOUSE:
+    {
+        MOUSEHOOKSTRUCT16 *ms16 = MapSL(lparam);
+        MOUSEHOOKSTRUCT ms32;
 
-	case WH_HARDWARE: 
-	case WH_FOREGROUNDIDLE: 
-	case WH_CALLWNDPROCRET:
-        default:
-	    FIXME("\t[%i] 16to32 translation unimplemented\n", id);
+        ms32.pt.x = ms16->pt.x;
+        ms32.pt.y = ms16->pt.y;
+        /* wHitTestCode may be negative, so convince compiler to do
+           correct sign extension. Yay. :| */
+        ms32.wHitTestCode = (INT)((INT16)ms16->wHitTestCode);
+        ms32.dwExtraInfo = ms16->dwExtraInfo;
+        ms32.hwnd = WIN_Handle32(ms16->hwnd);
+        ret = proc( code, wparam, (LPARAM)&ms32 );
+        break;
     }
+
+    case WH_DEBUG:
+    {
+        DEBUGHOOKINFO16 *dh16 = MapSL(lparam);
+        DEBUGHOOKINFO dh32;
+
+        dh32.idThread = 0;            /* FIXME */
+        dh32.idThreadInstaller = 0;   /* FIXME */
+        dh32.lParam = dh16->lParam;   /* FIXME Check for sign ext */
+        dh32.wParam = dh16->wParam;
+        dh32.code   = dh16->code;
+
+        /* do sign extension if it was WH_MSGFILTER */
+        if (wparam == 0xffff) wparam = WH_MSGFILTER;
+        ret = proc( code, wparam, (LPARAM)&dh32 );
+        break;
+    }
+
+    case WH_SHELL:
+    case WH_KEYBOARD:
+        ret = proc( code, wparam, lparam );
+        break;
+
+    case WH_HARDWARE:
+    case WH_FOREGROUNDIDLE:
+    case WH_CALLWNDPROCRET:
+    default:
+        FIXME("\t[%i] 16to32 translation unimplemented\n", id);
+        ret = proc( code, wparam, lparam );
+        break;
+    }
+    return ret;
 }
 
 
 /***********************************************************************
- *           HOOK_Map16To32A
+ *           call_hook_32_to_16
+ *
+ * Convert hook params to 16-bit and call 16-bit hook procedure
  */
-static void HOOK_Map16To32A(INT id, INT code, WPARAM *pwParam,
-			    LPARAM *plParam)
+static LRESULT call_hook_32_to_16( HOOKPROC16 proc, INT id, INT code, WPARAM wparam, LPARAM lparam,
+                                   BOOL unicode )
 {
-    HOOK_Map16To32Common( id, code, pwParam, plParam, TRUE );
-}
+    LRESULT ret = 0;
 
-
-/***********************************************************************
- *           HOOK_Map16To32W
- */
-static void HOOK_Map16To32W(INT id, INT code, WPARAM *pwParam,
-			    LPARAM *plParam)
-{
-    HOOK_Map16To32Common( id, code, pwParam, plParam, FALSE );
-}
-
-
-/***********************************************************************
- *           HOOK_UnMap16To32Common
- */
-static void HOOK_UnMap16To32Common(INT id, INT code, WPARAM wParamOrig,
-				   LPARAM lParamOrig, WPARAM wParam,
-				   LPARAM lParam, BOOL bA)
-{
     switch (id)
     {
-	case WH_MSGFILTER:
-	case WH_SYSMSGFILTER:
-	case WH_JOURNALRECORD:
-	case WH_JOURNALPLAYBACK:
-      
-	    HeapFree( GetProcessHeap(), 0, (LPVOID)lParam );
-	    break;
+    case WH_MSGFILTER:
+    case WH_SYSMSGFILTER:
+    case WH_JOURNALRECORD:
+    {
+        MSG *msg32 = (MSG *)lparam;
+        MSG16 msg16;
 
-	case WH_CALLWNDPROC:
-	{
-            LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)lParam;
-            if (bA) WINPROC_UnmapMsg16To32A( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
-                                             lpcwp32->lParam, 0 );
-            else WINPROC_UnmapMsg16To32W( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
-                                          lpcwp32->lParam, 0 );
-	    HeapFree( GetProcessHeap(), 0, lpcwp32 );
-            break;
-	}
+        STRUCT32_MSG32to16( msg32, &msg16 );
+        lparam = MapLS( &msg16 );
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        UnMapLS( lparam );
+        break;
+    }
 
-	case WH_GETMESSAGE:
+    case WH_GETMESSAGE:
+    {
+        MSG *msg32 = (MSG *)lparam;
+        MSG16 msg16;
+
+        STRUCT32_MSG32to16( msg32, &msg16 );
+        lparam = MapLS( &msg16 );
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        UnMapLS( lparam );
+        STRUCT32_MSG16to32( &msg16, msg32 );
+        break;
+    }
+
+    case WH_JOURNALPLAYBACK:
+    {
+        EVENTMSG *em32 = (EVENTMSG *)lparam;
+        EVENTMSG16 em16;
+
+        em16.message = em32->message;
+        em16.paramL  = em32->paramL;
+        em16.paramH  = em32->paramH;
+        em16.time    = em32->time;
+        lparam = MapLS( &em16 );
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        UnMapLS( lparam );
+        break;
+    }
+
+    case WH_CALLWNDPROC:
+    {
+        CWPSTRUCT *cwp32 = (CWPSTRUCT *)lparam;
+        CWPSTRUCT16 cwp16;
+        MSGPARAM16 mp16;
+
+        cwp16.hwnd   = WIN_Handle16(cwp32->hwnd);
+        cwp16.lParam = cwp32->lParam;
+
+        if (unicode)
+            WINPROC_MapMsg32WTo16( cwp32->hwnd, cwp32->message, cwp32->wParam,
+                                   &cwp16.message, &cwp16.wParam, &cwp16.lParam );
+        else
+            WINPROC_MapMsg32ATo16( cwp32->hwnd, cwp32->message, cwp32->wParam,
+                                   &cwp16.message, &cwp16.wParam, &cwp16.lParam );
+
+        lparam = MapLS( &cwp16 );
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        UnMapLS( lparam );
+
+        mp16.wParam  = cwp16.wParam;
+        mp16.lParam  = cwp16.lParam;
+        mp16.lResult = 0;
+        if (unicode)
+            WINPROC_UnmapMsg32WTo16( cwp32->hwnd, cwp32->message, cwp32->wParam,
+                                     cwp32->lParam, &mp16 );
+        else
+            WINPROC_UnmapMsg32ATo16( cwp32->hwnd, cwp32->message, cwp32->wParam,
+                                     cwp32->lParam, &mp16 );
+        break;
+    }
+
+    case WH_CBT:
+        switch (code)
         {
-	    LPMSG16 lpmsg16 = MapSL(lParamOrig);
-	    STRUCT32_MSG32to16( (LPMSG)lParam, lpmsg16 );
-	    HeapFree( GetProcessHeap(), 0, (LPVOID)lParam );
-	    break;
+        case HCBT_CREATEWND:
+            {
+                CBT_CREATEWNDA *cbtcw32 = (CBT_CREATEWNDA *)lparam;
+                CBT_CREATEWND16 cbtcw16;
+                CREATESTRUCT16 cs16;
+
+                STRUCT32_CREATESTRUCT32Ato16( cbtcw32->lpcs, &cs16 );
+                cbtcw16.lpcs = (CREATESTRUCT16 *)MapLS( &cs16 );
+                cbtcw16.hwndInsertAfter = WIN_Handle16( cbtcw32->hwndInsertAfter );
+                lparam = MapLS( &cbtcw16 );
+
+                if (unicode)
+                {
+                    cs16.lpszName = map_str_32W_to_16( (LPWSTR)cbtcw32->lpcs->lpszName );
+                    cs16.lpszClass = map_str_32W_to_16( (LPWSTR)cbtcw32->lpcs->lpszClass );
+                    ret = call_hook_16( proc, id, code, wparam, lparam );
+                    unmap_str_32W_to_16( cs16.lpszName );
+                    unmap_str_32W_to_16( cs16.lpszClass );
+                }
+                else
+                {
+                    cs16.lpszName = MapLS( cbtcw32->lpcs->lpszName );
+                    cs16.lpszClass = MapLS( cbtcw32->lpcs->lpszClass );
+                    ret = call_hook_16( proc, id, code, wparam, lparam );
+                    UnMapLS( cs16.lpszName );
+                    UnMapLS( cs16.lpszClass );
+                }
+                cbtcw32->hwndInsertAfter = WIN_Handle32( cbtcw16.hwndInsertAfter );
+                UnMapLS( (SEGPTR)cbtcw16.lpcs );
+                UnMapLS( lparam );
+                break;
+            }
+
+        case HCBT_ACTIVATE:
+            {
+                CBTACTIVATESTRUCT *cas32 = (CBTACTIVATESTRUCT *)lparam;
+                CBTACTIVATESTRUCT16 cas16;
+
+                cas16.fMouse     = cas32->fMouse;
+                cas16.hWndActive = WIN_Handle16( cas32->hWndActive );
+
+                lparam = MapLS( &cas16 );
+                ret = call_hook_16( proc, id, code, wparam, lparam );
+                UnMapLS( lparam );
+                break;
+            }
+        case HCBT_CLICKSKIPPED:
+            {
+                MOUSEHOOKSTRUCT *ms32 = (MOUSEHOOKSTRUCT *)lparam;
+                MOUSEHOOKSTRUCT16 ms16;
+
+                ms16.pt.x         = ms32->pt.x;
+                ms16.pt.y         = ms32->pt.y;
+                ms16.hwnd         = WIN_Handle16( ms32->hwnd );
+                ms16.wHitTestCode = ms32->wHitTestCode;
+                ms16.dwExtraInfo  = ms32->dwExtraInfo;
+
+                lparam = MapLS( &ms16 );
+                ret = call_hook_16( proc, id, code, wparam, lparam );
+                UnMapLS( lparam );
+                break;
+            }
+        case HCBT_MOVESIZE:
+            {
+                RECT *rect32 = (RECT *)lparam;
+                RECT16 rect16;
+
+                CONV_RECT32TO16( rect32, &rect16 );
+                lparam = MapLS( &rect16 );
+                ret = call_hook_16( proc, id, code, wparam, lparam );
+                UnMapLS( lparam );
+                break;
+            }
         }
+        break;
 
-        case WH_MOUSE:
-        case WH_DEBUG:
-
-	    HeapFree( GetProcessHeap(), 0, (LPVOID)lParam );
-	    break;
-
-        case WH_CBT:
-	    switch (code)
-  	    {
-	      case HCBT_CREATEWND:
-	      {
-		LPCBT_CREATEWNDA lpcbtcw32 = (LPCBT_CREATEWNDA)lParam;
-		LPCBT_CREATEWND16  lpcbtcw16 = MapSL(lParamOrig);
-
-		if( !bA )
-		{
-		   if (HIWORD(lpcbtcw32->lpcs->lpszName))
-                       HeapFree( GetProcessHeap(), 0, (LPWSTR)lpcbtcw32->lpcs->lpszName );
-		   if (HIWORD(lpcbtcw32->lpcs->lpszClass))
-                       HeapFree( GetProcessHeap(), 0, (LPWSTR)lpcbtcw32->lpcs->lpszClass );
-		}
-
-		lpcbtcw16->hwndInsertAfter = WIN_Handle16( lpcbtcw32->hwndInsertAfter );
-
-		HeapFree( GetProcessHeap(), 0, lpcbtcw32->lpcs );
-	      } /* fall through */
-
-	      case HCBT_ACTIVATE:
-	      case HCBT_CLICKSKIPPED:
-	      case HCBT_MOVESIZE:
-
-	        HeapFree( GetProcessHeap(), 0, (LPVOID)lParam);
-	        break;
-	    }
-  	    break;
-
-        case WH_SHELL:
-        case WH_KEYBOARD:
-	    break;
-
-        case WH_HARDWARE:
-	case WH_FOREGROUNDIDLE:
-	case WH_CALLWNDPROCRET:
-        default:
-	    FIXME("\t[%i] skipping unmap\n", id);
-  	    break;
-    }
-}
-
-
-/***********************************************************************
- *           HOOK_UnMap16To32A
- */
-static void HOOK_UnMap16To32A(INT id, INT code, WPARAM wParamOrig,
-			      LPARAM lParamOrig, WPARAM wParam,
-			      LPARAM lParam)
-{
-    HOOK_UnMap16To32Common( id, code, wParamOrig, lParamOrig, wParam,
-			    lParam, TRUE );
-}
-
-
-/***********************************************************************
- *           HOOK_UnMap16To32W
- */
-static void HOOK_UnMap16To32W(INT id, INT code, WPARAM wParamOrig,
-			      LPARAM lParamOrig, WPARAM wParam,
-			      LPARAM lParam)
-{
-    HOOK_UnMap16To32Common( id, code, wParamOrig, lParamOrig, wParam, 
-			    lParam, FALSE );
-}
-
-
-/***********************************************************************
- *           HOOK_Map32To16Common
- */
-static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
-				 LPARAM *plParam, BOOL bA)
-{
-    switch (id)
+    case WH_MOUSE:
     {
-      case WH_MSGFILTER:
-      case WH_SYSMSGFILTER:
-      case WH_GETMESSAGE:
-      case WH_JOURNALRECORD:
-      {
-	  LPMSG lpmsg32 = (LPMSG)*plParam;
-	  LPMSG16 lpmsg16 = SEGPTR_NEW( MSG16 );
+        MOUSEHOOKSTRUCT *ms32 = (MOUSEHOOKSTRUCT *)lparam;
+        MOUSEHOOKSTRUCT16 ms16;
 
-	  STRUCT32_MSG32to16( lpmsg32, lpmsg16 );
+        ms16.pt.x         = ms32->pt.x;
+        ms16.pt.y         = ms32->pt.y;
+        ms16.hwnd         = WIN_Handle16( ms32->hwnd );
+        ms16.wHitTestCode = ms32->wHitTestCode;
+        ms16.dwExtraInfo  = ms32->dwExtraInfo;
 
-	  *plParam = (LPARAM)SEGPTR_GET( lpmsg16 );
-	  break;
-      }
-
-      case WH_JOURNALPLAYBACK:
-      {
-	  LPEVENTMSG lpem32 = (LPEVENTMSG)*plParam;
-	  LPEVENTMSG16 lpem16 = SEGPTR_NEW( EVENTMSG16 );
-
-	  lpem16->message = lpem32->message;
-	  lpem16->paramL  = lpem32->paramL;
-	  lpem16->paramH  = lpem32->paramH;
-	  lpem16->time    = lpem32->time;
-
-	  *plParam = (LPARAM)SEGPTR_GET( lpem16 );
-	  break;
-      }
-
-      case WH_CALLWNDPROC:
-      {
-          LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)*plParam;
-	  LPCWPSTRUCT16   lpcwp16 = SEGPTR_NEW( CWPSTRUCT16 );
-
-          lpcwp16->hwnd = WIN_Handle16(lpcwp32->hwnd);
-          lpcwp16->lParam = lpcwp32->lParam;
-
-          if (bA) WINPROC_MapMsg32ATo16( lpcwp32->hwnd, lpcwp32->message,
-                                         lpcwp32->wParam, &lpcwp16->message,
-                                         &lpcwp16->wParam, &lpcwp16->lParam );
-          else WINPROC_MapMsg32WTo16( lpcwp32->hwnd, lpcwp32->message,
-                                      lpcwp32->wParam, &lpcwp16->message,
-                                      &lpcwp16->wParam, &lpcwp16->lParam );
-	  *plParam = (LPARAM)SEGPTR_GET( lpcwp16 );
-          break;
-      }
-
-      case WH_CBT:
-	switch (code)
-	{
-	  case HCBT_ACTIVATE:
-	  {
-	      LPCBTACTIVATESTRUCT lpcas32 = (LPCBTACTIVATESTRUCT)*plParam;
-	      LPCBTACTIVATESTRUCT16 lpcas16 =SEGPTR_NEW( CBTACTIVATESTRUCT16 );
-
-	      lpcas16->fMouse     = lpcas32->fMouse;
-	      lpcas16->hWndActive = WIN_Handle16( lpcas32->hWndActive );
-
-	      *plParam = (LPARAM)SEGPTR_GET( lpcas16 );
-	      break;
-	  }
-	      
-	  case HCBT_CLICKSKIPPED:
-	  {
-	      LPMOUSEHOOKSTRUCT lpms32 = (LPMOUSEHOOKSTRUCT)*plParam;
-	      LPMOUSEHOOKSTRUCT16 lpms16 = SEGPTR_NEW( MOUSEHOOKSTRUCT16 );
-
-	      CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
-
-	      lpms16->hwnd         = WIN_Handle16( lpms32->hwnd );
-	      lpms16->wHitTestCode = lpms32->wHitTestCode;
-	      lpms16->dwExtraInfo  = lpms32->dwExtraInfo;
-
-	      *plParam = (LPARAM)SEGPTR_GET( lpms16 );
-	      break;
-	  }
-
-	  case HCBT_MOVESIZE:
-	  {
-	      LPRECT lprect32 = (LPRECT)*plParam;
-	      LPRECT16 lprect16 = SEGPTR_NEW( RECT16 );
-
-	      CONV_RECT32TO16( lprect32, lprect16 );
-
-	      *plParam = (LPARAM)SEGPTR_GET( lprect16 );
-	      break;
-	  }
-	}
-	break;
-
-      case WH_MOUSE:
-      {
-	  LPMOUSEHOOKSTRUCT lpms32 = (LPMOUSEHOOKSTRUCT)*plParam;
-	  LPMOUSEHOOKSTRUCT16 lpms16 = SEGPTR_NEW( MOUSEHOOKSTRUCT16 );
-
-	  CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
-
-	  lpms16->hwnd = WIN_Handle16( lpms32->hwnd );
-	  lpms16->wHitTestCode = lpms32->wHitTestCode;
-	  lpms16->dwExtraInfo = lpms32->dwExtraInfo;
-
-	  *plParam = (LPARAM)SEGPTR_GET( lpms16 );
-	  break;
-      }
-
-      case WH_DEBUG:
-      {
-	  LPDEBUGHOOKINFO lpdh32 = (LPDEBUGHOOKINFO)*plParam;
-	  LPDEBUGHOOKINFO16 lpdh16 = SEGPTR_NEW( DEBUGHOOKINFO16 );
-
-	  lpdh16->hModuleHook = 0;	/* FIXME */
-	  lpdh16->reserved    = 0;
-	  lpdh16->lParam      = lpdh32->lParam;
-	  lpdh16->wParam      = lpdh32->wParam;
-	  lpdh16->code        = lpdh32->code;
-	  
-	  *plParam = (LPARAM)SEGPTR_GET( lpdh16 );
-	  break;
-      }
-
-      case WH_SHELL:
-      case WH_KEYBOARD:
-	break;
-
-      case WH_HARDWARE:
-      case WH_FOREGROUNDIDLE:
-      case WH_CALLWNDPROCRET:
-      default:
-	FIXME("\t[%i] 32to16 translation unimplemented\n", id);
+        lparam = MapLS( &ms16 );
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        UnMapLS( lparam );
+        break;
     }
-}
 
-
-/***********************************************************************
- *           HOOK_Map32ATo16
- */
-static void HOOK_Map32ATo16(INT id, INT code, WPARAM *pwParam,
-			    LPARAM *plParam)
-{
-    if (id == WH_CBT && code == HCBT_CREATEWND)
+    case WH_DEBUG:
     {
-	LPCBT_CREATEWNDA lpcbtcw32 = (LPCBT_CREATEWNDA)*plParam;
-	LPCBT_CREATEWND16 lpcbtcw16 = SEGPTR_NEW( CBT_CREATEWND16 );
-	LPCREATESTRUCT16 lpcs16 = SEGPTR_NEW( CREATESTRUCT16 );
+        DEBUGHOOKINFO *dh32 = (DEBUGHOOKINFO *)lparam;
+        DEBUGHOOKINFO16 dh16;
 
-	lpcbtcw16->lpcs = (LPCREATESTRUCT16)SEGPTR_GET( lpcs16 );
-	STRUCT32_CREATESTRUCT32Ato16( lpcbtcw32->lpcs, lpcs16 );
+        dh16.hModuleHook = 0; /* FIXME */
+        dh16.reserved    = 0;
+        dh16.lParam      = dh32->lParam;
+        dh16.wParam      = dh32->wParam;
+        dh16.code        = dh32->code;
 
-	if (HIWORD(lpcbtcw32->lpcs->lpszName))
-	  lpcs16->lpszName =
-	    SEGPTR_GET( SEGPTR_STRDUP( lpcbtcw32->lpcs->lpszName ) );
-	else
-	  lpcs16->lpszName = (SEGPTR)lpcbtcw32->lpcs->lpszName;
-
-	if (HIWORD(lpcbtcw32->lpcs->lpszClass))
-	  lpcs16->lpszClass =
-	    SEGPTR_GET( SEGPTR_STRDUP( lpcbtcw32->lpcs->lpszClass ) );
-	else
-	  lpcs16->lpszClass = (SEGPTR)lpcbtcw32->lpcs->lpszClass;
-
-	lpcbtcw16->hwndInsertAfter = WIN_Handle16( lpcbtcw32->hwndInsertAfter );
-
-	*plParam = (LPARAM)SEGPTR_GET( lpcbtcw16 );
+        lparam = MapLS( &dh16 );
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        UnMapLS( lparam );
+        break;
     }
-    else HOOK_Map32To16Common(id, code, pwParam, plParam, TRUE);
+
+    case WH_SHELL:
+    case WH_KEYBOARD:
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        break;
+
+    case WH_HARDWARE:
+    case WH_FOREGROUNDIDLE:
+    case WH_CALLWNDPROCRET:
+    default:
+        FIXME("\t[%i] 32to16 translation unimplemented\n", id);
+        ret = call_hook_16( proc, id, code, wparam, lparam );
+        break;
+    }
+    return ret;
 }
 
 
 /***********************************************************************
- *           HOOK_Map32WTo16
+ *           call_hook_32_to_32
+ *
+ * Convert hook params to/from Unicode and call hook procedure
  */
-static void HOOK_Map32WTo16(INT id, INT code, WPARAM *pwParam,
-			    LPARAM *plParam)
+static LRESULT call_hook_32_to_32( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM lparam,
+                                   BOOL to_unicode )
 {
-    if (id == WH_CBT && code == HCBT_CREATEWND)
+    if (id != WH_CBT || code != HCBT_CREATEWND) return proc( code, wparam, lparam );
+
+    if (to_unicode)  /* ASCII to Unicode */
     {
-        LPSTR name, cls;
-	LPCBT_CREATEWNDW lpcbtcw32 = (LPCBT_CREATEWNDW)*plParam;
-	LPCBT_CREATEWND16 lpcbtcw16 = SEGPTR_NEW( CBT_CREATEWND16 );
-	LPCREATESTRUCT16 lpcs16 = SEGPTR_NEW( CREATESTRUCT16 );
+        CBT_CREATEWNDA *cbtcwA = (CBT_CREATEWNDA *)lparam;
+        CBT_CREATEWNDW cbtcwW;
+        CREATESTRUCTW csW;
+        LRESULT ret;
 
-	lpcbtcw16->lpcs = (LPCREATESTRUCT16)SEGPTR_GET( lpcs16 );
-	STRUCT32_CREATESTRUCT32Ato16( (LPCREATESTRUCTA)lpcbtcw32->lpcs,
-				      lpcs16 );
+        cbtcwW.lpcs = &csW;
+        cbtcwW.hwndInsertAfter = cbtcwA->hwndInsertAfter;
+        csW = *(CREATESTRUCTW *)cbtcwA->lpcs;
 
-        name = SEGPTR_STRDUP_WtoA( lpcbtcw32->lpcs->lpszName );
-        cls  = SEGPTR_STRDUP_WtoA( lpcbtcw32->lpcs->lpszClass );
-        lpcs16->lpszName  = SEGPTR_GET( name );
-        lpcs16->lpszClass = SEGPTR_GET( cls );
-        lpcbtcw16->hwndInsertAfter = WIN_Handle16( lpcbtcw32->hwndInsertAfter );
-
-	*plParam = (LPARAM)SEGPTR_GET( lpcbtcw16 );
+        if (HIWORD(cbtcwA->lpcs->lpszName))
+            csW.lpszName = HEAP_strdupAtoW( GetProcessHeap(), 0, cbtcwA->lpcs->lpszName );
+        if (HIWORD(cbtcwA->lpcs->lpszClass))
+            csW.lpszClass = HEAP_strdupAtoW( GetProcessHeap(), 0, cbtcwA->lpcs->lpszClass );
+        ret = proc( code, wparam, (LPARAM)&cbtcwW );
+        cbtcwA->hwndInsertAfter = cbtcwW.hwndInsertAfter;
+        if (HIWORD(csW.lpszName)) HeapFree( GetProcessHeap(), 0, (LPWSTR)csW.lpszName );
+        if (HIWORD(csW.lpszClass)) HeapFree( GetProcessHeap(), 0, (LPWSTR)csW.lpszClass );
+        return ret;
     }
-    else HOOK_Map32To16Common(id, code, pwParam, plParam, FALSE);
-}
-
-
-/***********************************************************************
- *           HOOK_UnMap32To16Common
- */
-static void HOOK_UnMap32To16Common(INT id, INT code, WPARAM wParamOrig,
-				   LPARAM lParamOrig, WPARAM wParam,
-				   LPARAM lParam, BOOL bA)
-{
-    switch (id)
+    else  /* Unicode to ASCII */
     {
-      case WH_MSGFILTER:
-      case WH_SYSMSGFILTER:
-      case WH_JOURNALRECORD:
-      case WH_JOURNALPLAYBACK:
-      case WH_MOUSE:
-      case WH_DEBUG:
-	SEGPTR_FREE( MapSL(lParam) );
-	break;
+        CBT_CREATEWNDW *cbtcwW = (CBT_CREATEWNDW *)lparam;
+        CBT_CREATEWNDA cbtcwA;
+        CREATESTRUCTA csA;
+        LRESULT ret;
 
-      case WH_CALLWNDPROC:
-      {
-          LPCWPSTRUCT16   lpcwp16 = MapSL(lParam);
-	  LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)lParamOrig;
-	  MSGPARAM16	  mp16;
+        cbtcwA.lpcs = &csA;
+        cbtcwA.hwndInsertAfter = cbtcwW->hwndInsertAfter;
+        csA = *(CREATESTRUCTA *)cbtcwW->lpcs;
 
-	  mp16.wParam = lpcwp16->wParam;
-	  mp16.lParam = lpcwp16->lParam;
-	  mp16.lResult = 0;
-
-          if (bA) WINPROC_UnmapMsg32ATo16( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
-                                           lpcwp32->lParam, &mp16 );
-          else WINPROC_UnmapMsg32WTo16( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
-                                        lpcwp32->lParam, &mp16 );
-	  SEGPTR_FREE( MapSL(lParam) );
-          break;
-      }
-
-      case WH_GETMESSAGE:
-      {
-	  LPMSG lpmsg32 = (LPMSG)lParamOrig;
-
-	  STRUCT32_MSG16to32( MapSL(lParam), lpmsg32 );
-	  SEGPTR_FREE( MapSL(lParam) );
-	  break;
-      }
-
-      case WH_CBT:
-	switch (code)
-	{
-	  case HCBT_CREATEWND:
-	  {
-	       LPCBT_CREATEWNDA lpcbtcw32 = (LPCBT_CREATEWNDA)(lParamOrig);
-               LPCBT_CREATEWND16 lpcbtcw16 = MapSL(lParam);
-               LPCREATESTRUCT16  lpcs16 = MapSL((SEGPTR)lpcbtcw16->lpcs);
-
-               if (HIWORD(lpcs16->lpszName))
-                   SEGPTR_FREE( MapSL(lpcs16->lpszName) );
-
-               if (HIWORD(lpcs16->lpszClass))
-                   SEGPTR_FREE( MapSL(lpcs16->lpszClass) );
-
-               lpcbtcw32->hwndInsertAfter = WIN_Handle32( lpcbtcw16->hwndInsertAfter );
-
-               SEGPTR_FREE( lpcs16 );
-	  } /* fall through */
-
-	  case HCBT_ACTIVATE:
-	  case HCBT_CLICKSKIPPED:
-	  case HCBT_MOVESIZE:
-
-	       SEGPTR_FREE( MapSL(lParam) );
-	       break;
-	}
-	break;
-
-      case WH_SHELL:
-      case WH_KEYBOARD:
-	break;
-
-      case WH_HARDWARE:
-      case WH_FOREGROUNDIDLE:
-      case WH_CALLWNDPROCRET:
-      default:
-	FIXME("\t[%i] skipping unmap\n", id);
+        if (HIWORD(cbtcwW->lpcs->lpszName))
+            csA.lpszName = HEAP_strdupWtoA( GetProcessHeap(), 0, cbtcwW->lpcs->lpszName );
+        if (HIWORD(cbtcwW->lpcs->lpszClass))
+            csA.lpszClass = HEAP_strdupWtoA( GetProcessHeap(), 0, cbtcwW->lpcs->lpszClass );
+        ret = proc( code, wparam, (LPARAM)&cbtcwA );
+        cbtcwW->hwndInsertAfter = cbtcwA.hwndInsertAfter;
+        if (HIWORD(csA.lpszName)) HeapFree( GetProcessHeap(), 0, (LPSTR)csA.lpszName );
+        if (HIWORD(csA.lpszClass)) HeapFree( GetProcessHeap(), 0, (LPSTR)csA.lpszClass );
+        return ret;
     }
 }
 
 
 /***********************************************************************
- *           HOOK_UnMap32ATo16
+ *           call_hook
+ *
+ * Call a hook procedure.
  */
-static void HOOK_UnMap32ATo16(INT id, INT code, WPARAM wParamOrig,
-			      LPARAM lParamOrig, WPARAM wParam,
-			      LPARAM lParam)
+inline static LRESULT call_hook( HOOKDATA *data, INT fromtype, INT code,
+                                 WPARAM wparam, LPARAM lparam )
 {
-    HOOK_UnMap32To16Common( id, code, wParamOrig, lParamOrig, wParam,
-			    lParam, TRUE );
-}
+    INT type = (data->flags & HOOK_MAPTYPE);
+    LRESULT ret;
 
+    /* Suspend window structure locks before calling user code */
+    int iWndsLocks = WIN_SuspendWndsLock();
 
-/***********************************************************************
- *           HOOK_UnMap32WTo16
- */
-static void HOOK_UnMap32WTo16(INT id, INT code, WPARAM wParamOrig,
-			      LPARAM lParamOrig, WPARAM wParam,
-			      LPARAM lParam)
-{
-    HOOK_UnMap32To16Common( id, code, wParamOrig, lParamOrig, wParam,
-                            lParam, FALSE );
-}
-
-
-/***********************************************************************
- *           HOOK_Map32ATo32W
- */
-static void HOOK_Map32ATo32W(INT id, INT code, WPARAM *pwParam,
-			     LPARAM *plParam)
-{
-    if (id == WH_CBT && code == HCBT_CREATEWND)
+    if (type == HOOK_WIN16)
     {
-	LPCBT_CREATEWNDA lpcbtcwA = (LPCBT_CREATEWNDA)*plParam;
-	LPCBT_CREATEWNDW lpcbtcwW = HeapAlloc( GetProcessHeap(), 0,
-						 sizeof(*lpcbtcwW) );
-	lpcbtcwW->lpcs = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpcbtcwW->lpcs) );
-
-	lpcbtcwW->hwndInsertAfter = lpcbtcwA->hwndInsertAfter;
-	*lpcbtcwW->lpcs = *(LPCREATESTRUCTW)lpcbtcwA->lpcs;
-
-	if (HIWORD(lpcbtcwA->lpcs->lpszName))
-	{
-	    lpcbtcwW->lpcs->lpszName = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                    lpcbtcwA->lpcs->lpszName );
-	}
-	else
-	  lpcbtcwW->lpcs->lpszName = (LPWSTR)lpcbtcwA->lpcs->lpszName;
-
-	if (HIWORD(lpcbtcwA->lpcs->lpszClass))
-	{
-	    lpcbtcwW->lpcs->lpszClass = HEAP_strdupAtoW( GetProcessHeap(), 0,
-                                                   lpcbtcwA->lpcs->lpszClass );
-	}
-	else
-	  lpcbtcwW->lpcs->lpszClass = (LPCWSTR)lpcbtcwA->lpcs->lpszClass;
-	*plParam = (LPARAM)lpcbtcwW;
+        if (fromtype == HOOK_WIN16)  /* 16->16 */
+            ret = call_hook_16( (HOOKPROC16)data->proc, data->id, code, wparam, lparam );
+        else  /* 32->16 */
+            ret = call_hook_32_to_16( (HOOKPROC16)data->proc, data->id, code, wparam,
+                                      lparam, (type == HOOK_WIN32W) );
     }
-    return;
-}
-
-
-/***********************************************************************
- *           HOOK_UnMap32ATo32W
- */
-static void HOOK_UnMap32ATo32W(INT id, INT code, WPARAM wParamOrig,
-			       LPARAM lParamOrig, WPARAM wParam,
-			       LPARAM lParam)
-{
-    if (id == WH_CBT && code == HCBT_CREATEWND)
+    else if (fromtype == HOOK_WIN16)  /* 16->32 */
+        ret = call_hook_16_to_32( data->proc, data->id, code, wparam,
+                                  lparam, (type == HOOK_WIN32W) );
+    else /* 32->32, check unicode */
     {
-	LPCBT_CREATEWNDW lpcbtcwW = (LPCBT_CREATEWNDW)lParam;
-	if (HIWORD(lpcbtcwW->lpcs->lpszName))
-            HeapFree( GetProcessHeap(), 0, (LPWSTR)lpcbtcwW->lpcs->lpszName );
-	if (HIWORD(lpcbtcwW->lpcs->lpszClass))
-            HeapFree( GetProcessHeap(), 0, (LPWSTR)lpcbtcwW->lpcs->lpszClass );
-	HeapFree( GetProcessHeap(), 0, lpcbtcwW->lpcs );
-	HeapFree( GetProcessHeap(), 0, lpcbtcwW );
+        if (type == fromtype)
+            ret = data->proc( code, wparam, lparam );
+        else
+            ret = call_hook_32_to_32( data->proc, data->id, code, wparam,
+                                      lparam, (type == HOOK_WIN32W) );
     }
-    return;
+    WIN_RestoreWndsLock(iWndsLocks);
+    return ret;
 }
 
-
-/***********************************************************************
- *           HOOK_Map32WTo32A
- */
-static void HOOK_Map32WTo32A(INT id, INT code, WPARAM *pwParam,
-			     LPARAM *plParam)
-{
-    if (id == WH_CBT && code == HCBT_CREATEWND)
-    {
-	LPCBT_CREATEWNDW lpcbtcwW = (LPCBT_CREATEWNDW)*plParam;
-	LPCBT_CREATEWNDA lpcbtcwA = HeapAlloc( GetProcessHeap(), 0,
-						 sizeof(*lpcbtcwA) );
-	lpcbtcwA->lpcs = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpcbtcwA->lpcs) );
-
-	lpcbtcwA->hwndInsertAfter = lpcbtcwW->hwndInsertAfter;
-	*lpcbtcwA->lpcs = *(LPCREATESTRUCTA)lpcbtcwW->lpcs;
-
-	if (HIWORD(lpcbtcwW->lpcs->lpszName))
-	  lpcbtcwA->lpcs->lpszName = HEAP_strdupWtoA( GetProcessHeap(), 0,
-                                                    lpcbtcwW->lpcs->lpszName );
-	else
-	  lpcbtcwA->lpcs->lpszName = (LPSTR)lpcbtcwW->lpcs->lpszName;
-
-	if (HIWORD(lpcbtcwW->lpcs->lpszClass))
-	  lpcbtcwA->lpcs->lpszClass = HEAP_strdupWtoA( GetProcessHeap(), 0,
-                                                   lpcbtcwW->lpcs->lpszClass );
-	else
-	  lpcbtcwA->lpcs->lpszClass = (LPSTR)lpcbtcwW->lpcs->lpszClass;
-	*plParam = (LPARAM)lpcbtcwA;
-    }
-    return;
-}
-
-
-/***********************************************************************
- *           HOOK_UnMap32WTo32A
- */
-static void HOOK_UnMap32WTo32A(INT id, INT code, WPARAM wParamOrig,
-			       LPARAM lParamOrig, WPARAM wParam,
-			       LPARAM lParam)
-{
-    if (id == WH_CBT && code == HCBT_CREATEWND)
-    {
-	LPCBT_CREATEWNDA lpcbtcwA = (LPCBT_CREATEWNDA)lParam;
-	if (HIWORD(lpcbtcwA->lpcs->lpszName))
-            HeapFree( GetProcessHeap(), 0, (LPSTR)lpcbtcwA->lpcs->lpszName );
-	if (HIWORD(lpcbtcwA->lpcs->lpszClass))
-            HeapFree( GetProcessHeap(), 0, (LPSTR)lpcbtcwA->lpcs->lpszClass );
-	HeapFree( GetProcessHeap(), 0, lpcbtcwA->lpcs );
-	HeapFree( GetProcessHeap(), 0, lpcbtcwA );
-    }
-    return;
-}
-
-
-/***********************************************************************
- *           Map Function Tables
- */
-static const HOOK_MapFunc HOOK_MapFuncs[3][3] = 
-{
-    { NULL,            HOOK_Map16To32A,  HOOK_Map16To32W },
-    { HOOK_Map32ATo16, NULL,             HOOK_Map32ATo32W },
-    { HOOK_Map32WTo16, HOOK_Map32WTo32A, NULL }
-};
-
-static const HOOK_UnMapFunc HOOK_UnMapFuncs[3][3] = 
-{
-    { NULL,              HOOK_UnMap16To32A,  HOOK_UnMap16To32W },
-    { HOOK_UnMap32ATo16, NULL,               HOOK_UnMap32ATo32W },
-    { HOOK_UnMap32WTo16, HOOK_UnMap32WTo32A, NULL }
-};
-
-
-/***********************************************************************
- *           Internal Functions
- */
 
 /***********************************************************************
  *           HOOK_GetNextHook
@@ -854,9 +611,6 @@ static HANDLE16 HOOK_GetHook( INT16 id )
  *
  * Install a given hook.
  */
-/* ### start build ### */
-extern LONG CALLBACK HOOK_CallTo16_long_wwl(FARPROC16,WORD,WORD,LONG);
-/* ### stop build ### */
 static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
 		           HMODULE16 hModule, DWORD dwThreadId )
 {
@@ -973,7 +727,6 @@ static HANDLE16 HOOK_FindValidHook( HANDLE16 hook )
     }
 }
 
-
 /***********************************************************************
  *           HOOK_CallHook
  *
@@ -986,57 +739,21 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     HANDLE16 prevHook;
     HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
     LRESULT ret;
-    int iWndsLocks;
-
-    WPARAM wParamOrig = wParam;
-    LPARAM lParamOrig = lParam;
-    HOOK_MapFunc MapFunc;
-    HOOK_UnMapFunc UnMapFunc;
-
-    MapFunc = HOOK_MapFuncs[fromtype][data->flags & HOOK_MAPTYPE];
-    UnMapFunc = HOOK_UnMapFuncs[fromtype][data->flags & HOOK_MAPTYPE];
-
-    if (MapFunc)
-      MapFunc( data->id, code, &wParam, &lParam );
-
-    /* Now call it */
 
     if (!(queue = QUEUE_Current())) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
+
+    TRACE("Calling hook %04x: %d %08x %08lx\n", hook, code, wParam, lParam );
+
     data->flags |= HOOK_INUSE;
-
-    TRACE("Calling hook %04x: %d %08x %08lx\n",
-                  hook, code, wParam, lParam );
-
-    /* Suspend window structure locks before calling user code */
-    iWndsLocks = WIN_SuspendWndsLock();
-
-    if ((data->flags & HOOK_MAPTYPE) == HOOK_WIN16)
-    {
-        ret = HOOK_CallTo16_long_wwl( data->proc, code, wParam, lParam );
-        /* Grrr. While the hook procedure is supposed to have an LRESULT return
-           value even in Win16, it seems that for those hook types where the 
-           return value is interpreted as BOOL, Windows doesn't actually check
-           the HIWORD ...  Some buggy Win16 programs, notably WINFILE, rely on
-           that, because they neglect to clear DX ... */
-        if (data->id != WH_JOURNALPLAYBACK) ret = LOWORD( ret );
-    }
-    else
-        ret = data->proc(code, wParam, lParam);
-
-    WIN_RestoreWndsLock(iWndsLocks);
+    ret = call_hook( data, fromtype, code, wParam, lParam );
+    data->flags &= ~HOOK_INUSE;
 
     TRACE("Ret hook %04x = %08lx\n", hook, ret );
 
-    data->flags &= ~HOOK_INUSE;
     queue->hCurHook = prevHook;
-
-    if (UnMapFunc)
-      UnMapFunc( data->id, code, wParamOrig, lParamOrig, wParam, lParam );
-
     if (!data->proc) HOOK_RemoveHook( hook );
-
     return ret;
 }
 
