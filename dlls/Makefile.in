@@ -400,7 +400,7 @@ libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 
 advapi32/libadvapi32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 avifil32/libavifil32.@LIBEXT@: libmsvfw32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-comctl32/libcomctl32.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+comctl32/libcomctl32.@LIBEXT@: libmsvfw32.@LIBEXT@ libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 commdlg/libcomdlg32.@LIBEXT@: libshell32.@LIBEXT@ libshlwapi.@LIBEXT@ libcomctl32.@LIBEXT@ libwinspool.drv.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 crtdll/libcrtdll.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 dciman32/libdciman32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
@@ -454,7 +454,7 @@ winmm/mcicda/libmcicda.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libker
 winmm/mciseq/libmciseq.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/mciwave/libmciwave.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/midimap/libmidimap.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
-winmm/wavemap/libmsacm.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
+winmm/wavemap/libmsacm.drv.@LIBEXT@: libmsacm32.@LIBEXT@ libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winmm/wineoss/libwineoss.drv.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winnls/libwinnls32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winsock/libws2_32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
