@@ -171,8 +171,10 @@ typedef struct tagDC_FUNCS
 } DC_FUNCTIONS;
 
   /* DC flags */
-#define DC_SAVED      0x0002   /* It is a saved DC */
-#define DC_DIRTY      0x0004   /* hVisRgn has to be updated */
+#define DC_SAVED         0x0002   /* It is a saved DC */
+#define DC_DIRTY         0x0004   /* hVisRgn has to be updated */
+#define DC_BOUNDS_ENABLE 0x0008   /* Bounding rectangle tracking is enabled */
+#define DC_BOUNDS_SET    0x0010   /* Bounding rectangle has been set */
 
 /* Certain functions will do no further processing if the driver returns this.
    Used by mfdrv for example. */

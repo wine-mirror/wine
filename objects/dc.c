@@ -116,6 +116,10 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->xformWorld2Vport    = dc->xformWorld2Wnd;
     dc->xformVport2World    = dc->xformWorld2Wnd;
     dc->vport2WorldValid    = TRUE;
+    dc->BoundsRect.left     = 0;
+    dc->BoundsRect.top      = 0;
+    dc->BoundsRect.right    = 0;
+    dc->BoundsRect.bottom   = 0;
     PATH_InitGdiPath(&dc->path);
     return dc;
 }
@@ -322,6 +326,7 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->vportOrgY        = dc->vportOrgY;
     newdc->vportExtX        = dc->vportExtX;
     newdc->vportExtY        = dc->vportExtY;
+    newdc->BoundsRect       = dc->BoundsRect;
 
     newdc->hSelf = (HDC)handle;
     newdc->saveLevel = 0;
@@ -402,6 +407,7 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     dc->xformWorld2Vport = dcs->xformWorld2Vport;
     dc->xformVport2World = dcs->xformVport2World;
     dc->vport2WorldValid = dcs->vport2WorldValid;
+    dc->BoundsRect       = dcs->BoundsRect;
 
     dc->wndOrgX          = dcs->wndOrgX;
     dc->wndOrgY          = dcs->wndOrgY;
@@ -1372,40 +1378,76 @@ HCOLORSPACE WINAPI SetColorSpace( HDC hDC, HCOLORSPACE hColorSpace )
 }
 
 /***********************************************************************
- *           GetBoundsRect    (GDI.194)
- */
-UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
-{
-    return DCB_RESET | DCB_DISABLE; /* bounding rectangle always empty and disabled*/
-}
-
-/***********************************************************************
  *           GetBoundsRect    (GDI32.@)
  */
 UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 {
-    FIXME("(): stub\n");
-    return DCB_RESET;   /* bounding rectangle always empty */
+    UINT ret;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if ( !dc ) return 0;
+
+    if (rect) *rect = dc->BoundsRect;
+
+    ret = ((dc->flags & DC_BOUNDS_SET) ? DCB_SET : DCB_RESET);
+
+    if (flags & DCB_RESET)
+    {
+        dc->BoundsRect.left   = 0;
+        dc->BoundsRect.top    = 0;
+        dc->BoundsRect.right  = 0;
+        dc->BoundsRect.bottom = 0;
+        dc->flags &= ~DC_BOUNDS_SET;
+    }
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
-/***********************************************************************
- *           SetBoundsRect    (GDI.193)
- */
-UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
-{
-    if ( (flags & DCB_ACCUMULATE) || (flags & DCB_ENABLE) )
-        FIXME("(%04x, %p, %04x): stub\n", hdc, rect, flags );
-
-    return DCB_RESET | DCB_DISABLE; /* bounding rectangle always empty and disabled*/
-}
 
 /***********************************************************************
  *           SetBoundsRect    (GDI32.@)
  */
 UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 {
-    FIXME("(): stub\n");
-    return DCB_DISABLE;   /* bounding rectangle always empty */
+    UINT ret;
+    DC *dc;
+
+    if ((flags & DCB_ENABLE) && (flags & DCB_DISABLE)) return 0;
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+
+    ret = ((dc->flags & DC_BOUNDS_ENABLE) ? DCB_ENABLE : DCB_DISABLE) |
+          ((dc->flags & DC_BOUNDS_SET) ? DCB_SET : DCB_RESET);
+
+    if (flags & DCB_RESET)
+    {
+        dc->BoundsRect.left   = 0;
+        dc->BoundsRect.top    = 0;
+        dc->BoundsRect.right  = 0;
+        dc->BoundsRect.bottom = 0;
+        dc->flags &= ~DC_BOUNDS_SET;
+    }
+
+    if ((flags & DCB_ACCUMULATE) && rect && rect->left < rect->right && rect->top < rect->bottom)
+    {
+        if (dc->flags & DC_BOUNDS_SET)
+        {
+            dc->BoundsRect.left   = min( dc->BoundsRect.left, rect->left );
+            dc->BoundsRect.top    = min( dc->BoundsRect.top, rect->top );
+            dc->BoundsRect.right  = max( dc->BoundsRect.right, rect->right );
+            dc->BoundsRect.bottom = max( dc->BoundsRect.bottom, rect->bottom );
+        }
+        else
+        {
+            dc->BoundsRect = *rect;
+            dc->flags |= DC_BOUNDS_SET;
+        }
+    }
+
+    if (flags & DCB_ENABLE) dc->flags |= DC_BOUNDS_ENABLE;
+    if (flags & DCB_DISABLE) dc->flags &= ~DC_BOUNDS_ENABLE;
+
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 

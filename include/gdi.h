@@ -153,6 +153,7 @@ typedef struct tagDC
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
     XFORM         xformVport2World;  /* Inverse of the above transformation */
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
+    RECT          BoundsRect;        /* Current bounding rect */
 } DC;
 
 /* extra stock object: default 1x1 bitmap for memory DCs */

@@ -1547,6 +1547,33 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr, 
 
 
 /***********************************************************************
+ *           SetBoundsRect    (GDI.193)
+ */
+UINT16 WINAPI SetBoundsRect16( HDC16 hdc, const RECT16* rect, UINT16 flags )
+{
+    if (rect)
+    {
+        RECT rect32;
+        CONV_RECT16TO32( rect, &rect32 );
+        return SetBoundsRect( HDC_32( hdc ), &rect32, flags );
+    }
+    else return SetBoundsRect( HDC_32( hdc ), NULL, flags );
+}
+
+
+/***********************************************************************
+ *           GetBoundsRect    (GDI.194)
+ */
+UINT16 WINAPI GetBoundsRect16( HDC16 hdc, LPRECT16 rect, UINT16 flags)
+{
+    RECT rect32;
+    UINT ret = GetBoundsRect( HDC_32( hdc ), &rect32, flags );
+    if (rect) CONV_RECT32TO16( &rect32, rect );
+    return ret;
+}
+
+
+/***********************************************************************
  *		EngineEnumerateFont (GDI.300)
  */
 WORD WINAPI EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
