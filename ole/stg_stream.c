@@ -356,7 +356,15 @@ HRESULT WINAPI StgStreamImpl_Read(
 			    pcbRead);
   }
   else
-    assert(FALSE);
+  {
+    /*
+     * Small and big block chains are both NULL. This case will happen
+     * when a stream starts with BLOCK_END_OF_CHAIN and has size zero.
+     */
+
+    *pcbRead = 0;
+    return S_OK;
+  }
 
   /*
    * We should always be able to read the proper amount of data from the
