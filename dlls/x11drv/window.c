@@ -32,13 +32,6 @@ extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
     (((exStyle) & WS_EX_DLGMODALFRAME) || \
      (((style) & WS_DLGFRAME) && !((style) & WS_THICKFRAME)))
 
-#define HAS_THICKFRAME(style,exStyle) \
-    (((style) & WS_THICKFRAME) && \
-     !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
-
-#define HAS_THINFRAME(style) \
-    (((style) & WS_BORDER) || !((style) & (WS_CHILD | WS_POPUP)))
-
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 
@@ -442,30 +435,19 @@ void X11DRV_set_iconic_state( WND *win )
  */
 void X11DRV_window_to_X_rect( WND *win, RECT *rect )
 {
+    RECT rc;
+
     if (!(win->dwExStyle & WS_EX_MANAGED)) return;
-    if (win->dwStyle & WS_ICONIC) return;
     if (IsRectEmpty( rect )) return;
 
-    if (HAS_THICKFRAME( win->dwStyle, win->dwExStyle ))
-        InflateRect( rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
-    else if (HAS_DLGFRAME( win->dwStyle, win->dwExStyle ))
-        InflateRect( rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME) );
-    else if (HAS_THINFRAME( win->dwStyle ))
-        InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER) );
+    rc.top = rc.bottom = rc.left = rc.right = 0;
 
-    if ((win->dwStyle & WS_CAPTION) == WS_CAPTION)
-    {
-        if (win->dwExStyle & WS_EX_TOOLWINDOW)
-            rect->top += GetSystemMetrics(SM_CYSMCAPTION);
-        else
-            rect->top += GetSystemMetrics(SM_CYCAPTION);
-    }
+    AdjustWindowRectEx( &rc, win->dwStyle & ~(WS_HSCROLL|WS_VSCROLL), FALSE, win->dwExStyle );
 
-    if (win->dwExStyle & WS_EX_CLIENTEDGE)
-        InflateRect( rect, -GetSystemMetrics(SM_CXEDGE), -GetSystemMetrics(SM_CYEDGE) );
-    if (win->dwExStyle & WS_EX_STATICEDGE)
-        InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER) );
-
+    rect->left   -= rc.left;
+    rect->right  -= rc.right;
+    rect->top    -= rc.top;
+    rect->bottom -= rc.bottom;
     if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
     if (rect->left >= rect->right) rect->right = rect->left + 1;
 }
@@ -479,28 +461,9 @@ void X11DRV_window_to_X_rect( WND *win, RECT *rect )
 void X11DRV_X_to_window_rect( WND *win, RECT *rect )
 {
     if (!(win->dwExStyle & WS_EX_MANAGED)) return;
-    if (win->dwStyle & WS_ICONIC) return;
     if (IsRectEmpty( rect )) return;
 
-    if (HAS_THICKFRAME( win->dwStyle, win->dwExStyle ))
-        InflateRect( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );
-    else if (HAS_DLGFRAME( win->dwStyle, win->dwExStyle ))
-        InflateRect( rect, GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) );
-    else if (HAS_THINFRAME( win->dwStyle ))
-        InflateRect( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER) );
-
-    if ((win->dwStyle & WS_CAPTION) == WS_CAPTION)
-    {
-        if (win->dwExStyle & WS_EX_TOOLWINDOW)
-            rect->top -= GetSystemMetrics(SM_CYSMCAPTION);
-        else
-            rect->top -= GetSystemMetrics(SM_CYCAPTION);
-    }
-
-    if (win->dwExStyle & WS_EX_CLIENTEDGE)
-        InflateRect( rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE) );
-    if (win->dwExStyle & WS_EX_STATICEDGE)
-        InflateRect( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER) );
+    AdjustWindowRectEx( rect, win->dwStyle & ~(WS_HSCROLL|WS_VSCROLL), FALSE, win->dwExStyle );
 
     if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
     if (rect->left >= rect->right) rect->right = rect->left + 1;
