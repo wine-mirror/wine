@@ -325,7 +325,7 @@ HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWO
 /* This sets this format for the <em>Primary Buffer Only</em> */
 /* See file:///cdrom/sdk52/docs/worddoc/dsound.doc page 120 */
 static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
-	LPDIRECTSOUNDBUFFER8 iface,LPWAVEFORMATEX wfex
+	LPDIRECTSOUNDBUFFER8 iface,LPCWAVEFORMATEX wfex
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	IDirectSoundImpl* dsound = This->dsound;
@@ -916,7 +916,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetObjectInPath(
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_Initialize(
-	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPDSBUFFERDESC dbsd
+	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPCDSBUFFERDESC dbsd
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
@@ -1049,7 +1049,7 @@ static ICOM_VTABLE(IDirectSoundBuffer8) dspbvt =
 HRESULT WINAPI PrimaryBufferImpl_Create(
 	IDirectSoundImpl *ds,
 	PrimaryBufferImpl **pdsb,
-	LPDSBUFFERDESC dsbd)
+	LPCDSBUFFERDESC dsbd)
 {
 	PrimaryBufferImpl *dsb;
 

@@ -177,7 +177,7 @@ HRESULT WINAPI IDirectSoundNotifyImpl_Create(
  */
 
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
-	LPDIRECTSOUNDBUFFER8 iface,LPWAVEFORMATEX wfex
+	LPDIRECTSOUNDBUFFER8 iface,LPCWAVEFORMATEX wfex
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 
@@ -880,7 +880,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(
-	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPDSBUFFERDESC dbsd
+	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPCDSBUFFERDESC dbsd
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
@@ -1033,7 +1033,7 @@ static ICOM_VTABLE(IDirectSoundBuffer8) dsbvt =
 HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	IDirectSoundImpl *ds,
 	IDirectSoundBufferImpl **pdsb,
-	LPDSBUFFERDESC dsbd)
+	LPCDSBUFFERDESC dsbd)
 {
 	IDirectSoundBufferImpl *dsb;
 	LPWAVEFORMATEX wfex = dsbd->lpwfxFormat;
@@ -1305,7 +1305,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetStatus(
 }
 
 static HRESULT WINAPI SecondaryBufferImpl_Initialize(
-	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPDSBUFFERDESC dbsd)
+	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPCDSBUFFERDESC dbsd)
 {
 	ICOM_THIS(SecondaryBufferImpl,iface);
 	TRACE("(%p,%p,%p)\n",This,dsound,dbsd);
@@ -1342,7 +1342,7 @@ static HRESULT WINAPI SecondaryBufferImpl_SetCurrentPosition(
 }
 
 static HRESULT WINAPI SecondaryBufferImpl_SetFormat(
-	LPDIRECTSOUNDBUFFER8 iface,LPWAVEFORMATEX wfex)
+	LPDIRECTSOUNDBUFFER8 iface,LPCWAVEFORMATEX wfex)
 {
 	ICOM_THIS(SecondaryBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,wfex);

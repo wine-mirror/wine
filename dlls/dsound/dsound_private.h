@@ -153,7 +153,7 @@ struct IDirectSoundBufferImpl
 HRESULT WINAPI IDirectSoundBufferImpl_Create(
     IDirectSoundImpl *ds,
     IDirectSoundBufferImpl **pdsb,
-    LPDSBUFFERDESC dsbd);
+    LPCDSBUFFERDESC dsbd);
 
 /*****************************************************************************
  * SecondaryBuffer implementation structure
@@ -182,7 +182,7 @@ struct PrimaryBufferImpl
 HRESULT WINAPI PrimaryBufferImpl_Create(
     IDirectSoundImpl *ds,
     PrimaryBufferImpl **pdsb,
-    LPDSBUFFERDESC dsbd);
+    LPCDSBUFFERDESC dsbd);
 
 /*****************************************************************************
  * IDirectSoundCapture implementation structure

@@ -488,7 +488,7 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
 }
 
 static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
-	LPDIRECTSOUND8 iface,LPDSBUFFERDESC dsbd,LPLPDIRECTSOUNDBUFFER8 ppdsb,LPUNKNOWN lpunk
+	LPDIRECTSOUND8 iface,LPCDSBUFFERDESC dsbd,LPLPDIRECTSOUNDBUFFER8 ppdsb,LPUNKNOWN lpunk
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
 	LPWAVEFORMATEX	wfex;

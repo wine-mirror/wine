@@ -20,7 +20,7 @@
 #define __WINE_DSOUND_H
 
 #ifndef DIRECTSOUND_VERSION
-#define DIRECTSOUND_VERSION 0x0800
+#define DIRECTSOUND_VERSION 0x0900
 #endif
 
 #define COM_NO_WINDOWS_H
@@ -109,6 +109,7 @@ DEFINE_GUID(DSDEVID_WinePlayback,        0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00
 #define	MAKE_DSHRESULT(code)		MAKE_HRESULT(1,_FACDS,code)
 
 #define DS_OK				0
+#define DS_NO_VIRTUALIZATION            MAKE_HRESULT(0, _FACDS, 10)
 #define DSERR_ALLOCATED			MAKE_DSHRESULT(10)
 #define DSERR_CONTROLUNAVAIL		MAKE_DSHRESULT(30)
 #define DSERR_INVALIDPARAM		E_INVALIDARG
@@ -124,6 +125,14 @@ DEFINE_GUID(DSDEVID_WinePlayback,        0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00
 #define DSERR_BUFFERLOST		MAKE_DSHRESULT(150)
 #define DSERR_OTHERAPPHASPRIO		MAKE_DSHRESULT(160)
 #define DSERR_UNINITIALIZED		MAKE_DSHRESULT(170)
+#define DSERR_NOINTERFACE               E_NOINTERFACE
+#define DSERR_ACCESSDENIED              E_ACCESSDENIED
+#define DSERR_BUFFERTOOSMALL            MAKE_DSHRESULT(180)
+#define DSERR_DS8_REQUIRED              MAKE_DSHRESULT(190)
+#define DSERR_SENDLOOP                  MAKE_DSHRESULT(200)
+#define DSERR_BADSENDBUFFERGUID         MAKE_DSHRESULT(210)
+#define DSERR_FXUNAVAILABLE             MAKE_DSHRESULT(220)
+#define DSERR_OBJECTNOTFOUND            MAKE_DSHRESULT(4449)
 
 #define DSCAPS_PRIMARYMONO          0x00000001
 #define DSCAPS_PRIMARYSTEREO        0x00000002
@@ -169,13 +178,21 @@ typedef struct _DSCAPS
     DWORD	dwReserved1;
     DWORD	dwReserved2;
 } DSCAPS,*LPDSCAPS;
+typedef const DSCAPS *LPCDSCAPS;
 
-#define DSBPLAY_LOOPING         0x00000001
+#define DSBPLAY_LOOPING             0x00000001
+#define DSBPLAY_LOCHARDWARE         0x00000002
+#define DSBPLAY_LOCSOFTWARE         0x00000004
+#define DSBPLAY_TERMINATEBY_TIME    0x00000008
+#define DSBPLAY_TERMINATEBY_DISTANCE    0x000000010
+#define DSBPLAY_TERMINATEBY_PRIORITY    0x000000020
 
 #define DSBSTATUS_PLAYING           0x00000001
 #define DSBSTATUS_BUFFERLOST        0x00000002
 #define DSBSTATUS_LOOPING           0x00000004
-
+#define DSBSTATUS_LOCHARDWARE       0x00000008
+#define DSBSTATUS_LOCSOFTWARE       0x00000010
+#define DSBSTATUS_TERMINATED        0x00000020
 
 #define DSBLOCK_FROMWRITECURSOR     0x00000001
 #define DSBLOCK_ENTIREBUFFER        0x00000002
@@ -188,23 +205,25 @@ typedef struct _DSCAPS
 #define DSBCAPS_CTRLFREQUENCY       0x00000020
 #define DSBCAPS_CTRLPAN             0x00000040
 #define DSBCAPS_CTRLVOLUME          0x00000080
+#define DSBCAPS_CTRLDEFAULT         0x000000E0  /* Pan + volume + frequency. */
 #define DSBCAPS_CTRLPOSITIONNOTIFY  0x00000100
 #define DSBCAPS_CTRLFX              0x00000200
-#define DSBCAPS_CTRLDEFAULT         0x000000E0  /* Pan + volume + frequency. */
 #define DSBCAPS_CTRLALL             0x000001F0  /* All control capabilities */
 #define DSBCAPS_STICKYFOCUS         0x00004000
 #define DSBCAPS_GLOBALFOCUS         0x00008000
 #define DSBCAPS_GETCURRENTPOSITION2 0x00010000  /* More accurate play cursor under emulation*/
 #define DSBCAPS_MUTE3DATMAXDISTANCE 0x00020000
+#define DSBCAPS_LOCDEFER            0x00040000
 
 #define DSBSIZE_MIN                 4
 #define DSBSIZE_MAX                 0xFFFFFFF
 #define DSBPAN_LEFT                 -10000
+#define DSBPAN_CENTER               0
 #define DSBPAN_RIGHT                 10000
 #define DSBVOLUME_MAX                    0
 #define DSBVOLUME_MIN               -10000
 #define DSBFREQUENCY_MIN            100
-#define DSBFREQUENCY_MAX            100000
+#define DSBFREQUENCY_MAX            200000
 #define DSBFREQUENCY_ORIGINAL       0
 
 typedef struct _DSBCAPS
@@ -215,6 +234,7 @@ typedef struct _DSBCAPS
     DWORD	dwUnlockTransferRate;
     DWORD	dwPlayCpuOverhead;
 } DSBCAPS,*LPDSBCAPS;
+typedef const DSBCAPS *LPCDSBCAPS;
 
 #define DSSCL_NORMAL                1
 #define DSSCL_PRIORITY              2
@@ -252,9 +272,7 @@ typedef struct _DSBUFFERDESC
     DWORD		dwBufferBytes;
     DWORD		dwReserved;
     LPWAVEFORMATEX	lpwfxFormat;
-#if DIRECTSOUND_VERSION >= 0x0700
     GUID		guid3DAlgorithm;
-#endif
 } DSBUFFERDESC,*LPDSBUFFERDESC;
 typedef const DSBUFFERDESC *LPCDSBUFFERDESC;
 
@@ -270,6 +288,8 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 #define DSSPEAKER_QUAD          3
 #define DSSPEAKER_STEREO        4
 #define DSSPEAKER_SURROUND      5
+#define DSSPEAKER_5POINT1       6
+#define DSSPEAKER_7POINT1       7
 
 #define DSSPEAKER_GEOMETRY_MIN      0x00000005  /* 5 degrees */
 #define DSSPEAKER_GEOMETRY_NARROW   0x0000000A  /* 10 degrees */
@@ -283,13 +303,32 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 #define DS_CERTIFIED                0x00000000
 #define DS_UNCERTIFIED              0x00000001
 
+typedef struct _DSCEFFECTDESC
+{
+    DWORD       dwSize;
+    DWORD       dwFlags;
+    GUID        guidDSCFXClass;
+    GUID        guidDSCFXInstance;
+    DWORD       dwReserved1;
+    DWORD       dwReserved2;
+} DSCEFFECTDESC, *LPDSCEFFECTDESC;
+typedef const DSCEFFECTDESC *LPCDSCEFFECTDESC;
+                                                                                                                                             
+#define DSCFX_LOCHARDWARE   0x00000001
+#define DSCFX_LOCSOFTWARE   0x00000002
+                                                                                                                                             
+#define DSCFXR_LOCHARDWARE  0x00000010
+#define DSCFXR_LOCSOFTWARE  0x00000020
+                                                                                                                                             
 typedef struct _DSCBUFFERDESC
 {
-  DWORD          dwSize;
-  DWORD          dwFlags;
-  DWORD          dwBufferBytes;
-  DWORD          dwReserved;
-  LPWAVEFORMATEX lpwfxFormat;
+  DWORD           dwSize;
+  DWORD           dwFlags;
+  DWORD           dwBufferBytes;
+  DWORD           dwReserved;
+  LPWAVEFORMATEX  lpwfxFormat;
+  DWORD           dwFXCount;
+  LPDSCEFFECTDESC lpDSCFXDesc;
 } DSCBUFFERDESC, *LPDSCBUFFERDESC;
 typedef const DSCBUFFERDESC *LPCDSCBUFFERDESC;
 
@@ -313,11 +352,12 @@ typedef const DSCBCAPS *LPCDSCBCAPS;
 
 #define DSCCAPS_EMULDRIVER          DSCAPS_EMULDRIVER
 #define DSCCAPS_CERTIFIED           DSCAPS_CERTIFIED
+#define DSCCAPS_MULTIPLECAPTURE     0x00000001
 
 #define DSCBCAPS_WAVEMAPPED         0x80000000
 #define DSCBCAPS_CTRLFX             0x00000200
 
-#define DSCBLOCL_ENTIREBUFFER       0x00000001
+#define DSCBLOCK_ENTIREBUFFER       0x00000001
 #define DSCBSTART_LOOPING           0x00000001
 #define DSCBPN_OFFSET_STOP          0xffffffff
 
@@ -327,6 +367,11 @@ typedef const DSCBCAPS *LPCDSCBCAPS;
 #ifndef __LPCGUID_DEFINED__
 #define __LPCGUID_DEFINED__
 typedef const GUID *LPCGUID;
+#endif
+
+#ifndef _LPCWAVEFORMATEX_DEFINED
+#define _LPCWAVEFORMATEX_DEFINED
+typedef const WAVEFORMATEX *LPCWAVEFORMATEX;
 #endif
 
 typedef LPVOID* LPLPVOID;
@@ -357,7 +402,7 @@ extern HRESULT WINAPI GetDeviceID(LPCGUID lpGuidSrc, LPGUID lpGuidDest);
 #define INTERFACE IDirectSound
 #define IDirectSound_METHODS \
     IUnknown_METHODS \
-    STDMETHOD(CreateSoundBuffer)(THIS_ LPDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
+    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(GetCaps)(THIS_ LPDSCAPS lpDSCaps) PURE; \
     STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER lpDsbOriginal, LPLPDIRECTSOUNDBUFFER lplpDsbDuplicate) PURE; \
     STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwLevel) PURE; \
@@ -391,7 +436,7 @@ ICOM_DEFINE(IDirectSound,IUnknown)
 #define INTERFACE IDirectSound8
 #define IDirectSound8_METHODS \
     IUnknown_METHODS \
-    STDMETHOD(CreateSoundBuffer)(THIS_ LPDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
+    STDMETHOD(CreateSoundBuffer)(THIS_ LPCDSBUFFERDESC lpcDSBufferDesc, LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(GetCaps)(THIS_ LPDSCAPS lpDSCaps) PURE; \
     STDMETHOD(DuplicateSoundBuffer)(THIS_ LPDIRECTSOUNDBUFFER8 lpDsbOriginal, LPLPDIRECTSOUNDBUFFER8 lplpDsbDuplicate) PURE; \
     STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwLevel) PURE; \
@@ -435,11 +480,11 @@ ICOM_DEFINE(IDirectSound8,IUnknown)
     STDMETHOD(GetPan)(THIS_ LPLONG lplpan) PURE; \
     STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE; \
     STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPDSBUFFERDESC lpcDSBufferDesc) PURE; \
+    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE; \
     STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE; \
     STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE; \
     STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE; \
-    STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX lpcfxFormat) PURE; \
+    STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE; \
     STDMETHOD(SetVolume)(THIS_ LONG lVolume) PURE; \
     STDMETHOD(SetPan)(THIS_ LONG lPan) PURE; \
     STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE; \
@@ -489,11 +534,11 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
     STDMETHOD(GetPan)(THIS_ LPLONG lplpan) PURE; \
     STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE; \
     STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND8 lpDirectSound, LPDSBUFFERDESC lpcDSBufferDesc) PURE; \
+    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND8 lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE; \
     STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE; \
     STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE; \
     STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE; \
-    STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX lpcfxFormat) PURE; \
+    STDMETHOD(SetFormat)(THIS_ LPCWAVEFORMATEX lpcfxFormat) PURE; \
     STDMETHOD(SetVolume)(THIS_ LONG lVolume) PURE; \
     STDMETHOD(SetPan)(THIS_ LONG lPan) PURE; \
     STDMETHOD(SetFrequency)(THIS_ DWORD dwFrequency) PURE; \
@@ -653,8 +698,8 @@ ICOM_DEFINE(IDirectSoundNotify,IUnknown)
 #define DS3D_IMMEDIATE              0x00000000
 #define DS3D_DEFERRED               0x00000001
 
-#define DS3D_MINDISTANCEFACTOR      0.0f
-#define DS3D_MAXDISTANCEFACTOR      10.0f
+#define DS3D_MINDISTANCEFACTOR      FLT_MIN
+#define DS3D_MAXDISTANCEFACTOR      FLT_MAX
 #define DS3D_DEFAULTDISTANCEFACTOR  1.0f
 
 #define DS3D_MINROLLOFFFACTOR       0.0f
@@ -672,7 +717,7 @@ ICOM_DEFINE(IDirectSoundNotify,IUnknown)
 #define DS3D_MAXCONEANGLE           360
 #define DS3D_DEFAULTCONEANGLE       360
 
-#define DS3D_DEFAULTCONEOUTSIDEVOLUME   0
+#define DS3D_DEFAULTCONEOUTSIDEVOLUME   DSBVOLUME_MAX
 
 typedef struct _DS3DLISTENER {
 	DWORD				dwSize;
