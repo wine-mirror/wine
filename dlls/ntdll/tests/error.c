@@ -30,47 +30,92 @@
 #include "winternl.h"
 #include "ntsecapi.h"
 
-ULONG (*statustodoserror)(NTSTATUS Status);
+/* FIXME!!! this test checks only mappings, defined by MSDN:
+ * http://support.microsoft.com/default.aspx?scid=KB;EN-US;q113996&
+ * It is necessary to add other mappings and to test them up to Windows XP.
+ *
+ * Some Windows platforms don't know about all the mappings, and in such
+ * cases they return somewhat strange results (Win98) or a generic error
+ * like ERROR_MR_MID_NOT_FOUND (NT4). Our tests have to know about these to
+ * not fail, but we would very much prefer Wine not to return such garbage.
+ * To you can pass the 'strict' option to this test to force it to only check
+ * results against the first listed value. This test should pass in strict
+ * mode on the latest Windows platform (currently XP) and in Wine.
+ * (of course older Windows platforms will fail to pass the strict mode)
+ */
 
-void prepare_test(void)
+static ULONG (WINAPI *statustodoserror)(NTSTATUS Status);
+static int strict;
+
+static int prepare_test(void)
 {
     HMODULE ntdll;
+    int argc;
+    char** argv;
 
     ntdll = LoadLibraryA("ntdll.dll");
-    statustodoserror = (ULONG (*)(NTSTATUS Status)) GetProcAddress(ntdll, "RtlNtStatusToDosError");
-    ok((int)statustodoserror, "Null Pointer to RtlNtStatusToDosError");
+    statustodoserror = (void*)GetProcAddress(ntdll, "RtlNtStatusToDosError");
+    if (!statustodoserror)
+        return 0;
+
+    argc = winetest_get_mainargs(&argv);
+    strict=(argc >= 3 && strcmp(argv[2],"strict")==0);
+    return 1;
 }
 
-void cmp_call(long int win_nt, long int win32, char *message)
+static void cmp_call(NTSTATUS win_nt, ULONG win32, char* message)
 {
-    char buf[1000];
-    long int err;
+    ULONG err;
 
     err = statustodoserror(win_nt);
-    sprintf(buf, "%s Winnt: %lx, Expected error: %ld, error: %ld \n",
-            message, win_nt, win32, err);
-    ok(err == win32, buf);
+    ok(err == win32,
+       "%s (%lx): got %ld, expected %ld",
+            message, win_nt, err, win32);
 }
 
-void cmp_call2(long int win_nt, long int win32, char *message)
+static void cmp_call2(NTSTATUS win_nt, ULONG win32, char* message)
 {
-    char buf[1000];
-    long int err;
+    ULONG err;
 
     err = statustodoserror(win_nt);
-    sprintf(buf, "%s Winnt: %lx, Expected error: %ld, error: %ld \n",
-            message, win_nt, win32, err);
-    ok((err == win32) || (err == ERROR_MR_MID_NOT_FOUND), buf);
+    ok(err == win32 ||
+       (!strict && err == ERROR_MR_MID_NOT_FOUND),
+       "%s (%lx): got %ld, expected %ld (or MID_NOT_FOUND)",
+       message, win_nt, err, win32);
 }
 
-#define cmp(status, error) cmp_call(status, error, \
-    "Test for nt status " #status " and error " #error " failed.")
-#define cmp2(status, error) cmp_call2(status, error, \
-    "Test for nt status " #status " and error " #error " failed.")
-
-void run_error_tests(void)
+static void cmp_call3(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, char* message)
 {
-    prepare_test();
+    ULONG err;
+
+    err = statustodoserror(win_nt);
+    ok(err == win32_1 || (!strict && err == win32_2),
+       "%s (%lx): got %ld, expected %ld or %ld",
+            message, win_nt, err, win32_1, win32_2);
+}
+
+static void cmp_call4(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, char* message)
+{
+    ULONG err;
+
+    err = statustodoserror(win_nt);
+    ok(err == win32_1 ||
+       (!strict && (err == win32_2 || err == ERROR_MR_MID_NOT_FOUND)),
+       "%s (%lx): got %ld, expected %ld or %ld",
+            message, win_nt, err, win32_1, win32_2);
+}
+
+#define cmp(status, error) \
+        cmp_call(status, error, #status)
+#define cmp2(status, error) \
+        cmp_call2(status, error, #status)
+#define cmp3(status, error1, error2) \
+        cmp_call3(status, error1, error2, #status)
+#define cmp4(status, error1, error2) \
+        cmp_call4(status, error1, error2, #status)
+
+static void run_error_tests(void)
+{
     cmp(STATUS_DATATYPE_MISALIGNMENT,            ERROR_NOACCESS);
     cmp(STATUS_ACCESS_VIOLATION,                 ERROR_NOACCESS);
     cmp2(STATUS_DATATYPE_MISALIGNMENT_ERROR,     ERROR_NOACCESS);
@@ -306,7 +351,7 @@ void run_error_tests(void)
     cmp(STATUS_DEVICE_OFF_LINE,                  ERROR_NOT_READY);
     cmp(STATUS_DEVICE_DATA_ERROR,                ERROR_CRC);
     cmp(STATUS_DEVICE_NOT_READY,                 ERROR_NOT_READY);
-    cmp(STATUS_DEVICE_NOT_CONNECTED,             ERROR_NOT_READY);
+    cmp3(STATUS_DEVICE_NOT_CONNECTED,            ERROR_DEVICE_NOT_CONNECTED, ERROR_NOT_READY);
     cmp(STATUS_DEVICE_POWER_FAILURE,             ERROR_NOT_READY);
     cmp2(STATUS_NOT_FOUND,                       ERROR_NOT_FOUND);
     cmp2(STATUS_NO_MATCH,                        ERROR_NO_MATCH);
@@ -335,13 +380,13 @@ void run_error_tests(void)
     cmp(STATUS_NONEXISTENT_EA_ENTRY,             ERROR_FILE_CORRUPT);
     cmp(STATUS_NO_EAS_ON_FILE,                   ERROR_FILE_CORRUPT);
     cmp2(STATUS_NOT_A_REPARSE_POINT,             ERROR_NOT_A_REPARSE_POINT);
-    cmp2(STATUS_IO_REPARSE_TAG_INVALID,          ERROR_REPARSE_TAG_INVALID);
-    cmp2(STATUS_IO_REPARSE_TAG_MISMATCH,         ERROR_REPARSE_TAG_MISMATCH);
+    cmp4(STATUS_IO_REPARSE_TAG_INVALID,          ERROR_REPARSE_TAG_INVALID, ERROR_INVALID_PARAMETER);
+    cmp4(STATUS_IO_REPARSE_TAG_MISMATCH,         ERROR_REPARSE_TAG_MISMATCH, ERROR_INVALID_PARAMETER);
     cmp2(STATUS_IO_REPARSE_TAG_NOT_HANDLED,      ERROR_CANT_ACCESS_FILE);
     cmp2(STATUS_REPARSE_POINT_NOT_RESOLVED,      ERROR_CANT_RESOLVE_FILENAME);
     cmp2(STATUS_DIRECTORY_IS_A_REPARSE_POINT,    ERROR_BAD_PATHNAME);
     cmp2(STATUS_REPARSE_ATTRIBUTE_CONFLICT,      ERROR_REPARSE_ATTRIBUTE_CONFLICT);
-    cmp2(STATUS_IO_REPARSE_DATA_INVALID,         ERROR_INVALID_REPARSE_DATA);
+    cmp4(STATUS_IO_REPARSE_DATA_INVALID,         ERROR_INVALID_REPARSE_DATA, ERROR_INVALID_PARAMETER);
     cmp2(STATUS_FILE_IS_OFFLINE,                 ERROR_FILE_OFFLINE);
     cmp2(STATUS_REMOTE_STORAGE_NOT_ACTIVE,       ERROR_REMOTE_STORAGE_NOT_ACTIVE);
     cmp2(STATUS_REMOTE_STORAGE_MEDIA_ERROR,      ERROR_REMOTE_STORAGE_MEDIA_ERROR);
@@ -459,8 +504,7 @@ void run_error_tests(void)
     cmp(STATUS_INVALID_MEMBER,                   ERROR_INVALID_MEMBER);
     cmp(STATUS_TOO_MANY_SIDS,                    ERROR_TOO_MANY_SIDS);
     cmp(STATUS_LM_CROSS_ENCRYPTION_REQUIRED,     ERROR_LM_CROSS_ENCRYPTION_REQUIRED);
-    /* Commented out to supress warning. Works.
-       cmp(STATUS_MESSAGE_NOT_FOUND,                ERROR_MR_MID_NOT_FOUND);*/
+    cmp(STATUS_MESSAGE_NOT_FOUND,                ERROR_MR_MID_NOT_FOUND);
     cmp(STATUS_LOCAL_DISCONNECT,                 ERROR_NETNAME_DELETED);
     cmp(STATUS_REMOTE_DISCONNECT,                ERROR_NETNAME_DELETED);
     cmp(STATUS_REMOTE_RESOURCES,                 ERROR_REM_NOT_LIST);
@@ -483,12 +527,12 @@ void run_error_tests(void)
     cmp2(STATUS_TRANSPORT_FULL,                  ERROR_TRANSPORT_FULL);
     cmp2(STATUS_CLEANER_CARTRIDGE_INSTALLED,     ERROR_CLEANER_CARTRIDGE_INSTALLED);
     cmp2(STATUS_REG_NAT_CONSUMPTION,             ERROR_REG_NAT_CONSUMPTION);
-    cmp2(STATUS_ENCRYPTION_FAILED,               ERROR_ACCESS_DENIED);
-    cmp2(STATUS_DECRYPTION_FAILED,               ERROR_ACCESS_DENIED);
-    cmp2(STATUS_NO_RECOVERY_POLICY,              ERROR_ACCESS_DENIED);
-    cmp2(STATUS_NO_EFS,                          ERROR_ACCESS_DENIED);
-    cmp2(STATUS_WRONG_EFS,                       ERROR_ACCESS_DENIED);
-    cmp2(STATUS_NO_USER_KEYS,                    ERROR_ACCESS_DENIED);
+    cmp4(STATUS_ENCRYPTION_FAILED,               ERROR_ACCESS_DENIED, ERROR_ENCRYPTION_FAILED);
+    cmp4(STATUS_DECRYPTION_FAILED,               ERROR_ACCESS_DENIED, ERROR_DECRYPTION_FAILED);
+    cmp4(STATUS_NO_RECOVERY_POLICY,              ERROR_ACCESS_DENIED, ERROR_NO_RECOVERY_POLICY);
+    cmp4(STATUS_NO_EFS,                          ERROR_ACCESS_DENIED, ERROR_NO_EFS);
+    cmp4(STATUS_WRONG_EFS,                       ERROR_ACCESS_DENIED, ERROR_WRONG_EFS);
+    cmp4(STATUS_NO_USER_KEYS,                    ERROR_ACCESS_DENIED, ERROR_NO_USER_KEYS);
     cmp2(STATUS_FILE_NOT_ENCRYPTED,              ERROR_FILE_NOT_ENCRYPTED);
     cmp2(STATUS_NOT_EXPORT_FORMAT,               ERROR_NOT_EXPORT_FORMAT);
     cmp2(STATUS_FILE_ENCRYPTED,                  ERROR_FILE_ENCRYPTED);
@@ -715,7 +759,7 @@ void run_error_tests(void)
     cmp(SEC_E_OUT_OF_SEQUENCE,                   ERROR_ACCESS_DENIED);
     cmp(SEC_E_NO_AUTHENTICATING_AUTHORITY,       ERROR_NO_LOGON_SERVERS);
     cmp(SEC_E_BAD_PKGID,                         ERROR_NO_SUCH_PACKAGE);
-    cmp2(SEC_E_WRONG_PRINCIPAL,                  ERROR_WRONG_TARGET_NAME);
+    cmp4(SEC_E_WRONG_PRINCIPAL,                  ERROR_WRONG_TARGET_NAME, 1462);
     cmp2(SEC_E_INCOMPLETE_MESSAGE,               ERROR_INVALID_USER_BUFFER);
     cmp2(SEC_E_BUFFER_TOO_SMALL,                 ERROR_INSUFFICIENT_BUFFER);
     cmp2(SEC_E_UNTRUSTED_ROOT,                   ERROR_TRUST_FAILURE);
@@ -733,22 +777,22 @@ void run_error_tests(void)
     cmp2(CRYPT_E_REVOCATION_OFFLINE,             ERROR_MUTUAL_AUTH_FAILED);
     cmp2(STATUS_SHUTDOWN_IN_PROGRESS,            ERROR_SHUTDOWN_IN_PROGRESS);
     cmp2(STATUS_SERVER_SHUTDOWN_IN_PROGRESS,     ERROR_SERVER_SHUTDOWN_IN_PROGRESS);
-    cmp2(STATUS_DS_MEMBERSHIP_EVALUATED_LOCALLY, ERROR_DS_MEMBERSHIP_EVALUATED_LOCALLY);
-    cmp2(STATUS_DS_NO_ATTRIBUTE_OR_VALUE,        ERROR_DS_NO_ATTRIBUTE_OR_VALUE);
-    cmp2(STATUS_DS_INVALID_ATTRIBUTE_SYNTAX,     ERROR_DS_INVALID_ATTRIBUTE_SYNTAX);
-    cmp2(STATUS_DS_ATTRIBUTE_TYPE_UNDEFINED,     ERROR_DS_ATTRIBUTE_TYPE_UNDEFINED);
-    cmp2(STATUS_DS_ATTRIBUTE_OR_VALUE_EXISTS,    ERROR_DS_ATTRIBUTE_OR_VALUE_EXISTS);
-    cmp2(STATUS_DS_BUSY,                         ERROR_DS_BUSY);
-    cmp2(STATUS_DS_UNAVAILABLE,                  ERROR_DS_UNAVAILABLE);
-    cmp2(STATUS_DS_NO_RIDS_ALLOCATED,            ERROR_DS_NO_RIDS_ALLOCATED);
-    cmp2(STATUS_DS_NO_MORE_RIDS,                 ERROR_DS_NO_MORE_RIDS);
-    cmp2(STATUS_DS_INCORRECT_ROLE_OWNER,         ERROR_DS_INCORRECT_ROLE_OWNER);
-    cmp2(STATUS_DS_RIDMGR_INIT_ERROR,            ERROR_DS_RIDMGR_INIT_ERROR);
-    cmp2(STATUS_DS_OBJ_CLASS_VIOLATION,          ERROR_DS_OBJ_CLASS_VIOLATION);
-    cmp2(STATUS_DS_CANT_ON_NON_LEAF,             ERROR_DS_CANT_ON_NON_LEAF);
-    cmp2(STATUS_DS_CANT_ON_RDN,                  ERROR_DS_CANT_ON_RDN);
-    cmp2(STATUS_DS_CROSS_DOM_MOVE_FAILED,        ERROR_DS_CROSS_DOM_MOVE_ERROR);
-    cmp2(STATUS_DS_GC_NOT_AVAILABLE,             ERROR_DS_GC_NOT_AVAILABLE);
+    cmp4(STATUS_DS_MEMBERSHIP_EVALUATED_LOCALLY, ERROR_DS_MEMBERSHIP_EVALUATED_LOCALLY, 1922);
+    cmp4(STATUS_DS_NO_ATTRIBUTE_OR_VALUE,        ERROR_DS_NO_ATTRIBUTE_OR_VALUE, 1923);
+    cmp4(STATUS_DS_INVALID_ATTRIBUTE_SYNTAX,     ERROR_DS_INVALID_ATTRIBUTE_SYNTAX, 1924);
+    cmp4(STATUS_DS_ATTRIBUTE_TYPE_UNDEFINED,     ERROR_DS_ATTRIBUTE_TYPE_UNDEFINED, 1925);
+    cmp4(STATUS_DS_ATTRIBUTE_OR_VALUE_EXISTS,    ERROR_DS_ATTRIBUTE_OR_VALUE_EXISTS, 1926);
+    cmp4(STATUS_DS_BUSY,                         ERROR_DS_BUSY, 1927);
+    cmp4(STATUS_DS_UNAVAILABLE,                  ERROR_DS_UNAVAILABLE, 1928);
+    cmp4(STATUS_DS_NO_RIDS_ALLOCATED,            ERROR_DS_NO_RIDS_ALLOCATED, 1929);
+    cmp4(STATUS_DS_NO_MORE_RIDS,                 ERROR_DS_NO_MORE_RIDS, 1930);
+    cmp4(STATUS_DS_INCORRECT_ROLE_OWNER,         ERROR_DS_INCORRECT_ROLE_OWNER, 1931);
+    cmp4(STATUS_DS_RIDMGR_INIT_ERROR,            ERROR_DS_RIDMGR_INIT_ERROR, 1932);
+    cmp4(STATUS_DS_OBJ_CLASS_VIOLATION,          ERROR_DS_OBJ_CLASS_VIOLATION, 1933);
+    cmp4(STATUS_DS_CANT_ON_NON_LEAF,             ERROR_DS_CANT_ON_NON_LEAF, 1934);
+    cmp4(STATUS_DS_CANT_ON_RDN,                  ERROR_DS_CANT_ON_RDN, 1935);
+    cmp4(STATUS_DS_CROSS_DOM_MOVE_FAILED,        ERROR_DS_CROSS_DOM_MOVE_ERROR, 1937);
+    cmp4(STATUS_DS_GC_NOT_AVAILABLE,             ERROR_DS_GC_NOT_AVAILABLE, 1938);
     cmp2(STATUS_DS_CANT_MOD_OBJ_CLASS,           ERROR_DS_CANT_MOD_OBJ_CLASS);
     cmp2(STATUS_DS_ADMIN_LIMIT_EXCEEDED,         ERROR_DS_ADMIN_LIMIT_EXCEEDED);
     cmp2(STATUS_DIRECTORY_SERVICE_REQUIRED,      ERROR_DS_DS_REQUIRED);
@@ -791,9 +835,9 @@ void run_error_tests(void)
     cmp2(STATUS_KDC_UNABLE_TO_REFER,             SEC_E_KDC_UNABLE_TO_REFER);
     cmp2(STATUS_KDC_UNKNOWN_ETYPE,               SEC_E_KDC_UNKNOWN_ETYPE);
     cmp2(STATUS_UNSUPPORTED_PREAUTH,             SEC_E_UNSUPPORTED_PREAUTH);
-    cmp2(STATUS_SHARED_POLICY,                   ERROR_SHARED_POLICY);
-    cmp2(STATUS_POLICY_OBJECT_NOT_FOUND,         ERROR_POLICY_OBJECT_NOT_FOUND);
-    cmp2(STATUS_POLICY_ONLY_IN_DS,               ERROR_POLICY_ONLY_IN_DS);
+    cmp4(STATUS_SHARED_POLICY,                   ERROR_SHARED_POLICY, 1939);
+    cmp4(STATUS_POLICY_OBJECT_NOT_FOUND,         ERROR_POLICY_OBJECT_NOT_FOUND, 1940);
+    cmp4(STATUS_POLICY_ONLY_IN_DS,               ERROR_POLICY_ONLY_IN_DS, 1941);
     cmp2(STATUS_DEVICE_REMOVED,                  ERROR_DEVICE_REMOVED);
     cmp2(STATUS_RETRY,                           ERROR_RETRY);
     cmp2(STATUS_NOT_SUPPORTED_ON_SBS,            ERROR_NOT_SUPPORTED_ON_SBS);
@@ -844,10 +888,12 @@ void run_error_tests(void)
     cmp2(STATUS_CTX_SHADOW_ENDED_BY_MODE_CHANGE, ERROR_CTX_SHADOW_ENDED_BY_MODE_CHANGE);
     cmp2(STATUS_CTX_SHADOW_NOT_RUNNING,          ERROR_CTX_SHADOW_NOT_RUNNING);
     cmp2(STATUS_LICENSE_VIOLATION,               ERROR_CTX_LICENSE_NOT_AVAILABLE);
-/* FIXME - unknown STATUS values
-   cmp(STATUS_ENDPOINT_CLOSED,                  ERROR_DEV_NOT_EXIST); 
-   cmp(STATUS_DISCONNECTED,                     ERROR_DEV_NOT_EXIST);
-   cmp(STATUS_NONEXISTENT_NET_NAME,             ERROR_DEV_NOT_EXIST); */
+#if 0
+    /* FIXME - unknown STATUS values, see bug 1001 */
+    cmp(STATUS_ENDPOINT_CLOSED,                  ERROR_DEV_NOT_EXIST);
+    cmp(STATUS_DISCONNECTED,                     ERROR_DEV_NOT_EXIST);
+    cmp(STATUS_NONEXISTENT_NET_NAME,             ERROR_DEV_NOT_EXIST);
+#endif
     cmp2(STATUS_NETWORK_SESSION_EXPIRED,         ERROR_NO_USER_SESSION_KEY);
     cmp2(STATUS_FILES_OPEN,                      ERROR_OPEN_FILES);
     cmp2(STATUS_SXS_SECTION_NOT_FOUND,           ERROR_SXS_SECTION_NOT_FOUND);
@@ -891,27 +937,8 @@ void run_error_tests(void)
     cmp2(STATUS_CLUSTER_NETWORK_NOT_INTERNAL,    ERROR_CLUSTER_NETWORK_NOT_INTERNAL);
 }
 
-/* FIXME!!! this test checks only mappings, defined by MSDN:
-  http://support.microsoft.com/default.aspx?scid=KB;EN-US;q113996&
-  It is necessary to add other mappings and to test them up to Windows XP.
-*/
-/* Some Windows NT statuses are not processed in NT 4.0.
-   Tests allow RtlNtStatusToDosError to return ERROR_MR_MID_NOT_FOUND
-   for these constants. Check is done with cmp2 call */
 START_TEST(error)
 {
-    OSVERSIONINFOA version;
-
-    /* run these tests only on NT platform, version 4 or later */
-    version.dwOSVersionInfoSize = sizeof(version);
-    if (GetVersionExA(&version) &&
-        (version.dwPlatformId == VER_PLATFORM_WIN32_NT) &&
-        (version.dwMajorVersion >= 4))
-    {
+    if (prepare_test())
         run_error_tests();
-    }
-    
 }
-
-#undef cmp
-#undef cmp2
