@@ -516,6 +516,7 @@ interface IMoniker : IPersistStream
     MKSYS_ANTIMONIKER      = 3,
     MKSYS_ITEMMONIKER      = 4,
     MKSYS_POINTERMONIKER   = 5,
+    /* MKSYS_URLMONIKER       = 6, */ /* defined in urlmon.idl */
     MKSYS_CLASSMONIKER     = 7
   } MKSYS;
 

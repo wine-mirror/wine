@@ -543,3 +543,4 @@ cpp_quote("HRESULT WINAPI CoInternetGetSession(DWORD,/*IInternetSession*/void**,
 cpp_quote("HRESULT WINAPI MkParseDisplayNameEx(IBindCtx*,LPCWSTR,ULONG*,IMoniker**);")
 cpp_quote("HRESULT WINAPI IsAsyncMoniker(IMoniker* pmk);")
 cpp_quote("HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumFORMATETC*, IBindCtx**);")
+cpp_quote("#define MKSYS_URLMONIKER 6")

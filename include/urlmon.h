@@ -1391,6 +1391,7 @@ HRESULT WINAPI CoInternetGetSession(DWORD,/*IInternetSession*/void**,DWORD);
 HRESULT WINAPI MkParseDisplayNameEx(IBindCtx*,LPCWSTR,ULONG*,IMoniker**);
 HRESULT WINAPI IsAsyncMoniker(IMoniker* pmk);
 HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumFORMATETC*, IBindCtx**);
+#define MKSYS_URLMONIKER 6
 #ifdef __cplusplus
 }
 #endif
