@@ -10,8 +10,8 @@ C_SRCS = \
 	main.c \
 	pthread.c
 
-KTHREAD_OBJS = main.o kthread.o
-PTHREAD_OBJS = main.o pthread.o
+KTHREAD_OBJS = kthread.o main.o
+PTHREAD_OBJS = pthread.o main.o
 
 WINE_BINARIES = @WINE_BINARIES@
 MAIN_BINARY   = @MAIN_BINARY@

@@ -882,26 +882,31 @@ case $host_os in
         then
           LDDLL="$LDDLL,-z,defs"
         fi
-        AC_CACHE_CHECK([whether we can relocate the executable to 0x3c000000], ac_cv_ld_reloc_exec,
-          [saved_CFLAGS="$CFLAGS"
-           CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x3c000100"
-           AC_TRY_RUN([#include <unistd.h>
-                       int main() { return (sbrk(32*1024*1024) == (void *)-1); }],
-                      ac_cv_ld_reloc_exec="yes",
-                      ac_cv_ld_reloc_exec="no",
-                      ac_cv_ld_reloc_exec="no")
-           CFLAGS="$saved_CFLAGS"])
-        if test "$ac_cv_ld_reloc_exec" = "yes"
-        then
-          AC_SUBST(LDEXECFLAGS,["-Wl,--section-start,.interp=0x3c000100"])
-        fi
+
         AC_CACHE_CHECK([whether the linker accepts --export-dynamic], ac_cv_c_export_dynamic,
           [WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                            ac_cv_c_export_dynamic="yes",ac_cv_c_export_dynamic="no")])
         if test "$ac_cv_c_export_dynamic" = "yes"
         then
-          LDEXECFLAGS="$LDEXECFLAGS -Wl,--export-dynamic"
+          AC_SUBST(LDEXECFLAGS,["-Wl,--export-dynamic"])
         fi
+
+        case $host_cpu in
+          *i[[3456789]]86*)
+            AC_CACHE_CHECK([whether we can relocate the executable to 0x00110000], ac_cv_ld_reloc_exec,
+              [saved_CFLAGS="$CFLAGS"
+               CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x00110400"
+               AC_TRY_RUN([#include <unistd.h>
+                           int main() { return (sbrk(32*1024*1024) == (void *)-1); }],
+                          ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no", ac_cv_ld_reloc_exec="no")
+               CFLAGS="$saved_CFLAGS"])
+            if test "$ac_cv_ld_reloc_exec" = "yes"
+            then
+              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x00110400"
+            fi
+            ;;
+        esac
+
       else
         AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
             [WINE_TRY_CFLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],

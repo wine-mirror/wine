@@ -144,6 +144,36 @@ __ASM_GLOBAL_FUNC( wine_switch_to_stack,
 #endif
 
 
+static char *pe_area;
+static size_t pe_area_size;
+
+/***********************************************************************
+ *		wine_set_pe_load_area
+ *
+ * Define the reserved area to use for loading the main PE binary.
+ */
+void wine_set_pe_load_area( void *base, size_t size )
+{
+    unsigned int page_mask = getpagesize() - 1;
+    char *end = (char *)base + size;
+
+    pe_area = (char *)(((unsigned long)base + page_mask) & ~page_mask);
+    pe_area_size = (end - pe_area) & ~page_mask;
+}
+
+
+/***********************************************************************
+ *		wine_free_pe_load_area
+ *
+ * Free the reserved area to use for loading the main PE binary.
+ */
+void wine_free_pe_load_area(void)
+{
+    if (pe_area) munmap( pe_area, pe_area_size );
+    pe_area = NULL;
+}
+
+
 #if (defined(__svr4__) || defined(__NetBSD__)) && !defined(MAP_TRYFIXED)
 /***********************************************************************
  *             try_mmap_fixed
@@ -257,14 +287,24 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
     flags |= MAP_PRIVATE;
 #endif
 
-#ifdef MAP_TRYFIXED
-    /* If available, this will attempt a fixed mapping in-kernel */
-    flags |= MAP_TRYFIXED;
-#elif defined(__svr4__) || defined(__NetBSD__)
-    if ( try_mmap_fixed( start, size, prot, flags, fdzero, 0 ) )
-        return start;
-#endif
+    if (pe_area && start &&
+        (char *)start >= pe_area &&
+        (char *)start + size <= pe_area + pe_area_size)
+    {
+        wine_free_pe_load_area();
+        flags |= MAP_FIXED;
+    }
 
+    if (!(flags & MAP_FIXED))
+    {
+#ifdef MAP_TRYFIXED
+        /* If available, this will attempt a fixed mapping in-kernel */
+        flags |= MAP_TRYFIXED;
+#elif defined(__svr4__) || defined(__NetBSD__)
+        if ( try_mmap_fixed( start, size, prot, flags, fdzero, 0 ) )
+            return start;
+#endif
+    }
     return mmap( start, size, prot, flags, fdzero, 0 );
 #else
     return (void *)-1;

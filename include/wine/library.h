@@ -52,6 +52,7 @@ extern int __wine_main_argc;
 extern char **__wine_main_argv;
 extern WCHAR **__wine_main_wargv;
 extern char **__wine_main_environ;
+extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
 /* debugging */
 
@@ -69,6 +70,8 @@ extern int wine_dbg_parse_options( const char *str );
 
 extern void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack );
 extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
+extern void wine_set_pe_load_area( void *base, size_t size );
+extern void wine_free_pe_load_area(void);
 
 /* LDT management */
 
