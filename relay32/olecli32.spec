@@ -10,7 +10,7 @@ type win32
    8 stub OleEqual
    9 stdcall OleQueryLinkFromClip(str long long) OleQueryLinkFromClip
   10 stdcall OleQueryCreateFromClip(str long long) OleQueryCreateFromClip
-  11 stdcall OleCreateLinkFromClip(str long ptr str long long) OleCreateLinkFromClip
+  11 stdcall OleCreateLinkFromClip(str ptr long str ptr long long) OleCreateLinkFromClip
   12 stdcall OleCreateFromClip(str ptr long str ptr long long) OleCreateFromClip
   13 stub OleCopyToClipboard
   14 stdcall OleQueryType(ptr ptr) OleQueryType
