@@ -128,6 +128,34 @@ void TestCreateKeyEx()
 }
 
 /******************************************************************************
+ * TestCreateKeyEx
+ */
+void TestCreateKeyEx1()
+{
+    long lSts;
+    HKEY hkey,hkeyP;
+    DWORD dwDisp;
+    char keyname[]="regtest1";
+
+    lSts = RegOpenKeyEx(HKEY_LOCAL_MACHINE,"SOFTWARE",0,1,&hkeyP);
+    if (lSts != ERROR_SUCCESS) 
+      {
+	xERROR(1,lSts);
+	return;
+      }
+    lSts = RegCreateKeyEx(hkeyP,keyname,0,0,0,0xf003f,0,&hkey,&dwDisp);
+    if (lSts != ERROR_SUCCESS) 
+    {
+      xERROR(2,lSts);
+      RegCloseKey(hkeyP);
+      return;
+    }
+    lSts = RegDeleteKey( hkeyP,keyname);
+    if (lSts != ERROR_SUCCESS)  xERROR(3,lSts);
+    RegCloseKey(hkeyP);
+}
+
+/******************************************************************************
  * TestDeleteKey
  */
 void TestDeleteKey()
@@ -617,7 +645,7 @@ void TestSequence1()
 }
 
 
-int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
 
     /* These can be in any order */
@@ -646,6 +674,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
     TestSetValue();
     TestSetValueEx();
     TestUnLoadKey();
+    TestCreateKeyEx1();
 
     /* Now we have some sequence testing */
     TestSequence1();
