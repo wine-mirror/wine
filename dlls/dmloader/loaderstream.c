@@ -37,18 +37,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
  */
 HRESULT WINAPI ILoaderStream_Attach (ILoaderStream* This, LPCWSTR wzFile, IDirectMusicLoader *pLoader)
 {
-	TRACE("(%p, %s, %p)\n", This, debugstr_w(wzFile), pLoader);
-	ILoaderStream_Detach (This);
-	This->hFile = CreateFileW (wzFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    TRACE("(%p, %s, %p)\n", This, debugstr_w(wzFile), pLoader);
+    ILoaderStream_Detach (This);
+    This->hFile = CreateFileW (wzFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (This->hFile == INVALID_HANDLE_VALUE) {
-		TRACE(": failed\n");
+        TRACE(": failed\n");
         return E_FAIL;
     }
-	/* create IDirectMusicGetLoader */
-    (LPDIRECTMUSICLOADER)This->pLoader = pLoader;
+    /* create IDirectMusicGetLoader */
+    (LPDIRECTMUSICLOADER) This->pLoader = pLoader;
     strncpyW (This->wzFileName, wzFile, MAX_PATH);
-	TRACE(": succeeded\n");
-	
+    TRACE(": succeeded\n");
     return S_OK;
 }
 

@@ -86,7 +86,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicContainer (LPCGUID lpcGUID, LPDIRECTMUSIC
 {
 	IDirectMusicContainerImpl* dmcon;
 	
-	if (IsEqualIID (lpcGUID, &IID_IDirectMusicBand)) {
+	if (IsEqualIID (lpcGUID, &IID_IDirectMusicContainer)) {
 		dmcon = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicContainerImpl));
 		if (NULL == dmcon) {
 			*ppDMCon = (LPDIRECTMUSICCONTAINER) NULL;

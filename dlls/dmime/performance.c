@@ -78,6 +78,17 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 ifac
 	  IDirectSound_AddRef((LPDIRECTSOUND) This->pDirectSound);
 	} else {
 	  DirectSoundCreate8(&IID_IDirectSound8, (LPDIRECTSOUND8*) &This->pDirectSound, NULL);
+	  /** 
+	   * as seen in msdn
+	   * 
+	   *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directX/htm/idirectmusicperformance8initaudio.asp
+	   */
+	  if (NULL != hWnd) {
+	    IDirectSound8_SetCooperativeLevel(This->pDirectSound, hWnd, DSSCL_PRIORITY);
+	  } else {
+	    /* how to get the ForeGround window handle ? */
+            /*IDirectSound8_SetCooperativeLevel(This->pDirectSound, hWnd, DSSCL_PRIORITY);*/
+	  }
 	  if (!This->pDirectSound)
 	    return DSERR_NODRIVER;
 	}
@@ -88,7 +99,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_Init (LPDIRECTMUSICPERFORMANCE8 ifac
 	  IDirectMusic8_AddRef((LPDIRECTMUSIC8) This->pDirectMusic);
 	} else {
 	  /* app allows the performance to initialise itfself and needs a pointer to object*/
-		CoCreateInstance (&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8, (void**)&This->pDirectMusic);
+          CoCreateInstance (&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8, (void**)&This->pDirectMusic);
 	  if (ppDirectMusic) {
 	    *ppDirectMusic = (LPDIRECTMUSIC) This->pDirectMusic;
 	    IDirectMusic8_AddRef((LPDIRECTMUSIC8) *ppDirectMusic);
@@ -523,8 +534,9 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
 						      DMUS_AUDIOPARAMS* pParams)
 {
 	IDirectSound* dsound;
+	HRESULT hr = S_OK;
 	
-    ICOM_THIS(IDirectMusicPerformance8Impl,iface);
+        ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	FIXME("(%p, %p, %p, %p, %lx, %lu, %lx, %p): to check\n", This, ppDirectMusic, ppDirectSound, hWnd, dwDefaultPathType, dwPChannelCount, dwFlags, pParams);
 
 	if (This->pDirectMusic || This->pDirectSound)
@@ -550,11 +562,21 @@ HRESULT WINAPI IDirectMusicPerformance8ImplInitAudio (LPDIRECTMUSICPERFORMANCE8 
 	if (NULL != pParams) {
 	  memcpy(&This->pParams, pParams, sizeof(DMUS_AUDIOPARAMS));
 	} else {
-	  /* TODO, how can i fill the struct */
+	  /**
+	   * TODO, how can i fill the struct 
+	   * as seen at http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directX/htm/dmusaudioparams.asp
+	   */
+	  This->pParams.dwSize = sizeof(DMUS_AUDIOPARAMS);
+	  This->pParams.fInitNow = FALSE;
+	  This->pParams.dwValidData = DMUS_AUDIOPARAMS_FEATURES | DMUS_AUDIOPARAMS_VOICES | DMUS_AUDIOPARAMS_SAMPLERATE | DMUS_AUDIOPARAMS_DEFAULTSYNTH;
+	  This->pParams.dwVoices = 64;
+	  This->pParams.dwSampleRate = (DWORD) 22.050; 
+	  This->pParams.dwFeatures = dwFlags;
+	  This->pParams.clsidDefaultSynth = CLSID_DirectMusicSynthSink;
 	}
-	IDirectMusicPerformance8ImplCreateStandardAudioPath(iface, dwDefaultPathType, dwPChannelCount, FALSE, (IDirectMusicAudioPath**) &This->pDefaultPath);
+	hr = IDirectMusicPerformance8ImplCreateStandardAudioPath(iface, dwDefaultPathType, dwPChannelCount, FALSE, (IDirectMusicAudioPath**) &This->pDefaultPath);
 
-	return S_OK;
+	return hr;
 }
 
 HRESULT WINAPI IDirectMusicPerformance8ImplPlaySegmentEx (LPDIRECTMUSICPERFORMANCE8 iface, IUnknown* pSource, WCHAR* pwzSegmentName, IUnknown* pTransition, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState, IUnknown* pFrom, IUnknown* pAudioPath)
@@ -593,17 +615,24 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateAudioPath (LPDIRECTMUSICPERFORM
 	return S_OK;
 }
 
+/**
+ * see  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directX/htm/standardaudiopaths.asp
+ */
 HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath** ppNewPath)
 {
 	IDirectMusicAudioPathImpl *default_path;
 	DSBUFFERDESC desc;
 	WAVEFORMATEX format;
 	LPDIRECTSOUNDBUFFER8 buffer;
+	HRESULT hr = S_OK;
 
 	ICOM_THIS(IDirectMusicPerformance8Impl,iface);
 	
 	FIXME("(%p)->(%ld, %ld, %d, %p): semi-stub\n", This, dwType, dwPChannelCount, fActivate, ppNewPath);
 
+	if (NULL == ppNewPath) {
+	  return E_POINTER;
+	}
 	default_path = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicAudioPathImpl));
 	if (NULL == default_path) {
 		*ppNewPath = (LPDIRECTMUSICAUDIOPATH) NULL;
@@ -623,7 +652,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	format.cbSize = 0;
 	
 	desc.dwSize = sizeof(desc);
-	desc.dwFlags = 0;
+	desc.dwFlags = DSBCAPS_CTRLFX | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS;
 	desc.dwBufferBytes = DSBSIZE_MIN;
 	desc.dwReserved = 0;
 	desc.lpwfxFormat = &format;
@@ -631,22 +660,35 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	
 	switch(dwType) {
 	case DMUS_APATH_DYNAMIC_3D:
-		desc.dwFlags |= DSBCAPS_CTRL3D;
+                desc.dwFlags |= DSBCAPS_CTRL3D | DSBCAPS_CTRLFREQUENCY | DSBCAPS_MUTE3DATMAXDISTANCE;
 		break;
 	case DMUS_APATH_DYNAMIC_MONO:
+	        desc.dwFlags |= DSBCAPS_CTRLFREQUENCY;
 		break;
-	case DMUS_APATH_SHARED_STEREOPLUSREVERB:	
+	case DMUS_APATH_SHARED_STEREOPLUSREVERB:
+	        /* normally we havet to create 2 buffers (one for music other for reverb) 
+		 * in this case. See msdn
+                 */
 	case DMUS_APATH_DYNAMIC_STEREO:
+		desc.dwFlags |= DSBCAPS_CTRLFREQUENCY;
 		format.nChannels = 2;
 		format.nBlockAlign *= 2;
 		format.nAvgBytesPerSec *=2;
 		break;
 	default:
-		break;
+	        HeapFree(GetProcessHeap(), 0, default_path); 
+	        *ppNewPath = NULL;
+	        return E_INVALIDARG;
+	        break;
 	}
 
 	/* FIXME: Should we create one secondary buffer for each PChannel? */
-	IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
+	hr = IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
+	if (FAILED(hr)) {
+	        HeapFree(GetProcessHeap(), 0, default_path); 
+	        *ppNewPath = NULL;
+	        return DSERR_BUFFERLOST;
+	}
 	default_path->pDSBuffer = (IDirectSoundBuffer*) buffer;
 
 	/* Update description for creating primary buffer */
@@ -654,8 +696,13 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	desc.dwBufferBytes = 0;
 	desc.lpwfxFormat = NULL;
 
-	IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
-
+	hr = IDirectSound8_CreateSoundBuffer ((LPDIRECTSOUND8) This->pDirectSound, &desc, &buffer, NULL);
+	if (FAILED(hr)) {
+                IDirectSoundBuffer_Release(default_path->pDSBuffer);
+	        HeapFree(GetProcessHeap(), 0, default_path); 
+	        *ppNewPath = NULL;
+	        return DSERR_BUFFERLOST;
+	}
 	default_path->pPrimary = (IDirectSoundBuffer*) buffer;
 
 	*ppNewPath = (LPDIRECTMUSICAUDIOPATH) default_path;

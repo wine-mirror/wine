@@ -224,7 +224,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_SetSearchDirectory (LPDIRECTMUSICLOADER8 
 {
 	ICOM_THIS(IDirectMusicLoader8Impl,iface);
 
-	TRACE("(%p, %s, %p, %d)\n", This, debugstr_guid(rguidClass), pwzPath, fClear);
+	TRACE("(%p, %s, %s, %d)\n", This, debugstr_guid(rguidClass), debugstr_w(pwzPath), fClear);
 	if (0 == strncmpW(This->wzSearchPath, pwzPath, MAX_PATH)) {
 	  return S_FALSE;
 	} 
