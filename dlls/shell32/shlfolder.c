@@ -378,14 +378,16 @@ static HRESULT WINAPI IShellFolder_BindToStorage(
 *  LPARAM        lParam, //[in ] Column?
 *  LPCITEMIDLIST pidl1,  //[in ] simple pidl
 *  LPCITEMIDLIST pidl2)  //[in ] simple pidl
+*
+* NOTES
+*   Special case - If one of the items is a Path and the other is a File,
+*   always make the Path come before the File.
+*
 * FIXME
-*  we have to handle simple pidl's only
+*  we have to handle simple pidl's only (?)
 */
-static HRESULT WINAPI  IShellFolder_CompareIDs(
-  	LPSHELLFOLDER this,
-		LPARAM lParam, 
-    LPCITEMIDLIST pidl1, /*simple pidl*/
-    LPCITEMIDLIST pidl2) /*simple pidl*/
+static HRESULT WINAPI  IShellFolder_CompareIDs(LPSHELLFOLDER this,
+		 LPARAM lParam, LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2) 
 { CHAR szString1[MAX_PATH] = "";
   CHAR szString2[MAX_PATH] = "";
   int   nReturn;
@@ -393,9 +395,13 @@ static HRESULT WINAPI  IShellFolder_CompareIDs(
 
   TRACE(shell,"(%p)->(0x%08lx,pidl1=%p,pidl2=%p)\n",this,lParam,pidl1,pidl2);
 
-  /*Special case - If one of the items is a Path and the other is a File, always 
-  make the Path come before the File.*/
-
+  if (!pidl1 && !pidl2)
+    return 0;
+  if (!pidl1)	/* Desktop < anything */
+    return -1;
+  if (!pidl2)
+    return 1;
+  
   /* get the last item in each list */
   while((ILGetNext(pidlTemp1))->mkid.cb)
     pidlTemp1 = ILGetNext(pidlTemp1);
@@ -412,12 +418,14 @@ static HRESULT WINAPI  IShellFolder_CompareIDs(
   _ILGetDrive( pidl1,szString1,sizeof(szString1));
   _ILGetDrive( pidl2,szString1,sizeof(szString2));
   nReturn = strcasecmp(szString1, szString2);
+
   if(nReturn)
     return nReturn;
 
   _ILGetFolderText( pidl1,szString1,sizeof(szString1));
   _ILGetFolderText( pidl2,szString2,sizeof(szString2));
   nReturn = strcasecmp(szString1, szString2);
+
   if(nReturn)
     return nReturn;
 
@@ -439,27 +447,24 @@ static HRESULT WINAPI  IShellFolder_CompareIDs(
 * NOTES
 *  the same as SHCreateShellFolderViewEx ???
 */
-static HRESULT WINAPI IShellFolder_CreateViewObject(
-	LPSHELLFOLDER this,
-	HWND32 hwndOwner,
-	REFIID riid,
-	LPVOID *ppvOut)
-{ LPSHELLVIEW pShellView;
-  char    xriid[50];
-  HRESULT       hr;
+static HRESULT WINAPI IShellFolder_CreateViewObject( LPSHELLFOLDER this,
+		 HWND32 hwndOwner, REFIID riid, LPVOID *ppvOut)
+{	LPSHELLVIEW pShellView;
+	char    xriid[50];
+	HRESULT       hr;
 
 	WINE_StringFromCLSID(riid,xriid);
-  TRACE(shell,"(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",this,hwndOwner,xriid,ppvOut);
+	TRACE(shell,"(%p)->(hwnd=0x%x,\n\tIID:\t%s,%p)\n",this,hwndOwner,xriid,ppvOut);
 	
 	*ppvOut = NULL;
 
-  pShellView = IShellView_Constructor(this, this->mpidl);
-  if(!pShellView)
-    return E_OUTOFMEMORY;
-  hr = pShellView->lpvtbl->fnQueryInterface(pShellView, riid, ppvOut);
-  pShellView->lpvtbl->fnRelease(pShellView);
-  TRACE(shell,"-- (%p)->(interface=%p)\n",this, ppvOut);
-  return hr; 
+	pShellView = IShellView_Constructor(this, this->mpidl);
+	if(!pShellView)
+	  return E_OUTOFMEMORY;
+	hr = pShellView->lpvtbl->fnQueryInterface(pShellView, riid, ppvOut);
+	pShellView->lpvtbl->fnRelease(pShellView);
+	TRACE(shell,"-- (%p)->(interface=%p)\n",this, ppvOut);
+	return hr; 
 }
 
 /**************************************************************************
@@ -494,7 +499,8 @@ static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER this,UINT32 cid
   
   do
   { if (*pidltemp)
-    { if (_ILIsDesktop( *pidltemp))
+    { pdump (*pidltemp);
+      if (_ILIsDesktop( *pidltemp))
       { *rgfInOut |= ( SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK );
       }
       else if (_ILIsMyComputer( *pidltemp))
@@ -541,63 +547,43 @@ static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER this,UINT32 cid
 */
 static HRESULT WINAPI IShellFolder_GetUIObjectOf( LPSHELLFOLDER this,HWND32 hwndOwner,UINT32 cidl,
  LPCITEMIDLIST * apidl, REFIID riid, UINT32 * prgfInOut,LPVOID * ppvOut)
-{ char	        xclsid[50];
-  LPEXTRACTICON	pei;
-  LPCONTEXTMENU	pcm;
-  LPITEMIDLIST	pidl;
+{	char	        xclsid[50];
+	LPITEMIDLIST	pidl;
+	LPUNKNOWN	pObj = NULL; 
    
-  WINE_StringFromCLSID(riid,xclsid);
+	WINE_StringFromCLSID(riid,xclsid);
 
-  TRACE(shell,"(%p)->(%u,%u,pidl=%p,\n\tIID:%s,%p,%p)\n",
+	TRACE(shell,"(%p)->(%u,%u,pidl=%p,\n\tIID:%s,%p,%p)\n",
 	  this,hwndOwner,cidl,apidl,xclsid,prgfInOut,ppvOut);
 
-  *ppvOut = NULL;
+	*ppvOut = NULL;
 
-  if(IsEqualIID(riid, &IID_IContextMenu))
-  { pcm  = IContextMenu_Constructor(this, apidl, cidl);
-    if(pcm)
-    { *ppvOut = pcm;
-      return S_OK;
-    }
-  }
+	if(IsEqualIID(riid, &IID_IContextMenu))
+	{ if(cidl < 1)
+	    return E_INVALIDARG;
+	  pObj  = (LPUNKNOWN)IContextMenu_Constructor(this, apidl, cidl);
+	}
+	else if (IsEqualIID(riid, &IID_IDataObject))
+        { if (cidl < 1)
+	    return(E_INVALIDARG);
+	  pObj = (LPUNKNOWN)IDataObject_Constructor (hwndOwner, this, apidl, cidl);
+        }
+	else if(IsEqualIID(riid, &IID_IExtractIcon))
+	{ if (cidl != 1)
+	    return(E_INVALIDARG);
+	  pidl = ILCombine(this->mpidl, apidl[0]);
+	  pObj = (LPUNKNOWN)IExtractIcon_Constructor(pidl);
+	  SHFree(pidl);
+	} 
+	else
+	{ ERR(shell,"(%p)->E_NOINTERFACE\n",this);
+	  return E_NOINTERFACE;
+	}
+	if(!pObj)
+	  return E_OUTOFMEMORY;
 
-  if(cidl != 1)
-    return E_FAIL;
-
-  if(IsEqualIID(riid, &IID_IExtractIcon))
-  { pidl = ILCombine(this->mpidl, apidl[0]);
-    pei = IExtractIcon_Constructor(pidl);
-
-    /* The temp PIDL can be deleted because the new CExtractIcon either failed or 
-    made its own copy of it. */
-    SHFree(pidl);
-
-    if(pei)
-    { *ppvOut = pei;
-       return S_OK;
-    }
-    return E_OUTOFMEMORY;
-  }
-
-/*  if(IsEqualIID(riid, IID_IQueryInfo))
-  { CQueryInfo     *pqit;
-    LPITEMIDLIST   pidl;
-    pidl = m_pPidlMgr->Concatenate(m_pidl, pPidl[0]);
-    pqit = new CQueryInfo(pidl);
- */
-    /* The temp PIDL can be deleted because the new CQueryInfo either failed or 
-    made its own copy of it. */
- /*   m_pPidlMgr->Delete(pidl);
- 
-    if(pqit)
-    { *ppvReturn = pqit;
-      return S_OK;
-    }
-    return E_OUTOFMEMORY;
-  }
-*/
-  ERR(shell,"(%p)->E_NOINTERFACE\n",this);
-  return E_NOINTERFACE;
+	*ppvOut = pObj;
+	return S_OK;
 }
 /**************************************************************************
 *  IShellFolder_GetDisplayNameOf

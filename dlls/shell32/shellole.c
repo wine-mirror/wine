@@ -304,7 +304,7 @@ static HRESULT WINAPI IClassFactory_CreateInstance(
 	{ pObj = (IUnknown *)IShellFolder_Constructor(NULL,NULL);
 	} 
 	else if (IsEqualIID(riid, &IID_IShellView))
-	{ pObj = (IUnknown *)IShellView_Constructor();
+	{ pObj = (IUnknown *)IShellView_Constructor(NULL,NULL);
  	} 
 	else if (IsEqualIID(riid, &IID_IShellLink))
 	{ pObj = (IUnknown *)IShellLink_Constructor();

@@ -95,8 +95,8 @@ typedef struct _NOTIFYICONDATA {
 */
 #pragma pack(1)
 typedef struct 
-{ WORD		cb;	/* nr of bytes in this item */
-  BYTE		abID[1];/* first byte in this item */
+{ WORD	cb;	/* nr of bytes in this item */
+  BYTE	abID[1];/* first byte in this item */
 } SHITEMID,*LPSHITEMID;
 
 typedef struct 
@@ -167,7 +167,11 @@ typedef struct _SHFILEOPSTRUCTW
 #define  SHFILEOPSTRUCT WINELIB_NAME_AW(SHFILEOPSTRUCT)
 #define  LPSHFILEOPSTRUCT WINELIB_NAME_AW(LPSHFILEOPSTRUCT)
 
-DWORD WINAPI SHFileOperation32(LPSHFILEOPSTRUCT32A lpFileOp);
+DWORD WINAPI SHFileOperation32A (LPSHFILEOPSTRUCT32A lpFileOp);  
+DWORD WINAPI SHFileOperation32W (LPSHFILEOPSTRUCT32W lpFileOp);
+#define  SHFileOperation WINELIB_NAME_AW(SHFileOperation)
+
+DWORD WINAPI SHFileOperation32(DWORD x);
 
 /****************************************************************************
 * APPBARDATA 

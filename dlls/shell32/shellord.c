@@ -117,16 +117,16 @@ LPSTR WINAPI PathFindExtension(LPSTR path) {
  *     append \ if there is none
  */
 LPSTR WINAPI PathAddBackslash(LPSTR path)
-{ int len;
-  TRACE(shell,"%p->%s\n",path,path);
-  len = strlen(path);
-  if (len && path[len-1]!='\\') 
-	{ path[len+0]='\\';
-    path[len+1]='\0';
-    return path+len+1;
-  }
-	else
-    return path+len;
+{	int len;
+	TRACE(shell,"%p->%s\n",path,path);
+
+	len = strlen(path);
+	if (len && path[len-1]!='\\') 
+	{ path[len]  = '\\';
+	  path[len+1]= 0x00;
+	  return path+len+1;
+	}
+	return path+len;
 }
 
 /*************************************************************************
@@ -232,17 +232,25 @@ LPSTR WINAPI PathAppend(LPSTR x1,LPSTR x2) {
  * 
  * NOTES
  *  if lpszFile='.' skip it
+ *  szDest can be equal to lpszFile. Thats why we use sTemp
  */
 LPSTR WINAPI PathCombine(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile) 
-{	TRACE(shell,"%s %s\n",lpszDir,lpszFile);
+{	char sTemp[MAX_PATH];
+	TRACE(shell,"%p %p->%s %p->%s\n",szDest, lpszDir, lpszDir, lpszFile, lpszFile);
 
 	if (!lpszFile || !lpszFile[0] || (lpszFile[0]=='.' && !lpszFile[1]) ) 
 	{ strcpy(szDest,lpszDir);
 	  return szDest;
 	}
-	strcpy(szDest,lpszDir);
-	PathAddBackslash(szDest);
-	strcat(szDest,lpszFile);
+
+	/*  if lpszFile is a complete path don't care about lpszDir */
+	if (PathIsRoot(lpszFile))
+	{ strcpy(szDest,lpszFile);
+	}
+	strcpy(sTemp,lpszDir);
+	PathAddBackslash(sTemp);
+	strcat(sTemp,lpszFile);
+	strcpy(szDest,sTemp);
 	return szDest;
 }
 
@@ -777,15 +785,33 @@ DWORD WINAPI SHAddToRecentDocs32 (UINT32 uFlags,LPCVOID pv)
 	}
   return 0;
 }
+/*************************************************************************
+ * SHFileOperation32 [SHELL32.242]
+ *
+ */
+DWORD WINAPI SHFileOperation32(DWORD x)
+{	FIXME(shell,"0x%08lx stub\n",x);
+	return 0;
+
+}
 
 /*************************************************************************
- * SHFileOperation [SHELL32.242]
+ * SHFileOperation32A [SHELL32.243]
  *
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHFileOperation32 (
-    LPSHFILEOPSTRUCT32A lpFileOp)   
+DWORD WINAPI SHFileOperation32A (LPSHFILEOPSTRUCT32A lpFileOp)   
+{ FIXME (shell,"(%p):stub.\n", lpFileOp);
+  return 1;
+}
+/*************************************************************************
+ * SHFileOperation32W [SHELL32.244]
+ *
+ * NOTES
+ *     exported by name
+ */
+DWORD WINAPI SHFileOperation32W (LPSHFILEOPSTRUCT32W lpFileOp)   
 { FIXME (shell,"(%p):stub.\n", lpFileOp);
   return 1;
 }
@@ -964,13 +990,37 @@ HRESULT WINAPI SHGetDataFromIDListA(DWORD u, DWORD v, DWORD w, DWORD x, DWORD y)
 	return 0;
 }
 /*************************************************************************
- * SHFileOperationA [SHELL32.243]
+ * SHRegQueryValueEx32W [NT4.0:SHELL32.511]
  *
  */
-HRESULT WINAPI SHFileOperationA(DWORD x)
-{	FIXME(shell,"0x%08lx stub\n",x);
+HRESULT WINAPI SHRegQueryValueEx32W (DWORD u, LPWSTR v, DWORD w, DWORD x, DWORD y, DWORD z)
+{	FIXME(shell,"0x%04lx %s 0x%04lx 0x%04lx 0x%04lx  0x%04lx stub\n",u,debugstr_w(v),w,x,y,z);
 	return 0;
+}
 
+/*************************************************************************
+ * ReadCabinetState [NT 4.0:SHELL32.651]
+ *
+ */
+HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
+{	FIXME(shell,"0x%04lx 0x%04lx stub\n",u,v);
+	return 0;
+}
+/*************************************************************************
+ * WriteCabinetState [NT 4.0:SHELL32.652]
+ *
+ */
+HRESULT WINAPI WriteCabinetState(DWORD u)
+{	FIXME(shell,"0x%04lx stub\n",u);
+	return 0;
+}
+/*************************************************************************
+ * IsUserAdmin [NT 4.0:SHELL32.680]
+ *
+ */
+HRESULT WINAPI IsUserAdmin()
+{	FIXME(shell,"stub\n");
+	return TRUE;
 }
 /*************************************************************************
  * SHFlushClipboard [SHELL32.121]
