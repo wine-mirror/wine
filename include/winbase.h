@@ -1660,6 +1660,7 @@ BOOL        WINAPI GetPrivateProfileStructA(LPCSTR,LPCSTR,LPVOID,UINT,LPCSTR);
 BOOL        WINAPI GetPrivateProfileStructW(LPCWSTR,LPCWSTR,LPVOID,UINT,LPCWSTR);
 #define     GetPrivateProfileStruct WINELIB_NAME_AW(GetPrivateProfileStruct)
 FARPROC     WINAPI GetProcAddress(HMODULE,LPCSTR);
+DWORD       WINAPI GetProcessHeaps(DWORD,PHANDLE);
 UINT        WINAPI GetProfileIntA(LPCSTR,LPCSTR,INT);
 UINT        WINAPI GetProfileIntW(LPCWSTR,LPCWSTR,INT);
 #define     GetProfileInt WINELIB_NAME_AW(GetProfileInt)
