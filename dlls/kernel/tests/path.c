@@ -26,7 +26,7 @@
 
 #define WIN2K_PLUS(version) (version.dwMajorVersion==5)
 #define WIN98_PLUS(version) (version.dwMajorVersion==4 && \
-                             version.dwMajorVersion>0)
+                             version.dwMinorVersion>0)
 #define HAS_TRAIL_SLASH_A(string) (string[lstrlenA(string)-1]=='\\')
 
 #define LONGFILE "Long File test.path"
