@@ -7,6 +7,7 @@
  */
 
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -248,6 +249,53 @@ static LRESULT mmioMemIOProc(LPMMIOINFO16 lpmmioinfo, UINT16 uMessage, LPARAM lP
 }
 
 /**************************************************************************
+ *      MMIO_ParseExt         [internal]
+ *
+ * Parses a filename for the extension.
+ *
+ * RETURNS
+ *  The FOURCC code for the extension if found, else 0.
+ */
+static FOURCC MMIO_ParseExt(LPCSTR szFileName)
+{
+	/* Filenames are of the form file.ext+ABC
+	   FIXME: What if a '+' is part of the file name?
+	   For now, we take the last '+' present */
+
+	FOURCC ret = 0;
+
+	/* Note that ext{Start,End} point to the . and + respectively */
+	LPSTR extEnd;
+	
+	TRACE("(%s)\n",debugstr_a(szFileName));
+
+	extEnd = strrchr(szFileName,'+');
+	if (extEnd) {
+		/* Need to parse to find the extension */
+		LPSTR extStart;
+		
+		extStart = extEnd;
+		while (extStart > szFileName && extStart[0] != '.') {
+			extStart--;
+		}
+		
+		if (extStart == szFileName) {
+			ERR("+ but no . in szFileName: %s\n", debugstr_a(szFileName));
+		} else {
+			CHAR ext[5];
+			
+			if (extEnd - extStart - 1 > 4)
+				WARN("Extension length > 4\n");
+			lstrcpynA(ext,extStart + 1,MIN(extEnd-extStart,5));
+			TRACE("Got extension: %s\n", debugstr_a(ext));
+			/* FOURCC codes identifying file-extentions must be uppercase */
+			ret = mmioStringToFOURCCA(ext,MMIO_TOUPPER);
+		}
+	}
+	return ret;
+}
+
+/**************************************************************************
  * 		MMIO_Open      		[internal]
  */
 static HMMIO16 MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags, int use16)
@@ -272,11 +320,18 @@ static HMMIO16 MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlag
 		return 0;
 	memset(lpmminfo, 0, sizeof(MMIOINFO16));
 
-	/* assume DOS file if not otherwise specified */
+	/* If both params are NULL, then parse the file name */
 	if (refmminfo->fccIOProc == 0 && refmminfo->pIOProc == NULL) {
+		lpmminfo->fccIOProc = MMIO_ParseExt(szFileName);
+		/* Handle any unhandled/error case. Assume DOS file */
+		if (lpmminfo->fccIOProc == 0) {
 		lpmminfo->fccIOProc = FOURCC_DOS;
 		lpmminfo->pIOProc = (LPMMIOPROC16) mmioDosIOProc;
+ 		} else {
+			lpmminfo->pIOProc = mmioInstallIOProc16(lpmminfo->fccIOProc, NULL, MMIO_FINDPROC);
+		}
 	}
+
 	/* if just the four character code is present, look up IO proc */
 	else if (refmminfo->pIOProc == NULL) {
 
@@ -863,7 +918,26 @@ FOURCC WINAPI mmioStringToFOURCCW(LPCWSTR sz, UINT uFlags)
  */
 FOURCC WINAPI mmioStringToFOURCC16(LPCSTR sz, UINT16 uFlags)
 {
-	return mmioFOURCC(sz[0],sz[1],sz[2],sz[3]);
+	CHAR cc[4];
+	int i = 0;
+
+	while (i < 4 && sz[i]) {
+		if (uFlags & MMIO_TOUPPER) {
+			cc[i] = toupper(sz[i]);
+		} else {
+			cc[i] = sz[i];
+		}
+		i++;
+}
+
+	/* Pad with spaces */
+	while (i < 4) {
+		cc[i] = ' ';
+		i++;
+	}
+	
+	TRACE("Got %c%c%c%c\n",cc[0],cc[1],cc[2],cc[3]);
+	return mmioFOURCC(cc[0],cc[1],cc[2],cc[3]);
 }
 
 /**************************************************************************
@@ -1064,11 +1138,11 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, LPMMCKINFO lpck,
 		srchType = lpck->fccType;
 	}
 
+	if (uFlags & (MMIO_FINDCHUNK|MMIO_FINDLIST|MMIO_FINDRIFF)) {
 	TRACE("searching for %.4s.%.4s\n", 
 	      (LPSTR)&srchCkId,
-	      srchType?(LPSTR)&srchType:"<any>");
+			  srchType?(LPSTR)&srchType:"any ");
 	
-	if (uFlags & (MMIO_FINDCHUNK|MMIO_FINDLIST|MMIO_FINDRIFF)) {
 		while (TRUE) {
 		        LONG ix;
 			
@@ -1084,9 +1158,9 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, LPMMCKINFO lpck,
 				WARN("return ChunkNotFound\n");
 				return MMIOERR_CHUNKNOTFOUND;
 			}
-			TRACE("ckid=%.4ss fcc=%.4ss cksize=%08lX !\n",
+			TRACE("ckid=%.4s fcc=%.4s cksize=%08lX !\n",
 			      (LPSTR)&lpck->ckid, 
-			      srchType?(LPSTR)&lpck->fccType:"<unused>",
+			      srchType?(LPSTR)&lpck->fccType:"<na>",
 			      lpck->cksize);
 			if ((srchCkId == lpck->ckid) &&
 			    (!srchType || (srchType == lpck->fccType))
@@ -1098,6 +1172,7 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, LPMMCKINFO lpck,
 		}
 	} else {
 		/* FIXME: unverified, does it do this? */
+		/* NB: This part is used by WAVE_mciOpen, among others */
 		if (mmioRead(hmmio, (LPSTR)lpck, 3 * sizeof(DWORD)) < 3 * sizeof(DWORD)) {
 			mmioSeek(hmmio, dwOldPos, SEEK_SET);
 			WARN("return ChunkNotFound 2nd\n");
@@ -1225,7 +1300,11 @@ UINT16 WINAPI mmioRename16(LPCSTR szFileName, LPCSTR szNewFileName,
 	if (lpmmioinfo)
 		memcpy(lpmminfo, lpmmioinfo, sizeof(MMIOINFO16));
 	
-	/* assume DOS file if not otherwise specified */
+	/* If both params are NULL, then parse the file name */
+	if (lpmminfo->fccIOProc == 0 && lpmminfo->pIOProc == NULL) {
+		lpmminfo->fccIOProc = MMIO_ParseExt(szFileName);
+	}
+	/* Handle any unhandled/error case from above. Assume DOS file */
 	if (lpmminfo->fccIOProc == 0 && lpmminfo->pIOProc == NULL) {
 
 		lpmminfo->fccIOProc = mmioFOURCC('D', 'O', 'S', ' ');
