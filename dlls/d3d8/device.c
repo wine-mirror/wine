@@ -266,7 +266,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
            certain functions                                              */
 
         if (isPtSize || isDiffuse || useVertexShaderFunction==TRUE || (numBlends > 0)) {
-            FIXME("Using slow per-vertex code\n");
+            TRACE("Using slow per-vertex code\n");
 
             /* Enable this one to be able to debug what is going on, but it is slower
                than the pointer/array version                                          */
@@ -608,7 +608,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             checkGLcall("glEnd and previous calls");
 
         } else {
-            FIXME("Using fast vertex array code\n");
+            TRACE("Using fast vertex array code\n");
 
             /* Faster version, harder to debug */
             /* Shuffle to the beginning of the vertexes to render and index from there */
@@ -617,9 +617,9 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
             /* Set up the vertex pointers */
             if (isRHW) {
-		       glVertexPointer(4, GL_FLOAT, skip, curPos);
+               glVertexPointer(4, GL_FLOAT, skip, curPos);
                checkGLcall("glVertexPointer(4, ...)");
-		       curPos += 4*sizeof(float);
+               curPos += 4*sizeof(float);
             } else {
                glVertexPointer(3, GL_FLOAT, skip, curPos);
                checkGLcall("glVertexPointer(3, ...)");
@@ -786,6 +786,11 @@ SHORT bytesPerPixel(D3DFORMAT fmt) {
     case D3DFMT_R8G8B8:           retVal = 3; break;
     case D3DFMT_R5G6B5:           retVal = 2; break;
     case D3DFMT_A1R5G5B5:         retVal = 2; break;
+    case D3DFMT_UNKNOWN:
+        /* Guess at the highest value of the above */
+        TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %d\n", fmt);
+        retVal = 4;
+        break;
     default:
         FIXME("Unhandled fmt %d\n", fmt);
         retVal = 4;
@@ -1034,7 +1039,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDisplayMode(LPDIRECT3DDEVICE8 iface, D3
     case 16: pMode->Format       = D3DFMT_R5G6B5; break;
     case 24: pMode->Format       = D3DFMT_R8G8B8; break;
     case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
-    default: pMode->Format       = D3DFMT_UNKNOWN;
+    default: 
+       FIXME("Unrecognized display mode format\n");
+       pMode->Format       = D3DFMT_UNKNOWN;
     }
 
     FIXME("(%p) : returning w(%d) h(%d) rr(%d) fmt(%d)\n", This, pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format);
@@ -1140,8 +1147,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     /* Generate all the surfaces */
     tmpW = Width;
     tmpH = Height;
-    /*for (i=0; i<object->levels; i++) { */
-    i=0;
+    for (i=0; i<object->levels; i++) 
     {
         IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpH, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[i]);
         object->surfaces[i]->Container = object;
@@ -1202,8 +1208,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     tmpH = Height;
     tmpD = Depth;
 
-    /*for (i=0; i<object->levels; i++) { */
-    i=0;
+    for (i=0; i<object->levels; i++) 
     {
         IDirect3DVolume8Impl *volume;
 
@@ -1273,8 +1278,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
 
     /* Generate all the surfaces */
     tmpW = EdgeLength;
-    /*for (i=0; i<object->levels; i++) { */
-    i=0;
+    for (i=0; i<object->levels; i++) 
     {
         /* Create the 6 faces */
         for (j=0;j<6;j++) {
@@ -1392,9 +1396,36 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
     TRACE("(%p) srcsur=%p, pSourceRects=%p, cRects=%d, pDstSur=%p, pDestPtsArr=%p\n", This,
           pSourceSurface, pSourceRectsArray, cRects, pDestinationSurface, pDestPointsArray);
 
-    if (src->myDesc.Format != dst->myDesc.Format) {
+    /* Note: Not sure about the d3dfmt_unknown bit, but seems to avoid a problem inside
+         a sample and doesnt seem to break anything as far as I can tell               */
+    if (src->myDesc.Format != dst->myDesc.Format && (dst->myDesc.Format != D3DFMT_UNKNOWN)) {
         TRACE("Formats do not match %x / %x\n", src->myDesc.Format, dst->myDesc.Format);
         rc = D3DERR_INVALIDCALL;
+    } else if (dst->myDesc.Format == D3DFMT_UNKNOWN) {
+        void *texture = NULL;
+
+        TRACE("Converting dest to same format as source, since dest was unknown\n");
+        dst->myDesc.Format = src->myDesc.Format;
+
+        /* Convert container as well */
+        IDirect3DSurface8Impl_GetContainer((LPDIRECT3DSURFACE8) dst, NULL, &texture); /* FIXME: Which refid? */
+        if (texture != NULL) {
+
+            switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) texture)) {
+            case D3DRTYPE_TEXTURE:
+                ((IDirect3DTexture8Impl *)texture)->format = src->myDesc.Format;
+                break;
+            case D3DRTYPE_VOLUMETEXTURE:
+                ((IDirect3DVolumeTexture8Impl *)texture)->format = src->myDesc.Format;
+                break;
+            case D3DRTYPE_CUBETEXTURE:
+                ((IDirect3DCubeTexture8Impl *)texture)->format = src->myDesc.Format;
+                break;
+            default:
+                FIXME("Unhandled texture type\n");
+            }
+
+        }
     }
 
     /* Quick if complete copy ... */
@@ -1941,8 +1972,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
     /* Apply it */
 
     /* Clip Plane settings are affected by the model view in OpenGL, the World transform in direct3d, I think?*/
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
     glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLD].u.m[0][0]);
 
     TRACE("Clipplane [%f,%f,%f,%f]\n", This->UpdateStateBlock->clipplane[Index][0], This->UpdateStateBlock->clipplane[Index][1],
@@ -2298,10 +2329,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                 /* Note the D3DRS value applies to all textures, but GL has one
                    per texture, so apply it now ready to be used!               */
                 if (This->isMultiTexture) {
-		  glActiveTextureARB(GL_TEXTURE0_ARB + i);
-		  checkGLcall("Activate texture.. to update const color");
+                    glActiveTextureARB(GL_TEXTURE0_ARB + i);
+                    checkGLcall("Activate texture.. to update const color");
                 } else if (i>0) {
-		  FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
                 }
 
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
@@ -3014,25 +3045,30 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
             TRACE("Standard 2d texture\n");
             This->StateBlock.textureDimensions[Stage] = GL_TEXTURE_2D;
 
-/*            for (i=0; i<pTexture2->levels; i++) { */
-            i=0;
+            for (i=0; i<pTexture2->levels; i++) 
             {
 
-                if (pTexture2->surfaces[i]->textureName != 0 && pTexture2->Dirty == FALSE) {
+                if (i==0 && pTexture2->surfaces[i]->textureName != 0 && pTexture2->Dirty == FALSE) {
                     glBindTexture(GL_TEXTURE_2D, pTexture2->surfaces[i]->textureName);
                     checkGLcall("glBindTexture");
-                    TRACE("Texture %p given name %d\n", pTexture2->surfaces[i], pTexture2->surfaces[i]->textureName);
+                    TRACE("Texture %p (level %d) given name %d\n", pTexture2->surfaces[i], i, pTexture2->surfaces[i]->textureName);
                 } else {
+                    if (i==0) {
 
-                    if (pTexture2->surfaces[i]->textureName == 0) {
-                        glGenTextures(1, &pTexture2->surfaces[i]->textureName);
-                        checkGLcall("glGenTextures");
-                        TRACE("Texture %p given name %d\n", pTexture2->surfaces[i], pTexture2->surfaces[i]->textureName);
+                        if (pTexture2->surfaces[i]->textureName == 0) {
+                            glGenTextures(1, &pTexture2->surfaces[i]->textureName);
+                            checkGLcall("glGenTextures");
+                            TRACE("Texture %p (level %d) given name %d\n", pTexture2->surfaces[i], i, pTexture2->surfaces[i]->textureName);
+                        }
+
+                        glBindTexture(GL_TEXTURE_2D, pTexture2->surfaces[i]->textureName);
+                        checkGLcall("glBindTexture");
+
+                        TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", pTexture2->levels-1);   
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, pTexture2->levels-1);
+                        checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, pTexture2->levels)");
+
                     }
-
-                    glBindTexture(GL_TEXTURE_2D, pTexture2->surfaces[i]->textureName);
-                    checkGLcall("glBindTexture");
-
                     TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
                           GL_TEXTURE_2D, i, fmt2glintFmt(pTexture2->format), pTexture2->surfaces[i]->myDesc.Width,
                           pTexture2->surfaces[i]->myDesc.Height, 0, fmt2glFmt(pTexture2->format),fmt2glType(pTexture2->format),
@@ -3048,15 +3084,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                                 );
                     checkGLcall("glTexImage2D");
 
-                    /*
-                     * The following enable things to work but I dont think
-                     * they all go here - FIXME! @@@
-                     */
-                    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-                    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-                    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-                    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-
+                    /* Removed glTexParameterf now TextureStageStates are initialized at startup */
                     pTexture2->Dirty = FALSE;
                 }
 
@@ -3070,24 +3098,28 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
             TRACE("Standard 3d texture\n");
             This->StateBlock.textureDimensions[Stage] = GL_TEXTURE_3D;
 
-/*            for (i=0; i<pTexture2->levels; i++) { */
-            i=0;
+            for (i=0; i<pTexture2->levels; i++) 
             {
 
-                if (pTexture2->volumes[i]->textureName != 0 && pTexture2->Dirty == FALSE) {
+                if (i==0 && pTexture2->volumes[i]->textureName != 0 && pTexture2->Dirty == FALSE) {
                     glBindTexture(GL_TEXTURE_3D, pTexture2->volumes[i]->textureName);
                     checkGLcall("glBindTexture");
                     TRACE("Texture %p given name %d\n", pTexture2->volumes[i], pTexture2->volumes[i]->textureName);
                 } else {
+                    if (i==0) {
 
-                    if (pTexture2->volumes[i]->textureName == 0) {
-                        glGenTextures(1, &pTexture2->volumes[i]->textureName);
-                        checkGLcall("glGenTextures");
-                        TRACE("Texture %p given name %d\n", pTexture2->volumes[i], pTexture2->volumes[i]->textureName);
+                        if (pTexture2->volumes[i]->textureName == 0) {
+                            glGenTextures(1, &pTexture2->volumes[i]->textureName);
+                            checkGLcall("glGenTextures");
+                            TRACE("Texture %p given name %d\n", pTexture2->volumes[i], pTexture2->volumes[i]->textureName);
+                        }
+
+                        glBindTexture(GL_TEXTURE_3D, pTexture2->volumes[i]->textureName);
+                        checkGLcall("glBindTexture");
+
+                        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, pTexture2->levels-1); 
+                        checkGLcall("glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, pTexture2->levels-1)");
                     }
-
-                    glBindTexture(GL_TEXTURE_3D, pTexture2->volumes[i]->textureName);
-                    checkGLcall("glBindTexture");
 
                     TRACE("Calling glTexImage3D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
                           GL_TEXTURE_3D, i, fmt2glintFmt(pTexture2->format), pTexture2->volumes[i]->myDesc.Width,
@@ -3106,16 +3138,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                                 );
                     checkGLcall("glTexImage3D");
 
-                    /*
-                     * The following enable things to work but I dont think
-                     * they all go here - FIXME! @@@
-                     */
-                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT );
-                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-
+                    /* Removed glTexParameterf now TextureStageStates are initialized at startup */
                     pTexture2->Dirty = FALSE;
                 }
             }
@@ -3174,14 +3197,50 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     switch (Type) {
 
     case D3DTSS_MINFILTER             :
-        if (Value == D3DTEXF_POINT) {  
-            glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameter GL_TEXTURE_MINFILTER, GL_NEAREST");
-        } else if (Value == D3DTEXF_LINEAR) {
-            glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            checkGLcall("glTexParameter GL_TEXTURE_MINFILTER, GL_LINEAR");
-        } else {
-            FIXME("Unhandled D3DTSS_MINFILTER value of %ld\n", Value);
+    case D3DTSS_MIPFILTER             :
+        {
+            DWORD ValueMIN = This->StateBlock.texture_state[Stage][D3DTSS_MINFILTER];
+            DWORD ValueMIP = This->StateBlock.texture_state[Stage][D3DTSS_MIPFILTER];
+            GLint realVal = GL_LINEAR;
+
+            if (ValueMIN == D3DTEXF_POINT) {
+                /* GL_NEAREST_* */
+                if (ValueMIP == D3DTEXF_POINT) {
+                    realVal = GL_NEAREST_MIPMAP_NEAREST;
+                } else if (ValueMIP == D3DTEXF_LINEAR) {
+                    realVal = GL_NEAREST_MIPMAP_LINEAR;
+                } else if (ValueMIP == D3DTEXF_NONE) {
+                    realVal = GL_NEAREST;
+                } else {
+                    FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
+                    realVal = GL_NEAREST_MIPMAP_LINEAR;
+                }
+            } else if (ValueMIN == D3DTEXF_LINEAR) {
+                /* GL_LINEAR_* */
+                if (ValueMIP == D3DTEXF_POINT) {
+                    realVal = GL_LINEAR_MIPMAP_NEAREST;
+                } else if (ValueMIP == D3DTEXF_LINEAR) {
+                    realVal = GL_LINEAR_MIPMAP_LINEAR;
+                } else if (ValueMIP == D3DTEXF_NONE) {
+                    realVal = GL_LINEAR;
+                } else {
+                    FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
+                    realVal = GL_LINEAR_MIPMAP_LINEAR;
+                }
+            } else if (ValueMIN == D3DTEXF_NONE) {
+                /* Doesnt really make sense - Windows just seems to disable
+                   mipmapping when this occurs                              */
+                FIXME("Odd - minfilter of none, just disabling mipmaps\n");
+                realVal = GL_LINEAR;
+
+            } else {
+                FIXME("Unhandled D3DTSS_MINFILTER value of %ld\n", ValueMIN);
+                realVal = GL_LINEAR_MIPMAP_LINEAR;
+            }
+
+            TRACE("ValueMIN=%ld, ValueMIP=%ld, setting MINFILTER to %x\n", ValueMIN, ValueMIP, realVal);
+            glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_MIN_FILTER, realVal);
+            checkGLcall("glTexParameter GL_TEXTURE_MINFILTER, ...");
         }
         break;
 
@@ -3402,7 +3461,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_ADDRESSU              :
     case D3DTSS_ADDRESSV              :
     case D3DTSS_BORDERCOLOR           :
-    case D3DTSS_MIPFILTER             :
     case D3DTSS_MIPMAPLODBIAS         :
     case D3DTSS_MAXMIPLEVEL           :
     case D3DTSS_MAXANISOTROPY         :
