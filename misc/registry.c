@@ -50,9 +50,10 @@
 # include <sys/mman.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winerror.h"
-#include "winreg.h"
 
 #include "wine/winbase16.h"
 #include "wine/library.h"
@@ -108,13 +109,14 @@ static LPSTR _xstrdup(LPCSTR str)
 static LPWSTR _strdupnAtoW(LPCSTR strA,size_t lenA)
 {
     LPWSTR ret;
-    size_t lenW;
+    DWORD len;
 
     if (!strA) return NULL;
-    lenW = MultiByteToWideChar(CP_ACP,0,strA,lenA,NULL,0);
-    ret = _xmalloc(lenW*sizeof(WCHAR)+sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP,0,strA,lenA,ret,lenW);
-    ret[lenW] = 0;
+    if (RtlMultiByteToUnicodeSize( &len, strA, lenA ) != STATUS_SUCCESS) return NULL;
+
+    ret = _xmalloc(len+sizeof(WCHAR));
+    RtlMultiByteToUnicodeN(ret, len, NULL, strA, lenA);
+    ret[len / sizeof(WCHAR)] = 0;
     return ret;
 }
 
@@ -313,7 +315,9 @@ struct _w31_valent {
 };
 
 /* recursive helper function to display a directory tree  [Internal] */
-static void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab,struct _w31_header *head,HKEY hkey,time_t lastmodified, int level)
+static void _w31_dumptree(unsigned short idx, unsigned char *txt,
+                          struct _w31_tabent *tab, struct _w31_header *head,
+                          HKEY hkey, ULONG lastmodified, int level)
 {
     static const WCHAR classesW[] = {'.','c','l','a','s','s','e','s',0};
     struct _w31_dirent *dir;
@@ -381,18 +385,20 @@ static void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabe
  */
 static void _w31_loadreg(void)
 {
-    HANDLE hf;
-    HKEY root;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    struct _w31_header	head;
-    struct _w31_tabent	*tab;
-    unsigned char		*txt;
+    HANDLE                      hf;
+    HKEY                        root;
+    OBJECT_ATTRIBUTES           attr;
+    UNICODE_STRING              nameW;
+    struct _w31_header          head;
+    struct _w31_tabent*         tab = NULL;
+    unsigned char*              txt = NULL;
     unsigned int		len;
-    OFSTRUCT		ofs;
-    BY_HANDLE_FILE_INFORMATION hfinfo;
-    time_t			lastmodified;
-    DWORD       r;
+    OFSTRUCT		        ofs;
+    ULONG			lastmodified;
+    NTSTATUS                    status;
+    IO_STATUS_BLOCK             iosb;
+    FILE_POSITION_INFORMATION   fpi;
+    FILE_BASIC_INFORMATION      fbi;
 
     TRACE("(void)\n");
 
@@ -400,52 +406,54 @@ static void _w31_loadreg(void)
     if (hf==(HANDLE)HFILE_ERROR) return;
 
     /* read & dump header */
-    if (!ReadFile(hf,&head,sizeof(head),&r,NULL) || r!=sizeof(head)) {
+    if (NtReadFile(hf, 0, NULL, NULL, &iosb, 
+                   &head, sizeof(head), NULL, NULL) != STATUS_SUCCESS ||
+        iosb.Information != sizeof(head))
+    {
         ERR("reg.dat is too short.\n");
-        CloseHandle(hf);
-        return;
+        goto done;
     }
-    if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie))!=0) {
+    if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie)) != 0)
+    {
         ERR("reg.dat has bad signature.\n");
-        CloseHandle(hf);
-        return;
+        goto done;
     }
 
     len = head.tabcnt * sizeof(struct _w31_tabent);
     /* read and dump index table */
     tab = _xmalloc(len);
-    if (!ReadFile(hf,tab,len,&r,NULL) || r!=len) {
-        ERR("couldn't read %d bytes.\n",len);
-        free(tab);
-        CloseHandle(hf);
-        return;
+    if (NtReadFile(hf, 0, NULL, NULL, &iosb,
+                   tab, len, NULL, NULL) != STATUS_SUCCESS ||
+        iosb.Information != len) 
+    {
+        ERR("couldn't read index table (%d bytes).\n",len);
+        goto done;
     }
 
     /* read text */
     txt = _xmalloc(head.textsize);
-    if (-1==SetFilePointer(hf,head.textoff,NULL,SEEK_SET)) {
+    fpi.CurrentByteOffset.s.LowPart = head.textoff;
+    fpi.CurrentByteOffset.s.HighPart = 0;
+    if (NtSetInformationFile(hf, &iosb, &fpi, sizeof(fpi), 
+                             FilePositionInformation) != STATUS_SUCCESS)
+    {
         ERR("couldn't seek to textblock.\n");
-        free(tab);
-        free(txt);
-        CloseHandle(hf);
-        return;
+        goto done;
     }
-    if (!ReadFile(hf,txt,head.textsize,&r,NULL) || r!=head.textsize) {
-        ERR("textblock too short (%d instead of %ld).\n",len,head.textsize);
-        free(tab);
-        free(txt);
-        CloseHandle(hf);
-        return;
+    status = NtReadFile(hf, 0, NULL, NULL, &iosb, txt, head.textsize, NULL, NULL);
+    if (!(status == STATUS_SUCCESS || status == STATUS_END_OF_FILE) ||
+        iosb.Information != head.textsize)
+    {
+        ERR("textblock too short (%d instead of %ld).\n", len, head.textsize);
+        goto done;
     }
-
-    if (!GetFileInformationByHandle(hf,&hfinfo)) {
-        ERR("GetFileInformationByHandle failed?.\n");
-        free(tab);
-        free(txt);
-        CloseHandle(hf);
-        return;
+    if (NtQueryInformationFile(hf, &iosb, &fbi, sizeof(fbi),
+                               FileBasicInformation) != STATUS_SUCCESS)
+    {
+        ERR("Couldn't get basic information.\n");
+        goto done;
     }
-    lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
+    RtlTimeToSecondsSince1970(&fbi.LastWriteTime, &lastmodified);
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -460,9 +468,10 @@ static void _w31_loadreg(void)
         _w31_dumptree(tab[0].w1,txt,tab,&head,root,lastmodified,0);
         NtClose( root );
     }
-    free(tab);
-    free(txt);
-    CloseHandle(hf);
+ done:
+    if (tab) free(tab);
+    if (txt) free(txt);
+    NtClose(hf);
     return;
 }
 
@@ -1120,21 +1129,52 @@ static void _allocate_default_keys(void)
     if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) NtClose( hkey );
 }
 
+static void get_windows_dir(WCHAR* buffer, unsigned len)
+{
+    OBJECT_ATTRIBUTES   attr;
+    UNICODE_STRING      nameW, keyW;
+    HKEY                hkey;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    if (RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\Software\\Wine\\Wine\\Config\\wine" ))
+    {
+        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
+        {
+            char tmp[MAX_PATHNAME_LEN*sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+            DWORD count;
+
+            RtlCreateUnicodeStringFromAsciiz( &keyW, "Windows");
+            if (!NtQueryValueKey( hkey, &keyW, KeyValuePartialInformation,
+                                  tmp, sizeof(tmp), &count ))
+            {
+                WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                memcpy(buffer, str, min(((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->DataLength, len));
+            }
+            RtlFreeUnicodeString( &keyW );
+        }
+        RtlFreeUnicodeString( &nameW );
+    }
+}
+
+
 #define REG_DONTLOAD -1
 #define REG_WIN31     0
 #define REG_WIN95     1
 #define REG_WINNT     2
 
 /* return the type of native registry [Internal] */
-static int _get_reg_type(void)
+static int _get_reg_type(const WCHAR* windir)
 {
-    WCHAR windir[MAX_PATHNAME_LEN];
     WCHAR tmp[MAX_PATHNAME_LEN];
     int ret = REG_WIN31;
     static const WCHAR nt_reg_pathW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','s','y','s','t','e','m',0};
     static const WCHAR win9x_reg_pathW[] = {'\\','s','y','s','t','e','m','.','d','a','t',0};
-
-    GetWindowsDirectoryW(windir, MAX_PATHNAME_LEN);
 
     /* test %windir%/system32/config/system --> winnt */
     strcpyW(tmp, windir);
@@ -1202,24 +1242,41 @@ static LPSTR _get_tmp_fn(FILE **f)
 /* convert win95 native registry file to wine format [Internal] */
 static LPSTR _convert_win95_registry_to_wine_format(LPCWSTR fn, int level)
 {
-    int fd;
+    HANDLE hFile, hMapping;
     FILE *f;
-    DOS_FULL_NAME full_name;
     void *base;
     LPSTR ret = NULL;
-    struct stat st;
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER lg_int;
+    NTSTATUS nts;
+    SIZE_T len;
 
     _w95creg *creg;
     _w95rgkn *rgkn;
     _w95dke *dke, *root_dke;
 
-    if (!DOSFS_GetFullName( fn, 0, &full_name )) return NULL;
+    hFile = CreateFileW( fn, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
 
-    /* map the registry into the memory */
-    if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return NULL;
-    if ((fstat(fd, &st) == -1)) goto error1;
-    if (!st.st_size) goto error1;
-    if ((base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error1;
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    lg_int.QuadPart = 0;
+    nts = NtCreateSection( &hMapping, 
+                           STANDARD_RIGHTS_REQUIRED|SECTION_QUERY|SECTION_MAP_READ,
+                           &attr, &lg_int, PAGE_READONLY, SEC_COMMIT, hFile );
+    if (nts != STATUS_SUCCESS) goto error1;
+
+    base = NULL; len = 0;
+    nts = NtMapViewOfSection( hMapping, GetCurrentProcess(),
+                              &base, 0, 0, &lg_int, &len, ViewShare, 0, 
+			      PAGE_READONLY);
+    NtClose( hMapping );
+    if (nts != STATUS_SUCCESS) goto error1;
 
     /* control signature */
     if (*(LPDWORD)base != W95_REG_CREG_ID) {
@@ -1275,9 +1332,9 @@ error:
         ERR("Make a backup of the file, run a good reg cleaner program and try again!\n");
     }
 
-    munmap(base, st.st_size);
+    NtUnmapViewOfSection( GetCurrentProcess(), base );
 error1:
-    close(fd);
+    NtClose(hFile);
     return ret;
 }
 
@@ -1431,9 +1488,9 @@ static void _load_windows_registry( HKEY hkey_local_machine, HKEY hkey_current_u
     RtlInitUnicodeString( &nameW, WineW );
     if (NtCreateKey( &profile_key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) profile_key = 0;
 
-    GetWindowsDirectoryW(windir, MAX_PATHNAME_LEN);
+    get_windows_dir(windir, sizeof(windir));
 
-    reg_type = _get_reg_type();
+    reg_type = _get_reg_type(windir);
     switch (reg_type) {
         case REG_WINNT: {
             static const WCHAR ntuser_datW[] = {'\\','n','t','u','s','e','r','.','d','a','t',0};
@@ -1679,7 +1736,8 @@ void SHELL_LoadRegistry( void )
         if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
         {
             WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-            WideCharToMultiByte(CP_ACP, 0, str, -1, configfile, sizeof(configfile), NULL, NULL);
+            RtlUnicodeToMultiByteN( configfile, sizeof(configfile), NULL, 
+                                    str, (strlenW(str) + 1) * sizeof(WCHAR));
         }
         if (configfile[0] != '/') strcpy(configfile, ETCDIR);
 
