@@ -1935,6 +1935,22 @@ static void DSOUND_Mixer3D(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 }
 #endif
 
+static void *tmp_buffer;
+static size_t tmp_buffer_len = 0;
+
+static void *DSOUND_tmpbuffer(size_t len)
+{
+  if (len>tmp_buffer_len) {
+    void *new_buffer = realloc(tmp_buffer, len);
+    if (new_buffer) {
+      tmp_buffer = new_buffer;
+      tmp_buffer_len = len;
+    }
+    return new_buffer;
+  }
+  return tmp_buffer;
+}
+
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb)
 {
 	INT	i, len, ilen, temp, field;
@@ -1968,7 +1984,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb)
 
 	/* Been seeing segfaults in malloc() for some reason... */
 	TRACE(dsound, "allocating buffer (size = %d)\n", len);
-	if ((buf = ibuf = (BYTE *) malloc(len)) == NULL)
+	if ((buf = ibuf = (BYTE *) DSOUND_tmpbuffer(len)) == NULL)
 		return 0;
 
 	TRACE(dsound, "MixInBuffer (%p) len = %d\n", dsb, len);
@@ -2002,7 +2018,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb)
 		if (obuf >= (BYTE *)(primarybuf->buffer + primarybuf->buflen))
 			obuf = primarybuf->buffer;
 	}
-	free(buf);
+	/* free(buf); */
 
 	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)
 		DSOUND_CheckEvent(dsb, ilen);
