@@ -1133,7 +1133,6 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
 
     SERVER_START_REQ( reply_message )
     {
-        req->type   = info->type;
         req->result = result;
         req->remove = remove;
         for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
@@ -1566,13 +1565,12 @@ static void send_parent_notify( HWND hwnd, WORD event, WORD idChild, POINT pt )
  * Tell the server we have passed the message to the app
  * (even though we may end up dropping it later on)
  */
-static void accept_hardware_message( BOOL remove )
+static void accept_hardware_message( BOOL remove, HWND new_hwnd )
 {
-    SERVER_START_REQ( reply_message )
+    SERVER_START_REQ( accept_hardware_message )
     {
-        req->type   = MSG_HARDWARE;
-        req->result = 0;
-        req->remove = remove;
+        req->remove  = remove;
+        req->new_win = new_hwnd;
         if (wine_server_call( req ))
             FIXME("Failed to reply to MSG_HARDWARE message. Message may not be removed from queue.\n");
     }
@@ -1626,10 +1624,10 @@ static BOOL process_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first, UI
     {
         /* skip this message */
         HOOK_CallHooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, TRUE );
-        accept_hardware_message( TRUE );
+        accept_hardware_message( TRUE, 0 );
         return FALSE;
     }
-    accept_hardware_message( remove );
+    accept_hardware_message( remove, 0 );
     return TRUE;
 }
 
@@ -1651,7 +1649,6 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
     GUITHREADINFO info;
     MOUSEHOOKSTRUCT hook;
     BOOL eatMsg;
-    HWND hWndScope = msg->hwnd;
 
     /* find the window to dispatch this mouse message to */
 
@@ -1659,11 +1656,18 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
     GetGUIThreadInfo( GetCurrentThreadId(), &info );
     if (!(msg->hwnd = info.hwndCapture))
     {
+        HWND hWndScope = msg->hwnd;
         /* If no capture HWND, find window which contains the mouse position.
          * Also find the position of the cursor hot spot (hittest) */
         if (!IsWindow(hWndScope)) hWndScope = 0;
         if (!(msg->hwnd = WINPOS_WindowFromPoint( hWndScope, msg->pt, &hittest )))
             msg->hwnd = GetDesktopWindow();
+    }
+
+    if (!WIN_IsCurrentThread( msg->hwnd ))
+    {
+        accept_hardware_message( FALSE, msg->hwnd );
+        return FALSE;
     }
 
     /* FIXME: is this really the right place for this hook? */
@@ -1746,7 +1750,7 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
         hook.wHitTestCode = hittest;
         hook.dwExtraInfo  = extra_info;
         HOOK_CallHooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, TRUE );
-        accept_hardware_message( TRUE );
+        accept_hardware_message( TRUE, 0 );
         return FALSE;
     }
 
@@ -1754,11 +1758,11 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
     {
         SendMessageW( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
                       MAKELONG( hittest, msg->message ));
-        accept_hardware_message( TRUE );
+        accept_hardware_message( TRUE, 0 );
         return FALSE;
     }
 
-    accept_hardware_message( remove );
+    accept_hardware_message( remove, 0 );
 
     if (!remove || info.hwndCapture)
     {

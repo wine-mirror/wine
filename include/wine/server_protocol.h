@@ -2182,12 +2182,24 @@ struct get_message_reply
 struct reply_message_request
 {
     struct request_header __header;
-    int             type;
     unsigned int    result;
     int             remove;
     /* VARARG(data,bytes); */
 };
 struct reply_message_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct accept_hardware_message_request
+{
+    struct request_header __header;
+    int             remove;
+    user_handle_t   new_win;
+};
+struct accept_hardware_message_reply
 {
     struct reply_header __header;
 };
@@ -3353,6 +3365,7 @@ enum request
     REQ_send_message,
     REQ_get_message,
     REQ_reply_message,
+    REQ_accept_hardware_message,
     REQ_get_message_reply,
     REQ_set_win_timer,
     REQ_kill_win_timer,
@@ -3544,6 +3557,7 @@ union generic_request
     struct send_message_request send_message_request;
     struct get_message_request get_message_request;
     struct reply_message_request reply_message_request;
+    struct accept_hardware_message_request accept_hardware_message_request;
     struct get_message_reply_request get_message_reply_request;
     struct set_win_timer_request set_win_timer_request;
     struct kill_win_timer_request kill_win_timer_request;
@@ -3733,6 +3747,7 @@ union generic_reply
     struct send_message_reply send_message_reply;
     struct get_message_reply get_message_reply;
     struct reply_message_reply reply_message_reply;
+    struct accept_hardware_message_reply accept_hardware_message_reply;
     struct get_message_reply_reply get_message_reply_reply;
     struct set_win_timer_reply set_win_timer_reply;
     struct kill_win_timer_reply kill_win_timer_reply;
@@ -3797,6 +3812,6 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 162
+#define SERVER_PROTOCOL_VERSION 163
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1058,28 +1058,45 @@ static void update_input_key_state( struct thread_input *input, const struct mes
 }
 
 /* release the hardware message currently being processed by the given thread */
-static void release_hardware_message( struct thread *thread, int remove )
+static void release_hardware_message( struct thread *thread, int remove, user_handle_t new_win )
 {
     struct thread_input *input = thread->queue->input;
 
     if (input->msg_thread != thread) return;
-    if (remove)
+
+    /* clear the queue bit for that message */
+    if (remove || new_win)
     {
         struct message *other;
         int clr_bit;
 
-        update_input_key_state( input, input->msg );
-        list_remove( &input->msg->entry );
         clr_bit = get_hardware_msg_bit( input->msg );
         LIST_FOR_EACH_ENTRY( other, &input->msg_list, struct message, entry )
         {
-            if (get_hardware_msg_bit( other ) == clr_bit)
+            if (other != input->msg && get_hardware_msg_bit( other ) == clr_bit)
             {
                 clr_bit = 0;
                 break;
             }
         }
         if (clr_bit) clear_queue_bits( thread->queue, clr_bit );
+    }
+
+    if (new_win)  /* set the new window */
+    {
+        struct thread *owner = get_window_thread( new_win );
+        if (owner)
+        {
+            input->msg->win = new_win;
+            set_queue_bits( owner->queue, get_hardware_msg_bit( input->msg ));
+            release_object( owner );
+        }
+        if (!remove) return;  /* don't release the message */
+    }
+    else if (remove)
+    {
+        update_input_key_state( input, input->msg );
+        list_remove( &input->msg->entry );
         free_message( input->msg );
     }
     release_object( input->msg_thread );
@@ -1513,7 +1530,7 @@ DECL_HANDLER(get_message)
     if (queue->input->msg_thread == current && req->get_next_hw)
     {
         first_hw_msg = queue->input->msg;
-        release_hardware_message( current, 0 );
+        release_hardware_message( current, 0, 0 );
     }
 
     /* first check for sent messages */
@@ -1577,20 +1594,26 @@ DECL_HANDLER(get_message)
 /* reply to a sent message */
 DECL_HANDLER(reply_message)
 {
-    if (!current->queue)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-    if (req->type == MSG_HARDWARE)
-    {
-        struct thread_input *input = current->queue->input;
-        if (input->msg_thread == current) release_hardware_message( current, req->remove );
-        else set_error( STATUS_ACCESS_DENIED );
-    }
+    if (!current->queue) set_error( STATUS_ACCESS_DENIED );
     else if (current->queue->recv_result)
         reply_message( current->queue, req->result, 0, req->remove,
                        get_req_data(), get_req_data_size() );
+}
+
+
+/* accept the current hardware message */
+DECL_HANDLER(accept_hardware_message)
+{
+    if (current->queue)
+    {
+        struct thread_input *input = current->queue->input;
+        if (input->msg_thread == current)
+        {
+            release_hardware_message( current, req->remove, req->new_win );
+            return;
+        }
+    }
+    set_error( STATUS_ACCESS_DENIED );
 }
 
 

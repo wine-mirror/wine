@@ -1552,10 +1552,16 @@ enum message_type
 
 /* Reply to a sent message */
 @REQ(reply_message)
-    int             type;      /* type of original message */
     unsigned int    result;    /* message result */
     int             remove;    /* should we remove the message? */
     VARARG(data,bytes);        /* message data for sent messages */
+@END
+
+
+/* Accept the current hardware message */
+@REQ(accept_hardware_message)
+    int             remove;    /* should we remove the message? */
+    user_handle_t   new_win;   /* new destination window for current message */
 @END
 
 

@@ -1895,11 +1895,16 @@ static void dump_get_message_reply( const struct get_message_reply *req )
 
 static void dump_reply_message_request( const struct reply_message_request *req )
 {
-    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " result=%08x,", req->result );
     fprintf( stderr, " remove=%d,", req->remove );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
+}
+
+static void dump_accept_hardware_message_request( const struct accept_hardware_message_request *req )
+{
+    fprintf( stderr, " remove=%d,", req->remove );
+    fprintf( stderr, " new_win=%p", req->new_win );
 }
 
 static void dump_get_message_reply_request( const struct get_message_reply_request *req )
@@ -2814,6 +2819,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_send_message_request,
     (dump_func)dump_get_message_request,
     (dump_func)dump_reply_message_request,
+    (dump_func)dump_accept_hardware_message_request,
     (dump_func)dump_get_message_reply_request,
     (dump_func)dump_set_win_timer_request,
     (dump_func)dump_kill_win_timer_request,
@@ -3000,6 +3006,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_wait_input_idle_reply,
     (dump_func)0,
     (dump_func)dump_get_message_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_message_reply_reply,
     (dump_func)dump_set_win_timer_reply,
@@ -3188,6 +3195,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "send_message",
     "get_message",
     "reply_message",
+    "accept_hardware_message",
     "get_message_reply",
     "set_win_timer",
     "kill_win_timer",

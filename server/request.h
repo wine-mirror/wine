@@ -225,6 +225,7 @@ DECL_HANDLER(wait_input_idle);
 DECL_HANDLER(send_message);
 DECL_HANDLER(get_message);
 DECL_HANDLER(reply_message);
+DECL_HANDLER(accept_hardware_message);
 DECL_HANDLER(get_message_reply);
 DECL_HANDLER(set_win_timer);
 DECL_HANDLER(kill_win_timer);
@@ -415,6 +416,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_send_message,
     (req_handler)req_get_message,
     (req_handler)req_reply_message,
+    (req_handler)req_accept_hardware_message,
     (req_handler)req_get_message_reply,
     (req_handler)req_set_win_timer,
     (req_handler)req_kill_win_timer,
