@@ -3375,37 +3375,34 @@ static int INT21_FindFirst( CONTEXT86 *context )
     const char *path;
     FINDFILE_DTA *dta = (FINDFILE_DTA *)INT21_GetCurrentDTA(context);
     WCHAR maskW[12], pathW[MAX_PATH];
-    DWORD attr;
+    static const WCHAR wildcardW[] = {'*','.','*',0};
 
     path = (const char *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
     MultiByteToWideChar(CP_OEMCP, 0, path, -1, pathW, MAX_PATH);
 
-    dta->fullPath = HeapAlloc( GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR) );
-    p = strrchrW(pathW, '/');
-    if (p) *p = '\0';
-    GetLongPathNameW(pathW, dta->fullPath, MAX_PATH);
-    if (p) *p = '/';
-    attr = GetFileAttributesW(dta->fullPath);
-    if (attr == 0xffffffff || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+    p = strrchrW( pathW, '\\');
+    if (!p)
     {
-        SET_AX( context, GetLastError() );
-        SET_CFLAG(context);
-        return 0;
+        if (pathW[0] && pathW[1] == ':') p = pathW + 2;
+        else p = pathW;
     }
+    else p++;
 
     /* Note: terminating NULL in dta->mask overwrites dta->search_attr
      *       (doesn't matter as it is set below anyway)
      */
     if (!INT21_ToDosFCBFormat( p, maskW ))
     {
-        HeapFree( GetProcessHeap(), 0, dta->fullPath );
-        dta->fullPath = NULL;
         SetLastError( ERROR_FILE_NOT_FOUND );
         SET_AX( context, ERROR_FILE_NOT_FOUND );
         SET_CFLAG(context);
         return 0;
     }
     WideCharToMultiByte(CP_OEMCP, 0, maskW, 12, dta->mask, sizeof(dta->mask), NULL, NULL);
+
+    dta->fullPath = HeapAlloc( GetProcessHeap(), 0, sizeof(wildcardW) + (p - pathW)*sizeof(WCHAR) );
+    memcpy( dta->fullPath, pathW, (p - pathW) * sizeof(WCHAR) );
+    memcpy( dta->fullPath + (p - pathW), wildcardW, sizeof(wildcardW) );
     /* we must have a fully qualified file name in dta->fullPath
      * (we could have a UNC path, but this would lead to some errors later on)
      */
@@ -3422,32 +3419,13 @@ static int INT21_FindFirst( CONTEXT86 *context )
  */
 static BOOL match_short(LPCWSTR shortW, LPCSTR maskA)
 {
-    WCHAR       mask[12];
-    int         i, j;
+    WCHAR mask[11], file[12];
+    int i;
 
-    MultiByteToWideChar(CP_OEMCP, 0, maskA, 12, mask, 12);
-
-    for (i = j = 0; i < 8; i++)
-    {
-        switch (mask[i])
-        {
-        case '?':
-            if (shortW[j] == '\0' || shortW[j] == '.') return FALSE;
-            j++;
-            break;
-        case ' ': if (shortW[j] != '.') return FALSE; break;
-        default: if (shortW[j++] != mask[i]) return FALSE; break;
-        }
-    }
-    for (i = 8; i < 11; i++)
-    {
-        switch (mask[i])
-        {
-        case '?': if (shortW[j++] == '\0') return FALSE; break;
-        case ' ': if (shortW[j] != '\0') return FALSE; break;
-        default: if (shortW[j++] != mask[i]) return FALSE; break;
-        }
-    }
+    if (!INT21_ToDosFCBFormat( shortW, file )) return FALSE;
+    MultiByteToWideChar(CP_OEMCP, 0, maskA, 11, mask, 11);
+    for (i = 0; i < 11; i++)
+        if (mask[i] != '?' && mask[i] != file[i]) return FALSE;
     return TRUE;
 }
 
@@ -3472,7 +3450,6 @@ static unsigned INT21_FindHelper(LPCWSTR fullPath, unsigned drive, unsigned coun
         TRACE("returning %s as label\n", debugstr_w(entry->cAlternateFileName));
         return 1;
     }
-
 
     if (!INT21_FindHandle || INT21_FindPath != fullPath || count == 0)
     {
@@ -3546,7 +3523,7 @@ static int INT21_FindNext( CONTEXT86 *context )
             HeapFree( GetProcessHeap(), 0, dta->fullPath );
             INT21_FindPath = dta->fullPath = NULL;
         }
-        dta->count += n;
+        dta->count = n;
         return 1;
     }
     HeapFree( GetProcessHeap(), 0, dta->fullPath );
