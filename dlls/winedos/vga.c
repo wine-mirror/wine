@@ -608,7 +608,7 @@ void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
      * actual text mode memory area to make sure the screen
      * does get updated fully initially */
     for (i=0; i < Xres*Yres*2; i++)
-	*p2++ ^= *p++; /* XOR it */
+	*p2++ = *p++ ^ 0xff; /* XOR it */
 }
 
 /**********************************************************************
@@ -736,18 +736,18 @@ void VGA_PutChar(BYTE ascii)
 
     switch(ascii) {
     case '\b':
-       VGA_PutCharAt(vga_text_x, vga_text_y, ' ', vga_text_attr);
-       vga_text_x--;
-       break;
+        if (vga_text_x)
+            vga_text_x--;
+        break;
 
     case '\t':
-       vga_text_x += ((vga_text_x + 8) & ~7) - vga_text_x;
-       break;
+        vga_text_x += ((vga_text_x + 8) & ~7) - vga_text_x;
+        break;
 
     case '\n':
-       vga_text_y++;
-       vga_text_x = 0;
-       break;
+        vga_text_y++;
+        vga_text_x = 0;
+        break;
 
     case '\a':
         break;
@@ -789,7 +789,7 @@ void VGA_ClearText(unsigned row1, unsigned col1,
 
     for(y=row1; y<=row2; y++)
         for(x=col1; x<=col2; x++)
-            VGA_PutCharAt(x, y, ' ', attr);
+            VGA_PutCharAt(x, y, 0x20, attr);
 
     LeaveCriticalSection(&vga_lock);
 }

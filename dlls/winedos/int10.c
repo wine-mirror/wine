@@ -90,6 +90,8 @@ static const INT10_MODE INT10_modelist[] =
     {0xffff,    0,    0,  0}
 };
 
+static void INT10_SetCursorPos(BIOSDATA*, unsigned, unsigned, unsigned);
+
 
 /**********************************************************************
  *         INT10_FindMode
@@ -389,6 +391,7 @@ static void INT10_FillStateInformation( BYTE *buffer, BIOSDATA *data )
 static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
 {
     const INT10_MODE *ptr = INT10_FindMode( mode );
+    BOOL clearScreen = TRUE;
 
     if (!ptr)
         return FALSE;
@@ -398,6 +401,12 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
      */
     if (mode & 0x4000)
         return FALSE;
+
+    /*
+     * Check for VGA and VESA preserve video memory flag.
+     */
+    if ((mode & 0x0080) || (mode & 0x8000))
+        clearScreen = FALSE;
 
     /*
      * Note that we do not mask out flags here on purpose.
@@ -412,21 +421,34 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
     if (ptr->Depth == 0)
     {
         /* Text mode. */
-        TRACE( "Setting %s %dx%d text mode\n", 
+        TRACE( "Setting %s %dx%d text mode (screen %s)\n", 
                mode <= 0xff ? "VGA" : "VESA", 
-               ptr->Width, ptr->Height );
+               ptr->Width, ptr->Height, 
+               clearScreen ? "cleared" : "preserved" );
+
         /*
          * FIXME: We should check here if alpha mode could be set.
          */
         VGA_SetAlphaMode( ptr->Width, ptr->Height );
+
         data->VideoColumns = ptr->Width;
+        data->RowsOnScreenMinus1 = ptr->Height - 1;
+
+        if (clearScreen)
+        {            
+            VGA_ClearText( 0, 0, ptr->Height-1, ptr->Width-1, 0x07 );
+            INT10_SetCursorPos( data, 0, 0, 0 );
+            VGA_SetCursorPos( 0, 0 );            
+        }
     }
     else
     {
         /* Graphics mode. */
-        TRACE( "Setting %s %dx%dx%d graphics mode\n", 
+        TRACE( "Setting %s %dx%dx%d graphics mode (screen %s)\n", 
                mode <= 0xff ? "VGA" : "VESA", 
-               ptr->Width, ptr->Height, ptr->Depth );
+               ptr->Width, ptr->Height, ptr->Depth,
+               clearScreen ? "cleared" : "preserved" );
+
         if (VGA_SetMode( ptr->Width, ptr->Height, ptr->Depth ))
             return FALSE;
     }
