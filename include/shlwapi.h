@@ -83,9 +83,11 @@ DWORD WINAPI SHCopyKeyW(HKEY,LPCWSTR,HKEY,DWORD);
 
 /* Undocumented registry functions */
 
-HKEY WINAPI SHRegDuplicateHKey(HKEY hKey);
+HKEY WINAPI  SHRegDuplicateHKey(HKEY);
 
-/* FIXME: SHDeleteOrphanKey */
+DWORD WINAPI SHDeleteOrphanKeyA(HKEY,LPCSTR);
+DWORD WINAPI SHDeleteOrphanKeyW(HKEY,LPCWSTR);
+#define SHDeleteOrphanKey WINELIB_NAME_AW(SHDeleteOrphanKey)
 
 
 /* User registry functions */
@@ -854,6 +856,8 @@ HRESULT WINAPI SHCreateStreamOnFileW(LPCWSTR,DWORD,IStream**);
 #define SHCreateStreamOnFile WINELIB_NAME_AW(SHCreateStreamOnFile)
 
 HRESULT WINAPI SHCreateStreamOnFileEx(LPCWSTR,DWORD,DWORD,BOOL,IStream*,IStream**);
+
+HRESULT WINAPI SHCreateStreamWrapper(LPBYTE,DWORD,DWORD,IStream**);
 
 #endif /* NO_SHLWAPI_STREAM */
 
