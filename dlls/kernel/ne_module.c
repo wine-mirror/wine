@@ -2095,7 +2095,8 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     if (!nt) return (HMODULE16)11;  /* invalid exe */
 
     /* Extract base filename */
-    GetModuleFileNameA( module32, filename, sizeof(filename) );
+    len = GetModuleFileNameA( module32, filename, sizeof(filename) );
+    if (!len || len >= sizeof(filename)) return (HMODULE16)11;  /* invalid exe */
     basename = strrchr(filename, '\\');
     if (!basename) basename = filename;
     else basename++;

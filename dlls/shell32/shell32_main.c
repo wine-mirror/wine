@@ -91,11 +91,17 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 
     if (*lpCmdline==0) {
         /* Return the path to the executable */
-        DWORD size=16;
+        DWORD len, size=16;
 
         hargv=GlobalAlloc(size, 0);
 	argv=GlobalLock(hargv);
-	while (GetModuleFileNameW(0, (LPWSTR)(argv+1), size-sizeof(LPWSTR)) == 0) {
+	for (;;) {
+            len = GetModuleFileNameW(0, (LPWSTR)(argv+1), size-sizeof(LPWSTR));
+            if (!len) {
+                GlobalFree(hargv);
+                return NULL;
+            }
+            if (len < size) break;
             size*=2;
             hargv=GlobalReAlloc(hargv, size, 0);
             argv=GlobalLock(hargv);
@@ -932,6 +938,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	    /* get full path to this DLL for IExtractIconW_fnGetIconLocation() */
 	    GetModuleFileNameW(hinstDLL, swShell32Name, MAX_PATH);
+            swShell32Name[MAX_PATH - 1] = '\0';
 
 	    InitCommonControlsEx(NULL);
 

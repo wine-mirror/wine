@@ -143,6 +143,7 @@ void setup_dsound_options(void)
 {
     char buffer[MAX_PATH+1];
     HKEY hkey, appkey = 0;
+    DWORD len;
 
     buffer[MAX_PATH]='\0';
 
@@ -153,7 +154,8 @@ void setup_dsound_options(void)
         ExitProcess(1);
     }
 
-    if (GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    len = GetModuleFileNameA( 0, buffer, MAX_PATH );
+    if (len && len < MAX_PATH)
     {
         HKEY tmpkey;
 

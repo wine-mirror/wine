@@ -293,11 +293,21 @@ void msvcrt_init_args(void)
 
   MSVCRT__pgmptr = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
   if (MSVCRT__pgmptr)
-    GetModuleFileNameA(0, MSVCRT__pgmptr, MAX_PATH);
+  {
+    if (!GetModuleFileNameA(0, MSVCRT__pgmptr, MAX_PATH))
+      MSVCRT__pgmptr[0] = '\0';
+    else
+      MSVCRT__pgmptr[MAX_PATH - 1] = '\0';
+  }
 
   MSVCRT__wpgmptr = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
   if (MSVCRT__wpgmptr)
-    GetModuleFileNameW(0, MSVCRT__wpgmptr, MAX_PATH);
+  {
+    if (!GetModuleFileNameW(0, MSVCRT__wpgmptr, MAX_PATH))
+      MSVCRT__wpgmptr[0] = '\0';
+    else
+      MSVCRT__wpgmptr[MAX_PATH - 1] = '\0';
+  }
 }
 
 

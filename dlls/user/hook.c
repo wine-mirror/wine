@@ -122,6 +122,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
 {
     HHOOK handle = 0;
     WCHAR module[MAX_PATH];
+    DWORD len;
 
     if (tid)  /* thread-local hook */
     {
@@ -140,7 +141,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
     else  /* system-global hook */
     {
         if (id == WH_KEYBOARD_LL || id == WH_MOUSE_LL) inst = 0;
-        else if (!inst || !GetModuleFileNameW( inst, module, MAX_PATH ))
+        else if (!inst || !(len = GetModuleFileNameW( inst, module, MAX_PATH )) || len >= MAX_PATH)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;

@@ -239,6 +239,7 @@ static void setup_options(void)
 {
     char buffer[MAX_PATH+16];
     HKEY hkey, appkey = 0;
+    DWORD len;
 
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", 0, NULL,
                          REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
@@ -249,7 +250,8 @@ static void setup_options(void)
 
     /* open the app-specific key */
 
-    if (GetModuleFileNameA( 0, buffer, MAX_PATH ))
+    len = (GetModuleFileNameA( 0, buffer, MAX_PATH ));
+    if (len && len < MAX_PATH)
     {
         HKEY tmpkey;
         char *p, *appname = buffer;

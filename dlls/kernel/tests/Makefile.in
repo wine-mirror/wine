@@ -20,6 +20,7 @@ CTESTS = \
 	generated.c \
 	heap.c \
 	locale.c \
+	module.c \
 	mailslot.c \
 	path.c \
 	pipe.c \

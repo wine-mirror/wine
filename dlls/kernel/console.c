@@ -1133,7 +1133,10 @@ BOOL WINAPI AllocConsole(void)
     if (siCurrent.lpTitle)
         siConsole.lpTitle = siCurrent.lpTitle;
     else if (GetModuleFileNameA(0, buffer, sizeof(buffer)))
+    {
+        buffer[sizeof(buffer) - 1] = '\0';
         siConsole.lpTitle = buffer;
+    }
 
     if (!start_console_renderer(&siConsole))
 	goto the_end;

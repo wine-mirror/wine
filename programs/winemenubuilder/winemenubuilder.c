@@ -531,8 +531,8 @@ static BOOL DeferToRunOnce(LPWSTR link)
 
     WINE_TRACE( "Deferring icon creation to reboot.\n");
 
-    if( !GetModuleFileNameW( 0, szExecutable, MAX_PATH ) )
-        return FALSE;
+    len = GetModuleFileNameW( 0, szExecutable, MAX_PATH );
+    if (!len || len >= MAX_PATH) return FALSE;
 
     len = ( lstrlenW( link ) + lstrlenW( szExecutable ) + 4)*sizeof(WCHAR);
     buffer = HeapAlloc( GetProcessHeap(), 0, len );

@@ -490,8 +490,12 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
 	  else
 	    *lpiIcon = 6;   /* generic icon - found nothing */
 
-	  GetModuleFileNameA(hInst, lpIconPath, 0x80);
-	  hIcon = LoadIconA( hInst, MAKEINTRESOURCEA(*lpiIcon));
+	  if (GetModuleFileNameA(hInst, lpIconPath, 0x80))
+          {
+              /* terminate string (GetModuleFileName doesn't do if buffer is too small) */
+              lpIconPath[0x80 - 1] = '\0';
+              hIcon = LoadIconA( hInst, MAKEINTRESOURCEA(*lpiIcon));
+          }
 	}
 	return hIcon;
 }

@@ -441,7 +441,6 @@ END:
 DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 {
     DWORD ret, offset, len = (filename && strlenW(filename)) ? strlenW(filename) + 1: MAX_PATH;
-    DWORD nSize = len;
     LPSTR filenameA = NULL;
     LPWSTR filenameW;
     VS_FIXEDFILEINFO *vffi;
@@ -453,9 +452,12 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
     if (filename && strlenW(filename))
 	strcpyW(filenameW, filename);
     else {
-	nSize = GetModuleFileNameW(NULL, filenameW, nSize);
-	if((nSize +1) >= len)
-	    FIXME("buffer may be too small\n");
+	DWORD nSize = GetModuleFileNameW(NULL, filenameW, len);
+	if (!nSize || nSize >= len)
+        {
+	    len = 0;
+            goto End;
+        }
     }
 
     len = VERSION_GetFileVersionInfo_PE(filenameW, handle, 0, NULL);

@@ -82,6 +82,7 @@ WORD get_dos_version(void)
     HKEY hkey, config_key;
     WCHAR buffer[MAX_PATH];
     WORD ret = 0;
+    DWORD len;
 
     static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
                                     'S','o','f','t','w','a','r','e','\\',
@@ -103,7 +104,8 @@ WORD get_dos_version(void)
     attr.RootDirectory = config_key;
 
     /* open AppDefaults\\appname\\Version key */
-    if (GetModuleFileNameW( 0, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+    len = GetModuleFileNameW( 0, buffer, sizeof(buffer)/sizeof(WCHAR) );
+    if (len && len < sizeof(buffer)/sizeof(WCHAR))
     {
         WCHAR *p, *appname, appversion[MAX_PATH+20];
 

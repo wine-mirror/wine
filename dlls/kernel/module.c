@@ -432,6 +432,8 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
  *  This function always returns the long path of hModule (as opposed to
  *  GetModuleFileName16() which returns short paths when the modules version
  *  field is < 4.0).
+ *  The function doesn't write a terminating '\0' is the buffer is too 
+ *  small.
  */
 DWORD WINAPI GetModuleFileNameA(
 	HMODULE hModule,	/* [in] Module handle (32 bit) */
@@ -439,16 +441,20 @@ DWORD WINAPI GetModuleFileNameA(
         DWORD size )		/* [in] Size of lpFileName in characters */
 {
     LPWSTR filenameW = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
+    DWORD len;
 
     if (!filenameW)
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
-    GetModuleFileNameW( hModule, filenameW, size );
-    FILE_name_WtoA( filenameW, -1, lpFileName, size );
+    if ((len = GetModuleFileNameW( hModule, filenameW, size )))
+    {
+    	len = FILE_name_WtoA( filenameW, len, lpFileName, size );
+        if (len < size) lpFileName[len] = '\0';
+    }
     HeapFree( GetProcessHeap(), 0, filenameW );
-    return strlen( lpFileName );
+    return len;
 }
 
 /***********************************************************************
@@ -458,16 +464,16 @@ DWORD WINAPI GetModuleFileNameA(
  */
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size )
 {
-    ULONG magic;
+    ULONG magic, len = 0;
     LDR_MODULE *pldr;
     NTSTATUS nts;
     WIN16_SUBSYSTEM_TIB *win16_tib;
 
-    lpFileName[0] = 0;
-
     if (!hModule && ((win16_tib = NtCurrentTeb()->Tib.SubSystemTib)) && win16_tib->exe_name)
     {
-        lstrcpynW( lpFileName, win16_tib->exe_name->Buffer, size );
+        len = min(size, win16_tib->exe_name->Length / sizeof(WCHAR));
+        memcpy( lpFileName, win16_tib->exe_name->Buffer, len * sizeof(WCHAR) );
+        if (len < size) lpFileName[len] = '\0';
         goto done;
     }
 
@@ -475,13 +481,18 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
 
     if (!hModule) hModule = NtCurrentTeb()->Peb->ImageBaseAddress;
     nts = LdrFindEntryForAddress( hModule, &pldr );
-    if (nts == STATUS_SUCCESS) lstrcpynW(lpFileName, pldr->FullDllName.Buffer, size);
+    if (nts == STATUS_SUCCESS)
+    {
+        len = min(size, pldr->FullDllName.Length / sizeof(WCHAR));
+        memcpy(lpFileName, pldr->FullDllName.Buffer, len * sizeof(WCHAR));
+        if (len < size) lpFileName[len] = '\0';
+    }
     else SetLastError( RtlNtStatusToDosError( nts ) );
 
     LdrUnlockLoaderLock( 0, magic );
 done:
-    TRACE( "%s\n", debugstr_w(lpFileName) );
-    return strlenW(lpFileName);
+    TRACE( "%s\n", debugstr_wn(lpFileName, len) );
+    return len;
 }
 
 

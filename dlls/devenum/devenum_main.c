@@ -312,9 +312,12 @@ static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWST
           == ERROR_SUCCESS ? S_OK : E_FAIL;
 
     TRACE("HModule = %p\n", DEVENUM_hInstance);
-    if (!GetModuleFileNameW(DEVENUM_hInstance, dll_module,
-			    sizeof(dll_module) / sizeof(WCHAR)))
+    i = GetModuleFileNameW(DEVENUM_hInstance, dll_module,
+                           sizeof(dll_module) / sizeof(WCHAR));
+    if (!i)
 	return HRESULT_FROM_WIN32(GetLastError());
+    if (i >= sizeof(dll_module) / sizeof(WCHAR))
+	return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
     for (i = 0; i < count; i++)
     {

@@ -348,7 +348,11 @@ DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule,
     if (!lpFileName || !nSize) return 0;
 
     if ( hProcess == GetCurrentProcess() )
-        return GetModuleFileNameA( hModule, lpFileName, nSize );
+    {
+        DWORD len = GetModuleFileNameA( hModule, lpFileName, nSize );
+        if (nSize) lpFileName[nSize - 1] = '\0';
+        return len;
+    }
 
     if (!(ptr = HeapAlloc(GetProcessHeap(), 0, nSize * sizeof(WCHAR)))) return 0;
 
@@ -380,7 +384,11 @@ DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule,
     if (!lpFileName || !nSize) return 0;
 
     if ( hProcess == GetCurrentProcess() )
-        return GetModuleFileNameW( hModule, lpFileName, nSize );
+    {
+        DWORD len = GetModuleFileNameW( hModule, lpFileName, nSize );
+        if (nSize) lpFileName[nSize - 1] = '\0';
+        return len;
+    }
 
     lpFileName[0] = 0;
 

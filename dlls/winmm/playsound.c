@@ -90,8 +90,11 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
     if (RegOpenKeyW(HKEY_CURRENT_USER, wszKey, &hRegSnd) != 0) goto none;
     if (uFlags & SND_APPLICATION)
     {
+        DWORD len;
+
         err = 1; /* error */
-        if (GetModuleFileNameW(0, str, sizeof(str)/sizeof(str[0])))
+        len = GetModuleFileNameW(0, str, sizeof(str)/sizeof(str[0]));
+        if (len > 0 && len < sizeof(str)/sizeof(str[0]))
         {
             for (ptr = str + lstrlenW(str) - 1; ptr >= str; ptr--)
             {
