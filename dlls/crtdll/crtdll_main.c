@@ -1115,21 +1115,7 @@ INT __cdecl CRTDLL_fclose( CRTDLL_FILE *file )
  */
 INT __cdecl CRTDLL__unlink(LPCSTR pathname)
 {
-    int ret=0;
-    DOS_FULL_NAME full_name;
-
-    if (!DOSFS_GetFullName( pathname, FALSE, &full_name )) {
-      WARN("CRTDLL_unlink file %s bad name\n",pathname);
-      return EOF;
-    }
-  
-    ret=unlink(full_name.long_name);
-    TRACE("(%s unix %s)\n",
-		   pathname,full_name.long_name);
-    if(ret)
-      WARN(" Failed!\n");
-
-    return ret;
+    return DeleteFileA( pathname ) ? 0 : -1;
 }
 
 /*********************************************************************
