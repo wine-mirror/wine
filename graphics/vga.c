@@ -166,8 +166,8 @@ void VGA_ioport_out( WORD port, BYTE val )
         case 0x3c9:
             ((BYTE*)&paldat)[palcnt++]=val << 2;
             if (palcnt==3) {
-                VGA_SetPalette(&paldat,palreg,1);
-                palreg++;
+                VGA_SetPalette(&paldat,palreg++,1);
+                palcnt=0;
             }
             break;
     }
