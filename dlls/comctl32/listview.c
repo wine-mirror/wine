@@ -2258,6 +2258,7 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 
     LISTVIEW_RemoveAllSelections(infoPtr);
 
+    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.state = LVIS_FOCUSED | LVIS_SELECTED;
     lvItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
     LISTVIEW_SetItemState(infoPtr, nItem, &lvItem);
@@ -3498,8 +3499,12 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     nUpdateWidth = rcClip.right - rcClip.left;
     nTop = LISTVIEW_GetTopIndex(infoPtr);
     nItem = nTop + (rcClip.top - infoPtr->rcList.top) / infoPtr->nItemHeight;
+    if (nItem < nTop)
+        nItem = nTop;
     nLast = nItem + nUpdateHeight / infoPtr->nItemHeight;
     if (nUpdateHeight % infoPtr->nItemHeight) nLast++;
+    if (nLast > GETITEMCOUNT(infoPtr))
+        nLast = GETITEMCOUNT(infoPtr);
 
     /* send cache hint notification */
     if (lStyle & LVS_OWNERDATA) 
@@ -3559,6 +3564,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
             OffsetRect(&dis.rcItem, ptOrig.x, 0);
 
+            ZeroMemory(&item, sizeof(item));
             item.iItem = nItem;
 	    item.iSubItem = 0;
             item.mask = LVIF_PARAM;
@@ -5541,13 +5547,15 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
   INT nLeftPos;
   INT nLabelWidth;
   INT nIndent;
-  LVITEMW lvItem;
 
   TRACE("(hwnd=%x, nItem=%d, lprc=%p, uview=%d)\n",
 	infoPtr->hwndSelf, nItem, lprc, uView);
 
   if (uView & LVS_REPORT)
   {
+    LVITEMW lvItem;
+
+    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.mask = LVIF_INDENT;
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
@@ -6591,11 +6599,6 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     is_sorted = (lStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
 	        !(lStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
 
-    nItem = DPA_InsertPtr( infoPtr->hdpaItems, 
-		           is_sorted ? GETITEMCOUNT( infoPtr ) + 1 : lpLVItem->iItem, 
-			   hdpaSubItems );
-    if (nItem == -1) goto fail;
-   
     if (!LISTVIEW_SetItemT(infoPtr, lpLVItem, isW)) goto fail;
 
     /* if we're sorted, sort the list, and update the index */
@@ -6606,6 +6609,14 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	if (nItem == -1) goto fail;
     }
 
+    /* Add the subitem list to the items array. Do this last in case we go to
+     * fail during the above.
+     */
+    nItem = DPA_InsertPtr( infoPtr->hdpaItems, 
+		           is_sorted ? GETITEMCOUNT( infoPtr ) + 1 : lpLVItem->iItem, 
+			   hdpaSubItems );
+    if (nItem == -1) goto fail;
+   
     LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
     
     lpItem->valid = TRUE;
@@ -7284,7 +7295,10 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
       topvisible = LISTVIEW_GetTopIndex(infoPtr) +
                    LISTVIEW_GetCountPerColumn(infoPtr) + 1;
 
-      infoPtr->hdpaItems->nItemCount = nItems;
+      /* Grow the hdpaItems array if necessary */
+      if (nItems > infoPtr->hdpaItems->nMaxCount)
+          if (!DPA_SetPtr(infoPtr->hdpaItems, nItems - 1, NULL))
+              return FALSE;
 
       infoPtr->nItemWidth = max(LISTVIEW_GetItemWidth(infoPtr),
                                 DEFAULT_COLUMN_WIDTH);
