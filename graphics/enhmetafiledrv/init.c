@@ -332,12 +332,13 @@ HDC WINAPI CreateEnhMetaFileW(
 	physDev->hFile = hFile;
     }
 
-    if( !hdc )
-      DeleteDC( hRefDC );
-	
     TRACE("returning %04x\n", dc->hSelf);
     ret = dc->hSelf;
     GDI_ReleaseObj( dc->hSelf );
+
+    if( !hdc )
+      DeleteDC( hRefDC );
+	
     return ret;
 }
 
