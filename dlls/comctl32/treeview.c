@@ -683,7 +683,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     NMTVDISPINFOA callback;
     HWND hwnd = infoPtr->hwnd;
 
-    mask &= wineItem->callbackMask;
+    mask &= ~wineItem->callbackMask;
 
     if (mask == 0) return;
 
