@@ -1554,7 +1554,11 @@ void SHELL_LoadRegistry( void )
 
     if (!CLIENT_IsBootThread()) return;  /* already loaded */
 
-    if (!RegCreateKeyA(HKEY_USERS,".Default",&hkey_users_default)) hkey_users_default = 0;
+    if (RegCreateKeyA(HKEY_USERS,".Default",&hkey_users_default))
+    {
+        ERR("Cannot create HKEY_USERS/.Default\n" );
+        ExitProcess(1);
+    }
 
     _allocate_default_keys();
     _set_registry_levels(0,0,0);
