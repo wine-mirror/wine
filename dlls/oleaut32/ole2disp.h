@@ -2,6 +2,7 @@
 #define __WINE_OLEAUT32_OLE2DISP_H
 
 #include "wtypes.h"
+#include "wine/windef16.h"
 
 BSTR16 WINAPI SysAllocString16(LPCOLESTR16);
 BSTR16 WINAPI SysAllocStringLen16(const char*, int);
