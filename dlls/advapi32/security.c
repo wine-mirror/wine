@@ -752,7 +752,7 @@ AccessCheck(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken,
 
 BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
 {
-    FIXME_(advapi)("(%p, %p): stub\n", thread, token);
+    FIXME_(advapi)("(%p, %x): stub\n", thread, token);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 

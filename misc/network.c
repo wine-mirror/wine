@@ -977,7 +977,7 @@ BOOL WINAPI _MPR_25( LPBYTE lpMem, INT len )
  */
 DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-	FIXME_(mpr)( "(%s, 0x%08x, %p, %p): stub\n", lpLocalPath, dwInfoLevel, lpBuffer, lpBufferSize);
+	FIXME_(mpr)( "(%s, 0x%08lx, %p, %p): stub\n", lpLocalPath, dwInfoLevel, lpBuffer, lpBufferSize);
 
 	SetLastError(WN_NO_NETWORK);
 	return WN_NO_NETWORK;
@@ -988,7 +988,7 @@ DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel, LPVO
  */
 DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel, LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-	FIXME_(mpr)( "(%s, 0x%08x, %p, %p): stub\n", debugstr_w(lpLocalPath), dwInfoLevel, lpBuffer, lpBufferSize);
+	FIXME_(mpr)( "(%s, 0x%08lx, %p, %p): stub\n", debugstr_w(lpLocalPath), dwInfoLevel, lpBuffer, lpBufferSize);
 
 	SetLastError(WN_NO_NETWORK);
 	return WN_NO_NETWORK;

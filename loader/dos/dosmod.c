@@ -10,7 +10,7 @@
 #ifndef __ELF__
 /* if not, force dosmod at high addresses */
 asm(".org 0x110000");
-#endif __ELF__
+#endif /* __ELF__ */
 
 #include <stdio.h>
 #include <stdlib.h>
