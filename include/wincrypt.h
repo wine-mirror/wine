@@ -483,16 +483,45 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define PUBLICKEYBLOBEX         0xA
 #define SYMMETRICWRAPKEYBLOB    0xB
 
-#define CERT_STORE_PROV_MSG        ((LPCSTR)1)
-#define CERT_STORE_PROV_MEMORY     ((LPCSTR)2)
-#define CERT_STORE_PROV_FILE       ((LPCSTR)3)
-#define CERT_STORE_PROV_REG        ((LPCSTR)4)
-#define CERT_STORE_PROV_PKCS7      ((LPCSTR)5)
-#define CERT_STORE_PROV_SERIALIZED ((LPCSTR)6)
-#define CERT_STORE_PROV_FILENAME_A ((LPCSTR)7)
-#define CERT_STORE_PROV_FILENAME_W ((LPCSTR)8)
-#define CERT_STORE_PROV_SYSTEM_A   ((LPCSTR)9)
-#define CERT_STORE_PROV_SYSTEM_W   ((LPCSTR)10)
+/* cert store provider types */
+#define CERT_STORE_PROV_MSG                  ((LPCSTR)1)
+#define CERT_STORE_PROV_MEMORY               ((LPCSTR)2)
+#define CERT_STORE_PROV_FILE                 ((LPCSTR)3)
+#define CERT_STORE_PROV_REG                  ((LPCSTR)4)
+#define CERT_STORE_PROV_PKCS7                ((LPCSTR)5)
+#define CERT_STORE_PROV_SERIALIZED           ((LPCSTR)6)
+#define CERT_STORE_PROV_FILENAME_A           ((LPCSTR)7)
+#define CERT_STORE_PROV_FILENAME_W           ((LPCSTR)8)
+#define CERT_STORE_PROV_SYSTEM_A             ((LPCSTR)9)
+#define CERT_STORE_PROV_SYSTEM_W             ((LPCSTR)10)
+#define CERT_STORE_PROV_SYSTEM               CERT_STORE_PROV_SYSTEM_W
+#define CERT_STORE_PROV_COLLECTION           ((LPCSTR)11)
+#define CERT_STORE_PROV_SYSTEM_REGISTRY_A    ((LPCSTR)12)
+#define CERT_STORE_PROV_SYSTEM_REGISTRY_W    ((LPCSTR)13)
+#define CERT_STORE_PROV_SYSTEM_REGISTRY      CERT_STORE_PROV_SYSTEM_REGISTRY_W
+#define CERT_STORE_PROV_PHYSICAL_W           ((LPCSTR)14)
+#define CERT_STORE_PROV_PHYSICAL             CERT_STORE_PROV_PHYSICAL_W
+#define CERT_STORE_PROV_SMART_CARD_W         ((LPCSTR)15)
+#define CERT_STORE_PROV_SMART_CARD           CERT_STORE_PROV_SMART_CARD_W
+#define CERT_STORE_PROV_LDAP_W               ((LPCSTR)16)
+#define CERT_STORE_PROV_LDAP                 CERT_STORE_PROV_LDAP_W
+
+#define sz_CERT_STORE_PROV_MEMORY            "Memory"
+#define sz_CERT_STORE_PROV_FILENAME_W        "File"
+#define sz_CERT_STORE_PROV_FILENAME          sz_CERT_STORE_PROV_FILENAME_W
+#define sz_CERT_STORE_PROV_SYSTEM_W          "System"
+#define sz_CERT_STORE_PROV_SYSTEM            sz_CERT_STORE_PROV_SYSTEM_W
+#define sz_CERT_STORE_PROV_PKCS7             "PKCS7"
+#define sz_CERT_STORE_PROV_SERIALIZED        "Serialized"
+#define sz_CERT_STORE_PROV_COLLECTION        "Collection"
+#define sz_CERT_STORE_PROV_SYSTEM_REGISTRY_W "SystemRegistry"
+#define sz_CERT_STORE_PROV_SYSTEM_REGISTRY   sz_CERT_STORE_PROV_SYSTEM_REGISTRY_W
+#define sz_CERT_STORE_PROV_PHYSICAL_W        "Physical"
+#define sz_CERT_STORE_PROV_PHYSICAL          sz_CERT_STORE_PROV_PHYSICAL_W
+#define sz_CERT_STORE_PROV_SMART_CARD_W      "SmartCard"
+#define sz_CERT_STORE_PROV_SMART_CARD        sz_CERT_STORE_PROV_SMART_CARD_W
+#define sz_CERT_STORE_PROV_LDAP_W            "Ldap"
+#define sz_CERT_STORE_PROV_LDAP              sz_CERT_STORE_PROV_LDAP_W
 
 #define X509_ASN_ENCODING   0x00000001
 #define X509_NDR_ENCODING   0x00000002
@@ -573,6 +602,28 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
 		HCRYPTKEY hPubKey, LPCWSTR sDescription, DWORD dwFlags);
 #define CryptVerifySignature WINELIB_NAME_AW(CryptVerifySignature)
+
+/* cert store functions */
+HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwEncodingType,
+ HCRYPTPROV hCryptProv, DWORD dwFlags, const void *pvPara);
+
+HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
+ LPCSTR szSubSystemProtocol);
+HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
+ LPCWSTR szSubSystemProtocol);
+#define CertOpenSystemStore WINELIB_NAME_AW(CertOpenSystemStore)
+
+PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev);
+
+BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
+             DWORD dwSaveAs, DWORD dwSaveTo, void* pvSaveToPara, DWORD dwFlags);
+
+PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
+  const BYTE* pbCrlEncoded, DWORD cbCrlEncoded);
+
+BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags );
+
+BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext );
 
 #ifdef __cplusplus
 }

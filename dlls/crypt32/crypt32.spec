@@ -57,9 +57,9 @@
 @ stub CertNameToStrA
 @ stub CertNameToStrW
 @ stub CertOIDToAlgId
-@ stdcall CertOpenStore(long long long long long)
-@ stub CertOpenSystemStoreA
-@ stub CertOpenSystemStoreW
+@ stdcall CertOpenStore(str long long long ptr)
+@ stdcall CertOpenSystemStoreA(long str)
+@ stdcall CertOpenSystemStoreW(long wstr)
 @ stub CertRDNValueToStrA
 @ stub CertRDNValueToStrW
 @ stub CertRemoveEnhancedKeyUsageIdentifier

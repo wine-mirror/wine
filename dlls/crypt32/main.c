@@ -64,16 +64,6 @@ BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB*
     return FALSE;
 }
 
-/*
- * (0x1001350, %eax, 0, 0, 9);
- *
- */
-BOOL WINAPI CertOpenStore(LPSTR dw1, DWORD dw2, DWORD dw3, DWORD dw4, DWORD dw5)
-{
-  FIXME("(%s, %ld, %ld, %ld, %ld), stub.\n", debugstr_a(dw1), dw2, dw3, dw4, dw5);
-  return TRUE;
-}
-
 BOOL WINAPI CryptSIPRemoveProvider(GUID *pgProv)
 {
     FIXME("stub!\n");
@@ -264,38 +254,5 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
         RegCloseKey( hKey );
     }
 
-    return TRUE;
-}
-
-PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev)
-{
-    FIXME("(%p,%p)\n", hCertStore, pPrev);
-    return NULL;
-}
-
-BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
-             DWORD dwSaveAs, DWORD dwSaveTo, void* pvSaveToPara, DWORD dwFlags)
-{
-    FIXME("(%p,%ld,%ld,%ld,%p,%08lx) stub!\n", hCertStore, 
-          dwMsgAndCertEncodingType, dwSaveAs, dwSaveTo, pvSaveToPara, dwFlags);
-    return TRUE;
-}
-
-PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
-  const BYTE* pbCrlEncoded, DWORD cbCrlEncoded)
-{
-    FIXME("%08lx %p %08lx\n", dwCertEncodingType, pbCrlEncoded, cbCrlEncoded);
-    return NULL;
-}
-
-BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags )
-{
-    FIXME("%p %08lx\n", hCertStore, dwFlags );
-    return TRUE;
-}
-
-BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext )
-{
-    FIXME("%p stub\n", pCertContext);
     return TRUE;
 }
