@@ -57,7 +57,7 @@
 @ stub CertNameToStrA
 @ stub CertNameToStrW
 @ stub CertOIDToAlgId
-@ stdcall CertOpenStore(long long long long long) CertOpenStore
+@ stdcall CertOpenStore(long long long long long)
 @ stub CertOpenSystemStoreA
 @ stub CertOpenSystemStoreW
 @ stub CertRDNValueToStrA
@@ -105,7 +105,7 @@
 @ stub CryptGetMessageCertificates
 @ stub CryptGetMessageSignerCount
 @ stub CryptGetOIDFunctionAddress
-@ stdcall CryptGetOIDFunctionValue(long str str wstr ptr ptr ptr) CryptGetOIDFunctionValue
+@ stdcall CryptGetOIDFunctionValue(long str str wstr ptr ptr ptr)
 @ stub CryptHashCertificate
 @ stub CryptHashMessage
 @ stub CryptHashPublicKeyInfo
@@ -132,13 +132,13 @@
 @ stub CryptMsgSignCTL
 @ stub CryptMsgUpdate
 @ stub CryptMsgVerifyCountersignatureEncoded
-@ stdcall CryptRegisterDefaultOIDFunction(long str long wstr) CryptRegisterDefaultOIDFunction
-@ stdcall CryptRegisterOIDFunction(long str str wstr str) CryptRegisterOIDFunction
+@ stdcall CryptRegisterDefaultOIDFunction(long str long wstr)
+@ stdcall CryptRegisterOIDFunction(long str str wstr str)
 @ stub CryptRegisterOIDInfo
-@ stdcall CryptSIPAddProvider(ptr) CryptSIPAddProvider
-@ stdcall CryptSIPLoad(ptr long ptr) CryptSIPLoad
-@ stdcall CryptSIPRemoveProvider(ptr) CryptSIPRemoveProvider
-@ stdcall CryptSIPRetrieveSubjectGuid(wstr long ptr) CryptSIPRetrieveSubjectGuid
+@ stdcall CryptSIPAddProvider(ptr)
+@ stdcall CryptSIPLoad(ptr long ptr)
+@ stdcall CryptSIPRemoveProvider(ptr)
+@ stdcall CryptSIPRetrieveSubjectGuid(wstr long ptr)
 @ stub CryptSetAsyncParam
 @ stub CryptSetOIDFunctionValue
 @ stub CryptSetProviderU
@@ -160,12 +160,12 @@
 @ stub CryptVerifyMessageSignatureWithKey
 @ stub CryptVerifySignatureU
 @ stub I_CryptAllocTls
-@ stdcall I_CryptCreateLruCache(long long) I_CryptCreateLruCache
+@ stdcall I_CryptCreateLruCache(long long)
 @ stub I_CryptCreateLruEntry
 @ stub I_CryptDetachTls
-@ stdcall I_CryptFindLruEntryData(long) I_CryptFindLruEntryData
-@ stdcall I_CryptFlushLruCache(long) I_CryptFlushLruCache
-@ stdcall I_CryptFreeLruCache(long) I_CryptFreeLruCache
+@ stdcall I_CryptFindLruEntryData(long)
+@ stdcall I_CryptFlushLruCache(long)
+@ stdcall I_CryptFreeLruCache(long)
 @ stub I_CryptGetDefaultCryptProv
 @ stub I_CryptGetDefaultCryptProvForEncrypt
 @ stub I_CryptGetOssGlobal

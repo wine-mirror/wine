@@ -1,5 +1,5 @@
-@ stdcall CM_Connect_MachineW(wstr ptr) CM_Connect_MachineW
-@ stdcall CM_Disconnect_Machine(long) CM_Disconnect_Machine
+@ stdcall CM_Connect_MachineW(wstr ptr)
+@ stdcall CM_Disconnect_Machine(long)
 @ stub CM_Free_Log_Conf_Handle
 @ stub CM_Free_Res_Des_Handle
 @ stub CM_Get_DevNode_Status_Ex
@@ -61,11 +61,11 @@
 @ stub SetupAdjustDiskSpaceListA
 @ stub SetupAdjustDiskSpaceListW
 @ stub SetupCancelTemporarySourceList
-@ stdcall SetupCloseFileQueue(ptr) SetupCloseFileQueue
-@ stdcall SetupCloseInfFile(long) SetupCloseInfFile
+@ stdcall SetupCloseFileQueue(ptr)
+@ stdcall SetupCloseInfFile(long)
 @ stub SetupCommitFileQueue
-@ stdcall SetupCommitFileQueueA(long long ptr ptr) SetupCommitFileQueueA
-@ stdcall SetupCommitFileQueueW(long long ptr ptr) SetupCommitFileQueueW
+@ stdcall SetupCommitFileQueueA(long long ptr ptr)
+@ stdcall SetupCommitFileQueueW(long long ptr ptr)
 @ stub SetupCopyErrorA
 @ stub SetupCopyErrorW
 @ stub SetupCopyOEMInfW
@@ -74,71 +74,71 @@
 @ stub SetupDecompressOrCopyFileA
 @ stub SetupDecompressOrCopyFileW
 @ stub SetupDefaultQueueCallback
-@ stdcall SetupDefaultQueueCallbackA(ptr long long long) SetupDefaultQueueCallbackA
-@ stdcall SetupDefaultQueueCallbackW(ptr long long long) SetupDefaultQueueCallbackW
+@ stdcall SetupDefaultQueueCallbackA(ptr long long long)
+@ stdcall SetupDefaultQueueCallbackW(ptr long long long)
 @ stub SetupDeleteErrorA
 @ stub SetupDeleteErrorW
 @ stub SetupDestroyDiskSpaceList
 @ stub SetupDiAskForOEMDisk
 @ stub SetupDiBuildClassInfoList
-@ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr) SetupDiBuildClassInfoListExW
+@ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr)
 @ stub SetupDiBuildDriverInfoList
 @ stub SetupDiCallClassInstaller
 @ stub SetupDiCancelDriverInfoSearch
 @ stub SetupDiChangeState
 @ stub SetupDiClassGuidsFromNameA
-@ stdcall SetupDiClassGuidsFromNameExW(wstr ptr long ptr wstr ptr) SetupDiClassGuidsFromNameExW
+@ stdcall SetupDiClassGuidsFromNameExW(wstr ptr long ptr wstr ptr)
 @ stub SetupDiClassGuidsFromNameW
 @ stub SetupDiClassNameFromGuidA
-@ stdcall SetupDiClassNameFromGuidExW(ptr ptr long ptr wstr ptr) SetupDiClassNameFromGuidExW
+@ stdcall SetupDiClassNameFromGuidExW(ptr ptr long ptr wstr ptr)
 @ stub SetupDiClassNameFromGuidW
 @ stub SetupDiCreateDevRegKeyA
 @ stub SetupDiCreateDevRegKeyW
 @ stub SetupDiCreateDeviceInfoA
 @ stub SetupDiCreateDeviceInfoList
-@ stdcall SetupDiCreateDeviceInfoListExW(ptr long str ptr)  SetupDiCreateDeviceInfoListExW
+@ stdcall SetupDiCreateDeviceInfoListExW(ptr long str ptr)
 @ stub SetupDiCreateDeviceInfoW
 @ stub SetupDiDeleteDevRegKey
 @ stub SetupDiDeleteDeviceInfo
 @ stub SetupDiDestroyClassImageList
-@ stdcall SetupDiDestroyDeviceInfoList(long) SetupDiDestroyDeviceInfoList
+@ stdcall SetupDiDestroyDeviceInfoList(long)
 @ stub SetupDiDestroyDriverInfoList
 @ stub SetupDiDrawMiniIcon
-@ stdcall SetupDiEnumDeviceInfo(long long ptr) SetupDiEnumDeviceInfo
-@ stdcall SetupDiEnumDeviceInterfaces(long ptr ptr long ptr) SetupDiEnumDeviceInterfaces
+@ stdcall SetupDiEnumDeviceInfo(long long ptr)
+@ stdcall SetupDiEnumDeviceInterfaces(long ptr ptr long ptr)
 @ stub SetupDiEnumDriverInfoA
 @ stub SetupDiEnumDriverInfoW
 @ stub SetupDiGetActualSectionToInstallA
 @ stub SetupDiGetActualSectionToInstallW
 @ stub SetupDiGetClassBitmapIndex
 @ stub SetupDiGetClassDescriptionA
-@ stdcall SetupDiGetClassDescriptionExW(ptr ptr long ptr wstr ptr) SetupDiGetClassDescriptionExW
+@ stdcall SetupDiGetClassDescriptionExW(ptr ptr long ptr wstr ptr)
 @ stub SetupDiGetClassDescriptionW
 @ stub SetupDiGetClassDevPropertySheetsA
 @ stub SetupDiGetClassDevPropertySheetsW
-@ stdcall SetupDiGetClassDevsA(ptr ptr long long) SetupDiGetClassDevsA
-@ stdcall SetupDiGetClassDevsExW(ptr wstr ptr long ptr wstr ptr) SetupDiGetClassDevsExW
-@ stdcall SetupDiGetClassDevsW(ptr ptr long long) SetupDiGetClassDevsW
+@ stdcall SetupDiGetClassDevsA(ptr ptr long long)
+@ stdcall SetupDiGetClassDevsExW(ptr wstr ptr long ptr wstr ptr)
+@ stdcall SetupDiGetClassDevsW(ptr ptr long long)
 @ stub SetupDiGetClassImageIndex
 @ stub SetupDiGetClassImageList
 @ stub SetupDiGetClassImageListExW
 @ stub SetupDiGetClassInstallParamsA
 @ stub SetupDiGetClassInstallParamsW
 @ stub SetupDiGetDeviceInfoListClass
-@ stdcall SetupDiGetDeviceInfoListDetailW(ptr ptr) SetupDiGetDeviceInfoListDetailW
+@ stdcall SetupDiGetDeviceInfoListDetailW(ptr ptr)
 @ stub SetupDiGetDeviceInstallParamsA
 @ stub SetupDiGetDeviceInstallParamsW
 @ stub SetupDiGetDeviceInstanceIdA
 @ stub SetupDiGetDeviceInstanceIdW
-@ stdcall SetupDiGetDeviceRegistryPropertyA(long ptr long ptr ptr long ptr) SetupDiGetDeviceRegistryPropertyA
+@ stdcall SetupDiGetDeviceRegistryPropertyA(long ptr long ptr ptr long ptr)
 @ stub SetupDiGetDeviceRegistryPropertyW
 @ stub SetupDiGetDriverInfoDetailA
 @ stub SetupDiGetDriverInfoDetailW
 @ stub SetupDiGetDriverInstallParamsA
 @ stub SetupDiGetDriverInstallParamsW
 @ stub SetupDiGetDeviceInterfaceAlias
-@ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr) SetupDiGetDeviceInterfaceDetailA
-@ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr) SetupDiGetDeviceInterfaceDetailW
+@ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr)
+@ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr)
 @ stub SetupDiGetHwProfileFriendlyNameA
 @ stub SetupDiGetHwProfileFriendlyNameW
 @ stub SetupDiGetHwProfileList
@@ -155,7 +155,7 @@
 @ stub SetupDiLoadClassIcon
 @ stub SetupDiMoveDuplicateDevice
 @ stub SetupDiOpenClassRegKey
-@ stdcall SetupDiOpenClassRegKeyExW(ptr long long wstr ptr) SetupDiOpenClassRegKeyExW
+@ stdcall SetupDiOpenClassRegKeyExW(ptr long long wstr ptr)
 @ stub SetupDiOpenDevRegKey
 @ stub SetupDiOpenDeviceInfoA
 @ stub SetupDiOpenDeviceInfoW
@@ -177,65 +177,65 @@
 @ stub SetupDiSetSelectedDriverW
 @ stub SetupDuplicateDiskSpaceListA
 @ stub SetupDuplicateDiskSpaceListW
-@ stdcall SetupFindFirstLineA(long str str ptr) SetupFindFirstLineA
-@ stdcall SetupFindFirstLineW(long wstr wstr ptr) SetupFindFirstLineW
-@ stdcall SetupFindNextLine(ptr ptr) SetupFindNextLine
-@ stdcall SetupFindNextMatchLineA(ptr str ptr) SetupFindNextMatchLineA
-@ stdcall SetupFindNextMatchLineW(ptr wstr ptr) SetupFindNextMatchLineW
+@ stdcall SetupFindFirstLineA(long str str ptr)
+@ stdcall SetupFindFirstLineW(long wstr wstr ptr)
+@ stdcall SetupFindNextLine(ptr ptr)
+@ stdcall SetupFindNextMatchLineA(ptr str ptr)
+@ stdcall SetupFindNextMatchLineW(ptr wstr ptr)
 @ stub SetupFreeSourceListA
 @ stub SetupFreeSourceListW
-@ stdcall SetupGetBinaryField(ptr long ptr long ptr) SetupGetBinaryField
-@ stdcall SetupGetFieldCount(ptr) SetupGetFieldCount
+@ stdcall SetupGetBinaryField(ptr long ptr long ptr)
+@ stdcall SetupGetFieldCount(ptr)
 @ stub SetupGetFileCompressionInfoA
 @ stub SetupGetFileCompressionInfoW
-@ stdcall SetupGetFileQueueCount(long long ptr) SetupGetFileQueueCount
-@ stdcall SetupGetFileQueueFlags(long ptr) SetupGetFileQueueFlags
+@ stdcall SetupGetFileQueueCount(long long ptr)
+@ stdcall SetupGetFileQueueFlags(long ptr)
 @ stub SetupGetInfFileListA
 @ stub SetupGetInfFileListW
 @ stub SetupGetInfInformationA
 @ stub SetupGetInfInformationW
-@ stdcall SetupGetIntField(ptr long ptr) SetupGetIntField
-@ stdcall SetupGetLineByIndexA(long str long ptr) SetupGetLineByIndexA
-@ stdcall SetupGetLineByIndexW(long wstr long ptr) SetupGetLineByIndexW
-@ stdcall SetupGetLineCountA(long str) SetupGetLineCountA
-@ stdcall SetupGetLineCountW(long wstr) SetupGetLineCountW
-@ stdcall SetupGetLineTextA(ptr long str str ptr long ptr) SetupGetLineTextA
-@ stdcall SetupGetLineTextW(ptr long wstr wstr ptr long ptr) SetupGetLineTextW
-@ stdcall SetupGetMultiSzFieldA(ptr long ptr long ptr) SetupGetMultiSzFieldA
-@ stdcall SetupGetMultiSzFieldW(ptr long ptr long ptr) SetupGetMultiSzFieldW
+@ stdcall SetupGetIntField(ptr long ptr)
+@ stdcall SetupGetLineByIndexA(long str long ptr)
+@ stdcall SetupGetLineByIndexW(long wstr long ptr)
+@ stdcall SetupGetLineCountA(long str)
+@ stdcall SetupGetLineCountW(long wstr)
+@ stdcall SetupGetLineTextA(ptr long str str ptr long ptr)
+@ stdcall SetupGetLineTextW(ptr long wstr wstr ptr long ptr)
+@ stdcall SetupGetMultiSzFieldA(ptr long ptr long ptr)
+@ stdcall SetupGetMultiSzFieldW(ptr long ptr long ptr)
 @ stub SetupGetSourceFileLocationA
 @ stub SetupGetSourceFileLocationW
 @ stub SetupGetSourceFileSizeA
 @ stub SetupGetSourceFileSizeW
 @ stub SetupGetSourceInfoA
 @ stub SetupGetSourceInfoW
-@ stdcall SetupGetStringFieldA(ptr long ptr long ptr) SetupGetStringFieldA
-@ stdcall SetupGetStringFieldW(ptr long ptr long ptr) SetupGetStringFieldW
+@ stdcall SetupGetStringFieldA(ptr long ptr long ptr)
+@ stdcall SetupGetStringFieldW(ptr long ptr long ptr)
 @ stub SetupGetTargetPathA
 @ stub SetupGetTargetPathW
-@ stdcall SetupInitDefaultQueueCallback(long) SetupInitDefaultQueueCallback
-@ stdcall SetupInitDefaultQueueCallbackEx(long long long long ptr) SetupInitDefaultQueueCallbackEx
+@ stdcall SetupInitDefaultQueueCallback(long)
+@ stdcall SetupInitDefaultQueueCallbackEx(long long long long ptr)
 @ stub SetupInitializeFileLogA
 @ stub SetupInitializeFileLogW
 @ stub SetupInstallFileA
 @ stub SetupInstallFileExA
 @ stub SetupInstallFileExW
 @ stub SetupInstallFileW
-@ stdcall SetupInstallFilesFromInfSectionA(long long long str str long) SetupInstallFilesFromInfSectionA
-@ stdcall SetupInstallFilesFromInfSectionW(long long long wstr wstr long) SetupInstallFilesFromInfSectionW
-@ stdcall SetupInstallFromInfSectionA(long long str long long str long ptr ptr long ptr) SetupInstallFromInfSectionA
-@ stdcall SetupInstallFromInfSectionW(long long wstr long long wstr long ptr ptr long ptr) SetupInstallFromInfSectionW
+@ stdcall SetupInstallFilesFromInfSectionA(long long long str str long)
+@ stdcall SetupInstallFilesFromInfSectionW(long long long wstr wstr long)
+@ stdcall SetupInstallFromInfSectionA(long long str long long str long ptr ptr long ptr)
+@ stdcall SetupInstallFromInfSectionW(long long wstr long long wstr long ptr ptr long ptr)
 @ stub SetupInstallServicesFromInfSectionA
 @ stub SetupInstallServicesFromInfSectionW
-@ stdcall SetupIterateCabinetA(str long ptr ptr) SetupIterateCabinetA
-@ stdcall SetupIterateCabinetW(wstr long ptr ptr) SetupIterateCabinetW
+@ stdcall SetupIterateCabinetA(str long ptr ptr)
+@ stdcall SetupIterateCabinetW(wstr long ptr ptr)
 @ stub SetupLogFileA
 @ stub SetupLogFileW
-@ stdcall SetupOpenAppendInfFileA(str long ptr) SetupOpenAppendInfFileA
-@ stdcall SetupOpenAppendInfFileW(wstr long ptr) SetupOpenAppendInfFileW
-@ stdcall SetupOpenFileQueue() SetupOpenFileQueue
-@ stdcall SetupOpenInfFileA(str str long ptr) SetupOpenInfFileA
-@ stdcall SetupOpenInfFileW(wstr wstr long ptr) SetupOpenInfFileW
+@ stdcall SetupOpenAppendInfFileA(str long ptr)
+@ stdcall SetupOpenAppendInfFileW(wstr long ptr)
+@ stdcall SetupOpenFileQueue()
+@ stdcall SetupOpenInfFileA(str str long ptr)
+@ stdcall SetupOpenInfFileW(wstr wstr long ptr)
 @ stub SetupOpenMasterInf
 @ stub SetupPromptForDiskA
 @ stub SetupPromptForDiskW
@@ -253,22 +253,22 @@
 @ stub SetupQuerySourceListW
 @ stub SetupQuerySpaceRequiredOnDriveA
 @ stub SetupQuerySpaceRequiredOnDriveW
-@ stdcall SetupQueueCopyA(long str str str str str str str long) SetupQueueCopyA
-@ stdcall SetupQueueCopyIndirectA(ptr) SetupQueueCopyIndirectA
-@ stdcall SetupQueueCopyIndirectW(ptr) SetupQueueCopyIndirectW
-@ stdcall SetupQueueCopySectionA(long str long long str long) SetupQueueCopySectionA
-@ stdcall SetupQueueCopySectionW(long wstr long long wstr long) SetupQueueCopySectionW
-@ stdcall SetupQueueCopyW(long wstr wstr wstr wstr wstr wstr wstr long) SetupQueueCopyW
-@ stdcall SetupQueueDefaultCopyA(long long str str str long) SetupQueueDefaultCopyA
-@ stdcall SetupQueueDefaultCopyW(long long wstr wstr wstr long) SetupQueueDefaultCopyW
-@ stdcall SetupQueueDeleteA(long str str) SetupQueueDeleteA
-@ stdcall SetupQueueDeleteSectionA(long long long str) SetupQueueDeleteSectionA
-@ stdcall SetupQueueDeleteSectionW(long long long wstr) SetupQueueDeleteSectionW
-@ stdcall SetupQueueDeleteW(long wstr wstr) SetupQueueDeleteW
-@ stdcall SetupQueueRenameA(long str str str str) SetupQueueRenameA
-@ stdcall SetupQueueRenameSectionA(long long long str) SetupQueueRenameSectionA
-@ stdcall SetupQueueRenameSectionW(long long long wstr) SetupQueueRenameSectionW
-@ stdcall SetupQueueRenameW(long wstr wstr wstr wstr) SetupQueueRenameW
+@ stdcall SetupQueueCopyA(long str str str str str str str long)
+@ stdcall SetupQueueCopyIndirectA(ptr)
+@ stdcall SetupQueueCopyIndirectW(ptr)
+@ stdcall SetupQueueCopySectionA(long str long long str long)
+@ stdcall SetupQueueCopySectionW(long wstr long long wstr long)
+@ stdcall SetupQueueCopyW(long wstr wstr wstr wstr wstr wstr wstr long)
+@ stdcall SetupQueueDefaultCopyA(long long str str str long)
+@ stdcall SetupQueueDefaultCopyW(long long wstr wstr wstr long)
+@ stdcall SetupQueueDeleteA(long str str)
+@ stdcall SetupQueueDeleteSectionA(long long long str)
+@ stdcall SetupQueueDeleteSectionW(long long long wstr)
+@ stdcall SetupQueueDeleteW(long wstr wstr)
+@ stdcall SetupQueueRenameA(long str str str str)
+@ stdcall SetupQueueRenameSectionA(long long long str)
+@ stdcall SetupQueueRenameSectionW(long long long wstr)
+@ stdcall SetupQueueRenameW(long wstr wstr wstr wstr)
 @ stub SetupRemoveFileLogEntryA
 @ stub SetupRemoveFileLogEntryW
 @ stub SetupRemoveFromDiskSpaceListA
@@ -282,18 +282,18 @@
 @ stub SetupRenameErrorA
 @ stub SetupRenameErrorW
 @ stub SetupScanFileQueue
-@ stdcall SetupScanFileQueueA(long long long ptr ptr ptr) SetupScanFileQueueA
-@ stdcall SetupScanFileQueueW(long long long ptr ptr ptr) SetupScanFileQueueW
-@ stdcall SetupSetDirectoryIdA(long long str) SetupSetDirectoryIdA
+@ stdcall SetupScanFileQueueA(long long long ptr ptr ptr)
+@ stdcall SetupScanFileQueueW(long long long ptr ptr ptr)
+@ stdcall SetupSetDirectoryIdA(long long str)
 @ stub SetupSetDirectoryIdExA
 @ stub SetupSetDirectoryIdExW
-@ stdcall SetupSetDirectoryIdW(long long wstr) SetupSetDirectoryIdW
-@ stdcall SetupSetFileQueueFlags(long long long) SetupSetFileQueueFlags
+@ stdcall SetupSetDirectoryIdW(long long wstr)
+@ stdcall SetupSetFileQueueFlags(long long long)
 @ stub SetupSetPlatformPathOverrideA
 @ stub SetupSetPlatformPathOverrideW
 @ stub SetupSetSourceListA
 @ stub SetupSetSourceListW
-@ stdcall SetupTermDefaultQueueCallback(ptr) SetupTermDefaultQueueCallback
+@ stdcall SetupTermDefaultQueueCallback(ptr)
 @ stub SetupTerminateFileLog
 @ stub ShouldDeviceBeExcluded
 @ stub StampFileSecurity

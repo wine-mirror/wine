@@ -21,238 +21,238 @@
 @ stub CsrProbeForWrite
 @ stub CsrSetPriorityClass
 @ stub CsrpProcessCallbackRequest
-@ stdcall DbgBreakPoint() DbgBreakPoint
-@ varargs DbgPrint(str) DbgPrint
+@ stdcall DbgBreakPoint()
+@ varargs DbgPrint(str)
 @ stub DbgPrompt
 @ stub DbgSsHandleKmApiMsg
 @ stub DbgSsInitialize
 @ stub DbgUiConnectToDbg
 @ stub DbgUiContinue
 @ stub DbgUiWaitStateChange
-@ stdcall DbgUserBreakPoint() DbgUserBreakPoint
+@ stdcall DbgUserBreakPoint()
 @ stub KiUserApcDispatcher
 @ stub KiUserCallbackDispatcher
 @ stub KiUserExceptionDispatcher
 @ stub LdrAccessResource
-@ stdcall LdrDisableThreadCalloutsForDll(long) LdrDisableThreadCalloutsForDll
+@ stdcall LdrDisableThreadCalloutsForDll(long)
 @ stub LdrEnumResources
-@ stdcall LdrFindEntryForAddress(ptr ptr) LdrFindEntryForAddress
+@ stdcall LdrFindEntryForAddress(ptr ptr)
 @ stub LdrFindResourceDirectory_U
 @ stub LdrFindResource_U
-@ stdcall LdrGetDllHandle(long long ptr ptr) LdrGetDllHandle
-@ stdcall LdrGetProcedureAddress(ptr ptr long ptr) LdrGetProcedureAddress
+@ stdcall LdrGetDllHandle(long long ptr ptr)
+@ stdcall LdrGetProcedureAddress(ptr ptr long ptr)
 @ stub LdrInitializeThunk
-@ stdcall LdrLoadDll(wstr long ptr ptr) LdrLoadDll
+@ stdcall LdrLoadDll(wstr long ptr ptr)
 @ stub LdrProcessRelocationBlock
 @ stub LdrQueryImageFileExecutionOptions
 @ stub LdrQueryProcessModuleInformation
-@ stdcall LdrShutdownProcess() LdrShutdownProcess
-@ stdcall LdrShutdownThread() LdrShutdownThread
-@ stdcall LdrUnloadDll(ptr) LdrUnloadDll
+@ stdcall LdrShutdownProcess()
+@ stdcall LdrShutdownThread()
+@ stdcall LdrUnloadDll(ptr)
 @ stub LdrVerifyImageMatchesChecksum
 @ stub NPXEMULATORTABLE
-@ extern NlsAnsiCodePage NlsAnsiCodePage
-@ extern NlsMbCodePageTag NlsMbCodePageTag
-@ extern NlsMbOemCodePageTag NlsMbOemCodePageTag
-@ stdcall NtAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
-@ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
+@ extern NlsAnsiCodePage
+@ extern NlsMbCodePageTag
+@ extern NlsMbOemCodePageTag
+@ stdcall NtAcceptConnectPort(ptr long ptr long long ptr)
+@ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stub NtAccessCheckAndAuditAlarm
 @ stub NtAdjustGroupsToken
-@ stdcall NtAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
+@ stdcall NtAdjustPrivilegesToken(long long long long long long)
 @ stub NtAlertResumeThread
 @ stub NtAlertThread
-@ stdcall NtAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
-@ stdcall NtAllocateUuids(ptr ptr ptr) NtAllocateUuids
-@ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long) NtAllocateVirtualMemory
+@ stdcall NtAllocateLocallyUniqueId(ptr)
+@ stdcall NtAllocateUuids(ptr ptr ptr)
+@ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long)
 @ stub NtCallbackReturn
 @ stub NtCancelIoFile
 @ stub NtCancelTimer
-@ stdcall NtClearEvent(long) NtClearEvent
-@ stdcall NtClose(long) NtClose
+@ stdcall NtClearEvent(long)
+@ stdcall NtClose(long)
 @ stub NtCloseObjectAuditAlarm
-@ stdcall NtCompleteConnectPort(ptr) NtCompleteConnectPort
-@ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
+@ stdcall NtCompleteConnectPort(ptr)
+@ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub NtContinue
-@ stdcall NtCreateDirectoryObject(long long long) NtCreateDirectoryObject
-@ stdcall NtCreateEvent(long long long long long) NtCreateEvent
+@ stdcall NtCreateDirectoryObject(long long long)
+@ stdcall NtCreateEvent(long long long long long)
 @ stub NtCreateEventPair
-@ stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr) NtCreateFile
+@ stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr)
 @ stub NtCreateIoCompletion
-@ stdcall NtCreateKey(long long long long long long long) NtCreateKey
-@ stdcall NtCreateMailslotFile(long long long long long long long long) NtCreateMailslotFile
+@ stdcall NtCreateKey(long long long long long long long)
+@ stdcall NtCreateMailslotFile(long long long long long long long long)
 @ stub NtCreateMutant
 @ stub NtCreateNamedPipeFile
-@ stdcall NtCreatePagingFile(long long long long) NtCreatePagingFile
-@ stdcall NtCreatePort(ptr ptr long long long) NtCreatePort
+@ stdcall NtCreatePagingFile(long long long long)
+@ stdcall NtCreatePort(ptr ptr long long long)
 @ stub NtCreateProcess
 @ stub NtCreateProfile
-@ stdcall NtCreateSection(ptr long ptr ptr long long long) NtCreateSection
-@ stdcall NtCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
-@ stdcall NtCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
+@ stdcall NtCreateSection(ptr long ptr ptr long long long)
+@ stdcall NtCreateSemaphore(ptr long ptr long long)
+@ stdcall NtCreateSymbolicLinkObject(ptr long ptr ptr)
 @ stub NtCreateThread
-@ stdcall NtCreateTimer(ptr long ptr long) NtCreateTimer
+@ stdcall NtCreateTimer(ptr long ptr long)
 @ stub NtCreateToken
-@ stdcall NtCurrentTeb() NtCurrentTeb
+@ stdcall NtCurrentTeb()
 @ stub NtDelayExecution
 @ stub NtDeleteFile
-@ stdcall NtDeleteKey(long) NtDeleteKey
-@ stdcall NtDeleteValueKey(long ptr) NtDeleteValueKey
-@ stdcall NtDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
-@ stdcall NtDisplayString(ptr)NtDisplayString
-@ stdcall NtDuplicateObject(long long long ptr long long long) NtDuplicateObject
-@ stdcall NtDuplicateToken(long long long long long long) NtDuplicateToken
+@ stdcall NtDeleteKey(long)
+@ stdcall NtDeleteValueKey(long ptr)
+@ stdcall NtDeviceIoControlFile(long long long long long long long long long long)
+@ stdcall NtDisplayString(ptr)
+@ stdcall NtDuplicateObject(long long long ptr long long long)
+@ stdcall NtDuplicateToken(long long long long long long)
 @ stub NtEnumerateBus
-@ stdcall NtEnumerateKey (long long long long long long) NtEnumerateKey
-@ stdcall NtEnumerateValueKey (long long long long long long) NtEnumerateValueKey
+@ stdcall NtEnumerateKey (long long long long long long)
+@ stdcall NtEnumerateValueKey (long long long long long long)
 @ stub NtExtendSection
 @ stub NtFlushBuffersFile
 @ stub NtFlushInstructionCache
-@ stdcall NtFlushKey(long) NtFlushKey
-@ stdcall NtFlushVirtualMemory(long ptr ptr long) NtFlushVirtualMemory
+@ stdcall NtFlushKey(long)
+@ stdcall NtFlushVirtualMemory(long ptr ptr long)
 @ stub NtFlushWriteBuffer
-@ stdcall NtFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
-@ stdcall NtFsControlFile(long long long long long long long long long long) NtFsControlFile
+@ stdcall NtFreeVirtualMemory(long ptr ptr long)
+@ stdcall NtFsControlFile(long long long long long long long long long long)
 @ stub NtGetContextThread
 @ stub NtGetPlugPlayEvent
 @ stub NtGetTickCount
 @ stub NtImpersonateClientOfPort
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
-@ stdcall NtListenPort(ptr ptr) NtListenPort
+@ stdcall NtListenPort(ptr ptr)
 @ stub NtLoadDriver
-@ stdcall NtLoadKey(ptr ptr) NtLoadKey
+@ stdcall NtLoadKey(ptr ptr)
 @ stub NtLockFile
-@ stdcall NtLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
+@ stdcall NtLockVirtualMemory(long ptr ptr long)
 @ stub NtMakeTemporaryObject
-@ stdcall NtMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
+@ stdcall NtMapViewOfSection(long long ptr long long ptr ptr long long long)
 @ stub NtNotifyChangeDirectoryFile
-@ stdcall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
-@ stdcall NtOpenDirectoryObject(long long long) NtOpenDirectoryObject
-@ stdcall NtOpenEvent(long long long) NtOpenEvent
+@ stdcall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long)
+@ stdcall NtOpenDirectoryObject(long long long)
+@ stdcall NtOpenEvent(long long long)
 @ stub NtOpenEventPair
-@ stdcall NtOpenFile(ptr long ptr ptr long long) NtOpenFile
+@ stdcall NtOpenFile(ptr long ptr ptr long long)
 @ stub NtOpenIoCompletion
-@ stdcall NtOpenKey(ptr long ptr) NtOpenKey
+@ stdcall NtOpenKey(ptr long ptr)
 @ stub NtOpenMutant
 @ stub NtOpenObjectAuditAlarm
 @ stub NtOpenProcess
-@ stdcall NtOpenProcessToken(long long long) NtOpenProcessToken
-@ stdcall NtOpenSection(ptr long ptr) NtOpenSection
-@ stdcall NtOpenSemaphore(long long ptr) NtOpenSemaphore
-@ stdcall NtOpenSymbolicLinkObject (long long long) NtOpenSymbolicLinkObject
+@ stdcall NtOpenProcessToken(long long long)
+@ stdcall NtOpenSection(ptr long ptr)
+@ stdcall NtOpenSemaphore(long long ptr)
+@ stdcall NtOpenSymbolicLinkObject (long long long)
 @ stub NtOpenThread
-@ stdcall NtOpenThreadToken(long long long long) NtOpenThreadToken
+@ stdcall NtOpenThreadToken(long long long long)
 @ stub NtOpenTimer
 @ stub NtPlugPlayControl
 @ stub NtPrivilegeCheck
 @ stub NtPrivilegeObjectAuditAlarm
 @ stub NtPrivilegedServiceAuditAlarm
-@ stdcall NtProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory
-@ stdcall NtPulseEvent(long ptr) NtPulseEvent
+@ stdcall NtProtectVirtualMemory(long ptr ptr long ptr)
+@ stdcall NtPulseEvent(long ptr)
 @ stub NtQueryAttributesFile
 @ stub NtQueryDefaultLocale
-@ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
-@ stdcall NtQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
+@ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)
+@ stdcall NtQueryDirectoryObject(long long long long long long long)
 @ stub NtQueryEaFile
-@ stdcall NtQueryEvent(long long ptr long ptr) NtQueryEvent
-@ stdcall NtQueryInformationFile(long long long long long) NtQueryInformationFile
+@ stdcall NtQueryEvent(long long ptr long ptr)
+@ stdcall NtQueryInformationFile(long long long long long)
 @ stub NtQueryInformationPort
-@ stdcall NtQueryInformationProcess(long long long long long) NtQueryInformationProcess
-@ stdcall NtQueryInformationThread (long long long long long) NtQueryInformationThread
-@ stdcall NtQueryInformationToken (long long long long long) NtQueryInformationToken
+@ stdcall NtQueryInformationProcess(long long long long long)
+@ stdcall NtQueryInformationThread (long long long long long)
+@ stdcall NtQueryInformationToken (long long long long long)
 @ stub NtQueryIntervalProfile
 @ stub NtQueryIoCompletion
-@ stdcall NtQueryKey (long long ptr long ptr) NtQueryKey
+@ stdcall NtQueryKey (long long ptr long ptr)
 @ stub NtQueryMutant
-@ stdcall NtQueryObject(long long long long long) NtQueryObject
+@ stdcall NtQueryObject(long long long long long)
 @ stub NtQueryOpenSubKeys
-@ stdcall NtQueryPerformanceCounter (long long) NtQueryPerformanceCounter
-@ stdcall NtQuerySection (long long long long long) NtQuerySection
-@ stdcall NtQuerySecurityObject (long long long long long) NtQuerySecurityObject
-@ stdcall NtQuerySemaphore (long long long long long) NtQuerySemaphore
-@ stdcall NtQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
+@ stdcall NtQueryPerformanceCounter (long long)
+@ stdcall NtQuerySection (long long long long long)
+@ stdcall NtQuerySecurityObject (long long long long long)
+@ stdcall NtQuerySemaphore (long long long long long)
+@ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stub NtQuerySystemEnvironmentValue
-@ stdcall NtQuerySystemInformation(long long long long) NtQuerySystemInformation
-@ stdcall NtQuerySystemTime(ptr) NtQuerySystemTime
+@ stdcall NtQuerySystemInformation(long long long long)
+@ stdcall NtQuerySystemTime(ptr)
 @ stub NtQueryTimer
-@ stdcall NtQueryTimerResolution(long long long) NtQueryTimerResolution
-@ stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
-@ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
-@ stdcall NtQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
-@ stdcall NtRaiseException(ptr ptr long) NtRaiseException
+@ stdcall NtQueryTimerResolution(long long long)
+@ stdcall NtQueryValueKey(long long long long long long)
+@ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr)
+@ stdcall NtQueryVolumeInformationFile(long ptr ptr long long)
+@ stdcall NtRaiseException(ptr ptr long)
 @ stub NtRaiseHardError
-@ stdcall NtReadFile(long long long long long long long long long) NtReadFile
+@ stdcall NtReadFile(long long long long long long long long long)
 @ stub NtReadRequestData
 @ stub NtReadVirtualMemory
 @ stub NtRegisterNewDevice
-@ stdcall NtRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
+@ stdcall NtRegisterThreadTerminatePort(ptr)
 @ stub NtReleaseMutant
 @ stub NtReleaseProcessMutant
-@ stdcall NtReleaseSemaphore(long long ptr) NtReleaseSemaphore
+@ stdcall NtReleaseSemaphore(long long ptr)
 @ stub NtRemoveIoCompletion
-@ stdcall NtReplaceKey(ptr long ptr) NtReplaceKey
+@ stdcall NtReplaceKey(ptr long ptr)
 @ stub NtReplyPort
-@ stdcall NtReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
+@ stdcall NtReplyWaitReceivePort(ptr ptr ptr ptr)
 @ stub NtReplyWaitReceivePortEx
 @ stub NtReplyWaitReplyPort
 @ stub NtRequestPort
-@ stdcall NtRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
-@ stdcall NtResetEvent(long ptr) NtResetEvent
-@ stdcall NtRestoreKey(long long long) NtRestoreKey
-@ stdcall NtResumeThread(long long) NtResumeThread
-@ stdcall NtSaveKey(long long) NtSaveKey
+@ stdcall NtRequestWaitReplyPort(ptr ptr ptr)
+@ stdcall NtResetEvent(long ptr)
+@ stdcall NtRestoreKey(long long long)
+@ stdcall NtResumeThread(long long)
+@ stdcall NtSaveKey(long long)
 @ stub NtSecureConnectPort
 @ stub NtSetContextThread
 @ stub NtSetDefaultHardErrorPort
 @ stub NtSetDefaultLocale
 @ stub NtSetEaFile
-@ stdcall NtSetEvent(long long) NtSetEvent
+@ stdcall NtSetEvent(long long)
 @ stub NtSetHighEventPair
 @ stub NtSetHighWaitLowEventPair
 @ stub NtSetHighWaitLowThread
-@ stdcall NtSetInformationFile(long long long long long) NtSetInformationFile
-@ stdcall NtSetInformationKey(long long ptr long) NtSetInformationKey
+@ stdcall NtSetInformationFile(long long long long long)
+@ stdcall NtSetInformationKey(long long ptr long)
 @ stub NtSetInformationObject
-@ stdcall NtSetInformationProcess(long long long long) NtSetInformationProcess
-@ stdcall NtSetInformationThread(long long long long) NtSetInformationThread
+@ stdcall NtSetInformationProcess(long long long long)
+@ stdcall NtSetInformationThread(long long long long)
 @ stub NtSetInformationToken
-@ stdcall NtSetIntervalProfile(long long) NtSetIntervalProfile
+@ stdcall NtSetIntervalProfile(long long)
 @ stub NtSetIoCompletion
 @ stub NtSetLdtEntries
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
 @ stub NtSetLowWaitHighThread
-@ stdcall NtSetSecurityObject(long long ptr) NtSetSecurityObject
+@ stdcall NtSetSecurityObject(long long ptr)
 @ stub NtSetSystemEnvironmentValue
 @ stub NtSetSystemInformation
 @ stub NtSetSystemPowerState
-@ stdcall NtSetSystemTime(ptr ptr) NtSetSystemTime
-@ stdcall NtSetTimer(long ptr ptr ptr long long ptr) NtSetTimer
+@ stdcall NtSetSystemTime(ptr ptr)
+@ stdcall NtSetTimer(long ptr ptr ptr long long ptr)
 @ stub NtSetTimerResolution
-@ stdcall NtSetValueKey(long long long long long long) NtSetValueKey
-@ stdcall NtSetVolumeInformationFile(long ptr ptr long long) NtSetVolumeInformationFile
+@ stdcall NtSetValueKey(long long long long long long)
+@ stdcall NtSetVolumeInformationFile(long ptr ptr long long)
 @ stub NtShutdownSystem
 @ stub NtStartProfile
 @ stub NtStopProfile
 @ stub NtSuspendThread
 @ stub NtSystemDebugControl
-@ stdcall NtTerminateProcess(long long)NtTerminateProcess
-@ stdcall NtTerminateThread(long long) NtTerminateThread
+@ stdcall NtTerminateProcess(long long)
+@ stdcall NtTerminateThread(long long)
 @ stub NtTestAlert
 @ stub NtUnloadDriver
-@ stdcall NtUnloadKey(long) NtUnloadKey
+@ stdcall NtUnloadKey(long)
 @ stub NtUnloadKeyEx
 @ stub NtUnlockFile
-@ stdcall NtUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
-@ stdcall NtUnmapViewOfSection(long ptr) NtUnmapViewOfSection
+@ stdcall NtUnlockVirtualMemory(long ptr ptr long)
+@ stdcall NtUnmapViewOfSection(long ptr)
 @ stub NtVdmControl
 @ stub NtW32Call
 @ stub NtWaitForMultipleObjects
 @ stub NtWaitForProcessMutant
-@ stdcall NtWaitForSingleObject(long long long) NtWaitForSingleObject
+@ stdcall NtWaitForSingleObject(long long long)
 @ stub NtWaitHighEventPair
 @ stub NtWaitLowEventPair
-@ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
+@ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtWriteRequestData
 @ stub NtWriteVirtualMemory
 @ stub PfxFindPrefix
@@ -262,69 +262,69 @@
 @ stub RestoreEm87Context
 @ stub RtlAbortRXact
 @ stub RtlAbsoluteToSelfRelativeSD
-@ stdcall RtlAcquirePebLock() RtlAcquirePebLock
-@ stdcall RtlAcquireResourceExclusive(ptr long) RtlAcquireResourceExclusive
-@ stdcall RtlAcquireResourceShared(ptr long) RtlAcquireResourceShared
-@ stdcall RtlAddAccessAllowedAce(long long long long) RtlAddAccessAllowedAce
+@ stdcall RtlAcquirePebLock()
+@ stdcall RtlAcquireResourceExclusive(ptr long)
+@ stdcall RtlAcquireResourceShared(ptr long)
+@ stdcall RtlAddAccessAllowedAce(long long long long)
 @ stub RtlAddAccessDeniedAce
-@ stdcall RtlAddAce(ptr long long ptr long) RtlAddAce
+@ stdcall RtlAddAce(ptr long long ptr long)
 @ stub RtlAddActionToRXact
 @ stub RtlAddAttributeActionToRXact
 @ stub RtlAddAuditAccessAce
-@ stdcall RtlAdjustPrivilege(long long long long) RtlAdjustPrivilege
-@ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr) RtlAllocateAndInitializeSid
-@ stdcall RtlAllocateHeap(long long long) RtlAllocateHeap
+@ stdcall RtlAdjustPrivilege(long long long long)
+@ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr)
+@ stdcall RtlAllocateHeap(long long long)
 @ stub RtlAnsiCharToUnicodeChar
-@ stdcall RtlAnsiStringToUnicodeSize(ptr) RtlAnsiStringToUnicodeSize
-@ stdcall RtlAnsiStringToUnicodeString(ptr ptr long) RtlAnsiStringToUnicodeString
-@ stdcall RtlAppendAsciizToString(ptr str) RtlAppendAsciizToString
-@ stdcall RtlAppendStringToString(ptr ptr) RtlAppendStringToString
-@ stdcall RtlAppendUnicodeStringToString(ptr ptr) RtlAppendUnicodeStringToString
-@ stdcall RtlAppendUnicodeToString(ptr wstr) RtlAppendUnicodeToString
+@ stdcall RtlAnsiStringToUnicodeSize(ptr)
+@ stdcall RtlAnsiStringToUnicodeString(ptr ptr long)
+@ stdcall RtlAppendAsciizToString(ptr str)
+@ stdcall RtlAppendStringToString(ptr ptr)
+@ stdcall RtlAppendUnicodeStringToString(ptr ptr)
+@ stdcall RtlAppendUnicodeToString(ptr wstr)
 @ stub RtlApplyRXact
 @ stub RtlApplyRXactNoFlush
 @ stub RtlAreAllAccessesGranted
 @ stub RtlAreAnyAccessesGranted
-@ stdcall RtlAreBitsClear(ptr long long) RtlAreBitsClear
-@ stdcall RtlAreBitsSet(ptr long long) RtlAreBitsSet
-@ stdcall RtlAssert(ptr ptr long long) RtlAssert
+@ stdcall RtlAreBitsClear(ptr long long)
+@ stdcall RtlAreBitsSet(ptr long long)
+@ stdcall RtlAssert(ptr ptr long long)
 @ stub RtlCaptureStackBackTrace
-@ stdcall RtlCharToInteger(ptr long ptr) RtlCharToInteger
+@ stdcall RtlCharToInteger(ptr long ptr)
 @ stub RtlCheckRegistryKey
-@ stdcall RtlClearAllBits(ptr) RtlClearAllBits
-@ stdcall RtlClearBits(ptr long long) RtlClearBits
-@ stdcall RtlCompactHeap(long long) RtlCompactHeap
-@ stdcall RtlCompareMemory(ptr ptr long) RtlCompareMemory
-@ stdcall RtlCompareMemoryUlong(ptr ptr long) RtlCompareMemoryUlong
-@ stdcall RtlCompareString(ptr ptr long) RtlCompareString
-@ stdcall RtlCompareUnicodeString (ptr ptr long) RtlCompareUnicodeString
+@ stdcall RtlClearAllBits(ptr)
+@ stdcall RtlClearBits(ptr long long)
+@ stdcall RtlCompactHeap(long long)
+@ stdcall RtlCompareMemory(ptr ptr long)
+@ stdcall RtlCompareMemoryUlong(ptr ptr long)
+@ stdcall RtlCompareString(ptr ptr long)
+@ stdcall RtlCompareUnicodeString (ptr ptr long)
 @ stub RtlCompressBuffer
-@ stdcall RtlComputeCrc32(long ptr long) RtlComputeCrc32
+@ stdcall RtlComputeCrc32(long ptr long)
 @ stub RtlConsoleMultiByteToUnicodeN
 @ stub RtlConvertExclusiveToShared
-@ stdcall -ret64 RtlConvertLongToLargeInteger(long) RtlConvertLongToLargeInteger
+@ stdcall -ret64 RtlConvertLongToLargeInteger(long)
 @ stub RtlConvertSharedToExclusive
-@ stdcall RtlConvertSidToUnicodeString(ptr ptr long) RtlConvertSidToUnicodeString
+@ stdcall RtlConvertSidToUnicodeString(ptr ptr long)
 @ stub RtlConvertUiListToApiList
-@ stdcall -ret64 RtlConvertUlongToLargeInteger(long) RtlConvertUlongToLargeInteger
+@ stdcall -ret64 RtlConvertUlongToLargeInteger(long)
 @ stub RtlCopyLuid
 @ stub RtlCopyLuidAndAttributesArray
 @ stub RtlCopySecurityDescriptor
-@ stdcall RtlCopySid(long ptr ptr) RtlCopySid
+@ stdcall RtlCopySid(long ptr ptr)
 @ stub RtlCopySidAndAttributesArray
-@ stdcall RtlCopyString(ptr ptr) RtlCopyString
-@ stdcall RtlCopyUnicodeString(ptr ptr) RtlCopyUnicodeString
-@ stdcall RtlCreateAcl(ptr long long) RtlCreateAcl
+@ stdcall RtlCopyString(ptr ptr)
+@ stdcall RtlCopyUnicodeString(ptr ptr)
+@ stdcall RtlCreateAcl(ptr long long)
 @ stub RtlCreateAndSetSD
-@ stdcall RtlCreateEnvironment(long long) RtlCreateEnvironment
-@ stdcall RtlCreateHeap(long ptr long long ptr ptr) RtlCreateHeap
+@ stdcall RtlCreateEnvironment(long long)
+@ stdcall RtlCreateHeap(long ptr long long ptr ptr)
 @ stub RtlCreateProcessParameters
 @ stub RtlCreateQueryDebugBuffer
 @ stub RtlCreateRegistryKey
-@ stdcall RtlCreateSecurityDescriptor(ptr long) RtlCreateSecurityDescriptor
+@ stdcall RtlCreateSecurityDescriptor(ptr long)
 @ stub RtlCreateTagHeap
-@ stdcall RtlCreateUnicodeString(ptr wstr) RtlCreateUnicodeString
-@ stdcall RtlCreateUnicodeStringFromAsciiz(ptr str) RtlCreateUnicodeStringFromAsciiz
+@ stdcall RtlCreateUnicodeString(ptr wstr)
+@ stdcall RtlCreateUnicodeStringFromAsciiz(ptr str)
 @ stub RtlCreateUserProcess
 @ stub RtlCreateUserSecurityObject
 @ stub RtlCreateUserThread
@@ -335,149 +335,149 @@
 @ stub RtlDecompressFragment
 @ stub RtlDelete
 @ stub RtlDeleteAce
-@ stdcall RtlDeleteCriticalSection(ptr) RtlDeleteCriticalSection
+@ stdcall RtlDeleteCriticalSection(ptr)
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteRegistryValue
-@ stdcall RtlDeleteResource(ptr) RtlDeleteResource
-@ stdcall RtlDeleteSecurityObject(long) RtlDeleteSecurityObject
-@ stdcall RtlDestroyEnvironment(long) RtlDestroyEnvironment
-@ stdcall RtlDestroyHeap(long) RtlDestroyHeap
+@ stdcall RtlDeleteResource(ptr)
+@ stdcall RtlDeleteSecurityObject(long)
+@ stdcall RtlDestroyEnvironment(long)
+@ stdcall RtlDestroyHeap(long)
 @ stub RtlDestroyProcessParameters
 @ stub RtlDestroyQueryDebugBuffer
 @ stub RtlDetermineDosPathNameType_U
 @ stub RtlDoesFileExists_U
-@ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long) RtlDosPathNameToNtPathName_U
+@ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long)
 @ stub RtlDosSearchPath_U
-@ stdcall RtlDowncaseUnicodeChar(long) RtlDowncaseUnicodeChar
-@ stdcall RtlDumpResource(ptr) RtlDumpResource
-@ stdcall -ret64 RtlEnlargedIntegerMultiply(long long) RtlEnlargedIntegerMultiply
-@ stdcall RtlEnlargedUnsignedDivide(long long long ptr) RtlEnlargedUnsignedDivide
-@ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long) RtlEnlargedUnsignedMultiply
-@ stdcall RtlEnterCriticalSection(ptr) RtlEnterCriticalSection
+@ stdcall RtlDowncaseUnicodeChar(long)
+@ stdcall RtlDumpResource(ptr)
+@ stdcall -ret64 RtlEnlargedIntegerMultiply(long long)
+@ stdcall RtlEnlargedUnsignedDivide(long long long ptr)
+@ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long)
+@ stdcall RtlEnterCriticalSection(ptr)
 @ stub RtlEnumProcessHeaps
 @ stub RtlEnumerateGenericTable
 @ stub RtlEnumerateGenericTableWithoutSplaying
-@ stdcall RtlEqualComputerName(ptr ptr) RtlEqualComputerName
-@ stdcall RtlEqualDomainName(ptr ptr) RtlEqualDomainName
+@ stdcall RtlEqualComputerName(ptr ptr)
+@ stdcall RtlEqualDomainName(ptr ptr)
 @ stub RtlEqualLuid
-@ stdcall RtlEqualPrefixSid(ptr ptr) RtlEqualPrefixSid
-@ stdcall RtlEqualSid (long long) RtlEqualSid
-@ stdcall RtlEqualString(ptr ptr long) RtlEqualString
-@ stdcall RtlEqualUnicodeString(ptr ptr long) RtlEqualUnicodeString
-@ stdcall RtlEraseUnicodeString(ptr) RtlEraseUnicodeString
+@ stdcall RtlEqualPrefixSid(ptr ptr)
+@ stdcall RtlEqualSid (long long)
+@ stdcall RtlEqualString(ptr ptr long)
+@ stdcall RtlEqualUnicodeString(ptr ptr long)
+@ stdcall RtlEraseUnicodeString(ptr)
 @ stub RtlExpandEnvironmentStrings_U
 @ stub RtlExtendHeap
-@ stdcall -ret64 RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
-@ stdcall -ret64 RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
-@ stdcall -ret64 RtlExtendedMagicDivide(long long long long long) RtlExtendedMagicDivide
-@ stdcall RtlFillMemory(ptr long long) RtlFillMemory
-@ stdcall RtlFillMemoryUlong(ptr long long) RtlFillMemoryUlong
-@ stdcall RtlFindClearBits(ptr long long) RtlFindClearBits
-@ stdcall RtlFindClearBitsAndSet(ptr long long) RtlFindClearBitsAndSet
-@ stdcall RtlFindClearRuns(ptr ptr long long) RtlFindClearRuns
-@ stdcall RtlFindLastBackwardRunClear(ptr long ptr) RtlFindLastBackwardRunClear
-@ stdcall RtlFindLastBackwardRunSet(ptr long ptr) RtlFindLastBackwardRunSet
-@ stdcall RtlFindLeastSignificantBit(long long) RtlFindLeastSignificantBit
-@ stdcall RtlFindLongestRunClear(ptr long) RtlFindLongestRunClear
-@ stdcall RtlFindLongestRunSet(ptr long) RtlFindLongestRunSet
+@ stdcall -ret64 RtlExtendedIntegerMultiply(long long long)
+@ stdcall -ret64 RtlExtendedLargeIntegerDivide(long long long ptr)
+@ stdcall -ret64 RtlExtendedMagicDivide(long long long long long)
+@ stdcall RtlFillMemory(ptr long long)
+@ stdcall RtlFillMemoryUlong(ptr long long)
+@ stdcall RtlFindClearBits(ptr long long)
+@ stdcall RtlFindClearBitsAndSet(ptr long long)
+@ stdcall RtlFindClearRuns(ptr ptr long long)
+@ stdcall RtlFindLastBackwardRunClear(ptr long ptr)
+@ stdcall RtlFindLastBackwardRunSet(ptr long ptr)
+@ stdcall RtlFindLeastSignificantBit(long long)
+@ stdcall RtlFindLongestRunClear(ptr long)
+@ stdcall RtlFindLongestRunSet(ptr long)
 @ stub RtlFindMessage
-@ stdcall RtlFindMostSignificantBit(long long) RtlFindMostSignificantBit
-@ stdcall RtlFindNextForwardRunClear(ptr long ptr) RtlFindNextForwardRunClear
-@ stdcall RtlFindNextForwardRunSet(ptr long ptr) RtlFindNextForwardRunSet
-@ stdcall RtlFindSetBits(ptr long long) RtlFindSetBits
-@ stdcall RtlFindSetBitsAndClear(ptr long long) RtlFindSetBitsAndClear
-@ stdcall RtlFindSetRuns(ptr ptr long long) RtlFindSetRuns
-@ stdcall RtlFirstFreeAce(ptr ptr) RtlFirstFreeAce
-@ stdcall RtlFormatCurrentUserKeyPath(ptr) RtlFormatCurrentUserKeyPath
+@ stdcall RtlFindMostSignificantBit(long long)
+@ stdcall RtlFindNextForwardRunClear(ptr long ptr)
+@ stdcall RtlFindNextForwardRunSet(ptr long ptr)
+@ stdcall RtlFindSetBits(ptr long long)
+@ stdcall RtlFindSetBitsAndClear(ptr long long)
+@ stdcall RtlFindSetRuns(ptr ptr long long)
+@ stdcall RtlFirstFreeAce(ptr ptr)
+@ stdcall RtlFormatCurrentUserKeyPath(ptr)
 @ stub RtlFormatMessage
-@ stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
-@ stdcall RtlFreeHeap(long long long) RtlFreeHeap
-@ stdcall RtlFreeOemString(ptr) RtlFreeOemString
-@ stdcall RtlFreeSid (long) RtlFreeSid
-@ stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
+@ stdcall RtlFreeAnsiString(long)
+@ stdcall RtlFreeHeap(long long long)
+@ stdcall RtlFreeOemString(ptr)
+@ stdcall RtlFreeSid (long)
+@ stdcall RtlFreeUnicodeString(ptr)
 @ stub RtlGenerate8dot3Name
-@ stdcall RtlGetAce(ptr long ptr) RtlGetAce
-@ stdcall RtlGetNtVersionNumbers(ptr ptr ptr) RtlGetNtVersionNumbers
+@ stdcall RtlGetAce(ptr long ptr)
+@ stdcall RtlGetNtVersionNumbers(ptr ptr ptr)
 @ stub RtlGetVersion
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
-@ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr) RtlGetControlSecurityDescriptor
+@ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
 @ stub RtlGetCurrentDirectory_U
-@ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr) RtlGetDaclSecurityDescriptor
+@ stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetElementGenericTable
 @ stub RtlGetFullPathName_U
-@ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr) RtlGetGroupSecurityDescriptor
-@ stdcall RtlGetLongestNtPathLength() RtlGetLongestNtPathLength
+@ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr)
+@ stdcall RtlGetLongestNtPathLength()
 @ stub RtlGetNtGlobalFlags
-@ stdcall RtlGetNtProductType(ptr) RtlGetNtProductType
-@ stdcall RtlGetOwnerSecurityDescriptor(ptr ptr ptr) RtlGetOwnerSecurityDescriptor
-@ stdcall RtlGetProcessHeaps(long ptr) RtlGetProcessHeaps
-@ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)RtlGetSaclSecurityDescriptor
+@ stdcall RtlGetNtProductType(ptr)
+@ stdcall RtlGetOwnerSecurityDescriptor(ptr ptr ptr)
+@ stdcall RtlGetProcessHeaps(long ptr)
+@ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetUserInfoHeap
-@ stdcall RtlIdentifierAuthoritySid(ptr) RtlIdentifierAuthoritySid
-@ stdcall RtlImageDirectoryEntryToData(long long long ptr) RtlImageDirectoryEntryToData
-@ stdcall RtlImageNtHeader(long) RtlImageNtHeader
-@ stdcall RtlImageRvaToSection(ptr long long) RtlImageRvaToSection
-@ stdcall RtlImageRvaToVa(ptr long long ptr) RtlImageRvaToVa
-@ stdcall RtlImpersonateSelf(long) RtlImpersonateSelf
-@ stdcall RtlInitAnsiString(ptr str) RtlInitAnsiString
+@ stdcall RtlIdentifierAuthoritySid(ptr)
+@ stdcall RtlImageDirectoryEntryToData(long long long ptr)
+@ stdcall RtlImageNtHeader(long)
+@ stdcall RtlImageRvaToSection(ptr long long)
+@ stdcall RtlImageRvaToVa(ptr long long ptr)
+@ stdcall RtlImpersonateSelf(long)
+@ stdcall RtlInitAnsiString(ptr str)
 @ stub RtlInitCodePageTable
 @ stub RtlInitNlsTables
-@ stdcall RtlInitString(ptr str) RtlInitString
-@ stdcall RtlInitUnicodeString(ptr wstr) RtlInitUnicodeString
-@ stdcall RtlInitializeBitMap(ptr long long) RtlInitializeBitMap
+@ stdcall RtlInitString(ptr str)
+@ stdcall RtlInitUnicodeString(ptr wstr)
+@ stdcall RtlInitializeBitMap(ptr long long)
 @ stub RtlInitializeContext
-@ stdcall RtlInitializeCriticalSection(ptr) RtlInitializeCriticalSection
-@ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long) RtlInitializeCriticalSectionAndSpinCount
-@ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr) RtlInitializeGenericTable
+@ stdcall RtlInitializeCriticalSection(ptr)
+@ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long)
+@ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr)
 @ stub RtlInitializeRXact
-@ stdcall RtlInitializeResource(ptr) RtlInitializeResource
-@ stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
+@ stdcall RtlInitializeResource(ptr)
+@ stdcall RtlInitializeSid(ptr ptr long)
 @ stub RtlInsertElementGenericTable
-@ stdcall RtlInt64ToUnicodeString(long long long ptr) RtlInt64ToUnicodeString
-@ stdcall RtlIntegerToChar(long long long ptr) RtlIntegerToChar
-@ stdcall RtlIntegerToUnicodeString(long long ptr) RtlIntegerToUnicodeString
+@ stdcall RtlInt64ToUnicodeString(long long long ptr)
+@ stdcall RtlIntegerToChar(long long long ptr)
+@ stdcall RtlIntegerToUnicodeString(long long ptr)
 @ stub RtlIsDosDeviceName_U
 @ stub RtlIsGenericTableEmpty
 @ stub RtlIsNameLegalDOS8Dot3
-@ stdcall RtlIsTextUnicode(ptr long ptr) RtlIsTextUnicode
-@ stdcall -ret64 RtlLargeIntegerAdd(long long long long) RtlLargeIntegerAdd
-@ stdcall -ret64 RtlLargeIntegerArithmeticShift(long long long) RtlLargeIntegerArithmeticShift
-@ stdcall -ret64 RtlLargeIntegerDivide(long long long long ptr) RtlLargeIntegerDivide
-@ stdcall -ret64 RtlLargeIntegerNegate(long long) RtlLargeIntegerNegate
-@ stdcall -ret64 RtlLargeIntegerShiftLeft(long long long) RtlLargeIntegerShiftLeft
-@ stdcall -ret64 RtlLargeIntegerShiftRight(long long long) RtlLargeIntegerShiftRight
-@ stdcall -ret64 RtlLargeIntegerSubtract(long long long long) RtlLargeIntegerSubtract
-@ stdcall RtlLargeIntegerToChar(ptr long long ptr) RtlLargeIntegerToChar
-@ stdcall RtlLeaveCriticalSection(ptr) RtlLeaveCriticalSection
-@ stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
-@ stdcall RtlLengthSecurityDescriptor(ptr) RtlLengthSecurityDescriptor
-@ stdcall RtlLengthSid(ptr) RtlLengthSid
-@ stdcall RtlLocalTimeToSystemTime(ptr ptr) RtlLocalTimeToSystemTime
-@ stdcall RtlLockHeap(long) RtlLockHeap
+@ stdcall RtlIsTextUnicode(ptr long ptr)
+@ stdcall -ret64 RtlLargeIntegerAdd(long long long long)
+@ stdcall -ret64 RtlLargeIntegerArithmeticShift(long long long)
+@ stdcall -ret64 RtlLargeIntegerDivide(long long long long ptr)
+@ stdcall -ret64 RtlLargeIntegerNegate(long long)
+@ stdcall -ret64 RtlLargeIntegerShiftLeft(long long long)
+@ stdcall -ret64 RtlLargeIntegerShiftRight(long long long)
+@ stdcall -ret64 RtlLargeIntegerSubtract(long long long long)
+@ stdcall RtlLargeIntegerToChar(ptr long long ptr)
+@ stdcall RtlLeaveCriticalSection(ptr)
+@ stdcall RtlLengthRequiredSid(long)
+@ stdcall RtlLengthSecurityDescriptor(ptr)
+@ stdcall RtlLengthSid(ptr)
+@ stdcall RtlLocalTimeToSystemTime(ptr ptr)
+@ stdcall RtlLockHeap(long)
 @ stub RtlLookupElementGenericTable
-@ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr) RtlMakeSelfRelativeSD
+@ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr)
 @ stub RtlMapGenericMask
-@ stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
-@ stdcall RtlMultiByteToUnicodeN(ptr long ptr ptr long) RtlMultiByteToUnicodeN
-@ stdcall RtlMultiByteToUnicodeSize(ptr str long) RtlMultiByteToUnicodeSize
+@ stdcall RtlMoveMemory(ptr ptr long)
+@ stdcall RtlMultiByteToUnicodeN(ptr long ptr ptr long)
+@ stdcall RtlMultiByteToUnicodeSize(ptr str long)
 @ stub RtlNewInstanceSecurityObject
 @ stub RtlNewSecurityGrantedAccess
-@ stdcall RtlNewSecurityObject(long long long long long long) RtlNewSecurityObject
-@ stdcall RtlNormalizeProcessParams(ptr) RtlNormalizeProcessParams
-@ stdcall RtlNtStatusToDosError(long) RtlNtStatusToDosError
+@ stdcall RtlNewSecurityObject(long long long long long long)
+@ stdcall RtlNormalizeProcessParams(ptr)
+@ stdcall RtlNtStatusToDosError(long)
 @ stub RtlNumberGenericTableElements
-@ stdcall RtlNumberOfClearBits(ptr) RtlNumberOfClearBits
-@ stdcall RtlNumberOfSetBits(ptr) RtlNumberOfSetBits
-@ stdcall RtlOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
-@ stdcall RtlOemStringToUnicodeString(ptr ptr long) RtlOemStringToUnicodeString
-@ stdcall RtlOemToUnicodeN(ptr long ptr ptr long) RtlOemToUnicodeN
-@ stdcall RtlOpenCurrentUser(long ptr) RtlOpenCurrentUser
+@ stdcall RtlNumberOfClearBits(ptr)
+@ stdcall RtlNumberOfSetBits(ptr)
+@ stdcall RtlOemStringToUnicodeSize(ptr)
+@ stdcall RtlOemStringToUnicodeString(ptr ptr long)
+@ stdcall RtlOemToUnicodeN(ptr long ptr ptr long)
+@ stdcall RtlOpenCurrentUser(long ptr)
 @ stub RtlPcToFileHeader
-@ stdcall RtlPrefixString(ptr ptr long) RtlPrefixString
-@ stdcall RtlPrefixUnicodeString(ptr ptr long) RtlPrefixUnicodeString
+@ stdcall RtlPrefixString(ptr ptr long)
+@ stdcall RtlPrefixUnicodeString(ptr ptr long)
 @ stub RtlProtectHeap
-@ stdcall RtlQueryEnvironmentVariable_U(long long long) RtlQueryEnvironmentVariable_U
+@ stdcall RtlQueryEnvironmentVariable_U(long long long)
 @ stub RtlQueryInformationAcl
 @ stub RtlQueryProcessBackTraceInformation
 @ stub RtlQueryProcessDebugInformation
@@ -486,86 +486,86 @@
 @ stub RtlQueryRegistryValues
 @ stub RtlQuerySecurityObject
 @ stub RtlQueryTagHeap
-@ stdcall RtlQueryTimeZoneInformation(ptr) RtlQueryTimeZoneInformation
-@ stdcall RtlRaiseException(ptr) RtlRaiseException
-@ stdcall RtlRaiseStatus(long) RtlRaiseStatus
+@ stdcall RtlQueryTimeZoneInformation(ptr)
+@ stdcall RtlRaiseException(ptr)
+@ stdcall RtlRaiseStatus(long)
 @ stub RtlRandom
-@ stdcall RtlReAllocateHeap(long long ptr long) RtlReAllocateHeap
+@ stdcall RtlReAllocateHeap(long long ptr long)
 @ stub RtlRealPredecessor
 @ stub RtlRealSuccessor
-@ stdcall RtlReleasePebLock() RtlReleasePebLock
-@ stdcall RtlReleaseResource(ptr) RtlReleaseResource
+@ stdcall RtlReleasePebLock()
+@ stdcall RtlReleaseResource(ptr)
 @ stub RtlRemoteCall
 @ stub RtlResetRtlTranslations
 @ stub RtlRunDecodeUnicodeString
 @ stub RtlRunEncodeUnicodeString
-@ stdcall RtlSecondsSince1970ToTime(long ptr) RtlSecondsSince1970ToTime
-@ stdcall RtlSecondsSince1980ToTime(long ptr) RtlSecondsSince1980ToTime
+@ stdcall RtlSecondsSince1970ToTime(long ptr)
+@ stdcall RtlSecondsSince1980ToTime(long ptr)
 @ stub RtlSelfRelativeToAbsoluteSD
-@ stdcall RtlSetAllBits(ptr) RtlSetAllBits
-@ stdcall RtlSetBits(ptr long long) RtlSetBits
+@ stdcall RtlSetAllBits(ptr)
+@ stdcall RtlSetBits(ptr long long)
 @ stub RtlSetCurrentDirectory_U
 @ stub RtlSetCurrentEnvironment
-@ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long) RtlSetDaclSecurityDescriptor
-@ stdcall RtlSetEnvironmentVariable(long long long) RtlSetEnvironmentVariable
-@ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long) RtlSetGroupSecurityDescriptor
+@ stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long)
+@ stdcall RtlSetEnvironmentVariable(long long long)
+@ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
 @ stub RtlSetInformationAcl
-@ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long) RtlSetOwnerSecurityDescriptor
-@ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long) RtlSetSaclSecurityDescriptor
+@ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long)
+@ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long)
 @ stub RtlSetSecurityObject
-@ stdcall RtlSetTimeZoneInformation(ptr) RtlSetTimeZoneInformation
+@ stdcall RtlSetTimeZoneInformation(ptr)
 @ stub RtlSetUserFlagsHeap
 @ stub RtlSetUserValueHeap
-@ stdcall RtlSizeHeap(long long ptr) RtlSizeHeap
+@ stdcall RtlSizeHeap(long long ptr)
 @ stub RtlSplay
 @ stub RtlStartRXact
 @ stub RtlStringFromGUID
-@ stdcall RtlSubAuthorityCountSid(ptr) RtlSubAuthorityCountSid
-@ stdcall RtlSubAuthoritySid(ptr long) RtlSubAuthoritySid
+@ stdcall RtlSubAuthorityCountSid(ptr)
+@ stdcall RtlSubAuthoritySid(ptr long)
 @ stub RtlSubtreePredecessor
 @ stub RtlSubtreeSuccessor
-@ stdcall RtlSystemTimeToLocalTime(ptr ptr) RtlSystemTimeToLocalTime
-@ stdcall RtlTimeFieldsToTime(ptr ptr) RtlTimeFieldsToTime
-@ stdcall RtlTimeToElapsedTimeFields(long long) RtlTimeToElapsedTimeFields
-@ stdcall RtlTimeToSecondsSince1970(ptr ptr) RtlTimeToSecondsSince1970
-@ stdcall RtlTimeToSecondsSince1980(ptr ptr) RtlTimeToSecondsSince1980
-@ stdcall RtlTimeToTimeFields (long long) RtlTimeToTimeFields
-@ cdecl -i386 -norelay RtlUlongByteSwap() RtlUlongByteSwap
-@ cdecl -ret64 RtlUlonglongByteSwap(long long) RtlUlonglongByteSwap
-@ stdcall RtlUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
-@ stdcall RtlUnicodeStringToAnsiString(ptr ptr long) RtlUnicodeStringToAnsiString
+@ stdcall RtlSystemTimeToLocalTime(ptr ptr)
+@ stdcall RtlTimeFieldsToTime(ptr ptr)
+@ stdcall RtlTimeToElapsedTimeFields(long long)
+@ stdcall RtlTimeToSecondsSince1970(ptr ptr)
+@ stdcall RtlTimeToSecondsSince1980(ptr ptr)
+@ stdcall RtlTimeToTimeFields (long long)
+@ cdecl -i386 -norelay RtlUlongByteSwap()
+@ cdecl -ret64 RtlUlonglongByteSwap(long long)
+@ stdcall RtlUnicodeStringToAnsiSize(ptr)
+@ stdcall RtlUnicodeStringToAnsiString(ptr ptr long)
 @ stub RtlUnicodeStringToCountedOemString
-@ stdcall RtlUnicodeStringToInteger(ptr long ptr) RtlUnicodeStringToInteger
-@ stdcall RtlUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
-@ stdcall RtlUnicodeStringToOemString(ptr ptr long) RtlUnicodeStringToOemString
+@ stdcall RtlUnicodeStringToInteger(ptr long ptr)
+@ stdcall RtlUnicodeStringToOemSize(ptr)
+@ stdcall RtlUnicodeStringToOemString(ptr ptr long)
 @ stub RtlUnicodeToCustomCPN
-@ stdcall RtlUnicodeToMultiByteN(ptr long ptr ptr long) RtlUnicodeToMultiByteN
-@ stdcall RtlUnicodeToMultiByteSize(ptr wstr long) RtlUnicodeToMultiByteSize
-@ stdcall RtlUnicodeToOemN(ptr long ptr ptr long) RtlUnicodeToOemN
+@ stdcall RtlUnicodeToMultiByteN(ptr long ptr ptr long)
+@ stdcall RtlUnicodeToMultiByteSize(ptr wstr long)
+@ stdcall RtlUnicodeToOemN(ptr long ptr ptr long)
 @ stub RtlUniform
-@ stdcall RtlUnlockHeap(long) RtlUnlockHeap
-@ stdcall RtlUnwind(ptr ptr ptr long) RtlUnwind
-@ stdcall RtlUpcaseUnicodeChar(long) RtlUpcaseUnicodeChar
-@ stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
-@ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long) RtlUpcaseUnicodeStringToAnsiString
+@ stdcall RtlUnlockHeap(long)
+@ stdcall RtlUnwind(ptr ptr ptr long)
+@ stdcall RtlUpcaseUnicodeChar(long)
+@ stdcall RtlUpcaseUnicodeString(ptr ptr long)
+@ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long)
 @ stub RtlUpcaseUnicodeStringToCountedOemString
-@ stdcall RtlUpcaseUnicodeStringToOemString(ptr ptr long) RtlUpcaseUnicodeStringToOemString
+@ stdcall RtlUpcaseUnicodeStringToOemString(ptr ptr long)
 @ stub RtlUpcaseUnicodeToCustomCPN
-@ stdcall RtlUpcaseUnicodeToMultiByteN(ptr long ptr ptr long) RtlUpcaseUnicodeToMultiByteN
-@ stdcall RtlUpcaseUnicodeToOemN(ptr long ptr ptr long) RtlUpcaseUnicodeToOemN
-@ stdcall RtlUpperChar(long) RtlUpperChar
-@ stdcall RtlUpperString(ptr ptr) RtlUpperString
+@ stdcall RtlUpcaseUnicodeToMultiByteN(ptr long ptr ptr long)
+@ stdcall RtlUpcaseUnicodeToOemN(ptr long ptr ptr long)
+@ stdcall RtlUpperChar(long)
+@ stdcall RtlUpperString(ptr ptr)
 @ stub RtlUsageHeap
-@ cdecl -i386 -norelay RtlUshortByteSwap() RtlUshortByteSwap
+@ cdecl -i386 -norelay RtlUshortByteSwap()
 @ stub RtlValidAcl
-@ stdcall RtlValidSecurityDescriptor(ptr) RtlValidSecurityDescriptor
-@ stdcall RtlValidSid(ptr) RtlValidSid
-@ stdcall RtlValidateHeap(long long ptr) RtlValidateHeap
+@ stdcall RtlValidSecurityDescriptor(ptr)
+@ stdcall RtlValidSid(ptr)
+@ stdcall RtlValidateHeap(long long ptr)
 @ stub RtlValidateProcessHeaps
-@ stdcall RtlWalkHeap(long ptr) RtlWalkHeap
+@ stdcall RtlWalkHeap(long ptr)
 @ stub RtlWriteRegistryValue
 @ stub RtlZeroHeap
-@ stdcall RtlZeroMemory(ptr long) RtlZeroMemory
+@ stdcall RtlZeroMemory(ptr long)
 @ stub RtlpInitializeRtl
 @ stub RtlpNtCreateKey
 @ stub RtlpNtEnumerateSubKey
@@ -573,8 +573,8 @@
 @ stub RtlpNtOpenKey
 @ stub RtlpNtQueryValueKey
 @ stub RtlpNtSetValueKey
-@ stdcall RtlpUnWaitCriticalSection(ptr) RtlpUnWaitCriticalSection
-@ stdcall RtlpWaitForCriticalSection(ptr) RtlpWaitForCriticalSection
+@ stdcall RtlpUnWaitCriticalSection(ptr)
+@ stdcall RtlpWaitForCriticalSection(ptr)
 @ stdcall RtlxAnsiStringToUnicodeSize(ptr) RtlAnsiStringToUnicodeSize
 @ stdcall RtlxOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
 @ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
@@ -890,97 +890,97 @@
 @ stub __eFYL2X
 @ stub __eFYL2XP1
 @ stub __eGetStatusWord
-@ stdcall -ret64 _alldiv(long long long long) _alldiv
-@ stdcall -ret64 _allmul(long long long long) _allmul
+@ stdcall -ret64 _alldiv(long long long long)
+@ stdcall -ret64 _allmul(long long long long)
 @ stdcall -register -i386 _alloca_probe() NTDLL_alloca_probe
-@ stdcall -ret64 _allrem(long long long long) _allrem
-@ cdecl -ret64 _atoi64(str) _atoi64
-@ stdcall -ret64 _aulldiv(long long long long) _aulldiv
-@ stdcall -ret64 _aullrem(long long long long) _aullrem
+@ stdcall -ret64 _allrem(long long long long)
+@ cdecl -ret64 _atoi64(str)
+@ stdcall -ret64 _aulldiv(long long long long)
+@ stdcall -ret64 _aullrem(long long long long)
 @ stdcall -register -i386 _chkstk() NTDLL_chkstk
 @ stub _fltused
 @ cdecl _ftol() NTDLL__ftol
-@ cdecl _i64toa(long long ptr long) _i64toa
-@ cdecl _i64tow(long long ptr long) _i64tow
-@ cdecl _itoa(long ptr long) _itoa
-@ cdecl _itow(long ptr long) _itow
-@ cdecl _ltoa(long ptr long) _ltoa
-@ cdecl _ltow(long ptr long) _ltow
+@ cdecl _i64toa(long long ptr long)
+@ cdecl _i64tow(long long ptr long)
+@ cdecl _itoa(long ptr long)
+@ cdecl _itow(long ptr long)
+@ cdecl _ltoa(long ptr long)
+@ cdecl _ltow(long ptr long)
 @ cdecl _memccpy(ptr ptr long long) memccpy
 @ cdecl _memicmp(str str long) NTDLL__memicmp
 @ varargs _snprintf(ptr long ptr) snprintf
-@ varargs _snwprintf(wstr long wstr) _snwprintf
-@ cdecl _splitpath(str ptr ptr ptr ptr) _splitpath
+@ varargs _snwprintf(wstr long wstr)
+@ cdecl _splitpath(str ptr ptr ptr ptr)
 @ cdecl _strcmpi(str str) strcasecmp
 @ cdecl _stricmp(str str) strcasecmp
-@ cdecl _strlwr(str) _strlwr
+@ cdecl _strlwr(str)
 @ cdecl _strnicmp(str str long) strncasecmp
-@ cdecl _strupr(str) _strupr
-@ cdecl _ui64toa(long long ptr long) _ui64toa
-@ cdecl _ui64tow(long long ptr long) _ui64tow
-@ cdecl _ultoa(long ptr long) _ultoa
-@ cdecl _ultow(long ptr long) _ultow
+@ cdecl _strupr(str)
+@ cdecl _ui64toa(long long ptr long)
+@ cdecl _ui64tow(long long ptr long)
+@ cdecl _ultoa(long ptr long)
+@ cdecl _ultow(long ptr long)
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
 @ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
 @ cdecl _wcsupr(wstr) NTDLL__wcsupr
-@ cdecl _wtoi(wstr) _wtoi
-@ cdecl _wtoi64(wstr) _wtoi64
-@ cdecl _wtol(wstr) _wtol
-@ cdecl abs(long) abs
-@ cdecl atan(double) atan
-@ cdecl atoi(str) atoi
-@ cdecl atol(str) atol
-@ cdecl ceil(double) ceil
-@ cdecl cos(double) cos
-@ cdecl fabs(double) fabs
-@ cdecl floor(double) floor
-@ cdecl isalpha(long) isalpha
-@ cdecl isdigit(long) isdigit
-@ cdecl islower(long) islower
-@ cdecl isprint(long) isprint
-@ cdecl isspace(long) isspace
-@ cdecl isupper(long) isupper
+@ cdecl _wtoi(wstr)
+@ cdecl _wtoi64(wstr)
+@ cdecl _wtol(wstr)
+@ cdecl abs(long)
+@ cdecl atan(double)
+@ cdecl atoi(str)
+@ cdecl atol(str)
+@ cdecl ceil(double)
+@ cdecl cos(double)
+@ cdecl fabs(double)
+@ cdecl floor(double)
+@ cdecl isalpha(long)
+@ cdecl isdigit(long)
+@ cdecl islower(long)
+@ cdecl isprint(long)
+@ cdecl isspace(long)
+@ cdecl isupper(long)
 @ cdecl iswalpha(long) NTDLL_iswalpha
 @ cdecl iswctype(long long) NTDLL_iswctype
-@ cdecl isxdigit(long) isxdigit
-@ cdecl labs(long) labs
-@ cdecl log(double) log
+@ cdecl isxdigit(long)
+@ cdecl labs(long)
+@ cdecl log(double)
 @ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
-@ cdecl memchr(ptr long long) memchr
-@ cdecl memcmp(ptr ptr long) memcmp
-@ cdecl memcpy(ptr ptr long) memcpy
-@ cdecl memmove(ptr ptr long) memmove
-@ cdecl memset(ptr long long) memset
-@ cdecl pow(double double) pow
-@ cdecl qsort(ptr long long ptr) qsort
-@ cdecl sin(double) sin
-@ varargs sprintf(str str) sprintf
-@ cdecl sqrt(double) sqrt
-@ varargs sscanf(str str) sscanf
-@ cdecl strcat(str str) strcat
-@ cdecl strchr(str long) strchr
-@ cdecl strcmp(str str) strcmp
-@ cdecl strcpy(ptr str) strcpy
-@ cdecl strcspn(str str) strcspn
-@ cdecl strlen(str) strlen
-@ cdecl strncat(str str long) strncat
-@ cdecl strncmp(str str long) strncmp
-@ cdecl strncpy(ptr str long) strncpy
-@ cdecl strpbrk(str str) strpbrk
-@ cdecl strrchr(str long) strrchr
-@ cdecl strspn(str str) strspn
-@ cdecl strstr(str str) strstr
-@ cdecl strtol(str ptr long) strtol
-@ cdecl strtoul(str ptr long) strtoul
+@ cdecl memchr(ptr long long)
+@ cdecl memcmp(ptr ptr long)
+@ cdecl memcpy(ptr ptr long)
+@ cdecl memmove(ptr ptr long)
+@ cdecl memset(ptr long long)
+@ cdecl pow(double double)
+@ cdecl qsort(ptr long long ptr)
+@ cdecl sin(double)
+@ varargs sprintf(str str)
+@ cdecl sqrt(double)
+@ varargs sscanf(str str)
+@ cdecl strcat(str str)
+@ cdecl strchr(str long)
+@ cdecl strcmp(str str)
+@ cdecl strcpy(ptr str)
+@ cdecl strcspn(str str)
+@ cdecl strlen(str)
+@ cdecl strncat(str str long)
+@ cdecl strncmp(str str long)
+@ cdecl strncpy(ptr str long)
+@ cdecl strpbrk(str str)
+@ cdecl strrchr(str long)
+@ cdecl strspn(str str)
+@ cdecl strstr(str str)
+@ cdecl strtol(str ptr long)
+@ cdecl strtoul(str ptr long)
 @ varargs swprintf(wstr wstr) NTDLL_swprintf
-@ cdecl tan(double) tan
-@ cdecl tolower(long) tolower
-@ cdecl toupper(long) toupper
+@ cdecl tan(double)
+@ cdecl tolower(long)
+@ cdecl toupper(long)
 @ cdecl towlower(long) NTDLL_towlower
 @ cdecl towupper(long) NTDLL_towupper
-@ cdecl vsprintf(ptr str ptr) vsprintf
+@ cdecl vsprintf(ptr str ptr)
 @ cdecl wcscat(wstr wstr) NTDLL_wcscat
 @ cdecl wcschr(wstr long) NTDLL_wcschr
 @ cdecl wcscmp(wstr wstr) NTDLL_wcscmp
@@ -1016,7 +1016,7 @@
 @ stub RtlIsValidHandle
 @ stub RtlLookupAtomInAtomTable
 @ stub RtlQueryAtomInAtomTable
-@ stdcall RtlTryEnterCriticalSection(ptr) RtlTryEnterCriticalSection
+@ stdcall RtlTryEnterCriticalSection(ptr)
 @ stub RtlEnumerateProperties
 @ stub RtlSetPropertyClassId
 @ stub RtlSetPropertyNames
@@ -1031,8 +1031,8 @@
 @ stub RtlClosePropertySet
 @ stub RtlCreatePropertySet
 @ stub RtlSetPropertySetClassId
-@ stdcall NtPowerInformation(long long long long long) NtPowerInformation
-@ stdcall -ret64 VerSetConditionMask(long long long long) VerSetConditionMask
+@ stdcall NtPowerInformation(long long long long long)
+@ stdcall -ret64 VerSetConditionMask(long long long long)
 
 ##################
 # Wine extensions
@@ -1041,25 +1041,25 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # Exception handling
-@ cdecl -norelay __wine_exception_handler(ptr ptr ptr ptr) __wine_exception_handler
-@ cdecl -norelay __wine_finally_handler(ptr ptr ptr ptr) __wine_finally_handler
+@ cdecl -norelay __wine_exception_handler(ptr ptr ptr ptr)
+@ cdecl -norelay __wine_finally_handler(ptr ptr ptr ptr)
 
 # Relays
-@ cdecl -norelay -i386 __wine_call_from_32_regs() __wine_call_from_32_regs
-@ cdecl -i386 __wine_enter_vm86(ptr) __wine_enter_vm86
+@ cdecl -norelay -i386 __wine_call_from_32_regs()
+@ cdecl -i386 __wine_enter_vm86(ptr)
 
 # Server interface
-@ cdecl -norelay wine_server_call(ptr) wine_server_call
-@ cdecl wine_server_fd_to_handle(long long long ptr) wine_server_fd_to_handle
-@ cdecl wine_server_handle_to_fd(long long ptr ptr ptr) wine_server_handle_to_fd
+@ cdecl -norelay wine_server_call(ptr)
+@ cdecl wine_server_fd_to_handle(long long long ptr)
+@ cdecl wine_server_handle_to_fd(long long ptr ptr ptr)
 
 # Codepages
-@ cdecl __wine_init_codepages(ptr ptr) __wine_init_codepages
+@ cdecl __wine_init_codepages(ptr ptr)
 
 # signal handling
-@ cdecl __wine_set_signal_handler(long ptr) __wine_set_signal_handler
+@ cdecl __wine_set_signal_handler(long ptr)
 
 ################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
-@ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr) VIRTUAL_SetFaultHandler
+@ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr)

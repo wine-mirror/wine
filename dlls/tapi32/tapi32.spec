@@ -1,114 +1,114 @@
-@ stdcall lineAccept(long str long) lineAccept
-@ stdcall lineAddProvider(str long ptr) lineAddProvider
-@ stdcall lineAddToConference(long long) lineAddToConference
-@ stdcall lineAnswer(long str long) lineAnswer
-@ stdcall lineBlindTransfer(long str long) lineBlindTransfer
-@ stdcall lineClose(long) lineClose
-@ stdcall lineCompleteCall(long ptr long long) lineCompleteCall
-@ stdcall lineCompleteTransfer(long long ptr long) lineCompleteTransfer
-@ stdcall lineConfigDialog(long long str) lineConfigDialog
-@ stdcall lineConfigDialogEdit(long long str ptr long ptr) lineConfigDialogEdit
-@ stdcall lineConfigProvider(long long) lineConfigProvider
-@ stdcall lineDeallocateCall(long) lineDeallocateCall
-@ stdcall lineDevSpecific(long long long ptr long) lineDevSpecific
-@ stdcall lineDevSpecificFeature(long long ptr long) lineDevSpecificFeature
-@ stdcall lineDial(long str long) lineDial
-@ stdcall lineDrop(long str long) lineDrop
-@ stdcall lineForward(long long long ptr long ptr ptr) lineForward
-@ stdcall lineGatherDigits(long long str long str long long) lineGatherDigits
-@ stdcall lineGenerateDigits(long long str long) lineGenerateDigits
-@ stdcall lineGenerateTone(long long long long ptr) lineGenerateTone
-@ stdcall lineGetAddressCaps(long long long long long ptr) lineGetAddressCaps
-@ stdcall lineGetAddressID(long ptr long str long) lineGetAddressID
-@ stdcall lineGetAddressStatus(long long ptr) lineGetAddressStatus
-@ stdcall lineGetAppPriority(str long ptr long ptr ptr) lineGetAppPriority
-@ stdcall lineGetCallInfo(long ptr) lineGetCallInfo
-@ stdcall lineGetCallStatus(long ptr) lineGetCallStatus
-@ stdcall lineGetConfRelatedCalls(long ptr) lineGetConfRelatedCalls
-@ stdcall lineGetCountry(long long ptr) lineGetCountry
-@ stdcall lineGetDevCaps(long long long long ptr) lineGetDevCaps
-@ stdcall lineGetDevConfig(long ptr str) lineGetDevConfig
-@ stdcall lineGetID(long long long long ptr str) lineGetID
-@ stdcall lineGetIcon(long str ptr) lineGetIcon
-@ stdcall lineGetLineDevStatus(long ptr) lineGetLineDevStatus
-@ stdcall lineGetNewCalls(long long long ptr) lineGetNewCalls
-@ stdcall lineGetNumRings(long long ptr) lineGetNumRings
-@ stdcall lineGetProviderList(long ptr) lineGetProviderList
-@ stdcall lineGetRequest(long long ptr) lineGetRequest
-@ stdcall lineGetStatusMessages(long ptr ptr) lineGetStatusMessages
-@ stdcall lineGetTranslateCaps(long long ptr) lineGetTranslateCaps
-@ stdcall lineHandoff(long str long) lineHandoff
-@ stdcall lineHold(long) lineHold
-@ stdcall lineInitialize(ptr long ptr str ptr) lineInitialize
-@ stdcall lineMakeCall(long ptr str long ptr) lineMakeCall
-@ stdcall lineMonitorDigits(long long) lineMonitorDigits
-@ stdcall lineMonitorMedia(long long) lineMonitorMedia
-@ stdcall lineMonitorTones(long ptr long) lineMonitorTones
-@ stdcall lineNegotiateAPIVersion(long long long long ptr ptr) lineNegotiateAPIVersion
-@ stdcall lineNegotiateExtVersion(long long long long long ptr) lineNegotiateExtVersion
-@ stdcall lineOpen(long long ptr long long long long long ptr) lineOpen
-@ stdcall linePark(long long str ptr) linePark
-@ stdcall linePickup(long long ptr str str) linePickup
-@ stdcall linePrepareAddToConference(long ptr ptr) linePrepareAddToConference
-@ stdcall lineRedirect(long str long) lineRedirect
-@ stdcall lineRegisterRequestRecipient(long long long long) lineRegisterRequestRecipient
-@ stdcall lineReleaseUserUserInfo(long) lineReleaseUserUserInfo
-@ stdcall lineRemoveFromConference(long) lineRemoveFromConference
-@ stdcall lineRemoveProvider(long long) lineRemoveProvider
-@ stdcall lineSecureCall(long) lineSecureCall
-@ stdcall lineSendUserUserInfo(long str long) lineSendUserUserInfo
-@ stdcall lineSetAppPriority(str long ptr long str long) lineSetAppPriority
-@ stdcall lineSetAppSpecific(long long) lineSetAppSpecific
-@ stdcall lineSetCallParams(long long long long ptr) lineSetCallParams
-@ stdcall lineSetCallPrivilege(long long) lineSetCallPrivilege
-@ stdcall lineSetCurrentLocation(long long) lineSetCurrentLocation
-@ stdcall lineSetDevConfig(long ptr long str) lineSetDevConfig
-@ stdcall lineSetMediaControl(long long long long ptr long ptr long ptr long ptr long) lineSetMediaControl
-@ stdcall lineSetMediaMode(long long) lineSetMediaMode
-@ stdcall lineSetNumRings(long long long) lineSetNumRings
-@ stdcall lineSetStatusMessages(long long long) lineSetStatusMessages
-@ stdcall lineSetTerminal(long long long long long long long) lineSetTerminal
-@ stdcall lineSetTollList(long long str long) lineSetTollList
-@ stdcall lineSetupConference(long long ptr ptr long ptr) lineSetupConference
-@ stdcall lineSetupTransfer(long ptr ptr) lineSetupTransfer
-@ stdcall lineShutdown(long) lineShutdown
-@ stdcall lineSwapHold(long long) lineSwapHold
-@ stdcall lineTranslateAddress(long long long str long long ptr) lineTranslateAddress
-@ stdcall lineTranslateDialog(long long long long str) lineTranslateDialog
-@ stdcall lineUncompleteCall(long long) lineUncompleteCall
-@ stdcall lineUnhold(long) lineUnhold
-@ stdcall lineUnpark(long long ptr str) lineUnpark
-@ stdcall phoneClose(long) phoneClose
-@ stdcall phoneConfigDialog(long long str) phoneConfigDialog
-@ stdcall phoneDevSpecific(long ptr long) phoneDevSpecific
-@ stdcall phoneGetButtonInfo(long long ptr) phoneGetButtonInfo
-@ stdcall phoneGetData(long long ptr long) phoneGetData
-@ stdcall phoneGetDevCaps(long long long long ptr) phoneGetDevCaps
-@ stdcall phoneGetDisplay(long ptr) phoneGetDisplay
-@ stdcall phoneGetGain(long long ptr) phoneGetGain
-@ stdcall phoneGetHookSwitch(long ptr) phoneGetHookSwitch
-@ stdcall phoneGetID(long ptr str) phoneGetID
-@ stdcall phoneGetIcon(long str ptr) phoneGetIcon
-@ stdcall phoneGetLamp(long long ptr) phoneGetLamp
-@ stdcall phoneGetRing(long ptr ptr) phoneGetRing
-@ stdcall phoneGetStatus(long ptr) phoneGetStatus
-@ stdcall phoneGetStatusMessages(long ptr ptr ptr) phoneGetStatusMessages
-@ stdcall phoneGetVolume(long long ptr) phoneGetVolume
-@ stdcall phoneInitialize(ptr long ptr str ptr) phoneInitialize
-@ stdcall phoneNegotiateAPIVersion(long long long long ptr ptr) phoneNegotiateAPIVersion
-@ stdcall phoneNegotiateExtVersion(long long long long long ptr) phoneNegotiateExtVersion
-@ stdcall phoneOpen(long long ptr long long long long) phoneOpen
-@ stdcall phoneSetButtonInfo(long long ptr) phoneSetButtonInfo
-@ stdcall phoneSetData(long long ptr long) phoneSetData
-@ stdcall phoneSetDisplay(long long long str long) phoneSetDisplay
-@ stdcall phoneSetGain(long long long) phoneSetGain
-@ stdcall phoneSetHookSwitch(long long long) phoneSetHookSwitch
-@ stdcall phoneSetLamp(long long long) phoneSetLamp
-@ stdcall phoneSetRing(long long long) phoneSetRing
-@ stdcall phoneSetStatusMessages(long long long long) phoneSetStatusMessages
-@ stdcall phoneSetVolume(long long long) phoneSetVolume
-@ stdcall phoneShutdown(long) phoneShutdown
-@ stdcall tapiGetLocationInfo(str str) tapiGetLocationInfo
+@ stdcall lineAccept(long str long)
+@ stdcall lineAddProvider(str long ptr)
+@ stdcall lineAddToConference(long long)
+@ stdcall lineAnswer(long str long)
+@ stdcall lineBlindTransfer(long str long)
+@ stdcall lineClose(long)
+@ stdcall lineCompleteCall(long ptr long long)
+@ stdcall lineCompleteTransfer(long long ptr long)
+@ stdcall lineConfigDialog(long long str)
+@ stdcall lineConfigDialogEdit(long long str ptr long ptr)
+@ stdcall lineConfigProvider(long long)
+@ stdcall lineDeallocateCall(long)
+@ stdcall lineDevSpecific(long long long ptr long)
+@ stdcall lineDevSpecificFeature(long long ptr long)
+@ stdcall lineDial(long str long)
+@ stdcall lineDrop(long str long)
+@ stdcall lineForward(long long long ptr long ptr ptr)
+@ stdcall lineGatherDigits(long long str long str long long)
+@ stdcall lineGenerateDigits(long long str long)
+@ stdcall lineGenerateTone(long long long long ptr)
+@ stdcall lineGetAddressCaps(long long long long long ptr)
+@ stdcall lineGetAddressID(long ptr long str long)
+@ stdcall lineGetAddressStatus(long long ptr)
+@ stdcall lineGetAppPriority(str long ptr long ptr ptr)
+@ stdcall lineGetCallInfo(long ptr)
+@ stdcall lineGetCallStatus(long ptr)
+@ stdcall lineGetConfRelatedCalls(long ptr)
+@ stdcall lineGetCountry(long long ptr)
+@ stdcall lineGetDevCaps(long long long long ptr)
+@ stdcall lineGetDevConfig(long ptr str)
+@ stdcall lineGetID(long long long long ptr str)
+@ stdcall lineGetIcon(long str ptr)
+@ stdcall lineGetLineDevStatus(long ptr)
+@ stdcall lineGetNewCalls(long long long ptr)
+@ stdcall lineGetNumRings(long long ptr)
+@ stdcall lineGetProviderList(long ptr)
+@ stdcall lineGetRequest(long long ptr)
+@ stdcall lineGetStatusMessages(long ptr ptr)
+@ stdcall lineGetTranslateCaps(long long ptr)
+@ stdcall lineHandoff(long str long)
+@ stdcall lineHold(long)
+@ stdcall lineInitialize(ptr long ptr str ptr)
+@ stdcall lineMakeCall(long ptr str long ptr)
+@ stdcall lineMonitorDigits(long long)
+@ stdcall lineMonitorMedia(long long)
+@ stdcall lineMonitorTones(long ptr long)
+@ stdcall lineNegotiateAPIVersion(long long long long ptr ptr)
+@ stdcall lineNegotiateExtVersion(long long long long long ptr)
+@ stdcall lineOpen(long long ptr long long long long long ptr)
+@ stdcall linePark(long long str ptr)
+@ stdcall linePickup(long long ptr str str)
+@ stdcall linePrepareAddToConference(long ptr ptr)
+@ stdcall lineRedirect(long str long)
+@ stdcall lineRegisterRequestRecipient(long long long long)
+@ stdcall lineReleaseUserUserInfo(long)
+@ stdcall lineRemoveFromConference(long)
+@ stdcall lineRemoveProvider(long long)
+@ stdcall lineSecureCall(long)
+@ stdcall lineSendUserUserInfo(long str long)
+@ stdcall lineSetAppPriority(str long ptr long str long)
+@ stdcall lineSetAppSpecific(long long)
+@ stdcall lineSetCallParams(long long long long ptr)
+@ stdcall lineSetCallPrivilege(long long)
+@ stdcall lineSetCurrentLocation(long long)
+@ stdcall lineSetDevConfig(long ptr long str)
+@ stdcall lineSetMediaControl(long long long long ptr long ptr long ptr long ptr long)
+@ stdcall lineSetMediaMode(long long)
+@ stdcall lineSetNumRings(long long long)
+@ stdcall lineSetStatusMessages(long long long)
+@ stdcall lineSetTerminal(long long long long long long long)
+@ stdcall lineSetTollList(long long str long)
+@ stdcall lineSetupConference(long long ptr ptr long ptr)
+@ stdcall lineSetupTransfer(long ptr ptr)
+@ stdcall lineShutdown(long)
+@ stdcall lineSwapHold(long long)
+@ stdcall lineTranslateAddress(long long long str long long ptr)
+@ stdcall lineTranslateDialog(long long long long str)
+@ stdcall lineUncompleteCall(long long)
+@ stdcall lineUnhold(long)
+@ stdcall lineUnpark(long long ptr str)
+@ stdcall phoneClose(long)
+@ stdcall phoneConfigDialog(long long str)
+@ stdcall phoneDevSpecific(long ptr long)
+@ stdcall phoneGetButtonInfo(long long ptr)
+@ stdcall phoneGetData(long long ptr long)
+@ stdcall phoneGetDevCaps(long long long long ptr)
+@ stdcall phoneGetDisplay(long ptr)
+@ stdcall phoneGetGain(long long ptr)
+@ stdcall phoneGetHookSwitch(long ptr)
+@ stdcall phoneGetID(long ptr str)
+@ stdcall phoneGetIcon(long str ptr)
+@ stdcall phoneGetLamp(long long ptr)
+@ stdcall phoneGetRing(long ptr ptr)
+@ stdcall phoneGetStatus(long ptr)
+@ stdcall phoneGetStatusMessages(long ptr ptr ptr)
+@ stdcall phoneGetVolume(long long ptr)
+@ stdcall phoneInitialize(ptr long ptr str ptr)
+@ stdcall phoneNegotiateAPIVersion(long long long long ptr ptr)
+@ stdcall phoneNegotiateExtVersion(long long long long long ptr)
+@ stdcall phoneOpen(long long ptr long long long long)
+@ stdcall phoneSetButtonInfo(long long ptr)
+@ stdcall phoneSetData(long long ptr long)
+@ stdcall phoneSetDisplay(long long long str long)
+@ stdcall phoneSetGain(long long long)
+@ stdcall phoneSetHookSwitch(long long long)
+@ stdcall phoneSetLamp(long long long)
+@ stdcall phoneSetRing(long long long)
+@ stdcall phoneSetStatusMessages(long long long long)
+@ stdcall phoneSetVolume(long long long)
+@ stdcall phoneShutdown(long)
+@ stdcall tapiGetLocationInfo(str str)
 @ stub    tapiRequestDrop
-@ stdcall tapiRequestMakeCall(str str str str) tapiRequestMakeCall
+@ stdcall tapiRequestMakeCall(str str str str)
 @ stub    tapiRequestMediaCall

@@ -1,25 +1,25 @@
-@ stdcall ChooseColorA(ptr) ChooseColorA
-@ stdcall ChooseColorW(ptr) ChooseColorW
-@ stdcall ChooseFontA(ptr) ChooseFontA
-@ stdcall ChooseFontW(ptr) ChooseFontW
-@ stdcall CommDlgExtendedError() CommDlgExtendedError
-@ stdcall FindTextA(ptr) FindTextA
-@ stdcall FindTextW(ptr) FindTextW
-@ stdcall GetFileTitleA(str ptr long) GetFileTitleA
-@ stdcall GetFileTitleW(wstr ptr long) GetFileTitleW
-@ stdcall GetOpenFileNameA(ptr) GetOpenFileNameA
-@ stdcall GetOpenFileNameW(ptr) GetOpenFileNameW
-@ stdcall GetSaveFileNameA(ptr) GetSaveFileNameA
-@ stdcall GetSaveFileNameW(ptr) GetSaveFileNameW
+@ stdcall ChooseColorA(ptr)
+@ stdcall ChooseColorW(ptr)
+@ stdcall ChooseFontA(ptr)
+@ stdcall ChooseFontW(ptr)
+@ stdcall CommDlgExtendedError()
+@ stdcall FindTextA(ptr)
+@ stdcall FindTextW(ptr)
+@ stdcall GetFileTitleA(str ptr long)
+@ stdcall GetFileTitleW(wstr ptr long)
+@ stdcall GetOpenFileNameA(ptr)
+@ stdcall GetOpenFileNameW(ptr)
+@ stdcall GetSaveFileNameA(ptr)
+@ stdcall GetSaveFileNameW(ptr)
 @ stub LoadAlterBitmap
-@ stdcall PageSetupDlgA(ptr) PageSetupDlgA
-@ stdcall PageSetupDlgW(ptr) PageSetupDlgW
-@ stdcall PrintDlgA(ptr) PrintDlgA
-@ stdcall PrintDlgExA(ptr) PrintDlgExA
-@ stdcall PrintDlgExW(ptr) PrintDlgExW
-@ stdcall PrintDlgW(ptr) PrintDlgW
-@ stdcall ReplaceTextA(ptr) ReplaceTextA
-@ stdcall ReplaceTextW(ptr) ReplaceTextW
+@ stdcall PageSetupDlgA(ptr)
+@ stdcall PageSetupDlgW(ptr)
+@ stdcall PrintDlgA(ptr)
+@ stdcall PrintDlgExA(ptr)
+@ stdcall PrintDlgExW(ptr)
+@ stdcall PrintDlgW(ptr)
+@ stdcall ReplaceTextA(ptr)
+@ stdcall ReplaceTextW(ptr)
 @ stub WantArrows
 @ stub dwLBSubclass
 @ stub dwOKSubclass

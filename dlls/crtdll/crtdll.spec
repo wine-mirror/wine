@@ -21,7 +21,7 @@
 @ cdecl _CItanh() msvcrt._CItanh
 @ extern _HUGE_dll msvcrt._HUGE
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
-@ cdecl __GetMainArgs(ptr ptr ptr long) __GetMainArgs
+@ cdecl __GetMainArgs(ptr ptr ptr long)
 @ extern __argc_dll msvcrt.__argc
 @ extern __argv_dll msvcrt.__argv
 @ cdecl __dllonexit(ptr ptr ptr) msvcrt.__dllonexit
@@ -283,21 +283,21 @@
 @ cdecl _statusfp() msvcrt._statusfp
 @ cdecl _strcmpi(str str) msvcrt._strcmpi
 @ cdecl _strdate(ptr) msvcrt._strdate
-@ cdecl _strdec(str str) _strdec
+@ cdecl _strdec(str str)
 @ cdecl _strdup(str) msvcrt._strdup
 @ cdecl _strerror(long) msvcrt._strerror
 @ cdecl _stricmp(str str) msvcrt._stricmp
 @ cdecl _stricoll(str str) msvcrt._stricoll
-@ cdecl _strinc(str) _strinc
+@ cdecl _strinc(str)
 @ cdecl _strlwr(str) msvcrt._strlwr
-@ cdecl _strncnt(str long) _strncnt
-@ cdecl _strnextc(str) _strnextc
+@ cdecl _strncnt(str long)
+@ cdecl _strnextc(str)
 @ cdecl _strnicmp(str str long) msvcrt._strnicmp
-@ cdecl _strninc(str long) _strninc
+@ cdecl _strninc(str long)
 @ cdecl _strnset(str long long) msvcrt._strnset
 @ cdecl _strrev(str) msvcrt._strrev
 @ cdecl _strset(str long) msvcrt._strset
-@ cdecl _strspnp(str str) _strspnp
+@ cdecl _strspnp(str str)
 @ cdecl _strtime(ptr) msvcrt._strtime
 @ cdecl _strupr(str) msvcrt._strupr
 @ cdecl _swab(str str long) msvcrt._swab

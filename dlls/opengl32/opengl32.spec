@@ -1,20 +1,20 @@
-@  stdcall wglCreateContext(long) wglCreateContext
-@  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
-@  stdcall wglCopyContext(long long long) wglCopyContext
-@  stdcall wglDeleteContext(long) wglDeleteContext
-@  stdcall wglDescribeLayerPlane(long long long long ptr) wglDescribeLayerPlane
-@  stdcall wglGetCurrentContext() wglGetCurrentContext
-@  stdcall wglGetCurrentDC() wglGetCurrentDC
-@  stdcall wglGetExtensionsStringEXT() wglGetExtensionsStringEXT
-@  stdcall wglGetLayerPaletteEntries(long long long long ptr) wglGetLayerPaletteEntries
-@  stdcall wglGetProcAddress(str) wglGetProcAddress
-@  stdcall wglMakeCurrent(long long) wglMakeCurrent
-@  stdcall wglRealizeLayerPalette(long long long) wglRealizeLayerPalette
-@  stdcall wglSetLayerPaletteEntries(long long long long ptr) wglSetLayerPaletteEntries
-@  stdcall wglShareLists(long long) wglShareLists
-@  stdcall wglSwapLayerBuffers(long long) wglSwapLayerBuffers
-@  stdcall wglUseFontBitmapsA(long long long long) wglUseFontBitmapsA
-@  stdcall wglUseFontOutlinesA(long long long long long long long ptr) wglUseFontOutlinesA
+@  stdcall wglCreateContext(long)
+@  stdcall wglCreateLayerContext(long long)
+@  stdcall wglCopyContext(long long long)
+@  stdcall wglDeleteContext(long)
+@  stdcall wglDescribeLayerPlane(long long long long ptr)
+@  stdcall wglGetCurrentContext()
+@  stdcall wglGetCurrentDC()
+@  stdcall wglGetExtensionsStringEXT()
+@  stdcall wglGetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglGetProcAddress(str)
+@  stdcall wglMakeCurrent(long long)
+@  stdcall wglRealizeLayerPalette(long long long)
+@  stdcall wglSetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglShareLists(long long)
+@  stdcall wglSwapLayerBuffers(long long)
+@  stdcall wglUseFontBitmapsA(long long long long)
+@  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
 @  stub    glGetLevelParameterfv
 @  stub    glGetLevelParameteriv
 @  stub    wglUseFontBitmapsW

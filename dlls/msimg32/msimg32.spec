@@ -1,5 +1,5 @@
-@ stdcall AlphaBlend(long long long long long long long long long long long) AlphaBlend
+@ stdcall AlphaBlend(long long long long long long long long long long long)
 @ stub DllInitialize
-@ stdcall GradientFill(long ptr long ptr long long) GradientFill
-@ stdcall TransparentBlt(long long long long long long long long long long long) TransparentBlt
-@ stdcall vSetDdrawflag() vSetDdrawflag
+@ stdcall GradientFill(long ptr long ptr long long)
+@ stdcall TransparentBlt(long long long long long long long long long long long)
+@ stdcall vSetDdrawflag()

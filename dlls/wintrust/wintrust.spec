@@ -4,4 +4,4 @@
 @ stub CryptCATAdminReleaseContext
 @ stub CryptCATAdminReleaseCatalogContext
 @ stub CryptCATCatalogInfoFromContext
-@ stdcall WinVerifyTrust(long ptr ptr) WinVerifyTrust
+@ stdcall WinVerifyTrust(long ptr ptr)

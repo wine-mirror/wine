@@ -1,134 +1,134 @@
-@ stdcall AbortSystemShutdownA(ptr) AbortSystemShutdownA
-@ stdcall AbortSystemShutdownW(ptr) AbortSystemShutdownW
-@ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck
+@ stdcall AbortSystemShutdownA(ptr)
+@ stdcall AbortSystemShutdownW(ptr)
+@ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stub AccessCheckAndAuditAlarmA
 @ stub AccessCheckAndAuditAlarmW
 @ stub AccessCheckByType #(ptr ptr long long ptr long ptr ptr ptr ptr ptr) AccessCheckByType
-@ stdcall AddAccessAllowedAce (ptr long long ptr) AddAccessAllowedAce
+@ stdcall AddAccessAllowedAce (ptr long long ptr)
 @ stub AddAccessAllowedAceEx #(ptr long long long ptr) AddAccessAllowedAceEx
 @ stub AddAccessDeniedAce
 @ stub AddAce
 @ stub AddAuditAccessAce
 @ stub AdjustTokenGroups
-@ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr) AdjustTokenPrivileges
-@ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr) AllocateAndInitializeSid
-@ stdcall AllocateLocallyUniqueId(ptr) AllocateLocallyUniqueId
+@ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
+@ stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr)
+@ stdcall AllocateLocallyUniqueId(ptr)
 @ stub AreAllAccessesGranted
 @ stub AreAnyAccessesGranted
-@ stdcall BackupEventLogA (long str) BackupEventLogA
-@ stdcall BackupEventLogW (long wstr) BackupEventLogW
+@ stdcall BackupEventLogA (long str)
+@ stdcall BackupEventLogW (long wstr)
 @ stub ChangeServiceConfigA
 @ stub ChangeServiceConfigW
-@ stdcall ClearEventLogA (long str) ClearEventLogA
-@ stdcall ClearEventLogW (long wstr) ClearEventLogW
-@ stdcall CloseEventLog (long) CloseEventLog
-@ stdcall CloseServiceHandle(long) CloseServiceHandle
+@ stdcall ClearEventLogA (long str)
+@ stdcall ClearEventLogW (long wstr)
+@ stdcall CloseEventLog (long)
+@ stdcall CloseServiceHandle(long)
 @ stub CommandLineFromMsiDescriptor
-@ stdcall ControlService(long long ptr) ControlService
+@ stdcall ControlService(long long ptr)
 @ stub ConvertSidToStringSidA #(ptr str) ConvertSidToStringSidA
 @ stub ConvertSidToStringSidW #(ptr wstr) ConvertSidToStringSidW
 @ stub ConvertStringSecurityDescriptorToSecurityDescriptorA #(str long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorA
 @ stub ConvertStringSecurityDescriptorToSecurityDescriptorW #(wstr long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorW
-@ stdcall CopySid(long ptr ptr) CopySid
+@ stdcall CopySid(long ptr ptr)
 @ stub CreatePrivateObjectSecurity
 @ stub CreateProcessAsUserA
 @ stub CreateProcessAsUserW
-@ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceA
-@ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr) CreateServiceW
+@ stdcall CreateServiceA(long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
+@ stdcall CreateServiceW (long ptr ptr long long long long ptr ptr ptr ptr ptr ptr)
 @ stub CredProfileLoaded
-@ stdcall CryptAcquireContextA(ptr str str long long) CryptAcquireContextA
-@ stdcall CryptAcquireContextW(ptr wstr wstr long long) CryptAcquireContextW
-@ stdcall CryptContextAddRef(long ptr long) CryptContextAddRef
-@ stdcall CryptCreateHash(long long long long ptr) CryptCreateHash
-@ stdcall CryptDecrypt(long long long long ptr ptr) CryptDecrypt
-@ stdcall CryptDeriveKey(long long long long ptr) CryptDeriveKey
-@ stdcall CryptDestroyHash(long) CryptDestroyHash
-@ stdcall CryptDestroyKey(long) CryptDestroyKey
-@ stdcall CryptDuplicateHash(long ptr long ptr) CryptDuplicateHash
-@ stdcall CryptDuplicateKey(long ptr long ptr) CryptDuplicateKey
-@ stdcall CryptEncrypt(long long long long ptr ptr long) CryptEncrypt
-@ stdcall CryptEnumProvidersA(long ptr long ptr ptr ptr) CryptEnumProvidersA
-@ stdcall CryptEnumProvidersW(long ptr long ptr ptr ptr) CryptEnumProvidersW
-@ stdcall CryptEnumProviderTypesA(long ptr long ptr ptr ptr) CryptEnumProviderTypesA
-@ stdcall CryptEnumProviderTypesW(long ptr long ptr ptr ptr) CryptEnumProviderTypesW
-@ stdcall CryptExportKey(long long long long ptr ptr) CryptExportKey
-@ stdcall CryptGenKey(long long long ptr) CryptGenKey
-@ stdcall CryptGenRandom(long long ptr) CryptGenRandom
-@ stdcall CryptGetDefaultProviderA(long ptr long ptr ptr) CryptGetDefaultProviderA
-@ stdcall CryptGetDefaultProviderW(long ptr long ptr ptr) CryptGetDefaultProviderW
-@ stdcall CryptGetHashParam(long long ptr ptr long) CryptGetHashParam
-@ stdcall CryptGetKeyParam(long long ptr ptr long) CryptGetKeyParam
-@ stdcall CryptGetProvParam(long long ptr ptr long) CryptGetProvParam
-@ stdcall CryptGetUserKey(long long ptr) CryptGetUserKey
-@ stdcall CryptHashData(long ptr long long) CryptHashData
-@ stdcall CryptHashSessionKey(long long long) CryptHashSessionKey
-@ stdcall CryptImportKey(long ptr long long long ptr) CryptImportKey
-@ stdcall CryptReleaseContext(long long) CryptReleaseContext
-@ stdcall CryptSignHashA(long long ptr long ptr ptr) CryptSignHashA
+@ stdcall CryptAcquireContextA(ptr str str long long)
+@ stdcall CryptAcquireContextW(ptr wstr wstr long long)
+@ stdcall CryptContextAddRef(long ptr long)
+@ stdcall CryptCreateHash(long long long long ptr)
+@ stdcall CryptDecrypt(long long long long ptr ptr)
+@ stdcall CryptDeriveKey(long long long long ptr)
+@ stdcall CryptDestroyHash(long)
+@ stdcall CryptDestroyKey(long)
+@ stdcall CryptDuplicateHash(long ptr long ptr)
+@ stdcall CryptDuplicateKey(long ptr long ptr)
+@ stdcall CryptEncrypt(long long long long ptr ptr long)
+@ stdcall CryptEnumProvidersA(long ptr long ptr ptr ptr)
+@ stdcall CryptEnumProvidersW(long ptr long ptr ptr ptr)
+@ stdcall CryptEnumProviderTypesA(long ptr long ptr ptr ptr)
+@ stdcall CryptEnumProviderTypesW(long ptr long ptr ptr ptr)
+@ stdcall CryptExportKey(long long long long ptr ptr)
+@ stdcall CryptGenKey(long long long ptr)
+@ stdcall CryptGenRandom(long long ptr)
+@ stdcall CryptGetDefaultProviderA(long ptr long ptr ptr)
+@ stdcall CryptGetDefaultProviderW(long ptr long ptr ptr)
+@ stdcall CryptGetHashParam(long long ptr ptr long)
+@ stdcall CryptGetKeyParam(long long ptr ptr long)
+@ stdcall CryptGetProvParam(long long ptr ptr long)
+@ stdcall CryptGetUserKey(long long ptr)
+@ stdcall CryptHashData(long ptr long long)
+@ stdcall CryptHashSessionKey(long long long)
+@ stdcall CryptImportKey(long ptr long long long ptr)
+@ stdcall CryptReleaseContext(long long)
+@ stdcall CryptSignHashA(long long ptr long ptr ptr)
 @ stdcall CryptSignHashW(long long ptr long ptr ptr) CryptSignHashA
-@ stdcall CryptSetHashParam(long long ptr long) CryptSetHashParam
-@ stdcall CryptSetKeyParam(long long ptr long) CryptSetKeyParam
-@ stdcall CryptSetProviderA(str long) CryptSetProviderA
-@ stdcall CryptSetProviderW(wstr long) CryptSetProviderW
-@ stdcall CryptSetProviderExA(str long ptr long) CryptSetProviderExA
-@ stdcall CryptSetProviderExW(wstr long ptr long) CryptSetProviderExW
-@ stdcall CryptSetProvParam(long long ptr long) CryptSetProvParam
-@ stdcall CryptVerifySignatureA(long ptr long long ptr long) CryptVerifySignatureA
+@ stdcall CryptSetHashParam(long long ptr long)
+@ stdcall CryptSetKeyParam(long long ptr long)
+@ stdcall CryptSetProviderA(str long)
+@ stdcall CryptSetProviderW(wstr long)
+@ stdcall CryptSetProviderExA(str long ptr long)
+@ stdcall CryptSetProviderExW(wstr long ptr long)
+@ stdcall CryptSetProvParam(long long ptr long)
+@ stdcall CryptVerifySignatureA(long ptr long long ptr long)
 @ stdcall CryptVerifySignatureW(long ptr long long ptr long) CryptVerifySignatureA
 @ stub DeleteAce
-@ stdcall DeleteService(long) DeleteService
-@ stdcall DeregisterEventSource(long) DeregisterEventSource
+@ stdcall DeleteService(long)
+@ stdcall DeregisterEventSource(long)
 @ stub DestroyPrivateObjectSecurity
 @ stub DuplicateToken #(long long ptr) DuplicateToken
 @ stub DuplicateTokenEx #(long long ptr long long ptr) DuplicateTokenEx
 @ stub EnumDependentServicesA
 @ stub EnumDependentServicesW
-@ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr) EnumServicesStatusA
-@ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr) EnumServicesStatusW
-@ stdcall EqualPrefixSid(ptr ptr) EqualPrefixSid
-@ stdcall EqualSid(ptr ptr) EqualSid
+@ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr)
+@ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
+@ stdcall EqualPrefixSid(ptr ptr)
+@ stdcall EqualSid(ptr ptr)
 @ stub FindFirstFreeAce
-@ stdcall FreeSid(ptr) FreeSid
-@ stdcall GetAce(ptr long ptr) GetAce
+@ stdcall FreeSid(ptr)
+@ stdcall GetAce(ptr long ptr)
 @ stub GetAclInformation
-@ stdcall GetCurrentHwProfileA(ptr) GetCurrentHwProfileA
+@ stdcall GetCurrentHwProfileA(ptr)
 @ stub GetEffectiveRightsFromAclA
-@ stdcall GetFileSecurityA(str long ptr long ptr) GetFileSecurityA
-@ stdcall GetFileSecurityW(wstr long ptr long ptr) GetFileSecurityW
+@ stdcall GetFileSecurityA(str long ptr long ptr)
+@ stdcall GetFileSecurityW(wstr long ptr long ptr)
 @ stub GetKernelObjectSecurity
-@ stdcall GetLengthSid(ptr) GetLengthSid
+@ stdcall GetLengthSid(ptr)
 @ stub GetMangledSiteSid
 @ stub GetNamedSecurityInfoA #(str long long ptr ptr ptr ptr ptr) GetNamedSecurityInfoA
 @ stub GetNamedSecurityInfoW #(wstr long long ptr ptr ptr ptr ptr) GetNamedSecurityInfoW
-@ stdcall GetNumberOfEventLogRecords (long ptr) GetNumberOfEventLogRecords
-@ stdcall GetOldestEventLogRecord (long ptr) GetOldestEventLogRecord
+@ stdcall GetNumberOfEventLogRecords (long ptr)
+@ stdcall GetOldestEventLogRecord (long ptr)
 @ stub GetPrivateObjectSecurity
-@ stdcall GetSecurityDescriptorControl (ptr ptr ptr) GetSecurityDescriptorControl
-@ stdcall GetSecurityDescriptorDacl (ptr ptr ptr ptr) GetSecurityDescriptorDacl
-@ stdcall GetSecurityDescriptorGroup(ptr ptr ptr) GetSecurityDescriptorGroup
-@ stdcall GetSecurityDescriptorLength(ptr) GetSecurityDescriptorLength
-@ stdcall GetSecurityDescriptorOwner(ptr ptr ptr) GetSecurityDescriptorOwner
-@ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr) GetSecurityDescriptorSacl
+@ stdcall GetSecurityDescriptorControl (ptr ptr ptr)
+@ stdcall GetSecurityDescriptorDacl (ptr ptr ptr ptr)
+@ stdcall GetSecurityDescriptorGroup(ptr ptr ptr)
+@ stdcall GetSecurityDescriptorLength(ptr)
+@ stdcall GetSecurityDescriptorOwner(ptr ptr ptr)
+@ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr)
 @ stub GetSecurityInfo #(long long long ptr ptr ptr ptr ptr) GetSecurityInfo
-@ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr wstr wstr) GetSecurityInfoExW
+@ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr wstr wstr)
 @ stub GetServiceDisplayNameA
 @ stub GetServiceDisplayNameW
 @ stub GetServiceKeyNameA
 @ stub GetServiceKeyNameW
-@ stdcall GetSidIdentifierAuthority(ptr) GetSidIdentifierAuthority
-@ stdcall GetSidLengthRequired(long) GetSidLengthRequired
-@ stdcall GetSidSubAuthority(ptr long) GetSidSubAuthority
-@ stdcall GetSidSubAuthorityCount(ptr) GetSidSubAuthorityCount
+@ stdcall GetSidIdentifierAuthority(ptr)
+@ stdcall GetSidLengthRequired(long)
+@ stdcall GetSidSubAuthority(ptr long)
+@ stdcall GetSidSubAuthorityCount(ptr)
 @ stub GetSiteSidFromToken
-@ stdcall GetTokenInformation(long long ptr long ptr) GetTokenInformation
-@ stdcall GetUserNameA(ptr ptr) GetUserNameA
-@ stdcall GetUserNameW(ptr ptr) GetUserNameW
-@ stdcall ImpersonateLoggedOnUser(long) ImpersonateLoggedOnUser
+@ stdcall GetTokenInformation(long long ptr long ptr)
+@ stdcall GetUserNameA(ptr ptr)
+@ stdcall GetUserNameW(ptr ptr)
+@ stdcall ImpersonateLoggedOnUser(long)
 @ stub ImpersonateNamedPipeClient
-@ stdcall ImpersonateSelf(long) ImpersonateSelf
-@ stdcall InitializeAcl(ptr long long) InitializeAcl
-@ stdcall InitializeSecurityDescriptor(ptr long) InitializeSecurityDescriptor
-@ stdcall InitializeSid(ptr ptr long) InitializeSid
+@ stdcall ImpersonateSelf(long)
+@ stdcall InitializeAcl(ptr long long)
+@ stdcall InitializeSecurityDescriptor(ptr long)
+@ stdcall InitializeSid(ptr ptr long)
 @ stub InitiateSystemShutdownA
 @ stub InitiateSystemShutdownW
 @ stub InstallApplication
@@ -136,43 +136,43 @@
 @ stdcall IsTextUnicode(ptr long ptr) ntdll.RtlIsTextUnicode
 @ stub IsTokenRestricted
 @ stub IsValidAcl
-@ stdcall IsValidSecurityDescriptor(ptr) IsValidSecurityDescriptor
-@ stdcall IsValidSid(ptr) IsValidSid
-@ stdcall LockServiceDatabase(ptr) LockServiceDatabase
+@ stdcall IsValidSecurityDescriptor(ptr)
+@ stdcall IsValidSid(ptr)
+@ stdcall LockServiceDatabase(ptr)
 @ stub LogonUserA
 @ stub LogonUserW
-@ stdcall LookupAccountNameA(str str ptr ptr ptr ptr ptr) LookupAccountNameA
+@ stdcall LookupAccountNameA(str str ptr ptr ptr ptr ptr)
 @ stub LookupAccountNameW
-@ stdcall LookupAccountSidA(ptr ptr ptr ptr ptr ptr ptr) LookupAccountSidA
-@ stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr) LookupAccountSidW
+@ stdcall LookupAccountSidA(ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall LookupAccountSidW(ptr ptr ptr ptr ptr ptr ptr)
 @ stub LookupPrivilegeDisplayNameA
 @ stub LookupPrivilegeDisplayNameW
 @ stub LookupPrivilegeNameA
 @ stub LookupPrivilegeNameW
-@ stdcall LookupPrivilegeValueA(ptr ptr ptr) LookupPrivilegeValueA
-@ stdcall LookupPrivilegeValueW(ptr ptr ptr) LookupPrivilegeValueW
+@ stdcall LookupPrivilegeValueA(ptr ptr ptr)
+@ stdcall LookupPrivilegeValueW(ptr ptr ptr)
 @ stub MakeAbsoluteSD
-@ stdcall MakeSelfRelativeSD(ptr ptr ptr) MakeSelfRelativeSD
+@ stdcall MakeSelfRelativeSD(ptr ptr ptr)
 @ stub MapGenericMask
-@ stdcall NotifyBootConfigStatus(long) NotifyBootConfigStatus
-@ stdcall NotifyChangeEventLog (long long) NotifyChangeEventLog
+@ stdcall NotifyBootConfigStatus(long)
+@ stdcall NotifyChangeEventLog (long long)
 @ stub ObjectCloseAuditAlarmA
 @ stub ObjectCloseAuditAlarmW
 @ stub ObjectOpenAuditAlarmA
 @ stub ObjectOpenAuditAlarmW
 @ stub ObjectPrivilegeAuditAlarmA
 @ stub ObjectPrivilegeAuditAlarmW
-@ stdcall OpenBackupEventLogA (str str) OpenBackupEventLogA
-@ stdcall OpenBackupEventLogW (wstr wstr) OpenBackupEventLogW
-@ stdcall OpenEventLogA (str str) OpenEventLogA
-@ stdcall OpenEventLogW (wstr wstr) OpenEventLogW
-@ stdcall OpenProcessToken(long long ptr) OpenProcessToken
-@ stdcall OpenSCManagerA(ptr ptr long) OpenSCManagerA
-@ stdcall OpenSCManagerW(ptr ptr long) OpenSCManagerW
-@ stdcall OpenServiceA(long str long) OpenServiceA
-@ stdcall OpenServiceW(long wstr long) OpenServiceW
-@ stdcall OpenThreadToken(long long long ptr) OpenThreadToken
-@ stdcall PrivilegeCheck(ptr ptr ptr) PrivilegeCheck
+@ stdcall OpenBackupEventLogA (str str)
+@ stdcall OpenBackupEventLogW (wstr wstr)
+@ stdcall OpenEventLogA (str str)
+@ stdcall OpenEventLogW (wstr wstr)
+@ stdcall OpenProcessToken(long long ptr)
+@ stdcall OpenSCManagerA(ptr ptr long)
+@ stdcall OpenSCManagerW(ptr ptr long)
+@ stdcall OpenServiceA(long str long)
+@ stdcall OpenServiceW(long wstr long)
+@ stdcall OpenThreadToken(long long long ptr)
+@ stdcall PrivilegeCheck(ptr ptr ptr)
 @ stub PrivilegedServiceAuditAlarmA
 @ stub PrivilegedServiceAuditAlarmW
 @ stub QueryServiceConfigA
@@ -180,92 +180,92 @@
 @ stub QueryServiceLockStatusA
 @ stub QueryServiceLockStatusW
 @ stub QueryServiceObjectSecurity
-@ stdcall QueryServiceStatus(long ptr) QueryServiceStatus
-@ stdcall QueryServiceStatusEx (long long ptr long ptr) QueryServiceStatusEx
-@ stdcall ReadEventLogA (long long long ptr long ptr ptr) ReadEventLogA
-@ stdcall ReadEventLogW (long long long ptr long ptr ptr) ReadEventLogW
-@ stdcall RegCloseKey(long) RegCloseKey
-@ stdcall RegConnectRegistryA(str long ptr) RegConnectRegistryA
-@ stdcall RegConnectRegistryW(wstr long ptr) RegConnectRegistryW
-@ stdcall RegCreateKeyA(long str ptr) RegCreateKeyA
-@ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr) RegCreateKeyExA
-@ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) RegCreateKeyExW
-@ stdcall RegCreateKeyW(long wstr ptr) RegCreateKeyW
-@ stdcall RegDeleteKeyA(long str) RegDeleteKeyA
-@ stdcall RegDeleteKeyW(long wstr) RegDeleteKeyW
-@ stdcall RegDeleteValueA(long str) RegDeleteValueA
-@ stdcall RegDeleteValueW(long wstr) RegDeleteValueW
-@ stdcall RegEnumKeyA(long long ptr long) RegEnumKeyA
-@ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr) RegEnumKeyExA
-@ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr) RegEnumKeyExW
-@ stdcall RegEnumKeyW(long long ptr long) RegEnumKeyW
-@ stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr) RegEnumValueA
-@ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr) RegEnumValueW
-@ stdcall RegFlushKey(long) RegFlushKey
-@ stdcall RegGetKeySecurity(long long ptr ptr) RegGetKeySecurity
-@ stdcall RegLoadKeyA(long str str) RegLoadKeyA
-@ stdcall RegLoadKeyW(long wstr wstr) RegLoadKeyW
-@ stdcall RegNotifyChangeKeyValue(long long long long long) RegNotifyChangeKeyValue
-@ stdcall RegOpenCurrentUser(long ptr) RegOpenCurrentUser
-@ stdcall RegOpenKeyA(long str ptr) RegOpenKeyA
-@ stdcall RegOpenKeyExA(long str long long ptr) RegOpenKeyExA
-@ stdcall RegOpenKeyExW(long wstr long long ptr) RegOpenKeyExW
-@ stdcall RegOpenKeyW(long wstr ptr) RegOpenKeyW
+@ stdcall QueryServiceStatus(long ptr)
+@ stdcall QueryServiceStatusEx (long long ptr long ptr)
+@ stdcall ReadEventLogA (long long long ptr long ptr ptr)
+@ stdcall ReadEventLogW (long long long ptr long ptr ptr)
+@ stdcall RegCloseKey(long)
+@ stdcall RegConnectRegistryA(str long ptr)
+@ stdcall RegConnectRegistryW(wstr long ptr)
+@ stdcall RegCreateKeyA(long str ptr)
+@ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr)
+@ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr)
+@ stdcall RegCreateKeyW(long wstr ptr)
+@ stdcall RegDeleteKeyA(long str)
+@ stdcall RegDeleteKeyW(long wstr)
+@ stdcall RegDeleteValueA(long str)
+@ stdcall RegDeleteValueW(long wstr)
+@ stdcall RegEnumKeyA(long long ptr long)
+@ stdcall RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegEnumKeyW(long long ptr long)
+@ stdcall RegEnumValueA(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr)
+@ stdcall RegFlushKey(long)
+@ stdcall RegGetKeySecurity(long long ptr ptr)
+@ stdcall RegLoadKeyA(long str str)
+@ stdcall RegLoadKeyW(long wstr wstr)
+@ stdcall RegNotifyChangeKeyValue(long long long long long)
+@ stdcall RegOpenCurrentUser(long ptr)
+@ stdcall RegOpenKeyA(long str ptr)
+@ stdcall RegOpenKeyExA(long str long long ptr)
+@ stdcall RegOpenKeyExW(long wstr long long ptr)
+@ stdcall RegOpenKeyW(long wstr ptr)
 @ stub RegOpenUserClassesRoot
-@ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyA
-@ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) RegQueryInfoKeyW
-@ stdcall RegQueryMultipleValuesA(long ptr long ptr ptr) RegQueryMultipleValuesA
-@ stdcall RegQueryMultipleValuesW(long ptr long ptr ptr) RegQueryMultipleValuesW
-@ stdcall RegQueryValueA(long str ptr ptr) RegQueryValueA
-@ stdcall RegQueryValueExA(long str ptr ptr ptr ptr) RegQueryValueExA
-@ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr) RegQueryValueExW
-@ stdcall RegQueryValueW(long wstr ptr ptr) RegQueryValueW
+@ stdcall RegQueryInfoKeyA(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall RegQueryInfoKeyW(long ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall RegQueryMultipleValuesA(long ptr long ptr ptr)
+@ stdcall RegQueryMultipleValuesW(long ptr long ptr ptr)
+@ stdcall RegQueryValueA(long str ptr ptr)
+@ stdcall RegQueryValueExA(long str ptr ptr ptr ptr)
+@ stdcall RegQueryValueExW(long wstr ptr ptr ptr ptr)
+@ stdcall RegQueryValueW(long wstr ptr ptr)
 @ stub RegRemapPreDefKey
-@ stdcall RegReplaceKeyA(long str str str) RegReplaceKeyA
-@ stdcall RegReplaceKeyW(long wstr wstr wstr) RegReplaceKeyW
-@ stdcall RegRestoreKeyA(long str long) RegRestoreKeyA
-@ stdcall RegRestoreKeyW(long wstr long) RegRestoreKeyW
-@ stdcall RegSaveKeyA(long ptr ptr) RegSaveKeyA
-@ stdcall RegSaveKeyW(long ptr ptr) RegSaveKeyW
-@ stdcall RegSetKeySecurity(long long ptr) RegSetKeySecurity
-@ stdcall RegSetValueA(long str long ptr long) RegSetValueA
-@ stdcall RegSetValueExA(long str long long ptr long) RegSetValueExA
-@ stdcall RegSetValueExW(long wstr long long ptr long) RegSetValueExW
-@ stdcall RegSetValueW(long wstr long ptr long) RegSetValueW
-@ stdcall RegUnLoadKeyA(long str) RegUnLoadKeyA
-@ stdcall RegUnLoadKeyW(long wstr) RegUnLoadKeyW
-@ stdcall RegisterEventSourceA(ptr ptr) RegisterEventSourceA
-@ stdcall RegisterEventSourceW(ptr ptr) RegisterEventSourceW
-@ stdcall RegisterServiceCtrlHandlerA (ptr ptr) RegisterServiceCtrlHandlerA
-@ stdcall RegisterServiceCtrlHandlerW (ptr ptr) RegisterServiceCtrlHandlerW
-@ stdcall ReportEventA (long long long long ptr long long str ptr) ReportEventA
-@ stdcall ReportEventW (long long long long ptr long long wstr ptr) ReportEventW
-@ stdcall RevertToSelf() RevertToSelf
+@ stdcall RegReplaceKeyA(long str str str)
+@ stdcall RegReplaceKeyW(long wstr wstr wstr)
+@ stdcall RegRestoreKeyA(long str long)
+@ stdcall RegRestoreKeyW(long wstr long)
+@ stdcall RegSaveKeyA(long ptr ptr)
+@ stdcall RegSaveKeyW(long ptr ptr)
+@ stdcall RegSetKeySecurity(long long ptr)
+@ stdcall RegSetValueA(long str long ptr long)
+@ stdcall RegSetValueExA(long str long long ptr long)
+@ stdcall RegSetValueExW(long wstr long long ptr long)
+@ stdcall RegSetValueW(long wstr long ptr long)
+@ stdcall RegUnLoadKeyA(long str)
+@ stdcall RegUnLoadKeyW(long wstr)
+@ stdcall RegisterEventSourceA(ptr ptr)
+@ stdcall RegisterEventSourceW(ptr ptr)
+@ stdcall RegisterServiceCtrlHandlerA (ptr ptr)
+@ stdcall RegisterServiceCtrlHandlerW (ptr ptr)
+@ stdcall ReportEventA (long long long long ptr long long str ptr)
+@ stdcall ReportEventW (long long long long ptr long long wstr ptr)
+@ stdcall RevertToSelf()
 @ stub SetAclInformation
-@ stdcall SetFileSecurityA(str long ptr ) SetFileSecurityA
-@ stdcall SetFileSecurityW(wstr long ptr) SetFileSecurityW
-@ stdcall SetKernelObjectSecurity(long long ptr) SetKernelObjectSecurity
+@ stdcall SetFileSecurityA(str long ptr )
+@ stdcall SetFileSecurityW(wstr long ptr)
+@ stdcall SetKernelObjectSecurity(long long ptr)
 @ stub SetPrivateObjectSecurity
 @ stub SetSecurityDescriptorControl #(ptr long long)
-@ stdcall SetSecurityDescriptorDacl(ptr long ptr long) SetSecurityDescriptorDacl
-@ stdcall SetSecurityDescriptorGroup (ptr ptr long) SetSecurityDescriptorGroup
-@ stdcall SetSecurityDescriptorOwner (ptr ptr long) SetSecurityDescriptorOwner
-@ stdcall SetSecurityDescriptorSacl(ptr long ptr long) SetSecurityDescriptorSacl
+@ stdcall SetSecurityDescriptorDacl(ptr long ptr long)
+@ stdcall SetSecurityDescriptorGroup (ptr ptr long)
+@ stdcall SetSecurityDescriptorOwner (ptr ptr long)
+@ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
 @ stub SetServiceBits
 @ stub SetServiceObjectSecurity
-@ stdcall SetServiceStatus(long long)SetServiceStatus
-@ stdcall SetThreadToken (ptr ptr) SetThreadToken
-@ stdcall SetTokenInformation (long long ptr long) SetTokenInformation
-@ stdcall StartServiceA(long long ptr) StartServiceA
-@ stdcall StartServiceCtrlDispatcherA(ptr) StartServiceCtrlDispatcherA
-@ stdcall StartServiceCtrlDispatcherW(ptr) StartServiceCtrlDispatcherW
-@ stdcall StartServiceW(long long ptr) StartServiceW
-@ stdcall UnlockServiceDatabase (ptr) UnlockServiceDatabase
-@ stdcall LsaOpenPolicy(long long long long) LsaOpenPolicy
-@ stdcall LsaLookupSids(ptr long ptr ptr ptr) LsaLookupSids
-@ stdcall LsaFreeMemory(ptr)LsaFreeMemory
-@ stdcall LsaQueryInformationPolicy(ptr long ptr) LsaQueryInformationPolicy
-@ stdcall LsaClose(ptr)LsaClose
+@ stdcall SetServiceStatus(long long)
+@ stdcall SetThreadToken (ptr ptr)
+@ stdcall SetTokenInformation (long long ptr long)
+@ stdcall StartServiceA(long long ptr)
+@ stdcall StartServiceCtrlDispatcherA(ptr)
+@ stdcall StartServiceCtrlDispatcherW(ptr)
+@ stdcall StartServiceW(long long ptr)
+@ stdcall UnlockServiceDatabase (ptr)
+@ stdcall LsaOpenPolicy(long long long long)
+@ stdcall LsaLookupSids(ptr long ptr ptr ptr)
+@ stdcall LsaFreeMemory(ptr)
+@ stdcall LsaQueryInformationPolicy(ptr long ptr)
+@ stdcall LsaClose(ptr)
 @ stub LsaSetInformationPolicy
 @ stub LsaLookupNames
 @ stub SystemFunction001
@@ -315,7 +315,7 @@
 @ stub LsaGetSystemAccessAccount
 @ stub LsaSetInformationTrustedDomain
 @ stub LsaEnumerateTrustedDomains
-@ stdcall LsaNtStatusToWinError(long) LsaNtStatusToWinError
+@ stdcall LsaNtStatusToWinError(long)
 @ stub LsaOpenAccount
 @ stub LsaEnumeratePrivileges
 @ stub LsaLookupPrivilegeDisplayName
@@ -325,14 +325,14 @@
 @ stub ElfDeregisterEventSource
 @ stub ElfDeregisterEventSourceW
 @ stub I_ScSetServiceBit
-@ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long) SynchronizeWindows31FilesAndWindowsNTRegistry
-@ stdcall QueryWindows31FilesMigration(long) QueryWindows31FilesMigration
+@ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
+@ stdcall QueryWindows31FilesMigration(long)
 @ stub LsaICLookupSids
 @ stub SystemFunction031
 @ stub I_ScSetServiceBitsA
 @ stub EnumServiceGroupA
 @ stub EnumServiceGroupW
-@ stdcall CheckTokenMembership(long ptr ptr) CheckTokenMembership
+@ stdcall CheckTokenMembership(long ptr ptr)
 @ stub WmiQuerySingleInstanceW
 @ stub WmiSetSingleInstanceW
 @ stub WmiOpenBlock

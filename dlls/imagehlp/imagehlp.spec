@@ -1,61 +1,61 @@
-@ stdcall BindImage(str str str) BindImage
-@ stdcall BindImageEx(long str str str ptr) BindImageEx
-@ stdcall CheckSumMappedFile(ptr long ptr ptr) CheckSumMappedFile
-@ stdcall EnumerateLoadedModules(long ptr ptr) EnumerateLoadedModules
-@ stdcall FindDebugInfoFile(str str str) FindDebugInfoFile
-@ stdcall FindExecutableImage(str str str) FindExecutableImage
-@ stdcall GetImageConfigInformation(ptr ptr) GetImageConfigInformation
-@ stdcall GetImageUnusedHeaderBytes(ptr ptr) GetImageUnusedHeaderBytes
-@ stdcall GetTimestampForLoadedLibrary(long) GetTimestampForLoadedLibrary
-@ stdcall ImageAddCertificate(long ptr ptr) ImageAddCertificate
-@ stdcall ImageDirectoryEntryToData(ptr long long ptr) ImageDirectoryEntryToData
-@ stdcall ImageEnumerateCertificates(long long ptr ptr long) ImageEnumerateCertificates
-@ stdcall ImageGetCertificateData(long long ptr ptr) ImageGetCertificateData
-@ stdcall ImageGetCertificateHeader(long long ptr) ImageGetCertificateHeader
-@ stdcall ImageGetDigestStream(long long ptr long) ImageGetDigestStream
-@ stdcall ImageLoad(str str) ImageLoad
-@ stdcall ImageNtHeader(ptr) ImageNtHeader
-@ stdcall ImageRemoveCertificate(long long) ImageRemoveCertificate
-@ stdcall ImageRvaToSection(ptr ptr long) ImageRvaToSection
-@ stdcall ImageRvaToVa(ptr ptr long ptr) ImageRvaToVa
-@ stdcall ImageUnload(ptr) ImageUnload
-@ stdcall ImagehlpApiVersion() ImagehlpApiVersion
-@ stdcall ImagehlpApiVersionEx(ptr) ImagehlpApiVersionEx
-@ stdcall MakeSureDirectoryPathExists(str) MakeSureDirectoryPathExists
-@ stdcall MapAndLoad(str str ptr long long) MapAndLoad
-@ stdcall MapDebugInformation(long str str long) MapDebugInformation
-@ stdcall MapFileAndCheckSumA(str ptr ptr) MapFileAndCheckSumA
-@ stdcall MapFileAndCheckSumW(wstr ptr ptr) MapFileAndCheckSumW
+@ stdcall BindImage(str str str)
+@ stdcall BindImageEx(long str str str ptr)
+@ stdcall CheckSumMappedFile(ptr long ptr ptr)
+@ stdcall EnumerateLoadedModules(long ptr ptr)
+@ stdcall FindDebugInfoFile(str str str)
+@ stdcall FindExecutableImage(str str str)
+@ stdcall GetImageConfigInformation(ptr ptr)
+@ stdcall GetImageUnusedHeaderBytes(ptr ptr)
+@ stdcall GetTimestampForLoadedLibrary(long)
+@ stdcall ImageAddCertificate(long ptr ptr)
+@ stdcall ImageDirectoryEntryToData(ptr long long ptr)
+@ stdcall ImageEnumerateCertificates(long long ptr ptr long)
+@ stdcall ImageGetCertificateData(long long ptr ptr)
+@ stdcall ImageGetCertificateHeader(long long ptr)
+@ stdcall ImageGetDigestStream(long long ptr long)
+@ stdcall ImageLoad(str str)
+@ stdcall ImageNtHeader(ptr)
+@ stdcall ImageRemoveCertificate(long long)
+@ stdcall ImageRvaToSection(ptr ptr long)
+@ stdcall ImageRvaToVa(ptr ptr long ptr)
+@ stdcall ImageUnload(ptr)
+@ stdcall ImagehlpApiVersion()
+@ stdcall ImagehlpApiVersionEx(ptr)
+@ stdcall MakeSureDirectoryPathExists(str)
+@ stdcall MapAndLoad(str str ptr long long)
+@ stdcall MapDebugInformation(long str str long)
+@ stdcall MapFileAndCheckSumA(str ptr ptr)
+@ stdcall MapFileAndCheckSumW(wstr ptr ptr)
 @ stub  MarkImageAsRunFromSwap
-@ stdcall ReBaseImage(str str long long long long ptr ptr ptr ptr long) ReBaseImage
-@ stdcall RemovePrivateCvSymbolic(ptr ptr ptr) RemovePrivateCvSymbolic
-@ stdcall RemoveRelocations(ptr) RemoveRelocations
-@ stdcall SearchTreeForFile(str str str) SearchTreeForFile
-@ stdcall SetImageConfigInformation(ptr ptr) SetImageConfigInformation
-@ stdcall SplitSymbols(str str str long) SplitSymbols
-@ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr) StackWalk
-@ stdcall SymCleanup(long) SymCleanup
-@ stdcall SymEnumerateModules(long ptr ptr) SymEnumerateModules
-@ stdcall SymEnumerateSymbols(long long ptr ptr) SymEnumerateSymbols
-@ stdcall SymFunctionTableAccess(long long) SymFunctionTableAccess
-@ stdcall SymGetModuleBase(long long) SymGetModuleBase
-@ stdcall SymGetModuleInfo(long long ptr) SymGetModuleInfo
-@ stdcall SymGetOptions() SymGetOptions
-@ stdcall SymGetSearchPath(long str long) SymGetSearchPath
-@ stdcall SymGetSymFromAddr(long long ptr ptr) SymGetSymFromAddr
-@ stdcall SymGetSymFromName(long str ptr) SymGetSymFromName
-@ stdcall SymGetSymNext(long ptr) SymGetSymNext
-@ stdcall SymGetSymPrev(long ptr) SymGetSymPrev
-@ stdcall SymInitialize(long str long) SymInitialize
-@ stdcall SymLoadModule(long long str str long long) SymLoadModule
-@ stdcall SymRegisterCallback(long ptr ptr) SymRegisterCallback
-@ stdcall SymSetOptions(long) SymSetOptions
-@ stdcall SymSetSearchPath(long str) SymSetSearchPath
-@ stdcall SymUnDName(ptr str long) SymUnDName
-@ stdcall SymUnloadModule(long long) SymUnloadModule
-@ stdcall TouchFileTimes(long ptr) TouchFileTimes
-@ stdcall UnDecorateSymbolName(str str long long) UnDecorateSymbolName
-@ stdcall UnMapAndLoad(ptr) UnMapAndLoad
-@ stdcall UnmapDebugInformation(ptr) UnmapDebugInformation
-@ stdcall UpdateDebugInfoFile(str str str ptr) UpdateDebugInfoFile
-@ stdcall UpdateDebugInfoFileEx(str str str ptr long) UpdateDebugInfoFileEx
+@ stdcall ReBaseImage(str str long long long long ptr ptr ptr ptr long)
+@ stdcall RemovePrivateCvSymbolic(ptr ptr ptr)
+@ stdcall RemoveRelocations(ptr)
+@ stdcall SearchTreeForFile(str str str)
+@ stdcall SetImageConfigInformation(ptr ptr)
+@ stdcall SplitSymbols(str str str long)
+@ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
+@ stdcall SymCleanup(long)
+@ stdcall SymEnumerateModules(long ptr ptr)
+@ stdcall SymEnumerateSymbols(long long ptr ptr)
+@ stdcall SymFunctionTableAccess(long long)
+@ stdcall SymGetModuleBase(long long)
+@ stdcall SymGetModuleInfo(long long ptr)
+@ stdcall SymGetOptions()
+@ stdcall SymGetSearchPath(long str long)
+@ stdcall SymGetSymFromAddr(long long ptr ptr)
+@ stdcall SymGetSymFromName(long str ptr)
+@ stdcall SymGetSymNext(long ptr)
+@ stdcall SymGetSymPrev(long ptr)
+@ stdcall SymInitialize(long str long)
+@ stdcall SymLoadModule(long long str str long long)
+@ stdcall SymRegisterCallback(long ptr ptr)
+@ stdcall SymSetOptions(long)
+@ stdcall SymSetSearchPath(long str)
+@ stdcall SymUnDName(ptr str long)
+@ stdcall SymUnloadModule(long long)
+@ stdcall TouchFileTimes(long ptr)
+@ stdcall UnDecorateSymbolName(str str long long)
+@ stdcall UnMapAndLoad(ptr)
+@ stdcall UnmapDebugInformation(ptr)
+@ stdcall UpdateDebugInfoFile(str str str ptr)
+@ stdcall UpdateDebugInfoFileEx(str str str ptr long)

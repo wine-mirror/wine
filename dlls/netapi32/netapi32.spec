@@ -1,12 +1,12 @@
 @ stub I_BrowserDebugCall
 @ stub I_BrowserDebugTrace
-@ stdcall I_BrowserQueryEmulatedDomains(wstr ptr ptr) I_BrowserQueryEmulatedDomains
+@ stdcall I_BrowserQueryEmulatedDomains(wstr ptr ptr)
 @ stub I_BrowserQueryOtherDomains
 @ stub I_BrowserQueryStatistics
 @ stub I_BrowserResetNetlogonState
 @ stub I_BrowserResetStatistics
 @ stub I_BrowserServerEnum
-@ stdcall I_BrowserSetNetlogonState(wstr wstr wstr long) I_BrowserSetNetlogonState
+@ stdcall I_BrowserSetNetlogonState(wstr wstr wstr long)
 @ stub I_NetAccountDeltas
 @ stub I_NetAccountSync
 @ stub I_NetDatabaseDeltas
@@ -46,10 +46,10 @@
 @ stub I_NetServerSetServiceBitsEx
 @ stub NetAlertRaise
 @ stub NetAlertRaiseEx
-@ stdcall NetApiBufferAllocate(long ptr) NetApiBufferAllocate
-@ stdcall NetApiBufferFree(ptr) NetApiBufferFree
-@ stdcall NetApiBufferReallocate(ptr long ptr) NetApiBufferReallocate
-@ stdcall NetApiBufferSize(ptr ptr) NetApiBufferSize
+@ stdcall NetApiBufferAllocate(long ptr)
+@ stdcall NetApiBufferFree(ptr)
+@ stdcall NetApiBufferReallocate(ptr long ptr)
+@ stdcall NetApiBufferSize(ptr ptr)
 @ stub NetAuditClear
 @ stub NetAuditRead
 @ stub NetAuditWrite
@@ -74,7 +74,7 @@
 @ stub NetFileEnum
 @ stub NetFileGetInfo
 @ stub NetGetAnyDCName
-@ stdcall NetGetDCName(wstr wstr ptr) NetGetDCName
+@ stdcall NetGetDCName(wstr wstr ptr)
 @ stub NetGetDisplayInformationIndex
 @ stub NetGroupAdd
 @ stub NetGroupAddUser
@@ -101,7 +101,7 @@
 @ stub NetMessageNameDel
 @ stub NetMessageNameEnum
 @ stub NetMessageNameGetInfo
-@ stdcall NetQueryDisplayInformation(wstr long long long long ptr ptr) NetQueryDisplayInformation
+@ stdcall NetQueryDisplayInformation(wstr long long long long ptr ptr)
 @ stub NetRemoteComputerSupports
 @ stub NetRemoteTOD
 @ stub NetReplExportDirAdd
@@ -188,7 +188,7 @@
 @ stub NetUserDel
 @ stub NetUserEnum
 @ stub NetUserGetGroups
-@ stdcall NetUserGetInfo(wstr wstr long ptr) NetUserGetInfo
+@ stdcall NetUserGetInfo(wstr wstr long ptr)
 @ stub NetUserGetLocalGroups
 @ stub NetUserModalsGet
 @ stub NetUserModalsSet
@@ -198,12 +198,12 @@
 @ stub NetWkstaSetInfo
 @ stub NetWkstaTransportAdd
 @ stub NetWkstaTransportDel
-@ stdcall NetWkstaTransportEnum (wstr long ptr long ptr ptr ptr) NetWkstaTransportEnum
+@ stdcall NetWkstaTransportEnum (wstr long ptr long ptr ptr ptr)
 @ stub NetWkstaUserEnum
-@ stdcall NetWkstaUserGetInfo(wstr long ptr) NetWkstaUserGetInfo
+@ stdcall NetWkstaUserGetInfo(wstr long ptr)
 @ stub NetWkstaUserSetInfo
 @ stdcall NetapipBufferAllocate(long ptr) NetApiBufferAllocate
-@ stdcall Netbios(ptr) Netbios
+@ stdcall Netbios(ptr)
 @ stub NetpAccessCheck
 @ stub NetpAccessCheckAndAudit
 @ stub NetpAllocConfigName
@@ -220,7 +220,7 @@
 @ stub NetpDbgDisplayServerInfo
 @ stub NetpDbgPrint
 @ stdcall NetpDeleteSecurityObject(long) ntdll.RtlDeleteSecurityObject
-@ stdcall NetpGetComputerName(ptr) NetpGetComputerName
+@ stdcall NetpGetComputerName(ptr)
 @ stub NetpGetConfigBool
 @ stub NetpGetConfigDword
 @ stub NetpGetConfigTStrArray

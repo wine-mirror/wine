@@ -1,14 +1,14 @@
 1 stub GetDllVersion
 2 stdcall DllGetVersion (ptr) CABINET_DllGetVersion
-3 stdcall Extract(long ptr) Extract
+3 stdcall Extract(long ptr)
 4 stub DeleteExtractedFiles
-10 cdecl FCICreate(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) FCICreate
-11 cdecl FCIAddFile(long ptr ptr long ptr ptr ptr long) FCIAddFile
-12 cdecl FCIFlushFolder(long ptr ptr) FCIFlushFolder
-13 cdecl FCIFlushCabinet(long long ptr ptr) FCIFlushCabinet
-14 cdecl FCIDestroy(long) FCIDestroy
-20 cdecl FDICreate(ptr ptr ptr ptr ptr ptr ptr long ptr) FDICreate
-21 cdecl FDIIsCabinet(long long ptr) FDIIsCabinet
-22 cdecl FDICopy(long ptr ptr long ptr ptr ptr) FDICopy
-23 cdecl FDIDestroy(long) FDIDestroy
-24 cdecl FDITruncateCabinet(long ptr long) FDITruncateCabinet
+10 cdecl FCICreate(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+11 cdecl FCIAddFile(long ptr ptr long ptr ptr ptr long)
+12 cdecl FCIFlushFolder(long ptr ptr)
+13 cdecl FCIFlushCabinet(long long ptr ptr)
+14 cdecl FCIDestroy(long)
+20 cdecl FDICreate(ptr ptr ptr ptr ptr ptr ptr long ptr)
+21 cdecl FDIIsCabinet(long long ptr)
+22 cdecl FDICopy(long ptr ptr long ptr ptr ptr)
+23 cdecl FDIDestroy(long)
+24 cdecl FDITruncateCabinet(long ptr long)

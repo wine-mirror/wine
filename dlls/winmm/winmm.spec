@@ -3,185 +3,185 @@
 3 stub @
 4 stub @
 
-@ stdcall PlaySoundA(ptr long long) PlaySoundA
-@ stdcall CloseDriver(long long long) CloseDriver
-@ stdcall DefDriverProc(long long long long long) DefDriverProc
-@ stdcall DriverCallback(long long long long long long long) DriverCallback
+@ stdcall PlaySoundA(ptr long long)
+@ stdcall CloseDriver(long long long)
+@ stdcall DefDriverProc(long long long long long)
+@ stdcall DriverCallback(long long long long long long long)
 @ stdcall DrvClose(long long long) CloseDriver
 @ stdcall DrvDefDriverProc(long long long long long) DefDriverProc
 @ stdcall DrvGetModuleHandle(long) GetDriverModuleHandle
 @ stdcall DrvOpen(wstr wstr long) OpenDriverW
 @ stdcall DrvOpenA(str str long) OpenDriverA
 @ stdcall DrvSendMessage(long long long long) SendDriverMessage
-@ stdcall GetDriverFlags(long) GetDriverFlags
-@ stdcall GetDriverModuleHandle(long) GetDriverModuleHandle
+@ stdcall GetDriverFlags(long)
+@ stdcall GetDriverModuleHandle(long)
 @ stdcall OpenDriver(wstr wstr long) OpenDriverW
-@ stdcall OpenDriverA(str str long) OpenDriverA
+@ stdcall OpenDriverA(str str long)
 @ stdcall PlaySound(ptr long long) PlaySoundA
-@ stdcall PlaySoundW(ptr long long) PlaySoundW
-@ stdcall SendDriverMessage(long long long long) SendDriverMessage
-@ stdcall auxGetDevCapsA(long ptr long) auxGetDevCapsA
-@ stdcall auxGetDevCapsW(long ptr long) auxGetDevCapsW
-@ stdcall auxGetNumDevs() auxGetNumDevs
-@ stdcall auxGetVolume(long ptr) auxGetVolume
-@ stdcall auxOutMessage(long long long long) auxOutMessage
-@ stdcall auxSetVolume(long long) auxSetVolume
+@ stdcall PlaySoundW(ptr long long)
+@ stdcall SendDriverMessage(long long long long)
+@ stdcall auxGetDevCapsA(long ptr long)
+@ stdcall auxGetDevCapsW(long ptr long)
+@ stdcall auxGetNumDevs()
+@ stdcall auxGetVolume(long ptr)
+@ stdcall auxOutMessage(long long long long)
+@ stdcall auxSetVolume(long long)
 @ stub joyConfigChanged
-@ stdcall joyGetDevCapsA(long ptr long) joyGetDevCapsA
-@ stdcall joyGetDevCapsW(long ptr long) joyGetDevCapsW
-@ stdcall joyGetNumDevs() joyGetNumDevs
-@ stdcall joyGetPos(long ptr) joyGetPos
-@ stdcall joyGetPosEx(long ptr) joyGetPosEx
-@ stdcall joyGetThreshold(long ptr) joyGetThreshold
-@ stdcall joyReleaseCapture(long) joyReleaseCapture
-@ stdcall joySetCapture(long long long long) joySetCapture
-@ stdcall joySetThreshold(long long) joySetThreshold
-@ stdcall mciDriverNotify(long long long) mciDriverNotify
-@ stdcall mciDriverYield(long) mciDriverYield
-@ stdcall mciExecute(str) mciExecute
-@ stdcall mciFreeCommandResource(long) mciFreeCommandResource
-@ stdcall mciGetCreatorTask(long) mciGetCreatorTask
-@ stdcall mciGetDeviceIDA(str) mciGetDeviceIDA
-@ stdcall mciGetDeviceIDFromElementIDW(long str) mciGetDeviceIDFromElementIDW
-@ stdcall mciGetDeviceIDW(str) mciGetDeviceIDW
-@ stdcall mciGetDriverData(long) mciGetDriverData
-@ stdcall mciGetErrorStringA(long ptr long) mciGetErrorStringA
-@ stdcall mciGetErrorStringW(long ptr long) mciGetErrorStringW
-@ stdcall mciGetYieldProc(long ptr) mciGetYieldProc
-@ stdcall mciLoadCommandResource(long wstr long) mciLoadCommandResource
-@ stdcall mciSendCommandA(long long long long) mciSendCommandA
-@ stdcall mciSendCommandW(long long long long) mciSendCommandW
-@ stdcall mciSendStringA(str ptr long long) mciSendStringA
-@ stdcall mciSendStringW(str ptr long long) mciSendStringW
-@ stdcall mciSetDriverData(long long) mciSetDriverData
-@ stdcall mciSetYieldProc(long ptr long) mciSetYieldProc
+@ stdcall joyGetDevCapsA(long ptr long)
+@ stdcall joyGetDevCapsW(long ptr long)
+@ stdcall joyGetNumDevs()
+@ stdcall joyGetPos(long ptr)
+@ stdcall joyGetPosEx(long ptr)
+@ stdcall joyGetThreshold(long ptr)
+@ stdcall joyReleaseCapture(long)
+@ stdcall joySetCapture(long long long long)
+@ stdcall joySetThreshold(long long)
+@ stdcall mciDriverNotify(long long long)
+@ stdcall mciDriverYield(long)
+@ stdcall mciExecute(str)
+@ stdcall mciFreeCommandResource(long)
+@ stdcall mciGetCreatorTask(long)
+@ stdcall mciGetDeviceIDA(str)
+@ stdcall mciGetDeviceIDFromElementIDW(long str)
+@ stdcall mciGetDeviceIDW(str)
+@ stdcall mciGetDriverData(long)
+@ stdcall mciGetErrorStringA(long ptr long)
+@ stdcall mciGetErrorStringW(long ptr long)
+@ stdcall mciGetYieldProc(long ptr)
+@ stdcall mciLoadCommandResource(long wstr long)
+@ stdcall mciSendCommandA(long long long long)
+@ stdcall mciSendCommandW(long long long long)
+@ stdcall mciSendStringA(str ptr long long)
+@ stdcall mciSendStringW(str ptr long long)
+@ stdcall mciSetDriverData(long long)
+@ stdcall mciSetYieldProc(long ptr long)
 @ stub midiConnect
 @ stub midiDisconnect
-@ stdcall midiInAddBuffer(long ptr long) midiInAddBuffer
-@ stdcall midiInClose(long) midiInClose
-@ stdcall midiInGetDevCapsA(long ptr long) midiInGetDevCapsA
-@ stdcall midiInGetDevCapsW(long ptr long) midiInGetDevCapsW
-@ stdcall midiInGetErrorTextA(long ptr long) midiInGetErrorTextA
-@ stdcall midiInGetErrorTextW(long ptr long) midiInGetErrorTextW
-@ stdcall midiInGetID(long ptr) midiInGetID
-@ stdcall midiInGetNumDevs() midiInGetNumDevs
-@ stdcall midiInMessage(long long long long) midiInMessage
-@ stdcall midiInOpen(ptr long long long long) midiInOpen
-@ stdcall midiInPrepareHeader(long ptr long) midiInPrepareHeader
-@ stdcall midiInReset(long) midiInReset
-@ stdcall midiInStart(long) midiInStart
-@ stdcall midiInStop(long) midiInStop
-@ stdcall midiInUnprepareHeader(long ptr long) midiInUnprepareHeader
-@ stdcall midiOutCacheDrumPatches(long long ptr long) midiOutCacheDrumPatches
-@ stdcall midiOutCachePatches(long long ptr long) midiOutCachePatches
-@ stdcall midiOutClose(long) midiOutClose
-@ stdcall midiOutGetDevCapsA(long ptr long) midiOutGetDevCapsA
-@ stdcall midiOutGetDevCapsW(long ptr long) midiOutGetDevCapsW
-@ stdcall midiOutGetErrorTextA(long ptr long) midiOutGetErrorTextA
-@ stdcall midiOutGetErrorTextW(long ptr long) midiOutGetErrorTextW
-@ stdcall midiOutGetID(long ptr) midiOutGetID
-@ stdcall midiOutGetNumDevs() midiOutGetNumDevs
-@ stdcall midiOutGetVolume(long ptr) midiOutGetVolume
-@ stdcall midiOutLongMsg(long ptr long) midiOutLongMsg
-@ stdcall midiOutMessage(long long long long) midiOutMessage
-@ stdcall midiOutOpen(ptr long long long long) midiOutOpen
-@ stdcall midiOutPrepareHeader(long ptr long) midiOutPrepareHeader
-@ stdcall midiOutReset(long) midiOutReset
-@ stdcall midiOutSetVolume(long ptr) midiOutSetVolume
-@ stdcall midiOutShortMsg(long long) midiOutShortMsg
-@ stdcall midiOutUnprepareHeader(long ptr long) midiOutUnprepareHeader
-@ stdcall midiStreamClose(long) midiStreamClose
-@ stdcall midiStreamOpen(ptr ptr long long long long) midiStreamOpen
-@ stdcall midiStreamOut(long ptr long) midiStreamOut
-@ stdcall midiStreamPause(long) midiStreamPause
-@ stdcall midiStreamPosition(long ptr long) midiStreamPosition
-@ stdcall midiStreamProperty(long ptr long) midiStreamProperty
-@ stdcall midiStreamRestart(long) midiStreamRestart
-@ stdcall midiStreamStop(long) midiStreamStop
-@ stdcall mixerClose(long) mixerClose
-@ stdcall mixerGetControlDetailsA(long ptr long) mixerGetControlDetailsA
-@ stdcall mixerGetControlDetailsW(long ptr long) mixerGetControlDetailsW
-@ stdcall mixerGetDevCapsA(long ptr long) mixerGetDevCapsA
-@ stdcall mixerGetDevCapsW(long ptr long) mixerGetDevCapsW
-@ stdcall mixerGetID(long ptr long) mixerGetID
-@ stdcall mixerGetLineControlsA(long ptr long) mixerGetLineControlsA
-@ stdcall mixerGetLineControlsW(long ptr long) mixerGetLineControlsW
-@ stdcall mixerGetLineInfoA(long ptr long) mixerGetLineInfoA
-@ stdcall mixerGetLineInfoW(long ptr long) mixerGetLineInfoW
-@ stdcall mixerGetNumDevs() mixerGetNumDevs
-@ stdcall mixerMessage(long long long long) mixerMessage
-@ stdcall mixerOpen(ptr long long long long) mixerOpen
-@ stdcall mixerSetControlDetails(long ptr long) mixerSetControlDetails
-@ stdcall mmioAdvance(long ptr long) mmioAdvance
-@ stdcall mmioAscend(long ptr long) mmioAscend
-@ stdcall mmioClose(long long) mmioClose
-@ stdcall mmioCreateChunk(long ptr long) mmioCreateChunk
-@ stdcall mmioDescend(long ptr ptr long) mmioDescend
-@ stdcall mmioFlush(long long) mmioFlush
-@ stdcall mmioGetInfo(long ptr long) mmioGetInfo
+@ stdcall midiInAddBuffer(long ptr long)
+@ stdcall midiInClose(long)
+@ stdcall midiInGetDevCapsA(long ptr long)
+@ stdcall midiInGetDevCapsW(long ptr long)
+@ stdcall midiInGetErrorTextA(long ptr long)
+@ stdcall midiInGetErrorTextW(long ptr long)
+@ stdcall midiInGetID(long ptr)
+@ stdcall midiInGetNumDevs()
+@ stdcall midiInMessage(long long long long)
+@ stdcall midiInOpen(ptr long long long long)
+@ stdcall midiInPrepareHeader(long ptr long)
+@ stdcall midiInReset(long)
+@ stdcall midiInStart(long)
+@ stdcall midiInStop(long)
+@ stdcall midiInUnprepareHeader(long ptr long)
+@ stdcall midiOutCacheDrumPatches(long long ptr long)
+@ stdcall midiOutCachePatches(long long ptr long)
+@ stdcall midiOutClose(long)
+@ stdcall midiOutGetDevCapsA(long ptr long)
+@ stdcall midiOutGetDevCapsW(long ptr long)
+@ stdcall midiOutGetErrorTextA(long ptr long)
+@ stdcall midiOutGetErrorTextW(long ptr long)
+@ stdcall midiOutGetID(long ptr)
+@ stdcall midiOutGetNumDevs()
+@ stdcall midiOutGetVolume(long ptr)
+@ stdcall midiOutLongMsg(long ptr long)
+@ stdcall midiOutMessage(long long long long)
+@ stdcall midiOutOpen(ptr long long long long)
+@ stdcall midiOutPrepareHeader(long ptr long)
+@ stdcall midiOutReset(long)
+@ stdcall midiOutSetVolume(long ptr)
+@ stdcall midiOutShortMsg(long long)
+@ stdcall midiOutUnprepareHeader(long ptr long)
+@ stdcall midiStreamClose(long)
+@ stdcall midiStreamOpen(ptr ptr long long long long)
+@ stdcall midiStreamOut(long ptr long)
+@ stdcall midiStreamPause(long)
+@ stdcall midiStreamPosition(long ptr long)
+@ stdcall midiStreamProperty(long ptr long)
+@ stdcall midiStreamRestart(long)
+@ stdcall midiStreamStop(long)
+@ stdcall mixerClose(long)
+@ stdcall mixerGetControlDetailsA(long ptr long)
+@ stdcall mixerGetControlDetailsW(long ptr long)
+@ stdcall mixerGetDevCapsA(long ptr long)
+@ stdcall mixerGetDevCapsW(long ptr long)
+@ stdcall mixerGetID(long ptr long)
+@ stdcall mixerGetLineControlsA(long ptr long)
+@ stdcall mixerGetLineControlsW(long ptr long)
+@ stdcall mixerGetLineInfoA(long ptr long)
+@ stdcall mixerGetLineInfoW(long ptr long)
+@ stdcall mixerGetNumDevs()
+@ stdcall mixerMessage(long long long long)
+@ stdcall mixerOpen(ptr long long long long)
+@ stdcall mixerSetControlDetails(long ptr long)
+@ stdcall mmioAdvance(long ptr long)
+@ stdcall mmioAscend(long ptr long)
+@ stdcall mmioClose(long long)
+@ stdcall mmioCreateChunk(long ptr long)
+@ stdcall mmioDescend(long ptr ptr long)
+@ stdcall mmioFlush(long long)
+@ stdcall mmioGetInfo(long ptr long)
 @ stub mmioInstallIOProc16
-@ stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProcA
-@ stdcall mmioInstallIOProcW(long ptr long) mmioInstallIOProcW
-@ stdcall mmioOpenA(str ptr long) mmioOpenA
-@ stdcall mmioOpenW(wstr ptr long) mmioOpenW
-@ stdcall mmioRead(long ptr long) mmioRead
-@ stdcall mmioRenameA(ptr ptr ptr long) mmioRenameA
-@ stdcall mmioRenameW(ptr ptr ptr long) mmioRenameW
-@ stdcall mmioSeek(long long long) mmioSeek
-@ stdcall mmioSendMessage(long long long long) mmioSendMessage
-@ stdcall mmioSetBuffer(long ptr long long) mmioSetBuffer
-@ stdcall mmioSetInfo(long ptr long) mmioSetInfo
-@ stdcall mmioStringToFOURCCA(str long) mmioStringToFOURCCA
-@ stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCCW
-@ stdcall mmioWrite(long ptr long) mmioWrite
-@ stdcall mmsystemGetVersion() mmsystemGetVersion
-@ stdcall sndPlaySoundA(ptr long) sndPlaySoundA
-@ stdcall sndPlaySoundW(ptr long) sndPlaySoundW
-@ stdcall timeBeginPeriod(long) timeBeginPeriod
-@ stdcall timeEndPeriod(long) timeEndPeriod
-@ stdcall timeGetDevCaps(ptr long) timeGetDevCaps
-@ stdcall timeGetSystemTime(ptr long) timeGetSystemTime
-@ stdcall timeGetTime() timeGetTime
-@ stdcall timeKillEvent(long) timeKillEvent
-@ stdcall timeSetEvent(long long ptr long long) timeSetEvent
-@ stdcall waveInAddBuffer(long ptr long) waveInAddBuffer
-@ stdcall waveInClose(long) waveInClose
-@ stdcall waveInGetDevCapsA(long ptr long) waveInGetDevCapsA
-@ stdcall waveInGetDevCapsW(long ptr long) waveInGetDevCapsW
-@ stdcall waveInGetErrorTextA(long ptr long) waveInGetErrorTextA
-@ stdcall waveInGetErrorTextW(long ptr long) waveInGetErrorTextW
-@ stdcall waveInGetID(long ptr) waveInGetID
-@ stdcall waveInGetNumDevs() waveInGetNumDevs
-@ stdcall waveInGetPosition(long ptr long) waveInGetPosition
-@ stdcall waveInMessage(long long long long) waveInMessage
-@ stdcall waveInOpen(ptr long ptr long long long) waveInOpen
-@ stdcall waveInPrepareHeader(long ptr long) waveInPrepareHeader
-@ stdcall waveInReset(long) waveInReset
-@ stdcall waveInStart(long) waveInStart
-@ stdcall waveInStop(long) waveInStop
-@ stdcall waveInUnprepareHeader(long ptr long) waveInUnprepareHeader
-@ stdcall waveOutBreakLoop(long) waveOutBreakLoop
-@ stdcall waveOutClose(long) waveOutClose
-@ stdcall waveOutGetDevCapsA(long ptr long) waveOutGetDevCapsA
-@ stdcall waveOutGetDevCapsW(long ptr long) waveOutGetDevCapsW
-@ stdcall waveOutGetErrorTextA(long ptr long) waveOutGetErrorTextA
-@ stdcall waveOutGetErrorTextW(long ptr long) waveOutGetErrorTextW
-@ stdcall waveOutGetID(long ptr) waveOutGetID
-@ stdcall waveOutGetNumDevs() waveOutGetNumDevs
-@ stdcall waveOutGetPitch(long ptr) waveOutGetPitch
-@ stdcall waveOutGetPlaybackRate(long ptr) waveOutGetPlaybackRate
-@ stdcall waveOutGetPosition(long ptr long) waveOutGetPosition
-@ stdcall waveOutGetVolume(long ptr) waveOutGetVolume
-@ stdcall waveOutMessage(long long long long) waveOutMessage
-@ stdcall waveOutOpen(ptr long ptr long long long) waveOutOpen
-@ stdcall waveOutPause(long) waveOutPause
-@ stdcall waveOutPrepareHeader(long ptr long) waveOutPrepareHeader
-@ stdcall waveOutReset(long) waveOutReset
-@ stdcall waveOutRestart(long) waveOutRestart
-@ stdcall waveOutSetPitch(long long) waveOutSetPitch
-@ stdcall waveOutSetPlaybackRate(long long) waveOutSetPlaybackRate
-@ stdcall waveOutSetVolume(long long) waveOutSetVolume
-@ stdcall waveOutUnprepareHeader(long ptr long) waveOutUnprepareHeader
-@ stdcall waveOutWrite(long ptr long) waveOutWrite
+@ stdcall mmioInstallIOProcA(long ptr long)
+@ stdcall mmioInstallIOProcW(long ptr long)
+@ stdcall mmioOpenA(str ptr long)
+@ stdcall mmioOpenW(wstr ptr long)
+@ stdcall mmioRead(long ptr long)
+@ stdcall mmioRenameA(ptr ptr ptr long)
+@ stdcall mmioRenameW(ptr ptr ptr long)
+@ stdcall mmioSeek(long long long)
+@ stdcall mmioSendMessage(long long long long)
+@ stdcall mmioSetBuffer(long ptr long long)
+@ stdcall mmioSetInfo(long ptr long)
+@ stdcall mmioStringToFOURCCA(str long)
+@ stdcall mmioStringToFOURCCW(wstr long)
+@ stdcall mmioWrite(long ptr long)
+@ stdcall mmsystemGetVersion()
+@ stdcall sndPlaySoundA(ptr long)
+@ stdcall sndPlaySoundW(ptr long)
+@ stdcall timeBeginPeriod(long)
+@ stdcall timeEndPeriod(long)
+@ stdcall timeGetDevCaps(ptr long)
+@ stdcall timeGetSystemTime(ptr long)
+@ stdcall timeGetTime()
+@ stdcall timeKillEvent(long)
+@ stdcall timeSetEvent(long long ptr long long)
+@ stdcall waveInAddBuffer(long ptr long)
+@ stdcall waveInClose(long)
+@ stdcall waveInGetDevCapsA(long ptr long)
+@ stdcall waveInGetDevCapsW(long ptr long)
+@ stdcall waveInGetErrorTextA(long ptr long)
+@ stdcall waveInGetErrorTextW(long ptr long)
+@ stdcall waveInGetID(long ptr)
+@ stdcall waveInGetNumDevs()
+@ stdcall waveInGetPosition(long ptr long)
+@ stdcall waveInMessage(long long long long)
+@ stdcall waveInOpen(ptr long ptr long long long)
+@ stdcall waveInPrepareHeader(long ptr long)
+@ stdcall waveInReset(long)
+@ stdcall waveInStart(long)
+@ stdcall waveInStop(long)
+@ stdcall waveInUnprepareHeader(long ptr long)
+@ stdcall waveOutBreakLoop(long)
+@ stdcall waveOutClose(long)
+@ stdcall waveOutGetDevCapsA(long ptr long)
+@ stdcall waveOutGetDevCapsW(long ptr long)
+@ stdcall waveOutGetErrorTextA(long ptr long)
+@ stdcall waveOutGetErrorTextW(long ptr long)
+@ stdcall waveOutGetID(long ptr)
+@ stdcall waveOutGetNumDevs()
+@ stdcall waveOutGetPitch(long ptr)
+@ stdcall waveOutGetPlaybackRate(long ptr)
+@ stdcall waveOutGetPosition(long ptr long)
+@ stdcall waveOutGetVolume(long ptr)
+@ stdcall waveOutMessage(long long long long)
+@ stdcall waveOutOpen(ptr long ptr long long long)
+@ stdcall waveOutPause(long)
+@ stdcall waveOutPrepareHeader(long ptr long)
+@ stdcall waveOutReset(long)
+@ stdcall waveOutRestart(long)
+@ stdcall waveOutSetPitch(long long)
+@ stdcall waveOutSetPlaybackRate(long long)
+@ stdcall waveOutSetVolume(long long)
+@ stdcall waveOutUnprepareHeader(long ptr long)
+@ stdcall waveOutWrite(long ptr long)
 @ stub winmmf_ThunkData32
 @ stub winmmsl_ThunkData32

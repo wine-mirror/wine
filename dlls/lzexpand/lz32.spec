@@ -1,12 +1,12 @@
-@ stdcall CopyLZFile(long long) CopyLZFile
-@ stdcall GetExpandedNameA(str ptr) GetExpandedNameA
-@ stdcall GetExpandedNameW(wstr ptr) GetExpandedNameW
-@ stdcall LZClose(long) LZClose
-@ stdcall LZCopy(long long) LZCopy
-@ stdcall LZDone() LZDone
-@ stdcall LZInit(long) LZInit
-@ stdcall LZOpenFileA(str ptr long) LZOpenFileA
-@ stdcall LZOpenFileW(wstr ptr long) LZOpenFileW
-@ stdcall LZRead(long ptr long) LZRead
-@ stdcall LZSeek(long long long) LZSeek
-@ stdcall LZStart() LZStart
+@ stdcall CopyLZFile(long long)
+@ stdcall GetExpandedNameA(str ptr)
+@ stdcall GetExpandedNameW(wstr ptr)
+@ stdcall LZClose(long)
+@ stdcall LZCopy(long long)
+@ stdcall LZDone()
+@ stdcall LZInit(long)
+@ stdcall LZOpenFileA(str ptr long)
+@ stdcall LZOpenFileW(wstr ptr long)
+@ stdcall LZRead(long ptr long)
+@ stdcall LZSeek(long long long)
+@ stdcall LZStart()

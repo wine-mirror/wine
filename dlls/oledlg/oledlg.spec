@@ -1,23 +1,23 @@
-  1 stdcall OleUIAddVerbMenuA(ptr str long long long long long long ptr) OleUIAddVerbMenuA
-  2 stdcall OleUICanConvertOrActivateAs(ptr long long) OleUICanConvertOrActivateAs
-  3 stdcall OleUIInsertObjectA(ptr) OleUIInsertObjectA
-  4 stdcall OleUIPasteSpecialA(ptr) OleUIPasteSpecialA
-  5 stdcall OleUIEditLinksA(ptr) OleUIEditLinksA
-  6 stdcall OleUIChangeIconA(ptr) OleUIChangeIconA
-  7 stdcall OleUIConvertA(ptr) OleUIConvertA
-  8 stdcall OleUIBusyA(ptr) OleUIBusyA
-  9 stdcall OleUIUpdateLinksA(ptr long str long) OleUIUpdateLinksA
- 10 varargs OleUIPromptUserA(long long) OleUIPromptUserA
- 11 stdcall OleUIObjectPropertiesA(ptr) OleUIObjectPropertiesA
- 12 stdcall OleUIChangeSourceA(ptr) OleUIChangeSourceA
- 13 varargs OleUIPromptUserW(long long) OleUIPromptUserW
- 14 stdcall OleUIAddVerbMenuW(ptr wstr long long long long long long ptr) OleUIAddVerbMenuW
- 15 stdcall OleUIBusyW(ptr) OleUIBusyW
- 16 stdcall OleUIChangeIconW(ptr) OleUIChangeIconW
- 17 stdcall OleUIChangeSourceW(ptr) OleUIChangeSourceW
- 18 stdcall OleUIConvertW(ptr) OleUIConvertW
- 19 stdcall OleUIEditLinksW(ptr) OleUIEditLinksW
- 20 stdcall OleUIInsertObjectW(ptr) OleUIInsertObjectW
- 21 stdcall OleUIObjectPropertiesW(ptr) OleUIObjectPropertiesW
- 22 stdcall OleUIPasteSpecialW(ptr) OleUIPasteSpecialW
- 23 stdcall OleUIUpdateLinksW(ptr long wstr long) OleUIUpdateLinksW
+  1 stdcall OleUIAddVerbMenuA(ptr str long long long long long long ptr)
+  2 stdcall OleUICanConvertOrActivateAs(ptr long long)
+  3 stdcall OleUIInsertObjectA(ptr)
+  4 stdcall OleUIPasteSpecialA(ptr)
+  5 stdcall OleUIEditLinksA(ptr)
+  6 stdcall OleUIChangeIconA(ptr)
+  7 stdcall OleUIConvertA(ptr)
+  8 stdcall OleUIBusyA(ptr)
+  9 stdcall OleUIUpdateLinksA(ptr long str long)
+ 10 varargs OleUIPromptUserA(long long)
+ 11 stdcall OleUIObjectPropertiesA(ptr)
+ 12 stdcall OleUIChangeSourceA(ptr)
+ 13 varargs OleUIPromptUserW(long long)
+ 14 stdcall OleUIAddVerbMenuW(ptr wstr long long long long long long ptr)
+ 15 stdcall OleUIBusyW(ptr)
+ 16 stdcall OleUIChangeIconW(ptr)
+ 17 stdcall OleUIChangeSourceW(ptr)
+ 18 stdcall OleUIConvertW(ptr)
+ 19 stdcall OleUIEditLinksW(ptr)
+ 20 stdcall OleUIInsertObjectW(ptr)
+ 21 stdcall OleUIObjectPropertiesW(ptr)
+ 22 stdcall OleUIPasteSpecialW(ptr)
+ 23 stdcall OleUIUpdateLinksW(ptr long wstr long)

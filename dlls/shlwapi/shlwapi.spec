@@ -13,7 +13,7 @@
 13  stdcall @(ptr ptr) SHLWAPI_13
 14  stdcall @(ptr ptr) SHLWAPI_14
 15  stdcall @(ptr ptr) SHLWAPI_15
-16  stdcall SHCreateThread(ptr ptr long ptr) SHCreateThread
+16  stdcall SHCreateThread(ptr ptr long ptr)
 17  stdcall @ (ptr ptr) SHLWAPI_17
 18  stdcall @ (ptr ptr) SHLWAPI_18
 19  stdcall @ (ptr) SHLWAPI_19
@@ -219,9 +219,9 @@
 219 stdcall @(long long long long) SHLWAPI_219
 220 stub @
 221 stub @
-222 stdcall -noname _SHGlobalCounterCreate(long) _SHGlobalCounterCreate
-223 stdcall -noname _SHGlobalCounterGetValue(long) _SHGlobalCounterGetValue
-224 stdcall -noname _SHGlobalCounterIncrement(long) _SHGlobalCounterIncrement
+222 stdcall -noname _SHGlobalCounterCreate(long)
+223 stdcall -noname _SHGlobalCounterGetValue(long)
+224 stdcall -noname _SHGlobalCounterIncrement(long)
 225 stub @
 226 stub @
 227 stub @
@@ -250,9 +250,9 @@
 250 stub @
 251 stub @
 252 stub @
-253 stdcall AssocCreate(long long long long ptr ptr) AssocCreate
-254 stdcall AssocQueryKeyA(long long str ptr ptr) AssocQueryKeyA
-255 stdcall AssocQueryKeyW(long long wstr ptr ptr) AssocQueryKeyW
+253 stdcall AssocCreate(long long long long ptr ptr)
+254 stdcall AssocQueryKeyA(long long str ptr ptr)
+255 stdcall AssocQueryKeyW(long long wstr ptr ptr)
 256 stub @
 257 stub @
 258 stub @
@@ -353,7 +353,7 @@
 353 stub @
 354 stub @
 355 stub @
-356 stdcall -noname _CreateAllAccessSecurityAttributes(ptr ptr) _CreateAllAccessSecurityAttributes
+356 stdcall -noname _CreateAllAccessSecurityAttributes(ptr ptr)
 357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
 358 stdcall @(wstr long long ptr ptr long) SHLWAPI_358
 359 stdcall @(long long wstr) kernel32.OpenEventW
@@ -378,12 +378,12 @@
 378 stdcall @(wstr long long) SHLWAPI_378
 379 stub @
 380 stub @
-381 stdcall AssocQueryStringA(long long ptr ptr str ptr) AssocQueryStringA
-382 stdcall AssocQueryStringByKeyA(long long ptr ptr str ptr) AssocQueryStringByKeyA
-383 stdcall AssocQueryStringByKeyW(long long ptr ptr wstr ptr) AssocQueryStringByKeyW
-384 stdcall AssocQueryStringW(long long ptr ptr wstr ptr) AssocQueryStringW
-385 stdcall ChrCmpIA(long long) ChrCmpIA
-386 stdcall ChrCmpIW(long long) ChrCmpIW
+381 stdcall AssocQueryStringA(long long ptr ptr str ptr)
+382 stdcall AssocQueryStringByKeyA(long long ptr ptr str ptr)
+383 stdcall AssocQueryStringByKeyW(long long ptr ptr wstr ptr)
+384 stdcall AssocQueryStringW(long long ptr ptr wstr ptr)
+385 stdcall ChrCmpIA(long long)
+386 stdcall ChrCmpIW(long long)
 387 stub ColorAdjustLuma
 388 stub @
 389 stdcall @(ptr) SHLWAPI_389
@@ -401,7 +401,7 @@
 401 stdcall @(ptr) SHLWAPI_401
 402 stdcall @(ptr) SHLWAPI_402
 403 stdcall @(ptr) SHLWAPI_403
-404 stdcall ColorHLSToRGB(long long long) ColorHLSToRGB
+404 stdcall ColorHLSToRGB(long long long)
 405 stub @
 406 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_406
 407 stub @
@@ -419,9 +419,9 @@
 419 stub @
 420 stub @
 421 stub @
-422 stdcall -noname _SHGlobalCounterCreateNamedA(str long) _SHGlobalCounterCreateNamedA
-423 stdcall -noname _SHGlobalCounterCreateNamedW(wstr long) _SHGlobalCounterCreateNamedW
-424 stdcall -noname _SHGlobalCounterDecrement(long) _SHGlobalCounterDecrement
+422 stdcall -noname _SHGlobalCounterCreateNamedA(str long)
+423 stdcall -noname _SHGlobalCounterCreateNamedW(wstr long)
+424 stdcall -noname _SHGlobalCounterDecrement(long)
 425 stub @
 426 stub @
 427 stub @
@@ -442,285 +442,285 @@
 442 stdcall @(wstr ptr long) kernel32.GetEnvironmentVariableW
 443 stdcall @(ptr long) kernel32.GetSystemWindowsDirectoryA
 444 stdcall @(ptr long) kernel32.GetSystemWindowsDirectoryW
-445 stdcall ColorRGBToHLS(long ptr ptr ptr) ColorRGBToHLS
+445 stdcall ColorRGBToHLS(long ptr ptr ptr)
 446 stub @
 
 @ stdcall DllGetVersion (ptr) SHLWAPI_DllGetVersion
-@ stdcall GetMenuPosFromID(ptr long) GetMenuPosFromID
-@ stdcall HashData (ptr long ptr long) HashData
+@ stdcall GetMenuPosFromID(ptr long)
+@ stdcall HashData (ptr long ptr long)
 @ stub    IntlStrEqWorkerA
 @ stub    IntlStrEqWorkerW
-@ stdcall PathAddBackslashA (str) PathAddBackslashA
-@ stdcall PathAddBackslashW (wstr) PathAddBackslashW
-@ stdcall PathAddExtensionA (str str) PathAddExtensionA
-@ stdcall PathAddExtensionW (wstr wstr) PathAddExtensionW
-@ stdcall PathAppendA (str str) PathAppendA
-@ stdcall PathAppendW (wstr wstr) PathAppendW
-@ stdcall PathBuildRootA (ptr long) PathBuildRootA
-@ stdcall PathBuildRootW (ptr long) PathBuildRootW
-@ stdcall PathCanonicalizeA (ptr str) PathCanonicalizeA
-@ stdcall PathCanonicalizeW (ptr wstr) PathCanonicalizeW
-@ stdcall PathCombineA (ptr ptr ptr) PathCombineA
-@ stdcall PathCombineW (ptr ptr ptr) PathCombineW
-@ stdcall PathCommonPrefixA(str str ptr)PathCommonPrefixA
-@ stdcall PathCommonPrefixW(wstr wstr ptr)PathCommonPrefixW
-@ stdcall PathCompactPathA(long str long)PathCompactPathA
-@ stdcall PathCompactPathExA(ptr str long long)PathCompactPathExA
-@ stdcall PathCompactPathExW(ptr wstr long long)PathCompactPathExW
-@ stdcall PathCompactPathW(long wstr long)PathCompactPathW
-@ stdcall PathCreateFromUrlA(str ptr ptr long)PathCreateFromUrlA
-@ stdcall PathCreateFromUrlW(wstr ptr ptr long)PathCreateFromUrlW
-@ stdcall PathFileExistsA (str) PathFileExistsA
-@ stdcall PathFileExistsW (wstr) PathFileExistsW
-@ stdcall PathFindExtensionA (str) PathFindExtensionA
-@ stdcall PathFindExtensionW (wstr) PathFindExtensionW
-@ stdcall PathFindFileNameA (str) PathFindFileNameA
-@ stdcall PathFindFileNameW (wstr) PathFindFileNameW
-@ stdcall PathFindNextComponentA (str) PathFindNextComponentA
-@ stdcall PathFindNextComponentW (wstr) PathFindNextComponentW
-@ stdcall PathFindOnPathA (str ptr) PathFindOnPathA
-@ stdcall PathFindOnPathW (wstr ptr) PathFindOnPathW
-@ stdcall PathGetArgsA (str) PathGetArgsA
-@ stdcall PathGetArgsW (wstr) PathGetArgsW
-@ stdcall PathGetCharTypeA(long)PathGetCharTypeA
-@ stdcall PathGetCharTypeW(long)PathGetCharTypeW
-@ stdcall PathGetDriveNumberA (str) PathGetDriveNumberA
-@ stdcall PathGetDriveNumberW (wstr) PathGetDriveNumberW
-@ stdcall PathIsContentTypeA(str str)PathIsContentTypeA
-@ stdcall PathIsContentTypeW(wstr wstr)PathIsContentTypeW
-@ stdcall PathIsDirectoryA(str) PathIsDirectoryA
-@ stdcall PathIsDirectoryW(wstr) PathIsDirectoryW
-@ stdcall PathIsFileSpecA(str)PathIsFileSpecA
-@ stdcall PathIsFileSpecW(wstr)PathIsFileSpecW
-@ stdcall PathIsPrefixA(str str)PathIsPrefixA
-@ stdcall PathIsPrefixW(wstr wstr)PathIsPrefixW
-@ stdcall PathIsRelativeA (str) PathIsRelativeA
-@ stdcall PathIsRelativeW (wstr) PathIsRelativeW
-@ stdcall PathIsRootA(str) PathIsRootA
-@ stdcall PathIsRootW(wstr) PathIsRootW
-@ stdcall PathIsSameRootA(str str) PathIsSameRootA
-@ stdcall PathIsSameRootW(wstr wstr) PathIsSameRootW
-@ stdcall PathIsSystemFolderA(str long)PathIsSystemFolderA
-@ stdcall PathIsSystemFolderW(wstr long)PathIsSystemFolderW
-@ stdcall PathIsUNCA (str) PathIsUNCA
-@ stdcall PathIsUNCServerA(str)PathIsUNCServerA
-@ stdcall PathIsUNCServerShareA(str)PathIsUNCServerShareA
-@ stdcall PathIsUNCServerShareW(wstr)PathIsUNCServerShareW
-@ stdcall PathIsUNCServerW(wstr)PathIsUNCServerW
-@ stdcall PathIsUNCW(wstr) PathIsUNCW
-@ stdcall PathIsURLA(str) PathIsURLA
-@ stdcall PathIsURLW(wstr) PathIsURLW
-@ stdcall PathMakePrettyA(str) PathMakePrettyA
-@ stdcall PathMakePrettyW(wstr) PathMakePrettyW
-@ stdcall PathMakeSystemFolderA(str) PathMakeSystemFolderA
-@ stdcall PathMakeSystemFolderW(wstr) PathMakeSystemFolderW
-@ stdcall PathMatchSpecA  (str str) PathMatchSpecA
-@ stdcall PathMatchSpecW  (wstr wstr) PathMatchSpecW
-@ stdcall PathParseIconLocationA (str) PathParseIconLocationA
-@ stdcall PathParseIconLocationW (wstr) PathParseIconLocationW
-@ stdcall PathQuoteSpacesA (str) PathQuoteSpacesA
-@ stdcall PathQuoteSpacesW (wstr) PathQuoteSpacesW
-@ stdcall PathRelativePathToA(ptr str long str long)PathRelativePathToA
-@ stdcall PathRelativePathToW(ptr str long str long)PathRelativePathToW
-@ stdcall PathRemoveArgsA(str)PathRemoveArgsA
-@ stdcall PathRemoveArgsW(wstr)PathRemoveArgsW
-@ stdcall PathRemoveBackslashA (str) PathRemoveBackslashA
-@ stdcall PathRemoveBackslashW (wstr) PathRemoveBackslashW
-@ stdcall PathRemoveBlanksA(str) PathRemoveBlanksA
-@ stdcall PathRemoveBlanksW(wstr) PathRemoveBlanksW
-@ stdcall PathRemoveExtensionA(str)PathRemoveExtensionA
-@ stdcall PathRemoveExtensionW(wstr)PathRemoveExtensionW
-@ stdcall PathRemoveFileSpecA (str) PathRemoveFileSpecA
-@ stdcall PathRemoveFileSpecW (wstr) PathRemoveFileSpecW
-@ stdcall PathRenameExtensionA(str str)PathRenameExtensionA
-@ stdcall PathRenameExtensionW(wstr wstr)PathRenameExtensionW
-@ stdcall PathSearchAndQualifyA(str ptr long)PathSearchAndQualifyA
-@ stdcall PathSearchAndQualifyW(wstr ptr long)PathSearchAndQualifyW
-@ stdcall PathSetDlgItemPathA (long long ptr) PathSetDlgItemPathA
-@ stdcall PathSetDlgItemPathW (long long ptr) PathSetDlgItemPathW
-@ stdcall PathSkipRootA(str) PathSkipRootA
-@ stdcall PathSkipRootW(wstr) PathSkipRootW
-@ stdcall PathStripPathA(str) PathStripPathA
-@ stdcall PathStripPathW(wstr) PathStripPathW
-@ stdcall PathStripToRootA(str) PathStripToRootA
-@ stdcall PathStripToRootW(wstr) PathStripToRootW
-@ stdcall PathUnmakeSystemFolderA(str)PathUnmakeSystemFolderA
-@ stdcall PathUnmakeSystemFolderW(wstr)PathUnmakeSystemFolderW
-@ stdcall PathUnquoteSpacesA (str) PathUnquoteSpacesA
-@ stdcall PathUnquoteSpacesW (wstr) PathUnquoteSpacesW
-@ stdcall SHCreateShellPalette(long)SHCreateShellPalette
-@ stdcall SHDeleteEmptyKeyA(long ptr) SHDeleteEmptyKeyA
-@ stdcall SHDeleteEmptyKeyW(long ptr) SHDeleteEmptyKeyW
-@ stdcall SHDeleteKeyA(long str) SHDeleteKeyA
-@ stdcall SHDeleteKeyW(long wstr) SHDeleteKeyW
-@ stdcall SHDeleteOrphanKeyA(long str) SHDeleteOrphanKeyA
-@ stdcall SHDeleteOrphanKeyW(long wstr) SHDeleteOrphanKeyW
-@ stdcall SHDeleteValueA(long  str  str) SHDeleteValueA
-@ stdcall SHDeleteValueW(long wstr wstr) SHDeleteValueW
-@ stdcall SHEnumKeyExA(long long str ptr) SHEnumKeyExA
-@ stdcall SHEnumKeyExW(long long wstr ptr) SHEnumKeyExW
-@ stdcall SHEnumValueA(long long str ptr ptr ptr ptr) SHEnumValueA
-@ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr) SHEnumValueW
-@ stdcall SHGetInverseCMAP ( ptr long ) SHGetInverseCMAP
-@ stdcall SHGetValueA ( long str str ptr ptr ptr ) SHGetValueA
-@ stdcall SHGetValueW ( long wstr wstr ptr ptr ptr ) SHGetValueW
-@ stdcall SHIsLowMemoryMachine(long)SHIsLowMemoryMachine
-@ stdcall SHOpenRegStreamA(long str str long)SHOpenRegStreamA
-@ stdcall SHOpenRegStreamW(long wstr str long)SHOpenRegStreamW
-@ stdcall SHOpenRegStream2A(long str str long)SHOpenRegStream2A
-@ stdcall SHOpenRegStream2W(long wstr str long)SHOpenRegStream2W
-@ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr) SHQueryInfoKeyA
-@ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr) SHQueryInfoKeyW
-@ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) SHQueryValueExA
-@ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr) SHQueryValueExW
-@ stdcall SHRegCloseUSKey(ptr) SHRegCloseUSKey
+@ stdcall PathAddBackslashA (str)
+@ stdcall PathAddBackslashW (wstr)
+@ stdcall PathAddExtensionA (str str)
+@ stdcall PathAddExtensionW (wstr wstr)
+@ stdcall PathAppendA (str str)
+@ stdcall PathAppendW (wstr wstr)
+@ stdcall PathBuildRootA (ptr long)
+@ stdcall PathBuildRootW (ptr long)
+@ stdcall PathCanonicalizeA (ptr str)
+@ stdcall PathCanonicalizeW (ptr wstr)
+@ stdcall PathCombineA (ptr ptr ptr)
+@ stdcall PathCombineW (ptr ptr ptr)
+@ stdcall PathCommonPrefixA(str str ptr)
+@ stdcall PathCommonPrefixW(wstr wstr ptr)
+@ stdcall PathCompactPathA(long str long)
+@ stdcall PathCompactPathExA(ptr str long long)
+@ stdcall PathCompactPathExW(ptr wstr long long)
+@ stdcall PathCompactPathW(long wstr long)
+@ stdcall PathCreateFromUrlA(str ptr ptr long)
+@ stdcall PathCreateFromUrlW(wstr ptr ptr long)
+@ stdcall PathFileExistsA (str)
+@ stdcall PathFileExistsW (wstr)
+@ stdcall PathFindExtensionA (str)
+@ stdcall PathFindExtensionW (wstr)
+@ stdcall PathFindFileNameA (str)
+@ stdcall PathFindFileNameW (wstr)
+@ stdcall PathFindNextComponentA (str)
+@ stdcall PathFindNextComponentW (wstr)
+@ stdcall PathFindOnPathA (str ptr)
+@ stdcall PathFindOnPathW (wstr ptr)
+@ stdcall PathGetArgsA (str)
+@ stdcall PathGetArgsW (wstr)
+@ stdcall PathGetCharTypeA(long)
+@ stdcall PathGetCharTypeW(long)
+@ stdcall PathGetDriveNumberA (str)
+@ stdcall PathGetDriveNumberW (wstr)
+@ stdcall PathIsContentTypeA(str str)
+@ stdcall PathIsContentTypeW(wstr wstr)
+@ stdcall PathIsDirectoryA(str)
+@ stdcall PathIsDirectoryW(wstr)
+@ stdcall PathIsFileSpecA(str)
+@ stdcall PathIsFileSpecW(wstr)
+@ stdcall PathIsPrefixA(str str)
+@ stdcall PathIsPrefixW(wstr wstr)
+@ stdcall PathIsRelativeA (str)
+@ stdcall PathIsRelativeW (wstr)
+@ stdcall PathIsRootA(str)
+@ stdcall PathIsRootW(wstr)
+@ stdcall PathIsSameRootA(str str)
+@ stdcall PathIsSameRootW(wstr wstr)
+@ stdcall PathIsSystemFolderA(str long)
+@ stdcall PathIsSystemFolderW(wstr long)
+@ stdcall PathIsUNCA (str)
+@ stdcall PathIsUNCServerA(str)
+@ stdcall PathIsUNCServerShareA(str)
+@ stdcall PathIsUNCServerShareW(wstr)
+@ stdcall PathIsUNCServerW(wstr)
+@ stdcall PathIsUNCW(wstr)
+@ stdcall PathIsURLA(str)
+@ stdcall PathIsURLW(wstr)
+@ stdcall PathMakePrettyA(str)
+@ stdcall PathMakePrettyW(wstr)
+@ stdcall PathMakeSystemFolderA(str)
+@ stdcall PathMakeSystemFolderW(wstr)
+@ stdcall PathMatchSpecA  (str str)
+@ stdcall PathMatchSpecW  (wstr wstr)
+@ stdcall PathParseIconLocationA (str)
+@ stdcall PathParseIconLocationW (wstr)
+@ stdcall PathQuoteSpacesA (str)
+@ stdcall PathQuoteSpacesW (wstr)
+@ stdcall PathRelativePathToA(ptr str long str long)
+@ stdcall PathRelativePathToW(ptr str long str long)
+@ stdcall PathRemoveArgsA(str)
+@ stdcall PathRemoveArgsW(wstr)
+@ stdcall PathRemoveBackslashA (str)
+@ stdcall PathRemoveBackslashW (wstr)
+@ stdcall PathRemoveBlanksA(str)
+@ stdcall PathRemoveBlanksW(wstr)
+@ stdcall PathRemoveExtensionA(str)
+@ stdcall PathRemoveExtensionW(wstr)
+@ stdcall PathRemoveFileSpecA (str)
+@ stdcall PathRemoveFileSpecW (wstr)
+@ stdcall PathRenameExtensionA(str str)
+@ stdcall PathRenameExtensionW(wstr wstr)
+@ stdcall PathSearchAndQualifyA(str ptr long)
+@ stdcall PathSearchAndQualifyW(wstr ptr long)
+@ stdcall PathSetDlgItemPathA (long long ptr)
+@ stdcall PathSetDlgItemPathW (long long ptr)
+@ stdcall PathSkipRootA(str)
+@ stdcall PathSkipRootW(wstr)
+@ stdcall PathStripPathA(str)
+@ stdcall PathStripPathW(wstr)
+@ stdcall PathStripToRootA(str)
+@ stdcall PathStripToRootW(wstr)
+@ stdcall PathUnmakeSystemFolderA(str)
+@ stdcall PathUnmakeSystemFolderW(wstr)
+@ stdcall PathUnquoteSpacesA (str)
+@ stdcall PathUnquoteSpacesW (wstr)
+@ stdcall SHCreateShellPalette(long)
+@ stdcall SHDeleteEmptyKeyA(long ptr)
+@ stdcall SHDeleteEmptyKeyW(long ptr)
+@ stdcall SHDeleteKeyA(long str)
+@ stdcall SHDeleteKeyW(long wstr)
+@ stdcall SHDeleteOrphanKeyA(long str)
+@ stdcall SHDeleteOrphanKeyW(long wstr)
+@ stdcall SHDeleteValueA(long  str  str)
+@ stdcall SHDeleteValueW(long wstr wstr)
+@ stdcall SHEnumKeyExA(long long str ptr)
+@ stdcall SHEnumKeyExW(long long wstr ptr)
+@ stdcall SHEnumValueA(long long str ptr ptr ptr ptr)
+@ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr)
+@ stdcall SHGetInverseCMAP ( ptr long )
+@ stdcall SHGetValueA ( long str str ptr ptr ptr )
+@ stdcall SHGetValueW ( long wstr wstr ptr ptr ptr )
+@ stdcall SHIsLowMemoryMachine(long)
+@ stdcall SHOpenRegStreamA(long str str long)
+@ stdcall SHOpenRegStreamW(long wstr str long)
+@ stdcall SHOpenRegStream2A(long str str long)
+@ stdcall SHOpenRegStream2W(long wstr str long)
+@ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr)
+@ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr)
+@ stdcall SHQueryValueExA(long str ptr ptr ptr ptr)
+@ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr)
+@ stdcall SHRegCloseUSKey(ptr)
 @ stub    SHRegCreateUSKeyA
 @ stub    SHRegCreateUSKeyW
 @ stub    SHRegDeleteEmptyUSKeyA
 @ stub    SHRegDeleteEmptyUSKeyW
 @ stub    SHRegDeleteUSValueA
 @ stub    SHRegDeleteUSValueW
-@ stdcall SHRegEnumUSKeyA(long long str ptr long) SHRegEnumUSKeyA
-@ stdcall SHRegEnumUSKeyW(long long wstr ptr long) SHRegEnumUSKeyW
+@ stdcall SHRegEnumUSKeyA(long long str ptr long)
+@ stdcall SHRegEnumUSKeyW(long long wstr ptr long)
 @ stub    SHRegEnumUSValueA
 @ stub    SHRegEnumUSValueW
-@ stdcall SHRegGetBoolUSValueA(str str long long)SHRegGetBoolUSValueA
-@ stdcall SHRegGetBoolUSValueW(wstr wstr long long)SHRegGetBoolUSValueW
-@ stdcall SHRegGetUSValueA ( str str ptr ptr ptr long ptr long ) SHRegGetUSValueA
-@ stdcall SHRegGetUSValueW ( wstr wstr ptr ptr ptr long ptr long ) SHRegGetUSValueW
-@ stdcall SHRegOpenUSKeyA ( str long long long long ) SHRegOpenUSKeyA
-@ stdcall SHRegOpenUSKeyW ( wstr long long long long ) SHRegOpenUSKeyW
-@ stdcall SHRegQueryInfoUSKeyA ( long ptr ptr ptr ptr long ) SHRegQueryInfoUSKeyA
-@ stdcall SHRegQueryInfoUSKeyW ( long ptr ptr ptr ptr long ) SHRegQueryInfoUSKeyW
-@ stdcall SHRegQueryUSValueA ( long str ptr ptr ptr long ptr long ) SHRegQueryUSValueA
-@ stdcall SHRegQueryUSValueW ( long wstr ptr ptr ptr long ptr long ) SHRegQueryUSValueW
-@ stdcall SHRegSetUSValueA ( str str long ptr long long) SHRegSetUSValueA
-@ stdcall SHRegSetUSValueW ( wstr wstr long ptr long long) SHRegSetUSValueW
-@ stdcall SHRegWriteUSValueA (long str long ptr long long) SHRegWriteUSValueA
-@ stdcall SHRegWriteUSValueW (long str long ptr long long) SHRegWriteUSValueW
-@ stdcall SHSetValueA (long  str  str long ptr long) SHSetValueA
-@ stdcall SHSetValueW (long wstr wstr long ptr long) SHSetValueW
-@ stdcall StrCSpnA (str str) StrCSpnA
-@ stdcall StrCSpnIA (str str) StrCSpnIA
-@ stdcall StrCSpnIW (wstr wstr) StrCSpnIW
-@ stdcall StrCSpnW (wstr wstr) StrCSpnW
-@ stdcall StrCatBuffA (str str long) StrCatBuffA
-@ stdcall StrCatBuffW (wstr wstr long) StrCatBuffW
-@ stdcall StrCatW (ptr wstr) StrCatW
-@ stdcall StrChrA (str long) StrChrA
-@ stdcall StrChrIA (str long) StrChrIA
-@ stdcall StrChrIW (wstr long) StrChrIW
-@ stdcall StrChrW (wstr long) StrChrW
-@ stdcall StrCmpIW (wstr wstr) StrCmpIW
-@ stdcall StrCmpNA (str str long) StrCmpNA
-@ stdcall StrCmpNIA (str str long) StrCmpNIA
-@ stdcall StrCmpNIW (wstr wstr long) StrCmpNIW
-@ stdcall StrCmpNW (wstr wstr long) StrCmpNW
-@ stdcall StrCmpW (wstr wstr) StrCmpW
-@ stdcall StrCpyNW (wstr wstr long) StrCpyNW
-@ stdcall StrCpyW (ptr wstr) StrCpyW
-@ stdcall StrDupA (str) StrDupA
-@ stdcall StrDupW (wstr) StrDupW
-@ stdcall StrFormatByteSizeA(long ptr long) StrFormatByteSizeA
-@ stdcall StrFormatByteSizeW(long long ptr long) StrFormatByteSizeW
-@ stdcall StrFromTimeIntervalA(ptr long long long) StrFromTimeIntervalA
-@ stdcall StrFromTimeIntervalW(ptr long long long) StrFromTimeIntervalW
-@ stdcall StrIsIntlEqualA(long str str long) StrIsIntlEqualA
-@ stdcall StrIsIntlEqualW(long wstr wstr long) StrIsIntlEqualW
-@ stdcall StrNCatA(str str long) StrNCatA
-@ stdcall StrNCatW(wstr wstr long) StrNCatW
-@ stdcall StrPBrkA(str str) StrPBrkA
-@ stdcall StrPBrkW(wstr wstr) StrPBrkW
-@ stdcall StrRChrA (str str long) StrRChrA
-@ stdcall StrRChrIA (str str long) StrRChrIA
-@ stdcall StrRChrIW (str str long) StrRChrIW
-@ stdcall StrRChrW (wstr wstr long) StrRChrW
-@ stdcall StrRStrIA (str str str) StrRStrIA
-@ stdcall StrRStrIW (wstr wstr wstr) StrRStrIW
-@ stdcall StrSpnA (str str) StrSpnA
-@ stdcall StrSpnW (wstr wstr) StrSpnW
-@ stdcall StrStrA(str str)StrStrA
-@ stdcall StrStrIA(str str)StrStrIA
-@ stdcall StrStrIW(wstr wstr)StrStrIW
-@ stdcall StrStrW(wstr wstr)StrStrW
-@ stdcall StrToIntA(str)StrToIntA
-@ stdcall StrToIntExA(str long ptr) StrToIntExA
-@ stdcall StrToIntExW(wstr long ptr) StrToIntExW
-@ stdcall StrToIntW(wstr)StrToIntW
-@ stdcall StrTrimA(str str) StrTrimA
-@ stdcall StrTrimW(wstr wstr) StrTrimW
-@ stdcall UrlApplySchemeA(str ptr ptr long) UrlApplySchemeA
-@ stdcall UrlApplySchemeW(wstr ptr ptr long) UrlApplySchemeW
-@ stdcall UrlCanonicalizeA(str ptr ptr long) UrlCanonicalizeA
-@ stdcall UrlCanonicalizeW(wstr ptr ptr long) UrlCanonicalizeW
-@ stdcall UrlCombineA(str str str ptr long) UrlCombineA
-@ stdcall UrlCombineW(wstr wstr wstr ptr long) UrlCombineW
-@ stdcall UrlCompareA(str str long) UrlCompareA
-@ stdcall UrlCompareW(wstr wstr long) UrlCompareW
-@ stdcall UrlCreateFromPathA(str ptr ptr long) UrlCreateFromPathA
-@ stdcall UrlCreateFromPathW(wstr ptr ptr long) UrlCreateFromPathW
-@ stdcall UrlEscapeA(str ptr ptr long)UrlEscapeA
-@ stdcall UrlEscapeW(wstr ptr ptr long)UrlEscapeW
-@ stdcall UrlGetLocationA(str) UrlGetLocationA
-@ stdcall UrlGetLocationW(wstr) UrlGetLocationW
-@ stdcall UrlGetPartA(str ptr ptr long long) UrlGetPartA
-@ stdcall UrlGetPartW(wstr ptr ptr long long) UrlGetPartW
-@ stdcall UrlHashA(str ptr long) UrlHashA
-@ stdcall UrlHashW(wstr ptr long) UrlHashW
-@ stdcall UrlIsA(str long) UrlIsA
-@ stdcall UrlIsNoHistoryA(str) UrlIsNoHistoryA
-@ stdcall UrlIsNoHistoryW(wstr) UrlIsNoHistoryW
-@ stdcall UrlIsOpaqueA(str) UrlIsOpaqueA
-@ stdcall UrlIsOpaqueW(wstr) UrlIsOpaqueW
-@ stdcall UrlIsW(wstr long) UrlIsW
-@ stdcall UrlUnescapeA(str ptr ptr long) UrlUnescapeA
-@ stdcall UrlUnescapeW(wstr ptr ptr long) UrlUnescapeW
-@ varargs wnsprintfA(ptr long str) wnsprintfA
-@ varargs wnsprintfW(ptr long wstr) wnsprintfW
-@ stdcall wvnsprintfA(ptr long str ptr) wvnsprintfA
-@ stdcall wvnsprintfW(ptr long wstr ptr) wvnsprintfW
+@ stdcall SHRegGetBoolUSValueA(str str long long)
+@ stdcall SHRegGetBoolUSValueW(wstr wstr long long)
+@ stdcall SHRegGetUSValueA ( str str ptr ptr ptr long ptr long )
+@ stdcall SHRegGetUSValueW ( wstr wstr ptr ptr ptr long ptr long )
+@ stdcall SHRegOpenUSKeyA ( str long long long long )
+@ stdcall SHRegOpenUSKeyW ( wstr long long long long )
+@ stdcall SHRegQueryInfoUSKeyA ( long ptr ptr ptr ptr long )
+@ stdcall SHRegQueryInfoUSKeyW ( long ptr ptr ptr ptr long )
+@ stdcall SHRegQueryUSValueA ( long str ptr ptr ptr long ptr long )
+@ stdcall SHRegQueryUSValueW ( long wstr ptr ptr ptr long ptr long )
+@ stdcall SHRegSetUSValueA ( str str long ptr long long)
+@ stdcall SHRegSetUSValueW ( wstr wstr long ptr long long)
+@ stdcall SHRegWriteUSValueA (long str long ptr long long)
+@ stdcall SHRegWriteUSValueW (long str long ptr long long)
+@ stdcall SHSetValueA (long  str  str long ptr long)
+@ stdcall SHSetValueW (long wstr wstr long ptr long)
+@ stdcall StrCSpnA (str str)
+@ stdcall StrCSpnIA (str str)
+@ stdcall StrCSpnIW (wstr wstr)
+@ stdcall StrCSpnW (wstr wstr)
+@ stdcall StrCatBuffA (str str long)
+@ stdcall StrCatBuffW (wstr wstr long)
+@ stdcall StrCatW (ptr wstr)
+@ stdcall StrChrA (str long)
+@ stdcall StrChrIA (str long)
+@ stdcall StrChrIW (wstr long)
+@ stdcall StrChrW (wstr long)
+@ stdcall StrCmpIW (wstr wstr)
+@ stdcall StrCmpNA (str str long)
+@ stdcall StrCmpNIA (str str long)
+@ stdcall StrCmpNIW (wstr wstr long)
+@ stdcall StrCmpNW (wstr wstr long)
+@ stdcall StrCmpW (wstr wstr)
+@ stdcall StrCpyNW (wstr wstr long)
+@ stdcall StrCpyW (ptr wstr)
+@ stdcall StrDupA (str)
+@ stdcall StrDupW (wstr)
+@ stdcall StrFormatByteSizeA(long ptr long)
+@ stdcall StrFormatByteSizeW(long long ptr long)
+@ stdcall StrFromTimeIntervalA(ptr long long long)
+@ stdcall StrFromTimeIntervalW(ptr long long long)
+@ stdcall StrIsIntlEqualA(long str str long)
+@ stdcall StrIsIntlEqualW(long wstr wstr long)
+@ stdcall StrNCatA(str str long)
+@ stdcall StrNCatW(wstr wstr long)
+@ stdcall StrPBrkA(str str)
+@ stdcall StrPBrkW(wstr wstr)
+@ stdcall StrRChrA (str str long)
+@ stdcall StrRChrIA (str str long)
+@ stdcall StrRChrIW (str str long)
+@ stdcall StrRChrW (wstr wstr long)
+@ stdcall StrRStrIA (str str str)
+@ stdcall StrRStrIW (wstr wstr wstr)
+@ stdcall StrSpnA (str str)
+@ stdcall StrSpnW (wstr wstr)
+@ stdcall StrStrA(str str)
+@ stdcall StrStrIA(str str)
+@ stdcall StrStrIW(wstr wstr)
+@ stdcall StrStrW(wstr wstr)
+@ stdcall StrToIntA(str)
+@ stdcall StrToIntExA(str long ptr)
+@ stdcall StrToIntExW(wstr long ptr)
+@ stdcall StrToIntW(wstr)
+@ stdcall StrTrimA(str str)
+@ stdcall StrTrimW(wstr wstr)
+@ stdcall UrlApplySchemeA(str ptr ptr long)
+@ stdcall UrlApplySchemeW(wstr ptr ptr long)
+@ stdcall UrlCanonicalizeA(str ptr ptr long)
+@ stdcall UrlCanonicalizeW(wstr ptr ptr long)
+@ stdcall UrlCombineA(str str str ptr long)
+@ stdcall UrlCombineW(wstr wstr wstr ptr long)
+@ stdcall UrlCompareA(str str long)
+@ stdcall UrlCompareW(wstr wstr long)
+@ stdcall UrlCreateFromPathA(str ptr ptr long)
+@ stdcall UrlCreateFromPathW(wstr ptr ptr long)
+@ stdcall UrlEscapeA(str ptr ptr long)
+@ stdcall UrlEscapeW(wstr ptr ptr long)
+@ stdcall UrlGetLocationA(str)
+@ stdcall UrlGetLocationW(wstr)
+@ stdcall UrlGetPartA(str ptr ptr long long)
+@ stdcall UrlGetPartW(wstr ptr ptr long long)
+@ stdcall UrlHashA(str ptr long)
+@ stdcall UrlHashW(wstr ptr long)
+@ stdcall UrlIsA(str long)
+@ stdcall UrlIsNoHistoryA(str)
+@ stdcall UrlIsNoHistoryW(wstr)
+@ stdcall UrlIsOpaqueA(str)
+@ stdcall UrlIsOpaqueW(wstr)
+@ stdcall UrlIsW(wstr long)
+@ stdcall UrlUnescapeA(str ptr ptr long)
+@ stdcall UrlUnescapeW(wstr ptr ptr long)
+@ varargs wnsprintfA(ptr long str)
+@ varargs wnsprintfW(ptr long wstr)
+@ stdcall wvnsprintfA(ptr long str ptr)
+@ stdcall wvnsprintfW(ptr long wstr ptr)
 
 
 # exported in later versions
-@ stdcall StrRetToBufA (ptr ptr ptr long) StrRetToBufA
-@ stdcall StrRetToBufW (ptr ptr ptr long) StrRetToBufW
-@ stdcall StrRetToStrA (ptr ptr ptr) StrRetToStrA
-@ stdcall StrRetToStrW (ptr ptr ptr) StrRetToStrW
-@ stdcall SHRegGetPathA(long str str ptr long)SHRegGetPathA
-@ stdcall SHRegGetPathW(long wstr wstr ptr long)SHRegGetPathW
+@ stdcall StrRetToBufA (ptr ptr ptr long)
+@ stdcall StrRetToBufW (ptr ptr ptr long)
+@ stdcall StrRetToStrA (ptr ptr ptr)
+@ stdcall StrRetToStrW (ptr ptr ptr)
+@ stdcall SHRegGetPathA(long str str ptr long)
+@ stdcall SHRegGetPathW(long wstr wstr ptr long)
 @ stub    MLLoadLibraryA
 @ stub    MLLoadLibraryW
-@ stdcall PathIsDirectoryEmptyA(str) PathIsDirectoryEmptyA
-@ stdcall PathIsDirectoryEmptyW(wstr) PathIsDirectoryEmptyW
-@ stdcall PathIsNetworkPathA(str) PathIsNetworkPathA
-@ stdcall PathIsNetworkPathW(wstr) PathIsNetworkPathW
-@ stdcall PathIsLFNFileSpecA(str) PathIsLFNFileSpecA
-@ stdcall PathIsLFNFileSpecW(wstr) PathIsLFNFileSpecW
-@ stdcall PathFindSuffixArrayA(str ptr long) PathFindSuffixArrayA
-@ stdcall PathFindSuffixArrayW(wstr ptr long) PathFindSuffixArrayW
-@ stdcall _SHGetInstanceExplorer(ptr) _SHGetInstanceExplorer
-@ stdcall PathUndecorateA(str) PathUndecorateA
-@ stdcall PathUndecorateW(wstr) PathUndecorateW
+@ stdcall PathIsDirectoryEmptyA(str)
+@ stdcall PathIsDirectoryEmptyW(wstr)
+@ stdcall PathIsNetworkPathA(str)
+@ stdcall PathIsNetworkPathW(wstr)
+@ stdcall PathIsLFNFileSpecA(str)
+@ stdcall PathIsLFNFileSpecW(wstr)
+@ stdcall PathFindSuffixArrayA(str ptr long)
+@ stdcall PathFindSuffixArrayW(wstr ptr long)
+@ stdcall _SHGetInstanceExplorer(ptr)
+@ stdcall PathUndecorateA(str)
+@ stdcall PathUndecorateW(wstr)
 @ stub    PathUnExpandEnvStringsA
 @ stub    PathUnExpandEnvStringsW
-@ stdcall SHCopyKeyA(long str long long) SHCopyKeyA
-@ stdcall SHCopyKeyW(long wstr long long) SHCopyKeyW
-@ stdcall SHAutoComplete(ptr long) SHAutoComplete
-@ stdcall SHCreateStreamOnFileA(str long ptr) SHCreateStreamOnFileA
-@ stdcall SHCreateStreamOnFileW(wstr long ptr) SHCreateStreamOnFileW
-@ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) SHCreateStreamOnFileEx
-@ stdcall SHCreateStreamWrapper(ptr ptr long ptr) SHCreateStreamWrapper
-@ stdcall SHGetThreadRef (ptr) SHGetThreadRef
-@ stdcall SHRegDuplicateHKey (long) SHRegDuplicateHKey
-@ stdcall SHRegSetPathA(long str str str long) SHRegSetPathA
-@ stdcall SHRegSetPathW(long wstr wstr wstr long) SHRegSetPathW
+@ stdcall SHCopyKeyA(long str long long)
+@ stdcall SHCopyKeyW(long wstr long long)
+@ stdcall SHAutoComplete(ptr long)
+@ stdcall SHCreateStreamOnFileA(str long ptr)
+@ stdcall SHCreateStreamOnFileW(wstr long ptr)
+@ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr)
+@ stdcall SHCreateStreamWrapper(ptr ptr long ptr)
+@ stdcall SHGetThreadRef (ptr)
+@ stdcall SHRegDuplicateHKey (long)
+@ stdcall SHRegSetPathA(long str str str long)
+@ stdcall SHRegSetPathW(long wstr wstr wstr long)
 @ stub    SHRegisterValidateTemplate
-@ stdcall SHSetThreadRef (ptr) SHSetThreadRef
-@ stdcall SHReleaseThreadRef() SHReleaseThreadRef
-@ stdcall SHSkipJunction(ptr ptr) SHSkipJunction
-@ stdcall SHStrDupA (str ptr) SHStrDupA
-@ stdcall SHStrDupW (wstr ptr) SHStrDupW
-@ stdcall StrFormatByteSize64A(long long ptr long) StrFormatByteSize64A
-@ stdcall StrFormatKBSizeA(long long str long) StrFormatKBSizeA
-@ stdcall StrFormatKBSizeW(long long wstr long) StrFormatKBSizeW
-@ stdcall StrCmpLogicalW(wstr wstr) StrCmpLogicalW
+@ stdcall SHSetThreadRef (ptr)
+@ stdcall SHReleaseThreadRef()
+@ stdcall SHSkipJunction(ptr ptr)
+@ stdcall SHStrDupA (str ptr)
+@ stdcall SHStrDupW (wstr ptr)
+@ stdcall StrFormatByteSize64A(long long ptr long)
+@ stdcall StrFormatKBSizeA(long long str long)
+@ stdcall StrFormatKBSizeW(long long wstr long)
+@ stdcall StrCmpLogicalW(wstr wstr)

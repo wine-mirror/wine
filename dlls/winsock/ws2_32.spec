@@ -25,23 +25,23 @@
 21  stdcall  setsockopt(long long long ptr long) WS_setsockopt
 22  stdcall  shutdown(long long) WS_shutdown
 23  stdcall  socket(long long long) WS_socket
-24  stdcall  WSApSetPostRoutine(ptr) WSApSetPostRoutine
+24  stdcall  WSApSetPostRoutine(ptr)
 25  stub     WPUCompleteOverlappedRequest
-26  stdcall  WSAAccept(long ptr ptr ptr long) WSAAccept
+26  stdcall  WSAAccept(long ptr ptr ptr long)
 27  stub     WSAAddressToStringA
 28  stub     WSAAddressToStringW
-29  stdcall  WSACloseEvent(long) WSACloseEvent
-30  stdcall  WSAConnect(long ptr long ptr ptr ptr ptr) WSAConnect
-31  stdcall  WSACreateEvent ()  WSACreateEvent
-32  stdcall  WSADuplicateSocketA(long long ptr) WSADuplicateSocketA
+29  stdcall  WSACloseEvent(long)
+30  stdcall  WSAConnect(long ptr long ptr ptr ptr ptr)
+31  stdcall  WSACreateEvent ()
+32  stdcall  WSADuplicateSocketA(long long ptr)
 33  stub     WSADuplicateSocketW
 34  stub     WSAEnumNameSpaceProvidersA
 35  stub     WSAEnumNameSpaceProvidersW
-36  stdcall  WSAEnumNetworkEvents(long long ptr) WSAEnumNetworkEvents
-37  stdcall  WSAEnumProtocolsA(ptr ptr ptr) WSAEnumProtocolsA
-38  stdcall  WSAEnumProtocolsW(ptr ptr ptr) WSAEnumProtocolsW
-39  stdcall  WSAEventSelect(long long long) WSAEventSelect
-40  stdcall  WSAGetOverlappedResult(long ptr ptr long ptr) WSAGetOverlappedResult
+36  stdcall  WSAEnumNetworkEvents(long long ptr)
+37  stdcall  WSAEnumProtocolsA(ptr ptr ptr)
+38  stdcall  WSAEnumProtocolsW(ptr ptr ptr)
+39  stdcall  WSAEventSelect(long long long)
+40  stdcall  WSAGetOverlappedResult(long ptr ptr long ptr)
 41  stub     WSAGetQOSByName
 42  stub     WSAGetServiceClassInfoA
 43  stub     WSAGetServiceClassInfoW
@@ -49,9 +49,9 @@
 45  stub     WSAGetServiceClassNameByClassIdW
 46  stub     WSAHtonl
 47  stub     WSAHtons
-48  stdcall  WSAInstallServiceClassA(ptr) WSAInstallServiceClassA
-49  stdcall  WSAInstallServiceClassW(ptr) WSAInstallServiceClassW
-50  stdcall  WSAIoctl(long long ptr long ptr long ptr ptr ptr) WSAIoctl
+48  stdcall  WSAInstallServiceClassA(ptr)
+49  stdcall  WSAInstallServiceClassW(ptr)
+50  stdcall  WSAIoctl(long long ptr long ptr long ptr ptr ptr)
 51  stdcall  gethostbyaddr(ptr long long) WS_gethostbyaddr
 52  stdcall  gethostbyname(str) WS_gethostbyname
 53  stdcall  getprotobyname(str) WS_getprotobyname
@@ -68,54 +68,54 @@
 64  stub     WSANtohl
 65  stub     WSANtohs
 66  stub     WSAProviderConfigChange
-67  stdcall  WSARecv(long ptr long ptr ptr ptr ptr) WSARecv
+67  stdcall  WSARecv(long ptr long ptr ptr ptr ptr)
 68  stub     WSARecvDisconnect
-69  stdcall  WSARecvFrom(long ptr long ptr ptr ptr ptr ptr ptr ) WSARecvFrom
+69  stdcall  WSARecvFrom(long ptr long ptr ptr ptr ptr ptr ptr )
 70  stub     WSARemoveServiceClass
 71  stdcall  WSAResetEvent(long) kernel32.ResetEvent
-72  stdcall  WSASend(long ptr long ptr long ptr ptr) WSASend
-73  stdcall  WSASendDisconnect(long ptr) WSASendDisconnect
-74  stdcall  WSASendTo(long ptr long ptr long ptr long ptr ptr) WSASendTo
+72  stdcall  WSASend(long ptr long ptr long ptr ptr)
+73  stdcall  WSASendDisconnect(long ptr)
+74  stdcall  WSASendTo(long ptr long ptr long ptr long ptr ptr)
 75  stub     WSASetEvent
 76  stub     WSASetServiceA
 77  stub     WSASetServiceW
-78  stdcall  WSASocketA(long long long ptr long long) WSASocketA
+78  stdcall  WSASocketA(long long long ptr long long)
 79  stub     WSASocketW
 80  stub     WSAStringToAddressA
 81  stub     WSAStringToAddressW
 82  stdcall  WSAWaitForMultipleEvents(long ptr long long long) kernel32.WaitForMultipleObjectsEx
-83  stdcall  WSCDeinstallProvider(ptr ptr) WSCDeinstallProvider
+83  stdcall  WSCDeinstallProvider(ptr ptr)
 84  stub     WSCEnableNSProvider
 85  stub     WSCEnumProtocols
 86  stub     WSCGetProviderPath
 87  stub     WSCInstallNameSpace
-88  stdcall  WSCInstallProvider(ptr wstr ptr long ptr) WSCInstallProvider
+88  stdcall  WSCInstallProvider(ptr wstr ptr long ptr)
 89  stub     WSCUnInstallNameSpace
 90  stub     WSCWriteNameSpaceOrder
 91  stub     WSCWriteProviderOrder
 
 #  92 ~ 100   UNKNOWN
 
-101 stdcall WSAAsyncSelect(long long long long) WSAAsyncSelect
-102 stdcall WSAAsyncGetHostByAddr(long long ptr long long ptr long) WSAAsyncGetHostByAddr
-103 stdcall WSAAsyncGetHostByName(long long str ptr long) WSAAsyncGetHostByName
-104 stdcall WSAAsyncGetProtoByNumber(long long long ptr long) WSAAsyncGetProtoByNumber
-105 stdcall WSAAsyncGetProtoByName(long long str ptr long) WSAAsyncGetProtoByName
-106 stdcall WSAAsyncGetServByPort(long long long str ptr long) WSAAsyncGetServByPort
-107 stdcall WSAAsyncGetServByName(long long str str ptr long) WSAAsyncGetServByName
-108 stdcall WSACancelAsyncRequest(long) WSACancelAsyncRequest
-109 stdcall WSASetBlockingHook(ptr) WSASetBlockingHook
-110 stdcall WSAUnhookBlockingHook() WSAUnhookBlockingHook
-111 stdcall WSAGetLastError() WSAGetLastError
-112 stdcall WSASetLastError(long) WSASetLastError
-113 stdcall WSACancelBlockingCall() WSACancelBlockingCall
-114 stdcall WSAIsBlocking() WSAIsBlocking
-115 stdcall WSAStartup(long ptr) WSAStartup
-116 stdcall WSACleanup() WSACleanup
+101 stdcall WSAAsyncSelect(long long long long)
+102 stdcall WSAAsyncGetHostByAddr(long long ptr long long ptr long)
+103 stdcall WSAAsyncGetHostByName(long long str ptr long)
+104 stdcall WSAAsyncGetProtoByNumber(long long long ptr long)
+105 stdcall WSAAsyncGetProtoByName(long long str ptr long)
+106 stdcall WSAAsyncGetServByPort(long long long str ptr long)
+107 stdcall WSAAsyncGetServByName(long long str str ptr long)
+108 stdcall WSACancelAsyncRequest(long)
+109 stdcall WSASetBlockingHook(ptr)
+110 stdcall WSAUnhookBlockingHook()
+111 stdcall WSAGetLastError()
+112 stdcall WSASetLastError(long)
+113 stdcall WSACancelBlockingCall()
+114 stdcall WSAIsBlocking()
+115 stdcall WSAStartup(long ptr)
+116 stdcall WSACleanup()
 
 #  117 ~ 150  UNKNOWN
 
-151 stdcall  __WSAFDIsSet(long ptr) __WSAFDIsSet
+151 stdcall  __WSAFDIsSet(long ptr)
 
 #  152 ~ 499  UNKNOWN
 

@@ -11,15 +11,15 @@
 @ stub CoInternetCreateZoneManager
 @ stub CoInternetGetProtocolFlags
 @ stub CoInternetGetSecurityUrl
-@ stdcall CoInternetGetSession(long ptr long) CoInternetGetSession
+@ stdcall CoInternetGetSession(long ptr long)
 @ stub CoInternetParseUrl
-@ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long) CoInternetQueryInfo
+@ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
 @ stub CopyBindInfo
 @ stub CopyStgMedium
 @ stub CreateAsyncBindCtx
-@ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long) CreateAsyncBindCtxEx
+@ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
 @ stub CreateFormatEnumerator
-@ stdcall CreateURLMoniker(ptr wstr ptr) CreateURLMoniker
+@ stdcall CreateURLMoniker(ptr wstr ptr)
 @ stdcall DllCanUnloadNow() URLMON_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) URLMON_DllGetClassObject
 @ stdcall DllInstall(long ptr) URLMON_DllInstall
@@ -30,7 +30,7 @@
 @ stub FaultInIEFeature
 @ stub FindMediaType
 @ stub FindMediaTypeClass
-@ stdcall FindMimeFromData(long ptr ptr long ptr long ptr long) FindMimeFromData 
+@ stdcall FindMimeFromData(long ptr ptr long ptr long ptr long)
 @ stub GetClassFileOrMime
 @ stub GetClassURL
 @ stub GetComponentIDFromCLSSPEC
@@ -47,14 +47,14 @@
 @ stub IsLoggingEnabledW
 @ stub IsValidURL
 @ stdcall MkParseDisplayNameEx(ptr ptr ptr ptr) ole32.MkParseDisplayName
-@ stdcall ObtainUserAgentString(long str ptr) ObtainUserAgentString
+@ stdcall ObtainUserAgentString(long str ptr)
 @ stub PrivateCoInstall
-@ stdcall RegisterBindStatusCallback(ptr ptr ptr long) RegisterBindStatusCallback
+@ stdcall RegisterBindStatusCallback(ptr ptr ptr long)
 @ stub RegisterFormatEnumerator
 @ stub RegisterMediaTypeClass
 @ stub RegisterMediaTypes
-@ stdcall ReleaseBindInfo(ptr) ReleaseBindInfo
-@ stdcall RevokeBindStatusCallback(ptr ptr) RevokeBindStatusCallback
+@ stdcall ReleaseBindInfo(ptr)
+@ stdcall RevokeBindStatusCallback(ptr ptr)
 @ stub RevokeFormatEnumerator
 @ stub SetSoftwareUpdateAdvertisementState
 @ stub URLDownloadA
@@ -71,6 +71,6 @@
 @ stub URLOpenStreamW
 @ stub UrlMkBuildVersion
 @ stub UrlMkGetSessionOption
-@ stdcall UrlMkSetSessionOption(long ptr long long) UrlMkSetSessionOption
+@ stdcall UrlMkSetSessionOption(long ptr long long)
 @ stub WriteHitLogging
 @ stub ZonesReInit

@@ -1,18 +1,18 @@
-@ stdcall EmptyWorkingSet(long) EmptyWorkingSet
-@ stdcall EnumDeviceDrivers(ptr long ptr) EnumDeviceDrivers
-@ stdcall EnumProcessModules(long ptr long ptr) EnumProcessModules
-@ stdcall EnumProcesses(ptr long ptr) EnumProcesses
-@ stdcall GetDeviceDriverBaseNameA(ptr str long) GetDeviceDriverBaseNameA
-@ stdcall GetDeviceDriverBaseNameW(ptr wstr long) GetDeviceDriverBaseNameW
-@ stdcall GetDeviceDriverFileNameA(ptr str long) GetDeviceDriverFileNameA
-@ stdcall GetDeviceDriverFileNameW(ptr wstr long) GetDeviceDriverFileNameW
-@ stdcall GetMappedFileNameA(long ptr str long) GetMappedFileNameA
-@ stdcall GetMappedFileNameW(long ptr wstr long) GetMappedFileNameW
-@ stdcall GetModuleBaseNameA(long long str long) GetModuleBaseNameA
-@ stdcall GetModuleBaseNameW(long long wstr long) GetModuleBaseNameW
-@ stdcall GetModuleFileNameExA(long long str long) GetModuleFileNameExA
-@ stdcall GetModuleFileNameExW(long long wstr long) GetModuleFileNameExW
-@ stdcall GetModuleInformation(long long ptr long) GetModuleInformation
-@ stdcall GetProcessMemoryInfo(long ptr long) GetProcessMemoryInfo
-@ stdcall GetWsChanges(long ptr long) GetWsChanges
-@ stdcall InitializeProcessForWsWatch(long) InitializeProcessForWsWatch
+@ stdcall EmptyWorkingSet(long)
+@ stdcall EnumDeviceDrivers(ptr long ptr)
+@ stdcall EnumProcessModules(long ptr long ptr)
+@ stdcall EnumProcesses(ptr long ptr)
+@ stdcall GetDeviceDriverBaseNameA(ptr str long)
+@ stdcall GetDeviceDriverBaseNameW(ptr wstr long)
+@ stdcall GetDeviceDriverFileNameA(ptr str long)
+@ stdcall GetDeviceDriverFileNameW(ptr wstr long)
+@ stdcall GetMappedFileNameA(long ptr str long)
+@ stdcall GetMappedFileNameW(long ptr wstr long)
+@ stdcall GetModuleBaseNameA(long long str long)
+@ stdcall GetModuleBaseNameW(long long wstr long)
+@ stdcall GetModuleFileNameExA(long long str long)
+@ stdcall GetModuleFileNameExW(long long wstr long)
+@ stdcall GetModuleInformation(long long ptr long)
+@ stdcall GetProcessMemoryInfo(long ptr long)
+@ stdcall GetWsChanges(long ptr long)
+@ stdcall InitializeProcessForWsWatch(long)

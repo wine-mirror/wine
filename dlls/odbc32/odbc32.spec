@@ -1,81 +1,81 @@
-  1 stdcall SQLAllocConnect(long ptr) SQLAllocConnect
-  2 stdcall SQLAllocEnv(ptr)  SQLAllocEnv
-  3 stdcall SQLAllocStmt(long ptr) SQLAllocStmt
-  4 stdcall SQLBindCol(long long long ptr long ptr) SQLBindCol
-  5 stdcall SQLCancel(long) SQLCancel
-  6 stdcall SQLColAttributes(long long long ptr long ptr ptr) SQLColAttributes
-  7 stdcall SQLConnect(long str long str long str long) SQLConnect
-  8 stdcall SQLDescribeCol(long long str long ptr ptr ptr ptr ptr) SQLDescribeCol
-  9 stdcall SQLDisconnect(long) SQLDisconnect
- 10 stdcall SQLError(long long long str ptr str long ptr) SQLError
- 11 stdcall SQLExecDirect(long str long) SQLExecDirect
- 12 stdcall SQLExecute(long) SQLExecute
- 13 stdcall SQLFetch(long) SQLFetch
- 14 stdcall SQLFreeConnect(long) SQLFreeConnect
- 15 stdcall SQLFreeEnv(long) SQLFreeEnv
- 16 stdcall SQLFreeStmt(long long ) SQLFreeStmt
- 17 stdcall SQLGetCursorName(long str long ptr) SQLGetCursorName
- 18 stdcall SQLNumResultCols(long ptr) SQLNumResultCols
- 19 stdcall SQLPrepare(long str long) SQLPrepare
- 20 stdcall SQLRowCount(long ptr) SQLRowCount
- 21 stdcall SQLSetCursorName(long str long) SQLSetCursorName
- 22 stdcall SQLSetParam(long long long long long long ptr ptr) SQLSetParam
- 23 stdcall SQLTransact(long long long) SQLTransact
- 24 stdcall SQLAllocHandle(long long ptr) SQLAllocHandle
- 25 stdcall SQLBindParam(long long long long long long ptr ptr) SQLBindParam
- 26 stdcall SQLCloseCursor(long) SQLCloseCursor
- 27 stdcall SQLColAttribute(long long long ptr long ptr ptr) SQLColAttribute
- 28 stdcall SQLCopyDesc(long long) SQLCopyDesc
- 29 stdcall SQLEndTran(long long long) SQLEndTran
- 30 stdcall SQLFetchScroll(long long long) SQLFetchScroll
- 31 stdcall SQLFreeHandle(long long) SQLFreeHandle
- 32 stdcall SQLGetConnectAttr(long long ptr long ptr) SQLGetConnectAttr
- 33 stdcall SQLGetDescField(long long long ptr long ptr) SQLGetDescField
- 34 stdcall SQLGetDescRec(long long str long ptr ptr ptr ptr ptr ptr ptr) SQLGetDescRec
- 35 stdcall SQLGetDiagField(long long long long ptr long ptr) SQLGetDiagField
- 36 stdcall SQLGetDiagRec(long long long str ptr str long ptr) SQLGetDiagRec
- 37 stdcall SQLGetEnvAttr(long long ptr long ptr) SQLGetEnvAttr
- 38 stdcall SQLGetStmtAttr(long long ptr long ptr) SQLGetStmtAttr
- 39 stdcall SQLSetConnectAttr(long long ptr long) SQLSetConnectAttr
- 40 stdcall SQLColumns(long str long str long str long str long) SQLColumns
- 41 stdcall SQLDriverConnect(long long str long str long str long) SQLDriverConnect
- 42 stdcall SQLGetConnectOption(long long ptr) SQLGetConnectOption
- 43 stdcall SQLGetData(long long long ptr long ptr) SQLGetData
- 44 stdcall SQLGetFunctions(long long ptr) SQLGetFunctions
- 45 stdcall SQLGetInfo(long long ptr long ptr) SQLGetInfo
- 46 stdcall SQLGetStmtOption(long long ptr) SQLGetStmtOption
- 47 stdcall SQLGetTypeInfo(long long) SQLGetTypeInfo
- 48 stdcall SQLParamData(long ptr) SQLParamData
- 49 stdcall SQLPutData(long ptr long) SQLPutData
- 50 stdcall SQLSetConnectOption(long long long) SQLSetConnectOption
- 51 stdcall SQLSetStmtOption(long long long) SQLSetStmtOption
- 52 stdcall SQLSpecialColumns(long long str long str long str long long long) SQLSpecialColumns
- 53 stdcall SQLStatistics(long str long str long str long long long) SQLStatistics
- 54 stdcall SQLTables(long str long str long str long str long) SQLTables
- 55 stdcall SQLBrowseConnect(long str long str long ptr) SQLBrowseConnect
- 56 stdcall SQLColumnPrivileges(long str long str long str long str long) SQLColumnPrivileges
- 57 stdcall SQLDataSources(long long str long ptr str long ptr) SQLDataSources
- 58 stdcall SQLDescribeParam(long long ptr ptr ptr ptr) SQLDescribeParam
- 59 stdcall SQLExtendedFetch(long long long ptr ptr) SQLExtendedFetch
- 60 stdcall SQLForeignKeys(long str long str long str long str long str long str long) SQLForeignKeys
- 61 stdcall SQLMoreResults(long) SQLMoreResults
- 62 stdcall SQLNativeSql(long str long str long ptr) SQLNativeSql
- 63 stdcall SQLNumParams(long ptr) SQLNumParams
- 64 stdcall SQLParamOptions(long long ptr) SQLParamOptions
- 65 stdcall SQLPrimaryKeys(long str long str long str long) SQLPrimaryKeys
- 66 stdcall SQLProcedureColumns(long str long str long str long str long) SQLProcedureColumns
- 67 stdcall SQLProcedures(long str long str long str long) SQLProcedures
- 68 stdcall SQLSetPos(long long long long) SQLSetPos
- 69 stdcall SQLSetScrollOptions(long long long long) SQLSetScrollOptions
- 70 stdcall SQLTablePrivileges(long str long str long str long) SQLTablePrivileges
- 71 stdcall SQLDrivers(long long str long ptr str long ptr) SQLDrivers
- 72 stdcall SQLBindParameter(long long long long long long long ptr long ptr) SQLBindParameter
- 73 stdcall SQLSetDescField(long long long ptr long) SQLSetDescField
- 74 stdcall SQLSetDescRec(long long long long long long long ptr ptr ptr) SQLSetDescRec
- 75 stdcall SQLSetEnvAttr(long long ptr long) SQLSetEnvAttr
- 76 stdcall SQLSetStmtAttr(long long ptr long) SQLSetStmtAttr
- 77 stdcall SQLAllocHandleStd(long long ptr) SQLAllocHandleStd
- 78 stdcall SQLBulkOperations(long long) SQLBulkOperations
+  1 stdcall SQLAllocConnect(long ptr)
+  2 stdcall SQLAllocEnv(ptr)
+  3 stdcall SQLAllocStmt(long ptr)
+  4 stdcall SQLBindCol(long long long ptr long ptr)
+  5 stdcall SQLCancel(long)
+  6 stdcall SQLColAttributes(long long long ptr long ptr ptr)
+  7 stdcall SQLConnect(long str long str long str long)
+  8 stdcall SQLDescribeCol(long long str long ptr ptr ptr ptr ptr)
+  9 stdcall SQLDisconnect(long)
+ 10 stdcall SQLError(long long long str ptr str long ptr)
+ 11 stdcall SQLExecDirect(long str long)
+ 12 stdcall SQLExecute(long)
+ 13 stdcall SQLFetch(long)
+ 14 stdcall SQLFreeConnect(long)
+ 15 stdcall SQLFreeEnv(long)
+ 16 stdcall SQLFreeStmt(long long )
+ 17 stdcall SQLGetCursorName(long str long ptr)
+ 18 stdcall SQLNumResultCols(long ptr)
+ 19 stdcall SQLPrepare(long str long)
+ 20 stdcall SQLRowCount(long ptr)
+ 21 stdcall SQLSetCursorName(long str long)
+ 22 stdcall SQLSetParam(long long long long long long ptr ptr)
+ 23 stdcall SQLTransact(long long long)
+ 24 stdcall SQLAllocHandle(long long ptr)
+ 25 stdcall SQLBindParam(long long long long long long ptr ptr)
+ 26 stdcall SQLCloseCursor(long)
+ 27 stdcall SQLColAttribute(long long long ptr long ptr ptr)
+ 28 stdcall SQLCopyDesc(long long)
+ 29 stdcall SQLEndTran(long long long)
+ 30 stdcall SQLFetchScroll(long long long)
+ 31 stdcall SQLFreeHandle(long long)
+ 32 stdcall SQLGetConnectAttr(long long ptr long ptr)
+ 33 stdcall SQLGetDescField(long long long ptr long ptr)
+ 34 stdcall SQLGetDescRec(long long str long ptr ptr ptr ptr ptr ptr ptr)
+ 35 stdcall SQLGetDiagField(long long long long ptr long ptr)
+ 36 stdcall SQLGetDiagRec(long long long str ptr str long ptr)
+ 37 stdcall SQLGetEnvAttr(long long ptr long ptr)
+ 38 stdcall SQLGetStmtAttr(long long ptr long ptr)
+ 39 stdcall SQLSetConnectAttr(long long ptr long)
+ 40 stdcall SQLColumns(long str long str long str long str long)
+ 41 stdcall SQLDriverConnect(long long str long str long str long)
+ 42 stdcall SQLGetConnectOption(long long ptr)
+ 43 stdcall SQLGetData(long long long ptr long ptr)
+ 44 stdcall SQLGetFunctions(long long ptr)
+ 45 stdcall SQLGetInfo(long long ptr long ptr)
+ 46 stdcall SQLGetStmtOption(long long ptr)
+ 47 stdcall SQLGetTypeInfo(long long)
+ 48 stdcall SQLParamData(long ptr)
+ 49 stdcall SQLPutData(long ptr long)
+ 50 stdcall SQLSetConnectOption(long long long)
+ 51 stdcall SQLSetStmtOption(long long long)
+ 52 stdcall SQLSpecialColumns(long long str long str long str long long long)
+ 53 stdcall SQLStatistics(long str long str long str long long long)
+ 54 stdcall SQLTables(long str long str long str long str long)
+ 55 stdcall SQLBrowseConnect(long str long str long ptr)
+ 56 stdcall SQLColumnPrivileges(long str long str long str long str long)
+ 57 stdcall SQLDataSources(long long str long ptr str long ptr)
+ 58 stdcall SQLDescribeParam(long long ptr ptr ptr ptr)
+ 59 stdcall SQLExtendedFetch(long long long ptr ptr)
+ 60 stdcall SQLForeignKeys(long str long str long str long str long str long str long)
+ 61 stdcall SQLMoreResults(long)
+ 62 stdcall SQLNativeSql(long str long str long ptr)
+ 63 stdcall SQLNumParams(long ptr)
+ 64 stdcall SQLParamOptions(long long ptr)
+ 65 stdcall SQLPrimaryKeys(long str long str long str long)
+ 66 stdcall SQLProcedureColumns(long str long str long str long str long)
+ 67 stdcall SQLProcedures(long str long str long str long)
+ 68 stdcall SQLSetPos(long long long long)
+ 69 stdcall SQLSetScrollOptions(long long long long)
+ 70 stdcall SQLTablePrivileges(long str long str long str long)
+ 71 stdcall SQLDrivers(long long str long ptr str long ptr)
+ 72 stdcall SQLBindParameter(long long long long long long long ptr long ptr)
+ 73 stdcall SQLSetDescField(long long long ptr long)
+ 74 stdcall SQLSetDescRec(long long long long long long long ptr ptr ptr)
+ 75 stdcall SQLSetEnvAttr(long long ptr long)
+ 76 stdcall SQLSetStmtAttr(long long ptr long)
+ 77 stdcall SQLAllocHandleStd(long long ptr)
+ 78 stdcall SQLBulkOperations(long long)
  79 stub    CloseODBCPerfData
  80 stub    CollectODBCPerfData
  81 stub    CursorLibLockDbc

@@ -14,7 +14,7 @@
 @ stub CloseIMsgSession@4
 @ stub CreateIProp@24
 @ stub CreateTable@36
-@ stdcall DeinitMapiUtil() DeinitMapiUtil
+@ stdcall DeinitMapiUtil()
 @ stub DeregisterIdleRoutine@4
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
@@ -87,7 +87,7 @@
 @ stub MAPIAddress
 @ stub MAPIAdminProfiles
 # @ stub MAPIAdminProfiles@8
-@ stdcall MAPIAllocateBuffer(long ptr) MAPIAllocateBuffer
+@ stdcall MAPIAllocateBuffer(long ptr)
 # @ stub MAPIAllocateBuffer@8
 @ stub MAPIAllocateMore
 # @ stub MAPIAllocateMore@12
@@ -99,11 +99,11 @@
 # @ stub MAPIFreeBuffer@4
 @ stub MAPIGetDefaultMalloc@0
 @ stub MAPIInitIdle@4
-@ stdcall MAPIInitialize(ptr) MAPIInitialize
+@ stdcall MAPIInitialize(ptr)
 # @ stub MAPIInitialize@4
 @ stub MAPILogoff
-@ stdcall MAPILogon(long ptr ptr long long ptr) MAPILogon
-@ stdcall MAPILogonEx(long ptr ptr long ptr) MAPILogonEx
+@ stdcall MAPILogon(long ptr ptr long long ptr)
+@ stdcall MAPILogonEx(long ptr ptr long ptr)
 # @ stub MAPILogonEx@20
 @ stub MAPIOpenFormMgr
 # @ stub MAPIOpenFormMgr@8
@@ -114,7 +114,7 @@
 @ stub MAPISaveMail
 @ stub MAPISendDocuments
 @ stub MAPISendMail
-@ stdcall MAPIUninitialize()    MAPIUninitialize
+@ stdcall MAPIUninitialize()
 # @ stub MAPIUninitialize@0
 @ stub MNLS_CompareStringW@24
 @ stub MNLS_IsBadStringPtrW@8

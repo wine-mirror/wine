@@ -2,18 +2,18 @@
  2  stub RasAutodialEntryToNetwork
  3  stub RasConnectionNotificationA
  4  stub RasConnectionNotificationW
- 7  stdcall RasDeleteEntryA(str str) RasDeleteEntryA
- 8  stdcall RasDeleteEntryW(wstr wstr) RasDeleteEntryW
-14  stdcall RasEnumAutodialAddressesA(ptr ptr ptr) RasEnumAutodialAddressesA
-15  stdcall RasEnumAutodialAddressesW(ptr ptr ptr) RasEnumAutodialAddressesW
-19  stdcall RasEnumDevicesA(ptr ptr ptr) RasEnumDevicesA
-20  stdcall RasEnumDevicesW(ptr ptr ptr) RasEnumDevicesW
-24  stdcall RasGetAutodialAddressA(str ptr ptr ptr ptr) RasGetAutodialAddressA
-25  stdcall RasGetAutodialAddressW(wstr ptr ptr ptr ptr) RasGetAutodialAddressW
-26  stdcall RasGetAutodialEnableA(long ptr) RasGetAutodialEnableA
-27  stdcall RasGetAutodialEnableW(long ptr) RasGetAutodialEnableW
-28  stdcall RasGetAutodialParamA(long ptr ptr) RasGetAutodialParamA
-29  stdcall RasGetAutodialParamW(long ptr ptr) RasGetAutodialParamW
+ 7  stdcall RasDeleteEntryA(str str)
+ 8  stdcall RasDeleteEntryW(wstr wstr)
+14  stdcall RasEnumAutodialAddressesA(ptr ptr ptr)
+15  stdcall RasEnumAutodialAddressesW(ptr ptr ptr)
+19  stdcall RasEnumDevicesA(ptr ptr ptr)
+20  stdcall RasEnumDevicesW(ptr ptr ptr)
+24  stdcall RasGetAutodialAddressA(str ptr ptr ptr ptr)
+25  stdcall RasGetAutodialAddressW(wstr ptr ptr ptr ptr)
+26  stdcall RasGetAutodialEnableA(long ptr)
+27  stdcall RasGetAutodialEnableW(long ptr)
+28  stdcall RasGetAutodialParamA(long ptr ptr)
+29  stdcall RasGetAutodialParamW(long ptr ptr)
 30  stub RasGetConnectResponse
 34  stub RasGetCountryInfoA
 35  stub RasGetCountryInfoW
@@ -28,20 +28,20 @@
 51  stub RasGetSubEntryPropertiesW
 55  stub RasRenameEntryA
 56  stub RasRenameEntryW
-57  stdcall RasSetAutodialAddressA(str long ptr long long) RasSetAutodialAddressA
-58  stdcall RasSetAutodialAddressW(wstr long ptr long long) RasSetAutodialAddressW
-59  stdcall RasSetAutodialEnableA(long long) RasSetAutodialEnableA
-60  stdcall RasSetAutodialEnableW(long long) RasSetAutodialEnableW
-61  stdcall RasSetAutodialParamA(long ptr long) RasSetAutodialParamA
-62  stdcall RasSetAutodialParamW(long ptr long) RasSetAutodialParamW
+57  stdcall RasSetAutodialAddressA(str long ptr long long)
+58  stdcall RasSetAutodialAddressW(wstr long ptr long long)
+59  stdcall RasSetAutodialEnableA(long long)
+60  stdcall RasSetAutodialEnableW(long long)
+61  stdcall RasSetAutodialParamA(long ptr long)
+62  stdcall RasSetAutodialParamW(long ptr long)
 63  stub RasSetCredentialsA
 64  stub RasSetCredentialsW
-67  stdcall RasSetEntryPropertiesA( str  str ptr long ptr long) RasSetEntryPropertiesA
-68  stdcall RasSetEntryPropertiesW(wstr wstr ptr long ptr long) RasSetEntryPropertiesW
+67  stdcall RasSetEntryPropertiesA( str  str ptr long ptr long)
+68  stdcall RasSetEntryPropertiesW(wstr wstr ptr long ptr long)
 69  stub RasSetOldPassword
 70  stub RasSetSubEntryPropertiesA
 71  stub RasSetSubEntryPropertiesW
-72  stdcall RasValidateEntryNameA(str str) RasValidateEntryNameA
+72  stdcall RasValidateEntryNameA(str str)
 73  stub RasValidateEntryNameW
 
 11  stub RasDialWow
@@ -95,19 +95,19 @@
 541 stub	RasDialW
 542 stub	RasEditPhonebookEntryA
 543 stub	RasEditPhonebookEntryW
-544 stdcall	RasEnumConnectionsA(ptr ptr ptr) RasEnumConnectionsA
-545 stdcall	RasEnumConnectionsW(ptr ptr ptr) RasEnumConnectionsW
-546 stdcall	RasEnumEntriesA(str str ptr ptr ptr) RasEnumEntriesA
+544 stdcall	RasEnumConnectionsA(ptr ptr ptr)
+545 stdcall	RasEnumConnectionsW(ptr ptr ptr)
+546 stdcall	RasEnumEntriesA(str str ptr ptr ptr)
 547 stub	RasEnumEntriesW
 548 stub	RasGetConnectStatusA
 549 stub	RasGetConnectStatusW
-550 stdcall	RasGetEntryDialParamsA(str ptr ptr) RasGetEntryDialParamsA
+550 stdcall	RasGetEntryDialParamsA(str ptr ptr)
 551 stub	RasGetEntryDialParamsW
 552 stub	RasGetErrorStringA
 553 stub	RasGetErrorStringW
 554 stub	RasGetProjectionInfoA
 555 stub	RasGetProjectionInfoW
-556 stdcall	RasHangUpA(long) RasHangUpA
+556 stdcall	RasHangUpA(long)
 557 stub	RasHangUpW
 558 stub	RasSetEntryDialParamsA
 559 stub	RasSetEntryDialParamsW

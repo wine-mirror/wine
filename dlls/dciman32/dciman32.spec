@@ -1,5 +1,5 @@
 @ stub    DCIBeginAccess
-@ stdcall DCICloseProvider(long) DCICloseProvider
+@ stdcall DCICloseProvider(long)
 @ stub    DCICreateOffscreen
 @ stub    DCICreateOverlay
 @ stub    DCICreatePrimary
@@ -7,7 +7,7 @@
 @ stub    DCIDraw
 @ stub    DCIEndAccess
 @ stub    DCIEnum
-@ stdcall DCIOpenProvider() DCIOpenProvider
+@ stdcall DCIOpenProvider()
 @ stub    DCISetClipList
 @ stub    DCISetDestination
 @ stub    DCISetSrcDestClip

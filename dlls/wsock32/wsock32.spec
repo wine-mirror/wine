@@ -50,7 +50,7 @@
 # applications *should* 'degrade gracefully if these are not present
 # ... as it is, they don't
 #1000 stub WSApSetPostRoutine
-1001 stdcall WsControl(long long ptr ptr ptr ptr) WsControl
+1001 stdcall WsControl(long long ptr ptr ptr ptr)
 1100 stdcall inet_network(str) WSOCK32_inet_network
 1101 stdcall getnetbyname(str) WSOCK32_getnetbyname
 #1102 stub rcmd
@@ -58,18 +58,18 @@
 #1104 stub rresvport
 #1105 stub sethostname
 #1106 stub dn_expand
-1107 stdcall WSARecvEx(long ptr long ptr) WSARecvEx
-1108 stdcall s_perror(str) s_perror
+1107 stdcall WSARecvEx(long ptr long ptr)
+1108 stdcall s_perror(str)
 1109 stub GetAddressByNameA
 1110 stub GetAddressByNameW
-1111 stdcall EnumProtocolsA(ptr ptr ptr) EnumProtocolsA
-1112 stdcall EnumProtocolsW(ptr ptr ptr) EnumProtocolsW
-1113 stdcall GetTypeByNameA(str ptr) GetTypeByNameA
-1114 stdcall GetTypeByNameW(wstr ptr) GetTypeByNameW
+1111 stdcall EnumProtocolsA(ptr ptr ptr)
+1112 stdcall EnumProtocolsW(ptr ptr ptr)
+1113 stdcall GetTypeByNameA(str ptr)
+1114 stdcall GetTypeByNameW(wstr ptr)
 #1115 stub GetNameByTypeA
 #1116 stub GetNameByTypeW
-1117 stdcall SetServiceA(long long long ptr ptr ptr) SetServiceA
-1118 stdcall SetServiceW(long long long ptr ptr ptr) SetServiceW
+1117 stdcall SetServiceA(long long long ptr ptr ptr)
+1118 stdcall SetServiceW(long long long ptr ptr ptr)
 #1119 stub GetServiceA
 #1120 stub GetServiceW
 #1130 stub NPLoadNameSpaces

@@ -5,13 +5,13 @@
    6 stub OleClone
    7 stub OleCopyFromLink
    8 stub OleEqual
-   9 stdcall OleQueryLinkFromClip(str long long) OleQueryLinkFromClip
-  10 stdcall OleQueryCreateFromClip(str long long) OleQueryCreateFromClip
-  11 stdcall OleCreateLinkFromClip(str ptr long str ptr long long) OleCreateLinkFromClip
-  12 stdcall OleCreateFromClip(str ptr long str ptr long long) OleCreateFromClip
+   9 stdcall OleQueryLinkFromClip(str long long)
+  10 stdcall OleQueryCreateFromClip(str long long)
+  11 stdcall OleCreateLinkFromClip(str ptr long str ptr long long)
+  12 stdcall OleCreateFromClip(str ptr long str ptr long long)
   13 stub OleCopyToClipboard
-  14 stdcall OleQueryType(ptr ptr) OleQueryType
-  15 stdcall OleSetHostNames(ptr str str) OleSetHostNames
+  14 stdcall OleQueryType(ptr ptr)
+  15 stdcall OleSetHostNames(ptr str str)
   16 stub OleSetTargetDevice
   17 stub OleSetBounds
   18 stub OleQueryBounds
@@ -37,11 +37,11 @@
   38 stdcall OleCreateFromFile(ptr ptr ptr long ptr ptr ptr ptr) ole32.OleCreateFromFile
   39 stub OleCreateLinkFromFile
   40 stub OleRelease
-  41 stdcall OleRegisterClientDoc(str str long ptr) OleRegisterClientDoc
-  42 stdcall OleRevokeClientDoc(long) OleRevokeClientDoc
-  43 stdcall OleRenameClientDoc(long str) OleRenameClientDoc
+  41 stdcall OleRegisterClientDoc(str str long ptr)
+  42 stdcall OleRevokeClientDoc(long)
+  43 stdcall OleRenameClientDoc(long str)
   44 stub OleRevertClientDoc
-  45 stdcall OleSavedClientDoc(long) OleSavedClientDoc
+  45 stdcall OleSavedClientDoc(long)
   46 stub OleRename
   47 stub OleEnumObjects
   48 stub OleQueryName
@@ -53,4 +53,4 @@
   57 stub OleExecute
   58 stub OleCreateInvisible
   59 stub OleQueryClientVersion
-  60 stdcall OleIsDcMeta(long) OleIsDcMeta
+  60 stdcall OleIsDcMeta(long)

@@ -3,13 +3,13 @@
 @ stub DDInternalLock
 @ stub DDInternalUnlock
 @ stub DSoundHelp
-@ stdcall DirectDrawCreate(ptr ptr ptr) DirectDrawCreate
-@ stdcall DirectDrawCreateClipper(long ptr ptr) DirectDrawCreateClipper
-@ stdcall DirectDrawCreateEx(ptr ptr ptr ptr) DirectDrawCreateEx
-@ stdcall DirectDrawEnumerateA(ptr ptr) DirectDrawEnumerateA
-@ stdcall DirectDrawEnumerateW(ptr ptr) DirectDrawEnumerateW
-@ stdcall DirectDrawEnumerateExA(ptr ptr long) DirectDrawEnumerateExA
-@ stdcall DirectDrawEnumerateExW(ptr ptr long) DirectDrawEnumerateExW
+@ stdcall DirectDrawCreate(ptr ptr ptr)
+@ stdcall DirectDrawCreateClipper(long ptr ptr)
+@ stdcall DirectDrawCreateEx(ptr ptr ptr ptr)
+@ stdcall DirectDrawEnumerateA(ptr ptr)
+@ stdcall DirectDrawEnumerateW(ptr ptr)
+@ stdcall DirectDrawEnumerateExA(ptr ptr long)
+@ stdcall DirectDrawEnumerateExW(ptr ptr long)
 @ stdcall DllCanUnloadNow() DDRAW_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) DDRAW_DllGetClassObject
 @ stub GetNextMipMap

@@ -1,6 +1,6 @@
 1 stub _kSetEnvironmentVariable@8
 2 stub _SzFromImte@4
-3 stdcall GetCurrentTask32() GetCurrentTask32
+3 stdcall GetCurrentTask32()
 4 stub _DebugPrintf
 5 stub _NtCloseSection@8
 6 stub _AllocKernelHeap@8

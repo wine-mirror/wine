@@ -1,25 +1,25 @@
-@ stdcall InternetInitializeAutoProxyDll(long) InternetInitializeAutoProxyDll
+@ stdcall InternetInitializeAutoProxyDll(long)
 @ stub ShowCertificate
-@ stdcall CommitUrlCacheEntryA(str str long long long str long str str) CommitUrlCacheEntryA
+@ stdcall CommitUrlCacheEntryA(str str long long long str long str str)
 @ stub CommitUrlCacheEntryW
 @ stub CreateUrlCacheContainerA
 @ stub CreateUrlCacheContainerW
 @ stub CreateUrlCacheEntryA
 @ stub CreateUrlCacheEntryW
-@ stdcall CreateUrlCacheGroup(long ptr) CreateUrlCacheGroup
+@ stdcall CreateUrlCacheGroup(long ptr)
 @ stub DeleteIE3Cache
 @ stub DeleteUrlCacheContainerA
 @ stub DeleteUrlCacheContainerW
-@ stdcall DeleteUrlCacheEntry(str) DeleteUrlCacheEntry
-@ stdcall DeleteUrlCacheGroup(long long ptr) DeleteUrlCacheGroup
+@ stdcall DeleteUrlCacheEntry(str)
+@ stdcall DeleteUrlCacheGroup(long long ptr)
 @ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stub FindCloseUrlCache
 @ stub FindFirstUrlCacheContainerA
 @ stub FindFirstUrlCacheContainerW
-@ stdcall FindFirstUrlCacheEntryA(str ptr ptr) FindFirstUrlCacheEntryA
+@ stdcall FindFirstUrlCacheEntryA(str ptr ptr)
 @ stub FindFirstUrlCacheEntryExA
 @ stub FindFirstUrlCacheEntryExW
-@ stdcall FindFirstUrlCacheEntryW(wstr ptr ptr) FindFirstUrlCacheEntryW
+@ stdcall FindFirstUrlCacheEntryW(wstr ptr ptr)
 @ stub FindNextUrlCacheContainerA
 @ stub FindNextUrlCacheContainerW
 @ stub FindNextUrlCacheEntryA
@@ -30,31 +30,31 @@
 @ stub FreeUrlCacheSpaceW
 @ stub FtpCommandA
 @ stub FtpCommandW
-@ stdcall FtpCreateDirectoryA(ptr str) FtpCreateDirectoryA
-@ stdcall FtpCreateDirectoryW(ptr wstr) FtpCreateDirectoryW
-@ stdcall FtpDeleteFileA(ptr str) FtpDeleteFileA
+@ stdcall FtpCreateDirectoryA(ptr str)
+@ stdcall FtpCreateDirectoryW(ptr wstr)
+@ stdcall FtpDeleteFileA(ptr str)
 @ stub FtpDeleteFileW
-@ stdcall FtpFindFirstFileA(ptr str str long long) FtpFindFirstFileA
-@ stdcall FtpFindFirstFileW(ptr wstr wstr long long) FtpFindFirstFileW
-@ stdcall FtpGetCurrentDirectoryA(ptr str ptr) FtpGetCurrentDirectoryA
-@ stdcall FtpGetCurrentDirectoryW(ptr wstr ptr) FtpGetCurrentDirectoryW
-@ stdcall FtpGetFileA(ptr str str long long long long) FtpGetFileA
-@ stdcall FtpGetFileW(ptr wstr wstr long long long long) FtpGetFileW
-@ stdcall FtpOpenFileA(ptr str long long long) FtpOpenFileA
-@ stdcall FtpOpenFileW(ptr wstr long long long) FtpOpenFileW
-@ stdcall FtpPutFileA(ptr str str long long) FtpPutFileA
+@ stdcall FtpFindFirstFileA(ptr str str long long)
+@ stdcall FtpFindFirstFileW(ptr wstr wstr long long)
+@ stdcall FtpGetCurrentDirectoryA(ptr str ptr)
+@ stdcall FtpGetCurrentDirectoryW(ptr wstr ptr)
+@ stdcall FtpGetFileA(ptr str str long long long long)
+@ stdcall FtpGetFileW(ptr wstr wstr long long long long)
+@ stdcall FtpOpenFileA(ptr str long long long)
+@ stdcall FtpOpenFileW(ptr wstr long long long)
+@ stdcall FtpPutFileA(ptr str str long long)
 @ stub FtpPutFileW
-@ stdcall FtpRemoveDirectoryA(ptr str) FtpRemoveDirectoryA
+@ stdcall FtpRemoveDirectoryA(ptr str)
 @ stub FtpRemoveDirectoryW
-@ stdcall FtpRenameFileA(ptr str str) FtpRenameFileA
+@ stdcall FtpRenameFileA(ptr str str)
 @ stub FtpRenameFileW
-@ stdcall FtpSetCurrentDirectoryA(ptr str) FtpSetCurrentDirectoryA
-@ stdcall FtpSetCurrentDirectoryW(ptr wstr) FtpSetCurrentDirectoryW
+@ stdcall FtpSetCurrentDirectoryA(ptr str)
+@ stdcall FtpSetCurrentDirectoryW(ptr wstr)
 @ stub GetUrlCacheConfigInfoA
 @ stub GetUrlCacheConfigInfoW
-@ stdcall GetUrlCacheEntryInfoA(str ptr long) GetUrlCacheEntryInfoA
-@ stdcall GetUrlCacheEntryInfoExA(str ptr ptr str ptr ptr long) GetUrlCacheEntryInfoExA
-@ stdcall GetUrlCacheEntryInfoExW(wstr ptr ptr wstr ptr ptr long) GetUrlCacheEntryInfoExW
+@ stdcall GetUrlCacheEntryInfoA(str ptr long)
+@ stdcall GetUrlCacheEntryInfoExA(str ptr ptr str ptr ptr long)
+@ stdcall GetUrlCacheEntryInfoExW(wstr ptr ptr wstr ptr ptr long)
 @ stub GetUrlCacheEntryInfoW
 @ stub GetUrlCacheHeaderData
 @ stub GopherCreateLocatorA
@@ -67,91 +67,91 @@
 @ stub GopherGetLocatorTypeW
 @ stub GopherOpenFileA
 @ stub GopherOpenFileW
-@ stdcall HttpAddRequestHeadersA(ptr str long long) HttpAddRequestHeadersA
+@ stdcall HttpAddRequestHeadersA(ptr str long long)
 @ stub HttpAddRequestHeadersW
-@ stdcall HttpEndRequestA(ptr ptr long long) HttpEndRequestA
-@ stdcall HttpEndRequestW(ptr ptr long long) HttpEndRequestW
-@ stdcall HttpOpenRequestA(ptr str str str str ptr long long) HttpOpenRequestA
-@ stdcall HttpOpenRequestW(ptr wstr wstr wstr wstr ptr long long) HttpOpenRequestW
-@ stdcall HttpQueryInfoA(ptr long ptr ptr ptr) HttpQueryInfoA
-@ stdcall HttpQueryInfoW(ptr long ptr ptr ptr) HttpQueryInfoW
-@ stdcall HttpSendRequestA(ptr str long ptr long) HttpSendRequestA
-@ stdcall HttpSendRequestExA(long ptr ptr long long) HttpSendRequestExA
+@ stdcall HttpEndRequestA(ptr ptr long long)
+@ stdcall HttpEndRequestW(ptr ptr long long)
+@ stdcall HttpOpenRequestA(ptr str str str str ptr long long)
+@ stdcall HttpOpenRequestW(ptr wstr wstr wstr wstr ptr long long)
+@ stdcall HttpQueryInfoA(ptr long ptr ptr ptr)
+@ stdcall HttpQueryInfoW(ptr long ptr ptr ptr)
+@ stdcall HttpSendRequestA(ptr str long ptr long)
+@ stdcall HttpSendRequestExA(long ptr ptr long long)
 @ stub HttpSendRequestExW
-@ stdcall HttpSendRequestW(ptr wstr long ptr long) HttpSendRequestW
+@ stdcall HttpSendRequestW(ptr wstr long ptr long)
 @ stub IncrementUrlCacheHeaderData
-@ stdcall InternetAttemptConnect(long) InternetAttemptConnect
-@ stdcall InternetAutodial(long ptr) InternetAutodial
+@ stdcall InternetAttemptConnect(long)
+@ stdcall InternetAutodial(long ptr)
 @ stub InternetAutodialCallback
-@ stdcall InternetAutodialHangup(long) InternetAutodialHangup
-@ stdcall InternetCanonicalizeUrlA(str str ptr long) InternetCanonicalizeUrlA
-@ stdcall InternetCanonicalizeUrlW(wstr wstr ptr long) InternetCanonicalizeUrlW
-@ stdcall InternetCheckConnectionA(ptr long long) InternetCheckConnectionA
-@ stdcall InternetCheckConnectionW(ptr long long) InternetCheckConnectionW
-@ stdcall InternetCloseHandle(long) InternetCloseHandle
-@ stdcall InternetCombineUrlA(str str str ptr long) InternetCombineUrlA
-@ stdcall InternetCombineUrlW(wstr wstr wstr ptr long) InternetCombineUrlW
+@ stdcall InternetAutodialHangup(long)
+@ stdcall InternetCanonicalizeUrlA(str str ptr long)
+@ stdcall InternetCanonicalizeUrlW(wstr wstr ptr long)
+@ stdcall InternetCheckConnectionA(ptr long long)
+@ stdcall InternetCheckConnectionW(ptr long long)
+@ stdcall InternetCloseHandle(long)
+@ stdcall InternetCombineUrlA(str str str ptr long)
+@ stdcall InternetCombineUrlW(wstr wstr wstr ptr long)
 @ stub InternetConfirmZoneCrossing
-@ stdcall InternetConnectA(ptr str long str str long long long) InternetConnectA
-@ stdcall InternetConnectW(ptr wstr long wstr wstr long long long) InternetConnectW
-@ stdcall InternetCrackUrlA(str long long ptr) InternetCrackUrlA
-@ stdcall InternetCrackUrlW(wstr long long ptr) InternetCrackUrlW
+@ stdcall InternetConnectA(ptr str long str str long long long)
+@ stdcall InternetConnectW(ptr wstr long wstr wstr long long long)
+@ stdcall InternetCrackUrlA(str long long ptr)
+@ stdcall InternetCrackUrlW(wstr long long ptr)
 @ stub InternetCreateUrlA
 @ stub InternetCreateUrlW
 @ stub InternetDebugGetLocalTime
 @ stub InternetDial
 @ stub InternetErrorDlg
-@ stdcall InternetFindNextFileA(ptr ptr) InternetFindNextFileA
+@ stdcall InternetFindNextFileA(ptr ptr)
 @ stub InternetFindNextFileW
 @ stub InternetGetCertByURL
-@ stdcall InternetGetConnectedState(ptr long) InternetGetConnectedState
-@ stdcall InternetGetCookieA(str str ptr long) InternetGetCookieA
-@ stdcall InternetGetCookieW(wstr wstr ptr long) InternetGetCookieW
-@ stdcall InternetGetLastResponseInfoA(ptr str ptr) InternetGetLastResponseInfoA
+@ stdcall InternetGetConnectedState(ptr long)
+@ stdcall InternetGetCookieA(str str ptr long)
+@ stdcall InternetGetCookieW(wstr wstr ptr long)
+@ stdcall InternetGetLastResponseInfoA(ptr str ptr)
 @ stub InternetGetLastResponseInfoW
 @ stub InternetGoOnline
 @ stub InternetHangUp
-@ stdcall InternetLockRequestFile(ptr ptr) InternetLockRequestFile
-@ stdcall InternetOpenA(str long str str long) InternetOpenA
-@ stdcall InternetOpenW(wstr long wstr wstr long) InternetOpenW
+@ stdcall InternetLockRequestFile(ptr ptr)
+@ stdcall InternetOpenA(str long str str long)
+@ stdcall InternetOpenW(wstr long wstr wstr long)
 @ stub InternetOpenServerPushParse
-@ stdcall InternetOpenUrlA(ptr str str long long long) InternetOpenUrlA
-@ stdcall InternetOpenUrlW(ptr wstr wstr long long long) InternetOpenUrlW
-@ stdcall InternetQueryDataAvailable(ptr ptr long long) InternetQueryDataAvailable
-@ stdcall InternetQueryOptionA(ptr long ptr ptr) InternetQueryOptionA
-@ stdcall InternetQueryOptionW(ptr long ptr ptr) InternetQueryOptionW
-@ stdcall InternetReadFile(ptr ptr long ptr) InternetReadFile
-@ stdcall InternetReadFileExA(ptr ptr long long) InternetReadFileExA
-@ stdcall InternetReadFileExW(ptr ptr long long) InternetReadFileExW
+@ stdcall InternetOpenUrlA(ptr str str long long long)
+@ stdcall InternetOpenUrlW(ptr wstr wstr long long long)
+@ stdcall InternetQueryDataAvailable(ptr ptr long long)
+@ stdcall InternetQueryOptionA(ptr long ptr ptr)
+@ stdcall InternetQueryOptionW(ptr long ptr ptr)
+@ stdcall InternetReadFile(ptr ptr long ptr)
+@ stdcall InternetReadFileExA(ptr ptr long long)
+@ stdcall InternetReadFileExW(ptr ptr long long)
 @ stub InternetServerPushParse
-@ stdcall InternetSetCookieA(str str str) InternetSetCookieA
-@ stdcall InternetSetCookieW(wstr wstr wstr) InternetSetCookieW
+@ stdcall InternetSetCookieA(str str str)
+@ stdcall InternetSetCookieW(wstr wstr wstr)
 @ stub InternetSetDialState
 @ stub InternetSetFilePointer
-@ stdcall InternetSetOptionA(ptr long ptr long) InternetSetOptionA
-@ stdcall InternetSetOptionW(ptr long ptr long) InternetSetOptionW
+@ stdcall InternetSetOptionA(ptr long ptr long)
+@ stdcall InternetSetOptionW(ptr long ptr long)
 @ stub InternetSetOptionExA
 @ stub InternetSetOptionExW
-@ stdcall InternetSetStatusCallback(ptr ptr) InternetSetStatusCallback
+@ stdcall InternetSetStatusCallback(ptr ptr)
 @ stub InternetShowSecurityInfoByURL
 @ stub InternetTimeFromSystemTime
 @ stub InternetTimeToSystemTime
-@ stdcall InternetUnlockRequestFile(ptr) InternetUnlockRequestFile
-@ stdcall InternetWriteFile(ptr ptr long ptr) InternetWriteFile
+@ stdcall InternetUnlockRequestFile(ptr)
+@ stdcall InternetWriteFile(ptr ptr long ptr)
 @ stub InternetWriteFileExA
 @ stub InternetWriteFileExW
-@ stdcall IsHostInProxyBypassList(long str long) IsHostInProxyBypassList
+@ stdcall IsHostInProxyBypassList(long str long)
 @ stub LoadUrlCacheContent
 @ stub ParseX509EncodedCertificateForListBoxEntry
 @ stub ReadUrlCacheEntryStream
-@ stdcall RetrieveUrlCacheEntryFileA(str ptr ptr long) RetrieveUrlCacheEntryFileA
+@ stdcall RetrieveUrlCacheEntryFileA(str ptr ptr long)
 @ stub RetrieveUrlCacheEntryFileW
 @ stub RetrieveUrlCacheEntryStreamA
 @ stub RetrieveUrlCacheEntryStreamW
 @ stub RunOnceUrlCache
 @ stub SetUrlCacheConfigInfoA
 @ stub SetUrlCacheConfigInfoW
-@ stdcall SetUrlCacheEntryGroup(str long long ptr long ptr) SetUrlCacheEntryGroup
+@ stdcall SetUrlCacheEntryGroup(str long long ptr long ptr)
 @ stub SetUrlCacheEntryInfoA
 @ stub SetUrlCacheEntryInfoW
 @ stub SetUrlCacheHeaderData
