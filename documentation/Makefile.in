@@ -30,7 +30,6 @@ WINE_DEVEL_SRCS = \
 	cvs.sgml \
 	debugger.sgml \
 	debugging.sgml \
-	dlls.sgml \
 	documentation.sgml \
 	i18n.sgml \
 	implementation.sgml \

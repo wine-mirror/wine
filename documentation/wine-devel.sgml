@@ -13,7 +13,6 @@
 <!entity tools SYSTEM "tools.sgml">
 
 <!entity architecture SYSTEM "architecture.sgml">
-<!entity dlls SYSTEM "dlls.sgml">
 <!entity debugging SYSTEM "debugging.sgml">
 <!entity ole SYSTEM "ole.sgml">
 <!entity opengl SYSTEM "opengl.sgml">
@@ -52,7 +51,6 @@
     <title>Wine Architecture</title>
 
     &architecture;
-    &dlls;
     &debugging;
     &ole;
     &opengl;

@@ -25,7 +25,6 @@
 <!entity i18n SYSTEM "i18n.sgml">
 <!entity tools SYSTEM "tools.sgml">
 <!entity architecture SYSTEM "architecture.sgml">
-<!entity dlls SYSTEM "dlls.sgml">
 <!entity debugging SYSTEM "debugging.sgml">
 <!entity ole SYSTEM "ole.sgml">
 <!entity build SYSTEM "build.sgml">
@@ -100,7 +99,6 @@
     <part id="part-two">
       <title>Wine Architecture</title>
       &architecture;
-      &dlls;
       &debugging;
       &ole;
       &build;
