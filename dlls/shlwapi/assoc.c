@@ -1,5 +1,5 @@
 /*
- * SHLWAPI IQueryAssociations helper functions
+ * IQueryAssociations object and helper functions
  *
  * Copyright 2002 Jon Griffiths
  *
@@ -16,16 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * NOTES
- *  These function simplify the process of using the IQueryAssociations
- *  interface, primarily by providing the means to get an interface pointer.
- *  For those not interested in the object, the AssocQuery* functions hide
- *  the object completely and simply provide the functionality.
- *
- *  We require the implementation from shell32 because there is no interface
- *  for exporting an IQueryAssociations object available from that dll -
- *  as it is, we need the constructor.
  */
 #include "windef.h"
 #include "winnls.h"
@@ -36,17 +26,55 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+/**************************************************************************
+ *  IQueryAssociations {SHLWAPI}
+ *
+ * DESCRIPTION
+ *  This object provides a layer of abstraction over the system registry in
+ *  order to simplify the process of parsing associations between files.
+ *  Associations in this context means the registry entries that link (for
+ *  example) the extension of a file with its description, list of
+ *  applications to open the file with, and actions that can be performed on it
+ *  (the shell displays such information in the context menu of explorer
+ *  when you right-click on a file).
+ *
+ * HELPERS
+ * You can use this object tranparently by calling the helper functions
+ * AssocQueryKeyA(), AssocQueryStringA() and AssocQueryStringByKeyA(). These
+ * create an IQueryAssociations object, perform the requested actions
+ * and then dispose of the object. Alternatively, you can create an instance
+ * of the object using AssocCreate() and call the following methods on it:
+ *
+ * METHODS
+ */
+
 /* Default IQueryAssociations::Init() flags */
 #define SHLWAPI_DEF_ASSOCF (ASSOCF_INIT_BYEXENAME|ASSOCF_INIT_DEFAULTTOSTAR| \
                             ASSOCF_INIT_DEFAULTTOFOLDER)
 
-/* FIXME:
- * This is a temporary placeholder. We need the whole IQueryAssociations object.
- */
-static IQueryAssociations* IQueryAssociations_Constructor()
+typedef struct
 {
-  FIXME("() stub!\n");
-  return NULL;
+  ICOM_VFIELD(IQueryAssociations);
+  LONG ref;
+} IQueryAssociationsImpl;
+
+static struct ICOM_VTABLE(IQueryAssociations) IQueryAssociations_vtbl;
+
+/**************************************************************************
+ *  IQueryAssociations_Constructor [internal]
+ *
+ * Construct a new IQueryAssociations object.
+ */
+static IQueryAssociations* IQueryAssociations_Constructor(void)
+{
+  IQueryAssociationsImpl* iface;
+
+  iface =(IQueryAssociationsImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IQueryAssociationsImpl));
+  iface->lpVtbl = &IQueryAssociations_vtbl;
+  iface->ref = 1;
+
+  TRACE("Returning IQueryAssociations* %p\n", iface);
+  return (IQueryAssociations*)iface;
 }
 
 /*************************************************************************
@@ -81,7 +109,7 @@ static BOOL SHLWAPI_ParamAToW(LPCSTR lpszParam, LPWSTR lpszBuff, DWORD dwLen,
 }
 
 /*************************************************************************
- * AssocCreate	[SHLWAPI.253]
+ * AssocCreate  [SHLWAPI.253]
  *
  * Create a new IQueryAssociations object.
  *
@@ -91,8 +119,11 @@ static BOOL SHLWAPI_ParamAToW(LPCSTR lpszParam, LPWSTR lpszBuff, DWORD dwLen,
  *  lpInterface [O] Destination for the created IQueryAssociations object
  *
  * RETURNS
- *  Success: S_OK. lpInterface contains the new object
- *  Failure: An HRESULT error value
+ *  Success: S_OK. lpInterface contains the new object.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  refiid must be equal to IID_IQueryAssociations, or this function will fail.
  */
 HRESULT WINAPI AssocCreate(CLSID clsid, REFIID refiid, void **lpInterface)
 {
@@ -121,58 +152,64 @@ HRESULT WINAPI AssocCreate(CLSID clsid, REFIID refiid, void **lpInterface)
 }
 
 /*************************************************************************
- * AssocQueryKeyW	[SHLWAPI.255]
+ * AssocQueryKeyW  [SHLWAPI.255]
  *
  * See AssocQueryKeyA.
  */
-HRESULT WINAPI AssocQueryKeyW(ASSOCF flags, ASSOCKEY key, LPCWSTR pszAssoc,
+HRESULT WINAPI AssocQueryKeyW(ASSOCF cfFlags, ASSOCKEY assockey, LPCWSTR pszAssoc,
                               LPCWSTR pszExtra, HKEY *phkeyOut)
 {
   HRESULT hRet;
   IQueryAssociations* lpAssoc;
+
+  TRACE("(0x%8lx,0x%8x,%s,%s,%p)\n", cfFlags, assockey, debugstr_w(pszAssoc),
+        debugstr_w(pszExtra), phkeyOut);
 
   lpAssoc = IQueryAssociations_Constructor();
 
   if (!lpAssoc)
     return E_OUTOFMEMORY;
 
-  flags &= SHLWAPI_DEF_ASSOCF;
-  hRet = IQueryAssociations_Init(lpAssoc, flags, pszAssoc, NULL, NULL);
+  cfFlags &= SHLWAPI_DEF_ASSOCF;
+  hRet = IQueryAssociations_Init(lpAssoc, cfFlags, pszAssoc, NULL, NULL);
 
   if (SUCCEEDED(hRet))
-    hRet = IQueryAssociations_GetKey(lpAssoc, flags, key, pszExtra, phkeyOut);
+    hRet = IQueryAssociations_GetKey(lpAssoc, cfFlags, assockey, pszExtra, phkeyOut);
 
   IQueryAssociations_Release(lpAssoc);
   return hRet;
 }
 
 /*************************************************************************
- * AssocQueryKeyA	[SHLWAPI.254]
+ * AssocQueryKeyA  [SHLWAPI.254]
  *
  * Get a file association key from the registry.
  *
  * PARAMS
- *  flags    [I] Flags for the search
- *  key      [I] Type of key to get
+ *  cfFlags  [I] ASSOCF_ flags from "shlwapi.h"
+ *  assockey [I] Type of key to get
  *  pszAssoc [I] Key name to search below
  *  pszExtra [I] Extra information about the key location
  *  phkeyOut [O] Destination for the association key
  *
  * RETURNS
- *  Success: S_OK. phkeyOut contains the key
- *  Failure: An HRESULT error code
+ *  Success: S_OK. phkeyOut contains the key.
+ *  Failure: An HRESULT error code indicating the error.
  */
-HRESULT WINAPI AssocQueryKeyA(ASSOCF flags, ASSOCKEY key, LPCSTR pszAssoc,
+HRESULT WINAPI AssocQueryKeyA(ASSOCF cfFlags, ASSOCKEY assockey, LPCSTR pszAssoc,
                               LPCSTR pszExtra, HKEY *phkeyOut)
 {
   WCHAR szAssocW[MAX_PATH], *lpszAssocW = NULL;
   WCHAR szExtraW[MAX_PATH], *lpszExtraW = NULL;
   HRESULT hRet = E_OUTOFMEMORY;
 
+  TRACE("(0x%8lx,0x%8x,%s,%s,%p)\n", cfFlags, assockey, debugstr_a(pszAssoc),
+        debugstr_a(pszExtra), phkeyOut);
+
   if (SHLWAPI_ParamAToW(pszAssoc, szAssocW, MAX_PATH, &lpszAssocW) &&
       SHLWAPI_ParamAToW(pszExtra, szExtraW, MAX_PATH, &lpszExtraW))
   {
-    hRet = AssocQueryKeyW(flags, key, lpszAssocW, lpszExtraW, phkeyOut);
+    hRet = AssocQueryKeyW(cfFlags, assockey, lpszAssocW, lpszExtraW, phkeyOut);
   }
 
   if (lpszAssocW && lpszAssocW != szAssocW)
@@ -185,15 +222,18 @@ HRESULT WINAPI AssocQueryKeyA(ASSOCF flags, ASSOCKEY key, LPCSTR pszAssoc,
 }
 
 /*************************************************************************
- * AssocQueryStringW	[SHLWAPI.384]
+ * AssocQueryStringW  [SHLWAPI.384]
  *
  * See AssocQueryStringA.
  */
-HRESULT WINAPI AssocQueryStringW(ASSOCF flags, ASSOCSTR str, LPCWSTR pszAssoc,
+HRESULT WINAPI AssocQueryStringW(ASSOCF cfFlags, ASSOCSTR str, LPCWSTR pszAssoc,
                                  LPCWSTR pszExtra, LPWSTR pszOut, DWORD *pcchOut)
 {
   HRESULT hRet;
   IQueryAssociations* lpAssoc;
+
+  TRACE("(0x%8lx,0x%8x,%s,%s,%p,%p)\n", cfFlags, str, debugstr_w(pszAssoc),
+        debugstr_w(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)
     return E_INVALIDARG;
@@ -203,11 +243,11 @@ HRESULT WINAPI AssocQueryStringW(ASSOCF flags, ASSOCSTR str, LPCWSTR pszAssoc,
   if (!lpAssoc)
     return E_OUTOFMEMORY;
 
-  hRet = IQueryAssociations_Init(lpAssoc, flags & SHLWAPI_DEF_ASSOCF,
+  hRet = IQueryAssociations_Init(lpAssoc, cfFlags & SHLWAPI_DEF_ASSOCF,
                                  pszAssoc, NULL, NULL);
 
   if (SUCCEEDED(hRet))
-    hRet = IQueryAssociations_GetString(lpAssoc, flags, str, pszExtra,
+    hRet = IQueryAssociations_GetString(lpAssoc, cfFlags, str, pszExtra,
                                         pszOut, pcchOut);
 
   IQueryAssociations_Release(lpAssoc);
@@ -215,28 +255,31 @@ HRESULT WINAPI AssocQueryStringW(ASSOCF flags, ASSOCSTR str, LPCWSTR pszAssoc,
 }
 
 /*************************************************************************
- * AssocQueryStringA	[SHLWAPI.381]
+ * AssocQueryStringA  [SHLWAPI.381]
  *
  * Get a file association string from the registry.
  *
  * PARAMS
- *  flags    [I] Flags for the search
- *  str      [I] Type of string to get
+ *  cfFlags  [I] ASSOCF_ flags from "shlwapi.h"
+ *  str      [I] Type of string to get (ASSOCSTR enum from "shlwapi.h")
  *  pszAssoc [I] Key name to search below
  *  pszExtra [I] Extra information about the string location
  *  pszOut   [O] Destination for the association string
  *  pcchOut  [O] Length of pszOut
  *
  * RETURNS
- *  Success: S_OK. pszOut contains the string.
- *  Failure: An HRESULT error code.
+ *  Success: S_OK. pszOut contains the string, pcchOut contains its length.
+ *  Failure: An HRESULT error code indicating the error.
  */
-HRESULT WINAPI AssocQueryStringA(ASSOCF flags, ASSOCSTR str, LPCSTR pszAssoc,
+HRESULT WINAPI AssocQueryStringA(ASSOCF cfFlags, ASSOCSTR str, LPCSTR pszAssoc,
                                  LPCSTR pszExtra, LPSTR pszOut, DWORD *pcchOut)
 {
   WCHAR szAssocW[MAX_PATH], *lpszAssocW = NULL;
   WCHAR szExtraW[MAX_PATH], *lpszExtraW = NULL;
   HRESULT hRet = E_OUTOFMEMORY;
+
+  TRACE("(0x%8lx,0x%8x,%s,%s,%p,%p)\n", cfFlags, str, debugstr_a(pszAssoc),
+        debugstr_a(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)
     hRet = E_INVALIDARG;
@@ -254,7 +297,7 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF flags, ASSOCSTR str, LPCSTR pszAssoc,
       hRet = E_OUTOFMEMORY;
     else
     {
-      hRet = AssocQueryStringW(flags, str, lpszAssocW, lpszExtraW,
+      hRet = AssocQueryStringW(cfFlags, str, lpszAssocW, lpszExtraW,
                                lpszReturnW, &dwLenOut);
 
       if (SUCCEEDED(hRet))
@@ -274,27 +317,30 @@ HRESULT WINAPI AssocQueryStringA(ASSOCF flags, ASSOCSTR str, LPCSTR pszAssoc,
 }
 
 /*************************************************************************
- * AssocQueryStringByKeyW	[SHLWAPI.383]
+ * AssocQueryStringByKeyW  [SHLWAPI.383]
  *
  * See AssocQueryStringByKeyA.
  */
-HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF flags, ASSOCSTR str, HKEY hkAssoc,
+HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc,
                                       LPCWSTR pszExtra, LPWSTR pszOut,
                                       DWORD *pcchOut)
 {
   HRESULT hRet;
   IQueryAssociations* lpAssoc;
 
+  TRACE("(0x%8lx,0x%8x,%p,%s,%p,%p)\n", cfFlags, str, hkAssoc,
+        debugstr_w(pszExtra), pszOut, pcchOut);
+
   lpAssoc = IQueryAssociations_Constructor();
 
   if (!lpAssoc)
     return E_OUTOFMEMORY;
 
-  flags &= SHLWAPI_DEF_ASSOCF;
-  hRet = IQueryAssociations_Init(lpAssoc, flags, 0, hkAssoc, NULL);
+  cfFlags &= SHLWAPI_DEF_ASSOCF;
+  hRet = IQueryAssociations_Init(lpAssoc, cfFlags, 0, hkAssoc, NULL);
 
   if (SUCCEEDED(hRet))
-    hRet = IQueryAssociations_GetString(lpAssoc, flags, str, pszExtra,
+    hRet = IQueryAssociations_GetString(lpAssoc, cfFlags, str, pszExtra,
                                         pszOut, pcchOut);
 
   IQueryAssociations_Release(lpAssoc);
@@ -302,12 +348,12 @@ HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF flags, ASSOCSTR str, HKEY hkAssoc,
 }
 
 /*************************************************************************
- * AssocQueryStringByKeyA	[SHLWAPI.382]
+ * AssocQueryStringByKeyA  [SHLWAPI.382]
  *
  * Get a file association string from the registry, given a starting key.
  *
  * PARAMS
- *  flags    [I] Flags for the search
+ *  cfFlags  [I] ASSOCF_ flags from "shlwapi.h"
  *  str      [I] Type of string to get
  *  hkAssoc  [I] Key to search below
  *  pszExtra [I] Extra information about the string location
@@ -315,16 +361,19 @@ HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF flags, ASSOCSTR str, HKEY hkAssoc,
  *  pcchOut  [O] Length of pszOut
  *
  * RETURNS
- *  Success: S_OK. pszOut contains the string.
- *  Failure: An HRESULT error code.
+ *  Success: S_OK. pszOut contains the string, pcchOut contains its length.
+ *  Failure: An HRESULT error code indicating the error.
  */
-HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF flags, ASSOCSTR str, HKEY hkAssoc,
+HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc,
                                       LPCSTR pszExtra, LPSTR pszOut,
                                       DWORD *pcchOut)
 {
   WCHAR szExtraW[MAX_PATH], *lpszExtraW;
   WCHAR szReturnW[MAX_PATH], *lpszReturnW = szReturnW;
   HRESULT hRet = E_OUTOFMEMORY;
+
+  TRACE("(0x%8lx,0x%8x,%p,%s,%p,%p)\n", cfFlags, str, hkAssoc,
+        debugstr_a(pszExtra), pszOut, pcchOut);
 
   if (!pcchOut)
     hRet = E_INVALIDARG;
@@ -337,7 +386,7 @@ HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF flags, ASSOCSTR str, HKEY hkAssoc,
 
     if (lpszReturnW)
     {
-      hRet = AssocQueryStringByKeyW(flags, str, hkAssoc, lpszExtraW,
+      hRet = AssocQueryStringByKeyW(cfFlags, str, hkAssoc, lpszExtraW,
                                     lpszReturnW, &dwLenOut);
 
       if (SUCCEEDED(hRet))
@@ -353,3 +402,238 @@ HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF flags, ASSOCSTR str, HKEY hkAssoc,
     HeapFree(GetProcessHeap(), 0, lpszExtraW);
   return hRet;
 }
+
+/**************************************************************************
+ *  IQueryAssociations_QueryInterface {SHLWAPI}
+ *
+ * See IUnknown_QueryInterface.
+ */
+static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
+  IQueryAssociations* iface,
+  REFIID riid,
+  LPVOID *ppvObj)
+{
+  ICOM_THIS(IQueryAssociationsImpl, iface);
+
+  TRACE("(%p,%s,%p)\n",This, debugstr_guid(riid), ppvObj);
+
+  *ppvObj = NULL;
+
+  if (IsEqualIID(riid, &IID_IUnknown) ||
+      IsEqualIID(riid, &IID_IQueryAssociations))
+  {
+    *ppvObj = (IQueryAssociations*)This;
+
+    IQueryAssociations_AddRef((IQueryAssociations*)*ppvObj);
+    TRACE("Returning IQueryAssociations (%p)\n", *ppvObj);
+    return S_OK;
+  }
+  TRACE("Returning E_NOINTERFACE\n");
+  return E_NOINTERFACE;
+}
+
+/**************************************************************************
+ *  IQueryAssociations_AddRef {SHLWAPI}
+ *
+ * See IUnknown_AddRef.
+ */
+static ULONG WINAPI IQueryAssociations_fnAddRef(IQueryAssociations *iface)
+{
+  ICOM_THIS(IQueryAssociationsImpl,iface);
+
+  TRACE("(%p)->(ref before=%lu)\n",This, This->ref);
+
+  return InterlockedIncrement(&This->ref);
+}
+
+/**************************************************************************
+ *  IQueryAssociations_Release {SHLWAPI}
+ *
+ * See IUnknown_Release.
+ */
+static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations *iface)
+{
+  ICOM_THIS(IQueryAssociationsImpl,iface);
+  ULONG ulRet;
+
+  TRACE("(%p)->(ref before=%lu)\n",This, This->ref);
+
+  if (!(ulRet = InterlockedDecrement(&This->ref)))
+  {
+    TRACE("Destroying IQueryAssociations (%p)\n", This);
+    HeapFree(GetProcessHeap(), 0, This);
+  }
+  return ulRet;
+}
+
+/**************************************************************************
+ *  IQueryAssociations_Init {SHLWAPI}
+ *
+ * Initialise an IQueryAssociations object.
+ *
+ * PARAMS
+ *  iface    [I] IQueryAssociations interface to initialise
+ *  cfFlags  [I] ASSOCF_ flags from "shlwapi.h"
+ *  pszAssoc [I] String for the root key name, or NULL if hkProgid is given
+ *  hkProgid [I] Handle for the root key, or NULL if pszAssoc is given
+ *  hWnd     [I] Reserved, must be NULL.
+ *
+ * RETURNS
+ *  Success: S_OK. iface is initialised with the parameters given.
+ *  Failure: An HRESULT error code indicating the error.
+ */
+static HRESULT WINAPI IQueryAssociations_fnInit(
+  IQueryAssociations *iface,
+  ASSOCF cfFlags,
+  LPCWSTR pszAssoc,
+  HKEY hkProgid,
+  HWND hWnd)
+{
+  ICOM_THIS(IQueryAssociationsImpl, iface);
+
+  FIXME("(%p,0x%8lx,%s,%p,%p)-stub!\n", This, cfFlags,
+        debugstr_w(pszAssoc), hkProgid, hWnd);
+  return E_NOTIMPL;
+}
+
+/**************************************************************************
+ *  IQueryAssociations_GetString {SHLWAPI}
+ *
+ * Get a file association string from the registry.
+ *
+ * PARAMS
+ *  iface    [I]   IQueryAssociations interface to query
+ *  cfFlags  [I]   ASSOCF_ flags from "shlwapi.h"
+ *  str      [I]   Type of string to get (ASSOCSTR enum from "shlwapi.h")
+ *  pszExtra [I]   Extra information about the string location
+ *  pszOut   [O]   Destination for the association string
+ *  pcchOut  [I/O] Length of pszOut
+ *
+ * RETURNS
+ *  Success: S_OK. pszOut contains the string, pcchOut contains its length.
+ *  Failure: An HRESULT error code indicating the error.
+ */
+static HRESULT WINAPI IQueryAssociations_fnGetString(
+  IQueryAssociations *iface,
+  ASSOCF cfFlags,
+  ASSOCSTR str,
+  LPCWSTR pszExtra,
+  LPWSTR pszOut,
+  DWORD *pcchOut)
+{
+  ICOM_THIS(IQueryAssociationsImpl, iface);
+
+  FIXME("(%p,0x%8lx,0x%8x,%s,%p,%p)-stub!\n", This, cfFlags, str,
+        debugstr_w(pszExtra), pszOut, pcchOut);
+  return E_NOTIMPL;
+}
+
+/**************************************************************************
+ *  IQueryAssociations_GetKey {SHLWAPI}
+ *
+ * Get a file association key from the registry.
+ *
+ * PARAMS
+ *  iface    [I] IQueryAssociations interface to query
+ *  cfFlags  [I] ASSOCF_ flags from "shlwapi.h"
+ *  assockey [I] Type of key to get (ASSOCKEY enum from "shlwapi.h")
+ *  pszExtra [I] Extra information about the key location
+ *  phkeyOut [O] Destination for the association key
+ *
+ * RETURNS
+ *  Success: S_OK. phkeyOut contains a handle to the key.
+ *  Failure: An HRESULT error code indicating the error.
+ */
+static HRESULT WINAPI IQueryAssociations_fnGetKey(
+  IQueryAssociations *iface,
+  ASSOCF cfFlags,
+  ASSOCKEY assockey,
+  LPCWSTR pszExtra,
+  HKEY *phkeyOut)
+{
+  ICOM_THIS(IQueryAssociationsImpl, iface);
+
+  FIXME("(%p,0x%8lx,0x%8x,%s,%p)-stub!\n", This, cfFlags, assockey,
+        debugstr_w(pszExtra), phkeyOut);
+  return E_NOTIMPL;
+}
+
+/**************************************************************************
+ *  IQueryAssociations_GetData {SHLWAPI}
+ *
+ * Get the data for a file association key from the registry.
+ *
+ * PARAMS
+ *  iface     [I]   IQueryAssociations interface to query
+ *  cfFlags   [I]   ASSOCF_ flags from "shlwapi.h"
+ *  assocdata [I]   Type of data to get (ASSOCDATA enum from "shlwapi.h")
+ *  pszExtra  [I]   Extra information about the data location
+ *  pvOut     [O]   Destination for the association key
+ *  pcbOut    [I/O] Size of pvOut
+ *
+ * RETURNS
+ *  Success: S_OK. pszOut contains the data, pcbOut contains its length.
+ *  Failure: An HRESULT error code indicating the error.
+ */
+static HRESULT WINAPI IQueryAssociations_fnGetData(
+  IQueryAssociations *iface,
+  ASSOCF cfFlags,
+  ASSOCDATA assocdata,
+  LPCWSTR pszExtra,
+  LPVOID pvOut,
+  DWORD *pcbOut)
+{
+  ICOM_THIS(IQueryAssociationsImpl, iface);
+
+  FIXME("(%p,0x%8lx,0x%8x,%s,%p,%p)-stub!\n", This, cfFlags, assocdata,
+        debugstr_w(pszExtra), pvOut, pcbOut);
+  return E_NOTIMPL;
+}
+
+/**************************************************************************
+ *  IQueryAssociations_GetEnum {SHLWAPI}
+ *
+ * Not yet implemented in native Win32.
+ *
+ * PARAMS
+ *  iface     [I] IQueryAssociations interface to query
+ *  cfFlags   [I] ASSOCF_ flags from "shlwapi.h"
+ *  assocenum [I] Type of enum to get (ASSOCENUM enum from "shlwapi.h")
+ *  pszExtra  [I] Extra information about the enum location
+ *  riid      [I] REFIID to look for
+ *  ppvOut    [O] Destination for the interface.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  Presumably this function returns an enumerator object.
+ */
+static HRESULT WINAPI IQueryAssociations_fnGetEnum(
+  IQueryAssociations *iface,
+  ASSOCF cfFlags,
+  ASSOCENUM assocenum,
+  LPCWSTR pszExtra,
+  REFIID riid,
+  LPVOID *ppvOut)
+{
+  ICOM_THIS(IQueryAssociationsImpl, iface);
+
+  FIXME("(%p,0x%8lx,0x%8x,%s,%s,%p)-stub!\n", This, cfFlags, assocenum,
+        debugstr_w(pszExtra), debugstr_guid(riid), ppvOut);
+  return E_NOTIMPL;
+}
+
+static struct ICOM_VTABLE(IQueryAssociations) IQueryAssociations_vtbl =
+{
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  IQueryAssociations_fnQueryInterface,
+  IQueryAssociations_fnAddRef,
+  IQueryAssociations_fnRelease,
+  IQueryAssociations_fnInit,
+  IQueryAssociations_fnGetString,
+  IQueryAssociations_fnGetKey,
+  IQueryAssociations_fnGetData,
+  IQueryAssociations_fnGetEnum
+};
