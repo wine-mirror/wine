@@ -130,3 +130,29 @@ BOOL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, INT mode)
 
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
+
+INT EMFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
+{
+    EMRSETVIEWPORTORGEX emr;
+    EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
+
+    emr.emr.iType = EMR_SETVIEWPORTORGEX;
+    emr.emr.nSize = sizeof(emr);
+    emr.ptlOrigin.x = physDev->dc->vportOrgX + x;
+    emr.ptlOrigin.y = physDev->dc->vportOrgY + y;
+
+    return EMFDRV_WriteRecord( dev, &emr.emr );
+}
+
+INT EMFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y )
+{
+    EMRSETWINDOWORGEX emr;
+    EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
+
+    emr.emr.iType = EMR_SETWINDOWORGEX;
+    emr.emr.nSize = sizeof(emr);
+    emr.ptlOrigin.x = physDev->dc->wndOrgX + x;
+    emr.ptlOrigin.y = physDev->dc->wndOrgY + y;
+
+    return EMFDRV_WriteRecord( dev, &emr.emr );
+}

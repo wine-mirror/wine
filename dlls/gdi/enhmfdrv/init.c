@@ -84,8 +84,8 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_ModifyWorldTransform,     /* pModifyWorldTransform */
     EMFDRV_MoveTo,                   /* pMoveTo */
     EMFDRV_OffsetClipRgn,            /* pOffsetClipRgn */
-    NULL,                            /* pOffsetViewportOrg */
-    NULL,                            /* pOffsetWindowOrg */
+    EMFDRV_OffsetViewportOrg,        /* pOffsetViewportOrg */
+    EMFDRV_OffsetWindowOrg,          /* pOffsetWindowOrg */
     EMFDRV_PaintRgn,                 /* pPaintRgn */
     EMFDRV_PatBlt,                   /* pPatBlt */
     EMFDRV_Pie,                      /* pPie */
