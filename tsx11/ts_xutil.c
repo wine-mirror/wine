@@ -138,6 +138,17 @@ XVisualInfo * TSXGetVisualInfo(Display* a0, long a1, XVisualInfo* a2, int* a3)
   return r;
 }
 
+XWMHints * TSXGetWMHints(Display* a0, Window a1)
+{
+  XWMHints * r;
+  TRACE("Call XGetWMHints\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XGetWMHints(a0, a1);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XGetWMHints\n");
+  return r;
+}
+
 int   TSXGetWMSizeHints(Display* a0, Window a1, XSizeHints* a2, long* a3, Atom a4)
 {
   int   r;

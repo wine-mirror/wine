@@ -27,6 +27,7 @@ extern int  TSXEmptyRegion(Region);
 extern int  TSXEqualRegion(Region, Region);
 extern int  TSXFindContext(Display*, XID, XContext, XPointer*);
 extern XVisualInfo * TSXGetVisualInfo(Display*, long, XVisualInfo*, int*);
+extern XWMHints * TSXGetWMHints(Display*, Window);
 extern int   TSXGetWMSizeHints(Display*, Window, XSizeHints*, long*, Atom);
 extern int  TSXIntersectRegion(Region, Region, Region);
 extern int  TSXLookupString(XKeyEvent*, char*, int, KeySym*, XComposeStatus*);

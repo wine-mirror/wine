@@ -249,12 +249,14 @@ static void X11DRV_WND_UpdateIconHints(WND *wndPtr)
 
     X11DRV_WND_IconChanged(wndPtr);
 
-    wm_hints = TSXAllocWMHints();
-
-    X11DRV_WND_SetIconHints(wndPtr, wm_hints);
-
-    TSXSetWMHints( display, X11DRV_WND_GetXWindow(wndPtr), wm_hints );
-    TSXFree( wm_hints );
+    wm_hints = TSXGetWMHints( display, X11DRV_WND_GetXWindow(wndPtr) );
+    if (!wm_hints) wm_hints = TSXAllocWMHints();
+    if (wm_hints)
+    {
+        X11DRV_WND_SetIconHints(wndPtr, wm_hints);
+        TSXSetWMHints( display, X11DRV_WND_GetXWindow(wndPtr), wm_hints );
+        TSXFree( wm_hints );
+    }
 }
 
 
@@ -362,7 +364,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
           WIN_ReleaseWndPtr(tmpWnd);
       }
 
-      wm_hints = TSXAllocWMHints();
+      if ((wm_hints = TSXAllocWMHints()))
       {
 	  wm_hints->flags = InputHint | StateHint | WindowGroupHint;
 	  wm_hints->input = True;
@@ -831,7 +833,9 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
  */
 static BOOL X11DRV_SetWMHint(Display* display, WND* wndPtr, int hint, int val)
 {
-    XWMHints* wm_hints = TSXAllocWMHints();
+    XWMHints* wm_hints = TSXGetWMHints( display, X11DRV_WND_GetXWindow(wndPtr) );
+    if (!wm_hints) wm_hints = TSXAllocWMHints();
+    if (wm_hints)
     {
         wm_hints->flags = hint;
 	switch( hint )

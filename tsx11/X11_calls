@@ -75,6 +75,7 @@ XGetModifierMapping
 XGetScreenSaver
 XGetSelectionOwner
 XGetVisualInfo
+XGetWMHints
 XGetWMSizeHints
 XGetWindowAttributes
 XGetWindowProperty
