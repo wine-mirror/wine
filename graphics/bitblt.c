@@ -85,7 +85,7 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
               hdcDst, xDst, yDst, width, height, dcDst->bitsPerPixel, rop);
         if (dcDst->funcs->pBitBlt)
             ret = dcDst->funcs->pBitBlt( dcDst->physDev, xDst, yDst, width, height,
-                                         dcSrc->physDev, xSrc, ySrc, rop );
+                                         dcSrc ? dcSrc->physDev : NULL, xSrc, ySrc, rop );
         if (dcSrc) GDI_ReleaseObj( hdcSrc );
         GDI_ReleaseObj( hdcDst );
     }

@@ -1503,7 +1503,7 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
     BOOL result = FALSE;
     INT sSrc, sDst;
     RECT visRectDst, visRectSrc;
-    DC *dcSrc = physDevSrc->dc;
+    DC *dcSrc = physDevSrc ? physDevSrc->dc : NULL;
     DC *dcDst = physDevDst->dc;
 
     if (((rop >> 16) & 0x55) == ((rop >> 17) & 0x55)) {
