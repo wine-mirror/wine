@@ -15,30 +15,70 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "winerror.h"
 #include "user.h"
 #include "sysmetrics.h"
 
 static int sysMetrics[SM_WINE_CMETRICS+1];
 
-static int SYSMETRICS_GetProfileInt(const char *section, const char *key,
-				    int default_value)
+
+/***********************************************************************
+ * RegistryTwips2Pixels
+ *
+ * Convert a a dimension value that was obtained from the registry.  These are
+ * quoted as being "twips" values if negative and pixels if positive.
+ * See for example 
+ *   MSDN Library - April 2001 -> Resource Kits ->
+ *       Windows 2000 Resource Kit Reference ->
+ *       Technical Reference to the Windows 2000 Registry ->
+ *       HKEY_CURRENT_USE -> Control Panel -> Desktop -> WindowMetrics
+ *
+ * This is written as a function to prevent repeated evaluation of the 
+ * argument.
+ */
+inline static int RegistryTwips2Pixels(int x)
 {
-    int ret = default_value;
-    char buffer[1024];
-    HKEY hkey;
-
-    strcpy(buffer, "Software\\Wine\\Wine\\Config\\");
-    strncat(buffer, section, sizeof(buffer) - strlen(buffer));
-
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, buffer, &hkey))
-    {
-	DWORD type, count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-	    ret = atoi(buffer);
-	RegCloseKey(hkey);
-    }
-    return ret;
+    if (x < 0)
+        x = (-x+7)/15;
+    return x;
 }
+
+
+/***********************************************************************
+ * SYSMETRICS_GetRegistryMetric
+ *
+ * Get a registry entry from the already open key.  This allows us to open the
+ * section once and read several values.
+ *
+ * Of course this function belongs somewhere more usable but here will do
+ * for now.
+ */
+static int SYSMETRICS_GetRegistryMetric (
+        HKEY       hkey,            /* handle to the registry section */
+        const char *key,            /* value name in the section */
+        int        default_value)   /* default to return */
+{
+    int value = default_value;
+    if (hkey)
+    {
+        BYTE buffer[128];
+        DWORD type, count = sizeof(buffer);
+        if(!RegQueryValueExA (hkey, key, 0, &type, buffer, &count))
+        {
+            if (type != REG_SZ)
+            {
+                /* Are there any utilities for converting registry entries
+                 * between formats?
+                 */
+                /* FIXME_(reg)("We need reg format converter\n"); */
+            }
+            else
+                value = atoi(buffer);
+        }
+    }
+    return RegistryTwips2Pixels(value);
+}
+
 
 /***********************************************************************
  *           SYSMETRICS_Init
@@ -53,56 +93,78 @@ static int SYSMETRICS_GetProfileInt(const char *section, const char *key,
  * SM_CYCAPTION        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
  * SM_CYMENU           x-1      x	Already fixed
  * SM_CYFULLSCREEN     x-1      x
+ * SM_CXFRAME                           Fixed July 6, 2001 - Bill Medland
  * 
  * (collides with TWEAK_WineLook sometimes,
  * so changing anything might be difficult) 
+ *
+ * Starting at Win95 there are now a large number or Registry entries in the
+ * [WindowMetrics] section that are probably relevant here.
  */
 void SYSMETRICS_Init(void)
 {
     HDC hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    HKEY hkey; /* key to the window metrics area of the registry */
     assert(hdc);
+
+    if (RegOpenKeyExA (HKEY_CURRENT_USER, "Control Panel\\desktop\\WindowMetrics",
+                       0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
+
+    if (TWEAK_WineLook > WIN31_LOOK)
+    {
+        sysMetrics[SM_CXVSCROLL] = SYSMETRICS_GetRegistryMetric( hkey, "ScrollWidth", 16 );
+        sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
+
+        /* The Win 2000 resource kit SAYS that this is governed by the ScrollHeight
+         * but on my computer that controls the CYV/CXH values. */
+        sysMetrics[SM_CYCAPTION] = SYSMETRICS_GetRegistryMetric(hkey, "CaptionHeight", 18)
+                                     + 1; /* for the separator? */
+
+        sysMetrics[SM_CYMENU] = SYSMETRICS_GetRegistryMetric (hkey, "MenuHeight", 18) + 1;
+
+
+        sysMetrics[SM_CXDLGFRAME] = 3;
+        sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
+
+        sysMetrics[SM_CXFRAME] = SYSMETRICS_GetRegistryMetric(hkey, "BorderWidth", 1)
+                                    + sysMetrics[SM_CXDLGFRAME];
+        sysMetrics[SM_CYFRAME] = sysMetrics[SM_CXFRAME];
+        /* Since I am unable to get SM_CXDLGFRAME to be anything other than 3 on
+         * my Win95 computer I cannot proved the above assumption that the frame
+         * size is dependent on it.  However the above relationship is assumed in
+         * the painting of the Windows 95 frames (currently in nonclient.c)
+         */
+    }
+    else
+    {
+        sysMetrics[SM_CXVSCROLL]  = 17;
+        sysMetrics[SM_CYHSCROLL]  = sysMetrics[SM_CXVSCROLL];
+        sysMetrics[SM_CYCAPTION]  = 20;
+        sysMetrics[SM_CYMENU]     = 18;
+        sysMetrics[SM_CXDLGFRAME] = 4;
+        sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
+        sysMetrics[SM_CXFRAME]    = GetProfileIntA("Windows", "BorderWidth", 4) + 1;
+        sysMetrics[SM_CYFRAME]    = sysMetrics[SM_CXFRAME];
+    }
 
     sysMetrics[SM_CXCURSOR] = 32;
     sysMetrics[SM_CYCURSOR] = 32;
     sysMetrics[SM_CXSCREEN] = GetDeviceCaps( hdc, HORZRES );
     sysMetrics[SM_CYSCREEN] = GetDeviceCaps( hdc, VERTRES );
     sysMetrics[SM_WINE_BPP] = GetDeviceCaps( hdc, BITSPIXEL );
-    if (TWEAK_WineLook > WIN31_LOOK)
-	sysMetrics[SM_CXVSCROLL] =
-	    SYSMETRICS_GetProfileInt("Tweak.Layout", "ScrollBarWidth", 16);
-    else
-	sysMetrics[SM_CXVSCROLL] =
-	    SYSMETRICS_GetProfileInt("Tweak.Layout", "ScrollBarWidth", 17);
-    sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
-    if (TWEAK_WineLook > WIN31_LOOK)
-	sysMetrics[SM_CYCAPTION] =
-	    SYSMETRICS_GetProfileInt("Tweak.Layout", "CaptionHeight", 19);
-    else
-	sysMetrics[SM_CYCAPTION] =
-	    SYSMETRICS_GetProfileInt("Tweak.Layout", "CaptionHeight", 20);
     sysMetrics[SM_CXBORDER] = 1;
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
-    sysMetrics[SM_CXDLGFRAME] =
-	SYSMETRICS_GetProfileInt("Tweak.Layout", "DialogFrameWidth",
-			      (TWEAK_WineLook > WIN31_LOOK) ? 3 : 4);
-    sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL] - 1;
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
     sysMetrics[SM_CXICON] = 32;
     sysMetrics[SM_CYICON] = 32;
-    if (TWEAK_WineLook > WIN31_LOOK)
-	sysMetrics[SM_CYMENU] =
-	    SYSMETRICS_GetProfileInt("Tweak.Layout", "MenuHeight", 19);
-    else
-	sysMetrics[SM_CYMENU] =
-	    SYSMETRICS_GetProfileInt("Tweak.Layout", "MenuHeight", 18);
     sysMetrics[SM_CXFULLSCREEN] = sysMetrics[SM_CXSCREEN];
     sysMetrics[SM_CYFULLSCREEN] =
 	sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];
     sysMetrics[SM_CYKANJIWINDOW] = 0;
     sysMetrics[SM_MOUSEPRESENT] = 1;
-    sysMetrics[SM_CYVSCROLL] = sysMetrics[SM_CYVTHUMB];
-    sysMetrics[SM_CXHSCROLL] = sysMetrics[SM_CXHTHUMB];
+    sysMetrics[SM_CYVSCROLL] = SYSMETRICS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CXVSCROLL]);
+    sysMetrics[SM_CXHSCROLL] = SYSMETRICS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CYHSCROLL]);
     sysMetrics[SM_DEBUG] = 0;
 
     /* FIXME: The following should look for the registry key to see if the
@@ -120,8 +182,6 @@ void SYSMETRICS_Init(void)
 
     sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 2;
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
-    sysMetrics[SM_CXFRAME] = GetProfileIntA("Windows", "BorderWidth", 4) + 1;
-    sysMetrics[SM_CYFRAME] = sysMetrics[SM_CXFRAME];
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
     sysMetrics[SM_CXDOUBLECLK] =
@@ -185,7 +245,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_MIDEASTENABLED] = 0;
 
     sysMetrics[SM_MOUSEWHEELPRESENT] = 0;
-    
+
     sysMetrics[SM_CXVIRTUALSCREEN] = sysMetrics[SM_CXSCREEN];
     sysMetrics[SM_CYVIRTUALSCREEN] = sysMetrics[SM_CYSCREEN];
     sysMetrics[SM_XVIRTUALSCREEN] = 0;
@@ -194,6 +254,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
 
+    if (hkey) RegCloseKey (hkey);
     DeleteDC( hdc );
 }
 
