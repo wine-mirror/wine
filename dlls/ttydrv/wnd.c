@@ -7,7 +7,6 @@
 #include "config.h"
 
 #include "gdi.h"
-#include "heap.h"
 #include "ttydrv.h"
 #include "win.h"
 #include "debugtools.h"
@@ -52,8 +51,7 @@ WINDOW *TTYDRV_WND_GetCursesWindow(WND *wndPtr)
  */
 void TTYDRV_WND_Initialize(WND *wndPtr)
 {
-  TTYDRV_WND_DATA *pWndDriverData = 
-    (TTYDRV_WND_DATA *) HeapAlloc(SystemHeap, 0, sizeof(TTYDRV_WND_DATA));
+  TTYDRV_WND_DATA *pWndDriverData = HeapAlloc(GetProcessHeap(), 0, sizeof(TTYDRV_WND_DATA));
 
   TRACE("(%p)\n", wndPtr);
 
@@ -81,7 +79,7 @@ void TTYDRV_WND_Finalize(WND *wndPtr)
     ERR("WND destroyed without destroying the associated Curses Windows");
   }
 
-  HeapFree(SystemHeap, 0, pWndDriverData);
+  HeapFree(GetProcessHeap(), 0, pWndDriverData);
   wndPtr->pDriverData = NULL;
 }
 

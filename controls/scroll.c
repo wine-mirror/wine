@@ -9,7 +9,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "controls.h"
-#include "heap.h"
 #include "win.h"
 #include "debugtools.h"
 #include "user.h"
@@ -162,7 +161,7 @@ static SCROLLBAR_INFO *SCROLL_GetPtrScrollInfo( WND* wndPtr, INT nBar )
 
     if (!infoPtr)  /* Create the info structure if needed */
     {
-        if ((infoPtr = HeapAlloc( SystemHeap, 0, sizeof(SCROLLBAR_INFO) )))
+        if ((infoPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(SCROLLBAR_INFO) )))
         {
             infoPtr->MinVal = infoPtr->CurVal = infoPtr->Page = 0;
             infoPtr->MaxVal = 100;

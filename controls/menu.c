@@ -640,7 +640,7 @@ static void MENU_FreeItemData( MENUITEM* item )
 {
     /* delete text */
     if (IS_STRING_ITEM(item->fType) && item->text)
-        HeapFree( SystemHeap, 0, item->text );
+        HeapFree( GetProcessHeap(), 0, item->text );
 }
 
 /***********************************************************************
@@ -1869,7 +1869,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
                 flags |= MF_HELP;
                 str++;
             }
-            if (!(text = HEAP_strdupW( SystemHeap, 0, str ))) return FALSE;
+            if (!(text = HEAP_strdupW( GetProcessHeap(), 0, str ))) return FALSE;
             item->text = text;
         }
     }
@@ -1914,7 +1914,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
     /* Don't call SetRectEmpty here! */
 
 
-    if (prevText) HeapFree( SystemHeap, 0, prevText );
+    if (prevText) HeapFree( GetProcessHeap(), 0, prevText );
 
     debug_print_menuitem("MENU_SetItemData to  : ", item, "");
     return TRUE;
@@ -1950,7 +1950,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
 
     /* Create new items array */
 
-    newItems = HeapAlloc( SystemHeap, 0, sizeof(MENUITEM) * (menu->nItems+1) );
+    newItems = HeapAlloc( GetProcessHeap(), 0, sizeof(MENUITEM) * (menu->nItems+1) );
     if (!newItems)
     {
         WARN("allocation failed\n" );
@@ -1962,7 +1962,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
 	if (pos > 0) memcpy( newItems, menu->items, pos * sizeof(MENUITEM) );
 	if (pos < menu->nItems) memcpy( &newItems[pos+1], &menu->items[pos],
 					(menu->nItems-pos)*sizeof(MENUITEM) );
-        HeapFree( SystemHeap, 0, menu->items );
+        HeapFree( GetProcessHeap(), 0, menu->items );
     }
     menu->items = newItems;
     menu->nItems++;
@@ -2046,14 +2046,8 @@ static LPCSTR MENUEX_ParseResource( LPCSTR res, HMENU hMenu)
 	/* Align the following fields on a dword boundary.  */
 	res += (~((int)res - 1)) & 3;
 
-        /* FIXME: This is inefficient and cannot be optimised away by gcc.  */
-	{
-	    LPSTR newstr = HEAP_strdupWtoA(GetProcessHeap(),
-					   0, mii.dwTypeData);
-	    TRACE("Menu item: [%08x,%08x,%04x,%04x,%s]\n",
-			 mii.fType, mii.fState, mii.wID, resinfo, newstr);
-	    HeapFree( GetProcessHeap(), 0, newstr );
-	}
+        TRACE("Menu item: [%08x,%08x,%04x,%04x,%s]\n",
+              mii.fType, mii.fState, mii.wID, resinfo, debugstr_w(mii.dwTypeData));
 
 	if (resinfo & 1) {	/* Pop-up? */
 	    /* DWORD helpid = GET_DWORD(res); FIXME: use this.  */
@@ -3720,7 +3714,7 @@ BOOL WINAPI RemoveMenu( HMENU hMenu, UINT nPos, UINT wFlags )
 
     if (--menu->nItems == 0)
     {
-        HeapFree( SystemHeap, 0, menu->items );
+        HeapFree( GetProcessHeap(), 0, menu->items );
         menu->items = NULL;
     }
     else
@@ -3731,7 +3725,7 @@ BOOL WINAPI RemoveMenu( HMENU hMenu, UINT nPos, UINT wFlags )
 	    item++;
 	    nPos++;
 	}
-        menu->items = HeapReAlloc( SystemHeap, 0, menu->items,
+        menu->items = HeapReAlloc( GetProcessHeap(), 0, menu->items,
                                    menu->nItems * sizeof(MENUITEM) );
     }
     return TRUE;
@@ -3960,7 +3954,7 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 	            if (item->fType & MF_POPUP) DestroyMenu(item->hSubMenu);
 		    MENU_FreeItemData( item );
 	        }
-	        HeapFree( SystemHeap, 0, lppop->items );
+	        HeapFree( GetProcessHeap(), 0, lppop->items );
 	    }
 	    USER_HEAP_FREE( hMenu );
             MENU_ReleaseTopPopupWnd();
@@ -4500,7 +4494,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     if (lpmii->fMask & MIIM_TYPE ) {
 	/* Get rid of old string.  */
 	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
-	    HeapFree(SystemHeap, 0, menu->text);
+	    HeapFree(GetProcessHeap(), 0, menu->text);
 	    menu->text = NULL;
 	}
 
@@ -4512,16 +4506,16 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
 	if (IS_STRING_ITEM(menu->fType) && menu->text) {
 	    if (unicode)
-		menu->text = HEAP_strdupW(SystemHeap, 0,  lpmii->dwTypeData);
+		menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
 	    else
-		menu->text = HEAP_strdupAtoW(SystemHeap, 0, (LPSTR)lpmii->dwTypeData);
+		menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR)lpmii->dwTypeData);
 	}
     }
 
     if (lpmii->fMask & MIIM_FTYPE ) {
 	/* free the string when the type is changing */
 	if ( (!IS_STRING_ITEM(lpmii->fType)) && IS_STRING_ITEM(menu->fType) && menu->text) {
-	    HeapFree(SystemHeap, 0, menu->text);
+	    HeapFree(GetProcessHeap(), 0, menu->text);
 	    menu->text = NULL;
 	}
 	menu->fType &= ~MENU_ITEM_TYPE(menu->fType);
@@ -4531,11 +4525,11 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     if (lpmii->fMask & MIIM_STRING ) {
 	/* free the string when used */
 	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
-	    HeapFree(SystemHeap, 0, menu->text);
+	    HeapFree(GetProcessHeap(), 0, menu->text);
 	    if (unicode)
-		menu->text = HEAP_strdupW(SystemHeap, 0,  lpmii->dwTypeData);
+		menu->text = HEAP_strdupW(GetProcessHeap(), 0,  lpmii->dwTypeData);
 	    else
-		menu->text = HEAP_strdupAtoW(SystemHeap, 0, (LPSTR) lpmii->dwTypeData);
+		menu->text = HEAP_strdupAtoW(GetProcessHeap(), 0, (LPSTR) lpmii->dwTypeData);
 	}
     }
 

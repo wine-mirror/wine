@@ -1182,8 +1182,8 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
     /* store new "default" title if lpTitle is not NULL */
     if (lpTitle) 
     {
-	if (ci->frameTitle) HeapFree( SystemHeap, 0, ci->frameTitle );
-	ci->frameTitle = HEAP_strdupW( SystemHeap, 0, lpTitle );
+	if (ci->frameTitle) HeapFree( GetProcessHeap(), 0, ci->frameTitle );
+	ci->frameTitle = HEAP_strdupW( GetProcessHeap(), 0, lpTitle );
     }
 
     if (ci->frameTitle)

@@ -9,7 +9,6 @@
 
 #include "win.h"
 #include "user.h"
-#include "heap.h"
 #include "nonclient.h"
 #include "winpos.h"
 #include "dce.h"
@@ -67,8 +66,8 @@ void DEFWND_SetTextA( WND *wndPtr, LPCSTR text )
     if (!text) text = "";
     count = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
 
-    if (wndPtr->text) HeapFree(SystemHeap, 0, wndPtr->text);
-    if ((wndPtr->text = HeapAlloc(SystemHeap, 0, count * sizeof(WCHAR))))
+    if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
+    if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
         MultiByteToWideChar( CP_ACP, 0, text, -1, wndPtr->text, count );
     else
         ERR("Not enough memory for window text");
@@ -89,8 +88,8 @@ void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text )
     if (!text) text = empty_string;
     count = strlenW(text) + 1;
 
-    if (wndPtr->text) HeapFree(SystemHeap, 0, wndPtr->text);
-    if ((wndPtr->text = HeapAlloc(SystemHeap, 0, count * sizeof(WCHAR))))
+    if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
+    if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
 	strcpyW( wndPtr->text, text );
     else
         ERR("Not enough memory for window text");
@@ -379,10 +378,10 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return NC_HandleNCActivate( wndPtr, wParam );
 
     case WM_NCDESTROY:
-	if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
+	if (wndPtr->text) HeapFree( GetProcessHeap(), 0, wndPtr->text );
 	wndPtr->text = NULL;
-	if (wndPtr->pVScroll) HeapFree( SystemHeap, 0, wndPtr->pVScroll );
-	if (wndPtr->pHScroll) HeapFree( SystemHeap, 0, wndPtr->pHScroll );
+	if (wndPtr->pVScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pVScroll );
+	if (wndPtr->pHScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pHScroll );
         wndPtr->pVScroll = wndPtr->pHScroll = NULL;
 	return 0;
 

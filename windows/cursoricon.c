@@ -174,7 +174,7 @@ static ICONCACHE* CURSORICON_FindCache(HANDLE handle)
  */
 static void CURSORICON_AddSharedIcon( HMODULE hModule, HRSRC hRsrc, HRSRC hGroupRsrc, HANDLE handle )
 {
-    ICONCACHE *ptr = HeapAlloc( SystemHeap, 0, sizeof(ICONCACHE) );
+    ICONCACHE *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(ICONCACHE) );
     if ( !ptr ) return;
 
     ptr->hModule = hModule;
@@ -234,7 +234,7 @@ void CURSORICON_FreeModuleIcons( HMODULE hModule )
             *ptr = freePtr->next;
             
             GlobalFree16( freePtr->handle );
-            HeapFree( SystemHeap, 0, freePtr );
+            HeapFree( GetProcessHeap(), 0, freePtr );
             continue;
         }
         ptr = &(*ptr)->next;

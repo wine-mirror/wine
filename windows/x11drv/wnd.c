@@ -22,7 +22,6 @@
 #include "gdi.h"
 #include "options.h"
 #include "message.h"
-#include "heap.h"
 #include "win.h"
 #include "windef.h"
 #include "x11drv.h"
@@ -137,8 +136,7 @@ static BOOL X11DRV_WND_IsZeroSizeWnd(WND *wndPtr)
  */
 void X11DRV_WND_Initialize(WND *wndPtr)
 {
-  X11DRV_WND_DATA *pWndDriverData = 
-    (X11DRV_WND_DATA *) HeapAlloc(SystemHeap, 0, sizeof(X11DRV_WND_DATA));
+  X11DRV_WND_DATA *pWndDriverData = HeapAlloc(GetProcessHeap(), 0, sizeof(X11DRV_WND_DATA));
 
   wndPtr->pDriverData = (void *) pWndDriverData;
 
@@ -165,7 +163,7 @@ void X11DRV_WND_Finalize(WND *wndPtr)
 	  pWndDriverData->window
       );
     }
-  HeapFree(SystemHeap, 0, wndPtr->pDriverData);
+  HeapFree(GetProcessHeap(), 0, wndPtr->pDriverData);
   wndPtr->pDriverData = NULL;
 }
 

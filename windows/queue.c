@@ -14,7 +14,6 @@
 #include "queue.h"
 #include "win.h"
 #include "hook.h"
-#include "heap.h"
 #include "thread.h"
 #include "debugtools.h"
 #include "server.h"
@@ -70,7 +69,7 @@ PERQUEUEDATA * PERQDATA_CreateInstance( )
     }
 
     /* Allocate PERQUEUEDATA from the system heap */
-    if (!( pQData = (PERQUEUEDATA *) HeapAlloc( SystemHeap, 0,
+    if (!( pQData = (PERQUEUEDATA *) HeapAlloc( GetProcessHeap(), 0,
                                                     sizeof(PERQUEUEDATA) ) ))
         return 0;
 
@@ -139,7 +138,7 @@ ULONG PERQDATA_Release( PERQUEUEDATA *pQData )
             pQDataWin16 = 0;
             
         /* Free the PERQUEUEDATA instance */
-        HeapFree( SystemHeap, 0, pQData );
+        HeapFree( GetProcessHeap(), 0, pQData );
 
         return 0;
     }
@@ -309,16 +308,16 @@ MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
 
-    HeapLock( SystemHeap );  /* FIXME: a bit overkill */
+    HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
     queue = GlobalLock16( hQueue );
     if ( !queue || (queue->magic != QUEUE_MAGIC) )
     {
-        HeapUnlock( SystemHeap );
+        HeapUnlock( GetProcessHeap() );
         return NULL;
     }
 
     queue->lockCount++;
-    HeapUnlock( SystemHeap );
+    HeapUnlock( GetProcessHeap() );
     return queue;
 }
 
@@ -333,7 +332,7 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
 {
     if (queue)
     {
-        HeapLock( SystemHeap );  /* FIXME: a bit overkill */
+        HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
 
         if ( --queue->lockCount == 0 )
         {
@@ -343,7 +342,7 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
             GlobalFree16( queue->self );
         }
     
-        HeapUnlock( SystemHeap );
+        HeapUnlock( GetProcessHeap() );
     }
 }
 
@@ -551,7 +550,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     /* flush sent messages */
     QUEUE_FlushMessages( msgQueue );
 
-    HeapLock( SystemHeap );  /* FIXME: a bit overkill */
+    HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
 
     /* Release per queue data if present */
     if ( msgQueue->pQData )
@@ -579,7 +578,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     if (pPrev && *pPrev) *pPrev = msgQueue->next;
     msgQueue->self = 0;
 
-    HeapUnlock( SystemHeap );
+    HeapUnlock( GetProcessHeap() );
 
     /* free up resource used by MESSAGEQUEUE structure */
     msgQueue->lockCount--;
@@ -1030,7 +1029,7 @@ BOOL QUEUE_AddMsg( HQUEUE16 hQueue, int type, MSG *msg, DWORD extraInfo )
     if (!(msgQueue = QUEUE_Lock( hQueue ))) return FALSE;
 
     /* allocate new message in global heap for now */
-    if (!(qmsg = (QMSG *) HeapAlloc( SystemHeap, 0, sizeof(QMSG) ) ))
+    if (!(qmsg = (QMSG *) HeapAlloc( GetProcessHeap(), 0, sizeof(QMSG) ) ))
     {
         QUEUE_Unlock( msgQueue );
         return 0;
@@ -1130,7 +1129,7 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg )
         msgQueue->lastMsg = qmsg->prevMsg;
 
     /* deallocate the memory for the message */
-    HeapFree( SystemHeap, 0, qmsg );
+    HeapFree( GetProcessHeap(), 0, qmsg );
     
     msgQueue->msgCount--;
     if (!msgQueue->msgCount) msgQueue->wakeBits &= ~QS_POSTMESSAGE;
@@ -1246,7 +1245,7 @@ void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
 
         /* Don't merge allocate a new msg in the global heap */
         
-        if (!(qmsg = (QMSG *) HeapAlloc( SystemHeap, 0, sizeof(QMSG) ) ))
+        if (!(qmsg = (QMSG *) HeapAlloc( GetProcessHeap(), 0, sizeof(QMSG) ) ))
         {
             LeaveCriticalSection( &sysMsgQueue->cSection );
             return;
@@ -1494,13 +1493,13 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         queuePtr = QUEUE_Lock( hQueue );
         queuePtr->teb = NtCurrentTeb();
 
-        HeapLock( SystemHeap );  /* FIXME: a bit overkill */
+        HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
         SetThreadQueue16( 0, hQueue );
         teb->queue = hQueue;
             
         queuePtr->next  = hFirstQueue;
         hFirstQueue = hQueue;
-        HeapUnlock( SystemHeap );
+        HeapUnlock( GetProcessHeap() );
         
         QUEUE_Unlock( queuePtr );
     }

@@ -23,7 +23,6 @@
 #include "win.h"
 #include "gdi.h"
 #include "region.h"
-#include "heap.h"
 #include "user.h"
 #include "debugtools.h"
 #include "windef.h"
@@ -76,10 +75,10 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
     DCE * dce;
     WND* wnd;
     
-    if (!(dce = HeapAlloc( SystemHeap, 0, sizeof(DCE) ))) return NULL;
+    if (!(dce = HeapAlloc( GetProcessHeap(), 0, sizeof(DCE) ))) return NULL;
     if (!(dce->hDC = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
     {
-        HeapFree( SystemHeap, 0, dce );
+        HeapFree( GetProcessHeap(), 0, dce );
 	return 0;
     }
 
@@ -134,7 +133,7 @@ DCE* DCE_FreeDCE( DCE *dce )
     DeleteDC( dce->hDC );
     if( dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN) )
 	DeleteObject(dce->hClipRgn);
-    HeapFree( SystemHeap, 0, dce );
+    HeapFree( GetProcessHeap(), 0, dce );
 
     WIN_UnlockWnds();
     

@@ -109,7 +109,7 @@ void WINPOS_CheckInternalPos( WND* wndPtr )
     {
 	if( IsWindow(lpPos->hwndIconTitle) ) 
 	    DestroyWindow( lpPos->hwndIconTitle );
-	HeapFree( SystemHeap, 0, lpPos );
+	HeapFree( GetProcessHeap(), 0, lpPos );
     }
 
     QUEUE_Unlock( pMsgQ );
@@ -1087,7 +1087,7 @@ static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd, POINT pt,
 	/* this happens when the window is minimized/maximized 
 	 * for the first time (rectWindow is not adjusted yet) */
 
-	lpPos = HeapAlloc( SystemHeap, 0, sizeof(INTERNALPOS) );
+	lpPos = HeapAlloc( GetProcessHeap(), 0, sizeof(INTERNALPOS) );
 	if( !lpPos ) return NULL;
 
 	SetPropA( wnd->hwndSelf, atomInternalPos, (HANDLE)lpPos );

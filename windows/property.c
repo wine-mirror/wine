@@ -135,14 +135,14 @@ BOOL WINAPI SetPropA( HWND hwnd, LPCSTR str, HANDLE handle )
         /* We need to create it */
         WND *pWnd = WIN_FindWndPtr( hwnd );
         if (!pWnd) return FALSE;
-        if (!(prop = HeapAlloc( SystemHeap, 0, sizeof(*prop) )))
+        if (!(prop = HeapAlloc( GetProcessHeap(), 0, sizeof(*prop) )))
         {
             WIN_ReleaseWndPtr(pWnd);
             return FALSE;
         }
         if (!(prop->string = SEGPTR_STRDUP(str)))
         {
-            HeapFree( SystemHeap, 0, prop );
+            HeapFree( GetProcessHeap(), 0, prop );
             WIN_ReleaseWndPtr(pWnd);
             return FALSE;
 
@@ -229,7 +229,7 @@ HANDLE WINAPI RemovePropA( HWND hwnd, LPCSTR str )
     handle = prop->handle;
     *pprop = prop->next;
     SEGPTR_FREE(prop->string);
-    HeapFree( SystemHeap, 0, prop );
+    HeapFree( GetProcessHeap(), 0, prop );
     return handle;
 }
 
@@ -264,7 +264,7 @@ void PROPERTY_RemoveWindowProps( WND *pWnd )
     {
         next = prop->next;
         SEGPTR_FREE( prop->string );
-        HeapFree( SystemHeap, 0, prop );
+        HeapFree( GetProcessHeap(), 0, prop );
     }
     pWnd->pProp = NULL;
 }

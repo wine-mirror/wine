@@ -454,17 +454,17 @@ static DWORD MSG_ProcessKbdMsg( MSG *msg, BOOL remove )
  */
 static void MSG_JournalRecordMsg( MSG *msg )
 {
-    EVENTMSG *event = (EVENTMSG *) HeapAlloc(SystemHeap, 0, sizeof(EVENTMSG));
-    if (!event) return;
-    event->message = msg->message;
-    event->time = msg->time;
+    EVENTMSG event;
+
+    event.message = msg->message;
+    event.time = msg->time;
     if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
     {
-        event->paramL = (msg->wParam & 0xFF) | (HIWORD(msg->lParam) << 8);
-        event->paramH = msg->lParam & 0x7FFF;  
+        event.paramL = (msg->wParam & 0xFF) | (HIWORD(msg->lParam) << 8);
+        event.paramH = msg->lParam & 0x7FFF;
         if (HIWORD(msg->lParam) & 0x0100)
-            event->paramH |= 0x8000;               /* special_key - bit */
-        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)event );
+            event.paramH |= 0x8000;               /* special_key - bit */
+        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
     }
     else if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
     {
@@ -472,20 +472,18 @@ static void MSG_JournalRecordMsg( MSG *msg )
         pt.x = SLOWORD(msg->lParam);
         pt.y = SHIWORD(msg->lParam);
         ClientToScreen( msg->hwnd, &pt );
-        event->paramL = pt.x;
-        event->paramH = pt.y;
-        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)event );
+        event.paramL = pt.x;
+        event.paramH = pt.y;
+        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
     }
     else if ((msg->message >= WM_NCMOUSEFIRST) &&
              (msg->message <= WM_NCMOUSELAST))
     {
-        event->paramL = LOWORD(msg->lParam);       /* X pos */
-        event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
-        event->message += WM_MOUSEMOVE-WM_NCMOUSEMOVE;/* give no info about NC area */
-        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)event );
+        event.paramL = LOWORD(msg->lParam);       /* X pos */
+        event.paramH = HIWORD(msg->lParam);       /* Y pos */
+        event.message += WM_MOUSEMOVE-WM_NCMOUSEMOVE;/* give no info about NC area */
+        HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event );
     }
-    
-    HeapFree(SystemHeap, 0, event);
 }
 
 /***********************************************************************
@@ -495,94 +493,84 @@ static void MSG_JournalRecordMsg( MSG *msg )
  */
 static int MSG_JournalPlayBackMsg(void)
 {
- EVENTMSG *tmpMsg;
- long wtime,lParam,wParam;
- WORD keyDown,i,result=0;
+    EVENTMSG tmpMsg;
+    LPARAM lParam;
+    WPARAM wParam;
+    LRESULT wtime;
+    int keyDown,i;
 
- if ( HOOK_IsHooked( WH_JOURNALPLAYBACK ) )
- {
-  tmpMsg = (EVENTMSG *) HeapAlloc(SystemHeap, 0, sizeof(EVENTMSG));
-  if (!tmpMsg) return result;
-  
-  wtime=HOOK_CallHooksA( WH_JOURNALPLAYBACK, HC_GETNEXT, 0,
-                           (LPARAM) tmpMsg );
-  /*  TRACE(msg,"Playback wait time =%ld\n",wtime); */
-  if (wtime<=0)
-  {
-   wtime=0;
-   if ((tmpMsg->message >= WM_KEYFIRST) && (tmpMsg->message <= WM_KEYLAST))
-   {
-     wParam=tmpMsg->paramL & 0xFF;
-     lParam=MAKELONG(tmpMsg->paramH&0x7ffff,tmpMsg->paramL>>8);
-     if (tmpMsg->message == WM_KEYDOWN || tmpMsg->message == WM_SYSKEYDOWN)
-     {
-       for (keyDown=i=0; i<256 && !keyDown; i++)
-          if (InputKeyStateTable[i] & 0x80)
-            keyDown++;
-       if (!keyDown)
-         lParam |= 0x40000000;       
-       AsyncKeyStateTable[wParam]=InputKeyStateTable[wParam] |= 0x80;
-     }  
-     else                                       /* WM_KEYUP, WM_SYSKEYUP */
-     {
-       lParam |= 0xC0000000;      
-       AsyncKeyStateTable[wParam]=InputKeyStateTable[wParam] &= ~0x80;
-     }
-     if (InputKeyStateTable[VK_MENU] & 0x80)
-       lParam |= 0x20000000;     
-     if (tmpMsg->paramH & 0x8000)              /*special_key bit*/
-       lParam |= 0x01000000;
-     hardware_event( tmpMsg->message & 0xffff, LOWORD(wParam), lParam,
-                     0, 0, tmpMsg->time, 0 );
-   }
-   else
-   {
-    if ((tmpMsg->message>= WM_MOUSEFIRST) && (tmpMsg->message <= WM_MOUSELAST))
+    if (!HOOK_IsHooked( WH_JOURNALPLAYBACK )) return 0;
+
+    wtime=HOOK_CallHooksA( WH_JOURNALPLAYBACK, HC_GETNEXT, 0, (LPARAM)&tmpMsg );
+    /*  TRACE(msg,"Playback wait time =%ld\n",wtime); */
+    if (wtime<=0)
     {
-     switch (tmpMsg->message)
-     {
-      case WM_LBUTTONDOWN:
-          MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=TRUE;break;
-      case WM_LBUTTONUP:
-          MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=FALSE;break;
-      case WM_MBUTTONDOWN:
-          MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=TRUE;break;
-      case WM_MBUTTONUP:
-          MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=FALSE;break;
-      case WM_RBUTTONDOWN:
-          MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=TRUE;break;
-      case WM_RBUTTONUP:
-          MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=FALSE;break;      
-     }
-     AsyncKeyStateTable[VK_LBUTTON]= InputKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
-     AsyncKeyStateTable[VK_MBUTTON]= InputKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
-     AsyncKeyStateTable[VK_RBUTTON]= InputKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] ? 0x80 : 0;
-     SetCursorPos(tmpMsg->paramL,tmpMsg->paramH);
-     lParam=MAKELONG(tmpMsg->paramL,tmpMsg->paramH);
-     wParam=0;             
-     if (MouseButtonsStates[0]) wParam |= MK_LBUTTON;
-     if (MouseButtonsStates[1]) wParam |= MK_MBUTTON;
-     if (MouseButtonsStates[2]) wParam |= MK_RBUTTON;
-     hardware_event( tmpMsg->message & 0xffff, LOWORD (wParam), lParam,
-                     tmpMsg->paramL, tmpMsg->paramH, tmpMsg->time, 0 );
+        wtime=0;
+        if ((tmpMsg.message >= WM_KEYFIRST) && (tmpMsg.message <= WM_KEYLAST))
+        {
+            wParam=tmpMsg.paramL & 0xFF;
+            lParam=MAKELONG(tmpMsg.paramH&0x7ffff,tmpMsg.paramL>>8);
+            if (tmpMsg.message == WM_KEYDOWN || tmpMsg.message == WM_SYSKEYDOWN)
+            {
+                for (keyDown=i=0; i<256 && !keyDown; i++)
+                    if (InputKeyStateTable[i] & 0x80)
+                        keyDown++;
+                if (!keyDown)
+                    lParam |= 0x40000000;
+                AsyncKeyStateTable[wParam]=InputKeyStateTable[wParam] |= 0x80;
+            }
+            else                                       /* WM_KEYUP, WM_SYSKEYUP */
+            {
+                lParam |= 0xC0000000;
+                AsyncKeyStateTable[wParam]=InputKeyStateTable[wParam] &= ~0x80;
+            }
+            if (InputKeyStateTable[VK_MENU] & 0x80)
+                lParam |= 0x20000000;
+            if (tmpMsg.paramH & 0x8000)              /*special_key bit*/
+                lParam |= 0x01000000;
+            hardware_event( tmpMsg.message, wParam, lParam, 0, 0, tmpMsg.time, 0 );
+        }
+        else if ((tmpMsg.message>= WM_MOUSEFIRST) && (tmpMsg.message <= WM_MOUSELAST))
+        {
+            switch (tmpMsg.message)
+            {
+            case WM_LBUTTONDOWN:
+                MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=TRUE;break;
+            case WM_LBUTTONUP:
+                MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=FALSE;break;
+            case WM_MBUTTONDOWN:
+                MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=TRUE;break;
+            case WM_MBUTTONUP:
+                MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=FALSE;break;
+            case WM_RBUTTONDOWN:
+                MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=TRUE;break;
+            case WM_RBUTTONUP:
+                MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=FALSE;break;
+            }
+            AsyncKeyStateTable[VK_LBUTTON]= InputKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
+            AsyncKeyStateTable[VK_MBUTTON]= InputKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
+            AsyncKeyStateTable[VK_RBUTTON]= InputKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] ? 0x80 : 0;
+            SetCursorPos(tmpMsg.paramL,tmpMsg.paramH);
+            lParam=MAKELONG(tmpMsg.paramL,tmpMsg.paramH);
+            wParam=0;
+            if (MouseButtonsStates[0]) wParam |= MK_LBUTTON;
+            if (MouseButtonsStates[1]) wParam |= MK_MBUTTON;
+            if (MouseButtonsStates[2]) wParam |= MK_RBUTTON;
+            hardware_event( tmpMsg.message, wParam, lParam,
+                            tmpMsg.paramL, tmpMsg.paramH, tmpMsg.time, 0 );
+        }
+        HOOK_CallHooksA( WH_JOURNALPLAYBACK, HC_SKIP, 0, (LPARAM)&tmpMsg);
+        return 0;
     }
-   }
-   HOOK_CallHooksA( WH_JOURNALPLAYBACK, HC_SKIP, 0,
-                      (LPARAM) tmpMsg);
-  }
-  else
-  {
-      
-    if( tmpMsg->message == WM_QUEUESYNC )
-        if (HOOK_IsHooked( WH_CBT ))
-            HOOK_CallHooksA( WH_CBT, HCBT_QS, 0, 0L);
+    else
+    {
+        if( tmpMsg.message == WM_QUEUESYNC )
+            if (HOOK_IsHooked( WH_CBT ))
+                HOOK_CallHooksA( WH_CBT, HCBT_QS, 0, 0L);
 
-    result= QS_MOUSE | QS_KEY; /* ? */
-  }
-  HeapFree(SystemHeap, 0, tmpMsg);
- }
- return result;
-} 
+        return QS_MOUSE | QS_KEY; /* ? */
+    }
+}
 
 /***********************************************************************
  *           MSG_PeekHardwareMsg
@@ -808,7 +796,7 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
         return 0;
 
     /* create a SMSG structure to hold SendMessage() parameters */
-    if (! (smsg = (SMSG *) HeapAlloc( SystemHeap, 0, sizeof(SMSG) )) )
+    if (! (smsg = (SMSG *) HeapAlloc( GetProcessHeap(), 0, sizeof(SMSG) )) )
         return 0;
     if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
 
@@ -908,7 +896,7 @@ got:
         EnterCriticalSection( &queue->cSection );
     
         if (smsg->flags & SMSG_RECEIVED)
-            HeapFree(SystemHeap, 0, smsg);
+            HeapFree(GetProcessHeap(), 0, smsg);
         else
             smsg->flags |= SMSG_RECEIVER_CLEANS;
         
@@ -1000,7 +988,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
         if ( smsg->flags & SMSG_RECEIVER_CLEANS )
         {
             TRACE_(sendmsg)("Receiver cleans up!\n" );
-            HeapFree( SystemHeap, 0, smsg );
+            HeapFree( GetProcessHeap(), 0, smsg );
         }
 
         if (senderQ) LeaveCriticalSection(&senderQ->cSection);
@@ -1366,7 +1354,7 @@ BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
 
         if (HOOK_IsHooked( WH_SYSMSGFILTER ) || HOOK_IsHooked( WH_MSGFILTER ))
         {
-            MSG *pmsg = HeapAlloc( SystemHeap, 0, sizeof(MSG) );
+            MSG *pmsg = HeapAlloc( GetProcessHeap(), 0, sizeof(MSG) );
             if (pmsg)
             {
                 BOOL ret;
@@ -1376,7 +1364,7 @@ BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
                        HOOK_CallHooksA( WH_MSGFILTER, code, 0,
                                           (LPARAM) pmsg ));
                        
-                HeapFree( SystemHeap, 0, pmsg );
+                HeapFree( GetProcessHeap(), 0, pmsg );
                 if (ret)
                 {
                     /* Message filtered -> remove it from the queue */
