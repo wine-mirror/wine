@@ -104,9 +104,8 @@ typedef struct {
     LPWAVEFORMATEX wfx;
     DWORD buffer_size;
     DWORD written;
+    DWORD played;
     DWORD offset;
-
-    DWORD last_pos;
 } play_state_t;
 
 static int buffer_refill(play_state_t* state, DWORD size)
@@ -166,48 +165,53 @@ static int buffer_silence(play_state_t* state, DWORD size)
 
 static int buffer_service(play_state_t* state)
 {
-    DWORD play_pos,write_pos,buf_free;
+    DWORD last_play_pos,play_pos,buf_free;
     HRESULT rc;
 
-    rc=IDirectSoundBuffer_GetCurrentPosition(state->dsbo,&play_pos,&write_pos);
+    rc=IDirectSoundBuffer_GetCurrentPosition(state->dsbo,&play_pos,NULL);
     ok(rc==DS_OK,"GetCurrentPosition: %lx\n",rc);
     if (rc!=DS_OK) {
         goto STOP;
     }
 
-    /* Refill the buffer */
-    if (state->offset<=play_pos) {
-        buf_free=play_pos-state->offset;
-    } else {
-        buf_free=state->buffer_size-state->offset+play_pos;
-    }
+    /* Update the amount played */
+    last_play_pos=state->played % state->buffer_size;
+    if (play_pos<last_play_pos)
+        state->played+=state->buffer_size-last_play_pos+play_pos;
+    else
+        state->played+=play_pos-last_play_pos;
+
     if (winetest_debug > 1)
-        trace("buf pos=%ld free=%ld written=%ld / %ld\n",
-              play_pos,buf_free,state->written,state->wave_len);
+        trace("buf size=%ld last_play_pos=%ld play_pos=%ld played=%ld / %ld\n",
+              state->buffer_size,last_play_pos,play_pos,state->played,state->wave_len);
+
+    if (state->played>state->wave_len)
+    {
+        /* Everything has been played */
+        goto STOP;
+    }
+
+    /* Refill the buffer */
+    if (state->offset<=play_pos)
+        buf_free=play_pos-state->offset;
+    else
+        buf_free=state->buffer_size-state->offset+play_pos;
+
+    if (winetest_debug > 1)
+        trace("offset=%ld free=%ld written=%ld / %ld\n",
+              state->offset,buf_free,state->written,state->wave_len);
     if (buf_free==0)
         return 1;
 
-    if (state->written<state->wave_len) {
+    if (state->written<state->wave_len)
+    {
         int w=buffer_refill(state,buf_free);
         if (w==-1)
             goto STOP;
         buf_free-=w;
-        if (state->written==state->wave_len) {
-            state->last_pos=(state->offset<play_pos)?play_pos:0;
-            if (winetest_debug > 1)
-                trace("last sound byte at %ld\n",
-                      (state->written % state->buffer_size));
-        }
-    } else {
-        if (state->last_pos!=0 && play_pos<state->last_pos) {
-            /* We wrapped around the end of the buffer */
-            state->last_pos=0;
-        }
-        if (state->last_pos==0 &&
-            play_pos>(state->written % state->buffer_size)) {
-            /* Now everything has been played */
-            goto STOP;
-        }
+        if (state->written==state->wave_len && winetest_debug > 1)
+            trace("last sound byte at %ld\n",
+                  (state->written % state->buffer_size));
     }
 
     if (buf_free>0) {
@@ -341,6 +345,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
         DS3DLISTENER listener_param;
         LPDIRECTSOUND3DBUFFER buffer=NULL;
         DS3DBUFFER buffer_param;
+        DWORD start_time,now;
 
         trace("    Playing %g second 440Hz tone at %ldx%dx%d\n", duration,
               wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels);
@@ -397,7 +402,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             buffer_param.dwSize=sizeof(buffer_param);
             rc=IDirectSound3DBuffer_GetAllParameters(buffer,&buffer_param);
             ok(rc==DS_OK,"IDirectSound3DBuffer_GetAllParameters failed: 0x%lx\n",rc);
-}
+        }
         if (set_volume) {
             if (dsbcaps.dwFlags & DSBCAPS_CTRLVOLUME) {
                 LONG val;
@@ -433,7 +438,7 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
         state.dsbo=dsbo;
         state.wfx=&wfx;
         state.buffer_size=dsbcaps.dwBufferBytes;
-        state.written=state.offset=0;
+        state.played=state.written=state.offset=0;
         buffer_refill(&state,state.buffer_size);
 
         rc=IDirectSoundBuffer_Play(dsbo,0,0,DSBPLAY_LOOPING);
@@ -469,8 +474,9 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             ok(rc==DS_OK,"IDirectSound3dBuffer_SetPosition failed 0x%lx\n",rc);
         }
 
+        start_time=GetTickCount();
         while (buffer_service(&state)) {
-            WaitForSingleObject(GetCurrentProcess(),TIME_SLICE/2);
+            WaitForSingleObject(GetCurrentProcess(),TIME_SLICE);
             if (listener && move_listener) {
                 listener_param.vPosition.x += 0.5;
                 rc=IDirectSound3DListener_SetPosition(listener,listener_param.vPosition.x,listener_param.vPosition.y,listener_param.vPosition.z,DS3D_IMMEDIATE);
@@ -482,6 +488,9 @@ void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
                 ok(rc==DS_OK,"IDirectSound3dBuffer_SetPosition failed 0x%lx\n",rc);
             }
         }
+        /* Check the sound duration was within 10% of the expected value */
+        now=GetTickCount();
+        ok(fabs(1000*duration-now+start_time)<=100*duration,"The sound played for %ld ms instead of %g ms\n",now-start_time,1000*duration);
 
         free(state.wave);
         if (is_primary) {

@@ -47,8 +47,8 @@ static const unsigned int formats[][3]={
 #define NB_FORMATS (sizeof(formats)/sizeof(*formats))
 
 /* The time slice determines how often we will service the buffer */
-#define TIME_SLICE    100
-#define BUFFER_LEN    (4*TIME_SLICE)
+#define TIME_SLICE     31
+#define BUFFER_LEN    400
 
 
 extern char* wave_generate_la(WAVEFORMATEX*,double,DWORD*);
