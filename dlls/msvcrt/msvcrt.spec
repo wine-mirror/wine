@@ -484,8 +484,8 @@
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)
 @ cdecl _utime(str ptr)
-@ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
-@ cdecl _vsnwprintf(ptr long wstr long)
+@ cdecl _vsnprintf(ptr long ptr ptr) MSVCRT_vsnprintf
+@ cdecl _vsnwprintf(ptr long wstr long) MSVCRT_vsnwprintf
 @ cdecl _waccess(wstr long)
 @ stub _wasctime #(ptr) MSVCRT__wasctime
 @ cdecl _wchdir(wstr)
@@ -693,7 +693,7 @@
 @ cdecl signal(long long) MSVCRT_signal
 @ cdecl sin(double)
 @ cdecl sinh(double)
-@ varargs sprintf(ptr str)
+@ varargs sprintf(ptr str) MSVCRT_sprintf
 @ cdecl sqrt(double)
 @ cdecl srand(long)
 @ varargs sscanf(str str) MSVCRT_sscanf

@@ -21,6 +21,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
 #include "msvcrt.h"
 #include "winnls.h"
 #include "wine/unicode.h"
@@ -178,161 +179,476 @@ double MSVCRT_wcstod(const MSVCRT_wchar_t* lpszStr, MSVCRT_wchar_t** end)
   return ret;
 }
 
-static int MSVCRT_vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
+
+typedef struct pf_output_t
 {
-    unsigned int written = 0;
-    const WCHAR *iter = format;
-    char bufa[256], fmtbufa[64], *fmta;
+    int used;
+    int len;
+    BOOL unicode;
+    union {
+        LPWSTR W;
+        LPSTR  A;
+    } buf;
+} pf_output;
 
-    while (*iter)
+typedef struct pf_flags_t
+{
+    char Sign, LeftAlign, Alternate, PadZero;
+    char FieldLength, Precision;
+    char IntegerLength, IntegerDouble;
+    char WideString;
+    char Format;
+} pf_flags;
+
+/*
+ * writes a string of characters to the output
+ * returns -1 if the string doesn't fit in the output buffer
+ * return the length of the string if all characters were written
+ */
+static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
+{
+    int space = out->len - out->used;
+
+    if( len < 0 )
+        len = strlenW( str );
+    if( out->unicode )
     {
-        while (*iter && *iter != '%')
+        LPWSTR p = out->buf.W + out->used;
+
+        if( space >= len )
         {
-            if (written++ >= len)
-                return -1;
-            *str++ = *iter++;
+            memcpy( p, str, len*sizeof(WCHAR) );
+            out->used += len;
+            return len;
         }
-        if (*iter == '%')
+        if( space > 0 )
+            memcpy( p, str, space*sizeof(WCHAR) );
+        out->used += len;
+    }
+    else
+    {
+        int n = WideCharToMultiByte( CP_ACP, 0, str, len, NULL, 0, NULL, NULL );
+        LPSTR p = out->buf.A + out->used;
+
+        if( space >= n )
         {
-            if (iter[1] == '%')
-            {
-                if (written++ >= len)
-                    return -1;
-                *str++ = '%'; /* "%%"->'%' */
-                iter += 2;
-                continue;
-            }
+            WideCharToMultiByte( CP_ACP, 0, str, len, p, n, NULL, NULL );
+            out->used += n;
+            return len;
+        }
+        if( space > 0 )
+            WideCharToMultiByte( CP_ACP, 0, str, len, p, space, NULL, NULL );
+        out->used += n;
+    }
+    return -1;
+}
 
-            fmta = fmtbufa;
-            *fmta++ = *iter++;
-            while (*iter == '0' ||
-                   *iter == '+' ||
-                   *iter == '-' ||
-                   *iter == ' ' ||
-                   *iter == '*' ||
-                   *iter == '#')
-            {
-                if (*iter == '*')
-                {
-                    char *buffiter = bufa;
-                    int fieldlen = va_arg(valist, int);
-                    sprintf(buffiter, "%d", fieldlen);
-                    while (*buffiter)
-                        *fmta++ = *buffiter++;
-                }
-                else
-                    *fmta++ = *iter;
-                iter++;
-            }
+static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
+{
+    int space = out->len - out->used;
 
-            while (isdigit(*iter))
-                *fmta++ = *iter++;
+    if( len < 0 )
+        len = strlen( str );
+    if( !out->unicode )
+    {
+        LPSTR p = out->buf.A + out->used;
 
-            if (*iter == '.')
-            {
-                *fmta++ = *iter++;
-                if (*iter == '*')
-                {
-                    char *buffiter = bufa;
-                    int fieldlen = va_arg(valist, int);
-                    sprintf(buffiter, "%d", fieldlen);
-                    while (*buffiter)
-                        *fmta++ = *buffiter++;
-                }
-                else
-                    while (isdigit(*iter))
-                        *fmta++ = *iter++;
-            }
-            if (*iter == 'h' || *iter == 'l')
-                *fmta++ = *iter++;
+        if( space >= len )
+        {
+            memcpy( p, str, len );
+            out->used += len;
+            return len;
+        }
+        if( space > 0 )
+            memcpy( p, str, space );
+        out->used += len;
+    }
+    else
+    {
+        int n = MultiByteToWideChar( CP_ACP, 0, str, len, NULL, 0 );
+        LPWSTR p = out->buf.W + out->used;
 
-            switch (*iter)
-            {
-            case 'S':
-            {
-                static const char *none = "(null)";
-                const char *astr = va_arg(valist, const char *);
-                const char *striter = astr ? astr : none;
-                int r, n;
-                while (*striter)
-                {
-                    if (written >= len)
-                        return -1;
-                    n = 1;
-                    if( IsDBCSLeadByte( *striter ) )
-                        n++;
-                    r = MultiByteToWideChar( CP_ACP, 0,
-                               striter, n, str, len - written );
-                    striter += n;
-                    str += r;
-                    written += r;
-                }
-                iter++;
-                break;
-            }
+        if( space >= n )
+        {
+            MultiByteToWideChar( CP_ACP, 0, str, len, p, n );
+            out->used += n;
+            return len;
+        }
+        if( space > 0 )
+            MultiByteToWideChar( CP_ACP, 0, str, len, p, space );
+        out->used += n;
+    }
+    return -1;
+}
 
-            case 's':
-            {
-                static const WCHAR none[] = { '(','n','u','l','l',')',0 };
-                const WCHAR *wstr = va_arg(valist, const WCHAR *);
-                const WCHAR *striter = wstr ? wstr : none;
-                while (*striter)
-                {
-                    if (written++ >= len)
-                        return -1;
-                    *str++ = *striter++;
-                }
-                iter++;
-                break;
-            }
+static inline int pf_fill( pf_output *out, int len, pf_flags *flags, char left )
+{
+    int i, r = 0;
 
-            case 'c':
-                if (written++ >= len)
-                    return -1;
-                *str++ = (WCHAR)va_arg(valist, int);
-                iter++;
-                break;
-
-            default:
-            {
-                /* For non wc types, use system sprintf and append to wide char output */
-                /* FIXME: for unrecognised types, should ignore % when printing */
-                char *bufaiter = bufa;
-                if (*iter == 'p')
-                    sprintf(bufaiter, "%08lX", va_arg(valist, long));
-                else
-                {
-                    *fmta++ = *iter;
-                    *fmta = '\0';
-                    if (*iter == 'a' || *iter == 'A' ||
-                        *iter == 'e' || *iter == 'E' ||
-                        *iter == 'f' || *iter == 'F' || 
-                        *iter == 'g' || *iter == 'G')
-                        sprintf(bufaiter, fmtbufa, va_arg(valist, double));
-                    else
-                    {
-                        /* FIXME: On 32 bit systems this doesn't handle int 64's.
-                         *        on 64 bit systems this doesn't work for 32 bit types
-			 */
-                        sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
-                    }
-                }
-                while (*bufaiter)
-                {
-                    if (written++ >= len)
-                        return -1;
-                    *str++ = *bufaiter++;
-                }
-                iter++;
-                break;
-            }
-            }
+    if( ( !left &&  flags->LeftAlign ) || 
+        (  left && !flags->LeftAlign ) ||
+        (  left &&  flags->PadZero   ) )
+    {
+        for( i=0; (i<(flags->FieldLength-len)) && (r>=0); i++ )
+        {
+            if( flags->PadZero )
+                r = pf_output_stringA( out, "0", 1 );
+            else
+                r = pf_output_stringA( out, " ", 1 );
         }
     }
-    if (written >= len)
-        return -1;
-    *str++ = 0;
-    return (int)written;
+
+    return r;
+}
+
+static inline int pf_output_format_W( pf_output *out, LPCWSTR str,
+                                      int len, pf_flags *flags )
+{
+    int r = 0;
+
+    if( len < 0 )
+        len = strlenW( str );
+
+    r = pf_fill( out, len, flags, 1 );
+
+    if( r>=0 )
+        r = pf_output_stringW( out, str, len );
+
+    if( r>=0 )
+        r = pf_fill( out, len, flags, 0 );
+
+    return r;
+}
+
+static inline int pf_output_format_A( pf_output *out, LPCSTR str,
+                                      int len, pf_flags *flags )
+{
+    int r = 0;
+
+    if( len < 0 )
+        len = strlen( str );
+
+    r = pf_fill( out, len, flags, 1 );
+
+    if( r>=0 )
+        r = pf_output_stringA( out, str, len );
+
+    if( r>=0 )
+        r = pf_fill( out, len, flags, 0 );
+
+    return r;
+}
+
+static inline BOOL pf_is_double_format( char fmt )
+{
+    char float_fmts[] = "aefg";
+    if (!fmt)
+        return FALSE;
+    fmt = tolower( fmt );
+    return strchr( float_fmts, fmt ) ? TRUE : FALSE;
+}
+
+static inline BOOL pf_is_valid_format( char fmt )
+{
+    char float_fmts[] = "acdefginoux";
+    if (!fmt)
+        return FALSE;
+    fmt = tolower( fmt );
+    return strchr( float_fmts, fmt ) ? TRUE : FALSE;
+}
+
+static void pf_rebuild_format_string( char *p, pf_flags *flags )
+{
+    *p++ = '%';
+    if( flags->Sign )
+        *p++ = flags->Sign;
+    if( flags->LeftAlign )
+        *p++ = flags->LeftAlign;
+    if( flags->Alternate )
+        *p++ = flags->Alternate;
+    if( flags->PadZero )
+        *p++ = flags->PadZero;
+    if( flags->FieldLength )
+    {
+        sprintf(p, "%d", flags->FieldLength);
+        p += strlen(p);
+    }
+    if( flags->Precision )
+    {
+        sprintf(p, ".%d", flags->Precision);
+        p += strlen(p);
+    }
+    *p++ = flags->Format;
+    *p++ = 0;
+}
+
+/*********************************************************************
+ *  pf_vsnprintf  (INTERNAL)
+ *
+ *  implements both A and W vsnprintf functions
+ */
+static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
+{
+    int r;
+    LPCWSTR q, p = format;
+    pf_flags flags;
+
+    while (*p)
+    {
+        q = strchrW( p, '%' );
+
+        /* there's no % characters left, output the rest of the string */
+        if( !q )
+        {
+            r = pf_output_stringW(out, p, -1);
+            if( r<0 )
+                return r;
+            p += r;
+            continue;
+        }
+
+        /* there's characters before the %, output them */
+        if( q != p )
+        {
+            r = pf_output_stringW(out, p, q - p);
+            if( r<0 )
+                return r;
+            p = q;
+        }
+
+        /* we must be at a % now, skip over it */
+        assert( *p == '%' );
+        p++;
+
+        /* output a single % character */
+        if( *p == '%' )
+        {
+            r = pf_output_stringW(out, p, 1);
+            if( r<0 )
+                return r;
+            continue;
+        }
+
+        /* parse the flags */
+        memset( &flags, 0, sizeof flags );
+        while (*p)
+        {
+            if( *p == '+' || *p == ' ' )
+                flags.Sign = '+';
+            else if( *p == '-' )
+                flags.LeftAlign = *p;
+            else if( *p == '0' )
+                flags.PadZero = *p;
+            else if( *p == '#' )
+                flags.Alternate = *p;
+            else
+                break;
+            p++;
+        }
+
+        /* deal with the field width specifier */
+        flags.FieldLength = 0;
+        if( *p == '*' )
+            flags.FieldLength = va_arg( valist, int );
+        else while( isdigit(*p) )
+        {
+            flags.FieldLength *= 10;
+            flags.FieldLength += *p++ - '0';
+        }
+
+        /* deal with precision */
+        if( *p == '.' )
+        {
+            p++;
+            if( *p == '*' )
+                flags.Precision = va_arg( valist, int );
+            else while( isdigit(*p) )
+            {
+                flags.Precision *= 10;
+                flags.Precision += *p++ - '0';
+            }
+        }
+
+        /* deal with integer width modifier */
+        while( *p )
+        {
+            if( *p == 'h' || *p == 'l' || *p == 'L' )
+            {
+                if( flags.IntegerLength == *p )  /* FIXME: this is wrong */
+                    flags.IntegerDouble++;
+                else
+                    flags.IntegerLength = *p;
+                p++;
+            }
+            else if( *p == 'w' )
+                flags.WideString = *p++;
+            else
+                break;
+        }
+
+        flags.Format = *p;
+        r = 0;
+
+        /* output a unicode string */
+        if( ( flags.Format == 's' && flags.WideString ) ||
+            ( !out->unicode && flags.Format == 'S' ) ||
+            ( out->unicode && flags.Format == 's' ) )
+        {
+            LPCWSTR str = va_arg( valist, const WCHAR * );
+
+            if( str )
+                r = pf_output_format_W( out, str, -1, &flags );
+            else
+                r = pf_output_format_A( out, "(null)", -1, &flags );
+        }
+
+        /* output a ASCII string */
+        else if( ( flags.Format == 's' && flags.IntegerLength == 'h' ) ||
+            ( out->unicode && flags.Format == 'S' ) ||
+            ( !out->unicode && flags.Format == 's' ) )
+        {
+            LPCSTR str = va_arg( valist, const CHAR * );
+
+            if( str )
+                r = pf_output_format_A( out, str, -1, &flags );
+            else
+                r = pf_output_format_A( out, "(null)", -1, &flags );
+        }
+
+        /* output a single wide character */
+        else if( ( flags.Format == 'c' && flags.IntegerLength == 'w' ) ||
+            ( out->unicode && flags.Format == 'c' ) ||
+            ( !out->unicode && flags.Format == 'C' ) )
+        {
+            WCHAR ch = va_arg( valist, int );
+
+            r = pf_output_format_W( out, &ch, 1, &flags );
+        }
+
+        /* output a single ascii character */
+        else if( ( flags.Format == 'c' && flags.IntegerLength == 'h' ) ||
+            ( out->unicode && flags.Format == 'C' ) ||
+            ( !out->unicode && flags.Format == 'c' ) )
+        {
+            CHAR ch = va_arg( valist, int );
+
+            r = pf_output_format_A( out, &ch, 1, &flags );
+        }
+
+        /* output a pointer */
+        else if( flags.Format == 'p' )
+        {
+            char pointer[10];
+
+            flags.PadZero = 0;
+            if( flags.Alternate )
+                sprintf(pointer, "0X%08lX", va_arg(valist, long));
+            else
+                sprintf(pointer, "%08lX", va_arg(valist, long));
+            r = pf_output_format_A( out, pointer, -1, &flags );
+        }
+
+        /* deal with %n */
+        else if( flags.Format == 'n' )
+        {
+            int *x = va_arg(valist, int *);
+            *x = out->used;
+        }
+
+        /* deal with integers and floats using libc's printf */
+        else if( pf_is_valid_format( flags.Format ) )
+        {
+            char fmt[20], number[40], *x = number;
+
+            if( flags.FieldLength >= sizeof number )
+                x = HeapAlloc( GetProcessHeap(), 0, flags.FieldLength+1 );
+
+            pf_rebuild_format_string( fmt, &flags );
+
+            if( pf_is_double_format( flags.Format ) )
+                sprintf( number, fmt, va_arg(valist, double) );
+            else
+                sprintf( number, fmt, va_arg(valist, int) );
+
+            r = pf_output_stringA( out, number, -1 );
+            if( x != number )
+                HeapFree( GetProcessHeap(), 0, number );
+        }
+        else
+            continue;
+
+        if( r<0 )
+            return r;
+        p++;
+    }
+
+    /* check we reached the end, and null terminate the string */
+    assert( *p == 0 );
+    r = pf_output_stringW( out, p, 1 );
+    if( r<0 )
+        return r;
+
+    return out->used - 1;
+}
+
+/*********************************************************************
+ *		_vsnprintf (MSVCRT.@)
+ */
+int MSVCRT_vsnprintf( char *str, unsigned int len,
+                const char *format, va_list valist )
+{
+    DWORD sz;
+    LPWSTR formatW = NULL;
+    pf_output out;
+    int r;
+
+    out.unicode = FALSE;
+    out.buf.A = str;
+    out.used = 0;
+    out.len = len;
+
+    if( format )
+    {
+        sz = MultiByteToWideChar( CP_ACP, 0, format, -1, NULL, 0 );
+        formatW = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, format, -1, formatW, sz );
+    }
+
+    r = pf_vsnprintf( &out, formatW, valist );
+
+    HeapFree( GetProcessHeap(), 0, formatW );
+
+    return r;
+}
+
+/*********************************************************************
+ *		_vsnwsprintf (MSVCRT.@)
+ */
+int MSVCRT_vsnwprintf( MSVCRT_wchar_t *str, unsigned int len,
+                              const WCHAR *format, va_list valist )
+{
+    pf_output out;
+
+    out.unicode = TRUE;
+    out.buf.W = str;
+    out.used = 0;
+    out.len = len;
+
+    return pf_vsnprintf( &out, format, valist );
+}
+
+/*********************************************************************
+ *		sprintf (MSVCRT.@)
+ */
+int MSVCRT_sprintf( char *str, const char *format, ... )
+{
+    va_list ap;
+    int r;
+
+    va_start( ap, format );
+    r = MSVCRT_vsnprintf( str, INT_MAX, format, ap );
+    va_end( ap );
+    return r;
 }
 
 /*********************************************************************
@@ -344,18 +660,9 @@ int MSVCRT_swprintf( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format, ... )
     int r;
 
     va_start( ap, format );
-    r = MSVCRT_vsnprintfW( str, INT_MAX, format, ap );
+    r = MSVCRT_vsnwprintf( str, INT_MAX, format, ap );
     va_end( ap );
     return r;
-}
-
-/*********************************************************************
- *		_vsnwprintf (MSVCRT.@)
- */
-int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
-                const MSVCRT_wchar_t *format, va_list valist)
-{
-    return MSVCRT_vsnprintfW(str, len, format, valist);
 }
 
 /*********************************************************************
@@ -363,7 +670,7 @@ int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
  */
 int MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, va_list args )
 {
-    return MSVCRT_vsnprintfW( str, INT_MAX, format, args );
+    return MSVCRT_vsnwprintf( str, INT_MAX, format, args );
 }
 
 /*********************************************************************
