@@ -7,11 +7,9 @@ MODULE    = if1632
 
 SPEC_SRCS = \
 	comm.spec \
-	dispdib.spec \
 	kernel.spec \
 	system.spec \
 	toolhelp.spec \
-	wineps.spec \
 	wprocs.spec
 
 C_SRCS = \

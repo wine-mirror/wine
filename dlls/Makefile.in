@@ -53,6 +53,7 @@ DLLFILES = \
 	win87em/libwin87em.@LIBEXT@ \
 	winaspi/libwnaspi32.@LIBEXT@ \
 	windebug/libwindebug.@LIBEXT@ \
+	wineps/libwineps.@LIBEXT@ \
 	wing/libwing.@LIBEXT@ \
 	wininet/libwininet.@LIBEXT@ \
 	winmm/joystick/libjoystick.drv.@LIBEXT@ \
@@ -74,6 +75,7 @@ EXTRADLLNAMES = \
 	commdlg \
 	compobj \
 	ddeml \
+	dispdib \
 	dplay \
 	gdi \
 	keyboard \
@@ -143,6 +145,7 @@ SUBDIRS = \
 	win87em \
 	winaspi \
 	windebug \
+	wineps \
 	wing \
 	wininet \
 	winmm \
@@ -180,7 +183,7 @@ libdplayx.@LIBEXT@ libdplay.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
 libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
 	$(RM) $@ && $(LN_S) dsound/libdsound.@LIBEXT@ $@
 
-libgdi32.@LIBEXT@ libgdi.@LIBEXT@: gdi/libgdi32.@LIBEXT@
+libgdi32.@LIBEXT@ libgdi.@LIBEXT@ libdispdib.@LIBEXT@: gdi/libgdi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) gdi/libgdi32.@LIBEXT@ $@
 
 libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@
@@ -305,6 +308,9 @@ libwindebug.@LIBEXT@: windebug/libwindebug.@LIBEXT@
 
 libwineoss.drv.@LIBEXT@: winmm/wineoss/libwineoss.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/wineoss/libwineoss.drv.@LIBEXT@ $@
+
+libwineps.@LIBEXT@: wineps/libwineps.@LIBEXT@
+	$(RM) $@ && $(LN_S) wineps/libwineps.@LIBEXT@ $@
 
 libwing.@LIBEXT@: wing/libwing.@LIBEXT@
 	$(RM) $@ && $(LN_S) wing/libwing.@LIBEXT@ $@
