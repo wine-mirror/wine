@@ -740,11 +740,25 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     INT xinc, yinc;
     LONG style = GetWindowLongA( hwnd, GWL_STYLE );
     LONG exstyle = GetWindowLongA( hwnd, GWL_EXSTYLE );
+    RECT rc;
 
     /* Compute default values */
 
-    MinMax.ptMaxSize.x = GetSystemMetrics(SM_CXSCREEN);
-    MinMax.ptMaxSize.y = GetSystemMetrics(SM_CYSCREEN);
+    GetWindowRect(hwnd, &rc);
+    MinMax.ptReserved.x = rc.left;
+    MinMax.ptReserved.y = rc.top;
+
+    if (style & WS_CHILD)
+    {
+        GetClientRect(GetParent(hwnd), &rc);
+        MinMax.ptMaxSize.x = rc.right;
+        MinMax.ptMaxSize.y = rc.bottom;
+    }
+    else
+    {
+        MinMax.ptMaxSize.x = GetSystemMetrics(SM_CXSCREEN);
+        MinMax.ptMaxSize.y = GetSystemMetrics(SM_CYSCREEN);
+    }
     MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
     MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
     MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN);
@@ -1191,6 +1205,8 @@ HDWP WINAPI BeginDeferWindowPos( INT count )
     HDWP handle;
     DWP *pDWP;
 
+    TRACE("%d\n", count);
+
     if (count < 0)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -1207,6 +1223,8 @@ HDWP WINAPI BeginDeferWindowPos( INT count )
     pDWP->valid          = TRUE;
     pDWP->wMagic         = DWP_MAGIC;
     pDWP->hwndParent     = 0;
+
+    TRACE("returning hdwp %p\n", handle);
     return handle;
 }
 
@@ -1221,6 +1239,9 @@ HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter,
     DWP *pDWP;
     int i;
     HDWP newhdwp = hdwp,retvalue;
+
+    TRACE("hdwp %p, hwnd %p, after %p, %d,%d (%dx%d), flags %08x\n",
+          hdwp, hwnd, hwndAfter, x, y, cx, cy, flags);
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (hwnd == GetDesktopWindow()) return 0;
@@ -1294,6 +1315,8 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
     WINDOWPOS *winpos;
     BOOL res = TRUE;
     int i;
+
+    TRACE("%p\n", hdwp);
 
     pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return FALSE;
