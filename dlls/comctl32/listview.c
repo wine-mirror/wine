@@ -1340,7 +1340,8 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	if (uView == LVS_REPORT) doIcon = TRUE;
         else doLabel = TRUE;
     }
-    if (uView == LVS_ICON && infoPtr->bFocus && 
+    if (uView == LVS_ICON && infoPtr->bFocus &&
+	!(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
 	LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
 	oversizedBox = doLabel = TRUE;
     if (lprcLabel) doLabel = TRUE;
@@ -1411,8 +1412,13 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     if (doLabel)
     {
 	SIZE labelSize = { 0, 0 };
-		
-        if (is_textT(lvItem.pszText, TRUE))
+	
+	if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+	{
+	   labelSize.cx = infoPtr->nItemWidth;
+	   labelSize.cy = infoPtr->nItemHeight;
+	}
+	else if (is_textT(lvItem.pszText, TRUE))
         {
     	    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
     	    HDC hdc = GetDC(infoPtr->hwndSelf);
@@ -1450,7 +1456,10 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	    Label.top  = Box.top + ICON_TOP_PADDING_HITABLE +
 		         infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
 	    Label.right = Label.left + labelSize.cx;
-	    Label.bottom = Label.top + labelSize.cy + HEIGHT_PADDING;
+	    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+	        Label.bottom = Label.top + infoPtr->nItemHeight;
+	    else
+	        Label.bottom = Label.top + labelSize.cy + HEIGHT_PADDING;
 	}
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
