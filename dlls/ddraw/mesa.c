@@ -553,11 +553,11 @@ void store_render_state(IDirect3DDeviceImpl *This,
     if (dwRenderStateType == D3DRENDERSTATE_SRCBLEND) {
         if (dwRenderState == D3DBLEND_BOTHSRCALPHA) {
 	    lpStateBlock->render_state[D3DRENDERSTATE_SRCBLEND - 1] = D3DBLEND_SRCALPHA;
-	    lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1] = D3DBLEND_SRCALPHA;
+	    lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1] = D3DBLEND_INVSRCALPHA;
 	    return;
 	} else if (dwRenderState == D3DBLEND_BOTHINVSRCALPHA) {
 	    lpStateBlock->render_state[D3DRENDERSTATE_SRCBLEND - 1] = D3DBLEND_INVSRCALPHA;
-	    lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1] = D3DBLEND_INVSRCALPHA;
+	    lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1] = D3DBLEND_SRCALPHA;
 	    return;
 	}
     } else if (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS) {
