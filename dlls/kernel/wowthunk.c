@@ -194,6 +194,10 @@ static void insert_event_check( CONTEXT *context )
 {
     char *stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
 
+    /* don't do event check while in system code */
+    if (wine_ldt_is_system(context->SegCs))
+        return;
+
     if(context->SegCs == dpmi_checker_selector &&
        context->Eip   >= dpmi_checker_offset_call && 
        context->Eip   <= dpmi_checker_offset_cleanup)
@@ -598,7 +602,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
      * (both for PASCAL and CDECL calling convention), so we simply
      * copy them to the 16-bit stack ...
      */
-    WORD *stack = (WORD *)CURRENT_STACK16 - cbArgs / sizeof(WORD);
+    char *stack = (char *)CURRENT_STACK16 - cbArgs;
 
     memcpy( stack, pArgs, cbArgs );
 
@@ -609,11 +613,12 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
         if (TRACE_ON(relay))
         {
             DWORD count = cbArgs / sizeof(WORD);
+            WORD * wstack = (WORD *)stack;
 
             DPRINTF("%04lx:CallTo16(func=%04lx:%04x,ds=%04lx",
                     GetCurrentThreadId(),
                     context->SegCs, LOWORD(context->Eip), context->SegDs );
-            while (count) DPRINTF( ",%04x", stack[--count] );
+            while (count) DPRINTF( ",%04x", wstack[--count] );
             DPRINTF(") ss:sp=%04x:%04x",
                     SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
             DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x es=%04x fs=%04x\n",
@@ -636,13 +641,16 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             /* push return address */
             if (dwFlags & WCB16_REGS_LONG)
             {
-                *((DWORD *)stack - 1) = HIWORD(call16_ret_addr);
-                *((DWORD *)stack - 2) = LOWORD(call16_ret_addr);
+                stack -= sizeof(DWORD);
+                *((DWORD *)stack) = HIWORD(call16_ret_addr);
+                stack -= sizeof(DWORD);
+                *((DWORD *)stack) = LOWORD(call16_ret_addr);
                 cbArgs += 2 * sizeof(DWORD);
             }
             else
             {
-                *((SEGPTR *)stack - 1) = call16_ret_addr;
+                stack -= sizeof(SEGPTR);
+                *((SEGPTR *)stack) = call16_ret_addr;
                 cbArgs += sizeof(SEGPTR);
             }
 
@@ -682,18 +690,20 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
         if (TRACE_ON(relay))
         {
             DWORD count = cbArgs / sizeof(WORD);
+            WORD * wstack = (WORD *)stack;
 
             DPRINTF("%04lx:CallTo16(func=%04x:%04x,ds=%04x",
                     GetCurrentThreadId(), HIWORD(vpfn16), LOWORD(vpfn16),
                     SELECTOROF(NtCurrentTeb()->cur_stack) );
-            while (count) DPRINTF( ",%04x", stack[--count] );
+            while (count) DPRINTF( ",%04x", wstack[--count] );
             DPRINTF(") ss:sp=%04x:%04x\n",
                     SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
             SYSLEVEL_CheckNotLevel( 2 );
         }
 
         /* push return address */
-        *((SEGPTR *)stack - 1) = call16_ret_addr;
+        stack -= sizeof(SEGPTR);
+        *((SEGPTR *)stack) = call16_ret_addr;
         cbArgs += sizeof(SEGPTR);
 
         /*
