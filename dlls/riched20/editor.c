@@ -238,7 +238,7 @@ ME_TextBuffer *ME_MakeText() {
   return buf;
 }
 
-#define STREAMIN_BUFFER_SIZE 1024
+#define STREAMIN_BUFFER_SIZE 4096 /* M$ compatibility */
 
 static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream, ME_Style *style)
 {
