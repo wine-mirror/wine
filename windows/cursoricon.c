@@ -108,7 +108,7 @@ static HANDLE CURSORICON_FindSharedIcon( HMODULE hModule, HRSRC hRsrc )
 /*************************************************************************
  * CURSORICON_FindCache 
  *
- * Given a handle, find the coresponding cache element
+ * Given a handle, find the corresponding cache element
  *
  * PARAMS
  *      Handle     [I] handle to an Image 

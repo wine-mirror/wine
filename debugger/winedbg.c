@@ -843,7 +843,7 @@ int DEBUG_main(int argc, char** argv)
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     }
 
-    DEBUG_Printf(DBG_CHN_MESG, "Starting WineDbg... ");
+    DEBUG_Printf(DBG_CHN_MESG, "WineDbg starting... ");
 
     if (argc == 3) {
 	HANDLE	hEvent;

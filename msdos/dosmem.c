@@ -436,7 +436,7 @@ static void DOSMEM_InitMemory(void)
     dm->size = DM_BLOCK_TERMINAL;
     root_block->size |= DM_BLOCK_FREE 
 #ifdef __DOSMEM_DEBUG__
-		     | DM_BLOCK_DEBUG;
+		     | DM_BLOCK_DEBUG
 #endif
 		     ;
 }

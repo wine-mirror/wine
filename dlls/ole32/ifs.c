@@ -275,9 +275,11 @@ static ULONG WINAPI IMalloc_fnRelease(LPMALLOC iface) {
  * IMalloc32_Alloc [VTABLE]
  */
 static LPVOID WINAPI IMalloc_fnAlloc(LPMALLOC iface,DWORD cb) {
+	LPVOID addr;
 	ICOM_THIS(IMalloc32Impl,iface);
-	TRACE("(%p)->Alloc(%ld)\n",This,cb);
-	return HeapAlloc(GetProcessHeap(),0,cb);
+	addr = HeapAlloc(GetProcessHeap(),0,cb);
+	TRACE("(%p)->Alloc(%ld) -> %p\n",This,cb,addr);
+	return addr;
 }
 
 /******************************************************************************
