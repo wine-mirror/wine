@@ -1027,6 +1027,7 @@ dlls/ddraw/direct3d \
 dlls/ddraw/dpalette \
 dlls/ddraw/dsurface \
 dlls/kernel/messages \
+dlls/user/resources \
 "
 for i in $extra_subdirs; do [ -d $i ] || (echo "creating $i" && mkdir $i); done ])
 
@@ -1146,7 +1147,6 @@ programs/winemine/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 relay32/Makefile
-resources/Makefile
 scheduler/Makefile
 server/Makefile
 tools/Makefile

@@ -3,10 +3,10 @@ enough to contain the text for every individual language.
 
 Therefore:
 
-- Dimensions of controls are based on sysres_En.rc.  Other languages should
+- Dimensions of controls are based on user32_En.rc.  Other languages should
   change these dimensions in order to make the text fit.
 
-I (krynos@qbc.clic.net) will try to make sysres_Fr.rc fit correctly, if 
+I (krynos@qbc.clic.net) will try to make user32_Fr.rc fit correctly, if 
 someone is interrested in others languages, message me. I may correct 
 others languages after, but not soon.
 
@@ -27,55 +27,6 @@ flags (WS_??? etc): They control how the dialog behaves.  Things like:
 
 Frans van Dorsselaer
 dorssel@rulhm1.LeidenUniv.nl
-***************************************************************
-1996, May
-
-Subject: ChooseColor
-         ===========
-
-Please delete the old CHOOSECOLOR in YOUR sysres_??.rc   
-and insert the new CHOOSECOLOR from sysres_En.rc to YOUR 
-language file and translate this as you like it - 
-otherwise you'll get an undefined behavour. 
-
-Today it works well for:
-* English 
-* German
-* French
-* Italian
-* Korean
-* Finnish
-* Danish
-* Dutch
-...to be continued......
-
-Thank you.
-
-Albrecht Kleine
-kleine@ak.sax.de
-
-**************************************************************
-1996, May
-
-Subject: ChooseFont
-
-Just like ChooseColor, please copy CHOSEFONT from sysres_EN.rc,
-and translate it to your language. It's okay for:
-
-* English
-* German
-* Finnish
-* Italian
-* French
-* Danish
-* Dutch
-.....
-
-Thank you.
-
-Albrecht Kleine
-kleine@ak.sax.de
-
 **************************************************************
 1997, January
 
@@ -83,7 +34,7 @@ Subject: EDITMENU
 
 There now is a resource EDITMENU.  It is the menu that is displayed when you
 click the right mouse button within an edit control.  I included an English
-version in all sysres_??.rc files, which needs translation in your language.
+version in all user32_??.rc files, which needs translation in your language.
 This has now been done for:
 
 * English
@@ -93,7 +44,7 @@ This has now been done for:
 
 Note: I picked the IDs of the menuitems "at random".  When someone wants to
 find out the "real" (win95) values, feel free to change them.  However, you
-should change _all_ sysres_??.rc files and subsequently the function
+should change _all_ user32_??.rc files and subsequently the function
 EDIT_WM_Command() in controls/edit.c.  This is a matter of minutes (i.e. no
 programming skills required).
 

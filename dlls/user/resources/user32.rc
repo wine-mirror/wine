@@ -1,0 +1,47 @@
+/*
+ * Top level resource file for Common Dialogs
+ *
+ */
+
+#include "windef.h"
+#include "winuser.h"
+#include "winnls.h"
+#include "dlgs.h"
+#include "mdi.h"
+
+/*
+ * Everything that does not depend on language,
+ * like textless bitmaps etc, go into the
+ * neutral language. This will prevent them from
+ * being duplicated for each language.
+ */
+/*#include "resources/user32_xx.rc"*/
+
+/*
+ * Everything specific to any language goes
+ * in one of the specific files.
+ * Note that you can and may override resources
+ * which also have a neutral version. This is to
+ * get localized bitmaps for example.
+ */
+#include "resources/user32_Ca.rc"
+#include "resources/user32_Cs.rc"
+#include "resources/user32_Da.rc"
+#include "resources/user32_De.rc"
+#include "resources/user32_En.rc"
+#include "resources/user32_Eo.rc"
+#include "resources/user32_Es.rc"
+#include "resources/user32_Fi.rc"
+#include "resources/user32_Fr.rc"
+#include "resources/user32_Hu.rc"
+#include "resources/user32_It.rc"
+#include "resources/user32_Ko.rc"
+#include "resources/user32_Nl.rc"
+#include "resources/user32_No.rc"
+#include "resources/user32_Pl.rc"
+#include "resources/user32_Pt.rc"
+#include "resources/user32_Ru.rc"
+#include "resources/user32_Sk.rc"
+#include "resources/user32_Sv.rc"
+#include "resources/user32_Wa.rc"
+#include "resources/user32_Ja.rc"
