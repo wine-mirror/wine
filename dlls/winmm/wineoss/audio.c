@@ -1412,6 +1412,10 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     DWORD ptr;
 
     TRACE("(%p)\n",iface);
+    if (WOutDev[This->drv->wDevID].unixdev == -1) {
+	ERR("device not open, but accessing?\n");
+	return DSERR_UNINITIALIZED;
+    }
     if (ioctl(WOutDev[This->drv->wDevID].unixdev, SNDCTL_DSP_GETOPTR, &info) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
 	return DSERR_GENERIC;

@@ -1295,10 +1295,14 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 	LPDIRECTSOUNDBUFFER iface,LPDWORD playpos,LPDWORD writepos
 ) {
+	HRESULT	hres; 
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
 	if (This->hwbuf) {
-		IDsDriverBuffer_GetPosition(This->hwbuf, playpos, writepos);
+		hres=IDsDriverBuffer_GetPosition(This->hwbuf,playpos,writepos);
+		if (hres)
+		    return hres;
+
 	}
 	else if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) {
 		if (playpos && (This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2)) {
@@ -2690,6 +2694,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 	DWORD len;
 	int nfiller;
 	BOOL forced;
+	HRESULT hres;
 
 	if (!dsound || !primarybuf) {
 		ERR("dsound died without killing us?\n");
@@ -2716,7 +2721,11 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
 			BOOL paused = ((primarybuf->state == STATE_STOPPED) || (primarybuf->state == STATE_STARTING));
 			DWORD playpos, writepos, inq, maxq, mixq, frag;
-			IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, &writepos);
+			hres = IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, &writepos);
+			if (hres) {
+			    LeaveCriticalSection(&(dsound->lock));
+			    return;
+			}
 			/* Well, we *could* do Just-In-Time mixing using the writepos,
 			 * but that's a little bit ambitious and unnecessary... */
 			/* rather add our safety margin to the writepos, if we're playing */
@@ -2776,7 +2785,12 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 				}
 				/* the Stop is supposed to reset play position to beginning of buffer */
 				/* unfortunately, OSS is not able to do so, so get current pointer */
-				IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, NULL);
+				hres = IDsDriverBuffer_GetPosition(primarybuf->hwbuf, &playpos, NULL);
+				if (hres) {
+					LeaveCriticalSection(&(dsound->lock));
+					LeaveCriticalSection(&(primarybuf->lock));
+					return;
+				}
 				writepos = playpos;
 				primarybuf->playpos = playpos;
 				primarybuf->mixpos = playpos;
