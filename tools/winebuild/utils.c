@@ -260,7 +260,7 @@ const char *make_c_identifier( const char *str )
  */
 int get_alignment(int alignBoundary)
 {
-#ifdef __powerpc__
+#if defined(__powerpc__) || defined(__ALPHA__)
 
     int n = 0;
 
