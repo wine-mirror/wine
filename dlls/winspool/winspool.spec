@@ -1,5 +1,6 @@
 name	winspool
 type	win32
+init	WINSPOOL_EntryPoint
 
 101 stub ADVANCEDSETUPDIALOG
 102 stub AbortPrinter

@@ -8,7 +8,8 @@ MODULE    = winspool
 SPEC_SRCS = winspool.spec
 
 C_SRCS = \
-	info.c
+	info.c \
+	wspool.c
 
 all: $(MODULE).o
 

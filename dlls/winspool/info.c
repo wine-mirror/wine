@@ -15,12 +15,11 @@
 #include "winreg.h"
 #include "debugtools.h"
 #include "heap.h"
+#include "commctrl.h"
 
 DEFAULT_DEBUG_CHANNEL(winspool)
 
 CRITICAL_SECTION PRINT32_RegistryBlocker;
-
-#define NUM_PRINTER_MAX 10
 
 typedef struct _OPENEDPRINTERA
 {
@@ -29,27 +28,17 @@ typedef struct _OPENEDPRINTERA
     LPPRINTER_DEFAULTSA lpDefault;
 } OPENEDPRINTERA, *LPOPENEDPRINTERA;
 
+/* The OpenedPrinter Table dynamic array */
+static HDPA pOpenedPrinterDPA = NULL;
 
-/* Initialize the structure OpenedPrinter Table */
-static OPENEDPRINTERA OpenedPrinterTableA[NUM_PRINTER_MAX] = 
-{ 
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL},
-    {NULL, -1, NULL}
-};
+extern HDPA   (WINAPI* WINSPOOL_DPA_CreateEx) (INT, HANDLE);
+extern LPVOID (WINAPI* WINSPOOL_DPA_GetPtr) (const HDPA, INT);
+extern INT    (WINAPI* WINSPOOL_DPA_InsertPtr) (const HDPA, INT, LPVOID);
 
 static char Printers[] =
  "System\\CurrentControlSet\\control\\Print\\Printers\\";
 static char Drivers[] =
  "System\\CurrentControlSet\\control\\Print\\Environments\\Wine\\Drivers\\";
-
 
 /******************************************************************
  *  WINSPOOL_GetOpenedPrinterEntryA
@@ -58,12 +47,51 @@ static char Drivers[] =
 static LPOPENEDPRINTERA WINSPOOL_GetOpenedPrinterEntryA()
 {
     int i;
-    for( i=0; i< NUM_PRINTER_MAX; i++)
-	if (OpenedPrinterTableA[i].hPrinter == -1)
-	{
-	    OpenedPrinterTableA[i].hPrinter = i + 1;
-	    return &OpenedPrinterTableA[i];
-	}
+    LPOPENEDPRINTERA pOpenedPrinter;
+
+    /*
+     * Create the opened printers' handle dynamic array.
+     */
+    if (!pOpenedPrinterDPA)
+    {
+        pOpenedPrinterDPA = WINSPOOL_DPA_CreateEx(10, GetProcessHeap());
+        for (i = 0; i < 10; i++)
+        {
+            pOpenedPrinter = HeapAlloc(GetProcessHeap(),
+                                       HEAP_ZERO_MEMORY,
+                                       sizeof(OPENEDPRINTERA));
+            pOpenedPrinter->hPrinter = -1;
+            WINSPOOL_DPA_InsertPtr(pOpenedPrinterDPA, i, pOpenedPrinter);
+        }
+    }
+
+    /*
+     * Search for a handle not yet allocated.
+     */
+    for (i = 0; i < pOpenedPrinterDPA->nItemCount; i++)
+    {
+        pOpenedPrinter = WINSPOOL_DPA_GetPtr(pOpenedPrinterDPA, i);
+
+        if (pOpenedPrinter->hPrinter == -1)
+        {
+            pOpenedPrinter->hPrinter = i + 1;
+            return pOpenedPrinter;
+        }
+    }
+
+    /*
+     * Didn't find one, insert new element in the array.
+     */
+    if (i == pOpenedPrinterDPA->nItemCount)
+    {
+        pOpenedPrinter = HeapAlloc(GetProcessHeap(),
+                                   HEAP_ZERO_MEMORY,
+                                   sizeof(OPENEDPRINTERA));
+        pOpenedPrinter->hPrinter = i + 1;
+        WINSPOOL_DPA_InsertPtr(pOpenedPrinterDPA, i, pOpenedPrinter);
+        return pOpenedPrinter;
+    }
+
     return NULL;
 }
 
@@ -73,9 +101,15 @@ static LPOPENEDPRINTERA WINSPOOL_GetOpenedPrinterEntryA()
  */
 static LPOPENEDPRINTERA WINSPOOL_GetOpenedPrinterA(int printerHandle)
 {
-    if((printerHandle <=0) || (printerHandle > (NUM_PRINTER_MAX + 1)))
-	return NULL;
-    return &OpenedPrinterTableA[printerHandle -1];
+    LPOPENEDPRINTERA pOpenedPrinter;
+
+    if((printerHandle <=0) || 
+       (printerHandle > (pOpenedPrinterDPA->nItemCount - 1)))
+        return NULL;
+
+    pOpenedPrinter = WINSPOOL_DPA_GetPtr(pOpenedPrinterDPA, printerHandle);
+
+    return pOpenedPrinter;
 }
 
 /******************************************************************
@@ -1012,7 +1046,12 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 {
     LPOPENEDPRINTERA lpOpenedPrinter;
 
-    if ((hPrinter != -1) && (hPrinter < NUM_PRINTER_MAX + 1))
+    TRACE("Handle %d\n", hPrinter);
+
+    if (!pOpenedPrinterDPA)
+        return FALSE;
+
+    if ((hPrinter != -1) && (hPrinter < (pOpenedPrinterDPA->nItemCount - 1)))
     {
 	lpOpenedPrinter = WINSPOOL_GetOpenedPrinterA(hPrinter);
 	HeapFree(GetProcessHeap(), 0, lpOpenedPrinter->lpsPrinterName);
@@ -1031,7 +1070,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 	}
 	
 	lpOpenedPrinter->hPrinter = -1;
-	
+
 	return TRUE;
     }
     return FALSE;
