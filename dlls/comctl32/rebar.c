@@ -2273,9 +2273,6 @@ REBAR_InternalHitTest (REBAR_INFO *infoPtr, LPPOINT lpPt, UINT *pFlags, INT *pBa
 	TRACE("NOWHERE\n");
 	return;
     }
-
-    TRACE("flags=0x%X\n", *pFlags);
-    return;
 }
 
 

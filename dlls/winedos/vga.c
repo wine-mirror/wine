@@ -971,10 +971,6 @@ void VGA_ioport_out( WORD port, BYTE val )
                         vga_index_3c4, val);
            }
            break;
-
-           FIXME("Unsupported index, register 0x3c4: 0x%02x (value 0x%02x)\n",
-                 vga_index_3c4, val);
-           break;
         case 0x3c8:
             palreg=val; palcnt=0; break;
         case 0x3c9:

@@ -1720,7 +1720,6 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     client = InternetConnectA(hInternet, hostName, urlComponents.nPort,
         userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
     return FtpOpenFileA(client, path, GENERIC_READ, dwFlags, dwContext);
-    break;
   case INTERNET_SCHEME_HTTP:
   case INTERNET_SCHEME_HTTPS:
   {
@@ -1750,7 +1749,6 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
       return NULL;
     }
     return client1;
-    break;
   }
   case INTERNET_SCHEME_GOPHER:
     /* gopher doesn't seem to be implemented in wine, but it's supposed
@@ -1758,8 +1756,6 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
   default:
     return NULL;
   }
-  if(client != NULL)
-    InternetCloseHandle(client);
 }
 
 

@@ -4181,9 +4181,6 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
                        SetLastError(WSAENOTSOCK);
                        return SOCKET_ERROR;
                }
-
-       SetLastError(WSAENOTSOCK);
-       return SOCKET_ERROR;
 }
 
 /***********************************************************************
