@@ -2627,8 +2627,16 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
         hFile = FILE_CreateFile( full_name1.long_name, 0, 0,
                                  NULL, OPEN_EXISTING, 0, 0, TRUE,
                                  GetDriveTypeW( full_name1.short_name ) );
-        if (!hFile) return FALSE;
-        CloseHandle(hFile);
+        if (!hFile)
+        {
+            DWORD attr;
+
+            if (GetLastError() != ERROR_ACCESS_DENIED) return FALSE;
+            attr = GetFileAttributesA( full_name1.long_name );
+            if (attr == (DWORD)-1 || !(attr & FILE_ATTRIBUTE_DIRECTORY)) return FALSE;
+            /* if it's a directory we can continue */
+        }
+        else CloseHandle(hFile);
 
         /* check, if we are allowed to delete the destination,
         **     (but the file not being there is fine) */
