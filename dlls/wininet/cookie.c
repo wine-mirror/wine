@@ -38,6 +38,8 @@
 #include "wine/debug.h"
 #include "internet.h"
 
+#include "wine/list.h"
+
 #define RESPONSE_TIMEOUT        30            /* FROM internet.c */
 
 
@@ -55,8 +57,7 @@ typedef struct _cookie cookie;
 
 struct _cookie
 {
-    struct _cookie *next;
-    struct _cookie *prev;
+    struct list entry;
 
     struct _cookie_domain *parent;
 
@@ -67,25 +68,19 @@ struct _cookie
 
 struct _cookie_domain
 {
-    struct _cookie_domain *next;
-    struct _cookie_domain *prev;
+    struct list entry;
 
     LPWSTR lpCookieDomain;
     LPWSTR lpCookiePath;
-    cookie *cookie_tail;
+    struct list cookie_list;
 };
 
-static cookie_domain *cookieDomainTail;
+static struct list domain_list = LIST_INIT(domain_list);
 
 static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data);
 static cookie *COOKIE_findCookie(cookie_domain *domain, LPCWSTR lpszCookieName);
 static void COOKIE_deleteCookie(cookie *deadCookie, BOOL deleteDomain);
 static cookie_domain *COOKIE_addDomain(LPCWSTR domain, LPCWSTR path);
-static cookie_domain *COOKIE_addDomainFromUrl(LPCWSTR lpszUrl);
-static cookie_domain *COOKIE_findNextDomain(LPCWSTR lpszCookieDomain, LPCWSTR lpszCookiePath,
-                                            cookie_domain *prev_domain, BOOL allow_partial);
-static cookie_domain *COOKIE_findNextDomainFromUrl(LPCWSTR lpszUrl, cookie_domain *prev_domain,
-                                                   BOOL allow_partial);
 static void COOKIE_deleteDomain(cookie_domain *deadDomain);
 
 
@@ -94,8 +89,7 @@ static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR dat
 {
     cookie *newCookie = HeapAlloc(GetProcessHeap(), 0, sizeof(cookie));
 
-    newCookie->next = NULL;
-    newCookie->prev = NULL;
+    list_init(&newCookie->entry);
     newCookie->lpCookieName = NULL;
     newCookie->lpCookieData = NULL;
 
@@ -112,9 +106,8 @@ static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR dat
 
     TRACE("added cookie %p (data is %s)\n", newCookie, debugstr_w(data) );
 
-    newCookie->prev = domain->cookie_tail;
+    list_add_tail(&domain->cookie_list, &newCookie->entry);
     newCookie->parent = domain;
-    domain->cookie_tail = newCookie;
     return newCookie;
 }
 
@@ -122,11 +115,12 @@ static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR dat
 /* finds a cookie in the domain matching the cookie name */
 static cookie *COOKIE_findCookie(cookie_domain *domain, LPCWSTR lpszCookieName)
 {
-    cookie *searchCookie = domain->cookie_tail;
+    struct list * cursor;
     TRACE("(%p, %s)\n", domain, debugstr_w(lpszCookieName));
 
-    while (searchCookie)
+    LIST_FOR_EACH(cursor, &domain->cookie_list)
     {
+        cookie *searchCookie = LIST_ENTRY(cursor, cookie, entry);
 	BOOL candidate = TRUE;
 	if (candidate && lpszCookieName)
 	{
@@ -137,7 +131,6 @@ static cookie *COOKIE_findCookie(cookie_domain *domain, LPCWSTR lpszCookieName)
 	}
 	if (candidate)
 	    return searchCookie;
-        searchCookie = searchCookie->prev;
     }
     return NULL;
 }
@@ -149,18 +142,12 @@ static void COOKIE_deleteCookie(cookie *deadCookie, BOOL deleteDomain)
 	HeapFree(GetProcessHeap(), 0, deadCookie->lpCookieName);
     if (deadCookie->lpCookieData)
 	HeapFree(GetProcessHeap(), 0, deadCookie->lpCookieData);
-    if (deadCookie->prev)
-        deadCookie->prev->next = deadCookie->next;
-    if (deadCookie->next)
-	deadCookie->next->prev = deadCookie->prev;
+    list_remove(&deadCookie->entry);
 
-    if (deadCookie == deadCookie->parent->cookie_tail)
-    {
-	/* special case: last cookie, lets remove the domain to save memory */
-	deadCookie->parent->cookie_tail = deadCookie->prev;
-        if (!deadCookie->parent->cookie_tail && deleteDomain)
-	    COOKIE_deleteDomain(deadCookie->parent);
-    }
+    /* special case: last cookie, lets remove the domain to save memory */
+    if (list_empty(&deadCookie->parent->cookie_list) && deleteDomain)
+        COOKIE_deleteDomain(deadCookie->parent);
+    HeapFree(GetProcessHeap(), 0, deadCookie);
 }
 
 /* allocates a domain and adds it to the end */
@@ -168,9 +155,8 @@ static cookie_domain *COOKIE_addDomain(LPCWSTR domain, LPCWSTR path)
 {
     cookie_domain *newDomain = HeapAlloc(GetProcessHeap(), 0, sizeof(cookie_domain));
 
-    newDomain->next = NULL;
-    newDomain->prev = NULL;
-    newDomain->cookie_tail = NULL;
+    list_init(&newDomain->entry);
+    list_init(&newDomain->cookie_list);
     newDomain->lpCookieDomain = NULL;
     newDomain->lpCookiePath = NULL;
 
@@ -185,15 +171,14 @@ static cookie_domain *COOKIE_addDomain(LPCWSTR domain, LPCWSTR path)
         lstrcpyW(newDomain->lpCookiePath, path);
     }
 
-    newDomain->prev = cookieDomainTail;
-    cookieDomainTail = newDomain;
+    list_add_tail(&domain_list, &newDomain->entry);
+
     TRACE("Adding domain: %p\n", newDomain);
     return newDomain;
 }
 
-static cookie_domain *COOKIE_addDomainFromUrl(LPCWSTR lpszUrl)
+static void COOKIE_crackUrlSimple(LPCWSTR lpszUrl, LPWSTR hostName, int hostNameLen, LPWSTR path, int pathLen)
 {
-    WCHAR hostName[2048], path[2048];
     URL_COMPONENTSW UrlComponents;
 
     UrlComponents.lpszExtraInfo = NULL;
@@ -202,119 +187,59 @@ static cookie_domain *COOKIE_addDomainFromUrl(LPCWSTR lpszUrl)
     UrlComponents.lpszUrlPath = path;
     UrlComponents.lpszUserName = NULL;
     UrlComponents.lpszHostName = hostName;
-    UrlComponents.dwHostNameLength = 2048;
-    UrlComponents.dwUrlPathLength = 2048;
+    UrlComponents.dwHostNameLength = hostNameLen;
+    UrlComponents.dwUrlPathLength = pathLen;
 
     InternetCrackUrlW(lpszUrl, 0, 0, &UrlComponents);
-
-    TRACE("Url cracked. Domain: %s, Path: %s.\n", debugstr_w(UrlComponents.lpszHostName),
-	  debugstr_w(UrlComponents.lpszUrlPath));
-
-    /* hack for now - FIXME - There seems to be a bug in InternetCrackUrl?? */
-    UrlComponents.lpszUrlPath = NULL;
-
-    return COOKIE_addDomain(UrlComponents.lpszHostName, UrlComponents.lpszUrlPath);
 }
 
-/* find a domain. domain must match if its not NULL. path must match if its not NULL */
-static cookie_domain *COOKIE_findNextDomain(LPCWSTR lpszCookieDomain, LPCWSTR lpszCookiePath,
-                                            cookie_domain *prev_domain, BOOL allow_partial)
+/* match a domain. domain must match if the domain is not NULL. path must match if the path is not NULL */
+static BOOL COOKIE_matchDomain(LPCWSTR lpszCookieDomain, LPCWSTR lpszCookiePath,
+                               cookie_domain *searchDomain, BOOL allow_partial)
 {
-    cookie_domain *searchDomain;
-
-    if (prev_domain)
-    {
-	if(!prev_domain->prev)
+    TRACE("searching on domain %p\n", searchDomain);
+	if (lpszCookieDomain)
 	{
-	    TRACE("no more domains available, it would seem.\n");
-            return NULL;
-	}
-	searchDomain = prev_domain->prev;
-    }
-    else searchDomain = cookieDomainTail;
+	    if (!searchDomain->lpCookieDomain)
+            return FALSE;
 
-    while (searchDomain)
-    {
-	BOOL candidate = TRUE;
-        TRACE("searching on domain %p\n", searchDomain);
-	if (candidate && lpszCookieDomain)
-	{
-	    if (candidate && !searchDomain->lpCookieDomain)
-		candidate = FALSE;
-            TRACE("candidate! (%p)\n", searchDomain->lpCookieDomain);
 	    TRACE("comparing domain %s with %s\n", 
-                  debugstr_w(lpszCookieDomain), 
-                  debugstr_w(searchDomain->lpCookieDomain));
-	    if (candidate && allow_partial && !strstrW(lpszCookieDomain, searchDomain->lpCookieDomain))
-                candidate = FALSE;
-	    else if (candidate && !allow_partial &&
-		     lstrcmpW(lpszCookieDomain, searchDomain->lpCookieDomain) != 0)
-                candidate = FALSE;
+            debugstr_w(lpszCookieDomain), 
+            debugstr_w(searchDomain->lpCookieDomain));
+
+        if (allow_partial && !strstrW(lpszCookieDomain, searchDomain->lpCookieDomain))
+            return FALSE;
+        else if (!allow_partial && lstrcmpW(lpszCookieDomain, searchDomain->lpCookieDomain) != 0)
+            return FALSE;
  	}
-	if (candidate && lpszCookiePath)
-	{
-            TRACE("comparing paths\n");
-	    if (candidate && !searchDomain->lpCookiePath)
-                candidate = FALSE;
-	    if (candidate && 
-                strcmpW(lpszCookiePath, searchDomain->lpCookiePath))
-                candidate = FALSE;
+    if (lpszCookiePath)
+    {
+        TRACE("comparing paths: %s with %s\n", debugstr_w(lpszCookiePath), debugstr_w(searchDomain->lpCookiePath));
+        if (!searchDomain->lpCookiePath)
+            return FALSE;
+        if (strcmpW(lpszCookiePath, searchDomain->lpCookiePath))
+            return FALSE;
 	}
-	if (candidate)
-	{
-            TRACE("returning the domain %p\n", searchDomain);
-	    return searchDomain;
-	}
-	searchDomain = searchDomain->prev;
-    }
-    TRACE("found no domain, returning NULL\n");
-    return NULL;
-}
-
-static cookie_domain *COOKIE_findNextDomainFromUrl(LPCWSTR lpszUrl, cookie_domain *previous_domain,
-                                                   BOOL allow_partial)
-{
-    WCHAR hostName[2048], path[2048];
-    URL_COMPONENTSW UrlComponents;
-
-    UrlComponents.lpszExtraInfo = NULL;
-    UrlComponents.lpszPassword = NULL;
-    UrlComponents.lpszScheme = NULL;
-    UrlComponents.lpszUrlPath = path;
-    UrlComponents.lpszUserName = NULL;
-    UrlComponents.lpszHostName = hostName;
-    UrlComponents.dwHostNameLength = 2048;
-    UrlComponents.dwUrlPathLength = 2048;
-
-    InternetCrackUrlW(lpszUrl, 0, 0, &UrlComponents);
-
-    TRACE("Url cracked. Domain: %s, Path: %s.\n",
-          debugstr_w(UrlComponents.lpszHostName),
-	  debugstr_w(UrlComponents.lpszUrlPath));
-
-    /* hack for now - FIXME - There seems to be a bug in InternetCrackUrl?? */
-    UrlComponents.lpszUrlPath = NULL;
-
-    return COOKIE_findNextDomain(UrlComponents.lpszHostName, UrlComponents.lpszUrlPath,
-				 previous_domain, allow_partial);
+	return TRUE;
 }
 
 /* remove a domain from the list and delete it */
 static void COOKIE_deleteDomain(cookie_domain *deadDomain)
 {
-    while (deadDomain->cookie_tail)
-	COOKIE_deleteCookie(deadDomain->cookie_tail, FALSE);
+    struct list * cursor;
+    while ((cursor = list_tail(&deadDomain->cookie_list)))
+    {
+        COOKIE_deleteCookie(LIST_ENTRY(cursor, cookie, entry), FALSE);
+        list_remove(cursor);
+    }
+
     if (deadDomain->lpCookieDomain)
 	HeapFree(GetProcessHeap(), 0, deadDomain->lpCookieDomain);
     if (deadDomain->lpCookiePath)
 	HeapFree(GetProcessHeap(), 0, deadDomain->lpCookiePath);
-    if (deadDomain->prev)
-	deadDomain->prev->next = deadDomain->next;
-    if (deadDomain->next)
-	deadDomain->next->prev = deadDomain->prev;
 
-    if (cookieDomainTail == deadDomain)
-	cookieDomainTail = deadDomain->prev;
+    list_remove(&deadDomain->entry);
+
     HeapFree(GetProcessHeap(), 0, deadDomain);
 }
 
@@ -334,58 +259,50 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain)
 BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     LPWSTR lpCookieData, LPDWORD lpdwSize)
 {
-    cookie_domain *cookiesDomain = NULL;
-    cookie *thisCookie;
+    struct list * cursor;
     int cnt = 0, domain_count = 0;
-    /* Ok, this is just ODD!. During my tests, it appears M$ like to send out
-     * a cookie called 'MtrxTracking' to some urls. Also returns it from InternetGetCookie.
-     * I'm not exactly sure what to make of this, so its here for now.
-     * It'd be nice to know what exactly is going on, M$ tracking users? Does this need
-     * to be unique? Should I generate a random number here? etc.
-     */
-    static const WCHAR TrackingString[] = {
-        'M','t','r','x','T','r','a','c','k','i','n','g','I','D','=',
-        '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5',
-        '6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1', 0 };
-    static const WCHAR szps[] = { '%','s',0 };
+    int cookie_count = 0;
+    WCHAR hostName[2048], path[2048];
 
     TRACE("(%s, %s, %p, %p)\n", debugstr_w(lpszUrl),debugstr_w(lpszCookieName),
 	  lpCookieData, lpdwSize);
 
-    if (lpCookieData)
-	cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szps, TrackingString);
-    else
-	cnt += strlenW(TrackingString);
+    COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
 
-    while ((cookiesDomain = COOKIE_findNextDomainFromUrl(lpszUrl, cookiesDomain, TRUE)))
+    LIST_FOR_EACH(cursor, &domain_list)
     {
-        domain_count++;
-	TRACE("found domain %p\n", cookiesDomain);
-
-	thisCookie = cookiesDomain->cookie_tail;
-	if (lpCookieData == NULL) /* return the size of the buffer required to lpdwSize */
-	{
-	    while (thisCookie)
-	    {
-		cnt += 2; /* '; ' */
-		cnt += strlenW(thisCookie->lpCookieName);
-		cnt += 1; /* = */
-		cnt += strlenW(thisCookie->lpCookieData);
-
-		thisCookie = thisCookie->prev;
-	    }
-	}
-	while (thisCookie)
-	{
-            static const WCHAR szsc[] = { ';',' ',0 };
-            static const WCHAR szpseq[] = { '%','s','=','%','s',0 };
-            cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szsc);
-	    cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szpseq,
-                            thisCookie->lpCookieName,
-			    thisCookie->lpCookieData);
-
-	    thisCookie = thisCookie->prev;
-	}
+        cookie_domain *cookiesDomain = LIST_ENTRY(cursor, cookie_domain, entry);
+        if (COOKIE_matchDomain(hostName, NULL /* FIXME: path */, cookiesDomain, TRUE))
+        {
+            struct list * cursor;
+            domain_count++;
+            TRACE("found domain %p\n", cookiesDomain);
+    
+            LIST_FOR_EACH(cursor, &cookiesDomain->cookie_list)
+            {
+                cookie *thisCookie = LIST_ENTRY(cursor, cookie, entry);
+                if (lpCookieData == NULL) /* return the size of the buffer required to lpdwSize */
+                {
+                    if (cookie_count != 0)
+                        cnt += 2; /* '; ' */
+                    cnt += strlenW(thisCookie->lpCookieName);
+                    cnt += 1; /* = */
+                    cnt += strlenW(thisCookie->lpCookieData);
+                }
+                else
+                {
+                    static const WCHAR szsc[] = { ';',' ',0 };
+                    static const WCHAR szpseq[] = { '%','s','=','%','s',0 };
+                    if (cookie_count != 0)
+                        cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szsc);
+                    cnt += snprintfW(lpCookieData + cnt, *lpdwSize - cnt, szpseq,
+                                    thisCookie->lpCookieName,
+                                    thisCookie->lpCookieData);
+                    TRACE("Cookie: %s=%s\n", debugstr_w(thisCookie->lpCookieName), debugstr_w(thisCookie->lpCookieData));
+                }
+                cookie_count++;
+            }
+        }
     }
     if (lpCookieData == NULL)
     {
@@ -478,8 +395,10 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
 BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     LPCWSTR lpCookieData)
 {
+    cookie_domain *thisCookieDomain = NULL;
     cookie *thisCookie;
-    cookie_domain *thisCookieDomain;
+    WCHAR hostName[2048], path[2048];
+    struct list * cursor;
 
     TRACE("(%s,%s,%s)\n", debugstr_w(lpszUrl),
         debugstr_w(lpszCookieName), debugstr_w(lpCookieData));
@@ -516,8 +435,17 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         return ret;
     }
 
-    if (!(thisCookieDomain = COOKIE_findNextDomainFromUrl(lpszUrl, NULL, FALSE)))
-        thisCookieDomain = COOKIE_addDomainFromUrl(lpszUrl);
+    COOKIE_crackUrlSimple(lpszUrl, hostName, sizeof(hostName)/sizeof(hostName[0]), path, sizeof(path)/sizeof(path[0]));
+
+    LIST_FOR_EACH(cursor, &domain_list)
+    {
+        thisCookieDomain = LIST_ENTRY(cursor, cookie_domain, entry);
+        if (COOKIE_matchDomain(hostName, NULL /* FIXME: path */, thisCookieDomain, FALSE))
+            break;
+        thisCookieDomain = NULL;
+    }
+    if (!thisCookieDomain)
+        thisCookieDomain = COOKIE_addDomain(hostName, path);
 
     if ((thisCookie = COOKIE_findCookie(thisCookieDomain, lpszCookieName)))
 	COOKIE_deleteCookie(thisCookie, FALSE);
