@@ -85,6 +85,23 @@ VOID WINAPI KEYBOARD_Disable(VOID)
     pKeyStateTable = NULL;
 }
 
+/***********************************************************************
+ *           AnsiToOem   (KEYBOARD.5)
+ */
+INT16 WINAPI AnsiToOem16( LPCSTR s, LPSTR d )
+{
+    CharToOemA( s, d );
+    return -1;
+}
+
+/***********************************************************************
+ *           OemToAnsi   (KEYBOARD.6)
+ */
+INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
+{
+    OemToCharA( s, d );
+    return -1;
+}
 
 /**********************************************************************
  *		SetSpeed (KEYBOARD.7)
@@ -151,6 +168,22 @@ INT16 WINAPI GetKBCodePage16(void)
 INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
     return GetKeyNameTextA( lParam, lpBuffer, nSize );
+}
+
+/***********************************************************************
+ *           AnsiToOemBuff   (KEYBOARD.134)
+ */
+void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
+{
+    if (len != 0) CharToOemBuffA( s, d, len );
+}
+
+/***********************************************************************
+ *           OemToAnsiBuff   (KEYBOARD.135)
+ */
+void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
+{
+    if (len != 0) OemToCharBuffA( s, d, len );
 }
 
 /****************************************************************************
