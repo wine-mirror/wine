@@ -657,6 +657,89 @@ static int ctl2_alloc_importfile(
 }
 
 /****************************************************************************
+ *	ctl2_alloc_custdata
+ *
+ *  Allocates and initializes a "custom data" value in a type library.
+ *
+ * RETURNS
+ *
+ *  Success: The offset of the new custdata.
+ *  Failure:
+ *
+ *    -1: Out of memory.
+ *    -2: Unable to encode VARIANT data (typically a bug).
+ */
+static int ctl2_alloc_custdata(
+	ICreateTypeLib2Impl *This, /* [I] The type library in which to encode the value. */
+	VARIANT *pVarVal)          /* [I] The value to encode. */
+{
+    int offset;
+
+    TRACE("(%p,%p(%d))\n",This,pVarVal,V_VT(pVarVal));
+
+    switch (V_VT(pVarVal)) {
+    case VT_UI4:
+	offset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, 8, 0);
+	if (offset == -1) return offset;
+
+	*((unsigned short *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = VT_UI4;
+	*((unsigned long *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = V_UI4(pVarVal);
+	break;
+
+    default:
+	FIXME("Unknown variable encoding vt %d.\n", V_VT(pVarVal));
+	return -2;
+    }
+
+    return offset;
+}
+
+/****************************************************************************
+ *	ctl2_set_custdata
+ *
+ *  Adds a custom data element to an object in a type library.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_INVALIDARG or E_OUTOFMEMORY.
+ */
+static HRESULT ctl2_set_custdata(
+	ICreateTypeLib2Impl *This, /* [I] The type library to store the custom data in. */
+	REFGUID guid,              /* [I] The GUID used as a key to retrieve the custom data. */
+	VARIANT *pVarVal,          /* [I] The custom data itself. */
+	int *offset)               /* [I/O] The list of custom data to prepend to. */
+{
+    MSFT_GuidEntry guidentry;
+    int dataoffset;
+    int guidoffset;
+    int custoffset;
+    int *custdata;
+
+    guidentry.guid = *guid;
+
+    guidentry.unk10 = -1;
+    guidentry.unk14 = -1;
+
+    guidoffset = ctl2_alloc_guid(This, &guidentry);
+    if (guidoffset == -1) return E_OUTOFMEMORY;
+    dataoffset = ctl2_alloc_custdata(This, pVarVal);
+    if (dataoffset == -1) return E_OUTOFMEMORY;
+    if (dataoffset == -2) return E_INVALIDARG;
+
+    custoffset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATAGUID, 12, 0);
+    if (custoffset == -1) return E_OUTOFMEMORY;
+
+    custdata = (int *)&This->typelib_segment_data[MSFT_SEG_CUSTDATAGUID][custoffset];
+    custdata[0] = guidoffset;
+    custdata[1] = dataoffset;
+    custdata[2] = *offset;
+    *offset = custoffset;
+
+    return S_OK;
+}
+
+/****************************************************************************
  *	ctl2_encode_typedesc
  *
  *  Encodes a type description, storing information in the TYPEDESC and ARRAYDESC
@@ -3012,8 +3095,11 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetCustData(
 	REFGUID guid,            /* [I] The GUID used as a key to retrieve the custom data. */
 	VARIANT *pVarVal)        /* [I] The custom data itself. */
 {
-    FIXME("(%p,%s,%p), stub!\n", iface, debugstr_guid(guid), pVarVal);
-    return E_OUTOFMEMORY;
+    ICOM_THIS(ICreateTypeLib2Impl, iface);
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(guid), pVarVal);
+
+    return ctl2_set_custdata(This, guid, pVarVal, &This->typelib_header.CustomDataOffset);
 }
 
 /******************************************************************************
