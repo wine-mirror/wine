@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Courier New Italic, which is Copyright
+ *  	1990-1992 The Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -1007,7 +1010,7 @@ AFM PSDRV_Courier_Oblique =
     "Courier Oblique",				/* FullName */
     "Courier",					/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     -12,					/* ItalicAngle */
     TRUE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -1020,15 +1023,15 @@ AFM PSDRV_Courier_Oblique =
     753,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	805,				/* WinMetrics.sAscender */
-	-250,				/* WinMetrics.sDescender */
-	95,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	629,				/* WinMetrics.sTypoAscender */
-	-156,				/* WinMetrics.sTypoDescender */
-	415,				/* WinMetrics.sTypoLineGap */
-	805,				/* WinMetrics.usWinAscent */
-	250				/* WinMetrics.usWinDescent */
+	833,				/* WinMetrics.sAscender */
+	-300,				/* WinMetrics.sDescender */
+	0,				/* WinMetrics.sLineGap */
+	600,				/* WinMetrics.sAvgCharWidth */
+	613,				/* WinMetrics.sTypoAscender */
+	-188,				/* WinMetrics.sTypoDescender */
+	0,				/* WinMetrics.sTypoLineGap */
+	833,				/* WinMetrics.usWinAscent */
+	300				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

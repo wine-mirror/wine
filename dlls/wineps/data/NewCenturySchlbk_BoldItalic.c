@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Century Schoolbook Bold Italic, which is
+ *  	Copyright 1990-1991 The Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_NewCenturySchlbk_BoldItalic =
     "New Century Schoolbook Bold Italic",	/* FullName */
     "New Century Schoolbook",			/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    700,					/* Weight */
+    FW_BOLD,					/* Weight */
     -16,					/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_NewCenturySchlbk_BoldItalic =
     991,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	991,				/* WinMetrics.sAscender */
-	-250,				/* WinMetrics.sDescender */
+	986,				/* WinMetrics.sAscender */
+	-216,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	737,				/* WinMetrics.sTypoAscender */
-	-204,				/* WinMetrics.sTypoDescender */
-	259,				/* WinMetrics.sTypoLineGap */
-	991,				/* WinMetrics.usWinAscent */
-	250				/* WinMetrics.usWinDescent */
+	515,				/* WinMetrics.sAvgCharWidth */
+	739,				/* WinMetrics.sTypoAscender */
+	-192,				/* WinMetrics.sTypoDescender */
+	138,				/* WinMetrics.sTypoLineGap */
+	985,				/* WinMetrics.usWinAscent */
+	216				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

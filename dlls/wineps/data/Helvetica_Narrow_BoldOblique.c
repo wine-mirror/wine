@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Arial Narrow Bold Italic, which is
+ *  	Copyright 1990-1991 The Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Helvetica_Narrow_BoldOblique =
     "Helvetica Narrow Bold Oblique",		/* FullName */
     "Helvetica",				/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    700,					/* Weight */
+    FW_BOLD,					/* Weight */
     -12,					/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Helvetica_Narrow_BoldOblique =
     962,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	962,				/* WinMetrics.sAscender */
-	-228,				/* WinMetrics.sDescender */
+	936,				/* WinMetrics.sAscender */
+	-212,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	718,				/* WinMetrics.sTypoAscender */
-	-206,				/* WinMetrics.sTypoDescender */
-	276,				/* WinMetrics.sTypoLineGap */
-	962,				/* WinMetrics.usWinAscent */
-	228				/* WinMetrics.usWinDescent */
+	392,				/* WinMetrics.sAvgCharWidth */
+	728,				/* WinMetrics.sTypoAscender */
+	-210,				/* WinMetrics.sTypoDescender */
+	131,				/* WinMetrics.sTypoLineGap */
+	936,				/* WinMetrics.usWinAscent */
+	212				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

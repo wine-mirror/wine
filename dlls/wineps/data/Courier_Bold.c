@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Courier New Bold, which is Copyright
+ *  	1990-1992 The Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -1007,7 +1010,7 @@ AFM PSDRV_Courier_Bold =
     "Courier Bold",				/* FullName */
     "Courier",					/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    700,					/* Weight */
+    FW_BOLD,					/* Weight */
     0,						/* ItalicAngle */
     TRUE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -1020,15 +1023,15 @@ AFM PSDRV_Courier_Bold =
     801,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	801,				/* WinMetrics.sAscender */
-	-250,				/* WinMetrics.sDescender */
-	99,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	626,				/* WinMetrics.sTypoAscender */
-	-141,				/* WinMetrics.sTypoDescender */
-	433,				/* WinMetrics.sTypoLineGap */
-	801,				/* WinMetrics.usWinAscent */
-	250				/* WinMetrics.usWinDescent */
+	833,				/* WinMetrics.sAscender */
+	-300,				/* WinMetrics.sDescender */
+	0,				/* WinMetrics.sLineGap */
+	600,				/* WinMetrics.sAvgCharWidth */
+	633,				/* WinMetrics.sTypoAscender */
+	-209,				/* WinMetrics.sTypoDescender */
+	0,				/* WinMetrics.sTypoLineGap */
+	833,				/* WinMetrics.usWinAscent */
+	300				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

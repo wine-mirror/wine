@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Book Antiqua Bold Italic, which is
+ *  	Copyright 1991-1995 The Monotype Corporation.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Palatino_BoldItalic =
     "Palatino Bold Italic",			/* FullName */
     "Palatino",					/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    700,					/* Weight */
+    FW_BOLD,					/* Weight */
     -10,					/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Palatino_BoldItalic =
     926,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	926,				/* WinMetrics.sAscender */
-	-271,				/* WinMetrics.sDescender */
+	923,				/* WinMetrics.sAscender */
+	-282,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	726,				/* WinMetrics.sTypoAscender */
-	-270,				/* WinMetrics.sTypoDescender */
-	204,				/* WinMetrics.sTypoLineGap */
-	926,				/* WinMetrics.usWinAscent */
-	271				/* WinMetrics.usWinDescent */
+	447,				/* WinMetrics.sAvgCharWidth */
+	730,				/* WinMetrics.sTypoAscender */
+	-275,				/* WinMetrics.sTypoDescender */
+	65,				/* WinMetrics.sTypoLineGap */
+	922,				/* WinMetrics.usWinAscent */
+	281				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

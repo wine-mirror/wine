@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Bookman Old Style Italic, which is
+ *  	Copyright 1991-1995 The Monotype Corporation.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Bookman_LightItalic =
     "ITC Bookman Light Italic",			/* FullName */
     "ITC Bookman",				/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    300,					/* Weight */
+    FW_LIGHT,					/* Weight */
     -10,					/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Bookman_LightItalic =
     883,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	883,				/* WinMetrics.sAscender */
-	-250,				/* WinMetrics.sDescender */
-	17,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	717,				/* WinMetrics.sTypoAscender */
-	-211,				/* WinMetrics.sTypoDescender */
-	272,				/* WinMetrics.sTypoLineGap */
-	883,				/* WinMetrics.usWinAscent */
-	250				/* WinMetrics.usWinDescent */
+	942,				/* WinMetrics.sAscender */
+	-232,				/* WinMetrics.sDescender */
+	0,				/* WinMetrics.sLineGap */
+	482,				/* WinMetrics.sAvgCharWidth */
+	716,				/* WinMetrics.sTypoAscender */
+	-230,				/* WinMetrics.sTypoDescender */
+	123,				/* WinMetrics.sTypoLineGap */
+	875,				/* WinMetrics.usWinAscent */
+	232				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

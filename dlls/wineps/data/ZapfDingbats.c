@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Monotype Sorts, which is Copyright
+ *  	1991-1995 Monotype Typography, Ltd.
+ *
  */
 
 #include "psdrv.h"
@@ -986,7 +989,7 @@ AFM PSDRV_ZapfDingbats =
     "ITC Zapf Dingbats",			/* FullName */
     "ITC Zapf Dingbats",			/* FamilyName */
     "FontSpecific",				/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     0,						/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -98,					/* UnderlinePosition */
@@ -999,15 +1002,15 @@ AFM PSDRV_ZapfDingbats =
     820,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	820,				/* WinMetrics.sAscender */
-	-143,				/* WinMetrics.sDescender */
-	187,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	820,				/* WinMetrics.sTypoAscender */
-	-142,				/* WinMetrics.sTypoDescender */
-	238,				/* WinMetrics.sTypoLineGap */
-	820,				/* WinMetrics.usWinAscent */
-	143				/* WinMetrics.usWinDescent */
+	801,				/* WinMetrics.sAscender */
+	-201,				/* WinMetrics.sDescender */
+	0,				/* WinMetrics.sLineGap */
+	740,				/* WinMetrics.sAvgCharWidth */
+	801,				/* WinMetrics.sTypoAscender */
+	-201,				/* WinMetrics.sTypoDescender */
+	68,				/* WinMetrics.sTypoLineGap */
+	801,				/* WinMetrics.usWinAscent */
+	201				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Arial, which is Copyright 1990-1992 The
+ *  	Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Helvetica =
     "Helvetica",				/* FullName */
     "Helvetica",				/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     0,						/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Helvetica =
     931,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	931,				/* WinMetrics.sAscender */
-	-225,				/* WinMetrics.sDescender */
-	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	718,				/* WinMetrics.sTypoAscender */
-	-206,				/* WinMetrics.sTypoDescender */
-	276,				/* WinMetrics.sTypoLineGap */
-	931,				/* WinMetrics.usWinAscent */
-	225				/* WinMetrics.usWinDescent */
+	905,				/* WinMetrics.sAscender */
+	-212,				/* WinMetrics.sDescender */
+	33,				/* WinMetrics.sLineGap */
+	441,				/* WinMetrics.sAvgCharWidth */
+	728,				/* WinMetrics.sTypoAscender */
+	-210,				/* WinMetrics.sTypoDescender */
+	150,				/* WinMetrics.sTypoLineGap */
+	905,				/* WinMetrics.usWinAscent */
+	212				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

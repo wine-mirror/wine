@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Monotype Corsiva, which is Copyright
+ *  	1991-1995 The Monotype Corporation.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_ZapfChancery_MediumItalic =
     "ITC Zapf Chancery Medium Italic",		/* FullName */
     "ITC Zapf Chancery",			/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     -14,					/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_ZapfChancery_MediumItalic =
     831,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	831,				/* WinMetrics.sAscender */
-	-314,				/* WinMetrics.sDescender */
-	5,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	714,				/* WinMetrics.sTypoAscender */
-	-313,				/* WinMetrics.sTypoDescender */
-	173,				/* WinMetrics.sTypoLineGap */
-	831,				/* WinMetrics.usWinAscent */
-	314				/* WinMetrics.usWinDescent */
+	790,				/* WinMetrics.sAscender */
+	-303,				/* WinMetrics.sDescender */
+	29,				/* WinMetrics.sLineGap */
+	350,				/* WinMetrics.sAvgCharWidth */
+	689,				/* WinMetrics.sTypoAscender */
+	-259,				/* WinMetrics.sTypoDescender */
+	122,				/* WinMetrics.sTypoLineGap */
+	790,				/* WinMetrics.usWinAscent */
+	303				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

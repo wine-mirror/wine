@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Symbol, which is Copyright 1990-1992 The
+ *  	Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -986,7 +989,7 @@ AFM PSDRV_Symbol =
     "Symbol",					/* FullName */
     "Symbol",					/* FamilyName */
     "FontSpecific",				/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     0,						/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -98,					/* UnderlinePosition */
@@ -999,15 +1002,15 @@ AFM PSDRV_Symbol =
     1010,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	1010,				/* WinMetrics.sAscender */
-	-293,				/* WinMetrics.sDescender */
+	1005,				/* WinMetrics.sAscender */
+	-220,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	1010,				/* WinMetrics.sTypoAscender */
-	-292,				/* WinMetrics.sTypoDescender */
-	0,				/* WinMetrics.sTypoLineGap */
-	1010,				/* WinMetrics.usWinAscent */
-	293				/* WinMetrics.usWinDescent */
+	600,				/* WinMetrics.sAvgCharWidth */
+	693,				/* WinMetrics.sTypoAscender */
+	-216,				/* WinMetrics.sTypoDescender */
+	150,				/* WinMetrics.sTypoLineGap */
+	1005,				/* WinMetrics.usWinAscent */
+	220				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

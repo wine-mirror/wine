@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Century Gothic, which is Copyright
+ *  	1990-1991 The Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_AvantGarde_Book =
     "ITC Avant Garde Gothic Book",		/* FullName */
     "ITC Avant Garde Gothic",			/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     0,						/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_AvantGarde_Book =
     955,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	955,				/* WinMetrics.sAscender */
-	-222,				/* WinMetrics.sDescender */
+	1006,				/* WinMetrics.sAscender */
+	-220,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	740,				/* WinMetrics.sTypoAscender */
-	-191,				/* WinMetrics.sTypoDescender */
-	269,				/* WinMetrics.sTypoLineGap */
-	955,				/* WinMetrics.usWinAscent */
-	222				/* WinMetrics.usWinDescent */
+	486,				/* WinMetrics.sAvgCharWidth */
+	750,				/* WinMetrics.sTypoAscender */
+	-208,				/* WinMetrics.sTypoDescender */
+	112,				/* WinMetrics.sTypoLineGap */
+	971,				/* WinMetrics.usWinAscent */
+	220				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

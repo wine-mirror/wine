@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Times New Roman Italic, which is Copyright
+ *  	1990-1992 The Monotype Corporation plc/Type Solutions Inc.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Times_Italic =
     "Times Italic",				/* FullName */
     "Times",					/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     -15.5,					/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Times_Italic =
     883,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	883,				/* WinMetrics.sAscender */
-	-217,				/* WinMetrics.sDescender */
-	50,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	683,				/* WinMetrics.sTypoAscender */
-	-204,				/* WinMetrics.sTypoDescender */
-	313,				/* WinMetrics.sTypoLineGap */
-	883,				/* WinMetrics.usWinAscent */
-	217				/* WinMetrics.usWinDescent */
+	891,				/* WinMetrics.sAscender */
+	-216,				/* WinMetrics.sDescender */
+	42,				/* WinMetrics.sLineGap */
+	402,				/* WinMetrics.sAvgCharWidth */
+	694,				/* WinMetrics.sTypoAscender */
+	-216,				/* WinMetrics.sTypoDescender */
+	150,				/* WinMetrics.sTypoLineGap */
+	891,				/* WinMetrics.usWinAscent */
+	216				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

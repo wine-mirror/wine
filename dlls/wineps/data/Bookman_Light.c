@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Bookman Old Style, which is Copyright
+ *  	1991-1995 The Monotype Corporation.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Bookman_Light =
     "ITC Bookman Light",			/* FullName */
     "ITC Bookman",				/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    300,					/* Weight */
+    FW_LIGHT,					/* Weight */
     0,						/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Bookman_Light =
     908,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	908,				/* WinMetrics.sAscender */
-	-251,				/* WinMetrics.sDescender */
+	942,				/* WinMetrics.sAscender */
+	-232,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	717,				/* WinMetrics.sTypoAscender */
-	-227,				/* WinMetrics.sTypoDescender */
-	256,				/* WinMetrics.sTypoLineGap */
-	908,				/* WinMetrics.usWinAscent */
-	251				/* WinMetrics.usWinDescent */
+	492,				/* WinMetrics.sAvgCharWidth */
+	716,				/* WinMetrics.sTypoAscender */
+	-225,				/* WinMetrics.sTypoDescender */
+	128,				/* WinMetrics.sTypoLineGap */
+	894,				/* WinMetrics.usWinAscent */
+	231				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

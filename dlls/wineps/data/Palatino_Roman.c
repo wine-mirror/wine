@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Book Antiqua, which is Copyright 1991-1995
+ *  	The Monotype Corporation.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Palatino_Roman =
     "Palatino Roman",				/* FullName */
     "Palatino",					/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    400,					/* Weight */
+    FW_NORMAL,					/* Weight */
     0,						/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Palatino_Roman =
     927,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	927,				/* WinMetrics.sAscender */
-	-283,				/* WinMetrics.sDescender */
+	923,				/* WinMetrics.sAscender */
+	-282,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	726,				/* WinMetrics.sTypoAscender */
-	-280,				/* WinMetrics.sTypoDescender */
-	194,				/* WinMetrics.sTypoLineGap */
-	927,				/* WinMetrics.usWinAscent */
-	283				/* WinMetrics.usWinDescent */
+	445,				/* WinMetrics.sAvgCharWidth */
+	727,				/* WinMetrics.sTypoAscender */
+	-282,				/* WinMetrics.sTypoDescender */
+	61,				/* WinMetrics.sTypoLineGap */
+	960,				/* WinMetrics.usWinAscent */
+	282				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */

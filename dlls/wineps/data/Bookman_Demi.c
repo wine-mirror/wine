@@ -11,6 +11,9 @@
  *
  *	which are Copyright 1985-1992 Adobe Systems Incorporated.
  *
+ *  	Windows metrics derived from Bookman Old Style Bold, which is
+ *  	Copyright 1991-1995 The Monotype Corporation.
+ *
  */
 
 #include "psdrv.h"
@@ -947,7 +950,7 @@ AFM PSDRV_Bookman_Demi =
     "ITC Bookman Demi",				/* FullName */
     "ITC Bookman",				/* FamilyName */
     "AdobeStandardEncoding",			/* EncodingScheme */
-    600,					/* Weight */
+    FW_DEMIBOLD,				/* Weight */
     0,						/* ItalicAngle */
     FALSE,					/* IsFixedPitch */
     -100,					/* UnderlinePosition */
@@ -960,15 +963,15 @@ AFM PSDRV_Bookman_Demi =
     934,					/* FullAscender */
     {
 	1000,				/* WinMetrics.usUnitsPerEm */
-	934,				/* WinMetrics.sAscender */
-	-250,				/* WinMetrics.sDescender */
+	942,				/* WinMetrics.sAscender */
+	-232,				/* WinMetrics.sDescender */
 	0,				/* WinMetrics.sLineGap */
-	-10172,				/* WinMetrics.sAvgCharWidth */
-	725,				/* WinMetrics.sTypoAscender */
-	-211,				/* WinMetrics.sTypoDescender */
-	264,				/* WinMetrics.sTypoLineGap */
-	934,				/* WinMetrics.usWinAscent */
-	250				/* WinMetrics.usWinDescent */
+	527,				/* WinMetrics.sAvgCharWidth */
+	717,				/* WinMetrics.sTypoAscender */
+	-223,				/* WinMetrics.sTypoDescender */
+	130,				/* WinMetrics.sTypoLineGap */
+	941,				/* WinMetrics.usWinAscent */
+	231				/* WinMetrics.usWinDescent */
     },
     {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* CharWidths[0] - CharWidths[9] */
