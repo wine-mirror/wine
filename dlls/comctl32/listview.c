@@ -270,6 +270,7 @@ static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *);
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *, INT, LPRECT);
 static INT LISTVIEW_GetItemWidth(LISTVIEW_INFO *);
+static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *, INT, LPRECT);
 static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *, INT);
 static LRESULT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *, LPPOINT);
@@ -1455,7 +1456,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
   
     TRACE("hwnd=%x, item=%d, label=%s, fulltext=%s\n",
 	  infoPtr->hwndSelf, nItem, debugrect(&Label), debugrect(lprcText));
-  
+
     /***********************************************************/
     /* compute boundary box for the item (ala LVM_GETITEMRECT) */
     /***********************************************************/
@@ -2693,6 +2694,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
     HDPA hdpaSubItems;
     LISTVIEW_SUBITEM *lpSubItem;
+    BOOL bModified = FALSE;
 
     /* set subitem only if column is present */
     if (Header_GetItemCount(infoPtr->hwndHeader) <= lpLVItem->iSubItem) 
@@ -2700,6 +2702,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
    
     /* First do some sanity checks */
     if (lpLVItem->mask & ~(LVIF_TEXT | LVIF_IMAGE)) return FALSE;
+    if (!(lpLVItem->mask & (LVIF_TEXT | LVIF_IMAGE))) return TRUE;
    
     /* get the subitem structure, and create it if not there */
     hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
@@ -2725,13 +2728,34 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 	    return FALSE;
 	}
         lpSubItem->iSubItem = lpLVItem->iSubItem;
+	bModified = TRUE;
     }
     
     if (lpLVItem->mask & LVIF_IMAGE)
-	lpSubItem->hdr.iImage = lpLVItem->iImage;
+	if (lpSubItem->hdr.iImage != lpLVItem->iImage)
+	{
+	    lpSubItem->hdr.iImage = lpLVItem->iImage;
+	    bModified = TRUE;
+	}
 
     if (lpLVItem->mask & LVIF_TEXT)
-	textsetptrT(&lpSubItem->hdr.pszText, lpLVItem->pszText, isW);
+	if (lpSubItem->hdr.pszText != lpLVItem->pszText)
+	{
+	    textsetptrT(&lpSubItem->hdr.pszText, lpLVItem->pszText, isW);
+	    bModified = TRUE;
+	}
+
+    if (bModified && !infoPtr->bIsDrawing)
+    {
+	RECT rect;
+	
+	rect.top = lpLVItem->iSubItem;
+	rect.left = LVIR_BOUNDS;
+	/* GetSubItemRect will fail in non-report mode, so there's
+	 * gonna be no invalidation then, yay! */
+	if (LISTVIEW_GetSubItemRect(infoPtr, lpLVItem->iItem, &rect))
+	    LISTVIEW_InvalidateRect(infoPtr, &rect);
+    }
 	  
     return TRUE;
 }
@@ -2783,7 +2807,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     }
 
     /* redraw item, if necessary */
-    if (bResult && !infoPtr->bIsDrawing)
+    if (bResult && !infoPtr->bIsDrawing && lpLVItem->iSubItem == 0)
     {
 	if (oldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
 	{
@@ -5202,34 +5226,51 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
     return TRUE;
 }
 
-
-static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, INT nSubItem, INT flags, LPRECT lprc)
+/***
+ * DESCRIPTION:
+ * Retrieves the spacing between listview control items.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [IO] lprc : rectangle to receive the output
+ *             on input, lprc->top = nSubItem
+ *                       lprc->left = LVIR_ICON | LVIR_BOUNDS | LVIR_LABEL
+ *
+ * NOTE: this call is succeeds only for REPORT style listviews.
+ *       Because we can calculate things much faster in report mode,
+ *       we're gonna do the calculations inline here, instead of
+ *       calling functions that do heavy lifting.
+ * 
+ * RETURN:
+ *     TRUE: success
+ *     FALSE: failure
+ */
+static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 {
-    UINT uView = LISTVIEW_GetType(infoPtr);
-    INT  count;
+    POINT ptPosition;
+    
+    if (!lprc || LISTVIEW_GetType(infoPtr) != LVS_REPORT) return FALSE;
+    
+    TRACE("(nItem=%d, nSubItem=%d)\n", nItem, lprc->top);
 
-    TRACE("(nItem=%d, nSubItem=%d lprc=%p)\n", nItem, nSubItem,
-            lprc);
+    if (!Header_GetItemRect(infoPtr->hwndHeader, lprc->top, lprc)) return FALSE;
+    if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &ptPosition)) return FALSE;
+    lprc->top = ptPosition.y;
+    lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
-    if (!(uView & LVS_REPORT))
-        return FALSE;
-
-    if (flags & LVIR_ICON)
+    switch(lprc->left)
     {
+    case LVIR_ICON:
         FIXME("Unimplemented LVIR_ICON\n");
         return FALSE;
-    }
-    else
-    {
-        int top = min(Header_GetItemCount(infoPtr->hwndHeader), nSubItem - 1);
-
-        LISTVIEW_GetItemRect(infoPtr,nItem,lprc);
-        for (count = 0; count < top; count++)
-            lprc->left += LISTVIEW_GetColumnWidth(infoPtr,count);
-
-        lprc->right = LISTVIEW_GetColumnWidth(infoPtr,(nSubItem-1)) +
-                            lprc->left;
-    }
+    case LVIR_LABEL:
+    case LVIR_BOUNDS:
+	/* nothing to do here, we're done */
+        break;
+    default:
+	ERR("Unknown bounds=%d\n", lprc->left);
+	return FALSE;
+    }    
     return TRUE;
 }
 
@@ -8621,8 +8662,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_GetStringWidthT(infoPtr, (LPCWSTR)lParam, TRUE);
 
   case LVM_GETSUBITEMRECT:
-    return LISTVIEW_GetSubItemRect(infoPtr, (UINT)wParam, ((LPRECT)lParam)->top,
-                                   ((LPRECT)lParam)->left, (LPRECT)lParam);
+    return LISTVIEW_GetSubItemRect(infoPtr, (UINT)wParam, (LPRECT)lParam);
 
   case LVM_GETTEXTBKCOLOR:
     return infoPtr->clrTextBk;
