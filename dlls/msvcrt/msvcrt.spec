@@ -639,7 +639,7 @@ init    MSVCRT_Init
 @ cdecl isspace(long) MSVCRT_isspace
 @ cdecl isupper(long) MSVCRT_isupper
 @ cdecl iswalnum(long) MSVCRT_iswalnum
-@ forward -noimport iswalpha ntdll._iswalpha
+@ forward -noimport iswalpha ntdll.iswalpha
 @ cdecl iswascii(long) MSVCRT_iswascii
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
 @ forward -noimport iswctype ntdll.iswctype
