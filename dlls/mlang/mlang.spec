@@ -8,7 +8,7 @@
 @ stdcall DllUnregisterServer() MLANG_DllUnregisterServer
 @ stub GetGlobalFontLinkObject
 @ stdcall IsConvertINetStringAvailable(long long)
-@ stub LcidToRfc1766A
-@ stub LcidToRfc1766W
+@ stdcall LcidToRfc1766A(long ptr long)
+@ stdcall LcidToRfc1766W(long ptr long)
 @ stub Rfc1766ToLcidA
 @ stub Rfc1766ToLcidW

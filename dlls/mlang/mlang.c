@@ -549,6 +549,24 @@ HRESULT WINAPI IsConvertINetStringAvailable(
     return S_FALSE;
 }
 
+HRESULT WINAPI LcidToRfc1766A(
+    LCID Locale,
+    LPSTR pszRfc1766,
+    INT nChar)
+{
+    FIXME("%ld %s %u\n", Locale, pszRfc1766, nChar);
+    return S_FALSE;
+}
+
+HRESULT WINAPI LcidToRfc1766W(
+    LCID Locale,
+    LPWSTR pszRfc1766,
+    INT nChar)
+{
+    FIXME("%ld %p %u\n", Locale, pszRfc1766, nChar);
+    return S_FALSE;
+}
+
 /******************************************************************************
  * MLANG ClassFactory
  */
