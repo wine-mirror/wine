@@ -760,10 +760,7 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
         setup_dsound_options();
 
 	/* Default device? */
-	if ( !lpcGUID ||
-	    IsEqualGUID(lpcGUID, &GUID_NULL) ||
-	    IsEqualGUID(lpcGUID, &IID_IDirectSound) ||
-	    IsEqualGUID(lpcGUID, &IID_IDirectSound8))
+	if (!lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL))
 		lpcGUID = &DSDEVID_DefaultPlayback;
 
 	if (GetDeviceID(lpcGUID, &devGuid) != DS_OK) {
@@ -959,7 +956,7 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	if ( IsEqualGUID( &IID_IDirectSound, riid ) ||
 	     IsEqualGUID( &IID_IDirectSound8, riid ) ) {
 		/* FIXME: reuse already created dsound if present? */
-		return DirectSoundCreate8(riid,(LPDIRECTSOUND8*)ppobj,pOuter);
+		return DirectSoundCreate8(0,(LPDIRECTSOUND8*)ppobj,pOuter);
 	}
 	if ( IsEqualGUID( &IID_IDirectSoundCapture, riid ) ||
 	     IsEqualGUID( &IID_IDirectSoundCapture8, riid ) ) {
