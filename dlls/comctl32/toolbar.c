@@ -2785,7 +2785,8 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
        int	len;
        LPSTR	ptr;
 
-       if(lpTbb->iString) {
+       /* FIXME: iString == -1 is undocumented */
+       if(lpTbb->iString && lpTbb->iString!=-1) {
            len = strlen((char*)lpTbb->iString) + 2;
            ptr = COMCTL32_Alloc(len);
            nIndex = infoPtr->nNumButtons;
