@@ -16,7 +16,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <unistd.h>
 #include "callback.h"
 #include "class.h"
 #include "clipboard.h"
@@ -32,7 +31,8 @@
 #include "queue.h"
 #include "shell.h"
 #include "winpos.h"
-#include "winsock.h"
+#include "services.h"
+#include "file.h"
 #include "windef.h"
 #include "x11drv.h"
 
@@ -66,12 +66,6 @@ extern void X11DRV_KEYBOARD_HandleEvent(WND *pWnd, XKeyEvent *event);
 
 #define DndURL          128   /* KDE drag&drop */
 
-/* EVENT_WaitNetEvent() master fd sets */
-
-static fd_set __event_io_set[3];
-static int    __event_max_fd = 0;
-static int    __event_x_connection = 0;
-static int    __wakeup_pipe[2];
 
 static const char * const event_names[] =
 {
@@ -85,6 +79,7 @@ static const char * const event_names[] =
   "ClientMessage", "MappingNotify"
 };
 
+static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg );
 static void EVENT_ProcessEvent( XEvent *event );
 
   /* Event handlers */
@@ -111,216 +106,40 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
                                unsigned int *pwidth, unsigned int *pheight );
 
 
+static BOOL bUserRepaintDisabled = TRUE;
+
+
 /***********************************************************************
  *           EVENT_Init
- *
- * Initialize network IO.
  */
 BOOL X11DRV_EVENT_Init(void)
 {
-  int  i;
-  for( i = 0; i < 3; i++ )
-    FD_ZERO( __event_io_set + i );
-  
-  __event_max_fd = __event_x_connection = ConnectionNumber(display);
-  FD_SET( __event_x_connection, &__event_io_set[EVENT_IO_READ] );
-
-  /* this pipe is used to be able to wake-up the scheduler(WaitNetEvent) by
-   a 32 bit thread, this will become obsolete when the input thread will be
-   implemented */
-  pipe(__wakeup_pipe);
-
-  /* make the pipe non-blocking */
-  fcntl(__wakeup_pipe[0], F_SETFL, O_NONBLOCK);
-  fcntl(__wakeup_pipe[1], F_SETFL, O_NONBLOCK);
-  
-  FD_SET( __wakeup_pipe[0], &__event_io_set[EVENT_IO_READ] );
-  if (__wakeup_pipe[0] > __event_max_fd)
-      __event_max_fd = __wakeup_pipe[0];
-      
-  __event_max_fd++;
-  return TRUE;
-}
-
-/***********************************************************************
- *		X11DRV_EVENT_AddIO 
- */
-void X11DRV_EVENT_AddIO( int fd, unsigned io_type )
-{
-  FD_SET( fd, &__event_io_set[io_type] );
-  if( __event_max_fd <= fd ) __event_max_fd = fd + 1;
-}
-
-/***********************************************************************
- *		X11DRV_EVENT_DeleteIO 
- */
-void X11DRV_EVENT_DeleteIO( int fd, unsigned io_type )
-{
-  FD_CLR( fd, &__event_io_set[io_type] );
-}
-
-/***********************************************************************
- *		X11DRV_EVENT_IsUserIdle 
- */
-BOOL16 X11DRV_EVENT_IsUserIdle(void)
-{
-  struct timeval timeout = {0, 0};
-  fd_set check_set;
-  
-  FD_ZERO(&check_set);
-  FD_SET(__event_x_connection, &check_set);
-  if( select(__event_x_connection + 1, &check_set, NULL, NULL, &timeout) > 0 )
+    /* Install the X event processing callback */
+    SERVICE_AddObject( FILE_DupUnixHandle( ConnectionNumber(display), 
+                                           GENERIC_READ | SYNCHRONIZE ),
+                       EVENT_ProcessAllEvents, 0 );
     return TRUE;
-  return FALSE;
-}
-
-
-/***********************************************************************
- *           EVENT_ReadWakeUpPipe
- *
- * Empty the wake up pipe
- */
-void EVENT_ReadWakeUpPipe(void)
-{
-    char tmpBuf[10];
-    ssize_t ret;
-          
-    EnterCriticalSection(&X11DRV_CritSection);
-    
-    /* Flush the wake-up pipe, it's just dummy data for waking-up this
-     thread. This will be obsolete when the input thread will be done */
-    while ( (ret = read(__wakeup_pipe[0], &tmpBuf, 10)) == 10 );
-
-    LeaveCriticalSection(&X11DRV_CritSection);
 }
 
 /***********************************************************************
- *           X11DRV_EVENT_WaitNetEvent
- *
- * Wait for a network event, optionally sleeping until one arrives.
- * Returns TRUE if an event is pending that cannot be processed in
- * 'peek' mode, FALSE otherwise.
+ *           EVENT_ProcessAllEvents
  */
-
-BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
+static void CALLBACK EVENT_ProcessAllEvents( ULONG_PTR arg )
 {
-  XEvent event;
-  int pending = TSXPending(display);
+    XEvent event;
   
-  if (!pending && sleep)
+    TRACE_(event)( "called.\n" );
+
+    EnterCriticalSection( &X11DRV_CritSection );
+    while ( XPending( display ) )
     {
-      int num_pending;
-      fd_set io_set[3];
+        XNextEvent( display, &event );
       
-      memcpy( io_set, __event_io_set, sizeof(io_set) );
-      
-#ifdef CONFIG_IPC
-      sigsetjmp(env_wait_x, 1);
-      stop_wait_op= CONT;
-      
-      if (DDE_GetRemoteMessage()) {
-	while(DDE_GetRemoteMessage())
-	  ;
-	return FALSE;
-      }
-      stop_wait_op = STOP_WAIT_X;
-      /* The code up to the next "stop_wait_op = CONT" must be reentrant */
-      num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ], 
-			    &io_set[EVENT_IO_WRITE], 
-			    &io_set[EVENT_IO_EXCEPT], NULL );
-      if ( num_pending == -1 )
-	{
-	  /* Error - signal, invalid arguments, out of memory */
-	  stop_wait_op = CONT;
-	  return FALSE;
-	}
-      stop_wait_op = CONT;
-#else  /* CONFIG_IPC */
-      num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ],
-			    &io_set[EVENT_IO_WRITE],
-			    &io_set[EVENT_IO_EXCEPT], NULL );
-      
-      if ( num_pending == -1 )
-	{
-	  /* Error - signal, invalid arguments, out of memory */
-	  return FALSE;
-	}
-#endif  /* CONFIG_IPC */
-      
-      /* Flush the wake-up pipe, it's just dummy data for waking-up this
-       thread. This will be obsolete when the input thread will be done */
-      if ( FD_ISSET( __wakeup_pipe[0], &io_set[EVENT_IO_READ] ) )
-      {
-          num_pending--;
-          EVENT_ReadWakeUpPipe();
-      }
-       
-      /*  Winsock asynchronous services */
-      
-      if( FD_ISSET( __event_x_connection, &io_set[EVENT_IO_READ]) ) 
-	{
-	  num_pending--;
-	  if( num_pending )
-	    WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
-	}
-      else /* no X events */
-      {
-	WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
-	return FALSE;
-      }
+        LeaveCriticalSection( &X11DRV_CritSection );
+        EVENT_ProcessEvent( &event );
+        EnterCriticalSection( &X11DRV_CritSection );
     }
-  
-  /* Process current X event (and possibly others that occurred in the meantime) */
-  
-  EnterCriticalSection(&X11DRV_CritSection);
-  while (XPending( display ))
-    {
-      
-#ifdef CONFIG_IPC
-      if (DDE_GetRemoteMessage())
-        {
-	  LeaveCriticalSection(&X11DRV_CritSection);
-	  while(DDE_GetRemoteMessage()) ;
-	  return FALSE;
-        }
-#endif  /* CONFIG_IPC */
-      
-      XNextEvent( display, &event );
-      
-      if( peek )
-      {
-	  /* Check only for those events which can be processed
-	   * internally. */
-
-	  if( event.type == MotionNotify ||
-	      event.type == ButtonPress || event.type == ButtonRelease ||
-	      event.type == KeyPress || event.type == KeyRelease ||
-	      event.type == SelectionRequest || event.type == SelectionClear ||
-	      event.type == ClientMessage )
-	  {
-	      LeaveCriticalSection(&X11DRV_CritSection);
-	      EVENT_ProcessEvent( &event );
-	      EnterCriticalSection(&X11DRV_CritSection);
-	      continue;
-	  }
-
-	  if ( event.type == NoExpose )
-	    continue;
-	  
-	  XPutBackEvent(display, &event);
-	  LeaveCriticalSection(&X11DRV_CritSection);
-	  return TRUE;
-      }
-      else
-      {
-          LeaveCriticalSection(&X11DRV_CritSection);
-          EVENT_ProcessEvent( &event );
-          EnterCriticalSection(&X11DRV_CritSection);
-      }
-    }
-  LeaveCriticalSection(&X11DRV_CritSection);
-
-  return FALSE;
+    LeaveCriticalSection( &X11DRV_CritSection );
 }
 
 /***********************************************************************
@@ -328,24 +147,20 @@ BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
  *
  * Synchronize with the X server. Should not be used too often.
  */
-void X11DRV_EVENT_Synchronize()
+void X11DRV_EVENT_Synchronize( BOOL bProcessEvents )
 {
-  XEvent event;
-  
-  /* Use of the X critical section is needed or we have a small
-   * race between XPending() and XNextEvent().
-   */
-  EnterCriticalSection( &X11DRV_CritSection );
-  XSync( display, False );
-  while (XPending( display ))
-    {
-      XNextEvent( display, &event );
-      /* unlock X critsection for EVENT_ProcessEvent() might switch tasks */
-      LeaveCriticalSection( &X11DRV_CritSection );
-      EVENT_ProcessEvent( &event );
-      EnterCriticalSection( &X11DRV_CritSection );
-    }    
-  LeaveCriticalSection( &X11DRV_CritSection );
+    TSXSync( display, False );
+
+    if ( bProcessEvents )
+        EVENT_ProcessAllEvents( 0 );
+}
+
+/***********************************************************************
+ *           EVENT_UserRepaintDisable
+ */
+void X11DRV_EVENT_UserRepaintDisable( BOOL bDisabled )
+{
+    bUserRepaintDisabled = bDisabled;
 }
 
 /***********************************************************************
@@ -355,8 +170,9 @@ void X11DRV_EVENT_Synchronize()
  */
 static void EVENT_ProcessEvent( XEvent *event )
 {
-  WND *pWnd;
   HWND hWnd;
+
+  TRACE_(event)( "called.\n" );
 
   switch (event->type)
   {
@@ -377,7 +193,7 @@ static void EVENT_ProcessEvent( XEvent *event )
   }
       
   if ( TSXFindContext( display, event->xany.window, winContext,
-		       (char **)&pWnd ) != 0) {
+		       (char **)&hWnd ) != 0) {
     if ( event->type == ClientMessage) {
       /* query window (drag&drop event contains only drag window) */
       Window   	root, child;
@@ -385,29 +201,19 @@ static void EVENT_ProcessEvent( XEvent *event )
       unsigned	u;
       TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
 		       &root_x, &root_y, &child_x, &child_y, &u);
-      if (TSXFindContext( display, child, winContext, (char **)&pWnd ) != 0)
+      if (TSXFindContext( display, child, winContext, (char **)&hWnd ) != 0)
 	return;
     } else {
-      pWnd = NULL;  /* Not for a registered window */
+      hWnd = 0;  /* Not for a registered window */
     }
   }
 
-  WIN_LockWndPtr(pWnd);
-  
-  if(!pWnd)
-      hWnd = 0;
-  else
-      hWnd = pWnd->hwndSelf;
-  
-      
-  if ( !pWnd && event->xany.window != X11DRV_GetXRootWindow() )
+  if ( !hWnd && event->xany.window != X11DRV_GetXRootWindow() )
       ERR_(event)("Got event %s for unknown Window %08lx\n",
            event_names[event->type], event->xany.window );
   else
       TRACE_(event)("Got event %s for hwnd %04x\n",
 	     event_names[event->type], hWnd );
-
-  WIN_ReleaseWndPtr(pWnd);
 
   
   switch(event->type)
@@ -440,40 +246,42 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
       
     case FocusIn:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_FocusIn( hWnd, (XFocusChangeEvent*)event );
       break;
       
     case FocusOut:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_FocusOut( hWnd, (XFocusChangeEvent*)event );
       break;
       
     case Expose:
+      if (bUserRepaintDisabled) return;
       EVENT_Expose( hWnd, (XExposeEvent *)event );
       break;
       
     case GraphicsExpose:
+      if (bUserRepaintDisabled) return;
       EVENT_GraphicsExpose( hWnd, (XGraphicsExposeEvent *)event );
       break;
       
     case ConfigureNotify:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_ConfigureNotify( hWnd, (XConfigureEvent*)event );
       break;
 
     case SelectionRequest:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_SelectionRequest( hWnd, (XSelectionRequestEvent *)event );
       break;
 
     case SelectionClear:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_SelectionClear( hWnd, (XSelectionClearEvent*) event );
       break;
       
     case ClientMessage:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_ClientMessage( hWnd, (XClientMessageEvent *) event );
       break;
 
@@ -487,12 +295,12 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
       
     case MapNotify:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_MapNotify( hWnd, (XMapEvent *)event );
       break;
 
     case UnmapNotify:
-      if (!hWnd) return;
+      if (!hWnd || bUserRepaintDisabled) return;
       EVENT_UnmapNotify( hWnd, (XUnmapEvent *)event );
       break;
 
@@ -1522,26 +1330,6 @@ void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
 	  pWnd->dwStyle |= WS_MINIMIZE;
   }
   WIN_ReleaseWndPtr(pWnd);
-}
-
-
-/**********************************************************************
- *		X11DRV_EVENT_Pending
- */
-BOOL X11DRV_EVENT_Pending()
-{
-  return TSXPending(display);
-}
-
-/**********************************************************************
- *		X11DRV_EVENT_WakeUp
- */
-void X11DRV_EVENT_WakeUp(void)
-{
-    /* wake-up EVENT_WaitNetEvent function, a 32 bit thread post an event
-     for a 16 bit task */
-    if (write (__wakeup_pipe[1], "A", 1) != 1)
-        ERR_(event)("unable to write in wakeup_pipe\n");
 }
 
 

@@ -106,7 +106,8 @@ static void X11DRV_WND_RegisterWindow(WND *wndPtr)
   TSXSetWMProtocols( display, X11DRV_WND_GetXWindow(wndPtr), &wmDeleteWindow, 1 );
   
   if (!winContext) winContext = TSXUniqueContext();
-  TSXSaveContext( display, X11DRV_WND_GetXWindow(wndPtr), winContext, (char *) wndPtr );
+  TSXSaveContext( display, X11DRV_WND_GetXWindow(wndPtr), 
+                  winContext, (char *) wndPtr->hwndSelf );
 }
 
 /**********************************************************************
@@ -616,7 +617,7 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
     TSXInstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
   
-  EVENT_Synchronize();
+  EVENT_Synchronize( TRUE );
 }
 
 /*****************************************************************
@@ -665,7 +666,7 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy,
 	TSXSetGraphicsExposures( display, physDev->gc, False );
 
     if (bUpdate) /* Make sure exposure events have been processed */
-	EVENT_Synchronize();
+	EVENT_Synchronize( TRUE );
 }
 
 /***********************************************************************

@@ -342,16 +342,11 @@ extern int X11DRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 extern struct tagEVENT_DRIVER X11DRV_EVENT_Driver;
 
 extern BOOL X11DRV_EVENT_Init(void);
-extern void X11DRV_EVENT_AddIO(int fd, unsigned flag);
-extern void X11DRV_EVENT_DeleteIO(int fd, unsigned flag);
-extern BOOL X11DRV_EVENT_WaitNetEvent(BOOL sleep, BOOL peek);
-extern void X11DRV_EVENT_Synchronize(void);
+extern void X11DRV_EVENT_Synchronize( BOOL bProcessEvents );
 extern BOOL X11DRV_EVENT_CheckFocus( void );
 extern BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void X11DRV_EVENT_DummyMotionNotify(void);
-extern BOOL X11DRV_EVENT_Pending(void);
-extern BOOL16 X11DRV_EVENT_IsUserIdle(void);
-extern void X11DRV_EVENT_WakeUp(void);
+extern void X11DRV_EVENT_UserRepaintDisable( BOOL bDisable );
 
 /* X11 keyboard driver */
 
