@@ -498,10 +498,10 @@ file	user.exe
 654 stub UnloadKeyboardLayout
 655 stub PostPostedMessages
 656 pascal16 DrawFrameControl(word ptr word word) DrawFrameControl16
-657 stub DrawCaptionTemp
+657 pascal16 DrawCaptionTemp(word word ptr word word ptr word) DrawCaptionTemp16
 658 stub DispatchInput
 659 pascal16 DrawEdge(word ptr word word) DrawEdge16
-660 stub DrawCaption
+660 pascal16 DrawCaption(word word ptr word) DrawCaption16
 661 stub SetSysColorsTemp
 662 stub DrawMenubarTemp
 663 stub GetMenuDefaultItem

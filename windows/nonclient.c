@@ -24,7 +24,7 @@
 #include "tweak.h"
 #include "debug.h"
 #include "options.h"
-
+#include "cache.h"
 
 static HBITMAP16 hbitmapClose = 0;
 static HBITMAP16 hbitmapCloseD = 0;
@@ -217,17 +217,183 @@ NC_AdjustRectInner95 (LPRECT16 rect, DWORD style, DWORD exStyle)
 
 
 /***********************************************************************
- * DrawCaptionTempA [USER32.599]
+ * DrawCaption16 [USER.660] Draws a caption bar
+ *
+ * PARAMS
+ *     hwnd   [I]
+ *     hdc    [I]
+ *     lpRect [I]
+ *     uFlags [I]
  *
  */
-DWORD WINAPI
-DrawCaptionTemp32A (HWND32 hwnd, HDC32 hdc, LPRECT32 rect,
-		    HFONT32 hfont,DWORD x1,LPCSTR str,DWORD x2)
+
+BOOL16 WINAPI
+DrawCaption16 (HWND16 hwnd, HDC16 hdc, const RECT16 *lpRect, UINT16 uFlags)
 {
-    FIXME (nonclient, "(%08x,%08x,%p,%08x,%08x,\"%s\",%08x): stub\n",
-	   hwnd, hdc, rect, hfont, x1, str, x2);
+    FIXME (nonclient, " stub!\n");
+
+//    return DrawCaptionTemp32A (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
 
     return 0;
+}
+
+
+/***********************************************************************
+ * DrawCaption32 [USER32.154] Draws a caption bar
+ *
+ * PARAMS
+ *     hwnd   [I]
+ *     hdc    [I]
+ *     lpRect [I]
+ *     uFlags [I]
+ *
+ */
+
+BOOL32 WINAPI
+DrawCaption32 (HWND32 hwnd, HDC32 hdc, const RECT32 *lpRect, UINT32 uFlags)
+{
+    return DrawCaptionTemp32A (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
+}
+
+
+/***********************************************************************
+ * DrawCaptionTemp16 [USER.657]
+ *
+ */
+
+BOOL16 WINAPI
+DrawCaptionTemp16 (HWND16 hwnd, HDC16 hdc, const RECT16 *rect, HFONT16 hFont,
+		   HICON16 hIcon, LPCSTR str, UINT16 uFlags)
+{
+    FIXME (nonclient, " stub!\n");
+
+//    return DrawCaptionTemp32A (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
+
+    return 0;
+}
+
+
+/***********************************************************************
+ * DrawCaptionTemp32A [USER32.599]
+ *
+ */
+
+BOOL32 WINAPI
+DrawCaptionTemp32A (HWND32 hwnd, HDC32 hdc, const RECT32 *rect, HFONT32 hFont,
+		    HICON32 hIcon, LPCSTR str, UINT32 uFlags)
+{
+    RECT32   rc = *rect;
+
+    TRACE (nonclient, "(%08x,%08x,%p,%08x,%08x,\"%s\",%08x)\n",
+	   hwnd, hdc, rect, hFont, hIcon, str, uFlags);
+
+    /* drawing background */
+    if (uFlags & DC_INBUTTON) {
+	FillRect32 (hdc, &rc, GetSysColorBrush32 (COLOR_3DFACE));
+
+	if (uFlags & DC_ACTIVE) {
+	    HBRUSH32 hbr = SelectObject32 (hdc, CACHE_GetPattern55AABrush ());
+	    PatBlt32 (hdc, rc.left, rc.top,
+		      rc.right-rc.left, rc.bottom-rc.top, 0xFA0089);
+	    SelectObject32 (hdc, hbr);
+	}
+    }
+    else {
+	FillRect32 (hdc, &rc, GetSysColorBrush32 ((uFlags & DC_ACTIVE) ?
+		    COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION));
+    }
+
+
+    /* drawing icon */
+    if ((uFlags & DC_ICON) && !(uFlags & DC_SMALLCAP)) {
+	POINT32 pt;
+
+	pt.x = rc.left + 2;
+	pt.y = (rc.bottom + rc.top - sysMetrics[SM_CYSMICON]) / 2;
+
+	if (hIcon) {
+	    DrawIconEx32 (hdc, pt.x, pt.y, hIcon, sysMetrics[SM_CXSMICON],
+			  sysMetrics[SM_CYSMICON], 0, 0, DI_NORMAL);
+	}
+	else {
+	    WND *wndPtr = WIN_FindWndPtr(hwnd);
+	    HICON32 hAppIcon = 0;
+
+	    if (wndPtr->class->hIconSm)
+		hAppIcon = wndPtr->class->hIconSm;
+	    else if (wndPtr->class->hIcon)
+		hAppIcon = wndPtr->class->hIcon;
+
+	    DrawIconEx32 (hdc, pt.x, pt.y, hAppIcon, sysMetrics[SM_CXSMICON],
+			  sysMetrics[SM_CYSMICON], 0, 0, DI_NORMAL);
+	}
+
+	rc.left += (rc.bottom - rc.top);
+    }
+
+    /* drawing text */
+    if (uFlags & DC_TEXT) {
+	HFONT32 hOldFont;
+
+	if (uFlags & DC_INBUTTON)
+	    SetTextColor32 (hdc, GetSysColor32 (COLOR_BTNTEXT));
+	else if (uFlags & DC_ACTIVE)
+	    SetTextColor32 (hdc, GetSysColor32 (COLOR_CAPTIONTEXT));
+	else
+	    SetTextColor32 (hdc, GetSysColor32 (COLOR_INACTIVECAPTIONTEXT));
+
+	SetBkMode32 (hdc, TRANSPARENT);
+
+	if (hFont)
+	    hOldFont = SelectObject32 (hdc, hFont);
+	else {
+	    NONCLIENTMETRICS32A nclm;
+	    HFONT32 hNewFont;
+	    nclm.cbSize = sizeof(NONCLIENTMETRICS32A);
+	    SystemParametersInfo32A (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+	    hNewFont = CreateFontIndirect32A ((uFlags & DC_SMALLCAP) ?
+		&nclm.lfSmCaptionFont : &nclm.lfCaptionFont);
+	    hOldFont = SelectObject32 (hdc, hNewFont);
+	}
+
+	if (str)
+	    DrawText32A (hdc, str, -1, &rc,
+			 DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
+	else {
+	    CHAR szText[128];
+	    INT32 nLen;
+	    nLen = GetWindowText32A (hwnd, szText, 128);
+	    DrawText32A (hdc, szText, nLen, &rc,
+			 DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
+	}
+
+	if (hFont)
+	    SelectObject32 (hdc, hOldFont);
+	else
+	    DeleteObject32 (SelectObject32 (hdc, hOldFont));
+    }
+
+    /* drawing focus ??? */
+    if (uFlags & 0x2000)
+	FIXME (nonclient, "undocumented flag (0x2000)!\n");
+
+    return 0;
+}
+
+
+/***********************************************************************
+ * DrawCaptionTemp32W [USER32.602]
+ *
+ */
+
+BOOL32 WINAPI
+DrawCaptionTemp32W (HWND32 hwnd, HDC32 hdc, const RECT32 *rect, HFONT32 hFont,
+		    HICON32 hIcon, LPCWSTR str, UINT32 uFlags)
+{
+    LPSTR p = HEAP_strdupWtoA (GetProcessHeap (), 0, str);
+    BOOL32 res = DrawCaptionTemp32A (hwnd, hdc, rect, hFont, hIcon, p, uFlags);
+    HeapFree (GetProcessHeap (), 0, p);
+    return res;
 }
 
 
@@ -1252,10 +1418,11 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
 
 static void  NC_DrawCaption95(
     HDC32  hdc,
-    RECT32  *rect,
+    RECT32 *rect,
     HWND32 hwnd,
     DWORD  style,
-    BOOL32  active )
+    DWORD  exStyle,
+    BOOL32 active )
 {
     RECT32  r = *rect;
     WND     *wndPtr = WIN_FindWndPtr( hwnd );
@@ -1282,9 +1449,11 @@ static void  NC_DrawCaption95(
 	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE16(OBM_RESTORED) );
     }
 
-    if (style & WS_SYSMENU) {
+    if ((style & WS_SYSMENU) && !(exStyle & WS_EX_TOOLWINDOW)) {
 	if (NC_DrawSysButton95 (hwnd, hdc, FALSE))
 	    r.left += sysMetrics[SM_CYCAPTION] - 1;
+    }
+    if (style & WS_SYSMENU) {
 	NC_DrawCloseButton95 (hwnd, hdc, FALSE);
 	r.right -= sysMetrics[SM_CYCAPTION] - 1;
     }
@@ -1302,7 +1471,10 @@ static void  NC_DrawCaption95(
 	HFONT32 hFont, hOldFont;
 	nclm.cbSize = sizeof(NONCLIENTMETRICS32A);
 	SystemParametersInfo32A (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-	hFont = CreateFontIndirect32A (&nclm.lfCaptionFont);
+	if (exStyle & WS_EX_TOOLWINDOW)
+	    hFont = CreateFontIndirect32A (&nclm.lfSmCaptionFont);
+	else
+	    hFont = CreateFontIndirect32A (&nclm.lfCaptionFont);
 	hOldFont = SelectObject32 (hdc, hFont);
 	if (active) SetTextColor32( hdc, GetSysColor32( COLOR_CAPTIONTEXT ) );
 	else SetTextColor32( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
@@ -1488,7 +1660,8 @@ void  NC_DoNCPaint95(
 		r.bottom = rect.top + sysMetrics[SM_CYCAPTION];
 		rect.top += sysMetrics[SM_CYCAPTION];
 	    }
-            NC_DrawCaption95( hdc, &r, hwnd, wndPtr->dwStyle, active );
+            NC_DrawCaption95( hdc, &r, hwnd, wndPtr->dwStyle,
+                              wndPtr->dwExStyle,active );
         }
     }
 

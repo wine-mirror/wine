@@ -154,7 +154,7 @@ type	win32
 151 stdcall DragDetect(long long long) DragDetect32
 152 stub DragObject
 153 stdcall DrawAnimatedRects(long long ptr ptr) DrawAnimatedRects32
-154 stub DrawCaption
+154 stdcall DrawCaption(long long ptr long) DrawCaption32
 155 stdcall DrawEdge(long ptr long long) DrawEdge32
 156 stdcall DrawFocusRect(long ptr) DrawFocusRect32
 157 stub DrawFrame
@@ -603,7 +603,7 @@ type	win32
 599 stdcall DrawCaptionTempA(long long ptr long long str long) DrawCaptionTemp32A
 600 stub RegisterNetworkCapabilities
 601 stub WNDPROC_CALLBACK
-602 stub DrawCaptionTempW
+602 stdcall DrawCaptionTempW(long long ptr long long wstr long) DrawCaptionTemp32W
 603 stub IsHungAppWindow
 604 stub ChangeDisplaySettingsA
 605 stub ChangeDisplaySettingsW
