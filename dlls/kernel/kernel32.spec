@@ -777,7 +777,7 @@
 @ stdcall SetFileAttributesA(str long)
 @ stdcall SetFileAttributesW(wstr long)
 @ stdcall SetFilePointer(long long ptr long)
-@ stub SetFilePointerEx
+@ stdcall SetFilePointerEx(long long long ptr long)
 @ stdcall SetFileTime(long ptr ptr ptr)
 @ stdcall SetHandleContext(long long)
 @ stdcall SetHandleCount(long)

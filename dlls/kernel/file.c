@@ -861,6 +861,52 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
 
 
 /***********************************************************************
+ *           SetFilePointerEx   (KERNEL32.@)
+ */
+BOOL WINAPI SetFilePointerEx( HANDLE hFile, LARGE_INTEGER distance,
+                              LARGE_INTEGER *newpos, DWORD method )
+{
+    static const int whence[3] = { SEEK_SET, SEEK_CUR, SEEK_END };
+    BOOL ret = FALSE;
+    NTSTATUS status;
+    int fd;
+
+    TRACE("handle %p offset %s newpos %p origin %ld\n",
+          hFile, wine_dbgstr_longlong(distance.QuadPart), newpos, method );
+
+    if (method > FILE_END)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ret;
+    }
+
+    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
+    {
+        off_t pos, res;
+
+        pos = distance.QuadPart;
+        if ((res = lseek( fd, pos, whence[method] )) == (off_t)-1)
+        {
+            /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
+            if (((errno == EINVAL) || (errno == EPERM)) && (method != FILE_BEGIN) && (pos < 0))
+                SetLastError( ERROR_NEGATIVE_SEEK );
+            else
+                FILE_SetDosError();
+        }
+        else
+        {
+            ret = TRUE;
+            if( newpos )
+                newpos->QuadPart = res;
+        }
+        wine_server_release_fd( hFile, fd );
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
+    return ret;
+}
+
+/***********************************************************************
  *           GetFileTime   (KERNEL32.@)
  */
 BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
