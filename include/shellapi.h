@@ -245,6 +245,7 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW lpData);
  * Misc
  */
 
+LPWSTR*     WINAPI CommandLineToArgvW(LPCWSTR,int*);
 HICON       WINAPI ExtractIconA(HINSTANCE,LPCSTR,UINT);
 HICON       WINAPI ExtractIconW(HINSTANCE,LPCWSTR,UINT);
 #define     ExtractIcon WINELIB_NAME_AW(ExtractIcon)

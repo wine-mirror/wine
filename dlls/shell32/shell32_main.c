@@ -33,13 +33,14 @@ DEFAULT_DEBUG_CHANNEL(shell);
 /*************************************************************************
  * CommandLineToArgvW			[SHELL32.@]
  */
-LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
+LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
 {	LPWSTR  *argv,s,t;
+	LPWSTR  cmdline;
 	int	i;
 	TRACE("\n");
 
 	/* to get writeable copy */
-	cmdline = HEAP_strdupW( GetProcessHeap(), 0, cmdline);
+	cmdline = HEAP_strdupW( GetProcessHeap(), 0, lpCmdline);
 	s=cmdline;i=0;
 	while (*s)
 	{ /* space */
