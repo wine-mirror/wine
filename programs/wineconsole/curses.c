@@ -858,7 +858,7 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
 
     HeapFree(GetProcessHeap(), 0, PRIVATE(data)->line);
     HeapFree(GetProcessHeap(), 0, PRIVATE(data));
-    PRIVATE(data) = NULL;
+    data->private = NULL;
 }
 
 /******************************************************************
