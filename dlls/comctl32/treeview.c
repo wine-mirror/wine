@@ -1075,8 +1075,6 @@ TREEVIEW_Refresh (HWND hwnd, HDC hdc)
     
     GetClientRect (hwnd, &rect);
     if ((rect.left-rect.right ==0) || (rect.top-rect.bottom==0)) return;
-    
-    hdc=GetDC (hwnd);
 
     infoPtr->cdmode=TREEVIEW_SendCustomDrawNotify(hwnd,CDDS_PREPAINT,hdc,rect);
 
@@ -2405,7 +2403,6 @@ TREEVIEW_Paint (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TRACE("\n");
   hdc = wParam==0 ? BeginPaint (hwnd, &ps) : (HDC)wParam;
   TREEVIEW_Refresh (hwnd, hdc);
-  ReleaseDC(hwnd,hdc);
   if(!wParam) EndPaint (hwnd, &ps);
   TRACE("done\n");
       
