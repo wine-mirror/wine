@@ -576,12 +576,35 @@ LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT size, UINT16* pseg)
 
 		 info_block->free += orgsize - dm->size;
 	     } else {
+		 /* the collapse didn't help, try getting a new block */
 		 block = DOSMEM_GetBlock(hModule, size, pseg);
 		 if (block) {
+		     /* we got one, copy the old data there (we do need to, right?) */
+		     memcpy(block, ((char*)dm) + sizeof(dosmem_entry),
+				   (size<orgsize) ? size : orgsize);
+		     /* free old block */
 		     info_block->blocks--;
 		     info_block->free += dm->size;
 
 		     dm->size |= DM_BLOCK_FREE;
+		 } else {
+		     /* and Bill Gates said 640K should be enough for everyone... */
+
+		     /* need to split original and collapsed blocks apart again,
+		      * and free the collapsed blocks again, before exiting */
+		     if( blocksize - orgsize > 0x20 )
+		     {
+			 /* split dm so that the next one stays
+			  * paragraph-aligned (and next gains free bit) */
+
+			 dm->size = (((orgsize + 0xf + sizeof(dosmem_entry)) & ~0xf) -
+						       sizeof(dosmem_entry));
+			 next = (dosmem_entry*)(((char*)dm) + 
+				 sizeof(dosmem_entry) + dm->size);
+			 next->size = (blocksize - (dm->size + 
+				 sizeof(dosmem_entry))) | DM_BLOCK_FREE 
+							;
+		     } else dm->size &= DM_BLOCK_MASK;
 		 }
 	     }
        }
