@@ -1,127 +1,117 @@
 name	tapi32
 type	win32
 
-  1 stdcall lineAccept(long str long) lineAccept
-  2 stdcall lineAddProvider(str long ptr) lineAddProvider
-  3 stdcall lineAddToConference(long long) lineAddToConference
-  4 stdcall lineAnswer(long str long) lineAnswer
-  5 stdcall lineBlindTransfer(long str long) lineBlindTransfer
-  6 stdcall lineClose(long) lineClose
-  7 stdcall lineCompleteCall(long ptr long long) lineCompleteCall
-  8 stdcall lineCompleteTransfer(long long ptr long) lineCompleteTransfer
-  9 stdcall lineConfigDialog(long long str) lineConfigDialog
- 10 stdcall lineConfigDialogEdit(long long str ptr long ptr)
- lineConfigDialogEdit
- 11 stdcall lineConfigProvider(long long) lineConfigProvider
- 12 stdcall lineDeallocateCall(long) lineDeallocateCall
- 13 stdcall lineDevSpecific(long long long ptr long) lineDevSpecific
- 14 stdcall lineDevSpecificFeature(long long ptr long) lineDevSpecificFeature
- 15 stdcall lineDial(long str long) lineDial
- 16 stdcall lineDrop(long str long) lineDrop
- 17 stdcall lineForward(long long long ptr long ptr ptr) lineForward
- 18 stdcall lineGatherDigits(long long str long str long long)
- lineGatherDigits
- 19 stdcall lineGenerateDigits(long long str long) lineGenerateDigits
- 20 stdcall lineGenerateTone(long long long long ptr) lineGenerateTone
- 21 stdcall lineGetAddressCaps(long long long long long ptr)
- lineGetAddressCaps
- 22 stdcall lineGetAddressID(long ptr long str long) lineGetAddressID
- 23 stdcall lineGetAddressStatus(long long ptr) lineGetAddressStatus
- 24 stdcall lineGetAppPriority(str long ptr long ptr ptr) lineGetAppPriority
- 25 stdcall lineGetCallInfo(long ptr) lineGetCallInfo
- 26 stdcall lineGetCallStatus(long ptr) lineGetCallStatus
- 27 stdcall lineGetConfRelatedCalls(long ptr) lineGetConfRelatedCalls
- 28 stdcall lineGetCountry(long long ptr) lineGetCountry
- 29 stdcall lineGetDevCaps(long long long long ptr) lineGetDevCaps
- 30 stdcall lineGetDevConfig(long ptr str) lineGetDevConfig
- 31 stdcall lineGetID(long long long long ptr str) lineGetID
- 32 stdcall lineGetIcon(long str ptr) lineGetIcon
- 33 stdcall lineGetLineDevStatus(long ptr) lineGetLineDevStatus
- 34 stdcall lineGetNewCalls(long long long ptr) lineGetNewCalls
- 35 stdcall lineGetNumRings(long long ptr) lineGetNumRings
- 36 stdcall lineGetProviderList(long ptr) lineGetProviderList
- 37 stdcall lineGetRequest(long long ptr) lineGetRequest
- 38 stdcall lineGetStatusMessages(long ptr ptr) lineGetStatusMessages
- 39 stdcall lineGetTranslateCaps(long long ptr) lineGetTranslateCaps
- 40 stdcall lineHandoff(long str long) lineHandoff
- 41 stdcall lineHold(long) lineHold
- 42 stdcall lineInitialize(ptr long ptr str ptr) lineInitialize
- 43 stdcall lineMakeCall(long ptr str long ptr) lineMakeCall
- 44 stdcall lineMonitorDigits(long long) lineMonitorDigits
- 45 stdcall lineMonitorMedia(long long) lineMonitorMedia
- 46 stdcall lineMonitorTones(long ptr long) lineMonitorTones
- 47 stdcall lineNegotiateAPIVersion(long long long long ptr ptr) lineNegotiateAPIVersion
- 48 stdcall lineNegotiateExtVersion(long long long long long ptr)
- lineNegotiateExtVersion
- 49 stdcall lineOpen(long long ptr long long long long long ptr) lineOpen
- 50 stdcall linePark(long long str ptr) linePark
- 51 stdcall linePickup(long long ptr str str) linePickup
- 52 stdcall linePrepareAddToConference(long ptr ptr) linePrepareAddToConference
- 53 stdcall lineRedirect(long str long) lineRedirect
- 54 stdcall lineRegisterRequestRecipient(long long long long)
- lineRegisterRequestRecipient
- 55 stdcall lineReleaseUserUserInfo(long) lineReleaseUserUserInfo
- 56 stdcall lineRemoveFromConference(long) lineRemoveFromConference
- 57 stdcall lineRemoveProvider(long long) lineRemoveProvider
- 58 stdcall lineSecureCall(long) lineSecureCall
- 59 stdcall lineSendUserUserInfo(long str long) lineSendUserUserInfo
- 60 stdcall lineSetAppPriority(str long ptr long str long) lineSetAppPriority
- 61 stdcall lineSetAppSpecific(long long) lineSetAppSpecific
- 62 stdcall lineSetCallParams(long long long long ptr) lineSetCallParams
- 63 stdcall lineSetCallPrivilege(long long) lineSetCallPrivilege
- 64 stdcall lineSetCurrentLocation(long long) lineSetCurrentLocation
- 65 stdcall lineSetDevConfig(long ptr long str) lineSetDevConfig
- 66 stdcall lineSetMediaControl(long long long long ptr long ptr long ptr long ptr long) lineSetMediaControl
- 67 stdcall lineSetMediaMode(long long) lineSetMediaMode
- 68 stdcall lineSetNumRings(long long long) lineSetNumRings
- 69 stdcall lineSetStatusMessages(long long long) lineSetStatusMessages
- 70 stdcall lineSetTerminal(long long long long long long long)
- lineSetTerminal
- 71 stdcall lineSetTollList(long long str long) lineSetTollList
- 72 stdcall lineSetupConference(long long ptr ptr long ptr)
- lineSetupConference
- 73 stdcall lineSetupTransfer(long ptr ptr) lineSetupTransfer
- 74 stdcall lineShutdown(long) lineShutdown
- 75 stdcall lineSwapHold(long long) lineSwapHold
- 76 stdcall lineTranslateAddress(long long long str long long ptr)
- lineTranslateAddress
- 77 stdcall lineTranslateDialog(long long long long str) lineTranslateDialog
- 78 stdcall lineUncompleteCall(long long) lineUncompleteCall
- 79 stdcall lineUnHold(long) lineUnHold
- 80 stdcall lineUnpark(long long ptr str) lineUnpark
- 81 stdcall phoneClose(long) phoneClose
- 82 stdcall phoneConfigDialog(long long str) phoneConfigDialog
- 83 stdcall phoneDevSpecific(long ptr long) phoneDevSpecific
- 84 stdcall phoneGetButtonInfo(long long ptr) phoneGetButtonInfo
- 85 stdcall phoneGetData(long long ptr long) phoneGetData
- 86 stdcall phoneGetDevCaps(long long long long ptr) phoneGetDevCaps
- 87 stdcall phoneGetDisplay(long ptr) phoneGetDisplay
- 88 stdcall phoneGetGain(long long ptr) phoneGetGain
- 89 stdcall phoneGetHookSwitch(long ptr) phoneGetHookSwitch
- 90 stdcall phoneGetID(long ptr str) phoneGetID
- 91 stdcall phoneGetIcon(long str ptr) phoneGetIcon
- 92 stdcall phoneGetLamp(long long ptr) phoneGetLamp
- 93 stdcall phoneGetRing(long ptr ptr) phoneGetRing
- 94 stdcall phoneGetStatus(long ptr) phoneGetStatus
- 95 stdcall phoneGetStatusMessages(long ptr ptr ptr) phoneGetStatusMessages
- 96 stdcall phoneGetVolume(long long ptr) phoneGetVolume
- 97 stdcall phoneInitialize(ptr long ptr str ptr) phoneInitialize
- 98 stdcall phoneNegotiateAPIVersion(long long long long ptr ptr)
- phoneNegotiateAPIVersion
- 99 stdcall phoneNegotiateExtVersion(long long long long long ptr)
- phoneNegotiateExtVersion
-100 stdcall phoneOpen(long long ptr long long long long) phoneOpen
-101 stdcall phoneSetButtonInfo(long long ptr) phoneSetButtonInfo
-102 stdcall phoneSetData(long long ptr long) phoneSetData
-103 stdcall phoneSetDisplay(long long long str long) phoneSetDisplay
-104 stdcall phoneSetGain(long long long) phoneSetGain
-105 stdcall phoneSetHookSwitch(long long long) phoneSetHookSwitch
-106 stdcall phoneSetLamp(long long long) phoneSetLamp
-107 stdcall phoneSetRing(long long long) phoneSetRing
-108 stdcall phoneSetStatusMessages(long long long long) phoneSetStatusMessages
-109 stdcall phoneSetVolume(long long long) phoneSetVolume
-110 stdcall phoneShutdown(long) phoneShutdown
-111 stdcall tapiGetLocationInfo(str str) tapiGetLocationInfo
-112 stub    tapiRequestDrop
-113 stdcall tapiRequestMakeCall(str str str str) tapiRequestMakeCall
-114 stub    tapiRequestMediaCall
+@ stdcall lineAccept(long str long) lineAccept
+@ stdcall lineAddProvider(str long ptr) lineAddProvider
+@ stdcall lineAddToConference(long long) lineAddToConference
+@ stdcall lineAnswer(long str long) lineAnswer
+@ stdcall lineBlindTransfer(long str long) lineBlindTransfer
+@ stdcall lineClose(long) lineClose
+@ stdcall lineCompleteCall(long ptr long long) lineCompleteCall
+@ stdcall lineCompleteTransfer(long long ptr long) lineCompleteTransfer
+@ stdcall lineConfigDialog(long long str) lineConfigDialog
+@ stdcall lineConfigDialogEdit(long long str ptr long ptr) lineConfigDialogEdit
+@ stdcall lineConfigProvider(long long) lineConfigProvider
+@ stdcall lineDeallocateCall(long) lineDeallocateCall
+@ stdcall lineDevSpecific(long long long ptr long) lineDevSpecific
+@ stdcall lineDevSpecificFeature(long long ptr long) lineDevSpecificFeature
+@ stdcall lineDial(long str long) lineDial
+@ stdcall lineDrop(long str long) lineDrop
+@ stdcall lineForward(long long long ptr long ptr ptr) lineForward
+@ stdcall lineGatherDigits(long long str long str long long) lineGatherDigits
+@ stdcall lineGenerateDigits(long long str long) lineGenerateDigits
+@ stdcall lineGenerateTone(long long long long ptr) lineGenerateTone
+@ stdcall lineGetAddressCaps(long long long long long ptr) lineGetAddressCaps
+@ stdcall lineGetAddressID(long ptr long str long) lineGetAddressID
+@ stdcall lineGetAddressStatus(long long ptr) lineGetAddressStatus
+@ stdcall lineGetAppPriority(str long ptr long ptr ptr) lineGetAppPriority
+@ stdcall lineGetCallInfo(long ptr) lineGetCallInfo
+@ stdcall lineGetCallStatus(long ptr) lineGetCallStatus
+@ stdcall lineGetConfRelatedCalls(long ptr) lineGetConfRelatedCalls
+@ stdcall lineGetCountry(long long ptr) lineGetCountry
+@ stdcall lineGetDevCaps(long long long long ptr) lineGetDevCaps
+@ stdcall lineGetDevConfig(long ptr str) lineGetDevConfig
+@ stdcall lineGetID(long long long long ptr str) lineGetID
+@ stdcall lineGetIcon(long str ptr) lineGetIcon
+@ stdcall lineGetLineDevStatus(long ptr) lineGetLineDevStatus
+@ stdcall lineGetNewCalls(long long long ptr) lineGetNewCalls
+@ stdcall lineGetNumRings(long long ptr) lineGetNumRings
+@ stdcall lineGetProviderList(long ptr) lineGetProviderList
+@ stdcall lineGetRequest(long long ptr) lineGetRequest
+@ stdcall lineGetStatusMessages(long ptr ptr) lineGetStatusMessages
+@ stdcall lineGetTranslateCaps(long long ptr) lineGetTranslateCaps
+@ stdcall lineHandoff(long str long) lineHandoff
+@ stdcall lineHold(long) lineHold
+@ stdcall lineInitialize(ptr long ptr str ptr) lineInitialize
+@ stdcall lineMakeCall(long ptr str long ptr) lineMakeCall
+@ stdcall lineMonitorDigits(long long) lineMonitorDigits
+@ stdcall lineMonitorMedia(long long) lineMonitorMedia
+@ stdcall lineMonitorTones(long ptr long) lineMonitorTones
+@ stdcall lineNegotiateAPIVersion(long long long long ptr ptr) lineNegotiateAPIVersion
+@ stdcall lineNegotiateExtVersion(long long long long long ptr) lineNegotiateExtVersion
+@ stdcall lineOpen(long long ptr long long long long long ptr) lineOpen
+@ stdcall linePark(long long str ptr) linePark
+@ stdcall linePickup(long long ptr str str) linePickup
+@ stdcall linePrepareAddToConference(long ptr ptr) linePrepareAddToConference
+@ stdcall lineRedirect(long str long) lineRedirect
+@ stdcall lineRegisterRequestRecipient(long long long long) lineRegisterRequestRecipient
+@ stdcall lineReleaseUserUserInfo(long) lineReleaseUserUserInfo
+@ stdcall lineRemoveFromConference(long) lineRemoveFromConference
+@ stdcall lineRemoveProvider(long long) lineRemoveProvider
+@ stdcall lineSecureCall(long) lineSecureCall
+@ stdcall lineSendUserUserInfo(long str long) lineSendUserUserInfo
+@ stdcall lineSetAppPriority(str long ptr long str long) lineSetAppPriority
+@ stdcall lineSetAppSpecific(long long) lineSetAppSpecific
+@ stdcall lineSetCallParams(long long long long ptr) lineSetCallParams
+@ stdcall lineSetCallPrivilege(long long) lineSetCallPrivilege
+@ stdcall lineSetCurrentLocation(long long) lineSetCurrentLocation
+@ stdcall lineSetDevConfig(long ptr long str) lineSetDevConfig
+@ stdcall lineSetMediaControl(long long long long ptr long ptr long ptr long ptr long) lineSetMediaControl
+@ stdcall lineSetMediaMode(long long) lineSetMediaMode
+@ stdcall lineSetNumRings(long long long) lineSetNumRings
+@ stdcall lineSetStatusMessages(long long long) lineSetStatusMessages
+@ stdcall lineSetTerminal(long long long long long long long) lineSetTerminal
+@ stdcall lineSetTollList(long long str long) lineSetTollList
+@ stdcall lineSetupConference(long long ptr ptr long ptr) lineSetupConference
+@ stdcall lineSetupTransfer(long ptr ptr) lineSetupTransfer
+@ stdcall lineShutdown(long) lineShutdown
+@ stdcall lineSwapHold(long long) lineSwapHold
+@ stdcall lineTranslateAddress(long long long str long long ptr) lineTranslateAddress
+@ stdcall lineTranslateDialog(long long long long str) lineTranslateDialog
+@ stdcall lineUncompleteCall(long long) lineUncompleteCall
+@ stdcall lineUnhold(long) lineUnhold
+@ stdcall lineUnpark(long long ptr str) lineUnpark
+@ stdcall phoneClose(long) phoneClose
+@ stdcall phoneConfigDialog(long long str) phoneConfigDialog
+@ stdcall phoneDevSpecific(long ptr long) phoneDevSpecific
+@ stdcall phoneGetButtonInfo(long long ptr) phoneGetButtonInfo
+@ stdcall phoneGetData(long long ptr long) phoneGetData
+@ stdcall phoneGetDevCaps(long long long long ptr) phoneGetDevCaps
+@ stdcall phoneGetDisplay(long ptr) phoneGetDisplay
+@ stdcall phoneGetGain(long long ptr) phoneGetGain
+@ stdcall phoneGetHookSwitch(long ptr) phoneGetHookSwitch
+@ stdcall phoneGetID(long ptr str) phoneGetID
+@ stdcall phoneGetIcon(long str ptr) phoneGetIcon
+@ stdcall phoneGetLamp(long long ptr) phoneGetLamp
+@ stdcall phoneGetRing(long ptr ptr) phoneGetRing
+@ stdcall phoneGetStatus(long ptr) phoneGetStatus
+@ stdcall phoneGetStatusMessages(long ptr ptr ptr) phoneGetStatusMessages
+@ stdcall phoneGetVolume(long long ptr) phoneGetVolume
+@ stdcall phoneInitialize(ptr long ptr str ptr) phoneInitialize
+@ stdcall phoneNegotiateAPIVersion(long long long long ptr ptr) phoneNegotiateAPIVersion
+@ stdcall phoneNegotiateExtVersion(long long long long long ptr) phoneNegotiateExtVersion
+@ stdcall phoneOpen(long long ptr long long long long) phoneOpen
+@ stdcall phoneSetButtonInfo(long long ptr) phoneSetButtonInfo
+@ stdcall phoneSetData(long long ptr long) phoneSetData
+@ stdcall phoneSetDisplay(long long long str long) phoneSetDisplay
+@ stdcall phoneSetGain(long long long) phoneSetGain
+@ stdcall phoneSetHookSwitch(long long long) phoneSetHookSwitch
+@ stdcall phoneSetLamp(long long long) phoneSetLamp
+@ stdcall phoneSetRing(long long long) phoneSetRing
+@ stdcall phoneSetStatusMessages(long long long long) phoneSetStatusMessages
+@ stdcall phoneSetVolume(long long long) phoneSetVolume
+@ stdcall phoneShutdown(long) phoneShutdown
+@ stdcall tapiGetLocationInfo(str str) tapiGetLocationInfo
+@ stub    tapiRequestDrop
+@ stdcall tapiRequestMakeCall(str str str str) tapiRequestMakeCall
+@ stub    tapiRequestMediaCall

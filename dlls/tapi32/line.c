@@ -516,7 +516,7 @@ DWORD WINAPI lineUncompleteCall(HLINE hLine, DWORD dwCompletionID)
     return 1;
 }
 
-DWORD WINAPI lineUnHold(HCALL hCall)
+DWORD WINAPI lineUnhold(HCALL hCall)
 {
     FIXME("(%04x): stub.\n", hCall);
     return 1;
