@@ -67,7 +67,7 @@ static void ShowUsage(int ExitCode)
 	ExitProcess(ExitCode);
 }
 
-static BOOL GetProductCode(LPCSTR str, LPCSTR *PackageName, LPGUID *ProductCode)
+static BOOL GetProductCode(LPCSTR str, LPCSTR *PackageName, LPGUID ProductCode)
 {
 	BOOL ret = FALSE;
 	int len = 0;
@@ -77,17 +77,13 @@ static BOOL GetProductCode(LPCSTR str, LPCSTR *PackageName, LPGUID *ProductCode)
 	{
 		len = MultiByteToWideChar(CP_ACP, 0, str, -1, wstr, 0);
 		wstr = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
-		ret = (CLSIDFromString(wstr, *ProductCode) == NOERROR);
+		ret = (CLSIDFromString(wstr, ProductCode) == NOERROR);
 		HeapFree(GetProcessHeap(), 0, wstr);
 		wstr = NULL;
 	}
 
 	if(!ret)
-	{
-		HeapFree(GetProcessHeap(), 0, *ProductCode);
-		*ProductCode = NULL;
 		*PackageName = str;
-	}
 
 	return ret;
 }
@@ -183,7 +179,98 @@ static void DllUnregisterServer(LPCSTR DllName)
 		FreeLibrary(DllHandle);
 }
 
-int main(int argc, char *argv[])
+/*
+ * state machine to break up the command line properly
+ */
+
+enum chomp_state
+{
+	cs_whitespace,
+	cs_token,
+	cs_quote
+};
+
+static int chomp( char *str )
+{
+	enum chomp_state state = cs_whitespace;
+	char *p, *out;
+	int count = 0, ignore;
+
+	for( p = str, out = str; *p; p++ )
+	{
+		ignore = 1;
+		switch( state )
+		{
+		case cs_whitespace:
+			switch( *p )
+			{
+			case ' ':
+				break;
+			case '"':
+				state = cs_quote;
+				count++;
+				break;
+			default:
+				count++;
+				ignore = 0;
+				state = cs_token;
+			}
+			break;
+
+		case cs_token:
+			switch( *p )
+			{
+			case '"':
+				state = cs_quote;
+				break;
+			case ' ':
+				state = cs_whitespace;
+				*out++ = 0;
+				break;
+			default:
+				ignore = 0;
+			}
+			break;
+
+		case cs_quote:
+			switch( *p )
+			{
+			case '"':
+				state = cs_token;
+				break;
+			default:
+				ignore = 0;
+			}
+			break;
+		}
+		if( !ignore )
+			*out++ = *p;
+	}
+
+	*out = 0;
+
+	return count;
+}
+
+void process_args( char *cmdline, int *pargc, char ***pargv )
+{
+	char **argv, *p = strdup(cmdline);
+	int i, n;
+
+	n = chomp( p );
+	argv = HeapAlloc(GetProcessHeap(), 0, sizeof (char*)*(n+1));
+	for( i=0; i<n; i++ )
+	{
+		argv[i] = p;
+		p += strlen(p) + 1;
+	}
+	argv[i] = NULL;
+
+	*pargc = n;
+	*pargv = argv;
+}
+
+int main(int argc, char **argv)
 {
 	int i;
 	BOOL FunctionInstall = FALSE;
@@ -199,7 +286,7 @@ int main(int argc, char *argv[])
 
 	BOOL GotProductCode = FALSE;
 	LPCSTR PackageName = NULL;
-	LPGUID ProductCode = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
+	GUID ProductCode;
 	LPSTR Properties = HeapAlloc(GetProcessHeap(), 0, 1);
 
 	DWORD RepairMode = 0;
@@ -222,25 +309,28 @@ int main(int argc, char *argv[])
 	Properties[0] = 0;
 	Transforms[0] = 0;
 
+	process_args( GetCommandLineA(), &argc, &argv );
+
 	for(i = 1; i < argc; i++)
 	{
 		WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 
-                if (!lstrcmpiA(argv[i], "/regserver"))
-                {
-                    FunctionRegServer = TRUE;
-                }
-                else if (!lstrcmpiA(argv[i], "/unregserver") || !lstrcmpiA(argv[i], "/unregister"))
-                {
-                    FunctionUnregServer = TRUE;
-                }
+		if (!lstrcmpiA(argv[i], "/regserver"))
+		{
+			FunctionRegServer = TRUE;
+		}
+		else if (!lstrcmpiA(argv[i], "/unregserver") || !lstrcmpiA(argv[i], "/unregister"))
+		{
+			FunctionUnregServer = TRUE;
+		}
 		else if(!MSIEXEC_lstrncmpiA(argv[i], "/i", 2))
 		{
 			char *argvi = argv[i];
 			FunctionInstall = TRUE;
 			if(strlen(argvi) > 2)
 				argvi += 2;
-			else {
+			else
+			{
 				i++;
 				if(i >= argc)
 					ShowUsage(1);
