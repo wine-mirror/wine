@@ -4573,6 +4573,54 @@ HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY* pcyOut) {
    return S_OK;
 }
 
+/**********************************************************************
+ *              VarDecFromStr [OLEAUT32.@]
+ */
+HRESULT WINAPI VarDecFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags,
+                             DECIMAL* pdecOut)
+{   WCHAR *p=strIn;
+    ULONGLONG t;
+    ULONG  cy;
+#ifdef FIXIT
+    DECIMAL_SETZERO(pdecOut);
+#else
+    pdecOut->u.s.sign = pdecOut->u.s.scale = UI1_MIN;
+    pdecOut->Hi32 = pdecOut->u1.s1.Mid32 = pdecOut->u1.s1.Lo32 = UI4_MIN;
+#endif
+    if(*p == (WCHAR)'-')pdecOut->u.s.sign= DECIMAL_NEG;
+    if((*p == (WCHAR)'-') || (*p == (WCHAR)'+')) p++;
+    for(;*p != (WCHAR)0; p++) {
+        if((*p < (WCHAR)'0')||(*p > (WCHAR)'9')) goto error ;
+        t = (ULONGLONG)pdecOut->u1.s1.Lo32 *(ULONGLONG)10
+          + (ULONGLONG)(*p -(WCHAR)'0');
+        cy = (ULONG)(t >> 32);
+        pdecOut->u1.s1.Lo32 = (ULONG)(t & (ULONGLONG)UI4_MAX);
+        t = (ULONGLONG)pdecOut->u1.s1.Mid32 * (ULONGLONG)10
+          + (ULONGLONG)cy;
+        cy = (ULONG)(t >> 32);
+        pdecOut->u1.s1.Mid32 = (ULONG)(t & (ULONGLONG)UI4_MAX);
+        t = (ULONGLONG)pdecOut->Hi32 * (ULONGLONG)10
+          + (ULONGLONG)cy;
+        cy = (ULONG)(t >> 32);
+        pdecOut->Hi32 = (ULONG)(t & (ULONGLONG)UI4_MAX);
+        if(cy) goto overflow ;
+    }
+    TRACE("(4) %s -> sign %02x,hi %08lx,mid %08lx, lo%08lx, scale %08x\n",
+          debugstr_w(strIn),
+          pdecOut->u.s.sign, pdecOut->Hi32, pdecOut->u1.s1.Mid32,
+          pdecOut->u1.s1.Lo32, pdecOut->u.s.scale);
+    return S_OK;
+
+overflow:
+    /* like NT4 SP5 */
+    pdecOut->Hi32 = pdecOut->u1.s1.Mid32 = pdecOut->u1.s1.Lo32 = 0xffffffff;
+    return DISP_E_OVERFLOW;
+
+error:
+    ERR("%s: unknown char at pos %d\n",
+              debugstr_w(strIn),  p - strIn + 1);
+    return DISP_E_TYPEMISMATCH;
+}
 
 /**********************************************************************
  *              DosDateTimeToVariantTime [OLEAUT32.14]

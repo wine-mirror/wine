@@ -192,7 +192,7 @@
 194 stub VarDecFromR8
 195 stub VarDecFromDate
 196 stub VarDecFromCy
-197 stub VarDecFromStr
+197 stdcall VarDecFromStr(wstr long long ptr)
 198 stub VarDecFromDisp
 199 stub VarDecFromBool
 200 stdcall GetErrorInfo(long ptr) ole32.GetErrorInfo
