@@ -264,25 +264,22 @@ typedef struct WSAData {
 /*
  * Define flags to be used with the WSAAsyncSelect() call.
  */
-#define FD_READ            WS_FD_READ
-#define FD_WRITE           WS_FD_WRITE
-#define FD_OOB             WS_FD_OOB
-#define FD_ACCEPT          WS_FD_ACCEPT
-#define FD_CONNECT         WS_FD_CONNECT
-#define FD_CLOSE           WS_FD_CLOSE
-#define WS_FD_READ         0x0001
-#define WS_FD_WRITE        0x0002
-#define WS_FD_OOB          0x0004
-#define WS_FD_ACCEPT       0x0008
-#define WS_FD_CONNECT      0x0010
-#define WS_FD_CLOSE        0x0020
+#define FD_READ                    0x00000001
+#define FD_WRITE                   0x00000002
+#define FD_OOB                     0x00000004
+#define FD_ACCEPT                  0x00000008
+#define FD_CONNECT                 0x00000010
+#define FD_CLOSE                   0x00000020
 
-#define WS_FD_LISTENING	   0x10000000	/* internal per-socket flags */
-#define WS_FD_NONBLOCKING  0x20000000
-#define WS_FD_CONNECTED	   0x40000000
-#define WS_FD_RAW	   0x80000000
-#define WS_FD_SERVEVENT	   0x01000000
-#define WS_FD_INTERNAL	   0xFFFF0000
+/* internal per-socket flags */
+#ifdef __WINE__
+#define FD_WINE_LISTENING          0x10000000
+#define FD_WINE_NONBLOCKING        0x20000000
+#define FD_WINE_CONNECTED          0x40000000
+#define FD_WINE_RAW                0x80000000
+#define FD_WINE_SERVEVENT          0x01000000
+#define FD_WINE_INTERNAL           0xFFFF0000
+#endif
 
 /*
  * All Windows Sockets error constants are biased by WSABASEERR from

@@ -84,7 +84,7 @@ static void sock_reselect( struct sock *sock )
 
     if (sock->obj.select == -1) {
         /* previously unconnected socket, is this reselect supposed to connect it? */
-        if (!(sock->state & ~WS_FD_NONBLOCKING)) return;
+        if (!(sock->state & ~FD_WINE_NONBLOCKING)) return;
         /* ok, it is, attach it to the wineserver's main poll loop */
         add_select_user( &sock->obj );
     }
@@ -116,14 +116,14 @@ static void sock_poll_event( struct object *obj, int event )
     assert( sock->obj.ops == &sock_ops );
     if (debug_level)
         fprintf(stderr, "socket %d select event: %x\n", sock->obj.fd, event);
-    if (sock->state & WS_FD_CONNECT)
+    if (sock->state & FD_CONNECT)
     {
         /* connecting */
         if (event & POLLOUT)
         {
             /* we got connected */
-            sock->state |= WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE;
-            sock->state &= ~WS_FD_CONNECT;
+            sock->state |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
+            sock->state &= ~FD_CONNECT;
             sock->pmask |= FD_CONNECT;
             sock->errors[FD_CONNECT_BIT] = 0;
             if (debug_level)
@@ -132,14 +132,14 @@ static void sock_poll_event( struct object *obj, int event )
         else if (event & (POLLERR|POLLHUP))
         {
             /* we didn't get connected? */
-            sock->state &= ~WS_FD_CONNECT;
+            sock->state &= ~FD_CONNECT;
             sock->pmask |= FD_CONNECT;
             sock->errors[FD_CONNECT_BIT] = sock_error( sock->obj.fd );
             if (debug_level)
                 fprintf(stderr, "socket %d connection failure\n", sock->obj.fd);
         }
     } else
-    if (sock->state & WS_FD_LISTENING)
+    if (sock->state & FD_WINE_LISTENING)
     {
         /* listening */
         if (event & POLLIN)
@@ -193,10 +193,10 @@ static void sock_poll_event( struct object *obj, int event )
                 fprintf(stderr, "socket %d got OOB data\n", sock->obj.fd);
         }
         if (((event & POLLERR) || ((event & (POLLIN|POLLHUP)) == POLLHUP))
-            && (sock->state & (WS_FD_READ|WS_FD_WRITE))) {
+            && (sock->state & (FD_READ|FD_WRITE))) {
             /* socket closing */
             sock->errors[FD_CLOSE_BIT] = sock_error( sock->obj.fd );
-            sock->state &= ~(WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE);
+            sock->state &= ~(FD_WINE_CONNECTED|FD_READ|FD_WRITE);
             sock->pmask |= FD_CLOSE;
             if (debug_level)
                 fprintf(stderr, "socket %d aborted by error %d\n",
@@ -247,10 +247,10 @@ static int sock_get_poll_events( struct object *obj )
 
     assert( obj->ops == &sock_ops );
 
-    if (sock->state & WS_FD_CONNECT)
+    if (sock->state & FD_CONNECT)
         /* connecting, wait for writable */
         return POLLOUT;
-    if (sock->state & WS_FD_LISTENING)
+    if (sock->state & FD_WINE_LISTENING)
         /* listening, wait for readable */
         return (sock->hmask & FD_ACCEPT) ? 0 : POLLIN;
 
@@ -277,7 +277,7 @@ static void sock_destroy( struct object *obj )
         /* if the service thread was waiting for the event object,
          * we should now signal it, to let the service thread
          * object detect that it is now orphaned... */
-        if (sock->mask & WS_FD_SERVEVENT)
+        if (sock->mask & FD_WINE_SERVEVENT)
             set_event( sock->event );
         /* we're through with it */
         release_object( sock->event );
@@ -300,7 +300,7 @@ static struct object *create_socket( int family, int type, int protocol )
     fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
     if (!(sock = alloc_object( &sock_ops, -1 ))) return NULL;
     sock->obj.fd = sockfd;
-    sock->state = (type != SOCK_STREAM) ? (WS_FD_READ|WS_FD_WRITE) : 0;
+    sock->state = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->mask  = 0;
     sock->hmask = 0;
     sock->pmask = 0;
@@ -343,14 +343,14 @@ static struct object *accept_socket( handle_t handle )
     /* newly created socket gets the same properties of the listening socket */
     fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
     acceptsock->obj.fd = acceptfd;
-    acceptsock->state  = WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE;
-    if (sock->state & WS_FD_NONBLOCKING)
-        acceptsock->state |= WS_FD_NONBLOCKING; 
+    acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
+    if (sock->state & FD_WINE_NONBLOCKING)
+        acceptsock->state |= FD_WINE_NONBLOCKING;
     acceptsock->mask   = sock->mask;
     acceptsock->hmask  = 0;
     acceptsock->pmask  = 0;
     acceptsock->event  = NULL;
-    if (sock->event && !(sock->mask & WS_FD_SERVEVENT))
+    if (sock->event && !(sock->mask & FD_WINE_SERVEVENT))
         acceptsock->event = (struct event *)grab_object( sock->event );
 
     sock_reselect( acceptsock );
@@ -475,7 +475,7 @@ DECL_HANDLER(set_socket_event)
     if (debug_level && sock->event) fprintf(stderr, "event ptr: %p\n", sock->event);
     sock_reselect( sock );
     if (sock->mask)
-        sock->state |= WS_FD_NONBLOCKING;
+        sock->state |= FD_WINE_NONBLOCKING;
 
     /* if a network event is pending, signal the event object 
        it is possible that FD_CONNECT or FD_ACCEPT network events has happened
@@ -486,7 +486,7 @@ DECL_HANDLER(set_socket_event)
     
     if (oevent)
     {
-    	if ((oevent != sock->event) && (omask & WS_FD_SERVEVENT))
+        if ((oevent != sock->event) && (omask & FD_WINE_SERVEVENT))
             /* if the service thread was waiting for the old event object,
              * we should now signal it, to let the service thread
              * object detect that it is now orphaned... */
@@ -559,9 +559,9 @@ DECL_HANDLER(enable_socket_event)
     sock_reselect( sock );
 
     /* service trigger */
-    if (req->mask & WS_FD_SERVEVENT)
+    if (req->mask & FD_WINE_SERVEVENT)
     {
-        sock->pmask |= WS_FD_SERVEVENT;
+        sock->pmask |= FD_WINE_SERVEVENT;
         if (sock->event) {
             if (debug_level) fprintf(stderr, "signalling service event ptr %p\n", sock->event);
             set_event(sock->event);

@@ -252,7 +252,7 @@ static int _is_blocking(SOCKET s)
         req->s_event = 0;
         req->c_event = 0;
         SERVER_CALL();
-        ret = (req->state & WS_FD_NONBLOCKING) == 0;
+        ret = (req->state & FD_WINE_NONBLOCKING) == 0;
     }
     SERVER_END_REQ;
     return ret;
@@ -743,7 +743,7 @@ static void WSOCK32_async_accept(SOCKET s, SOCKET as)
     else
 	ERR("accept queue too small\n");
     /* now signal our AsyncSelect handler */
-    _enable_event(s, WS_FD_SERVEVENT, 0, 0);
+    _enable_event(s, FD_WINE_SERVEVENT, 0, 0);
 }
 
 /**********************************************************************/
@@ -801,7 +801,7 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 #endif
 	    } else SetLastError(wsaErrno());
 	    close(fd);
-	    if (omask & WS_FD_SERVEVENT)
+	    if (omask & FD_WINE_SERVEVENT)
 		WSOCK32_async_accept(s, as);
 	    return as;
 	}
@@ -960,8 +960,8 @@ INT WINAPI WSOCK32_connect(SOCKET s, struct sockaddr *name, INT namelen)
     {
 	/* tell wineserver that a connection is in progress */
 	_enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
-		      WS_FD_CONNECT|WS_FD_READ|WS_FD_WRITE,
-		      WS_FD_CONNECTED|WS_FD_LISTENING);
+		      FD_CONNECT|FD_READ|FD_WRITE,
+		      FD_WINE_CONNECTED|FD_WINE_LISTENING);
 	if (_is_blocking(s))
 	{
 	    int result;
@@ -997,8 +997,8 @@ connect_success:
 	free(name);
 #endif
     _enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
-		  WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE,
-		  WS_FD_CONNECT|WS_FD_LISTENING);
+		  FD_WINE_CONNECTED|FD_READ|FD_WRITE,
+		  FD_CONNECT|FD_WINE_LISTENING);
     return 0; 
 }
 
@@ -1550,9 +1550,9 @@ INT WINAPI WSOCK32_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 		}
 		close(fd);
 		if (*argp)
-		    _enable_event(s, 0, WS_FD_NONBLOCKING, 0);
+		    _enable_event(s, 0, FD_WINE_NONBLOCKING, 0);
 		else
-		    _enable_event(s, 0, 0, WS_FD_NONBLOCKING);
+		    _enable_event(s, 0, 0, FD_WINE_NONBLOCKING);
 		return 0;
 
 	case WS_SIOCATMARK: 
@@ -1610,8 +1610,8 @@ INT WINAPI WSOCK32_listen(SOCKET s, INT backlog)
 	{
 	    close(fd);
 	    _enable_event(s, FD_ACCEPT,
-			  WS_FD_LISTENING,
-			  WS_FD_CONNECT|WS_FD_CONNECTED);
+			  FD_WINE_LISTENING,
+			  FD_CONNECT|FD_WINE_CONNECTED);
 	    return 0;
 	}
 	SetLastError(wsaErrno());
@@ -2096,14 +2096,14 @@ INT WINAPI WSOCK32_shutdown(SOCKET s, INT how)
 	    switch( how )
 	    {
 		case 0: /* drop receives */
-			_enable_event(s, 0, 0, WS_FD_READ);
+			_enable_event(s, 0, 0, FD_READ);
 #ifdef SHUT_RD
 			how = SHUT_RD;
 #endif
 			break;
 
 		case 1: /* drop sends */
-			_enable_event(s, 0, 0, WS_FD_WRITE);
+			_enable_event(s, 0, 0, FD_WRITE);
 #ifdef SHUT_WR
 			how = SHUT_WR;
 #endif
@@ -2122,7 +2122,7 @@ INT WINAPI WSOCK32_shutdown(SOCKET s, INT how)
 	{
 	    if( how > 1 ) 
 	    {
-		_enable_event(s, 0, 0, WS_FD_CONNECTED|WS_FD_LISTENING);
+		_enable_event(s, 0, 0, FD_WINE_CONNECTED|FD_WINE_LISTENING);
 	    }
 	    close(fd);
 	    return 0;
@@ -2660,12 +2660,12 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
     if ( (GetLastError() == WSAENOTSOCK) || (GetLastError() == WSAEINVAL) )
     {
 	/* orphaned event (socket closed or something) */
-	pmask = WS_FD_SERVEVENT;
+	pmask = FD_WINE_SERVEVENT;
 	orphan = TRUE;
     }
 
     /* check for accepted sockets that needs to inherit WSAAsyncSelect */
-    if (pmask & WS_FD_SERVEVENT) {
+    if (pmask & FD_WINE_SERVEVENT) {
 	int q;
 	for (q=0; q<WS_ACCEPT_QUEUE; q++)
 	    if (accept_old[q] == info->sock) {
@@ -2677,7 +2677,7 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 		    WSAAsyncSelect(as, info->hWnd, info->uMsg, info->lEvent);
 		}
 	    }
-	pmask &= ~WS_FD_SERVEVENT;
+	pmask &= ~FD_WINE_SERVEVENT;
     }
     /* dispatch network events */
     for (i=0; i<FD_MAX_EVENTS; i++)
@@ -2723,7 +2723,7 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 		info->lEvent = lEvent;
 		info->service = SERVICE_AddObject( hObj, WINSOCK_DoAsyncEvent, (ULONG_PTR)info );
 
-		err = WSAEventSelect( s, hObj, lEvent | WS_FD_SERVEVENT );
+		err = WSAEventSelect( s, hObj, lEvent | FD_WINE_SERVEVENT );
 		if (err) {
 		    /* SERVICE_Delete closes the event object */
 		    SERVICE_Delete( info->service );
