@@ -155,6 +155,34 @@ error:
 
 
 /***********************************************************************
+ *           THREAD_FreeTHDB
+ *
+ * Free data structures associated with a thread.
+ * Must be called from the context of another thread.
+ */
+void THREAD_FreeTHDB( THDB *thdb )
+{
+    THDB **pptr = &THREAD_First;
+
+    /* cleanup the message queue, if there's one */
+    if (thdb->teb.queue)
+        USER_QueueCleanup( thdb->teb.queue );
+        
+    CloseHandle( thdb->event );
+    while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
+    if (*pptr) *pptr = thdb->next;
+
+    /* Free the associated memory */
+
+    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
+    SELECTOR_FreeBlock( thdb->teb_sel, 1 );
+    close( thdb->socket );
+    VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
+    HeapFree( SystemHeap, HEAP_NO_SERIALIZE, thdb );
+}
+
+
+/***********************************************************************
  *           THREAD_CreateInitialThread
  *
  * Create the initial thread.
@@ -309,37 +337,10 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
  * RETURNS
  *    None
  */
-void WINAPI ExitThread(
-    DWORD code) /* [in] Exit code for this thread */
+void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 {
-    THDB *thdb = THREAD_Current();
-    THDB **pptr = &THREAD_First;
-    WORD ds;
-
     MODULE_InitializeDLLs( 0, DLL_THREAD_DETACH, NULL );
-
-    thdb->exit_code = code;
-
-    /* cleanup the message queue, if there's one */
-    if (thdb->teb.queue)
-        USER_QueueCleanup( thdb->teb.queue );
-        
-    CloseHandle( thdb->event );
-    while (*pptr && (*pptr != thdb)) pptr = &(*pptr)->next;
-    if (*pptr) *pptr = thdb->next;
-
-    /* Free the associated memory */
-
-    if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
-    GET_DS( ds );
-    SET_FS( ds );
-    SELECTOR_FreeBlock( thdb->teb_sel, 1 );
-    close( thdb->socket );
-    HeapFree( SystemHeap, HEAP_NO_SERIALIZE, thdb );
-
-    /* FIXME: should free the stack somehow */
-
-    SYSDEPS_ExitThread();
+    TerminateThread( GetCurrentThread(), code );
 }
 
 
@@ -364,8 +365,8 @@ HANDLE WINAPI GetCurrentThread(void)
 DWORD WINAPI GetCurrentThreadId(void)
 {
     THDB *thdb = THREAD_Current();
-    /* FIXME: should not get here without a thread */
-    return thdb ? (DWORD)thdb->server_tid : 0x12345678;
+    assert( thdb );
+    return (DWORD)thdb->server_tid;
 }
 
 
