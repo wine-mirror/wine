@@ -60,7 +60,6 @@ typedef struct
     char     *dos_cwd;   /* cwd in DOS format without leading or trailing \ */
     char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
     char     *device;    /* raw device path */
-    BOOL      read_volinfo; /* read the volume info from the device ? */
     char      label_conf[12]; /* drive label as cfg'd in wine.conf */
     char      label_read[12]; /* drive label as read from device */
     DWORD     serial_conf;    /* drive serial number as cfg'd in wine.conf */
@@ -208,11 +207,13 @@ int DRIVE_Init(void)
             if (buffer[0])
 	    {
                 drive->device = HEAP_strdupA( GetProcessHeap(), 0, buffer );
-		drive->read_volinfo =
-		(BOOL)PROFILE_GetWineIniInt( name, "ReadVolInfo", 1);
+		if (PROFILE_GetWineIniBool( name, "ReadVolInfo", 1))
+                    drive->flags |= DRIVE_READ_VOL_INFO;
 	    }
-	    else
-		drive->read_volinfo = FALSE;
+
+            /* Get the FailReadOnly flag */
+            if (PROFILE_GetWineIniBool( name, "FailReadOnly", 0 ))
+                drive->flags |= DRIVE_FAIL_READ_ONLY;
 
             /* Make the first hard disk the current drive */
             if ((DRIVE_CurDrive == -1) && (drive->type == TYPE_HD))
@@ -564,7 +565,7 @@ const char * DRIVE_GetLabel( int drive )
 	    CDROM_Close(&wcda);
 }
     }
-    if ((!read) && (DOSDrives[drive].read_volinfo))
+    if ((!read) && (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO))
     {
 	if (DRIVE_ReadSuperblock(drive,(char *) buff))
 	    ERR("Invalid or unreadable superblock on %s (%c:).\n",
@@ -599,7 +600,7 @@ char buff[DRIVE_SUPER];
 
     if (!DRIVE_IsValid( drive )) return 0;
     
-    if (DOSDrives[drive].read_volinfo)
+    if (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO)
     {
 	switch(DOSDrives[drive].type)
 	{
@@ -633,7 +634,7 @@ int DRIVE_SetSerialNumber( int drive, DWORD serial )
 
     if (!DRIVE_IsValid( drive )) return 0;
 
-    if (DOSDrives[drive].read_volinfo)
+    if (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO)
     {
         if ((DOSDrives[drive].type != TYPE_FLOPPY) &&
             (DOSDrives[drive].type != TYPE_HD)) return 0;

@@ -203,7 +203,7 @@ static void save_key( HKEY hkey, const char *filename )
     {
         sprintf( p, "reg%04x.tmp", count++ );
         handle = FILE_CreateFile( name, GENERIC_WRITE, 0, NULL,
-                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
+                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1, TRUE );
         if (handle != INVALID_HANDLE_VALUE) break;
         if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) break;
     }
@@ -628,7 +628,7 @@ static int _wine_loadsubreg( FILE *F, HKEY hkey, const char *fn )
             {
                 HANDLE file;
                 if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                                             FILE_ATTRIBUTE_NORMAL, -1 )) != INVALID_HANDLE_VALUE)
+                                      FILE_ATTRIBUTE_NORMAL, -1, TRUE )) != INVALID_HANDLE_VALUE)
                 {
                     struct load_registry_request *req = get_req_buffer();
                     req->hkey    = hkey;

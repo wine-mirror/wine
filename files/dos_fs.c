@@ -660,7 +660,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
 		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
                     return FILE_CreateFile( "/dev/null", access,
                                             FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                                            OPEN_EXISTING, 0, -1 );
+                                            OPEN_EXISTING, 0, -1, TRUE );
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
 			HFILE to_dup;
 			HFILE handle;
@@ -697,7 +697,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
                                      DOSFS_Devices[i].name,devname);
 			r =  FILE_CreateFile( devname, access,
 				FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-				OPEN_EXISTING, 0, -1 );
+				OPEN_EXISTING, 0, -1, TRUE );
 			TRACE_(file)("Create_File return %08X\n",r);
 			return r;
 		    }

@@ -42,7 +42,6 @@
 #include "global.h"
 #include "heap.h"
 #include "msdos.h"
-#include "options.h"
 #include "ldt.h"
 #include "process.h"
 #include "task.h"
@@ -322,11 +321,13 @@ HFILE FILE_DupUnixHandle( int fd, DWORD access )
  * Implementation of CreateFile. Takes a Unix path name.
  */
 HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
-                         LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                         DWORD attributes, HANDLE template )
+                        LPSECURITY_ATTRIBUTES sa, DWORD creation,
+                        DWORD attributes, HANDLE template, BOOL fail_read_only )
 {
+    DWORD err;
     struct create_file_request *req = get_req_buffer();
 
+ restart:
     req->access  = access;
     req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
     req->sharing = sharing;
@@ -334,22 +335,19 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     req->attrs   = attributes;
     lstrcpynA( req->name, filename, server_remaining(req->name) );
     SetLastError(0);
-    server_call( REQ_CREATE_FILE );
+    err = server_call( REQ_CREATE_FILE );
 
     /* If write access failed, retry without GENERIC_WRITE */
 
-    if ((req->handle == -1) && !Options.failReadOnly &&
-        (access & GENERIC_WRITE)) 
+    if ((req->handle == -1) && !fail_read_only && (access & GENERIC_WRITE)) 
     {
-    	DWORD lasterror = GetLastError();
-
-	if ((lasterror == ERROR_ACCESS_DENIED) ||
-	    (lasterror == ERROR_WRITE_PROTECT)) {
+	if ((err == ERROR_ACCESS_DENIED) || (err == ERROR_WRITE_PROTECT))
+        {
 	    TRACE("Write access failed for file '%s', trying without "
 		  "write access", filename);
-            return FILE_CreateFile( filename, access & ~GENERIC_WRITE, sharing,
-                                    sa, creation, attributes, template );
-    }
+            access &= ~GENERIC_WRITE;
+            goto restart;
+        }
     }
 
     if (req->handle == -1)
@@ -491,7 +489,8 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     }
 
     return FILE_CreateFile( full_name.long_name, access, sharing,
-                            sa, creation, attributes, template );
+                            sa, creation, attributes, template,
+                            DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY );
 }
 
 
@@ -917,7 +916,8 @@ found:
     }
 
     hFileRet = FILE_CreateFile( full_name.long_name, access, sharing,
-                                NULL, OPEN_EXISTING, 0, -1 );
+                                NULL, OPEN_EXISTING, 0, -1,
+                                DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY );
     if (hFileRet == HFILE_ERROR) goto not_found;
 
     GetFileTime( hFileRet, NULL, NULL, &filetime );

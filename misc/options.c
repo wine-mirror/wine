@@ -49,8 +49,6 @@ static const struct option option_table[] =
       "--dll name       Enable or disable built-in DLLs" },
     { "dosver",       0, 1, VERSION_ParseDosVersion,
       "--dosver x.xx    DOS version to imitate (e.g. 6.22). Only valid with --winver win31" },
-    { "failreadonly", 0, 0, do_failreadonly,
-      "--failreadonly   Read only files may not be opened in write mode" },
     { "help",       'h', 0, do_help,
       "--help,-h        Show this help message" },
     { "language",     0, 1, MAIN_ParseLanguageOption,
@@ -87,11 +85,6 @@ static void do_synchronous( const char *arg )
 static void do_debug( const char *arg )
 {
     Options.debug = TRUE;
-}
-
-static void do_failreadonly( const char *arg )
-{
-    Options.failReadOnly = TRUE;
 }
 
 static void do_desktop( const char *arg )

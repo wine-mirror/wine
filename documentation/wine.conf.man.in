@@ -97,6 +97,12 @@ You definitely don't want to use "unix" unless you intend to port programs using
 .br
 Always try to avoid using FAT16. Use VFAT/FAT32 OS file system driver instead !
 .PP
+.I format: FailReadOnly=<boolean>
+.br
+Read-only files may not be opened in write mode (the default is to
+allow opening read-only files for writing, because most Windows
+programs always request read-write access, even on CD-ROM drives...).
+.PP
 .B [wine]
 .br
 .I format: windows = <directory>

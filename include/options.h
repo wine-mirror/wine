@@ -62,8 +62,6 @@ struct options
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    synchronous;     /* X synchronous mode */
     int    debug;
-    int    failReadOnly;    /* Opening a read only file will fail
-			       if write access is requested */
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
     char * configFileName;  /* Command line config file */

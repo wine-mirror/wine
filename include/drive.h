@@ -26,6 +26,8 @@ typedef enum
 #define DRIVE_SHORT_NAMES     0x0002  /* Drive fs has 8.3 file names */
 #define DRIVE_CASE_SENSITIVE  0x0004  /* Drive fs is case sensitive */
 #define DRIVE_CASE_PRESERVING 0x0008  /* Drive fs is case preserving */
+#define DRIVE_FAIL_READ_ONLY  0x0010  /* Fail opening read-only files for writing */
+#define DRIVE_READ_VOL_INFO   0x0020  /* Try to read volume info from the device? */
 
 extern int DRIVE_Init(void);
 extern int DRIVE_IsValid( int drive );
