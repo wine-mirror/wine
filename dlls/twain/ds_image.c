@@ -103,7 +103,7 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
     {
         if (pSource->currentState == 6)
         {
-            /* return general image description information about the image about to be transfer */
+            /* return general image description information about the image about to be transferred */
             status = sane_get_parameters (pSource->deviceHandle, &pSource->sane_param);
         }
 
@@ -265,7 +265,7 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
                                 sizeof (buffer),  &buff_len);
             if (status == SANE_STATUS_GOOD)
             {
-                /* FIXME: put code for coverting the image data into DIB here */
+                /* FIXME: put code for converting the image data into DIB here */
 
             }
             else if (status != SANE_STATUS_EOF)

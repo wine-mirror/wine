@@ -1,7 +1,7 @@
 ----- Old Corel README, probably outdated ----------------------------------
 1. INTRODUCTION
 
-This library (twain32.dll) is an implementation of TWAIN API for providing image acquisition devices (scanner or digital camera) support.  It uses SANE drivers as the backend and translates TWAIN API calls into SANE API calls.  Unlike the twain32 library on Windows platform, it combines the Data Source Manager and Data Sources into a single library.  Thus it is our responsiblity to provide a graphical user interface and capability negotiation, which usually are performed by data sources.
+This library (twain_32.dll) is an implementation of TWAIN API for providing image acquisition devices (scanner or digital camera) support.  It uses SANE drivers as the backend and translates TWAIN API calls into SANE API calls.  Unlike the twain32 library on Windows platform, it combines the Data Source Manager and Data Sources into a single library.  Thus it is our responsiblity to provide a graphical user interface and capability negotiation, which usually are performed by data sources.
 
 
 2. WHAT'S IMPLEMENTED
@@ -12,7 +12,7 @@ This library (twain32.dll) is an implementation of TWAIN API for providing image
 
 - The operation triplets that deal with the UI (such as DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDS, MSG_DISABLEDS and MSG_ENABLEDSUIONLY) are partially implemented although it does not really do much.
 
-- The operation triplets that deal with native image transfering (DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET) are also partially implemented.  Still need to figure out how to convert the image data obtained from sane to the Windows DIB format.
+- The operation triplets that deal with native image transfers (DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET) are also partially implemented.  Still need to figure out how to convert the image data obtained from sane to the Windows DIB format.
 
 -  Only the CAP_ICAPXFERMECH capability is implemented.
 

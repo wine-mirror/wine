@@ -237,7 +237,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 
     if (pIdentity->ProductName[0] != '\0')
     {
-        /* Make sure the source to be open exists in the device list */
+        /* Make sure the source to be opened exists in the device list */
         for (i = 0; device_list[i]; i ++)
         {
             if (strcmp (device_list[i]->name, pIdentity->ProductName) == 0)

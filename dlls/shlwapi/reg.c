@@ -1835,16 +1835,16 @@ BOOL WINAPI GetMIMETypeSubKeyW(LPCWSTR lpszType, LPWSTR lpszBuffer, DWORD dwLen)
 /*************************************************************************
  * @   [SHLWAPI.330]
  *
- * Get the files extension for a given Mime type.
+ * Get the file extension for a given Mime type.
  *
  * PARAMS
  *  lpszType [I] Mime type to get the file extension for
- *  lpExt    [O] Destingtion for the resulting extension
- *  iLen     [I] Length og lpExt in characters
+ *  lpExt    [O] Destination for the resulting extension
+ *  iLen     [I] Length of lpExt in characters
  *
  * RETURNS
  *  Success: TRUE. lpExt contains the file extension.
- *  Failure: FALSE, if any paramater is invalid or the extension cannot be
+ *  Failure: FALSE, if any parameter is invalid or the extension cannot be
  *           retrieved. If iLen > 0, lpExt is set to an empty string.
  *
  * NOTES

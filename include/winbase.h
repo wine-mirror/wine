@@ -492,7 +492,7 @@ typedef struct _OVERLAPPED {
         HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
-typedef VOID (CALLBACK *LPOVERLAPPED_COMPLETION_ROUTINE)(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped);
+typedef VOID (CALLBACK *LPOVERLAPPED_COMPLETION_ROUTINE)(DWORD,DWORD,LPOVERLAPPED);
 
 /* Process startup information.
  */

@@ -93,7 +93,7 @@ ASPI_GetHCforController( int controller );
 /* WNASPI32/WINASPI defs */
 #define HOST_TO_TARGET(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x2)
 #define TARGET_TO_HOST(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x1)
-#define NO_DATA_TRANSFERED(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x3)
+#define NO_DATA_TRANSFERRED(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x3)
 
 
 #define INQUIRY_VENDOR          8

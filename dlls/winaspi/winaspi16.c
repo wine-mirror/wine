@@ -154,7 +154,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
   else if (HOST_TO_TARGET(prb)) {
     TRACE("\tData transfer: Host to target. Length checked.\n");
   }
-  else if (NO_DATA_TRANSFERED(prb)) {
+  else if (NO_DATA_TRANSFERRED(prb)) {
     TRACE("\tData transfer: none\n");
   }
   else {

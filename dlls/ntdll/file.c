@@ -84,7 +84,7 @@ mode_t FILE_umask = 0;
  * PARAMS
  *  handle    [O] Variable that receives the file handle on return
  *  access    [I] Access desired by the caller to the file
- *  attr      [I] Structue describing the file to be opened
+ *  attr      [I] Structure describing the file to be opened
  *  io        [O] Receives details about the result of the operation
  *  sharing   [I] Type of shared access the caller requires
  *  options   [I] Options for the file open

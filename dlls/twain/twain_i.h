@@ -32,7 +32,7 @@
 #include "winbase.h"
 #include "twain.h"
 
-/* internel information about an active data source */
+/* internal information about an active data source */
 typedef struct tagActiveDS
 {
     struct tagActiveDS	*next;			/* next active DS */
@@ -45,7 +45,7 @@ typedef struct tagActiveDS
 #ifdef HAVE_SANE
     SANE_Handle		deviceHandle;		/* device handle */
     SANE_Parameters     sane_param;             /* parameters about the image
-                                                   transfered */
+                                                   transferred */
 #endif
     /* Capabiblities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
