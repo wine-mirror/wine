@@ -795,7 +795,8 @@ SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG 
 {
     LPSPropValue lpDest = (LPSPropValue)lpDst;
     char *lpDataDest = (char *)(lpDest + cValues);
-    ULONG ulLen, i, iter;
+    ULONG ulLen, i;
+    int iter;
 
     TRACE("(%d,%p,%p,%p)\n", cValues, lpProps, lpDst, lpCount);
 
@@ -930,7 +931,8 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
     static const BOOL bBadPtr = TRUE; /* Windows bug - Assumes source is bad */
     LPSPropValue lpDest = (LPSPropValue)lpProps;
     ULONG ulCount = cValues * sizeof(SPropValue);
-    ULONG ulLen, i, iter;
+    ULONG ulLen, i;
+    int iter;
 
     TRACE("(%d,%p,%p,%p,%p)\n", cValues, lpProps, lpOld, lpNew, lpCount);
 
@@ -1520,7 +1522,7 @@ static inline ULONG WINAPI IMAPIProp_fnAddRef(LPMAPIPROP iface)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
 
-    TRACE("(%p)->(count=%ld)\n", This, This->lRef);
+    TRACE("(%p)->(count before=%lu)\n", This, This->lRef);
 
     return InterlockedIncrement(&This->lRef);
 }
@@ -1534,10 +1536,12 @@ static inline ULONG WINAPI IMAPIProp_fnAddRef(LPMAPIPROP iface)
 static inline ULONG WINAPI IMAPIProp_fnRelease(LPMAPIPROP iface)
 {
     IPropDataImpl *This = (IPropDataImpl*)iface;
+    LONG lRef;
 
-    TRACE("(%p)->()\n", This);
+    TRACE("(%p)->(count before=%lu)\n", This, This->lRef);
 
-    if (!InterlockedDecrement(&This->lRef))
+    lRef = InterlockedDecrement(&This->lRef);
+    if (!lRef)
     {
         TRACE("Destroying IPropData (%p)\n",This);
 
@@ -1552,9 +1556,8 @@ static inline ULONG WINAPI IMAPIProp_fnRelease(LPMAPIPROP iface)
         }
         RtlDeleteCriticalSection(&This->cs);
         This->lpFree(This);
-        return 0U;
     }
-    return (ULONG)This->lRef;
+    return (ULONG)lRef;
 }
 
 /**************************************************************************
