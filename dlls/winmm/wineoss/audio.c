@@ -1981,6 +1981,7 @@ struct IDsDriverBufferImpl
     /* IDsDriverBufferImpl fields */
     IDsDriverImpl*	drv;
     DWORD		buflen;
+    WAVEFORMATEX        wfx;
 };
 
 static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
@@ -2003,8 +2004,10 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 	 * memset(wwo->mapping,0, wwo->maplen);
 	 */
 	{
-	    char*	p1 = wwo->mapping;
-	    unsigned	len = wwo->maplen;
+	    unsigned char*	p1 = wwo->mapping;
+	    unsigned		len = wwo->maplen;
+	    unsigned char	silence = (dsdb->wfx.wBitsPerSample == 8) ? 128 : 0;
+	    unsigned long	ulsilence = (dsdb->wfx.wBitsPerSample == 8) ? 0x80808080 : 0;
 
 	    if (len >= 16) /* so we can have at least a 4 long area to store... */
 	    {
@@ -2014,13 +2017,13 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 		int		b = len >> 2;
 		unsigned long*	p4 = (unsigned long*)p1;
 
-		while (b--) *p4++ = 0;
+		while (b--) *p4++ = ulsilence;
 		/* prepare for filling the rest */
 		len &= 3;
 		p1 = (unsigned char*)p4;
 	    }
 	    /* in all cases, fill the remaining bytes */
-	    while (len-- != 0) *p1++ = 0;
+	    while (len-- != 0) *p1++ = silence;
 	}
     }
     return DS_OK;
@@ -2373,7 +2376,8 @@ static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCap
 
 static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
 						      LPWAVEFORMATEX pwfx,
-						      DWORD dwFlags, DWORD dwCardAddress,
+						      DWORD dwFlags, 
+						      DWORD dwCardAddress,
 						      LPDWORD pdwcbBufferSize,
 						      LPBYTE *ppbBuffer,
 						      LPVOID *ppvObj)
@@ -2399,6 +2403,7 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     (*ippdsdb)->lpVtbl  = &dsdbvt;
     (*ippdsdb)->ref	= 1;
     (*ippdsdb)->drv	= This;
+    (*ippdsdb)->wfx     = *pwfx;
 
     /* check how big the DMA buffer is now */
     if (ioctl(WOutDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
