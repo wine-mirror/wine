@@ -559,10 +559,11 @@ INT WINAPI GetDIBits(
                             LPBYTE srcbits = sbits;
 
                             for( y = 0; y < lines; y++) {
-                                for( x = 0; x < srcwidth; x++ )
-                                    *dstbits++ = ((*srcbits++ >> 3) & bmask) |
-                                                 (((WORD)*srcbits++ << 2) & gmask) |
-                                                 (((WORD)*srcbits++ << 7) & rmask);
+                                for( x = 0; x < srcwidth; x++, srcbits += 3)
+                                    *dstbits++ = ((srcbits[0] >> 3) & bmask) |
+                                                 (((WORD)srcbits[1] << 2) & gmask) |
+                                                 (((WORD)srcbits[2] << 7) & rmask);
+
                                 dstbits = (LPWORD)(dbits+=dstwidthb);
                                 srcbits = (sbits += srcwidthb);
                             }
