@@ -169,6 +169,7 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/prope
 static VOID set_installer_properties(MSIPACKAGE *package)
 {
     WCHAR pth[MAX_PATH];
+    WCHAR *ptr;
     OSVERSIONINFOA OSVersion;
     DWORD verval;
     WCHAR verstr[10], msiver[10];
@@ -210,6 +211,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 {'P','e','r','s','o','n','a','l','F','o','l','d','e','r',0};
     static const WCHAR WF[] = 
 {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
+    static const WCHAR WV[] = 
+{'W','i','n','d','o','w','s','V','o','l','u','m','e',0};
     static const WCHAR TF[]=
 {'T','e','m','p','F','o','l','d','e','r',0};
     static const WCHAR szAdminUser[] =
@@ -332,6 +335,12 @@ Privileged
     strcatW(pth,cszbs);
     MSI_SetPropertyW(package, WF, pth);
 
+    SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
+    ptr = strchrW(pth,'\\');
+    if (ptr)
+	*ptr = 0;
+    MSI_SetPropertyW(package, WV, pth);
+    
     GetTempPathW(MAX_PATH,pth);
     MSI_SetPropertyW(package, TF, pth);
 
@@ -767,6 +776,9 @@ UINT MSI_GetPropertyW(MSIPACKAGE *package, LPCWSTR szName,
 
     if (rc == ERROR_SUCCESS)
         TRACE("returning %s for property %s\n", debugstr_w(szValueBuf),
+            debugstr_w(szName));
+    else if (rc == ERROR_MORE_DATA)
+        TRACE("need %i sized buffer for %s\n", *pchValueBuf,
             debugstr_w(szName));
     else
     {

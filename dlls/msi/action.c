@@ -281,7 +281,7 @@ static LPWSTR PACKAGE_GetProperty(MSIPACKAGE *package, LPCWSTR prop)
     UINT r;
 
     r = MSI_GetPropertyW(package, prop, NULL, &sz);
-    if (r != ERROR_SUCCESS)
+    if (r != ERROR_SUCCESS && r != ERROR_MORE_DATA)
         return NULL;
     sz++;
     str = HeapAlloc(GetProcessHeap(),0,sz*sizeof(WCHAR));
