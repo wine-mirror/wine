@@ -320,3 +320,14 @@ BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
     FIXME("(hDevice %p pfOn %p): stub\n", hDevice, pfOn);
     return TRUE; /* no information */
 }
+
+/***********************************************************************
+ *           Beep   (KERNEL32.@)
+ */
+BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
+{
+    static const char beep = '\a';
+    /* dwFreq and dwDur are ignored by Win95 */
+    if (isatty(2)) write( 2, &beep, 1 );
+    return TRUE;
+}
