@@ -1,4 +1,4 @@
-EXTRADEFS = -DSTRICT -DUNICODE
+EXTRADEFS = -DUNICODE
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

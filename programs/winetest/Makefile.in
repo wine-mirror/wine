@@ -1,4 +1,4 @@
-EXTRADEFS = -DSTRICT `perl -MExtUtils::Embed -e ccflags`
+EXTRADEFS = `perl -MExtUtils::Embed -e ccflags`
 EXTRALIBS = `perl -MExtUtils::Embed -e ldopts`
 EXTRAINCL = `perl -MExtUtils::Embed -e perl_inc`
 XSUBPPDIR = `perl -MConfig -e 'print $$Config::Config{privlibexp}'`/ExtUtils
