@@ -39,12 +39,12 @@ AC_SUBST(OPTIONS)
 
 if test "$DEBUG_MSGS" = "no"
 then
-    AC_DEFINE(NO_DEBUG_MSGS, 1, [Define if all debug messages are to be compiled out])
+    OPTIONS="$OPTIONS -DNO_DEBUG_MSGS"
 fi
 
 if test "$TRACE_MSGS" = "no" -o "$DEBUG_MSGS" = "no"
 then
-    AC_DEFINE(NO_TRACE_MSGS, 1, [Define if TRACE messages are to be compiled out])
+    OPTIONS="$OPTIONS -DNO_TRACE_MSGS"
 fi
 
 dnl **** Check for some programs ****

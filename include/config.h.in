@@ -427,12 +427,6 @@
 /* Define if you have the xpg4 library (-lxpg4).  */
 #undef HAVE_LIBXPG4
 
-/* Define if all debug messages are to be compiled out */
-#undef NO_DEBUG_MSGS
-
-/* Define if TRACE messages are to be compiled out */
-#undef NO_TRACE_MSGS
-
 /* Define if you have libjpeg including devel headers */
 #undef HAVE_LIBJPEG
 

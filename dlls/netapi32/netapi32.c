@@ -2,6 +2,8 @@
  * Copyright 2001 Mike McCormack
  */
 
+#include "config.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>

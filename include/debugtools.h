@@ -5,7 +5,6 @@
 #ifdef __WINE__  /* Debugging interface is internal to Wine */
 
 #include <stdarg.h>
-#include "config.h"
 #include "windef.h"
 
 struct _GUID;
