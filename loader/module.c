@@ -200,10 +200,6 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile )
          * structure encompasses the "Offset to extended header"
          * field.
          */
-        if ((header.mz.e_cparhdr << 4) < sizeof(IMAGE_DOS_HEADER))
-            return BINARY_DOS;
-        if (header.mz.e_crlc && (header.mz.e_lfarlc < sizeof(IMAGE_DOS_HEADER)))
-            return BINARY_DOS;
         if (header.mz.e_lfanew < sizeof(IMAGE_DOS_HEADER))
             return BINARY_DOS;
         if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1)
