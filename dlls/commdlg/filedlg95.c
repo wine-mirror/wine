@@ -649,9 +649,9 @@ static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hid
     /* finally use fixed parent size */
     rectParent.bottom -= help_fixup;
 
-    /* set the size of the child dialog */
-    SetWindowPos(hwndChildDlg, HWND_BOTTOM,
-                 0, 0, rectParent.right, rectParent.bottom, SWP_NOACTIVATE);
+    /* save the size of the parent's client area */
+    rectChild.right = rectParent.right;
+    rectChild.bottom = rectParent.bottom;
 
     /* set the size of the parent dialog */
     AdjustWindowRectEx(&rectParent, GetWindowLongW(hwndParentDlg, GWL_STYLE),
@@ -661,6 +661,10 @@ static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hid
                  rectParent.right - rectParent.left,
                  rectParent.bottom - rectParent.top,
                  SWP_NOMOVE | SWP_NOZORDER);
+
+    /* set the size of the child dialog */
+    SetWindowPos(hwndChildDlg, HWND_BOTTOM,
+                 0, 0, rectChild.right, rectChild.bottom, SWP_NOACTIVATE);
 }
 
 INT_PTR CALLBACK FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -930,10 +934,12 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
      	   CreateTemplateDialog((FileOpenDlgInfos *)lParam, hwnd);
 
          FILEDLG95_InitControls(hwnd);
-      	 FILEDLG95_FillControls(hwnd, wParam, lParam);
+
          if (fodInfos->DlgInfos.hwndCustomDlg)
              ArrangeCtrlPositions(fodInfos->DlgInfos.hwndCustomDlg, hwnd,
                  (fodInfos->ofnInfos->Flags & (OFN_HIDEREADONLY | OFN_SHOWHELP)) == OFN_HIDEREADONLY);
+
+      	 FILEDLG95_FillControls(hwnd, wParam, lParam);
 
          SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
          SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
