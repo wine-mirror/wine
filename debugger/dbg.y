@@ -398,8 +398,9 @@ static void mode_command(int newmode)
     else fprintf(stderr,"Invalid mode (use 16 or 32)\n");
 }
 
-static WINE_EXCEPTION_FILTER(wine_dbg)
+static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
 {
+	fprintf(stderr, "\nwine_dbg_cmd: ");
    switch (GetExceptionCode()) {
    case DEBUG_STATUS_INTERNAL_ERROR:
       fprintf(stderr, "WineDbg internal error\n");
@@ -537,7 +538,7 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
 	       if ((ret_ok = DEBUG_ValidateRegisters()))
 		  ret_ok = DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear( &addr ), &ch, 1 );
 	    } 
-	    __EXCEPT(wine_dbg)
+	    __EXCEPT(wine_dbg_cmd)
 	    {
 	       ret_ok = 0;
 	    }

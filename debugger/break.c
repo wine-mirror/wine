@@ -208,7 +208,6 @@ void DEBUG_SetBreakpoints( BOOL set )
 	    }
 	    
 	    *lpdr = DEBUG_ToLinear(&breakpoints[i].addr);
-	    fprintf(stderr, "Setting DR%d %08lx\n", (lpdr - &DEBUG_context.Dr0) / 4, *lpdr);
 	    bits = (breakpoints[i].u.w.rw) ? DR7_RW_WRITE : DR7_RW_READ;
 	    switch (breakpoints[i].u.w.len + 1)
 	    {
@@ -226,7 +225,6 @@ void DEBUG_SetBreakpoints( BOOL set )
 	 break;
       }
    }
-   fprintf(stderr, "Setting DR7 %08lx\n", DEBUG_context.Dr7);
 }
 
 /***********************************************************************

@@ -1237,9 +1237,9 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
   ehptr = (Elf32_Ehdr *) addr;
 
   if( load_offset == 0 )
-      DEBUG_RegisterELFDebugInfo(ehptr->e_entry, statbuf.st_size, filename);
+      DEBUG_RegisterELFModule(ehptr->e_entry, filename);
   else
-      DEBUG_RegisterELFDebugInfo(load_offset, statbuf.st_size, filename);
+      DEBUG_RegisterELFModule(load_offset, filename);
 
   spnt = (Elf32_Shdr *) (addr + ehptr->e_shoff);
   nsect = ehptr->e_shnum;

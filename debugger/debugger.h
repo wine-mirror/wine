@@ -11,6 +11,7 @@
 #include <assert.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wine/exception.h"
 
 #ifdef __i386__
 #define STEP_FLAG 0x00000100 /* single step flag */
@@ -135,8 +136,8 @@ typedef struct
     struct expr * condition;
 } BREAKPOINT;
 
-typedef struct tagWINE_DBG_THREAD {
-    struct tagWINE_DBG_PROCESS*	process;
+typedef struct tagDBG_THREAD {
+    struct tagDBG_PROCESS*	process;
     HANDLE			handle;
     DWORD			tid;
     LPVOID			start;
@@ -146,21 +147,30 @@ typedef struct tagWINE_DBG_THREAD {
     enum exec_mode 		dbg_exec_mode;
     int 			dbg_exec_count;
     BREAKPOINT			stepOverBP;
-    struct tagWINE_DBG_THREAD* 	next;
-    struct tagWINE_DBG_THREAD* 	prev;
-} WINE_DBG_THREAD;
+    struct tagDBG_THREAD* 	next;
+    struct tagDBG_THREAD* 	prev;
+} DBG_THREAD;
 
-typedef struct tagWINE_DBG_PROCESS {
+typedef struct tagDBG_PROCESS {
     HANDLE			handle;
     DWORD			pid;
-    WINE_DBG_THREAD*		threads;
-    struct tagWINE_DBG_PROCESS*	next;
-    struct tagWINE_DBG_PROCESS*	prev;
-} WINE_DBG_PROCESS;
+    DBG_THREAD*			threads;
+    int				num_threads;
+    struct tagDBG_MODULE*	modules;
+    /*
+     * This is an index we use to keep track of the debug information
+     * when we have multiple sources.  We use the same database to also
+     * allow us to do an 'info shared' type of deal, and we use the index
+     * to eliminate duplicates.
+     */
+    int				next_index;
+    struct tagDBG_PROCESS*	next;
+    struct tagDBG_PROCESS*	prev;
+} DBG_PROCESS;
 
-extern	WINE_DBG_PROCESS* DEBUG_CurrProcess;
-extern	WINE_DBG_THREAD*  DEBUG_CurrThread;
-extern  CONTEXT		  DEBUG_context;
+extern	DBG_PROCESS*	DEBUG_CurrProcess;
+extern	DBG_THREAD*	DEBUG_CurrThread;
+extern  CONTEXT		DEBUG_context;
 
 #define DEBUG_READ_MEM(addr, buf, len) \
       (ReadProcessMemory(DEBUG_CurrProcess->handle, (addr), (buf), (len), NULL))
@@ -173,6 +183,28 @@ extern  CONTEXT		  DEBUG_context;
 
 #define DEBUG_WRITE_MEM_VERBOSE(addr, buf, len) \
       (DEBUG_WRITE_MEM((addr), (buf), (len)) || (DEBUG_InvalLinAddr( addr ),0))
+
+typedef struct tagDBG_MODULE {
+   struct tagDBG_MODULE*	next;
+   void*			load_addr;
+   char*			module_name;
+   char				status;
+   char				type;
+   short int			dbg_index;
+   HMODULE                      handle;
+   void*			extra_info;
+} DBG_MODULE;
+
+/* status field */
+#define DM_STATUS_NEW		0
+#define DM_STATUS_LOADED	1
+#define DM_STATUS_ERROR		2
+
+/* type field */
+#define DM_TYPE_UNKNOWN		0
+#define DM_TYPE_ELF		1
+#define DM_TYPE_NE		2
+#define DM_TYPE_PE		3
 
 #ifdef __i386__
 #ifdef REG_SP  /* Some Sun includes define this */
@@ -249,7 +281,6 @@ extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     unsigned int ebp,
 					     struct list_id * source);
 extern void DEBUG_ReadSymbolTable( const char * filename );
-extern int  DEBUG_LoadEntryPoints( const char * prefix );
 extern void DEBUG_AddLineNumber( struct name_hash * func, int line_num, 
 				 unsigned long offset );
 extern struct wine_locals *
@@ -270,7 +301,7 @@ extern BOOL DEBUG_GetLineNumberAddr( struct name_hash *, const int lineno,
 
 extern int DEBUG_SetLocalSymbolType(struct wine_locals * sym, 
 				    struct datatype * type);
-BOOL DEBUG_Normalize(struct name_hash * nh );
+extern BOOL DEBUG_Normalize(struct name_hash * nh );
 
   /* debugger/info.c */
 extern void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format );
@@ -309,6 +340,24 @@ extern int  DEBUG_GetSelectorType( WORD sel );
 extern int  DEBUG_IsSelectorSystem( WORD sel );
 #endif
 
+  /* debugger/module.c */
+extern int  DEBUG_LoadEntryPoints( const char * prefix );
+extern void DEBUG_LoadModule32( const char* name, DWORD base );
+extern DBG_MODULE* DEBUG_AddModule(const char* name, int type, 
+				   void* mod_addr, HMODULE hmod);
+extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, int type);
+extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, int type);
+extern DBG_MODULE* DEBUG_RegisterPEModule(HMODULE, u_long load_addr, const char* name);
+extern DBG_MODULE* DEBUG_RegisterELFModule(u_long load_addr, const char* name);
+extern int DEBUG_ProcessDeferredDebug(void);
+extern void DEBUG_InfoShare(void);
+
+  /* debugger/msc.c */
+extern int DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* nth, unsigned long nth_ofs);
+extern int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, void* nth, unsigned long nth_ofs);
+extern void DEBUG_InitCVDataTypes(void);
+extern int DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module);
+
   /* debugger/registers.c */
 extern void DEBUG_SetRegister( enum debug_regs reg, int val );
 extern int DEBUG_GetRegister( enum debug_regs reg );
@@ -329,13 +378,6 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 extern int DEBUG_ReadExecutableDbgInfo(void);
 extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, 
 			    int stablen, unsigned int strtaboff, int strtablen);
-
-  /* debugger/msc.c */
-extern int DEBUG_RegisterDebugInfo( HMODULE, const char *);
-extern int DEBUG_ProcessDeferredDebug(void);
-extern int DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, const char * name);
-extern void DEBUG_InfoShare(void);
-extern void DEBUG_InitCVDataTypes(void);
 
   /* debugger/types.c */
 extern int DEBUG_nchar;

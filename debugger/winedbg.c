@@ -9,7 +9,12 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include "debugger.h"
-#include "winbase.h"
+
+#include "thread.h"
+#include "process.h"
+#include "wingdi.h"
+#include "winuser.h"
+
 #include "winreg.h"
 #include "debugtools.h"
 #include "options.h"
@@ -20,29 +25,56 @@ HANDLE dbg_heap = 0;
 
 DEFAULT_DEBUG_CHANNEL(winedbg);
     
-WINE_DBG_PROCESS* DEBUG_CurrProcess = NULL;
-WINE_DBG_THREAD*  DEBUG_CurrThread = NULL;
-CONTEXT		  DEBUG_context;
+DBG_PROCESS*	DEBUG_CurrProcess = NULL;
+DBG_THREAD*	DEBUG_CurrThread = NULL;
+CONTEXT		DEBUG_context;
 
-static WINE_DBG_PROCESS* proc = NULL;
+static DBG_PROCESS* proc = NULL;
+static BOOL bBreakAllThreads = FALSE;
 
-static	WINE_DBG_PROCESS*	DEBUG_GetProcess(DWORD pid)
+static	BOOL DEBUG_Init(void)
 {
-    WINE_DBG_PROCESS*	p;
+    HKEY	hkey;
+    DWORD 	type;
+    DWORD	val;
+    DWORD 	count = sizeof(val);
+
+    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
+	if (!RegQueryValueExA(hkey, "BreakAllThreadsStartup", 0, &type, (LPSTR)&val, &count)) {
+	    bBreakAllThreads = val;
+	}
+	RegCloseKey(hkey);
+    }
+    return TRUE;
+}
+		       
+static WINE_EXCEPTION_FILTER(wine_dbg)
+{
+    DEBUG_ExternalDebugger();
+    fprintf(stderr, "\nwine_dbg: Exception %lx\n", GetExceptionCode());
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static	DBG_PROCESS*	DEBUG_GetProcess(DWORD pid)
+{
+    DBG_PROCESS*	p;
     
     for (p = proc; p; p = p->next)
 	if (p->pid == pid) break;
     return p;
 }
 
-static	WINE_DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
+static	DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
 {
-    WINE_DBG_PROCESS*	p = DBG_alloc(sizeof(WINE_DBG_PROCESS));
+    DBG_PROCESS*	p = DBG_alloc(sizeof(DBG_PROCESS));
     if (!p)
 	return NULL;
     p->handle = h;
     p->pid = pid;
     p->threads = NULL;
+    p->num_threads = 0;
+    p->modules = NULL;
+    p->next_index = 0;
 
     p->next = proc;
     p->prev = NULL;
@@ -51,9 +83,9 @@ static	WINE_DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
     return p;
 }
 
-static	void			DEBUG_DelThread(WINE_DBG_THREAD* p);
+static	void			DEBUG_DelThread(DBG_THREAD* p);
 
-static	void			DEBUG_DelProcess(WINE_DBG_PROCESS* p)
+static	void			DEBUG_DelProcess(DBG_PROCESS* p)
 {
     if (p->threads != NULL) {
 	ERR("Shouldn't happen\n");
@@ -138,19 +170,19 @@ static BOOL DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LP
     return FALSE;
 }
 
-static	WINE_DBG_THREAD*	DEBUG_GetThread(WINE_DBG_PROCESS* p, DWORD tid)
+static	DBG_THREAD*	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid)
 {
-    WINE_DBG_THREAD*	t;
+    DBG_THREAD*	t;
     
     for (t = p->threads; t; t = t->next)
 	if (t->tid == tid) break;
     return t;
 }
 
-static	WINE_DBG_THREAD*	DEBUG_AddThread(WINE_DBG_PROCESS* p, DWORD tid, 
-						HANDLE h, LPVOID start, LPVOID teb)
+static	DBG_THREAD*	DEBUG_AddThread(DBG_PROCESS* p, DWORD tid, 
+					HANDLE h, LPVOID start, LPVOID teb)
 {
-    WINE_DBG_THREAD*	t = DBG_alloc(sizeof(WINE_DBG_THREAD));
+    DBG_THREAD*	t = DBG_alloc(sizeof(DBG_THREAD));
     if (!t)
 	return NULL;
     
@@ -162,7 +194,8 @@ static	WINE_DBG_THREAD*	DEBUG_AddThread(WINE_DBG_PROCESS* p, DWORD tid,
     t->wait_for_first_exception = 0;
     t->dbg_exec_mode = EXEC_CONT;
     t->dbg_exec_count = 0;
-    
+
+    p->num_threads++;
     t->next = p->threads;
     t->prev = NULL;
     if (p->threads) p->threads->prev = t;
@@ -176,25 +209,28 @@ static	void			DEBUG_InitCurrThread(void)
     if (!Options.debug) return;
 
     if (DEBUG_CurrThread->start) {
-	DBG_VALUE	value;
-	
-	DEBUG_SetBreakpoints(FALSE);
-	value.type = NULL;
-	value.cookie = DV_TARGET;
-	value.addr.seg = 0;
-	value.addr.off = (DWORD)DEBUG_CurrThread->start;
-	DEBUG_AddBreakpoint(&value);
-	DEBUG_SetBreakpoints(TRUE);
+	if (DEBUG_CurrThread->process->num_threads == 1 || bBreakAllThreads) {
+	    DBG_VALUE	value;
+	    
+	    DEBUG_SetBreakpoints(FALSE);
+	    value.type = NULL;
+	    value.cookie = DV_TARGET;
+	    value.addr.seg = 0;
+	    value.addr.off = (DWORD)DEBUG_CurrThread->start;
+	    DEBUG_AddBreakpoint(&value);
+	    DEBUG_SetBreakpoints(TRUE);
+	}
     } else {
 	DEBUG_CurrThread->wait_for_first_exception = 1;
     }
 }
 
-static	void			DEBUG_DelThread(WINE_DBG_THREAD* t)
+static	void			DEBUG_DelThread(DBG_THREAD* t)
 {
     if (t->prev) t->prev->next = t->next;
     if (t->next) t->next->prev = t->prev;
     if (t == t->process->threads) t->process->threads = t->next;
+    t->process->num_threads--;
     DBG_free(t);
 }
 
@@ -281,42 +317,41 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
     return ret;
 }
 
-static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
+static	DWORD	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
 {
-    DEBUG_EVENT		de;
     char		buffer[256];
     DWORD		cont;
-
-    while (WaitForDebugEvent(&de, INFINITE)) {
+    
+    __TRY {
 	cont = 0L;
-
-	if ((DEBUG_CurrProcess = DEBUG_GetProcess(de.dwProcessId)) != NULL)
-	    DEBUG_CurrThread = DEBUG_GetThread(DEBUG_CurrProcess, de.dwThreadId);
+	
+	if ((DEBUG_CurrProcess = DEBUG_GetProcess(de->dwProcessId)) != NULL)
+	    DEBUG_CurrThread = DEBUG_GetThread(DEBUG_CurrProcess, de->dwThreadId);
 	else 
 	    DEBUG_CurrThread = NULL;
-
-	switch (de.dwDebugEventCode) {
+	
+	switch (de->dwDebugEventCode) {
 	case EXCEPTION_DEBUG_EVENT:
 	    if (!DEBUG_CurrThread) break;
-
+	    
 	    TRACE("%08lx:%08lx: exception code=%08lx %d\n", 
-		  de.dwProcessId, de.dwThreadId, 
-		  de.u.Exception.ExceptionRecord.ExceptionCode,
+		  de->dwProcessId, de->dwThreadId, 
+		  de->u.Exception.ExceptionRecord.ExceptionCode,
 		  DEBUG_CurrThread->wait_for_first_exception);
-
+	    
 	    DEBUG_context.ContextFlags = CONTEXT_CONTROL|CONTEXT_INTEGER|CONTEXT_SEGMENTS|CONTEXT_DEBUG_REGISTERS;
 	    if (!GetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context)) {
 		WARN("Can't get thread's context\n");
 		break;
 	    }
-
-	    TRACE("%p:%p\n", de.u.Exception.ExceptionRecord.ExceptionAddress, 
+	    
+	    TRACE("%p:%p\n", de->u.Exception.ExceptionRecord.ExceptionAddress, 
 		  (void*)DEBUG_context.Eip);
-
-	    cont = DEBUG_HandleException(&de.u.Exception.ExceptionRecord, 
-					 de.u.Exception.dwFirstChance, 
+	    
+	    cont = DEBUG_HandleException(&de->u.Exception.ExceptionRecord, 
+					 de->u.Exception.dwFirstChance, 
 					 DEBUG_CurrThread->wait_for_first_exception);
-
+	    
 	    if (DEBUG_CurrThread->wait_for_first_exception) {
 		DEBUG_CurrThread->wait_for_first_exception = 0;
 #ifdef __i386__
@@ -327,23 +362,23 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    break;
 	    
 	case CREATE_THREAD_DEBUG_EVENT:
-	    TRACE("%08lx:%08lx: create thread D @%p\n", de.dwProcessId, de.dwThreadId, 
-		  de.u.CreateThread.lpStartAddress);
+	    TRACE("%08lx:%08lx: create thread D @%p\n", de->dwProcessId, de->dwThreadId, 
+		  de->u.CreateThread.lpStartAddress);
 	    
 	    if (DEBUG_CurrProcess == NULL) {
 		ERR("Unknown process\n");
 		break;
 	    }
-	    if (DEBUG_GetThread(DEBUG_CurrProcess, de.dwThreadId) != NULL) {
+	    if (DEBUG_GetThread(DEBUG_CurrProcess, de->dwThreadId) != NULL) {
 		TRACE("Thread already listed, skipping\n");
 		break;
 	    }
-
+	    
 	    DEBUG_CurrThread = DEBUG_AddThread(DEBUG_CurrProcess, 
-					       de.dwThreadId, 
-					       de.u.CreateThread.hThread, 
-					       de.u.CreateThread.lpStartAddress, 
-					       de.u.CreateThread.lpThreadLocalBase);
+					       de->dwThreadId, 
+					       de->u.CreateThread.hThread, 
+					       de->u.CreateThread.lpStartAddress, 
+					       de->u.CreateThread.lpThreadLocalBase);
 	    if (!DEBUG_CurrThread) {
 		ERR("Couldn't create thread\n");
 		break;
@@ -353,34 +388,34 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    
 	case CREATE_PROCESS_DEBUG_EVENT:
 	    DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer), 
-                                           de.u.CreateProcessInfo.hProcess, 
-                                           de.u.LoadDll.lpImageName);
+                                           de->u.CreateProcessInfo.hProcess, 
+                                           de->u.LoadDll.lpImageName);
 	    
-	    /* FIXME unicode ? de.u.CreateProcessInfo.fUnicode */
+	    /* FIXME unicode ? de->u.CreateProcessInfo.fUnicode */
 	    TRACE("%08lx:%08lx: create process %s @%p\n", 
-		  de.dwProcessId, de.dwThreadId, 
+		  de->dwProcessId, de->dwThreadId, 
 		  buffer,
-		  de.u.CreateProcessInfo.lpStartAddress);
+		  de->u.CreateProcessInfo.lpStartAddress);
 	    
-	    if (DEBUG_GetProcess(de.dwProcessId) != NULL) {
+	    if (DEBUG_GetProcess(de->dwProcessId) != NULL) {
 		TRACE("Skipping already defined process\n");
 		break;
 	    }
-	    DEBUG_CurrProcess = DEBUG_AddProcess(de.dwProcessId,
-						 de.u.CreateProcessInfo.hProcess);
+	    DEBUG_CurrProcess = DEBUG_AddProcess(de->dwProcessId,
+						 de->u.CreateProcessInfo.hProcess);
 	    if (DEBUG_CurrProcess == NULL) {
 		ERR("Unknown process\n");
 		break;
 	    }
 	    
-	    TRACE("%08lx:%08lx: create thread I @%p\n", de.dwProcessId, de.dwThreadId, 
-		  de.u.CreateProcessInfo.lpStartAddress);
+	    TRACE("%08lx:%08lx: create thread I @%p\n", de->dwProcessId, de->dwThreadId, 
+		  de->u.CreateProcessInfo.lpStartAddress);
 	    
 	    DEBUG_CurrThread = DEBUG_AddThread(DEBUG_CurrProcess, 	
-					       de.dwThreadId, 
-					       de.u.CreateProcessInfo.hThread, 
-					       de.u.CreateProcessInfo.lpStartAddress, 
-					       de.u.CreateProcessInfo.lpThreadLocalBase);
+					       de->dwThreadId, 
+					       de->u.CreateProcessInfo.hThread, 
+					       de->u.CreateProcessInfo.lpStartAddress, 
+					       de->u.CreateProcessInfo.lpThreadLocalBase);
 	    if (!DEBUG_CurrThread) {
 		ERR("Couldn't create thread\n");
 		break;
@@ -390,15 +425,15 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    DEBUG_InitCurrThread();
 #ifdef _WE_SUPPORT_THE_STAB_TYPES_USED_BY_MINGW_TOO
 	    /* so far, process name is not set */
-	    DEBUG_RegisterDebugInfo((DWORD)de.u.CreateProcessInfo.lpBaseOfImage, 
+	    DEBUG_RegisterDebugInfo((DWORD)de->u.CreateProcessInfo.lpBaseOfImage, 
 				    "wine-exec");
 #endif
 	    break;
 	    
 	case EXIT_THREAD_DEBUG_EVENT:
 	    TRACE("%08lx:%08lx: exit thread (%ld)\n", 
-		  de.dwProcessId, de.dwThreadId, de.u.ExitThread.dwExitCode);
-
+		  de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
+	    
 	    if (DEBUG_CurrThread == NULL) {
 		ERR("Unknown thread\n");
 		break;
@@ -409,8 +444,8 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    
 	case EXIT_PROCESS_DEBUG_EVENT:
 	    TRACE("%08lx:%08lx: exit process (%ld)\n", 
-		  de.dwProcessId, de.dwThreadId, de.u.ExitProcess.dwExitCode);
-
+		  de->dwProcessId, de->dwThreadId, de->u.ExitProcess.dwExitCode);
+	    
 	    if (DEBUG_CurrProcess == NULL) {
 		ERR("Unknown process\n");
 		break;
@@ -428,16 +463,18 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 	    }
 	    DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer), 
                                            DEBUG_CurrThread->process->handle, 
-                                           de.u.LoadDll.lpImageName);
+                                           de->u.LoadDll.lpImageName);
 	    
-	    /* FIXME unicode: de.u.LoadDll.fUnicode */
-	    TRACE("%08lx:%08lx: loads DLL %s @%p\n", de.dwProcessId, de.dwThreadId, 
-		  buffer, de.u.LoadDll.lpBaseOfDll);
+	    /* FIXME unicode: de->u.LoadDll.fUnicode */
+	    TRACE("%08lx:%08lx: loads DLL %s @%p\n", de->dwProcessId, de->dwThreadId, 
+		  buffer, de->u.LoadDll.lpBaseOfDll);
+	    CharUpperA(buffer);
+	    DEBUG_LoadModule32( buffer, (DWORD)de->u.LoadDll.lpBaseOfDll);
 	    break;
 	    
 	case UNLOAD_DLL_DEBUG_EVENT:
-	    TRACE("%08lx:%08lx: unload DLL @%p\n", de.dwProcessId, de.dwThreadId, 
-		  de.u.UnloadDll.lpBaseOfDll);
+	    TRACE("%08lx:%08lx: unload DLL @%p\n", de->dwProcessId, de->dwThreadId, 
+		  de->u.UnloadDll.lpBaseOfDll);
 	    break;
 	    
 	case OUTPUT_DEBUG_STRING_EVENT:
@@ -445,27 +482,45 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 		ERR("Unknown thread\n");
 		break;
 	    }
-
+	    
 	    DEBUG_ProcessGetString(buffer, sizeof(buffer), 
 				   DEBUG_CurrThread->process->handle, 
-				   de.u.DebugString.lpDebugStringData);
+				   de->u.DebugString.lpDebugStringData);
 	    
-	    /* fixme unicode de.u.DebugString.fUnicode ? */
+	    /* fixme unicode de->u.DebugString.fUnicode ? */
 	    TRACE("%08lx:%08lx: output debug string (%s)\n", 
-		  de.dwProcessId, de.dwThreadId, 
+		  de->dwProcessId, de->dwThreadId, 
 		  buffer);
 	    break;
 	    
 	case RIP_EVENT:
 	    TRACE("%08lx:%08lx: rip error=%ld type=%ld\n", 
-		  de.dwProcessId, de.dwThreadId, de.u.RipInfo.dwError, 
-		  de.u.RipInfo.dwType);
+		  de->dwProcessId, de->dwThreadId, de->u.RipInfo.dwError, 
+		  de->u.RipInfo.dwType);
 	    break;
 	    
 	default:
 	    TRACE("%08lx:%08lx: unknown event (%ld)\n", 
-		  de.dwProcessId, de.dwThreadId, de.dwDebugEventCode);
+		  de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
 	}
+	
+    } __EXCEPT(wine_dbg) {
+	cont = 0;
+    }
+    __ENDTRY;
+
+    return cont;
+}
+
+static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
+{
+    DEBUG_EVENT		de;
+    DWORD		cont;
+
+    DEBUG_Init();
+
+    while (WaitForDebugEvent(&de, INFINITE)) {
+	cont = DEBUG_HandleDebugEvent(&de);
 	ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
     }
     
@@ -473,11 +528,6 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
     
     return 0L;
 }
-
-#include "thread.h"
-#include "process.h"
-#include "wingdi.h"
-#include "winuser.h"
 
 static	DWORD	CALLBACK	DEBUG_StarterFromPID(LPVOID pid)
 {

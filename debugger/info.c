@@ -344,16 +344,6 @@ void DEBUG_WalkClasses(void)
    DBG_free(cw.table);
 }
 
-void DEBUG_DumpModule(DWORD mod)
-{
-   fprintf(stderr, "No longer doing info module '0x%08lx'\n", mod);
-}
-
-void DEBUG_WalkModules(void)
-{
-   fprintf(stderr, "No longer walking modules list\n");
-}
-
 void DEBUG_DumpQueue(DWORD q)
 {
    fprintf(stderr, "No longer doing info queue '0x%08lx'\n", q);

@@ -15,7 +15,8 @@ C_SRCS = \
 	hash.c \
 	info.c \
 	memory.c \
-	msc.c	\
+	module.c \
+	msc.c \
 	registers.c \
 	source.c \
 	stabs.c	\

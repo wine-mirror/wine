@@ -36,9 +36,19 @@
 #include "peexe.h"
 #include "file.h"
 
+typedef struct {
+   IMAGE_DEBUG_DIRECTORY	dbgdir;
+   u_long			sect_ofs;
+   int				nsect;
+   char*			dbg_info;
+   int				dbg_size;
+} MSC_DBG_INFO;
+
+#define	MSC_INFO(module)	((MSC_DBG_INFO*)((module)->extra_info))
+
 /*
-    *dbg_filename must be at least MAX_PATHNAME_LEN bytes in size
-*/
+ * dbg_filename must be at least MAX_PATHNAME_LEN bytes in size
+ */
 static void LocateDebugInfoFile(char *filename, char *dbg_filename)
 {
     char	  *str1 = DBG_alloc(MAX_PATHNAME_LEN*10);
@@ -75,13 +85,6 @@ ok:
     DBG_free(str2);
     return;
 }
-/*
- * This is an index we use to keep track of the debug information
- * when we have multiple sources.  We use the same database to also
- * allow us to do an 'info shared' type of deal, and we use the index
- * to eliminate duplicates.
- */
-static int DEBUG_next_index = 0;
 
 union any_size
 {
@@ -690,30 +693,6 @@ struct codeview_linetab_hdr
 
 
 /*
- ********************************************************************
- */
-struct deferred_debug_info
-{
-	struct deferred_debug_info	* next;
-	char				* load_addr;
-	char				* module_name;
-	char				* dbg_info;
-	int				  dbg_size;
-        HMODULE                         module;
-	PIMAGE_DEBUG_DIRECTORY           dbgdir;
-        PIMAGE_SECTION_HEADER	          sectp;
-	int				  nsect;
-	short int			  dbg_index;			
-	char				  status;
-};
-
-#define DF_STATUS_NEW		0
-#define DF_STATUS_LOADED	1
-#define DF_STATUS_ERROR		2
-
-struct deferred_debug_info * dbglist = NULL;
-
-/*
  * A simple macro that tells us whether a given COFF symbol is a
  * function or not.
  */
@@ -1295,36 +1274,37 @@ DEBUG_InitCVDataTypes(void)
  * We don't fully process it here for performance reasons.
  */
 int
-DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
+DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs)
 {
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
-  int			  orig_size;
-  PIMAGE_DEBUG_DIRECTORY dbgptr;
-  u_long v_addr, size;
-  PIMAGE_NT_HEADERS	  nth  = PE_HEADER(hModule);
+  IMAGE_DEBUG_DIRECTORY   dbg;
+  u_long                  v_addr, size, orig_size;
+  PIMAGE_NT_HEADERS	  nth = (PIMAGE_NT_HEADERS)_nth;
 
-  size = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size;
-  if (size) {
+  orig_size = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size;
+  if (orig_size) {
     v_addr = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress;
-    dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
-    orig_size = size;
-    for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
+    for(size = orig_size; size >= sizeof(dbg); size -= sizeof(dbg))
     {
-      switch(dbgptr->Type)
+      if (!DEBUG_READ_MEM_VERBOSE((void*)(module->load_addr + v_addr), &dbg, sizeof(dbg))) continue;
+
+      switch(dbg.Type)
 	{
 	case IMAGE_DEBUG_TYPE_CODEVIEW:
 	case IMAGE_DEBUG_TYPE_MISC:
 	  has_codeview = TRUE;
 	  break;
 	}
+      v_addr += sizeof(dbg);
     }
 
-    size = orig_size;
-    dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
-    for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
+    v_addr = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress;
+    for(size = orig_size; size >= sizeof(dbg); size -= sizeof(dbg))
     {
-      switch(dbgptr->Type)
+      if (!DEBUG_READ_MEM_VERBOSE((void*)(module->load_addr + v_addr), &dbg, sizeof(dbg))) continue;
+
+      switch(dbg.Type)
 	{
 	case IMAGE_DEBUG_TYPE_COFF:
 	  /*
@@ -1352,22 +1332,14 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
 	   * it just points to itself, and we can ignore this.
 	   */
 
-
-
-
-
-
-          if(   (dbgptr->Type != IMAGE_DEBUG_TYPE_MISC) ||
-                (PE_HEADER(hModule)->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) != 0 )
+          if(   (dbg.Type != IMAGE_DEBUG_TYPE_MISC) ||
+                (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) != 0 )
             {
-                char                 fn[PATH_MAX];
-                int                  fd = -1;
-                DOS_FULL_NAME        full_name;
-                struct deferred_debug_info*      deefer = (struct deferred_debug_info *) DBG_alloc(sizeof(*deefer));
- 
-                deefer->module    = hModule;
-                deefer->load_addr = (char *)hModule;
- 
+                char            fn[PATH_MAX];
+                int             fd = -1;
+                DOS_FULL_NAME   full_name;
+		char*		dbg_info;
+
                 /*
                  * Read the important bits.  What we do after this depends
                  * upon the type, but this is always enough so we are able
@@ -1377,60 +1349,72 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
                  * the DataDirectory array's content. One its entry contains the *beloved*
                  * debug information. (Note the DataDirectory is mapped, not its content)
                  */
- 
-                 if (GetModuleFileNameA(hModule, fn, sizeof(fn)) > 0 &&
+		/* FIXME: the module->handle value is not usable in the debugger's process */
+		if (GetModuleFileNameA(module->handle, fn, sizeof(fn)) > 0 &&
                     DOSFS_GetFullName(fn, TRUE, &full_name) &&
                     (fd = open(full_name.long_name, O_RDONLY)) > 0)
-                {
-                    deefer->dbg_info = mmap(NULL, dbgptr->SizeOfData,
-                                            PROT_READ, MAP_PRIVATE, fd, dbgptr->PointerToRawData);
+		{
+                    dbg_info = mmap(NULL, dbg.SizeOfData,
+				    PROT_READ, MAP_PRIVATE, fd, dbg.PointerToRawData);
                     close(fd);
-                    if( deefer->dbg_info == (char *) 0xffffffff )
-                    {
-                        DBG_free(deefer);
-                        break;
-                    }
+                    if( dbg_info == (char *) 0xffffffff ) break;
                 }
                 else
                 {
-                    DBG_free(deefer);
-                    fprintf(stderr, " (not mapped: fn=%s, lfn=%s, fd=%d)", fn, full_name.long_name, fd);
+                    fprintf(stderr, " (not mapped: fn='%s', lfn='%s', fd=%d)\n", fn, full_name.long_name, fd);
                     break;
                 }
-                deefer->dbg_size = dbgptr->SizeOfData;
-                deefer->dbgdir = dbgptr;
-                deefer->next = dbglist;
-                deefer->status = DF_STATUS_NEW;
-                deefer->dbg_index = DEBUG_next_index;
-                deefer->module_name = DBG_strdup(module_name);
+		if (!(module->extra_info = DBG_alloc(sizeof(MSC_DBG_INFO))))
+		    break;
 
-                deefer->sectp = PE_SECTIONS(hModule);
-                deefer->nsect = PE_HEADER(hModule)->FileHeader.NumberOfSections;
-
-                dbglist = deefer;
+		MSC_INFO(module)->dbg_info = dbg_info;
+		MSC_INFO(module)->dbg_size = dbg.SizeOfData;
+                MSC_INFO(module)->dbgdir = dbg;
+                MSC_INFO(module)->sect_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
+		   nth->FileHeader.SizeOfOptionalHeader;
+                MSC_INFO(module)->nsect = nth->FileHeader.NumberOfSections;
             }
 	  break;
 #if 0
 	default:
 #endif
 	}
+      v_addr += sizeof(dbg);
     }
-    DEBUG_next_index++;
+    DEBUG_CurrProcess->next_index++;
   }
-  /* look for .stabs/.stabstr sections */
-  {
-    PIMAGE_SECTION_HEADER      pe_seg = PE_SECTIONS(hModule);
-    int i,stabsize=0,stabstrsize=0;
-    unsigned int stabs=0,stabstr=0;
-    
-    for (i=0;i<nth->FileHeader.NumberOfSections;i++) {
-      if (!strcasecmp(pe_seg[i].Name,".stab")) {
-	stabs = pe_seg[i].VirtualAddress;
-	stabsize = pe_seg[i].SizeOfRawData;
-      }
-      if (!strncasecmp(pe_seg[i].Name,".stabstr",8)) {
-	stabstr = pe_seg[i].VirtualAddress;
-	stabstrsize = pe_seg[i].SizeOfRawData;
+
+  return rtn;
+}
+
+/* look for stabs information in PE header (it's how mingw compiler provides its
+ * debugging information
+ */
+int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, void* _nth, unsigned long nth_ofs)
+{
+    IMAGE_SECTION_HEADER	pe_seg;
+    unsigned long		pe_seg_ofs;
+    int 		      	i, stabsize = 0, stabstrsize = 0;
+    unsigned int 		stabs = 0, stabstr = 0;
+    char			bufstr[256];
+    PIMAGE_NT_HEADERS		nth  = (PIMAGE_NT_HEADERS)_nth;
+
+    pe_seg_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
+	nth->FileHeader.SizeOfOptionalHeader;
+
+    for (i = 0; i < nth->FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
+      if (!DEBUG_READ_MEM_VERBOSE((void*)(module->load_addr + pe_seg_ofs), 
+				  &pe_seg, sizeof(pe_seg)) ||
+	  !DEBUG_READ_MEM_VERBOSE((void*)pe_seg.Name, bufstr, sizeof(bufstr)))
+	  {fprintf(stderr, "err3\n");continue;}
+      bufstr[sizeof(bufstr) - 1] = 0;
+
+      if (!strcasecmp(bufstr, ".stab")) {
+	stabs = pe_seg.VirtualAddress;
+	stabsize = pe_seg.SizeOfRawData;
+      } else if (!strncasecmp(bufstr, ".stabstr", 8)) {
+	stabstr = pe_seg.VirtualAddress;
+	stabstrsize = pe_seg.SizeOfRawData;
       }
     }
     if (stabstrsize && stabsize) {
@@ -1438,48 +1422,13 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
       /* Won't work currently, since MINGW32 uses some special typedefs
        * which we do not handle yet. Support for them is a bit difficult.
        */
-      DEBUG_ParseStabs(hModule,0,stabs,stabsize,stabstr,stabstrsize);
+       /* FIXME: load_addr is in a different address space... */
+      DEBUG_ParseStabs(module->load_addr, 0, stabs, stabsize, stabstr, stabstrsize);
 #endif
       fprintf(stderr,"(stabs not loaded)");
     }
-  }
-  return (rtn);
+    return TRUE;
 }
-
-/*
- * ELF modules are also entered into the list - this is so that we
- * can make 'info shared' types of displays possible.
- */
-int
-DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, const char * name)
-{
-  struct deferred_debug_info * deefer;
-
-  deefer = (struct deferred_debug_info *) DBG_alloc(sizeof(*deefer));
-  deefer->module = 0;
-  
-  /*
-   * Read the important bits.  What we do after this depends
-   * upon the type, but this is always enough so we are able
-   * to proceed if we know what we need to do next.
-   */
-  deefer->dbg_size = size;
-  deefer->dbg_info = (char *) NULL;
-  
-  deefer->load_addr = (char *) load_addr;
-  deefer->dbgdir = NULL;
-  deefer->next = dbglist;
-  deefer->status = DF_STATUS_LOADED;
-  deefer->dbg_index = DEBUG_next_index;
-  deefer->module_name = DBG_strdup(name);
-  dbglist = deefer;
-
-  DEBUG_next_index++;
-
-  return (TRUE);
-}
-
-
 
 /*
  * Process COFF debugging information embedded in a Win32 application.
@@ -1487,7 +1436,7 @@ DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, const char * name)
  */
 static
 int
-DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
+DEBUG_ProcessCoff(DBG_MODULE* module)
 {
   struct CoffAuxSection * aux;
   struct CoffDebug   * coff;
@@ -1512,7 +1461,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
   int		       rtn = FALSE;
   char		     * this_file = NULL;
 
-  coff = (struct CoffDebug *) deefer->dbg_info;
+  coff = (struct CoffDebug *) MSC_INFO(module)->dbg_info;
 
   coff_symbol = (struct CoffSymbol *) ((unsigned int) coff + coff->SymbolOffset);
   coff_linetab = (struct CoffLinenum *) ((unsigned int) coff + coff->LinenumberOffset);
@@ -1679,7 +1628,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	    }
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) (deefer->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) (module->load_addr + coff_sym->Value);
 
 	  if( curr_file->neps + 1 >= curr_file->neps_alloc )
 	    {
@@ -1719,7 +1668,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	    }
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) (deefer->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) (module->load_addr + coff_sym->Value);
 
 #if 0
 	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
@@ -1778,7 +1727,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	    }
 
 	  new_value.addr.seg = 0;
-	  new_value.addr.off = (int) (deefer->load_addr + coff_sym->Value);
+	  new_value.addr.off = (int) (module->load_addr + coff_sym->Value);
 
 #if 0
 	  fprintf(stderr, "%d: %x %s\n", i, new_value.addr.off, nampnt);
@@ -1860,7 +1809,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 		{
 		  if (i+1 >= coff_files[j].neps) break;
 		  DEBUG_GetSymbolAddr(coff_files[j].entries[i+1], &new_value.addr);
-		  if( (((unsigned int)deefer->load_addr +
+		  if( (((unsigned int)module->load_addr +
 		        linepnt->VirtualAddr) >= new_value.addr.off) )
 		  {
 		      i++;
@@ -1875,7 +1824,7 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      DEBUG_GetSymbolAddr(coff_files[j].entries[i], &new_value.addr);
 	      DEBUG_AddLineNumber(coff_files[j].entries[i], 
 				  linepnt->Linenum,
-				  (unsigned int) deefer->load_addr 
+				  (unsigned int) module->load_addr 
 				  + linepnt->VirtualAddr 
 				  - new_value.addr.off);
 	    }
@@ -2006,9 +1955,9 @@ leave:
 }
 
 static int
-DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
-			  char			     * cv_data,
-			  int			       size,
+DEBUG_SnarfCodeView(      DBG_MODULE	      	      * module,
+			  char			      * cv_data,
+			  int			        size,
 			  struct codeview_linetab_hdr * linetab)
 {
   struct name_hash	* curr_func = NULL;
@@ -2025,8 +1974,12 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
   struct name_hash	* thunk_sym = NULL;
 
   ptr.c = cv_data;
-  nsect = deefer->nsect;
-  sectp = deefer->sectp;
+  nsect = MSC_INFO(module)->nsect;
+  sectp = DBG_alloc(sizeof(*sectp) * nsect);
+  if (!sectp || 
+      !DEBUG_READ_MEM_VERBOSE(module->load_addr + MSC_INFO(module)->sect_ofs, 
+			      sectp, sizeof(*sectp) * nsect))
+     return FALSE;
 
   /*
    * Loop over the different types of records and whenever we
@@ -2075,7 +2028,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  memcpy(symname, sym->data.name, sym->data.namelen);
 	  new_value.addr.seg = 0;
 	  new_value.type = DEBUG_GetCVType(sym->data.symtype);
-	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	  new_value.addr.off = (unsigned int) module->load_addr + 
 	     sectp[sym->data.seg - 1].VirtualAddress + 
 	     sym->data.offset;
 	  new_value.cookie = DV_TARGET;
@@ -2105,7 +2058,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  memcpy(symname, sym->data32.name, sym->data32.namelen);
 	  new_value.addr.seg = 0;
 	  new_value.type = DEBUG_GetCVType(sym->data32.symtype);
-	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	  new_value.addr.off = (unsigned int) module->load_addr + 
 	     sectp[sym->data32.seg - 1].VirtualAddress + 
 	     sym->data32.offset;
 	  new_value.cookie = DV_TARGET;
@@ -2120,7 +2073,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  memcpy(symname, sym->thunk.name, sym->thunk.namelen);
 	  new_value.addr.seg = 0;
 	  new_value.type = NULL;
-	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	  new_value.addr.off = (unsigned int) module->load_addr + 
 	     sectp[sym->thunk.segment - 1].VirtualAddress + 
 	     sym->thunk.offset;
 	  new_value.cookie = DV_TARGET;
@@ -2136,7 +2089,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  memcpy(symname, sym->proc.name, sym->proc.namelen);
 	  new_value.addr.seg = 0;
 	  new_value.type = DEBUG_GetCVType(sym->proc.proctype);
-	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	  new_value.addr.off = (unsigned int) module->load_addr + 
 	     sectp[sym->proc.segment - 1].VirtualAddress + 
 	     sym->proc.offset;
 	  new_value.cookie = DV_TARGET;
@@ -2147,10 +2100,10 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   */
 	  for(i=0; linetab && linetab[i].linetab != NULL; i++)
 	    {
-	      if(     ((unsigned int) deefer->load_addr 
+	      if(     ((unsigned int) module->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
 		       + linetab[i].start <= new_value.addr.off)
-		  &&  ((unsigned int) deefer->load_addr 
+		  &&  ((unsigned int) module->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
 		       + linetab[i].end > new_value.addr.off) )
 		{
@@ -2202,7 +2155,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  memcpy(symname, sym->proc32.name, sym->proc32.namelen);
 	  new_value.addr.seg = 0;
 	  new_value.type = DEBUG_GetCVType(sym->proc32.proctype);
-	  new_value.addr.off = (unsigned int) deefer->load_addr + 
+	  new_value.addr.off = (unsigned int) module->load_addr + 
 	    sectp[sym->proc32.segment - 1].VirtualAddress + 
 	    sym->proc32.offset;
 	  new_value.cookie = DV_TARGET;
@@ -2213,10 +2166,10 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	   */
 	  for(i=0; linetab && linetab[i].linetab != NULL; i++)
 	    {
-	      if(     ((unsigned int) deefer->load_addr 
+	      if(     ((unsigned int) module->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
 		       + linetab[i].start <= new_value.addr.off)
-		  &&  ((unsigned int) deefer->load_addr 
+		  &&  ((unsigned int) module->load_addr 
 		       + sectp[linetab[i].segno - 1].VirtualAddress 
 		       + linetab[i].end > new_value.addr.off) )
 		{
@@ -2316,6 +2269,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
       DBG_free(linetab);
     }
 
+  DBG_free(sectp);
   return TRUE;
 }
 
@@ -2593,7 +2547,7 @@ static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols,
     }
 }
 
-int DEBUG_ProcessPDBFile( struct deferred_debug_info *deefer, char *full_filename )
+static int DEBUG_ProcessPDBFile( DBG_MODULE* module, char *full_filename )
 {
     char filename[MAX_PATHNAME_LEN];
     struct stat	statbuf;
@@ -2690,7 +2644,7 @@ int DEBUG_ProcessPDBFile( struct deferred_debug_info *deefer, char *full_filenam
      */
 
     if (      root->TimeDateStamp 
-         != ((struct CodeViewDebug *)deefer->dbg_info)->cv_timestamp ) 
+         != ((struct CodeViewDebug *)MSC_INFO(module)->dbg_info)->cv_timestamp ) 
     {
         fprintf(stderr, "-Wrong time stamp of .PDB file %s\n", filename);
         goto leave;
@@ -2719,7 +2673,7 @@ int DEBUG_ProcessPDBFile( struct deferred_debug_info *deefer, char *full_filenam
     modimage = pdb_read_file( image, toc, symbols.gsym_file );
     if ( modimage )
     {
-        DEBUG_SnarfCodeView( deefer, modimage, 
+        DEBUG_SnarfCodeView( module, modimage, 
                              toc->file[symbols.gsym_file].size, NULL );
         pdb_free( modimage );
     }
@@ -2762,7 +2716,7 @@ int DEBUG_ProcessPDBFile( struct deferred_debug_info *deefer, char *full_filenam
                 linetab = DEBUG_SnarfLinetab( modimage + symbol_size, lineno_size );
 
             if ( symbol_size )
-                DEBUG_SnarfCodeView( deefer, modimage + sizeof(DWORD),
+                DEBUG_SnarfCodeView( module, modimage + sizeof(DWORD),
                                      symbol_size - sizeof(DWORD), linetab );
 
             pdb_free( modimage );
@@ -2794,16 +2748,16 @@ int DEBUG_ProcessPDBFile( struct deferred_debug_info *deefer, char *full_filenam
 /*
  * Process DBG file which contains debug information.
  */
-/* static */
+static
 int
-DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
+DEBUG_ProcessDBGFile(DBG_MODULE* module, char * filename)
 {
   char			      * addr = (char *) 0xffffffff;
   char			      * codeview;
   struct CV4_DirHead	      * codeview_dir;
   struct CV4_DirEnt	      * codeview_dent;
   PIMAGE_DEBUG_DIRECTORY	dbghdr;
-  struct deferred_debug_info    deefer2;
+  DBG_MODULE			module2;
   int				fd = -1;
   int				i;
   int				j;
@@ -2847,7 +2801,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 
   pdbg = (PIMAGE_SEPARATE_DEBUG_HEADER) addr;
 
-  if( pdbg->TimeDateStamp != deefer->dbgdir->TimeDateStamp )
+  if( pdbg->TimeDateStamp != MSC_INFO(module)->dbgdir.TimeDateStamp )
     {
       fprintf(stderr, "Warning - %s has incorrect internal timestamp\n",
 	      dbg_file);
@@ -2877,12 +2831,12 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 		   * Dummy up a deferred debug header to handle the
 		   * COFF stuff embedded within the DBG file.
 		   */
-		  memset((char *) &deefer2, 0, sizeof(deefer2));
-		  deefer2.dbg_info = (addr + dbghdr->PointerToRawData);
-		  deefer2.dbg_size = dbghdr->SizeOfData;
-		  deefer2.load_addr = deefer->load_addr;
+		  memset((char *) &module2, 0, sizeof(module2));
+		  MSC_INFO(&module2)->dbg_info = (addr + dbghdr->PointerToRawData);
+		  MSC_INFO(&module2)->dbg_size = dbghdr->SizeOfData;
+		  module2.load_addr = module->load_addr;
 
-		  DEBUG_ProcessCoff(&deefer2);
+		  DEBUG_ProcessCoff(&module2);
 		  break;
 		case IMAGE_DEBUG_TYPE_CODEVIEW:
 		  /*
@@ -2950,7 +2904,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 			  /*
 			   * Now process the CV stuff.
 			   */
-			  DEBUG_SnarfCodeView(deefer, 
+			  DEBUG_SnarfCodeView(module, 
 					      codeview + codeview_dent->offset + sizeof(DWORD),
 					      codeview_dent->size - sizeof(DWORD),
 					      linetab);
@@ -2978,126 +2932,83 @@ leave:
 }
 
 int
-DEBUG_ProcessDeferredDebug(void)
+DEBUG_ProcessMSCDebugInfo(DBG_MODULE* module)
 {
-  struct deferred_debug_info * deefer;
   struct CodeViewDebug	     * cvd;
   struct MiscDebug	     * misc;
   char			     * filename;
-  int			       last_proc = -1;
-  int                          need_print =0;
   int			       sts;
-
-  for(deefer = dbglist; deefer; deefer = deefer->next)
-    {
-      if( deefer->status != DF_STATUS_NEW )
-	{
-	  continue;
-	}
-
-      if( last_proc != deefer->dbg_index )
-	{
-	  if (!need_print)
-	    {
-	      fprintf(stderr, "DeferredDebug for:");
-	      need_print=1;
-	    }
-	  fprintf(stderr, " %s",deefer->module_name);
-	  last_proc = deefer->dbg_index;
-	}
-
-      switch(deefer->dbgdir->Type)
-	{
-	case IMAGE_DEBUG_TYPE_COFF:
-	  /*
-	   * Standard COFF debug information that VC++ adds when you
-	   * use /debugtype:both with the linker.
-	   */
+  
+  switch (MSC_INFO(module)->dbgdir.Type)
+     {
+     case IMAGE_DEBUG_TYPE_COFF:
+	/*
+	 * Standard COFF debug information that VC++ adds when you
+	 * use /debugtype:both with the linker.
+	 */
 #if 0
-	  fprintf(stderr, "Processing COFF symbols...\n");
+	fprintf(stderr, "Processing COFF symbols...\n");
 #endif
-	  sts = DEBUG_ProcessCoff(deefer);
-	  break;
-	case IMAGE_DEBUG_TYPE_CODEVIEW:
-	  /*
-	   * This is a pointer to a PDB file of some sort.
-	   */
-	  cvd = (struct CodeViewDebug *) deefer->dbg_info;
-
-	  if( strcmp(cvd->cv_nbtype, "NB10") != 0 )
-	    {
+	sts = DEBUG_ProcessCoff(module);
+	break;
+     case IMAGE_DEBUG_TYPE_CODEVIEW:
+	/*
+	 * This is a pointer to a PDB file of some sort.
+	 */
+	cvd = (struct CodeViewDebug *) MSC_INFO(module)->dbg_info;
+	
+	if( strcmp(cvd->cv_nbtype, "NB10") != 0 )
+	   {
 	      /*
 	       * Whatever this is, we don't know how to deal with
 	       * it yet.
 	       */
 	      sts = FALSE;
 	      break;
-	    }
-	  sts = DEBUG_ProcessPDBFile(deefer, cvd->cv_name);
+	   }
+	sts = DEBUG_ProcessPDBFile(module, cvd->cv_name);
 #if 0
-	  fprintf(stderr, "Processing PDB file %s\n", cvd->cv_name);
+	fprintf(stderr, "Processing PDB file %s\n", cvd->cv_name);
 #endif
-	  break;
-	case IMAGE_DEBUG_TYPE_MISC:
-	  /*
-	   * A pointer to a .DBG file of some sort.  These files
-	   * can contain either CV4 or COFF information.  Open
-	   * the file, and try to do the right thing with it.
-	   */
-	  misc = (struct MiscDebug *) deefer->dbg_info;
-
-	  filename = strrchr((char *) &misc->Data, '.');
-
-	  /*
-	   * Ignore the file if it doesn't have a .DBG extension.
-	   */
-	  if(    (filename == NULL)
-	      || (    (strcmp(filename, ".dbg") != 0)
-	           && (strcmp(filename, ".DBG") != 0)) )
-	    {
-	       sts = FALSE;
-	       break;
-	    }
-
-	  filename = (char *) &misc->Data;
-
-	  /*
-	   * Do the dirty deed...
-	   */
-	  sts = DEBUG_ProcessDBGFile(deefer, filename);
-      
-	  break;
-	default:
-	  /*
-	   * We should never get here...
-	   */
-	   sts = FALSE;
-	  break;
-	}
-      deefer->status = (sts) ? DF_STATUS_LOADED : DF_STATUS_ERROR;
-
-    }
-  if(need_print)
-     fprintf(stderr, "\n");
-  return TRUE;
-
+	break;
+     case IMAGE_DEBUG_TYPE_MISC:
+	/*
+	 * A pointer to a .DBG file of some sort.  These files
+	 * can contain either CV4 or COFF information.  Open
+	 * the file, and try to do the right thing with it.
+	 */
+	misc = (struct MiscDebug *) MSC_INFO(module)->dbg_info;
+	
+	filename = strrchr((char *) &misc->Data, '.');
+	
+	/*
+	 * Ignore the file if it doesn't have a .DBG extension.
+	 */
+	if(    (filename == NULL)
+	       || (    (strcmp(filename, ".dbg") != 0)
+		       && (strcmp(filename, ".DBG") != 0)) )
+	   {
+	      sts = FALSE;
+	      break;
+	   }
+	
+	filename = (char *) &misc->Data;
+	
+	/*
+	 * Do the dirty deed...
+	 */
+	sts = DEBUG_ProcessDBGFile(module, filename);
+	
+	break;
+     default:
+	/*
+	 * We should never get here...
+	 */
+	sts = FALSE;
+	break;
+     }
+  return sts;
 }
 
-/***********************************************************************
- *           DEBUG_InfoShare
- *
- * Display shared libarary information.
- */
-void DEBUG_InfoShare(void)
-{
-  struct deferred_debug_info * deefer;
 
-  fprintf(stderr,"Address\t\tModule\tName\n");
-
-  for(deefer = dbglist; deefer; deefer = deefer->next)
-  {
-      fprintf(stderr,"0x%8.8x\t(%s)\t%s\n", (unsigned int) deefer->load_addr,
-              deefer->module ? "Win32" : "ELF", deefer->module_name);
-  }
-}
 
