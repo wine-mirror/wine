@@ -143,6 +143,8 @@ typedef struct
 	LPWSTR        sWorkDir;
 	LPWSTR        sDescription;
 	LPWSTR        sPathRel;
+
+	BOOL		bDirty;
 } IShellLinkImpl;
 
 #define _IShellLinkW_Offset ((int)(&(((IShellLinkImpl*)0)->lpvtblw)))
@@ -216,8 +218,13 @@ static HRESULT WINAPI IPersistFile_fnGetClassID(IPersistFile* iface, CLSID *pCla
 static HRESULT WINAPI IPersistFile_fnIsDirty(IPersistFile* iface)
 {
 	_ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface);
-	FIXME("(%p)\n",This);
-	return NOERROR;
+
+	TRACE("(%p)\n",This);
+
+	if (This->bDirty)
+	    return S_OK;
+
+	return S_FALSE;
 }
 static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFileName, DWORD dwMode)
 {
@@ -234,6 +241,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
             r = IPersistStream_Load(StreamThis, stm);
             ShellLink_UpdatePath(This->sPathRel, pszFileName, This->sWorkDir, &This->sPath);
             IStream_Release( stm );
+            This->bDirty = TRUE;
         }
 
         return r;
@@ -290,8 +298,12 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
         IStream_Release( stm );
 
         if( SUCCEEDED( r ) )
+	{
             StartLinkProcessor( pszFileName );
-        else
+
+            This->bDirty = TRUE;
+        }
+	else
         {
             DeleteFileW( pszFileName );
             WARN("Failed to create shortcut %s\n", debugstr_w(pszFileName) );
@@ -787,6 +799,7 @@ HRESULT WINAPI IShellLink_Constructor (
 	sl->lpvtblPersistFile = &pfvt;
 	sl->lpvtblPersistStream = &psvt;
 	sl->iShowCmd = SW_SHOWNORMAL;
+	sl->bDirty = FALSE;
 
 	TRACE("(%p)->()\n",sl);
 
@@ -1025,13 +1038,14 @@ static HRESULT WINAPI IShellLinkA_fnGetIDList(IShellLinkA * iface, LPITEMIDLIST 
 
 static HRESULT WINAPI IShellLinkA_fnSetIDList(IShellLinkA * iface, LPCITEMIDLIST pidl)
 {
-	ICOM_THIS(IShellLinkImpl, iface);
+    ICOM_THIS(IShellLinkImpl, iface);
 
-	TRACE("(%p)->(pidl=%p)\n",This, pidl);
+    TRACE("(%p)->(pidl=%p)\n",This, pidl);
 
-	if (This->pPidl)
-            ILFree(This->pPidl);
-	This->pPidl = ILClone (pidl);
+    if (This->pPidl)
+	ILFree(This->pPidl);
+    This->pPidl = ILClone (pidl);
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1061,6 +1075,8 @@ static HRESULT WINAPI IShellLinkA_fnSetDescription(IShellLinkA * iface, LPCSTR p
     This->sDescription = HEAP_strdupAtoW( GetProcessHeap(), 0, pszName);
     if ( !This->sDescription )
         return E_OUTOFMEMORY;
+
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1092,6 +1108,8 @@ static HRESULT WINAPI IShellLinkA_fnSetWorkingDirectory(IShellLinkA * iface, LPC
     if ( !This->sWorkDir )
         return E_OUTOFMEMORY;
 
+    This->bDirty = TRUE;
+
     return S_OK;
 }
 
@@ -1122,6 +1140,8 @@ static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA * iface, LPCSTR psz
     if( !This->sArgs )
         return E_OUTOFMEMORY;
 
+    This->bDirty = TRUE;
+
     return S_OK;
 }
 
@@ -1143,6 +1163,7 @@ static HRESULT WINAPI IShellLinkA_fnSetHotkey(IShellLinkA * iface, WORD wHotkey)
 	TRACE("(%p)->(hotkey=%x)\n",This, wHotkey);
 
 	This->wHotKey = wHotkey;
+	This->bDirty = TRUE;
 
 	return S_OK;
 }
@@ -1163,6 +1184,7 @@ static HRESULT WINAPI IShellLinkA_fnSetShowCmd(IShellLinkA * iface, INT iShowCmd
     TRACE("(%p) %d\n",This, iShowCmd);
 
     This->iShowCmd = iShowCmd;
+    This->bDirty = TRUE;
 
     return NOERROR;
 }
@@ -1194,7 +1216,9 @@ static HRESULT WINAPI IShellLinkA_fnSetIconLocation(IShellLinkA * iface, LPCSTR 
     This->sIcoPath = HEAP_strdupAtoW(GetProcessHeap(), 0, pszIconPath);
     if ( !This->sIcoPath )
         return E_OUTOFMEMORY;
+
     This->iIcoNdx = iIcon;
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1208,6 +1232,7 @@ static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA * iface, LPCSTR 
     if (This->sPathRel)
         HeapFree(GetProcessHeap(), 0, This->sPathRel);
     This->sPathRel = HEAP_strdupAtoW(GetProcessHeap(), 0, pszPathRel);
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1231,6 +1256,8 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
     This->sPath = HEAP_strdupAtoW(GetProcessHeap(), 0, pszFile);
     if( !This->sPath )
         return E_OUTOFMEMORY;
+
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1340,6 +1367,8 @@ static HRESULT WINAPI IShellLinkW_fnSetIDList(IShellLinkW * iface, LPCITEMIDLIST
     if( !This->pPidl )
         return E_FAIL;
 
+    This->bDirty = TRUE;
+
     return S_OK;
 }
 
@@ -1369,7 +1398,9 @@ static HRESULT WINAPI IShellLinkW_fnSetDescription(IShellLinkW * iface, LPCWSTR 
                                     (lstrlenW( pszName )+1)*sizeof(WCHAR) );
     if ( !This->sDescription )
         return E_OUTOFMEMORY;
+
     lstrcpyW( This->sDescription, pszName );
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1401,6 +1432,7 @@ static HRESULT WINAPI IShellLinkW_fnSetWorkingDirectory(IShellLinkW * iface, LPC
     if ( !This->sWorkDir )
         return E_OUTOFMEMORY;
     lstrcpyW( This->sWorkDir, pszDir );
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1432,6 +1464,7 @@ static HRESULT WINAPI IShellLinkW_fnSetArguments(IShellLinkW * iface, LPCWSTR ps
     if ( !This->sArgs )
         return E_OUTOFMEMORY;
     lstrcpyW( This->sArgs, pszArgs );
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1454,6 +1487,7 @@ static HRESULT WINAPI IShellLinkW_fnSetHotkey(IShellLinkW * iface, WORD wHotkey)
     TRACE("(%p)->(hotkey=%x)\n",This, wHotkey);
 
     This->wHotKey = wHotkey;
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1474,6 +1508,7 @@ static HRESULT WINAPI IShellLinkW_fnSetShowCmd(IShellLinkW * iface, INT iShowCmd
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
     This->iShowCmd = iShowCmd;
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1508,6 +1543,7 @@ static HRESULT WINAPI IShellLinkW_fnSetIconLocation(IShellLinkW * iface, LPCWSTR
     lstrcpyW( This->sIcoPath, pszIconPath );
 
     This->iIcoNdx = iIcon;
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1525,6 +1561,7 @@ static HRESULT WINAPI IShellLinkW_fnSetRelativePath(IShellLinkW * iface, LPCWSTR
     if ( !This->sPathRel )
         return E_OUTOFMEMORY;
     lstrcpyW( This->sPathRel, pszPathRel );
+    This->bDirty = TRUE;
 
     return S_OK;
 }
@@ -1550,7 +1587,9 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
                              (lstrlenW( pszFile )+1) * sizeof (WCHAR) );
     if ( !This->sPath )
         return E_OUTOFMEMORY;
+
     lstrcpyW( This->sPath, pszFile );
+    This->bDirty = TRUE;
 
     return S_OK;
 }
