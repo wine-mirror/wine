@@ -35,6 +35,7 @@
 #include "imagelist.h"
 #include "commctrl.h"
 #include "debugtools.h"
+#include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(imagelist)
 
@@ -1904,10 +1905,23 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 
 HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 {
+    HRESULT errCode;
+    ULONG ulRead;
+    ILHEAD ilHead;
+    HIMAGELIST himl;
+
+
     FIXME("empty stub!\n");
 
-
+    errCode = IStream_Read (pstm, &ilHead, sizeof(ILHEAD), &ulRead);
+    if (errCode != S_OK)
     return NULL;
+
+    FIXME("Magic: 0x%x\n", ilHead.usMagic);
+
+    himl = ImageList_Create (32, 32, ILD_NORMAL, 2, 2);
+
+    return himl;
 }
 
 
@@ -2390,13 +2404,13 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
 	/* copy images */
         BitBlt (hdcBitmap, 0, 0, nCopyCount * himl->cx, himl->cy,
                   hdcImageList, 0, 0, SRCCOPY);
-
+#if 0
 	/* delete 'empty' image space */
 	SetBkColor (hdcBitmap, RGB(255, 255, 255));
 	SetTextColor (hdcBitmap, RGB(0, 0, 0));
 	PatBlt (hdcBitmap,  nCopyCount * himl->cx, 0, 
 		  (nNewCount - nCopyCount) * himl->cx, himl->cy, BLACKNESS);
-
+#endif
 	DeleteObject (himl->hbmImage);
 	himl->hbmImage = hbmNewBitmap;
     }
@@ -2415,13 +2429,13 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
 	    /* copy images */
             BitBlt (hdcBitmap, 0, 0, nCopyCount * himl->cx, himl->cy,
                       hdcImageList, 0, 0, SRCCOPY);
-
+#if 0
 	    /* delete 'empty' image space */
 	    SetBkColor (hdcBitmap, RGB(255, 255, 255));
 	    SetTextColor (hdcBitmap, RGB(0, 0, 0));
             PatBlt (hdcBitmap,  nCopyCount * himl->cx, 0, 
 		      (nNewCount - nCopyCount) * himl->cx, himl->cy, BLACKNESS);
-
+#endif
             DeleteObject (himl->hbmMask);
             himl->hbmMask = hbmNewBitmap;
         }

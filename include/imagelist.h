@@ -30,5 +30,20 @@ struct _IMAGELIST
  
 typedef struct _IMAGELIST *HIMAGELIST;
 
+
+/* header used by ImageList_Read() and ImageList_Write() */
+
+typedef struct _ILHEAD
+{
+    USHORT usMagic;
+    USHORT usParam1;
+    INT    Param2;
+    INT    Param3;
+    INT    Param4;
+    INT    Param5;
+    INT    Param6;
+    INT    Param7;
+} ILHEAD;
+
 #endif  /* __WINE_IMAGELIST_H */
 
