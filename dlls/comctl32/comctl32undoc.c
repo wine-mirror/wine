@@ -93,6 +93,11 @@ DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lPar
     position.s.LowPart = 0;
     position.s.HighPart = 0;
 
+    /*
+     * Zero out our streamData
+     */
+    memset(&streamData,0,sizeof(STREAMDATA));
+
     errCode = IStream_Seek (pStream, position, STREAM_SEEK_CUR, &newPosition);
     if (errCode != S_OK)
 	return errCode;
@@ -104,7 +109,8 @@ DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lPar
     FIXME ("dwSize=%lu dwData2=%lu dwItems=%lu\n",
 	   streamData.dwSize, streamData.dwData2, streamData.dwItems);
 
-    if (lParam < sizeof(STREAMDATA) ||
+    if ( ulRead < sizeof(STREAMDATA) ||
+    lParam < sizeof(STREAMDATA) ||
 	streamData.dwSize < sizeof(STREAMDATA) ||
 	streamData.dwData2 < 1) {
 	errCode = E_FAIL;
