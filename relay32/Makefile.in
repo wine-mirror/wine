@@ -8,9 +8,7 @@ MODULE    = relay32
 C_SRCS = \
 	builtin32.c \
 	relay386.c \
-	snoop.c \
-	utthunk.c \
-	wowthunk.c
+	snoop.c
 
 all: $(MODULE).o
 

@@ -53,9 +53,7 @@ BOOL RELAY_Init(void)
     CALL32_CBClientEx_RetAddr = 
         PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
 #endif
-
-    /* Initialize thunking */
-    return THUNK_Init();
+    return TRUE;
 }
 
 /*
@@ -338,85 +336,3 @@ void RELAY_DebugCallTo16Ret( int ret_val )
             OFFSETOF(NtCurrentTeb()->cur_stack), ret_val);
     SYSLEVEL_CheckNotLevel( 2 );
 }
-
-
-/**********************************************************************
- *	     Catch    (KERNEL.55)
- *
- * Real prototype is:
- *   INT16 WINAPI Catch( LPCATCHBUF lpbuf );
- */
-void WINAPI Catch16( LPCATCHBUF lpbuf, CONTEXT86 *context )
-{
-    /* Note: we don't save the current ss, as the catch buffer is */
-    /* only 9 words long. Hopefully no one will have the silly    */
-    /* idea to change the current stack before calling Throw()... */
-
-    /* Windows uses:
-     * lpbuf[0] = ip
-     * lpbuf[1] = cs
-     * lpbuf[2] = sp
-     * lpbuf[3] = bp
-     * lpbuf[4] = si
-     * lpbuf[5] = di
-     * lpbuf[6] = ds
-     * lpbuf[7] = unused
-     * lpbuf[8] = ss
-     */
-
-    lpbuf[0] = LOWORD(EIP_reg(context));
-    lpbuf[1] = CS_reg(context);
-    /* Windows pushes 4 more words before saving sp */
-    lpbuf[2] = LOWORD(ESP_reg(context)) - 4 * sizeof(WORD);
-    lpbuf[3] = LOWORD(EBP_reg(context));
-    lpbuf[4] = LOWORD(ESI_reg(context));
-    lpbuf[5] = LOWORD(EDI_reg(context));
-    lpbuf[6] = DS_reg(context);
-    lpbuf[7] = 0;
-    lpbuf[8] = SS_reg(context);
-    AX_reg(context) = 0;  /* Return 0 */
-}
-
-
-/**********************************************************************
- *	     Throw    (KERNEL.56)
- *
- * Real prototype is:
- *   INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval );
- */
-void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
-{
-    STACK16FRAME *pFrame;
-    STACK32FRAME *frame32;
-    TEB *teb = NtCurrentTeb();
-
-    AX_reg(context) = retval;
-
-    /* Find the frame32 corresponding to the frame16 we are jumping to */
-    pFrame = THREAD_STACK16(teb);
-    frame32 = pFrame->frame32;
-    while (frame32 && frame32->frame16)
-    {
-        if (OFFSETOF(frame32->frame16) < OFFSETOF(teb->cur_stack))
-            break;  /* Something strange is going on */
-        if (OFFSETOF(frame32->frame16) > lpbuf[2])
-        {
-            /* We found the right frame */
-            pFrame->frame32 = frame32;
-            break;
-        }
-        frame32 = ((STACK16FRAME *)PTR_SEG_TO_LIN(frame32->frame16))->frame32;
-    }
-
-    EIP_reg(context) = lpbuf[0];
-    CS_reg(context)  = lpbuf[1];
-    ESP_reg(context) = lpbuf[2] + 4 * sizeof(WORD) - sizeof(WORD) /*extra arg*/;
-    EBP_reg(context) = lpbuf[3];
-    ESI_reg(context) = lpbuf[4];
-    EDI_reg(context) = lpbuf[5];
-    DS_reg(context)  = lpbuf[6];
-
-    if (lpbuf[8] != SS_reg(context))
-        ERR("Switching stack segment with Throw() not supported; expect crash now\n" );
-}
-

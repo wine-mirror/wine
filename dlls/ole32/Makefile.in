@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = ole32
 SOVERSION = 1.0
 ALTNAMES  = ole2 ole2nls ole2conv ole2prox ole2thk storage compobj
-IMPORTS   = rpcrt4
+IMPORTS   = rpcrt4 kernel32
 
 C_SRCS = \
 	antimoniker.c \

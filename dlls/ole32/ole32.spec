@@ -1,6 +1,8 @@
 name	ole32
 type	win32
+
 import  rpcrt4
+import	kernel32
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED
   2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID

@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = w32skrnl
 SOVERSION = 1.0
 ALTNAMES  = w32sys win32s16
+IMPORTS   = kernel32
 
 C_SRCS = \
 	w32skernel.c \

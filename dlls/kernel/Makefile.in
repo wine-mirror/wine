@@ -8,8 +8,11 @@ ALTNAMES  = comm kernel system toolhelp windebug win87em wprocs
 
 C_SRCS = \
 	kernel_main.c \
+	thunk.c \
+	utthunk.c \
 	win87em.c \
-	windebug.c
+	windebug.c \
+	wowthunk.c
 
 RC_SRCS = \
 	locale_rc.rc

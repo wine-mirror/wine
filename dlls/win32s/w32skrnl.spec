@@ -1,6 +1,8 @@
 name	w32skrnl
 type	win32
 
+import	kernel32.dll
+
 1 stub _kSetEnvironmentVariable@8
 2 stub _SzFromImte@4
 3 stdcall GetCurrentTask32() GetCurrentTask

@@ -23,7 +23,6 @@ C_SRCS = \
 	toolhelp.c \
 	tweak.c \
 	version.c \
-	w32scomb.c \
 	wsprintf.c
 
 GLUE = printdrv.c

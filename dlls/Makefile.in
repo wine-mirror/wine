@@ -388,7 +388,7 @@ ddraw/libddraw.so: libx11drv.so
 dplayx/libdplayx.so: libole32.so
 dsound/libdsound.so: libwinmm.so
 msvideo/libmsvfw32.so: libwinmm.so
-ole32/libole32.so: librpcrt4.so
+ole32/libole32.so: librpcrt4.so libkernel32.so
 oleaut32/liboleaut32.so: libole32.so libcomctl32.so
 olecli/libolecli32.so: libolesvr32.so libole32.so
 olepro32/libolepro32.so: liboleaut32.so libole32.so
@@ -398,6 +398,7 @@ shfolder/libshfolder.so: libshell32.so
 shlwapi/libshlwapi.so: libshell32.so
 urlmon/liburlmon.so: libole32.so
 version/libversion.so: liblz32.so
+win32s/libw32skrnl.so: libkernel32.so
 winmm/joystick/libjoystick.drv.so: libwinmm.so
 winmm/mcianim/libmcianim.drv.so: libwinmm.so
 winmm/mciavi/libmciavi.drv.so: libwinmm.so

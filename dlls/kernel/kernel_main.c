@@ -16,6 +16,8 @@
 #include "global.h"
 
 extern void CODEPAGE_Init(void);
+extern BOOL THUNK_Init(void);
+
 
 /***********************************************************************
  *           KERNEL process initialisation routine
@@ -26,6 +28,9 @@ static BOOL process_attach(void)
 
     /* Setup codepage info */
     CODEPAGE_Init();
+
+    /* Initialize thunking */
+    if (!THUNK_Init()) return FALSE;
 
     /* Initialize DOS memory */
     if (!DOSMEM_Init(0)) return FALSE;

@@ -9,8 +9,6 @@
 
 #include "windef.h"
 
-struct _PDB;
-
 struct ThunkDataCommon
 {
     char                   magic[4];         /* 00 */
@@ -100,7 +98,7 @@ struct ThunkDataSL
 struct SLTargetDB
 {
      struct SLTargetDB *   next;
-     struct _PDB *         process;
+     DWORD                 process;
      DWORD *               targetTable;
 };
 
