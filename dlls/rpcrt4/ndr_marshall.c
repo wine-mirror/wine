@@ -42,6 +42,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define BUFFER_PARANOIA 40
 
+#if defined(__i386__)
+  #define LITTLE_ENDIAN_32_WRITE(pchar, word32) \
+    (*((UINT32 *)(pchar)) = (word32))
+
+  #define LITTLE_ENDIAN_32_READ(pchar) \
+    (*((UINT32 *)(pchar)))
+#else
+  /* these would work for i386 too, but less efficient */
+  #define LITTLE_ENDIAN_32_WRITE(pchar, word32) \
+    (*(pchar)     = LOBYTE(LOWORD(word32)), \
+     *((pchar)+1) = HIBYTE(LOWORD(word32)), \
+     *((pchar)+2) = LOBYTE(HIWORD(word32)), \
+     *((pchar)+3) = HIBYTE(HIWORD(word32)), \
+     (word32))
+
+  #define LITTLE_ENDIAN_32_READ(pchar) \
+    (MAKELONG( \
+      MAKEWORD(*(pchar), *((pchar)+1)) \
+      MAKEWORD(*((pchar)+2), *((pchar)+3)))
+#endif
+
 /***********************************************************************
  *            NdrConformantStringMarshall [RPCRT4.@]
  */
@@ -59,9 +80,9 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
     /* in DCE terminology this is a Conformant Varying String */
     c = pStubMsg->Buffer;
     memset(c, 0, 12);
-    *((UINT32 *)c) = len + 1;   /* max length: strlen + 1 (for '\0') */
-    c += 8;                     /* offset: 0 */
-    *((UINT32 *)c) = len + 1;   /* actual length: (same) */
+    LITTLE_ENDIAN_32_WRITE(c, len + 1); /* max length: strlen + 1 (for '\0') */
+    c += 8;                             /* offset: 0 */
+    LITTLE_ENDIAN_32_WRITE(c, len + 1); /* actual length: (same) */
     c += 4;
     for (i = 0; i <= len; i++)
       *(c++) = *(pszMessage++); /* copy the string itself into the remaining space */
