@@ -238,7 +238,7 @@ static const char *wodPlayerCmdString[] = {
  *
  * Low level device opening (from values stored in ossdev)
  */
-static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
+static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
 {
     int fd, val, err;
 
@@ -258,38 +258,42 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
     }
 
     /* First size and stereo then samplerate */
+    err=MMSYSERR_NOERROR;
     if (ossdev->format)
     {
         val = ossdev->format;
-        ioctl(fd, SNDCTL_DSP_SETFMT, &val);
+        ioctl(fd, SNDCTL_DSP_SETFMT, &ossdev->format);
         if (val != ossdev->format) {
-            TRACE("Can't set format to %d (returned %d)\n", ossdev->format, val);
+            TRACE("Can't set format to %d (returned %d)\n", val, ossdev->format);
             err=WAVERR_BADFORMAT;
-            goto error;
+            if (strict_format)
+                goto error;
         }
     }
     if (ossdev->stereo)
     {
         val = ossdev->stereo;
-        ioctl(fd, SNDCTL_DSP_STEREO, &val);
+        ioctl(fd, SNDCTL_DSP_STEREO, &ossdev->stereo);
         if (val != ossdev->stereo) {
-            TRACE("Can't set stereo to %u (returned %d)\n", ossdev->stereo, val);
+            TRACE("Can't set stereo to %u (returned %d)\n", val, ossdev->stereo);
             err=WAVERR_BADFORMAT;
-            goto error;
+            if (strict_format)
+                goto error;
         }
     }
     if (ossdev->sample_rate)
     {
         val = ossdev->sample_rate;
-        ioctl(fd, SNDCTL_DSP_SPEED, &val);
+        ioctl(fd, SNDCTL_DSP_SPEED, &ossdev->sample_rate);
         if (!NEAR_MATCH(val, ossdev->sample_rate)) {
-            TRACE("Can't set sample_rate to %u (returned %d)\n", ossdev->sample_rate, val);
+            TRACE("Can't set sample_rate to %u (returned %d)\n", val, ossdev->sample_rate);
             err=WAVERR_BADFORMAT;
-            goto error;
+            if (strict_format)
+                goto error;
         }
     }
     ossdev->fd = fd;
-    return MMSYSERR_NOERROR;
+    return err;
 
 error:
     close(fd);
@@ -303,8 +307,9 @@ error:
  * open the device for both waveout and wavein streams...
  * this is hackish, but it's the way OSS interface is done...
  */
-static DWORD	OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
-                               int* frag, int sample_rate, int stereo, int fmt)
+static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
+                            int* frag, int strict_format,
+                            int sample_rate, int stereo, int fmt)
 {
     DWORD       ret;
 
@@ -323,7 +328,7 @@ static DWORD	OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
         ossdev->open_access = req_access;
         ossdev->owner_tid = GetCurrentThreadId();
 
-        if ((ret = OSS_RawOpenDevice(ossdev, frag)) != MMSYSERR_NOERROR) return ret;
+        if ((ret = OSS_RawOpenDevice(ossdev,strict_format)) != MMSYSERR_NOERROR) return ret;
     }
     else
     {
@@ -395,7 +400,7 @@ static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
     }
     TRACE("Changing fd from %d to ", ossdev->fd);
     close(ossdev->fd);
-    ret = OSS_RawOpenDevice(ossdev, &ossdev->audio_fragment);
+    ret = OSS_RawOpenDevice(ossdev, 1);
     TRACE("%d\n", ossdev->fd);
     return ret;
 }
@@ -414,23 +419,23 @@ static BOOL     OSS_WaveOutInit(OSS_DEVICE* ossdev)
     int                 caps;
     int                 mask;
 
-    if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0, 0, 0) != 0) return FALSE;
+    if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0, 0, 0, 0) != 0) return FALSE;
 
     memset(&ossdev->out_caps, 0, sizeof(ossdev->out_caps));
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
-    /* FIXME: some programs compare this string against the content of the registry
-     * for MM drivers. The names have to match in order for the program to work
-     * (e.g. MS win9x mplayer.exe)
+    /* FIXME: some programs compare this string against the content of the
+     * registry for MM drivers. The names have to match in order for the
+     * program to work (e.g. MS win9x mplayer.exe)
      */
 #ifdef EMULATE_SB16
     ossdev->out_caps.wMid = 0x0002;
     ossdev->out_caps.wPid = 0x0104;
     strcpy(ossdev->out_caps.szPname, "SB16 Wave Out");
 #else
-    ossdev->out_caps.wMid = 0x00FF; 	/* Manufac ID */
-    ossdev->out_caps.wPid = 0x0001; 	/* Product ID */
+    ossdev->out_caps.wMid = 0x00FF; /* Manufac ID */
+    ossdev->out_caps.wPid = 0x0001; /* Product ID */
     /*    strcpy(ossdev->out_caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
     strcpy(ossdev->out_caps.szPname, "CS4236/37/38");
 #endif
@@ -516,7 +521,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     int                 caps;
     int                 mask;
 
-    if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0, 0, 0) != 0) return FALSE;
+    if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0, 0, 0, 0) != 0) return FALSE;
 
     memset(&ossdev->in_caps, 0, sizeof(ossdev->in_caps));
 
@@ -598,7 +603,7 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 {
     int 	caps;
 
-    if (OSS_OpenDevice(ossdev, O_RDWR, NULL, 0, 0, 0) != 0) return;
+    if (OSS_OpenDevice(ossdev, O_RDWR, NULL, 0, 0, 0, 0) != 0) return;
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0)
     {
 	ossdev->full_duplex = (caps & DSP_CAP_DUPLEX);
@@ -1320,10 +1325,24 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
      * otherwise mmap() will fail (at least under Linux) */
     ret = OSS_OpenDevice(wwo->ossdev,
                          (dwFlags & WAVE_DIRECTSOUND) ? O_RDWR : O_WRONLY,
-                         &audio_fragment, lpDesc->lpFormat->nSamplesPerSec,
+                         &audio_fragment,
+                         (dwFlags & WAVE_DIRECTSOUND) ? 0 : 1,
+                         lpDesc->lpFormat->nSamplesPerSec,
                          (lpDesc->lpFormat->nChannels > 1) ? 1 : 0,
                          (lpDesc->lpFormat->wBitsPerSample == 16)
                              ? AFMT_S16_LE : AFMT_U8);
+    if ((ret==WAVERR_BADFORMAT) && (dwFlags & WAVE_DIRECTSOUND)) {
+        lpDesc->lpFormat->nSamplesPerSec=wwo->ossdev->sample_rate;
+        lpDesc->lpFormat->nChannels=(wwo->ossdev->stereo ? 2 : 1);
+        lpDesc->lpFormat->wBitsPerSample=(wwo->ossdev->format == AFMT_U8 ? 8 : 16);
+        lpDesc->lpFormat->nBlockAlign=lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
+        lpDesc->lpFormat->nAvgBytesPerSec=lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
+        ret=MMSYSERR_NOERROR;
+        TRACE("OSS_OpenDevice returned this format: %ldx%dx%d\n",
+              lpDesc->lpFormat->nSamplesPerSec,
+              lpDesc->lpFormat->wBitsPerSample,
+              lpDesc->lpFormat->nChannels);
+    }
     if (ret != 0) return ret;
     wwo->state = WINE_WS_STOPPED;
 
@@ -2486,6 +2505,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* 15 fragments max, 2^10 = 1024 bytes per fragment */
     audio_fragment = 0x000F000A;
     ret = OSS_OpenDevice(wwi->ossdev, O_RDONLY, &audio_fragment,
+                         1,
                          lpDesc->lpFormat->nSamplesPerSec,
                          (lpDesc->lpFormat->nChannels > 1) ? 1 : 0,
                          (lpDesc->lpFormat->wBitsPerSample == 16)
