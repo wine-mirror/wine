@@ -4891,7 +4891,9 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   descr.height    = lines;
   descr.useShm    = FALSE;
   descr.dibpitch  = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
+  X11DRV_DIB_Lock(bmp, DIB_Status_GdiMod, FALSE);
   result = X11DRV_DIB_SetImageBits( &descr );
+  X11DRV_DIB_Unlock(bmp, TRUE);
 
   if (descr.colorMap) HeapFree(GetProcessHeap(), 0, descr.colorMap);
 
@@ -5009,7 +5011,9 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.dibpitch = dib ? (dib->dibSection.dsBm.bmWidthBytes)
 		       : (((descr.infoWidth * descr.infoBpp + 31) &~31) / 8);
 
+  X11DRV_DIB_Lock(bmp, DIB_Status_GdiMod, FALSE);
   X11DRV_DIB_GetImageBits( &descr );
+  X11DRV_DIB_Unlock(bmp, TRUE);
 
   if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
       info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(
@@ -5646,7 +5650,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   INT effHeight, totalSize;
   BITMAP bm;
   LPVOID mapBits = NULL;
-  
+
   TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
 	bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
 	bi->biSizeImage, bi->biClrUsed, usage == DIB_PAL_COLORS? "PAL" : "RGB");
