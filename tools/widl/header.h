@@ -40,5 +40,6 @@ extern void write_typedef(type_t *type, var_t *names);
 extern void write_expr(FILE *h, expr_t *e);
 extern void write_constdef(var_t *v);
 extern void write_externdef(var_t *v);
+extern void write_library(char *name, attr_t *attr);
 
 #endif
