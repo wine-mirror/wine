@@ -2242,10 +2242,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             glEnable(GL_DEPTH_TEST);
             checkGLcall("glEnable GL_DEPTH_TEST");
             break;
-
         case D3DZB_USEW:
+            glEnable(GL_DEPTH_TEST);
+            checkGLcall("glEnable GL_DEPTH_TEST");
+            FIXME("W buffer is not well handled\n");
+            break;
         default:
-            FIXME("Unrecognized/Unhandled D3DZBUFFERTYPE value %ld\n", Value);
+            FIXME("Unrecognized D3DZBUFFERTYPE value %ld\n", Value);
         }
         break;
 
