@@ -3,3 +3,4 @@ shdocvw.dll
 shdocvw.dll.dbg.c
 shdocvw.spec.c
 shdocvw.spec.def
+version.res

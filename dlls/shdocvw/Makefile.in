@@ -19,6 +19,8 @@ C_SRCS = \
 	shdocvw_main.c \
 	webbrowser.c
 
+RC_SRCS = version.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

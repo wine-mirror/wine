@@ -13,6 +13,8 @@ C_SRCS = \
 	service.c \
 	socket.c
 
+RC_SRCS = version.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

@@ -16,6 +16,8 @@ C_SRCS = \
 	async.c \
 	socket.c
 
+RC_SRCS = version.rc
+
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@

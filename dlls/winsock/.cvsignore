@@ -1,4 +1,5 @@
 Makefile
+version.res
 winsock.spec.c
 ws2_32.dll.dbg.c
 ws2_32.spec.c
