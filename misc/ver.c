@@ -1383,10 +1383,11 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		    xs = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
 		    TRACE(ver,"->%s\n",xs);
 		    HeapFree(GetProcessHeap(),0,xs);
+
+		    /* This is a leak.  */
+		    b = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
 		} else
 		    TRACE(ver,"->%p\n",b);
-		/* This is a leak.  */
-		b = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
 	} else {
 		struct	dbA	*db;
 		b=_find_dataA(block,s,*(WORD*)block);
