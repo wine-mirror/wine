@@ -879,3 +879,19 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	}
 	return TRUE;
 }
+
+/*************************************************************************
+ * DllInstall         [SHELL32.202]
+ *
+ * PARAMETERS
+ *   
+ *    BOOL bInstall - TRUE for install, FALSE for uninstall
+ *    LPCWSTR pszCmdLine - command line (unused by shell32?)
+ */
+
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
+{
+   FIXME_(shell)("(%s, %s): stub!\n", bInstall ? "TRUE":"FALSE", debugstr_w(cmdline));
+
+   return S_OK;		/* indicate success */
+}

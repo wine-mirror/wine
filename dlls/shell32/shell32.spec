@@ -392,3 +392,4 @@ init	Shell32LibMain
 
 1224 stdcall SHFileOperationA (ptr) SHFileOperationA # exported by name
 1225 stdcall SHFileOperationW (ptr) SHFileOperationW # exported by name
+1226 stdcall DllInstall (long wstr) DllInstall # win98:202
