@@ -70,4 +70,38 @@ extern void msvcrt_init_args(void);
 extern void msvcrt_free_args(void);
 extern void msvcrt_init_vtables(void);
 
+/* run-time error codes */
+#define _RT_STACK       0
+#define _RT_NULLPTR     1
+#define _RT_FLOAT       2
+#define _RT_INTDIV      3
+#define _RT_EXECMEM     5
+#define _RT_EXECFORM    6
+#define _RT_EXECENV     7
+#define _RT_SPACEARG    8
+#define _RT_SPACEENV    9
+#define _RT_ABORT       10
+#define _RT_NPTR        12
+#define _RT_FPTR        13
+#define _RT_BREAK       14
+#define _RT_INT         15
+#define _RT_THREAD      16
+#define _RT_LOCK        17
+#define _RT_HEAP        18
+#define _RT_OPENCON     19
+#define _RT_QWIN        20
+#define _RT_NOMAIN      21
+#define _RT_NONCONT     22
+#define _RT_INVALDISP   23
+#define _RT_ONEXIT      24
+#define _RT_PUREVIRT    25
+#define _RT_STDIOINIT   26
+#define _RT_LOWIOINIT   27
+#define _RT_HEAPINIT    28
+#define _RT_DOMAIN      120
+#define _RT_SING        121
+#define _RT_TLOSS       122
+#define _RT_CRNL        252
+#define _RT_BANNER      255
+
 #endif /* __WINE_MSVCRT_H */

@@ -46,8 +46,8 @@ MSVCRT_thread_data *msvcrt_get_thread_data(void)
     if (!(ptr = TlsGetValue( MSVCRT_tls_index )))
     {
         if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptr) )))
-            MSVCRT__amsg_exit(16);
-        if (!TlsSetValue( MSVCRT_tls_index, ptr )) MSVCRT__amsg_exit(16);
+            MSVCRT__amsg_exit( _RT_THREAD );
+        if (!TlsSetValue( MSVCRT_tls_index, ptr )) MSVCRT__amsg_exit( _RT_THREAD );
     }
     SetLastError( err );
     return ptr;
