@@ -1136,6 +1136,8 @@ static void BuildCallFrom32Regs( FILE *outfile )
  */
 void BuildRelays16( FILE *outfile )
 {
+    char buffer[1024];
+
     /* File header */
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
@@ -1144,7 +1146,6 @@ void BuildRelays16( FILE *outfile )
 #ifdef USE_STABS
     if (output_file_name)
     {
-        char buffer[1024];
         getcwd(buffer, sizeof(buffer));
         fprintf( outfile, "\t.file\t\"%s\"\n", output_file_name );
 
@@ -1197,6 +1198,15 @@ void BuildRelays16( FILE *outfile )
 #ifdef USE_STABS
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
     fprintf( outfile, ".Letext:\n");
+
+    /* Some versions of gdb need to have the filename data for
+       each section, so output it again for the data section. */
+    if (output_file_name)
+    {
+        fprintf( outfile, ".stabs \"%s/\",100,0,0,Data_Start\n", buffer);
+        fprintf( outfile, ".stabs \"%s\",100,0,0,Data_Start\n", output_file_name );
+        fprintf( outfile, "Data_Start:\n\n" );
+    }
 #endif
 
     /* The whole Call16_Ret segment must lie within the .data section */
