@@ -132,6 +132,7 @@ typedef struct
 
 #define IS_STRING_ITEM(flags) (MENU_ITEM_TYPE ((flags)) == MF_STRING)
 #define IS_BITMAP_ITEM(flags) (MENU_ITEM_TYPE ((flags)) == MF_BITMAP)
+#define IS_MAGIC_ITEM(text)   (LOWORD((int)text)<12)
 
 #define IS_SYSTEM_MENU(menu)  \
 	(!((menu)->wFlags & MF_POPUP) && (menu)->wFlags & MF_SYSMENU)
@@ -860,7 +861,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	HBITMAP resBmp = 0;
 
 	/* Check if there is a magic menu item associated with this item */
-	if((LOWORD((int)lpitem->text))<12)
+	if (IS_MAGIC_ITEM(lpitem->text))
 	{
 	    resBmp = MENU_LoadMagicItem((int)lpitem->text, (lpitem->fType & MF_HILITE),
 					lpitem->dwItemData);
@@ -1203,24 +1204,22 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     {
 	if(TWEAK_WineLook == WIN98_LOOK)
 	{
-	    if(menuBar)
+            if(menuBar) {
 		SetTextColor(hdc, GetSysColor(COLOR_MENUTEXT));
-	    else
-	    {
+                SetBkColor(hdc, GetSysColor(COLOR_MENU));
+	    } else {
 		if(lpitem->fState & MF_GRAYED)
 		    SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 		else
 		    SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+                SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
 	    }
-	    SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
 	}
 	else /* Not Win98 Look */
 	{
 	    SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
 	    if(!IS_BITMAP_ITEM(lpitem->fType))
 		SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-	    else
-		SetBkColor(hdc, GetSysColor(COLOR_MENU));
 	}
     }
     else
@@ -1300,7 +1299,9 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
     /* Draw the item text or bitmap */
     if (IS_BITMAP_ITEM(lpitem->fType))
-    {   int top;
+    {
+        int left,top,w,h;
+        DWORD rop;
 
         HBITMAP resBmp = 0;
 
@@ -1310,7 +1311,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
          * Check if there is a magic menu item associated with this item
          * and load the appropriate bitmap
          */
-	if((LOWORD((int)lpitem->text)) < 12)
+	if (IS_MAGIC_ITEM(lpitem->text))
 	{
 	    resBmp = MENU_LoadMagicItem((int)lpitem->text, (lpitem->fState & MF_HILITE),
 					lpitem->dwItemData);
@@ -1326,12 +1327,23 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    SelectObject(hdcMem,resBmp );
 	
 	    /* handle fontsize > bitmap_height */
-	    top = ((rect.bottom-rect.top)>bm.bmHeight) ? 
-		rect.top+(rect.bottom-rect.top-bm.bmHeight)/2 : rect.top;
-
-	    BitBlt( hdc, rect.left, top, rect.right - rect.left,
-		  rect.bottom - rect.top, hdcMem, 0, 0,
-		  ((lpitem->fState & MF_HILITE) && !((LOWORD((DWORD)lpitem->text)) < 12)) ? NOTSRCCOPY : SRCCOPY );
+            h=rect.bottom - rect.top;
+	    top = (h>bm.bmHeight) ? 
+		rect.top+(h-bm.bmHeight)/2 : rect.top;
+            w=rect.right - rect.left;
+            left=rect.left;
+            if (TWEAK_WineLook == WIN95_LOOK) {
+                rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text)) ? NOTSRCCOPY : SRCCOPY;
+                if ((lpitem->fState & MF_HILITE) && IS_BITMAP_ITEM(lpitem->fType))
+                    SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+            } else {
+                left++;
+                w-=2;
+                rop=((lpitem->fState & MF_HILITE) && !IS_MAGIC_ITEM(lpitem->text) && (!menuBar)) ? MERGEPAINT : SRCCOPY;
+            }
+	    BitBlt( hdc, left, top, w,
+		  h, hdcMem, 0, 0,
+		   rop);
 	}
 	DeleteDC( hdcMem );
 
