@@ -2,7 +2,8 @@
  * IDirect3DVertexBuffer9 implementation
  *
  * Copyright 2002-2004 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2004 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +23,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DVertexBuffer9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER9 iface, REFIID riid, LPVOID* ppobj) {
@@ -31,7 +32,7 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER9
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DResource9)
         || IsEqualGUID(riid, &IID_IDirect3DVertexBuffer9)) {
-        IDirect3DVertexBuffer9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -65,58 +66,69 @@ ULONG WINAPI IDirect3DVertexBuffer9Impl_Release(LPDIRECT3DVERTEXBUFFER9 iface) {
 /* IDirect3DVertexBuffer9 IDirect3DResource9 Interface follow: */
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDevice(LPDIRECT3DVERTEXBUFFER9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IDirect3DResource9Impl_GetDevice((LPDIRECT3DRESOURCE9) This, ppDevice);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_SetPrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_SetPrivateData(This->wineD3DVertexBuffer, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetPrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_GetPrivateData(This->wineD3DVertexBuffer, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_FreePrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_FreePrivateData(This->wineD3DVertexBuffer, refguid);
 }
 
 DWORD WINAPI IDirect3DVertexBuffer9Impl_SetPriority(LPDIRECT3DVERTEXBUFFER9 iface, DWORD PriorityNew) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_SetPriority(This->wineD3DVertexBuffer, PriorityNew);
 }
 
 DWORD WINAPI IDirect3DVertexBuffer9Impl_GetPriority(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_GetPriority(This->wineD3DVertexBuffer);
 }
 
 void WINAPI IDirect3DVertexBuffer9Impl_PreLoad(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     IWineD3DVertexBuffer_PreLoad(This->wineD3DVertexBuffer);
     return ;
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DVertexBuffer9Impl_GetType(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_GetType(This->wineD3DVertexBuffer);
 }
 
 /* IDirect3DVertexBuffer9 Interface follow: */
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_Lock(LPDIRECT3DVERTEXBUFFER9 iface, UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_Lock(This->wineD3DVertexBuffer, OffsetToLock, SizeToLock, (BYTE **)ppbData, Flags);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_Unlock(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_Unlock(This->wineD3DVertexBuffer);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9 iface, D3DVERTEXBUFFER_DESC* pDesc) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer, pDesc);
 }
 
@@ -141,8 +153,8 @@ IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
 
 /* IDirect3DDevice9 IDirect3DVertexBuffer9 Methods follow: */
 HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9 iface, 
-						       UINT Size, DWORD Usage, DWORD FVF, D3DPOOL Pool, 
-						       IDirect3DVertexBuffer9** ppVertexBuffer, HANDLE* pSharedHandle) {
+                                UINT Size, DWORD Usage, DWORD FVF, D3DPOOL Pool,
+                                IDirect3DVertexBuffer9** ppVertexBuffer, HANDLE* pSharedHandle) {
     
     IDirect3DVertexBuffer9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;

@@ -2,7 +2,8 @@
  * IDirect3DTexture9 implementation
  *
  * Copyright 2002-2005 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2005 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +23,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DTexture9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DTexture9Impl_QueryInterface(LPDIRECT3DTEXTURE9 iface, REFIID riid, LPVOID* ppobj) {
@@ -32,7 +33,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_QueryInterface(LPDIRECT3DTEXTURE9 iface, RE
         || IsEqualGUID(riid, &IID_IDirect3DResource9)
         || IsEqualGUID(riid, &IID_IDirect3DBaseTexture9)
         || IsEqualGUID(riid, &IID_IDirect3DTexture9)) {
-        IDirect3DTexture9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -71,17 +72,17 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetDevice(LPDIRECT3DTEXTURE9 iface, IDirect
 
 HRESULT WINAPI IDirect3DTexture9Impl_SetPrivateData(LPDIRECT3DTEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
-    return IWineD3DTexture_SetPrivateData(This->wineD3DTexture,refguid,pData,SizeOfData,Flags);
+    return IWineD3DTexture_SetPrivateData(This->wineD3DTexture, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DTexture9Impl_GetPrivateData(LPDIRECT3DTEXTURE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
-    return IWineD3DTexture_GetPrivateData(This->wineD3DTexture,refguid,pData,pSizeOfData);
+    return IWineD3DTexture_GetPrivateData(This->wineD3DTexture, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DTexture9Impl_FreePrivateData(LPDIRECT3DTEXTURE9 iface, REFGUID refguid) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
-    return IWineD3DTexture_FreePrivateData(This->wineD3DTexture,refguid);
+    return IWineD3DTexture_FreePrivateData(This->wineD3DTexture, refguid);
 }
 
 DWORD WINAPI IDirect3DTexture9Impl_SetPriority(LPDIRECT3DTEXTURE9 iface, DWORD PriorityNew) {
@@ -147,7 +148,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(LPDIRECT3DTEXTURE9 iface, UINT
     wined3ddesc.Type                = &pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = &pDesc->Pool;
-    wined3ddesc.Size                = &tmpInt;
+    wined3ddesc.Size                = &tmpInt; /* required for d3d8 */
     wined3ddesc.MultiSampleType     = &pDesc->MultiSampleType;
     wined3ddesc.MultiSampleQuality  = &pDesc->MultiSampleQuality;
     wined3ddesc.Width               = &pDesc->Width;
@@ -169,7 +170,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_GetSurfaceLevel(LPDIRECT3DTEXTURE9 iface, U
     return hrc;
 }
 
-HRESULT WINAPI IDirect3DTexture9Impl_LockRect(LPDIRECT3DTEXTURE9 iface, UINT Level,D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
+HRESULT WINAPI IDirect3DTexture9Impl_LockRect(LPDIRECT3DTEXTURE9 iface, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
     return IWineD3DTexture_LockRect(This->wineD3DTexture, Level, pLockedRect, pRect, Flags);
 }
@@ -184,7 +185,6 @@ HRESULT WINAPI IDirect3DTexture9Impl_AddDirtyRect(LPDIRECT3DTEXTURE9 iface, CONS
     return IWineD3DTexture_AddDirtyRect(This->wineD3DTexture, pDirtyRect);
 }
 
-
 IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
 {
     IDirect3DTexture9Impl_QueryInterface,
@@ -198,6 +198,7 @@ IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
     IDirect3DTexture9Impl_GetPriority,
     IDirect3DTexture9Impl_PreLoad,
     IDirect3DTexture9Impl_GetType,
+    
     IDirect3DTexture9Impl_SetLOD,
     IDirect3DTexture9Impl_GetLOD,
     IDirect3DTexture9Impl_GetLevelCount,
@@ -219,8 +220,11 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hrc = D3D_OK;
     
+    TRACE("(%p) : W(%d) H(%d), Lvl(%d) d(%ld), Fmt(%u), Pool(%d)\n", This, Width, Height, Levels, Usage, Format,  Pool);
+
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTexture9Impl));
+
     if (NULL == object) {
         FIXME("Allocation of memory failed\n");
         *ppTexture = NULL;
@@ -230,15 +234,17 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
     object->lpVtbl = &Direct3DTexture9_Vtbl;
     object->ref = 1;
     hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
-                                 Format, Pool, &(object->wineD3DTexture), pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
+                                 Format, Pool, &object->wineD3DTexture, pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
 
     if (FAILED(hrc)) {
         /* free up object */ 
         FIXME("(%p) call to IWineD3DDevice_CreateTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
         *ppTexture = NULL;
-    } else {
-        *ppTexture = (LPDIRECT3DTEXTURE9) object;
-    }
-    return hrc;
+   } else {
+        *ppTexture= (LPDIRECT3DTEXTURE9) object;
+   }
+
+   TRACE("(%p) Created Texture %p, %p\n",This,object,object->wineD3DTexture);
+   return hrc;
 }

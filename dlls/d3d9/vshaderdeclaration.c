@@ -21,7 +21,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /**
  * DirectX9 SDK download

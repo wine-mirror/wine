@@ -22,7 +22,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DResource9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DResource9Impl_QueryInterface(LPDIRECT3DRESOURCE9 iface, REFIID riid, LPVOID* ppobj) {
@@ -65,6 +65,9 @@ ULONG WINAPI IDirect3DResource9Impl_Release(LPDIRECT3DRESOURCE9 iface) {
 HRESULT WINAPI IDirect3DResource9Impl_GetDevice(LPDIRECT3DRESOURCE9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
     IWineD3DDevice *myDevice = NULL;
+
+    TRACE("(%p) Relay\n", This);
+
     IWineD3DResource_GetDevice(This->wineD3DResource, &myDevice);
     IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
     IWineD3DDevice_Release(myDevice);
@@ -73,37 +76,44 @@ HRESULT WINAPI IDirect3DResource9Impl_GetDevice(LPDIRECT3DRESOURCE9 iface, IDire
 
 HRESULT WINAPI IDirect3DResource9Impl_SetPrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DResource_SetPrivateData(This->wineD3DResource, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DResource9Impl_GetPrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DResource_GetPrivateData(This->wineD3DResource, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DResource9Impl_FreePrivateData(LPDIRECT3DRESOURCE9 iface, REFGUID refguid) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DResource_FreePrivateData(This->wineD3DResource, refguid);
 }
 
 DWORD  WINAPI IDirect3DResource9Impl_SetPriority(LPDIRECT3DRESOURCE9 iface, DWORD PriorityNew) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DResource_SetPriority(This->wineD3DResource, PriorityNew);
 }
 
 DWORD WINAPI IDirect3DResource9Impl_GetPriority(LPDIRECT3DRESOURCE9 iface) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DResource_GetPriority(This->wineD3DResource);
 }
 
 void WINAPI IDirect3DResource9Impl_PreLoad(LPDIRECT3DRESOURCE9 iface) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     IWineD3DResource_PreLoad(This->wineD3DResource);
     return;
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DResource9Impl_GetType(LPDIRECT3DRESOURCE9 iface) {
     IDirect3DResource9Impl *This = (IDirect3DResource9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DResource_GetType(This->wineD3DResource);
 }
 

@@ -22,7 +22,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DVolume9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 iface, REFIID riid, LPVOID* ppobj) {
@@ -30,7 +30,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 iface, REFI
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DVolume9)) {
-        IDirect3DVolume9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -74,24 +74,28 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDevice(LPDIRECT3DVOLUME9 iface, IDirect3D
 
 HRESULT WINAPI IDirect3DVolume9Impl_SetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVolume_SetPrivateData(This->wineD3DVolume, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_GetPrivateData(LPDIRECT3DVOLUME9 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVolume_GetPrivateData(This->wineD3DVolume, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_FreePrivateData(LPDIRECT3DVOLUME9 iface, REFGUID refguid) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
+    TRACE("(%p) Relay\n", This);
     return IWineD3DVolume_FreePrivateData(This->wineD3DVolume, refguid);
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface, REFIID riid, void** ppContainer) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     HRESULT res;
-
     IUnknown *IWineContainer = NULL;
+
+    TRACE("(%p) Relay\n", This);
     res = IWineD3DVolume_GetContainer(This->wineD3DVolume, riid, (void **)&IWineContainer);
 
     /* If this works, the only valid container is a child of resource (volumetexture) */
@@ -108,6 +112,8 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_D
     WINED3DVOLUME_DESC     wined3ddesc;
     UINT                   tmpInt = -1;
 
+    TRACE("(%p) Relay\n", This);
+
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
     wined3ddesc.Format              = &pDesc->Format;
     wined3ddesc.Type                = &pDesc->Type;
@@ -123,11 +129,13 @@ HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_D
 
 HRESULT WINAPI IDirect3DVolume9Impl_LockBox(LPDIRECT3DVOLUME9 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
+    TRACE("(%p) relay %p %p %p %ld\n", This, This->wineD3DVolume, pLockedVolume, pBox, Flags);
     return IWineD3DVolume_LockBox(This->wineD3DVolume, pLockedVolume, pBox, Flags);
 }
 
 HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
+    TRACE("(%p) relay %p\n", This, This->wineD3DVolume);
     return IWineD3DVolume_UnlockBox(This->wineD3DVolume);
 }
 
@@ -145,6 +153,7 @@ IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
     IDirect3DVolume9Impl_LockBox,
     IDirect3DVolume9Impl_UnlockBox
 };
+
 
 /* Internal function called back during the CreateVolumeTexture */
 HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
@@ -166,14 +175,15 @@ HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, 
     object->lpVtbl = &Direct3DVolume9_Vtbl;
     object->ref = 1;
     hrc = IWineD3DDevice_CreateVolume(This->WineD3DDevice, Width, Height, Depth, Usage, Format, 
-                                       Pool, ppVolume, pSharedHandle, (IUnknown *)object);
+                                       Pool, &object->wineD3DVolume, pSharedHandle, (IUnknown *)object);
     if (hrc != D3D_OK) {
         /* free up object */ 
         FIXME("(%p) call to IWineD3DDevice_CreateVolume failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
         *ppVolume = NULL;
     } else {
-        *ppVolume = (IWineD3DVolume *)object;
+        *ppVolume = (IWineD3DVolume *)object->wineD3DVolume;
     }
+    TRACE("(%p) Created volume %p\n", This, *ppVolume);
     return hrc;
 }
