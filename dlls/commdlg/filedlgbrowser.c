@@ -12,13 +12,14 @@
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "debugtools.h"
+#include "winreg.h"
 
 #include "shlwapi.h"
 #include "filedlgbrowser.h"
 #include "cdlg.h"
 #include "shlguid.h"
 #include "wine/obj_serviceprovider.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg);
 

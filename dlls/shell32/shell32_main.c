@@ -11,14 +11,14 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "windef.h"
+#include "winerror.h"
+#include "winreg.h"
 #include "dlgs.h"
 #include "shellapi.h"
 #include "shlobj.h"
 #include "shlguid.h"
 #include "shlwapi.h"
-#include "windef.h"
-#include "winerror.h"
-#include "winreg.h"
 
 #include "undocshell.h"
 #include "wine/winuser16.h"

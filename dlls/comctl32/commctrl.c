@@ -11,10 +11,11 @@
 #include "winbase.h"
 #include "heap.h"
 #include "commctrl.h"
-#include "debugtools.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "shlwapi.h"
 #include "comctl32.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl);
 

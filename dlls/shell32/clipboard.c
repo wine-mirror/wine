@@ -21,12 +21,13 @@
 
 #include <string.h>
 
-#include "debugtools.h"
-
-#include "pidl.h"
+#include "winreg.h"
 #include "shlwapi.h"
+#include "pidl.h"
 #include "undocshell.h"
 #include "shell32_main.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

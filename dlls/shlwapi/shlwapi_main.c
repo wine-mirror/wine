@@ -7,6 +7,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "debugtools.h"
 #include "shlwapi.h"
 

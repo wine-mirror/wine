@@ -5,12 +5,13 @@
  */
 
 #include <string.h>
-#include "debugtools.h"
+#include "winreg.h"
 #include "initguid.h"
 #include "ole2.h"
 #include "shlwapi.h"
 
 #include "shdocvw.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shdocvw);
 

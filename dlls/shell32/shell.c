@@ -11,13 +11,13 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#include "windef.h"
+#include "winerror.h"
+#include "winreg.h"
 #include "dlgs.h"
 #include "shellapi.h"
 #include "shlobj.h"
 #include "shlwapi.h"
-#include "windef.h"
-#include "winerror.h"
-#include "winreg.h"
 
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"

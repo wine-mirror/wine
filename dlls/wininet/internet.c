@@ -21,6 +21,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wininet.h"
 #include "debugtools.h"
 #include "winerror.h"

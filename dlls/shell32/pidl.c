@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "winbase.h"
-#include "debugtools.h"
+#include "winreg.h"
 #include "shlguid.h"
 #include "winerror.h"
 #include "winnls.h"
@@ -22,6 +22,7 @@
 #include "shlwapi.h"
 
 #include "pidl.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(pidl);
 DECLARE_DEBUG_CHANNEL(shell);

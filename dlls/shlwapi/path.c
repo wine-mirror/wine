@@ -10,6 +10,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "shlwapi.h"
 #include "debugtools.h"
 

@@ -5,14 +5,14 @@
 
 #include "winnls.h"
 #include "winerror.h"
-#include "debugtools.h"
+#include "winreg.h"
 
 #include "shlobj.h"
-#include "shlwapi.h"
 #include "shellapi.h"
 #include "shell32_main.h"
 #include "undocshell.h"
 #include "wine/unicode.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

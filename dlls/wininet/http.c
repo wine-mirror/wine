@@ -9,13 +9,6 @@
 
 #include "config.h"
 
-#include "windef.h"
-#include "winbase.h"
-#include "wininet.h"
-#include "debugtools.h"
-#include "winerror.h"
-#include "shlwapi.h"
-
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -27,7 +20,15 @@
 #include <string.h>
 #include <time.h>
 
+#include "windef.h"
+#include "winbase.h"
+#include "wininet.h"
+#include "winreg.h"
+#include "winerror.h"
+#include "shlwapi.h"
+
 #include "internet.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(wininet);
 

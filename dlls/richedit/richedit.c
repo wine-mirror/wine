@@ -12,7 +12,7 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
-#include "debugtools.h"
+#include "winreg.h"
 #include "winerror.h"
 #include "riched32.h"
 #include "richedit.h"
@@ -21,6 +21,7 @@
 
 #include "rtf.h"
 #include "rtf2text.h"
+#include "debugtools.h"
 
 #define ID_EDIT      1
 

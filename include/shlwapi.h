@@ -15,24 +15,27 @@ extern "C" {
 #define GCT_WILD	0x0004
 #define GCT_SEPARATOR	0x0008
 
-/*
- * The URL_ defines were determined by trial and error.  If they become
- * documented please check them and add the missing ones including:
- *
- * URL_ESCAPE_PERCENT
- * URL_PLUGGABLE_PROTOCOL
- * URL_DONT_ESCAPE_EXTRA_INFO
- * URL_ESCAPE_SEGMENT_ONLY
- */
-
-#define URL_UNESCAPE_INPLACE         0x00100000
-#define URL_DONT_UNESCAPE_EXTRA_INFO 0x02000000
- 
-#define URL_ESCAPE_SPACES_ONLY       0x04000000
-
-#define URL_UNESCAPE                 0x10000000
+#define URL_WININET_COMPATIBILITY    0x80000000
+#define URL_PLUGGABLE_PROTOCOL       0x40000000
 #define URL_ESCAPE_UNSAFE            0x20000000
-#define URL_DONT_SIMPLIFY            0x40000000
+#define URL_UNESCAPE                 0x10000000
+
+#define URL_DONT_SIMPLIFY            0x08000000
+#define URL_NO_META                  URL_DONT_SIMPLIFY
+#define URL_ESCAPE_SPACES_ONLY       0x04000000
+#define URL_DONT_ESCAPE_EXTRA_INFO   0x02000000
+#define URL_DONT_UNESCAPE_EXTRA_INFO URL_DONT_ESCAPE_EXTRA_INFO
+#define URL_BROWSER_MODE             URL_DONT_ESCAPE_EXTRA_INFO
+
+#define URL_INTERNAL_PATH            0x00800000  /* Will escape #'s in paths */
+#define URL_UNESCAPE_HIGH_ANSI_ONLY  0x00400000
+#define URL_CONVERT_IF_DOSPATH       0x00200000
+#define URL_UNESCAPE_INPLACE         0x00100000
+
+#define URL_FILE_USE_PATHURL         0x00010000
+
+#define URL_ESCAPE_SEGMENT_ONLY      0x00002000
+#define URL_ESCAPE_PERCENT           0x00001000
 
 LPSTR  WINAPI PathAddBackslashA(LPSTR path);	
 LPWSTR WINAPI PathAddBackslashW(LPWSTR path);	
@@ -225,9 +228,32 @@ HRESULT WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey);
 HRESULT WINAPI SHDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey);
 #define  SHDeleteKey WINELIB_NAME_AW(SHDeleteKey)
 
+HRESULT WINAPI SHDeleteValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR pszValue);
+HRESULT WINAPI SHDeleteValueW(HKEY hkey, LPCWSTR pszSubKey, LPCWSTR pszValue);
+#define  SHDeleteValue WINELIB_NAME_AW(SHDeleteValue)
+
 DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey);
 DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey);
 #define  SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
+
+DWORD WINAPI SHRegGetPathA(HKEY hKey, LPCSTR pcszSubKey,
+			   LPCSTR pcszValue, LPSTR pszPath, DWORD dwFlags);
+DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR pcszSubKey,
+			   LPCWSTR pcszValue, LPWSTR pszPath, DWORD dwFlags);
+#define  SHRegGetPath WINELIB_NAME_AW(SHRegGetPath)
+
+DWORD WINAPI SHGetValueA(HKEY hKey, LPCSTR pSubKey, LPCSTR pValue,
+			 LPDWORD pwType, LPVOID pvData, LPDWORD pbData);
+DWORD WINAPI SHGetValueW(HKEY hKey, LPCWSTR pSubKey, LPCWSTR pValue,
+			 LPDWORD pwType, LPVOID pvData, LPDWORD pbData);
+#define  SHGetValue WINELIB_NAME_AW(SHGetValue)
+
+HRESULT WINAPI SHSetValueA(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
+			 DWORD dwType, LPCVOID pvData, DWORD cbData);
+HRESULT WINAPI SHSetValueW(HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue,
+			 DWORD dwType, LPCVOID pvData, DWORD cbData);
+#define  SHSetValue WINELIB_NAME_AW(SHSetValue)
+
 
 
 typedef HANDLE HUSKEY;
@@ -248,6 +274,66 @@ typedef enum {
 } SHREGENUM_FLAGS; 
 
 
+/* Shell User Key Registry interfaces */
+
+LONG  WINAPI SHRegOpenUSKeyA(LPCSTR Path, REGSAM AccessType, 
+			     HUSKEY hRelativeUSKey, PHUSKEY phNewUSKey,
+			     BOOL fIgnoreHKCU);
+LONG  WINAPI SHRegOpenUSKeyW(LPCWSTR Path, REGSAM AccessType, 
+			     HUSKEY hRelativeUSKey, PHUSKEY phNewUSKey,
+			     BOOL fIgnoreHKCU);
+#define SHRegOpenUSKey WINELIB_NAME_AW(SHRegOpenUSKey)
+
+LONG  WINAPI SHRegCloseUSKey(HUSKEY hUSKey);
+
+LONG  WINAPI SHRegGetUSValueA(LPCSTR pszSubKey, LPCSTR pszValue, 
+			      LPDWORD pdwType, LPVOID pvData,
+			      LPDWORD pcbData, BOOL fIgnoreHKCU,
+			      LPVOID pvDefaultData, DWORD dwDefaultDataSize);
+LONG  WINAPI SHRegGetUSValueW(LPCWSTR pszSubKey, LPCWSTR pszValue, 
+			      LPDWORD pdwType, LPVOID pvData,
+			      LPDWORD pcbData, BOOL fIgnoreHKCU, 
+			      LPVOID pvDefaultData, DWORD dwDefaultDataSize);
+#define SHRegGetUSValue WINELIB_NAME_AW(SHRegGetUSValue)
+
+BOOL  WINAPI SHRegGetBoolUSValueA(LPCSTR pszSubKey, LPCSTR pszValue, 
+				  BOOL fIgnoreHKCU, BOOL fDefault);
+BOOL  WINAPI SHRegGetBoolUSValueW(LPCWSTR pszSubKey, LPCWSTR pszValue, 
+				  BOOL fIgnoreHKCU, BOOL fDefault);
+#define SHRegGetBoolUSValue WINELIB_NAME_AW(SHRegGetBoolUSValue)
+
+LONG  WINAPI SHRegQueryUSValueA(HUSKEY hUSKey, LPCSTR pszValue, 
+				LPDWORD pdwType, LPVOID pvData,
+				LPDWORD pcbData, BOOL fIgnoreHKCU, 
+				LPVOID pvDefaultData, DWORD dwDefaultDataSize);
+LONG  WINAPI SHRegQueryUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, 
+				LPDWORD pdwType, LPVOID pvData,
+				LPDWORD pcbData, BOOL fIgnoreHKCU, 
+				LPVOID pvDefaultData, DWORD dwDefaultDataSize);
+#define SHRegQueryUSValue WINELIB_NAME_AW(SHRegQueryUSValue)
+
+DWORD  WINAPI SHRegQueryInfoUSKeyA(HUSKEY hUSKey, LPDWORD pcSubKeys,
+				  LPDWORD pcchMaxSubKeyLen,
+				  LPDWORD pcValues,
+				  LPDWORD pcchMaxValueNameLen,
+				  SHREGENUM_FLAGS enumRegFlags);
+DWORD  WINAPI SHRegQueryInfoUSKeyW(HUSKEY hUSKey, LPDWORD pcSubKeys,
+				  LPDWORD pcchMaxSubKeyLen,
+				  LPDWORD pcValues,
+				  LPDWORD pcchMaxValueNameLen,
+				  SHREGENUM_FLAGS enumRegFlags);
+#define SHRegQueryInfoUSKey WINELIB_NAME_AW(SHRegQueryInfoUSKey)
+
+LONG  WINAPI SHRegEnumUSKeyA(HUSKEY hUSKey, DWORD dwIndex, LPSTR pszName,
+			     LPDWORD pcchValueNameLen,
+			     SHREGENUM_FLAGS enumRegFlags);
+LONG  WINAPI SHRegEnumUSKeyW(HUSKEY hUSKey, DWORD dwIndex, LPWSTR pszName,
+			     LPDWORD pcchValueNameLen,
+			     SHREGENUM_FLAGS enumRegFlags);
+#define SHRegEnumUSKey WINELIB_NAME_AW(SHRegEnumUSKey)
+
+
+/* Shell URL interfaces */
 
 HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized, 
 				LPDWORD pcchCanonicalized, DWORD dwFlags);
@@ -255,11 +341,29 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 				LPDWORD pcchCanonicalized, DWORD dwFlags);
 #define UrlCanonicalize WINELIB_NAME_AW(UrlCanoncalize)
 
+HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
+			   LPSTR pszCombined, LPDWORD pcchCombined,
+			   DWORD dwFlags);
+HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
+			   LPWSTR pszCombined, LPDWORD pcchCombined,
+			   DWORD dwFlags);
+#define UrlCombine WINELIB_NAME_AW(UrlCombine)
+
 HRESULT WINAPI UrlEscapeA(LPCSTR pszUrl, LPSTR pszEscaped, LPDWORD pcchEscaped,
 			  DWORD dwFlags);
 HRESULT WINAPI UrlEscapeW(LPCWSTR pszUrl, LPWSTR pszEscaped,
 			  LPDWORD pcchEscaped, DWORD dwFlags);
 #define UrlEscape WINELIB_NAME_AW(UrlEscape)
+
+LPCSTR  WINAPI UrlGetLocationA(LPCSTR pszUrl);
+LPCWSTR WINAPI UrlGetLocationW(LPCWSTR pszUrl);
+#define UrlGetLocation WINELIB_NAME_AW(UrlGetLocation)
+
+BOOL    WINAPI HashData(const unsigned char *lpSrc, INT nSrcLen,
+			unsigned char *lpDest, INT nDestLen);
+HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestlen);
+HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, INT nDestlen);
+#define UrlHash WINELIB_NAME_AW(UrlHash)
 
 HRESULT WINAPI UrlUnescapeA(LPCSTR pszUrl, LPSTR pszUnescaped,
 			    LPDWORD pcchUnescaped, DWORD dwFlags);

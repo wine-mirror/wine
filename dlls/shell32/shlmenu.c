@@ -3,6 +3,7 @@
  */
 #include <string.h>
 
+#include "winreg.h"
 #include "shlobj.h"
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"
@@ -10,11 +11,11 @@
 #include "undocshell.h"
 #include "shlwapi.h"
 #include "heap.h"
-#include "debugtools.h"
 #include "shell32_main.h"
 #include "shlguid.h"
 
 #include "pidl.h"
+#include "debugtools.h"
 
 static BOOL FileMenu_AppendItemA(HMENU hMenu, LPCSTR lpText, UINT uID, int icon,
                                  HMENU hMenuPopup, int nItemHeight);

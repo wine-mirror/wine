@@ -12,9 +12,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "debugtools.h"
 #include "winerror.h"
 #include "winbase.h"
+#include "winreg.h"
 
 #include "oleidl.h"
 #include "shlguid.h"
@@ -28,6 +28,7 @@
 #include "shresdef.h"
 #include "shlwapi.h"
 #include "shellfolder.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

@@ -2,15 +2,15 @@
  * SHFileOperation
  */
 #include <string.h>
-#include "debugtools.h"
-#include "shellapi.h"
-#include "shlwapi.h"
 
+#include "winreg.h"
+#include "shellapi.h"
 #include "shlobj.h"
 #include "shresdef.h"
 #include "shell32_main.h"
 #include "undocshell.h"
 #include "shlwapi.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
