@@ -82,17 +82,8 @@ typedef struct tagICONCACHE
 } ICONCACHE;
 
 static ICONCACHE *IconAnchor = NULL;
-static CRITICAL_SECTION IconCrst;
+static CRITICAL_SECTION IconCrst = CRITICAL_SECTION_INIT;
 static DWORD ICON_HOTSPOT = 0x42424242;
-
-/**********************************************************************
- *	    CURSORICON_Init
- */
-void CURSORICON_Init( void )
-{
-    InitializeCriticalSection( &IconCrst );
-    MakeCriticalSectionGlobal( &IconCrst );
-}
 
 /**********************************************************************
  *	    CURSORICON_FindSharedIcon

@@ -81,7 +81,7 @@ static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 
 static const WCHAR wininiW[] = { 'w','i','n','.','i','n','i',0 };
 
-static CRITICAL_SECTION PROFILE_CritSect;
+static CRITICAL_SECTION PROFILE_CritSect = CRITICAL_SECTION_INIT;
 
 static const char hex[16] = "0123456789ABCDEF";
 
@@ -944,10 +944,6 @@ int PROFILE_LoadWineIni(void)
         ERR("Cannot create config registry key\n" );
         return 0;
     }
-    wine_profile_key = ConvertToGlobalHandle( wine_profile_key );
-
-    InitializeCriticalSection( &PROFILE_CritSect );
-    MakeCriticalSectionGlobal( &PROFILE_CritSect );
 
     if (!CLIENT_IsBootThread()) return 1;  /* already loaded */
 

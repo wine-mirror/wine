@@ -19,7 +19,6 @@ extern BOOL MSG_InternalGetMessage( int type, struct tagMSG *msg, HWND hwnd,
                                     WORD flags, BOOL sendIdle, BOOL* idleSent );
 
 /* timer.c */
-extern BOOL TIMER_Init( void );
 extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
 extern BOOL TIMER_GetTimerMsg( struct tagMSG *msg, HWND hwnd,

@@ -208,7 +208,7 @@ static fontEncodingTemplate* fETTable = __fETTable;
 
 static int		DefResolution = 0;
 
-static CRITICAL_SECTION crtsc_fonts_X11;
+static CRITICAL_SECTION crtsc_fonts_X11 = CRITICAL_SECTION_INIT;
 
 static fontResource*	fontList = NULL;
 static fontObject*      fontCache = NULL;		/* array */
@@ -2627,9 +2627,6 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   XFONT_LoadAliases();
   XFONT_LoadDefaults();
   XFONT_LoadIgnores();
-
-  InitializeCriticalSection( &crtsc_fonts_X11 );
-  MakeCriticalSectionGlobal( &crtsc_fonts_X11 );
 
   /* fontList initialization is over, allocate X font cache */
 

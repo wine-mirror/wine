@@ -13,9 +13,9 @@
 #include "winversion.h"
 #include "wine/undocshell.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
-static CRITICAL_SECTION SHELL32_ChangenotifyCS;
+static CRITICAL_SECTION SHELL32_ChangenotifyCS = CRITICAL_SECTION_INIT;
 
 /* internal list of notification clients (internal) */
 typedef struct _NOTIFICATIONLIST
@@ -30,17 +30,12 @@ typedef struct _NOTIFICATIONLIST
 	DWORD dwFlags;		/* client flags */
 } NOTIFICATIONLIST, *LPNOTIFICATIONLIST;
 
-NOTIFICATIONLIST head;
-NOTIFICATIONLIST tail;
+static NOTIFICATIONLIST head;
+static NOTIFICATIONLIST tail;
 
 void InitChangeNotifications()
 {
 	TRACE("head=%p tail=%p\n", &head, &tail);
-
-	InitializeCriticalSection(&SHELL32_ChangenotifyCS);
-	MakeCriticalSectionGlobal(&SHELL32_ChangenotifyCS);
-	ZeroMemory(&head, sizeof(NOTIFICATIONLIST));
-	ZeroMemory(&tail, sizeof(NOTIFICATIONLIST));
 	head.next = &tail;
 	tail.prev = &head;
 }

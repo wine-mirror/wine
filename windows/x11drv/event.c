@@ -2041,7 +2041,7 @@ int X11DRV_EVENT_PrepareShmCompletion( Drawable dw )
   int n;
 
   if (!shm_read)
-    shm_read = ConvertToGlobalHandle( FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ | SYNCHRONIZE ) );
+      shm_read = FILE_DupUnixHandle( ConnectionNumber(display), GENERIC_READ | SYNCHRONIZE );
 
   for (n=0; n<SHM_MAX_Q; n++)
     if (!shm_q[n].draw)
@@ -2055,7 +2055,7 @@ int X11DRV_EVENT_PrepareShmCompletion( Drawable dw )
 
   shm_q[n].state = 0;
   if (!shm_q[n].sema) {
-    shm_q[n].sema = ConvertToGlobalHandle( CreateSemaphoreA( NULL, 0, 256, NULL ) );
+      shm_q[n].sema = CreateSemaphoreA( NULL, 0, 256, NULL );
     TRACE("Allocated ShmCompletion slots have been increased to %d, new semaphore is %x\n", n+1, shm_q[n].sema);
   }
 

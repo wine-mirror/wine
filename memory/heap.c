@@ -535,10 +535,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         /* Initialize critical section */
 
         InitializeCriticalSection( &heap->critSection );
-	/* FIXME: once separate address spaces are implemented, only */
-	/* the SystemHeap critical section should be global */
-	/* if (!SystemHeap) */
-	MakeCriticalSectionGlobal( &heap->critSection );
+	if (!SystemHeap) MakeCriticalSectionGlobal( &heap->critSection );
     }
  
     /* Create the first free block */

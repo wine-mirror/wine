@@ -59,7 +59,6 @@ SEGPTR WINAPI GetpWin16Lock16(void)
 VOID WINAPI _CreateSysLevel(SYSLEVEL *lock, INT level)
 {
     InitializeCriticalSection( &lock->crst );
-    MakeCriticalSectionGlobal( &lock->crst );
     lock->level = level;
 
     TRACE("(%p, %d): handle is %d\n", 

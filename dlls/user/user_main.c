@@ -7,7 +7,6 @@
 #include "winuser.h"
 #include "wine/winbase16.h"
 
-#include "cursoricon.h"
 #include "dce.h"
 #include "dialog.h"
 #include "display.h"
@@ -61,14 +60,8 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     /* Create the DCEs */
     DCE_Init();
 
-    /* Initialize timers */
-    if (!TIMER_Init()) return FALSE;
-    
     /* Initialize window procedures */
     if (!WINPROC_Init()) return FALSE;
-
-    /* Initialize cursor/icons */
-    CURSORICON_Init();
 
     /* Initialize built-in window classes */
     if (!WIDGETS_Init()) return FALSE;

@@ -36,7 +36,7 @@ static int *ph_errno = &h_errno;
 DEFAULT_DEBUG_CHANNEL(thread)
 
 /* Xlib critical section (FIXME: does not belong here) */
-CRITICAL_SECTION X11DRV_CritSection = { 0, };
+CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT;
 
 #ifdef linux
 # ifdef HAVE_SCHED_H

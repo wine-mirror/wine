@@ -451,7 +451,7 @@ typedef struct
 } SIC_ENTRY, * LPSIC_ENTRY;
 
 static HDPA		sic_hdpa = 0;
-static CRITICAL_SECTION	SHELL32_SicCS;
+static CRITICAL_SECTION	SHELL32_SicCS = CRITICAL_SECTION_INIT;
 
 /*****************************************************************************
  * SIC_CompareEntrys			[called by comctl32.dll]
@@ -612,9 +612,6 @@ BOOL SIC_Initialize(void)
 	if (sic_hdpa)	/* already initialized?*/
 	  return TRUE;
 	  
-	InitializeCriticalSection(&SHELL32_SicCS);
-	MakeCriticalSectionGlobal(&SHELL32_SicCS);
-	
 	sic_hdpa = pDPA_Create(16);
 	
 	if (!sic_hdpa)

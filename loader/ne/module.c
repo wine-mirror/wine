@@ -384,9 +384,6 @@ HANDLE NE_OpenFile( NE_MODULE *pModule )
     if ((cachedfd = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
                                    NULL, OPEN_EXISTING, 0, -1 )) == -1)
         MESSAGE( "Can't open file '%s' for module %04x\n", name, pModule->self );
-    else
-        /* FIXME: should not be necessary */
-        cachedfd = ConvertToGlobalHandle(cachedfd);
     TRACE("opened '%s' -> %d\n",
                     name, cachedfd );
     return cachedfd;

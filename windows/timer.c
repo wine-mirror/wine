@@ -37,21 +37,7 @@ typedef struct tagTIMER
 
 static TIMER TimersArray[NB_TIMERS];
 
-static CRITICAL_SECTION csTimer;
-
-
-/***********************************************************************
- *           TIMER_Init
- *
- * Initialize critical section for the timer.
- */
-BOOL TIMER_Init( void )
-{
-    InitializeCriticalSection( &csTimer );
-    MakeCriticalSectionGlobal( &csTimer );
-
-    return TRUE;
-}
+static CRITICAL_SECTION csTimer = CRITICAL_SECTION_INIT;
 
 
 /***********************************************************************
