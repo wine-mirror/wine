@@ -472,16 +472,7 @@ UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground) {
 }
 
 /***********************************************************************
- *		MCIWndCreate		[MSVFW.44]
- */
-HWND VFWAPIV MCIWndCreate (HWND hwndParent, HINSTANCE hInstance,
-                      DWORD dwStyle,LPVOID szFile)
-{	FIXME("%x %x %lx %p\n",hwndParent, hInstance, dwStyle, szFile);
-	return 0;
-}
-
-/***********************************************************************
- *		MCIWndCreateA		[MSVFW.45]
+ *		MCIWndCreateA		[MSVFW.44 & MSVFW.45]
  */
 HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPCSTR szFile)

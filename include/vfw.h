@@ -17,6 +17,9 @@ BOOL        VFWAPI DrawDibClose(HDRAWDIB hdd);
 HDRAWDIB    VFWAPI DrawDibOpen(void);
 UINT        VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground);
 BOOL        VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal);
+HWND        VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCSTR szFile);
+HWND        VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCWSTR szFile);
+#define     MCIWndCreate WINELIB_NAME_AW(MCIWndCreate)
 DWORD       VFWAPI VideoForWindowsVersion(void);
 
 #ifndef mmioFOURCC

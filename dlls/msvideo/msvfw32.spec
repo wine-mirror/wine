@@ -48,7 +48,7 @@ import	winmm.dll
  41 stub    ICSeqCompressFrame
  42 stub    ICSeqCompressFrameEnd
  43 stub    ICSeqCompressFrameStart
- 44 cdecl   MCIWndCreate (long long long ptr) MCIWndCreate
+ 44 cdecl   MCIWndCreate (long long long str) MCIWndCreateA
  45 cdecl   MCIWndCreateA (long long long str) MCIWndCreateA
  46 cdecl   MCIWndCreateW (long long long wstr) MCIWndCreateW
  47 stub    MCIWndRegisterClass
