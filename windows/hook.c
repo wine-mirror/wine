@@ -995,6 +995,15 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
 
     ret = data->proc(code, wParam, lParam);
 
+    /* Grrr. While the hook procedure is supposed to have an LRESULT return
+       value even in Win16, it seems that for those hook types where the 
+       return value is interpreted as BOOL, Windows doesn't actually check
+       the HIWORD ...  Some buggy Win16 programs, notably WINFILE, rely on
+       that, because they neglect to clear DX ... */
+    if (    (data->flags & HOOK_MAPTYPE) == HOOK_WIN16 
+         && data->id != WH_JOURNALPLAYBACK )
+        ret = LOWORD( ret );
+
     TRACE(hook, "Ret hook %04x = %08lx\n", hook, ret );
 
     data->flags &= ~HOOK_INUSE;
