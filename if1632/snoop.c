@@ -91,7 +91,7 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 
 	if (!TRACE_ON(snoop)) return;
 	if (!snr) {
-		xsnr=GLOBAL_Alloc(GMEM_ZEROINIT,2*sizeof(*snr),0,TRUE,TRUE,FALSE);
+		xsnr=GLOBAL_Alloc(GMEM_ZEROINIT,2*sizeof(*snr),0,WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT);
 		snr = GlobalLock16(xsnr);
 		snr[0].pushbp	= 0x5566;
 		snr[0].pusheax	= 0x50;
@@ -126,14 +126,13 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 	(*dll)->name	= HEAP_strdupA(GetProcessHeap(),0,name);
 	if ((s=strrchr((*dll)->name,'.')))
 		*s='\0';
-	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,TRUE,FALSE,FALSE));
+	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,WINE_LDT_FLAGS_CODE));
 	(*dll)->funs = GlobalLock16((*dll)->funhandle);
 	if (!(*dll)->funs) {
 		HeapFree(GetProcessHeap(),0,*dll);
 		FIXME("out of memory\n");
 		return;
 	}
-	memset((*dll)->funs,0,65535);
 }
 
 FARPROC16
@@ -240,9 +239,8 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 		rets = &((*rets)->next);
 	}
 	if (!*rets) {
-		HANDLE16	hand = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,TRUE,FALSE,FALSE));
+		HANDLE16 hand = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,WINE_LDT_FLAGS_CODE));
 		*rets = GlobalLock16(hand);
-		memset(*rets,0,65535);
 		(*rets)->rethandle = hand;
 		i = 0;	/* entry 0 is free */
 	}

@@ -169,7 +169,7 @@ static SEGPTR TASK_AllocThunk( HTASK16 hTask )
         if (!sel)  /* Allocate a new segment */
         {
             sel = GLOBAL_Alloc( GMEM_FIXED, sizeof(THUNKS) + (MIN_THUNKS-1)*8,
-                                pTask->hPDB, TRUE, FALSE, FALSE );
+                                pTask->hPDB, WINE_LDT_FLAGS_CODE );
             if (!sel) return (SEGPTR)0;
             TASK_CreateThunks( sel, 0, MIN_THUNKS );
             pThunk->next = sel;
@@ -228,7 +228,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
       /* Allocate the task structure */
 
     hTask = GLOBAL_Alloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB),
-                          pModule->self, FALSE, FALSE, FALSE );
+                          pModule->self, WINE_LDT_FLAGS_DATA );
     if (!hTask) return FALSE;
     pTask = (TDB *)GlobalLock16( hTask );
 
@@ -268,7 +268,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
       /* Allocate a selector for the PDB */
 
     pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB16),
-                                    pModule->self, FALSE, FALSE, FALSE );
+                                      pModule->self, WINE_LDT_FLAGS_DATA );
 
       /* Fill the PDB */
 
@@ -313,8 +313,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
       /* Allocate a code segment alias for the TDB */
 
     pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, (void *)pTask,
-                                          sizeof(TDB), pTask->hPDB, TRUE,
-                                          FALSE, FALSE );
+                                          sizeof(TDB), pTask->hPDB, WINE_LDT_FLAGS_CODE );
 
       /* Set the owner of the environment block */
 

@@ -380,7 +380,7 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
     if (size < (DWORD)pNameInfo->length << sizeShift)
         size = (DWORD)pNameInfo->length << sizeShift;
-    return GLOBAL_Alloc( GMEM_FIXED, size, hModule, FALSE, FALSE, FALSE );
+    return GLOBAL_Alloc( GMEM_FIXED, size, hModule, WINE_LDT_FLAGS_DATA );
 }
 
 
@@ -398,7 +398,7 @@ HGLOBAL16 WINAPI DirectResAlloc16( HINSTANCE16 hInstance, WORD wType,
     if(wType != 0x10)	/* 0x10 is the only observed value, passed from
                            CreateCursorIndirect. */
         TRACE("(wType=%x)\n", wType);
-    return GLOBAL_Alloc(GMEM_MOVEABLE, wSize, hInstance, FALSE, FALSE, FALSE);
+    return GLOBAL_Alloc(GMEM_MOVEABLE, wSize, hInstance, WINE_LDT_FLAGS_DATA );
 }
 
 

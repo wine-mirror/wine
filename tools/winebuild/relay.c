@@ -145,18 +145,19 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     else
         fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb, %%fs\n" );
 
-    /* Get address of ldt_copy array into %ecx */
+    /* Get address of wine_ldt_copy array into %ecx */
     if ( UsePIC )
-        fprintf( outfile, "\tmovl " PREFIX "ldt_copy@GOT(%%ecx), %%ecx\n" );
+        fprintf( outfile, "\tmovl " PREFIX "wine_ldt_copy@GOT(%%ecx), %%ecx\n" );
     else
-        fprintf( outfile, "\tmovl $" PREFIX "ldt_copy, %%ecx\n" );
+        fprintf( outfile, "\tmovl $" PREFIX "wine_ldt_copy, %%ecx\n" );
 
     /* Translate STACK16FRAME base to flat offset in %edx */
     fprintf( outfile, "\tmovw %%ss, %%dx\n" );
     fprintf( outfile, "\tandl $0xfff8, %%edx\n" );
+    fprintf( outfile, "\tshrl $1, %%edx\n" );
     fprintf( outfile, "\tmovl (%%ecx,%%edx), %%edx\n" );
     fprintf( outfile, "\tmovzwl %%sp, %%ebp\n" );
-    fprintf( outfile, "\tleal (%%ebp,%%edx), %%edx\n" );  
+    fprintf( outfile, "\tleal (%%ebp,%%edx), %%edx\n" );
 
     /* Get saved flags into %ecx */
     fprintf( outfile, "\tpopl %%ecx\n" );
@@ -852,7 +853,8 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 
     fprintf( outfile, "\tshldl $16,%%ebx,%%eax\n" );
     fprintf( outfile, "\tandl $0xfff8,%%eax\n" );
-    fprintf( outfile, "\tmovl " PREFIX "ldt_copy(%%eax),%%esi\n" );
+    fprintf( outfile, "\tshrl $1,%%eax\n" );
+    fprintf( outfile, "\tmovl " PREFIX "wine_ldt_copy(%%eax),%%esi\n" );
     fprintf( outfile, "\tmovw %%bx,%%ax\n" );
     fprintf( outfile, "\taddl %%eax,%%esi\n" );
 

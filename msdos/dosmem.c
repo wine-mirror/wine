@@ -212,7 +212,7 @@ static void DOSMEM_InitDPMI(void)
     memcpy( ptr, enter_xms, sizeof(enter_xms) );
     ptr = DOSMEM_GetBlock( sizeof(enter_pm), &DOSMEM_dpmi_seg );
     memcpy( ptr, enter_pm, sizeof(enter_pm) );
-    DOSMEM_dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), SEGMENT_CODE, FALSE, FALSE );
+    DOSMEM_dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), WINE_LDT_FLAGS_CODE );
 }
 
 BIOSDATA * DOSMEM_BiosData()
@@ -506,11 +506,11 @@ BOOL DOSMEM_Init(BOOL dos_init)
         setup_dos_mem( dos_init );
 
         DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
-                                           0x10000, 0, FALSE, FALSE, FALSE );
+                                           0x10000, 0, WINE_LDT_FLAGS_DATA );
         DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_sysmem + 0x400,
-                                                0x100, 0, FALSE, FALSE, FALSE );
+                                                0x100, 0, WINE_LDT_FLAGS_DATA );
         DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
-                                               0x10000, 0, FALSE, FALSE, FALSE );
+                                               0x10000, 0, WINE_LDT_FLAGS_DATA );
         DOSMEM_FillBiosSegments();
         DOSMEM_FillIsrTable();
         DOSMEM_InitMemory();
@@ -836,9 +836,8 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 	HMODULE16 hModule = GetModuleHandle16("KERNEL");
 	WORD	sel;
 
-	sel=GLOBAL_CreateBlock(
-		GMEM_FIXED,DOSMEM_dosmem+realsel*16,0x10000,
-		hModule,FALSE,FALSE,FALSE );
+	sel=GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+realsel*16, 0x10000,
+                                hModule, WINE_LDT_FLAGS_DATA );
 	TRACE_(selector)("(0x%04x) returns 0x%04x.\n", realsel,sel);
 	return sel;
 }

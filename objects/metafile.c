@@ -101,7 +101,7 @@ HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh)
         size = sizeof(METAHEADER) + sizeof(METAHEADERDISK);
 
     hmf = GLOBAL_CreateBlock( GMEM_MOVEABLE, mh, mh->mtSize * sizeof(WORD),
-                              GetCurrentPDB16(), FALSE, FALSE, FALSE );
+                              GetCurrentPDB16(), WINE_LDT_FLAGS_DATA );
     return hmf;
 }
 

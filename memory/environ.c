@@ -123,7 +123,7 @@ BOOL ENV_BuildEnvironment(void)
 
     if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
     current_envdb.environ = p;
-    current_envdb.env_sel = SELECTOR_AllocBlock( p, 0x10000, SEGMENT_DATA, FALSE, FALSE );
+    current_envdb.env_sel = SELECTOR_AllocBlock( p, 0x10000, WINE_LDT_FLAGS_DATA );
 
     /* And fill it with the Unix environment */
 
@@ -302,7 +302,8 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, old_size + len )))
         goto done;
     if (current_envdb.env_sel)
-        SELECTOR_MoveBlock( current_envdb.env_sel, new_env );
+        current_envdb.env_sel = SELECTOR_ReallocBlock( current_envdb.env_sel,
+                                                       new_env, old_size + len );
     p = new_env + (p - env);
     if (len > 0) memmove( p + len, p, old_size - (p - new_env) );
 

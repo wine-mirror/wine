@@ -112,24 +112,20 @@ void debug_handles(void)
  * Create a global heap block for a fixed range of linear memory.
  */
 HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
-                              HGLOBAL16 hOwner, BOOL16 isCode,
-                              BOOL16 is32Bit, BOOL16 isReadOnly )
+                              HGLOBAL16 hOwner, unsigned char selflags )
 {
     WORD sel, selcount;
     GLOBALARENA *pArena;
 
       /* Allocate the selector(s) */
 
-    sel = SELECTOR_AllocBlock( ptr, size,
-			      isCode ? SEGMENT_CODE : SEGMENT_DATA,
-			      is32Bit, isReadOnly );
-    
+    sel = SELECTOR_AllocBlock( ptr, size, selflags );
     if (!sel) return 0;
     selcount = (size + 0xffff) / 0x10000;
 
     if (!(pArena = GLOBAL_GetArena( sel, selcount )))
     {
-        SELECTOR_FreeBlock( sel, selcount );
+        SELECTOR_FreeBlock( sel );
         return 0;
     }
 
@@ -144,7 +140,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
     pArena->flags = flags & GA_MOVEABLE;
     if (flags & GMEM_DISCARDABLE) pArena->flags |= GA_DISCARDABLE;
     if (flags & GMEM_DDESHARE) pArena->flags |= GA_IPCSHARE;
-    if (!isCode) pArena->flags |= GA_DGROUP;
+    if (!(selflags & (WINE_LDT_FLAGS_CODE^WINE_LDT_FLAGS_DATA))) pArena->flags |= GA_DGROUP;
     pArena->selCount = selcount;
     if (selcount > 1)  /* clear the next arena blocks */
         memset( pArena + 1, 0, (selcount - 1) * sizeof(GLOBALARENA) );
@@ -169,7 +165,7 @@ BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
     if (!VALID_HANDLE(sel))
     	return FALSE;
     pArena = GET_ARENA_PTR(sel);
-    SELECTOR_FreeBlock( sel, (pArena->size + 0xffff) / 0x10000 );
+    SELECTOR_FreeBlock( sel );
     memset( pArena, 0, sizeof(GLOBALARENA) );
     return TRUE;
 }
@@ -192,10 +188,7 @@ BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
 
     pArena->base = (DWORD)ptr;
     pArena->size = size;
-
-    SELECTOR_MoveBlock( sel, ptr );
-    SetSelectorLimit16( sel, size-1 );
-
+    SELECTOR_ReallocBlock( sel, ptr, size );
     return TRUE;
 }
 
@@ -204,8 +197,7 @@ BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
  *
  * Implementation of GlobalAlloc16()
  */
-HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
-                        BOOL16 isCode, BOOL16 is32Bit, BOOL16 isReadOnly )
+HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags )
 {
     void *ptr;
     HGLOBAL16 handle;
@@ -214,8 +206,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
 
     /* If size is 0, create a discarded block */
 
-    if (size == 0) return GLOBAL_CreateBlock( flags, NULL, 1, hOwner, isCode,
-                                              is32Bit, isReadOnly );
+    if (size == 0) return GLOBAL_CreateBlock( flags, NULL, 1, hOwner, selflags );
 
     /* Fixup the size */
 
@@ -229,8 +220,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
 
       /* Allocate the selector(s) */
 
-    handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner,
-				isCode, is32Bit, isReadOnly );
+    handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner, selflags );
     if (!handle)
     {
         HeapFree( GetProcessHeap(), 0, ptr );
@@ -255,7 +245,7 @@ HGLOBAL16 WINAPI GlobalAlloc16(
 
     if (flags & GMEM_DDESHARE)
         owner = GetExePtr(owner);  /* Make it a module handle */
-    return GLOBAL_Alloc( flags, size, owner, FALSE, FALSE, FALSE );
+    return GLOBAL_Alloc( flags, size, owner, WINE_LDT_FLAGS_DATA );
 }
 
 
@@ -333,7 +323,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         ptr = HeapReAlloc( GetProcessHeap(), 0, ptr, size );
     if (!ptr)
     {
-        SELECTOR_FreeBlock( sel, (oldsize + 0xffff) / 0x10000 );
+        SELECTOR_FreeBlock( sel );
         memset( pArena, 0, sizeof(GLOBALARENA) );
         return 0;
     }
@@ -352,7 +342,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     if (!(pNewArena = GLOBAL_GetArena( sel, selcount )))
     {
         HeapFree( GetProcessHeap(), 0, ptr );
-        SELECTOR_FreeBlock( sel, selcount );
+        SELECTOR_FreeBlock( sel );
         return 0;
     }
 
@@ -699,8 +689,7 @@ DWORD WINAPI GlobalDOSAlloc16(
        WORD	 wSelector;
        GLOBALARENA *pArena;
    
-       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, 
-				      hModule, 0, 0, 0 );
+       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, hModule, WINE_LDT_FLAGS_DATA );
        pArena = GET_ARENA_PTR(wSelector);
        pArena->flags |= GA_DOSMEM;
        return MAKELONG(wSelector,uParagraph);

@@ -1012,7 +1012,7 @@ AllocSLCallback(
 
 	*(DWORD*)(thunk+18) = GetCurrentProcessId();
 
-	sel = SELECTOR_AllocBlock( thunk , 32, SEGMENT_CODE, FALSE, FALSE );
+	sel = SELECTOR_AllocBlock( thunk, 32, WINE_LDT_FLAGS_CODE );
 	return (sel<<16)|0;
 }
 

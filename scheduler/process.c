@@ -192,8 +192,7 @@ static BOOL process_init( char *argv[] )
         struct init_process_request *req = server_alloc_req( sizeof(*req),
                                                              sizeof(main_exe_name)-1 );
 
-        req->ldt_copy  = ldt_copy;
-        req->ldt_flags = ldt_flags_copy;
+        req->ldt_copy  = &wine_ldt_copy;
         req->ppid      = getppid();
         if ((ret = !server_call( REQ_INIT_PROCESS )))
         {

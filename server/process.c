@@ -171,7 +171,6 @@ struct thread *create_process( int fd )
     process->queue           = NULL;
     process->atom_table      = NULL;
     process->ldt_copy        = NULL;
-    process->ldt_flags       = NULL;
     process->exe.next        = NULL;
     process->exe.prev        = NULL;
     process->exe.file        = NULL;
@@ -808,7 +807,6 @@ DECL_HANDLER(init_process)
         return;
     }
     current->process->ldt_copy  = req->ldt_copy;
-    current->process->ldt_flags = req->ldt_flags;
     init_process( req->ppid, req );
 }
 

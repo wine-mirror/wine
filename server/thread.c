@@ -574,7 +574,7 @@ static void get_selector_entry( struct thread *thread, int entry,
                                 unsigned int *base, unsigned int *limit,
                                 unsigned char *flags )
 {
-    if (!thread->process->ldt_copy || !thread->process->ldt_flags)
+    if (!thread->process->ldt_copy)
     {
         set_error( STATUS_ACCESS_DENIED );
         return;
@@ -587,10 +587,10 @@ static void get_selector_entry( struct thread *thread, int entry,
     if (suspend_for_ptrace( thread ))
     {
         unsigned char flags_buf[4];
-        int *addr = (int *)thread->process->ldt_copy + 2 * entry;
+        int *addr = (int *)thread->process->ldt_copy + entry;
         if (read_thread_int( thread, addr, base ) == -1) goto done;
-        if (read_thread_int( thread, addr + 1, limit ) == -1) goto done;
-        addr = (int *)thread->process->ldt_flags + (entry >> 2);
+        if (read_thread_int( thread, addr + 8192, limit ) == -1) goto done;
+        addr = (int *)thread->process->ldt_copy + 2*8192 + (entry >> 2);
         if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
         *flags = flags_buf[entry & 3];
     done:

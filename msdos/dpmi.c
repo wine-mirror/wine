@@ -260,7 +260,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         DWORD esp,edi;
 
         INT_SetRealModeContext((REALMODECALL *)PTR_SEG_OFF_TO_LIN( rmcb->regs_sel, rmcb->regs_ofs ), context);
-        ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
+        ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, WINE_LDT_FLAGS_DATA );
         esp = context->Esp;
 
         FIXME("untested!\n");
@@ -583,25 +583,24 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
     DWORD psp_ofs = (DWORD)(lpDosTask->psp_seg<<4);
     PDB16 *psp = (PDB16 *)psp_ofs;
     HANDLE16 env_seg = psp->environment;
-    int is32;
+    unsigned char selflags = WINE_LDT_FLAGS_DATA;
 
     RESET_CFLAG(context);
     lpDosTask->dpmi_flag = AX_reg(context);
-    is32 = lpDosTask->dpmi_flag & 1;
 /* our mode switch wrapper have placed the desired CS into DX */
-    cs = SELECTOR_AllocBlock( (void *)(DX_reg(context)<<4), 0x10000, SEGMENT_CODE, FALSE, FALSE );
+    cs = SELECTOR_AllocBlock( (void *)(DX_reg(context)<<4), 0x10000, WINE_LDT_FLAGS_CODE );
 /* due to a flaw in some CPUs (at least mine), it is best to mark stack segments as 32-bit if they
    can be used in 32-bit code. Otherwise, these CPUs may not set the high word of esp during a
    ring transition (from kernel code) to the 16-bit stack, and this causes trouble if executing
    32-bit code using this stack. */
-    ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
+    if (lpDosTask->dpmi_flag & 1) selflags |= WINE_LDT_FLAGS_32BIT;
+    ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, selflags );
 /* do the same for the data segments, just in case */
     if (context->SegDs == context->SegSs) ds = ss;
-    else ds = SELECTOR_AllocBlock( (void *)(context->SegDs<<4), 0x10000, SEGMENT_DATA, is32, FALSE );
-    es = SELECTOR_AllocBlock( psp, 0x100, SEGMENT_DATA, is32, FALSE );
+    else ds = SELECTOR_AllocBlock( (void *)(context->SegDs<<4), 0x10000, selflags );
+    es = SELECTOR_AllocBlock( psp, 0x100, selflags );
 /* convert environment pointer, as the spec says, but we're a bit lazy about the size here... */
-    psp->environment = SELECTOR_AllocBlock( (void *)(env_seg<<4),
-					    0x10000, SEGMENT_DATA, FALSE, FALSE );
+    psp->environment = SELECTOR_AllocBlock( (void *)(env_seg<<4), 0x10000, WINE_LDT_FLAGS_DATA );
 
     pm_ctx = *context;
     pm_ctx.SegCs = DOSMEM_dpmi_sel;
@@ -852,24 +851,20 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     case 0x000b:  /* Get descriptor */
     	TRACE("get descriptor (0x%04x)\n",BX_reg(context));
         {
-            ldt_entry entry;
-            LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
-            entry.base = W32S_WINE2APP(entry.base, offset);
-
+            LDT_ENTRY entry;
+            wine_ldt_set_base( &entry, (void*)W32S_WINE2APP(wine_ldt_get_base(&entry), offset) );
             /* FIXME: should use ES:EDI for 32-bit clients */
-            LDT_EntryToBytes( PTR_SEG_OFF_TO_LIN( context->SegEs,
-                                                  DI_reg(context) ), &entry );
+            *(LDT_ENTRY *)PTR_SEG_OFF_TO_LIN( context->SegEs, LOWORD(context->Edi) ) = entry;
         }
         break;
 
     case 0x000c:  /* Set descriptor */
     	TRACE("set descriptor (0x%04x)\n",BX_reg(context));
         {
-            ldt_entry entry;
-            LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( context->SegEs,
-                                                  DI_reg(context) ), &entry );
-            entry.base = W32S_APP2WINE(entry.base, offset);
-            LDT_SetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
+            LDT_ENTRY entry = *(LDT_ENTRY *)PTR_SEG_OFF_TO_LIN( context->SegEs,
+                                                                LOWORD(context->Edi) );
+            wine_ldt_set_base( &entry, (void*)W32S_APP2WINE(wine_ldt_get_base(&entry), offset) );
+            wine_ldt_set_entry( LOWORD(context->Ebx), &entry );
         }
         break;
 

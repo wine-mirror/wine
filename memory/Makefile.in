@@ -12,7 +12,6 @@ C_SRCS = \
 	global.c \
 	heap.c \
 	instr.c \
-	ldt.c \
 	local.c \
 	registry.c \
 	selector.c \

@@ -737,7 +737,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     if (ne_header.ne_cbnrestab)
     {
         pModule->nrname_handle = GLOBAL_Alloc( 0, ne_header.ne_cbnrestab,
-                                               hModule, FALSE, FALSE, FALSE );
+                                               hModule, WINE_LDT_FLAGS_DATA );
         if (!pModule->nrname_handle)
         {
             GlobalFree16( hModule );
@@ -763,7 +763,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     {
         pModule->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,
                                     (pModule->modref_count+1)*sizeof(HMODULE16),
-                                    hModule, FALSE, FALSE, FALSE );
+                                    hModule, WINE_LDT_FLAGS_DATA );
         if (!pModule->dlls_to_init)
         {
             if (pModule->nrname_handle) GlobalFree16( pModule->nrname_handle );

@@ -484,10 +484,13 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     if (flags & HEAP_WINE_SEGPTR)
     {
-        selector = SELECTOR_AllocBlock( address, totalSize,
-                           (flags & (HEAP_WINE_CODESEG|HEAP_WINE_CODE16SEG))
-                            ? SEGMENT_CODE : SEGMENT_DATA,
-                           (flags & HEAP_WINE_CODESEG) != 0, FALSE );
+        unsigned char selflags = WINE_LDT_FLAGS_DATA;
+
+        if (flags & (HEAP_WINE_CODESEG | HEAP_WINE_CODE16SEG))
+            selflags = WINE_LDT_FLAGS_CODE;
+        if (flags & HEAP_WINE_CODESEG)
+            selflags |= WINE_LDT_FLAGS_32BIT;
+        selector = SELECTOR_AllocBlock( address, totalSize, selflags );
         if (!selector)
         {
             ERR("Could not allocate selector\n" );
@@ -1835,16 +1838,13 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
   
     nrBlocks      = (totSize + 0x7fff) >> 15; 
     selectorTable = (LPWORD) HeapAlloc( header->heap,  0, nrBlocks * 2 );
-    selectorEven  = SELECTOR_AllocBlock( base, totSize, 
-                                         SEGMENT_DATA, FALSE, FALSE );
-    selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, 
-                                         SEGMENT_DATA, FALSE, FALSE );
-    
+    selectorEven  = SELECTOR_AllocBlock( base, totSize, WINE_LDT_FLAGS_DATA );
+    selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, WINE_LDT_FLAGS_DATA );
     if ( !selectorTable || !selectorEven || !selectorOdd )
     {
         if ( selectorTable ) HeapFree( header->heap, 0, selectorTable );
-        if ( selectorEven  ) SELECTOR_FreeBlock( selectorEven, totSize >> 16 );
-        if ( selectorOdd   ) SELECTOR_FreeBlock( selectorOdd, (totSize-0x8000) >> 16 );
+        if ( selectorEven  ) SELECTOR_FreeBlock( selectorEven );
+        if ( selectorOdd   ) SELECTOR_FreeBlock( selectorOdd );
         HeapDestroy( header->heap );
         VirtualFree( base, 0, MEM_RELEASE );
         return 0;

@@ -42,7 +42,7 @@ BOOL RELAY_Init(void)
 
     codesel = SELECTOR_AllocBlock( (void *)Call16_Ret_Start,
                                    (char *)Call16_Ret_End - (char *)Call16_Ret_Start,
-                                   SEGMENT_CODE, TRUE, FALSE );
+                                   WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
     if (!codesel) return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */

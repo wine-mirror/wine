@@ -178,7 +178,6 @@ struct init_process_request
 {
     REQUEST_HEADER;                /* request header */
     IN  void*        ldt_copy;     /* addr of LDT copy */
-    IN  void*        ldt_flags;    /* addr of LDT flags */
     IN  int          ppid;         /* parent Unix pid */
     OUT int          start_flags;  /* flags from startup info */
     OUT unsigned int server_start; /* server start time (GetTickCount) */
@@ -1592,7 +1591,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 27
+#define SERVER_PROTOCOL_VERSION 28
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

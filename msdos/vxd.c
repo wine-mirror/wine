@@ -392,8 +392,7 @@ void WINAPI VXD_TimerAPI ( CONTEXT86 *context )
     case 0x0009: /* get system time selector */
         if ( !System_Time_Selector )
         {
-            System_Time_Selector = SELECTOR_AllocBlock( &System_Time, sizeof(DWORD), 
-                                                        SEGMENT_DATA, FALSE, TRUE );
+            System_Time_Selector = SELECTOR_AllocBlock( &System_Time, sizeof(DWORD), WINE_LDT_FLAGS_DATA );
             CreateSystemTimer( 55, System_Time_Tick );
         }
 

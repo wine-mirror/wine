@@ -9,7 +9,6 @@
 
 #include "windef.h"
 #include "wine/windef16.h"
-#include "ldt.h"
 
 struct _CONTEXT86;
 struct _STACK16FRAME;

@@ -236,7 +236,7 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
     /* Make sure the segment and offset are valid */
     if (IS_SELECTOR_SYSTEM(seg)) return (BYTE *)(base + (index << ss));
     if (((seg & 7) != 7) || IS_SELECTOR_FREE(seg)) return NULL;
-    if (GET_SEL_LIMIT(seg) < (base + (index << ss))) return NULL;
+    if (wine_ldt_copy.limit[seg >> 3] < (base + (index << ss))) return NULL;
     return (BYTE *)PTR_SEG_OFF_TO_LIN( seg, (base + (index << ss)) );
 #undef GET_VAL
 }

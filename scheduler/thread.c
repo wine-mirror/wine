@@ -93,7 +93,7 @@ static BOOL THREAD_InitTEB( TEB *teb )
     teb->stack_top = (void *)~0UL;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
-    teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
+    teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
     return (teb->teb_sel != 0);
 }
 
@@ -196,8 +196,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
 
     if (alloc_stack16)
     {
-        teb->stack_sel = SELECTOR_AllocBlock( teb->stack_top, 0x10000, SEGMENT_DATA,
-                                              FALSE, FALSE );
+        teb->stack_sel = SELECTOR_AllocBlock( teb->stack_top, 0x10000, WINE_LDT_FLAGS_DATA );
         if (!teb->stack_sel) goto error;
         teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( teb->stack_sel, 
                                                 0x10000 - sizeof(STACK16FRAME) );

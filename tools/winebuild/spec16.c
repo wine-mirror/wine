@@ -388,7 +388,8 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
         case 'p':  /* linear pointer */
         case 't':  /* linear pointer to null-terminated string */
             if ( !usecdecl ) pos -= 4;
-            fprintf( outfile, "PTR_SEG_TO_LIN( *(SEGPTR *)(args+%d) )", pos );
+            fprintf( outfile, "((char*)wine_ldt_copy.base[*(WORD*)(args+%d) >> 3] + *(WORD*)(args+%d))",
+                     pos + 2, pos );
             if (  usecdecl ) pos += 4;
             break;
 
@@ -565,7 +566,11 @@ void BuildSpec16File( FILE *outfile )
              input_file_name );
     fprintf( outfile, "#include \"builtin16.h\"\n\n" );
 
-    fprintf( outfile, "extern void RELAY_Unimplemented16(void);\n\n" );
+    fprintf( outfile, "extern struct\n{\n" );
+    fprintf( outfile, "  void *base[8192];\n" );
+    fprintf( outfile, "  unsigned long limit[8192];\n" );
+    fprintf( outfile, "  unsigned char flags[8192];\n" );
+    fprintf( outfile, "} wine_ldt_copy;\n\n" );
 
     data = (unsigned char *)xmalloc( 0x10000 );
     memset( data, 0, 16 );

@@ -60,8 +60,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
     HMODULE16 hModule;
 
     hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
-                                  descr->module_size, 0,
-                                  FALSE, FALSE, FALSE );
+                                  descr->module_size, 0, WINE_LDT_FLAGS_DATA );
     if (!hModule) return 0;
     FarSetOwner16( hModule, hModule );
 
@@ -76,7 +75,8 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
 
     pSegTable = NE_SEG_TABLE( pModule );
     pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
-                                          pSegTable->minsize, hModule, TRUE, TRUE, FALSE );
+                                          pSegTable->minsize, hModule,
+                                          WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT );
     if (!pSegTable->hSeg) return 0;
     patch_code_segment( descr->code_start );
     pSegTable++;
@@ -86,8 +86,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
     minsize = pSegTable->minsize ? pSegTable->minsize : 0x10000;
     minsize += pModule->heap_size;
     if (minsize > 0x10000) minsize = 0x10000;
-    pSegTable->hSeg = GLOBAL_Alloc( GMEM_FIXED, minsize,
-                                        hModule, FALSE, FALSE, FALSE );
+    pSegTable->hSeg = GLOBAL_Alloc( GMEM_FIXED, minsize, hModule, WINE_LDT_FLAGS_DATA );
     if (!pSegTable->hSeg) return 0;
     if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
                                     descr->data_start, pSegTable->minsize);

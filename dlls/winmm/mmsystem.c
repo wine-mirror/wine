@@ -4925,9 +4925,8 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
  */
 HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt)
 {
-    DWORD 		showCmd = 0x40002;
+    DWORD 		*pShowCmd;
     LPSTR 		cmdline;
-    WORD 		sel1, sel2;
     LOADPARAMS16*	lp;
     HINSTANCE16 	ret;
     HINSTANCE16		handle;
@@ -4942,20 +4941,19 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD d
      */
     FIXME("This is currently broken. It will fail\n");
 
-    cmdline = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 0x0d);
+    cmdline = SEGPTR_ALLOC(0x0d);
     cmdline[0] = 0x0d;
     *(LPDWORD)(cmdline + 1) = (DWORD)spProc;
     *(LPDWORD)(cmdline + 5) = dwPmt;
     *(LPDWORD)(cmdline + 9) = 0;
 
-    sel1 = SELECTOR_AllocBlock(cmdline, 0x0d, SEGMENT_DATA, FALSE, FALSE);
-    sel2 = SELECTOR_AllocBlock(&showCmd, sizeof(showCmd),
-			       SEGMENT_DATA, FALSE, FALSE);
-    
+    pShowCmd = SEGPTR_ALLOC(sizeof(DWORD));
+    *pShowCmd = 0x40002;
+
     lp = (LOADPARAMS16*)HeapAlloc(GetProcessHeap(), 0, sizeof(LOADPARAMS16));
     lp->hEnvironment = 0;
-    lp->cmdLine = PTR_SEG_OFF_TO_SEGPTR(sel1, 0);
-    lp->showCmd = PTR_SEG_OFF_TO_SEGPTR(sel2, 0);
+    lp->cmdLine = SEGPTR_GET(cmdline);
+    lp->showCmd = SEGPTR_GET(pShowCmd);
     lp->reserved = 0;
     
 #ifndef USE_MM_TSK_WINE
@@ -4971,12 +4969,10 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD d
     }
     if (lphMmTask)
 	*lphMmTask = handle;
-    
-    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel2, 0));
-    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel1, 0));
-    
+
     HeapFree(GetProcessHeap(), 0, lp);
-    HeapFree(GetProcessHeap(), 0, cmdline);
+    SEGPTR_FREE(pShowCmd);
+    SEGPTR_FREE(cmdline);
 
     TRACE("=> 0x%04x/%d\n", handle, ret);
     return ret;

@@ -3324,8 +3324,7 @@ HBITMAP16 X11DRV_DIB_CreateDIBSection16(
 	  if ( dib->dsBm.bmBits )
 	    {
 	      ((X11DRV_DIBSECTION *) bmp->dib)->selector = 
-		SELECTOR_AllocBlock( dib->dsBm.bmBits, size, 
-				     SEGMENT_DATA, FALSE, FALSE );
+                  SELECTOR_AllocBlock( dib->dsBm.bmBits, size, WINE_LDT_FLAGS_DATA );
 	    }
 	  TRACE("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
 			 dib->dsBm.bmBits, size, ((X11DRV_DIBSECTION *) bmp->dib)->selector,
@@ -3600,12 +3599,8 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
   
   if (dib->colorMap)
     HeapFree(GetProcessHeap(), 0, dib->colorMap);
-  
-  if (dib->selector)
-    {
-      WORD count = (GetSelectorLimit16( dib->selector ) >> 16) + 1;
-      SELECTOR_FreeBlock( dib->selector, count );
-    }
+
+  if (dib->selector) SELECTOR_FreeBlock( dib->selector );
 }
 
 

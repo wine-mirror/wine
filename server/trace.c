@@ -324,7 +324,6 @@ static void dump_boot_done_request( const struct boot_done_request *req )
 static void dump_init_process_request( const struct init_process_request *req )
 {
     fprintf( stderr, " ldt_copy=%p,", req->ldt_copy );
-    fprintf( stderr, " ldt_flags=%p,", req->ldt_flags );
     fprintf( stderr, " ppid=%d", req->ppid );
 }
 

@@ -410,7 +410,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         selfloadheader->EntryAddrProc = NE_GetEntryPoint(hselfload,27);
         selfloadheader->MyAlloc  = NE_GetEntryPoint(hselfload,28);
         selfloadheader->SetOwner = NE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
-        pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
+        pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, WINE_LDT_FLAGS_DATA));
         oldstack = NtCurrentTeb()->cur_stack;
         NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                           0xff00 - sizeof(STACK16FRAME) );
@@ -845,6 +845,7 @@ BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
 {
     SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + segnum - 1;
     int minsize;
+    unsigned char selflags;
 
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
@@ -861,11 +862,9 @@ BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
     if ( segnum == pModule->ss )     minsize += pModule->stack_size;
     if ( segnum == pModule->dgroup ) minsize += pModule->heap_size;
 
-    pSeg->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSeg->flags),
-                                   minsize, pModule->self,
-                                   !(pSeg->flags & NE_SEGFLAGS_DATA),
-                                    (pSeg->flags & NE_SEGFLAGS_32BIT) != 0,
-                            FALSE /*pSeg->flags & NE_SEGFLAGS_READONLY*/ );
+    selflags = (pSeg->flags & NE_SEGFLAGS_DATA) ? WINE_LDT_FLAGS_DATA : WINE_LDT_FLAGS_CODE;
+    if (pSeg->flags & NE_SEGFLAGS_32BIT) selflags |= WINE_LDT_FLAGS_32BIT;
+    pSeg->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSeg->flags), minsize, pModule->self, selflags );
     if (!pSeg->hSeg) return FALSE;
 
     pSeg->flags |= NE_SEGFLAGS_ALLOCATED;
