@@ -29,11 +29,14 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdarg.h>
 #include <ctype.h>
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
 
+#include "windef.h"
+#include "winbase.h"
 #include "build.h"
 
 int UsePIC = 0;
@@ -94,6 +97,28 @@ static void set_dll_file_name( const char *name, DLLSPEC *spec )
     if (!strchr( spec->file_name, '.' )) strcat( spec->file_name, ".dll" );
 }
 
+/* set the dll subsystem */
+static void set_subsystem( const char *subsystem, DLLSPEC *spec )
+{
+    char *major, *minor, *str = xstrdup( subsystem );
+
+    if ((major = strchr( str, ':' ))) *major++ = 0;
+    if (!strcmp( str, "native" )) spec->subsystem = IMAGE_SUBSYSTEM_NATIVE;
+    else if (!strcmp( str, "windows" )) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+    else if (!strcmp( str, "console" )) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+    else fatal_error( "Invalid subsystem name '%s'\n", subsystem );
+    if (major)
+    {
+        if ((minor = strchr( major, '.' )))
+        {
+            *minor++ = 0;
+            spec->subsystem_minor = atoi( minor );
+        }
+        spec->subsystem_major = atoi( major );
+    }
+    free( str );
+}
+
 /* cleanup on program exit */
 static void cleanup(void)
 {
@@ -121,11 +146,11 @@ static const char usage_str[] =
 "    -K FLAGS                Compiler flags (only -KPIC is supported)\n"
 "    -l --library=LIB        Import the specified library\n"
 "    -L --library-path=DIR   Look for imports libraries in DIR\n"
-"    -m --mode=MODE          Set the binary mode (cui|gui|cuiw|guiw|native)\n"
 "    -M --main-module=MODULE Set the name of the main module for a Win16 dll\n"
 "    -N --dll-name=DLLNAME   Set the DLL name (default: from input file name)\n"
 "    -o --output=NAME        Set the output file name (default: stdout)\n"
 "    -r --res=RSRC.RES       Load resources from RSRC.RES\n"
+"       --subsystem=SUBSYS   Set the subsystem (one of native, windows, console)\n"
 "       --version            Print the version and exit\n"
 "    -w --warnings           Turn on warnings\n"
 "\nMode options:\n"
@@ -145,6 +170,7 @@ enum long_options_values
     LONG_OPT_DEBUG,
     LONG_OPT_RELAY16,
     LONG_OPT_RELAY32,
+    LONG_OPT_SUBSYSTEM,
     LONG_OPT_VERSION
 };
 
@@ -158,8 +184,8 @@ static const struct option long_options[] =
     { "debug",    0, 0, LONG_OPT_DEBUG },
     { "relay16",  0, 0, LONG_OPT_RELAY16 },
     { "relay32",  0, 0, LONG_OPT_RELAY32 },
+    { "subsystem",1, 0, LONG_OPT_SUBSYSTEM },
     { "version",  0, 0, LONG_OPT_VERSION },
-    { "spec",     1, 0, LONG_OPT_DLL },  /* for backwards compatibility */
     /* aliases for short options */
     { "source-dir",    1, 0, 'C' },
     { "delay-lib",     1, 0, 'd' },
@@ -171,8 +197,6 @@ static const struct option long_options[] =
     { "kill-at",       0, 0, 'k' },
     { "library",       1, 0, 'l' },
     { "library-path",  1, 0, 'L' },
-    { "mode",          1, 0, 'm' },
-    { "exe-mode",      1, 0, 'm' },  /* for backwards compatibility */
     { "main-module",   1, 0, 'M' },
     { "dll-name",      1, 0, 'N' },
     { "output",        1, 0, 'o' },
@@ -268,12 +292,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case 'l':
             add_import_dll( optarg, 0 );
             break;
-        case 'm':
-            if (!strcmp( optarg, "gui" )) spec->mode = SPEC_MODE_GUIEXE;
-            else if (!strcmp( optarg, "cui" )) spec->mode = SPEC_MODE_CUIEXE;
-            else if (!strcmp( optarg, "native" )) spec->mode = SPEC_MODE_NATIVE;
-            else usage(1);
-            break;
         case 'o':
             if (unlink( optarg ) == -1 && errno != ENOENT)
                 fatal_error( "Unable to create output file '%s'\n", optarg );
@@ -306,7 +324,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             spec->file_name = xmalloc( strlen(p) + 5 );
             strcpy( spec->file_name, p );
             if (!strchr( spec->file_name, '.' )) strcat( spec->file_name, ".exe" );
-            if (spec->mode == SPEC_MODE_DLL) spec->mode = SPEC_MODE_GUIEXE;
+            if (!spec->subsystem) spec->subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
             break;
         case LONG_OPT_DEBUG:
             set_exec_mode( MODE_DEBUG );
@@ -316,6 +334,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_RELAY32:
             set_exec_mode( MODE_RELAY32 );
+            break;
+        case LONG_OPT_SUBSYSTEM:
+            set_subsystem( optarg, spec );
             break;
         case LONG_OPT_VERSION:
             printf( "winebuild version " PACKAGE_VERSION "\n" );
@@ -385,6 +406,7 @@ int main(int argc, char **argv)
     switch(exec_mode)
     {
     case MODE_DLL:
+        spec->characteristics |= IMAGE_FILE_DLL;
         load_resources( argv, spec );
         if (!parse_input_file( spec )) break;
         switch (spec->type)

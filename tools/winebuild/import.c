@@ -26,10 +26,13 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
+#include "windef.h"
+#include "winbase.h"
 #include "build.h"
 
 struct import
@@ -443,19 +446,19 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
     }
 
     /* add symbols that will be contained in the spec file itself */
-    switch (spec->mode)
+    if (!(spec->characteristics & IMAGE_FILE_DLL))
     {
-    case SPEC_MODE_DLL:
-    case SPEC_MODE_NATIVE:
-        break;
-    case SPEC_MODE_GUIEXE:
-        kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA", spec );
-        kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA", spec );
-        /* fall through */
-    case SPEC_MODE_CUIEXE:
-        kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
-        break;
+        switch (spec->subsystem)
+        {
+        case IMAGE_SUBSYSTEM_WINDOWS_GUI:
+            kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );
+            kernel_imports += add_extra_symbol( extras, &count, "GetStartupInfoA", spec );
+            kernel_imports += add_extra_symbol( extras, &count, "GetModuleHandleA", spec );
+            /* fall through */
+        case IMAGE_SUBSYSTEM_WINDOWS_CUI:
+            kernel_imports += add_extra_symbol( extras, &count, "ExitProcess", spec );
+            break;
+        }
     }
     if (nb_delayed)
     {

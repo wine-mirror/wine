@@ -498,7 +498,8 @@ static void build(struct options* opts)
     {
         strarray_add(spec_args, "--exe");
         strarray_add(spec_args, output_name);
-        strarray_add(spec_args, opts->gui_app ? "-mgui" : "-mcui");
+        strarray_add(spec_args, "--subsystem");
+        strarray_add(spec_args, opts->gui_app ? "windows" : "console");
     }
 
     for ( j = 0; j < lib_dirs->size; j++ )

@@ -50,14 +50,6 @@ typedef enum
     SPEC_WIN32
 } SPEC_TYPE;
 
-typedef enum
-{
-    SPEC_MODE_DLL,
-    SPEC_MODE_NATIVE,
-    SPEC_MODE_GUIEXE,
-    SPEC_MODE_CUIEXE
-} SPEC_MODE;
-
 typedef struct
 {
     int n_values;
@@ -99,7 +91,6 @@ typedef struct
     char            *owner_name;         /* name of the 32-bit dll owning this one */
     char            *init_func;          /* initialization routine */
     SPEC_TYPE        type;               /* type of dll (Win16/Win32) */
-    SPEC_MODE        mode;               /* dll mode (dll/exe/etc.) */
     int              base;               /* ordinal base */
     int              limit;              /* ordinal limit */
     int              stack_size;         /* exe stack size */
@@ -108,6 +99,10 @@ typedef struct
     int              alloc_entry_points; /* number of allocated entry points */
     int              nb_names;           /* number of entry points with names */
     int              nb_resources;       /* number of resources */
+    int              characteristics;    /* characteristics for the PE header */
+    int              subsystem;          /* subsystem id */
+    int              subsystem_major;    /* subsystem version major number */
+    int              subsystem_minor;    /* subsystem version minor number */
     ORDDEF          *entry_points;       /* dll entry points */
     ORDDEF         **names;              /* array of entry point names (points into entry_points) */
     ORDDEF         **ordinals;           /* array of dll ordinals (points into entry_points) */

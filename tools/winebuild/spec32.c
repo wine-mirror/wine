@@ -484,7 +484,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 {
     int exports_size = 0;
     int nr_exports, nr_imports;
-    int characteristics, subsystem;
     DWORD page_size;
     const char *init_func = spec->init_func;
 
@@ -593,10 +592,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "extern void _fini();\n" );
 #endif
 
-    characteristics = subsystem = 0;
-    switch(spec->mode)
+    if (spec->characteristics & IMAGE_FILE_DLL)
     {
-    case SPEC_MODE_DLL:
         if (init_func)
             fprintf( outfile, "extern int __stdcall %s( void*, unsigned int, void* );\n\n", init_func );
         else
@@ -617,9 +614,10 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  "}\n",
                  DLL_PROCESS_ATTACH, init_func, init_func, DLL_PROCESS_DETACH );
         init_func = "__wine_dll_main";
-        characteristics = IMAGE_FILE_DLL;
-        break;
-    case SPEC_MODE_NATIVE:
+    }
+    else switch(spec->subsystem)
+    {
+    case IMAGE_SUBSYSTEM_NATIVE:
         if (init_func)
             fprintf( outfile, "extern int __stdcall %s( void*, void* );\n\n", init_func );
         else
@@ -640,9 +638,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  "}\n",
                  init_func, init_func );
         init_func = "__wine_driver_entry";
-        subsystem = IMAGE_SUBSYSTEM_NATIVE;
         break;
-    case SPEC_MODE_GUIEXE:
+    case IMAGE_SUBSYSTEM_WINDOWS_GUI:
         if (!init_func) init_func = "WinMain";
         fprintf( outfile,
                  "\ntypedef struct {\n"
@@ -684,9 +681,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  "    ExitProcess( ret );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
-        subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
         break;
-    case SPEC_MODE_CUIEXE:
+    case IMAGE_SUBSYSTEM_WINDOWS_CUI:
         if (init_func)
             fprintf( outfile, "extern int %s( int argc, char *argv[] );\n", init_func );
         else
@@ -713,7 +709,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  "    ExitProcess( ret );\n"
                  "}\n\n" );
         init_func = "__wine_exe_main";
-        subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         break;
     }
 
@@ -775,7 +770,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 #endif
     fprintf( outfile, "    0, 0, 0, 0,\n" );
     fprintf( outfile, "    sizeof(nt_header.OptionalHeader),\n" ); /* SizeOfOptionalHeader */
-    fprintf( outfile, "    0x%04x },\n", characteristics );        /* Characteristics */
+    fprintf( outfile, "    0x%04x },\n", spec->characteristics );  /* Characteristics */
 
     fprintf( outfile, "  { 0x%04x,\n", IMAGE_NT_OPTIONAL_HDR_MAGIC );  /* Magic */
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorLinkerVersion */
@@ -787,12 +782,13 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    %ld,\n", page_size );         /* FileAlignment */
     fprintf( outfile, "    1, 0,\n" );                   /* Major/MinorOperatingSystemVersion */
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorImageVersion */
-    fprintf( outfile, "    4, 0,\n" );                   /* Major/MinorSubsystemVersion */
+    fprintf( outfile, "    %d,\n", spec->subsystem_major );             /* MajorSubsystemVersion */
+    fprintf( outfile, "    %d,\n", spec->subsystem_minor );             /* MinorSubsystemVersion */
     fprintf( outfile, "    0,\n" );                      /* Win32VersionValue */
     fprintf( outfile, "    _end,\n" );                   /* SizeOfImage */
     fprintf( outfile, "    %ld,\n", page_size );         /* SizeOfHeaders */
     fprintf( outfile, "    0,\n" );                      /* CheckSum */
-    fprintf( outfile, "    0x%04x,\n", subsystem );      /* Subsystem */
+    fprintf( outfile, "    0x%04x,\n", spec->subsystem );/* Subsystem */
     fprintf( outfile, "    0,\n" );                      /* DllCharacteristics */
     fprintf( outfile, "    %d, %ld,\n",                  /* SizeOfStackReserve/Commit */
              (spec->stack_size ? spec->stack_size : 1024) * 1024, page_size );

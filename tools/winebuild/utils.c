@@ -82,6 +82,7 @@ void fatal_error( const char *msg, ... )
             fprintf( stderr, "%d:", current_line );
         fputc( ' ', stderr );
     }
+    else fprintf( stderr, "winebuild: " );
     vfprintf( stderr, msg, valist );
     va_end( valist );
     exit(1);
@@ -241,7 +242,6 @@ DLLSPEC *alloc_dll_spec(void)
     spec->owner_name         = NULL;
     spec->init_func          = NULL;
     spec->type               = SPEC_WIN32;
-    spec->mode               = SPEC_MODE_DLL;
     spec->base               = MAX_ORDINALS;
     spec->limit              = 0;
     spec->stack_size         = 0;
@@ -250,6 +250,10 @@ DLLSPEC *alloc_dll_spec(void)
     spec->alloc_entry_points = 0;
     spec->nb_names           = 0;
     spec->nb_resources       = 0;
+    spec->characteristics    = 0;
+    spec->subsystem          = 0;
+    spec->subsystem_major    = 4;
+    spec->subsystem_minor    = 0;
     spec->entry_points       = NULL;
     spec->names              = NULL;
     spec->ordinals           = NULL;
