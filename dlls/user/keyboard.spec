@@ -5,6 +5,14 @@
 5   pascal16 AnsiToOem(str ptr) AnsiToOem16
 6   pascal16 OemToAnsi(str ptr) OemToAnsi16
 7   pascal16 SetSpeed(word) SetSpeed16
+8   stub WEP
+9   stub INQUIREEX
+10  stub TOASCIIEX
+11  stub VKKEYSCANEX
+12  stub MAPVIRTUALKEYEX
+13  stub NEWTABLEEX
+14  stub __EXPORTEDSTUB
+
 100	pascal	ScreenSwitchEnable(word) ScreenSwitchEnable16
 #126	pascal	GetTableSeg
 #127	pascal	NewTable
