@@ -159,6 +159,7 @@ then
         dnl NOTE: autoconf does not allow commas inside the third 
         dnl       parameter to AC_CHECK_HEADERS, due to some quoting
         dnl       magic it does.
+	echo "Install the following packages:"
 	echo "Red Hat < 7.1	:	xpm xpm-devel"
 	echo "Red Hat >= 7.1	:	XFree86-devel"
 	echo "Caldera OpenLinux	:	xpm xpm-devel xpm-devel-static"

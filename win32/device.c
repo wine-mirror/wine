@@ -327,7 +327,7 @@ HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
         if (!strncasecmp( info->name, filename, strlen(info->name) ))
             return FILE_CreateDevice( info->id | 0x10000, access, sa );
 
-    FIXME( "Unknown VxD %s. Try --winver nt40 or win31 !\n", filename);
+    FIXME( "Unknown/unsupported VxD %s. Try --winver nt40 or win31 !\n", filename);
     SetLastError( ERROR_FILE_NOT_FOUND );
     return 0;
 }

@@ -948,7 +948,7 @@ static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPSTR buf )
 /***********************************************************************
  *           DRIVE_BuildEnv
  *
- * Build the environment array containing the drives current directories.
+ * Build the environment array containing the drives' current directories.
  * Resulting pointer must be freed with HeapFree.
  */
 char *DRIVE_BuildEnv(void)

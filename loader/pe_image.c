@@ -291,7 +291,7 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 	wmImp = MODULE_LoadLibraryExA( name, 0, 0 );
 	if (!wmImp) {
-	    ERR_(module)("Module (file) %s needed by %s not found\n", name, wm->filename);
+	    ERR_(module)("Module (file) %s (which is needed by %s) not found\n", name, wm->filename);
 	    return 1;
 	}
         wm->deps[i++] = wmImp;
@@ -386,7 +386,7 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
     if (!dir->VirtualAddress || !dir->Size)
     {
         if (nt->OptionalHeader.ImageBase == 0x400000)
-            ERR("Standard load address for a Win32 program (0x00400000) not available - patched kernel ?\n");
+            ERR("Standard load address for a Win32 program (0x00400000) not available - security-patched kernel ?\n");
         ERR( "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
              filename,
              (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?

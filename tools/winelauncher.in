@@ -60,7 +60,7 @@ Warning:
    Most Linux distributions have one or the other of these
    tools.
 
-   We strongly recommend that you use your distributions
+   We strongly recommend that you use your distribution's
    software methods to locate xmessage."
 
 else
@@ -70,7 +70,7 @@ fi
 
 #------------------------------------------------------------------------------
 #  We're going to do a lot of fancy footwork below.
-#    Before we get started, it would be nice to know the argv0,
+#    Before we get started, it would be nice to know the argv0
 #    of the actual script we're running (and lets remove at least
 #    one level of symlinking).
 #------------------------------------------------------------------------------

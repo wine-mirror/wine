@@ -1084,7 +1084,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         FIXME("(%s,...): PROFILE_SERVER ignored\n", name);
     if (lpStartupInfo->lpDesktop)
         FIXME("(%s,...): lpStartupInfo->lpDesktop %s ignored\n", 
-                      name, lpStartupInfo->lpDesktop);
+                      name, debugstr_a(lpStartupInfo->lpDesktop));
     if (lpStartupInfo->lpTitle)
         FIXME("(%s,...): lpStartupInfo->lpTitle %s ignored\n", 
                       name, lpStartupInfo->lpTitle);

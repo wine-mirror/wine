@@ -1478,7 +1478,7 @@ BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
 
     if (PROFILE_Open( filename ))
     {
-        if (!section && !entry && !string)
+        if (!section && !entry && !string) /* documented "file flush" case */
             PROFILE_ReleaseFile();  /* always return FALSE in this case */
         else
             ret = PROFILE_SetString( section, entry, string );
