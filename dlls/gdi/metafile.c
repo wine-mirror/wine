@@ -245,6 +245,10 @@ static METAHEADER *MF_ReadMetaFile(HANDLE hfile)
         HeapFree( GetProcessHeap(), 0, mh );
 	return NULL;
     }
+    if(mh->mtVersion != MFVERSION || mh->mtHeaderSize != size / 2) {
+        HeapFree( GetProcessHeap(), 0, mh );
+        return NULL;
+    }
     size = mh->mtSize * 2;
     mh = HeapReAlloc( GetProcessHeap(), 0, mh, size );
     if(!mh) return NULL;
