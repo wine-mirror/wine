@@ -27,6 +27,7 @@
 #  Should we have a special output mode for WineHQ?
 
 use strict;
+use bytes;
 
 # Options
 my $opt_output_directory = "man3w"; # All default options are for nroff (man pages)
