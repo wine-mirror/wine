@@ -60,9 +60,9 @@ static XF86VidModeModeInfo *orig_mode = NULL;
 
 /* This function is used both by DGA and DGA2 drivers, thus the virtual function table
    is not set here, but in the calling function */
-HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_no_VT(
+HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_with_VT(
     LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,
-    IUnknown *lpunk
+    IUnknown *lpunk, void *vtable
 ) {
     ICOM_THIS(IDirectDraw2Impl,iface);
     IDirectDrawSurfaceImpl* dsurf;
@@ -84,6 +84,8 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_no_VT(
 	HEAP_ZERO_MEMORY,
 	sizeof(dga_ds_private)
     );
+    ICOM_VTBL(dsurf) = (ICOM_VTABLE(IDirectDrawSurface)*)vtable;
+
     dspriv = (dga_ds_private*)dsurf->private;
     IDirectDraw2_AddRef(iface);
 
@@ -148,7 +150,7 @@ HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_no_VT(
 		);
 		IDirectDraw2_AddRef(iface);
 		back->ref = 1;
-		ICOM_VTBL(back) = (ICOM_VTABLE(IDirectDrawSurface4)*)&dga_dds4vt;
+		ICOM_VTBL(back) = (ICOM_VTABLE(IDirectDrawSurface4)*)vtable;
 		back->private = HeapAlloc(
 			GetProcessHeap(),
 			HEAP_ZERO_MEMORY,
@@ -196,12 +198,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
     IUnknown *lpunk
 ) {
   HRESULT ret;
-  IDirectDrawSurfaceImpl* dsurf;
 
-  ret = DGA_IDirectDraw2Impl_CreateSurface_no_VT(iface, lpddsd, lpdsf, lpunk);
-
-  dsurf = *(IDirectDrawSurfaceImpl**)lpdsf;
-  ICOM_VTBL(dsurf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga_dds4vt;
+  ret = DGA_IDirectDraw2Impl_CreateSurface_with_VT(iface, lpddsd, lpdsf, lpunk, &dga_dds4vt);
 
   return ret;
 }

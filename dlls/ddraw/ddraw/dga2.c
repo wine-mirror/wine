@@ -40,12 +40,8 @@ static HRESULT WINAPI DGA2_IDirectDraw2Impl_CreateSurface(
     IUnknown *lpunk
 ) {
   HRESULT ret;
-  IDirectDrawSurfaceImpl* dsurf;
 
-  ret = DGA_IDirectDraw2Impl_CreateSurface_no_VT(iface, lpddsd, lpdsf, lpunk);
-
-  dsurf = *(IDirectDrawSurfaceImpl**)lpdsf;
-  ICOM_VTBL(dsurf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga2_dds4vt;
+  ret = DGA_IDirectDraw2Impl_CreateSurface_with_VT(iface, lpddsd, lpdsf, lpunk, &dga2_dds4vt);
 
   return ret;
 }

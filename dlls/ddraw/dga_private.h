@@ -37,8 +37,8 @@ extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(LPDIRECTDRAWSURFACE
 extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Unlock(LPDIRECTDRAWSURFACE4 iface,LPVOID surface) ;
 extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lphdc);
 
-extern HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_no_VT(LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,
-							       LPDIRECTDRAWSURFACE *lpdsf,IUnknown *lpunk) ;
+extern HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_with_VT(LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,
+								 LPDIRECTDRAWSURFACE *lpdsf,IUnknown *lpunk, void *vtable) ;
 
 extern HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(LPDIRECTDRAW2 iface,REFIID refiid,LPVOID *obj) ;
 extern HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(LPDIRECTDRAW2 iface,LPDDCAPS caps1,LPDDCAPS caps2) ;
