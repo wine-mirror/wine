@@ -10,6 +10,7 @@ MODULE   = none
 C_SRCS = makedep.c fnt2bdf.c bin2res.c
 
 SUBDIRS = \
+	widl \
 	winebuild \
 	winedump \
 	wmc \
@@ -28,7 +29,7 @@ all: $(PROGRAMS) $(SUBDIRS)
 
 @MAKE_RULES@
 
-wrc: wpp
+widl wrc: wpp
 
 makedep: makedep.o
 	$(CC) $(CFLAGS) -o makedep makedep.o

@@ -1374,6 +1374,7 @@ programs/winhelp/Makefile
 programs/winver/Makefile
 server/Makefile
 tools/Makefile
+tools/widl/Makefile
 tools/winapi/Makefile
 tools/winebuild/Makefile
 tools/winedump/Makefile

@@ -1,0 +1,311 @@
+/*
+ * IDL Compiler
+ *
+ * Copyright 2002 Ove Kaaven
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+%option stack
+%option never-interactive
+
+nl	\r?\n
+ws	[ \f\t\r]
+cident	[a-zA-Z_][0-9a-zA-Z_]*
+int	[0-9]+
+hexd	[0-9a-fA-F]
+hex	0x{hexd}+
+uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
+
+%x QUOTE
+
+%{
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <assert.h>
+
+#include "widl.h"
+#include "utils.h"
+#include "parser.h"
+#include "wpp.h"
+
+#include "y.tab.h"
+
+#define YY_USE_PROTOS
+#define YY_NO_UNPUT
+#define YY_NO_TOP_STATE
+
+extern char *temp_name;
+
+static void addcchar(char c);
+static char *get_buffered_cstring(void);
+
+static char *cbuffer;
+static int cbufidx;
+static int cbufalloc = 0;
+
+static int kw_token(const char *kw);
+
+#define MAX_IMPORT_DEPTH 10
+struct {
+  YY_BUFFER_STATE state;
+  char *temp_name;
+} import_stack[MAX_IMPORT_DEPTH];
+int import_stack_ptr = 0;
+
+static void pop_import(void);
+
+%}
+
+/*
+ **************************************************************************
+ * The flexer starts here
+ **************************************************************************
+ */
+%%
+^#.*
+\"			yy_push_state(QUOTE); cbufidx = 0;
+<QUOTE>\"		{
+				yy_pop_state();
+				yylval.str = get_buffered_cstring();
+				return aSTRING;
+			}
+<QUOTE>\\\\		|
+<QUOTE>\\\"		addcchar(yytext[1]);
+<QUOTE>\\.		addcchar('\\'); addcchar(yytext[1]);
+<QUOTE>.		addcchar(yytext[0]);
+{uuid}			return aUUID;
+{hex}			return aNUM;
+{int}			return aNUM;
+{cident}		return kw_token(yytext);
+\n
+{ws}
+\<\<			return SHL;
+\>\>			return SHR;
+.			return yytext[0];
+<<EOF>>			{
+				if (import_stack_ptr) pop_import();
+				else yyterminate();
+			}
+%%
+
+#ifndef yywrap
+int yywrap(void)
+{
+	return 1;
+}
+#endif
+
+static struct {
+	const char *kw;
+	int token;
+	int val;
+} keywords[] = {
+	{"__cdecl",			tCDECL},
+	{"__int64",			tINT64},
+	{"__stdcall",			tSTDCALL},
+	{"_stdcall",			tSTDCALL},
+	{"aggregatable",		tAGGREGATABLE},
+	{"allocate",			tALLOCATE},
+	{"appobject",			tAPPOBJECT},
+	{"arrays",			tARRAYS},
+	{"async",			tASYNC},
+	{"async_uuid",			tASYNCUUID},
+	{"auto_handle",			tAUTOHANDLE},
+	{"bindable",			tBINDABLE},
+	{"boolean",			tBOOLEAN},
+	{"broadcast",			tBROADCAST},
+	{"byte",			tBYTE},
+	{"byte_count",			tBYTECOUNT},
+	{"call_as",			tCALLAS},
+	{"callback",			tCALLBACK},
+	{"case",			tCASE},
+	{"char",			tCHAR},
+	{"coclass",			tCOCLASS},
+	{"code",			tCODE},
+	{"comm_status",			tCOMMSTATUS},
+	{"const",			tCONST},
+	{"context_handle",		tCONTEXTHANDLE},
+	{"context_handle_noserialize",	tCONTEXTHANDLENOSERIALIZE},
+	{"context_handle_serialize",	tCONTEXTHANDLENOSERIALIZE},
+	{"control",			tCONTROL},
+	{"cpp_quote",			tCPPQUOTE},
+/* ... */
+	{"default",			tDEFAULT},
+/* ... */
+	{"double",			tDOUBLE},
+/* ... */
+	{"enum",			tENUM},
+/* ... */
+	{"extern",			tEXTERN},
+/* ... */
+	{"float",			tFLOAT},
+/* ... */
+	{"hyper",			tHYPER},
+/* ... */
+	{"iid_is",			tIIDIS},
+/* ... */
+	{"import",			tIMPORT},
+	{"importlib",			tIMPORTLIB},
+	{"in",				tIN},
+	{"include",			tINCLUDE},
+	{"in_line",			tINLINE},
+	{"int",				tINT},
+/* ... */
+	{"interface",			tINTERFACE},
+/* ... */
+	{"length_is",			tLENGTHIS},
+/* ... */
+	{"local",			tLOCAL},
+	{"long",			tLONG},
+/* ... */
+	{"object",			tOBJECT},
+	{"odl",				tODL},
+	{"oleautomation",		tOLEAUTOMATION},
+/* ... */
+	{"out",				tOUT},
+/* ... */
+	{"pointer_default",		tPOINTERDEFAULT},
+/* ... */
+	{"ref",				tREF},
+/* ... */
+	{"short",			tSHORT},
+	{"signed",			tSIGNED},
+	{"size_is",			tSIZEIS},
+	{"sizeof",			tSIZEOF},
+/* ... */
+	{"string",			tSTRING},
+	{"struct",			tSTRUCT},
+	{"switch",			tSWITCH},
+	{"switch_is",			tSWITCHIS},
+	{"switch_type",			tSWITCHTYPE},
+/* ... */
+	{"typedef",			tTYPEDEF},
+	{"union",			tUNION},
+/* ... */
+	{"unique",			tUNIQUE},
+	{"unsigned",			tUNSIGNED},
+/* ... */
+	{"uuid",			tUUID},
+	{"v1_enum",			tV1ENUM},
+/* ... */
+	{"version",			tVERSION},
+	{"void",			tVOID},
+	{"wchar_t",			tWCHAR},
+	{"wire_marshal",		tWIREMARSHAL},
+	{NULL}
+};
+
+static int kw_token(const char *kw)
+{
+	int i;
+	for (i=0; keywords[i].kw; i++)
+		if (strcmp(kw, keywords[i].kw) == 0)
+			return keywords[i].token;
+	yylval.str = xstrdup(kw);
+	return is_type(kw) ? aKNOWNTYPE : aIDENTIFIER;
+}
+
+static void addcchar(char c)
+{
+	if(cbufidx >= cbufalloc)
+	{
+		cbufalloc += 1024;
+		cbuffer = xrealloc(cbuffer, cbufalloc * sizeof(cbuffer[0]));
+		if(cbufalloc > 65536)
+			yywarning("Reallocating string buffer larger than 64kB");
+	}
+	cbuffer[cbufidx++] = c;
+}
+
+static char *get_buffered_cstring(void)
+{
+	addcchar(0);
+	return xstrdup(cbuffer);
+}
+
+static void pop_import(void)
+{
+	int ptr = import_stack_ptr-1;
+
+	fclose(yyin);
+	yy_delete_buffer( YY_CURRENT_BUFFER );
+	yy_switch_to_buffer( import_stack[ptr].state );
+	if (temp_name) {
+		unlink(temp_name);
+		free(temp_name);
+	}
+	temp_name = import_stack[ptr].temp_name;
+	import_stack_ptr--;
+}
+
+struct imports {
+	char *name;
+	struct imports *next;
+} *first_import;
+
+void do_import(char *fname)
+{
+	FILE *f;
+	char *hname, *path;
+	struct imports *import;
+	int ptr = import_stack_ptr;
+	int ret;
+
+	if (!parse_only) {
+		hname = dup_basename(fname, ".idl");
+		strcat(hname, ".h");
+
+		fprintf(header, "#include \"%s\"\n", hname);
+		free(hname);
+	}
+
+	import = first_import;
+	while (import && strcmp(import->name, fname))
+		import = import->next;
+	if (import) return; /* already imported */
+
+	import = xmalloc(sizeof(struct imports));
+	import->name = xstrdup(fname);
+	import->next = first_import;
+	first_import = import;
+
+        if (!(path = wpp_find_include( fname, 1 )))
+            yyerror("Unable to open include file %s", fname);
+
+	import_stack[ptr].temp_name = temp_name;
+	import_stack_ptr++;
+
+        ret = wpp_parse_temp( path, &temp_name );
+        free( path );
+        if (ret) exit(1);
+
+	if((f = fopen(temp_name, "r")) == NULL)
+		yyerror("Unable to open %s", temp_name);
+
+	import_stack[ptr].state = YY_CURRENT_BUFFER;
+	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
+}
+
+void abort_import(void)
+{
+	int ptr;
+
+	for (ptr=0; ptr<import_stack_ptr; ptr++)
+		unlink(import_stack[ptr].temp_name);
+}
