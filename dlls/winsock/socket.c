@@ -1301,12 +1301,6 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
             }
             else
             {
-                int on = 1;
-                /* The game GrandPrixLegends binds more than one time, but does
-                 * not do a SO_REUSEADDR - Stevens says this is ok */
-                TRACE( "Setting WS_SO_REUSEADDR on socket before we bind it\n");
-                WS_setsockopt( s, WS_SOL_SOCKET, WS_SO_REUSEADDR, (char*)&on, sizeof(on) );
-
                 if (bind(fd, uaddr, uaddrlen) < 0)
                 {
                     int loc_errno = errno;
