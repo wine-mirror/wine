@@ -94,7 +94,7 @@ void *BUILTIN32_dlopen( const char *name )
     strcat( buffer, ".so" );
 
     if (!(handle = ELFDLL_dlopen( buffer, RTLD_NOW )))
-        ERR( "failed to load %s: %s\n", buffer, dlerror() );
+        WARN( "failed to load %s: %s\n", buffer, dlerror() );
     return handle;
 #else
     return NULL;
