@@ -690,16 +690,18 @@ DWORD WINAPI SHHelpShortcuts_RunDLL (DWORD dwArg1, DWORD dwArg2, DWORD dwArg3, D
 
 DWORD WINAPI SHLoadInProc (REFCLSID rclsid)
 {
-	IUnknown * pUnk = NULL;
-	TRACE("%s\n", debugstr_guid(rclsid));
+    void *ptr = NULL;
 
-	CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown,(LPVOID*)pUnk);
-	if(pUnk)
-	{
-	  IUnknown_Release(pUnk);
-          return NOERROR;
-	}
-	return DISP_E_MEMBERNOTFOUND;
+    TRACE("%s\n", debugstr_guid(rclsid));
+
+    CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown,&ptr);
+    if(ptr)
+    {
+        IUnknown * pUnk = ptr;
+        IUnknown_Release(pUnk);
+        return NOERROR;
+    }
+    return DISP_E_MEMBERNOTFOUND;
 }
 
 /*************************************************************************
