@@ -131,6 +131,7 @@
 %x pp_line
 %x pp_defined
 %x pp_ignore
+%x RCINCL
 
 ws	[ \v\f\t\r]
 cident	[a-zA-Z_][0-9a-zA-Z_]*
@@ -190,6 +191,7 @@ typedef struct bufferstackentry {
 	char		*include_filename;
 	int		include_ifdepth;
 	int		seen_junk;
+	int 		pass_data;
 } bufferstackentry_t;
 
 #define ALLOCBLOCKSIZE	(1 << 10)	/* Allocate these chunks at a time for string-buffers */
@@ -259,6 +261,8 @@ static int macexpstackidx = 0;
 
 static bufferstackentry_t bufferstack[MAXBUFFERSTACK];
 static int bufferstackidx = 0;
+
+static int pass_data=1;
 
 /*
  * Global variables
@@ -509,7 +513,7 @@ includelogicentry_t *includelogiclist = NULL;
 	/*
 	 * Comment handling (almost all start-conditions)
 	 */
-<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody>"/*"	yy_push_state(pp_comment);
+<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,RCINCL>"/*" yy_push_state(pp_comment);
 <pp_comment>[^*\n]*|"*"+[^*/\n]*	;
 <pp_comment>\n				newline(0);
 <pp_comment>"*"+"/"			yy_pop_state();
@@ -517,7 +521,7 @@ includelogicentry_t *includelogiclist = NULL;
 	/*
 	 * Remove C++ style comment (almost all start-conditions)
 	 */
-<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,pp_macscan>"//"[^\n]*	{
+<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,pp_macscan,RCINCL>"//"[^\n]*	{
 		if(pptext[ppleng-1] == '\\')
 			ppwarning("C++ style comment ends with an escaped newline (escape ignored)");
 	}
@@ -538,6 +542,8 @@ includelogicentry_t *includelogiclist = NULL;
 		case pp_mbody:
 		case pp_inc:
 		case pp_line:
+		case RCINCL:
+			if (yy_current_state()==RCINCL) yy_pop_state();
 			pplval.cptr = get_string();
 			return tDQSTRING;
 		default:
@@ -613,8 +619,13 @@ includelogicentry_t *includelogiclist = NULL;
 				pplval.cptr = xstrdup(pptext);
 				return tIDENT;
 			}
-			else
-				put_buffer(pptext, ppleng);
+			else {
+				if((yy_current_state()==INITIAL) && (strcasecmp(pptext,"RCINCLUDE")==0)){
+					yy_push_state(RCINCL);
+					return tRCINCLUDE;
+				}
+				else put_buffer(pptext, ppleng);
+			}
 		}
 		else if(!ppp->expanding)
 		{
@@ -651,6 +662,18 @@ includelogicentry_t *includelogiclist = NULL;
 	 * newlines to propagate to the output or admin.
 	 */
 <pp_macexp>(\n)|(.)|(\\\r?(\n|.))	put_buffer(pptext, ppleng);
+
+<RCINCL>[A-Za-z0-9_\.\\/]+ {
+		pplval.cptr=xstrdup(pptext);
+        	yy_pop_state();
+		return tRCINCLUDEPATH;
+	}
+
+<RCINCL>{ws}+ ;
+
+<RCINCL>\"		{
+		new_string(); add_string(pptext,ppleng);yy_push_state(pp_dqs);
+	}
 
 	/*
 	 * This is a 'catch-all' rule to discover errors in the scanner
@@ -1164,6 +1187,7 @@ static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
 	bufferstack[bufferstackidx].include_filename	= incname;
 	bufferstack[bufferstackidx].include_ifdepth	= include_ifdepth;
 	bufferstack[bufferstackidx].seen_junk		= seen_junk;
+	bufferstack[bufferstackidx].pass_data		= pass_data;
 
 	if(ppp)
 		ppp->expanding = 1;
@@ -1229,6 +1253,8 @@ static bufferstackentry_t *pop_buffer(void)
 			include_ppp	= bufferstack[bufferstackidx].include_ppp;
 			include_ifdepth	= bufferstack[bufferstackidx].include_ifdepth;
 			seen_junk	= bufferstack[bufferstackidx].seen_junk;
+			pass_data	= bufferstack[bufferstackidx].pass_data;
+
 		}
 	}
 
@@ -1386,8 +1412,10 @@ static void put_buffer(char *s, int len)
 {
 	if(top_macro())
 		add_text_to_macro(s, len);
-	else
-		fwrite(s, 1, len, ppout);
+	else {
+           if(pass_data)
+           fwrite(s, 1, len, ppout);           
+        }
 }
 
 
@@ -1396,6 +1424,15 @@ static void put_buffer(char *s, int len)
  * Include management
  *-------------------------------------------------------------------------
  */
+int is_c_h_include(char *fname)  
+{        
+	int sl=strlen(fname);
+	if (sl < 2) return 0;
+	if ((toupper(fname[sl-1])!='H') && (toupper(fname[sl-1])!='C')) return 0;
+        if (fname[sl-2]!='.') return 0;
+	return 1;
+}
+
 void do_include(char *fname, int type)
 {
 	char *newpath;
@@ -1431,8 +1468,11 @@ void do_include(char *fname, int type)
 	seen_junk = 0;
 	include_state = 0;
 	include_ppp = NULL;
+	if (is_c_h_include(newpath)) pass_data=0;
+	else pass_data=1;
+
 	if(debuglevel & DEBUGLEVEL_PPMSG)
-		fprintf(stderr, "do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n", input_name, line_number, include_state, include_ppp, include_ifdepth);
+		fprintf(stderr, "do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d ,pass_data=%d\n", input_name, line_number, include_state, include_ppp, include_ifdepth,pass_data);
 	pp_switch_to_buffer(pp_create_buffer(ppin, YY_BUF_SIZE));
 
 	fprintf(ppout, "# 1 \"%s\" 1%s\n", newpath, type ? "" : " 3"); 
