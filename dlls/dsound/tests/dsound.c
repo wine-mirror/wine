@@ -524,7 +524,8 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                  wfx.nSamplesPerSec!=wfx2.nSamplesPerSec ||
                  wfx.wBitsPerSample!=wfx2.wBitsPerSample ||
                  wfx.nChannels!=wfx2.nChannels)) {
-                trace("Requested primary format tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
+                trace("Requested primary format tag=0x%04x %ldx%dx%d "
+                      "avg.B/s=%ld align=%d\n",
                       wfx2.wFormatTag,wfx2.nSamplesPerSec,wfx2.wBitsPerSample,
                       wfx2.nChannels,wfx2.nAvgBytesPerSec,wfx2.nBlockAlign);
                 trace("Got tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
@@ -545,9 +546,12 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
             bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
             bufdesc.lpwfxFormat=&wfx2;
-            trace("  Testing a primary buffer at %ldx%dx%d with a secondary buffer at %ldx%dx%d\n",
-                  wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
-                  wfx2.nSamplesPerSec,wfx2.wBitsPerSample,wfx2.nChannels);
+            if (winetest_interactive) {
+                trace("  Testing a primary buffer at %ldx%dx%d with a "
+                      "secondary buffer at %ldx%dx%d\n",
+                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,
+                      wfx2.nSamplesPerSec,wfx2.wBitsPerSample,wfx2.nChannels);
+            }
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DS_OK && secondary!=NULL,
                "IDirectSound_CreateSoundBuffer failed to create a secondary "
@@ -634,8 +638,10 @@ static HRESULT test_secondary(LPGUID lpGuid)
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
             bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
             bufdesc.lpwfxFormat=&wfx;
-            trace("  Testing a secondary buffer at %ldx%dx%d\n",
-                  wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+            if (winetest_interactive) {
+                trace("  Testing a secondary buffer at %ldx%dx%d\n",
+                      wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+            }
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DS_OK && secondary!=NULL,
                "IDirectSound_CreateSoundBuffer failed to create a secondary "
