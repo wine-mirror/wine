@@ -159,8 +159,10 @@ static void test_info(void)
 
     boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, 0);
     ok (!boolret, "GetFileVersionInfoA should have failed: GetLastError = 0x%08lx\n", GetLastError());
-    ok ((GetLastError() == ERROR_INVALID_DATA) || (GetLastError() == ERROR_BAD_PATHNAME),
-        "Last error wrong! ERROR_INVALID_DATA/ERROR_BAD_PATHNAME (ME) expected, got 0x%08lx\n",
+    ok ((GetLastError() == ERROR_INVALID_DATA) || (GetLastError() == ERROR_BAD_PATHNAME) ||
+	(GetLastError() == NO_ERROR),
+        "Last error wrong! ERROR_INVALID_DATA/ERROR_BAD_PATHNAME (ME)/"
+	"NO_ERROR (95) expected, got 0x%08lx\n",
         GetLastError());
 
     boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, pVersionInfo );
