@@ -315,10 +315,12 @@ James Juran <jrj120@psu.edu>.
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
-can be obtained via FTP from ibiblio.org in the 
-/pub/Linux/ALPHA/Wine/development directory.  The releases are in the 
-format 'Wine-yyyymmdd.tar.gz', or 'Wine-yyyymmdd.diff.gz' for the diff's 
-from the previous release.
+can be obtained via FTP from ibiblio.org in the
+/pub/Linux/ALPHA/Wine/development directory.  The releases are in the
+format 'Wine-yyyymmdd.tar.gz', or 'Wine-yyyymmdd.diff.gz' for the
+diff's from the previous release. The same directory holds the
+pre-built contents of the documentation in various formats
+(wine-doc.xxx.gz).
 .PP
 The latest snapshot of the code may be obtained via CVS.  For information
 on how to do this, please see

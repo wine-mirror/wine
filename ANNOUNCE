@@ -24,7 +24,10 @@ from the following locations:
   ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20010216.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
-For more download locations, see http://ftpsearch.lycos.com.
+For more download locations, see http://ftpsearch.lycos.com. These
+locations also hold pre-built documentation packages in various
+formats: wine-doc-html.tar.gz, wine-doc-txt.tar.gz, wine-doc.pdf.gz
+and wine-doc.ps.gz
 
 You can also get the current source directly from the CVS tree. Check
 http://www.winehq.com/dev.html for details.

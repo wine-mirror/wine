@@ -88,6 +88,9 @@ You also need flex version 2.5 or later and yacc.
 Bison will work as a replacement for yacc. If you are
 using RedHat or Debian, install the flex and bison packages.
 
+In case you want to build the documentation yourself, you'll also
+need the DocBook tools (db2html, db2ps, db2pdf).
+
 4. COMPILATION
 
 In case you chose to not use wineinstall, run the following commands
@@ -120,6 +123,9 @@ run "make depend && make".
 Once Wine has been built correctly, you can do "make install"; this
 will install the wine executable, the Wine man page, and a few other
 needed files.
+
+If you want to build the documentation, you can run "make" in the
+documentation directory.
 
 Wine requires a configuration file named wine.conf. Its default
 location is /usr/local/etc, but you can supply a different name when
@@ -196,7 +202,8 @@ CVS:	The current Wine development tree is available through CVS.
 	Go to http://www.winehq.com/dev.shtml for more information.
 
 If you add something, or fix a bug, please send a patch ('diff -u'
-format preferred) to julliard@winehq.com for inclusion in the next
+format preferred) to julliard@winehq.com or to the
+wine-patches@winehq.com mailing list for inclusion in the next
 release.
 
 --
