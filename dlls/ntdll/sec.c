@@ -408,10 +408,12 @@ ULONG WINAPI RtlLengthSecurityDescriptor(
 	if ( lpsd->Group != NULL )
 		Size += RtlLengthSid((PSID)((LPBYTE)lpsd->Group + offset));
 
-	if ( lpsd->Sacl != NULL )
+	if ( (lpsd->Control & SE_SACL_PRESENT) &&
+	      lpsd->Sacl != NULL )
 		Size += ((PACL)((LPBYTE)lpsd->Sacl + offset))->AclSize;
 
-	if ( lpsd->Dacl != NULL )
+	if ( (lpsd->Control & SE_DACL_PRESENT) &&
+	      lpsd->Dacl != NULL )
 		Size += ((PACL)((LPBYTE)lpsd->Dacl + offset))->AclSize;
 
 	return Size;
@@ -430,7 +432,7 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
 
 	TRACE("(%p,%p,%p,%p)\n",
-	pSecurityDescriptor, lpbDaclPresent, *pDacl, lpbDaclDefaulted);
+	pSecurityDescriptor, lpbDaclPresent, pDacl, lpbDaclDefaulted);
 
 	if (lpsd->Revision != SECURITY_DESCRIPTOR_REVISION)
 	  return STATUS_UNKNOWN_REVISION ;
@@ -438,14 +440,12 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 	if ( (*lpbDaclPresent = (SE_DACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
 	  if ( SE_SELF_RELATIVE & lpsd->Control)
-	  { *pDacl = (PACL) ((LPBYTE)lpsd + (DWORD)lpsd->Dacl);
-	  }
+	    *pDacl = (PACL) ((LPBYTE)lpsd + (DWORD)lpsd->Dacl);
 	  else
-	  { *pDacl = lpsd->Dacl;
-	  }
-	}
+	    *pDacl = lpsd->Dacl;
 
-	*lpbDaclDefaulted = (( SE_DACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
+	  *lpbDaclDefaulted = (( SE_DACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
+	}
 
 	return STATUS_SUCCESS;
 }
@@ -498,19 +498,17 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 	pSecurityDescriptor, lpbSaclPresent, *pSacl, lpbSaclDefaulted);
 
 	if (lpsd->Revision != SECURITY_DESCRIPTOR_REVISION)
-	  return STATUS_UNKNOWN_REVISION ;
+	  return STATUS_UNKNOWN_REVISION;
 
 	if ( (*lpbSaclPresent = (SE_SACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
-	  if ( SE_SELF_RELATIVE & lpsd->Control)
-	  { *pSacl = (PACL) ((LPBYTE)lpsd + (DWORD)lpsd->Sacl);
-	  }
+	  if (SE_SELF_RELATIVE & lpsd->Control)
+	    *pSacl = (PACL) ((LPBYTE)lpsd + (DWORD)lpsd->Sacl);
 	  else
-	  { *pSacl = lpsd->Sacl;
-	  }
-	}
+	    *pSacl = lpsd->Sacl;
 
-	*lpbSaclDefaulted = (( SE_SACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
+	  *lpbSaclDefaulted = (( SE_SACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
+	}
 
 	return STATUS_SUCCESS;
 }
@@ -620,6 +618,7 @@ NTSTATUS WINAPI RtlSetGroupSecurityDescriptor (
 		lpsd->Control &= ~SE_GROUP_DEFAULTED;
 	return STATUS_SUCCESS;
 }
+
 /**************************************************************************
  *                 RtlGetGroupSecurityDescriptor		[NTDLL.@]
  */
@@ -730,8 +729,8 @@ NTSTATUS WINAPI RtlMakeSelfRelativeSD(
 
 
 /**************************************************************************
-+ *                 RtlSelfRelativeToAbsoluteSD [NTDLL.@]
-+ */
+ *                 RtlSelfRelativeToAbsoluteSD [NTDLL.@]
+ */
 NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
         IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
 	OUT PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
@@ -939,6 +938,8 @@ NTSTATUS  WINAPI RtlDeleteAce(PACL pAcl, DWORD dwAceIndex)
 		memcpy(pAce, ((BYTE*)pAce)+pAce->AceSize, len);
                 pAcl->AceCount--;
 	}
+
+	TRACE("pAcl=%p dwAceIndex=%ld status=0x%08lx\n", pAcl, dwAceIndex, status);
 
 	return status;
 }
@@ -1265,7 +1266,7 @@ NTSTATUS WINAPI RtlQueryInformationAcl(
 
 		if (pAcl->AclSize < paclsize->AclBytesInUse)
                 {
-                    WARN("Acl has %ld bytes free\n", pAcl->AclSize - paclsize->AclBytesInUse);
+                    WARN("Acl has %ld bytes free\n", paclsize->AclBytesFree);
                     paclsize->AclBytesFree = 0;
                     paclsize->AclBytesInUse = pAcl->AclSize;
                 }
