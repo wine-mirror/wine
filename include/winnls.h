@@ -278,6 +278,66 @@ DECL_WINELIB_TYPE_AW(TIMEFMT_ENUMPROC)
 #define MAX_LEADBYTES     12
 #define MAX_DEFAULTCHAR   2
 
+/* Defines for calendar handling */
+#define CAL_ICALINTVALUE          0x00000001
+#define CAL_SCALNAME              0x00000002
+#define CAL_IYEAROFFSETRANGE      0x00000003
+#define CAL_SERASTRING            0x00000004
+#define CAL_SSHORTDATE            0x00000005
+#define CAL_SLONGDATE             0x00000006
+#define CAL_SDAYNAME1             0x00000007
+#define CAL_SDAYNAME2             0x00000008
+#define CAL_SDAYNAME3             0x00000009
+#define CAL_SDAYNAME4             0x0000000a
+#define CAL_SDAYNAME5             0x0000000b
+#define CAL_SDAYNAME6             0x0000000c
+#define CAL_SDAYNAME7             0x0000000d
+#define CAL_SABBREVDAYNAME1       0x0000000e
+#define CAL_SABBREVDAYNAME2       0x0000000f
+#define CAL_SABBREVDAYNAME3       0x00000010
+#define CAL_SABBREVDAYNAME4       0x00000011
+#define CAL_SABBREVDAYNAME5       0x00000012
+#define CAL_SABBREVDAYNAME6       0x00000013
+#define CAL_SABBREVDAYNAME7       0x00000014
+#define CAL_SMONTHNAME1           0x00000015
+#define CAL_SMONTHNAME2           0x00000016
+#define CAL_SMONTHNAME3           0x00000017
+#define CAL_SMONTHNAME4           0x00000018
+#define CAL_SMONTHNAME5           0x00000019
+#define CAL_SMONTHNAME6           0x0000001a
+#define CAL_SMONTHNAME7           0x0000001b
+#define CAL_SMONTHNAME8           0x0000001c
+#define CAL_SMONTHNAME9           0x0000001d
+#define CAL_SMONTHNAME10          0x0000001e
+#define CAL_SMONTHNAME11          0x0000001f
+#define CAL_SMONTHNAME12          0x00000020
+#define CAL_SMONTHNAME13          0x00000021
+#define CAL_SABBREVMONTHNAME1     0x00000022
+#define CAL_SABBREVMONTHNAME2     0x00000023
+#define CAL_SABBREVMONTHNAME3     0x00000024
+#define CAL_SABBREVMONTHNAME4     0x00000025
+#define CAL_SABBREVMONTHNAME5     0x00000026
+#define CAL_SABBREVMONTHNAME6     0x00000027
+#define CAL_SABBREVMONTHNAME7     0x00000028
+#define CAL_SABBREVMONTHNAME8     0x00000029
+#define CAL_SABBREVMONTHNAME9     0x0000002a
+#define CAL_SABBREVMONTHNAME10    0x0000002b
+#define CAL_SABBREVMONTHNAME11    0x0000002c
+#define CAL_SABBREVMONTHNAME12    0x0000002d
+#define CAL_SABBREVMONTHNAME13    0x0000002e
+#define CAL_SYEARMONTH            0x0000002f
+#define CAL_GREGORIAN                  1
+#define CAL_GREGORIAN_US               2
+#define CAL_JAPAN                      3
+#define CAL_TAIWAN                     4
+#define CAL_KOREA                      5
+#define CAL_HIJRI                      6
+#define CAL_THAI                       7
+#define CAL_HEBREW                     8
+#define CAL_GREGORIAN_ME_FRENCH        9
+#define CAL_GREGORIAN_ARABIC           10
+#define CAL_GREGORIAN_XLIT_ENGLISH     11
+#define CAL_GREGORIAN_XLIT_FRENCH      12
 
 /* Types
  */
