@@ -57,9 +57,10 @@ static enum {none_mode = 0, winedbg_mode, automatic_mode, gdb_mode} local_mode;
 
 DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
 
+static HANDLE hOutput;
 void	DEBUG_OutputA(const char* buffer, int len)
 {
-    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, NULL, NULL);
+    WriteFile(hOutput, buffer, len, NULL, NULL);
 }
 
 void	DEBUG_OutputW(const WCHAR* buffer, int len)
@@ -1067,6 +1068,9 @@ int main(int argc, char** argv)
     DWORD	retv = 0;
     unsigned    gdb_flags = 0;
 
+    /* Initialize the output */
+    hOutput=GetStdHandle(STD_OUTPUT_HANDLE);
+
     /* Initialize the type handling stuff. */
     DEBUG_InitTypes();
     DEBUG_InitCVDataTypes();
@@ -1081,6 +1085,7 @@ int main(int argc, char** argv)
         {
             if (local_mode != none_mode) return DEBUG_Usage();
             local_mode = automatic_mode;
+            hOutput=GetStdHandle(STD_ERROR_HANDLE);
             /* force some internal variables */
             DBG_IVAR(BreakOnDllLoad) = 0;
             argc--; argv++;
