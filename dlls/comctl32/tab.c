@@ -1406,7 +1406,7 @@ TAB_DrawItemInterior
     RECT rcTemp;
     RECT rcImage;
     LOGFONTA logfont;
-    HFONT hFont;
+    HFONT hFont = 0;
     HFONT hOldFont = 0; /* stop uninitialized warning */
 
     INT nEscapement = 0; /* stop uninitialized warning */
@@ -1483,8 +1483,12 @@ TAB_DrawItemInterior
     {
       if(lStyle & TCS_VERTICAL)
       {
-        center_offset = ((drawRect->bottom - drawRect->top) - (rcText.right - rcText.left)) / 2;
-
+        center_offset = 0;
+        /*
+        currently the rcText rect is flawed because the rotated font does not
+        often match the horizontal font. So leave this as 0
+        ((drawRect->bottom - drawRect->top) - (rcText.right - rcText.left)) / 2;
+        */
         if(lStyle & TCS_BOTTOM)
           drawRect->top+=center_offset;
         else
@@ -1521,14 +1525,20 @@ TAB_DrawItemInterior
     /* call CreateFontIndirectA, which requires us to set the values of the logfont we pass in */
     if(lStyle & TCS_VERTICAL)
     {
-      iPointSize = 9;
+      if (!GetObjectA((infoPtr->hFont) ? 
+                infoPtr->hFont : GetStockObject(SYSTEM_FONT),
+                sizeof(LOGFONTA),&logfont))
+      {
+        iPointSize = 9;
 
-      lstrcpyA(logfont.lfFaceName, "Arial");
-      logfont.lfHeight = -MulDiv(iPointSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-      logfont.lfWeight = FW_NORMAL;
-      logfont.lfItalic = 0;
-      logfont.lfUnderline = 0;
-      logfont.lfStrikeOut = 0;
+        lstrcpyA(logfont.lfFaceName, "Arial");
+        logfont.lfHeight = -MulDiv(iPointSize, GetDeviceCaps(hdc, LOGPIXELSY), 
+                                    72);
+        logfont.lfWeight = FW_NORMAL;
+        logfont.lfItalic = 0;
+        logfont.lfUnderline = 0;
+        logfont.lfStrikeOut = 0;
+      }
 
       logfont.lfEscapement = nEscapement;
       logfont.lfOrientation = nOrientation;
@@ -1541,8 +1551,8 @@ TAB_DrawItemInterior
       ExtTextOutW(hdc,
       (lStyle & TCS_BOTTOM) ? drawRect->right : drawRect->left,
       (!(lStyle & TCS_BOTTOM)) ? drawRect->bottom : drawRect->top,
-      0,
-      0,
+      ETO_CLIPPED,
+      drawRect,
       infoPtr->items[iItem].pszText,
       lstrlenW(infoPtr->items[iItem].pszText),
       0);
@@ -1563,7 +1573,11 @@ TAB_DrawItemInterior
     *drawRect = rcTemp; /* restore drawRect */
 
     if(lStyle & TCS_VERTICAL)
+    {
       SelectObject(hdc, hOldFont); /* restore the original font */
+      if (hFont)
+        DeleteObject(hFont);
+    }
   }
 
   /*
@@ -1834,8 +1848,11 @@ static void TAB_DrawItem(
     }
   
     /* This modifies r to be the text rectangle. */
+{
+    HFONT hOldFont = SelectObject(hdc, infoPtr->hFont);
     TAB_DrawItemInterior(hwnd, hdc, iItem, &r);
-
+    SelectObject(hdc,hOldFont);
+}
     /* Draw the focus rectangle */
     if (((lStyle & TCS_FOCUSNEVER) == 0) &&
 	 (GetFocus() == hwnd) &&
