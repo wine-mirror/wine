@@ -88,7 +88,6 @@
  *   -- LVS_EX_ONECLICKACTIVATE
  *   -- LVS_EX_REGIONAL
  *   -- LVS_EX_SIMPLESELECT
- *   -- LVS_EX_SUBITEMIMAGES
  *   -- LVS_EX_TRACKSELECT
  *   -- LVS_EX_TWOCLICKACTIVATE
  *   -- LVS_EX_UNDERLINECOLD
@@ -1949,7 +1948,9 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	    Icon.left = State.right;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
-	    if (infoPtr->himlSmall && (!lpColumnInfo || lpLVItem->iSubItem == 0 || (lpColumnInfo->fmt & LVCFMT_IMAGE)))
+	    if (infoPtr->himlSmall &&
+                (!lpColumnInfo || lpLVItem->iSubItem == 0 || (lpColumnInfo->fmt & LVCFMT_IMAGE) ||
+                 ((infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES) && lpLVItem->iImage != I_IMAGECALLBACK)))
 		Icon.right += infoPtr->iconSize.cx;
 	    Icon.bottom = Icon.top + infoPtr->nItemHeight;
 	}
@@ -3388,6 +3389,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL i
 	    return FALSE;
 	}
         lpSubItem->iSubItem = lpLVItem->iSubItem;
+        lpSubItem->hdr.iImage = I_IMAGECALLBACK;
 	*bChanged = TRUE;
     }
     
@@ -5082,8 +5084,12 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     }
   
     /* Do we need to enquire about the image? */
-    if ((lpLVItem->mask & LVIF_IMAGE) && pItemHdr->iImage == I_IMAGECALLBACK)
+    if ((lpLVItem->mask & LVIF_IMAGE) && pItemHdr->iImage == I_IMAGECALLBACK &&
+        (lpLVItem->iSubItem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES)))
+    {
 	dispInfo.item.mask |= LVIF_IMAGE;
+        dispInfo.item.iImage = I_IMAGECALLBACK;
+    }
 
     /* Apps depend on calling back for text if it is NULL or LPSTR_TEXTCALLBACKW */
     if ((lpLVItem->mask & LVIF_TEXT) && !is_textW(pItemHdr->pszText))
@@ -5116,7 +5122,12 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	    pItemHdr->iImage = dispInfo.item.iImage;
     }
     else if (lpLVItem->mask & LVIF_IMAGE)
-	lpLVItem->iImage = pItemHdr->iImage;
+    {
+        if(lpLVItem->iSubItem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES))
+            lpLVItem->iImage = pItemHdr->iImage;
+        else
+            lpLVItem->iImage = 0;
+    }
 
     /* The pszText field */
     if (dispInfo.item.mask & LVIF_TEXT)
