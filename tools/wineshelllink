@@ -69,7 +69,7 @@ kde_entry()
 # KDE Config File
 [KDE Desktop Entry]
 Name=$xname
-Exec=wine "$path" $args
+Exec=wine "$path" -- $args
 Type=Application
 Comment=$descr
 EOF
@@ -83,7 +83,7 @@ gnome_entry()
     cat <<EOF
 [Desktop Entry]
 Name=$xname
-Exec=wine "$path" $args
+Exec=wine "$path" -- $args
 Type=Application
 Comment=$descr
 EOF
@@ -96,7 +96,7 @@ mdk_entry()
     base=`basename "$link"`
     section=`dirname "$link"`
     [ -z "$icon" ] || xicon="icon=\"$xpmicon\""
-    echo "?package(local.Wine):needs=x11 section=\"Wine/$section\" title=\"$base\" longtitle=\"$descr\" command=\"wine \\\"$path\\\" $args\" $xicon"
+    echo "?package(local.Wine):needs=x11 section=\"Wine/$section\" title=\"$base\" longtitle=\"$descr\" command=\"wine \\\"$path\\\" -- $args\" $xicon"
 }
 
 # copy the icon file to a specified dir and set xpmicon to the resulting path
