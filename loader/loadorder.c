@@ -11,12 +11,12 @@
 #include "config.h"
 #include "windef.h"
 #include "options.h"
-#include "debug.h"
 #include "loadorder.h"
 #include "heap.h"
 #include "options.h"
 #include "module.h"
 #include "elfdll.h"
+#include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
 
