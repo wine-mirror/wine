@@ -671,12 +671,12 @@ static BOOL process_attach(void)
   XFree(vis);
   LEAVE_GL();
 
-  if ((extensions != NULL) && (strstr(extensions, "GLX_ARB_get_proc_address"))) {
-    opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
-    if (opengl_handle != NULL) {
-      p_glXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
-      wine_dlclose(opengl_handle, NULL, 0);
-    }
+  opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
+  if (opengl_handle != NULL) {
+   p_glXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
+   wine_dlclose(opengl_handle, NULL, 0);
+   if (p_glXGetProcAddressARB == NULL)
+	   TRACE("could not find glXGetProcAddressARB in libGL.\n");
   }
   
   if (default_cx == NULL) {
