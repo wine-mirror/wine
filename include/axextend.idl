@@ -780,6 +780,24 @@ interface IStreamBuilder : IUnknown
 }
 
 
+/*****************************************************************************
+ * IAMStreamConfig interface
+ */
+[
+    object,
+    uuid(c6e13340-30ac-11d0-a18c-00a0c9118956),
+    pointer_default(unique)
+]
+interface IAMStreamConfig : IUnknown
+{
+    HRESULT SetFormat( [in] AM_MEDIA_TYPE *pmt);
+    HRESULT GetFormat( [in] AM_MEDIA_TYPE **pmt);
+    HRESULT GetNumberOfCapabilities( [out] int *piCount, [out] int *piSize);
+    HRESULT GetStreamCaps( [in] int iIndex, [out] AM_MEDIA_TYPE **pmt,
+                          [out] BYTE *pSCC);
+}
+
+
 [
         object,
         uuid(56a868aa-0ad4-11ce-b03a-0020af0ba770),
