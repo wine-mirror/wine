@@ -1034,9 +1034,12 @@ BOOL  WINAPI EnumPrintersA(
 	return FALSE;
     }
   
-    while(RegEnumKeyA(hkeyPrinters, number, NULL, 0) == ERROR_SUCCESS)
-        number++;
-
+    if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &number, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) {
+        RegCloseKey(hkeyPrinters);
+	ERR("Can't query Printers key\n");
+	return FALSE;
+    }
     TRACE("Found %ld printers\n", number);
 
     switch(dwLevel) {
