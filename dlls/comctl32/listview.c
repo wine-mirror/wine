@@ -272,6 +272,7 @@ static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
 static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *);
+static BOOL LISTVIEW_GetItemListOrigin(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *, INT, LPRECT);
 static INT LISTVIEW_CalculateMaxWidth(LISTVIEW_INFO *);
@@ -718,7 +719,9 @@ static BOOL notify_customdrawitem (LISTVIEW_INFO *infoPtr, HDC hdc, UINT iItem, 
 
 /******** Item iterator functions **********************************/
 
-static BOOL iterator_create_frameditems(ITERATOR*, LISTVIEW_INFO*, const RECT*, HRGN);
+static BOOL ranges_add(HDPA ranges, RANGE range);
+static BOOL ranges_del(HDPA ranges, RANGE range);
+static void ranges_dump(HDPA ranges);
 
 static inline BOOL iterator_next(ITERATOR* i)
 {
@@ -757,51 +760,25 @@ static inline void iterator_destroy(ITERATOR* i)
     if (i->ranges) DPA_Destroy(i->ranges);
 }
 
-static inline BOOL iterator_create_empty(ITERATOR* i)
+static inline BOOL iterator_empty(ITERATOR* i)
 {
     ZeroMemory(i, sizeof(*i));
     i->nItem = i->range.lower = i->range.upper = -1;
     return TRUE;
 }
 
-static inline BOOL iterator_create_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr)
-{
-    return iterator_create_frameditems(i, infoPtr, &infoPtr->rcList, 0);
-}
-
-static BOOL iterator_create_clippeditems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
-{
-    HRGN rgnClip;
-    RECT rcClip;
-    INT rgntype;
-    
-    rgntype = GetClipBox(hdc, &rcClip);
-    if (rgntype == NULLREGION) 
-	return iterator_create_empty(i);
-    if (rgntype == SIMPLEREGION)
-	rgnClip = 0;
-    else
-    {
-	FIXME("TODO: complex clipped region!\n");
-	rgnClip = 0;
-    }
-    return iterator_create_frameditems(i, infoPtr, &rcClip, rgnClip);
-}
-
-static BOOL iterator_create_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT* lprc, HRGN rgn)
+static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT* lprc)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nPerCol, nPerRow;
     
-    if (rgn) FIXME("Don't know how to handle regions yet.\n");
-
     /* in case we fail, we want to return an empty iterator */
-    if (!iterator_create_empty(i)) return FALSE;
+    if (!iterator_empty(i)) return FALSE;
 
     if (uView == LVS_ICON || uView == LVS_SMALLICON)
     {
 	i->range.lower = 0;
-	i->range.upper = infoPtr->nItemCount;
+	i->range.upper = infoPtr->nItemCount - 1;
 	return TRUE;
     }
     
@@ -813,9 +790,54 @@ static BOOL iterator_create_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, con
     else /* uView == LVS_LIST */
 	nPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left)/infoPtr->nItemWidth, 1);
 
-    i->range.upper = min(i->range.lower + nPerCol * nPerRow, infoPtr->nItemCount);
+    i->range.upper = min(i->range.lower + nPerCol * nPerRow, infoPtr->nItemCount - 1);
     return TRUE;
 }
+
+static BOOL iterator_clippeditems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
+{
+    POINT Origin, Position;
+    RECT rcItem, rcClip;
+    INT nItem, rgntype;
+    
+    rgntype = GetClipBox(hdc, &rcClip);
+    if (rgntype == NULLREGION) return iterator_empty(i);
+    if (!iterator_frameditems(i, infoPtr, &rcClip)) return FALSE;
+    if (rgntype == SIMPLEREGION) return TRUE;
+ 
+    /* if we can't deal with the region, we'll  just go with the simple range */
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return TRUE;
+    if (!(i->ranges = DPA_Create(10))) return TRUE;
+    if (!ranges_add(i->ranges, i->range))
+    {
+	DPA_Destroy(i->ranges);
+	i->ranges = 0;
+	return TRUE;
+    }
+
+    /* no delete the invisible items from the list */
+    for (nItem = i->range.lower; nItem <= i->range.upper; nItem++)
+    {
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) continue;
+	rcItem.left = Position.x + Origin.x;
+	rcItem.top = Position.y + Origin.y;
+	rcItem.right = rcItem.left + infoPtr->nItemWidth;
+	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+	if (!RectVisible(hdc, &rcItem))
+	{
+	    RANGE item_range = { nItem, nItem };
+	    ranges_del(i->ranges, item_range);
+	}
+    }
+    
+    return TRUE;
+}
+
+static inline BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr)
+{
+    return iterator_frameditems(i, infoPtr, &infoPtr->rcList);
+}
+
 /******** Misc helper functions ************************************/
 
 static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
@@ -1263,7 +1285,7 @@ static void LISTVIEW_InvalidateSelectedItems(LISTVIEW_INFO *infoPtr)
 {
     ITERATOR i; 
    
-    iterator_create_visibleitems(&i, infoPtr); 
+    iterator_visibleitems(&i, infoPtr); 
     while(iterator_next(&i))
     {
 	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED))
@@ -1885,19 +1907,9 @@ static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *infoPtr)
 }
 
 #if 0
-static void ranges_dump(HDPA ranges)
-{
-    INT i;
-
-    ERR("Selections are:\n");
-    for (i = 0; i < ranges->nItemCount; i++)
-    {
-    	RANGE *selection = DPA_GetPtr(ranges, i);
-    	ERR("   [%d - %d]\n", selection->lower, selection->upper);
-    }
-}
 static void LISTVIEW_PrintSelectionRanges(LISTVIEW_INFO *infoPtr)
 {
+    ERR("Selections are:\n");
     ranges_dump(infoPtr->hdpaSelectionRanges);
 }
 #endif
@@ -1923,6 +1935,17 @@ static INT CALLBACK ranges_cmp(LPVOID range1, LPVOID range2, LPARAM flags)
     if (((RANGE*)range2)->upper < ((RANGE*)range1)->lower) 
 	return 1;
     return 0;
+}
+
+static void ranges_dump(HDPA ranges)
+{
+    INT i;
+
+    for (i = 0; i < ranges->nItemCount; i++)
+    {
+    	RANGE *selection = DPA_GetPtr(ranges, i);
+    	ERR("   [%d - %d]\n", selection->lower, selection->upper);
+    }
 }
 
 static inline BOOL ranges_contain(HDPA ranges, INT nItem)
@@ -1954,16 +1977,17 @@ static BOOL ranges_shift(HDPA ranges, INT nItem, INT delta)
     return TRUE;
 }
 
-static BOOL ranges_add(HDPA ranges, INT lower, INT upper)
+static BOOL ranges_add(HDPA ranges, RANGE range)
 {
     RANGE srchrgn;
     INT index;
 
-    TRACE("range (%i - %i)\n", lower, upper);
+    TRACE("range=(%i - %i)\n", range.lower, range.upper);
+    if (TRACE_ON(listview)) ranges_dump(ranges);
 
     /* try find overlapping regions first */
-    srchrgn.lower = lower - 1;
-    srchrgn.upper = upper + 1;
+    srchrgn.lower = range.lower - 1;
+    srchrgn.upper = range.upper + 1;
     index = DPA_Search(ranges, &srchrgn, 0, ranges_cmp, 0, 0);
    
     if (index == -1)
@@ -1973,8 +1997,7 @@ static BOOL ranges_add(HDPA ranges, INT lower, INT upper)
 	/* create the brand new range to insert */	
         newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
 	if(!newrgn) return FALSE;
-	newrgn->lower = lower;
-	newrgn->upper = upper;
+	*newrgn = range;
 	
 	/* figure out where to insert it */
 	index = DPA_Search(ranges, newrgn, 0, ranges_cmp, 0, DPAS_INSERTAFTER);
@@ -1993,8 +2016,8 @@ static BOOL ranges_add(HDPA ranges, INT lower, INT upper)
 	TRACE("Merge with index %i (%d - %d)\n",
 	      index, chkrgn->lower, chkrgn->upper);
 
-	chkrgn->lower = min(lower, chkrgn->lower);
-	chkrgn->upper = max(upper, chkrgn->upper);
+	chkrgn->lower = min(range.lower, chkrgn->lower);
+	chkrgn->upper = max(range.upper, chkrgn->upper);
 	
 	TRACE("New range %i (%d - %d)\n",
 	      index, chkrgn->lower, chkrgn->upper);
@@ -2030,17 +2053,15 @@ static BOOL ranges_add(HDPA ranges, INT lower, INT upper)
     return TRUE;
 }
 
-static BOOL ranges_del(HDPA ranges, INT lower, INT upper)
+static BOOL ranges_del(HDPA ranges, RANGE range)
 {
     RANGE remrgn, tmprgn, *chkrgn;
     BOOL done = FALSE;
     INT index;
 
-    remrgn.lower = lower;
-    remrgn.upper = upper;
-
-    TRACE("range: (%d - %d)\n", remrgn.lower, remrgn.upper);
-
+    TRACE("range: (%d - %d)\n", range.lower, range.upper);
+    
+    remrgn = range;
     do 
     {
 	index = DPA_Search(ranges, &remrgn, 0, ranges_cmp, 0, 0);
@@ -2066,14 +2087,14 @@ static BOOL ranges_del(HDPA ranges, INT lower, INT upper)
 	    DPA_DeletePtr(ranges, index);
 	}
 	/* case 3: overlap upper */
-	else if ( (chkrgn->upper < remrgn.upper) &&
+	else if ( (chkrgn->upper <= remrgn.upper) &&
 		  (chkrgn->lower < remrgn.lower) )
 	{
 	    chkrgn->upper = remrgn.lower - 1;
 	}
 	/* case 4: overlap lower */
 	else if ( (chkrgn->upper > remrgn.upper) &&
-		  (chkrgn->lower > remrgn.lower) )
+		  (chkrgn->lower >= remrgn.lower) )
 	{
 	    chkrgn->lower = remrgn.upper + 1;
 	}
@@ -2100,10 +2121,11 @@ static BOOL ranges_del(HDPA ranges, INT lower, INT upper)
  */
 static BOOL remove_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
 {
+    RANGE range = { lower, upper };
     LVITEMW lvItem;
     INT i;
 
-    if (!ranges_del(infoPtr->hdpaSelectionRanges, lower, upper)) return FALSE;
+    if (!ranges_del(infoPtr->hdpaSelectionRanges, range)) return FALSE;
     if (adj_sel_only) return TRUE;
    
     /* reset the selection on items */
@@ -2119,10 +2141,11 @@ static BOOL remove_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper,
  */
 static BOOL add_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
 {
+    RANGE range = { lower, upper };
     LVITEMW lvItem;
     INT i;
 
-    if (!ranges_add(infoPtr->hdpaSelectionRanges, lower, upper)) return FALSE;
+    if (!ranges_add(infoPtr->hdpaSelectionRanges, range)) return FALSE;
     if (adj_sel_only) return TRUE;
    
     /* set the selection on items */
@@ -2394,7 +2417,7 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	rcSelMark.left = LVIR_BOUNDS;
 	if (!LISTVIEW_GetItemRect(infoPtr, infoPtr->nSelectionMark, &rcSelMark)) return;
 	UnionRect(&rcSel, &rcItem, &rcSelMark);
-	iterator_create_frameditems(&i, infoPtr, &rcSel, 0);
+	iterator_frameditems(&i, infoPtr, &rcSel);
 	while(iterator_next(&i))
 	{
 	    LISTVIEW_GetItemPosition(infoPtr, i.nItem, &ptItem);
@@ -2503,7 +2526,7 @@ static INT LISTVIEW_GetItemAtPt(LISTVIEW_INFO *infoPtr, POINT pt)
     ITERATOR i;
     RECT rcItem;
    
-    iterator_create_visibleitems(&i, infoPtr); 
+    iterator_visibleitems(&i, infoPtr); 
     while(iterator_next(&i))
     {
 	rcItem.left = LVIR_SELECTBOUNDS;
@@ -3366,7 +3389,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
 
     /* figure out what we need to draw */
-    iterator_create_clippeditems(&i, infoPtr, hdc);
+    iterator_clippeditems(&i, infoPtr, hdc);
     
     /* send cache hint notification */
     if (infoPtr->dwStyle & LVS_OWNERDATA) 
@@ -3474,7 +3497,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     oldTa.fgColor = GetTextColor(hdc);
    
     /* figure out what we need to draw */
-    iterator_create_clippeditems(&i, infoPtr, hdc);
+    iterator_clippeditems(&i, infoPtr, hdc);
     
     /* a last few bits before we start drawing */
     bFullSelected = infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT;
@@ -3571,7 +3594,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
     
     /* figure out what we need to draw */
-    iterator_create_clippeditems(&i, infoPtr, hdc);
+    iterator_clippeditems(&i, infoPtr, hdc);
     
     while(iterator_next(&i))
     {
@@ -3611,35 +3634,26 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
     DWORD cditemmode = CDRF_DODEFAULT;
     POINT Origin, Position;
-    RECT rcItem, rcClip, rcTemp;
-    BOOL bDrawFocusedItem = FALSE;
+    RECT rcItem;
     ITERATOR i;
 
-    GetClipBox(hdc, &rcClip); /* FIXME: get rid of this */
-     
     /* Get scroll info once before loop */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
     
     /* figure out what we need to draw */
-    iterator_create_clippeditems(&i, infoPtr, hdc);
+    iterator_clippeditems(&i, infoPtr, hdc);
     
     while(iterator_next(&i))
     {
+	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_FOCUSED))
+	    continue;
+
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
 	rcItem.left = Position.x;
 	rcItem.top = Position.y;
 	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
 	rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	OffsetRect(&rcItem, Origin.x, Origin.y);
-
-	if (!IntersectRect(&rcTemp, &rcItem, &rcClip)) continue;
-
-	/* FIXME: move this before the rcItem computation, when we no longer need rcClip */	
-	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_FOCUSED))
-	{
-	    bDrawFocusedItem = TRUE;
-	    continue;
-	}
 
         if (cdmode & CDRF_NOTIFYITEMDRAW)
             cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, 0, CDDS_ITEMPREPAINT);
@@ -3652,20 +3666,19 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     }
     iterator_destroy(&i);
 
-    /* use the 'while' trick so we can break out of the loop */
-    while (bDrawFocusedItem)
-    {
-	if (!LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcItem, 0, 0, 0)) break;
-	if (cdmode & CDRF_NOTIFYITEMDRAW)
-	    cditemmode = notify_customdrawitem (infoPtr, hdc, infoPtr->nFocusedItem, 0, CDDS_ITEMPREPAINT);
-	if (cditemmode & CDRF_SKIPDEFAULT) break;
+    /* draw the focused item last, in case it's oversized */
+    if (!LISTVIEW_GetItemMeasures(infoPtr, infoPtr->nFocusedItem, &rcItem, 0, 0, 0)) return;
+    if (!RectVisible(hdc, &rcItem)) return;
+ 
+    if (cdmode & CDRF_NOTIFYITEMDRAW)
+	cditemmode = notify_customdrawitem (infoPtr, hdc, infoPtr->nFocusedItem, 0, CDDS_ITEMPREPAINT);
+    if (cditemmode & CDRF_SKIPDEFAULT)
+	return;
+    
+    LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, rcItem);
 	
-	LISTVIEW_DrawLargeItem(infoPtr, hdc, infoPtr->nFocusedItem, rcItem);
-	
-        if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-            notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
-	bDrawFocusedItem = FALSE;
-    }
+    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+	notify_customdrawitem(infoPtr, hdc, i.nItem, 0, CDDS_ITEMPOSTPAINT);
 }
 
 /***
@@ -5597,7 +5610,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	    rcSearch.right = lpht->pt.x + 1;
 	    rcSearch.bottom = lpht->pt.y + 1;
 
-	    iterator_create_frameditems(&i, infoPtr, &rcSearch, 0);
+	    iterator_frameditems(&i, infoPtr, &rcSearch);
 	    while(iterator_next(&i))
 	    {
 		if (!LISTVIEW_GetItemMeasures(infoPtr, i.nItem, &rcBounds, 0, 0, 0)) continue;
