@@ -96,7 +96,7 @@
 @ stub SetupDiCreateDevRegKeyA
 @ stub SetupDiCreateDevRegKeyW
 @ stub SetupDiCreateDeviceInfoA
-@ stub SetupDiCreateDeviceInfoList
+@ stdcall SetupDiCreateDeviceInfoList(ptr ptr)
 @ stdcall SetupDiCreateDeviceInfoListExW(ptr long str ptr)
 @ stub SetupDiCreateDeviceInfoW
 @ stub SetupDiDeleteDevRegKey
@@ -118,6 +118,7 @@
 @ stub SetupDiGetClassDevPropertySheetsA
 @ stub SetupDiGetClassDevPropertySheetsW
 @ stdcall SetupDiGetClassDevsA(ptr ptr long long)
+@ stdcall SetupDiGetClassDevsExA(ptr str ptr long ptr str ptr)
 @ stdcall SetupDiGetClassDevsExW(ptr wstr ptr long ptr wstr ptr)
 @ stdcall SetupDiGetClassDevsW(ptr ptr long long)
 @ stub SetupDiGetClassImageIndex
@@ -126,6 +127,7 @@
 @ stub SetupDiGetClassInstallParamsA
 @ stub SetupDiGetClassInstallParamsW
 @ stub SetupDiGetDeviceInfoListClass
+@ stdcall SetupDiGetDeviceInfoListDetailA(ptr ptr)
 @ stdcall SetupDiGetDeviceInfoListDetailW(ptr ptr)
 @ stub SetupDiGetDeviceInstallParamsA
 @ stub SetupDiGetDeviceInstallParamsW

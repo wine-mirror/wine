@@ -91,7 +91,25 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(DWORD flags, LPGUID list, DWORD size, P
 /***********************************************************************
  *		SetupDiGetDeviceInfoListDetailW  (SETUPAPI.@)
  */
+BOOL WINAPI SetupDiGetDeviceInfoListDetailA(HDEVINFO devinfo, PSP_DEVINFO_DATA devinfo_data )
+{
+  FIXME("\n");
+  return FALSE;
+}
+
+/***********************************************************************
+ *		SetupDiGetDeviceInfoListDetailW  (SETUPAPI.@)
+ */
 BOOL WINAPI SetupDiGetDeviceInfoListDetailW(HDEVINFO devinfo, PSP_DEVINFO_DATA devinfo_data )
+{
+  FIXME("\n");
+  return FALSE;
+}
+
+/***********************************************************************
+ *		SetupDiCreateDeviceInfoListA (SETUPAPI.@)
+ */
+HDEVINFO WINAPI SetupDiCreateDeviceInfoList(LPGUID class, HWND parend)
 {
   FIXME("\n");
   return FALSE;
@@ -103,6 +121,17 @@ BOOL WINAPI SetupDiGetDeviceInfoListDetailW(HDEVINFO devinfo, PSP_DEVINFO_DATA d
 HDEVINFO WINAPI SetupDiCreateDeviceInfoListExW(LPGUID class, HWND parend, LPCWSTR machine, PVOID reserved)
 {
   FIXME("\n");
+  return FALSE;
+}
+
+/***********************************************************************
+ *		  (SETUPAPI.@)
+ *
+ * NO WINAPI in description given
+ */
+HDEVINFO WINAPI SetupDiGetClassDevsExA(LPGUID class, LPCSTR filter, HWND parent, DWORD flags, HDEVINFO deviceset, LPCSTR machine, PVOID reserved)
+{
+  FIXME("filter %s machine %s\n",debugstr_a(filter),debugstr_a(machine));
   return FALSE;
 }
 
