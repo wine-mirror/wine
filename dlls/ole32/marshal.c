@@ -292,8 +292,9 @@ StdMarshalImpl_MarshalInterface(
   hres = IStream_Write(pStm,&md,sizeof(md),&res);
   if (hres) return hres;
 
-  if (SUCCEEDED(MARSHAL_Find_Stub(&mid,&pUnk))) {
-      IUnknown_Release(pUnk);
+  if (SUCCEEDED(MARSHAL_Find_Stub_Buffer(&mid,&stub))) {
+      /* Find_Stub_Buffer gives us a ref but we want to keep it, as if we'd created a new one */
+      TRACE("Found RpcStubBuffer %p\n", stub);
       return S_OK;
   }
   hres = get_facbuf_for_iid(riid,&psfacbuf);
