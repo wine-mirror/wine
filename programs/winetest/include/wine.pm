@@ -57,7 +57,12 @@ $todo_failures = 0;
 # |         access to them.  But I haven't worked it out       |
 # |         yet ...                                            |
 # --------------------------------------------------------------
-%return_types = ( "void" => 0, "int" => 1, "word" => 2, "ptr" => 3 );
+%return_types = ( 
+    "void" => 0,
+    "int" => 1, "long" => 1,
+    "word" => 2,
+    "ptr" => 3, "str" => 3, "wstr" => 3
+);
 
 
 # ------------------------------------------------------------------------
@@ -118,7 +123,7 @@ sub AUTOLOAD
 sub call($@)
 {
     my ($function,@args) = @_;
-    my ($funcptr,$ret_type) = @{$prototypes{$function}};
+    my ($funcptr,$ret_type,$arg_types) = @{$prototypes{$function}};
 
     if ($wine::debug > 1)
     {
@@ -131,9 +136,31 @@ sub call($@)
         print STDERR ")\n";
     }
 
+    # Check and translate args before call
+    my @args2;
+    if (defined($arg_types)) {
+	my @arg_types = @$arg_types;
+
+	if($#args != $#arg_types) {
+	    print STDERR "$function: too many arguments, expected " .
+		($#arg_types + 1) . ", got " . ($#args + 1) . "\n";
+	}
+
+	while (defined(my $arg = shift @args) &&
+               defined(my $arg_type = shift @arg_types))
+        {
+	    if($arg_type == 1 || $arg_type == 2) { # int || word
+		$arg = int($arg);
+	    }
+	    push @args2, $arg;
+	}
+    } else {
+	@args2 = @args;
+    }
+
     # Now call call_wine_API(), which will turn around and call
     # the appropriate wine API function.
-    my ($err,$r) = call_wine_API( $funcptr, $ret_type, $wine::debug-1, @args );
+    my ($err,$r) = call_wine_API( $funcptr, $ret_type, $wine::debug-1, @args2 );
 
     if ($wine::debug > 1)
     {
@@ -170,8 +197,19 @@ sub declare($%)
     foreach $func (keys %list)
     {
         my $ptr = get_proc_address( $handle, $func ) or die "Could not find '$func' in '$module'";
-        my $ret_type = $return_types{$list{$func}};
-        $prototypes{$func} = [ $ptr, $ret_type ];
+
+	if(ref($list{$func}) eq "ARRAY") {
+	    my ($return_type, $argument_types) = @{$list{$func}};
+
+	    my $ret_type = $return_types{$return_type};
+	    my $arg_types = [map { $return_types{$_} } @$argument_types];
+
+	    $prototypes{$func} = [ $ptr, $ret_type, $arg_types ];
+	} else {
+	    my $ret_type = $return_types{$list{$func}};
+
+	    $prototypes{$func} = [ $ptr, $ret_type ];
+	}
     }
 }
 
@@ -526,8 +564,8 @@ wine - Perl extension for calling wine API functions
     use wine;
 
     wine::declare( "kernel32",
-                   SetLastError => "void",
-                   GetLastError => "int" );
+                   SetLastError => ["void", ["int"]],
+                   GetLastError => ["int", []] );
     SetLastError( 1234 );
     printf "%d\n", GetLastError();
 
@@ -542,11 +580,11 @@ a Perl script.
 The functions you want to call must first be declared by calling
 the wine::declare method. The first argument is the name of the
 module containing the APIs, and the next argument is a list of
-function names and their return types. For instance:
+function names and their return and argument types. For instance:
 
     wine::declare( "kernel32",
-                   SetLastError => "void",
-                   GetLastError => "int" );
+                   SetLastError => ["void", ["int"]],
+                   GetLastError => ["int", []] );
 
 declares that the functions SetLastError and GetLastError are
 contained in the kernel32 dll.
@@ -564,9 +602,13 @@ The supported return types are:
 
 =item word
 
-=item int
+=item long
 
 =item ptr
+
+=item str
+
+=item wstr
 
 =back
 
