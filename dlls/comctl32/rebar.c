@@ -9,6 +9,8 @@
  *     Eric <ekohl@abo.rhein-zeitung.de>
  *
  * TODO:
+ *   - vertical placement
+ *   - ComboBox and ComboBoxEx placement
  *   - Some messages.
  *   - All notifications.
  *   - Layout code.
@@ -130,10 +132,18 @@ REBAR_CalcHorzBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     }
 
     /* set initial child window rectangle */
-    lpBand->rcChild.left   = lpBand->rcCapText.right + 4;
-    lpBand->rcChild.top    = lpBand->rcBand.top + 2;
-    lpBand->rcChild.right  = lpBand->rcBand.right - 4;
-    lpBand->rcChild.bottom = lpBand->rcBand.bottom - 2;
+    if (lpBand->fStyle & RBBS_FIXEDSIZE) {
+	lpBand->rcChild.left   = lpBand->rcCapText.right;
+	lpBand->rcChild.top    = lpBand->rcBand.top;
+	lpBand->rcChild.right  = lpBand->rcBand.right;
+	lpBand->rcChild.bottom = lpBand->rcBand.bottom;
+    }
+    else {
+	lpBand->rcChild.left   = lpBand->rcCapText.right + 4;
+	lpBand->rcChild.top    = lpBand->rcBand.top + 2;
+	lpBand->rcChild.right  = lpBand->rcBand.right - 4;
+	lpBand->rcChild.bottom = lpBand->rcBand.bottom - 2;
+    }
 
     /* calculate gripper rectangle */
     if ((!(lpBand->fStyle & RBBS_NOGRIPPER)) &&
@@ -157,6 +167,86 @@ REBAR_CalcHorzBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 
 }
 
+
+static VOID
+REBAR_CalcVertBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
+{
+    lpBand->fDraw = 0;
+
+    /* set initial caption image rectangle */
+    SetRect32 (&lpBand->rcCapImage, 0, 0, 0, 0);
+
+    /* image is visible */
+    if ((lpBand->iImage > -1) && (infoPtr->himl)) {
+	lpBand->fDraw |= DRAW_IMAGE;
+
+	lpBand->rcCapImage.right  = lpBand->rcCapImage.left + infoPtr->imageSize.cx;
+	lpBand->rcCapImage.bottom = lpBand->rcCapImage.top + infoPtr->imageSize.cy;
+
+	/* update band width */
+	if (lpBand->uMinHeight < infoPtr->imageSize.cx + 2) {
+	    lpBand->uMinHeight = infoPtr->imageSize.cx + 2;
+	    lpBand->rcBand.right = lpBand->rcBand.left + lpBand->uMinHeight;
+	}
+    }
+
+    /* set initial caption text rectangle */
+    lpBand->rcCapText.left   = lpBand->rcBand.left + 1;
+    lpBand->rcCapText.top    = lpBand->rcCapImage.bottom;
+    lpBand->rcCapText.right  = lpBand->rcBand.right - 1;
+    lpBand->rcCapText.bottom = lpBand->rcBand.top;
+
+    /* text is visible */
+    if (lpBand->lpText) {
+	HDC32 hdc = GetDC32 (0);
+	HFONT32 hOldFont = SelectObject32 (hdc, infoPtr->hFont);
+	SIZE32 size;
+
+	lpBand->fDraw |= DRAW_TEXT;
+	GetTextExtentPoint32A (hdc, lpBand->lpText,
+			       lstrlen32A (lpBand->lpText), &size);
+//	lpBand->rcCapText.right += size.cx;
+	lpBand->rcCapText.bottom += size.cy;
+
+	SelectObject32 (hdc, hOldFont);
+	ReleaseDC32 (0, hdc);
+    }
+
+    /* set initial child window rectangle */
+    if (lpBand->fStyle & RBBS_FIXEDSIZE) {
+	lpBand->rcChild.left   = lpBand->rcBand.left;
+	lpBand->rcChild.top    = lpBand->rcCapText.bottom;
+	lpBand->rcChild.right  = lpBand->rcBand.right;
+	lpBand->rcChild.bottom = lpBand->rcBand.bottom;
+    }
+    else {
+	lpBand->rcChild.left   = lpBand->rcBand.left + 2;
+	lpBand->rcChild.top    = lpBand->rcCapText.bottom + 4;
+	lpBand->rcChild.right  = lpBand->rcBand.right - 2;
+	lpBand->rcChild.bottom = lpBand->rcBand.bottom - 4;
+    }
+
+    /* calculate gripper rectangle */
+    if ((!(lpBand->fStyle & RBBS_NOGRIPPER)) &&
+	(!(lpBand->fStyle & RBBS_FIXEDSIZE)) &&
+	((lpBand->fStyle & RBBS_GRIPPERALWAYS) || 
+	 (infoPtr->uNumBands > 1))) {
+	lpBand->fDraw |= DRAW_GRIPPER;
+	lpBand->rcGripper.left   = lpBand->rcBand.left + 3;
+	lpBand->rcGripper.right  = lpBand->rcBand.left - 3;
+	lpBand->rcGripper.top    = lpBand->rcBand.top + 3;
+	lpBand->rcGripper.bottom = lpBand->rcGripper.top + 3;
+
+	/* move caption rectangles */
+	OffsetRect32 (&lpBand->rcCapImage, 0, GRIPPER_WIDTH);
+	OffsetRect32 (&lpBand->rcCapText, 0, GRIPPER_WIDTH);
+
+	/* adjust child rectangle */
+	lpBand->rcChild.top += GRIPPER_WIDTH;
+    }
+}
+
+
 static VOID
 REBAR_Layout (WND *wndPtr, LPRECT32 lpRect)
 {
@@ -171,12 +261,17 @@ REBAR_Layout (WND *wndPtr, LPRECT32 lpRect)
     else
 	GetClientRect32 (wndPtr->hwndSelf, &rcClient);
 
-//    x = rcClient.left + 1;
-//    y = rcClient.top + 1;
     x = 0;
     y = 0;
-    cx = rcClient.right - rcClient.left - 2;
-    cy = 20;    /* FIXME: fixed height */
+
+    if (wndPtr->dwStyle & CCS_VERT) {
+	cx = 20;    /* FIXME: fixed height */
+	cy = rcClient.bottom - rcClient.top;
+    }
+    else {
+	cx = rcClient.right - rcClient.left;
+	cy = 20;    /* FIXME: fixed height */
+    }
 
     for (i = 0; i < infoPtr->uNumBands; i++) {
 	lpBand = &infoPtr->bands[i];
@@ -185,32 +280,54 @@ REBAR_Layout (WND *wndPtr, LPRECT32 lpRect)
 	    ((wndPtr->dwStyle & CCS_VERT) && (lpBand->fStyle & RBBS_NOVERT)))
 	    continue;
 
-	if (lpBand->fStyle & RBBS_VARIABLEHEIGHT)
-	    cy = lpBand->cyMaxChild;
-	else if (lpBand->fStyle & RBBIM_CHILDSIZE)
-	    cy = lpBand->cyMinChild;
-	else
-	    cy = 20;
 
-	lpBand->rcBand.left   = x;
-	lpBand->rcBand.right  = x + cx;
-	lpBand->rcBand.top    = y;
-	lpBand->rcBand.bottom = y + cy;
+	if (wndPtr->dwStyle & CCS_VERT) {
+	    if (lpBand->fStyle & RBBS_VARIABLEHEIGHT)
+		cx = lpBand->cyMaxChild;
+	    else if (lpBand->fStyle & RBBIM_CHILDSIZE)
+		cx = lpBand->cyMinChild;
+	    else
+		cx = 20; /* FIXME */
 
-	lpBand->uMinHeight = cy;
+	    lpBand->rcBand.left   = x;
+	    lpBand->rcBand.right  = x + cx;
+	    lpBand->rcBand.top    = y;
+	    lpBand->rcBand.bottom = y + cy;
+	    lpBand->uMinHeight = cx;
+	}
+	else {
+	    if (lpBand->fStyle & RBBS_VARIABLEHEIGHT)
+		cy = lpBand->cyMaxChild;
+	    else if (lpBand->fStyle & RBBIM_CHILDSIZE)
+		cy = lpBand->cyMinChild;
+	    else
+		cy = 20; /* FIXME */
 
-/*
-	if (wndPtr->dwStyle & CCS_VERT)
+	    lpBand->rcBand.left   = x;
+	    lpBand->rcBand.right  = x + cx;
+	    lpBand->rcBand.top    = y;
+	    lpBand->rcBand.bottom = y + cy;
+	    lpBand->uMinHeight = cy;
+	}
+
+	if (wndPtr->dwStyle & CCS_VERT) {
 	    REBAR_CalcVertBand (infoPtr, lpBand);
-	else
-*/
+	    x += lpBand->uMinHeight;
+	}
+	else {
 	    REBAR_CalcHorzBand (infoPtr, lpBand);
-
-	y += lpBand->uMinHeight;
+	    y += lpBand->uMinHeight;
+	}
     }
 
-    infoPtr->calcSize.cx = rcClient.right - rcClient.left;
-    infoPtr->calcSize.cy = y; /* FIXME: fixed edge */
+    if (wndPtr->dwStyle & CCS_VERT) {
+	infoPtr->calcSize.cx = x;
+	infoPtr->calcSize.cy = rcClient.bottom - rcClient.top;
+    }
+    else {
+	infoPtr->calcSize.cx = rcClient.right - rcClient.left;
+	infoPtr->calcSize.cy = y;
+    }
 }
 
 
@@ -230,7 +347,9 @@ REBAR_ForceResize (WND *wndPtr)
     rc.right  = infoPtr->calcSize.cx;
     rc.bottom = infoPtr->calcSize.cy;
 
-//    AdjustWindowRectEx32 (&rc, wndPtr->dwStyle, FALSE, 0);
+    if (wndPtr->dwStyle & WS_BORDER) {
+	InflateRect32 (&rc, sysMetrics[SM_CXEDGE], sysMetrics[SM_CYEDGE]);
+    }
 
     SetWindowPos32 (wndPtr->hwndSelf, 0, 0, 0,
 		    rc.right - rc.left, rc.bottom - rc.top,
@@ -253,11 +372,39 @@ REBAR_MoveChildWindows (WND *wndPtr)
 	if (lpBand->hwndChild) {
 	    TRACE (rebar, "hwndChild = %x\n", lpBand->hwndChild);
 
-	    SetWindowPos32 (lpBand->hwndChild, HWND_TOP,
+	    if (WIDGETS_IsControl32 (WIN_FindWndPtr(lpBand->hwndChild), BIC32_COMBO)) {
+		INT32 nEditHeight, yPos;
+		RECT32 rc;
+
+		/* special placement code for combo box */
+
+
+		/* get size of edit line */
+		GetWindowRect32 (lpBand->hwndChild, &rc);
+		nEditHeight = rc.bottom - rc.top;
+		yPos = (lpBand->rcChild.bottom + lpBand->rcChild.top - nEditHeight)/2;
+
+		/* center combo box inside child area */
+		SetWindowPos32 (lpBand->hwndChild, HWND_TOP,
+			    lpBand->rcChild.left, /*lpBand->rcChild.top*/ yPos,
+			    lpBand->rcChild.right - lpBand->rcChild.left,
+			    nEditHeight,
+			    SWP_SHOWWINDOW);
+	    }
+#if 0
+	    else if () {
+		/* special placement code for extended combo box */
+
+
+	    }
+#endif
+	    else {
+		SetWindowPos32 (lpBand->hwndChild, HWND_TOP,
 			    lpBand->rcChild.left, lpBand->rcChild.top,
 			    lpBand->rcChild.right - lpBand->rcChild.left,
 			    lpBand->rcChild.bottom - lpBand->rcChild.top,
 			    SWP_SHOWWINDOW);
+	    }
 	}
     }
 }
@@ -489,12 +636,17 @@ static LRESULT
 REBAR_GetBarHeight (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (wndPtr);
+    INT32 nHeight;
 
     REBAR_Layout (wndPtr, NULL);
+    nHeight = infoPtr->calcSize.cy;
 
-    FIXME (rebar, "height = %d\n", infoPtr->calcSize.cy);
+    if (wndPtr->dwStyle & WS_BORDER)
+	nHeight += (2 * sysMetrics[SM_CYEDGE]);
 
-    return infoPtr->calcSize.cy;
+    FIXME (rebar, "height = %d\n", nHeight);
+
+    return nHeight;
 }
 
 
@@ -1080,6 +1232,8 @@ REBAR_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		COMCTL32_Free (lpBand->lpText);
 		lpBand->lpText = NULL;
 	    }
+	    /* destroy child window */
+	    DestroyWindow32 (lpBand->hwndChild);
 	}
 
 	/* free band array */
@@ -1129,22 +1283,14 @@ REBAR_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 __inline__ static LRESULT
 REBAR_NCCalcSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    LONG result = 0;
-
-    if (wndPtr->class->style & CS_VREDRAW)
-	result |= WVR_VREDRAW;
-    if (wndPtr->class->style & CS_HREDRAW)
-	result |= WVR_HREDRAW;
-
     if (wndPtr->dwStyle & WS_BORDER) {
-	((LPRECT32)lParam)->left += sysMetrics[SM_CXEDGE];
-	((LPRECT32)lParam)->top += sysMetrics[SM_CYEDGE];
-	((LPRECT32)lParam)->right -= sysMetrics[SM_CXEDGE];
+	((LPRECT32)lParam)->left   += sysMetrics[SM_CXEDGE];
+	((LPRECT32)lParam)->top    += sysMetrics[SM_CYEDGE];
+	((LPRECT32)lParam)->right  -= sysMetrics[SM_CXEDGE];
 	((LPRECT32)lParam)->bottom -= sysMetrics[SM_CYEDGE];
     }
 
-//    return DefWindowProc32A (wndPtr->hwndSelf, WM_NCCALCSIZE, wParam, lParam);
-    return result;
+    return 0;
 }
 
 
@@ -1471,7 +1617,7 @@ REBAR_Register (VOID)
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(REBAR_INFO *);
     wndClass.hCursor       = 0;
-//    wndClass.hbrBackground = (HBRUSH32)(COLOR_BTNFACE + 1);
+    wndClass.hbrBackground = (HBRUSH32)(COLOR_BTNFACE + 1);
     wndClass.lpszClassName = REBARCLASSNAME32A;
  
     RegisterClass32A (&wndClass);
