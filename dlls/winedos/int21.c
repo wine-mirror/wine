@@ -1961,6 +1961,7 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
     drivespec[0] += drive;
     drivetype = GetDriveTypeW( drivespec );
 
+    RESET_CFLAG(context);
     if (drivetype == DRIVE_UNKNOWN || drivetype == DRIVE_NO_ROOT_DIR)
     {
         TRACE( "IOCTL - SUBFUNCTION %d - INVALID DRIVE %c:\n", 
@@ -2935,6 +2936,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             else
             {
                 SET_AL( context, 0xff ); /* invalid date */
+                TRACE( "SetSystemDate(%02d/%02d/%04d): invalid date\n",
+                       day, month, year );
             }
         }
         break;
@@ -2952,10 +2955,19 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x2d: /* SET SYSTEM TIME */
-        FIXME("SetSystemTime(%02d:%02d:%02d.%02d): not allowed\n",
+        if( CH_reg(context) >= 24 || CL_reg(context) >= 60 || DH_reg(context) >= 60 || DL_reg(context) >= 100 ) {
+            TRACE("SetSystemTime(%02d:%02d:%02d.%02d): wrong time\n",
               CH_reg(context), CL_reg(context),
               DH_reg(context), DL_reg(context) );
-        SET_AL( context, 0 );  /* Let's pretend we succeeded */
+            SET_AL( context, 0xFF );
+        }
+        else
+        {
+            FIXME("SetSystemTime(%02d:%02d:%02d.%02d): not allowed\n",
+                  CH_reg(context), CL_reg(context),
+                  DH_reg(context), DL_reg(context) );
+            SET_AL( context, 0 );  /* Let's pretend we succeeded */
+        }
         break;
 
     case 0x2e: /* SET VERIFY FLAG */
@@ -3090,24 +3102,33 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x38: /* GET COUNTRY-SPECIFIC INFORMATION */
         TRACE( "GET COUNTRY-SPECIFIC INFORMATION\n" );
-        if (AL_reg(context)) 
+        if (AL_reg(context))
         {
             WORD country = AL_reg(context);
             if (country == 0xff)
                 country = BX_reg(context);
-            if (country != INT21_GetSystemCountryCode())
+            if (country != INT21_GetSystemCountryCode()) {
                 FIXME( "Requested info on non-default country %04x\n", country );
+                SET_AX(context, 2);
+                SET_CFLAG(context);
+            }
         }
-        INT21_FillCountryInformation( CTX_SEG_OFF_TO_LIN(context, 
-                                                         context->SegDs, 
-                                                         context->Edx) );
-        SET_AX( context, INT21_GetSystemCountryCode() );
-        SET_BX( context, INT21_GetSystemCountryCode() );
+        if(AX_reg(context) != 2 )
+        {
+            INT21_FillCountryInformation( CTX_SEG_OFF_TO_LIN(context,
+                                                             context->SegDs,
+                                                             context->Edx) );
+            SET_AX( context, INT21_GetSystemCountryCode() );
+            SET_BX( context, INT21_GetSystemCountryCode() );
+            RESET_CFLAG(context);
+        }
         break;
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
         if (!INT21_CreateDirectory( context ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x3a: /* "RMDIR" - REMOVE DIRECTORY */
@@ -3122,30 +3143,40 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
             if (!RemoveDirectoryW( dirW ))
                 bSetDOSExtendedError = TRUE;
+            else
+                RESET_CFLAG(context);
         }
         break;
 
     case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
         if (!INT21_SetCurrentDirectory( context ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
         if (!INT21_CreateFile( context, context->Edx, FALSE, 
                                OF_READWRITE | OF_SHARE_COMPAT, 0x12 ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
         if (!INT21_CreateFile( context, context->Edx, FALSE, 
                                AL_reg(context), 0x01 ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x3e: /* "CLOSE" - CLOSE FILE */
         TRACE( "CLOSE handle %d\n", BX_reg(context) );
         if (_lclose16( BX_reg(context) ) == HFILE_ERROR16)
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
@@ -3175,6 +3206,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
              *        does not work as it is supposed to work.
              */
 
+            RESET_CFLAG(context); /* set if error */
             if (!DOSVM_IsWin16() && BX_reg(context) == 0)
             {
                 result = INT21_BufferedInput( context, buffer, count );
@@ -3202,6 +3234,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
                 for(i=0; i<CX_reg(context); i++)
                     DOSVM_PutChar(ptr[i]);
                 SET_AX(context, CX_reg(context));
+                RESET_CFLAG(context);
             }
             else
             {
@@ -3210,7 +3243,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
                 if (result == HFILE_ERROR)
                     bSetDOSExtendedError = TRUE;
                 else
+                {
                     SET_AX( context, (WORD)result );
+                    RESET_CFLAG(context);
+                }
             }
         }
         break;
@@ -3227,6 +3263,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
             if (!DeleteFileW( fileW ))
                 bSetDOSExtendedError = TRUE;
+            else
+                RESET_CFLAG(context);
         }
         break;
 
@@ -3248,6 +3286,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             {
                 SET_AX( context, LOWORD(status) );
                 SET_DX( context, HIWORD(status) );
+                RESET_CFLAG(context);
             }
         }
         break;
@@ -3255,6 +3294,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x43: /* FILE ATTRIBUTES */
         if (!INT21_FileAttributes( context, AL_reg(context), FALSE ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x44: /* IOCTL */
@@ -3277,7 +3318,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             if (handle16 == HFILE_ERROR)
                 bSetDOSExtendedError = TRUE;
             else
+            {
                 SET_AX( context, handle16 );
+                RESET_CFLAG(context);
+            }
         }
         break;
 
@@ -3286,11 +3330,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
                BX_reg(context), CX_reg(context) );
         if (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR16)
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
         if (!INT21_GetCurrentDirectory( context, FALSE ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x48: /* ALLOCATE MEMORY */
@@ -3306,9 +3354,12 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             }
             else
                 DOSMEM_GetBlock( bytes, &selector );
-               
+
             if (selector)
+            {
                 SET_AX( context, selector );
+                RESET_CFLAG(context);
+            }
             else
             {
                 SET_CFLAG(context);
@@ -3352,12 +3403,14 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             if (!ISV86(context) && DOSVM_IsWin16())
             {
                 FIXME( "Resize memory block - unsupported under Win16\n" );
+                SET_CFLAG(context);
             }
             else
             {
                 LPVOID address = (void*)((DWORD)context->SegEs << 4);
                 UINT blocksize = DOSMEM_ResizeBlock( address, newsize, FALSE );
 
+                RESET_CFLAG(context);
                 if (blocksize == (UINT)-1)
                 {
                     SET_CFLAG( context );
@@ -3380,6 +3433,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
             TRACE( "EXEC %s\n", program );
 
+            RESET_CFLAG(context);
             if (DOSVM_IsWin16())
             {
                 HINSTANCE16 instance = WinExec16( program, SW_NORMAL );
@@ -3456,11 +3510,15 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x56: /* "RENAME" - RENAME FILE */
         if (!INT21_RenameFile( context ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x57: /* FILE DATE AND TIME */
         if (!INT21_FileDateTime( context ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x58: /* GET OR SET MEMORY ALLOCATION STRATEGY */
@@ -3503,6 +3561,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         if (!INT21_CreateFile( context, context->Edx, FALSE,
                                OF_READWRITE | OF_SHARE_COMPAT, 0x10 ))
             bSetDOSExtendedError = TRUE;
+        else
+            RESET_CFLAG(context);
         break;
 
     case 0x5c: /* "FLOCK" - RECORD LOCKING */
@@ -3511,6 +3571,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             DWORD  length = MAKELONG(DI_reg(context), SI_reg(context));
             HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
 
+            RESET_CFLAG(context);
             switch (AL_reg(context))
             {
             case 0x00: /* LOCK */
