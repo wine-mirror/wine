@@ -172,6 +172,7 @@ typedef DWORD (CALLBACK * EDITSTREAMCALLBACK)( DWORD, LPBYTE, LONG, LONG * );
 #define ES_SELFIME            0x00040000
 #define ES_NOIME              0x00080000
 #define ES_VERTICAL           0x00400000
+#define ES_SELECTIONBAR       0x01000000
 #define ES_EX_NOCALLOLEINIT   0x01000000
 
 /* the character formatting options */
