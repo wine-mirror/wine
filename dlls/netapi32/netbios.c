@@ -798,7 +798,16 @@ UCHAR WINAPI Netbios(PNCB ncb)
         NetBIOSAdapter *adapter = nbGetAdapter(ncb->ncb_lana_num);
 
         if (!adapter)
-            ret = NRC_BRIDGE;
+        {
+            if (cmd == NCBRESET || cmd == NCBADDNAME)
+            {
+              if (cmd == NCBADDNAME)
+                FIXME("NCBADDNAME: stub, returning success");
+              ret = NRC_GOODRET;
+            }
+            else
+              ret = NRC_BRIDGE;
+	}
         else
         {
             if (adapter->shuttingDown)
