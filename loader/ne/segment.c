@@ -452,13 +452,15 @@ void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
     TRACE_(module)("(%d);\n", segnum);
 
     if (pSegTable[segnum-1].flags & NE_SEGFLAGS_DATA)
-{
+    {
 	pSegTable[segnum-1].flags |= NE_SEGFLAGS_LOADED;
 	return;
     }
-    if (!(dgroup = SEL(pSegTable[pModule->dgroup-1].hSeg)))
-	return;
 
+    if (!pModule->dgroup) return;
+
+    if (!(dgroup = SEL(pSegTable[pModule->dgroup-1].hSeg))) return;
+    
     pSeg = PTR_SEG_OFF_TO_LIN(sel, 0);
 
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);
