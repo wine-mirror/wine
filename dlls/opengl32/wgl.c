@@ -16,8 +16,11 @@
 #include "wgl.h"
 #include "opengl_ext.h"
 
-DEFAULT_DEBUG_CHANNEL(opengl)
+DEFAULT_DEBUG_CHANNEL(opengl);
 
+/***********************************************************************
+ *		wglCreateContext
+ */
 HGLRC WINAPI wglCreateContext(HDC hdc) {
   DC * dc = DC_GetDCPtr( hdc );
   X11DRV_PDEVICE *physDev;
@@ -49,6 +52,9 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
   return (HGLRC) ret;
 }
 
+/***********************************************************************
+ *		wglCreateLayerContext
+ */
 HGLRC WINAPI wglCreateLayerContext(HDC hdc,
 				   int iLayerPlane) {
   FIXME("(%08x,%d): stub !\n", hdc, iLayerPlane);
@@ -56,6 +62,9 @@ HGLRC WINAPI wglCreateLayerContext(HDC hdc,
   return NULL;
 }
 
+/***********************************************************************
+ *		wglCopyContext
+ */
 BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
 			   HGLRC hglrcDst,
 			   UINT mask) {
@@ -64,12 +73,18 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
   return FALSE;
 }
 
+/***********************************************************************
+ *		wglDeleteContext
+ */
 BOOL WINAPI wglDeleteContext(HGLRC hglrc) {
   FIXME("(%p): stub !\n", hglrc);
 
   return FALSE;
 }
 
+/***********************************************************************
+ *		wglDescribeLayerPlane
+ */
 BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
 				  int iPixelFormat,
 				  int iLayerPlane,
@@ -80,6 +95,9 @@ BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
   return FALSE;
 }
 
+/***********************************************************************
+ *		wglGetCurrentContext
+ */
 HGLRC WINAPI wglGetCurrentContext(void) {
   GLXContext ret;
 
@@ -94,6 +112,9 @@ HGLRC WINAPI wglGetCurrentContext(void) {
   return ret;
 }
 
+/***********************************************************************
+ *		wglGetCurrentDC
+ */
 HDC WINAPI wglGetCurrentDC(void) {
   GLXContext ret;
 
@@ -111,6 +132,9 @@ HDC WINAPI wglGetCurrentDC(void) {
   }
 }
 
+/***********************************************************************
+ *		wglGetLayerPaletteEntries
+ */
 int WINAPI wglGetLayerPaletteEntries(HDC hdc,
 				     int iLayerPlane,
 				     int iStart,
@@ -126,6 +150,9 @@ static int compar(const void *elt_a, const void *elt_b) {
 		((OpenGL_extension *) elt_b)->name);
 }
 
+/***********************************************************************
+ *		wglGetProcAddress
+ */
 void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
   static HMODULE hm = 0;
@@ -183,6 +210,9 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   }
 }
 
+/***********************************************************************
+ *		wglMakeCurrent
+ */
 BOOL WINAPI wglMakeCurrent(HDC hdc,
 			   HGLRC hglrc) {
   DC * dc = DC_GetDCPtr( hdc );
@@ -207,6 +237,9 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
   return ret;
 }
 
+/***********************************************************************
+ *		wglRealizeLayerPalette
+ */
 BOOL WINAPI wglRealizeLayerPalette(HDC hdc,
 				   int iLayerPlane,
 				   BOOL bRealize) {
@@ -215,6 +248,9 @@ BOOL WINAPI wglRealizeLayerPalette(HDC hdc,
   return FALSE;
 }
 
+/***********************************************************************
+ *		wglSetLayerPaletteEntries
+ */
 int WINAPI wglSetLayerPaletteEntries(HDC hdc,
 				     int iLayerPlane,
 				     int iStart,
@@ -225,6 +261,9 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
+/***********************************************************************
+ *		wglShareLists
+ */
 BOOL WINAPI wglShareLists(HGLRC hglrc1,
 			  HGLRC hglrc2) {
   FIXME("(): stub !\n");
@@ -232,6 +271,9 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
   return FALSE;
 }
 
+/***********************************************************************
+ *		wglSwapLayerBuffers
+ */
 BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 				UINT fuPlanes) {
   FIXME("(): stub !\n");
@@ -239,6 +281,9 @@ BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
   return FALSE;
 }
 
+/***********************************************************************
+ *		wglUseFontBitmaps
+ */
 BOOL WINAPI wglUseFontBitmaps(HDC hdc,
 			      DWORD first,
 			      DWORD count,
@@ -248,6 +293,9 @@ BOOL WINAPI wglUseFontBitmaps(HDC hdc,
   return FALSE;
 }
  
+/***********************************************************************
+ *		wglUseFontOutlines
+ */
 BOOL WINAPI wglUseFontOutlines(HDC hdc,
 			       DWORD first,
 			       DWORD count,

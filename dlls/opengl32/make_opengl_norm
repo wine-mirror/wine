@@ -22,6 +22,9 @@ while ($line = <INC>) {
 	if (($name !~ /(MESA|PGI|ARB|EXT)/) ||
 	    ($name =~ /MultiTexCoord/) ||
 	    ($name =~ /ActiveTextureARB/)) {
+	    print "/***********************************************************************\n";
+	    print " *\t\t$name\n";
+	    print " */\n";
 	    print "$ret WINAPI wine_$name(";
 	    @rargs = ();
 	    @names = ();
