@@ -45,7 +45,6 @@ typedef struct {
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
     volatile WORD		dwStatus;	/* one from MCI_MODE_xxxx */
     DWORD			dwMciTimeFormat;/* One of the supported MCI_FORMAT_xxxx */
-    DWORD                      	dwRemaining;    /* remaining bytes to play or record */
     DWORD			dwPosition;	/* position in bytes in chunk */
     HANDLE			hEvent;		/* for synchronization */
     DWORD			dwEventCount;	/* for synchronization */
@@ -251,6 +250,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
 	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
 
     wmw->lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
+    if (!wmw->lpWaveFormat) return MMSYSERR_NOMEM;
     r = mmioRead(wmw->hFile, (HPSTR)wmw->lpWaveFormat, mmckInfo.cksize);
     if (r < sizeof(WAVEFORMAT))
 	return MCIERR_INVALID_FILE;
@@ -284,45 +284,41 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
 static DWORD WAVE_mciCreateRIFFSkeleton(WINE_MCIWAVE* wmw)
 {
    MMCKINFO     ckWaveFormat;
-
-   LPMMCKINFO     lpckRIFF     = &(wmw->ckMainRIFF);
-   LPMMCKINFO     lpckWaveData = &(wmw->ckWaveData);
-   LPWAVEFORMATEX lpWaveFormat = wmw->lpWaveFormat;
-
-
-   HMMIO     hmmio      = wmw->hFile;
+   LPMMCKINFO   lpckRIFF     = &(wmw->ckMainRIFF);
+   LPMMCKINFO   lpckWaveData = &(wmw->ckWaveData);
 
    lpckRIFF->ckid    = FOURCC_RIFF;
    lpckRIFF->fccType = mmioFOURCC('W', 'A', 'V', 'E');
    lpckRIFF->cksize  = 0;
 
-   if (MMSYSERR_NOERROR != mmioCreateChunk(hmmio, lpckRIFF, MMIO_CREATERIFF))
+   if (MMSYSERR_NOERROR != mmioCreateChunk(wmw->hFile, lpckRIFF, MMIO_CREATERIFF))
 	goto err;
 
    ckWaveFormat.fccType = 0;
    ckWaveFormat.ckid    = mmioFOURCC('f', 'm', 't', ' ');
-   ckWaveFormat.cksize  = 16;
+   ckWaveFormat.cksize  = sizeof(PCMWAVEFORMAT);
 
-   if (!lpWaveFormat)
+   if (!wmw->lpWaveFormat)
    {
-       /* FIXME: for non PCM formats, the size of the waveFormat has to be
-	* gotten
-	*/
-	lpWaveFormat = wmw->lpWaveFormat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lpWaveFormat));
-
-	memcpy(lpWaveFormat, &wmw->wfxRef, sizeof(wmw->wfxRef));
+       wmw->lpWaveFormat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wmw->lpWaveFormat));
+       if (!wmw->lpWaveFormat) return MMSYSERR_NOMEM;
+       memcpy(wmw->lpWaveFormat, &wmw->wfxRef, sizeof(wmw->wfxRef));
    }
 
-   if (MMSYSERR_NOERROR != mmioCreateChunk(hmmio, &ckWaveFormat, 0))
-	goto err;
-
-   /* only the first 16 bytes are serialized */
-   /* wrong... for non PCM, the whole waveFormat is stored
+   /* we can only record PCM files... there is no way in the MCI API to specify
+    * the necessary data to initialize the extra bytes of the WAVEFORMATEX
+    * structure
     */
-   if (-1 == mmioWrite(hmmio, (HPCSTR) lpWaveFormat, 16))
+   if (wmw->lpWaveFormat->wFormatTag != WAVE_FORMAT_PCM)
+       goto err;
+
+   if (MMSYSERR_NOERROR != mmioCreateChunk(wmw->hFile, &ckWaveFormat, 0))
 	goto err;
 
-   if (MMSYSERR_NOERROR != mmioAscend(hmmio, &ckWaveFormat, 0))
+   if (-1 == mmioWrite(wmw->hFile, (HPCSTR)wmw->lpWaveFormat, sizeof(PCMWAVEFORMAT)))
+	goto err;
+
+   if (MMSYSERR_NOERROR != mmioAscend(wmw->hFile, &ckWaveFormat, 0))
 	goto err;
 
    lpckWaveData->cksize  = 0;
@@ -330,13 +326,15 @@ static DWORD WAVE_mciCreateRIFFSkeleton(WINE_MCIWAVE* wmw)
    lpckWaveData->ckid    = mmioFOURCC('d', 'a', 't', 'a');
 
    /* create data chunk */
-   if (MMSYSERR_NOERROR != mmioCreateChunk(hmmio, lpckWaveData, 0))
+   if (MMSYSERR_NOERROR != mmioCreateChunk(wmw->hFile, lpckWaveData, 0))
 	goto err;
 
    return 0;
 
 err:
-   HeapFree(GetProcessHeap(), 0, wmw->lpWaveFormat);
+   if (wmw->lpWaveFormat)
+       HeapFree(GetProcessHeap(), 0, wmw->lpWaveFormat);
+   wmw->lpWaveFormat = NULL;
    return MCIERR_INVALID_FILE;
 }
 
@@ -616,7 +614,7 @@ static DWORD WAVE_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
      */
     if (wmw->bTemporaryFile)
     {
-	HeapFree(GetProcessHeap(), 0, (CHAR*) wmw->openParms.lpstrElementName);
+	HeapFree(GetProcessHeap(), 0, (char*)wmw->openParms.lpstrElementName);
 	wmw->openParms.lpstrElementName = NULL;
     }
 
@@ -655,6 +653,11 @@ static	void	CALLBACK WAVE_mciPlayCallback(HWAVEOUT hwo, UINT uMsg,
     }
 }
 
+/******************************************************************
+ *		WAVE_mciPlayWaitDone
+ *
+ *
+ */
 static void WAVE_mciPlayWaitDone(WINE_MCIWAVE* wmw)
 {
     for (;;) {
@@ -865,12 +868,13 @@ cleanUp:
  * 				WAVE_mciPlayCallback		[internal]
  */
 static	void	CALLBACK WAVE_mciRecordCallback(HWAVEOUT hwo, UINT uMsg,
-					      DWORD dwInstance,
-					      DWORD dwParam1, DWORD dwParam2)
+                                                DWORD dwInstance,
+                                                DWORD dwParam1, DWORD dwParam2)
 {
     WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)dwInstance;
-    LPWAVEHDR           lpWaveHdr = NULL;
+    LPWAVEHDR           lpWaveHdr;
     LONG                count = 0;
+
     switch (uMsg) {
     case WIM_OPEN:
     case WIM_CLOSE:
@@ -883,9 +887,9 @@ static	void	CALLBACK WAVE_mciRecordCallback(HWAVEOUT hwo, UINT uMsg,
 	count = mmioWrite(wmw->hFile, lpWaveHdr->lpData, lpWaveHdr->dwBytesRecorded);
 
 	lpWaveHdr->dwFlags &= ~WHDR_DONE;
-	wmw->dwPosition  += count;
-        wmw->dwRemaining -= count;
-
+        if (count > 0)
+            wmw->dwPosition  += count;
+        /* else error reporting ?? */
         if (wmw->dwStatus == MCI_MODE_RECORD)
         {
            /* Only queue up another buffer if we are recording.  We could receive this
@@ -903,6 +907,10 @@ static	void	CALLBACK WAVE_mciRecordCallback(HWAVEOUT hwo, UINT uMsg,
     }
 }
 
+/******************************************************************
+ *		bWAVE_mciRecordWaitDone
+ *
+ */
 static void WAVE_mciRecordWaitDone(WINE_MCIWAVE* wmw)
 {
     for (;;) {
@@ -922,7 +930,7 @@ static void WAVE_mciRecordWaitDone(WINE_MCIWAVE* wmw)
 static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 {
     DWORD		end;
-    DWORD		dwRet = 0;
+    DWORD		dwRet = MMSYSERR_NOERROR;
     LONG		bufsize;
     LPWAVEHDR		waveHdr = NULL;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
@@ -963,12 +971,10 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 				    (DWORD)lpParms, sizeof(MCI_RECORD_PARMS));
     }
 
-    if (!wmw->lpWaveFormat)
-    {
-  	    /* new RIFF file */
-	    dwRet = WAVE_mciCreateRIFFSkeleton(wmw);
-    } else
-    {
+    if (!wmw->lpWaveFormat) {
+        /* new RIFF file */
+        dwRet = WAVE_mciCreateRIFFSkeleton(wmw);
+    } else {
 	FIXME("Should descend into data chunk. Please report.\n");
     }
 
@@ -1009,7 +1015,7 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     dwRet = waveInOpen((HWAVEIN*)&wmw->hWave, WAVE_MAPPER, wmw->lpWaveFormat,
 			(DWORD)WAVE_mciRecordCallback, (DWORD)wmw, CALLBACK_FUNCTION);
 
-    if (dwRet != 0) {
+    if (dwRet != MMSYSERR_NOERROR) {
 	TRACE("Can't open low level audio device %ld\n", dwRet);
 	dwRet = MCIERR_DEVICE_OPEN;
 	wmw->hWave = 0;
@@ -1042,13 +1048,11 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     wmw->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     wmw->dwEventCount = 1L; /* for first buffer */
 
-    wmw->dwRemaining = end - wmw->dwPosition;
-
-    TRACE("Recording (normalized) from byte=%lu for %lu bytes\n", wmw->dwPosition, wmw->dwRemaining);
+    TRACE("Recording (normalized) from byte=%lu for %lu bytes\n", wmw->dwPosition, end - wmw->dwPosition);
 
     dwRet = waveInStart(wmw->hWave);
 
-    while ( wmw->dwRemaining > 0 && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
+    while (wmw->dwPosition < end && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
 	WAVE_mciRecordWaitDone(wmw);
     }
 
