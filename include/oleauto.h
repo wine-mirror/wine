@@ -516,10 +516,6 @@ HRESULT WINAPI VarCmp(LPVARIANT,LPVARIANT,LCID,ULONG);
 
 
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif 
-
 typedef struct tagPARAMDATA {
     OLECHAR * szName;   /* parameter name */
     VARTYPE vt;         /* parameter type */
@@ -584,6 +580,10 @@ HRESULT WINAPI LoadTypeLibEx(LPCOLESTR,REGKIND,ITypeLib**);
 HRESULT WINAPI QueryPathOfRegTypeLib(REFGUID,WORD,WORD,LCID,LPBSTR);
 HRESULT WINAPI RegisterTypeLib(ITypeLib*,OLECHAR*,OLECHAR*);
 HRESULT WINAPI UnRegisterTypeLib(REFGUID,WORD,WORD,LCID,SYSKIND);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif 
 
 
 #endif /*__WINE_OLEAUTO_H*/

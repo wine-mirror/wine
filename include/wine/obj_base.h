@@ -34,6 +34,11 @@
 #include "wtypes.h"
 #include "guiddef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #ifndef NONAMELESSSTRUCT
 #define LISet32(li, v)   ((li).HighPart = (v) < 0 ? -1 : 0, (li).LowPart = (v))
 #define ULISet32(li, v)  ((li).HighPart = 0, (li).LowPart = (v))
@@ -660,10 +665,6 @@ ICOM_DEFINE(IMalloc,IUnknown)
 #define IMalloc_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
 #define IMalloc_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 HRESULT WINAPI CoGetMalloc(DWORD dwMemContext,LPMALLOC* lpMalloc);
 

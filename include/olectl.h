@@ -4,6 +4,11 @@
 #include "windef.h"
 #include "ocidl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 
 /*
  * Ole Control Interfaces
@@ -256,6 +261,13 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define CONNECT_E_CANNOTCONNECT     (CONNECT_E_FIRST+2)
 #define CONNECT_E_OVERRIDDEN        (CONNECT_E_FIRST+3)
 
+#define SELFREG_E_FIRST             MAKE_SCODE(SEVERITY_ERROR,   FACILITY_ITF, 0x0200)
+#define SELFREG_E_LAST              MAKE_SCODE(SEVERITY_ERROR,   FACILITY_ITF, 0x020F)
+#define SELFREG_S_FIRST             MAKE_SCODE(SEVERITY_SUCCESS, FACILITY_ITF, 0x0200)
+#define SELFREG_S_LAST              MAKE_SCODE(SEVERITY_SUCCESS, FACILITY_ITF, 0x020F)
+#define SELFREG_E_TYPELIB           (SELFREG_E_FIRST+0)
+#define SELFREG_E_CLASS             (SELFREG_E_FIRST+1)
+
 #ifndef FACILITY_CONTROL
 #define FACILITY_CONTROL 0xa
 #endif
@@ -314,6 +326,11 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define PERPROP_S_LAST     MAKE_SCODE(SEVERITY_SUCCESS, FACILITY_ITF, 0x020F)
 
 #define PERPROP_E_NOPAGEAVAILABLE   (PERPROP_E_FIRST+0)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*  __WINE_OLECTL_H */
 

@@ -26,7 +26,15 @@
 #include <stdlib.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 /*    These macros are msdev's way of defining COM objects. They are provided 

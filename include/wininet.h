@@ -1,7 +1,7 @@
 #ifndef _WINE_WININET_H_
 #define _WINE_WININET_H_
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -1399,7 +1399,7 @@ BOOLAPI InternetCheckConnectionA(LPCSTR lpszUrl,DWORD dwFlags,DWORD dwReserved);
 BOOLAPI InternetCheckConnectionW(LPCWSTR lpszUrl,DWORD dwFlags,DWORD dwReserved); 
 #define InternetCheckConnection WINELIB_NAME_AW(InternetCheckConnection)
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 }
 #endif
 
