@@ -130,7 +130,7 @@ static BOOL derive_key(ALG_ID aiAlgid, HCRYPTKEY *phKey, DWORD len)
     result = CryptCreateHash(hProv, CALG_MD2, 0, 0, &hHash);
     if (!result) {
         /* rsaenh compiled without OpenSSL */
-        ok(GetLastError()==NTE_BAD_ALGID, "%08lx", GetLastError());
+        ok(GetLastError()==NTE_BAD_ALGID, "%08lx\n", GetLastError());
         return FALSE;
     } 
     ok(result, "%08lx\n", GetLastError());

@@ -649,7 +649,7 @@ static void test_OpenColorProfileA()
     handle = OpenColorProfileA( &profile, PROFILE_READWRITE, 0, 0 );
     ok( handle == NULL, "OpenColorProfileA() failed (%ld)\n", GetLastError() );
 
-    ok ( !CloseColorProfile( NULL ), "CloseColorProfile() succeeded" );
+    ok ( !CloseColorProfile( NULL ), "CloseColorProfile() succeeded\n" );
 
     if (standardprofile)
     {
@@ -697,7 +697,7 @@ static void test_OpenColorProfileW()
     handle = OpenColorProfileW( &profile, PROFILE_READWRITE, 0, 0 );
     ok( handle == NULL, "OpenColorProfileW() failed (%ld)\n", GetLastError() );
 
-    ok ( !CloseColorProfile( NULL ), "CloseColorProfile() succeeded" );
+    ok ( !CloseColorProfile( NULL ), "CloseColorProfile() succeeded\n" );
 
     if (standardprofileW)
     {

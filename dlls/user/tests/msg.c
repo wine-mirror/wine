@@ -4056,8 +4056,8 @@ static void test_timers(void)
        NULL, NULL, 0);
 
     info.id = SetTimer(info.hWnd,TIMER_ID,10000,tfunc);
-    ok(info.id, "SetTimer failed");
-    ok(info.id==TIMER_ID, "SetTimer timer ID different");
+    ok(info.id, "SetTimer failed\n");
+    ok(info.id==TIMER_ID, "SetTimer timer ID different\n");
     info.handles[0] = CreateEvent(NULL,0,0,NULL);
     info.handles[1] = CreateThread(NULL,0,timer_thread_proc,&info,0,&id);
 

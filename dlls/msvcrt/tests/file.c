@@ -261,7 +261,7 @@ static void test_file_inherit( const char* selfname )
     char 		buffer[16];
 
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
-    ok(fd != -1, "Couldn't create test file\n ");
+    ok(fd != -1, "Couldn't create test file\n");
     arg_v[0] = selfname;
     arg_v[1] = "tests/file.c";
     arg_v[2] = buffer; sprintf(buffer, "%d", fd);
@@ -274,7 +274,7 @@ static void test_file_inherit( const char* selfname )
     ok(unlink("fdopen.tst") != 1, "Couldn't unlink\n");
     
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY | O_NOINHERIT, _S_IREAD |_S_IWRITE);
-    ok(fd != -1, "Couldn't create test file\n ");
+    ok(fd != -1, "Couldn't create test file\n");
     arg_v[0] = selfname;
     arg_v[1] = "tests/file.c";
     arg_v[2] = buffer; sprintf(buffer, "%d", fd);
