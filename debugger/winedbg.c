@@ -150,6 +150,8 @@ static	DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
     p->num_modules = 0;
     p->next_index = 0;
     p->dbg_hdr_addr = 0;
+    p->delayed_bp = NULL;
+    p->num_delayed_bp = 0;
 
     p->next = DEBUG_ProcessList;
     p->prev = NULL;
@@ -162,10 +164,16 @@ static	void			DEBUG_DelThread(DBG_THREAD* p);
 
 static	void			DEBUG_DelProcess(DBG_PROCESS* p)
 {
+    int	i;
+
     if (p->threads != NULL) {
 	DEBUG_Printf(DBG_CHN_ERR, "Shouldn't happen\n");
 	while (p->threads) DEBUG_DelThread(p->threads);
     }
+    for (i = 0; i < p->num_delayed_bp; i++) {
+	DBG_free(p->delayed_bp[i].name);
+    }
+    DBG_free(p->delayed_bp);
     if (p->prev) p->prev->next = p->next;
     if (p->next) p->next->prev = p->prev;
     if (p == DEBUG_ProcessList) DEBUG_ProcessList = p->next;
@@ -730,6 +738,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 			 de->u.LoadDll.nDebugInfoSize);
 	    _strupr(buffer);
 	    DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, (DWORD)de->u.LoadDll.lpBaseOfDll);
+	    DEBUG_CheckDelayedBP();
 	    if (DBG_IVAR(BreakOnDllLoad)) {
 		DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n", 
 			     buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);

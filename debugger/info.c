@@ -69,7 +69,7 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 	  if (strstr(default_format, "%S") == NULL)
 	    {
 	       DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, default_format, res );
-	    } 
+	    }
 	  else
 	    {
 	       char* 	ptr;

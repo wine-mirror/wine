@@ -372,12 +372,26 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
  */
 void	DEBUG_AddBreakpointFromId(const char *name, int lineno)
 {
-   DBG_VALUE value;
-   
-   if (DEBUG_GetSymbolValue(name, lineno, &value, TRUE))
+   DBG_VALUE 	value;
+   int		i;
+
+   if (DEBUG_GetSymbolValue(name, lineno, &value, TRUE)) {
       DEBUG_AddBreakpoint(&value, NULL);
-   else
-      DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint\n");
+      return;
+   }
+
+   DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint, will check again when a new DLL is loaded\n");
+   for (i = 0; i < DEBUG_CurrProcess->num_delayed_bp; i++) {
+      if (!strcmp(name, DEBUG_CurrProcess->delayed_bp[i].name) &&
+	  lineno == DEBUG_CurrProcess->delayed_bp[i].lineno) {
+	 return;
+      }
+   }
+   DEBUG_CurrProcess->delayed_bp = DBG_realloc(DEBUG_CurrProcess->delayed_bp, 
+					       sizeof(DBG_DELAYED_BP) * ++DEBUG_CurrProcess->num_delayed_bp);
+
+   DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].name = strcpy(DBG_alloc(strlen(name) + 1), name);
+   DEBUG_CurrProcess->delayed_bp[DEBUG_CurrProcess->num_delayed_bp - 1].lineno = lineno;
 }
 
 /***********************************************************************
@@ -396,7 +410,7 @@ void	DEBUG_AddBreakpointFromLineno(int lineno)
       
       DEBUG_FindNearestSymbol(&value.addr, TRUE, &nh, 0, NULL);
       if (nh == NULL) {
-	 DEBUG_Printf(DBG_CHN_MESG,"Unable to add breakpoint\n");
+	 DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint\n");
 	 return;
       }
       DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE);
@@ -405,6 +419,27 @@ void	DEBUG_AddBreakpointFromLineno(int lineno)
    value.type = NULL;
    value.cookie = DV_TARGET;
    DEBUG_AddBreakpoint( &value, NULL );
+}
+
+/***********************************************************************
+ *           DEBUG_CheckDelayedBP
+ *
+ * Check is a registered delayed BP is now available.
+ */
+void		DEBUG_CheckDelayedBP(void)
+{
+   DBG_VALUE		value;
+   int			i = 0;
+   DBG_DELAYED_BP*	dbp = DEBUG_CurrProcess->delayed_bp;
+
+   while (i < DEBUG_CurrProcess->num_delayed_bp) {
+      if (DEBUG_GetSymbolValue(dbp[i].name, dbp[i].lineno, &value, TRUE)) {
+	 DEBUG_AddBreakpoint(&value, NULL);
+	 memmove(&dbp[i], &dbp[i+1], (--DEBUG_CurrProcess->num_delayed_bp - i) * sizeof(*dbp));
+      } else {
+	 i++;
+      }
+   }
 }
 
 /***********************************************************************

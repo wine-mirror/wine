@@ -1308,6 +1308,7 @@ static BOOL DEBUG_RescanElf(void)
     switch (dbg_hdr.r_state) {
     case RT_CONSISTENT:	
        DEBUG_WalkList(&dbg_hdr);
+       DEBUG_CheckDelayedBP();
        break;
     case RT_ADD:
        break;

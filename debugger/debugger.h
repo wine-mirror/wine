@@ -183,6 +183,11 @@ typedef struct tagDBG_THREAD {
     struct tagDBG_THREAD* 	prev;
 } DBG_THREAD;
 
+typedef struct tagDBG_DELAYED_BP {
+    int				lineno;
+    char*			name;
+} DBG_DELAYED_BP;
+
 typedef struct tagDBG_PROCESS {
     HANDLE			handle;
     DWORD			pid;
@@ -192,6 +197,8 @@ typedef struct tagDBG_PROCESS {
     struct tagDBG_MODULE**	modules;
     int				num_modules;
     unsigned long		dbg_hdr_addr;
+    DBG_DELAYED_BP*		delayed_bp;
+    int				num_delayed_bp;
     /*
      * This is an index we use to keep track of the debug information
      * when we have multiple sources.  We use the same database to also
@@ -257,6 +264,7 @@ extern void DEBUG_AddBreakpointFromId( const char *name, int lineno );
 extern void DEBUG_AddBreakpointFromLineno( int lineno );
 extern void DEBUG_AddWatchpoint( const DBG_VALUE *addr, int is_write );
 extern void DEBUG_AddWatchpointFromId( const char *name );
+extern void DEBUG_CheckDelayedBP( void );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
