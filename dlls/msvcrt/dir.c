@@ -434,86 +434,44 @@ int _wrmdir(const MSVCRT_wchar_t * dir)
 void _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
                  MSVCRT_wchar_t *fname, MSVCRT_wchar_t *ext )
 {
-  /* Modified PD code from 'snippets' collection. */
-  MSVCRT_wchar_t ch, *ptr, *p;
-  MSVCRT_wchar_t pathbuff[MAX_PATH],*path=pathbuff;
+    const MSVCRT_wchar_t *p, *end;
 
-  /* FIXME: Should be an strncpyW or something */
-  strcpyW(pathbuff, inpath);
-  TRACE(":splitting path %s\n",debugstr_w(path));
-
-  /* convert slashes to backslashes for searching */
-  for (ptr = (MSVCRT_wchar_t*)path; *ptr; ++ptr)
-    if (*ptr == '/')
-      *ptr = '\\';
-
-  /* look for drive spec */
-  if ((ptr = strchrW(path, ':')) != 0)
-  {
-    ++ptr;
-    if (drv)
+    if (inpath[0] && inpath[1] == ':')
     {
-      strncpyW(drv, path, ptr - path);
-      drv[ptr - path] = 0;
+        if (drv)
+        {
+            drv[0] = inpath[0];
+            drv[1] = inpath[1];
+            drv[2] = 0;
+        }
+        inpath += 2;
     }
-    path = ptr;
-  }
-  else if (drv)
-    *drv = 0;
+    else if (drv) drv[0] = 0;
 
-  /* find rightmost backslash or leftmost colon */
-  if ((ptr = strrchrW(path, '\\')) == NULL)
-    ptr = (strchrW(path, ':'));
+    /* look for end of directory part */
+    end = NULL;
+    for (p = inpath; *p; p++) if (*p == '/' || *p == '\\') end = p + 1;
 
-  if (!ptr)
-  {
-    ptr = (MSVCRT_wchar_t *)path; /* no path */
-    if (dir)
-      *dir = 0;
-  }
-  else
-  {
-    ++ptr; /* skip the delimiter */
-    if (dir)
+    if (end)  /* got a directory */
     {
-      ch = *ptr;
-      *ptr = 0;
-      strcpyW(dir, path);
-      *ptr = ch;
+        if (dir)
+        {
+            memcpy( dir, inpath, (end - inpath) * sizeof(MSVCRT_wchar_t) );
+            dir[end - inpath] = 0;
+        }
+        inpath = end;
     }
-  }
+    else if (dir) dir[0] = 0;
 
-  if ((p = strrchrW(ptr, '.')) == NULL)
-  {
+    /* look for extension */
+    for (end = inpath; *end; end++) if (*end == '.') break;
+
     if (fname)
-      strcpyW(fname, ptr);
-    if (ext)
-      *ext = 0;
-  }
-  else
-  {
-    *p = 0;
-    if (fname)
-      strcpyW(fname, ptr);
-    *p = '.';
-    if (ext)
-      strcpyW(ext, p);
-  }
-
-  /* Fix pathological case - Win returns ':' as part of the
-   * directory when no drive letter is given.
-   */
-  if (drv && drv[0] == ':')
-  {
-    *drv = 0;
-    if (dir)
     {
-      pathbuff[0] = ':';
-      pathbuff[1] = 0;
-      strcatW(pathbuff,dir);
-      strcpyW(dir, pathbuff);
+        memcpy( fname, inpath, (end - inpath) * sizeof(MSVCRT_wchar_t) );
+        fname[end - inpath] = 0;
     }
-  }
+    if (ext) strcpyW( ext, end );
 }
 
 /* INTERNAL: Helper for _fullpath. Modified PD code from 'snippets'. */
