@@ -244,7 +244,6 @@ static void reply_message( struct msg_queue *queue, unsigned int result,
                            unsigned int error, int remove )
 {
     struct message_result *res = queue->recv_result;
-    if (!res) set_error( STATUS_ACCESS_DENIED );  /* FIXME */
 
     if (remove)
     {
@@ -728,8 +727,10 @@ DECL_HANDLER(get_message)
 /* reply to a sent message */
 DECL_HANDLER(reply_message)
 {
-    if (current->queue) reply_message( current->queue, req->result, 0, req->remove );
-    else set_error( STATUS_ACCESS_DENIED );
+    if (current->queue && current->queue->recv_result)
+        reply_message( current->queue, req->result, 0, req->remove );
+    else
+        set_error( STATUS_ACCESS_DENIED );
 }
 
 
