@@ -284,18 +284,13 @@ BOOL USER_IsExitingThread( DWORD tid )
  */
 static void thread_detach(void)
 {
-    HQUEUE16 hQueue = GetThreadQueue16( 0 );
-
     exiting_thread_id = GetCurrentThreadId();
 
     WDML_NotifyThreadDetach();
 
-    if (hQueue)
-    {
-        TIMER_RemoveThreadTimers();
-        WIN_DestroyThreadWindows( GetDesktopWindow() );
-        QUEUE_DeleteMsgQueue();
-    }
+    TIMER_RemoveThreadTimers();
+    WIN_DestroyThreadWindows( GetDesktopWindow() );
+    QUEUE_DeleteMsgQueue();
 
     if (!(NtCurrentTeb()->tibflags & TEBF_WIN32))
     {

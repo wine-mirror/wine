@@ -38,86 +38,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
 
 /***********************************************************************
- *	     QUEUE_Lock
- *
- * Function for getting a 32 bit pointer on queue structure. For thread
- * safeness programmers should use this function instead of GlobalLock to
- * retrieve a pointer on the structure. QUEUE_Unlock should also be called
- * when access to the queue structure is not required anymore.
- */
-MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
-    queue = GlobalLock16( hQueue );
-    if ( !queue || (queue->magic != QUEUE_MAGIC) )
-    {
-        HeapUnlock( GetProcessHeap() );
-        return NULL;
-    }
-
-    queue->lockCount++;
-    HeapUnlock( GetProcessHeap() );
-    return queue;
-}
-
-
-/***********************************************************************
- *	     QUEUE_Current
- *
- * Get the current thread queue, creating it if required.
- * QUEUE_Unlock is not needed since the queue can only be deleted by
- * the current thread anyway.
- */
-MESSAGEQUEUE *QUEUE_Current(void)
-{
-    MESSAGEQUEUE *queue;
-    HQUEUE16 hQueue;
-
-    if (!(hQueue = GetThreadQueue16(0)))
-    {
-        if (!(hQueue = InitThreadInput16( 0, 0 ))) return NULL;
-    }
-
-    if ((queue = GlobalLock16( hQueue )))
-    {
-        if (queue->magic != QUEUE_MAGIC) queue = NULL;
-    }
-    return queue;
-}
-
-
-/***********************************************************************
- *	     QUEUE_Unlock
- *
- * Use with QUEUE_Lock to get a thread safe access to message queue
- * structure
- */
-void QUEUE_Unlock( MESSAGEQUEUE *queue )
-{
-    if (queue)
-    {
-        HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
-
-        if ( --queue->lockCount == 0 )
-        {
-            if (queue->server_queue)
-                CloseHandle( queue->server_queue );
-            GlobalFree16( queue->self );
-        }
-
-        HeapUnlock( GetProcessHeap() );
-    }
-}
-
-
-/***********************************************************************
  *           QUEUE_CreateMsgQueue
  *
  * Creates a message queue. Doesn't link it into queue list!
  */
-static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
+static HQUEUE16 QUEUE_CreateMsgQueue(void)
 {
     HQUEUE16 hQueue;
     HANDLE handle;
@@ -133,60 +58,69 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     if ( !msgQueue )
         return 0;
 
-    if (bCreatePerQData)
+    SERVER_START_REQ( get_msg_queue )
     {
-        SERVER_START_REQ( get_msg_queue )
-        {
-            wine_server_call_err( req );
-            handle = reply->handle;
-        }
-        SERVER_END_REQ;
-        if (!handle)
-        {
-            ERR_(msg)("Cannot get thread queue");
-            GlobalFree16( hQueue );
-            return 0;
-        }
-        msgQueue->server_queue = handle;
+        wine_server_call_err( req );
+        handle = reply->handle;
     }
-
+    SERVER_END_REQ;
+    if (!handle)
+    {
+        ERR_(msg)("Cannot get thread queue");
+        GlobalFree16( hQueue );
+        return 0;
+    }
+    msgQueue->server_queue = handle;
     msgQueue->self = hQueue;
-    msgQueue->lockCount = 1;
-    msgQueue->magic = QUEUE_MAGIC;
     return hQueue;
 }
 
 
 /***********************************************************************
+ *	     QUEUE_Current
+ *
+ * Get the current thread queue, creating it if required.
+ * QUEUE_Unlock is not needed since the queue can only be deleted by
+ * the current thread anyway.
+ */
+MESSAGEQUEUE *QUEUE_Current(void)
+{
+    HQUEUE16 hQueue = NtCurrentTeb()->queue;
+
+    if (!hQueue)
+    {
+        if (!(hQueue = QUEUE_CreateMsgQueue())) return NULL;
+        SetThreadQueue16( 0, hQueue );
+    }
+
+    return GlobalLock16( hQueue );
+}
+
+
+
+/***********************************************************************
  *	     QUEUE_DeleteMsgQueue
  *
- * Unlinks and deletes a message queue.
- *
- * Note: We need to mask asynchronous events to make sure PostMessage works
- * even in the signal handler.
+ * Delete a message queue.
  */
 void QUEUE_DeleteMsgQueue(void)
 {
-    HQUEUE16 hQueue = GetThreadQueue16(0);
+    HQUEUE16 hQueue = NtCurrentTeb()->queue;
     MESSAGEQUEUE * msgQueue;
 
     if (!hQueue) return;  /* thread doesn't have a queue */
 
     TRACE("(): Deleting message queue %04x\n", hQueue);
 
-    if (!(msgQueue = QUEUE_Lock(hQueue)))
+    if (!(msgQueue = GlobalLock16( hQueue )))
     {
         ERR("invalid thread queue\n");
         return;
     }
 
-    msgQueue->magic = 0;
-    msgQueue->self = 0;
     SetThreadQueue16( 0, 0 );
-
-    /* free up resource used by MESSAGEQUEUE structure */
-    msgQueue->lockCount--;
-    QUEUE_Unlock( msgQueue );
+    CloseHandle( msgQueue->server_queue );
+    GlobalFree16( hQueue );
 }
 
 
@@ -195,30 +129,8 @@ void QUEUE_DeleteMsgQueue(void)
  */
 HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 {
-    MESSAGEQUEUE *queuePtr;
-    HQUEUE16 hQueue = NtCurrentTeb()->queue;
-
-    if ( !hQueue )
-    {
-        /* Create thread message queue */
-        if( !(hQueue = QUEUE_CreateMsgQueue( TRUE )))
-        {
-            ERR_(msg)("failed!\n");
-            return FALSE;
-	}
-
-        /* Link new queue into list */
-        queuePtr = QUEUE_Lock( hQueue );
-
-        HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
-        SetThreadQueue16( 0, hQueue );
-        NtCurrentTeb()->queue = hQueue;
-        HeapUnlock( GetProcessHeap() );
-
-        QUEUE_Unlock( queuePtr );
-    }
-
-    return hQueue;
+    MESSAGEQUEUE *queue = QUEUE_Current();
+    return queue ? queue->self : 0;
 }
 
 /***********************************************************************

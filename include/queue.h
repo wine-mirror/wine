@@ -40,9 +40,6 @@ typedef struct tagMESSAGEQUEUE
   struct received_message_info *receive_info; /* Info about message being currently received */
   struct hook16_queue_info *hook16_info;      /* Opaque pointer for 16-bit hook support */
 
-  DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
-  DWORD     lockCount;              /* reference counter */
-
   DWORD     GetMessageTimeVal;      /* Value for GetMessageTime */
   DWORD     GetMessagePosVal;       /* Value for GetMessagePos */
   DWORD     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
@@ -52,13 +49,10 @@ typedef struct tagMESSAGEQUEUE
 } MESSAGEQUEUE;
 
 
-#define QUEUE_MAGIC            0xD46E80AF
 #define MAX_SENDMSG_RECURSION  64
 
 /* Message queue management methods */
 extern MESSAGEQUEUE *QUEUE_Current(void);
-extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
-extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern void QUEUE_DeleteMsgQueue(void);
 
 #endif  /* __WINE_QUEUE_H */
