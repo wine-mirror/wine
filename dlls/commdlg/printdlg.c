@@ -463,7 +463,10 @@ static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 	    }
 	    lppd->nFromPage = nFromPage;
 	    lppd->nToPage   = nToPage;
+	    lppd->Flags |= PD_PAGENUMS;
 	}
+	else
+	    lppd->Flags &= ~PD_PAGENUMS;
 
 	if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED) {/* Print to file */
 	    lppd->Flags |= PD_PRINTTOFILE;
