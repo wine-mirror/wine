@@ -20,6 +20,7 @@
  */
 #include <limits.h>
 #include <stdio.h>
+#include <math.h>
 #include "msvcrt.h"
 #include "winnls.h"
 #include "wine/unicode.h"
@@ -149,6 +150,32 @@ double MSVCRT_wcstod(const MSVCRT_wchar_t* lpszStr, MSVCRT_wchar_t** end)
     divisor *= 10;
     str++;
   }
+
+  if (*str == 'E' || *str == 'e' || *str == 'D' || *str == 'd')
+  {
+    int negativeExponent = 0;
+    int exponent = 0;
+    if (*(++str) == '-')
+    {
+      negativeExponent = 1;
+      str++;
+    }
+    while (isdigitW(*str))
+    {
+      exponent = exponent * 10 + (*str - '0');
+      str++;
+    }
+    if (exponent != 0)
+    {
+      if (negativeExponent)
+        ret = ret / pow(10.0, exponent);
+      else
+        ret = ret * pow(10.0, exponent);
+    }
+  }
+
+  if (negative)
+    ret = -ret;
 
   if (end)
     *end = (MSVCRT_wchar_t*)str;
