@@ -202,23 +202,50 @@ static void DSOUND_CloseAudio(void);
 
 #endif
 
-/*******************************************************************************
- *		DirectSoundEnumerateA
+/***************************************************************************
+ * DirectSoundEnumerateA [DSOUND.2]  
+ *
+ * Enumerate all DirectSound drivers installed in the system
+ *
+ * RETURNS
+ *    Success: DS_OK
+ *    Failure: DSERR_INVALIDPARAM
  */
 HRESULT WINAPI DirectSoundEnumerateA(
-	LPDSENUMCALLBACKA enumcb,
-	LPVOID context)
+	LPDSENUMCALLBACKA lpDSEnumCallback,
+	LPVOID lpContext)
 {
-	TRACE("enumcb = %p, context = %p\n", enumcb, context);
+	TRACE("lpDSEnumCallback = %p, lpContext = %p\n", 
+		lpDSEnumCallback, lpContext);
 
 #ifdef HAVE_OSS
-	if (enumcb != NULL)
-		enumcb(NULL,"WINE DirectSound using Open Sound System",
-		    "sound",context);
+	if (lpDSEnumCallback != NULL)
+		lpDSEnumCallback(NULL,"WINE DirectSound using Open Sound System",
+		    "sound",lpContext);
 #endif
 
 	return DS_OK;
 }
+
+/***************************************************************************
+ * DirectSoundEnumerateW [DSOUND.3]  
+ *
+ * Enumerate all DirectSound drivers installed in the system
+ *
+ * RETURNS
+ *    Success: DS_OK
+ *    Failure: DSERR_INVALIDPARAM
+ */
+HRESULT WINAPI DirectSoundEnumerateW(
+	LPDSENUMCALLBACKW lpDSEnumCallback, 
+	LPVOID lpContext )
+{
+        FIXME("lpDSEnumCallback = %p, lpContext = %p: stub\n", 
+                lpDSEnumCallback, lpContext);
+
+        return DS_OK;
+}
+
 
 #ifdef HAVE_OSS
 static void _dump_DSBCAPS(DWORD xmask) {
@@ -563,9 +590,19 @@ static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(LPDIRECTSOUND3DLISTENER if
 
 static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER iface)
 {
+	ULONG ulReturn;
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
-	This->ref--;
-	return This->ref;
+
+	ulReturn = --This->ref;
+
+	/* Free all resources */
+	if( ulReturn == 0 ) {
+		if(This->dsb)
+			IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->dsb);
+		HeapFree(GetProcessHeap(),0,This);
+	}
+
+	return ulReturn;
 }
 
 /* IDirectSound3DListener methods */
@@ -1251,9 +1288,36 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 
 	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
 		*ppobj = This->ds3db;
-		if (*ppobj)
-			return DS_OK;
+		if (*ppobj) {
+			IDirectSound3DBuffer_AddRef((LPDIRECTSOUND3DBUFFER)This->ds3db);
+			return S_OK;
+		}
 	}
+
+        if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
+		IDirectSound3DListenerImpl* dsl;
+
+		if (This->dsound->listener) {
+			*ppobj = This->dsound->listener;
+                        IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)This->dsound->listener);
+                        return DS_OK;
+		}
+
+		dsl = (IDirectSound3DListenerImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*dsl));
+		dsl->ref = 1;
+		ICOM_VTBL(dsl) = &ds3dlvt;
+		*ppobj = (LPVOID)dsl;
+
+		dsl->dsb = This;
+		IDirectSoundBuffer_AddRef(iface);
+
+		This->dsound->listener = dsl;
+		IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)dsl);
+
+		return S_OK;
+	}
+
+	FIXME( "Unknown GUID %s\n", debugstr_guid( riid ) );
 
 	return E_FAIL;
 }
@@ -1291,7 +1355,11 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
 	LPDIRECTSOUND iface,HWND hwnd,DWORD level
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
+
 	FIXME("(%p,%08lx,%ld):stub\n",This,(DWORD)hwnd,level);
+
+	This->priolevel = level;
+
 	return DS_OK;
 }
 
@@ -1523,7 +1591,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND iface) {
 		FIXME("need to release all buffers!\n");
 		HeapFree(GetProcessHeap(),0,This);
 		dsound = NULL;
-		return S_OK;
+		return 0;
 	}
 	return This->ref;
 }
@@ -1545,6 +1613,7 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
 
 		if (This->listener) {
 			*ppobj = This->listener;
+			IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)This->listener);
 			return DS_OK;
 		}
 		This->listener = (IDirectSound3DListenerImpl*)HeapAlloc(
@@ -1554,7 +1623,7 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
 		IDirectSound_AddRef(iface);
 		This->listener->ds3dl.dwSize = sizeof(DS3DLISTENER);
 		This->listener->ds3dl.vPosition.x.x = 0.0;
-		This->listener->ds3dl.vPosition.y.y = 0.0;
+		This->listener->ds3dl.vPosition.x.x = 0.0;
 		This->listener->ds3dl.vPosition.z.z = 0.0;
 		This->listener->ds3dl.vVelocity.x.x = 0.0;
 		This->listener->ds3dl.vVelocity.y.y = 0.0;
@@ -2316,12 +2385,16 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	if (*ippDS == NULL)
 		return DSERR_OUTOFMEMORY;
 
-	(*ippDS)->ref		= 1;
 	ICOM_VTBL(*ippDS)	= &dsvt;
-	(*ippDS)->buffers	= NULL;
-	(*ippDS)->nrofbuffers	= 0;
+	(*ippDS)->ref		= 1;
 
-	(*ippDS)->wfx.wFormatTag		= 1;
+	(*ippDS)->priolevel	= DSSCL_NORMAL; 
+	(*ippDS)->nrofbuffers	= 0;
+	(*ippDS)->buffers	= NULL;
+	(*ippDS)->primary	= NULL; 
+	(*ippDS)->listener	= NULL; 
+
+	(*ippDS)->wfx.wFormatTag	= 1;
 	(*ippDS)->wfx.nChannels		= 2;
 	(*ippDS)->wfx.nSamplesPerSec	= 22050;
 	(*ippDS)->wfx.nAvgBytesPerSec	= 44100;
@@ -2357,6 +2430,70 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	return DSERR_NODRIVER;
 #endif
 }
+
+/***************************************************************************
+ * DirectSoundCaptureCreate [DSOUND.6]
+ *
+ * Enumerate all DirectSound drivers installed in the system
+ *
+ * RETURNS
+ *    Success: DS_OK
+ *    Failure: DSERR_NOAGGREGATION, DSERR_ALLOCATED, DSERR_INVALIDPARAM,
+ *             DSERR_OUTOFMEMORY
+ */
+HRESULT WINAPI DirectSoundCaptureCreate(
+	REFGUID riid,
+	LPDIRECTSOUNDCAPTURE* lplpDSC,
+	LPUNKNOWN pUnkOuter )
+{
+	FIXME("(%s,%p,%p): stub\n", debugstr_guid(riid), lplpDSC, pUnkOuter);
+
+	if( pUnkOuter ) {
+		return DSERR_NOAGGREGATION;
+	}
+
+	*lplpDSC = NULL;
+
+	return DSERR_OUTOFMEMORY;
+}
+
+/***************************************************************************
+ * DirectSoundCaptureEnumerateA [DSOUND.7]
+ *
+ * Enumerate all DirectSound drivers installed in the system
+ *
+ * RETURNS
+ *    Success: DS_OK
+ *    Failure: DSERR_INVALIDPARAM
+ */
+HRESULT WINAPI DirectSoundCaptureEnumerateA(
+        LPDSENUMCALLBACKA lpDSEnumCallback,
+        LPVOID lpContext)
+{
+	FIXME("(%p,%p):stub\n", lpDSEnumCallback, lpContext );
+	return DS_OK;
+}
+
+/***************************************************************************
+ * DirectSoundCaptureEnumerateW [DSOUND.8]
+ *
+ * Enumerate all DirectSound drivers installed in the system
+ *
+ * RETURNS
+ *    Success: DS_OK
+ *    Failure: DSERR_INVALIDPARAM
+ */
+HRESULT WINAPI DirectSoundCaptureEnumerateW(
+        LPDSENUMCALLBACKW lpDSEnumCallback,
+        LPVOID lpContext)
+{
+        FIXME("(%p,%p):stub\n", lpDSEnumCallback, lpContext );
+        return DS_OK;
+} 
+
+
+
+
 
 /*******************************************************************************
  * DirectSound ClassFactory

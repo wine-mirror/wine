@@ -186,6 +186,12 @@ typedef BOOL (CALLBACK *LPDSENUMCALLBACKW)(LPGUID,LPWSTR,LPWSTR,LPVOID);
 typedef BOOL (CALLBACK *LPDSENUMCALLBACKA)(LPGUID,LPSTR,LPSTR,LPVOID);
 
 extern HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND * ppDS,IUnknown *pUnkOuter );
+extern HRESULT WINAPI DirectSoundEnumerateA(LPDSENUMCALLBACKA, LPVOID);
+extern HRESULT WINAPI DirectSoundEnumerateW(LPDSENUMCALLBACKW, LPVOID);
+
+extern HRESULT WINAPI DirectSoundCaptureCreate(REFGUID, LPDIRECTSOUNDCAPTURE *, LPUNKNOWN);
+extern HRESULT WINAPI DirectSoundCaptureEnumerateA(LPDSENUMCALLBACKA, LPVOID);
+extern HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW, LPVOID);
 
 
 /*****************************************************************************
