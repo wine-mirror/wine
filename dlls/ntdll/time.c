@@ -2,8 +2,8 @@
  * Nt time functions.
  *
  * RtlTimeToTimeFields, RtlTimeFieldsToTime and defines are taken from ReactOS and
- * adapted to wine with special permissions of the author
- * Rex Jolliff (rex@lvcablemodem.com)
+ * adapted to wine with special permissions of the author. This code is
+ * Copyright 2002 Rex Jolliff (rex@lvcablemodem.com)
  *
  * Copyright 1999 Juergen Schmied
  *
@@ -332,11 +332,11 @@ void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout )
 /******************************************************************************
  *       RtlTimeToTimeFields [NTDLL.@]
  *
- * Parses Time into a TimeFields structure.
+ * Convert a time into a TIME_FIELDS structure.
  *
  * PARAMS
- *   liTime [I] Time to convert to timefields.
- *   TimeFields [O] Pointer to TIME_FIELDS structure to hold parsed info.
+ *   liTime     [I] Time to convert.
+ *   TimeFields [O] Destination for the converted time.
  *
  * RETURNS
  *   Nothing.
@@ -395,15 +395,15 @@ VOID WINAPI RtlTimeToTimeFields(
 /******************************************************************************
  *       RtlTimeFieldsToTime [NTDLL.@]
  *
- * Converts a TIME_FIELDS structure to time.
+ * Convert a TIME_FIELDS structure into a time.
  *
  * PARAMS
- *   ftTimeFields [I] Time fields structure to convert.
- *   Time [O] Converted time.
+ *   ftTimeFields [I] TIME_FIELDS structure to convert.
+ *   Time         [O] Destination for the converted time.
  *
  * RETURNS
- *   TRUE: Successful.
- *   FALSE: Failure.
+ *   Success: TRUE.
+ *   Failure: FALSE.
  */
 BOOLEAN WINAPI RtlTimeFieldsToTime(
 	PTIME_FIELDS tfTimeFields,
@@ -453,14 +453,15 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 /******************************************************************************
  *        RtlLocalTimeToSystemTime [NTDLL.@]
  *
- * Converts local time to system time.
+ * Convert a local time into system time.
  *
  * PARAMS
- *   LocalTime [I] Localtime to convert.
- *   SystemTime [O] SystemTime of the supplied localtime.
+ *   LocalTime  [I] Local time to convert.
+ *   SystemTime [O] Destination for the converted time.
  *
  * RETURNS
- *   Status.
+ *   Success: STATUS_SUCCESS.
+ *   Failure: An NTSTATUS error code indicating the problem.
  */
 NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
                                           PLARGE_INTEGER SystemTime)
@@ -477,14 +478,15 @@ NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
 /******************************************************************************
  *       RtlSystemTimeToLocalTime [NTDLL.@]
  *
- * Converts system Time to local time.
+ * Convert a system time into a local time.
  *
  * PARAMS
  *   SystemTime [I] System time to convert.
- *   LocalTime [O] Local time of the supplied system time.
+ *   LocalTime  [O] Destination for the converted time.
  *
  * RETURNS
- *   Nothing.
+ *   Success: STATUS_SUCCESS.
+ *   Failure: An NTSTATUS error code indicating the problem.
  */
 NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
                                           PLARGE_INTEGER LocalTime )
@@ -501,89 +503,95 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
 /******************************************************************************
  *       RtlTimeToSecondsSince1970 [NTDLL.@]
  *
- * Converts Time to seconds since 1970.
+ * Convert a time into a count of seconds since 1970.
  *
  * PARAMS
- *   time [I] Time to convert.
- *   res [O] Pointer to a LONG to receive the seconds since 1970.
+ *   Time    [I] Time to convert.
+ *   Seconds [O] Destination for the converted time.
  *
  * RETURNS
- *   TRUE: Successful.
- *   FALSE: Failure.
+ *   Success: TRUE.
+ *   Failure: FALSE, if the resulting value will not fit in a DWORD.
  */
-BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *time, PULONG res )
+BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
-    ULONGLONG tmp = ((ULONGLONG)time->s.HighPart << 32) | time->s.LowPart;
+    ULONGLONG tmp = ((ULONGLONG)Time->s.HighPart << 32) | Time->s.LowPart;
     tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_TO_1970;
     if (tmp > 0xffffffff) return FALSE;
-    *res = (DWORD)tmp;
+    *Seconds = (DWORD)tmp;
     return TRUE;
 }
 
 /******************************************************************************
  *       RtlTimeToSecondsSince1980 [NTDLL.@]
  *
- * Converts Time to seconds since 1980.
+ * Convert a time into a count of seconds since 1980.
  *
  * PARAMS
- *   time [I] Time to convert.
- *   res [O] Pointer to a integer to receive the time since 1980.
+ *   Time    [I] Time to convert.
+ *   Seconds [O] Destination for the converted time.
  *
  * RETURNS
- *   TRUE: Successful.
- *   FALSE: Failure.
+ *   Success: TRUE.
+ *   Failure: FALSE, if the resulting value will not fit in a DWORD.
  */
-BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *time, LPDWORD res )
+BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
-    ULONGLONG tmp = ((ULONGLONG)time->s.HighPart << 32) | time->s.LowPart;
+    ULONGLONG tmp = ((ULONGLONG)Time->s.HighPart << 32) | Time->s.LowPart;
     tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_TO_1980;
     if (tmp > 0xffffffff) return FALSE;
-    *res = (DWORD)tmp;
+    *Seconds = (DWORD)tmp;
     return TRUE;
 }
 
 /******************************************************************************
  *       RtlSecondsSince1970ToTime [NTDLL.@]
  *
- * Converts seconds since 1970 to time.
+ * Convert a count of seconds since 1970 to a time.
  *
  * PARAMS
- *   time [I] Seconds since 1970 to convert.
- *   res [O] Seconds since 1970 in Time.
+ *   Seconds [I] Time to convert.
+ *   Time    [O] Destination for the converted time.
  *
  * RETURNS
  *   Nothing.
  */
-void WINAPI RtlSecondsSince1970ToTime( DWORD time, LARGE_INTEGER *res )
+void WINAPI RtlSecondsSince1970ToTime( DWORD Seconds, LARGE_INTEGER *Time )
 {
-    ULONGLONG secs = time * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-    res->s.LowPart  = (DWORD)secs;
-    res->s.HighPart = (DWORD)(secs >> 32);
+    ULONGLONG secs = Seconds * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    Time->s.LowPart  = (DWORD)secs;
+    Time->s.HighPart = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************
  *       RtlSecondsSince1980ToTime [NTDLL.@]
  *
- * Converts seconds since 1980 to time.
+ * Convert a count of seconds since 1980 to a time.
  *
  * PARAMS
- *   time [I] Seconds since 1980 to convert.
- *   res [O] Seconds since 1980 in Time.
+ *   Seconds [I] Time to convert.
+ *   Time    [O] Destination for the converted time.
  *
  * RETURNS
  *   Nothing.
  */
-void WINAPI RtlSecondsSince1980ToTime( DWORD time, LARGE_INTEGER *res )
+void WINAPI RtlSecondsSince1980ToTime( DWORD Seconds, LARGE_INTEGER *Time )
 {
-    ULONGLONG secs = time * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1980;
-    res->s.LowPart  = (DWORD)secs;
-    res->s.HighPart = (DWORD)(secs >> 32);
+    ULONGLONG secs = Seconds * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1980;
+    Time->s.LowPart  = (DWORD)secs;
+    Time->s.HighPart = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************
  *       RtlTimeToElapsedTimeFields [NTDLL.@]
+ *
+ * Convert a time to a count of elapsed seconds.
+ *
+ * PARAMS
+ *   Time       [I] Time to convert.
+ *   TimeFields [O] Destination for the converted time.
  *
  * RETURNS
  *   Nothing.
@@ -612,21 +620,22 @@ void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS 
  *       NtQuerySystemTime [NTDLL.@]
  *       ZwQuerySystemTime [NTDLL.@]
  *
- * Gets the current system time.
+ * Get the current system time.
  *
  * PARAMS
- *   time [O] The current system time.
+ *   Time [O] Destination for the current system time.
  *
  * RETURNS
- *   Status.
+ *   Success: STATUS_SUCCESS.
+ *   Failure: An NTSTATUS error code indicating the problem.
  */
-NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER time )
+NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER Time )
 {
     struct timeval now;
 
     gettimeofday( &now, 0 );
-    time->QuadPart = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-    time->QuadPart += now.tv_usec * 10;
+    Time->QuadPart = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    Time->QuadPart += now.tv_usec * 10;
     return STATUS_SUCCESS;
 }
 
@@ -687,19 +696,20 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
             return TZ_INFO[i].psTZWindows;
    }
 
-   return (NULL);
+   return NULL;
 }
 
 /***********************************************************************
  *      RtlQueryTimeZoneInformation [NTDLL.@]
  *
- * Returns the timezone.
+ * Get information about the current timezone.
  *
  * PARAMS
- *   tzinfo [O] Retrieves the timezone info.
+ *   tzinfo [O] Destination for the retrieved timezone info.
  *
  * RETURNS
- *   Status.
+ *   Success: STATUS_SUCCESS.
+ *   Failure: An NTSTATUS error code indicating the problem.
  */
 NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 {
@@ -723,15 +733,16 @@ NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 /***********************************************************************
  *       RtlSetTimeZoneInformation [NTDLL.@]
  *
- * Sets the current time zone.
+ * Set the current time zone information.
  *
  * PARAMS
- *   tzinfo [I] Timezone information used to set timezone.
+ *   tzinfo [I] Timezone information to set.
  *
  * RETURNS
- *   Status.
+ *   Success: STATUS_SUCCESS.
+ *   Failure: An NTSTATUS error code indicating the problem.
  *
- * BUGS:
+ * BUGS
  *   Uses the obsolete unix timezone structure and tz_dsttime member.
  */
 NTSTATUS WINAPI RtlSetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
@@ -753,14 +764,15 @@ NTSTATUS WINAPI RtlSetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
  *        NtSetSystemTime [NTDLL.@]
  *        ZwSetSystemTime [NTDLL.@]
  *
- * Sets the system time.
+ * Set the system time.
  *
- * PARAM:
- *   NewTime [I] The time to set the system time to.
- *   OldTime [O] Optional (ie. can be NULL).  Old Time.
+ * PARAMS
+ *   NewTime [I] The time to set.
+ *   OldTime [O] Optional destination for the previous system time.
  *
  * RETURNS
- *   Status.
+ *   Success: STATUS_SUCCESS.
+ *   Failure: An NTSTATUS error code indicating the problem.
  */
 NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *OldTime)
 {
