@@ -201,6 +201,7 @@ typedef struct          /* WSAAsyncSelect() control struct */
 
 #define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
 #define WS_MAX_UDP_DATAGRAM             1024
+static INT WINAPI WSA_DefaultBlockingHook( FARPROC x );
 
 static void *he_buffer;          /* typecast for Win16/32 ws_hostent */
 static SEGPTR he_buffer_seg;
@@ -211,7 +212,7 @@ static SEGPTR pe_buffer_seg;
 static char* local_buffer;
 static SEGPTR dbuffer_seg;
 static INT num_startup;          /* reference counter */
-static FARPROC blocking_hook;
+static FARPROC blocking_hook = WSA_DefaultBlockingHook;
 
 /* function prototypes */
 static int WS_dup_he(struct hostent* p_he, int flag);
@@ -3480,6 +3481,12 @@ INT WINAPI WSACancelBlockingCall(void)
     return 0;
 }
 
+static INT WINAPI WSA_DefaultBlockingHook( FARPROC x )
+{
+    FIXME("How was this called?\n");
+    return x();
+}
+
 
 /***********************************************************************
  *      WSASetBlockingHook		(WINSOCK.109)
@@ -3510,7 +3517,7 @@ FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
  */
 INT16 WINAPI WSAUnhookBlockingHook16(void)
 {
-    blocking_hook = NULL;
+    blocking_hook = WSA_DefaultBlockingHook;
     return 0;
 }
 
@@ -3520,7 +3527,7 @@ INT16 WINAPI WSAUnhookBlockingHook16(void)
  */
 INT WINAPI WSAUnhookBlockingHook(void)
 {
-    blocking_hook = NULL;
+    blocking_hook = WSA_DefaultBlockingHook;
     return 0;
 }
 
