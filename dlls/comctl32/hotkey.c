@@ -26,9 +26,6 @@
  * If you discover missing features or bugs please note them below.
  *
  * TODO:
- *   Messages:
- *     WM_CHAR
- *     WM_SYSCHAR
  *   Styles:
  *     WS_DISABLED
  *   Notifications:
@@ -67,6 +64,7 @@ typedef struct tagHOTKEY_INFO
 #define HOTKEY_GetInfoPtr(hwnd) ((HOTKEY_INFO *)GetWindowLongPtrA (hwnd, 0))
 
 static const WCHAR HOTKEY_plussep[] = { ' ', '+', ' ' };
+static LRESULT HOTKEY_SetFont (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
 
 #define IsOnlySet(flags) (infoPtr->CurrMod == (flags))
 
@@ -100,39 +98,47 @@ HOTKEY_IsCombInv(HOTKEY_INFO *infoPtr)
 #undef IsOnlySet
 
 static void
-HOTKEY_DrawHotKey(HOTKEY_INFO *infoPtr, LPCWSTR KeyName, WORD NameLen, 
-                  LPRECT rc, HDC hdc)
+HOTKEY_DrawHotKey(HOTKEY_INFO *infoPtr, LPCWSTR KeyName, WORD NameLen, HDC hdc)
 {
     SIZE TextSize;
+    INT nXStart, nYStart;
+    COLORREF clrOldText, clrOldBk;
+    HFONT hFontOld;
 
-    /* We have to allow some space for the frame to be drawn */
-    rc->left += 2;
-    rc->top++;
-    DrawTextW(hdc, KeyName, NameLen, rc, DT_LEFT | DT_VCENTER);
-    rc->left -= 2;
-    rc->top--;
+    /* Make a gap from the frame */
+    nXStart = GetSystemMetrics(SM_CXBORDER);
+    nYStart = GetSystemMetrics(SM_CYBORDER);
 
-    /* Get the text size and position the caret accordingly */
-    GetTextExtentPoint32W (hdc, KeyName, NameLen, &TextSize);
-    infoPtr->CaretPos = TextSize.cx + 2;
-    SetCaretPos(infoPtr->CaretPos, 3);
+    hFontOld = SelectObject(hdc, infoPtr->hFont);
+    clrOldText = SetTextColor(hdc, comctl32_color.clrWindowText);
+    clrOldBk = SetBkColor(hdc, comctl32_color.clrWindow);
+
+    TextOutW(hdc, nXStart, nYStart, KeyName, NameLen);
+
+    /* Get the text width for the caret */
+    GetTextExtentPoint32W(hdc, KeyName, NameLen, &TextSize);
+    infoPtr->CaretPos = nXStart + TextSize.cx;
+
+    SetBkColor(hdc, clrOldBk);
+    SetTextColor(hdc, clrOldText);
+    SelectObject(hdc, hFontOld);
+
+    /* position the caret */
+    SetCaretPos(infoPtr->CaretPos, nYStart);
 }
 
 /* Draw the names of the keys in the control */
 static void 
 HOTKEY_Refresh(HOTKEY_INFO *infoPtr, HDC hdc)
 {
-    WCHAR KeyName[sizeof(WCHAR) * 64];
+    WCHAR KeyName[64];
     WORD NameLen = 0;
     BYTE Modifier;
-    RECT rc;
-
-    GetClientRect(infoPtr->hwndSelf, &rc);
 
     TRACE("(infoPtr=%p hdc=%p)\n", infoPtr, hdc);
 
     if(!infoPtr->CurrMod && !infoPtr->HotKey) {
-	HOTKEY_DrawHotKey (infoPtr, infoPtr->strNone, 4, &rc, hdc);
+	HOTKEY_DrawHotKey (infoPtr, infoPtr->strNone, 4, hdc);
 	return;
     }
 	
@@ -172,7 +178,7 @@ HOTKEY_Refresh(HOTKEY_INFO *infoPtr, HDC hdc)
     else
 	KeyName[NameLen] = 0;
 
-    HOTKEY_DrawHotKey (infoPtr, KeyName, NameLen, &rc, hdc);
+    HOTKEY_DrawHotKey (infoPtr, KeyName, NameLen, hdc);
 }
 
 static void
@@ -216,21 +222,13 @@ HOTKEY_SetRules(HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
           infoPtr->InvComb, infoPtr->InvMod);
 }
 
-/* << HOTKEY_Char >> */
 
 static LRESULT
 HOTKEY_Create (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    TEXTMETRICW tm;
-    HDC hdc;
-
     infoPtr->hwndNotify = ((LPCREATESTRUCTA)lParam)->hwndParent;
 
-    /* get default font height */
-    hdc = GetDC (infoPtr->hwndSelf);
-    GetTextMetricsW (hdc, &tm);
-    infoPtr->nHeight = tm.tmHeight;
-    ReleaseDC (infoPtr->hwndSelf, hdc);
+    HOTKEY_SetFont(infoPtr, (WPARAM)GetStockObject(SYSTEM_FONT), 0);
 
     return 0;
 }
@@ -385,9 +383,9 @@ HOTKEY_SetFocus (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     infoPtr->bFocus = TRUE;
 
 
-    CreateCaret (infoPtr->hwndSelf, NULL, 1, infoPtr->nHeight - 2);
+    CreateCaret (infoPtr->hwndSelf, NULL, 1, infoPtr->nHeight);
 
-    SetCaretPos (infoPtr->CaretPos, 3);
+    SetCaretPos (infoPtr->CaretPos, GetSystemMetrics(SM_CYBORDER));
 
     ShowCaret (infoPtr->hwndSelf);
 
@@ -396,7 +394,7 @@ HOTKEY_SetFocus (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-inline static LRESULT
+static LRESULT
 HOTKEY_SetFont (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     TEXTMETRICW tm;
@@ -440,7 +438,9 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             HOTKEY_SetRules (infoPtr, wParam, lParam);
 	    break;
 
-/*	case WM_CHAR: */
+	case WM_CHAR:
+	case WM_SYSCHAR:
+	    return HOTKEY_KeyDown (infoPtr, MapVirtualKeyW(LOBYTE(HIWORD(lParam)), 1), lParam);
 
 	case WM_CREATE:
 	    return HOTKEY_Create (infoPtr, wParam, lParam);
@@ -483,8 +483,6 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETFONT:
 	    return HOTKEY_SetFont (infoPtr, wParam, lParam);
-
-/*	case WM_SYSCHAR: */
 
 	default:
 	    if ((uMsg >= WM_USER) && (uMsg < WM_APP))
