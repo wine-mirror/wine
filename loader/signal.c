@@ -298,7 +298,9 @@ void SIGNAL_InitHandlers(void)
     SIGNAL_SetHandler( SIGSEGV, (void (*)())SIGNAL_fault, 1);
     SIGNAL_SetHandler( SIGILL,  (void (*)())SIGNAL_fault, 1);
     SIGNAL_SetHandler( SIGFPE,  (void (*)())SIGNAL_fault, 1);
+#ifdef SIGTRAP
     SIGNAL_SetHandler( SIGTRAP, (void (*)())SIGNAL_trap,  1); /* debugger */
+#endif
     SIGNAL_SetHandler( SIGHUP,  (void (*)())SIGNAL_trap,  1); /* forced break*/
 #ifdef SIGBUS
     SIGNAL_SetHandler( SIGBUS,  (void (*)())SIGNAL_fault, 1);
@@ -319,7 +321,7 @@ BOOL SIGNAL_Init(void)
     if (sigaltstack(&ss, NULL) < 0)
     {
         perror("sigaltstack");
-        return FALSE;
+	/* fall through on error and try it differently */
     }
 #endif  /* HAVE_SIGALTSTACK */
     
