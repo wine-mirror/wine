@@ -1014,12 +1014,7 @@ static void db_task_printsym(unsigned int addr, int size)
     DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32, TRUE );
 }
 
-void
-db_print_address(seg, size, addrp, byref)
-	char *		seg;
-	int		size;
-	struct i_addr	*addrp;
-	int		byref;
+void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
 {
 	if (addrp->is_reg) {
 	    fprintf(stderr,"%s", db_reg[size][addrp->disp]);
