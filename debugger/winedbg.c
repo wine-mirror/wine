@@ -31,7 +31,7 @@ CONTEXT		DEBUG_context;
 int 		curr_frame = 0;
 static char*	DEBUG_LastCmdLine = NULL;
 
-static DBG_PROCESS* proc = NULL;
+static DBG_PROCESS* DEBUG_ProcessList = NULL;
 DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
 
 void	DEBUG_Output(int chn, const char* buffer, int len)
@@ -129,7 +129,7 @@ static	DBG_PROCESS*	DEBUG_GetProcess(DWORD pid)
 {
     DBG_PROCESS*	p;
     
-    for (p = proc; p; p = p->next)
+    for (p = DEBUG_ProcessList; p; p = p->next)
 	if (p->pid == pid) break;
     return p;
 }
@@ -148,10 +148,10 @@ static	DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h)
     p->next_index = 0;
     p->dbg_hdr_addr = 0;
 
-    p->next = proc;
+    p->next = DEBUG_ProcessList;
     p->prev = NULL;
-    if (proc) proc->prev = p;
-    proc = p;
+    if (DEBUG_ProcessList) DEBUG_ProcessList->prev = p;
+    DEBUG_ProcessList = p;
     return p;
 }
 
@@ -165,7 +165,7 @@ static	void			DEBUG_DelProcess(DBG_PROCESS* p)
     }
     if (p->prev) p->prev->next = p->next;
     if (p->next) p->next->prev = p->prev;
-    if (p == proc) proc = p->next;
+    if (p == DEBUG_ProcessList) DEBUG_ProcessList = p->next;
     if (p == DEBUG_CurrProcess) DEBUG_CurrProcess = NULL;
     DBG_free(p);
 }
@@ -718,10 +718,10 @@ static	DWORD	DEBUG_MainLoop(void)
     
     for (ret = TRUE; ret; ) {
 	/* wait until we get at least one loaded process */
-	while (!proc && (ret = DEBUG_Parser()));
+	while (!DEBUG_ProcessList && (ret = DEBUG_Parser()));
 	if (!ret) break;
 
-	while (ret && WaitForDebugEvent(&de, INFINITE)) {
+	while (ret && DEBUG_ProcessList && WaitForDebugEvent(&de, INFINITE)) {
 	    ret = DEBUG_HandleDebugEvent(&de, &cont);
 	    ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
 	}
