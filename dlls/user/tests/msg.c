@@ -934,6 +934,44 @@ static const struct message WmSetScrollRangeHV_NC_Seq[] =
     { WM_GETTEXT, sent|optional },
     { 0 }
 };
+/* test if we receive the right sequence of messages */
+/* after calling ShowWindow( SW_SHOWNA) */
+static const struct message WmSHOWNAChildInvisParInvis[] = {
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { 0 }
+};
+static const struct message WmSHOWNAChildVisParInvis[] = {
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { 0 }
+};
+static const struct message WmSHOWNAChildVisParVis[] = {
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER },
+    { 0 }
+};
+static const struct message WmSHOWNAChildInvisParVis[] = {
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER},
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { 0 }
+};
+static const struct message WmSHOWNATopVisible[] = {
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE },
+    { 0 }
+};
+static const struct message WmSHOWNATopInvisible[] = {
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { 0 }
+};
 
 static int after_end_dialog;
 static int sequence_cnt, sequence_size;
@@ -2653,6 +2691,66 @@ static void test_scroll_messages(HWND hwnd)
     test_hv_scroll_2(hwnd, SB_VERT, WS_VSCROLL, 0, 0, 0);
 }
 
+static void test_showwindow(void)
+{
+    HWND hwnd, hchild;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hwnd, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child\n");
+    flush_sequence();
+
+    /* ShowWindow( SW_SHOWNA) for invisible top level window */
+    trace("calling ShowWindow( SW_SHOWNA) for invisible top level window\n");
+    ok( ShowWindow(hwnd, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
+    ok_sequence(WmSHOWNATopInvisible, "ShowWindow(SW_SHOWNA) on invisible top level window.\n", TRUE);
+    trace("done\n");
+
+    /* ShowWindow( SW_SHOWNA) for now visible top level window */
+    trace("calling ShowWindow( SW_SHOWNA) for now visible top level window\n");
+    ok( ShowWindow(hwnd, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
+    ok_sequence(WmSHOWNATopVisible, "ShowWindow(SW_SHOWNA) on visible top level window.\n", FALSE);
+    trace("done\n");
+    /* back to invisible */
+    ShowWindow(hchild, SW_HIDE);
+    ShowWindow(hwnd, SW_HIDE);
+    flush_sequence();
+    /* ShowWindow(SW_SHOWNA) with child and parent invisible */ 
+    trace("calling ShowWindow( SW_SHOWNA) for invisible child with invisible parent\n");
+    ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
+    ok_sequence(WmSHOWNAChildInvisParInvis, "ShowWindow(SW_SHOWNA) invisible child and parent\n", TRUE);
+    trace("done\n");
+    /* ShowWindow(SW_SHOWNA) with child visible and parent invisible */ 
+    ok( ShowWindow(hchild, SW_SHOW) != FALSE, "ShowWindow: window was invisible\n" );
+    flush_sequence();
+    trace("calling ShowWindow( SW_SHOWNA) for the visible child and invisible parent\n");
+    ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
+    ok_sequence(WmSHOWNAChildVisParInvis, "ShowWindow(SW_SHOWNA) visible child and invisible parent\n", TRUE);
+    trace("done\n");
+    /* ShowWindow(SW_SHOWNA) with child visible and parent visible */
+    ShowWindow( hwnd, SW_SHOW);
+    flush_sequence();
+    trace("calling ShowWindow( SW_SHOWNA) for the visible child and parent\n");
+    ok( ShowWindow(hchild, SW_SHOWNA) != FALSE, "ShowWindow: window was invisible\n" );
+    ok_sequence(WmSHOWNAChildVisParVis, "ShowWindow(SW_SHOWNA) for the visible child and parent\n", FALSE);
+    trace("done\n");
+
+    /* ShowWindow(SW_SHOWNA) with child invisible and parent visible */
+    ShowWindow( hchild, SW_HIDE);
+    flush_sequence();
+    trace("calling ShowWindow( SW_SHOWNA) for the invisible child and visible parent\n");
+    ok( ShowWindow(hchild, SW_SHOWNA) == FALSE, "ShowWindow: window was visible\n" );
+    ok_sequence(WmSHOWNAChildInvisParVis, "ShowWindow(SW_SHOWNA) for the invisible child and visible parent\n", FALSE);
+    trace("done\n");
+
+    DestroyWindow(hchild);
+    DestroyWindow(hwnd);
+    flush_sequence();
+}
+
 /* test if we receive the right sequence of messages */
 static void test_messages(void)
 {
@@ -2948,6 +3046,8 @@ static void test_messages(void)
     DestroyWindow(hchild);
     DestroyWindow(hparent);
     flush_sequence();
+
+    test_showwindow();
 }
 
 /****************** button message test *************************/

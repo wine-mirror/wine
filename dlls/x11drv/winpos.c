@@ -1100,8 +1100,9 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             break;
 
 	case SW_SHOWNA:
-            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-            /* fall through */
+            swp |= SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+            if( wndPtr->dwStyle & WS_CHILD) swp |= SWP_NOZORDER;
+            break;
 	case SW_SHOW:
             if (wasVisible) goto END;
 
@@ -1125,7 +1126,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     }
 
     showFlag = (cmd != SW_HIDE);
-    if (showFlag != wasVisible)
+    if (showFlag != wasVisible || cmd == SW_SHOWNA)
     {
         SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
         if (!IsWindow( hwnd )) goto END;
