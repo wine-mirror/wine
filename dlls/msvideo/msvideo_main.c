@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "msvideo_private.h"
+#include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
 
@@ -85,7 +86,12 @@ BOOL VFWAPI ICInfo(
         char *s = buf;
         while (*s) 
         {
-            if (!strncasecmp((char*)&fccType, s, 4) && s[4] == '.' && s[9] == '=')
+	    /* (WS) I'm commenting out this test because GetPrivateProfileString
+	     * will return only a list of keys without their values. I'm curious
+	     * to understand how the codecs ever got listed since it seems
+	     * obvious they can't be found this way.
+	     */
+            if (!strncasecmp((char*)&fccType, s, 4) && s[4] == '.' /* && s[9] == '=' */ )
             {
                 if (!fccHandler--) 
                 {
@@ -95,11 +101,21 @@ BOOL VFWAPI ICInfo(
                     hic = ICOpen(fccType, lpicinfo->fccHandler, ICMODE_QUERY);
                     if (hic)
                     {
+			/* (WS) Some incompatible codecs can make wine crash 
+			 * right here. It would be nice if we could protect
+			 * wine and simply ignore such codecs.
+			 */
                         ICGetInfo(hic, lpicinfo, lpicinfo->dwSize);
                         ICClose(hic);
                         return TRUE;
                     }
-                    return FALSE;
+		    /* (WS) I'm removing this return because I think it's
+		     * better to keep going down the list of codecs rather
+		     * than stopping short at the first one that will not
+		     * open.
+		     
+                     * return FALSE; */
+		    fccHandler++;
                 }
             }
             s += strlen(s) + 1; /* either next char or \0 */
@@ -251,9 +267,32 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC l
  */
 LRESULT VFWAPI ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	LRESULT		ret;
+	char    codecname[10];
+	char	szDriver[128];
 
 	TRACE("(%p,%p,%ld)\n",hic,picinfo,cb);
+
+	/* (WS) The field szDriver should be initialized because the driver 
+	 * is not obliged and often will not do it. Some applications, like
+	 * VirtualDub, rely on this field and will occasionally crash if it
+	 * goes unitialized.
+	 */
+	if (picinfo && cb >= sizeof(ICINFO)) 
+	   szDriver[0] = 0; /* At first, set it to an empty string */
+
 	ret = ICSendMessage(hic,ICM_GETINFO,(DWORD)picinfo,cb);
+
+	/* (WS) When szDriver was not supplied by the driver itself, apparently 
+	 * Windows will set its value equal to the driver file name. This can
+	 * be obtained from the registry as we do here.
+	 */
+	if (picinfo && cb >= sizeof(ICINFO))
+	   if (szDriver[0] == 0) { /* was szDriver not supplied? */
+              sprintf(codecname, "vidc.%.4s", (char*)&(picinfo->fccHandler));
+              GetPrivateProfileStringA("drivers32", codecname, "", szDriver, sizeof(szDriver), "system.ini");
+	      MultiByteToWideChar(CP_ACP, 0, szDriver, -1, picinfo->szDriver, sizeof(picinfo->szDriver)/sizeof(WCHAR));
+	   }
+
 	TRACE("	-> 0x%08lx\n",ret);
 	return ret;
 }
