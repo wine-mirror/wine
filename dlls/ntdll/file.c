@@ -247,13 +247,13 @@ typedef struct async_fileio
     void*                            apc_user;
     char                             *buffer;
     unsigned int                     count;
-    unsigned long                    offset;
-    enum fd_type                     fd_type;
+    off_t                            offset;
+    BOOL                             avail_mode;
 } async_fileio;
 
 static DWORD fileio_get_async_count(const struct async_private *ovp)
 {
-    async_fileio *fileio = (async_fileio*) ovp;
+    const async_fileio *fileio = (const async_fileio*) ovp;
 
     if (fileio->count < fileio->async.iosb->Information)
     	return 0;
@@ -334,7 +334,7 @@ static void FILE_AsyncReadService(async_private *ovp)
 
     /* check to see if the data is ready (non-blocking) */
 
-    if ( fileio->fd_type == FD_TYPE_SOCKET )
+    if ( fileio->avail_mode )
         result = read(ovp->fd, &fileio->buffer[already], fileio->count - already);
     else
     {
@@ -363,14 +363,15 @@ static void FILE_AsyncReadService(async_private *ovp)
         return;
     }
 
+    TRACE("status before: %s\n", (io_status->u.Status == STATUS_SUCCESS) ? "success" : "pending");
     io_status->Information += result;
-    if (io_status->Information >= fileio->count || fileio->fd_type == FD_TYPE_SOCKET )
+    if (io_status->Information >= fileio->count || fileio->avail_mode )
         io_status->u.Status = STATUS_SUCCESS;
     else
         io_status->u.Status = STATUS_PENDING;
 
-    TRACE("read %d more bytes %ld/%d so far\n",
-          result, io_status->Information, fileio->count);
+    TRACE("read %d more bytes %ld/%d so far (%s)\n",
+          result, io_status->Information, fileio->count, (io_status->u.Status == STATUS_SUCCESS) ? "success" : "pending");
 }
 
 
@@ -402,13 +403,12 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                            PLARGE_INTEGER offset, PULONG key)
 {
     int unix_handle, flags;
-    enum fd_type type;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
     io_status->Information = 0;
-    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_READ, &unix_handle, &type, &flags );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_READ, &unix_handle, NULL, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_RECV_SHUTDOWN)
@@ -442,6 +442,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         if (!(ovp = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(async_fileio))))
         {
             wine_server_release_fd( hFile, unix_handle );
+            if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
             return STATUS_NO_MEMORY;
         }
         ovp->async.ops = (apc ? &fileio_async_ops : &fileio_nocomp_async_ops );
@@ -456,18 +457,24 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             ovp->offset = 0;
         else
         {
-            ovp->offset = offset->u.LowPart;
-            if (offset->u.HighPart) FIXME("NIY-high part\n");
+            ovp->offset = offset->QuadPart;
+            if (offset->u.HighPart && ovp->offset == offset->u.LowPart)
+                FIXME("High part of offset is lost\n");
         } 
         ovp->apc = apc;
         ovp->apc_user = apc_user;
         ovp->buffer = buffer;
-        ovp->fd_type = type;
+        ovp->avail_mode = (flags & FD_FLAG_AVAILABLE);
+        NtResetEvent(hEvent, NULL);
 
-        io_status->Information = 0;
         ret = register_new_async(&ovp->async);
         if (ret != STATUS_SUCCESS)
+        {
+            wine_server_release_fd( hFile, unix_handle );
+            if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
+            RtlFreeHeap(GetProcessHeap(), 0, ovp);
             return ret;
+        }
         if (flags & FD_FLAG_TIMEOUT)
         {
             NtWaitForSingleObject(hEvent, TRUE, NULL);
@@ -480,6 +487,15 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             /* let some APC be run, this will read some already pending data */
             timeout.u.LowPart = timeout.u.HighPart = 0;
             NtDelayExecution( TRUE, &timeout );
+            /* if we only have to read the available data, and none is available,
+             * simply cancel the request. If data was available, it has been read
+             * while in by previous call (NtDelayExecution)
+             */
+            if ((flags & FD_FLAG_AVAILABLE) && io_status->u.Status == STATUS_PENDING)
+            {
+                io_status->u.Status = STATUS_SUCCESS;
+                register_old_async(&ovp->async);
+            }
         }
         return io_status->u.Status;
     }
@@ -526,7 +542,7 @@ static void FILE_AsyncWriteService(struct async_private *ovp)
 
     /* write some data (non-blocking) */
 
-    if ( fileio->fd_type == FD_TYPE_SOCKET )
+    if ( fileio->avail_mode )
         result = write(ovp->fd, &fileio->buffer[already], fileio->count - already);
     else
     {
@@ -583,16 +599,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                             PLARGE_INTEGER offset, PULONG key)
 {
     int unix_handle, flags;
-    enum fd_type type;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p)!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
-    TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
-          hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
-
     io_status->Information = 0;
-    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &unix_handle, &type, &flags );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &unix_handle, NULL, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_SEND_SHUTDOWN)
@@ -620,15 +632,17 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         ovp->async.iosb = io_status;
         ovp->count = length;
         if (offset) {
-            ovp->offset = offset->u.LowPart;
-            if (offset->u.HighPart) FIXME("NIY-high part\n");
+            ovp->offset = offset->QuadPart;
+            if (offset->u.HighPart && ovp->offset == offset->u.LowPart)
+                FIXME("High part of offset is lost\n");
         } else {
             ovp->offset = 0;
         }
         ovp->apc = apc;
         ovp->apc_user = apc_user;
         ovp->buffer = (void*)buffer;
-        ovp->fd_type = type;
+        ovp->avail_mode = (flags & FD_FLAG_AVAILABLE);
+        NtResetEvent(hEvent, NULL);
 
         io_status->Information = 0;
         ret = register_new_async(&ovp->async);

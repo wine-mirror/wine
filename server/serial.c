@@ -209,9 +209,12 @@ static int serial_get_info( struct fd *fd, int *flags )
     *flags = 0;
     if (!(serial->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
         *flags |= FD_FLAG_OVERLAPPED;
-    else if(!((serial->readinterval == MAXDWORD) &&
-              (serial->readmult == 0) && (serial->readconst == 0)) )
+    else if (!(serial->readinterval == MAXDWORD &&
+               serial->readmult == 0 && serial->readconst == 0))
         *flags |= FD_FLAG_TIMEOUT;
+    if (serial->readinterval == MAXDWORD &&     
+        serial->readmult == 0 && serial->readconst == 0)
+        *flags |= FD_FLAG_AVAILABLE;
 
     return FD_TYPE_DEFAULT;
 }
@@ -292,7 +295,7 @@ static void serial_queue_async(struct fd *fd, void *ptr, unsigned int status, in
     else if ( async ) destroy_async ( async );
     else set_error ( STATUS_INVALID_PARAMETER );
 
-    set_fd_events ( fd, serial_get_poll_events( fd ));
+    set_fd_events ( fd, serial_get_poll_events( fd ) );
 }
 
 static int serial_flush( struct fd *fd, struct event **event )

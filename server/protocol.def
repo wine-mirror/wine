@@ -612,10 +612,12 @@ enum fd_type
     FD_TYPE_DEFAULT,
     FD_TYPE_SOCKET
 };
-#define FD_FLAG_OVERLAPPED         0x01
-#define FD_FLAG_TIMEOUT            0x02
+#define FD_FLAG_OVERLAPPED         0x01 /* fd opened in overlapped mode */
+#define FD_FLAG_TIMEOUT            0x02 /* read/write is synchronous */
 #define FD_FLAG_RECV_SHUTDOWN      0x04
 #define FD_FLAG_SEND_SHUTDOWN      0x08
+#define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation, 
+                                         * only handle available data (don't wait) */
 
 
 /* Flush a file buffers */

@@ -234,7 +234,7 @@ static void sock_wake_up( struct sock *sock, int pollev )
     int i;
     int async_active = 0;
 
-    if ( sock->flags & FD_FLAG_OVERLAPPED )
+    if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
         if( pollev & (POLLIN|POLLPRI) && IS_READY( sock->read_q ) )
         {
@@ -425,7 +425,7 @@ static void sock_poll_event( struct fd *fd, int event )
         sock_reselect( sock );
 
     /* wake up anyone waiting for whatever just happened */
-    if ( sock->pmask & sock->mask || sock->flags & FD_FLAG_OVERLAPPED ) sock_wake_up( sock, event );
+    if ( sock->pmask & sock->mask || sock->flags & WSA_FLAG_OVERLAPPED ) sock_wake_up( sock, event );
 
     /* if anyone is stupid enough to wait on the socket object itself,
      * maybe we should wake them up too, just in case? */
@@ -480,7 +480,7 @@ static int sock_get_info( struct fd *fd, int *flags )
     struct sock *sock = get_fd_user( fd );
     assert ( sock->obj.ops == &sock_ops );
 
-    *flags = 0;
+    *flags = FD_FLAG_AVAILABLE;
     if (sock->flags & WSA_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
     if ( sock->type != SOCK_STREAM || sock->state & FD_WINE_CONNECTED )
     {

@@ -805,6 +805,8 @@ enum fd_type
 #define FD_FLAG_TIMEOUT            0x02
 #define FD_FLAG_RECV_SHUTDOWN      0x04
 #define FD_FLAG_SEND_SHUTDOWN      0x08
+#define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation,
+                                         * only handle available data (don't wait) */
 
 
 
@@ -3647,6 +3649,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 147
+#define SERVER_PROTOCOL_VERSION 148
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -111,8 +111,10 @@ inline static NTSTATUS __register_async( async_private *ovp, const DWORD status 
     return ret;
 }
 
-#define register_old_async(ovp) \
-    __register_async(ovp, ovp->iosb->u.Status);
+inline static NTSTATUS register_old_async( async_private *ovp )
+{
+    return __register_async(ovp, ovp->iosb->u.Status);
+}
 
 inline static NTSTATUS register_new_async( async_private *ovp )
 {
