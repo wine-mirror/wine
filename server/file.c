@@ -40,6 +40,7 @@
 #include "winerror.h"
 #include "winbase.h"
 
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
@@ -65,7 +66,6 @@ static struct file *file_hash[NAME_HASH_SIZE];
 static void file_dump( struct object *obj, int verbose );
 static int file_get_poll_events( struct object *obj );
 static void file_poll_event( struct object *obj, int event );
-static int file_get_fd( struct object *obj );
 static int file_flush( struct object *obj );
 static int file_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void file_destroy( struct object *obj );
@@ -75,19 +75,23 @@ static const struct object_ops file_ops =
 {
     sizeof(struct file),          /* size */
     file_dump,                    /* dump */
-    default_poll_add_queue,       /* add_queue */
-    default_poll_remove_queue,    /* remove_queue */
-    default_poll_signaled,        /* signaled */
+    default_fd_add_queue,         /* add_queue */
+    default_fd_remove_queue,      /* remove_queue */
+    default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
-    file_get_poll_events,         /* get_poll_events */
-    file_poll_event,              /* poll_event */
-    file_get_fd,                  /* get_fd */
-    file_flush,                   /* flush */
+    default_get_fd,               /* get_fd */
     file_get_info,                /* get_file_info */
-    file_queue_async,             /* queue_async */
     file_destroy                  /* destroy */
 };
 
+static const struct fd_ops file_fd_ops =
+{
+    file_get_poll_events,         /* get_poll_events */
+    file_poll_event,              /* poll_event */
+    file_flush,                   /* flush */
+    file_get_info,                /* get_file_info */
+    file_queue_async              /* queue_async */
+};
 
 static int get_name_hash( const char *name )
 {
@@ -127,7 +131,8 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
                                         unsigned int attrs, int drive_type )
 {
     struct file *file;
-    if ((file = alloc_object( &file_ops, fd )))
+
+    if ((file = alloc_fd_object( &file_ops, &file_fd_ops, fd )))
     {
         file->name       = NULL;
         file->next       = NULL;
@@ -291,22 +296,10 @@ static void file_poll_event( struct object *obj, int event )
 }
 
 
-static int file_get_fd( struct object *obj )
-{
-    struct file *file = (struct file *)obj;
-    assert( obj->ops == &file_ops );
-    return file->obj.fd;
-}
-
 static int file_flush( struct object *obj )
 {
-    int ret;
-    struct file *file = (struct file *)grab_object(obj);
-    assert( obj->ops == &file_ops );
-
-    ret = (fsync( file->obj.fd ) != -1);
+    int ret = (fsync( get_unix_fd(obj) ) != -1);
     if (!ret) file_set_error();
-    release_object( file );
     return ret;
 }
 
@@ -314,17 +307,17 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply,
 {
     struct stat st;
     struct file *file = (struct file *)obj;
-    assert( obj->ops == &file_ops );
+    int unix_fd = get_unix_fd( obj );
 
     if (reply)
     {
-        if (fstat( file->obj.fd, &st ) == -1)
+        if (fstat( unix_fd, &st ) == -1)
         {
             file_set_error();
             return FD_TYPE_INVALID;
         }
         if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
-            S_ISSOCK(st.st_mode) || isatty(file->obj.fd)) reply->type = FILE_TYPE_CHAR;
+            S_ISSOCK(st.st_mode) || isatty(unix_fd)) reply->type = FILE_TYPE_CHAR;
         else reply->type = FILE_TYPE_DISK;
         if (S_ISDIR(st.st_mode)) reply->attr = FILE_ATTRIBUTE_DIRECTORY;
         else reply->attr = FILE_ATTRIBUTE_ARCHIVE;
@@ -394,7 +387,7 @@ static void file_queue_async(struct object *obj, void *ptr, unsigned int status,
             async_insert( q, async );
 
         /* Check if the new pending request can be served immediately */
-        pfd.fd = obj->fd;
+        pfd.fd = get_unix_fd( obj );
         pfd.events = file_get_poll_events ( obj );
         pfd.revents = 0;
         poll ( &pfd, 1, 0 );
@@ -469,7 +462,7 @@ static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, 
     xto = *low+((off_t)*high<<32);
     if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
-    if ((result = lseek(file->obj.fd,xto,whence))==-1)
+    if ((result = lseek( get_unix_fd(&file->obj), xto, whence))==-1)
     {
         /* Check for seek before start of file */
 
@@ -492,13 +485,14 @@ static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, 
 static int extend_file( struct file *file, off_t size )
 {
     static const char zero;
+    int unix_fd = get_unix_fd( &file->obj );
 
     /* extend the file one byte beyond the requested size and then truncate it */
     /* this should work around ftruncate implementations that can't extend files */
-    if ((lseek( file->obj.fd, size, SEEK_SET ) != -1) &&
-        (write( file->obj.fd, &zero, 1 ) != -1))
+    if ((lseek( unix_fd, size, SEEK_SET ) != -1) &&
+        (write( unix_fd, &zero, 1 ) != -1))
     {
-        ftruncate( file->obj.fd, size );
+        ftruncate( unix_fd, size );
         return 1;
     }
     file_set_error();
@@ -509,16 +503,17 @@ static int extend_file( struct file *file, off_t size )
 static int truncate_file( struct file *file )
 {
     int ret = 0;
-    off_t pos = lseek( file->obj.fd, 0, SEEK_CUR );
-    off_t eof = lseek( file->obj.fd, 0, SEEK_END );
+    int unix_fd = get_unix_fd( &file->obj );
+    off_t pos = lseek( unix_fd, 0, SEEK_CUR );
+    off_t eof = lseek( unix_fd, 0, SEEK_END );
 
     if (eof < pos) ret = extend_file( file, pos );
     else
     {
-        if (ftruncate( file->obj.fd, pos ) != -1) ret = 1;
+        if (ftruncate( unix_fd, pos ) != -1) ret = 1;
         else file_set_error();
     }
-    lseek( file->obj.fd, pos, SEEK_SET );  /* restore file pos */
+    lseek( unix_fd, pos, SEEK_SET );  /* restore file pos */
     return ret;
 }
 
@@ -527,17 +522,18 @@ int grow_file( struct file *file, int size_high, int size_low )
 {
     int ret = 0;
     struct stat st;
+    int unix_fd = get_unix_fd( &file->obj );
     off_t old_pos, size = size_low + (((off_t)size_high)<<32);
 
-    if (fstat( file->obj.fd, &st ) == -1)
+    if (fstat( unix_fd, &st ) == -1)
     {
         file_set_error();
         return 0;
     }
     if (st.st_size >= size) return 1;  /* already large enough */
-    old_pos = lseek( file->obj.fd, 0, SEEK_CUR );  /* save old pos */
+    old_pos = lseek( unix_fd, 0, SEEK_CUR );  /* save old pos */
     ret = extend_file( file, size );
-    lseek( file->obj.fd, old_pos, SEEK_SET );  /* restore file pos */
+    lseek( unix_fd, old_pos, SEEK_SET );  /* restore file pos */
     return ret;
 }
 
@@ -633,8 +629,8 @@ DECL_HANDLER(get_handle_fd)
         if (fd != -1) reply->fd = fd;
         else if (!get_error())
         {
-            if ((fd = obj->ops->get_fd( obj )) != -1)
-                send_client_fd( current->process, fd, req->handle );
+            int unix_fd = get_unix_fd( obj );
+            if (unix_fd != -1) send_client_fd( current->process, unix_fd, req->handle );
         }
         reply->type = obj->ops->get_file_info( obj, NULL, &reply->flags );
         release_object( obj );
@@ -660,18 +656,6 @@ DECL_HANDLER(truncate_file)
     {
         truncate_file( file );
         release_object( file );
-    }
-}
-
-/* flush a file buffers */
-DECL_HANDLER(flush_file)
-{
-    struct object *obj;
-
-    if ((obj = get_handle_obj( current->process, req->handle, 0, NULL )))
-    {
-        obj->ops->flush( obj );
-        release_object( obj );
     }
 }
 

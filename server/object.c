@@ -28,6 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "file.h"
 #include "thread.h"
 #include "unicode.h"
 #include "list.h"
@@ -137,6 +138,7 @@ void *alloc_object( const struct object_ops *ops, int fd )
     if (obj)
     {
         obj->refcount = 1;
+        obj->fd_obj   = NULL;
         obj->fd       = fd;
         obj->select   = -1;
         obj->ops      = ops;
@@ -218,6 +220,7 @@ void release_object( void *ptr )
         assert( !obj->head );
         assert( !obj->tail );
         obj->ops->destroy( obj );
+        if (obj->fd_obj) close_fd( obj->fd_obj );
         if (obj->name) free_name( obj );
         if (obj->select != -1) remove_select_user( obj );
         if (obj->fd != -1) close( obj->fd );
@@ -287,16 +290,17 @@ int no_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* not abandoned */
 }
 
-int no_get_fd( struct object *obj )
+struct fd *no_get_fd( struct object *obj )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return -1;
+    return NULL;
 }
 
-int no_flush( struct object *obj )
+struct fd *default_get_fd( struct object *obj )
 {
+    if (obj->fd_obj) return (struct fd *)grab_object( obj->fd_obj );
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    return 0;
+    return NULL;
 }
 
 int no_get_file_info( struct object *obj, struct get_file_info_reply *info, int *flags )
@@ -308,41 +312,6 @@ int no_get_file_info( struct object *obj, struct get_file_info_reply *info, int 
 
 void no_destroy( struct object *obj )
 {
-}
-
-/* default add_queue() routine for objects that poll() on an fd */
-int default_poll_add_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    if (!obj->head)  /* first on the queue */
-        set_select_events( obj, obj->ops->get_poll_events( obj ) );
-    add_queue( obj, entry );
-    return 1;
-}
-
-/* default remove_queue() routine for objects that poll() on an fd */
-void default_poll_remove_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    grab_object(obj);
-    remove_queue( obj, entry );
-    if (!obj->head)  /* last on the queue is gone */
-        set_select_events( obj, 0 );
-    release_object( obj );
-}
-
-/* default signaled() routine for objects that poll() on an fd */
-int default_poll_signaled( struct object *obj, struct thread *thread )
-{
-    int events = obj->ops->get_poll_events( obj );
-
-    if (check_select_events( obj->fd, events ))
-    {
-        /* stop waiting on select() if we are signaled */
-        set_select_events( obj, 0 );
-        return 1;
-    }
-    /* restart waiting on select() if we are no longer signaled */
-    if (obj->head) set_select_events( obj, events );
-    return 0;
 }
 
 /* default handler for poll() events */

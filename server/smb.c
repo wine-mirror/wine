@@ -40,12 +40,12 @@
 #include "winerror.h"
 #include "winbase.h"
 
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
 
 static void smb_dump( struct object *obj, int verbose );
-static int smb_get_fd( struct object *obj );
 static int smb_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static int smb_get_poll_events( struct object *obj );
 static void destroy_smb(struct object *obj);
@@ -64,17 +64,22 @@ static const struct object_ops smb_ops =
 {
     sizeof(struct smb),        /* size */
     smb_dump,                  /* dump */
-    default_poll_add_queue,    /* add_queue */
-    default_poll_remove_queue, /* remove_queue */
-    default_poll_signaled,     /* signaled */
+    default_fd_add_queue,      /* add_queue */
+    default_fd_remove_queue,   /* remove_queue */
+    default_fd_signaled,       /* signaled */
     no_satisfied,              /* satisfied */
+    default_get_fd,            /* get_fd */
+    smb_get_info,              /* get_file_info */
+    destroy_smb                /* destroy */
+};
+
+static const struct fd_ops smb_fd_ops =
+{
     smb_get_poll_events,       /* get_poll_events */
     default_poll_event,        /* poll_event */
-    smb_get_fd,                /* get_fd */
     no_flush,                  /* flush */
     smb_get_info,              /* get_file_info */
-    NULL,                      /* queue_async */
-    destroy_smb                /* destroy */
+    no_queue_async             /* queue_async */
 };
 
 static void destroy_smb( struct object *obj)
@@ -106,13 +111,6 @@ static int smb_get_poll_events( struct object *obj )
     /* fprintf(stderr,"poll events are %04x\n",events); */
 
     return events;
-}
-
-static int smb_get_fd( struct object *obj )
-{
-    struct smb *smb = (struct smb *)obj;
-    assert( obj->ops == &smb_ops );
-    return smb->obj.fd;
 }
 
 static int smb_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
@@ -154,7 +152,7 @@ DECL_HANDLER(create_smb)
         return;
     }
 
-    smb = alloc_object( &smb_ops, fd );
+    smb = alloc_fd_object( &smb_ops, &smb_fd_ops, fd );
     if (smb)
     {
         smb->tree_id = req->tree_id;

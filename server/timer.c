@@ -57,12 +57,8 @@ static const struct object_ops timer_ops =
     remove_queue,              /* remove_queue */
     timer_signaled,            /* signaled */
     timer_satisfied,           /* satisfied */
-    NULL,                      /* get_poll_events */
-    NULL,                      /* poll_event */
     no_get_fd,                 /* get_fd */
-    no_flush,                  /* flush */
     no_get_file_info,          /* get_file_info */
-    NULL,                      /* queue_async */
     timer_destroy              /* destroy */
 };
 

@@ -143,12 +143,8 @@ static const struct object_ops msg_queue_ops =
     msg_queue_remove_queue,    /* remove_queue */
     msg_queue_signaled,        /* signaled */
     msg_queue_satisfied,       /* satisfied */
-    NULL,                      /* get_poll_events */
-    NULL,                      /* poll_event */
     no_get_fd,                 /* get_fd */
-    no_flush,                  /* flush */
     no_get_file_info,          /* get_file_info */
-    NULL,                      /* queue_async */
     msg_queue_destroy          /* destroy */
 };
 
@@ -161,12 +157,8 @@ static const struct object_ops thread_input_ops =
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
     no_get_fd,                    /* get_fd */
-    no_flush,                     /* flush */
     no_get_file_info,             /* get_file_info */
-    NULL,                         /* queue_async */
     thread_input_destroy          /* destroy */
 };
 

@@ -66,12 +66,8 @@ static const struct object_ops hook_table_ops =
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
     no_get_fd,                    /* get_fd */
-    no_flush,                     /* flush */
     no_get_file_info,             /* get_file_info */
-    NULL,                         /* queue_async */
     hook_table_destroy            /* destroy */
 };
 

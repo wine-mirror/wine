@@ -39,13 +39,13 @@
 #include "winerror.h"
 #include "winbase.h"
 
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
 #include "async.h"
 
 static void serial_dump( struct object *obj, int verbose );
-static int serial_get_fd( struct object *obj );
 static int serial_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static int serial_get_poll_events( struct object *obj );
 static void serial_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count);
@@ -82,17 +82,22 @@ static const struct object_ops serial_ops =
 {
     sizeof(struct serial),        /* size */
     serial_dump,                  /* dump */
-    default_poll_add_queue,       /* add_queue */
-    default_poll_remove_queue,    /* remove_queue */
-    default_poll_signaled,        /* signaled */
+    default_fd_add_queue,         /* add_queue */
+    default_fd_remove_queue,      /* remove_queue */
+    default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
+    default_get_fd,               /* get_fd */
+    serial_get_info,              /* get_file_info */
+    destroy_serial                /* destroy */
+};
+
+static const struct fd_ops serial_fd_ops =
+{
     serial_get_poll_events,       /* get_poll_events */
     serial_poll_event,            /* poll_event */
-    serial_get_fd,                /* get_fd */
     serial_flush,                 /* flush */
     serial_get_info,              /* get_file_info */
-    serial_queue_async,           /* queue_async */
-    destroy_serial                /* destroy */
+    serial_queue_async            /* queue_async */
 };
 
 static struct serial *create_serial( const char *nameptr, size_t len, unsigned int access, int attributes )
@@ -137,7 +142,7 @@ static struct serial *create_serial( const char *nameptr, size_t len, unsigned i
        if(0>fcntl(fd, F_SETFL, 0))
            perror("fcntl");
 
-    if ((serial = alloc_object( &serial_ops, fd )))
+    if ((serial = alloc_fd_object( &serial_ops, &serial_fd_ops, fd )))
     {
         serial->attrib       = attributes;
         serial->access       = access;
@@ -194,13 +199,6 @@ static int serial_get_poll_events( struct object *obj )
     return events;
 }
 
-static int serial_get_fd( struct object *obj )
-{
-    struct serial *serial = (struct serial *)obj;
-    assert( obj->ops == &serial_ops );
-    return serial->obj.fd;
-}
-
 static int serial_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     struct serial *serial = (struct serial *) obj;
@@ -245,7 +243,7 @@ static void serial_poll_event(struct object *obj, int event)
     if(IS_READY(serial->wait_q) && (POLLIN & event) )
         async_notify(serial->wait_q.head,STATUS_ALERTED);
 
-    set_select_events(obj,obj->ops->get_poll_events(obj));
+    set_select_events( obj, serial_get_poll_events(obj) );
 }
 
 static void serial_queue_async(struct object *obj, void *ptr, unsigned int status, int type, int count)
@@ -295,7 +293,7 @@ static void serial_queue_async(struct object *obj, void *ptr, unsigned int statu
         }
 
         /* Check if the new pending request can be served immediately */
-        pfd.fd = obj->fd;
+        pfd.fd = get_unix_fd( obj );
         pfd.events = serial_get_poll_events ( obj );
         pfd.revents = 0;
         poll ( &pfd, 1, 0 );
@@ -315,16 +313,11 @@ static void serial_queue_async(struct object *obj, void *ptr, unsigned int statu
 
 static int serial_flush( struct object *obj )
 {
-    int ret;
-    struct serial *serial = (struct serial *)grab_object(obj);
-    assert( obj->ops == &serial_ops );
-
     /* MSDN says: If hFile is a handle to a communications device,
      * the function only flushes the transmit buffer.
      */
-    ret = (tcflush( serial->obj.fd, TCOFLUSH ) != -1);
+    int ret = (tcflush( get_unix_fd(obj), TCOFLUSH ) != -1);
     if (!ret) file_set_error();
-    release_object( serial );
     return ret;
 }
 

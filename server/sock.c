@@ -44,9 +44,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "winerror.h"
 #include "winbase.h"
+
 #include "process.h"
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
@@ -83,7 +84,6 @@ static void sock_dump( struct object *obj, int verbose );
 static int sock_signaled( struct object *obj, struct thread *thread );
 static int sock_get_poll_events( struct object *obj );
 static void sock_poll_event( struct object *obj, int event );
-static int sock_get_fd( struct object *obj );
 static int sock_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void sock_destroy( struct object *obj );
 static int sock_get_error( int err );
@@ -98,13 +98,18 @@ static const struct object_ops sock_ops =
     remove_queue,                 /* remove_queue */
     sock_signaled,                /* signaled */
     no_satisfied,                 /* satisfied */
+    default_get_fd,               /* get_fd */
+    sock_get_info,                /* get_file_info */
+    sock_destroy                  /* destroy */
+};
+
+static const struct fd_ops sock_fd_ops =
+{
     sock_get_poll_events,         /* get_poll_events */
     sock_poll_event,              /* poll_event */
-    sock_get_fd,                  /* get_fd */
     no_flush,                     /* flush */
     sock_get_info,                /* get_file_info */
-    sock_queue_async,             /* queue_async */
-    sock_destroy                  /* destroy */
+    sock_queue_async              /* queue_async */
 };
 
 
@@ -438,7 +443,7 @@ static int sock_signaled( struct object *obj, struct thread *thread )
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
 
-    return check_select_events( sock->obj.fd, sock_get_poll_events( &sock->obj ) );
+    return check_select_events( get_unix_fd(obj), sock_get_poll_events( &sock->obj ) );
 }
 
 static int sock_get_poll_events( struct object *obj )
@@ -465,13 +470,6 @@ static int sock_get_poll_events( struct object *obj )
         ev |= POLLIN;
 
     return ev;
-}
-
-static int sock_get_fd( struct object *obj )
-{
-    struct sock *sock = (struct sock *)obj;
-    assert( obj->ops == &sock_ops );
-    return sock->obj.fd;
 }
 
 static int sock_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
@@ -592,8 +590,8 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
         return NULL;
     }
     fcntl(sockfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
-    if (!(sock = alloc_object( &sock_ops, -1 ))) return NULL;
-    sock->obj.fd = sockfd;
+    if (!(sock = alloc_fd_object( &sock_ops, &sock_fd_ops, -1 ))) return NULL;
+    set_unix_fd( &sock->obj, sockfd );
     sock->state = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->mask    = 0;
     sock->hmask   = 0;
@@ -640,13 +638,13 @@ static struct sock *accept_socket( obj_handle_t handle )
          * return.
          */
         slen = sizeof(saddr);
-        acceptfd = accept(sock->obj.fd,&saddr,&slen);
+        acceptfd = accept( get_unix_fd(&sock->obj), &saddr, &slen);
         if (acceptfd==-1) {
             sock_set_error();
             release_object( sock );
             return NULL;
         }
-        if (!(acceptsock = alloc_object( &sock_ops, -1 )))
+        if (!(acceptsock = alloc_fd_object( &sock_ops, &sock_fd_ops, acceptfd )))
         {
             release_object( sock );
             return NULL;
@@ -654,7 +652,6 @@ static struct sock *accept_socket( obj_handle_t handle )
 
         /* newly created socket gets the same properties of the listening socket */
         fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
-        acceptsock->obj.fd = acceptfd;
         acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
         if (sock->state & FD_WINE_NONBLOCKING)
             acceptsock->state |= FD_WINE_NONBLOCKING;

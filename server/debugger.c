@@ -72,12 +72,8 @@ static const struct object_ops debug_event_ops =
     remove_queue,                  /* remove_queue */
     debug_event_signaled,          /* signaled */
     no_satisfied,                  /* satisfied */
-    NULL,                          /* get_poll_events */
-    NULL,                          /* poll_event */
     no_get_fd,                     /* get_fd */
-    no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
-    NULL,                          /* queue_async */
     debug_event_destroy            /* destroy */
 };
 
@@ -93,12 +89,8 @@ static const struct object_ops debug_ctx_ops =
     remove_queue,                  /* remove_queue */
     debug_ctx_signaled,            /* signaled */
     no_satisfied,                  /* satisfied */
-    NULL,                          /* get_poll_events */
-    NULL,                          /* poll_event */
     no_get_fd,                     /* get_fd */
-    no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
-    NULL,                          /* queue_async */
     debug_ctx_destroy              /* destroy */
 };
 

@@ -37,7 +37,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include "object.h"
+#include "file.h"
 #include "handle.h"
 #include "request.h"
 #include "unicode.h"
@@ -166,12 +168,8 @@ static const struct object_ops key_ops =
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
     NULL,                    /* satisfied */
-    NULL,                    /* get_poll_events */
-    NULL,                    /* poll_event */
     no_get_fd,               /* get_fd */
-    no_flush,                /* flush */
     no_get_file_info,        /* get_file_info */
-    NULL,                    /* queue_async */
     key_destroy              /* destroy */
 };
 
@@ -1452,7 +1450,7 @@ static void load_registry( struct key *key, obj_handle_t handle )
     int fd;
 
     if (!(obj = get_handle_obj( current->process, handle, GENERIC_READ, NULL ))) return;
-    fd = dup(obj->ops->get_fd( obj ));
+    fd = dup( get_unix_fd( obj ) );
     release_object( obj );
     if (fd != -1)
     {
@@ -1547,7 +1545,7 @@ static void save_registry( struct key *key, obj_handle_t handle )
         return;
     }
     if (!(obj = get_handle_obj( current->process, handle, GENERIC_WRITE, NULL ))) return;
-    fd = dup(obj->ops->get_fd( obj ));
+    fd = dup( get_unix_fd( obj ) );
     release_object( obj );
     if (fd != -1)
     {

@@ -53,12 +53,8 @@ static const struct object_ops device_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
-    NULL,                     /* get_poll_events */
-    NULL,                     /* poll_event */
     no_get_fd,                /* get_fd */
-    no_flush,                 /* flush */
     device_get_info,          /* get_file_info */
-    NULL,                     /* queue_async */
     no_destroy                /* destroy */
 };
 

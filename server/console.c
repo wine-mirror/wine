@@ -51,12 +51,8 @@ static const struct object_ops console_input_ops =
     remove_queue,                     /* remove_queue */
     console_input_signaled,           /* signaled */
     no_satisfied,                     /* satisfied */
-    NULL,                             /* get_poll_events */
-    NULL,                             /* poll_event */
     no_get_fd,                        /* get_fd */
-    no_flush,                         /* flush */
     console_get_file_info,            /* get_file_info */
-    NULL,                             /* queue_async */
     console_input_destroy             /* destroy */
 };
 
@@ -80,12 +76,8 @@ static const struct object_ops console_input_events_ops =
     remove_queue,                     /* remove_queue */
     console_input_events_signaled,    /* signaled */
     no_satisfied,                     /* satisfied */
-    NULL,                             /* get_poll_events */
-    NULL,                             /* poll_event */
     no_get_fd,                        /* get_fd */
-    no_flush,                         /* flush */
     no_get_file_info,                 /* get_file_info */
-    NULL,                             /* queue_async */
     console_input_events_destroy      /* destroy */
 };
 
@@ -121,12 +113,8 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
-    NULL,                             /* get_poll_events */
-    NULL,                             /* poll_event */
     no_get_fd,                        /* get_fd */
-    no_flush,                         /* flush */
     console_get_file_info,            /* get_file_info */
-    NULL,                             /* queue_async */
     screen_buffer_destroy             /* destroy */
 };
 

@@ -55,18 +55,10 @@ struct object_ops
     int  (*signaled)(struct object *,struct thread *);
     /* wait satisfied; return 1 if abandoned */
     int  (*satisfied)(struct object *,struct thread *);
-    /* get the events we want to poll() for on this object */
-    int  (*get_poll_events)(struct object *);
-    /* a poll() event occured */
-    void (*poll_event)(struct object *,int event);
-    /* return a Unix fd that can be used to read/write from the object */
-    int  (*get_fd)(struct object *);
-    /* flush the object buffers */
-    int  (*flush)(struct object *);
+    /* return an fd object that can be used to read/write from the object */
+    struct fd *(*get_fd)(struct object *);
     /* get file information */
     int  (*get_file_info)(struct object *,struct get_file_info_reply *, int *flags);
-    /* queue an async operation - see register_async handler in async.c*/
-    void (*queue_async)(struct object *, void* ptr, unsigned int status, int type, int count);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };
@@ -74,6 +66,7 @@ struct object_ops
 struct object
 {
     unsigned int              refcount;    /* reference count */
+    struct fd                *fd_obj;      /* file descriptor */
     int                       fd;          /* file descriptor */
     int                       select;      /* select() user id */
     const struct object_ops  *ops;
@@ -107,13 +100,10 @@ extern void release_object( void *obj );
 extern struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
-extern int no_get_fd( struct object *obj );
-extern int no_flush( struct object *obj );
+extern struct fd *no_get_fd( struct object *obj );
+extern struct fd *default_get_fd( struct object *obj );
 extern int no_get_file_info( struct object *obj, struct get_file_info_reply *info, int *flags );
 extern void no_destroy( struct object *obj );
-extern int default_poll_add_queue( struct object *obj, struct wait_queue_entry *entry );
-extern void default_poll_remove_queue( struct object *obj, struct wait_queue_entry *entry );
-extern int default_poll_signaled( struct object *obj, struct thread *thread );
 extern void default_poll_event( struct object *obj, int event );
 #ifdef DEBUG_OBJECTS
 extern void dump_objects(void);

@@ -28,6 +28,7 @@
 
 #include "winbase.h"
 
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
@@ -47,7 +48,7 @@ struct mapping
     struct mapping *shared_prev;     /* prev in shared PE mapping list */
 };
 
-static int mapping_get_fd( struct object *obj );
+static struct fd *mapping_get_fd( struct object *obj );
 static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void mapping_dump( struct object *obj, int verbose );
 static void mapping_destroy( struct object *obj );
@@ -60,12 +61,8 @@ static const struct object_ops mapping_ops =
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
     NULL,                        /* satisfied */
-    NULL,                        /* get_poll_events */
-    NULL,                        /* poll_event */
     mapping_get_fd,              /* get_fd */
-    no_flush,                    /* flush */
     mapping_get_info,            /* get_file_info */
-    NULL,                        /* queue_async */
     mapping_destroy              /* destroy */
 };
 
@@ -111,13 +108,7 @@ static void init_page_size(void)
 /* get the fd to use for mmaping a file */
 inline static int get_mmap_fd( struct file *file )
 {
-    struct object *obj;
-    if (!(obj = (struct object *)file))
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return -1;
-    }
-    return obj->ops->get_fd( obj );
+    return get_unix_fd( (struct object *)file );
 }
 
 /* find the shared PE mapping for a given mapping */
@@ -327,11 +318,12 @@ static void mapping_dump( struct object *obj, int verbose )
     fputc( '\n', stderr );
 }
 
-static int mapping_get_fd( struct object *obj )
+static struct fd *mapping_get_fd( struct object *obj )
 {
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
-    return get_mmap_fd( mapping->file );
+
+    return default_get_fd( (struct object *)mapping->file );
 }
 
 static int mapping_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )

@@ -38,6 +38,7 @@
 
 #include "winbase.h"
 
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
@@ -90,35 +91,35 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
     no_get_fd,                    /* get_fd */
-    no_flush,                     /* flush */
     no_get_file_info,             /* get_file_info */
-    NULL,                         /* queue_async */
     named_pipe_destroy            /* destroy */
 };
 
 static void pipe_user_dump( struct object *obj, int verbose );
 static void pipe_user_destroy( struct object *obj);
-static int pipe_user_get_fd( struct object *obj );
 static int pipe_user_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 
 static const struct object_ops pipe_user_ops =
 {
     sizeof(struct pipe_user),     /* size */
     pipe_user_dump,               /* dump */
-    default_poll_add_queue,       /* add_queue */
-    default_poll_remove_queue,    /* remove_queue */
-    default_poll_signaled,        /* signaled */
+    default_fd_add_queue,         /* add_queue */
+    default_fd_remove_queue,      /* remove_queue */
+    default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
+    default_get_fd,               /* get_fd */
+    pipe_user_get_info,           /* get_file_info */
+    pipe_user_destroy             /* destroy */
+};
+
+static const struct fd_ops pipe_user_fd_ops =
+{
     NULL,                         /* get_poll_events */
     default_poll_event,           /* poll_event */
-    pipe_user_get_fd,             /* get_fd */
     no_flush,                     /* flush */
     pipe_user_get_info,           /* get_file_info */
-    NULL,                         /* queue_async */
-    pipe_user_destroy             /* destroy */
+    no_queue_async                /* queue_async */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )
@@ -192,13 +193,6 @@ static void pipe_user_destroy( struct object *obj)
     release_object(user->pipe);
 }
 
-static int pipe_user_get_fd( struct object *obj )
-{
-    struct pipe_user *user = (struct pipe_user *)obj;
-    assert( obj->ops == &pipe_user_ops );
-    return user->obj.fd;
-}
-
 static int pipe_user_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
     if (reply)
@@ -243,7 +237,7 @@ static struct pipe_user *create_pipe_user( struct named_pipe *pipe, int fd )
 {
     struct pipe_user *user;
 
-    user = alloc_object( &pipe_user_ops, fd );
+    user = alloc_fd_object( &pipe_user_ops, &pipe_user_fd_ops, fd );
     if(!user)
         return NULL;
 
@@ -475,4 +469,3 @@ DECL_HANDLER(get_named_pipe_info)
 
     release_object(user);
 }
-

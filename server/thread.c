@@ -35,6 +35,7 @@
 
 #include "winbase.h"
 
+#include "file.h"
 #include "handle.h"
 #include "process.h"
 #include "thread.h"
@@ -86,13 +87,18 @@ static const struct object_ops thread_ops =
     remove_queue,               /* remove_queue */
     thread_signaled,            /* signaled */
     no_satisfied,               /* satisfied */
+    no_get_fd,                  /* get_fd */
+    no_get_file_info,           /* get_file_info */
+    destroy_thread              /* destroy */
+};
+
+static const struct fd_ops thread_fd_ops =
+{
     NULL,                       /* get_poll_events */
     thread_poll_event,          /* poll_event */
-    no_get_fd,                  /* get_fd */
     no_flush,                   /* flush */
     no_get_file_info,           /* get_file_info */
-    NULL,                       /* queue_async */
-    destroy_thread              /* destroy */
+    no_queue_async              /* queue_async */
 };
 
 static struct thread *first_thread;
@@ -144,7 +150,7 @@ struct thread *create_thread( int fd, struct process *process )
 {
     struct thread *thread;
 
-    if (!(thread = alloc_object( &thread_ops, fd ))) return NULL;
+    if (!(thread = alloc_fd_object( &thread_ops, &thread_fd_ops, fd ))) return NULL;
 
     init_thread_structure( thread );
 

@@ -71,12 +71,8 @@ static const struct object_ops atom_table_ops =
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satified */
-    NULL,                         /* get_poll_events */
-    NULL,                         /* poll_event */
     no_get_fd,                    /* get_fd */
-    no_flush,                     /* flush */
     no_get_file_info,             /* get_file_info */
-    NULL,                         /* queue_async */
     atom_table_destroy            /* destroy */
 };
 

@@ -32,6 +32,7 @@
 
 #include "winbase.h"
 
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
@@ -47,7 +48,7 @@ struct pipe
 
 static void pipe_dump( struct object *obj, int verbose );
 static int pipe_get_poll_events( struct object *obj );
-static int pipe_get_fd( struct object *obj );
+static struct fd *pipe_get_fd( struct object *obj );
 static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags );
 static void pipe_destroy( struct object *obj );
 
@@ -55,17 +56,22 @@ static const struct object_ops pipe_ops =
 {
     sizeof(struct pipe),          /* size */
     pipe_dump,                    /* dump */
-    default_poll_add_queue,       /* add_queue */
-    default_poll_remove_queue,    /* remove_queue */
-    default_poll_signaled,        /* signaled */
+    default_fd_add_queue,         /* add_queue */
+    default_fd_remove_queue,      /* remove_queue */
+    default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
+    pipe_get_fd,                  /* get_fd */
+    pipe_get_info,                /* get_file_info */
+    pipe_destroy                  /* destroy */
+};
+
+static const struct fd_ops pipe_fd_ops =
+{
     pipe_get_poll_events,         /* get_poll_events */
     default_poll_event,           /* poll_event */
-    pipe_get_fd,                  /* get_fd */
     no_flush,                     /* flush */
     pipe_get_info,                /* get_file_info */
-    NULL,                         /* queue_async */
-    pipe_destroy                  /* destroy */
+    no_queue_async                /* queue_async */
 };
 
 
@@ -73,7 +79,7 @@ static struct pipe *create_pipe_side( int fd, int side )
 {
     struct pipe *pipe;
 
-    if ((pipe = alloc_object( &pipe_ops, fd )))
+    if ((pipe = alloc_fd_object( &pipe_ops, &pipe_fd_ops, fd )))
     {
         pipe->other  = NULL;
         pipe->side   = side;
@@ -123,7 +129,7 @@ static int pipe_get_poll_events( struct object *obj )
     return (pipe->side == READ_SIDE) ? POLLIN : POLLOUT;
 }
 
-static int pipe_get_fd( struct object *obj )
+static struct fd *pipe_get_fd( struct object *obj )
 {
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
@@ -131,9 +137,9 @@ static int pipe_get_fd( struct object *obj )
     if (!pipe->other)
     {
         set_error( STATUS_PIPE_BROKEN );
-        return -1;
+        return NULL;
     }
-    return pipe->obj.fd;
+    return (struct fd *)grab_object( pipe->obj.fd_obj );
 }
 
 static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )

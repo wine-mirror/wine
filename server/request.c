@@ -48,6 +48,7 @@
 #include "wincon.h"
 #include "wine/library.h"
 
+#include "file.h"
 #include "handle.h"
 #include "thread.h"
 #include "process.h"
@@ -81,13 +82,18 @@ static const struct object_ops master_socket_ops =
     NULL,                          /* remove_queue */
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
+    no_get_fd,                     /* get_fd */
+    no_get_file_info,              /* get_file_info */
+    no_destroy                     /* destroy */
+};
+
+static const struct fd_ops master_socket_fd_ops =
+{
     NULL,                          /* get_poll_events */
     master_socket_poll_event,      /* poll_event */
-    no_get_fd,                     /* get_fd */
     no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
-    NULL,                          /* queue_async */
-    no_destroy                     /* destroy */
+    no_queue_async                 /* queue_async */
 };
 
 
@@ -670,7 +676,7 @@ static void acquire_lock(void)
     chmod( server_socket_name, 0600 );  /* make sure no other user can connect */
     if (listen( fd, 5 ) == -1) fatal_perror( "listen" );
 
-    if (!(master_socket = alloc_object( &master_socket_ops, fd )))
+    if (!(master_socket = alloc_fd_object( &master_socket_ops, &master_socket_fd_ops, fd )))
         fatal_error( "out of memory\n" );
     master_socket->timeout = NULL;
     set_select_events( &master_socket->obj, POLLIN );

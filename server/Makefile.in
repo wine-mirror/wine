@@ -16,6 +16,7 @@ C_SRCS = \
 	debugger.c \
 	device.c \
 	event.c \
+	fd.c \
 	file.c \
 	handle.c \
 	hook.c \

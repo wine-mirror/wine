@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "winnt.h"
 
+#include "file.h"
 #include "handle.h"
 #include "process.h"
 #include "thread.h"
@@ -62,13 +63,18 @@ static const struct object_ops process_ops =
     remove_queue,                /* remove_queue */
     process_signaled,            /* signaled */
     no_satisfied,                /* satisfied */
+    no_get_fd,                   /* get_fd */
+    no_get_file_info,            /* get_file_info */
+    process_destroy              /* destroy */
+};
+
+static const struct fd_ops process_fd_ops =
+{
     NULL,                        /* get_poll_events */
     process_poll_event,          /* poll_event */
-    no_get_fd,                   /* get_fd */
     no_flush,                    /* flush */
     no_get_file_info,            /* get_file_info */
-    NULL,                        /* queue_async */
-    process_destroy              /* destroy */
+    no_queue_async               /* queue_async */
 };
 
 /* process startup info */
@@ -102,12 +108,8 @@ static const struct object_ops startup_info_ops =
     remove_queue,                  /* remove_queue */
     startup_info_signaled,         /* signaled */
     no_satisfied,                  /* satisfied */
-    NULL,                          /* get_poll_events */
-    NULL,                          /* poll_event */
     no_get_fd,                     /* get_fd */
-    no_flush,                      /* flush */
     no_get_file_info,              /* get_file_info */
-    NULL,                        /* queue_async */
     startup_info_destroy           /* destroy */
 };
 
@@ -190,7 +192,7 @@ struct thread *create_process( int fd )
     struct thread *thread = NULL;
     int request_pipe[2];
 
-    if (!(process = alloc_object( &process_ops, fd ))) goto error;
+    if (!(process = alloc_fd_object( &process_ops, &process_fd_ops, fd ))) goto error;
     process->next            = NULL;
     process->prev            = NULL;
     process->parent          = NULL;

@@ -28,7 +28,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "object.h"
+#include "file.h"
 #include "thread.h"
 #include "process.h"
 
@@ -301,7 +301,7 @@ void select_loop(void)
             {
                 if (pollfd[i].revents)
                 {
-                    poll_users[i]->ops->poll_event( poll_users[i], pollfd[i].revents );
+                    fd_poll_event( poll_users[i], pollfd[i].revents );
                     if (!--ret) break;
                 }
             }
