@@ -33,6 +33,7 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
     Pixmap pixmapBits, pixmapMask, pixmapAll;
     XColor fg, bg;
     Cursor cursor = None;
+    BOOL DesktopWinExists = FALSE;
 
     if (!ptr)  /* Create an empty cursor */
     {
@@ -143,7 +144,12 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
     if (X11DRV_MOUSE_XCursor != None) XFreeCursor( display, X11DRV_MOUSE_XCursor );
     X11DRV_MOUSE_XCursor = cursor;
 
-    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display) || !WIN_GetDesktop())
+    if (WIN_GetDesktop() != NULL)
+    {
+		DesktopWinExists = TRUE;
+		WIN_ReleaseDesktop();
+	}
+    if (X11DRV_GetXRootWindow() != DefaultRootWindow(display) || !DesktopWinExists)
     {
         /* Set the cursor on the desktop window */
         XDefineCursor( display, X11DRV_GetXRootWindow(), cursor );
@@ -164,7 +170,6 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
             WIN_ReleaseWndPtr(tmpWnd);
         }
     }
-    WIN_ReleaseDesktop();
     return TRUE;
 }
 
