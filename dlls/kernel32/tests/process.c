@@ -955,7 +955,8 @@ static void test_CommandLine(void)
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
        GetLastError() == ERROR_PATH_NOT_FOUND /* NT4 */ ||
-       GetLastError() == ERROR_BAD_PATHNAME /* Win98 */,
+       GetLastError() == ERROR_BAD_PATHNAME /* Win98 */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* Win7 */,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
     strcpy(buffer, "doesnotexist.exe");
