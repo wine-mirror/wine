@@ -121,7 +121,7 @@ DWORD WINAPI VerFindFileA(
     char  systemDir[MAX_PATH];
 
     /* Print out debugging information */
-    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)",
+    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
           flags, debugstr_a(lpszFilename), debugstr_a(lpszWinDir), debugstr_a(lpszAppDir),
           lpuCurDirLen, lpuCurDirLen ? *lpuCurDirLen : 0,
           lpuDestDirLen, lpuDestDirLen ? *lpuDestDirLen : 0 );
@@ -212,7 +212,7 @@ DWORD WINAPI VerFindFileW( UINT flags,LPCWSTR lpszFilename,LPCWSTR lpszWinDir,
     WCHAR systemDir[MAX_PATH];
 
     /* Print out debugging information */
-    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)",
+    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
           flags, debugstr_w(lpszFilename), debugstr_w(lpszWinDir), debugstr_w(lpszAppDir),
           lpuCurDirLen, lpuCurDirLen ? *lpuCurDirLen : 0,
           lpuDestDirLen, lpuDestDirLen ? *lpuDestDirLen : 0 );
@@ -295,7 +295,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
     alloclen = 1000;
     buf=HeapAlloc(GetProcessHeap(), 0, alloclen);
     if(buf == NULL) {
-        WARN("Memory exausted while fetching version info!");
+        WARN("Memory exausted while fetching version info!\n");
         return NULL;
     }
     while (1) {
@@ -309,7 +309,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
 	    HeapFree(GetProcessHeap(), 0, buf);
 	    buf = HeapAlloc(GetProcessHeap(), 0, alloclen);
             if(buf == NULL) {
-               WARN("Memory exausted while fetching version info!");
+               WARN("Memory exausted while fetching version info!\n");
                return NULL;
             }                                                                 
 	} else {

@@ -732,7 +732,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 		    if ((dwRet = MCI_GetString((LPSTR*)&data[offset], &args)))
 			return dwRet;
 		    break;
-		default:	ERR("oops");
+		default:	ERR("oops\n");
 		}
 		/* exit inside while loop, except if just entered in constant area definition */
 		if (!inCst || eid != MCI_CONSTANT) eid = MCI_END_COMMAND;
@@ -749,7 +749,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 		case MCI_END_CONSTANT:		
 		case MCI_STRING:		offset++; break;
 		case MCI_RECT:			offset += 4; break;
-		default:			ERR("oops");
+		default:			ERR("oops\n");
 		}
 	    }
 	} while (eid != MCI_END_COMMAND);

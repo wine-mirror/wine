@@ -457,7 +457,7 @@ DWORD MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr)
     }
     
     if (wma->dwCurrVideoFrame != 0 && wma->lpWaveFormat) {
-	FIXME("Should recompute dwCurrAudioBlock, except unsynchronized sound & video");
+	FIXME("Should recompute dwCurrAudioBlock, except unsynchronized sound & video\n");
     }
     wma->dwCurrAudioBlock = 0;
     

@@ -1864,7 +1864,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    switch (msg.message) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
-                /*FIXME("Device should stop recording");*/
+                /*FIXME("Device should stop recording\n");*/
 		SetEvent(wwi->hEvent);
 		break;
 	    case WINE_WM_RESTARTING:

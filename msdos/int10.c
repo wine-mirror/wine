@@ -479,12 +479,12 @@ else {
                           (AH_reg(context) == 0x09) ? BL_reg(context) : -1,
                           CX_reg(context));
            if (CX_reg(context) > 1)
-              TRACE("Write Character%s at Cursor Position "
-                 "(Rep. %d): %c\n", (AH_reg(context) == 0x09) ? " and Attribute" : "",
+              TRACE("Write Character%s at Cursor Position (Rep. %d): %c\n",
+                    (AH_reg(context) == 0x09) ? " and Attribute" : "",
                  CX_reg(context), AL_reg(context));
            else
-              TRACE("Write Character%s at Cursor "
-                "Position: %c\n", (AH_reg(context) == 0x09) ? " and Attribute" : "",
+              TRACE("Write Character%s at Cursor Position: %c\n",
+                    (AH_reg(context) == 0x09) ? " and Attribute" : "",
                 AL_reg(context));
        }
        break;

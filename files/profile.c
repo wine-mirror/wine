@@ -993,8 +993,7 @@ int  PROFILE_GetWineIniBool(
 	retval = def;
     }
 
-    TRACE("(\"%s\", \"%s\", %s), "
-		    "[%c], ret %s.\n", section, key_name,
+    TRACE("(\"%s\", \"%s\", %s), [%c], ret %s.\n", section, key_name,
 		    def ? "TRUE" : "FALSE", key_value[0],
 		    retval ? "TRUE" : "FALSE");
 

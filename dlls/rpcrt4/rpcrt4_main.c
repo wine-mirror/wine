@@ -259,7 +259,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
    ((unsigned char*)Uuid->Data4)[6] = a[4];
    ((unsigned char*)Uuid->Data4)[7] = a[5];
    
-   TRACE("%s", debugstr_guid(Uuid));
+   TRACE("%s\n", debugstr_guid(Uuid));
    
    return S_OK;
 }

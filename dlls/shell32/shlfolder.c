@@ -1518,7 +1518,7 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	    TRACE("delete %s\n", szPath);
 	    if (! SHELL_DeleteDirectoryA(szPath, bConfirm))
 	    {
-              TRACE("delete %s failed, bConfirm=%d", szPath, bConfirm);
+              TRACE("delete %s failed, bConfirm=%d\n", szPath, bConfirm);
 	      return E_FAIL;
 	    }
 	    pidl = ILCombine(This->absPidl, apidl[i]);
@@ -1532,7 +1532,7 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	    TRACE("delete %s\n", szPath);
 	    if (! SHELL_DeleteFileA(szPath, bConfirm))
 	    {
-              TRACE("delete %s failed, bConfirm=%d", szPath, bConfirm);
+              TRACE("delete %s failed, bConfirm=%d\n", szPath, bConfirm);
 	      return E_FAIL;
 	    }
 	    pidl = ILCombine(This->absPidl, apidl[i]);

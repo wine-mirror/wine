@@ -1061,7 +1061,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
     }
     
     /* Update the X property */
-    TRACE("\tUpdating property %s...", TSXGetAtomName(display, rprop));
+    TRACE("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
 
     /* We may want to consider setting the type to xaTargets instead,
      * in case some apps expect this instead of XA_ATOM */
@@ -1363,7 +1363,7 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
               /* We must have a non "None" property to service a MULTIPLE target atom */
               if ( !targetPropList[i+1] )
               {
-                  TRACE("\tMULTIPLE(%d): Skipping target with empty property!", i);
+                  TRACE("\tMULTIPLE(%d): Skipping target with empty property!\n", i);
                   continue;
               }
               
@@ -1502,7 +1502,7 @@ static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 static void EVENT_PropertyNotify( XPropertyEvent *event )
 {
   /* Check if we have any resources to free */
-  TRACE("Received PropertyNotify event: ");
+  TRACE("Received PropertyNotify event: \n");
 
   switch(event->state)
   {

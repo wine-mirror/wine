@@ -241,7 +241,7 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
     }
     if (dwFlags & MCI_OPEN_ELEMENT) {
         if (dwFlags & MCI_OPEN_ELEMENT_ID) {
-            WARN("MCI_OPEN_ELEMENT_ID %8lx ! Abort", (DWORD)lpOpenParms->lpstrElementName);
+            WARN("MCI_OPEN_ELEMENT_ID %8lx ! Abort\n", (DWORD)lpOpenParms->lpstrElementName);
             return MCIERR_NO_ELEMENT_ALLOWED;
         }
         WARN("MCI_OPEN_ELEMENT %s ignored\n",lpOpenParms->lpstrElementName);

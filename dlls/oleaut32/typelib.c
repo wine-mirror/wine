@@ -18,7 +18,7 @@
  * - locale stuff is partially implemented but hasn't been tested.
  *
  * - imported typelib should be stored together in a linked list instead of having
- *   independant TLBImpLib strucutures in each ITypeInfo. This way, imported libraries
+ *   independant TLBImpLib structures in each ITypeInfo. This way, imported libraries
  *   are just imported once (major optimization)
  *
  * - typelib file is still read it's in entirety, but it is released now.
@@ -372,7 +372,7 @@ DWORD WINAPI OaBuildVersion16(void)
     case 0x00000004:  /* NT4 */
 		return MAKELONG(4277, 40); /* NT4 SP6 */
     default:
-	FIXME("Version value not known yet. Please investigate it !");
+	FIXME("Version value not known yet. Please investigate it!\n");
 		return 0;
     }
 }
@@ -649,7 +649,7 @@ static void dump_Variant(VARIANT * pvar)
             break;
     }
         
-    TRACE("VARTYPE: %s", szVarType);
+    TRACE("VARTYPE: %s\n", szVarType);
     
     switch (V_VT(pvar))
     {

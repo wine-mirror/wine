@@ -95,7 +95,7 @@ static void set_last_error(void)
         SetLastError( ERROR_BAD_FORMAT );
         break;
     default:
-        WARN( "unknown file error: %s", strerror(save_errno) );
+        WARN( "unknown file error: %s\n", strerror(save_errno) );
         SetLastError( ERROR_GEN_FAILURE );
         break;
     }

@@ -70,7 +70,7 @@ void DEFWND_SetTextA( WND *wndPtr, LPCSTR text )
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
         MultiByteToWideChar( CP_ACP, 0, text, -1, wndPtr->text, count );
     else
-        ERR("Not enough memory for window text");
+        ERR("Not enough memory for window text\n");
 
     if (USER_Driver.pSetWindowText)
         USER_Driver.pSetWindowText(wndPtr->hwndSelf, wndPtr->text);
@@ -93,7 +93,7 @@ void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text )
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
 	strcpyW( wndPtr->text, text );
     else
-        ERR("Not enough memory for window text");
+        ERR("Not enough memory for window text\n");
 
     if (USER_Driver.pSetWindowText)
         USER_Driver.pSetWindowText(wndPtr->hwndSelf, wndPtr->text);

@@ -62,9 +62,9 @@ BOOL WINAPI SHLWAPI_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad
 
 HRESULT WINAPI SHLWAPI_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
-	if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) 
+	if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
 	{
-	  WARN("wrong DLLVERSIONINFO size from app");
+	  WARN("wrong DLLVERSIONINFO size from app\n");
 	  return E_INVALIDARG;
 	}
 

@@ -234,7 +234,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     
     printerDevCaps = (DeviceCaps *) calloc(1, sizeof(DeviceCaps));
     if(printerDevCaps == NULL) {
-        ERR("No memory to read the device capabilities!");
+        ERR("No memory to read the device capabilities!\n");
         HeapFree( GetProcessHeap(), 0, physDev );
         return FALSE;
     }

@@ -309,7 +309,7 @@ HRESULT WINAPI BindCtxImpl_SetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts
     
     if (pbindopts->cbStruct > sizeof(BIND_OPTS2))
     {
-        WARN("invalid size");
+        WARN("invalid size\n");
         return E_INVALIDARG; /* FIXME : not verified */
     }
     memcpy(&This->bindOption2, pbindopts, pbindopts->cbStruct);
@@ -330,7 +330,7 @@ HRESULT WINAPI BindCtxImpl_GetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts
 
     if (pbindopts->cbStruct > sizeof(BIND_OPTS2))
     {
-        WARN("invalid size");
+        WARN("invalid size\n");
         return E_INVALIDARG; /* FIXME : not verified */
     }
     memcpy(pbindopts, &This->bindOption2, pbindopts->cbStruct);

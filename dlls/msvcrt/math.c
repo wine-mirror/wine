@@ -719,7 +719,7 @@ MSVCRT_ldiv_t MSVCRT_ldiv(long num, long denom)
  */
 void _adj_fdiv_m16i(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -733,7 +733,7 @@ void _adj_fdiv_m16i(void)
  */
 void _adj_fdiv_m32(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -747,7 +747,7 @@ void _adj_fdiv_m32(void)
  */
 void _adj_fdiv_m32i(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -761,7 +761,7 @@ void _adj_fdiv_m32i(void)
  */
 void _adj_fdiv_m64(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -775,7 +775,7 @@ void _adj_fdiv_m64(void)
  */
 void _adj_fdiv_r(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -789,7 +789,7 @@ void _adj_fdiv_r(void)
  */
 void _adj_fdivr_m16i(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -803,7 +803,7 @@ void _adj_fdivr_m16i(void)
  */
 void _adj_fdivr_m32(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -817,7 +817,7 @@ void _adj_fdivr_m32(void)
  */
 void _adj_fdivr_m32i(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -831,7 +831,7 @@ void _adj_fdivr_m32i(void)
  */
 void _adj_fdivr_m64(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -845,7 +845,7 @@ void _adj_fdivr_m64(void)
  */
 void _adj_fpatan(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -859,7 +859,7 @@ void _adj_fpatan(void)
  */
 void _adj_fprem(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -873,7 +873,7 @@ void _adj_fprem(void)
  */
 void _adj_fprem1(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -887,7 +887,7 @@ void _adj_fprem1(void)
  */
 void _adj_fptan(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -898,7 +898,7 @@ void _adj_fptan(void)
  */
 void _adjust_fdiv(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -912,7 +912,7 @@ void _adjust_fdiv(void)
  */
 void _safe_fdiv(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -926,7 +926,7 @@ void _safe_fdiv(void)
  */
 void _safe_fdivr(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -940,7 +940,7 @@ void _safe_fdivr(void)
  */
 void _safe_fprem(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 /***********************************************************************
@@ -955,7 +955,7 @@ void _safe_fprem(void)
  */
 void _safe_fprem1(void)
 {
-  TRACE("(): stub");
+  TRACE("(): stub\n");
 }
 
 

@@ -566,7 +566,7 @@ int _fstat(int fd, struct _stat* buf)
     MSVCRT__set_errno(ERROR_INVALID_PARAMETER);
     return -1;
   }
-  FIXME(":dwFileAttributes = %d, mode set to 0",hfi.dwFileAttributes);
+  FIXME(":dwFileAttributes = %d, mode set to 0\n",hfi.dwFileAttributes);
   buf->st_nlink = hfi.nNumberOfLinks;
   buf->st_size  = hfi.nFileSizeLow;
   RtlTimeToSecondsSince1970(&hfi.ftLastAccessTime, &dw);

@@ -842,7 +842,7 @@ Atom EVENT_SelectionRequest_MULTIPLE( XSelectionRequestEvent *pevent )
               /* We must have a non "None" property to service a MULTIPLE target atom */
               if ( !targetPropList[i+1] )
               {
-                  TRACE("\tMULTIPLE(%d): Skipping target with empty property!", i);
+                  TRACE("\tMULTIPLE(%d): Skipping target with empty property!\n", i);
                   continue;
               }
               

@@ -816,9 +816,9 @@ void WINAPI FreeIconList( DWORD dw )
 
 HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
-	if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) 
+	if (pdvi->cbSize != sizeof(DLLVERSIONINFO))
 	{
-	  WARN("wrong DLLVERSIONINFO size from app");
+	  WARN("wrong DLLVERSIONINFO size from app\n");
 	  return E_INVALIDARG;
 	}
 

@@ -891,7 +891,7 @@ int X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNum, BOOL 
     mapping = HeapReAlloc( GetProcessHeap(), 0, palPtr->mapping,
                            sizeof(int)*palPtr->logpalette.palNumEntries);
     if(mapping == NULL) {
-        ERR("Can not allocate new mapping -- memory exausted!");
+        ERR("Can not allocate new mapping -- memory exausted!\n");
         return 0;
     }
     palPtr->mapping = mapping;

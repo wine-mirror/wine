@@ -595,7 +595,7 @@ HRESULT WINAPI FileMonikerImpl_BindToObject(IMoniker* iface,
         }
         if (pca!=NULL){
 
-            FIXME("()");
+            FIXME("()\n");
             
             /*res=GetClassFile(This->filePathName,&clsID);
 
@@ -610,7 +610,7 @@ HRESULT WINAPI FileMonikerImpl_BindToObject(IMoniker* iface,
                 }
             }*/
         }
-}
+    }
 
     if (pObj!=NULL){
         /* get the requested interface from the loaded class */

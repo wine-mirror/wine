@@ -161,7 +161,7 @@ static BOOL IMM32_DestroyIMC( HIMC hIMC )
 
 	if ( pIMC->context.hWnd != (HWND)NULL )
 	{
-		FIXME( "please release lock of the context.hWnd!" );
+		FIXME( "please release lock of the context.hWnd!\n" );
 	}
 
 	if ( pIMC->fSelected )

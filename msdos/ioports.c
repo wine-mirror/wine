@@ -95,7 +95,7 @@ static void set_timer_maxval(unsigned timer, unsigned maxval)
             Dosvm.SetTimer(maxval);
             break;
         case 1: /* RAM refresh */
-            FIXME("RAM refresh counter handling not implemented !");
+            FIXME("RAM refresh counter handling not implemented !\n");
             break;
         case 2: /* cassette & speaker */
             /* speaker on ? */

@@ -2412,7 +2412,7 @@ static inline void get_fields(const IDirectSoundBufferImpl *dsb, BYTE *buf, INT 
 {
 	INT16	*bufs = (INT16 *) buf;
 
-	/* TRACE("(%p)", buf); */
+	/* TRACE("(%p)\n", buf); */
 	if ((dsb->wfx.wBitsPerSample == 8) && dsb->wfx.nChannels == 2) {
 		*fl = cvtU8toS16(*buf);
 		*fr = cvtU8toS16(*(buf + 1));
@@ -2601,7 +2601,7 @@ static void DSOUND_Mixer3D(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	obp = buf;
 
 	if (buf_mixpos > buflen) {
-		FIXME("Major breakage");
+		FIXME("Major breakage\n");
 		return;
 	}
 

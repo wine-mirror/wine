@@ -1246,7 +1246,7 @@ Uninit_DirectDraw_Initialize(LPDIRECTDRAW7 iface, LPGUID pDeviceGuid)
     const ddraw_driver* driver;
     ICOM_THIS(IDirectDrawImpl, iface);
 
-    TRACE("(%p)->(%p)", iface, pDeviceGuid);
+    TRACE("(%p)->(%p)\n", iface, pDeviceGuid);
 
     driver = DDRAW_FindDriver(pDeviceGuid);
     /* XXX This return value is not documented. (Not checked.) */

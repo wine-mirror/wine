@@ -40,7 +40,7 @@ BOOL SHELL_WarnItemDelete (int nKindOfDialog, LPCSTR szDir)
 		szCaption, sizeof(szCaption));
         }
 	else {
-          FIXME("Called without a valid nKindOfDialog specified!");
+          FIXME("Called without a valid nKindOfDialog specified!\n");
 	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText, 
 		sizeof(szText));
 	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION, 

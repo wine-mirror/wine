@@ -692,7 +692,7 @@ void X11DRV_KEYBOARD_UpdateState ( void )
 
     TRACE("called\n");
     if (!TSXQueryKeymap(display, keys_return)) {
-        ERR("Error getting keymap !");
+        ERR("Error getting keymap !\n");
         return;
     }
 
@@ -850,7 +850,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
 
   syms = keysyms_per_keycode;
   if (syms > 4) {
-    WARN("%d keysyms per keycode not supported, set to 4", syms);
+    WARN("%d keysyms per keycode not supported, set to 4\n", syms);
     syms = 4;
   }
   for (current = 0; main_key_tab[current].comment; current++) {

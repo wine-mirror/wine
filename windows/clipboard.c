@@ -796,7 +796,7 @@ BOOL WINAPI EmptyClipboard(void)
 
     if (hClipLock != GetCurrentTask())
     {
-        WARN("Clipboard not opened by calling task!");
+        WARN("Clipboard not opened by calling task!\n");
         return FALSE;
     }
     
@@ -1046,7 +1046,7 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
 
     if (CLIPBOARD_IsLocked())
     {
-        WARN("Clipboard not opened by calling task!");
+        WARN("Clipboard not opened by calling task!\n");
         return 0;
     }
 
@@ -1168,7 +1168,7 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
 
     if (CLIPBOARD_IsLocked())
     {
-        WARN("Clipboard not opened by calling task!");
+        WARN("Clipboard not opened by calling task!\n");
         return 0;
     }
 
@@ -1207,7 +1207,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
     lpNewFormat = (LPWINE_CLIPFORMAT)HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CLIPFORMAT));
     if(lpNewFormat == NULL) {
-        WARN("No more memory for a new format!");
+        WARN("No more memory for a new format!\n");
         return 0;
     }
     lpFormat->NextFormat = lpNewFormat;
@@ -1216,7 +1216,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
     lpNewFormat->Name = (LPSTR)HEAP_strdupA(GetProcessHeap(), 0, FormatName);
     if(lpNewFormat->Name == NULL) {
-        WARN("No more memory for the new format name!");
+        WARN("No more memory for the new format name!\n");
         HeapFree(GetProcessHeap(), 0, lpNewFormat);
         return 0;
     }

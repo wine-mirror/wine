@@ -240,7 +240,7 @@ BOOL ODBC_LoadDMFunctions()
 
         if (error[0])
         {
-            ERR("Failed to load function %s",gProxyHandle.functions[i].name);
+            ERR("Failed to load function %s\n",gProxyHandle.functions[i].name);
             gProxyHandle.functions[i].func = SQLDummyFunc;
         }
     }
@@ -550,9 +550,10 @@ SQLRETURN WINAPI SQLDataSources(SQLHENV EnvironmentHandle,
         {
            TRACE("returns: %d \t", ret);
            if (*NameLength1 > 0)
-             TRACE("DataSource = %s,", ServerName);
+             DPRINTF("DataSource = %s,", ServerName);
            if (*NameLength2 > 0)
-             TRACE(" Description = %s\n", Description);
+             DPRINTF(" Description = %s", Description);
+           DPRINTF("\n");
         }
 
         return ret;

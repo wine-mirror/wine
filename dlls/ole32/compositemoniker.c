@@ -340,8 +340,10 @@ HRESULT WINAPI CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         else if (IsEqualIID(&clsid,&CLSID_CompositeMoniker))
             return E_FAIL;
 
-        else{
-            FIXME("()");
+        else
+        {
+            FIXME("()\n");
+            /* FIXME: To whoever wrote this code: It's either return or break. it cannot be both! */
             break;
             return E_NOTIMPL;
         }

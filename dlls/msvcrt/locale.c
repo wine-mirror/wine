@@ -406,7 +406,7 @@ char* MSVCRT_setlocale(int category, const char* locale)
 
   if (haveCP && !haveCountry && !haveLang)
   {
-    FIXME(":Codepage only locale not implemented");
+    FIXME(":Codepage only locale not implemented\n");
     /* FIXME: Use default lang/country and skip locale_to_LCID()
      * call below...
      */
@@ -456,7 +456,7 @@ const char* _Getdays(void)
   static const char *MSVCRT_days = ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:"
                             "Wednesday:Thu:Thursday:Fri:Friday:Sat:Saturday";
   /* FIXME: Use locale */
-  TRACE("(void) semi-stub");
+  TRACE("(void) semi-stub\n");
   return MSVCRT_days;
 }
 
@@ -469,7 +469,7 @@ const char* _Getmonths(void)
                 "April:May:May:Jun:June:Jul:July:Aug:August:Sep:September:Oct:"
                 "October:Nov:November:Dec:December";
   /* FIXME: Use locale */
-  TRACE("(void) semi-stub");
+  TRACE("(void) semi-stub\n");
   return MSVCRT_months;
 }
 
@@ -479,7 +479,7 @@ const char* _Getmonths(void)
 const char* _Getnames(void)
 {
   /* FIXME: */
-  TRACE("(void) stub");
+  TRACE("(void) stub\n");
   return "";
 }
 
@@ -490,7 +490,7 @@ const char* _Strftime(char *out, unsigned int len, const char *fmt,
                                      const void *tm, void *foo)
 {
   /* FIXME: */
-  TRACE("(%p %d %s %p %p) stub", out, len, fmt, tm, foo);
+  TRACE("(%p %d %s %p %p) stub\n", out, len, fmt, tm, foo);
   return "";
 }
 

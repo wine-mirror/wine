@@ -3450,7 +3450,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 
 	if (iLength >= 1023)
 	{
-	    ERR("Insuficient space to retrieve new item label.");
+	    ERR("Insuficient space to retrieve new item label\n");
 	}
 
 	tvdi.item.pszText = tmpText;
@@ -3472,7 +3472,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 	{
 	    if (NULL == COMCTL32_ReAlloc(editedItem->pszText, iLength + 1))
 	    {
-		ERR("OutOfMemory, cannot allocate space for label");
+		ERR("OutOfMemory, cannot allocate space for label\n");
 		DestroyWindow(infoPtr->hwndEdit);
 		infoPtr->hwndEdit = 0;
 		return FALSE;

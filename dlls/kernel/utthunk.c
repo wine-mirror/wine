@@ -108,7 +108,7 @@ static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefin
         segptrList = HeapAlloc( GetProcessHeap(), 0, sizeof(SEGPTR)*nList );
         if ( !segptrList )
         {
-            FIXME("Unable to allocate segptrList!" );
+            FIXME("Unable to allocate segptrList!\n" );
             return 0;
         }
 

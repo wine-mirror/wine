@@ -348,8 +348,8 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 
     if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
 	resource_id = (UINT)(-((INT)resource_id));
-    TRACE("instance = %04x, id = %04x, buffer = %08x, "
-          "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
+    TRACE("instance = %04x, id = %04x, buffer = %08x, length = %d\n",
+          instance, (int)resource_id, (int) buffer, buflen);
 
     /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out 
      * 20 - 31. */
@@ -394,8 +394,8 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
     INT    retval;
     LPWSTR wbuf;
 
-    TRACE("instance = %04x, id = %04x, buffer = %08x, "
-          "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
+    TRACE("instance = %04x, id = %04x, buffer = %08x, length = %d\n",
+          instance, (int)resource_id, (int) buffer, buflen);
 
     if(buffer == NULL) /* asked size of string */
 	return LoadStringW(instance, resource_id, NULL, 0);

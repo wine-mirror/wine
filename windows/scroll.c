@@ -268,11 +268,11 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
         HRGN  hrgnTemp = CreateRectRgnIndirect(&rc);
         RECT  caretrc;
 
-TRACE("%04x, %d,%d hrgnUpdate=%04x rcUpdate = %p \
-cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d) %04x\n",             
-(HWND16)hwnd, dx, dy, hrgnUpdate, rcUpdate,
-clipRect?clipRect->left:0, clipRect?clipRect->top:0, clipRect?clipRect->right:0, clipRect?clipRect->bottom:0,
-rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
+        TRACE("%04x, %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d) %04x\n",
+              (HWND16)hwnd, dx, dy, hrgnUpdate, rcUpdate,
+              clipRect?clipRect->left:0, clipRect?clipRect->top:0,
+              clipRect?clipRect->right:0, clipRect?clipRect->bottom:0,
+              rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 
         caretrc = rc; 
 	bCaret = SCROLL_FixCaret(hwnd, &caretrc, flags);

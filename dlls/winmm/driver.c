@@ -35,7 +35,7 @@ static	WORD	DRIVER_GetNumberOfModuleRefs(LPWINE_DRIVER lpNewDrv)
     LPWINE_DRIVER	lpDrv;
     WORD		count = 0;
 
-    if (lpNewDrv->dwFlags & WINE_GDF_16BIT) ERR("OOOch");
+    if (lpNewDrv->dwFlags & WINE_GDF_16BIT) ERR("OOOch\n");
     for (lpDrv = lpDrvItemList; lpDrv; lpDrv = lpDrv->lpNextItem) {
 	if (!(lpDrv->dwFlags & WINE_GDF_16BIT) &&
 	    lpDrv->d.d32.hModule == lpNewDrv->d.d32.hModule) {

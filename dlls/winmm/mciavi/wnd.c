@@ -164,7 +164,7 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 	GetClientRect(wma->hWnd, &lpParms->rc);
     }
     if (dwFlags & MCI_DGV_WHERE_FRAME) {
-	FIXME(x = "Frame");
+	FIXME(x = "Frame\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_WHERE_SOURCE) {
@@ -174,7 +174,7 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 	lpParms->rc.bottom = wma->mah.dwHeight;
     }
     if (dwFlags & MCI_DGV_WHERE_VIDEO) {
-	FIXME(x = "Video");
+	FIXME(x = "Video\n");
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (dwFlags & MCI_DGV_WHERE_WINDOW) {

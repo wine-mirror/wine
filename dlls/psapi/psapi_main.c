@@ -288,7 +288,7 @@ BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
  */
 BOOL WINAPI QueryWorkingSet(HANDLE hProcess, LPVOID pv, DWORD cb)
 {
-  FIXME("(hProcess=0x%08x, %p, %ld)", hProcess, pv, cb);
+  FIXME("(hProcess=0x%08x, %p, %ld)\n", hProcess, pv, cb);
 
   if(pv && cb)
     ((DWORD *) pv)[0] = 0; /* Empty WorkingSet */

@@ -191,10 +191,10 @@ LRESULT CALLBACK IMM32_IMEWndProc( HWND hwnd, UINT nMsg,
 	case WM_KEYUP:
 		return IMM32_IMEWnd_WM_KEYUP( pParam, wParam, lParam );
 	case WM_IME_KEYDOWN:
-		ERR( "Why WM_IME_KEYDOWN is generated?" );
+		ERR( "Why WM_IME_KEYDOWN is generated?\n" );
 		return 0;
 	case WM_IME_KEYUP:
-		ERR( "Why WM_IME_KEYUP is generated?" );
+		ERR( "Why WM_IME_KEYUP is generated?\n" );
 		return 0;
 	case WM_IME_CHAR:
 		FIXME( "ignore WM_IME_CHAR - wParam %08x, lParam %08lx.\n",

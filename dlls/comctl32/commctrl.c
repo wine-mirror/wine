@@ -879,7 +879,7 @@ HRESULT WINAPI
 COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
     if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) {
-        WARN("wrong DLLVERSIONINFO size from app");
+        WARN("wrong DLLVERSIONINFO size from app\n");
 	return E_INVALIDARG;
     }
 
@@ -1024,7 +1024,7 @@ _TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     TRACE("%lx, %lx, %x, %lx\n", ptme->cbSize, ptme->dwFlags, ptme->hwndTrack, ptme->dwHoverTime);
 
     if (ptme->cbSize != sizeof(TRACKMOUSEEVENT)) {
-        WARN("wrong TRACKMOUSEEVENT size from app");
+        WARN("wrong TRACKMOUSEEVENT size from app\n");
         SetLastError(ERROR_INVALID_PARAMETER); /* FIXME not sure if this is correct */
         return FALSE;
     }

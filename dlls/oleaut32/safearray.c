@@ -1062,7 +1062,7 @@ HRESULT WINAPI SafeArrayGetVarType(
   if (psa->fFeatures & FADF_HAVEVARTYPE)
   {
     /* VT tag @ negative offset 4 in the array descriptor */
-    FIXME("Returning VT_BSTR instead of VT_...");
+    FIXME("Returning VT_BSTR instead of VT_...\n");
     vt = VT_BSTR;
   }
   else if (psa->fFeatures & FADF_RECORD)
@@ -1083,7 +1083,7 @@ HRESULT WINAPI SafeArrayGetVarType(
     *pvt = vt;
     hr = S_OK;
   }
-  
-  TRACE("HRESULT = %08lx", hr);
+
+  TRACE("HRESULT = %08lx\n", hr);
   return hr;
 }

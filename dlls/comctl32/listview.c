@@ -3035,8 +3035,8 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
   RECT rcTemp;
 
-  TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, \
-bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right, 
+  TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, bottom=%d)\n",
+        hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
         rcItem.bottom);
 
   /* get information needed for drawing the item */
@@ -8506,7 +8506,7 @@ static LRESULT LISTVIEW_NotifyFormat(HWND hwndFrom, HWND hwnd, INT nCommand)
                                          (WPARAM)hwnd, (LPARAM)NF_QUERY);
     if (infoPtr->notifyFormat == NFR_UNICODE)
     {
-      FIXME("NO support for unicode structures");
+      FIXME("NO support for unicode structures\n");
     }
   }
 

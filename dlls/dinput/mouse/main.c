@@ -305,8 +305,8 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
   else if (df->dwFlags == DIDF_RELAXIS)
     This->absolute = 0;
   else
-    ERR("Neither absolute nor relative flag set.");
-  
+    ERR("Neither absolute nor relative flag set\n");
+
   /* Store the new data format */
   This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize);
   memcpy(This->df, df, df->dwSize);

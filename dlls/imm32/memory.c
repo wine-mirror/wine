@@ -89,7 +89,7 @@ LPVOID IMM32_MoveableLock( IMM32_MOVEABLEMEM* lpMoveable )
 {
 	if ( lpMoveable->dwLockCount == IMM32_MOVEABLEMEM_LOCK_MAX )
 	{
-		ERR( "lock count is 0xffffffff." );
+		ERR( "lock count is 0xffffffff\n" );
 	}
 	else
 	{

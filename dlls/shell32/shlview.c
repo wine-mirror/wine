@@ -1554,7 +1554,7 @@ static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG
 	
 	if ((lpmsg->message>=WM_KEYFIRST) && (lpmsg->message>=WM_KEYLAST))
 	{
-	  TRACE("-- key=0x04%x",lpmsg->wParam) ;
+	  TRACE("-- key=0x04%x\n",lpmsg->wParam) ;
 	}
 	return S_FALSE; /* not handled */
 }

@@ -909,7 +909,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
        }
 
        default:
-         FIXME("Stub!");
+         FIXME("Stub!\n");
          break;
     }
 
@@ -986,7 +986,7 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
       *
       * So someone needs to implement this.
       */
-     FIXME("Unimplemented with URL of NULL");
+     FIXME("Unimplemented with URL of NULL\n");
      return TRUE;
   }
   else

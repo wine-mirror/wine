@@ -3630,7 +3630,7 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
 
     if (IS_STRING_ITEM(flags) && str)
         TRACE("hMenu %04x, pos %d, flags %08x, "
-		      "id %04x, str '%s'\n",
+		      "id %04x, str %s\n",
                       hMenu, pos, flags, id, debugstr_w(str) );
     else TRACE("hMenu %04x, pos %d, flags %08x, "
 		       "id %04x, str %08lx (not a string)\n",

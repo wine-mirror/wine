@@ -543,8 +543,8 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
                                    (LPARAM)(ofn->lpstrCustomFilter) + n );
           n += lstrlenW(pstr) + 1;
 	  pstr += lstrlenW(pstr) + 1;
-	  TRACE("add str='%s' "
-	  "associated to '%s'\n", debugstr_w(old_pstr), debugstr_w(pstr));
+	  TRACE("add str=%s associated to %s\n",
+                debugstr_w(old_pstr), debugstr_w(pstr));
           SendDlgItemMessageW(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
           n += lstrlenW(pstr) + 1;
 	  pstr += lstrlenW(pstr) + 1;
@@ -560,8 +560,8 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				       (LPARAM)(ofn->lpstrFilter + n) );
 	  n += lstrlenW(pstr) + 1;
 	  pstr += lstrlenW(pstr) + 1;
-	  TRACE("add str='%s' "
-		  "associated to '%s'\n", debugstr_w(old_pstr), debugstr_w(pstr));
+	  TRACE("add str=%s associated to %s\n",
+                debugstr_w(old_pstr), debugstr_w(pstr));
 	  SendDlgItemMessageW(hWnd, cmb1, CB_SETITEMDATA, i, (LPARAM)pstr);
 	  n += lstrlenW(pstr) + 1;
 	  pstr += lstrlenW(pstr) + 1;
