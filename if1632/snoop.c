@@ -12,6 +12,7 @@
 #include "global.h"
 #include "selectors.h"
 #include "stackframe.h"
+#include "builtin16.h"
 #include "snoop.h"
 #include "debugstr.h"
 #include "debugtools.h"
@@ -22,17 +23,8 @@ DEFAULT_DEBUG_CHANNEL(snoop)
 
 #include "pshpack1.h"
 
-void WINAPI SNOOP16_Entry(CONTEXT86 *context);
-void WINAPI SNOOP16_Return(CONTEXT86 *context);
-extern void KERNEL_CallFrom16_p_regs_();
-
-/* Generic callfrom16_p_regs function entry.
- *      pushw %bp			0x55
- *      pushl $DOS3Call			DWORD fun32
- *      .byte 0x9a			0x9a
- *      .long CallFrom16_p_regs_	DWORD addr
- *      .long 0x90900023		WORD seg;nop;nop
- */
+void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context);
+void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context);
 
 typedef	struct tagSNOOP16_FUN {
 	/* code part */
@@ -71,15 +63,15 @@ typedef struct tagSNOOP16_RETURNENTRIES {
 } SNOOP16_RETURNENTRIES;
 
 typedef struct tagSNOOP16_RELAY {
-	/* code part */
-	BYTE		prefix;		/* 0x66 , 32bit prefix */
-	BYTE		pushbp;		/* 0x55 */
+	WORD		pushbp;		/* 0x5566 */
+	BYTE		pusheax;	/* 0x50 */
+	WORD		pushax;		/* 0x5066 */
 	BYTE		pushl;		/* 0x68 */
 	DWORD		realfun;	/* SNOOP16_Return */
 	BYTE		lcall;		/* 0x9a call absolute with segment */
 	DWORD		callfromregs;
 	WORD		seg;
-	/* unreached */
+        WORD		lret;           /* 0xcb66 */
 } SNOOP16_RELAY;
 
 #include "poppack.h"
@@ -98,20 +90,25 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 	if (!snr) {
 		xsnr=GLOBAL_Alloc(GMEM_ZEROINIT,2*sizeof(*snr),0,TRUE,TRUE,FALSE);
 		snr = GlobalLock16(xsnr);
-		snr[0].prefix	= 0x66;
-		snr[0].pushbp	= 0x55;
+		snr[0].pushbp	= 0x5566;
+		snr[0].pusheax	= 0x50;
+		snr[0].pushax	= 0x5066;
 		snr[0].pushl	= 0x68;
 		snr[0].realfun	= (DWORD)SNOOP16_Entry;
 		snr[0].lcall 	= 0x9a;
-		snr[0].callfromregs = (DWORD)KERNEL_CallFrom16_p_regs_;
+		snr[0].callfromregs = (DWORD)CallFrom16Register;
 		GET_CS(snr[0].seg);
-		snr[1].prefix	= 0x66;
-		snr[1].pushbp	= 0x55;
+		snr[0].lret     = 0xcb66;
+
+		snr[1].pushbp	= 0x5566;
+		snr[1].pusheax	= 0x50;
+		snr[1].pushax	= 0x5066;
 		snr[1].pushl	= 0x68;
 		snr[1].realfun	= (DWORD)SNOOP16_Return;
 		snr[1].lcall 	= 0x9a;
-		snr[1].callfromregs = (DWORD)KERNEL_CallFrom16_p_regs_;
+		snr[1].callfromregs = (DWORD)CallFrom16Register;
 		GET_CS(snr[1].seg);
+		snr[1].lret     = 0xcb66;
 	}
 	while (*dll) {
 		if ((*dll)->hmod == pModule->self)
@@ -209,7 +206,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 }
 
 #define CALLER1REF (*(DWORD*)(PTR_SEG_OFF_TO_LIN(SS_reg(context),LOWORD(ESP_reg(context))+4)))
-void WINAPI SNOOP16_Entry(CONTEXT86 *context) {
+void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	DWORD		ordinal=0;
 	DWORD		entry=(DWORD)PTR_SEG_OFF_TO_LIN(CS_reg(context),LOWORD(EIP_reg(context)))-5;
 	WORD		xcs = CS_reg(context);
@@ -276,7 +273,7 @@ void WINAPI SNOOP16_Entry(CONTEXT86 *context) {
 	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
 }
 
-void WINAPI SNOOP16_Return(CONTEXT86 *context) {
+void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) PTR_SEG_OFF_TO_LIN(CS_reg(context),LOWORD(EIP_reg(context)))-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
@@ -326,8 +323,3 @@ FARPROC16 SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfu
 }
 #endif	/* !__i386__ */
 
-void
-SNOOP16_Init() {
-	fnSNOOP16_GetProcAddress16=SNOOP16_GetProcAddress16;
-	fnSNOOP16_RegisterDLL=SNOOP16_RegisterDLL;
-}

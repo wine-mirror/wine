@@ -22,9 +22,6 @@ typedef struct
 {
     LONG (CALLBACK *CallRegisterShortProc)( CONTEXT86 *, INT );
     LONG (CALLBACK *CallRegisterLongProc)( CONTEXT86 *, INT );
-    VOID (CALLBACK *CallFrom16WndProc)(void);
-    LRESULT (CALLBACK *CallWndProc)( WNDPROC16, HWND16, UINT16,
-                                     WPARAM16, LPARAM );
     LRESULT (CALLBACK *CallDriverProc)( DRIVERPROC16, DWORD, HDRVR16,
                                         UINT16, LPARAM, LPARAM );
     LRESULT (CALLBACK *CallDriverCallback)( FARPROC16, HANDLE16, UINT16,

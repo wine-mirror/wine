@@ -96,7 +96,6 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     {
  	/* Implement self-loading segments */
  	SELFLOADHEADER *selfloadheader;
-        STACK16FRAME *stack16Top;
         DWORD oldstack;
  	WORD old_hSeg, new_hSeg;
         HFILE hFile32;
@@ -107,16 +106,8 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	oldstack = NtCurrentTeb()->cur_stack;
  	old_hSeg = pSeg->hSeg;
  	NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
-                                                          0xff00 - sizeof(*stack16Top));
-        stack16Top = CURRENT_STACK16;
-        stack16Top->frame32 = 0;
-        stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
-        stack16Top->entry_point = 0;
-        stack16Top->entry_ip = 0;
-        stack16Top->entry_cs = 0;
-        stack16Top->bp = 0;
-        stack16Top->ip = 0;
-        stack16Top->cs = 0;
+                                                          0xff00 - sizeof(STACK16FRAME));
+
 	TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
 		pModule->self,hf,segnum );
         DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
@@ -403,7 +394,6 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         HFILE16 hFile16;
         /* Handle self-loading modules */
         SELFLOADHEADER *selfloadheader;
-        STACK16FRAME *stack16Top;
         HMODULE16 hselfload = GetModuleHandle16("WPROCS");
         DWORD oldstack;
         WORD saved_hSeg = pSegTable[pModule->dgroup - 1].hSeg;
@@ -420,17 +410,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
         oldstack = NtCurrentTeb()->cur_stack;
         NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
-                                                          0xff00 - sizeof(*stack16Top) );
-        stack16Top = CURRENT_STACK16;
-        stack16Top->frame32 = 0;
-        stack16Top->ebp = 0;
-        stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
-        stack16Top->entry_point = 0;
-        stack16Top->entry_ip = 0;
-        stack16Top->entry_cs = 0;
-        stack16Top->bp = 0;
-        stack16Top->ip = 0;
-        stack16Top->cs = 0;
+                                                          0xff00 - sizeof(STACK16FRAME) );
 
         DuplicateHandle( GetCurrentProcess(), NE_OpenFile(pModule),
                          GetCurrentProcess(), &hf, 0, FALSE, DUPLICATE_SAME_ACCESS );

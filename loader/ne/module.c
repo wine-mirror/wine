@@ -25,6 +25,7 @@
 #include "process.h"
 #include "toolhelp.h"
 #include "snoop.h"
+#include "builtin16.h"
 #include "stackframe.h"
 #include "debugtools.h"
 #include "file.h"
@@ -34,15 +35,10 @@
 
 DEFAULT_DEBUG_CHANNEL(module)
 
-FARPROC16 (*fnSNOOP16_GetProcAddress16)(HMODULE16,DWORD,FARPROC16) = NULL;
-void (*fnSNOOP16_RegisterDLL)(NE_MODULE*,LPCSTR) = NULL;
-
 #define hFirstModule (pThhook->hExeHead)
 
 static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
-static HMODULE16 NE_LoadBuiltin(LPCSTR name,BOOL force) { return 0; }
-HMODULE16 (*fnBUILTIN_LoadModule)(LPCSTR name,BOOL force) = NE_LoadBuiltin;
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
 
 static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_only );
@@ -323,10 +319,10 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
     else sel = GlobalHandleToSel16(NE_SEG_TABLE(pModule)[sel-1].hSeg);
     if (sel==0xffff)
 	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
-    if (!snoop || !fnSNOOP16_GetProcAddress16)
+    if (!snoop)
 	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
     else
-	return (FARPROC16)fnSNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset ));
+	return (FARPROC16)SNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset ));
 }
 
 
@@ -729,8 +725,8 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     else pModule->dlls_to_init = 0;
 
     NE_RegisterModule( pModule );
-    if (fnSNOOP16_RegisterDLL)
-    	fnSNOOP16_RegisterDLL(pModule,ofs->szPathName);
+    SNOOP16_RegisterDLL(pModule,ofs->szPathName);
+
     return hModule;
 }
 
@@ -911,7 +907,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
 		case MODULE_LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", libname);
-			hinst = fnBUILTIN_LoadModule(libname, TRUE);
+			hinst = BUILTIN_LoadModule(libname, TRUE);
 			break;
 
 		default:

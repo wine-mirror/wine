@@ -18,6 +18,7 @@
 #include "global.h"
 #include "heap.h"
 #include "module.h"
+#include "snoop.h"
 #include "neexe.h"
 #include "pe_image.h"
 #include "dosexe.h"

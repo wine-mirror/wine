@@ -5,9 +5,11 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include <string.h>
 #include "wine/winbase16.h"
 #include "winuser.h"
-#include "callback.h"
+#include "stackframe.h"
+#include "builtin16.h"
 #include "heap.h"
 #include "selectors.h"
 #include "struct32.h"
@@ -26,19 +28,22 @@ DECLARE_DEBUG_CHANNEL(win)
 /* Window procedure 16-to-32-bit thunk,
  * see BuildSpec16Files() in tools/build.c */
 
+#include "pshpack1.h"
 typedef struct
 {
-    BYTE       popl_eax;             /* popl  %eax (return address) */
+    WORD       pushw_bp;             /* pushw %bp */
     BYTE       pushl_func;           /* pushl $proc */
-    WNDPROC  proc WINE_PACKED;
-    BYTE       pushl_eax;            /* pushl %eax */
-    WORD       pushw_bp WINE_PACKED; /* pushw %bp */
-    BYTE       pushl_thunk;          /* pushl $thunkfrom16 */
-    void     (*thunk32)() WINE_PACKED;
-    BYTE       lcall;                /* lcall cs:relay */
-    void     (*relay)() WINE_PACKED; /* WINPROC_CallProc16To32A/W() */
-    WORD       cs WINE_PACKED;
+    WNDPROC    proc;
+    WORD       pushw_ax;             /* pushw %ax */
+    BYTE       pushl_relay;          /* pushl $relay */
+    void     (*relay)();             /* WINPROC_Thunk16To32A/W() */
+    BYTE       lcall;                /* lcall cs:glue */
+    void     (*glue)();              /* CallFrom16Long */
+    WORD       cs;                   /* __FLATCS */
+    WORD       lret;                 /* lret $10 */
+    WORD       nArgs;
 } WINPROC_THUNK_FROM16;
+#include "poppack.h"
 
 /* Window procedure 32-to-16-bit thunk,
  * see BuildSpec32Files() in tools/build.c */
@@ -89,12 +94,8 @@ static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
 static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
                                                UINT msg, WPARAM wParam,
                                                LPARAM lParam );
-static LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
-					WPARAM16 wParam, LPARAM lParam,
-					WNDPROC func );
-static LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
-					WPARAM16 wParam, LPARAM lParam,
-					WNDPROC func );
+static LRESULT WINAPI WINPROC_Thunk16To32A( WNDPROC func, LPBYTE args );
+static LRESULT WINAPI WINPROC_Thunk16To32W( WNDPROC func, LPBYTE args );
 
 static HANDLE WinProcHeap;
 
@@ -133,6 +134,79 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     retvalue = proc( hwnd, msg, wParam, lParam );
     WIN_RestoreWndsLock(iWndsLocks);
     return retvalue;
+}
+
+/***********************************************************************
+ *           WINPROC_CallWndProc16
+ *
+ * Call a 16-bit window procedure
+ */
+static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
+                                             UINT16 msg, WPARAM16 wParam,
+                                             LPARAM lParam )
+{
+    CONTEXT86 context;
+    LRESULT ret;
+    WORD *args;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    DWORD offset = 0;
+    TEB *teb = NtCurrentTeb();
+    int iWndsLocks;
+
+    /* Window procedures want ax = hInstance, ds = es = ss */
+
+    memset(&context, '\0', sizeof(context));
+    DS_reg(&context)  = SELECTOROF(teb->cur_stack);
+    ES_reg(&context)  = DS_reg(&context);
+    EAX_reg(&context) = wndPtr ? wndPtr->hInstance : DS_reg(&context);
+    CS_reg(&context)  = SELECTOROF(proc);
+    EIP_reg(&context) = OFFSETOF(proc);
+    EBP_reg(&context) = OFFSETOF(teb->cur_stack)
+                        + (WORD)&((STACK16FRAME*)0)->bp;
+
+    WIN_ReleaseWndPtr(wndPtr);
+
+    if (lParam)
+    {
+        /* Some programs (eg. the "Undocumented Windows" examples, JWP) only
+           work if structures passed in lParam are placed in the stack/data
+           segment. Programmers easily make the mistake of converting lParam
+           to a near rather than a far pointer, since Windows apparently
+           allows this. We copy the structures to the 16 bit stack; this is
+           ugly but makes these programs work. */
+        switch (msg)
+        {
+          case WM_CREATE:
+          case WM_NCCREATE:
+            offset = sizeof(CREATESTRUCT16); break;
+          case WM_DRAWITEM:
+            offset = sizeof(DRAWITEMSTRUCT16); break;
+          case WM_COMPAREITEM:
+            offset = sizeof(COMPAREITEMSTRUCT16); break;
+        }
+        if (offset)
+        {
+            void *s = PTR_SEG_TO_LIN(lParam);
+            lParam = stack16_push( offset );
+            memcpy( PTR_SEG_TO_LIN(lParam), s, offset );
+        }
+    }
+
+    iWndsLocks = WIN_SuspendWndsLock();
+
+    args = (WORD *)THREAD_STACK16(teb) - 5;
+    args[0] = LOWORD(lParam);
+    args[1] = HIWORD(lParam);
+    args[2] = wParam;
+    args[3] = msg;
+    args[4] = hwnd;
+
+    ret = CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
+    if (offset) stack16_pop( offset );
+
+    WIN_RestoreWndsLock(iWndsLocks);
+
+    return ret;
 }
 
 
@@ -214,18 +288,19 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
             break;
         case WIN_PROC_32A:
         case WIN_PROC_32W:
-            proc->thunk.t_from16.popl_eax    = 0x58;   /* popl  %eax */
+            proc->thunk.t_from16.pushw_bp    = 0x5566; /* pushw %bp */
             proc->thunk.t_from16.pushl_func  = 0x68;   /* pushl $proc */
             proc->thunk.t_from16.proc        = (FARPROC)func;
-            proc->thunk.t_from16.pushl_eax   = 0x50;   /* pushl %eax */
-            proc->thunk.t_from16.pushw_bp    = 0x5566; /* pushw %bp */
-            proc->thunk.t_from16.pushl_thunk = 0x68;   /* pushl $thunkfrom16 */
-            proc->thunk.t_from16.thunk32     = (type == WIN_PROC_32A) ?
-                                           (void(*)())WINPROC_CallProc16To32A :
-                                           (void(*)())WINPROC_CallProc16To32W;
-            proc->thunk.t_from16.lcall       = 0x9a;   /* lcall cs:relay */
-            proc->thunk.t_from16.relay       = (void*)Callbacks->CallFrom16WndProc;
+            proc->thunk.t_from16.pushw_ax    = 0x5066; /* pushw %ax */
+            proc->thunk.t_from16.pushl_relay = 0x68;   /* pushl $relay */
+            proc->thunk.t_from16.relay       = (type == WIN_PROC_32A) ?
+                                           (void(*)())WINPROC_Thunk16To32A :
+                                           (void(*)())WINPROC_Thunk16To32W;
+            proc->thunk.t_from16.lcall       = 0x9a;   /* lcall cs:glue */
+            proc->thunk.t_from16.glue        = (void*)CallFrom16Long;
             GET_CS(proc->thunk.t_from16.cs);
+            proc->thunk.t_from16.lret        = 0xca66;
+            proc->thunk.t_from16.nArgs       = 10;
             proc->jmp.jmp  = 0xe9;
             /* Fixup relative jump */
             proc->jmp.proc = (WNDPROC)((DWORD)func -
@@ -2138,9 +2213,9 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
  *
  * Call a 32-bit window procedure, translating the 16-bit args.
  */
-LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
-                                 WPARAM16 wParam, LPARAM lParam,
-                                 WNDPROC func )
+static LRESULT WINPROC_CallProc16To32A( WNDPROC func, HWND16 hwnd,
+                                        UINT16 msg, WPARAM16 wParam,
+                                        LPARAM lParam )
 {
     LRESULT result;
     UINT msg32;
@@ -2152,15 +2227,28 @@ LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
     return WINPROC_UnmapMsg16To32A( hwnd, msg32, wParam32, lParam, result );
 }
 
+/**********************************************************************
+ *	     WINPROC_Thunk16To32A
+ */
+static LRESULT WINAPI WINPROC_Thunk16To32A( WNDPROC func, LPBYTE args )
+{
+    HWND16   hwnd   = *(HWND16 *)( args+8 );
+    UINT16   msg    = *(HWND16 *)( args+6 );
+    WPARAM16 wParam = *(HWND16 *)( args+4 );
+    LPARAM   lParam = *(LPARAM *)( args+0 );
+
+    return WINPROC_CallProc16To32A( func, hwnd, msg, wParam, lParam );
+}
+
 
 /**********************************************************************
  *	     WINPROC_CallProc16To32W
  *
  * Call a 32-bit window procedure, translating the 16-bit args.
  */
-LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
-                                 WPARAM16 wParam, LPARAM lParam,
-                                 WNDPROC func )
+static LRESULT WINPROC_CallProc16To32W( WNDPROC func, HWND16 hwnd,
+                                        UINT16 msg, WPARAM16 wParam,
+                                        LPARAM lParam )
 {
     LRESULT result;
     UINT msg32;
@@ -2174,6 +2262,18 @@ LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
     return WINPROC_UnmapMsg16To32W( hwnd, msg32, wParam32, lParam, result );
 }
 
+/**********************************************************************
+ *	     WINPROC_Thunk16To32W
+ */
+static LRESULT WINAPI WINPROC_Thunk16To32W( WNDPROC func, LPBYTE args )
+{
+    HWND16   hwnd   = *(HWND16 *)( args+8 );
+    UINT16   msg    = *(HWND16 *)( args+6 );
+    WPARAM16 wParam = *(HWND16 *)( args+4 );
+    LPARAM   lParam = *(LPARAM *)( args+0 );
+
+    return WINPROC_CallProc16To32W( func, hwnd, msg, wParam, lParam );
+}
 
 /**********************************************************************
  *	     WINPROC_CallProc32ATo16
@@ -2191,8 +2291,8 @@ static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
     if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, 
                                &msg16, &mp16.wParam, &mp16.lParam ) == -1)
         return 0;
-    mp16.lResult = Callbacks->CallWndProc( func, hwnd, msg16,
-                                           mp16.wParam, mp16.lParam );
+    mp16.lResult = WINPROC_CallWndProc16( func, hwnd, msg16,
+                                          mp16.wParam, mp16.lParam );
     WINPROC_UnmapMsg32ATo16( hwnd, msg, wParam, lParam, &mp16 );
     return mp16.lResult;
 }
@@ -2214,8 +2314,8 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
     if (WINPROC_MapMsg32WTo16( hwnd, msg, wParam, &msg16, &mp16.wParam,
                                &mp16.lParam ) == -1)
         return 0;
-    mp16.lResult = Callbacks->CallWndProc( func, hwnd, msg16,
-                                           mp16.wParam, mp16.lParam );
+    mp16.lResult = WINPROC_CallWndProc16( func, hwnd, msg16,
+                                          mp16.wParam, mp16.lParam );
     WINPROC_UnmapMsg32WTo16( hwnd, msg, wParam, lParam, &mp16 );
     return mp16.lResult;
 }
@@ -2230,27 +2330,27 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     WINDOWPROC *proc = WINPROC_GetPtr( func );
 
     if (!proc)
-        return Callbacks->CallWndProc( func, hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 
 #if testing
     func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_16 );
-    return Callbacks->CallWndProc( func, hwnd, msg, wParam, lParam );
+    return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 #endif
     
     switch(proc->type)
     {
     case WIN_PROC_16:
         if (!proc->thunk.t_from32.proc) return 0;
-        return Callbacks->CallWndProc( proc->thunk.t_from32.proc,
-                                       hwnd, msg, wParam, lParam );
+        return WINPROC_CallWndProc16( proc->thunk.t_from32.proc,
+                                      hwnd, msg, wParam, lParam );
     case WIN_PROC_32A:
         if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallProc16To32A( hwnd, msg, wParam, lParam,
-                                        proc->thunk.t_from16.proc );
+        return WINPROC_CallProc16To32A( proc->thunk.t_from16.proc,
+                                        hwnd, msg, wParam, lParam );
     case WIN_PROC_32W:
         if (!proc->thunk.t_from16.proc) return 0;
-        return WINPROC_CallProc16To32W( hwnd, msg, wParam, lParam,
-                                        proc->thunk.t_from16.proc );
+        return WINPROC_CallProc16To32W( proc->thunk.t_from16.proc,
+                                        hwnd, msg, wParam, lParam );
     default:
         WARN_(relay)("Invalid proc %p\n", proc );
         return 0;

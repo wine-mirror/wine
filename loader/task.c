@@ -1230,8 +1230,9 @@ void WINAPI SwitchStackBack16( CONTEXT86 *context )
     newFrame->frame32 = oldFrame->frame32;
     if (TRACE_ON(relay))
     {
-        newFrame->entry_ip = oldFrame->entry_ip;
-        newFrame->entry_cs = oldFrame->entry_cs;
+        newFrame->module_cs   = oldFrame->module_cs;
+        newFrame->callfrom_ip = oldFrame->callfrom_ip;
+        newFrame->entry_ip    = oldFrame->entry_ip;
     }
 }
 

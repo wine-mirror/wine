@@ -10,6 +10,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
+#include "builtin16.h"
 #include "builtin32.h"
 #include "global.h"
 #include "heap.h"
@@ -19,24 +20,11 @@
 #include "stackframe.h"
 #include "user.h"
 #include "process.h"
-#include "snoop.h"
 #include "task.h"
 #include "debugtools.h"
 #include "toolhelp.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
-
-/* Built-in modules descriptors */
-/* Don't change these structures! (see tools/build.c) */
-
-typedef struct
-{
-    const char *name;              /* DLL name */
-    void       *module_start;      /* 32-bit address of the module data */
-    int         module_size;       /* Size of the module data */
-    const BYTE *code_start;        /* 32-bit address of DLL code */
-    const BYTE *data_start;        /* 32-bit address of DLL data */
-} WIN16_DESCRIPTOR;
 
 typedef struct
 {
@@ -209,8 +197,6 @@ BOOL BUILTIN_Init(void)
     WORD vector;
     HMODULE16 hModule;
 
-    fnBUILTIN_LoadModule = BUILTIN_LoadModule;
-
     for (dll = BuiltinDLLs; dll->descr; dll++)
     {
         if (dll->flags & DLL_FLAG_ALWAYS_USED)
@@ -227,8 +213,6 @@ BOOL BUILTIN_Init(void)
         assert(proc);
         INT_SetPMHandler( vector, proc );
     }
-
-    SNOOP16_Init();
 
     return TRUE;
 }
@@ -266,7 +250,7 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force )
  * Return the ordinal, name, and type info corresponding to a CS:IP address.
  * This is used only by relay debugging.
  */
-LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, LPSTR name, WORD *pOrd )
+LPCSTR BUILTIN_GetEntryPoint16( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
 {
     WORD i, max_offset;
     register BYTE *p;
@@ -274,7 +258,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, LPSTR name, WORD *pOrd )
     ET_BUNDLE *bundle;
     ET_ENTRY *entry;
 
-    if (!(pModule = NE_GetPtr( FarGetOwner16( GlobalHandle16(cs) ))))
+    if (!(pModule = NE_GetPtr( FarGetOwner16( GlobalHandle16( frame->module_cs ) ))))
         return NULL;
 
     max_offset = 0;
@@ -285,7 +269,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, LPSTR name, WORD *pOrd )
         entry = (ET_ENTRY *)((BYTE *)bundle+6);
 	for (i = bundle->first + 1; i <= bundle->last; i++)
         {
-	    if ((entry->offs < ip)
+	    if ((entry->offs < frame->entry_ip)
 	    && (entry->segnum == 1) /* code segment ? */
 	    && (entry->offs >= max_offset))
             {
@@ -313,7 +297,7 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, LPSTR name, WORD *pOrd )
              *pOrd, *p, (char *)(p + 1) );
 
     /* Retrieve type info string */
-    return *(LPCSTR *)((LPBYTE)PTR_SEG_OFF_TO_LIN( cs, ip ) - 6) + 10;
+    return *(LPCSTR *)((LPBYTE)PTR_SEG_OFF_TO_LIN( frame->module_cs, frame->callfrom_ip ) + 4);
 }
 
 
@@ -326,8 +310,7 @@ void WINAPI BUILTIN_DefaultIntHandler( CONTEXT86 *context )
 {
     WORD ordinal;
     char name[80];
-    STACK16FRAME *frame = CURRENT_STACK16;
-    BUILTIN_GetEntryPoint16( frame->entry_cs, frame->entry_ip, name, &ordinal );
+    BUILTIN_GetEntryPoint16( CURRENT_STACK16, name, &ordinal );
     INT_BARF( context, ordinal - FIRST_INTERRUPT_ORDINAL );
 }
 

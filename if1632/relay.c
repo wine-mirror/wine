@@ -12,6 +12,7 @@
 #include "heap.h"
 #include "module.h"
 #include "stackframe.h"
+#include "builtin16.h"
 #include "task.h"
 #include "syslevel.h"
 #include "debugstr.h"
@@ -77,7 +78,7 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
     if (!TRACE_ON(relay)) return;
 
     frame = CURRENT_STACK16;
-    args = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,funstr,&ordinal);
+    args = BUILTIN_GetEntryPoint16( frame, funstr, &ordinal );
     if (!args) return; /* happens for the two snoop register relays */
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
     DPRINTF( "Call %s(",funstr);
@@ -205,7 +206,7 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
 
     if (!TRACE_ON(relay)) return;
     frame = CURRENT_STACK16;
-    args = BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,funstr,&ordinal);
+    args = BUILTIN_GetEntryPoint16( frame, funstr, &ordinal );
     if (!args) return;
     if (!RELAY_ShowDebugmsgRelay(funstr)) return;
     DPRINTF( "Ret  %s() ",funstr);
@@ -246,7 +247,7 @@ void RELAY_Unimplemented16(void)
     WORD ordinal;
     char name[80];
     STACK16FRAME *frame = CURRENT_STACK16;
-    BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,name,&ordinal);
+    BUILTIN_GetEntryPoint16( frame, name, &ordinal );
     MESSAGE("No handler for Win16 routine %s (called from %04x:%04x)\n",
             name, frame->cs, frame->ip );
     ExitProcess(1);
@@ -256,31 +257,29 @@ void RELAY_Unimplemented16(void)
 /***********************************************************************
  *           RELAY_DebugCallTo16
  *
- * 'stack' points to the called function address on the 32-bit stack.
- * Stack layout:
- *  ...        ...
- * (stack+8)   arg2
- * (stack+4)   arg1
- * (stack)     func to call
+ * 'target' contains either the function to call (normal CallTo16)
+ * or a pointer to the CONTEXT86 struct (register CallTo16).
+ * 'nb_args' is the number of argument bytes on the 16-bit stack; 
+ * 'reg_func' specifies whether we have a register CallTo16 or not.
  */
-void RELAY_DebugCallTo16( int* stack, int nb_args )
+void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
 {
+    WORD *stack16;
     TEB *teb;
 
     if (!TRACE_ON(relay)) return;
     teb = NtCurrentTeb();
+    stack16 = (WORD *)THREAD_STACK16(teb);
 
-    if (nb_args == -1)  /* Register function */
+    nb_args /= sizeof(WORD);
+
+    if ( reg_func )
     {
-        CONTEXT86 *context = (CONTEXT86 *)stack[0];
-        WORD *stack16 = (WORD *)THREAD_STACK16(teb);
+        CONTEXT86 *context = (CONTEXT86 *)target;
+
         DPRINTF("CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), LOWORD(EIP_reg(context)), DS_reg(context) );
-        nb_args = stack[1] / sizeof(WORD);
-        while (nb_args--) {
-	    --stack16;
-	    DPRINTF( ",0x%04x", *stack16 );
-	}
+        while (nb_args--) DPRINTF( ",0x%04x", *--stack16 );
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
                 OFFSETOF(teb->cur_stack) );
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x FS=%04x\n",
@@ -291,13 +290,8 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
     else
     {
         DPRINTF("CallTo16(func=%04x:%04x,ds=%04x",
-                HIWORD(stack[0]), LOWORD(stack[0]),
-                SELECTOROF(teb->cur_stack) );
-        stack++;
-        while (nb_args--) {
-	    DPRINTF(",0x%04x", *stack );
-	    stack++;
-	}
+                HIWORD(target), LOWORD(target), SELECTOROF(teb->cur_stack) );
+        while (nb_args--) DPRINTF( ",0x%04x", *--stack16 );
         DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
                 OFFSETOF(teb->cur_stack) );
     }
@@ -398,16 +392,6 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
 
     if (lpbuf[8] != SS_reg(context))
         ERR("Switching stack segment with Throw() not supported; expect crash now\n" );
-
-    if (TRACE_ON(relay))  /* Make sure we have a valid entry point address */
-    {
-        static FARPROC16 entryPoint = NULL;
-
-        if (!entryPoint)  /* Get entry point for Throw() */
-            entryPoint = NE_GetEntryPoint( GetModuleHandle16("KERNEL"), 56 );
-        pFrame->entry_cs = SELECTOROF(entryPoint);
-        pFrame->entry_ip = OFFSETOF(entryPoint);
-    }
 }
 
 

@@ -104,7 +104,6 @@ extern LONG CALLBACK THUNK_CallTo16_long_llllllllllllllll(FARPROC16,LONG,LONG,LO
                                                           LONG,LONG,LONG,LONG,LONG,
                                                           LONG,LONG,LONG,LONG,LONG,
                                                           LONG,LONG,LONG);
-extern void CALLBACK THUNK_CallFrom16_p_long_wwwll();
 /* ### stop build ### */
 
 
@@ -137,9 +136,6 @@ typedef struct tagTHUNK
 
 static THUNK *firstThunk = NULL;
 
-static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
-                                           UINT16 msg, WPARAM16 wParam,
-                                           LPARAM lParam );
 static BOOL WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
                                             LPVOID,LPDWORD );
 static BOOL THUNK_ThunkletInit( void );
@@ -149,8 +145,6 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
 {
     (void *)CallTo16RegisterShort,               /* CallRegisterShortProc */
     (void *)CallTo16RegisterLong,                /* CallRegisterLongProc */
-    (void*)THUNK_CallFrom16_p_long_wwwll,        /* CallFrom16WndProc */
-    THUNK_CallWndProc16,                         /* CallWndProc */
     (void *)THUNK_CallTo16_long_lwwll,           /* CallDriverProc */
     (void *)THUNK_CallTo16_word_wwlll,           /* CallDriverCallback */
     (void *)THUNK_CallTo16_word_wwlll,           /* CallTimeFuncProc */
@@ -239,80 +233,6 @@ static void THUNK_Free( THUNK *thunk )
         }
     }
     ERR_(thunk)("invalid thunk addr %p\n", thunk );
-}
-
-
-/***********************************************************************
- *           THUNK_CallWndProc16
- *
- * Call a 16-bit window procedure
- */
-static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
-                                           UINT16 msg, WPARAM16 wParam,
-                                           LPARAM lParam )
-{
-    CONTEXT86 context;
-    LRESULT ret;
-    WORD *args;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    DWORD offset = 0;
-    TEB *teb = NtCurrentTeb();
-    int iWndsLocks;
-
-    /* Window procedures want ax = hInstance, ds = es = ss */
-    
-    memset(&context, '\0', sizeof(context));
-    DS_reg(&context)  = SELECTOROF(teb->cur_stack);
-    ES_reg(&context)  = DS_reg(&context);
-    EAX_reg(&context) = wndPtr ? wndPtr->hInstance : DS_reg(&context);
-    CS_reg(&context)  = SELECTOROF(proc);
-    EIP_reg(&context) = OFFSETOF(proc);
-    EBP_reg(&context) = OFFSETOF(teb->cur_stack)
-                        + (WORD)&((STACK16FRAME*)0)->bp;
-
-    WIN_ReleaseWndPtr(wndPtr);
-    
-    if (lParam)
-    {
-	/* Some programs (eg. the "Undocumented Windows" examples, JWP) only
-           work if structures passed in lParam are placed in the stack/data
-           segment. Programmers easily make the mistake of converting lParam
-           to a near rather than a far pointer, since Windows apparently
-           allows this. We copy the structures to the 16 bit stack; this is
-           ugly but makes these programs work. */
-	switch (msg)
-	{
-	  case WM_CREATE:
-	  case WM_NCCREATE:
-	    offset = sizeof(CREATESTRUCT16); break;
-	  case WM_DRAWITEM:
-	    offset = sizeof(DRAWITEMSTRUCT16); break;
-	  case WM_COMPAREITEM:
-	    offset = sizeof(COMPAREITEMSTRUCT16); break;
-	}
-	if (offset)
-	{
-	    void *s = PTR_SEG_TO_LIN(lParam);
-	    lParam = stack16_push( offset );
-	    memcpy( PTR_SEG_TO_LIN(lParam), s, offset );
-	}
-    }
-
-    iWndsLocks = WIN_SuspendWndsLock();
-
-    args = (WORD *)THREAD_STACK16(teb) - 5;
-    args[0] = LOWORD(lParam);
-    args[1] = HIWORD(lParam);
-    args[2] = wParam;
-    args[3] = msg;
-    args[4] = hwnd;
-
-    ret = CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
-    if (offset) stack16_pop( offset );
-
-    WIN_RestoreWndsLock(iWndsLocks);
-
-    return ret;
 }
 
 
@@ -1023,7 +943,6 @@ UINT WINAPI ThunkConnect16(
 
 void WINAPI C16ThkSL(CONTEXT86 *context)
 {
-    extern void CallFrom16Thunk(void);
     LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
     WORD cs, ds;
     GET_CS(cs);
@@ -1037,7 +956,9 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
      *   mov edx, es:[ecx + $EDX]
      *   push bp
      *   push edx
-     *   call __FLATCS:CallFrom16_t_long_
+     *   push dx
+     *   push edx
+     *   call __FLATCS:CallFrom16Thunk
      */
 
     *x++ = 0xB8; *((WORD *)x)++ = ds;
@@ -1047,6 +968,8 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
                  *x++ = 0x91; *((DWORD *)x)++ = EDX_reg(context);
 
     *x++ = 0x55;
+    *x++ = 0x66; *x++ = 0x52;
+    *x++ = 0x52;
     *x++ = 0x66; *x++ = 0x52;
     *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16Thunk;
                               *((WORD *)x)++ = cs;
@@ -1073,7 +996,6 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         struct ThunkDataSL16 *SL16 = PTR_SEG_TO_LIN(EDX_reg(context));
         struct ThunkDataSL *td = SL16->fpData;
 
-        extern void CallFrom16Thunk(void);
         DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), 631);
         WORD cs;
         GET_CS(cs);
@@ -1094,7 +1016,9 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
          *   call C16ThkSL01
          *   push bp
          *   push edx
-         *   call __FLATCS:CallFrom16_t_long_
+         *   push dx
+         *   push edx
+         *   call __FLATCS:CallFrom16Thunk
          */
 
         *x++ = 0x66; *x++ = 0x33; *x++ = 0xC0;
@@ -1102,6 +1026,8 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         *x++ = 0x9A; *((DWORD *)x)++ = procAddress;
 
         *x++ = 0x55;
+        *x++ = 0x66; *x++ = 0x52;
+        *x++ = 0x52;
         *x++ = 0x66; *x++ = 0x52;
         *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16Thunk;
                                   *((WORD *)x)++ = cs;
