@@ -504,7 +504,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         WARN("Already deleted\n");
         break;
       default:
-        WARN("Unknown magic number (%d)\n",GDIMAGIC(header->wMagic));
+        WARN("Unknown magic number (%04x)\n",GDIMAGIC(header->wMagic));
     }
     GDI_ReleaseObj( obj );
     return FALSE;
@@ -1125,9 +1125,25 @@ WORD WINAPI GdiSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
 }
 
 /***********************************************************************
+ *           GdiInit2     (GDI.405)
+ *
+ * See "Undocumented Windows"
+ */
+HANDLE16 WINAPI GdiInit216(
+    HANDLE16 h1, /* GDI object */
+    HANDLE16 h2 /* global data */
+)
+{
+    FIXME("(%04x, %04x), stub.\n", h1, h2);
+    if (h2 == 0xffff)
+	return 0xffff; /* undefined return value */
+    return h1; /* FIXME: should be the memory handle of h1 */
+}
+
+/***********************************************************************
  *           FinalGdiInit     (GDI.405)
  */
-void WINAPI FinalGdiInit16( HANDLE16 unknown )
+void WINAPI FinalGdiInit16( HBRUSH16 hPattern /* fill pattern of desktop */ )
 {
 }
 

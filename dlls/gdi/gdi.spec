@@ -297,7 +297,7 @@ rsrc	version16.res
 400 pascal16 FastWindowFrame(word ptr s_word s_word long) FastWindowFrame16
 401 stub GDIMOVEBITMAP
 402 stub GDIGETBITSGLOBAL # W2.0 (only ?)
-403 stub GDIINIT2
+403 pascal16 GdiInit2(word word) GdiInit216
 404 stub GetTTGlyphIndexMap
 405 pascal16 FinalGdiInit(word) FinalGdiInit16
 406 stub CREATEREALBITMAPINDIRECT # W2.0 (only ?)
