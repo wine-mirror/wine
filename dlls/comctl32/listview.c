@@ -3981,79 +3981,101 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
  */
 static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
-  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-  NMLISTVIEW nmlv;
-  BOOL bResult = FALSE;
-  HDPA hdpaSubItems;
-  LISTVIEW_ITEM *lpItem;
-  LISTVIEW_SUBITEM *lpSubItem;
-  LVITEMW item;
-  INT i;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    INT nPerCol, nItemCol, nItemRow;
+    NMLISTVIEW nmlv;
+    LVITEMW item;
+    BOOL is_icon;
+    RECT rcScroll;
+    POINT Origin;
 
-  TRACE("(nItem=%d)\n", nItem);
+    TRACE("(nItem=%d)\n", nItem);
 
-  /* remove selection, and focus */
-  item.state = 0;
-  item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-  LISTVIEW_SetItemState(infoPtr, nItem, &item);
+    if (nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
+    
+    /* remove selection, and focus */
+    item.state = 0;
+    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+    LISTVIEW_SetItemState(infoPtr, nItem, &item);
 
-  /* send LVN_DELETEITEM notification. */
-  ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
-  nmlv.iItem = nItem;
-  notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
+    /* send LVN_DELETEITEM notification. */
+    ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
+    nmlv.iItem = nItem;
+    notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
 
-  if (infoPtr->dwStyle & LVS_OWNERDATA)
-  {
-    infoPtr->nItemCount--;
-    LISTVIEW_InvalidateList(infoPtr); /*FIXME: optimize */
-    return TRUE;
-  }
-
-  if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
-  {
-    /* initialize memory */
-    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-
-    hdpaSubItems = (HDPA)DPA_DeletePtr(infoPtr->hdpaItems, nItem);
-    if (hdpaSubItems != NULL)
+    if (!(infoPtr->dwStyle & LVS_OWNERDATA))
     {
-      infoPtr->nItemCount--;
-      for (i = 1; i < hdpaSubItems->nItemCount; i++)
-      {
-          lpSubItem = (LISTVIEW_SUBITEM *)DPA_GetPtr(hdpaSubItems, i);
-          /* free item string */
-          if (is_textW(lpSubItem->hdr.pszText))
-            COMCTL32_Free(lpSubItem->hdr.pszText);
+        HDPA hdpaSubItems;
+	ITEMHDR *hdrItem;
+	INT i;
 
-          /* free item */
-          COMCTL32_Free(lpSubItem);
-      }
+	hdpaSubItems = (HDPA)DPA_DeletePtr(infoPtr->hdpaItems, nItem);	
+	for (i = 0; i < hdpaSubItems->nItemCount; i++)
+    	{
+            hdrItem = (ITEMHDR *)DPA_GetPtr(hdpaSubItems, i);
+	    if (is_textW(hdrItem->pszText)) COMCTL32_Free(hdrItem->pszText);
+            COMCTL32_Free(hdrItem);
+        }
+        DPA_Destroy(hdpaSubItems);
+    }
+  
+    is_icon = (uView == LVS_SMALLICON || uView == LVS_ICON); 
+    if (is_icon)
+    {
+	RECT rcBox;
 
-      lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-      /* free item string */
-      if (is_textW(lpItem->hdr.pszText))
-          COMCTL32_Free(lpItem->hdr.pszText);
-
-      /* free item */
-      COMCTL32_Free(lpItem);
-
-      bResult = DPA_Destroy(hdpaSubItems);
-      DPA_DeletePtr(infoPtr->hdpaPosX, nItem);
-      DPA_DeletePtr(infoPtr->hdpaPosY, nItem);
+	LISTVIEW_GetItemBox(infoPtr, nItem, &rcBox);
+	DPA_DeletePtr(infoPtr->hdpaPosX, nItem);
+	DPA_DeletePtr(infoPtr->hdpaPosY, nItem);
+	LISTVIEW_InvalidateRect(infoPtr, &rcBox);
     }
 
+    infoPtr->nItemCount--;
     LISTVIEW_ShiftIndices(infoPtr, nItem, -1);
 
-    /* align items (set position of each item) */
-    if ((infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_SMALLICON || uView == LVS_ICON))
-	LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+    if (is_icon && (infoPtr->dwStyle & LVS_AUTOARRANGE))
+	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 
     LISTVIEW_UpdateScroll(infoPtr);
 
-    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
-  }
+    /* now is the invalidation fun */
+    
+    /* there's nothing else to do in icon mode */
+    if (is_icon) return TRUE;
+ 
+    /* figure out the item's position */ 
+    if (uView == LVS_REPORT)
+	nPerCol = infoPtr->nItemCount + 1;
+    else /* LVS_LIST */
+	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
+    nItemCol = nItem / nPerCol;
+    nItemRow = nItem % nPerCol;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
 
-  return bResult;
+    /* move the items below up a slot */
+    rcScroll.left = nItemCol * infoPtr->nItemWidth;
+    rcScroll.top = nItemRow * infoPtr->nItemHeight;
+    rcScroll.right = rcScroll.left + infoPtr->nItemWidth;
+    rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
+    OffsetRect(&rcScroll, Origin.x, Origin.y);
+    if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
+	ScrollWindowEx(infoPtr->hwndSelf, 0, -infoPtr->nItemHeight, 
+		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
+
+    /* report has only that column, so we're done */
+    if (uView == LVS_REPORT) return TRUE;
+
+    /* now for LISTs, we have to deal with the columns to the right */
+    rcScroll.left = (nItemCol + 1) * infoPtr->nItemWidth;
+    rcScroll.top = 0;
+    rcScroll.right = (infoPtr->nItemCount / nPerCol + 1) * infoPtr->nItemWidth;
+    rcScroll.bottom = nPerCol * infoPtr->nItemHeight;
+    OffsetRect(&rcScroll, Origin.x, Origin.y);
+    if (IntersectRect(&rcScroll, &rcScroll, &infoPtr->rcList))
+	ScrollWindowEx(infoPtr->hwndSelf, 0, -infoPtr->nItemHeight,
+		       &rcScroll, &rcScroll, 0, 0, SW_ERASE | SW_INVALIDATE);
+
+    return TRUE;
 }
 
 
