@@ -7,6 +7,15 @@
 
 #include "config.h"
 
+#ifdef NO_REENTRANT_X11
+/* Get pointers to the static errno and h_errno variables used by Xlib. This
+   must be done before including <errno.h> makes the variables invisible.  */
+extern int errno;
+static int *perrno = &errno;
+extern int h_errno;
+static int *ph_errno = &h_errno;
+#endif  /* NO_REENTRANT_X11 */
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +45,8 @@ static XKeyboardState keyboard_state;
 static void (*old_tsx11_lock)(void);
 static void (*old_tsx11_unlock)(void);
 
+static CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT;
+
 Display *display;
 Screen *screen;
 Visual *visual;
@@ -45,6 +56,35 @@ unsigned int screen_depth;
 Window root_window;
 
 unsigned int X11DRV_server_startticks;
+
+#ifdef NO_REENTRANT_X11
+static int* (*old_errno_location)(void);
+static int* (*old_h_errno_location)(void);
+
+/***********************************************************************
+ *           x11_errno_location
+ *
+ * Get the per-thread errno location.
+ */
+static int *x11_errno_location(void)
+{
+    /* Use static libc errno while running in Xlib. */
+    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId()) return perrno;
+    return old_errno_location();
+}
+
+/***********************************************************************
+ *           x11_h_errno_location
+ *
+ * Get the per-thread h_errno location.
+ */
+static int *x11_h_errno_location(void)
+{
+    /* Use static libc h_errno while running in Xlib. */
+    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId()) return ph_errno;
+    return old_h_errno_location();
+}
+#endif /* NO_REENTRANT_X11 */
 
 /***********************************************************************
  *		error_handler
@@ -268,6 +308,12 @@ static void process_attach(void)
     setup_options();
 
     /* setup TSX11 locking */
+#ifdef NO_REENTRANT_X11
+    old_errno_location = (void *)InterlockedExchange( (PLONG)&wine_errno_location,
+                                                      (LONG)x11_errno_location );
+    old_h_errno_location = (void *)InterlockedExchange( (PLONG)&wine_h_errno_location,
+                                                        (LONG)x11_h_errno_location );
+#endif /* NO_REENTRANT_X11 */
     old_tsx11_lock    = wine_tsx11_lock;
     old_tsx11_unlock  = wine_tsx11_unlock;
     wine_tsx11_lock   = lock_tsx11;
@@ -359,6 +405,10 @@ static void process_detach(void)
     /* restore TSX11 locking */
     wine_tsx11_lock = old_tsx11_lock;
     wine_tsx11_unlock = old_tsx11_unlock;
+#ifdef NO_REENTRANT_X11
+    wine_errno_location = old_errno_location;
+    wine_h_errno_location = old_h_errno_location;
+#endif /* NO_REENTRANT_X11 */
 
 #if 0  /* FIXME */
     /* close the display */

@@ -191,10 +191,6 @@ extern BOOL X11DRV_SetupGCForText( struct tagDC *dc );
 
 extern const int X11DRV_XROPfunction[];
 
-/* Xlib critical section */
-
-extern CRITICAL_SECTION X11DRV_CritSection;
-
 extern void _XInitImageFuncPtrs(XImage *);
 
 #define XCREATEIMAGE(image,width,height,bpp) \

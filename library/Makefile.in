@@ -10,6 +10,7 @@ SONAME    = libwine.so
 
 C_SRCS = \
 	debug.c \
+	errno.c \
 	ldt.c \
 	loader.c \
 	port.c

@@ -214,6 +214,26 @@ error:
 
 
 /***********************************************************************
+ *           thread_errno_location
+ *
+ * Get the per-thread errno location.
+ */
+static int *thread_errno_location(void)
+{
+    return &NtCurrentTeb()->thread_errno;
+}
+
+/***********************************************************************
+ *           thread_h_errno_location
+ *
+ * Get the per-thread h_errno location.
+ */
+static int *thread_h_errno_location(void)
+{
+    return &NtCurrentTeb()->thread_h_errno;
+}
+
+/***********************************************************************
  *           THREAD_Init
  *
  * Setup the initial thread.
@@ -228,6 +248,8 @@ void THREAD_Init(void)
         assert( initial_teb.teb_sel );
         initial_teb.process = &current_process;
         SYSDEPS_SetCurThread( &initial_teb );
+        wine_errno_location = thread_errno_location;
+        wine_h_errno_location = thread_h_errno_location;
     }
 }
 

@@ -660,74 +660,35 @@ dnl
 dnl For cross-compiling we blindly assume that libc is reentrant. This is
 dnl ok since non-reentrant libc is quite rare (mostly old libc5 versions).
 
+AC_DEFUN(WINE_CHECK_ERRNO,
+[
+  AC_CACHE_CHECK(for reentrant libc: $1, wine_cv_libc_r_$1,
+  [AC_TRY_RUN([int myerrno = 0;
+char buf[256];
+int *$1(){return &myerrno;}
+main(){connect(0,buf,255); exit(!myerrno);}],
+  wine_cv_libc_r_$1=yes, wine_cv_libc_r_$1=no,
+  wine_cv_libc_r_$1=yes )
+])
+if test "$wine_cv_libc_r_$1" = "yes"
+then
+    wine_cv_libc_reentrant=$1 
+fi
+])
+
 wine_cv_libc_reentrant=no 
-dnl 
 dnl Linux style errno location
-dnl 
-AC_CACHE_CHECK("for reentrant libc: __errno_location", wine_cv_libc_r__errno_location,
-  [AC_TRY_RUN([int myerrno = 0;
-char buf[256];
-int *__errno_location(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}],
-  wine_cv_libc_r__errno_location=yes, wine_cv_libc_r__errno_location=no,
-  wine_cv_libc_r__errno_location=yes )
-])
-if test "$wine_cv_libc_r__errno_location" = "yes"
-then
-    AC_DEFINE(HAVE__ERRNO_LOCATION)
-    wine_cv_libc_reentrant=__errno_location 
-fi
-dnl
+WINE_CHECK_ERRNO(__errno_location)
 dnl FreeBSD style errno location
-dnl 
-AC_CACHE_CHECK("for reentrant libc: __error", wine_cv_libc_r__error,
-  [AC_TRY_RUN([int myerrno = 0;
-char buf[256];
-int *__error(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}],
-    wine_cv_libc_r__error=yes, wine_cv_libc_r__error=no,
-    wine_cv_libc_r__error=yes )
-])
-if test "$wine_cv_libc_r__error" = "yes"
-then
-    AC_DEFINE(HAVE__ERROR)
-    wine_cv_libc_reentrant=__error 
-fi
-dnl
+WINE_CHECK_ERRNO(__error)
 dnl Solaris style errno location
-dnl 
-AC_CACHE_CHECK("for reentrant libc: ___errno", wine_cv_libc_r___errno,
-  [AC_TRY_RUN([int myerrno = 0;
-char buf[256];
-int *___errno(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}],
-    wine_cv_libc_r___errno=yes, wine_cv_libc_r___errno=no,
-    wine_cv_libc_r___errno=yes )
-])
-if test "$wine_cv_libc_r___errno" = "yes"
-then
-    AC_DEFINE(HAVE___ERRNO)
-    wine_cv_libc_reentrant=___errno 
-fi
-dnl
+WINE_CHECK_ERRNO(___errno)
 dnl UnixWare style errno location
-dnl 
-AC_CACHE_CHECK("for reentrant libc: __thr_errno", wine_cv_libc_r__thr_errno,
-  [AC_TRY_RUN([int myerrno = 0;
-char buf[256];
-int *__thr_errno(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}],
-    wine_cv_libc_r__thr_errno=yes, wine_cv_libc_r__thr_errno=no,
-    wine_cv_libc_r__thr_errno=yes )
-])
-if test "$wine_cv_libc_r__thr_errno" = "yes"
+WINE_CHECK_ERRNO(__thr_errno)
+
+if test "$wine_cv_libc_reentrant" != "no" 
 then
-    AC_DEFINE(HAVE__THR_ERRNO)
-    wine_cv_libc_reentrant=__thr_errno 
-fi
-if test "$wine_cv_libc_reentrant" = "no" 
-then
-  AC_DEFINE(NO_REENTRANT_LIBC)
+  AC_DEFINE_UNQUOTED(ERRNO_LOCATION,$wine_cv_libc_reentrant)
 fi
 
 dnl **** Check for reentrant X libraries ****

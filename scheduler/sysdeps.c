@@ -6,13 +6,6 @@
 
 #include "config.h"
 
-/* Get pointers to the static errno and h_errno variables used by Xlib. This
-   must be done before including <errno.h> makes the variables invisible.  */
-extern int errno;
-static int *perrno = &errno;
-extern int h_errno;
-static int *ph_errno = &h_errno;
-
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -36,9 +29,6 @@ static int *ph_errno = &h_errno;
 
 DEFAULT_DEBUG_CHANNEL(thread);
 
-/* Xlib critical section (FIXME: does not belong here) */
-CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT;
-
 #ifdef linux
 # ifdef HAVE_SCHED_H
 #  include <sched.h>
@@ -51,55 +41,6 @@ CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT;
 #  define CLONE_PID     0x00001000
 # endif  /* CLONE_VM */
 #endif  /* linux */
-
-static int init_done;
-
-#ifndef NO_REENTRANT_LIBC
-
-/***********************************************************************
- *           __errno_location/__error/___errno
- *
- * Get the per-thread errno location.
- */
-#ifdef HAVE__ERRNO_LOCATION
-int *__errno_location()
-#endif
-#ifdef HAVE__ERROR
-int *__error()
-#endif
-#ifdef HAVE___ERRNO
-int *___errno()
-#endif
-#ifdef HAVE__THR_ERRNO
-int *__thr_errno()
-#endif
-{
-    if (!init_done) return perrno;
-#ifdef NO_REENTRANT_X11
-    /* Use static libc errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId())
-        return perrno;
-#endif
-    return &NtCurrentTeb()->thread_errno;
-}
-
-/***********************************************************************
- *           __h_errno_location
- *
- * Get the per-thread h_errno location.
- */
-int *__h_errno_location()
-{
-    if (!init_done) return ph_errno;
-#ifdef NO_REENTRANT_X11
-    /* Use static libc h_errno while running in Xlib. */
-    if (X11DRV_CritSection.OwningThread == GetCurrentThreadId())
-        return ph_errno;
-#endif
-    return &NtCurrentTeb()->thread_h_errno;
-}
-
-#endif /* NO_REENTRANT_LIBC */
 
 /***********************************************************************
  *           SYSDEPS_SetCurThread
@@ -115,8 +56,6 @@ void SYSDEPS_SetCurThread( TEB *teb )
     /* On non-i386 Solaris, we use the LWP private pointer */
     _lwp_setprivate( teb );
 #endif
-
-    init_done = 1;  /* now we can use threading routines */
 }
 
 /***********************************************************************
@@ -150,7 +89,7 @@ static void SYSDEPS_StartThread( TEB *teb )
  */
 int SYSDEPS_SpawnThread( TEB *teb )
 {
-#ifndef NO_REENTRANT_LIBC
+#ifdef ERRNO_LOCATION
 
 #ifdef linux
     const int flags = CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD;
@@ -192,7 +131,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
     return 0;
 #endif
 
-#endif /* NO_REENTRANT_LIBC */
+#endif /* ERRNO_LOCATION */
 
     FIXME("CreateThread: stub\n" );
     return 0;

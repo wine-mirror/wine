@@ -27,6 +27,10 @@ extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned c
 
 extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
 
+/* errno support */
+extern int* (*wine_errno_location)(void);
+extern int* (*wine_h_errno_location)(void);
+
 /* LDT management */
 
 extern void wine_ldt_get_entry( unsigned short sel, LDT_ENTRY *entry );
