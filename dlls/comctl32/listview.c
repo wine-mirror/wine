@@ -1572,6 +1572,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     TRACE("(lpLVItem=%s)\n", debuglvitem_t(lpLVItem, TRUE));
 	
     /* Be smart and try to figure out the minimum we have to do */
+    if (lpLVItem->iSubItem) assert(uView == LVS_REPORT);
     if (lprcBounds)
     {
 	if (uView == LVS_REPORT) doIcon = TRUE;
@@ -1589,11 +1590,18 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     /************************************************************/
     /* compute the box rectangle (it should be cheap to do)     */
     /************************************************************/
-    Box.left = 0;
+    if (lpLVItem->iSubItem)
+    {
+        if (!Header_GetItemRect(infoPtr->hwndHeader, lpLVItem->iSubItem, &Box)) return FALSE;
+    }
+    else
+    {
+	Box.left = 0;
+	Box.right = infoPtr->nItemWidth;
+    }
     Box.top = 0;
-    Box.right = infoPtr->nItemWidth;
     Box.bottom = infoPtr->nItemHeight;
-
+		
     /************************************************************/
     /* compute STATEICON bounding box                           */
     /************************************************************/
@@ -1609,14 +1617,21 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	else
 	{
 	    /* we need the ident in report mode, if we don't have it, we fail */
-	    assert(uView != LVS_REPORT || (lpLVItem->mask & LVIF_INDENT));
 	    State.left = Box.left;
-	    if (uView == LVS_REPORT) State.left += infoPtr->iconSize.cx * lpLVItem->iIndent;
+	    if (uView == LVS_REPORT) 
+	    {
+		State.left += REPORT_MARGINX;
+		if (lpLVItem->iSubItem == 0)
+		{
+		    assert(lpLVItem->mask & LVIF_INDENT);
+		    State.left += infoPtr->iconSize.cx * lpLVItem->iIndent;
+		}
+	    }
 	    State.top  = Box.top;
 	}	
 	State.right    = State.left;
 	State.bottom   = State.top;
-	if (infoPtr->himlState)
+	if (infoPtr->himlState && lpLVItem->iSubItem == 0)
 	{
 	    State.right  += infoPtr->iconStateSize.cx;
 	    State.bottom += infoPtr->iconStateSize.cy;
@@ -1647,10 +1662,11 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
 	    Icon.left = State.right;
-	    if (infoPtr->himlState) Icon.left += IMAGE_PADDING;
+	    if (!IsRectEmpty(&State)) Icon.left += IMAGE_PADDING;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
-	    if (infoPtr->himlSmall) Icon.right += infoPtr->iconSize.cx;
+	    /* FIXME: add suport for icons for subitems */
+	    if (infoPtr->himlSmall && lpLVItem->iSubItem == 0) Icon.right += infoPtr->iconSize.cx;
 	    Icon.bottom = Icon.top + infoPtr->nItemHeight;
 	}
 	if(lprcIcon) *lprcIcon = Icon;
@@ -1664,12 +1680,13 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     {
 	SIZE labelSize = { 0, 0 };
 
-	if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (uView == LVS_REPORT))
+	if (lpLVItem->iSubItem || ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && uView == LVS_REPORT))
 	{
 	   labelSize.cx = infoPtr->nItemWidth;
 	   labelSize.cy = infoPtr->nItemHeight;
 	   goto calc_label;
 	}
+	
 	/* we need the text in non owner draw mode */
 	assert(lpLVItem->mask & LVIF_TEXT);
 	if (is_textT(lpLVItem->pszText, TRUE))
@@ -1722,10 +1739,9 @@ calc_label:
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
 	    Label.left = Icon.right;
-	    if (infoPtr->himlSmall) Label.left += IMAGE_PADDING;
+	    if (!IsRectEmpty(&Icon) || !IsRectEmpty(&State)) Label.left += IMAGE_PADDING;
 	    Label.top = Box.top;
-	    Label.right = Label.left + labelSize.cx;
-	    if (Label.right > Box.right) Label.right = Box.right;
+	    Label.right = min(Label.left + labelSize.cx, Box.right - (uView == LVS_REPORT ? REPORT_MARGINX : 0));
 	    Label.bottom = Label.top + infoPtr->nItemHeight;
 	}
   
@@ -3227,66 +3243,13 @@ static inline BOOL LISTVIEW_FillBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc, const REC
 
 /***
  * DESCRIPTION:
- * Draws a subitem.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] HDC : device context handle
- * [I] INT : item index
- * [I] INT : subitem index
- * [I] RECT * : clipping rectangle
- * [I] cdmode : custom draw mode
- *
- * RETURN:
- *   Success: TRUE
- *   Failure: FALSE
- */
-static BOOL LISTVIEW_DrawSubItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, 
-		                 INT nSubItem, RECT rcItem, UINT align, DWORD cdmode)
-{
-    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    DWORD cditemmode = CDRF_DODEFAULT;
-    NMLVCUSTOMDRAW nmlvcd;
-    LVITEMW lvItem;
-
-    TRACE("(hdc=%x, nItem=%d, nSubItem=%d, rcItem=%s)\n", 
-	   hdc, nItem, nSubItem, debugrect(&rcItem));
-
-    /* get information needed for drawing the item */
-    lvItem.mask = LVIF_TEXT | LVIF_IMAGE;
-    lvItem.iItem = nItem;
-    lvItem.iSubItem = nSubItem;
-    lvItem.cchTextMax = DISP_TEXT_SIZE;
-    lvItem.pszText = szDispText;
-    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
-    TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
-
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcItem, &lvItem);
-    if (cdmode & CDRF_NOTIFYITEMDRAW)
-        cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
-    if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
-
-    if (lvItem.iImage) FIXME("Draw the image for the subitem\n");
-
-    select_text_attr(infoPtr, hdc, &nmlvcd);
-    DrawTextW(hdc, lvItem.pszText, -1, &rcItem, LV_SL_DT_FLAGS | align);
-
-postpaint:
-    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
-        notify_customdraw(infoPtr, CDDS_ITEMPOSTPAINT, &nmlvcd);
-
-    return TRUE;
-}
-
-
-/***
- * DESCRIPTION:
  * Draws an item.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] hdc : device context handle
  * [I] nItem : item index
+ * [I] nSubItem : subitem index
  * [I] pos : item position in client coordinates
  * [I] cdmode : custom draw mode
  *
@@ -3294,7 +3257,7 @@ postpaint:
  *   Success: TRUE
  *   Failure: FALSE
  */
-static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT pos, DWORD cdmode)
+static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nSubItem, POINT pos, DWORD cdmode)
 {
     UINT uFormat, uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
@@ -3307,11 +3270,12 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT 
     TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
     /* get information needed for drawing the item */
-    lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
+    lvItem.mask = LVIF_TEXT | LVIF_IMAGE;
+    if (nSubItem == 0) lvItem.mask |= LVIF_STATE;
     if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
     lvItem.iItem = nItem;
-    lvItem.iSubItem = 0;
+    lvItem.iSubItem = nSubItem;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
@@ -3333,7 +3297,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT 
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
 
     /* state icons */
-    if (infoPtr->himlState)
+    if (infoPtr->himlState && !IsRectEmpty(&rcState))
     {
         UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
         if (uStateImage)
@@ -3342,24 +3306,46 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, POINT 
 
     /* small icons */
     himl = (uView == LVS_ICON ? infoPtr->himlNormal : infoPtr->himlSmall);
-    if (himl && lvItem.iImage >= 0)
+    if (himl && lvItem.iImage >= 0 && !IsRectEmpty(&rcIcon))
 	ImageList_Draw(himl, lvItem.iImage, hdc, rcIcon.left, rcIcon.top,
 			(lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ? ILD_SELECTED : ILD_NORMAL);
 
     /* Don't bother painting item being edited */
-    if (infoPtr->bEditing && lprcFocus) goto postpaint;
+    if (infoPtr->bEditing && lprcFocus && nSubItem == 0) goto postpaint;
 
     select_text_attr(infoPtr, hdc, &nmlvcd);
 
-    rcSelect = rcLabel;
-    if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
-	rcSelect.right = rcBox.right;
+    /* draw the selection background, if we're drawing the main item */
+    if (nSubItem == 0)
+    {
+	rcSelect = rcLabel;
+    	if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
+	    rcSelect.right = rcBox.right;
    
-    if (lvItem.state & LVIS_SELECTED) 
-        ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
-    if(lprcFocus) *lprcFocus = rcSelect;
-    
-    uFormat = (uView == LVS_ICON ? (lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS) : LV_SL_DT_FLAGS | DT_CENTER);
+    	if (lvItem.state & LVIS_SELECTED) 
+            ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
+    	if(lprcFocus) *lprcFocus = rcSelect;
+    }
+   
+    /* figure out the text drawing flags */
+    uFormat = (uView == LVS_ICON ? (lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS) : LV_SL_DT_FLAGS);
+    if (uView == LVS_ICON)
+	uFormat = (lprcFocus ? LV_FL_DT_FLAGS : LV_ML_DT_FLAGS);
+    else 
+    {
+	INT align = DT_LEFT;
+	
+	if (nSubItem)
+	{
+    	    LVCOLUMNW lvColumn;
+	    lvColumn.mask = LVCF_FMT;
+	    LISTVIEW_GetColumnT(infoPtr, nSubItem, &lvColumn, TRUE);
+	    TRACE("lvColumn=%s\n", debuglvcolumn_t(&lvColumn, TRUE));
+	    if (lvColumn.fmt & LVCFMT_RIGHT) align = DT_RIGHT;
+	    else if (lvColumn.fmt & LVCFMT_CENTER)align = DT_CENTER;
+	}
+	uFormat |= align;
+    }
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
 
 postpaint:
@@ -3454,12 +3440,10 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
  */
 static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
-    INT rgntype, nDrawPosY, j;
-    INT nColumnCount, nFirstCol, nLastCol;
-    RECT rcItem, rcClip;
+    INT rgntype, nColumnCount, nFirstCol, nLastCol, nCol;
+    RECT rcClip;
     COLUMNCACHE *lpCols;
-    LVCOLUMNW lvColumn;
-    POINT ptOrig;
+    POINT Origin, Position;
     ITERATOR i;
 
     TRACE("()\n");
@@ -3472,34 +3456,21 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
     lpCols = COMCTL32_Alloc(nColumnCount * sizeof(COLUMNCACHE));
     if (!lpCols) return;
-    for (j = 0; j < nColumnCount; j++) 
+    for (nCol = 0; nCol < nColumnCount; nCol++) 
     {
-    	Header_GetItemRect(infoPtr->hwndHeader, j, &lpCols[j].rc);
-	TRACE("lpCols[%d].rc=%s\n", j, debugrect(&lpCols[j].rc));
+    	Header_GetItemRect(infoPtr->hwndHeader, nCol, &lpCols[nCol].rc);
+	TRACE("lpCols[%d].rc=%s\n", nCol, debugrect(&lpCols[nCol].rc));
     }
     
     /* Get scroll info once before loop */
-    if (!LISTVIEW_GetOrigin(infoPtr, &ptOrig)) return;
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
     
     /* we now narrow the columns as well */
     nLastCol = nColumnCount - 1;
     for(nFirstCol = 0; nFirstCol < nColumnCount; nFirstCol++)
-	if (lpCols[nFirstCol].rc.right + ptOrig.x >= rcClip.left) break;
+	if (lpCols[nFirstCol].rc.right + Origin.x >= rcClip.left) break;
     for(nLastCol = nColumnCount - 1; nLastCol >= 0; nLastCol--)
-	if (lpCols[nLastCol].rc.left + ptOrig.x < rcClip.right) break;
-
-    /* cache the per-column information before we start drawing */
-    for (j = nFirstCol; j <= nLastCol; j++)
-    {
-	lvColumn.mask = LVCF_FMT;
-	LISTVIEW_GetColumnT(infoPtr, j, &lvColumn, TRUE);
-	TRACE("lvColumn=%s\n", debuglvcolumn_t(&lvColumn, TRUE));
-	lpCols[j].align = DT_LEFT;
-	if (lvColumn.fmt & LVCFMT_RIGHT)
-	    lpCols[j].align = DT_RIGHT;
-	else if (lvColumn.fmt & LVCFMT_CENTER)
-	    lpCols[j].align = DT_CENTER;
-    }
+	if (lpCols[nLastCol].rc.left + Origin.x < rcClip.right) break;
 
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
@@ -3510,29 +3481,24 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     /* iterate through the invalidated rows */
     while(iterator_prev(&i))
     {
-	nDrawPosY = i.nItem * infoPtr->nItemHeight;
-
 	/* iterate through the invalidated columns */
-	for (j = nFirstCol; j <= nLastCol; j++)
+	for (nCol = nFirstCol; nCol <= nLastCol; nCol++)
 	{
-	    rcItem = lpCols[j].rc;
-	    rcItem.left += REPORT_MARGINX;
-	    rcItem.right = max(rcItem.left, rcItem.right - REPORT_MARGINX);
-	    rcItem.top = nDrawPosY;
-	    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+	    if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
+	    Position.x += Origin.x;
+	    Position.y += Origin.y;
 
-	    /* Offset the Scroll Bar Pos */
-	    OffsetRect(&rcItem, ptOrig.x, ptOrig.y);
-
-	    if (rgntype == COMPLEXREGION && !RectVisible(hdc, &rcItem)) continue;
-
-	    if (j == 0)
+	    if (rgntype == COMPLEXREGION)
 	    {
-		POINT pos = { rcItem.left, rcItem.top };
-		LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, pos, cdmode);
+	        RECT rcItem;
+	        rcItem.left = Position.x + lpCols[nCol].rc.left;
+	        rcItem.right = rcItem.left + (lpCols[nCol].rc.right - lpCols[nCol].rc.left);
+	        rcItem.top = Position.y;
+	        rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+		if (!RectVisible(hdc, &rcItem)) continue;
 	    }
-	    else
-		LISTVIEW_DrawSubItem(infoPtr, hdc, i.nItem, j, rcItem, lpCols[j].align, cdmode);
+
+	    LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, nCol, Position, cdmode);
 	}
     }
     iterator_destroy(&i);
@@ -3570,7 +3536,7 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 	Position.x += Origin.x;
 	Position.y += Origin.y;
 
-        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, Position, cdmode);
+        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, 0, Position, cdmode);
     }
     iterator_destroy(&i);
 }
