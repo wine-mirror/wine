@@ -1293,42 +1293,6 @@ end:
   return hr;
 }
 
-static HRESULT WINAPI Remote_CoGetClassObject(
-    REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
-    REFIID iid, LPVOID *ppv
-) {
-  HKEY		key;
-  char 		buf[200];
-  HRESULT	hres = E_UNEXPECTED;
-  char		xclsid[80];
-  WCHAR 	dllName[MAX_PATH+1];
-  DWORD 	dllNameLen = sizeof(dllName);
-  STARTUPINFOW	sinfo;
-  PROCESS_INFORMATION	pinfo;
-
-  WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
-
-  sprintf(buf,"CLSID\\%s\\LocalServer32",xclsid);
-  hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key);
-
-  if (hres != ERROR_SUCCESS)
-      return REGDB_E_CLASSNOTREG;
-
-  memset(dllName,0,sizeof(dllName));
-  hres= RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)dllName,&dllNameLen);
-  if (hres)
-	  return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
-  RegCloseKey(key);
-
-  TRACE("found LocalServer32 exe %s\n", debugstr_w(dllName));
-
-  memset(&sinfo,0,sizeof(sinfo));
-  sinfo.cb = sizeof(sinfo);
-  if (!CreateProcessW(NULL,dllName,NULL,NULL,FALSE,0,NULL,NULL,&sinfo,&pinfo))
-      return E_FAIL;
-  return create_marshalled_proxy(rclsid,iid,ppv);
-}
-
 /***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
  *           CoGetClassObject [OLE32.16]
@@ -1389,7 +1353,9 @@ HRESULT WINAPI CoGetClassObject(
 
     if (((CLSCTX_LOCAL_SERVER) & dwClsContext)
         && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext))
-	return Remote_CoGetClassObject(rclsid,dwClsContext,pServerInfo,iid,ppv);
+	return create_marshalled_proxy(rclsid,iid,ppv);
+
+  
 
     /* remote servers not supported yet */
     if (     ((CLSCTX_REMOTE_SERVER) & dwClsContext)
