@@ -1,0 +1,79 @@
+#ifndef __INCLUDE_WINUSER_H
+#define __INCLUDE_WINUSER_H
+
+#include "wintypes.h"
+#include "wingdi.h"
+
+#pragma pack(1)
+
+/*
+ * FIXME This is very partial. Only the few things that help partitioning
+ *       got here
+ */
+
+typedef struct _PRINTER_DEFAULTS32A {
+    LPSTR        pDatatype;
+    LPDEVMODE32A pDevMode;
+    ACCESS_MASK  DesiredAccess;
+} PRINTER_DEFAULTS32A, *LPPRINTER_DEFAULTS32A;
+
+typedef struct _PRINTER_DEFAULTS32W {
+    LPWSTR       pDatatype;
+    LPDEVMODE32W pDevMode;
+    ACCESS_MASK  DesiredAccess;
+} PRINTER_DEFAULTS32W, *LPPRINTER_DEFAULTS32W;
+
+DECL_WINELIB_TYPE_AW(PRINTER_DEFAULTS)
+DECL_WINELIB_TYPE_AW(LPPRINTER_DEFAULTS)
+
+#define MONITOR_DEFAULTTONULL       0x00000000
+#define MONITOR_DEFAULTTOPRIMARY    0x00000001
+#define MONITOR_DEFAULTTONEAREST    0x00000002
+
+#define MONITORINFOF_PRIMARY        0x00000001
+
+typedef struct tagMONITORINFO
+{
+    DWORD   cbSize;
+    RECT32  rcMonitor;
+    RECT32  rcWork;
+    DWORD   dwFlags;
+} MONITORINFO, *LPMONITORINFO;
+
+typedef struct tagMONITORINFOEX32A
+{
+    MONITORINFO dummy;
+    CHAR        szDevice[CCHDEVICENAME];
+} MONITORINFOEX32A, *LPMONITORINFOEX32A;
+
+typedef struct tagMONITORINFOEX32W
+{
+    MONITORINFO dummy;
+    WCHAR       szDevice[CCHDEVICENAME];
+} MONITORINFOEX32W, *LPMONITORINFOEX32W;
+
+DECL_WINELIB_TYPE_AW(MONITORINFOEX)
+DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
+
+typedef BOOL32  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC32,LPRECT32,LPARAM);
+
+#pragma pack(4)
+
+BOOL32      WINAPI EnumDisplayMonitors(HDC32,LPRECT32,MONITORENUMPROC,LPARAM);
+BOOL32      WINAPI GetMonitorInfo32A(HMONITOR,LPMONITORINFO);
+BOOL32      WINAPI GetMonitorInfo32W(HMONITOR,LPMONITORINFO);
+#define     GetMonitorInfo WINELIB_NAME_AW(GetMonitorInfo)
+HDC16       WINAPI BeginPaint16(HWND16,LPPAINTSTRUCT16);
+HDC32       WINAPI BeginPaint32(HWND32,LPPAINTSTRUCT32);
+#define     BeginPaint WINELIB_NAME(BeginPaint)
+BOOL16      WINAPI EndPaint16(HWND16,const PAINTSTRUCT16*);
+BOOL32      WINAPI EndPaint32(HWND32,const PAINTSTRUCT32*);
+#define     EndPaint WINELIB_NAME(EndPaint)
+COLORREF    WINAPI GetSysColor16(INT16);
+COLORREF    WINAPI GetSysColor32(INT32);
+#define     GetSysColor WINELIB_NAME(GetSysColor)
+VOID        WINAPI SetSysColors16(INT16,const INT16*,const COLORREF*);
+BOOL32      WINAPI SetSysColors32(INT32,const INT32*,const COLORREF*);
+#define     SetSysColors WINELIB_NAME(SetSysColors)
+
+#endif /* __INCLUDE_WINUSER_H */

@@ -406,6 +406,81 @@ DECL_WINELIB_TYPE(HWND)
 extern int __winelib;
 #endif  /* __WINE__ */
 
+/* The SIZE structure */
+
+typedef struct
+{
+    INT16  cx;
+    INT16  cy;
+} SIZE16, *LPSIZE16;
+
+typedef struct
+{
+    INT32  cx;
+    INT32  cy;
+} SIZE32, *LPSIZE32;
+
+DECL_WINELIB_TYPE(SIZE)
+DECL_WINELIB_TYPE(LPSIZE)
+
+#define CONV_SIZE16TO32(s16,s32) \
+            ((s32)->cx = (INT32)(s16)->cx, (s32)->cy = (INT32)(s16)->cy)
+#define CONV_SIZE32TO16(s32,s16) \
+            ((s16)->cx = (INT16)(s32)->cx, (s16)->cy = (INT16)(s32)->cy)
+
+/* The POINT structure */
+
+typedef struct
+{
+    INT16  x;
+    INT16  y;
+} POINT16, *LPPOINT16;
+
+typedef struct
+{
+    INT32  x;
+    INT32  y;
+} POINT32, *LPPOINT32;
+
+DECL_WINELIB_TYPE(POINT)
+DECL_WINELIB_TYPE(LPPOINT)
+
+#define CONV_POINT16TO32(p16,p32) \
+            ((p32)->x = (INT32)(p16)->x, (p32)->y = (INT32)(p16)->y)
+#define CONV_POINT32TO16(p32,p16) \
+            ((p16)->x = (INT16)(p32)->x, (p16)->y = (INT16)(p32)->y)
+
+#define MAKEPOINT16(l) (*((POINT16 *)&(l)))
+#define MAKEPOINT WINELIB_NAME(MAKEPOINT)
+
+/* The RECT structure */
+
+typedef struct
+{
+    INT16  left;
+    INT16  top;
+    INT16  right;
+    INT16  bottom;
+} RECT16, *LPRECT16;
+
+typedef struct
+{
+    INT32  left;
+    INT32  top;
+    INT32  right;
+    INT32  bottom;
+} RECT32, *LPRECT32;
+
+DECL_WINELIB_TYPE(RECT)
+DECL_WINELIB_TYPE(LPRECT)
+
+#define CONV_RECT16TO32(r16,r32) \
+    ((r32)->left  = (INT32)(r16)->left,  (r32)->top    = (INT32)(r16)->top, \
+     (r32)->right = (INT32)(r16)->right, (r32)->bottom = (INT32)(r16)->bottom)
+#define CONV_RECT32TO16(r32,r16) \
+    ((r16)->left  = (INT16)(r32)->left,  (r16)->top    = (INT16)(r32)->top, \
+     (r16)->right = (INT16)(r32)->right, (r16)->bottom = (INT16)(r32)->bottom)
+
 #ifdef __cplusplus
 }
 #endif
