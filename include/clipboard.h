@@ -10,6 +10,7 @@ typedef struct tagWINE_CLIPFORMAT {
     WORD	wRefCount;
     WORD	wDataPresent;
     LPSTR	Name;
+    HANDLE	hDataSrc32;
     HANDLE	hData32;
     DWORD	BufSize;
     struct tagWINE_CLIPFORMAT *PrevFormat;

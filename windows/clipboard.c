@@ -41,22 +41,22 @@ static HWND hWndViewer     = 0;   /* start of viewers chain */
 static WORD LastRegFormat = CF_REGFORMATBASE;
 
 WINE_CLIPFORMAT ClipFormats[16]  = {
-    { CF_TEXT, 1, 0, "Text", (HANDLE)NULL, 0, NULL, &ClipFormats[1] , (HANDLE16)NULL},
-    { CF_BITMAP, 1, 0, "Bitmap", (HANDLE)NULL, 0, &ClipFormats[0], &ClipFormats[2] , (HANDLE16)NULL},
-    { CF_METAFILEPICT, 1, 0, "MetaFile Picture", (HANDLE)NULL, 0, &ClipFormats[1], &ClipFormats[3] , (HANDLE16)NULL},
-    { CF_SYLK, 1, 0, "Sylk", (HANDLE)NULL, 0, &ClipFormats[2], &ClipFormats[4] , (HANDLE16)NULL},
-    { CF_DIF, 1, 0, "DIF", (HANDLE)NULL, 0, &ClipFormats[3], &ClipFormats[5] , (HANDLE16)NULL},
-    { CF_TIFF, 1, 0, "TIFF", (HANDLE)NULL, 0, &ClipFormats[4], &ClipFormats[6] , (HANDLE16)NULL},
-    { CF_OEMTEXT, 1, 0, "OEM Text", (HANDLE)NULL, 0, &ClipFormats[5], &ClipFormats[7] , (HANDLE16)NULL},
-    { CF_DIB, 1, 0, "DIB", (HANDLE)NULL, 0, &ClipFormats[6], &ClipFormats[8] , (HANDLE16)NULL},
-    { CF_PALETTE, 1, 0, "Palette", (HANDLE)NULL, 0, &ClipFormats[7], &ClipFormats[9] , (HANDLE16)NULL},
-    { CF_PENDATA, 1, 0, "PenData", (HANDLE)NULL, 0, &ClipFormats[8], &ClipFormats[10] , (HANDLE16)NULL},
-    { CF_RIFF, 1, 0, "RIFF", (HANDLE)NULL, 0, &ClipFormats[9], &ClipFormats[11] , (HANDLE16)NULL},
-    { CF_WAVE, 1, 0, "Wave", (HANDLE)NULL, 0, &ClipFormats[10], &ClipFormats[12] , (HANDLE16)NULL},
-    { CF_OWNERDISPLAY, 1, 0, "Owner Display", (HANDLE)NULL, 0, &ClipFormats[11], &ClipFormats[13] , (HANDLE16)NULL},
-    { CF_DSPTEXT, 1, 0, "DSPText", (HANDLE)NULL, 0, &ClipFormats[12], &ClipFormats[14] , (HANDLE16)NULL},
-    { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", (HANDLE)NULL, 0, &ClipFormats[13], &ClipFormats[15] , (HANDLE16)NULL},
-    { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE)NULL, 0, &ClipFormats[14], NULL , (HANDLE16)NULL}
+    { CF_TEXT, 1, 0, "Text", (HANDLE)NULL, (HANDLE)NULL, 0, NULL, &ClipFormats[1] , (HANDLE16)NULL},
+    { CF_BITMAP, 1, 0, "Bitmap", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[0], &ClipFormats[2] , (HANDLE16)NULL},
+    { CF_METAFILEPICT, 1, 0, "MetaFile Picture", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[1], &ClipFormats[3] , (HANDLE16)NULL},
+    { CF_SYLK, 1, 0, "Sylk", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[2], &ClipFormats[4] , (HANDLE16)NULL},
+    { CF_DIF, 1, 0, "DIF", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[3], &ClipFormats[5] , (HANDLE16)NULL},
+    { CF_TIFF, 1, 0, "TIFF", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[4], &ClipFormats[6] , (HANDLE16)NULL},
+    { CF_OEMTEXT, 1, 0, "OEM Text", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[5], &ClipFormats[7] , (HANDLE16)NULL},
+    { CF_DIB, 1, 0, "DIB", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[6], &ClipFormats[8] , (HANDLE16)NULL},
+    { CF_PALETTE, 1, 0, "Palette", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[7], &ClipFormats[9] , (HANDLE16)NULL},
+    { CF_PENDATA, 1, 0, "PenData", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[8], &ClipFormats[10] , (HANDLE16)NULL},
+    { CF_RIFF, 1, 0, "RIFF", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[9], &ClipFormats[11] , (HANDLE16)NULL},
+    { CF_WAVE, 1, 0, "Wave", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[10], &ClipFormats[12] , (HANDLE16)NULL},
+    { CF_OWNERDISPLAY, 1, 0, "Owner Display", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[11], &ClipFormats[13] , (HANDLE16)NULL},
+    { CF_DSPTEXT, 1, 0, "DSPText", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[12], &ClipFormats[14] , (HANDLE16)NULL},
+    { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[13], &ClipFormats[15] , (HANDLE16)NULL},
+    { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[14], NULL , (HANDLE16)NULL}
     };
 
 static LPWINE_CLIPFORMAT __lookup_format( LPWINE_CLIPFORMAT lpFormat, WORD wID )
@@ -109,6 +109,8 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
       {
         DeleteMetaFile( ((METAFILEPICT *)GlobalLock( lpFormat->hData32 ))->hMF );
 	GlobalFree(lpFormat->hData32);
+        if (lpFormat->hDataSrc32)
+          GlobalFree(lpFormat->hDataSrc32);
 	if (lpFormat->hData16)
 	  /* HMETAFILE16 and HMETAFILE32 are apparently the same thing, 
 	     and a shallow copy is enough to share a METAFILEPICT
@@ -116,7 +118,7 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
 	     should of course only be deleted once. */
 	  GlobalFree16(lpFormat->hData16);
       }
-      else if (lpFormat->hData16)
+      if (lpFormat->hData16)
       {
 	DeleteMetaFile16( ((METAFILEPICT16 *)GlobalLock16( lpFormat->hData16 ))->hMF );
 	GlobalFree16(lpFormat->hData16);
@@ -126,6 +128,8 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
     {
       if (lpFormat->hData32)
 	GlobalFree(lpFormat->hData32);
+      if (lpFormat->hDataSrc32)
+        GlobalFree(lpFormat->hDataSrc32);
       if (lpFormat->hData16)
 	GlobalFree16(lpFormat->hData16);
     }
@@ -153,6 +157,63 @@ BOOL CLIPBOARD_IsPresent(WORD wFormat)
 	if( lpFormat ) return (lpFormat->wDataPresent);
     }
     return FALSE;
+}
+
+/**************************************************************************
+ *			CLIPBOARD_IsMemoryObject
+ *  Tests if the clipboard format specifies a memory object
+ */
+BOOL CLIPBOARD_IsMemoryObject( WORD wFormat )
+{
+    switch(wFormat)
+    {
+        case CF_BITMAP:
+        case CF_METAFILEPICT:
+        case CF_DSPTEXT:
+        case CF_ENHMETAFILE:
+        case CF_HDROP:
+        case CF_PALETTE:
+        case CF_PENDATA:
+            return FALSE;
+        default:
+            return TRUE;
+     }
+}
+
+/***********************************************************************
+ * CLIPBOARD_GlobalDupMem( HGLOBAL )
+ * Helper method to duplicate an HGLOBAL chunk of memory into shared memory
+ */
+HGLOBAL CLIPBOARD_GlobalDupMem( HGLOBAL hGlobalSrc )
+{
+    HGLOBAL hGlobalDest;
+    PVOID pGlobalSrc, pGlobalDest;
+    DWORD cBytes;
+    
+    if ( !hGlobalSrc )
+      return 0;
+
+    cBytes = GlobalSize(hGlobalSrc);
+    if ( 0 == cBytes )
+      return 0;
+
+    /* Turn on the DDESHARE and _MOVEABLE flags explicitly */
+    hGlobalDest = GlobalAlloc( GlobalFlags(hGlobalSrc) | GMEM_DDESHARE | GMEM_MOVEABLE,
+                               cBytes );
+    if ( !hGlobalDest )
+      return 0;
+    
+    pGlobalSrc = GlobalLock(hGlobalSrc);
+    pGlobalDest = GlobalLock(hGlobalDest);
+    if ( !pGlobalSrc || !pGlobalDest )
+      return 0;
+
+    memcpy(pGlobalDest, pGlobalSrc, cBytes);
+        
+    GlobalUnlock(hGlobalSrc);
+    GlobalUnlock(hGlobalDest);
+
+    return hGlobalDest;
 }
 
 /**************************************************************************
@@ -365,7 +426,17 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
 
     bCBHasChanged = TRUE;
     lpFormat->wDataPresent = 1;
+    lpFormat->hDataSrc32 = hData;  /* Save the source handle */
+
+    /*
+     * Make a shared duplicate if the memory is not shared
+     * TODO: What should be done for non-memory objects
+     */
+    if ( CLIPBOARD_IsMemoryObject(wFormat) && hData && !(GlobalFlags(hData) & GMEM_DDESHARE) )
+        lpFormat->hData32 = CLIPBOARD_GlobalDupMem( hData );
+    else
     lpFormat->hData32 = hData;          /* 0 is legal, see WM_RENDERFORMAT */
+    
     lpFormat->hData16 = 0;
 
     return lpFormat->hData32;
@@ -569,7 +640,8 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
 	size = sizeof( METAFILEPICT );
       else
 	size = GlobalSize16(lpUpdate->hData16);
-      lpUpdate->hData32 = GlobalAlloc(GMEM_ZEROINIT, size); 
+      lpUpdate->hData32 = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | GMEM_DDESHARE,
+                                      size);
       if( lpUpdate->wFormatID == CF_METAFILEPICT )
       {
 	FIXME("\timplement function CopyMetaFilePict16to32\n");
@@ -729,6 +801,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
     lpNewFormat->wDataPresent = 0;
     lpNewFormat->hData16 = 0;
+    lpNewFormat->hDataSrc32 = 0;
     lpNewFormat->hData32 = 0;
     lpNewFormat->BufSize = 0;
     lpNewFormat->PrevFormat = lpFormat;
