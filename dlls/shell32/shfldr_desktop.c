@@ -75,8 +75,6 @@ typedef struct {
 #define _IUnknown_(This)	(IShellFolder*)&(This->lpVtbl)
 #define _IShellFolder_(This)	(IShellFolder*)&(This->lpVtbl)
 
-HRESULT WINAPI ISF_MyComputer_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
-
 static struct ICOM_VTABLE (IShellFolder2) vt_MCFldr_ShellFolder2;
 
 static shvheader DesktopSFHeader[] = {
@@ -417,7 +415,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
     if (ppvOut) {
 	*ppvOut = NULL;
 
-	if (IsEqualIID (riid, &IID_IContextMenu) && (cidl >= 1)) {
+	if (IsEqualIID (riid, &IID_IContextMenu)) {
 	    pObj = (LPUNKNOWN) ISvItemCm_Constructor ((IShellFolder *) iface, This->pidlRoot, apidl, cidl);
 	    hr = S_OK;
 	} else if (IsEqualIID (riid, &IID_IDataObject) && (cidl >= 1)) {
@@ -444,7 +442,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetUIObjectOf (IShellFolder2 * iface,
 	    hr = E_NOINTERFACE;
 	}
 
-	if (!pObj)
+	if (SUCCEEDED(hr) && !pObj)
 	    hr = E_OUTOFMEMORY;
 
 	*ppvOut = pObj;
@@ -464,9 +462,11 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 {
     ICOM_THIS (IGenericSFImpl, iface);
 
-    CHAR szPath[MAX_PATH] = "";
+    CHAR szPath[MAX_PATH];
     GUID const *clsid;
     HRESULT hr = S_OK;
+
+    *szPath = '\0';
 
     TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
