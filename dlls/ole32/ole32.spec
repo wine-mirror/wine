@@ -36,11 +36,11 @@ init	OLE32_DllEntryPoint
  34 stdcall CoMarshalInterface(ptr ptr ptr long ptr long) CoMarshalInterface
  35 stub CoQueryReleaseObject
  36 stdcall CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject
- 37 stub CoRegisterMallocSpy        # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
+ 37 stdcall CoRegisterMallocSpy (ptr) CoRegisterMallocSpy
  38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter
  39 stub CoReleaseMarshalData       # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
  40 stdcall CoRevokeClassObject(long) CoRevokeClassObject
- 41 stub CoRevokeMallocSpy          # stdcall () return 0,ERR_NOTIMPLEMENTED
+ 41 stdcall CoRevokeMallocSpy() CoRevokeMallocSpy
  42 stdcall CoSetState(ptr) CoSetState
  43 stdcall CoTaskMemAlloc(long) CoTaskMemAlloc
  44 stdcall CoTaskMemFree(ptr) CoTaskMemFree

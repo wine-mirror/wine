@@ -24,6 +24,8 @@
 #ifndef __WINE_WINE_OBJ_MISC_H
 #define __WINE_WINE_OBJ_MISC_H
 
+#include "wine/obj_base.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -103,7 +105,7 @@ ICOM_DEFINE(IEnumUnknown,IUnknown)
 #define ICOM_INTERFACE IMallocSpy
 #define IMallocSpy_METHODS \
     ICOM_METHOD1 (ULONG,PreAlloc,        ULONG,cbRequest) \
-    ICOM_VMETHOD1(      PostAlloc,       void*,pActual) \
+    ICOM_METHOD1 (PVOID,PostAlloc,       void*,pActual) \
     ICOM_METHOD2 (PVOID,PreFree,         void*,pRequest, BOOL,fSpyed) \
     ICOM_VMETHOD1(      PostFree,        BOOL,fSpyed) \
     ICOM_METHOD4 (ULONG,PreRealloc,      void*,pRequest, ULONG,cbRequest, void**,ppNewRequest, BOOL,fSpyed) \

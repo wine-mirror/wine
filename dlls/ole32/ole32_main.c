@@ -22,6 +22,7 @@
 #include "winerror.h"
 #include "ole32_main.h"
 #include "wine/debug.h"
+#include "wine/obj_misc.h" /* FIXME: CoRegisterMallocSpy */
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -39,9 +40,11 @@ BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImp
     case DLL_PROCESS_ATTACH:
         OLE32_hInstance = hinstDLL;
         COMPOBJ_InitProcess();
+	if (TRACE_ON(ole)) CoRegisterMallocSpy((LPVOID)-1);
 	break;
 
     case DLL_PROCESS_DETACH:
+        if (TRACE_ON(ole)) CoRevokeMallocSpy();
         COMPOBJ_UninitProcess();
         OLE32_hInstance = 0;
 	break;

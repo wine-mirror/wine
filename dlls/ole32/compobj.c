@@ -126,9 +126,6 @@ HINSTANCE16     COMPOBJ_hInstance = 0;
 HINSTANCE       COMPOBJ_hInstance32 = 0;
 static int      COMPOBJ_Attach = 0;
 
-LPMALLOC16 currentMalloc16=NULL;
-LPMALLOC currentMalloc32=NULL;
-
 HTASK16 hETask = 0;
 WORD Table_ETask[62];
 
@@ -210,6 +207,35 @@ DWORD WINAPI CoBuildVersion(void)
 {
     TRACE("Returning version %d, build %d.\n", rmm, rup);
     return (rmm<<16)+rup;
+}
+
+LPMALLOC16 currentMalloc16=NULL;
+
+/***********************************************************************
+ *           CoGetMalloc    [COMPOBJ.4]
+ * RETURNS
+ *	The current win16 IMalloc
+ */
+HRESULT WINAPI CoGetMalloc16(
+	DWORD dwMemContext,	/* [in] unknown */
+	LPMALLOC16 * lpMalloc	/* [out] current win16 malloc interface */
+) {
+    if(!currentMalloc16)
+	currentMalloc16 = IMalloc16_Constructor();
+    *lpMalloc = currentMalloc16;
+    return S_OK;
+}
+
+/***********************************************************************
+ *           CoCreateStandardMalloc [COMPOBJ.71]
+ */
+HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
+					  LPMALLOC16 *lpMalloc)
+{
+    /* FIXME: docu says we shouldn't return the same allocator as in
+     * CoGetMalloc16 */
+    *lpMalloc = IMalloc16_Constructor();
+    return S_OK;
 }
 
 /******************************************************************************
@@ -365,49 +391,6 @@ void WINAPI CoUninitialize(void)
     ERR( "CoUninitialize() - not CoInitialized.\n" );
     InterlockedExchangeAdd(&s_COMLockCount,1); /* restore the lock count. */
   }
-}
-
-/***********************************************************************
- *           CoGetMalloc    [COMPOBJ.4]
- * RETURNS
- *	The current win16 IMalloc
- */
-HRESULT WINAPI CoGetMalloc16(
-	DWORD dwMemContext,	/* [in] unknown */
-	LPMALLOC16 * lpMalloc	/* [out] current win16 malloc interface */
-) {
-    if(!currentMalloc16)
-	currentMalloc16 = IMalloc16_Constructor();
-    *lpMalloc = currentMalloc16;
-    return S_OK;
-}
-
-/******************************************************************************
- *		CoGetMalloc	[OLE32.20]
- *
- * RETURNS
- *	The current win32 IMalloc
- */
-HRESULT WINAPI CoGetMalloc(
-	DWORD dwMemContext,	/* [in] unknown */
-	LPMALLOC *lpMalloc	/* [out] current win32 malloc interface */
-) {
-    if(!currentMalloc32)
-	currentMalloc32 = IMalloc_Constructor();
-    *lpMalloc = currentMalloc32;
-    return S_OK;
-}
-
-/***********************************************************************
- *           CoCreateStandardMalloc [COMPOBJ.71]
- */
-HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
-					  LPMALLOC16 *lpMalloc)
-{
-    /* FIXME: docu says we shouldn't return the same allocator as in
-     * CoGetMalloc16 */
-    *lpMalloc = IMalloc16_Constructor();
-    return S_OK;
 }
 
 /******************************************************************************
@@ -1779,55 +1762,6 @@ HRESULT WINAPI CoFileTimeNow( FILETIME *lpFileTime ) /* [out] the current time *
 {
     GetSystemTimeAsFileTime( lpFileTime );
     return S_OK;
-}
-
-/***********************************************************************
- *           CoTaskMemAlloc (OLE32.43)
- * RETURNS
- * 	pointer to newly allocated block
- */
-LPVOID WINAPI CoTaskMemAlloc(
-	ULONG size	/* [in] size of memoryblock to be allocated */
-) {
-    LPMALLOC	lpmalloc;
-    HRESULT	ret = CoGetMalloc(0,&lpmalloc);
-
-    if (FAILED(ret))
-	return NULL;
-
-    return IMalloc_Alloc(lpmalloc,size);
-}
-/***********************************************************************
- *           CoTaskMemFree (OLE32.44)
- */
-VOID WINAPI CoTaskMemFree(
-	LPVOID ptr	/* [in] pointer to be freed */
-) {
-    LPMALLOC	lpmalloc;
-    HRESULT	ret = CoGetMalloc(0,&lpmalloc);
-
-    if (FAILED(ret))
-      return;
-
-    IMalloc_Free(lpmalloc, ptr);
-}
-
-/***********************************************************************
- *           CoTaskMemRealloc (OLE32.45)
- * RETURNS
- * 	pointer to newly allocated block
- */
-LPVOID WINAPI CoTaskMemRealloc(
-  LPVOID pvOld,
-  ULONG  size)	/* [in] size of memoryblock to be allocated */
-{
-  LPMALLOC lpmalloc;
-  HRESULT  ret = CoGetMalloc(0,&lpmalloc);
-
-  if (FAILED(ret))
-    return NULL;
-
-  return IMalloc_Realloc(lpmalloc, pvOld, size);
 }
 
 /***********************************************************************
