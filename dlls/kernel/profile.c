@@ -81,8 +81,6 @@ static PROFILE *MRUProfile[N_CACHED_PROFILES]={NULL};
 
 #define CurProfile (MRUProfile[0])
 
-#define PROFILE_MAX_LINE_LEN   1024
-
 /* Check for comments in profile */
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
@@ -156,7 +154,8 @@ static inline void PROFILE_WriteMarker(HANDLE hFile, ENCODING encoding)
 
 static void PROFILE_WriteLine( HANDLE hFile, WCHAR * szLine, int len, ENCODING encoding)
 {
-    char write_buffer[PROFILE_MAX_LINE_LEN];
+    char * write_buffer;
+    int write_buffer_len;
     DWORD dwBytesWritten;
 
     TRACE("writing: %s\n", debugstr_wn(szLine, len));
@@ -164,12 +163,20 @@ static void PROFILE_WriteLine( HANDLE hFile, WCHAR * szLine, int len, ENCODING e
     switch (encoding)
     {
     case ENCODING_ANSI:
-        len = WideCharToMultiByte(CP_ACP, 0, szLine, len, write_buffer, sizeof(write_buffer), NULL, NULL);
-        WriteFile(hFile, write_buffer, len * sizeof(char), &dwBytesWritten, NULL);
+        write_buffer_len = WideCharToMultiByte(CP_ACP, 0, szLine, len, NULL, 0, NULL, NULL);
+        write_buffer = HeapAlloc(GetProcessHeap(), 0, write_buffer_len);
+        if (!write_buffer) return;
+        len = WideCharToMultiByte(CP_ACP, 0, szLine, len, write_buffer, write_buffer_len, NULL, NULL);
+        WriteFile(hFile, write_buffer, len, &dwBytesWritten, NULL);
+        HeapFree(GetProcessHeap(), 0, write_buffer);
         break;
     case ENCODING_UTF8:
-        len = WideCharToMultiByte(CP_UTF8, 0, szLine, len, write_buffer, sizeof(write_buffer), NULL, NULL);
-        WriteFile(hFile, write_buffer, len * sizeof(char), &dwBytesWritten, NULL);
+        write_buffer_len = WideCharToMultiByte(CP_UTF8, 0, szLine, len, NULL, 0, NULL, NULL);
+        write_buffer = HeapAlloc(GetProcessHeap(), 0, write_buffer_len);
+        if (!write_buffer) return;
+        len = WideCharToMultiByte(CP_UTF8, 0, szLine, len, write_buffer, write_buffer_len, NULL, NULL);
+        WriteFile(hFile, write_buffer, len, &dwBytesWritten, NULL);
+        HeapFree(GetProcessHeap(), 0, write_buffer);
         break;
     case ENCODING_UTF16LE:
         WriteFile(hFile, szLine, len * sizeof(WCHAR), &dwBytesWritten, NULL);
@@ -188,36 +195,55 @@ static void PROFILE_WriteLine( HANDLE hFile, WCHAR * szLine, int len, ENCODING e
  *
  * Save a profile tree to a file.
  */
-static void PROFILE_Save( HANDLE hFile, PROFILESECTION *section, ENCODING encoding )
+static void PROFILE_Save( HANDLE hFile, const PROFILESECTION *section, ENCODING encoding )
 {
-    static const WCHAR wSectionFormat[] = {'\r','\n','[','%','s',']','\r','\n',0};
-    static const WCHAR wNameFormat[] = {'%','s',0};
-    static const WCHAR wValueFormat[] = {'=','%','s',0};
-    static const WCHAR wNewLine[] = {'\r','\n',0};
     PROFILEKEY *key;
-    WCHAR szLine[PROFILE_MAX_LINE_LEN];
-    int len = 0;
-    
+    WCHAR *buffer, *p;
+
     PROFILE_WriteMarker(hFile, encoding);
 
     for ( ; section; section = section->next)
     {
-        if (section->name[0])
-        {
-            len += snprintfW( szLine + len, PROFILE_MAX_LINE_LEN - len, wSectionFormat, section->name );
-            PROFILE_WriteLine( hFile, szLine, len, encoding );
-            len = 0;
-       }
+        int len = 0;
+
+        if (section->name[0]) len += strlenW(section->name) + 6;
 
         for (key = section->key; key; key = key->next)
         {
-            len += snprintfW( szLine + len, PROFILE_MAX_LINE_LEN - len, wNameFormat, key->name );
-            if (key->value)
-                 len += snprintfW( szLine + len, PROFILE_MAX_LINE_LEN - len, wValueFormat, key->value );
-            len += snprintfW( szLine + len, PROFILE_MAX_LINE_LEN - len, wNewLine );
-            PROFILE_WriteLine( hFile, szLine, len, encoding );
-            len = 0;
+            len += strlenW(key->name) + 2;
+            if (key->value) len += strlenW(key->value) + 1;
         }
+
+        buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!buffer) return;
+
+        p = buffer;
+        if (section->name[0])
+        {
+            *p++ = '\r';
+            *p++ = '\n';
+            *p++ = '[';
+            strcpyW( p, section->name );
+            p += strlenW(p);
+            *p++ = ']';
+            *p++ = '\r';
+            *p++ = '\n';
+        }
+        for (key = section->key; key; key = key->next)
+        {
+            strcpyW( p, key->name );
+            p += strlenW(p);
+            if (key->value)
+            {
+                *p++ = '=';
+                strcpyW( p, key->value );
+                p += strlenW(p);
+            }
+            *p++ = '\r';
+            *p++ = '\n';
+        }
+        PROFILE_WriteLine( hFile, buffer, len, encoding );
+        HeapFree(GetProcessHeap(), 0, buffer);
     }
 }
 
@@ -654,7 +680,7 @@ static BOOL PROFILE_FlushFile(void)
 
     if (!CurProfile->changed) return TRUE;
 
-    hFile = CreateFileW(CurProfile->filename, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFileW(CurProfile->filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
