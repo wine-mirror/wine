@@ -1,7 +1,8 @@
 /*
  * IDirect3DVolume8 implementation
  *
- * Copyright 2002 Jason Edmeades
+ * Copyright 2002-2003 Jason Edmeades
+ *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,8 @@
 
 #include "config.h"
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -31,8 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* IDirect3DVolume IUnknown parts follow: */
-HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface,REFIID riid,LPVOID *ppobj)
-{
+HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface, REFIID riid, LPVOID* ppobj) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
@@ -42,7 +44,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_QueryInterface(LPDIRECT3DVOLUME8 iface,REFII
         return D3D_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("(%p)->(%s,%p) not found\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
 }
 
@@ -75,16 +77,19 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetDevice(LPDIRECT3DVOLUME8 iface, IDirect3D
 
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DVolume8Impl_SetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DVolume8Impl_GetPrivateData(LPDIRECT3DVOLUME8 iface, REFGUID  refguid, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DVolume8Impl_FreePrivateData(LPDIRECT3DVOLUME8 iface, REFGUID refguid) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     FIXME("(%p) : stub\n", This);    
@@ -98,12 +103,14 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID
     IUnknown_AddRef(This->Container);
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DVOLUME_DESC* pDesc) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     TRACE("(%p) : copying into %p\n", This, pDesc);
     memcpy(pDesc, &This->myDesc, sizeof(D3DVOLUME_DESC));
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     FIXME("(%p) : pBox=%p stub\n", This, pBox);    
@@ -162,6 +169,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
     TRACE("returning memory@%p rpitch(%d) spitch(%d)\n", pLockedVolume->pBits, pLockedVolume->RowPitch, pLockedVolume->SlicePitch);
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     if (FALSE == This->locked) {
@@ -191,6 +199,7 @@ ICOM_VTABLE(IDirect3DVolume8) Direct3DVolume8_Vtbl =
     IDirect3DVolume8Impl_UnlockBox
 };
 
+
 HRESULT WINAPI IDirect3DVolume8Impl_CleanDirtyBox(LPDIRECT3DVOLUME8 iface) {
   ICOM_THIS(IDirect3DVolume8Impl,iface);
   This->Dirty = FALSE;
@@ -210,11 +219,20 @@ HRESULT WINAPI IDirect3DVolume8Impl_CleanDirtyBox(LPDIRECT3DVOLUME8 iface) {
 HRESULT WINAPI IDirect3DVolume8Impl_AddDirtyBox(LPDIRECT3DVOLUME8 iface, CONST D3DBOX* pDirtyBox) {
   ICOM_THIS(IDirect3DVolume8Impl,iface);
   This->Dirty = TRUE;
-  This->lockedBox.Left   = min(This->lockedBox.Left,   pDirtyBox->Left);
-  This->lockedBox.Top    = min(This->lockedBox.Top,    pDirtyBox->Top);
-  This->lockedBox.Front  = min(This->lockedBox.Front,  pDirtyBox->Front);
-  This->lockedBox.Right  = max(This->lockedBox.Right,  pDirtyBox->Right);
-  This->lockedBox.Bottom = max(This->lockedBox.Bottom, pDirtyBox->Bottom);
-  This->lockedBox.Back   = max(This->lockedBox.Back,   pDirtyBox->Back);
+   if (NULL != pDirtyBox) {
+    This->lockedBox.Left   = min(This->lockedBox.Left,   pDirtyBox->Left);
+    This->lockedBox.Top    = min(This->lockedBox.Top,    pDirtyBox->Top);
+    This->lockedBox.Front  = min(This->lockedBox.Front,  pDirtyBox->Front);
+    This->lockedBox.Right  = max(This->lockedBox.Right,  pDirtyBox->Right);
+    This->lockedBox.Bottom = max(This->lockedBox.Bottom, pDirtyBox->Bottom);
+    This->lockedBox.Back   = max(This->lockedBox.Back,   pDirtyBox->Back);
+  } else {
+    This->lockedBox.Left   = 0;
+    This->lockedBox.Top    = 0;
+    This->lockedBox.Front  = 0;
+    This->lockedBox.Right  = This->myDesc.Width;
+    This->lockedBox.Bottom = This->myDesc.Height;
+    This->lockedBox.Back   = This->myDesc.Depth;
+  }
   return D3D_OK;
 }

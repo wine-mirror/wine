@@ -1,7 +1,8 @@
 /*
  * IDirect3DSurface8 implementation
  *
- * Copyright 2002 Jason Edmeades
+ * Copyright 2002-2003 Jason Edmeades
+ *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,8 @@
 
 #include "config.h"
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -76,21 +79,25 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect
     IDirect3DDevice8Impl_AddRef(*ppDevice);
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DSurface8Impl_SetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DSurface8Impl_GetPrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 iface, REFGUID refguid) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     FIXME("(%p) : stub\n", This);    
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void** ppContainer) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     HRESULT res;
@@ -106,6 +113,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFI
     TRACE("(%p) : returning %p\n", This, *ppContainer);
     return res;
 }
+
 HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
 
@@ -113,6 +121,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFAC
     memcpy(pDesc, &This->myDesc, sizeof(D3DSURFACE_DESC));
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     HRESULT hr;
     ICOM_THIS(IDirect3DSurface8Impl,iface);
@@ -254,6 +263,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
     This->locked = TRUE;
     return D3D_OK;
 }
+
 HRESULT WINAPI IDirect3DSurface8Impl_UnlockRect(LPDIRECT3DSURFACE8 iface) {
     ICOM_THIS(IDirect3DSurface8Impl,iface);
     
@@ -374,6 +384,7 @@ unlock_end:
     return D3D_OK;
 }
 
+
 ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -389,6 +400,7 @@ ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl =
     IDirect3DSurface8Impl_LockRect,
     IDirect3DSurface8Impl_UnlockRect,
 };
+
 
 HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenum gl_target, GLenum gl_level) {
   ICOM_THIS(IDirect3DSurface8Impl,iface);
