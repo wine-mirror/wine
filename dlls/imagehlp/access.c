@@ -123,8 +123,14 @@ PVOID WINAPI ImageDirectoryEntryToData(
  */
 PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
 {
-  PLOADED_IMAGE pLoadedImage =
-    HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE));
+  PLOADED_IMAGE pLoadedImage;
+
+  FIXME("(%s, %s): stub\n", DllName, DllPath);
+	  
+  pLoadedImage = HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE));
+  if (pLoadedImage)
+    pLoadedImage->FileHeader = HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(IMAGE_NT_HEADERS));
+  
   return pLoadedImage;
 }
 
@@ -133,6 +139,7 @@ PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
  */
 PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID Base)
 {
+  TRACE("(%p)\n", Base);
   return (PIMAGE_NT_HEADERS)
     ((LPBYTE) Base + ((PIMAGE_DOS_HEADER) Base)->e_lfanew);
 }
@@ -168,6 +175,9 @@ PVOID WINAPI ImageRvaToVa(
 BOOL WINAPI ImageUnload(PLOADED_IMAGE pLoadedImage)
 {
   LIST_ENTRY *pCurrent, *pFind;
+
+  TRACE("(%p)\n", pLoadedImage);
+  
   if(!IMAGEHLP_pFirstLoadedImage || !pLoadedImage)
     {
       /* No image loaded or null pointer */
@@ -215,6 +225,9 @@ BOOL WINAPI MapAndLoad(
   HMODULE hModule = NULL;
   PIMAGE_NT_HEADERS pNtHeader = NULL;
 
+  TRACE("(%s, %s, %p, %d, %d)\n", pszImageName, pszDllPath, pLoadedImage,
+                                    bDotDll, bReadOnly);
+  
   /* PathCombine(&szFileName, pszDllPath, pszImageName); */
   /* PathRenameExtension(&szFileName, bDotDll?:"dll":"exe"); */
 
