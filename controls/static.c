@@ -345,7 +345,7 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC32 hdc )
 	break;
 
     case SS_LEFTNOWORDWRAP:
-	wFormat = DT_LEFT | DT_SINGLELINE | DT_EXPANDTABS | DT_VCENTER | DT_NOCLIP;
+	wFormat = DT_LEFT | DT_EXPANDTABS | DT_VCENTER;
 	break;
 
     default:
