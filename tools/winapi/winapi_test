@@ -149,6 +149,7 @@ my %type_name2type;
 my %defines = (
     "ANYSIZE_ARRAY" => 1,
     "CCHDEVICENAME" => 32,
+    "CCHILDREN_TITLEBAR+1" => 6,
     "ELF_VENDOR_SIZE" => 4,
     "EXCEPTION_MAXIMUM_PARAMETERS" => 15,
     "HW_PROFILE_GUIDLEN" => 39,
@@ -160,7 +161,8 @@ my %defines = (
     "MAX_GOPHER_DISPLAY_TEXT + 1" => 129,
     "MAX_GOPHER_LOCATOR_LENGTH + 1" => 654,
     "MAX_PATH" => 260,
-    "MAX_PROFILE_LEN" => 80, 
+    "MAX_PROFILE_LEN" => 80,
+    "NUM_POINTS" => 3,
     "OFS_MAXPATHNAME" => 128,
     "SIZE_OF_80387_REGISTERS" => 80,
     "TOKEN_SOURCE_LENGTH" => 8,
@@ -203,7 +205,11 @@ sub _find_align_kind_size {
 	$align = 2;
 	$kind = "signed";
 	$size = 2;
-    } elsif (!/^$/ && /^(?:(signed|unsigned)\s+)?(?:__int32|int|long(?:\s+int)?)?$/) {
+    } elsif (/^(signed|unsigned)$/) {
+	$align = 4;
+	$kind = defined($1) ? $1 : "signed";
+	$size = 4;
+    } elsif (/^(?:(signed|unsigned)\s+)?(?:__int32|int|long(?:\s+int)?)$/) {
 	$align = 4;
 	$kind = defined($1) ? $1 : "signed";
 	$size = 4;
@@ -215,7 +221,7 @@ sub _find_align_kind_size {
 	$align = 8;
 	$kind = defined($1) ? $1 : "signed";
 	$size = 8;
-    } elsif (/^(?:double)$/) {
+    } elsif (/^(?:double|DOUBLE|DATE)$/) {
 	$align = 8;
 	$kind = "float";
 	$size = 8;
@@ -236,9 +242,9 @@ sub _find_align_kind_size {
 	$kind = "struct";
 	$size = 8;
     } elsif (/^(?:VOID)$/) {
-    $align = 4;
-    $kind = "signed";
-    $size = 4;
+ 	$align = 4;
+ 	$kind = "signed";
+ 	$size = 4;
     } elsif (/^(?:SHORT)$/) {
 	$align = 2;
 	$kind = "unsigned";
@@ -255,6 +261,14 @@ sub _find_align_kind_size {
 	$align = 2;
 	$kind = "unsigned";
 	$size = 2;
+    } elsif (/^(?:INT64|LONG64|LONGLONG)$/) {
+	$align = 8;
+ 	$kind = "signed";
+ 	$size = 8;
+    } elsif (/^(?:UINT64|ULONG64|DWORD64|ULONGLONG|DWORDLONG)$/) {
+	$align = 8;
+ 	$kind = "unsigned";
+ 	$size = 8;
     } elsif (/^(?:LARGE_INTEGER)$/) {
 	$align = 8;
 	$kind = "union";

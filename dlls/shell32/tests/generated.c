@@ -774,9 +774,12 @@ static void test_pack_SHNAMEMAPPINGW(void)
 static void test_pack_AUTO_SCROLL_DATA(void)
 {
     /* AUTO_SCROLL_DATA (pack 4) */
+    TEST_TYPE(AUTO_SCROLL_DATA, 48, 4);
     TEST_FIELD(AUTO_SCROLL_DATA, int, iNextSample, 0, 4, 4);
     TEST_FIELD(AUTO_SCROLL_DATA, DWORD, dwLastScroll, 4, 4, 4);
     TEST_FIELD(AUTO_SCROLL_DATA, BOOL, bFull, 8, 4, 4);
+    TEST_FIELD(AUTO_SCROLL_DATA, POINT[NUM_POINTS], pts, 12, 24, 4);
+    TEST_FIELD(AUTO_SCROLL_DATA, DWORD[NUM_POINTS], dwTimes, 36, 12, 4);
 }
 
 static void test_pack_BFFCALLBACK(void)

@@ -1112,6 +1112,7 @@ static void test_pack_LPTITLEBARINFO(void)
 {
     /* LPTITLEBARINFO */
     TEST_TYPE(LPTITLEBARINFO, 4, 4);
+    TEST_TYPE_POINTER(LPTITLEBARINFO, 44, 4);
 }
 
 static void test_pack_LPTOGGLEKEYS(void)
@@ -1873,6 +1874,7 @@ static void test_pack_PTITLEBARINFO(void)
 {
     /* PTITLEBARINFO */
     TEST_TYPE(PTITLEBARINFO, 4, 4);
+    TEST_TYPE_POINTER(PTITLEBARINFO, 44, 4);
 }
 
 static void test_pack_PUSEROBJECTFLAGS(void)
@@ -2037,8 +2039,10 @@ static void test_pack_TIMERPROC(void)
 static void test_pack_TITLEBARINFO(void)
 {
     /* TITLEBARINFO (pack 4) */
+    TEST_TYPE(TITLEBARINFO, 44, 4);
     TEST_FIELD(TITLEBARINFO, DWORD, cbSize, 0, 4, 4);
     TEST_FIELD(TITLEBARINFO, RECT, rcTitleBar, 4, 16, 4);
+    TEST_FIELD(TITLEBARINFO, DWORD[CCHILDREN_TITLEBAR+1], rgstate, 20, 24, 4);
 }
 
 static void test_pack_TOGGLEKEYS(void)
