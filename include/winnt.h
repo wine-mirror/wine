@@ -319,13 +319,13 @@ typedef unsigned short  WCHAR,      *PWCHAR;
 /* 'Extended/Wide' numerical types */
 #ifndef _ULONGLONG_
 #define _ULONGLONG_
-typedef signed __int64   LONGLONG,   *PLONGLONG;
-typedef unsigned __int64 ULONGLONG,  *PULONGLONG;
+typedef signed __int64   DECLSPEC_ALIGN(8) LONGLONG,   *PLONGLONG;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) ULONGLONG,  *PULONGLONG;
 #endif
 
 #ifndef _DWORDLONG_
 #define _DWORDLONG_
-typedef ULONGLONG       DWORDLONG,  *PDWORDLONG;
+typedef ULONGLONG DECLSPEC_ALIGN(8) DWORDLONG,  *PDWORDLONG;
 #endif
 
 /* ANSI string types */

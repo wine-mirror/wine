@@ -184,8 +184,12 @@ typedef struct tagMSG {
 } MSG, *PMSG, *NPMSG, *LPMSG;
 
 #endif /* winnt.h */
+#if 0
 typedef double DOUBLE;
 
+#else
+typedef double DECLSPEC_ALIGN(8) DOUBLE;
+#endif
 #ifndef _PALETTEENTRY_DEFINED
 #define _PALETTEENTRY_DEFINED
 typedef struct tagPALETTEENTRY {
@@ -609,8 +613,12 @@ typedef enum tagSTATFLAG {
     STATFLAG_NOOPEN = 2
 } STATFLAG;
 
+#if 0
 typedef double DATE;
 
+#else
+typedef double DECLSPEC_ALIGN(8) DATE;
+#endif
 #if 0
 typedef struct tagCY {
     LONGLONG int64;

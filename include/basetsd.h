@@ -59,20 +59,31 @@ extern "C" {
 #  endif
 #endif /* !defined(_MSC_VER) */
 
+/* FIXME: DECLSPEC_ALIGN should be declared only in winnt.h, but we need it here too */
+#ifndef DECLSPEC_ALIGN
+# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+#  define DECLSPEC_ALIGN(x) __declspec(align(x))
+# elif defined(__GNUC__)
+#  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
+# else
+#  define DECLSPEC_ALIGN(x)
+# endif
+#endif
+
 typedef signed char      INT8, *PINT8;
 typedef signed short     INT16, *PINT16;
 typedef signed int       INT32, *PINT32;
-typedef signed __int64   INT64, *PINT64;
+typedef signed __int64   DECLSPEC_ALIGN(8) INT64, *PINT64;
 typedef unsigned char    UINT8, *PUINT8;
 typedef unsigned short   UINT16, *PUINT16;
 typedef unsigned int     UINT32, *PUINT32;
-typedef unsigned __int64 UINT64, *PUINT64;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) UINT64, *PUINT64;
 typedef signed int       LONG32, *PLONG32;
 typedef unsigned int     ULONG32, *PULONG32;
 typedef unsigned int     DWORD32, *PDWORD32;
-typedef signed __int64   LONG64, *PLONG64;
-typedef unsigned __int64 ULONG64, *PULONG64;
-typedef unsigned __int64 DWORD64, *PDWORD64;
+typedef signed __int64   DECLSPEC_ALIGN(8) LONG64, *PLONG64;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) ULONG64, *PULONG64;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) DWORD64, *PDWORD64;
 
 /* Win32 or Win64 dependent typedef/defines. */
 

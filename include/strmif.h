@@ -117,7 +117,7 @@ typedef enum _PinDirection {
 #define MAX_FILTER_NAME 128
 typedef LONGLONG REFERENCE_TIME;
 
-typedef double REFTIME;
+typedef DOUBLE REFTIME;
 
 typedef DWORD_PTR HSEMAPHORE;
 
