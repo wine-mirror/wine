@@ -56,8 +56,6 @@ extern const WINE_LANGUAGE_DEF Languages[];
 
 struct options
 {
-    int    argc;
-    char **argv;
     char * desktopGeometry; /* NULL when no desktop */
     char * display;         /* display name */
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
