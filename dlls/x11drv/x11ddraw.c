@@ -9,6 +9,7 @@
 #include "x11drv.h"
 #include "x11ddraw.h"
 #include "xvidmode.h"
+#include "dga2.h"
 
 #include "windef.h"
 #include "wingdi.h"
@@ -20,6 +21,7 @@ DEFAULT_DEBUG_CHANNEL(x11drv);
 
 LPDDRAWI_DDRAWSURFACE_LCL X11DRV_DD_Primary;
 LPDDRAWI_DDRAWSURFACE_GBL X11DRV_DD_PrimaryGbl;
+HWND X11DRV_DD_PrimaryWnd;
 HBITMAP X11DRV_DD_PrimaryDIB;
 Drawable X11DRV_DD_PrimaryDrawable;
 ATOM X11DRV_DD_UserClass;
@@ -48,6 +50,7 @@ static DWORD PASCAL X11DRV_DDHAL_CreateSurface(LPDDHAL_CREATESURFACEDATA data)
 {
   if (data->lpDDSurfaceDesc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) {
     X11DRV_DD_Primary = *data->lplpSList;
+    X11DRV_DD_PrimaryWnd = (HWND)X11DRV_DD_Primary->lpSurfMore->lpDDRAWReserved;
     X11DRV_DD_PrimaryGbl = X11DRV_DD_Primary->lpGbl;
     SetPrimaryDIB(GET_LPDDRAWSURFACE_GBL_MORE(X11DRV_DD_PrimaryGbl)->hKernelSurface);
     X11DRV_DD_UserClass = GlobalFindAtomA("WINE_DDRAW");
@@ -84,6 +87,7 @@ static DWORD PASCAL X11DRV_DDHAL_DestroySurface(LPDDHAL_DESTROYSURFACEDATA data)
 {
   if (data->lpDDSurface == X11DRV_DD_Primary) {
     X11DRV_DD_Primary = NULL;
+    X11DRV_DD_PrimaryWnd = 0;
     X11DRV_DD_PrimaryGbl = NULL;
     SetPrimaryDIB(0);
     X11DRV_DD_UserClass = 0;
@@ -149,6 +153,28 @@ static DDHAL_DDPALETTECALLBACKS hal_ddpalcallbacks = {
   X11DRV_DDHAL_SetPaletteEntries
 };
 
+static X11DEVICE x11device = {
+  NULL
+};
+
+static DWORD PASCAL X11DRV_DDHAL_GetDriverInfo(LPDDHAL_GETDRIVERINFODATA data)
+{
+  LPX11DRIVERINFO info = x11device.lpInfo;
+  while (info) {
+    if (IsEqualGUID(&data->guidInfo, info->lpGuid)) {
+      DWORD dwSize = info->dwSize;
+      data->dwActualSize = dwSize;
+      if (data->dwExpectedSize < dwSize) dwSize = data->dwExpectedSize;
+      memcpy(data->lpvData, info->lpvData, dwSize);
+      data->ddRVal = DD_OK;
+      return DDHAL_DRIVER_HANDLED;
+    }
+    info = info->lpNext;
+  }
+  data->ddRVal = DDERR_CURRENTLYNOTAVAIL;
+  return DDHAL_DRIVER_HANDLED;
+}
+
 static DDHALINFO hal_info = {
   sizeof(DDHALINFO),
   &hal_ddcallbacks,
@@ -157,18 +183,77 @@ static DDHALINFO hal_info = {
   {	/* vmiData */
    0	 /* fpPrimary */
   },
-  {	/* ddCaps */
-   sizeof(DDCORECAPS)
+  {	/* ddCaps (only stuff the HAL implements here) */
+   sizeof(DDCORECAPS),							/* dwSize */
+   DDCAPS_GDI | DDCAPS_PALETTE,						/* dwCaps */
+   DDCAPS2_CERTIFIED | DDCAPS2_NONLOCALVIDMEM | DDCAPS2_NOPAGELOCKREQUIRED |
+   DDCAPS2_WIDESURFACES | DDCAPS2_PRIMARYGAMMA | DDCAPS2_FLIPNOVSYNC,   /* dwCaps2 */
+   0,									/* dwCKeyCaps */
+   0,									/* dwFXCaps */
+   0,									/* dwFXAlphaCaps */
+   DDPCAPS_8BIT | DDPCAPS_PRIMARYSURFACE,				/* dwPalCaps */
+   0,									/* dwSVCaps */
+   0,									/* dwAlphaBltConstBitDepths */
+   0,									/* dwAlphaBltPixelBitDepths */
+   0,									/* dwAlphaBltSurfaceBitDepths */
+   0,									/* dwAlphaOverlayBltConstBitDepths */
+   0,									/* dwAlphaOverlayBltPixelBitDepths */
+   0,									/* dwAlphaOverlayBltSurfaceBitDepths */
+   0,									/* dwZBufferBitDepths */
+   16*1024*1024,							/* dwVidMemTotal */
+   16*1024*1024,							/* dwVidMemFree */
+   0,									/* dwMaxVisibleOverlays */
+   0,									/* dwCurrVisibleOverlays */
+   0,									/* dwNumFourCCCodes */
+   0,									/* dwAlignBoundarySrc */
+   0,									/* dwAlignSizeSrc */
+   0,									/* dwAlignBoundaryDest */
+   0,									/* dwAlignSizeDest */
+   0,									/* dwAlignStrideAlign */
+   {0},									/* dwRops */
+   {									/* ddsCaps */
+    DDSCAPS_BACKBUFFER | DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER |
+    DDSCAPS_OFFSCREENPLAIN | DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE |
+    DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY |
+    DDSCAPS_VISIBLE | DDSCAPS_LOCALVIDMEM | DDSCAPS_NONLOCALVIDMEM	/* dwCaps */
+   },
+   0,									/* dwMinOverlayStretch */
+   0,									/* dwMaxOverlayStretch */
+   0,									/* dwMinLiveVideoStretch */
+   0,									/* dwMaxLiveVideoStretch */
+   0,									/* dwMinHwCodecStretch */
+   0,									/* dwMaxHwCodecStretch */
+   0,									/* dwReserved1 */
+   0,									/* dwReserved2 */
+   0,									/* dwReserved2 */
+   0,									/* dwSVBCaps */
+   0,									/* dwSVBCKeyCaps */
+   0,									/* dwSVBFXCaps */
+   {0},									/* dwSVBRops */
+   0,									/* dwVSBCaps */
+   0,									/* dwVSBCKeyCaps */
+   0,									/* dwVSBFXCaps */
+   {0},									/* dwVSBRops */
+   0,									/* dwSSBCaps */
+   0,									/* dwSSBCKeyCaps */
+   0,									/* dwSSBFXCaps */
+   {0},									/* dwSSBRops */
+   0,									/* dwMaxVideoPorts */
+   0,									/* dwCurrVideoPorts */
+   0									/* dwSVBCaps */
   },
   0,	/* dwMonitorFrequency */
-  NULL,	/* GetDriverInfo */
+  X11DRV_DDHAL_GetDriverInfo,
   0,	/* dwModeIndex */
   NULL,	/* lpdwFourCC */
   0,	/* dwNumModes */
   NULL,	/* lpModeInfo */
-  DDHALINFO_ISPRIMARYDISPLAY | DDHALINFO_MODEXILLEGAL,	/* dwFlags */
-  NULL,	/* lpPDevice */
-  0	/* hInstance */
+  DDHALINFO_ISPRIMARYDISPLAY | DDHALINFO_MODEXILLEGAL | DDHALINFO_GETDRIVERINFOSET, /* dwFlags */
+  &x11device,
+  0,	/* hInstance */
+  0,	/* lpD3DGlobalDriverData */
+  0,	/* lpD3DHALCallbacks */
+  NULL	/* lpDDExeBufCallbacks */
 };
 
 static LPDDHALDDRAWFNS ddraw_fns;
@@ -217,13 +302,16 @@ INT X11DRV_DCICommand(INT cbInput, LPVOID lpInData, LPVOID lpOutData)
 
       /* FIXME: get x11drv's hInstance */
 #ifdef HAVE_LIBXXF86DGA2
-      /*if (!X11DRV_XF86DGA2_CreateDriver(&hal_info))*/
+      if (!X11DRV_XF86DGA2_CreateDriver(&hal_info))
 #endif
       {
 #ifdef HAVE_LIBXXF86VM
 	X11DRV_XF86VM_CreateDriver(&hal_info);
 #endif
       }
+#ifdef HAVE_OPENGL
+      /*X11DRV_GLX_CreateDriver(&hal_info);*/
+#endif
 
       (ddraw_fns->lpSetInfo)(&hal_info, FALSE);
       *lpInstance = hal_info.hInstance;
@@ -233,7 +321,7 @@ INT X11DRV_DCICommand(INT cbInput, LPVOID lpInData, LPVOID lpOutData)
   return 0;
 }
 
-void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr)
+void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr, LPVIDMEM fb_mem)
 {
   LPDDHALMODEINFO info = &hal_info.lpModeInfo[dwModeIndex];
 
@@ -249,6 +337,8 @@ void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr)
   hal_info.vmiData.ddpfDisplay.u2.dwRBitMask = info->dwRBitMask;
   hal_info.vmiData.ddpfDisplay.u3.dwGBitMask = info->dwGBitMask;
   hal_info.vmiData.ddpfDisplay.u4.dwBBitMask = info->dwBBitMask;
+  hal_info.vmiData.dwNumHeaps = fb_mem ? 1 : 0;
+  hal_info.vmiData.pvmList = fb_mem;
 
   X11DRV_DDHAL_SetInfo();
 }

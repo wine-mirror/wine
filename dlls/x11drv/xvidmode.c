@@ -132,7 +132,7 @@ void X11DRV_XF86VM_SetExclusiveMode(int lock)
 static DWORD PASCAL X11DRV_XF86VM_SetMode(LPDDHAL_SETMODEDATA data)
 {
   X11DRV_XF86VM_SetCurrentMode(data->dwModeIndex);
-  X11DRV_DDHAL_SwitchMode(data->dwModeIndex, NULL);
+  X11DRV_DDHAL_SwitchMode(data->dwModeIndex, NULL, NULL);
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_HANDLED;
 }
@@ -143,7 +143,7 @@ int X11DRV_XF86VM_CreateDriver(LPDDHALINFO info)
 
   info->dwNumModes = xf86vm_mode_count;
   info->lpModeInfo = xf86vm_modes;
-  X11DRV_DDHAL_SwitchMode(X11DRV_XF86VM_GetCurrentMode(), NULL);
+  X11DRV_DDHAL_SwitchMode(X11DRV_XF86VM_GetCurrentMode(), NULL, NULL);
   info->lpDDCallbacks->SetMode = X11DRV_XF86VM_SetMode;
   return TRUE;
 }

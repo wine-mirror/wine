@@ -39,6 +39,7 @@ static int *ph_errno = &h_errno;
 #include "wine_gl.h"
 #include "x11drv.h"
 #include "xvidmode.h"
+#include "dga2.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -422,6 +423,14 @@ static void process_attach(void)
     /* initialize XVidMode */
     X11DRV_XF86VM_Init();
 #endif
+#ifdef HAVE_LIBXXF86DGA2
+    /* initialize DGA2 */
+    X11DRV_XF86DGA2_Init();
+#endif
+#ifdef HAVE_OPENGL
+    /* initialize GLX */
+    /*X11DRV_GLX_Init();*/
+#endif
 
     /* load display.dll */
     LoadLibrary16( "display" );
@@ -445,6 +454,14 @@ static void process_detach(void)
     TSXChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent |
                              KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
 
+#ifdef HAVE_OPENGL
+    /* cleanup GLX */
+    /*X11DRV_GLX_Cleanup();*/
+#endif
+#ifdef HAVE_LIBXXF86DGA2
+    /* cleanup DGA2 */
+    X11DRV_XF86DGA2_Cleanup();
+#endif
 #ifdef HAVE_LIBXXF86VM
     /* cleanup XVidMode */
     X11DRV_XF86VM_Cleanup();
