@@ -30,8 +30,7 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
+
 #include <sys/time.h>
 #include <malloc.h>
 #include <string.h>
@@ -51,6 +50,35 @@
 #include "wine/ipexport.h"
 #include "wine/icmpapi.h"
 #include "debugtools.h"
+
+#undef BIG_ENDIAN
+#undef LITTLE_ENDIAN
+#undef BYTE_ORDER
+
+/* Set up endiannes macros for the ip and ip_icmp BSD headers */
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN       4321
+#endif
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN    1234
+#endif
+#ifndef BYTE_ORDER
+#include "config.h"
+#ifdef WORDS_BIGENDIAN
+#define BYTE_ORDER       BIG_ENDIAN
+#else
+#define BYTE_ORDER       LITTLE_ENDIAN
+#endif
+#endif /* BYTE_ORDER */
+
+/* These are BSD headers. We use these here because they are needed on 
+ * libc5 Linux systems. On other platforms they are usually simply more 
+ * complete than the native stuff, and cause less portability problems 
+ * so we use them anyway.
+ */
+#include "ip.h"
+#include "ip_icmp.h"
+
 
 DEFAULT_DEBUG_CHANNEL(icmp)
 

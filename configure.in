@@ -507,6 +507,10 @@ then
   AC_DEFINE(NO_REENTRANT_X11)
 fi
 
+dnl **** Check for endianness ****
+
+AC_C_BIGENDIAN
+
 dnl **** Check for functions ****
 
 AC_FUNC_ALLOCA()
