@@ -15,7 +15,7 @@
 DEFAULT_DEBUG_CHANNEL(int)
 
 typedef struct {
-  BYTE queuelen,queue[15];
+  BYTE queuelen,queue[15],ascii[15];
 } KBDSYSTEM;
 
 /**********************************************************************
@@ -25,15 +25,21 @@ typedef struct {
  */
 void WINAPI INT_Int09Handler( CONTEXT86 *context )
 {
-  BYTE scan = INT_Int09ReadScan();
+  BYTE ascii, scan = INT_Int09ReadScan(&ascii);
   UINT vkey = MapVirtualKeyA(scan&0x7f, 1);
   BYTE ch[2];
   int cnt, c2;
 
   TRACE("scan=%02x\n",scan);
   if (!(scan & 0x80)) {
-    /* as in TranslateMessage, windows/input.c */
-    cnt = ToAscii(vkey, scan, QueueKeyStateTable, (LPWORD)ch, 0);
+    if (ascii) {
+      /* we already have an ASCII code, no translation necessary */
+      ch[0] = ascii;
+      cnt = 1;
+    } else {
+      /* as in TranslateMessage, windows/input.c */
+      cnt = ToAscii(vkey, scan, QueueKeyStateTable, (LPWORD)ch, 0);
+    }
     if (cnt>0) {
       for (c2=0; c2<cnt; c2++)
         INT_Int16AddChar(ch[c2], scan);
@@ -56,12 +62,14 @@ static void KbdRelay( LPDOSTASK lpDosTask, CONTEXT86 *context, void *data )
      * we'll remove current scancode from keyboard buffer here,
      * rather than in ReadScan, because some DOS apps depend on
      * the scancode being available for reading multiple times... */
-    if (--sys->queuelen)
+    if (--sys->queuelen) {
       memmove(sys->queue,sys->queue+1,sys->queuelen);
+      memmove(sys->ascii,sys->ascii+1,sys->queuelen);
+    }
   }
 }
 
-void WINAPI INT_Int09SendScan( BYTE scan )
+void WINAPI INT_Int09SendScan( BYTE scan, BYTE ascii )
 {
   KBDSYSTEM *sys = (KBDSYSTEM *)DOSVM_GetSystemData(0x09);
   if (!sys) {
@@ -69,16 +77,20 @@ void WINAPI INT_Int09SendScan( BYTE scan )
     DOSVM_SetSystemData(0x09,sys);
   }
   /* add scancode to queue */
-  sys->queue[sys->queuelen++] = scan;
+  sys->queue[sys->queuelen] = scan;
+  sys->ascii[sys->queuelen++] = ascii;
   /* tell app to read it by triggering IRQ 1 (int 09) */
   DOSVM_QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
 }
 
-BYTE WINAPI INT_Int09ReadScan( void )
+BYTE WINAPI INT_Int09ReadScan( BYTE*ascii )
 {
   KBDSYSTEM *sys = (KBDSYSTEM *)DOSVM_GetSystemData(0x09);
-  if (sys)
+  if (sys) {
+    if (ascii) *ascii = sys->ascii[0];
     return sys->queue[0];
-  else
+  } else {
+    if (ascii) *ascii = 0;
     return 0;
+  }
 }

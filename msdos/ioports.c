@@ -324,7 +324,7 @@ DWORD IO_inport( int port, int size )
         break;
     }
     case 0x60:
-        res = INT_Int09ReadScan();
+        res = INT_Int09ReadScan(NULL);
 #if 0 /* what's this port got to do with parport ? */
         res = (DWORD)parport_8255[0];
 #endif

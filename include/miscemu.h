@@ -174,8 +174,8 @@ extern void IO_outport( int port, int count, DWORD value );
 
 /* msdos/int09.c */
 extern void WINAPI INT_Int09Handler(CONTEXT86*);
-extern void WINAPI INT_Int09SendScan(BYTE);
-extern BYTE WINAPI INT_Int09ReadScan(void);
+extern void WINAPI INT_Int09SendScan(BYTE scan,BYTE ascii);
+extern BYTE WINAPI INT_Int09ReadScan(BYTE*ascii);
 
 /* msdos/int10.c */
 extern void WINAPI INT_Int10Handler(CONTEXT86*);

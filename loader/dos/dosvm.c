@@ -341,9 +341,9 @@ void DOSVM_ProcessMessage(LPDOSTASK lpDosTask,MSG *msg)
 	/* FIXME: some keys (function keys) have
 	 * extended bit set even when they shouldn't,
 	 * should check for them */
-	INT_Int09SendScan(0xE0);
+	INT_Int09SendScan(0xE0,0);
       }
-      INT_Int09SendScan(scan);
+      INT_Int09SendScan(scan,0);
       break;
     }
   }
