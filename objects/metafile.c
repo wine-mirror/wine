@@ -220,8 +220,8 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
     if(!lpFilename)
         return 0;
 
-    if((hFile = CreateFileA(lpFilename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-			    0, -1)) == HFILE_ERROR)
+    if((hFile = CreateFileA(lpFilename, GENERIC_READ, FILE_SHARE_READ, NULL,
+			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR)
         return 0;
 
     mh = MF_ReadMetaFile(hFile);
@@ -245,8 +245,8 @@ HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
     if(!lpFilename)
         return 0;
 
-    if((hFile = CreateFileA(lpFilename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-			    0, -1)) == HFILE_ERROR)
+    if((hFile = CreateFileA(lpFilename, GENERIC_READ, FILE_SHARE_READ, NULL,
+			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR)
         return 0;
 
     mh = MF_ReadMetaFile(hFile);
@@ -270,8 +270,8 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
     if(!lpFilename)
         return 0;
 
-    if((hFile = CreateFileW(lpFilename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-			    0, -1)) == HFILE_ERROR)
+    if((hFile = CreateFileW(lpFilename, GENERIC_READ, FILE_SHARE_READ, NULL,
+			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR)
         return 0;
 
     mh = MF_ReadMetaFile(hFile);
@@ -298,7 +298,7 @@ static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
     }
     mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
 
-    if((hfile = CreateFileA(mhd->filename, GENERIC_READ, 0, NULL,
+    if((hfile = CreateFileA(mhd->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
 			    OPEN_EXISTING, 0, -1)) == HFILE_ERROR) {
         WARN("Can't open file of disk based metafile\n");
         return NULL;
