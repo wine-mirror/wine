@@ -26,9 +26,7 @@
   <bookinfo>
     <title>Wine Developer's Guide</title>
 
-    <!-- Until we learn how to format this thing nicely, 
-	 we can't really incude it -->
-    <!--authorgroup>
+    <authorgroup>
       <author>
 	<firstname>Uwe</firstname>
 	<surname>Bonnes</surname>
@@ -109,7 +107,7 @@
 	<firstname>Morten</firstname>
 	<surname>Welinder</surname>
       </author>
-    </authorgroup-->
+    </authorgroup>
   </bookinfo>
 
   <part id="part-one">

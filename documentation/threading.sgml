@@ -19,8 +19,8 @@
     <title> Threading support in Win32 </title>
 
     <para>
-      Win32 is an unusually thread friendly API. Not only is in entirely thread safe, but it provides
-      many different facilities to working with threads. These range from the basics such as starting
+      Win32 is an unusually thread friendly API. Not only is it entirely thread safe, but it provides
+      many different facilities for working with threads. These range from the basics such as starting
       and stopping threads, to the extremely complex such as injecting threads into other processes and
       COM inter-thread marshalling.
     </para>
@@ -33,7 +33,7 @@
 
     <para>
       Win32 provides many different ways you can make your code thread safe however the most common
-      are the <emphasis>critical section</emphasis> and the <emphasis>interlocked functions</emphasis>.
+      are <emphasis>critical section</emphasis> and the <emphasis>interlocked functions</emphasis>.
       Critical sections are a type of mutex designed to protect a geographic area of code. If you don't
       want multiple threads running in a piece of code at once, you can protect them with calls to
       EnterCriticalSection and LeaveCriticalSection. The first call to EnterCriticalSection by a thread

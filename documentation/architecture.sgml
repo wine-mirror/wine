@@ -1947,6 +1947,149 @@ WSOCK32.DLL:	   32-bit sockets APIs
     </sect1>
   </chapter>
 
+  <chapter id="initialization">
+  <title> The Wine initialization process </title>
+
+  <para>
+    Wine has a rather complex startup procedure, so unlike many programs the best place to begin
+    exploring the code-base is <emphasis>not</emphasis> in fact at the main() function but instead
+    at some of the more straightforward DLLs that exist on the periphery such as MSI, the widget
+    library (in USER and COMCTL32) etc. The purpose of this section is to document and explain how
+    Wine starts up from the moment the user runs "wine myprogram.exe" to the point at which
+    myprogram gets control.
+  </para>
+
+  <sect1>
+    <title> First Steps </title>
+
+    <para>
+      The actual wine binary that the user runs does not do very much, in fact it is only
+      responsible for checking the threading model in use (NPTL vs LinuxThreads) and then invoking
+      a new binary which performs the next stage in the startup sequence. See the threading chapter
+      for more information on this check and why it's necessary. You can find this code in
+      <filename>loader/glibc.c</filename>. The result of this check is an exec of either
+      wine-pthread or wine-kthread, potentially (on Linux) via
+      the <emphasis>preloader</emphasis>. We need to use separate binaries here because overriding
+      the native pthreads library requires us to exploit a property of ELF symbol fixup semantics:
+      it's not possible to do this without starting a new process.
+    </para>
+
+    <para>
+      The Wine preloader is found in <filename>loader/preloader.c</filename>, and is required in
+      order to impose a Win32 style address space layout upon the newly created Win32 process. The
+      details of what this does is covered in the address space layout chapter. The preloader is a
+      statically linked ELF binary which is passed the name of the actual Wine binary to run (either
+      wine-kthread or wine-pthread) along with the arguments the user passed in from the command
+      line. The preloader is an unusual program: it does not have a main() function. In standard ELF
+      applications, the entry point is actually at a symbol named _start: this is provided by the
+      standard gcc infrastructure and normally jumps to <function>__libc_start_main</function> which
+      initializes glibc before passing control to the main function as defined by the programmer.
+    </para>
+
+    <para>
+      The preloader takes control direct from the entry point for a few reasons. Firstly, it is
+      required that glibc is not initialized twice: the result of such behaviour is undefined and
+      subject to change without notice. Secondly, it's possible that as part of initializing glibc,
+      the address space layout could be changed - for instance, any call to malloc will initialize a
+      heap arena which modifies the VM mappings. Finally, glibc does not return to _start at any
+      point, so by reusing it we avoid the need to recreate the ELF bootstrap stack (env, argv,
+      auxiliary array etc).
+    </para>
+
+    <para>
+      The preloader is responsible for two things: protecting important regions of the address
+      space so the dynamic linker does not map shared libraries into them, and once that is done
+      loading the real Wine binary off disk, linking it and starting it up. Normally all this is
+      done automatically by glibc and the kernel but as we intercepted this process by using a
+      static binary it's up to us to restart the process. The bulk of the code in the preloader is
+      about loading wine-[pk]thread and ld-linux.so.2 off disk, linking them together, then
+      starting the dynamic linking process.
+    </para>
+
+    <para>
+      One of the last things the preloader does before jumping into the dynamic linker is scan the
+      symbol table of the loaded Wine binary and set the value of a global variable directly: this
+      is a more efficient way of passing information to the main Wine program than flattening the
+      data structures into an environment variable or command line parameter then unpacking it on
+      the other side, but it achieves pretty much the same thing. The global variable set points to
+      the preload descriptor table, which contains the VMA regions protected by the preloader. This
+      allows Wine to unmap them once the dynamic linker has been run, so leaving gaps we can
+      initialize properly later on.
+    </para>
+
+  </sect1>
+
+  <sect1>
+    <title> Starting the emulator </title>
+
+    <para>
+      The process of starting up the emulator itself is mostly one of chaining through various
+      initializer functions defined in the core libraries and DLLs: libwine, then NTDLL, then kernel32.
+    </para>
+
+    <para>
+      Both the wine-pthread and wine-kthread binaries share a common <function>main</function>
+      function, defined in <filename>loader/main.c</filename>, so no matter which binary is selected
+      after the preloader has run we start here. This passes the information provided by the
+      preloader into libwine and then calls wine_init, defined
+      in <filename>libs/wine/loader.c</filename>. This is where the emulation really starts:
+      <function>wine_init</function> can, with the correct preparation,
+      be called from programs other than the wine loader itself.
+    </para>
+
+    <para>
+      <function>wine_init</function> does some very basic setup tasks such as initializing the
+      debugging infrastructure, yet more address space manipulation (see the information on the
+      4G/4G VM split in the address space chapter), before loading NTDLL - the core of both Wine and
+      the Windows NT series - and jumping to the <function>__wine_process_init</function> function defined
+      in <filename>dlls/ntdll/loader.c</filename>
+    </para>
+
+    <para>
+      This function is responsible for initializing the primary Win32 environment. In thread_init(),
+      it sets up the TEB, the wineserver connection for the main thread and the process heap. See
+      the threading chapter for more information on this.
+    </para>
+
+    <para>
+      Finally, it loads and jumps to <function>__wine_kernel_init</function> in kernel32.dll: this
+      is defined in <filename>dlls/kernel32/process.c</filename>. This is where the bulk of the work
+      is done. The kernel32 initialization code retrieves the startup info for the process from the
+      server, initializes the registry, sets up the drive mapping system and locale data, then
+      begins loading the requested application itself. Each process has a STARTUPINFO block that can
+      be passed into <function>CreateProcess</function> specifying various things like how the first
+      window should be displayed: this is sent to the new process via the wineserver.
+    </para>
+
+    <para>
+      After determining the type of file given to Wine by the user (a Win32 EXE file, a Win16 EXE, a
+      Winelib app etc), the program is loaded into memory (which may involve loading and
+      initializing other DLLs, the bulk of Wines startup code), before control reaches the end of
+      <function>__wine_kernel_init</function>. This function ends with the new process stack being
+      initialized, and start_process being called on the new stack. Nearly there!
+    </para>
+
+    <para>
+      The final element of initializing Wine is starting the newly loaded program
+      itself. <function>start_process</function> sets up the SEH backstop handler, calls
+      <function>LdrInitializeThunk</function> which performs the last part of the process
+      initialization (such as performing relocations and calling the DllMains with PROCESS_ATTACH),
+      grabs the entry point of the executable and then on this line:
+    </para>
+
+    <programlisting>
+      ExitProcess( entry( peb ) );
+    </programlisting>
+
+    <para>
+      ... jumps to the entry point of the program. At this point the users program is running and
+      the API provided by Wine is ready to be used. When entry returns,
+      the <function>ExitProcess</function> API will be used to initialize a graceful shutdown.
+    </para>
+
+  </sect1>
+  </chapter>
+
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
