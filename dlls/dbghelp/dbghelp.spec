@@ -11,7 +11,7 @@
 @ stub FindFileInPath
 @ stub FindFileInSearchPath
 @ stdcall GetTimestampForLoadedLibrary(long)
-@ stub ImageDirectoryEntryToData
+@ stdcall ImageDirectoryEntryToData(ptr long long ptr) ntdll.RtlImageDirectoryEntryToData
 @ stub ImageDirectoryEntryToDataEx
 @ stdcall ImageNtHeader(ptr) ntdll.RtlImageNtHeader
 @ stdcall ImageRvaToSection(ptr ptr long) ntdll.RtlImageRvaToSection
