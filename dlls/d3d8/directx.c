@@ -439,7 +439,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
     case D3DFMT_DXT5:
     case D3DFMT_X8L8V8U8:
     case D3DFMT_L6V5U5:
-    case D3DFMT_V8U8:
+    /*case D3DFMT_V8U8:*/
     case D3DFMT_L8:
       /* Since we do not support these formats right now, don't pretend to. */
       return D3DERR_NOTAVAILABLE;
@@ -660,10 +660,10 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
                           D3DSTENCILCAPS_KEEP    | 
                           D3DSTENCILCAPS_REPLACE | 
                           D3DSTENCILCAPS_ZERO;
-#if defined(GL_VERSION_1_4) || defined(GL_EXT_stencil_wrap)
-    pCaps->StencilCaps |= D3DSTENCILCAPS_DECR    | 
-                          D3DSTENCILCAPS_INCR;
-#endif
+    if (GL_SUPPORT(EXT_STENCIL_WRAP)) {
+      pCaps->StencilCaps |= D3DSTENCILCAPS_DECR    | 
+	                    D3DSTENCILCAPS_INCR;
+    }
 
     pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x80000;
 
@@ -696,8 +696,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 			      D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
                               D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
+    pCaps->TextureOpCaps |= D3DTEXOPCAPS_BUMPENVMAP;
                             /* FIXME: Add 
-			      D3DTEXOPCAPS_BUMPENVMAP
 			      D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
 			      D3DTEXOPCAPS_PREMODULATE */
 
@@ -745,9 +745,9 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | 
                                   D3DVTXPCAPS_MATERIALSOURCE7   | 
                                   D3DVTXPCAPS_POSITIONALLIGHTS  | 
+                                  D3DVTXPCAPS_LOCALVIEWER |
                                   D3DVTXPCAPS_TEXGEN;
                                   /* FIXME: Add 
-				     D3DVTXPCAPS_LOCALVIEWER 
 				     D3DVTXPCAPS_TWEENING */
 
     pCaps->MaxPrimitiveCount = 0xFFFFFFFF;
@@ -932,6 +932,8 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
         } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
 	  TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
 	  This->gl_info.supported[ARB_TEXTURE_CUBE_MAP] = TRUE;
+	  TRACE_(d3d_caps)(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support\n");
+	  This->gl_info.supported[NV_TEXGEN_REFLECTION] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_compression") == 0) {
 	  TRACE_(d3d_caps)(" FOUND: ARB Texture Compression support\n");
 	  This->gl_info.supported[ARB_TEXTURE_COMPRESSION] = TRUE;
@@ -970,6 +972,9 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	} else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
 	  TRACE_(d3d_caps)(" FOUND: EXT Secondary coord support\n");
 	  This->gl_info.supported[EXT_SECONDARY_COLOR] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_EXT_stencil_wrap") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: EXT Stencil wrap support\n");
+	  This->gl_info.supported[EXT_STENCIL_WRAP] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
 	  TRACE_(d3d_caps)(" FOUND: EXT Texture S3TC compression support\n");
 	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
@@ -998,15 +1003,33 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	/**
 	 * NVIDIA 
 	 */
-        } else if (strcmp(ThisExtn, "GL_NV_texture_env_combine4") == 0) {
-	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
-	  This->gl_info.supported[NV_TEXTURE_ENV_COMBINE4] = TRUE;
-	} else if (strstr(ThisExtn, "GL_NV_fragment_program")) {
-	  This->gl_info.ps_nv_version = PS_VERSION_11;
-	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
 	} else if (strstr(ThisExtn, "GL_NV_fog_distance")) {
 	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Fog Distance support\n");
 	  This->gl_info.supported[NV_FOG_DISTANCE] = TRUE;
+	} else if (strstr(ThisExtn, "GL_NV_fragment_program")) {
+	  This->gl_info.ps_nv_version = PS_VERSION_11;
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
+        } else if (strcmp(ThisExtn, "GL_NV_register_combiners") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Register combiners (1) support\n");
+	  This->gl_info.supported[NV_REGISTER_COMBINERS] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_NV_register_combiners2") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Register combiners (2) support\n");
+	  This->gl_info.supported[NV_REGISTER_COMBINERS2] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_NV_texgen_reflection") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Gen Reflection support\n");
+	  This->gl_info.supported[NV_TEXGEN_REFLECTION] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_NV_texture_env_combine4") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
+	  This->gl_info.supported[NV_TEXTURE_ENV_COMBINE4] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_NV_texture_shader") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (1) support\n");
+	  This->gl_info.supported[NV_TEXTURE_SHADER] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_NV_texture_shader2") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (2) support\n");
+	  This->gl_info.supported[NV_TEXTURE_SHADER2] = TRUE;
+        } else if (strcmp(ThisExtn, "GL_NV_texture_shader3") == 0) {
+	  TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Texture Shader (3) support\n");
+	  This->gl_info.supported[NV_TEXTURE_SHADER3] = TRUE;
 	} else if (strstr(ThisExtn, "GL_NV_vertex_program")) {
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program1_1")) ? VS_VERSION_11 : VS_VERSION_10);
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program2"))   ? VS_VERSION_20 : VS_VERSION_10);

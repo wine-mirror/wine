@@ -232,6 +232,7 @@ struct PLIGHTINFOEL {
 #define GL_SUPPORT(ExtName)           (TRUE == This->direct3d8->gl_info.supported[ExtName])
 #define GL_SUPPORT_DEV(ExtName, dev)  (TRUE == (dev)->direct3d8->gl_info.supported[ExtName])
 #define GL_EXTCALL(FuncName)          (This->direct3d8->gl_info.FuncName)
+#define GL_EXTCALL_DEV(FuncName, dev) ((dev)->direct3d8->gl_info.FuncName)
 
 
 #define D3DCOLOR_R(dw) (((float) (((dw) >> 16) & 0xFF)) / 255.0f)
@@ -358,6 +359,8 @@ struct IDirect3DDevice8Impl
     /* palettes texture management */
     PALETTEENTRY                  palettes[MAX_PALETTES][256];
     UINT                          currentPalette;
+
+    BOOL                          texture_shader_active;
 
     /* Optimization */
     BOOL                          modelview_valid;

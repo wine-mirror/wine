@@ -386,6 +386,195 @@ typedef void (APIENTRY * PGLFNGETCOMPRESSEDTEXIMAGEPROC) (GLenum target, GLint l
 #define GL_EYE_PLANE_ABSOLUTE_NV          0x855C
 /* reuse GL_EYE_PLANE */
 #endif
+/* GL_NV_texgen_reflection */
+#ifndef GL_NV_texgen_reflection
+#define GL_NV_texgen_reflection 1
+#define GL_NORMAL_MAP_NV                  0x8511
+#define GL_REFLECTION_MAP_NV              0x8512
+#endif
+/* GL_NV_register_combiners */
+#ifndef GL_NV_register_combiners
+#define GL_NV_register_combiners 1
+#define GL_REGISTER_COMBINERS_NV          0x8522
+#define GL_VARIABLE_A_NV                  0x8523
+#define GL_VARIABLE_B_NV                  0x8524
+#define GL_VARIABLE_C_NV                  0x8525
+#define GL_VARIABLE_D_NV                  0x8526
+#define GL_VARIABLE_E_NV                  0x8527
+#define GL_VARIABLE_F_NV                  0x8528
+#define GL_VARIABLE_G_NV                  0x8529
+#define GL_CONSTANT_COLOR0_NV             0x852A
+#define GL_CONSTANT_COLOR1_NV             0x852B
+#define GL_PRIMARY_COLOR_NV               0x852C
+#define GL_SECONDARY_COLOR_NV             0x852D
+#define GL_SPARE0_NV                      0x852E
+#define GL_SPARE1_NV                      0x852F
+#define GL_DISCARD_NV                     0x8530
+#define GL_E_TIMES_F_NV                   0x8531
+#define GL_SPARE0_PLUS_SECONDARY_COLOR_NV 0x8532
+#define GL_UNSIGNED_IDENTITY_NV           0x8536
+#define GL_UNSIGNED_INVERT_NV             0x8537
+#define GL_EXPAND_NORMAL_NV               0x8538
+#define GL_EXPAND_NEGATE_NV               0x8539
+#define GL_HALF_BIAS_NORMAL_NV            0x853A
+#define GL_HALF_BIAS_NEGATE_NV            0x853B
+#define GL_SIGNED_IDENTITY_NV             0x853C
+#define GL_SIGNED_NEGATE_NV               0x853D
+#define GL_SCALE_BY_TWO_NV                0x853E
+#define GL_SCALE_BY_FOUR_NV               0x853F
+#define GL_SCALE_BY_ONE_HALF_NV           0x8540
+#define GL_BIAS_BY_NEGATIVE_ONE_HALF_NV   0x8541
+#define GL_COMBINER_INPUT_NV              0x8542
+#define GL_COMBINER_MAPPING_NV            0x8543
+#define GL_COMBINER_COMPONENT_USAGE_NV    0x8544
+#define GL_COMBINER_AB_DOT_PRODUCT_NV     0x8545
+#define GL_COMBINER_CD_DOT_PRODUCT_NV     0x8546
+#define GL_COMBINER_MUX_SUM_NV            0x8547
+#define GL_COMBINER_SCALE_NV              0x8548
+#define GL_COMBINER_BIAS_NV               0x8549
+#define GL_COMBINER_AB_OUTPUT_NV          0x854A
+#define GL_COMBINER_CD_OUTPUT_NV          0x854B
+#define GL_COMBINER_SUM_OUTPUT_NV         0x854C
+#define GL_MAX_GENERAL_COMBINERS_NV       0x854D
+#define GL_NUM_GENERAL_COMBINERS_NV       0x854E
+#define GL_COLOR_SUM_CLAMP_NV             0x854F
+#define GL_COMBINER0_NV                   0x8550
+#define GL_COMBINER1_NV                   0x8551
+#define GL_COMBINER2_NV                   0x8552
+#define GL_COMBINER3_NV                   0x8553
+#define GL_COMBINER4_NV                   0x8554
+#define GL_COMBINER5_NV                   0x8555
+#define GL_COMBINER6_NV                   0x8556
+#define GL_COMBINER7_NV                   0x8557
+/* reuse GL_TEXTURE0_ARB */
+/* reuse GL_TEXTURE1_ARB */
+/* reuse GL_ZERO */
+/* reuse GL_NONE */
+/* reuse GL_FOG */
+#endif
+typedef void (APIENTRY * PGLFNCOMBINERPARAMETERFVNVPROC) (GLenum pname, const GLfloat *params);
+typedef void (APIENTRY * PGLFNCOMBINERPARAMETERFNVPROC) (GLenum pname, GLfloat param);
+typedef void (APIENTRY * PGLFNCOMBINERPARAMETERIVNVPROC) (GLenum pname, const GLint *params);
+typedef void (APIENTRY * PGLFNCOMBINERPARAMETERINVPROC) (GLenum pname, GLint param);
+typedef void (APIENTRY * PGLFNCOMBINERINPUTNVPROC) (GLenum stage, GLenum portion, GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage);
+typedef void (APIENTRY * PGLFNCOMBINEROUTPUTNVPROC) (GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct, GLboolean cdDotProduct, GLboolean muxSum);
+typedef void (APIENTRY * PGLFNFINALCOMBINERINPUTNVPROC) (GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage);
+typedef void (APIENTRY * PGLFNGETCOMBINERINPUTPARAMETERFVNVPROC) (GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETCOMBINERINPUTPARAMETERIVNVPROC) (GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETCOMBINEROUTPUTPARAMETERFVNVPROC) (GLenum stage, GLenum portion, GLenum pname, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETCOMBINEROUTPUTPARAMETERIVNVPROC) (GLenum stage, GLenum portion, GLenum pname, GLint *params);
+typedef void (APIENTRY * PGLFNGETFINALCOMBINERINPUTPARAMETERFVNVPROC) (GLenum variable, GLenum pname, GLfloat *params);
+typedef void (APIENTRY * PGLFNGETFINALCOMBINERINPUTPARAMETERIVNVPROC) (GLenum variable, GLenum pname, GLint *params);
+/* GL_NV_register_combiners2 */
+#ifndef GL_NV_register_combiners2
+#define GL_NV_register_combiners2 1
+#define GL_PER_STAGE_CONSTANTS_NV         0x8535
+#endif
+typedef void (APIENTRY * PGLFNCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, GLenum pname, const GLfloat *params);
+typedef void (APIENTRY * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, GLenum pname, GLfloat *params);
+/* GL_NV_texture_shader */
+#ifndef GL_NV_texture_shader
+#define GL_NV_texture_shader 1
+#define GL_OFFSET_TEXTURE_RECTANGLE_NV    0x864C
+#define GL_OFFSET_TEXTURE_RECTANGLE_SCALE_NV 0x864D
+#define GL_DOT_PRODUCT_TEXTURE_RECTANGLE_NV 0x864E
+#define GL_RGBA_UNSIGNED_DOT_PRODUCT_MAPPING_NV 0x86D9
+#define GL_UNSIGNED_INT_S8_S8_8_8_NV      0x86DA
+#define GL_UNSIGNED_INT_8_8_S8_S8_REV_NV  0x86DB
+#define GL_DSDT_MAG_INTENSITY_NV          0x86DC
+#define GL_SHADER_CONSISTENT_NV           0x86DD
+#define GL_TEXTURE_SHADER_NV              0x86DE
+#define GL_SHADER_OPERATION_NV            0x86DF
+#define GL_CULL_MODES_NV                  0x86E0
+#define GL_OFFSET_TEXTURE_MATRIX_NV       0x86E1
+#define GL_OFFSET_TEXTURE_SCALE_NV        0x86E2
+#define GL_OFFSET_TEXTURE_BIAS_NV         0x86E3
+#define GL_OFFSET_TEXTURE_2D_MATRIX_NV    GL_OFFSET_TEXTURE_MATRIX_NV
+#define GL_OFFSET_TEXTURE_2D_SCALE_NV     GL_OFFSET_TEXTURE_SCALE_NV
+#define GL_OFFSET_TEXTURE_2D_BIAS_NV      GL_OFFSET_TEXTURE_BIAS_NV
+#define GL_PREVIOUS_TEXTURE_INPUT_NV      0x86E4
+#define GL_CONST_EYE_NV                   0x86E5
+#define GL_PASS_THROUGH_NV                0x86E6
+#define GL_CULL_FRAGMENT_NV               0x86E7
+#define GL_OFFSET_TEXTURE_2D_NV           0x86E8
+#define GL_DEPENDENT_AR_TEXTURE_2D_NV     0x86E9
+#define GL_DEPENDENT_GB_TEXTURE_2D_NV     0x86EA
+#define GL_DOT_PRODUCT_NV                 0x86EC
+#define GL_DOT_PRODUCT_DEPTH_REPLACE_NV   0x86ED
+#define GL_DOT_PRODUCT_TEXTURE_2D_NV      0x86EE
+#define GL_DOT_PRODUCT_TEXTURE_CUBE_MAP_NV 0x86F0
+#define GL_DOT_PRODUCT_DIFFUSE_CUBE_MAP_NV 0x86F1
+#define GL_DOT_PRODUCT_REFLECT_CUBE_MAP_NV 0x86F2
+#define GL_DOT_PRODUCT_CONST_EYE_REFLECT_CUBE_MAP_NV 0x86F3
+#define GL_HILO_NV                        0x86F4
+#define GL_DSDT_NV                        0x86F5
+#define GL_DSDT_MAG_NV                    0x86F6
+#define GL_DSDT_MAG_VIB_NV                0x86F7
+#define GL_HILO16_NV                      0x86F8
+#define GL_SIGNED_HILO_NV                 0x86F9
+#define GL_SIGNED_HILO16_NV               0x86FA
+#define GL_SIGNED_RGBA_NV                 0x86FB
+#define GL_SIGNED_RGBA8_NV                0x86FC
+#define GL_SIGNED_RGB_NV                  0x86FE
+#define GL_SIGNED_RGB8_NV                 0x86FF
+#define GL_SIGNED_LUMINANCE_NV            0x8701
+#define GL_SIGNED_LUMINANCE8_NV           0x8702
+#define GL_SIGNED_LUMINANCE_ALPHA_NV      0x8703
+#define GL_SIGNED_LUMINANCE8_ALPHA8_NV    0x8704
+#define GL_SIGNED_ALPHA_NV                0x8705
+#define GL_SIGNED_ALPHA8_NV               0x8706
+#define GL_SIGNED_INTENSITY_NV            0x8707
+#define GL_SIGNED_INTENSITY8_NV           0x8708
+#define GL_DSDT8_NV                       0x8709
+#define GL_DSDT8_MAG8_NV                  0x870A
+#define GL_DSDT8_MAG8_INTENSITY8_NV       0x870B
+#define GL_SIGNED_RGB_UNSIGNED_ALPHA_NV   0x870C
+#define GL_SIGNED_RGB8_UNSIGNED_ALPHA8_NV 0x870D
+#define GL_HI_SCALE_NV                    0x870E
+#define GL_LO_SCALE_NV                    0x870F
+#define GL_DS_SCALE_NV                    0x8710
+#define GL_DT_SCALE_NV                    0x8711
+#define GL_MAGNITUDE_SCALE_NV             0x8712
+#define GL_VIBRANCE_SCALE_NV              0x8713
+#define GL_HI_BIAS_NV                     0x8714
+#define GL_LO_BIAS_NV                     0x8715
+#define GL_DS_BIAS_NV                     0x8716
+#define GL_DT_BIAS_NV                     0x8717
+#define GL_MAGNITUDE_BIAS_NV              0x8718
+#define GL_VIBRANCE_BIAS_NV               0x8719
+#define GL_TEXTURE_BORDER_VALUES_NV       0x871A
+#define GL_TEXTURE_HI_SIZE_NV             0x871B
+#define GL_TEXTURE_LO_SIZE_NV             0x871C
+#define GL_TEXTURE_DS_SIZE_NV             0x871D
+#define GL_TEXTURE_DT_SIZE_NV             0x871E
+#define GL_TEXTURE_MAG_SIZE_NV            0x871F
+#endif
+/* GL_NV_texture_shader2 */
+#ifndef GL_NV_texture_shader2
+#define GL_NV_texture_shader2 1
+#define GL_DOT_PRODUCT_TEXTURE_3D_NV      0x86EF
+#endif
+/* GL_NV_texture_shader3 */
+#ifndef GL_NV_texture_shader3
+#define GL_NV_texture_shader3 1
+#define GL_OFFSET_PROJECTIVE_TEXTURE_2D_NV 0x8850
+#define GL_OFFSET_PROJECTIVE_TEXTURE_2D_SCALE_NV 0x8851
+#define GL_OFFSET_PROJECTIVE_TEXTURE_RECTANGLE_NV 0x8852
+#define GL_OFFSET_PROJECTIVE_TEXTURE_RECTANGLE_SCALE_NV 0x8853
+#define GL_OFFSET_HILO_TEXTURE_2D_NV      0x8854
+#define GL_OFFSET_HILO_TEXTURE_RECTANGLE_NV 0x8855
+#define GL_OFFSET_HILO_PROJECTIVE_TEXTURE_2D_NV 0x8856
+#define GL_OFFSET_HILO_PROJECTIVE_TEXTURE_RECTANGLE_NV 0x8857
+#define GL_DEPENDENT_HILO_TEXTURE_2D_NV   0x8858
+#define GL_DEPENDENT_RGB_TEXTURE_3D_NV    0x8859
+#define GL_DEPENDENT_RGB_TEXTURE_CUBE_MAP_NV 0x885A
+#define GL_DOT_PRODUCT_PASS_THROUGH_NV    0x885B
+#define GL_DOT_PRODUCT_TEXTURE_1D_NV      0x885C
+#define GL_DOT_PRODUCT_AFFINE_DEPTH_REPLACE_NV 0x885D
+#define GL_HILO8_NV                       0x885E
+#define GL_SIGNED_HILO8_NV                0x885F
+#define GL_FORCE_BLUE_TO_ONE_NV           0x8860
+#endif
 
 /*******
  * OpenGL Official Version 
@@ -458,6 +647,7 @@ typedef enum _GL_SupportedExt {
   EXT_PALETTED_TEXTURE,
   EXT_POINT_PARAMETERS,
   EXT_SECONDARY_COLOR,
+  EXT_STENCIL_WRAP,
   EXT_TEXTURE_COMPRESSION_S3TC,
   EXT_TEXTURE_FILTER_ANISOTROPIC,
   EXT_TEXTURE_LOD,
@@ -467,9 +657,15 @@ typedef enum _GL_SupportedExt {
   EXT_TEXTURE_ENV_DOT3,
   EXT_VERTEX_WEIGHTING,
   /* NVIDIA */
-  NV_TEXTURE_ENV_COMBINE4,
-  NV_FRAGMENT_PROGRAM,
   NV_FOG_DISTANCE,
+  NV_FRAGMENT_PROGRAM,
+  NV_REGISTER_COMBINERS,
+  NV_REGISTER_COMBINERS2,
+  NV_TEXGEN_REFLECTION,
+  NV_TEXTURE_ENV_COMBINE4,
+  NV_TEXTURE_SHADER,
+  NV_TEXTURE_SHADER2,
+  NV_TEXTURE_SHADER3,
   NV_VERTEX_PROGRAM,
   /* ATI */
   ATI_TEXTURE_ENV_COMBINE3,
@@ -519,18 +715,24 @@ typedef enum _GL_PSVersion {
 #define MAKEDWORD_VERSION(maj, min)  ((maj & 0x0000FFFF) << 16) | (min & 0x0000FFFF)
 
 #define GL_EXT_FUNCS_GEN \
+    /** ARB Extensions **/ \
+    /* GL_ARB_texture_compression */ \
+    USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE2DPROC,       glCompressedTexImage2DARB); \
+    USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE3DPROC,       glCompressedTexImage3DARB); \
+    USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE2DPROC,    glCompressedTexSubImage2DARB); \
+    USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE3DPROC,    glCompressedTexSubImage3DARB); \
     /** EXT Extensions **/ \
     /* GL_EXT_fog_coord */ \
     /* GL_EXT_paletted_texture */ \
-    USE_GL_FUNC(PGLFNGLCOLORTABLEEXTPROC,            glColorTableEXT); \
+    USE_GL_FUNC(PGLFNGLCOLORTABLEEXTPROC,             glColorTableEXT); \
     /* GL_EXT_point_parameters */ \
-    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFEXTPROC,       glPointParameterfEXT); \
-    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVEXTPROC,      glPointParameterfvEXT); \
+    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFEXTPROC,        glPointParameterfEXT); \
+    USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVEXTPROC,       glPointParameterfvEXT); \
     /* GL_EXT_secondary_color */ \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBEXTPROC,     glSecondaryColor3ubEXT); \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FEXTPROC,      glSecondaryColor3fEXT); \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC,     glSecondaryColor3fvEXT); \
-    USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC, glSecondaryColorPointerEXT); \
+    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBEXTPROC,      glSecondaryColor3ubEXT); \
+    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FEXTPROC,       glSecondaryColor3fEXT); \
+    USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3FVEXTPROC,      glSecondaryColor3fvEXT); \
+    USE_GL_FUNC(PGLFNGLSECONDARYCOLORPOINTEREXTPROC,  glSecondaryColorPointerEXT); \
     /* GL_EXT_secondary_color */ \
     USE_GL_FUNC(PGLFNGENPROGRAMSARBPROC,              glGenProgramsARB); \
     USE_GL_FUNC(PGLFNBINDPROGRAMARBPROC,              glBindProgramARB); \
@@ -632,7 +834,7 @@ typedef struct _GL_Info {
   GL_VSVersion vs_nv_version;
   GL_VSVersion vs_ati_version;
   
-  BOOL supported[40];
+  BOOL supported[50];
 
   /** OpenGL EXT and ARB functions ptr */
   GL_EXT_FUNCS_GEN;

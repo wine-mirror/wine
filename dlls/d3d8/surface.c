@@ -574,14 +574,14 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
       
       ENTER_GL();
 
-      glCompressedTexImage2D(gl_target, 
-			     gl_level, 
-			     D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
-			     This->myDesc.Width,
-			     This->myDesc.Height,
-			     0,
-			     This->myDesc.Size,
-			     This->allocatedMemory);
+      GL_EXTCALL_DEV(glCompressedTexImage2DARB, This->Device)(gl_target, 
+							      gl_level, 
+							      D3DFmt2GLIntFmt(This->Device, This->myDesc.Format),
+							      This->myDesc.Width,
+							      This->myDesc.Height,
+							      0,
+							      This->myDesc.Size,
+							      This->allocatedMemory);
       checkGLcall("glCommpressedTexTexImage2D");
 
       LEAVE_GL();

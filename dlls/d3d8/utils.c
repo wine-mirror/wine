@@ -378,6 +378,7 @@ SHORT D3DFmtGetBpp(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     /* color buffer */
     case D3DFMT_P8:               retVal = 1; break;
     case D3DFMT_R3G3B2:           retVal = 1; break;
+    case D3DFMT_V8U8:             retVal = 2; break;
     case D3DFMT_R5G6B5:           retVal = 2; break;
     case D3DFMT_X1R5G5B5:         retVal = 2; break;
     case D3DFMT_A4R4G4B4:         retVal = 2; break;
@@ -432,6 +433,7 @@ GLint D3DFmt2GLIntFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
         switch (fmt) {
         case D3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
         case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
+        case D3DFMT_V8U8:             retVal = GL_COLOR_INDEX8_EXT; break;
 
         case D3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
         case D3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
@@ -466,6 +468,7 @@ GLenum D3DFmt2GLFmt(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
         switch (fmt) {
         case D3DFMT_P8:               retVal = GL_COLOR_INDEX; break;
         case D3DFMT_A8P8:             retVal = GL_COLOR_INDEX; break;
+        case D3DFMT_V8U8:             retVal = GL_COLOR_INDEX; break;
 
         case D3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
         case D3DFMT_A8R8G8B8:         retVal = GL_BGRA; break;
@@ -500,7 +503,8 @@ GLenum D3DFmt2GLType(IDirect3DDevice8Impl* This, D3DFORMAT fmt) {
     if (retVal == 0) {
         switch (fmt) {
         case D3DFMT_P8:               retVal = GL_UNSIGNED_BYTE; break;
-        case D3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;
+        case D3DFMT_A8P8:             retVal = GL_UNSIGNED_BYTE; break;        
+	case D3DFMT_V8U8:             retVal = GL_UNSIGNED_BYTE; break;
 
         case D3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
         case D3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
@@ -582,18 +586,8 @@ GLenum StencilOp(DWORD op) {
     case D3DSTENCILOP_INCRSAT : return GL_INCR;
     case D3DSTENCILOP_DECRSAT : return GL_DECR;
     case D3DSTENCILOP_INVERT  : return GL_INVERT; 
-#if defined(GL_VERSION_1_4)
-    case D3DSTENCILOP_INCR    : return GL_INCR_WRAP;
-    case D3DSTENCILOP_DECR    : return GL_DECR_WRAP;
-#elif defined(GL_EXT_stencil_wrap)
     case D3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
     case D3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
-#else
-    case D3DSTENCILOP_INCR    : FIXME("Unsupported stencil op D3DSTENCILOP_INCR\n");
-                                return GL_INCR; /* Fixme - needs to support wrap */
-    case D3DSTENCILOP_DECR    : FIXME("Unsupported stencil op D3DSTENCILOP_DECR\n");
-                                return GL_DECR; /* Fixme - needs to support wrap */
-#endif
     default:
         FIXME("Invalid stencil op %ld\n", op);
         return GL_ALWAYS;
@@ -1275,6 +1269,49 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 	    glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
 	    checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
 	    break;
+	    
+	  case D3DTOP_BUMPENVMAP:
+	    {
+	      if (GL_SUPPORT(NV_TEXTURE_SHADER)) {
+		/*
+		  texture unit 0: GL_TEXTURE_2D
+		  texture unit 1: GL_DOT_PRODUCT_NV
+		  texture unit 2: GL_DOT_PRODUCT_DIFFUSE_CUBE_MAP_NV
+		  texture unit 3: GL_DOT_PRODUCT_REFLECT_CUBE_MAP_NV
+		*/
+		float m[2][2];
+		
+		union {
+		  float f;
+		  DWORD d;
+		} tmpvalue;
+		
+		tmpvalue.d = This->StateBlock->texture_state[Stage][D3DTSS_BUMPENVMAT00];
+		m[0][0] = tmpvalue.f;
+		tmpvalue.d = This->StateBlock->texture_state[Stage][D3DTSS_BUMPENVMAT01];
+		m[0][1] = tmpvalue.f;
+		tmpvalue.d = This->StateBlock->texture_state[Stage][D3DTSS_BUMPENVMAT10];
+		m[1][0] = tmpvalue.f;
+		tmpvalue.d = This->StateBlock->texture_state[Stage][D3DTSS_BUMPENVMAT11];
+		m[1][1] = tmpvalue.f;
+		
+		if (FALSE == This->texture_shader_active) {
+		  This->texture_shader_active = TRUE;
+		  glEnable(GL_TEXTURE_SHADER_NV);
+		}
+		/*
+		  glActiveTextureARB(GL_TEXTURE0_ARB + Stage - 1);
+		  glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
+		*/
+		glActiveTextureARB(GL_TEXTURE1_ARB + Stage);
+		glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_OFFSET_TEXTURE_2D_NV);
+		glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, GL_TEXTURE0_ARB + Stage - 1);
+		glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, (float*)&m[0]);
+		break;	    
+	      }
+	    }
+
+	  case D3DTOP_BUMPENVMAPLUMINANCE:
 
 	  default:
 	    Handled = FALSE;

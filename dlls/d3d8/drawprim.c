@@ -533,12 +533,12 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
 
     /* Specular Colour ------------------------------------------*/
     if (isSpecular == TRUE) {
-#if defined(GL_EXT_secondary_color)
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
           GL_EXTCALL(glSecondaryColor3fvEXT(sRGB));
           VTRACE(("glSecondaryColor4f: r,g,b=%f,%f,%f\n", sRGB[0], sRGB[1], sRGB[2]));
-        }
-#endif
+        } else {
+	  VTRACE(("Specular color extensions not supplied\n"));
+	}
     }
 
     /* Normal -------------------------------- */
@@ -794,44 +794,29 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                 sd->u.s.specular.dwStride, 
                 sd->u.s.specular.lpData));
 
-#if defined(GL_VERSION_1_4)
-        glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, 
-                                   sd->u.s.specular.dwStride, 
-                                   sd->u.s.specular.lpData);
-        vcheckGLcall("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, ...)");
-        glEnableClientState(GL_SECONDARY_COLOR_ARRAY);
-        vcheckGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY)");
-#elif defined(GL_EXT_secondary_color)
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
             GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE,
                                                    sd->u.s.specular.dwStride, 
                                                    sd->u.s.specular.lpData);
-            checkGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");
+            vcheckGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");
             glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-            checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
-        }
-#else
-        /* Missing specular color is not critical, no warnings */
-        VTRACE(("Specular colour is not supported in this GL implementation\n"));
-#endif
+            vcheckGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+        } else {
+	  /* Missing specular color is not critical, no warnings */
+	  VTRACE(("Specular colour is not supported in this GL implementation\n"));
+	}
 
     } else {
 
-#if defined(GL_VERSION_1_4)
-        glDisableClientState(GL_SECONDARY_COLOR_ARRAY);
-        checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY)");
-        glSecondaryColor3f(0, 0, 0);
-        checkGLcall("glSecondaryColor3f(0, 0, 0)");
-#elif defined(GL_EXT_secondary_color)
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-              glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-            checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
-            GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
-            checkGLcall("glSecondaryColor3fEXT(0, 0, 0)");
-        }
-#else
-        /* Do not worry if specular colour missing and disable request */
-#endif
+      if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+	glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
+	checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+	GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
+	checkGLcall("glSecondaryColor3fEXT(0, 0, 0)");
+      } else {
+	/* Missing specular color is not critical, no warnings */
+	VTRACE(("Specular colour is not supported in this GL implementation\n"));
+      }
     }
 
     /* Texture coords -------------------------------------------*/
@@ -1187,40 +1172,31 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
             if (vx_index == 0) glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         }
 
-#if 1
         /* Specular ------------------------------- */
         if (sd->u.s.diffuse.lpData != NULL) {
             VTRACE(("glSecondaryColor4ub: r,g,b=%f,%f,%f\n", 
                     ((specularColor >> 16) & 0xFF) / 255.0f, 
                     ((specularColor >>  8) & 0xFF) / 255.0f,
                     ((specularColor >>  0) & 0xFF) / 255.0f));
-#if defined(GL_VERSION_1_4)
-            glSecondaryColor3ub((specularColor >> 16) & 0xFF,
-                                (specularColor >>  8) & 0xFF,
-                                (specularColor >>  0) & 0xFF);
-#elif defined(GL_EXT_secondary_color)
             if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
                 GL_EXTCALL(glSecondaryColor3ubEXT)(
                            (specularColor >> 16) & 0xFF,
                            (specularColor >>  8) & 0xFF,
                            (specularColor >>  0) & 0xFF);
-            }
-#else
-            /* Do not worry if specular colour missing and disable request */
-            VTRACE(("Specular color extensions not supplied\n"));
-#endif
+            } else {
+	      /* Do not worry if specular colour missing and disable request */
+	      VTRACE(("Specular color extensions not supplied\n"));
+	    }
         } else {
-#if defined(GL_VERSION_1_4)
-            if (vx_index == 0) glSecondaryColor3f(0, 0, 0);
-#elif defined(GL_EXT_secondary_color)
-            if (vx_index == 0 && GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+            if (vx_index == 0) {
+	      if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
                 GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
-            }
-#else
-            /* Do not worry if specular colour missing and disable request */
-#endif
+	      } else {
+		/* Do not worry if specular colour missing and disable request */
+		VTRACE(("Specular color extensions not supplied\n"));
+	      }
+            } 
         }
-#endif
 
         /* Normal -------------------------------- */
         if (sd->u.s.normal.lpData != NULL) {

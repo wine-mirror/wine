@@ -2975,6 +2975,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
 
     case D3DRS_COLORWRITEENABLE          :
+      {
         TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n", 
 	      Value & D3DCOLORWRITEENABLE_RED   ? 1 : 0,
 	      Value & D3DCOLORWRITEENABLE_GREEN ? 1 : 0,
@@ -2985,7 +2986,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                     Value & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE, 
                     Value & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
         checkGLcall("glColorMask(...)");
-		break;
+      }
+      break;
+
+    case D3DRS_LOCALVIEWER               :
+      {
+	GLint state = (Value) ? 1 : 0;
+	TRACE("Local Viewer Enable to %ul\n", (BOOL) Value);	
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, state);
+      }
+      break;
 
         /* Unhandled yet...! */
     case D3DRS_LASTPIXEL                 :
@@ -2999,7 +3009,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_WRAP5                     :
     case D3DRS_WRAP6                     :
     case D3DRS_WRAP7                     :
-    case D3DRS_LOCALVIEWER               :
     case D3DRS_SOFTWAREVERTEXPROCESSING  :
     case D3DRS_POINTSPRITEENABLE         :
     case D3DRS_MULTISAMPLEANTIALIAS      :
@@ -3450,8 +3459,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                         checkGLcall("Disable GL_TEXTURE_1D");
                     } 
                     if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_2D) {
+		      if (GL_SUPPORT(NV_TEXTURE_SHADER) && This->texture_shader_active) {
+			glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
+			checkGLcall("Enable GL_TEXTURE_2D");
+		      } else {
                         glEnable(GL_TEXTURE_2D);
                         checkGLcall("Enable GL_TEXTURE_2D");
+		      }
                     } else {
                         glDisable(GL_TEXTURE_2D);
                         checkGLcall("Disable GL_TEXTURE_2D");
@@ -3637,74 +3651,73 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
               }
               break;
 
-#if defined(GL_ARB_texture_cube_map) || defined(GL_NV_texgen_reflection)
 	    case D3DTSS_TCI_CAMERASPACENORMAL:
 	      {
-		float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
-                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+		if (GL_SUPPORT(GL_NV_texgen_reflection)) {
+		  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+		  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+		  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+		  float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+		  TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
 
-                glMatrixMode(GL_MODELVIEW);
-                glPushMatrix();
-                glLoadIdentity();
-                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-                glPopMatrix();
-
-		glEnable(GL_TEXTURE_GEN_S);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
-		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB);
-                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB)");
-		glEnable(GL_TEXTURE_GEN_T);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
-		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB);
-                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB)");
-		glEnable(GL_TEXTURE_GEN_R);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
-		glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB);
-                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_ARB)");
+		  glMatrixMode(GL_MODELVIEW);
+		  glPushMatrix();
+		  glLoadIdentity();
+		  glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+		  glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+		  glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+		  glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+		  glPopMatrix();
+		  
+		  glEnable(GL_TEXTURE_GEN_S);
+		  checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+		  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+		  checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+		  glEnable(GL_TEXTURE_GEN_T);
+		  checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+		  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+		  checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+		  glEnable(GL_TEXTURE_GEN_R);
+		  checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+		  glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+		  checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+		}
 	      }
 	      break;
-#endif
 
-#if defined(GL_ARB_texture_cube_map) || defined(GL_NV_texgen_reflection)
 	    case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
 	      {
-
-		float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
-                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
-
-                glMatrixMode(GL_MODELVIEW);
-                glPushMatrix();
-                glLoadIdentity();
-                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-                glPopMatrix();
-		
-		glEnable(GL_TEXTURE_GEN_S);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
-		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
-                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB)");
-		glEnable(GL_TEXTURE_GEN_T);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
-		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
-                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB)");
-		glEnable(GL_TEXTURE_GEN_R);
-		checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
-		glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB);
-                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB)");
+		if (GL_SUPPORT(GL_NV_texgen_reflection)) {
+		  float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+		  float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+		  float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+		  float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+		  TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+		  
+		  glMatrixMode(GL_MODELVIEW);
+		  glPushMatrix();
+		  glLoadIdentity();
+		  glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+		  glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+		  glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+		  glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+		  glPopMatrix();
+		  
+		  glEnable(GL_TEXTURE_GEN_S);
+		  checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+		  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+		  checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+		  glEnable(GL_TEXTURE_GEN_T);
+		  checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+		  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+		  checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+		  glEnable(GL_TEXTURE_GEN_R);
+		  checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+		  glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+		  checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+		}
 	      }
 	      break;
-#endif
 
             /* Unhandled types: */
             default:
@@ -3720,22 +3733,31 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         break;
 
         /* Unhandled */
-    case D3DTSS_BUMPENVMAT00          :
-    case D3DTSS_BUMPENVMAT01          :
-        TRACE("BUMPENVMAT0%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT00, Stage, Type, Value);
-        break;
-    case D3DTSS_BUMPENVMAT10          :
-    case D3DTSS_BUMPENVMAT11          :
-        TRACE("BUMPENVMAT1%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT10, Stage, Type, Value);
-        break;
-
     case D3DTSS_TEXTURETRANSFORMFLAGS :
         set_texture_matrix((float *)&This->StateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], Value);
         break; 
 
+    case D3DTSS_BUMPENVMAT00          :
+    case D3DTSS_BUMPENVMAT01          :
+        TRACE("BUMPENVMAT0%u Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT00, Stage, Type, Value);
+        break;
+    case D3DTSS_BUMPENVMAT10          :
+    case D3DTSS_BUMPENVMAT11          :
+        TRACE("BUMPENVMAT1%u Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT10, Stage, Type, Value);
+        break;
+
     case D3DTSS_BUMPENVLSCALE         :
+      TRACE("BUMPENVLSCALE Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
+      break;
+
     case D3DTSS_BUMPENVLOFFSET        :
+      TRACE("BUMPENVLOFFSET Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
+      break;
+
     case D3DTSS_RESULTARG             :
+      TRACE("RESULTARG Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
+      break;
+
     default:
         /* Put back later: FIXME("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value); */
         TRACE("Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
