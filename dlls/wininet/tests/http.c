@@ -95,7 +95,7 @@ void winapi_test(int flags)
 
     trace("InternetOpenA <--\n");
     hi = InternetOpenA("",0x0,0x0,0x0,flags);
-    ok((hi != 0x0),"InternetOpen Failed");
+    ok((hi != 0x0),"InternetOpen Failed\n");
     trace("InternetOpenA -->\n");
 
     if (hi == 0x0) goto abort;
@@ -104,7 +104,7 @@ void winapi_test(int flags)
 
     trace("InternetConnectA <--\n");
     hic=InternetConnectA(hi,"www.winehq.org",0x0,0x0,0x0,0x3,0x0,0xdeadbeef);
-    ok((hic != 0x0),"InternetConnect Failed");
+    ok((hic != 0x0),"InternetConnect Failed\n");
     trace("InternetConnectA -->\n");
 
     if (hic == 0x0) goto abort;
@@ -121,7 +121,7 @@ void winapi_test(int flags)
          * abort.
          */
     } else  {
-        ok((hor != 0x0),"HttpOpenRequest Failed");
+        ok((hor != 0x0),"HttpOpenRequest Failed\n");
     }
     trace("HttpOpenRequestA -->\n");
 
@@ -132,10 +132,10 @@ void winapi_test(int flags)
     rc = HttpSendRequestA(hor, "", 0xffffffff,0x0,0x0);
     if (flags)
         ok(((rc == 0)&&(GetLastError()==997)),
-            "Asyncronous HttpSendRequest NOT returning 0 with error 997");
+            "Asynchronous HttpSendRequest NOT returning 0 with error 997\n");
     else
         ok((rc != 0) || GetLastError() == 12007, /* 12007 == XP */
-           "Syncronous HttpSendRequest returning 0, error %ld", GetLastError());
+           "Synchronous HttpSendRequest returning 0, error %ld\n", GetLastError());
     trace("HttpSendRequestA <--\n");
 
     while ((flags)&&(!goon))
@@ -169,13 +169,13 @@ void winapi_test(int flags)
     trace("Option 0x1 -> %li  %s\n",rc,buffer);
 
     length = 100;
-    trace("Entery Query loop\n");
+    trace("Entering Query loop\n");
 
     while (length)
     {
 
         rc = InternetQueryDataAvailable(hor,&length,0x0,0x0);
-        ok((rc != 0),"InternetQueryDataAvailable failed");
+        ok((rc != 0),"InternetQueryDataAvailable failed\n");
 
         if (length)
         {
@@ -194,15 +194,15 @@ void winapi_test(int flags)
 abort:
     if (hor != 0x0) {
         rc = InternetCloseHandle(hor);
-        ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed");
+        ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
     }
     if (hic != 0x0) {
         rc = InternetCloseHandle(hic);
-        ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed");
+        ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed\n");
     }
     if (hi != 0x0) {
       rc = InternetCloseHandle(hi);
-      ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed");
+      ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
       if (flags)
           Sleep(100);
     }
@@ -272,7 +272,7 @@ void InternetCrackUrl_test(void)
   urlComponents.dwExtraInfoLength = 1024;
   ok((InternetCrackUrl(TEST_URL, 0,0,&urlComponents)),
      "InternetCrackUrl failed, error %lx\n",GetLastError());
-  ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong");
+  ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong\n");
 }
 
 START_TEST(http)
@@ -281,5 +281,4 @@ START_TEST(http)
     winapi_test(0x00000000);
     InternetCrackUrl_test();
     InternetOpenUrlA_test();
-    
 }
