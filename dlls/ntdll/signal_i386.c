@@ -119,18 +119,18 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "pushl %ebp\n\t"
                   "movl %esp, %ebp\n\t"
                   "movl $166,%eax\n\t"  /*SYS_vm86*/
-                  "pushl %fs\n\t"
                   "movl 8(%ebp),%ecx\n\t"
                   "pushl %ebx\n\t"
                   "movl $1,%ebx\n\t"    /*VM86_ENTER*/
                   "pushl %ecx\n\t"      /* put vm86plus_struct ptr somewhere we can find it */
+                  "pushl %fs\n\t"
                   "int $0x80\n"
                   ".globl " __ASM_NAME("vm86_return") "\n\t"
                   ".type " __ASM_NAME("vm86_return") ",@function\n"
                   __ASM_NAME("vm86_return") ":\n\t"
+                  "popl %fs\n\t"
                   "popl %ecx\n\t"
                   "popl %ebx\n\t"
-                  "popl %fs\n\t"
                   "popl %ebp\n\t"
                   "ret" );
 
@@ -386,6 +386,61 @@ static inline void *get_cr2_value( const SIGCONTEXT *sigcontext )
 #endif
 }
 
+
+#ifdef linux
+/***********************************************************************
+ *           save_vm86_context
+ *
+ * Set the register values from a vm86 structure.
+ */
+static void save_vm86_context( CONTEXT *context, const struct vm86plus_struct *vm86 )
+{
+    context->Eax    = vm86->regs.eax;
+    context->Ebx    = vm86->regs.ebx;
+    context->Ecx    = vm86->regs.ecx;
+    context->Edx    = vm86->regs.edx;
+    context->Esi    = vm86->regs.esi;
+    context->Edi    = vm86->regs.edi;
+    context->Esp    = vm86->regs.esp;
+    context->Ebp    = vm86->regs.ebp;
+    context->Eip    = vm86->regs.eip;
+    context->SegCs  = vm86->regs.cs;
+    context->SegDs  = vm86->regs.ds;
+    context->SegEs  = vm86->regs.es;
+    context->SegFs  = vm86->regs.fs;
+    context->SegGs  = vm86->regs.gs;
+    context->SegSs  = vm86->regs.ss;
+    context->EFlags = vm86->regs.eflags;
+}
+
+
+/***********************************************************************
+ *           restore_vm86_context
+ *
+ * Build a vm86 structure from the register values.
+ */
+static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct *vm86 )
+{
+    vm86->regs.eax    = context->Eax;
+    vm86->regs.ebx    = context->Ebx;
+    vm86->regs.ecx    = context->Ecx;
+    vm86->regs.edx    = context->Edx;
+    vm86->regs.esi    = context->Esi;
+    vm86->regs.edi    = context->Edi;
+    vm86->regs.esp    = context->Esp;
+    vm86->regs.ebp    = context->Ebp;
+    vm86->regs.eip    = context->Eip;
+    vm86->regs.cs     = context->SegCs;
+    vm86->regs.ds     = context->SegDs;
+    vm86->regs.es     = context->SegEs;
+    vm86->regs.fs     = context->SegFs;
+    vm86->regs.gs     = context->SegGs;
+    vm86->regs.ss     = context->SegSs;
+    vm86->regs.eflags = context->EFlags;
+}
+#endif /* linux */
+
+
 /***********************************************************************
  *           save_context
  *
@@ -411,27 +466,12 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
         /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
-        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)ESP_sig(sigcontext);
+        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
         /* fetch the saved %fs on the stack */
-        fs = *((unsigned int *)ESP_sig(sigcontext) + 2);
+        fs = *(unsigned int *)ESP_sig(sigcontext);
         __set_fs(fs);
         /* get context from vm86 struct */
-        context->Eax    = vm86->regs.eax;
-        context->Ebx    = vm86->regs.ebx;
-        context->Ecx    = vm86->regs.ecx;
-        context->Edx    = vm86->regs.edx;
-        context->Esi    = vm86->regs.esi;
-        context->Edi    = vm86->regs.edi;
-        context->Esp    = vm86->regs.esp;
-        context->Ebp    = vm86->regs.ebp;
-        context->Eip    = vm86->regs.eip;
-        context->SegCs  = vm86->regs.cs;
-        context->SegDs  = vm86->regs.ds;
-        context->SegEs  = vm86->regs.es;
-        context->SegFs  = vm86->regs.fs;
-        context->SegGs  = vm86->regs.gs;
-        context->SegSs  = vm86->regs.ss;
-        context->EFlags = vm86->regs.eflags;
+        save_vm86_context( context, vm86 );
         return;
     }
 #endif  /* linux */
@@ -473,23 +513,8 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
         IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))
     {
         /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
-        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)ESP_sig(sigcontext);
-        vm86->regs.eax    = context->Eax;
-        vm86->regs.ebx    = context->Ebx;
-        vm86->regs.ecx    = context->Ecx;
-        vm86->regs.edx    = context->Edx;
-        vm86->regs.esi    = context->Esi;
-        vm86->regs.edi    = context->Edi;
-        vm86->regs.esp    = context->Esp;
-        vm86->regs.ebp    = context->Ebp;
-        vm86->regs.eip    = context->Eip;
-        vm86->regs.cs     = context->SegCs;
-        vm86->regs.ds     = context->SegDs;
-        vm86->regs.es     = context->SegEs;
-        vm86->regs.fs     = context->SegFs;
-        vm86->regs.gs     = context->SegGs;
-        vm86->regs.ss     = context->SegSs;
-        vm86->regs.eflags = context->EFlags;
+        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)(ESP_sig(sigcontext) + sizeof(int));
+        restore_vm86_context( context, vm86 );
         return;
     }
 #endif /* linux */
@@ -896,22 +921,7 @@ void __wine_enter_vm86( CONTEXT *context )
     memset( &vm86, 0, sizeof(vm86) );
     for (;;)
     {
-        vm86.regs.eax    = context->Eax;
-        vm86.regs.ebx    = context->Ebx;
-        vm86.regs.ecx    = context->Ecx;
-        vm86.regs.edx    = context->Edx;
-        vm86.regs.esi    = context->Esi;
-        vm86.regs.edi    = context->Edi;
-        vm86.regs.esp    = context->Esp;
-        vm86.regs.ebp    = context->Ebp;
-        vm86.regs.eip    = context->Eip;
-        vm86.regs.cs     = context->SegCs;
-        vm86.regs.ds     = context->SegDs;
-        vm86.regs.es     = context->SegEs;
-        vm86.regs.fs     = context->SegFs;
-        vm86.regs.gs     = context->SegGs;
-        vm86.regs.ss     = context->SegSs;
-        vm86.regs.eflags = context->EFlags;
+        restore_vm86_context( context, &vm86 );
 
         do
         {
@@ -923,22 +933,7 @@ void __wine_enter_vm86( CONTEXT *context )
             }
         } while (VM86_TYPE(res) == VM86_SIGNAL);
 
-        context->Eax    = vm86.regs.eax;
-        context->Ebx    = vm86.regs.ebx;
-        context->Ecx    = vm86.regs.ecx;
-        context->Edx    = vm86.regs.edx;
-        context->Esi    = vm86.regs.esi;
-        context->Edi    = vm86.regs.edi;
-        context->Esp    = vm86.regs.esp;
-        context->Ebp    = vm86.regs.ebp;
-        context->Eip    = vm86.regs.eip;
-        context->SegCs  = vm86.regs.cs;
-        context->SegDs  = vm86.regs.ds;
-        context->SegEs  = vm86.regs.es;
-        context->SegFs  = vm86.regs.fs;
-        context->SegGs  = vm86.regs.gs;
-        context->SegSs  = vm86.regs.ss;
-        context->EFlags = vm86.regs.eflags;
+        save_vm86_context( context, &vm86 );
 
         switch(VM86_TYPE(res))
         {
