@@ -117,6 +117,9 @@
 <!entity name-tom-wickline "Tom Wickline">
 <!entity email-tom-wickline "twickline2@triad.rr.com">
 
+<!entity name-francois-gouget "Fran&ccedil;ois Gouget">
+<!entity email-francois-gouget "fgouget@free.fr">
+
 <!-- *** Coders mentioned in docs, but not doc writers *** -->
 
 <!entity name-francis-beaudet "Francis Beaudet">

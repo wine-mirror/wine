@@ -2,6 +2,9 @@
     <title>Writing Conformance tests</title>
 
     <para>
+      Written by &name-francois-gouget; <email>&email-francois-gouget;</email>
+    </para>
+    <para>
       Note: This part of the documentation is still very much a work in
       progress and is in no way complete.
     </para>
@@ -325,8 +328,6 @@ START_TEST(paths)
         sure to not include any Unix or Wine specific header: tests must
         compile on Windows.
       </para>
-<!-- FIXME: Can we include windows.h now? We should be able to but currently __WINE__ is defined thus making it impossible. -->
-<!-- FIXME: Add recommendations about what to print in case of a failure: be informative -->
       <para>
         You can use <function>trace</> to print informational messages. Note
         that these messages will only be printed if 'runtest -v' is being used.
@@ -349,24 +350,93 @@ START_TEST(paths)
         failed, and the following optional parameters depend on the format
         string.
       </para>
+    </sect1>
+
+    <sect1 id="testing-error-messages">
+      <title>Writing good error messages</title>
       <para>
-        It is important to display an informative message when a test fails:
-        a good error message will help the Wine developper identify exactly
-        what went wrong without having to add too many other printfs. For
-        instance it may be useful to print the error code if relevant, or the
-        expected value and effective value. In that respect, for some tests
-        you may want to define a macro such as the following:
+        The message that is printed when a test fails is
+        <emphasis>extremely</> important.
+      </para>
+      <para>
+        Someone will take your test, run it on a Windows platform that
+        you don't have access to, and discover that it fails. They will then
+        post an email with the output of the test, and in particular your
+        error message. Someone, maybe you, will then have to figure out from
+        this error message why the test failed.
+      </para>
+      <para>
+        If the error message contains all the relevant information that will
+        be easy. If not, then it will require modifying the test, finding
+        someone to compile it on Windows, sending the modified version to the
+        original tester and waiting for his reply. In other words, it will
+        be long and painful.
+      </para>
+      <para>
+        So how do you write a good error message? Let's start with an example
+        of a bad error message:
+<screen>
+    ok(GetThreadPriorityBoost(curthread,&amp;disabled)!=0,
+       "GetThreadPriorityBoost Failed");
+</screen>
+        This will yield:
+<screen>
+thread.c:123: Test failed: GetThreadPriorityBoost Failed
+</screen>
+      </para>
+      <para>
+        Did you notice how the error message provides no information about
+        why the test failed? We already know from the line number exactly
+        which test failed. In fact the error message gives strictly no
+        information that cannot already be obtained by reading the code. In
+        other words it provides no more information than an empty string!
+      </para>
+      <para>
+        Let's look at how to rewrite it:
+<screen>
+    BOOL rc;
+...
+    rc=GetThreadPriorityBoost(curthread,&amp;disabled);
+    ok(rc!=0 && disabled==0,"rc=%d error=%ld disabled=%d",
+       rc,GetLastError(),disabled);
+</screen>
+        This will yield:
+<screen>
+thread.c:123: Test failed: rc=0 error=120 disabled=0
+</screen>
+      </para>
+      <para>
+        When receiving such a message, one would check the source, see that
+        it's a call to GetThreadPriorityBoost, that the test failed not
+        because the API returned the wrong value, but because it returned an
+        error code. Furthermore we see that GetLastError() returned 120 which
+        winerror.h defines as ERROR_CALL_NOT_IMPLEMENTED. So the source of
+        the problem is obvious: this Windows platform (here Windows 98) does
+        not support this API and thus the test must be modified to detect
+        such a condition and skip the test.
+      </para>
+      <para>
+        So a good error message should provide all the information which
+        cannot be obtained by reading the source, typically the function
+        return value, error codes, and any function output parameter. Even if
+        more information is needed to fully understand a problem,
+        systematically providing the above is easy and will help cut down the
+        number of iterations required to get to a resolution.
+      </para>
+      <para>
+        It may also be a good idea to dump items that may be hard to retrieve
+        from the source, like the expected value in a test if it is the
+        result of an earlier computation, or comes from a large array of test
+        values (e.g. index 112 of _pTestStrA in vartest.c). In that respect,
+        for some tests you may want to define a macro such as the following:
 <screen>
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
 
 ...
 
-eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
+    eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
 </screen>
-       </para>
-       <para>
-         Note
        </para>
     </sect1>
 
