@@ -122,16 +122,19 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
             lpszEnd++;
         }
 
-        if (*lpszEnd == '\0')
+        if (*lpszStart == '\0')
 	    break;
 
-        *lpszEnd = '\0';
-
+        if (*lpszEnd == '\r')
+        {
+            *lpszEnd = '\0';
+            lpszEnd += 2; /* Jump over \r\n */
+        }
         TRACE("interpreting header %s\n", debugstr_w(lpszStart));
         if (HTTP_InterpretHttpHeader(lpszStart, field, MAX_FIELD_LEN, value, MAX_FIELD_VALUE_LEN))
             bSuccess = HTTP_ProcessHeader(lpwhr, field, value, dwModifier | HTTP_ADDHDR_FLAG_REQ);
 
-        lpszStart = lpszEnd + 2; /* Jump over \0\n */
+        lpszStart = lpszEnd;
 
     } while (bSuccess);
 
