@@ -24,7 +24,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/file.c \
 	$(TOPOBJDIR)/files/smb.c \
 	$(TOPOBJDIR)/loader/module.c \
-	$(TOPOBJDIR)/memory/codepage.c \
 	$(TOPOBJDIR)/memory/environ.c \
 	$(TOPOBJDIR)/memory/virtual.c \
 	$(TOPOBJDIR)/misc/cpu.c \

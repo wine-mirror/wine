@@ -72,6 +72,7 @@ static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 extern void SHELL_LoadRegistry(void);
 extern void VERSION_Init( const WCHAR *appname );
 extern void MODULE_InitLoadPath(void);
+extern void LOCALE_Init(void);
 
 /***********************************************************************
  *           contains_path
@@ -684,6 +685,8 @@ static BOOL process_init( char *argv[], char **environ )
         params->hStdError  = hstderr;
     }
 
+    LOCALE_Init();
+
     /* Copy the parent environment */
     if (!build_initial_environment( environ )) return FALSE;
 
@@ -758,7 +761,6 @@ void __wine_kernel_init(void)
 
         if (!__wine_main_argv[0]) OPTIONS_Usage();
 
-        /* FIXME: locale info not loaded yet */
         MultiByteToWideChar( CP_UNIXCP, 0, __wine_main_argv[0], -1, exe_nameW, MAX_PATH );
         if (!find_exe_file( exe_nameW, buffer, MAX_PATH, &main_exe_file ))
         {

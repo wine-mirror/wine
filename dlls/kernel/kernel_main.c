@@ -47,7 +47,7 @@
 #include "kernel_private.h"
 #include "console_private.h"
 
-extern void LOCALE_Init(void);
+extern void LOCALE_InitRegistry(void);
 extern void COMPUTERNAME_Init(void);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
@@ -115,8 +115,8 @@ static BOOL process_attach(void)
     FILE_umask = umask(0777);
     umask( FILE_umask );
 
-    /* Setup codepage info */
-    LOCALE_Init();
+    /* Setup registry locale information */
+    LOCALE_InitRegistry();
 
     /* Initialize 16-bit thunking entry points */
     if (!WOWTHUNK_Init()) return FALSE;
