@@ -770,8 +770,11 @@ BOOL WINAPI DeleteDC( HDC hdc )
 	if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC ))) break;
 	dc->header.hNext = dcs->header.hNext;
 	dc->saveLevel--;
-        GDI_ReleaseObj( hdcs );
-	DeleteDC( hdcs );
+        if (dcs->hClipRgn) DeleteObject( dcs->hClipRgn );
+        if (dcs->hVisRgn) DeleteObject( dcs->hVisRgn );
+        if (dcs->hGCClipRgn) DeleteObject( dcs->hGCClipRgn );
+        PATH_DestroyGdiPath(&dcs->path);
+        GDI_FreeObject( hdcs, dcs );
     }
     
     if (!(dc->flags & DC_SAVED))
