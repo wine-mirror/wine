@@ -102,4 +102,13 @@
 #define ID_REGISTRY_PRINTERSETUP        32833
 #define ID_REGISTRY_SAVESUBTREEAS       32834
 #define IDS_LICENSE                     32835
+#define IDS_ERROR                       32836
+#define IDS_BAD_VALUE			32837
+#define IDS_UNSUPPORTED_TYPE		32838
+#define IDS_TOO_BIG_VALUE		32839
+
+#define IDD_EDIT_STRING			2000
+#define IDC_VALUE_NAME			2001
+#define IDC_VALUE_DATA			2002
+
 #define IDC_STATIC                      -1

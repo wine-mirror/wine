@@ -119,6 +119,20 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit String"
+FONT 8, "System"
+BEGIN
+    LTEXT           "Value name:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Value data:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
+    DEFPUSHBUTTON   "Cancel",IDCANCEL,175,60,30,11,WS_GROUP
+END
+
+
 /*
  * String Table
  */
@@ -179,6 +193,14 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Copies the name of the selected key to the clipboard"
     ID_EDIT_FIND            "Finds a text string in a key, value or data"
     ID_EDIT_FINDNEXT        "Finds next occurrence of text specified in previous search"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Error"
+    IDS_BAD_VALUE           "Can't query value '%s'"
+    IDS_UNSUPPORTED_TYPE    "Can't edit keys of this type (%ld)"
+    IDS_TOO_BIG_VALUE       "Value is too big (%ld)"
 END
 
 /*****************************************************************/

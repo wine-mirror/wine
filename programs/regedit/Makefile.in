@@ -11,6 +11,7 @@ EXTRADEFS = -DNO_LIBWINE_PORT
 C_SRCS = \
 	about.c \
 	childwnd.c \
+	edit.c \
 	framewnd.c \
 	listview.c \
 	main.c \

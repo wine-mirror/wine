@@ -37,6 +37,7 @@ extern "C" {
 #define	SPLIT_WIDTH		5
 #define MAX_NAME_LEN    500
 
+#define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
 
 /******************************************************************************/
 
@@ -59,6 +60,7 @@ typedef struct {
 	WINDOWPLACEMENT pos;
 	TCHAR	szPath[MAX_PATH];
 } ChildWnd;
+extern ChildWnd* pChildWnd;
 
 /*******************************************************************************
  * Global Variables:
@@ -126,6 +128,8 @@ d(GetSaveFileNameA)
 d(GetStockObject)
 d(GetSubMenu)
 d(GetSystemMetrics)
+d(GetWindowTextA)
+d(GetWindowTextLengthA)
 d(ImageList_Add)
 d(ImageList_Create)
 d(ImageList_GetImageCount)
@@ -140,6 +144,7 @@ d(LoadImageA)
 d(LoadMenuA)
 d(LoadStringA)
 d(MessageBeep)
+d(MessageBoxA)
 d(MoveWindow)
 d(OpenClipboard)
 d(PostQuitMessage)
@@ -152,6 +157,7 @@ d(ScreenToClient)
 d(SendMessageA)
 d(SetCapture)
 d(SetCursor)
+d(SetDlgItemTextA)
 d(SetFocus)
 d(SetWindowLongA)
 d(SetWindowTextA)
@@ -197,6 +203,8 @@ d(wsprintfA)
 #define GetStockObject pGetStockObject
 #define GetSubMenu pGetSubMenu
 #define GetSystemMetrics pGetSystemMetrics
+#define GetWindowTextA pGetWindowTextA
+#define GetWindowTextLengthA pGetWindowTextLengthA
 #define ImageList_Add pImageList_Add
 #define ImageList_Create pImageList_Create
 #define ImageList_GetImageCount pImageList_GetImageCount
@@ -211,6 +219,7 @@ d(wsprintfA)
 #define LoadMenuA pLoadMenuA
 #define LoadStringA pLoadStringA
 #define MessageBeep pMessageBeep
+#define MessageBoxA pMessageBoxA
 #define MoveWindow pMoveWindow
 #define OpenClipboard pOpenClipboard
 #define PostQuitMessage pPostQuitMessage
@@ -223,6 +232,7 @@ d(wsprintfA)
 #define SendMessageA pSendMessageA
 #define SetCapture pSetCapture
 #define SetCursor pSetCursor
+#define SetDlgItemTextA pSetDlgItemTextA
 #define SetFocus pSetFocus
 #define SetWindowLongA pSetWindowLongA
 #define SetWindowTextA pSetWindowTextA
@@ -256,5 +266,8 @@ extern BOOL RefreshListView(HWND hwndTV, HKEY hKey, LPTSTR keyPath);
 extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
 extern HKEY FindRegRoot(HWND hwndTV, HTREEITEM hItem, LPTSTR keyPath, int* pPathLen, int max);
+
+/* edit.c */
+BOOL ModifyValue(HWND hwnd, HKEY hKey, LPTSTR valueName);
 
 #endif /* __MAIN_H__ */

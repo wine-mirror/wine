@@ -22,16 +22,16 @@
 #include <windows.h>
 #include <tchar.h>
 #include <commctrl.h>
-#include <assert.h>
-#define ASSERT assert
 
 #include "main.h"
 
+ChildWnd* pChildWnd;
 
 /*******************************************************************************
  * Local module support methods
  */
 
+/*FIXME: why do we need this, we should remove it, we have already FindRegRoot */
 static void MakeFullRegPath(HWND hwndTV, HTREEITEM hItem, LPTSTR keyPath, int* pPathLen, int max)
 {
     TVITEM item;
@@ -128,12 +128,11 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 {
     static int last_split;
 /*    ChildWnd* pChildWnd = (ChildWnd*)GetWindowLong(hWnd, GWL_USERDATA); */
-    static ChildWnd* pChildWnd;
 
     switch (message) {
     case WM_CREATE:
         pChildWnd = (ChildWnd*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-        ASSERT(pChildWnd);
+	if (!pChildWnd) return 0;
         pChildWnd->nSplitPos = 250;
         pChildWnd->hTreeWnd = CreateTreeView(hWnd, pChildWnd->szPath, TREE_WINDOW);
         pChildWnd->hListWnd = CreateListView(hWnd, LIST_WINDOW/*, pChildWnd->szPath*/);

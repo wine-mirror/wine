@@ -436,6 +436,19 @@ BOOL RefreshView(HWND hWnd)
  */
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    HKEY hKeyRoot, hKey;
+    TCHAR keyPath[1000] = { 0 };
+    TCHAR valueName[255] = { 0 };
+    int keyPathLen = 0, item;
+    BOOL result = TRUE;
+    LONG lRet;
+
+    hKeyRoot = FindRegRoot(pChildWnd->hTreeWnd, 0, keyPath, &keyPathLen, sizeof(keyPath)/sizeof(TCHAR));
+    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
+    if (lRet != ERROR_SUCCESS) hKey = 0;
+    item = ListView_GetNextItem(pChildWnd->hListWnd, -1, LVNI_FOCUSED);
+    if (item != -1) ListView_GetItemText(pChildWnd->hListWnd, item, 0, valueName, sizeof(valueName)/sizeof(TCHAR));
+
 	switch (LOWORD(wParam)) {
     /* Parse the menu selections:*/
     case ID_REGISTRY_IMPORTREGISTRYFILE:
@@ -451,6 +464,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_REGISTRY_PRINT:
         PrintRegistryHive(hWnd, _T(""));
         break;
+    case ID_EDIT_MODIFY:
+       if (ModifyValue(hWnd, hKey, valueName))
+           RefreshListView(pChildWnd->hListWnd, hKeyRoot, keyPath);
+       break;
     case ID_EDIT_COPYKEYNAME:
         CopyKeyName(hWnd, _T(""));
         break;
@@ -486,9 +503,11 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
         break;
     default:
-        return FALSE;
-    }
-	return TRUE;
+        result = FALSE;
+      }
+ 
+    RegCloseKey(hKey);
+    return result;
 }
 
 /********************************************************************************

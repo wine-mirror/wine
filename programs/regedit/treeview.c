@@ -48,6 +48,9 @@ HKEY FindRegRoot(HWND hwndTV, HTREEITEM hItem, LPTSTR keyPath, int* pPathLen, in
 {
     HKEY hKey = NULL;
     TVITEM item;
+
+    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
+
     item.mask = TVIF_PARAM;
     item.hItem = TreeView_GetParent(hwndTV, hItem);
 
