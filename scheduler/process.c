@@ -516,6 +516,11 @@ void PROCESS_Start(void)
     if ( pdb->flags & PDB32_CONSOLE_PROC )
         AllocConsole();
 
+    /* Signal the parent process to continue */
+    SetEvent( pdb->load_done_evt );
+    CloseHandle( pdb->load_done_evt );
+    pdb->load_done_evt = INVALID_HANDLE_VALUE;
+
     /* Now call the entry point */
 
     EnterCriticalSection( &pdb->crit_section );
@@ -534,7 +539,7 @@ void PROCESS_Start(void)
     ExitProcess( entry(NULL) );
 
  error:
-    ExitProcess(1);
+    ExitProcess( GetLastError() );
 }
 
 
@@ -549,6 +554,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                      BOOL inherit, DWORD flags, STARTUPINFOA *startup,
                      PROCESS_INFORMATION *info )
 {
+    HANDLE load_done_evt = INVALID_HANDLE_VALUE;
     DWORD size, commit;
     int server_thandle;
     struct new_process_request req;
@@ -592,6 +598,9 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     if (pModule->module32)
     {
+        HANDLE handles[2];
+        DWORD exitcode;
+
         /* Create the main thread */
         size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
         if (!(thdb = THREAD_Create( pdb, 0L, size, TRUE, tsa, &server_thandle ))) 
@@ -609,12 +618,40 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         /* Inherit the env DB from the parent */
         if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
 
+        /* Create the load-done event */
+        load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL );
+        DuplicateHandle( GetCurrentProcess(), load_done_evt,
+                         info->hProcess, &pdb->load_done_evt, 0, TRUE, DUPLICATE_SAME_ACCESS );
+
         /* Call USER signal proc */
         PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
 
         /* Set the process module (FIXME: hack) */
         pdb->module = pModule->self;
         SYSDEPS_SpawnThread( thdb );
+
+        /* Wait until process is initialized (or initialization failed) */
+        handles[0] = info->hProcess;
+        handles[1] = load_done_evt;
+
+        switch ( WaitForMultipleObjects( 2, handles, FALSE, INFINITE ) )
+        {
+        default: 
+            ERR_(process)( "WaitForMultipleObjects failed\n" );
+            break;
+
+        case 0:
+            /* Child initialization code returns error condition as exitcode */
+            if ( GetExitCodeProcess( info->hProcess, &exitcode ) )
+                SetLastError( exitcode );
+            goto error;
+
+        case 1:
+            break;
+        } 
+
+        CloseHandle( load_done_evt );
+        load_done_evt = INVALID_HANDLE_VALUE;
     }
     else  /* Create a 16-bit process */
     {
@@ -666,6 +703,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     return pdb;
 
 error:
+    if (load_done_evt != INVALID_HANDLE_VALUE) CloseHandle( load_done_evt );
     if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
     if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
     PROCESS_FreePDB( pdb );

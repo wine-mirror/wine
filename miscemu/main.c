@@ -104,15 +104,13 @@ void MAIN_EmulatorRun( void )
         ExitProcess( 0 );
     }
 
-
     /* Start message loop for desktop window */
 
-    do
+    while ( GetNumTasks16() > 1  && Callout.GetMessageA( &msg, 0, 0, 0 ) )
     {
-        if (!Callout.GetMessageA( &msg, 0, 0, 0 )) break;
         Callout.TranslateMessage( &msg );
         Callout.DispatchMessageA( &msg );
-    } while (GetNumTasks16() > 1);
+    }
 
     ExitProcess( 0 );
 }
