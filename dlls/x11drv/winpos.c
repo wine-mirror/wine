@@ -1687,51 +1687,19 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
             }
             else
             {
-                XRectangle *aXRect;
-                int x_offset, y_offset;
-                DWORD size;
-                DWORD dwBufferSize = GetRegionData(hrgn, 0, NULL);
-                PRGNDATA pRegionData = HeapAlloc(GetProcessHeap(), 0, dwBufferSize);
-                if (!pRegionData)
+                RGNDATA *pRegionData = X11DRV_GetRegionData( hrgn, 0 );
+                if (pRegionData)
                 {
-                    WIN_ReleasePtr( wndPtr );
-                    return TRUE;
-                }
-                GetRegionData(hrgn, dwBufferSize, pRegionData);
-                size = pRegionData->rdh.nCount;
-                x_offset = wndPtr->rectWindow.left - data->whole_rect.left;
-                y_offset = wndPtr->rectWindow.top - data->whole_rect.top;
-                /* convert region's "Windows rectangles" to XRectangles */
-                aXRect = HeapAlloc(GetProcessHeap(), 0, size * sizeof(*aXRect) );
-                if (aXRect)
-                {
-                    XRectangle* pCurrRect = aXRect;
-                    RECT *pRect = (RECT*) pRegionData->Buffer;
-                    for (; pRect < ((RECT*) pRegionData->Buffer) + size ; ++pRect, ++pCurrRect)
-                    {
-                        pCurrRect->x      = pRect->left + x_offset;
-                        pCurrRect->y      = pRect->top + y_offset;
-                        pCurrRect->height = pRect->bottom - pRect->top;
-                        pCurrRect->width  = pRect->right  - pRect->left;
-
-                        TRACE("Rectangle %04d of %04ld data: X=%04d, Y=%04d, Height=%04d, Width=%04d.\n",
-                              pRect - (RECT*) pRegionData->Buffer,
-                              size,
-                              pCurrRect->x,
-                              pCurrRect->y,
-                              pCurrRect->height,
-                              pCurrRect->width);
-                    }
-
-                    /* shape = non-rectangular windows (X11/extensions) */
                     wine_tsx11_lock();
                     XShapeCombineRectangles( display, data->whole_window, ShapeBounding,
-                                             0, 0, aXRect,
-                                             pCurrRect - aXRect, ShapeSet, YXBanded );
+                                             wndPtr->rectWindow.left - data->whole_rect.left,
+                                             wndPtr->rectWindow.top - data->whole_rect.top,
+                                             (XRectangle *)pRegionData->Buffer,
+                                             pRegionData->rdh.nCount,
+                                             ShapeSet, YXBanded );
                     wine_tsx11_unlock();
-                    HeapFree(GetProcessHeap(), 0, aXRect );
+                    HeapFree(GetProcessHeap(), 0, pRegionData);
                 }
-                HeapFree(GetProcessHeap(), 0, pRegionData);
             }
         }
     }
