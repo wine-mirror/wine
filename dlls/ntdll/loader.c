@@ -55,6 +55,14 @@ static WINE_EXCEPTION_FILTER(page_fault)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+static const char * const reason_names[] =
+{
+    "PROCESS_DETACH",
+    "PROCESS_ATTACH",
+    "THREAD_ATTACH",
+    "THREAD_DETACH"
+};
+
 static CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
 static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
@@ -388,13 +396,37 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
     return wm;
 }
 
+
+/*************************************************************************
+ *              call_tls_callbacks
+ */
+static void call_tls_callbacks( HMODULE module, UINT reason )
+{
+    const IMAGE_TLS_DIRECTORY *dir;
+    const PIMAGE_TLS_CALLBACK *callback;
+    ULONG dirsize;
+
+    dir = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &dirsize );
+    if (!dir || !dir->AddressOfCallBacks) return;
+
+    for (callback = dir->AddressOfCallBacks; *callback; callback++)
+    {
+        if (TRACE_ON(relay))
+            DPRINTF("%04lx:Call TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
+                    GetCurrentThreadId(), *callback, module, reason_names[reason] );
+        (*callback)( module, reason, NULL );
+        if (TRACE_ON(relay))
+            DPRINTF("%04lx:Ret  TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
+                    GetCurrentThreadId(), *callback, module, reason_names[reason] );
+    }
+}
+
+
 /*************************************************************************
  *              MODULE_InitDLL
  */
-static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
+static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
 {
-    static const char * const typeName[] = { "PROCESS_DETACH", "PROCESS_ATTACH",
-                                             "THREAD_ATTACH", "THREAD_DETACH" };
     char mod_name[32];
     BOOL retv = TRUE;
     DLLENTRYPROC entry = wm->ldr.EntryPoint;
@@ -403,6 +435,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
     /* Skip calls for modules loaded with special load flags */
 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return TRUE;
+    if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.BaseAddress, reason );
     if (!entry || !(wm->ldr.Flags & LDR_IMAGE_IS_DLL)) return TRUE;
 
     if (TRACE_ON(relay))
@@ -410,20 +443,20 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
         size_t len = max( strlen(wm->modname), sizeof(mod_name)-1 );
         memcpy( mod_name, wm->modname, len );
         mod_name[len] = 0;
-        DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p (%s),type=%ld,res=%p)\n",
-                GetCurrentThreadId(), entry, module, mod_name, type, lpReserved );
+        DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p (%s),reason=%s,res=%p)\n",
+                GetCurrentThreadId(), entry, module, mod_name, reason_names[reason], lpReserved );
     }
-    else TRACE("(%p (%s),%s,%p) - CALL\n", module, wm->modname, typeName[type], lpReserved );
+    else TRACE("(%p (%s),%s,%p) - CALL\n", module, wm->modname, reason_names[reason], lpReserved );
 
-    retv = entry( module, type, lpReserved );
+    retv = entry( module, reason, lpReserved );
 
     /* The state of the module list may have changed due to the call
        to the dll. We cannot assume that this module has not been
        deleted.  */
     if (TRACE_ON(relay))
-        DPRINTF("%04lx:Ret  PE DLL (proc=%p,module=%p (%s),type=%ld,res=%p) retval=%x\n",
-                GetCurrentThreadId(), entry, module, mod_name, type, lpReserved, retv );
-    else TRACE("(%p,%s,%p) - RETURN %d\n", module, typeName[type], lpReserved, retv );
+        DPRINTF("%04lx:Ret  PE DLL (proc=%p,module=%p (%s),reason=%s,res=%p) retval=%x\n",
+                GetCurrentThreadId(), entry, module, mod_name, reason_names[reason], lpReserved, retv );
+    else TRACE("(%p,%s,%p) - RETURN %d\n", module, reason_names[reason], lpReserved, retv );
 
     return retv;
 }
@@ -526,7 +559,7 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
  * sequence at MODULE_DllProcessAttach.  Unless the bForceDetach flag
  * is set, only DLLs with zero refcount are notified.
  */
-void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
+static void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
 {
     WINE_MODREF *wm;
 
@@ -603,7 +636,7 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
     RtlEnterCriticalSection( &loader_section );
 
     wm = get_modref( hModule );
-    if ( !wm )
+    if (!wm || wm->ldr.TlsIndex != -1)
         ret = STATUS_DLL_NOT_FOUND;
     else
         wm->ldr.Flags |= LDR_NO_DLL_CALLS;
@@ -1065,24 +1098,23 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
  *		LdrShutdownProcess (NTDLL.@)
  *
  */
-NTSTATUS    WINAPI  LdrShutdownProcess(void)
+void WINAPI LdrShutdownProcess(void)
 {
     TRACE("()\n");
     MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
-    return STATUS_SUCCESS; /* FIXME */
 }
 
 /******************************************************************
  *		LdrShutdownThread (NTDLL.@)
  *
  */
-NTSTATUS WINAPI LdrShutdownThread(void)
+void WINAPI LdrShutdownThread(void)
 {
     WINE_MODREF *wm;
     TRACE("()\n");
 
     /* don't do any detach calls if process is exiting */
-    if (process_detaching) return STATUS_SUCCESS;
+    if (process_detaching) return;
     /* FIXME: there is still a race here */
 
     RtlEnterCriticalSection( &loader_section );
@@ -1098,7 +1130,6 @@ NTSTATUS WINAPI LdrShutdownThread(void)
     }
 
     RtlLeaveCriticalSection( &loader_section );
-    return STATUS_SUCCESS; /* FIXME */
 }
 
 /***********************************************************************

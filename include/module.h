@@ -182,7 +182,6 @@ enum binary_type
 
 /* module.c */
 extern BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
-extern void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved );
 extern void MODULE_DllThreadAttach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 extern HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );

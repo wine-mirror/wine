@@ -421,14 +421,6 @@ void PE_InitTls( void )
                 NtAllocateVirtualMemory( GetCurrentProcess(), &mem, NULL, &size,
                                          MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
 		memcpy(mem,_fixup_address(&(peh->OptionalHeader),delta,(LPVOID)pdir->StartAddressOfRawData),datasize);
-		if (pdir->AddressOfCallBacks) {
-		     PIMAGE_TLS_CALLBACK *cbs;
-
-		     cbs = _fixup_address(&(peh->OptionalHeader),delta,pdir->AddressOfCallBacks);
-		     if (*cbs)
-		       FIXME("TLS Callbacks aren't going to be called\n");
-		}
-
 		TlsSetValue( wm->ldr.TlsIndex, mem );
 	}
 }
