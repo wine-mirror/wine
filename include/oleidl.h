@@ -16,6 +16,8 @@
 /* the following depend on obj_dataobject.h */
 #include "wine/obj_dragdrop.h"
 
+#include "wine/obj_inplace.h"
+#include "wine/obj_cache.h"
 
 #endif /* __WINE_OLEIDL_H */
 

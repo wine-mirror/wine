@@ -7,6 +7,8 @@
 /* the following depend only on obj_base.h */
 #include "wine/obj_olefont.h"
 
+#include "wine/obj_control.h"
+#include "wine/obj_connection.h"
 
 #endif /* __WINE_OCIDL_H */
 
