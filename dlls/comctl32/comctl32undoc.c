@@ -1,8 +1,10 @@
 /*
  * Undocumented functions from COMCTL32.DLL
  *
- * Copyright 1998 Eric Kohl <ekohl@abo.rhein-zeitung.de>
+ * Copyright 1998 Eric Kohl
  *           1998 Juergen Schmied <j.schmied@metronet.de>
+ *           2000 Eric Kohl for CodeWeavers
+ *
  * NOTES
  *     All of these functions are UNDOCUMENTED!! And I mean UNDOCUMENTED!!!!
  *     Do NOT rely on names or contents of undocumented structures and types!!!
@@ -800,6 +802,92 @@ Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
 	if (!ptr)
 	    return FALSE;
 	strcpyW (ptr, lpSrc);
+	*lppDest = ptr;
+    }
+    else {
+	if (*lppDest) {
+	    COMCTL32_Free (*lppDest);
+	    *lppDest = NULL;
+	}
+    }
+
+    return TRUE;
+}
+
+
+/**************************************************************************
+ * Str_GetPtrWtoA [internal]
+ *
+ * Converts a unicode string into a multi byte string
+ *
+ * PARAMS
+ *     lpSrc   [I] Pointer to the unicode source string
+ *     lpDest  [O] Pointer to caller supplied storage for the multi byte string
+ *     nMaxLen [I] Size, in bytes, of the destination buffer
+ *
+ * RETURNS
+ *     Length, in bytes, of the converted string.
+ */
+
+INT
+Str_GetPtrWtoA (LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen)
+{
+    INT len;
+
+    TRACE("(%s %p %d)\n", debugstr_w(lpSrc), lpDest, nMaxLen);
+
+    if (!lpDest && lpSrc)
+	return WideCharToMultiByte(CP_ACP, 0, lpSrc, -1, 0, 0, NULL, NULL);
+
+    if (nMaxLen == 0)
+	return 0;
+
+    if (lpSrc == NULL) {
+	lpDest[0] = '\0';
+	return 0;
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, lpSrc, -1, 0, 0, NULL, NULL);
+    if (len >= nMaxLen)
+	len = nMaxLen - 1;
+
+    WideCharToMultiByte(CP_ACP, 0, lpSrc, -1, lpDest, len, NULL, NULL);
+    lpDest[len] = '\0';
+
+    return len;
+}
+
+
+/**************************************************************************
+ * Str_SetPtrAtoW [internal]
+ *
+ * Converts a multi byte string to a unicode string.
+ * If the pointer to the destination buffer is NULL a buffer is allocated.
+ * If the destination buffer is too small to keep the converted multi byte
+ * string the destination buffer is reallocated. If the source pointer is
+ * NULL, the destination buffer is freed.
+ *
+ * PARAMS
+ *     lppDest [I/O] pointer to a pointer to the destination buffer
+ *     lpSrc   [I] pointer to a multi byte string
+ *
+ * RETURNS
+ *     TRUE: conversion successful
+ *     FALSE: error
+ */
+
+BOOL
+Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
+{
+    TRACE("(%p %s)\n", lppDest, lpSrc);
+
+    if (lpSrc) {
+	INT len = MultiByteToWideChar(CP_ACP,0,lpSrc,-1,NULL,0);
+	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len);
+
+	if (!ptr)
+	    return FALSE;
+	MultiByteToWideChar(CP_ACP,0,lpSrc,-1,ptr,len);
 	*lppDest = ptr;
     }
     else {

@@ -82,5 +82,8 @@ extern HMODULE COMCTL32_hModule;
 
 /* Internal function */
 HWND COMCTL32_CreateToolTip (HWND);
+INT  Str_GetPtrWtoA (LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
+BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc);
+
 
 #endif  /* __WINE_COMCTL32_H */
