@@ -310,6 +310,10 @@ static CURSORICONDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
     }
     if (dir->idCount == 1) return &dir->idEntries[0]; /* No choice... */
 
+    /* Double height to account for AND and XOR masks */
+
+    height *= 2;
+
     /* First find the largest one smaller than or equal to the requested size*/
 
     maxwidth = maxheight = 0;
