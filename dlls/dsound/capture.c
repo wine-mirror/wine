@@ -604,11 +604,11 @@ DSOUND_CreateDirectSoundCaptureBuffer(
             wfex->nAvgBytesPerSec, wfex->nBlockAlign,
             wfex->wBitsPerSample, wfex->cbSize);
 
-        if (wfex->cbSize == 0)
-            memcpy(&(ipDSC->wfx), wfex, sizeof(*wfex) + wfex->cbSize);
+        if (wfex->wFormatTag == WAVE_FORMAT_PCM)
+            memcpy(&(ipDSC->wfx), wfex, sizeof(WAVEFORMATEX));
         else {
             WARN("non PCM formats not supported\n");
-            return DSERR_BADFORMAT; /* FIXME: DSERR_INVALIDPARAM ? */
+            return DSERR_BADFORMAT;
         }
     } else {
 	WARN("lpcDSCBufferDesc->lpwfxFormat == 0\n");
@@ -648,8 +648,10 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 		&(ipDSC->wfx),0,0,&(ipDSC->buflen),&(ipDSC->buffer),(LPVOID*)&(ipDSC->hwbuf));
 	    if (err != DS_OK) {
 		WARN("IDsCaptureDriver_CreateCaptureBuffer failed\n");
-		ipDSC->hwbuf = 0;
-		return DSERR_GENERIC;
+		This->dsound->capture_buffer = 0;
+		HeapFree( GetProcessHeap(), 0, This );
+		*ppobj = NULL;
+		return err;
 	    }
 	} else {
             LPBYTE newbuf;
@@ -662,8 +664,10 @@ DSOUND_CreateDirectSoundCaptureBuffer(
                 (DWORD)DSOUND_capture_callback, (DWORD)ipDSC, flags));
             if (err != DS_OK) {
                 WARN("waveInOpen failed\n");
-	        ipDSC->hwi = 0;
-                return DSERR_BADFORMAT; /* FIXME: DSERR_INVALIDPARAM ? */
+		This->dsound->capture_buffer = 0;
+		HeapFree( GetProcessHeap(), 0, This );
+		*ppobj = NULL;
+		return err;
             }
 
 	    buflen = lpcDSCBufferDesc->dwBufferBytes;
