@@ -139,7 +139,6 @@ static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
 	iData->mmSysTimeMS = GetTickCount();
 	iData->lpTimerList = NULL;
 	iData->hMMTimer = SERVICE_AddTimer(MMSYSTIME_MININTERVAL*1000L, TIME_MMSysTimeCallback, (DWORD)iData);
-	InitializeCriticalSection(&iData->cs);
     }
 
     return iData;
