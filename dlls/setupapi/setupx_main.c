@@ -575,7 +575,7 @@ void SETUPX_CreateStandardLDDs(void)
     if (hKey) RegCloseKey(hKey);
 }
 	
-/*
+/***********************************************************************
  * CtlDelLdd		(SETUPX.37)
  *
  * RETURN
@@ -616,13 +616,16 @@ RETERR16 SETUPX_DelLdd(LOGDISKID16 ldid)
     return OK;
 }
 
+/***********************************************************************
+ *		CtlDelLdd (SETUPX.37)
+ */
 RETERR16 WINAPI CtlDelLdd16(LOGDISKID16 ldid)
 {
     FIXME("(%d); - please report to a.mohr@mailto.de !!!\n", ldid);
     return SETUPX_DelLdd(ldid);
 }
 
-/*
+/***********************************************************************
  * CtlFindLdd		(SETUPX.35)
  *
  * doesn't check pldd ptr validity: crash (W98SE)
@@ -661,7 +664,7 @@ RETERR16 WINAPI CtlFindLdd16(LPLOGDISKDESC pldd)
     return 1; /* what is this ?? */
 }
 
-/*
+/***********************************************************************
  * CtlSetLdd			(SETUPX.33)
  *
  * Set an LDD entry.
@@ -733,7 +736,7 @@ RETERR16 WINAPI CtlSetLdd16(LPLOGDISKDESC pldd)
 }
 
 
-/*
+/***********************************************************************
  * CtlAddLdd		(SETUPX.36)
  *
  * doesn't check pldd ptr validity: crash (W98SE)
@@ -746,7 +749,7 @@ RETERR16 WINAPI CtlAddLdd16(LPLOGDISKDESC pldd)
     return CtlSetLdd16(pldd);
 }
 
-/*
+/***********************************************************************
  * CtlGetLdd		(SETUPX.34)
  *
  * doesn't check pldd ptr validity: crash (W98SE)
@@ -781,6 +784,8 @@ static RETERR16 SETUPX_GetLdd(LPLOGDISKDESC pldd)
 
     return OK;
 }
+
+/**********************************************************************/
 
 RETERR16 WINAPI CtlGetLdd16(LPLOGDISKDESC pldd)
 {
@@ -1054,7 +1059,7 @@ RETERR16 WINAPI VcpOpen16(VIFPROC vifproc, LPARAM lparamMsgRef)
 }
 
 /***********************************************************************
- *		vcpClose
+ *		VcpClose
  *
  * Is fl related to VCPDISKINFO.fl ?
  */

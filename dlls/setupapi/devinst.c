@@ -10,7 +10,8 @@
 
 DEFAULT_DEBUG_CHANNEL(setupapi);
 
-/*
+/***********************************************************************
+ *		DiGetClassDevs (SETUPX.304)
  * Return a list of installed system devices.
  * Uses HKLM\\ENUM to list devices.
  */

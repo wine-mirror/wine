@@ -485,7 +485,7 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
 
 
 /***********************************************************************
- *           GetDOSEnvironment   (KERNEL.131)
+ *           GetDOSEnvironment16   (KERNEL.131)
  */
 SEGPTR WINAPI GetDOSEnvironment16(void)
 {

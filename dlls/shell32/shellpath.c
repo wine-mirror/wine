@@ -910,6 +910,8 @@ static const CSIDL_DATA CSIDL_Data[] =
 #undef HKCU
 #undef HKLM
 
+/**********************************************************************/
+
 BOOL WINAPI SHGetSpecialFolderPathA (
 	HWND hwndOwner,
 	LPSTR szPath,
