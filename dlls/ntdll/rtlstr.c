@@ -38,25 +38,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-UINT NlsAnsiCodePage = 1252;
+UINT NlsAnsiCodePage = 0;
 BYTE NlsMbCodePageTag = 0;
 BYTE NlsMbOemCodePageTag = 0;
 
 static const union cptable *ansi_table;
 static const union cptable *oem_table;
-
-inline static const union cptable *get_ansi_table(void)
-{
-    if (!ansi_table) ansi_table = wine_cp_get_table( 1252 );
-    return ansi_table;
-}
-
-inline static const union cptable *get_oem_table(void)
-{
-    if (!oem_table) oem_table = wine_cp_get_table( 437 );
-    return oem_table;
-}
-
 
 /**************************************************************************
  *	__wine_init_codepages   (NTDLL.@)
@@ -719,7 +706,7 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen
                                         LPCSTR src, DWORD srclen )
 {
 
-    int ret = wine_cp_mbstowcs( get_ansi_table(), 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
+    int ret = wine_cp_mbstowcs( ansi_table, 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
     if (reslen)
         *reslen = (ret >= 0) ? ret*sizeof(WCHAR) : dstlen; /* overflow -> we filled up to dstlen */
     return STATUS_SUCCESS;
@@ -732,7 +719,7 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen
 NTSTATUS WINAPI RtlOemToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                   LPCSTR src, DWORD srclen )
 {
-    int ret = wine_cp_mbstowcs( get_oem_table(), 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
+    int ret = wine_cp_mbstowcs( oem_table, 0, src, srclen, dst, dstlen/sizeof(WCHAR) );
     if (reslen)
         *reslen = (ret >= 0) ? ret*sizeof(WCHAR) : dstlen; /* overflow -> we filled up to dstlen */
     return STATUS_SUCCESS;
@@ -745,7 +732,7 @@ NTSTATUS WINAPI RtlOemToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
 NTSTATUS WINAPI RtlUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
                                         LPCWSTR src, DWORD srclen )
 {
-    int ret = wine_cp_wcstombs( get_ansi_table(), 0, src, srclen / sizeof(WCHAR),
+    int ret = wine_cp_wcstombs( ansi_table, 0, src, srclen / sizeof(WCHAR),
                                 dst, dstlen, NULL, NULL );
     if (reslen)
         *reslen = (ret >= 0) ? ret : dstlen; /* overflow -> we filled up to dstlen */
@@ -759,7 +746,7 @@ NTSTATUS WINAPI RtlUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
                                   LPCWSTR src, DWORD srclen )
 {
-    int ret = wine_cp_wcstombs( get_oem_table(), 0, src, srclen / sizeof(WCHAR),
+    int ret = wine_cp_wcstombs( oem_table, 0, src, srclen / sizeof(WCHAR),
                                 dst, dstlen, NULL, NULL );
     if (reslen)
         *reslen = (ret >= 0) ? ret : dstlen; /* overflow -> we filled up to dstlen */
@@ -1083,7 +1070,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
  */
 UINT WINAPI RtlOemStringToUnicodeSize( const STRING *str )
 {
-    int ret = wine_cp_mbstowcs( get_oem_table(), 0, str->Buffer, str->Length, NULL, 0 );
+    int ret = wine_cp_mbstowcs( oem_table, 0, str->Buffer, str->Length, NULL, 0 );
     return (ret + 1) * sizeof(WCHAR);
 }
 
@@ -1125,7 +1112,7 @@ DWORD WINAPI RtlAnsiStringToUnicodeSize( const STRING *str )
  */
 NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
 {
-    *size = wine_cp_mbstowcs( get_ansi_table(), 0, str, len, NULL, 0 ) * sizeof(WCHAR);
+    *size = wine_cp_mbstowcs( ansi_table, 0, str, len, NULL, 0 ) * sizeof(WCHAR);
     return STATUS_SUCCESS;
 }
 
@@ -1146,7 +1133,7 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
  */
 NTSTATUS WINAPI RtlUnicodeToMultiByteSize( PULONG size, LPCWSTR str, ULONG len )
 {
-    *size = wine_cp_wcstombs( get_ansi_table(), 0, str, len / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    *size = wine_cp_wcstombs( ansi_table, 0, str, len / sizeof(WCHAR), NULL, 0, NULL, NULL );
     return STATUS_SUCCESS;
 }
 
@@ -1187,7 +1174,7 @@ DWORD WINAPI RtlUnicodeStringToAnsiSize( const UNICODE_STRING *str )
  */
 DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
 {
-    return wine_cp_wcstombs( get_oem_table(), 0, str->Buffer, str->Length / sizeof(WCHAR),
+    return wine_cp_wcstombs( oem_table, 0, str->Buffer, str->Length / sizeof(WCHAR),
                              NULL, 0, NULL, NULL ) + 1;
 }
 
