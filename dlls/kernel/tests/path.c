@@ -112,14 +112,11 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
   len=GetFullPathNameA(subpath,MAX_PATH,tmpstr,&strptr);
   ok(len, "GetFullPathNameA failed for: '%s'",subpath);
   if(HAS_TRAIL_SLASH_A(subpath)) {
-/* Wine strips off the trailing '\\'. Neither Win98 nor Win2k do this. */
-    todo_wine {
-      ok(strptr==NULL,
-         "%s: GetFullPathNameA should not return a filename ptr",errstr);
-      ok(lstrcmpiA(fullpath,tmpstr)==0,
-         "%s: GetFullPathNameA returned '%s' instead of '%s'",
-         errstr,tmpstr,fullpath);
-    }
+    ok(strptr==NULL,
+       "%s: GetFullPathNameA should not return a filename ptr",errstr);
+    ok(lstrcmpiA(fullpath,tmpstr)==0,
+       "%s: GetFullPathNameA returned '%s' instead of '%s'",
+       errstr,tmpstr,fullpath);
   } else {
     ok(lstrcmpiA(strptr,filename)==0,
        "%s: GetFullPathNameA returned '%s' instead of '%s'",

@@ -1313,9 +1313,6 @@ static DWORD DOSFS_DoGetFullPathName( LPCWSTR name, DWORD len, LPWSTR result )
 	}
     if (full_name.short_name[namelen-1]=='.')
 	full_name.short_name[(namelen--)-1] =0;
-    if (!driveletter)
-      if (full_name.short_name[namelen-1]=='\\')
-	full_name.short_name[(namelen--)-1] =0;
     TRACE("got %s\n", debugstr_w(full_name.short_name));
 
     /* If the lpBuffer buffer is too small, the return value is the
@@ -1383,7 +1380,7 @@ DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
 
             if (lastpart)
             {
-                LPSTR p = buffer + strlen(buffer);
+                LPSTR p = buffer + strlen(buffer) - 1;
 
                 if (*p != '\\')
                 {
@@ -1409,7 +1406,7 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
     DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer );
     if (ret && (ret<=len) && buffer && lastpart)
     {
-        LPWSTR p = buffer + strlenW(buffer);
+        LPWSTR p = buffer + strlenW(buffer) - 1;
         if (*p != (WCHAR)'\\')
         {
             while ((p > buffer + 2) && (*p != (WCHAR)'\\')) p--;
