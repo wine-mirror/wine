@@ -837,6 +837,9 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
             FIXME("(%04x,%d): unsupported DeviceCaps capability, will yield 0!\n",
                   hdc,cap );
         ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
+
+        if ((cap == NUMCOLORS) && (ret == 0xffff)) 
+	    ret = -1;
         break;
     }
 
