@@ -147,14 +147,17 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
        HANDLE			hEvent;
        PROCESS_INFORMATION	info;
        STARTUPINFOA		startup;
-       SECURITY_ATTRIBUTES attr;
+       OBJECT_ATTRIBUTES	attr;
 
-       attr.nLength              = sizeof(attr);
-       attr.lpSecurityDescriptor = NULL;
-       attr.bInheritHandle       = TRUE;
+       attr.Length                   = sizeof(attr);
+       attr.RootDirectory            = 0;
+       attr.Attributes               = OBJ_INHERIT;
+       attr.ObjectName               = NULL;
+       attr.SecurityDescriptor       = NULL;
+       attr.SecurityQualityOfService = NULL;
 
        TRACE("Starting debugger (fmt=%s)\n", format);
-       NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, NULL, FALSE, FALSE );
+       NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, FALSE, FALSE );
        sprintf(buffer, format, GetCurrentProcessId(), hEvent);
        memset(&startup, 0, sizeof(startup));
        startup.cb = sizeof(startup);
