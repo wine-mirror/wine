@@ -44,6 +44,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "thread.h"
 #include "wine/unicode.h"
 #include "file.h"
 #include "wine/debug.h"
@@ -108,8 +109,6 @@ int DIR_Init(void)
     char path[MAX_PATHNAME_LEN];
     WCHAR longpath[MAX_PATHNAME_LEN];
     WCHAR *tmp_dir, *profile_dir;
-    int drive;
-    const char *cwd;
     static const WCHAR wineW[] = {'M','a','c','h','i','n','e','\\',
                                   'S','o','f','t','w','a','r','e','\\',
                                   'W','i','n','e','\\','W','i','n','e','\\',
@@ -135,28 +134,6 @@ int DIR_Init(void)
     static const WCHAR comspecW[] = {'C','O','M','S','P','E','C',0};
     static const WCHAR empty_strW[] = { 0 };
 
-    if (!getcwd( path, MAX_PATHNAME_LEN ))
-    {
-        perror( "Could not get current directory" );
-        return 0;
-    }
-    cwd = path;
-    if ((drive = DRIVE_FindDriveRoot( &cwd )) == -1)
-    {
-        MESSAGE("Warning: could not find wine config [Drive x] entry "
-            "for current working directory %s; "
-	    "starting in windows directory.\n", cwd );
-    }
-    else
-    {
-        longpath[0] = 'a' + drive;
-        longpath[1] = ':';
-        MultiByteToWideChar(CP_UNIXCP, 0, cwd, -1, longpath + 2, MAX_PATHNAME_LEN);
-        SetCurrentDirectoryW( longpath );
-        if(GetDriveTypeW(longpath)==DRIVE_CDROM)
-            chdir("/"); /* change to root directory so as not to lock cdroms */
-    }
-
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
@@ -175,7 +152,25 @@ int DIR_Init(void)
         return 0;
     }
 
-    if (drive == -1) SetCurrentDirectoryW( DIR_Windows );
+    if (!getcwd( path, MAX_PATHNAME_LEN ))
+    {
+        MESSAGE("Warning: could not get current Unix working directory, "
+                "starting in the Windows directory.\n" );
+        SetCurrentDirectoryW( DIR_Windows );
+    }
+    else
+    {
+        MultiByteToWideChar( CP_UNIXCP, 0, path, -1, longpath, MAX_PATHNAME_LEN);
+        GetFullPathNameW( longpath, MAX_PATHNAME_LEN, longpath, NULL );
+        if (!SetCurrentDirectoryW( longpath ))
+        {
+            MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
+                    "starting in the Windows directory.\n", path );
+            SetCurrentDirectoryW( DIR_Windows );
+        }
+        else if (!NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.Handle)
+            chdir("/"); /* change to root directory so as not to lock cdroms */
+    }
 
     /* Set the environment variables */
 

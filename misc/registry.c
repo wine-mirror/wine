@@ -1833,6 +1833,59 @@ static void create_hardware_branch(void)
 }
 
 
+/* convert the drive type entries from the old format to the new one */
+static void convert_drive_types(void)
+{
+    static const WCHAR TypeW[] = {'T','y','p','e',0};
+    static const WCHAR drive_types_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                             'S','o','f','t','w','a','r','e','\\',
+                                             'W','i','n','e','\\',
+                                             'D','r','i','v','e','s',0 };
+    WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+                      'W','i','n','e','\\','W','i','n','e','\\',
+                      'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
+    char tmp[32*sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    DWORD dummy;
+    ULONG disp;
+    HKEY hkey_old, hkey_new;
+    int i;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, drive_types_keyW );
+
+    if (NtCreateKey( &hkey_new, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &disp )) return;
+    if (disp != REG_CREATED_NEW_KEY) return;
+
+    for (i = 0; i < 26; i++)
+    {
+        RtlInitUnicodeString( &nameW, driveW );
+        nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
+        if (NtOpenKey( &hkey_old, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
+        RtlInitUnicodeString( &nameW, TypeW );
+        if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        {
+            WCHAR valueW[] = {'A',':',0};
+            WCHAR *type = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+
+            valueW[0] = 'A' + i;
+            RtlInitUnicodeString( &nameW, valueW );
+            NtSetValueKey( hkey_new, &nameW, 0, REG_SZ, type, (strlenW(type) + 1) * sizeof(WCHAR) );
+            MESSAGE( "Converted drive type to new entry HKLM\\Software\\Wine\\Drives \"%c:\" = %s\n",
+                     'A' + i, debugstr_w(type) );
+        }
+        NtClose( hkey_old );
+    }
+    NtClose( hkey_new );
+}
+
+
 /* load all registry (native and global and home) */
 void SHELL_LoadRegistry( void )
 {
@@ -2001,6 +2054,10 @@ void SHELL_LoadRegistry( void )
         _save_at_exit(hkey_local_machine,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
         _save_at_exit(hkey_users_default,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
     }
+
+    /* convert keys from config file to new registry format */
+
+    convert_drive_types();
 
     NtClose(hkey_users_default);
     NtClose(hkey_current_user);

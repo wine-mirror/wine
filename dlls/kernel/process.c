@@ -733,17 +733,14 @@ static BOOL process_init( char *argv[], char **environ )
     /* Parse command line arguments */
     if (!info_size) OPTIONS_ParseOptions( argv );
 
-    /* initialise DOS drives */
-    if (!DRIVE_Init()) return FALSE;
+    /* Create device symlinks */
+    VOLUME_CreateDevices();
 
     /* initialise DOS directories */
     if (!DIR_Init()) return FALSE;
 
     /* registry initialisation */
     SHELL_LoadRegistry();
-
-    /* Create device symlinks */
-    VOLUME_CreateDevices();
 
     /* global boot finished, the rest is process-local */
     SERVER_START_REQ( boot_done )

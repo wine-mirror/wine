@@ -840,7 +840,7 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
     for (i = 0; i < name_len; i++)
         if (name[i] <= 32 || name[i] >= 127) return STATUS_OBJECT_NAME_NOT_FOUND;
 
-    unix_len = strlen(config_dir) + sizeof("/dosdevices/") + name_len;
+    unix_len = strlen(config_dir) + sizeof("/dosdevices/") + name_len + 1;
 
     if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
         return STATUS_NO_MEMORY;
@@ -853,7 +853,11 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
     dev[i] = 0;
 
     /* special case for drive devices */
-    if (name_len == 2 && dev[1] == ':') dev[1] = '|';
+    if (name_len == 2 && dev[1] == ':')
+    {
+        dev[i++] = ':';
+        dev[i] = 0;
+    }
 
     for (;;)
     {

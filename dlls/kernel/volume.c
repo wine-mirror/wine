@@ -167,35 +167,36 @@ static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
 /* fetch the type of a drive from the registry */
 static UINT get_registry_drive_type( const WCHAR *root )
 {
+    static const WCHAR drive_types_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                             'S','o','f','t','w','a','r','e','\\',
+                                             'W','i','n','e','\\',
+                                             'D','r','i','v','e','s',0 };
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HKEY hkey;
     DWORD dummy;
     UINT ret = DRIVE_UNKNOWN;
     char tmp[32 + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
-    WCHAR path[MAX_PATH];
-    WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
-                      'W','i','n','e','\\','W','i','n','e','\\',
-                      'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
-    static const WCHAR TypeW[] = {'T','y','p','e',0};
+    WCHAR driveW[] = {'A',':',0};
 
-
-    if (!root)
-    {
-        GetCurrentDirectoryW( MAX_PATH, path );
-        root = path;
-    }
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, driveW );
-    nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = root[0];
+    RtlInitUnicodeString( &nameW, drive_types_keyW );
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return DRIVE_UNKNOWN;
 
-    RtlInitUnicodeString( &nameW, TypeW );
+    if (root) driveW[0] = root[0];
+    else
+    {
+        WCHAR path[MAX_PATH];
+        GetCurrentDirectoryW( MAX_PATH, path );
+        driveW[0] = path[0];
+    }
+
+    RtlInitUnicodeString( &nameW, driveW );
     if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
     {
         int i;
@@ -216,25 +217,99 @@ static UINT get_registry_drive_type( const WCHAR *root )
 
 
 /* create symlinks for the DOS drives; helper for VOLUME_CreateDevices */
-static int create_drives(void)
+static int create_drives( int devices_only )
 {
-    WCHAR name[3], rootW[MAX_PATHNAME_LEN];
+    static const WCHAR PathW[] = {'P','a','t','h',0};
+    static const WCHAR DeviceW[] = {'D','e','v','i','c','e',0};
+    WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+                      'W','i','n','e','\\','W','i','n','e','\\',
+                      'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    char tmp[1024*sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+    char dest[1024];
+    WCHAR *p, name[3];
+    HKEY hkey;
+    DWORD dummy;
     int i, count = 0;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    /* create symlinks for the drive roots */
+
+    if (!devices_only) for (i = 0; i < 26; i++)
+    {
+        RtlInitUnicodeString( &nameW, driveW );
+        nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
+        if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
+
+        RtlInitUnicodeString( &nameW, PathW );
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        {
+            WCHAR path[1024];
+            WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            ExpandEnvironmentStringsW( data, path, sizeof(path)/sizeof(WCHAR) );
+
+            p = path + strlenW(path) - 1;
+            while ((p > path) && (*p == '/')) *p-- = '\0';
+
+            name[0] = 'a' + i;
+            name[1] = ':';
+            name[2] = 0;
+
+            if (path[0] != '/')
+            {
+                /* relative paths are relative to config dir */
+                memmove( path + 3, path, (strlenW(path) + 1) * sizeof(WCHAR) );
+                path[0] = '.';
+                path[1] = '.';
+                path[2] = '/';
+            }
+            if (DefineDosDeviceW( DDD_RAW_TARGET_PATH, name, path ))
+            {
+                WideCharToMultiByte(CP_UNIXCP, 0, path, -1, dest, sizeof(dest), NULL, NULL);
+                MESSAGE( "Created symlink %s/dosdevices/%c: -> %s\n",
+                         wine_get_config_dir(), 'a' + i, dest );
+                count++;
+            }
+        }
+        NtClose( hkey );
+    }
+
+    /* create symlinks for the drive devices */
 
     for (i = 0; i < 26; i++)
     {
-        const char *root = DRIVE_GetRoot( i );
-        if (!root) continue;
-        name[0] = 'a' + i;
-        name[1] = ':';
-        name[2] = 0;
-        if (MultiByteToWideChar( CP_UNIXCP, 0, root, -1, rootW, MAX_PATHNAME_LEN ) &&
-            DefineDosDeviceW( DDD_RAW_TARGET_PATH, name, rootW ))
+        RtlInitUnicodeString( &nameW, driveW );
+        nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
+        if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
+
+        RtlInitUnicodeString( &nameW, DeviceW );
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
         {
-            MESSAGE( "Created symlink %s/dosdevices/%c: -> %s\n", wine_get_config_dir(), 'a' + i, root );
-            count++;
+            char *path, *p;
+            WCHAR devname[] = {'A',':',':',0 };
+            WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            WideCharToMultiByte(CP_UNIXCP, 0, data, -1, dest, sizeof(dest), NULL, NULL);
+            path = get_dos_device_path( devname );
+            p = path + strlen(path);
+            p[-3] = 'a' + i;
+            if (!symlink( dest, path ))
+            {
+                MESSAGE( "Created symlink %s/dosdevices/%c:: -> %s\n",
+                         wine_get_config_dir(), 'a' + i, dest );
+                count++;
+            }
+            HeapFree( GetProcessHeap(), 0, path );
         }
+        NtClose( hkey );
     }
+
     return count;
 }
 
@@ -336,7 +411,7 @@ void VOLUME_CreateDevices(void)
             }
             NtClose( hkey );
         }
-        count += create_drives();
+        count += create_drives( FALSE );
     }
     else
     {
@@ -351,13 +426,22 @@ void VOLUME_CreateDevices(void)
             buffer[strlen(buffer)-2] = 'a' + i;
             if (!lstat( buffer, &st )) break;
         }
-        if (i == 26) count += create_drives();
+        if (i == 26) count += create_drives( FALSE );
+        else
+        {
+            strcat( buffer, ":" );
+            for (i = 0; i < 26; i++)
+            {
+                buffer[strlen(buffer)-3] = 'a' + i;
+                if (!lstat( buffer, &st )) break;
+            }
+            if (i == 26) count += create_drives( TRUE );
+        }
     }
 
     if (count)
-        MESSAGE( "\nYou can now remove the [SerialPorts] and [ParallelPorts] sections\n"
-                 "in your configuration file, as well as the \"Path=\" definitions in\n"
-                 "the drive sections, they are replaced by the above symlinks.\n\n" );
+        MESSAGE( "\nYou can now remove the [SerialPorts], [ParallelPorts], and [Drive] sections\n"
+                 "in your configuration file, they are replaced by the above symlinks.\n\n" );
 
     HeapFree( GetProcessHeap(), 0, buffer );
 }

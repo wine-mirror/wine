@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE.CONF 5 "September 2003" "Version 20030911" "Wine Configuration File"
+.TH WINE.CONF 5 "April 2004" "Version 20040408" "Wine Configuration File"
 .SH NAME
 wine.conf \- Wine configuration file
 .SH DESCRIPTION
@@ -24,41 +24,11 @@ consist of lines of the form
 The entry and value can be any text strings, included in double
 quotes; it can also contain references to environment variables
 surrounded by
-.I ${}.
+.I %
+signs.
 Inside the double quotes, special characters, backslashes and quotes
 must be escaped with backslashes. Supported section names and entries
 are listed below.
-.PP
-.B [Drive X]
-.br
-This section is used to specify the root directory and type of each emulated
-.B DOS
-drive, since most Windows applications require a DOS/MS-Windows based
-disk drive & directory scheme, which is either provided by a real
-DOS partition mounted somewhere or by some carefully crafted directory layout
-on a Unix file system ("no-windows fake installation").
-There is one such section for every drive you want to configure.
-.PP
-.I format: """Path""=""<rootdirectory>"""
-.br
-default: none
-.br
-If you mounted your dos partition as
-.I /dos
-and installed Microsoft Windows in
-C:\\WINDOWS (thus it shows up as /dos/WINDOWS), then you should specify
-.I """Path""=""/dos"""
-in the
-.I [Drive C]
-section in order to configure /dos as the drive root of drive C:.
-.PP
-.I format: """Type""=""<type>"""
-.br
-default: "hd"
-.br
-Used to specify the drive type this drive appears as in Windows
-or DOS programs; supported types are "floppy", "hd", "cdrom"
-and "network".
 .PP
 .B [wine]
 .br
@@ -331,11 +301,5 @@ file, the registry files, and the DOS device mappings. The default is
 .TP
 .I $WINEPREFIX/config
 User-specific configuration file
-.TP
-.I $WINEPREFIX/dosdevices
-Directory containing the DOS device mappings. Each file in that
-directory is a symlink to the Unix device file implementing a given
-device. For instance, if COM1 is mapped to /dev/ttyS0 you'd have a
-symlink of the form $WINEPREFIX/dosdevices/com1 -> /dev/ttyS0.
 .SH "SEE ALSO"
 .BR wine (1)

@@ -174,78 +174,6 @@ void FILE_SetDosError(void)
 }
 
 
-/***********************************************************************
- *           FILE_CreateFile
- *
- * Implementation of CreateFile. Takes a Unix path name.
- * Returns 0 on failure.
- */
-HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
-                        LPSECURITY_ATTRIBUTES sa, DWORD creation,
-                        DWORD attributes, HANDLE template )
-{
-    unsigned int err;
-    UINT disp, options;
-    HANDLE ret;
-
-    switch (creation)
-    {
-    case CREATE_ALWAYS:     disp = FILE_OVERWRITE_IF; break;
-    case CREATE_NEW:        disp = FILE_CREATE; break;
-    case OPEN_ALWAYS:       disp = FILE_OPEN_IF; break;
-    case OPEN_EXISTING:     disp = FILE_OPEN; break;
-    case TRUNCATE_EXISTING: disp = FILE_OVERWRITE; break;
-    default:
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    options = 0;
-    if (attributes & FILE_FLAG_BACKUP_SEMANTICS)
-        options |= FILE_OPEN_FOR_BACKUP_INTENT;
-    else
-        options |= FILE_NON_DIRECTORY_FILE;
-    if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
-        options |= FILE_DELETE_ON_CLOSE;
-    if (!(attributes & FILE_FLAG_OVERLAPPED))
-        options |= FILE_SYNCHRONOUS_IO_ALERT;
-    if (attributes & FILE_FLAG_RANDOM_ACCESS)
-        options |= FILE_RANDOM_ACCESS;
-    attributes &= FILE_ATTRIBUTE_VALID_FLAGS;
-
-    SERVER_START_REQ( create_file )
-    {
-        req->access     = access;
-        req->inherit    = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        req->sharing    = sharing;
-        req->create     = disp;
-        req->options    = options;
-        req->attrs      = attributes;
-        wine_server_add_data( req, filename, strlen(filename) );
-        SetLastError(0);
-        err = wine_server_call( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
-
-    if (err)
-    {
-        /* In the case file creation was rejected due to CREATE_NEW flag
-         * was specified and file with that name already exists, correct
-         * last error is ERROR_FILE_EXISTS and not ERROR_ALREADY_EXISTS.
-         * Note: RtlNtStatusToDosError is not the subject to blame here.
-         */
-        if (err == STATUS_OBJECT_NAME_COLLISION)
-            SetLastError( ERROR_FILE_EXISTS );
-        else
-            SetLastError( RtlNtStatusToDosError(err) );
-    }
-
-    if (!ret) WARN("Unable to create file '%s' (GLE %ld)\n", filename, GetLastError());
-    return ret;
-}
-
-
 static HANDLE FILE_OpenPipe(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     HANDLE ret;
@@ -368,18 +296,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         }
         else if (isalphaW(filename[4]) && filename[5] == ':' && filename[6] == '\0')
         {
-            const char *device = DRIVE_GetDevice( toupperW(filename[4]) - 'A' );
-            if (device)
-            {
-                ret = FILE_CreateFile( device, access, sharing, sa, creation,
-                                       attributes, template );
-            }
-            else
-            {
-                SetLastError( ERROR_ACCESS_DENIED );
-                return INVALID_HANDLE_VALUE;
-            }
-            goto done;
+            dosdev = 0;
         }
         else if ((dosdev = RtlIsDosDeviceName_U( filename + 4 )))
         {

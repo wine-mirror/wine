@@ -4,35 +4,6 @@ WINE REGISTRY Version 2
 ;; If you think it is necessary to show others your complete config for a
 ;; bug report, filter out empty lines and comments with
 ;; grep -v "^;" ~/.wine/config | grep '.'
-;;
-;; MS-DOS drives configuration
-;;
-;; Each section has the following format:
-;; [Drive X]
-;; "Path"="xxx"       (Unix path for drive root)
-;; "Type"="xxx"       (supported types are 'floppy', 'hd', 'cdrom' and 'network')
-;; "Device"="/dev/xx" (only if you want to allow raw device access)
-;;
-[Drive A]
-"Type" = "floppy"
-"Device" = "/dev/fd0"
-
-[Drive C]
-"Type" = "hd"
-
-[Drive D]
-"Type" = "cdrom"
-; make sure that device is correct and has proper permissions !
-"Device" = "/dev/cdrom"
-
-[Drive E]
-"Type" = "hd"
-
-[Drive F]
-"Type" = "network"
-
-[Drive Z]
-"Type" = "hd"
 
 [wine]
 "Windows" = "c:\\windows"

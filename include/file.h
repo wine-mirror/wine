@@ -33,13 +33,6 @@ extern void FILE_SetDosError(void);
 /* files/directory.c */
 extern int DIR_Init(void);
 
-/* drive.c */
-extern int DRIVE_Init(void);
-extern int DRIVE_FindDriveRoot( const char **path );
-extern int DRIVE_FindDriveRootW( LPCWSTR *path );
-extern const char * DRIVE_GetRoot( int drive );
-extern const char * DRIVE_GetDevice( int drive );
-
 /* vxd.c */
 extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
