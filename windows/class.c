@@ -664,7 +664,7 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
     ATOM atom;
     BOOL ret;
 
-    TRACE(class,"%s %x\n",className, hInstance);
+    TRACE(class,"%s %x\n",debugres_a(className), hInstance);
 
     if (!(atom = GlobalFindAtomA( className )))
     {
@@ -690,7 +690,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
     ATOM atom;
     BOOL ret;
 
-    TRACE(class,"%s %x\n",debugstr_w(className), hInstance);
+    TRACE(class,"%s %x\n",debugres_w(className), hInstance);
 
     if (!(atom = GlobalFindAtomW( className )))
     {
