@@ -47,6 +47,10 @@
  */
 #endif
 
+#if defined(TYPE_ALIGNMENT) && defined(_MSC_VER) && _MSC_VER >= 800 && !defined(__cplusplus)
+#pragma warning(disable:4116)
+#endif
+
 #if !defined(TYPE_ALIGNMENT) && defined(_TYPE_ALIGNMENT)
 # define TYPE_ALIGNMENT _TYPE_ALIGNMENT
 #endif

@@ -523,6 +523,10 @@ sub output_header {
     print OUT " */\n";
     print OUT "#endif\n";
     print OUT "\n";
+    print OUT "#if defined(TYPE_ALIGNMENT) && defined(_MSC_VER) && _MSC_VER >= 800 && !defined(__cplusplus)\n";
+    print OUT "#pragma warning(disable:4116)\n";
+    print OUT "#endif\n";
+    print OUT "\n";
     print OUT "#if !defined(TYPE_ALIGNMENT) && defined(_TYPE_ALIGNMENT)\n";
     print OUT "# define TYPE_ALIGNMENT _TYPE_ALIGNMENT\n";
     print OUT "#endif\n";
