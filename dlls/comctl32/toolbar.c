@@ -52,7 +52,6 @@
  *   - Notifications:
  *     - NM_CHAR
  *     - NM_KEYDOWN
- *     - NM_RCLICK
  *     - NM_RDBLCLICK
  *     - TBN_DRAGOUT
  *     - TBN_GETOBJECT
@@ -5578,6 +5577,34 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
+TOOLBAR_RButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
+    NMMOUSE nmmouse;
+    POINT pt;
+
+    pt.x = LOWORD(lParam);
+    pt.y = HIWORD(lParam);
+    
+    nmmouse.dwHitInfo = TOOLBAR_InternalHitTest(hwnd, &pt);
+
+    if (nmmouse.dwHitInfo < 0) {
+	nmmouse.dwItemSpec = -1;
+    } else {
+	nmmouse.dwItemSpec = infoPtr->buttons[nmmouse.dwHitInfo].idCommand;
+	nmmouse.dwItemData = infoPtr->buttons[nmmouse.dwHitInfo].dwData;
+    }
+
+    ClientToScreen(hwnd, &pt); 
+    memcpy(&nmmouse.pt, &pt, sizeof(POINT));
+
+    TOOLBAR_SendNotify((LPNMHDR)&nmmouse, infoPtr, NM_RCLICK);
+
+    return 0;
+}
+
+static LRESULT
 TOOLBAR_CaptureChanged(HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -6588,6 +6615,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONUP:
 	    return TOOLBAR_LButtonUp (hwnd, wParam, lParam);
+
+	case WM_RBUTTONUP:
+	    return TOOLBAR_RButtonUp (hwnd, wParam, lParam);
 
 	case WM_MOUSEMOVE:
 	    return TOOLBAR_MouseMove (hwnd, wParam, lParam);
