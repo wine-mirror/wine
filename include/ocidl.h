@@ -1,10 +1,14 @@
-#ifndef __WINE_OCIDL_H
-#define __WINE_OCIDL_H
-
-#if !defined(COM_NO_WINDOWS_H) && !defined(__WINE__)
+#ifndef __WINE__
+#include "rpc.h"
+#include "rpcndr.h"
+#ifndef COM_NO_WINDOWS_H
 #include "windows.h"
 #include "ole2.h"
 #endif
+#endif
+
+#ifndef __WINE_OCIDL_H
+#define __WINE_OCIDL_H
 
 #include "wine/obj_base.h"
 

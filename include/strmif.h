@@ -1,3 +1,12 @@
+#ifndef __WINE__
+#include "rpc.h"
+#include "rpcndr.h"
+#ifndef COM_NO_WINDOWS_H
+#include "windows.h"
+#include "ole2.h"
+#endif
+#endif
+
 #ifndef __WINE_STRMIF_H_
 #define __WINE_STRMIF_H_
 

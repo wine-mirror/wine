@@ -2,12 +2,12 @@
  *    RPC interface
  *
  */
-#ifndef __WINE_RPC_H
-#define __WINE_RPC_H
-
 #if !defined(RPC_NO_WINDOWS_H) && !defined(__WINE__)
 #include "windows.h"
 #endif
+
+#ifndef __WINE_RPC_H
+#define __WINE_RPC_H
 
 #define __RPC_FAR
 #define __RPC_API  WINAPI
