@@ -41,20 +41,30 @@ typedef struct IMalloc16 IMalloc16, *LPMALLOC16;
 ICOM_DEFINE(IMalloc16,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknown methods ***/
-#define IMalloc16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IMalloc16_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IMalloc16_Release(p)            ICOM_CALL (Release,p)
-/*** IMalloc16 methods ***/
-#define IMalloc16_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
-#define IMalloc16_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
-#define IMalloc16_Free(p,a)       ICOM_CALL1(Free,p,a)
-#define IMalloc16_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
-#define IMalloc16_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
-#define IMalloc16_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
-
 /**********************************************************************/
 
 extern LPMALLOC16 IMalloc16_Constructor();
+
+/**********************************************************************/
+
+typedef struct ILockBytes16 *LPLOCKBYTES16, ILockBytes16;
+
+#define ICOM_INTERFACE ILockBytes
+#define ILockBytes16_METHODS \
+	ICOM_METHOD4(HRESULT,ReadAt,       ULARGE_INTEGER,ulOffset, void*,pv, ULONG, cb, ULONG*,pcbRead) \
+	ICOM_METHOD4(HRESULT,WriteAt,      ULARGE_INTEGER,ulOffset, const void*,pv, ULONG,cb, ULONG*,pcbWritten) \
+	ICOM_METHOD (HRESULT,Flush) \
+	ICOM_METHOD1(HRESULT,SetSize,      ULARGE_INTEGER,cb) \
+	ICOM_METHOD3(HRESULT,LockRegion,   ULARGE_INTEGER,libOffset, ULARGE_INTEGER, cb, DWORD,dwLockType) \
+	ICOM_METHOD3(HRESULT,UnlockRegion, ULARGE_INTEGER,libOffset, ULARGE_INTEGER, cb, DWORD,dwLockType) \
+	ICOM_METHOD2(HRESULT,Stat,         STATSTG*,pstatstg, DWORD,grfStatFlag)
+
+#define ILockBytes16_IMETHODS \
+	IUnknown_IMETHODS \
+	ILockBytes16_METHODS
+
+ICOM_DEFINE(ILockBytes16,IUnknown)
+#undef ICOM_INTERFACE
+
 
 #endif /* __WINE_OLE_IFS_H */

@@ -32,7 +32,6 @@ C_SRCS = \
 	ole2.c \
 	ole2stubs.c \
 	ole2impl.c \
-	ole2nls.c \
 	ole32_main.c \
 	oleobj.c \
 	oleproxy.c \
@@ -41,6 +40,8 @@ C_SRCS = \
 	stg_stream.c \
 	storage.c \
 	storage32.c
+
+C_SRCS16 = ole2nls.c
 
 RC_SRCS = ole32res.rc
 

@@ -34,9 +34,12 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
+#include "wownt32.h"
 #include "wine/unicode.h"
 #include "objbase.h"
 #include "wine/debug.h"
+
+#include "ifs.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -1690,4 +1693,67 @@ HRESULT WINAPI StgOpenStorage16(
 	}
 	return S_OK;
 
+}
+
+/******************************************************************************
+ *              StgIsStorageILockBytes        [STORAGE.6]
+ *
+ * Determines if the ILockBytes contains a storage object.
+ */
+HRESULT WINAPI StgIsStorageILockBytes16(SEGPTR plkbyt)
+{
+  DWORD args[6];
+  HRESULT hres;
+  HANDLE16 hsig;
+  
+  args[0] = (DWORD)plkbyt;	/* iface */
+  args[1] = args[2] = 0;	/* ULARGE_INTEGER offset */
+  args[3] = (DWORD)K32WOWGlobalAllocLock16( 0, 8, &hsig ); /* sig */
+  args[4] = 8;
+  args[5] = 0;
+
+  if (!K32WOWCallback16Ex(
+      (DWORD)((ICOM_VTABLE(ILockBytes16)*)MapSL(
+	  (SEGPTR)ICOM_VTBL(((LPLOCKBYTES16)MapSL(plkbyt))))
+      )->ReadAt,
+      WCB16_PASCAL,
+      6*sizeof(DWORD),
+      (LPVOID)args,
+      (LPDWORD)&hres
+  )) {
+      ERR("CallTo16 ILockBytes16::ReadAt() failed, hres %lx\n",hres);
+      return hres;
+  }
+  if (memcmp(MapSL(args[3]), STORAGE_magic, sizeof(STORAGE_magic)) == 0) {
+    K32WOWGlobalUnlockFree16(args[3]);
+    return S_OK;
+  }
+  K32WOWGlobalUnlockFree16(args[3]);
+  return S_FALSE;
+}
+
+/******************************************************************************
+ *    StgOpenStorageOnILockBytes    [STORAGE.4]
+ */
+HRESULT WINAPI StgOpenStorageOnILockBytes16(
+      ILockBytes16 *plkbyt,
+      IStorage16 *pstgPriority,
+      DWORD grfMode,
+      SNB16 snbExclude,
+      DWORD reserved,
+      IStorage16 **ppstgOpen)
+{
+  IStorage16Impl*	lpstg;
+
+  if ((plkbyt == 0) || (ppstgOpen == 0))
+    return STG_E_INVALIDPOINTER;
+
+  *ppstgOpen = 0;
+
+  _create_istorage16(ppstgOpen);
+  lpstg = MapSL((SEGPTR)*ppstgOpen);
+
+  /* just teach it to use HANDLE instead of ilockbytes :/ */
+
+  return S_OK;
 }
