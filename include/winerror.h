@@ -1464,6 +1464,8 @@ extern int WIN32_LastError;
 #define S_OK                                               ((HRESULT)0L)
 #define S_FALSE                                            ((HRESULT)1L)
 
+#define E_PENDING                                          0x8000000AL
+
 
 #define E_NOTIMPL                                          0x80004001L
 #define E_NOINTERFACE                                      0x80004002L

@@ -1,6 +1,6 @@
 /* DirectPlay & DirectPlayLobby messaging implementation
  *
- * Copyright 2000 - Peter Hunnisett
+ * Copyright 2000,2001 - Peter Hunnisett
  *
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
@@ -17,6 +17,7 @@
 #include "dplayx_messages.h"
 #include "dplay_global.h"
 #include "dplayx_global.h"
+#include "name_server.h"
 
 DEFAULT_DEBUG_CHANNEL(dplay);
 
@@ -212,7 +213,6 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
     TRACE( "Asking for player id w/ dwFlags 0x%08lx\n", 
            lpMsgBody->dwFlags );
 
-
     DP_MSG_ExpectReply( This, &data, DPMSG_DEFAULT_WAIT_TIME, DPMSGCMD_NEWPLAYERIDREPLY, 
                         &lpMsg, &dwMsgSize );
   }
@@ -267,7 +267,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlay2AImpl* This, DPID dpidServer )
     DWORD  dwDataSize;
     
     /* SP Player remote data needs to be propagated at some point - is this the point? */
-    IDirectPlaySP_GetSPPlayerData( This->dp2->spData.lpISP, dpidServer, (LPVOID*)&lpPData, &dwDataSize, DPSET_REMOTE );
+    IDirectPlaySP_GetSPPlayerData( This->dp2->spData.lpISP, 0, (LPVOID*)&lpPData, &dwDataSize, DPSET_REMOTE );
     
     ERR( "Player Data size is 0x%08lx\n"
          "[%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x]\n"
@@ -305,11 +305,22 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlay2AImpl* This, DPID dpidServer )
   lpMsgBody->unknown4[0] =  0x30; 
   lpMsgBody->unknown4[1] =  0xb;
   lpMsgBody->unknown4[2] =  0x0;
-  lpMsgBody->unknown4[3] =  0x1e090002;
+
+  lpMsgBody->unknown4[3] =  NS_GetNsMagic( This->dp2->lpNameServerData ) -
+                            0x02000000;
+  TRACE( "Setting first magic to 0x%08lx\n", lpMsgBody->unknown4[3] );
+
   lpMsgBody->unknown4[4] =  0x0;
   lpMsgBody->unknown4[5] =  0x0;
   lpMsgBody->unknown4[6] =  0x0;
-  lpMsgBody->unknown4[7] =  0x32090002;
+
+#if 0
+  lpMsgBody->unknown4[7] =  NS_GetOtherMagic( This->dp2->lpNameServerData )
+#else
+  lpMsgBody->unknown4[7] =  NS_GetNsMagic( This->dp2->lpNameServerData );
+#endif
+  TRACE( "Setting second magic to 0x%08lx\n", lpMsgBody->unknown4[7] );
+
   lpMsgBody->unknown4[8] =  0x0;
   lpMsgBody->unknown4[9] =  0x0;
   lpMsgBody->unknown4[10] = 0x0;
@@ -330,6 +341,8 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlay2AImpl* This, DPID dpidServer )
     data.dwMessageSize  = dwMsgSize;
     data.bSystemMessage = TRUE; /* Allow reply to be sent */
     data.lpISP          = This->dp2->spData.lpISP;
+
+    TRACE( "Sending forward player request with 0x%08lx\n", dpidServer );
 
     lpMsg = DP_MSG_ExpectReply( This, &data, 
                                 DPMSG_WAIT_60_SECS, 
@@ -372,11 +385,13 @@ LPVOID DP_MSG_ExpectReply( IDirectPlay2AImpl* This, LPDPSP_SENDDATA lpData,
 
   if( FAILED(hr) )
   {
-    ERR( "Request for new playerID send failed: %s\n",
-         DPLAYX_HresultToString( hr ) );
+    ERR( "Send failed: %s\n", DPLAYX_HresultToString( hr ) );
     return NULL;
   }
 
+  /* The reply message will trigger the hMsgReceipt event effectively switching
+   * control back to this thread. See DP_MSG_ReplyReceived.
+   */
   dwWaitReturn = WaitForSingleObject( hMsgReceipt, dwWaitTime );
   if( dwWaitReturn != WAIT_OBJECT_0 )
   {
@@ -429,7 +444,43 @@ void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId,
     ERR( "No receipt event set - only expecting in reply mode\n" );
     DebugBreak();
   }
- 
+}
+
+void DP_MSG_ToSelf( IDirectPlay2AImpl* This, DPID dpidSelf )
+{
+  LPVOID                   lpMsg;
+  LPDPMSG_SENDENVELOPE     lpMsgBody;
+  DWORD                    dwMsgSize;
+
+  dwMsgSize = This->dp2->spData.dwSPHeaderSize + sizeof( *lpMsgBody );
+
+  lpMsg = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwMsgSize );
+
+  lpMsgBody = (LPDPMSG_SENDENVELOPE)( (BYTE*)lpMsg +
+                                      This->dp2->spData.dwSPHeaderSize );
+
+  /* Compose dplay message envelope */
+  lpMsgBody->dwMagic    = DPMSGMAGIC_DPLAYMSG;
+  lpMsgBody->wCommandId = DPMSGCMD_JUSTENVELOPE;
+  lpMsgBody->wVersion   = DPMSGVER_DP6;
+
+  /* Send the message to ourselves */
+  {
+    DPSP_SENDDATA data;
+
+    data.dwFlags        = 0;
+    data.idPlayerTo     = dpidSelf; /* Sending to session server */
+    data.idPlayerFrom   = 0; /* Sending from session server */
+    data.lpMessage      = lpMsg;
+    data.dwMessageSize  = dwMsgSize;
+    data.bSystemMessage = TRUE; /* Allow reply to be sent */
+    data.lpISP          = This->dp2->spData.lpISP;
+
+    lpMsg = DP_MSG_ExpectReply( This, &data,
+                                DPMSG_WAIT_5_SECS,
+                                DPMSGCMD_JUSTENVELOPE,
+                                &lpMsg, &dwMsgSize );
+  }
 }
 
 void DP_MSG_ErrorReceived( IDirectPlay2AImpl* This, WORD wCommandId,

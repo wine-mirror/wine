@@ -1,6 +1,6 @@
 /* DPLAYX.DLL name server implementation
  *
- * Copyright 2000 - Peter Hunnisett
+ * Copyright 2000-2001 - Peter Hunnisett
  *
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
@@ -43,6 +43,10 @@ struct NSCache
   lpNSCacheData present; /* keep track of what is to be looked at when walking */
 
   DPQ_HEAD(NSCacheData) first;
+
+  BOOL bNsIsLocal;
+  LPVOID lpLocalAddrHdr;  /* FIXME: Not yet used */
+  LPVOID lpRemoteAddrHdr; /* FIXME: Not yet used */
 }; 
 typedef struct NSCache NSCache, *lpNSCache;
 
@@ -52,12 +56,22 @@ DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
 /* Name Server functions 
  * --------------------- 
  */
-void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd )
+void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo )
 {
 #if 0
   /* FIXME: Remove this method? */
   DPLAYX_SetLocalSession( lpsd );
 #endif
+  lpNSCache lpCache = (lpNSCache)lpNSInfo;
+
+  lpCache->bNsIsLocal = TRUE;
+}
+
+void NS_SetRemoteComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo )
+{
+  lpNSCache lpCache = (lpNSCache)lpNSInfo;
+
+  lpCache->bNsIsLocal = FALSE;
 }
 
 DPQ_DECL_COMPARECB( cbUglyPig, GUID )
@@ -66,7 +80,8 @@ DPQ_DECL_COMPARECB( cbUglyPig, GUID )
 }
 
 /* Store the given NS remote address for future reference */
-void NS_SetRemoteComputerAsNameServer( LPVOID                    lpNSAddrHdr,
+/* FIXME: LPDPMSG_ENUMSESSIONSREPLY should be const */
+void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
                                        DWORD                     dwHdrSize,
                                        LPDPMSG_ENUMSESSIONSREPLY lpMsg,
                                        LPVOID                    lpNSInfo )
@@ -75,15 +90,11 @@ void NS_SetRemoteComputerAsNameServer( LPVOID                    lpNSAddrHdr,
   lpNSCache     lpCache = (lpNSCache)lpNSInfo;
   lpNSCacheData lpCacheNode;
 
-  TRACE( "%p, %p, %p\n", lpNSAddrHdr, lpMsg, lpNSInfo );
-
-  /* FIXME: Should check to see if the reply is for an existing session. If
-   *        so we remove the old and add the new so oldest is at front.
-   */
+  TRACE( "%p, %p, %p\n", lpcNSAddrHdr, lpMsg, lpNSInfo );
 
   /* See if we can find this session. If we can, remove it as it's a dup */
   DPQ_REMOVE_ENTRY_CB( lpCache->first, next, data->guidInstance, cbUglyPig,
-                     lpMsg->sd.guidInstance, lpCacheNode );
+                       lpMsg->sd.guidInstance, lpCacheNode );
 
   if( lpCacheNode != NULL )
   {
@@ -104,12 +115,12 @@ void NS_SetRemoteComputerAsNameServer( LPVOID                    lpNSAddrHdr,
 
   lpCacheNode->lpNSAddrHdr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                         dwHdrSize );
-  CopyMemory( lpCacheNode->lpNSAddrHdr, lpNSAddrHdr, dwHdrSize );
+  CopyMemory( lpCacheNode->lpNSAddrHdr, lpcNSAddrHdr, dwHdrSize );
               
 
   lpCacheNode->data = (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
                                                    HEAP_ZERO_MEMORY, 
-                                                   sizeof( *lpCacheNode->data ) );
+                                                   sizeof( *(lpCacheNode->data) ) );
 
   if( lpCacheNode->data == NULL )
   {
@@ -120,8 +131,10 @@ void NS_SetRemoteComputerAsNameServer( LPVOID                    lpNSAddrHdr,
   CopyMemory( lpCacheNode->data, &lpMsg->sd, sizeof( *lpCacheNode->data ) );
   len = WideCharToMultiByte( CP_ACP, 0, (LPWSTR)(lpMsg+1), -1, NULL, 0, NULL, NULL );
   if ((lpCacheNode->data->u1.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0, len )))
+  {
       WideCharToMultiByte( CP_ACP, 0, (LPWSTR)(lpMsg+1), -1,
                            lpCacheNode->data->u1.lpszSessionNameA, len, NULL, NULL );
+  }
 
   lpCacheNode->dwTime = timeGetTime();
 
@@ -148,8 +161,38 @@ LPVOID NS_GetNSAddr( LPVOID lpNSInfo )
    *        must be it. That would make this method obsolete once that's
    *        in place.
    */
-
+#if 1
   return lpCache->first.lpQHFirst->lpNSAddrHdr;
+#else
+  /* FIXME: Should convert over to this */
+  return lpCache->bNsIsLocal ? lpCache->lpLocalAddrHdr
+                             : lpCache->lpRemoteAddrHdr;
+#endif
+}
+
+/* Get the magic number associated with the Name Server */
+DWORD NS_GetNsMagic( LPVOID lpNSInfo )
+{
+  LPDWORD lpHdrInfo = (LPDWORD)NS_GetNSAddr( lpNSInfo );
+
+  return lpHdrInfo[1];
+}
+
+/* Get the magic number associated with the non NS end */
+DWORD NS_GetOtherMagic( LPVOID lpNSInfo )
+{
+  lpNSCache lpCache = (lpNSCache)lpNSInfo;
+
+  return ((LPDWORD)lpCache->lpLocalAddrHdr)[1];
+}
+
+void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
+{
+  lpNSCache lpCache = (lpNSCache)lpNSInfo;
+
+  lpCache->lpLocalAddrHdr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwHdrSize );
+
+  CopyMemory( lpCache->lpLocalAddrHdr, lpHdr, dwHdrSize );
 }
 
 /* This function is responsible for sending a request for all other known
@@ -216,6 +259,9 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo )
 
   /* NULL out the walking pointer */
   lpCache->present = NULL;
+
+  lpCache->bNsIsLocal = FALSE;
+
 }
 
 /* Create and initialize a session cache */
@@ -234,6 +280,8 @@ BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
 
   DPQ_INIT(lpCache->first);
   lpCache->present = NULL;
+
+  lpCache->bNsIsLocal = FALSE;
 
   return TRUE;
 }
@@ -280,8 +328,7 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
   lpNSCache     lpCache = lpNSInfo;
 
   const DWORD dwPresentTime = timeGetTime();
-  const DWORD dwPrunePeriod = 60000; /* is 60 secs enough? */ 
-  const DWORD dwPruneTime   = dwPresentTime - dwPrunePeriod;
+  const DWORD dwPrunePeriod = DPMSG_WAIT_60_SECS; /* is 60 secs enough? */
 
   /* This silly little algorithm is based on the fact we keep entries in 
    * the queue in a time based order. It also assumes that it is not possible
@@ -299,25 +346,12 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
       break;
     }
 
-    if( dwPruneTime > dwPresentTime ) /* 0 <= dwPresentTime <= dwPrunePeriod */
+    /* Deal with time in a wrap around safe manner - unsigned arithmatic.
+     * Check the difference in time */
+    if( (dwPresentTime - (DPQ_FIRST(lpCache->first)->dwTime)) < dwPrunePeriod )
     {
-      if( ( DPQ_FIRST(lpCache->first)->dwTime <= dwPresentTime ) ||
-          ( DPQ_FIRST(lpCache->first)->dwTime > dwPruneTime )
-        )
-      {
-        /* Less than dwPrunePeriod old - keep */
-        break; 
-      }
-    }
-    else /* dwPrunePeriod <= dwPresentTime <= max dword */
-    {
-      if( ( DPQ_FIRST(lpCache->first)->dwTime <= dwPresentTime ) &&
-          ( DPQ_FIRST(lpCache->first)->dwTime > dwPruneTime ) 
-        )
-      {
-        /* Less than dwPrunePeriod old - keep */
-        break;
-      }
+      /* First entry has not expired yet; don't prune */
+      break;
     }
 
     lpFirstData = DPQ_FIRST(lpCache->first);
@@ -328,33 +362,38 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
 }
 
 /* NAME SERVER Message stuff */
-void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg, 
-                                    LPDPSP_REPLYDATA lpReplyData,
+void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg, 
+                                    LPVOID* lplpReplyData,
+                                    LPDWORD lpdwReplySize,
                                     IDirectPlay2Impl* lpDP )
 {
   LPDPMSG_ENUMSESSIONSREPLY rmsg;
   DWORD dwVariableSize;
   DWORD dwVariableLen;
-  /* LPDPMSG_ENUMSESSIONSREQUEST msg = (LPDPMSG_ENUMSESSIONSREQUEST)lpMsg; */
+  /* LPCDPMSG_ENUMSESSIONSREQUEST msg = (LPDPMSG_ENUMSESSIONSREQUEST)lpcMsg; */
   BOOL bAnsi = TRUE; /* FIXME: This needs to be in the DPLAY interface */
 
   FIXME( ": few fixed + need to check request for response\n" );
 
   if (bAnsi)
+  {
       dwVariableLen = MultiByteToWideChar( CP_ACP, 0,
                                            lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA,
                                            -1, NULL, 0 );
+  }
   else
+  {
       dwVariableLen = strlenW( lpDP->dp2->lpSessionDesc->u1.lpszSessionName ) + 1;
+  }
 
   dwVariableSize = dwVariableLen * sizeof( WCHAR );
 
-  lpReplyData->dwMessageSize = lpDP->dp2->spData.dwSPHeaderSize +
-                                 sizeof( *rmsg ) + dwVariableSize;
-  lpReplyData->lpMessage     = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                          lpReplyData->dwMessageSize );
+  *lpdwReplySize = lpDP->dp2->spData.dwSPHeaderSize +
+                     sizeof( *rmsg ) + dwVariableSize;
+  *lplpReplyData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                              *lpdwReplySize );
 
-  rmsg = (LPDPMSG_ENUMSESSIONSREPLY)( (BYTE*)lpReplyData->lpMessage + 
+  rmsg = (LPDPMSG_ENUMSESSIONSREPLY)( (BYTE*)*lplpReplyData + 
                                              lpDP->dp2->spData.dwSPHeaderSize);
 
   rmsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG; 
@@ -365,8 +404,12 @@ void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg,
               sizeof( lpDP->dp2->lpSessionDesc->dwSize ) ); 
   rmsg->dwUnknown = 0x0000005c;
   if( bAnsi )
+  {
       MultiByteToWideChar( CP_ACP, 0, lpDP->dp2->lpSessionDesc->u1.lpszSessionNameA, -1,
                            (LPWSTR)(rmsg+1), dwVariableLen );
+  }
   else
+  {
       strcpyW( (LPWSTR)(rmsg+1), lpDP->dp2->lpSessionDesc->u1.lpszSessionName );
+  }
 }

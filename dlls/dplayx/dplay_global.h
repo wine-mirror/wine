@@ -2,6 +2,7 @@
 #define __WINE_DPLAY_GLOBAL_INCLUDED
 
 #include "dplaysp.h"
+#include "lobbysp.h"
 #include "dplayx_queue.h"
 
 extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, 
@@ -126,7 +127,14 @@ struct DPMSG
 };
 typedef struct DPMSG* LPDPMSG;
 
-/* Contains all dp1 and dp2 data members */
+enum SPSTATE
+{
+  NO_PROVIDER = 0,
+  DP_SERVICE_PROVIDER = 1,
+  DP_LOBBY_PROVIDER = 2
+};
+
+/* Contains all data members. FIXME: Rename me */
 typedef struct tagDirectPlay2Data
 {
   BOOL   bConnectionOpen;
@@ -149,11 +157,19 @@ typedef struct tagDirectPlay2Data
 
   /* Information about the service provider active on this connection */
   SPINITDATA spData;
+  BOOL       bSPInitialized;
+
+  /* Information about the lobby server that's attached to this DP object */
+  SPDATA_INIT dplspData;
+  BOOL        bDPLSPInitialized;
 
   /* Our service provider */
   HMODULE hServiceProvider;
 
-  BOOL bConnectionInitialized;
+  /* Our DP lobby provider */
+  HMODULE hDPLobbyProvider;
+
+  enum SPSTATE connectionInitialized;
 
   /* Expected messages queue */
   DPQ_HEAD( tagDP_MSG_REPLY_STRUCT_LIST ) replysExpected;

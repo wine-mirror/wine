@@ -16,6 +16,7 @@ C_SRCS = \
 	dplayx_main.c \
 	dplayx_messages.c \
 	dplobby.c \
+	lobbysp.c \
 	name_server.c
 
 @MAKE_DLL_RULES@

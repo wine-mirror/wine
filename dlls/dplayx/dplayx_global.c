@@ -1240,10 +1240,8 @@ LPCSTR DPLAYX_HresultToString(HRESULT hr)
       return "DPERR_NOPLAYERS";
     case DPERR_NOSESSIONS: 
       return "DPERR_NOSESSIONS";
-/* This one isn't defined yet in WINE sources. I don't know the value
     case DPERR_PENDING: 
       return "DPERR_PENDING";
-*/
     case DPERR_SENDTOOBIG: 
       return "DPERR_SENDTOOBIG";
     case DPERR_TIMEOUT: 

@@ -26,7 +26,9 @@
 #include <stdlib.h>
 #endif
 
+#ifndef INITGUID
 #include "cguid.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

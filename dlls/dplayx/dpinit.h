@@ -9,5 +9,8 @@ extern HRESULT DP_CreateInterface( REFIID riid, LPVOID* ppvObj );
 extern HRESULT DPL_CreateInterface( REFIID riid, LPVOID* ppvObj );
 extern HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj, 
                                      IDirectPlay2Impl* dp );
+extern HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj,
+                                      IDirectPlay2Impl* dp );
+
 
 #endif

@@ -19,6 +19,7 @@ void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId,
                            LPCVOID lpMsgBody, DWORD dwMsgBodySize );
 void DP_MSG_ErrorReceived( IDirectPlay2AImpl* This, WORD wCommandId,
                            LPCVOID lpMsgBody, DWORD dwMsgBodySize );
+void DP_MSG_ToSelf( IDirectPlay2AImpl* This, DPID dpidSelf );
 
 /* Timings -> 1000 ticks/sec */
 #define DPMSG_WAIT_5_SECS   5000
@@ -47,7 +48,12 @@ void DP_MSG_ErrorReceived( IDirectPlay2AImpl* This, WORD wCommandId,
 
 #define DPMSGCMD_FORWARDADDPLAYER     19
 
+#define DPMSGCMD_PLAYERCHAT           22
+
 #define DPMSGCMD_FORWARDADDPLAYERNACK 36
+
+#define DPMSGCMD_JUSTENVELOPE         1000
+#define DPMSGCMD_JUSTENVELOPEREPLY    1001
 
 /* This is what DP 6 defines it as. Don't know what it means. All messages
  * defined below are DPMSGVER_DP6.
@@ -163,21 +169,21 @@ typedef struct tagDPMSG_FORWARDADDPLAYER
   DWORD unknown; /* 0 */
 
   DPID  dpidAppServer; /* Remote application server id */
-  DWORD unknown2[5]; /* ??? */
-#define FORWARDADDPLAYER_UNKNOWN2_INIT { 0x0, 0x1c, 0x6c, 0x50, 0x9 }
+  DWORD unknown2[5]; /* 0x0, 0x1c, 0x6c, 0x50, 0x9 */
 
   DPID  dpidAppServer2; /* Remote application server id again !? */
-  DWORD unknown3[5]; /* ??? */
-#define FORWARDADDPLAYER_UNKNOWN3_INIT { 0x0, 0x0, 0x20, 0x0, 0x0 }
+  DWORD unknown3[5]; /* 0x0, 0x0, 0x20, 0x0, 0x0 */
 
   DPID  dpidAppServer3; /* Remote application server id again !? */
 
   DWORD unknown4[12]; /* ??? - Is this a clump of 5 and then 8? */
-                      /* NOTE: 1 byte infront of the two 0x??090002 entries changes! */
+                      /* NOTE: 1 byte infront of the two 0x??090002 entries changes!
+                      *       Is it a timestamp of some sort? 1st always smaller than
+                      *       other...
+                      */
 #define FORWARDADDPLAYER_UNKNOWN4_INIT { 0x30, 0xb, 0x0, 0x1e090002, 0x0, 0x0, 0x0, 0x32090002, 0x0, 0x0, 0x0, 0x0 }
 
-  BYTE unknown5[2]; /* 2 bytes at the end. This may be a part of something! */
-#define FORWARDADDPLAYER_UNKNOWN5_INIT { 0x0 }
+  BYTE unknown5[2]; /* 2 bytes at the end. This may be a part of something! ( 0x0, 0x0) */
 
 } DPMSG_FORWARDADDPLAYER, *LPDPMSG_FORWARDADDPLAYER;
 typedef const DPMSG_FORWARDADDPLAYER* LPCDPMSG_FORWARDADDPLAYER;

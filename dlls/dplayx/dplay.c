@@ -1,6 +1,6 @@
 /* Direct Play 2,3,4 Implementation
  *
- * Copyright 1998,1999,2000 - Peter Hunnisett
+ * Copyright 1998,1999,2000,2001 - Peter Hunnisett
  *
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
@@ -169,6 +169,8 @@ static HRESULT WINAPI DP_IF_InitializeConnection
 static BOOL CALLBACK cbDPCreateEnumConnections( LPCGUID lpguidSP,
     LPVOID lpConnection, DWORD dwConnectionSize, LPCDPNAME lpName,
     DWORD dwFlags, LPVOID lpContext );
+static BOOL WINAPI DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
+                                           LPDWORD lpdwBufSize );
 
 
 
@@ -181,6 +183,9 @@ static void DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc,
 
 
 static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDpSp );
+static HRESULT DP_InitializeDPSP( IDirectPlay3Impl* This, HMODULE hServiceProvider );
+static HRESULT DP_InitializeDPLSP( IDirectPlay3Impl* This, HMODULE hServiceProvider );
+
 
 
 
@@ -283,6 +288,20 @@ static BOOL DP_CreateDirectPlay2( LPVOID lpDP )
     return FALSE;
   }
 
+  /* Setup lobby provider information */
+  This->dp2->dplspData.dwSPVersion = DPSP_MAJORVERSION;
+  This->dp2->dplspData.lpCB = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                         sizeof( *This->dp2->dplspData.lpCB ) );
+  This->dp2->dplspData.lpCB->dwSize = sizeof(  *This->dp2->dplspData.lpCB );
+
+  if( FAILED( DPLSP_CreateInterface( &IID_IDPLobbySP,
+                                     (LPVOID*)&This->dp2->dplspData.lpISP, This ) )
+    )
+  {
+    /* FIXME: Memory leak */
+    return FALSE;
+  }
+
   return TRUE;
 }
 
@@ -347,12 +366,17 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
     (*This->dp2->spData.lpCB->Shutdown)();
   }
 
-  /* Unload the SP */
+  /* Unload the SP (if it exists) */
   if( This->dp2->hServiceProvider != 0 )
   {
     FreeLibrary( This->dp2->hServiceProvider );
   }
 
+  /* Unload the Lobby Provider (if it exists) */
+  if( This->dp2->hDPLobbyProvider != 0 )
+  {
+    FreeLibrary( This->dp2->hDPLobbyProvider );
+  }
 
 #if 0
   DPQ_DELETEQ( This->dp2->players, players, lpPlayerList, cbDeletePlayerElem );
@@ -631,6 +655,26 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
 
   switch( wCommandId )
   {
+    /* Name server needs to handle this request */
+    case DPMSGCMD_ENUMSESSIONSREQUEST:
+    {
+      /* Reply expected */
+      NS_ReplyToEnumSessionsRequest( lpcMessageBody, lplpReply, lpdwMsgSize, This );
+
+      break;
+    }
+
+    /* Name server needs to handle this request */
+    case DPMSGCMD_ENUMSESSIONSREPLY:
+    {
+      /* No reply expected */
+      NS_AddRemoteComputerAsNameServer( lpcMessageHeader,
+                                        This->dp2->spData.dwSPHeaderSize,
+                                        (LPDPMSG_ENUMSESSIONSREPLY)lpcMessageBody,
+                                        This->dp2->lpNameServerData );
+      break;
+    }
+
     case DPMSGCMD_REQUESTNEWPLAYERID:
     {
       LPCDPMSG_REQUESTNEWPLAYERID lpcMsg = 
@@ -667,11 +711,36 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
     case DPMSGCMD_NEWPLAYERIDREPLY:
     {
 
+#if 0
+      if( wCommandId == DPMSGCMD_NEWPLAYERIDREPLY )
+        DebugBreak();
+#endif
       DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
  
       break;
     }
     
+#if 1
+    case DPMSGCMD_JUSTENVELOPE:
+    {
+      TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08lx\n", lpcMessageHeader, ((LPDWORD)lpcMessageHeader)[1] );
+      NS_SetLocalAddr( This->dp2->lpNameServerData, lpcMessageHeader, 20 );
+      DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
+    }
+#endif
+
+    case DPMSGCMD_FORWARDADDPLAYER:
+    {
+#if 0
+      DebugBreak();
+#endif
+#if 1
+    TRACE( "Sending message to self to get my addr\n" );
+    DP_MSG_ToSelf( This, 1 ); /* This is a hack right now */
+#endif
+      break;
+    }
+
     case DPMSGCMD_FORWARDADDPLAYERNACK:
     {
       DP_MSG_ErrorReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
@@ -685,6 +754,8 @@ HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpcMessageBody,
       break;
     }
   }
+
+  /* FIXME: There is code in dplaysp.c to handle dplay commands. Move to here. */
 
   return DP_OK;
 }
@@ -1475,6 +1546,11 @@ static HRESULT WINAPI DP_IF_CreatePlayer
      *        is this used for regular players? If only for server players, move
      *        this call to DP_SecureOpen(...);
      */
+#if 0
+    TRACE( "Sending message to self to get my addr\n" );
+    DP_MSG_ToSelf( This, *lpidPlayer ); /* This is a hack right now */
+#endif
+
     hr = DP_MSG_ForwardPlayerCreation( This, *lpidPlayer);
   }
 #else
@@ -2107,6 +2183,47 @@ static HRESULT WINAPI DP_IF_EnumSessions
     return DPERR_GENERIC;
   }
 
+#if 1
+  /* The loading of a lobby provider _seems_ to require a backdoor loading
+   * of the service provider to also associate with this DP object. This is
+   * because the app doesn't seem to have to call EnumConnections and
+   * InitializeConnection for the SP before calling this method. As such
+   * we'll do their dirty work for them with a quick hack so as to always
+   * load the TCP/IP service provider.
+   *
+   * The correct solution would seem to involve creating a dialog box which
+   * contains the possible SPs. These dialog boxes most likely follow SDK
+   * examples.
+   */
+   if( This->dp2->bDPLSPInitialized && !This->dp2->bSPInitialized )
+   {
+     LPVOID lpConnection;
+     DWORD  dwSize;
+
+     WARN( "Hack providing TCP/IP SP for lobby provider activated\n" );
+
+     if( !DP_BuildSPCompoundAddr( (LPGUID)&DPSPGUID_TCPIP, &lpConnection, &dwSize ) )
+     {
+       ERR( "Can't build compound addr\n" );
+       return DPERR_GENERIC;
+     }
+
+     hr = DP_IF_InitializeConnection( (IDirectPlay3Impl*)This, lpConnection,
+                                      0, bAnsi );
+     if( FAILED(hr) )
+     {
+       return hr;
+     }
+
+     /* Free up the address buffer */
+     HeapFree( GetProcessHeap(), 0, lpConnection );
+
+     /* The SP is now initialized */
+     This->dp2->bSPInitialized = TRUE;
+   }
+#endif
+
+
   /* Use the service provider default? */
   if( dwTimeout == 0 )
   {
@@ -2158,6 +2275,7 @@ static HRESULT WINAPI DP_IF_EnumSessions
                                                        sizeof( *lpData ) );
         /* FIXME: need to kill the thread on object deletion */
         lpData->lpSpData  = &This->dp2->spData;
+
         CopyMemory( &lpData->requestGuid, &lpsd->guidApplication, sizeof(GUID) );
         lpData->dwEnumSessionFlags = dwFlags;
         lpData->dwTimeout = dwTimeout;
@@ -2693,7 +2811,7 @@ static HRESULT WINAPI DP_SecureOpen
   {
     /* Rightoo - this computer is the host and the local computer needs to be
        the name server so that others can join this session */
-    NS_SetLocalComputerAsNameServer( lpsd );
+    NS_SetLocalComputerAsNameServer( lpsd, This->dp2->lpNameServerData );
 
     This->dp2->bHostInterface = TRUE;
 
@@ -3458,6 +3576,45 @@ static HRESULT WINAPI DirectPlay3WImpl_DeleteGroupFromGroup
   return DP_IF_DeleteGroupFromGroup( This, idParentGroup, idGroup );
 }
 
+static
+BOOL WINAPI DP_BuildSPCompoundAddr( LPGUID lpcSpGuid, LPVOID* lplpAddrBuf,
+                                    LPDWORD lpdwBufSize )
+{
+  DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
+  HRESULT                  hr;
+
+  dpCompoundAddress.dwDataSize = sizeof( GUID );
+  memcpy( &dpCompoundAddress.guidDataType, &DPAID_ServiceProvider,
+          sizeof( GUID ) ) ;
+  dpCompoundAddress.lpData = lpcSpGuid;
+
+  *lplpAddrBuf = NULL;
+  *lpdwBufSize = 0;
+
+  hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, *lplpAddrBuf,
+                                  lpdwBufSize, TRUE );
+
+  if( hr != DPERR_BUFFERTOOSMALL )
+  {
+    ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
+    return FALSE;
+  }
+
+  /* Now allocate the buffer */
+  *lplpAddrBuf = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                            *lpdwBufSize );
+
+  hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, *lplpAddrBuf,
+                                  lpdwBufSize, TRUE );
+  if( FAILED(hr) )
+  {
+    ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
 static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
           ( LPDIRECTPLAY3A iface, LPCGUID lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, LPVOID lpContext, DWORD dwFlags )
 {
@@ -3515,9 +3672,8 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       char     returnBuffer[51];
       WCHAR    buff[51];
       DPNAME   dpName;
-      HRESULT  hr;
+      BOOL     bBuildPass;
 
-      DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
       LPVOID                   lpAddressBuffer = NULL;
       DWORD                    dwAddressBufferSize = 0;
 
@@ -3551,31 +3707,19 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       dpName.u2.lpszLongNameA  = NULL;
 
       /* Create the compound address for the service provider. 
-         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP,
-               nasty stuff. This may be why the native dll just gets around this little bit by
-               allocating an 80 byte buffer which isn't even filled with a valid compound 
-               address. Oh well. Creating a proper compound address is the way to go anyway... 
-               despite this method taking slightly more heap space and realtime :) */
-      dpCompoundAddress.dwDataSize   = sizeof( GUID );
-      memcpy( &dpCompoundAddress.guidDataType, &DPAID_ServiceProvider, 
-              sizeof( GUID ) ) ;
-      dpCompoundAddress.lpData       = &serviceProviderGUID; 
+         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP
+               nast stuff. This may be why the native dll just gets around this little bit by
+               allocating an 80 byte buffer which isn't even a filled with a valid compound
+               address. Oh well. Creating a proper compound address is the way to go anyways
+                despite this method taking slightly more heap space and realtime :) */
 
-      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer, 
-                                     &dwAddressBufferSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
+      bBuildPass = DP_BuildSPCompoundAddr( &serviceProviderGUID,
+                                           &lpAddressBuffer,
+                                           &dwAddressBufferSize );
+      if( !bBuildPass )
       {
-        ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
-        return hr;
-      }
-
-      /* Now allocate the buffer */
-      lpAddressBuffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwAddressBufferSize );
-
-      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
-                                     &dwAddressBufferSize, TRUE ) ) != DP_OK )
-      {
-        ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
-        return hr;
+        ERR( "Can't build compound addr\n" );
+        return DPERR_GENERIC;
       }
 
       /* The enumeration will return FALSE if we are not to continue */
@@ -3656,11 +3800,12 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       dpName.u2.lpszLongNameA  = NULL;
 
       /* Create the compound address for the service provider. 
-         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP,
-               nasty stuff. This may be why the native dll just gets around this little bit by
-               allocating an 80 byte buffer which isn't even filled with a valid compound 
-               address. Oh well. Creating a proper compound address is the way to go anyway... 
+         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP
+               nast stuff. This may be why the native dll just gets around this little bit by
+               allocating an 80 byte buffer which isn't even a filled with a valid compound
+               address. Oh well. Creating a proper compound address is the way to go anyways
                despite this method taking slightly more heap space and realtime :) */
+
       dpCompoundAddress.guidDataType = DPAID_LobbyProvider;
       dpCompoundAddress.dwDataSize   = sizeof( GUID );
       dpCompoundAddress.lpData       = &serviceProviderGUID; 
@@ -3895,10 +4040,12 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
         continue;
       }
 
-      /* Save the name of the SP or LP */
-      len = MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, NULL, 0 );
-      lpSpData->lpszName = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-      MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, lpSpData->lpszName, len );
+      if( i == 0 ) /* DP SP */
+      {
+        len = MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, NULL, 0 );
+        lpSpData->lpszName = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, subKeyName, -1, lpSpData->lpszName, len );
+      }
 
       sizeOfReturnBuffer = 255;
 
@@ -3911,7 +4058,10 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
          continue;
       }
 
-      lpSpData->dwReserved1 = GET_DWORD( returnBuffer );
+      if( i == 0 )
+      {
+        lpSpData->dwReserved1 = GET_DWORD( returnBuffer );
+      }
  
       sizeOfReturnBuffer = 255;
 
@@ -3924,8 +4074,10 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
          continue;
       }
 
-      lpSpData->dwReserved2 = GET_DWORD( returnBuffer );
-
+      if( i == 0 )
+      {
+        lpSpData->dwReserved2 = GET_DWORD( returnBuffer );
+      }
 
       sizeOfReturnBuffer = 255;
    
@@ -3946,12 +4098,92 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
   return 0;
 }
 
+static
+HRESULT DP_InitializeDPSP( IDirectPlay3Impl* This, HMODULE hServiceProvider )
+{
+  HRESULT hr;
+  LPDPSP_SPINIT SPInit;
+
+  /* Initialize the service provider by calling SPInit */
+  SPInit = (LPDPSP_SPINIT)GetProcAddress( hServiceProvider, "SPInit" );
+ 
+  if( SPInit == NULL )
+  {
+    ERR( "Service provider doesn't provide SPInit interface?\n" );
+    FreeLibrary( hServiceProvider );
+    return DPERR_UNAVAILABLE;
+  } 
+
+  TRACE( "Calling SPInit (DP SP entry point)\n" );
+ 
+  hr = (*SPInit)( &This->dp2->spData );
+
+  if( FAILED(hr) )
+  {
+    ERR( "DP SP Initialization failed: %s\n", DPLAYX_HresultToString(hr) );
+    FreeLibrary( hServiceProvider );
+    return hr;
+  }
+
+  /* FIXME: Need to verify the sanity of the returned callback table
+   *        using IsBadCodePtr */
+  This->dp2->bSPInitialized = TRUE;
+
+  /* This interface is now initialized as a DP object */
+  This->dp2->connectionInitialized = DP_SERVICE_PROVIDER;
+
+  /* Store the handle of the module so that we can unload it later */
+  This->dp2->hServiceProvider = hServiceProvider;
+     
+  return hr;
+}
+
+static
+HRESULT DP_InitializeDPLSP( IDirectPlay3Impl* This, HMODULE hLobbyProvider )
+{
+  HRESULT hr;
+  LPSP_INIT DPLSPInit;
+ 
+  /* Initialize the service provider by calling SPInit */
+  DPLSPInit = (LPSP_INIT)GetProcAddress( hLobbyProvider, "DPLSPInit" );
+ 
+  if( DPLSPInit == NULL )
+  {
+    ERR( "Service provider doesn't provide DPLSPInit interface?\n" );
+    FreeLibrary( hLobbyProvider );
+    return DPERR_UNAVAILABLE;
+  } 
+
+  TRACE( "Calling DPLSPInit (DPL SP entry point)\n" );
+ 
+  hr = (*DPLSPInit)( &This->dp2->dplspData );
+
+  if( FAILED(hr) )
+  {
+    ERR( "DPL SP Initialization failed: %s\n", DPLAYX_HresultToString(hr) );
+    FreeLibrary( hLobbyProvider );
+    return hr;
+  }
+
+  /* FIXME: Need to verify the sanity of the returned callback table
+   *        using IsBadCodePtr */
+
+  This->dp2->bDPLSPInitialized = TRUE;
+   
+  /* This interface is now initialized as a lobby object */
+  This->dp2->connectionInitialized = DP_LOBBY_PROVIDER;
+
+  /* Store the handle of the module so that we can unload it later */
+  This->dp2->hDPLobbyProvider = hLobbyProvider;
+     
+  return hr;
+}
+
 static HRESULT WINAPI DP_IF_InitializeConnection
           ( IDirectPlay3Impl* This, LPVOID lpConnection, DWORD dwFlags, BOOL bAnsi )
 {
   HMODULE hServiceProvider;
   HRESULT hr;
-  LPDPSP_SPINIT SPInit;
   GUID guidSP;
   const DWORD dwAddrSize = 80; /* FIXME: Need to calculate it correctly */
   BOOL bIsDpSp; /* TRUE if Direct Play SP, FALSE if Direct Play Lobby SP */
@@ -3961,11 +4193,6 @@ static HRESULT WINAPI DP_IF_InitializeConnection
   if( dwFlags != 0 )
   {
     return DPERR_INVALIDFLAGS;
-  }
-
-  if( This->dp2->bConnectionInitialized == TRUE )
-  {
-    return DPERR_ALREADYINITIALIZED;
   }
 
   /* Find out what the requested SP is and how large this buffer is */
@@ -3978,13 +4205,6 @@ static HRESULT WINAPI DP_IF_InitializeConnection
     return DPERR_UNAVAILABLE;
   }
 
-  /* Initialize what we can of the Service Provider required information.
-   * The rest will be done in DP_LoadSP
-   */
-  This->dp2->spData.lpAddress = lpConnection;
-  This->dp2->spData.dwAddressSize = dwAddrSize;
-  This->dp2->spData.lpGuid = &guidSP;
-
   /* Load the service provider */
   hServiceProvider = DP_LoadSP( &guidSP, &This->dp2->spData, &bIsDpSp );
 
@@ -3996,42 +4216,26 @@ static HRESULT WINAPI DP_IF_InitializeConnection
   
   if( bIsDpSp )
   {
-    /* Initialize the service provider by calling SPInit */
-    SPInit = (LPDPSP_SPINIT)GetProcAddress( hServiceProvider, "SPInit" );
+     /* Fill in what we can of the Service Provider required information.
+      * The rest was be done in DP_LoadSP
+      */
+     This->dp2->spData.lpAddress = lpConnection;
+     This->dp2->spData.dwAddressSize = dwAddrSize;
+     This->dp2->spData.lpGuid = &guidSP;
+
+     hr = DP_InitializeDPSP( This, hServiceProvider );
   }
   else
   {
-    /* Initialize the service provider by calling SPInit */
-    SPInit = (LPDPSP_SPINIT)GetProcAddress( hServiceProvider, "DPLSPInit" );    
+     This->dp2->dplspData.lpAddress = lpConnection;
+
+     hr = DP_InitializeDPLSP( This, hServiceProvider );
   }
   
-  if( SPInit == NULL )
-  {
-    ERR( "Service provider doesn't provide %s interface?\n",
-         bIsDpSp ? "SPInit" : "DPLSPInit" );
-    FreeLibrary( hServiceProvider );
-    return DPERR_UNAVAILABLE;
-  }  
-
-  TRACE( "Calling %s (SP entry point)\n", bIsDpSp ? "SPInit" : "DPLSPInit" );
-  
-  /* FIXME: Need to break this out into a separate routine for DP SP and
-   *        DPL SP as they actually use different stuff... 
-   */
-  hr = (*SPInit)( &This->dp2->spData );
-
   if( FAILED(hr) )
   {
-    ERR( "DP/DPL SP Initialization failed: %s\n", DPLAYX_HresultToString(hr) );
-    FreeLibrary( hServiceProvider );
     return hr;
   }
-
-  /* This interface is now initialized */
-  This->dp2->bConnectionInitialized = TRUE;
-
-  /* Store the handle of the module so that we can unload it later */
-  This->dp2->hServiceProvider = hServiceProvider;
 
   return DP_OK;
 }
@@ -4040,6 +4244,13 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
           ( LPDIRECTPLAY3A iface, LPVOID lpConnection, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay3Impl,iface);
+
+  /* This may not be externally invoked once either an SP or LP is initialized */
+  if( This->dp2->connectionInitialized != NO_PROVIDER )
+  {
+    return DPERR_ALREADYINITIALIZED;
+  } 
+
   return DP_IF_InitializeConnection( This, lpConnection, dwFlags, TRUE );  
 }
 
@@ -4047,6 +4258,13 @@ static HRESULT WINAPI DirectPlay3WImpl_InitializeConnection
           ( LPDIRECTPLAY3 iface, LPVOID lpConnection, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay3Impl,iface);
+
+  /* This may not be externally invoked once either an SP or LP is initialized */
+  if( This->dp2->connectionInitialized != NO_PROVIDER )
+  {
+    return DPERR_ALREADYINITIALIZED;
+  }
+
   return DP_IF_InitializeConnection( This, lpConnection, dwFlags, FALSE );
 }
 

@@ -168,10 +168,8 @@ static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
    * to it (ie we'd be stuck with always having one reference to the dplay
    * object, and hence us, around).
    * NOTE: The dp object does reference count us.
-   */
-  /* IDirectPlayX_AddRef( (LPDIRECTPLAY2)dp ); */
-
-  /* FIXME: This is a kludge to get around a problem where a queryinterface
+   *
+   * FIXME: This is a kludge to get around a problem where a queryinterface
    *        is used to get a new interface and then is closed. We will then
    *        reference garbage. However, with this we will never deallocate
    *        the interface we store. The correct fix is to require all 
@@ -297,6 +295,8 @@ static HRESULT WINAPI IDirectPlaySPImpl_AddMRUEntry
 {
   ICOM_THIS(IDirectPlaySPImpl,iface);
 
+  /* Should be able to call the comctl32 undocumented MRU routines.
+     I suspect that the interface works appropriately */
   FIXME( "(%p)->(%p,%p%p,0x%08lx,0x%08lx): stub\n", 
          This, lpSection, lpKey, lpData, dwDataSize, dwMaxEntries );
 
@@ -350,6 +350,8 @@ static HRESULT WINAPI IDirectPlaySPImpl_EnumMRUEntries
 {
   ICOM_THIS(IDirectPlaySPImpl,iface);
 
+  /* Should be able to call the comctl32 undocumented MRU routines.
+     I suspect that the interface works appropriately */
   FIXME( "(%p)->(%p,%p,%p,%p,): stub\n", 
          This, lpSection, lpKey, lpEnumMRUCallback, lpContext );
 
@@ -382,7 +384,6 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPPlayerData
   LPDP_SPPLAYERDATA lpPlayerData;
   ICOM_THIS(IDirectPlaySPImpl,iface);
 
-/*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
   TRACE( "(%p)->(0x%08lx,%p,%p,0x%08lx)\n", 
          This, idPlayer, lplpData, lpdwDataSize, dwFlags );
 
@@ -435,10 +436,10 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   HRESULT hr = DPERR_GENERIC;
   WORD wCommandId;
   WORD wVersion;
-
+  DPSP_REPLYDATA data;
+      
   ICOM_THIS(IDirectPlaySPImpl,iface);
 
-/*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
   FIXME( "(%p)->(%p,0x%08lx,%p): mostly stub\n", 
          This, lpMessageBody, dwMessageBodySize, lpMessageHeader );
 
@@ -451,80 +452,48 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   if( lpMsg->dwMagic != DPMSGMAGIC_DPLAYMSG )
   {
     ERR( "Unknown magic 0x%08lx!\n", lpMsg->dwMagic );
+    return DPERR_GENERIC;
   }
 
-  switch( lpMsg->wCommandId )
+#if 0
   {
-    /* Name server needs to handle this request */
-    /* FIXME: This should be done in direct play handler */
-    case DPMSGCMD_ENUMSESSIONSREQUEST:
+    const LPDWORD lpcHeader = (LPDWORD)lpMessageHeader;
+
+    TRACE( "lpMessageHeader = [0x%08lx] [0x%08lx] [0x%08lx] [0x%08lx] [0x%08lx]\n",
+           lpcHeader[0], lpcHeader[1], lpcHeader[2], lpcHeader[3], lpcHeader[4] );
+   }
+#endif
+
+  /* Pass everything else to Direct Play */
+  data.lpMessage     = NULL;
+  data.dwMessageSize = 0;
+
+  /* Pass this message to the dplay interface to handle */
+  hr = DP_HandleMessage( This->sp->dplay, lpMessageBody, dwMessageBodySize,
+                         lpMessageHeader, wCommandId, wVersion, 
+                         &data.lpMessage, &data.dwMessageSize );
+
+  if( FAILED(hr) )
+  {
+    ERR( "Command processing failed %s\n", DPLAYX_HresultToString(hr) );
+  }
+
+  /* Do we want a reply? */
+  if( data.lpMessage != NULL )
+  {
+    data.lpSPMessageHeader = lpMessageHeader;
+    data.idNameServer      = 0;
+    data.lpISP             = iface;
+
+    hr = (This->sp->dplay->dp2->spData.lpCB->Reply)( &data );
+
+    if( FAILED(hr) )
     {
-      DPSP_REPLYDATA data;
-
-      data.lpSPMessageHeader = lpMessageHeader;
-      data.idNameServer      = 0;
-      data.lpISP             = iface;
- 
-      NS_ReplyToEnumSessionsRequest( lpMessageBody, &data, This->sp->dplay );
-
-      hr = (This->sp->dplay->dp2->spData.lpCB->Reply)( &data );
-
-      if( FAILED(hr) )
-      {
-        ERR( "Reply failed 0x%08lx\n", hr );
-      }
-
-      break;
-    }
-
-    /* Name server needs to handle this request */
-    /* FIXME: This should be done in direct play handler */
-    case DPMSGCMD_ENUMSESSIONSREPLY:
-    {
-      NS_SetRemoteComputerAsNameServer( lpMessageHeader, 
-                                        This->sp->dplay->dp2->spData.dwSPHeaderSize,
-                                        (LPDPMSG_ENUMSESSIONSREPLY)lpMessageBody,
-                                        This->sp->dplay->dp2->lpNameServerData );
-
-      /* No reply expected */
-      hr = DP_OK;
-
-      break;
-    }
-
-    /* Pass everything else to Direct Play */
-    default:
-    {
-      DPSP_REPLYDATA data;
-      
-      data.lpMessage     = NULL;
-      data.dwMessageSize = 0;
-
-      /* Pass this message to the dplay interface to handle */
-      hr = DP_HandleMessage( This->sp->dplay, lpMessageBody, dwMessageBodySize,
-                             lpMessageHeader, wCommandId, wVersion, 
-                             &data.lpMessage, &data.dwMessageSize );
-
-      /* Do we want a reply? */
-      if( data.lpMessage != NULL )
-      {
-        HRESULT hr;
-
-        data.lpSPMessageHeader = lpMessageHeader;
-        data.idNameServer      = 0;
-        data.lpISP             = iface;
-
-        hr = (This->sp->dplay->dp2->spData.lpCB->Reply)( &data );
-
-        if( FAILED(hr) )
-        {
-          ERR( "Reply failed %s\n", DPLAYX_HresultToString(hr) );
-        }
-      }
-
-      break;
+      ERR( "Reply failed %s\n", DPLAYX_HresultToString(hr) );
     }
   }
+
+  return hr;
 
 #if 0
   HRESULT hr = DP_OK;
@@ -768,8 +737,6 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
     SetEvent( hReceiveEvent );
   }
 #endif
-
-  return hr;
 }
 
 static HRESULT WINAPI IDirectPlaySPImpl_SetSPPlayerData
@@ -859,7 +826,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPData
    */
   if( dwFlags != DPSET_REMOTE )
   {
-    FIXME( "Undocumented dwFlags 0x%08lx used\n", dwFlags );
+    TRACE( "Undocumented dwFlags 0x%08lx used\n", dwFlags );
   }
 #endif
 
@@ -918,7 +885,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPData
    */
   if( dwFlags != DPSET_REMOTE )
   {
-    FIXME( "Undocumented dwFlags 0x%08lx used\n", dwFlags );
+    TRACE( "Undocumented dwFlags 0x%08lx used\n", dwFlags );
   }
 #endif
 
