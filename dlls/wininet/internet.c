@@ -2155,14 +2155,17 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
 
     TRACE( "%s %p 0x%08lx\n", debugstr_w(string), time, reserved );
 
-    if (!string || !time || reserved != 0) return FALSE;
+    if (!string || !time) return FALSE;
+
+    /* Windows does this too */
+    GetSystemTime( time );
 
     /*  Convert an RFC1123 time such as 'Fri, 07 Jan 2005 12:06:35 GMT' into
      *  a SYSTEMTIME structure.
      */
 
     while (*s && !isalphaW( *s )) s++;
-    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return FALSE;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
     time->wDayOfWeek = 7;
 
     for (i = 0; i < 7; i++)
@@ -2176,12 +2179,12 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
         }
     }
 
-    if (time->wDayOfWeek > 6) return FALSE;
+    if (time->wDayOfWeek > 6) return TRUE;
     while (*s && !isdigitW( *s )) s++;
     time->wDay = strtolW( s, &s, 10 );
 
     while (*s && !isalphaW( *s )) s++;
-    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return FALSE;
+    if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
     time->wMonth = 0;
 
     for (i = 0; i < 12; i++)
@@ -2194,22 +2197,22 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
             break;
         }
     }
-    if (time->wMonth == 0) return FALSE;
+    if (time->wMonth == 0) return TRUE;
 
     while (*s && !isdigitW( *s )) s++;
-    if (*s == '\0') return FALSE;
+    if (*s == '\0') return TRUE;
     time->wYear = strtolW( s, &s, 10 );
 
     while (*s && !isdigitW( *s )) s++;
-    if (*s == '\0') return FALSE;
+    if (*s == '\0') return TRUE;
     time->wHour = strtolW( s, &s, 10 );
 
     while (*s && !isdigitW( *s )) s++;
-    if (*s == '\0') return FALSE;
+    if (*s == '\0') return TRUE;
     time->wMinute = strtolW( s, &s, 10 );
 
     while (*s && !isdigitW( *s )) s++;
-    if (*s == '\0') return FALSE;
+    if (*s == '\0') return TRUE;
     time->wSecond = strtolW( s, &s, 10 );
 
     time->wMilliseconds = 0;

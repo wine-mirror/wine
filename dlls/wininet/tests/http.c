@@ -427,6 +427,18 @@ static void InternetTimeToSystemTimeW_test()
                                      '1','2',' ','0','6',' ','3','5',0 };
     static const WCHAR string3[] = { 'F','r',0 };
 
+    ret = InternetTimeToSystemTimeW( NULL, NULL, 0 );
+    ok( !ret, "InternetTimeToSystemTimeW succeeded (%ld)\n", GetLastError() );
+
+    ret = InternetTimeToSystemTimeW( NULL, &time, 0 );
+    ok( !ret, "InternetTimeToSystemTimeW succeeded (%ld)\n", GetLastError() );
+
+    ret = InternetTimeToSystemTimeW( string, NULL, 0 );
+    ok( !ret, "InternetTimeToSystemTimeW succeeded (%ld)\n", GetLastError() );
+
+    ret = InternetTimeToSystemTimeW( string, &time, 1 );
+    ok( ret, "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
+
     ret = InternetTimeToSystemTimeW( string, &time, 0 );
     ok( ret, "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
     ok( !memcmp( &time, &expect, sizeof(expect) ),
@@ -438,9 +450,7 @@ static void InternetTimeToSystemTimeW_test()
         "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
 
     ret = InternetTimeToSystemTimeW( string3, &time, 0 );
-    todo_wine {
-        ok( ret, "InternetTimeToSystemTimeW succeeds on (%ld), string3='Fr'", GetLastError() );
-    }
+    ok( ret, "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
 }
 
 START_TEST(http)
