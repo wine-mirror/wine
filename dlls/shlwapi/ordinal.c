@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "objbase.h"
 #include "docobj.h"
 #include "exdisp.h"
 #include "shlguid.h"

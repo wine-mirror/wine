@@ -30,6 +30,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "commctrl.h"
+#include "objbase.h"
 #include "docobj.h"
 #include "undocshell.h"
 #include "shlobj.h"

@@ -34,6 +34,7 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "winreg.h"
+#include "objbase.h"
 
 #include "dmusici.h"
 #include "dmusicf.h"

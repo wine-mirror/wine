@@ -290,7 +290,11 @@
 #endif
 #define DECLARE_INTERFACE_(iface,ibase) DECLARE_INTERFACE(iface)
 
-#define BEGIN_INTERFACE
+#ifdef ICOM_MSVTABLE_COMPAT
+# define BEGIN_INTERFACE long dummyRTTI1, dummyRTTI2;
+#else
+# define BEGIN_INTERFACE
+#endif
 #define END_INTERFACE
 
 #endif  /* __cplusplus && !CINTERFACE */

@@ -11,13 +11,9 @@ extern "C" {
 #if defined(ICOM_MSVTABLE_COMPAT) && (!defined(__cplusplus) || defined(CINTERFACE))
 # define ICOM_MSVTABLE_COMPAT_FIELDS long dummyRTTI1,dummyRTTI2;
 # define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,
-# define BEGIN_INTERFACE ICOM_MSVTABLE_COMPAT_FIELDS
-# define END_INTERFACE
 #else
 # define ICOM_MSVTABLE_COMPAT_FIELDS
 # define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-# define BEGIN_INTERFACE
-# define END_INTERFACE
 #endif
 #ifndef __IUnknown_FWD_DEFINED__
 #define __IUnknown_FWD_DEFINED__

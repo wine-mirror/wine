@@ -30,10 +30,10 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
 #include "oleauto.h"
 #include "winerror.h"
 
-#include "objbase.h"
 #include "wine/unicode.h"
 #include "compobj_private.h"
 

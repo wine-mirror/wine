@@ -21,6 +21,7 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winerror.h"
+#include "objbase.h"
 #include "oleauto.h"
 #include <math.h>
 

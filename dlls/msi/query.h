@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
 #include "objidl.h"
 #include "msi.h"
 #include "msiquery.h"

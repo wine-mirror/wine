@@ -51,6 +51,7 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "objbase.h"
 #include "servprov.h"
 #include "shlguid.h"
 #include "wingdi.h"

@@ -34,11 +34,10 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "oleauto.h"
-#include "wine/debug.h"
 #include "wine/unicode.h"
 #include "winerror.h"
 #include "variant.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(variant);
 

@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winver.h"
 #include "dbghelp.h"
+#include "objbase.h"
 #include "oaidl.h"
 
 #include "cvconst.h"

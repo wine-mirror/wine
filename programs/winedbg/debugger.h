@@ -33,6 +33,7 @@
 #include "winver.h"
 #include "dbghelp.h"
 #include "cvconst.h"
+#include "objbase.h"
 #include "oaidl.h"
 
 /* the debugger uses these exceptions for it's internal use */

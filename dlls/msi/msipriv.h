@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "msi.h"
 #include "msiquery.h"
+#include "objbase.h"
 #include "objidl.h"
 
 #define MSI_DATASIZEMASK 0x00ff

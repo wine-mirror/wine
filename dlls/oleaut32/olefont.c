@@ -34,8 +34,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
-#include "oleauto.h"    /* for SysAllocString(....) */
 #include "objbase.h"
+#include "oleauto.h"    /* for SysAllocString(....) */
 #include "ole2.h"
 #include "olectl.h"
 #include "wine/debug.h"
