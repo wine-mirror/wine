@@ -754,8 +754,8 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL32 bSemiTransparent)
 	   TRACE(icon, "[%04x] %ix%i %ibpp (bogus %ibps)\n", 
 		hIcon, pIcon->nWidth, pIcon->nHeight, pIcon->bBitsPerPixel, pIcon->nWidthBytes );
 
-	   xor_width = BITMAP_GetBitsWidth( pIcon->nWidth, bpp );
-	   and_width =  BITMAP_GetBitsWidth( pIcon->nWidth, 1 );
+	   xor_width = BITMAP_GetWidthBytes( pIcon->nWidth, bpp );
+	   and_width = BITMAP_GetWidthBytes( pIcon->nWidth, 1 );
 	   psPtr = (BYTE *)(pIcon + 1) + pIcon->nHeight * and_width;
 
            memset(pXorBits, 0, 128);
@@ -923,9 +923,9 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect( HINSTANCE16 hInstance,
 
     hInstance = GetExePtr( hInstance );  /* Make it a module handle */
     if (!lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
-    info->nWidthBytes = BITMAP_WIDTH_BYTES(info->nWidth,info->bBitsPerPixel);
+    info->nWidthBytes = BITMAP_GetWidthBytes(info->nWidth,info->bBitsPerPixel);
     sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * BITMAP_WIDTH_BYTES( info->nWidth, 1 );
+    sizeAnd = info->nHeight * BITMAP_GetWidthBytes( info->nWidth, 1 );
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
         return 0;
@@ -1057,7 +1057,7 @@ BOOL32 WINAPI DrawIcon32( HDC32 hdc, INT32 x, INT32 y, HICON32 hIcon )
                                (char *)(ptr+1) );
     hXorBits = CreateBitmap32( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
                                ptr->bBitsPerPixel, (char *)(ptr + 1)
-                         + ptr->nHeight * BITMAP_WIDTH_BYTES(ptr->nWidth,1) );
+                        + ptr->nHeight * BITMAP_GetWidthBytes(ptr->nWidth,1) );
     oldFg = SetTextColor32( hdc, RGB(0,0,0) );
     oldBg = SetBkColor32( hdc, RGB(255,255,255) );
 
@@ -1090,7 +1090,7 @@ DWORD WINAPI DumpIcon( SEGPTR pInfo, WORD *lpLen,
 
     if (!info) return 0;
     sizeXor = info->nHeight * info->nWidthBytes;
-    sizeAnd = info->nHeight * BITMAP_WIDTH_BYTES( info->nWidth, 1 );
+    sizeAnd = info->nHeight * BITMAP_GetWidthBytes( info->nWidth, 1 );
     if (lpAndBits) *lpAndBits = pInfo + sizeof(CURSORICONINFO);
     if (lpXorBits) *lpXorBits = pInfo + sizeof(CURSORICONINFO) + sizeAnd;
     if (lpLen) *lpLen = sizeof(CURSORICONINFO) + sizeAnd + sizeXor;
@@ -1674,8 +1674,7 @@ BOOL32 WINAPI GetIconInfo(HICON32 hIcon,LPICONINFO iconinfo) {
                                 ciconinfo->bPlanes, ciconinfo->bBitsPerPixel,
                                 (char *)(ciconinfo + 1)
                                 + ciconinfo->nHeight *
-                                BITMAP_GetBitsWidth (ciconinfo->nWidth,1) );
-//                                BITMAP_WIDTH_BYTES(ciconinfo->nWidth,1) );
+                                BITMAP_GetWidthBytes (ciconinfo->nWidth,1) );
     iconinfo->hbmMask = CreateBitmap32 ( ciconinfo->nWidth, ciconinfo->nHeight,
                                 1, 1, (char *)(ciconinfo + 1));
 
@@ -1819,7 +1818,7 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 				    ptr->bPlanes, ptr->bBitsPerPixel,
 				    (char *)(ptr + 1)
 				    + ptr->nHeight *
-				    BITMAP_WIDTH_BYTES(ptr->nWidth,1) );
+				    BITMAP_GetWidthBytes(ptr->nWidth,1) );
 	hAndBits = CreateBitmap32 ( ptr->nWidth, ptr->nHeight,
 				    1, 1, (char *)(ptr+1) );
 	oldFg = SetTextColor32( hdc, RGB(0,0,0) );

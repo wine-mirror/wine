@@ -53,16 +53,12 @@ typedef struct tagBITMAPOBJ
 
 } BITMAPOBJ;
 
-#define BITMAP_WIDTH_BYTES(width,bpp) \
-    (((bpp) == 24) ? (width) * 4 : ( ((bpp) == 15) ? (width) * 2 : \
-				    ((width) * (bpp) + 15) / 16 * 2 ))
-
   /* objects/bitmap.c */
 extern INT16   BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
 extern INT32   BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
 extern BOOL32  BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
-extern INT32   BITMAP_GetBitsPadding( int width, int depth );
-extern INT32   BITMAP_GetBitsWidth( int width, int depth );
+extern INT32   BITMAP_GetPadding( INT32 width, INT32 depth );
+extern INT32   BITMAP_GetWidthBytes( INT32 width, INT32 depth );
 extern HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
   UINT32 loadflags);
 extern HBITMAP32 BITMAP_CopyBitmap( HBITMAP32 hbitmap );

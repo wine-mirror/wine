@@ -17,13 +17,6 @@
 #include "xmalloc.h"
 #include "x11drv.h"
 
-#ifdef PRELIMINARY_WING16_SUPPORT
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#endif
-
-
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
@@ -186,10 +179,13 @@ BOOL32 X11DRV_CreateBitmap( HBITMAP32 hbitmap )
       /* Check parameters */
     if (bmp->bitmap.bmPlanes != 1) return 0;
     if ((bmp->bitmap.bmBitsPixel != 1) && 
-       (bmp->bitmap.bmBitsPixel != screenDepth)) {
+	(bmp->bitmap.bmBitsPixel != screenDepth)) {
         GDI_HEAP_UNLOCK( hbitmap );
 	return FALSE;
     }
+
+    TRACE(x11drv, "(%08x) %dx%d %d bpp\n", hbitmap, bmp->bitmap.bmWidth,
+	  bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
 
     pbitmap = X11DRV_AllocBitmap( bmp );
     if(!pbitmap) return FALSE;
@@ -243,7 +239,9 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
     LPBYTE tbuf;
     int	h, w, pad;
 
-    pad = BITMAP_GetBitsPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
+    TRACE(x11drv, "(bmp=%p, buffer=%p, count=%lx)\n", bmp, buffer, count);
+
+    pad = BITMAP_GetPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
 
     if (pad == -1)
         return 0;
@@ -364,30 +362,25 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     struct XPutImage_descr descr;
     LONG height;
     XImage *image;
-    LPBYTE sbuf, tmpbuffer;
-    int	w, h, pad, widthbytes;
+    LPBYTE sbuf;
+    int	w, h, pad;
 
     TRACE(x11drv, "(bmp=%p, bits=%p, count=%lx)\n", bmp, bits, count);
     
-    pad = BITMAP_GetBitsPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
+    pad = BITMAP_GetPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
 
     if (pad == -1) 
         return 0;
 	
     sbuf = (LPBYTE)bits;
 
-    widthbytes	= (((bmp->bitmap.bmWidth * bmp->bitmap.bmBitsPixel) + 31) /
-		   32) * 4;
-    height      = count / bmp->bitmap.bmWidthBytes;
-    tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
-
-    TRACE(x11drv, "h=%ld, w=%d, wb=%d\n", height, bmp->bitmap.bmWidth, 
-	  widthbytes);
+    height = count / bmp->bitmap.bmWidthBytes;
 
     EnterCriticalSection( &X11DRV_CritSection );
     image = XCreateImage( display, DefaultVisualOfScreen(screen),
-                          bmp->bitmap.bmBitsPixel, ZPixmap, 0, tmpbuffer,
-                          bmp->bitmap.bmWidth,height,32,widthbytes );
+                          bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
+                          bmp->bitmap.bmWidth, height, 32, 0 );
+    image->data = (LPBYTE)xmalloc(image->bytes_per_line * height);
     
     /* copy 16 bit padded image buffer with real bitsperpixel to XImage */
     sbuf = (LPBYTE)bits;
@@ -466,8 +459,9 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     descr.image  = image;
     descr.width  = bmp->bitmap.bmWidth;
     descr.height = height;
+
     CALL_LARGE_STACK( XPutImage_wrapper, &descr );
-    XDestroyImage( image ); /* frees tmpbuffer too */
+    XDestroyImage( image ); /* frees image->data too */
     LeaveCriticalSection( &X11DRV_CritSection );
     
     return count;
@@ -505,27 +499,7 @@ BOOL32 X11DRV_BITMAP_DeleteObject( HBITMAP32 hbitmap, BITMAPOBJ * bmp )
 {
     X11DRV_PHYSBITMAP *pbitmap = bmp->DDBitmap->physBitmap;
 
-#ifdef PRELIMINARY_WING16_SUPPORT
-    if( bmp->bitmap.bmBits )
- 	TSXShmDetach( display, (XShmSegmentInfo*)bmp->bitmap.bmBits );
-#endif
-
     TSXFreePixmap( display, pbitmap->pixmap );
-
-
-#ifdef PRELIMINARY_WING16_SUPPORT
-    if( bmp->bitmap.bmBits )
-    {
-    __ShmBitmapCtl* p = (__ShmBitmapCtl*)bmp->bitmap.bmBits;
-      WORD          sel = HIWORD(p->bits);
-      unsigned long l, limit = GetSelectorLimit(sel);
-
-      for( l = 0; l < limit; l += 0x10000, sel += __AHINCR )
-	   FreeSelector(sel);
-      shmctl(p->si.shmid, IPC_RMID, NULL); 
-      shmdt(p->si.shmaddr);  /* already marked for destruction */
-    }
-#endif
 
     HeapFree( GetProcessHeap(), 0, bmp->DDBitmap->physBitmap );
     HeapFree( GetProcessHeap(), 0, bmp->DDBitmap );

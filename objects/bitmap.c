@@ -19,19 +19,18 @@
 
 
 /***********************************************************************
- *           BITMAP_GetBitsPadding
+ *           BITMAP_GetPadding
  *
  * Return number of bytes to pad a scanline of 16-bit aligned Windows DDB data.
  */
-INT32 BITMAP_GetBitsPadding( int bmWidth, int bpp )
+INT32 BITMAP_GetPadding( int bmWidth, int bpp )
 {
     INT32 pad;
 
     switch (bpp) 
     {
     case 1:
-	if (!(bmWidth & 15)) pad = 0;
-	else pad = ((16 - (bmWidth & 15)) + 7) / 8;
+        pad = ((bmWidth-1) & 8) ? 0 : 1;
 	break;
 
     case 8:
@@ -61,11 +60,12 @@ INT32 BITMAP_GetBitsPadding( int bmWidth, int bpp )
 }
 
 /***********************************************************************
- *           BITMAP_GetBitsWidth
+ *           BITMAP_GetWidthBytes
  *
- * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB data.
+ * Return number of bytes taken by a scanline of 16-bit aligned Windows DDB
+ * data.
  */
-INT32 BITMAP_GetBitsWidth( int bmWidth, int bpp )
+INT32 BITMAP_GetWidthBytes( INT32 bmWidth, INT32 bpp )
 {
     switch(bpp)
     {
@@ -167,11 +167,11 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     bmp->size.cx = 0;
     bmp->size.cy = 0;
     bmp->bitmap.bmType = 0;
-    bmp->bitmap.bmWidth = (INT16)width;
-    bmp->bitmap.bmHeight = (INT16)height;
-    bmp->bitmap.bmPlanes = (BYTE)planes;
-    bmp->bitmap.bmBitsPixel = (BYTE)bpp;
-    bmp->bitmap.bmWidthBytes = (INT16)BITMAP_WIDTH_BYTES( width, bpp );
+    bmp->bitmap.bmWidth = width;
+    bmp->bitmap.bmHeight = height;
+    bmp->bitmap.bmPlanes = planes;
+    bmp->bitmap.bmBitsPixel = bpp;
+    bmp->bitmap.bmWidthBytes = BITMAP_GetWidthBytes( width, bpp );
     bmp->bitmap.bmBits = NULL;
 
     bmp->DDBitmap = NULL;
@@ -594,8 +594,11 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 }
 
 
-HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
-  UINT32 loadflags)
+/**********************************************************************
+ *       BITMAP_LoadBitmap32W
+ */
+HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name, 
+			       UINT32 loadflags)
 {
     HBITMAP32 hbitmap = 0;
     HDC32 hdc;
@@ -647,6 +650,8 @@ HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
     if (loadflags & LR_LOADFROMFILE) UnmapViewOfFile( ptr );
     return hbitmap;
 }
+
+
 /******************************************************************************
  * LoadBitmap32W [USER32.358]  Loads bitmap from the executable file
  *
