@@ -148,7 +148,7 @@ static HBITMAP hStdRadioCheck = 0;
 static HBITMAP hStdCheck = 0;
 static HBITMAP hStdMnArrow = 0;
 
-// Minimze/restore/close buttons to be inserted in menubar
+/* Minimze/restore/close buttons to be inserted in menubar */
 static HBITMAP hBmpMinimize = 0;
 static HBITMAP hBmpMinimizeD = 0;
 static HBITMAP hBmpMaximize = 0;
@@ -664,11 +664,13 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
 
 static HBITMAP MENU_LoadMagicItem(UINT id, BOOL hilite, DWORD dwItemData)
 {
-    // Magic menu item id's section
-    // These magic id's are used by windows to insert "standard" mdi
-    // buttons (minimize,restore,close) on menu. Under windows,
-    // these magic id's make sure the right things appear when those
-    // bitmap buttons are pressed/selected/released.
+    /*
+     * Magic menu item id's section
+     * These magic id's are used by windows to insert "standard" mdi
+     * buttons (minimize,restore,close) on menu. Under windows,
+     * these magic id's make sure the right things appear when those
+     * bitmap buttons are pressed/selected/released.
+     */
 
     switch(id)
     {   case HBMMENU_SYSTEM:
@@ -2535,7 +2537,14 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     POPUPMENU *menu;
     BOOL fRemove;
     INT executedMenuId = 0;
-    MTRACKER mt = { 0, hmenu, hmenu, hwnd, {x, y} };	/* control struct */
+    MTRACKER mt;
+
+    mt.trackFlags = 0;
+    mt.hCurrentMenu = hmenu;
+    mt.hTopMenu = hmenu;
+    mt.hOwnerWnd = hwnd;
+    mt.pt.x = x;
+    mt.pt.y = y;
 
     TRACE(menu,"hmenu=0x%04x flags=0x%08x (%d,%d) hwnd=0x%04x (%d,%d)-(%d,%d)\n",
 	    hmenu, wFlags, x, y, hwnd, (lprect) ? lprect->left : 0, (lprect) ? lprect->top : 0,

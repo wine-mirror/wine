@@ -17,8 +17,15 @@ DEFAULT_DEBUG_CHANNEL(gdi)
  */
 HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 {
-    LOGPEN logpen = { style, { width, 0 }, color };
+    LOGPEN logpen;
+
     TRACE(gdi, "%d %d %06lx\n", style, width, color );
+
+    logpen.lopnStyle = style; 
+    logpen.lopnWidth.x = width;
+    logpen.lopnWidth.y = 0;
+    logpen.lopnColor = color;
+
     return CreatePenIndirect( &logpen );
 }
 
@@ -28,8 +35,15 @@ HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
  */
 HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 {
-    LOGPEN logpen = { style, { width, 0 }, color };
+    LOGPEN logpen;
+
     TRACE(gdi, "%d %d %06lx\n", style, width, color );
+
+    logpen.lopnStyle = style; 
+    logpen.lopnWidth.x = width;
+    logpen.lopnWidth.y = 0;
+    logpen.lopnColor = color;
+
     return CreatePenIndirect( &logpen );
 }
 

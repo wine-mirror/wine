@@ -148,9 +148,12 @@ static BOOL MFDRV_CreatePatternBrush(DC *dc, HBRUSH16 hBrush,
 static HBRUSH MFDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
                                           BRUSHOBJ * brush )
 {
-    LOGBRUSH16 logbrush = { brush->logbrush.lbStyle,
-                            brush->logbrush.lbColor,
-                            brush->logbrush.lbHatch };
+    LOGBRUSH16 logbrush;
+                                                        
+    logbrush.lbStyle = brush->logbrush.lbStyle;
+    logbrush.lbColor = brush->logbrush.lbColor;
+    logbrush.lbHatch = brush->logbrush.lbHatch;   
+
     switch (brush->logbrush.lbStyle)
     {
     case BS_SOLID:
@@ -230,11 +233,16 @@ static BOOL MFDRV_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
  */
 static HPEN MFDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
+    LOGPEN16 logpen;
     HPEN prevHandle = dc->w.hPen;
-    LOGPEN16 logpen = { pen->logpen.lopnStyle,
-                        { pen->logpen.lopnWidth.x, pen->logpen.lopnWidth.y },
-                        pen->logpen.lopnColor };
+
+    logpen.lopnStyle = pen->logpen.lopnStyle;
+    logpen.lopnWidth.x = pen->logpen.lopnWidth.x;
+    logpen.lopnWidth.y = pen->logpen.lopnWidth.y;
+    logpen.lopnColor = pen->logpen.lopnColor;
+
     if (MFDRV_CreatePenIndirect( dc, hpen, &logpen )) return prevHandle;
+
     return 0;
 }
 

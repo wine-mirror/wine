@@ -419,11 +419,11 @@ typedef struct {
 	DWORD		dwScale;
 } ICDRAWBEGIN;
 
-#define ICDRAW_HURRYUP      0x80000000L   // don't draw just buffer (hurry up!)
-#define ICDRAW_UPDATE       0x40000000L   // don't draw just update screen
-#define ICDRAW_PREROLL      0x20000000L   // this frame is before real start
-#define ICDRAW_NULLFRAME    0x10000000L   // repeat last frame
-#define ICDRAW_NOTKEYFRAME  0x08000000L   // this frame is not a key frame
+#define ICDRAW_HURRYUP      0x80000000L   /* don't draw just buffer (hurry up!) */
+#define ICDRAW_UPDATE       0x40000000L   /* don't draw just update screen */
+#define ICDRAW_PREROLL      0x20000000L   /* this frame is before real start */
+#define ICDRAW_NULLFRAME    0x10000000L   /* repeat last frame */
+#define ICDRAW_NOTKEYFRAME  0x08000000L   /* this frame is not a key frame */
 
 typedef struct {
 	DWORD	dwFlags;

@@ -44,7 +44,7 @@
 #define SYSMETRICS_CXMINTRACK       100
 #define SYSMETRICS_CYMINTRACK        28
 #endif
-#endif 0
+#endif /* 0 */
 
 /* Some non-constant system metrics */
 #define SYSMETRICS_CXSCREEN             sysMetrics[SM_CXSCREEN]             /* 0 */

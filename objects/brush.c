@@ -54,8 +54,14 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
  */
 HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 {
-    LOGBRUSH logbrush = { BS_HATCHED, color, style };
+    LOGBRUSH logbrush;
+
     TRACE(gdi, "%d %06lx\n", style, color );
+
+    logbrush.lbStyle = BS_HATCHED;
+    logbrush.lbColor = color;
+    logbrush.lbHatch = style;
+
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
     return CreateBrushIndirect( &logbrush );
 }
@@ -66,8 +72,14 @@ HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
  */
 HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
 {
-    LOGBRUSH logbrush = { BS_HATCHED, color, style };
+    LOGBRUSH logbrush;
+
     TRACE(gdi, "%d %06lx\n", style, color );
+
+    logbrush.lbStyle = BS_HATCHED;
+    logbrush.lbColor = color;
+    logbrush.lbHatch = style;
+
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
     return CreateBrushIndirect( &logbrush );
 }
@@ -103,12 +115,16 @@ HBRUSH WINAPI CreatePatternBrush( HBITMAP hbitmap )
  */
 HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 {
-    LOGBRUSH logbrush = { BS_DIBPATTERN, coloruse, 0 };
+    LOGBRUSH logbrush;
     BITMAPINFO *info, *newInfo;
     INT size;
-    
+
     TRACE(gdi, "%04x\n", hbitmap );
 
+    logbrush.lbStyle = BS_DIBPATTERN;
+    logbrush.lbColor = coloruse;
+    logbrush.lbHatch = 0;
+  
       /* Make a copy of the bitmap */
 
     if (!(info = (BITMAPINFO *)GlobalLock16( hbitmap ))) return 0;
@@ -153,11 +169,15 @@ HBRUSH WINAPI CreateDIBPatternBrush(
 		UINT coloruse 		/* Specifies color format, if provided */
 )
 {
-    LOGBRUSH logbrush = { BS_DIBPATTERN, coloruse, 0 };
+    LOGBRUSH logbrush;
     BITMAPINFO *info, *newInfo;
     INT size;
     
     TRACE(gdi, "%04x\n", hbitmap );
+
+    logbrush.lbStyle = BS_DIBPATTERN;
+    logbrush.lbColor = coloruse;
+    logbrush.lbHatch = 0;
 
       /* Make a copy of the bitmap */
 
@@ -236,8 +256,14 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
  */
 HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 {
-    LOGBRUSH logbrush = { BS_SOLID, color, 0 };
+    LOGBRUSH logbrush;
+
     TRACE(gdi, "%06lx\n", color );
+
+    logbrush.lbStyle = BS_SOLID;
+    logbrush.lbColor = color;
+    logbrush.lbHatch = 0;
+
     return CreateBrushIndirect( &logbrush );
 }
 
@@ -247,8 +273,14 @@ HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
  */
 HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 {
-    LOGBRUSH logbrush = { BS_SOLID, color, 0 };
+    LOGBRUSH logbrush;
+
     TRACE(gdi, "%06lx\n", color );
+
+    logbrush.lbStyle = BS_SOLID;
+    logbrush.lbColor = color;
+    logbrush.lbHatch = 0;
+
     return CreateBrushIndirect( &logbrush );
 }
 

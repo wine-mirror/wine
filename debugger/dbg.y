@@ -236,10 +236,13 @@ break_command:
 				   }
 				}
     | tBREAK tNUM tEOL	       { struct name_hash *nh;
-				 DBG_ADDR addr = { NULL,
-						   CS_reg(&DEBUG_context),
-                                                   EIP_reg(&DEBUG_context) };
+				 DBG_ADDR addr;
 				 TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+
+				 addr.type = NULL;
+				 addr.seg = CS_reg(&DEBUG_context);
+				 addr.off = EIP_reg(&DEBUG_context);
+
 				 if (ISV86(&DEBUG_context))
 				     addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
 				 DBG_FIX_ADDR_SEG( &addr, CS_reg(&DEBUG_context) );
@@ -258,10 +261,13 @@ break_command:
 				   }
                                }
 
-    | tBREAK tEOL              { DBG_ADDR addr = { NULL,
-						   CS_reg(&DEBUG_context),
-                                                   EIP_reg(&DEBUG_context) };
+    | tBREAK tEOL              { DBG_ADDR addr;
 				 TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+
+				 addr.type = NULL;
+				 addr.seg = CS_reg(&DEBUG_context);
+				 addr.off = EIP_reg(&DEBUG_context);
+
 				 if (ISV86(&DEBUG_context))
 				     addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
 				 GlobalUnlock16( GetCurrentTask() );

@@ -558,9 +558,9 @@ typedef enum _SECURITY_IMPERSONATION_LEVEL {
 
 typedef BOOLEAN SECURITY_CONTEXT_TRACKING_MODE,
 	* PSECURITY_CONTEXT_TRACKING_MODE;
-//
-//	Quality of Service
-//
+/*
+ *	Quality of Service
+ */
 
 typedef struct _SECURITY_QUALITY_OF_SERVICE {
   DWORD				Length;

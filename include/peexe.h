@@ -307,8 +307,8 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
 typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
 	union {
 		struct {
-			DWORD NameOffset:31;
-			DWORD NameIsString:1;
+			unsigned NameOffset:31;
+			unsigned NameIsString:1;
 		} s;
 		DWORD   Name;
 		WORD    Id;
@@ -316,8 +316,8 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
 	union {
 		DWORD   OffsetToData;
 		struct {
-			DWORD   OffsetToDirectory:31;
-			DWORD   DataIsDirectory:1;
+			unsigned OffsetToDirectory:31;
+			unsigned DataIsDirectory:1;
 		} s;
 	} u2;
 } IMAGE_RESOURCE_DIRECTORY_ENTRY,*PIMAGE_RESOURCE_DIRECTORY_ENTRY;

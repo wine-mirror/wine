@@ -813,7 +813,7 @@ BOOL WINAPI AttachThreadInput(
 
     /* TODO: Reset the Key State */
 
-    bRet = 1;      // Success
+    bRet = 1;      /* Success */
     
 CLEANUP:
 

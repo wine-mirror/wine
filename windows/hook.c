@@ -585,7 +585,11 @@ static void HOOK_UnMap32To16Common(INT id, INT code, WPARAM wParamOrig,
       {
           LPCWPSTRUCT16   lpcwp16 = (LPCWPSTRUCT16)PTR_SEG_TO_LIN(lParam);
 	  LPCWPSTRUCT   lpcwp32 = (LPCWPSTRUCT)lParamOrig;
-	  MSGPARAM16	  mp16 = { lpcwp16->wParam, lpcwp16->lParam, 0 };
+	  MSGPARAM16	  mp16;
+
+	  mp16.wParam = lpcwp16->wParam;
+	  mp16.lParam = lpcwp16->lParam;
+	  mp16.lResult = 0;
 
           if (bA) WINPROC_UnmapMsg32ATo16( lpcwp32->hwnd,lpcwp32->message, lpcwp32->wParam,
                                            lpcwp32->lParam, &mp16 );

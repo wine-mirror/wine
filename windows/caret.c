@@ -29,7 +29,7 @@ typedef enum
 {
     CARET_OFF = 0,
     CARET_ON,
-    CARET_TOGGLE,
+    CARET_TOGGLE
 } DISPLAY_CARET;
 
 static CARET Caret = { 0, 0, FALSE, 0, 0, 2, 12, 0, 500, 0 };

@@ -24,11 +24,6 @@
  *
  *****************************************************************************
  */
-#ifndef __inline__
-#ifndef __GNUC__
-#define __inline__
-#endif /* __GNUC__ */
-#endif /* __inline__ */
 
 #define DDE_HANDLES_BIT_ARRAY_SIZE (DDE_HANDLES/sizeof(int)/8)
 

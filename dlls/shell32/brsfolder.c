@@ -154,7 +154,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 
 	      }
 	    }
-	    SHFree(pidlTemp);  //Finally, free the pidl that the shell gave us...
+	    SHFree(pidlTemp);  /* Finally, free the pidl that the shell gave us... */
 	    pidlTemp=0;
 	  }
 	}
@@ -172,7 +172,7 @@ Done:
 static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 {	
 	NMTREEVIEWA	*pnmtv   = (NMTREEVIEWA *)lpnmh;
-	LPTV_ITEMDATA	lptvid;  //Long pointer to TreeView item data
+	LPTV_ITEMDATA	lptvid;  /* Long pointer to TreeView item data */
 	IShellFolder *	lpsf2=0;
 	
 

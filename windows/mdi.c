@@ -839,7 +839,7 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
 	return 0; 
     }
 
-     // The close button is only present in Win 95 look
+    /* The close button is only present in Win 95 look */
     if(TWEAK_WineLook > WIN31_LOOK)
     {
         AppendMenuA(frame->wIDmenu,MF_HELP | MF_BITMAP,
@@ -869,17 +869,17 @@ static BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild )
     if(!(iId == SC_RESTORE || iId == SC_CLOSE) )
 	return 0; 
 
-    // app button
+    /* app button */
     RemoveMenu(frameWnd->wIDmenu,0,MF_BYPOSITION);
 
     if(TWEAK_WineLook > WIN31_LOOK)
     {
-        // close
-    DeleteMenu(frameWnd->wIDmenu,GetMenuItemCount(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
+        /* close */
+        DeleteMenu(frameWnd->wIDmenu,GetMenuItemCount(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
     }
-    // restore
+    /* restore */
     DeleteMenu(frameWnd->wIDmenu,GetMenuItemCount(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
-    // minimize
+    /* minimize */
     DeleteMenu(frameWnd->wIDmenu,GetMenuItemCount(frameWnd->wIDmenu) - 1,MF_BYPOSITION);
 
     DrawMenuBar(frameWnd->hwndSelf);
@@ -1159,7 +1159,12 @@ LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
         if( IsWindow(ci->hwndChildMaximized) )
 	{
 	    WND*	child = WIN_FindWndPtr(ci->hwndChildMaximized);
-	    RECT	rect  = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
+	    RECT	rect;
+
+	    rect.left = 0;
+	    rect.top = 0;
+	    rect.right = LOWORD(lParam);
+	    rect.bottom = HIWORD(lParam);
 
 	    AdjustWindowRectEx(&rect, child->dwStyle, 0, child->dwExStyle);
 	    MoveWindow(ci->hwndChildMaximized, rect.left, rect.top,
@@ -1938,7 +1943,7 @@ void WINAPI CalcChildScroll16( HWND16 hwnd, WORD scroll )
  */
 void WINAPI ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam)
 {
-    return ScrollChildren( hWnd, uMsg, wParam, lParam );
+    ScrollChildren( hWnd, uMsg, wParam, lParam );
 }
 
 

@@ -195,4 +195,4 @@ extern fontObject* XFONT_GetFontObject( X_PHYSFONT pFont );
 extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont );
 extern LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont );
 
-#endif __WINE_X11FONT_H 
+#endif /* __WINE_X11FONT_H */

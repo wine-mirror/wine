@@ -654,7 +654,7 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
     }
 
 /* FIXME: add autoconf check for this */
-#if defined(__svr4__) || defined(_SCO_DS)
+#if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
     if (statfs( DOSDrives[drive].root, &info, 0, 0) < 0)
 #else
     if (statfs( DOSDrives[drive].root, &info) < 0)

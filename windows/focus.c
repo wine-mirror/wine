@@ -116,8 +116,8 @@ HWND WINAPI SetFocus( HWND hwnd )
         
         if( hwnd == hWndFocus )
         {
-            bRet = 1;      // Success
-            goto CLEANUP;  // Nothing to do
+	    bRet = 1;      /* Success */
+	    goto CLEANUP;  /* Nothing to do */
         }
         
 	/* call hooks */
@@ -151,7 +151,7 @@ HWND WINAPI SetFocus( HWND hwnd )
         FOCUS_SwitchFocus( pCurMsgQ, hWndFocus, hwnd );
     }
 
-    bRet = 1;      // Success
+    bRet = 1;      /* Success */
     
 CLEANUP:
 

@@ -1574,10 +1574,12 @@ static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT start, LPCSTR pText )
  */
 static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
 {
-   POINT     pt = { LOWORD(lParam), HIWORD(lParam) };
+   POINT     pt;
    BOOL      bButton;
    HWND      hWnd = lphc->self->hwndSelf;
 
+   pt.x = LOWORD(lParam);
+   pt.y = HIWORD(lParam);
    bButton = PtInRect(&lphc->buttonRect, pt);
 
    if( (CB_GETTYPE(lphc) == CBS_DROPDOWNLIST) ||
@@ -1643,9 +1645,12 @@ static void COMBO_LButtonUp( LPHEADCOMBO lphc, LPARAM lParam )
  */
 static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
 {
-   POINT  pt = { LOWORD(lParam), HIWORD(lParam) };
+   POINT  pt;
    RECT   lbRect;
-
+   
+   pt.x = LOWORD(lParam);
+   pt.y = HIWORD(lParam);
+   
    if( lphc->wState & CBF_BUTTONDOWN )
    {
      BOOL bButton;

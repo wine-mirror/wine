@@ -434,8 +434,8 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,PAVISTREAM ppsS
 		icf.lQuality 	= aco->dwQuality;
 		icf.lKeyRate 	= aco->dwKeyFrameEvery;
 
-		icf.GetData = (void*)0xdead4242;
-		icf.PutData = (void*)0xdead4243;
+		icf.GetData = (LONG (*)(LPARAM,LONG,LPVOID,LONG)) 0xdead4242;
+		icf.PutData = (LONG (*)(LPARAM,LONG,LPVOID,LONG)) 0xdead4243;
 		ICSendMessage(as->hic,ICM_COMPRESS_FRAMES_INFO,(LPARAM)&icf,sizeof(icf));
 	}
 	return S_OK;

@@ -1028,7 +1028,7 @@ LPWSTR __cdecl CRTDLL__wcslwr(LPWSTR x)
 VOID __cdecl CRTDLL_longjmp(jmp_buf env, int val)
 {
     FIXME(crtdll,"CRTDLL_longjmp semistup, expect crash\n");
-    return longjmp(env, val);
+    longjmp(env, val);
 }
 
 /*********************************************************************

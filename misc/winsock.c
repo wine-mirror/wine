@@ -19,7 +19,7 @@
 #ifdef HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif
-#if defined(__svr4__)
+#if defined(__svr4__) || defined(__sun)
 #include <sys/ioccom.h>
 #include <sys/sockio.h>
 #endif

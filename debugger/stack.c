@@ -51,7 +51,11 @@ typedef struct
  */
 void DEBUG_InfoStack(void)
 {
-    DBG_ADDR addr = { NULL, SS_reg(&DEBUG_context), ESP_reg(&DEBUG_context) };
+    DBG_ADDR addr;
+
+    addr.type = NULL;
+    addr.seg = SS_reg(&DEBUG_context);
+    addr.off = ESP_reg(&DEBUG_context);
 
     fprintf(stderr,"Stack dump:\n");
     if (IS_SELECTOR_32BIT(addr.seg))

@@ -306,12 +306,12 @@ typedef struct _FPO_DATA {
   DWORD cbProcSize;
   DWORD cdwLocals;
   WORD  cdwParams;
-  WORD  cbProlog : 8;
-  WORD  cbRegs   : 3;
-  WORD  fHasSEH  : 1;
-  WORD  fUseBP   : 1;
-  WORD  reserved : 1;
-  WORD  cbFrame  : 2;
+  unsigned cbProlog : 8;
+  unsigned cbRegs   : 3;
+  unsigned fHasSEH  : 1;
+  unsigned fUseBP   : 1;
+  unsigned reserved : 1;
+  unsigned cbFrame  : 2;
 } FPO_DATA, *PFPO_DATA;
 
 typedef struct _IMAGE_DEBUG_INFORMATION {

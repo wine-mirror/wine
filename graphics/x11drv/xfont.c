@@ -553,9 +553,17 @@ static BOOL  LFD_ComposeLFD( fontObject* fo,
    if (fo->lf.lfEscapement) {
      /* escapement is in tenths of degrees, theta is in radians */
      double theta = M_PI*fo->lf.lfEscapement/1800.;  
-     double h_matrix[4] = {h*cos(theta), h*sin(theta), -h*sin(theta), h*cos(theta)};
-     double point_matrix[4] = {point*cos(theta), point*sin(theta), -point*sin(theta), point*cos(theta)};
+     double h_matrix[4];
+     double point_matrix[4];
      char *s;
+     h_matrix[0] = h*cos(theta);
+     h_matrix[1] = h*sin(theta);
+     h_matrix[2] = -h*sin(theta);
+     h_matrix[3] = h*cos(theta);
+     point_matrix[0] = point*cos(theta);
+     point_matrix[1] = point*sin(theta);
+     point_matrix[2] = -point*sin(theta);
+     point_matrix[3] = point*cos(theta);
      sprintf(h_string, "[%+f%+f%+f%+f]", h_matrix[0], h_matrix[1], h_matrix[2], h_matrix[3]);
      sprintf(point_string, "[%+f%+f%+f%+f]", point_matrix[0], point_matrix[1], point_matrix[2], point_matrix[3]);
      while ((s = strchr(h_string, '-'))) *s='~';
@@ -594,6 +602,7 @@ static BOOL  LFD_ComposeLFD( fontObject* fo,
 		  /* fall through */
 
 	case 255: /* no suffix */
+	          break;
    }
 
    lpch = lpLFD + lstrlenA(lpLFD);
@@ -962,7 +971,11 @@ static void XFONT_WindowsNames( char* buffer )
     char* 	lpstr, *lpch;
     int		i, up;
     BYTE	bFamilyStyle;
-    const char*	relocTable[] = { INIDefaultFixed, INIDefault, NULL };
+    const char*	relocTable[3];
+    
+    relocTable[0] = INIDefaultFixed;
+    relocTable[1] = INIDefault;
+    relocTable[2] = NULL;
 
     for( fr = fontList; fr ; fr = fr->next )
     {
@@ -2354,8 +2367,14 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 
     if( !pfo )
     {
-	fontMatch	fm = { NULL, NULL, 0, 0, plf};
+	fontMatch	fm;
 	INT		i, index;
+
+	fm.pfr = NULL;
+	fm.pfi = NULL;
+	fm.height = 0;
+	fm.flags = 0;
+	fm.plf = plf;
 
 	if( XTextCaps & TC_SF_X_YINDEP ) fm.flags = FO_MATCH_XYINDEP;
 

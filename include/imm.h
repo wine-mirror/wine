@@ -59,7 +59,7 @@ typedef struct _tagCOMPOSITIONFORM
 				RECT  rcArea;
 } COMPOSITIONFORM, *LPCOMPOSITIONFORM;
 
-// wParam for WM_IME_CONTROL
+/* wParam for WM_IME_CONTROL */
 #define IMC_GETCANDIDATEPOS             0x0007
 #define IMC_SETCANDIDATEPOS             0x0008
 #define IMC_GETCOMPOSITIONFONT          0x0009
@@ -71,8 +71,10 @@ typedef struct _tagCOMPOSITIONFORM
 #define IMC_CLOSESTATUSWINDOW           0x0021
 #define IMC_OPENSTATUSWINDOW            0x0022
 
-// wParam for WM_IME_CONTROL to the soft keyboard
-// dwAction for ImmNotifyIME
+/*
+ * wParam for WM_IME_CONTROL to the soft keyboard
+ * dwAction for ImmNotifyIME
+ */
 #define NI_OPENCANDIDATE                0x0010
 #define NI_CLOSECANDIDATE               0x0011
 #define NI_SELECTCANDIDATESTR           0x0012
@@ -82,7 +84,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define NI_SETCANDIDATE_PAGESTART       0x0016
 #define NI_SETCANDIDATE_PAGESIZE        0x0017
 
-// lParam for WM_IME_SETCONTEXT
+/* lParam for WM_IME_SETCONTEXT */
 #define ISC_SHOWUICANDIDATEWINDOW       0x00000001
 #define ISC_SHOWUICOMPOSITIONWINDOW     0x80000000
 #define ISC_SHOWUIGUIDELINE             0x40000000
@@ -90,14 +92,14 @@ typedef struct _tagCOMPOSITIONFORM
 #define ISC_SHOWUIALL                   0xC000000F
 
 
-// dwIndex for ImmNotifyIME/NI_COMPOSITIONSTR
+/* dwIndex for ImmNotifyIME/NI_COMPOSITIONSTR */
 #define CPS_COMPLETE                    0x0001
 #define CPS_CONVERT                     0x0002
 #define CPS_REVERT                      0x0003
 #define CPS_CANCEL                      0x0004
 
 
-// the modifiers of hot key
+/* the modifiers of hot key */
 #define MOD_ALT                         0x0001
 #define MOD_CONTROL                     0x0002
 #define MOD_SHIFT                       0x0004
@@ -109,28 +111,28 @@ typedef struct _tagCOMPOSITIONFORM
 #define MOD_IGNORE_ALL_MODIFIER         0x0400
 
 
-// Windows for Simplified Chinese Edition hot key ID from 0x10 - 0x2F
+/* Windows for Simplified Chinese Edition hot key ID from 0x10 - 0x2F */
 #define IME_CHOTKEY_IME_NONIME_TOGGLE           0x10
 #define IME_CHOTKEY_SHAPE_TOGGLE                0x11
 #define IME_CHOTKEY_SYMBOL_TOGGLE               0x12
 
-// Windows for Japanese Edition hot key ID from 0x30 - 0x4F
+/* Windows for Japanese Edition hot key ID from 0x30 - 0x4F */
 #define IME_JHOTKEY_CLOSE_OPEN                  0x30
 
-// Windows for Korean Edition hot key ID from 0x50 - 0x6F
+/* Windows for Korean Edition hot key ID from 0x50 - 0x6F */
 #define IME_KHOTKEY_SHAPE_TOGGLE                0x50
 #define IME_KHOTKEY_HANJACONVERT                0x51
 #define IME_KHOTKEY_ENGLISH                     0x52
-// Windows for Tranditional Chinese Edition hot key ID from 0x70 - 0x8F
+/* Windows for Tranditional Chinese Edition hot key ID from 0x70 - 0x8F */
 #define IME_THOTKEY_IME_NONIME_TOGGLE           0x70
 #define IME_THOTKEY_SHAPE_TOGGLE                0x71
 #define IME_THOTKEY_SYMBOL_TOGGLE               0x72
 
-// direct switch hot key ID from 0x100 - 0x11F
+/* direct switch hot key ID from 0x100 - 0x11F */
 #define IME_HOTKEY_DSWITCH_FIRST                0x100
 #define IME_HOTKEY_DSWITCH_LAST                 0x11F
 
-// IME private hot key from 0x200 - 0x21F
+/* IME private hot key from 0x200 - 0x21F */
 #define IME_HOTKEY_PRIVATE_FIRST                0x200
 #define IME_ITHOTKEY_RESEND_RESULTSTR           0x200
 #define IME_ITHOTKEY_PREVIOUS_COMPOSITION       0x201
@@ -138,8 +140,10 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_HOTKEY_PRIVATE_LAST                 0x21F
 
 
-// dwSystemInfoFlags bits
-// parameter of ImmGetCompositionString
+/*
+ * dwSystemInfoFlags bits
+ * parameter of ImmGetCompositionString
+ */
 #define GCS_COMPREADSTR                 0x0001
 #define GCS_COMPREADATTR                0x0002
 #define GCS_COMPREADCLAUSE              0x0004
@@ -153,52 +157,54 @@ typedef struct _tagCOMPOSITIONFORM
 #define GCS_RESULTSTR                   0x0800
 #define GCS_RESULTCLAUSE                0x1000
 
-// style bit flags for WM_IME_COMPOSITION
+/* style bit flags for WM_IME_COMPOSITION */
 #define CS_INSERTCHAR                   0x2000
 #define CS_NOMOVECARET                  0x4000
 
 
-// bits of fdwInit of INPUTCONTEXT
-// IME version constants
+/*
+ * bits of fdwInit of INPUTCONTEXT
+ * IME version constants
+ */
 #define IMEVER_0310                     0x0003000A
 #define IMEVER_0400                     0x00040000
 
 
-// IME property bits
+/* IME property bits */
 #define IME_PROP_AT_CARET               0x00010000
 #define IME_PROP_SPECIAL_UI             0x00020000
 #define IME_PROP_CANDLIST_START_FROM_1  0x00040000
 #define IME_PROP_UNICODE                0x00080000
 
 
-// IME UICapability bits
+/* IME UICapability bits */
 #define UI_CAP_2700                     0x00000001
 #define UI_CAP_ROT90                    0x00000002
 #define UI_CAP_ROTANY                   0x00000004
-// ImmSetCompositionString Capability bits
+/* ImmSetCompositionString Capability bits */
 #define SCS_CAP_COMPSTR                 0x00000001
 #define SCS_CAP_MAKEREAD                0x00000002
 
 
-// IME WM_IME_SELECT inheritance Capability bits
+/* IME WM_IME_SELECT inheritance Capability bits */
 #define SELECT_CAP_CONVERSION           0x00000001
 #define SELECT_CAP_SENTENCE             0x00000002
 
 
-// ID for deIndex of ImmGetGuideLine
+/* ID for deIndex of ImmGetGuideLine */
 #define GGL_LEVEL                       0x00000001
 #define GGL_INDEX                       0x00000002
 #define GGL_STRING                      0x00000003
 #define GGL_PRIVATE                     0x00000004
 
-// ID for dwLevel of GUIDELINE Structure
+/* ID for dwLevel of GUIDELINE Structure */
 #define GL_LEVEL_NOGUIDELINE            0x00000000
 #define GL_LEVEL_FATAL                  0x00000001
 #define GL_LEVEL_ERROR                  0x00000002
 #define GL_LEVEL_WARNING                0x00000003
 #define GL_LEVEL_INFORMATION            0x00000004
 
-// ID for dwIndex of GUIDELINE Structure
+/* ID for dwIndex of GUIDELINE Structure */
 #define GL_ID_UNKNOWN                   0x00000000
 #define GL_ID_NOMODULE                  0x00000001
 #define GL_ID_NODICTIONARY              0x00000010
@@ -216,7 +222,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define GL_ID_PRIVATE_FIRST             0x00008000
 #define GL_ID_PRIVATE_LAST              0x0000FFFF
 
-// ID for dwIndex of ImmGetProperty
+/* ID for dwIndex of ImmGetProperty */
 #define IGP_GETIMEVERSION               (DWORD)(-4)
 #define IGP_PROPERTY                    0x00000004
 #define IGP_CONVERSION                  0x00000008
@@ -226,11 +232,11 @@ typedef struct _tagCOMPOSITIONFORM
 #define IGP_SELECT                      0x00000018
 
 
-// dwIndex for ImmSetCompositionString API
+/* dwIndex for ImmSetCompositionString API */
 #define SCS_SETSTR          (GCS_COMPREADSTR|GCS_COMPSTR)
 #define SCS_CHANGEATTR      (GCS_COMPREADATTR|GCS_COMPATTR)
 #define SCS_CHANGECLAUSE    (GCS_COMPREADCLAUSE|GCS_COMPCLAUSE)
-// attribute for COMPOSITIONSTRING Structure
+/* attribute for COMPOSITIONSTRING Structure */
 #define ATTR_INPUT                      0x00
 #define ATTR_TARGET_CONVERTED           0x01
 #define ATTR_CONVERTED                  0x02
@@ -238,7 +244,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define ATTR_INPUT_ERROR                0x04
 
 
-// bit field for IMC_SETCOMPOSITIONWINDOW, IMC_SETCANDIDATEWINDOW
+/* bit field for IMC_SETCOMPOSITIONWINDOW, IMC_SETCANDIDATEWINDOW */
 #define CFS_DEFAULT                     0x0000
 #define CFS_RECT                        0x0001
 #define CFS_POINT                       0x0002
@@ -246,21 +252,21 @@ typedef struct _tagCOMPOSITIONFORM
 #define CFS_CANDIDATEPOS                0x0040
 #define CFS_EXCLUDE                     0x0080
 
-// conversion direction for ImmGetConversionList
+/* conversion direction for ImmGetConversionList */
 #define GCL_CONVERSION                  0x0001
 #define GCL_REVERSECONVERSION           0x0002
 #define GCL_REVERSE_LENGTH              0x0003
 
 
-// bit field for conversion mode
+/* bit field for conversion mode */
 #define IME_CMODE_ALPHANUMERIC          0x0000
 #define IME_CMODE_NATIVE                0x0001
 #define IME_CMODE_CHINESE               IME_CMODE_NATIVE
-// IME_CMODE_HANGEUL is old name of IME_CMODE_HANGUL. It will be gone eventually.
+/* IME_CMODE_HANGEUL is old name of IME_CMODE_HANGUL. It will be gone eventually. */
 #define IME_CMODE_HANGEUL               IME_CMODE_NATIVE
 #define IME_CMODE_HANGUL                IME_CMODE_NATIVE
 #define IME_CMODE_JAPANESE              IME_CMODE_NATIVE
-#define IME_CMODE_KATAKANA              0x0002  // only effect under IME_CMODE_NATIVE
+#define IME_CMODE_KATAKANA              0x0002  /* only effect under IME_CMODE_NATIVE */
 #define IME_CMODE_LANGUAGE              0x0003
 #define IME_CMODE_FULLSHAPE             0x0008
 #define IME_CMODE_ROMAN                 0x0010
@@ -278,7 +284,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_SMODE_AUTOMATIC             0x0004
 #define IME_SMODE_PHRASEPREDICT         0x0008
 
-// style of candidate
+/* style of candidate */
 #define IME_CAND_UNKNOWN                0x0000
 #define IME_CAND_READ                   0x0001
 #define IME_CAND_CODE                   0x0002
@@ -287,7 +293,7 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_CAND_STROKE                 0x0005
 
 
-// wParam of report message WM_IME_NOTIFY
+/* wParam of report message WM_IME_NOTIFY */
 #define IMN_CLOSESTATUSWINDOW           0x0001
 #define IMN_OPENSTATUSWINDOW            0x0002
 #define IMN_CHANGECANDIDATE             0x0003
@@ -304,17 +310,17 @@ typedef struct _tagCOMPOSITIONFORM
 #define IMN_PRIVATE                     0x000E
 
 
-// error code of ImmGetCompositionString
+/* error code of ImmGetCompositionString */
 #define IMM_ERROR_NODATA                (-1)
 #define IMM_ERROR_GENERAL               (-2)
 
 
-// dialog mode of ImmConfigureIME
+/* dialog mode of ImmConfigureIME */
 #define IME_CONFIG_GENERAL              1
 #define IME_CONFIG_REGISTERWORD         2
 #define IME_CONFIG_SELECTDICTIONARY     3
 
-// dialog mode of ImmEscape
+/* dialog mode of ImmEscape */
 #define IME_ESC_QUERY_SUPPORT           0x0003
 #define IME_ESC_RESERVED_FIRST          0x0004
 #define IME_ESC_RESERVED_LAST           0x07FF
@@ -331,15 +337,17 @@ typedef struct _tagCOMPOSITIONFORM
 #define IME_ESC_PRIVATE_HOTKEY          0x100a
 
 
-// style of word registration
+/* style of word registration */
 #define IME_REGWORD_STYLE_EUDC          0x00000001
 #define IME_REGWORD_STYLE_USER_FIRST    0x80000000
 #define IME_REGWORD_STYLE_USER_LAST     0xFFFFFFFF
 
-// type of soft keyboard
-// for Windows Tranditional Chinese Edition
+/*
+ * type of soft keyboard
+ * for Windows Tranditional Chinese Edition
+ */
 #define SOFTKEYBOARD_TYPE_T1            0x0001
-// for Windows Simplified Chinese Edition
+/* for Windows Simplified Chinese Edition */
 #define SOFTKEYBOARD_TYPE_C1            0x0002
 
 

@@ -196,7 +196,7 @@ static void MergeToolBar(IShellViewImpl * This)
 	int i;
 	enum
 	{ IN_STD_BMP = 0x4000,
-	  IN_VIEW_BMP = 0x8000,
+	  IN_VIEW_BMP = 0x8000
 	} ;
 	static const TBBUTTON c_tbDefault[] =
 	{ { STD_COPY | IN_STD_BMP, FCIDM_SHVIEW_COPY, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0,0}, 0, -1},

@@ -281,10 +281,10 @@ typedef VARIANT_BOOL OLE_ENABLEDEFAULTBOOL;
 
 #define VT_COLOR            VT_I4
 #define VT_FONT             VT_DISPATCH
-#define VT_STREAMED_PROPSET 73  //       [P]  Stream contains a property set
-#define VT_STORED_PROPSET   74  //       [P]  Storage contains a property set
-#define VT_BLOB_PROPSET     75  //       [P]  Blob contains a property set
-#define VT_VERBOSE_ENUM     76  //       [P]  Enum value with text string
+#define VT_STREAMED_PROPSET 73  /*       [P]  Stream contains a property set */
+#define VT_STORED_PROPSET   74  /*       [P]  Storage contains a property set */
+#define VT_BLOB_PROPSET     75  /*       [P]  Blob contains a property set */
+#define VT_VERBOSE_ENUM     76  /*       [P]  Enum value with text string */
 
 #define PERPROP_E_FIRST    MAKE_SCODE(SEVERITY_ERROR,   FACILITY_ITF, 0x0200)
 #define PERPROP_E_LAST     MAKE_SCODE(SEVERITY_ERROR,   FACILITY_ITF, 0x020F)

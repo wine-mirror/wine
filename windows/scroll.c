@@ -156,7 +156,7 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
 	    {
 		GetRgnBox( hrgn, rcUpdate );
 
-		//Put the rcUpdate in logical coordinate
+		/* Put the rcUpdate in logical coordinate */
 		DPtoLP( hdc, (LPPOINT)rcUpdate, 2 );
 	    }
             if (!hrgnUpdate) DeleteObject( hrgn );

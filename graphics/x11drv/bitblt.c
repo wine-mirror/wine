@@ -1406,9 +1406,21 @@ static int BITBLT_DoStretchBlt( const struct StretchBlt_params *p )
 BOOL X11DRV_PatBlt( DC *dc, INT left, INT top,
                       INT width, INT height, DWORD rop )
 {
-    struct StretchBlt_params params = { dc, left, top, width, height,
-                                        NULL, 0, 0, 0, 0, rop };
+    struct StretchBlt_params params;
     BOOL result;
+
+    params.dcDst = dc;
+    params.xDst = left;
+    params.yDst = top;
+    params.widthDst = width;
+    params.heightDst = height;
+    params.dcSrc = NULL;
+    params.xSrc = 0;
+    params.ySrc = 0;
+    params.widthSrc = 0;
+    params.heightSrc = 0;
+    params.rop = rop;
+
     X11DRV_DIB_UpdateDIBSection( dc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
@@ -1425,9 +1437,21 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
                       INT width, INT height, DC *dcSrc,
                       INT xSrc, INT ySrc, DWORD rop )
 {
-    struct StretchBlt_params params = { dcDst, xDst, yDst, width, height,
-                                        dcSrc, xSrc, ySrc, width, height, rop};
+    struct StretchBlt_params params;
     BOOL result;
+
+    params.dcDst = dcDst;
+    params.xDst = xDst;
+    params.yDst = yDst;
+    params.widthDst = width;
+    params.heightDst = height;
+    params.dcSrc = dcSrc;
+    params.xSrc = xSrc;
+    params.ySrc = ySrc;
+    params.widthSrc = width;
+    params.heightSrc = height;
+    params.rop = rop;
+
     X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
     X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
@@ -1446,10 +1470,21 @@ BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
                           DC *dcSrc, INT xSrc, INT ySrc,
                           INT widthSrc, INT heightSrc, DWORD rop )
 {
-    struct StretchBlt_params params = { dcDst, xDst, yDst, widthDst, heightDst,
-                                        dcSrc, xSrc, ySrc, widthSrc, heightSrc,
-                                        rop };
+    struct StretchBlt_params params;
     BOOL result;
+
+    params.dcDst = dcDst;
+    params.xDst = xDst;
+    params.yDst = yDst;
+    params.widthDst = widthDst;
+    params.heightDst = heightDst;
+    params.dcSrc = dcSrc;
+    params.xSrc = xSrc;
+    params.ySrc = ySrc;
+    params.widthSrc = widthSrc;
+    params.heightSrc = heightSrc;
+    params.rop = rop;
+
     X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
     X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );

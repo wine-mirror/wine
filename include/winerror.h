@@ -300,7 +300,7 @@ extern int WIN32_LastError;
 #define E_POINTER			0x80004003
 #define E_ABORT				0x80004004
 #define E_FAIL				0x80004005
-#define E_UNSPEC E_FAIL // must to be defined (used by FileMoniker, IOleLink and DoDragDrop as a return value)
+#define E_UNSPEC E_FAIL /* must to be defined (used by FileMoniker, IOleLink and DoDragDrop as a return value) */
 
 /*#define CO_E_INIT_TLS			0x80004006
 #define CO_E_INIT_SHARED_ALLOCATOR	0x80004007

@@ -56,12 +56,12 @@ typedef GUID	FMTID,*LPFMTID;
 #define REFCLSID            const CLSID &
 #define REFIID              const IID &
 #define REFFMTID            const FMTID &
-#else // !__cplusplus
+#else /* !defined(__cplusplus) */
 #define REFGUID             const GUID* const
 #define REFCLSID            const CLSID* const
 #define REFIID              const IID* const
 #define REFFMTID            const FMTID* const
-#endif // !__cplusplus
+#endif /* !defined(__cplusplus) */
 
 extern const IID GUID_NULL;
 #define CLSID_NULL GUID_NULL
@@ -169,7 +169,7 @@ typedef struct tagCLIPDATA
     BYTE *pClipData;
 } CLIPDATA;
 
-// Macro to calculate the size of the above pClipData
+/* Macro to calculate the size of the above pClipData */
 #define CBPCLIPDATA(clipdata)    ( (clipdata).cbSize - sizeof((clipdata).ulClipFmt) )
 
 typedef LONG SCODE;
@@ -228,7 +228,7 @@ typedef struct {
 #define _ROTFLAGS_DEFINED
 #define ROTFLAGS_REGISTRATIONKEEPSALIVE 0x1
 #define ROTFLAGS_ALLOWANYCLIENT 0x2
-#endif // !_ROTFLAGS_DEFINED
+#endif /* !defined(_ROTFLAGS_DEFINED) */
 
 #endif /* _SECURITY_DEFINED */
 

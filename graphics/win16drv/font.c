@@ -179,10 +179,12 @@ BOOL	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     WORD wRet;
-    WEPFC wepfc = {proc, lp};
-
+    WEPFC wepfc;
     /* EnumDFontCallback is GDI.158 */
     FARPROC16 pfnCallback = NE_GetEntryPoint( GetModuleHandle16("GDI"), 158 );
+
+    wepfc.proc = proc;
+    wepfc.lp = lp;
 
     wRet = PRTDRV_EnumDFonts(physDev->segptrPDEVICE, plf->lfFaceName[0] ?
 			     plf->lfFaceName : NULL , pfnCallback , &wepfc );

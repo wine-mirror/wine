@@ -1190,10 +1190,16 @@ X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
                      UINT fillType )
 {
     BOOL result;
-    struct FloodFill_params params = { dc, x, y, color, fillType };
+    struct FloodFill_params params;
 
     TRACE(graphics, "X11DRV_ExtFloodFill %d,%d %06lx %d\n",
                       x, y, color, fillType );
+
+    params.dc = dc;
+    params.x = x;
+    params.y = y;
+    params.color = color;
+    params.fillType = fillType;
 
     if (!PtVisible( dc->hSelf, x, y )) return FALSE;
     EnterCriticalSection( &X11DRV_CritSection );

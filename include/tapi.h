@@ -402,6 +402,7 @@ typedef struct linetranslateoutput_tag {
 typedef void (CALLBACK * LINECALLBACK)(DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
 
 typedef struct _PHONEAPP {
+  int dummy;
 } PHONEAPP, *LPPHONEAPP;
 
 typedef struct _PHONE {

@@ -2197,7 +2197,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->nButtonDown = -1;
     infoPtr->nOldHit = -1;
-    infoPtr->nHotItem = -2; // It has to be initially different from nOldHit
+    infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
     infoPtr->hwndNotify = GetParent (hwnd);
     infoPtr->bTransparent = (dwStyle & TBSTYLE_FLAT);
     infoPtr->dwDTFlags = DT_CENTER;
@@ -2447,7 +2447,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr->nOldHit != nHit)
     {
-	//Remove the effect of an old hot button
+        /* Remove the effect of an old hot button */
 	if(infoPtr->nOldHit == infoPtr->nHotItem)
 	{
 	    oldBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
@@ -2456,7 +2456,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    InvalidateRect (hwnd, &oldBtnPtr->rect, TRUE);
 	}
 
-	// It's not a separator or in nowhere. It's a hot button.
+	/* It's not a separator or in nowhere. It's a hot button. */
 	if (nHit >= 0)
 	{
 	    btnPtr = &infoPtr->buttons[nHit];

@@ -563,7 +563,9 @@ DECL_HANDLER(get_write_fd)
 /* set a file current position */
 DECL_HANDLER(set_file_pointer)
 {
-    struct set_file_pointer_reply reply = { req->low, req->high };
+    struct set_file_pointer_reply reply;
+    reply.low = req->low;
+    reply.high = req->high;
     set_file_pointer( req->handle, &reply.low, &reply.high, req->whence );
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

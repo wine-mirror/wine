@@ -265,7 +265,7 @@ typedef enum {
   D3DRENDERSTATE_STIPPLEPATTERN29   = 93,
   D3DRENDERSTATE_STIPPLEPATTERN30   = 94,
   D3DRENDERSTATE_STIPPLEPATTERN31   = 95,
-  D3DRENDERSTATE_FORCE_DWORD        = 0x7fffffff, /* force 32-bit size enum */
+  D3DRENDERSTATE_FORCE_DWORD        = 0x7fffffff /* force 32-bit size enum */
 } D3DRENDERSTATETYPE;
 
 typedef enum { 
@@ -288,21 +288,21 @@ typedef enum {
   D3DLIGHTSTATE_FOGSTART      = 5,
   D3DLIGHTSTATE_FOGEND        = 6,
   D3DLIGHTSTATE_FOGDENSITY    = 7,
-  D3DLIGHTSTATE_FORCE_DWORD   = 0x7fffffff, /* force 32-bit size enum */
+  D3DLIGHTSTATE_FORCE_DWORD   = 0x7fffffff /* force 32-bit size enum */
 } D3DLIGHTSTATETYPE;
 
 typedef enum {
   D3DVT_VERTEX        = 1,
   D3DVT_LVERTEX       = 2,
   D3DVT_TLVERTEX      = 3,
-  D3DVT_FORCE_DWORD   = 0x7fffffff, /* force 32-bit size enum */
+  D3DVT_FORCE_DWORD   = 0x7fffffff /* force 32-bit size enum */
 } D3DVERTEXTYPE;
 
 typedef enum {
   D3DTRANSFORMSTATE_WORLD           = 1,
   D3DTRANSFORMSTATE_VIEW            = 2,
   D3DTRANSFORMSTATE_PROJECTION      = 3,
-  D3DTRANSFORMSTATE_FORCE_DWORD     = 0x7fffffff, /* force 32-bit size enum */
+  D3DTRANSFORMSTATE_FORCE_DWORD     = 0x7fffffff /* force 32-bit size enum */
 } D3DTRANSFORMSTATETYPE;
 
 /* ********************************************************************
@@ -1017,7 +1017,7 @@ typedef enum _D3DOPCODE {
   D3DOP_SPAN            = 13, 
   D3DOP_SETSTATUS       = 14, 
   
-  D3DOP_FORCE_DWORD     = 0x7fffffff, 
+  D3DOP_FORCE_DWORD     = 0x7fffffff 
 } D3DOPCODE; 
 
 typedef struct _D3DPOINT { 

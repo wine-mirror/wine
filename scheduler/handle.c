@@ -18,7 +18,9 @@ DEFAULT_DEBUG_CHANNEL(win32)
  */
 BOOL WINAPI CloseHandle( HANDLE handle )
 {
-    struct close_handle_request req = { handle };
+    struct close_handle_request req;
+    
+    req.handle = handle;
     CLIENT_SendRequest( REQ_CLOSE_HANDLE, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }

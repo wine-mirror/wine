@@ -1034,8 +1034,13 @@ TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf,
     winpos.flags |= SWP_NOSIZE;
   else
     {
-      RECT rect = { 0, 0, pWnd->rectWindow.right - pWnd->rectWindow.left,
-		      pWnd->rectWindow.bottom - pWnd->rectWindow.top };
+      RECT rect;
+
+      rect.left = 0;
+      rect.top = 0;
+      rect.right = pWnd->rectWindow.right - pWnd->rectWindow.left;
+      rect.bottom = pWnd->rectWindow.bottom - pWnd->rectWindow.top;
+
       DCE_InvalidateDCE( pWnd, &rect );
     }
   

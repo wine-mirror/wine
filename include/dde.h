@@ -29,14 +29,14 @@
 /* DDEACK: wStatus in WM_DDE_ACK message */
 struct tagDDEACK
 {
-    WORD bAppReturnCode:8, reserved:6, fBusy:1, fAck:1;
+    unsigned bAppReturnCode:8, reserved:6, fBusy:1, fAck:1;
 };
 typedef struct tagDDEACK DDEACK;
 
 /* DDEDATA: hData in WM_DDE_DATA message */
 struct tagDDEDATA
 {
-    WORD unused:12, fResponse:1, fRelease:1, reserved:1, fAckReq:1,
+    unsigned unused:12, fResponse:1, fRelease:1, reserved:1, fAckReq:1,
          cfFormat:16;
     BYTE Value[1];		/* undetermined array */
 };
@@ -46,14 +46,14 @@ typedef struct tagDDEDATA DDEDATA;
 /* DDEADVISE: hOptions in WM_DDE_ADVISE message */
 struct tagDDEADVISE
 {
-    WORD reserved:14, fDeferUpd:1, fAckReq:1, cfFormat:16;
+    unsigned reserved:14, fDeferUpd:1, fAckReq:1, cfFormat:16;
 };
 typedef struct tagDDEADVISE DDEADVISE;
 
 /* DDEPOKE: hData in WM_DDE_POKE message. */
 struct tagDDEPOKE
 {
-    WORD unused:13, fRelease:1, fReserved:2, cfFormat:16;
+    unsigned unused:13, fRelease:1, fReserved:2, cfFormat:16;
     BYTE Value[1];   	/* undetermined array */
 };
 typedef struct tagDDEPOKE DDEPOKE;

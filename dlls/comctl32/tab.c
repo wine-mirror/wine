@@ -1150,8 +1150,13 @@ static void TAB_EnsureSelectionVisible(
    */
   if (isVisible)
   {
-    POINT pt1 = { selectedRect.left, selectedRect.top };
-    POINT pt2 = { selectedRect.right - 1, selectedRect.bottom - 1 };
+    POINT pt1;
+    POINT pt2;
+
+    pt1.x = selectedRect.left;
+    pt1.y = selectedRect.top;
+    pt2.x = selectedRect.right - 1;
+    pt2.y = selectedRect.bottom - 1;
 
     isVisible = PtInRect(&visibleRect, pt1) &&  PtInRect(&visibleRect, pt2);
   }
@@ -1176,8 +1181,13 @@ static void TAB_EnsureSelectionVisible(
      */
     if (isVisible)
     {
-      POINT pt1 = { selectedRect.left, selectedRect.top };
-      POINT pt2 = { selectedRect.right - 1, selectedRect.bottom - 1 };
+      POINT pt1;
+      POINT pt2;
+
+      pt1.x = selectedRect.left;
+      pt1.y = selectedRect.top;
+      pt2.x = selectedRect.right - 1;
+      pt2.y = selectedRect.bottom - 1;
       
       isVisible = PtInRect(&visibleRect, pt1) &&  PtInRect(&visibleRect, pt2);
     }

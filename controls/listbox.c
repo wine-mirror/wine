@@ -1765,7 +1765,11 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
                             MAKELPARAM( x, y ) );
         if (wnd->dwExStyle & WS_EX_DRAGDETECT)
         {
-            POINT pt = { x, y };
+            POINT pt;
+	    
+	    pt.x = x;
+	    pt.y = y;
+
             if (DragDetect( wnd->hwndSelf, pt ))
                 SendMessageA( descr->owner, WM_BEGINDRAG, 0, 0 );
         }
@@ -2004,7 +2008,10 @@ static LRESULT LISTBOX_HandleChar( WND *wnd, LB_DESCR *descr,
                                    WPARAM wParam )
 {
     INT caret = -1;
-    char str[2] = { wParam & 0xff, '\0' };
+    char str[2];
+    
+    str[0] = wParam & 0xff; 
+    str[1] = '\0';
 
     if (descr->style & LBS_WANTKEYBOARDINPUT)
     {
@@ -2267,8 +2274,16 @@ LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg,
 
     case LB_ITEMFROMPOINT:
         {
-            POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-            RECT rect = { 0, 0, descr->width, descr->height };
+            POINT pt;
+            RECT rect;
+
+	    pt.x = LOWORD(lParam);
+	    pt.y = HIWORD(lParam);
+	    rect.left = 0;
+	    rect.top = 0;
+	    rect.right = descr->width;
+	    rect.bottom = descr->height;
+
             retvalue = MAKELONG( LISTBOX_GetItemFromPoint(wnd, descr, pt.x, pt.y),
                              PtInRect( &rect, pt ) );
             goto END;

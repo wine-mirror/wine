@@ -835,7 +835,7 @@ ULONG SmallBlockChainStream_GetCount(
          SmallBlockChainStream* This);
 
 
-#endif __STORAGE32_H__
+#endif /* __STORAGE32_H__ */
 
 
 

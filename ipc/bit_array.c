@@ -143,9 +143,9 @@ static __inline__ int clear_bit(int bit, int *mem)
 {
   int ret;
 
-  __asm__("xor %1,%1
-	   btrl %2,%0
-	   adcl %1,%1"
+  __asm__("xor %1,%1\n"
+	  "btrl %2,%0\n"
+	  "adcl %1,%1\n"
 	  :"=m" (*mem), "=&r" (ret)
 	  :"r" (bit));
   return (ret);
@@ -154,9 +154,9 @@ static __inline__ int clear_bit(int bit, int *mem)
 static __inline__ int set_bit(int bit, int *mem)
 {
   int ret;
-  __asm__("xor %1,%1
-	   btsl %2,%0
-	   adcl %1,%1"
+  __asm__("xor %1,%1\n"
+	  "btsl %2,%0\n"
+	  "adcl %1,%1\n"
 	  :"=m" (*mem), "=&r" (ret)
 	  :"r" (bit));
   return (ret);

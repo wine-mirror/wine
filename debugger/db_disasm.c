@@ -1005,7 +1005,12 @@ void db_read_address( DBG_ADDR *addr, int short_addr, int regmodrm,
 
 static void db_task_printsym(unsigned int addr, int size)
 {
-    DBG_ADDR address = { NULL, 0, addr };
+    DBG_ADDR address;
+
+    address.type = NULL;
+    address.seg = 0;
+    address.off = addr;
+
     DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32, TRUE );
 }
 

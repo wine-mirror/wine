@@ -80,11 +80,14 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 {
     RECT rect;
     LRESULT retvalue;
-    POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+    POINT pt;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
     LONG style = wndPtr->dwStyle & 0x0f;
     HANDLE oldHbitmap;
+
+    pt.x = LOWORD(lParam);
+    pt.y = HIWORD(lParam);
 
     switch (uMsg)
     {
