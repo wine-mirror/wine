@@ -38,6 +38,7 @@
 #include "debug.h"
 #include "xmalloc.h"
 #include "winreg.h"
+#include "winversion.h"
 
 static void REGISTRY_Init();
 /* FIXME: following defines should be configured global ... */
@@ -2660,7 +2661,7 @@ DWORD WINAPI RegEnumKeyEx32W( HKEY hkey, DWORD iSubkey, LPWSTR lpszName,
 
 	if (iSubkey || !lpxkey)
 		return ERROR_NO_MORE_ITEMS;
-	if (2*lstrlen32W(lpxkey->keyname)+2>*lpcchName)
+	if (lstrlen32W(lpxkey->keyname)+1>*lpcchName)
 		return ERROR_MORE_DATA;
 	memcpy(lpszName,lpxkey->keyname,lstrlen32W(lpxkey->keyname)*2+2);
 
@@ -2789,6 +2790,9 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD iSubkey, LPSTR lpszName,
  *    lpdwType    [O] Type code
  *    lpbData     [O] Value data
  *    lpcbData    [O] Size of data buffer
+ *
+ * Note:  wide character functions that take and/or return "character counts"
+ *  use TCHAR (that is unsigned short or char) not byte counts.
  */
 DWORD WINAPI RegEnumValue32W( HKEY hkey, DWORD iValue, LPWSTR lpszValue,
                               LPDWORD lpcchValue, LPDWORD lpdReserved,
@@ -2812,12 +2816,12 @@ DWORD WINAPI RegEnumValue32W( HKEY hkey, DWORD iValue, LPWSTR lpszValue,
     val = lpkey->values + iValue;
 
 	if (val->name) {
-		if (lstrlen32W(val->name)*2+2>*lpcchValue) {
-			*lpcchValue = lstrlen32W(val->name)*2+2;
+	        if (lstrlen32W(val->name)+1>*lpcchValue) {
+			*lpcchValue = lstrlen32W(val->name)+1;
 			return ERROR_MORE_DATA;
 		}
 		memcpy(lpszValue,val->name,2*lstrlen32W(val->name)+2);
-		*lpcchValue=lstrlen32W(val->name)*2+2;
+		*lpcchValue=lstrlen32W(val->name);
 	} else {
 		*lpszValue	= 0;
 		*lpcchValue	= 0;
@@ -3182,6 +3186,11 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
  *    lpccbMaxValueData      [O] Buffer for longest value data length
  *    lpcbSecurityDescriptor [O] Buffer for security descriptor length
  *    ft
+ * - win95 allows lpszClass to be valid and lpcchClass to be NULL 
+ * - winnt returns ERROR_INVALID_PARAMETER if lpszClass is valid and
+ *   lpcchClass is NULL
+ * - both allow lpszClass to be NULL and lpcchClass to be NULL 
+ * (it's hard to test validity, so test !NULL instead)
  */
 DWORD WINAPI RegQueryInfoKey32W( HKEY hkey, LPWSTR lpszClass, 
                                  LPDWORD lpcchClass, LPDWORD lpdwReserved,
@@ -3200,20 +3209,29 @@ DWORD WINAPI RegQueryInfoKey32W( HKEY hkey, LPWSTR lpszClass,
 	if (!lpkey)
 		return ERROR_INVALID_HANDLE;
 	if (lpszClass) {
+   	        if (VERSION_GetVersion() == NT40 && lpcchClass == NULL) {
+		    return ERROR_INVALID_PARAMETER;
+		}
+		/* either lpcchClass is valid or this is win95 and lpcchClass
+		   could be invalid */
 		if (lpkey->class) {
-			if (lstrlen32W(lpkey->class)*2+2>*lpcchClass) {
-				*lpcchClass=lstrlen32W(lpkey->class)*2;
+		        DWORD classLen = lstrlen32W(lpkey->class);
+
+			if (lpcchClass && classLen+1>*lpcchClass) {
+				*lpcchClass=classLen+1;
 				return ERROR_MORE_DATA;
 			}
-			*lpcchClass=lstrlen32W(lpkey->class)*2;
-			memcpy(lpszClass,lpkey->class,lstrlen32W(lpkey->class));
+			if (lpcchClass)
+			    *lpcchClass=classLen;
+			memcpy(lpszClass,lpkey->class, classLen*2 + 2);
 		} else {
 			*lpszClass	= 0;
-			*lpcchClass	= 0;
+			if (lpcchClass)
+			    *lpcchClass	= 0;
 		}
 	} else {
 		if (lpcchClass)
-			*lpcchClass	= lstrlen32W(lpkey->class)*2;
+			*lpcchClass	= lstrlen32W(lpkey->class);
 	}
 	lpxkey=lpkey->nextsub;
 	nrofkeys=maxsubkey=maxclass=maxvname=maxvdata=0;
@@ -3240,9 +3258,9 @@ DWORD WINAPI RegQueryInfoKey32W( HKEY hkey, LPWSTR lpszClass,
 	if (lpcSubKeys)
 		*lpcSubKeys	= nrofkeys;
 	if (lpcchMaxSubkey)
-		*lpcchMaxSubkey	= maxsubkey*2;
+		*lpcchMaxSubkey	= maxsubkey;
 	if (lpcchMaxClass)
-		*lpcchMaxClass	= maxclass*2;
+		*lpcchMaxClass	= maxclass;
 	if (lpcchMaxValueName)
 		*lpcchMaxValueName= maxvname;
 	if (lpccbMaxValueData)
@@ -3261,13 +3279,19 @@ DWORD WINAPI RegQueryInfoKey32A( HKEY hkey, LPSTR lpszClass, LPDWORD lpcchClass,
                                  LPDWORD lpccbMaxValueData, 
                                  LPDWORD lpcbSecurityDescriptor, FILETIME *ft )
 {
-	LPWSTR		lpszClassW;
+	LPWSTR		lpszClassW = NULL;
 	DWORD		ret;
 
-	TRACE(reg,"(%x,......)\n",hkey);
+	TRACE(reg,"(%x,%p,%p......)\n",hkey, lpszClass, lpcchClass);
 	if (lpszClass) {
-		*lpcchClass*= 2;
-		lpszClassW  = (LPWSTR)xmalloc(*lpcchClass);
+		if (lpcchClass) {
+		    lpszClassW  = (LPWSTR)xmalloc((*lpcchClass) * 2);
+		} else if (VERSION_GetVersion() == WIN95) {
+		    /* win95  allows lpcchClass to be null */
+		    /* we don't know how big lpszClass is, would 
+		       MAX_PATHNAME_LEN be the correct default? */
+		    lpszClassW  = (LPWSTR)xmalloc(MAX_PATHNAME_LEN*2); 
+		}
 
 	} else
 		lpszClassW  = NULL;
