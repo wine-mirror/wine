@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = clock
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-WRCEXTRA  = -t -A -p clock
+WRCEXTRA  = -s -p clock
 
 LICENSELANG = En
 
@@ -17,9 +17,11 @@ C_SRCS = \
 	main.c \
 	$(LICENSELANG:%=License_%.c)
 
+SPEC_SRCS = clock.spec
+
 RC_SRCS = rsrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: check_wrc check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
@@ -28,7 +30,7 @@ all: check_wrc $(PROGRAMS)
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
 
-clock: $(OBJS) $(WINESTUB)
+clock: $(OBJS)
 	$(CC) -o clock $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::

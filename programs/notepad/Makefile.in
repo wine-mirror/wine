@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = notepad
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-WRCEXTRA  = -t -A -p notepad
+WRCEXTRA  = -s -p notepad
 
 LICENSELANG = En
 
@@ -18,9 +18,11 @@ C_SRCS = \
 	search.c \
 	$(LICENSELANG:%=License_%.c)
 
+SPEC_SRCS = notepad.spec
+
 RC_SRCS = rsrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: check_wrc check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
@@ -28,7 +30,7 @@ all: check_wrc $(PROGRAMS)
 .rc.s:
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
-notepad: $(OBJS) $(WINESTUB)
+notepad: $(OBJS)
 	$(CC) -o notepad $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::

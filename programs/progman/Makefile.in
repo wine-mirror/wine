@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = progman
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-WRCEXTRA  = -t -A -p progman
+WRCEXTRA  = -s -p progman
 
 LICENSELANG = En
 
@@ -20,9 +20,11 @@ C_SRCS = \
 	string.c \
 	$(LICENSELANG:%=License_%.c)
 
+SPEC_SRCS = progman.spec
+
 RC_SRCS = rsrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: check_wrc check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
@@ -30,7 +32,7 @@ all: check_wrc $(PROGRAMS)
 .rc.s:
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
-progman: $(OBJS) $(WINESTUB)
+progman: $(OBJS)
 	$(CC) -o progman $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::

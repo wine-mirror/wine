@@ -3,66 +3,57 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-RCFLAGS   = -w32 -h
 PROGRAMS  = expand hello hello2 hello3 hello4 hello5 new rolex vartest volinfo
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-WRCEXTRA  = -t -A -p $*
+WRCEXTRA  = -s -p $*
 
-C_SRCS = \
-	expand.c \
-	hello.c \
-	hello2.c \
-	hello3.c \
-	hello4.c \
-	hello5.c \
-	new.c \
-	rolex.c \
-	vartest.c \
-	volinfo.c
+SPEC_SRCS = \
+	expand.spec \
+	hello.spec \
+	hello2.spec \
+	hello3.spec \
+	hello4.spec \
+	hello5.spec \
+	new.spec \
+	rolex.spec \
+	vartest.spec \
+	volinfo.spec
 
 RC_SRCS = \
 	hello3res.rc
 
-all: check_wrc $(PROGRAMS)
-
-depend:: $(RC_SRCS:.rc=.h)
+all: check_wrc check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
-$(RC_SRCS:.rc=.s): $(WRC)
+expand: expand.o expand.spec.o
+	$(CC) -o expand $+ $(LDOPTIONS) $(ALL_LIBS)
 
-$(WINESTUB):
-	@cd ../library && $(MAKE)
+hello: hello.o hello.spec.o
+	$(CC) -o hello $+ $(LDOPTIONS) $(ALL_LIBS)
 
-expand: expand.o $(WINESTUB)
-	$(CC) -o expand expand.o $(LDOPTIONS) $(ALL_LIBS)
+hello2: hello2.o hello2.spec.o
+	$(CC) -o hello2 $+ $(LDOPTIONS) $(ALL_LIBS)
 
-hello: hello.o $(WINESTUB)
-	$(CC) -o hello hello.o $(LDOPTIONS) $(ALL_LIBS)
+hello3: hello3.o hello3.spec.o hello3res.o
+	$(CC) -o hello3 $+ $(LDOPTIONS) $(ALL_LIBS)
 
-hello2: hello2.o $(WINESTUB)
-	$(CC) -o hello2 hello2.o $(LDOPTIONS) $(ALL_LIBS)
+hello4: hello4.o hello4.spec.o
+	$(CC) -o hello4 $+ $(LDOPTIONS) $(ALL_LIBS)
 
-hello3: hello3res.o hello3.o $(WINESTUB)
-	$(CC) -o hello3 hello3.o hello3res.o $(LDOPTIONS) $(ALL_LIBS)
-hello3.o: hello3res.h
+hello5: hello5.o hello5.spec.o
+	$(CC) -o hello5 $+ $(LDOPTIONS) $(ALL_LIBS)
 
-hello4: hello4.o $(WINESTUB)
-	$(CC) -o hello4 hello4.o $(LDOPTIONS) $(ALL_LIBS)
+new: new.o new.spec.o
+	$(CC) -o new $+ $(LDOPTIONS) $(ALL_LIBS)
 
-hello5: hello5.o $(WINESTUB)
-	$(CC) -o hello5 hello5.o $(LDOPTIONS) $(ALL_LIBS)
+rolex: rolex.o rolex.spec.o
+	$(CC) -o rolex $+ $(LDOPTIONS) $(ALL_LIBS)
 
-new: new.o $(WINESTUB)
-	$(CC) -o new new.o $(LDOPTIONS) $(ALL_LIBS)
+vartest: vartest.o vartest.spec.o
+	$(CC) -o vartest $+ $(LDOPTIONS) $(ALL_LIBS)
 
-rolex: rolex.o $(WINESTUB)
-	$(CC) -o rolex rolex.o $(LDOPTIONS) $(ALL_LIBS)
-
-vartest: vartest.o $(WINESTUB)
-	$(CC) -o vartest vartest.o $(LDOPTIONS) $(ALL_LIBS)
-
-volinfo: volinfo.o $(WINESTUB)
-	$(CC) -o volinfo volinfo.o $(LDOPTIONS) $(ALL_LIBS)
+volinfo: volinfo.o volinfo.spec.o
+	$(CC) -o volinfo $+ $(LDOPTIONS) $(ALL_LIBS)
 
 ### Dependencies:

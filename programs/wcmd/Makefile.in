@@ -6,8 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = wcmd
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -A -t -p $*
+WRCEXTRA  = -s -p wcmd
 
 C_SRCS = \
 	batch.c \
@@ -15,19 +14,20 @@ C_SRCS = \
 	directory.c \
 	wcmdmain.c
 
+SPEC_SRCS = \
+	wcmd.spec
+
 RC_SRCS = \
 	wcmdrc.rc
 
 all: check_wrc $(PROGRAMS)
-
-depend:: $(RC_SRCS:.rc=.h)
 
 @MAKE_RULES@
 
 #this line is needed to prevent winestub.o being linked
 WINESTUB = 
 
-wcmd: $(OBJS) $(WINESTUB)
+wcmd: $(OBJS)
 	$(CC) -o wcmd $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::
@@ -35,7 +35,5 @@ install::
 
 uninstall::
 	$(RM) $(bindir)/wcmd
-
-$(RC_SRCS:.rc=.s): $(WRC)
 
 ### Dependencies:

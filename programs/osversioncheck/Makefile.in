@@ -9,6 +9,8 @@ ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 
 C_SRCS = osversioncheck.c
 
+SPEC_SRCS = osversioncheck.spec
+
 all: $(PROGRAMS)
 
 @MAKE_RULES@

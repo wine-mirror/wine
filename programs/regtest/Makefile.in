@@ -6,16 +6,16 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = regtest
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
 
 C_SRCS = regtest.c
 
-all: $(PROGRAMS)
+SPEC_SRCS = regtest.spec
+
+all: check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
-regtest: $(OBJS) $(WINESTUB)
+regtest: $(OBJS)
 	$(CC) -o regtest $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::

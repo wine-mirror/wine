@@ -9,11 +9,13 @@ ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 
 C_SRCS = control.c
 
-all: $(PROGRAMS)
+SPEC_SRCS = control.spec
+
+all: check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
-control: $(OBJS) $(WINESTUB)
+control: $(OBJS)
 	$(CC) -o control $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::

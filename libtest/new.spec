@@ -1,0 +1,4 @@
+name	new
+mode	guiexe
+type	win32
+init	WinMain

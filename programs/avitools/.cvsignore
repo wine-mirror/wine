@@ -1,4 +1,7 @@
 Makefile
 icinfo
+icinfo.spec.c
 aviplay
+aviplay.spec.c
 aviinfo
+aviinfo.spec.c

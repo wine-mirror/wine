@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-WRCEXTRA  = -t -A -p winhelp
+WRCEXTRA  = -s -p winhelp
 
 C_SRCS = \
 	winhelp.c \
@@ -14,12 +14,14 @@ C_SRCS = \
 	macro.c \
 	string.c
 
+SPEC_SRCS = winhelp.spec
+
 EXTRA_SRCS = macro.yacc.y macro.lex.l
 EXTRA_OBJS = y.tab.o lex.yy.o
 
 RC_SRCS = rsrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: check_wrc check_winestub $(PROGRAMS)
 
 depend:: y.tab.h
 
@@ -29,7 +31,7 @@ depend:: y.tab.h
 .rc.s:
 	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
 
-winhelp: $(OBJS) $(WINESTUB)
+winhelp: $(OBJS)
 	$(CC) -o winhelp $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 hlp2sgml: hlp2sgml.o hlpfile.o

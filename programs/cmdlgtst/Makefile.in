@@ -6,30 +6,22 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = cmdlgtst
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
+WRCEXTRA  = -s -p cmdlgtst
 
 C_SRCS = \
 	cmdlgtst.c
 
+SPEC_SRCS = \
+	cmdlgtst.spec
+
 RC_SRCS = \
 	cmdlgr.rc
 
-all: check_wrc $(PROGRAMS)
-
-depend:: $(RC_SRCS:.rc=.h)
+all: check_wrc check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
-# Override resource compiler rules
-.rc.s:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
-
-.rc.h:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
-
-
-cmdlgtst: $(OBJS) $(WINESTUB)
+cmdlgtst: $(OBJS)
 	$(CC) -o cmdlgtst $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::
@@ -37,7 +29,5 @@ install::
 
 uninstall::
 	$(RM) $(bindir)/cmdlgtst
-
-$(RC_SRCS:.rc=.s): $(WRC)
 
 ### Dependencies:

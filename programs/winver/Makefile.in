@@ -6,16 +6,16 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winver
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
 
 C_SRCS = winver.c
 
-all: check_wrc $(PROGRAMS)
+SPEC_SRCS = winver.spec
+
+all: check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
-winver: $(OBJS) $(WINESTUB)
+winver: $(OBJS)
 	$(CC) -o winver $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::

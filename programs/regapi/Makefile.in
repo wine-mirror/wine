@@ -6,17 +6,18 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = regapi
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
 
 C_SRCS = \
 	regapi.c
 
-all: $(PROGRAMS)
+SPEC_SRCS = \
+	regapi.spec
+
+all: check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
-regapi: $(OBJS) $(WINESTUB)
+regapi: $(OBJS)
 	$(CC) -o regapi $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::

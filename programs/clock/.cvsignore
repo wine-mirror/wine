@@ -1,12 +1,4 @@
-Da.s
-De.s
-En.s
-Es.s
-Fi.s
-Fr.s
 Makefile
-Pt.s
-Sw.s
-Wa.s
 clock
+clock.spec.c
 rsrc.s

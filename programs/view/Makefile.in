@@ -6,32 +6,24 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = view
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
-RCFLAGS   = -w32 -h
-WRCEXTRA  = -t -A -p $*
+WRCEXTRA  = -s -p view
 
 C_SRCS = \
 	init.c \
 	view.c \
 	winmain.c
 
+SPEC_SRCS = \
+	view.spec
+
 RC_SRCS = \
 	viewrc.rc
 
-all: check_wrc $(PROGRAMS)
-
-depend:: $(RC_SRCS:.rc=.h)
+all: check_wrc check_winestub $(PROGRAMS)
 
 @MAKE_RULES@
 
-# Override resource compiler rules
-.rc.s:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
-
-.rc.h:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
-
-
-view: $(OBJS) $(WINESTUB)
+view: $(OBJS)
 	$(CC) -o view $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install::
@@ -39,7 +31,5 @@ install::
 
 uninstall::
 	$(RM) $(bindir)/view
-
-$(RC_SRCS:.rc=.s): $(WRC)
 
 ### Dependencies:
