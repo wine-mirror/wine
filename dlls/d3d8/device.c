@@ -3833,8 +3833,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             int  operand = GL_SRC_COLOR;
             int  source = GL_TEXTURE;
 
-	    GetSrcAndOpFromValue(Value, isAlphaArg, &source, &operand);
+            GetSrcAndOpFromValue(Value, isAlphaArg, &source, &operand);
             if (isAlphaArg) {
+
+                /* From MSDN (D3DTSS_ALPHAARG1) : 
+                   The default argument is D3DTA_TEXTURE. If no texture is set for this stage, 
+                   then the default argument is D3DTA_DIFFUSE.
+                   FIXME? If texture added/removed, may need to reset back as well? */
+                if (Type == D3DTSS_ALPHAARG1 && This->StateBlock->textures[Stage] == NULL && Value == D3DTA_TEXTURE) {
+                    GetSrcAndOpFromValue(D3DTA_DIFFUSE, isAlphaArg, &source, &operand);  
+                }
                 TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_ALPHA_EXT(Type), source, OPERANDx_ALPHA_EXT(Type), operand);
                 glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT(Type), source);
                 vcheckGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT, source);");
@@ -3906,50 +3914,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     break;
 
                 case D3DTOP_SELECTARG1                :
-		    {
-                        /*FIXME("see if D3DTOP_SELECTARG1 behavior is correct now!\n");*/
+                    {
                         glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
-			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
-#if 0 /* don't seem to do anything */
-			{
-			  BOOL  isAlphaOp = (Type == D3DTSS_ALPHAOP);
-			  DWORD dwValue = 0;
-			  GLenum source;
-			  GLenum operand;			
-
-			  dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
-			  GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
-			  if (isAlphaOp) {
-			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_ALPHA_EXT, source, GL_OPERAND0_ALPHA_EXT, operand);
-			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, source);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, 'source')");
-			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, operand);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, 'operand')");
-			  } else {
-			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_RGB_EXT, source, GL_OPERAND0_RGB_EXT, operand);
-			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, source);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, 'source')");
-			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, operand);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, 'operand')");
-			  }
-			  dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
-			  GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
-			  if (isAlphaOp) {
-			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_ALPHA_EXT, source, GL_OPERAND1_ALPHA_EXT, operand);
-			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, source);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, 'source')");
-			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, operand);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, 'operand')");
-			  } else {
-			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_RGB_EXT, source, GL_OPERAND1_RGB_EXT, operand);
-			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, source);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, 'source')");
-			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, operand);
-			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, 'operand')");
-			  }
-			}
-#endif
-		    }
+                        checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
+                    }
                     break;
 
                 case D3DTOP_SELECTARG2                :
