@@ -1,15 +1,15 @@
-This is release 980927 of Wine, the MS Windows emulator.  This is still a
+This is release 981018 of Wine, the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work correctly.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-980927: (see ChangeLog for details)
+WHAT'S NEW with Wine-981018: (see ChangeLog for details)
+	- ELF DLL loader.
+	- Some more DOS support.
 	- Still more common controls and SHELL32 features.
-	- MIDI I/O support.
-	- Several new undocumented KERNEL functions.
-	- More DOS exe stuff including some debugger support.
+	- Using Windows native USER.DLL may work.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -18,12 +18,15 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-980927.tar.gz
-  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-980927.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-980927.tar.gz
-  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-980927.tar.gz
+  ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/development/Wine-981018.tar.gz
+  ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/Wine-981018.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-981018.tar.gz
+  ftp://ftp.progsoc.uts.edu.au/pub/Wine/development/Wine-981018.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
+
+You can also get the current source directly from the CVS tree. Check
+http://www.winehq.com/cvs.html for details.
 
 If you submitted a patch, please check to make sure it has been
 included in the new release.
