@@ -143,6 +143,47 @@ typedef struct IWineD3DDeviceImpl
 
 extern IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
+/*****************************************************************************
+ * IWineD3DResource implementation structure
+ */
+typedef struct IWineD3DResourceClass
+{
+    /* IUnknown fields */
+    DWORD                   ref;     /* Note: Ref counting not required */
+
+    /* WineD3DResource Information */
+    IWineD3DDevice         *wineD3DDevice;
+    D3DRESOURCETYPE         resourceType;
+
+} IWineD3DResourceClass;
+
+typedef struct IWineD3DResourceImpl
+{
+    /* IUnknown & WineD3DResource Information     */
+    IWineD3DResourceVtbl   *lpVtbl;
+    IWineD3DResourceClass   resource;
+
+} IWineD3DResourceImpl;
+
+extern IWineD3DResourceVtbl IWineD3DResource_Vtbl;
+
+/*****************************************************************************
+ * IWineD3DVertexBuffer implementation structure (extends IWineD3DResourceImpl)
+ */
+typedef struct IWineD3DVertexBufferImpl
+{
+    /* IUnknown & WineD3DResource Information     */
+    IWineD3DVertexBufferVtbl *lpVtbl;
+    IWineD3DResourceClass     resource;
+
+    /* WineD3DVertexBuffer specifics */
+    BYTE                     *allocatedMemory;
+    D3DVERTEXBUFFER_DESC      currentDesc;
+
+} IWineD3DVertexBufferImpl;
+
+extern IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
+
 /* Utility function prototypes */
 const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype);

@@ -70,8 +70,10 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
     UINT                *PresentationInterval;
 } WINED3DPRESENT_PARAMETERS;
 
-typedef struct IWineD3D IWineD3D;
-typedef struct IWineD3DDevice IWineD3DDevice;
+typedef struct IWineD3D               IWineD3D;
+typedef struct IWineD3DDevice         IWineD3DDevice;
+typedef struct IWineD3DResource       IWineD3DResource;
+typedef struct IWineD3DVertexBuffer   IWineD3DVertexBuffer;
 
 /*****************************************************************************
  * WineD3D interface 
@@ -138,6 +140,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3D methods ***/
+    STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle) PURE;
 };
 #undef INTERFACE
 
@@ -146,7 +149,92 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
 #define IWineD3DDevice_AddRef(p)                                (p)->lpVtbl->AddRef(p)
 #define IWineD3DDevice_Release(p)                               (p)->lpVtbl->Release(p)
-/*** IWineD3D methods ***/
+/*** IWineD3DDevice methods ***/
+#define IWineD3DDevice_CreateVertexBuffer(p,a,b,c,d,e,f)        (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d,e,f)
+#endif
+
+/*****************************************************************************
+ * WineD3DResource interface 
+ */
+#define INTERFACE IWineD3DResource
+DECLARE_INTERFACE_(IWineD3DResource,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DResource methods ***/
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
+    STDMETHOD(FreePrivateData)(THIS_ REFGUID  refguid) PURE;
+    STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
+    STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
+    STDMETHOD_(void,PreLoad)(THIS) PURE;
+    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DResource_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DResource_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IWineD3DResource_Release(p)                   (p)->lpVtbl->Release(p)
+/*** IWineD3DResource methods ***/
+#define IWineD3DResource_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DResource_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
+#define IWineD3DResource_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
+#define IWineD3DResource_FreePrivateData(p,a)         (p)->lpVtbl->FreePrivateData(p,a)
+#define IWineD3DResource_SetPriority(p,a)             (p)->lpVtbl->SetPriority(p,a)
+#define IWineD3DResource_GetPriority(p)               (p)->lpVtbl->GetPriority(p)
+#define IWineD3DResource_PreLoad(p)                   (p)->lpVtbl->PreLoad(p)
+#define IWineD3DResource_GetType(p)                   (p)->lpVtbl->GetType(p)
+#endif
+
+/*****************************************************************************
+ * WineD3DVertexBuffer interface 
+ */
+#define INTERFACE IWineD3DVertexBuffer
+DECLARE_INTERFACE_(IWineD3DVertexBuffer,IDirect3DResource8)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DResource methods ***/
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
+    STDMETHOD(FreePrivateData)(THIS_ REFGUID  refguid) PURE;
+    STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE;
+    STDMETHOD_(DWORD,GetPriority)(THIS) PURE;
+    STDMETHOD_(void,PreLoad)(THIS) PURE;
+    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
+    /*** IWineD3DVertexBuffer methods ***/
+    STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE;
+    STDMETHOD(Unlock)(THIS) PURE;
+    STDMETHOD(GetDesc)(THIS_ D3DVERTEXBUFFER_DESC  * pDesc) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DVertexBuffer_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DVertexBuffer_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IWineD3DVertexBuffer_Release(p)                   (p)->lpVtbl->Release(p)
+/*** IWineD3DResource methods ***/
+#define IWineD3DVertexBuffer_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DVertexBuffer_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
+#define IWineD3DVertexBuffer_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
+#define IWineD3DVertexBuffer_FreePrivateData(p,a)         (p)->lpVtbl->FreePrivateData(p,a)
+#define IWineD3DVertexBuffer_SetPriority(p,a)             (p)->lpVtbl->SetPriority(p,a)
+#define IWineD3DVertexBuffer_GetPriority(p)               (p)->lpVtbl->GetPriority(p)
+#define IWineD3DVertexBuffer_PreLoad(p)                   (p)->lpVtbl->PreLoad(p)
+#define IWineD3DVertexBuffer_GetType(p)                   (p)->lpVtbl->GetType(p)
+/*** IWineD3DVertexBuffer methods ***/
+#define IWineD3DVertexBuffer_Lock(p,a,b,c,d)              (p)->lpVtbl->Lock(p,a,b,c,d)
+#define IWineD3DVertexBuffer_Unlock(p)                    (p)->lpVtbl->Unlock(p)
+#define IWineD3DVertexBuffer_GetDesc(p,a)                 (p)->lpVtbl->GetDesc(p,a)
 #endif
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */

@@ -1,7 +1,7 @@
 /*
- * IDirect3DResource9 implementation
+ * IDirect3DVertexBuffer9 implementation
  *
- * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2002-2004 Jason Edmeades
  *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
@@ -20,17 +20,6 @@
  */
 
 #include "config.h"
-
-#include <stdarg.h>
-
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "d3d9_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -54,15 +43,15 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_QueryInterface(LPDIRECT3DVERTEXBUFFER9
 ULONG WINAPI IDirect3DVertexBuffer9Impl_AddRef(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 ULONG WINAPI IDirect3DVertexBuffer9Impl_Release(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    ULONG ref = --This->ref;
+    ULONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        if (NULL != This->allocatedMemory) HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        IWineD3DVertexBuffer_Release(This->wineD3DVertexBuffer);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -76,63 +65,55 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDevice(LPDIRECT3DVERTEXBUFFER9 ifac
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_SetPrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DVertexBuffer_SetPrivateData(This->wineD3DVertexBuffer, refguid, pData, SizeOfData, Flags);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetPrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DVertexBuffer_GetPrivateData(This->wineD3DVertexBuffer, refguid, pData, pSizeOfData);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_FreePrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DVertexBuffer_FreePrivateData(This->wineD3DVertexBuffer, refguid);
 }
 
 DWORD WINAPI IDirect3DVertexBuffer9Impl_SetPriority(LPDIRECT3DVERTEXBUFFER9 iface, DWORD PriorityNew) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    return IDirect3DResource9Impl_SetPriority((LPDIRECT3DRESOURCE9) This, PriorityNew);
+    return IWineD3DVertexBuffer_SetPriority(This->wineD3DVertexBuffer, PriorityNew);
 }
 
 DWORD WINAPI IDirect3DVertexBuffer9Impl_GetPriority(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    return IDirect3DResource9Impl_GetPriority((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DVertexBuffer_GetPriority(This->wineD3DVertexBuffer);
 }
 
 void WINAPI IDirect3DVertexBuffer9Impl_PreLoad(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    IWineD3DVertexBuffer_PreLoad(This->wineD3DVertexBuffer);
     return ;
 }
 
 D3DRESOURCETYPE WINAPI IDirect3DVertexBuffer9Impl_GetType(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    return IDirect3DResource9Impl_GetType((LPDIRECT3DRESOURCE9) This);
+    return IWineD3DVertexBuffer_GetType(This->wineD3DVertexBuffer);
 }
 
 /* IDirect3DVertexBuffer9 Interface follow: */
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_Lock(LPDIRECT3DVERTEXBUFFER9 iface, UINT OffsetToLock, UINT SizeToLock, void** ppbData, DWORD Flags) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DVertexBuffer_Lock(This->wineD3DVertexBuffer, OffsetToLock, SizeToLock, (BYTE **)ppbData, Flags);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_Unlock(LPDIRECT3DVERTEXBUFFER9 iface) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DVertexBuffer_Unlock(This->wineD3DVertexBuffer);
 }
 
 HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9 iface, D3DVERTEXBUFFER_DESC* pDesc) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
-    TRACE("(%p) : copying into %p\n", This, pDesc);
-    memcpy(pDesc, &This->myDesc, sizeof(D3DVERTEXBUFFER_DESC));
-    return D3D_OK;
+    return IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer, pDesc);
 }
-
 
 IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
 {
@@ -157,26 +138,16 @@ IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
 HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9 iface, 
 						       UINT Size, DWORD Usage, DWORD FVF, D3DPOOL Pool, 
 						       IDirect3DVertexBuffer9** ppVertexBuffer, HANDLE* pSharedHandle) {
+    
     IDirect3DVertexBuffer9Impl *object;
-
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBuffer9Impl));
     object->lpVtbl = &Direct3DVertexBuffer9_Vtbl;
     object->ref = 1;
-    object->Device = This;
-
-    object->ResourceType = D3DRTYPE_VERTEXBUFFER;
-
-    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
-    object->myDesc.Usage = Usage;
-    object->myDesc.Pool  = Pool;
-    object->myDesc.FVF   = FVF;
-    object->myDesc.Size  = Size;
-
-    TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->allocatedMemory, object);
-
+    object->device = This;
+    IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage, FVF, Pool, &(object->wineD3DVertexBuffer), pSharedHandle);
     *ppVertexBuffer = (LPDIRECT3DVERTEXBUFFER9) object;
 
     return D3D_OK;

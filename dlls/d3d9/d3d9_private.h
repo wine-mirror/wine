@@ -31,11 +31,13 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #define XMD_H 
 #include <GL/gl.h>
@@ -537,8 +539,8 @@ struct IDirect3DResource9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl   *Device; 
-    D3DRESOURCETYPE         ResourceType;
+    IWineD3DResource       *wineD3DResource;
+    IDirect3DDevice9       *device;
 };
 
 /* IUnknown: */
@@ -636,12 +638,8 @@ struct IDirect3DVertexBuffer9Impl
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
-    IDirect3DDevice9Impl   *Device;
-    D3DRESOURCETYPE         ResourceType;
-
-    /* IDirect3DVertexBuffer9 fields */
-    BYTE                   *allocatedMemory;
-    D3DVERTEXBUFFER_DESC    myDesc;
+    IWineD3DVertexBuffer   *wineD3DVertexBuffer;
+    IDirect3DDevice9Impl   *device;
 };
 
 /* IUnknown: */

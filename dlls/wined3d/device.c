@@ -34,6 +34,29 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 /**********************************************************
  * IWineD3DDevice implementation follows
  **********************************************************/
+HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
+                             DWORD FVF, D3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle) {
+
+    IWineD3DVertexBufferImpl *object;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVertexBufferImpl));
+    object->lpVtbl                = &IWineD3DVertexBuffer_Vtbl;
+    object->resource.wineD3DDevice= iface;
+    object->resource.resourceType = D3DRTYPE_VERTEXBUFFER;
+    object->resource.ref          = 1;
+    object->allocatedMemory       = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
+    object->currentDesc.Usage     = Usage;
+    object->currentDesc.Pool      = Pool;
+    object->currentDesc.FVF       = FVF;
+    object->currentDesc.Size      = Size;
+
+    TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->allocatedMemory, object);
+    *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
+
+    return D3D_OK;
+}
 
 
 /**********************************************************
@@ -47,7 +70,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface,REFIID ri
 
 ULONG WINAPI IWineD3DDeviceImpl_AddRef(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("(%p) : AddRef increasing from %ld\n", This, This->ref);
+    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
@@ -71,5 +94,6 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
 {
     IWineD3DDeviceImpl_QueryInterface,
     IWineD3DDeviceImpl_AddRef,
-    IWineD3DDeviceImpl_Release
+    IWineD3DDeviceImpl_Release,
+    IWineD3DDeviceImpl_CreateVertexBuffer
 };

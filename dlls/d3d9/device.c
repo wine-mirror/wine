@@ -20,18 +20,6 @@
  */
 
 #include "config.h"
-
-#include <math.h>
-#include <stdarg.h>
-
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "wingdi.h"
-#include "wine/debug.h"
-
 #include "d3d9_private.h"
 
 /** currently desactiving 1_4 support as mesa doesn't implement all 1_4 support while defining it */
