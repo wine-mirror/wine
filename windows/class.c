@@ -23,6 +23,7 @@
 #include "wine/port.h"
 #include "heap.h"
 #include "win.h"
+#include "user.h"
 #include "controls.h"
 #include "dce.h"
 #include "winproc.h"
@@ -51,6 +52,39 @@ typedef struct tagCLASS
 } CLASS;
 
 static CLASS *firstClass;
+
+/***********************************************************************
+ *           get_class_ptr
+ */
+static CLASS *get_class_ptr( HWND hwnd )
+{
+    CLASS *ret = NULL;
+    WND *ptr = WIN_GetWndPtr( hwnd );
+
+    if (!ptr)
+    {
+        if (IsWindow( hwnd )) /* check other processes */
+        {
+            ERR( "class of window %04x belongs to other process\n", hwnd );
+            /* DbgBreakPoint(); */
+        }
+    }
+    else
+    {
+        if (ptr != BAD_WND_PTR) ret = ptr->class;
+        else SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           release_class_ptr
+ */
+inline static void release_class_ptr( CLASS *ptr )
+{
+    USER_Unlock();
+}
 
 
 /***********************************************************************
@@ -218,14 +252,16 @@ static BOOL CLASS_FreeClass( CLASS *classPtr )
 void CLASS_FreeModuleClasses( HMODULE16 hModule )
 {
     CLASS *ptr, *next;
-  
-    TRACE("0x%08x\n", hModule); 
 
+    TRACE("0x%08x\n", hModule);
+
+    USER_Lock();
     for (ptr = firstClass; ptr; ptr = next)
     {
         next = ptr->next;
 	if (ptr->hInstance == hModule) CLASS_FreeClass( ptr );
     }
+    USER_Unlock();
 }
 
 
@@ -337,6 +373,30 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE hInstance,
     if ((classPtr->next = firstClass)) firstClass->prev = classPtr;
     firstClass = classPtr;
     return classPtr;
+}
+
+
+/***********************************************************************
+ *           CLASS_UnregisterClass
+ *
+ * The real UnregisterClass() functionality.
+ */
+static BOOL CLASS_UnregisterClass( ATOM atom, HINSTANCE hInstance )
+{
+    CLASS *classPtr;
+    BOOL ret = FALSE;
+
+    USER_Lock();
+    if (atom &&
+        (classPtr = CLASS_FindClassByAtom( atom, hInstance )) &&
+        (classPtr->hInstance == hInstance))
+    {
+        ret = CLASS_FreeClass( classPtr );
+    }
+    else SetLastError( ERROR_CLASS_DOES_NOT_EXIST );
+
+    USER_Unlock();
+    return ret;
 }
 
 
@@ -647,30 +707,14 @@ BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
     return UnregisterClassA( className, GetExePtr( hInstance ) );
 }
 
-
 /***********************************************************************
  *		UnregisterClassA (USER32.@)
  *
  */
 BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 {
-    CLASS *classPtr;
-    ATOM atom;
-
     TRACE("%s %x\n",debugres_a(className), hInstance);
-
-    if (!(atom = GlobalFindAtomA( className )))
-    {
-        SetLastError(ERROR_CLASS_DOES_NOT_EXIST);
-        return FALSE;
-    }
-    if (!(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-        (classPtr->hInstance != hInstance))
-    {
-        SetLastError(ERROR_CLASS_DOES_NOT_EXIST);
-        return FALSE;
-    }
-    return CLASS_FreeClass( classPtr );
+    return CLASS_UnregisterClass( GlobalFindAtomA( className ), hInstance );
 }
 
 /***********************************************************************
@@ -678,23 +722,8 @@ BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
  */
 BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
 {
-    CLASS *classPtr;
-    ATOM atom;
-
     TRACE("%s %x\n",debugres_w(className), hInstance);
-
-    if (!(atom = GlobalFindAtomW( className )))
-    {
-        SetLastError(ERROR_CLASS_DOES_NOT_EXIST);
-        return FALSE;
-    }
-    if (!(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-        (classPtr->hInstance != hInstance))
-    {
-        SetLastError(ERROR_CLASS_DOES_NOT_EXIST);
-        return FALSE;
-    }
-    return CLASS_FreeClass( classPtr );
+    return CLASS_UnregisterClass( GlobalFindAtomW( className ), hInstance );
 }
 
 
@@ -703,40 +732,20 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
  */
 WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 {
-    WND * wndPtr;
+    CLASS *class;
     WORD retvalue = 0;
-    
-    TRACE("%x %x\n",hwnd, offset);
-    
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if (offset >= 0)
-    {
-        if (offset <= wndPtr->class->cbClsExtra - sizeof(WORD))
-        {
-            retvalue = GET_WORD((char *)(wndPtr->class + 1) + offset);
-            goto END;
-        }
-    }
-    else switch(offset)
-    {
-        case GCW_ATOM:
-            retvalue = wndPtr->class->atomName;
-            goto END;
-        case GCL_HBRBACKGROUND:
-        case GCL_HCURSOR:
-        case GCL_HICON:
-        case GCL_HICONSM:
-        case GCL_STYLE:
-        case GCL_CBWNDEXTRA:
-        case GCL_CBCLSEXTRA:
-        case GCL_HMODULE:
-            retvalue = (WORD)GetClassLongA( hwnd, offset );
-            goto END;
-    }
 
-    WARN("Invalid offset %d\n", offset);
- END:
-    WIN_ReleaseWndPtr(wndPtr);
+    if (offset < 0) return GetClassLongA( hwnd, offset );
+
+    TRACE("%x %x\n",hwnd, offset);
+
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+
+    if (offset <= class->cbClsExtra - sizeof(WORD))
+        retvalue = GET_WORD((char *)(class + 1) + offset);
+    else
+        SetLastError( ERROR_INVALID_INDEX );
+    release_class_ptr( class );
     return retvalue;
 }
 
@@ -744,25 +753,26 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 /***********************************************************************
  *		GetClassLong (USER.131)
  */
-LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
+LONG WINAPI GetClassLong16( HWND16 hwnd16, INT16 offset )
 {
-    WND *wndPtr;
+    CLASS *class;
     LONG ret;
+    HWND hwnd = (HWND)(ULONG_PTR)hwnd16;  /* no need for full handle */
 
-    TRACE("%x %x\n",hwnd, offset);
+    TRACE("%x %d\n",hwnd, offset);
 
     switch( offset )
     {
     case GCL_WNDPROC:
-        if (!(wndPtr = WIN_FindWndPtr16( hwnd ))) return 0;
-        ret = (LONG)CLASS_GetProc( wndPtr->class, WIN_PROC_16 );
-        WIN_ReleaseWndPtr(wndPtr);
+        if (!(class = get_class_ptr( hwnd ))) return 0;
+        ret = (LONG)CLASS_GetProc( class, WIN_PROC_16 );
+        release_class_ptr( class );
         return ret;
     case GCL_MENUNAME:
-        ret = GetClassLongA( WIN_Handle32(hwnd), offset );
+        ret = GetClassLongA( hwnd, offset );
         return (LONG)SEGPTR_GET( (void *)ret );
     default:
-        return GetClassLongA( WIN_Handle32(hwnd), offset );
+        return GetClassLongA( hwnd, offset );
     }
 }
 
@@ -772,61 +782,63 @@ LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
  */
 LONG WINAPI GetClassLongA( HWND hwnd, INT offset )
 {
-    WND * wndPtr;
-    LONG retvalue;
-    
-    TRACE("%x %x\n",hwnd, offset);
-    
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+    CLASS *class;
+    LONG retvalue = 0;
+
+    TRACE("%x %d\n", hwnd, offset);
+
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+
     if (offset >= 0)
     {
-        if (offset <= wndPtr->class->cbClsExtra - sizeof(LONG))
-        {
-            retvalue = GET_DWORD((char *)(wndPtr->class + 1) + offset);
-            goto END;
-        }
+        if (offset <= class->cbClsExtra - sizeof(LONG))
+            retvalue = GET_DWORD((char *)(class + 1) + offset);
+        else
+            SetLastError( ERROR_INVALID_INDEX );
+        release_class_ptr( class );
+        return retvalue;
     }
 
     switch(offset)
     {
-        case GCL_HBRBACKGROUND:
-            retvalue = (LONG)wndPtr->class->hbrBackground;
-            goto END;
-        case GCL_HCURSOR:
-            retvalue = (LONG)wndPtr->class->hCursor;
-            goto END;
-        case GCL_HICON:
-            retvalue = (LONG)wndPtr->class->hIcon;
-            goto END;
-        case GCL_HICONSM:
-            retvalue = (LONG)wndPtr->class->hIconSm;
-            goto END;
-        case GCL_STYLE:
-            retvalue = (LONG)wndPtr->class->style;
-            goto END;
-        case GCL_CBWNDEXTRA:
-            retvalue = (LONG)wndPtr->class->cbWndExtra;
-            goto END;
-        case GCL_CBCLSEXTRA:
-            retvalue = (LONG)wndPtr->class->cbClsExtra;
-            goto END;
-        case GCL_HMODULE:
-            retvalue = (LONG)wndPtr->class->hInstance;
-            goto END;
-        case GCL_WNDPROC:
-            retvalue = (LONG)CLASS_GetProc( wndPtr->class, WIN_PROC_32A );
-            goto END;
-        case GCL_MENUNAME:
-            retvalue = (LONG)CLASS_GetMenuNameA( wndPtr->class );
-            goto END;
-        case GCW_ATOM:
-            retvalue = GetClassWord( hwnd, offset );
-            goto END;
+    case GCL_HBRBACKGROUND:
+        retvalue = (LONG)class->hbrBackground;
+        break;
+    case GCL_HCURSOR:
+        retvalue = (LONG)class->hCursor;
+        break;
+    case GCL_HICON:
+        retvalue = (LONG)class->hIcon;
+        break;
+    case GCL_HICONSM:
+        retvalue = (LONG)class->hIconSm;
+        break;
+    case GCL_STYLE:
+        retvalue = (LONG)class->style;
+        break;
+    case GCL_CBWNDEXTRA:
+        retvalue = (LONG)class->cbWndExtra;
+        break;
+    case GCL_CBCLSEXTRA:
+        retvalue = (LONG)class->cbClsExtra;
+        break;
+    case GCL_HMODULE:
+        retvalue = (LONG)class->hInstance;
+        break;
+    case GCL_WNDPROC:
+        retvalue = (LONG)CLASS_GetProc( class, WIN_PROC_32A );
+        break;
+    case GCL_MENUNAME:
+        retvalue = (LONG)CLASS_GetMenuNameA( class );
+        break;
+    case GCW_ATOM:
+        retvalue = (DWORD)class->atomName;
+        break;
+    default:
+        SetLastError( ERROR_INVALID_INDEX );
+        break;
     }
-    WARN("Invalid offset %d\n", offset);
-    retvalue = 0;
-END:
-    WIN_ReleaseWndPtr(wndPtr);
+    release_class_ptr( class );
     return retvalue;
 }
 
@@ -836,26 +848,23 @@ END:
  */
 LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
 {
-    WND * wndPtr;
+    CLASS *class;
     LONG retvalue;
 
-    TRACE("%x %x\n",hwnd, offset);
-
-    switch(offset)
-    {
-    case GCL_WNDPROC:
-        if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-        retvalue = (LONG)CLASS_GetProc( wndPtr->class, WIN_PROC_32W );
-        WIN_ReleaseWndPtr(wndPtr);
-        return retvalue;
-    case GCL_MENUNAME:
-        if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-        retvalue = (LONG)CLASS_GetMenuNameW( wndPtr->class );
-        WIN_ReleaseWndPtr(wndPtr);
-        return retvalue;
-    default:
+    if (offset != GCL_WNDPROC && offset != GCL_MENUNAME)
         return GetClassLongA( hwnd, offset );
-    }
+
+    TRACE("%x %d\n", hwnd, offset);
+
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+
+    if (offset == GCL_WNDPROC)
+        retvalue = (LONG)CLASS_GetProc( class, WIN_PROC_32W );
+    else  /* GCL_MENUNAME */
+        retvalue = (LONG)CLASS_GetMenuNameW( class );
+
+    release_class_ptr( class );
+    return retvalue;
 }
 
 
@@ -864,47 +873,24 @@ LONG WINAPI GetClassLongW( HWND hwnd, INT offset )
  */
 WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
 {
-    WND * wndPtr;
+    CLASS *class;
     WORD retval = 0;
-    void *ptr;
-    
-    TRACE("%x %x %x\n",hwnd, offset, newval);
-    
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if (offset >= 0)
+
+    if (offset < 0) return SetClassLongA( hwnd, offset, (DWORD)newval );
+
+    TRACE("%x %d %x\n", hwnd, offset, newval);
+
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+
+    if (offset <= class->cbClsExtra - sizeof(WORD))
     {
-        if (offset + sizeof(WORD) <= wndPtr->class->cbClsExtra)
-            ptr = (char *)(wndPtr->class + 1) + offset;
-        else
-        {
-            WARN("Invalid offset %d\n", offset );
-            WIN_ReleaseWndPtr(wndPtr);
-            return 0;
-        }
+        void *ptr = (char *)(class + 1) + offset;
+        retval = GET_WORD(ptr);
+        PUT_WORD( ptr, newval );
     }
-    else switch(offset)
-    {
-        case GCL_HBRBACKGROUND:
-        case GCL_HCURSOR:
-        case GCL_HICON:
-        case GCL_HICONSM:
-        case GCL_STYLE:
-        case GCL_CBWNDEXTRA:
-        case GCL_CBCLSEXTRA:
-        case GCL_HMODULE:
-            WIN_ReleaseWndPtr(wndPtr);
-            return (WORD)SetClassLongA( hwnd, offset, (LONG)newval );
-        case GCW_ATOM:
-            ptr = &wndPtr->class->atomName;
-            break;
-        default:
-            WARN("Invalid offset %d\n", offset);
-            WIN_ReleaseWndPtr(wndPtr);
-            return 0;
-    }
-    retval = GET_WORD(ptr);
-    PUT_WORD( ptr, newval );
-    WIN_ReleaseWndPtr(wndPtr);
+    else SetLastError( ERROR_INVALID_INDEX );
+
+    release_class_ptr( class );
     return retval;
 }
 
@@ -912,25 +898,26 @@ WORD WINAPI SetClassWord( HWND hwnd, INT offset, WORD newval )
 /***********************************************************************
  *		SetClassLong (USER.132)
  */
-LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
+LONG WINAPI SetClassLong16( HWND16 hwnd16, INT16 offset, LONG newval )
 {
-    WND *wndPtr;
+    CLASS *class;
     LONG retval;
+    HWND hwnd = (HWND)(ULONG_PTR)hwnd16;  /* no need for full handle */
 
-    TRACE("%x %x %lx\n",hwnd, offset, newval);
+    TRACE("%x %d %lx\n", hwnd, offset, newval);
 
     switch(offset)
     {
     case GCL_WNDPROC:
-        if (!(wndPtr = WIN_FindWndPtr16(hwnd))) return 0;
-        retval = (LONG)CLASS_SetProc( wndPtr->class, (WNDPROC)newval, WIN_PROC_16 );
-        WIN_ReleaseWndPtr(wndPtr);
+        if (!(class = get_class_ptr( hwnd ))) return 0;
+        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_16 );
+        release_class_ptr( class );
         return retval;
     case GCL_MENUNAME:
         newval = (LONG)MapSL( newval );
         /* fall through */
     default:
-        return SetClassLongA( WIN_Handle32(hwnd), offset, newval );
+        return SetClassLongA( hwnd, offset, newval );
     }
 }
 
@@ -940,69 +927,73 @@ LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
  */
 LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
 {
-    WND * wndPtr;
+    CLASS *class;
     LONG retval = 0;
-    void *ptr;
-    
-    TRACE("%x %x %lx\n",hwnd, offset, newval);
-        
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+
+    TRACE("%x %d %lx\n", hwnd, offset, newval);
+
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+
     if (offset >= 0)
     {
-        if (offset + sizeof(LONG) <= wndPtr->class->cbClsExtra)
-            ptr = (char *)(wndPtr->class + 1) + offset;
-        else
+        if (offset <= class->cbClsExtra - sizeof(LONG))
         {
-            WARN("Invalid offset %d\n", offset );
-            retval = 0;
-            goto END;
+            void *ptr = (char *)(class + 1) + offset;
+            retval = GET_DWORD(ptr);
+            PUT_DWORD( ptr, newval );
         }
+        else SetLastError( ERROR_INVALID_INDEX );
     }
     else switch(offset)
     {
-        case GCL_MENUNAME:
-            CLASS_SetMenuNameA( wndPtr->class, (LPCSTR)newval );
-            retval = 0;  /* Old value is now meaningless anyway */
-            goto END;
-        case GCL_WNDPROC:
-            retval = (LONG)CLASS_SetProc( wndPtr->class, (WNDPROC)newval, WIN_PROC_32A );
-            goto END;
-        case GCL_HBRBACKGROUND:
-            ptr = &wndPtr->class->hbrBackground;
-            break;
-        case GCL_HCURSOR:
-            ptr = &wndPtr->class->hCursor;
-            break;
-        case GCL_HICON:
-            ptr = &wndPtr->class->hIcon;
-            break;
-        case GCL_HICONSM:
-            ptr = &wndPtr->class->hIconSm;
-            break;
-        case GCL_STYLE:
-            ptr = &wndPtr->class->style;
-            break;
-        case GCL_CBWNDEXTRA:
-            ptr = &wndPtr->class->cbWndExtra;
-            break;
-        case GCL_CBCLSEXTRA:
-            ptr = &wndPtr->class->cbClsExtra;
-            break;
-        case GCL_HMODULE:
-            ptr = &wndPtr->class->hInstance;
-            break;
-        case GCW_ATOM:
-            WIN_ReleaseWndPtr(wndPtr);
-            return SetClassWord( hwnd, offset, newval );
-        default:
-            WARN("Invalid offset %d\n", offset );
-            retval = 0;
-            goto END;
+    case GCL_MENUNAME:
+        CLASS_SetMenuNameA( class, (LPCSTR)newval );
+        retval = 0;  /* Old value is now meaningless anyway */
+        break;
+    case GCL_WNDPROC:
+        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32A );
+        break;
+    case GCL_HBRBACKGROUND:
+        retval = (LONG)class->hbrBackground;
+        class->hbrBackground = newval;
+        break;
+    case GCL_HCURSOR:
+        retval = (LONG)class->hCursor;
+        class->hCursor = newval;
+        break;
+    case GCL_HICON:
+        retval = (LONG)class->hIcon;
+        class->hIcon = newval;
+        break;
+    case GCL_HICONSM:
+        retval = (LONG)class->hIconSm;
+        class->hIconSm = newval;
+        break;
+    case GCL_STYLE:
+        retval = (LONG)class->style;
+        class->style = newval;
+        break;
+    case GCL_CBWNDEXTRA:
+        retval = (LONG)class->cbWndExtra;
+        class->cbWndExtra = newval;
+        break;
+    case GCL_CBCLSEXTRA:
+        retval = (LONG)class->cbClsExtra;
+        class->cbClsExtra = newval;
+        break;
+    case GCL_HMODULE:
+        retval = (LONG)class->hInstance;
+        class->hInstance = newval;
+        break;
+    case GCW_ATOM:
+        retval = (DWORD)class->atomName;
+        class->atomName = newval;
+        break;
+    default:
+        SetLastError( ERROR_INVALID_INDEX );
+        break;
     }
-    retval = GET_DWORD(ptr);
-    PUT_DWORD( ptr, newval );
-END:
-    WIN_ReleaseWndPtr(wndPtr);
+    release_class_ptr( class );
     return retval;
 }
 
@@ -1012,26 +1003,25 @@ END:
  */
 LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
 {
-    WND *wndPtr;
+    CLASS *class;
     LONG retval;
 
-    TRACE("%x %x %lx\n",hwnd, offset, newval);
-    
-    switch(offset)
-    {
-    case GCL_WNDPROC:
-        if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-        retval = (LONG)CLASS_SetProc( wndPtr->class, (WNDPROC)newval, WIN_PROC_32W );
-        WIN_ReleaseWndPtr(wndPtr);
-        return retval;
-    case GCL_MENUNAME:
-        if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-        CLASS_SetMenuNameW( wndPtr->class, (LPCWSTR)newval );
-        WIN_ReleaseWndPtr(wndPtr);
-        return 0;  /* Old value is now meaningless anyway */
-    default:
+    if (offset != GCL_WNDPROC && offset != GCL_MENUNAME)
         return SetClassLongA( hwnd, offset, newval );
+
+    TRACE("%x %d %lx\n", hwnd, offset, newval);
+
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+
+    if (offset == GCL_WNDPROC)
+        retval = (LONG)CLASS_SetProc( class, (WNDPROC)newval, WIN_PROC_32W );
+    else  /* GCL_MENUNAME */
+    {
+        CLASS_SetMenuNameW( class, (LPCWSTR)newval );
+        retval = 0;  /* Old value is now meaningless anyway */
     }
+    release_class_ptr( class );
+    return retval;
 }
 
 
@@ -1039,14 +1029,15 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
  *		GetClassNameA (USER32.@)
  */
 INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
-{   INT ret;
-    WND *wndPtr;
-            
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    ret = GlobalGetAtomNameA( wndPtr->class->atomName, buffer, count );
+{
+    INT ret;
+    CLASS *class;
 
-    WIN_ReleaseWndPtr(wndPtr);
-    TRACE("%x %s %x\n",hwnd, buffer, count);
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+    ret = GlobalGetAtomNameA( class->atomName, buffer, count );
+    release_class_ptr( class );
+
+    TRACE("%x %s %x\n",hwnd, debugstr_a(buffer), count);
     return ret;
 }
 
@@ -1055,14 +1046,15 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
  *		GetClassNameW (USER32.@)
  */
 INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
-{   INT ret;
-    WND *wndPtr;
+{
+    INT ret;
+    CLASS *class;
 
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    ret = GlobalGetAtomNameW( wndPtr->class->atomName, buffer, count );
-    WIN_ReleaseWndPtr(wndPtr);
+    if (!(class = get_class_ptr( hwnd ))) return 0;
+    ret = GlobalGetAtomNameW( class->atomName, buffer, count );
+    release_class_ptr( class );
+
     TRACE("%x %s %x\n",hwnd, debugstr_w(buffer), count);
-    
     return ret;
 }
 
