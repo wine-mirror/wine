@@ -1567,6 +1567,7 @@ BOOL WINAPI SetCommTimeouts(
 
     if (-1==tcgetattr(fd,&tios)) {
         FIXME("tcgetattr on fd %d failed!\n",fd);
+        close(fd);
         return FALSE;
     }
 
@@ -1591,6 +1592,7 @@ BOOL WINAPI SetCommTimeouts(
 
     if (-1==tcsetattr(fd,0,&tios)) {
         FIXME("tcsetattr on fd %d failed!\n",fd);
+        close(fd);
         return FALSE;
     }
     close(fd);
@@ -1759,12 +1761,6 @@ BOOL WINAPI WaitCommEvent(
     ov.hEvent = CreateEventA(NULL,FALSE,FALSE,NULL);
 
     COMM_WaitCommEvent(hFile, lpdwEvents, &ov);
-
-    if(GetLastError()!=STATUS_PENDING)
-    {
-        CloseHandle(ov.hEvent);
-        return FALSE;
-    }
 
     /* wait for the overlapped to complete */
     ret = GetOverlappedResult(hFile, &ov, NULL, TRUE);
