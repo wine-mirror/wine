@@ -41,6 +41,7 @@ C_SRCS = \
 	memalloc.c \
 	monprop.c \
 	regsvr.c \
+	sample.c \
 	seekpass.c \
 	sysclock.c
 

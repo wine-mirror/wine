@@ -12,6 +12,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
+#include "winuser.h"
 #include "wine/obj_base.h"
 #include "wine/obj_oleaut.h"
 #include "strmif.h"

@@ -213,7 +213,7 @@ IReferenceClock_fnGetTime(IReferenceClock* iface,REFERENCE_TIME* prtTime)
 	EnterCriticalSection( &This->m_csClock );
 
 	dwTimeCur = GetTickCount();
-	This->m_rtLast += (REFERENCE_TIME)(DWORD)(dwTimeCur - This->m_dwTimeLast);
+	This->m_rtLast += (REFERENCE_TIME)(DWORD)(dwTimeCur - This->m_dwTimeLast) * (REFERENCE_TIME)10000;
 
 	This->m_dwTimeLast = dwTimeCur;
 

@@ -12,6 +12,7 @@
 */
 
 #include "iunk.h"
+#include "sample.h"
 
 typedef struct MA_IMemAllocatorImpl
 {
@@ -26,6 +27,9 @@ typedef struct CMemoryAllocator
 	/* IMemAllocator fields. */
 	CRITICAL_SECTION	csMem;
 	ALLOCATOR_PROPERTIES	prop;
+	HANDLE	hEventSample;
+	BYTE*	pData;
+	CMemMediaSample**	ppSamples;
 } CMemoryAllocator;
 
 #define	CMemoryAllocator_THIS(iface,member)		CMemoryAllocator*	This = ((CMemoryAllocator*)(((char*)iface)-offsetof(CMemoryAllocator,member)))

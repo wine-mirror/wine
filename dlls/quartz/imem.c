@@ -1,7 +1,7 @@
 /*
  * Implementation of CLSID_MemoryAllocator.
  *
- * FIXME - stub.
+ * FIXME - not tested.
  *
  * hidenori@a2.ctktv.ne.jp
  */
@@ -11,6 +11,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "strmif.h"
@@ -58,6 +59,7 @@ IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropRe
 {
 	CMemoryAllocator_THIS(iface,memalloc);
 	long	padding;
+	HRESULT	hr;
 
 	TRACE( "(%p)->(%p,%p)\n", This, pPropReq, pPropActual );
 
@@ -72,7 +74,16 @@ IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropRe
 	if ( ( pPropReq->cbAlign & (pPropReq->cbAlign-1) ) != 0 )
 		return E_INVALIDARG;
 
+	hr = NOERROR;
+
 	EnterCriticalSection( &This->csMem );
+
+	if ( This->pData != NULL || This->ppSamples != NULL )
+	{
+		/* if commited, properties must not be changed. */
+		hr = E_UNEXPECTED;
+		goto end;
+	}
 
 	This->prop.cBuffers = pPropReq->cBuffers;
 	This->prop.cbBuffer = pPropReq->cbBuffer;
@@ -88,9 +99,10 @@ IMemAllocator_fnSetProperties(IMemAllocator* iface,ALLOCATOR_PROPERTIES* pPropRe
 
 	memcpy( pPropActual, &This->prop, sizeof(ALLOCATOR_PROPERTIES) );
 
+end:
 	LeaveCriticalSection( &This->csMem );
 
-	return NOERROR;
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -116,27 +128,176 @@ static HRESULT WINAPI
 IMemAllocator_fnCommit(IMemAllocator* iface)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
+	HRESULT	hr;
+	LONG	lBufSize;
+	LONG	i;
+	BYTE*	pCur;
 
-	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+	TRACE( "(%p)->()\n", This );
+
+	EnterCriticalSection( &This->csMem );
+
+	hr = NOERROR;
+	if ( This->pData != NULL || This->ppSamples != NULL ||
+	     This->prop.cBuffers <= 0 )
+		goto end;
+
+	lBufSize = This->prop.cBuffers *
+		(This->prop.cbBuffer + This->prop.cbPrefix) +
+		This->prop.cbAlign;
+	if ( lBufSize <= 0 )
+		lBufSize = 1;
+
+	This->pData = (BYTE*)QUARTZ_AllocMem( lBufSize );
+	if ( This->pData == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		goto end;
+	}
+
+	This->ppSamples = (CMemMediaSample**)QUARTZ_AllocMem(
+		sizeof(CMemMediaSample*) * This->prop.cBuffers );
+	if ( This->ppSamples == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		goto end;
+	}
+
+	for ( i = 0; i < This->prop.cBuffers; i++ )
+		This->ppSamples[i] = NULL;
+
+	pCur = This->pData + This->prop.cbAlign - ((This->pData-(BYTE*)NULL) & (This->prop.cbAlign-1));
+
+	for ( i = 0; i < This->prop.cBuffers; i++ )
+	{
+		hr = QUARTZ_CreateMemMediaSample(
+			pCur, (This->prop.cbBuffer + This->prop.cbPrefix),
+			iface, &This->ppSamples[i] );
+		if ( FAILED(hr) )
+			goto end;
+		pCur += (This->prop.cbBuffer + This->prop.cbPrefix);
+	}
+
+	hr = NOERROR;
+end:
+	if ( FAILED(hr) )
+		IMemAllocator_Decommit(iface);
+
+	LeaveCriticalSection( &This->csMem );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMemAllocator_fnDecommit(IMemAllocator* iface)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
+	HRESULT	hr;
+	LONG	i;
+	BOOL	bBlock;
 
-	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+	TRACE( "(%p)->()\n", This );
+
+	EnterCriticalSection( &This->csMem );
+
+	hr = NOERROR;
+
+	if ( This->pData == NULL && This->ppSamples == NULL )
+		goto end;
+
+	while ( 1 )
+	{
+		bBlock = FALSE;
+		i = 0;
+
+		ResetEvent( This->hEventSample );
+
+		while ( 1 )
+		{
+			if ( i >= This->prop.cBuffers )
+				break;
+
+			if ( This->ppSamples[i] != NULL )
+			{
+				if ( This->ppSamples[i]->ref == 0 )
+				{
+					QUARTZ_DestroyMemMediaSample( This->ppSamples[i] );
+					This->ppSamples[i] = NULL;
+				}
+				else
+				{
+					bBlock = TRUE;
+				}
+			}
+			i++;
+		}
+
+		if ( !bBlock )
+		{
+			hr = NOERROR;
+			break;
+		}
+
+		WaitForSingleObject( This->hEventSample, INFINITE );
+	}
+
+end:
+	LeaveCriticalSection( &This->csMem );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMemAllocator_fnGetBuffer(IMemAllocator* iface,IMediaSample** ppSample,REFERENCE_TIME* prtStart,REFERENCE_TIME* prtEnd,DWORD dwFlags)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
+	LONG	i;
+	HRESULT	hr;
 
-	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+	TRACE( "(%p)->(%p,%p,%p,%lu)\n", This, ppSample, prtStart, prtEnd, dwFlags );
+
+	if ( ppSample == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->csMem );
+
+	hr = NOERROR;
+
+	if ( This->pData == NULL || This->ppSamples == NULL ||
+	     This->prop.cBuffers <= 0 )
+	{
+		hr = E_FAIL; /* FIXME? */
+		goto end;
+	}
+
+	while ( 1 )
+	{
+		ResetEvent( This->hEventSample );
+
+		for ( i = 0; i < This->prop.cBuffers; i++ )
+		{
+			if ( This->ppSamples[i]->ref == 0 )
+			{
+				*ppSample = (IMediaSample*)(This->ppSamples[i]);
+				IMediaSample_AddRef( *ppSample );
+				hr = NOERROR;
+				goto end;
+			}
+		}
+
+		if ( dwFlags & AM_GBF_NOWAIT )
+		{
+			hr = E_FAIL; /* FIXME? */
+			goto end;
+		}
+
+		WaitForSingleObject( This->hEventSample, INFINITE );
+	}
+
+end:
+	LeaveCriticalSection( &This->csMem );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -144,8 +305,10 @@ IMemAllocator_fnReleaseBuffer(IMemAllocator* iface,IMediaSample* pSample)
 {
 	CMemoryAllocator_THIS(iface,memalloc);
 
-	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+	TRACE( "(%p)->(%p)\n", This, pSample );
+	SetEvent( This->hEventSample );
+
+	return NOERROR;
 }
 
 
@@ -174,6 +337,13 @@ HRESULT CMemoryAllocator_InitIMemAllocator( CMemoryAllocator* pma )
 	ICOM_VTBL(&pma->memalloc) = &imemalloc;
 
 	ZeroMemory( &pma->prop, sizeof(pma->prop) );
+	pma->hEventSample = (HANDLE)NULL;
+	pma->pData = NULL;
+	pma->ppSamples = NULL;
+
+	pma->hEventSample = CreateEventA( NULL, TRUE, FALSE, NULL );
+	if ( pma->hEventSample == (HANDLE)NULL )
+		return E_OUTOFMEMORY;
 
 	InitializeCriticalSection( &pma->csMem );
 
@@ -187,4 +357,7 @@ void CMemoryAllocator_UninitIMemAllocator( CMemoryAllocator* pma )
 	IMemAllocator_Decommit( (IMemAllocator*)(&pma->memalloc) );
 
 	DeleteCriticalSection( &pma->csMem );
+
+	if ( pma->hEventSample != (HANDLE)NULL )
+		CloseHandle( pma->hEventSample );
 }

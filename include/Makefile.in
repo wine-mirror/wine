@@ -144,6 +144,7 @@ INSTALLED_INCLUDES = \
 	wine/obj_errorinfo.h \
 	wine/obj_extracticon.h \
 	wine/obj_inplace.h \
+	wine/obj_ksproperty.h \
 	wine/obj_marshal.h \
 	wine/obj_misc.h \
 	wine/obj_moniker.h \
