@@ -84,17 +84,25 @@ static struct {
 ...
 
 After you have added your table, recompile Wine and test that it works.
-If it fails to detect your table, try running with -debugmsg +key and
-find the error messages it gives for your layout.
+If it fails to detect your table, try running
+
+wine -debugmsg +key,+keyboard >& key.log
+
+and look in the resulting key.log file to find the error messages it
+gives for your layout.
 
 Note that the LANG_* and SUBLANG_* definitions are in include/winnls.h,
 which you might need to know to find out which numbers your language
-is assigned, and find it in the debugmsg output.
+is assigned, and find it in the debugmsg output. The numbers will
+be SUBLANG * 0x400 + LANG, so, for example the combination
+LANG_NORWEGIAN (0x14) and SUBLANG_DEFAULT (0x1) will be (in hex)
+14 + 1*400 = 414, so since I'm Norwegian, I could look for 0414 in
+the debugmsg output to find out why my keyboard won't detect.
 
 Once it works, submit it to the Wine project. If you use CVS, you
 will just have to do
 
-cvs -z3 diff windows/x11drv/keyboard.c > layout.diff
+cvs -z3 diff -u windows/x11drv/keyboard.c > layout.diff
 
 from your main Wine directory, then submit layout.diff to
 wine-patches@winehq.com along with a brief note of what it is.
