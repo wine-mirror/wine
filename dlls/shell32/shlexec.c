@@ -766,8 +766,8 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
         return 2;
     }
 
-    hszApp = DdeCreateStringHandleW(ddeInst, app, CP_WINANSI);
-    hszTopic = DdeCreateStringHandleW(ddeInst, topic, CP_WINANSI);
+    hszApp = DdeCreateStringHandleW(ddeInst, app, CP_WINUNICODE);
+    hszTopic = DdeCreateStringHandleW(ddeInst, topic, CP_WINUNICODE);
 
     hConv = DdeConnect(ddeInst, hszApp, hszTopic, NULL);
     exec = ddeexec;
