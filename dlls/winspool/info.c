@@ -3002,6 +3002,34 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
 static CHAR PortMonitor[] = "Wine Port Monitor";
 static CHAR PortDescription[] = "Wine Port";
 
+static BOOL WINSPOOL_ComPortExists( LPCSTR name )
+{
+    HANDLE handle;
+
+    handle = CreateFileA( name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                         NULL, OPEN_EXISTING, 0, NULL );
+    if (handle == INVALID_HANDLE_VALUE)
+        return FALSE;
+    CloseHandle( handle );
+    return TRUE;
+}
+
+static DWORD WINSPOOL_CountSerialPorts()
+{
+    CHAR name[6];
+    DWORD n = 0, i;
+
+    for (i=0; i<4; i++)
+    {
+        strcpy( name, "COMx:" );
+        name[3] = '1' + i;
+        if (WINSPOOL_ComPortExists( name ))
+            n++;
+    }
+
+    return n;
+}
+
 /******************************************************************************
  *		EnumPortsA   (WINSPOOL.@)
  */
@@ -3010,9 +3038,8 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
 {
     CHAR portname[10];
     DWORD info_size, ofs, i, printer_count, serial_count, count, n, r;
-    const LPCSTR szSerialPortKey = "Software\\Wine\\Wine\\Config\\serialports";
     const LPCSTR szPrinterPortKey = "Software\\Wine\\Wine\\Config\\spooler";
-    HKEY hkey_serial, hkey_printer;
+    HKEY hkey_printer;
 
     TRACE("(%s,%ld,%p,%ld,%p,%p)\n",
           name,level,buffer,bufsize,bufneeded,bufreturned);
@@ -3032,16 +3059,9 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
     
     /* see how many exist */
 
-    hkey_serial = 0;
     hkey_printer = 0;
-    serial_count = 0;
+    serial_count = WINSPOOL_CountSerialPorts();
     printer_count = 0;
-    r = RegOpenKeyA( HKEY_LOCAL_MACHINE, szSerialPortKey, &hkey_serial);
-    if (r == ERROR_SUCCESS)
-    {
-        RegQueryInfoKeyA ( hkey_serial, NULL, NULL, NULL, NULL, NULL, NULL,
-	    &serial_count, NULL, NULL, NULL, NULL);
-    }
 
     r = RegOpenKeyA( HKEY_LOCAL_MACHINE, szPrinterPortKey, &hkey_printer);
     if ( r == ERROR_SUCCESS )
@@ -3063,14 +3083,20 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
 
         /* get the serial port values, then the printer values */
         if ( i < serial_count )
-            r = RegEnumValueA( hkey_serial, i, 
-                     portname, &vallen, NULL, NULL, NULL, 0 );
+        {
+            strcpy( portname, "COMx:" );
+            portname[3] = '1' + i;
+            if (!WINSPOOL_ComPortExists( portname ))
+                continue;
+            vallen = strlen( portname );
+        }
         else
+        {
             r = RegEnumValueA( hkey_printer, i-serial_count, 
                      portname, &vallen, NULL, NULL, NULL, 0 );
-
-        if ( r )
-            continue;
+            if ( r )
+                continue;
+        }
 
         /* add a colon if necessary, and make it upper case */
         CharUpperBuffA(portname,vallen);
@@ -3105,7 +3131,6 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
         n++;
     }
 
-    RegCloseKey(hkey_serial);
     RegCloseKey(hkey_printer);
 
     if(bufneeded)
