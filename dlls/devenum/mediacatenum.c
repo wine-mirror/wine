@@ -88,8 +88,6 @@ static ULONG WINAPI DEVENUM_IPropertyBag_Release(LPPROPERTYBAG iface)
     return This->ref;
 }
 
-static const WCHAR wszNull = '\0';
-
 static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     LPPROPERTYBAG iface,
     LPCOLESTR pszPropName,
@@ -375,7 +373,9 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
     if(pmkToLeft==NULL)
     {
             /* first activation of this class */
-            res=IMoniker_BindToStorage(iface, NULL, NULL, &IID_IPropertyBag, (void**)&pProp);
+	    LPVOID pvptr;
+            res=IMoniker_BindToStorage(iface, NULL, NULL, &IID_IPropertyBag, &pvptr);
+	    pProp = (IPropertyBag*)pvptr;
             if (SUCCEEDED(res))
             {
                 V_VT(&var) = VT_LPWSTR;
@@ -388,7 +388,8 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
             }
             if (SUCCEEDED(res))
             {
-                res=CoCreateInstance(&clsID,NULL,CLSCTX_ALL,&IID_IUnknown,(void**)&pObj);
+                res=CoCreateInstance(&clsID,NULL,CLSCTX_ALL,&IID_IUnknown,&pvptr);
+		pObj = (IUnknown*)pvptr;
             }
     }
 

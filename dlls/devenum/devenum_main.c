@@ -76,7 +76,7 @@ HRESULT WINAPI DEVENUM_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *pp
      * Oh well - works just fine as it is */
     if (IsEqualGUID(rclsid, &CLSID_SystemDeviceEnum) ||
         IsEqualGUID(rclsid, &CLSID_CDeviceMoniker))
-	return IClassFactory_QueryInterface((LPCLASSFACTORY)&DEVENUM_ClassFactory, iid, ppv);
+	return IClassFactory_QueryInterface((LPCLASSFACTORY)(char*)&DEVENUM_ClassFactory, iid, ppv);
     FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
@@ -142,9 +142,13 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
     const WCHAR friendlymidirend[] = {'M','i','d','i',' ','R','e','n','d','e','r','e','r','s',0};
     const WCHAR friendlyextrend[] = {'E','x','t','e','r','n','a','l',' ','R','e','n','d','e','r','e','r','s',0};
     const WCHAR friendlydevctrl[] = {'D','e','v','i','c','e',' ','C','o','n','t','r','o','l',' ','F','i','l','t','e','r','s',0};
+    LPVOID mapvptr;
+
     CoInitialize(NULL);
+    
     res = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC,
-                           &IID_IFilterMapper2, (void **) &pMapper);
+                           &IID_IFilterMapper2,  &mapvptr);
+    pMapper = (IFilterMapper2*)mapvptr;
 
     IFilterMapper2_CreateCategory(pMapper, &CLSID_VideoInputDeviceCategory, MERIT_DO_NOT_USE, friendlyvidcap);
     IFilterMapper2_CreateCategory(pMapper, &CLSID_LegacyAmFilterCategory, MERIT_NORMAL, friendlydshow);

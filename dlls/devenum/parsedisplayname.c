@@ -131,7 +131,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
 
     if (SUCCEEDED(res))
     {
-        res = DEVENUM_ICreateDevEnum_CreateClassEnumerator((ICreateDevEnum *)&DEVENUM_CreateDevEnum, &clsidDevice, &pEm, 0);
+        res = DEVENUM_ICreateDevEnum_CreateClassEnumerator((ICreateDevEnum *)(char*)&DEVENUM_CreateDevEnum, &clsidDevice, &pEm, 0);
     }
 
     if (SUCCEEDED(res))
