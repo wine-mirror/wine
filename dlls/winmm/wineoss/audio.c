@@ -909,9 +909,22 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
     EnterCriticalSection(&omr->msg_crst);
     if ((omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size)))
     {
+	int old_ring_buffer_size = omr->ring_buffer_size;
 	omr->ring_buffer_size += OSS_RING_BUFFER_INCREMENT;
 	TRACE("omr->ring_buffer_size=%d\n",omr->ring_buffer_size);
 	omr->messages = HeapReAlloc(GetProcessHeap(),0,omr->messages, omr->ring_buffer_size * sizeof(OSS_MSG));
+	/* Now we need to rearrange the ring buffer so that the new
+	   buffers just allocated are in between omr->msg_tosave and
+	   omr->msg_toget.
+	*/
+	if (omr->msg_tosave < omr->msg_toget)
+	{
+	    memmove(&(omr->messages[omr->msg_toget + OSS_RING_BUFFER_INCREMENT]),
+		    &(omr->messages[omr->msg_toget]),
+		    sizeof(OSS_MSG)*(old_ring_buffer_size - omr->msg_toget)
+		    );
+	    omr->msg_toget += OSS_RING_BUFFER_INCREMENT;
+	}
     }
     if (wait)
     {

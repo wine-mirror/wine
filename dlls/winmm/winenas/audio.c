@@ -454,9 +454,22 @@ static int NAS_AddRingMessage(MSG_RING* mr, enum win_wm_message msg, DWORD param
     EnterCriticalSection(&mr->msg_crst);
     if ((mr->msg_toget == ((mr->msg_tosave + 1) % mr->ring_buffer_size)))
     {
+	int old_ring_buffer_size = mr->ring_buffer_size;
 	mr->ring_buffer_size += NAS_RING_BUFFER_INCREMENT;
 	TRACE("omr->ring_buffer_size=%d\n",mr->ring_buffer_size);
 	mr->messages = HeapReAlloc(GetProcessHeap(),0,mr->messages, mr->ring_buffer_size * sizeof(RING_MSG));
+	/* Now we need to rearrange the ring buffer so that the new
+	   buffers just allocated are in between mr->msg_tosave and
+	   mr->msg_toget.
+	*/
+	if (mr->msg_tosave < mr->msg_toget)
+	{
+	    memmove(&(mr->messages[mr->msg_toget + NAS_RING_BUFFER_INCREMENT]),
+		    &(mr->messages[mr->msg_toget]),
+		    sizeof(RING_MSG)*(old_ring_buffer_size - mr->msg_toget)
+		    );
+	    mr->msg_toget += NAS_RING_BUFFER_INCREMENT;
+	}
     }
     if (wait)
     {
