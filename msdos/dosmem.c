@@ -215,28 +215,10 @@ static void DOSMEM_FillBiosSegments(void)
 {
     BYTE *pBiosSys = DOSMEM_dosmem + 0xf0000;
     BYTE *pBiosROMTable = pBiosSys+0xe6f5;
-    BIOS_EXTRA *extra = (BIOS_EXTRA *)(DOSMEM_dosmem + (int)BIOS_EXTRA_PTR);
     BIOSDATA *pBiosData = DOSMEM_BiosData();
-
-    /* Supported VESA mode, see int10.c */
-    WORD ConstVesaModeList[]={0x00,0x01,0x02,0x03,0x07,0x0D,0x0E,0x10,0x12,0x13,
-                              0x100,0x101,0x102,0x103,0x104,0x105,0x106,0x107,0x10D,0x10E,
-                              0x10F,0x110,0x111,0x112,0x113,0x114,0x115,0x116,0x117,0x118,
-                              0x119,0x11A,0x11B,0xFFFF};
-    char * ConstVesaString = "WINE SVGA BOARD";
-    int i;
-
-    VIDEOFUNCTIONALITY *pVidFunc = &extra->vid_func;
-    VIDEOSTATE *pVidState = &extra->vid_state;
-    VESAINFO *pVesaInfo = &extra->vesa_info;
-    char * VesaString = extra->vesa_string;
-    WORD * VesaModeList = extra->vesa_modes;
 
       /* Clear all unused values */
     memset( pBiosData, 0, sizeof(*pBiosData) );
-    memset( pVidFunc,  0, sizeof(*pVidFunc ) );
-    memset( pVidState, 0, sizeof(*pVidState) );
-    memset( pVesaInfo, 0, sizeof(*pVesaInfo) );
 
     /* FIXME: should check the number of configured drives and ports */
     pBiosData->Com1Addr             = 0x3f8;
@@ -275,61 +257,6 @@ static void DOSMEM_FillBiosSegments(void)
     *(pBiosROMTable+0x7)	= 0x00; /* feature byte 3 */
     *(pBiosROMTable+0x8)	= 0x00; /* feature byte 4 */
     *(pBiosROMTable+0x9)	= 0x00; /* feature byte 5 */
-
-
-    for (i = 0; i < 7; i++)
-        pVidFunc->ModeSupport[i] = 0xff;
-
-    pVidFunc->ScanlineSupport     = 7;
-    pVidFunc->NumberCharBlocks    = 0;
-    pVidFunc->ActiveCharBlocks    = 0;
-    pVidFunc->MiscFlags           = 0x8ff;
-    pVidFunc->SavePointerFlags    = 0x3f;
-
-                                    /* FIXME: always real mode ? */
-    pVidState->StaticFuncTable    = BIOS_EXTRA_SEGPTR + offsetof(BIOS_EXTRA,vid_func);
-    pVidState->VideoMode          = pBiosData->VideoMode; /* needs updates! */
-    pVidState->NumberColumns      = pBiosData->VideoColumns; /* needs updates! */
-    pVidState->RegenBufLen        = 0;
-    pVidState->RegenBufAddr       = 0;
-
-    for (i = 0; i < 8; i++)
-        pVidState->CursorPos[i] = 0;
-
-    pVidState->CursorType         = 0x0a0b;  /* start/end line */
-    pVidState->ActivePage         = 0;
-    pVidState->CRTCPort           = 0x3da;
-    pVidState->Port3x8            = 0;
-    pVidState->Port3x9            = 0;
-    pVidState->NumberRows         = 23;     /* number of rows - 1 */
-    pVidState->BytesPerChar       = 0x10;
-    pVidState->DCCActive          = pBiosData->DisplayCombination;
-    pVidState->DCCAlternate       = 0;
-    pVidState->NumberColors       = 16;
-    pVidState->NumberPages        = 1;
-    pVidState->NumberScanlines    = 3; /* (0,1,2,3) = (200,350,400,480) */
-    pVidState->CharBlockPrimary   = 0;
-    pVidState->CharBlockSecondary = 0;
-    pVidState->MiscFlags =
-                           (pBiosData->VGASettings & 0x0f)
-                         | ((pBiosData->ModeOptions & 1) << 4); /* cursor emulation */
-    pVidState->NonVGASupport      = 0;
-    pVidState->VideoMem           = (pBiosData->ModeOptions & 0x60 >> 5);
-    pVidState->SavePointerState   = 0;
-    pVidState->DisplayStatus      = 4;
-
-    /* SVGA structures */
-    pVesaInfo->Signature          = *(DWORD*)"VESA";
-    pVesaInfo->Major              = 2;
-    pVesaInfo->Minor              = 0;
-                                    /* FIXME: always real mode ? */
-    pVesaInfo->StaticVendorString = BIOS_EXTRA_SEGPTR + offsetof(BIOS_EXTRA,vesa_string);
-    pVesaInfo->CapabilitiesFlags  = 0xfffffffd; /* FIXME: not really supported */
-                                    /* FIXME: always real mode ? */
-    pVesaInfo->StaticModeList     = BIOS_EXTRA_SEGPTR + offsetof(BIOS_EXTRA,vesa_modes);
-
-    strcpy(VesaString,ConstVesaString);
-    memcpy(VesaModeList,ConstVesaModeList,sizeof(ConstVesaModeList));
 
     /* BIOS date string */
     strcpy((char *)pBiosSys+0xfff5, "13/01/99");
@@ -597,10 +524,10 @@ UINT DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
    UINT blocksize;
    UINT orgsize;
 
-   if( ptr < (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) ||
-       (ptr >= (void*)DOSMEM_MemoryTop() &&
-        !((((char*)ptr) - DOSMEM_dosmem) & 0xf)))
-       return (UINT)-1;
+   if( (ptr < (void*)(sizeof(dosmem_entry) + (char*)DOSMEM_RootBlock())) ||
+       (ptr >= (void*)DOSMEM_MemoryTop()) ||
+       (((((char*)ptr) - DOSMEM_dosmem) & 0xf) != 0) )
+     return (UINT)-1;
 
    dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
    if( dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL) )

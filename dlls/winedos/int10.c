@@ -30,6 +30,54 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
+/*
+ * Display combination code for active display.
+ *
+ * Values (hex):
+ * 00 - no display
+ * 01 - monochrome adapter w/ monochrome display
+ * 02 - CGA w/ color display
+ * 03 - reserved
+ * 04 - EGA w/ color display
+ * 05 - EGA w/ monochrome display
+ * 06 - PGA w/ color display
+ * 07 - VGA w/ monochrome analog display
+ * 08 - VGA w/ color analog display
+ * 09 - reserved
+ * 0A - MCGA w/ digital color display
+ * 0B - MCGA w/ monochrome analog display
+ * 0C - MCGA w/ color analog display
+ * FF - unknown display type
+ */
+#define INT10_DCC 0x08
+
+#include "pshpack1.h"
+
+/*
+ * Structure for DOS data that can be accessed directly from applications.
+ * This structure must be correctly packed.
+ */
+typedef struct _INT10_HEAP {
+    BYTE  StaticModeSupport[7];     /* modes supported 1..7 */
+    BYTE  StaticScanlineSupport;    /* scan lines supported */
+    BYTE  StaticNumberCharBlocks;   /* total number of char blocks */
+    BYTE  StaticActiveCharBlocks;   /* max number of active char blocks */
+    WORD  StaticMiscFlags;          /* misc function support flags */
+    WORD  StaticReserved1;          /* reserved */
+    BYTE  StaticSavePointerFlags;   /* save pointer function flags */
+    BYTE  StaticReserved2;          /* reserved */
+
+    WORD  VesaCurrentMode;
+    WORD  VesaModeList[64];
+    char  VesaOEMName[32];
+    char  VesaProductName[32];
+    char  VesaProductRev[32];
+    char  VesaVendorName[32];
+
+    WORD  WineHeapSegment;
+} INT10_HEAP;
+
+#include "poppack.h"
 
 /*
  * Wine internal information about video modes.
@@ -90,6 +138,8 @@ static const INT10_MODE INT10_modelist[] =
     {0xffff,    0,    0,  0}
 };
 
+/* Forward declarations. */
+static INT10_HEAP *INT10_GetHeap(void);
 static void INT10_SetCursorPos(BIOSDATA*, unsigned, unsigned, unsigned);
 
 
@@ -124,10 +174,77 @@ static const INT10_MODE *INT10_FindMode( WORD mode )
  */
 static void INT10_FillControllerInformation( BYTE *buffer )
 {
+    INT10_HEAP *heap = INT10_GetHeap();
+
+    /* 00 - BYTE[4]: signature */
+    memmove( buffer, "VESA", 4 );
+
+    /* 04 - WORD: version number */
+    *(WORD*)(buffer + 4) = 0x0300; /* version 3.0 */
+    
+    /* 06 - DWORD: pointer to OEM name */
+    *(SEGPTR*)(buffer + 6) = MAKESEGPTR( heap->WineHeapSegment,
+                                         offsetof(INT10_HEAP,
+                                                  VesaOEMName) );
+
     /*
-     * FIXME: Move VESA info stuff here from dosmem.
+     * 10 - DWORD: capabilities flags 
+     * Bits:
+     *    0 - DAC can be switched into 8-bit mode
+     *    1 - non-VGA controller
+     *    2 - programmed DAC with blank bit
+     *    3 - controller supports hardware stereoscopic signalling
+     *    4 - =0 stereo signalling via external VESA stereo connector
+     *        =1 stereo signalling via VESA EVC connector
+     *    5 - controller supports hardware mouse cursor
+     *    6 - controller supports hardware clipping
+     *    7 - controller supports transparent BitBLT
+     * 8-31 - reserved (0)
      */
-    memcpy(buffer, &BIOS_EXTRA_PTR->vesa_info, sizeof(VESAINFO));
+    *(DWORD*)(buffer + 10) = 0; /* FIXME */
+    
+    /* 14 - DWORD: pointer to list of supported VESA and OEM video modes */
+    *(SEGPTR*)(buffer + 14) = MAKESEGPTR( heap->WineHeapSegment,
+                                          offsetof(INT10_HEAP,
+                                                   VesaModeList) );
+
+    /* 18 - WORD: total amount of video memory in 64K blocks */
+    *(WORD*)(buffer + 18) = 16; /* FIXME */
+
+    /* 20 - WORD: OEM software version (BCD, high byte = major) */
+    *(WORD*)(buffer + 20) = 0x0100; /* version 1.0 */
+
+    /* 22 - DWORD: pointer to vendor name */
+    *(SEGPTR*)(buffer + 22) = MAKESEGPTR( heap->WineHeapSegment,
+                                          offsetof(INT10_HEAP,
+                                                   VesaVendorName) );
+
+    /* 26 - DWORD: pointer to product name */
+    *(SEGPTR*)(buffer + 26) = MAKESEGPTR( heap->WineHeapSegment,
+                                          offsetof(INT10_HEAP,
+                                                   VesaProductName) );
+
+    /* 30 - DWORD: pointer to product revision string */
+    *(SEGPTR*)(buffer + 30) = MAKESEGPTR( heap->WineHeapSegment,
+                                          offsetof(INT10_HEAP,
+                                                   VesaProductRev) );
+
+    /* 34 - WORD: VBE/AF version (if capabilities bit 3 set) */
+    *(WORD*)(buffer + 34) = 0;
+
+    /*
+     * 36 - DWORD: pointer to list of accelerated modes 
+     *             (if capabilities bit 3 set) 
+     */
+    *(SEGPTR*)(buffer + 36) = 0;
+
+    /* 40 - BYTE[216]: reserved for VBE implementation, set to zero */
+    memset( buffer + 40, 216, 0 );
+
+    /* 
+     * 256 - BYTE[256]: reserved for VBE3.0 implementation, 
+     *                  ignored in order to support older programs
+     */
 }
 
 
@@ -347,6 +464,9 @@ static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
     /* 62 - DWORD: maximum pixel clock for graphics video mode, in Hz */
     *(DWORD*)(buffer + 62) = 0; /* FIXME */
 
+    /* 66 - BYTE[190]: reserved, set to zero */
+    memset( buffer + 66, 190, 0 );
+
     return TRUE;
 }
 
@@ -358,10 +478,166 @@ static BOOL INT10_FillModeInformation( BYTE *buffer, WORD mode )
  */
 static void INT10_FillStateInformation( BYTE *buffer, BIOSDATA *data )
 {
+    INT10_HEAP *heap = INT10_GetHeap();
+
+    /* 00 - DWORD: address of static functionality table */
+    *(SEGPTR*)(buffer + 0) = MAKESEGPTR( heap->WineHeapSegment,
+                                         offsetof(INT10_HEAP, 
+                                                  StaticModeSupport) );
+
+    /* 04 - BYTE[30]: copy of BIOS data starting from 0x49 (VideoMode) */
+    memmove( buffer + 4, &data->VideoMode, 30 );
+
+    /* 34 - BYTE: number of rows - 1 */
+    buffer[34] = data->RowsOnScreenMinus1;
+
+    /* 35 - WORD: bytes/character */
+    *(WORD*)(buffer + 35) = data->BytesPerChar;
+
+    /* 37 - BYTE: display combination code of active display */
+    buffer[37] = INT10_DCC;
+
+    /* 38 - BYTE: DCC of alternate display */
+    buffer[38] = 0; /* no secondary display */
+
+    /* 39 - WORD: number of colors supported in current mode (0000h = mono) */
+    *(WORD*)(buffer + 39) = 16; /* FIXME */
+
+    /* 41 - BYTE: number of pages supported in current mode */
+    buffer[41] = 1; /* FIXME */
+
     /*
-     * FIXME: Move VGA info stuff here from dosmem.
+     * 42 - BYTE: number of scan lines active
+     * Values (hex):
+     * 00 = 200
+     * 01 = 350
+     * 02 = 400
+     * 03 = 480
      */
-     memcpy( buffer, &BIOS_EXTRA_PTR->vid_state, sizeof(VIDEOSTATE) );
+    buffer[42] = 3; /* FIXME */
+
+    /* 43 - BYTE: primary character block */
+    buffer[43] = 0; /* FIXME */
+
+    /* 44 - BYTE: secondary character block */
+    buffer[44] = 0; /* FIXME */
+
+    /*
+     * 45 - BYTE: miscellaneous flags
+     * Bits:
+     * 0 - all modes on all displays on
+     * 1 - gray summing on
+     * 2 - monochrome display attached
+     * 3 - default palette loading disabled
+     * 4 - cursor emulation enabled
+     * 5 - 0 = intensity; 1 = blinking
+     * 6 - flat-panel display is active
+     * 7 - unused (0)
+     */
+    /* FIXME: Correct value? */
+    buffer[45] =
+        (data->VGASettings & 0x0f) |
+        ((data->ModeOptions & 1) << 4); /* cursor emulation */
+
+    /*
+     * 46 - BYTE: non-VGA mode support 
+     * Bits:
+     *   0 - BIOS supports information return for adapter interface
+     *   1 - adapter interface driver required
+     *   2 - 16-bit VGA graphics present
+     *   3 - =1 MFI attributes enabled
+     *       =0 VGA attributes enabled
+     *   4 - 132-column mode supported
+     * 5-7 - reserved
+     */
+     buffer[46] = 0; /* FIXME: correct value? */
+
+     /* 47 - BYTE[2]: reserved, set to zero */
+     memset( buffer + 47, 2, 0 );
+
+     /*
+      * 49 - BYTE: video memory available
+      * Values (hex):
+      * 00 - 64K
+      * 01 - 128K
+      * 02 - 192K
+      * 03 - 256K
+      */
+     buffer[49] = (data->ModeOptions & 0x60) >> 5; /* FIXME */
+
+     /*
+      * 50 - BYTE: save pointer state flags
+      * Bits:
+      *   0 - 512 character set active
+      *   1 - dynamic save area present
+      *   2 - alpha font override active
+      *   3 - graphics font override active
+      *   4 - palette override active
+      *   5 - DCC override active
+      * 6-7 - unused (0)
+      */
+     buffer[50] = heap->StaticSavePointerFlags;
+
+     /*
+      * 51 - BYTE: display information and status 
+      * Bits:
+      *   0 - flat-panel display attached
+      *   1 - flat-panel display active
+      *   2 - color display
+      * 3-6 - reserved
+      *   7 - 640x480 flat-panel can be used simultaneously with CRT
+      */
+     buffer[51] = 4; /* FIXME: correct value? */
+
+     /* 52 - BYTE[12]: reserved, set to zero */
+     memset( buffer + 52, 12, 0 );
+}
+
+
+/**********************************************************************
+ *         INT10_GetHeap
+ */
+INT10_HEAP *INT10_GetHeap( void )
+{
+    static INT10_HEAP *heap_pointer = 0;
+
+    if (!heap_pointer)
+    {
+        WORD segment;
+        int  i;
+
+        heap_pointer = DOSVM_AllocDataUMB( sizeof(INT10_HEAP), 
+                                           0,
+                                           &segment );
+
+        for (i = 0; i < 7; i++)
+            heap_pointer->StaticModeSupport[i] = 0xff; /* FIXME */
+
+        heap_pointer->StaticScanlineSupport = 7;  /* FIXME */
+        heap_pointer->StaticNumberCharBlocks = 0; /* FIXME */
+        heap_pointer->StaticActiveCharBlocks = 0; /* FIXME */
+        heap_pointer->StaticMiscFlags = 0x8ff;    /* FIXME */
+        heap_pointer->StaticReserved1 = 0;
+        heap_pointer->StaticSavePointerFlags = 0x3f; /* FIXME */
+        heap_pointer->StaticReserved2 = 0;
+
+        for (i=0; TRUE; i++)
+        {
+            heap_pointer->VesaModeList[i] = INT10_modelist[i].Mode;
+            if (INT10_modelist[i].Mode == 0xffff)
+                break;
+        }
+
+        strcpy( heap_pointer->VesaOEMName, "WINE SVGA BOARD" );
+        strcpy( heap_pointer->VesaVendorName, "WINE" );
+        strcpy( heap_pointer->VesaProductName, "WINE SVGA" );
+        strcpy( heap_pointer->VesaProductRev, "2003" );
+        
+        heap_pointer->VesaCurrentMode = 0; /* Initialized later. */
+        heap_pointer->WineHeapSegment = segment;
+    }
+
+    return heap_pointer;
 }
 
 
@@ -391,6 +667,7 @@ static void INT10_FillStateInformation( BYTE *buffer, BIOSDATA *data )
 static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
 {
     const INT10_MODE *ptr = INT10_FindMode( mode );
+    INT10_HEAP *heap = INT10_GetHeap();
     BOOL clearScreen = TRUE;
 
     if (!ptr)
@@ -410,9 +687,8 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
 
     /*
      * Note that we do not mask out flags here on purpose.
-     *
-     * FIXME: Store VESA mode somewhere.
      */
+    heap->VesaCurrentMode = mode;
     if (mode <= 0xff)
         data->VideoMode = mode;
     else
@@ -553,12 +829,9 @@ static void INT10_HandleVESA( CONTEXT86 *context )
         break;
 
     case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
-        /*
-         * FIXME: This returns wrong value if current mode is VESA mode.
-         */
         SET_AL( context, 0x4f );
-        SET_AH( context, 0x00 ); /* should probly check if a vesa mode has ben set */
-        SET_BX( context, data->VideoMode );
+        SET_AH( context, 0x00 );
+        SET_BX( context, INT10_GetHeap()->VesaCurrentMode );
         break;
 
     case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
@@ -1069,9 +1342,9 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         switch AL_reg(context) {
         case 0x00: /* GET DISPLAY COMBINATION CODE */
             TRACE("Get Display Combination Code\n");
-            SET_AX( context, 0x001a );
-            SET_BL( context, 0x08 ); /* VGA w/ color analog display */
-            SET_BH( context, 0x00 ); /* No secondary hardware */
+            SET_AL( context, 0x1a );      /* Function supported */
+            SET_BL( context, INT10_DCC ); /* Active display */
+            SET_BH( context, 0x00 );      /* No alternate display */
             break;
         case 0x01: /* SET DISPLAY COMBINATION CODE */
             FIXME("Set Display Combination Code - Not Supported\n");
