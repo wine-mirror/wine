@@ -43,6 +43,8 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "winreg.h"
+#include "winternl.h"
 
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -498,32 +500,16 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
     return ret;
 }
 
-
-/***********************************************************************
- *           EVENT_Operation
- *
- * Execute an event operation (set,reset,pulse).
- */
-static BOOL EVENT_Operation( HANDLE handle, enum event_op op )
-{
-    BOOL ret;
-    SERVER_START_REQ( event_op )
-    {
-        req->handle = handle;
-        req->op     = op;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
 /***********************************************************************
  *           PulseEvent    (KERNEL32.@)
  */
 BOOL WINAPI PulseEvent( HANDLE handle )
 {
-    return EVENT_Operation( handle, PULSE_EVENT );
+    NTSTATUS status;
+
+    if ((status = NtPulseEvent( handle, NULL )))
+        SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -533,7 +519,11 @@ BOOL WINAPI PulseEvent( HANDLE handle )
  */
 BOOL WINAPI SetEvent( HANDLE handle )
 {
-    return EVENT_Operation( handle, SET_EVENT );
+    NTSTATUS status;
+
+    if ((status = NtSetEvent( handle, NULL )))
+        SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -543,7 +533,11 @@ BOOL WINAPI SetEvent( HANDLE handle )
  */
 BOOL WINAPI ResetEvent( HANDLE handle )
 {
-    return EVENT_Operation( handle, RESET_EVENT );
+    NTSTATUS status;
+
+    if ((status = NtResetEvent( handle, NULL )))
+        SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
