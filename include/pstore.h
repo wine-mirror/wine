@@ -451,7 +451,7 @@ struct IPStore : public IUnknown
         PST_KEY Key,
         const GUID* pItemType,
         const GUID* pItemSubtype,
-        LPCWSTR* szItemName,
+        LPCWSTR szItemName,
         PST_ACCESSMODE ModeFlags,
         PPST_PROMPTIFO pProomptInfo,
         DWORD dwFlags) = 0;
@@ -622,7 +622,7 @@ struct IPStoreVtbl {
         PST_KEY Key,
         const GUID* pItemType,
         const GUID* pItemSubtype,
-        LPCWSTR* szItemName,
+        LPCWSTR szItemName,
         PST_ACCESSMODE ModeFlags,
         PPST_PROMPTIFO pProomptInfo,
         DWORD dwFlags);
@@ -695,7 +695,7 @@ struct IPStoreVtbl {
     STDMETHOD_(HRESULT,DeleteItem)(THIS_ PST_KEY Key, const GUID* pItemType, const GUID* pItemSubType, LPCWSTR szItemName, PPST_PROMPTINFO pPromptInfo, DWORD dwFlags) PURE; \
     STDMETHOD_(HRESULT,ReadItem)(THIS_ PST_KEY Key, const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName, DWORD* cbData, BYTE** pbData, PPST_PROMPTIFO pPromptInfo, DWORD dwFlags) PURE; \
     STDMETHOD_(HRESULT,WriteItem)(THIS_ PST_KEY Key, const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName, DWORD cbData, BYTE* ppbData, PPST_PROMPTIFO pPromptInfo, DWORD dwDefaultConfirmationStyle, DWORD dwFlags) PURE; \
-    STDMETHOD_(HRESULT,OpenItem)(THIS_ PST_KEY Key, const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR* szItemName, PST_ACCESSMODE ModeFlags, PPST_PROMPTIFO pProomptInfo, DWORD dwFlags) PURE; \
+    STDMETHOD_(HRESULT,OpenItem)(THIS_ PST_KEY Key, const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR szItemName, PST_ACCESSMODE ModeFlags, PPST_PROMPTIFO pProomptInfo, DWORD dwFlags) PURE; \
     STDMETHOD_(HRESULT,CloseItem)(THIS_ PST_KEY Key, const GUID* pItemType, const GUID* pItemSubtype, LPCWSTR* szItemName, DWORD dwFlags) PURE; \
     STDMETHOD_(HRESULT,EnumItems)(THIS_ PST_KEY Key, const GUID* pItemType, const GUID* pItemSubtype, DWORD dwFlags, IEnumPStoreItems** ppenum) PURE;
 
@@ -893,7 +893,7 @@ HRESULT CALLBACK IPStore_OpenItem_Proxy(
     PST_KEY Key,
     const GUID* pItemType,
     const GUID* pItemSubtype,
-    LPCWSTR* szItemName,
+    LPCWSTR szItemName,
     PST_ACCESSMODE ModeFlags,
     PPST_PROMPTIFO pProomptInfo,
     DWORD dwFlags);

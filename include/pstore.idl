@@ -240,7 +240,7 @@ interface IPStore : IUnknown
         [in] PST_KEY Key,
         [in] const GUID* pItemType,
         [in] const GUID* pItemSubtype,
-        [in] LPCWSTR* szItemName,
+        [in] LPCWSTR szItemName,
         [in] PST_ACCESSMODE ModeFlags,
         [in] PPST_PROMPTIFO pProomptInfo,
         [in] DWORD dwFlags );
