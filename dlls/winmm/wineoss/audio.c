@@ -179,6 +179,7 @@ typedef struct {
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     PCMWAVEFORMAT		format;
+    DWORD			volume;
 
     /* OSS information */
     DWORD			dwFragmentSize;		/* size of OSS buffer fragment */
@@ -831,6 +832,7 @@ LONG OSS_WaveInit(void)
         {
             WOutDev[numOutDev].state = WINE_WS_CLOSED;
             WOutDev[numOutDev].ossdev = &OSS_Devices[i];
+	    WOutDev[numOutDev].volume = 0xffffffff;
             numOutDev++;
         }
     }
@@ -1876,6 +1878,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     int 	mixer;
     int		volume;
     DWORD	left, right;
+    DWORD	last_left, last_right;
 
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
 
@@ -1896,7 +1899,13 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     left = LOBYTE(volume);
     right = HIBYTE(volume);
     TRACE("left=%ld right=%ld !\n", left, right);
-    *lpdwVol = ((left * 0xFFFFl) / 100) + (((right * 0xFFFFl) / 100) << 16);
+    last_left  = (LOWORD(WOutDev[wDevID].volume) * 100) / 0xFFFFl;
+    last_right = (HIWORD(WOutDev[wDevID].volume) * 100) / 0xFFFFl;
+    TRACE("last_left=%ld last_right=%ld !\n", last_left, last_right);
+    if (last_left == left && last_right == right)
+	*lpdwVol = WOutDev[wDevID].volume;
+    else
+	*lpdwVol = ((left * 0xFFFFl) / 100) + (((right * 0xFFFFl) / 100) << 16);
     return MMSYSERR_NOERROR;
 }
 
@@ -1931,6 +1940,10 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 	TRACE("volume=%04x\n", (unsigned)volume);
     }
     close(mixer);
+
+    /* save requested volume */
+    WOutDev[wDevID].volume = dwParam;
+
     return MMSYSERR_NOERROR;
 }
 
