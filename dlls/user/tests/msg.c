@@ -75,7 +75,7 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
@@ -84,6 +84,9 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
     { 0 }
 };
 /* SetWindowPos(SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE)
@@ -362,6 +365,11 @@ static const struct message WmCreateCustomDialogSeq[] = {
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_GETTEXT, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETTEXT, sent|optional|defwinproc },
     { WM_ACTIVATE, sent|wparam, 1 },
     { WM_KILLFOCUS, sent|parent },
     { WM_IME_SETCONTEXT, sent|optional },
@@ -369,64 +377,109 @@ static const struct message WmCreateCustomDialogSeq[] = {
     { WM_GETDLGCODE, sent|defwinproc|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCPAINT, sent|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
+    { WM_GETTEXT, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETTEXT, sent|optional|defwinproc },
     { WM_ERASEBKGND, sent },
     { WM_CTLCOLORDLG, sent|defwinproc },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_NCCALCSIZE, sent|optional },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETTEXT, sent|optional|defwinproc },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_CTLCOLORDLG, sent|optional|defwinproc },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
     { 0 }
 };
-/* Creation of a modal dialog (32) */
-static const struct message WmCreateModalDialogSeq[] = { /* FIXME: add */
+/* Calling EndDialog for a custom dialog (32) */
+static const struct message WmEndCustomDialogSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_GETTEXT, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { HCBT_ACTIVATE, hook },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_GETTEXT, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETICON, sent|optional|defwinproc },
+    { WM_GETTEXT, sent|optional|defwinproc },
+    { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent },
+    { 0 }
+};
+/* Creation and destruction of a modal dialog (32) */
+static const struct message WmModalDialogSeq[] = {
     { WM_CANCELMODE, sent|parent },
     { WM_KILLFOCUS, sent|parent },
     { WM_ENABLE, sent|parent|wparam, 0 },
-    /* (window proc creation messages not tracked yet, because...) */
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
-    /* (...the window proc message hook was installed here, IsVisible still FALSE) */
-    { WM_NCACTIVATE, sent|parent|wparam, 0 },
-    { WM_GETTEXT, sent|defwinproc },
-    { WM_ACTIVATE, sent|parent|wparam, 0 },
+    { WM_CHANGEUISTATE, sent|optional },
+    { WM_SHOWWINDOW, sent },
     { WM_WINDOWPOSCHANGING, sent },
-    { WM_WINDOWPOSCHANGING, sent|parent },
     { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
-    /* (setting focus) */
-    { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent },
     { WM_NCPAINT, sent },
-    { WM_GETTEXT, sent|defwinproc },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
     { WM_ERASEBKGND, sent },
-    { WM_CTLCOLORDLG, sent|defwinproc },
+    { WM_CTLCOLORDLG, sent },
     { WM_WINDOWPOSCHANGED, sent },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_NCCALCSIZE, sent },
+    { WM_NCPAINT, sent },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_ERASEBKGND, sent },
+    { WM_CTLCOLORDLG, sent },
     { WM_PAINT, sent },
-    /* FIXME: (bunch of WM_CTLCOLOR* for each control) */
-    { WM_PAINT, sent|parent },
-    { WM_ENTERIDLE, sent|parent|wparam, 0},
-    { WM_SETCURSOR, sent|parent },
-    { 0 }
-};
-/* Destruction of a modal dialog (32) */
-static const struct message WmDestroyModalDialogSeq[] = { /* FIXME: add */
-    /* (inside dialog proc: EndDialog is called) */
+    { WM_CTLCOLORBTN, sent },
+    { WM_TIMER, sent },
     { WM_ENABLE, sent|parent|wparam, 1 },
-    { WM_SETFOCUS, sent },
     { WM_WINDOWPOSCHANGING, sent },
-    { WM_NCPAINT, sent|parent },
-    { WM_GETTEXT, sent|defwinproc },
-    { WM_ERASEBKGND, sent|parent },
     { WM_WINDOWPOSCHANGED, sent },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { HCBT_ACTIVATE, hook },
     { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
     { WM_ACTIVATE, sent|wparam, 0 },
-    { WM_WINDOWPOSCHANGING, sent },
-    { WM_WINDOWPOSCHANGING, sent|parent },
-    { WM_NCACTIVATE, sent|parent|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
-    { WM_ACTIVATE, sent|parent|wparam, 1 },
-    { WM_KILLFOCUS, sent },
-    { WM_SETFOCUS, sent|parent },
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { HCBT_SETFOCUS, hook },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
     { 0 }
@@ -467,6 +520,11 @@ static const struct message WmSetMenuNonVisibleSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETICON, sent|optional },
+    { WM_GETTEXT, sent|optional },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
     { 0 }
 };
 /* SetMenu for NonVisible windows with no size change */
@@ -481,12 +539,15 @@ static const struct message WmSetMenuVisibleSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_ACTIVATE, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_NCPAINT, sent|wparam|optional, 1 },
+    { WM_ERASEBKGND, sent|optional },
     { 0 }
 };
 /* SetMenu for Visible windows with no size change */
@@ -494,7 +555,7 @@ static const struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_NCPAINT, sent|wparam, 1 },
-    { WM_GETTEXT, sent|defwinproc },
+    { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
     { WM_ACTIVATE, sent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
@@ -513,6 +574,7 @@ static const struct message WmSetRedrawTrueSeq[] =
     { 0 }
 };
 
+static int after_end_dialog;
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
 
@@ -602,7 +664,7 @@ static void ok_sequence(const struct message *expected, const char *context)
 
   todo_wine {
     if (expected->message || actual->message)
-	ok (FALSE, "%s: the msg sequence is not complete\n", context);
+	ok (FALSE, "%s: the msg sequence is not complete (got 0x%04x)\n", context, actual->message);
   }
 
     flush_sequence();
@@ -631,6 +693,23 @@ static void test_WM_SETREDRAW(HWND hwnd)
     SetWindowLongA(hwnd, GWL_STYLE, style);
 
     flush_sequence();
+}
+
+static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg;
+
+    trace("dialog: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
+    if (message == WM_INITDIALOG) SetTimer( hwnd, 1, 100, NULL );
+    if (message == WM_TIMER) EndDialog( hwnd, 0 );
+    return 0;
 }
 
 /* test if we receive the right sequence of messages */
@@ -768,7 +847,18 @@ static void test_messages(void)
                            0, 0, 100, 100, hparent, 0, 0, NULL);
     ok(hwnd != 0, "Failed to create custom dialog window\n");
     ok_sequence(WmCreateCustomDialogSeq, "CreateCustomDialog");
+
+    flush_sequence();
+    after_end_dialog = 1;
+    EndDialog( hwnd, 0 );
+    ok_sequence(WmEndCustomDialogSeq, "EndCustomDialog");
+
     DestroyWindow(hwnd);
+    after_end_dialog = 0;
+
+    flush_sequence();
+    DialogBoxA( 0, "TEST_DIALOG", hparent, TestModalDlgProcA );
+    ok_sequence(WmModalDialogSeq, "ModalDialog");
 
     DestroyWindow(hparent);
     flush_sequence();
@@ -906,7 +996,10 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
     DefDlgProcA(hwnd, DM_SETDEFID, 1, 0);
     ret = DefDlgProcA(hwnd, DM_GETDEFID, 0, 0);
-    ok(HIWORD(ret) == DC_HASDEFID, "DM_GETDEFID should return DC_HASDEFID\n");
+    if (after_end_dialog)
+        ok( ret == 0, "DM_GETDEFID should return 0 after EndDialog, got %lx\n", ret );
+    else
+        ok(HIWORD(ret) == DC_HASDEFID, "DM_GETDEFID should return DC_HASDEFID, got %lx\n", ret);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
