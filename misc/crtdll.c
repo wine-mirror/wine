@@ -2191,3 +2191,11 @@ LPSTR __cdecl CRTDLL__strtime (LPSTR date)
 {	FIXME("%p stub\n", date);
 	return 0;
 }
+
+/*********************************************************************
+ *                  _except_handler2  (CRTDLL.78)
+ */
+INT __cdecl CRTDLL__except_handler2 (void *a0, void *a1, void *a2, void *a3)
+{	FIXME ("%p %p %p %p stub\n", a0, a1, a2, a3);
+	return 0;
+}

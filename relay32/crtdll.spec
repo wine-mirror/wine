@@ -80,7 +80,7 @@ init    CRTDLL_Init
  75 extern _environ_dll CRTDLL_environ_dll
  76 stub _eof
  77 cdecl _errno() CRTDLL__errno
- 78 stub _except_handler2
+ 78 cdecl _except_handler2(ptr ptr ptr ptr) CRTDLL__except_handler2
  79 stub _execl
  80 stub _execle
  81 stub _execlp
