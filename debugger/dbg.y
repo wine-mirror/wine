@@ -75,7 +75,7 @@ int yyerror(char *);
 %type <type> type_cast type_expr
 %type <value> expr_addr lval_addr
 %type <integer> expr_value
-%type <string> pathname
+%type <string> pathname identifier
 
 %type <listing> list_arg
 
@@ -196,14 +196,14 @@ print_command:
 
 break_command:
       tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpoint( &$3, NULL ); DEBUG_FreeExprMem(); }
-    | tBREAK tIDENTIFIER tEOL  { DEBUG_AddBreakpointFromId($2, -1); }
-    | tBREAK tIDENTIFIER ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
+    | tBREAK identifier tEOL   { DEBUG_AddBreakpointFromId($2, -1); }
+    | tBREAK identifier ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
     | tBREAK tNUM tEOL	       { DEBUG_AddBreakpointFromLineno($2); }
     | tBREAK tEOL              { DEBUG_AddBreakpointFromLineno(-1); }
 
 watch_command:
       tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); DEBUG_FreeExprMem(); }
-    | tWATCH tIDENTIFIER tEOL   { DEBUG_AddWatchpointFromId($2); }
+    | tWATCH identifier tEOL    { DEBUG_AddWatchpointFromId($2); }
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
@@ -336,6 +336,12 @@ lvalue:
     | lvalue '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
     | lvalue '[' expr ']'	 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); } 
 	
+identifier:
+      tIDENTIFIER 		 { $$ = $1; }
+    | identifier '.' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 1 + strlen($3)+ 1);
+                                   sprintf(ptr, "%s.%s", $1, $3); $$ = DEBUG_MakeSymbol(ptr);
+                                   DBG_free(ptr); } 
+
 %%
 
 static void issue_prompt(void)
@@ -375,6 +381,9 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
       break;
    case DEBUG_STATUS_BAD_TYPE:
       DEBUG_Printf(DBG_CHN_MESG, "No type or type mismatch\n");
+      break;
+   case DEBUG_STATUS_NO_FIELD:
+      DEBUG_Printf(DBG_CHN_MESG, "No such field in structure or union\n");
       break;
    default:
       DEBUG_Printf(DBG_CHN_MESG, "Exception %lx\n", GetExceptionCode());

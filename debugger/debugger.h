@@ -286,6 +286,7 @@ extern void DEBUG_Exit( DWORD );
 
   /* debugger/debug.l */
 extern void DEBUG_FlushSymbols(void);
+extern char*DEBUG_MakeSymbol(const char*);
 
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);
@@ -534,6 +535,7 @@ extern HANDLE dbg_heap;
 #define	DEBUG_STATUS_NO_SYMBOL		(DEBUG_STATUS_OFFSET+1)
 #define	DEBUG_STATUS_DIV_BY_ZERO	(DEBUG_STATUS_OFFSET+2)
 #define	DEBUG_STATUS_BAD_TYPE		(DEBUG_STATUS_OFFSET+3)
+#define DEBUG_STATUS_NO_FIELD		(DEBUG_STATUS_OFFSET+4)
 
 extern DBG_INTVAR		DEBUG_IntVars[];
 

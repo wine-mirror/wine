@@ -333,9 +333,10 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
       break;
     case EXPR_TYPE_SYMBOL:
       if( !DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE) )
-	{    
-	   RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
-	}
+      {    
+	  DEBUG_Printf(DBG_CHN_MESG, "%s\n", exp->un.symbol.name);
+	  RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
+      }
       break;
     case EXPR_TYPE_PSTRUCT:
       exp1 =  DEBUG_EvalExpr(exp->un.structure.exp1);
@@ -344,24 +345,32 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	   RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
       rtn.cookie = DV_TARGET;
-      rtn.addr.off = DEBUG_TypeDerefPointer(&exp1, &type1);
-      if( type1 == NULL )
+      rtn.addr.off = DEBUG_TypeDerefPointer(&exp1, &rtn.type);
+      if( rtn.type == NULL )
 	{
 	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
-      rtn.type = type1;
-      DEBUG_FindStructElement(&rtn, exp->un.structure.element_name,
-			      &exp->un.structure.result);
+      if (!DEBUG_FindStructElement(&rtn, exp->un.structure.element_name,
+				   &exp->un.structure.result))
+      {
+	  DEBUG_Printf(DBG_CHN_MESG, "%s\n", exp->un.structure.element_name);
+	  RaiseException(DEBUG_STATUS_NO_FIELD, 0, 0, NULL);
+      }
+
       break;
     case EXPR_TYPE_STRUCT:
       exp1 =  DEBUG_EvalExpr(exp->un.structure.exp1);
       if( exp1.type == NULL )
-	{
+      {
 	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
-	}
+      }
       rtn = exp1;
-      DEBUG_FindStructElement(&rtn, exp->un.structure.element_name,
-			      &exp->un.structure.result);
+      if (!DEBUG_FindStructElement(&rtn, exp->un.structure.element_name,
+				   &exp->un.structure.result))
+      {
+	  DEBUG_Printf(DBG_CHN_MESG, "%s\n", exp->un.structure.element_name);
+	  RaiseException(DEBUG_STATUS_NO_FIELD, 0, 0, NULL);
+      }
       break;
     case EXPR_TYPE_CALL:
       /*

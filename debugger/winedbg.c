@@ -297,25 +297,26 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 
     if (!is_debug) {
         if (!addr.seg)
-            DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (0x%08lx).\n", addr.off);
+            DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (0x%08lx)", addr.off);
         else
             switch(DEBUG_GetSelectorType(addr.seg))
             {
             case MODE_32:
-                DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (%04lx:%08lx).\n", addr.seg, addr.off);
+                DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (%04lx:%08lx)", addr.seg, addr.off);
                 break;
             case MODE_16:
-                DEBUG_Printf(DBG_CHN_MESG, " in 16-bit code (%04lx:%04lx).\n", addr.seg, addr.off);
+                DEBUG_Printf(DBG_CHN_MESG, " in 16-bit code (%04lx:%04lx)", addr.seg, addr.off);
                 break;
             case MODE_VM86:
-                DEBUG_Printf(DBG_CHN_MESG, " in vm86 code (%04lx:%04lx).\n", addr.seg, addr.off);
+                DEBUG_Printf(DBG_CHN_MESG, " in vm86 code (%04lx:%04lx)", addr.seg, addr.off);
                 break;
             case MODE_INVALID:
-                DEBUG_Printf(DBG_CHN_MESG, "bad CS (%lx)\n", addr.seg);
+                DEBUG_Printf(DBG_CHN_MESG, " bad CS (%lx)", addr.seg);
                 break;
         }
+	DEBUG_Printf(DBG_CHN_MESG, ".\n");
     }
-
+ 
     DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
 
     if (!force && is_debug && 
@@ -505,9 +506,9 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
             DEBUG_Printf(DBG_CHN_MESG, "%08lx", rec->ExceptionCode);
             break;
         }
-	DEBUG_Printf(DBG_CHN_MESG, "\n");
     }
 
+#if 0
     DEBUG_Printf(DBG_CHN_TRACE, 
 		 "Entering debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
 #ifdef __i386__
@@ -516,6 +517,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		 0L, 0L,
 #endif
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
+#endif
 
     if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode)) {
 	DEBUG_interactiveP = TRUE;
@@ -530,6 +532,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
     }
     *cont = DEBUG_ExceptionEpilog();
 
+#if 0
     DEBUG_Printf(DBG_CHN_TRACE, 
 		 "Exiting debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
 #ifdef __i386__
@@ -538,6 +541,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		 0L, 0L,
 #endif
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
+#endif
 
     return ret;
 }

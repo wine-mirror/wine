@@ -282,7 +282,7 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 	 if (size < pe_seg.VirtualAddress + pe_seg.SizeOfRawData)
 	     size = pe_seg.VirtualAddress + pe_seg.SizeOfRawData;
      }
-     
+
      /* FIXME: we make the assumption that hModule == base */
      wmod = DEBUG_RegisterPEModule((HMODULE)base, base, size, name);
      if (wmod) {
@@ -291,9 +291,9 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 	     dil = DEBUG_RegisterMSCDebugInfo(wmod, hFile, &pe_header, nth_ofs);
 	 if (dil != DIL_LOADED)
 	     dil = DEBUG_RegisterPEDebugInfo(wmod, hFile, &pe_header, nth_ofs); 
+	 wmod->dil = dil;
      }
 
-     if (wmod) wmod->dil = dil;
      DEBUG_ReportDIL(dil, "32bit DLL", name, base);
 }
 

@@ -1494,11 +1494,9 @@ b =&gt; 8 bit unsigned hexadecimal integer
 	    </listitem>
 	    <listitem>
 	      <para>
-	        Because of previous rule, fields access from a struct must be written as:
-<screen>
-	my_struct . my_field	
-</screen>
-	        (note the spaces after and before the dot).
+	        The debugger will try to distinguish this writing with structure operations. 
+		Therefore, you can only use the previous writing in operations manipulating
+		symbols ({break|watch}points, type information command...).
 	      </para>
 	    </listitem>
 	  </itemizedlist>

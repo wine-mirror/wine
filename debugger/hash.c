@@ -1214,6 +1214,8 @@ DEBUG_InfoLocals(void)
       return FALSE;
     }
 
+  DEBUG_Printf(DBG_CHN_MESG, "%s:\n", curr_func->name);
+
   for(i=0; i < curr_func->n_locals; i++ )
     {
       /*
@@ -1234,12 +1236,14 @@ DEBUG_InfoLocals(void)
 	  continue;
 	}
       
+      DEBUG_PrintTypeCast(curr_func->local_vars[i].type);
+
       if( curr_func->local_vars[i].regno != 0 )
 	{
 	  ptr = (unsigned int *)(((DWORD)&DEBUG_context)
 				 + reg_ofs[curr_func->local_vars[i].regno - 1]);
-	  DEBUG_Printf(DBG_CHN_MESG, "%s:%s (optimized into register $%s) == 0x%8.8x\n",
-		       curr_func->name, curr_func->local_vars[i].name,
+	  DEBUG_Printf(DBG_CHN_MESG, " %s (optimized into register $%s) == 0x%8.8x\n",
+		       curr_func->local_vars[i].name,
 		       reg_name[curr_func->local_vars[i].regno - 1],
 		       *ptr);
 	}
@@ -1247,8 +1251,8 @@ DEBUG_InfoLocals(void)
 	{
 	  DEBUG_READ_MEM_VERBOSE((void*)(ebp + curr_func->local_vars[i].offset), 
 				 &val, sizeof(val));
-	  DEBUG_Printf(DBG_CHN_MESG, "%s:%s == 0x%8.8x\n",
-		       curr_func->name, curr_func->local_vars[i].name, val);
+	  DEBUG_Printf(DBG_CHN_MESG, " %s == 0x%8.8x\n",
+		       curr_func->local_vars[i].name, val);
 	}
     }
 

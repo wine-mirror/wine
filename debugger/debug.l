@@ -18,7 +18,6 @@
 	    YY_FATAL_ERROR( "read() in flex scanner failed" );
 
 static int dbg_read(char * buf, int size);
-static char * DEBUG_MakeSymbol(char *);
 
 #endif  /* DONT_USE_READLINE */
 
@@ -30,7 +29,7 @@ static int syntax_error;
 DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdiswx]
-IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~@]*
+IDENTIFIER [_a-zA-Z~][_a-zA-Z0-9~@]*
 PATHNAME   [/_a-zA-Z\.~][/_a-zA-Z0-9\.~@]*
 STRING     \"[^\n"]+\"
 
@@ -116,9 +115,9 @@ STRING     \"[^\n"]+\"
 <INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
-<INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
-<INITIAL>watch|watc|wat			{ BEGIN(PATH_EXPECTED); return tWATCH; }
-<INITIAL>whatis|whati|what		{ BEGIN(PATH_EXPECTED); return tWHATIS; }
+<INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(NOCMD); return tBREAK; }
+<INITIAL>watch|watc|wat			{ BEGIN(NOCMD); return tWATCH; }
+<INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }
 <INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
 <NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
@@ -247,7 +246,7 @@ static int dbg_read(char * buf, int size)
 static char *local_symbols[30];
 static int next_symbol;
 
-static char * DEBUG_MakeSymbol(char * symbol)
+char * DEBUG_MakeSymbol(const char * symbol)
 {
         assert(0 <= next_symbol && next_symbol < (sizeof(local_symbols) / sizeof(local_symbols[0])));
 	return local_symbols[next_symbol++] = DBG_strdup(symbol);
