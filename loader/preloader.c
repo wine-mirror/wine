@@ -156,9 +156,10 @@ __ASM_GLOBAL_FUNC(_start,
  *  %x prints a hex number
  *  %s prints a string
  */
-static void wld_vsprintf(char *str, char *fmt, va_list args )
+static void wld_vsprintf(char *str, const char *fmt, va_list args )
 {
-    char *p = fmt;
+    static const char hex_chars[16] = "0123456789abcdef";
+    const char *p = fmt;
 
     while( *p )
     {
@@ -167,15 +168,10 @@ static void wld_vsprintf(char *str, char *fmt, va_list args )
             p++;
             if( *p == 'x' )
             {
-                int ch, i, x = va_arg( args, int );
+                int i;
+                unsigned int x = va_arg( args, unsigned int );
                 for(i=7; i>=0; i--)
-                {
-                    ch = (x>>(i*4))&0xf;
-                    ch += '0';
-                    if(ch>'9')
-                        ch+=('A'-10-'0');
-                    *str++ = ch;
-                }
+                    *str++ = hex_chars[(x>>(i*4))&0xf];
             }
             else if( *p == 's' )
             {
@@ -192,7 +188,7 @@ static void wld_vsprintf(char *str, char *fmt, va_list args )
     *str = 0;
 }
 
-static void wld_printf(char *fmt, ... )
+static void wld_printf(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
@@ -203,7 +199,7 @@ static void wld_printf(char *fmt, ... )
     write(2, buffer, strlen(buffer));
 }
 
-static void fatal_error(char *fmt, ... )
+static void fatal_error(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
@@ -253,7 +249,11 @@ static void set_auxiliary( ElfW(auxv_t) *av, int type, long int val )
 {
   for ( ; av->a_type != AT_NULL; av++)
     if( av->a_type == type )
+    {
       av->a_un.a_val = val;
+      return;
+    }
+  wld_printf( "wine-preloader: cannot set auxiliary value %x, please report\n", type );
 }
 
 /*
@@ -525,7 +525,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, char *var )
     const ElfW(Phdr) *ph;
     const ElfW(Sym) *symtab = NULL;
     const char *strings = NULL;
-    Elf_Symndx i, symtabend = 0;
+    uint32_t i, symtabend = 0;
 
     /* check the values */
 #ifdef DUMP_SYMS
@@ -556,7 +556,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, char *var )
         if( dyn->d_tag == DT_SYMTAB )
             symtab = (const ElfW(Sym) *)dyn->d_un.d_ptr;
         if( dyn->d_tag == DT_HASH )
-            symtabend = *((const Elf_Symndx *)dyn->d_un.d_ptr + 1);
+            symtabend = *((const uint32_t *)dyn->d_un.d_ptr + 1);
 #ifdef DUMP_SYMS
         wld_printf("%x %x\n", dyn->d_tag, dyn->d_un.d_ptr );
 #endif
