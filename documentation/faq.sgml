@@ -160,7 +160,7 @@
           on non-x86 platforms: run both Wine and the application inside the
           CPU emulator. As long as the emulator provides a standard Unix
           environment, Wine should only need minimal modifications. What
-          performance you loose due to Wine running inside the emulator
+          performance you lose due to Wine running inside the emulator
           rather than natively, you gain in complexity inside of Wine.
           Furthermore, if the emulator is fast enough to run Windows
           applications, Photoshop for instance, then it should be fast enough
@@ -1343,7 +1343,7 @@ wine myprogram.exe
 
       <qandaentry>
       <question id="bash-wine-Command-not-found-What-can-I-do">
-        <para>bash "wine: Command not found" What can I do?</para>
+        <para>bash says "wine: Command not found" What can I do?</para>
       </question>
       <answer>
         <para>

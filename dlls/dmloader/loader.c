@@ -181,7 +181,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 	desc.dwSize = sizeof (DMUS_OBJECTDESC); 
 	IDirectMusicObject_GetDescriptor (pObject, &desc);
 	
-	/* tests with native dlls show that descriptor, which is recieved by GetDescriptor doesn't contain filepath 
+	/* tests with native dlls show that descriptor, which is received by GetDescriptor doesn't contain filepath
 	   therefore we must copy it from input description	*/	
 	if (pDesc->dwValidData & DMUS_OBJ_FILENAME || desc.dwValidData & DMUS_OBJ_OBJECT) {
 		DMUS_PRIVATE_CACHE_ENTRY CacheEntry;

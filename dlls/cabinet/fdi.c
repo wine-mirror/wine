@@ -2167,7 +2167,7 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
  *   pfdin.  The only part of that structure which is assigned for every callback
  *   is the pv element, which contains the arbitrary value which was passed to
  *   FDICopy in the pvUser argument (psz1 is also used each time, but its meaning
- *   is highly dependant on fdint).
+ *   is highly dependent on fdint).
  *   
  *   If you encounter unknown notifications, you should return zero if you want
  *   decompression to continue (or -1 to abort).  All strings used in the
