@@ -46,6 +46,7 @@ UINT nClipboardFormat;
 LPCTSTR strClipboardFormat = _T("TODO: SET CORRECT FORMAT");
 
 
+#define MAX_LOADSTRING  100
 TCHAR szTitle[MAX_LOADSTRING];
 TCHAR szFrameClass[MAX_LOADSTRING];
 TCHAR szChildClass[MAX_LOADSTRING];

@@ -28,18 +28,14 @@
 
 #include "main.h"
 
-extern HINSTANCE hInst;
-
 static INT_PTR CALLBACK AboutDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HWND    hLicenseEditWnd;
     TCHAR   strLicense[0x1000];
 
     switch (message) {
     case WM_INITDIALOG:
-        hLicenseEditWnd = GetDlgItem(hDlg, IDC_LICENSE_EDIT);
-        LoadString(hInst, IDS_LICENSE, strLicense, 0x1000);
-        SetWindowText(hLicenseEditWnd, strLicense);
+        LoadString(hInst, IDS_LICENSE, strLicense, COUNT_OF(strLicense));
+        SetDlgItemText(hDlg, IDC_LICENSE_EDIT, strLicense);
         return TRUE;
     case WM_COMMAND:
         if ((LOWORD(wParam) == IDOK) || (LOWORD(wParam) == IDCANCEL)) {

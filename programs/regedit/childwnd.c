@@ -20,38 +20,26 @@
 
 #define WIN32_LEAN_AND_MEAN     /* Exclude rarely-used stuff from Windows headers */
 #include <windows.h>
-#include <tchar.h>
 #include <commctrl.h>
+#include <tchar.h>
+#include <stdio.h>
 
 #include "main.h"
 
-ChildWnd* pChildWnd;
+ChildWnd* g_pChildWnd;
 
 /*******************************************************************************
  * Local module support methods
  */
 
-/*FIXME: why do we need this, we should remove it, we have already FindRegRoot */
-static void MakeFullRegPath(HWND hwndTV, HTREEITEM hItem, LPTSTR keyPath, int* pPathLen, int max)
+static LPCTSTR get_root_key_name(HKEY hRootKey)
 {
-    TVITEM item;
-    item.mask = TVIF_PARAM;
-    item.hItem = hItem;
-    if (TreeView_GetItem(hwndTV, &item)) {
-        if (item.hItem != TreeView_GetRoot(hwndTV)) {
-            /* recurse */
-            MakeFullRegPath(hwndTV, TreeView_GetParent(hwndTV, hItem), keyPath, pPathLen, max);
-            keyPath[*pPathLen] = _T('\\');
-            ++(*pPathLen);
-        }
-        item.mask = TVIF_TEXT;
-        item.hItem = hItem;
-        item.pszText = &keyPath[*pPathLen];
-        item.cchTextMax = max - *pPathLen;
-        if (TreeView_GetItem(hwndTV, &item)) {
-            *pPathLen += _tcslen(item.pszText);
-        }
-    }
+    if (hRootKey == HKEY_CLASSES_ROOT) return _T("HKEY_CLASSES_ROOT");
+    if (hRootKey == HKEY_CURRENT_USER) return _T("HKEY_CURRENT_USER");
+    if (hRootKey == HKEY_LOCAL_MACHINE) return _T("HKEY_LOCAL_MACHINE");
+    if (hRootKey == HKEY_USERS) return _T("HKEY_USERS");
+    if (hRootKey == HKEY_CURRENT_CONFIG) return _T("HKEY_CURRENT_CONFIG");
+    return _T("UKNOWN HKEY, PLEASE REPORT");
 }
 
 static void draw_splitbar(HWND hWnd, int x)
@@ -127,13 +115,15 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static int last_split;
-    /*    ChildWnd* pChildWnd = (ChildWnd*)GetWindowLong(hWnd, GWL_USERDATA); */
+    ChildWnd* pChildWnd = g_pChildWnd;
 
     switch (message) {
     case WM_CREATE:
-        pChildWnd = (ChildWnd*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+        g_pChildWnd = pChildWnd = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
         if (!pChildWnd) return 0;
+        _tcsncpy(pChildWnd->szPath, _T("My Computer"), MAX_PATH);
         pChildWnd->nSplitPos = 250;
+        pChildWnd->hWnd = hWnd;
         pChildWnd->hTreeWnd = CreateTreeView(hWnd, pChildWnd->szPath, TREE_WINDOW);
         pChildWnd->hListWnd = CreateListView(hWnd, LIST_WINDOW/*, pChildWnd->szPath*/);
         break;
@@ -157,6 +147,8 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         }
         goto def;
     case WM_DESTROY:
+        HeapFree(GetProcessHeap(), 0, pChildWnd);
+        pChildWnd = NULL;
         PostQuitMessage(0);
         break;
     case WM_LBUTTONDOWN: {
@@ -234,17 +226,21 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             case TVN_ITEMEXPANDING:
                 return !OnTreeExpanding(pChildWnd->hTreeWnd, (NMTREEVIEW*)lParam);
             case TVN_SELCHANGED: {
-                    HKEY hKey;
-                    TCHAR keyPath[1000];
-                    int keyPathLen = 0;
-                    keyPath[0] = _T('\0');
-                    hKey = FindRegRoot(pChildWnd->hTreeWnd, ((NMTREEVIEW*)lParam)->itemNew.hItem, keyPath, &keyPathLen, sizeof(keyPath)/sizeof(TCHAR));
-                    RefreshListView(pChildWnd->hListWnd, hKey, keyPath);
+                    LPCTSTR keyPath, rootName;
+		    LPTSTR fullPath;
+                    HKEY hRootKey;
 
-                    keyPathLen = 0;
-                    keyPath[0] = _T('\0');
-                    MakeFullRegPath(pChildWnd->hTreeWnd, ((NMTREEVIEW*)lParam)->itemNew.hItem, keyPath, &keyPathLen, sizeof(keyPath)/sizeof(TCHAR));
-                    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)keyPath);
+		    keyPath = GetItemPath(pChildWnd->hTreeWnd, ((NMTREEVIEW*)lParam)->itemNew.hItem, &hRootKey);
+		    if (keyPath) {
+                        RefreshListView(pChildWnd->hListWnd, hRootKey, keyPath);
+			rootName = get_root_key_name(hRootKey);
+			fullPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(rootName) + 1 + lstrlen(keyPath) + 1) * sizeof(TCHAR));
+			if (fullPath) {
+			    _stprintf(fullPath, "%s\\%s", rootName, keyPath);
+			    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
+			    HeapFree(GetProcessHeap(), 0, fullPath);
+			}
+		    }
                 }
                 break;
             default:

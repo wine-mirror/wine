@@ -28,11 +28,11 @@
 #define TREE_WINDOW     2002
 #define LIST_WINDOW     2003
 
-#define MAX_LOADSTRING  100
 #define	SPLIT_WIDTH	5
-#define MAX_NAME_LEN    500
 
 #define COUNT_OF(a) (sizeof(a)/sizeof(a[0]))
+
+extern HINSTANCE hInst;
 
 /******************************************************************************/
 
@@ -55,7 +55,7 @@ typedef struct {
     WINDOWPLACEMENT pos;
     TCHAR   szPath[MAX_PATH];
 } ChildWnd;
-extern ChildWnd* pChildWnd;
+extern ChildWnd* g_pChildWnd;
 
 /*******************************************************************************
  * Global Variables:
@@ -84,14 +84,15 @@ extern void UpdateStatusBar(void);
 
 /* listview.c */
 extern HWND CreateListView(HWND hwndParent, int id);
-extern BOOL RefreshListView(HWND hwndTV, HKEY hKey, LPTSTR keyPath);
+extern BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCTSTR keyPath);
+extern LPCTSTR GetValueName(HWND hwndLV);
 
 /* treeview.c */
 extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
-extern HKEY FindRegRoot(HWND hwndTV, HTREEITEM hItem, LPTSTR keyPath, int* pPathLen, int max);
+extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 
 /* edit.c */
-BOOL ModifyValue(HWND hwnd, HKEY hKey, LPTSTR valueName);
+BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
 
 #endif /* __MAIN_H__ */

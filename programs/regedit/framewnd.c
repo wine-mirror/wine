@@ -38,8 +38,6 @@
 
 static BOOL bInMenuLoop = FALSE;        /* Tells us if we are in the menu loop */
 
-static HWND hChildWnd;
-
 /*******************************************************************************
  * Local module support methods
  */
@@ -60,7 +58,7 @@ static void resize_frame_rect(HWND hWnd, PRECT prect)
         GetClientRect(hStatusBar, &rt);
         prect->bottom -= rt.bottom;
     }
-    MoveWindow(hChildWnd, prect->left, prect->top, prect->right, prect->bottom, TRUE);
+    MoveWindow(g_pChildWnd->hWnd, prect->left, prect->top, prect->right, prect->bottom, TRUE);
 }
 
 void resize_frame_client(HWND hWnd)
@@ -437,21 +435,20 @@ BOOL RefreshView(HWND hWnd)
  */
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HKEY hKeyRoot, hKey;
-    TCHAR keyPath[1000] = { 0 };
-    TCHAR valueName[255] = { 0 };
-    int keyPathLen = 0, item;
+    HKEY hKeyRoot = 0, hKey = 0;
+    LPCTSTR keyPath;
+    LPCTSTR valueName;
     BOOL result = TRUE;
     LONG lRet;
 
-    hKeyRoot = FindRegRoot(pChildWnd->hTreeWnd, 0, keyPath, &keyPathLen, sizeof(keyPath)/sizeof(TCHAR));
-    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
-    if (lRet != ERROR_SUCCESS) hKey = 0;
-    item = ListView_GetNextItem(pChildWnd->hListWnd, -1, LVNI_FOCUSED);
-    if (item != -1) ListView_GetItemText(pChildWnd->hListWnd, item, 0, valueName, sizeof(valueName)/sizeof(TCHAR));
+    keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
+    valueName = GetValueName(g_pChildWnd->hListWnd);
+    if (keyPath) {
+        lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
+        if (lRet != ERROR_SUCCESS) hKey = 0;
+    }
 
     switch (LOWORD(wParam)) {
-        /* Parse the menu selections:*/
     case ID_REGISTRY_IMPORTREGISTRYFILE:
         ImportRegistryFile(hWnd);
         break;
@@ -467,7 +464,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case ID_EDIT_MODIFY:
         if (ModifyValue(hWnd, hKey, valueName))
-            RefreshListView(pChildWnd->hListWnd, hKeyRoot, keyPath);
+            RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
         break;
     case ID_EDIT_COPYKEYNAME:
         CopyKeyName(hWnd, _T(""));
@@ -486,22 +483,17 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_VIEW_REFRESH:
         RefreshView(hWnd);
         break;
-        /*	case ID_OPTIONS_TOOLBAR:*/
-        /*		toggle_child(hWnd, LOWORD(wParam), hToolBar);*/
-        /*      break;*/
+   /*case ID_OPTIONS_TOOLBAR:*/
+   /*	toggle_child(hWnd, LOWORD(wParam), hToolBar);*/
+   /*    break;*/
     case ID_VIEW_STATUSBAR:
         toggle_child(hWnd, LOWORD(wParam), hStatusBar);
         break;
     case ID_HELP_HELPTOPICS:
-        /*		WinHelp(hWnd, _T("regedit"), HELP_CONTENTS, 0);*/
         WinHelp(hWnd, _T("regedit"), HELP_FINDER, 0);
         break;
     case ID_HELP_ABOUT:
-#ifdef WINSHELLAPI
-        /*        ShellAbout(hWnd, szTitle, _T(""), LoadIcon(hInst, (LPCTSTR)IDI_REGEDIT));*/
-#else
         ShowAboutBox(hWnd);
-#endif
         break;
     default:
         result = FALSE;
@@ -524,23 +516,15 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static ChildWnd* pChildWnd = NULL;
-
     switch (message) {
-    case WM_CREATE: {
-            pChildWnd = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
-            _tcsncpy(pChildWnd->szPath, _T("My Computer"), MAX_PATH);
-            hChildWnd = CreateWindowEx(0, szChildClass, _T("regedit child window"),
-                                       /*                    WS_CHILD|WS_CLIPCHILDREN|WS_VISIBLE|WS_BORDER,*/
-                                       WS_CHILD|WS_VISIBLE,
-                                       CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                                       hWnd, (HMENU)0, hInst, pChildWnd);
-        }
+    case WM_CREATE:
+        CreateWindowEx(0, szChildClass, _T("regedit child window"), WS_CHILD | WS_VISIBLE,
+                       CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                       hWnd, (HMENU)0, hInst, 0);
         break;
     case WM_COMMAND:
-        if (!_CmdWndProc(hWnd, message, wParam, lParam)) {
+        if (!_CmdWndProc(hWnd, message, wParam, lParam))
             return DefWindowProc(hWnd, message, wParam, lParam);
-        }
         break;
     case WM_SIZE:
         resize_frame_client(hWnd);
@@ -557,10 +541,6 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         OnMenuSelect(hWnd, LOWORD(wParam), HIWORD(wParam), (HMENU)lParam);
         break;
     case WM_DESTROY:
-        if (pChildWnd) {
-            HeapFree(GetProcessHeap(), 0, pChildWnd);
-            pChildWnd = NULL;
-        }
         WinHelp(hWnd, _T("regedit"), HELP_QUIT, 0);
         PostQuitMessage(0);
     default:

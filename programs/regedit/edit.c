@@ -33,7 +33,7 @@
 #include "regproc.h"
 #include "resource.h"
 
-static TCHAR* editValueName;
+static const TCHAR* editValueName;
 static TCHAR* stringValueData;
 
 void error(HWND hwnd, INT resId, ...)
@@ -91,7 +91,7 @@ INT_PTR CALLBACK modify_string_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
     return FALSE;
 }
 
-BOOL ModifyValue(HWND hwnd, HKEY hKey, LPTSTR valueName)
+BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
 {
     DWORD valueDataLen;
     DWORD type;
