@@ -80,6 +80,7 @@ LPSTR    COMCTL32_aSubclass = (LPSTR)NULL;
 HMODULE COMCTL32_hModule = 0;
 LANGID  COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
 HBRUSH  COMCTL32_hPattern55AABrush = (HANDLE)NULL;
+COMCTL32_SysColor  comctl32_color;
 
 static HBITMAP COMCTL32_hPattern55AABitmap = (HANDLE)NULL;
 
@@ -123,6 +124,9 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             /* create local pattern brush */
             COMCTL32_hPattern55AABitmap = CreateBitmap (8, 8, 1, 1, wPattern55AA);
             COMCTL32_hPattern55AABrush = CreatePatternBrush (COMCTL32_hPattern55AABitmap);
+
+	    /* Get all the colors at DLL load */
+	    COMCTL32_RefreshSysColors();
 
             /* register all Win95 common control classes */
             ANIMATE_Register ();
@@ -1026,4 +1030,38 @@ COMCTL32_CreateToolTip(HWND hwndOwner)
     }
 
     return hwndToolTip;
+}
+
+
+/***********************************************************************
+ * COMCTL32_RefreshSysColors [NOT AN API]
+ *
+ * Invoked on any control recognizing a WM_SYSCOLORCHANGE message to
+ * refresh the color values in the color structure
+ *
+ * PARAMS
+ *     none
+ *
+ * RETURNS
+ *     none
+ */
+VOID
+COMCTL32_RefreshSysColors(void)
+{
+    comctl32_color.clrBtnHighlight = GetSysColor (COLOR_BTNHIGHLIGHT);
+    comctl32_color.clrBtnShadow = GetSysColor (COLOR_BTNSHADOW);
+    comctl32_color.clrBtnText = GetSysColor (COLOR_BTNTEXT);
+    comctl32_color.clrBtnFace = GetSysColor (COLOR_BTNFACE);
+    comctl32_color.clrHighlight = GetSysColor (COLOR_HIGHLIGHT);
+    comctl32_color.clrHighlightText = GetSysColor (COLOR_HIGHLIGHTTEXT);
+    comctl32_color.clr3dHilight = GetSysColor (COLOR_3DHILIGHT);
+    comctl32_color.clr3dShadow = GetSysColor (COLOR_3DSHADOW);
+    comctl32_color.clr3dDkShadow = GetSysColor (COLOR_3DDKSHADOW);
+    comctl32_color.clr3dFace = GetSysColor (COLOR_3DFACE);
+    comctl32_color.clrWindow = GetSysColor (COLOR_WINDOW);
+    comctl32_color.clrWindowText = GetSysColor (COLOR_WINDOWTEXT);
+    comctl32_color.clrGrayText = GetSysColor (COLOR_GRAYTEXT);
+    comctl32_color.clrActiveCaption = GetSysColor (COLOR_ACTIVECAPTION);
+    comctl32_color.clrInfoBk = GetSysColor (COLOR_INFOBK);
+    comctl32_color.clrInfoText = GetSysColor (COLOR_INFOTEXT);
 }

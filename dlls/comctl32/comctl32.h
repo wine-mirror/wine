@@ -93,9 +93,31 @@ extern HBRUSH  COMCTL32_hPattern55AABrush;
 /* DragList icon */
 #define IDI_DRAGARROW                   150
 
+typedef struct 
+{
+    COLORREF clrBtnHighlight;       /* COLOR_BTNHIGHLIGHT                  */
+    COLORREF clrBtnShadow;          /* COLOR_BTNSHADOW                     */
+    COLORREF clrBtnText;            /* COLOR_BTNTEXT                       */
+    COLORREF clrBtnFace;            /* COLOR_BTNFACE                       */
+    COLORREF clrHighlight;          /* COLOR_HIGHLIGHT                     */
+    COLORREF clrHighlightText;      /* COLOR_HIGHLIGHTTEXT                 */
+    COLORREF clr3dHilight;          /* COLOR_3DHILIGHT                     */
+    COLORREF clr3dShadow;           /* COLOR_3DSHADOW                      */
+    COLORREF clr3dDkShadow;         /* COLOR_3DDKSHADOW                    */
+    COLORREF clr3dFace;             /* COLOR_3DFACE                        */
+    COLORREF clrWindow;             /* COLOR_WINDOW                        */
+    COLORREF clrWindowText;         /* COLOR_WINDOWTEXT                    */
+    COLORREF clrGrayText;           /* COLOR_GREYTEXT                      */
+    COLORREF clrActiveCaption;      /* COLOR_ACTIVECAPTION                 */
+    COLORREF clrInfoBk;             /* COLOR_INFOBK                        */
+    COLORREF clrInfoText;           /* COLOR_INFOTEXT                      */
+} COMCTL32_SysColor;
+
+extern COMCTL32_SysColor  comctl32_color;
 
 /* Internal function */
 HWND COMCTL32_CreateToolTip (HWND);
+VOID COMCTL32_RefreshSysColors(void);
 INT  Str_GetPtrWtoA (LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
 BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc);
 
