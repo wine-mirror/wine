@@ -839,8 +839,8 @@ static HANDLE16 HOOK_GetHook( INT16 id, HQUEUE16 hQueue )
  *
  * Install a given hook.
  */
-static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
-			      HINSTANCE16 hInst, HTASK16 hTask )
+static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
+		           HMODULE16 hModule, DWORD dwThreadId )
 {
     HOOKDATA *data;
     HANDLE16 handle;
@@ -848,24 +848,20 @@ static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
 
     if ((id < WH_MINHOOK) || (id > WH_MAXHOOK)) return 0;
 
-    TRACE(hook, "Setting hook %d: %08x %04x %04x\n",
-                  id, (UINT32)proc, hInst, hTask );
+    TRACE(hook, "Setting hook %d: %08x %04x %08lx\n",
+                  id, (UINT32)proc, hModule, dwThreadId );
 
-    if (!hInst && (type!=HOOK_WIN16))
-    	hInst = GetModuleHandle32A(NULL);/*FIXME: correct? probably not */
+    /* Create task queue if none present */
+    GetFastQueue();
 
     if (id == WH_JOURNALPLAYBACK) EnableHardwareInput(FALSE);
 
-    if (hTask)  /* Task-specific hook */
+    if (dwThreadId)  /* Task-specific hook */
     {
 	if ((id == WH_JOURNALRECORD) || (id == WH_JOURNALPLAYBACK) ||
 	    (id == WH_SYSMSGFILTER)) return 0;  /* System-only hooks */
-        if (!(hQueue = GetTaskQueue( hTask )))
-        {
-            /* FIXME: shouldn't this be done somewhere else? */
-            if (hTask != GetCurrentTask()) return 0;
-            if (!(hQueue = GetFastQueue())) return 0;
-        }
+        if (!(hQueue = GetThreadQueue( dwThreadId )))
+            return 0;
     }
 
     /* Create the hook structure */
@@ -875,7 +871,7 @@ static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
     data->proc        = proc;
     data->id          = id;
     data->ownerQueue  = hQueue;
-    data->ownerModule = hInst;
+    data->ownerModule = hModule;
     data->flags       = type;
 
     /* Insert it in the correct linked list */
@@ -893,7 +889,8 @@ static HANDLE16 HOOK_SetHook( INT16 id, LPVOID proc, INT32 type,
     }
     TRACE(hook, "Setting hook %d: ret=%04x [next=%04x]\n", 
 			   id, handle, data->next );
-    return handle;
+
+    return (HHOOK)( handle? MAKELONG( handle, HOOK_MAGIC ) : 0 );
 }
 
 
@@ -982,7 +979,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
 
     /* Now call it */
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetThreadQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
     data->flags |= HOOK_INUSE;
@@ -1031,6 +1028,9 @@ HOOKPROC16 HOOK_GetProc16( HHOOK hhook )
  */
 BOOL32 HOOK_IsHooked( INT16 id )
 {
+    /* Hmmm. Use GetThreadQueue(0) instead of GetFastQueue() here to 
+       avoid queue being created if someone wants to merely check ... */
+
     return HOOK_GetHook( id, GetThreadQueue(0) ) != 0;
 }
 
@@ -1045,7 +1045,7 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id , GetThreadQueue(0) ))) return 0;
+    if (!(hook = HOOK_GetHook( id, GetFastQueue() ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN16, code, wParam, lParam );
 }
@@ -1060,7 +1060,7 @@ LRESULT HOOK_CallHooks32A( INT32 id, INT32 code, WPARAM32 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id , GetThreadQueue(0) ))) return 0;
+    if (!(hook = HOOK_GetHook( id, GetFastQueue() ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32A, code, wParam, lParam );
 }
@@ -1075,7 +1075,7 @@ LRESULT HOOK_CallHooks32W( INT32 id, INT32 code, WPARAM32 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id , GetThreadQueue(0) ))) return 0;
+    if (!(hook = HOOK_GetHook( id, GetFastQueue() ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32W, code, wParam,
 			  lParam );
@@ -1173,50 +1173,28 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
  */
 FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    HANDLE16 handle;
     HINSTANCE16 hInst = FarGetOwner( HIWORD(proc) );
 
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 
-    if (id == WH_DEBUG)
-    {
-	FIXME(hook, "WH_DEBUG is broken in 16-bit Windows.\n");
-	return 0;
-    }
-
-    handle = HOOK_SetHook( id, proc, HOOK_WIN16, GetExePtr(hInst), hTask );
-    return (handle) ? (FARPROC16)MAKELONG( handle, HOOK_MAGIC ) : NULL;
+    return (FARPROC16)SetWindowsHookEx16( id, proc, hInst, hTask );
 }
-
 
 /***********************************************************************
  *           SetWindowsHook32A   (USER32.525)
- *
- * FIXME: I don't know if this is correct
  */
 HHOOK WINAPI SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
 {
-    /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
-    HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
-
-    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32A, 0, hTask );
-    return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : 0;
+    return SetWindowsHookEx32A( id, proc, 0, GetCurrentThreadId() );
 }
-
 
 /***********************************************************************
  *           SetWindowsHook32W   (USER32.528)
- *
- * FIXME: I don't know if this is correct
  */
 HHOOK WINAPI SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
 {
-    /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
-    HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
-
-    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32W, 0, hTask );
-    return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : 0;
+    return SetWindowsHookEx32W( id, proc, 0, GetCurrentThreadId() );
 }
 
 
@@ -1226,46 +1204,30 @@ HHOOK WINAPI SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
 HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
                                  HTASK16 hTask )
 {
-    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN16, GetExePtr(hInst), hTask );
-    return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;
+    if (id == WH_DEBUG)
+    {
+	FIXME(hook, "WH_DEBUG is broken in 16-bit Windows.\n");
+	return 0;
+    }
+    return HOOK_SetHook( id, proc, HOOK_WIN16, GetExePtr(hInst), (DWORD)hTask );
 }
-
 
 /***********************************************************************
  *           SetWindowsHookEx32A   (USER32.526)
  */
 HHOOK WINAPI SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
-                                  DWORD dwThreadID )
+                                  DWORD dwThreadId )
 {
-    HANDLE16 handle;
-    HTASK16 hTask;
-
-    if (dwThreadID == GetCurrentThreadId())
-      hTask = GetCurrentTask();
-    else
-      hTask = LOWORD(dwThreadID);  /* FIXME! */
-
-    handle = HOOK_SetHook( id, proc, HOOK_WIN32A, hInst, hTask );
-    return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;
+    return HOOK_SetHook( id, proc, HOOK_WIN32A, MapHModuleLS(hInst), dwThreadId );
 }
-
 
 /***********************************************************************
  *           SetWindowsHookEx32W   (USER32.527)
  */
 HHOOK WINAPI SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
-                                  DWORD dwThreadID )
+                                  DWORD dwThreadId )
 {
-    HANDLE16 handle;
-    HTASK16 hTask;
-
-    if (dwThreadID == GetCurrentThreadId())
-      hTask = GetCurrentTask();
-    else
-      hTask = LOWORD(dwThreadID);  /* FIXME! */
-
-    handle = HOOK_SetHook( id, proc, HOOK_WIN32W, hInst, hTask );
-    return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;
+    return HOOK_SetHook( id, proc, HOOK_WIN32W, MapHModuleLS(hInst), dwThreadId );
 }
 
 
@@ -1274,27 +1236,15 @@ HHOOK WINAPI SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
  */
 BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id, GetThreadQueue(0) );
-
-    TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
-
-    while (hook)
-    {
-        HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
-        if (data->proc == (HOOKPROC32)proc) break;
-        hook = HOOK_GetNextHook( hook );
-    }
-    if (!hook) return FALSE;
-    return HOOK_RemoveHook( hook );
+    return UnhookWindowsHook32( id, (HOOKPROC32)proc );
 }
-
 
 /***********************************************************************
  *           UnhookWindowsHook32   (USER32.557)
  */
 BOOL32 WINAPI UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id, GetThreadQueue(0) );
+    HANDLE16 hook = HOOK_GetHook( id, GetFastQueue() );
 
     TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
 
@@ -1314,17 +1264,16 @@ BOOL32 WINAPI UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
  */
 BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
 {
-    if (HIWORD(hhook) != HOOK_MAGIC) return FALSE;  /* Not a new format hook */
-    return HOOK_RemoveHook( LOWORD(hhook) );
+    return UnhookWindowsHookEx32( hhook );
 }
-
 
 /***********************************************************************
  *           UnhookWindowHookEx32   (USER32.558)
  */
 BOOL32 WINAPI UnhookWindowsHookEx32( HHOOK hhook )
 {
-    return UnhookWindowsHookEx16( hhook );
+    if (HIWORD(hhook) != HOOK_MAGIC) return FALSE;  /* Not a new format hook */
+    return HOOK_RemoveHook( LOWORD(hhook) );
 }
 
 
@@ -1381,7 +1330,7 @@ LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
      * current hook value from the task queue to find the next hook. */
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetThreadQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
     return CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
 }
 
