@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = ddraw.dll
+IMPORTS   = ddraw user32 gdi32 kernel32
+EXTRALIBS = $(LIBUUID)
+
+CTESTS = \
+	ddrawmodes.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

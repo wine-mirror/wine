@@ -1472,6 +1472,7 @@ dlls/d3dim/Makefile
 dlls/d3dx8/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
+dlls/ddraw/tests/Makefile
 dlls/devenum/Makefile
 dlls/dinput/Makefile
 dlls/dinput8/Makefile

@@ -46,6 +46,8 @@ C_SRCS = \
 
 RC_SRCS = version.rc
 
+SUBDIRS = tests
+
 EXTRASUBDIRS = \
 	d3ddevice \
 	dclipper \
