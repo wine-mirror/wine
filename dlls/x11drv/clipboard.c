@@ -329,7 +329,7 @@ static Window thread_selection_wnd(void)
     {
         wine_tsx11_lock();
         w = XCreateWindow(thread_display(), root_window, 0, 0, 1, 1, 0, screen_depth,
-            InputOutput, visual, 0, NULL);
+                          InputOutput, CopyFromParent, 0, NULL);
         wine_tsx11_unlock();
 
         if (w)
