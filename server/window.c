@@ -522,7 +522,7 @@ static struct region *get_visible_region( struct window *win, struct window *top
 
     /* create a region relative to the window itself */
 
-    if ((flags & DCX_PARENTCLIP) && win->parent)
+    if ((flags & DCX_PARENTCLIP) && win != top && win->parent)
     {
         rectangle_t rect;
         rect.left = rect.top = 0;
@@ -562,14 +562,13 @@ static struct region *get_visible_region( struct window *win, struct window *top
     if (top && top != win && (tmp = create_empty_region()) != NULL)
     {
         offset_region( region, offset_x, offset_y );  /* make it relative to parent */
-        while (win->parent)
+        while (win != top && win->parent)
         {
             if (win->style & WS_CLIPSIBLINGS)
             {
                 if (!clip_children( win->parent, win, region, 0, 0 )) goto error;
                 if (is_region_empty( region )) break;
             }
-            if (win == top) break;
             /* clip to parent client area */
             win = win->parent;
             offset_x += win->client_rect.left;
