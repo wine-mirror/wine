@@ -13,9 +13,12 @@ DEFAULT_DEBUG_CHANNEL(ras);
 /**************************************************************************
  *                 RasEnumConnectionsA			[RASAPI32.544]
  */
-DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD x, LPDWORD y) {
+DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD lpcb, LPDWORD lpcConnections) {
 	/* Remote Access Service stuff is done by underlying OS anyway */
-	FIXME("(%p,%p,%p),stub!\n",rca,x,y);
+	FIXME("(%p,%p,%p),stub!\n",rca,lpcb,lpcConnections);
+	FIXME("RAS support is not implemented ! Configure program to use LAN connection/winsock instead !\n");
+	*lpcConnections = 0; /* no RAS connections available */
+	
 	return 0;
 }
 
