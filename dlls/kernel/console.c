@@ -2289,6 +2289,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     SMALL_RECT			clip;
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
     BOOL			inside;
+    COORD                       src;
 
     if (lpClipRect)
 	TRACE("(%p,(%d,%d-%d,%d),(%d,%d-%d,%d),%d-%d,%p)\n", hConsoleOutput,
@@ -2305,6 +2306,9 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
 
     if (!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
 	return FALSE;
+
+    src.X = lpScrollRect->Left;
+    src.Y = lpScrollRect->Top;
 
     /* step 1: get dst rect */
     dst.Left = dwDestOrigin.X;
@@ -2330,8 +2334,8 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     if (clip.Left > clip.Right || clip.Top > clip.Bottom) return FALSE;
 
     /* step 2b: clip dst rect */
-    if (dst.Left   < clip.Left  ) dst.Left   = clip.Left;
-    if (dst.Top    < clip.Top   ) dst.Top    = clip.Top;
+    if (dst.Left   < clip.Left  ) {src.X += clip.Left - dst.Left; dst.Left   = clip.Left;}
+    if (dst.Top    < clip.Top   ) {src.Y += clip.Top  - dst.Top;  dst.Top    = clip.Top;}
     if (dst.Right  > clip.Right ) dst.Right  = clip.Right;
     if (dst.Bottom > clip.Bottom) dst.Bottom = clip.Bottom;
 
@@ -2339,8 +2343,8 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     SERVER_START_REQ(move_console_output)
     {
         req->handle = console_handle_unmap(hConsoleOutput);
-	req->x_src = lpScrollRect->Left;
-	req->y_src = lpScrollRect->Top;
+	req->x_src = src.X;
+	req->y_src = src.Y;
 	req->x_dst = dst.Left;
 	req->y_dst = dst.Top;
 	req->w = dst.Right - dst.Left + 1;

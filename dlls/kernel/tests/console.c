@@ -369,11 +369,11 @@ static void testScroll(HANDLE hCon, COORD sbSize)
 #define W 11
 #define H 7
 
-    /* no clipping, src & dst rect don't overlap */
-    resetContent(hCon, sbSize, TRUE);
-
 #define IN_SRECT(r,c) ((r).Left <= (c).X && (c).X <= (r).Right && (r).Top <= (c).Y && (c).Y <= (r).Bottom)
 #define IN_SRECT2(r,d,c) ((d).X <= (c).X && (c).X <= (d).X + (r).Right - (r).Left && (d).Y <= (c).Y && (c).Y <= (d).Y + (r).Bottom - (r).Top)
+
+    /* no clipping, src & dst rect don't overlap */
+    resetContent(hCon, sbSize, TRUE);
 
     scroll.Left = 0;
     scroll.Right = W - 1;
@@ -476,7 +476,6 @@ static void testScroll(HANDLE hCon, COORD sbSize)
         }
     }
 
-#if 0
     /* clipping, src & dst rect do overlap */
     resetContent(hCon, sbSize, TRUE);
 
@@ -511,7 +510,6 @@ static void testScroll(HANDLE hCon, COORD sbSize)
             else okCHAR(hCon, c, CONTENT(c), DEFAULT_ATTRIB);
         }
     }
-#endif
 }
 
 static int mch_count;
