@@ -1,0 +1,32 @@
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+
+PROGRAMS = winebuild
+MODULE   = none
+
+C_SRCS = \
+	main.c \
+	parser.c \
+	relay.c \
+	spec16.c \
+	spec32.c \
+	utils.c
+
+all: $(PROGRAMS)
+
+@MAKE_RULES@
+
+winebuild: $(OBJS)
+	$(CC) $(CFLAGS) -o winebuild $(OBJS)
+
+install:: $(PROGRAMS)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) winebuild $(bindir)/winebuild
+
+uninstall::
+	$(RM) $(bindir)/winebuild
+
+### Dependencies:

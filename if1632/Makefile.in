@@ -13,7 +13,7 @@ C_SRCS = \
 	thunk.c
 
 GEN_ASM_SRCS = \
-	call16.s
+	asmrelay.s
 
 GLUE = thunk.c
 
@@ -21,7 +21,7 @@ all: $(MODULE).o
 
 @MAKE_RULES@
 
-call16.s: $(BUILD)
-	$(BUILD) @BUILDFLAGS@ -o $@ -call16
+asmrelay.s: $(BUILD)
+	$(BUILD) @DLLFLAGS@ -o $@ -relay
 
 ### Dependencies:

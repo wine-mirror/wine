@@ -12,14 +12,8 @@ C_SRCS = \
 	utthunk.c \
 	wowthunk.c
 
-GEN_ASM_SRCS = \
-	call32.s
-
 all: $(MODULE).o
 
 @MAKE_RULES@
-
-call32.s: $(BUILD)
-	$(BUILD) @BUILDFLAGS@ -o $@ -call32
 
 ### Dependencies:

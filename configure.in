@@ -493,10 +493,8 @@ then
 fi
 
 DLLFLAGS=""
-BUILDFLAGS=""
 
 if test "$LIBEXT" = "so"; then
-    BUILDFLAGS="-pic"
     DLLFLAGS="-fPIC"
     DLL_LINK="-L\$(DLLDIR) \$(IMPORTS:%=-l%) -L\$(TOPOBJDIR) -lwine"
 else
@@ -527,7 +525,6 @@ else
 fi
 
 AC_SUBST(DLL_LINK)
-AC_SUBST(BUILDFLAGS)
 AC_SUBST(DLLFLAGS)
 AC_SUBST(LDSHARED)
 AC_SUBST(LIBEXT)
@@ -1083,6 +1080,7 @@ scheduler/Makefile
 server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
+tools/winebuild/Makefile
 tools/wrc/Makefile
 tools/wmc/Makefile
 tsx11/Makefile

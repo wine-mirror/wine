@@ -4,17 +4,19 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = build makedep fnt2bdf bin2res
+PROGRAMS = makedep fnt2bdf bin2res
 MODULE   = none
 
-C_SRCS = build.c makedep.c fnt2bdf.c bin2res.c
+C_SRCS = makedep.c fnt2bdf.c bin2res.c
 
 SUBDIRS = \
 	cvdump \
+	winebuild \
 	wmc \
 	wrc
 
 INSTALLSUBDIRS = \
+	winebuild \
 	wmc \
 	wrc
 
@@ -24,12 +26,9 @@ EXTRASUBDIRS = \
 	winapi_check/win32 \
 	wineconf.libs
 
-all: $(PROGRAMS) wmc wrc
+all: $(PROGRAMS) winebuild wmc wrc
 
 @MAKE_RULES@
-
-build: build.o
-	$(CC) $(CFLAGS) -o build build.o
 
 makedep: makedep.o
 	$(CC) $(CFLAGS) -o makedep makedep.o
@@ -42,10 +41,9 @@ bin2res: bin2res.o
 
 install:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
-	$(INSTALL_PROGRAM) build $(bindir)/winebuild
 	$(INSTALL_PROGRAM) fnt2bdf $(bindir)/fnt2bdf
 
 uninstall:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__uninstall__)
-	$(RM) $(bindir)/winebuild $(bindir)/fnt2bdf
+	$(RM) $(bindir)/fnt2bdf
 
 ### Dependencies:

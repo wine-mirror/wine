@@ -54,7 +54,7 @@ LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
-BUILD     = $(TOPOBJDIR)/tools/build
+BUILD     = $(TOPOBJDIR)/tools/winebuild/winebuild
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc
 WRCFLAGS  = -c -s -p $*
@@ -183,10 +183,10 @@ DLLS = \
 	$(WRC) $(WRCFLAGS) $(WRCEXTRA) -bnh $<
 
 .spec.spec.c:
-	$(BUILD) @BUILDFLAGS@ -o $@ -spec $<
+	$(BUILD) @DLLFLAGS@ -o $@ -spec $<
 
 .c.glue.c:
-	$(BUILD) @BUILDFLAGS@ -o $@ -glue $<
+	$(BUILD) @DLLFLAGS@ -o $@ -glue $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
@@ -212,10 +212,10 @@ $(WMC) check_wmc:
 $(MAKEDEP) check_makedep:
 	cd $(TOPOBJDIR)/tools && $(MAKE) makedep
 
-# Rule to rebuild the 'build' program
+# Rule to rebuild the 'winebuild' program
 
-$(BUILD) checkbuild:
-	cd $(TOPOBJDIR)/tools && $(MAKE) build
+$(BUILD) check_winebuild:
+	cd $(TOPOBJDIR)/tools/winebuild && $(MAKE) winebuild
 
 # Rule for main module
 

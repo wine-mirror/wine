@@ -4,10 +4,11 @@
 name	NAME
 type    win16|win32
 [file   WINFILENAME]
-[base   ORDINAL]
+[mode	dll|cuiexe|guiexe]
 [heap   SIZE]
 [init	FUNCTION]
 [import DLL]
+[rsrc	PREFIX]
 
 ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
 
@@ -31,7 +32,8 @@ General:
 declarations are optional, but the default handler will print an error
 message.
 
-"base" gives the offset of the first ordinal; default is 0.
+"mode" specifies whether it is the spec file for a dll or the main exe.
+This is only valid for Win32 spec files.
 
 "heap" is the size of the module local heap (only valid for Win16
 modules); default is no local heap.
@@ -46,6 +48,8 @@ is loaded. This is only valid for Win32 modules.
 "import" names a module that this one depends on (only for Win32
 modules at the present). The import declaration can be present several
 times.
+
+"rsrc" specifies the prefix for the resource directory name.
 
 Lines whose first character is a '#' will be ignored as comments.
 
