@@ -29,12 +29,6 @@ typedef	struct tagWAVEMAPDATA {
     DWORD	dwCallback;
     DWORD	dwClientInstance;
     DWORD	dwFlags;
-    MMRESULT (WINAPI *acmStreamOpen)(LPHACMSTREAM, HACMDRIVER, LPWAVEFORMATEX, LPWAVEFORMATEX, LPWAVEFILTER, DWORD, DWORD, DWORD);
-    MMRESULT (WINAPI *acmStreamClose)(HACMSTREAM, DWORD);
-    MMRESULT (WINAPI *acmStreamSize)(HACMSTREAM, DWORD, LPDWORD, DWORD);
-    MMRESULT (WINAPI *acmStreamConvert)(HACMSTREAM, PACMSTREAMHEADER, DWORD);
-    MMRESULT (WINAPI *acmStreamPrepareHeader)(HACMSTREAM, PACMSTREAMHEADER, DWORD);
-    MMRESULT (WINAPI *acmStreamUnprepareHeader)(HACMSTREAM, PACMSTREAMHEADER, DWORD);
 } WAVEMAPDATA;
 
 static	BOOL	WAVEMAP_IsData(WAVEMAPDATA* wm)
@@ -86,8 +80,8 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
     /* destination is always PCM, so the formulas below apply */
     lpwfx->nBlockAlign = (lpwfx->nChannels * lpwfx->wBitsPerSample) / 8;
     lpwfx->nAvgBytesPerSec = lpwfx->nSamplesPerSec * lpwfx->nBlockAlign;
-    ret = wom->acmStreamOpen(&wom->hAcmStream, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, 
-			     (dwFlags & WAVE_FORMAT_QUERY) ? ACM_STREAMOPENF_QUERY : 0L);
+    ret = acmStreamOpen(&wom->hAcmStream, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, 
+			(dwFlags & WAVE_FORMAT_QUERY) ? ACM_STREAMOPENF_QUERY : 0L);
     if (ret != MMSYSERR_NOERROR)
 	return ret;
     return waveOutOpen(&wom->hWave, idx, lpwfx, (DWORD)WAVEMAP_DstCallback, 
@@ -118,18 +112,6 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    goto found;
 	}
     }
-
-    /* temporary hack until real builtin dll loading is available */
-    do {
-	HMODULE hModule = LoadLibraryA("msacm32.dll");
-	
-	wom->acmStreamOpen            = (void*)GetProcAddress(hModule, "acmStreamOpen");
-	wom->acmStreamClose           = (void*)GetProcAddress(hModule, "acmStreamClose");
-	wom->acmStreamSize            = (void*)GetProcAddress(hModule, "acmStreamSize");
-	wom->acmStreamConvert         = (void*)GetProcAddress(hModule, "acmStreamConvert");
-	wom->acmStreamPrepareHeader   = (void*)GetProcAddress(hModule, "acmStreamPrepareHeader");
-	wom->acmStreamUnprepareHeader = (void*)GetProcAddress(hModule, "acmStreamUnprepareHeader");
-    } while (0);
 
     wfx.wFormatTag = WAVE_FORMAT_PCM;
     wfx.cbSize = 0; /* normally, this field is not used for PCM format, just in case */
@@ -177,7 +159,7 @@ static	DWORD	wodClose(WAVEMAPDATA* wom)
 
     if (ret == MMSYSERR_NOERROR) {
 	if (wom->hAcmStream) {
-	    ret = wom->acmStreamClose(wom->hAcmStream, 0);
+	    ret = acmStreamClose(wom->hAcmStream, 0);
 	}
 	if (ret == MMSYSERR_NOERROR) {
 	    HeapFree(GetProcessHeap(), 0, wom);
@@ -197,7 +179,7 @@ static	DWORD	wodWrite(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2)
     
     lpWaveHdrSrc->dwFlags |= WHDR_INQUEUE;
     ash = (PACMSTREAMHEADER)lpWaveHdrSrc->reserved;
-    if (wom->acmStreamConvert(wom->hAcmStream, ash, 0L) != MMSYSERR_NOERROR)
+    if (acmStreamConvert(wom->hAcmStream, ash, 0L) != MMSYSERR_NOERROR)
 	return MMSYSERR_ERROR;
     
     lpWaveHdrDst = (LPWAVEHDR)((LPSTR)ash + sizeof(ACMSTREAMHEADER));
@@ -215,7 +197,7 @@ static	DWORD	wodPrepare(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2
     if (!wom->hAcmStream) {
 	return waveOutPrepareHeader(wom->hWave, lpWaveHdrSrc, dwParam2);
     }
-    if (wom->acmStreamSize(wom->hAcmStream, lpWaveHdrSrc->dwBufferLength, &size, ACM_STREAMSIZEF_SOURCE) != MMSYSERR_NOERROR)
+    if (acmStreamSize(wom->hAcmStream, lpWaveHdrSrc->dwBufferLength, &size, ACM_STREAMSIZEF_SOURCE) != MMSYSERR_NOERROR)
 	return MMSYSERR_ERROR;
 
     ash = HeapAlloc(GetProcessHeap(), 0, sizeof(ACMSTREAMHEADER) + sizeof(WAVEHDR) + size);
@@ -233,7 +215,7 @@ static	DWORD	wodPrepare(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwParam2
     ash->cbDstLength = size;
     /* ash->cbDstLengthUsed */
     ash->dwDstUser = 0; /* FIXME ? */
-    dwRet = wom->acmStreamPrepareHeader(wom->hAcmStream, ash, 0L);
+    dwRet = acmStreamPrepareHeader(wom->hAcmStream, ash, 0L);
     if (dwRet != MMSYSERR_NOERROR)
 	goto errCleanUp;
 
@@ -266,7 +248,7 @@ static	DWORD	wodUnprepare(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwPara
 	return waveOutUnprepareHeader(wom->hWave, lpWaveHdrSrc, dwParam2);
     }
     ash = (PACMSTREAMHEADER)lpWaveHdrSrc->reserved;
-    dwRet1 = wom->acmStreamUnprepareHeader(wom->hAcmStream, ash, 0L);
+    dwRet1 = acmStreamUnprepareHeader(wom->hAcmStream, ash, 0L);
     
     lpWaveHdrDst = (LPWAVEHDR)((LPSTR)ash + sizeof(ACMSTREAMHEADER));
     dwRet2 = waveOutUnprepareHeader(wom->hWave, lpWaveHdrDst, sizeof(*lpWaveHdrDst));
@@ -340,6 +322,33 @@ static	DWORD	wodBreakLoop(WAVEMAPDATA* wom)
     return waveOutBreakLoop(wom->hWave);
 }
 
+static  DWORD	wodMapperStatus(WAVEMAPDATA* wom, DWORD flags, LPVOID ptr)
+{
+    UINT	id;
+    DWORD	ret = MMSYSERR_NOTSUPPORTED;
+
+    switch (flags) {
+    case WAVEOUT_MAPPER_STATUS_DEVICE:	
+	ret = waveOutGetID(wom->hWave, &id);
+	*(LPDWORD)ptr = id;
+	break;
+    case WAVEOUT_MAPPER_STATUS_MAPPED:
+	FIXME("Unsupported flag=%ld\n", flags);
+	*(LPDWORD)ptr = 0; /* FIXME ?? */	
+	break;
+    case WAVEOUT_MAPPER_STATUS_FORMAT:
+	FIXME("Unsupported flag=%ld\n", flags);
+	/* ptr points to a WAVEFORMATEX struct - before or after streaming ? */
+	*(LPDWORD)ptr = 0;
+	break;
+    default:
+	FIXME("Unsupported flag=%ld\n", flags);
+	*(LPDWORD)ptr = 0;
+	break;
+    }
+    return ret;
+}
+
 /**************************************************************************
  * 				WAVEMAP_wodMessage	[sample driver]
  */
@@ -374,6 +383,7 @@ DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_SETVOLUME:	return wodSetVolume	(wDevID, (WAVEMAPDATA*)dwUser, dwParam1);
     case WODM_RESTART:		return wodRestart	((WAVEMAPDATA*)dwUser);
     case WODM_RESET:		return wodReset		((WAVEMAPDATA*)dwUser);
+    case WODM_MAPPER_STATUS:	return wodMapperStatus  ((WAVEMAPDATA*)dwUser, dwParam1, (LPVOID)dwParam2);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }
@@ -471,6 +481,33 @@ static	DWORD	widReset(WAVEMAPDATA* wim)
     return waveInReset(wim->hWave);
 }
 
+static  DWORD	widMapperStatus(WAVEMAPDATA* wim, DWORD flags, LPVOID ptr)
+{
+    UINT	id;
+    DWORD	ret = MMSYSERR_NOTSUPPORTED;
+
+    switch (flags) {
+    case WAVEIN_MAPPER_STATUS_DEVICE:	
+	ret = waveInGetID(wim->hWave, &id);
+	*(LPDWORD)ptr = id;
+	break;
+    case WAVEIN_MAPPER_STATUS_MAPPED:
+	FIXME("Unsupported yet flag=%ld\n", flags);
+	*(LPDWORD)ptr = 0; /* FIXME ?? */	
+	break;
+    case WAVEIN_MAPPER_STATUS_FORMAT:
+	FIXME("Unsupported flag=%ld\n", flags);
+	/* ptr points to a WAVEFORMATEX struct  - before or after streaming ? */
+	*(LPDWORD)ptr = 0; /* FIXME ?? */	
+	break;
+    default:
+	FIXME("Unsupported flag=%ld\n", flags);
+	*(LPDWORD)ptr = 0;
+	break;
+    }
+    return ret;
+}
+
 /**************************************************************************
  * 				WAVEMAP_widMessage	[sample driver]
  */
@@ -500,6 +537,7 @@ DWORD WINAPI WAVEMAP_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_RESET:		return widReset         ((WAVEMAPDATA*)dwUser);
     case WIDM_START:		return widStart         ((WAVEMAPDATA*)dwUser);
     case WIDM_STOP:		return widStop          ((WAVEMAPDATA*)dwUser);
+    case WIDM_MAPPER_STATUS:	return widMapperStatus  ((WAVEMAPDATA*)dwUser, dwParam1, (LPVOID)dwParam2);
     default:
 	FIXME("unknown message %u!\n", wMsg);
     }
