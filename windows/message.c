@@ -743,7 +743,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, CONST HANDLE *handles,
  */
 DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
 {
-    DWORD cur_time, ret;
+    DWORD start_time, elapsed, ret;
     HANDLE idle_event = -1;
 
     SERVER_START_REQ( wait_input_idle )
@@ -753,31 +753,37 @@ DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
         if (!(ret = SERVER_CALL_ERR())) idle_event = req->event;
     }
     SERVER_END_REQ;
-    if (ret) return 0xffffffff;  /* error */
+    if (ret) return WAIT_FAILED;  /* error */
     if (!idle_event) return 0;  /* no event to wait on */
 
-    cur_time = GetTickCount();
+    start_time = GetTickCount();
+    elapsed = 0;
 
     TRACE("waiting for %x\n", idle_event );
-    while ( dwTimeOut > GetTickCount() - cur_time || dwTimeOut == INFINITE )
+    do
     {
-        ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut, QS_SENDMESSAGE );
-        if ( ret == ( WAIT_OBJECT_0 + 1 ))
+        ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut - elapsed, QS_SENDMESSAGE );
+        switch (ret)
         {
+        case WAIT_OBJECT_0+1:
             process_sent_messages();
-            continue;
-        }
-        if ( ret == WAIT_TIMEOUT || ret == 0xFFFFFFFF )
-        {
+            break;
+        case WAIT_TIMEOUT:
+        case WAIT_FAILED:
             TRACE("timeout or error\n");
             return ret;
-        }
-        else
-        {
+        default:
             TRACE("finished\n");
             return 0;
         }
+        if (dwTimeOut != INFINITE)
+        {
+            elapsed = GetTickCount() - start_time;
+            if (elapsed > dwTimeOut)
+                break;
+        }
     }
+    while (1);
 
     return WAIT_TIMEOUT;
 }
