@@ -1292,12 +1292,13 @@ INT WINAPI VariantTimeToSystemTime(double dateIn, LPSYSTEMTIME lpSt)
 }
 
 /***********************************************************************
- *              VarDateFromUdate [OLEAUT32.330]
+ *              VarDateFromUdateEx [OLEAUT32.319]
  *
  * Convert an unpacked format date and time to a variant VT_DATE.
  *
  * PARAMS
  *  pUdateIn [I] Unpacked format date and time to convert
+ *  lcid     [I] Locale identifier for the conversion
  *  dwFlags  [I] Flags controlling the conversion (VAR_ flags from "oleauto.h")
  *  pDateOut [O] Destination for variant VT_DATE.
  *
@@ -1305,17 +1306,20 @@ INT WINAPI VariantTimeToSystemTime(double dateIn, LPSYSTEMTIME lpSt)
  *  Success: S_OK. *pDateOut contains the converted value.
  *  Failure: E_INVALIDARG, if pUdateIn cannot be represented in VT_DATE format.
  */
-HRESULT WINAPI VarDateFromUdate(UDATE *pUdateIn, ULONG dwFlags, DATE *pDateOut)
+HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DATE *pDateOut)
 {
   UDATE ud;
   double dateVal;
 
-  TRACE("(%p->%d/%d/%d %d:%d:%d:%d %d %d,0x%08lx,%p)\n", pUdateIn,
+  TRACE("(%p->%d/%d/%d %d:%d:%d:%d %d %d,0x%08lx,0x%08lx,%p)\n", pUdateIn,
         pUdateIn->st.wMonth, pUdateIn->st.wDay, pUdateIn->st.wYear,
         pUdateIn->st.wHour, pUdateIn->st.wMinute, pUdateIn->st.wSecond,
         pUdateIn->st.wMilliseconds, pUdateIn->st.wDayOfWeek,
-        pUdateIn->wDayOfYear, dwFlags, pDateOut);
+        pUdateIn->wDayOfYear, lcid, dwFlags, pDateOut);
 
+  if (lcid != MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT))
+    FIXME("lcid possibly not handled, treating as en-us\n");
+      
   memcpy(&ud, pUdateIn, sizeof(ud));
 
   if (dwFlags & VAR_VALIDDATE)
@@ -1336,6 +1340,31 @@ HRESULT WINAPI VarDateFromUdate(UDATE *pUdateIn, ULONG dwFlags, DATE *pDateOut)
   TRACE("Returning %g\n", dateVal);
   *pDateOut = dateVal;
   return S_OK;
+}
+
+/***********************************************************************
+ *              VarDateFromUdate [OLEAUT32.330]
+ *
+ * Convert an unpacked format date and time to a variant VT_DATE.
+ *
+ * PARAMS
+ *  pUdateIn [I] Unpacked format date and time to convert
+ *  dwFlags  [I] Flags controlling the conversion (VAR_ flags from "oleauto.h")
+ *  pDateOut [O] Destination for variant VT_DATE.
+ *
+ * RETURNS
+ *  Success: S_OK. *pDateOut contains the converted value.
+ *  Failure: E_INVALIDARG, if pUdateIn cannot be represented in VT_DATE format.
+ *
+ * NOTES
+ *  This function uses the United States English locale for the conversion. Use
+ *  VarDateFromUdateEx() for alternate locales.
+ */
+HRESULT WINAPI VarDateFromUdate(UDATE *pUdateIn, ULONG dwFlags, DATE *pDateOut)
+{
+  LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  
+  return VarDateFromUdateEx(pUdateIn, lcid, dwFlags, pDateOut);
 }
 
 /***********************************************************************

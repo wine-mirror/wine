@@ -311,7 +311,7 @@
 316 stdcall VarR4CmpR8(long double)
 317 stdcall VarR8Round(double long ptr)
 318 stdcall VarCat(ptr ptr ptr)
-319 stub VarDateFromUdateEx # stdcall (ptr long long ptr)
+319 stdcall VarDateFromUdateEx(ptr long long ptr)
 320 stdcall -private DllRegisterServer() OLEAUT32_DllRegisterServer
 321 stdcall -private DllUnregisterServer() OLEAUT32_DllUnregisterServer
 322 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
