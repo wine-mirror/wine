@@ -1001,14 +1001,16 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, UINT32 N, LPSTR lpText)
            if( lpBuffer )
            {
 	       INT32    n = SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, 
-					   (WPARAM32)idx, (LPARAM)lpText );
+					   (WPARAM32)idx, (LPARAM)lpBuffer );
 
 	       /* truncate if buffer is too short */
 
 	       if( length >= N )
 	       {
+	       	   if (N && lpText) {
 	           if( n != LB_ERR ) memcpy( lpText, lpBuffer, (N>n) ? n+1 : N-1 );
 	           lpText[N - 1] = '\0';
+                   }
 	           HeapFree( GetProcessHeap(), 0, lpBuffer );
 	       }
 	       return (LRESULT)n;
