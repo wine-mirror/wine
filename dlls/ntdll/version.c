@@ -471,8 +471,18 @@ static DWORD VERSION_GetLinkedDllVersion(void)
         {
         case 90 : return WINME;
         case 10 : return WIN98;
-        case 0  : return WIN95; /* FIXME: We should check for NT40 here */
+        case 0  :
+            switch(ophd->MajorImageVersion)
+            {
+            case 4 : return NT40;
+            case 0 : return WIN95;
+            }
+            break;
         }
+        break;
+    case 1:
+        if(ophd->MinorOperatingSystemVersion == 0)
+           return WIN95;
         break;
     }
     FIXME("Unknown EXE OS version %d.%d, please report !!\n",
