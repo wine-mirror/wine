@@ -127,7 +127,7 @@ static void _write_ftprolog(LPBYTE relayCode ,DWORD *targetTable) {
 	*x++	= 0x0f;*x++=0xb6;*x++=0xd1; /* movzbl edx,cl */
 	*x++	= 0x8B;*x++=0x14;*x++=0x95;*(DWORD**)x= targetTable;
 	x+=4;	/* mov edx, [4*edx + targetTable] */
-	*x++	= 0x68; *(DWORD*)x = (DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"FT_Prolog");
+	*x++	= 0x68; *(DWORD*)x = (DWORD)GetProcAddress(kernel32_handle,"FT_Prolog");
 	x+=4; 	/* push FT_Prolog */
 	*x++	= 0xC3;		/* lret */
 	/* fill rest with 0xCC / int 3 */
@@ -154,7 +154,7 @@ static void _write_qtthunk(
 	*x++	= 0x8A;*x++=0x4D;*x++=0xFC; /* movb cl,[ebp-04] */
 	*x++	= 0x8B;*x++=0x14;*x++=0x8D;*(DWORD**)x= targetTable;
 	x+=4;	/* mov edx, [4*ecx + targetTable */
-	*x++	= 0xB8; *(DWORD*)x = (DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");
+	*x++	= 0xB8; *(DWORD*)x = (DWORD)GetProcAddress(kernel32_handle,"QT_Thunk");
 	x+=4; 	/* mov eax , QT_Thunk */
 	*x++	= 0xFF; *x++ = 0xE0;	/* jmp eax */
 	/* should fill the rest of the 32 bytes with 0xCC */
@@ -817,13 +817,12 @@ LPVOID WINAPI ThunkInitLSF(
 	LPCSTR dll16,	/* [in] name of win16 dll */
 	LPCSTR dll32	/* [in] name of win32 dll */
 ) {
-	HMODULE	hkrnl32 = GetModuleHandleA("KERNEL32");
 	LPDWORD		addr,addr2;
 
 	/* FIXME: add checks for valid code ... */
 	/* write pointers to kernel32.89 and kernel32.90 (+ordinal base of 1) */
-	*(DWORD*)(thunk+0x35) = (DWORD)GetProcAddress(hkrnl32,(LPSTR)90);
-	*(DWORD*)(thunk+0x6D) = (DWORD)GetProcAddress(hkrnl32,(LPSTR)89);
+	*(DWORD*)(thunk+0x35) = (DWORD)GetProcAddress(kernel32_handle,(LPSTR)90);
+	*(DWORD*)(thunk+0x6D) = (DWORD)GetProcAddress(kernel32_handle,(LPSTR)89);
 
 
 	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
@@ -1973,7 +1972,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR func_name)
 
      /* jmpl QT_Thunk */
     *thunk++ = 0xea;
-    *(FARPROC *)thunk = GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");
+    *(FARPROC *)thunk = GetProcAddress(kernel32_handle,"QT_Thunk");
     thunk += sizeof(FARPROC16);
     *(WORD *)thunk = wine_get_cs();
 

@@ -41,6 +41,7 @@
 #include "module.h"
 #include "stackframe.h"
 #include "builtin16.h"
+#include "toolhelp.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(fixup);

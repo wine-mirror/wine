@@ -64,6 +64,7 @@ static BOOL oem_file_apis;
 
 static unsigned int server_startticks;
 int main_create_flags = 0;
+HMODULE kernel32_handle = 0;
 
 /* Process flags */
 #define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
@@ -613,6 +614,7 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
  */
 static BOOL process_init( char *argv[], char **environ )
 {
+    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     BOOL ret;
     size_t info_size = 0;
     RTL_USER_PROCESS_PARAMETERS *params;
@@ -697,6 +699,8 @@ static BOOL process_init( char *argv[], char **environ )
         params->hStdOutput = hstdout;
         params->hStdError  = hstderr;
     }
+
+    kernel32_handle = GetModuleHandleW(kernel32W);
 
     LOCALE_Init();
 

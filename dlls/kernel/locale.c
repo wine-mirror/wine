@@ -41,13 +41,12 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "thread.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define LOCALE_LOCALEINFOFLAGSMASK (LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP|LOCALE_RETURN_NUMBER)
-
-static const WCHAR kernel32W[] = { 'K','E','R','N','E','L','3','2','\0' };
 
 /* current code pages */
 static const union cptable *ansi_cptable;
@@ -383,7 +382,6 @@ found:
 static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCSTR Dialect)
 {
     LANG_FIND_DATA l_data;
-    HMODULE hKernel32;
 
     if(!Lang)
     {
@@ -397,9 +395,7 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
     if (Country) strcpynAtoW(l_data.country, Country, sizeof(l_data.country));
     else l_data.country[0] = 0;
 
-    hKernel32 = GetModuleHandleW(kernel32W);
-
-    EnumResourceLanguagesW(hKernel32, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
+    EnumResourceLanguagesW(kernel32_handle, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
                            find_language_id_proc, (LPARAM)&l_data);
 
     if (l_data.n_found == 1) goto END;
@@ -410,7 +406,7 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
         {
             /* retry without country name */
             l_data.country[0] = 0;
-            EnumResourceLanguagesW(hKernel32, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
+            EnumResourceLanguagesW(kernel32_handle, (LPCWSTR)RT_STRING, (LPCWSTR)LOCALE_ILANGUAGE,
                                    find_language_id_proc, (LONG)&l_data);
             if (!l_data.n_found)
             {
@@ -882,7 +878,6 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     LANGID lang_id;
     HRSRC hrsrc;
     HGLOBAL hmem;
-    HMODULE hModule;
     INT ret;
     UINT lcflags;
     const WCHAR *p;
@@ -945,13 +940,13 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     if (SUBLANGID(lang_id) == SUBLANG_NEUTRAL)
         lang_id = MAKELANGID(PRIMARYLANGID(lang_id), SUBLANG_DEFAULT);
 
-    hModule = GetModuleHandleW( kernel32W );
-    if (!(hrsrc = FindResourceExW( hModule, (LPWSTR)RT_STRING, (LPCWSTR)((lctype >> 4) + 1), lang_id )))
+    if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
+                                   (LPCWSTR)((lctype >> 4) + 1), lang_id )))
     {
         SetLastError( ERROR_INVALID_FLAGS );  /* no such lctype */
         return 0;
     }
-    if (!(hmem = LoadResource( hModule, hrsrc )))
+    if (!(hmem = LoadResource( kernel32_handle, hrsrc )))
         return 0;
 
     p = LockResource( hmem );
@@ -1675,7 +1670,7 @@ LCID WINAPI ConvertDefaultLocale( LCID lcid )
 BOOL WINAPI IsValidLocale( LCID lcid, DWORD flags )
 {
     /* check if language is registered in the kernel32 resources */
-    return FindResourceExW( GetModuleHandleW(kernel32W), (LPWSTR)RT_STRING,
+    return FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, LANGIDFROMLCID(lcid)) != 0;
 }
 
@@ -1716,7 +1711,7 @@ static BOOL CALLBACK enum_lang_proc_w( HMODULE hModule, LPCWSTR type,
 BOOL WINAPI EnumSystemLocalesA( LOCALE_ENUMPROCA lpfnLocaleEnum, DWORD dwFlags )
 {
     TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
-    EnumResourceLanguagesA( GetModuleHandleW(kernel32W), (LPSTR)RT_STRING,
+    EnumResourceLanguagesA( kernel32_handle, (LPSTR)RT_STRING,
                             (LPCSTR)LOCALE_ILANGUAGE, enum_lang_proc_a,
                             (LONG)lpfnLocaleEnum);
     return TRUE;
@@ -1731,7 +1726,7 @@ BOOL WINAPI EnumSystemLocalesA( LOCALE_ENUMPROCA lpfnLocaleEnum, DWORD dwFlags )
 BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD dwFlags )
 {
     TRACE("(%p,%08lx)\n", lpfnLocaleEnum, dwFlags);
-    EnumResourceLanguagesW( GetModuleHandleW(kernel32W), (LPWSTR)RT_STRING,
+    EnumResourceLanguagesW( kernel32_handle, (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, enum_lang_proc_w,
                             (LONG)lpfnLocaleEnum);
     return TRUE;
@@ -2548,7 +2543,6 @@ static BOOL NLS_RegGetDword(HKEY hKey, LPCWSTR szValueName, DWORD *lpVal)
 
 static BOOL NLS_GetLanguageGroupName(LGRPID lgrpid, LPWSTR szName, ULONG nameSize)
 {
-    HMODULE hModule = GetModuleHandleW(kernel32W);
     LANGID  langId;
     LPCWSTR szResourceName = (LPCWSTR)(((lgrpid + 0x2000) >> 4) + 1);
     HRSRC   hResource;
@@ -2560,11 +2554,11 @@ static BOOL NLS_GetLanguageGroupName(LGRPID lgrpid, LPWSTR szName, ULONG nameSiz
     if (SUBLANGID(langId) == SUBLANG_NEUTRAL)
         langId = MAKELANGID( PRIMARYLANGID(langId), SUBLANG_DEFAULT );
 
-    hResource = FindResourceExW( hModule, (LPWSTR)RT_STRING, szResourceName, langId );
+    hResource = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING, szResourceName, langId );
 
     if (hResource)
     {
-        HGLOBAL hResDir = LoadResource( hModule, hResource );
+        HGLOBAL hResDir = LoadResource( kernel32_handle, hResource );
 
         if (hResDir)
         {

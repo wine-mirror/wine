@@ -33,7 +33,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-
+#include "kernel_private.h"
 #include "heap.h"
 #include "wine/debug.h"
 
@@ -172,7 +172,7 @@ DWORD WINAPI FormatMessageA(
         }
         if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
         {
-            hmodule = GetModuleHandleA("kernel32");
+            hmodule = kernel32_handle;
             bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
         }
 
@@ -399,7 +399,7 @@ DWORD WINAPI FormatMessageW(
         }
         if ((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) && (!bufsize))
         {
-            hmodule = GetModuleHandleA("kernel32");
+            hmodule = kernel32_handle;
             bufsize=load_messageA(hmodule,dwMessageId,dwLanguageId,NULL,100);
         }
 

@@ -42,6 +42,7 @@
 #include "thread.h"
 #include "stackframe.h"
 #include "wincon.h"
+#include "toolhelp.h"
 #include "kernel_private.h"
 #include "console_private.h"
 

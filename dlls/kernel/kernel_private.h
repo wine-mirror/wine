@@ -44,6 +44,8 @@ static inline HANDLE console_handle_unmap(HANDLE h)
     return h != INVALID_HANDLE_VALUE ? (HANDLE)((DWORD)h ^ 3) : INVALID_HANDLE_VALUE;
 }
 
+extern HMODULE kernel32_handle;
+
 /* Size of per-process table of DOS handles */
 #define DOS_TABLE_SIZE 256
 extern HANDLE dos_handles[DOS_TABLE_SIZE];
@@ -64,12 +66,6 @@ extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
 extern void SELECTOR_FreeBlock( WORD sel );
 #define IS_SELECTOR_32BIT(sel) \
    (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
-
-extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, const void *ptr, DWORD size,
-                                     HGLOBAL16 hOwner, unsigned char selflags );
-extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
-extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size );
-extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner, unsigned char selflags );
 
 /* this structure is always located at offset 0 of the DGROUP segment */
 #include "pshpack1.h"

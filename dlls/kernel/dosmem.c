@@ -41,6 +41,7 @@
 #include "wine/winbase16.h"
 
 #include "kernel_private.h"
+#include "toolhelp.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 
