@@ -471,10 +471,7 @@ BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 }
 
 /***********************************************************************
- *           QueryWorkingSet (PSAPI.?)
- * FIXME
- *     I haven't been able to find the ordinal for this function,
- *     This means it can't be called from outside the DLL.
+ *           QueryWorkingSet (PSAPI.@)
  */
 BOOL WINAPI QueryWorkingSet(HANDLE hProcess, LPVOID pv, DWORD cb)
 {

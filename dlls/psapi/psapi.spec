@@ -21,3 +21,4 @@
 @ stdcall GetProcessMemoryInfo(long ptr long)
 @ stdcall GetWsChanges(long ptr long)
 @ stdcall InitializeProcessForWsWatch(long)
+@ stdcall QueryWorkingSet(long ptr long)
