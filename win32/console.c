@@ -583,7 +583,8 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
 	struct termios term;
 	char buf[256];
 	char c = '\0';
-	int i,xpid,master,slave,pty_handle;
+	int i,xpid,master,slave;
+        HANDLE pty_handle;
 
         if (CONSOLE_GetPid( handle )) return TRUE; /* already complex */
 
