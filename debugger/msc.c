@@ -2302,6 +2302,7 @@ DEBUG_ProcessDeferredDebug()
   struct MiscDebug	     * misc;
   char			     * filename;
   int			       last_proc = -1;
+  int                          need_print =0;
 
   DEBUG_InitCVDataTypes();
 
@@ -2314,6 +2315,11 @@ DEBUG_ProcessDeferredDebug()
 
       if( last_proc != deefer->dbg_index )
 	{
+	  if (!need_print)
+	    {
+	      fprintf(stderr, "DeferredDebug for:");
+	      need_print=1;
+	    }
 	  fprintf(stderr, " %s",deefer->module_name);
 	  last_proc = deefer->dbg_index;
 	}
@@ -2384,6 +2390,8 @@ DEBUG_ProcessDeferredDebug()
 	  break;
 	}
     }
+      if(need_print)
+       fprintf(stderr, "\n");
   return TRUE;
 
 }
