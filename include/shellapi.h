@@ -342,6 +342,19 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW lpData);
 #define Shell_NotifyIcon WINELIB_NAME_AW(Shell_NotifyIcon)
 
 /******************************************
+ * Links
+ */
+
+#define SHGNLI_PIDL        0x01
+#define SHGNLI_PREFIXNAME  0x02
+#define SHGNLI_NOUNIQUE    0x04
+#define SHGNLI_NOLNK       0x08
+
+BOOL WINAPI SHGetNewLinkInfoA(LPCSTR,LPCSTR,LPSTR,BOOL*,UINT);
+BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR,LPCWSTR,LPWSTR,BOOL*,UINT);
+#define     SHGetNewLinkInfo WINELIB_NAME_AW(SHGetNewLinkInfo)
+
+/******************************************
  * Misc
  */
 
@@ -365,6 +378,9 @@ HINSTANCE   WINAPI FindExecutableW(LPCWSTR,LPCWSTR,LPWSTR);
 BOOL        WINAPI ShellAboutA(HWND,LPCSTR,LPCSTR,HICON);
 BOOL        WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
 #define     ShellAbout WINELIB_NAME_AW(ShellAbout)
+int         WINAPIV ShellMessageBoxA(HINSTANCE,HWND,LPCSTR,LPCSTR,UINT,...);
+int         WINAPIV ShellMessageBoxW(HINSTANCE,HWND,LPCWSTR,LPCWSTR,UINT,...);
+#define     ShellMessageBox WINELIB_NAME_AW(ShellMessageBox)
 
 #ifdef __cplusplus
 } /* extern "C" */

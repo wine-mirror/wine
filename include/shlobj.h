@@ -33,11 +33,26 @@ extern "C" {
 #include <shtypes.h>
 #include <shobjidl.h>
 
-HRESULT WINAPI SHCoCreateInstance(LPCWSTR,const CLSID*,LPUNKNOWN,REFIID,LPVOID*);
+LPVOID       WINAPI SHAlloc(ULONG);
+HRESULT      WINAPI SHCoCreateInstance(LPCWSTR,const CLSID*,IUnknown*,REFIID,LPVOID*);
+HRESULT      WINAPI SHCreateStdEnumFmtEtc(DWORD,const FORMATETC *,IEnumFORMATETC**);
+BOOL         WINAPI SHFindFiles(LPCITEMIDLIST,LPCITEMIDLIST);
+void         WINAPI SHFree(LPVOID);
+BOOL         WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl,LPSTR pszPath);
+BOOL         WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl,LPWSTR pszPath);
+#define             SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
+HRESULT      WINAPI SHILCreateFromPath(LPCWSTR,LPITEMIDLIST*,DWORD*);
+LPITEMIDLIST WINAPI SHSimpleIDListFromPath(LPCWSTR);
+int          WINAPI SHMapPIDLToSystemImageListIndex(IShellFolder*,LPCITEMIDLIST,int*);
 
-BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
-BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
-#define     SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
+
+/* SHObjectProperties flags */
+#define SHOP_PRINTERNAME 0x01
+#define SHOP_FILEPATH    0x02
+#define SHOP_VOLUMEGUID  0x04
+
+BOOL WINAPI SHObjectProperties(HWND,UINT,LPCWSTR,LPCWSTR);
+
 
 /*****************************************************************************
  * Predeclare interfaces
@@ -854,11 +869,59 @@ DECL_WINELIB_TYPE_AW(FILEGROUPDESCRIPTOR)
 DECL_WINELIB_TYPE_AW(LPFILEGROUPDESCRIPTOR)
 
 /****************************************************************************
+ * Cabinet functions
+ */
+
+typedef struct {
+    WORD cLength;
+    WORD nVersion;
+    BOOL fFullPathTitle:1;
+    BOOL fSaveLocalView:1;
+    BOOL fNotShell:1;
+    BOOL fSimpleDefault:1;
+    BOOL fDontShowDescBar:1;
+    BOOL fNewWindowMode:1;
+    BOOL fShowCompColor:1;
+    BOOL fDontPrettyNames:1;
+    BOOL fAdminsCreateCommonGroups:1;
+    UINT fUnusedFlags:7;
+    UINT fMenuEnumFilter;
+} CABINETSTATE, *LPCABINETSTATE;
+
+#define CABINETSTATE_VERSION 2
+
+BOOL WINAPI ReadCabinetState(CABINETSTATE *, int);
+BOOL WINAPI WriteCabinetState(CABINETSTATE *);
+
+/****************************************************************************
  * Path Manipulation Routines
  */
 VOID WINAPI PathGetShortPath(LPWSTR pszPath);
 
 #include <poppack.h>
+
+/****************************************************************************
+ * Drag And Drop Routines
+ */
+
+/* DAD_AutoScroll sample structure */
+#define NUM_POINTS 3
+typedef struct
+{
+    int   iNextSample;
+    DWORD dwLastScroll;
+    BOOL  bFull;
+    POINT pts[NUM_POINTS];
+    DWORD dwTimes[NUM_POINTS];
+} AUTO_SCROLL_DATA;
+
+BOOL         WINAPI DAD_SetDragImage(HIMAGELIST,LPPOINT);
+BOOL         WINAPI DAD_DragEnterEx(HWND,POINT);
+BOOL         WINAPI DAD_DragEnterEx2(HWND,POINT,IDataObject*);
+BOOL         WINAPI DAD_DragMove(POINT);
+BOOL         WINAPI DAD_DragLeave(void);
+BOOL         WINAPI DAD_AutoScroll(HWND,AUTO_SCROLL_DATA*,LPPOINT);
+HRESULT      WINAPI SHDoDragDrop(HWND,IDataObject*,IDropSource*,DWORD,LPDWORD);
 
 /*****************************************************************************
  * IFileSystemBindData interface
@@ -940,6 +1003,9 @@ struct IFileSystemBindDataVtbl {
 LPITEMIDLIST WINAPI ILAppendID(LPITEMIDLIST,LPCSHITEMID,BOOL);
 LPITEMIDLIST WINAPI ILClone(LPCITEMIDLIST);
 LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST);
+LPITEMIDLIST WINAPI ILCreateFromPathA(LPCSTR);
+LPITEMIDLIST WINAPI ILCreateFromPathW(LPCWSTR);
+#define             ILCreateFromPath WINELIB_NAME_AW(ILCreateFromPath)
 LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST,LPCITEMIDLIST);
 LPITEMIDLIST WINAPI ILFindChild(LPCITEMIDLIST,LPCITEMIDLIST);
 LPITEMIDLIST WINAPI ILFindLastID(LPCITEMIDLIST);
