@@ -213,8 +213,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     case VENDOR_ATI:
         major = minor = 0;
         gl_string_cursor = strchr(gl_string, '-');
-        if (gl_string_cursor++) {
+        if (gl_string_cursor) {
             int error = 0;
+            gl_string_cursor++;
 
             /* Check if version number is of the form x.y.z */
             if (*gl_string_cursor > '9' && *gl_string_cursor < '0')
