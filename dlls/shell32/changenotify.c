@@ -222,8 +222,8 @@ void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 
 	if(uFlags & SHCNF_PATHA)
 	{
-	  SHFree(pidl1);
-	  SHFree(pidl2);
+            if (pidl1) SHFree(pidl1);
+            if (pidl2) SHFree(pidl2);
 	}
 }
 
@@ -269,8 +269,8 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	/* if we allocated it, free it */
 	if(uFlags & SHCNF_PATHA)
 	{
-	  SHFree(Pidls[0]);
-	  SHFree(Pidls[1]);
+            if (Pidls[0]) SHFree(Pidls[0]);
+            if (Pidls[1]) SHFree(Pidls[1]);
 	}
 }
 
