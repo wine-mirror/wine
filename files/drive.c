@@ -1529,7 +1529,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
- *           GetDiskFreeSpaceExA   (KERNEL32.@)
+ *           GetDiskFreeSpaceExW   (KERNEL32.@)
  *
  *  This function is used to acquire the size of the available and
  *  total space on a logical volume.
@@ -1540,7 +1540,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
  *  detailed error information.
  *
  */
-BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
+BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root,
 				     PULARGE_INTEGER avail,
 				     PULARGE_INTEGER total,
 				     PULARGE_INTEGER totalfree)
@@ -1556,10 +1556,10 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
             FIXME("there are valid root names which are not supported yet\n");
 	    /* ..like UNC names, for instance. */
 
-            WARN("invalid root '%s'\n", root );
+            WARN("invalid root '%s'\n", debugstr_w(root));
             return FALSE;
         }
-        drive = toupper(root[0]) - 'A';
+        drive = toupperW(root[0]) - 'A';
     }
 
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
@@ -1605,18 +1605,21 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 }
 
 /***********************************************************************
- *           GetDiskFreeSpaceExW   (KERNEL32.@)
+ *           GetDiskFreeSpaceExA   (KERNEL32.@)
  */
-BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
+BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root, PULARGE_INTEGER avail,
 				     PULARGE_INTEGER total,
 				     PULARGE_INTEGER  totalfree)
 {
-    LPSTR xroot;
+    UNICODE_STRING rootW;
     BOOL ret;
 
-    xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, root);
-    ret = GetDiskFreeSpaceExA( xroot, avail, total, totalfree);
-    HeapFree( GetProcessHeap(), 0, xroot );
+    if (root) RtlCreateUnicodeStringFromAsciiz(&rootW, root);
+    else rootW.Buffer = NULL;
+
+    ret = GetDiskFreeSpaceExW( rootW.Buffer, avail, total, totalfree);
+
+    RtlFreeUnicodeString(&rootW);
     return ret;
 }
 
