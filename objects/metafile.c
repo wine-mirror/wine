@@ -658,10 +658,10 @@ BOOL WINAPI EnumMetaFile(
 			     MFENUMPROC lpEnumFunc, 
 			     LPARAM lpData 
 ) {
-    METAHEADER *mh = MF_GetMetaHeader(hmf);
+    METAHEADER *mhTemp = NULL, *mh = MF_GetMetaHeader(hmf);
     METARECORD *mr;
     HANDLETABLE *ht;
-    BOOL result = TRUE, loaded = FALSE;
+    BOOL result = TRUE;
     int i, offset = 0;
     HPEN hPen;
     HBRUSH hBrush;
@@ -671,10 +671,30 @@ BOOL WINAPI EnumMetaFile(
 		     hdc, hmf, lpEnumFunc, (void*)lpData);
     if (!mh) return 0;
     if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
-        mh = MF_LoadDiskBasedMetaFile(mh);
-	if(!mh) return 0;
-	loaded = TRUE;
+	mhTemp = MF_LoadDiskBasedMetaFile(mh);
+	if(!mhTemp)
+	{
+	    MF_ReleaseMetaHeader(hmf);
+	    return FALSE;
+	}
+	mh = mhTemp;
     }
+    else
+    {
+	/* We need to copy this thing instead of use it directly because we
+	 * have to close the hmf handle for the purpose of avoiding deadlock.
+	 */
+	mhTemp = HeapAlloc( GetProcessHeap(), 0, mh->mtHeaderSize + mh->mtSize*2 );
+	if(!mhTemp)
+	{
+	    MF_ReleaseMetaHeader(hmf);
+	    return FALSE;
+	}
+	memcpy( mhTemp, mh, mh->mtHeaderSize + mh->mtSize*2 );
+	mh = mhTemp;
+    }
+    MF_ReleaseMetaHeader(hmf);
+    hmf = 0; /* just in case */
     
     /* save the current pen, brush and font */
     hPen = GetCurrentObject(hdc, OBJ_PEN);
@@ -713,9 +733,8 @@ BOOL WINAPI EnumMetaFile(
 
     /* free handle table */
     HeapFree( GetProcessHeap(), 0, ht);
-    if(loaded)
-        HeapFree( GetProcessHeap(), 0, mh );
-    MF_ReleaseMetaHeader(hmf);
+    /* free a copy of metafile */
+    HeapFree( GetProcessHeap(), 0, mh );
     return result;
 }
 
