@@ -243,7 +243,7 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
             method. So to run the kernel 'path' tests you would do:
 <screen>
 <prompt>C:\&gt;</>cd dlls\kernel\tests\Output\Win32_MSVC_Headers
-<prompt>C:\dlls\kernel\tests\Output\Win32_MSVC_Headers&gt;</>kernel32_test thread
+<prompt>C:\dlls\kernel\tests\Output\Win32_MSVC_Headers&gt;</>kernel32_test path
 </screen>
           </para></listitem>
         </itemizedlist>
