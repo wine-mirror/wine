@@ -1856,7 +1856,7 @@ LRESULT WINAPI SendMessageTimeout16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     /* FIXME: need support for SMTO_BLOCK */
     
     ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout, 0, &msgRet);
-    *resultp = (WORD) msgRet;
+    if (resultp) *resultp = (WORD) msgRet;
     return ret;
 }
 
@@ -1876,7 +1876,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wParam,
     ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout, SMSG_WIN32,
                           &msgRet);
 
-    *resultp = (DWORD) msgRet;
+    if (resultp) *resultp = (DWORD) msgRet;
     return ret;
 }
 
@@ -1896,7 +1896,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wParam,
     ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout,
                           SMSG_WIN32 | SMSG_UNICODE, &msgRet);
     
-    *resultp = (DWORD) msgRet;
+    if (resultp) *resultp = (DWORD) msgRet;
     return ret;
 }
 
