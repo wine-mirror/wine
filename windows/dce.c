@@ -410,7 +410,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     /* fixup flags */
 
-    if (!wndPtr->dce) flags |= DCX_CACHE;
+    if (flags & (DCX_WINDOW | DCX_PARENTCLIP)) flags |= DCX_CACHE;
 
     if (flags & DCX_USESTYLE)
     {
@@ -425,25 +425,26 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
 	    if (wndPtr->dwStyle & WS_CLIPCHILDREN &&
                      !(wndPtr->dwStyle & WS_MINIMIZE) ) flags |= DCX_CLIPCHILDREN;
+            if (!wndPtr->dce) flags |= DCX_CACHE;
 	}
-	else flags |= DCX_CACHE;
     }
 
-    if (flags & DCX_WINDOW) 
-	flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
+    if (flags & DCX_WINDOW) flags &= ~DCX_CLIPCHILDREN;
 
     if (!wndPtr->parent || (wndPtr->parent->hwndSelf == GetDesktopWindow()))
         flags = (flags & ~DCX_PARENTCLIP) | DCX_CLIPSIBLINGS;
-    else if( flags & DCX_PARENTCLIP )
+
+    /* it seems parent clip is ignored when clipping siblings or children */
+    if (flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN)) flags &= ~DCX_PARENTCLIP;
+
+    if( flags & DCX_PARENTCLIP )
     {
-	flags |= DCX_CACHE;
-	if( !(flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN)) )
-	    if( (wndPtr->dwStyle & WS_VISIBLE) && (wndPtr->parent->dwStyle & WS_VISIBLE) )
-	    {
-		flags &= ~DCX_CLIPCHILDREN;
-		if( wndPtr->parent->dwStyle & WS_CLIPSIBLINGS )
-		    flags |= DCX_CLIPSIBLINGS;
-	    }
+        if( (wndPtr->dwStyle & WS_VISIBLE) && (wndPtr->parent->dwStyle & WS_VISIBLE) )
+        {
+            flags &= ~DCX_CLIPCHILDREN;
+            if( wndPtr->parent->dwStyle & WS_CLIPSIBLINGS )
+                flags |= DCX_CLIPSIBLINGS;
+        }
     }
 
     /* find a suitable DCE */
@@ -496,7 +497,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     else 
     {
         dce = wndPtr->dce;
-	if( dce->hwndCurrent == hwnd )
+        if (dce && dce->hwndCurrent == hwnd)
 	{
 	    TRACE("\tskipping hVisRgn update\n");
 	    bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */

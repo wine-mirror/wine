@@ -283,7 +283,7 @@ HRESULT User_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
 	HDC hDisplayDC;
 	HRESULT hr;
 	hDisplayWnd = get_display_window(This, &offset);
-	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS);
+	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS|DCX_CACHE);
 	hr = GetDeviceGammaRamp(hDisplayDC, lpGammaRamp) ? DD_OK : DDERR_UNSUPPORTED;
 	ReleaseDC(hDisplayWnd, hDisplayDC);
 	return hr;
@@ -302,7 +302,7 @@ HRESULT User_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
 	HDC hDisplayDC;
 	HRESULT hr;
 	hDisplayWnd = get_display_window(This, &offset);
-	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS);
+	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS|DCX_CACHE);
 	hr = SetDeviceGammaRamp(hDisplayDC, lpGammaRamp) ? DD_OK : DDERR_UNSUPPORTED;
 	ReleaseDC(hDisplayWnd, hDisplayDC);
 	return hr;
@@ -477,7 +477,7 @@ static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 	    return;
 
 	hDisplayWnd = get_display_window(This, &offset);
-	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS);
+	hDisplayDC = GetDCEx(hDisplayWnd, 0, DCX_CLIPSIBLINGS|DCX_CACHE);
 #if 0
 	/* FIXME: this doesn't work... if users really want to run
 	 * X in 8bpp, then we need to call directly into display.drv
