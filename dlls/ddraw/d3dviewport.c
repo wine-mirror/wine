@@ -131,6 +131,7 @@ ULONG WINAPI IDirect3DViewport2Impl_Release(LPDIRECT3DVIEWPORT2 iface)
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
 
   if (!--(This->ref)) {
+    HeapFree(GetProcessHeap(),0,This->private);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
