@@ -340,7 +340,44 @@ static void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 {
     LPWINE_MLD	mld = (LPWINE_MLD)dwInstance;
 
-    FIXME("NIY\n");
+    switch (uMsg) {
+    case MIM_OPEN:
+    case MIM_CLOSE:
+	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
+
+    case MIM_DATA:	
+    case MIM_MOREDATA:	
+    case MIM_ERROR:	
+	/* dwParam1 & dwParam2 are are data, nothing to do */
+	break;
+    case MIM_LONGDATA:
+    case MIM_LONGERROR:
+	/* dwParam1 points to a MidiHdr, work to be done !!! */
+	if (mld->bFrom32 && !MMDrvs[mld->mmdIndex].bIs32) {
+	    /* initial map is: 32 => 16 */
+	    LPMIDIHDR		wh16 = (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1);
+	    LPMIDIHDR		wh32 = *(LPMIDIHDR*)((LPSTR)wh16 - sizeof(LPMIDIHDR));
+	    
+	    dwParam1 = (DWORD)wh32;
+	    wh32->dwFlags = wh16->dwFlags;
+	    wh32->dwBytesRecorded = wh16->dwBytesRecorded;
+	} else if (!mld->bFrom32 && MMDrvs[mld->mmdIndex].bIs32) {
+	    /* initial map is: 16 => 32 */
+	    LPMIDIHDR		wh32 = (LPMIDIHDR)(dwParam1);
+	    LPMIDIHDR		segwh16 = *(LPMIDIHDR*)((LPSTR)wh32 - sizeof(LPMIDIHDR));
+	    LPMIDIHDR		wh16 = PTR_SEG_TO_LIN(segwh16);
+	    
+	    dwParam1 = (DWORD)segwh16;
+	    wh16->dwFlags = wh32->dwFlags;
+	    wh16->dwBytesRecorded = wh32->dwBytesRecorded;
+	}	
+	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
+	break;
+    /* case MOM_POSITIONCB: */
+    default:
+	ERR("Unknown msg %u\n", uMsg);
+    }
+
     MMDRV_Callback(mld, hDev, uMsg, dwParam1, dwParam2);
 }
 
