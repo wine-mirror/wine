@@ -1093,7 +1093,7 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
           TRIVERTEX *v2 = vert_array + rect->LowerRight;
           int y1 = v1->y < v2->y ? v1->y : v2->y;
           int y2 = v2->y > v1->y ? v2->y : v1->y;
-          int x, y, dx;
+          int x, dx;
           if (v1->x > v2->x)
             {
               TRIVERTEX *t = v2;
@@ -1103,11 +1103,20 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
           dx = v2->x - v1->x;
           for (x = 0; x < dx; x++)
             {
-              for (y = y1; y < y2; y++)
-                SetPixel (hdc, x + v1->x, y, RGB(
+              POINT pts[2];
+              HPEN hPen, hOldPen;
+              
+              hPen = CreatePen( PS_SOLID, 1, RGB(
                   (v1->Red   * (dx - x) + v2->Red   * x) / dx >> 8,
                   (v1->Green * (dx - x) + v2->Green * x) / dx >> 8,
                   (v1->Blue  * (dx - x) + v2->Blue  * x) / dx >> 8));
+              hOldPen = SelectObject( hdc, hPen );
+              pts[0].x = x;
+              pts[0].y = y1;
+              pts[1].x = x;
+              pts[1].y = y2;
+              Polyline( hdc, &pts[0], 2 );
+              DeleteObject( SelectObject(hdc, hOldPen ) );
             }
         }
       break;
@@ -1119,7 +1128,7 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
           TRIVERTEX *v2 = vert_array + rect->LowerRight;
           int x1 = v1->x < v2->x ? v1->x : v2->x;
           int x2 = v2->x > v1->x ? v2->x : v1->x;
-          int x, y, dy;
+          int y, dy;
           if (v1->y > v2->y)
             {
               TRIVERTEX *t = v2;
@@ -1129,11 +1138,20 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
           dy = v2->y - v1->y;
           for (y = 0; y < dy; y++)
             {
-              for (x = x1; x < x2; x++)
-                SetPixel (hdc, x, y + v1->y, RGB(
+              POINT pts[2];
+              HPEN hPen, hOldPen;
+              
+              hPen = CreatePen( PS_SOLID, 1, RGB(
                   (v1->Red   * (dy - y) + v2->Red   * y) / dy >> 8,
                   (v1->Green * (dy - y) + v2->Green * y) / dy >> 8,
                   (v1->Blue  * (dy - y) + v2->Blue  * y) / dy >> 8));
+              hOldPen = SelectObject( hdc, hPen );
+              pts[0].x = x1;
+              pts[0].y = y;
+              pts[1].x = x2;
+              pts[1].y = y;
+              Polyline( hdc, &pts[0], 2 );
+              DeleteObject( SelectObject(hdc, hOldPen ) );
             }
         }
       break;
