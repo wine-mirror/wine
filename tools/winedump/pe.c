@@ -680,6 +680,75 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
     printf( "\n" );
 }
 
+/* dump a Unicode string with proper escaping */
+int dump_strW( const WCHAR *str, size_t len )
+{
+    static const char escapes[32] = ".......abtnvfr.............e....";
+    char buffer[256];
+    char *pos = buffer;
+    int count = 0;
+
+    for (; len; str++, len--)
+    {
+        if (pos > buffer + sizeof(buffer) - 8)
+        {
+            fwrite( buffer, pos - buffer, 1, stdout );
+            count += pos - buffer;
+            pos = buffer;
+        }
+        if (*str > 127)  /* hex escape */
+        {
+            if (len > 1 && str[1] < 128 && isxdigit((char)str[1]))
+                pos += sprintf( pos, "\\x%04x", *str );
+            else
+                pos += sprintf( pos, "\\x%x", *str );
+            continue;
+        }
+        if (*str < 32)  /* octal or C escape */
+        {
+            if (!*str && len == 1) continue;  /* do not output terminating NULL */
+            if (escapes[*str] != '.')
+                pos += sprintf( pos, "\\%c", escapes[*str] );
+            else if (len > 1 && str[1] >= '0' && str[1] <= '7')
+                pos += sprintf( pos, "\\%03o", *str );
+            else
+                pos += sprintf( pos, "\\%o", *str );
+            continue;
+        }
+        if (*str == '\\') *pos++ = '\\';
+        *pos++ = *str;
+    }
+    fwrite( buffer, pos - buffer, 1, stdout );
+    count += pos - buffer;
+    return count;
+}
+
+/* dump data for a STRING resource */
+void dump_string_data( const WCHAR *ptr, unsigned int size, unsigned int id, const char *prefix )
+{
+    int i;
+
+    for (i = 0; i < 16 && size; i++)
+    {
+        int len = *ptr++;
+
+        if (len >= size)
+        {
+            len = size;
+            size = 0;
+        }
+        else size -= len + 1;
+
+        if (len)
+        {
+            printf( "%s%04x \"", prefix, (id - 1) * 16 + i );
+            dump_strW( ptr, len );
+            printf( "\"\n" );
+            ptr += len;
+        }
+    }
+}
+
 static void dump_dir_resource(void)
 {
     const IMAGE_RESOURCE_DIRECTORY *root = get_dir(IMAGE_FILE_RESOURCE_DIRECTORY);
@@ -730,7 +799,11 @@ static void dump_dir_resource(void)
 
                 printf( " Language=%04x:\n", e3->u1.s2.Id );
                 data = (IMAGE_RESOURCE_DATA_ENTRY *)((char *)root + e3->u2.OffsetToData);
-                dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
+                if (!e1->u1.s1.NameIsString && e1->u1.s2.Id == 6)
+                    dump_string_data( RVA( data->OffsetToData, data->Size ), data->Size,
+                                      e2->u1.s2.Id, "    " );
+                else
+                    dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
             }
         }
     }
