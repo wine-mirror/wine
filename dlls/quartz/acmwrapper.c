@@ -187,7 +187,7 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
 	This->pWfOut = (WAVEFORMATEX*)outpmt->pbFormat;
 	This->pWfOut->wFormatTag = WAVE_FORMAT_PCM;
 	This->pWfOut->wBitsPerSample = 16;
-	This->pWfOut->nBlockAlign = 1;
+	This->pWfOut->nBlockAlign = 4;
 	This->pWfOut->cbSize = 0;
 	This->pWfOut->nAvgBytesPerSec = This->pWfOut->nChannels * This->pWfOut->nSamplesPerSec
 						* (This->pWfOut->wBitsPerSample/8);
@@ -202,6 +202,9 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
 	    }
 
 	    TRACE("input buffer size %ld\n", This->max_size);
+
+            /* Update buffer size of media samples in output */
+            ((OutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = OUTPUT_BUFFER_SIZE;
 	    
             TRACE("Connection accepted\n");
             return S_OK;
