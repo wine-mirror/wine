@@ -459,6 +459,8 @@ BOOL
 EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 {
     if(count < 2) return FALSE;
+    if( EMFDRV_Polylinegon16( dev, pt, count, EMR_POLYGON16 ) )
+        return TRUE;
     return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYGON );
 }
 
