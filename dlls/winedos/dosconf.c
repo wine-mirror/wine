@@ -397,7 +397,7 @@ static void DOSCONF_Parse(char *menuname)
 {
     char confline[256];
     char *p, *trail;
-    int i;
+    unsigned int i;
 
     if (menuname != NULL) /* we need to jump to a certain sub menu */
     {

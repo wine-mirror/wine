@@ -144,7 +144,8 @@ void wine_dbg_add_option( const char *name, unsigned char set, unsigned char cle
 int wine_dbg_parse_options( const char *str )
 {
     char *opt, *next, *options;
-    int i, errors = 0;
+    unsigned int i;
+    int errors = 0;
 
     if (!(options = strdup(str))) return -1;
     for (opt = options; opt; opt = next)

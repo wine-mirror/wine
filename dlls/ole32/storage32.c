@@ -2677,7 +2677,7 @@ ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This)
   }
   else
   {
-    int i;
+    unsigned int i;
     /*
      * Follow the chain to the last one.
      */
@@ -6667,7 +6667,8 @@ static HRESULT STORAGE_WriteCompObj( LPSTORAGE pstg, CLSID *clsid,
 /* enumerate HKEY_CLASSES_ROOT\\CLSID looking for a CLSID whose name matches */
 static HRESULT CLSIDFromUserType(LPCWSTR lpszUserType, CLSID *clsid)
 {
-    LONG r, count, i, len;
+    LONG r, i, len;
+    ULONG count;
     WCHAR szKey[0x40];
     HKEY hkey, hkeyclsid;
     LPWSTR buffer = NULL;

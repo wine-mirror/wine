@@ -95,7 +95,7 @@ void PSDRV_SetClip( PSDRV_PDEVICE *physDev )
         }
         else
         {
-            INT i;
+            UINT i;
             RECT *pRect = (RECT *)rgndata->Buffer;
 
             PSDRV_WriteArrayDef(physDev, szArrayName, rgndata->rdh.nCount * 4);

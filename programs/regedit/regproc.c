@@ -522,7 +522,7 @@ HKEY getRegClass(LPSTR lpClass)
 {
     LPSTR classNameEnd;
     LPSTR classNameBeg;
-    int i;
+    unsigned int i;
 
     char  lpClassCopy[KEY_MAX_LEN];
 
@@ -1364,7 +1364,7 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
         }
         HeapFree(GetProcessHeap(), 0, branch_name);
     } else {
-        int i;
+        unsigned int i;
 
         /* export all registry classes */
         file = REGPROC_open_export_file(file_name);

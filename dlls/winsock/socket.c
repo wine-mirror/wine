@@ -514,7 +514,7 @@ static fd_set* fd_set_import( fd_set* fds, const WS_fd_set* wsfds, int access, i
     /* translate Winsock fd set into local fd set */
     if( wsfds )
     {
-        int i;
+        unsigned int i;
 
         FD_ZERO(fds);
         for( i = 0; i < wsfds->fd_count; i++ )
@@ -580,7 +580,7 @@ static void fd_set_unimport( WS_fd_set* wsfds, int lfd[] )
 {
     if ( wsfds )
     {
-	int i;
+	unsigned int i;
 
 	for( i = 0; i < wsfds->fd_count; i++ )
 	    if ( lfd[i] >= 0 ) release_sock_fd( wsfds->fd_array[i], lfd[i] );
@@ -2093,7 +2093,7 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
 
         if (p_except && ws_exceptfds)
         {
-            int i, j;
+            unsigned int i, j;
 
             for (i = j = 0; i < ws_exceptfds->fd_count; i++)
             {
@@ -2164,7 +2164,8 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                       LPWSAOVERLAPPED lpOverlapped,
                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
-    int i, n, fd, err = WSAENOTSOCK, flags, ret;
+    unsigned int i;
+    int n, fd, err = WSAENOTSOCK, flags, ret;
     struct iovec* iovec;
     struct ws2_async *wsa;
 
@@ -3343,7 +3344,8 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 
 {
-    int i, n, fd, err = WSAENOTSOCK, flags, ret;
+    unsigned int i;
+    int n, fd, err = WSAENOTSOCK, flags, ret;
     struct iovec* iovec;
     struct ws2_async *wsa;
 

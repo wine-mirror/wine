@@ -33,14 +33,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 static PALETTEENTRY *COLOR_sysPal;
 
-static int palette_size = 256;  /* FIXME */
+static unsigned int palette_size = 256;  /* FIXME */
 
 /***********************************************************************
  *	     TTYDRV_PALETTE_Initialize
  */
 BOOL TTYDRV_PALETTE_Initialize(void)
 {
-  int i;
+  unsigned int i;
   PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS];
 
   TRACE("(void)\n");

@@ -100,7 +100,7 @@ struct tagTYPE42 {
 
 static BOOL LoadTable(HDC hdc, OTTable *table)
 {
-    int i;
+    unsigned int i;
 
     if(table->MS_tag == MS_MAKE_TAG('g','d','i','r')) return TRUE;
     table->len = GetFontData(hdc, table->MS_tag, 0, NULL, 0);

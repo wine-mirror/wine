@@ -329,7 +329,8 @@ static void	WCCURSES_SetTitle(const struct inner_data* data)
  */
 static void WCCURSES_Refresh(const struct inner_data* data, int tp, int bm)
 {
-    int         x, y;
+    unsigned int x;
+    int         y;
     CHAR_INFO*	cell;
     DWORD       attr;
     char        ch;

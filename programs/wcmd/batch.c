@@ -49,7 +49,7 @@ void WCMD_batch (char *file, char *command, int called) {
 HANDLE h = INVALID_HANDLE_VALUE;
 char string[MAXSTRING];
 char extension[][WCMD_BATCH_EXT_SIZE] = {".bat",".cmd"};
-int  i;
+unsigned int  i;
 BATCH_CONTEXT *prev_context;
 
   for(i=0; (i<(sizeof(extension)/WCMD_BATCH_EXT_SIZE)) && 

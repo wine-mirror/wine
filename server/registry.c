@@ -180,7 +180,8 @@ static void dump_path( const struct key *key, const struct key *base, FILE *f )
 /* dump a value to a text file */
 static void dump_value( const struct key_value *value, FILE *f )
 {
-    int i, count;
+    unsigned int i;
+    int count;
 
     if (value->name[0])
     {

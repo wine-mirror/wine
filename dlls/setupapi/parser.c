@@ -178,7 +178,7 @@ static void *grow_array( void *array, unsigned int *count, size_t elem )
 /* find a section by name */
 static int find_section( struct inf_file *file, const WCHAR *name )
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < file->nb_sections; i++)
         if (!strcmpiW( name, file->sections[i]->name )) return i;
@@ -313,7 +313,8 @@ static const WCHAR *get_string_subst( struct inf_file *file, const WCHAR *str, u
     struct section *strings_section;
     struct line *line;
     struct field *field;
-    int i, dirid;
+    unsigned int i;
+    int dirid;
     WCHAR *dirid_str, *end;
     const WCHAR *ret = NULL;
 
@@ -1167,7 +1168,7 @@ BOOL WINAPI SetupOpenAppendInfFileW( PCWSTR name, HINF parent_hinf, UINT *error 
 void WINAPI SetupCloseInfFile( HINF hinf )
 {
     struct inf_file *file = hinf;
-    int i;
+    unsigned int i;
 
     for (i = 0; i < file->nb_sections; i++) HeapFree( GetProcessHeap(), 0, file->sections[i] );
     HeapFree( GetProcessHeap(), 0, file->src_root );

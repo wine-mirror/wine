@@ -49,8 +49,7 @@ void  break_set_xpoints(BOOL set)
 {
     static BOOL                 last; /* = 0 = FALSE */
 
-    int		                i;
-    unsigned                    ret, size;
+    unsigned int                i, ret, size;
     void*                       addr;
     struct dbg_breakpoint*      bp = dbg_curr_process->bp;
 

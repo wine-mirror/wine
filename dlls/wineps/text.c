@@ -142,7 +142,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
         GetTextExtentPoint32W(physDev->hdc, str, count, &sz);
 
     if((char_extra = GetTextCharacterExtra(physDev->hdc)) != 0) {
-        INT i;
+        UINT i;
 	SIZE tmpsz;
 
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
@@ -162,7 +162,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 
     if(deltas) {
         SIZE tmpsz;
-	INT i;
+	UINT i;
 	/* Get the width of the last char and add on all the offsets */
 	if(physDev->font.fontloc == Download)
 	    GetTextExtentPointI(physDev->hdc, glyphs + count - 1, 1, &tmpsz);
@@ -247,7 +247,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	    PSDRV_WriteBuiltinGlyphShow(physDev, str, count);
     }
     else {
-        INT i;
+        UINT i;
 	float dx = 0.0, dy = 0.0;
 	float cos_theta = cos(physDev->font.escapement * M_PI / 1800.0);
 	float sin_theta = sin(physDev->font.escapement * M_PI / 1800.0);

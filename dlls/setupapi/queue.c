@@ -173,7 +173,7 @@ static void concat_W( WCHAR *buffer, const WCHAR *src1, const WCHAR *src2, const
  */
 static BOOL build_filepathsW( const struct file_op *op, FILEPATHS_W *paths )
 {
-    int src_len = 1, dst_len = 1;
+    unsigned int src_len = 1, dst_len = 1;
     WCHAR *source = (PWSTR)paths->Source, *target = (PWSTR)paths->Target;
 
     if (op->src_root) src_len += strlenW(op->src_root) + 1;

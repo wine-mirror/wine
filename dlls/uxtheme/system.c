@@ -434,7 +434,7 @@ HRESULT WINAPI GetThemeDocumentationProperty(LPCWSTR pszThemeName,
 
     PTHEME_FILE pt;
     HRESULT hr;
-    int i;
+    unsigned int i;
     int iDocId;
     TRACE("(%s,%s,%p,%d)\n", debugstr_w(pszThemeName), debugstr_w(pszPropertyName),
           pszValueBuff, cchMaxValChars);

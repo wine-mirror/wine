@@ -755,7 +755,7 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
 {
   PRPC_SERVER_INTERFACE If = (PRPC_SERVER_INTERFACE)IfSpec;
   RpcServerInterface* sif;
-  int i;
+  unsigned int i;
 
   TRACE("(%p,%s,%p,%u,%u,%u,%p)\n", IfSpec, debugstr_guid(MgrTypeUuid), MgrEpv, Flags, MaxCalls,
          MaxRpcSize, IfCallbackFn);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *  Adobe Font Metric (AFM) file parsing finctions for Wine PostScript driver.
+ *  Adobe Font Metric (AFM) file parsing functions for Wine PostScript driver.
  *  See http://partners.adobe.com/asn/developer/pdfs/tn/5004.AFM_Spec.pdf.
  *
  *  Copyright 2001  Ian Pilcher

@@ -260,16 +260,16 @@ void InitBoard( BOARD *p_board )
 
     LoadBoard( p_board );
 
-    if( p_board->pos.x < (unsigned) GetSystemMetrics( SM_CXFIXEDFRAME ))
+    if( p_board->pos.x < GetSystemMetrics( SM_CXFIXEDFRAME ))
         p_board->pos.x = GetSystemMetrics( SM_CXFIXEDFRAME );
 
-    if( p_board->pos.x > (unsigned) (GetSystemMetrics( SM_CXSCREEN )
+    if( p_board->pos.x > (GetSystemMetrics( SM_CXSCREEN )
     - GetSystemMetrics( SM_CXFIXEDFRAME ))) {
         p_board->pos.x = GetSystemMetrics( SM_CXSCREEN )
         - GetSystemMetrics( SM_CXFIXEDFRAME );
     }
 
-    if( p_board->pos.y < (unsigned) (GetSystemMetrics( SM_CYMENU )
+    if( p_board->pos.y < (GetSystemMetrics( SM_CYMENU )
     + GetSystemMetrics( SM_CYCAPTION )
     + GetSystemMetrics( SM_CYFIXEDFRAME ))) {
         p_board->pos.y = GetSystemMetrics( SM_CYMENU ) +
@@ -277,7 +277,7 @@ void InitBoard( BOARD *p_board )
         GetSystemMetrics( SM_CYFIXEDFRAME );
     }
 
-    if( p_board->pos.y > (unsigned) (GetSystemMetrics( SM_CYSCREEN )
+    if( p_board->pos.y > (GetSystemMetrics( SM_CYSCREEN )
     - GetSystemMetrics( SM_CYFIXEDFRAME ))) {
         p_board->pos.y = GetSystemMetrics( SM_CYSCREEN )
         - GetSystemMetrics( SM_CYFIXEDFRAME );
@@ -840,7 +840,7 @@ void TestBoard( HWND hWnd, BOARD *p_board, unsigned x, unsigned y, int msg )
 void TestMines( BOARD *p_board, POINT pt, int msg )
 {
     BOOL draw = TRUE;
-    unsigned col, row;
+    int col, row;
 
     col = (pt.x - p_board->mines_rect.left) / MINE_WIDTH + 1;
     row = (pt.y - p_board->mines_rect.top ) / MINE_HEIGHT + 1;

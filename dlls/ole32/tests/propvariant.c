@@ -127,7 +127,7 @@ static void test_validtypes()
 {
     PROPVARIANT propvar;
     HRESULT hr;
-    int i;
+    unsigned int i;
 
     memset(&propvar, 0, sizeof(propvar));
 

@@ -1177,7 +1177,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     HDC					hdcref;
     struct jpeg_source_mgr		xjsm;
     LPBYTE                              oldbits;
-    int i;
+    unsigned int i;
 
     if(!libjpeg_handle) {
         if(!load_libjpeg()) {
@@ -1353,7 +1353,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   }
   default:
   {
-    int i;
+    unsigned int i;
     FIXME("Unknown magic %04x, %ld read bytes:\n",magic,xread);
     hr=E_FAIL;
     for (i=0;i<xread+8;i++) {

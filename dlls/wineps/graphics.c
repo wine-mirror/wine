@@ -381,7 +381,8 @@ BOOL PSDRV_Polyline( PSDRV_PDEVICE *physDev, const POINT* pt, INT count )
 BOOL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* counts,
                         UINT polygons )
 {
-    DWORD polygon, line, total;
+    DWORD polygon, total;
+    INT line;
     POINT *dev_pts, *pt;
 
     TRACE("\n");

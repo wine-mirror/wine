@@ -1050,7 +1050,7 @@ static const MSSTYLES_CLASS_NAME mapClass[] = {
 
 BOOL MSSTYLES_LookupPartState(LPCWSTR pszClass, LPCWSTR pszPart, LPCWSTR pszState, int *iPartId, int *iStateId)
 {
-    int i;
+    unsigned int i;
     const MSSTYLES_CLASS_MAP *map;
 
     *iPartId = 0;

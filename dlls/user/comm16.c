@@ -324,8 +324,8 @@ static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov
 
 static void comm_waitread(struct DosDeviceStruct *ptr)
 {
-	int bleft;
-        COMSTAT stat;
+	unsigned int bleft;
+	COMSTAT stat;
 
 	/* FIXME: get timeouts working properly so we can read bleft bytes */
 	bleft = ((ptr->ibuf_tail > ptr->ibuf_head) ?

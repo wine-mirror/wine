@@ -66,7 +66,7 @@ typedef struct {
 
 uninst_entry *entries = NULL;
 
-int numentries = 0;
+unsigned int numentries = 0;
 int list_need_update = 1;
 int oldsel = -1;
 
@@ -88,7 +88,8 @@ void UninstallProgram(void);
 
 void ListUninstallPrograms(void)
 {
-    int i, len;
+    unsigned int i;
+    int len;
     char *descr;
 
     if (! FetchUninstallInformation())
@@ -107,7 +108,7 @@ void ListUninstallPrograms(void)
 
 void RemoveSpecificProgram(char *name)
 {
-    int i;
+    unsigned int i;
 
     if (! FetchUninstallInformation())
         return;
@@ -273,7 +274,7 @@ int FetchUninstallInformation(void)
 
 void UninstallProgram(void)
 {
-    int i;
+    unsigned int i;
     char errormsg[1024];
     BOOL res;
     STARTUPINFO si;
@@ -323,7 +324,8 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     HDC hdc;
     PAINTSTRUCT ps;
     TEXTMETRIC tm;
-    int cxChar, cyChar, i, y, bx, maxx, maxy, wx, wy;
+    unsigned int i;
+    int cxChar, cyChar, y, bx, maxx, maxy, wx, wy;
     static HWND hwndList = 0, static_text = 0;
     DWORD style;
     RECT rect;

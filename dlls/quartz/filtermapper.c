@@ -367,7 +367,7 @@ static HRESULT FM2_WriteFilterData(IPropertyBag * pPropBag, const REGFILTER2 * p
 {
     VARIANT var;
     int size = sizeof(struct REG_RF);
-    int i;
+    unsigned int i;
     struct Vector mainStore = {NULL, 0, 0};
     struct Vector clsidStore = {NULL, 0, 0};
     struct REG_RF rrf;
@@ -395,7 +395,7 @@ static HRESULT FM2_WriteFilterData(IPropertyBag * pPropBag, const REGFILTER2 * p
     {
         struct REG_RFP rrfp;
         REGFILTERPINS2 rgPin2 = prf2->u.s1.rgPins2[i];
-        int j;
+        unsigned int j;
 
         rrfp.signature[0] = '0';
         rrfp.signature[1] = 'p';
@@ -999,7 +999,7 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
     if (SUCCEEDED(hr))
     {
         IMoniker ** ppMoniker;
-        int i;
+        unsigned int i;
         ULONG nMonikerCount = monikers.current / sizeof(struct MONIKER_MERIT);
 
         /* sort the monikers in descending merit order */

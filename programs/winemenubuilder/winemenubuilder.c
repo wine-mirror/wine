@@ -397,7 +397,7 @@ static int ExtractFromICO(const char *szFileName, const char *szXPMFileName)
 static BOOL create_default_icon( const char *filename, const char* comment )
 {
     FILE *fXPM;
-    int i;
+    unsigned int i;
 
     if (!(fXPM = fopen(filename, "w"))) return FALSE;
     if (fprintf(fXPM, "/* XPM */\n/* %s */\nstatic char * icon[] = {", comment) <= 0)

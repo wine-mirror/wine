@@ -198,7 +198,8 @@ typedef int (*EnumChannelCB)(HANDLE, void*, char*, void*);
 static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user, unsigned unique)
 {
     struct dll_option_layout    dol;
-    int                         i, j, ret = 1;
+    int                         i, ret = 1;
+    unsigned int                j;
     void*                       buf_addr;
     unsigned char               buffer[32];
     void*                       addr;

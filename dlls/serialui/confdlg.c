@@ -147,7 +147,8 @@ static PARAM2STR SERIALUI_Flow2Str={ SERIALUI_TABLESIZE(SERIALUI_Flow2StrData),S
  */
 static void SERIALUI_AddConfItems(HWND hDlg, DWORD id, LPCPARAM2STR table, DWORD dwVal)
 {
-    int i,n;
+    unsigned int i;
+    int n;
     HWND hControl = GetDlgItem(hDlg,id);
 
     if(!hControl)
@@ -212,7 +213,7 @@ static DWORD SERIALUI_BaudConvertTable[] =  {
 
 static BOOL SERIALUI_MakeBaudDword(LPDWORD lpdwBaudRate)
 {
-    int i;
+    unsigned int i;
 
     for(i=0; i<(sizeof(SERIALUI_BaudConvertTable)/sizeof(DWORD)); i+=2)
     {
@@ -227,7 +228,7 @@ static BOOL SERIALUI_MakeBaudDword(LPDWORD lpdwBaudRate)
 
 static BOOL SERIALUI_MakeBaudEnum(LPDWORD lpdwBaudRate)
 {
-    int i;
+    unsigned int i;
 
     for(i=0; i<(sizeof(SERIALUI_BaudConvertTable)/sizeof(DWORD)); i+=2)
     {

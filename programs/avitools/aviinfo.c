@@ -27,7 +27,7 @@
 
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
-    int			n;
+    unsigned int	n;
     HRESULT		hres;
     PAVIFILE		avif;
     PAVISTREAM		vids,auds;

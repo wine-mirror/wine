@@ -520,7 +520,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 {
     /* We are running using client-side rendering fonts... */
     GLYPHMETRICS gm;
-    int glyph;
+    unsigned int glyph;
     int size = 0;
     void *bitmap = NULL, *gl_bitmap = NULL;
     int org_alignment;
@@ -531,7 +531,7 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
     LEAVE_GL();
 
     for (glyph = first; glyph < first + count; glyph++) {
-	int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
+	unsigned int needed_size = GetGlyphOutline_ptr(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, NULL);
 	int height, width_int;
 
 	TRACE("Glyph : %3d / List : %ld\n", glyph, listBase);

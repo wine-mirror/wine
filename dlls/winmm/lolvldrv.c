@@ -818,7 +818,7 @@ static  BOOL	MMDRV_ExitPerType(LPWINE_MM_DRIVER lpDrv, UINT type)
  */
 void    MMDRV_Exit(void)
 {
-    int i;
+    unsigned int i;
     TRACE("()\n");
 
     for (i = 0; i < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]); i++)

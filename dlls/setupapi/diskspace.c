@@ -117,7 +117,7 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC DiskSpace,
                         PVOID Reserved1, UINT Reserved2)
 {
     WCHAR driveW[20];
-    int i;
+    unsigned int i;
     LPDISKSPACELIST list = (LPDISKSPACELIST)DiskSpace;
     BOOL rc = FALSE;
     static const WCHAR bkslsh[]= {'\\',0};

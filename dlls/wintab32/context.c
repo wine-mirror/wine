@@ -712,9 +712,9 @@ int WINAPI WTDataGet(HCTX hCtx, UINT wBegin, UINT wEnd,
 {
     LPOPENCONTEXT context;
     LPVOID ptr = lpPkts;
-    UINT bgn = 0;
-    UINT end = 0;
-    UINT num = 0;
+    INT bgn = 0;
+    INT end = 0;
+    INT num = 0;
 
     TRACE("(%p, %u, %u, %d, %p, %p)\n",
 	  hCtx, wBegin, wEnd, cMaxPkts, lpPkts, lpNPkts);
@@ -770,9 +770,9 @@ int WINAPI WTDataPeek(HCTX hCtx, UINT wBegin, UINT wEnd,
 {
     LPOPENCONTEXT context;
     LPVOID ptr = lpPkts;
-    UINT bgn = 0;
-    UINT end = 0;
-    UINT num = 0;
+    INT bgn = 0;
+    INT end = 0;
+    INT num = 0;
 
     TRACE("(%p, %u, %u, %d, %p, %p)\n",
 	  hCtx, wBegin, wEnd, cMaxPkts, lpPkts, lpNPkts);

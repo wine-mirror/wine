@@ -166,7 +166,8 @@ static void set_IO_permissions(int val1, int val, char rw)
 
 static void do_IO_port_init_read_or_write(const WCHAR *str, char rw)
 {
-    int val, val1, i;
+    int val, val1;
+    unsigned int i;
     WCHAR *end;
     static const WCHAR allW[] = {'a','l','l',0};
 

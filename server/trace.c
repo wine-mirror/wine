@@ -117,7 +117,7 @@ static void dump_context( const CONTEXT *context )
 
 static void dump_exc_record( const EXCEPTION_RECORD *rec )
 {
-    int i;
+    unsigned int i;
     fprintf( stderr, "{code=%lx,flags=%lx,rec=%p,addr=%p,params={",
              rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionRecord,
              rec->ExceptionAddress );

@@ -1078,8 +1078,7 @@ HRESULT CoInternetCreateSecurityManager( IServiceProvider *pSP,
 
 static BOOL URLMON_IsBinary(LPVOID pBuffer, DWORD cbSize)
 {
-    int binarycount = 0;
-    int i;
+    unsigned int i, binarycount = 0;
     unsigned char *buff = pBuffer;
     for(i=0; i<cbSize; i++) {
         if(buff[i] < 32)

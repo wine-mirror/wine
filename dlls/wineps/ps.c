@@ -701,7 +701,7 @@ BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, DWORD number)
 {
     char *buf = HeapAlloc(PSDRV_Heap, 0, number * 3 + 1);
     char *ptr;
-    int i;
+    unsigned int i;
 
     ptr = buf;
 

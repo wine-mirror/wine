@@ -41,7 +41,7 @@ HRESULT IEnumRegFiltersImpl_Construct(REGFILTER* pInRegFilters, const ULONG size
 {
     IEnumRegFiltersImpl* pEnumRegFilters;
     REGFILTER* pRegFilters = NULL;
-    int i;
+    unsigned int i;
 
     TRACE("(%p, %ld, %p)\n", pInRegFilters, size, ppEnum);
 
@@ -139,7 +139,7 @@ static HRESULT WINAPI IEnumRegFiltersImpl_Next(IEnumRegFilters * iface, ULONG cF
 {
     ULONG cFetched; 
     IEnumRegFiltersImpl *This = (IEnumRegFiltersImpl *)iface;
-    int i;
+    unsigned int i;
 
     cFetched = min(This->size, This->uIndex + cFilters) - This->uIndex;
 

@@ -61,7 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
 static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
 {
-    int i=0;
+    unsigned int i=0;
     buf[0]='\0';
 
     do

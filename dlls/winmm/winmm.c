@@ -426,7 +426,7 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
 	    MIXERCONTROLDETAILS_LISTTEXTW *pDetailsW = (MIXERCONTROLDETAILS_LISTTEXTW *)lpmcd->paDetails;
             MIXERCONTROLDETAILS_LISTTEXTA *pDetailsA;
 	    int size = max(1, lpmcd->cChannels) * sizeof(MIXERCONTROLDETAILS_LISTTEXTA);
-            int i;
+            unsigned int i;
 
 	    if (lpmcd->u.cMultipleItems != 0) {
 		size *= lpmcd->u.cMultipleItems;
@@ -491,7 +491,7 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
 {
     MIXERLINECONTROLSA	mlcA;
     DWORD		ret;
-    int			i;
+    unsigned int	i;
 
     TRACE("(%p, %p, %08lx)\n", hmix, lpmlcW, fdwControls);
 

@@ -766,7 +766,8 @@ static int
 STORAGE_get_free_big_blocknr(HANDLE hf) {
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
-	int	lastbigblocknr,i,curblock,bigblocknr;
+	int	lastbigblocknr,i,bigblocknr;
+	unsigned int curblock;
 	struct storage_header sth;
 	BOOL ret;
 
@@ -1073,7 +1074,7 @@ HRESULT WINAPI IStream16_fnRead(
 		/* use small block reader */
 		blocknr = STORAGE_get_nth_next_small_blocknr(This->hf,This->stde.pps_sb,This->offset.u.LowPart/SMALLSIZE);
 		while (cb) {
-			int	cc;
+			unsigned int cc;
 
 			if (!STORAGE_get_small_block(This->hf,blocknr,block)) {
 			   WARN("small block read failed!!!\n");
@@ -1093,7 +1094,7 @@ HRESULT WINAPI IStream16_fnRead(
 		/* use big block reader */
 		blocknr = STORAGE_get_nth_next_big_blocknr(This->hf,This->stde.pps_sb,This->offset.u.LowPart/BIGSIZE);
 		while (cb) {
-			int	cc;
+			unsigned int cc;
 
 			if (!STORAGE_get_big_block(This->hf,blocknr,block)) {
 				WARN("big block read failed!!!\n");

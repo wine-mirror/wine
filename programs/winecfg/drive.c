@@ -456,7 +456,8 @@ void refreshDriveEditDialog(HWND dialog) {
   char *label;
   char *serial;
   char *device;
-  int i, selection = -1;
+  unsigned int i;
+  int selection = -1;
 
   updatingUI = TRUE;
 

@@ -692,7 +692,7 @@ void VGA_ShowMouse( BOOL show )
 void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
 {
     char *p, *p2;
-    int i;
+    unsigned int i;
 
     /*
      * Allocate space for char + attr.

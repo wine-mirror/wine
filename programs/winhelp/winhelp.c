@@ -93,7 +93,7 @@ HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile)
 HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
 {
     static      HLPFILE_WINDOWINFO      mwi;
-    int         i;
+    unsigned int     i;
 
     if (!name || !name[0])
         name = Globals.active_win->lpszName;
@@ -365,7 +365,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
 static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin, 
                                     HLPFILE_PAGE* page, int nCmdShow)
 {
-    int                 i;
+    unsigned int i;
 
     win->hMainWnd      = oldwin->hMainWnd;
     win->hButtonBoxWnd = oldwin->hButtonBoxWnd;
@@ -1112,7 +1112,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
     PAINTSTRUCT         ps;
     HDC                 hDc;
     TEXTMETRIC          tm;
-    int                 i;
+    unsigned int        i;
     RECT                r;
 
     switch (msg)
@@ -1622,7 +1622,7 @@ static void WINHELP_DeleteLines(WINHELP_WINDOW *win)
 static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
 {
     WINHELP_WINDOW**    w;
-    int                 i;
+    unsigned int        i;
     WINHELP_BUTTON*     b;
     WINHELP_BUTTON*     bp;
 
@@ -1683,7 +1683,7 @@ static void WINHELP_InitFonts(HWND hWnd)
 
     if (!init)
     {
-        INT i;
+        UINT i;
 
         for (i = 0; i < FONTS_LEN; i++)
 	{

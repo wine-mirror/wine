@@ -308,7 +308,7 @@ UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix,
 {
     MIXERLINECONTROLSA	mlcA;
     DWORD		ret;
-    int			i;
+    unsigned int	i;
     LPMIXERCONTROL16	lpmc16;
 
     TRACE("(%04x, %p, %08lx)\n", hmix, lpmlc16, fdwControls);

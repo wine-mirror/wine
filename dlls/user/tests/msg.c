@@ -2402,7 +2402,7 @@ static void test_button_messages(void)
 	{ BS_AUTORADIOBUTTON, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
 	{ BS_OWNERDRAW, WmSetFocusButtonSeq, WmKillFocusButtonSeq }
     };
-    int i;
+    unsigned int i;
     HWND hwnd;
 
     subclass_button();

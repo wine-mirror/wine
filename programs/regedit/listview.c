@@ -59,7 +59,7 @@ static int column_alignment[MAX_LIST_COLUMNS] = { LVCFMT_LEFT, LVCFMT_LEFT, LVCF
 LPTSTR get_item_text(HWND hwndLV, int item)
 {
     LPTSTR newStr, curStr;
-    int maxLen = 128;
+    unsigned int maxLen = 128;
 
     curStr = HeapAlloc(GetProcessHeap(), 0, maxLen);
     if (!curStr) return NULL;

@@ -890,7 +890,7 @@ static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
  */
 static HANDLE INT21_OpenMagicDevice( LPCWSTR name, DWORD access )
 {
-    int i;
+    unsigned int i;
     const WCHAR *p;
     HANDLE handle;
 

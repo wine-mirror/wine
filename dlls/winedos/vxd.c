@@ -830,7 +830,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             {
                 LPBYTE page  = module->baseAddr + r->VirtualAddress;
                 WORD *TypeOffset = (WORD *)(r + 1);
-                int count = (r->SizeOfBlock - sizeof(*r)) / sizeof(*TypeOffset);
+                unsigned int count = (r->SizeOfBlock - sizeof(*r)) / sizeof(*TypeOffset);
 
                 TRACE("MapModule: %d relocations for page %08lx\n",
                            count, (DWORD)page);
