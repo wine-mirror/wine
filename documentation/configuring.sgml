@@ -180,63 +180,76 @@
         <sect3>
           <title>The [Drive X] Section</title>
           <para>
-            It should be pretty self explanatory, but here is an
-            in-depth tutorial about them. There are up to 6 lines for
-            each drive in Wine.
+	    These sections are supposed to make certain Unix
+	    directory locations accessible to Wine as a DOS/Windows drive
+	    (drive 'X:') and thus accessible to Windows programs
+	    under the drive name you specified.
+	    Every DOS/Windows program sort of expects at least a C: drive (and
+	    sometimes also an A: floppy drive), so your config file should
+	    at least contain the corresponding sections, [Drive C] and
+	    [Drive A].
+	    You need to decide on whether you want to use an existing Windows
+	    partition as the C drive or whether you want to create your own
+	    Wine drive C directory tree somewhere (take care about
+	    permissions !).
+            Each drive section may specify up to 6 different settings
+	    as explained below.
           </para>
           <para>
             <programlisting>[Drive X]</programlisting>
-            The above line begins the section for a drive whose letter is X. 
+            The above line begins the section for a drive whose letter is X
+	    (DOS notation: drive 'X:').
+	    You could e.g. create an equivalent to a drive 'C:'
+	    under DOS/Windows by using a [Drive C] section name.
           </para>
           <para>
-            <programlisting>Path=/dir/to/path</programlisting> This
-            path is where the drive will begin. When Wine is browsing
-            in drive X, it will see the files that are in the
-            directory <filename>/dir/to/path</filename>. Don't forget
-            to leave off the trailing slash!
+            <programlisting>"Path" = "/dir/to/path"</programlisting>
+	    This specifies the directory where the drive will begin.
+	    When Wine is browsing in drive X, it will be able
+	    to see the files that are in the directory
+	    <filename>/dir/to/path</filename> and below.
+	    (note that symlinks to directories won't get included !
+	    see "<link linkend="dirsymlinks">ShowDirSymlinks</link>"
+	    config setting)
+	    You can also make use of environment variables like $HOME here,
+	    an example for using a mywinedrive directory in your home dir
+	    would be
+	    "Path" = "${HOME}/mywinedrive"
+	    Don't forget to leave off the trailing slash!
           </para>
           <para>
-            <programlisting>"Type" = "floppy|hd|cdrom|network"</programlisting>
+            <programlisting>"Type" = "hd|cdrom|network|floppy"</programlisting>
             Sets up the type of drive Wine will see it as. Type must
             equal one of the four <literal>floppy</literal>,
             <literal>hd</literal>, <literal>cdrom</literal>, or
             <literal>network</literal>. They are self-explanatory.
             (The |'s mean "Type = '&lt;one of the options&gt;'".)
+	    Usually, you choose "hd" for a drive ("hd" is default anyway).
           </para>
           <para>
-            <programlisting>"Label" = "blah"</programlisting> Defines the
-            drive label. Generally only needed for programs that look
-            for a special CD-ROM. Info on finding the lable is in
-            <literal>&lt;dirs to wine>/documentation/cdrom-labels</literal>.
+            <programlisting>"Label" = "blah"</programlisting>
+	    Defines the drive label. Generally only needed
+	    for programs that look for a special CD-ROM.
             The label may be up to 11 characters.
+	    Note that the preferred way of managing labels and serial numbers
+	    of CD-ROMs and floppies is to give Wine raw device access for
+	    reading these on a per-CD case (see "Device" below) instead of
+	    hardcoding one specific "Label".
           </para>
           <para>
             <programlisting>"Serial" = "deadbeef"</programlisting>
             Tells Wine the serial number of the drive. A few programs with
             intense protection for pirating might need this, but otherwise
-            don't use it. Up to 8 characters and hexadecimal.
+            it's not needed. Up to 8 characters and hexadecimal.
+	    Using a "Device" entry instead of hardcoding the "Serial" probably
+	    is a smarter choice.
           </para>
           <para>
-            <programlisting>"Filesystem" = "msdos|win95|unix"</programlisting>
+            <programlisting>"Filesystem" = "win95|unix|msdos"</programlisting>
             Sets up the way Wine looks at files on the drive.
           </para>
 
           <variablelist>
-            <varlistentry>
-              <term><literal>msdos</literal></term>
-              <listitem>
-                <para>
-                  Case insensitive filesystem. Alike to DOS and
-                  Windows 3.x. <literal>8.3</literal> is the maximum
-                  length of files (eightdot.123) - longer ones will be
-                  truncated. (NOTE: this is a very bad choice if you
-                  plan on running apps that use long filenames. win95
-                  should work fine with apps that were designed to run
-                  under the msdos system. In other words, you might
-                  not want to use this.)
-                </para>
-              </listitem>
-            </varlistentry>
             <varlistentry>
               <term><literal>win95</literal></term>
               <listitem>
@@ -260,42 +273,62 @@
                 </para>
               </listitem>
             </varlistentry>
+            <varlistentry>
+              <term><literal>msdos</literal></term>
+              <listitem>
+                <para>
+                  Case insensitive filesystem. Alike to DOS and
+                  Windows 3.x. <literal>8.3</literal> is the maximum
+                  length of files (eightdot.123) - longer ones will be
+                  truncated. (NOTE: this is a very bad choice if you
+                  plan on running apps that use long filenames. win95
+                  should work fine with apps that were designed to run
+                  under the msdos system. In other words, you might
+                  not want to use this.)
+                </para>
+              </listitem>
+            </varlistentry>
           </variablelist>
 
           <programlisting>"Device" = "/dev/xx"</programlisting>
           <para>
+	    Needed for raw device access and label and serial number reading.
             Use this ONLY for floppy and cdrom devices. Using it on
-            Extended2 partitions can have dire results (when a windows
-            app tries to do a lowlevel write, they do it in a FAT way
-            -- FAT does not mix with Extended2).
+            Extended2 or other Unix file systems can have dire results
+	    (when a windows app tries to do a lowlevel write,
+	    they do it in a FAT way -- FAT format is completely different from
+	    any Unix file system).
+	    Also, make sure that you have proper permissions to this device
+	    file.
           </para>
           <note>
             <para>
               This setting is not really important; almost all apps
               will have no problem if it remains unspecified. For
-              CD-ROMs you might want to add it to get automatic label
+              CD-ROMs it's quite useful in order to get automatic label
               detection, though. If you are unsure about specifying
               device names, just leave out this setting for your
               drives.
             </para>
           </note>
           <para>
-            Here is a setup for Drive X, a generic hard drive:
+	    Here are a few sample entries:
             <programlisting>
-[Drive X]
-"Path" = "/dos-a"
+Here is a setup for Drive C, a generic hard drive:
+[Drive C]
+"Path" = "/dosc"
 "Type" = "hd"
 "Label" = "Hard Drive"
 "Filesystem" = "win95"
-This is a setup for Drive X, a generic CD-ROM drive:
-[Drive X]
-"Path" = "/dos-d"
+This is a setup for Drive E, a generic CD-ROM drive:
+[Drive E]
+"Path" = "/mnt/cdrom"
 "Type" = "cdrom"
 "Label" = "Total Annihilation"
 "Filesystem" = "win95"
-"Device" = "/dev/hdc"
-And here is a setup for Drive X, a generic floppy drive:
-[Drive X]
+"Device" = "/dev/cdrom"
+And here is a setup for Drive A, a generic floppy drive:
+[Drive A]
 "Type" = "floppy"
 "Path" = "/mnt/floppy"
 "Label" = "Floppy Drive"
@@ -310,31 +343,39 @@ And here is a setup for Drive X, a generic floppy drive:
           <title>The [wine] Section </title>
           <para>
             The [wine] section of the configuration file contains all kinds
-            of general settings for Wine. When specifying the directories
-            for the directory related settings, make them as they would
-            appear in wine. If your drive <medialabel>C</medialabel>
-            has a path of <filename>/dos</filename>, and your
-            <filename>windows</filename> directory is located in
-            <filename>/dos/windows</filename>, then use:
-            <programlisting>"Windows" = "c:\\windows"</programlisting>
-          </para>
+            of general settings for Wine.
+	  </para>
           <para>
-            This sets up the <filename>windows</filename> directory.
-            Make one if you don't already have one. NO TRAILING SLASH
-            (NOT <filename>C:\\windows\</filename>)!
+            <programlisting>"Windows" = "c:\\windows"</programlisting>
+            This tells Wine and Windows programs where the
+            <filename>Windows</filename> directory is.  It is
+            recommended to have this directory somewhere on your
+            configured <medialabel>C</medialabel> drive, and it's also
+            recommended to just call the directory "windows" (this is
+            the default setup on Windows, and some stupid applications
+            might rely on this).  So in case you chose a "Windows"
+            setting of "c:\\windows" and you chose to set up a drive C
+            e.g. at <filename>/usr/local/wine_c</filename>, the
+            corresponding directory would be
+            <filename>/usr/local/wine_c/windows</filename>.  Make one
+            if you don't already have one. NO TRAILING SLASH (NOT
+            <filename>C:\\windows\</filename>)! Write access strongly
+            recommended!
           </para>
           <para>
             <programlisting>"System" = "c:\\windows\\system"</programlisting>
-            This sets up where the windows system files are. Should
-            reside in the directory used for the
-            <literal>Windows</literal> setting. If you don't have
-            <filename>windows</filename> then this is where the system
-            files will go. Again, NO TRAILING SLASH!
+            This sets up where the windows system files are. The Windows
+	    system directory should reside below the directory used for the
+            <literal>Windows</literal> setting.
+	    Thus when using the example above, the system directory would be
+	    <filename>/usr/local/wine_c/windows/system</filename>.
+            Again, no trailing slash, and write access!
           </para>
           <para>
             <programlisting>"Temp" = "c:\\temp"</programlisting> This should
-            be the directory you want your temp files stored in. YOU
-            MUST HAVE WRITE ACCESS TO IT.
+            be the directory you want your temp files stored in,
+	    /usr/local/wine_c/temp in our example.
+            Again, no trailing slash, and WRITE ACCESS!!
           </para>
           <para>
             <programlisting>
@@ -380,7 +421,7 @@ And here is a setup for Drive X, a generic floppy drive:
 	    making use of appropriate shell32.dll functionality to create
 	    icons on the desktop/start menu during installation.
 	  </para>
-	  <para>
+	  <para id="dirsymlinks">
 	    <programlisting>"ShowDirSymlinks" = "1"</programlisting>
 	    Wine doesn't pass directory symlinks to Windows programs by
 	    default, as doing so may crash some programs that do
@@ -955,48 +996,6 @@ OPTIONAL:
           yourself for heaving flaming.
         </para>
       </sect2>
-    </sect1>
-
-    <sect1 id="win95look">
-      <title>Win95/98 Look</title>
-      <para>
-        Written by &name-david-cuthbert; <email>&email-david-cuthbert;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/win95look</filename>)
-      </para>
-      <para>
-        Win95/Win98 interface code is being introduced.
-      </para>
-      <para>
-        Instead of compiling Wine for Win3.1 vs. Win95 using
-        <constant>#define</constant> switches, the code now looks in a
-        special [Tweak.Layout] section of
-        <filename>~/.wine/config</filename> for a
-        <literal>"WineLook" = "Win95"</literal> or
-        <literal>"WineLook" = "Win98"</literal> entry.
-      </para>
-      <para>
-        A few new sections and a number of entries have been added to
-        the <filename>~/.wine/config</filename> file -- these are for
-        debugging the Win95 tweaks only and may be removed in a future
-        release!  These entries/sections are:
-      </para>
-      <programlisting>
-[Tweak.Fonts]
-"System.Height" = "&lt;point size>"    # Sets the height of the system typeface
-"System.Bold" = "[true|false]"      # Whether the system font should be boldfaced
-"System.Italic" = "[true|false]"    # Whether the system font should be italicized
-"System.Underline" = "[true|false]" # Whether the system font should be underlined
-"System.StrikeOut" = "[true|false]" # Whether the system font should be struck out
-"OEMFixed.xxx"                  # Same parameters for the OEM fixed typeface
-"AnsiFixed.xxx"                 # Same parameters for the Ansi fixed typeface
-"AnsiVar.xxx"                   # Same parameters for the Ansi variable typeface
-"SystemFixed.xxx"               # Same parameters for the System fixed typeface
-
-[Tweak.Layout]
-"WineLook" = "[Win31|Win95|Win98]"  # Changes Wine's look and feel
-      </programlisting>
     </sect1>
 
     <sect1 id="x11drv">
@@ -1856,6 +1855,51 @@ OPTIONAL:
       </sect2>
     </sect1>
 
+    &fonts;
+    &printing;
+
+    <sect1 id="win95look">
+      <title>Win95/98 Look</title>
+      <para>
+        Written by &name-david-cuthbert; <email>&email-david-cuthbert;</email>
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/win95look</filename>)
+      </para>
+      <para>
+        Win95/Win98 interface code is being introduced.
+      </para>
+      <para>
+        Instead of compiling Wine for Win3.1 vs. Win95 using
+        <constant>#define</constant> switches, the code now looks in a
+        special [Tweak.Layout] section of
+        <filename>~/.wine/config</filename> for a
+        <literal>"WineLook" = "Win95"</literal> or
+        <literal>"WineLook" = "Win98"</literal> entry.
+      </para>
+      <para>
+        A few new sections and a number of entries have been added to
+        the <filename>~/.wine/config</filename> file -- these are for
+        debugging the Win95 tweaks only and may be removed in a future
+        release!  These entries/sections are:
+      </para>
+      <programlisting>
+[Tweak.Fonts]
+"System.Height" = "&lt;point size>"    # Sets the height of the system typeface
+"System.Bold" = "[true|false]"      # Whether the system font should be boldfaced
+"System.Italic" = "[true|false]"    # Whether the system font should be italicized
+"System.Underline" = "[true|false]" # Whether the system font should be underlined
+"System.StrikeOut" = "[true|false]" # Whether the system font should be struck out
+"OEMFixed.xxx"                  # Same parameters for the OEM fixed typeface
+"AnsiFixed.xxx"                 # Same parameters for the Ansi fixed typeface
+"AnsiVar.xxx"                   # Same parameters for the Ansi variable typeface
+"SystemFixed.xxx"               # Same parameters for the System fixed typeface
+
+[Tweak.Layout]
+"WineLook" = "[Win31|Win95|Win98]"  # Changes Wine's look and feel
+      </programlisting>
+    </sect1>
+
     <sect1 id="keyboard">
       <title>Keyboard</title>
 
@@ -2035,9 +2079,6 @@ diff -u the_backup_file_you_made dlls/x11drv/keyboard.c > layout.diff
         Good luck.
       </para>
     </sect1>
-
-    &fonts;
-    &printing;
 
   </chapter>
 

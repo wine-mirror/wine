@@ -52,7 +52,7 @@ FreeBSD info:
 Solaris info:
   You will most likely need to build Wine with the GNU toolchain
   (gcc, gas, etc.). Warning : installing gas does *not* ensure that it
-  will be used by gcc. Recompiling gcc after installing gas or 
+  will be used by gcc. Recompiling gcc after installing gas or
   symlinking cc, as and ld to the gnu tools is said to be necessary.
 
 NetBSD info:
@@ -86,9 +86,14 @@ are compiled with optimization, often due to problems with header file
 management. pgcc currently doesn't work with Wine. The cause of this problem
 is unknown.
 
+Of course you also need "make" (most likely GNU make).
+
 You also need flex version 2.5 or later and yacc.
 Bison will work as a replacement for yacc. If you are
 using RedHat or Debian, install the flex and bison packages.
+
+For the automatic processing of the test suite scripts, you also need
+libperl development header support (libperl-dev package on Debian).
 
 For requirements in case you intend to build the documentation yourself,
 see "DOCUMENTATION" section.
@@ -102,7 +107,7 @@ to build Wine:
 make depend
 make
 
-This will build the program "wine" and numerous support libraries/binaries.  
+This will build the program "wine" and numerous support libraries/binaries.
 The program "wine" will load and run Windows executables.
 The library "libwine" ("Winelib") can be used to compile and link
 Windows source code under Unix.
@@ -217,16 +222,13 @@ Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.com/.
 	Please read the file documentation/bugs.sgml to see what
 	information is required.
 
-HOWTO:	The Wine HOWTO (outdated !) is available at
-	http://www.westfalen.de/witch/wine-HOWTO.txt .
-
 IRC:	Online help is available at channel #WineHQ on irc.openprojects.net.
 
 CVS:	The current Wine development tree is available through CVS.
 	Go to http://www.winehq.com/development/ for more information.
 
 Mailing lists:
-	There are several mailing lists for Wine developers; see 
+	There are several mailing lists for Wine developers; see
 	http://www.winehq.com/development/#ml for more information.
 
 If you add something, or fix a bug, please send a patch (in 'diff -u'

@@ -26,6 +26,7 @@ WINE REGISTRY Version 2
 "Path" = "/mnt/fd0"
 "Type" = "floppy"
 "Label" = "Floppy"
+"Filesystem" = "win95"
 "Serial" = "87654321"
 "Device" = "/dev/fd0"
 
@@ -173,6 +174,13 @@ WINE REGISTRY Version 2
 ;"DefaultFixed" = "fixed"
 ;"DefaultSerif" = "-cronyx-times-"
 ;"DefaultSansSerif" = "-cronyx-helvetica-"
+
+; the TrueType font dirs you want to make accessible to wine
+[FontDirs]
+;"dir1" = "/usr/X11R6/lib/X11/fonts/TrueType"
+;"dir2" = "/usr/share/fonts/truetype"
+;"dir3" = "/usr/X11R6/lib/X11/fonts/TT"
+;"dir4" = "/usr/share/fonts/TT"
 
 [serialports]
 "Com1" = "/dev/ttyS0"

@@ -106,7 +106,8 @@ STUB: AddFontResource( SOMEFILE.FON )
           if you're on FreeBSD you can use the port in
           <filename>/usr/ports/x11-servers/Xfstt</filename>.  And
           there is <command>xfsft</command> which uses the freetype
-          library, see <filename>documentation/ttfserver</filename>).
+          library, see <link linkend="ttfont-server">freetype</link>
+	  description).
         </para>
         <para>
           However, there is a possibility of the native TrueType

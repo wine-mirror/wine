@@ -153,8 +153,10 @@ C:\                Root directory of primary disk drive
           And there are of course DLLs that wine does not currently
           implement very well (or at all). If you do not have a real
           Windows you can steal necessary DLLs from, you can always
-          get some from a DLL archive such as
-          <ulink url="http://solo.abac.com/dllarchive/">http://solo.abac.com/dllarchive/</ulink>.
+          get some from one of the Windows DLL archive sites
+	  that can be found via internet search engine.
+	  Please make sure to obey any licenses on the DLLs you fetch...
+	  (some are redistributable, some aren't).
         </para>
       </sect2>
     </sect1>

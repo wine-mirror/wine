@@ -153,6 +153,26 @@ Tells Wine which graphics driver to use. Normally you'd want to use
 x11drv (for X11). In case you want to run programs as text console/TTY only
 without having Wine rely on X11 support, then use ttydrv.
 .PP
+.B [Version]
+.br
+.I format: """Windows""=""<version string>"""
+.br
+default: none; chosen by semi-intelligent detection mechanism based on DLL environment
+.br
+Used to specify which Windows version to return to programs (forced value,
+overrides standard detection mechanism !).
+Valid settings are e.g. "win31", "win95", "win98", "win2k", "winxp".
+Also valid as an AppDefaults setting (recommended/preferred use).
+.PP
+.I format: """DOS""=""<version string>"""
+.br
+default: "<Windows version specific>"
+.br
+Used to specify the DOS version that should be returned to programs.
+Only takes effect in case Wine acts as "win31" Windows version !
+Common DOS version settings include 6.22, 6.20, 6.00, 5.00, 4.00, 3.30, 3.10.
+Also valid as an AppDefaults setting (recommended/preferred use).
+.PP
 .B [DllOverrides]
 .br
 .I format: """modulename""=""native,so,builtin"""

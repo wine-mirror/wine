@@ -397,7 +397,7 @@ XXXX &gt; YY @ ZZZZ:ZZZZ
 0x37a &gt; 04 @ 0297:0211
       </programlisting>
       <para>
-        As you can see their is a repeating structure starting at
+        As you can see there is a repeating structure starting at
         address <literal>0297:01ec</literal> that consists of four io
         accesses on the parallel port. Looking at it the first io
         access writes a changing byte to the data port the second
