@@ -34,6 +34,8 @@
 #include "dsconf.h"
 #include "dxerr8.h"
 
+#include "dsound_test.h"
+
 #ifndef DSBCAPS_CTRLDEFAULT
 #define DSBCAPS_CTRLDEFAULT \
         DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLPAN|DSBCAPS_CTRLVOLUME
@@ -251,14 +253,6 @@ static void propset_private_tests()
 
 error:
     FreeLibrary(hDsound);
-}
-
-static HWND get_hwnd()
-{
-    HWND hwnd=GetForegroundWindow();
-    if (!hwnd)
-        hwnd=GetDesktopWindow();
-    return hwnd;
 }
 
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
