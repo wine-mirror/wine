@@ -26,14 +26,18 @@
 
 DEFAULT_DEBUG_CHANNEL(int)
 
-static WORD tmr_8253_countmax[3] = {0xffff, 0x12, 1}; /* [2] needs to be 1 ! */
-/* if byte_toggle is TRUE, then hi byte has already been written */
-static BOOL16 tmr_8253_byte_toggle[3] = {FALSE, FALSE, FALSE};
-static WORD tmr_8253_latch[3] = {0, 0, 0};
-
-/* 4th contents are dummy */
-static BOOL16 tmr_8253_latched[4] = {FALSE, FALSE, FALSE, FALSE};
-static BYTE tmr_8253_ctrlbyte_ch[4] = {0x06, 0x44, 0x86, 0};
+static struct {
+    WORD	countmax;
+    BOOL16	byte_toggle; /* if TRUE, then hi byte has already been written */
+    WORD	latch;
+    BOOL16	latched;
+    BYTE	ctrlbyte_ch;
+    WORD	oldval;
+} tmr_8253[3] = {
+    {0xFFFF,	FALSE,	0,	FALSE,	0x06,	0},
+    {0x0012,	FALSE,	0,	FALSE,	0x44,	0},
+    {0x0001,	FALSE,	0,	FALSE,	0x86,	0},
+};
 
 static int dummy_ctr = 0;
 
@@ -275,54 +279,53 @@ DWORD IO_inport( int port, int size )
 
     switch (port)
     {
-    case 0x3ba:
-    case 0x3da:
-        res = (DWORD)VGA_ioport_in( port );
-        break;
     case 0x40:
     case 0x41:
     case 0x42:
     {
         BYTE chan = port & 3;
         WORD tempval = 0;
+	if (tmr_8253[chan].latched)
+	    tempval = tmr_8253[chan].latch;
+	else
+	{
+	    dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
+	    if (chan == 0) /* System timer counter divisor */
+	    {
+		/* FIXME: DOSVM_GetTimer() returns quite rigid values */
+		tempval = dummy_ctr + (WORD)DOSVM_GetTimer();
+	    }
+	    else
+	    {
+		/* FIXME: intelligent hardware timer emulation needed */
+		tempval = dummy_ctr;
+	    }
+	}
 
-        if (tmr_8253_latched[chan] == TRUE)
+        switch ((tmr_8253[chan].ctrlbyte_ch & 0x30) >> 4)
         {
-            tempval = tmr_8253_latch[chan];
-            tmr_8253_latched[chan] = FALSE;
-        }
-        else
-        {
-            dummy_ctr -= 1+(int) (10.0*rand()/(RAND_MAX+1.0));
-        if (chan == 0) /* System timer counter divisor */
-                /* FIXME: DOSVM_GetTimer() returns quite rigid values */
-				tempval = dummy_ctr+(WORD)DOSVM_GetTimer();
-        else
-        {   /* FIXME: intelligent hardware timer emulation needed */
-            tempval = dummy_ctr;
-        }
-        }
-        switch (tmr_8253_ctrlbyte_ch[chan] & 0x30)
-        {
-        case 0x00:
-            break; /* correct ? */
-        case 0x10: /* read lo byte */
-            res = (BYTE)tempval;
-            break;
-        case 0x30: /* read lo byte, then hi byte */
-            tmr_8253_byte_toggle[chan] ^= TRUE; /* toggle */
-            if (tmr_8253_byte_toggle[chan] == TRUE)
+        case 0:
+	    res = 0; /* shouldn't happen? */
+	    break;
+        case 1: /* read lo byte */
+	    res = (BYTE)tempval;
+	    tmr_8253[chan].latched = FALSE;
+	    break;
+        case 3: /* read lo byte, then hi byte */
+            tmr_8253[chan].byte_toggle ^= TRUE; /* toggle */
+            if (tmr_8253[chan].byte_toggle)
             {
                 res = (BYTE)tempval;
                 break;
             }
             /* else [fall through if read hi byte !] */
-        case 0x20: /* read hi byte */
-            res = (BYTE)tempval>>8;
-            break;
+        case 2: /* read hi byte */
+	    res = (BYTE)(tempval >> 8);
+ 	    tmr_8253[chan].latched = FALSE;
+	    break;
         }
-        break;
     }
+    break;
     case 0x60:
         res = INT_Int09ReadScan(NULL);
 #if 0 /* what's this port got to do with parport ? */
@@ -344,6 +347,10 @@ DWORD IO_inport( int port, int size )
     case 0x200:
     case 0x201:
         res = 0xffffffff; /* no joystick */
+        break;
+    case 0x3ba:
+    case 0x3da:
+        res = (DWORD)VGA_ioport_in( port );
         break;
     default:
         WARN("Direct I/O read attempted from port %x\n", port);
@@ -385,10 +392,6 @@ void IO_outport( int port, int size, DWORD value )
 
     switch (port)
     {
-    case 0x3c8:
-    case 0x3c9:
-        VGA_ioport_out( port, (BYTE)value );
-        break;
     case 0x20:
         DOSVM_PIC_ioport_out( port, (BYTE)value );
         break;
@@ -397,74 +400,79 @@ void IO_outport( int port, int size, DWORD value )
     case 0x42:
     {
         BYTE chan = port & 3;
-        WORD oldval = 0;
 
-        if ( ((tmr_8253_ctrlbyte_ch[chan] & 0x30) != 0x30) ||
-/* we need to get the oldval before any lo/hi byte change has been made */
-             (tmr_8253_byte_toggle[chan] == FALSE) )
-            oldval = tmr_8253_countmax[chan];
-        switch (tmr_8253_ctrlbyte_ch[chan] & 0x30)
+	/* we need to get the oldval before any lo/hi byte change has been made */
+        if (((tmr_8253[chan].ctrlbyte_ch & 0x30) != 0x30) ||
+	    !tmr_8253[chan].byte_toggle)
+            tmr_8253[chan].oldval = tmr_8253[chan].countmax;
+        switch ((tmr_8253[chan].ctrlbyte_ch & 0x30) >> 4)
         {
-        case 0x00:
-            break; /* correct ? */
-        case 0x10: /* write lo byte */
-            tmr_8253_countmax[chan] =
-                (tmr_8253_countmax[chan] & 0xff00) | (BYTE)value;
+        case 0:
+            break; /* shouldn't happen? */
+        case 1: /* write lo byte */
+            tmr_8253[chan].countmax =
+                (tmr_8253[chan].countmax & 0xff00) | (BYTE)value;
             break;
-        case 0x30: /* write lo byte, then hi byte */
-            tmr_8253_byte_toggle[chan] ^= TRUE; /* toggle */
-            if (tmr_8253_byte_toggle[chan] == TRUE)
+        case 3: /* write lo byte, then hi byte */
+            tmr_8253[chan].byte_toggle ^= TRUE; /* toggle */
+            if (tmr_8253[chan].byte_toggle)
             {
-                tmr_8253_countmax[chan] =
-                    (tmr_8253_countmax[chan] & 0xff00) | (BYTE)value;
+                tmr_8253[chan].countmax =
+                    (tmr_8253[chan].countmax & 0xff00) | (BYTE)value;
                 break;
             }
             /* else [fall through if write hi byte !] */
-        case 0x20: /* write hi byte */
-            tmr_8253_countmax[chan] =
-                (tmr_8253_countmax[chan] & 0xff)|((BYTE)value << 8);
+        case 2: /* write hi byte */
+            tmr_8253[chan].countmax =
+                (tmr_8253[chan].countmax & 0x00ff) | ((BYTE)value << 8);
             break;
         }
-        if (
-            /* programming finished ? */
-            ( ((tmr_8253_ctrlbyte_ch[chan] & 0x30) != 0x30) ||
-              (tmr_8253_byte_toggle[chan] == FALSE) )
-            /* update to new value ? */
-            && (tmr_8253_countmax[chan] != oldval)
-            )
-            set_timer_maxval(chan, tmr_8253_countmax[chan]);
+	/* if programming is finished and value has changed
+	   then update to new value */
+        if ((((tmr_8253[chan].ctrlbyte_ch & 0x30) != 0x30) ||
+	     !tmr_8253[chan].byte_toggle) &&
+	    (tmr_8253[chan].countmax != tmr_8253[chan].oldval))
+            set_timer_maxval(chan, tmr_8253[chan].countmax);
     }
     break;          
     case 0x43:
-        {
-          BYTE chan = ((BYTE)value & 0xc0) >> 6;
-
-        /* ctrl byte for specific timer channel */
-          tmr_8253_ctrlbyte_ch[chan] = (BYTE)value;
-          if (chan == 3) {
-            FIXME("8254 timer readback not implemented yet\n");
-            }
-          else
-          if (((BYTE)value&0x30)==0) { /* latch timer */
-            tmr_8253_latched[chan] = TRUE;
-            dummy_ctr -= 1+(int) (10.0*rand()/(RAND_MAX+1.0));
-            if (chan == 0) /* System timer divisor */
-              tmr_8253_latch[0] = dummy_ctr+(WORD)DOSVM_GetTimer();
-            else
-            {   /* FIXME: intelligent hardware timer emulation needed */
-              tmr_8253_latch[chan] = dummy_ctr;
-            }
-          }
-        if ((value & 0x30) == 0x30) /* write lo byte, then hi byte */
-            tmr_8253_byte_toggle[((BYTE)value & 0xc0) >> 6] = FALSE; /* init */
-        }
-        break;
+    {
+	BYTE chan = ((BYTE)value & 0xc0) >> 6;
+	/* ctrl byte for specific timer channel */
+	if (chan == 3)
+	{
+	    FIXME("8254 timer readback not implemented yet\n");
+	    break;
+	}
+	switch (((BYTE)value & 0x30) >> 4)
+	{
+	case 0:	/* latch timer */
+	    tmr_8253[chan].latched = TRUE;
+	    dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
+	    if (chan == 0) /* System timer divisor */
+		tmr_8253[chan].latch = dummy_ctr + (WORD)DOSVM_GetTimer();
+	    else
+	    {
+		/* FIXME: intelligent hardware timer emulation needed */
+		tmr_8253[chan].latch = dummy_ctr;
+	    }
+	    break;
+	case 3:	/* write lo byte, then hi byte */
+	    tmr_8253[chan].byte_toggle = FALSE; /* init */
+	    /* fall through */
+	case 1:	/* write lo byte only */
+	case 2:	/* write hi byte only */
+	    tmr_8253[chan].ctrlbyte_ch = (BYTE)value;
+	    break;
+	}
+    }
+    break;
     case 0x61:
         parport_8255[1] = (BYTE)value;
-        if ((((BYTE)parport_8255[1] & 3) == 3) && (tmr_8253_countmax[2] != 1))
+        if ((((BYTE)parport_8255[1] & 3) == 3) && (tmr_8253[2].countmax != 1))
         {
-            TRACE("Beep (freq: %d) !\n", 1193180 / tmr_8253_countmax[2]);
-            Beep(1193180 / tmr_8253_countmax[2], 20);
+            TRACE("Beep (freq: %d) !\n", 1193180 / tmr_8253[2].countmax);
+            Beep(1193180 / tmr_8253[2].countmax, 20);
         }
         break;
     case 0x70:
@@ -472,6 +480,10 @@ void IO_outport( int port, int size, DWORD value )
         break;
     case 0x71:
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
+        break;
+    case 0x3c8:
+    case 0x3c9:
+        VGA_ioport_out( port, (BYTE)value );
         break;
     default:
         WARN("Direct I/O write attempted to port %x\n", port );
