@@ -571,6 +571,14 @@ void test_CreateFileW(void)
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
 }
 
+static void test_DeleteFileA( void )
+{
+    BOOL ret;
+    ret = DeleteFileA("");
+    ok((!ret) && (GetLastError() == ERROR_FILE_NOT_FOUND),
+       "DeleteFile should fail with an empty path, and last error value should be ERROR_FILE_NOT_FOUND");
+}
+
 #define PATTERN_OFFSET	0x10
 
 void test_offset_in_overlapped_structure(void)
@@ -648,5 +656,6 @@ START_TEST(file)
     test_CopyFileW();
     test_CreateFileA();
     test_CreateFileW();
+    test_DeleteFileA();
     test_offset_in_overlapped_structure();
 }
