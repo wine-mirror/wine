@@ -346,7 +346,7 @@ static ULONG   WINAPI CFProxy_Release(LPCLASSFACTORY iface) {
         ref = InterlockedDecrement(&This->ref);
 
     if (!ref) {
-      	IRpcChannelBuffer_Release(This->chanbuf);
+      	if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
         HeapFree(GetProcessHeap(),0,This);
     }
     return ref;
