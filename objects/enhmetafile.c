@@ -1811,19 +1811,33 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
        lpNewEnhMetaFileHeader->rclFrame.top    = 0;
        lpNewEnhMetaFileHeader->rclFrame.bottom = 0;
 
-       lpNewEnhMetaFileHeader->nHandles = 0; /* No handles yet */
+       lpNewEnhMetaFileHeader->dSignature=ENHMETA_SIGNATURE;
+       lpNewEnhMetaFileHeader->nVersion=0x10000;
+       lpNewEnhMetaFileHeader->nBytes = lpNewEnhMetaFileHeader->nSize;
+       lpNewEnhMetaFileHeader->sReserved=0;
+
+        /* FIXME: if there is a description add it */
+        lpNewEnhMetaFileHeader->nDescription=0;
+        lpNewEnhMetaFileHeader->offDescription=0;
+
+        lpNewEnhMetaFileHeader->nHandles = 0; /* No handles yet */
+        lpNewEnhMetaFileHeader->nRecords = 0;
+        
+        /* I am pretty sure this starts at 0 and grows as entries are added */
+        lpNewEnhMetaFileHeader->nPalEntries = 0;
+
+        /* Size in Pixels */
+        lpNewEnhMetaFileHeader->szlDevice.cx = GetDeviceCaps(hdcRef,HORZRES);
+        lpNewEnhMetaFileHeader->szlDevice.cy = GetDeviceCaps(hdcRef,VERTRES);
+
+        /* Size in mm */
+        lpNewEnhMetaFileHeader->szlMillimeters.cx =
+                                        GetDeviceCaps(hdcRef,HORZSIZE);
+        lpNewEnhMetaFileHeader->szlMillimeters.cy =
+                                        GetDeviceCaps(hdcRef,VERTSIZE);
 
        /* FIXME: Add in the rest of the fields to the header */
-       /* dSignature
-          nVersion
-          nRecords
-          sReserved
-          nDescription
-          offDescription
-          nPalEntries
-          szlDevice
-          szlMillimeters
-          cbPixelFormat
+       /* cbPixelFormat
           offPixelFormat,
           bOpenGL */
      } 
@@ -2009,21 +2023,66 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
              break;
           }
 
+          case META_LINETO:
+          case META_MOVETO:
+          {
+             PEMRLINETO lpRecord;
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRLINETO,uRecord);
+
+             if ( lpMetaRecord->rdFunction == META_LINETO )
+             {
+               lpRecord->emr.iType = EMR_LINETO;
+             }
+             else
+             {
+               lpRecord->emr.iType = EMR_MOVETOEX;
+             }
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->ptl.x = lpMetaRecord->rdParm[1];
+             lpRecord->ptl.y = lpMetaRecord->rdParm[0];
+
+             break;
+            }
+
+          case META_SETTEXTCOLOR:
+          case META_SETBKCOLOR:
+          {
+             PEMRSETBKCOLOR lpRecord;
+             size_t uRecord = sizeof(*lpRecord);
+
+             EMF_ReAllocAndAdjustPointers(PEMRSETBKCOLOR,uRecord);
+
+             if ( lpMetaRecord->rdFunction == META_SETTEXTCOLOR )
+             {
+               lpRecord->emr.iType = EMR_SETTEXTCOLOR;
+             }
+             else
+             {
+               lpRecord->emr.iType = EMR_SETBKCOLOR;
+             }
+             lpRecord->emr.nSize = sizeof( *lpRecord );
+
+             lpRecord->crColor = MAKELONG(lpMetaRecord->rdParm[0],
+                                    lpMetaRecord->rdParm[1]);
+
+             break;
+          }
+
+
 
           /* These are all unimplemented and as such are intended to fall through to the default case */
-          case META_SETBKCOLOR:
           case META_SETBKMODE:
           case META_SETROP2:
           case META_SETRELABS:
           case META_SETSTRETCHBLTMODE:
-          case META_SETTEXTCOLOR:
           case META_SETVIEWPORTORG:
           case META_OFFSETWINDOWORG:
           case META_SCALEWINDOWEXT:
           case META_OFFSETVIEWPORTORG:
           case META_SCALEVIEWPORTEXT:
-          case META_LINETO:
-          case META_MOVETO:
           case META_EXCLUDECLIPRECT:
           case META_INTERSECTCLIPRECT:
           case META_ARC:
