@@ -58,8 +58,10 @@ int main(int argc, char **argv)
                 case 'c':        /* compile or assemble */
                 case 'S':        /* generate assembler code */
                 case 'E':        /* preprocess only */
-                case 'M':        /* map file generation */
                     if (argv[i][2] == 0) linking = 0;
+                    break;
+                case 'M':        /* map file generation */
+                    linking = 0;
                     break;
 		case 'm':
 		    if (strcmp("-mno-cygwin", argv[i]) == 0)
