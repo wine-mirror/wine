@@ -960,7 +960,7 @@ static	LRESULT	PCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
 	if (adfs->pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) {
             WARN("not possible\n");
             return ACMERR_NOTPOSSIBLE;
-       }
+        }
 	adfs->pwfxDst->wFormatTag = adfs->pwfxSrc->wFormatTag;
     }
     /* check if result is ok */

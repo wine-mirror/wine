@@ -31,6 +31,16 @@
 #include "mmreg.h"
 #include "msacm.h"
 
+static BOOL CALLBACK FormatTagEnumProc(HACMDRIVERID hadid,
+                                       PACMFORMATTAGDETAILS paftd,
+                                       DWORD dwInstance,
+                                       DWORD fdwSupport)
+{
+    trace("   Format 0x%04lx: %s\n", paftd->dwFormatTag, paftd->szFormatTag);
+
+    return TRUE;
+}
+
 static BOOL CALLBACK FormatEnumProc(HACMDRIVERID hadid,
                                     LPACMFORMATDETAILS pafd,
                                     DWORD dwInstance,
@@ -141,8 +151,6 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
 
     if (rc == MMSYSERR_NOERROR) {
         DWORD dwSize;
-        WAVEFORMATEX * pwfx;
-        ACMFORMATDETAILS fd;
         HACMDRIVERID hid;
 
         /* try bad pointer */
@@ -202,6 +210,10 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
            "acmMetrics(): rc = %08x, should be %08x\n",
            rc, MMSYSERR_NOERROR);
         if (rc == MMSYSERR_NOERROR) {
+            ACMFORMATDETAILS fd;
+            WAVEFORMATEX * pwfx;
+            ACMFORMATTAGDETAILS aftd;
+
             /* try bad pointer */
             rc = acmFormatEnum(had, 0, FormatEnumProc, 0, 0);
             ok(rc == MMSYSERR_INVALPARAM,
@@ -239,6 +251,40 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
             rc = acmFormatEnum(had, &fd, FormatEnumProc, 0, 0);
             ok(rc == MMSYSERR_NOERROR,
                "acmFormatEnum(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_NOERROR);
+
+            /* try bad pointer */
+            rc = acmFormatTagEnum(had, 0, FormatTagEnumProc, 0, 0);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatTagEnum(): rc = %08x, should be %08x\n",
+                rc, MMSYSERR_INVALPARAM);
+
+            /* try bad structure size */
+            ZeroMemory(&aftd, sizeof(fd));
+            rc = acmFormatTagEnum(had, &aftd, FormatTagEnumProc, 0, 0);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatTagEnum(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+
+            aftd.cbStruct = sizeof(aftd) - 1;
+            rc = acmFormatTagEnum(had, &aftd, FormatTagEnumProc, 0, 0);
+            ok(rc == MMSYSERR_INVALPARAM,
+               "acmFormatTagEnum(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALPARAM);
+
+            aftd.cbStruct = sizeof(aftd);
+            aftd.dwFormatTag = WAVE_FORMAT_UNKNOWN;
+
+            /* try bad flag */
+            rc = acmFormatTagEnum(had, &aftd, FormatTagEnumProc, 0, 1);
+            ok(rc == MMSYSERR_INVALFLAG,
+               "acmFormatTagEnum(): rc = %08x, should be %08x\n",
+               rc, MMSYSERR_INVALFLAG);
+
+            /* try valid parameters */
+            rc = acmFormatTagEnum(had, &aftd, FormatTagEnumProc, 0, 0);
+            ok(rc == MMSYSERR_NOERROR,
+               "acmFormatTagEnum(): rc = %08x, should be %08x\n",
                rc, MMSYSERR_NOERROR);
 
             free(pwfx);

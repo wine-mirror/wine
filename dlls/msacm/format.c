@@ -741,6 +741,15 @@ MMRESULT WINAPI acmFormatTagEnumA(HACMDRIVER had, PACMFORMATTAGDETAILSA paftda,
     ACMFORMATTAGDETAILSW	aftdw;
     struct MSACM_FormatTagEnumWtoA_Instance aftei;
 
+    if (!paftda)
+        return MMSYSERR_INVALPARAM;
+
+    if (paftda->cbStruct < sizeof(*paftda))
+        return MMSYSERR_INVALPARAM;
+
+    if (fdwEnum != 0)
+        return MMSYSERR_INVALFLAG;
+
     memset(&aftdw, 0, sizeof(aftdw));
     aftdw.cbStruct = sizeof(aftdw);
     aftdw.dwFormatTagIndex = paftda->dwFormatTagIndex;
@@ -768,7 +777,14 @@ MMRESULT WINAPI acmFormatTagEnumW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
     TRACE("(%p, %p, %p, %ld, %ld)\n",
 	  had, paftd, fnCallback, dwInstance, fdwEnum);
 
-    if (paftd->cbStruct < sizeof(*paftd)) return MMSYSERR_INVALPARAM;
+    if (!paftd)
+        return MMSYSERR_INVALPARAM;
+
+    if (paftd->cbStruct < sizeof(*paftd))
+        return MMSYSERR_INVALPARAM;
+
+    if (fdwEnum != 0)
+        return MMSYSERR_INVALFLAG;
 
     /* (WS) MSDN info page says that if had != 0, then we should find
      * the specific driver to get its tags from. Therefore I'm removing
