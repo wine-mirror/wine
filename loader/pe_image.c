@@ -939,6 +939,13 @@ void PE_InitDLL(WINE_MODREF *wm, DWORD type, LPVOID lpReserved)
     }
 }
 
+/************************************************************************
+ *	PE_InitTls			(internal)
+ *
+ * If included, initialises the thread local storages of modules.
+ * Pointers in those structs are not RVAs but real pointers which have been
+ * relocated by do_relocations() already.
+ */
 void PE_InitTls(THDB *thdb)
 {
 	WINE_MODREF		*wm;
@@ -958,33 +965,28 @@ void PE_InitTls(THDB *thdb)
 		delta = wm->module - peh->OptionalHeader.ImageBase;
 		if (!peh->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress)
 			continue;
+		FIXME(win32,"%s has TLS directory.\n",wm->longname);
 		pdir = (LPVOID)(wm->module + peh->OptionalHeader.
 			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
 		
 		
 		if (!(pem->flags & PE_MODREF_TLS_ALLOCED)) {
 			pem->tlsindex = THREAD_TlsAlloc(thdb);
-			*(LPDWORD)AdjustPtr(pdir->AddressOfIndex,delta)
-			  =pem->tlsindex;   
+			*pdir->AddressOfIndex=pem->tlsindex;   
 		}
 		pem->flags |= PE_MODREF_TLS_ALLOCED;
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
 		mem=VirtualAlloc(0,size,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
-		memcpy(mem,
-		       AdjustPtr(pdir->StartAddressOfRawData,delta), 
-		       datasize);
-
-		/* don't use TlsSetValue, we are in the wrong thread */
+		memcpy(mem,(LPVOID)pdir->StartAddressOfRawData,datasize);
 		if (pdir->AddressOfCallBacks) {
 		     PIMAGE_TLS_CALLBACK *cbs = 
-		       (PIMAGE_TLS_CALLBACK *)
-		       AdjustPtr(pdir->AddressOfCallBacks, delta);
+		       (PIMAGE_TLS_CALLBACK *)pdir->AddressOfCallBacks;
 
-		     if (*cbs) {
+		     if (*cbs)
 		       FIXME(win32, "TLS Callbacks aren't going to be called\n");
-		     }
 		}
+		/* Don't use TlsSetValue, we are in the wrong thread */
 		thdb->tls_array[pem->tlsindex] = mem;
 	}
 }
