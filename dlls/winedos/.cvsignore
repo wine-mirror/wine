@@ -1,3 +1,4 @@
 Makefile
 winedos.dll.dbg.c
 winedos.spec.c
+winedos16.spec.c
