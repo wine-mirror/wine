@@ -93,12 +93,20 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
     /* destination is always PCM, so the formulas below apply */
     lpwfx->nBlockAlign = (lpwfx->nChannels * lpwfx->wBitsPerSample) / 8;
     lpwfx->nAvgBytesPerSec = lpwfx->nSamplesPerSec * lpwfx->nBlockAlign;
-    ret = acmStreamOpen(&wom->hAcmStream, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, 
-			(dwFlags & WAVE_FORMAT_QUERY) ? ACM_STREAMOPENF_QUERY : 0L);
-    if (ret != MMSYSERR_NOERROR)
-	return ret;
-    return waveOutOpen(&wom->hInnerWave, idx, lpwfx, (DWORD)wodCallback, 
-		       (DWORD)wom, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
+    if (dwFlags & WAVE_FORMAT_QUERY) {
+	ret = acmStreamOpen(NULL, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, ACM_STREAMOPENF_QUERY);
+    } else {
+	ret = acmStreamOpen(&wom->hAcmStream, 0, lpDesc->lpFormat, lpwfx, NULL, 0L, 0L, 0L);
+    }
+    if (ret == MMSYSERR_NOERROR) {
+	ret = waveOutOpen(&wom->hInnerWave, idx, lpwfx, (DWORD)wodCallback, 
+			  (DWORD)wom, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
+	if (ret != MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY)) {
+	    acmStreamClose(wom->hAcmStream, 0);
+	    wom->hAcmStream = 0;
+	}
+    }
+    return ret;
 }
 
 static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
@@ -138,6 +146,18 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                         if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags) == MMSYSERR_NOERROR) goto found;
 
     for (i = 0; i < nd; i++) {
+	/* first try with same stereo/mono option as source */
+	wfx.nChannels = lpDesc->lpFormat->nChannels;
+	TRY(44100, 16);
+	TRY(22050, 16);
+	TRY(11025, 16);
+
+	/* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
+	wfx.nChannels ^= 3; 
+	TRY(44100, 16);
+	TRY(22050, 16);
+	TRY(11025, 16);
+
 	/* first try with same stereo/mono option as source */
 	wfx.nChannels = lpDesc->lpFormat->nChannels;
 	TRY(44100, 8);
@@ -464,12 +484,20 @@ static	DWORD	widOpenHelper(WAVEMAPDATA* wim, UINT idx,
     /* source is always PCM, so the formulas below apply */
     lpwfx->nBlockAlign = (lpwfx->nChannels * lpwfx->wBitsPerSample) / 8;
     lpwfx->nAvgBytesPerSec = lpwfx->nSamplesPerSec * lpwfx->nBlockAlign;
-    ret = acmStreamOpen(&wim->hAcmStream, 0, lpwfx, lpDesc->lpFormat, NULL, 0L, 0L, 
-			(dwFlags & WAVE_FORMAT_QUERY) ? ACM_STREAMOPENF_QUERY : 0L);
-    if (ret != MMSYSERR_NOERROR)
-	return ret;
-    return waveInOpen(&wim->hInnerWave, idx, lpwfx, (DWORD)widCallback, 
-		       (DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
+    if (dwFlags & WAVE_FORMAT_QUERY) {
+	ret = acmStreamOpen(NULL, 0, lpwfx, lpDesc->lpFormat, NULL, 0L, 0L, ACM_STREAMOPENF_QUERY);
+    } else {
+	ret = acmStreamOpen(&wim->hAcmStream, 0, lpwfx, lpDesc->lpFormat, NULL, 0L, 0L, 0L);
+    }
+    if (ret == MMSYSERR_NOERROR) {
+	ret = waveInOpen(&wim->hInnerWave, idx, lpwfx, (DWORD)widCallback, 
+			 (DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION);
+	if (ret != MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY)) {
+	    acmStreamClose(wim->hAcmStream, 0);
+	    wim->hAcmStream = 0;
+	}
+    }
+    return ret;
 }
 
 static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
@@ -479,7 +507,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WAVEMAPDATA*	wim = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
     WAVEFORMATEX	wfx;
 
-    TRACE("(%p %p %08lx\n", lpdwUser, lpDesc, dwFlags);
+    TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
 
     if (!wim)
 	return MMSYSERR_NOMEM;
@@ -528,6 +556,7 @@ found:
     } else {
 	*lpdwUser = (DWORD)wim;
     }
+    TRACE("Ok (stream=%08lx)\n", (DWORD)wim->hAcmStream);
     return MMSYSERR_NOERROR;
 }
 
