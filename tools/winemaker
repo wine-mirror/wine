@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-my $version="0.5.8";
+my $version="0.5.9";
 
 use Cwd;
 use File::Basename;
@@ -1604,6 +1604,9 @@ sub generate_spec_file
   } elsif (@$target[$T_FLAGS] & $TF_WRAPPER) {
     $basename.="_wrapper";
   }
+  if (@$target[$T_TYPE] != $TT_DLL) {
+      $basename .= '.exe';
+  }
 
   if (!open(FILEO,">$path$basename.spec")) {
     print STDERR "error: could not open \"$path$basename.spec\" for writing\n";
@@ -1756,7 +1759,7 @@ sub generate_project_files
 		  });
     generate_list("EXES",1,\@exe_list,sub
 		  {
-		    return "@{$_[0]}[$T_NAME]";
+		    return "@{$_[0]}[$T_NAME].exe";
 		  });
     print FILEO "\n\n\n";
 
@@ -1821,7 +1824,7 @@ sub generate_project_files
       } elsif (@$target[$T_FLAGS] & $TF_WRAPPER) {
 	$basename.="_wrapper";
       }
-      generate_list("${canon}_SPEC_SRCS",1,[ "$basename.spec" ]);
+      generate_list("${canon}_SPEC_SRCS",1,[ "$basename.exe.spec" ]);
       generate_list("${canon}_DLL_PATH",1,@$target[$T_DLL_PATH]);
       generate_list("${canon}_DLLS",1,@$target[$T_DLLS]);
       generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH]);
@@ -1871,12 +1874,20 @@ sub generate_project_files
   print FILEO "### Generic autoconf targets\n\n";
   print FILEO "all:";
   if (@$project[$P_PATH] eq "") {
+    print FILEO " wineapploader";
     print FILEO " \$(SUBDIRS)";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO " \$(DLLS) \$(EXES:%=%.so)";
   }
   print FILEO "\n\n";
+  if (@$project[$P_PATH] eq "") {
+      print FILEO "wineapploader: wineapploader.in\n";
+      print FILEO "\tsed -e 's,\@bindir\\\@,\$(bindir),g' " .
+	  "-e 's,\@winelibdir\\\@,.,g' " .
+	  "\$(SRCDIR)/wineapploader.in >\$\@ || \$(RM) \$\@\n";
+      print FILEO "\n";
+  }
   print FILEO "\@MAKE_RULES\@\n";
   print FILEO "\n";
   print FILEO "install::\n";
@@ -1886,7 +1897,8 @@ sub generate_project_files
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\t_list=\"\$(EXES) \$(EXES:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
+    print FILEO "\t_list=\"\$(EXES:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
+    print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(INSTALL_SCRIPT) \$\$i \$(bindir); done\n";
     print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
   }
   print FILEO "\n";
@@ -1898,25 +1910,41 @@ sub generate_project_files
   }
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "\t_list=\"\$(EXES) \$(EXES:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
+    print FILEO "\t_list=\"\$(EXES)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
     print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(RM) \$(libdir)/\$\$i;done\n";
   }
-  print FILEO "\n\n\n";
+  print FILEO "\n";
+  print FILEO "clean::\n";
+  print FILEO "\t\$(RM)";
+  if (@$project[$P_PATH] eq "") {
+      print FILEO " wineapploader";
+  }
+  if (@{@$project[$P_TARGETS]} > 0) {
+      print FILEO " \$(EXES)";
+  }
+  print FILEO "\n\n";
 
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "### Target specific build rules\n\n";
     foreach $target (@{@$project[$P_TARGETS]}) {
       my $canon=canonize("@$target[$T_NAME]");
+      my $mode;
+
       $canon =~ s/_so$//;
-      print FILEO "\$(${canon}_SPEC_SRCS:.spec=.tmp.o): \$(${canon}_OBJS)\n";
-      print FILEO "\t\$(LDCOMBINE) \$(${canon}_OBJS) -o \$\@\n";
-      print FILEO "\t-\$(STRIP) \$(STRIPFLAGS) \$\@\n";
-      print FILEO "\n";
-      print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_SPEC_SRCS) \$(${canon}_SPEC_SRCS:.spec=.tmp.o) \$(${canon}_RC_SRCS:.rc=.res)\n";
-      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(${canon}_DLLS:%=-l%) \$(${canon}_RC_SRCS:%.rc=-res %.res) -sym \$(${canon}_SPEC_SRCS:.spec=.tmp.o) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
+      if (@$target[$T_TYPE] == $TT_GUIEXE) {
+	  $mode = '-m gui';
+      } elsif (@$target[$T_TYPE] == $TT_CUIEXE) {
+	  $mode = '-m cui';
+      } else {
+	  $mode = '';
+      }
+
+      print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_SPEC_SRCS) \$(${canon}_OBJS) \$(${canon}_RC_SRCS:.rc=.res)\n";
+      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(${canon}_DLLS:%=-l%) \$(${canon}_RC_SRCS:%.rc=-res %.res) $mode \$(${canon}_OBJS) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
       print FILEO "\n";
       my $t_name=@$target[$T_NAME];
       if (@$target[$T_TYPE]!=$TT_DLL) {
-        $t_name.=".so";
+        $t_name.=".exe.so";
       }
       print FILEO "$t_name: \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_OBJS) \$(${canon}_DEPENDS) \n";
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
@@ -1926,7 +1954,7 @@ sub generate_project_files
       }
       print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(${canon}_LIBRARIES:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
       if (@$target[$T_TYPE] ne $TT_DLL) {
-        print FILEO "\ttest -f @$target[$T_NAME] || \$(LN_S) \$(WINE) @$target[$T_NAME]\n";
+        print FILEO "\ttest -f @$target[$T_NAME] || \$(INSTALL_SCRIPT) wineapploader @$target[$T_NAME]\n";
       }
       print FILEO "\n\n";
     }
@@ -2000,9 +2028,11 @@ sub generate_generic
 # configure
 # configure.in
 # Make.rules.in
+# wineapploader.in
 sub generate_global_files
 {
   generate_generic("Make.rules.in");
+  generate_generic("wineapploader.in");
 
   # Get the name of a source file for configure.in
   my $a_source_file;
@@ -2280,7 +2310,6 @@ AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
-AC_PROG_LN_S
 
 dnl **** Check for some libraries ****
 
@@ -2292,9 +2321,6 @@ dnl Check for -lnsl for Solaris
 AC_CHECK_FUNCS(gethostbyname,, AC_CHECK_LIB(nsl, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", AC_CHECK_LIB(socket, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", , -lnsl), -lsocket))
 dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
-
-dnl **** If ln -s doesn't work, use cp instead ****
-if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
 
 dnl **** Check for gcc strength-reduce bug ****
 
@@ -2622,7 +2648,7 @@ then
   WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine"
   WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/library"
   WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild"
-  WINE_DLL_ROOT="$WINE_ROOT/dlls"
+  WINE_DLL_ROOT="$WINE_ROOT/dlls:$WINE_ROOT/lib"
 fi
 
 AC_ARG_WITH(wine-includes,
@@ -2965,7 +2991,6 @@ CXXFLAGS  = @CXXFLAGS@
 WRCFLAGS  = -r -L
 OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB
 LIBS      = @LIBS@ $(LIBRARY_PATH)
-LN_S      = @LN_S@
 ALLFLAGS  = $(DEFINES) -I$(SRCDIR) $(INCLUDE_PATH) $(WINE_INCLUDE_PATH)
 ALLCFLAGS = $(CFLAGS) $(CEXTRA) $(OPTIONS) $(ALLFLAGS)
 ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(ALLFLAGS)
@@ -2988,6 +3013,7 @@ WINEBUILD = @WINEBUILD@
 
 INSTALL         = install
 INSTALL_PROGRAM = $(INSTALL)
+INSTALL_SCRIPT  = $(INSTALL)
 INSTALL_DATA    = $(INSTALL) -m 644
 prefix          = @prefix@
 exec_prefix     = @exec_prefix@
@@ -3006,7 +3032,7 @@ CLEAN_FILES     = *.spec.c y.tab.c y.tab.h lex.yy.c \
 
 # Implicit rules
 
-.SUFFIXES: .cpp .rc .res .tmp.o .spec .spec.c .spec.o
+.SUFFIXES: .cpp .rc .res .spec .spec.c .spec.o
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -3041,7 +3067,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS) $(SPEC_SRCS:.spec=.tmp.o) $(EXES) $(EXES:%=%.so) $(DLLS)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS) $(EXES) $(EXES:%=%.so) $(DLLS)
 
 # Rules for installing
 
@@ -3059,6 +3085,47 @@ $(SUBDIRS): dummy
 dummy:
 
 # End of global rules
+--- wineapploader.in ---
+#!/bin/sh
+#
+# Wrapper script to start a Winelib application once it is installed
+#
+# Copyright (C) 2002 Alexandre Julliard
+
+# determine the app Winelib library name
+appname=`basename "$0" .exe`.exe
+
+#allow Wine to load Winelib application from the current directory
+export WINEDLLPATH=$WINEDLLPATH:@winelibdir@
+
+# first try explicit WINELOADER
+if [ -x "$WINELOADER" ]; then exec "$WINELOADER" "$appname" "$@"; fi
+
+# then default bin directory
+if [ -x "@bindir@/wine" ]; then exec "@bindir@/wine" "$appname" "$@"; fi
+
+# now try the directory containing $0
+appdir=""
+case "$0" in
+  */*)
+    # $0 contains a path, use it
+    appdir=`dirname "$0"`
+    ;;
+  *)
+    # no directory in $0, search in PATH
+    saved_ifs=$IFS
+    IFS=:
+    for d in $PATH
+    do
+      IFS=$saved_ifs
+      if [ -x "$d/$0" ]; then appdir="$d"; break; fi
+    done
+    ;;
+esac
+if [ -x "$appdir/wine" ]; then exec "$appdir/wine" "$appname" "$@"; fi
+
+# finally look in PATH
+exec wine "$appname" "$@"
 --- wrapper.c ---
 /*
  * Copyright 2000 Francois Gouget <fgouget@codeweavers.com> for CodeWeavers
