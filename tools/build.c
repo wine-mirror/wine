@@ -1836,7 +1836,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2 );
-    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
+    fprintf( outfile, "\t.byte 0x64\n\tmovzwl (%d),%%esp\n", STACKOFFSET );
     fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
     if (reg_func)
