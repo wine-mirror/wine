@@ -198,7 +198,7 @@
 @ stub DelimStringToMultiSz
 @ stub DestroyTextFileReadBuffer
 @ stub DoesUserHavePrivilege
-@ stub DuplicateString
+@ stdcall DuplicateString(wstr)
 @ stub EnablePrivilege
 @ stub ExtensionPropSheetPageProc
 @ stub FileExists
@@ -226,7 +226,7 @@
 @ stub OpenAndMapFileForRead
 @ stub OutOfMemory
 @ stub QueryMultiSzValueToArray
-@ stub QueryRegistryValue
+@ stdcall QueryRegistryValue(long wstr ptr ptr ptr)
 @ stub ReadAsciiOrUnicodeTextFile
 @ stub RegistryDelnode
 @ stub RetreiveFileSecurity
