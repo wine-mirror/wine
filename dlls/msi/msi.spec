@@ -107,8 +107,8 @@
 107 stub MsiProvideComponentW
 108 stub MsiProvideQualifiedComponentA
 109 stub MsiProvideQualifiedComponentW
-110 stub MsiQueryFeatureStateA
-111 stub MsiQueryFeatureStateW
+110 stdcall MsiQueryFeatureStateA(str str)
+111 stdcall MsiQueryFeatureStateW(wstr wstr)
 112 stdcall MsiQueryProductStateA(str)
 113 stdcall MsiQueryProductStateW(wstr)
 114 stdcall MsiRecordDataSize(long long)
@@ -135,8 +135,8 @@
 135 stub MsiSetComponentStateW
 136 stdcall MsiSetExternalUIA(ptr long ptr)
 137 stub MsiSetExternalUIW
-138 stub MsiSetFeatureStateA
-139 stub MsiSetFeatureStateW
+138 stdcall MsiSetFeatureStateA(long str long)
+139 stdcall MsiSetFeatureStateW(long wstr long)
 140 stub MsiSetInstallLevel
 141 stdcall MsiSetInternalUI(long ptr)
 142 stub MsiVerifyDiskSpace
@@ -169,8 +169,8 @@
 169 stdcall MsiEnableLogW(long wstr long)
 170 stdcall MsiFormatRecordA(long long ptr ptr)
 171 stdcall MsiFormatRecordW(long long ptr ptr)
-172 stub MsiGetComponentPathA
-173 stub MsiGetComponentPathW
+172 stdcall MsiGetComponentPathA(str str ptr ptr)
+173 stdcall MsiGetComponentPathW(wstr wstr ptr ptr)
 174 stub MsiApplyPatchA
 175 stub MsiApplyPatchW
 176 stub MsiAdvertiseScriptA

@@ -61,6 +61,7 @@ typedef struct tagMSIFEATURE
     INT Attributes;
     
     INSTALLSTATE State;
+    BOOL Enabled;
     INT ComponentCount;
     INT Components[1024]; /* yes hardcoded limit.... I am bad */
     INT Cost;
@@ -228,6 +229,18 @@ inline static char *strdupWtoA( const WCHAR *str )
 );
         if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
             WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    }
+    return ret;
+}
+
+inline static WCHAR *strdupAtoW( const char *str )
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     }
     return ret;
 }
@@ -401,6 +414,7 @@ static void ui_actiondata(MSIHANDLE hPackage, LPCWSTR action, MSIHANDLE record)
             HeapFree(GetProcessHeap(),0,ActionFormat);
 
         ActionFormat = load_dynamic_stringW(row,3);
+        strcpyW(LastAction,action);
         MsiCloseHandle(row);
         MsiViewClose(view);
         MsiCloseHandle(view);
@@ -1072,6 +1086,7 @@ typedef struct
         WCHAR source[MAX_PATH];
 } thread_struct;
 
+#if 0
 static DWORD WINAPI DllThread(LPVOID info)
 {
     HANDLE DLL;
@@ -1105,6 +1120,7 @@ static DWORD WINAPI DllThread(LPVOID info)
 
     return 0;
 }
+#endif
 
 static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
                                 const LPWSTR target, const INT type)
@@ -1128,12 +1144,13 @@ static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source,
 
     if (type & 0xc0)
     {
-        DWORD ThreadId;
+        /* DWORD ThreadId; */
         info.hPackage = hPackage;
         strcpyW(info.target,target);
         strcpyW(info.source,tmp_file);
         TRACE("Start Asyncronous execution\n");
-        CreateThread(NULL,0,DllThread,(LPVOID)&info,0,&ThreadId);
+        FIXME("DATABASE NOT THREADSAFE... not starting\n");
+        /* CreateThread(NULL,0,DllThread,(LPVOID)&info,0,&ThreadId); */
         return ERROR_SUCCESS;
     }
  
@@ -2973,6 +2990,7 @@ static UINT ACTION_InstallInitialize(MSIHANDLE hPackage)
         {
             TRACE("Override of install level found\n");
             feature_state = TRUE;
+            package->features[i].Enabled = feature_state;
         }
 
         TRACE("Feature %s has a state of %i\n",
@@ -4086,7 +4104,7 @@ static UINT ACTION_PublishProduct(MSIHANDLE hPackage)
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 {
     LPWSTR szwAction;
-    UINT len,rc;
+    UINT rc;
 
     TRACE(" exteral attempt at action %s\n",szAction);
 
@@ -4095,13 +4113,11 @@ UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
     if (hInstall == 0)
         return ERROR_FUNCTION_FAILED;
 
-    len = MultiByteToWideChar( CP_ACP, 0, szAction, -1, NULL, 0);
-    szwAction = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+    szwAction = strdupAtoW(szAction);
 
     if (!szwAction)
         return ERROR_FUNCTION_FAILED; 
 
-    MultiByteToWideChar( CP_ACP, 0, szAction, -1, szwAction, len);
 
     rc = MsiDoActionW(hInstall, szwAction);
     HeapFree(GetProcessHeap(),0,szwAction);
@@ -4119,7 +4135,7 @@ UINT WINAPI MsiGetTargetPathA( MSIHANDLE hInstall, LPCSTR szFolder,
 {
     LPWSTR szwFolder;
     LPWSTR szwPathBuf;
-    UINT len,rc;
+    UINT rc;
 
     TRACE("getting folder %s %p %li\n",szFolder,szPathBuf, *pcchPathBuf);
 
@@ -4128,15 +4144,12 @@ UINT WINAPI MsiGetTargetPathA( MSIHANDLE hInstall, LPCSTR szFolder,
     if (hInstall == 0)
         return ERROR_FUNCTION_FAILED;
 
-    len = MultiByteToWideChar( CP_ACP, 0, szFolder, -1, NULL, 0);
-    szwFolder= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
+    szwFolder = strdupAtoW(szFolder);
 
     if (!szwFolder)
         return ERROR_FUNCTION_FAILED; 
 
     szwPathBuf = HeapAlloc( GetProcessHeap(), 0 , *pcchPathBuf * sizeof(WCHAR));
-
-    MultiByteToWideChar( CP_ACP, 0, szFolder, -1, szwFolder, len);
 
     rc = MsiGetTargetPathW(hInstall, szwFolder, szwPathBuf,pcchPathBuf);
 
@@ -4180,7 +4193,7 @@ UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder,
 {
     LPWSTR szwFolder;
     LPWSTR szwPathBuf;
-    UINT len,rc;
+    UINT rc;
 
     TRACE("getting source %s %p %li\n",szFolder,szPathBuf, *pcchPathBuf);
 
@@ -4189,15 +4202,11 @@ UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder,
     if (hInstall == 0)
         return ERROR_FUNCTION_FAILED;
 
-    len = MultiByteToWideChar( CP_ACP, 0, szFolder, -1, NULL, 0);
-    szwFolder= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
-
+    szwFolder = strdupAtoW(szFolder);
     if (!szwFolder)
         return ERROR_FUNCTION_FAILED; 
 
     szwPathBuf = HeapAlloc( GetProcessHeap(), 0 , *pcchPathBuf * sizeof(WCHAR));
-
-    MultiByteToWideChar( CP_ACP, 0, szFolder, -1, szwFolder, len);
 
     rc = MsiGetSourcePathW(hInstall, szwFolder, szwPathBuf,pcchPathBuf);
 
@@ -4240,31 +4249,23 @@ UINT WINAPI MsiSetTargetPathA(MSIHANDLE hInstall, LPCSTR szFolder,
 {
     LPWSTR szwFolder;
     LPWSTR szwFolderPath;
-    UINT rc,len;
+    UINT rc;
 
     if (!szFolder)
         return ERROR_FUNCTION_FAILED;
     if (hInstall == 0)
         return ERROR_FUNCTION_FAILED;
 
-    len = MultiByteToWideChar( CP_ACP, 0, szFolder, -1, NULL, 0);
-    szwFolder= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
-
+    szwFolder = strdupAtoW(szFolder);
     if (!szwFolder)
         return ERROR_FUNCTION_FAILED; 
 
-    MultiByteToWideChar( CP_ACP, 0, szFolder, -1, szwFolder, len);
-
-    len = MultiByteToWideChar( CP_ACP, 0, szFolderPath, -1, NULL, 0);
-    szwFolderPath= HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR));
-
+    szwFolderPath = strdupAtoW(szFolderPath);
     if (!szwFolderPath)
     {
         HeapFree(GetProcessHeap(),0,szwFolder);
         return ERROR_FUNCTION_FAILED; 
     }
-
-    MultiByteToWideChar( CP_ACP, 0, szFolderPath, -1, szwFolderPath, len);
 
     rc = MsiSetTargetPathW(hInstall, szwFolder, szwFolderPath);
 
@@ -4316,6 +4317,142 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, DWORD iRunMode)
 {
     FIXME("STUB (%li)\n",iRunMode);
     return FALSE;
+}
+
+/*
+ * according to the docs when this is called it immediently recalculates all the
+ * components states as well
+ */
+UINT WINAPI MsiSetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
+                                INSTALLSTATE iState)
+{
+    LPWSTR szwFeature = NULL;
+    UINT rc;
+
+    szwFeature = strdupAtoW(szFeature);
+
+    if (!szwFeature)
+        return ERROR_FUNCTION_FAILED;
+   
+    rc = MsiSetFeatureStateW(hInstall,szwFeature, iState); 
+
+    HeapFree(GetProcessHeap(),0,szwFeature);
+
+    return rc;
+}
+
+UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
+                                INSTALLSTATE iState)
+{
+    MSIPACKAGE* package;
+    INT index;
+
+    TRACE(" %s to %i\n",debugstr_w(szFeature), iState);
+
+    package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    index = get_loaded_feature(package,szFeature);
+    if (index < 0)
+        return ERROR_UNKNOWN_FEATURE;
+
+    package->features[index].State = iState;
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MsiGetFeatureStateA(MSIHANDLE hInstall, LPSTR szFeature,
+                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
+{
+    LPWSTR szwFeature = NULL;
+    UINT rc;
+    
+    szwFeature = strdupAtoW(szFeature);
+
+    rc = MsiGetFeatureStateW(hInstall,szwFeature,piInstalled, piAction);
+
+    HeapFree( GetProcessHeap(), 0 , szwFeature);
+
+    return rc;
+}
+
+UINT WINAPI MsiGetFeatureStateW(MSIHANDLE hInstall, LPWSTR szFeature,
+                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
+{
+    MSIPACKAGE* package;
+    INT index;
+
+    TRACE("%ld %s %p %p\n", hInstall, debugstr_w(szFeature), piInstalled,
+piAction);
+
+    package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    index = get_loaded_feature(package,szFeature);
+    if (index < 0)
+        return ERROR_UNKNOWN_FEATURE;
+
+    if (piInstalled)
+        *piInstalled = package->features[index].State;
+
+    if (piAction)
+    {
+        if (package->features[index].Enabled)
+            *piAction = INSTALLSTATE_LOCAL;
+        else
+            *piAction = INSTALLSTATE_UNKNOWN;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+UINT WINAPI MsiGetComponentStateA(MSIHANDLE hInstall, LPSTR szComponent,
+                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
+{
+    LPWSTR szwComponent= NULL;
+    UINT rc;
+    
+    szwComponent= strdupAtoW(szComponent);
+
+    rc = MsiGetComponentStateW(hInstall,szwComponent,piInstalled, piAction);
+
+    HeapFree( GetProcessHeap(), 0 , szwComponent);
+
+    return rc;
+}
+
+UINT WINAPI MsiGetComponentStateW(MSIHANDLE hInstall, LPWSTR szComponent,
+                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
+{
+    MSIPACKAGE* package;
+    INT index;
+
+    TRACE("%ld %s %p %p\n", hInstall, debugstr_w(szComponent), piInstalled,
+piAction);
+
+    package = msihandle2msiinfo(hInstall, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    index = get_loaded_component(package,szComponent);
+    if (index < 0)
+        return ERROR_UNKNOWN_COMPONENT;
+
+    if (piInstalled)
+        *piInstalled = package->components[index].State;
+
+    if (piAction)
+    {
+        if (package->components[index].Enabled &&
+            package->components[index].FeatureState)
+            *piAction = INSTALLSTATE_LOCAL;
+        else
+            *piAction = INSTALLSTATE_UNKNOWN;
+    }
+
+    return ERROR_SUCCESS;
 }
 
 #if 0

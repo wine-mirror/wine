@@ -1096,6 +1096,101 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
+                                         LPSTR lpPathBuf, DWORD* pcchBuf)
+{
+    INSTALLSTATE rc;
+    UINT len;
+    LPWSTR szwProduct= NULL;
+    LPWSTR szwComponent= NULL;
+    LPWSTR lpwPathBuf= NULL;
+
+    if( szProduct)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szProduct, -1, NULL, 0 );
+        szwProduct= HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        if( !szwProduct)
+            return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, szProduct, -1, szwProduct, len );
+    }
+
+    if( szComponent)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szComponent, -1, NULL, 0 );
+        szwComponent= HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        if( !szwComponent)
+            return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, szComponent, -1, szwComponent, len );
+    }
+
+    if (pcchBuf && *pcchBuf > 0)
+        lpwPathBuf = HeapAlloc( GetProcessHeap(), 0, *pcchBuf * sizeof(WCHAR));
+    else
+        lpwPathBuf = NULL;
+
+    rc = MsiGetComponentPathW(szwProduct, szwComponent, lpwPathBuf, pcchBuf);
+
+    HeapFree( GetProcessHeap(), 0, szwProduct);
+    HeapFree( GetProcessHeap(), 0, szwComponent);
+    if (lpwPathBuf)
+    {
+        WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, *pcchBuf,
+                            lpPathBuf, GUID_SIZE, NULL, NULL);
+        HeapFree( GetProcessHeap(), 0, lpwPathBuf);
+    }
+
+    return rc;
+}
+
+INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
+                                         LPWSTR lpPathBuf, DWORD* pcchBuf)
+{
+    FIXME("STUB: (%s %s %p %p)\n", debugstr_w(szProduct),
+           debugstr_w(szComponent), lpPathBuf, pcchBuf);
+
+    return INSTALLSTATE_UNKNOWN;
+}
+
+INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
+{
+    INSTALLSTATE rc;
+    UINT len;
+    LPWSTR szwProduct= NULL;
+    LPWSTR szwFeature= NULL;
+
+    if( szProduct)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szProduct, -1, NULL, 0 );
+        szwProduct= HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        if( !szwProduct)
+            return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, szProduct, -1, szwProduct, len );
+    }
+
+    if( szFeature)
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szFeature, -1, NULL, 0 );
+        szwFeature= HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        if( !szwFeature)
+            return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, szFeature, -1, szwFeature, len );
+    }
+
+    rc = MsiQueryFeatureStateW(szwProduct, szwFeature);
+
+    HeapFree( GetProcessHeap(), 0, szwProduct);
+    HeapFree( GetProcessHeap(), 0, szwFeature);
+
+    return rc;
+}
+
+INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
+{
+    FIXME("STUB: (%s %s)\n", debugstr_w(szProduct), debugstr_w(szFeature));
+    return INSTALLSTATE_UNKNOWN;
+}
+
+
 /******************************************************************
  *		DllMain
  *

@@ -398,34 +398,6 @@ UINT WINAPI MsiDatabaseGetPrimaryKeysW(MSIHANDLE hdb,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiGetFeatureStateA(MSIHANDLE hInstall, LPSTR szFeature,
-                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
-{
-    FIXME("%ld %s %p %p\n", hInstall, debugstr_a(szFeature), piInstalled, piAction);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiGetFeatureStateW(MSIHANDLE hInstall, LPWSTR szFeature,
-                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
-{
-    FIXME("%ld %s %p %p\n", hInstall, debugstr_w(szFeature), piInstalled, piAction);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiGetComponentStateA(MSIHANDLE hInstall, LPSTR szFeature,
-                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
-{
-    FIXME("%ld %s %p %p\n", hInstall, debugstr_a(szFeature), piInstalled, piAction);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiGetComponentStateW(MSIHANDLE hInstall, LPWSTR szFeature,
-                  INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
-{
-    FIXME("%ld %s %p %p\n", hInstall, debugstr_w(szFeature), piInstalled, piAction);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
 UINT WINAPI MsiViewModify(MSIHANDLE hView, MSIMODIFY eModifyMode, MSIHANDLE
 hRecord)
 {
