@@ -1699,6 +1699,7 @@ programs/clock/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/expand/Makefile
+programs/msiexec/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
 programs/regedit/Makefile
