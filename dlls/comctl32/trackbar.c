@@ -442,7 +442,7 @@ TRACKBAR_DrawOneTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
     }
 
     range = infoPtr->lRangeMax - infoPtr->lRangeMin;
-    if (range == 0)
+    if (range <= 0)
       range = 1; /* to avoid division by zero */
 
     if (flags & TIC_SELECTIONMARK) {
@@ -966,6 +966,7 @@ TRACKBAR_GetTicPos (TRACKBAR_INFO *infoPtr, INT iTic)
 
     tic   = TRACKBAR_GetTic (infoPtr, iTic);
     range = infoPtr->lRangeMax - infoPtr->lRangeMin;
+    if (range <= 0) range = 1;
     width = infoPtr->rcChannel.right - infoPtr->rcChannel.left;
     pos   = infoPtr->rcChannel.left + (width * tic) / range;
 
