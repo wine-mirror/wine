@@ -943,6 +943,8 @@ DWORD WIN16DRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
     case DC_PRINTERMEM:
     case DC_PRINTRATEUNIT:
     case DC_SIZE:
+    case DC_TRUETYPE:
+    case DC_VERSION:
         OutputSize = 0;
 	break;
 
