@@ -208,13 +208,13 @@ dump_D3DLIGHT7(LPD3DLIGHT7 lpLight)
 void
 dump_DPFLAGS(DWORD dwFlags)
 {
-        static const flag_info flags[] =
-	{
-	    FE(D3DDP_WAIT),
-	    FE(D3DDP_OUTOFORDER),
-	    FE(D3DDP_DONOTCLIP),
-	    FE(D3DDP_DONOTUPDATEEXTENTS),
-	    FE(D3DDP_DONOTLIGHT)
+    static const flag_info flags[] =
+    {
+        FE(D3DDP_WAIT),
+	FE(D3DDP_OUTOFORDER),
+	FE(D3DDP_DONOTCLIP),
+	FE(D3DDP_DONOTUPDATEEXTENTS),
+	FE(D3DDP_DONOTLIGHT)
     };
 
     DDRAW_dump_flags(dwFlags, flags, sizeof(flags)/sizeof(flags[0]));

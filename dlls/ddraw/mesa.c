@@ -503,6 +503,22 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		}
 		break;
 
+	    case D3DRENDERSTATE_DIFFUSEMATERIALSOURCE:     /* 145 */
+	        rs->color_diffuse = dwRenderState;
+		break;
+
+	    case D3DRENDERSTATE_SPECULARMATERIALSOURCE:   /* 146 */
+	        rs->color_specular = dwRenderState;
+		break;
+
+	    case D3DRENDERSTATE_AMBIENTMATERIALSOURCE:    /* 147 */
+	        rs->color_ambient = dwRenderState;
+		break;
+
+	    case D3DRENDERSTATE_EMISSIVEMATERIALSOURCE:   /* 148 */
+	        rs->color_emissive = dwRenderState;
+		break;
+
 	    default:
 	        ERR("Unhandled dwRenderStateType %s (%08x) !\n", _get_renderstate(dwRenderStateType), dwRenderStateType);
 	}

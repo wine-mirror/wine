@@ -912,6 +912,8 @@ void dump_flexible_vertex(DWORD d3dvtVertexType)
 	FE(D3DFVF_DIFFUSE),
 	FE(D3DFVF_SPECULAR)
     };
+    int i;
+    
     if (d3dvtVertexType & D3DFVF_RESERVED0) DPRINTF("D3DFVF_RESERVED0 ");
     switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
 #define GEN_CASE(a) case a: DPRINTF(#a " "); break
@@ -936,6 +938,9 @@ void dump_flexible_vertex(DWORD d3dvtVertexType)
 	GEN_CASE(D3DFVF_TEX8);
     }
 #undef GEN_CASE
+    for (i = 0; i < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); i++) {
+        DPRINTF(" T%d-s%ld", i + 1, (((d3dvtVertexType >> (16 + (2 * i))) + 1) & 0x03) + 1);
+    }
     DPRINTF("\n");
 }
 
@@ -1627,8 +1632,44 @@ GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
     This->light_parameters[dwLightIndex] = *lpLight;
 
     switch (lpLight->dltType) {
-	case D3DLIGHT_DIRECTIONAL: {  /* 3 */
+	case D3DLIGHT_DIRECTIONAL: {
 	    float direction[4];
+	    float cut_off = 180.0;
+	    
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_AMBIENT,  (float *) &(lpLight->dcvAmbient));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_DIFFUSE,  (float *) &(lpLight->dcvDiffuse));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPECULAR, (float *) &(lpLight->dcvSpecular));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_CUTOFF, &cut_off);
+
+	    direction[0] = lpLight->dvDirection.u1.x;
+	    direction[1] = lpLight->dvDirection.u2.y;
+	    direction[2] = lpLight->dvDirection.u3.z;
+	    direction[3] = 0.0;
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) direction);
+	} break;
+
+        case D3DLIGHT_POINT: {
+	    float position[4];
+	    float cut_off = 180.0;
+
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_AMBIENT,  (float *) &(lpLight->dcvAmbient));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_DIFFUSE,  (float *) &(lpLight->dcvDiffuse));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPECULAR, (float *) &(lpLight->dcvSpecular));
+	    position[0] = lpLight->dvPosition.u1.x;
+	    position[1] = lpLight->dvPosition.u2.y;
+	    position[2] = lpLight->dvPosition.u3.z;
+	    position[3] = 1.0;
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) position);
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_CONSTANT_ATTENUATION, &(lpLight->dvAttenuation0));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_LINEAR_ATTENUATION, &(lpLight->dvAttenuation1));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_QUADRATIC_ATTENUATION, &(lpLight->dvAttenuation2));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_CUTOFF, &cut_off);
+	} break;
+
+        case D3DLIGHT_SPOT: {
+	    float direction[4];
+	    float position[4];
+	    float cut_off = 90.0 * (lpLight->dvPhi / M_PI);
 
 	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_AMBIENT,  (float *) &(lpLight->dcvAmbient));
 	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_DIFFUSE,  (float *) &(lpLight->dcvDiffuse));
@@ -1637,9 +1678,21 @@ GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
 	    direction[0] = lpLight->dvDirection.u1.x;
 	    direction[1] = lpLight->dvDirection.u2.y;
 	    direction[2] = lpLight->dvDirection.u3.z;
-	    direction[3] = 0.0; /* This is a directional light */
-
-	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) direction);
+	    direction[3] = 0.0;
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_DIRECTION, (float *) direction);
+	    position[0] = lpLight->dvPosition.u1.x;
+	    position[1] = lpLight->dvPosition.u2.y;
+	    position[2] = lpLight->dvPosition.u3.z;
+	    position[3] = 1.0;
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) position);
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_CONSTANT_ATTENUATION, &(lpLight->dvAttenuation0));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_LINEAR_ATTENUATION, &(lpLight->dvAttenuation1));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_QUADRATIC_ATTENUATION, &(lpLight->dvAttenuation2));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_CUTOFF, &cut_off);
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPOT_EXPONENT, &(lpLight->dvFalloff));
+	    if ((lpLight->dvTheta != 0.0) || (lpLight->dvTheta != lpLight->dvPhi)) {
+	        WARN("dvTheta not fully supported yet !\n");
+	    }
 	} break;
 
         default: WARN(" light type not handled yet...\n");
