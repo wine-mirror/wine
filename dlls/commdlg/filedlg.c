@@ -1373,7 +1373,8 @@ BOOL WINAPI GetOpenFileNameA(
                              LPOPENFILENAMEA ofn /* address of init structure */
                              )
 {
-    if(TWEAK_WineLook > WIN31_LOOK)
+    if( (TWEAK_WineLook>WIN31_LOOK) &&
+	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
     {
         return GetFileDialog95A(ofn, OPEN_DIALOG);
     }
@@ -1400,7 +1401,8 @@ BOOL WINAPI GetOpenFileNameW(
                              LPOPENFILENAMEW ofn /* address of init structure */
                              )
 {
-    if(TWEAK_WineLook > WIN31_LOOK)
+    if( (TWEAK_WineLook>WIN31_LOOK) &&
+	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
     {
         return GetFileDialog95W(ofn, OPEN_DIALOG);
     }
@@ -1427,16 +1429,14 @@ BOOL WINAPI GetSaveFileNameA(
                              LPOPENFILENAMEA ofn /* address of init structure */
                              )
 {
-    if(TWEAK_WineLook > WIN31_LOOK)
+    if( (TWEAK_WineLook>WIN31_LOOK) &&
+	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
     {
         return GetFileDialog95A(ofn, SAVE_DIALOG);
+    } else {
+	BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
+	return Commdlg_GetFileNameA(dofunction,ofn);
     }
-    else
-    {
-   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
-   return Commdlg_GetFileNameA(dofunction,ofn);
-}
-
 }
 
 /***********************************************************************
@@ -1455,14 +1455,12 @@ BOOL WINAPI GetSaveFileNameW(
                              LPOPENFILENAMEW ofn /* address of init structure */
                              )
 {
-    if(TWEAK_WineLook > WIN31_LOOK)
+    if( (TWEAK_WineLook>WIN31_LOOK) &&
+	(!(ofn->Flags & (OFN_ENABLETEMPLATEHANDLE|OFN_ENABLETEMPLATE))))
     {
         return GetFileDialog95W(ofn, SAVE_DIALOG);
+    } else {
+	BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
+	return Commdlg_GetFileNameW(dofunction,ofn);
     }
-    else
-    {
-   BOOL16 (CALLBACK * dofunction)(SEGPTR ofn16) = GetSaveFileName16;
-   return Commdlg_GetFileNameW(dofunction,ofn);
-}
-
 }
