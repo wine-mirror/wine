@@ -449,6 +449,10 @@ HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
         return HFILE_ERROR;
     }
 
+    /* If the name contains a DOS wild card (* or ?), do no create a file */
+    if(strchr(filename,'*') || strchr(filename,'?'))
+        return HFILE_ERROR;
+
     /* Open a console for CONIN$ or CONOUT$ */
     if (!lstrcmpiA(filename, "CONIN$")) return CONSOLE_OpenHandle( FALSE, access, sa );
     if (!lstrcmpiA(filename, "CONOUT$")) return CONSOLE_OpenHandle( TRUE, access, sa );
