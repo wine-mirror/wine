@@ -126,7 +126,7 @@ typedef struct
  */
 #define FS(x) {{0,0,0,0},{0x1<<(x),0}}
 #define MAXTCIINDEX 32
-static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
+static const CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   /* ANSI */
   { ANSI_CHARSET, 1252, FS(0)},
   { EASTEUROPE_CHARSET, 1250, FS(1)},

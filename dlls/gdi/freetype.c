@@ -2032,16 +2032,16 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     if(!(ptm->tmPitchAndFamily & TMPF_VECTOR))
         *ptype |= RASTER_FONTTYPE;
 
+    pntm->ntmTm.ntmFlags = ptm->tmItalic ? NTM_ITALIC : 0;
+    if(ptm->tmWeight > 550) pntm->ntmTm.ntmFlags |= NTM_BOLD;
+    if(pntm->ntmTm.ntmFlags == 0) pntm->ntmTm.ntmFlags = NTM_REGULAR;
+
+    pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
+    pntm->ntmTm.ntmAvgWidth = pntm->ntmTm.tmAveCharWidth;
+    memset(&pntm->ntmFontSig, 0, sizeof(FONTSIGNATURE));
+
     if(potm) {
-        pntm->ntmTm.ntmFlags = ptm->tmItalic ? NTM_ITALIC : 0;
-        if(ptm->tmWeight > 550) pntm->ntmTm.ntmFlags |= NTM_BOLD;
-        if(pntm->ntmTm.ntmFlags == 0) pntm->ntmTm.ntmFlags = NTM_REGULAR;
-
         pntm->ntmTm.ntmSizeEM = potm->otmEMSquare;
-        pntm->ntmTm.ntmCellHeight = 0;
-        pntm->ntmTm.ntmAvgWidth = 0;
-
-        memset(&pntm->ntmFontSig, 0, sizeof(FONTSIGNATURE));
 
         strncpyW(pelf->elfLogFont.lfFaceName,
                  (WCHAR*)((char*)potm + (ptrdiff_t)potm->otmpFamilyName),
@@ -2053,7 +2053,10 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
                  (WCHAR*)((char*)potm + (ptrdiff_t)potm->otmpStyleName),
                  LF_FACESIZE);
 
+        HeapFree(GetProcessHeap(), 0, potm);
     } else {
+        pntm->ntmTm.ntmSizeEM = pntm->ntmTm.tmHeight - pntm->ntmTm.tmInternalLeading;
+
         strncpyW(pelf->elfLogFont.lfFaceName, face->family->FamilyName, LF_FACESIZE);
         strncpyW(pelf->elfFullName, face->family->FamilyName, LF_FACESIZE);
         pelf->elfStyle[0] = '\0';
@@ -2061,9 +2064,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
 
     pelf->elfScript[0] = '\0'; /* This will get set in WineEngEnumFonts */
 
-    HeapFree(GetProcessHeap(), 0, potm);
     free_font(font);
-    return;
 }
 
 /*************************************************************
