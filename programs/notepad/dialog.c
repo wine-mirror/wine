@@ -34,7 +34,7 @@ static LRESULT WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
 
 
 
-void ShowLastError()
+VOID ShowLastError()
 {
     DWORD error = GetLastError();
     if (error != NO_ERROR)
@@ -505,10 +505,7 @@ VOID DIALOG_FilePrinterSetup(VOID)
 
 VOID DIALOG_FileExit(VOID)
 {
-    if (DoCloseFile())
-    {
-        PostQuitMessage(0);
-    }
+    PostMessage(Globals.hMainWnd, WM_CLOSE, 0, 0l);
 }
 
 VOID DIALOG_EditUndo(VOID)

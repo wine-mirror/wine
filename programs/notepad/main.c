@@ -117,16 +117,20 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
     {
         RECT rc;
         GetClientRect(hWnd, &rc);
-        LoadLibrary("RichEd32.dll");
-
-        Globals.hEdit =
-            CreateWindow("RICHEDIT", "",
-                         WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
-                         ES_AUTOVSCROLL | ES_MULTILINE,
-                         0, 0, rc.right, rc.bottom, hWnd,
-                         NULL, Globals.hInstance, NULL);
-        NOTEPAD_InitData();
-        DIALOG_FileNew();
+        if (LoadLibrary("RichEd32.dll"))
+        {
+            Globals.hEdit =
+                CreateWindow("RICHEDIT", "",
+                             WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
+                             ES_AUTOVSCROLL | ES_MULTILINE,
+                             0, 0, rc.right, rc.bottom, hWnd,
+                             NULL, Globals.hInstance, NULL);
+            NOTEPAD_InitData();
+            DIALOG_FileNew();
+        } else {
+            ShowLastError();
+            return -1;
+        }
         break;
     }
 
@@ -140,9 +144,8 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
 
     case WM_CLOSE:
         if (DoCloseFile()) {
-            PostQuitMessage(0);
+            DestroyWindow(hWnd);
         }
-        DestroyWindow(hWnd);
         break;
 
     case WM_DESTROY:
@@ -150,13 +153,9 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         break;
 
     case WM_SIZE:
-    {
-        RECT rc;
-        GetClientRect(hWnd, &rc);
-        SetWindowPos(Globals.hEdit, NULL, 0, 0, rc.right, rc.bottom,
+        SetWindowPos(Globals.hEdit, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam),
                      SWP_NOOWNERZORDER | SWP_NOZORDER);
         break;
-    }
 
     case WM_DROPFILES:
     {
@@ -295,6 +294,11 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         CreateWindow(className, winName, WS_OVERLAPPEDWINDOW,
                      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
                      NULL, NULL, Globals.hInstance, NULL);
+    if (!Globals.hMainWnd)
+    {
+        ShowLastError();
+        ExitProcess(1);
+    }
 
     ShowWindow(Globals.hMainWnd, show);
     UpdateWindow(Globals.hMainWnd);

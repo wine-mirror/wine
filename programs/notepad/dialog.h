@@ -50,6 +50,7 @@ VOID DIALOG_PageSetup(VOID);
 VOID DIALOG_TimeDate(VOID);
 
 /* utility functions */
+VOID ShowLastError();
 BOOL FileExists(LPSTR szFilename);
 BOOL DoCloseFile(void);
 void DoOpenFile(LPSTR szFileName);
