@@ -342,9 +342,6 @@ static int		fontLF = -1, fontMRU = -1;	/* last free, most recently used */
 #define CHECK_PFONT(pFont) ( (((UINT)(pFont) & 0xFFFF0000) == X_PFONT_MAGIC) &&\
 			     (((UINT)(pFont) & 0x0000FFFF) < fontCacheSize) )
 
-static Atom RAW_ASCENT;
-static Atom RAW_DESCENT;
-
 /***********************************************************************
  *           Helper macros from X distribution
  */
@@ -1067,8 +1064,7 @@ static void XFONT_GetLeading( const LPIFONTINFO16 pFI, const XFontStruct* x_fs,
     if( pEL ) *pEL = 0;
 
     if(XFT) {
-        Atom RAW_CAP_HEIGHT = TSXInternAtom(gdi_display, "RAW_CAP_HEIGHT", TRUE);
-	if(TSXGetFontProperty((XFontStruct*)x_fs, RAW_CAP_HEIGHT, &height))
+	if(TSXGetFontProperty((XFontStruct*)x_fs, x11drv_atom(RAW_CAP_HEIGHT), &height))
 	    *pIL = XFT->ascent -
                             (INT)(XFT->pixelsize / 1000.0 * height);
 	else
@@ -2032,13 +2028,10 @@ static int XLoadQueryFont_ErrorHandler(Display *dpy, XErrorEvent *event, void *a
 static XFontStruct *safe_XLoadQueryFont(Display *display, char *name)
 {
     XFontStruct *ret;
-    
-    wine_tsx11_lock();
+
     X11DRV_expect_error(display, XLoadQueryFont_ErrorHandler, NULL);
     ret = XLoadQueryFont(display, name);
     if (X11DRV_check_error()) ret = NULL;
-    wine_tsx11_unlock();
-
     return ret;
 }
 
@@ -3020,12 +3013,6 @@ void X11DRV_FONT_InitX11Metrics( void )
   XFONT_GrowFreeList(0, fontCacheSize - 1);
 
   TRACE("done!\n");
-
-  /* update text caps parameter */
-
-  RAW_ASCENT  = TSXInternAtom(gdi_display, "RAW_ASCENT", TRUE);
-  RAW_DESCENT = TSXInternAtom(gdi_display, "RAW_DESCENT", TRUE);
-  return;
 }
 
 /***********************************************************************
@@ -3071,8 +3058,8 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
   TSXFree(fontName);
   HeapFree(GetProcessHeap(), 0, lfd);
 
-  TSXGetFontProperty( pfo->fs, RAW_ASCENT, &PX->RAW_ASCENT );
-  TSXGetFontProperty( pfo->fs, RAW_DESCENT, &PX->RAW_DESCENT );
+  TSXGetFontProperty( pfo->fs, x11drv_atom(RAW_ASCENT), &PX->RAW_ASCENT );
+  TSXGetFontProperty( pfo->fs, x11drv_atom(RAW_DESCENT), &PX->RAW_DESCENT );
 
   PX->pixelsize = hypot(PX->a, PX->b);
   PX->ascent = PX->pixelsize / 1000.0 * PX->RAW_ASCENT;

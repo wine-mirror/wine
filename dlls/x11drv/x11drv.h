@@ -364,30 +364,43 @@ extern int use_xkb;
 extern int use_take_focus;
 extern int managed_mode;
 
-extern Atom wmProtocols;
-extern Atom wmDeleteWindow;
-extern Atom wmTakeFocus;
-extern Atom dndProtocol;
-extern Atom dndSelection;
-extern Atom wmChangeState;
-extern Atom kwmDockWindow;
-extern Atom _kde_net_wm_system_tray_window_for;
+/* atoms */
+
+enum x11drv_atoms
+{
+    FIRST_XATOM = XA_LAST_PREDEFINED + 1,
+    XATOM_CLIPBOARD = FIRST_XATOM,
+    XATOM_COMPOUND_TEXT,
+    XATOM_MULTIPLE,
+    XATOM_SELECTION_DATA,
+    XATOM_TARGETS,
+    XATOM_TEXT,
+    XATOM_UTF8_STRING,
+    XATOM_RAW_ASCENT,
+    XATOM_RAW_DESCENT,
+    XATOM_RAW_CAP_HEIGHT,
+    XATOM_WM_PROTOCOLS,
+    XATOM_WM_DELETE_WINDOW,
+    XATOM_WM_TAKE_FOCUS,
+    XATOM_KWM_DOCKWINDOW,
+    XATOM_DndProtocol,
+    XATOM_DndSelection,
+    XATOM__MOTIF_WM_HINTS,
+    XATOM__KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR,
+    XATOM__NET_WM_PID,
+    XATOM__NET_WM_PING,
+    XATOM__NET_WM_NAME,
+    XATOM_image_gif,
+    XATOM_text_rtf,
+    XATOM_text_richtext,
+    NB_XATOMS
+};
+
+extern Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
+
+#define x11drv_atom(name) (X11DRV_Atoms[XATOM_##name - FIRST_XATOM])
 
 /* X11 clipboard driver */
-
-typedef struct tagPROPERTYFORMATMAP
-{
-    LPCSTR lpszProperty;
-    LPCSTR lpszFormat;
-} PROPERTYFORMATMAP;
-
-typedef struct tagPROPERTYALIASMAP
-{
-    LPCSTR lpszProperty;
-    UINT drvDataProperty;
-    LPCSTR lpszAlias;
-    UINT drvDataAlias;
-} PROPERTYALIASMAP;
 
 typedef struct tagWINE_CLIPDATA {
     UINT        wFormatID;
@@ -416,11 +429,7 @@ typedef struct tagWINE_CLIPFORMAT {
 #define CF_FLAG_BUILTINFMT   1 /* Built-in windows format */
 #define CF_FLAG_SYNTHESIZED  8 /* Implicitly converted data */
 
-extern Atom xaClipboard;
-extern Atom xaTargets;
-extern Atom xaMultiple;
-
-extern BOOL X11DRV_InitClipboard(Display *display);
+extern void X11DRV_InitClipboard(Display *display);
 extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd);
 extern INT X11DRV_CountClipboardFormats(void);
 extern UINT X11DRV_EnumClipboardFormats(UINT wFormat);

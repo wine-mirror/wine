@@ -56,17 +56,35 @@ extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 
-Atom wmProtocols = None;
-Atom wmDeleteWindow = None;
-Atom wmTakeFocus = None;
-Atom dndProtocol = None;
-Atom dndSelection = None;
-Atom wmChangeState = None;
-Atom mwmHints = None;
-Atom kwmDockWindow = None;
-Atom netwmPid = None;
-Atom netwmPing = None;
-Atom _kde_net_wm_system_tray_window_for = None; /* KDE 2 Final */
+Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
+
+static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
+{
+    "CLIPBOARD",
+    "COMPOUND_TEXT",
+    "MULTIPLE",
+    "SELECTION_DATA",
+    "TARGETS",
+    "TEXT",
+    "UTF8_STRING",
+    "RAW_ASCENT",
+    "RAW_DESCENT",
+    "RAW_CAP_HEIGHT",
+    "WM_PROTOCOLS",
+    "WM_DELETE_WINDOW",
+    "WM_TAKE_FOCUS",
+    "KWM_DOCKWINDOW",
+    "DndProtocol",
+    "DndSelection",
+    "_MOTIF_WM_HINTS",
+    "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR",
+    "_NET_WM_PID",
+    "_NET_WM_PING",
+    "_NET_WM_NAME",
+    "image/gif",
+    "text/rtf",
+    "text/richtext"
+};
 
 static LPCSTR whole_window_atom;
 static LPCSTR client_window_atom;
@@ -336,17 +354,19 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
     Window group_leader;
     XClassHint *class_hints;
     XWMHints* wm_hints;
-    Atom protocols[2];
+    Atom protocols[3];
+    MwmHints mwm_hints;
     int i;
 
     wine_tsx11_lock();
 
     /* wm protocols */
     i = 0;
-    protocols[i++] = wmDeleteWindow;
-    if (wmTakeFocus) protocols[i++] = wmTakeFocus;
-    if (netwmPing) protocols[i++] = netwmPing;
-    XSetWMProtocols( display, data->whole_window, protocols, i );
+    protocols[i++] = x11drv_atom(WM_DELETE_WINDOW);
+    protocols[i++] = x11drv_atom(_NET_WM_PING);
+    if (use_take_focus) protocols[i++] = x11drv_atom(WM_TAKE_FOCUS);
+    XChangeProperty( display, data->whole_window, x11drv_atom(WM_PROTOCOLS),
+                     XA_ATOM, 32, PropModeReplace, (char *)protocols, i );
 
     /* class hints */
     if ((class_hints = XAllocClassHint()))
@@ -373,44 +393,40 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
     if (win->dwExStyle & WS_EX_TRAYWINDOW)
     {
         int val = 1;
-        if (kwmDockWindow != None)
-            XChangeProperty( display, data->whole_window, kwmDockWindow, kwmDockWindow,
-                             32, PropModeReplace, (char*)&val, 1 );
-        if (_kde_net_wm_system_tray_window_for != None)
-            XChangeProperty( display, data->whole_window, _kde_net_wm_system_tray_window_for,
-                             XA_WINDOW, 32, PropModeReplace, (char*)&data->whole_window, 1 );
+        XChangeProperty( display, data->whole_window, x11drv_atom(KWM_DOCKWINDOW),
+                         x11drv_atom(KWM_DOCKWINDOW), 32, PropModeReplace, (char*)&val, 1 );
+        XChangeProperty( display, data->whole_window, x11drv_atom(_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR),
+                         XA_WINDOW, 32, PropModeReplace, (char*)&data->whole_window, 1 );
     }
 
     /* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties */
     XSetWMProperties(display, data->whole_window, NULL, NULL, NULL, 0, NULL, NULL, NULL);
     /* set the pid. together, these properties are needed so the window manager can kill us if we freeze */
     i = getpid();
-    XChangeProperty(display, data->whole_window, netwmPid, XA_CARDINAL, 32, PropModeReplace, (char *)&i, 1);
-    
-    if (mwmHints != None)
-    {
-        MwmHints mwm_hints;
-        mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
-        mwm_hints.functions = 0;
-        if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.functions |= MWM_FUNC_MOVE;
-        if (win->dwStyle & WS_THICKFRAME) mwm_hints.functions |= MWM_FUNC_MOVE | MWM_FUNC_RESIZE;
-        if (win->dwStyle & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
-        if (win->dwStyle & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
-        if (win->dwStyle & WS_SYSMENU)    mwm_hints.functions |= MWM_FUNC_CLOSE;
-        mwm_hints.decorations = 0;
-        if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.decorations |= MWM_DECOR_TITLE;
-        if (win->dwExStyle & WS_EX_DLGMODALFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
-        else if (win->dwStyle & WS_THICKFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER | MWM_DECOR_RESIZEH;
-        else if ((win->dwStyle & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
-        else if (win->dwStyle & WS_BORDER) mwm_hints.decorations |= MWM_DECOR_BORDER;
-        else if (!(win->dwStyle & (WS_CHILD|WS_POPUP))) mwm_hints.decorations |= MWM_DECOR_BORDER;
-        if (win->dwStyle & WS_SYSMENU)  mwm_hints.decorations |= MWM_DECOR_MENU;
-        if (win->dwStyle & WS_MINIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MINIMIZE;
-        if (win->dwStyle & WS_MAXIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MAXIMIZE;
+    XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_PID),
+                    XA_CARDINAL, 32, PropModeReplace, (char *)&i, 1);
 
-        XChangeProperty( display, data->whole_window, mwmHints, mwmHints, 32,
-                         PropModeReplace, (char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
-    }
+    mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
+    mwm_hints.functions = 0;
+    if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.functions |= MWM_FUNC_MOVE;
+    if (win->dwStyle & WS_THICKFRAME) mwm_hints.functions |= MWM_FUNC_MOVE | MWM_FUNC_RESIZE;
+    if (win->dwStyle & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
+    if (win->dwStyle & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
+    if (win->dwStyle & WS_SYSMENU)    mwm_hints.functions |= MWM_FUNC_CLOSE;
+    mwm_hints.decorations = 0;
+    if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.decorations |= MWM_DECOR_TITLE;
+    if (win->dwExStyle & WS_EX_DLGMODALFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
+    else if (win->dwStyle & WS_THICKFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER | MWM_DECOR_RESIZEH;
+    else if ((win->dwStyle & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) mwm_hints.decorations |= MWM_DECOR_BORDER;
+    else if (win->dwStyle & WS_BORDER) mwm_hints.decorations |= MWM_DECOR_BORDER;
+    else if (!(win->dwStyle & (WS_CHILD|WS_POPUP))) mwm_hints.decorations |= MWM_DECOR_BORDER;
+    if (win->dwStyle & WS_SYSMENU)  mwm_hints.decorations |= MWM_DECOR_MENU;
+    if (win->dwStyle & WS_MINIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MINIMIZE;
+    if (win->dwStyle & WS_MAXIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MAXIMIZE;
+
+    XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
+                     x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
+                     (char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
 
     wm_hints = XAllocWMHints();
     wine_tsx11_unlock();
@@ -674,18 +690,8 @@ static void create_desktop( Display *display, WND *wndPtr )
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
 
     wine_tsx11_lock();
-    winContext     = XUniqueContext();
-    wmProtocols    = XInternAtom( display, "WM_PROTOCOLS", False );
-    wmDeleteWindow = XInternAtom( display, "WM_DELETE_WINDOW", False );
-    if (use_take_focus) wmTakeFocus = XInternAtom( display, "WM_TAKE_FOCUS", False );
-    dndProtocol = XInternAtom( display, "DndProtocol" , False );
-    dndSelection = XInternAtom( display, "DndSelection" , False );
-    wmChangeState = XInternAtom( display, "WM_CHANGE_STATE", False );
-    mwmHints = XInternAtom( display, _XA_MWM_HINTS, False );
-    kwmDockWindow = XInternAtom( display, "KWM_DOCKWINDOW", False );
-    _kde_net_wm_system_tray_window_for = XInternAtom( display, "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR", False );
-    netwmPid = XInternAtom( display, "_NET_WM_PID", False );
-    netwmPing = XInternAtom( display, "_NET_WM_PING", False );
+    winContext = XUniqueContext();
+    XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
     wine_tsx11_unlock();
 
     whole_window_atom  = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_whole_window" ));
@@ -698,6 +704,8 @@ static void create_desktop( Display *display, WND *wndPtr )
     SetPropA( wndPtr->hwndSelf, whole_window_atom, (HANDLE)root_window );
     SetPropA( wndPtr->hwndSelf, client_window_atom, (HANDLE)root_window );
     SetPropA( wndPtr->hwndSelf, "__wine_x11_visual_id", (HANDLE)XVisualIDFromVisual(visual) );
+
+    X11DRV_InitClipboard( display );
 
     if (root_window != DefaultRootWindow(display)) X11DRV_create_desktop_thread();
 }
@@ -849,11 +857,8 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         according to the standard
         ( http://www.pps.jussieu.fr/~jch/software/UTF8_STRING/UTF8_STRING.text ).
         */
-        XChangeProperty( display, win,
-            XInternAtom(display, "_NET_WM_NAME", False),
-            XInternAtom(display, "UTF8_STRING", False),
-            8, PropModeReplace, (unsigned char *) utf8_buffer,
-            count);
+        XChangeProperty( display, win, x11drv_atom(_NET_WM_NAME), x11drv_atom(UTF8_STRING),
+                         8, PropModeReplace, (unsigned char *) utf8_buffer, count);
         wine_tsx11_unlock();
 
         HeapFree( GetProcessHeap(), 0, utf8_buffer );

@@ -98,21 +98,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 #define S_PRIMARY        1
 #define S_CLIPBOARD      2
 
-/* CLIPBOARD atom names */
-#define _CLIPBOARD     "CLIPBOARD"
-#define _TARGETS      "TARGETS"
-#define _MULTIPLE     "MULTIPLE"
-#define _SELECTIONDATA "SELECTION_DATA"
-#define _TEXT          "TEXT"
-#define _COMPOUNDTEXT  "COMPOUND_TEXT"
-
-Atom xaClipboard = None;
-Atom xaTargets = None;
-Atom xaMultiple = None;
-Atom xaSelectionData = None;
-Atom xaText = None;
-Atom xaCompoundText = None;
-
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static BOOL clearAllSelections = FALSE;        /* Always lose all selections */
@@ -138,7 +123,7 @@ HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, LPCSTR PropertyName);
+static UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop);
 static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, Atom prop);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(UINT wFormatID);
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
@@ -154,7 +139,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(LPWINE_CLIPDATA lpData);
  * WARNING: This data ordering is dependent on the WINE_CLIPFORMAT structure
  * declared in clipboard.h
  */
-WINE_CLIPFORMAT ClipFormats[]  =
+static WINE_CLIPFORMAT ClipFormats[]  =
 {
     { CF_TEXT, "WCF_TEXT",  0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
         X11DRV_CLIPBOARD_ExportClipboardData, NULL, &ClipFormats[1]},
@@ -223,25 +208,34 @@ WINE_CLIPFORMAT ClipFormats[]  =
         X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[20], NULL}
 };
 
+#define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
 
 /* Maps X properties to Windows formats */
-PROPERTYFORMATMAP PropertyFormatMap[] =
-{ 
-    { "text/rtf", "Rich Text Format" },
+static const struct
+{
+    LPCSTR lpszFormat;
+    UINT   prop;
+} PropertyFormatMap[] =
+{
+    { "Rich Text Format", XATOM_text_rtf },
     /* Temporarily disable text/html because Evolution incorrectly pastes strings with extra nulls */
     /*{ "text/html", "HTML Format" },*/
-    { "image/gif", "GIF" },
+    { "GIF", XATOM_image_gif }
 };
 
 
 /* Maps equivalent X properties. It is assumed that lpszProperty must already 
    be in ClipFormats or PropertyFormatMap. */
-PROPERTYALIASMAP PropertyAliasMap[] =
-{ 
-    /* lpszProperty, Alias */
-    { "text/rtf", 0, "text/richtext", 0 },
-    { "XAString", XA_STRING, _COMPOUNDTEXT, 0 },
-    { "XAString", XA_STRING, _TEXT, 0 },
+static const struct
+{
+    UINT drvDataProperty;
+    UINT drvDataAlias;
+} PropertyAliasMap[] =
+{
+    /* DataProperty,   DataAlias */
+    { XATOM_text_rtf,  XATOM_text_richtext },
+    { XA_STRING,       XATOM_COMPOUND_TEXT },
+    { XA_STRING,       XATOM_TEXT },
 };
 
 
@@ -254,7 +248,7 @@ static UINT ClipDataCount = 0;
 /*
  * Clipboard sequence number
  */
-UINT wSeqNo = 0;
+static UINT wSeqNo = 0;
 
 /**************************************************************************
  *                Internal Clipboard implementation methods
@@ -263,19 +257,11 @@ UINT wSeqNo = 0;
 /**************************************************************************
  *		X11DRV_InitClipboard
  */
-BOOL X11DRV_InitClipboard(Display *display)
+void X11DRV_InitClipboard(Display *display)
 {
     INT i;
     HKEY hkey;
-    PROPERTYALIASMAP *lpalias;
     LPWINE_CLIPFORMAT lpFormat = ClipFormats;
-
-    xaClipboard = TSXInternAtom( display, _CLIPBOARD, FALSE );
-    xaTargets = TSXInternAtom( display, _TARGETS, FALSE );
-    xaMultiple = TSXInternAtom(display, _MULTIPLE, False);
-    xaSelectionData = TSXInternAtom(display, _SELECTIONDATA, False);
-    xaText = TSXInternAtom(display, _TEXT, False);
-    xaCompoundText = TSXInternAtom(display, _COMPOUNDTEXT, False);
 
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
     {
@@ -299,21 +285,9 @@ BOOL X11DRV_InitClipboard(Display *display)
     }
 
     /* Register known mapping between window formats and X properties */
-    for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PROPERTYFORMATMAP); i++)
-        X11DRV_CLIPBOARD_InsertClipboardFormat(PropertyFormatMap[i].lpszFormat, 
-            PropertyFormatMap[i].lpszProperty);
-
-    /* Register known mapping between X properties */
-    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PROPERTYALIASMAP); i++)
-    {
-        lpalias = &PropertyAliasMap[i];
-        if (!lpalias->drvDataProperty)
-        lpalias->drvDataProperty = TSXInternAtom(display, lpalias->lpszProperty, False);
-        if (!lpalias->drvDataAlias)
-        lpalias->drvDataAlias = TSXInternAtom(display, lpalias->lpszAlias, False);
-    }
-
-    return TRUE;
+    for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PropertyFormatMap[0]); i++)
+        X11DRV_CLIPBOARD_InsertClipboardFormat(PropertyFormatMap[i].lpszFormat,
+                                               GET_ATOM(PropertyFormatMap[i].prop));
 }
 
 
@@ -363,11 +337,11 @@ LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupAliasProperty(UINT drvDataAlias)
     unsigned int i;
     LPWINE_CLIPFORMAT lpFormat = NULL;
 
-    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PROPERTYALIASMAP); i++)
+    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PropertyAliasMap[0]); i++)
     {
-        if (PropertyAliasMap[i].drvDataAlias == drvDataAlias)
+        if (GET_ATOM(PropertyAliasMap[i].drvDataAlias) == drvDataAlias)
         {
-            lpFormat = X11DRV_CLIPBOARD_LookupProperty(PropertyAliasMap[i].drvDataProperty);
+            lpFormat = X11DRV_CLIPBOARD_LookupProperty(GET_ATOM(PropertyAliasMap[i].drvDataProperty));
             break;
         }
    }
@@ -384,11 +358,11 @@ UINT  X11DRV_CLIPBOARD_LookupPropertyAlias(UINT drvDataProperty)
     unsigned int i;
     UINT alias = 0;
 
-    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PROPERTYALIASMAP); i++)
+    for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PropertyAliasMap[0]); i++)
     {
-        if (PropertyAliasMap[i].drvDataProperty == drvDataProperty)
+        if (GET_ATOM(PropertyAliasMap[i].drvDataProperty) == drvDataProperty)
         {
-            alias = PropertyAliasMap[i].drvDataAlias;
+            alias = GET_ATOM(PropertyAliasMap[i].drvDataAlias);
             break;
         }
    }
@@ -426,7 +400,7 @@ LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
 /**************************************************************************
  *		InsertClipboardFormat
  */
-UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, LPCSTR PropertyName)
+static UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, Atom prop)
 {
     LPWINE_CLIPFORMAT lpFormat;
     LPWINE_CLIPFORMAT lpNewFormat;
@@ -451,7 +425,7 @@ UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, LPCSTR PropertyNa
     strcpy(lpNewFormat->Name, FormatName);
     lpNewFormat->wFlags = 0;
     lpNewFormat->wFormatID = GlobalAddAtomA(lpNewFormat->Name);
-    lpNewFormat->drvData = TSXInternAtom(thread_display(), PropertyName, False);
+    lpNewFormat->drvData = prop;
     lpNewFormat->lpDrvImportFunc = X11DRV_CLIPBOARD_ImportClipboardData;
     lpNewFormat->lpDrvExportFunc = X11DRV_CLIPBOARD_ExportClipboardData;
 
@@ -465,11 +439,8 @@ UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, LPCSTR PropertyNa
     lpFormat->NextFormat = lpNewFormat;
     lpNewFormat->PrevFormat = lpFormat;
 
-    TRACE("Registering format(%d): %s drvData(%d): %s\n", 
-        lpNewFormat->wFormatID, 
-        FormatName,
-        lpNewFormat->drvData, 
-        PropertyName);
+    TRACE("Registering format(%d): %s drvData %d\n",
+        lpNewFormat->wFormatID, FormatName, lpNewFormat->drvData);
 
     return lpNewFormat->wFormatID;
 }
@@ -1154,7 +1125,7 @@ HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Window requestor, Atom aTarget, Atom 
 
     if (lpstr)
     {
-        if (aTarget == xaCompoundText)
+        if (aTarget == x11drv_atom(COMPOUND_TEXT))
            style = XCompoundTextStyle;
         else
            style = XStdICCTextStyle;
@@ -1186,7 +1157,7 @@ HANDLE X11DRV_CLIPBOARD_ExportString(Window requestor, Atom aTarget, Atom rprop,
     {
         if (aTarget == XA_STRING)
             return X11DRV_CLIPBOARD_ExportXAString(lpData, lpBytes);
-        else if (aTarget == xaCompoundText || aTarget == xaText)
+        else if (aTarget == x11drv_atom(COMPOUND_TEXT) || aTarget == x11drv_atom(TEXT))
             return X11DRV_CLIPBOARD_ExportCompoundText(requestor, aTarget,
                 rprop, lpData, lpBytes);
         else
@@ -1275,7 +1246,8 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
     Bool res;
 
     wine_tsx11_lock();
-    XConvertSelection(display, selection, xaTargets, xaSelectionData, w, CurrentTime);
+    XConvertSelection(display, selection, x11drv_atom(TARGETS),
+                      x11drv_atom(SELECTION_DATA), w, CurrentTime);
     wine_tsx11_unlock();
 
     /*
@@ -1292,7 +1264,7 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
     }
 
     /* Verify that the selection returned a valid TARGETS property */
-    if ((xe->xselection.target != xaTargets) || (xe->xselection.property == None))
+    if ((xe->xselection.target != x11drv_atom(TARGETS)) || (xe->xselection.property == None))
     {
         /* Selection owner failed to respond or we missed the SelectionNotify */
         WARN("Failed to retrieve TARGETS for selection %ld.\n", selection);
@@ -1332,7 +1304,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         if (TSXGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
 	    selectionAcquired |= S_PRIMARY;
 
-        if (TSXGetSelectionOwner(display,xaClipboard) == selectionWindow)
+        if (TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
 	    selectionAcquired |= S_CLIPBOARD;
 
         if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
@@ -1365,12 +1337,12 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
      * Query the selection owner for the TARGETS property
      */
     if (TSXGetSelectionOwner(display,XA_PRIMARY) ||
-        TSXGetSelectionOwner(display,xaClipboard))
+        TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
     if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe))
         selectionCacheSrc = XA_PRIMARY;
-    else if (X11DRV_CLIPBOARD_QueryTargets(display, w, xaClipboard, &xe))
-        selectionCacheSrc = xaClipboard;
+    else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), &xe))
+        selectionCacheSrc = x11drv_atom(CLIPBOARD);
     else
             return -1;
     }
@@ -1392,7 +1364,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         * The TARGETS property should have returned us a list of atoms
         * corresponding to each selection target format supported.
         */
-       if ((atype == XA_ATOM || atype == xaTargets) && aformat == 32)
+       if ((atype == XA_ATOM || atype == x11drv_atom(TARGETS)) && aformat == 32)
        {
           INT i;
 
@@ -1478,7 +1450,7 @@ static BOOL X11DRV_CLIPBOARD_ReadClipboardData(UINT wFormat)
 
             wine_tsx11_lock();
             XConvertSelection(display, selectionCacheSrc, lpFormat->drvData,
-                              xaSelectionData, w, CurrentTime);
+                              x11drv_atom(SELECTION_DATA), w, CurrentTime);
             wine_tsx11_unlock();
 
             /* wait until SelectionNotify is received */
@@ -1498,7 +1470,7 @@ static BOOL X11DRV_CLIPBOARD_ReadClipboardData(UINT wFormat)
 	    {
                 wine_tsx11_lock();
                 XConvertSelection(display, selectionCacheSrc, alias,
-                                  xaSelectionData, w, CurrentTime);
+                                  x11drv_atom(SELECTION_DATA), w, CurrentTime);
                 wine_tsx11_unlock();
 
                 /* wait until SelectionNotify is received */
@@ -1726,7 +1698,7 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
              * dictate that *all* selections should be cleared on loss of a selection,
              * we must give up all the selections we own.
              */
-            if (clearAllSelections || (selType == xaClipboard))
+            if (clearAllSelections || (selType == x11drv_atom(CLIPBOARD)))
             {
                 CLIPBOARDINFO cbinfo;
 
@@ -1752,7 +1724,7 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
                     if (OpenClipboard(hwnd))
                     {
                       /* We really lost CLIPBOARD but want to voluntarily lose PRIMARY */
-                      if ((selType == xaClipboard) && (selectionAcquired & S_PRIMARY))
+                      if ((selType == x11drv_atom(CLIPBOARD)) && (selectionAcquired & S_PRIMARY))
                       {
 		          TRACE("Lost clipboard. Check if we need to release PRIMARY\n");
                           if (selectionWindow == TSXGetSelectionOwner(display,XA_PRIMARY))
@@ -1768,10 +1740,10 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
                       if ((selType == XA_PRIMARY) && (selectionAcquired & S_CLIPBOARD))
                       {
 		          TRACE("Lost PRIMARY. Check if we need to release CLIPBOARD\n");
-                          if (selectionWindow == TSXGetSelectionOwner(display,xaClipboard))
+                          if (selectionWindow == TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
                           {
 		              TRACE("We still own CLIPBOARD. Releasing CLIPBOARD.\n");
-                              XSetSelectionOwner(display, xaClipboard, None, CurrentTime);
+                              XSetSelectionOwner(display, x11drv_atom(CLIPBOARD), None, CurrentTime);
                           }
 		          else
 		              TRACE("We no longer own CLIPBOARD\n");
@@ -1835,6 +1807,7 @@ static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
 INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName)
 {
     LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+    Atom prop;
 
     if (FormatName == NULL) 
         return 0;
@@ -1854,7 +1827,8 @@ INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName)
 	lpFormat = lpFormat->NextFormat;
     }
 
-    return X11DRV_CLIPBOARD_InsertClipboardFormat(FormatName, FormatName);
+    prop = TSXInternAtom( thread_display(), FormatName, False );
+    return X11DRV_CLIPBOARD_InsertClipboardFormat(FormatName, prop);
 }
 
 
@@ -1919,12 +1893,12 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
 
         /* Grab CLIPBOARD selection if not owned */
         if (!(selectionAcquired & S_CLIPBOARD))
-            TSXSetSelectionOwner(display, xaClipboard, owner, CurrentTime);
+            TSXSetSelectionOwner(display, x11drv_atom(CLIPBOARD), owner, CurrentTime);
 
         if (TSXGetSelectionOwner(display,XA_PRIMARY) == owner)
 	    selectionAcquired |= S_PRIMARY;
 
-        if (TSXGetSelectionOwner(display,xaClipboard) == owner)
+        if (TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == owner)
 	    selectionAcquired |= S_CLIPBOARD;
 
         if (selectionAcquired)
@@ -1942,7 +1916,7 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
         if (TSXGetSelectionOwner(display,XA_PRIMARY) == selectionWindow)
 	    selectionAcquired |= S_PRIMARY;
 
-        if (TSXGetSelectionOwner(display,xaClipboard) == selectionWindow)
+        if (TSXGetSelectionOwner(display,x11drv_atom(CLIPBOARD)) == selectionWindow)
 	    selectionAcquired |= S_CLIPBOARD;
 
         if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
@@ -2225,7 +2199,7 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
         if (saveSelectionState & S_PRIMARY)
             TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
 
-        TSXSetSelectionOwner(display, xaClipboard, selectionWindow, CurrentTime);
+        TSXSetSelectionOwner(display, x11drv_atom(CLIPBOARD), selectionWindow, CurrentTime);
 
         /* Restore the selection masks */
         selectionAcquired = saveSelectionState;
@@ -2233,7 +2207,7 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
         /* Lose the selection if something went wrong */
         if (((saveSelectionState & S_PRIMARY) &&
            (TSXGetSelectionOwner(display, XA_PRIMARY) != selectionWindow)) || 
-           (TSXGetSelectionOwner(display, xaClipboard) != selectionWindow))
+           (TSXGetSelectionOwner(display, x11drv_atom(CLIPBOARD)) != selectionWindow))
         {
             bLostSelection = TRUE;
         }

@@ -69,6 +69,7 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     MSG msg;
     HWND hwnd;
     WND *win;
+    Atom atom = x11drv_atom(WM_DELETE_WINDOW);
 
     NtCurrentTeb()->driver_data = driver_data;
     display = thread_display();
@@ -82,7 +83,8 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
 
     SetWindowLongW( hwnd, GWL_WNDPROC, (LONG)desktop_winproc );
     wine_tsx11_lock();
-    XSetWMProtocols( display, root_window, &wmDeleteWindow, 1 );
+    XChangeProperty ( display, root_window, x11drv_atom(WM_PROTOCOLS),
+                      XA_ATOM, 32, PropModeReplace, (char *)&atom, 1 );
     XMapWindow( display, root_window );
     wine_tsx11_unlock();
 

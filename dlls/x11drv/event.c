@@ -56,12 +56,6 @@ WINE_DECLARE_DEBUG_CHANNEL(clipboard);
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
 
-extern Atom wmProtocols;
-extern Atom wmDeleteWindow;
-extern Atom dndProtocol;
-extern Atom dndSelection;
-extern Atom netwmPing;
-
 #define DndNotDnd       -1    /* OffiX drag&drop */
 #define DndUnknown      0
 #define DndRawData      1
@@ -434,7 +428,7 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
 
     if (!protocol) return;
 
-    if (protocol == wmDeleteWindow)
+    if (protocol == x11drv_atom(WM_DELETE_WINDOW))
     {
         /* Ignore the delete window request if the window has been disabled
          * and we are in managed mode. This is to disallow applications from
@@ -442,7 +436,7 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
          */
         if (IsWindowEnabled(hwnd)) PostMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     }
-    else if (protocol == wmTakeFocus)
+    else if (protocol == x11drv_atom(WM_TAKE_FOCUS))
     {
         Time event_time = (Time)event->data.l[1];
         HWND last_focus = x11drv_thread_data()->last_focus;
@@ -469,7 +463,9 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
             if (!hwnd) hwnd = last_focus;
             if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, event_time );
         }
-    } else if (protocol == netwmPing) {
+    }
+    else if (protocol == x11drv_atom(_NET_WM_PING))
+    {
       XClientMessageEvent xev;
       xev = *event;
       
@@ -513,7 +509,7 @@ static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
         XSetICFocus( xic );
         wine_tsx11_unlock();
     }
-    if (wmTakeFocus) return;  /* ignore FocusIn if we are using take focus */
+    if (use_take_focus) return;  /* ignore FocusIn if we are using take focus */
 
     if (!can_activate_window(hwnd))
     {
@@ -636,7 +632,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
         return None;
 
     /* Create TARGETS property list (First item in list is TARGETS itself) */
-    for (targets[0] = xaTargets, cTargets = 1, wFormat = 0;
+    for (targets[0] = x11drv_atom(TARGETS), cTargets = 1, wFormat = 0;
           (wFormat = X11DRV_EnumClipboardFormats(wFormat));)
     {
         LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupFormat(wFormat);
@@ -736,14 +732,17 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
 
           for (i = 0; i < cTargetPropList; i+=2)
           {
-              char *targetName = TSXGetAtomName(display, targetPropList[i]);
-              char *propName = TSXGetAtomName(display, targetPropList[i+1]);
               XSelectionRequestEvent event;
 
-              TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n",
-                    i/2, targetName, propName);
-              TSXFree(targetName);
-              TSXFree(propName);
+              if (TRACE_ON(event))
+              {
+                  char *targetName = TSXGetAtomName(display, targetPropList[i]);
+                  char *propName = TSXGetAtomName(display, targetPropList[i+1]);
+                  TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n",
+                        i/2, targetName, propName);
+                  TSXFree(targetName);
+                  TSXFree(propName);
+              }
 
               /* We must have a non "None" property to service a MULTIPLE target atom */
               if ( !targetPropList[i+1] )
@@ -798,7 +797,7 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
    */
   if ( !bIsMultiple )
   {
-    if (((event->selection != XA_PRIMARY) && (event->selection != xaClipboard)))
+    if (((event->selection != XA_PRIMARY) && (event->selection != x11drv_atom(CLIPBOARD))))
        goto END;
   }
 
@@ -809,12 +808,12 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
   if( rprop == None )
       rprop = event->target;
 
-  if(event->target == xaTargets)  /*  Return a list of all supported targets */
+  if(event->target == x11drv_atom(TARGETS))  /*  Return a list of all supported targets */
   {
       /* TARGETS selection request */
       rprop = EVENT_SelectionRequest_TARGETS( display, request, event->target, rprop );
   }
-  else if(event->target == xaMultiple)  /*  rprop contains a list of (target, property) atom pairs */
+  else if(event->target == x11drv_atom(MULTIPLE))  /*  rprop contains a list of (target, property) atom pairs */
   {
       /* MULTIPLE selection request */
       rprop = EVENT_SelectionRequest_MULTIPLE( hWnd, event );
@@ -884,7 +883,7 @@ END:
  */
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 {
-  if (event->selection == XA_PRIMARY || event->selection == xaClipboard)
+  if (event->selection == XA_PRIMARY || event->selection == x11drv_atom(CLIPBOARD))
       X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd );
 }
 
@@ -1029,7 +1028,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     if (!bAccept) return;
 
     TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
-                          dndSelection, 0, 65535, FALSE,
+                          x11drv_atom(DndSelection), 0, 65535, FALSE,
                           AnyPropertyType, &u.atom_aux, (int *) &u.pt_aux.y,
                           &data_length, &aux_long, &p_data);
 
@@ -1118,7 +1117,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
   if (!(GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return;
 
   TSXGetWindowProperty( event->display, DefaultRootWindow(event->display),
-			dndSelection, 0, 65535, FALSE,
+			x11drv_atom(DndSelection), 0, 65535, FALSE,
 			AnyPropertyType, &u.atom_aux, &u.i,
 			&data_length, &aux_long, &p_data);
   if (aux_long)
@@ -1208,9 +1207,9 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 {
   if (event->message_type != None && event->format == 32) {
-    if (event->message_type == wmProtocols)
+    if (event->message_type == x11drv_atom(WM_PROTOCOLS))
         handle_wm_protocols_message( hWnd, event );
-    else if (event->message_type == dndProtocol)
+    else if (event->message_type == x11drv_atom(DndProtocol))
     {
         /* query window (drag&drop event contains only drag window) */
         Window root, child;
