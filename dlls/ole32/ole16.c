@@ -113,19 +113,6 @@ SEGPTR WINAPI IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
 }
 
 /******************************************************************************
- * IMalloc16_Realloc [COMPOBJ.504]
- */
-SEGPTR WINAPI IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
-{
-    SEGPTR ret;
-    ICOM_THIS(IMalloc16Impl,iface);
-    TRACE("(%p)->Realloc(%08lx,%ld)\n",This,pv,cb);
-    ret = MapLS( HeapReAlloc( GetProcessHeap(), 0, MapSL(pv), cb ) );
-    UnMapLS(pv);
-    return ret;
-}
-
-/******************************************************************************
  * IMalloc16_Free [COMPOBJ.505]
  */
 VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
@@ -135,6 +122,26 @@ VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv)
     TRACE("(%p)->Free(%08lx)\n",This,pv);
     UnMapLS(pv);
     HeapFree( GetProcessHeap(), 0, ptr );
+}
+
+/******************************************************************************
+ * IMalloc16_Realloc [COMPOBJ.504]
+ */
+SEGPTR WINAPI IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb)
+{
+    SEGPTR ret;
+    ICOM_THIS(IMalloc16Impl,iface);
+    TRACE("(%p)->Realloc(%08lx,%ld)\n",This,pv,cb);
+    if (!pv) 
+	ret = IMalloc16_fnAlloc(iface, cb);
+    else if (cb) {
+        ret = MapLS( HeapReAlloc( GetProcessHeap(), 0, MapSL(pv), cb ) );
+        UnMapLS(pv);
+    } else {
+	IMalloc16_fnFree(iface, pv);
+	ret = 0;
+    }
+    return ret;
 }
 
 /******************************************************************************

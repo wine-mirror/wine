@@ -209,7 +209,12 @@ static LPVOID WINAPI IMalloc_fnRealloc(LPMALLOC iface,LPVOID pv,DWORD cb) {
 	    pv = pRealMemory;
 	}
 
-	pNewMemory = HeapReAlloc(GetProcessHeap(),0,pv,cb);
+        if (!pv) pNewMemory = HeapAlloc(GetProcessHeap(),0,cb);
+	else if (cb) pNewMemory = HeapReAlloc(GetProcessHeap(),0,pv,cb);
+	else {
+	    HeapFree(GetProcessHeap(),0,pv);
+	    pNewMemory = NULL;
+	}
 
 	if(Malloc32.pSpy) {
 	    pNewMemory = IMallocSpy_PostRealloc(Malloc32.pSpy, pNewMemory, TRUE);
