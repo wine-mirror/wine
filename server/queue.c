@@ -239,6 +239,7 @@ void free_msg_queue( struct thread *thread )
 {
     struct process *process = thread->process;
 
+    remove_thread_hooks( thread );
     if (!thread->queue) return;
     if (process->queue == thread->queue)  /* is it the process main queue? */
     {

@@ -3012,6 +3012,8 @@ struct start_hook_chain_reply
 {
     struct reply_header __header;
     user_handle_t  handle;
+    process_id_t   pid;
+    thread_id_t    tid;
     void*          proc;
     int            unicode;
     /* VARARG(module,unicode_str); */
@@ -3041,6 +3043,8 @@ struct get_next_hook_reply
     struct reply_header __header;
     user_handle_t  next;
     int            id;
+    process_id_t   pid;
+    thread_id_t    tid;
     void*          proc;
     int            prev_unicode;
     int            next_unicode;
@@ -3622,6 +3626,6 @@ union generic_reply
     struct set_clipboard_info_reply set_clipboard_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 115
+#define SERVER_PROTOCOL_VERSION 116
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2108,6 +2108,8 @@ enum message_type
     int            id;             /* id of the hook */
 @REPLY
     user_handle_t  handle;         /* handle to the next hook */
+    process_id_t   pid;            /* process id for low-level keyboard/mouse hooks */
+    thread_id_t    tid;            /* thread id for low-level keyboard/mouse hooks */
     void*          proc;           /* hook procedure */
     int            unicode;        /* is it a unicode hook? */
     VARARG(module,unicode_str);    /* module name */
@@ -2126,6 +2128,8 @@ enum message_type
 @REPLY
     user_handle_t  next;           /* handle to the next hook */
     int            id;             /* id of the next hook */
+    process_id_t   pid;            /* process id for low-level keyboard/mouse hooks */
+    thread_id_t    tid;            /* thread id for low-level keyboard/mouse hooks */
     void*          proc;           /* next hook procedure */
     int            prev_unicode;   /* was the previous a unicode hook? */
     int            next_unicode;   /* is the next a unicode hook? */

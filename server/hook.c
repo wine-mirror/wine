@@ -28,6 +28,7 @@
 #include "winuser.h"
 
 #include "object.h"
+#include "process.h"
 #include "request.h"
 #include "user.h"
 
@@ -91,16 +92,16 @@ static struct hook_table *alloc_hook_table(void)
 }
 
 /* create a new hook and add it to the specified table */
-static struct hook *add_hook( struct thread *thread, int index )
+static struct hook *add_hook( struct thread *thread, int index, int global )
 {
     struct hook *hook;
-    struct hook_table *table = thread ? get_queue_hooks(thread) : global_hooks;
+    struct hook_table *table = global ? global_hooks : get_queue_hooks(thread);
 
     if (!table)
     {
         if (!(table = alloc_hook_table())) return NULL;
-        if (thread) set_queue_hooks( thread, table );
-        else global_hooks = table;
+        if (global) global_hooks = table;
+        else set_queue_hooks( thread, table );
     }
     if (!(hook = mem_alloc( sizeof(*hook) ))) return NULL;
 
@@ -145,7 +146,10 @@ static struct hook *find_hook( struct thread *thread, int index, void *proc )
 /* get the hook table that a given hook belongs to */
 inline static struct hook_table *get_table( struct hook *hook )
 {
-    return hook->thread ? get_queue_hooks(hook->thread) : global_hooks;
+    if (!hook->thread) return global_hooks;
+    if (hook->index + WH_MINHOOK == WH_KEYBOARD_LL) return global_hooks;
+    if (hook->index + WH_MINHOOK == WH_MOUSE_LL) return global_hooks;
+    return get_queue_hooks(hook->thread);
 }
 
 /* get the first hook in the chain */
@@ -236,6 +240,25 @@ static void release_hook_chain( struct hook_table *table, int index )
     }
 }
 
+/* remove all global hooks owned by a given thread */
+void remove_thread_hooks( struct thread *thread )
+{
+    int index;
+
+    if (!global_hooks) return;
+
+    /* only low-level keyboard/mouse global hooks can be owned by a thread */
+    for (index = WH_KEYBOARD_LL - WH_MINHOOK; index <= WH_MOUSE_LL - WH_MINHOOK; index++)
+    {
+        struct hook *hook = get_first_hook( global_hooks, index );
+        while (hook)
+        {
+            struct hook *next = HOOK_ENTRY( list_next( &global_hooks->hooks[index], &hook->chain ) );
+            if (hook->thread == thread) remove_hook( hook );
+            hook = next;
+        }
+    }
+}
 
 /* set a window hook */
 DECL_HANDLER(set_hook)
@@ -243,6 +266,7 @@ DECL_HANDLER(set_hook)
     struct thread *thread;
     struct hook *hook;
     WCHAR *module;
+    int global;
     size_t module_size = get_req_data_size();
 
     if (!req->proc || req->id < WH_MINHOOK || req->id > WH_MAXHOOK)
@@ -250,7 +274,14 @@ DECL_HANDLER(set_hook)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!req->tid)
+    if (req->id == WH_KEYBOARD_LL || req->id == WH_MOUSE_LL)
+    {
+        /* low-level hardware hooks are special: always global, but without a module */
+        thread = (struct thread *)grab_object( current );
+        module = NULL;
+        global = 1;
+    }
+    else if (!req->tid)
     {
         if (!module_size)
         {
@@ -259,14 +290,16 @@ DECL_HANDLER(set_hook)
         }
         if (!(module = memdup( get_req_data(), module_size ))) return;
         thread = NULL;
+        global = 1;
     }
     else
     {
         module = NULL;
+        global = 0;
         if (!(thread = get_thread_from_id( req->tid ))) return;
     }
 
-    if ((hook = add_hook( thread, req->id - WH_MINHOOK )))
+    if ((hook = add_hook( thread, req->id - WH_MINHOOK, global )))
     {
         hook->proc        = req->proc;
         hook->unicode     = req->unicode;
@@ -319,8 +352,20 @@ DECL_HANDLER(start_hook_chain)
             !(hook = get_first_valid_hook( global_hooks, req->id - WH_MINHOOK )))
             return;  /* no hook set */
     }
+
+    if (hook->thread && hook->thread != current)  /* must run in other thread */
+    {
+        reply->pid  = get_process_id( hook->thread->process );
+        reply->tid  = get_thread_id( hook->thread );
+        reply->proc = 0;
+    }
+    else
+    {
+        reply->pid  = 0;
+        reply->tid  = 0;
+        reply->proc = hook->proc;
+    }
     reply->handle  = hook->handle;
-    reply->proc    = hook->proc;
     reply->unicode = hook->unicode;
     table->counts[hook->index]++;
     if (hook->module) set_reply_data( hook->module, hook->module_size );
@@ -358,9 +403,20 @@ DECL_HANDLER(get_next_hook)
     {
         reply->next = next->handle;
         reply->id   = next->index + WH_MINHOOK;
-        reply->proc = next->proc;
         reply->prev_unicode = hook->unicode;
         reply->next_unicode = next->unicode;
         if (next->module) set_reply_data( next->module, next->module_size );
+        if (next->thread && next->thread != current)
+        {
+            reply->pid  = get_process_id( next->thread->process );
+            reply->tid  = get_thread_id( next->thread );
+            reply->proc = 0;
+        }
+        else
+        {
+            reply->pid  = 0;
+            reply->tid  = 0;
+            reply->proc = next->proc;
+        }
     }
 }

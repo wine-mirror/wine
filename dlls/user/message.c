@@ -21,6 +21,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
+
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -553,6 +555,12 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_WINE_SETWINDOWPOS:
         push_data( data, (WINDOWPOS *)lparam, sizeof(WINDOWPOS) );
         return 0;
+    case WM_WINE_KEYBOARD_LL_HOOK:
+        push_data( data, (KBDLLHOOKSTRUCT *)lparam, sizeof(KBDLLHOOKSTRUCT) );
+        return 0;
+    case WM_WINE_MOUSE_LL_HOOK:
+        push_data( data, (MSLLHOOKSTRUCT *)lparam, sizeof(MSLLHOOKSTRUCT) );
+        return 0;
 
     /* these contain an HFONT */
     case WM_SETFONT:
@@ -795,6 +803,13 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!*lparam) return TRUE;
         if (!get_buffer_space( buffer, sizeof(BOOL) )) return FALSE;
         break;
+    case WM_WINE_KEYBOARD_LL_HOOK:
+        minsize = sizeof(KBDLLHOOKSTRUCT);
+        break;
+    case WM_WINE_MOUSE_LL_HOOK:
+        minsize = sizeof(MSLLHOOKSTRUCT);
+        break;
+
     /* these contain an HFONT */
     case WM_SETFONT:
     case WM_GETFONT:
@@ -1086,6 +1101,10 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return EnableWindow( hwnd, wparam );
     case WM_WINE_SETACTIVEWINDOW:
         return (LRESULT)SetActiveWindow( (HWND)wparam );
+    case WM_WINE_KEYBOARD_LL_HOOK:
+        return HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, wparam, lparam, TRUE );
+    case WM_WINE_MOUSE_LL_HOOK:
+        return HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, wparam, lparam, TRUE );
     default:
         FIXME( "unknown internal message %x\n", msg );
         return 0;
@@ -1261,6 +1280,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
     {
         req->id      = dest_tid;
         req->type    = info->type;
+        req->flags   = 0;
         req->win     = info->hwnd;
         req->msg     = info->msg;
         req->wparam  = info->wparam;
@@ -1752,6 +1772,46 @@ static LRESULT send_inter_thread_message( DWORD dest_tid, const struct send_mess
     ret = retrieve_reply( info, reply_size, res_ptr );
 
     WIN_RestoreWndsLock( locks );
+    return ret;
+}
+
+
+/***********************************************************************
+ *		MSG_SendInternalMessageTimeout
+ *
+ * Same as SendMessageTimeoutW but sends the message to a specific thread
+ * without requiring a window handle. Only works for internal Wine messages.
+ */
+LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
+                                        UINT msg, WPARAM wparam, LPARAM lparam,
+                                        UINT flags, UINT timeout, PDWORD_PTR res_ptr )
+{
+    struct send_message_info info;
+    LRESULT ret, result;
+
+    assert( msg & 0x80000000 );  /* must be an internal Wine message */
+
+    info.type    = MSG_UNICODE;
+    info.hwnd    = 0;
+    info.msg     = msg;
+    info.wparam  = wparam;
+    info.lparam  = lparam;
+    info.flags   = flags;
+    info.timeout = timeout;
+
+    if (USER_IsExitingThread( dest_tid )) return 0;
+
+    if (dest_tid == GetCurrentThreadId())
+    {
+        result = handle_internal_message( 0, msg, wparam, lparam );
+        ret = 1;
+    }
+    else
+    {
+        if (dest_pid != GetCurrentProcessId()) info.type = MSG_OTHER_PROCESS;
+        ret = send_inter_thread_message( dest_tid, &info, &result );
+    }
+    if (ret && res_ptr) *res_ptr = result;
     return ret;
 }
 

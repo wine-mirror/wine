@@ -2437,6 +2437,8 @@ static void dump_start_hook_chain_request( const struct start_hook_chain_request
 static void dump_start_hook_chain_reply( const struct start_hook_chain_reply *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " unicode=%d,", req->unicode );
     fprintf( stderr, " module=" );
@@ -2457,6 +2459,8 @@ static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
 {
     fprintf( stderr, " next=%p,", req->next );
     fprintf( stderr, " id=%d,", req->id );
+    fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " prev_unicode=%d,", req->prev_unicode );
     fprintf( stderr, " next_unicode=%d,", req->next_unicode );

@@ -57,8 +57,9 @@ extern BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HW
                                               UINT first, UINT last, BOOL remove );
 extern BOOL MSG_process_cooked_hardware_message( MSG *msg, ULONG_PTR extra_info, BOOL remove );
 extern void MSG_JournalPlayBackMsg(void);
-
-/* sendmsg.c */
+extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
+                                               UINT msg, WPARAM wparam, LPARAM lparam,
+                                               UINT flags, UINT timeout, PDWORD_PTR res_ptr );
 extern BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags );
 
 /* spy.c */

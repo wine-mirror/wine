@@ -50,6 +50,7 @@ extern void cleanup_clipboard_thread( struct thread *thread );
 /* hook functions */
 
 extern void close_global_hooks(void);
+extern void remove_thread_hooks( struct thread *thread );
 
 /* queue functions */
 
