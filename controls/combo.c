@@ -659,56 +659,74 @@ static void CBPaintButton(
   HDC         hdc,
   RECT        rectButton)
 {
-    UINT 	x, y;
-    BOOL 	bBool;
-    HDC       hMemDC;
-    HBRUSH    hPrevBrush;
-    COLORREF    oldTextColor, oldBkColor;
-
     if( lphc->wState & CBF_NOREDRAW ) 
       return;
 
-    hPrevBrush = SelectObject(hdc, GetSysColorBrush(COLOR_BTNFACE));
-
-    /*
-     * Draw the button background
-     */
-    PatBlt( hdc,
-	    rectButton.left,
-	    rectButton.top,
-	    rectButton.right-rectButton.left,
-	    rectButton.bottom-rectButton.top,
-	    PATCOPY );
-
-    if( (bBool = lphc->wState & CBF_BUTTONDOWN) )
+    if (TWEAK_WineLook == WIN31_LOOK)
     {
-	DrawEdge( hdc, &rectButton, EDGE_SUNKEN, BF_RECT );
-    } 
-    else 
-    {
-	DrawEdge( hdc, &rectButton, EDGE_RAISED, BF_RECT );
+        UINT 	  x, y;
+	BOOL 	  bBool;
+	HDC       hMemDC;
+	HBRUSH    hPrevBrush;
+	COLORREF  oldTextColor, oldBkColor;
+	
+
+	hPrevBrush = SelectObject(hdc, GetSysColorBrush(COLOR_BTNFACE));
+
+	/*
+	 * Draw the button background
+	 */
+	PatBlt( hdc,
+		rectButton.left,
+		rectButton.top,
+		rectButton.right-rectButton.left,
+		rectButton.bottom-rectButton.top,
+		PATCOPY );
+	
+	if( (bBool = lphc->wState & CBF_BUTTONDOWN) )
+	{
+	    DrawEdge( hdc, &rectButton, EDGE_SUNKEN, BF_RECT );
+	} 
+	else 
+	{
+	    DrawEdge( hdc, &rectButton, EDGE_RAISED, BF_RECT );
+	}
+	
+	/*
+	 * Remove the edge of the button from the rectangle
+	 * and calculate the position of the bitmap.
+	 */
+	InflateRect( &rectButton, -2, -2);	
+	
+	x = (rectButton.left + rectButton.right - CBitWidth) >> 1;
+	y = (rectButton.top + rectButton.bottom - CBitHeight) >> 1;
+	
+	
+	hMemDC = CreateCompatibleDC( hdc );
+	SelectObject( hMemDC, hComboBmp );
+	oldTextColor = SetTextColor( hdc, GetSysColor(COLOR_BTNFACE) );
+	oldBkColor = SetBkColor( hdc, CB_DISABLED(lphc) ? RGB(128,128,128) :
+				 RGB(0,0,0) );
+	BitBlt( hdc, x, y, CBitWidth, CBitHeight, hMemDC, 0, 0, SRCCOPY );
+	SetBkColor( hdc, oldBkColor );
+	SetTextColor( hdc, oldTextColor );
+	DeleteDC( hMemDC );
+	SelectObject( hdc, hPrevBrush );
     }
+    else
+    {
+        UINT buttonState = DFCS_SCROLLCOMBOBOX;
 
-    /*
-     * Remove the edge of the button from the rectangle
-     * and calculate the position of the bitmap.
-     */
-    InflateRect( &rectButton, -2, -2);	
+	if (lphc->wState & CBF_BUTTONDOWN)
+	{
+	    buttonState |= DFCS_PUSHED;
+	}
 
-    x = (rectButton.left + rectButton.right - CBitWidth) >> 1;
-    y = (rectButton.top + rectButton.bottom - CBitHeight) >> 1;
-
-
-    hMemDC = CreateCompatibleDC( hdc );
-    SelectObject( hMemDC, hComboBmp );
-    oldTextColor = SetTextColor( hdc, GetSysColor(COLOR_BTNFACE) );
-    oldBkColor = SetBkColor( hdc, CB_DISABLED(lphc) ? RGB(128,128,128) :
-			       RGB(0,0,0) );
-    BitBlt( hdc, x, y, CBitWidth, CBitHeight, hMemDC, 0, 0, SRCCOPY );
-    SetBkColor( hdc, oldBkColor );
-    SetTextColor( hdc, oldTextColor );
-    DeleteDC( hMemDC );
-    SelectObject( hdc, hPrevBrush );
+        DrawFrameControl(hdc,
+			 &rectButton,
+			 DFC_SCROLL,
+			 buttonState);			  
+    }
 }
 
 /***********************************************************************
