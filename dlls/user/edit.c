@@ -4519,6 +4519,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 			if (es->style & ES_RIGHT)
 				es->style &= ~ES_CENTER;
 			es->style &= ~WS_HSCROLL;
+			es->style &= ~ES_AUTOHSCROLL;
 		}
 
 		/* FIXME: for now, all multi line controls are AUTOVSCROLL */
