@@ -98,7 +98,7 @@ INT32 WINAPI ExtSelectClipRgn( HDC32 hdc, HRGN32 hrgn, INT32 fnMode )
         }
 
         OffsetRgn32( dc->w.hClipRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
-        retval = CombineRgn32( dc->w.hClipRgn, dc->w.hClipRgn, hrgn, fnMode );
+        retval = CombineRgn32( dc->w.hClipRgn, hrgn, dc->w.hClipRgn, fnMode );
         OffsetRgn32( dc->w.hClipRgn, dc->w.DCOrgX, dc->w.DCOrgY );
     }
 
@@ -465,6 +465,8 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
     ret = GetRgnBox16( dc->w.hGCClipRgn, rect );
     OffsetRect16( rect, -dc->w.DCOrgX, -dc->w.DCOrgY );
     DPtoLP16( hdc, (LPPOINT16)rect, 2 );
+    TRACE(clipping, "%d,%d-%d,%d\n", 
+            rect->left,rect->top,rect->right,rect->bottom );
     return ret;
 }
 
