@@ -16,8 +16,9 @@
  * fieldToEqual - The value that we're looking for
  * rc - Variable to put the return code. Same type as (head)->tqh_first
  */
-#define TAILQ_FIND_ENTRY( head, elm, field, fieldToEqual, rc ) { \
-  (rc) = (head)->tqh_first; /* NULL head? */                    \
+#define TAILQ_FIND_ENTRY( head, elm, field, fieldToEqual, rc )   \
+do {                                                             \
+  (rc) = (head)->tqh_first; /* NULL head? */                     \
                                                                  \
   while( rc )                                                    \
   {                                                              \
@@ -34,6 +35,23 @@
         break;                                                   \
       }                                                          \
   }                                                              \
-}
+} while(0)
+
+/* head - pointer to TAILQ_HEAD struct
+ * elm  - how to find the next element
+ * field - to be concatenated to rc to compare with fieldToEqual
+ * fieldToEqual - The value that we're looking for
+ * rc - Variable to put the return code. Same type as (head)->tqh_first
+ */
+#define TAILQ_REMOVE_ENTRY( head, elm, field, fieldToEqual, rc )   \
+do {                                                               \
+  TAILQ_FIND_ENTRY( head, elm, field, fieldToEqual, rc );          \
+                                                                   \
+  /* Was the element found? */                                     \
+  if( rc )                                                         \
+  {                                                                \
+    TAILQ_REMOVE( head, rc, elm );                                 \
+  }                                                                \
+} while(0)
 
 #endif /* __WINE_DPLAYX_QUEUE_H */

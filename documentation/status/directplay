@@ -72,6 +72,9 @@ TODO:
   - Fix all the buffer sizes for registry calls. They're off by one - but in a safe direction.
   - Find out how to call the service provider dlls - they don't have a published interface!
   - Fix race condition on interface destruction
+  - Handles need to be correctly reference counted
+  - Need to check if we need to deallocate any list objects when destroying 
+    dplay interface
 
 Programs to make work:
   - lserver.exe (from sdk)
