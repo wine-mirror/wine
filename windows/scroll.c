@@ -8,7 +8,7 @@
  */
 
 #include <stdlib.h>
-#include "windows.h"
+#include "winuser.h"
 #include "class.h"
 #include "dc.h"
 #include "win.h"

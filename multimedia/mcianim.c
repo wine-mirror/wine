@@ -10,13 +10,12 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "wine/winuser16.h"
-#include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
-#include "debug.h"
 #include "multimedia.h"
+#include "debug.h"
 
 #define MAX_ANIMDRV 		2
 

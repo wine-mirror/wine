@@ -6,7 +6,8 @@
  */
 
 #include <stdlib.h>
-#include "windows.h"
+#include "wine/winbase16.h"
+#include "winuser.h"
 #include "heap.h"
 #include "gdi.h"
 #include "user.h"

@@ -10,8 +10,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "windows.h"
-#include "user.h"
+#include "wintypes.h"
 #include "driver.h"
 #include "multimedia.h"
 #include "debug.h"

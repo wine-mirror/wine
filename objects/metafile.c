@@ -12,7 +12,6 @@
 #include "metafiledrv.h"
 #include "metafile.h"
 #include "bitmap.h"
-#include "file.h"
 #include "heap.h"
 #include "toolhelp.h"
 #include "debug.h"

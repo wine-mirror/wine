@@ -5,14 +5,12 @@
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
  */
-#include "heap.h"
 #include "winerror.h"
-#include "debug.h"
 #include "winnt.h"
 #include "winreg.h"
 #include "dplay.h"
-
-#include "thread.h"
+#include "heap.h"
+#include "debug.h"
 
 struct IDirectPlayLobby {
     LPDIRECTPLAYLOBBY_VTABLE lpVtbl;

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "windows.h"
+#include "wintypes.h"
 #include "user.h"
 #include "driver.h"
 #include "multimedia.h"

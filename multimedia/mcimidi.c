@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include "callback.h"
 #include "wine/winuser16.h"
 #include "ldt.h"
 #include "multimedia.h"
@@ -28,8 +29,6 @@
 #include "driver.h"
 #include "xmalloc.h"
 #include "debug.h"
-#include "callback.h"
-#include "options.h"
 #include "heap.h"
 
 typedef struct {

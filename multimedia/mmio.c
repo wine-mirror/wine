@@ -10,10 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "windows.h"
-#include "win.h"
+#include "wintypes.h"
+#include "wine/winbase16.h"
 #include "heap.h"
-#include "user.h"
 #include "file.h"
 #include "mmsystem.h"
 #include "debug.h"

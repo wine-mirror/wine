@@ -9,9 +9,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "windows.h"
+#include "winbase.h"
 #include "multimedia.h"
-#include "mmsystem.h"
 #include "xmalloc.h"
 #include "debug.h"
 

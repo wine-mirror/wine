@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "windows.h"
+#include "winuser.h"
 #include "win.h"
 #include "heap.h"
 #include "nonclient.h"

@@ -6,7 +6,7 @@
  */
 
 #include <assert.h>
-#include "windows.h"
+#include "winuser.h"
 #include "gdi.h"
 #include "mouse.h"
 #include "debug.h"

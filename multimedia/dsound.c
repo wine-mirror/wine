@@ -64,7 +64,7 @@
 #include "dsound.h"
 #include "winerror.h"
 #include "multimedia.h"
-#include "objbase.h"
+#include "wine/obj_base.h"
 #include "thread.h"
 #include "debug.h"
 

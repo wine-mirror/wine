@@ -19,10 +19,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include "windows.h"
-#include "ldt.h"
-#include "user.h"
-#include "driver.h"
+#include "winuser.h"
 #include "mmsystem.h"
 #include "debug.h"
 
@@ -164,7 +161,7 @@ MMRESULT32 WINAPI joyGetDevCaps32A(UINT32 wID, LPJOYCAPS32A lpCaps,UINT32 wSize)
 
 	lpCaps->wMid = jc16.wMid;
 	lpCaps->wPid = jc16.wPid;
-	lstrcpy32A(lpCaps->szPname,jc16.szPname);
+	strcpy(lpCaps->szPname,jc16.szPname);
         lpCaps->wXmin = jc16.wXmin;
         lpCaps->wXmax = jc16.wXmax;
         lpCaps->wYmin = jc16.wYmin;
@@ -185,8 +182,8 @@ MMRESULT32 WINAPI joyGetDevCaps32A(UINT32 wID, LPJOYCAPS32A lpCaps,UINT32 wSize)
         lpCaps->wMaxAxes = jc16.wMaxAxes;
         lpCaps->wNumAxes = jc16.wNumAxes;
         lpCaps->wMaxButtons = jc16.wMaxButtons;
-        lstrcpy32A(lpCaps->szRegKey,jc16.szRegKey);
-        lstrcpy32A(lpCaps->szOEMVxD,jc16.szOEMVxD);
+        strcpy(lpCaps->szRegKey,jc16.szRegKey);
+        strcpy(lpCaps->szOEMVxD,jc16.szOEMVxD);
 	return ret;
 }
 

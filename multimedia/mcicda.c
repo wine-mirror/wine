@@ -6,8 +6,7 @@
  * Copyright 1998-99 Eric Pouech
  */
 
-#include "windows.h"
-#include "user.h"
+#include "winuser.h"
 #include "driver.h"
 #include "multimedia.h"
 #include "debug.h"

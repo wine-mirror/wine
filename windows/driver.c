@@ -10,9 +10,9 @@
 
 #include "wine/winuser16.h"
 #include "heap.h"
-#include "win.h"
 #include "callback.h"
 #include "driver.h"
+#include "ldt.h"
 #include "module.h"
 #include "debug.h"
 #include <string.h>

@@ -5,7 +5,8 @@
  *
  */
 
-#include "windows.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
 
 
 /***********************************************************************

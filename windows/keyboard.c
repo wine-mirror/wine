@@ -14,7 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "windows.h"
+#include "winuser.h"
+#include "wine/keyboard16.h"
 #include "win.h"
 #include "gdi.h"
 #include "heap.h"

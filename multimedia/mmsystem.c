@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "win.h"
 #include "heap.h"
 #include "ldt.h"
 #include "user.h"

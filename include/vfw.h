@@ -2,9 +2,9 @@
 #define __WINE_VFW_H
 
 #include "wintypes.h"
+#include "mmsystem.h"
 #include "wingdi.h"
-#include "driver.h"
-#include "objbase.h"
+#include "wine/obj_base.h"
 
 #define VFWAPI	WINAPI
 #define VFWAPIV	WINAPIV

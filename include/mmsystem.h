@@ -5,6 +5,8 @@
 #ifndef __WINE_MMSYSTEM_H
 #define __WINE_MMSYSTEM_H
 
+#include "wintypes.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif 

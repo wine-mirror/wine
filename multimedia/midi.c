@@ -14,26 +14,21 @@
  * 98/11 splitted in midi.c and mcimidi.c
  */
 
+#include "config.h"
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#include <sys/errno.h>
-#endif
 #include <sys/ioctl.h>
 #include "wine/winuser16.h"
-#include "ldt.h"
 #include "multimedia.h"
-#include "user.h"
 #include "driver.h"
 #include "xmalloc.h"
 #include "debug.h"
-#include "callback.h"
-#include "options.h"
 #include "heap.h"
+
 
 typedef struct {
 #ifndef HAVE_OSS

@@ -18,13 +18,11 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "windows.h"
+#include "multimedia.h"
 #include "heap.h"
 #include "ldt.h"
 #include "user.h"
 #include "driver.h"
-#include "mmsystem.h"
-#include "multimedia.h"
 #include "callback.h"
 #include "debug.h"
 #include "xmalloc.h"

@@ -5,9 +5,9 @@
 
 #include <string.h>
 #include <assert.h>
-#include "windows.h"
-#include "gdi.h"
 #include "winbase.h"
+#include "wine/winestring.h"
+#include "gdi.h"
 #include "winnt.h"
 #include "debug.h"
 #include "winerror.h"

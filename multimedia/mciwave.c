@@ -20,13 +20,11 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "wine/winuser16.h"
-#include "user.h"
 #include "driver.h"
+#include "multimedia.h"
 #include "mmsystem.h"
 #include "heap.h"
-#include "ldt.h"
 #include "debug.h"
-#include "multimedia.h"
 
 #define MAX_MCIWAVEDRV 	(1)
 

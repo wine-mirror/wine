@@ -5,6 +5,8 @@
 #ifndef __WINE_MENU_H
 #define __WINE_MENU_H
 
+#include "win.h"
+
 #define MAGIC_REDUCE  3
 #define MAGIC_RESTORE 2
 #define MAGIC_CLOSE   5

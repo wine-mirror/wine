@@ -31,9 +31,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "wine/winbase16.h"
 #include "heap.h"
-#include "windows.h"
-#include "peexe.h"
 #include "color.h"
 #include "bitmap.h"
 #include "cursoricon.h"
@@ -42,7 +41,6 @@
 #include "sysmetrics.h"
 #include "global.h"
 #include "module.h"
-#include "win.h"
 #include "debug.h"
 #include "task.h"
 #include "user.h"

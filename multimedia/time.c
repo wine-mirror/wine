@@ -9,17 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "windows.h"
-#include "win.h"
-#include "ldt.h"
-#include "module.h"
+#include "wintypes.h"
+#include "wine/winbase16.h" /* GetTaskDS */
 #include "callback.h"
-#include "user.h"
-#include "driver.h"
 #include "mmsystem.h"
-#include "debug.h"
 #include "xmalloc.h"
 #include "options.h"
+#include "debug.h"
 
 #define USE_FAKE_MM_TIMERS
 
@@ -207,7 +203,7 @@ static	WORD	timeSetEventInternal(UINT32 wDelay,UINT32 wResol,
     lpNewTimer->isWin32 = isWin32;
     lpNewTimer->hInstance = GetTaskDS();
     TRACE(mmtime, "hInstance=%04X !\n", lpNewTimer->hInstance);
-    TRACE(mmtime, "lpFunc=%p !\n", isWin32 ? lpFunc : PTR_SEG_TO_LIN(lpFunc));
+    TRACE(mmtime, "lpFunc=0x%08lx !\n", (DWORD)lpFunc );
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
     return lpNewTimer->wTimerID;

@@ -5,7 +5,8 @@
  * Copyright 1996 Frans van Dorsselaer
  */
 
-#include "windows.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
 #include "module.h"
 #include "debug.h"
 

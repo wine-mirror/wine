@@ -4,8 +4,9 @@
  * Copyright 1998 Turchanov Sergey
  */
 
+#include "winbase.h"
+#include "winuser.h"
 #include "monitor.h"
-#include "windows.h"
 
 /**********************************************************************/
 

@@ -12,12 +12,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include "windows.h"
-#include "win.h"
+#include "winuser.h"
 #include "heap.h"
-#include "message.h"
-#include "queue.h"
 #include "task.h"
+#include "message.h"
 #include "clipboard.h"
 #include "xmalloc.h"
 #include "debug.h"

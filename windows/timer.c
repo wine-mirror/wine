@@ -4,7 +4,7 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include "windows.h"
+#include "winuser.h"
 #include "queue.h"
 #include "task.h"
 #include "winproc.h"

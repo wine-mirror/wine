@@ -9,7 +9,9 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include "windows.h"
+#include "winuser.h"
+#include "wine/winuser16.h"
+#include "wine/winbase16.h"
 #include "dialog.h"
 #include "drive.h"
 #include "heap.h"

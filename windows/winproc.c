@@ -5,7 +5,8 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include "windows.h"
+#include "wine/winbase16.h"
+#include "winuser.h"
 #include "callback.h"
 #include "heap.h"
 #include "selectors.h"
