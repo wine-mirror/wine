@@ -68,6 +68,14 @@
 #define PTRACE_SETFPREGS PT_SETFPREGS
 #endif
 
+#ifdef PT_GETDBREGS
+#define PTRACE_GETDBREGS PT_GETDBREGS
+#endif
+
+#ifdef PT_SETDBREGS
+#define PTRACE_SETDBREGS PT_SETDBREGS
+#endif
+
 #ifdef linux
 #ifdef HAVE_SYS_USER_H
 # include <sys/user.h>
@@ -361,7 +369,17 @@ static void get_thread_context( struct thread *thread, unsigned int flags, CONTE
     }
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
-        /* FIXME: How is this done on FreeBSD? */
+#ifdef PTRACE_GETDBREGS
+	struct dbreg dbregs;
+        if (ptrace( PTRACE_GETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1)
+		goto error;
+	context->Dr0 = dbregs.dr0;
+	context->Dr1 = dbregs.dr1;
+	context->Dr2 = dbregs.dr2;
+	context->Dr3 = dbregs.dr3;
+	context->Dr6 = dbregs.dr6;
+	context->Dr7 = dbregs.dr7;
+#endif
     }
     if (flags & CONTEXT_FLOATING_POINT)
     {
@@ -417,7 +435,19 @@ static void set_thread_context( struct thread *thread, unsigned int flags, const
     }
     if (flags & CONTEXT_DEBUG_REGISTERS)
     {
-        /* FIXME: How is this done on FreeBSD? */
+#ifdef PTRACE_SETDBREGS
+	struct dbreg dbregs;
+	dbregs.dr0 = context->Dr0;
+	dbregs.dr1 = context->Dr1;
+	dbregs.dr2 = context->Dr2;
+	dbregs.dr3 = context->Dr3;
+	dbregs.dr4 = 0;
+	dbregs.dr5 = 0;
+	dbregs.dr6 = context->Dr6;
+	dbregs.dr7 = context->Dr7;
+        if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t) &dbregs, 0 ) == -1)
+		goto error;
+#endif
     }
     if (flags & CONTEXT_FLOATING_POINT)
     {
