@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * ToDo:
+ * - add search box for locating entries quickly
  */
 
 
@@ -34,11 +37,12 @@
 #define NULL_HANDLE 0
 #endif
 
+#undef DUMB_DEBUG
 #ifdef DUMB_DEBUG
 #include <stdio.h>
-#define DEBUG(x) fprintf(stderr,x)
+#define DEBUG(x...) fprintf(stderr,x)
 #else
-#define DEBUG(x) 
+#define DEBUG(x...) 
 #endif
 
 /* use multi-select listbox */
@@ -67,6 +71,8 @@ typedef struct {
 uninst_entry *entries = NULL;
 
 int numentries = 0;
+int list_need_update = 1;
+int oldsel = -1;
 
 struct {
     DWORD style;
@@ -81,14 +87,14 @@ struct {
 
 #define NUM (sizeof button/sizeof button[0])
 
-int GetUninstallStrings(void);
+int FetchUninstallInformation(void);
 void UninstallProgram(void);
 
 void ListUninstallPrograms(void)
 {
     int i;
     
-    if (! GetUninstallStrings())
+    if (! FetchUninstallInformation())
         exit(1);
 
     for (i=0; i < numentries; i++)
@@ -100,7 +106,7 @@ void RemoveSpecificProgram(char *name)
 {
     int i;
 
-    if (! GetUninstallStrings())
+    if (! FetchUninstallInformation())
         exit(1);
 
     for (i=0; i < numentries; i++)
@@ -178,7 +184,12 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     return msg.wParam;
 }
 
-int GetUninstallStrings(void)
+int cmp_by_name(const void *a, const void *b)
+{
+    return strcasecmp(((uninst_entry *)a)->descr, ((uninst_entry *)b)->descr);
+}
+
+int FetchUninstallInformation(void)
 {
     HKEY hkeyUninst, hkeyApp;
     int i;
@@ -188,6 +199,8 @@ int GetUninstallStrings(void)
     char *p;
 
     
+    numentries = 0;
+    oldsel = -1;
     if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGSTR_PATH_UNINSTALL,
 			    0, KEY_READ, &hkeyUninst) != ERROR_SUCCESS )
     {
@@ -225,9 +238,11 @@ int GetUninstallStrings(void)
 	    entries[numentries-1].active = 0;
 	    RegQueryValueEx(hkeyApp, REGSTR_VAL_UNINSTALLER_COMMANDLINE, 0, 0,
 			    entries[numentries-1].command, &uninstlen);
+	    DEBUG("allocated entry #%d: '%s' ('%s'), '%s'\n", numentries, entries[numentries-1].key, entries[numentries-1].descr, entries[numentries-1].command);
 	}
 	RegCloseKey(hkeyApp);
     }
+    qsort(entries, numentries, sizeof(uninst_entry), cmp_by_name);
     RegCloseKey(hkeyUninst);
     return 1;
 }
@@ -248,6 +263,7 @@ void UninstallProgram(void)
     {
 	if (!(entries[i].active)) /* don't uninstall this one */
 	    continue;
+	DEBUG("uninstalling '%s'\n", entries[i].descr);
 	memset(&si, 0, sizeof(STARTUPINFO));
 	si.cb = sizeof(STARTUPINFO);
 	si.wShowWindow = SW_NORMAL;
@@ -256,7 +272,7 @@ void UninstallProgram(void)
 	{   /* wait for the process to exit */
 	    WaitForSingleObject(info.hProcess, INFINITE);
 	    res = GetExitCodeProcess(info.hProcess, &exit_code);
-	    fprintf(stderr, "%d: %08lx\n", res, exit_code);
+	    DEBUG("%d: %08lx\n", res, exit_code);
 #ifdef DEL_REG_KEY
 	    /* delete the program's uninstall entry */
 	    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGSTR_PATH_UNINSTALL,
@@ -273,6 +289,8 @@ void UninstallProgram(void)
 	    MessageBox(0, errormsg, appname, MB_OK);
 	}
     }
+    DEBUG("finished uninstall phase.\n");
+    list_need_update = 1;
 }
 
 LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -288,11 +306,6 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch( msg ) {
     case WM_CREATE:
 	{
-	if (!(GetUninstallStrings()))
-	{
-	    PostQuitMessage(0);
-	    return 0;
-	}
 	hdc = GetDC(hWnd);
 	GetTextMetrics(hdc, &tm);
 	cxChar = tm.tmAveCharWidth;
@@ -359,13 +372,28 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_PAINT:
       {
-	int prevsel = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-	SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
-	SendMessage(hwndList, WM_SETREDRAW, FALSE, 0);
-	for (i=0; i < numentries; i++)
-	    SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)entries[i].descr);
-	SendMessage(hwndList, LB_SETCURSEL, prevsel, 0 );
-	SendMessage(hwndList, WM_SETREDRAW, TRUE, 0);
+	if (list_need_update)
+	{
+	    int prevsel;
+	    prevsel = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+	    if (!(FetchUninstallInformation()))
+	    {
+	        PostQuitMessage(0);
+	        return 0;
+	    }
+	    SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
+	    SendMessage(hwndList, WM_SETREDRAW, FALSE, 0);
+	    for (i=0; i < numentries; i++)
+	    {
+	        DEBUG("adding '%s'\n", entries[i].descr);
+	        SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)entries[i].descr);
+	    }
+	    DEBUG("setting prevsel %d\n", prevsel);
+	    if (prevsel != -1)
+	        SendMessage(hwndList, LB_SETCURSEL, prevsel, 0 );
+	    SendMessage(hwndList, WM_SETREDRAW, TRUE, 0);
+	    list_need_update = 0;
+	}
         hdc = BeginPaint( hWnd, &ps );
         EndPaint( hWnd, &ps );
         return 0;
@@ -382,8 +410,17 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    {
 		int sel = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 		
+#ifndef USE_MULTIPLESEL
+		if (oldsel != -1)
+		{
+		    entries[oldsel].active ^= 1; /* toggle */
+		    DEBUG("toggling %d old '%s'\n", entries[oldsel].active, entries[oldsel].descr);
+		}
+#endif
 		entries[sel].active ^= 1; /* toggle */
+		DEBUG("toggling %d '%s'\n", entries[sel].active, entries[sel].descr);
 		SendMessage(hwndEdit, WM_SETTEXT, 0, (LPARAM)entries[sel].command);
+		oldsel = sel;
 	    }
 	}
 	else
@@ -391,9 +428,6 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
 	    UninstallProgram();
    
-	    /* update listbox */
-	    numentries = 0;
-	    GetUninstallStrings();
 	    InvalidateRect(hWnd, NULL, TRUE);
 	    UpdateWindow(hWnd);
 
