@@ -103,7 +103,7 @@ init	MAIN_KernelInit
  88 varargs SSCall() SSCall
  89 register FT_PrologPrime() FT_PrologPrime
  90 register QT_ThunkPrime() QT_ThunkPrime
- 91 stub PK16FNF
+ 91 stdcall PK16FNF(ptr) PK16FNF
  92 stdcall GetPK16SysVar() GetPK16SysVar
  93 stdcall GetpWin16Lock(ptr) GetpWin16Lock32
  94 stdcall _CheckNotSysLevel(ptr) _CheckNotSysLevel

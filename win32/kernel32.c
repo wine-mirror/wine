@@ -1362,5 +1362,22 @@ BOOL32 WINAPI GetBinaryType32W (LPCWSTR lpApplicationName, LPDWORD lpBinaryType)
 	return ret;
 }
 
+/*********************************************************************
+ *                   PK16FNF [KERNEL32.91]
+ *
+ *  This routine fills in the supplied 13-byte (8.3 plus terminator)
+ *  string buffer with the 8.3 filename of a recently loaded 16-bit
+ *  module.  It is unknown exactly what modules trigger this
+ *  mechanism or what purpose this serves.  Win98 Explorer (and
+ *  probably also Win95 with IE 4 shell integration) calls this
+ *  several times during initialization.
+ *
+ *  FIXME: find out what this really does and make it work.
+ */
+void WINAPI PK16FNF(LPSTR strPtr)
+{
+       FIXME(win32, "(%p): stub\n", strPtr);
 
-
+       /* fill in a fake filename that'll be easy to recognize */
+       lstrcpy32A(strPtr, "WINESTUB.FIX");
+}
