@@ -208,6 +208,8 @@ typedef struct
 #define BS_AUTORADIOBUTTON     0x00000009L
 #define BS_OWNERDRAW           0x0000000BL
 #define BS_LEFTTEXT            0x00000020L
+#define BS_ICON                0x00000040L
+#define BS_BITMAP              0x00000080L
 
 #define BS_LEFT                0x00000100L
 #define BS_PUSHLIKE            0x00001000L

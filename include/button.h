@@ -17,6 +17,7 @@ typedef struct
 {
     WORD     state;   /* Current state */
     HFONT16  hFont;   /* Button font (or 0 for system font) */
+    HANDLE   hImage;  /* Handle to the image or the icon */
 } BUTTONINFO;
 
   /* Button state values */

@@ -84,6 +84,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
     WND *wndPtr = WIN_FindWndPtr(hWnd);
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
     LONG style = wndPtr->dwStyle & 0x0f;
+    HANDLE oldHbitmap;
 
     switch (uMsg)
     {
@@ -118,6 +119,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         }
         infoPtr->state = BUTTON_UNCHECKED;
         infoPtr->hFont = 0;
+        infoPtr->hImage = NULL;
         WIN_ReleaseWndPtr(wndPtr);
         return 0;
 
@@ -229,6 +231,17 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
         break;
 
+    case BM_SETIMAGE:
+	oldHbitmap = infoPtr->hImage;
+	if(wndPtr->dwStyle & BS_BITMAP)
+	    infoPtr->hImage = (HANDLE) lParam;
+        WIN_ReleaseWndPtr(wndPtr);
+	return oldHbitmap;
+
+    case BM_GETIMAGE:
+        WIN_ReleaseWndPtr(wndPtr);
+	return infoPtr->hImage;
+
     case BM_GETCHECK16:
     case BM_GETCHECK:
         retvalue = infoPtr->state & 3;
@@ -294,6 +307,8 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     HPEN hOldPen;
     HBRUSH hOldBrush;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+    int xBorderOffset, yBorderOffset;
+    xBorderOffset = yBorderOffset = 0;
 
     GetClientRect( wndPtr->hwndSelf, &rc );
 
@@ -304,7 +319,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     SetBkMode(hDC, TRANSPARENT);
     Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
-    if (action == ODA_DRAWENTIRE)
+/*    if (action == ODA_DRAWENTIRE)*/
     {
         SetPixel( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
@@ -330,6 +345,11 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     } else {
         rc.right++, rc.bottom++;
 	DrawEdge( hDC, &rc, EDGE_RAISED, BF_RECT );
+
+	/* To place de bitmap correctly */
+	xBorderOffset += GetSystemMetrics(SM_CXEDGE);
+	yBorderOffset += GetSystemMetrics(SM_CYEDGE);
+
         rc.right--, rc.bottom--;
     }
 	
@@ -368,6 +388,47 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
         }   
     }
 
+    if((wndPtr->dwStyle & BS_BITMAP) && (infoPtr->hImage != NULL))
+    {
+	BITMAP bm;
+	HDC hdcMem;
+	int yOffset, xOffset, imageWidth, imageHeight;
+
+	GetObjectA (infoPtr->hImage, sizeof(BITMAP), &bm);
+	
+	/* Center the bitmap */
+	xOffset = (((rc.right - rc.left) - 2*xBorderOffset) - bm.bmWidth ) / 2;
+	yOffset = (((rc.bottom - rc.top) - 2*yBorderOffset) - bm.bmHeight ) / 2;
+
+	imageWidth = bm.bmWidth;
+	imageHeight = bm.bmHeight;
+
+	/* If the image is to big for the button */
+	if (xOffset < 0)
+	{
+	    imageWidth = rc.right - rc.left - 2*xBorderOffset -1;
+	    xOffset = xBorderOffset;
+	}
+
+	if (yOffset < 0)
+	{
+	    imageHeight = rc.bottom - rc.top - 2*yBorderOffset -1;
+	    yOffset = yBorderOffset;
+	}
+
+	/* Let minimum 1 space from border */
+	xOffset++, yOffset++;
+
+	hdcMem = CreateCompatibleDC (hDC);
+	SelectObject (hdcMem, (HBITMAP)infoPtr->hImage);
+	BitBlt(hDC, rc.left + xOffset, 
+	       rc.top + yOffset, 
+	       imageWidth, imageHeight,
+	       hdcMem, 0, 0, SRCCOPY);
+
+	DeleteDC (hdcMem);
+    }
+    
     SelectObject( hDC, hOldPen );
     SelectObject( hDC, hOldBrush );
 }
@@ -644,3 +705,4 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     SendMessageA( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
                     wndPtr->wIDmenu, (LPARAM)&dis );
 }
+
