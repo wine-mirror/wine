@@ -790,9 +790,7 @@ static res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 			put_word(res, ctrl->y);
 			put_word(res, ctrl->width);
 			put_word(res, ctrl->height);
-			put_word(res, ctrl->id);
-			/* FIXME: Pad is _NOT_ documented!?! */
-			put_pad(res);
+			put_dword(res, ctrl->id);
 			if(ctrl->ctlclass)
 				put_name_id(res, ctrl->ctlclass, TRUE, dlgex->lvc.language);
 			else
