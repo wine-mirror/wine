@@ -1566,8 +1566,15 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
 
     TRACE_(toolhelp)("(%p): task=%04x\n", lpte, lpte->hNext );
     if (!lpte->hNext) return FALSE;
-    pTask = (TDB *)GlobalLock16( lpte->hNext );
-    if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;
+
+    /* make sure that task and hInstance are valid (skip initial Wine task !) */
+    while (1) {
+        pTask = (TDB *)GlobalLock16( lpte->hNext );
+        if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;
+        if (pTask->hInstance)
+            break;
+        lpte->hNext = pTask->hNext;
+    }
     pInstData = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( GlobalHandleToSel16(pTask->hInstance), 0 );
     lpte->hTask         = lpte->hNext;
     lpte->hTaskParent   = pTask->hParent;
