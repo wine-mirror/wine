@@ -1709,7 +1709,7 @@ BOOL WINAPI PathRelativePathToA(
           <title>Basic Infrastructure</title>
           <para>
             FIXME: How the build/make system works (makefiles, db2html,
-            db2html-winehq, jade, stylesheets).
+            jade, stylesheets).
           </para>
         </sect3>
 
@@ -1717,14 +1717,14 @@ BOOL WINAPI PathRelativePathToA(
           <title>Tweaking the DSSSL stylesheets</title>
           <para>
             FIXME: Things you can tweak, and how to do it (examples from
-            default.dsl and winehq.dsl).
+            default.dsl and print.dsl).
           </para>
         </sect3>
 
         <sect3 id="docbook-generating">
           <title>Generating docs for Wine web sites</title>
           <para>
-            FIXME: Explain make_winehq, rsync, etc.
+            FIXME: Explain make, rsync, etc.
           </para>
         </sect3>
       </sect2>
