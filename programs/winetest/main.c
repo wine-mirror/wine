@@ -551,11 +551,6 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     const char *cp, *submit = NULL, *tag = NULL;
     int reset_env = 1;
 
-    if (!running_on_visible_desktop ()) {
-        report (R_ERROR, "Tests must be run on a visible desktop");
-        exit (2);
-    }
-
     /* initialize the revision information first */
     extract_rev_infos();
 
@@ -605,6 +600,11 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
         cmdLine = strtok (NULL, whitespace);
     }
     if (!submit) {
+        if (!running_on_visible_desktop ()) {
+            report (R_ERROR, "Tests must be run on a visible desktop");
+            exit (2);
+        }
+
         if (reset_env && (putenv ("WINETEST_PLATFORM=windows") ||
                           putenv ("WINETEST_DEBUG=1") || 
                           putenv ("WINETEST_INTERACTIVE=0") ||
