@@ -396,7 +396,10 @@ static void test_parent_owner(void)
     /* window is now child of 'child' but owned by 'owner' */
     DestroyWindow( owner );
     ok( IsWindow(test), "Window %p destroyed by owner destruction\n", test );
-    check_parents( test, child, child, owner, owner, hwndMain, owner );
+    /* Win98 doesn't pass this test. It doesn't allow a destroyed owner,
+     * while Win95, Win2k, WinXP do.
+     */
+    /*check_parents( test, child, child, owner, owner, hwndMain, owner );*/
     ok( !IsWindow(owner), "Owner %p not destroyed\n", owner );
     DestroyWindow(test);
 
@@ -418,7 +421,10 @@ static void test_parent_owner(void)
     DestroyWindow( owner );
     ok( IsWindow(test), "Window %p destroyed by owner destruction\n", test );
     ok( !IsWindow(owner), "Owner %p not destroyed\n", owner );
-    check_parents( test, desktop, owner, owner, owner, test, owner );
+    /* Win98 doesn't pass this test. It doesn't allow a destroyed owner,
+     * while Win95, Win2k, WinXP do.
+     */
+    /*check_parents( test, desktop, owner, owner, owner, test, owner );*/
     DestroyWindow(test);
 
     /* final cleanup */
@@ -707,15 +713,15 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 	    WINDOWINFO info;
 
-	    info.cbSize = 0;
+	    /* Win98 actually does check the info.cbSize and doesn't allow
+	     * it to be anything except sizeof(WINDOWINFO), while Win95, Win2k,
+	     * WinXP do not check it at all.
+	     */
+	    info.cbSize = sizeof(WINDOWINFO);
 	    ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
 	    /* win2k SP4 returns broken border info if GetWindowInfo
 	     * is being called from HCBT_DESTROYWND or HCBT_MINMAX hook proc.
 	     */
-	    verify_window_info((HWND)wParam, &info, nCode != HCBT_MINMAX);
-
-	    info.cbSize = sizeof(WINDOWINFO) + 1;
-	    ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
 	    verify_window_info((HWND)wParam, &info, nCode != HCBT_MINMAX);
 	}
     }
@@ -1296,7 +1302,9 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
             ok(cs->y != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->y);
 
             /* cx/cy == CW_USEDEFAULT are translated to 0 */
-            ok(cs->cx == 0, "%d != 0\n", cs->cx);
+            /* For some reason Win98 doesn't translate cs->cx from CW_USEDEFAULT,
+               while Win95, Win2k, WinXP do. */
+            /*ok(cs->cx == 0, "%d != 0\n", cs->cx);*/
             ok(cs->cy == 0, "%d != 0\n", cs->cy);
             break;
         }
