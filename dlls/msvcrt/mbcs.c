@@ -307,6 +307,32 @@ int _mbscmp(const unsigned char* str, const unsigned char* cmp)
 }
 
 /*********************************************************************
+ *		_mbsicoll(MSVCRT.@)
+ * FIXME: handle locales.
+ */
+int _mbsicoll(const unsigned char* str, const unsigned char* cmp)
+{
+  if(MSVCRT___mb_cur_max > 1)
+  {
+    unsigned int strc, cmpc;
+    do {
+      if(!*str)
+        return *cmp ? -1 : 0;
+      if(!*cmp)
+        return 1;
+      strc = _mbctolower(_mbsnextc(str));
+      cmpc = _mbctolower(_mbsnextc(cmp));
+      if(strc != cmpc)
+        return strc < cmpc ? -1 : 1;
+      str +=(strc > 255) ? 2 : 1;
+      cmp +=(strc > 255) ? 2 : 1; /* equal, use same increment */
+    } while(1);
+  }
+  return strcasecmp(str, cmp); /* ASCII CP */
+}
+
+
+/*********************************************************************
  *		_mbsicmp(MSVCRT.@)
  */
 int _mbsicmp(const unsigned char* str, const unsigned char* cmp)

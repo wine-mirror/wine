@@ -355,7 +355,7 @@
 @ cdecl _mbsdec(ptr ptr) _mbsdec
 @ cdecl _mbsdup(str) _strdup
 @ cdecl _mbsicmp(str str) _mbsicmp
-@ stub _mbsicoll #(str str)
+@ cdecl _mbsicoll(str str) _mbsicoll
 @ cdecl _mbsinc(str) _mbsinc
 @ cdecl _mbslen(str) _mbslen
 @ cdecl _mbslwr(str) _mbslwr
