@@ -51,6 +51,14 @@ struct registry_callback_info
     BOOL delete;
 };
 
+/* info passed to callback functions dealing with registering dlls */
+struct register_dll_info
+{
+    PSP_FILE_CALLBACK_W callback;
+    PVOID               callback_context;
+    BOOL                unregister;
+};
+
 typedef BOOL (*iterate_fields_func)( HINF hinf, PCWSTR field, void *arg );
 
 /* Unicode constants */
@@ -63,6 +71,7 @@ static const WCHAR AddReg[]     = {'A','d','d','R','e','g',0};
 static const WCHAR DelReg[]     = {'D','e','l','R','e','g',0};
 static const WCHAR UpdateInis[] = {'U','p','d','a','t','e','I','n','i','s',0};
 static const WCHAR UpdateIniFields[] = {'U','p','d','a','t','e','I','n','i','F','i','e','l','d','s',0};
+static const WCHAR RegisterDlls[] = {'R','e','g','i','s','t','e','r','D','l','l','s',0};
 
 
 /***********************************************************************
@@ -420,6 +429,153 @@ static BOOL registry_callback( HINF hinf, PCWSTR field, void *arg )
 }
 
 
+/***********************************************************************
+ *            do_register_dll
+ *
+ * Register or unregister a dll.
+ */
+static BOOL do_register_dll( const struct register_dll_info *info, const WCHAR *path,
+                             INT flags, INT timeout, const WCHAR *args )
+{
+    HMODULE module;
+    HRESULT res;
+    SP_REGISTER_CONTROL_STATUSW status;
+
+    status.cbSize = sizeof(status);
+    status.FileName = path;
+    status.FailureCode = SPREG_SUCCESS;
+    status.Win32Error = ERROR_SUCCESS;
+
+    if (info->callback)
+    {
+        switch(info->callback( info->callback_context, SPFILENOTIFY_STARTREGISTRATION,
+                               (UINT_PTR)&status, !info->unregister ))
+        {
+        case FILEOP_ABORT:
+            SetLastError( ERROR_OPERATION_ABORTED );
+            return FALSE;
+        case FILEOP_SKIP:
+            return TRUE;
+        case FILEOP_DOIT:
+            break;
+        }
+    }
+
+    if (!(module = LoadLibraryExW( path, 0, LOAD_WITH_ALTERED_SEARCH_PATH )))
+    {
+        WARN( "could not load %s\n", debugstr_w(path) );
+        status.FailureCode = SPREG_LOADLIBRARY;
+        status.Win32Error = GetLastError();
+        goto done;
+    }
+
+    if (flags & FLG_REGSVR_DLLREGISTER)
+    {
+        const char *entry_point = info->unregister ? "DllUnregisterServer" : "DllRegisterServer";
+        HRESULT (WINAPI *func)(void) = (void *)GetProcAddress( module, entry_point );
+
+        if (!func)
+        {
+            status.FailureCode = SPREG_GETPROCADDR;
+            status.Win32Error = GetLastError();
+            goto done;
+        }
+
+        TRACE( "calling %s in %s\n", entry_point, debugstr_w(path) );
+        res = func();
+
+        if (FAILED(res))
+        {
+            WARN( "calling %s in %s returned error %lx\n", entry_point, debugstr_w(path), res );
+            status.FailureCode = SPREG_REGSVR;
+            status.Win32Error = res;
+            goto done;
+        }
+    }
+
+    if (flags & FLG_REGSVR_DLLINSTALL)
+    {
+        HRESULT (WINAPI *func)(BOOL,LPCWSTR) = (void *)GetProcAddress( module, "DllInstall" );
+
+        if (!func)
+        {
+            status.FailureCode = SPREG_GETPROCADDR;
+            status.Win32Error = GetLastError();
+            goto done;
+        }
+
+        TRACE( "calling DllInstall(%d,%s) in %s\n",
+               !info->unregister, debugstr_w(args), debugstr_w(path) );
+        res = func( !info->unregister, args );
+
+        if (FAILED(res))
+        {
+            WARN( "calling DllInstall in %s returned error %lx\n", debugstr_w(path), res );
+            status.FailureCode = SPREG_REGSVR;
+            status.Win32Error = res;
+            goto done;
+        }
+    }
+
+done:
+    if (module) FreeLibrary( module );
+    if (info->callback) info->callback( info->callback_context, SPFILENOTIFY_ENDREGISTRATION,
+                                        (UINT_PTR)&status, !info->unregister );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *            register_dlls_callback
+ *
+ * Called once for each RegisterDlls entry in a given section.
+ */
+static BOOL register_dlls_callback( HINF hinf, PCWSTR field, void *arg )
+{
+    struct register_dll_info *info = arg;
+    INFCONTEXT context;
+    BOOL ret = TRUE;
+    BOOL ok = SetupFindFirstLineW( hinf, field, NULL, &context );
+
+    for (; ok; ok = SetupFindNextLine( &context, &context ))
+    {
+        WCHAR *path, *args, *p;
+        WCHAR buffer[MAX_INF_STRING_LENGTH];
+        INT flags, timeout;
+
+        /* get directory */
+        if (!(path = PARSER_get_dest_dir( &context ))) continue;
+
+        /* get dll name */
+        if (!SetupGetStringFieldW( &context, 3, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+            goto done;
+        if (!(p = HeapReAlloc( GetProcessHeap(), 0, path,
+                               (strlenW(path) + strlenW(buffer) + 2) * sizeof(WCHAR) ))) goto done;
+        path = p;
+        p += strlenW(p);
+        if (p == path || p[-1] != '\\') *p++ = '\\';
+        strcpyW( p, buffer );
+
+        /* get flags */
+        if (!SetupGetIntField( &context, 4, &flags )) flags = 0;
+
+        /* get timeout */
+        if (!SetupGetIntField( &context, 5, &timeout )) timeout = 60;
+
+        /* get command line */
+        args = NULL;
+        if (SetupGetStringFieldW( &context, 6, buffer, sizeof(buffer)/sizeof(WCHAR), NULL ))
+            args = buffer;
+
+        ret = do_register_dll( info, path, flags, timeout, args );
+
+    done:
+        HeapFree( GetProcessHeap(), 0, path );
+        if (!ret) break;
+    }
+    return ret;
+}
+
 static BOOL update_ini_callback( HINF hinf, PCWSTR field, void *arg )
 {
     INFCONTEXT context;
@@ -512,7 +668,8 @@ static BOOL iterate_section_fields( HINF hinf, PCWSTR section, PCWSTR key,
                 goto done;
             if (!callback( hinf, buffer, arg ))
             {
-                ERR("callback failed for %s %s\n", debugstr_w(section), debugstr_w(buffer) );
+                WARN("callback failed for %s %s err %ld\n",
+                     debugstr_w(section), debugstr_w(buffer), GetLastError() );
                 goto done;
             }
         }
@@ -654,6 +811,38 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
             return FALSE;
     }
 
+    if (flags & SPINST_REGSVR)
+    {
+        struct register_dll_info info;
+
+        info.unregister = FALSE;
+        if (flags & SPINST_REGISTERCALLBACKAWARE)
+        {
+            info.callback         = callback;
+            info.callback_context = context;
+        }
+        else info.callback = NULL;
+
+        if (!iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info ))
+            return FALSE;
+    }
+
+    if (flags & SPINST_UNREGSVR)
+    {
+        struct register_dll_info info;
+
+        info.unregister = TRUE;
+        if (flags & SPINST_REGISTERCALLBACKAWARE)
+        {
+            info.callback         = callback;
+            info.callback_context = context;
+        }
+        else info.callback = NULL;
+
+        if (!iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info ))
+            return FALSE;
+    }
+
     if (flags & SPINST_REGISTRY)
     {
         struct registry_callback_info info;
@@ -666,7 +855,8 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         if (!iterate_section_fields( hinf, section, AddReg, registry_callback, &info ))
             return FALSE;
     }
-    if (flags & (SPINST_BITREG|SPINST_REGSVR|SPINST_UNREGSVR|SPINST_PROFILEITEMS|SPINST_COPYINF))
+
+    if (flags & (SPINST_BITREG|SPINST_PROFILEITEMS|SPINST_COPYINF))
         FIXME( "unsupported flags %x\n", flags );
     return TRUE;
 }

@@ -112,10 +112,37 @@ typedef struct _SP_FILE_COPY_PARAMS_W
 DECL_WINELIB_SETUPAPI_TYPE_AW(SP_FILE_COPY_PARAMS)
 DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_FILE_COPY_PARAMS)
 
+typedef struct _SP_REGISTER_CONTROL_STATUSA
+{
+    DWORD    cbSize;
+    PCSTR    FileName;
+    DWORD    Win32Error;
+    DWORD    FailureCode;
+} SP_REGISTER_CONTROL_STATUSA, *PSP_REGISTER_CONTROL_STATUSA;
+
+typedef struct _SP_REGISTER_CONTROL_STATUSW
+{
+    DWORD    cbSize;
+    PCWSTR   FileName;
+    DWORD    Win32Error;
+    DWORD    FailureCode;
+} SP_REGISTER_CONTROL_STATUSW, *PSP_REGISTER_CONTROL_STATUSW;
+
+DECL_WINELIB_TYPE_AW(SP_REGISTER_CONTROL_STATUS)
+DECL_WINELIB_TYPE_AW(PSP_REGISTER_CONTROL_STATUS)
+
+#define SPREG_SUCCESS       0x00000000
+#define SPREG_LOADLIBRARY   0x00000001
+#define SPREG_GETPROCADDR   0x00000002
+#define SPREG_REGSVR        0x00000003
+#define SPREG_DLLINSTALL    0x00000004
+#define SPREG_TIMEOUT       0x00000005
+#define SPREG_UNKNOWN       0xffffffff
+
 typedef UINT (CALLBACK *PSP_FILE_CALLBACK_A)( PVOID Context, UINT Notification,
-                                              UINT Param1, UINT Param2 );
+                                              UINT_PTR Param1, UINT_PTR Param2 );
 typedef UINT (CALLBACK *PSP_FILE_CALLBACK_W)( PVOID Context, UINT Notification,
-                                              UINT Param1, UINT Param2 );
+                                              UINT_PTR Param1, UINT_PTR Param2 );
 DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_FILE_CALLBACK)
 
 #define LINE_LEN                    256
@@ -364,6 +391,9 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PFILEPATHS)
 #define FLG_DELREG_32BITKEY              FLG_ADDREG_32BITKEY
 #define FLG_DELREG_OPERATION_MASK        (0x000000FE)
 #define FLG_DELREG_MULTI_SZ_DELSTRING    (FLG_DELREG_TYPE_MULTI_SZ | FLG_ADDREG_DELREG_BIT | 0x00000002)
+
+#define FLG_REGSVR_DLLREGISTER           0x00000001
+#define FLG_REGSVR_DLLINSTALL            0x00000002
 
 /* Class installer function codes */
 #define DIF_SELECTDEVICE                    0x01
