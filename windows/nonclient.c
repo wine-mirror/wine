@@ -402,12 +402,23 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 				       -tmpRect.left, -tmpRect.top ) + 1;
 	}
 
-	SetRect(&tmpRect, 0, 0, 0, 0);
-	NC_AdjustRectInner (&tmpRect, style, exStyle);
-	winRect->left   -= tmpRect.left;
-	winRect->top    -= tmpRect.top;
-	winRect->right  -= tmpRect.right;
-	winRect->bottom -= tmpRect.bottom;
+        if( exStyle & WS_EX_CLIENTEDGE)
+            if( winRect->right - winRect->left > 2 * GetSystemMetrics(SM_CXEDGE) &&
+                   winRect->bottom - winRect->top > 2 * GetSystemMetrics(SM_CYEDGE))
+                InflateRect( winRect, - GetSystemMetrics(SM_CXEDGE),
+                        - GetSystemMetrics(SM_CYEDGE));
+
+        if (style & WS_VSCROLL)
+            if( winRect->right - winRect->left >= GetSystemMetrics(SM_CXVSCROLL)){
+                if((exStyle & WS_EX_LEFTSCROLLBAR) != 0)
+                    winRect->left  += GetSystemMetrics(SM_CXVSCROLL);
+                else
+                    winRect->right -= GetSystemMetrics(SM_CXVSCROLL);
+            }
+
+        if (style & WS_HSCROLL)
+            if( winRect->bottom - winRect->top > GetSystemMetrics(SM_CYHSCROLL))
+                    winRect->bottom -= GetSystemMetrics(SM_CYHSCROLL);
 
         if (winRect->top > winRect->bottom)
             winRect->bottom = winRect->top;

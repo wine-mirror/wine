@@ -2231,6 +2231,58 @@ static void test_validatergn(HWND hwnd)
     DestroyWindow( child );
 }
 
+
+void nccalchelper( HWND hwnd, INT x, INT y, RECT *prc)
+{
+    MoveWindow( hwnd, 0, 0, x, y, 0);
+    GetWindowRect( hwnd, prc);
+    trace("window rect is %ld,%ld - %ld,%ld\n", 
+            prc->left,prc->top,prc->right,prc->bottom);
+    DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)prc);
+    trace("nccalc rect is %ld,%ld - %ld,%ld\n",
+            prc->left,prc->top,prc->right,prc->bottom);
+}
+
+void test_nccalcscroll( HWND parent)
+{
+    RECT rc1;
+    INT sbheight = GetSystemMetrics( SM_CYHSCROLL);
+    INT sbwidth = GetSystemMetrics( SM_CXVSCROLL);
+    HWND hwnd = CreateWindowExA(0, "static", NULL, 
+            WS_CHILD| WS_VISIBLE | WS_VSCROLL | WS_HSCROLL , 
+            10, 10, 200, 200, parent, 0, 0, NULL); 
+    ShowWindow( parent, SW_SHOW);
+    UpdateWindow( parent);
+
+    /* test window too low for a horizontal scroll bar */
+    nccalchelper( hwnd, 100, sbheight, &rc1);
+    ok( rc1.bottom - rc1.top == sbheight, "Height should be %d size is %ld,%ld - %ld,%ld\n", 
+            sbheight, rc1.left, rc1.top, rc1.right, rc1.bottom);
+
+    /* test window just high enough for a horizontal scroll bar */
+    nccalchelper( hwnd, 100, sbheight + 1, &rc1);
+    ok( rc1.bottom - rc1.top == 1, "Height should be %d size is %ld,%ld - %ld,%ld\n", 
+            1, rc1.left, rc1.top, rc1.right, rc1.bottom);
+
+    /* test window too narrow for a vertical scroll bar */
+    nccalchelper( hwnd, sbwidth - 1, 100, &rc1);
+    ok( rc1.right - rc1.left == sbwidth - 1 , "Width should be %d size is %ld,%ld - %ld,%ld\n", 
+            sbwidth - 1, rc1.left, rc1.top, rc1.right, rc1.bottom);
+
+    /* test window just wide enough for a vertical scroll bar */
+    nccalchelper( hwnd, sbwidth, 100, &rc1);
+    ok( rc1.right - rc1.left == 0, "Width should be %d size is %ld,%ld - %ld,%ld\n", 
+            0, rc1.left, rc1.top, rc1.right, rc1.bottom);
+
+    /* same test, but with client edge: not enough width */
+    SetWindowLong( hwnd, GWL_EXSTYLE, WS_EX_CLIENTEDGE | GetWindowLong( hwnd, GWL_EXSTYLE));
+    nccalchelper( hwnd, sbwidth, 100, &rc1);
+    ok( rc1.right - rc1.left == sbwidth - 2 * GetSystemMetrics(SM_CXEDGE),
+            "Width should be %d size is %ld,%ld - %ld,%ld\n", 
+            sbwidth - 2 * GetSystemMetrics(SM_CXEDGE), rc1.left, rc1.top, rc1.right, rc1.bottom);
+
+    DestroyWindow( hwnd);
+}
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2287,6 +2339,7 @@ START_TEST(win)
     test_keyboard_input(hwndMain);
     test_mouse_input(hwndMain);
     test_validatergn(hwndMain);
+    test_nccalcscroll( hwndMain);
 
     UnhookWindowsHookEx(hhook);
 }
