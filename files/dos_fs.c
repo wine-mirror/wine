@@ -1697,15 +1697,12 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
  *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.
- * FIXME: convert dos file name to unicode
  */
-BOOL WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len )
+BOOL WINAPI wine_get_unix_file_name( LPCWSTR dosW, LPSTR buffer, DWORD len )
 {
     BOOL ret;
     DOS_FULL_NAME path;
-    WCHAR dosW[MAX_PATHNAME_LEN];
 
-    MultiByteToWideChar(CP_ACP, 0, dos, -1, dosW, MAX_PATHNAME_LEN);
     ret = DOSFS_GetFullName( dosW, FALSE, &path );
     if (ret && len)
     {

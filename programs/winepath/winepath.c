@@ -36,7 +36,7 @@ static char *progname;
 
 /* Wine specific functions */
 extern BOOL process_init(char *argv[]);
-typedef BOOL (WINAPI *wine_get_unix_file_name_t) ( LPCSTR dos, LPSTR buffer, DWORD len );
+typedef BOOL (WINAPI *wine_get_unix_file_name_t) ( LPCWSTR dos, LPSTR buffer, DWORD len );
 /*
  * handle an option
  */
@@ -161,7 +161,10 @@ int main(int argc, char *argv[])
             printf("%s\n", path);
         }
         if (outputformats & UNIXFORMAT) {
-            wine_get_unix_file_name_ptr(argv[i], path, sizeof(path));
+            WCHAR dosW[MAX_PATH];
+
+            MultiByteToWideChar(CP_ACP, 0, argv[i], -1, dosW, MAX_PATH);
+            wine_get_unix_file_name_ptr(dosW, path, sizeof(path));
             printf("%s\n", path);
         }
     }

@@ -618,7 +618,7 @@ static void LoadReplaceList(void)
 }
 
 
-static BOOL ReadFontDir(char *dirname)
+static BOOL ReadFontDir(const char *dirname)
 {
     DIR *dir;
     struct dirent *dent;
@@ -724,17 +724,13 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
     if (ft_handle)  /* do it only if we have freetype up and running */
     {
-        DWORD len = WideCharToMultiByte(CP_ACP, 0, file, -1, NULL, 0, NULL, NULL);
-        LPSTR fileA = HeapAlloc(GetProcessHeap(), 0, len);
         char unixname[MAX_PATH];
-        WideCharToMultiByte(CP_ACP, 0, file, -1, fileA, len, NULL, NULL);
 
         if(flags)
             FIXME("Ignoring flags %lx\n", flags);
 
-        if(wine_get_unix_file_name(fileA, unixname, sizeof(unixname)))
+        if(wine_get_unix_file_name(file, unixname, sizeof(unixname)))
             AddFontFileToList(unixname, NULL);
-        HeapFree(GetProcessHeap(), 0, fileA);
     }
     return 1;
 }
@@ -756,11 +752,11 @@ BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
  */
 BOOL WineEngInit(void)
 {
+    static const WCHAR fontsW[] = {'\\','F','o','n','t','s','\0'};
     HKEY hkey;
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    LPSTR value;
     LPVOID data;
-    char windowsdir[MAX_PATH];
+    WCHAR windowsdir[MAX_PATH];
     char unixname[MAX_PATH];
 
     TRACE("\n");
@@ -826,8 +822,8 @@ BOOL WineEngInit(void)
     TRACE("FreeType version is %d.%d.%d\n",FT_Version.major,FT_Version.minor,FT_Version.patch);
 
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
-    GetWindowsDirectoryA(windowsdir, sizeof(windowsdir));
-    strcat(windowsdir, "\\Fonts");
+    GetWindowsDirectoryW(windowsdir, sizeof(windowsdir) / sizeof(WCHAR));
+    strcatW(windowsdir, fontsW);
     if(wine_get_unix_file_name(windowsdir, unixname, sizeof(unixname)))
         ReadFontDir(unixname);
 
@@ -837,19 +833,20 @@ BOOL WineEngInit(void)
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
 		   "Software\\Microsoft\\Windows\\CurrentVersion\\Fonts",
 		   &hkey) == ERROR_SUCCESS) {
-        RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        LPWSTR valueW;
+        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 			 &valuelen, &datalen, NULL, NULL);
 
 	valuelen++; /* returned value doesn't include room for '\0' */
-	value = HeapAlloc(GetProcessHeap(), 0, valuelen);
-	data = HeapAlloc(GetProcessHeap(), 0, datalen);
+	valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
+	data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
 
-	dlen = datalen;
+	dlen = datalen * sizeof(WCHAR);
 	vlen = valuelen;
-	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
+	while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, data,
 			    &dlen) == ERROR_SUCCESS) {
-	    if(((LPSTR)data)[0] && ((LPSTR)data)[1] == ':')
-	        if(wine_get_unix_file_name((LPSTR)data, unixname, sizeof(unixname)))
+	    if(((LPWSTR)data)[0] && ((LPWSTR)data)[1] == ':')
+	        if(wine_get_unix_file_name((LPWSTR)data, unixname, sizeof(unixname)))
 		    AddFontFileToList(unixname, NULL);
 
 	    /* reset dlen and vlen */
@@ -857,7 +854,7 @@ BOOL WineEngInit(void)
 	    vlen = valuelen;
 	}
 	HeapFree(GetProcessHeap(), 0, data);
-	HeapFree(GetProcessHeap(), 0, value);
+	HeapFree(GetProcessHeap(), 0, valueW);
 	RegCloseKey(hkey);
     }
 
@@ -867,7 +864,7 @@ BOOL WineEngInit(void)
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
 		   "Software\\Wine\\Wine\\Config\\FontDirs",
 		   &hkey) == ERROR_SUCCESS) {
-
+        LPSTR value;
         RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 			 &valuelen, &datalen, NULL, NULL);
 

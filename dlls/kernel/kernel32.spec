@@ -1132,7 +1132,7 @@
 @ varargs __wine_call_from_16_regs()
 
 # Unix files
-@ stdcall wine_get_unix_file_name(str ptr long)
+@ stdcall wine_get_unix_file_name(wstr ptr long)
 
 # Init code
 @ cdecl __wine_kernel_init()

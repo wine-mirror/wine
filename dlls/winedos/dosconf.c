@@ -456,13 +456,14 @@ static void DOSCONF_Parse(char *menuname)
 DOSCONF *DOSCONF_GetConfig(void)
 {
     HKEY hkey;
-    CHAR filename[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    static const WCHAR configW[] = {'c','o','n','f','i','g','.','s','y','s',0};
 
     if (DOSCONF_loaded)
         return &DOSCONF_config;
 
     /* default value */
-    strcpy( filename, "*" );
+    filename[0] = '*'; filename[1] = '\0';
 
     if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
                      "Software\\Wine\\Wine\\Config\\wine", 
@@ -471,11 +472,11 @@ DOSCONF *DOSCONF_GetConfig(void)
         DWORD type;
         DWORD count = sizeof(filename);
 
-        RegQueryValueExA(hkey, "config.sys", 0, &type, filename, &count);
+        RegQueryValueExW(hkey, configW, 0, &type, (LPBYTE)filename, &count);
         RegCloseKey(hkey);
     }
 
-    if (strcmp(filename, "*") && *filename != '\0')
+    if ((filename[0] != '*' || filename[1] != '\0') && *filename != '\0')
     {
         CHAR fullname[MAX_PATH];
 
@@ -492,7 +493,7 @@ DOSCONF *DOSCONF_GetConfig(void)
         {
             WARN( "Couldn't open config.sys file given as %s in"
                   " configuration file, section [wine]!\n", 
-                  filename );
+                  debugstr_w(filename) );
         }
     }
 

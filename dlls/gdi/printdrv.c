@@ -511,6 +511,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     else
     {
 	char buffer[MAX_PATH];
+        WCHAR psCmdPW[MAX_PATH];
 
         TRACE("Just assume it's a file\n");
 
@@ -518,7 +519,8 @@ static int CreateSpoolFile(LPCSTR pszOutput)
          * The file name can be dos based, we have to find its
          * Unix correspondant file name
          */
-	wine_get_unix_file_name(psCmdP, buffer, sizeof(buffer));
+        MultiByteToWideChar(CP_ACP, 0, psCmdP, -1, psCmdPW, MAX_PATH);
+	wine_get_unix_file_name(psCmdPW, buffer, sizeof(buffer));
 
         if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
         {
