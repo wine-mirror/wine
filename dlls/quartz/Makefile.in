@@ -29,6 +29,7 @@ C_SRCS = \
 	filesink.c \
 	fmap.c \
 	ifgraph.c \
+	ijgdec.c \
 	imcntl.c \
 	imfilter.c \
 	impos.c \

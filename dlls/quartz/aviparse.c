@@ -141,7 +141,7 @@ static HRESULT CAVIParseImpl_ParseStreamList(
 	if ( hr == S_OK )
 	{
 		FIXME( "'indx' has been detected - not implemented now!\n" );
-		return E_FAIL;
+		/*return E_FAIL;*/
 	}
 
 	return NOERROR;
