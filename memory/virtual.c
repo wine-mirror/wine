@@ -1146,7 +1146,15 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
 	    GetTempPath32A(260,buf);
 	    GetTempFileName32A(buf,"wine",0,buf);
-	    hFile = CreateFile32A(buf,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_ALWAYS,0,0);
+	    hFile = CreateFile32A(
+	    	buf,
+		GENERIC_READ|GENERIC_WRITE,
+	    	FILE_SHARE_READ|FILE_SHARE_WRITE,/* so we can reuse the tmpfn */
+		NULL,
+		OPEN_ALWAYS,
+		0,
+		0
+	    );
 	    /* FIXME: bad hack to avoid lots of leftover tempfiles */
 	    DeleteFile32A(buf); 
 	    if (hFile == INVALID_HANDLE_VALUE32)
