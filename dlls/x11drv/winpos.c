@@ -1316,15 +1316,6 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             if (wasVisible) goto END;
 
 	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
-
-	    /*
-	     * ShowWindow has a little peculiar behavior that if the
-	     * window is already the topmost window, it will not
-	     * activate it.
-	     */
-	    if (GetTopWindow(NULL)==hwnd && (wasVisible || GetActiveWindow() == hwnd))
-	      swp |= SWP_NOACTIVATE;
-
 	    break;
 
 	case SW_SHOWNOACTIVATE:
