@@ -34,48 +34,10 @@
 #include "mmreg.h"
 #include "dxerr9.h"
 
-static const unsigned int formats[][3]={
-    { 8000,  8, 1},
-    { 8000,  8, 2},
-    { 8000, 16, 1},
-    { 8000, 16, 2},
-    {11025,  8, 1},
-    {11025,  8, 2},
-    {11025, 16, 1},
-    {11025, 16, 2},
-    {22050,  8, 1},
-    {22050,  8, 2},
-    {22050, 16, 1},
-    {22050, 16, 2},
-    {44100,  8, 1},
-    {44100,  8, 2},
-    {44100, 16, 1},
-    {44100, 16, 2},
-    {48000,  8, 1},
-    {48000,  8, 2},
-    {48000, 16, 1},
-    {48000, 16, 2},
-    {96000,  8, 1},
-    {96000,  8, 2},
-    {96000, 16, 1},
-    {96000, 16, 2}
-};
-#define NB_FORMATS (sizeof(formats)/sizeof(*formats))
+#include "dsound_test.h"
 
 #define NOTIFICATIONS    5
 
-static void init_format(WAVEFORMATEX* wfx, int format, int rate, int depth, int channels)
-{
-    wfx->wFormatTag=format;
-    wfx->nChannels=channels;
-    wfx->wBitsPerSample=depth;
-    wfx->nSamplesPerSec=rate;
-    wfx->nBlockAlign=wfx->nChannels*wfx->wBitsPerSample/8;
-    if (wfx->nBlockAlign==0)	/* align compressed formats to byte boundry */
-	wfx->nBlockAlign=1;
-    wfx->nAvgBytesPerSec=wfx->nSamplesPerSec*wfx->nChannels*wfx->wBitsPerSample/8;
-    wfx->cbSize=0;
-}
 
 static char * format_string(WAVEFORMATEX* wfx)
 {

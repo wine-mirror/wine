@@ -1,5 +1,6 @@
 Makefile
 capture.ok
+ds3d.ok
 dsound.ok
 propset.ok
 testlist.c

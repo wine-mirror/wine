@@ -8,6 +8,7 @@ EXTRALIBS = -ldxguid -luuid -ldxerr9
 
 CTESTS = \
 	capture.c \
+	ds3d.c \
 	dsound.c \
 	propset.c
 
