@@ -409,9 +409,11 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_RestoreDisplayMode(LPDIRECTDRAW2 ifac
 
 static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
     ICOM_THIS(IDirectDraw2Impl,iface);
+    DDPRIVATE(This);
     TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
+      VirtualFree(ddpriv->fb_addr, 0, MEM_RELEASE);
       TSXF86DGADirectVideo(display,DefaultScreen(display),0);
       if (This->d.window && GetPropA(This->d.window,ddProp))
 	DestroyWindow(This->d.window);

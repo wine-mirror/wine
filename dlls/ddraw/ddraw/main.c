@@ -547,10 +547,11 @@ HRESULT common_off_screen_CreateSurface(
 	ERR("Creates a surface that is already allocated : assuming this is an application bug !\n");
 
     lpdsf->s.surface_desc.dwFlags |= DDSD_PITCH|DDSD_LPSURFACE;
-    lpdsf->s.surface_desc.u1.lpSurface =(LPBYTE)HeapAlloc(
-	GetProcessHeap(),
-	0,
-	lpdsf->s.surface_desc.dwWidth * lpdsf->s.surface_desc.dwHeight * bpp
+    lpdsf->s.surface_desc.u1.lpSurface =(LPBYTE)VirtualAlloc(
+	NULL,
+	lpdsf->s.surface_desc.dwWidth * lpdsf->s.surface_desc.dwHeight * bpp,
+	MEM_RESERVE | MEM_COMMIT,
+	PAGE_READWRITE
     );
     lpdsf->s.surface_desc.lPitch = lpdsf->s.surface_desc.dwWidth * bpp;
     return DD_OK;

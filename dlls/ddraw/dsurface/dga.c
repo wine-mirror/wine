@@ -22,6 +22,14 @@ DEFAULT_DEBUG_CHANNEL(ddraw);
 #define DPPRIVATE(x) dga_dp_private *dppriv = ((dga_dp_private*)(x)->private)
 #define DSPRIVATE(x) dga_ds_private *dspriv = ((dga_ds_private*)(x)->private)
 
+static BYTE DGA_TouchSurface(LPDIRECTDRAWSURFACE4 iface)
+{
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    /* if the DIB section is in GdiMod state, we must
+     * touch the surface to get any updates from the DIB */
+    return *(BYTE*)(This->s.surface_desc.u1.lpSurface);
+}
+
 /******************************************************************************
  *		IDirectDrawSurface methods
  *
@@ -41,6 +49,8 @@ HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Flip(
     LPBYTE		surf;
 
     TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
+
+    DGA_TouchSurface(iface);
     iflipto = _common_find_flipto(This,iflipto);
 
     /* and flip! */
@@ -107,7 +117,7 @@ ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
     IDirectDraw2_Release((IDirectDraw2*)This->s.ddraw);
     /* clear out of surface list */
     if (ddpriv->fb_height == -1)
-	HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
+	VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
     else
 	ddpriv->vpmask &= ~(1<<(dspriv->fb_height/ddpriv->fb_height));
 
@@ -122,6 +132,18 @@ ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
 	IDirectDrawClipper_Release(This->s.lpClipper);
     HeapFree(GetProcessHeap(),0,This);
     return S_OK;
+}
+
+HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Unlock(
+    LPDIRECTDRAWSURFACE4 iface,LPVOID surface
+) {
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    TRACE("(%p)->Unlock(%p)\n",This,surface);
+
+    /* in case this was called from ReleaseDC */
+    DGA_TouchSurface(iface);
+
+    return DD_OK;
 }
 
 ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt = 
@@ -159,7 +181,7 @@ ICOM_VTABLE(IDirectDrawSurface4) dga_dds4vt =
     IDirectDrawSurface4Impl_SetColorKey,
     IDirectDrawSurface4Impl_SetOverlayPosition,
     DGA_IDirectDrawSurface4Impl_SetPalette,
-    IDirectDrawSurface4Impl_Unlock,
+    DGA_IDirectDrawSurface4Impl_Unlock,
     IDirectDrawSurface4Impl_UpdateOverlay,
     IDirectDrawSurface4Impl_UpdateOverlayDisplay,
     IDirectDrawSurface4Impl_UpdateOverlayZOrder,

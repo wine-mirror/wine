@@ -30,6 +30,12 @@ DEFAULT_DEBUG_CHANNEL(ddraw);
 #define DPPRIVATE(x) x11_dp_private *dppriv = ((x11_dp_private*)(x)->private)
 #define DSPRIVATE(x) x11_ds_private *dspriv = ((x11_ds_private*)(x)->private)
 
+static BYTE Xlib_TouchData(LPVOID data)
+{
+    /* this is a function so it doesn't get optimized out */
+    return *(BYTE*)data;
+}
+
 /******************************************************************************
  *		IDirectDrawSurface methods
  *
@@ -126,6 +132,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
 	X11DRV_EVENT_WaitShmCompletions( ddpriv->drawable );
     }
 #endif
+
     return DD_OK;
 }
 
@@ -140,6 +147,9 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 				   This->s.surface_desc.lPitch,
 				   This->s.palette);
 
+  /* if the DIB section is in GdiMod state, we must
+   * touch the surface to get any updates from the DIB */
+  Xlib_TouchData(dspriv->image->data);
 #ifdef HAVE_LIBXXSHM
     if (ddpriv->xshm_active) {
 /*
@@ -321,7 +331,7 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
     if (dspriv->image != NULL) {
 	if (This->s.ddraw->d.pixel_convert != NULL) {
 	    /* In pixel conversion mode, there are 2 buffers to release. */
-	    HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
+	    VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
 
 #ifdef HAVE_LIBXXSHM
 	    if (ddpriv->xshm_active) {
@@ -340,19 +350,20 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
 
 #ifdef HAVE_LIBXXSHM
 	    if (ddpriv->xshm_active) {
+		VirtualFree(dspriv->image->data, 0, MEM_RELEASE);
 		TSXShmDetach(display, &(dspriv->shminfo));
 		TSXDestroyImage(dspriv->image);
 		shmdt(dspriv->shminfo.shmaddr);
 	    } else
 #endif
 	    {
-		HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
+		VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
 		TSXDestroyImage(dspriv->image);
 	    }
 	}
 	dspriv->image = 0;
     } else
-	HeapFree(GetProcessHeap(),0,This->s.surface_desc.u1.lpSurface);
+	VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
 
     if (This->s.palette)
 	IDirectDrawPalette_Release((IDirectDrawPalette*)This->s.palette);

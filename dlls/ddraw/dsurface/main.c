@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #include "debugtools.h"
+#include "bitmap.h"
 #include "ddraw_private.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw);
@@ -675,8 +676,9 @@ HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lph
     DDSURFACEDESC desc;
     BITMAPINFO *b_info;
     UINT usage;
+    HDC ddc;
 
-    FIXME("(%p)->GetDC(%p)\n",This,lphdc);
+    TRACE("(%p)->GetDC(%p)\n",This,lphdc);
 
     /* Creates a DIB Section of the same size / format as the surface */
     IDirectDrawSurface4_Lock(iface,NULL,&desc,0,0);
@@ -702,7 +704,7 @@ HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lph
 
 	b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	b_info->bmiHeader.biWidth = desc.dwWidth;
-	b_info->bmiHeader.biHeight = desc.dwHeight;
+	b_info->bmiHeader.biHeight = -desc.dwHeight;
 	b_info->bmiHeader.biPlanes = 1;
 	b_info->bmiHeader.biBitCount = desc.ddpfPixelFormat.u.dwRGBBitCount;
 #if 0
@@ -760,16 +762,19 @@ HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lph
 	    }
 	    break;
 	}
-	This->s.DIBsection = CreateDIBSection(BeginPaint(This->s.ddraw->d.mainWindow,&This->s.ddraw->d.ps),
+	ddc = CreateDCA("DISPLAY",NULL,NULL,NULL);
+	This->s.DIBsection = ddc ? DIB_CreateDIBSection(ddc,
 	    b_info,
 	    usage,
 	    &(This->s.bitmap_data),
 	    0,
-	    0
-	);
-	EndPaint(This->s.ddraw->d.mainWindow,&This->s.ddraw->d.ps);
+	    (DWORD)desc.u1.lpSurface,
+	    desc.lPitch
+	) : 0;
 	if (!This->s.DIBsection) {
 		ERR("CreateDIBSection failed!\n");
+		if (ddc) DeleteDC(ddc);
+		HeapFree(GetProcessHeap(), 0, b_info);
 		return E_FAIL;
 	}
 	TRACE("DIBSection at : %p\n", This->s.bitmap_data);
@@ -778,19 +783,26 @@ HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lph
 	HeapFree(GetProcessHeap(), 0, b_info);
 
 	/* Create the DC */
-	This->s.hdc = CreateCompatibleDC(0);
+	This->s.hdc = CreateCompatibleDC(ddc);
 	This->s.holdbitmap = SelectObject(This->s.hdc, This->s.DIBsection);
+
+	if (ddc) DeleteDC(ddc);
     }
 
-    /* Copy our surface in the DIB section */
-    if ((GET_BPP(desc) * desc.dwWidth) == desc.lPitch)
-	memcpy(This->s.bitmap_data,desc.u1.lpSurface,desc.lPitch*desc.dwHeight);
-    else
-	/* TODO */
-	FIXME("This case has to be done :/\n");
+    if (This->s.bitmap_data != desc.u1.lpSurface) {
+        FIXME("DIBSection not created for frame buffer, reverting to old code\n");
+	/* Copy our surface in the DIB section */
+	if ((GET_BPP(desc) * desc.dwWidth) == desc.lPitch)
+	    memcpy(This->s.bitmap_data,desc.u1.lpSurface,desc.lPitch*desc.dwHeight);
+	else
+	    /* TODO */
+	    FIXME("This case has to be done :/\n");
+    }
 
-    TRACE("HDC : %08lx\n", (DWORD) This->s.hdc);
-    *lphdc = This->s.hdc;
+    if (lphdc) {
+	TRACE("HDC : %08lx\n", (DWORD) This->s.hdc);
+	*lphdc = This->s.hdc;
+    }
 
     return DD_OK;
 }
@@ -798,14 +810,17 @@ HRESULT WINAPI IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lph
 HRESULT WINAPI IDirectDrawSurface4Impl_ReleaseDC(LPDIRECTDRAWSURFACE4 iface,HDC hdc) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
 
-    FIXME("(%p)->(0x%08lx),stub!\n",This,(long)hdc);
-    TRACE( "Copying DIBSection at : %p\n", This->s.bitmap_data);
-    /* Copy the DIB section to our surface */
-    if ((GET_BPP(This->s.surface_desc) * This->s.surface_desc.dwWidth) == This->s.surface_desc.lPitch) {
-	memcpy(This->s.surface_desc.u1.lpSurface, This->s.bitmap_data, This->s.surface_desc.lPitch * This->s.surface_desc.dwHeight);
-    } else {
-	/* TODO */
-	FIXME("This case has to be done :/\n");
+    TRACE("(%p)->(0x%08lx)\n",This,(long)hdc);
+
+    if (This->s.bitmap_data != This->s.surface_desc.u1.lpSurface) {
+	TRACE( "Copying DIBSection at : %p\n", This->s.bitmap_data);
+	/* Copy the DIB section to our surface */
+	if ((GET_BPP(This->s.surface_desc) * This->s.surface_desc.dwWidth) == This->s.surface_desc.lPitch) {
+	    memcpy(This->s.surface_desc.u1.lpSurface, This->s.bitmap_data, This->s.surface_desc.lPitch * This->s.surface_desc.dwHeight);
+	} else {
+	    /* TODO */
+	    FIXME("This case has to be done :/\n");
+	}
     }
     /* Unlock the surface */
     IDirectDrawSurface4_Unlock(iface,This->s.surface_desc.u1.lpSurface);

@@ -146,6 +146,7 @@ static HRESULT WINAPI DGA2_IDirectDrawImpl_SetDisplayMode(
     } else {
       TRACE("Using mode number %d\n", mode_to_use);
       
+      VirtualFree(ddpriv->DGA.fb_addr, 0, MEM_RELEASE);
       TSXDGACloseFramebuffer(display, DefaultScreen(display));
       
       if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
@@ -155,6 +156,7 @@ static HRESULT WINAPI DGA2_IDirectDrawImpl_SetDisplayMode(
       
       /* Initialize the frame buffer */
       _DGA2_Initialize_FrameBuffer(This, mode_to_use);
+      VirtualAlloc(ddpriv->DGA.fb_addr, ddpriv->DGA.fb_memsize, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
       
       /* Re-get (if necessary) the DGA events */
       TSXDGASelectInput(display, DefaultScreen(display),
@@ -226,6 +228,7 @@ static ULONG WINAPI DGA2_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 
     if (!--(This->ref)) {
       TRACE("Closing access to the FrameBuffer\n");
+      VirtualFree(ddpriv->DGA.fb_addr, 0, MEM_RELEASE);
       TSXDGACloseFramebuffer(display, DefaultScreen(display));
       TRACE("Going back to normal X mode of operation\n");
       TSXDGASetMode(display, DefaultScreen(display), 0);

@@ -245,15 +245,18 @@ static XImage *create_xshmimage(
 
     if (This->d.pixel_convert != NULL) {
 	int bpp = PFGET_BPP(This->d.directdraw_pixelformat);
-	lpdsf->s.surface_desc.u1.lpSurface = HeapAlloc(
-	    GetProcessHeap(),
-	    HEAP_ZERO_MEMORY,
+	lpdsf->s.surface_desc.u1.lpSurface = VirtualAlloc(
+	    NULL,
 	    lpdsf->s.surface_desc.dwWidth *
 	    lpdsf->s.surface_desc.dwHeight *
-	    bpp
+	    bpp,
+	    MEM_RESERVE | MEM_COMMIT,
+	    PAGE_READWRITE
 	);
-    } else
+    } else {
 	lpdsf->s.surface_desc.u1.lpSurface = img->data;
+	VirtualAlloc(img->data, img->bytes_per_line * img->height, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
+    }
     return img;
 }
 #endif /* HAVE_LIBXXSHM */
@@ -271,12 +274,13 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
     if (img == NULL) {
 #endif
     /* Allocate surface memory */
-	lpdsf->s.surface_desc.u1.lpSurface = HeapAlloc(
-	    GetProcessHeap(),
-	    HEAP_ZERO_MEMORY,
+	lpdsf->s.surface_desc.u1.lpSurface = VirtualAlloc(
+	    NULL,
 	    lpdsf->s.surface_desc.dwWidth *
 	    lpdsf->s.surface_desc.dwHeight *
-	    bpp
+	    bpp,
+	    MEM_RESERVE | MEM_COMMIT,
+	    PAGE_READWRITE
 	);
 
 	if (This->d.pixel_convert != NULL)

@@ -155,6 +155,9 @@ DGA_Create( LPDIRECTDRAW *lplpDD ) {
     dgpriv->fb_memsize	= memsize;
     dgpriv->vpmask		= 0;
 
+    /* Register frame buffer with the kernel, it is a potential DIB section */
+    VirtualAlloc(dgpriv->fb_addr, dgpriv->fb_memsize, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
+
     /* The cast is because DGA2's install colormap does not return a value whereas
        DGA1 version does */
     dgpriv->InstallColormap = (void (*)(Display *, int, Colormap)) TSXF86DGAInstallColormap;

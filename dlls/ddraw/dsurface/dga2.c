@@ -21,6 +21,14 @@ DEFAULT_DEBUG_CHANNEL(ddraw);
 #define DPPRIVATE(x) dga2_dp_private *dppriv = ((dga2_dp_private*)(x)->private)
 #define DSPRIVATE(x) dga2_ds_private *dspriv = ((dga2_ds_private*)(x)->private)
 
+static BYTE DGA2_TouchSurface(LPDIRECTDRAWSURFACE4 iface)
+{   
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    /* if the DIB section is in GdiMod state, we must
+     * touch the surface to get any updates from the DIB */
+    return *(BYTE*)(This->s.surface_desc.u1.lpSurface);
+}
+
 HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_Flip(
     LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
 ) {
@@ -32,6 +40,8 @@ HRESULT WINAPI DGA2_IDirectDrawSurface4Impl_Flip(
     LPBYTE	surf;
 
     TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
+
+    DGA2_TouchSurface(iface);
     iflipto = _common_find_flipto(This,iflipto);
 
     /* and flip! */
@@ -94,7 +104,7 @@ ICOM_VTABLE(IDirectDrawSurface4) dga2_dds4vt =
     IDirectDrawSurface4Impl_SetColorKey,
     IDirectDrawSurface4Impl_SetOverlayPosition,
     DGA_IDirectDrawSurface4Impl_SetPalette,
-    IDirectDrawSurface4Impl_Unlock,
+    DGA_IDirectDrawSurface4Impl_Unlock,
     IDirectDrawSurface4Impl_UpdateOverlay,
     IDirectDrawSurface4Impl_UpdateOverlayDisplay,
     IDirectDrawSurface4Impl_UpdateOverlayZOrder,

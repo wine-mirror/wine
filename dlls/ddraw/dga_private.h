@@ -33,6 +33,8 @@ typedef struct dga_ds_private {
 /* For usage in DGA2 */
 extern ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) ;
 extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWPALETTE pal) ;
+extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Unlock(LPDIRECTDRAWSURFACE4 iface,LPVOID surface) ;
+
 extern HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_no_VT(LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,
 							       LPDIRECTDRAWSURFACE *lpdsf,IUnknown *lpunk) ;
 

@@ -156,6 +156,9 @@ DGA2_Create( LPDIRECTDRAW *lplpDD ) {
     
     /* Initialize the frame buffer */
     _DGA2_Initialize_FrameBuffer(ddraw, mode_to_use);
+
+    /* Register frame buffer with the kernel, it is as a potential DIB section */
+    VirtualAlloc(dgpriv->DGA.fb_addr, dgpriv->DGA.fb_memsize, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
     
     /* Set the input handling for relative mouse movements */
     X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_RELATIVE);
