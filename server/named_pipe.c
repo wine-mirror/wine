@@ -91,6 +91,7 @@ struct connect_wait
 {
     struct list          entry;      /* entry in named pipe wait list */
     struct wait_info     wait;
+    struct timeout_user *timeout_user;
 };
 
 struct named_pipe
@@ -223,17 +224,30 @@ static void set_waiter( struct wait_info *wait, void *func, void *ov )
     wait->overlapped = ov;
 }
 
-static void notify_connect_waiters( struct named_pipe *pipe, unsigned int status )
+static void notify_connect_waiter( struct connect_wait *waiter, unsigned int status )
+{
+    notify_waiter( &waiter->wait, status );
+    list_remove( &waiter->entry );
+    free( waiter );
+}
+
+static void notify_all_connect_waiters( struct named_pipe *pipe, unsigned int status )
 {
     struct list *ptr;
 
     while ((ptr = list_head( &pipe->waiters )) != NULL)
     {
         struct connect_wait *waiter = LIST_ENTRY( ptr, struct connect_wait, entry );
-        notify_waiter( &waiter->wait, status );
-        list_remove( &waiter->entry );
-        free( waiter );
+        if (waiter->timeout_user) remove_timeout_user( waiter->timeout_user );
+        notify_connect_waiter( waiter, status );
     }
+}
+
+/* pipe connect wait timeout */
+static void connect_timeout( void *ptr )
+{
+    struct connect_wait *waiter = (struct connect_wait *)ptr;
+    notify_connect_waiter( waiter, STATUS_TIMEOUT );
 }
 
 static void named_pipe_destroy( struct object *obj)
@@ -242,18 +256,31 @@ static void named_pipe_destroy( struct object *obj)
 
     assert( list_empty( &pipe->servers ) );
     assert( !pipe->instances );
-    notify_connect_waiters( pipe, STATUS_HANDLES_CLOSED );
+    notify_all_connect_waiters( pipe, STATUS_HANDLES_CLOSED );
 }
 
-static void queue_connect_waiter( struct named_pipe *pipe, void *func, void *overlapped )
+static void queue_connect_waiter( struct named_pipe *pipe, void *func,
+                                  void *overlapped, unsigned int *timeout )
 {
     struct connect_wait *waiter;
 
     waiter = mem_alloc( sizeof(*waiter) );
     if( waiter )
     {
+        struct timeval tv;
+
         set_waiter( &waiter->wait, func, overlapped );
         list_add_tail( &pipe->waiters, &waiter->entry );
+
+        if (timeout)
+        {
+            gettimeofday( &tv, 0 );
+            add_timeout( &tv, *timeout );
+            waiter->timeout_user = add_timeout_user( &tv, connect_timeout,
+                                                     waiter );
+        }
+        else
+            waiter->timeout_user = NULL;
     }
 }
 
@@ -695,7 +722,7 @@ DECL_HANDLER(connect_named_pipe)
         assert( !server->fd );
         server->state = ps_wait_open;
         set_waiter( &server->wait, req->func, req->overlapped );
-        notify_connect_waiters( server->pipe, STATUS_SUCCESS );
+        notify_all_connect_waiters( server->pipe, STATUS_SUCCESS );
         break;
     case ps_connected_server:
         assert( server->fd );
@@ -735,7 +762,18 @@ DECL_HANDLER(wait_named_pipe)
         release_object( server );
     }
     else
-        queue_connect_waiter( pipe, req->func, req->overlapped );
+    {
+        unsigned int timeout;
+        if (req->timeout == NMPWAIT_USE_DEFAULT_WAIT)
+            timeout = pipe->timeout;
+        else
+            timeout = req->timeout;
+
+        if (req->timeout == NMPWAIT_WAIT_FOREVER)
+            queue_connect_waiter( pipe, req->func, req->overlapped, NULL );
+        else
+            queue_connect_waiter( pipe, req->func, req->overlapped, &timeout );
+    }
 
     release_object( pipe );
 }
