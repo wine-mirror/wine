@@ -30,14 +30,6 @@ extern void TSXDGASetViewport(Display*, int, int, int, int);
 extern void TSXDGAInstallColormap(Display*, int, Colormap);
 extern Colormap TSXDGACreateColormap(Display*, int, XDGADevice*, int);
 extern void TSXDGASelectInput(Display*, int, long);
-extern void TSXDGAFillRectangle(Display*, int, int, int, unsigned int, unsigned int, unsigned long);
-extern void TSXDGACopyArea(Display*, int, int, int, unsigned int, unsigned int, int, int);
-extern void TSXDGACopyTransparentArea(Display*, int, int, int, unsigned int, unsigned int, int, int, unsigned long);
-extern int TSXDGAGetViewportStatus(Display*, int);
-extern void TSXDGASync(Display*, int);
-extern Bool TSXDGASetClientVersion(Display*);
-extern void TSXDGAChangePixmapMode(Display*, int, int*, int*, int);
-extern void TSXDGAKeyEventToXKeyEvent(XDGAKeyEvent*, XKeyEvent*);
 
 #endif /* defined(HAVE_LIBXXF86DGA2) */
 

@@ -23,7 +23,10 @@
 
 #include "ts_xlib.h"
 #include "ts_xutil.h"
-#include "ts_shape.h"
+#ifdef HAVE_LIBXSHAPE
+#include <X11/IntrinsicP.h>
+#include <X11/extensions/shape.h>
+#endif HAVE_LIBXSHAPE
 
 #include "winbase.h"
 #include "wingdi.h"
@@ -1649,8 +1652,10 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
         {
             if (!hrgn)
             {
-                TSXShapeCombineMask( display, data->whole_window,
-                                     ShapeBounding, 0, 0, None, ShapeSet );
+                wine_tsx11_lock();
+                XShapeCombineMask( display, data->whole_window,
+                                   ShapeBounding, 0, 0, None, ShapeSet );
+                wine_tsx11_unlock();
             }
             else
             {
@@ -1691,9 +1696,11 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
                     }
 
                     /* shape = non-rectangular windows (X11/extensions) */
-                    TSXShapeCombineRectangles( display, data->whole_window, ShapeBounding,
-                                               0, 0, aXRect,
-                                               pCurrRect - aXRect, ShapeSet, YXBanded );
+                    wine_tsx11_lock();
+                    XShapeCombineRectangles( display, data->whole_window, ShapeBounding,
+                                             0, 0, aXRect,
+                                             pCurrRect - aXRect, ShapeSet, YXBanded );
+                    wine_tsx11_unlock();
                     HeapFree(GetProcessHeap(), 0, aXRect );
                 }
                 HeapFree(GetProcessHeap(), 0, pRegionData);

@@ -25,7 +25,6 @@
 #include <X11/keysym.h>
 
 #include "ts_xlib.h"
-#include "ts_xresource.h"
 #include "ts_xutil.h"
 #ifdef HAVE_LIBXXF86DGA2
 #include "ts_xf86dga2.h"

@@ -29,7 +29,6 @@
 #include <X11/keysym.h>
 
 #include "ts_xlib.h"
-#include "ts_xresource.h"
 #include "ts_xutil.h"
 #ifdef HAVE_XKB
 #include <X11/XKBlib.h>

@@ -23,7 +23,7 @@
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 #ifdef HAVE_LIBXXSHM
-# include "ts_xshm.h"
+#include <X11/extensions/XShm.h>
 # ifdef HAVE_SYS_SHM_H
 #  include <sys/shm.h>
 # endif
@@ -5654,7 +5654,6 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
 {
     XImage *image;
 
-    wine_tsx11_lock();
     image = XShmCreateImage(gdi_display, visual, bpp, ZPixmap, NULL, shminfo, width, height);
     if (image)
     {
@@ -5674,7 +5673,6 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                 if (ok)
                 {
                     shmctl(shminfo->shmid, IPC_RMID, 0);
-                    wine_tsx11_unlock();
                     return image; /* Success! */
                 }
                 /* An error occured */
@@ -5686,7 +5684,6 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
         XDestroyImage(image);
         image = NULL;
     }
-    wine_tsx11_unlock();
     return image;
 }
 #endif /* HAVE_LIBXXSHM */
@@ -5812,8 +5809,9 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   /* Create XImage */
   if (dib && bmp)
   {
+      wine_tsx11_lock();
 #ifdef HAVE_LIBXXSHM
-      if (TSXShmQueryExtension(gdi_display) &&
+      if (XShmQueryExtension(gdi_display) &&
           (dib->image = X11DRV_XShmCreateImage( bm.bmWidth, effHeight,
                                                 bmp->bitmap.bmBitsPixel, &dib->shminfo )) )
       {
@@ -5825,6 +5823,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 #else
       dib->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
 #endif
+      wine_tsx11_unlock();
   }
 
   /* Clean up in case of errors */
@@ -5872,10 +5871,11 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
 
   if (dib->image)
   {
+      wine_tsx11_lock();
 #ifdef HAVE_LIBXXSHM
       if (dib->shminfo.shmid != -1)
       {
-          TSXShmDetach (gdi_display, &(dib->shminfo));
+          XShmDetach (gdi_display, &(dib->shminfo));
           XDestroyImage (dib->image);
           shmdt (dib->shminfo.shmaddr);
           dib->shminfo.shmid = -1;
@@ -5883,6 +5883,7 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
       else
 #endif
           XDestroyImage( dib->image );
+      wine_tsx11_unlock();
   }
 
   if (dib->colorMap)

@@ -30,7 +30,7 @@
 $X11_include_dir = "/usr/X11/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "XShm", "xf86dga", "xf86dga2", "xf86vmode", "shape", "xvideo");
+@dolist = ("Xlib", "Xutil", "xf86dga2", "xf86vmode");
 
 # First read list of wanted function names.
 
@@ -60,16 +60,9 @@ foreach $name (@dolist) {
     $pre_file = "#ifdef HAVE_X11_XLIB_H\n";
     $post_file = "#endif /* defined(HAVE_X11_XLIB_H) */\n";
     $inc_name = $name;
-    if($name eq "Xutil" || $name eq "Xresource" || $name eq "XShm") {
-	$x11_incl = "#include <X11/Xlib.h>\n";
+    if($name eq "Xutil") {
 	# For Xutil, we need X11/Xresource.h for XUniqueContext().
-	$x11_incl .= "#include <X11/Xresource.h>\n" if $name eq "Xutil";
-    }
-    if($name eq "xf86dga")  {
-    	$x11_incl = "#include <X11/Xlib.h>\n";
-	$extensions_dir = "extensions/";
-	$pre_file = "#ifdef HAVE_LIBXXF86DGA\n";
-	$post_file = "#endif /* defined(HAVE_LIBXXF86DGA) */\n";
+	$x11_incl = "#include <X11/Xlib.h>\n#include <X11/Xresource.h>\n";
     }
     if($name eq "xf86dga2")  {
     	$x11_incl = "#include <X11/Xlib.h>\n";
@@ -78,31 +71,12 @@ foreach $name (@dolist) {
 	$post_file = "#endif /* defined(HAVE_LIBXXF86DGA2) */\n";
 	$inc_name = "xf86dga";
     }
-    if($name eq "XShm") {
-	$extensions_dir = "extensions/";
-	$pre_file = "#ifdef HAVE_LIBXXSHM\n";
-	$post_file = "#endif /* defined(HAVE_LIBXXSHM) */\n";
-    }
     if($name eq "xf86vmode") {
      	$x11_incl = "#include <X11/Xlib.h>\n";
 	$extensions_dir = "extensions/";
 	$pre_file = "#include \"windef.h\"\n#ifdef HAVE_LIBXXF86VM\n#define XMD_H\n#include \"basetsd.h\"\n";
 	$post_file = "#endif /* defined(HAVE_LIBXXF86VM) */\n";
     }
-    if($name eq "shape") {
-        $extensions_dir = "extensions/";
-        $pre_file = "#ifdef HAVE_LIBXSHAPE\n#include <X11/IntrinsicP.h>\n";
-        $post_file = "#endif /* defined(HAVE_LIBXSHAPE) */\n";
-        $inc_name = "shape";
-    }
-    if($name eq "xvideo")  {
-    	$x11_incl = "#include <X11/Xlib.h>\n#include <X11/extensions/Xv.h>\n#include <X11/extensions/XShm.h>\n";
-	$extensions_dir = "extensions/";
-	$pre_file = "#ifdef HAVE_XVIDEO\n";
-	$post_file = "#endif /* defined(HAVE_XVIDEO) */\n";
-	$inc_name = "Xvlib";
-    }
-
 
     print OUTH <<END;
 /*
@@ -143,82 +117,7 @@ $x11_incl#include <X11/$extensions_dir$inc_name.h>
 
 END
 
-    if ($name eq "XShm") {
-	output_fn("XShmQueryExtension", "Bool",
-		  "Display *", "Display *a0", "a0");
-	output_fn("XShmQueryVersion", "Bool",
-		  "Display *, int *, int *, Bool *",
-		  "Display *a0, int *a1, int *a2, Bool *a3", "a0, a1, a2, a3");
-	output_fn("XShmPixmapFormat", "int",
-		  "Display *", "Display *a0", "a0");
-	output_fn("XShmAttach", Status,
-		  "Display *, XShmSegmentInfo *",
-		  "Display *a0, XShmSegmentInfo *a1", "a0, a1");
-	output_fn("XShmDetach", Status,
-		  "Display *, XShmSegmentInfo *",
-		  "Display *a0, XShmSegmentInfo *a1", "a0, a1");
-	output_fn("XShmPutImage", Status,
-		  "Display *, Drawable, GC, XImage *, int, int, int, int, unsigned int, unsigned int, Bool",
-		  "Display *a0, Drawable a1, GC a2, XImage *a3, int a4, int a5, int a6, int a7, unsigned int a8, unsigned int a9, Bool a10", "a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10");
-	output_fn("XShmGetImage", Status,
-		  "Display *, Drawable, XImage *, int, int, unsigned long",
-		  "Display *a0, Drawable a1, XImage *a2, int a3, int a4, unsigned long a5",
-		  "a0, a1, a2, a3, a4, a5");
-	output_fn("XShmCreateImage", "XImage *",
-		  "Display *, Visual *, unsigned int, int, char *, XShmSegmentInfo *, unsigned int, unsigned int",
-		  "Display *a0, Visual *a1, unsigned int a2, int a3, char *a4, XShmSegmentInfo *a5, unsigned int a6, unsigned int a7",
-		  "a0, a1, a2, a3, a4, a5, a6, a7");
-	output_fn("XShmCreatePixmap", "Pixmap",
-		  "Display *, Drawable, char *, XShmSegmentInfo *, unsigned int, unsigned int, unsigned int",
-		  "Display *a0, Drawable a1, char *a2, XShmSegmentInfo *a3, unsigned int a4, unsigned int a5, unsigned int a6",
-		  "a0, a1, a2, a3, a4, a5, a6");
-    } elsif($name eq "xf86dga") {
-    	output_fn("XF86DGAQueryVersion",Bool,
-		"Display*,int*,int*",
-		"Display*a0,int*a1,int*a2",
-		"a0,a1,a2"
-	);
-    	output_fn("XF86DGAQueryExtension",Bool,
-		"Display*,int*,int*",
-		"Display*a0,int*a1,int*a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86DGAGetVideo",Status,
-		"Display*,int,char**,int*,int*,int*",
-		"Display*a0,int a1,char**a2,int*a3,int*a4,int*a5",
-		"a0,a1,a2,a3,a4,a5"
-	);
-	output_fn("XF86DGADirectVideo",Status,
-		"Display*,int,int",
-		"Display*a0,int a1,int a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86DGAGetViewPortSize",Status,
-		"Display*,int,int*,int*",
-		"Display*a0,int a1,int *a2,int *a3",
-		"a0,a1,a2,a3"
-	);
-	output_fn("XF86DGASetViewPort",Status,
-		"Display*,int,int,int",
-		"Display*a0,int a1,int a2,int a3",
-		"a0,a1,a2,a3"
-	);
-	output_fn("XF86DGAInstallColormap",Status,
-		"Display*,int,Colormap",
-		"Display*a0,int a1,Colormap a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86DGAQueryDirectVideo",Status,
-		"Display*,int,int*",
-		"Display*a0,int a1,int *a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86DGAViewPortChanged",Status,
-		"Display*,int,int",
-		"Display*a0,int a1,int a2",
-		"a0,a1,a2"
-	);
-    } elsif($name eq "xf86dga2") {
+    if($name eq "xf86dga2") {
     	output_fn_short("Bool", "XDGAQueryVersion", "Display*" ,"int*","int*");
     	output_fn_short("Bool", "XDGAQueryExtension", "Display*" ,"int*","int*");
     	output_fn_short("XDGAMode*", "XDGAQueryModes", "Display*" ,"int", "int*");
@@ -229,38 +128,6 @@ END
     	output_fn_short("void", "XDGAInstallColormap", "Display*" , "int", "Colormap");
 	output_fn_short("Colormap", "XDGACreateColormap", "Display*" ,"int", "XDGADevice*", "int");
     	output_fn_short("void", "XDGASelectInput", "Display*" ,"int", "long");
-    	output_fn_short("void", "XDGAFillRectangle", "Display*" ,"int", "int", "int", "unsigned int", "unsigned int", "unsigned long");
-   	output_fn_short("void", "XDGACopyArea", "Display*" ,"int", "int", "int", "unsigned int", "unsigned int", "int", "int");
-   	output_fn_short("void", "XDGACopyTransparentArea", "Display*" ,"int", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned long");
-    	output_fn_short("int", "XDGAGetViewportStatus", "Display*" ,"int");
-    	output_fn_short("void", "XDGASync", "Display*" ,"int");
-    	output_fn_short("Bool", "XDGASetClientVersion", "Display*");
-    	output_fn_short("void", "XDGAChangePixmapMode", "Display*" ,"int", "int*", "int*", "int");
-	output_fn_short("void", "XDGAKeyEventToXKeyEvent", "XDGAKeyEvent*" ,"XKeyEvent*");
-    } elsif ($name eq "xvideo") {
-	output_fn_short("int", "XvQueryExtension", "Display*", "unsigned int*", "unsigned int*", "unsigned int*", "unsigned int*", "unsigned int*");
-	output_fn_short("int", "XvQueryAdaptors", "Display*", "Window", "unsigned int*", "XvAdaptorInfo**");
-	output_fn_short("int", "XvQueryEncodings", "Display*", "XvPortID", "unsigned int*", "XvEncodingInfo**");
-	output_fn_short("int", "XvPutVideo", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
-	output_fn_short("int", "XvPutStill", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
-	output_fn_short("int", "XvGetVideo", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
-	output_fn_short("int", "XvGetStill", "Display*", "XvPortID", "Drawable", "GC", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
-	output_fn_short("int", "XvStopVideo", "Display*", "XvPortID", "Drawable");
-	output_fn_short("int", "XvGrabPort", "Display*", "XvPortID", "Time");
-	output_fn_short("int", "XvUngrabPort", "Display*", "XvPortID", "Time");
-	output_fn_short("int", "XvSelectVideoNotify", "Display*", "Drawable", "Bool");
-	output_fn_short("int", "XvSelectPortNotify", "Display*", "XvPortID", "Bool");
-	output_fn_short("int", "XvSetPortAttribute", "Display*", "XvPortID", "Atom", "int");
-	output_fn_short("int", "XvGetPortAttribute", "Display*", "XvPortID", "Atom", "int*");
-	output_fn_short("int", "XvQueryBestSize", "Display*", "XvPortID", "Bool", "unsigned int", "unsigned int", "unsigned int", "unsigned int", "unsigned int*", "unsigned int*");
-	output_fn_short("XvAttribute*", "XvQueryPortAttributes", "Display*", "XvPortID", "int*");
-	output_fn_short("void", "XvFreeAdaptorInfo", "XvAdaptorInfo*");
-	output_fn_short("void", "XvFreeEncodingInfo", "XvEncodingInfo*");
-	output_fn_short("XvImageFormatValues *", "XvListImageFormats", "Display*", "XvPortID", "int*");
-	output_fn_short("XvImage *", "XvCreateImage", "Display*", "XvPortID", "int", "char*", "int", "int");
-	output_fn_short("int", "XvPutImage", "Display*", "XvPortID", "Drawable", "GC", "XvImage*", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int");
-	output_fn_short("int", "XvShmPutImage", "Display*", "XvPortID", "Drawable", "GC", "XvImage*", "int", "int", "unsigned int", "unsigned int", "int", "int", "unsigned int", "unsigned int", "Bool");
-output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", "char*", "int", "int", "XShmSegmentInfo*");
     } elsif($name eq "xf86vmode") {
     	output_fn("XF86VidModeQueryVersion",Bool,
 		"Display*,int*,int*",
@@ -282,31 +149,6 @@ output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", 
 		"Display*a0,int a1,int*a2,XF86VidModeModeInfo***a3",
 		"a0,a1,a2,a3"
 	);
-	output_fn("XF86VidModeAddModeLine",Bool,
-		"Display*,int,XF86VidModeModeInfo*,XF86VidModeModeInfo*",
-		"Display*a0,int a1,XF86VidModeModeInfo*a2,XF86VidModeModeInfo*a3",
-		"a0,a1,a2,a3"
-	);
-	output_fn("XF86VidModeDeleteModeLine",Bool,
-		"Display*,int,XF86VidModeModeInfo*",
-		"Display*a0,int a1,XF86VidModeModeInfo*a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86VidModeModModeLine",Bool,
-		"Display*,int,XF86VidModeModeLine*",
-		"Display*a0,int a1,XF86VidModeModeLine*a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86VidModeValidateModeLine",Status,
-		"Display*,int,XF86VidModeModeInfo*",
-		"Display*a0,int a1,XF86VidModeModeInfo*a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86VidModeSwitchMode",Bool,
-		"Display*,int,int",
-		"Display*a0,int a1,int a2",
-		"a0,a1,a2"
-	);
 	output_fn("XF86VidModeSwitchToMode",Bool,
 		"Display*,int,XF86VidModeModeInfo*",
 		"Display*a0,int a1,XF86VidModeModeInfo*a2",
@@ -316,16 +158,6 @@ output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", 
 		"Display*,int,int",
 		"Display*a0,int a1,int a2",
 		"a0,a1,a2"
-	);
-	output_fn("XF86VidModeGetMonitor",Bool,
-		"Display*,int,XF86VidModeMonitor*",
-		"Display*a0,int a1,XF86VidModeMonitor*a2",
-		"a0,a1,a2"
-	);
-	output_fn("XF86VidModeGetViewPort",Bool,
-		"Display*,int,int*,int*",
-		"Display*a0,int a1,int*a2,int*a3",
-		"a0,a1,a2,a3"
 	);
 	output_fn("XF86VidModeSetViewPort",Bool,
 		"Display*,int,int,int",
@@ -383,34 +215,9 @@ output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", 
       }
     }
 
-    if($name eq "Xlib") {
-	raw_output_fn("XSynchronize", "int (*r)(Display *)",
-		  "int (*TSXSynchronize(Display *, Bool))(Display *)",
-		  "int (*TSXSynchronize(Display *a0, Bool a1))(Display *)",
-		  "a0, a1");
-    } elsif($name eq "Xutil") {
+    if ($name eq "Xutil") {
 	output_fn("XDestroyImage", "int",
 		  "struct _XImage *", "struct _XImage *a0", "a0");
-	output_fn("XGetPixel", "unsigned long",
-		  "struct _XImage *, int, int",
-		  "struct _XImage *a0, int a1, int a2",
-		  "a0, a1, a2");
-	output_fn("XPutPixel", "int",
-		  "struct _XImage *, int, int, unsigned long",
-		  "struct _XImage *a0, int a1, int a2, unsigned long a3",
-		  "a0, a1, a2, a3");
-	output_fn("XSubImage", "struct _XImage *",
-		  "struct _XImage *, int, int, unsigned int, unsigned int",
-		  "struct _XImage *a0, int a1, int a2, unsigned int a3, unsigned int a4",
-		  "a0, a1, a2, a3, a4");
-	output_fn("XAddPixel", "int",
-		  "struct _XImage *, long",
-		  "struct _XImage *a0, long a1", "a0, a1");
-	output_fn("XUniqueContext", "XContext", "void", "void", "");
-	output_fn("XDeleteContext", "int",
-		  "Display*,XID,XContext",
-		  "Display*a0,XID a1,XContext a2",
-		  "a0,a1,a2");
     }
 
     print OUTH <<END;
