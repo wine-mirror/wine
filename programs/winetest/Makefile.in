@@ -47,6 +47,9 @@ TESTBINS = $(TESTS:%=%_test.exe$(DLLEXT))
 winetest.rc: maketest Makefile.in
 	$(SRCDIR)/maketest $(TESTBINS) > $@ || ( $(RM) $@ && exit 1 )
 
+revision.info:
+	(cd $(TOPSRCDIR); for file in dlls/*/tests/*.c; do rev=`cvs stat "$$file" | grep "Working" | awk '{print $$3}'`; echo "$$file:$$rev"; done) > $@ || ( $(RM) $@ && exit 1 )
+
 winetest.res: $(TESTBINS)
 
 clean::

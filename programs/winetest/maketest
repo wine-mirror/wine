@@ -15,6 +15,15 @@ do
     i=`expr $i + 1`
     echo "$i \"$test\""
 done
+
+if [ -f revision.info ]; then
+    i=0
+    for line in `cat revision.info`; do
+        i=`expr $i + 1`
+	echo "$i+30000 \"$line\""
+    done
+fi
+
 echo "}"
 
 i=0

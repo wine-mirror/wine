@@ -49,7 +49,14 @@ struct wine_test
     char *exename;
 };
 
+struct rev_info
+{
+    const char* file;
+    const char* rev;
+};
+
 static struct wine_test *wine_tests;
+static struct rev_info *rev_infos;
 
 static const char *wineloader;
 
@@ -113,6 +120,65 @@ void remove_dir (const char *dir)
     if (!RemoveDirectory (dir))
         report (R_WARNING, "Can't remove directory %s: error %d",
                 dir, GetLastError ());
+}
+
+const char* get_test_source_file(const char* test, const char* subtest)
+{
+    static const char* special_dirs[][2] = {
+	{ "gdi32", "gdi"}, { "kernel32", "kernel" },
+	{ "user32", "user" }, { "winspool.drv", "winspool" },
+	{ "ws2_32", "winsock" }, { 0, 0 }
+    };
+    static char buffer[MAX_PATH];
+    int i;
+
+    for (i = 0; special_dirs[i][0]; i++) {
+	if (strcmp(test, special_dirs[i][0]) == 0) {
+	    test = special_dirs[i][1];
+	    break;
+	}
+    }
+
+    snprintf(buffer, sizeof(buffer), "dlls/%s/tests/%s.c", test, subtest);
+    fprintf(stderr, "file=%s\n", buffer);
+    return buffer;
+}
+
+const char* get_file_rev(const char* file)
+{
+    const struct rev_info* rev;
+ 
+    for(rev = rev_infos; rev->file; rev++) {
+	fprintf(stderr, "  ?{%s:%s)\n", rev->file, rev->rev);
+	if (strcmp(rev->file, file) == 0) return rev->rev;
+    }
+
+    return "";
+}
+
+void extract_rev_infos ()
+{
+    char revinfo[256], *p;
+    int size = 0, i = 0, len;
+    HMODULE module = GetModuleHandle (NULL);
+
+    for (i = 0; TRUE; i++) {
+	if (i >= size) {
+	    size += 100;
+	    rev_infos = xrealloc(rev_infos, size);
+	}
+	memset(rev_infos + i, 0, sizeof(rev_infos[i]));
+
+        len = LoadStringA (module, i + 30000, revinfo, sizeof(revinfo));
+        if (len == 0) break; /* end of revision info */
+	if (len >= sizeof(revinfo)) 
+	    report (R_FATAL, "Revision info too long.");
+	if(!(p = strrchr(revinfo, ':')))
+	    report (R_FATAL, "Revision info malformed (i=%d)", i);
+	*p = 0;
+	rev_infos[i].file = strdup(revinfo);
+	rev_infos[i].rev = strdup(p + 1);
+    } while(1);
 }
 
 void* extract_rcdata (int id, DWORD* size)
@@ -236,9 +302,11 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
 int run_test (struct wine_test* test, const char* subtest)
 {
     int status;
-    const char *argv[] = {"wine", test->exename, subtest, NULL};
+    const char* argv[] = {"wine", test->exename, subtest, NULL};
+    const char* file = get_test_source_file(test->name, subtest);
+    const char* rev = get_file_rev(file);
 
-    xprintf ("%s:%s start\n", test->name, subtest);
+    xprintf ("%s:%s start %s %s\n", test->name, subtest, file, rev);
     if (test->is_elf)
         status = spawnvp (_P_WAIT, wineloader, argv);
     else
@@ -385,6 +453,9 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     char *logname = NULL;
     char *tag = NULL, *cp;
     const char *submit = NULL;
+
+    /* initialize the revision information first */
+    extract_rev_infos();
 
     cmdLine = mystrtok (cmdLine);
     while (cmdLine) {
