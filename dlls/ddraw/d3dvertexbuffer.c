@@ -109,7 +109,8 @@ HRESULT WINAPI
 Main_IDirect3DVertexBufferImpl_7_1T_Unlock(LPDIRECT3DVERTEXBUFFER7 iface)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
-    FIXME("(%p/%p)->(): stub!\n", This, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
+    /* Nothing to do */
     return DD_OK;
 }
 
@@ -124,7 +125,7 @@ Main_IDirect3DVertexBufferImpl_7_ProcessVertices(LPDIRECT3DVERTEXBUFFER7 iface,
                                                  DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
-    FIXME("(%p/%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx): stub!\n", This, iface, dwVertexOp, dwDestIndex, dwCount, lpSrcBuffer, dwSrcIndex, lpD3DDevice, dwFlags);
+    FIXME("(%p/%p)->(%08lx,%08lx,%08lx,%p,%08lx,%p,%08lx): stub!\n", This, iface, dwVertexOp, dwDestIndex, dwCount, lpSrcBuffer, dwSrcIndex, lpD3DDevice, dwFlags);    
     return DD_OK;
 }
 
@@ -132,8 +133,11 @@ HRESULT WINAPI
 Main_IDirect3DVertexBufferImpl_7_1T_GetVertexBufferDesc(LPDIRECT3DVERTEXBUFFER7 iface,
                                                         LPD3DVERTEXBUFFERDESC lpD3DVertexBufferDesc)
 {
+    DWORD size;
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
-    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lpD3DVertexBufferDesc);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DVertexBufferDesc);
+    size = (lpD3DVertexBufferDesc->dwSize < This->desc.dwSize) ? lpD3DVertexBufferDesc->dwSize : This->desc.dwSize;
+    memcpy(lpD3DVertexBufferDesc,&This->desc,size);
     return DD_OK;
 }
 
@@ -258,7 +262,7 @@ ICOM_VTABLE(IDirect3DVertexBuffer7) VTABLE_IDirect3DVertexBuffer7 =
     XCAST(ProcessVertices) Main_IDirect3DVertexBufferImpl_7_ProcessVertices,
     XCAST(GetVertexBufferDesc) Main_IDirect3DVertexBufferImpl_7_1T_GetVertexBufferDesc,
     XCAST(Optimize) Main_IDirect3DVertexBufferImpl_7_Optimize,
-    XCAST(ProcessVerticesStrided) Main_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided,
+    XCAST(ProcessVerticesStrided) Main_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
@@ -275,14 +279,14 @@ ICOM_VTABLE(IDirect3DVertexBuffer7) VTABLE_IDirect3DVertexBuffer7 =
 ICOM_VTABLE(IDirect3DVertexBuffer) VTABLE_IDirect3DVertexBuffer =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    XCAST(QueryInterface) Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
-    XCAST(AddRef) Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
-    XCAST(Release) Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
-    XCAST(Lock) Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
-    XCAST(Unlock) Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
+    XCAST(QueryInterface) Thunk_IDirect3DVertexBufferImpl_1_QueryInterface,
+    XCAST(AddRef) Thunk_IDirect3DVertexBufferImpl_1_AddRef,
+    XCAST(Release) Thunk_IDirect3DVertexBufferImpl_1_Release,
+    XCAST(Lock) Thunk_IDirect3DVertexBufferImpl_1_Lock,
+    XCAST(Unlock) Thunk_IDirect3DVertexBufferImpl_1_Unlock,
     XCAST(ProcessVertices) Main_IDirect3DVertexBufferImpl_1_ProcessVertices,
     XCAST(GetVertexBufferDesc) Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
-    XCAST(Optimize) Main_IDirect3DVertexBufferImpl_1_Optimize,
+    XCAST(Optimize) Main_IDirect3DVertexBufferImpl_1_Optimize
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)

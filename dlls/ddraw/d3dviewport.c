@@ -98,7 +98,7 @@ ULONG WINAPI
 Main_IDirect3DViewportImpl_3_2_1_AddRef(LPDIRECT3DVIEWPORT3 iface)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
+    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
     return ++(This->ref);
 }
 
@@ -106,7 +106,7 @@ ULONG WINAPI
 Main_IDirect3DViewportImpl_3_2_1_Release(LPDIRECT3DVIEWPORT3 iface)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
+    TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     if (!--(This->ref)) {
         HeapFree(GetProcessHeap(), 0, This);
 	return 0;
