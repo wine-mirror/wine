@@ -385,7 +385,8 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	    TRACE("MCI_STATUS_READY = %u\n", LOWORD(lpParms->dwReturn));
 	    break;
 	case MCI_STATUS_TIME_FORMAT:
-	    lpParms->dwReturn = MAKEMCIRESOURCE(wma->dwMciTimeFormat, wma->dwMciTimeFormat);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wma->dwMciTimeFormat,
+                                wma->dwMciTimeFormat + MCI_FORMAT_RETURN_BASE);
 	    TRACE("MCI_STATUS_TIME_FORMAT => %u\n", LOWORD(lpParms->dwReturn));
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
