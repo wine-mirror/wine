@@ -118,8 +118,8 @@ static int main_create_flags;
 static unsigned int server_startticks;
 
 /* memory/environ.c */
-extern struct _ENVDB *ENV_InitStartupInfo( handle_t info_handle, size_t info_size,
-                                           char *main_exe_name, size_t main_exe_size );
+extern struct _ENVDB *ENV_InitStartupInfo( size_t info_size, char *main_exe_name,
+                                           size_t main_exe_size );
 extern BOOL ENV_BuildCommandLine( char **argv );
 extern STARTUPINFOA current_startupinfo;
 
@@ -358,7 +358,6 @@ static BOOL process_init( char *argv[] )
 {
     BOOL ret;
     size_t info_size = 0;
-    handle_t info = 0;
 
     /* store the program name */
     argv0 = argv[0];
@@ -384,7 +383,6 @@ static BOOL process_init( char *argv[] )
             main_exe_file     = reply->exe_file;
             main_create_flags = reply->create_flags;
             info_size         = reply->info_size;
-            info              = reply->info;
             server_startticks = reply->server_start;
             current_startupinfo.hStdInput   = reply->hstdin;
             current_startupinfo.hStdOutput  = reply->hstdout;
@@ -420,12 +418,12 @@ static BOOL process_init( char *argv[] )
     PTHREAD_init_done();
 
     /* Copy the parent environment */
-    if (!(current_process.env_db = ENV_InitStartupInfo( info, info_size,
-                                                        main_exe_name, sizeof(main_exe_name) )))
+    if (!(current_process.env_db = ENV_InitStartupInfo( info_size, main_exe_name,
+                                                        sizeof(main_exe_name) )))
         return FALSE;
 
     /* Parse command line arguments */
-    OPTIONS_ParseOptions( !info ? argv : NULL );
+    OPTIONS_ParseOptions( !info_size ? argv : NULL );
 
     ret = MAIN_MainInit();
 
@@ -891,8 +889,7 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
                             BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                             LPPROCESS_INFORMATION info, LPCSTR unixdir )
 {
-    BOOL ret;
-    HANDLE load_done_evt = 0;
+    BOOL ret, success = FALSE;
     HANDLE process_info;
     startup_info_t startup_info;
 
@@ -965,48 +962,33 @@ static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCST
 
     /* wait for the new process info to be ready */
 
-    ret = TRUE;  /* pretend success even if we don't get the new process info */
-    if (WaitForSingleObject( process_info, 2000 ) == STATUS_WAIT_0)
+    WaitForSingleObject( process_info, INFINITE );
+    SERVER_START_REQ( get_new_process_info )
     {
-        SERVER_START_REQ( get_new_process_info )
+        req->info     = process_info;
+        req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+        req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
+        if ((ret = !wine_server_call_err( req )))
         {
-            req->info     = process_info;
-            req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
-            req->tinherit = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle);
-            if ((ret = !wine_server_call_err( req )))
-            {
-                info->dwProcessId = (DWORD)reply->pid;
-                info->dwThreadId  = (DWORD)reply->tid;
-                info->hProcess    = reply->phandle;
-                info->hThread     = reply->thandle;
-                load_done_evt     = reply->event;
-            }
+            info->dwProcessId = (DWORD)reply->pid;
+            info->dwThreadId  = (DWORD)reply->tid;
+            info->hProcess    = reply->phandle;
+            info->hThread     = reply->thandle;
+            success           = reply->success;
         }
-        SERVER_END_REQ;
+    }
+    SERVER_END_REQ;
+
+    if (ret && !success)  /* new process failed to start */
+    {
+        DWORD exitcode;
+        if (GetExitCodeProcess( info->hProcess, &exitcode )) SetLastError( exitcode );
+        CloseHandle( info->hThread );
+        CloseHandle( info->hProcess );
+        ret = FALSE;
     }
     CloseHandle( process_info );
-    if (!ret) return FALSE;
-
-    /* Wait until process is initialized (or initialization failed) */
-    if (load_done_evt)
-    {
-        DWORD res;
-        HANDLE handles[2];
-
-        handles[0] = info->hProcess;
-        handles[1] = load_done_evt;
-        res = WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
-        CloseHandle( load_done_evt );
-        if (res == STATUS_WAIT_0)  /* the process died */
-        {
-            DWORD exitcode;
-            if (GetExitCodeProcess( info->hProcess, &exitcode )) SetLastError( exitcode );
-            CloseHandle( info->hThread );
-            CloseHandle( info->hProcess );
-            return FALSE;
-        }
-    }
-    return TRUE;
+    return ret;
 }
 
 

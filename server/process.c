@@ -74,9 +74,12 @@ static const struct object_ops process_ops =
 
 /* process startup info */
 
+enum startup_state { STARTUP_IN_PROGRESS, STARTUP_DONE, STARTUP_ABORTED };
+
 struct startup_info
 {
     struct object       obj;          /* object header */
+    enum startup_state  state;        /* child process startup state */
     int                 inherit_all;  /* inherit all handles from parent */
     int                 use_handles;  /* use stdio handles */
     int                 create_flags; /* creation flags */
@@ -113,6 +116,16 @@ static const struct object_ops startup_info_ops =
 };
 
 
+/* set the state of the process startup info */
+static void set_process_startup_state( struct process *process, enum startup_state state )
+{
+    if (!process->startup_info) return;
+    process->startup_info->state = state;
+    wake_up( &process->startup_info->obj, 0 );
+    release_object( process->startup_info );
+    process->startup_info = NULL;
+}
+
 /* set the console and stdio handles for a newly created process */
 static int set_process_console( struct process *process, struct thread *parent_thread,
                                 struct startup_info *info, struct init_process_reply *reply )
@@ -122,7 +135,7 @@ static int set_process_console( struct process *process, struct thread *parent_t
         /* let the process init do the allocation */
         return 1;
     }
-    else if (parent_thread && !(process->create_flags & DETACHED_PROCESS))
+    else if (info && !(process->create_flags & DETACHED_PROCESS))
     {
         /* FIXME: some better error checking should be done...
          * like if hConOut and hConIn are console handles, then they should be on the same
@@ -131,7 +144,7 @@ static int set_process_console( struct process *process, struct thread *parent_t
         inherit_console( parent_thread, process,
                          (info->inherit_all || info->use_handles) ? info->hstdin : 0 );
     }
-    if (parent_thread)
+    if (info)
     {
         if (!info->inherit_all && !info->use_handles)
         {
@@ -193,7 +206,7 @@ struct thread *create_process( int fd )
     process->suspend         = 0;
     process->create_flags    = 0;
     process->console         = NULL;
-    process->init_event      = NULL;
+    process->startup_info    = NULL;
     process->idle_event      = NULL;
     process->queue           = NULL;
     process->atom_table      = NULL;
@@ -201,6 +214,7 @@ struct thread *create_process( int fd )
     process->exe.next        = NULL;
     process->exe.prev        = NULL;
     process->exe.file        = NULL;
+    process->exe.base        = NULL;
     process->exe.dbg_offset  = 0;
     process->exe.dbg_size    = 0;
     process->exe.namelen     = 0;
@@ -209,9 +223,6 @@ struct thread *create_process( int fd )
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
     first_process = process;
-
-    /* create the init done event */
-    if (!(process->init_event = create_event( NULL, 0, 1, 0 ))) goto error;
 
     /* create the main thread */
     if (pipe( request_pipe ) == -1)
@@ -245,12 +256,7 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
     {
         parent = parent_thread->process;
         info = parent_thread->info;
-        if (!info)
-        {
-            fatal_protocol_error( current, "init_process: parent but no info\n" );
-            return NULL;
-        }
-        if (info->thread)
+        if (info && info->thread)
         {
             fatal_protocol_error( current, "init_process: called twice?\n" );
             return NULL;
@@ -262,7 +268,7 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
     process->create_flags = info ? info->create_flags : 0;
 
     /* create the handle table */
-    if (parent && info->inherit_all)
+    if (info && info->inherit_all)
         process->handles = copy_handle_table( process, parent );
     else
         process->handles = alloc_handle_table( process, 0 );
@@ -270,7 +276,7 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
 
     /* retrieve the main exe file */
     reply->exe_file = 0;
-    if (parent && info->exe_file)
+    if (info && info->exe_file)
     {
         process->exe.file = (struct file *)grab_object( info->exe_file );
         if (!(reply->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
@@ -285,7 +291,7 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
         /* attach to the debugger if requested */
         if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
             set_process_debugger( process, parent_thread );
-        else if (parent && parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
+        else if (parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
             set_process_debugger( process, parent->debugger );
     }
 
@@ -297,7 +303,6 @@ static struct startup_info *init_process( int ppid, struct init_process_reply *r
         reply->info_size = info->data_size;
         info->process = (struct process *)grab_object( process );
         info->thread  = (struct thread *)grab_object( current );
-        wake_up( &info->obj, 0 );
     }
     reply->create_flags = process->create_flags;
     reply->server_start = server_start_ticks;
@@ -312,12 +317,13 @@ static void process_destroy( struct object *obj )
 
     /* we can't have a thread remaining */
     assert( !process->thread_list );
+
+    set_process_startup_state( process, STARTUP_ABORTED );
     if (process->console) release_object( process->console );
     if (process->parent) release_object( process->parent );
     if (process->next) process->next->prev = process->prev;
     if (process->prev) process->prev->next = process->next;
     else first_process = process->next;
-    if (process->init_event) release_object( process->init_event );
     if (process->idle_event) release_object( process->idle_event );
     if (process->queue) release_object( process->queue );
     if (process->atom_table) release_object( process->atom_table );
@@ -371,16 +377,15 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d\n",
-             info->create_flags, info->hstdin, info->hstdout, info->hstderr );
+    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d state=%d\n",
+             info->create_flags, info->hstdin, info->hstdout, info->hstderr, info->state );
 }
 
 static int startup_info_signaled( struct object *obj, struct thread *thread )
 {
     struct startup_info *info = (struct startup_info *)obj;
-    return (info->thread != NULL);
+    return info->state != STARTUP_IN_PROGRESS;
 }
-
 
 /* get a process from an id (and increment the refcount) */
 struct process *get_process_from_id( void *id )
@@ -490,6 +495,7 @@ static void process_killed( struct process *process )
         if (dll->filename) free( dll->filename );
         free( dll );
     }
+    set_process_startup_state( process, STARTUP_ABORTED );
     if (process->exe.file) release_object( process->exe.file );
     process->exe.file = NULL;
     wake_up( &process->obj, 0 );
@@ -776,6 +782,7 @@ DECL_HANDLER(new_process)
 
     /* build the startup info for a new process */
     if (!(info = alloc_object( &startup_info_ops, -1 ))) return;
+    info->state        = STARTUP_IN_PROGRESS;
     info->inherit_all  = req->inherit_all;
     info->use_handles  = req->use_handles;
     info->create_flags = req->create_flags;
@@ -807,8 +814,6 @@ DECL_HANDLER(get_new_process_info)
 {
     struct startup_info *info;
 
-    reply->event = 0;
-
     if ((info = (struct startup_info *)get_handle_obj( current->process, req->info,
                                                        0, &startup_info_ops )))
     {
@@ -818,9 +823,7 @@ DECL_HANDLER(get_new_process_info)
                                        PROCESS_ALL_ACCESS, req->pinherit );
         reply->thandle = alloc_handle( current->process, info->thread,
                                        THREAD_ALL_ACCESS, req->tinherit );
-        if (info->process->init_event)
-            reply->event = alloc_handle( current->process, info->process->init_event,
-                                       EVENT_ALL_ACCESS, 0 );
+        reply->success = (info->state == STARTUP_DONE);
         release_object( info );
     }
     else
@@ -829,6 +832,7 @@ DECL_HANDLER(get_new_process_info)
         reply->tid     = 0;
         reply->phandle = 0;
         reply->thandle = 0;
+        reply->success = 0;
     }
 }
 
@@ -837,19 +841,15 @@ DECL_HANDLER(get_startup_info)
 {
     struct startup_info *info;
 
-    if ((info = (struct startup_info *)get_handle_obj( current->process, req->info,
-                                                       0, &startup_info_ops )))
+    if ((info = current->process->startup_info))
     {
         size_t size = info->data_size;
         if (size > get_reply_max_size()) size = get_reply_max_size();
-        if (req->close)
-        {
-            set_reply_data_ptr( info->data, size );
-            info->data = NULL;
-            close_handle( current->process, req->info, NULL );
-        }
-        else set_reply_data( info->data, size );
-        release_object( info );
+
+        /* we return the data directly without making a copy so this can only be called once */
+        set_reply_data_ptr( info->data, size );
+        info->data = NULL;
+        info->data_size = 0;
     }
 }
 
@@ -857,21 +857,19 @@ DECL_HANDLER(get_startup_info)
 /* initialize a new process */
 DECL_HANDLER(init_process)
 {
-    struct startup_info *info;
-
-    reply->info = 0;
-    reply->info_size = 0;
     if (!current->unix_pid)
     {
         fatal_protocol_error( current, "init_process: init_thread not called yet\n" );
         return;
     }
-    current->process->ldt_copy  = req->ldt_copy;
-    if ((info = init_process( req->ppid, reply )))
+    if (current->process->startup_info)
     {
-        reply->info = alloc_handle( current->process, info, 0, FALSE );
-        release_object( info );
+        fatal_protocol_error( current, "init_process: called twice\n" );
+        return;
     }
+    reply->info_size = 0;
+    current->process->ldt_copy = req->ldt_copy;
+    current->process->startup_info = init_process( req->ppid, reply );
 }
 
 /* signal the end of the process initialization */
@@ -880,9 +878,14 @@ DECL_HANDLER(init_process_done)
     struct file *file = NULL;
     struct process *process = current->process;
 
-    if (!process->init_event)
+    if (is_process_init_done(process))
     {
-        fatal_protocol_error( current, "init_process_done: no event\n" );
+        fatal_protocol_error( current, "init_process_done: called twice\n" );
+        return;
+    }
+    if (!req->module)
+    {
+        fatal_protocol_error( current, "init_process_done: module base address cannot be 0\n" );
         return;
     }
     process->exe.base = req->module;
@@ -896,10 +899,9 @@ DECL_HANDLER(init_process_done)
     if ((process->exe.namelen = get_req_data_size()))
         process->exe.filename = memdup( get_req_data(), process->exe.namelen );
 
-    generate_startup_debug_events( current->process, req->entry );
-    set_event( process->init_event );
-    release_object( process->init_event );
-    process->init_event = NULL;
+    generate_startup_debug_events( process, req->entry );
+    set_process_startup_state( process, STARTUP_DONE );
+
     if (req->gui) process->idle_event = create_event( NULL, 0, 1, 0 );
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
     reply->debugged = (current->process->debugger != 0);
@@ -1018,7 +1020,7 @@ DECL_HANDLER(load_dll)
         dll->dbg_size   = req->dbg_size;
         dll->name       = req->name;
         /* only generate event if initialization is done */
-        if (!current->process->init_event)
+        if (is_process_init_done( current->process ))
             generate_debug_event( current, LOAD_DLL_DEBUG_EVENT, dll );
     }
     if (file) release_object( file );

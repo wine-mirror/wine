@@ -25,6 +25,7 @@
 
 struct msg_queue;
 struct atom_table;
+struct startup_info;
 
 /* process structures */
 
@@ -60,7 +61,7 @@ struct process
     int                  suspend;         /* global process suspend count */
     int                  create_flags;    /* process creation flags */
     struct console_input*console;         /* console input */
-    struct event        *init_event;      /* event for init done */
+    struct startup_info *startup_info;    /* startup info while init is in progress */
     struct event        *idle_event;      /* event for input idle */
     struct msg_queue    *queue;           /* main message queue */
     struct atom_table   *atom_table;      /* pointer to local atom table */
@@ -106,6 +107,7 @@ extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 
-static inline void *get_process_id( struct process *process ) { return process; }
+inline static void *get_process_id( struct process *process ) { return process; }
+inline static int is_process_init_done( struct process *process ) { return process->exe.base != 0; }
 
 #endif  /* __WINE_SERVER_PROCESS_H */

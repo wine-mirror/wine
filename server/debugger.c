@@ -427,7 +427,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
     struct thread *thread;
 
     if (process->debugger) goto error;  /* already being debugged */
-    if (process->init_event) goto error;  /* still starting up */
+    if (!is_process_init_done( process )) goto error;  /* still starting up */
     if (!process->thread_list) goto error;  /* no thread running in the process */
 
     /* make sure we don't create a debugging loop */
@@ -470,7 +470,7 @@ int debugger_detach( struct process *process, struct thread *debugger )
         goto error;  /* not currently debugged, or debugged by another debugger */
     if (!debugger->debug_ctx ) goto error; /* should be a debugger */
     /* init should be done, otherwise wouldn't be attached */
-    assert(!process->init_event);
+    assert(is_process_init_done(process));
 
     suspend_process( process );
     /* send continue indication for all events */

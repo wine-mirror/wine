@@ -376,7 +376,7 @@ static void dump_get_new_process_info_reply( const struct get_new_process_info_r
     fprintf( stderr, " phandle=%d,", req->phandle );
     fprintf( stderr, " tid=%p,", req->tid );
     fprintf( stderr, " thandle=%d,", req->thandle );
-    fprintf( stderr, " event=%d", req->event );
+    fprintf( stderr, " success=%d", req->success );
 }
 
 static void dump_new_thread_request( const struct new_thread_request *req )
@@ -407,7 +407,6 @@ static void dump_init_process_reply( const struct init_process_reply *req )
 {
     fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " server_start=%08x,", req->server_start );
-    fprintf( stderr, " info=%d,", req->info );
     fprintf( stderr, " info_size=%d,", req->info_size );
     fprintf( stderr, " exe_file=%d,", req->exe_file );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
@@ -417,8 +416,6 @@ static void dump_init_process_reply( const struct init_process_reply *req )
 
 static void dump_get_startup_info_request( const struct get_startup_info_request *req )
 {
-    fprintf( stderr, " info=%d,", req->info );
-    fprintf( stderr, " close=%d", req->close );
 }
 
 static void dump_get_startup_info_reply( const struct get_startup_info_reply *req )

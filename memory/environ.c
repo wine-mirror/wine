@@ -201,8 +201,7 @@ inline static char *copy_str( char **dst, const char **src, size_t len )
  *
  * Fill the startup info structure from the server.
  */
-ENVDB *ENV_InitStartupInfo( handle_t info_handle, size_t info_size,
-                            char *main_exe_name, size_t main_exe_size )
+ENVDB *ENV_InitStartupInfo( size_t info_size, char *main_exe_name, size_t main_exe_size )
 {
     startup_info_t info;
     void *data;
@@ -217,8 +216,6 @@ ENVDB *ENV_InitStartupInfo( handle_t info_handle, size_t info_size,
 
     SERVER_START_REQ( get_startup_info )
     {
-        req->info = info_handle;
-        req->close = TRUE;
         wine_server_set_reply( req, data, info_size );
         wine_server_call( req );
         info_size = wine_server_reply_size( reply );

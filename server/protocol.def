@@ -220,7 +220,7 @@ typedef struct
     handle_t     phandle;      /* process handle (in the current process) */
     void*        tid;          /* thread id */
     handle_t     thandle;      /* thread handle (in the current process) */
-    handle_t     event;        /* event handle to signal startup */
+    int          success;      /* did the process start successfully? */
 @END
 
 
@@ -248,7 +248,6 @@ typedef struct
 @REPLY
     int          create_flags; /* creation flags */
     unsigned int server_start; /* server start time (GetTickCount) */
-    handle_t     info;         /* handle to startup info */
     size_t       info_size;    /* total size of startup info */
     handle_t     exe_file;     /* file handle for main exe */
     handle_t     hstdin;       /* handle for stdin */
@@ -259,8 +258,6 @@ typedef struct
 
 /* Retrieve the new process startup info */
 @REQ(get_startup_info)
-    handle_t     info;         /* handle to startup info */
-    int          close;        /* should we close the handle at the same time? */
 @REPLY
     VARARG(info,startup_info); /* startup information */
 @END

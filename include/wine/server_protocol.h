@@ -214,7 +214,7 @@ struct get_new_process_info_reply
     handle_t     phandle;
     void*        tid;
     handle_t     thandle;
-    handle_t     event;
+    int          success;
 };
 
 
@@ -258,7 +258,6 @@ struct init_process_reply
     struct reply_header __header;
     int          create_flags;
     unsigned int server_start;
-    handle_t     info;
     size_t       info_size;
     handle_t     exe_file;
     handle_t     hstdin;
@@ -271,8 +270,6 @@ struct init_process_reply
 struct get_startup_info_request
 {
     struct request_header __header;
-    handle_t     info;
-    int          close;
 };
 struct get_startup_info_reply
 {
@@ -3198,6 +3195,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 79
+#define SERVER_PROTOCOL_VERSION 80
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

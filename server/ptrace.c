@@ -177,7 +177,7 @@ void detach_thread( struct thread *thread, int sig )
 void stop_thread( struct thread *thread )
 {
     /* can't stop a thread while initialisation is in progress */
-    if (!thread->unix_pid || thread->process->init_event) return;
+    if (!thread->unix_pid || !is_process_init_done(thread->process)) return;
     /* first try to attach to it */
     if (!thread->attached)
         if (attach_thread( thread )) return;  /* this will have stopped it */
@@ -206,7 +206,7 @@ int suspend_for_ptrace( struct thread *thread )
         return 1;
     }
     /* can't stop a thread while initialisation is in progress */
-    if (!thread->unix_pid || thread->process->init_event) goto error;
+    if (!thread->unix_pid || !is_process_init_done(thread->process)) goto error;
     thread->suspend++;
     if (attach_thread( thread )) return 1;
     thread->suspend--;
