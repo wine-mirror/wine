@@ -1161,12 +1161,12 @@ LRESULT WINAPI ICClose(HIC hic) {
 	WINE_HIC *whic = GlobalLock16(hic);
 	TRACE("(0x%08lx)\n",(DWORD)hic);
 	if (whic->driverproc) {
-		ICSendMessage16(hic,DRV_CLOSE,0,0);
-		ICSendMessage16(hic,DRV_DISABLE,0,0);
-		ICSendMessage16(hic,DRV_FREE,0,0);
+		ICSendMessage(hic,DRV_CLOSE,0,0);
+		ICSendMessage(hic,DRV_DISABLE,0,0);
+		ICSendMessage(hic,DRV_FREE,0,0);
 	} else {
 		CloseDriver(whic->hdrv,0,0);
-}
+	}
 
 	GlobalUnlock16(hic);
 	GlobalFree16(hic);

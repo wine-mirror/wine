@@ -433,27 +433,11 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 /***********************************************************************
  *           RectVisible    (GDI.465)
  */
-BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
+BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect16 )
 {
-    BOOL ret = FALSE;
-    RECT16 tmpRect;
-    DC *dc = DC_GetDCUpdate( hdc );
-    if (!dc) return FALSE;
-    TRACE("%04x %d,%dx%d,%d\n",
-          hdc, rect->left, rect->top, rect->right, rect->bottom );
-    if (dc->hGCClipRgn)
-    {
-        /* copy rectangle to avoid overwriting by LPtoDP */
-        tmpRect = *rect;
-        LPtoDP16( hdc, (LPPOINT16)&tmpRect, 2 );
-        tmpRect.left   += dc->DCOrgX;
-        tmpRect.right  += dc->DCOrgX;
-        tmpRect.top    += dc->DCOrgY;
-        tmpRect.bottom += dc->DCOrgY;
-        ret = RectInRegion16( dc->hGCClipRgn, &tmpRect );
-    }
-    GDI_ReleaseObj( hdc );
-    return ret;
+    RECT rect;
+    CONV_RECT16TO32( rect16, &rect );
+    return RectVisible( hdc, &rect );
 }
 
 
@@ -462,9 +446,25 @@ BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
  */
 BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 {
-    RECT16 rect16;
-    CONV_RECT32TO16( rect, &rect16 );
-    return RectVisible16( (HDC16)hdc, &rect16 );
+    BOOL ret = FALSE;
+    RECT tmpRect;
+    DC *dc = DC_GetDCUpdate( hdc );
+    if (!dc) return FALSE;
+    TRACE("%04x %d,%dx%d,%d\n",
+          hdc, rect->left, rect->top, rect->right, rect->bottom );
+    if (dc->hGCClipRgn)
+    {
+        /* copy rectangle to avoid overwriting by LPtoDP */
+        tmpRect = *rect;
+        LPtoDP( hdc, (LPPOINT)&tmpRect, 2 );
+        tmpRect.left   += dc->DCOrgX;
+        tmpRect.right  += dc->DCOrgX;
+        tmpRect.top    += dc->DCOrgY;
+        tmpRect.bottom += dc->DCOrgY;
+        ret = RectInRegion( dc->hGCClipRgn, &tmpRect );
+    }
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 

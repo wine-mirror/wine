@@ -1180,9 +1180,9 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
 
 
 /**************************************************************************
- *		RegisterClipboardFormat (USER.145)
+ *		RegisterClipboardFormatA (USER32.@)
  */
-UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
+UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
 {
     LPWINE_CLIPFORMAT lpNewFormat; 
     LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
@@ -1240,11 +1240,11 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
 
 /**************************************************************************
- *		RegisterClipboardFormatA (USER32.@)
+ *		RegisterClipboardFormat (USER.145)
  */
-UINT WINAPI RegisterClipboardFormatA( LPCSTR formatName )
+UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 {
-    return RegisterClipboardFormat16( formatName );
+    return RegisterClipboardFormatA( FormatName );
 }
 
 

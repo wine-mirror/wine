@@ -2343,7 +2343,7 @@ void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
 			newPos = maxPos;
 			break;
 	case SB_ENDSCROLL:
-			CalcChildScroll16(hWnd,(uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ);
+			CalcChildScroll(hWnd,(uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ);
 			return;
     }
 

@@ -778,10 +778,14 @@ typedef HWND WINAPI (*WindowFromDC_funcptr)( HDC );
 typedef BOOL WINAPI (*RedrawWindow_funcptr)( HWND, const RECT *, HRGN, UINT );
 
 /**********************************************************************
- *            UpdateColors   (DISPLAY.366)
- *            UpdateColors16   (GDI.366)
+ * UpdateColors [GDI32.@]  Remaps current colors to logical palette
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
-INT16 WINAPI UpdateColors16( HDC16 hDC )
+BOOL WINAPI UpdateColors(
+    HDC hDC) /* [in] Handle of device context */
 {
     HMODULE mod;
     DC *dc;
@@ -814,16 +818,12 @@ INT16 WINAPI UpdateColors16( HDC16 hDC )
 
 
 /**********************************************************************
- * UpdateColors [GDI32.@]  Remaps current colors to logical palette
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
+ *            UpdateColors   (DISPLAY.366)
+ *            UpdateColors16   (GDI.366)
  */
-BOOL WINAPI UpdateColors(
-    HDC hDC) /* [in] Handle of device context */
+INT16 WINAPI UpdateColors16( HDC16 hDC )
 {
-    UpdateColors16( hDC );
+    UpdateColors( hDC );
     return TRUE;
 }
 

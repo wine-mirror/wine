@@ -2339,7 +2339,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 	HWND  hNewWnd;
 	UINT  id = 0;
 	LRESULT l = SendMessageA( pmt->hOwnerWnd, WM_NEXTMENU, vk, 
-		(IS_SYSTEM_MENU(menu)) ? GetSubMenu16(pmt->hTopMenu,0) : pmt->hTopMenu );
+		(IS_SYSTEM_MENU(menu)) ? GetSubMenu(pmt->hTopMenu,0) : pmt->hTopMenu );
 
 	TRACE("%04x [%04x] -> %04x [%04x]\n",
 		     (UINT16)pmt->hCurrentMenu, (UINT16)pmt->hOwnerWnd, LOWORD(l), HIWORD(l) );
@@ -2387,7 +2387,7 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 		wndPtr = WIN_FindWndPtr(hNewWnd);
 
 		if( wndPtr->dwStyle & WS_SYSMENU &&
-		    GetSubMenu16(wndPtr->hSysMenu, 0) == hNewMenu )
+		    GetSubMenu(wndPtr->hSysMenu, 0) == hNewMenu )
 		{
 	            /* get the real system menu */
 		    hNewMenu =  wndPtr->hSysMenu;
@@ -3897,7 +3897,7 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
 	if( wndPtr->hSysMenu )
         {
 	    POPUPMENU *menu;
-	    retvalue = GetSubMenu16(wndPtr->hSysMenu, 0);
+	    retvalue = GetSubMenu(wndPtr->hSysMenu, 0);
 
 	    /* Store the dummy sysmenu handle to facilitate the refresh */
 	    /* of the close button if the SC_CLOSE item change */
