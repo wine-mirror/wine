@@ -578,7 +578,7 @@ foreach my $file (@c_files) {
 				# Do nothing X Windows is handled differently
 			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
 				my $name = $1;
-				if($header !~ /^alloca\.h|sys\/time\.h|unistd\.h$/ &&
+				if($header !~ /^alloca\.h$/ &&
 				   $file_dir !~ /tests$/ &&
 				   !$preprocessor->is_def("STATFS_DEFINED_BY_$name"))
 				{
