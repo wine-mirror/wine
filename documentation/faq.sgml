@@ -98,7 +98,7 @@
        </para>
 
        <para>
-          Plex86 is the opensource free-software alternative for VMWare,
+          Plex86 is the open-source free-software alternative for VMWare,
 	  VirtualPC, and other IA-32 on IA-32 "Virtual PC products." It
           can only run on the IA-32 architecture.
        </para>
@@ -176,8 +176,8 @@
           hard-drive space required by Windows, memory and performance hit 
           taken by emulated virtual machines. Now you can start your Windows
           application straight from your regular desktop environment, place
-          that application's window side by side with native application 
-          windows, copy/paste from one to the other, and run it all at full speed.
+          that application's window side by side with native applications,
+          copy/paste from one to the other, and run it all at full speed.
         </para>
         <para>
           It is also a pretty vital part of migrating a large organisation,
@@ -473,8 +473,8 @@
           express permission by TransGaming. They have submitted some
           of their work for integration into Wine, most notably DirectDraw
           and some DirectSound work, and such work has been integrated into
-          Wine tree. However it seems unlikely they will submit their Direct3D
-          work.
+          the Wine tree. However it seems unlikely they will submit their
+          Direct3D work.
         </para>
       </answer>
       </qandaentry>
@@ -551,8 +551,8 @@
           missing device/hardware support).
         </para>
         <para>
-          Linux/x86: Works, and as most popular platform for both developers
-	  and users, it is the best supported platform of all.
+          Linux/x86: Works, and as the most popular platform for both
+          developers and users, it is the best supported platform of all.
         </para>
       </answer>
       </qandaentry>
@@ -835,7 +835,7 @@
       </question>
       <answer>
         <para>
-          Most of Wine's development effort is geared against MS Windows' GUI,
+          Most of Wine's development effort is geared towards MS Windows' GUI,
           but some limited support for character mode has appeared, by setting
           <parameter>GraphicsDriver=ttydrv</parameter> in wine.conf's
           <parameter>[wine]</parameter> section.
@@ -843,7 +843,7 @@
         <para>
           Wine's infrastructure is already somewhat prepared for supporting
           other graphics drivers than x11drv, but no real "alternative" 
-          graphics driver has been developped yet.
+          graphics driver has been developed yet.
         </para>
       </answer>
       </qandaentry>
@@ -1045,7 +1045,7 @@ wine
     </qandadiv>
 
     <qandadiv id="Installing-And-Configuring-Wine">
-      <title>Installing And Configuring Wine</title>
+      <title>Installing and Configuring Wine</title>
       <qandaentry>
       <question id="How-do-I-compile-the-Wine-source-code">
         <para>How do I compile the Wine distribution source code?</para>
@@ -1070,7 +1070,7 @@ wine
           hardware and cannot get it with Wine and UNIX in the way
         </para>
         <para>
-          Wine is supposed to be used WITHOUT Windows primarily. If you want
+          Wine is supposed to be primarily used WITHOUT Windows. If you want
           to use a Windows installation, then use an existing installation 
           alongside the UNIX installation (see the dual-boot HOWTO for your OS
           for more details). Or alternatively use the cabextract utility to
@@ -1121,7 +1121,7 @@ wine
       </question>
       <answer>
         <para>
-          Either use a classic no-windows install (Wine is getter better all
+          Either use a classic no-windows install (Wine is getting better all
           the time) or use a Win9x install (Win95, 98, 98SE, ME). DON'T 
           configure Wine to use an NT-based Windows install (NT, Win2K, WinXP).
         </para>
@@ -1168,7 +1168,7 @@ wine
 
       <qandaentry>
       <question id="When-I-click-on-exe-file-nothing-happens">
-        <para>When I click on *.exe file in my file Manager, nothing happens</para>
+        <para>When I click on *.exe file in my file Manager, nothing happens.</para>
       </question>
       <answer>
         <para>
@@ -1226,7 +1226,7 @@ export PATH=$PATH:/path/to/wine/binary
            If you used a package manager (<command>rpm</command> or 
            <command>apt</command>) - Verify your packages. The package 
            <filename>winesetuptk.rpm</filename> is only a front-end for 
-           making a meaningfull config file, it DOES NOT install the wine
+           making a meaningful config file, it DOES NOT install the wine
            package...
         </para>
         <para>
@@ -1399,7 +1399,7 @@ rm -fR \[/path/\]Wine*
       
       <qandaentry>
       <question id="Can-I-use-Wine-with-other-Linux-Distros">
-        <para>Can I use Wine with SuSe, Peanut or other Linux Distro's?</para>
+        <para>Can I use Wine with SuSE, Peanut or other Linux Distro's?</para>
       </question>
       <answer>
         <para>
@@ -1416,7 +1416,8 @@ rm -fR \[/path/\]Wine*
       </question>
       <answer>
         <para>
-          Yes, it does.
+          Yes, it does. Wine should work on any processor compatible with
+          the Pentium or greater.
         </para>
       </answer>
       </qandaentry>
@@ -1428,7 +1429,7 @@ rm -fR \[/path/\]Wine*
       <answer>
         <para>
           Sure, Wine supports that. Just enter the unix program name wherever
-          a program has something that it's supposed to execute,and then it 
+          a program has something that it's supposed to execute, and it
           should just work.
         </para>
       </answer>
@@ -1437,7 +1438,7 @@ rm -fR \[/path/\]Wine*
       <question id="Error-with-installshield-6">
         <para>
           I get <quote>Error installing iKernel.exe: (0x1400)</quote>
-          when running an Installshield 6 installer
+          when running an Installshield 6 installer.
         </para>
       </question>
       <answer>
@@ -1446,14 +1447,14 @@ rm -fR \[/path/\]Wine*
           point, it's probably because there are leftover processes from a
           previous try. You can verify this with the command
         </para>
-        <para><command>$ ps augxw | grep wine</command></para>
+        <para><prompt>$ </><command>ps augxw | grep wine</command></para>
         <para>
           If that command shows old copies of wine running your setup,
           you need to kill them before you can run the setup program.
           If there are no other Wine programs running, you can kill them
           all with the command
         </para>
-        <para><command>$ killall wine</command></para>
+        <para><prompt>$ </><command>killall wine</command></para>
         <para>
           If you're also running Wine programs you care about, you'll
           have to kill off the old Setup instances one by one using
@@ -1462,7 +1463,7 @@ rm -fR \[/path/\]Wine*
         </para>
         <para>
           You should repeat the <command>ps</command> to make sure the old 
-          wines are gone. 
+          Wine processes are gone.
         </para>
        </answer>
       </qandaentry>
@@ -1587,8 +1588,8 @@ rm -fR \[/path/\]Wine*
           </listitem>
           <listitem>
           <para>
-            The MS Windows program name and, if possible, the version number 
-            of the software tested
+            The Windows application name, including the version, and, if
+            applicable, a URL the application can be downloaded from
           </para>
           </listitem>
           <listitem>
