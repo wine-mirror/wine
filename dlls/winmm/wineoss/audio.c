@@ -152,9 +152,9 @@ typedef struct tagOSS_DEVICE {
     unsigned                    open_access;
     int                         fd;
     DWORD                       owner_tid;
-    unsigned                    sample_rate;
-    unsigned                    stereo;
-    unsigned                    format;
+    int                         sample_rate;
+    int                         stereo;
+    int                         format;
     unsigned                    audio_fragment;
     BOOL                        full_duplex;
     BOOL                        bTriggerSupport;
@@ -240,7 +240,7 @@ static const char *wodPlayerCmdString[] = {
  */
 static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
 {
-    int fd, val, err;
+    int fd, val, rc;
 
     if ((fd = open(ossdev->dev_name, ossdev->open_access|O_NDELAY, 0)) == -1)
     {
@@ -258,46 +258,42 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
     }
 
     /* First size and stereo then samplerate */
-    err=MMSYSERR_NOERROR;
-    if (ossdev->format)
+    if (ossdev->format>=0)
     {
         val = ossdev->format;
-        ioctl(fd, SNDCTL_DSP_SETFMT, &ossdev->format);
-        if (val != ossdev->format) {
+        rc = ioctl(fd, SNDCTL_DSP_SETFMT, &ossdev->format);
+        if (rc != 0 || val != ossdev->format) {
             TRACE("Can't set format to %d (returned %d)\n", val, ossdev->format);
-            err=WAVERR_BADFORMAT;
             if (strict_format)
                 goto error;
         }
     }
-    if (ossdev->stereo)
+    if (ossdev->stereo>=0)
     {
         val = ossdev->stereo;
-        ioctl(fd, SNDCTL_DSP_STEREO, &ossdev->stereo);
-        if (val != ossdev->stereo) {
+        rc = ioctl(fd, SNDCTL_DSP_STEREO, &ossdev->stereo);
+        if (rc != 0 || val != ossdev->stereo) {
             TRACE("Can't set stereo to %u (returned %d)\n", val, ossdev->stereo);
-            err=WAVERR_BADFORMAT;
             if (strict_format)
                 goto error;
         }
     }
-    if (ossdev->sample_rate)
+    if (ossdev->sample_rate>=0)
     {
         val = ossdev->sample_rate;
-        ioctl(fd, SNDCTL_DSP_SPEED, &ossdev->sample_rate);
-        if (!NEAR_MATCH(val, ossdev->sample_rate)) {
+        rc = ioctl(fd, SNDCTL_DSP_SPEED, &ossdev->sample_rate);
+        if (rc != 0 || !NEAR_MATCH(val, ossdev->sample_rate)) {
             TRACE("Can't set sample_rate to %u (returned %d)\n", val, ossdev->sample_rate);
-            err=WAVERR_BADFORMAT;
             if (strict_format)
                 goto error;
         }
     }
     ossdev->fd = fd;
-    return err;
+    return MMSYSERR_NOERROR;
 
 error:
     close(fd);
-    return err;
+    return WAVERR_BADFORMAT;
 }
 
 /******************************************************************
@@ -428,7 +424,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     int rc,arg;
     int f,c,r;
 
-    if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0, 0, 0, 0) != 0) return FALSE;
+    if (OSS_OpenDevice(ossdev, O_WRONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
     /* FIXME: some programs compare this string against the content of the
@@ -471,14 +467,19 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     for (f=0;f<2;f++) {
         arg=win_std_oss_fmts[f];
         rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
-        if (rc!=0 || arg!=win_std_oss_fmts[f])
+        if (rc!=0 || arg!=win_std_oss_fmts[f]) {
+            TRACE("DSP_SAMPLESIZE: rc=%d returned 0x%x for 0x%x\n",
+                  rc,arg,win_std_oss_fmts[f]);
             continue;
+        }
 
         for (c=0;c<2;c++) {
             arg=c;
             rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
-            if (rc!=0 || arg!=c)
+            if (rc!=0 || arg!=c) {
+                TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
+            }
             if (c==1) {
                 ossdev->out_caps.wChannels=2;
                 ossdev->out_caps.dwSupport|=WAVECAPS_LRVOLUME;
@@ -521,7 +522,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     int rc,arg;
     int f,c,r;
 
-    if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0, 0, 0, 0) != 0) return FALSE;
+    if (OSS_OpenDevice(ossdev, O_RDONLY, NULL, 0,-1,-1,-1) != 0) return FALSE;
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
 
     /* See comment in OSS_WaveOutInit */
@@ -553,14 +554,19 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     for (f=0;f<2;f++) {
         arg=win_std_oss_fmts[f];
         rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
-        if (rc!=0 || arg!=win_std_oss_fmts[f])
+        if (rc!=0 || arg!=win_std_oss_fmts[f]) {
+            TRACE("DSP_SAMPLESIZE: rc=%d returned 0x%x for 0x%x\n",
+                  rc,arg,win_std_oss_fmts[f]);
             continue;
+        }
 
         for (c=0;c<2;c++) {
             arg=c;
             rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
-            if (rc!=0 || arg!=c)
+            if (rc!=0 || arg!=c) {
+                TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
+            }
             if (c==1) {
                 ossdev->in_caps.wChannels=2;
             }
@@ -594,7 +600,7 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 {
     int 	caps;
 
-    if (OSS_OpenDevice(ossdev, O_RDWR, NULL, 0, 0, 0, 0) != 0) return;
+    if (OSS_OpenDevice(ossdev, O_RDWR, NULL, 0,-1,-1,-1) != 0) return;
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0)
     {
 	ossdev->full_duplex = (caps & DSP_CAP_DUPLEX);
@@ -1322,13 +1328,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                          (lpDesc->lpFormat->nChannels > 1) ? 1 : 0,
                          (lpDesc->lpFormat->wBitsPerSample == 16)
                              ? AFMT_S16_LE : AFMT_U8);
-    if ((ret==WAVERR_BADFORMAT) && (dwFlags & WAVE_DIRECTSOUND)) {
+    if ((ret==MMSYSERR_NOERROR) && (dwFlags & WAVE_DIRECTSOUND)) {
         lpDesc->lpFormat->nSamplesPerSec=wwo->ossdev->sample_rate;
         lpDesc->lpFormat->nChannels=(wwo->ossdev->stereo ? 2 : 1);
         lpDesc->lpFormat->wBitsPerSample=(wwo->ossdev->format == AFMT_U8 ? 8 : 16);
         lpDesc->lpFormat->nBlockAlign=lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
         lpDesc->lpFormat->nAvgBytesPerSec=lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
-        ret=MMSYSERR_NOERROR;
         TRACE("OSS_OpenDevice returned this format: %ldx%dx%d\n",
               lpDesc->lpFormat->nSamplesPerSec,
               lpDesc->lpFormat->wBitsPerSample,
