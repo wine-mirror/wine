@@ -211,6 +211,10 @@ static int serial_get_info( struct object *obj, struct get_file_info_reply *repl
     if(serial->attrib & FILE_FLAG_OVERLAPPED)
         return FD_TYPE_OVERLAPPED;
 
+    if( (serial->readinterval == MAXDWORD) &&
+        (serial->readmult == 0) && (serial->readconst == 0) )
+        return FD_TYPE_DEFAULT;
+
     return FD_TYPE_TIMEOUT;
 }
 
