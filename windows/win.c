@@ -2010,6 +2010,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     if (wndPtr->hwndSelf == GetDesktopWindow())
     {
         /* can't change anything on the desktop window */
+        WIN_ReleasePtr( wndPtr );
         SetLastError( ERROR_ACCESS_DENIED );
         return 0;
     }
