@@ -718,6 +718,15 @@ static DWORD MCICDA_Set(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
+
+    if (dwFlags & MCI_SET_DOOR_OPEN) {
+	MCICDA_SetDoor(wDevID, TRUE);
+    }
+    if (dwFlags & MCI_SET_DOOR_CLOSED) {
+	MCICDA_SetDoor(wDevID, FALSE);
+    }
+
+    /* only functions which require valid lpParms below this line ! */
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
     /*
       TRACE("dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
@@ -739,12 +748,6 @@ static DWORD MCICDA_Set(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	    return MCIERR_BAD_TIME_FORMAT;
 	}
 	wmcda->dwTimeFormat = lpParms->dwTimeFormat;
-    }
-    if (dwFlags & MCI_SET_DOOR_OPEN) {
-	MCICDA_SetDoor(wDevID, TRUE);
-    }
-    if (dwFlags & MCI_SET_DOOR_CLOSED) {
-	MCICDA_SetDoor(wDevID, FALSE);
     }
     if (dwFlags & MCI_SET_VIDEO) return MCIERR_UNSUPPORTED_FUNCTION;
     if (dwFlags & MCI_SET_ON) return MCIERR_UNSUPPORTED_FUNCTION;
