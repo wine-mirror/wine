@@ -302,7 +302,8 @@ char *strmake(const char *fmt, ...)
     char *p;
     va_list ap;
 
-    if ((p = malloc (size)) == NULL) return NULL;
+    if ((p = malloc (size)) == NULL)
+	error("Can not malloc %d bytes.", size);
     
     while (1) 
     {
@@ -311,7 +312,8 @@ char *strmake(const char *fmt, ...)
 	va_end(ap);
         if (n > -1 && n < size) return p;
         size *= 2;
-	if ((p = realloc (p, size)) == NULL) return NULL;
+	if ((p = realloc (p, size)) == NULL)
+	    error("Can not realloc %d bytes.", size);
     }
 }
 
@@ -428,9 +430,9 @@ void add_lib_file(const char* library)
 
 int main(int argc, char **argv)
 {
-    char *library = 0, *path = 0, *p;
-    int i, j, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = 1;
-    char *base_name, *app_temp_name, *wrp_temp_name;
+    char *library = 0, *path = 0;
+    int i, j, len, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = 1;
+    char *base_name, *base_file, *app_temp_name, *wrp_temp_name;
     char *spec_name, *spec_c_name, *spec_o_name;
     char *wspec_name, *wspec_c_name, *wspec_o_name;
     char *wrap_c_name, *wrap_o_name;
@@ -453,8 +455,6 @@ int main(int argc, char **argv)
 		if (argv[i][2]) output_name = strdup(argv[i]+ 2);
 		else if (i + 1 < argc) output_name = strdup(argv[++i]);
 		else error("The -o switch takes an argument.");
-		if ( !(p = strstr(output_name, ".exe")) || *(p+4) )
-		    output_name = strmake("%s.exe", output_name);
 		break;
 	    case 'L':
 		if (argv[i][2]) path = argv[i] + 2;
@@ -505,9 +505,16 @@ int main(int argc, char **argv)
 
     app_temp_name = tempnam(0, "wapp");
     wrp_temp_name = tempnam(0, "wwrp");
-    
-    base_name = strdup(output_name);
-    base_name[strlen(output_name) - 4 ] = 0; /* remove the .exe extension */
+   
+    /* get base filename by removing the .exe extension, if present */ 
+    base_file = strdup(output_name);
+    len = strlen(base_file);
+    if (len > 4 && strcmp(base_file + len - 4, ".exe") == 0)
+	base_file[len - 4 ] = 0; /* remove the .exe extension */
+
+    /* we need to get rid of the directory part to get the base name */
+    if ( (base_name = strrchr(base_file, '/')) ) base_name++;
+    else base_name = base_file;
     
     spec_name = strmake("%s.spec", app_temp_name);
     spec_c_name = strmake("%s.c", spec_name);
@@ -536,12 +543,11 @@ int main(int argc, char **argv)
     else
     {
 	spec_args[j++] = "--exe";
-	spec_args[j++] = output_name;
+	spec_args[j++] = strmake("%s.exe", base_name);
         spec_args[j++] = gui_mode ? "-mgui" : "-mcui";
     }
     for (i = 0; i < nb_obj_files; i++)
 	spec_args[j++] = obj_files[i];
-    spec_args[j++] = "-L" WINEDLLS;
     for (i = 0; i < nb_dll_files; i++)
 	spec_args[j++] = dll_files[i];
     spec_args[j] = 0;
@@ -568,7 +574,7 @@ int main(int argc, char **argv)
     link_args[j++] = "-lwine";
     link_args[j++] = "-lm";
     link_args[j++] = "-o";
-    link_args[j++] = strmake("%s.%s.so", base_name, create_wrapper ? "dll" : "exe");
+    link_args[j++] = strmake("%s.%s.so", base_file, create_wrapper ? "dll" : "exe");
     link_args[j++] = spec_o_name;
     for (i = 0; i < nb_obj_files; i++)
 	if (!is_resource(obj_files[i])) link_args[j++] = obj_files[i];
@@ -587,13 +593,13 @@ int main(int argc, char **argv)
     wwrap_args[j] = 0;
      
     /* build wrapper winebuild's argument list */
-    wspec_args = malloc( 20 * sizeof (char *) );
+    wspec_args = malloc( (nb_lib_files + nb_dll_files + 20) * sizeof (char *) );
     j = 0;
     wspec_args[j++] = BINDIR "/winebuild";
     wspec_args[j++] = "-o";
     wspec_args[j++] = wspec_c_name;
     wspec_args[j++] = "--exe";
-    wspec_args[j++] = output_name;
+    wspec_args[j++] = strmake("%s.exe", base_name);
     wspec_args[j++] = gui_mode ? "-mgui" : "-mcui";
     wspec_args[j++] = wrap_o_name;
     for (i = 0; i < nb_dll_files; i++)
@@ -620,7 +626,7 @@ int main(int argc, char **argv)
     wlink_args[j++] = "-lwine";
     wlink_args[j++] = "-ldl";
     wlink_args[j++] = "-o";
-    wlink_args[j++] = strmake("%s.exe.so", base_name);
+    wlink_args[j++] = strmake("%s.exe.so", base_file);
     wlink_args[j++] = wspec_o_name;
     wlink_args[j++] = wrap_o_name;
     wlink_args[j] = 0;
@@ -656,7 +662,7 @@ int main(int argc, char **argv)
     }
 
     /* create the loader script */
-    create_file(base_name, app_loader_script, base_name);
+    create_file(base_file, app_loader_script, base_name);
     chmod(base_name, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 
     return 0;    
