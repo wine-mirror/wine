@@ -60,7 +60,7 @@ Registry Command Line API Tool
   regRestorer.pl  - Will convert "cleaned" diff file into 
                     something "regapi-able"
   
-  regSet          - Will do the procedure explained herein 
+  regSet.sh       - Will do the procedure explained herein 
                     for the added key only.
 
   
