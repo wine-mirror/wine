@@ -66,6 +66,7 @@ extern int num_lock;
 #include "windef.h"
 #include "winbase.h"
 #include "d3d8.h"
+#include "wine/wined3d_interface.h"
 
 extern int vs_mode;
 #define VS_NONE 0
@@ -284,6 +285,9 @@ struct IDirect3D8Impl
     IDirect3D8Vtbl         *lpVtbl;
     DWORD                   ref;
 
+    /* The WineD3D device */
+    IWineD3D               *WineD3D;
+    
     /* IDirect3D8 fields */
     GL_Info                 gl_info;
     BOOL                    isGLInfoValid;

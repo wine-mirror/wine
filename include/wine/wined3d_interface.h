@@ -45,6 +45,12 @@ typedef struct IWineD3D IWineD3D;
 #define IWineD3D_METHODS \
     IUnknown_METHODS \
     STDMETHOD_(UINT,GetAdapterCount             )(THIS) PURE; \
+    STDMETHOD(RegisterSoftwareDevice)(THIS_ void * pInitializeFunction) PURE; \
+    STDMETHOD_(HMONITOR,GetAdapterMonitor)(THIS_ UINT Adapter) PURE; \
+    STDMETHOD_(UINT,GetAdapterModeCount)(THIS_ UINT Adapter, D3DFORMAT Format) PURE; \
+    STDMETHOD(EnumAdapterModes)(THIS_ UINT  Adapter, UINT  Mode, D3DFORMAT Format, D3DDISPLAYMODE * pMode) PURE; \
+    STDMETHOD(GetAdapterDisplayMode)(THIS_ UINT  Adapter, D3DDISPLAYMODE * pMode) PURE; \
+    
 
 DECLARE_INTERFACE_(IWineD3D,IUnknown) { IWineD3D_METHODS };
 #undef INTERFACE
@@ -56,6 +62,12 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown) { IWineD3D_METHODS };
 #define IWineD3D_Release(p)                               (p)->lpVtbl->Release(p)
 /*** IWineD3D methods ***/
 #define IWineD3D_GetAdapterCount(p)                       (p)->lpVtbl->GetAdapterCount(p)
+#define IWineD3D_RegisterSoftwareDevice(p,a)              (p)->lpVtbl->RegisterSoftwareDevice(p,a)
+#define IWineD3D_GetAdapterMonitor(p,a)                   (p)->lpVtbl->GetAdapterMonitor(p,a)
+#define IWineD3D_GetAdapterModeCount(p,a,b)               (p)->lpVtbl->GetAdapterModeCount(p,a,b)
+#define IWineD3D_EnumAdapterModes(p,a,b,c,d)              (p)->lpVtbl->EnumAdapterModes(p,a,b,c,d)
+#define IWineD3D_GetAdapterDisplayMode(p,a,b)             (p)->lpVtbl->GetAdapterDisplayMode(p,a,b)
+
 #endif
 
 /* Define the main WineD3D entrypoint */

@@ -61,6 +61,10 @@ typedef struct IWineD3DImpl
 
 extern IWineD3DVtbl IWineD3D_Vtbl;
 
+/* Utility function prototypes */
+const char* debug_d3dformat(D3DFORMAT fmt);
+
+
 
 
 #if 0 /* Needs fixing during rework */

@@ -194,23 +194,22 @@ ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-    if (ref == 0)
+    if (ref == 0) {
+        IWineD3D_Release(This->WineD3D);
         HeapFree(GetProcessHeap(), 0, This);
+    }
     return ref;
 }
 
 /* IDirect3D Interface follow: */
-HRESULT  WINAPI  IDirect3D8Impl_RegisterSoftwareDevice     (LPDIRECT3D8 iface, void* pInitializeFunction) {
+HRESULT WINAPI IDirect3D8Impl_RegisterSoftwareDevice (LPDIRECT3D8 iface, void* pInitializeFunction) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    FIXME_(d3d_caps)("(%p)->(%p): stub\n", This, pInitializeFunction);
-    return D3D_OK;
+    return IWineD3D_RegisterSoftwareDevice(This->WineD3D, pInitializeFunction);
 }
 
-UINT     WINAPI  IDirect3D8Impl_GetAdapterCount            (LPDIRECT3D8 iface) {
+UINT WINAPI IDirect3D8Impl_GetAdapterCount (LPDIRECT3D8 iface) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    /* FIXME: Set to one for now to imply the display */
-    TRACE_(d3d_caps)("(%p): Mostly stub, only returns primary display\n", This);
-    return 1;
+    return IWineD3D_GetAdapterCount(This->WineD3D);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
@@ -264,142 +263,19 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
     return D3D_OK;
 }
 
-
-/*#define DEBUG_SINGLE_MODE*/
-#undef DEBUG_SINGLE_MODE
-
-UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
-                                                            UINT Adapter) {
+UINT WINAPI IDirect3D8Impl_GetAdapterModeCount (LPDIRECT3D8 iface,UINT Adapter) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-
-    TRACE_(d3d_caps)("(%p}->(Adapter: %d)\n", This, Adapter);
-
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (Adapter == 0) { /* Display */
-        int i = 0;
-#if !defined( DEBUG_SINGLE_MODE )
-        DEVMODEW DevModeW;
-        while (EnumDisplaySettingsExW(NULL, i, &DevModeW, 0)) {
-            i++;
-        }
-#else
-        i = 1;
-#endif
-
-        TRACE_(d3d_caps)("(%p}->(Adapter: %d) => %d\n", This, Adapter, i);
-        return i;
-    } else {
-        FIXME_(d3d_caps)("Adapter not primary display\n");
-    }
-
-    return 0;
+    return IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, D3DFMT_UNKNOWN);
 }
 
-HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
-                                                            UINT Adapter, UINT Mode, D3DDISPLAYMODE* pMode) {
+HRESULT WINAPI IDirect3D8Impl_EnumAdapterModes (LPDIRECT3D8 iface, UINT Adapter, UINT Mode, D3DDISPLAYMODE* pMode) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-
-    TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p)\n", This, Adapter, Mode, pMode);
-
-    if (NULL == pMode || 
-	Adapter >= IDirect3D8Impl_GetAdapterCount(iface) ||
-	Mode >= IDirect3D8Impl_GetAdapterModeCount(iface, Adapter)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (Adapter == 0) { /* Display */
-        int bpp = 0;
-#if !defined( DEBUG_SINGLE_MODE )
-        HDC hdc;
-        DEVMODEW DevModeW;
-
-        if (EnumDisplaySettingsExW(NULL, Mode, &DevModeW, 0)) 
-        {
-            pMode->Width        = DevModeW.dmPelsWidth;
-            pMode->Height       = DevModeW.dmPelsHeight;
-            bpp                 = DevModeW.dmBitsPerPel;
-            pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-            if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
-            {
-                pMode->RefreshRate = DevModeW.dmDisplayFrequency;
-            }
-        }
-        else
-        {
-            TRACE_(d3d_caps)("Requested mode out of range %d\n", Mode);
-            return D3DERR_INVALIDCALL;
-        }
-
-        hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        bpp = min(GetDeviceCaps(hdc, BITSPIXEL), bpp);
-        DeleteDC(hdc);
-
-        switch (bpp) {
-        case  8: pMode->Format = D3DFMT_R3G3B2;   break;
-        case 16: pMode->Format = D3DFMT_R5G6B5;   break;
-        case 24: /* pMode->Format = D3DFMT_R5G6B5;   break;*/ /* Make 24bit appear as 32 bit */
-        case 32: pMode->Format = D3DFMT_A8R8G8B8; break;
-        default: pMode->Format = D3DFMT_UNKNOWN;
-	}
-#else
-       if (Mode > 0) return D3DERR_INVALIDCALL;
-       pMode->Width        = 800;
-       pMode->Height       = 600;
-       pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-       pMode->Format       = D3DFMT_A8R8G8B8;
-       bpp = 32;
-#endif
-       TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x,%s) bpp %u\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
-
-    } else {
-        FIXME_(d3d_caps)("Adapter not primary display\n");
-    }
-
-    return D3D_OK;
+    return IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, D3DFMT_UNKNOWN, Mode, pMode);
 }
 
-HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
-                                                            UINT Adapter, D3DDISPLAYMODE* pMode) {
+HRESULT WINAPI IDirect3D8Impl_GetAdapterDisplayMode (LPDIRECT3D8 iface, UINT Adapter, D3DDISPLAYMODE* pMode) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    TRACE_(d3d_caps)("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
-
-    if (NULL == pMode || 
-	Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return D3DERR_INVALIDCALL;
-    }
-
-    if (Adapter == 0) { /* Display */
-        int bpp = 0;
-        DEVMODEW DevModeW;
-
-        EnumDisplaySettingsExW(NULL, (DWORD)-1, &DevModeW, 0);
-        pMode->Width        = DevModeW.dmPelsWidth;
-        pMode->Height       = DevModeW.dmPelsHeight;
-        bpp                 = DevModeW.dmBitsPerPel;
-        pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-        if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
-        {
-            pMode->RefreshRate = DevModeW.dmDisplayFrequency;
-        }
-
-        switch (bpp) {
-        case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
-        case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
-        case 24: /*pMode->Format       = D3DFMT_R5G6B5;   break;*/ /* Make 24bit appear as 32 bit */
-        case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
-        default: pMode->Format       = D3DFMT_UNKNOWN;
-        }
-
-    } else {
-        FIXME_(d3d_caps)("Adapter not primary display\n");
-    }
-
-    TRACE_(d3d_caps)("returning w:%d, h:%d, ref:%d, fmt:%x\n", pMode->Width,
-          pMode->Height, pMode->RefreshRate, pMode->Format);
-    return D3D_OK;
+    return IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, pMode);
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
@@ -877,15 +753,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
 
 HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapter) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    FIXME_(d3d_caps)("(%p)->(Adptr:%d)\n", This, Adapter);
-
-    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
-        return NULL;
-    }
-
-    return D3D_OK;
+    return IWineD3D_GetAdapterMonitor(This->WineD3D, Adapter);
 }
-
 
 static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     const char *GL_Extensions = NULL;

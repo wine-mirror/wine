@@ -61,16 +61,18 @@ ULONG WINAPI IDirect3D9Impl_Release(LPDIRECT3D9 iface) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-    if (ref == 0)
+    if (ref == 0) {
+        IWineD3D_Release(This->WineD3D);
         HeapFree(GetProcessHeap(), 0, This);
+    }
+
     return ref;
 }
 
 /* IDirect3D9 Interface follow: */
 HRESULT  WINAPI  IDirect3D9Impl_RegisterSoftwareDevice(LPDIRECT3D9 iface, void* pInitializeFunction) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p)->(%p): stub\n", This, pInitializeFunction);
-    return D3D_OK;
+    return IWineD3D_RegisterSoftwareDevice(This->WineD3D, pInitializeFunction);
 }
 
 UINT     WINAPI  IDirect3D9Impl_GetAdapterCount(LPDIRECT3D9 iface) {
@@ -86,20 +88,17 @@ HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9 iface, UINT Adapt
 
 UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return 0;
+    return IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, Format);
 }
 
 HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, Format, Mode, pMode);
 }
 
 HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9 iface, UINT Adapter, D3DDISPLAYMODE* pMode) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    return IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, pMode);
 }
 
 HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(LPDIRECT3D9 iface,
@@ -149,8 +148,7 @@ HRESULT  WINAPI  IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapter, D
 
 HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapter) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return NULL;
+    return IWineD3D_GetAdapterMonitor(This->WineD3D, Adapter);
 }
 
 HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,

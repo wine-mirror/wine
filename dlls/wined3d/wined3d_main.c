@@ -36,6 +36,7 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion) {
     IWineD3DImpl* object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DImpl));
     object->lpVtbl = &IWineD3D_Vtbl;
     object->dxVersion = dxVersion;
+    object->ref = 1;
 
     TRACE("Created WineD3D object @ %p for d3d%d support\n", object, dxVersion);
 
