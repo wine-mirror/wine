@@ -412,6 +412,8 @@ debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
 @ extern pfnRealizePalette pfnRealizePalette
 @ extern pfnSelectPalette pfnSelectPalette
 @ stub pstackConnect
+@ stub GetDCBrushColor #stdcall (long)
+@ stub GetDCPenColor   #stdcall (long)
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
