@@ -225,13 +225,18 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
           lps->hdc, lps->rcPaint.left, lps->rcPaint.top, lps->rcPaint.right, lps->rcPaint.bottom );
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
-    lps->fErase = !(wndPtr->flags & WIN_NEEDS_ERASEBKGND);
+    lps->fErase = (wndPtr->flags & WIN_NEEDS_ERASEBKGND) != 0;
     wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
     WIN_ReleasePtr( wndPtr );
 
-    if (!lps->fErase)
+    if (lps->fErase)
         lps->fErase = !SendMessageA( hwnd, bIcon ? WM_ICONERASEBKGND : WM_ERASEBKGND,
                                      (WPARAM)lps->hdc, 0 );
+
+    TRACE("hdc = %p box = (%ld,%ld - %ld,%ld), fErase = %d\n",
+          lps->hdc, lps->rcPaint.left, lps->rcPaint.top, lps->rcPaint.right, lps->rcPaint.bottom,
+          lps->fErase);
+
     return lps->hdc;
 }
 
