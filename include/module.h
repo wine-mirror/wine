@@ -184,9 +184,6 @@ extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 extern void MODULE_WalkModref( DWORD id );
 
-/* resource.c */
-extern INT       WINAPI AccessResource(HMODULE,HRSRC); 
-
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
 extern void NE_DumpModule( HMODULE16 hModule );
@@ -202,7 +199,6 @@ extern HANDLE NE_OpenFile( NE_MODULE *pModule );
 extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
 extern BOOL NE_InitResourceHandler( HMODULE16 hModule );
 extern HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type );
-extern INT16 NE_AccessResource( NE_MODULE *pModule, HRSRC16 hRsrc );
 extern DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC16 hRsrc );
 extern HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc );
 extern BOOL16 NE_FreeResource( NE_MODULE *pModule, HGLOBAL16 handle );
@@ -223,7 +219,7 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 
 /* loader/pe_resource.c */
 extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
-extern DWORD PE_SizeofResource(HMODULE,HRSRC);
+extern DWORD PE_SizeofResource(HRSRC);
 extern HGLOBAL PE_LoadResource(HMODULE,HRSRC);
 extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY,LPCSTR,DWORD,BOOL);
 extern PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL);

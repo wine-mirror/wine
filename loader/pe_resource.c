@@ -157,13 +157,11 @@ HANDLE PE_LoadResource( HMODULE hmod, HANDLE hRsrc )
 
 
 /**********************************************************************
- *	    PE_SizeofResource32
+ *	    PE_SizeofResource
  */
-DWORD PE_SizeofResource( HINSTANCE hModule, HANDLE hRsrc )
+DWORD PE_SizeofResource( HANDLE hRsrc )
 {
-    /* we don't need hModule */
-    if (!hRsrc)
-   	 return 0;
+    if (!hRsrc) return 0;
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
 }
 

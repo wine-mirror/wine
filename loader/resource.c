@@ -132,49 +132,22 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 				BOOL bUnicode, BOOL bRet16 )
 {
     HRSRC hRsrc = 0;
-    HMODULE16 hMod16   = MapHModuleLS( hModule );
-    NE_MODULE *pModule = NE_GetPtr( hMod16 );
     
-    TRACE("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
+    TRACE("(%08x, %08x%s, %08x%s, %04x, %s, %s)\n",
 	  hModule,
-	  pModule ? (char *)NE_MODULE_NAME(pModule) : "NULL dereference",
 	  (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
 	  (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
 	  lang,
 	  bUnicode? "W"  : "A",
 	  bRet16?   "NE" : "PE" );
-    
-    if (pModule)
+
+    if (!HIWORD(hModule))
     {
-	if (pModule->module32)
-	{
-	    /* 32-bit PE module */
-	    LPWSTR typeStr, nameStr;
-	    
-	    if ( HIWORD( type ) && !bUnicode )
-		typeStr = HEAP_strdupAtoW( GetProcessHeap(), 0, type );
-	    else
-		typeStr = (LPWSTR)type;
-	    if ( HIWORD( name ) && !bUnicode )
-		nameStr = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-	    else
-		nameStr = (LPWSTR)name;
-	    
-	    hRsrc = PE_FindResourceExW( pModule->module32, nameStr, typeStr, lang );
-	    
-	    if ( HIWORD( type ) && !bUnicode ) 
-		HeapFree( GetProcessHeap(), 0, typeStr );
-	    if ( HIWORD( name ) && !bUnicode ) 
-		HeapFree( GetProcessHeap(), 0, nameStr );
-	    
-	    
-	    /* If we need to return 16-bit HRSRC, perform conversion */
-	    if ( bRet16 )
-		hRsrc = MapHRsrc32To16( pModule, hRsrc, 
-					HIWORD( type )? 0 : LOWORD( type ) );
-	}
-	else
-	{
+        HMODULE16 hMod16   = MapHModuleLS( hModule );
+        NE_MODULE *pModule = NE_GetPtr( hMod16 );
+        if (!pModule) return 0;
+        if (!pModule->module32)
+        {
 	    /* 16-bit NE module */
 	    LPSTR typeStr, nameStr;
 	    
@@ -194,10 +167,39 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 	    if ( HIWORD( name ) && bUnicode ) 
 		HeapFree( GetProcessHeap(), 0, nameStr );
 	    
-	    
 	    /* If we need to return 32-bit HRSRC, no conversion is necessary,
 	       we simply use the 16-bit HRSRC as 32-bit HRSRC */
-	}
+        }
+        else
+        {
+            /* 32-bit PE module */
+            hRsrc = RES_FindResource2( pModule->module32, type, name, lang, bUnicode, FALSE );
+            /* If we need to return 16-bit HRSRC, perform conversion */
+            if ( bRet16 )
+                hRsrc = MapHRsrc32To16( pModule, hRsrc, 
+                                        HIWORD( type )? 0 : LOWORD( type ) );
+        }
+    }
+    else
+    {
+        /* 32-bit PE module */
+        LPWSTR typeStr, nameStr;
+	    
+        if ( HIWORD( type ) && !bUnicode )
+            typeStr = HEAP_strdupAtoW( GetProcessHeap(), 0, type );
+        else
+            typeStr = (LPWSTR)type;
+        if ( HIWORD( name ) && !bUnicode )
+            nameStr = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
+        else
+            nameStr = (LPWSTR)name;
+
+        hRsrc = PE_FindResourceExW( hModule, nameStr, typeStr, lang );
+	    
+        if ( HIWORD( type ) && !bUnicode ) 
+            HeapFree( GetProcessHeap(), 0, typeStr );
+        if ( HIWORD( name ) && !bUnicode ) 
+            HeapFree( GetProcessHeap(), 0, nameStr );
     }
     return hRsrc;
 }
@@ -230,81 +232,28 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
  */
 static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 {
-    DWORD size = 0;
+    if (!hRsrc) return 0;
 
-    HMODULE16 hMod16   = MapHModuleLS( hModule );
-    NE_MODULE *pModule = NE_GetPtr( hMod16 );
+    TRACE("(%08x, %08x, %s)\n", hModule, hRsrc, bRet16? "NE" : "PE" );
 
-    TRACE("(%08x %s, %08x, %s)\n",
-          hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
-
-    if ( !pModule || !hRsrc ) return 0;
-
-    if (pModule->module32)
+    if (!HIWORD(hModule))
     {
-        /* 32-bit PE module */
+        HMODULE16 hMod16   = MapHModuleLS( hModule );
+        NE_MODULE *pModule = NE_GetPtr( hMod16 );
+        if (!pModule) return 0;
+
+        if (!pModule->module32)  /* 16-bit NE module */
+        {
+            /* If we got a 32-bit hRsrc, we don't need to convert it */
+            return NE_SizeofResource( pModule, hRsrc );
+        }
 
         /* If we got a 16-bit hRsrc, convert it */
-        HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
-
-        size = PE_SizeofResource( hModule, hRsrc32 );
-    }
-    else
-    {
-        /* 16-bit NE module */
-
-        /* If we got a 32-bit hRsrc, we don't need to convert it */
-
-        size = NE_SizeofResource( pModule, hRsrc );
+        if (!HIWORD(hRsrc)) hRsrc = MapHRsrc16To32( pModule, hRsrc );
     }
 
-    return size;
-}
-
-/**********************************************************************
- *          RES_AccessResource
- */
-static HFILE RES_AccessResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
-{
-    HFILE hFile = HFILE_ERROR;
-
-    HMODULE16 hMod16   = MapHModuleLS( hModule );
-    NE_MODULE *pModule = NE_GetPtr( hMod16 );
-
-    TRACE("(%08x %s, %08x, %s)\n",
-          hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
-
-    if ( !pModule || !hRsrc ) return HFILE_ERROR;
-
-    if (pModule->module32)
-    {
-        /* 32-bit PE module */
-#if 0
-        /* If we got a 16-bit hRsrc, convert it */
-        HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
-#endif
-
-        FIXME("32-bit modules not yet supported.\n" );
-        hFile = HFILE_ERROR;
-
-        /* If we need to return a 16-bit file handle, convert it */
-        if ( bRet16 )
-            hFile = FILE_AllocDosHandle( hFile );
-    }
-    else
-    {
-        /* 16-bit NE module */
-
-        /* If we got a 32-bit hRsrc, we don't need to convert it */
-
-        hFile = NE_AccessResource( pModule, hRsrc );
-
-        /* If we are to return a 32-bit file handle, convert it */
-        if ( !bRet16 )
-            hFile = FILE_GetHandle( hFile );
-    }
-
-    return hFile;
+    /* 32-bit PE module */
+    return PE_SizeofResource( hRsrc );
 }
 
 /**********************************************************************
@@ -314,117 +263,52 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 {
     HGLOBAL hMem = 0;
 
-    HMODULE16 hMod16   = MapHModuleLS( hModule );
-    NE_MODULE *pModule = NE_GetPtr( hMod16 );
+    TRACE("(%08x, %08x, %s)\n", hModule, hRsrc, bRet16? "NE" : "PE" );
 
-    TRACE("(%08x %s, %08x, %s)\n",
-          hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
+    if (!hRsrc) return 0;
 
-    if ( !pModule || !hRsrc ) return 0;
-
-    if (pModule->module32)
+    if (!HIWORD(hModule))
     {
-        /* 32-bit PE module */
-
-        /* If we got a 16-bit hRsrc, convert it */
-        HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
-
-        hMem = PE_LoadResource( pModule->module32, hRsrc32 );
-
-        /* If we need to return a 16-bit resource, convert it */
-        if ( bRet16 )
+        HMODULE16 hMod16   = MapHModuleLS( hModule );
+        NE_MODULE *pModule = NE_GetPtr( hMod16 );
+        if (!pModule) return 0;
+        if (!pModule->module32)
         {
-            WORD type   = MapHRsrc16ToType( pModule, hRsrc );
-            DWORD size  = SizeofResource( hModule, hRsrc );
-            LPVOID bits = LockResource( hMem );
+            /* 16-bit NE module */
 
-            hMem = NE_LoadPEResource( pModule, type, bits, size );
+            /* If we got a 32-bit hRsrc, we don't need to convert it */
+            hMem = NE_LoadResource( pModule, hRsrc );
+
+            /* If we are to return a 32-bit resource, we should probably
+               convert it but we don't for now.  FIXME !!! */
+            return hMem;
+        }
+        else
+        {
+            /* If we got a 16-bit hRsrc, convert it */
+            HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
+
+            hMem = PE_LoadResource( pModule->module32, hRsrc32 );
+
+            /* If we need to return a 16-bit resource, convert it */
+            if ( bRet16 )
+            {
+                WORD type   = MapHRsrc16ToType( pModule, hRsrc );
+                DWORD size  = SizeofResource( hModule, hRsrc );
+                LPVOID bits = LockResource( hMem );
+
+                hMem = NE_LoadPEResource( pModule, type, bits, size );
+            }
         }
     }
     else
     {
-        /* 16-bit NE module */
-
-        /* If we got a 32-bit hRsrc, we don't need to convert it */
-
-        hMem = NE_LoadResource( pModule, hRsrc );
-
-        /* If we are to return a 32-bit resource, we should probably
-           convert it but we don't for now.  FIXME !!! */
+        /* 32-bit PE module */
+        hMem = PE_LoadResource( hModule, hRsrc );
     }
 
     return hMem;
 }
-
-/**********************************************************************
- *          RES_LockResource
- */
-static LPVOID RES_LockResource( HGLOBAL handle, BOOL bRet16 )
-{
-    LPVOID bits = NULL;
-
-    TRACE("(%08x, %s)\n", handle, bRet16? "NE" : "PE" );
-
-    if ( HIWORD( handle ) )
-    {
-        /* 32-bit memory handle */
-
-        if ( bRet16 )
-            FIXME("can't return SEGPTR to 32-bit resource %08x.\n", handle );
-        else
-            bits = (LPVOID)handle;
-    }
-    else
-    {
-        /* 16-bit memory handle */
-
-        /* May need to reload the resource if discarded */
-        SEGPTR segPtr = WIN16_GlobalLock16( handle );
-        
-        if ( bRet16 )
-            bits = (LPVOID)segPtr;
-        else
-            bits = PTR_SEG_TO_LIN( segPtr );
-    }
-
-    return bits;
-}
-
-/**********************************************************************
- *          RES_FreeResource
- */
-static BOOL RES_FreeResource( HGLOBAL handle )
-{
-    HGLOBAL retv = handle;
-
-    TRACE("(%08x)\n", handle );
-
-    if ( HIWORD( handle ) )
-    {
-        /* 32-bit memory handle: nothing to do */
-    }
-    else
-    {
-        /* 16-bit memory handle */
-        NE_MODULE *pModule = NE_GetPtr( FarGetOwner16( handle ) );
-
-        /* Try NE resource first */
-        retv = NE_FreeResource( pModule, handle );
-
-        /* If this failed, call USER.DestroyIcon32; this will check
-           whether it is a shared cursor/icon; if not it will call
-           GlobalFree16() */
-        if ( retv ) {
-            if ( Callout.DestroyIcon32 )
-                retv = Callout.DestroyIcon32( handle, CID_RESOURCE );
-            else
-                retv = GlobalFree16( handle );
-	}
-    }
-
-    return (BOOL)retv;
-}
-
 
 /**********************************************************************
  *          FindResource16   (KERNEL.60)
@@ -497,11 +381,13 @@ HGLOBAL WINAPI LoadResource( HINSTANCE hModule, HRSRC hRsrc )
  */
 SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
 {
-    return (SEGPTR)RES_LockResource( handle, TRUE );
+    TRACE("(%04x)\n", handle );
+    /* May need to reload the resource if discarded */
+    return WIN16_GlobalLock16( handle );
 }
 LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 {
-    return RES_LockResource( handle, FALSE );
+    return PTR_SEG_TO_LIN( WIN16_LockResource16(handle) );
 }
 
 /**********************************************************************
@@ -509,7 +395,13 @@ LPVOID WINAPI LockResource16( HGLOBAL16 handle )
  */
 LPVOID WINAPI LockResource( HGLOBAL handle )
 {
-    return RES_LockResource( handle, FALSE );
+    TRACE("(%08x)\n", handle );
+
+    if (HIWORD( handle ))  /* 32-bit memory handle */
+        return (LPVOID)handle;
+
+    /* 16-bit memory handle */
+    return LockResource16( handle );
 }
 
 /**********************************************************************
@@ -517,7 +409,25 @@ LPVOID WINAPI LockResource( HGLOBAL handle )
  */
 BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 {
-    return RES_FreeResource( handle );
+    HGLOBAL retv = handle;
+    NE_MODULE *pModule = NE_GetPtr( FarGetOwner16( handle ) );
+
+    TRACE("(%04x)\n", handle );
+
+    /* Try NE resource first */
+    retv = NE_FreeResource( pModule, handle );
+
+    /* If this failed, call USER.DestroyIcon32; this will check
+       whether it is a shared cursor/icon; if not it will call
+       GlobalFree16() */
+    if ( retv )
+    {
+        if ( Callout.DestroyIcon32 )
+            retv = Callout.DestroyIcon32( handle, CID_RESOURCE );
+        else
+            retv = GlobalFree16( handle );
+    }
+    return (BOOL)retv;
 }
 
 /**********************************************************************
@@ -525,23 +435,9 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
  */
 BOOL WINAPI FreeResource( HGLOBAL handle )
 {
-    return RES_FreeResource( handle );
-}
+    if (HIWORD(handle)) return 0; /* 32-bit memory handle: nothing to do */
 
-/**********************************************************************
- *          AccessResource16 (KERNEL.64)
- */
-INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
-{
-    return RES_AccessResource( hModule, hRsrc, TRUE );
-}
-
-/**********************************************************************
- *	    AccessResource   (KERNEL32.64)
- */
-INT WINAPI AccessResource( HMODULE hModule, HRSRC hRsrc )
-{
-    return RES_AccessResource( hModule, hRsrc, FALSE );
+    return FreeResource16( handle );
 }
 
 /**********************************************************************

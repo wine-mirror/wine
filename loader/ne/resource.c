@@ -400,11 +400,12 @@ HGLOBAL16 WINAPI DirectResAlloc16( HINSTANCE16 hInstance, WORD wType,
 
 
 /**********************************************************************
- *	    NE_AccessResource
+ *          AccessResource16 (KERNEL.64)
  */
-INT16 NE_AccessResource( NE_MODULE *pModule, HRSRC16 hRsrc )
+INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 {
     HFILE16 fd;
+    NE_MODULE *pModule = NE_GetPtr( hModule );
 
     if (!pModule || !pModule->res_table || !hRsrc) return -1;
 
