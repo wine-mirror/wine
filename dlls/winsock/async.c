@@ -90,6 +90,11 @@
 
 DEFAULT_DEBUG_CHANNEL(winsock)
 
+/* protoptypes of some functions in socket.c
+ */
+UINT16 wsaErrno(void);
+UINT16 wsaHerrno(void);
+
 /* ----------------------------------- helper functions - */
 
 static int list_size(char** l, int item_size)
@@ -308,7 +313,7 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 					size = -size;
 				}
 			} else {
-				fail = WSAENOBUFS;
+				fail = ((h_errno < 0) ? wsaErrno() : wsaHerrno());
 			}
 		}
 		break;
@@ -325,7 +330,13 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 					size = -size;
 				}
 			} else {
-				fail = WSAENOBUFS;
+                if (aq->flags & AQ_NAME)
+                    MESSAGE("protocol %s not found; You might want to add "
+                            "this to /etc/protocols\n", debugstr_a(aq->proto_name) );
+                else
+                    MESSAGE("protocol number %d not found; You might want to add "
+                            "this to /etc/protocols\n", aq->proto_number );
+                fail = WSANO_DATA;
 			}
 		}
 		break;
@@ -342,7 +353,15 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 					size = -size;
 				}
 			} else {
-				fail = WSAENOBUFS;
+                if (aq->flags & AQ_NAME)
+                    MESSAGE("service %s protocol %s not found; You might want to add "
+                            "this to /etc/services\n", debugstr_a(aq->serv_name) ,
+                            aq->serv_proto ? debugstr_a(aq->serv_proto ):"*"); 
+                else
+                    MESSAGE("service on port %d protocol %s not found; You might want to add "
+                            "this to /etc/services\n", aq->serv_port,
+                            aq->serv_proto ? debugstr_a(aq->serv_proto ):"*"); 
+                fail = WSANO_DATA;
 			}
 		}
 		break;

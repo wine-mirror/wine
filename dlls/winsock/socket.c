@@ -1964,8 +1964,12 @@ static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
 		return (struct WIN_protoent*)(pwsi->pe);
 	    else SetLastError(WSAENOBUFS);
-	else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
-    }
+        else {
+            MESSAGE("protocol %s not found; You might want to add "
+                    "this to /etc/protocols\n", debugstr_a(name) );
+            SetLastError(WSANO_DATA);
+        }
+    } else SetLastError(WSANOTINITIALISED);
     return NULL;
 }
 
@@ -1998,8 +2002,12 @@ static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
 		return (struct WIN_protoent*)(pwsi->pe);
 	    else SetLastError(WSAENOBUFS);
-	else SetLastError(WSANO_DATA);
-    }
+        else {
+            MESSAGE("protocol number %d not found; You might want to add "
+                    "this to /etc/protocols\n", number );
+            SetLastError(WSANO_DATA);
+        }
+    } else SetLastError(WSANOTINITIALISED);
     return NULL;
 }
 
@@ -2038,7 +2046,7 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 		    return (struct WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
 	    else {
-                MESSAGE("service %s protocol %s not found; maybe you have add "
+                MESSAGE("service %s protocol %s not found; You might want to add "
                         "this to /etc/services\n", debugstr_a(pwsi->buffer),
                         proto ? debugstr_a(pwsi->buffer+i):"*"); 
                 SetLastError(WSANO_DATA);
@@ -2083,7 +2091,7 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 		else SetLastError(WSAENOBUFS);
 	    }
 	    else {
-                MESSAGE("service on port %d protocol %s not found; maybe you have "
+                MESSAGE("service on port %d protocol %s not found; You might want to add "
                         "add this to /etc/services\n", ntohl(port),
                         proto ? debugstr_a(pwsi->buffer) : "*"); 
                 SetLastError(WSANO_DATA);
@@ -2498,7 +2506,8 @@ DWORD WINAPI WsControl(DWORD protocoll,DWORD action,
   }
   return FALSE;
 }
-/*********************************************************
+
+/***********************************************************************
  *       WS_s_perror         WSOCK32.1108 
  */
 void WINAPI WS_s_perror(LPCSTR message)
