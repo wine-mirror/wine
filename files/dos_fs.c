@@ -244,7 +244,7 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
     /* at most 3 character of the extension are processed
      * is something behind this ? 
      */
-    if (*p == '*') p++; /* skip wildcard */
+    while (*p == '*' || *p == ' ') p++; /* skip wildcards and spaces */
     return IS_END_OF_NAME(*p);
 }
 
