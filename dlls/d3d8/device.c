@@ -3410,22 +3410,71 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             break;
         }
 
+    case D3DTSS_ADDRESSU              :
+    case D3DTSS_ADDRESSV              :
+    case D3DTSS_ADDRESSW              :
+        {
+            GLint wrapParm = GL_REPEAT;
+            switch (Value) {
+            case D3DTADDRESS_WRAP:   wrapParm = GL_REPEAT; break;
+            case D3DTADDRESS_CLAMP:  wrapParm = GL_CLAMP; break;      
+            case D3DTADDRESS_BORDER: wrapParm = GL_CLAMP_TO_EDGE; break;      
+
+            case D3DTADDRESS_MIRROR:      /* Unsupported in OpenGL? */
+            case D3DTADDRESS_MIRRORONCE:  /* Unsupported in OpenGL? */
+            default:
+                FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
+                wrapParm = GL_REPEAT; 
+            }
+
+            switch (Type) {
+            case D3DTSS_ADDRESSU:
+                TRACE("Setting WRAP_S to %d for %x\n", wrapParm, This->StateBlock.textureDimensions[Stage]);
+                glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_WRAP_S, wrapParm);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_S, wrapParm)");
+                break;
+            case D3DTSS_ADDRESSV:
+                TRACE("Setting WRAP_T to %d for %x\n", wrapParm, This->StateBlock.textureDimensions[Stage]);
+                glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_WRAP_T, wrapParm);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_T, wrapParm)");
+                break;
+            case D3DTSS_ADDRESSW:
+                TRACE("Setting WRAP_R to %d for %x\n", wrapParm, This->StateBlock.textureDimensions[Stage]);
+                glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_WRAP_R, wrapParm);
+                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
+                break;
+            default: /* nop */
+      	        break; /** stupic compilator */
+            }
+        }
+        break;
+
+    case D3DTSS_BORDERCOLOR           :
+        {
+            float col[4];
+            col[0] = ((Value >> 16) & 0xFF) / 255.0;
+            col[1] = ((Value >>  8) & 0xFF) / 255.0;
+            col[2] = ((Value >>  0) & 0xFF) / 255.0;
+            col[3] = ((Value >> 24) & 0xFF) / 255.0;
+
+            TRACE("Setting border color for %x to %lx\n", This->StateBlock.textureDimensions[Stage], Value); 
+            glTexParameterfv(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_BORDER_COLOR, &col[0]);
+            checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
+        }
+        break;
+
         /* Unhandled */
     case D3DTSS_BUMPENVMAT00          :
     case D3DTSS_BUMPENVMAT01          :
     case D3DTSS_BUMPENVMAT10          :
     case D3DTSS_BUMPENVMAT11          :
     case D3DTSS_TEXCOORDINDEX         :
-    case D3DTSS_ADDRESSU              :
-    case D3DTSS_ADDRESSV              :
-    case D3DTSS_BORDERCOLOR           :
     case D3DTSS_MIPMAPLODBIAS         :
     case D3DTSS_MAXMIPLEVEL           :
     case D3DTSS_MAXANISOTROPY         :
     case D3DTSS_BUMPENVLSCALE         :
     case D3DTSS_BUMPENVLOFFSET        :
     case D3DTSS_TEXTURETRANSFORMFLAGS :
-    case D3DTSS_ADDRESSW              :
     case D3DTSS_RESULTARG             :
     default:
         /* Put back later: FIXME("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value); */
