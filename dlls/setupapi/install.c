@@ -69,9 +69,12 @@ static const WCHAR Ini2Reg[]    = {'I','n','i','2','R','e','g',0};
 static const WCHAR LogConf[]    = {'L','o','g','C','o','n','f',0};
 static const WCHAR AddReg[]     = {'A','d','d','R','e','g',0};
 static const WCHAR DelReg[]     = {'D','e','l','R','e','g',0};
+static const WCHAR BitReg[]     = {'B','i','t','R','e','g',0};
 static const WCHAR UpdateInis[] = {'U','p','d','a','t','e','I','n','i','s',0};
+static const WCHAR CopyINF[]    = {'C','o','p','y','I','N','F',0};
 static const WCHAR UpdateIniFields[] = {'U','p','d','a','t','e','I','n','i','F','i','e','l','d','s',0};
 static const WCHAR RegisterDlls[] = {'R','e','g','i','s','t','e','r','D','l','l','s',0};
+static const WCHAR ProfileItems[] = {'P','r','o','f','i','l','e','I','t','e','m','s',0};
 
 
 /***********************************************************************
@@ -576,6 +579,11 @@ static BOOL register_dlls_callback( HINF hinf, PCWSTR field, void *arg )
     return ret;
 }
 
+/***********************************************************************
+ *            update_ini_callback
+ *
+ * Called once for each UpdateInis entry in a given section.
+ */
 static BOOL update_ini_callback( HINF hinf, PCWSTR field, void *arg )
 {
     INFCONTEXT context;
@@ -640,6 +648,24 @@ static BOOL ini2reg_callback( HINF hinf, PCWSTR field, void *arg )
 static BOOL logconf_callback( HINF hinf, PCWSTR field, void *arg )
 {
     FIXME( "should do logconf %s\n", debugstr_w(field) );
+    return TRUE;
+}
+
+static BOOL bitreg_callback( HINF hinf, PCWSTR field, void *arg )
+{
+    FIXME( "should do bitreg %s\n", debugstr_w(field) );
+    return TRUE;
+}
+
+static BOOL profile_items_callback( HINF hinf, PCWSTR field, void *arg )
+{
+    FIXME( "should do profile items %s\n", debugstr_w(field) );
+    return TRUE;
+}
+
+static BOOL copy_inf_callback( HINF hinf, PCWSTR field, void *arg )
+{
+    FIXME( "should do copy inf %s\n", debugstr_w(field) );
     return TRUE;
 }
 
@@ -804,13 +830,11 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         if (!iterate_section_fields( hinf, section, Ini2Reg, ini2reg_callback, NULL ))
             return FALSE;
     }
-
     if (flags & SPINST_LOGCONFIG)
     {
         if (!iterate_section_fields( hinf, section, LogConf, logconf_callback, NULL ))
             return FALSE;
     }
-
     if (flags & SPINST_REGSVR)
     {
         struct register_dll_info info;
@@ -826,7 +850,6 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         if (!iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info ))
             return FALSE;
     }
-
     if (flags & SPINST_UNREGSVR)
     {
         struct register_dll_info info;
@@ -842,7 +865,6 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         if (!iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info ))
             return FALSE;
     }
-
     if (flags & SPINST_REGISTRY)
     {
         struct registry_callback_info info;
@@ -855,8 +877,78 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         if (!iterate_section_fields( hinf, section, AddReg, registry_callback, &info ))
             return FALSE;
     }
+    if (flags & SPINST_BITREG)
+    {
+        if (!iterate_section_fields( hinf, section, BitReg, bitreg_callback, NULL ))
+            return FALSE;
+    }
+    if (flags & SPINST_PROFILEITEMS)
+    {
+        if (!iterate_section_fields( hinf, section, ProfileItems, profile_items_callback, NULL ))
+            return FALSE;
+    }
+    if (flags & SPINST_COPYINF)
+    {
+        if (!iterate_section_fields( hinf, section, CopyINF, copy_inf_callback, NULL ))
+            return FALSE;
+    }
 
-    if (flags & (SPINST_BITREG|SPINST_PROFILEITEMS|SPINST_COPYINF))
-        FIXME( "unsupported flags %x\n", flags );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *		InstallHinfSectionW  (SETUPAPI.@)
+ *
+ * NOTE: 'cmdline' is <section> <mode> <path> from
+ *   RUNDLL32.EXE SETUPAPI.DLL,InstallHinfSection <section> <mode> <path>
+ */
+void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, INT show )
+{
+    WCHAR *p, *path, section[MAX_PATH];
+    void *callback_context;
+    UINT mode;
+    HINF hinf;
+
+    TRACE("hwnd %p, handle %p, cmdline %s\n", hwnd, handle, debugstr_w(cmdline));
+
+    lstrcpynW( section, cmdline, sizeof(section)/sizeof(WCHAR) );
+
+    if (!(p = strchrW( section, ' ' ))) return;
+    *p++ = 0;
+    while (*p == ' ') p++;
+    mode = atoiW( p );
+
+    if (!(p = strchrW( p, ' ' ))) return;
+    path = p + 1;
+    while (*path == ' ') path++;
+
+    hinf = SetupOpenInfFileW( path, NULL, INF_STYLE_WIN4, NULL );
+    if (hinf == INVALID_HANDLE_VALUE) return;
+
+    callback_context = SetupInitDefaultQueueCallback( hwnd );
+    SetupInstallFromInfSectionW( hwnd, hinf, section, SPINST_ALL, NULL, NULL, SP_COPY_NEWER,
+                                 SetupDefaultQueueCallbackW, callback_context,
+                                 NULL, NULL );
+    SetupTermDefaultQueueCallback( callback_context );
+    SetupCloseInfFile( hinf );
+
+    /* FIXME: should check the mode and maybe reboot */
+    /* there isn't much point in doing that since we */
+    /* don't yet handle deferred file copies anyway. */
+}
+
+
+/***********************************************************************
+ *		InstallHinfSectionA  (SETUPAPI.@)
+ */
+void WINAPI InstallHinfSectionA( HWND hwnd, HINSTANCE handle, LPCSTR cmdline, INT show )
+{
+    UNICODE_STRING cmdlineW;
+
+    if (RtlCreateUnicodeStringFromAsciiz( &cmdlineW, cmdline ))
+    {
+        InstallHinfSectionW( hwnd, handle, cmdlineW.Buffer, show );
+        RtlFreeUnicodeString( &cmdlineW );
+    }
 }

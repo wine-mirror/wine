@@ -599,6 +599,9 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PFILEPATHS)
 #define SPDRP_INSTALL_STATE               0x00000022
 #define SPDRP_MAXIMUM_PROPERTY            0x00000023
 
+void     WINAPI InstallHinfSectionA( HWND hwnd, HINSTANCE handle, LPCSTR cmdline, INT show );
+void     WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, INT show );
+#define         InstallHinfSection WINELIB_NAME_AW(InstallHinfSection)
 HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR pszclass, DWORD style, UINT *error );
 HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR pszclass, DWORD style, UINT *error );
 #define         SetupOpenInfFile WINELIB_NAME_AW(SetupOpenInfFile)

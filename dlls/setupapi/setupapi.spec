@@ -27,9 +27,9 @@
 @ stub GetSetFileTimestamp
 @ stub GetVersionInfoFromImage
 @ stub InfIsFromOemLocation
-@ stdcall InstallHinfSection(long long str long)
-@ stub InstallHinfSectionA
-@ stub InstallHinfSectionW
+@ stdcall InstallHinfSection(long long str long) InstallHinfSectionA
+@ stdcall InstallHinfSectionA(long long str long)
+@ stdcall InstallHinfSectionW(long long wstr long)
 @ stub InstallStop
 @ stub IsUserAdmin
 @ stub LookUpStringInTable
