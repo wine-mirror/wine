@@ -2104,7 +2104,7 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
 /*************************************************************************
  * SHGetFolderPathA			[SHFOLDER.@]
  */
-HRESULT SHGetFolderPathA(
+HRESULT WINAPI SHGetFolderPathA(
 	HWND hwndOwner,
 	int nFolder,
 	HANDLE hToken,	/* FIXME: get paths for specific user */
@@ -2121,7 +2121,7 @@ HRESULT SHGetFolderPathA(
 /*************************************************************************
  * SHGetFolderPathW			[SHFOLDER.@]
  */
-HRESULT SHGetFolderPathW(
+HRESULT WINAPI SHGetFolderPathW(
 	HWND hwndOwner,
 	int nFolder,
 	HANDLE hToken,
