@@ -1126,27 +1126,24 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
     int num_active_stages = 0;
 
+    /* This is to prevent 'thread contention' between a thread locking the device and another
+       doing 3D display on it... */
+    EnterCriticalSection(&(This->crit));   
+    
     ENTER_GL();
     if (glThis->state == SURFACE_MEMORY_DIRTY) {
         This->flush_to_framebuffer(This, NULL, glThis->lock_surf);
     }
-    LEAVE_GL();
 
     glThis->state = SURFACE_GL;
     
     /* Compute the number of active texture stages */
     while (This->current_texture[num_active_stages] != NULL) num_active_stages++;
 
-    /* This is to prevent 'thread contention' between a thread locking the device and another
-       doing 3D display on it... */
-    EnterCriticalSection(&(This->crit));   
-    
     if (TRACE_ON(ddraw)) {
         TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
     }
 
-    ENTER_GL();
-    
     /* Just a hack for now.. Will have to find better algorithm :-/ */
     if ((d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
         vertex_lighted = TRUE;
@@ -1992,9 +1989,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	    }
 
 	    if ((dwState & 0xFF) != D3DTTFF_DISABLE) {
-	        LEAVE_GL();
 	        This->matrices_updated(This, TEXMAT0_CHANGED << dwStage);
-		ENTER_GL();
 	    }
 
 	    if (handled == TRUE) {
@@ -2800,7 +2795,6 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
         /* If the surface is already in memory, no need to do anything here... */
         GLenum buffer_type;
 	GLenum buffer_color;
-	GLenum prev_read;
 	RECT loc_rect;
 	int y;
 	char *dst;
@@ -2811,18 +2805,6 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	   may only write to the device... But when we will blit it back to the screen, we need
 	   also to blit correctly the parts the application did not overwrite... */
 	
-	ENTER_GL();
-	
-	glGetIntegerv(GL_READ_BUFFER, &prev_read);
-	glFlush();
-	
-	if (is_front == TRUE)
-	    /* Application wants to lock the front buffer */
-	    glReadBuffer(GL_FRONT);
-	else 
-	    /* Application wants to lock the back buffer */
-	    glReadBuffer(GL_BACK);
-
 	if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
 	    (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
 	    (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
@@ -2840,9 +2822,17 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
 	} else {
 	    ERR(" unsupported pixel format at device locking.\n");
-	    LEAVE_GL();
 	    return;
 	}
+
+	ENTER_GL();
+	
+	if (is_front == TRUE)
+	    /* Application wants to lock the front buffer */
+	    glReadBuffer(GL_FRONT);
+	else 
+	    /* Application wants to lock the back buffer */
+	    glReadBuffer(GL_BACK);
 
 	/* Just a hack while waiting for proper rectangle support */
 	pRect = NULL;
@@ -2866,7 +2856,6 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	    dst += This->surface_desc.u1.lPitch;
 	}
 
-	glReadBuffer(prev_read);
 	glPixelStorei(GL_PACK_SWAP_BYTES, FALSE);
 	
 	if (is_front)
@@ -2904,8 +2893,8 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     GLint tex_state;
     int x, y;
 
-    /* This is to prevent another thread to actually lock the buffer while we flush it on screen */
-    EnterCriticalSection(&(d3d_dev->crit));
+    /* Note : no need here to lock the 'device critical section' as we are already protected by
+       the GL critical section. */
     
     loc_rect.top = 0;
     loc_rect.left = 0;
@@ -2947,7 +2936,6 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	glPixelStorei(GL_UNPACK_SWAP_BYTES, TRUE);
     } else {
         ERR(" unsupported pixel format at frame buffer flush.\n");
-	LeaveCriticalSection(&(d3d_dev->crit));
 	return;
     }
 
@@ -2957,6 +2945,8 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_SCISSOR_TEST); 
+    glDepthRange(0.0, 1.0);
+    glViewport(0, 0, d3d_dev->surface->surface_desc.dwWidth, d3d_dev->surface->surface_desc.dwHeight);
     glScissor(loc_rect.left, surf->surface_desc.dwHeight - loc_rect.bottom,
 	      loc_rect.right - loc_rect.left, loc_rect.bottom - loc_rect.top);
     
@@ -3024,9 +3014,11 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, max_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_tex);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, tex_env);
-    LEAVE_GL();
+    glDepthRange(d3d_dev->active_viewport.dvMinZ, d3d_dev->active_viewport.dvMaxZ);
+    glViewport(d3d_dev->active_viewport.dwX,
+	       d3d_dev->surface->surface_desc.dwHeight - (d3d_dev->active_viewport.dwHeight + d3d_dev->active_viewport.dwY),
+	       d3d_dev->active_viewport.dwWidth, d3d_dev->active_viewport.dwHeight);
     d3d_dev->matrices_updated(d3d_dev, TEXMAT0_CHANGED);
-    ENTER_GL();
 #if 0
     /* I keep this code here as it's very useful to debug :-) */
     {
@@ -3041,9 +3033,6 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	}
     }
 #endif
-
-    /* And leave the critical section... */
-    LeaveCriticalSection(&(d3d_dev->crit));
 }
 
 static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
@@ -3221,9 +3210,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     
     /* Initialisation */
     TRACE(" setting current context\n");
-    LEAVE_GL();
     object->set_context(object);
-    ENTER_GL();
     TRACE(" current context set\n");
 
     /* allocate the clipping planes */

@@ -101,11 +101,9 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	    case D3DRENDERSTATE_TEXTUREHANDLE: {    /*  1 */
 	        IDirectDrawSurfaceImpl *tex = (IDirectDrawSurfaceImpl*) dwRenderState;
 		
-		LEAVE_GL();
 		IDirect3DDevice7_SetTexture(ICOM_INTERFACE(This, IDirect3DDevice7),
 					    0, 
 					    ICOM_INTERFACE(tex, IDirectDrawSurface7));
-		ENTER_GL();
 	    } break;
 	      
 	    case D3DRENDERSTATE_TEXTUREADDRESSU:  /* 44 */
@@ -117,11 +115,9 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		else if (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESSU) d3dTexStageStateType = D3DTSS_ADDRESSU;
 		else d3dTexStageStateType = D3DTSS_ADDRESSV;
 
-		LEAVE_GL();
 		IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7),
 						      0, d3dTexStageStateType,
 						      dwRenderState);
-		ENTER_GL();
 	    } break;
 	      
 	    case D3DRENDERSTATE_TEXTUREPERSPECTIVE: /* 4 */
@@ -218,9 +214,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        }
 
 		if (tex_mag != 0xFFFFFFFF) {
-		    LEAVE_GL();
 		    IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7), 0, D3DTSS_MAGFILTER, tex_mag);
-		    ENTER_GL();
 		}
 	    } break;
 
@@ -239,9 +233,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        }
 
 		if (tex_min != 0xFFFFFFFF) {
-		    LEAVE_GL();
 		    IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7), 0, D3DTSS_MINFILTER, tex_min);
-		    ENTER_GL();
 		}
 	    } break;
 
