@@ -76,9 +76,6 @@ DEFINE_GUID(IID_IDirectSoundFullDuplex,	0xEDCB4C7A,0xDAAB,0x4216,0xA4,0x2E,0x6C,
 typedef struct IDirectSoundFullDuplex IDirectSoundFullDuplex,*LPDIRECTSOUNDFULLDUPLEX;
 #define	IID_IDirectSoundFullDuplex8	IID_IDirectSoundFullDuplex
 
-DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
-typedef struct IKsPropertySet IKsPropertySet,*LPKSPROPERTYSET;
-
 DEFINE_GUID(DSDEVID_DefaultPlayback,     0xDEF00000,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 DEFINE_GUID(DSDEVID_DefaultCapture,      0xDEF00001,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
 DEFINE_GUID(DSDEVID_DefaultVoicePlayback,0xDEF00002,0x9C6D,0x47Ed,0xAA,0xF1,0x4D,0xDA,0x8F,0x2B,0x5C,0x03);
@@ -779,6 +776,13 @@ ICOM_DEFINE(IDirectSound3DBuffer,IUnknown)
 /*****************************************************************************
  * IKsPropertySet interface
  */
+#ifndef _IKsPropertySet_
+#define _IKsPropertySet_
+
+typedef struct IKsPropertySet IKsPropertySet,*LPKSPROPERTYSET;
+
+DEFINE_GUID(IID_IKsPropertySet,0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
+
 #define KSPROPERTY_SUPPORT_GET	1
 #define KSPROPERTY_SUPPORT_SET	2
 
@@ -800,6 +804,7 @@ ICOM_DEFINE(IKsPropertySet,IUnknown)
 #define IKsPropertySet_QuerySupport(p,a,b,c)    (p)->lpVtbl->QuerySupport(p,a,b,c)
 #endif
 
+#endif /* _IKsPropertySet_ */
 
 /*****************************************************************************
  * IDirectSoundFullDuplex interface

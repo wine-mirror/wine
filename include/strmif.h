@@ -7020,6 +7020,154 @@ void __RPC_STUB IResourceManager_ReleaseFocus_Stub(
 
 #endif  /* __IResourceManager_INTERFACE_DEFINED__ */
 
+#ifndef _IKsPropertySet_
+#define _IKsPropertySet_
+#define KSPROPERTY_SUPPORT_GET  1
+#define KSPROPERTY_SUPPORT_SET  2
+/*****************************************************************************
+ * IKsPropertySet interface
+ */
+#ifndef __IKsPropertySet_INTERFACE_DEFINED__
+#define __IKsPropertySet_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IKsPropertySet, 0x31efac30, 0x515c, 0x11d0, 0xa9,0xaa, 0x00,0xaa,0x00,0x61,0xbe,0x93);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IKsPropertySet : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE Set(
+        REFGUID guidPropSet,
+        DWORD dwPropID,
+        LPVOID pInstanceData,
+        DWORD cbInstanceData,
+        LPVOID pPropData,
+        DWORD cbPropData) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE Get(
+        REFGUID guidPropSet,
+        DWORD dwPropID,
+        LPVOID pInstanceData,
+        DWORD cbInstanceData,
+        LPVOID pPropData,
+        DWORD cbPropData,
+        DWORD* pcbReturned) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE QuerySupported(
+        REFGUID guidPropSet,
+        DWORD dwPropID,
+        DWORD* pTypeSupport) = 0;
+
+};
+#else
+typedef struct IKsPropertySetVtbl IKsPropertySetVtbl;
+struct IKsPropertySet {
+    const IKsPropertySetVtbl* lpVtbl;
+};
+struct IKsPropertySetVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IKsPropertySet* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IKsPropertySet* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IKsPropertySet* This);
+
+    /*** IKsPropertySet methods ***/
+    HRESULT (STDMETHODCALLTYPE *Set)(
+        IKsPropertySet* This,
+        REFGUID guidPropSet,
+        DWORD dwPropID,
+        LPVOID pInstanceData,
+        DWORD cbInstanceData,
+        LPVOID pPropData,
+        DWORD cbPropData);
+
+    HRESULT (STDMETHODCALLTYPE *Get)(
+        IKsPropertySet* This,
+        REFGUID guidPropSet,
+        DWORD dwPropID,
+        LPVOID pInstanceData,
+        DWORD cbInstanceData,
+        LPVOID pPropData,
+        DWORD cbPropData,
+        DWORD* pcbReturned);
+
+    HRESULT (STDMETHODCALLTYPE *QuerySupported)(
+        IKsPropertySet* This,
+        REFGUID guidPropSet,
+        DWORD dwPropID,
+        DWORD* pTypeSupport);
+
+};
+
+/*** IUnknown methods ***/
+#define IKsPropertySet_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IKsPropertySet_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IKsPropertySet_Release(p) (p)->lpVtbl->Release(p)
+/*** IKsPropertySet methods ***/
+#define IKsPropertySet_Set(p,a,b,c,d,e,f) (p)->lpVtbl->Set(p,a,b,c,d,e,f)
+#define IKsPropertySet_Get(p,a,b,c,d,e,f,g) (p)->lpVtbl->Get(p,a,b,c,d,e,f,g)
+#define IKsPropertySet_QuerySupported(p,a,b,c) (p)->lpVtbl->QuerySupported(p,a,b,c)
+
+#endif
+
+#define IKsPropertySet_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IKsPropertySet methods ***/ \
+    STDMETHOD_(HRESULT,Set)(THIS_ REFGUID guidPropSet, DWORD dwPropID, LPVOID pInstanceData, DWORD cbInstanceData, LPVOID pPropData, DWORD cbPropData) PURE; \
+    STDMETHOD_(HRESULT,Get)(THIS_ REFGUID guidPropSet, DWORD dwPropID, LPVOID pInstanceData, DWORD cbInstanceData, LPVOID pPropData, DWORD cbPropData, DWORD* pcbReturned) PURE; \
+    STDMETHOD_(HRESULT,QuerySupported)(THIS_ REFGUID guidPropSet, DWORD dwPropID, DWORD* pTypeSupport) PURE;
+
+HRESULT CALLBACK IKsPropertySet_Set_Proxy(
+    IKsPropertySet* This,
+    REFGUID guidPropSet,
+    DWORD dwPropID,
+    LPVOID pInstanceData,
+    DWORD cbInstanceData,
+    LPVOID pPropData,
+    DWORD cbPropData);
+void __RPC_STUB IKsPropertySet_Set_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IKsPropertySet_Get_Proxy(
+    IKsPropertySet* This,
+    REFGUID guidPropSet,
+    DWORD dwPropID,
+    LPVOID pInstanceData,
+    DWORD cbInstanceData,
+    LPVOID pPropData,
+    DWORD cbPropData,
+    DWORD* pcbReturned);
+void __RPC_STUB IKsPropertySet_Get_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IKsPropertySet_QuerySupported_Proxy(
+    IKsPropertySet* This,
+    REFGUID guidPropSet,
+    DWORD dwPropID,
+    DWORD* pTypeSupport);
+void __RPC_STUB IKsPropertySet_QuerySupported_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IKsPropertySet_INTERFACE_DEFINED__ */
+
+#endif /* _IKsPropertySet_ */
 #ifndef __IPinConnection_FWD_DEFINED__
 #define __IPinConnection_FWD_DEFINED__
 typedef struct IPinConnection IPinConnection;

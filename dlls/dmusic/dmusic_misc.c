@@ -37,7 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IReferenceClock IUnknown parts follow: */
-HRESULT WINAPI IReferenceClockImpl_QueryInterface (LPREFERENCECLOCK iface, REFIID riid, LPVOID *ppobj)
+HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFIID riid, LPVOID *ppobj)
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
@@ -52,14 +52,14 @@ HRESULT WINAPI IReferenceClockImpl_QueryInterface (LPREFERENCECLOCK iface, REFII
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IReferenceClockImpl_AddRef (LPREFERENCECLOCK iface)
+ULONG WINAPI IReferenceClockImpl_AddRef (IReferenceClock *iface)
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 	TRACE("(%p) : AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
-ULONG WINAPI IReferenceClockImpl_Release (LPREFERENCECLOCK iface)
+ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface)
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 	ULONG ref = --This->ref;
@@ -72,7 +72,7 @@ ULONG WINAPI IReferenceClockImpl_Release (LPREFERENCECLOCK iface)
 }
 
 /* IReferenceClock Interface follow: */
-HRESULT WINAPI IReferenceClockImpl_GetTime (LPREFERENCECLOCK iface, REFERENCE_TIME* pTime)
+HRESULT WINAPI IReferenceClockImpl_GetTime (IReferenceClock *iface, REFERENCE_TIME* pTime)
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
@@ -81,7 +81,7 @@ HRESULT WINAPI IReferenceClockImpl_GetTime (LPREFERENCECLOCK iface, REFERENCE_TI
 	return S_OK;
 }
 
-HRESULT WINAPI IReferenceClockImpl_AdviseTime (LPREFERENCECLOCK iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie)
+HRESULT WINAPI IReferenceClockImpl_AdviseTime (IReferenceClock *iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie)
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
@@ -90,7 +90,7 @@ HRESULT WINAPI IReferenceClockImpl_AdviseTime (LPREFERENCECLOCK iface, REFERENCE
 	return S_OK;
 }
 
-HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (LPREFERENCECLOCK iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie)
+HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (IReferenceClock *iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie)
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
@@ -99,7 +99,7 @@ HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (LPREFERENCECLOCK iface, REFER
 	return S_OK;
 }
 
-HRESULT WINAPI IReferenceClockImpl_Unadvise (LPREFERENCECLOCK iface, DWORD dwAdviseCookie)
+HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdviseCookie)
 {
 	ICOM_THIS(IReferenceClockImpl,iface);
 
