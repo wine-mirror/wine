@@ -82,7 +82,7 @@ struct JoystickImpl
 	LONG				lMin,lMax,deadzone;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_head, queue_tail, queue_len;
-	DIJOYSTATE			js;
+	DIJOYSTATE2			js;
 };
 
 static GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
@@ -368,8 +368,9 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 
     joy_polldev(This);
     TRACE("(this=%p,0x%08lx,%p)\n",This,len,ptr);
-    if (len != sizeof(DIJOYSTATE)) {
+    if ((len != sizeof(DIJOYSTATE)) && (len != sizeof(DIJOYSTATE2))) {
     	FIXME("len %ld is not sizeof(DIJOYSTATE), unsupported format.\n",len);
+	return E_FAIL;
     }
     memcpy(ptr,&(This->js),len);
     This->queue_head = 0;

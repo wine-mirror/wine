@@ -98,7 +98,7 @@ struct JoystickImpl
         HANDLE				hEvent;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_head, queue_tail, queue_len;
-	DIJOYSTATE			js;
+	DIJOYSTATE2			js;
 
 	/* data returned by the EVIOCGABS() ioctl */
 	int				axes[ABS_MAX+1][5];
@@ -561,8 +561,9 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     joy_polldev(This);
 
     TRACE("(this=%p,0x%08lx,%p)\n",This,len,ptr);
-    if (len != sizeof(DIJOYSTATE)) {
-    	FIXME("len %ld is not sizeof(DIJOYSTATE), unsupported format.\n",len);
+    if ((len != sizeof(DIJOYSTATE)) && (len != sizeof(DIJOYSTATE2))) {
+    	FIXME("len %ld is not sizeof(DIJOYSTATE) or DIJOYSTATE2, unsupported format.\n",len);
+	return E_FAIL;
     }
     memcpy(ptr,&(This->js),len);
     This->queue_head = 0;
