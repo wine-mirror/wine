@@ -233,6 +233,7 @@ MSVCRT_INCLUDES = \
 	msvcrt/eh.h \
 	msvcrt/errno.h \
 	msvcrt/fcntl.h \
+	msvcrt/float.h \
 	msvcrt/io.h \
 	msvcrt/limits.h \
 	msvcrt/locale.h \
