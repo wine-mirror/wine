@@ -4,9 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dim.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = d3dim_main.c
 
 RC_SRCS = version.rc

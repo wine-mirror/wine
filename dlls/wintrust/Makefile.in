@@ -4,9 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wintrust.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = wintrust_main.c
 
 @MAKE_DLL_RULES@

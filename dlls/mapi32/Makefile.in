@@ -4,9 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mapi32.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = mapi32_main.c
 
 @MAKE_DLL_RULES@

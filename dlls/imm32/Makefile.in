@@ -6,9 +6,6 @@ MODULE    = imm32.dll
 IMPORTS   = user32 kernel32
 ALTNAMES  = imm.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

@@ -7,9 +7,6 @@ MODULE    = shdocvw.dll
 IMPORTS   = ole32 user32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	classinfo.c \
 	events.c \

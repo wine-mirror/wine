@@ -7,9 +7,6 @@ MODULE    = msvcrt20.dll
 IMPORTS   = msvcrt
 EXTRALIBS = $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = msvcrt20.c
 
 @MAKE_DLL_RULES@

@@ -7,9 +7,6 @@ IMPORTS   = winmm user32 kernel32
 EXTRAINCL = @ARTSINCL@
 EXTRALIBS = @ARTSLIBS@ $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	arts.c \
 	audio.c

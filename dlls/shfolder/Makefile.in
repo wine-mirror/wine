@@ -5,9 +5,6 @@ VPATH     = @srcdir@
 MODULE    = shfolder.dll
 IMPORTS   = shell32
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = shfolder_main.c
 
 @MAKE_DLL_RULES@

@@ -7,9 +7,6 @@ MODULE    = advapi32.dll
 IMPORTS   = kernel32 ntdll
 EXTRALIBS = $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	advapi.c \
 	crypt.c \

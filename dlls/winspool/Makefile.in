@@ -6,9 +6,6 @@ VPATH     = @srcdir@
 MODULE    = winspool.drv
 IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	info.c \
 	wspool.c

@@ -6,9 +6,6 @@ MODULE    = olecli32.dll
 IMPORTS   = ole32 gdi32 kernel32
 ALTNAMES  = olecli.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

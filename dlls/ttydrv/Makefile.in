@@ -6,9 +6,6 @@ MODULE    = ttydrv.dll
 IMPORTS   = user32 gdi32 kernel32
 EXTRALIBS = @CURSESLIBS@
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	bitmap.c \
 	dc.c \

@@ -7,9 +7,6 @@ IMPORTS   = user32 advapi32 kernel32 ntdll
 ALTNAMES  = wprocs.dll
 EXTRALIBS = $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = wprocs.spec
 
 C_SRCS = \

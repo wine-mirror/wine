@@ -8,9 +8,6 @@ IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	$(TOPOBJDIR)/graphics/x11drv/bitblt.c \
 	$(TOPOBJDIR)/graphics/x11drv/bitmap.c \

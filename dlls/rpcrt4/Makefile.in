@@ -7,9 +7,6 @@ MODULE    = rpcrt4.dll
 IMPORTS   = advapi32 kernel32
 EXTRALIBS = $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	cproxy.c \
 	cpsf.c \

@@ -6,9 +6,6 @@ MODULE    = msacm32.dll
 IMPORTS   = winmm user32 advapi32 kernel32
 ALTNAMES  = msacm.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

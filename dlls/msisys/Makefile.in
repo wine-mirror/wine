@@ -6,9 +6,6 @@ MODULE    = msisys.ocx
 IMPORTS   = kernel32
 EXTRALIBS = $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = msisys.c
 
 @MAKE_DLL_RULES@

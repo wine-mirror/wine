@@ -8,9 +8,6 @@ IMPORTS   = kernel32 ntdll
 DELAYIMPORTS = user32
 EXTRALIBS = $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	console.c \
 	cpp.c \

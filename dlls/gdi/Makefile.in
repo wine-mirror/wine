@@ -9,9 +9,6 @@ ALTNAMES  = gdi.exe dispdib.dll wing.dll
 EXTRAINCL = @FREETYPEINCL@
 EXTRALIBS = $(LIBUNICODE) @ICULIBS@
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = \
 	dispdib.spec \
 	gdi.exe.spec \

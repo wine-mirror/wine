@@ -7,9 +7,6 @@ IMPORTS   = user32 gdi32 kernel32
 EXTRALIBS = @SANELIBS@
 EXTRAINCL = @SANEINCL@
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	capability.c \
 	ds_audio.c \

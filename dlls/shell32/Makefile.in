@@ -9,9 +9,6 @@ IMPORTS   = ole32 shlwapi comctl32 user32 gdi32 advapi32 kernel32 ntdll
 ALTNAMES  = shell.dll
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

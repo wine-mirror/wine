@@ -6,9 +6,6 @@ MODULE    = w32skrnl.dll
 IMPORTS   = kernel32
 ALTNAMES  = w32sys.dll win32s16.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

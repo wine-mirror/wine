@@ -8,9 +8,6 @@ IMPORTS   = ntdll
 ALTNAMES  = krnl386.exe comm.drv stress.dll system.drv toolhelp.dll windebug.dll win87em.dll
 EXTRALIBS = $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = \
 	comm.drv.spec \
 	krnl386.exe.spec \

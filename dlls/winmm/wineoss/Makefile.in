@@ -6,9 +6,6 @@ MODULE    = wineoss.drv
 IMPORTS   = winmm user32 kernel32
 EXTRALIBS = $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	audio.c \
 	midi.c \

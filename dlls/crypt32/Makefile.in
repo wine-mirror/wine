@@ -6,9 +6,6 @@ VPATH     = @srcdir@
 MODULE    = crypt32.dll
 IMPORTS   = advapi32 kernel32
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	main.c
 

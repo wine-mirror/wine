@@ -6,9 +6,6 @@ MODULE    = wnaspi32.dll
 IMPORTS   = advapi32 kernel32
 ALTNAMES  = winaspi.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

@@ -5,9 +5,6 @@ VPATH     = @srcdir@
 MODULE    = wow32.dll
 IMPORTS   = kernel32
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = wow_main.c
 
 @MAKE_DLL_RULES@

@@ -6,9 +6,6 @@ MODULE    = ctl3d32.dll
 IMPORTS   = user32 kernel32
 ALTNAMES  = ctl3d.dll ctl3dv2.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = ctl3d32.c

@@ -6,9 +6,6 @@ MODULE    = wintab32.dll
 IMPORTS   = kernel32
 ALTNAMES  = wintab.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

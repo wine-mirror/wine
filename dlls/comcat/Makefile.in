@@ -6,9 +6,6 @@ MODULE    = comcat.dll
 IMPORTS   = ole32 user32 advapi32 kernel32
 EXTRALIBS = $(LIBUNICODE) $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	comcat_main.c \
 	factory.c \

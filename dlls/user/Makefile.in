@@ -8,9 +8,6 @@ IMPORTS   = gdi32 advapi32 kernel32 ntdll
 ALTNAMES  = user.exe ddeml.dll display.drv keyboard.drv mouse.drv
 EXTRALIBS = $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = \
 	ddeml.spec \
 	display.drv.spec \

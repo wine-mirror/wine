@@ -5,9 +5,6 @@ VPATH     = @srcdir@
 MODULE    = olepro32.dll
 IMPORTS   = oleaut32
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = olepro32stubs.c
 
 @MAKE_DLL_RULES@

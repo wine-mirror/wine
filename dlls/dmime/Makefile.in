@@ -6,9 +6,6 @@ MODULE    = dmime.dll
 IMPORTS   = dsound winmm ole32 user32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	audiopath.c \
 	dmime_main.c \

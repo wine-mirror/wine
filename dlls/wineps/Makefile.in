@@ -7,9 +7,6 @@ IMPORTS   = user32 gdi32 winspool advapi32 kernel32
 ALTNAMES  = wineps16.drv
 EXTRAINCL = @FREETYPEINCL@
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = wineps16.drv.spec
 
 FONTMETRICS = \

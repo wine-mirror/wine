@@ -6,9 +6,6 @@ VPATH     = @srcdir@
 MODULE    = imagehlp.dll
 IMPORTS   = kernel32
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	access.c \
 	debug.c \

@@ -7,9 +7,6 @@ IMPORTS   = msvcrt kernel32
 EXTRALIBS = $(LIBUNICODE)
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	crtdll_main.c
 

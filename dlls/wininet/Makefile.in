@@ -7,9 +7,6 @@ MODULE    = wininet.dll
 IMPORTS   = mpr shlwapi shell32 user32 advapi32 kernel32
 EXTRALIBS = $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	cookie.c \
 	dialogs.c \

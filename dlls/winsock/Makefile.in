@@ -7,9 +7,6 @@ MODULE    = ws2_32.dll
 IMPORTS   = user32 iphlpapi kernel32 ntdll
 ALTNAMES  = winsock.dll
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

@@ -7,9 +7,6 @@ MODULE    = dplayx.dll
 IMPORTS   = winmm ole32 user32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	dpclassfactory.c \
 	dplay.c \

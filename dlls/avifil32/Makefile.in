@@ -7,9 +7,6 @@ IMPORTS   = msacm32 msvfw32 shell32 winmm ole32 user32 advapi32 kernel32
 ALTNAMES  = avifile.dll
 EXTRALIBS = $(LIBUUID)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \

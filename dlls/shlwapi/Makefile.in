@@ -7,9 +7,6 @@ MODULE    = shlwapi.dll
 IMPORTS   = ole32 user32 gdi32 advapi32 kernel32
 EXTRALIBS = $(LIBUUID) $(LIBUNICODE)
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	assoc.c \
 	clist.c \

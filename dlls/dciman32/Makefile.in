@@ -5,9 +5,6 @@ VPATH     = @srcdir@
 MODULE    = dciman32.dll
 IMPORTS   = kernel32
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = dciman_main.c
 
 @MAKE_DLL_RULES@

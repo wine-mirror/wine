@@ -6,9 +6,6 @@ MODULE    = wineaudioio.drv
 IMPORTS   = winmm user32 kernel32 ntdll
 EXTRALIBS = $(LIBUUID) @AUDIOIOLIBS@
 
-LDDLLFLAGS = @LDDLLFLAGS@
-SYMBOLFILE = $(MODULE).tmp.o
-
 C_SRCS = \
 	audio.c \
 	audioio.c
