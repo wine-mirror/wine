@@ -238,6 +238,7 @@ typedef struct tagLISTVIEW_INFO
   INT nSelectionMark;
   INT nHotItem;
   SHORT notifyFormat;
+  HWND hwndNotify;
   RECT rcList;                 /* This rectangle is really the window
 				* client rectangle possibly reduced by the 
 				* horizontal scroll bar and/or header - see 
@@ -721,7 +722,7 @@ static LRESULT notify_hdr(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
     pnmh->hwndFrom = infoPtr->hwndSelf;
     pnmh->idFrom = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
     pnmh->code = code;
-    result = SendMessageW(GetParent(infoPtr->hwndSelf), WM_NOTIFY,
+    result = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
 			  (WPARAM)pnmh->idFrom, (LPARAM)pnmh);
 
     TRACE("  <= %ld\n", result);
@@ -1738,7 +1739,7 @@ static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
 	LISTVIEW_GetItemBox(infoPtr, dis.itemID, &dis.rcItem);
 	dis.itemData = item.lParam;
 
-	SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+	SendMessageW(infoPtr->hwndNotify, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
     }
     else
     {
@@ -3680,7 +3681,6 @@ postpaint:
 static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, DWORD cdmode)
 {
     UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
-    HWND hwndParent = GetParent(infoPtr->hwndSelf);
     DWORD cditemmode = CDRF_DODEFAULT;
     NMLVCUSTOMDRAW nmlvcd;
     POINT Origin, Position;
@@ -3730,7 +3730,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC h
 	if (!(cditemmode & CDRF_SKIPDEFAULT))
 	{
             prepaint_setup (infoPtr, hdc, &nmlvcd);
-	    SendMessageW(hwndParent, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+	    SendMessageW(infoPtr->hwndNotify, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
 	}
 
     	if (cditemmode & CDRF_NOTIFYPOSTPAINT)
@@ -7179,7 +7179,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->hwndSelf = hwnd;
   infoPtr->dwStyle = lpcs->style;
   /* determine the type of structures to use */
-  infoPtr->notifyFormat = SendMessageW(GetParent(infoPtr->hwndSelf), WM_NOTIFYFORMAT,
+  infoPtr->hwndNotify = lpcs->hwndParent;
+  infoPtr->notifyFormat = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT,
                                        (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
 
   /* initialize color information  */
@@ -9064,7 +9065,7 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 	}
 
 	default:
-	  return SendMessageW (GetParent (infoPtr->hwndSelf), WM_COMMAND, wParam, lParam);
+	  return SendMessageW (infoPtr->hwndNotify, WM_COMMAND, wParam, lParam);
     }
 
     return 0;
