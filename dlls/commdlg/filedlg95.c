@@ -277,7 +277,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   LPSTR lpstrSavDir = NULL;
   DWORD dwFlags = 0;
   
-  /* Initialise FileOpenDlgInfos structure*/  
+  /* Initialize FileOpenDlgInfos structure */
   fodInfos = (FileOpenDlgInfos*)MemAlloc(sizeof(FileOpenDlgInfos));
   ZeroMemory(fodInfos, sizeof(FileOpenDlgInfos));
   
@@ -298,7 +298,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   dwFlags = ofn->Flags;
   ofn->Flags = ofn->Flags|OFN_WINE;
 
-  /* Initialise the dialog property */
+  /* Initialize the dialog property */
   fodInfos->DlgInfos.dwDlgProp = 0;
   fodInfos->DlgInfos.hwndCustomDlg = (HWND)NULL;
   
@@ -397,7 +397,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   LPCWSTR lpTemplateName = NULL;
   DWORD dwFlags;
 
-  /* Initialise FileOpenDlgInfos structure*/
+  /* Initialize FileOpenDlgInfos structure */
   fodInfos = (FileOpenDlgInfos*)MemAlloc(sizeof(FileOpenDlgInfos));
   ZeroMemory(fodInfos, sizeof(FileOpenDlgInfos));
 
@@ -1503,8 +1503,12 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	{
 	  if (! *PathFindExtensionA(lpstrPathAndFile))
 	  {
-	    strcat(lpstrPathAndFile, ".");
-	    strcat(lpstrPathAndFile, fodInfos->ofnInfos->lpstrDefExt);
+	    /* only add "." in case a default extension does exist */
+	    if (*fodInfos->ofnInfos->lpstrDefExt != '\0')
+	    {
+	        strcat(lpstrPathAndFile, ".");
+	        strcat(lpstrPathAndFile, fodInfos->ofnInfos->lpstrDefExt);
+	    }
 	  }
 	}
 
