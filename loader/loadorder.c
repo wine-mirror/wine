@@ -29,41 +29,48 @@ static module_loadorder_t *module_loadorder = NULL;
 static int nmodule_loadorder = 0;
 static int nmodule_loadorder_alloc = 0;
 
+/* DLL order is irrelevant ! Gets sorted later. */
 static struct tagDllOverride {
 	char *key,*value;
 } DefaultDllOverrides[] = {
+	/* "system" DLLs */
 	{"kernel32,gdi32,user32",	"builtin"},
 	{"krnl386,gdi,user",		"builtin"},
 	{"toolhelp",			"builtin"},
-	{"comdlg32,commdlg",		"elfdll,builtin,native"},
+	{"system,display",		"builtin"},
+	{"w32skrnl,wow32",		"builtin"},
+	{"advapi32,crtdll,ntdll",	"builtin,native"},
+	{"lz32,lzexpand",		"builtin,native"},
 	{"version,ver",			"elfdll,builtin,native"},
+	/* "new" interface */
+	{"comdlg32,commdlg",		"elfdll,builtin,native"},
 	{"shell32,shell",		"builtin,native"},
 	{"shlwapi",			"native,builtin"},
-	{"lz32,lzexpand",		"builtin,native"},
-	{"commctrl,comctl32",		"builtin,native"},
+	{"shfolder",                    "builtin,native"},
+	{"comctl32,commctrl",		"builtin,native"},
+	/* network */
 	{"wsock32,winsock",		"builtin"},
 	{"ws2_32",			"builtin"},
-	{"advapi32,crtdll,ntdll",	"builtin,native"},
-	{"mpr,winspool.drv",		"builtin,native"},
-	{"ddraw,dinput,dsound",		"builtin,native"},
-	{"winmm, mmsystem",		"builtin"},
-	{"msvideo, msvfw32",		"builtin, native"},
-	{"mcicda.drv, mciseq.drv",	"builtin, native"},
-	{"mciwave.drv",			"builtin, native"},
-	{"mciavi.drv, mcianim.drv",	"native, builtin"},
-	{"msacm.drv, midimap.drv",      "builtin, native"},
-	{"w32skrnl",			"builtin"},
-	{"wnaspi32,wow32",		"builtin"},
-	{"system,display,wprocs	",	"builtin"},
-	{"wineps",			"builtin"},
         {"icmp",                        "builtin"},
+	/* multimedia */
+	{"ddraw,dinput,dsound",		"builtin,native"},
+	{"winmm,mmsystem",		"builtin"},
+	{"msvfw32,msvideo",		"builtin,native"},
+	{"mcicda.drv,mciseq.drv",	"builtin,native"},
+	{"mciwave.drv",			"builtin,native"},
+	{"mciavi.drv,mcianim.drv",	"native,builtin"},
+	{"msacm.drv,midimap.drv",       "builtin,native"},
+	{"opengl32",                    "builtin,native"},
 	/* we have to use libglide2x.so instead of glide2x.dll ... */
 	{"glide2x",			"so,native"},
 	{"glide3x",			"so,native"},
+	/* other stuff */
+	{"mpr,winspool.drv",		"builtin,native"},
+	{"wnaspi32,winaspi",		"builtin"},
 	{"odbc32",			"builtin"},
-	{"opengl32",                    "builtin,native"},
-	{"shfolder",                    "builtin,native"},
 	{"rpcrt4",                      "native,builtin"},
+	/* non-windows DLLs */
+	{"wineps,wprocs,x11drv",	"builtin"},
 	{NULL,NULL},
 };
 
