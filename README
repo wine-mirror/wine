@@ -90,9 +90,6 @@ Optional support libraries:
   If you want CUPS printing support, please install both cups and cups-devel
   packages.
 
-  For the automatic processing of the test suite scripts, you also need
-  libperl development header support (libperl-dev package on Debian).
-
 For requirements in case you intend to build the documentation yourself,
 see "DOCUMENTATION" section.
 
