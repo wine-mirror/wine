@@ -3,7 +3,8 @@
  * Copyright 1994, Bob Amstadt
  *           1995,1996 Alex Korobka
  *
- * This file contains routines to support MDI features.
+ * This file contains routines to support MDI (Multiple Document
+ * Interface) features .
  *
  * Notes: Fairly complete implementation. Any volunteers for 
  *	  "More windows..." stuff?
@@ -342,7 +343,8 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     }
 
     /* this menu is needed to set a check mark in MDI_ChildActivate */
-    AppendMenuA(ci->hWindowMenu ,MF_STRING ,wIDmenu, lpstrDef );
+    if (ci->hWindowMenu != 0)
+        AppendMenuA(ci->hWindowMenu ,MF_STRING ,wIDmenu, lpstrDef );
 
     ci->nActiveChildren++;
 
@@ -1116,7 +1118,8 @@ LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
         }
 	MDI_UpdateFrameText(frameWnd, hwnd, MDI_NOFRAMEREPAINT,frameWnd->text);
 
-	AppendMenuA( ci->hWindowMenu, MF_SEPARATOR, 0, NULL );
+	if (ci->hWindowMenu != 0)
+	    AppendMenuA( ci->hWindowMenu, MF_SEPARATOR, 0, NULL );
 
 	GetClientRect(frameWnd->hwndSelf, &rect);
 	NC_HandleNCCalcSize( w, &rect );
@@ -1131,7 +1134,8 @@ LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
       case WM_DESTROY:
 	if( ci->hwndChildMaximized )
             MDI_RestoreFrameMenu(w->parent, ci->hwndChildMaximized);
-	if((nItems = GetMenuItemCount(ci->hWindowMenu)) > 0) 
+	if((ci->hWindowMenu != 0) && 
+	   (nItems = GetMenuItemCount(ci->hWindowMenu)) > 0) 
 	{
     	    ci->idFirstChild = nItems - 1;
 	    ci->nActiveChildren++; 		/* to delete a separator */
