@@ -243,6 +243,9 @@ static void TASK_CallToStart(void)
     /* Terminate the stack frame chain */
     memset(THREAD_STACK16( pTask->thdb ), '\0', sizeof(STACK16FRAME));
 
+    /* Initialize process critical section */
+    InitializeCriticalSection( &PROCESS_Current()->crit_section );
+
     /* Call USER signal proc */
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
     PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
@@ -687,9 +690,9 @@ BOOL TASK_Reschedule(void)
     {
         /* We need to remove one pair of stackframes (exept for Winelib) */
         STACK16FRAME *oldframe16 = CURRENT_STACK16;
-        STACK32FRAME *oldframe32 = oldframe16->frame32;
-        STACK16FRAME *newframe16 = PTR_SEG_TO_LIN( oldframe32->frame16 );
-        STACK32FRAME *newframe32 = newframe16->frame32;
+        STACK32FRAME *oldframe32 = oldframe16? oldframe16->frame32 : NULL;
+        STACK16FRAME *newframe16 = oldframe32? PTR_SEG_TO_LIN( oldframe32->frame16 ) : NULL;
+        STACK32FRAME *newframe32 = newframe16? newframe16->frame32 : NULL;
         if (newframe32)
         {
             newframe16->entry_ip     = oldframe16->entry_ip;

@@ -463,6 +463,10 @@ void PROCESS_Start(void)
     /* Setup process flags */
     if (header->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI) pdb->flags |= PDB32_CONSOLE_PROC;
 
+    /* Map system DLLs into this process (from initial process) */
+    /* FIXME: this is a hack */
+    pdb->modref_list = PROCESS_Initial()->modref_list;
+
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
 
     /* Initialize the critical section */
@@ -488,10 +492,6 @@ void PROCESS_Start(void)
     TASK_StartTask( pdb->task );
 
     PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0, 0 );
-
-    /* Map system DLLs into this process (from initial process) */
-    /* FIXME: this is a hack */
-    pdb->modref_list = PROCESS_Initial()->modref_list;
 
     /* Create 32-bit MODREF */
     if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
@@ -574,9 +574,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     info->hProcess    = reply.handle;
     info->dwProcessId = (DWORD)pdb->server_pid;
 
-    /* Call USER signal proc */
-    PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
-
     if (pModule->module32)
     {
         /* Create the main thread */
@@ -595,6 +592,9 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
         /* Inherit the env DB from the parent */
         if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, inherit, startup )) goto error;
+
+        /* Call USER signal proc */
+        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
 
         /* Set the process module (FIXME: hack) */
         pdb->module = pModule->self;
@@ -631,6 +631,9 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
             DuplicateHandle( GetCurrentProcess(), pdb->parent->env_db->hStderr,
                              info->hProcess, &pdb->env_db->hStderr, 0, TRUE, DUPLICATE_SAME_ACCESS );
         }
+
+        /* Call USER signal proc */
+        PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, info->dwProcessId, 0 );
 
         /* Create a Win16 task for this process */
         if (startup->dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup->wShowWindow;
