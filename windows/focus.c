@@ -95,6 +95,9 @@ HWND WINAPI SetFocus( HWND hwnd )
 	    hwndTop = wndPtr->hwndSelf;
 	}
 
+        /* definitely at the top window now */
+        if ( wndPtr->dwStyle & ( WS_MINIMIZE | WS_DISABLED) ) goto CLEANUP;
+
         /* Retrieve the message queue associated with this window */
         pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
         if ( !pMsgQ )
