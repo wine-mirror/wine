@@ -313,7 +313,7 @@ BOOL LocalInit( HANDLE selector, WORD start, WORD end )
     if (start == 0) {
       /* Check if the segment is the DGROUP of a module */
 
-	if ((pModule = (NE_MODULE *)GlobalLock( GetExePtr( selector ) )))
+	if ((pModule = MODULE_GetPtr( GetExePtr( selector ) )))
 	{
 	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
 	    if (pModule->dgroup && (pSeg->selector == selector)) {

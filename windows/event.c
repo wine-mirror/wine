@@ -6,7 +6,6 @@
  */
 
 #include <ctype.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -20,6 +19,7 @@
 #include "win.h"
 #include "class.h"
 #include "clipboard.h"
+#include "debugger.h"
 #include "options.h"
 #include "queue.h"
 #include "winpos.h"
@@ -317,7 +317,7 @@ static void EVENT_key( XKeyEvent *event )
     /* Ctrl-Alt-Return enters the debugger */
     if ((keysym == XK_Return) && (event->type == KeyPress) &&
         (event->state & ControlMask) && (event->state & Mod1Mask))
-        kill( getpid(), SIGHUP );
+        DEBUG_EnterDebugger();
 
     xkey = LOWORD(keysym);
     key_type = HIBYTE(xkey);
@@ -451,8 +451,8 @@ static void EVENT_ButtonPress( XButtonEvent *event )
     int buttonNum = event->button - 1;
 
     if (buttonNum >= NB_BUTTONS) return;
-    MouseButtonsStates[buttonNum] = TRUE;
-    AsyncMouseButtonsStates[buttonNum] = TRUE;
+    MouseButtonsStates[buttonNum] = 0x8000;
+    AsyncMouseButtonsStates[buttonNum] = 0x8000;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,

@@ -18,6 +18,8 @@ struct pe_data {
 	int resource_offset; /* offset to resource typedirectory in file */
 };
 
+typedef struct pe_data PE_MODULE;
+
 extern int PE_unloadImage(HMODULE hModule);
 extern void my_wcstombs(char * result, u_short * source, int len);
 

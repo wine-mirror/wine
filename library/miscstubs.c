@@ -207,3 +207,8 @@ WNDPROC MODULE_GetWndProcEntry32( char *name )
 {
     return MODULE_GetWndProcEntry16( name );
 }
+
+void DEBUG_EnterDebugger(void)
+{
+}
+

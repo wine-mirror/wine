@@ -93,7 +93,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntry(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 {
 #ifndef WINELIB
-    struct pe_data *pe;
+    PE_MODULE *pe;
     NE_MODULE *pModule;
     PIMAGE_RESOURCE_DIRECTORY resdirptr;
     DWORD root;
@@ -105,9 +105,9 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
     dprintf_resource( stddeb, " name=" );
     PrintId( name );
     dprintf_resource( stddeb, "\n" );
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;  /* FIXME? */
-    if (!(pe = NE_WIN32_MODULE(pModule)) || !pe->pe_resource) return 0;
+    if (!(pe = pModule->pe_module) || !pe->pe_resource) return 0;
 
     resdirptr = (PIMAGE_RESOURCE_DIRECTORY) pe->pe_resource;
     root = (DWORD) resdirptr;
@@ -117,8 +117,10 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 	return 0;
     result = GetResDirEntry(resdirptr, (LPCWSTR)language, root);
 	/* Try LANG_NEUTRAL, too */
-	if(!result)
-		return GetResDirEntry(resdirptr, (LPCWSTR)0, root);
+    if(!result)
+        return GetResDirEntry(resdirptr, (LPCWSTR)0, root);
+    return result;
+    
 #else
     return LIBRES_FindResource( hModule, name, type );
 #endif
@@ -131,17 +133,17 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc )
 {
 #ifndef WINELIB
-    struct pe_data *pe;
     NE_MODULE *pModule;
+    PE_MODULE *pe;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "LoadResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
 
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;  /* FIXME? */
-    if (!(pe = NE_WIN32_MODULE(pModule)) || !pe->pe_resource) return 0;
+    if (!(pe = pModule->pe_module) || !pe->pe_resource) return 0;
     return (HANDLE32) (pe->load_addr+((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
 #else
     return LIBRES_LoadResource( hModule, hRsrc );

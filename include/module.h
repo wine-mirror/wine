@@ -8,6 +8,7 @@
 #define _WINE_MODULE_H
 
 #include "wintypes.h"
+#include "pe_image.h"
 
 #ifndef WINELIB
 #pragma pack(1)
@@ -16,47 +17,43 @@
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct
 {
-    WORD    magic;            /* 'NE' signature */
-    WORD    count;            /* Usage count */
-    WORD    entry_table;      /* Near ptr to entry table */
-    HMODULE next;             /* Selector to next module */
-    WORD    dgroup_entry;     /* Near ptr to segment entry for DGROUP */
-    WORD    fileinfo;         /* Near ptr to file info (OFSTRUCT) */
-    WORD    flags;            /* Module flags */
-    WORD    dgroup;           /* Logical segment for DGROUP */
-    WORD    heap_size;        /* Initial heap size */
-    WORD    stack_size;       /* Initial stack size */
-    WORD    ip;               /* Initial ip */
-    WORD    cs;               /* Initial cs (logical segment) */
-    WORD    sp;               /* Initial stack pointer */
-    WORD    ss;               /* Initial ss (logical segment) */
-    WORD    seg_count;        /* Number of segments in segment table */
-    WORD    modref_count;     /* Number of module references */
-    WORD    nrname_size;      /* Size of non-resident names table */
-    WORD    seg_table;        /* Near ptr to segment table */
-    WORD    res_table;        /* Near ptr to resource table */
-    WORD    name_table;       /* Near ptr to resident names table */
-    WORD    modref_table;     /* Near ptr to module reference table */
-    WORD    import_table;     /* Near ptr to imported names table */
-    DWORD   nrname_fpos;      /* File offset of non-resident names table */
-    WORD    moveable_entries; /* Number of moveable entries in entry table */
-    WORD    alignment;        /* Alignment shift count */
-    WORD    truetype;         /* Set to 2 if TrueType font */
-    BYTE    os_flags;         /* Operating system flags */
-    BYTE    misc_flags;       /* Misc. flags */
-    HANDLE  dlls_to_init;     /* List of DLLs to initialize */
-    HANDLE  nrname_handle;    /* Handle to non-resident name table in memory */
-    WORD    min_swap_area;    /* Min. swap area size */
-    WORD    expected_version; /* Expected Windows version */
-    WORD    self_loading_sel; /* Selector used for self-loading apps. procs */
+    WORD    magic;            /* 00 'NE' signature */
+    WORD    count;            /* 02 Usage count */
+    WORD    entry_table;      /* 04 Near ptr to entry table */
+    HMODULE next;             /* 06 Selector to next module */
+    WORD    dgroup_entry;     /* 08 Near ptr to segment entry for DGROUP */
+    WORD    fileinfo;         /* 0a Near ptr to file info (OFSTRUCT) */
+    WORD    flags;            /* 0c Module flags */
+    WORD    dgroup;           /* 0e Logical segment for DGROUP */
+    WORD    heap_size;        /* 10 Initial heap size */
+    WORD    stack_size;       /* 12 Initial stack size */
+    WORD    ip;               /* 14 Initial ip */
+    WORD    cs;               /* 16 Initial cs (logical segment) */
+    WORD    sp;               /* 18 Initial stack pointer */
+    WORD    ss;               /* 1a Initial ss (logical segment) */
+    WORD    seg_count;        /* 1c Number of segments in segment table */
+    WORD    modref_count;     /* 1e Number of module references */
+    WORD    nrname_size;      /* 20 Size of non-resident names table */
+    WORD    seg_table;        /* 22 Near ptr to segment table */
+    WORD    res_table;        /* 24 Near ptr to resource table */
+    WORD    name_table;       /* 26 Near ptr to resident names table */
+    WORD    modref_table;     /* 28 Near ptr to module reference table */
+    WORD    import_table;     /* 2a Near ptr to imported names table */
+    DWORD   nrname_fpos;      /* 2c File offset of non-resident names table */
+    WORD    moveable_entries; /* 30 Number of moveable entries in entry table*/
+    WORD    alignment;        /* 32 Alignment shift count */
+    WORD    truetype;         /* 34 Set to 2 if TrueType font */
+    BYTE    os_flags;         /* 36 Operating system flags */
+    BYTE    misc_flags;       /* 37 Misc. flags */
+    HANDLE  dlls_to_init;     /* 38 List of DLLs to initialize */
+    HANDLE  nrname_handle;    /* 3a Handle to non-resident name table */
+    WORD    min_swap_area;    /* 3c Min. swap area size */
+    WORD    expected_version; /* 3e Expected Windows version */
+    /* From here, these are extra fields not present in normal Windows */
+    PE_MODULE *pe_module;     /* 40 PE module handle for Win32 modules */
+    HMODULE self;             /* 44 Handle for this module */
+    WORD    self_loading_sel; /* 46 Selector used for self-loading apps. */
 } NE_MODULE;
-
-
-  /* Extra module info appended to NE_MODULE for Win32 modules */
-typedef struct
-{
-    DWORD   pe_module;
-} NE_WIN32_EXTRAINFO;
 
 
   /* In-memory segment table */
@@ -115,6 +112,7 @@ typedef struct
 #endif
 
 extern BOOL MODULE_Init(void);
+extern NE_MODULE *MODULE_GetPtr( HMODULE hModule );
 extern void MODULE_DumpModule( HMODULE hmodule );
 extern void MODULE_WalkModules(void);
 extern int MODULE_OpenFile( HMODULE hModule );
@@ -128,7 +126,7 @@ extern FARPROC MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC MODULE_GetWndProcEntry32( const char *name );
 
 extern BOOL NE_LoadSegment( HMODULE hModule, WORD segnum );
-extern void NE_FixupPrologs( HMODULE hModule );
+extern void NE_FixupPrologs( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE hModule );
 
 #endif  /* _WINE_MODULE_H */

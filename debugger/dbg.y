@@ -217,6 +217,18 @@ void mode_command(int newmode)
 }
 
 
+
+/***********************************************************************
+ *           DEBUG_EnterDebugger
+ *
+ * Force an entry into the debugger.
+ */
+void DEBUG_EnterDebugger(void)
+{
+    kill( getpid(), SIGHUP );
+}
+
+
 void wine_debug( int signal, struct sigcontext_struct *regs )
 {
     static int loaded_symbols = 0;
@@ -247,6 +259,12 @@ void wine_debug( int signal, struct sigcontext_struct *regs )
         addr.seg = CS_reg(DEBUG_context);
         addr.off = EIP_reg(DEBUG_context);
         DBG_FIX_ADDR_SEG( &addr, 0 );
+
+        /* Put the display in a correct state */
+
+        XUngrabPointer( display, CurrentTime );
+        XUngrabServer( display );
+        XFlush( display );
 
         if (!addr.seg) newmode = 32;
         else newmode = (GET_SEL_FLAGS(addr.seg) & LDT_FLAGS_32BIT) ? 32 : 16;

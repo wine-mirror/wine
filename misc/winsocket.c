@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
-#if defined__svr4__
+#if defined(__svr4__)
 #include <sys/filio.h>
 #include <sys/ioccom.h>
 #endif

@@ -261,7 +261,7 @@ base	1
 0256 stub GetPrivateProfileStringW
 0257	stdcall GetProcAddress(long long)	WIN32_GetProcAddress
 0258 stub GetProcessAffinityMask
-0259	return GetProcessHeap 0 0
+0259 stdcall GetProcessHeap() GetProcessHeap
 0260 stub GetProcessHeaps
 0261 stub GetProcessShutdownParameters
 0262 stub GetProcessTimes
@@ -338,18 +338,18 @@ base	1
 0332 stub GlobalUnlock
 0333 stub GlobalWire
 0334 stdcall HeapAlloc(long long long) HeapAlloc
-0335 stub HeapCompact
+0335 stdcall HeapCompact(long long) HeapCompact
 0336 stdcall HeapCreate(long long long)	HeapCreate
-0337 stub HeapDestroy
-0338 stub HeapFree
-0339 stub HeapLock
-0340 stub HeapReAlloc
-0341 stub HeapSize
-0342 stub HeapUnlock
-0343 stub HeapValidate
-0344 stub HeapWalk
+0337 stdcall HeapDestroy(long) HeapDestroy
+0338 stdcall HeapFree(long long ptr) HeapFree
+0339 stdcall HeapLock(long) HeapLock
+0340 stdcall HeapReAlloc(long long ptr long) HeapReAlloc
+0341 stdcall HeapSize(long long ptr) HeapSize
+0342 stdcall HeapUnlock(long) HeapUnlock
+0343 stdcall HeapValidate(long long ptr) HeapValidate
+0344 stdcall HeapWalk(long ptr) HeapWalk
 0345 stub InitAtomTable
-0346 stdcall InitializeCriticalSection(ptr)	InitializeCriticalSection
+0346 stdcall InitializeCriticalSection(ptr) InitializeCriticalSection
 0347 stub InterlockedDecrement
 0348 stub InterlockedExchange
 0349 stub InterlockedIncrement

@@ -49,7 +49,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     int ordinal, additive;
     unsigned short *sp;
 
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return FALSE;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return FALSE;
     pSegTable = NE_SEG_TABLE( pModule );
     pSeg = pSegTable + segnum - 1;
     pModuleTable = NE_MODULE_TABLE( pModule );
@@ -171,7 +171,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
             address = MODULE_GetEntryPoint( module, ordinal );
             if (!address)
             {
-                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                NE_MODULE *pTarget = MODULE_GetPtr( module );
                 if (!pTarget)
                     fprintf( stderr, "Module not found: %04x, reference %d of module %*.*s\n",
                              module, rep->target1, 
@@ -187,7 +187,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
             }
             if (debugging_fixup)
             {
-                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                NE_MODULE *pTarget = MODULE_GetPtr( module );
                 fprintf( stddeb,"%d: %*.*s.%d=%04x:%04x\n", i + 1, 
                          *((BYTE *)pTarget + pTarget->name_table),
                          *((BYTE *)pTarget + pTarget->name_table),
@@ -208,7 +208,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 
             if (!address)
             {
-                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                NE_MODULE *pTarget = MODULE_GetPtr( module );
                 fprintf( stderr, "Warning: no handler for %*.*s.%s, setting to 0:0\n",
                         *((BYTE *)pTarget + pTarget->name_table),
                         *((BYTE *)pTarget + pTarget->name_table),
@@ -216,7 +216,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
             }
             if (debugging_fixup)
             {
-                NE_MODULE *pTarget = (NE_MODULE *)GlobalLock( module );
+                NE_MODULE *pTarget = MODULE_GetPtr( module );
                 fprintf( stddeb,"%d: %*.*s.%s=%04x:%04x\n", i + 1, 
                          *((BYTE *)pTarget + pTarget->name_table),
                          *((BYTE *)pTarget + pTarget->name_table),
@@ -347,23 +347,21 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
  *
  * Fixup the exported functions prologs.
  */
-void NE_FixupPrologs( HMODULE hModule )
+void NE_FixupPrologs( NE_MODULE *pModule )
 {
 #ifdef WINELIB
 	fprintf(stderr,"NE_FixupPrologs should not be called for libwine\n");
 #else
-    NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     WORD dgroup = 0;
     WORD sel;
     BYTE *p, *fixup_ptr, count;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
     pSegTable = NE_SEG_TABLE(pModule);
     if (pModule->flags & NE_FFLAGS_SINGLEDATA)
         dgroup = pSegTable[pModule->dgroup-1].selector;
 
-    dprintf_module( stddeb, "MODULE_FixupPrologs(%04x)\n", hModule );
+    dprintf_module( stddeb, "MODULE_FixupPrologs(%04x)\n", pModule->self );
     p = (BYTE *)pModule + pModule->entry_table;
     while (*p)
     {
@@ -455,10 +453,11 @@ static BOOL NE_InitDLL( HMODULE hModule )
      * es:si  command line (always 0)
      */
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!(pModule = MODULE_GetPtr( hModule ))) return FALSE;
     pSegTable = NE_SEG_TABLE( pModule );
 
-    if (!(pModule->flags & NE_FFLAGS_LIBMODULE)) return TRUE; /*not a library*/
+    if (!(pModule->flags & NE_FFLAGS_LIBMODULE) ||
+        (pModule->flags & NE_FFLAGS_WIN32)) return TRUE; /*not a library*/
     if (!pModule->cs) return TRUE;  /* no initialization code */
 
     if (!(pModule->flags & NE_FFLAGS_SINGLEDATA))
@@ -509,7 +508,7 @@ void NE_InitializeDLLs( HMODULE hModule )
     NE_MODULE *pModule;
     HMODULE *pDLL;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!(pModule = MODULE_GetPtr( hModule ))) return;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         PE_InitializeDLLs(hModule);

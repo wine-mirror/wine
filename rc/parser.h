@@ -105,7 +105,3 @@ void set_out_file(char*);
 
 extern int verbose;
 
-#ifdef __sun__
-#define strtoul strtol
-#endif
-

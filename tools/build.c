@@ -635,6 +635,9 @@ static void BuildModule16( int max_code_offset, int max_data_offset )
     pModule->nrname_handle = 0;
     pModule->min_swap_area = 0;
     pModule->expected_version = 0x030a;
+    pModule->pe_module = NULL;
+    pModule->self = 0;
+    pModule->self_loading_sel = 0;
 
       /* File information */
 
@@ -772,14 +775,12 @@ static void BuildModule32(void)
 {
     char *buffer;
     NE_MODULE *pModule;
-    NE_WIN32_EXTRAINFO *pExtraInfo;
     OFSTRUCT *pFileInfo;
     BYTE *pstr;
     WORD *pword;
 
     /*   Module layout:
      * NE_MODULE            Module
-     * NE_WIN32_EXTRAINFO   Win32 module extra info
      * OFSTRUCT             File information
      * SEGTABLEENTRY        Segment table (empty)
      * WORD[2]              Resource table (empty)
@@ -817,15 +818,13 @@ static void BuildModule32(void)
     pModule->nrname_handle = 0;
     pModule->min_swap_area = 0;
     pModule->expected_version = 0x030a;
-
-    /* Win32 extra info */
-
-    pExtraInfo = (NE_WIN32_EXTRAINFO *)(pModule + 1);
-    pExtraInfo->pe_module = 0;
+    pModule->pe_module = NULL;
+    pModule->self = 0;
+    pModule->self_loading_sel = 0;
 
       /* File information */
 
-    pFileInfo = (OFSTRUCT *)(pExtraInfo + 1);
+    pFileInfo = (OFSTRUCT *)(pModule + 1);
     pModule->fileinfo = (int)pFileInfo - (int)pModule;
     memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
     pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)

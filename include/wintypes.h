@@ -43,6 +43,7 @@ typedef DWORD SEGPTR;
 #endif  /* WINELIB32 */
 
 typedef UINT HANDLE;
+typedef DWORD HANDLE32;
 typedef UINT WPARAM;
 typedef LONG LPARAM;
 typedef LONG LRESULT;
@@ -163,21 +164,29 @@ typedef FARPROC HOOKPROC;
 #define SELECTOROF(ptr)     (HIWORD(ptr))
 #define OFFSETOF(ptr)       (LOWORD(ptr))
 
+#if !defined(WINELIB) || defined(__i386__)
+#define PUT_WORD(ptr,w)   (*(WORD *)(ptr) = (w))
+#define GET_WORD(ptr)     (*(WORD *)(ptr))
+#define PUT_DWORD(ptr,dw) (*(DWORD *)(ptr) = (dw))
+#define GET_DWORD(ptr)    (*(DWORD *)(ptr))
+#else
+#define PUT_WORD(ptr,w)   (*(BYTE *)(ptr) = LOBYTE(w), \
+                           *((BYTE *)(ptr) + 1) = HIBYTE(w))
+#define GET_WORD(ptr)     ((WORD)(*(BYTE *)(ptr) | \
+                                  (WORD)(*((BYTE *)(ptr)+1) << 8)))
+#define PUT_DWORD(ptr,dw) (PUT_WORD((ptr),LOWORD(dw)), \
+                           PUT_WORD((WORD *)(ptr)+1,HIWORD(dw)))
+#define GET_DWORD(ptr)    ((DWORD)(GET_WORD(ptr) | \
+                                   ((DWORD)GET_WORD((WORD *)(ptr)+1) << 16)))
+#endif  /* !WINELIB || __i386__ */
+
+
 #ifndef MAX
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef DONT_DEFINE_min_AND_max
-#ifndef min
-#define min(a,b) MIN(a,b)
-#endif
-#ifndef max
-#define max(a,b) MAX(a,b)
-#endif
 #endif
 
 #endif /* __WINE_WINTYPES_H */

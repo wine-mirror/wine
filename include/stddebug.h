@@ -107,6 +107,7 @@
 #undef DEBUG_GDI
 #undef DEBUG_GLOBAL
 #undef DEBUG_GRAPHICS
+#undef DEBUG_HEAP
 #undef DEBUG_HOOK
 #undef DEBUG_ICON
 #undef DEBUG_INT
@@ -186,6 +187,7 @@
 #define DEBUG_GDI
 #define DEBUG_GLOBAL
 #define DEBUG_GRAPHICS
+#define DEBUG_HEAP
 #define DEBUG_HOOK
 #define DEBUG_ICON
 #define DEBUG_INT

@@ -1,33 +1,111 @@
--  Find all the remaining bugs!
+This file gives some information about the code in edit.c.  If you want to
+change, add, or fix code, please read this text.  If you're not interested
+in doing actual work on edit.c only C & D will be of interest to you.
 
--  ES_LEFT, ES_RIGHT and ES_CENTER.  ES_RIGHT and ES_CENTER cannot be
-   used with single line edit controls or be combined with ES_AUTOHSCROLL.
+A) basic policy
+B) special functions
+C) not implemented
+D) known bugs
 
--  Hide selection when window loses focus and ES_NOHIDESEL to disable
-   this functionality.
+A) Basic Policy
 
--  ES_LOWERCASE and ES_UPPERCASE.
+The code has been made in such a way, that functions try to call other
+(documented) functions if that is sufficient.  This might sometimes not be
+the most efficient way, but it keeps the code clear.  This way I tried to keep
+the number of functions that rely on the internal EDITSTATE structure as
+low as possible.  For instance EDIT_WM_Cut() simply calls EDIT_WM_Copy() and
+EDIT_WM_Clear().  The latter two are well documented message handlers, so
+as long as they are right EDIT_WM_Cut() will never have to change again.
 
--  ES_OEMCONVERT.  Probably won't do anything very much.
+Example:
+The best thing to do, when you want to know the offset of line 3, is calling
+EDIT_EM_LineIndex().  Again this is a well documented message handler.  Don't
+look at es->LineDefs[2].offset.  It would just be another reference to the
+internal structure, and that would make it more difficult to change things.
+Refer to EDIT_WM_???? and EDIT_EM_????? functions as much as possible.
 
--  ES_WANTRETURN and Ctrl-Enter to move to next line when this
-   functionality is enabled.
+The WND * pointer is used internally whenever possible.  Although it is not
+the real HWND, it improves performance enough to use it.
 
--  Implement undo buffer correctly.  Windows allows the user to undo
-   entered text as well as deleted text.  You can also undo an undo.
+All displaying is done by invalidating regions / rects.  Only
+EDIT_EM_LineScroll() uses direct painting.  This way things become much
+faster.  Although sometimes the response time might appear to be slow, it
+would be much slower even, when everything would be painted instantly.  This
+is especially true for scrollbar tracking and selection changes..
 
--  Add word wrap - this is a very big change!
 
-I'm doing a rewrite on edit.c.  Please e-mail me if you want
-to work on edit.c as well, so we can synchronize.
 
-Bugs in the current version, known to me:
--  An empty document still contains "\r\n"
--  UNDO is unstable (incomplete, and it can cause a segfault)
--  WM_LBUTTONDBLCLK lets you select whole words, but doesn't set
-   the caret at the end of the selection
--  Scrolling (left-right) works, but the scrollbar doesn't
+B) Special functions
 
+The edit control needs to use local heap memory because applications may
+rely on EM_GETHANDLE.  This is bad, but it can't be helped, we have to live
+with that.  For this reason there is a nice EDIT_GetPointer() function,
+which locks the heap buffer *only once*, no matter how often it is called.
+Only at the end of the message handler EDIT_ReleasePointer() is called.  You
+don't have to worry about unlocking the heap.  Calling EDIT_GetPointer() is
+very fast if the buffer is already locked.
+This way, the buffer gets locked / unlock only once every message, although
+EDIT_GetPointer() may actually have been called a hundred times.
+Only when the actual HLOCAL is needed (for example to ReAlloc), a call to
+EDIT_ReleasePointer() is needed.  Look for instance in EDIT_MakeFit().
+
+This brings us to EDIT_MakeFit().  It automatically re-allocates the buffer
+if the size parameter > buffersize.  If everything is successful TRUE is
+returned, otherwise FALSE.  Only when the buffer contents may grow you need
+to call EDIT_MakeFit().  Currently this is only in EDIT_ReplaceSel() and
+EDIT_WM_SetText().
+
+EDIT_BuildLineDefs() is the most important function in edit.c.  It builds
+the internal EDITSTATE structure.  As soon as text *might* have changed, or
+when the appearance of the text on the screen *might* have changed, call
+this function !  This includes changes of screen size, change of the font,
+clipboard actions, etc. etc.  Most other functions that rely on EDITSTATE,
+rely on the stuff this function builds.
+
+
+
+C) Not Implemented
+
+- ES_PASSWORD
+- ES_CENTER
+- ES_RIGHT
+- EM_SETRECT
+- EM_SETRECTNP
+- EM_FMTLINES
+- ES_AUTOVSCROLL (every multi line *is* auto vscroll)
+- ES_AUTOHSCROLL (multi line can be yes or no, but single line only yes)
+- WM_UNDO (=EM_UNDO)
+- EM_CANUNDO
+- EM_SCROLL (scrolling works, but this appears to be an undocumented message)
+- ES_LOWERCASE
+- ES_UPPERCASE
+- ES_OEMCONVERT
+- ES_WANTRETURN
+- probably much, MUCH more
+
+I encountered several undocumented messages, or message parameters.
+EditWndProc() reports any unknown message with an id > WM_USER.
+
+
+
+D) Known bugs.
+
+-	Scrolling is weird, sometimes.  The current code makes the scrollbar
+	of Notepad work, but the scrollbar code itself is broken.  Currently
+	the scroll code of edit.c is *not* according to specs.  Instead, it
+	is according to the broken scrollbar code.  If that gets fixed, this
+	should be fixed, too.
+-	The clipboard is broken.  Whenever things go wrong with
+	cut/copy/paste, it is probably the clipboard that messes up things,
+	not edit.c.
+-	With Notepad, if you select New File a couple of times and enter
+	text, the buffer is sometimes corrupted.
+-	Switching on/off WordWrap with Notepad sometimes corrupts the buffer.
+
+
+I am still very actively changing things.  Especially I am working
+on Undo capabilities.  If you want to do things, other than bug fixes,
+please mail me so we can synchronize.
 
 Frans van Dorsselaer
 dorssel@rulhm1.LeidenUniv.nl

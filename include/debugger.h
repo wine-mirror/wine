@@ -111,6 +111,7 @@ extern void DEBUG_InfoStack(void);
 extern void DEBUG_BackTrace(void);
 
   /* debugger/dbg.y */
+extern void DEBUG_EnterDebugger(void);
 extern void wine_debug( int signal, struct sigcontext_struct * regs );
 
 #endif  /* DEBUGGER_H */

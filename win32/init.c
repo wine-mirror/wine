@@ -30,7 +30,7 @@ static int CreateStdHandles(void);
 /*********************************************************************
  *              CloseHandle             (KERNEL32.23)
  */
-BOOL CloseHandle(HANDLE32 handle)
+BOOL CloseHandle(KERNEL_OBJECT *handle)
 {
     int rc;
 

@@ -1,4 +1,71 @@
 ----------------------------------------------------------------------
+Sun Apr 14 12:51:27 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/menu.c] [include/dialog.h] [windows/dialog.c]
+	Made the resource loading code always use the correct Windows
+	layout for Winelib on other CPUs.
+
+	* [include/module.h] [loader/module.c]
+	Added self handle in NE_MODULE structure, so we can use a pointer
+	instead of a handle.
+	Added function MODULE_GetPtr() to validate a HMODULE.
+
+	* [memory/heap.c]
+	Implemented Win32 heap management.
+
+	* [memory/selector.c]
+	Fix selector limit for huge blocks.
+
+Sat Apr 13 00:19:12 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/metafile.c]
+	Fixed memcpy bug to allow memory based metafiles to work.
+
+Fri Apr 12 19:25:41 1996  Frans van Dorsselaer  <dorssel@rulhm1.leidenuniv.nl>
+
+	* [controls/edit.c] [controls/EDIT.TODO]
+	Complete rewrite.  Everything changed: new features, new bugs.
+	Main addition: WordWrap.
+
+Fri Apr 12 20:29:55 1996  Tristan Tarrant <tst@dcs.ed.ac.uk>
+
+	* [resources/sysres_It.rc]
+	Fixed a few mistakes in the file and resized some of the controls.
+
+Fri Apr 12 09:55:13 1996  John Harvey <john@division.co.uk>
+
+	* [misc/winsocket.c]
+	Fixed broken #if defined that stopped unixware compiling.
+
+	* [win32/resource.c]
+        Added missing return to end of FindResource32.
+
+Thu Apr 11 18:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/keyboard.c] [windows/event.c]
+	Fixed GetKeyState for mouse buttons.
+
+	* [windows/message.c]
+	WM_MOUSEACTIVATE wasn't sent in some cases.
+
+Wed Apr 10 18:59:53 1996  Niels de Carpentier  <niels@cindy.et.tudelft.nl>
+
+	* [objects/font.c]
+	Match slightly bigger font if height negative.
+
+Mon Apr  8 13:46:15 1996  Deano Calver <deano@rattie.demon.co.uk>
+
+	* [multimedia/mmsystem.c]
+	Changed read's to FILE_read's in mmsystem to fix mmio bug.
+
+Sun Apr  7 21:40:29 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [misc/commdlg.c] [resources/sysres_En.rc] [resources/sysres_De.rc]
+	Introduced ColorDlgProc() for ChooseColor() and replaced fitting
+	En-,De- resources. 
+	As written in TODO: some national language support is needed here.
+
+----------------------------------------------------------------------
 Fri Apr  5 15:22:55 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/button.c] [controls/static.c]

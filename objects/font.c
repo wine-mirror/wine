@@ -152,7 +152,9 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
         height = 10 * (-height * 9 / 8);
 	 * may be we have to use an non linear function
 	*/
-        height *= -10;
+	/* assume internal leading is 2 pixels. Else small fonts will become
+         * very small. */
+        height = (height-2) * -10; 
     }
     else height *= 10;
     width  = 10 * (font->lfWidth * dc->w.VportExtY / dc->w.WndExtY);

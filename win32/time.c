@@ -84,6 +84,6 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 VOID Sleep(DWORD cMilliseconds)
 {
     if(cMilliseconds == INFINITE)
-        while(1) { /* Spin forever */ }
+        while(1) sleep(1000); /* Spin forever */
     usleep(cMilliseconds*1000);
 }

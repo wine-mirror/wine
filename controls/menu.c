@@ -1017,11 +1017,11 @@ static SEGPTR MENU_ParseResource( SEGPTR res, HMENU hMenu )
 
     do
     {
-        flags = *(WORD *)PTR_SEG_TO_LIN( res );
+        flags = GET_WORD( PTR_SEG_TO_LIN( res ) );
         res += sizeof(WORD);
         if (!(flags & MF_POPUP))
         {
-            id = *(WORD *)PTR_SEG_TO_LIN( res );
+            id = GET_WORD( PTR_SEG_TO_LIN( res ) );
             res += sizeof(WORD);
         }
         data = res;
@@ -2315,7 +2315,7 @@ HMENU LoadMenu( HINSTANCE instance, SEGPTR name )
     
     /* check for Win32 module */
     instance = GetExePtr( instance );
-    if(((NE_MODULE*)GlobalLock(instance))->flags & NE_FFLAGS_WIN32)
+    if (MODULE_GetPtr(instance)->flags & NE_FFLAGS_WIN32)
         return WIN32_LoadMenuA(instance,PTR_SEG_TO_LIN(name));
 
     if (!(hRsrc = FindResource( instance, name, RT_MENU ))) return 0;

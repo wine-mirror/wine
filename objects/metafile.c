@@ -648,7 +648,7 @@ BOOL MF_WriteRecord(HMETAFILE hmf, METARECORD *mr, WORD rlen)
 	GlobalUnlock(mf->hMetaHdr);
 	mf->hMetaHdr = GlobalReAlloc(mf->hMetaHdr, len, GMEM_MOVEABLE);
 	mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
-	memcpy(mh + mh->mtSize * 2, mr, rlen);
+	memcpy((WORD *)mh + mh->mtSize, mr, rlen);
     }
     else if (mh->mtType == 1)     /* disk based metafile */
     {

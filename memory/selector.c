@@ -121,9 +121,9 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size,
     {
         LDT_SetEntry( SELECTOR_TO_ENTRY(sel) + i, &entry );
         entry.base += 0x10000;
-        size -= 0x10000;
-        entry.limit = (size > 0x10000) ? 0xffff : size-1;
-        entry.limit_in_pages = 0;
+        /* Apparently the next selectors should *not* get a 64k limit. */
+        /* Can't remember where I read they should... --AJ */
+        entry.limit -= entry.limit_in_pages ? 0x10 : 0x10000;
     }
 }
 

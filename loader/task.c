@@ -162,7 +162,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
     /* Now add the program name */
 
     *p++ = '\0';
-    *(WORD *)p = 1;
+    PUT_WORD( p, 1 );
     p += sizeof(WORD);
     GetSystemDirectory( p, sysdirlen );
     strcat( p, "\\" );
@@ -329,7 +329,7 @@ static void TASK_CallToStart(void)
 {
     int cs_reg, ds_reg, ip_reg;
     TDB *pTask = (TDB *)GlobalLock( hCurrentTask );
-    NE_MODULE *pModule = (NE_MODULE *)GlobalLock( pTask->hModule );
+    NE_MODULE *pModule = MODULE_GetPtr( pTask->hModule );
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
     /* Registers at initialization must be:
@@ -387,7 +387,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     extern DWORD CALLTO16_RetAddr_word;
 #endif
     
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     pSegTable = NE_SEG_TABLE( pModule );
 
       /* Allocate the task structure */
@@ -759,7 +759,7 @@ void InitTask( struct sigcontext_struct context )
     EAX_reg(&context) = 0;
 #endif
     if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return;
-    if (!(pModule = (NE_MODULE *)GlobalLock( pTask->hModule ))) return;
+    if (!(pModule = MODULE_GetPtr( pTask->hModule ))) return;
 
     if (firstTask)
     {

@@ -1900,7 +1900,7 @@ LONG mmioRead(HMMIO hmmio, HPSTR pch, LONG cch)
 	dprintf_mmio(stddeb, "mmioRead(%04X, %p, %ld);\n", hmmio, pch, cch);
 	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
 	if (lpmminfo == NULL) return 0;
-	count = read(LOWORD(lpmminfo->dwReserved2), pch, cch);
+	count = FILE_Read(LOWORD(lpmminfo->dwReserved2), pch, cch);
 	GlobalUnlock(hmmio);
 	dprintf_mmio(stddeb, "mmioRead // count=%ld\n", count);
 	return count;
@@ -2002,7 +2002,7 @@ UINT mmioAdvance(HMMIO hmmio, MMIOINFO FAR* lpmmioinfo, UINT uFlags)
 	lpmminfo = (LPMMIOINFO)GlobalLock(hmmio);
 	if (lpmminfo == NULL) return 0;
 	if (uFlags == MMIO_READ) {
-		count = read(LOWORD(lpmminfo->dwReserved2), 
+		count = FILE_Read(LOWORD(lpmminfo->dwReserved2), 
 			lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer);
 		}
 	if (uFlags == MMIO_WRITE) {
@@ -2070,7 +2070,7 @@ UINT mmioDescend(HMMIO hmmio, MMCKINFO FAR* lpck,
 		(uFlags & MMIO_FINDLIST)) {
 		dprintf_mmio(stddeb, "mmioDescend // MMIO_FINDxxxx dwfcc=%08lX !\n", dwfcc);
 		while (TRUE) {
-			if (read(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
+			if (FILE_Read(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
 					sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
 				_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
 				GlobalUnlock(hmmio);
@@ -2086,7 +2086,7 @@ UINT mmioDescend(HMMIO hmmio, MMCKINFO FAR* lpck,
 			}
 		}
 	else {
-		if (read(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
+		if (FILE_Read(LOWORD(lpmminfo->dwReserved2), (LPSTR)lpck, 
 				sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
 			_llseek(LOWORD(lpmminfo->dwReserved2), dwOldPos, SEEK_SET);
 			GlobalUnlock(hmmio);

@@ -40,9 +40,9 @@ INT GetKeyState(INT keycode)
 void GetKeyboardState(BYTE FAR *lpKeyState)
 {
     if (lpKeyState != NULL) {
-	KeyStateTable[VK_LBUTTON] = MouseButtonsStates[0];
-	KeyStateTable[VK_MBUTTON] = MouseButtonsStates[1];
-	KeyStateTable[VK_RBUTTON] = MouseButtonsStates[2];
+	KeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] >> 8;
+	KeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] >> 8;
+	KeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] >> 8;
 	memcpy(lpKeyState, KeyStateTable, 256);
     }
 }
@@ -54,9 +54,9 @@ void SetKeyboardState(BYTE FAR *lpKeyState)
 {
     if (lpKeyState != NULL) {
 	memcpy(KeyStateTable, lpKeyState, 256);
-	MouseButtonsStates[0] = KeyStateTable[VK_LBUTTON];
-	MouseButtonsStates[1] = KeyStateTable[VK_MBUTTON];
-	MouseButtonsStates[2] = KeyStateTable[VK_RBUTTON];
+	MouseButtonsStates[0] = KeyStateTable[VK_LBUTTON]? 0x8000: 0;
+	MouseButtonsStates[1] = KeyStateTable[VK_MBUTTON]? 0x8000: 0;
+	MouseButtonsStates[2] = KeyStateTable[VK_RBUTTON]? 0x8000: 0;
     }
 }
 
@@ -80,15 +80,15 @@ int GetAsyncKeyState(int nKey)
     switch (nKey) {
      case VK_LBUTTON:
 	retval = AsyncMouseButtonsStates[0] | 
-	(MouseButtonsStates[0] << 8);
+	MouseButtonsStates[0]? 0x0001: 0;
 	break;
      case VK_MBUTTON:
 	retval = AsyncMouseButtonsStates[1] |
-	(MouseButtonsStates[1] << 8);
+	MouseButtonsStates[1]? 0x0001: 0;
 	break;
      case VK_RBUTTON:
 	retval = AsyncMouseButtonsStates[2] |
-	(MouseButtonsStates[2] << 8);
+	MouseButtonsStates[2]? 0x0001: 0;
 	break;
      default:
 	retval = AsyncKeyStateTable[nKey] | 

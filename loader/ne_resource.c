@@ -43,7 +43,7 @@ static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
     DWORD ret = 0;
     int count;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     for (; pTypeInfo->type_id != 0;
              pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
@@ -139,11 +139,10 @@ static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
  */
 HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
 {
-    NE_MODULE *pModule;
     NE_TYPEINFO *pTypeInfo;
     HRSRC hRsrc;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
 
@@ -217,11 +216,10 @@ HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
  */
 HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
 {
-    NE_MODULE *pModule;
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
 #ifndef WINELIB
@@ -238,11 +236,10 @@ HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
  */
 int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
 {
-    NE_MODULE *pModule;
     NE_NAMEINFO *pNameInfo=NULL;
     int fd;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return -1;
 #ifndef WINELIB
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
@@ -262,11 +259,10 @@ int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
  */
 DWORD NE_SizeofResource( HMODULE hModule, HRSRC hRsrc )
 {
-    NE_MODULE *pModule;
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
 #ifndef WINELIB
@@ -281,12 +277,11 @@ DWORD NE_SizeofResource( HMODULE hModule, HRSRC hRsrc )
  */
 HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc )
 {
-    NE_MODULE *pModule;
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
     int fd;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return 0;
 #ifndef WINELIB
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
@@ -328,12 +323,11 @@ SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle )
  */
 BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
 {
-    NE_MODULE *pModule;
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;
     WORD count;
 
-    pModule = (NE_MODULE *)GlobalLock( hModule );
+    NE_MODULE *pModule = MODULE_GetPtr( hModule );
     if (!pModule || !pModule->res_table) return FALSE;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     while (pTypeInfo->type_id)

@@ -1,5 +1,5 @@
-#ifndef _WINBASE_H
-#define _WINBASE_H
+#ifndef __WINE_WINBASE_H
+#define __WINE_WINBASE_H
 
 
 
@@ -19,12 +19,6 @@
 #define WAIT_ABANDONED_0	STATUS_ABANDONED_WAIT_0
 #define WAIT_TIMEOUT		STATUS_TIMEOUT
 
-#define MEM_COMMIT      0x1000
-#define MEM_RESERVE	0x2000
-#define MEM_TOPDOWN	0x100000
-
-#define MEM_RELEASE	0x8000
-
 #define	PAGE_NOACCESS		0x01
 #define	PAGE_READONLY		0x02
 #define	PAGE_READWRITE		0x04
@@ -36,11 +30,14 @@
 #define	PAGE_GUARD		0x100
 #define	PAGE_NOCACHE		0x200
 
-HANDLE WINAPI OpenProcess(DWORD access, BOOL inherit, DWORD id);
-int WINAPI GetCurrentProcessId(void);
-int WINAPI TerminateProcess(HANDLE h, int ret);
-
-WINAPI void *  VirtualAlloc (void *addr,DWORD size,DWORD type,DWORD protect);
+#define MEM_COMMIT              0x00001000
+#define MEM_RESERVE             0x00002000
+#define MEM_DECOMMIT            0x00004000
+#define MEM_RELEASE             0x00008000
+#define MEM_FREE                0x00010000
+#define MEM_PRIVATE             0x00020000
+#define MEM_MAPPED              0x00040000
+#define MEM_TOP_DOWN            0x00100000
 
 struct _EXCEPTION_POINTERS;
 
@@ -105,8 +102,6 @@ typedef struct
   int ss;
 } exception_info;
 
-#endif
-
 
 /*DWORD WINAPI GetVersion( void );*/
 
@@ -122,3 +117,27 @@ HACCEL WINAPI LoadAcceleratorsA(   HINSTANCE, const char *);
 #define FreeModule(hLibModule) FreeLibrary((hLibModule))
 #define MakeProcInstance(lpProc,hInstance) (lpProc)
 #define FreeProcInstance(lpProc) (lpProc)
+
+
+WINAPI void     DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
+WINAPI void     EnterCriticalSection(CRITICAL_SECTION *lpCrit);
+WINAPI int      GetCurrentProcessId(void);
+WINAPI HANDLE32 GetProcessHeap(void);
+WINAPI LPVOID   HeapAlloc(HANDLE32,DWORD,DWORD);
+WINAPI DWORD    HeapCompact(HANDLE32,DWORD);
+WINAPI HANDLE32 HeapCreate(DWORD,DWORD,DWORD);
+WINAPI BOOL     HeapDestroy(HANDLE32);
+WINAPI BOOL     HeapFree(HANDLE32,DWORD,LPVOID);
+WINAPI BOOL     HeapLock(HANDLE32);
+WINAPI LPVOID   HeapReAlloc(HANDLE32,DWORD,LPVOID,DWORD);
+WINAPI DWORD    HeapSize(HANDLE32,DWORD,LPVOID);
+WINAPI BOOL     HeapUnlock(HANDLE32);
+WINAPI BOOL     HeapValidate(HANDLE32,DWORD,LPVOID);
+WINAPI void     InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
+WINAPI void     LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
+WINAPI HANDLE   OpenProcess(DWORD access, BOOL inherit, DWORD id);
+WINAPI int      TerminateProcess(HANDLE h, int ret);
+WINAPI LPVOID   VirtualAlloc(LPVOID addr,DWORD size,DWORD type,DWORD protect);
+WINAPI BOOL     VirtualFree( LPVOID addr, DWORD size, DWORD type );
+
+#endif  /* __WINE_WINBASE_H */

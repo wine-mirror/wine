@@ -52,7 +52,7 @@ HRSRC FindResource( HMODULE hModule, SEGPTR name, SEGPTR type )
     dprintf_resource( stddeb, " name=" );
     PrintId( name );
     dprintf_resource( stddeb, "\n" );
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
@@ -77,7 +77,7 @@ HGLOBAL LoadResource( HMODULE hModule, HRSRC hRsrc )
     dprintf_resource(stddeb, "LoadResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
@@ -104,7 +104,7 @@ SEGPTR WIN16_LockResource( HGLOBAL handle )
     dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return (SEGPTR)0;
     hModule = GetExePtr( handle );
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         fprintf(stderr,"Don't know how to LockResource() for Win32 module\n");
@@ -126,7 +126,7 @@ LPVOID LockResource( HGLOBAL handle )
     dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
     if (!handle) return NULL;
     hModule = GetExePtr( handle );
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         fprintf(stderr,"Don't know how to LockResource() for Win32 module\n");
@@ -151,7 +151,7 @@ BOOL FreeResource( HGLOBAL handle )
     dprintf_resource(stddeb, "FreeResource: handle=%04x\n", handle );
     if (!handle) return FALSE;
     hModule = GetExePtr( handle );
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         fprintf(stderr,"Don't know how to FreeResource() for Win32 module\n");
@@ -175,7 +175,7 @@ INT AccessResource( HINSTANCE hModule, HRSRC hRsrc )
     dprintf_resource(stddeb, "AccessResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!hRsrc) return 0;
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
@@ -199,7 +199,7 @@ DWORD SizeofResource( HMODULE hModule, HRSRC hRsrc )
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "SizeofResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
@@ -224,7 +224,7 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
     dprintf_resource(stddeb, "AllocResource: module=%04x res=%04x size=%ld\n",
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
 #ifndef WINELIB
     if (pModule->flags & NE_FFLAGS_WIN32)
     {

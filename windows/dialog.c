@@ -69,14 +69,20 @@ HWND DIALOG_GetFirstTabItem( HWND hwndDlg )
  *           DIALOG_GetControl
  *
  * Return the class and text of the control pointed to by ptr,
- * and return a pointer to the next control.
+ * fill the header structure and return a pointer to the next control.
  */
-static SEGPTR DIALOG_GetControl( SEGPTR ptr, SEGPTR *class, SEGPTR *text )
+static SEGPTR DIALOG_GetControl( SEGPTR ptr, DLGCONTROLHEADER *header,
+                                 SEGPTR *class, SEGPTR *text )
 {
     unsigned char *base = (unsigned char *)PTR_SEG_TO_LIN( ptr );
     unsigned char *p = base;
 
-    p += 14;  /* size of control header */
+    header->x  = GET_WORD(p); p += sizeof(WORD);
+    header->y  = GET_WORD(p); p += sizeof(WORD);
+    header->cx = GET_WORD(p); p += sizeof(WORD);
+    header->cy = GET_WORD(p); p += sizeof(WORD);
+    header->id = GET_WORD(p); p += sizeof(WORD);
+    header->style = GET_DWORD(p); p += sizeof(DWORD);
 
     if (*p & 0x80)
     {
@@ -92,7 +98,7 @@ static SEGPTR DIALOG_GetControl( SEGPTR ptr, SEGPTR *class, SEGPTR *text )
     if (*p == 0xff)
     {
 	  /* Integer id, not documented (?). Only works for SS_ICON controls */
-	*text = MAKEINTRESOURCE( p[1] + 256 * p[2] );
+	*text = MAKEINTRESOURCE( GET_WORD(p+1) );
 	p += 4;
     }
     else
@@ -115,14 +121,18 @@ static SEGPTR DIALOG_ParseTemplate( SEGPTR template, DLGTEMPLATE * result )
     unsigned char *base = (unsigned char *)PTR_SEG_TO_LIN(template);
     unsigned char * p = base;
  
-    result->header = *(DLGTEMPLATEHEADER *)p;
-    p += 13;
+    result->style = GET_DWORD(p); p += sizeof(DWORD);
+    result->nbItems = *p++;
+    result->x  = GET_WORD(p); p += sizeof(WORD);
+    result->y  = GET_WORD(p); p += sizeof(WORD);
+    result->cx = GET_WORD(p); p += sizeof(WORD);
+    result->cy = GET_WORD(p); p += sizeof(WORD);
 
     /* Get the menu name */
 
     if (*p == 0xff)
     {
-        result->menuName = MAKEINTRESOURCE( p[1] + 256 * p[2] );
+        result->menuName = MAKEINTRESOURCE( GET_WORD(p+1) );
         p += 3;
     }
     else if (*p)
@@ -149,9 +159,9 @@ static SEGPTR DIALOG_ParseTemplate( SEGPTR template, DLGTEMPLATE * result )
 
     /* Get the font name */
 
-    if (result->header.style & DS_SETFONT)
+    if (result->style & DS_SETFONT)
     {
-	result->pointSize = *(WORD *)p;
+	result->pointSize = GET_WORD(p);
         p += sizeof(WORD);
 	result->faceName = template + (WORD)(p - base);
         p += strlen(p) + 1;
@@ -166,9 +176,9 @@ static SEGPTR DIALOG_ParseTemplate( SEGPTR template, DLGTEMPLATE * result )
  */
 static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
 {
-    dprintf_dialog(stddeb, "DIALOG %d, %d, %d, %d\n", result->header.x, result->header.y,
-	    result->header.cx, result->header.cy );
-    dprintf_dialog(stddeb, " STYLE %08lx\n", result->header.style );
+    dprintf_dialog(stddeb, "DIALOG %d, %d, %d, %d\n", result->x, result->y,
+                   result->cx, result->cy );
+    dprintf_dialog(stddeb, " STYLE %08lx\n", result->style );
     dprintf_dialog( stddeb, " CAPTION '%s'\n",
                     (char *)PTR_SEG_TO_LIN(result->caption) );
 
@@ -184,7 +194,7 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
     else if (LOWORD(result->menuName))
 	dprintf_dialog(stddeb, " MENU %04x\n", LOWORD(result->menuName) );
 
-    if (result->header.style & DS_SETFONT)
+    if (result->style & DS_SETFONT)
 	dprintf_dialog( stddeb, " FONT %d,'%s'\n", result->pointSize,
                         (char *)PTR_SEG_TO_LIN(result->faceName) );
 }
@@ -264,7 +274,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 
       /* Create custom font if needed */
 
-    if (template.header.style & DS_SETFONT)
+    if (template.style & DS_SETFONT)
     {
           /* The font height must be negative as it is a point size */
           /* (see CreateFont() documentation in the Windows SDK).   */
@@ -293,26 +303,26 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
       /* Create dialog main window */
 
     rect.left = rect.top = 0;
-    rect.right = template.header.cx * xUnit / 4;
-    rect.bottom = template.header.cy * yUnit / 8;
-    if (template.header.style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
-    AdjustWindowRectEx( &rect, template.header.style, 
+    rect.right = template.cx * xUnit / 4;
+    rect.bottom = template.cy * yUnit / 8;
+    if (template.style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
+    AdjustWindowRectEx( &rect, template.style, 
 			hMenu ? TRUE : FALSE , exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
 
-    if ((INT)template.header.x == CW_USEDEFAULT)
+    if ((INT)template.x == CW_USEDEFAULT)
         rect.left = rect.top = CW_USEDEFAULT;
     else
     {
-        rect.left += template.header.x * xUnit / 4;
-        rect.top += template.header.y * yUnit / 8;
-        if (!(template.header.style & DS_ABSALIGN))
+        rect.left += template.x * xUnit / 4;
+        rect.top += template.y * yUnit / 8;
+        if (!(template.style & DS_ABSALIGN))
             ClientToScreen( owner, (POINT *)&rect );
     }
 
     hwnd = CreateWindowEx( exStyle, template.className, template.caption, 
-			   template.header.style & ~WS_VISIBLE,
+			   template.style & ~WS_VISIBLE,
 			   rect.left, rect.top, rect.right, rect.bottom,
 			   owner, hMenu, hInst, (SEGPTR)0 );
     if (!hwnd)
@@ -348,15 +358,15 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
     dlgInfo->msgResult = 0;  /* This is used to store the default button id */
     dlgInfo->hDialogHeap = 0;
 
-    for (i = 0; i < template.header.nbItems; i++)
+    for (i = 0; i < template.nbItems; i++)
     {
-	DLGCONTROLHEADER *header;
+	DLGCONTROLHEADER header;
 	SEGPTR className, winName;
         HWND hwndDefButton = 0;
         char buffer[10];
 
-        header = (DLGCONTROLHEADER *)PTR_SEG_TO_LIN( headerPtr );
-	headerPtr = DIALOG_GetControl( headerPtr, &className, &winName );
+	headerPtr = DIALOG_GetControl( headerPtr, &header,
+                                       &className, &winName );
 
         if (!HIWORD(className))
         {
@@ -381,12 +391,12 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 	else dprintf_dialog(stddeb,"%04x", LOWORD(winName) );
 
 	dprintf_dialog(stddeb," %d, %d, %d, %d, %d, %08lx\n", 
-                       header->id, header->x, header->y, 
-                       header->cx, header->cy, header->style );
+                       header.id, header.x, header.y, 
+                       header.cx, header.cy, header.style );
 
 	if (HIWORD(className) &&
             !strcmp( (char *)PTR_SEG_TO_LIN(className), "EDIT") &&
-            ((header->style & DS_LOCALEDIT) != DS_LOCALEDIT))
+            ((header.style & DS_LOCALEDIT) != DS_LOCALEDIT))
         {
 	    if (!dlgInfo->hDialogHeap)
             {
@@ -399,23 +409,23 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 		LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);
 	    }
 	    hwndCtrl = CreateWindowEx(WS_EX_NOPARENTNOTIFY, className, winName,
-                                      header->style | WS_CHILD,
-                                      header->x * xUnit / 4,
-                                      header->y * yUnit / 8,
-                                      header->cx * xUnit / 4,
-                                      header->cy * yUnit / 8,
-                                      hwnd, (HMENU)header->id,
+                                      header.style | WS_CHILD,
+                                      header.x * xUnit / 4,
+                                      header.y * yUnit / 8,
+                                      header.cx * xUnit / 4,
+                                      header.cy * yUnit / 8,
+                                      hwnd, (HMENU)header.id,
                                       dlgInfo->hDialogHeap, (SEGPTR)0 );
 	}
 	else
         {
 	    hwndCtrl = CreateWindowEx(WS_EX_NOPARENTNOTIFY, className, winName,
-                                      header->style | WS_CHILD,
-                                      header->x * xUnit / 4,
-                                      header->y * yUnit / 8,
-                                      header->cx * xUnit / 4,
-                                      header->cy * yUnit / 8,
-                                      hwnd, (HMENU)header->id,
+                                      header.style | WS_CHILD,
+                                      header.x * xUnit / 4,
+                                      header.y * yUnit / 8,
+                                      header.cx * xUnit / 4,
+                                      header.cy * yUnit / 8,
+                                      hwnd, (HMENU)header.id,
                                       hInst, (SEGPTR)0 );
 	}
 
@@ -454,7 +464,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 	SendMessage( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
     if (SendMessage( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
 	SetFocus( dlgInfo->hwndFocus );
-    if (template.header.style & WS_VISIBLE) ShowWindow(hwnd, SW_SHOW);
+    if (template.style & WS_VISIBLE) ShowWindow(hwnd, SW_SHOW);
     return hwnd;
 }
 

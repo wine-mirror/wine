@@ -34,6 +34,8 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+static HANDLE32 ProcessHeap;  /* FIXME: should be in process database */
+
 void my_wcstombs(char * result, u_short * source, int len)
 {
   while(len--) {
@@ -136,20 +138,19 @@ static DWORD PE_FindExportedFunction(struct pe_data *pe, char* funcName)
 DWORD PE_GetProcAddress(HMODULE hModule, char* function)
 {
     NE_MODULE *pModule;
-    struct pe_data *pe;
 
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
     if (pModule->flags & NE_FFLAGS_BUILTIN)
     {
-        BUILTIN_DLL *dll = (BUILTIN_DLL *)NE_WIN32_MODULE(pModule);
+        BUILTIN_DLL *dll = (BUILTIN_DLL *)pModule->pe_module;
         if(HIWORD(function))
             return RELAY32_GetEntryPoint(dll,function,0);
         else
             return RELAY32_GetEntryPoint(dll,0,(int)function);
     }
-    if (!(pe = NE_WIN32_MODULE(pModule))) return 0;
-    return PE_FindExportedFunction( pe, function );
+    if (!pModule->pe_module) return 0;
+    return PE_FindExportedFunction( pModule->pe_module, function );
 }
 
 void fixup_imports(struct pe_data *pe, HMODULE hModule)
@@ -286,7 +287,7 @@ static void calc_vma_size(struct pe_data *pe)
 	     pe->pe_seg[i].NumberOfRelocations,
 	     pe->pe_seg[i].NumberOfLinenumbers,
 	     pe->pe_seg[i].Characteristics);
-	  pe->vma_size = max(pe->vma_size,
+	  pe->vma_size = MAX(pe->vma_size,
 	  		pe->pe_seg[i].Virtual_Address + 
 			pe->pe_seg[i].Size_Of_Raw_Data);
     }
@@ -535,10 +536,9 @@ void InitTask(struct sigcontext_struct context);
 
 HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
-        struct pe_data *pe;
+        PE_MODULE *pe;
 	int size, of_size;
 	NE_MODULE *pModule;
-        NE_WIN32_EXTRAINFO *pExtraInfo;
 	SEGTABLEENTRY *pSegment;
 	char *pStr;
 	DWORD cts;
@@ -554,8 +554,6 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
         of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
                   + strlen(ofs->szPathName) + 1;
 	size = sizeof(NE_MODULE) +
-               /* extra module info */
-               sizeof(NE_WIN32_EXTRAINFO) +
                /* loaded file info */
                of_size +
                /* segment table: DS,CS */
@@ -586,18 +584,16 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	pModule->seg_count=1;
 	pModule->modref_count=0;
 	pModule->nrname_size=0;
-	pModule->fileinfo=sizeof(NE_MODULE) + sizeof(NE_WIN32_EXTRAINFO);
+	pModule->fileinfo=sizeof(NE_MODULE);
 	pModule->os_flags=NE_OSFLAGS_WINDOWS;
 	pModule->expected_version=0x30A;
-
-        /* Set extra info */
-        pExtraInfo = (NE_WIN32_EXTRAINFO *)(pModule + 1);
+        pModule->self = hModule;
 
         /* Set loaded file information */
-        memcpy( pExtraInfo + 1, ofs, of_size );
-        ((OFSTRUCT *)(pExtraInfo+1))->cBytes = of_size - 1;
+        memcpy( pModule + 1, ofs, of_size );
+        ((OFSTRUCT *)(pModule+1))->cBytes = of_size - 1;
 
-	pSegment=(SEGTABLEENTRY*)((char*)(pExtraInfo + 1) + of_size);
+	pSegment=(SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
 	pModule->seg_table=pModule->dgroup_entry=(int)pSegment-(int)pModule;
 	pSegment->size=0;
 	pSegment->flags=NE_SEGFLAGS_DATA;
@@ -627,7 +623,7 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 
 	pe = PE_LoadImage( fd, hModule, mz_header.ne_offset );
 
-        pExtraInfo->pe_module = (DWORD)pe;
+        pModule->pe_module = pe;
 	pModule->heap_size=0x1000;
 	pModule->stack_size=0xE000;
 
@@ -638,12 +634,18 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 	if ((pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)) {
 /*            PE_InitDLL(hModule); */
         } else {
+            ProcessHeap = HeapCreate( 0, 0x10000, 0 );
             TASK_CreateTask(hModule,hInstance,0,
 		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),
 		*((WORD*)PTR_SEG_TO_LIN(params->showCmd)+1));
             PE_InitializeDLLs(hModule);
 	}
 	return hInstance;
+}
+
+HANDLE32 GetProcessHeap(void)
+{
+    return ProcessHeap;
 }
 
 int USER_InitApp(HINSTANCE hInstance);
@@ -653,19 +655,19 @@ void PE_Win32CallToStart(struct sigcontext_struct context)
 {
     int fs;
     HMODULE hModule;
+    NE_MODULE *pModule;
     struct pe_data *pe;
 
     dprintf_win32(stddeb,"Going to start Win32 program\n");	
     InitTask(context);
     hModule = GetExePtr( GetCurrentTask() );
+    pModule = MODULE_GetPtr( hModule );
     USER_InitApp( hModule );
     fs=(int)GlobalAlloc(GHND,0x10000);
     PE_InitTEB(fs);
-    pe = NE_WIN32_MODULE( (NE_MODULE *)GlobalLock(hModule) );
     __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
-/*    ((void(*)())(pe->load_addr+pe->pe_header->opt_coff.AddressOfEntryPoint))(); */
-    CallTaskStart32( (FARPROC)(pe->load_addr + 
-                               pe->pe_header->opt_coff.AddressOfEntryPoint) );
+    CallTaskStart32( (FARPROC)(pModule->pe_module->load_addr + 
+                               pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
 }
 
 int PE_UnloadImage( HMODULE hModule )
@@ -678,11 +680,13 @@ int PE_UnloadImage( HMODULE hModule )
 static void PE_InitDLL(HMODULE hModule)
 {
     NE_MODULE *pModule;
-    struct pe_data *pe;
+    PE_MODULE *pe;
+
     hModule = GetExePtr(hModule);
-    if (!(pModule = (NE_MODULE *)GlobalLock(hModule))) return;
-    if (!(pModule->flags & NE_FFLAGS_WIN32)) return;
-    if (!(pe = NE_WIN32_MODULE(pModule))) return;
+    if (!(pModule = MODULE_GetPtr(hModule))) return;
+    if (!(pModule->flags & NE_FFLAGS_WIN32) || !(pe = pModule->pe_module))
+        return;
+
     /* FIXME: What are the correct values for parameters 2 and 3? */
         
     /* Is this a library? */
@@ -726,7 +730,7 @@ void PE_InitializeDLLs(HMODULE hModule)
 {
 	NE_MODULE *pModule;
 	HMODULE *pDLL;
-	pModule = (NE_MODULE *)GlobalLock( GetExePtr(hModule) );
+	pModule = MODULE_GetPtr( GetExePtr(hModule) );
 	if (pModule->dlls_to_init)
 	{
 		HANDLE to_init = pModule->dlls_to_init;

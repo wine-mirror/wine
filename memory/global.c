@@ -198,7 +198,9 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
         ptr = DDE_malloc(flags, size, &shmdata);
     else 
 #endif  /* CONFIG_IPC */
+    {
 	ptr = malloc( size );
+    }
     if (!ptr) return 0;
 
       /* Allocate the selector(s) */

@@ -15,7 +15,7 @@
 
 typedef struct {
     unsigned long       magic;
-} KERNEL_OBJECT, *HANDLE32;
+} KERNEL_OBJECT;
 
 typedef struct {
     KERNEL_OBJECT       common;

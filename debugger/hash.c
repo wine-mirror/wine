@@ -217,7 +217,7 @@ void DEBUG_LoadEntryPoints(void)
 
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
-        if (!(pModule = (NE_MODULE *)GlobalLock( entry.hModule ))) continue;
+        if (!(pModule = MODULE_GetPtr( entry.hModule ))) continue;
 
         name = (unsigned char *)pModule + pModule->name_table;
 

@@ -81,32 +81,28 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
    
     hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
     msg->hwnd = pWnd->hwndSelf;
-    if (hittest != HTERROR)
+    if ((hittest != HTERROR) && mouseClick)
     {
+        HWND hwndTop = WIN_GetTopParent( msg->hwnd );
+
         /* Send the WM_PARENTNOTIFY message */
 
-        if (mouseClick) WIN_SendParentNotify( msg->hwnd, msg->message, 0,
-                                            MAKELONG( msg->pt.x, msg->pt.y ) );
+        WIN_SendParentNotify( msg->hwnd, msg->message, 0,
+                              MAKELONG( msg->pt.x, msg->pt.y ) );
 
         /* Activate the window if needed */
 
-        if (mouseClick)
+        if (msg->hwnd != GetActiveWindow() && msg->hwnd != GetDesktopWindow())
         {
-            HWND hwndTop = WIN_GetTopParent( msg->hwnd );
-            if (hwndTop != GetActiveWindow())
-            {
-                LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE,
-					(WPARAM)hwndTop,
-                                        MAKELONG( hittest, msg->message ) );
-                if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
-                    eatMsg = TRUE;
-                if ((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT))
-                {
-                    SetWindowPos( hwndTop, HWND_TOP, 0, 0, 0, 0,
-                                 SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-                    WINPOS_ChangeActiveWindow( hwndTop, TRUE );
-                }
-            }
+            LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE, hwndTop,
+                                    MAKELONG( hittest, msg->message ) );
+
+            if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
+                eatMsg = TRUE;
+
+            if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)) 
+                && hwndTop != GetActiveWindow() )
+                WINPOS_ChangeActiveWindow( hwndTop, TRUE );
         }
     }
 

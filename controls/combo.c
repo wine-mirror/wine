@@ -1013,7 +1013,8 @@ INT DlgDirListComboBox( HWND hDlg, SEGPTR path, INT idCBox,
     if (idCBox)
     {
         SendDlgItemMessage( hDlg, idCBox, CB_RESETCONTENT, 0, 0 );
-        ret = (SendDlgItemMessage( hDlg, idCBox, CB_DIR, wType, path ) >= 0);
+        ret = (SendDlgItemMessage( hDlg, idCBox, CB_DIR,
+                                   wType, (LPARAM)path ) >= 0);
     }
     if (idStatic)
     {

@@ -33,34 +33,27 @@ typedef struct
 } DIALOGINFO;
 
 
-  /* Dialog template header */
-typedef struct
-{
-    DWORD     style;    
-    BYTE      nbItems WINE_PACKED;
-    WORD      x WINE_PACKED;
-    WORD      y WINE_PACKED;
-    WORD      cx WINE_PACKED;
-    WORD      cy WINE_PACKED;
-} DLGTEMPLATEHEADER;
-
-
   /* Dialog control header */
 typedef struct
 {
+    DWORD      style;
     WORD       x;
     WORD       y;
     WORD       cx;
     WORD       cy;
     WORD       id;
-    DWORD      style WINE_PACKED;
 } DLGCONTROLHEADER;
 
 
   /* Dialog template */
 typedef struct
 {
-    DLGTEMPLATEHEADER  header;
+    DWORD              style;
+    WORD               nbItems;
+    WORD               x;
+    WORD               y;
+    WORD               cx;
+    WORD               cy;
     SEGPTR             menuName;
     SEGPTR             className;
     SEGPTR             caption;

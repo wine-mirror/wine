@@ -4,6 +4,7 @@ MODULE = memory
 C_SRCS = \
 	atom.c \
 	global.c \
+	heap.c \
 	ldt.c \
 	local.c \
 	selector.c

@@ -48,12 +48,18 @@ void WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit)
 
 void WINAPI EnterCriticalSection(CRITICAL_SECTION* lpCrit)
 {
-	return;
+    if (lpCrit->LockCount)
+        fprintf( stderr, "Error: re-entering critical section %08lx\n",
+                 (DWORD)lpCrit );
+    lpCrit->LockCount++;
 }
 
 void WINAPI LeaveCriticalSection(CRITICAL_SECTION* lpCrit)
 {
-	return;
+    if (!lpCrit->LockCount)
+        fprintf( stderr, "Error: leaving critical section %08lx again\n",
+                 (DWORD)lpCrit );
+    lpCrit->LockCount--;
 }
 
 void WINAPI DeleteCriticalSection(CRITICAL_SECTION* lpCrit)

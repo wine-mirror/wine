@@ -113,9 +113,6 @@ static void win_fault(int signal, int code, struct sigcontext *context)
         }
     }
 
-    XUngrabPointer(display, CurrentTime);
-    XUngrabServer(display);
-    XFlush(display);
     wine_debug( signal, context );  /* Enter our debugger */
 }
 

@@ -2050,7 +2050,7 @@ BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, INT id )
     dprintf_listbox( stddeb, "DlgDirSelect: %04x '%s' %d\n", hDlg, lpStr, id );
     if ((i = SendDlgItemMessage( hDlg, id, LB_GETCURSEL, 0, 0 )) == LB_ERR)
         return FALSE;
-    SendDlgItemMessage( hDlg, id, LB_GETTEXT, i, MAKE_SEGPTR(buffer) );
+    SendDlgItemMessage( hDlg, id, LB_GETTEXT, i, (LPARAM)MAKE_SEGPTR(buffer) );
     if (buffer[0] == '[')  /* drive or directory */
     {
         if (buffer[1] == '-')  /* drive */
