@@ -137,7 +137,7 @@ static void SYSDEPS_StartThread( TEB *teb )
         TerminateThread( GetCurrentThread(), GetExceptionCode() );
     }
     __ENDTRY
-    SYSDEPS_ExitThread();  /* should never get here */
+    SYSDEPS_ExitThread(0);  /* should never get here */
 }
 
 
@@ -153,31 +153,31 @@ int SYSDEPS_SpawnThread( TEB *teb )
 
 #ifdef linux
     if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
-               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
+               CLONE_VM | CLONE_FS | SIGCHLD, teb ) < 0)
         return -1;
-    /* FIXME: close the child socket in the parent process */
-/*    close( thread->socket );*/
+    close( teb->socket );  /* close the child socket in the parent */
     return 0;
 #endif
 
 #ifdef HAVE_RFORK
-    DWORD *sp = (DWORD *)teb->stack_top;
-    *--sp = (DWORD)teb;
+    void **sp = (void **)teb->stack_top;
+    *--sp = teb;
     *--sp = 0;
-    *--sp = (DWORD)SYSDEPS_StartThread;
-    __asm__(
-    "pushl %2;\n\t"		/* RFPROC|RMEM */
+    *--sp = SYSDEPS_StartThread;
+    __asm__ __volatile__(
+    "pushl %2;\n\t"		/* RFPROC|RFMEM|RFFDG */
     "pushl $0;\n\t"		/* 0 ? */
     "movl %1,%%eax;\n\t"	/* SYS_rfork */
     ".byte 0x9a; .long 0; .word 7;\n\t"	/* lcall 7:0... FreeBSD syscall */
     "cmpl $0, %%edx;\n\t"
     "je 1f;\n\t"
-    "movl %0,%%esp;\n\t"	/* father -> new thread */
+    "movl %0,%%esp;\n\t"	/* child -> new thread */
     "ret;\n"
-    "1:\n\t"		/* child -> caller thread */
+    "1:\n\t"		/* parent -> caller thread */
     "addl $8,%%esp" :
-    : "r" (sp), "g" (SYS_rfork), "g" (RFPROC|RFMEM)
+    : "r" (sp), "g" (SYS_rfork), "g" (RFPROC|RFMEM|RFFDG)
     : "eax", "edx");
+    close( teb->socket );  /* close the child socket in the parent */
     return 0;
 #endif
 
@@ -202,15 +202,14 @@ int SYSDEPS_SpawnThread( TEB *teb )
  *           SYSDEPS_ExitThread
  *
  * Exit a running thread; must not return.
- * Must not make any reference to the thread structures (THDB etc.) as
- * they have already been deleted.
  */
-void SYSDEPS_ExitThread(void)
+void SYSDEPS_ExitThread( int status )
 {
-#if !defined(__i386__) && defined(HAVE__LWP_CREATE)
+#ifdef HAVE__LWP_CREATE
+    close( NtCurrentTeb()->socket );
     _lwp_exit();
 #endif
-    _exit( 0 );
+    _exit( status );
 }
 
 

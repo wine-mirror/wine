@@ -1223,8 +1223,8 @@ BOOL      WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Loca
 #define     EnumTimeFormats WINELIB_NAME_AW(EnumTimeFormats)
 BOOL        WINAPI EqualSid(PSID, PSID);
 BOOL        WINAPI EqualPrefixSid(PSID,PSID);
-VOID        WINAPI ExitProcess(DWORD);
-VOID        WINAPI ExitThread(DWORD);
+VOID        WINAPI ExitProcess(DWORD) WINE_NORETURN;
+VOID        WINAPI ExitThread(DWORD) WINE_NORETURN;
 DWORD       WINAPI ExpandEnvironmentStringsA(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI ExpandEnvironmentStringsW(LPCWSTR,LPWSTR,DWORD);
 #define     ExpandEnvironmentStrings WINELIB_NAME_AW(ExpandEnvironmentStrings)

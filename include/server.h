@@ -191,6 +191,7 @@ struct terminate_process_request
 {
     IN  int          handle;       /* process handle to terminate */
     IN  int          exit_code;    /* process exit code */
+    OUT int          self;         /* suicide? */
 };
 
 
@@ -199,6 +200,8 @@ struct terminate_thread_request
 {
     IN  int          handle;       /* thread handle to terminate */
     IN  int          exit_code;    /* thread exit code */
+    OUT int          self;         /* suicide? */
+    OUT int          last;         /* last thread in this process? */
 };
 
 
@@ -1202,7 +1205,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 3
+#define SERVER_PROTOCOL_VERSION 4
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1219,7 +1222,7 @@ enum request
 
 extern unsigned int server_call_noerr( enum request req );
 extern unsigned int server_call_fd( enum request req, int fd_out, int *fd_in );
-extern void server_protocol_error( const char *err, ... );
+extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
 
 /* get a pointer to the request buffer */
 static inline void * WINE_UNUSED get_req_buffer(void)

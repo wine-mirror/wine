@@ -399,10 +399,16 @@ void resume_process( struct process *process )
 }
 
 /* kill a process on the spot */
-void kill_process( struct process *process, int exit_code )
+static void kill_process( struct process *process, struct thread *skip, int exit_code )
 {
-    while (process->thread_list)
-        kill_thread( process->thread_list, exit_code );
+    struct thread *thread = process->thread_list;
+    while (thread)
+    {
+        struct thread *next = thread->proc_next;
+        thread->exit_code = exit_code;
+        if (thread != skip) kill_thread( thread, 1 );
+        thread = next;
+    }
 }
 
 /* kill all processes being debugged by a given thread */
@@ -416,7 +422,7 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
             process = process->next;
         if (!process) return;
         process->debugger = NULL;
-        kill_process( process, exit_code );
+        kill_process( process, NULL, exit_code );
     }
 }
 
@@ -678,7 +684,8 @@ DECL_HANDLER(terminate_process)
 
     if ((process = get_process_from_handle( req->handle, PROCESS_TERMINATE )))
     {
-        kill_process( process, req->exit_code );
+        req->self = (current->process == process);
+        kill_process( process, current, req->exit_code );
         release_object( process );
     }
 }

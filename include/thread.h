@@ -131,6 +131,6 @@ extern TEB *THREAD_IdToTEB( DWORD id );
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( TEB *teb );
 extern void SYSDEPS_SetCurThread( TEB *teb );
-extern void SYSDEPS_ExitThread(void);
+extern void SYSDEPS_ExitThread( int status ) WINE_NORETURN;
 
 #endif  /* __WINE_THREAD_H */

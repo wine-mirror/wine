@@ -137,7 +137,7 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
     thread->pass_fd     = -1;
     thread->state       = RUNNING;
     thread->attached    = 0;
-    thread->exit_code   = STILL_ACTIVE;
+    thread->exit_code   = 0;
     thread->next        = NULL;
     thread->prev        = NULL;
     thread->priority    = THREAD_PRIORITY_NORMAL;
@@ -175,7 +175,7 @@ void thread_poll_event( struct object *obj, int event )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    if (event & (POLLERR | POLLHUP)) kill_thread( thread, BROKEN_PIPE );
+    if (event & (POLLERR | POLLHUP)) kill_thread( thread, 0 );
     else
     {
         if (event & POLLOUT) write_request( thread );
@@ -556,20 +556,25 @@ static void get_selector_entry( struct thread *thread, int entry,
 }
 
 /* kill a thread on the spot */
-void kill_thread( struct thread *thread, int exit_code )
+void kill_thread( struct thread *thread, int violent_death )
 {
     if (thread->state == TERMINATED) return;  /* already killed */
     thread->state = TERMINATED;
-    thread->exit_code = exit_code;
     if (current == thread) current = NULL;
     if (debug_level)
-        fprintf( stderr,"%08x: *killed* exit_code=%d\n", (unsigned int)thread, exit_code );
-    if (thread->wait) end_wait( thread );
+        fprintf( stderr,"%08x: *killed* exit_code=%d\n",
+                 (unsigned int)thread, thread->exit_code );
+    if (thread->wait)
+    {
+        end_wait( thread );
+        /* if it is waiting on the socket, we don't need to send a SIGTERM */
+        violent_death = 0;
+    }
     debug_exit_thread( thread );
     abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
-    detach_thread( thread );
+    detach_thread( thread, violent_death ? SIGTERM : 0 );
     remove_select_user( &thread->obj );
     release_object( thread );
 }
@@ -639,9 +644,17 @@ DECL_HANDLER(terminate_thread)
 {
     struct thread *thread;
 
+    req->self = 0;
+    req->last = 0;
     if ((thread = get_thread_from_handle( req->handle, THREAD_TERMINATE )))
     {
-        kill_thread( thread, req->exit_code );
+        thread->exit_code = req->exit_code;
+        if (thread != current) kill_thread( thread, 1 );
+        else
+        {
+            req->self = 1;
+            req->last = (thread->process->running_threads == 1);
+        }
         release_object( thread );
     }
 }
@@ -654,7 +667,7 @@ DECL_HANDLER(get_thread_info)
     if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
     {
         req->tid       = thread;
-        req->exit_code = thread->exit_code;
+        req->exit_code = (thread->state == TERMINATED) ? thread->exit_code : STILL_ACTIVE;
         req->priority  = thread->priority;
         release_object( thread );
     }

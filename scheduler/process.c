@@ -627,12 +627,16 @@ error:
  */
 void WINAPI ExitProcess( DWORD status )
 {
-    EnterCriticalSection( &PROCESS_Current()->crit_section );
-    MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
-    LeaveCriticalSection( &PROCESS_Current()->crit_section );
+    struct terminate_process_request *req = get_req_buffer();
 
+    MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
     TASK_KillTask( 0 );
-    TerminateProcess( GetCurrentProcess(), status );
+
+    /* send the exit code to the server */
+    req->handle    = GetCurrentProcess();
+    req->exit_code = status;
+    server_call( REQ_TERMINATE_PROCESS );
+    exit( status );
 }
 
 /***********************************************************************
@@ -649,10 +653,12 @@ void WINAPI ExitProcess16( WORD status )
  */
 BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
 {
+    BOOL ret;
     struct terminate_process_request *req = get_req_buffer();
     req->handle    = handle;
     req->exit_code = exit_code;
-    return !server_call( REQ_TERMINATE_PROCESS );
+    if ((ret = !server_call( REQ_TERMINATE_PROCESS )) && req->self) exit( exit_code );
+    return ret;
 }
 
 

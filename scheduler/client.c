@@ -78,17 +78,6 @@ static void fatal_perror( const char *err, ... )
 }
 
 /***********************************************************************
- *           CLIENT_Die
- *
- * Die on protocol errors or socket close
- */
-static void CLIENT_Die(void)
-{
-    close( NtCurrentTeb()->socket );
-    SYSDEPS_ExitThread();
-}
-
-/***********************************************************************
  *           server_protocol_error
  */
 void server_protocol_error( const char *err, ... )
@@ -99,7 +88,7 @@ void server_protocol_error( const char *err, ... )
     fprintf( stderr, "Client protocol error:%p: ", NtCurrentTeb()->tid );
     vfprintf( stderr, err, args );
     va_end( args );
-    CLIENT_Die();
+    SYSDEPS_ExitThread(1);
 }
 
 
@@ -110,7 +99,7 @@ static void server_perror( const char *err )
 {
     fprintf( stderr, "Client protocol error:%p: ", NtCurrentTeb()->tid );
     perror( err );
-    CLIENT_Die();
+    SYSDEPS_ExitThread(1);
 }
 
 
@@ -126,7 +115,7 @@ static void send_request( enum request req )
         return;
     if (ret == -1)
     {
-        if (errno == EPIPE) CLIENT_Die();
+        if (errno == EPIPE) SYSDEPS_ExitThread(0);
         server_perror( "sendmsg" );
     }
     server_protocol_error( "partial msg sent %d/%d\n", ret, sizeof(req) );
@@ -170,7 +159,7 @@ static void send_request_fd( enum request req, int fd )
     if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(req)) return;
     if (ret == -1)
     {
-        if (errno == EPIPE) CLIENT_Die();
+        if (errno == EPIPE) SYSDEPS_ExitThread(0);
         server_perror( "sendmsg" );
     }
     server_protocol_error( "partial msg sent %d/%d\n", ret, sizeof(req) );
@@ -190,15 +179,17 @@ static unsigned int wait_reply(void)
     {
         if ((ret = read( NtCurrentTeb()->socket, &res, sizeof(res) )) == sizeof(res))
             return res;
+        if (!ret) break;
         if (ret == -1)
         {
             if (errno == EINTR) continue;
-            if (errno == EPIPE) CLIENT_Die();
+            if (errno == EPIPE) break;
             server_perror("read");
         }
-        if (!ret) CLIENT_Die(); /* the server closed the connection; time to die... */
         server_protocol_error( "partial msg received %d/%d\n", ret, sizeof(res) );
     }
+    /* the server closed the connection; time to die... */
+    SYSDEPS_ExitThread(0);
 }
 
 
@@ -248,15 +239,17 @@ static unsigned int wait_reply_fd( int *fd )
 #endif
             return res;
         }
+        if (!ret) break;
         if (ret == -1)
         {
             if (errno == EINTR) continue;
-            if (errno == EPIPE) CLIENT_Die();
+            if (errno == EPIPE) break;
             server_perror("recvmsg");
         }
-        if (!ret) CLIENT_Die(); /* the server closed the connection; time to die... */
         server_protocol_error( "partial seq received %d/%d\n", ret, sizeof(res) );
     }
+    /* the server closed the connection; time to die... */
+    SYSDEPS_ExitThread(0);
 }
 
 

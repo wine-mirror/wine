@@ -221,13 +221,12 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
  * Send DLL process detach notifications.  See the comment about calling 
  * sequence at MODULE_DllProcessAttach.  Unless the bForceDetach flag
  * is set, only DLLs with zero refcount are notified.
- *
- * NOTE: Assumes that the process critical section is held!
- *
  */
 void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
 {
     WINE_MODREF *wm;
+
+    EnterCriticalSection( &PROCESS_Current()->crit_section );
 
     do
     {
@@ -248,6 +247,8 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
             break;
         }
     } while ( wm );
+
+    LeaveCriticalSection( &PROCESS_Current()->crit_section );
 }
 
 /*************************************************************************

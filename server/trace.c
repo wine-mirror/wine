@@ -297,10 +297,21 @@ static void dump_terminate_process_request( const struct terminate_process_reque
     fprintf( stderr, " exit_code=%d", req->exit_code );
 }
 
+static void dump_terminate_process_reply( const struct terminate_process_request *req )
+{
+    fprintf( stderr, " self=%d", req->self );
+}
+
 static void dump_terminate_thread_request( const struct terminate_thread_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " exit_code=%d", req->exit_code );
+}
+
+static void dump_terminate_thread_reply( const struct terminate_thread_request *req )
+{
+    fprintf( stderr, " self=%d,", req->self );
+    fprintf( stderr, " last=%d", req->last );
 }
 
 static void dump_get_process_info_request( const struct get_process_info_request *req )
@@ -1366,8 +1377,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_init_process_done_reply,
     (dump_func)0,
     (dump_func)dump_get_thread_buffer_reply,
-    (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_terminate_process_reply,
+    (dump_func)dump_terminate_thread_reply,
     (dump_func)dump_get_process_info_reply,
     (dump_func)0,
     (dump_func)dump_get_thread_info_reply,

@@ -16,11 +16,6 @@
 /* max request length */
 #define MAX_REQUEST_LENGTH  8192
 
-/* exit code passed to remove_client on communication error */
-#define OUT_OF_MEMORY  -1
-#define BROKEN_PIPE    -2
-#define PROTOCOL_ERROR -3
-
 /* request handler definition */
 #define DECL_HANDLER(name) void req_##name( struct name##_request *req )
 

@@ -98,7 +98,8 @@ void fatal_protocol_error( struct thread *thread, const char *err, ... )
     fprintf( stderr, "Protocol error:%p: ", thread );
     vfprintf( stderr, err, args );
     va_end( args );
-    kill_thread( thread, PROTOCOL_ERROR );
+    thread->exit_code = 1;
+    kill_thread( thread, 1 );
 }
 
 /* die on a fatal error */
@@ -193,12 +194,13 @@ void read_request( struct thread *thread )
     if (ret == -1)
     {
         perror("recvmsg");
-        kill_thread( thread, BROKEN_PIPE );
+        thread->exit_code = 1;
+        kill_thread( thread, 1 );
         return;
     }
     if (!ret)  /* closed pipe */
     {
-        kill_thread( thread, BROKEN_PIPE );
+        kill_thread( thread, 0 );
         return;
     }
     fatal_protocol_error( thread, "partial message received %d/%d\n", ret, sizeof(req) );
@@ -212,7 +214,6 @@ int write_request( struct thread *thread )
     if (thread->pass_fd == -1)
     {
         ret = write( thread->obj.fd, &thread->error, sizeof(thread->error) );
-        if (ret == sizeof(thread->error)) goto ok;
     }
     else  /* we have an fd to send */
     {
@@ -231,20 +232,33 @@ int write_request( struct thread *thread )
         ret = sendmsg( thread->obj.fd, &msghdr, 0 );
         close( thread->pass_fd );
         thread->pass_fd = -1;
-        if (ret == sizeof(thread->error)) goto ok;
+    }
+    if (ret == sizeof(thread->error))
+    {
+        set_select_events( &thread->obj, POLLIN );
+        return 1;
     }
     if (ret == -1)
     {
         if (errno == EWOULDBLOCK) return 0;  /* not a fatal error */
-        if (errno != EPIPE) perror("sendmsg");
+        if (errno == EPIPE)
+        {
+            kill_thread( thread, 0 );  /* normal death */
+        }
+        else
+        {
+            perror("sendmsg");
+            thread->exit_code = 1;
+            kill_thread( thread, 1 );
+        }
     }
-    else fprintf( stderr, "Partial message sent %d/%d\n", ret, sizeof(thread->error) );
-    kill_thread( thread, BROKEN_PIPE );
+    else
+    {
+        thread->exit_code = 1;
+        kill_thread( thread, 1 );
+        fprintf( stderr, "Partial message sent %d/%d\n", ret, sizeof(thread->error) );
+    }
     return -1;
-
- ok:
-    set_select_events( &thread->obj, POLLIN );
-    return 1;
 }
 
 static void master_socket_dump( struct object *obj, int verbose )

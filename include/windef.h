@@ -353,11 +353,13 @@ typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 /* Macro for structure packing. */
 
 #ifdef __GNUC__
-#define WINE_PACKED __attribute__ ((packed))
-#define WINE_UNUSED __attribute__ ((unused))
+#define WINE_PACKED   __attribute__((packed))
+#define WINE_UNUSED   __attribute__((unused))
+#define WINE_NORETURN __attribute__((noreturn))
 #else
-#define WINE_PACKED  /* nothing */
-#define WINE_UNUSED  /* nothing */
+#define WINE_PACKED    /* nothing */
+#define WINE_UNUSED    /* nothing */
+#define WINE_NORETURN  /* nothing */
 #endif
 
 /* Macros to split words and longs. */

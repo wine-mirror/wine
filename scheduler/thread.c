@@ -336,8 +336,23 @@ HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
  */
 void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 {
-    MODULE_DllThreadDetach( NULL );
-    TerminateThread( GetCurrentThread(), code );
+    struct terminate_thread_request *req = get_req_buffer();
+
+     /* send the exit code to the server */
+    req->handle    = GetCurrentThread();
+    req->exit_code = code;
+    server_call( REQ_TERMINATE_THREAD );
+    if (req->last)
+    {
+        MODULE_DllProcessDetach( TRUE, (LPVOID)1 );
+        TASK_KillTask( 0 );
+        exit( code );
+    }
+    else
+    {
+        MODULE_DllThreadDetach( NULL );
+        SYSDEPS_ExitThread( code );
+    }
 }
 
 
@@ -590,10 +605,16 @@ BOOL WINAPI TerminateThread(
     HANDLE handle, /* [in] Handle to thread */
     DWORD exitcode)  /* [in] Exit code for thread */
 {
+    BOOL ret;
     struct terminate_thread_request *req = get_req_buffer();
     req->handle    = handle;
     req->exit_code = exitcode;
-    return !server_call( REQ_TERMINATE_THREAD );
+    if ((ret = !server_call( REQ_TERMINATE_THREAD )) && req->self)
+    {
+        if (req->last) exit( exitcode );
+        else SYSDEPS_ExitThread( exitcode );
+    }
+    return ret;
 }
 
 

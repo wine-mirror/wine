@@ -74,7 +74,7 @@ extern void suspend_all_threads( void );
 extern void resume_all_threads( void );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
-extern void kill_thread( struct thread *thread, int exit_code );
+extern void kill_thread( struct thread *thread, int violent_death );
 extern void wake_up( struct object *obj, int max );
 extern int sleep_on( int count, struct object *objects[], int flags,
                      int timeout, sleep_reply func );
@@ -85,7 +85,7 @@ extern void sigchld_handler();
 extern void wait4_thread( struct thread *thread, int signal );
 extern void stop_thread( struct thread *thread );
 extern void continue_thread( struct thread *thread );
-extern void detach_thread( struct thread *thread );
+extern void detach_thread( struct thread *thread, int sig );
 extern int suspend_for_ptrace( struct thread *thread );
 extern int read_thread_int( struct thread *thread, const int *addr, int *data );
 extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
