@@ -427,10 +427,16 @@ INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
         RtlCreateUnicodeStringFromAsciiz(&captionW, msgbox->lpszCaption);
     else
         captionW.Buffer = (LPWSTR)msgbox->lpszCaption;
-    if (HIWORD(msgbox->lpszIcon))
-        RtlCreateUnicodeStringFromAsciiz(&iconW, msgbox->lpszIcon);
+
+    if (msgbox->dwStyle & MB_USERICON)
+    {
+        if (HIWORD(msgbox->lpszIcon))
+            RtlCreateUnicodeStringFromAsciiz(&iconW, msgbox->lpszIcon);
+        else
+            iconW.Buffer = (LPWSTR)msgbox->lpszIcon;
+    }
     else
-        iconW.Buffer = (LPWSTR)msgbox->lpszIcon;
+        iconW.Buffer = NULL;
 
     msgboxW.cbSize = sizeof(msgboxW);
     msgboxW.hwndOwner = msgbox->hwndOwner;
