@@ -262,7 +262,7 @@ static void marshall_size_arg( var_t *arg )
       temp.type = type->ref;
       temp.name = arg->name; /* FIXME */
 #if 0
-      print_proxy( "/* FIXME: %s use the right name for %s\n", __FUNCTION__, arg->name );
+      print_proxy( "/* FIXME: %s use the right name for %s */\n", __FUNCTION__, arg->name );
 #endif
       marshall_size_arg( &temp );
     }
@@ -349,7 +349,7 @@ static void marshall_copy_arg( var_t *arg )
       temp.type = type->ref;
       temp.name = arg->name; /* FIXME */
 #if 0
-      print_proxy( "/* FIXME: %s use the right name for %s\n", __FUNCTION__, arg->name );
+      print_proxy( "/* FIXME: %s use the right name for %s */\n", __FUNCTION__, arg->name );
 #endif
       marshall_copy_arg( &temp );
     }
@@ -446,7 +446,7 @@ static void unmarshall_copy_arg( var_t *arg )
       temp.type = type->ref;
       temp.name = arg->name; /* FIXME */
 #if 1
-      print_proxy( "/* FIXME: %s use the right name for %s\n", __FUNCTION__, arg->name );
+      print_proxy( "/* FIXME: %s use the right name for %s */\n", __FUNCTION__, arg->name );
 #endif
       unmarshall_copy_arg( &temp );
     }
@@ -896,15 +896,23 @@ static void write_proxy(type_t *iface)
   }
 
   /* proxy vtable */
-  print_proxy( "const CINTERFACE_PROXY_VTABLE(%d) %sProxyVtbl =\n", midx, iface->name);
+  print_proxy( "const CINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n", midx, iface->name);
   print_proxy( "{\n");
   indent++;
-  print_proxy( "{&IID_%s},{\n", iface->name);
+  print_proxy( "{\n", iface->name);
+  indent++;
+  print_proxy( "&IID_%s,\n", iface->name);
+  indent--;
+  print_proxy( "},\n");
+  print_proxy( "{\n");
+  indent++;
   write_proxy_methods(iface);
-  fprintf(proxy, "}\n");
+  fprintf(proxy, "\n");
+  indent--;
+  print_proxy( "}\n");
   indent--;
   print_proxy( "};\n");
-  print_proxy( "\n");
+  fprintf(proxy, "\n\n");
 
   /* stub vtable */
   print_proxy( "static const PRPC_STUB_FUNCTION %s_table[] =\n", iface->name);
@@ -915,13 +923,22 @@ static void write_proxy(type_t *iface)
   indent--;
   fprintf(proxy, "};\n");
   print_proxy( "\n");
-  print_proxy( "const CInterfaceStubVtbl %sStubVtbl = {\n", iface->name);
+  print_proxy( "const CInterfaceStubVtbl _%sStubVtbl =\n", iface->name);
+  print_proxy( "{\n");
   indent++;
-  print_proxy( "{&IID_%s,\n", iface->name);
-  print_proxy( " 0,\n");
-  print_proxy( " %d,\n", stubs+3);
-  print_proxy( " &%s_table[-3]},\n", iface->name);
-  print_proxy( "{CStdStubBuffer_METHODS}\n");
+  print_proxy( "{\n");
+  indent++;
+  print_proxy( "&IID_%s,\n", iface->name);
+  print_proxy( "0,\n");
+  print_proxy( "%d,\n", stubs+3);
+  print_proxy( "&%s_table[-3],\n", iface->name);
+  indent--;
+  print_proxy( "},\n", iface->name);
+  print_proxy( "{\n");
+  indent++;
+  print_proxy( "CStdStubBuffer_METHODS\n");
+  indent--;
+  print_proxy( "}\n");
   indent--;
   print_proxy( "};\n");
   print_proxy( "\n");
@@ -964,7 +981,7 @@ void write_proxies(ifref_t *ifaces)
   while (cur) {
     if(cur->iface->ref && cur->iface->funcs &&
        is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-      fprintf(proxy, "    (CInterfaceProxyVtbl*)&%sProxyVtbl,\n", cur->iface->name);
+      fprintf(proxy, "    (CInterfaceProxyVtbl*)&_%sProxyVtbl,\n", cur->iface->name);
     cur = PREV_LINK(cur);
   }
   fprintf(proxy, "    0\n");
@@ -977,14 +994,14 @@ void write_proxies(ifref_t *ifaces)
   while (cur) {
     if(cur->iface->ref && cur->iface->funcs &&
        is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-      fprintf(proxy, "    (CInterfaceStubVtbl*)&%sStubVtbl,\n", cur->iface->name);
+      fprintf(proxy, "    (CInterfaceStubVtbl*)&_%sStubVtbl,\n", cur->iface->name);
     cur = PREV_LINK(cur);
   }
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  fprintf(proxy, "const PCInterfaceName _%s_InterfaceNamesList[] =\n", file_id);
+  fprintf(proxy, "PCInterfaceName const _%s_InterfaceNamesList[] =\n", file_id);
   fprintf(proxy, "{\n");
   cur = lcur;
   while (cur) {
@@ -1006,7 +1023,8 @@ void write_proxies(ifref_t *ifaces)
   while (cur) {
     if(cur->iface->ref)
     {
-      fprintf(proxy, "    if (!_%s_CHECK_IID(%d)) {\n", file_id, c);
+      fprintf(proxy, "    if (!_%s_CHECK_IID(%d))\n", file_id, c);
+      fprintf(proxy, "    {\n");
       fprintf(proxy, "        *pIndex = %d;\n", c);
       fprintf(proxy, "        return 1;\n");
       fprintf(proxy, "    }\n");
