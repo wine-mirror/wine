@@ -2616,6 +2616,8 @@ typedef struct tagMESSAGE_RESOURCE_DATA {
 
 /* FIXME:  Orphan.  What does it point to? */
 typedef PVOID PACCESS_TOKEN;
+typedef PVOID PSECURITY_DESCRIPTOR;
+typedef PVOID PSID;
 
 /*
  * TOKEN_INFORMATION_CLASS
@@ -2693,7 +2695,7 @@ typedef struct _SID {
     BYTE SubAuthorityCount;
     SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
     DWORD SubAuthority[1];
-} SID,*PSID;
+} SID,*PISID;
 #endif /* !defined(SID_DEFINED) */
 
 #define	SID_REVISION			(1)	/* Current revision */
@@ -2825,7 +2827,7 @@ typedef struct {
     PSID Group;
     PACL Sacl;
     PACL Dacl;
-} SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
+} SECURITY_DESCRIPTOR, *PISECURITY_DESCRIPTOR;
 
 #define SECURITY_DESCRIPTOR_MIN_LENGTH   (sizeof(SECURITY_DESCRIPTOR))
 

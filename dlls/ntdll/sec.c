@@ -73,6 +73,7 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 	DWORD nSubAuthority6, DWORD nSubAuthority7,
 	PSID *pSid )
 {
+
 	TRACE("(%p, 0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p)\n",
 		pIdentifierAuthority,nSubAuthorityCount,
 		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
@@ -82,10 +83,10 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
                                        RtlLengthRequiredSid(nSubAuthorityCount))))
 	  return FALSE;
 
-	(*pSid)->Revision = SID_REVISION;
+	((SID*)*pSid)->Revision = SID_REVISION;
 
 	if (pIdentifierAuthority)
-	  memcpy(&(*pSid)->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
+	  memcpy(&((SID*)*pSid)->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
 	*RtlSubAuthorityCountSid(*pSid) = nSubAuthorityCount;
 
 	if (nSubAuthorityCount > 0)
@@ -145,7 +146,7 @@ BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2)
     if (*RtlSubAuthorityCountSid(pSid1) != *RtlSubAuthorityCountSid(pSid2))
         return FALSE;
 
-    if (memcmp(pSid1, pSid2, RtlLengthRequiredSid(pSid1->SubAuthorityCount - 1)) != 0)
+    if (memcmp(pSid1, pSid2, RtlLengthRequiredSid(((SID*)pSid1)->SubAuthorityCount - 1)) != 0)
         return FALSE;
 
     return TRUE;
@@ -224,13 +225,15 @@ BOOL WINAPI RtlInitializeSid(
 	BYTE nSubAuthorityCount)
 {
 	int i;
+	SID* pisid=pSid;
+
 	if (nSubAuthorityCount >= SID_MAX_SUB_AUTHORITIES)
 	  return FALSE;
 
-	pSid->Revision = SID_REVISION;
-	pSid->SubAuthorityCount = nSubAuthorityCount;
+	pisid->Revision = SID_REVISION;
+	pisid->SubAuthorityCount = nSubAuthorityCount;
 	if (pIdentifierAuthority)
-	  memcpy(&pSid->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
+	  memcpy(&pisid->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
 
 	for (i = 0; i < nSubAuthorityCount; i++)
 	  *RtlSubAuthoritySid(pSid, i) = 0;
@@ -252,7 +255,7 @@ BOOL WINAPI RtlInitializeSid(
  */
 LPDWORD WINAPI RtlSubAuthoritySid( PSID pSid, DWORD nSubAuthority )
 {
-	return &(pSid->SubAuthority[nSubAuthority]);
+    return &(((SID*)pSid)->SubAuthority[nSubAuthority]);
 }
 
 /**************************************************************************
@@ -268,7 +271,7 @@ LPDWORD WINAPI RtlSubAuthoritySid( PSID pSid, DWORD nSubAuthority )
  */
 PSID_IDENTIFIER_AUTHORITY WINAPI RtlIdentifierAuthoritySid( PSID pSid )
 {
-	return &(pSid->IdentifierAuthority);
+    return &(((SID*)pSid)->IdentifierAuthority);
 }
 
 /**************************************************************************
@@ -284,7 +287,7 @@ PSID_IDENTIFIER_AUTHORITY WINAPI RtlIdentifierAuthoritySid( PSID pSid )
  */
 LPBYTE WINAPI RtlSubAuthorityCountSid(PSID pSid)
 {
-	return &(pSid->SubAuthorityCount);
+    return &(((SID*)pSid)->SubAuthorityCount);
 }
 
 /**************************************************************************
@@ -296,10 +299,10 @@ DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID
 	    (nDestinationSidLength < RtlLengthSid(pSourceSid)))
           return FALSE;
 
-	if (nDestinationSidLength < (pSourceSid->SubAuthorityCount*4+8))
+	if (nDestinationSidLength < (((SID*)pSourceSid)->SubAuthorityCount*4+8))
 	  return FALSE;
 
-	memmove(pDestinationSid, pSourceSid, pSourceSid->SubAuthorityCount*4+8);
+	memmove(pDestinationSid, pSourceSid, ((SID*)pSourceSid)->SubAuthorityCount*4+8);
 	return TRUE;
 }
 /******************************************************************************
@@ -320,8 +323,8 @@ BOOLEAN WINAPI RtlValidSid( PSID pSid )
     __TRY
     {
         ret = TRUE;
-        if (!pSid || pSid->Revision != SID_REVISION ||
-            pSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
+        if (!pSid || ((SID*)pSid)->Revision != SID_REVISION ||
+            ((SID*)pSid)->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
         {
             ret = FALSE;
         }
@@ -360,7 +363,7 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 	if (rev!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	memset(lpsd,'\0',sizeof(*lpsd));
-	lpsd->Revision = SECURITY_DESCRIPTOR_REVISION;
+	((SECURITY_DESCRIPTOR*)lpsd)->Revision = SECURITY_DESCRIPTOR_REVISION;
 	return STATUS_SUCCESS;
 }
 /**************************************************************************
@@ -380,7 +383,7 @@ NTSTATUS WINAPI RtlValidSecurityDescriptor(
 {
 	if ( ! SecurityDescriptor )
 		return STATUS_INVALID_SECURITY_DESCR;
-	if ( SecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION )
+	if ( ((SECURITY_DESCRIPTOR*)SecurityDescriptor)->Revision != SECURITY_DESCRIPTOR_REVISION )
 		return STATUS_UNKNOWN_REVISION;
 
 	return STATUS_SUCCESS;
@@ -390,28 +393,29 @@ NTSTATUS WINAPI RtlValidSecurityDescriptor(
  *  RtlLengthSecurityDescriptor			[NTDLL.@]
  */
 ULONG WINAPI RtlLengthSecurityDescriptor(
-	PSECURITY_DESCRIPTOR SecurityDescriptor)
+	PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
 	ULONG offset = 0;
 	ULONG Size = SECURITY_DESCRIPTOR_MIN_LENGTH;
 
-	if ( SecurityDescriptor == NULL )
+	if ( lpsd == NULL )
 		return 0;
 
-	if (SecurityDescriptor->Control & SE_SELF_RELATIVE)
-		offset = (ULONG) SecurityDescriptor;
+	if ( lpsd->Control & SE_SELF_RELATIVE)
+		offset = (ULONG) lpsd;
 
-	if ( SecurityDescriptor->Owner != NULL )
-		Size += RtlLengthSid((PSID)((LPBYTE)SecurityDescriptor->Owner + offset));
+	if ( lpsd->Owner != NULL )
+		Size += RtlLengthSid((PSID)((LPBYTE)lpsd->Owner + offset));
 
-	if ( SecurityDescriptor->Group != NULL )
-		Size += RtlLengthSid((PSID)((LPBYTE)SecurityDescriptor->Group + offset));
+	if ( lpsd->Group != NULL )
+		Size += RtlLengthSid((PSID)((LPBYTE)lpsd->Group + offset));
 
-	if ( SecurityDescriptor->Sacl != NULL )
-		Size += ((PACL)((LPBYTE)SecurityDescriptor->Sacl + offset))->AclSize;
+	if ( lpsd->Sacl != NULL )
+		Size += ((PACL)((LPBYTE)lpsd->Sacl + offset))->AclSize;
 
-	if ( SecurityDescriptor->Dacl != NULL )
-		Size += ((PACL)((LPBYTE)SecurityDescriptor->Dacl + offset))->AclSize;
+	if ( lpsd->Dacl != NULL )
+		Size += ((PACL)((LPBYTE)lpsd->Dacl + offset))->AclSize;
 
 	return Size;
 }
@@ -426,23 +430,25 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 	OUT PACL *pDacl,
 	OUT PBOOLEAN lpbDaclDefaulted)
 {
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
 	TRACE("(%p,%p,%p,%p)\n",
 	pSecurityDescriptor, lpbDaclPresent, *pDacl, lpbDaclDefaulted);
 
-	if (pSecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION)
+	if (lpsd->Revision != SECURITY_DESCRIPTOR_REVISION)
 	  return STATUS_UNKNOWN_REVISION ;
 
-	if ( (*lpbDaclPresent = (SE_DACL_PRESENT & pSecurityDescriptor->Control) ? 1 : 0) )
+	if ( (*lpbDaclPresent = (SE_DACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
-	  if ( SE_SELF_RELATIVE & pSecurityDescriptor->Control)
-	  { *pDacl = (PACL) ((LPBYTE)pSecurityDescriptor + (DWORD)pSecurityDescriptor->Dacl);
+	  if ( SE_SELF_RELATIVE & lpsd->Control)
+	  { *pDacl = (PACL) ((LPBYTE)lpsd + (DWORD)lpsd->Dacl);
 	  }
 	  else
-	  { *pDacl = pSecurityDescriptor->Dacl;
+	  { *pDacl = lpsd->Dacl;
 	  }
 	}
 
-	*lpbDaclDefaulted = (( SE_DACL_DEFAULTED & pSecurityDescriptor->Control ) ? 1 : 0);
+	*lpbDaclDefaulted = (( SE_DACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
 
 	return STATUS_SUCCESS;
 }
@@ -451,11 +457,13 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
  *  RtlSetDaclSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetDaclSecurityDescriptor (
-	PSECURITY_DESCRIPTOR lpsd,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	BOOLEAN daclpresent,
 	PACL dacl,
 	BOOLEAN dacldefaulted )
 {
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -487,23 +495,25 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 	OUT PACL *pSacl,
 	OUT PBOOLEAN lpbSaclDefaulted)
 {
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
 	TRACE("(%p,%p,%p,%p)\n",
 	pSecurityDescriptor, lpbSaclPresent, *pSacl, lpbSaclDefaulted);
 
-	if (pSecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION)
+	if (lpsd->Revision != SECURITY_DESCRIPTOR_REVISION)
 	  return STATUS_UNKNOWN_REVISION ;
 
-	if ( (*lpbSaclPresent = (SE_SACL_PRESENT & pSecurityDescriptor->Control) ? 1 : 0) )
+	if ( (*lpbSaclPresent = (SE_SACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
-	  if ( SE_SELF_RELATIVE & pSecurityDescriptor->Control)
-	  { *pSacl = (PACL) ((LPBYTE)pSecurityDescriptor + (DWORD)pSecurityDescriptor->Sacl);
+	  if ( SE_SELF_RELATIVE & lpsd->Control)
+	  { *pSacl = (PACL) ((LPBYTE)lpsd + (DWORD)lpsd->Sacl);
 	  }
 	  else
-	  { *pSacl = pSecurityDescriptor->Sacl;
+	  { *pSacl = lpsd->Sacl;
 	  }
 	}
 
-	*lpbSaclDefaulted = (( SE_SACL_DEFAULTED & pSecurityDescriptor->Control ) ? 1 : 0);
+	*lpbSaclDefaulted = (( SE_SACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
 
 	return STATUS_SUCCESS;
 }
@@ -512,11 +522,13 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
  * RtlSetSaclSecurityDescriptor			[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetSaclSecurityDescriptor (
-	PSECURITY_DESCRIPTOR lpsd,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	BOOLEAN saclpresent,
 	PACL sacl,
 	BOOLEAN sacldefaulted)
 {
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -538,22 +550,24 @@ NTSTATUS WINAPI RtlSetSaclSecurityDescriptor (
  * RtlGetOwnerSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlGetOwnerSecurityDescriptor(
-	PSECURITY_DESCRIPTOR SecurityDescriptor,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	PSID *Owner,
 	PBOOLEAN OwnerDefaulted)
 {
-	if ( !SecurityDescriptor  || !Owner || !OwnerDefaulted )
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
+	if ( !lpsd  || !Owner || !OwnerDefaulted )
 		return STATUS_INVALID_PARAMETER;
 
-	if (SecurityDescriptor->Owner != NULL)
+	if (lpsd->Owner != NULL)
 	{
-            if (SecurityDescriptor->Control & SE_SELF_RELATIVE)
-                *Owner = (PSID)((LPBYTE)SecurityDescriptor +
-                                (ULONG)SecurityDescriptor->Owner);
+            if (lpsd->Control & SE_SELF_RELATIVE)
+                *Owner = (PSID)((LPBYTE)lpsd +
+                                (ULONG)lpsd->Owner);
             else
-                *Owner = SecurityDescriptor->Owner;
+                *Owner = lpsd->Owner;
 
-            if ( SecurityDescriptor->Control & SE_OWNER_DEFAULTED )
+            if ( lpsd->Control & SE_OWNER_DEFAULTED )
                 *OwnerDefaulted = TRUE;
             else
                 *OwnerDefaulted = FALSE;
@@ -568,10 +582,12 @@ NTSTATUS WINAPI RtlGetOwnerSecurityDescriptor(
  *                 RtlSetOwnerSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetOwnerSecurityDescriptor(
-	PSECURITY_DESCRIPTOR lpsd,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	PSID owner,
 	BOOLEAN ownerdefaulted)
 {
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -589,10 +605,12 @@ NTSTATUS WINAPI RtlSetOwnerSecurityDescriptor(
  *                 RtlSetGroupSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlSetGroupSecurityDescriptor (
-	PSECURITY_DESCRIPTOR lpsd,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	PSID group,
 	BOOLEAN groupdefaulted)
 {
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -609,22 +627,24 @@ NTSTATUS WINAPI RtlSetGroupSecurityDescriptor (
  *                 RtlGetGroupSecurityDescriptor		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
-	PSECURITY_DESCRIPTOR SecurityDescriptor,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,
 	PSID *Group,
 	PBOOLEAN GroupDefaulted)
 {
-	if ( !SecurityDescriptor || !Group || !GroupDefaulted )
+	SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
+	if ( !lpsd || !Group || !GroupDefaulted )
 		return STATUS_INVALID_PARAMETER;
 
-	if (SecurityDescriptor->Group != NULL)
+	if (lpsd->Group != NULL)
 	{
-            if (SecurityDescriptor->Control & SE_SELF_RELATIVE)
-                *Group = (PSID)((LPBYTE)SecurityDescriptor +
-                                (ULONG)SecurityDescriptor->Group);
+            if (lpsd->Control & SE_SELF_RELATIVE)
+                *Group = (PSID)((LPBYTE)lpsd +
+                                (ULONG)lpsd->Group);
             else
-                *Group = SecurityDescriptor->Group;
+                *Group = lpsd->Group;
 
-            if ( SecurityDescriptor->Control & SE_GROUP_DEFAULTED )
+            if ( lpsd->Control & SE_GROUP_DEFAULTED )
                 *GroupDefaulted = TRUE;
             else
                 *GroupDefaulted = FALSE;
@@ -645,8 +665,8 @@ NTSTATUS WINAPI RtlMakeSelfRelativeSD(
 {
     ULONG offsetRel;
     ULONG length;
-    PSECURITY_DESCRIPTOR pAbs = pAbsoluteSecurityDescriptor;
-    PSECURITY_DESCRIPTOR pRel = pSelfRelativeSecurityDescriptor;
+    SECURITY_DESCRIPTOR* pAbs = pAbsoluteSecurityDescriptor;
+    SECURITY_DESCRIPTOR* pRel = pSelfRelativeSecurityDescriptor;
 
     TRACE(" %p %p %p(%ld)\n", pAbs, pRel, lpdwBufferLength,
         lpdwBufferLength ? *lpdwBufferLength: -1);
@@ -729,8 +749,8 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
 	OUT LPDWORD lpdwPrimaryGroupSize)
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PSECURITY_DESCRIPTOR pAbs = pAbsoluteSecurityDescriptor;
-    PSECURITY_DESCRIPTOR pRel = pSelfRelativeSecurityDescriptor;
+    SECURITY_DESCRIPTOR* pAbs = pAbsoluteSecurityDescriptor;
+    SECURITY_DESCRIPTOR* pRel = pSelfRelativeSecurityDescriptor;
 
     if (!pRel ||
         !lpdwAbsoluteSecurityDescriptorSize ||

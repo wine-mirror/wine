@@ -1280,11 +1280,25 @@ static void test_pack_PIMAGE_VXD_HEADER(void)
     TEST_TYPE_POINTER(PIMAGE_VXD_HEADER, 196, 2);
 }
 
+static void test_pack_PISECURITY_DESCRIPTOR(void)
+{
+    /* PISECURITY_DESCRIPTOR */
+    TEST_TYPE(PISECURITY_DESCRIPTOR, 4, 4);
+    TEST_TYPE_POINTER(PISECURITY_DESCRIPTOR, 20, 4);
+}
+
 static void test_pack_PISECURITY_DESCRIPTOR_RELATIVE(void)
 {
     /* PISECURITY_DESCRIPTOR_RELATIVE */
     TEST_TYPE(PISECURITY_DESCRIPTOR_RELATIVE, 4, 4);
     TEST_TYPE_POINTER(PISECURITY_DESCRIPTOR_RELATIVE, 20, 4);
+}
+
+static void test_pack_PISID(void)
+{
+    /* PISID */
+    TEST_TYPE(PISID, 4, 4);
+    TEST_TYPE_POINTER(PISID, 12, 4);
 }
 
 static void test_pack_PLARGE_INTEGER(void)
@@ -1411,14 +1425,12 @@ static void test_pack_PSECURITY_DESCRIPTOR(void)
 {
     /* PSECURITY_DESCRIPTOR */
     TEST_TYPE(PSECURITY_DESCRIPTOR, 4, 4);
-    TEST_TYPE_POINTER(PSECURITY_DESCRIPTOR, 20, 4);
 }
 
 static void test_pack_PSID(void)
 {
     /* PSID */
     TEST_TYPE(PSID, 4, 4);
-    TEST_TYPE_POINTER(PSID, 12, 4);
 }
 
 static void test_pack_PSID_IDENTIFIER_AUTHORITY(void)
@@ -2217,7 +2229,9 @@ static void test_pack(void)
     test_pack_PIMAGE_TLS_CALLBACK();
     test_pack_PIMAGE_TLS_DIRECTORY();
     test_pack_PIMAGE_VXD_HEADER();
+    test_pack_PISECURITY_DESCRIPTOR();
     test_pack_PISECURITY_DESCRIPTOR_RELATIVE();
+    test_pack_PISID();
     test_pack_PLARGE_INTEGER();
     test_pack_PLIST_ENTRY();
     test_pack_PLUID();

@@ -179,7 +179,7 @@ NtQuerySecurityObject(
 	/* owner: administrator S-1-5-20-220*/
 	if (OWNER_SECURITY_INFORMATION & RequestedInformation)
 	{
-	  PSID psid = (PSID)&(Buffer[BufferIndex]);
+	  SID* psid = (SID*)&(Buffer[BufferIndex]);
 
 	  psd->Owner = BufferIndex;
 	  BufferIndex += RtlLengthRequiredSid(2);
@@ -194,7 +194,7 @@ NtQuerySecurityObject(
 	/* group: built in domain S-1-5-12 */
 	if (GROUP_SECURITY_INFORMATION & RequestedInformation)
 	{
-	  PSID psid = (PSID) &(Buffer[BufferIndex]);
+	  SID* psid = (SID*) &(Buffer[BufferIndex]);
 
 	  psd->Group = BufferIndex;
 	  BufferIndex += RtlLengthRequiredSid(1);
@@ -211,7 +211,7 @@ NtQuerySecurityObject(
 	  /* acl header */
 	  PACL pacl = (PACL)&(Buffer[BufferIndex]);
 	  PACCESS_ALLOWED_ACE pace;
-	  PSID psid;
+	  SID* psid;
 
 	  psd->Dacl = BufferIndex;
 
@@ -232,7 +232,7 @@ NtQuerySecurityObject(
 	  pace->SidStart = BufferIndex;
 
 	  /* SID S-1-5-12 (System) */
-	  psid = (PSID)&(Buffer[BufferIndex]);
+	  psid = (SID*)&(Buffer[BufferIndex]);
 
 	  BufferIndex += RtlLengthRequiredSid(1);
 
@@ -252,7 +252,7 @@ NtQuerySecurityObject(
 	  pace->SidStart = BufferIndex;
 
 	  /* S-1-5-12 (Administrators) */
-	  psid = (PSID)&(Buffer[BufferIndex]);
+	  psid = (SID*)&(Buffer[BufferIndex]);
 
 	  BufferIndex += RtlLengthRequiredSid(2);
 
@@ -273,7 +273,7 @@ NtQuerySecurityObject(
 	  pace->SidStart = BufferIndex;
 
 	  /* SID S-1-1-0 (Everyone) */
-	  psid = (PSID)&(Buffer[BufferIndex]);
+	  psid = (SID*)&(Buffer[BufferIndex]);
 
 	  BufferIndex += RtlLengthRequiredSid(1);
 

@@ -48,7 +48,7 @@ static BYTE ParseAceStringType(LPCWSTR* StringAcl);
 static DWORD ParseAceStringRights(LPCWSTR* StringAcl);
 static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     LPCWSTR StringSecurityDescriptor,
-    PSECURITY_DESCRIPTOR SecurityDescriptor, 
+    SECURITY_DESCRIPTOR* SecurityDescriptor,
     LPDWORD cBytes);
 static DWORD ParseAclStringFlags(LPCWSTR* StringAcl);
 
@@ -552,7 +552,7 @@ GetLengthSid (PSID pSid)
  *   revision []
  */
 BOOL WINAPI
-InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr, DWORD revision )
+InitializeSecurityDescriptor( PSECURITY_DESCRIPTOR pDescr, DWORD revision )
 {
 	CallWin32ToNt (RtlCreateSecurityDescriptor(pDescr, revision ));
 }
@@ -584,7 +584,7 @@ BOOL WINAPI MakeAbsoluteSD (
 /******************************************************************************
  * GetSecurityDescriptorLength [ADVAPI32.@]
  */
-DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
+DWORD WINAPI GetSecurityDescriptorLength( PSECURITY_DESCRIPTOR pDescr)
 {
 	return (RtlLengthSecurityDescriptor(pDescr));
 }
@@ -597,7 +597,7 @@ DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
  *   lpbOwnerDefaulted []
  */
 BOOL WINAPI
-GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, PSID *pOwner,
+GetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pDescr, PSID *pOwner,
 			    LPBOOL lpbOwnerDefaulted )
 {
 	CallWin32ToNt (RtlGetOwnerSecurityDescriptor( pDescr, pOwner, (PBOOLEAN)lpbOwnerDefaulted ));
@@ -1887,7 +1887,7 @@ lerr:
  */
 static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     LPCWSTR StringSecurityDescriptor,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
+    SECURITY_DESCRIPTOR* SecurityDescriptor,
     LPDWORD cBytes)
 {
     BOOL bret = FALSE;
@@ -2031,7 +2031,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
         PULONG SecurityDescriptorSize)
 {
     DWORD cBytes;
-    PSECURITY_DESCRIPTOR psd;
+    SECURITY_DESCRIPTOR* psd;
     BOOL bret = FALSE;
 
     TRACE("%s\n", debugstr_w(StringSecurityDescriptor));
@@ -2052,7 +2052,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
         NULL, &cBytes))
 	goto lend;
 
-    psd = *SecurityDescriptor = (PSECURITY_DESCRIPTOR) LocalAlloc(
+    psd = *SecurityDescriptor = (SECURITY_DESCRIPTOR*) LocalAlloc(
         GMEM_ZEROINIT, cBytes);
 
     psd->Revision = SID_REVISION;
@@ -2114,26 +2114,27 @@ BOOL WINAPI ConvertSidToStringSidW( PSID pSid, LPWSTR *pstr )
     WCHAR fmt[] = { 
         'S','-','%','u','-','%','2','X','%','2','X','%','X','%','X','%','X','%','X',0 };
     WCHAR subauthfmt[] = { '-','%','u',0 };
+    SID* pisid=pSid;
 
     TRACE("%p %p\n", pSid, pstr );
 
     if( !IsValidSid( pSid ) )
         return FALSE;
 
-    if (pSid->Revision != SDDL_REVISION)
+    if (pisid->Revision != SDDL_REVISION)
         return FALSE;
 
-    sz = 14 + pSid->SubAuthorityCount * 11;
+    sz = 14 + pisid->SubAuthorityCount * 11;
     str = LocalAlloc( 0, sz*sizeof(WCHAR) );
-    sprintfW( str, fmt, pSid->Revision, 
-         pSid->IdentifierAuthority.Value[2],
-         pSid->IdentifierAuthority.Value[3],
-         pSid->IdentifierAuthority.Value[0]&0x0f,
-         pSid->IdentifierAuthority.Value[4]&0x0f,
-         pSid->IdentifierAuthority.Value[1]&0x0f,
-         pSid->IdentifierAuthority.Value[5]&0x0f);
-    for( i=0; i<pSid->SubAuthorityCount; i++ )
-        sprintfW( str + strlenW(str), subauthfmt, pSid->SubAuthority[i] );
+    sprintfW( str, fmt, pisid->Revision,
+         pisid->IdentifierAuthority.Value[2],
+         pisid->IdentifierAuthority.Value[3],
+         pisid->IdentifierAuthority.Value[0]&0x0f,
+         pisid->IdentifierAuthority.Value[4]&0x0f,
+         pisid->IdentifierAuthority.Value[1]&0x0f,
+         pisid->IdentifierAuthority.Value[5]&0x0f);
+    for( i=0; i<pisid->SubAuthorityCount; i++ )
+        sprintfW( str + strlenW(str), subauthfmt, pisid->SubAuthority[i] );
     *pstr = str;
 
     return TRUE;
@@ -2190,6 +2191,7 @@ static DWORD ComputeStringSidSize(LPCWSTR StringSid)
 static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
 {
     BOOL bret = FALSE;
+    SID* pisid=pSid;
 
     if (!StringSid)
     {
@@ -2198,7 +2200,7 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
     }
 
     *cBytes = ComputeStringSidSize(StringSid);
-    if (!pSid) /* Simply compute the size */
+    if (!pisid) /* Simply compute the size */
         return TRUE;
 
     if (*StringSid != 'S' || *StringSid != '-') /* S-R-I-S-S */
@@ -2207,19 +2209,19 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
 	int csubauth = ((*cBytes - sizeof(SID)) / sizeof(DWORD)) + 1;
 
         StringSid += 2; /* Advance to Revision */
-        pSid->Revision = atoiW(StringSid);
+        pisid->Revision = atoiW(StringSid);
 
-        if (pSid->Revision != SDDL_REVISION)
+        if (pisid->Revision != SDDL_REVISION)
            goto lend; /* ERROR_INVALID_SID */
 
-	pSid->SubAuthorityCount = csubauth;
+	pisid->SubAuthorityCount = csubauth;
 
 	while (*StringSid && *StringSid != '-')
             StringSid++; /* Advance to identifier authority */
 
-        pSid->IdentifierAuthority.Value[5] = atoiW(StringSid);
+        pisid->IdentifierAuthority.Value[5] = atoiW(StringSid);
 
-	if (pSid->IdentifierAuthority.Value[5] > 5)
+	if (pisid->IdentifierAuthority.Value[5] > 5)
             goto lend; /* ERROR_INVALID_SID */
     
         while (*StringSid)
@@ -2227,24 +2229,24 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
 	    while (*StringSid && *StringSid != '-')
                 StringSid++;
 
-            pSid->SubAuthority[i++] = atoiW(StringSid);
+            pisid->SubAuthority[i++] = atoiW(StringSid);
         }
 
-	if (i != pSid->SubAuthorityCount)
+	if (i != pisid->SubAuthorityCount)
             goto lend; /* ERROR_INVALID_SID */
 
         bret = TRUE;
     }
     else /* String constant format  - Only available in winxp and above */
     {
-        pSid->Revision = SDDL_REVISION;
-	pSid->SubAuthorityCount = 1;
+        pisid->Revision = SDDL_REVISION;
+	pisid->SubAuthorityCount = 1;
 
 	FIXME("String constant not supported: %s\n", debugstr_wn(StringSid, 2));
 
 	/* TODO: Lookup string of well-known SIDs in table */
-	pSid->IdentifierAuthority.Value[5] = 0;
-	pSid->SubAuthority[0] = 0;
+	pisid->IdentifierAuthority.Value[5] = 0;
+	pisid->SubAuthority[0] = 0;
 
         bret = TRUE;
     }
