@@ -38,10 +38,10 @@
 #include "winreg.h"
 
 #include "wine/winbase16.h"
-#include "file.h"
-#include "heap.h"
-#include "options.h"
 #include "wine/server.h"
+#include "wine/unicode.h"
+#include "file.h"
+#include "options.h"
 
 #include "debugtools.h"
 
@@ -1600,42 +1600,6 @@ LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 {
     FIXME("(%x,%s): stub\n",hkey, debugstr_a(lpSubKey));
     return ERROR_SUCCESS;
-}
-
-
-/******************************************************************************
- * RegRestoreKeyW [ADVAPI32.@]
- *
- * PARAMS
- *    hkey    [I] Handle of key where restore begins
- *    lpFile  [I] Address of filename containing saved tree
- *    dwFlags [I] Optional flags
- */
-LONG WINAPI RegRestoreKeyW( HKEY hkey, LPCWSTR lpFile, DWORD dwFlags )
-{
-    TRACE("(%x,%s,%ld)\n",hkey,debugstr_w(lpFile),dwFlags);
-
-    /* It seems to do this check before the hkey check */
-    if (!lpFile || !*lpFile)
-        return ERROR_INVALID_PARAMETER;
-
-    FIXME("(%x,%s,%ld): stub\n",hkey,debugstr_w(lpFile),dwFlags);
-
-    /* Check for file existence */
-
-    return ERROR_SUCCESS;
-}
-
-
-/******************************************************************************
- * RegRestoreKeyA [ADVAPI32.@]
- */
-LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
-{
-    LPWSTR lpFileW = HEAP_strdupAtoW( GetProcessHeap(), 0, lpFile );
-    LONG ret = RegRestoreKeyW( hkey, lpFileW, dwFlags );
-    HeapFree( GetProcessHeap(), 0, lpFileW );
-    return ret;
 }
 
 

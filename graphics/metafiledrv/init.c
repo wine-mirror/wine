@@ -7,7 +7,6 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "gdi.h"
-#include "heap.h"
 #include "metafile.h"
 #include "metafiledrv.h"
 #include "debugtools.h"
@@ -241,9 +240,12 @@ HDC WINAPI CreateMetaFileA(
 HDC WINAPI CreateMetaFileW(LPCWSTR filename)
 {
     LPSTR filenameA;
+    DWORD len;
     HDC hReturnDC;
 
-    filenameA = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
+    len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
+    filenameA = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
 
     hReturnDC = CreateMetaFileA(filenameA);
 

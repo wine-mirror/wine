@@ -11,8 +11,6 @@
 #include "winnls.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);
@@ -99,15 +97,20 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
  */
 HACCEL WINAPI LoadAcceleratorsA(HINSTANCE instance,LPCSTR lpTableName)
 {
-	LPWSTR	 uni;
-	HACCEL result;
-	if (HIWORD(lpTableName))
-		uni = HEAP_strdupAtoW( GetProcessHeap(), 0, lpTableName );
-	else
-		uni = (LPWSTR)lpTableName;
-	result = LoadAcceleratorsW(instance,uni);
-	if (HIWORD(uni)) HeapFree( GetProcessHeap(), 0, uni);
-	return result;
+    INT len;
+    LPWSTR uni;
+    HACCEL result = 0;
+
+    if (!HIWORD(lpTableName)) return LoadAcceleratorsW( instance, (LPCWSTR)lpTableName );
+
+    len = MultiByteToWideChar( CP_ACP, 0, lpTableName, -1, NULL, 0 );
+    if ((uni = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    {
+        MultiByteToWideChar( CP_ACP, 0, lpTableName, -1, uni, len );
+        result = LoadAcceleratorsW(instance,uni);
+        HeapFree( GetProcessHeap(), 0, uni);
+    }
+    return result;
 }
 
 /**********************************************************************

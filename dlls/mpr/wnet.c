@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 #include "winbase.h"
+#include "winnls.h"
 #include "winnetwk.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mpr);
@@ -369,9 +369,12 @@ DWORD WINAPI WNetGetConnectionW( LPCWSTR lpLocalName,
                                  LPWSTR lpRemoteName, LPDWORD lpBufferSize )
 {
     CHAR  buf[200];
-    DWORD x = sizeof(buf);
-    LPSTR lnA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpLocalName );
-    DWORD ret = WNetGetConnectionA( lnA, buf, &x );
+    DWORD ret, x = sizeof(buf);
+    INT len = WideCharToMultiByte( CP_ACP, 0, lpLocalName, -1, NULL, 0, NULL, NULL );
+    LPSTR lnA = HeapAlloc( GetProcessHeap(), 0, len );
+
+    WideCharToMultiByte( CP_ACP, 0, lpLocalName, -1, lnA, len, NULL, NULL );
+    ret = WNetGetConnectionA( lnA, buf, &x );
     HeapFree( GetProcessHeap(), 0, lnA );
     if (ret == WN_SUCCESS)
     {

@@ -12,7 +12,6 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "win.h"
-#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
 
@@ -144,11 +143,20 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 /**********************************************************************
  *		WinHelpW (USER32.@)
  */
-BOOL WINAPI WinHelpW( HWND hWnd, LPCWSTR helpFile, UINT command,
-                          DWORD dwData )
+BOOL WINAPI WinHelpW( HWND hWnd, LPCWSTR helpFile, UINT command, DWORD dwData )
 {
-    LPSTR file = HEAP_strdupWtoA( GetProcessHeap(), 0, helpFile );
-    BOOL ret = WinHelpA( hWnd, file, command, dwData );
-    HeapFree( GetProcessHeap(), 0, file );
+    INT len;
+    LPSTR file;
+    BOOL ret = FALSE;
+
+    if (!helpFile) return WinHelpA( hWnd, NULL, command, dwData );
+
+    len = WideCharToMultiByte( CP_ACP, 0, helpFile, -1, NULL, 0, NULL, NULL );
+    if ((file = HeapAlloc( GetProcessHeap(), 0, len )))
+    {
+        WideCharToMultiByte( CP_ACP, 0, helpFile, -1, file, len, NULL, NULL );
+        ret = WinHelpA( hWnd, file, command, dwData );
+        HeapFree( GetProcessHeap(), 0, file );
+    }
     return ret;
 }

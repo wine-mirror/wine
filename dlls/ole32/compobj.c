@@ -24,7 +24,7 @@
 #include "winreg.h"
 #include "wownt32.h"
 #include "wtypes.h"
-
+#include "wine/unicode.h"
 #include "wine/obj_base.h"
 #include "wine/obj_clientserver.h"
 #include "wine/obj_misc.h"
@@ -33,7 +33,6 @@
 #include "wine/winbase16.h"
 #include "compobj_private.h"
 #include "ifs.h"
-#include "heap.h"
 
 #include "debugtools.h"
 
@@ -538,12 +537,14 @@ HRESULT WINAPI CoCreateGuid(
  */
 HRESULT WINAPI CLSIDFromString(
 	LPCOLESTR idstr,	/* [in] string representation of GUID */
-	CLSID *id		/* [out] GUID represented by above string */
-) {
-    LPOLESTR16      xid = HEAP_strdupWtoA(GetProcessHeap(),0,idstr);
-    HRESULT       ret = CLSIDFromString16(xid,id);
+	CLSID *id )		/* [out] GUID represented by above string */
+{
+    char xid[40];
+    HRESULT ret;
 
-    HeapFree(GetProcessHeap(),0,xid);
+    if (!WideCharToMultiByte( CP_ACP, 0, idstr, -1, xid, sizeof(xid), NULL, NULL ))
+        return CO_E_CLASSSTRING;
+    ret = CLSIDFromString16(xid,id);
     if(ret != S_OK) { /* It appears a ProgID is also valid */
         ret = CLSIDFromProgID(idstr, id);
     }
@@ -774,13 +775,30 @@ HRESULT WINAPI CLSIDFromProgID16(
  */
 HRESULT WINAPI CLSIDFromProgID(
 	LPCOLESTR progid,	/* [in] program id as found in registry */
-	LPCLSID riid		/* [out] associated CLSID */
-) {
-	LPOLESTR16 pid = HEAP_strdupWtoA(GetProcessHeap(),0,progid);
-	HRESULT       ret = CLSIDFromProgID16(pid,riid);
+	LPCLSID riid )		/* [out] associated CLSID */
+{
+    static const WCHAR clsidW[] = { '\\','C','L','S','I','D',0 };
+    char buf2[80];
+    DWORD buf2len = sizeof(buf2);
+    HKEY xhkey;
 
-	HeapFree(GetProcessHeap(),0,pid);
-	return ret;
+    WCHAR *buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
+    strcpyW( buf, progid );
+    strcatW( buf, clsidW );
+    if (RegOpenKeyW(HKEY_CLASSES_ROOT,buf,&xhkey))
+    {
+        HeapFree(GetProcessHeap(),0,buf);
+        return CO_E_CLASSSTRING;
+    }
+    HeapFree(GetProcessHeap(),0,buf);
+
+    if (RegQueryValueA(xhkey,NULL,buf2,&buf2len))
+    {
+        RegCloseKey(xhkey);
+        return CO_E_CLASSSTRING;
+    }
+    RegCloseKey(xhkey);
+    return CLSIDFromString16(buf2,riid);
 }
 
 

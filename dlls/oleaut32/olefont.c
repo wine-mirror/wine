@@ -20,7 +20,6 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "debugtools.h"
-#include "heap.h"
 #include "connpt.h" /* for CreateConnectionPoint */
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -1335,6 +1334,7 @@ static HRESULT WINAPI OLEFontImpl_Load(
   BYTE  bVersion;
   BYTE  bAttributes;
   BYTE  bStringSize;
+  INT len;
 
   _ICOM_THIS_From_IPersistStream(OLEFontImpl, iface);
   
@@ -1393,7 +1393,6 @@ static HRESULT WINAPI OLEFontImpl_Load(
   if (cbRead!=1)
     return E_FAIL;
 
-  memset(readBuffer, 0, 0x100);
   IStream_Read(pLoadStream, readBuffer, bStringSize, &cbRead);
 
   if (cbRead!=bStringSize)
@@ -1402,9 +1401,10 @@ static HRESULT WINAPI OLEFontImpl_Load(
   if (this->description.lpstrName!=0)
     HeapFree(GetProcessHeap(), 0, this->description.lpstrName);
 
-  this->description.lpstrName = HEAP_strdupAtoW(GetProcessHeap(), 
-						    HEAP_ZERO_MEMORY,
-						    readBuffer);
+  len = MultiByteToWideChar( CP_ACP, 0, readBuffer, bStringSize, NULL, 0 );
+  this->description.lpstrName = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof(WCHAR) );
+  MultiByteToWideChar( CP_ACP, 0, readBuffer, bStringSize, this->description.lpstrName, len );
+  this->description.lpstrName[len] = 0;
 
   return S_OK;
 }
@@ -1482,7 +1482,8 @@ static HRESULT WINAPI OLEFontImpl_Save(
    * FontName
    */
   if (this->description.lpstrName!=0)
-    bStringSize = lstrlenW(this->description.lpstrName);
+    bStringSize = WideCharToMultiByte( CP_ACP, 0, this->description.lpstrName,
+                                       strlenW(this->description.lpstrName), NULL, 0, NULL, NULL );
   else
     bStringSize = 0;
 
@@ -1493,15 +1494,12 @@ static HRESULT WINAPI OLEFontImpl_Save(
 
   if (bStringSize!=0)
   {
-    writeBuffer = HEAP_strdupWtoA(GetProcessHeap(), 
-				  HEAP_ZERO_MEMORY,
-				  this->description.lpstrName);
-
-    if (writeBuffer==0)
-      return E_OUTOFMEMORY;
+      if (!(writeBuffer = HeapAlloc( GetProcessHeap(), 0, bStringSize ))) return E_OUTOFMEMORY;
+      WideCharToMultiByte( CP_ACP, 0, this->description.lpstrName,
+                           strlenW(this->description.lpstrName),
+                           writeBuffer, bStringSize, NULL, NULL );
 
     IStream_Write(pOutStream, writeBuffer, bStringSize, &cbWritten);
-    
     HeapFree(GetProcessHeap(), 0, writeBuffer);
 
     if (cbWritten!=bStringSize)

@@ -16,7 +16,6 @@
 #include <time.h>
 #include "winbase.h"
 #include "winerror.h"
-#include "heap.h"
 #include "wine/server.h"
 #include "debugtools.h"
 
@@ -49,10 +48,17 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
                                                 BOOL bWatchSubtree,
                                                 DWORD dwNotifyFilter) 
 {
-    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpPathName );
-    HANDLE ret = FindFirstChangeNotificationA( nameA, bWatchSubtree, 
-                                                          dwNotifyFilter );
-    if (nameA) HeapFree( GetProcessHeap(), 0, nameA );
+    HANDLE ret = INVALID_HANDLE_VALUE;
+
+    FIXME("this is not supported yet (non-trivial).\n");
+
+    SERVER_START_REQ( create_change_notification )
+    {
+        req->subtree = bWatchSubtree;
+        req->filter  = dwNotifyFilter;
+        if (!wine_server_call_err( req )) ret = reply->handle;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 

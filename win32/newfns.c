@@ -12,8 +12,9 @@ at a later date. */
 #include <sys/time.h>
 #include <unistd.h>
 #include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "winerror.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);
@@ -268,9 +269,13 @@ DWORD WINAPI GetCompressedFileSizeW(
  */
 BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
 {
-    LPWSTR lpComputerNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpComputerName);
-    BOOL ret = SetComputerNameW(lpComputerNameW);
-    HeapFree(GetProcessHeap(),0,lpComputerNameW);
+    BOOL ret;
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, lpComputerName, -1, NULL, 0 );
+    LPWSTR nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+
+    MultiByteToWideChar( CP_ACP, 0, lpComputerName, -1, nameW, len );
+    ret = SetComputerNameW( nameW );
+    HeapFree( GetProcessHeap(), 0, nameW );
     return ret;
 }
 

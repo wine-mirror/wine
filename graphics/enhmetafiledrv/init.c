@@ -9,7 +9,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "gdi.h"
-#include "heap.h"
 #include "enhmetafiledrv.h"
 #include "debugtools.h"
 
@@ -212,9 +211,12 @@ HDC WINAPI CreateEnhMetaFileA(
     HDC hReturnDC;
     DWORD len1, len2, total;
 
-    if(filename) 
-        filenameW = HEAP_strdupAtoW( GetProcessHeap(), 0, filename );
-
+    if(filename)
+    {
+        total = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
+        filenameW = HeapAlloc( GetProcessHeap(), 0, total * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, filename, -1, filenameW, total );
+    }
     if(description) {
         len1 = strlen(description);
 	len2 = strlen(description + len1 + 1);

@@ -10,10 +10,10 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "debugtools.h"
+#include "winnls.h"
 #include "ole2.h"
 #include "olectl.h"
-#include "heap.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -233,9 +233,12 @@ ULONG WINAPI LHashValOfNameSys( SYSKIND skind, LCID lcid, LPCOLESTR str)
 {
     LPSTR	strA;
     ULONG	res;
+    INT len;
 
     if (!str) return 0;
-    strA = HEAP_strdupWtoA(GetProcessHeap(), 0, str);
+    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+    strA = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, str, -1, strA, len, NULL, NULL );
     res = LHashValOfNameSysA(skind, lcid, strA);
     HeapFree(GetProcessHeap(), 0, strA);
     return res;

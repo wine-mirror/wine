@@ -20,7 +20,6 @@
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "cursoricon.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(icon);
@@ -572,8 +571,10 @@ HRESULT WINAPI PrivateExtractIconsA (
 	DWORD y )	/* [in] NOTE: 0x80 */
 {
 	DWORD ret;
-	LPWSTR lpwstrFile = HEAP_strdupAtoW(GetProcessHeap(), 0, lpstrFile);
-	
+        INT len = MultiByteToWideChar( CP_ACP, 0, lpstrFile, -1, NULL, 0 );
+        LPWSTR lpwstrFile = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+
+        MultiByteToWideChar( CP_ACP, 0, lpstrFile, -1, lpwstrFile, len );
 	ret = PrivateExtractIconsW(
 		lpwstrFile, nIndex, sizeX, sizeY, phicon, w, nIcons, y
 	);
@@ -649,13 +650,13 @@ HRESULT WINAPI PrivateExtractIconExA (
 	UINT nIcons )
 {
 	DWORD ret;
-	LPWSTR lpwstrFile = HEAP_strdupAtoW(GetProcessHeap(), 0, lpstrFile);
+        INT len = MultiByteToWideChar( CP_ACP, 0, lpstrFile, -1, NULL, 0 );
+        LPWSTR lpwstrFile = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
 
-	TRACE("%s 0x%08lx %p %p 0x%08x\n",
-	lpstrFile, nIndex, phIconLarge, phIconSmall, nIcons);
+	TRACE("%s 0x%08lx %p %p 0x%08x\n", lpstrFile, nIndex, phIconLarge, phIconSmall, nIcons);
 
+        MultiByteToWideChar( CP_ACP, 0, lpstrFile, -1, lpwstrFile, len );
 	ret = PrivateExtractIconExW(lpwstrFile,nIndex,phIconLarge, phIconSmall, nIcons);
-
 	HeapFree(GetProcessHeap(), 0, lpwstrFile);
 	return ret;
 }

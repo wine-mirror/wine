@@ -37,7 +37,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"
-#include "heap.h"
 #include "palette.h"
 #include "bitmap.h"
 #include "cursoricon.h"
@@ -2191,9 +2190,13 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
     HANDLE res;
     LPWSTR u_name;
 
+    if (!HIWORD(name))
+        return LoadImageW(hinst, (LPWSTR)name, type, desiredx, desiredy, loadflags);
+
     __TRY {
-	if (HIWORD(name)) u_name = HEAP_strdupAtoW(GetProcessHeap(), 0, name);
-	else u_name=(LPWSTR)name;
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+        u_name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        MultiByteToWideChar( CP_ACP, 0, name, -1, u_name, len );
     }
     __EXCEPT(page_fault) {
 	SetLastError( ERROR_INVALID_PARAMETER );
@@ -2201,7 +2204,7 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
     }
     __ENDTRY
     res = LoadImageW(hinst, u_name, type, desiredx, desiredy, loadflags);
-    if (HIWORD(name)) HeapFree(GetProcessHeap(), 0, u_name);
+    HeapFree(GetProcessHeap(), 0, u_name);
     return res;
 }
 

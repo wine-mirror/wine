@@ -13,7 +13,6 @@
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "win.h"
-#include "heap.h"
 #include "user.h"
 #include "dce.h"
 #include "controls.h"
@@ -1602,6 +1601,7 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child,
     ATOM atom = 0;
     LPWSTR buffer;
     HWND hwnd;
+    INT len;
 
     if (className)
     {
@@ -1613,8 +1613,11 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child,
             return 0;
         }
     }
+    if (!title) return WIN_FindWindow( parent, child, atom, NULL );
 
-    buffer = HEAP_strdupAtoW( GetProcessHeap(), 0, title );
+    len = MultiByteToWideChar( CP_ACP, 0, title, -1, NULL, 0 );
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return 0;
+    MultiByteToWideChar( CP_ACP, 0, title, -1, buffer, len );
     hwnd = WIN_FindWindow( parent, child, atom, buffer );
     HeapFree( GetProcessHeap(), 0, buffer );
     return hwnd;

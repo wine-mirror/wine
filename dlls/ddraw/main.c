@@ -14,15 +14,15 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "winnls.h"
 #include "winerror.h"
-#include "debugtools.h"
-#include "heap.h"
 
 #include "ddraw.h"
 #include "d3d.h"
 
 /* This for all the enumeration and creation of D3D-related objects */
 #include "ddraw_private.h"
+#include "debugtools.h"
 
 #define MAX_DDRAW_DRIVERS 3
 static const ddraw_driver* DDRAW_drivers[MAX_DDRAW_DRIVERS];
@@ -93,14 +93,21 @@ static BOOL CALLBACK DirectDrawEnumerateExProcW(
     GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, 
     LPVOID lpContext, HMONITOR hm)
 {
+    INT len;
+    BOOL bResult;
+    LPWSTR lpDriverDescriptionW, lpDriverNameW;
     DirectDrawEnumerateProcData *pEPD = (DirectDrawEnumerateProcData*)lpContext;
-    LPWSTR lpDriverDescriptionW =
-	HEAP_strdupAtoW(GetProcessHeap(), 0, lpDriverDescription);
-    LPWSTR lpDriverNameW =
-	HEAP_strdupAtoW(GetProcessHeap(), 0, lpDriverName);
 
-    BOOL bResult = (*(LPDDENUMCALLBACKEXW *) pEPD->lpCallback)(
-	lpGUID, lpDriverDescriptionW, lpDriverNameW, pEPD->lpContext, hm);
+    len = MultiByteToWideChar( CP_ACP, 0, lpDriverDescription, -1, NULL, 0 );
+    lpDriverDescriptionW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, lpDriverDescription, -1, lpDriverDescriptionW, len );
+
+    len = MultiByteToWideChar( CP_ACP, 0, lpDriverName, -1, NULL, 0 );
+    lpDriverNameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, lpDriverName, -1, lpDriverNameW, len );
+
+    bResult = (*(LPDDENUMCALLBACKEXW *) pEPD->lpCallback)(lpGUID, lpDriverDescriptionW,
+                                                          lpDriverNameW, pEPD->lpContext, hm);
 
     HeapFree(GetProcessHeap(), 0, lpDriverDescriptionW);
     HeapFree(GetProcessHeap(), 0, lpDriverNameW);

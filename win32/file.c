@@ -27,7 +27,6 @@
 
 #include "wine/winbase16.h"
 #include "file.h"
-#include "heap.h"
 
 #include "debugtools.h"
 
@@ -106,8 +105,12 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
  */
 BOOL WINAPI SetFileAttributesW(LPCWSTR lpFileName, DWORD attributes)
 {
-    LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
-    BOOL res = SetFileAttributesA( afn, attributes );
+    BOOL res;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, lpFileName, -1, NULL, 0, NULL, NULL );
+    LPSTR afn = HeapAlloc( GetProcessHeap(), 0, len );
+
+    WideCharToMultiByte( CP_ACP, 0, lpFileName, -1, afn, len, NULL, NULL );
+    res = SetFileAttributesA( afn, attributes );
     HeapFree( GetProcessHeap(), 0, afn );
     return res;
 }

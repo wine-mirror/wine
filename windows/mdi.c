@@ -77,7 +77,6 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "win.h"
-#include "heap.h"
 #include "nonclient.h"
 #include "controls.h"
 #include "user.h"
@@ -1459,7 +1458,9 @@ LRESULT WINAPI DefFrameProcA( HWND hwnd, HWND hwndMDIClient,
 	{
         case WM_SETTEXT:
             {
-                LPWSTR text = HEAP_strdupAtoW( GetProcessHeap(), 0, (LPSTR)lParam );
+                DWORD len = MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, NULL, 0 );
+                LPWSTR text = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+                MultiByteToWideChar( CP_ACP, 0, (LPSTR)lParam, -1, text, len );
                 MDI_UpdateFrameText(hwnd, hwndMDIClient, MDI_REPAINTFRAME, text );
                 HeapFree( GetProcessHeap(), 0, text );
             }

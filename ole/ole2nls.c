@@ -17,7 +17,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "options.h"
 #include "winver.h"
 #include "winnls.h"
@@ -2243,12 +2242,9 @@ INT WINAPI LCMapStringW(
       returned_len = wcstombs(src_native, srcstr_libc, src_native_len) + 1;
       if(returned_len == 0)
       {
-          LPSTR srcstr_ascii = (LPSTR)HEAP_strdupWtoA(GetProcessHeap(),
-					   0, srcstr);
-          ERR("wcstombs failed.  The string specified (%s) may contains an "
-              "invalid character.\n", srcstr_ascii);
+          ERR("wcstombs failed.  The string specified (%s) may contain an invalid character.\n",
+              debugstr_w(srcstr));
           SetLastError(ERROR_INVALID_PARAMETER);
-          if(srcstr_ascii) HeapFree(GetProcessHeap(), 0, srcstr_ascii);
           if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
           if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
           setlocale(LC_COLLATE, lc_collate_default);

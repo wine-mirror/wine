@@ -11,7 +11,6 @@
 #include "version.h"
 #include "win.h"
 #include "user.h"
-#include "heap.h"
 #include "dce.h"
 #include "controls.h"
 #include "cursoricon.h"
@@ -259,22 +258,38 @@ DrawCaption (HWND hwnd, HDC hdc, const RECT *lpRect, UINT uFlags)
 
 /***********************************************************************
  *		DrawCaptionTempA (USER32.@)
- *
- * PARAMS
- *
- * RETURNS
- *     Success:
- *     Failure:
  */
+BOOL WINAPI DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
+                              HICON hIcon, LPCSTR str, UINT uFlags)
+{
+    LPWSTR strW;
+    INT len;
+    BOOL ret = FALSE;
 
-BOOL WINAPI
-DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
-		    HICON hIcon, LPCSTR str, UINT uFlags)
+    if (!(uFlags & DC_TEXT) || !str)
+        return DrawCaptionTempW( hwnd, hdc, rect, hFont, hIcon, NULL, uFlags );
+
+    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    if ((strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    {
+        MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
+        ret = DrawCaptionTempW (hwnd, hdc, rect, hFont, hIcon, strW, uFlags);
+        HeapFree( GetProcessHeap (), 0, strW );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *		DrawCaptionTempW (USER32.@)
+ */
+BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
+                              HICON hIcon, LPCWSTR str, UINT uFlags)
 {
     RECT   rc = *rect;
 
-    TRACE("(%08x,%08x,%p,%08x,%08x,\"%s\",%08x)\n",
-          hwnd, hdc, rect, hFont, hIcon, str, uFlags);
+    TRACE("(%08x,%08x,%p,%08x,%08x,%s,%08x)\n",
+          hwnd, hdc, rect, hFont, hIcon, debugstr_w(str), uFlags);
 
     /* drawing background */
     if (uFlags & DC_INBUTTON) {
@@ -332,13 +347,13 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 	}
 
 	if (str)
-	    DrawTextA (hdc, str, -1, &rc,
+	    DrawTextW (hdc, str, -1, &rc,
 			 DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
 	else {
-	    CHAR szText[128];
+	    WCHAR szText[128];
 	    INT nLen;
-	    nLen = GetWindowTextA (hwnd, szText, 128);
-	    DrawTextA (hdc, szText, nLen, &rc,
+	    nLen = GetWindowTextW (hwnd, szText, 128);
+	    DrawTextW (hdc, szText, nLen, &rc,
 			 DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT);
 	}
 
@@ -353,27 +368,6 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 	FIXME("undocumented flag (0x2000)!\n");
 
     return 0;
-}
-
-
-/***********************************************************************
- *		DrawCaptionTempW (USER32.@)
- *
- * PARAMS
- *
- * RETURNS
- *     Success:
- *     Failure:
- */
-
-BOOL WINAPI
-DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
-		    HICON hIcon, LPCWSTR str, UINT uFlags)
-{
-    LPSTR p = HEAP_strdupWtoA (GetProcessHeap (), 0, str);
-    BOOL res = DrawCaptionTempA (hwnd, hdc, rect, hFont, hIcon, p, uFlags);
-    HeapFree (GetProcessHeap (), 0, p);
-    return res;
 }
 
 

@@ -20,7 +20,6 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "module.h"
-#include "heap.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -143,6 +142,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_nameA( const IMAGE_RESOURCE
 {
     const IMAGE_RESOURCE_DIRECTORY *ret = NULL;
     LPWSTR nameW;
+    INT len;
 
     if (!HIWORD(name)) return find_entry_by_id( dir, LOWORD(name), root );
     if (name[0] == '#')
@@ -150,8 +150,10 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_nameA( const IMAGE_RESOURCE
         return find_entry_by_id( dir, atoi(name+1), root );
     }
 
-    if ((nameW = HEAP_strdupAtoW( GetProcessHeap(), 0, name )))
+    len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
+    if ((nameW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
     {
+        MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, len );
         ret = find_entry_by_nameW( dir, nameW, root );
         HeapFree( GetProcessHeap(), 0, nameW );
     }

@@ -12,7 +12,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
-#include "heap.h"
 #include "user.h"
 #include "win.h"
 #include "controls.h"
@@ -364,21 +363,26 @@ BOOL WINAPI EnumDisplaySettingsA(
 /***********************************************************************
  *		EnumDisplaySettingsW (USER32.@)
  */
-BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode) {
-	LPSTR nameA = HEAP_strdupWtoA(GetProcessHeap(),0,name);
-	DEVMODEA	devmodeA; 
-	BOOL ret = EnumDisplaySettingsA(nameA,n,&devmodeA); 
+BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode)
+{
+    DEVMODEA devmodeA;
+    BOOL ret;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
+    LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, len );
 
-	if (ret) {
-		devmode->dmBitsPerPel		 = devmodeA.dmBitsPerPel;
-		devmode->dmPelsHeight		 = devmodeA.dmPelsHeight;
-		devmode->dmPelsWidth	   	 = devmodeA.dmPelsWidth;
-		devmode->dmDisplayFlags	    = devmodeA.dmDisplayFlags;
-		devmode->dmDisplayFrequency = devmodeA.dmDisplayFrequency;
-		/* FIXME: convert rest too, if they are ever returned */
-	}
-	HeapFree(GetProcessHeap(),0,nameA);
-	return ret;
+    WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
+    ret = EnumDisplaySettingsA(nameA,n,&devmodeA);
+    if (ret)
+    {
+        devmode->dmBitsPerPel       = devmodeA.dmBitsPerPel;
+        devmode->dmPelsHeight       = devmodeA.dmPelsHeight;
+        devmode->dmPelsWidth        = devmodeA.dmPelsWidth;
+        devmode->dmDisplayFlags     = devmodeA.dmDisplayFlags;
+        devmode->dmDisplayFrequency = devmodeA.dmDisplayFrequency;
+        /* FIXME: convert rest too, if they are ever returned */
+    }
+    HeapFree(GetProcessHeap(),0,nameA);
+    return ret;
 }
 
 /***********************************************************************

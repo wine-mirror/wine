@@ -39,7 +39,6 @@
 #include "wine/wingdi16.h"
 #include "bitmap.h"
 #include "global.h"
-#include "heap.h"
 #include "metafile.h"
 
 #include "debugtools.h"
@@ -436,9 +435,16 @@ HMETAFILE WINAPI CopyMetaFileA(
 HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile,
                                     LPCWSTR lpFilename )
 {
-    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
-    HMETAFILE ret = CopyMetaFileA( hSrcMetaFile, p );
-    HeapFree( GetProcessHeap(), 0, p );
+    HMETAFILE ret = 0;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, lpFilename, -1, NULL, 0, NULL, NULL );
+    LPSTR p = HeapAlloc( GetProcessHeap(), 0, len );
+
+    if (p)
+    {
+        WideCharToMultiByte( CP_ACP, 0, lpFilename, -1, p, len, NULL, NULL );
+        ret = CopyMetaFileA( hSrcMetaFile, p );
+        HeapFree( GetProcessHeap(), 0, p );
+    }
     return ret;
 }
 
