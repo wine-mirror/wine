@@ -2966,10 +2966,6 @@ void MENU_TrackMouseMenuBar( HWND hWnd, INT ht, POINT pt )
 
     if (IsMenu(hMenu))
     {
-        /* map point to parent client coordinates */
-        HWND parent = GetAncestor( hWnd, GA_PARENT );
-        if (parent != GetDesktopWindow()) ScreenToClient( parent, &pt );
-
 	MENU_InitTracking( hWnd, hMenu, FALSE, wFlags );
 	MENU_TrackMenu( hMenu, wFlags, pt.x, pt.y, hWnd, NULL );
 	MENU_ExitTracking(hWnd);
