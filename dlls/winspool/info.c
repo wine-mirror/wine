@@ -678,7 +678,7 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 
     TRACE("%s\n", lpKey);
 
-    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &retval) !=
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, lpKey, &retval) !=
        ERROR_SUCCESS)
        retval = NULL;
 
