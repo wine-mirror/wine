@@ -1520,7 +1520,8 @@ static BOOL process_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd,
         req->type   = MSG_HARDWARE;
         req->result = 0;
         req->remove = remove || !ret;
-        wine_server_call( req );
+        if (wine_server_call( req ))
+            FIXME("Failed to reply to MSG_HARDWARE message. Message may not be removed from queue.\n");
     }
     SERVER_END_REQ;
     return ret;
