@@ -176,13 +176,13 @@ typedef struct {
     INT16 funcdescsize; /* size of reconstituted FUNCDESC and related structs */
 #endif
     INT   FKCCIC;       /* bit string with the following  */
-                        /* meaning (bit 0 is the msb): */
-                        /* bit 2 indicates that oEntry is numeric */
-                        /* bit 3 that parameter has default values */
-                        /* calling convention (bits 4-7 ) */
-                        /* bit 8 indicates that custom data is present */
-                        /* Invokation kind (bits 9-12 ) */
-                        /* function kind (eg virtual), bits 13-15  */
+                        /* meaning (bit 0 is the lsb): */
+                        /* bits 0 - 2: FUNCKIND */
+                        /* bits 3 - 6: INVOKEKIND */
+                        /* bit  7: custom data present */
+                        /* bits 8 - 11: CALLCONV */
+                        /* bit  12: parameters have default values */
+                        /* bit  13: oEntry is numeric */
 #ifdef WORDS_BIGENDIAN
     INT16 nroargs;      /* nr of optional arguments */
     INT16 nrargs;       /* number of arguments (including optional ????) */
@@ -195,7 +195,7 @@ typedef struct {
 /*
 0*  INT   helpcontext;
 1*  INT   oHelpString;
-2*  INT   oEntry;       // either offset in string table or numeric as it is //
+2*  INT   oEntry;       // either offset in string table or numeric as it is (see bit 13 of FKCCIC) //
 3*  INT   res9;         // unknown (-1) //
 4*  INT   resA;         // unknown (-1) //
 5*  INT   HelpStringContext;

@@ -1119,7 +1119,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     var_t *arg, *last_arg = NULL;
     char *namedata;
     attr_t *attr;
-    unsigned int funcflags = 0, callconv = 4;
+    unsigned int funcflags = 0, callconv = 4 /* CC_STDCALL */;
+    unsigned int funckind = 1 /* FUNC_PUREVIRTUAL */, invokekind = 1 /* INVOKE_FUNC */;
     int help_context = 0, help_string_context = 0, help_string_offset = -1;
 
     id = ((0x6000 | typeinfo->typeinfo->cImplTypes) << 16) | index;
@@ -1164,7 +1165,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
             break;
         case ATTR_OUT:
             break;
-
+        case ATTR_PROPGET:
+            invokekind = 0x2; /* INVOKE_PROPERTYGET */
+            break;
+        case ATTR_PROPPUT:
+            invokekind = 0x4; /* INVOKE_PROPERTYPUT */
+            break;
         default:
             warning("ignoring attr %d\n", attr->type);
             break;
@@ -1180,7 +1186,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     encode_var(typeinfo->typelib, func->def, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
-    typedata[4] = (index << 16) | (callconv << 8) | 9;
+    typedata[4] = (index << 16) | (callconv << 8) | (invokekind << 3) | funckind;
     if(num_defaults) typedata[4] |= 0x1000;
     typedata[5] = num_params;
 
