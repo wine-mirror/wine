@@ -589,7 +589,7 @@ BOOL32 WINAPI DeleteForm32W(HANDLE32 hPrinter, LPWSTR pFormName)
 /*****************************************************************************
  *          DeletePrinter32  [WINSPOOL.143]
  */
-BOOL32 DeletePrinter32(HANDLE32 hPrinter)
+BOOL32 WINAPI DeletePrinter32(HANDLE32 hPrinter)
 {
     FIXME(print, "(%d): stub\n", hPrinter);
     return 1;
