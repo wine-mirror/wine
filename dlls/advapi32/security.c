@@ -2187,8 +2187,11 @@ BOOL WINAPI ConvertStringSidToSidW(LPCWSTR StringSid, PSID* Sid)
     BOOL bret = FALSE;
     DWORD cBytes;
 
+    TRACE("%s, %p\n", debugstr_w(StringSid), Sid);
     if (GetVersion() & 0x80000000)
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    else if (!StringSid || !Sid)
+        SetLastError(ERROR_INVALID_PARAMETER);
     else if (ParseStringSidToSid(StringSid, NULL, &cBytes))
     {
         PSID pSid = *Sid = (PSID) LocalAlloc(0, cBytes);
@@ -2197,7 +2200,33 @@ BOOL WINAPI ConvertStringSidToSidW(LPCWSTR StringSid, PSID* Sid)
         if (!bret)
             LocalFree(*Sid); 
     }
+    TRACE("returning %s\n", bret ? "TRUE" : "FALSE");
+    return bret;
+}
 
+/******************************************************************************
+ * ConvertStringSidToSidA [ADVAPI32.@]
+ */
+BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
+{
+    BOOL bret = FALSE;
+
+    TRACE("%s, %p\n", debugstr_a(StringSid), Sid);
+    if (GetVersion() & 0x80000000)
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    else if (!StringSid || !Sid)
+        SetLastError(ERROR_INVALID_PARAMETER);
+    else
+    {
+        UINT len = MultiByteToWideChar(CP_ACP, 0, StringSid, -1, NULL, 0);
+        LPWSTR wStringSid = (LPWSTR)HeapAlloc(GetProcessHeap(), 0,
+         len * sizeof(WCHAR));
+
+        MultiByteToWideChar(CP_ACP, 0, StringSid, -1, wStringSid, len);
+        bret = ConvertStringSidToSidW(wStringSid, Sid);
+        HeapFree(GetProcessHeap(), 0, wStringSid);
+    }
+    TRACE("returning %s\n", bret ? "TRUE" : "FALSE");
     return bret;
 }
 
@@ -2215,8 +2244,7 @@ BOOL WINAPI ConvertSidToStringSidW( PSID pSid, LPWSTR *pstr )
 {
     DWORD sz, i;
     LPWSTR str;
-    WCHAR fmt[] = { 
-        'S','-','%','u','-','%','2','X','%','2','X','%','X','%','X','%','X','%','X',0 };
+    WCHAR fmt[] = { 'S','-','%','u','-','%','d',0 };
     WCHAR subauthfmt[] = { '-','%','u',0 };
     SID* pisid=pSid;
 
@@ -2227,16 +2255,20 @@ BOOL WINAPI ConvertSidToStringSidW( PSID pSid, LPWSTR *pstr )
 
     if (pisid->Revision != SDDL_REVISION)
         return FALSE;
+    if (pisid->IdentifierAuthority.Value[0] ||
+     pisid->IdentifierAuthority.Value[1])
+    {
+        FIXME("not matching MS' bugs\n");
+        return FALSE;
+    }
 
     sz = 14 + pisid->SubAuthorityCount * 11;
     str = LocalAlloc( 0, sz*sizeof(WCHAR) );
-    sprintfW( str, fmt, pisid->Revision,
-         pisid->IdentifierAuthority.Value[2],
-         pisid->IdentifierAuthority.Value[3],
-         pisid->IdentifierAuthority.Value[0]&0x0f,
-         pisid->IdentifierAuthority.Value[4]&0x0f,
-         pisid->IdentifierAuthority.Value[1]&0x0f,
-         pisid->IdentifierAuthority.Value[5]&0x0f);
+    sprintfW( str, fmt, pisid->Revision, MAKELONG(
+     MAKEWORD( pisid->IdentifierAuthority.Value[5],
+     pisid->IdentifierAuthority.Value[4] ),
+     MAKEWORD( pisid->IdentifierAuthority.Value[3],
+     pisid->IdentifierAuthority.Value[2] ) ) );
     for( i=0; i<pisid->SubAuthorityCount; i++ )
         sprintfW( str + strlenW(str), subauthfmt, pisid->SubAuthority[i] );
     *pstr = str;
@@ -2297,37 +2329,65 @@ static BOOL ParseStringSidToSid(LPCWSTR StringSid, PSID pSid, LPDWORD cBytes)
     BOOL bret = FALSE;
     SID* pisid=pSid;
 
+    TRACE("%s, %p, %p\n", debugstr_w(StringSid), pSid, cBytes);
     if (!StringSid)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
+        TRACE("StringSid is NULL, returning FALSE\n");
 	return FALSE;
     }
 
     *cBytes = ComputeStringSidSize(StringSid);
     if (!pisid) /* Simply compute the size */
+    {
+        TRACE("only size requested, returning TRUE\n");
         return TRUE;
+    }
 
     if (*StringSid != 'S' || *StringSid != '-') /* S-R-I-S-S */
     {
-        int i = 0;
-	int csubauth = ((*cBytes - sizeof(SID)) / sizeof(DWORD)) + 1;
+        DWORD i = 0, identAuth;
+	DWORD csubauth = ((*cBytes - sizeof(SID)) / sizeof(DWORD)) + 1;
 
         StringSid += 2; /* Advance to Revision */
         pisid->Revision = atoiW(StringSid);
 
         if (pisid->Revision != SDDL_REVISION)
-           goto lend; /* ERROR_INVALID_SID */
+        {
+            TRACE("Revision %d is unknown\n", pisid->Revision);
+            goto lend; /* ERROR_INVALID_SID */
+        }
+        if (csubauth == 0)
+        {
+            TRACE("SubAuthorityCount is 0\n");
+            goto lend; /* ERROR_INVALID_SID */
+        }
 
 	pisid->SubAuthorityCount = csubauth;
 
+        /* Advance to identifier authority */
 	while (*StringSid && *StringSid != '-')
-            StringSid++; /* Advance to identifier authority */
+            StringSid++;
+        if (*StringSid == '-')
+            StringSid++;
 
-        pisid->IdentifierAuthority.Value[5] = atoiW(StringSid);
+        /* MS' implementation can't handle values greater than 2^32 - 1, so
+         * we don't either; assume most significant bytes are always 0
+         */
+        pisid->IdentifierAuthority.Value[0] = 0;
+        pisid->IdentifierAuthority.Value[1] = 0;
+        identAuth = atoiW(StringSid);
+        pisid->IdentifierAuthority.Value[5] = identAuth & 0xff;
+        pisid->IdentifierAuthority.Value[4] = (identAuth & 0xff00) >> 8;
+        pisid->IdentifierAuthority.Value[3] = (identAuth & 0xff0000) >> 16;
+        pisid->IdentifierAuthority.Value[2] = (identAuth & 0xff000000) >> 24;
 
-	if (pisid->IdentifierAuthority.Value[5] > 5)
-            goto lend; /* ERROR_INVALID_SID */
-    
+        /* Advance to first sub authority */
+        while (*StringSid && *StringSid != '-')
+            StringSid++;
+        if (*StringSid == '-')
+            StringSid++;
+
         while (*StringSid)
 	{	
 	    while (*StringSid && *StringSid != '-')
@@ -2359,6 +2419,7 @@ lend:
     if (!bret)
         SetLastError(ERROR_INVALID_SID);
 
+    TRACE("returning %s\n", bret ? "TRUE" : "FALSE");
     return bret;
 }
 

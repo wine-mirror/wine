@@ -41,6 +41,8 @@
 @ stdcall ControlService(long long ptr)
 @ stdcall ConvertSidToStringSidA(ptr ptr)
 @ stdcall ConvertSidToStringSidW(ptr ptr)
+@ stdcall ConvertStringSidToSidA(ptr ptr)
+@ stdcall ConvertStringSidToSidW(ptr ptr)
 @ stub ConvertStringSecurityDescriptorToSecurityDescriptorA #(str long ptr ptr) ConvertStringSecurityDescriptorToSecurityDescriptorA
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
 @ stdcall CopySid(long ptr ptr)
