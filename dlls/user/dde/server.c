@@ -775,7 +775,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleExecute(WDML_CONV* pConv, WDML_XACT* pX
 	break;
     default:	
 	WARN("Bad result code\n");
-	/* fall thru */
+	/* fall through */
     case DDE_FNOTPROCESSED:				
 	break;
     }	
@@ -845,7 +845,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandlePoke(WDML_CONV* pConv, WDML_XACT* pXAct
 		break;
 	    default:
 		FIXME("Unsupported returned value %08lx\n", (DWORD)hDdeDataOut);
-		/* fal thru */
+		/* fal through */
 	    case DDE_FNOTPROCESSED:				
 		break;
 	    }

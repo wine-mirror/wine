@@ -3033,7 +3033,7 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
 
 /*========================================================================
  * look for stabs information in PE header (it's how mingw compiler provides its
- * debugging information), and also wine PE <-> ELF linking thru .wsolnk sections
+ * debugging information), and also wine PE <-> ELF linking through .wsolnk sections
  */
 enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, 
 					      void* _nth, unsigned long nth_ofs)

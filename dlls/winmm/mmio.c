@@ -386,7 +386,7 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 	break;
     case MMIOM_READ:
 	memcpy((void*)lParam1, MapSL(lp1), lp2);
-	/* fall thru */
+	/* fall through */
     case MMIOM_WRITE:
     case MMIOM_WRITEFLUSH:
 	if (!SEGPTR_FREE(MapSL(lp1))) {

@@ -236,7 +236,7 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     switch (wMsg) {
     case DRVM_INIT:
 	AUXDRV_Init();
-	/* fall thru */
+	/* fall through */
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:

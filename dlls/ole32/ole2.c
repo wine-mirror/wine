@@ -1072,7 +1072,7 @@ BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor
    * in the groups File, Edit, Container, Object, Window, Help.
    * The Edit, Object & Help groups belong to the server object
    * and the other three belong to the container.
-   * Loop thru the group widths and locate the group we are a member of.
+   * Loop through the group widths and locate the group we are a member of.
    */
   for ( i = 0, nWidth = 0; i < 6; i++ )
   {

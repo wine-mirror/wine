@@ -155,7 +155,7 @@ BOOL WINAPI EnumDisplayMonitors(
 
                 break;
             }
-            /*fall thru */
+            /* fall through */
         case NULLREGION:
              return TRUE;
         case ERROR:

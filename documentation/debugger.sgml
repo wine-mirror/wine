@@ -1029,7 +1029,7 @@ wine -debug myprog.exe
         <title>WineDbg configuration</title>
 
         <para>
-          <command>WineDbg</command> can be configured thru a number
+          <command>WineDbg</command> can be configured through a number
           of options. Those options are stored in the registry, on a
           per user basis. The key is (in <emphasis>my</emphasis> registry)
         </para>
@@ -1114,7 +1114,7 @@ set $BreakAllThreadsStartup = 1
                   <command>WineDbg</command>'s <command>cont</command>
                   command) or pass the exception up to the exception
                   handler chain in the program (if it exists)
-                  (<command>WineDbg</command> implements this thru the
+                  (<command>WineDbg</command> implements this through the
                   <command>pass</command> command). If none of the
                   exception handlers takes care of the exception, the
                   exception event is sent again to the debugger (known
@@ -1280,7 +1280,7 @@ abort		aborts the debugger
 quit		exits the debugger
 
 attach N	attach to a W-process (N is its ID). IDs can be
-		obtained thru walk process command
+		obtained using the walk process command
         </screen>
         <screen>
 help		prints some help on the commands

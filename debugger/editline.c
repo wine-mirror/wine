@@ -228,7 +228,7 @@ TTYget(void)
 	  break;
        default:
 	  DEBUG_Printf(DBG_CHN_FIXME, "shouldn't happen\n");
-	  /* fall thru */
+	  /* fall through */
        case WAIT_ABANDONED:
        case WAIT_TIMEOUT:
 	  return EOF;

@@ -723,7 +723,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			at = LOBYTE(HIWORD(at)) * CDFRAMES_PERMIN +
 			    HIBYTE(LOWORD(at)) * CDFRAMES_PERSEC +
 			    LOBYTE(LOWORD(at));
-			/* fall thru */
+			/* fall through */
 		    case 0: /* HSG addressing mode */
 			CDROM_Audio_Seek(&wcda, at, dev);
 			break;
@@ -756,7 +756,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			end = LOBYTE(HIWORD(end)) * CDFRAMES_PERMIN +
 			    HIBYTE(LOWORD(end)) * CDFRAMES_PERSEC +
 			    LOBYTE(LOWORD(end));
-			/* fall thru */
+			/* fall through */
 		    case 0: /* HSG addressing mode */
 			CDROM_Audio_Play(&wcda, beg, end, dev);
 			break;

@@ -59,7 +59,7 @@ static BOOL DEBUG_IsStepOverInstr(void)
     addr.seg = DEBUG_context.SegCs;
     addr.off = DEBUG_context.Eip;
     /* FIXME: old code was using V86BASE(DEBUG_context)
-     * instead of passing thru DOSMEM_MemoryBase
+     * instead of passing through DOSMEM_MemoryBase
      */
     instr = (BYTE*)DEBUG_ToLinear(&addr);
 
@@ -142,7 +142,7 @@ BOOL DEBUG_IsFctReturn(void)
     addr.seg = DEBUG_context.SegCs;
     addr.off = DEBUG_context.Eip;
     /* FIXME: old code was using V86BASE(DEBUG_context)
-     * instead of passing thru DOSMEM_MemoryBase
+     * instead of passing through DOSMEM_MemoryBase
      */
     instr = (BYTE*)DEBUG_ToLinear(&addr);
 

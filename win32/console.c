@@ -567,7 +567,7 @@ BOOL WINAPI FreeConsole(VOID)
  * its own xterm).
  * 
  * This makes simple commandline tools pipeable, while complex commandline 
- * tools work without getting messed up by debugoutput.
+ * tools work without getting messed up by debug output.
  * 
  * All other functions should work independently from this call.
  *

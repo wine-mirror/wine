@@ -160,7 +160,7 @@ Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
               prop = XA_PIXMAP;
               break;
             }
-            /* Fall thru to the default case in order to use the native format */
+            /* Fall through to the default case in order to use the native format */
         }
         
         default:

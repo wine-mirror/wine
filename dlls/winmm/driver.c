@@ -84,7 +84,7 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
     case DRV_EXITAPPLICATION:	
     case DRV_POWER:
     case DRV_CLOSE:	/* should be 0/0 */
-    case DRV_OPEN:	/* pass thru */
+    case DRV_OPEN:	/* pass through */
 	/* lParam1 and lParam2 are not used */
 	ret = 0;
 	break;

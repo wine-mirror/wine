@@ -1781,7 +1781,7 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	keep = TRUE;
 	switch (uDevType) {
 	/* FIXME:
-	 * don't know if buffer for value is the one passed thru lpstrDevice 
+	 * don't know if buffer for value is the one passed through lpstrDevice 
 	 * or is provided by MCI driver.
 	 * Assuming solution 2: provided by MCI driver, so zeroing on entry
 	 */
