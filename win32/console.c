@@ -44,6 +44,9 @@
 #include "heap.h"
 #include "debug.h"
 
+#include "server/request.h"
+#include "server.h"
+
 /* The CONSOLE kernel32 Object */
 typedef struct _CONSOLE {
 	K32OBJ  		header;
@@ -52,6 +55,7 @@ typedef struct _CONSOLE {
 
 	int			master;	/* xterm side of pty */
 	int			infd,outfd;
+        int                     hread, hwrite;  /* server handles (hack) */
 	int			pid;	/* xterm's pid, -1 if no xterm */
         LPSTR   		title;	/* title of console */
 	INPUT_RECORD		*irs;	/* buffered input records */
@@ -652,6 +656,7 @@ static int CONSOLE_openpty(CONSOLE *console, char *name,
         int fdm, fds;
         char *ptr1, *ptr2;
         char pts_name[512];
+        struct set_console_fd_request req;
 
         strcpy (pts_name, "/dev/ptyXY");
 
@@ -673,7 +678,13 @@ static int CONSOLE_openpty(CONSOLE *console, char *name,
                         }
                         console->master = fdm;
                         console->infd = console->outfd = fds;
-			
+                        req.handle = console->hread;
+			CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(fds), 1, &req, sizeof(req) );
+                        CLIENT_WaitReply( NULL, NULL, 0 );
+                        req.handle = console->hwrite;
+			CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(fds), 1, &req, sizeof(req) );
+                        CLIENT_WaitReply( NULL, NULL, 0 );
+
 			if (term != NULL)
 				tcsetattr(console->infd, TCSANOW, term);
 			if (winsize != NULL)
@@ -777,7 +788,9 @@ HFILE32 CONSOLE_GetConsoleHandle(VOID)
  */
 BOOL32 WINAPI AllocConsole(VOID)
 {
-
+        struct create_console_request req;
+        struct create_console_reply reply;
+        int len;
 	PDB32 *pdb = PROCESS_Current();
 	CONSOLE *console;
 	HANDLE32 hIn, hOut, hErr;
@@ -815,15 +828,30 @@ BOOL32 WINAPI AllocConsole(VOID)
 	/* FIXME: we shouldn't probably use hardcoded UNIX values here. */
 	console->infd		 = 0;
 	console->outfd		 = 1;
+        console->hread = console->hwrite = -1;
 
-	if ((hIn = HANDLE_Alloc(pdb,&console->header, 0, TRUE,-1)) == INVALID_HANDLE_VALUE32)
+        CLIENT_SendRequest( REQ_CREATE_CONSOLE, -1, 1, &req, sizeof(req) );
+        if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) ) != ERROR_SUCCESS)
         {
+            K32OBJ_DecCount(&console->header);
+            SYSTEM_UNLOCK();
+            return FALSE;
+        }
+        CHECK_LEN( len, sizeof(reply) );
+        console->hread = reply.handle_read;
+        console->hwrite = reply.handle_write;
+
+	if ((hIn = HANDLE_Alloc(pdb,&console->header, 0, TRUE,
+                                reply.handle_read)) == INVALID_HANDLE_VALUE32)
+        {
+            CLIENT_CloseHandle( reply.handle_write );
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
             return FALSE;
 	}
 
-	if ((hOut = HANDLE_Alloc(pdb,&console->header, 0, TRUE,-1)) == INVALID_HANDLE_VALUE32)
+	if ((hOut = HANDLE_Alloc(pdb,&console->header, 0, TRUE,
+                                 reply.handle_write)) == INVALID_HANDLE_VALUE32)
         {
             CloseHandle(hIn);
             K32OBJ_DecCount(&console->header);
@@ -831,8 +859,9 @@ BOOL32 WINAPI AllocConsole(VOID)
             return FALSE;
 	}
 
-
-	if ((hErr = HANDLE_Alloc(pdb,&console->header, 0, TRUE,-1)) == INVALID_HANDLE_VALUE32)
+        if (!DuplicateHandle( GetCurrentProcess(), hOut,
+                              GetCurrentProcess(), &hErr,
+                              0, TRUE, DUPLICATE_SAME_ACCESS ))
         {
             CloseHandle(hIn);
             CloseHandle(hOut);
