@@ -208,6 +208,8 @@
 #include <winreg.h>
 #define NO_SHLWAPI_STREAM 
 #include <shlwapi.h>
+
+#include "rtf.h"
  
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
@@ -302,6 +304,31 @@ ME_TextBuffer *ME_MakeText() {
   buf->pCharStyle = NULL;
   
   return buf;
+}
+
+static LRESULT ME_StreamIn(HWND hwnd, DWORD format, EDITSTREAM *stream)
+{
+  RTF_Info parser;
+
+  TRACE("%p %p\n", stream, hwnd);
+
+  /* setup the RTF parser */
+  memset(&parser, 0, sizeof parser);
+  RTFSetEditStream(&parser, stream);
+  parser.rtfFormat = format&(SF_TEXT|SF_RTF);
+  parser.hwndEdit = hwnd;
+  WriterInit(&parser);
+  RTFInit(&parser);
+  BeginFile(&parser);
+
+  /* do the parsing */
+  RTFRead(&parser);
+  RTFFlushOutputBuffer(&parser);
+
+  /* put the cursor at the top */
+  SendMessageA(hwnd, EM_SETSEL, 0, 0);
+
+  return 0;
 }
 
 ME_TextEditor *ME_MakeEditor(HWND hWnd) {
@@ -414,7 +441,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETUNDOLIMIT)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROC)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_STREAMIN)
   UNSUPPORTED_MSG(EM_STREAMOUT)
   UNSUPPORTED_MSG(WM_SETFONT)
   UNSUPPORTED_MSG(WM_PASTE)
@@ -422,7 +448,10 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(WM_STYLECHANGED)
 /*  UNSUPPORTED_MSG(WM_UNICHAR) FIXME missing in Wine headers */
     
+/* Messages specific to Richedit controls */
   
+  case EM_STREAMIN:
+   return ME_StreamIn(hWnd, wParam, (EDITSTREAM*)lParam);
   case WM_GETDLGCODE:
   {
     UINT code = DLGC_WANTCHARS|DLGC_WANTARROWS;

@@ -12,6 +12,7 @@ C_SRCS = \
 	list.c \
 	paint.c \
 	para.c \
+	reader.c \
 	richole.c \
 	row.c \
 	run.c \
