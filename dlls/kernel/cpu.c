@@ -226,7 +226,7 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
         return TRUE;
     }
 #endif
-    frequency->u.LowPart  = 1000000;
+    frequency->u.LowPart  = 10000000;
     frequency->u.HighPart = 0;
     return TRUE;
 }
