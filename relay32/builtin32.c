@@ -42,10 +42,10 @@ void *BUILTIN32_dlopen( const char *name )
 
     if (!(handle = wine_dll_load( name, error, sizeof(error) )))
     {
-        if (strstr(error, "undefined symbol")) /* undef symbol -> ERR() */
-            ERR("failed to load %s: %s\n", name, error);
-        else /* WARN() for libraries that are supposed to be native */
-            WARN("failed to load %s: %s\n", name, error );
+        if (strstr(error, "cannot open")) /* cannot open -> WARN() */
+            WARN("cannot open .so lib for builtin %s: %s\n", name, error);
+        else /* ERR() for all other errors (missing functions, ...) */
+            ERR("failed to load .so lib for builtin %s: %s\n", name, error );
     }
     return handle;
 }
