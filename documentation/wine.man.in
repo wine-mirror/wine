@@ -106,10 +106,6 @@ For more information, see the
 file contained in the source distribution.
 .SH OPTIONS
 .TP
-.I --config filename
-Use the named configuration file rather than the default
-(@sysconfdir@/wine.conf or ~/.wine/config).
-.TP
 .I --debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
 Turn debugging messages on or off.  
 .RS +7
@@ -279,17 +275,17 @@ by
 For example, if you want to execute 
 .B wine 
 with the options 
-.I --managed --config myapp.winerc
+.I --managed --display :0.2
 and if 
 .B wine 
 should run the program 
 .I myapp.exe
 with the arguments
-.I --config my.ini somefile
+.I --display 3d somefile
 , then you could use the following command line to invoke 
 .B wine:
 .PP
-.I wine --managed --config myapp.winerc -- myapp.exe --config my.ini somefile
+.I wine --managed --display :0.2 -- myapp.exe --display 3d somefile
 .PP 
 Note that in contrast to previous versions of 
 .B wine, 
@@ -354,16 +350,13 @@ expects a configuration file (
 .I @sysconfdir@/wine.conf
 ), which must conform to the format specified in the
 .BR wine.conf (5)
-man page. A sample configuration file is wine.ini in the base directory of the 
+man page. A sample configuration file is documentation/samples/config in the 
 .B wine 
 source archive. Alternatively a configuration file with the name
 .I config
 in the ~/.wine directory of the user running 
 .B wine 
-can be used. The third option is to specify the name of the 
-configuration file with the 
-.B --config
-option. 
+can be used.
 .SH AUTHORS
 .B wine
 is available thanks to the work of many developers. For a listing
