@@ -106,7 +106,7 @@ void CHARLIST_FreeList(CHARLIST* pCharList){
         CHARLIST_Dequeue(pCharList);       
 }
 
-/* this function count the number of occurences of a caracter */
+/* this function counts the number of occurrences of a caracter */
 int CHARLIST_CountChar(CHARLIST* pCharList, char myChar)
 {
     CHARLISTENTRY *pCurrent;

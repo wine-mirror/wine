@@ -51,8 +51,8 @@ typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
   LPARAM    lParam;
   int       iIntegral;      /* item height multiplier (1 is normal) */
   int       iLevel;         /* indentation level:0=root level */
-  HTREEITEM parent;         /* handle to parent or 0 if at root*/
-  HTREEITEM firstChild;     /* handle to first child or 0 if no child*/
+  HTREEITEM parent;         /* handle to parent or 0 if at root */
+  HTREEITEM firstChild;     /* handle to first child or 0 if no child */
   HTREEITEM lastChild;
   HTREEITEM prevSibling;    /* handle to prev item in list, 0 if first */
   HTREEITEM nextSibling;    /* handle to next item in list, 0 if last */
@@ -136,7 +136,7 @@ typedef struct tagTREEVIEW_INFO
 #define TV_HSCROLL 	0x01    /* treeview too large to fit in window */
 #define TV_VSCROLL 	0x02	/* (horizontal/vertical) */
 #define TV_LDRAG		0x04	/* Lbutton pushed to start drag */
-#define TV_LDRAGGING	0x08	/* Lbutton pushed, mouse moved.  */
+#define TV_LDRAGGING	0x08	/* Lbutton pushed, mouse moved. */
 #define TV_RDRAG		0x10	/* dito Rbutton */
 #define TV_RDRAGGING	0x20	
 
@@ -2306,7 +2306,7 @@ TREEVIEW_DrawItem(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
 
 	if ((wineItem->state & TVIS_SELECTED) && (wineItem->iSelectedImage))
 	{
-	    /* The item is curently selected */
+	    /* The item is currently selected */
 	    imageIndex = wineItem->iSelectedImage;
 	}
 	else
@@ -3720,7 +3720,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 	goto setfocus;
     }
     else if (bTrack)
-    {   /* if TREEVIEW_TrackMouse == 1 dragging occured and the cursor left the dragged item's rectangle */
+    {   /* if TREEVIEW_TrackMouse == 1 dragging occurred and the cursor left the dragged item's rectangle */
 	if (TREEVIEW_TrackMouse(infoPtr, ht.pt))
 	{
 	    TREEVIEW_SendTreeviewDnDNotify(infoPtr, TVN_BEGINDRAGA, ht.hItem,
@@ -3748,7 +3748,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 
     /* 
      * If the style allows editing and the node is already selected 
-     * and the click occured on the item label...
+     * and the click occurred on the item label...
      */
     if ((infoPtr->dwStyle & TVS_EDITLABELS) &&
 	        (ht.flags & TVHT_ONITEMLABEL) && (infoPtr->selectedItem == ht.hItem))
@@ -4665,7 +4665,7 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
 
     /* tool tip is automatically destroyed: we are its owner */
 
-    /* Restore original windproc. */
+    /* Restore original wndproc */
     if (infoPtr->hwndEdit)
 	SetWindowLongA(infoPtr->hwndEdit, GWL_WNDPROC,
 		       (LONG)infoPtr->wpEditOrig);

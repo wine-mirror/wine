@@ -2,8 +2,8 @@
  * Audio Renderer (CLSID_AudioRender)
  *
  * FIXME
- *  - implements IRefereneceClock.
- *  - implements seeking.
+ *  - implement IReferenceClock.
+ *  - implement seeking.
  *
  * hidenori@a2.ctktv.ne.jp
  */

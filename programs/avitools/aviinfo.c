@@ -32,7 +32,7 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
 #else
 # define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x##"A");assert(fn##x);
 #endif
-	/* Non character dependend routines: */
+	/* Non character dependent routines: */
 	XX (AVIFileInit);
 	XX (AVIFileExit);
 	XX (AVIFileRelease);

@@ -5597,7 +5597,7 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                         wine_tsx11_unlock();
                         return image; /* Success! */
                     }
-                    /* An error occured */
+                    /* An error occurred */
                     XShmErrorFlag = 0;
                     XSetErrorHandler(WineXHandler);
                 }

@@ -235,7 +235,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	  /* line buffer emptied */
 	  lol->offs_unread_CON = 0;
 	  curbuffer = NULL;
-	  /* if we're not in raw mode, call it a day*/
+	  /* if we're not in raw mode, call it a day */
 	  if (!(con->attr & ATTR_RAW)) {
 	    hdr->status = STAT_DONE;
 	    io->count = len;

@@ -167,7 +167,7 @@ BOOL WINAPI ArcTo( HDC hdc,
      */
     result = Arc(hdc, left, top, right, bottom, xstart, ystart, xend, yend);
     /*
-     * If no error occured, the current position is moved to the ending
+     * If no error occurred, the current position is moved to the ending
      * point of the arc.
      */
     if (result) MoveToEx(hdc, xend, yend, NULL);

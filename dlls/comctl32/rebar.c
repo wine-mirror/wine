@@ -3753,7 +3753,7 @@ REBAR_MouseMove (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_BAND *band1, *band2;
     POINTS ptsmove;
 
-    /* Validate entry as hit on Gripper has occured */
+    /* Validate entry as hit on Gripper has occurred */
     if (GetCapture() != infoPtr->hwndSelf) return 0;
     if (infoPtr->ihitBand == -1) return 0;
 

@@ -188,7 +188,7 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     }
     /* 3. Check if we have an input filter program. If we have one, it 
      *    most likely is one capable of converting postscript.
-     *    (Could probably check for occurence of 'gs' or 'ghostscript' 
+     *    (Could probably check for occurrence of 'gs' or 'ghostscript' 
      *     in the if file itself.)
      */
     if (strstr(pent,":if=/")) {

@@ -171,7 +171,7 @@ BOOL WINAPI ILRemoveLastID(LPCITEMIDLIST pidl)
  * ILClone [SHELL32.18]
  *
  * NOTES
- *    dupicate an idlist
+ *    duplicate an idlist
  */
 LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
 { DWORD    len;

@@ -219,7 +219,7 @@ static CHAR UPDOWN_GetThousandSep()
  * it stores it in the control's CurVal
  * returns:
  *   TRUE  - if it read the integer from the buddy successfully
- *   FALSE - if an error occured
+ *   FALSE - if an error occurred
  */
 static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
 {
@@ -265,7 +265,7 @@ static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
  * Tries to set the pos to the buddy window based on current pos
  * returns:
  *   TRUE  - if it set the caption of the  buddy successfully
- *   FALSE - if an error occured
+ *   FALSE - if an error occurred
  */
 static BOOL UPDOWN_SetBuddyInt (UPDOWN_INFO *infoPtr)
 {

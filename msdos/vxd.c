@@ -583,7 +583,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * We search between the addresses of the exported symbols SetFS
          * and StackLinearToSegmented for the byte sequence '0F 01 04'
          * (this is the opcode of 'sgdt [si]'). We then search backwards
-         * from this address for the last occurrance of 'CB' (retf) that marks
+         * from this address for the last occurrence of 'CB' (retf) that marks
          * the end of the preceeding function. The following byte (which
          * should now be the first byte of the function we are looking for)
          * will be replaced by 'CB' (retf).

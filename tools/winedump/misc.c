@@ -136,7 +136,7 @@ const char *str_match (const char *str, const char *match, int *found)
 /*******************************************************************
  *         str_find_set
  *
- * Locate the first occurence of a set of characters in a string
+ * Locate the first occurrence of a set of characters in a string
  */
 const char *str_find_set (const char *str, const char *findset)
 {

@@ -62,7 +62,7 @@ char *get_typename(resource_t* r)
  *	maxlen	- Max chars to copy
  * Output	: 'cs'
  * Description	: Copy a unicode string to ascii. Copying stops after the
- *		  first occuring '\0' or when maxlen-1 chars are copied. The
+ *		  first occurring '\0' or when maxlen-1 chars are copied. The
  *		  String is always nul terminated.
  * Remarks	: No codepage translation is done.
  *****************************************************************************

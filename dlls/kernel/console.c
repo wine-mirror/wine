@@ -36,7 +36,7 @@ DEFAULT_DEBUG_CHANNEL(console);
 static UINT console_input_codepage;
 static UINT console_output_codepage;
 
-/* map input records to Ascii */
+/* map input records to ASCII */
 static void input_records_WtoA( INPUT_RECORD *buffer, int count )
 {
     int i;
@@ -66,7 +66,7 @@ static void input_records_AtoW( INPUT_RECORD *buffer, int count )
     }
 }
 
-/* map char infos to Ascii */
+/* map char infos to ASCII */
 static void char_info_WtoA( CHAR_INFO *buffer, int count )
 {
     char ch;
