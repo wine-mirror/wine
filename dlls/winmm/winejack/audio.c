@@ -128,6 +128,7 @@ typedef struct {
     PCMWAVEFORMAT     format;
     WAVEOUTCAPSA      caps;
     WORD              wDevID;
+    char              interface_name[32];
 
     jack_port_t*      out_port_l;   /* ports for left and right channels */
     jack_port_t*      out_port_r;
@@ -171,6 +172,7 @@ typedef struct {
     WAVEINCAPSA     caps;
     BOOL            bTriggerSupport;
     WORD              wDevID;
+    char              interface_name[32];
 
     jack_port_t*      in_port_l;   /* ports for left and right channels */
     jack_port_t*      in_port_r;
@@ -892,6 +894,9 @@ LONG JACK_WaveInit(void)
       /*    strcpy(WOutDev[i].caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
       strcpy(WOutDev[i].caps.szPname, "CS4236/37/38");
 #endif
+
+      snprintf(WOutDev[i].interface_name, sizeof(WOutDev[i].interface_name), "winejack: %d", i);
+
       WOutDev[i].caps.vDriverVersion = 0x0100;
       WOutDev[i].caps.dwFormats = 0x00000000;
       WOutDev[i].caps.dwSupport = WAVECAPS_VOLUME;
@@ -933,6 +938,8 @@ LONG JACK_WaveInit(void)
 	WInDev[i].caps.wPid = 0x0001;
 	strcpy(WInDev[i].caps.szPname,"CS4236/37/38");
 #endif
+        snprintf(WInDev[i].interface_name, sizeof(WInDev[i].interface_name), "winejack: %d", i);
+
 	WInDev[i].caps.vDriverVersion = 0x0100;
 
 	WInDev[i].caps.wChannels = 0x2;
@@ -1676,6 +1683,33 @@ static DWORD wodGetNumDevs(void)
 }
 
 /**************************************************************************
+ *                              wodDevInterfaceSize             [internal]
+ */
+static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+{
+    TRACE("(%u, %p)\n", wDevID, dwParam1);
+                                                                                                       
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].interface_name, -1,
+                                    NULL, 0 ) * sizeof(WCHAR);
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ *                              wodDevInterface                 [internal]
+ */
+static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+{
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].interface_name, -1,
+                                        NULL, 0 ) * sizeof(WCHAR))
+    {
+        MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].interface_name, -1,
+                            dwParam1, dwParam2 / sizeof(WCHAR));
+        return MMSYSERR_NOERROR;
+    }
+    return MMSYSERR_INVALPARAM;
+}
+
+/**************************************************************************
  * 				wodMessage (WINEJACK.7)
  */
 DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
@@ -1718,6 +1752,8 @@ DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
   case WODM_RESTART:          return wodRestart(wDevID);
   case WODM_RESET:            return wodReset(wDevID);
 
+  case DRV_QUERYDEVICEINTERFACESIZE: return wodDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
+  case DRV_QUERYDEVICEINTERFACE:     return wodDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
   case DRV_QUERYDSOUNDIFACE:	return wodDsCreate(wDevID, (PIDSDRIVER*)dwParam1);
   case DRV_QUERYDSOUNDDESC:	return wodDsDesc(wDevID, (PDSDRIVERDESC)dwParam1);
   case DRV_QUERYDSOUNDGUID:	return wodDsGuid(wDevID, (LPGUID)dwParam1);
@@ -2391,6 +2427,42 @@ static DWORD widReset(WORD wDevID)
 }
 
 /**************************************************************************
+ * 				widGetNumDevs			[internal]
+ */
+static DWORD widGetNumDevs(void)
+{
+  return MAX_WAVEINDRV;
+}
+
+/**************************************************************************
+ *                              widDevInterfaceSize             [internal]
+ */
+static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+{
+    TRACE("(%u, %p)\n", wDevID, dwParam1);
+                                                                                                       
+                                                                                                       
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                                    NULL, 0 ) * sizeof(WCHAR);
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ *                              widDevInterface                 [internal]
+ */
+static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+{
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                                        NULL, 0 ) * sizeof(WCHAR))
+    {
+        MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                            dwParam1, dwParam2 / sizeof(WCHAR));
+        return MMSYSERR_NOERROR;
+    }
+    return MMSYSERR_INVALPARAM;
+}
+
+/**************************************************************************
  * 				widMessage (WINEJACK.6)
  */
 DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
@@ -2412,10 +2484,12 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_PREPARE:		return widPrepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_UNPREPARE:	return widUnprepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSA)dwParam1,	dwParam2);
-    case WIDM_GETNUMDEVS:	return MAX_WAVEINDRV;
+    case WIDM_GETNUMDEVS:	return widGetNumDevs();
     case WIDM_RESET:		return widReset		(wDevID);
     case WIDM_START:		return widStart		(wDevID);
     case WIDM_STOP:		return widStop		(wDevID);
+    case DRV_QUERYDEVICEINTERFACESIZE: return widDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:     return widDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
     default:
 	FIXME("unknown message %d!\n", wMsg);
     }

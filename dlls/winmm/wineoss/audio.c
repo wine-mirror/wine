@@ -150,6 +150,7 @@ typedef struct {
 typedef struct tagOSS_DEVICE {
     char                        dev_name[32];
     char                        mixer_name[32];
+    char                        interface_name[64];
     unsigned                    open_count;
     WAVEOUTCAPSA                out_caps;
     WAVEINCAPSA                 in_caps;
@@ -256,17 +257,17 @@ static DWORD wdDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].dev_name, -1,
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
 
 static DWORD wdDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].dev_name, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].dev_name, -1,
+        MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
 	return MMSYSERR_NOERROR;
     }
@@ -964,6 +965,8 @@ LONG OSS_WaveInit(void)
 	    sprintf((char *)OSS_Devices[i].dev_name, "/dev/dsp%d", i);
 	    sprintf((char *)OSS_Devices[i].mixer_name, "/dev/mixer%d", i);
 	}
+
+        sprintf(OSS_Devices[i].interface_name, "wineoss: %s", OSS_Devices[i].dev_name);
 
 	INIT_GUID(OSS_Devices[i].ds_guid,  0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
 	INIT_GUID(OSS_Devices[i].dsc_guid, 0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);

@@ -149,7 +149,8 @@ typedef struct {
     WAVEOUTCAPSA		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
-    char*                      device;
+    char*                       device;
+    char                        interface_name[64];
     snd_pcm_t*                  p_handle;                 /* handle to ALSA playback device */
     snd_pcm_t*                  c_handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
@@ -195,7 +196,8 @@ typedef struct {
     WAVEOUTCAPSA		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
-    char*                      device;
+    char*                       device;
+    char                        interface_name[64];
     snd_pcm_t*                  p_handle;                 /* handle to ALSA playback device */
     snd_pcm_t*                  c_handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
@@ -581,6 +583,8 @@ LONG ALSA_WaveInit(void)
     wwo->device = ALSA_GetDeviceFromReg("PlaybackDevice");
     TRACE("using waveout device \"%s\"\n", wwo->device);
 
+    snprintf(wwo->interface_name, sizeof(wwo->interface_name), "winealsa: %s", wwo->device);
+
     wwo->caps.wMid = 0x0002;
     wwo->caps.wPid = 0x0104;
     strcpy(wwo->caps.szPname, "SB16 Wave Out");
@@ -693,6 +697,8 @@ LONG ALSA_WaveInit(void)
     /* FIXME: use better values */
     wwi->device = ALSA_GetDeviceFromReg("RecordDevice");
     TRACE("using wavein device \"%s\"\n", wwi->device);
+
+    snprintf(wwi->interface_name, sizeof(wwi->interface_name), "winealsa: %s", wwi->device);
 
     wwi->caps.wMid = 0x0002;
     wwi->caps.wPid = 0x0104;
@@ -2000,7 +2006,7 @@ static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].device, -1,
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
@@ -2010,10 +2016,10 @@ static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
  */
 static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].device, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].device, -1,
+        MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
 	return MMSYSERR_NOERROR;
     }
@@ -3394,6 +3400,33 @@ static	DWORD	widGetNumDevs(void)
 }
 
 /**************************************************************************
+ *                              widDevInterfaceSize             [internal]
+ */
+static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+{
+    TRACE("(%u, %p)\n", wDevID, dwParam1);
+                                                                                                                                             
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                                    NULL, 0 ) * sizeof(WCHAR);
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
+ *                              widDevInterface                 [internal]
+ */
+static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+{
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                                        NULL, 0 ) * sizeof(WCHAR))
+    {
+        MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                            dwParam1, dwParam2 / sizeof(WCHAR));
+        return MMSYSERR_NOERROR;
+    }
+    return MMSYSERR_INVALPARAM;
+}
+
+/**************************************************************************
  * 				widMessage (WINEALSA.@)
  */
 DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
@@ -3420,9 +3453,9 @@ DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WIDM_RESET:		return widReset		(wDevID);
     case WIDM_START: 		return widStart	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
     case WIDM_STOP: 		return widStop	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    /*case DRV_QUERYDEVICEINTERFACESIZE: return wdDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
-    case DRV_QUERYDEVICEINTERFACE:     return wdDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
-    case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
+    case DRV_QUERYDEVICEINTERFACESIZE: return widDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:     return widDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
+    /*case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
     case DRV_QUERYDSOUNDGUID:	return widDsGuid     (wDevID, (LPGUID)dwParam1);*/
     default:
