@@ -1135,7 +1135,10 @@ HANDLE      WINAPI CreateWaitableTimerA(LPSECURITY_ATTRIBUTES,BOOL,LPCSTR);
 HANDLE      WINAPI CreateWaitableTimerW(LPSECURITY_ATTRIBUTES,BOOL,LPCWSTR);
 #define     CreateWaitableTimer WINELIB_NAME_AW(CreateWaitableTimer)
 BOOL        WINAPI DebugActiveProcess(DWORD);
+BOOL        WINAPI DebugActiveProcessStop(DWORD);
 void        WINAPI DebugBreak(void);
+BOOL        WINAPI DebugBreakProcess(HANDLE);
+BOOL        WINAPI DebugSetProcessKillOnExit(BOOL);
 BOOL        WINAPI DeregisterEventSource(HANDLE);
 BOOL        WINAPI DeviceIoControl(HANDLE,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI DisableThreadLibraryCalls(HMODULE);

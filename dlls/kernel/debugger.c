@@ -150,7 +150,7 @@ BOOL WINAPI ContinueDebugEvent(
 /**********************************************************************
  *           DebugActiveProcess   (KERNEL32.@)
  *
- *  Attempts to attach the dugger to a process.
+ *  Attempts to attach the debugger to a process.
  *
  * RETURNS
  *
@@ -163,6 +163,30 @@ BOOL WINAPI DebugActiveProcess(
     SERVER_START_REQ( debug_process )
     {
         req->pid = (void *)pid;
+        req->attach = 1;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/**********************************************************************
+ *           DebugActiveProcessStop   (KERNEL32.@)
+ *
+ *  Attempts to detach the debugger from a process.
+ *
+ * RETURNS
+ *
+ *  True if the debugger was detached from the process.
+ */
+BOOL WINAPI DebugActiveProcessStop(
+    DWORD pid) /* [in] The process to be detached. */
+{
+    BOOL ret;
+    SERVER_START_REQ( debug_process )
+    {
+        req->pid = (void *)pid;
+        req->attach = 0;
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -234,6 +258,32 @@ void WINAPI OutputDebugString16(
 void WINAPI DebugBreak(void)
 {
     DbgBreakPoint();
+}
+
+/***********************************************************************
+ *           DebugBreakProcess   (KERNEL32.@)
+ *
+ *  Raises an exception so that a debugger (if attached)
+ *  can take some action. Same as DebugBreak, but applies to any process.
+ */
+BOOL WINAPI DebugBreakProcess(HANDLE hProc)
+{
+#if 0  /* FIXME: not correct */
+    int res;
+    int pid;
+
+    TRACE("(%08lx)\n", (DWORD)hProc);
+
+    SERVER_START_REQ( get_process_info )
+    {
+        req->handle = hProc;
+        res = wine_server_call_err( req );
+        pid = (int)reply->pid;
+    }
+    SERVER_END_REQ;
+    return !res && kill(pid, SIGINT) == 0;
+#endif
+    return FALSE;
 }
 
 
@@ -309,3 +359,23 @@ void WINAPIV _DebugOutput( void )
     /* Output */
     FIXME("%s %04x %s\n", caller, flags, debugstr_a(MapSL(spec)) );
 }
+
+/***********************************************************************
+ *           DebugSetProcessKillOnExit                    (KERNEL.328)
+ *
+ * Let a debugger decide wether a debuggee will be killed upon debugger
+ * termination
+ */
+BOOL WINAPI DebugSetProcessKillOnExit(BOOL kill)
+{
+    BOOL ret = FALSE;
+
+    SERVER_START_REQ( set_debugger_kill_on_exit )
+    {
+        req->kill_on_exit = kill;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+

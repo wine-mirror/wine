@@ -71,6 +71,8 @@ extern struct thread *create_process( int fd );
 extern struct process *get_process_from_id( void *id );
 extern struct process *get_process_from_handle( handle_t handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );
+extern int debugger_detach( struct process* process, struct thread* debugger );
+
 extern void add_process_thread( struct process *process,
                                 struct thread *thread );
 extern void remove_process_thread( struct process *process,
@@ -80,6 +82,7 @@ extern void resume_process( struct process *process );
 extern void kill_process( struct process *process, struct thread *skip, int exit_code );
 extern void kill_console_processes( struct thread *renderer, int exit_code );
 extern void kill_debugged_processes( struct thread *debugger, int exit_code );
+extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 

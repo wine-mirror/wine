@@ -573,10 +573,24 @@ void kill_debugged_processes( struct thread *debugger, int exit_code )
 }
 
 
+/* detach a debugger from all its debuggees */
+void detach_debugged_processes( struct thread *debugger )
+{
+    struct process *process;
+    for (process = first_process; process; process = process->next)
+    {
+        if (process->debugger == debugger && process->running_threads)
+        {
+            debugger_detach( process, debugger );
+        }
+    }
+}
+
+
 /* get all information about a process */
 static void get_process_info( struct process *process, struct get_process_info_reply *reply )
 {
-    reply->pid              = process;
+    reply->pid              = get_process_id( process );
     reply->debugged         = (process->debugger != 0);
     reply->exit_code        = process->exit_code;
     reply->priority         = process->priority;

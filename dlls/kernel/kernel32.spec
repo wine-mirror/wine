@@ -970,6 +970,11 @@ debug_channels (comm console debugstr dll int resource stress thunk toolhelp
 @ stdcall SetCalendarInfoA(long long long str) SetCalendarInfoA
 @ stdcall SetCalendarInfoW(long long long wstr) SetCalendarInfoW
 
+# XP extensions
+@ stdcall DebugActiveProcessStop(long) DebugActiveProcessStop
+@ stdcall DebugBreakProcess(long) DebugBreakProcess
+@ stdcall DebugSetProcessKillOnExit(long) DebugSetProcessKillOnExit
+
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #

@@ -38,6 +38,7 @@ struct debug_ctx
     struct object        obj;         /* object header */
     struct debug_event  *event_head;  /* head of pending events queue */
     struct debug_event  *event_tail;  /* tail of pending events queue */
+    int                  kill_on_exit;/* kill debuggees on debugger exit ? */
 };
 
 
@@ -422,13 +423,74 @@ static int debugger_attach( struct process *process, struct thread *debugger )
 
     /* we must have been able to attach all threads */
     for (thread = process->thread_list; thread; thread = thread->proc_next)
+    {
         if (!thread->attached)
         {
             resume_process( process );
             goto error;
         }
+    }
 
     if (set_process_debugger( process, debugger )) return 1;
+    resume_process( process );
+    return 0;
+
+ error:
+    set_error( STATUS_ACCESS_DENIED );
+    return 0;
+}
+
+
+/* detach a process from a debugger thread (and resume it ?) */
+int debugger_detach( struct process *process, struct thread *debugger )
+{
+    struct thread *thread;
+    struct debug_event *event;
+    struct debug_ctx *debug_ctx;
+
+    if (!process->debugger || process->debugger != debugger)
+        goto error;  /* not currently debugged, or debugged by another debugger */
+    if (!debugger->debug_ctx ) goto error; /* should be a debugger */
+    /* init should be done, otherwise wouldn't be attached */
+    assert(!process->init_event);
+
+    suspend_process( process );
+    /* send continue indication for all events */
+    debug_ctx = debugger->debug_ctx;
+
+    /* find the event in the queue
+     * FIXME: could loop on process' threads and look the debug_event field */
+    for (event = debug_ctx->event_head; event; event = event->next)
+    {
+        if (event->state != EVENT_QUEUED) continue;
+
+        if (event->sender->process == process)
+        {
+            assert( event->sender->debug_event == event );
+            event->status = DBG_CONTINUE;
+            event->state  = EVENT_CONTINUED;
+            wake_up( &event->obj, 0 );
+            unlink_event( debug_ctx, event );
+            /* from queued debug event */
+            resume_process( process );
+        }
+    }
+
+    /* remove relationships between process and its debugger */
+    process->debugger = NULL;
+    release_object( debugger->debug_ctx );
+    debugger->debug_ctx = NULL;
+
+    /* now detach all the threads */
+    for (thread = process->thread_list; thread; thread = thread->proc_next)
+    {
+        if (thread->attached)
+        {
+            detach_thread( thread, 0 );
+        }
+    }
+
+    /* from this function */
     resume_process( process );
     return 0;
 
@@ -470,6 +532,7 @@ int set_process_debugger( struct process *process, struct thread *debugger )
         if (!(debug_ctx = alloc_object( &debug_ctx_ops, -1 ))) return 0;
         debug_ctx->event_head = NULL;
         debug_ctx->event_tail = NULL;
+        debug_ctx->kill_on_exit = 1;
         debugger->debug_ctx = debug_ctx;
     }
     process->debugger = debugger;
@@ -481,8 +544,15 @@ void debug_exit_thread( struct thread *thread )
 {
     if (thread->debug_ctx)  /* this thread is a debugger */
     {
-        /* kill all debugged processes */
-        kill_debugged_processes( thread, thread->exit_code );
+        if (thread->debug_ctx->kill_on_exit)
+        {
+            /* kill all debugged processes */
+            kill_debugged_processes( thread, thread->exit_code );
+        }
+        else
+        {
+            detach_debugged_processes( thread );
+        }
         release_object( thread->debug_ctx );
         thread->debug_ctx = NULL;
     }
@@ -538,12 +608,17 @@ DECL_HANDLER(continue_debug_event)
 /* Start debugging an existing process */
 DECL_HANDLER(debug_process)
 {
-    struct debug_event_exception data;
     struct process *process = get_process_from_id( req->pid );
     if (!process) return;
 
-    if (debugger_attach( process, current ))
+    if (!req->attach)
     {
+        debugger_detach( process, current );
+    }
+    else if (debugger_attach( process, current ))
+    {
+        struct debug_event_exception data;
+
         generate_startup_debug_events( process, NULL );
         resume_process( process );
 
@@ -621,4 +696,15 @@ DECL_HANDLER(output_debug_string)
     data.unicode = req->unicode;
     data.length  = req->length;
     generate_debug_event( current, OUTPUT_DEBUG_STRING_EVENT, &data );
+}
+
+/* set debugger kill on exit flag */
+DECL_HANDLER(set_debugger_kill_on_exit)
+{
+    if (!current->debug_ctx)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    current->debug_ctx->kill_on_exit = req->kill_on_exit;
 }

@@ -1117,9 +1117,16 @@ enum char_info_mode
 @END
 
 
-/* Start debugging an existing process */
+/* Start/stop debugging an existing process */
 @REQ(debug_process)
     void*        pid;          /* id of the process to debug */
+    int          attach;       /* 1=attaching / 0=detaching from the process */
+@END
+
+
+/* Set debugger kill on exit flag */
+@REQ(set_debugger_kill_on_exit)
+    int          kill_on_exit;  /* 0=detach/1=kill debuggee when debugger dies */
 @END
 
 
