@@ -104,4 +104,5 @@
 {"Belgium",		0x0490, 1252},
 {"Hong Kong",		0x0404, 0},
 {"People's republic of China",	0x0804, 0},
-{"Singapore",		0x0404, 0}
+{"Singapore",		0x0404, 0},
+{"Malaysia",		0x043e, 1252}

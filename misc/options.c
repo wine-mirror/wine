@@ -86,7 +86,7 @@ static const struct option_descr option_table[] =
       "--help,-h        Show this help message" },
     { "language",     0, 1, 1, do_language,
       "--language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv,\n"
-      "                    He,Hr,Hu,It,Ja,Ko,Kw,Nl,No,Pl,Pt,Sk,Sv,Ru,Wa)" },
+      "                    He,Hr,Hu,It,Ja,Ko,Kw,Ms,Nl,No,Pl,Pt,Sk,Sv,Ru,Wa)" },
     { "managed",      0, 0, 0, do_managed,
       "--managed        Allow the window manager to manage created windows" },
     { "synchronous",  0, 0, 1, do_synchronous,

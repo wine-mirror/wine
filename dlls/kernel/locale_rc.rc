@@ -363,6 +363,10 @@ LANG_BEGIN (LANG_GAELIC, SUBLANG_GAELIC_MANX) /* 0x0c3c */
 #include "nls/gdv.nls"
 LANG_END
 
+LANG_BEGIN (LANG_MALAY, SUBLANG_DEFAULT) /* 0x043e */
+#include "nls/msl.nls"
+LANG_END
+
 LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x048f*/
 #include "nls/esperanto.nls"
 LANG_END

@@ -59,6 +59,7 @@ static const language_t languages[] = {
 	{0x0436, 850, 1252, "Afrikaans", "South Africa"},
 /*	{0x0438, 852, 1252, "Faroese", "Faroe Islands"}, FIXME: Not sure about codepages */
 	{0x043C, 437, 1252, "Irish", "Ireland"},
+	{0x043E, 850, 1252, "Malay", "Malaysia"},
 /*	{0x048F,   ?,    ?, "Esperanto", "<none>"},*/
 /*	{0x0804,   ?,    ?, "Chinese (People's replublic of China)", People's republic of China"},*/
 	{0x0807, 850, 1252, "German", "Switzerland"},
