@@ -1741,6 +1741,19 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
     else
         fprintf( outfile, "\tcall " PREFIX "CallTo16Long\n" );
 
+    /* Return to caller (using STDCALL calling convention) */
+    if ( strlen( args ) > 0 )
+        fprintf( outfile, "\tret $%d\n", strlen( args ) * 4 );
+    else
+    {
+        fprintf( outfile, "\tret\n" );
+
+        /* Note: the arg transfer routine must start exactly three bytes
+                 after the return stub, hence the nop's */
+        fprintf( outfile, "\tnop\n" );
+        fprintf( outfile, "\tnop\n" );
+    }
+
     /* 
      * The core routine will call here with registers set up as follows:
      *
@@ -2146,8 +2159,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
  * CallTo16Word and CallTo16Long are used by the 32->16 glue code
  * as described above.  The register functions can be called directly:
  *
- *   extern void CallTo16RegisterShort( const CONTEXT86 *context, int nb_args );
- *   extern void CallTo16RegisterLong ( const CONTEXT86 *context, int nb_args );
+ *   extern void CALLBACK CallTo16RegisterShort( const CONTEXT86 *context, int nb_args );
+ *   extern void CALLBACK CallTo16RegisterLong ( const CONTEXT86 *context, int nb_args );
  *
  * They call to 16-bit code with all registers except SS:SP set up as specified 
  * by the 'context' structure, and SS:SP set to point to the current 16-bit
@@ -2169,9 +2182,9 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     fprintf( outfile, "\t.globl " PREFIX "CallTo16%s\n", name );
     fprintf( outfile, PREFIX "CallTo16%s:\n", name );
 
-    /* Retrieve relay target address */
-    if ( !reg_func )
-        fprintf( outfile, "\tpopl %%eax\n" );
+    /* No relay stub for 'register' functions */
+    if ( reg_func )
+        fprintf( outfile, "\tpushl $0\n" );
 
     /* Function entry sequence */
     fprintf( outfile, "\tpushl %%ebp\n" );
@@ -2195,7 +2208,10 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Move relay target address to %edi */
     if ( !reg_func )
-        fprintf( outfile, "\tmovl %%eax, %%edi\n" );
+    {
+        fprintf( outfile, "\tmovl 4(%%ebp), %%edi\n" );
+        fprintf( outfile, "\taddl $3, %%edi\n" );
+    }
 
     /* Enter Win16 Mutex */
     if ( UsePIC )
@@ -2210,10 +2226,10 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         if ( reg_func )
             fprintf( outfile, "\tpushl $-1\n" );
         else
-            fprintf( outfile, "\tpushl -9(%%edi)\n" );
+            fprintf( outfile, "\tpushl -12(%%edi)\n" );
 
         /* Push the address of the first argument */
-        fprintf( outfile, "\tleal 8(%%ebp),%%eax\n" );
+        fprintf( outfile, "\tleal 12(%%ebp),%%eax\n" );
         fprintf( outfile, "\tpushl %%eax\n" );
 
         if ( UsePIC )
@@ -2286,7 +2302,14 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Function exit sequence */
     fprintf( outfile, "\tpopl %%ebp\n" );
-    fprintf( outfile, "\tret\n" );
+
+    if ( !reg_func )
+        fprintf( outfile, "\tret\n" );   /* return to relay return stub */
+    else
+    {
+        fprintf( outfile, "\taddl $4, %%esp\n" );
+        fprintf( outfile, "\tret $8\n" );
+    }
 
 
     /* Start of the actual CallTo16 routine */

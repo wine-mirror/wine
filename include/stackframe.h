@@ -24,8 +24,9 @@ typedef struct _STACK32FRAME
     DWORD   ecx;            /* 18 */
     DWORD   ebx;            /* 1c */
     DWORD   ebp;            /* 20 saved 32-bit frame pointer */
-    DWORD   retaddr;        /* 24 actual return address */
-    DWORD   args[1];        /* 28 arguments to 16-bit function */
+    DWORD   relay;          /* 24 return address to relay stub */
+    DWORD   retaddr;        /* 28 actual return address */
+    DWORD   args[1];        /* 2c arguments to 16-bit function */
 } STACK32FRAME;
 
   /* 16-bit stack layout after CallFrom16() */

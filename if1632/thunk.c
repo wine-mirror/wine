@@ -26,84 +26,84 @@ DECLARE_DEBUG_CHANNEL(system)
 DECLARE_DEBUG_CHANNEL(thunk)
 
 
-extern LONG CallTo16RegisterShort(const CONTEXT86 *context, INT offset);
-extern LONG CallTo16RegisterLong(const CONTEXT86 *context, INT offset);
+extern LONG CALLBACK CallTo16RegisterShort(const CONTEXT86 *context, INT offset);
+extern LONG CALLBACK CallTo16RegisterLong(const CONTEXT86 *context, INT offset);
 
 /* List of the 16-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto16.S */
 
 /* ### start build ### */
-extern WORD THUNK_CallTo16_word_     (FARPROC16);
-extern LONG THUNK_CallTo16_long_     (FARPROC16);
-extern WORD THUNK_CallTo16_word_w    (FARPROC16,WORD);
-extern WORD THUNK_CallTo16_word_l    (FARPROC16,LONG);
-extern LONG THUNK_CallTo16_long_l    (FARPROC16,LONG);
-extern WORD THUNK_CallTo16_word_ww   (FARPROC16,WORD,WORD);
-extern WORD THUNK_CallTo16_word_wl   (FARPROC16,WORD,LONG);
-extern WORD THUNK_CallTo16_word_ll   (FARPROC16,LONG,LONG);
-extern LONG THUNK_CallTo16_long_ll   (FARPROC16,LONG,LONG);
-extern WORD THUNK_CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
-extern WORD THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
-extern WORD THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
-extern LONG THUNK_CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
-extern LONG THUNK_CallTo16_long_lll  (FARPROC16,LONG,LONG,LONG);
-extern WORD THUNK_CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
-extern WORD THUNK_CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
-extern WORD THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
-extern WORD THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
-extern WORD THUNK_CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
-extern WORD THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern LONG THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern WORD THUNK_CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_llll (FARPROC16,LONG,LONG,LONG,LONG);
-extern WORD THUNK_CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
-extern WORD THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
-extern LONG THUNK_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
-extern WORD THUNK_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
-extern WORD THUNK_CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
-extern WORD THUNK_CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_lllll(FARPROC16,LONG,LONG,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_llllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_lllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG,LONG);
-extern WORD THUNK_CallTo16_word_llwwlll(FARPROC16,LONG,LONG,WORD,WORD,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
-                                            LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_llllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,
-                                            LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_lllllllll(FARPROC16,LONG,LONG,LONG,LONG,
-                                             LONG,LONG,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_llllllllll(FARPROC16,LONG,LONG,LONG,LONG,
-                                              LONG,LONG,LONG,LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_lllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
-                                               LONG,LONG,LONG,LONG,LONG,LONG,
-                                               LONG);
-extern LONG THUNK_CallTo16_long_llllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
-                                                LONG,LONG,LONG,LONG,LONG,LONG,
-                                                LONG,LONG);
-extern LONG THUNK_CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
-                                                LONG,WORD,LONG,LONG,LONG,LONG,
-                                                LONG,WORD);
-extern LONG THUNK_CallTo16_long_lllllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
-                                                 LONG,LONG,LONG,LONG,LONG,LONG,
-                                                 LONG,LONG,LONG);
-extern LONG THUNK_CallTo16_long_llllllllllllll(FARPROC16,LONG,LONG,LONG,
-                                                  LONG,LONG,LONG,LONG,LONG,
-                                                  LONG,LONG,LONG,LONG,LONG,
-                                                  LONG);
-extern LONG THUNK_CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
-                                                  WORD,WORD,LONG,WORD,WORD,
-                                                  WORD,WORD,LONG,LONG,LONG,
-                                                  LONG);
-extern LONG THUNK_CallTo16_long_lllllllllllllll(FARPROC16,LONG,LONG,LONG,
-                                                   LONG,LONG,LONG,LONG,LONG,
-                                                   LONG,LONG,LONG,LONG,LONG,
-                                                   LONG,LONG);
-extern LONG THUNK_CallTo16_long_llllllllllllllll(FARPROC16,LONG,LONG,LONG,
-                                                    LONG,LONG,LONG,LONG,LONG,
-                                                    LONG,LONG,LONG,LONG,LONG,
-                                                    LONG,LONG,LONG);
-extern void THUNK_CallFrom16_p_long_wwwll();
+extern WORD CALLBACK THUNK_CallTo16_word_     (FARPROC16);
+extern LONG CALLBACK THUNK_CallTo16_long_     (FARPROC16);
+extern WORD CALLBACK THUNK_CallTo16_word_w    (FARPROC16,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_l    (FARPROC16,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_l    (FARPROC16,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_ww   (FARPROC16,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_wl   (FARPROC16,WORD,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_ll   (FARPROC16,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_ll   (FARPROC16,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_www  (FARPROC16,WORD,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_wwl  (FARPROC16,WORD,WORD,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_wlw  (FARPROC16,WORD,LONG,WORD);
+extern LONG CALLBACK THUNK_CallTo16_long_wwl  (FARPROC16,WORD,WORD,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lll  (FARPROC16,LONG,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_llwl (FARPROC16,LONG,LONG,WORD,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_lwll (FARPROC16,LONG,WORD,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_wwll (FARPROC16,WORD,WORD,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_llll (FARPROC16,LONG,LONG,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_wllwl(FARPROC16,WORD,LONG,LONG,WORD,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
+extern LONG CALLBACK THUNK_CallTo16_long_lwwll(FARPROC16,LONG,WORD,WORD,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
+extern WORD CALLBACK THUNK_CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lllll(FARPROC16,LONG,LONG,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_llllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG,LONG);
+extern WORD CALLBACK THUNK_CallTo16_word_llwwlll(FARPROC16,LONG,LONG,WORD,WORD,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
+                                                  LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_llllllll(FARPROC16,LONG,LONG,LONG,LONG,LONG,
+                                                  LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+                                                   LONG,LONG,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_llllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+                                                    LONG,LONG,LONG,LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+                                                     LONG,LONG,LONG,LONG,LONG,LONG,
+                                                     LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_llllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+                                                      LONG,LONG,LONG,LONG,LONG,LONG,
+                                                      LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
+                                                      LONG,WORD,LONG,LONG,LONG,LONG,
+                                                      LONG,WORD);
+extern LONG CALLBACK THUNK_CallTo16_long_lllllllllllll(FARPROC16,LONG,LONG,LONG,LONG,
+                                                       LONG,LONG,LONG,LONG,LONG,LONG,
+                                                       LONG,LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_llllllllllllll(FARPROC16,LONG,LONG,LONG,
+                                                        LONG,LONG,LONG,LONG,LONG,
+                                                        LONG,LONG,LONG,LONG,LONG,
+                                                        LONG);
+extern LONG CALLBACK THUNK_CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
+                                                        WORD,WORD,LONG,WORD,WORD,
+                                                        WORD,WORD,LONG,LONG,LONG,
+                                                        LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_lllllllllllllll(FARPROC16,LONG,LONG,LONG,
+                                                         LONG,LONG,LONG,LONG,LONG,
+                                                         LONG,LONG,LONG,LONG,LONG,
+                                                         LONG,LONG);
+extern LONG CALLBACK THUNK_CallTo16_long_llllllllllllllll(FARPROC16,LONG,LONG,LONG,
+                                                          LONG,LONG,LONG,LONG,LONG,
+                                                          LONG,LONG,LONG,LONG,LONG,
+                                                          LONG,LONG,LONG);
+extern void CALLBACK THUNK_CallFrom16_p_long_wwwll();
 /* ### stop build ### */
 
 

@@ -20,53 +20,53 @@ extern int (*IF1632_CallLargeStack)( int (*func)(void), void *arg );
 
 typedef struct
 {
-    LONG (*CallRegisterShortProc)( CONTEXT86 *, INT );
-    LONG (*CallRegisterLongProc)( CONTEXT86 *, INT );
-    VOID (*CallFrom16WndProc)(void);
-    LRESULT (*CallWndProc)( WNDPROC16, HWND16, UINT16,
+    LONG (CALLBACK *CallRegisterShortProc)( CONTEXT86 *, INT );
+    LONG (CALLBACK *CallRegisterLongProc)( CONTEXT86 *, INT );
+    VOID (CALLBACK *CallFrom16WndProc)(void);
+    LRESULT (CALLBACK *CallWndProc)( WNDPROC16, HWND16, UINT16,
                                      WPARAM16, LPARAM );
-    LRESULT (*CallDriverProc)( DRIVERPROC16, DWORD, HDRVR16,
+    LRESULT (CALLBACK *CallDriverProc)( DRIVERPROC16, DWORD, HDRVR16,
                                         UINT16, LPARAM, LPARAM );
-    LRESULT (*CallDriverCallback)( FARPROC16, HANDLE16, UINT16,
+    LRESULT (CALLBACK *CallDriverCallback)( FARPROC16, HANDLE16, UINT16,
                                             DWORD, LPARAM, LPARAM );
-    LRESULT (*CallTimeFuncProc)( FARPROC16, WORD, UINT16,
+    LRESULT (CALLBACK *CallTimeFuncProc)( FARPROC16, WORD, UINT16,
                                           DWORD, LPARAM, LPARAM );
-    INT16 (*CallWindowsExitProc)( FARPROC16, INT16 );
-    INT16 (*CallWordBreakProc)( EDITWORDBREAKPROC16, SEGPTR, INT16,
+    INT16 (CALLBACK *CallWindowsExitProc)( FARPROC16, INT16 );
+    INT16 (CALLBACK *CallWordBreakProc)( EDITWORDBREAKPROC16, SEGPTR, INT16,
                                          INT16, INT16 );
-    VOID (*CallBootAppProc)( FARPROC16, HANDLE16, HFILE16 );
-    WORD (*CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
-    WORD (*CallLocalNotifyFunc)( FARPROC16, WORD, HLOCAL16, WORD );
-    HGLOBAL16 (*CallResourceHandlerProc)( FARPROC16, HGLOBAL16, HMODULE16, HRSRC16 );
-    DWORD (*CallWOWCallbackProc)( FARPROC16, DWORD );
-    BOOL (*CallWOWCallback16Ex)( FARPROC16, DWORD, DWORD, LPVOID, 
+    VOID (CALLBACK *CallBootAppProc)( FARPROC16, HANDLE16, HFILE16 );
+    WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
+    WORD (CALLBACK *CallLocalNotifyFunc)( FARPROC16, WORD, HLOCAL16, WORD );
+    HGLOBAL16 (CALLBACK *CallResourceHandlerProc)( FARPROC16, HGLOBAL16, HMODULE16, HRSRC16 );
+    DWORD (CALLBACK *CallWOWCallbackProc)( FARPROC16, DWORD );
+    BOOL (CALLBACK *CallWOWCallback16Ex)( FARPROC16, DWORD, DWORD, LPVOID, 
                                             LPDWORD );
-    DWORD (*CallUTProc)( FARPROC16, DWORD, DWORD );
-    LRESULT (*CallASPIPostProc)( FARPROC16, SEGPTR );
+    DWORD (CALLBACK *CallUTProc)( FARPROC16, DWORD, DWORD );
+    LRESULT (CALLBACK *CallASPIPostProc)( FARPROC16, SEGPTR );
     /* Following are the graphics driver callbacks */
-    WORD (*CallDrvControlProc)( FARPROC16, SEGPTR, WORD,
+    WORD (CALLBACK *CallDrvControlProc)( FARPROC16, SEGPTR, WORD,
                                          SEGPTR, SEGPTR );
-    WORD (*CallDrvEnableProc)( FARPROC16, SEGPTR, WORD, SEGPTR,
+    WORD (CALLBACK *CallDrvEnableProc)( FARPROC16, SEGPTR, WORD, SEGPTR,
                                         SEGPTR, SEGPTR );
-    WORD (*CallDrvEnumDFontsProc)( FARPROC16, SEGPTR, SEGPTR,
+    WORD (CALLBACK *CallDrvEnumDFontsProc)( FARPROC16, SEGPTR, SEGPTR,
                                             FARPROC16, SEGPTR );
-    WORD (*CallDrvEnumObjProc)( FARPROC16, SEGPTR, WORD, FARPROC16,
+    WORD (CALLBACK *CallDrvEnumObjProc)( FARPROC16, SEGPTR, WORD, FARPROC16,
                                          SEGPTR );
-    WORD (*CallDrvOutputProc)( FARPROC16, SEGPTR, WORD, WORD, SEGPTR,
+    WORD (CALLBACK *CallDrvOutputProc)( FARPROC16, SEGPTR, WORD, WORD, SEGPTR,
                                         SEGPTR, SEGPTR, SEGPTR, SEGPTR );
-    DWORD (*CallDrvRealizeProc)( FARPROC16, SEGPTR, WORD, SEGPTR,
+    DWORD (CALLBACK *CallDrvRealizeProc)( FARPROC16, SEGPTR, WORD, SEGPTR,
                                           SEGPTR, SEGPTR );
-    WORD (*CallDrvStretchBltProc)( FARPROC16, SEGPTR, WORD, WORD,
+    WORD (CALLBACK *CallDrvStretchBltProc)( FARPROC16, SEGPTR, WORD, WORD,
                                             WORD, WORD, SEGPTR, WORD, WORD,
                                             WORD, WORD, DWORD, SEGPTR, SEGPTR,
                                             SEGPTR );
-    DWORD (*CallDrvExtTextOutProc)( FARPROC16, SEGPTR, WORD, WORD,
+    DWORD (CALLBACK *CallDrvExtTextOutProc)( FARPROC16, SEGPTR, WORD, WORD,
                                              SEGPTR, SEGPTR, INT16, SEGPTR,
                                              SEGPTR, SEGPTR, SEGPTR, SEGPTR,
                                              WORD );
-    WORD (*CallDrvGetCharWidthProc)( FARPROC16, SEGPTR, SEGPTR, WORD,
+    WORD (CALLBACK *CallDrvGetCharWidthProc)( FARPROC16, SEGPTR, SEGPTR, WORD,
 					      WORD, SEGPTR, SEGPTR, SEGPTR );
-    BOOL16 (*CallDrvAbortProc)( FARPROC16, HDC16, INT16 );
+    BOOL16 (CALLBACK *CallDrvAbortProc)( FARPROC16, HDC16, INT16 );
 } CALLBACKS_TABLE;
 
 extern const CALLBACKS_TABLE *Callbacks;
