@@ -730,6 +730,7 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     }
 
     /* Check hwndInsertAfter */
+    if (winpos->flags & SWP_NOZORDER) goto done;
 
     /* fix sign extension */
     if (winpos->hwndInsertAfter == (HWND)0xffff) winpos->hwndInsertAfter = HWND_TOPMOST;
