@@ -998,9 +998,6 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    lpRect->top += infoPtr->nButtonSize;
 	if (infoPtr->BRbtnState && (lpRect->bottom - infoPtr->nButtonSize > lpRect->top))
 	    lpRect->bottom -= infoPtr->nButtonSize;
-	/* ???? */
-	if ((lpRect->bottom < 0) || (lpRect->bottom > infoPtr->nHeight))
-	    lpRect->bottom = infoPtr->nHeight;
     }
 
     TRACE("[%p] client rect set to %ldx%ld at (%ld,%ld) BtnState[%d,%d]\n",
