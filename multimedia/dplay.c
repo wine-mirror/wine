@@ -15,7 +15,6 @@
 #include "dplay.h"
 
 #include "thread.h"
-#include <sys/queue.h>
 
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
 #define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)

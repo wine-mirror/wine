@@ -4,8 +4,12 @@
  * Copyright 1998 Ove Kåven
  */
 
-#ifdef linux
+#ifndef __WINE_DOSEXE_H
+#define __WINE_DOSEXE_H
 
+#include <sys/types.h>
+#include "windows.h"
+#include "winnt.h"
 #include "wintypes.h"
 
 typedef struct _DOSTASK {
@@ -22,10 +26,14 @@ typedef struct _DOSTASK {
  pid_t task;
 } DOSTASK, *LPDOSTASK;
 
+#ifdef linux
+
 #define MZ_SUPPORTED
 
+struct _NE_MODULE;
+
 extern int MZ_InitTask( LPDOSTASK lpDosTask );
-extern int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule );
+extern int MZ_InitMemory( LPDOSTASK lpDosTask, struct _NE_MODULE *pModule );
 extern void MZ_KillModule( LPDOSTASK lpDosTask );
 
 #endif /* linux */
@@ -33,3 +41,5 @@ extern void MZ_KillModule( LPDOSTASK lpDosTask );
 extern HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
                                      LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info );
 extern int DOSVM_Enter( PCONTEXT context );
+
+#endif /* __WINE_DOSEXE_H */
