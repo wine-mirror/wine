@@ -437,6 +437,32 @@ HEADER_SendSimpleNotify (HWND hwnd, UINT code)
 				   (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
 }
 
+static BOOL
+HEADER_SendItemChange(HWND hwnd, INT iItem, UINT mask, UINT msg)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    NMHEADERA nmhdr;
+    HDITEMA nmitem;
+
+    nmhdr.hdr.hwndFrom = hwnd;
+    nmhdr.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
+    nmhdr.hdr.code = msg;
+    nmhdr.iItem = iItem;
+    nmhdr.iButton = 0;
+    nmhdr.pitem = &nmitem;
+    nmitem.mask = mask;
+    nmitem.cxy = infoPtr->items[iItem].cxy;
+    nmitem.hbm = infoPtr->items[iItem].hbm;
+    nmitem.pszText = NULL;
+    nmitem.cchTextMax = 0;
+    nmitem.fmt = infoPtr->items[iItem].fmt;
+    nmitem.lParam = infoPtr->items[iItem].lParam;
+    nmitem.iOrder = infoPtr->items[iItem].iOrder;
+    nmitem.iImage = infoPtr->items[iItem].iImage;
+
+    return (BOOL)SendMessageA (GetParent (hwnd), WM_NOTIFY,
+			       (WPARAM)nmhdr.hdr.idFrom, (LPARAM)&nmhdr);
+}
 
 static BOOL
 HEADER_SendHeaderNotify (HWND hwnd, UINT code, INT iItem)
@@ -934,7 +960,7 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TRACE("[nItem=%d]\n", nItem);
 
-    if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, nItem))
+    if (HEADER_SendItemChange(hwnd, nItem, phdi->mask,HDN_ITEMCHANGINGA))
 	return FALSE;
 
     lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
@@ -972,7 +998,7 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_ORDER)
 	lpItem->iOrder = phdi->iOrder;
 
-    HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA, nItem);
+    HEADER_SendItemChange(hwnd,nItem,phdi->mask,HDN_ITEMCHANGEDA);    
 
     HEADER_SetItemBounds (hwnd);
 
@@ -997,7 +1023,7 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TRACE("[nItem=%d]\n", nItem);
 
-    if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, nItem))
+    if (HEADER_SendItemChange(hwnd,nItem,phdi->mask,HDN_ITEMCHANGINGW))
 	return FALSE;
 
     lpItem = (HEADER_ITEM*)&infoPtr->items[nItem];
@@ -1035,7 +1061,7 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (phdi->mask & HDI_ORDER)
 	lpItem->iOrder = phdi->iOrder;
 
-    HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA, nItem);
+    HEADER_SendItemChange(hwnd, nItem, phdi->mask,HDN_ITEMCHANGEDW);
 
     HEADER_SetItemBounds (hwnd);
 
@@ -1208,7 +1234,9 @@ static LRESULT
 HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+    /*
+     *DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+     */
     POINT pt;
     UINT  flags;
     INT   nItem, nWidth;
@@ -1236,23 +1264,33 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	HEADER_SendHeaderNotify (hwnd, HDN_ENDTRACKA, infoPtr->iMoveItem);
 
-	if (!(dwStyle & HDS_FULLDRAG)) {
+         /*
+          * we want to do this even for HDS_FULLDRAG because this is where
+          * we send the HDN_ITEMCHANGING and HDN_ITEMCHANGED notifications
+          *
+          * if (!(dwStyle & HDS_FULLDRAG)) {
+          */
+
 	    hdc = GetDC (hwnd);
 	    HEADER_DrawTrackLine (hwnd, hdc, infoPtr->xOldTrack);
-	    ReleaseDC (hwnd, hdc);
-	    if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, infoPtr->iMoveItem))
+            ReleaseDC (hwnd, hdc);
+            if (HEADER_SendItemChange(hwnd, infoPtr->iMoveItem,HDI_WIDTH,
+                                      HDN_ITEMCHANGINGA))
 		infoPtr->items[infoPtr->iMoveItem].cxy = infoPtr->nOldWidth;
 	    else {
 		nWidth = pt.x - infoPtr->items[infoPtr->iMoveItem].rect.left + infoPtr->xTrackOffset;
 		if (nWidth < 0)
 		    nWidth = 0;
 		infoPtr->items[infoPtr->iMoveItem].cxy = nWidth;
-		HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA, infoPtr->iMoveItem);
-	    }
+            }
 
+            HEADER_SendItemChange(hwnd,infoPtr->iMoveItem,HDI_WIDTH,
+                                  HDN_ITEMCHANGEDA);
 	    HEADER_SetItemBounds (hwnd);
 	    InvalidateRect(hwnd, NULL, FALSE);
-	}
+       /*     
+	* }
+        */
     }
 
     if (infoPtr->bCaptured) {
@@ -1301,16 +1339,27 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 	else if (infoPtr->bTracking) {
 	    if (dwStyle & HDS_FULLDRAG) {
-		if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, infoPtr->iMoveItem))
-		    infoPtr->items[infoPtr->iMoveItem].cxy = infoPtr->nOldWidth;
-		else {
-		    nWidth = pt.x - infoPtr->items[infoPtr->iMoveItem].rect.left + infoPtr->xTrackOffset;
-		    if (nWidth < 0)
-			nWidth = 0;
-		    infoPtr->items[infoPtr->iMoveItem].cxy = nWidth;
-		    HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA,
-					     infoPtr->iMoveItem);
-		}
+                /*
+                 * Investigation shows that the changing message occure only
+                 * after tracking is done
+                 *
+		 *if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, infoPtr->iMoveItem))
+		 *  infoPtr->items[infoPtr->iMoveItem].cxy = infoPtr->nOldWidth;
+		 *else {
+                 *
+                 */
+		nWidth = pt.x - infoPtr->items[infoPtr->iMoveItem].rect.left + infoPtr->xTrackOffset;
+		if (nWidth < 0)
+		  nWidth = 0;
+		infoPtr->items[infoPtr->iMoveItem].cxy = nWidth;
+	        /* 
+                 * Invistigation shows that the item changed only occures
+                 * after the tracking is done
+                 *
+ 		 * HEADER_SendItemChanged(FALSE,hwnd,infoPtr->iMoveItem,HDI_WIDTH);
+                 *}
+                 */
+		
 		HEADER_SetItemBounds (hwnd);
 		InvalidateRect(hwnd, NULL, FALSE);
 	    }
