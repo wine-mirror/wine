@@ -1112,57 +1112,12 @@ DECL_WINELIB_TYPE_AW(OSVERSIONINFO)
 #define VER_PLATFORM_WIN32_WINDOWS      1
 #define VER_PLATFORM_WIN32_NT           2
 
-typedef struct tagCOMSTAT16
-{
-    BYTE   status;
-    UINT16 cbInQue WINE_PACKED;
-    UINT16 cbOutQue WINE_PACKED;
-} COMSTAT16,*LPCOMSTAT16;
-
 typedef struct tagCOMSTAT
 {
     DWORD status;
     DWORD cbInQue;
     DWORD cbOutQue;
 } COMSTAT,*LPCOMSTAT;
-
-typedef struct tagDCB16
-{
-    BYTE   Id;
-    UINT16 BaudRate WINE_PACKED;
-    BYTE   ByteSize;
-    BYTE   Parity;
-    BYTE   StopBits;
-    UINT16 RlsTimeout;
-    UINT16 CtsTimeout;
-    UINT16 DsrTimeout;
-
-    unsigned fBinary        :1;
-    unsigned fRtsDisable    :1;
-    unsigned fParity        :1;
-    unsigned fOutxCtsFlow   :1;
-    unsigned fOutxDsrFlow   :1;
-    unsigned fDummy         :2;
-    unsigned fDtrDisable    :1;
-
-    unsigned fOutX          :1;
-    unsigned fInX           :1;
-    unsigned fPeChar        :1;
-    unsigned fNull          :1;
-    unsigned fChEvt         :1;
-    unsigned fDtrflow       :1;
-    unsigned fRtsflow       :1;
-    unsigned fDummy2        :1;
-
-    CHAR   XonChar;
-    CHAR   XoffChar;
-    UINT16 XonLim;
-    UINT16 XoffLim;
-    CHAR   PeChar;
-    CHAR   EofChar;
-    CHAR   EvtChar;
-    UINT16 TxDelay WINE_PACKED;
-} DCB16, *LPDCB16;
 
 typedef struct tagDCB
 {
@@ -1233,6 +1188,7 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW*);
 
 void      WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
+BOOL      WINAPI TryEnterCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
