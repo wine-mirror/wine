@@ -453,7 +453,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
               pModule->self,hFile16);
         NE_CallTo16_word_ww(selfloadheader->BootApp, pModule->self,hFile16);
 	TRACE_(dll)("Return from CallBootAppProc\n");
-        _lclose16(hf);
+        _lclose16(hFile16);
         NtCurrentTeb()->cur_stack = oldstack;
 
         for (i = 2; i <= pModule->seg_count; i++)
