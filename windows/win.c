@@ -2029,8 +2029,8 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 		goto end;
 	case GWL_STYLE:
 	       	style.styleOld = wndPtr->dwStyle;
-		newval &= ~(WS_VISIBLE | WS_CHILD);	/* Some bits can't be changed this way */
-		style.styleNew = newval | (style.styleOld & (WS_VISIBLE | WS_CHILD));
+		newval &= ~(WS_CHILD);	/* this bit can't be changed this way */
+		style.styleNew = newval | (style.styleOld & (WS_CHILD));
 
 		if (wndPtr->flags & WIN_ISWIN32)
 			SendMessageA(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
