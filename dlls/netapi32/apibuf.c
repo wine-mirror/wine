@@ -62,7 +62,10 @@ NET_API_STATUS WINAPI NetApiBufferReallocate(LPVOID OldBuffer, DWORD NewByteCoun
     TRACE("(%p, %ld, %p)\n", OldBuffer, NewByteCount, NewBuffer);
     if (NewByteCount) 
     {
-	*NewBuffer = HeapReAlloc(GetProcessHeap(), 0, OldBuffer, NewByteCount);
+        if (OldBuffer)
+            *NewBuffer = HeapReAlloc(GetProcessHeap(), 0, OldBuffer, NewByteCount);
+        else
+            *NewBuffer = HeapAlloc(GetProcessHeap(), 0, NewByteCount);
 	return *NewBuffer ? NERR_Success : GetLastError();
     } 
     else 
