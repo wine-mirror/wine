@@ -144,7 +144,7 @@
         contexts, if you want to prevent the screen to flicker when
         using OpenGL applications (all games are using double-buffered
         contexts), you need to set the following option in your
-        <filename>.winerc</filename> / <filename>wine.ini</filename>
+        <filename>~/.wine/config</filename> file
         in the [x11drv] section :
       </para>
       <programlisting>

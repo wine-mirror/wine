@@ -66,7 +66,7 @@
           </listitem>
           <listitem>
             <para>
-              Edit the <filename>wine.conf</filename> file to remove
+              Edit the <filename>~/.wine/config</filename> file to remove
               aliases for the fonts you've just installed.
             </para>
           </listitem>
@@ -112,7 +112,7 @@ STUB: AddFontResource( SOMEFILE.FON )
       </sect2>
 
       <sect2>
-        <title>How To Add Font Aliases To <filename>wine.conf</filename></title>
+        <title>How To Add Font Aliases To <filename>~/.wine/config</filename></title>
         <para>
           Many Windows applications assume that fonts included in
           original Windows 3.1  distribution are always present. By
@@ -331,7 +331,7 @@ Default = -adobe-times-
           WINE stores detailed information about available fonts in
           the <filename>~/.wine/.cachedmetrics</filename> file. You
           can copy it elsewhere and add this entry to the [fonts]
-          section  in your <filename>wine.conf</filename>:
+          section  in your <filename>~/.wine/config</filename>:
         </para>
         <screen>
 FontMetrics = &lt;file with metrics&gt;

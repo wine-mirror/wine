@@ -26,7 +26,6 @@
 Usage: ./wine [options] program_name [arguments]
 
 Options:
-   --config name    Specify config file to use
    --debugmsg name  Turn debugging-messages on or off
    --desktop geom   Use a desktop window of the given geometry
    --display name   Use the specified display
@@ -49,12 +48,7 @@ Options:
         up with a sensible set of defaults; in this case, you can run
         <command>wine</command> without explicitly listing any
         options.  In rare cases, you might want to override certain
-        parameters on the command line.  If you find yourself using
-        the same long set of command options with certain
-        applications, you might find it easier to work with multiple
-        config files, using the <link
-        linkend="config-parameter"><parameter>--config</parameter>
-        parameter</link> to specify a non-default configuration.
+        parameters on the command line.  
       </para>
       <para>
         After the options, you should put the name of the file you
@@ -108,25 +102,6 @@ Options:
     <sect1 id="command-line-options">
       <title>Command-Line Options</title>
       <sect2 id="config-parameter">
-        <title>--config</title>
-        <para>
-          The <parameter>--config</parameter> parameter allows you to
-          specify which configuration file you want to use for the
-          current invocation of <command>wine</command>.  For example,
-          if you like to run a specific application or set of
-          applications with a different array of options than your
-          normal defaults, you might set up a different config file
-          for them, and use the <parameter>--config</parameter> option
-          to make use of it.
-        </para>
-        <para>
-          The default value of <parameter>--config</parameter> is
-          <filename>~/.winerc</filename>.  This value is hardwired
-          into the Wine source code.  In future versions of Wine, the
-          default may change to <filename>~/.wine/conf</filename>.
-        </para>
-      </sect2>
-
       <sect2>
         <title>--debugmsg [channels]</title>
         <para>

@@ -361,7 +361,7 @@ die folgenden Programme und Dateien installiert sein:
    gültige Konfigurationsdatei oder über eine benutzerspezifische
    Datei im Heimatverzeichnis des betreffenden Benutzers konfiguriert
    werden.  Die benutzerspezifische Konfigurationsdatei trägt den
-   Namen .winerc.  Wenn diese Datei existiert, wird die systemweit
+   Namen ~/.wine/config.  Wenn diese Datei existiert, wird die systemweit
    gültige Konfigurationsdatei (standardmäßig
    /usr/local/etc/wine.conf) nicht beachtet und es werden alle
    Einstellungen aus der Konfigurationsdatei des betreffenden
@@ -410,7 +410,7 @@ die folgenden Programme und Dateien installiert sein:
    diese Vorlage durch den folgenden Befehl an den richtigen Platz
    kopiert werden:
    
-   cp ~/wine/wine.ini ~/.winerc
+   cp ~/wine/documentation/samples/config ~/.wine/config
    
    Die Werte, welche Variablen in der Konfigurationsdatei zugewiesen
    werden, lassen sich in drei Typen einteilen: Zeichenketten, Zahlen
@@ -439,7 +439,7 @@ die folgenden Programme und Dateien installiert sein:
    Weil Programme, die für DOS oder Windows geschrieben sind,
    Laufwerksbuchstaben verwenden, um Dateien zu bezeichnen, muss WINE
    diese Buchstaben auf das UNIX-Dateisystem abbilden. Das Problem ist
-   auf die folgende Art gelöst: In der Konfigurationsdatei (.winerc
+   auf die folgende Art gelöst: In der Konfigurationsdatei (~/.wine/config
    oder /usr/local/etc/wine.conf) wird jedem Laufwerksbuchstaben ein
    Verzeichnis im UNIX-Dateisystem zugeordnet. Dieses Verzeichnis
    stellt dann (aus Sicht der Windows-Programme) das Basisverzeichnis
@@ -892,8 +892,8 @@ die folgenden Programme und Dateien installiert sein:
    WINE-Versionen oder den Windows-Versionen dieser Bibliotheken
    funktioniert. 
 
-   In der Datei .winerc bzw. wine.conf gibt es zwei Abschnitte mit
-   denen bestimmt wird, welche Bibliotheken aus einer
+   In der Datei ~/.wine/config bzw. wine.conf gibt es zwei Abschnitte
+   mit denen bestimmt wird, welche Bibliotheken aus einer
    Windows-Installation geladen werden sollen. Darüberhinaus können
    diese Einstellungen beim Aufruf von WINE an der Kommandozeile
    überschrieben werden. Im allgemeinen empfiehlt es sich, die
@@ -1222,7 +1222,7 @@ die folgenden Programme und Dateien installiert sein:
    
     7.6.3 Font-Einstellungen in der WINEs Konfigurationsdatei
     
-   In der Konfigurationsdatei .winerc bzw. wine.conf stehen die
+   In der Konfigurationsdatei ~/.wine/config bzw. wine.conf stehen die
    folgenden Variablen zur Verfügung, mit denen WINEs Umgang mit
    Schriftarten beeinflusst werden kann:
    

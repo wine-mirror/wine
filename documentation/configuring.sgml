@@ -50,7 +50,7 @@
         <para>
           This section will guide you through the process of making a
           config file. Take a look at the file <filename>&lt;dirs to
-          wine>/wine.ini</filename>. It is organized by section.
+          wine>/documentation/samples/config</filename>. It is organized by section.
         </para>
 
         <informaltable frame="all">
@@ -167,7 +167,7 @@
           </para>
           <para>
             <programlisting>
-Type=floppy|hd|cdrom|network &lt;--- the |'s mean Type=&lt;one of the options>
+"Type" = "floppy|hd|cdrom|network" &lt;--- the |'s mean "Type = "&lt;one of the options>"
             </programlisting>
           </para>
           <para>
@@ -177,20 +177,20 @@ Type=floppy|hd|cdrom|network &lt;--- the |'s mean Type=&lt;one of the options>
             <literal>network</literal>. They are self-explanatory.
           </para>
           <para>
-            <programlisting>Label=blah</programlisting> Defines the
+            <programlisting>"Label" = "blah"</programlisting> Defines the
             drive label. Generally only needed for programs that look
             for a special CD-ROM. Info on finding the lable is in
             <literal>&lt;dirs to wine>/documentation/cdrom-labels</literal>.
             The label may be up to 11 characters.
           </para>
           <para>
-            <programlisting>Serial=deadbeef</programlisting>
+            <programlisting>"Serial" = "deadbeef"</programlisting>
             Tells Wine the serial number of the drive. A few programs with
             intense protection for pirating might need this, but otherwise
             don't use it. Up to 8 characters and hexadecimal.
           </para>
           <para>
-            <programlisting>Filesystem=msdos|win95|unix</programlisting>
+            <programlisting>"Filesystem" = "msdos|win95|unix"</programlisting>
             Sets up the way Wine looks at files on the drive.
           </para>
 
@@ -235,7 +235,7 @@ Type=floppy|hd|cdrom|network &lt;--- the |'s mean Type=&lt;one of the options>
             </varlistentry>
           </variablelist>
 
-          <programlisting>Device=/dev/xx</programlisting>
+          <programlisting>"Device" = "/dev/xx"</programlisting>
           <para>
             Use this ONLY for floppy and cdrom devices. Using it on
             Extended2 partitions can have dire results (when a windows
@@ -256,25 +256,25 @@ Type=floppy|hd|cdrom|network &lt;--- the |'s mean Type=&lt;one of the options>
             Here is a setup for Drive X, a generic hard drive:
             <programlisting>
 [Drive X]
-Path=/dos-a
-Type=hd
-Label=Hard Drive
-Filesystem=win95
+"Path" = "/dos-a"
+"Type" = "hd"
+"Label" = "Hard Drive"
+"Filesystem" = "win95"
 This is a setup for Drive X, a generic CD-ROM drive:
 [Drive X]
-Path=/dos-d
-Type=cdrom
-Label=Total Annihilation
-Filesystem=win95
-Device=/dev/hdc
+"Path" = "/dos-d"
+"Type" = "cdrom"
+"Label" = "Total Annihilation"
+"Filesystem" = "win95"
+"Device" = "/dev/hdc"
 And here is a setup for Drive X, a generic floppy drive:
 [Drive X]
-Type=floppy
-Path=/mnt/floppy
-Label=Floppy Drive
-Serial=87654321
-Filesystem=win95
-Device=/dev/fd0
+"Type" = "floppy"
+"Path" = "/mnt/floppy"
+"Label" = "Floppy Drive"
+"Serial" = "87654321"
+"Filesystem" = "win95"
+"Device" = "/dev/fd0"
             </programlisting>
           </para>
         </sect3>
@@ -289,15 +289,15 @@ Device=/dev/fd0
             has a path of <filename>/dos</filename>, and your
             <filename>windows</filename> directory is located in
             <filename>/dos/windows</filename>, then use:
-            <programlisting>Windows=c:\windows</programlisting>
+            <programlisting>"Windows" = "c:\\windows"</programlisting>
           </para>
           <para>
             This sets up the <filename>windows</filename> directory.
             Make one if you don't already have one. NO TRAILING SLASH
-            (NOT <filename>C:\windows\</filename>)!
+            (NOT <filename>C:\\windows\</filename>)!
           </para>
           <para>
-            <programlisting>System=c:\windows\system</programlisting>
+            <programlisting>"System" = "c:\\windows\\system"</programlisting>
             This sets up where the windows system files are. Should
             reside in the directory used for the
             <literal>Windows</literal> setting. If you don't have
@@ -305,13 +305,13 @@ Device=/dev/fd0
             files will go. Again, NO TRAILING SLASH!
           </para>
           <para>
-            <programlisting>Temp=c:\temp</programlisting> This should
+            <programlisting>"Temp" = "c:\\temp"</programlisting> This should
             be the directory you want your temp files stored in. YOU
             MUST HAVE WRITE ACCESS TO IT.
           </para>
           <para>
             <programlisting>
-Path=c:\windows;c:\windows\system;c:\blanco
+"Path" = "c:\\windows;c:\\windows\\system;c:\\blanco"
             </programlisting>
           </para>
           <para>
@@ -324,21 +324,21 @@ Path=c:\windows;c:\windows\system;c:\blanco
             current directory, wine will run that one). Make sure it
             always has your <filename>windows</filename> directory and
             system directory (For this setup, it must have
-            <filename>c:\windows;c:\windows\system</filename>).
+            <filename>"c:\\windows;c:\\windows\\system"</filename>).
           </para>
           <para>
-            <programlisting>SymbolTableFile=wine.sym</programlisting>
+            <programlisting>"SymbolTableFile" = "wine.sym"</programlisting>
             Sets up the symbol table file for the wine debugger. You
             probably don't need to fiddle with this. May be useful if
             your wine is stripped.
           </para>
           <para>
-            <programlisting>printer=off|on</programlisting> Tells wine
+            <programlisting>"printer" = "off|on"</programlisting> Tells wine
             whether to allow printer drivers and printing to work.
             Using these things are pretty alpha, so you might want to
             watch out. Some people might find it useful, however. If
             you're not planning on working on printing, don't even add
-            this to your <filename>wine.ini</filename> (It probably
+            this to your <filename>~/.wine/config</filename> (It probably
             isn't already in it). Check out the [spooler] and
             [parallelports] sections too.
           </para>
@@ -462,14 +462,7 @@ Path=c:\windows;c:\windows\system;c:\blanco
             These settings provide wine's default handling of DLL loading.
           </para>
           <para>
-            <programlisting>EXTRA_LD_LIBRARY_PATH=/dirs</programlisting>
-          </para>
-          <para>
-            The directory specified here is appended to the normal search
-            path for certain forms of DLL's (elfdll and .so).
-          </para>
-          <para>
-            <programlisting>DefaultLoadOrder = native, elfdll, so, builtin</programlisting>
+            <programlisting>"DefaultLoadOrder" =" native, so, builtin"</programlisting>
           </para>
           <para>
             This setting is a comma-delimited list of which order to
@@ -482,30 +475,15 @@ Path=c:\windows;c:\windows\system;c:\blanco
         <sect3>
           <title>The [DllPairs] Section</title>
           <para>
-            This section is optional, but strongly recommended. If you
-            try to use native SHELL32, but builtin SHELL, you could
-            have some big problems (native and builtin/so/elfdll do
-            certain things in different ways). Using different forms
-            of a pair is a *very*, **very** bad idea. By specifying
-            DLL pairs here, wine will print out a message if you use
-            different forms of a pair. You shouldn't need to change
-            anything in this section, the following should work fine
-            in all cases:
+          At one time, there was a section called [DllPairs] in the 
+          default configuration file, but this has been obsoleted
+          because the pairing information has now been embedded into
+          Wine itself. (The purpose of this section was merely to be
+          able to issue warnings if the user attempted to pair
+          codependent 16-bit/32-bit DLLs of different types.) If you
+          still have this in your <filename>wine.conf</filename> or
+          <filename>~/.wine/config</filename>, you may safely delete it.
           </para>
-          <programlisting>
-[DllPairs]
-kernel	= kernel32
-gdi	= gdi32
-user	= user32
-commdlg	= comdlg32
-commctrl= comctl32
-ver	= version
-shell	= shell32
-lzexpand= lz32
-winsock	= wsock32
-          </programlisting>
-        </sect3>
-
         <sect3>
           <title>The [DllOverrides] Section</title>
           <para>
@@ -518,43 +496,62 @@ winsock	= wsock32
             For example, to load builtin KERNEL pair (case doesn't
             matter here):
             <programlisting>
-kernel,kernel32 = builtin
+"kernel,kernel32" = "builtin"
             </programlisting>
           </para>
           <para>
             To load the native COMMDLG pair, but if that doesn't work
             try builtin:
             <programlisting>
-commdlg,comdlg32 = native,builtin
+"commdlg,comdlg32" = "native,builtin"
             </programlisting>
           </para>
           <para>
             To load the native COMCTL32:
             <programlisting>
-comctl32 = native
+"comctl32" = "native"
             </programlisting>
           </para>
           <para>
-            Here is a good generic setup (As it is defined in wine.ini
+            Here is a good generic setup (As it is defined in config
             that was included with your wine package):
             <programlisting>
 [DllOverrides]
-kernel32, gdi32, user32	= builtin
-kernel, gdi, user	= builtin
-toolhelp		= builtin
-comdlg32, commdlg	= elfdll, builtin, native
-version, ver		= elfdll, builtin, native
-shell32, shell		= builtin, native
-lz32, lzexpand		= builtin, native
-commctrl, comctl32	= builtin, native
-wsock32, winsock	= builtin
-advapi32, crtdll, ntdll	= builtin, native
-mpr, winspool		= builtin, native
-ddraw, dinput, dsound	= builtin, native
-winmm, w32skrnl, msvfw32= builtin
-wnaspi32, wow32		= builtin
-system, display, wprocs	= builtin
-wineps			= builtin
+"commdlg"      = "builtin, native"
+"comdlg32"     = "builtin, native"
+"ver"          = "builtin, native"
+"version"      = "builtin, native"
+"shell"        = "builtin, native"
+"shell32"      = "builtin, native"
+"lzexpand"     = "builtin, native"
+"lz32"         = "builtin, native"
+"comctl32"     = "builtin, native"
+"commctrl"     = "builtin, native"
+"wsock32"      = "builtin"
+"winsock"      = "builtin"
+"advapi32"     = "builtin, native"
+"crtdll"       = "builtin, native"
+"mpr"          = "builtin, native"
+"winspool.drv" = "builtin, native"
+"ddraw"        = "builtin, native"
+"dinput"       = "builtin, native"
+"dsound"       = "builtin, native"
+"mmsystem"     = "builtin"
+"winmm"        = "builtin"
+"msvcrt"       = "native, builtin"
+"msvideo"      = "builtin, native"
+"msvfw32"      = "builtin, native"
+"mcicda.drv"   = "builtin, native"
+"mciseq.drv"   = "builtin, native"
+"mciwave.drv"  = "builtin, native"
+"mciavi.drv"   = "native, builtin"
+"mcianim.drv"  = "native, builtin"
+"msacm.drv"    = "builtin, native"
+"msacm"        = "builtin, native"
+"msacm32"      = "builtin, native"
+"midimap.drv"  = "builtin, native"
+"wnaspi32"     = "builtin"
+"icmp"         = "builtin"
             </programlisting>
           </para>
           <note>
@@ -574,7 +571,7 @@ wineps			= builtin
           </para>
           <para>
             <programlisting>
-AllocSystemColors=100
+"AllocSystemColors" = "100"
             </programlisting>
             System colors to allocate? Just leave it at 100.
           </para>
@@ -586,7 +583,7 @@ AllocSystemColors=100
             This section sets up wine's font handling.
           </para>
           <para>
-            <programlisting>Resolution = 96</programlisting>
+            <programlisting>"Resolution" = "96"</programlisting>
           </para>
           <para>
             Since the way X handles fonts is different from the way
@@ -601,7 +598,7 @@ AllocSystemColors=100
             working acceptably in wine.
           </para>
           <para>
-            <programlisting>Default = -adobe-times-</programlisting>
+            <programlisting>"Default" = "-adobe-times-"</programlisting>
             The default font wine uses. Fool around with it if you'd like.
           </para>
           <para>
@@ -612,7 +609,7 @@ OPTIONAL:
             used in wine. This is good for apps that need a special font you don't have,
             but a good replacement exists. The syntax is like so:
             <programlisting>
-AliasX = [Fake windows name],[Real X name]&lt;,optional "masking" section>
+"AliasX" = "[Fake windows name],[Real X name]"&lt;,optional "masking" section>
             </programlisting>
           </para>
           <para>
@@ -630,14 +627,14 @@ AliasX = [Fake windows name],[Real X name]&lt;,optional "masking" section>
             apps as "Google". When defining an alias in a config file, forget about my
             comment text (The "&lt;-- blah" stuff)
             <programlisting>
-Alias0 = Foo,--google-      &lt;-- Note the no spaces after the " = ". Important!
+"Alias0" = "Foo,--google-"      &lt;
             </programlisting>
           </para>
           <para>
             Here is an example with masking enabled. The font will show up as "Foo" in
             windows apps.
             <programlisting>
-Alias1 = Foo,--google-,subst 
+"Alias1" = "Foo,--google-,subst"
             </programlisting>
           </para>
           <para>
@@ -655,7 +652,7 @@ Alias1 = Foo,--google-,subst
           <para>
             The [serialports] section tells wine what serial ports it
             is allowed to use.
-            <programlisting>ComX=/dev/cuaY</programlisting>
+            <programlisting>"ComX" = "/dev/cuaY"</programlisting>
           </para>
           <para>
             Replace <literal>X</literal> with the number of the COM
@@ -666,7 +663,7 @@ Alias1 = Foo,--google-,subst
             (<medialabel>/dev/modem</medialabel> is acceptable). It is
             not always necessary to define any COM ports (An optional
             setting). Here is an example:
-            <programlisting>Com1=/dev/cua0</programlisting>
+            <programlisting>"Com1" = "/dev/cua0"</programlisting>
           </para>
           <para>
             Use as many of these as you like in the section to define
@@ -675,7 +672,7 @@ Alias1 = Foo,--google-,subst
           <para>
             The [parallelports] section sets up any parallel ports
             that will be allowed access under wine.
-            <programlisting>LptX=/dev/lpY</programlisting>
+            <programlisting>"LptX" = "/dev/lpY"</programlisting>
           </para>
           <para>
             Sounds familiar? Syntax is just like the COM port setting.
@@ -686,7 +683,7 @@ Alias1 = Foo,--google-,subst
             to define a parallel port (AKA, it's optional). As with
             the other section, LptX can equal  any device (Maybe
             <medialabel>/dev/printer</medialabel>). Here is an
-            example:  <programlisting>Lpt1=/dev/lp0</programlisting>
+            example:  <programlisting>"Lpt1" = "/dev/lp0"</programlisting>
           </para>
           <para>
             The [spooler] section will inform wine where to spool
@@ -696,12 +693,12 @@ Alias1 = Foo,--google-,subst
             setting you use in this section works to map a port (LPT1,
             for example) to a file or a command. Here is an example,
             mapping LPT1 to the file <filename>out.ps</filename>: 
-            <programlisting>LPT1:=out.ps</programlisting>
+            <programlisting>"LPT1:" = "out.ps"</programlisting>
           </para>
           <para>
             The following command maps printing jobs to LPT1 to the
             command <command>lpr</command>. Notice  the |: 
-            <programlisting>LPT1:=|lpr</programlisting>
+            <programlisting>"LPT1:" = "|lpr"</programlisting>
           </para>
           <para>
             The [ports] section is usually useful only for people who
@@ -709,11 +706,11 @@ Alias1 = Foo,--google-,subst
             scanners. IF YOU DON'T NEED IT, DON'T USE IT! 
           </para>
           <para>
-            <programlisting>read=0x779,0x379,0x280-0x2a0</programlisting>
+            <programlisting>"read" = "0x779,0x379,0x280-0x2a0"</programlisting>
             Gives direct read access to those IO's.
           </para>
           <para>
-            <programlisting>write=0x779,0x379,0x280-0x2a0</programlisting>
+            <programlisting>"write" = "0x779,0x379,0x280-0x2a0"</programlisting>
             Gives direct write access to those IO's. It's probably a
             good idea to keep the values of the
             <literal>read</literal> and <literal>write</literal>
@@ -731,17 +728,17 @@ Alias1 = Foo,--google-,subst
             REMOVE ANYTHING IN THIS SECTION TO YOUR CONFIG.
           </para>
           <para>
-            <programlisting>File=/blanco</programlisting>
+            <programlisting>"File" = "/blanco"</programlisting>
             Sets the logfile for wine. Set to CON to log to standard out.
             THIS IS RARELY USED.
           </para>
           <para>
-            <programlisting>Exclude=WM_SIZE;WM_TIMER;</programlisting>
+            <programlisting>"Exclude" = "WM_SIZE;WM_TIMER;"</programlisting>
             Excludes debug messages about <constant>WM_SIZE</constant>
             and <constant>WM_TIMER</constant> in the logfile.
           </para>
           <para>
-            <programlisting>Include=WM_SIZE;WM_TIMER;</programlisting>
+            <programlisting>"Include" = "WM_SIZE;WM_TIMER;"</programlisting>
             Includes debug messages about <constant>WM_SIZE</constant>
             and <constant>WM_TIMER</constant> in the logfile.
           </para>
@@ -752,19 +749,15 @@ Alias1 = Foo,--google-,subst
             windows installation.
           </para>
           <para>
-            <programlisting>UserFileName=/dirs/to/user.reg</programlisting>
+            <programlisting>"UserFileName" = "/dirs/to/user.reg"</programlisting>
             The location of your old <filename>user.reg</filename> file.
-          </para>
-          <para>
-            <programlisting>LocalMachineFileName=/dirs/to/system.reg</programlisting>
-            The location of your old <filename>system.reg</filename> file.
           </para>
           <para>
             [tweak.layout] is devoted to wine's look. There is only
             one setting for it.
           </para>
           <para>
-            <programlisting>WineLook=win31|win95|win98</programlisting>
+            <programlisting>"WineLook" = "win31|win95|win98"</programlisting>
             Will change the look of wine from Windows 3.1 to Windows 95.
             The <literal>win98</literal> setting behaves
             just like <literal>win95</literal> most of the time.
@@ -774,11 +767,11 @@ Alias1 = Foo,--google-,subst
             special conditions.
           </para>
           <para>
-            <programlisting>Default=/program/to/execute.exe</programlisting>
+            <programlisting>"Default" = "/program/to/execute.exe"</programlisting>
             Sets the program to be run if wine is started without specifying a program.
           </para>
           <para>
-            <programlisting>Startup=/program/to/execute.exe</programlisting>
+            <programlisting>"Startup" = "/program/to/execute.exe"</programlisting>
             Sets the program to automatically be run at startup every time.
           </para>
         </sect3>
@@ -794,11 +787,13 @@ Alias1 = Foo,--google-,subst
             <term><filename>/usr/local/etc/wine.conf</filename></term>
             <listitem><para>
                 A systemwide config file, used for anyone who doesn't
-                have their own.
+                have their own. NOTE: this file is currently unused as a
+                new global configuration mechanism is not in place at this
+                time
             </para></listitem>
           </varlistentry>
           <varlistentry>
-            <term><filename>$HOME/.winerc</filename></term>
+            <term><filename>$HOME/.wine/config</filename></term>
             <listitem><para>
                 Your own config file, that only is used for your user. 
             </para></listitem>
@@ -807,7 +802,8 @@ Alias1 = Foo,--google-,subst
         <para>
           So copy your version of the <filename>wine.conf</filename> file to
           <filename>/usr/local/etc/wine.conf</filename> or
-          <filename>$HOME/.winerc</filename> for wine to recognize it. 
+          <filename>$HOME/.wine/config</filename> for wine to recognize
+	  it. 
         </para>
       </sect2>
 
@@ -817,7 +813,8 @@ Alias1 = Foo,--google-,subst
           There is always a chance that things will go wrong. If the
           unthinkable happens,  try the newsgroup,
           <systemitem>comp.emulators.ms-windows.wine</systemitem>,
-	  or the IRCnet channel <systemitem>#WineHQ</systemitem>.
+	  or the IRCnet channel <systemitem>#WineHQ</systemitem> found on
+          irc.stealth.net:6668,	 or connected servers.
 	  Make sure that you have looked over this document thoroughly,
 	  and have also read:
         </para>
@@ -855,30 +852,30 @@ Alias1 = Foo,--google-,subst
         Instead of compiling Wine for Win3.1 vs. Win95 using
         <constant>#define</constant> switches, the code now looks in a
         special [Tweak.Layout] section of
-        <filename>wine.conf</filename> for a
-        <literal>WineLook=Win95</literal> or
-        <literal>WineLook=Win98</literal> entry.
+        <filename>~/.wine/config</filename> for a
+        <literal>"WineLook" = "Win95"</literal> or
+        <literal>"WineLook" = "Win98"</literal> entry.
       </para>
       <para>
         A few new sections and a number of entries have been added to
-        the <filename>wine.conf file</filename> -- these are for
+        the <filename>~/.wine/config</filename> file -- these are for
         debugging the Win95 tweaks only and may be removed in a future
         release!  These entries/sections are:
       </para>
       <programlisting>
 [Tweak.Fonts]
-System.Height=&lt;point size>    # Sets the height of the system typeface
-System.Bold=[true|false]      # Whether the system font should be boldfaced
-System.Italic=[true|false]    # Whether the system font should be italicized
-System.Underline=[true|false] # Whether the system font should be underlined
-System.StrikeOut=[true|false] # Whether the system font should be struck out
-OEMFixed.xxx                  # Same parameters for the OEM fixed typeface
-AnsiFixed.xxx                 # Same parameters for the Ansi fixed typeface
-AnsiVar.xxx                   # Same parameters for the Ansi variable typeface
-SystemFixed.xxx               # Same parameters for the System fixed typeface
+"System.Height" = "&lt;point size>"    # Sets the height of the system typeface
+"System.Bold" = "[true|false]"      # Whether the system font should be boldfaced
+"System.Italic" = "[true|false]"    # Whether the system font should be italicized
+"System.Underline" = "[true|false]" # Whether the system font should be underlined
+"System.StrikeOut" = "[true|false]" # Whether the system font should be struck out
+"OEMFixed.xxx"                  # Same parameters for the OEM fixed typeface
+"AnsiFixed.xxx"                 # Same parameters for the Ansi fixed typeface
+"AnsiVar.xxx"                   # Same parameters for the Ansi variable typeface
+"SystemFixed.xxx"               # Same parameters for the System fixed typeface
 
 [Tweak.Layout]
-WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
+"WineLook" = "[Win31|Win95|Win98]"  # Changes Wine's look and feel
       </programlisting>
     </sect1>
 
@@ -901,9 +898,8 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
         ncurses-based ttydrv, which he claims works for displaying
         calc.exe). The display driver is chosen with the
         <literal>GraphicsDriver</literal> option in the [wine] section
-        of <filename>wine.conf</filename> or
-        <filename>.winerc</filename>, but I will only cover the x11drv
-        driver in this article.
+        of <filename>~/.wine/config</filename>, but I will only cover the
+        x11drv driver in this article.
       </para>
 
       <sect2>
@@ -1205,26 +1201,26 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
         <para>
           Reading labels and serial numbers just works automagically
           if you specify a <literal>Device=</literal> line in the
-          [Drive X] section in your <filename>wine.conf</filename>.
+          [Drive X] section in your <filename>~/.wine/config</filename>.
           Note that the device has to exist and must be accessible if
           you do this, though.
         </para>
         <para>
           If you don't do that, then you should give fixed
-          <literal>Label=</literal> or <literal>Serial=</literal>
-          entries in <filename>wine.conf</filename>, as Wine returns
+          <literal>"Label" =</literal> or <literal>"Serial" =</literal>
+          entries in <filename>~./wine/config</filename>, as Wine returns
           these entries instead if no device is given. If they don't
           exist, then Wine will return default values (label
           <literal>Drive X</literal> and serial
           <literal>12345678</literal>).
         </para>
         <para>
-          If you want to give a <literal>Device=</literal> entry
+          If you want to give a <literal>"Device" =</literal> entry
           <emphasis>only</emphasis> for drive raw sector accesses,
 	  but not for reading the volume info from the device (i.e. you want
 	  a <emphasis>fixed</emphasis>, preconfigured label), you need
-          to specify <literal>ReadVolInfo=0</literal> to tell Wine to
-          skip the volume reading.
+          to specify <literal>"ReadVolInfo" = "0"</literal> to tell Wine
+          to skip the volume reading.
         </para>
       </sect2>
 
@@ -1237,28 +1233,28 @@ WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
         </para>
         <screen>
 [Drive A]
-Path=/mnt/floppy
-Type=floppy
-Device=/dev/fd0
-Filesystem=msdos
+"Path" = "/mnt/floppy"
+"Type" = "floppy"
+"Device" = "/dev/fd0"
+"Filesystem" = "msdos"
 
 [Drive R]
-Path=/mnt/cdrom
-Type=cdrom
-Device=/dev/hda1
-Filesystem=win95
+"Path" = "/mnt/cdrom"
+"Type" = "cdrom"
+"Device" = "/dev/hda1"
+"Filesystem" = "win95"
         </screen>
         <para>
           Here's an example of overriding the CD-ROM label:
         </para>
         <screen>
 [Drive J]
-Path=/mnt/cdrom
-Type=cdrom
-Label=X234GCDSE
+"Path" = "/mnt/cdrom"
+"Type" = "cdrom"
+"Label" = "X234GCDSE"
 ; note that the device isn't really needed here as we have a fixed label
-Device=/dev/cdrom
-Filesystem=msdos
+"Device" = "/dev/cdrom"
+"Filesystem" = "msdos"
         </screen>
       </sect2>
 
@@ -1362,19 +1358,6 @@ Filesystem=msdos
         <title>The [DllDefaults] section</title>
         <variablelist>
           <varlistentry>
-            <term>EXTRA_LD_LIBRARY_PATH</term>
-            <listitem> <para>
-                This specifies the location of the Wine's DLL
-                <filename>.so</filename> files. Wine will search this
-                path when trying to locate a DLL of the type
-                <literal>builtin</literal> or
-                <literal>elfdll</literal>. (This does not apply to
-                <filename>libwine.so</filename>, since
-                <filename>libwine.so</filename> is not a DLL in this
-                sense.)
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
             <term>DefaultLoadOrder</term>
             <listitem> <para>
                 This specifies in what order Wine should search for
@@ -1395,7 +1378,7 @@ Filesystem=msdos
           able to issue warnings if the user attempted to pair
           codependent 16-bit/32-bit DLLs of different types.) If you
           still have this in your <filename>wine.conf</filename> or
-          <filename>.winerc</filename>, you may safely delete it.
+          <filename>~/.wine/config</filename>, you may safely delete it.
         </para>
       </sect2>
 

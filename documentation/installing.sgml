@@ -139,15 +139,15 @@ WinNT/2000 directory for common 16-bit DLLs</literallayout></entry>
           be (<filename>tools/wineinstall</filename> will even ask
           you). If you choose, say, <filename>/var/wine</filename>, as
           the root of your virtual drive <medialabel>C</medialabel>,
-          then you'd put this in your <filename>wine.conf</filename>:
+          then you'd put this in your <filename>~/.wine/config</filename>:
         </para>
 
         <programlisting>
 [Drive C]
-Path=/var/wine
-Type=hd
-Label=MS-DOS
-Filesystem=win95
+"Path" = "/var/wine"
+"Type" = "hd"
+"Label" = "MS-DOS"
+"Filesystem" = "win95"
         </programlisting>
 
         <para>
@@ -155,8 +155,8 @@ Filesystem=win95
           "c:\windows\system" would map to
           <filename>/var/wine/windows/system</filename> in the UNIX
           filesystem. Note that you need to specify
-          <literal>Filesystem=win95</literal>, NOT
-          <literal>Filesystem=unix</literal>, to make Wine simulate a
+          <literal>"Filesystem" = "win95"</literal>, NOT
+          <literal>"Filesystem" = "unix"</literal>, to make Wine simulate a
           Windows-compatible (case-insensitive) filesystem, otherwise
           most apps won't work.
         </para>
@@ -235,11 +235,10 @@ Filesystem=win95
         <listitem>
           <para>
             Point <medialabel>[Drive C]</medialabel> in
-            <filename>wine.conf</filename> or
-            <filename>.winerc</filename> to where you want
+            <filename>~/.wine/config</filename> to where you want
             <filename>C:</filename> to be. Refer to the Wine man page
             for more information. Remember to use
-            <userinput>filesystem=win95</userinput>!
+            <userinput>"Filesystem" = "win95"</userinput>!
           </para>
         </listitem>
         <listitem>
@@ -286,8 +285,7 @@ Filesystem=win95
         <listitem>
           <para>
             Edit the <quote>[DllOverrides]</quote> section of
-            <filename>wine.conf</filename> or
-            <filename>.winerc</filename> to specify
+            <filename>~/.wine/config</filename> to specify
             <quote>native</quote> before <quote>builtin</quote> for
             the Windows DLLs you want to use. For more information
             about this, see the Wine manpage.
@@ -307,7 +305,7 @@ Filesystem=win95
             only as pairs to your Wine directory (these DLLs are
             <quote>clean</quote> to use).  Make sure you have these
             specified in the <quote>[DllPairs]</quote> section of
-            <filename>wine.conf</filename> or .winerc.
+            <filename>~/.wine/config</filename>.
           </para>
         </listitem>
         <listitem>
@@ -364,13 +362,13 @@ Filesystem=win95
           Wine maps mounted FAT filesystems, such as
           <filename>/c</filename>, to driver letters, such as
           <quote>c:</quote>, as indicated by the
-          <filename>wine.conf</filename> file.  The following excerpt
-          from a <filename>wine.conf</filename> file does this:
+          <filename>~/.wine/config</filename> file.  The following excerpt
+          from a <filename>~/.wine/config</filename> file does this:
         </para>
         <programlisting>
 [Drive C]
-Path=/c
-Type=hd
+"Path" = "/c"
+"Type" = "hd"
         </programlisting>
         <para>
           Although VFAT filesystems are preferable to FAT filesystems
@@ -682,17 +680,17 @@ THIS MAY TRASH YOUR SYSTEM IF USED CORRECTLY
             <para>
 	      For Win32 software (WNASPI32), Wine has auto-detection in place.
 	      For Win16 software (WINASPI), you need to add a SCSI device entry
-	      for your particular scanner to wine.conf. The format is
+	      for your particular scanner to ~/.wine/config. The format is
 	      <literal>[scsi cCtTdD]</literal> where
-              <literal>C=controller</literal>,
-              <literal>T=target</literal>, <literal>D=LUN</literal>
+              <literal>"C" = "controller"</literal>,
+              <literal>"T" = "target"</literal>, <literal>D=LUN</literal>
             </para>
             <para>
               For example, I set mine up as  controller <literal>0</literal>,
               Target <literal>6</literal>, LUN <literal>0</literal>.
               <programlisting>
 [scsi c0t6d0]
-Device=/dev/sgi
+"Device" = "/dev/sgi"
               </programlisting>
               Yours will vary with your particular SCSI setup.
             </para>

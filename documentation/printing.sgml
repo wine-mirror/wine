@@ -44,15 +44,15 @@ printer=on
         </screen>
         <para>
           to the [wine] section of <filename>wine.conf</filename> (or
-          <filename>~/.winerc</filename>). This lets
+          <filename>~/.wine/config</filename>). This lets
           <function>CreateDC</function> proceed if its driver argument is a 16
           bit driver. You will probably also need to add
         </para>
         <screen>
-TTEnable=0 TTOnly=0
+"TTEnable" = "0" "TTOnly" = "0"
         </screen>
         <para>
-          to the [TrueType] section of <filename>win.ini</filename>. The code for
+          to the [TrueType] section of <filename>~/.wine/config</filename>. The code for
           the driver interface is in <filename>graphics/win16drv</filename>.
         </para>
       </sect2>
@@ -76,7 +76,7 @@ TTEnable=0 TTOnly=0
           example the following lines
         </para>
         <screen>
-LPT1:=foo.ps LPT2:=|lpr
+"LPT1:" = "foo.ps" "LPT2:" = "|lpr"
         </screen>
         <para>
           map <systemitem>LPT1:</systemitem> to file <filename>foo.ps</filename>
@@ -116,23 +116,23 @@ LPT1:=foo.ps LPT2:=|lpr
           To install it add
         </para>
         <screen>
-Wine PostScript Driver=WINEPS,LPT1:
+"Wine PostScript Driver" = "WINEPS,LPT1:"
         </screen>
         <para>
           to the [devices] section and
         </para>
         <screen>
-Wine PostScript Driver=WINEPS,LPT1:,15,45
+"Wine PostScript Driver" = "WINEPS,LPT1:,15,45"
         </screen>
         <para>
           to the [PrinterPorts] section of <filename>win.ini</filename> and to set it
           as the default printer also add
         </para>
         <screen>
-device=Wine PostScript Driver,WINEPS,LPT1:
+"device" = "Wine PostScript Driver,WINEPS,LPT1:"
         </screen>
         <para>
-          to the [windows] section of <filename>win.ini</filename> and ???
+          to the [windows] section of <filename>~/.wine/config</filename> and ???
           <emphasis>[sic]</emphasis>
         </para>
         <para>
@@ -161,10 +161,10 @@ device=Wine PostScript Driver,WINEPS,LPT1:
         <para>
           Then create a [afmfiles] section in your
           <filename>wine.conf</filename> (or
-          <filename>~/.winerc</filename>) and add a line of the form
+          <filename>~/.wine/config</filename>) and add a line of the form
         </para>
         <screen>
-file&lt;n&gt;=/unix/path/name/filename.afm
+"file&lt;n&gt;" = "/unix/path/name/filename.afm"
         </screen>
         <para>
           for each AFM file that you wish to use. [This might change in the future]
@@ -176,10 +176,10 @@ file&lt;n&gt;=/unix/path/name/filename.afm
           have a look in <ulink url="ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/">
             ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/</ulink>. Create
           a [psdrv] section in your <filename>wine.conf</filename> (or
-          <filename>~/.winerc</filename>) and add the  following entry:
+          <filename>~/.wine/config</filename>) and add the  following entry:
         </para>
         <screen>
-ppdfile=/somewhere/file.ppd
+"ppdfile" = "/somewhere/file.ppd"
         </screen>
         <para>
           By default, the driver will look for a file named

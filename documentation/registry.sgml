@@ -81,8 +81,7 @@
       <para>
         If you point Wine at an existing MS Windows installation (by
         setting the appropriate directories in
-        <filename>wine.conf</filename> or
-        <filename>.winerc</filename>), then Wine is able to load
+        <filename>~/.wine/config</filename>, then Wine is able to load
         registry data from it. However, Wine will not save anything to
         the real Windows registry, but rather to its own registry
         files (see below). Of course, if a particular registry value
@@ -249,8 +248,8 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
       <title>The [registry] section</title>
 
       <para>
-        With the above information fresh in mind, let's look at the
-        <filename>wine.conf</filename>/<filename>.winerc</filename>
+        With the above information fresh in mind, let's look at the 
+	<filename>wine.conf</filename>/<filename>~/.wine/config</filename>
         options for handling the registry.
       </para>
 
