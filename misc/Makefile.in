@@ -1,4 +1,5 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
+sysconfdir = @sysconfdir@
+DEFS      = @DLLFLAGS@ -D__WINE__ -DETCDIR="\"$(sysconfdir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@

@@ -51,8 +51,8 @@ static void REGISTRY_Init(void);
 
 /* NOTE: do not append a /. linux' mkdir() WILL FAIL if you do that */
 #define WINE_PREFIX                 "/.wine"
-#define SAVE_USERS_DEFAULT          "/usr/local/etc/wine.userreg"
-#define SAVE_LOCAL_MACHINE_DEFAULT  "/usr/local/etc/wine.systemreg"
+#define SAVE_USERS_DEFAULT          ETCDIR"/wine.userreg"
+#define SAVE_LOCAL_MACHINE_DEFAULT  ETCDIR"/wine.systemreg"
 
 /* relative in ~user/.wine/ : */
 #define SAVE_CURRENT_USER           "user.reg"
@@ -1883,12 +1883,12 @@ void SHELL_LoadRegistry( void )
   _w95_loadreg("user.dat",	HKU);
 
   /* 
-   * Load the global HKU hive directly from /usr/local/etc
+   * Load the global HKU hive directly from sysconfdir
    */ 
   _wine_loadreg( HKU, SAVE_USERS_DEFAULT, 0);
 
   /* 
-   * Load the global machine defaults directly form /usr/local/etc
+   * Load the global machine defaults directly form sysconfdir
    */
   _wine_loadreg( HKLM, SAVE_LOCAL_MACHINE_DEFAULT, 0);
 
