@@ -438,7 +438,9 @@ static void InternetTimeToSystemTimeW_test()
         "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
 
     ret = InternetTimeToSystemTimeW( string3, &time, 0 );
-    ok( !ret, "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
+    todo_wine {
+        ok( ret, "InternetTimeToSystemTimeW succeeds on (%ld), string3='Fr'", GetLastError() );
+    }
 }
 
 START_TEST(http)
