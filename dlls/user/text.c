@@ -270,6 +270,192 @@ void TEXT_CopySansPrefix (int noprefix, WCHAR *d, int *len_d, const WCHAR *s, in
 }
 
 /*********************************************************************
+ *                      TEXT_WordBreak (static)
+ *
+ *  Perform wordbreak processing on the given string
+ *
+ * Assumes that DT_WORDBREAK has been specified and not all the characters
+ * fit.  Note that this function should be called when the first character that
+ * doesn't fit is a space or tab, so that it can swallow the space(s)
+ *
+ * Note that the Windows processing has some strange properties.  In particular
+ * leading and trailing spaces are not stripped except for the first space of a
+ * line created by a wordbreak.
+ *
+ * Arguments
+ *   hdc        [in] The handle to the DC that defines the font.
+ *   str        [in/out] The string that needs to be broken.
+ *   max_str    [in] The dimension of str (number of WCHAR).
+ *   len_str    [in/out] The number of characters in str
+ *   width      [in] The maximum width permitted
+ *   format     [in] The format flags in effect
+ *   chars_fit  [in] The maximum number of characters of str that are already
+ *              known to fit; chars_fit+1 is known not to fit.
+ *   chars_used [out] The number of characters of str that have been "used" and
+ *              do not need to be included in later text.  For example this will
+ *              include any spaces that have been discarded from the start of 
+ *              the next line.
+ *   size       [out] The size of the returned text in logical coordinates
+ *
+ * Pedantic assumption - Assumes that the text length is monotonically
+ * increasing with number of characters (i.e. no weird kernings)
+ *
+ * Algorithm
+ * 
+ * Work back from the last character that did fit to either a space or the last
+ * character of a word, whichever is met first.
+ * If there was one or the first character didn't fit then
+ *     break the line after that character
+ *     and if the next character is a space then discard it.
+ * Suppose there was none (and the first character did fit).
+ *     If Break Within Word is permitted
+ *         break the word after the last character that fits (there must be
+ *         at least one; none is caught earlier).
+ *     Otherwise
+ *         discard any trailing space.
+ *         include the whole word; it may be ellipsified later
+ *
+ * Break Within Word is permitted under a set of circumstances that are not
+ * totally clear yet.  Currently our best guess is:
+ *     If DT_EDITCONTROL is in effect and neither DT_WORD_ELLIPSIS nor
+ *     DT_PATH_ELLIPSIS is
+ */
+
+static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
+                            unsigned int *len_str,
+                            int width, int format, unsigned int chars_fit,
+                            unsigned int *chars_used, SIZE *size)
+{
+    WCHAR *p;
+    int word_fits;
+    assert (format & DT_WORDBREAK);
+    assert (chars_fit < *len_str);
+
+    /* Work back from the last character that did fit to either a space or the
+     * last character of a word, whichever is met first.
+     */
+    p = str + chars_fit; /* The character that doesn't fit */
+    word_fits = TRUE;
+    if (!chars_fit)
+        ; /* we pretend that it fits anyway */
+    else if (*p == SPACE) /* chars_fit < *len_str so this is valid */
+        p--; /* the word just fitted */
+    else
+    {
+        while (p > str && *(--p) != SPACE)
+            ;
+        word_fits = (p != str || *p == SPACE);
+    }
+    /* If there was one or the first character didn't fit then */
+    if (word_fits)
+    {
+        /* break the line after that character */
+        p++;
+        *len_str = p - str;
+        /* and if the next character is a space then discard it. */
+        *chars_used = *len_str;
+        if (*p == SPACE)
+            (*chars_used)++;
+    }
+    /* Suppose there was none. */
+    else
+    {
+        if ((format & (DT_EDITCONTROL | DT_WORD_ELLIPSIS | DT_PATH_ELLIPSIS)) ==
+            DT_EDITCONTROL)
+        {
+            /* break the word after the last character that fits (there must be
+             * at least one; none is caught earlier).
+             */
+            *len_str = chars_fit;
+            *chars_used = chars_fit;
+
+            /* FIXME - possible error.  Since the next character is now removed
+             * this could make the text longer so that it no longer fits, and
+             * so we need a loop to test and shrink.
+             */
+        }
+        /* Otherwise */
+        else
+        {
+            /* discard any trailing space. */
+            const WCHAR *e = str + *len_str;
+            p = str + chars_fit;
+            while (p < e && *p != SPACE)
+                p++;
+            *chars_used = p - str;
+            if (p < e) /* i.e. loop failed because *p == SPACE */
+                (*chars_used)++;
+
+            /* include the whole word; it may be ellipsified later */
+            *len_str = p - str;
+            /* Possible optimisation; if DT_WORD_ELLIPSIS only use chars_fit+1
+             * so that it will be too long
+             */
+        }
+    }
+    /* Remeasure the string */
+    GetTextExtentExPointW (hdc, str, *len_str, 0, NULL, NULL, size);
+}
+
+/*********************************************************************
+ *                      TEXT_SkipChars
+ *
+ *  Skip over the given number of characters, bearing in mind prefix
+ *  substitution and the fact that a character may take more than one
+ *  WCHAR (Unicode surrogates are two words long) (and there may have been
+ *  a trailing &)
+ *
+ * Parameters
+ *   new_count  [out] The updated count
+ *   new_str    [out] The updated pointer
+ *   start_count [in] The count of remaining characters corresponding to the
+ *                    start of the string
+ *   start_str  [in] The starting point of the string
+ *   max        [in] The number of characters actually in this segment of the
+ *                   string (the & counts)
+ *   n          [in] The number of characters to skip (if prefix then
+ *                   &c counts as one)
+ *   prefix     [in] Apply prefix substitution
+ *
+ * Return Values
+ *   none
+ *
+ * Remarks
+ *   There must be at least n characters in the string
+ *   We need max because the "line" may have ended with a & followed by a tab
+ *   or newline etc. which we don't want to swallow
+ */
+
+static void TEXT_SkipChars (int *new_count, const WCHAR **new_str,
+                            int start_count, const WCHAR *start_str,
+                            int max, int n, int prefix)
+{
+    /* This is specific to wide characters, MSDN doesn't say anything much
+     * about Unicode surrogates yet and it isn't clear if _wcsinc will
+     * correctly handle them so we'll just do this the easy way for now
+     */
+
+    if (prefix)
+    {
+        const WCHAR *str_on_entry = start_str;
+        assert (max >= n);
+        max -= n;
+        while (n--)
+            if (*start_str++ == PREFIX && max--)
+                start_str++;
+            else;
+        start_count -= (start_str - str_on_entry);
+    }
+    else
+    {
+        start_str += n;
+        start_count -= n;
+    }
+    *new_str = start_str;
+    *new_count = start_count;
+}
+  
+/*********************************************************************
  *                      TEXT_Reprefix
  *
  *  Reanalyse the text to find the prefixed character.  This is called when
@@ -330,113 +516,122 @@ static int TEXT_Reprefix (const WCHAR *str, unsigned int n1, unsigned int n2,
  * len - dest buffer size in chars on input, copied length into dest on output.
  * width - maximum width of line in pixels.
  * format - format type passed to DrawText.
+ * retsize - returned size of the line in pixels.
  *
  * Returns pointer to next char in str after end of the line
  * or NULL if end of str reached.
- *
  */
 static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
-                                  WCHAR *dest, int *len, int width, WORD format)
+                                  WCHAR *dest, int *len, int width, WORD format,
+                                  SIZE *retsize)
 {
     int i = 0, j = 0;
     int plen = 0;
-    int seg_plen; /* plen at the beginning of the current text segment */
     SIZE size;
-    int wb_i = 0, wb_j = 0, wb_count = 0;
     int maxl = *len;
-    int normal_char;
-    int seg_j; /* j at the beginning of the current text segment */
+    int seg_i, seg_count, seg_j;
+    int max_seg_width;
+    int num_fit;
+    int word_broken;
 
-    seg_j = j;
-    seg_plen = plen;
-    while (*count && j < maxl)
+
+    /* For each text segment in the line */
+
+    retsize->cy = 0;
+    while (*count)
     {
-        normal_char = 1;
-	switch (str[i])
-	{
-	case CR:
-	case LF:
-	    if (!(format & DT_SINGLELINE))
-	    {
-		if ((*count > 1) && (((str[i] == CR) && (str[i+1] == LF)) ||
-                                     ((str[i] == LF) && (str[i+1] == CR))))
-                {
-		    (*count)--;
-                    i++;
-                }
-		i++;
-		*len = j;
-		(*count)--;
-		return (&str[i]);
-	    }
-            /* else it's just another character */
-	    break;
-	    
-	case PREFIX:
-	    if (!(format & DT_NOPREFIX) && *count > 1)
-                {
-                if (str[++i] == PREFIX)
-		    (*count)--; /* and treat it as just another character */
-		else {
-                    prefix_offset = j;
-                    normal_char = 0; /* we are skipping the PREFIX itself */
-                    break;
-                }
-	    }
-	    break;
-	    
-	case TAB:
-	    if (format & DT_EXPANDTABS)
-	    {
-                if ((format & DT_WORDBREAK))
-	        {
-		    wb_i = i+1;
-		    wb_j = j;
-		    wb_count = *count;
-                    plen = ((plen/tabwidth)+1)*tabwidth;
-                    seg_plen = plen;
-                }
 
-                normal_char = 0;
-                dest[j++] = str[i++];
-                seg_j = j;
-	    }
-	    break;
+        /* Skip any leading tabs */
 
-	case SPACE:
-            if ((format & DT_WORDBREAK))
-	    {
-		wb_i = i+1;
-		wb_j = j;
-		wb_count = *count;
-            }
-	    break;
-
-	default:
-
-	}
-        if (normal_char)
+        if (str[i] == TAB && (format & DT_EXPANDTABS))
         {
-	    dest[j++] = str[i++];
-	    if ((format & DT_WORDBREAK))
-	    {
-		if (!GetTextExtentPointW(hdc, &dest[seg_j], j-seg_j, &size))
-		    return NULL;
-                plen = seg_plen + size.cx;
-	    }
+            plen = ((plen/tabwidth)+1)*tabwidth;
+            (*count)--; if (j < maxl) dest[j++] = str[i++]; else i++;
+            while (*count && str[i] == TAB)
+            {
+                plen += tabwidth;
+                (*count)--; if (j < maxl) dest[j++] = str[i++]; else i++;
+            }
         }
 
-	(*count)--;
-	if ((format & DT_WORDBREAK) && plen > width && wb_j)
-	{
-			*len = wb_j;
-			*count = wb_count - 1;
-			return (&str[wb_i]);
-	}
+
+        /* Now copy as far as the next tab or cr/lf or eos */
+
+        seg_i = i;
+        seg_count = *count;
+        seg_j = j;
+
+        while (*count &&
+               (str[i] != TAB || !(format & DT_EXPANDTABS)) &&
+               ((str[i] != CR && str[i] != LF) || (format & DT_SINGLELINE)))
+        {
+	    if (str[i] == PREFIX && !(format & DT_NOPREFIX) && *count > 1)
+            {
+                (*count)--, i++; /* Throw away the prefix itself */
+                if (str[i] == PREFIX)
+                {
+                    /* Swallow it before we see it again */
+		    (*count)--; if (j < maxl) dest[j++] = str[i++]; else i++;
+                }
+		else
+                {
+                    prefix_offset = j;
+                }
+	    }
+            else
+            {
+                (*count)--; if (j < maxl) dest[j++] = str[i++]; else i++;
+            }
+        }
+
+
+        /* Measure the whole text segment and possibly WordBreak it */
+
+        max_seg_width = width - plen;
+        GetTextExtentExPointW (hdc, dest + seg_j, j - seg_j, max_seg_width, &num_fit, NULL, &size);
+
+        word_broken = 0;
+        if (num_fit < j-seg_j && (format & DT_WORDBREAK))
+        {
+            const WCHAR *s;
+            int chars_used;
+            int j_in_seg = j-seg_j;
+            TEXT_WordBreak (hdc, dest+seg_j, maxl-seg_j, &j_in_seg,
+                            max_seg_width, format, num_fit, &chars_used, &size);
+            /* and correct the counts */
+            j = seg_j + j_in_seg;
+            TEXT_SkipChars (count, &s, seg_count, str+seg_i, i-seg_i,
+                            chars_used, !(format & DT_NOPREFIX));
+            i = s - str;
+            word_broken = 1;
+        }
+
+        plen += size.cx;
+        if (size.cy > retsize->cy)
+            retsize->cy = size.cy;
+
+        if (word_broken)
+            break;
+        else if (!*count)
+            break;
+        else if (str[i] == CR || str[i] == LF)
+        {
+            count--, i++;
+            if (count && (str[i] == CR || str[i] == LF) && str[i] != str[i-1])
+            {
+                count--, i++;
+            }
+            break;
+        }
+        /* else it was a Tab and we go around again */
     }
     
+    retsize->cx = plen;
     *len = j;
-    return NULL;
+    if (*count)
+        return (&str[i]);
+    else
+        return NULL;
 }
 
 
@@ -474,39 +669,6 @@ static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int of
     LineTo (hdc, prefix_end, y);
     SelectObject (hdc, oldPen);
     DeleteObject (hpen);
-}
-
-/* We are only going to need this until we correct the measuring in
- * TEXT_NextLineW (coming soon)
- */
-static int TEXT_TextExtent (HDC hdc, UINT flags, const WCHAR *line, int len, SIZE *size)
-{
-    if ((flags & DT_EXPANDTABS))
-    {
-        SIZE tsize;
-        const WCHAR *p;
-        size->cx = 0;
-        size->cy = 0;
-        while (len)
-        {
-            p = line; while (p < line+len && *p != TAB) p++;
-            if (!GetTextExtentPointW (hdc, line, p-line, &tsize)) return 0;
-            size->cx += tsize.cx;
-            if (tsize.cy > size->cy) size->cy = tsize.cy;
-            len -= (p-line);
-            line=p;
-            if (len)
-            {
-                assert (*line == TAB);
-                len--;
-                line++;
-                size->cx = ((size->cx/tabwidth)+1)*tabwidth;
-            }
-        }
-        return 1;
-    }
-    else
-	return GetTextExtentPointW(hdc, line, len, size);
 }
 
 /***********************************************************************
@@ -574,9 +736,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     {
 	prefix_offset = -1;
 	len = MAX_STATIC_BUFFER;
-	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags);
+	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size);
 
-	if (!TEXT_TextExtent(hdc, flags, line, len, &size)) return 0;
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
 	else if (flags & DT_RIGHT) x = rect->right - size.cx;
