@@ -1878,7 +1878,7 @@ sub generate_project_files
   }
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "\tfor i in \$(EXES); do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
-    print FILEO "\tfor i in \$(EXES:%=%.so) \$(DLLS); do \$(INSTALL_LIBRARY) \$\$i \$(libdir); done\n";
+    print FILEO "\tfor i in \$(EXES:%=%.so) \$(DLLS); do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
   }
   print FILEO "\n";
   print FILEO "uninstall::\n";
@@ -2261,70 +2261,18 @@ AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
-AC_PATH_XTRA
 AC_PROG_LN_S
-AC_PATH_PROG(LDCONFIG, ldconfig, true, /sbin:/usr/sbin:$PATH)
 
 dnl **** Check for some libraries ****
 
 dnl Check for -lm for BeOS
 AC_CHECK_LIB(m,sqrt)
-dnl Check for -li386 for NetBSD and OpenBSD
-AC_CHECK_LIB(i386,i386_set_ldt)
-dnl Check for -lossaudio for NetBSD
-AC_CHECK_LIB(ossaudio,_oss_ioctl)
 dnl Check for -lw for Solaris
 AC_CHECK_LIB(w,iswalnum)
 dnl Check for -lnsl for Solaris
 AC_CHECK_FUNCS(gethostbyname,, AC_CHECK_LIB(nsl, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", AC_CHECK_LIB(socket, gethostbyname, X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl", , -lnsl), -lsocket))
 dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
-dnl Check for -lxpg4 for FreeBSD
-AC_CHECK_LIB(xpg4,setrunelocale)
-dnl Check for -lmmap for OS/2
-AC_CHECK_LIB(mmap,mmap)
-dnl Check for openpty
-AC_CHECK_FUNCS(openpty,,
-	AC_CHECK_LIB(util,openpty,
-		AC_DEFINE(HAVE_OPENPTY)
-		LIBS="$LIBS -lutil"
-	))
-
-AC_CHECK_HEADERS(dlfcn.h,
-	AC_CHECK_FUNCS(dlopen,
-		AC_DEFINE(HAVE_DL_API),
-    		AC_CHECK_LIB(dl,dlopen,
-			AC_DEFINE(HAVE_DL_API)
-			LIBS="$LIBS -ldl",
-		)
-	),
-)
-
-dnl **** Check which curses lib to use ***
-if test "$CURSES" = "yes"
-then
-    AC_CHECK_HEADERS(ncurses.h)
-    if test "$ac_cv_header_ncurses_h" = "yes"
-    then 
-        AC_CHECK_LIB(ncurses,waddch)
-    fi
-    if test "$ac_cv_lib_ncurses_waddch" = "yes"
-    then
-        AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
-        AC_CHECK_LIB(ncurses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
-    else
-        AC_CHECK_HEADERS(curses.h)
-        if test "$ac_cv_header_curses_h" = "yes"
-        then    
-            AC_CHECK_LIB(curses,waddch)
-            if test "$ac_cv_lib_curses_waddch" = "yes"
-            then
-                AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
-                AC_CHECK_LIB(curses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
-            fi
-        fi
-    fi
-fi
 
 dnl **** If ln -s doesn't work, use cp instead ****
 if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
@@ -2894,18 +2842,12 @@ CFLAGS    = @CFLAGS@
 CXXFLAGS  = @CXXFLAGS@
 WRCFLAGS  = -r -L
 OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB
-X_CFLAGS  = @X_CFLAGS@
-X_LIBS    = @X_LIBS@
-XLIB      = @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@
 DLL_LINK  = @DLL_LINK@
 LIBS      = @LIBS@ $(LIBRARY_PATH)
-YACC      = @YACC@
-LEX       = @LEX@
-LEXLIB    = @LEXLIB@
 LN_S      = @LN_S@
 ALLFLAGS  = $(DEFINES) -I$(SRCDIR) $(WINE_INCLUDE_PATH) $(INCLUDE_PATH)
-ALLCFLAGS = $(CFLAGS) $(CEXTRA) $(OPTIONS) $(X_CFLAGS) $(ALLFLAGS)
-ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(X_CFLAGS) $(ALLFLAGS)
+ALLCFLAGS = $(CFLAGS) $(CEXTRA) $(OPTIONS) $(ALLFLAGS)
+ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(ALLFLAGS)
 ALLWRCFLAGS=$(WRCFLAGS) $(WRCEXTRA) $(OPTIONS) $(ALLFLAGS)
 LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
@@ -2922,9 +2864,9 @@ WINEBUILD = @WINEBUILD@
 
 # Installation infos
 
-INSTALL         = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA    = @INSTALL_DATA@
+INSTALL         = install
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA    = $(INSTALL) -m 644
 prefix          = @prefix@
 exec_prefix     = @exec_prefix@
 bindir          = @bindir@
