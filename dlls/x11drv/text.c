@@ -290,7 +290,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	    long ve_we;
 	    unsigned short err = 0;
 
-	    ve_we = (LONG)(physDev->dc->xformWorld2Vport.eM11 * 0x10000);
+	    ve_we = X11DRV_XWStoDS( physDev, 0x10000 );
 
 	    while (i < count)
 	    {

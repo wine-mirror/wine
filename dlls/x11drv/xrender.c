@@ -53,8 +53,8 @@ static XRenderPictFormat *mono_format; /* format of mono bitmap */
 typedef struct
 {
     LOGFONTW lf;
-    XFORM  xform; /* this is dum as we don't care about offsets */
-    DWORD hash;
+    SIZE     devsize;  /* size in device coords */
+    DWORD    hash;
 } LFANDSIZE;
 
 #define INITIAL_REALIZED_BUF_SIZE 128
@@ -225,7 +225,7 @@ sym_not_found:
 static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
 {
   if(p1->hash != p2->hash) return TRUE;
-  if(memcmp(&p1->xform, &p2->xform, sizeof(p1->xform))) return TRUE;
+  if(memcmp(&p1->devsize, &p2->devsize, sizeof(p1->devsize))) return TRUE;
   if(memcmp(&p1->lf, &p2->lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
   return strcmpW(p1->lf.lfFaceName, p2->lf.lfFaceName);
 }
@@ -425,8 +425,8 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
   DWORD hash = 0, *ptr;
   int i;
 
-  for(ptr = (DWORD*)&plfsz->xform; ptr < (DWORD*)(&plfsz->xform + 1); ptr++)
-    hash ^= *ptr;
+  hash ^= plfsz->devsize.cx;
+  hash ^= plfsz->devsize.cy;
   for(i = 0, ptr = (DWORD*)&plfsz->lf; i < 7; i++, ptr++)
     hash ^= *ptr;
   for(i = 0, ptr = (DWORD*)&plfsz->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
@@ -465,7 +465,8 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     TRACE("h=%ld w=%ld weight=%ld it=%d charset=%d name=%s\n",
 	  lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
 	  lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
-    lfsz.xform = physDev->dc->xformWorld2Vport;
+    lfsz.devsize.cx = X11DRV_XWStoDS( physDev, lfsz.lf.lfWidth );
+    lfsz.devsize.cy = X11DRV_YWStoDS( physDev, lfsz.lf.lfHeight );
     lfsz_calc_hash(&lfsz);
 
     EnterCriticalSection(&xrender_cs);
