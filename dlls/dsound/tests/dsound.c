@@ -342,14 +342,21 @@ static HRESULT test_dsound(LPGUID lpGuid)
         init_format(&wfx,WAVE_FORMAT_PCM,11025,8,1);
         ZeroMemory(&bufdesc, sizeof(bufdesc));
         bufdesc.dwSize=sizeof(bufdesc);
-        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLVOLUME;
+        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRL3D;
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n", rc);
         if (rc==DS_OK && secondary!=NULL) {
-            /* add some more refs */
-            IDirectSoundBuffer_AddRef(secondary);
+            LPDIRECTSOUND3DBUFFER buffer3d;
+            rc=IDirectSound_QueryInterface(secondary, &IID_IDirectSound3DBuffer, (void **)&buffer3d);
+            ok(rc==DS_OK && buffer3d!=NULL,"QueryInterface failed:  %s\n",DXGetErrorString9(rc));
+            if (rc==DS_OK && buffer3d!=NULL) {
+                ref=IDirectSound3DBuffer_AddRef(buffer3d);
+                ok(ref==2,"IDirectSound3DBuffer_AddRef has %d references, should have 2\n",ref);
+            }
+            ref=IDirectSoundBuffer_AddRef(secondary);
+            ok(ref==2,"IDirectSoundBuffer_AddRef has %d references, should have 2\n",ref);
         }
         /* release with buffer */
         ref=IDirectSound_Release(dso);
@@ -460,14 +467,27 @@ static HRESULT test_dsound8(LPGUID lpGuid)
         init_format(&wfx,WAVE_FORMAT_PCM,11025,8,1);
         ZeroMemory(&bufdesc, sizeof(bufdesc));
         bufdesc.dwSize=sizeof(bufdesc);
-        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLVOLUME;
+        bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRL3D;
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n", rc);
         if (rc==DS_OK && secondary!=NULL) {
-            /* add some more refs */
-            IDirectSoundBuffer8_AddRef(secondary);
+            LPDIRECTSOUND3DBUFFER buffer3d;
+            LPDIRECTSOUNDBUFFER8 buffer8;
+            rc=IDirectSound_QueryInterface(secondary, &IID_IDirectSound3DBuffer, (void **)&buffer3d);
+            ok(rc==DS_OK && buffer3d!=NULL,"QueryInterface failed:  %s\n",DXGetErrorString9(rc));
+            if (rc==DS_OK && buffer3d!=NULL) {
+                ref=IDirectSound3DBuffer_AddRef(buffer3d);
+                ok(ref==2,"IDirectSound3DBuffer_AddRef has %d references, should have 2\n",ref);
+            }
+            rc=IDirectSound_QueryInterface(secondary, &IID_IDirectSoundBuffer8, (void **)&buffer8);
+            if (rc==DS_OK && buffer8!=NULL) {
+                ref=IDirectSoundBuffer8_AddRef(buffer8);
+                ok(ref==3,"IDirectSoundBuffer8_AddRef has %d references, should have 3\n",ref);
+            }
+            ref=IDirectSoundBuffer_AddRef(secondary);
+            ok(ref==4,"IDirectSoundBuffer_AddRef has %d references, should have 4\n",ref);
         }
         /* release with buffer */
         ref=IDirectSound8_Release(dso);
