@@ -421,10 +421,6 @@ void PROCESS_Start(void)
     else
         type = PROC_WIN32;
 
-    /* Map system DLLs into this process (from initial process) */
-    /* FIXME: this is a hack */
-    pdb->modref_list = PROCESS_Initial()->modref_list;
-
     /* Initialize the critical section */
     InitializeCriticalSection( &pdb->crit_section );
 

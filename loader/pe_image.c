@@ -553,6 +553,35 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName )
                        ofs->szPathName, aoep, lowest_va );
 
 
+    /* FIXME:  Hack!  While we don't really support shared sections yet,
+     *         this checks for those special cases where the whole DLL
+     *         consists only of shared sections and is mapped into the
+     *         shared address space > 2GB.  In this case, we assume that
+     *         the module got mapped at its base address. Thus we simply
+     *         check whether the module has actually been mapped there
+     *         and use it, if so.  This is needed to get Win95 USER32.DLL
+     *         to work (until we support shared sections properly).
+     */
+
+    if ( nt->OptionalHeader.ImageBase & 0x80000000 )
+    {
+        HMODULE sharedMod = (HMODULE)nt->OptionalHeader.ImageBase; 
+        IMAGE_NT_HEADERS *sharedNt = (LPBYTE)sharedMod 
+                                   + ((LPBYTE)nt - (LPBYTE)hModule);
+
+        /* Well, this check is not really comprehensive, 
+           but should be good enough for now ... */
+        if (    !IsBadReadPtr( (LPBYTE)sharedMod, sizeof(IMAGE_DOS_HEADER) )
+             && memcmp( (LPBYTE)sharedMod, (LPBYTE)hModule, sizeof(IMAGE_DOS_HEADER) ) == 0
+             && !IsBadReadPtr( sharedNt, sizeof(IMAGE_NT_HEADERS) )
+             && memcmp( sharedNt, nt, sizeof(IMAGE_NT_HEADERS) ) == 0 )
+        {
+            UnmapViewOfFile( (LPVOID)hModule );
+            return sharedMod;
+        }
+    }
+
+
     /* Allocate memory for module */
     load_addr = nt->OptionalHeader.ImageBase;
     vma_size = calc_vma_size( hModule );
@@ -575,6 +604,13 @@ HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName )
                    "stripped during link" : "unknown reason" );
             goto error;
         }
+
+        /* FIXME: If we need to relocate a system DLL (base > 2GB) we should
+         *        really make sure that the *new* base address is also > 2GB.
+         *        Some DLLs really check the MSB of the module handle :-/
+         */
+        if ( nt->OptionalHeader.ImageBase & 0x80000000 )
+            ERR_(win32)( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
 
         load_addr = (DWORD)VirtualAlloc( NULL, vma_size,
 					 MEM_RESERVE | MEM_COMMIT,
