@@ -38,6 +38,15 @@ struct thread_wait
     struct wait_queue_entry queues[1];
 };
 
+/* asynchronous procedure calls */
+
+struct thread_apc
+{
+    void                   *func;    /* function to call in client */
+    void                   *param;   /* function param */
+};
+#define MAX_THREAD_APC  16  /* Max outstanding APCs for a thread */
+
 
 /* thread operations */
 
@@ -86,11 +95,16 @@ struct thread *create_thread( int fd, void *pid, int *thread_handle,
     thread->name      = NULL;
     thread->mutex     = NULL;
     thread->wait      = NULL;
+    thread->apc       = NULL;
+    thread->apc_count = 0;
     thread->error     = 0;
     thread->state     = STARTING;
     thread->exit_code = 0x103;  /* STILL_ACTIVE */
     thread->next      = first_thread;
     thread->prev      = NULL;
+    thread->priority  = THREAD_PRIORITY_NORMAL;
+    thread->affinity  = 1;
+    thread->suspend   = 0;
 
     if (first_thread) first_thread->prev = thread;
     first_thread = thread;
@@ -136,6 +150,7 @@ static void destroy_thread( struct object *obj )
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
     if (thread->name) free( thread->name );
+    if (thread->apc) free( thread->apc );
     if (debug_level) memset( thread, 0xaa, sizeof(thread) );  /* catch errors */
     free( thread );
 }
@@ -178,6 +193,49 @@ void get_thread_info( struct thread *thread,
 {
     reply->pid       = thread;
     reply->exit_code = thread->exit_code;
+    reply->priority  = thread->priority;
+}
+
+
+/* set all information about a thread */
+void set_thread_info( struct thread *thread,
+                      struct set_thread_info_request *req )
+{
+    if (req->mask & SET_THREAD_INFO_PRIORITY)
+        thread->priority = req->priority;
+    if (req->mask & SET_THREAD_INFO_AFFINITY)
+    {
+        if (req->affinity != 1) SET_ERROR( ERROR_INVALID_PARAMETER );
+        else thread->affinity = req->affinity;
+    }
+}
+
+/* suspend a thread */
+int suspend_thread( struct thread *thread )
+{
+    int old_count = thread->suspend;
+    if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
+    {
+        if (!thread->suspend++)
+        {
+            if (thread->unix_pid) kill( thread->unix_pid, SIGSTOP );
+        }
+    }
+    return old_count;
+}
+
+/* resume a thread */
+int resume_thread( struct thread *thread )
+{
+    int old_count = thread->suspend;
+    if (thread->suspend > 0)
+    {
+        if (!--thread->suspend)
+        {
+            if (thread->unix_pid) kill( thread->unix_pid, SIGCONT );
+        }
+    }
+    return old_count;
 }
 
 /* send a reply to a thread */
@@ -297,13 +355,12 @@ static int check_wait( struct thread *thread, int *signaled )
     int i;
     struct thread_wait *wait = thread->wait;
     struct wait_queue_entry *entry = wait->queues;
-    struct timeval now;
 
     assert( wait );
     if (wait->flags & SELECT_ALL)
     {
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-            if (!entry->obj->ops->signaled( entry->obj, thread )) goto check_timeout;
+            if (!entry->obj->ops->signaled( entry->obj, thread )) goto other_checks;
         /* Wait satisfied: tell it to all objects */
         *signaled = 0;
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
@@ -323,61 +380,82 @@ static int check_wait( struct thread *thread, int *signaled )
             return 1;
         }
     }
- check_timeout:
-    if (!(wait->flags & SELECT_TIMEOUT)) return 0;
-    gettimeofday( &now, NULL );
-    if ((now.tv_sec > wait->timeout.tv_sec) ||
-        ((now.tv_sec == wait->timeout.tv_sec) &&
-         (now.tv_usec >= wait->timeout.tv_usec)))
+
+ other_checks:
+    if ((wait->flags & SELECT_ALERTABLE) && thread->apc)
     {
-        *signaled = STATUS_TIMEOUT;
+        *signaled = STATUS_USER_APC;
         return 1;
+    }
+    if (wait->flags & SELECT_TIMEOUT)
+    {
+        struct timeval now;
+        gettimeofday( &now, NULL );
+        if ((now.tv_sec > wait->timeout.tv_sec) ||
+            ((now.tv_sec == wait->timeout.tv_sec) &&
+             (now.tv_usec >= wait->timeout.tv_usec)))
+        {
+            *signaled = STATUS_TIMEOUT;
+            return 1;
+        }
     }
     return 0;
 }
 
-/* sleep on a list of objects */
-void sleep_on( struct thread *thread, int count, int *handles, int flags, int timeout )
+/* send the select reply to wake up the client */
+static void send_select_reply( struct thread *thread, int signaled )
 {
     struct select_reply reply;
-
-    assert( !thread->wait );
-    reply.signaled = -1;
-    if (!wait_on( thread, count, handles, flags, timeout )) goto done;
-    if (!check_wait( thread, &reply.signaled ))
+    reply.signaled = signaled;
+    if ((signaled == STATUS_USER_APC) && thread->apc)
     {
-        /* we need to wait */
-        if (flags & SELECT_TIMEOUT)
-            set_select_timeout( thread->client_fd, &thread->wait->timeout );
-        return;
+        struct thread_apc *apc = thread->apc;
+        int len = thread->apc_count * sizeof(*apc);
+        thread->apc = NULL;
+        thread->apc_count = 0;
+        send_reply( thread, -1, 2, &reply, sizeof(reply),
+                    apc, len );
+        free( apc );
     }
-    end_wait( thread );
- done:
-    send_reply( thread, -1, 1, &reply, sizeof(reply) );
+    else send_reply( thread, -1, 1, &reply, sizeof(reply) );
 }
 
 /* attempt to wake up a thread */
 /* return 1 if OK, 0 if the wait condition is still not satisfied */
 static int wake_thread( struct thread *thread )
 {
-    struct select_reply reply;
+    int signaled;
 
-    if (!check_wait( thread, &reply.signaled )) return 0;
+    if (!check_wait( thread, &signaled )) return 0;
     end_wait( thread );
-    send_reply( thread, -1, 1, &reply, sizeof(reply) );
+    send_select_reply( thread, signaled );
     return 1;
+}
+
+/* sleep on a list of objects */
+void sleep_on( struct thread *thread, int count, int *handles, int flags, int timeout )
+{
+    assert( !thread->wait );
+    if (!wait_on( thread, count, handles, flags, timeout ))
+    {
+        /* return an error */
+        send_select_reply( thread, -1 );
+        return;
+    }
+    if (!wake_thread( thread ))
+    {
+        /* we need to wait */
+        if (flags & SELECT_TIMEOUT)
+            set_select_timeout( thread->client_fd, &thread->wait->timeout );
+    }
 }
 
 /* timeout for the current thread */
 void thread_timeout(void)
 {
-    struct select_reply reply;
-
     assert( current->wait );
-
-    reply.signaled = STATUS_TIMEOUT;
     end_wait( current );
-    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    send_select_reply( current, STATUS_TIMEOUT );
 }
 
 /* attempt to wake threads sleeping on the object wait queue */
@@ -394,6 +472,29 @@ void wake_up( struct object *obj, int max )
         }
         entry = next;
     }
+}
+
+/* queue an async procedure call */
+int thread_queue_apc( struct thread *thread, void *func, void *param )
+{
+    struct thread_apc *apc;
+    if (!func)
+    {
+        SET_ERROR( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!thread->apc)
+    {
+        if (!(thread->apc = mem_alloc( MAX_THREAD_APC * sizeof(*apc) )))
+            return 0;
+        thread->apc_count = 0;
+    }
+    else if (thread->apc_count >= MAX_THREAD_APC) return 0;
+    thread->apc[thread->apc_count].func  = func;
+    thread->apc[thread->apc_count].param = param;
+    thread->apc_count++;
+    wake_thread( thread );
+    return 1;
 }
 
 /* kill a thread on the spot */

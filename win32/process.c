@@ -20,45 +20,6 @@
 
 
 /**********************************************************************
- *          GetProcessAffinityMask
- */
-BOOL32 WINAPI GetProcessAffinityMask(HANDLE32 hProcess,
-                                     LPDWORD lpProcessAffinityMask,
-                                     LPDWORD lpSystemAffinityMask)
-{
-	TRACE(task,"(%x,%lx,%lx)\n",
-		hProcess,(lpProcessAffinityMask?*lpProcessAffinityMask:0),
-		(lpSystemAffinityMask?*lpSystemAffinityMask:0));
-	/* It is definitely important for a process to know on what processor
-	   it is running :-) */
-	if(lpProcessAffinityMask)
-		*lpProcessAffinityMask=1;
-	if(lpSystemAffinityMask)
-		*lpSystemAffinityMask=1;
-	return TRUE;
-}
-
-/**********************************************************************
- *           SetThreadAffinityMask
- * Works now like the Windows95 (no MP support) version
- */
-BOOL32 WINAPI SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
-{
-	THDB	*thdb = THREAD_GetPtr( hThread, THREAD_SET_INFORMATION, NULL );
-
-	if (!thdb) 
-		return FALSE;
-	if (dwThreadAffinityMask!=1) {
-		WARN(thread,"(%d,%ld): only 1 processor supported.\n",
-                    (int)hThread,dwThreadAffinityMask);
-		K32OBJ_DecCount((K32OBJ*)thdb);
-		return FALSE;
-	}
-	K32OBJ_DecCount((K32OBJ*)thdb);
-	return TRUE;
-}
-
-/**********************************************************************
  *  ContinueDebugEvent [KERNEL32.146]
  */
 BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {

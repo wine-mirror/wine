@@ -50,14 +50,7 @@
 /* The CONSOLE kernel32 Object */
 typedef struct _CONSOLE {
 	K32OBJ  		header;
-	DWORD			mode;
-	CONSOLE_CURSOR_INFO	cinfo;
 
-	int			master;	/* xterm side of pty */
-	int			infd,outfd;
-        int                     hread, hwrite;  /* server handles (hack) */
-	int			pid;	/* xterm's pid, -1 if no xterm */
-        LPSTR   		title;	/* title of console */
 	INPUT_RECORD		*irs;	/* buffered input records */
 	int			nrofirs;/* nr of buffered input records */
 } CONSOLE;
@@ -79,13 +72,31 @@ static void CONSOLE_Destroy(K32OBJ *obj)
 
 	obj->type = K32OBJ_UNKNOWN;
 
-	if (console->title)
-	  	  HeapFree( SystemHeap, 0, console->title );
-	console->title = NULL;
-	/* if there is a xterm, kill it. */
-	if (console->pid != -1)
-		kill(console->pid, SIGTERM);
 	HeapFree(SystemHeap, 0, console);
+}
+
+
+/***********************************************************************
+ * CONSOLE_GetPtr
+ */
+static CONSOLE *CONSOLE_GetPtr( HANDLE32 handle )
+{
+    return (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), handle,
+                                       K32OBJ_CONSOLE, 0, NULL );
+}
+
+/****************************************************************************
+ *		CONSOLE_GetInfo
+ */
+static BOOL32 CONSOLE_GetInfo( HANDLE32 handle, struct get_console_info_reply *reply )
+{
+    struct get_console_info_request req;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+        return FALSE;
+    CLIENT_SendRequest( REQ_GET_CONSOLE_INFO, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitSimpleReply( reply, sizeof(*reply), NULL );
 }
 
 
@@ -110,8 +121,7 @@ static void
 CONSOLE_string_to_IR( HANDLE32 hConsoleInput,unsigned char *buf,int len) {
     int			j,k;
     INPUT_RECORD	ir;
-    CONSOLE *console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput,
-                                                   K32OBJ_CONSOLE, 0, NULL);
+    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
 
     for (j=0;j<len;j++) {
     	unsigned char inchar = buf[j];
@@ -489,8 +499,15 @@ BOOL32 WINAPI FreeConsole(VOID)
 		return FALSE;
 	}
 
-        HANDLE_CloseAll( pdb, &console->header );
+        CLIENT_SendRequest( REQ_FREE_CONSOLE, -1, 0 );
+        if (CLIENT_WaitReply( NULL, NULL, 0 ) != ERROR_SUCCESS)
+        {
+            K32OBJ_DecCount(&console->header);
+            SYSTEM_UNLOCK();
+            return FALSE;
+        }
 
+        HANDLE_CloseAll( pdb, &console->header );
 	K32OBJ_DecCount( &console->header );
 	pdb->console = NULL;
 	SYSTEM_UNLOCK();
@@ -498,32 +515,42 @@ BOOL32 WINAPI FreeConsole(VOID)
 }
 
 
-/** 
- *  It looks like the openpty that comes with glibc in RedHat 5.0
- *  is buggy (second call returns what looks like a dup of 0 and 1
- *  instead of a new pty), this is a generic replacement.
+/*************************************************************************
+ * 		CONSOLE_OpenHandle
+ *
+ * Open a handle to the current process console.
  */
-static int CONSOLE_openpty(CONSOLE *console, char *name, 
-			struct termios *term, struct winsize *winsize)
+HANDLE32 CONSOLE_OpenHandle( BOOL32 output, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-        int temp, slave;
-        struct set_console_fd_request req;
+    struct open_console_request req;
+    struct open_console_reply reply;
+    CONSOLE *console;
+    HANDLE32 handle;
 
-        temp = wine_openpty(&console->master, &slave, name, term,
-           winsize);
-        console->infd = console->outfd = slave;
+    req.output  = output;
+    req.access  = access;
+    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
 
-        req.handle = console->hread;
-        CLIENT_SendRequest(REQ_SET_CONSOLE_FD, dup(slave), 1,
-           &req, sizeof(req));
-        CLIENT_WaitReply( NULL, NULL, 0);
-        req.handle = console->hwrite;
-        CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(slave), 1,
-           &req, sizeof(req));
-        CLIENT_WaitReply( NULL, NULL, 0);
-
-        return temp;  /* The same result as the openpty call */
+    SYSTEM_LOCK();
+    if (!(console = (CONSOLE*)HeapAlloc( SystemHeap, 0, sizeof(*console))))
+    {
+        SYSTEM_UNLOCK();
+        return FALSE;
+    }
+    console->header.type     = K32OBJ_CONSOLE;
+    console->header.refcount = 1;
+    console->nrofirs         = 0;
+    console->irs             = HeapAlloc(GetProcessHeap(),0,1);;
+    handle = HANDLE_Alloc( PROCESS_Current(), &console->header, req.access,
+                           req.inherit, reply.handle );
+    SYSTEM_UNLOCK();
+    K32OBJ_DecCount(&console->header);
+    return handle;
 }
+
 
 /*************************************************************************
  * 		CONSOLE_make_complex			[internal]
@@ -537,29 +564,37 @@ static int CONSOLE_openpty(CONSOLE *console, char *name,
  * 
  * All other functions should work indedependend from this call.
  *
- * To test for complex console: pid == -1 -> simple, otherwise complex.
+ * To test for complex console: pid == 0 -> simple, otherwise complex.
  */
-static BOOL32 CONSOLE_make_complex(HANDLE32 handle,CONSOLE *console)
+static BOOL32 CONSOLE_make_complex(HANDLE32 handle)
 {
+        struct set_console_fd_request req;
+        struct get_console_info_reply info;
 	struct termios term;
-	char buf[30],*title;
+	char buf[256];
 	char c = '\0';
 	int status = 0;
-	int i,xpid;
+	int i,xpid,master,slave;
 	DWORD	xlen;
 
-	if (console->pid != -1)
-		return TRUE; /* already complex */
+        if (!CONSOLE_GetInfo( handle, &info )) return FALSE;
+        if (info.pid) return TRUE; /* already complex */
 
 	MSG("Console: Making console complex (creating an xterm)...\n");
 
 	if (tcgetattr(0, &term) < 0) return FALSE;
 	term.c_lflag = ~(ECHO|ICANON);
-	if (CONSOLE_openpty(console, NULL, &term, NULL) < 0) return FALSE;
+
+        if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                                  K32OBJ_CONSOLE, 0 )) == -1)
+            return FALSE;
+
+        if (wine_openpty(&master, &slave, NULL, &term, NULL) < 0)
+            return FALSE;
 
 	if ((xpid=fork()) == 0) {
-		tcsetattr(console->infd, TCSADRAIN, &term);
-		sprintf(buf, "-Sxx%d", console->master);
+		tcsetattr(slave, TCSADRAIN, &term);
+		sprintf(buf, "-Sxx%d", master);
 		/* "-fn vga" for VGA font. Harmless if vga is not present:
 		 *  xterm: unable to open font "vga", trying "fixed".... 
 		 */
@@ -567,53 +602,39 @@ static BOOL32 CONSOLE_make_complex(HANDLE32 handle,CONSOLE *console)
 		ERR(console, "error creating AllocConsole xterm\n");
 		exit(1);
 	}
-	console->pid = xpid;
+
+        req.pid = xpid;
+        CLIENT_SendRequest( REQ_SET_CONSOLE_FD, dup(slave), 1, &req, sizeof(req) );
+        CLIENT_WaitReply( NULL, NULL, 0 );
 
 	/* most xterms like to print their window ID when used with -S;
 	 * read it and continue before the user has a chance...
 	 */
-	for (i=0; c!='\n'; (status=read(console->infd, &c, 1)), i++) {
+	for (i=0; c!='\n'; (status=read(slave, &c, 1)), i++) {
 		if (status == -1 && c == '\0') {
 				/* wait for xterm to be created */
 			usleep(100);
 		}
 		if (i > 10000) {
 			ERR(console, "can't read xterm WID\n");
-			kill(console->pid, SIGKILL);
+			kill(xpid, SIGKILL);
 			return FALSE;
 		}
 	}
 	/* enable mouseclicks */
 	sprintf(buf,"%c[?1001s%c[?1000h",27,27);
 	WriteFile(handle,buf,strlen(buf),&xlen,NULL);
-	if (console->title) {
-	    title = HeapAlloc(GetProcessHeap(),0,strlen("\033]2;\a")+1+strlen(console->title));
-	    sprintf(title,"\033]2;%s\a",console->title);
-	    WriteFile(handle,title,strlen(title),&xlen,NULL);
-	    HeapFree(GetProcessHeap(),0,title);
+        
+        if (GetConsoleTitle32A( buf, sizeof(buf) ))
+        {
+	    WriteFile(handle,"\033]2;",4,&xlen,NULL);
+	    WriteFile(handle,buf,strlen(buf),&xlen,NULL);
+	    WriteFile(handle,"\a",1,&xlen,NULL);
 	}
 	return TRUE;
 
 }
 
-/***********************************************************************
- *		CONSOLE_GetConsoleHandle
- *	 returns a 16-bit style console handle
- * note: only called from _lopen
- */
-HFILE32 CONSOLE_GetConsoleHandle(VOID)
-{
-	PDB32 *pdb = PROCESS_Current();
-	HFILE32 handle = HFILE_ERROR32;
-
-	SYSTEM_LOCK();
-	if (pdb->console != NULL) {
-		CONSOLE *console = (CONSOLE *)pdb->console;
-		handle = (HFILE32)HANDLE_Alloc(pdb, &console->header, 0, TRUE, -1);
-	}
-	SYSTEM_UNLOCK();
-	return handle;
-}
 
 /***********************************************************************
  *            AllocConsole (KERNEL32.103)
@@ -622,16 +643,13 @@ HFILE32 CONSOLE_GetConsoleHandle(VOID)
  */
 BOOL32 WINAPI AllocConsole(VOID)
 {
-        struct create_console_request req;
-        struct create_console_reply reply;
+        struct open_console_request req;
+        struct open_console_reply reply;
 	PDB32 *pdb = PROCESS_Current();
 	CONSOLE *console;
 	HANDLE32 hIn, hOut, hErr;
 
 	SYSTEM_LOCK();		/* FIXME: really only need to lock the process */
-
-	SetLastError(ERROR_CANNOT_MAKE);  /* this might not be the right 
-					     error, but it's a good guess :) */
 
 	console = (CONSOLE *)pdb->console;
 
@@ -650,39 +668,46 @@ BOOL32 WINAPI AllocConsole(VOID)
 
         console->header.type     = K32OBJ_CONSOLE;
         console->header.refcount = 1;
-        console->pid             = -1;
-        console->title           = NULL;
 	console->nrofirs	 = 0;
 	console->irs	 	 = HeapAlloc(GetProcessHeap(),0,1);;
-    	console->mode		 =   ENABLE_PROCESSED_INPUT
-				   | ENABLE_LINE_INPUT
-				   | ENABLE_ECHO_INPUT;
-	/* FIXME: we shouldn't probably use hardcoded UNIX values here. */
-	console->infd		 = 0;
-	console->outfd		 = 1;
-        console->hread = console->hwrite = -1;
 
-        CLIENT_SendRequest( REQ_CREATE_CONSOLE, -1, 1, &req, sizeof(req) );
+        CLIENT_SendRequest( REQ_ALLOC_CONSOLE, -1, 0 );
+        if (CLIENT_WaitReply( NULL, NULL, 0 ) != ERROR_SUCCESS)
+        {
+            K32OBJ_DecCount(&console->header);
+            SYSTEM_UNLOCK();
+            return FALSE;
+        }
+
+        req.output = 0;
+        req.access = GENERIC_READ | GENERIC_WRITE;
+        req.inherit = FALSE;
+        CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
         if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) != ERROR_SUCCESS)
         {
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
             return FALSE;
         }
-        console->hread = reply.handle_read;
-        console->hwrite = reply.handle_write;
-
-	if ((hIn = HANDLE_Alloc(pdb,&console->header, 0, TRUE,
-                                reply.handle_read)) == INVALID_HANDLE_VALUE32)
+	if ((hIn = HANDLE_Alloc(pdb,&console->header, req.access,
+                                FALSE, reply.handle)) == INVALID_HANDLE_VALUE32)
         {
-            CLIENT_CloseHandle( reply.handle_write );
             K32OBJ_DecCount(&console->header);
             SYSTEM_UNLOCK();
             return FALSE;
 	}
 
-	if ((hOut = HANDLE_Alloc(pdb,&console->header, 0, TRUE,
-                                 reply.handle_write)) == INVALID_HANDLE_VALUE32)
+        req.output = 1;
+        CLIENT_SendRequest( REQ_OPEN_CONSOLE, -1, 1, &req, sizeof(req) );
+        if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) != ERROR_SUCCESS)
+        {
+            CloseHandle(hIn);
+            K32OBJ_DecCount(&console->header);
+            SYSTEM_UNLOCK();
+            return FALSE;
+        }
+	if ((hOut = HANDLE_Alloc(pdb,&console->header, req.access,
+                                 FALSE, reply.handle)) == INVALID_HANDLE_VALUE32)
         {
             CloseHandle(hIn);
             K32OBJ_DecCount(&console->header);
@@ -742,14 +767,15 @@ UINT32 WINAPI GetConsoleOutputCP(VOID)
  */
 BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+    struct get_console_mode_request req;
+    struct get_console_mode_reply reply;
 
-    if (!console) {
-    	FIXME(console,"(%d,%p), no console handle passed!\n",hcon,mode);
-	return FALSE;
-    }
-    *mode = console->mode;
-    K32OBJ_DecCount(&console->header);
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hcon,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+        return FALSE;
+    CLIENT_SendRequest( REQ_GET_CONSOLE_MODE, -1, 1, &req, sizeof(req));
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+    *mode = reply.mode;
     return TRUE;
 }
 
@@ -767,16 +793,14 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
  */
 BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+    struct set_console_mode_request req;
 
-    if (!console) {
-    	FIXME(console,"(%d,%ld), no console handle passed!\n",hcon,mode);
-	return FALSE;
-    }
-    FIXME(console,"(0x%08x,0x%08lx): stub\n",hcon,mode);
-    console->mode = mode;
-    K32OBJ_DecCount(&console->header);
-    return TRUE;
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hcon,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+        return FALSE;
+    req.mode = mode;
+    CLIENT_SendRequest( REQ_SET_CONSOLE_MODE, -1, 1, &req, sizeof(req));
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 
@@ -785,14 +809,29 @@ BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
  */
 DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
 {
-    PDB32 *pdb = PROCESS_Current();
-    CONSOLE *console= (CONSOLE *)pdb->console;
+    struct get_console_info_request req;
+    struct get_console_info_reply reply;
+    int len;
+    DWORD ret = 0;
+    HANDLE32 hcon;
 
-    if(console && console->title) {
-	lstrcpyn32A(title,console->title,size);
-	return strlen(title);
+    if ((hcon = CreateFile32A( "CONOUT$", GENERIC_READ, 0, NULL,
+                               OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE32)
+        return 0;
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hcon,
+                                              K32OBJ_CONSOLE, GENERIC_READ )) == -1)
+    {
+        CloseHandle( hcon );
+        return 0;
     }
-    return 0;
+    CLIENT_SendRequest( REQ_GET_CONSOLE_INFO, -1, 1, &req, sizeof(req) );
+    if (!CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply), title, size ))
+    {
+        if (len > sizeof(reply)+size) title[size-1] = 0;
+        ret = strlen(title);
+    }
+    CloseHandle( hcon );
+    return ret;
 }
 
 
@@ -809,14 +848,14 @@ DWORD WINAPI GetConsoleTitle32A(LPSTR title,DWORD size)
  */
 DWORD WINAPI GetConsoleTitle32W( LPWSTR title, DWORD size )
 {
-    PDB32 *pdb = PROCESS_Current();
-    CONSOLE *console= (CONSOLE *)pdb->console;
-    if(console && console->title) 
-    {
-        lstrcpynAtoW(title,console->title,size);
-        return (lstrlen32W(title));
-    }
-    return 0;
+    char *tmp;
+    DWORD ret;
+
+    if (!(tmp = HeapAlloc( GetProcessHeap(), 0, size ))) return 0;
+    ret = GetConsoleTitle32A( tmp, size );
+    lstrcpyAtoW( title, tmp );
+    HeapFree( GetProcessHeap(), 0, tmp );
+    return ret;
 }
 
 
@@ -858,13 +897,7 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
     	0,4,2,6,
 	1,5,3,7,
     };
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleOutput, K32OBJ_CONSOLE, 0, NULL);
-
-    if (!console) {
-    	FIXME(console,"(%d,...): no console handle!\n",hConsoleOutput);
-	return FALSE;
-    }
-    CONSOLE_make_complex(hConsoleOutput,console);
+    CONSOLE_make_complex(hConsoleOutput);
     buffer = HeapAlloc(GetProcessHeap(),0,100);;
     curbufsize = 100;
 
@@ -897,7 +930,6 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
     sprintf(sbuf,"%c[0m",27);SADD(sbuf);
     WriteFile(hConsoleOutput,buffer,bufused,&res,NULL);
     HeapFree(GetProcessHeap(),0,buffer);
-    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -932,7 +964,7 @@ BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
                               LPDWORD lpNumberOfCharsRead,
                               LPVOID lpReserved )
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
+    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
     int		i,charsread = 0;
     LPSTR	xbuf = (LPSTR)lpBuffer;
 
@@ -1007,7 +1039,7 @@ BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
 				  LPINPUT_RECORD lpBuffer,
 				  DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
+    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
 
     TRACE(console, "(%d,%p,%ld,%p)\n",hConsoleInput, lpBuffer, nLength,
           lpNumberOfEventsRead);
@@ -1056,6 +1088,7 @@ BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
  */
 BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
 {
+#if 0
     PDB32 *pdb = PROCESS_Current();
     CONSOLE *console;
     DWORD written;
@@ -1079,6 +1112,7 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
     }
 
     sprintf(titlestring,titleformat,title);
+#if 0
     /* only set title for complex console (own xterm) */
     if (console->pid != -1) {
 	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),titlestring,strlen(titlestring),&written,NULL);
@@ -1086,9 +1120,41 @@ BOOL32 WINAPI SetConsoleTitle32A(LPCSTR title)
 	    ret =TRUE;
     } else
     	ret = TRUE;
+#endif
     HeapFree( GetProcessHeap(), 0, titlestring );
     K32OBJ_DecCount(&console->header);
     return ret;
+
+
+
+#endif
+
+    struct set_console_info_request req;
+    struct get_console_info_reply info;
+    HANDLE32 hcon;
+    DWORD written;
+
+    if ((hcon = CreateFile32A( "CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                               OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE32)
+        return FALSE;
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hcon,
+                                              K32OBJ_CONSOLE, GENERIC_WRITE )) == -1)
+        goto error;
+    req.mask = SET_CONSOLE_INFO_TITLE;
+    CLIENT_SendRequest( REQ_SET_CONSOLE_INFO, -1, 2, &req, sizeof(req),
+                        title, strlen(title)+1 );
+    if (CLIENT_WaitReply( NULL, NULL, 0 )) goto error;
+    if (CONSOLE_GetInfo( hcon, &info ) && info.pid)
+    {
+        /* only set title for complex console (own xterm) */
+        WriteFile( hcon, "\033]2;", 4, &written, NULL );
+        WriteFile( hcon, title, strlen(title), &written, NULL );
+        WriteFile( hcon, "\a", 1, &written, NULL );
+    }
+    return TRUE;
+ error:
+    CloseHandle( hcon );
+    return FALSE;
 }
 
 
@@ -1132,7 +1198,7 @@ BOOL32 WINAPI ReadConsoleInput32W(HANDLE32 hConsoleInput,
  */
 BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput)
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
+    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
 
     if (!console)
     	return FALSE;
@@ -1156,19 +1222,13 @@ BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hcon, COORD pos )
 {
     char 	xbuf[20];
     DWORD	xlen;
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
 
-    if (!console) {
-    	FIXME(console,"(%d,...), no console handle!\n",hcon);
-    	return FALSE;
-    }
-    CONSOLE_make_complex(hcon,console);
+    CONSOLE_make_complex(hcon);
     TRACE(console, "%d (%dx%d)\n", hcon, pos.x , pos.y );
     /* x are columns, y rows */
     sprintf(xbuf,"%c[%d;%dH", 0x1B, pos.y+1, pos.x+1);
     /* FIXME: store internal if we start using own console buffers */
     WriteFile(hcon,xbuf,strlen(xbuf),&xlen,NULL);
-    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -1177,7 +1237,7 @@ BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hcon, COORD pos )
  */
 BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+    CONSOLE *console = CONSOLE_GetPtr( hcon );
 
     if (!console) {
     	FIXME(console,"(%d,%p), no console handle!\n",hcon,nrofevents);
@@ -1211,7 +1271,7 @@ BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
                                   DWORD cInRecords,
                                   LPDWORD lpcRead)
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hConsoleInput, K32OBJ_CONSOLE, 0, NULL);
+    CONSOLE *console = CONSOLE_GetPtr( hConsoleInput );
 
     if (!console) {
         FIXME(console,"(%d,%p,%ld,%p), No console handle passed!\n",hConsoleInput, pirBuffer, cInRecords, lpcRead);
@@ -1260,17 +1320,14 @@ BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
 BOOL32 WINAPI GetConsoleCursorInfo32( HANDLE32 hcon,
                                       LPCONSOLE_CURSOR_INFO cinfo )
 {
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
+    struct get_console_info_reply reply;
 
-    if (!console) {
-    	FIXME(console, "(%x,%p), no console handle!\n", hcon, cinfo);
-	return FALSE;
+    if (!CONSOLE_GetInfo( hcon, &reply )) return FALSE;
+    if (cinfo)
+    {
+        cinfo->dwSize = reply.cursor_size;
+        cinfo->bVisible = reply.cursor_visible;
     }
-    TRACE(console, "(%x,%p)\n", hcon, cinfo);
-    if (!cinfo)
-    	return FALSE;
-    *cinfo = console->cinfo;
-    K32OBJ_DecCount(&console->header);
     return TRUE;
 }
 
@@ -1286,19 +1343,22 @@ BOOL32 WINAPI SetConsoleCursorInfo32(
     HANDLE32 hcon,                /* [in] Handle to console screen buffer */
     LPCONSOLE_CURSOR_INFO cinfo)  /* [in] Address of cursor information */
 {
+    struct set_console_info_request req;
     char	buf[8];
     DWORD	xlen;
-    CONSOLE	*console = (CONSOLE*)HANDLE_GetObjPtr( PROCESS_Current(), hcon, K32OBJ_CONSOLE, 0, NULL);
 
-    TRACE(console, "(%x,%ld,%i): stub\n", hcon,cinfo->dwSize,cinfo->bVisible);
-    if (!console)
-    	return FALSE;
-    CONSOLE_make_complex(hcon,console);
-    sprintf(buf,"%c[?25%c",27,cinfo->bVisible?'h':'l');
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hcon,
+                                              K32OBJ_CONSOLE, GENERIC_WRITE )) == -1)
+        return FALSE;
+    CONSOLE_make_complex(hcon);
+    sprintf(buf,"\033[?25%c",cinfo->bVisible?'h':'l');
     WriteFile(hcon,buf,strlen(buf),&xlen,NULL);
-    console->cinfo = *cinfo;
-    K32OBJ_DecCount(&console->header);
-    return TRUE;
+
+    req.cursor_size    = cinfo->dwSize;
+    req.cursor_visible = cinfo->bVisible;
+    req.mask           = SET_CONSOLE_INFO_CURSOR;
+    CLIENT_SendRequest( REQ_SET_CONSOLE_INFO, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 

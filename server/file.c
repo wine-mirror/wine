@@ -423,3 +423,17 @@ int set_file_time( int handle, time_t access_time, time_t write_time )
     return 1;
     
 }
+
+int file_lock( struct file *file, int offset_high, int offset_low,
+               int count_high, int count_low )
+{
+    /* FIXME: implement this */
+    return 1;
+}
+
+int file_unlock( struct file *file, int offset_high, int offset_low,
+                 int count_high, int count_low )
+{
+    /* FIXME: implement this */
+    return 1;
+}

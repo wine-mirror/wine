@@ -15,10 +15,7 @@
 /* The declarations are here to avoid including a lot of unnecessary files */
 extern const K32OBJ_OPS PROCESS_Ops;
 extern const K32OBJ_OPS THREAD_Ops;
-extern const K32OBJ_OPS FILE_Ops;
-extern const K32OBJ_OPS CHANGE_Ops;
 extern const K32OBJ_OPS MEM_MAPPED_FILE_Ops;
-extern const K32OBJ_OPS DEVICE_Ops;
 extern const K32OBJ_OPS CONSOLE_Ops;
 extern const K32OBJ_OPS SNAPSHOT_Ops;
 
@@ -44,13 +41,13 @@ const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
     &K32OBJ_NullOps,        /* K32OBJ_CRITICAL_SECTION */
     &PROCESS_Ops,           /* K32OBJ_PROCESS */
     &THREAD_Ops,            /* K32OBJ_THREAD */
-    &FILE_Ops,              /* K32OBJ_FILE */
-    &CHANGE_Ops,            /* K32OBJ_CHANGE */
+    &K32OBJ_DefaultOps,     /* K32OBJ_FILE */
+    &K32OBJ_DefaultOps,     /* K32OBJ_CHANGE */
     &CONSOLE_Ops,           /* K32OBJ_CONSOLE */
     &K32OBJ_NullOps,        /* K32OBJ_SCREEN_BUFFER */
     &MEM_MAPPED_FILE_Ops,   /* K32OBJ_MEM_MAPPED_FILE */
     &K32OBJ_NullOps,        /* K32OBJ_SERIAL */
-    &DEVICE_Ops,            /* K32OBJ_DEVICE_IOCTL */
+    &K32OBJ_NullOps,        /* K32OBJ_DEVICE_IOCTL */
     &K32OBJ_DefaultOps,     /* K32OBJ_PIPE */
     &K32OBJ_NullOps,        /* K32OBJ_MAILSLOT */
     &K32OBJ_NullOps,        /* K32OBJ_TOOLHELP_SNAPSHOT */

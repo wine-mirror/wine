@@ -227,7 +227,7 @@ DECL_HANDLER(dup_handle)
 DECL_HANDLER(get_process_info)
 {
     struct process *process;
-    struct get_process_info_reply reply = { 0, 0 };
+    struct get_process_info_reply reply = { 0, 0, 0 };
 
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
@@ -235,6 +235,19 @@ DECL_HANDLER(get_process_info)
         release_object( process );
     }
     send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set information about a process */
+DECL_HANDLER(set_process_info)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION )))
+    {
+        set_process_info( process, req );
+        release_object( process );
+    }
+    send_reply( current, -1, 0 );
 }
 
 /* fetch information about a thread */
@@ -249,6 +262,59 @@ DECL_HANDLER(get_thread_info)
         release_object( thread );
     }
     send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set information about a thread */
+DECL_HANDLER(set_thread_info)
+{
+    struct thread *thread;
+
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_INFORMATION )))
+    {
+        set_thread_info( thread, req );
+        release_object( thread );
+    }
+    send_reply( current, -1, 0 );
+}
+
+/* suspend a thread */
+DECL_HANDLER(suspend_thread)
+{
+    struct thread *thread;
+    struct suspend_thread_reply reply = { -1 };
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
+    {
+        reply.count = suspend_thread( thread );
+        release_object( thread );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    
+}
+
+/* resume a thread */
+DECL_HANDLER(resume_thread)
+{
+    struct thread *thread;
+    struct resume_thread_reply reply = { -1 };
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
+    {
+        reply.count = resume_thread( thread );
+        release_object( thread );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+    
+}
+
+/* queue an APC for a thread */
+DECL_HANDLER(queue_apc)
+{
+    struct thread *thread;
+    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
+    {
+        thread_queue_apc( thread, req->func, req->param );
+        release_object( thread );
+    }
+    send_reply( current, -1, 0 );
 }
 
 /* open a handle to a process */
@@ -488,6 +554,36 @@ DECL_HANDLER(get_file_info)
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
+/* lock a region of a file */
+DECL_HANDLER(lock_file)
+{
+    struct file *file;
+
+    if ((file = get_file_obj( current->process, req->handle, 0 )))
+    {
+        file_lock( file, req->offset_high, req->offset_low,
+                   req->count_high, req->count_low );
+        release_object( file );
+    }
+    send_reply( current, -1, 0 );
+}
+
+
+/* unlock a region of a file */
+DECL_HANDLER(unlock_file)
+{
+    struct file *file;
+
+    if ((file = get_file_obj( current->process, req->handle, 0 )))
+    {
+        file_unlock( file, req->offset_high, req->offset_low,
+                     req->count_high, req->count_low );
+        release_object( file );
+    }
+    send_reply( current, -1, 0 );
+}
+
+
 /* create an anonymous pipe */
 DECL_HANDLER(create_pipe)
 {
@@ -512,34 +608,72 @@ DECL_HANDLER(create_pipe)
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
-/* create a console */
-DECL_HANDLER(create_console)
+/* allocate a console for the current process */
+DECL_HANDLER(alloc_console)
 {
-    struct create_console_reply reply = { -1, -1 };
-    struct object *obj[2];
-    if (create_console( fd, obj ))
+    alloc_console( current->process );
+    send_reply( current, -1, 0 );
+}
+
+/* free the console of the current process */
+DECL_HANDLER(free_console)
+{
+    free_console( current->process );
+    send_reply( current, -1, 0 );
+}
+
+/* open a handle to the process console */
+DECL_HANDLER(open_console)
+{
+    struct object *obj;
+    struct open_console_reply reply = { -1 };
+    if ((obj = get_console( current->process, req->output )))
     {
-        reply.handle_read = alloc_handle( current->process, obj[0],
-                                          STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_READ,
-                                          req->inherit );
-        if (reply.handle_read != -1)
-        {
-            reply.handle_write = alloc_handle( current->process, obj[1],
-                                               STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
-                                               req->inherit );
-            if (reply.handle_write == -1)
-                close_handle( current->process, reply.handle_read );
-        }
-        release_object( obj[0] );
-        release_object( obj[1] );
+        reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        release_object( obj );
     }
     send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set info about a console (output only) */
+DECL_HANDLER(set_console_info)
+{
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "set_console_info", name, len );
+    set_console_info( req->handle, req, name );
+    send_reply( current, -1, 0 );
+}
+
+/* get info about a console (output only) */
+DECL_HANDLER(get_console_info)
+{
+    struct get_console_info_reply reply;
+    const char *title;
+    get_console_info( req->handle, &reply, &title );
+    send_reply( current, -1, 2, &reply, sizeof(reply),
+                title, title ? strlen(title)+1 : 0 );
 }
 
 /* set a console fd */
 DECL_HANDLER(set_console_fd)
 {
-    set_console_fd( req->handle, fd );
+    set_console_fd( req->handle, fd, req->pid );
+    send_reply( current, -1, 0 );
+}
+
+/* get a console mode (input or output) */
+DECL_HANDLER(get_console_mode)
+{
+    struct get_console_mode_reply reply;
+    get_console_mode( req->handle, &reply.mode );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set a console mode (input or output) */
+DECL_HANDLER(set_console_mode)
+{
+    set_console_mode( req->handle, req->mode );
     send_reply( current, -1, 0 );
 }
 
@@ -584,4 +718,19 @@ DECL_HANDLER(get_mapping_info)
     struct get_mapping_info_reply reply;
     int map_fd = get_mapping_info( req->handle, &reply );
     send_reply( current, map_fd, 1, &reply, sizeof(reply) );
+}
+
+/* create a device */
+DECL_HANDLER(create_device)
+{
+    struct object *obj;
+    struct create_device_reply reply = { -1 };
+
+    if ((obj = create_device( req->id )))
+    {
+        reply.handle = alloc_handle( current->process, obj,
+                                     req->access, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
 }

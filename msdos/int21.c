@@ -218,22 +218,17 @@ static void GetDrivePB( CONTEXT *context, int drive )
 static void ioctlGetDeviceInfo( CONTEXT *context )
 {
     int curr_drive;
-    FILE_OBJECT *file;
+    const DOS_DEVICE *dev;
 
     TRACE(int21, "(%d)\n", BX_reg(context));
     
     RESET_CFLAG(context);
 
     /* DOS device ? */
-    if ((file = FILE_GetFile( FILE_GetHandle32(BX_reg(context)), 0, NULL )))
+    if ((dev = DOSFS_GetDeviceByHandle( FILE_GetHandle32(BX_reg(context)) )))
     {
-        const DOS_DEVICE *dev = DOSFS_GetDevice( file->unix_name );
-        FILE_ReleaseFile( file );
-        if (dev)
-        {
-	    DX_reg(context) = dev->flags;
-	    return;
-        }
+        DX_reg(context) = dev->flags;
+        return;
     }
 
     /* it seems to be a file */
@@ -1559,12 +1554,13 @@ void WINAPI DOS3Call( CONTEXT *context )
         case 0x01:
             break;
         case 0x02:{
-           FILE_OBJECT *file;
-           file = FILE_GetFile(FILE_GetHandle32(BX_reg(context)),0,NULL);
-           if (!strcasecmp(file->unix_name, "SCSIMGR$"))
-                        ASPI_DOS_HandleInt(context);
-           FILE_ReleaseFile( file );
-           break;
+            const DOS_DEVICE *dev;
+            if ((dev = DOSFS_GetDeviceByHandle( FILE_GetHandle32(BX_reg(context)) )) &&
+                !strcasecmp( dev->name, "SCSIMGR$" ))
+            {
+                ASPI_DOS_HandleInt(context);
+            }
+            break;
        }
 	case 0x05:{	/* IOCTL - WRITE TO BLOCK DEVICE CONTROL CHANNEL */
 	    /*BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, DS_reg(context),EDX_reg(context));*/

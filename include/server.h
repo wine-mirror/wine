@@ -92,9 +92,24 @@ struct get_process_info_request
 };
 struct get_process_info_reply
 {
-    void*        pid;          /* server process id */
-    int          exit_code;    /* process exit code */
+    void*        pid;              /* server process id */
+    int          exit_code;        /* process exit code */
+    int          priority;         /* priority class */
+    int          process_affinity; /* process affinity mask */
+    int          system_affinity;  /* system affinity mask */
 };
+
+
+/* Set a process informations */
+struct set_process_info_request
+{
+    int          handle;       /* process handle */
+    int          mask;         /* setting mask (see below) */
+    int          priority;     /* priority class */
+    int          affinity;     /* affinity mask */
+};
+#define SET_PROCESS_INFO_PRIORITY 0x01
+#define SET_PROCESS_INFO_AFFINITY 0x02
 
 
 /* Retrieve information about a thread */
@@ -106,6 +121,50 @@ struct get_thread_info_reply
 {
     void*        pid;          /* server thread id */
     int          exit_code;    /* thread exit code */
+    int          priority;     /* thread priority level */
+};
+
+
+/* Set a thread informations */
+struct set_thread_info_request
+{
+    int          handle;       /* thread handle */
+    int          mask;         /* setting mask (see below) */
+    int          priority;     /* priority class */
+    int          affinity;     /* affinity mask */
+};
+#define SET_THREAD_INFO_PRIORITY 0x01
+#define SET_THREAD_INFO_AFFINITY 0x02
+
+
+/* Suspend a thread */
+struct suspend_thread_request
+{
+    int          handle;       /* thread handle */
+};
+struct suspend_thread_reply
+{
+    int          count;        /* new suspend count */
+};
+
+
+/* Resume a thread */
+struct resume_thread_request
+{
+    int          handle;       /* thread handle */
+};
+struct resume_thread_reply
+{
+    int          count;        /* new suspend count */
+};
+
+
+/* Queue an APC for a thread */
+struct queue_apc_request
+{
+    int          handle;       /* thread handle */
+    void*        func;         /* function to call */
+    void*        param;        /* param for function to call */
 };
 
 
@@ -160,6 +219,7 @@ struct select_request
 struct select_reply
 {
     int          signaled;     /* signaled handle */
+/*  void*        apcs[]; */    /* async procedures to call */
 };
 #define SELECT_ALL       1
 #define SELECT_ALERTABLE 2
@@ -338,6 +398,28 @@ struct get_file_info_reply
 };
 
 
+/* Lock a region of a file */
+struct lock_file_request
+{
+    int          handle;        /* handle to the file */
+    unsigned int offset_low;    /* offset of start of lock */
+    unsigned int offset_high;   /* offset of start of lock */
+    unsigned int count_low;     /* count of bytes to lock */
+    unsigned int count_high;    /* count of bytes to lock */
+};
+
+
+/* Unlock a region of a file */
+struct unlock_file_request
+{
+    int          handle;        /* handle to the file */
+    unsigned int offset_low;    /* offset of start of unlock */
+    unsigned int offset_high;   /* offset of start of unlock */
+    unsigned int count_low;     /* count of bytes to unlock */
+    unsigned int count_high;    /* count of bytes to unlock */
+};
+
+
 /* Create an anonymous pipe */
 struct create_pipe_request
 {
@@ -350,15 +432,28 @@ struct create_pipe_reply
 };
 
 
-/* Create a console */
-struct create_console_request
+/* Allocate a console for the current process */
+struct alloc_console_request
 {
+};
+
+
+/* Free the console of the current process */
+struct free_console_request
+{
+};
+
+
+/* Open a handle to the process console */
+struct open_console_request
+{
+    int          output;        /* input or output? */
+    unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
 };
-struct create_console_reply
+struct open_console_reply
 {
-    int          handle_read;   /* handle to read from the console */
-    int          handle_write;  /* handle to write to the console */
+    int          handle;        /* handle to the console */
 };
 
 
@@ -366,6 +461,52 @@ struct create_console_reply
 struct set_console_fd_request
 {
     int          handle;        /* handle to the console */
+    int          pid;           /* pid of xterm (hack) */
+};
+
+
+/* Get a console mode (input or output) */
+struct get_console_mode_request
+{
+    int          handle;        /* handle to the console */
+};
+struct get_console_mode_reply
+{
+    int          mode;          /* console mode */
+};
+
+
+/* Set a console mode (input or output) */
+struct set_console_mode_request
+{
+    int          handle;        /* handle to the console */
+    int          mode;          /* console mode */
+};
+
+
+/* Set info about a console (output only) */
+struct set_console_info_request
+{
+    int          handle;        /* handle to the console */
+    int          mask;          /* setting mask (see below) */
+    int          cursor_size;   /* size of cursor (percentage filled) */
+    int          cursor_visible;/* cursor visibility flag */
+    char         title[0];      /* console title */
+};
+#define SET_CONSOLE_INFO_CURSOR 0x01
+#define SET_CONSOLE_INFO_TITLE  0x02
+
+/* Get info about a console (output only) */
+struct get_console_info_request
+{
+    int          handle;        /* handle to the console */
+};
+struct get_console_info_reply
+{
+    int          cursor_size;   /* size of cursor (percentage filled) */
+    int          cursor_visible;/* cursor visibility flag */
+    int          pid;           /* pid of xterm (hack) */
+/*  char         title[0]; */   /* console title */
 };
 
 
@@ -417,6 +558,19 @@ struct get_mapping_info_reply
 };
 
 
+/* Create a device */
+struct create_device_request
+{
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+    int          id;            /* client private id */
+};
+struct create_device_reply
+{
+    int          handle;        /* handle to the device */
+};
+
+
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
@@ -438,7 +592,6 @@ extern int CLIENT_CloseHandle( int handle );
 extern int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process,
                                    int dst_handle, DWORD access, BOOL32 inherit, DWORD options );
 extern int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit );
-extern int CLIENT_Select( int count, int *handles, int flags, int timeout );
 #endif  /* __WINE_SERVER__ */
 
 #endif  /* __WINE_SERVER_H */

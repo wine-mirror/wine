@@ -30,28 +30,15 @@
 #include "winnt.h"
 #include "msdos.h"
 #include "miscemu.h"
-
-static void DEVICE_Destroy(K32OBJ *dev);
-
-const K32OBJ_OPS DEVICE_Ops =
-{
-    DEVICE_Destroy	/* destroy */
-};
-
-/* The device object */
-typedef struct
-{
-    K32OBJ    header;
-    struct VxDInfo *info;
-} DEVICE_OBJECT;
+#include "server.h"
 
 
-static BOOL32 DeviceIo_VTDAPI(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+static BOOL32 DeviceIo_VTDAPI(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
-static BOOL32 DeviceIo_MONODEBG(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+static BOOL32 DeviceIo_MONODEBG(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -59,13 +46,13 @@ static BOOL32 DeviceIo_MONODEBG(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 
 static BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context );
 
-static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+static BOOL32 DeviceIo_IFSMgr(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static BOOL32 DeviceIo_VWin32(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+static BOOL32 DeviceIo_VWin32(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -80,10 +67,11 @@ struct VxDInfo
     LPCSTR  name;
     WORD    id;
     BOOL32  (*vxdcall)(DWORD *, DWORD, CONTEXT *);
-    BOOL32  (*deviceio)(DEVICE_OBJECT *, DWORD, LPVOID, DWORD, 
+    BOOL32  (*deviceio)(DWORD, LPVOID, DWORD, 
                         LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
-}   
-    VxDList[] = 
+};
+
+static const struct VxDInfo VxDList[] = 
 {
     /* Standard VxD IDs */
     { "VMM",      0x0001, VxDCall_VMM, NULL },
@@ -266,43 +254,39 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
     "<KERNEL32.101>"          /* 0x0028 -- What does this do??? */
 };
 
-HANDLE32 DEVICE_Open(LPCSTR filename) 
+HANDLE32 DEVICE_Open( LPCSTR filename, DWORD access,
+                      LPSECURITY_ATTRIBUTES sa )
 {
-	DEVICE_OBJECT *dev;
-	HANDLE32 handle;
-	int i;
+    const struct VxDInfo *info;
 
-	dev = HeapAlloc( SystemHeap, 0, sizeof(DEVICE_OBJECT) );
-	if (!dev) return INVALID_HANDLE_VALUE32;
+    for (info = VxDList; info->name; info++)
+        if (!lstrcmpi32A( info->name, filename ))
+            return FILE_CreateDevice( info->id | 0x10000, access, sa );
 
-	dev->header.type = K32OBJ_DEVICE_IOCTL;
-	dev->header.refcount = 1;
-	dev->info       = NULL;
-
-	for (i = 0; VxDList[i].name; i++)
-	    if (!lstrcmpi32A(VxDList[i].name, filename))
-	        break;
-	if (VxDList[i].name)
-	    dev->info = &VxDList[i];
-	else
-	    FIXME(win32, "Unknown VxD %s\n", filename);
-
-
-	handle = HANDLE_Alloc( PROCESS_Current(), &(dev->header),
-			       FILE_ALL_ACCESS | GENERIC_READ |
-			       GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, TRUE, -1 );
-	/* If the allocation failed, the object is already destroyed */
-	if (handle == INVALID_HANDLE_VALUE32) dev = NULL;
-	return handle;
+    FIXME(win32, "Unknown VxD %s\n", filename);
+    return FILE_CreateDevice( 0x10000, access, sa );
 }
 
-static void DEVICE_Destroy(K32OBJ *obj) 
+static const struct VxDInfo *DEVICE_GetInfo( HANDLE32 handle )
 {
-    DEVICE_OBJECT *dev = (DEVICE_OBJECT *)obj;
-    assert( obj->type == K32OBJ_DEVICE_IOCTL );
+    struct get_file_info_request req;
+    struct get_file_info_reply reply;
 
-    obj->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, dev );
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return NULL;
+    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
+    if (!CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) &&
+        (reply.type == FILE_TYPE_UNKNOWN) &&
+        (reply.attr & 0x10000))
+    {
+        const struct VxDInfo *info;
+
+        for (info = VxDList; info->name; info++)
+            if (info->id == LOWORD(reply.attr)) break;
+        return info;
+    }
+    return NULL;
 }
 
 /****************************************************************************
@@ -320,15 +304,14 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped)
 {
-	DEVICE_OBJECT	*dev = (DEVICE_OBJECT *)HANDLE_GetObjPtr(
-		PROCESS_Current(), hDevice, K32OBJ_DEVICE_IOCTL, 0 /*FIXME*/, NULL );
+        const struct VxDInfo *info;
 
         TRACE(win32, "(%d,%ld,%p,%ld,%p,%ld,%p,%p)\n",
 		hDevice,dwIoControlCode,lpvInBuffer,cbInBuffer,
 		lpvOutBuffer,cbOutBuffer,lpcbBytesReturned,lpOverlapped
 	);
 
-	if (!dev)
+	if (!(info = DEVICE_GetInfo( hDevice )))
 	{
 		SetLastError( ERROR_INVALID_PARAMETER );
 		return FALSE;
@@ -337,9 +320,9 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 	/* Check if this is a user defined control code for a VxD */
 	if( HIWORD( dwIoControlCode ) == 0 )
 	{
-		if ( dev->info && dev->info->deviceio )
+		if ( info->deviceio )
 		{
-			return dev->info->deviceio( dev, dwIoControlCode, 
+			return info->deviceio( dwIoControlCode, 
                                         lpvInBuffer, cbInBuffer, 
                                         lpvOutBuffer, cbOutBuffer, 
                                         lpcbBytesReturned, lpOverlapped );
@@ -348,7 +331,7 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 		{
 			/* FIXME: Set appropriate error */
 			FIXME( win32, "Unimplemented control %ld for VxD device %s\n", 
-                               dwIoControlCode, dev->info ? dev->info->name : "???" );
+                               dwIoControlCode, info->name ? info->name : "???" );
 		}
 	}
 	else
@@ -403,8 +386,7 @@ BOOL32 WINAPI DeviceIoControl(HANDLE32 hDevice, DWORD dwIoControlCode,
 /***********************************************************************
  *           DeviceIo_VTDAPI
  */
-static BOOL32 DeviceIo_VTDAPI(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+static BOOL32 DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped)
@@ -765,15 +747,14 @@ static void CONTEXT_2_win32apieq(CONTEXT *pCxt,struct win32apireq *pOut)
 	/* FIXME: pOut->ar_pad ignored */
 }
 
-static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
-			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+static BOOL32 DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped)
 {
     BOOL32 retv = TRUE;
-	TRACE(win32,"(%p,%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-			dev,dwIoControlCode,
+	TRACE(win32,"(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+			dwIoControlCode,
 			lpvInBuffer,cbInBuffer,
 			lpvOutBuffer,cbOutBuffer,
 			lpcbBytesReturned,
@@ -866,7 +847,7 @@ static void CONTEXT_2_DIOCRegs( CONTEXT *pCxt, DIOC_REGISTERS *pOut )
 }
 
 
-static BOOL32 DeviceIo_VWin32(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+static BOOL32 DeviceIo_VWin32(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -928,7 +909,7 @@ static BOOL32 DeviceIo_VWin32(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 
 
 /* this is used by some Origin games */
-static BOOL32 DeviceIo_MONODEBG(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+static BOOL32 DeviceIo_MONODEBG(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -942,8 +923,8 @@ static BOOL32 DeviceIo_MONODEBG(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 		fprintf(stderr,"MONODEBG: %s\n",debugstr_a(lpvInBuffer));
 		break;
 	default:
-		FIXME(win32,"(%p,%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
-			dev,dwIoControlCode,
+		FIXME(win32,"(%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+			dwIoControlCode,
 			lpvInBuffer,cbInBuffer,
 			lpvOutBuffer,cbOutBuffer,
 			lpcbBytesReturned,

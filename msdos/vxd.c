@@ -1123,12 +1123,13 @@ void VXD_Win32s( CONTEXT *context )
     {
         DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
         HANDLE32 handle = stack[0];
+        HANDLE32 new_handle;
 
         TRACE(vxd, "NtDupSection(%lx)\n", (DWORD)handle);
  
-        /* Handle is 'duplicated' by incrementing RefCount */
-        HANDLE_GetObjPtr(PROCESS_Current(), handle, K32OBJ_MEM_MAPPED_FILE, 0,NULL);
-
+        DuplicateHandle( GetCurrentProcess(), handle,
+                         GetCurrentProcess(), &new_handle,
+                         0, FALSE, DUPLICATE_SAME_ACCESS );
         EAX_reg(context) = STATUS_SUCCESS;
     }
     break;

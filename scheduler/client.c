@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -267,7 +268,7 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
         case 0:  /* child */
             close( tmpfd[0] );
             sprintf( buffer, "%d", tmpfd[1] );
-/*#define EXEC_SERVER*/
+#define EXEC_SERVER
 #ifdef EXEC_SERVER
             execlp( "wineserver", "wineserver", buffer, NULL );
             execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
@@ -299,6 +300,7 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
     if (thdb->socket != -1) close( thdb->socket );
     thdb->socket = fd[0];
     thdb->seq = 0;  /* reset the sequence number for the new fd */
+    fcntl( fd[0], F_SETFD, 1 ); /* set close on exec flag */
 
     if (thandle) *thandle = reply.thandle;
     else if (reply.thandle != -1) CLIENT_CloseHandle( reply.thandle );
@@ -365,7 +367,6 @@ int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, in
 {
     struct dup_handle_request req;
     struct dup_handle_reply reply;
-    int len;
 
     req.src_process = src_process;
     req.src_handle  = src_handle;
@@ -398,25 +399,4 @@ int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit )
     CLIENT_SendRequest( REQ_OPEN_PROCESS, -1, 1, &req, sizeof(req) );
     CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
     return reply.handle;
-}
-
-
-/***********************************************************************
- *           CLIENT_Select
- */
-int CLIENT_Select( int count, int *handles, int flags, int timeout )
-{
-    struct select_request req;
-    struct select_reply reply;
-    int len;
-
-    req.count   = count;
-    req.flags   = flags;
-    req.timeout = timeout;
-
-    CLIENT_SendRequest( REQ_SELECT, -1, 2,
-                        &req, sizeof(req),
-                        handles, count * sizeof(int) );
-    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
-    return reply.signaled;
 }

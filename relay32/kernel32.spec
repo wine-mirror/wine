@@ -581,7 +581,7 @@ init	MAIN_KernelInit
 563 stub QueryOldestEventLogRecord
 564 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
 565 stdcall QueryPerformanceFrequency(ptr) QueryPerformanceFrequency
-566 stub QueueUserAPC
+566 stdcall QueueUserAPC(ptr long long) QueueUserAPC
 567 register RaiseException() RaiseException
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
 569 stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInput32A

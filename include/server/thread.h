@@ -17,6 +17,7 @@
 
 struct process;
 struct thread_wait;
+struct thread_apc;
 struct mutex;
 
 enum run_state { STARTING, RUNNING, TERMINATED };
@@ -31,11 +32,16 @@ struct thread
     struct process     *process;
     struct mutex       *mutex;     /* list of currently owned mutexes */
     struct thread_wait *wait;      /* current wait condition if sleeping */
+    struct thread_apc  *apc;       /* list of async procedure calls */
+    int                 apc_count; /* number of outstanding APCs */
     int                 error;     /* current error code */
     enum run_state      state;     /* running state */
     int                 exit_code; /* thread exit code */
     int                 client_fd; /* client fd for socket communications */
     int                 unix_pid;  /* Unix pid of client */
+    int                 priority;  /* priority level */
+    int                 affinity;  /* affinity mask */
+    int                 suspend;   /* suspend count */
     enum request        last_req;  /* last request received (for debugging) */
     char               *name;
 };
@@ -50,10 +56,15 @@ extern struct thread *get_thread_from_id( void *id );
 extern struct thread *get_thread_from_handle( int handle, unsigned int access );
 extern void get_thread_info( struct thread *thread,
                              struct get_thread_info_reply *reply );
+extern void set_thread_info( struct thread *thread,
+                             struct set_thread_info_request *req );
+extern int suspend_thread( struct thread *thread );
+extern int resume_thread( struct thread *thread );
 extern int send_reply( struct thread *thread, int pass_fd,
                        int n, ... /* arg_1, len_1, ..., arg_n, len_n */ );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
+extern int thread_queue_apc( struct thread *thread, void *func, void *param );
 extern void kill_thread( struct thread *thread, int exit_code );
 extern void thread_killed( struct thread *thread, int exit_code );
 extern void thread_timeout(void);

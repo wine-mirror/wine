@@ -26,6 +26,8 @@
 #include "heap.h"
 #include "msdos.h"
 #include "syslevel.h"
+#include "server.h"
+#include "process.h"
 #include "debug.h"
 
 /* Define the VFAT ioctl to get both short and long file names */
@@ -602,6 +604,30 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
     return NULL;
 }
 
+
+/***********************************************************************
+ *           DOSFS_GetDeviceByHandle
+ */
+const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE32 hFile )
+{
+    struct get_file_info_request req;
+    struct get_file_info_reply reply;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return NULL;
+    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
+    if (!CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ) &&
+        (reply.type == FILE_TYPE_UNKNOWN))
+    {
+        if ((reply.attr >= 0) &&
+            (reply.attr < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
+            return &DOSFS_Devices[reply.attr];
+    }
+    return NULL;
+}
+
+
 /***********************************************************************
  *           DOSFS_OpenDevice
  *
@@ -651,10 +677,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, DWORD access )
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
                     !strcmp(DOSFS_Devices[i].name,"HPSCAN"))
                 {
-                    /* FIXME: should keep the name somewhere */
-                    return FILE_CreateFile( "/dev/null", access,
-                                            FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                                            OPEN_EXISTING, 0, -1 );
+                    return FILE_CreateDevice( i, access, NULL );
 		}
 		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR32;

@@ -273,6 +273,8 @@ typedef struct tagCOMMTIMEOUTS {
   
 #pragma pack(4)
 
+typedef VOID (CALLBACK *PAPCFUNC)(ULONG_PTR);
+
 BOOL32      WINAPI ClearCommError(INT32,LPDWORD,LPCOMSTAT);
 BOOL32      WINAPI BuildCommDCB32A(LPCSTR,LPDCB32);
 BOOL32      WINAPI BuildCommDCB32W(LPCWSTR,LPDCB32);
@@ -305,8 +307,9 @@ void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit);
 HANDLE32  WINAPI OpenProcess(DWORD access, BOOL32 inherit, DWORD id);
 BOOL32    WINAPI GetProcessWorkingSetSize(HANDLE32,LPDWORD,LPDWORD);
-BOOL32    WINAPI SetProcessWorkingSetSize(HANDLE32,DWORD,DWORD);
+DWORD     WINAPI QueueUserAPC(PAPCFUNC,HANDLE32,ULONG_PTR);
 void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
+BOOL32    WINAPI SetProcessWorkingSetSize(HANDLE32,DWORD,DWORD);
 BOOL32    WINAPI TerminateProcess(HANDLE32,DWORD);
 BOOL32    WINAPI TerminateThread(HANDLE32,DWORD);
 

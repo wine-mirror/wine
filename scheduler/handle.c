@@ -212,34 +212,6 @@ int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
 }
 
 
-/***********************************************************************
- *           HANDLE_SetObjPtr
- *
- * Change the object pointer of a handle, and increment the refcount.
- * Use with caution!
- */
-BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle, K32OBJ *ptr,
-                         DWORD access )
-{
-    BOOL32 ret = FALSE;
-
-    SYSTEM_LOCK();
-    if ((handle > 0) && (handle < pdb->handle_table->count))
-    {
-        HANDLE_ENTRY *entry = &pdb->handle_table->entries[handle];
-        K32OBJ *old_ptr = entry->ptr;
-        K32OBJ_IncCount( ptr );
-        entry->access = access;
-        entry->ptr    = ptr;
-        if (old_ptr) K32OBJ_DecCount( old_ptr );
-        ret = TRUE;
-    }
-    SYSTEM_UNLOCK();
-    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
-    return ret;
-}
-
-
 /*********************************************************************
  *           HANDLE_GetAccess
  */

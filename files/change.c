@@ -18,40 +18,12 @@
 #include "server.h"
 #include "debug.h"
 
-static void CHANGE_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS CHANGE_Ops =
-{
-    CHANGE_Destroy      /* destroy */
-};
-
 /* The change notification object */
 typedef struct
 {
     K32OBJ       header;
-    LPSTR        lpPathName;
-    BOOL32       bWatchSubtree;
-    DWORD        dwNotifyFilter;
-    BOOL32       notify;
 } CHANGE_OBJECT;
 
-/****************************************************************************
- *		CHANGE_Destroy
- */
-static void CHANGE_Destroy( K32OBJ *obj )
-{
-    CHANGE_OBJECT *change = (CHANGE_OBJECT *)obj;
-    assert( obj->type == K32OBJ_CHANGE );
-
-    if ( change->lpPathName )
-    {
-        HeapFree( SystemHeap, 0, change->lpPathName );
-        change->lpPathName = NULL;
-    }
-
-    obj->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, change );
-}
 
 /****************************************************************************
  *		FindFirstChangeNotification32A (KERNEL32.248)
@@ -76,15 +48,8 @@ HANDLE32 WINAPI FindFirstChangeNotification32A( LPCSTR lpPathName,
         CLIENT_CloseHandle( reply.handle );
         return INVALID_HANDLE_VALUE32;
     }
-
     change->header.type = K32OBJ_CHANGE;
     change->header.refcount = 1;
-
-    change->lpPathName = HEAP_strdupA( SystemHeap, 0, lpPathName );
-    change->bWatchSubtree = bWatchSubtree;
-    change->dwNotifyFilter = dwNotifyFilter;
-    change->notify = FALSE;
-
     return HANDLE_Alloc( PROCESS_Current(), &change->header, 
                          STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE /*FIXME*/,
                          FALSE, reply.handle );
@@ -109,20 +74,10 @@ HANDLE32 WINAPI FindFirstChangeNotification32W( LPCWSTR lpPathName,
  */
 BOOL32 WINAPI FindNextChangeNotification( HANDLE32 handle ) 
 {
-    CHANGE_OBJECT *change;
-
-    SYSTEM_LOCK();
-    if (!(change = (CHANGE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(),
-                                                      handle, K32OBJ_CHANGE, 
-                                                      0 /*FIXME*/, NULL )) )
-    {
-        SYSTEM_UNLOCK();
+    if (HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                K32OBJ_FILE, 0 ) == -1)
         return FALSE;
-    }
-
-    change->notify = FALSE;
-    K32OBJ_DecCount( &change->header );
-    SYSTEM_UNLOCK();
+    /* FIXME: do something */
     return TRUE;
 }
 

@@ -35,18 +35,6 @@ const K32OBJ_OPS THREAD_Ops =
 /* Is threading code initialized? */
 BOOL32 THREAD_InitDone = FALSE;
 
-/**********************************************************************
- *           THREAD_GetPtr
- *
- * Return a pointer to a thread object. The object count must be decremented
- * when no longer used.
- */
-THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle )
-{
-    return (THDB *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                    K32OBJ_THREAD, access, server_handle );
-}
-
 
 /***********************************************************************
  *           THREAD_Current
@@ -161,7 +149,6 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
                      LPTHREAD_START_ROUTINE start_addr, LPVOID param )
 {
     DWORD old_prot;
-    WORD cs, ds;
 
     THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
     if (!thdb) return NULL;
@@ -236,19 +223,6 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
     if (!(thdb->event = CreateEvent32A( NULL, FALSE, FALSE, NULL ))) goto error;
     thdb->event = ConvertToGlobalHandle( thdb->event );
 
-    /* Initialize the thread context */
-
-    GET_CS(cs);
-    GET_DS(ds);
-    thdb->pcontext        = &thdb->context;
-    thdb->context.SegCs   = cs;
-    thdb->context.SegDs   = ds;
-    thdb->context.SegEs   = ds;
-    thdb->context.SegGs   = ds;
-    thdb->context.SegSs   = ds;
-    thdb->context.SegFs   = thdb->teb_sel;
-    thdb->context.Eip     = (DWORD)start_addr;
-    thdb->context.Esp     = (DWORD)thdb->teb.stack_top;
     PE_InitTls( thdb );
     return thdb;
 
@@ -588,10 +562,7 @@ BOOL32 WINAPI SetThreadContext(
     HANDLE32 handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
-    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT, NULL );
-    if (!thread) return FALSE;
-    *context = thread->context;
-    K32OBJ_DecCount( &thread->header );
+    FIXME( thread, "not implemented\n" );
     return TRUE;
 }
 
@@ -606,10 +577,19 @@ BOOL32 WINAPI GetThreadContext(
     HANDLE32 handle,  /* [in]  Handle to thread with context */
     CONTEXT *context) /* [out] Address of context structure */
 {
-    THDB *thread = THREAD_GetPtr( handle, THREAD_GET_CONTEXT, NULL );
-    if (!thread) return FALSE;
-    *context = thread->context;
-    K32OBJ_DecCount( &thread->header );
+    WORD cs, ds;
+
+    FIXME( thread, "returning dummy info\n" );
+
+    /* make up some plausible values for segment registers */
+    GET_CS(cs);
+    GET_DS(ds);
+    context->SegCs   = cs;
+    context->SegDs   = ds;
+    context->SegEs   = ds;
+    context->SegGs   = ds;
+    context->SegSs   = ds;
+    context->SegFs   = ds;
     return TRUE;
 }
 
@@ -624,14 +604,14 @@ BOOL32 WINAPI GetThreadContext(
 INT32 WINAPI GetThreadPriority(
     HANDLE32 hthread) /* [in] Handle to thread */
 {
-    THDB *thread;
-    INT32 ret;
-    
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
+    struct get_thread_info_request req;
+    struct get_thread_info_reply reply;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
+                                         K32OBJ_THREAD, THREAD_QUERY_INFORMATION );
+    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL ))
         return THREAD_PRIORITY_ERROR_RETURN;
-    ret = thread->delta_priority;
-    K32OBJ_DecCount( &thread->header );
-    return ret;
+    return reply.priority;
 }
 
 
@@ -646,13 +626,31 @@ BOOL32 WINAPI SetThreadPriority(
     HANDLE32 hthread, /* [in] Handle to thread */
     INT32 priority)   /* [in] Thread priority level */
 {
-    THDB *thread;
-    
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_SET_INFORMATION, NULL )))
-        return FALSE;
-    thread->delta_priority = priority;
-    K32OBJ_DecCount( &thread->header );
-    return TRUE;
+    struct set_thread_info_request req;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
+                                         K32OBJ_THREAD, THREAD_SET_INFORMATION );
+    if (req.handle == -1) return FALSE;
+    req.priority = priority;
+    req.mask     = SET_THREAD_INFO_PRIORITY;
+    CLIENT_SendRequest( REQ_SET_THREAD_INFO, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+
+/**********************************************************************
+ *           SetThreadAffinityMask   (KERNEL32.669)
+ */
+DWORD WINAPI SetThreadAffinityMask( HANDLE32 hThread, DWORD dwThreadAffinityMask )
+{
+    struct set_thread_info_request req;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hThread,
+                                         K32OBJ_THREAD, THREAD_SET_INFORMATION );
+    if (req.handle == -1) return FALSE;
+    req.affinity = dwThreadAffinityMask;
+    req.mask     = SET_THREAD_INFO_AFFINITY;
+    CLIENT_SendRequest( REQ_SET_THREAD_INFO, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitReply( NULL, NULL, 0 )) return 0;
+    return 1;  /* FIXME: should return previous value */
 }
 
 
@@ -688,10 +686,11 @@ BOOL32 WINAPI GetExitCodeThread(
     HANDLE32 hthread, /* [in]  Handle to thread */
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
+    struct get_thread_info_request req;
     struct get_thread_info_reply reply;
-    int handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
                                          K32OBJ_THREAD, THREAD_QUERY_INFORMATION );
-    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &handle, sizeof(handle) );
+    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
     if (exitcode) *exitcode = reply.exit_code;
     return TRUE;
@@ -710,33 +709,15 @@ BOOL32 WINAPI GetExitCodeThread(
  *    Already running: 0
  */
 DWORD WINAPI ResumeThread(
-    HANDLE32 hthread) /* [in] Indentifies thread to restart */
+    HANDLE32 hthread) /* [in] Identifies thread to restart */
 {
-    THDB *thread;
-    DWORD oldcount;
-
-    SYSTEM_LOCK();
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
-    {
-        SYSTEM_UNLOCK();
-        WARN(thread, "Invalid thread handle\n");
-	return 0xFFFFFFFF;
-    }
-    if ((oldcount = thread->suspend_count) != 0)
-    {
-        if (!--thread->suspend_count)
-        {
-            if (kill(thread->unix_pid, SIGCONT))
-            {
-                WARN(thread, "Unable to CONTinue pid: %04x\n",
-                     thread->unix_pid);
-                oldcount = 0xFFFFFFFF;
-            }
-        }
-    }
-    K32OBJ_DecCount(&thread->header);
-    SYSTEM_UNLOCK();
-    return oldcount;
+    struct resume_thread_request req;
+    struct resume_thread_reply reply;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
+                                         K32OBJ_THREAD, THREAD_SUSPEND_RESUME );
+    CLIENT_SendRequest( REQ_RESUME_THREAD, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
+    return reply.count;
 }
 
 
@@ -750,37 +731,28 @@ DWORD WINAPI ResumeThread(
 DWORD WINAPI SuspendThread(
     HANDLE32 hthread) /* [in] Handle to the thread */
 {
-    THDB *thread;
-    DWORD oldcount;
+    struct suspend_thread_request req;
+    struct suspend_thread_reply reply;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
+                                         K32OBJ_THREAD, THREAD_SUSPEND_RESUME );
+    CLIENT_SendRequest( REQ_SUSPEND_THREAD, -1, 1, &req, sizeof(req) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return 0xffffffff;
+    return reply.count;
+}
 
-    SYSTEM_LOCK();
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
-    {
-        SYSTEM_UNLOCK();
-        WARN(thread, "Invalid thread handle\n");
-	return 0xFFFFFFFF;
-    }
-    
-    if (!(oldcount = thread->suspend_count))
-    {
-        if (thread->unix_pid == getpid())
-            WARN(thread, "Attempting to suspend myself\n" );
-        else
-        {
-            if (kill(thread->unix_pid, SIGSTOP))
-            {
-                WARN(thread, "Unable to STOP pid: %04x\n", 
-                     thread->unix_pid);
-                oldcount = 0xFFFFFFFF;
-            }
-            else thread->suspend_count++;
-        }
-    }
-    else thread->suspend_count++;
-    K32OBJ_DecCount( &thread->header );
-    SYSTEM_UNLOCK();
-    return oldcount;
 
+/***********************************************************************
+ *              QueueUserAPC  (KERNEL32.566)
+ */
+DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE32 hthread, ULONG_PTR data )
+{
+    struct queue_apc_request req;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
+                                         K32OBJ_THREAD, THREAD_SET_CONTEXT );
+    req.func  = func;
+    req.param = (void *)data;
+    CLIENT_SendRequest( REQ_QUEUE_APC, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 

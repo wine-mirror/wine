@@ -66,6 +66,33 @@ PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle )
                                      K32OBJ_PROCESS, access, server_handle );
 }
 
+/***********************************************************************
+ *           PROCESS_QueryInfo
+ *
+ * Retrieve information about a process
+ */
+static BOOL32 PROCESS_QueryInfo( HANDLE32 handle,
+                                 struct get_process_info_reply *reply )
+{
+    struct get_process_info_request req;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                         K32OBJ_PROCESS, PROCESS_QUERY_INFORMATION );
+    CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitSimpleReply( reply, sizeof(*reply), NULL );
+}
+
+/***********************************************************************
+ *           PROCESS_IsCurrent
+ *
+ * Check if a handle is to the current process
+ */
+BOOL32 PROCESS_IsCurrent( HANDLE32 handle )
+{
+    struct get_process_info_reply reply;
+    return (PROCESS_QueryInfo( handle, &reply ) &&
+            (reply.pid == PROCESS_Current()->server_pid));
+}
+
 
 /***********************************************************************
  *           PROCESS_IdToPDB
@@ -599,28 +626,14 @@ LCID WINAPI GetThreadLocale(void)
  */
 BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
 {
-    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_SET_INFORMATION, NULL );
-    if (!pdb) return FALSE;
-    switch (priorityclass)
-    {
-    case NORMAL_PRIORITY_CLASS:
-    	pdb->priority = 0x00000008;
-	break;
-    case IDLE_PRIORITY_CLASS:
-    	pdb->priority = 0x00000004;
-	break;
-    case HIGH_PRIORITY_CLASS:
-    	pdb->priority = 0x0000000d;
-	break;
-    case REALTIME_PRIORITY_CLASS:
-    	pdb->priority = 0x00000018;
-    	break;
-    default:
-    	WARN(process,"Unknown priority class %ld\n",priorityclass);
-	break;
-    }
-    K32OBJ_DecCount( &pdb->header );
-    return TRUE;
+    struct set_process_info_request req;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hprocess,
+                                         K32OBJ_PROCESS, PROCESS_SET_INFORMATION );
+    if (req.handle == -1) return FALSE;
+    req.priority = priorityclass;
+    req.mask     = SET_PROCESS_INFO_PRIORITY;
+    CLIENT_SendRequest( REQ_SET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
 
@@ -629,30 +642,39 @@ BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
  */
 DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 {
-    PDB32 *pdb = PROCESS_GetPtr( hprocess, PROCESS_QUERY_INFORMATION, NULL );
-    DWORD ret = 0;
-    if (pdb)
-    {
-    	switch (pdb->priority)
-        {
-	case 0x00000008:
-	    ret = NORMAL_PRIORITY_CLASS;
-	    break;
-	case 0x00000004:
-	    ret = IDLE_PRIORITY_CLASS;
-	    break;
-	case 0x0000000d:
-	    ret = HIGH_PRIORITY_CLASS;
-	    break;
-	case 0x00000018:
-	    ret = REALTIME_PRIORITY_CLASS;
-	    break;
-	default:
-	    WARN(process,"Unknown priority %ld\n",pdb->priority);
-	}
-	K32OBJ_DecCount( &pdb->header );
-    }
-    return ret;
+    struct get_process_info_reply reply;
+    if (!PROCESS_QueryInfo( hprocess, &reply )) return 0;
+    return reply.priority;
+}
+
+
+/***********************************************************************
+ *          SetProcessAffinityMask   (KERNEL32.662)
+ */
+BOOL32 WINAPI SetProcessAffinityMask( HANDLE32 hProcess, DWORD affmask )
+{
+    struct set_process_info_request req;
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hProcess,
+                                         K32OBJ_PROCESS, PROCESS_SET_INFORMATION );
+    if (req.handle == -1) return FALSE;
+    req.affinity = affmask;
+    req.mask     = SET_PROCESS_INFO_AFFINITY;
+    CLIENT_SendRequest( REQ_SET_PROCESS_INFO, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+/**********************************************************************
+ *          GetProcessAffinityMask    (KERNEL32.373)
+ */
+BOOL32 WINAPI GetProcessAffinityMask( HANDLE32 hProcess,
+                                      LPDWORD lpProcessAffinityMask,
+                                      LPDWORD lpSystemAffinityMask )
+{
+    struct get_process_info_reply reply;
+    if (!PROCESS_QueryInfo( hProcess, &reply )) return FALSE;
+    if (lpProcessAffinityMask) *lpProcessAffinityMask = reply.process_affinity;
+    if (lpSystemAffinityMask) *lpSystemAffinityMask = reply.system_affinity;
+    return TRUE;
 }
 
 
@@ -718,15 +740,6 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
     PDB32 *pdb = PROCESS_IdToPDB( processid );
     if (!pdb) return 0;
     return pdb->flags;
-}
-
-/***********************************************************************
- *		SetProcessAffinityMask	[KERNEL32.662]
- */
-BOOL32 WINAPI SetProcessAffinityMask(HANDLE32 hProcess,DWORD affmask)
-{
-    FIXME(process,"(0x%08x,%ld), stub - harmless\n",hProcess,affmask);
-    return TRUE;
 }
 
 /***********************************************************************
@@ -867,14 +880,11 @@ BOOL32 WINAPI GetExitCodeProcess(
     LPDWORD lpExitCode) /* [O] address to receive termination status */
 {
     struct get_process_info_reply reply;
-    int handle = HANDLE_GetServerHandle( PROCESS_Current(), hProcess,
-                                         K32OBJ_PROCESS, PROCESS_QUERY_INFORMATION );
-
-    CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &handle, sizeof(handle) );
-    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+    if (!PROCESS_QueryInfo( hProcess, &reply )) return FALSE;
     if (lpExitCode) *lpExitCode = reply.exit_code;
     return TRUE;
 }
+
 
 /***********************************************************************
  * GetProcessHeaps [KERNEL32.376]

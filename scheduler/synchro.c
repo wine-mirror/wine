@@ -28,7 +28,6 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
 
     SYSTEM_LOCK();
     wait->count    = count;
-    wait->signaled = WAIT_FAILED;
     wait->wait_all = wait_all;
     for (i = 0, ptr = wait->objs; i < count; i++, ptr++)
     {
@@ -67,44 +66,12 @@ static void SYNC_FreeWaitStruct( WAIT_STRUCT *wait )
     SYSTEM_UNLOCK();
 }
 
-
-/***********************************************************************
- *           SYNC_DoWait
- */
-static DWORD SYNC_DoWait( DWORD count, const HANDLE32 *handles,
-                          BOOL32 wait_all, DWORD timeout, BOOL32 alertable )
-{
-    WAIT_STRUCT *wait = &THREAD_Current()->wait_struct;
-
-    if (count > MAXIMUM_WAIT_OBJECTS)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return WAIT_FAILED;
-    }
-
-    if (alertable)
-        FIXME(win32, "alertable not implemented\n" );
-
-    if (!SYNC_BuildWaitStruct( count, handles, wait_all, wait ))
-        wait->signaled = WAIT_FAILED;
-    else
-    {
-        int flags = 0;
-        if (wait_all) flags |= SELECT_ALL;
-        if (alertable) flags |= SELECT_ALERTABLE;
-        if (timeout != INFINITE32) flags |= SELECT_TIMEOUT;
-        wait->signaled = CLIENT_Select( count, wait->server, flags, timeout );
-        SYNC_FreeWaitStruct( wait );
-    }
-    return wait->signaled;
-}
-
 /***********************************************************************
  *              Sleep  (KERNEL32.679)
  */
 VOID WINAPI Sleep( DWORD timeout )
 {
-    SYNC_DoWait( 0, NULL, FALSE, timeout, FALSE );
+    WaitForMultipleObjectsEx( 0, NULL, FALSE, timeout, FALSE );
 }
 
 /******************************************************************************
@@ -112,7 +79,7 @@ VOID WINAPI Sleep( DWORD timeout )
  */
 DWORD WINAPI SleepEx( DWORD timeout, BOOL32 alertable )
 {
-    DWORD ret = SYNC_DoWait( 0, NULL, FALSE, timeout, alertable );
+    DWORD ret = WaitForMultipleObjectsEx( 0, NULL, FALSE, timeout, alertable );
     if (ret != WAIT_IO_COMPLETION) ret = 0;
     return ret;
 }
@@ -123,7 +90,7 @@ DWORD WINAPI SleepEx( DWORD timeout, BOOL32 alertable )
  */
 DWORD WINAPI WaitForSingleObject( HANDLE32 handle, DWORD timeout )
 {
-    return SYNC_DoWait( 1, &handle, FALSE, timeout, FALSE );
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, FALSE );
 }
 
 
@@ -133,7 +100,7 @@ DWORD WINAPI WaitForSingleObject( HANDLE32 handle, DWORD timeout )
 DWORD WINAPI WaitForSingleObjectEx( HANDLE32 handle, DWORD timeout,
                                     BOOL32 alertable )
 {
-    return SYNC_DoWait( 1, &handle, FALSE, timeout, alertable );
+    return WaitForMultipleObjectsEx( 1, &handle, FALSE, timeout, alertable );
 }
 
 
@@ -143,7 +110,7 @@ DWORD WINAPI WaitForSingleObjectEx( HANDLE32 handle, DWORD timeout,
 DWORD WINAPI WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
                                      BOOL32 wait_all, DWORD timeout )
 {
-    return SYNC_DoWait( count, handles, wait_all, timeout, FALSE );
+    return WaitForMultipleObjectsEx( count, handles, wait_all, timeout, FALSE );
 }
 
 
@@ -154,7 +121,46 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
                                        BOOL32 wait_all, DWORD timeout,
                                        BOOL32 alertable )
 {
-    return SYNC_DoWait( count, handles, wait_all, timeout, alertable );
+    WAIT_STRUCT *wait = &THREAD_Current()->wait_struct;
+    struct select_request req;
+    struct select_reply reply;
+    void *apc[32];
+    int len;
+
+    if (count > MAXIMUM_WAIT_OBJECTS)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return WAIT_FAILED;
+    }
+
+    if (!SYNC_BuildWaitStruct( count, handles, wait_all, wait ))
+        return WAIT_FAILED;
+
+    req.count   = count;
+    req.flags   = 0;
+    req.timeout = timeout;
+
+    if (wait_all) req.flags |= SELECT_ALL;
+    if (alertable) req.flags |= SELECT_ALERTABLE;
+    if (timeout != INFINITE32) req.flags |= SELECT_TIMEOUT;
+
+    CLIENT_SendRequest( REQ_SELECT, -1, 2,
+                        &req, sizeof(req),
+                        wait->server, count * sizeof(int) );
+    CLIENT_WaitReply( &len, NULL, 2, &reply, sizeof(reply),
+                      apc, sizeof(apc) );
+    if ((reply.signaled == STATUS_USER_APC) && (len > sizeof(reply)))
+    {
+        int i;
+        len -= sizeof(reply);
+        for (i = 0; i < len / sizeof(void*); i += 2)
+        {
+            PAPCFUNC func = (PAPCFUNC)apc[i];
+            func( (ULONG_PTR)apc[i+1] );
+        }
+    }
+    SYNC_FreeWaitStruct( wait );
+    return reply.signaled;
 }
 
 

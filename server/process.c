@@ -52,6 +52,10 @@ struct process
     int                  running_threads; /* number of threads running in this process */
     struct timeval       start_time;      /* absolute time at process start */
     struct timeval       end_time;        /* absolute time at process end */
+    int                  priority;        /* priority class */
+    int                  affinity;        /* process affinity mask */
+    struct object       *console_in;      /* console input */
+    struct object       *console_out;     /* console output */
 };
 
 static struct process *first_process;
@@ -84,11 +88,12 @@ static const struct object_ops process_ops =
 /* create a new process */
 struct process *create_process(void)
 {
-    struct process *process;
+    struct process *process, *parent;
 
     if (!(process = mem_alloc( sizeof(*process) ))) return NULL;
 
-    if (!copy_handle_table( process, current ? current->process : NULL ))
+    parent = current ? current->process : NULL;
+    if (!copy_handle_table( process, parent ))
     {
         free( process );
         return NULL;
@@ -99,6 +104,15 @@ struct process *create_process(void)
     process->thread_list     = NULL;
     process->exit_code       = 0x103;  /* STILL_ACTIVE */
     process->running_threads = 0;
+    process->priority        = NORMAL_PRIORITY_CLASS;
+    process->affinity        = 1;
+    process->console_in      = NULL;
+    process->console_out     = NULL;
+    if (parent)
+    {
+        if (parent->console_in) process->console_in = grab_object( parent->console_in );
+        if (parent->console_out) process->console_out = grab_object( parent->console_out );
+    }
 
     if (first_process) first_process->prev = process;
     first_process = process;
@@ -126,6 +140,7 @@ static void process_destroy( struct object *obj )
     if (process->next) process->next->prev = process->prev;
     if (process->prev) process->prev->next = process->next;
     else first_process = process->next;
+    free_console( process );
     free_handles( process );
     if (debug_level) memset( process, 0xbb, sizeof(process) );  /* catch errors */
     free( process );
@@ -506,6 +521,55 @@ void kill_process( struct process *process, int exit_code )
 void get_process_info( struct process *process,
                        struct get_process_info_reply *reply )
 {
-    reply->pid       = process;
-    reply->exit_code = process->exit_code;
+    reply->pid              = process;
+    reply->exit_code        = process->exit_code;
+    reply->priority         = process->priority;
+    reply->process_affinity = process->affinity;
+    reply->system_affinity  = 1;
+}
+
+/* set all information about a process */
+void set_process_info( struct process *process,
+                       struct set_process_info_request *req )
+{
+    if (req->mask & SET_PROCESS_INFO_PRIORITY)
+        process->priority = req->priority;
+    if (req->mask & SET_PROCESS_INFO_AFFINITY)
+    {
+        if (req->affinity != 1) SET_ERROR( ERROR_INVALID_PARAMETER );
+        else process->affinity = req->affinity;
+    }
+}
+
+/* allocate a console for this process */
+int alloc_console( struct process *process )
+{
+    struct object *obj[2];
+    if (process->console_in || process->console_out)
+    {
+        SET_ERROR( ERROR_ACCESS_DENIED );
+        return 0;
+    }
+    if (!create_console( -1, obj )) return 0;
+    process->console_in  = obj[0];
+    process->console_out = obj[1];
+    return 1;
+}
+
+/* free the console for this process */
+int free_console( struct process *process )
+{
+    if (process->console_in) release_object( process->console_in );
+    if (process->console_out) release_object( process->console_out );
+    process->console_in = process->console_out = NULL;
+    return 1;
+}
+
+/* get the process console */
+struct object *get_console( struct process *process, int output )
+{
+    struct object *obj;
+    if (!(obj = output ? process->console_out : process->console_in))
+        return NULL;
+    return grab_object( obj );
 }

@@ -46,72 +46,15 @@
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
-static void FILE_Destroy( K32OBJ *obj );
-
-const K32OBJ_OPS FILE_Ops =
+/* The file object */
+typedef struct
 {
-    FILE_Destroy       /* destroy */
-};
+    K32OBJ    header;
+} FILE_OBJECT;
 
-struct DOS_FILE_LOCK {
-  struct DOS_FILE_LOCK *	next;
-  DWORD				base;
-  DWORD				len;
-  DWORD				processId;
-  FILE_OBJECT *			dos_file;
-  char *			unix_name;
-};
-
-typedef struct DOS_FILE_LOCK DOS_FILE_LOCK;
-
-static DOS_FILE_LOCK *locks = NULL;
-static void DOS_RemoveFileLocks(FILE_OBJECT *file);
 
 /* Size of per-process table of DOS handles */
 #define DOS_TABLE_SIZE 256
-
-
-/***********************************************************************
- *           FILE_Destroy
- *
- * Destroy a DOS file.
- */
-static void FILE_Destroy( K32OBJ *ptr )
-{
-    FILE_OBJECT *file = (FILE_OBJECT *)ptr;
-    assert( ptr->type == K32OBJ_FILE );
-
-    DOS_RemoveFileLocks(file);
-
-    if (file->unix_name) HeapFree( SystemHeap, 0, file->unix_name );
-    ptr->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, file );
-}
-
-
-/***********************************************************************
- *           FILE_GetFile
- *
- * Return the DOS file associated to a task file handle. FILE_ReleaseFile must
- * be called to release the file.
- */
-FILE_OBJECT *FILE_GetFile( HFILE32 handle, DWORD access, int *server_handle )
-{
-    return (FILE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                            K32OBJ_FILE, access,
-                                            server_handle );
-}
-
-
-/***********************************************************************
- *           FILE_ReleaseFile
- *
- * Release a DOS file obtained with FILE_GetFile.
- */
-void FILE_ReleaseFile( FILE_OBJECT *file )
-{
-    K32OBJ_DecCount( &file->header );
-}
 
 
 /***********************************************************************
@@ -391,7 +334,6 @@ HFILE32 FILE_DupUnixHandle( int fd, DWORD access )
     }
     file->header.type = K32OBJ_FILE;
     file->header.refcount = 0;
-    file->unix_name = NULL;
     return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
                          req.inherit, reply.handle );
 }
@@ -448,7 +390,39 @@ HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     }
     file->header.type = K32OBJ_FILE;
     file->header.refcount = 0;
-    file->unix_name = HEAP_strdupA( SystemHeap, 0, filename );
+    return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
+                         req.inherit, reply.handle );
+}
+
+
+/***********************************************************************
+ *           FILE_CreateDevice
+ *
+ * Same as FILE_CreateFile but for a device
+ */
+HFILE32 FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
+{
+    FILE_OBJECT *file;
+    struct create_device_request req;
+    struct create_device_reply reply;
+
+    req.access  = access;
+    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+    req.id      = client_id;
+    CLIENT_SendRequest( REQ_CREATE_DEVICE, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL );
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+
+    /* Now build the FILE_OBJECT */
+
+    if (!(file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        CLIENT_CloseHandle( reply.handle );
+        return (HFILE32)INVALID_HANDLE_VALUE32;
+    }
+    file->header.type = K32OBJ_FILE;
+    file->header.refcount = 0;
     return HANDLE_Alloc( PROCESS_Current(), &file->header, req.access,
                          req.inherit, reply.handle );
 }
@@ -487,7 +461,6 @@ HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
                               DWORD attributes, HANDLE32 template )
 {
     DOS_FULL_NAME full_name;
-    HANDLE32 to_dup = HFILE_ERROR32;
 
     if (!filename)
     {
@@ -507,7 +480,8 @@ HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
 	}
     }
 
-    if (!strncmp(filename, "\\\\.\\", 4)) return DEVICE_Open( filename+4 );
+    if (!strncmp(filename, "\\\\.\\", 4))
+        return DEVICE_Open( filename+4, access, sa );
 
     /* If the name still starts with '\\', it's a UNC name. */
     if (!strncmp(filename, "\\\\", 2))
@@ -517,23 +491,9 @@ HFILE32 WINAPI CreateFile32A( LPCSTR filename, DWORD access, DWORD sharing,
         return HFILE_ERROR32;
     }
 
-    /* If the name is either CONIN$ or CONOUT$, give them duplicated stdin
-     * or stdout, respectively. The lower case version is also allowed. Most likely
-     * this should be a case ignore string compare.
-     */
-    if(!strcasecmp(filename, "CONIN$"))
-	to_dup = GetStdHandle( STD_INPUT_HANDLE );
-    else if(!strcasecmp(filename, "CONOUT$"))
-	to_dup = GetStdHandle( STD_OUTPUT_HANDLE );
-
-    if(to_dup != HFILE_ERROR32)
-    {
-	HFILE32 handle;
-	if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
-			      &handle, access, FALSE, 0 ))
-	    handle = HFILE_ERROR32;
-	return handle;
-    }
+    /* Open a console for CONIN$ or CONOUT$ */
+    if (!lstrcmpi32A(filename, "CONIN$")) return CONSOLE_OpenHandle( FALSE, access, sa );
+    if (!lstrcmpi32A(filename, "CONOUT$")) return CONSOLE_OpenHandle( TRUE, access, sa );
 
     if (DOSFS_GetDevice( filename ))
     {
@@ -1979,6 +1939,64 @@ BOOL32 WINAPI SetFileTime( HFILE32 hFile,
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
+
+/**************************************************************************
+ *           LockFile   (KERNEL32.511)
+ */
+BOOL32 WINAPI LockFile( HFILE32 hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+                        DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
+{
+    struct lock_file_request req;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return FALSE;
+    req.offset_low  = dwFileOffsetLow;
+    req.offset_high = dwFileOffsetHigh;
+    req.count_low   = nNumberOfBytesToLockLow;
+    req.count_high  = nNumberOfBytesToLockHigh;
+    CLIENT_SendRequest( REQ_LOCK_FILE, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+
+/**************************************************************************
+ *           UnlockFile   (KERNEL32.703)
+ */
+BOOL32 WINAPI UnlockFile( HFILE32 hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+                          DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
+{
+    struct unlock_file_request req;
+
+    if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                              K32OBJ_FILE, 0 )) == -1)
+        return FALSE;
+    req.offset_low  = dwFileOffsetLow;
+    req.offset_high = dwFileOffsetHigh;
+    req.count_low   = nNumberOfBytesToUnlockLow;
+    req.count_high  = nNumberOfBytesToUnlockHigh;
+    CLIENT_SendRequest( REQ_UNLOCK_FILE, -1, 1, &req, sizeof(req) );
+    return !CLIENT_WaitReply( NULL, NULL, 0 );
+}
+
+
+#if 0
+
+struct DOS_FILE_LOCK {
+  struct DOS_FILE_LOCK *	next;
+  DWORD				base;
+  DWORD				len;
+  DWORD				processId;
+  FILE_OBJECT *			dos_file;
+/*  char *			unix_name;*/
+};
+
+typedef struct DOS_FILE_LOCK DOS_FILE_LOCK;
+
+static DOS_FILE_LOCK *locks = NULL;
+static void DOS_RemoveFileLocks(FILE_OBJECT *file);
+
+
 /* Locks need to be mirrored because unix file locking is based
  * on the pid. Inside of wine there can be multiple WINE processes
  * that share the same unix pid.
@@ -1994,6 +2012,7 @@ static BOOL32 DOS_AddLock(FILE_OBJECT *file, struct flock *f)
   processId = GetCurrentProcessId();
 
   /* check if lock overlaps a current lock for the same file */
+#if 0
   for (curr = locks; curr; curr = curr->next) {
     if (strcmp(curr->unix_name, file->unix_name) == 0) {
       if ((f->l_start == curr->base) && (f->l_len == curr->len))
@@ -2005,12 +2024,13 @@ static BOOL32 DOS_AddLock(FILE_OBJECT *file, struct flock *f)
       }
     }
   }
+#endif
 
   curr = HeapAlloc( SystemHeap, 0, sizeof(DOS_FILE_LOCK) );
   curr->processId = GetCurrentProcessId();
   curr->base = f->l_start;
   curr->len = f->l_len;
-  curr->unix_name = HEAP_strdupA( SystemHeap, 0, file->unix_name);
+/*  curr->unix_name = HEAP_strdupA( SystemHeap, 0, file->unix_name);*/
   curr->next = locks;
   curr->dos_file = file;
   locks = curr;
@@ -2029,7 +2049,7 @@ static void DOS_RemoveFileLocks(FILE_OBJECT *file)
     if ((*curr)->dos_file == file) {
       rem = *curr;
       *curr = (*curr)->next;
-      HeapFree( SystemHeap, 0, rem->unix_name );
+/*      HeapFree( SystemHeap, 0, rem->unix_name );*/
       HeapFree( SystemHeap, 0, rem );
     }
     else
@@ -2052,7 +2072,7 @@ static BOOL32 DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
       /* this is the same lock */
       rem = *curr;
       *curr = (*curr)->next;
-      HeapFree( SystemHeap, 0, rem->unix_name );
+/*      HeapFree( SystemHeap, 0, rem->unix_name );*/
       HeapFree( SystemHeap, 0, rem );
       return TRUE;
     }
@@ -2151,6 +2171,7 @@ BOOL32 WINAPI UnlockFile(
 #endif
   return TRUE;
 }
+#endif
 
 /**************************************************************************
  * GetFileAttributesEx32A [KERNEL32.874]

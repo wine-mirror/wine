@@ -61,7 +61,6 @@ typedef struct _TEB
 typedef struct
 {
     DWORD         count;     /* Count of valid objects */
-    DWORD         signaled;  /* Index of signaled object (or WAIT_FAILED)*/
     BOOL32        wait_all;  /* Wait for all objects flag */
     K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
     int           server[MAXIMUM_WAIT_OBJECTS];  /* Server handles */
@@ -110,8 +109,7 @@ typedef struct _THDB
     CRITICAL_SECTION *sys_mutex[4];/* 1e8 Syslevel mutex pointers */
     DWORD          unknown6[2];    /* 1f8 Unknown */
     /* The following are Wine-specific fields */
-    CONTEXT        context;        /* 200 Thread context */
-    WAIT_STRUCT    wait_struct;    /*     Event wait structure */
+    WAIT_STRUCT    wait_struct;    /* 200 Event wait structure */
     int            socket;         /*     Socket for server communication */
     unsigned int   seq;            /*     Server sequence number */
     void          *server_tid;     /*     Server id for this thread */
@@ -155,7 +153,6 @@ extern THDB *THREAD_Current(void);
 extern BOOL32 THREAD_IsWin16( THDB *thdb );
 extern THDB *THREAD_IdToTHDB( DWORD id );
 extern void THREAD_Start( THDB *thdb );
-extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
 extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
 extern DWORD THREAD_TlsAlloc( THDB *thread );

@@ -13,13 +13,6 @@
 
 #define MAX_PATHNAME_LEN   1024
 
-/* The file object */
-typedef struct
-{
-    K32OBJ    header;
-    char     *unix_name;
-} FILE_OBJECT;
-
 /* Definition of a full DOS file name */
 typedef struct
 {
@@ -39,9 +32,6 @@ typedef struct
 
 
 /* files/file.c */
-extern FILE_OBJECT *FILE_GetFile( HFILE32 handle, DWORD access,
-                                  int *server_handle );
-extern void FILE_ReleaseFile( FILE_OBJECT *file );
 extern void FILE_SetDosError(void);
 extern HFILE32 FILE_DupUnixHandle( int fd, DWORD access );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
@@ -49,6 +39,8 @@ extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
 extern HFILE32 FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                 LPSECURITY_ATTRIBUTES sa, DWORD creation,
                                 DWORD attributes, HANDLE32 template );
+extern HFILE32 FILE_CreateDevice( int client_id, DWORD access,
+                                  LPSECURITY_ATTRIBUTES sa );
 extern LPVOID FILE_dommap( int unix_handle, LPVOID start,
                            DWORD size_high, DWORD size_low,
                            DWORD offset_high, DWORD offset_low,
@@ -71,6 +63,7 @@ extern void DOSFS_UnixTimeToFileTime( time_t unixtime, LPFILETIME ft,
 extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
 extern BOOL32 DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
 extern const DOS_DEVICE *DOSFS_GetDevice( const char *name );
+extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE32 hFile );
 extern HFILE32 DOSFS_OpenDevice( const char *name, DWORD access );
 extern BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
                                   INT32 long_len, LPSTR short_buf,

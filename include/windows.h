@@ -4186,6 +4186,7 @@ BOOL32      WINAPI SetPriorityClass(HANDLE32,DWORD);
 BOOL32      WINAPI SetStdHandle(DWORD,HANDLE32);
 BOOL32      WINAPI SetSystemPowerState(BOOL32,BOOL32);
 BOOL32      WINAPI SetSystemTime(const SYSTEMTIME*);
+DWORD       WINAPI SetThreadAffinityMask(HANDLE32,DWORD);
 BOOL32      WINAPI SetThreadPriority(HANDLE32,INT32);
 BOOL32      WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
 VOID        WINAPI Sleep(DWORD);

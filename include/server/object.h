@@ -133,6 +133,11 @@ extern void remove_process_thread( struct process *process,
 extern void kill_process( struct process *process, int exit_code );
 extern void get_process_info( struct process *process,
                               struct get_process_info_reply *reply );
+extern void set_process_info( struct process *process,
+                              struct set_process_info_request *req );
+extern int alloc_console( struct process *process );
+extern int free_console( struct process *process );
+extern struct object *get_console( struct process *process, int output );
 
 /* handle functions */
 
@@ -184,6 +189,10 @@ extern int file_get_mmap_fd( struct file *file );
 extern int set_file_pointer( int handle, int *low, int *high, int whence );
 extern int truncate_file( int handle );
 extern int set_file_time( int handle, time_t access_time, time_t write_time );
+extern int file_lock( struct file *file, int offset_high, int offset_low,
+                      int count_high, int count_low );
+extern int file_unlock( struct file *file, int offset_high, int offset_low,
+                        int count_high, int count_low );
 extern void file_set_error(void);
 
 
@@ -195,7 +204,13 @@ extern int create_pipe( struct object *obj[2] );
 /* console functions */
 
 extern int create_console( int fd, struct object *obj[2] );
-extern int set_console_fd( int handle, int fd );
+extern int set_console_fd( int handle, int fd, int pid );
+extern int get_console_mode( int handle, int *mode );
+extern int set_console_mode( int handle, int mode );
+extern int set_console_info( int handle, struct set_console_info_request *req,
+                             const char *title );
+extern int get_console_info( int handle, struct get_console_info_reply *reply,
+                             const char **title );
 
 
 /* change notification functions */
@@ -208,6 +223,10 @@ extern struct object *create_mapping( int size_high, int size_low, int protect,
                                       int handle, const char *name );
 extern int open_mapping( unsigned int access, int inherit, const char *name );
 extern int get_mapping_info( int handle, struct get_mapping_info_reply *reply );
+
+
+/* device functions */
+extern struct object *create_device( int id );
 
 
 extern int debug_level;

@@ -57,7 +57,19 @@ static int dump_get_process_info_request( struct get_process_info_request *req, 
 static int dump_get_process_info_reply( struct get_process_info_reply *req, int len )
 {
     fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " exit_code=%d", req->exit_code );
+    fprintf( stderr, " exit_code=%d,", req->exit_code );
+    fprintf( stderr, " priority=%d,", req->priority );
+    fprintf( stderr, " process_affinity=%d,", req->process_affinity );
+    fprintf( stderr, " system_affinity=%d", req->system_affinity );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_process_info_request( struct set_process_info_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mask=%d,", req->mask );
+    fprintf( stderr, " priority=%d,", req->priority );
+    fprintf( stderr, " affinity=%d", req->affinity );
     return (int)sizeof(*req);
 }
 
@@ -70,7 +82,49 @@ static int dump_get_thread_info_request( struct get_thread_info_request *req, in
 static int dump_get_thread_info_reply( struct get_thread_info_reply *req, int len )
 {
     fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " exit_code=%d", req->exit_code );
+    fprintf( stderr, " exit_code=%d,", req->exit_code );
+    fprintf( stderr, " priority=%d", req->priority );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_thread_info_request( struct set_thread_info_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mask=%d,", req->mask );
+    fprintf( stderr, " priority=%d,", req->priority );
+    fprintf( stderr, " affinity=%d", req->affinity );
+    return (int)sizeof(*req);
+}
+
+static int dump_suspend_thread_request( struct suspend_thread_request *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_suspend_thread_reply( struct suspend_thread_reply *req, int len )
+{
+    fprintf( stderr, " count=%d", req->count );
+    return (int)sizeof(*req);
+}
+
+static int dump_resume_thread_request( struct resume_thread_request *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_resume_thread_reply( struct resume_thread_reply *req, int len )
+{
+    fprintf( stderr, " count=%d", req->count );
+    return (int)sizeof(*req);
+}
+
+static int dump_queue_apc_request( struct queue_apc_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " func=%p,", req->func );
+    fprintf( stderr, " param=%p", req->param );
     return (int)sizeof(*req);
 }
 
@@ -297,6 +351,26 @@ static int dump_get_file_info_reply( struct get_file_info_reply *req, int len )
     return (int)sizeof(*req);
 }
 
+static int dump_lock_file_request( struct lock_file_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " offset_low=%08x,", req->offset_low );
+    fprintf( stderr, " offset_high=%08x,", req->offset_high );
+    fprintf( stderr, " count_low=%08x,", req->count_low );
+    fprintf( stderr, " count_high=%08x", req->count_high );
+    return (int)sizeof(*req);
+}
+
+static int dump_unlock_file_request( struct unlock_file_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " offset_low=%08x,", req->offset_low );
+    fprintf( stderr, " offset_high=%08x,", req->offset_high );
+    fprintf( stderr, " count_low=%08x,", req->count_low );
+    fprintf( stderr, " count_high=%08x", req->count_high );
+    return (int)sizeof(*req);
+}
+
 static int dump_create_pipe_request( struct create_pipe_request *req, int len )
 {
     fprintf( stderr, " inherit=%d", req->inherit );
@@ -310,22 +384,77 @@ static int dump_create_pipe_reply( struct create_pipe_reply *req, int len )
     return (int)sizeof(*req);
 }
 
-static int dump_create_console_request( struct create_console_request *req, int len )
+static int dump_alloc_console_request( struct alloc_console_request *req, int len )
 {
+    return (int)sizeof(*req);
+}
+
+static int dump_free_console_request( struct free_console_request *req, int len )
+{
+    return (int)sizeof(*req);
+}
+
+static int dump_open_console_request( struct open_console_request *req, int len )
+{
+    fprintf( stderr, " output=%d,", req->output );
+    fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d", req->inherit );
     return (int)sizeof(*req);
 }
 
-static int dump_create_console_reply( struct create_console_reply *req, int len )
+static int dump_open_console_reply( struct open_console_reply *req, int len )
 {
-    fprintf( stderr, " handle_read=%d,", req->handle_read );
-    fprintf( stderr, " handle_write=%d", req->handle_write );
+    fprintf( stderr, " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
 static int dump_set_console_fd_request( struct set_console_fd_request *req, int len )
 {
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " pid=%d", req->pid );
+    return (int)sizeof(*req);
+}
+
+static int dump_get_console_mode_request( struct get_console_mode_request *req, int len )
+{
     fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_get_console_mode_reply( struct get_console_mode_reply *req, int len )
+{
+    fprintf( stderr, " mode=%d", req->mode );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_console_mode_request( struct set_console_mode_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mode=%d", req->mode );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_console_info_request( struct set_console_info_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mask=%d,", req->mask );
+    fprintf( stderr, " cursor_size=%d,", req->cursor_size );
+    fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
+    fprintf( stderr, " title=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
+    return len;
+}
+
+static int dump_get_console_info_request( struct get_console_info_request *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_get_console_info_reply( struct get_console_info_reply *req, int len )
+{
+    fprintf( stderr, " cursor_size=%d,", req->cursor_size );
+    fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
+    fprintf( stderr, " pid=%d", req->pid );
     return (int)sizeof(*req);
 }
 
@@ -372,6 +501,20 @@ static int dump_get_mapping_info_reply( struct get_mapping_info_reply *req, int 
     return (int)sizeof(*req);
 }
 
+static int dump_create_device_request( struct create_device_request *req, int len )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " id=%d", req->id );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_device_reply( struct create_device_reply *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
 struct dumper
 {
     int (*dump_req)( void *data, int len );
@@ -392,8 +535,18 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())0 },
     { (int(*)(void *,int))dump_get_process_info_request,
       (void(*)())dump_get_process_info_reply },
+    { (int(*)(void *,int))dump_set_process_info_request,
+      (void(*)())0 },
     { (int(*)(void *,int))dump_get_thread_info_request,
       (void(*)())dump_get_thread_info_reply },
+    { (int(*)(void *,int))dump_set_thread_info_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_suspend_thread_request,
+      (void(*)())dump_suspend_thread_reply },
+    { (int(*)(void *,int))dump_resume_thread_request,
+      (void(*)())dump_resume_thread_reply },
+    { (int(*)(void *,int))dump_queue_apc_request,
+      (void(*)())0 },
     { (int(*)(void *,int))dump_close_handle_request,
       (void(*)())0 },
     { (int(*)(void *,int))dump_dup_handle_request,
@@ -432,18 +585,36 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())0 },
     { (int(*)(void *,int))dump_get_file_info_request,
       (void(*)())dump_get_file_info_reply },
+    { (int(*)(void *,int))dump_lock_file_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_unlock_file_request,
+      (void(*)())0 },
     { (int(*)(void *,int))dump_create_pipe_request,
       (void(*)())dump_create_pipe_reply },
-    { (int(*)(void *,int))dump_create_console_request,
-      (void(*)())dump_create_console_reply },
+    { (int(*)(void *,int))dump_alloc_console_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_free_console_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_open_console_request,
+      (void(*)())dump_open_console_reply },
     { (int(*)(void *,int))dump_set_console_fd_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_get_console_mode_request,
+      (void(*)())dump_get_console_mode_reply },
+    { (int(*)(void *,int))dump_set_console_mode_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_set_console_info_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_get_console_info_request,
+      (void(*)())dump_get_console_info_reply },
     { (int(*)(void *,int))dump_create_change_notification_request,
       (void(*)())dump_create_change_notification_reply },
     { (int(*)(void *,int))dump_create_mapping_request,
       (void(*)())dump_create_mapping_reply },
     { (int(*)(void *,int))dump_get_mapping_info_request,
       (void(*)())dump_get_mapping_info_reply },
+    { (int(*)(void *,int))dump_create_device_request,
+      (void(*)())dump_create_device_reply },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -454,7 +625,12 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "terminate_process",
     "terminate_thread",
     "get_process_info",
+    "set_process_info",
     "get_thread_info",
+    "set_thread_info",
+    "suspend_thread",
+    "resume_thread",
+    "queue_apc",
     "close_handle",
     "dup_handle",
     "open_process",
@@ -474,12 +650,21 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "set_file_time",
     "flush_file",
     "get_file_info",
+    "lock_file",
+    "unlock_file",
     "create_pipe",
-    "create_console",
+    "alloc_console",
+    "free_console",
+    "open_console",
     "set_console_fd",
+    "get_console_mode",
+    "set_console_mode",
+    "set_console_info",
+    "get_console_info",
     "create_change_notification",
     "create_mapping",
     "get_mapping_info",
+    "create_device",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )

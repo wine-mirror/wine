@@ -31,7 +31,7 @@
 typedef struct
 {
     K32OBJ        header;
-    FILE_OBJECT  *file;
+    K32OBJ       *file;
 } FILE_MAPPING;
 
 /* File view */
@@ -810,20 +810,12 @@ BOOL32 WINAPI VirtualProtectEx(
               LPVOID addr,     /* [in]  Address of region of committed pages */
               DWORD size,      /* [in]  Size of region */
               DWORD new_prot,  /* [in]  Desired access protection */
-              LPDWORD old_prot /* [out] Address of variable to get old protection */
-) {
-    BOOL32 ret = FALSE;
-
-    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_VM_OPERATION, NULL );
-    if (pdb)
-    {
-        if (pdb == PROCESS_Current())
-            ret = VirtualProtect( addr, size, new_prot, old_prot );
-        else
-            ERR(virtual,"Unsupported on other process\n");
-        K32OBJ_DecCount( &pdb->header );
-    }
-    return ret;
+              LPDWORD old_prot /* [out] Address of variable to get old protection */ )
+{
+    if (PROCESS_IsCurrent( handle ))
+        return VirtualProtect( addr, size, new_prot, old_prot );
+    ERR(virtual,"Unsupported on other process\n");
+    return FALSE;
 }
 
 
@@ -907,20 +899,12 @@ DWORD WINAPI VirtualQueryEx(
              HANDLE32 handle,                 /* [in] Handle of process */
              LPCVOID addr,                    /* [in] Address of region */
              LPMEMORY_BASIC_INFORMATION info, /* [out] Address of info buffer */
-             DWORD len                        /* [in] Size of buffer */
-) {
-    DWORD ret = len;
-
-    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_QUERY_INFORMATION, NULL );
-    if (pdb)
-    {
-        if (pdb == PROCESS_Current())
-            ret = VirtualQuery( addr, info, len );
-        else
-            ERR(virtual,"Unsupported on other process\n");
-        K32OBJ_DecCount( &pdb->header );
-    }
-    return ret;
+             DWORD len                        /* [in] Size of buffer */ )
+{
+    if (PROCESS_IsCurrent( handle ))
+        return VirtualQuery( addr, info, len );
+    ERR(virtual,"Unsupported on other process\n");
+    return 0;
 }
 
 
@@ -1079,7 +1063,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
     FILE_MAPPING *mapping = NULL;
-    FILE_OBJECT *file;
+    K32OBJ *file;
     struct create_mapping_request req;
     struct create_mapping_reply reply = { -1 };
     HANDLE32 handle;
@@ -1172,7 +1156,9 @@ HANDLE32 WINAPI CreateFileMapping32A(
             ((protect & 0xff) == PAGE_EXECUTE_READWRITE) ||
             ((protect & 0xff) == PAGE_EXECUTE_WRITECOPY))
                 access |= GENERIC_WRITE;
-        if (!(file = FILE_GetFile( hFile, access, &req.handle ))) goto error;
+
+        if (!(file = HANDLE_GetObjPtr( PROCESS_Current(), hFile, K32OBJ_FILE,
+                                       access, &req.handle ))) goto error;
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
         if (!size_high && !size_low)
         {
@@ -1218,7 +1204,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
 error:
     if (reply.handle != -1) CLIENT_CloseHandle( reply.handle );
-    if (file) K32OBJ_DecCount( &file->header );
+    if (file) K32OBJ_DecCount( file );
     if (mapping) HeapFree( SystemHeap, 0, mapping );
     return 0;
 }
@@ -1305,7 +1291,7 @@ static void VIRTUAL_DestroyMapping( K32OBJ *ptr )
     FILE_MAPPING *mapping = (FILE_MAPPING *)ptr;
     assert( ptr->type == K32OBJ_MEM_MAPPED_FILE );
 
-    if (mapping->file) K32OBJ_DecCount( &mapping->file->header );
+    if (mapping->file) K32OBJ_DecCount( mapping->file );
     ptr->type = K32OBJ_UNKNOWN;
     HeapFree( SystemHeap, 0, mapping );
 }
@@ -1347,7 +1333,6 @@ LPVOID WINAPI MapViewOfFileEx(
               DWORD count,       /* [in] Number of bytes to map */
               LPVOID addr        /* [in] Suggested starting address for mapped view */
 ) {
-    FILE_MAPPING *mapping;
     FILE_VIEW *view;
     UINT32 ptr = (UINT32)-1, size = 0;
     int flags = MAP_PRIVATE;
@@ -1364,12 +1349,8 @@ LPVOID WINAPI MapViewOfFileEx(
         return NULL;
     }
 
-    if (!(mapping = (FILE_MAPPING *)HANDLE_GetObjPtr( PROCESS_Current(),
-                                                      handle,
-                                                      K32OBJ_MEM_MAPPED_FILE,
-                                                      0  /* FIXME */, &req.handle )))
-        return NULL;
-
+    req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
+                                         K32OBJ_MEM_MAPPED_FILE, 0 /* FIXME */ );
     CLIENT_SendRequest( REQ_GET_MAPPING_INFO, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &info, sizeof(info), &unix_handle ))
         goto error;
@@ -1438,13 +1419,11 @@ LPVOID WINAPI MapViewOfFileEx(
         goto error;
     }
     if (unix_handle != -1) close( unix_handle );
-    K32OBJ_DecCount( &mapping->header );
     return (LPVOID)ptr;
 
 error:
     if (unix_handle != -1) close( unix_handle );
     if (ptr != (UINT32)-1) FILE_munmap( (void *)ptr, 0, size );
-    K32OBJ_DecCount( &mapping->header );
     return NULL;
 }
 

@@ -139,8 +139,6 @@ extern K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
                                  int *server_handle );
 extern int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
                                    K32OBJ_TYPE type, DWORD access );
-extern BOOL32 HANDLE_SetObjPtr( PDB32 *pdb, HANDLE32 handle,
-                                K32OBJ *ptr, DWORD access );
 extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );
 
 /* Global handle macros */
@@ -153,6 +151,7 @@ extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );
 /* scheduler/process.c */
 extern BOOL32 PROCESS_Init( void );
 extern PDB32 *PROCESS_Current(void);
+extern BOOL32 PROCESS_IsCurrent( HANDLE32 handle );
 extern PDB32 *PROCESS_Initial(void);
 extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern PDB32 *PROCESS_IdToPDB( DWORD id );
