@@ -96,8 +96,8 @@ User_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
 #endif
 #ifndef SYNC_UPDATE
 	InitializeCriticalSection(&priv->user.crit);
-	priv->user.refresh_event = CreateEventA(NULL, TRUE, FALSE, NULL);
-	priv->user.update_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+	priv->user.refresh_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+	priv->user.update_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 	priv->user.update_thread = CreateThread(NULL, 0, User_update_thread, This, 0, NULL);
 #ifdef OWN_WINDOW
 	if (This->ddraw_owner->cooperative_level & DDSCL_FULLSCREEN) {

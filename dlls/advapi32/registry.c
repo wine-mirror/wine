@@ -2073,7 +2073,7 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
           hEvent,fAsync);
 
     if( !fAsync )
-        hEvent = CreateEventA(NULL, 0, 0, NULL);
+        hEvent = CreateEventW(NULL, 0, 0, NULL);
 
     SERVER_START_REQ( set_registry_notification )
     {

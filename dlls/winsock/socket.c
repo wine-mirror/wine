@@ -2997,7 +2997,7 @@ WSAEVENT WINAPI WSACreateEvent(void)
     /* Create a manual-reset event, with initial state: unsignaled */
     TRACE("\n");
 
-    return CreateEventA(NULL, TRUE, FALSE, NULL);
+    return CreateEventW(NULL, TRUE, FALSE, NULL);
 }
 
 /***********************************************************************

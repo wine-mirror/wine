@@ -725,7 +725,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
         DisableThreadLibraryCalls(hinstDLL);
         DOSVM_InitSegments();
 
-        event_notifier = CreateEventA(NULL, FALSE, FALSE, NULL);
+        event_notifier = CreateEventW(NULL, FALSE, FALSE, NULL);
         if(!event_notifier)
           ERR("Failed to create event object!\n");
     }

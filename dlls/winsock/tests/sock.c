@@ -599,9 +599,9 @@ static void do_test( test_setup *test )
     DWORD i, n = min (test->general.n_clients, MAX_CLIENTS);
     DWORD wait;
 
-    server_ready = CreateEventA ( NULL, TRUE, FALSE, NULL );
+    server_ready = CreateEventW ( NULL, TRUE, FALSE, NULL );
     for (i = 0; i <= n; i++)
-        client_ready[i] = CreateEventA ( NULL, TRUE, FALSE, NULL );
+        client_ready[i] = CreateEventW ( NULL, TRUE, FALSE, NULL );
 
     StartServer ( test->srv, &test->general, &test->srv_params );
     StartClients ( test->clt, &test->general, &test->clt_params );

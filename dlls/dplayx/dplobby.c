@@ -1164,13 +1164,13 @@ BOOL DPL_CreateAndSetLobbyHandles( DWORD dwDestProcessId, HANDLE hDestProcess,
   s_attrib.bInheritHandle       = TRUE;
 
   /* FIXME: Is there a handle leak here? */
-  hTemp = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
+  hTemp = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
   *lphStart = ConvertToGlobalHandle( hTemp );
 
-  hTemp = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
+  hTemp = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
   *lphDeath = ConvertToGlobalHandle( hTemp );
 
-  hTemp = CreateEventA( &s_attrib, TRUE, FALSE, NULL );
+  hTemp = CreateEventW( &s_attrib, TRUE, FALSE, NULL );
   *lphRead  = ConvertToGlobalHandle( hTemp );
 
   if( ( !DuplicateHandle( GetCurrentProcess(), *lphStart,

@@ -2025,7 +2025,7 @@ BOOL WINAPI WaitCommEvent(
         return COMM_WaitCommEvent(hFile, lpdwEvents, lpOverlapped);
 
     /* if there is no overlapped structure, create our own */
-    ov.hEvent = CreateEventA(NULL,FALSE,FALSE,NULL);
+    ov.hEvent = CreateEventW(NULL,FALSE,FALSE,NULL);
 
     COMM_WaitCommEvent(hFile, lpdwEvents, &ov);
 

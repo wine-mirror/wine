@@ -166,7 +166,7 @@ static
 HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
                                        LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList, WORD wReplyCommandId )
 {
-  lpReplyStructList->replyExpected.hReceipt       = CreateEventA( NULL, FALSE, FALSE, NULL );
+  lpReplyStructList->replyExpected.hReceipt       = CreateEventW( NULL, FALSE, FALSE, NULL );
   lpReplyStructList->replyExpected.wExpectedReply = wReplyCommandId;
   lpReplyStructList->replyExpected.lpReplyMsg     = NULL;
   lpReplyStructList->replyExpected.dwMsgBodySize  = 0;

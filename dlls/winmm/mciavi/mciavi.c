@@ -152,7 +152,7 @@ static	DWORD	MCIAVI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 	return 0;
 
     InitializeCriticalSection(&wma->cs);
-    wma->hStopEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wma->hStopEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wma->wDevID = modp->wDeviceID;
     wma->wCommandTable = mciLoadCommandResource(MCIAVI_hInstance, mciAviWStr, 0);
     modp->wCustomCommandTable = wma->wCommandTable;

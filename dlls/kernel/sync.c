@@ -440,7 +440,7 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
  */
 HANDLE WINAPI WIN16_CreateEvent( BOOL manual_reset, BOOL initial_state )
 {
-    return CreateEventA( NULL, manual_reset, initial_state, NULL );
+    return CreateEventW( NULL, manual_reset, initial_state, NULL );
 }
 
 
@@ -548,7 +548,7 @@ BOOL WINAPI ResetEvent( HANDLE handle )
  */
 HANDLE WINAPI VWin32_EventCreate(VOID)
 {
-    HANDLE hEvent = CreateEventA( NULL, FALSE, 0, NULL );
+    HANDLE hEvent = CreateEventW( NULL, FALSE, 0, NULL );
     return ConvertToGlobalHandle( hEvent );
 }
 
@@ -1301,7 +1301,7 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
     }
 
     memset(&ov,0,sizeof(ov));
-    ov.hEvent = CreateEventA(NULL,0,0,NULL);
+    ov.hEvent = CreateEventW(NULL,0,0,NULL);
     if (!ov.hEvent)
         return FALSE;
 

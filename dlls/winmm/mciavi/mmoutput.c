@@ -561,7 +561,7 @@ DWORD MCIAVI_OpenAudio(WINE_MCIAVI* wma, unsigned* nHdr, LPWAVEHDR* pWaveHdr)
     }
     wma->dwCurrAudioBlock = 0;
 
-    wma->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wma->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wma->dwEventCount = *nHdr - 1;
     *pWaveHdr = waveHdr;
  cleanUp:

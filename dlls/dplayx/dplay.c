@@ -2309,7 +2309,7 @@ static HRESULT WINAPI DP_IF_EnumSessions
         lpData->dwTimeout = dwTimeout;
 
         This->dp2->hKillEnumSessionThreadEvent =
-          CreateEventA( NULL, TRUE, FALSE, NULL );
+          CreateEventW( NULL, TRUE, FALSE, NULL );
 
         if( !DuplicateHandle( GetCurrentProcess(),
                               This->dp2->hKillEnumSessionThreadEvent,
@@ -4582,7 +4582,7 @@ static HRESULT WINAPI DP_SendEx
     {
       DWORD dwWaitReturn;
 
-      This->dp2->hReplyEvent = CreateEventA( NULL, FALSE, FALSE, NULL );
+      This->dp2->hReplyEvent = CreateEventW( NULL, FALSE, FALSE, NULL );
 
       dwWaitReturn = WaitForSingleObject( hReplyEvent, dwTimeout );
       if( dwWaitReturn != WAIT_OBJECT_0 )

@@ -273,8 +273,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    if (g_dwTlsErrIndex == TLS_OUT_OF_INDEXES)
 		return FALSE;
 
-	    hQuitEvent = CreateEventA(0, TRUE, FALSE, NULL);
-	    hWorkEvent = CreateEventA(0, FALSE, FALSE, NULL);
+	    hQuitEvent = CreateEventW(0, TRUE, FALSE, NULL);
+	    hWorkEvent = CreateEventW(0, FALSE, FALSE, NULL);
 	    InitializeCriticalSection(&csQueue);
 
             URLCacheContainers_CreateDefaults();

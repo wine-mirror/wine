@@ -542,8 +542,8 @@ static void RPCRT4_start_listen(void)
 
   EnterCriticalSection(&listen_cs);
   if (! ++listen_count) {
-    if (!mgr_event) mgr_event = CreateEventA(NULL, TRUE, FALSE, NULL);
-    if (!server_sem) server_sem = CreateSemaphoreA(NULL, 0, MAX_THREADS, NULL);
+    if (!mgr_event) mgr_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    if (!server_sem) server_sem = CreateSemaphoreW(NULL, 0, MAX_THREADS, NULL);
     if (!worker_tls) worker_tls = TlsAlloc();
     std_listen = TRUE;
     server_thread = CreateThread(NULL, 0, RPCRT4_server_thread, NULL, 0, NULL);

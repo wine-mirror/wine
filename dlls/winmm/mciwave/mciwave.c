@@ -809,7 +809,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 
     whidx = 0;
     left = min(wmw->ckWaveData.cksize, end - wmw->dwPosition);
-    wmw->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wmw->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wmw->dwEventCount = 1L; /* for first buffer */
 
     TRACE("Playing (normalized) from byte=%lu for %lu bytes\n", wmw->dwPosition, left);
@@ -1048,7 +1048,7 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 	goto cleanUp;
     }
 
-    wmw->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wmw->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wmw->dwEventCount = 1L; /* for first buffer */
 
     TRACE("Recording (normalized) from byte=%lu for %lu bytes\n", wmw->dwPosition, end - wmw->dwPosition);

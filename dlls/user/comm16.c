@@ -249,7 +249,7 @@ static INT COMM16_WriteFile(HANDLE hComm, LPCVOID buffer, DWORD len)
 	DWORD count= -1;
 
 	ZeroMemory(&ov,sizeof(ov));
-	ov.hEvent = CreateEventA(NULL,0,0,NULL);
+	ov.hEvent = CreateEventW(NULL,0,0,NULL);
 	if(ov.hEvent==INVALID_HANDLE_VALUE)
 		return -1;
 
