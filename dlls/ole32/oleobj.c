@@ -9,10 +9,12 @@
 #include <string.h>
 #include "winbase.h"
 #include "winerror.h"
-#include "oleidl.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+#include "initguid.h"
+#include "oleidl.h"
+
+DEFAULT_DEBUG_CHANNEL(ole);
 
 #define INITIAL_SINKS 10
 

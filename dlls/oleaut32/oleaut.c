@@ -8,12 +8,14 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "winversion.h"
-#include "oleauto.h"
-#include "wine/obj_base.h"
-#include "wine/obj_moniker.h"
+
 #include "heap.h"
 #include "ldt.h"
 #include "debugtools.h"
+
+#include "initguid.h"
+#include "oleauto.h"
+#include "olectl.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 

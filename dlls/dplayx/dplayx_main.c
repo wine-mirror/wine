@@ -8,9 +8,13 @@
 
 #include "winbase.h"
 #include "debugtools.h"
+
+#include "initguid.h"
+#include "dplay.h"
+#include "dplobby.h"
 #include "dplayx_global.h"
 
-DEFAULT_DEBUG_CHANNEL(dplay)
+DEFAULT_DEBUG_CHANNEL(dplay);
 
 static DWORD DPLAYX_dwProcessesAttached = 0;
 

@@ -9,6 +9,7 @@
  */
 #include "initguid.h"
 
+#if 0
 #include "shlguid.h"
 #include "docobj.h"
 #include "olectl.h"
@@ -25,6 +26,7 @@
 #include "dplobby.h"
 #include "vfw.h"
 #include "shlobj.h"
+#endif
 
 /* and now for the one assumed GUID... */
 DEFINE_GUID(GUID_NULL,   0,0,0,0,0,0,0,0,0,0,0);

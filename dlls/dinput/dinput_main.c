@@ -38,9 +38,8 @@
 # include <linux/joystick.h>
 # define JOYDEV	"/dev/js0"
 #endif
-#include "wine/obj_base.h"
+
 #include "debugtools.h"
-#include "dinput.h"
 #include "input.h"
 #include "user.h"
 #include "message.h"
@@ -50,6 +49,9 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#include "initguid.h"
+#include "dinput.h"
 
 DEFAULT_DEBUG_CHANNEL(dinput);
 

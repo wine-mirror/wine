@@ -34,16 +34,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>	/* Insomnia - pow() function */
-#include "dsound.h"
-#include "dsdriver.h"
+
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
 #include "mmsystem.h"
-#include "wine/obj_base.h"
 #include "thread.h"
 #include "debugtools.h"
+
+#include "initguid.h"
+#include "dsound.h"
+#include "dsdriver.h"
 
 DEFAULT_DEBUG_CHANNEL(dsound);
 

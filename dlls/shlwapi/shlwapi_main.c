@@ -9,6 +9,9 @@
 #include "winerror.h"
 #include "debugtools.h"
 
+#include "initguid.h"
+#include "wine/obj_storage.h"
+
 DEFAULT_DEBUG_CHANNEL(shell);
 
 HINSTANCE shlwapi_hInstance = 0; 
