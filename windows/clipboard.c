@@ -181,7 +181,8 @@ VOID CALLBACK CLIPBOARD_GlobalFreeProc( HWND hwnd, UINT uMsg, UINT idEvent, DWOR
 void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
 {
     if( (lpFormat->wFormatID >= CF_GDIOBJFIRST &&
-	 lpFormat->wFormatID <= CF_GDIOBJLAST) || lpFormat->wFormatID == CF_BITMAP )
+	 lpFormat->wFormatID <= CF_GDIOBJLAST) || lpFormat->wFormatID == CF_BITMAP 
+	    || lpFormat->wFormatID == CF_PALETTE)
     {
       if (lpFormat->hData32)
 	DeleteObject(lpFormat->hData32);
