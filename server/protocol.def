@@ -677,8 +677,11 @@ enum fd_type
     int          attr;          /* file attributes */
     time_t       access_time;   /* last access time */
     time_t       write_time;    /* last write time */
+    time_t       change_time;   /* last change time */
     int          size_high;     /* file size */
     int          size_low;      /* file size */
+    int          alloc_high;    /* size used on disk */
+    int          alloc_low;     /* size used on disk */
     int          links;         /* number of links */
     int          index_high;    /* unique index */
     int          index_low;     /* unique index */

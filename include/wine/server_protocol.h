@@ -892,8 +892,11 @@ struct get_file_info_reply
     int          attr;
     time_t       access_time;
     time_t       write_time;
+    time_t       change_time;
     int          size_high;
     int          size_low;
+    int          alloc_high;
+    int          alloc_low;
     int          links;
     int          index_high;
     int          index_low;
@@ -3615,6 +3618,6 @@ union generic_reply
     struct set_clipboard_info_reply set_clipboard_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 112
+#define SERVER_PROTOCOL_VERSION 113
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

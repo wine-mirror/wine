@@ -313,7 +313,7 @@ struct _w31_valent {
 };
 
 /* recursive helper function to display a directory tree  [Internal] */
-void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab,struct _w31_header *head,HKEY hkey,time_t lastmodified, int level)
+static void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab,struct _w31_header *head,HKEY hkey,time_t lastmodified, int level)
 {
     static const WCHAR classesW[] = {'.','c','l','a','s','s','e','s',0};
     struct _w31_dirent *dir;
@@ -379,9 +379,9 @@ void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab
 /******************************************************************************
  * _w31_loadreg [Internal]
  */
-void _w31_loadreg(void)
+static void _w31_loadreg(void)
 {
-    HFILE hf;
+    HANDLE hf;
     HKEY root;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -392,56 +392,57 @@ void _w31_loadreg(void)
     OFSTRUCT		ofs;
     BY_HANDLE_FILE_INFORMATION hfinfo;
     time_t			lastmodified;
+    DWORD       r;
 
     TRACE("(void)\n");
 
-    hf = OpenFile("reg.dat",&ofs,OF_READ);
-    if (hf==HFILE_ERROR) return;
+    hf = (HANDLE)OpenFile("reg.dat",&ofs,OF_READ);
+    if (hf==(HANDLE)HFILE_ERROR) return;
 
     /* read & dump header */
-    if (sizeof(head)!=_lread(hf,&head,sizeof(head))) {
+    if (!ReadFile(hf,&head,sizeof(head),&r,NULL) || r!=sizeof(head)) {
         ERR("reg.dat is too short.\n");
-        _lclose(hf);
+        CloseHandle(hf);
         return;
     }
     if (memcmp(head.cookie, "SHCC3.10", sizeof(head.cookie))!=0) {
         ERR("reg.dat has bad signature.\n");
-        _lclose(hf);
+        CloseHandle(hf);
         return;
     }
 
     len = head.tabcnt * sizeof(struct _w31_tabent);
     /* read and dump index table */
     tab = _xmalloc(len);
-    if (len!=_lread(hf,tab,len)) {
+    if (!ReadFile(hf,tab,len,&r,NULL) || r!=len) {
         ERR("couldn't read %d bytes.\n",len);
         free(tab);
-        _lclose(hf);
+        CloseHandle(hf);
         return;
     }
 
     /* read text */
     txt = _xmalloc(head.textsize);
-    if (-1==_llseek(hf,head.textoff,SEEK_SET)) {
+    if (-1==SetFilePointer(hf,head.textoff,NULL,SEEK_SET)) {
         ERR("couldn't seek to textblock.\n");
         free(tab);
         free(txt);
-        _lclose(hf);
+        CloseHandle(hf);
         return;
     }
-    if (head.textsize!=_lread(hf,txt,head.textsize)) {
+    if (!ReadFile(hf,txt,head.textsize,&r,NULL) || r!=head.textsize) {
         ERR("textblock too short (%d instead of %ld).\n",len,head.textsize);
         free(tab);
         free(txt);
-        _lclose(hf);
+        CloseHandle(hf);
         return;
     }
 
-    if (!GetFileInformationByHandle((HANDLE)hf,&hfinfo)) {
+    if (!GetFileInformationByHandle(hf,&hfinfo)) {
         ERR("GetFileInformationByHandle failed?.\n");
         free(tab);
         free(txt);
-        _lclose(hf);
+        CloseHandle(hf);
         return;
     }
     lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
@@ -461,7 +462,7 @@ void _w31_loadreg(void)
     }
     free(tab);
     free(txt);
-    _lclose(hf);
+    CloseHandle(hf);
     return;
 }
 

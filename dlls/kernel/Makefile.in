@@ -28,6 +28,8 @@ C_SRCS = \
 	console.c \
 	debugger.c \
 	editline.c \
+	file.c \
+	file16.c \
 	format_msg.c \
 	kernel_main.c \
 	lcformat.c \

@@ -82,14 +82,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
-/* Size of per-process table of DOS handles */
-#define DOS_TABLE_SIZE 256
-
 /* Macro to derive file offset from OVERLAPPED struct */
 #define OVERLAPPED_OFFSET(overlapped) ((off_t) (overlapped)->Offset + ((off_t) (overlapped)->OffsetHigh << 32))
 
-static HANDLE dos_handles[DOS_TABLE_SIZE];
-
+HANDLE dos_handles[DOS_TABLE_SIZE];
 mode_t FILE_umask;
 
 extern HANDLE WINAPI FILE_SmbOpen(LPCSTR name);
@@ -172,7 +168,7 @@ static void fileio_async_cleanup ( struct async_private *ovp )
  *
  * Convert OF_* mode into flags for CreateFile.
  */
-static void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing )
+void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing )
 {
     switch(mode & 0x03)
     {
@@ -921,15 +917,6 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
 
 
 /**************************************************************************
- *           GetFileAttributes   (KERNEL.420)
- */
-DWORD WINAPI GetFileAttributes16( LPCSTR name )
-{
-    return GetFileAttributesA( name );
-}
-
-
-/**************************************************************************
  *           GetFileAttributesW   (KERNEL32.@)
  */
 DWORD WINAPI GetFileAttributesW( LPCWSTR name )
@@ -971,15 +958,6 @@ DWORD WINAPI GetFileAttributesA( LPCSTR name )
     else
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return ret;
-}
-
-
-/**************************************************************************
- *              SetFileAttributes	(KERNEL.421)
- */
-BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
-{
-    return SetFileAttributesA( lpFileName, attributes );
 }
 
 
@@ -1082,43 +1060,6 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 
 
 /***********************************************************************
- *           GetFileSize   (KERNEL32.@)
- */
-DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
-{
-    BY_HANDLE_FILE_INFORMATION info;
-    if (!GetFileInformationByHandle( hFile, &info )) return -1;
-    if (filesizehigh) *filesizehigh = info.nFileSizeHigh;
-    return info.nFileSizeLow;
-}
-
-
-/***********************************************************************
- *           GetFileSizeEx   (KERNEL32.@)
- */
-BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
-{
-    BY_HANDLE_FILE_INFORMATION info;
-
-    if (!lpFileSize)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    if (!GetFileInformationByHandle( hFile, &info ))
-    {
-        return FALSE;
-    }
-
-    lpFileSize->s.LowPart = info.nFileSizeLow;
-    lpFileSize->s.HighPart = info.nFileSizeHigh;
-
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           GetFileTime   (KERNEL32.@)
  */
 BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
@@ -1132,6 +1073,7 @@ BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
     if (lpLastWriteTime)  *lpLastWriteTime  = info.ftLastWriteTime;
     return TRUE;
 }
+
 
 /***********************************************************************
  *           FILE_GetTempFileName : utility for GetTempFileName
@@ -1245,50 +1187,11 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
 
 
 /***********************************************************************
- *           GetTempFileName   (KERNEL.97)
- */
-UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
-                                 LPSTR buffer )
-{
-    char temppath[MAX_PATH];
-    char *prefix16 = NULL;
-    UINT16 ret;
-
-    if (!(drive & ~TF_FORCEDRIVE)) /* drive 0 means current default drive */
-        drive |= DRIVE_GetCurrentDrive() + 'A';
-
-    if ((drive & TF_FORCEDRIVE) &&
-        !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
-    {
-        drive &= ~TF_FORCEDRIVE;
-        WARN("invalid drive %d specified\n", drive );
-    }
-
-    if (drive & TF_FORCEDRIVE)
-        sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
-    else
-        GetTempPathA( MAX_PATH, temppath );
-
-    if (prefix)
-    {
-        prefix16 = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + 2);
-        *prefix16 = '~';
-        strcpy(prefix16 + 1, prefix);
-    }
-
-    ret = GetTempFileNameA( temppath, prefix16, unique, buffer );
-
-    if (prefix16) HeapFree(GetProcessHeap(), 0, prefix16);
-    return ret;
-}
-
-/***********************************************************************
  *           FILE_DoOpenFile
  *
  * Implementation of OpenFile16() and OpenFile32().
  */
-static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
-                                BOOL win32 )
+static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode, BOOL win32 )
 {
     HFILE hFileRet;
     HANDLE handle;
@@ -1629,15 +1532,6 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
     return 0;
 }
 
-
-/***********************************************************************
- *           _lclose   (KERNEL32.@)
- */
-HFILE WINAPI _lclose( HFILE hFile )
-{
-    TRACE("handle %d\n", hFile );
-    return CloseHandle( (HANDLE)hFile ) ? 0 : HFILE_ERROR;
-}
 
 /***********************************************************************
  *              GetOverlappedResult     (KERNEL32.@)
@@ -2213,75 +2107,6 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
 
 /***********************************************************************
- *           _hread (KERNEL.349)
- */
-LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
-{
-    LONG maxlen;
-
-    TRACE("%d %08lx %ld\n",
-                  hFile, (DWORD)buffer, count );
-
-    /* Some programs pass a count larger than the allocated buffer */
-    maxlen = GetSelectorLimit16( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
-    if (count > maxlen) count = maxlen;
-    return _lread((HFILE)DosFileHandleToWin32Handle(hFile), MapSL(buffer), count );
-}
-
-
-/***********************************************************************
- *           _lread (KERNEL.82)
- */
-UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
-{
-    return (UINT16)WIN16_hread( hFile, buffer, (LONG)count );
-}
-
-
-/***********************************************************************
- *           _lread   (KERNEL32.@)
- */
-UINT WINAPI _lread( HFILE handle, LPVOID buffer, UINT count )
-{
-    DWORD result;
-    if (!ReadFile( (HANDLE)handle, buffer, count, &result, NULL )) return -1;
-    return result;
-}
-
-
-/***********************************************************************
- *           _lread16   (KERNEL.82)
- */
-UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
-{
-    return (UINT16)_lread((HFILE)DosFileHandleToWin32Handle(hFile), buffer, (LONG)count );
-}
-
-
-/***********************************************************************
- *           _lcreat   (KERNEL.83)
- */
-HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
-{
-    return Win32HandleToDosFileHandle( (HANDLE)_lcreat( path, attr ) );
-}
-
-
-/***********************************************************************
- *           _lcreat   (KERNEL32.@)
- */
-HFILE WINAPI _lcreat( LPCSTR path, INT attr )
-{
-    /* Mask off all flags not explicitly allowed by the doc */
-    attr &= FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
-    TRACE("%s %02x\n", path, attr );
-    return (HFILE)CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
-                               FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                               CREATE_ALWAYS, attr, 0 );
-}
-
-
-/***********************************************************************
  *           SetFilePointer   (KERNEL32.@)
  */
 DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
@@ -2311,164 +2136,12 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
 }
 
 
-/***********************************************************************
- *           _llseek   (KERNEL.84)
- *
- * FIXME:
- *   Seeking before the start of the file should be allowed for _llseek16,
- *   but cause subsequent I/O operations to fail (cf. interrupt list)
- *
- */
-LONG WINAPI _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
-{
-    return SetFilePointer( DosFileHandleToWin32Handle(hFile), lOffset, NULL, nOrigin );
-}
-
-
-/***********************************************************************
- *           _llseek   (KERNEL32.@)
- */
-LONG WINAPI _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
-{
-    return SetFilePointer( (HANDLE)hFile, lOffset, NULL, nOrigin );
-}
-
-
-/***********************************************************************
- *           _lopen   (KERNEL.85)
- */
-HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
-{
-    return Win32HandleToDosFileHandle( (HANDLE)_lopen( path, mode ) );
-}
-
-
-/***********************************************************************
- *           _lopen   (KERNEL32.@)
- */
-HFILE WINAPI _lopen( LPCSTR path, INT mode )
-{
-    DWORD access, sharing;
-
-    TRACE("('%s',%04x)\n", path, mode );
-    FILE_ConvertOFMode( mode, &access, &sharing );
-    return (HFILE)CreateFileA( path, access, sharing, NULL, OPEN_EXISTING, 0, 0 );
-}
-
-
-/***********************************************************************
- *           _lwrite   (KERNEL.86)
- */
-UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
-{
-    return (UINT16)_hwrite( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, (LONG)count );
-}
-
-/***********************************************************************
- *           _lwrite   (KERNEL32.@)
- */
-UINT WINAPI _lwrite( HFILE hFile, LPCSTR buffer, UINT count )
-{
-    return (UINT)_hwrite( hFile, buffer, (LONG)count );
-}
-
-
-/***********************************************************************
- *           _hread16   (KERNEL.349)
- */
-LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
-{
-    return _lread( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
-}
-
-
-/***********************************************************************
- *           _hread   (KERNEL32.@)
- */
-LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count)
-{
-    return _lread( hFile, buffer, count );
-}
-
-
-/***********************************************************************
- *           _hwrite   (KERNEL.350)
- */
-LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
-{
-    return _hwrite( (HFILE)DosFileHandleToWin32Handle(hFile), buffer, count );
-}
-
-
-/***********************************************************************
- *           _hwrite   (KERNEL32.@)
- *
- *	experimentation yields that _lwrite:
- *		o truncates the file at the current position with
- *		  a 0 len write
- *		o returns 0 on a 0 length write
- *		o works with console handles
- *
- */
-LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
-{
-    DWORD result;
-
-    TRACE("%d %p %ld\n", handle, buffer, count );
-
-    if (!count)
-    {
-        /* Expand or truncate at current position */
-        if (!SetEndOfFile( (HANDLE)handle )) return HFILE_ERROR;
-        return 0;
-    }
-    if (!WriteFile( (HANDLE)handle, buffer, count, &result, NULL ))
-        return HFILE_ERROR;
-    return result;
-}
-
-
-/***********************************************************************
- *           SetHandleCount   (KERNEL.199)
- */
-UINT16 WINAPI SetHandleCount16( UINT16 count )
-{
-    return SetHandleCount( count );
-}
-
-
 /*************************************************************************
  *           SetHandleCount   (KERNEL32.@)
  */
 UINT WINAPI SetHandleCount( UINT count )
 {
     return min( 256, count );
-}
-
-
-/***********************************************************************
- *           FlushFileBuffers   (KERNEL32.@)
- */
-BOOL WINAPI FlushFileBuffers( HANDLE hFile )
-{
-    NTSTATUS            nts;
-    IO_STATUS_BLOCK     ioblk;
-
-    if (is_console_handle( hFile ))
-    {
-        /* this will fail (as expected) for an output handle */
-        /* FIXME: wait until FlushFileBuffers is moved to dll/kernel */
-        /* return FlushConsoleInputBuffer( hFile ); */
-        return TRUE;
-    }
-    nts = NtFlushBuffersFile( hFile, &ioblk );
-    if (nts != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError( nts ) );
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 
@@ -2485,15 +2158,6 @@ BOOL WINAPI SetEndOfFile( HANDLE hFile )
     }
     SERVER_END_REQ;
     return ret;
-}
-
-
-/***********************************************************************
- *           DeleteFile   (KERNEL.146)
- */
-BOOL16 WINAPI DeleteFile16( LPCSTR path )
-{
-    return DeleteFileA( path );
 }
 
 
@@ -3041,6 +2705,7 @@ BOOL WINAPI CopyFileExW(LPCWSTR sourceFilename, LPCWSTR destFilename,
     return CopyFileW(sourceFilename, destFilename, (copyFlags & COPY_FILE_FAIL_IF_EXISTS) != 0);
 }
 
+
 /**************************************************************************
  *           CopyFileExA   (KERNEL32.@)
  */
@@ -3093,136 +2758,6 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
     }
     SERVER_END_REQ;
     return ret;
-}
-
-
-/**************************************************************************
- *           LockFile   (KERNEL32.@)
- */
-BOOL WINAPI LockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
-                      DWORD count_low, DWORD count_high )
-{
-    BOOL ret;
-
-    TRACE( "%p %lx%08lx %lx%08lx\n", hFile, offset_high, offset_low, count_high, count_low );
-
-    SERVER_START_REQ( lock_file )
-    {
-        req->handle      = hFile;
-        req->offset_low  = offset_low;
-        req->offset_high = offset_high;
-        req->count_low   = count_low;
-        req->count_high  = count_high;
-        req->shared      = FALSE;
-        req->wait        = FALSE;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-/**************************************************************************
- * LockFileEx [KERNEL32.@]
- *
- * Locks a byte range within an open file for shared or exclusive access.
- *
- * RETURNS
- *   success: TRUE
- *   failure: FALSE
- *
- * NOTES
- * Per Microsoft docs, the third parameter (reserved) must be set to 0.
- */
-BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
-                        DWORD count_low, DWORD count_high, LPOVERLAPPED overlapped )
-{
-    NTSTATUS err;
-    BOOL async;
-    HANDLE handle;
-
-    if (reserved)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    TRACE( "%p %lx%08lx %lx%08lx flags %lx\n",
-           hFile, overlapped->OffsetHigh, overlapped->Offset, count_high, count_low, flags );
-
-    for (;;)
-    {
-        SERVER_START_REQ( lock_file )
-        {
-            req->handle      = hFile;
-            req->offset_low  = overlapped->Offset;
-            req->offset_high = overlapped->OffsetHigh;
-            req->count_low   = count_low;
-            req->count_high  = count_high;
-            req->shared      = !(flags & LOCKFILE_EXCLUSIVE_LOCK);
-            req->wait        = !(flags & LOCKFILE_FAIL_IMMEDIATELY);
-            err = wine_server_call( req );
-            handle = reply->handle;
-            async  = reply->overlapped;
-        }
-        SERVER_END_REQ;
-        if (err != STATUS_PENDING)
-        {
-            if (err) SetLastError( RtlNtStatusToDosError(err) );
-            return !err;
-        }
-        if (async)
-        {
-            FIXME( "Async I/O lock wait not implemented, might deadlock\n" );
-            if (handle) CloseHandle( handle );
-            SetLastError( ERROR_IO_PENDING );
-            return FALSE;
-        }
-        if (handle)
-        {
-            WaitForSingleObject( handle, INFINITE );
-            CloseHandle( handle );
-        }
-        else Sleep(100);  /* Unix lock conflict, sleep a bit and retry */
-    }
-}
-
-
-/**************************************************************************
- *           UnlockFile   (KERNEL32.@)
- */
-BOOL WINAPI UnlockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
-                        DWORD count_low, DWORD count_high )
-{
-    BOOL ret;
-
-    TRACE( "%p %lx%08lx %lx%08lx\n", hFile, offset_high, offset_low, count_high, count_low );
-
-    SERVER_START_REQ( unlock_file )
-    {
-        req->handle      = hFile;
-        req->offset_low  = offset_low;
-        req->offset_high = offset_high;
-        req->count_low   = count_low;
-        req->count_high  = count_high;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/**************************************************************************
- *           UnlockFileEx   (KERNEL32.@)
- */
-BOOL WINAPI UnlockFileEx( HANDLE hFile, DWORD reserved, DWORD count_low, DWORD count_high,
-                          LPOVERLAPPED overlapped )
-{
-    if (reserved)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    return UnlockFile( hFile, overlapped->Offset, overlapped->OffsetHigh, count_low, count_high );
 }
 
 
@@ -3288,31 +2823,4 @@ BOOL WINAPI GetFileAttributesExA(
     else
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return ret;
-}
-
-/**************************************************************************
- *           ReplaceFileW   (KERNEL32.@)
- *           ReplaceFile    (KERNEL32.@)
- */
-BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName,LPCWSTR lpReplacementFileName,
-                         LPCWSTR lpBackupFileName, DWORD dwReplaceFlags,
-                         LPVOID lpExclude, LPVOID lpReserved)
-{
-    FIXME("(%s,%s,%s,%08lx,%p,%p) stub\n",debugstr_w(lpReplacedFileName),debugstr_w(lpReplacementFileName),
-                                          debugstr_w(lpBackupFileName),dwReplaceFlags,lpExclude,lpReserved);
-    SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
-    return FALSE;
-}
-
-/**************************************************************************
- *           ReplaceFileA (KERNEL32.@)
- */
-BOOL WINAPI ReplaceFileA(LPCSTR lpReplacedFileName,LPCSTR lpReplacementFileName,
-                         LPCSTR lpBackupFileName, DWORD dwReplaceFlags,
-                         LPVOID lpExclude, LPVOID lpReserved)
-{
-    FIXME("(%s,%s,%s,%08lx,%p,%p) stub\n",lpReplacedFileName,lpReplacementFileName,
-                                          lpBackupFileName,dwReplaceFlags,lpExclude,lpReserved);
-    SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
-    return FALSE;
 }

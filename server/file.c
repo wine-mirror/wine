@@ -329,15 +329,22 @@ static int file_get_info( struct fd *fd, struct get_file_info_reply *reply, int 
         if (!(st.st_mode & S_IWUSR)) reply->attr |= FILE_ATTRIBUTE_READONLY;
         reply->access_time = st.st_atime;
         reply->write_time  = st.st_mtime;
+        reply->change_time = st.st_ctime;
         if (S_ISDIR(st.st_mode))
         {
-            reply->size_high = 0;
-            reply->size_low  = 0;
+            reply->size_high  = 0;
+            reply->size_low   = 0;
+            reply->alloc_high = 0;
+            reply->alloc_low  = 0;
         }
         else
         {
-            reply->size_high = st.st_size >> 32;
-            reply->size_low  = st.st_size & 0xffffffff;
+            file_pos_t  alloc;
+            reply->size_high  = st.st_size >> 32;
+            reply->size_low   = st.st_size & 0xffffffff;
+            alloc = (file_pos_t)st.st_blksize * st.st_blocks;
+            reply->alloc_high = alloc >> 32;
+            reply->alloc_low  = alloc & 0xffffffff;
         }
         reply->links       = st.st_nlink;
         reply->index_high  = st.st_dev;

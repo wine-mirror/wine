@@ -44,4 +44,9 @@ static inline HANDLE console_handle_unmap(HANDLE h)
     return h != INVALID_HANDLE_VALUE ? (HANDLE)((DWORD)h ^ 3) : INVALID_HANDLE_VALUE;
 }
 
+/* Size of per-process table of DOS handles */
+#define DOS_TABLE_SIZE 256
+extern HANDLE dos_handles[DOS_TABLE_SIZE];
+void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing );
+
 #endif

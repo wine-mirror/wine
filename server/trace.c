@@ -893,8 +893,11 @@ static void dump_get_file_info_reply( const struct get_file_info_reply *req )
     fprintf( stderr, " attr=%d,", req->attr );
     fprintf( stderr, " access_time=%ld,", req->access_time );
     fprintf( stderr, " write_time=%ld,", req->write_time );
+    fprintf( stderr, " change_time=%ld,", req->change_time );
     fprintf( stderr, " size_high=%d,", req->size_high );
     fprintf( stderr, " size_low=%d,", req->size_low );
+    fprintf( stderr, " alloc_high=%d,", req->alloc_high );
+    fprintf( stderr, " alloc_low=%d,", req->alloc_low );
     fprintf( stderr, " links=%d,", req->links );
     fprintf( stderr, " index_high=%d,", req->index_high );
     fprintf( stderr, " index_low=%d,", req->index_low );

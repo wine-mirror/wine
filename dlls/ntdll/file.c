@@ -345,32 +345,161 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
  *  NtQueryInformationFile		[NTDLL.@]
  *  ZwQueryInformationFile		[NTDLL.@]
  */
-NTSTATUS WINAPI NtQueryInformationFile(
-	HANDLE FileHandle,
-	PIO_STATUS_BLOCK IoStatusBlock,
-	PVOID FileInformation,
-	ULONG Length,
-	FILE_INFORMATION_CLASS FileInformationClass)
+NTSTATUS WINAPI NtQueryInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
+                                       PVOID ptr, LONG len,
+                                       FILE_INFORMATION_CLASS class)
 {
-	FIXME("(%p,%p,%p,0x%08lx,0x%08x),stub!\n",
-	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
-	return 0;
+    NTSTATUS    status;
+    LONG        used = 0;
+    BYTE        answer[256];
+    time_t      ct = 0, wt = 0, at = 0;
+
+    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", hFile, io_status, ptr, len, class);
+
+    switch (class)
+    {
+    case FileBasicInformation:
+        {
+            FILE_BASIC_INFORMATION*  fbi = (FILE_BASIC_INFORMATION*)answer;
+            if (sizeof(answer) < sizeof(*fbi)) goto too_small;
+
+            SERVER_START_REQ( get_file_info )
+            {
+                req->handle = hFile;
+                if (!(status = wine_server_call( req )))
+                {
+                    /* FIXME: which file types are supported ?
+                     * Serial ports (FILE_TYPE_CHAR) are not,
+                     * and MSDN also says that pipes are not supported.
+                     * FILE_TYPE_REMOTE seems to be supported according to
+                     * MSDN q234741.txt */
+                    if ((reply->type == FILE_TYPE_DISK) ||
+                        (reply->type == FILE_TYPE_REMOTE))
+                    {
+                        at = reply->access_time;
+                        wt = reply->write_time;
+                        ct = reply->change_time;
+                        fbi->FileAttributes = reply->attr;
+                        used = sizeof(*fbi);
+                    }
+                    else status = STATUS_INVALID_HANDLE; /* FIXME ??? */
+                }
+            }
+            SERVER_END_REQ;
+            if (used)
+            {
+                RtlSecondsSince1970ToTime(wt, &fbi->CreationTime);
+                RtlSecondsSince1970ToTime(wt, &fbi->LastWriteTime);
+                RtlSecondsSince1970ToTime(ct, &fbi->ChangeTime);
+                RtlSecondsSince1970ToTime(at, &fbi->LastAccessTime);
+            }
+        }
+        break;
+    case FileStandardInformation:
+        {
+            FILE_STANDARD_INFORMATION*  fsi = (FILE_STANDARD_INFORMATION*)answer;
+            if (sizeof(answer) < sizeof(*fsi)) goto too_small;
+
+            SERVER_START_REQ( get_file_info )
+            {
+                req->handle = hFile;
+                if (!(status = wine_server_call( req )))
+                {
+                    /* FIXME: which file types are supported ?
+                     * Serial ports (FILE_TYPE_CHAR) are not,
+                     * and MSDN also says that pipes are not supported.
+                     * FILE_TYPE_REMOTE seems to be supported according to
+                     * MSDN q234741.txt */
+                    if ((reply->type == FILE_TYPE_DISK) ||
+                        (reply->type == FILE_TYPE_REMOTE))
+                    {
+                        fsi->AllocationSize.s.HighPart = reply->alloc_high;
+                        fsi->AllocationSize.s.LowPart  = reply->alloc_low;
+                        fsi->EndOfFile.s.HighPart      = reply->size_high;
+                        fsi->EndOfFile.s.LowPart       = reply->size_low;
+                        fsi->NumberOfLinks             = reply->links;
+                        fsi->DeletePending             = FALSE; /* FIXME */
+                        fsi->Directory                 = (reply->attr & FILE_ATTRIBUTE_DIRECTORY);
+                        used = sizeof(*fsi);
+                    }
+                    else status = STATUS_INVALID_HANDLE; /* FIXME ??? */
+                }
+            }
+            SERVER_END_REQ;
+        }
+        break;
+    case FilePositionInformation:
+        {
+            FILE_POSITION_INFORMATION*  fpi = (FILE_POSITION_INFORMATION*)answer;
+            if (sizeof(answer) < sizeof(*fpi)) goto too_small;
+
+            SERVER_START_REQ( set_file_pointer )
+            {
+                req->handle = hFile;
+                req->low = 0;
+                req->high = 0;
+                req->whence = SEEK_CUR;
+                if (!(status = wine_server_call( req )))
+                {
+                    fpi->CurrentByteOffset.s.HighPart = reply->new_high;
+                    fpi->CurrentByteOffset.s.LowPart  = reply->new_low;
+                    used = sizeof(*fpi);
+                }
+            }
+            SERVER_END_REQ;
+        }
+        break;
+    default:
+        FIXME("Unsupported class (%d)\n", class);
+        return io_status->u.Status = STATUS_NOT_IMPLEMENTED;
+    }
+    if (used) memcpy(ptr, answer, min(used, len));
+    io_status->u.Status = status;
+    io_status->Information = len;
+    return status;
+ too_small:
+    io_status->Information = 0;
+    return io_status->u.Status = STATUS_BUFFER_TOO_SMALL;
 }
 
 /******************************************************************************
  *  NtSetInformationFile		[NTDLL.@]
  *  ZwSetInformationFile		[NTDLL.@]
  */
-NTSTATUS WINAPI NtSetInformationFile(
-	HANDLE FileHandle,
-	PIO_STATUS_BLOCK IoStatusBlock,
-	PVOID FileInformation,
-	ULONG Length,
-	FILE_INFORMATION_CLASS FileInformationClass)
+NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
+                                     PVOID ptr, ULONG len, 
+                                     FILE_INFORMATION_CLASS class)
 {
-	FIXME("(%p,%p,%p,0x%08lx,0x%08x)\n",
-	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
-	return 0;
+    NTSTATUS    status = STATUS_INVALID_PARAMETER_3;
+
+    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", hFile, io_status, ptr, len, class);
+
+    switch (class)
+    {   
+    case FilePositionInformation:
+        if (len >= sizeof(FILE_POSITION_INFORMATION))
+        {
+            FILE_POSITION_INFORMATION*  fpi = (FILE_POSITION_INFORMATION*)ptr;
+
+            SERVER_START_REQ( set_file_pointer )
+            {
+                req->handle = hFile;
+                req->low = fpi->CurrentByteOffset.s.LowPart;
+                req->high = fpi->CurrentByteOffset.s.HighPart;
+                req->whence = SEEK_SET;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+            status = STATUS_SUCCESS;
+        }
+        break;
+    default:
+        FIXME("Unsupported class (%d)\n", class);
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    io_status->u.Status = status;
+    io_status->Information = 0;
+    return status;
 }
 
 /******************************************************************************
@@ -487,7 +616,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	  case FileFsMaximumInformation:
 	    break;
 	}
-	IoStatusBlock->DUMMYUNIONNAME.Status = STATUS_SUCCESS;
+	IoStatusBlock->u.Status = STATUS_SUCCESS;
 	IoStatusBlock->Information = len;
 	return STATUS_SUCCESS;
 }
@@ -513,4 +642,104 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK* IoStatusBlock
         NtClose( hEvent );
     }
     return ret;
+}
+
+/******************************************************************
+ *		NtLockFile       (NTDLL.@)
+ *
+ *
+ */
+NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
+                            PIO_APC_ROUTINE apc, void* apc_user, 
+                            PIO_STATUS_BLOCK io_status, PLARGE_INTEGER offset, 
+                            PLARGE_INTEGER count, ULONG* key, BOOLEAN dont_wait,
+                            BOOLEAN exclusive )
+{
+    NTSTATUS    ret;
+    HANDLE      handle;
+    BOOLEAN     async;
+
+    if (apc || io_status || key)
+    {
+        FIXME("Unimplemented yet parameter\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    for (;;)
+    {
+        SERVER_START_REQ( lock_file )
+        {
+            req->handle      = hFile;
+            req->offset_low  = offset->s.LowPart;
+            req->offset_high = offset->s.HighPart;
+            req->count_low   = count->s.LowPart;
+            req->count_high  = count->s.HighPart;
+            req->shared      = !exclusive;
+            req->wait        = !dont_wait;
+            ret = wine_server_call( req );
+            handle = reply->handle;
+            async  = reply->overlapped;
+        }
+        SERVER_END_REQ;
+        if (ret != STATUS_PENDING)
+        {
+            if (!ret && lock_granted_event) NtSetEvent(lock_granted_event, NULL);
+            return ret;
+        }
+
+        if (async)
+        {
+            FIXME( "Async I/O lock wait not implemented, might deadlock\n" );
+            if (handle) NtClose( handle );
+            return STATUS_PENDING;
+        }
+        if (handle)
+        {
+            NtWaitForSingleObject( handle, FALSE, NULL );
+            NtClose( handle );
+        }
+        else
+        {
+            LARGE_INTEGER time;
+    
+            /* Unix lock conflict, sleep a bit and retry */
+            time.QuadPart = 100 * (ULONGLONG)10000;
+            time.QuadPart = -time.QuadPart;
+            NtWaitForMultipleObjects( 0, NULL, FALSE, FALSE, &time );
+        }
+    }
+}
+
+
+/******************************************************************
+ *		NtUnlockFile    (NTDLL.@)
+ *
+ *
+ */
+NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
+                              PLARGE_INTEGER offset, PLARGE_INTEGER count,
+                              PULONG key )
+{
+    NTSTATUS status;
+
+    TRACE( "%p %lx%08lx %lx%08lx\n",
+           hFile, offset->s.HighPart, offset->s.LowPart, count->s.HighPart, count->s.LowPart );
+
+    if (io_status || key)
+    {
+        FIXME("Unimplemented yet parameter\n");
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    SERVER_START_REQ( unlock_file )
+    {
+        req->handle      = hFile;
+        req->offset_low  = offset->s.LowPart;
+        req->offset_high = offset->s.HighPart;
+        req->count_low   = count->s.LowPart;
+        req->count_high  = count->s.HighPart;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
 }

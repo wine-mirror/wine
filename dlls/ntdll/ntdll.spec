@@ -123,7 +123,7 @@
 @ stdcall NtListenPort(ptr ptr)
 @ stub NtLoadDriver
 @ stdcall NtLoadKey(ptr ptr)
-@ stub NtLockFile
+@ stdcall NtLockFile(long long ptr ptr ptr ptr ptr ptr long long)
 @ stdcall NtLockVirtualMemory(long ptr ptr long)
 @ stub NtMakeTemporaryObject
 @ stdcall NtMapViewOfSection(long long ptr long long ptr ptr long long long)
@@ -245,7 +245,7 @@
 @ stub NtUnloadDriver
 @ stdcall NtUnloadKey(long)
 @ stub NtUnloadKeyEx
-@ stub NtUnlockFile
+@ stdcall NtUnlockFile(long ptr ptr ptr ptr)
 @ stdcall NtUnlockVirtualMemory(long ptr ptr long)
 @ stdcall NtUnmapViewOfSection(long ptr)
 @ stub NtVdmControl
@@ -655,7 +655,7 @@
 @ stdcall ZwListenPort(ptr ptr) NtListenPort
 @ stub ZwLoadDriver
 @ stdcall ZwLoadKey(ptr ptr) NtLoadKey
-@ stub ZwLockFile
+@ stdcall ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
 @ stdcall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
 @ stub ZwMakeTemporaryObject
 @ stdcall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
@@ -774,7 +774,7 @@
 @ stub ZwUnloadDriver
 @ stdcall ZwUnloadKey(long) NtUnloadKey
 @ stub ZwUnloadKeyEx
-@ stub ZwUnlockFile
+@ stdcall ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile
 @ stdcall ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
 @ stdcall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stub ZwVdmControl
