@@ -52,11 +52,11 @@ typedef GUID FMTID,*LPFMTID;
 #define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
-inline BOOL operator==(const GUID& guidOne, const GUID& guidOther)
+inline bool operator==(const GUID& guidOne, const GUID& guidOther)
 {
     return !memcmp(&guidOne,&guidOther,sizeof(GUID));
 }
-inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
+inline bool operator!=(const GUID& guidOne, const GUID& guidOther)
 {
     return !(guidOne == guidOther);
 }
