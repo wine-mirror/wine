@@ -587,9 +587,34 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
          * The driver may support other formats and do the conversions in
          * software which is why we don't use this value
          */
-        int oss_mask;
+        int oss_mask, oss_caps;
         ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &oss_mask);
         TRACE("OSS dsp out mask=%08x\n", oss_mask);
+        if (oss_mask & AFMT_MU_LAW) TRACE("AFMT_MU_LAW ");
+        if (oss_mask & AFMT_A_LAW) TRACE("AFMT_A_LAW ");
+        if (oss_mask & AFMT_IMA_ADPCM) TRACE("AFMT_IMA_ADPCM ");
+        if (oss_mask & AFMT_U8) TRACE("AFMT_U8 ");
+        if (oss_mask & AFMT_S16_LE) TRACE("AFMT_S16_LE ");
+        if (oss_mask & AFMT_S16_BE) TRACE("AFMT_S16_BE ");
+        if (oss_mask & AFMT_S8) TRACE("AFMT_S8 ");
+        if (oss_mask & AFMT_U16_LE) TRACE("AFMT_U16_LE ");
+        if (oss_mask & AFMT_U16_BE) TRACE("AFMT_U16_BE ");
+        if (oss_mask & AFMT_MPEG) TRACE("AFMT_MPEG ");
+        if (oss_mask & AFMT_AC3) TRACE("AFMT_AC3 ");
+        TRACE(")\n");
+        ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &oss_caps);
+        TRACE("Caps=%08x\n",oss_caps);
+        TRACE("\tRevision: %d\n", oss_caps&DSP_CAP_REVISION);
+        TRACE("\tDuplex: %s\n", oss_caps & DSP_CAP_DUPLEX ? "true" : "false");
+        TRACE("\tRealtime: %s\n", oss_caps & DSP_CAP_REALTIME ? "true" : "false");
+        TRACE("\tBatch: %s\n", oss_caps & DSP_CAP_BATCH ? "true" : "false");
+        TRACE("\tCoproc: %s\n", oss_caps & DSP_CAP_COPROC ? "true" : "false");
+        TRACE("\tTrigger: %s\n", oss_caps & DSP_CAP_TRIGGER ? "true" : "false");
+        TRACE("\tMmap: %s\n", oss_caps & DSP_CAP_MMAP ? "true" : "false");
+#ifdef DSP_CAP_MULTI
+        TRACE("\tMulti: %s\n", oss_caps & DSP_CAP_MULTI ? "true" : "false");
+#endif
+        TRACE("\tBind: %s\n", oss_caps & DSP_CAP_BIND ? "true" : "false");
     }
 
     /* We must first set the format and the stereo mode as some sound cards
