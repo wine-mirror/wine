@@ -490,7 +490,7 @@ DWORD WINAPI VerInstallFileA(
 	    xret|=VIF_TEMPFILE;
 	}
     } else {
-    	if (-1!=GetFileAttributesA(destfn))
+    	if (INVALID_FILE_ATTRIBUTES!=GetFileAttributesA(destfn))
 	    if (!DeleteFileA(destfn)) {
 		xret|=_error2vif(GetLastError())|VIF_CANNOTDELETE;
 		DeleteFileA(tmpfn);
