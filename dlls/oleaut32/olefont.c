@@ -951,6 +951,9 @@ static HRESULT WINAPI OLEFontImpl_Clone(
   IFont** ppfont)
 {
   OLEFontImpl* newObject = 0;
+  LOGFONTW logFont;
+  INT      fontHeight;
+  CY       cySize;
   _ICOM_THIS(OLEFontImpl, iface);
   TRACE("(%p)->(%p)\n", this, ppfont);
 
@@ -969,9 +972,38 @@ static HRESULT WINAPI OLEFontImpl_Clone(
 
   *newObject = *this;
 
-  /*
-   * That new object starts with a reference count of 1
+  /* We need to alloc new memory for the string, otherwise
+   * we free memory twice.
    */
+  newObject->description.lpstrName = HeapAlloc(
+	GetProcessHeap(),0,
+	(1+strlenW(this->description.lpstrName))*2
+  );
+  /* We need to clone the HFONT too. This is just cut & paste from above */
+  IFont_get_Size(iface, &cySize);
+
+  fontHeight = MulDiv(cySize.s.Lo, 2540L, 72L);
+  fontHeight = MulDiv(fontHeight, this->cyLogical,this->cyHimetric);
+
+  memset(&logFont, 0, sizeof(LOGFONTW));
+
+  logFont.lfHeight          = ((fontHeight%10000L)>5000L) ? (-fontHeight/10000L)-1 :
+							    (-fontHeight/10000L);
+  logFont.lfItalic          = this->description.fItalic;
+  logFont.lfUnderline       = this->description.fUnderline;
+  logFont.lfStrikeOut       = this->description.fStrikethrough;
+  logFont.lfWeight          = this->description.sWeight;
+  logFont.lfCharSet         = this->description.sCharset;
+  logFont.lfOutPrecision    = OUT_CHARACTER_PRECIS;
+  logFont.lfClipPrecision   = CLIP_DEFAULT_PRECIS;
+  logFont.lfQuality         = DEFAULT_QUALITY;
+  logFont.lfPitchAndFamily  = DEFAULT_PITCH;
+  strcpyW(logFont.lfFaceName,this->description.lpstrName);
+
+  newObject->gdiFont = CreateFontIndirectW(&logFont);
+
+
+  /* The cloned object starts with a reference count of 1 */
   newObject->ref          = 1;
 
   *ppfont = (IFont*)newObject;
