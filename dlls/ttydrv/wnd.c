@@ -377,7 +377,8 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 
     SetDCOrg16( HDC_16(hdc), org.x, org.y );
 
-    if (SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ))  /* DC was dirty */
+    if (SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN ) ||  /* DC was dirty */
+        ( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) ))
     {
         if (flags & DCX_PARENTCLIP)
         {
@@ -410,23 +411,13 @@ BOOL TTYDRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
             OffsetRgn( hrgnVisible, org.x, org.y );
         }
+
+        /* apply additional region operation (if any) */
+        if( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) )
+            CombineRgn( hrgnVisible, hrgnVisible, hrgn,
+                        (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
+
         SelectVisRgn16( HDC_16(hdc), HRGN_16(hrgnVisible) );
-    }
-
-    /* apply additional region operation (if any) */
-
-    if( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) )
-    {
-        if( !hrgnVisible ) hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
-
-        TRACE("\tsaved VisRgn, clipRgn = %p\n", hrgn);
-
-        SaveVisRgn16( HDC_16(hdc) );
-        CombineRgn( hrgnVisible, hrgn, 0, RGN_COPY );
-        OffsetRgn( hrgnVisible, org.x, org.y );
-        CombineRgn( hrgnVisible, HRGN_32(InquireVisRgn16(HDC_16(hdc))), hrgnVisible,
-                      (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-        SelectVisRgn16(HDC_16(hdc), HRGN_16(hrgnVisible));
     }
 
     if (hrgnVisible) DeleteObject( hrgnVisible );
