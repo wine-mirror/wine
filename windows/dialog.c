@@ -1107,7 +1107,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
     if (!wndPtr)
     {
 	ERR("got invalid window handle (%04x); buggy app !?\n", hwnd);
-	return TRUE; /* the sun is shining even for buggy apps */
+	return FALSE;
     }
 
     if ((dlgInfo = (DIALOGINFO *)wndPtr->wExtra))
