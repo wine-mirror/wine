@@ -1396,20 +1396,10 @@ static HLOCAL16 LOCAL_InternalLock( LPSTR heap, HLOCAL16 handle )
 /***********************************************************************
  *           LOCAL_Lock
  */
-LPSTR LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle )
+void *LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     return handle ? ptr + LOCAL_InternalLock( ptr, handle ) : NULL;
-}
-
-
-/***********************************************************************
- *           LOCAL_LockSegptr
- */
-SEGPTR LOCAL_LockSegptr( HANDLE16 ds, HLOCAL16 handle )
-{
-    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-    return PTR_SEG_OFF_TO_SEGPTR( ds, LOCAL_InternalLock( ptr, handle ) );
 }
 
 
@@ -1594,7 +1584,9 @@ HLOCAL16 WINAPI LocalFree16( HLOCAL16 handle )
  */
 SEGPTR WINAPI LocalLock16( HLOCAL16 handle )
 {
-    return LOCAL_LockSegptr( CURRENT_DS, handle );
+    WORD ds = CURRENT_DS;
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    return PTR_SEG_OFF_TO_SEGPTR( ds, LOCAL_InternalLock( ptr, handle ) );
 }
 
 

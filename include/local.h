@@ -23,8 +23,7 @@ extern UINT16 LOCAL_Size( HANDLE16 ds, HLOCAL16 handle );
 extern UINT16 LOCAL_Flags( HANDLE16 ds, HLOCAL16 handle );
 extern UINT16 LOCAL_HeapSize( HANDLE16 ds );
 extern UINT16 LOCAL_CountFree( HANDLE16 ds );
-extern LPSTR LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle );
-extern SEGPTR LOCAL_LockSegptr( HANDLE16 ds, HLOCAL16 handle );
+extern void *LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle );
 extern BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle );
 extern WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags );
 
