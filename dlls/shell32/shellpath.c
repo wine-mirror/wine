@@ -1042,6 +1042,15 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	    *p = '\\';
 	    p = strchr(p+1, '\\');
 	}
+	/* last component must be created too. */
+	if (!PathFileExistsA(szBuildPath))
+	{
+	    if (!CreateDirectoryA(szBuildPath,NULL))
+	    {
+		ERR("Failed to create directory '%s'.\n", szPath);
+		return FALSE;
+	    }
+	}
 
 	MESSAGE("Created not existing system directory '%s'\n", szPath);
 	return TRUE;
