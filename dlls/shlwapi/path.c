@@ -2683,7 +2683,7 @@ BOOL WINAPI PathCompactPathA(HDC hDC, LPSTR lpszPath, UINT dx)
 {
   BOOL bRet = FALSE;
 
-  TRACE("(%08x,%s,%d)\n", hDC, debugstr_a(lpszPath), dx);
+  TRACE("(%p,%s,%d)\n", hDC, debugstr_a(lpszPath), dx);
 
   if (lpszPath)
   {
@@ -2709,7 +2709,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
   SIZE size;
   DWORD dwLen;
 
-  TRACE("(%08x,%s,%d)\n", hDC, debugstr_w(lpszPath), dx);
+  TRACE("(%p,%s,%d)\n", hDC, debugstr_w(lpszPath), dx);
 
   if (!lpszPath)
     return bRet;
@@ -3343,7 +3343,7 @@ VOID WINAPI PathSetDlgItemPathA(HWND hDlg, int id, LPCSTR lpszPath)
 {
   WCHAR szPath[MAX_PATH];
 
-  TRACE("(%8x,%8x,%s)\n",hDlg, id, debugstr_a(lpszPath));
+  TRACE("(%p,%8x,%s)\n",hDlg, id, debugstr_a(lpszPath));
 
   if (lpszPath)
     MultiByteToWideChar(0,0,lpszPath,-1,szPath,MAX_PATH);
@@ -3365,7 +3365,7 @@ VOID WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR lpszPath)
   HDC hdc;
   HGDIOBJ hPrevObj;
 
-  TRACE("(%8x,%8x,%s)\n",hDlg, id, debugstr_w(lpszPath));
+  TRACE("(%p,%8x,%s)\n",hDlg, id, debugstr_w(lpszPath));
 
   if (!(hwItem = GetDlgItem(hDlg, id)))
     return;

@@ -377,7 +377,7 @@ IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
   LPBYTE lpBuff = NULL;
   DWORD dwLength, dwType;
 
-  TRACE("(0x%08x,%s,%s,0x%08lx)\n", hKey, pszSubkey, pszValue, dwMode);
+  TRACE("(%p,%s,%s,0x%08lx)\n", hKey, pszSubkey, pszValue, dwMode);
 
   /* Open the key, read in binary data and create stream */
   if (!RegOpenKeyExA (hKey, pszSubkey, 0, KEY_READ, &hStrKey) &&
@@ -406,7 +406,7 @@ IStream * WINAPI SHOpenRegStream2W(HKEY hKey, LPCWSTR pszSubkey,
   LPBYTE lpBuff = NULL;
   DWORD dwLength, dwType;
 
-  TRACE("(0x%08x,%s,%s,0x%08lx)\n", hKey, debugstr_w(pszSubkey),
+  TRACE("(%p,%s,%s,0x%08lx)\n", hKey, debugstr_w(pszSubkey),
         debugstr_w(pszValue), dwMode);
 
   /* Open the key, read in binary data and create stream */
@@ -445,7 +445,7 @@ IStream * WINAPI SHOpenRegStreamA(HKEY hkey, LPCSTR pszSubkey,
 {
   IStream *iStream;
 
-  TRACE("(0x%08x,%s,%s,0x%08lx)\n", hkey, pszSubkey, pszValue, dwMode);
+  TRACE("(%p,%s,%s,0x%08lx)\n", hkey, pszSubkey, pszValue, dwMode);
 
   iStream = SHOpenRegStream2A(hkey, pszSubkey, pszValue, dwMode);
   return iStream ? iStream : (IStream *)&rsDummyRegStream;
@@ -461,7 +461,7 @@ IStream * WINAPI SHOpenRegStreamW(HKEY hkey, LPCWSTR pszSubkey,
 {
   IStream *iStream;
 
-  TRACE("(0x%08x,%s,%s,0x%08lx)\n", hkey, debugstr_w(pszSubkey),
+  TRACE("(%p,%s,%s,0x%08lx)\n", hkey, debugstr_w(pszSubkey),
         debugstr_w(pszValue), dwMode);
   iStream = SHOpenRegStream2W(hkey, pszSubkey, pszValue, dwMode);
   return iStream ? iStream : (IStream *)&rsDummyRegStream;

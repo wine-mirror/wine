@@ -47,7 +47,7 @@ DWORD SHLWAPI_ThreadRef_index = -1;
  */
 BOOL WINAPI SHLWAPI_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-	TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+	TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 	switch (fdwReason)
 	{
 	  case DLL_PROCESS_ATTACH:

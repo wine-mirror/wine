@@ -353,7 +353,7 @@ DWORD WINAPI SHLWAPI_223(HANDLE hSem)
 {
   DWORD dwOldCount = 0;
 
-  TRACE("(0x%08x)\n", hSem);
+  TRACE("(%p)\n", hSem);
   ReleaseSemaphore(hSem, 1, &dwOldCount); /* +1 */
   WaitForSingleObject(hSem, 0);           /* -1 */
   return dwOldCount;
@@ -374,7 +374,7 @@ DWORD WINAPI SHLWAPI_224(HANDLE hSem)
 {
   DWORD dwOldCount = 0;
 
-  TRACE("(0x%08x)\n", hSem);
+  TRACE("(%p)\n", hSem);
   ReleaseSemaphore(hSem, 1, &dwOldCount);
   return dwOldCount + 1;
 }
@@ -394,7 +394,7 @@ DWORD WINAPI SHLWAPI_424(HANDLE hSem)
 {
   DWORD dwOldCount = 0;
 
-  TRACE("(0x%08x)\n", hSem);
+  TRACE("(%p)\n", hSem);
 
   dwOldCount = SHLWAPI_223(hSem);
   WaitForSingleObject(hSem, 0);

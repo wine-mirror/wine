@@ -1,4 +1,4 @@
-EXTRADEFS = -D_SHLWAPI_ -DWINE_NO_STRICT
+EXTRADEFS = -D_SHLWAPI_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

@@ -700,7 +700,7 @@ BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
  */
 BOOL WINAPI SHLWAPI_36(HMENU hMenu, UINT flags, UINT id, LPCWSTR str)
 {
-    TRACE("(0x%08x,0x%08x,0x%08x,%s)\n",hMenu, flags, id, debugstr_w(str));
+    TRACE("(%p,0x%08x,0x%08x,%s)\n",hMenu, flags, id, debugstr_w(str));
     return InsertMenuW(hMenu, -1, flags | MF_BITMAP, id, str);
 }
 
@@ -992,7 +992,7 @@ LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wMask, UINT wFlags)
  */
 DWORD WINAPI SHLWAPI_167(HWND hWnd, HWND hWndParent)
 {
-	FIXME("0x%08x,0x%08x\n", hWnd, hWndParent);
+	FIXME("%p,%p\n", hWnd, hWndParent);
 	return 0;
 }
 
@@ -1163,7 +1163,7 @@ HRESULT WINAPI SHLWAPI_172(IUnknown *lpUnknown, PHWND lphWnd)
     hRet = IOleWindow_GetWindow((IOleWindow*)lpOle, lphWnd);
     IUnknown_Release(lpOle);
     if (lphWnd)
-      TRACE("Returning HWND=%08x\n", *lphWnd);
+      TRACE("Returning HWND=%p\n", *lphWnd);
   }
 
   return hRet;
@@ -1541,7 +1541,7 @@ VOID WINAPI SHLWAPI_203(LPCSTR lpszStr)
  */
 BOOL WINAPI SHLWAPI_204(HWND hParent, HWND hChild)
 {
-  TRACE("(%08x,%08x)\n", hParent, hChild);
+  TRACE("(%p,%p)\n", hParent, hChild);
 
   if (!hParent || !hChild)
     return TRUE;
@@ -1815,7 +1815,7 @@ DWORD WINAPI SHLWAPI_237 (WNDCLASSW * lpWndClass)
 {
 	WNDCLASSW WndClass;
 
-	TRACE("(0x%08x %s)\n",lpWndClass->hInstance, debugstr_w(lpWndClass->lpszClassName));
+	TRACE("(%p %s)\n",lpWndClass->hInstance, debugstr_w(lpWndClass->lpszClassName));
 
 	if (GetClassInfoW(lpWndClass->hInstance, lpWndClass->lpszClassName, &WndClass))
 		return TRUE;
@@ -1827,7 +1827,7 @@ DWORD WINAPI SHLWAPI_237 (WNDCLASSW * lpWndClass)
  */
 DWORD WINAPI SHLWAPI_239(HINSTANCE hInstance, LPVOID p2, DWORD dw3)
 {
-    FIXME("(0x%08x %p 0x%08lx) stub\n",
+    FIXME("(%p %p 0x%08lx) stub\n",
 	  hInstance, p2, dw3);
     return 0;
 #if 0
@@ -2021,7 +2021,7 @@ HWND WINAPI SHLWAPI_278 (
 	HCURSOR hCursor;
 	char * clsname = "WorkerA";
 
-	FIXME("(0x%08lx 0x%08x 0x%08lx 0x%08lx 0x%08x 0x%08lx) partial stub\n",
+	FIXME("(0x%08lx %p 0x%08lx 0x%08lx %p 0x%08lx) partial stub\n",
 	  wndProc,hWndParent,dwExStyle,dwStyle,hMenu,z);
 
 	hCursor = LoadCursorA(0x00000000,IDC_ARROWA);
@@ -2033,7 +2033,7 @@ HWND WINAPI SHLWAPI_278 (
 	  wndclass.cbWndExtra = 4;
 	  wndclass.hInstance = shlwapi_hInstance;
 	  wndclass.hCursor = hCursor;
-	  wndclass.hbrBackground = COLOR_BTNSHADOW;
+	  wndclass.hbrBackground = (HBRUSH)COLOR_BTNSHADOW;
 	  wndclass.lpszMenuName = NULL;
 	  wndclass.lpszClassName = clsname;
 	  RegisterClassA (&wndclass);

@@ -737,7 +737,7 @@ DWORD WINAPI SHRegGetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
 {
   DWORD dwSize = MAX_PATH;
 
-  TRACE("(hkey=0x%08x,%s,%s,%p,%ld)\n", hKey, debugstr_a(lpszSubKey),
+  TRACE("(hkey=%p,%s,%s,%p,%ld)\n", hKey, debugstr_a(lpszSubKey),
         debugstr_a(lpszValue), lpszPath, dwFlags);
 
   return SHGetValueA(hKey, lpszSubKey, lpszValue, 0, lpszPath, &dwSize);
@@ -753,7 +753,7 @@ DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
 {
   DWORD dwSize = MAX_PATH;
 
-  TRACE("(hkey=0x%08x,%s,%s,%p,%ld)\n", hKey, debugstr_w(lpszSubKey),
+  TRACE("(hkey=%p,%s,%s,%p,%ld)\n", hKey, debugstr_w(lpszSubKey),
         debugstr_w(lpszValue), lpszPath, dwFlags);
 
   return SHGetValueW(hKey, lpszSubKey, lpszValue, 0, lpszPath, &dwSize);
@@ -781,7 +781,7 @@ DWORD WINAPI SHRegSetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
 {
   char szBuff[MAX_PATH];
 
-  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub\n",hKey, debugstr_a(lpszSubKey),
+  FIXME("(hkey=%p,%s,%s,%p,%ld) - semi-stub\n",hKey, debugstr_a(lpszSubKey),
         debugstr_a(lpszValue), lpszPath, dwFlags);
 
   lstrcpyA(szBuff, lpszPath);
@@ -802,7 +802,7 @@ DWORD WINAPI SHRegSetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
 {
   WCHAR szBuff[MAX_PATH];
 
-  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub\n",hKey, debugstr_w(lpszSubKey),
+  FIXME("(hkey=%p,%s,%s,%p,%ld) - semi-stub\n",hKey, debugstr_w(lpszSubKey),
         debugstr_w(lpszValue), lpszPath, dwFlags);
 
   lstrcpyW(szBuff, lpszPath);
@@ -836,7 +836,7 @@ DWORD WINAPI SHGetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
   DWORD dwRet = 0;
   HKEY hSubKey = 0;
 
-  TRACE("(hkey=0x%08x,%s,%s,%p,%p,%p)\n", hKey, debugstr_a(lpszSubKey),
+  TRACE("(hkey=%p,%s,%s,%p,%p,%p)\n", hKey, debugstr_a(lpszSubKey),
         debugstr_a(lpszValue), pwType, pvData, pcbData);
 
   /*   lpszSubKey can be 0. In this case the value is taken from the
@@ -865,7 +865,7 @@ DWORD WINAPI SHGetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
   DWORD dwRet = 0;
   HKEY hSubKey = 0;
 
-  TRACE("(hkey=0x%08x,%s,%s,%p,%p,%p)\n", hKey, debugstr_w(lpszSubKey),
+  TRACE("(hkey=%p,%s,%s,%p,%p,%p)\n", hKey, debugstr_w(lpszSubKey),
         debugstr_w(lpszValue), pwType, pvData, pcbData);
 
   if(lpszSubKey)
@@ -908,7 +908,7 @@ DWORD WINAPI SHSetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
   HKEY  hSubKey;
   LPSTR szEmpty = "";
 
-  TRACE("(hkey=0x%08x,%s,%s,%ld,%p,%ld)\n", hKey, debugstr_a(lpszSubKey),
+  TRACE("(hkey=%p,%s,%s,%ld,%p,%ld)\n", hKey, debugstr_a(lpszSubKey),
           debugstr_a(lpszValue), dwType, pvData, cbData);
 
   if (lpszSubKey && *lpszSubKey)
@@ -937,7 +937,7 @@ DWORD WINAPI SHSetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
   HKEY  hSubKey;
   WCHAR szEmpty[] = { '\0' };
 
-  TRACE("(hkey=0x%08x,%s,%s,%ld,%p,%ld)\n", hKey, debugstr_w(lpszSubKey),
+  TRACE("(hkey=%p,%s,%s,%ld,%p,%ld)\n", hKey, debugstr_w(lpszSubKey),
         debugstr_w(lpszValue), dwType, pvData, cbData);
 
   if (lpszSubKey && *lpszSubKey)
@@ -962,7 +962,7 @@ DWORD WINAPI SHSetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
 LONG WINAPI SHQueryInfoKeyA(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
                             LPDWORD pwValues, LPDWORD pwValueMax)
 {
-  TRACE("(hkey=0x%08x,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
+  TRACE("(hkey=%p,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
         pwValues, pwValueMax);
   return RegQueryInfoKeyA(hKey, NULL, NULL, NULL, pwSubKeys, pwSubKeyMax,
                           NULL, pwValues, pwValueMax, NULL, NULL, NULL);
@@ -976,7 +976,7 @@ LONG WINAPI SHQueryInfoKeyA(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
 LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
                             LPDWORD pwValues, LPDWORD pwValueMax)
 {
-  TRACE("(hkey=0x%08x,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
+  TRACE("(hkey=%p,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
         pwValues, pwValueMax);
   return RegQueryInfoKeyW(hKey, NULL, NULL, NULL, pwSubKeys, pwSubKeyMax,
                           NULL, pwValues, pwValueMax, NULL, NULL, NULL);
@@ -1030,7 +1030,7 @@ DWORD WINAPI SHQueryValueExA( HKEY hKey, LPCSTR lpszValue,
 {
   DWORD dwRet, dwType, dwUnExpDataLen = 0, dwExpDataLen;
 
-  TRACE("(hkey=0x%08x,%s,%p,%p,%p,%p=%ld)\n", hKey, debugstr_a(lpszValue),
+  TRACE("(hkey=%p,%s,%p,%p,%p,%p=%ld)\n", hKey, debugstr_a(lpszValue),
         lpReserved, pwType, pvData, pcbData, pcbData ? *pcbData : 0);
 
   if (pcbData) dwUnExpDataLen = *pcbData;
@@ -1089,7 +1089,7 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
 {
   DWORD dwRet, dwType, dwUnExpDataLen = 0, dwExpDataLen;
 
-  TRACE("(hkey=0x%08x,%s,%p,%p,%p,%p=%ld)\n", hKey, debugstr_w(lpszValue),
+  TRACE("(hkey=%p,%s,%p,%p,%p,%p=%ld)\n", hKey, debugstr_w(lpszValue),
         lpReserved, pwType, pvData, pcbData, pcbData ? *pcbData : 0);
 
   if (pcbData) dwUnExpDataLen = *pcbData;
@@ -1156,7 +1156,7 @@ DWORD WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey)
   CHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
   HKEY hSubKey = 0;
 
-  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_a(lpszSubKey));
+  TRACE("(hkey=%p,%s)\n", hKey, debugstr_a(lpszSubKey));
 
   dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
   if(!dwRet)
@@ -1206,7 +1206,7 @@ DWORD WINAPI SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
   WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
   HKEY hSubKey = 0;
 
-  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_w(lpszSubKey));
+  TRACE("(hkey=%p,%s)\n", hKey, debugstr_w(lpszSubKey));
 
   dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
   if(!dwRet)
@@ -1266,7 +1266,7 @@ DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey)
   DWORD dwRet, dwKeyCount = 0;
   HKEY hSubKey = 0;
 
-  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_a(lpszSubKey));
+  TRACE("(hkey=%p,%s)\n", hKey, debugstr_a(lpszSubKey));
 
   dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
   if(!dwRet)
@@ -1295,7 +1295,7 @@ DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey)
   DWORD dwRet, dwKeyCount = 0;
   HKEY hSubKey = 0;
 
-  TRACE("(hkey=0x%08x, %s)\n", hKey, debugstr_w(lpszSubKey));
+  TRACE("(hkey=%p, %s)\n", hKey, debugstr_w(lpszSubKey));
 
   dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
   if(!dwRet)
@@ -1332,7 +1332,7 @@ DWORD WINAPI SHDeleteOrphanKeyA(HKEY hKey, LPCSTR lpszSubKey)
   HKEY hSubKey;
   DWORD dwKeyCount = 0, dwValueCount = 0, dwRet;
 
-  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_a(lpszSubKey));
+  TRACE("(hkey=%p,%s)\n", hKey, debugstr_a(lpszSubKey));
 
   dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
 
@@ -1361,7 +1361,7 @@ DWORD WINAPI SHDeleteOrphanKeyW(HKEY hKey, LPCWSTR lpszSubKey)
   HKEY hSubKey;
   DWORD dwKeyCount = 0, dwValueCount = 0, dwRet;
 
-  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_w(lpszSubKey));
+  TRACE("(hkey=%p,%s)\n", hKey, debugstr_w(lpszSubKey));
 
   dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
 
@@ -1399,7 +1399,7 @@ DWORD WINAPI SHDeleteValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue)
   DWORD dwRet;
   HKEY hSubKey;
 
-  TRACE("(hkey=0x%08x,%s,%s)\n", hKey, debugstr_a(lpszSubKey), debugstr_a(lpszValue));
+  TRACE("(hkey=%p,%s,%s)\n", hKey, debugstr_a(lpszSubKey), debugstr_a(lpszValue));
 
   dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_SET_VALUE, &hSubKey);
   if (!dwRet)
@@ -1420,7 +1420,7 @@ DWORD WINAPI SHDeleteValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue)
   DWORD dwRet;
   HKEY hSubKey;
 
-  TRACE("(hkey=0x%08x,%s,%s)\n", hKey, debugstr_w(lpszSubKey), debugstr_w(lpszValue));
+  TRACE("(hkey=%p,%s,%s)\n", hKey, debugstr_w(lpszSubKey), debugstr_w(lpszValue));
 
   dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_SET_VALUE, &hSubKey);
   if (!dwRet)
@@ -1449,7 +1449,7 @@ DWORD WINAPI SHDeleteValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 LONG WINAPI SHEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpszSubKey,
                          LPDWORD pwLen)
 {
-  TRACE("(hkey=0x%08x,%ld,%s,%p)\n", hKey, dwIndex, debugstr_a(lpszSubKey), pwLen);
+  TRACE("(hkey=%p,%ld,%s,%p)\n", hKey, dwIndex, debugstr_a(lpszSubKey), pwLen);
 
   return RegEnumKeyExA(hKey, dwIndex, lpszSubKey, pwLen, NULL, NULL, NULL, NULL);
 }
@@ -1462,7 +1462,7 @@ LONG WINAPI SHEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpszSubKey,
 LONG WINAPI SHEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpszSubKey,
                          LPDWORD pwLen)
 {
-  TRACE("(hkey=0x%08x,%ld,%s,%p)\n", hKey, dwIndex, debugstr_w(lpszSubKey), pwLen);
+  TRACE("(hkey=%p,%ld,%s,%p)\n", hKey, dwIndex, debugstr_w(lpszSubKey), pwLen);
 
   return RegEnumKeyExW(hKey, dwIndex, lpszSubKey, pwLen, NULL, NULL, NULL, NULL);
 }
@@ -1489,7 +1489,7 @@ LONG WINAPI SHEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpszValue,
                          LPDWORD pwLen, LPDWORD pwType,
                          LPVOID pvData, LPDWORD pcbData)
 {
-  TRACE("(hkey=0x%08x,%ld,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
+  TRACE("(hkey=%p,%ld,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
         debugstr_a(lpszValue), pwLen, pwType, pvData, pcbData);
 
   return RegEnumValueA(hKey, dwIndex, lpszValue, pwLen, NULL,
@@ -1505,7 +1505,7 @@ LONG WINAPI SHEnumValueW(HKEY hKey, DWORD dwIndex, LPWSTR lpszValue,
                          LPDWORD pwLen, LPDWORD pwType,
                          LPVOID pvData, LPDWORD pcbData)
 {
-  TRACE("(hkey=0x%08x,%ld,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
+  TRACE("(hkey=%p,%ld,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
         debugstr_w(lpszValue), pwLen, pwType, pvData, pcbData);
 
   return RegEnumValueW(hKey, dwIndex, lpszValue, pwLen, NULL,
@@ -1789,7 +1789,7 @@ HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
     HKEY newKey = 0;
 
     RegOpenKeyExA(hKey, 0, 0, MAXIMUM_ALLOWED, &newKey);
-    TRACE("new key is %08x\n", newKey);
+    TRACE("new key is %p\n", newKey);
     return newKey;
 }
 
@@ -1817,7 +1817,7 @@ DWORD WINAPI SHCopyKeyA(HKEY hKeyDst, LPCSTR lpszSubKey, HKEY hKeySrc, DWORD dwR
 {
   WCHAR szSubKeyW[MAX_PATH];
 
-  TRACE("(hkey=0x%08x,%s,%0x08x,%ld)\n", hKeyDst, debugstr_a(lpszSubKey), hKeySrc, dwReserved);
+  TRACE("(hkey=%p,%s,%p08x,%ld)\n", hKeyDst, debugstr_a(lpszSubKey), hKeySrc, dwReserved);
 
   if (lpszSubKey)
     MultiByteToWideChar(0, 0, lpszSubKey, -1, szSubKeyW, MAX_PATH);
@@ -1839,7 +1839,7 @@ DWORD WINAPI SHCopyKeyW(HKEY hKeyDst, LPCWSTR lpszSubKey, HKEY hKeySrc, DWORD dw
   WCHAR szName[MAX_PATH], *lpszName = szName;
   DWORD dwRet = S_OK;
 
-  TRACE("hkey=0x%08x,%s,%0x08x,%ld)\n", hKeyDst, debugstr_w(lpszSubKey), hKeySrc, dwReserved);
+  TRACE("hkey=%p,%s,%p08x,%ld)\n", hKeyDst, debugstr_w(lpszSubKey), hKeySrc, dwReserved);
 
   if(!hKeyDst || !hKeySrc)
     dwRet = ERROR_INVALID_PARAMETER;
