@@ -716,9 +716,7 @@ done:
  */
 static BOOL DIR_TryModulePath( LPCWSTR name, DOS_FULL_NAME *full_name, BOOL win32 )
 {
-    /* FIXME: for now, GetModuleFileNameW can't return more */
-    /* than OFS_MAXPATHNAME. This may change with Win32. */
-    WCHAR bufferW[OFS_MAXPATHNAME];
+    WCHAR bufferW[MAX_PATH];
     LPWSTR p;
 
     if (!win32)
@@ -727,13 +725,13 @@ static BOOL DIR_TryModulePath( LPCWSTR name, DOS_FULL_NAME *full_name, BOOL win3
 	if (!GetCurrentTask()) return FALSE;
 	if (!GetModuleFileName16( GetCurrentTask(), buffer, sizeof(buffer) ))
             return FALSE;
-        MultiByteToWideChar(CP_ACP, 0, buffer, -1, bufferW, OFS_MAXPATHNAME);
+        MultiByteToWideChar(CP_ACP, 0, buffer, -1, bufferW, MAX_PATH);
     } else {
-	if (!GetModuleFileNameW( 0, bufferW, OFS_MAXPATHNAME ) )
+	if (!GetModuleFileNameW( 0, bufferW, MAX_PATH ) )
             return FALSE;
     }
     if (!(p = strrchrW( bufferW, '\\' ))) return FALSE;
-    if (OFS_MAXPATHNAME - (++p - bufferW) <= strlenW(name)) return FALSE;
+    if (MAX_PATH - (++p - bufferW) <= strlenW(name)) return FALSE;
     strcpyW( p, name );
     return DOSFS_GetFullName( bufferW, TRUE, full_name );
 }
