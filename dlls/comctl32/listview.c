@@ -3330,8 +3330,13 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             OffsetRect(&dis.rcItem, ptOrig.x, 0);
 
 	    TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
-            if (SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis))
-		continue;
+            SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+	    /* In theory we should do the default drawing if WM_DRAWITEM 
+	     * returns FALSE but, in the words of Larry McVoy, in practice
+	     * theory is different than practice, and hence there are 
+	     * important apps out there that depend on no default drawing
+	     * in LVS_OWNERDRAWFIXED. So we always skip to the next item. */
+	    continue;
         }
 	
 	/* compute the full select rectangle, if needed */
