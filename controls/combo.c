@@ -1887,7 +1887,7 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		    lphc->wState &= ~CBF_NOEDITNOTIFY;
 		    return ret;
 		}
-		else return  CB_ERR;
+		else return CB_ERR;
 	case WM_CUT:
         case WM_PASTE:
 	case WM_COPY:

@@ -611,6 +611,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 	DEFWND_SetTextA( wndPtr, (LPCSTR)PTR_SEG_TO_LIN(lParam) );
 	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
 	    NC_HandleNCPaint( hwnd , (HRGN)1 );
+	result = 1; /* success. FIXME: check text length */
         break;
 
     default:
@@ -677,6 +678,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 	DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
 	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
 	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+	result = 1; /* success. FIXME: check text length */
         break;
 
     default:
@@ -733,6 +735,7 @@ LRESULT WINAPI DefWindowProcW(
 	DEFWND_SetTextW( wndPtr, (LPCWSTR)lParam );
 	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
 	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+	result = 1; /* success. FIXME: check text length */
         break;
 
     default:

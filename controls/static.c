@@ -242,6 +242,7 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
 	else
             DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
         InvalidateRect( hWnd, NULL, FALSE );
+	lResult = 1; /* success. FIXME: check text length */
         break;
 
     case WM_SETFONT:

@@ -1505,7 +1505,7 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
                 WIN_ReleaseWndPtr(wndPtr);
                 HeapFree( GetProcessHeap(), 0, text );
             }
-	    return 0;
+	    return 1; /* success. FIXME: check text length */
 	
 	  case WM_SETFOCUS:
 	    SetFocus(hwndMDIClient);
@@ -1662,7 +1662,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 	if( ci->hwndChildMaximized == hwnd )
 	    MDI_UpdateFrameText( clientWnd->parent, ci->self,
 				 MDI_REPAINTFRAME, NULL );
-        retvalue = 0;
+        retvalue = 1; /* success. FIXME: check text length */
         goto END;
 
       case WM_CLOSE:
@@ -1862,7 +1862,7 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
 	if( ci->hwndChildMaximized == hwnd )
 	    MDI_UpdateFrameText( clientWnd->parent, ci->self,
 				 MDI_REPAINTFRAME, NULL );
-        retvalue = 0;
+        retvalue = 1; /* success. FIXME: check text length */
         goto END;
 
       case WM_GETMINMAXINFO:
@@ -1940,7 +1940,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
 	if( ci->hwndChildMaximized == hwnd )
 	    MDI_UpdateFrameText( clientWnd->parent, ci->self,
 				 MDI_REPAINTFRAME, NULL );
-        retvalue = 0;
+        retvalue = 1; /* success. FIXME: check text length */
         goto END;
 
       case WM_GETMINMAXINFO:
