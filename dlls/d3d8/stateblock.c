@@ -165,7 +165,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
         This->StateBlock->texture_state[i][D3DTSS_BUMPENVMAT01          ] = (DWORD) 0.0;
         This->StateBlock->texture_state[i][D3DTSS_BUMPENVMAT10          ] = (DWORD) 0.0;
         This->StateBlock->texture_state[i][D3DTSS_BUMPENVMAT11          ] = (DWORD) 0.0;
-        /* FIXME: This->StateBlock->texture_state[i][D3DTSS_TEXCOORDINDEX         ] = ?; */
+        This->StateBlock->texture_state[i][D3DTSS_TEXCOORDINDEX         ] = i;
         This->StateBlock->texture_state[i][D3DTSS_ADDRESSU              ] = D3DTADDRESS_WRAP;
         This->StateBlock->texture_state[i][D3DTSS_ADDRESSV              ] = D3DTADDRESS_WRAP;
         This->StateBlock->texture_state[i][D3DTSS_BORDERCOLOR           ] = 0x00;
