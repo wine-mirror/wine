@@ -462,7 +462,9 @@ void file_set_error(void)
     case ESPIPE:    set_win32_error( ERROR_SEEK ); break;
     case ENOTEMPTY: set_error( STATUS_DIRECTORY_NOT_EMPTY ); break;
     case EIO:       set_error( STATUS_ACCESS_VIOLATION ); break;
+#ifdef EOVERFLOW
     case EOVERFLOW: set_error( STATUS_INVALID_PARAMETER ); break;
+#endif
     default:        perror("file_set_error"); set_win32_error( ERROR_UNKNOWN ); break;
     }
 }

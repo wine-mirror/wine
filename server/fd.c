@@ -501,7 +501,9 @@ static int set_unix_lock( struct fd *fd, file_pos_t start, file_pos_t end, int t
             if (fl.l_type == F_WRLCK) return 1;
             set_error( STATUS_ACCESS_DENIED );
             return 0;
+#ifdef EOVERFLOW
         case EOVERFLOW:
+#endif
         case EINVAL:
             /* this can happen if off_t is 64-bit but the kernel only supports 32-bit */
             /* in that case we shrink the limit and retry */
