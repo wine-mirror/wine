@@ -159,32 +159,29 @@ static void queue_kbd_event( const KEYBDINPUT *ki )
  */
 static void queue_mouse_event( const MOUSEINPUT *mi, WORD keystate )
 {
-    if (mi->dwFlags & MOUSEEVENTF_MOVE)
+    if (mi->dwFlags & MOUSEEVENTF_ABSOLUTE)
     {
-        if (mi->dwFlags & MOUSEEVENTF_ABSOLUTE)
-        {
-            PosX = (mi->dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
-            PosY = (mi->dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
-        }
-        else
-        {
-            int width  = GetSystemMetrics(SM_CXSCREEN);
-            int height = GetSystemMetrics(SM_CYSCREEN);
-            long posX = (long) PosX, posY = (long) PosY;
+        PosX = (mi->dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+        PosY = (mi->dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+    }
+    else if (mi->dwFlags & MOUSEEVENTF_MOVE)
+    {
+        int width  = GetSystemMetrics(SM_CXSCREEN);
+        int height = GetSystemMetrics(SM_CYSCREEN);
+        long posX = (long) PosX, posY = (long) PosY;
 
-            /* dx and dy can be negative numbers for relative movements */
-            posX += (long)mi->dx;
-            posY += (long)mi->dy;
+        /* dx and dy can be negative numbers for relative movements */
+        posX += (long)mi->dx;
+        posY += (long)mi->dy;
 
-            /* Clip to the current screen size */
-            if (posX < 0) PosX = 0;
-            else if (posX >= width) PosX = width - 1;
-            else PosX = posX;
+        /* Clip to the current screen size */
+        if (posX < 0) PosX = 0;
+        else if (posX >= width) PosX = width - 1;
+        else PosX = posX;
 
-            if (posY < 0) PosY = 0;
-            else if (posY >= height) PosY = height - 1;
-            else PosY = posY;
-        }
+        if (posY < 0) PosY = 0;
+        else if (posY >= height) PosY = height - 1;
+        else PosY = posY;
     }
 
     if (mi->dwFlags & MOUSEEVENTF_MOVE)

@@ -477,7 +477,7 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
         break;
     }
 
-    X11DRV_SendEvent( statusCodes[buttonNum], pt.x, pt.y,
+    X11DRV_SendEvent( statusCodes[buttonNum] | MOUSEEVENTF_ABSOLUTE, pt.x, pt.y,
                       keystate, wData, event->time - X11DRV_server_startticks, hWnd);
 }
 
@@ -518,7 +518,7 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
     default:
         return;
     }
-    X11DRV_SendEvent( statusCodes[buttonNum], pt.x, pt.y,
+    X11DRV_SendEvent( statusCodes[buttonNum] | MOUSEEVENTF_ABSOLUTE, pt.x, pt.y,
                       keystate, 0, event->time - X11DRV_server_startticks, hWnd);
 }
 

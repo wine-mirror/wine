@@ -292,8 +292,6 @@ void X11DRV_InitMouse( LPMOUSE_EVENT_PROC proc )
 void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
                        WORD keyState, DWORD data, DWORD time, HWND hWnd )
 {
-    int width  = GetSystemMetrics( SM_CXSCREEN );
-    int height = GetSystemMetrics( SM_CYSCREEN );
     int iWndsLocks;
     WINE_MOUSEEVENT wme;
 
@@ -301,19 +299,20 @@ void X11DRV_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
 
     TRACE("(%04lX,%ld,%ld)\n", mouseStatus, posX, posY );
 
-    if (mouseStatus & MOUSEEVENTF_MOVE) {
-      if (mouseStatus & MOUSEEVENTF_ABSOLUTE) {
+    if (mouseStatus & MOUSEEVENTF_ABSOLUTE)
+    {
+        int width  = GetSystemMetrics( SM_CXSCREEN );
+        int height = GetSystemMetrics( SM_CYSCREEN );
 	/* Relative mouse movements seems not to be scaled as absolute ones */
 	posX = (((long)posX << 16) + width-1)  / width;
 	posY = (((long)posY << 16) + height-1) / height;
-      }
     }
 
     wme.magic    = WINE_MOUSEEVENT_MAGIC;
     wme.time     = time;
     wme.hWnd     = hWnd;
     wme.keyState = keyState;
-    
+
     InterlockedDecrement( &X11DRV_MOUSE_WarpPointer );
     /* To avoid deadlocks, we have to suspend all locks on windows structures
        before the program control is passed to the mouse driver */
