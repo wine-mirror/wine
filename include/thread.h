@@ -130,6 +130,8 @@ typedef struct _TEB
     PVOID        ReservedForNtRpc;           /* -2- f1c used by rpcrt4 */
     DWORD        pad9[24];                   /* --n f20 */
     PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
+    PVOID        pad10[4];                   /* --n f84 */
+    PVOID        TlsExpansionSlots;          /* -2- f94 */
 } TEB;
 #endif /* WINE_TEB_DEFINED */
 
