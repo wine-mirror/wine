@@ -67,22 +67,10 @@ typedef struct
     LPWSTR    dos_cwd;   /* cwd in DOS format without leading or trailing \ */
     char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
     char     *device;    /* raw device path */
-    UINT      type;      /* drive type */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
 } DOSDRIVE;
 
-
-static const WCHAR DRIVE_Types[][8] =
-{
-    { 0 }, /* DRIVE_UNKNOWN */
-    { 0 }, /* DRIVE_NO_ROOT_DIR */
-    {'f','l','o','p','p','y',0}, /* DRIVE_REMOVABLE */
-    {'h','d',0}, /* DRIVE_FIXED */
-    {'n','e','t','w','o','r','k',0}, /* DRIVE_REMOTE */
-    {'c','d','r','o','m',0}, /* DRIVE_CDROM */
-    {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
-};
 
 #define MAX_DOS_DRIVES  26
 
@@ -99,23 +87,6 @@ inline static char *heap_strdup( const char *str )
     if (p) memcpy( p, str, len );
     return p;
 }
-
-/***********************************************************************
- *           DRIVE_GetDriveType
- */
-static inline UINT DRIVE_GetDriveType( INT drive, LPCWSTR value )
-{
-    int i;
-
-    for (i = 0; i < sizeof(DRIVE_Types)/sizeof(DRIVE_Types[0]); i++)
-    {
-        if (!strcmpiW( value, DRIVE_Types[i] )) return i;
-    }
-    MESSAGE("Drive %c: unknown drive type %s, defaulting to 'hd'.\n",
-            'A' + drive, debugstr_w(value) );
-    return DRIVE_FIXED;
-}
-
 
 /***********************************************************************
  *           DRIVE_Init
@@ -140,7 +111,6 @@ int DRIVE_Init(void)
     const char *config_dir = wine_get_config_dir();
 
     static const WCHAR PathW[] = {'P','a','t','h',0};
-    static const WCHAR TypeW[] = {'T','y','p','e',0};
     static const WCHAR DeviceW[] = {'D','e','v','i','c','e',0};
 
     attr.Length = sizeof(attr);
@@ -180,7 +150,6 @@ int DRIVE_Init(void)
         drive->device   = NULL;
         drive->dev      = drive_stat_buffer.st_dev;
         drive->ino      = drive_stat_buffer.st_ino;
-        drive->type     = DRIVE_FIXED;
         root = NULL;
         symlink_count++;
     }
@@ -246,20 +215,11 @@ int DRIVE_Init(void)
                 drive->device   = NULL;
                 drive->dev      = drive_stat_buffer.st_dev;
                 drive->ino      = drive_stat_buffer.st_ino;
-                drive->type     = DRIVE_FIXED;
             }
         }
 
         if (drive->root)
         {
-            /* Get the drive type */
-            RtlInitUnicodeString( &nameW, TypeW );
-            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-            {
-                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-                drive->type = DRIVE_GetDriveType( i, data );
-            }
-
             /* Get the device */
             RtlInitUnicodeString( &nameW, DeviceW );
             if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
@@ -270,14 +230,9 @@ int DRIVE_Init(void)
                 WideCharToMultiByte(CP_UNIXCP, 0, data, -1, drive->device, len, NULL, NULL);
             }
 
-            /* Make the first hard disk the current drive */
-            if ((DRIVE_CurDrive == -1) && (drive->type == DRIVE_FIXED))
-                DRIVE_CurDrive = i;
-
             count++;
-            TRACE("Drive %c: path=%s type=%s dev=%x ino=%x\n",
-                  'A' + i, drive->root, debugstr_w(DRIVE_Types[drive->type]),
-                  (int)drive->dev, (int)drive->ino );
+            TRACE("Drive %c: path=%s dev=%x ino=%x\n",
+                  'A' + i, drive->root, (int)drive->dev, (int)drive->ino );
         }
 
     next:
@@ -291,7 +246,6 @@ int DRIVE_Init(void)
         DOSDrives[2].root     = heap_strdup( "/" );
         DOSDrives[2].dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSDrives[2].dos_cwd[0]));
         DOSDrives[2].unix_cwd = heap_strdup( "" );
-        DOSDrives[2].type     = DRIVE_FIXED;
         DOSDrives[2].device   = NULL;
         DRIVE_CurDrive = 2;
     }
@@ -299,7 +253,7 @@ int DRIVE_Init(void)
     /* Make sure the current drive is valid */
     if (DRIVE_CurDrive == -1)
     {
-        for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
+        for (i = 2, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
         {
             if (drive->root)
             {
@@ -563,16 +517,6 @@ const char * DRIVE_GetDevice( int drive )
 }
 
 /***********************************************************************
- *           DRIVE_GetType
- */
-static UINT DRIVE_GetType( int drive )
-{
-    if (!DRIVE_IsValid( drive )) return DRIVE_NO_ROOT_DIR;
-    return DOSDrives[drive].type;
-}
-
-
-/***********************************************************************
  *           DRIVE_Chdir
  */
 int DRIVE_Chdir( int drive, LPCWSTR path )
@@ -681,70 +625,6 @@ WCHAR *DRIVE_BuildEnv(void)
     }
     *p = 0;
     return env;
-}
-
-
-/***********************************************************************
- *           GetDriveTypeW   (KERNEL32.@)
- *
- * Returns the type of the disk drive specified. If root is NULL the
- * root of the current directory is used.
- *
- * RETURNS
- *
- *  Type of drive (from Win32 SDK):
- *
- *   DRIVE_UNKNOWN     unable to find out anything about the drive
- *   DRIVE_NO_ROOT_DIR nonexistent root dir
- *   DRIVE_REMOVABLE   the disk can be removed from the machine
- *   DRIVE_FIXED       the disk can not be removed from the machine
- *   DRIVE_REMOTE      network disk
- *   DRIVE_CDROM       CDROM drive
- *   DRIVE_RAMDISK     virtual disk in RAM
- */
-UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
-{
-    int drive;
-    TRACE("(%s)\n", debugstr_w(root));
-
-    if (NULL == root) drive = DRIVE_GetCurrentDrive();
-    else
-    {
-        if ((root[1]) && (root[1] != ':'))
-	{
-	    WARN("invalid root %s\n", debugstr_w(root));
-	    return DRIVE_NO_ROOT_DIR;
-	}
-	drive = toupperW(root[0]) - 'A';
-    }
-    return DRIVE_GetType(drive);
-}
-
-
-/***********************************************************************
- *           GetDriveTypeA   (KERNEL32.@)
- */
-UINT WINAPI GetDriveTypeA( LPCSTR root )
-{
-    UNICODE_STRING rootW;
-    UINT ret = 0;
-
-    if (root)
-    {
-        if( !RtlCreateUnicodeStringFromAsciiz(&rootW, root))
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return 0;
-        }
-    }
-    else
-        rootW.Buffer = NULL;
-
-    ret = GetDriveTypeW(rootW.Buffer);
-
-    RtlFreeUnicodeString(&rootW);
-    return ret;
-
 }
 
 
@@ -866,78 +746,5 @@ BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
     }
     else
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetLogicalDriveStringsA   (KERNEL32.@)
- */
-UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
-{
-    int drive, count;
-
-    for (drive = count = 0; drive < MAX_DOS_DRIVES; drive++)
-        if (DRIVE_IsValid(drive)) count++;
-    if ((count * 4) + 1 <= len)
-    {
-        LPSTR p = buffer;
-        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
-            if (DRIVE_IsValid(drive))
-            {
-                *p++ = 'a' + drive;
-                *p++ = ':';
-                *p++ = '\\';
-                *p++ = '\0';
-            }
-        *p = '\0';
-        return count * 4;
-    }
-    else
-        return (count * 4) + 1; /* account for terminating null */
-    /* The API tells about these different return values */
-}
-
-
-/***********************************************************************
- *           GetLogicalDriveStringsW   (KERNEL32.@)
- */
-UINT WINAPI GetLogicalDriveStringsW( UINT len, LPWSTR buffer )
-{
-    int drive, count;
-
-    for (drive = count = 0; drive < MAX_DOS_DRIVES; drive++)
-        if (DRIVE_IsValid(drive)) count++;
-    if (count * 4 * sizeof(WCHAR) <= len)
-    {
-        LPWSTR p = buffer;
-        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
-            if (DRIVE_IsValid(drive))
-            {
-                *p++ = (WCHAR)('a' + drive);
-                *p++ = (WCHAR)':';
-                *p++ = (WCHAR)'\\';
-                *p++ = (WCHAR)'\0';
-            }
-        *p = (WCHAR)'\0';
-    }
-    return count * 4 * sizeof(WCHAR);
-}
-
-
-/***********************************************************************
- *           GetLogicalDrives   (KERNEL32.@)
- */
-DWORD WINAPI GetLogicalDrives(void)
-{
-    DWORD ret = 0;
-    int drive;
-
-    for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
-    {
-        if ( (DRIVE_IsValid(drive)) ||
-            (DOSDrives[drive].type == DRIVE_CDROM)) /* audio CD is also valid */
-            ret |= (1 << drive);
-    }
     return ret;
 }

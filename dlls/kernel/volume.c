@@ -65,6 +65,16 @@ enum fs_type
     FS_ISO9660
 };
 
+static const WCHAR drive_types[][8] =
+{
+    { 0 }, /* DRIVE_UNKNOWN */
+    { 0 }, /* DRIVE_NO_ROOT_DIR */
+    {'f','l','o','p','p','y',0}, /* DRIVE_REMOVABLE */
+    {'h','d',0}, /* DRIVE_FIXED */
+    {'n','e','t','w','o','r','k',0}, /* DRIVE_REMOTE */
+    {'c','d','r','o','m',0}, /* DRIVE_CDROM */
+    {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
+};
 
 /* read a Unix symlink; returned buffer must be freed by caller */
 static char *read_symlink( const char *path )
@@ -151,6 +161,50 @@ static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
         return FALSE;
     }
     return TRUE;
+}
+
+
+/* fetch the type of a drive from the registry */
+static UINT get_registry_drive_type( int drive )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HKEY hkey;
+    DWORD dummy;
+    UINT ret = DRIVE_UNKNOWN;
+    char tmp[32 + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+    WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+                      'W','i','n','e','\\','W','i','n','e','\\',
+                      'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
+    static const WCHAR TypeW[] = {'T','y','p','e',0};
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, driveW );
+    nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + drive;
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return DRIVE_UNKNOWN;
+
+    RtlInitUnicodeString( &nameW, TypeW );
+    if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+    {
+        int i;
+        WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+
+        for (i = 0; i < sizeof(drive_types)/sizeof(drive_types[0]); i++)
+        {
+            if (!strcmpiW( data, drive_types[i] ))
+            {
+                ret = i;
+                break;
+            }
+        }
+    }
+    NtClose( hkey );
+    return ret;
 }
 
 
@@ -1162,6 +1216,170 @@ DWORD WINAPI QueryDosDeviceA( LPCSTR devname, LPSTR target, DWORD bufsize )
 
     RtlFreeUnicodeString(&devnameW);
     HeapFree(GetProcessHeap(), 0, targetW);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetLogicalDrives   (KERNEL32.@)
+ */
+DWORD WINAPI GetLogicalDrives(void)
+{
+    const char *config_dir = wine_get_config_dir();
+    struct stat st;
+    char *buffer, *dev;
+    DWORD ret = 0;
+    int i;
+
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, strlen(config_dir) + sizeof("/dosdevices/a:") )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
+    strcpy( buffer, config_dir );
+    strcat( buffer, "/dosdevices/a:" );
+    dev = buffer + strlen(buffer) - 2;
+
+    for (i = 0; i < 26; i++)
+    {
+        *dev = 'a' + i;
+        if (!stat( buffer, &st )) ret |= (1 << i);
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetLogicalDriveStringsA   (KERNEL32.@)
+ */
+UINT WINAPI GetLogicalDriveStringsA( UINT len, LPSTR buffer )
+{
+    DWORD drives = GetLogicalDrives();
+    UINT drive, count;
+
+    for (drive = count = 0; drive < 26; drive++) if (drives & (1 << drive)) count++;
+    if ((count * 4) + 1 > len) return count * 4 + 1;
+
+    for (drive = 0; drive < 26; drive++)
+    {
+        if (drives & (1 << drive))
+        {
+            *buffer++ = 'a' + drive;
+            *buffer++ = ':';
+            *buffer++ = '\\';
+            *buffer++ = 0;
+        }
+    }
+    *buffer = 0;
+    return count * 4;
+}
+
+
+/***********************************************************************
+ *           GetLogicalDriveStringsW   (KERNEL32.@)
+ */
+UINT WINAPI GetLogicalDriveStringsW( UINT len, LPWSTR buffer )
+{
+    DWORD drives = GetLogicalDrives();
+    UINT drive, count;
+
+    for (drive = count = 0; drive < 26; drive++) if (drives & (1 << drive)) count++;
+    if ((count * 4) + 1 > len) return count * 4 + 1;
+
+    for (drive = 0; drive < 26; drive++)
+    {
+        if (drives & (1 << drive))
+        {
+            *buffer++ = 'a' + drive;
+            *buffer++ = ':';
+            *buffer++ = '\\';
+            *buffer++ = 0;
+        }
+    }
+    *buffer = 0;
+    return count * 4;
+}
+
+
+/***********************************************************************
+ *           GetDriveTypeW   (KERNEL32.@)
+ *
+ * Returns the type of the disk drive specified. If root is NULL the
+ * root of the current directory is used.
+ *
+ * RETURNS
+ *
+ *  Type of drive (from Win32 SDK):
+ *
+ *   DRIVE_UNKNOWN     unable to find out anything about the drive
+ *   DRIVE_NO_ROOT_DIR nonexistent root dir
+ *   DRIVE_REMOVABLE   the disk can be removed from the machine
+ *   DRIVE_FIXED       the disk can not be removed from the machine
+ *   DRIVE_REMOTE      network disk
+ *   DRIVE_CDROM       CDROM drive
+ *   DRIVE_RAMDISK     virtual disk in RAM
+ */
+UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
+{
+    FILE_FS_DEVICE_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+    UINT ret;
+
+    if (!open_device_root( root, &handle )) return DRIVE_NO_ROOT_DIR;
+
+    status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsDeviceInformation );
+    NtClose( handle );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        ret = DRIVE_UNKNOWN;
+    }
+    else if ((ret = get_registry_drive_type( toupperW(root[0]) - 'A' )) == DRIVE_UNKNOWN)
+    {
+        switch (info.DeviceType)
+        {
+        case FILE_DEVICE_CD_ROM_FILE_SYSTEM:  ret = DRIVE_CDROM; break;
+        case FILE_DEVICE_VIRTUAL_DISK:        ret = DRIVE_RAMDISK; break;
+        case FILE_DEVICE_NETWORK_FILE_SYSTEM: ret = DRIVE_REMOTE; break;
+        case FILE_DEVICE_DISK_FILE_SYSTEM:
+            if (info.Characteristics & FILE_REMOTE_DEVICE) ret = DRIVE_REMOTE;
+            else if (info.Characteristics & FILE_REMOVABLE_MEDIA) ret = DRIVE_REMOVABLE;
+            else ret = DRIVE_FIXED;
+            break;
+        default:
+            ret = DRIVE_UNKNOWN;
+            break;
+        }
+    }
+    TRACE( "%s -> %d\n", debugstr_w(root), ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetDriveTypeA   (KERNEL32.@)
+ */
+UINT WINAPI GetDriveTypeA( LPCSTR root )
+{
+    UNICODE_STRING rootW;
+    UINT ret;
+
+    if (root)
+    {
+        if( !RtlCreateUnicodeStringFromAsciiz(&rootW, root))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return DRIVE_NO_ROOT_DIR;
+        }
+    }
+    else rootW.Buffer = NULL;
+
+    ret = GetDriveTypeW(rootW.Buffer);
+
+    RtlFreeUnicodeString(&rootW);
     return ret;
 }
 
