@@ -70,7 +70,7 @@ sub read_spec_file($) {
     close(IN);
 
     # FIXME: Kludge
-    if($module =~ /^(?:comm|imm|ole2conv|ole2prox|ole2thk|rasapi16|windebug)\.dll$/) {
+    if($module =~ /^(?:(?:imm|ole2conv|ole2prox|ole2thk|rasapi16|windebug)\.dll|comm\.drv)$/) {
 	$type = "win16";
     }
 
