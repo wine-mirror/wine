@@ -869,12 +869,14 @@ dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/dciman32/Makefile
+dlls/display/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/lzexpand/Makefile
+dlls/mouse/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
 dlls/msacm32/Makefile

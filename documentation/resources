@@ -2,14 +2,14 @@ This document desribes tools for handling resources within wine
 
 ### bin2res ###
 
- This tool allows the editing of embeded binary resources within 
+ This tool allows the editing of embedded binary resources within 
  *.rc files. These resources are stored as hex dump so they can be
- stored within the cvs. This makes the editing of the embeded
+ stored within the cvs. This makes the editing of the embedded
  bitmaps and icons harder.
  
  ### Create binary files from.rc ###
 
-  the resources in the.rc file has to be marked by a header:
+  the resources in the .rc file have to be marked by a header:
 
 	/* BINRES idb_std_small.bmp */
  	IDB_STD_SMALL BITMAP LOADONCALL DISCARDABLE

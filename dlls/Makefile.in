@@ -5,12 +5,14 @@ SUBDIRS = \
 	commdlg \
 	crtdll \
 	dciman32 \
+	display \
 	dplayx \
 	dsound \
 	icmp \
 	imagehlp \
 	imm32 \
 	lzexpand \
+	mouse \
 	mpr \
 	msacm \
 	msacm32 \

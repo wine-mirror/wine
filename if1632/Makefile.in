@@ -9,11 +9,9 @@ SPEC_SRCS = \
 	comm.spec \
 	ddeml.spec \
 	dispdib.spec \
-	display.spec \
 	gdi.spec \
 	kernel.spec \
 	keyboard.spec \
-	mouse.spec \
 	ole2conv.spec \
 	ole2nls.spec \
 	ole2prox.spec \

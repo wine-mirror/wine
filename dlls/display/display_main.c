@@ -53,17 +53,14 @@ VOID WINAPI DISPLAY_CheckCursor( void )
  *           DISPLAY_GetDriverResourceID                  (DISPLAY.450)
  *
  * Used by USER to check if driver contains better version of a builtin
- * resource than USER.
+ * resource than USER (yes, our DISPLAY does !).
  * wQueriedResID is the ID USER asks about.
- * lpsResName might often contain "OEMBIN".
- * For now we just let USER use its own resource.
+ * lpsResName does often contain "OEMBIN".
  */
 DWORD WINAPI DISPLAY_GetDriverResourceID( WORD wQueriedResID, LPSTR lpsResName )
 {
-    FIXME("Return the display resource ID\n" );
-
 	if (wQueriedResID == 3)
-		return (DWORD)wQueriedResID/*FIXME resourceID*/;
+		return (DWORD)1;
 
 	return (DWORD)wQueriedResID;
 }

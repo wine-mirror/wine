@@ -1,0 +1,20 @@
+/*
+ * Top level resource file for MOUSE driver dll
+ *
+ */
+
+/* this ought to be VERSION_INFO */
+DUMMY1 1
+{ 
+	0x1,
+	0x2,
+	0x3,
+	0x4,
+	0x5
+}
+
+/* what's that ? */
+DUMMY2 3
+{
+	0x0
+}

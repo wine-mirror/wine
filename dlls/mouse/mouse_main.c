@@ -10,10 +10,12 @@
 #include "debugtools.h"
 #include "callback.h"
 #include "builtin16.h"
+#include "module.h"
 #include "mouse.h"
 #include "monitor.h"
 #include "winuser.h"
 #include "win.h"
+#include "wine/winbase16.h"
 
 DEFAULT_DEBUG_CHANNEL(event)
 
@@ -52,8 +54,11 @@ VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc)
     DefMouseEventProc = lpMouseEventProc;
 
     /* Now initialize the mouse driver */
-    if (initDone == FALSE) MOUSE_Driver->pInit();
-    initDone = TRUE;
+    if (initDone == FALSE)
+	{
+		MOUSE_Driver->pInit();
+    	initDone = TRUE;
+	}
 }
 
 static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,

@@ -189,6 +189,25 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 {
     HANDLE fd;
     NE_MODULE* pModule = NE_GetPtr( hModule );
+    if (pModule && (pModule->flags & NE_FFLAGS_BUILTIN))
+    {
+	HGLOBAL16 handle;
+	WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+	NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+    
+        if ( hMemObj )
+            handle = GlobalReAlloc16( hMemObj, pNameInfo->length << sizeShift, 0 );
+        else
+            handle = AllocResource16( hModule, hRsrc, 0 );
+
+	if ( handle )
+        {
+            /* NOTE: hRsrcMap points to start of built-in resource data */
+            memcpy( GlobalLock16( handle ), 
+                    pModule->hRsrcMap + (pNameInfo->offset << sizeShift),
+                    pNameInfo->length << sizeShift );
+        }
+    }
     if (pModule && (fd = NE_OpenFile( pModule )) >= 0)
     {
 	HGLOBAL16 handle;

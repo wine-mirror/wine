@@ -36,12 +36,14 @@ LIBSUBDIRS = \
 	dlls/commdlg \
 	dlls/crtdll \
 	dlls/dciman32 \
+	dlls/display \
 	dlls/dplayx \
 	dlls/dsound \
 	dlls/icmp \
 	dlls/imagehlp \
 	dlls/imm32 \
 	dlls/lzexpand \
+	dlls/mouse \
 	dlls/mpr \
 	dlls/msacm \
 	dlls/msacm32 \
@@ -147,12 +149,14 @@ LIBOBJS = \
 	dlls/commdlg/commdlg.o \
 	dlls/crtdll/crtdll.o \
 	dlls/dciman32/dciman32.o \
-	dlls/icmp/icmp.o \
+	dlls/display/display.o \
 	dlls/dplayx/dplayx.o \
 	dlls/dsound/dsound.o \
+	dlls/icmp/icmp.o \
 	dlls/imagehlp/imagehlp.o \
 	dlls/imm32/imm32.o \
 	dlls/lzexpand/lzexpand.o \
+	dlls/mouse/mouse.o \
 	dlls/mpr/mpr.o \
 	dlls/msacm/msacm.o \
 	dlls/msacm32/msacm32.o \

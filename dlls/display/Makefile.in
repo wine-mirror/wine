@@ -1,0 +1,23 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = display
+WRCEXTRA  = -s -w16 -pdisplay
+SPEC_SRCS = display.spec
+
+C_SRCS = \
+	display_main.c
+
+RC_SRCS = \
+	disp.rc
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+$(RC_SRCS:.rc=.s): $(WRC)
+
+### Dependencies:
+

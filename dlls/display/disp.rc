@@ -1,0 +1,47 @@
+/*
+ * resource file for DISPLAY driver dll
+ *
+ */
+
+1 "OEMBIN"
+{ 
+	0x11,			/* vertical thumb height (in pixels)  */
+	0x11,			/* horizontal thumb width (in pixels) */
+	0x02,			/* icon width (in pixels)             */
+	0x02,			/* icon height (in pixels)            */
+	0x01,			/* cursor width (in pixels)           */
+	0x01,			/* cursor height (in pixels)          */
+	0x00,			/* reserved                           */
+	0x01,			/* vertical-line width                */
+	0x01,			/* horizontal-line width              */
+
+	/* default system color values */
+	0x00c0c0c0L,	/* scrollbar */
+	0x00c0c0c0L,	/* desktop */
+	0x00800000L,	/* active caption */
+	0x00ffffffL,	/* inactive caption */
+	0x00ffffffL,	/* menu */
+	0x00ffffffL,	/* window */
+	0x00000000L,	/* window frame */
+	0x00000000L,	/* menu text */
+	0x00000000L,	/* window text */
+	0x00ffffffL,	/* caption text */
+	0x00c0c0c0L,	/* active border */
+	0x00c0c0c0L,	/* inactive border */
+	0x00ffffffL,	/* app workspace */
+	0x00800000L,	/* hilite bk */
+	0x00ffffffL,	/* hilite text */
+	0x00c0c0c0L,	/* btn face */
+	0x00808080L,	/* btn shadow */
+	0x00c0c0c0L,	/* gray text */
+	0x00000000L,	/* btn text */
+	0x00000000L		/* inactive caption text */
+}
+
+/* this is an icon */
+DUMMY1 1
+{
+	0x0
+}
+
+
