@@ -150,11 +150,38 @@ void cb_handler(int sig)
  signal(sig,cb_handler);
 }
 
+int send_signal(void)
+{
+ int ret=sig_pend; sig_pend=0;
+ if (!ret) {
+  if (sig_alrm) {
+   ret=SIGALRM; sig_alrm--;
+  } else {
+   ret=SIGUSR2; sig_cb--;
+  }
+ }
+ if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
+ if (sig_fatal) return 1;
+ return 0;
+}
+
+int send_enter_reply(int ret)
+{
+ if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
+ if (XWRITE(1,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
+ switch (ret&0xff) {
+  case DOSMOD_SIGNAL:
+   return send_signal();
+ }
+ return 0;
+}
+
 int main(int argc,char**argv)
 {
  int mfd=open(argv[0],O_RDWR);
  struct timeval tim;
- int func,ret;
+ mprot_info mpr;
+ int func,ret,idle;
  off_t fofs=0;
  pid_t ppid=getppid();
  
@@ -200,43 +227,69 @@ int main(int argc,char**argv)
  set_timer(&tim);
 #endif
 /* report back to the main program that we're ready */
- ret=2; /* dosmod protocol revision */
+ ret=3; /* dosmod protocol revision */
  XWRITE(1,&ret,sizeof(ret));
 /* context exchange loop */
+ idle=0;
  do {
-  if (XREAD(0,&func,sizeof(func))!=sizeof(func)) return 1;
+  if (idle) {
+   while (1) {
+    int res;
+    /* parent is idle, transmit any signals (particularly SIGALRM) */
+    if (sig_pend||sig_alrm||sig_cb) {
+     ret=DOSMOD_SIGNAL;
+     if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
+     ret=send_signal();
+     if (ret) return ret;
+     break;
+    }
+    res = read(0,&func,sizeof(func));
+    if (res==sizeof(func))
+     break;
+    if (res==-1) {
+     if (errno==EINTR)
+      continue;
+     perror("dosmod read");
+     return 1;
+    }
+    if (res) /* don't print the EOF condition */
+     fprintf(stderr,"dosmod read only %d of %d bytes.\n",res,sizeof(func));
+    return 1;
+   }
+   ret=DOSMOD_LEFTIDLE;
+   if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
+   idle--;
+  } else
+   if (XREAD(0,&func,sizeof(func))!=sizeof(func)) return 1;
   if (func<0) break;
   switch (func) {
-   case DOSMOD_SET_TIMER:
+   case DOSMOD_SET_TIMER: /* rev 1 */
     if (XREAD(0,&tim,sizeof(tim))!=sizeof(tim)) return 1;
     set_timer(&tim);
     /* no response */
     break;
-   case DOSMOD_GET_TIMER:
+   case DOSMOD_GET_TIMER: /* rev 1 */
     get_timer(&tim);
     if (XWRITE(1,&tim,sizeof(tim))!=sizeof(tim)) return 1;
     break;
-   case DOSMOD_ENTER:
+   case DOSMOD_MPROTECT: /* rev 3 */
+    if (XREAD(0,&mpr,sizeof(mpr))!=sizeof(mpr)) return 1;
+    mprotect(mpr.addr,mpr.len,mpr.prot);
+    /* no response */
+    break;
+   case DOSMOD_ENTERIDLE: /* rev 3 */
+    idle++;
+    break;
+   case DOSMOD_LEAVEIDLE: /* rev 3 */
+    break;
+   case DOSMOD_ENTER: /* rev 0 */
    default:
     if (XREAD(0,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
     if (sig_pend||sig_alrm||sig_cb) ret=DOSMOD_SIGNAL; else
      ret=vm86plus(func,&VM86);
-    if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
-    if (XWRITE(1,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
-    switch (ret&0xff) {
-     case DOSMOD_SIGNAL:
-      ret=sig_pend; sig_pend=0;
-      if (!ret) {
-       if (sig_alrm) {
-        ret=SIGALRM; sig_alrm--;
-       } else {
-        ret=SIGUSR2; sig_cb--;
-       }
-      }
-      if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
-      if (sig_fatal) return 1;
-      break;
-    }
+
+    ret=send_enter_reply(ret);
+    if (ret) return ret;
   }
  } while (1);
  return 0;
