@@ -19,6 +19,7 @@
 #
 
 use wine;
+use winetest;
 
 use kernel32;
 

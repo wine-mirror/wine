@@ -21,7 +21,7 @@
 
 use strict;
 use diagnostics;
-use wine;
+use winetest;
 
 $main::orig_reg = './tests/orig.reg';
 
