@@ -2394,9 +2394,9 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 
 		if(abs(plf->lfHeight) > MAX_FONT_SIZE) {
 		    ERR(font,
-	  "plf->lfHeight = %d, this is probably not right. Setting to 100\n", 
+	  "plf->lfHeight = %d, this is probably not right. Setting to 12\n", 
 			plf->lfHeight);
-		    plf->lfHeight = 100;
+		    plf->lfHeight = 12;
 		}
 
 		XFONT_MatchDeviceFont( fontList, &fm );
