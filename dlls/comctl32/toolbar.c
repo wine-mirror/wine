@@ -205,6 +205,9 @@ TOOLBAR_CheckStyle (HWND hwnd, DWORD dwStyle)
 static INT
 TOOLBAR_SendNotify (NMHDR *nmhdr, TOOLBAR_INFO *infoPtr, UINT code)
 {
+	if(!IsWindow(infoPtr->hwndSelf))
+	    return 0;   /* we have just been destroyed */
+	
     nmhdr->idFrom = GetDlgCtrlID (infoPtr->hwndSelf);
     nmhdr->hwndFrom = infoPtr->hwndSelf;
     nmhdr->code = code;
@@ -1415,7 +1418,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     PCUSTDLG_INFO custInfo = (PCUSTDLG_INFO)GetWindowLongA (hwnd, DWL_USER);
     PCUSTOMBUTTON btnInfo;
     NMTOOLBARA nmtb;
-    TOOLBAR_INFO *infoPtr = custInfo->tbInfo;
+    TOOLBAR_INFO *infoPtr = custInfo ? custInfo->tbInfo : NULL;
 
     switch (uMsg)
     {
@@ -1428,6 +1431,8 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		char Buffer[256];
 		int i = 0;
 		int index;
+		
+		infoPtr = custInfo->tbInfo;
 
 		/* send TBN_QUERYINSERT notification */
 		nmtb.iItem = custInfo->tbInfo->nNumButtons;
