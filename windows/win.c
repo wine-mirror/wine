@@ -1771,7 +1771,7 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
             SetLastError( ERROR_INVALID_WINDOW_HANDLE );
             return 0;
         }
-        if (offset > wndPtr->cbWndExtra - sizeof(WORD))
+        if (offset > (int)(wndPtr->cbWndExtra - sizeof(WORD)))
         {
             WARN("Invalid offset %d\n", offset );
             SetLastError( ERROR_INVALID_INDEX );
@@ -1837,7 +1837,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
        return 0;
     }
 
-    if (offset > wndPtr->cbWndExtra - sizeof(WORD))
+    if (offset > (int)(wndPtr->cbWndExtra - sizeof(WORD)))
     {
         WARN("Invalid offset %d\n", offset );
         WIN_ReleasePtr(wndPtr);
@@ -1916,7 +1916,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
 
     if (offset >= 0)
     {
-        if (offset > wndPtr->cbWndExtra - sizeof(LONG))
+        if (offset > (int)(wndPtr->cbWndExtra - sizeof(LONG)))
         {
           /*
             * Some programs try to access last element from 16 bit
@@ -2005,7 +2005,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     if (offset >= 0)
     {
         LONG *ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
-        if (offset > wndPtr->cbWndExtra - sizeof(LONG))
+        if (offset > (int)(wndPtr->cbWndExtra - sizeof(LONG)))
         {
             WARN("Invalid offset %d\n", offset );
             WIN_ReleasePtr( wndPtr );
