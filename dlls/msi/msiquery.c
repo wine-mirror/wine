@@ -205,7 +205,6 @@ UINT MSI_IterateRecords( MSIQUERY *view, DWORD *count,
         msiobj_release( &rec->hdr );
         if( r != ERROR_SUCCESS )
             break;
-        n++;
     }
 
     MSI_ViewClose( view );
