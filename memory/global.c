@@ -1274,10 +1274,16 @@ HGLOBAL WINAPI GlobalReAlloc(
       {
 	 /* reallocate a moveable block */
 	 pintern=HANDLE_TO_INTERN(hmem);
+
+#if 0
+/* Apparently Windows doesn't care whether the handle is locked at this point */
+/* See also the same comment in GlobalFree() */
 	 if(pintern->LockCount>1) {
 	    ERR("handle 0x%08lx is still locked, cannot realloc!\n",(DWORD)hmem);
 	    SetLastError(ERROR_INVALID_HANDLE);
-	 } else if(size!=0)
+	 } else
+#endif
+         if(size!=0)
 	 {
 	    hnew=hmem;
 	    if(pintern->Pointer)
