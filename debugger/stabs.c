@@ -1075,7 +1075,7 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
 		goto leave;
 	}
 	free(fn);
-	if (t) s = t+1;
+	if (t) s = t+1; else break;
       }
       if (!s || !*s) fprintf(stderr," not found");
       free(paths);

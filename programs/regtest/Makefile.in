@@ -19,7 +19,10 @@ regtest: $(OBJS)
 	$(CC) -o regtest $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy
-	$(INSTALL_PROGRAM) regtest $(bindir)/program
+	$(INSTALL_PROGRAM) regtest $(bindir)/regtest
+
+uninstall: dummy
+	$(RM) $(bindir)/regtest
 
 dummy:
 

@@ -18,6 +18,9 @@ depend:
 install:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) install) || exit 1; done
 
+uninstall:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) uninstall) || exit 1; done
+
 clean:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
 

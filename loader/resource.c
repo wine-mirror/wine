@@ -66,7 +66,7 @@ HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR name, LPCSTR type,
  */
 HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
                                   LPCWSTR type, WORD lang )
-{
+{	HRSRC32 ret;
     WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
     HRSRC32	hrsrc;
 
@@ -83,7 +83,10 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
     if (wm) {
     	switch (wm->type) {
 	case MODULE32_PE:
-	    return PE_FindResourceEx32W(wm,name,type,lang);
+	    ret =  PE_FindResourceEx32W(wm,name,type,lang);
+        if ( ret==0 )
+          ERR(resource,"%s not found!\n",debugres_w (name));
+	    return ret;
 	default:
 	    ERR(module,"unknown module type %d\n",wm->type);
 	    break;
@@ -229,6 +232,7 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
 {
     HRSRC32 hRsrc;
     HACCEL32 hRetval;
+    DWORD size;
 
     if (HIWORD(lpTableName))
         TRACE(accel, "%p '%s'\n",
@@ -244,6 +248,13 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
     }
     else {
       hRetval = LoadResource32( instance, hRsrc );
+      size = SizeofResource32( instance, hRsrc );
+      if(size>=sizeof(ACCEL32))
+      {
+	LPACCEL32 accel_table = (LPACCEL32) hRetval;
+	/* mark last element as such - sometimes it is not marked in image */
+	accel_table[size/sizeof(ACCEL32)-1].fVirt |= 0x80;
+      }
     }
 
     TRACE(accel, "returning HACCEL 0x%x\n", hRsrc);

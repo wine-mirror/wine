@@ -3852,7 +3852,7 @@ BOOL32 WINAPI SetMenuItemInfo32W(HMENU32 hmenu, UINT32 item, BOOL32 bypos,
 /**********************************************************************
  *		SetMenuDefaultItem32    (USER32.489)
  */
-BOOL32 WINAPI SetMenuDefaultItem32(HMENU32 hmenu, UINT32 item, BOOL32 bypos)
+BOOL32 WINAPI SetMenuDefaultItem32(HMENU32 hmenu, UINT32 item, UINT32 bypos)
 {
     MENUITEM *menuitem = MENU_FindItem(&hmenu, &item, bypos);
     POPUPMENU *menu;
@@ -3938,7 +3938,7 @@ BOOL32 WINAPI InsertMenuItem32W(HMENU32 hMenu, UINT32 uItem, BOOL32 bypos,
 
 BOOL32 WINAPI CheckMenuRadioItem32(HMENU32 hMenu,
 				   UINT32 first, UINT32 last, UINT32 check,
-				   BOOL32 bypos)
+				   UINT32 bypos)
 {
      MENUITEM *mifirst, *milast, *micheck;
      HMENU32 mfirst = hMenu, mlast = hMenu, mcheck = hMenu;

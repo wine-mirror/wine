@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
 
@@ -71,7 +72,7 @@ void call_timeout_handler( struct thread *thread )
     current = thread;
     if (debug_level) trace_timeout();
     CLEAR_ERROR();
-    send_reply( current, -1, 0 );
+    thread_timeout();
     current = NULL;
 }
 
@@ -131,6 +132,12 @@ DECL_HANDLER(new_thread)
 /* create a new thread */
 DECL_HANDLER(init_thread)
 {
+    if (current->state != STARTING)
+    {
+        fatal_protocol_error( "init_thread: already running\n" );
+        return;
+    }
+    current->state    = RUNNING;
     current->unix_pid = req->unix_pid;
     if (!(current->name = malloc( len + 1 )))
     {
@@ -213,7 +220,21 @@ DECL_HANDLER(get_process_info)
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
-/* open a handle a process */
+/* fetch information about a thread */
+DECL_HANDLER(get_thread_info)
+{
+    struct thread *thread;
+    struct get_thread_info_reply reply = { 0, 0 };
+
+    if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
+    {
+        get_thread_info( thread, &reply );
+        release_object( thread );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* open a handle to a process */
 DECL_HANDLER(open_process)
 {
     struct open_process_reply reply = { -1 };
@@ -225,4 +246,13 @@ DECL_HANDLER(open_process)
         release_object( process );
     }
     send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* select on a handle list */
+DECL_HANDLER(select)
+{
+    if (len != req->count * sizeof(int))
+        fatal_protocol_error( "select: bad length %d for %d handles\n",
+                              len, req->count );
+    sleep_on( current, req->count, (int *)data, req->flags, req->timeout );
 }

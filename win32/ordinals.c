@@ -129,4 +129,3 @@ DWORD WINAPI _KERNEL32_99(DWORD x) {
 	FIXME(win32,"(0x%08lx): stub\n",x);
 	return 1;
 }
-

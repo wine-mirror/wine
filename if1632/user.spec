@@ -368,7 +368,7 @@ file	user.exe
 398 pascal16 GetClassInfoEx(word segstr ptr) GetClassInfoEx16
 399 stub ChildWindowFromPointEx
 400 stub FinalUserInit
-402 pascal16 GetPriorityClipboardFormat(word ptr s_word) GetPriorityClipboardFormat16
+402 pascal16 GetPriorityClipboardFormat(ptr s_word) GetPriorityClipboardFormat16
 403 pascal16 UnregisterClass(segstr word) UnregisterClass16
 404 pascal16 GetClassInfo(word segstr ptr) GetClassInfo16
 406 pascal16 CreateCursor(word word word word word ptr ptr) CreateCursor16

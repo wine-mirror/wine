@@ -945,7 +945,7 @@ INT32 WINAPI GetProfileString32W( LPCWSTR section, LPCWSTR entry,
 /***********************************************************************
  *           GetProfileSection32A   (KERNEL32.268)
  */
-INT32 WINAPI GetProfileSection32A( LPCSTR section, LPSTR buffer, UINT32 len )
+INT32 WINAPI GetProfileSection32A( LPCSTR section, LPSTR buffer, DWORD len )
 {
     return GetPrivateProfileSection32A( section, buffer, len, "win.ini" );
 }
@@ -1080,7 +1080,7 @@ INT32 WINAPI GetPrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
  *           GetPrivateProfileSection32A   (KERNEL32.255)
  */
 INT32 WINAPI GetPrivateProfileSection32A( LPCSTR section, LPSTR buffer,
-                                          UINT32 len, LPCSTR filename )
+                                          DWORD len, LPCSTR filename )
 {
     if (PROFILE_Open( filename ))
         return PROFILE_GetSection(CurProfile->section, section, buffer, len,
@@ -1186,7 +1186,7 @@ WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
 /***********************************************************************
  *           GetPrivateProfileStruct32A (KERNEL32.370)
  */
-WORD WINAPI GetPrivateProfileStruct32A (LPCSTR section, LPCSTR key, 
+BOOL32 WINAPI GetPrivateProfileStruct32A (LPCSTR section, LPCSTR key, 
 	LPVOID buf, UINT32 len, LPCSTR filename)
 {
     PROFILEKEY *k;
@@ -1204,7 +1204,7 @@ WORD WINAPI GetPrivateProfileStruct32A (LPCSTR section, LPCSTR key,
 /***********************************************************************
  *           WritePrivateProfileStruct32A (KERNEL32.744)
  */
-WORD WINAPI WritePrivateProfileStruct32A (LPCSTR section, LPCSTR key, 
+BOOL32 WINAPI WritePrivateProfileStruct32A (LPCSTR section, LPCSTR key, 
 	LPVOID buf, UINT32 bufsize, LPCSTR filename)
 {
     if ((!section) && (!key) && (!buf)) {	/* flush the cache */

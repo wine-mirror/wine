@@ -4,24 +4,18 @@
  * Copyright 1998 Eric Kohl
  *
  * TODO:
- *   - Subclassing.
  *   - Tracking tooltips (under construction).
  *   - TTS_ALWAYSTIP (undefined).
  *   - Unicode support.
  *   - Custom draw support.
+ *   - The "lParam" variable from NMTTDISPINFO32A is not handled
+ *     in TOOLTIPS_GetTipText.
  *
  * Testing:
  *   - Run tests using Waite Group Windows95 API Bible Volume 2.
  *     The second cdrom (chapter 3) contains executables activate.exe,
  *     curtool.exe, deltool.exe, enumtools.exe, getinfo.exe, getiptxt.exe,
  *     hittest.exe, needtext.exe, newrect.exe, updtext.exe and winfrpt.exe.
- *
- *   - Activate.exe, deltool.exe, enumtool.exe, getinfo.exe and getiptxt.exe
- *     are the only working examples, since subclassing is not implemented.
- *
- * Fixme:
- *   - The "lParam" variable from NMTTDISPINFO32A is not handled
- *     in TOOLTIPS_GetTipText.
  */
 
 #include "windows.h"
@@ -35,8 +29,13 @@
 #define ID_TIMER1  1    /* show delay timer */
 #define ID_TIMER2  2    /* auto pop timer */
 #define ID_TIMER3  3    /* tool leave timer */
+#define TT_SUBCLASS_PROP "CC32SubclassInfo"   /* property name of tooltip window handle */
 
 #define TOOLTIPS_GetInfoPtr(wndPtr) ((TOOLTIPS_INFO *)wndPtr->wExtra[0])
+
+
+LRESULT CALLBACK
+TOOLTIPS_SubclassProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam);
 
 
 static VOID
@@ -91,8 +90,8 @@ TOOLTIPS_GetTipText (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 	    ttnmdi.lpszText = infoPtr->szTipText;
 
 	    TRACE (tooltips, "hdr.idFrom = %x\n", ttnmdi.hdr.idFrom);
-	    SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
-			    (WPARAM32)wndPtr->wIDmenu, (LPARAM)&ttnmdi);
+	    SendMessage32A (toolPtr->hwnd, WM_NOTIFY,
+			    (WPARAM32)toolPtr->uId, (LPARAM)&ttnmdi);
 
 	    if (ttnmdi.hinst) {
 		LoadString32A (ttnmdi.hinst, (UINT32)ttnmdi.szText,
@@ -195,17 +194,17 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 	return;
     }
 
-    TRACE (tooltips, "Show tooltip %d!\n", infoPtr->nTool);
+    TRACE (tooltips, "Show tooltip %d!\n", infoPtr->nCurrentTool);
+    toolPtr = &infoPtr->tools[infoPtr->nCurrentTool];
 
     hdr.hwndFrom = wndPtr->hwndSelf;
-    hdr.idFrom = infoPtr->nTool;
+    hdr.idFrom = toolPtr->uId;
     hdr.code = TTN_SHOW;
-    SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
-		    (WPARAM32)wndPtr->wIDmenu, (LPARAM)&hdr);
+    SendMessage32A (toolPtr->hwnd, WM_NOTIFY,
+		    (WPARAM32)toolPtr->uId, (LPARAM)&hdr);
 
     TRACE (tooltips, "\"%s\"\n", infoPtr->szTipText);
 
-    toolPtr = &infoPtr->tools[infoPtr->nTool];
     TOOLTIPS_CalcTipSize (wndPtr, infoPtr, &size);
     TRACE (tooltips, "size %d - %d\n", size.cx, size.cy);
 
@@ -232,9 +231,8 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 
     TRACE (tooltips, "pos %d - %d\n", pt.x, pt.y);
 
-//    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, pt.x, pt.y,
-//		    size.cx, size.cy, SWP_SHOWWINDOW);
-    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 1, 1,
+//    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 1, 1,
+    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, pt.x, pt.y,
 		    size.cx, size.cy, SWP_SHOWWINDOW);
 
     SetTimer32 (wndPtr->hwndSelf, ID_TIMER2, infoPtr->nAutoPopTime, 0);
@@ -244,19 +242,21 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 static VOID
 TOOLTIPS_Hide (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 {
+    TTTOOL_INFO *toolPtr;
     NMHDR hdr;
 
     if (infoPtr->nCurrentTool == -1)
 	return;
 
+    toolPtr = &infoPtr->tools[infoPtr->nCurrentTool];
     TRACE (tooltips, "Hide tooltip %d!\n", infoPtr->nCurrentTool);
     KillTimer32 (wndPtr->hwndSelf, ID_TIMER2);
 
     hdr.hwndFrom = wndPtr->hwndSelf;
-    hdr.idFrom = infoPtr->nCurrentTool;
+    hdr.idFrom = toolPtr->uId;
     hdr.code = TTN_POP;
-    SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
-		    (WPARAM32)wndPtr->wIDmenu, (LPARAM)&hdr);
+    SendMessage32A (toolPtr->hwnd, WM_NOTIFY,
+		    (WPARAM32)toolPtr->uId, (LPARAM)&hdr);
 
     infoPtr->nCurrentTool = -1;
 
@@ -269,22 +269,6 @@ TOOLTIPS_GetToolFromInfoA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFO32A lpToolInfo)
 {
     TTTOOL_INFO *toolPtr;
     INT32 nTool;
-
-#if 0
-    for (nTool = 0; nTool < infoPtr->uNumTools; nTool++) {
-	toolPtr = &infoPtr->tools[nTool];
-
-	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    if (lpToolInfo->uId == toolPtr->uId)
-		return nTool;
-	}
-	else {
-	    if ((lpToolInfo->hwnd == toolPtr->hwnd) &&
-		(lpToolInfo->uId == toolPtr->uId))
-		return nTool;
-	}
-    }
-#endif
 
     for (nTool = 0; nTool < infoPtr->uNumTools; nTool++) {
 	toolPtr = &infoPtr->tools[nTool];
@@ -316,11 +300,7 @@ TOOLTIPS_GetToolFromPoint (TOOLTIPS_INFO *infoPtr, HWND32 hwnd, LPPOINT32 lpPt)
     for (nTool = 0; nTool < infoPtr->uNumTools; nTool++) {
 	toolPtr = &infoPtr->tools[nTool];
 
-	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    if ((HWND32)toolPtr->uId == hwnd)
-		return nTool;
-	}
-	else {
+	if (!(toolPtr->uFlags & TTF_IDISHWND)) {
 	    if (hwnd != toolPtr->hwnd)
 		continue;
 	    if (!PtInRect32 (&toolPtr->rect, *lpPt))
@@ -329,7 +309,31 @@ TOOLTIPS_GetToolFromPoint (TOOLTIPS_INFO *infoPtr, HWND32 hwnd, LPPOINT32 lpPt)
 	}
     }
 
+    for (nTool = 0; nTool < infoPtr->uNumTools; nTool++) {
+	toolPtr = &infoPtr->tools[nTool];
+
+	if (toolPtr->uFlags & TTF_IDISHWND) {
+	    if ((HWND32)toolPtr->uId == hwnd)
+		return nTool;
+	}
+    }
+
     return -1;
+}
+
+
+static INT32
+TOOLTIPS_GetToolFromMessage (TOOLTIPS_INFO *infoPtr, HWND32 hwndTool)
+{
+    DWORD   dwPos;
+    POINT32 pt;
+
+    dwPos = GetMessagePos ();
+    pt.x = (INT32)LOWORD(dwPos);
+    pt.y = (INT32)HIWORD(dwPos);
+    ScreenToClient32 (hwndTool, &pt);
+
+    return TOOLTIPS_GetToolFromPoint (infoPtr, hwndTool, &pt);
 }
 
 
@@ -380,9 +384,6 @@ TOOLTIPS_AddTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TTTOOL_INFO *toolPtr;
 
     if (lpToolInfo == NULL) return FALSE;
-
-    if (lpToolInfo->uFlags & TTF_SUBCLASS)
-	FIXME (tooltips, "subclassing not supported!\n");
 
     TRACE (tooltips, "add tool (%x) %x %d%s!\n",
 	   wndPtr->hwndSelf, lpToolInfo->hwnd, lpToolInfo->uId,
@@ -435,6 +436,44 @@ TOOLTIPS_AddTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (lpToolInfo->cbSize >= sizeof(TTTOOLINFO32A))
 	toolPtr->lParam = lpToolInfo->lParam;
 
+    /* install subclassing */
+    if (toolPtr->uFlags & TTF_SUBCLASS) {
+	if (toolPtr->uFlags & TTF_IDISHWND) {
+	    LPTT_SUBCLASS_INFO lpttsi =
+		(LPTT_SUBCLASS_INFO)GetProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
+	    if (lpttsi == NULL) {
+		lpttsi = (LPTT_SUBCLASS_INFO)HeapAlloc (GetProcessHeap(),
+		    HEAP_ZERO_MEMORY, sizeof(TT_SUBCLASS_INFO));
+		lpttsi->wpOrigProc = 
+		    (WNDPROC32)SetWindowLong32A ((HWND32)toolPtr->uId,
+		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
+		lpttsi->hwndToolTip = wndPtr->hwndSelf;
+		lpttsi->uRefCount++;
+		SetProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP,
+			    (HANDLE32)lpttsi);
+	    }
+	    else
+		ERR (tooltips, "A window tool must only be listed once!\n");
+	}
+	else {
+	    LPTT_SUBCLASS_INFO lpttsi =
+		(LPTT_SUBCLASS_INFO)GetProp32A (toolPtr->hwnd, TT_SUBCLASS_PROP);
+	    if (lpttsi == NULL) {
+		lpttsi = (LPTT_SUBCLASS_INFO)HeapAlloc (GetProcessHeap(),
+		    HEAP_ZERO_MEMORY, sizeof(TT_SUBCLASS_INFO));
+		lpttsi->wpOrigProc = 
+		    (WNDPROC32)SetWindowLong32A (toolPtr->hwnd,
+		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
+		lpttsi->hwndToolTip = wndPtr->hwndSelf;
+		lpttsi->uRefCount++;
+		SetProp32A (toolPtr->hwnd, TT_SUBCLASS_PROP, (HANDLE32)lpttsi);
+	    }
+	    else
+		lpttsi->uRefCount++;
+	}
+	TRACE (tooltips, "subclassing installed!\n");
+    }
+
     return TRUE;
 }
 
@@ -463,6 +502,38 @@ TOOLTIPS_DelTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
 	if (toolPtr->lpszText != LPSTR_TEXTCALLBACK32A)
 	    HeapFree (GetProcessHeap (), 0, toolPtr->lpszText);
+    }
+
+    /* remove subclassing */
+    if (toolPtr->uFlags & TTF_SUBCLASS) {
+	if (toolPtr->uFlags & TTF_IDISHWND) {
+	    LPTT_SUBCLASS_INFO lpttsi =
+		(LPTT_SUBCLASS_INFO)GetProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
+	    if (lpttsi) {
+		SetWindowLong32A ((HWND32)toolPtr->uId, GWL_WNDPROC,
+				  (LONG)lpttsi->wpOrigProc);
+		RemoveProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
+		HeapFree (GetProcessHeap(), 0, &lpttsi);
+	    }
+	    else
+		ERR (tooltips, "Invalid data handle!\n");
+	}
+	else {
+	    LPTT_SUBCLASS_INFO lpttsi =
+		(LPTT_SUBCLASS_INFO)GetProp32A (toolPtr->hwnd, TT_SUBCLASS_PROP);
+	    if (lpttsi) {
+		if (lpttsi->uRefCount == 1) {
+		    SetWindowLong32A ((HWND32)toolPtr->uId, GWL_WNDPROC,
+				      (LONG)lpttsi->wpOrigProc);
+		    RemoveProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
+		    HeapFree (GetProcessHeap(), 0, &lpttsi);
+		}
+		else
+		    lpttsi->uRefCount--;
+	    }
+	    else
+		ERR (tooltips, "Invalid data handle!\n");
+	}
     }
 
     /* delete tool from tool list */
@@ -734,7 +805,9 @@ TOOLTIPS_NewToolRect32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     INT32 nTool;
 
     if (!(lpti)) return 0;
+#if 0
     if (lpti->cbSize < sizeof(TTTOOLINFO32A)) return 0;
+#endif
 
     nTool = TOOLTIPS_GetToolFromInfoA (infoPtr, lpti);
     if (nTool == -1) return 0;
@@ -766,16 +839,10 @@ TOOLTIPS_RelayEvent (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     LPMSG32 lpMsg = (LPMSG32)lParam;
     POINT32 pt;
 
-    if (lpMsg == NULL) {
+    if (lParam == NULL) {
 	ERR (tooltips, "lpMsg == NULL!\n");
 	return 0;
     }
-
-    pt = lpMsg->pt;
-    ScreenToClient32 (lpMsg->hwnd, &pt);
-    infoPtr->nOldTool = infoPtr->nTool;
-    infoPtr->nTool = TOOLTIPS_GetToolFromPoint (infoPtr, lpMsg->hwnd, &pt);
-    TRACE (tooltips, "tool (%x) %d %d\n", wndPtr->hwndSelf, infoPtr->nOldTool, infoPtr->nTool);
 
     switch (lpMsg->message) {
 	case WM_LBUTTONDOWN:
@@ -784,10 +851,22 @@ TOOLTIPS_RelayEvent (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	case WM_MBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
+	    pt = lpMsg->pt;
+	    ScreenToClient32 (lpMsg->hwnd, &pt);
+	    infoPtr->nOldTool = infoPtr->nTool;
+	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint (infoPtr, lpMsg->hwnd, &pt);
+	    TRACE (tooltips, "tool (%x) %d %d\n",
+		   wndPtr->hwndSelf, infoPtr->nOldTool, infoPtr->nTool);
 	    TOOLTIPS_Hide (wndPtr, infoPtr);
 	    break;
 
 	case WM_MOUSEMOVE:
+	    pt = lpMsg->pt;
+	    ScreenToClient32 (lpMsg->hwnd, &pt);
+	    infoPtr->nOldTool = infoPtr->nTool;
+	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint (infoPtr, lpMsg->hwnd, &pt);
+	    TRACE (tooltips, "tool (%x) %d %d\n",
+		   wndPtr->hwndSelf, infoPtr->nOldTool, infoPtr->nTool);
 	    TRACE (tooltips, "WM_MOUSEMOVE (%04x %d %d)\n",
 		   wndPtr->hwndSelf, pt.x, pt.y);
 	    if ((infoPtr->bActive) && (infoPtr->nTool != infoPtr->nOldTool)) {
@@ -1103,14 +1182,33 @@ static LRESULT
 TOOLTIPS_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr(wndPtr);
+    TTTOOL_INFO *toolPtr;
 
     /* free tools */
     if (infoPtr->tools) {
 	INT32 i;
 	for (i = 0; i < infoPtr->uNumTools; i++) {
-	    if ((infoPtr->tools[i].hinst) && (infoPtr->tools[i].lpszText)) {
-		if (infoPtr->tools[i].lpszText != LPSTR_TEXTCALLBACK32A)
-		    HeapFree (GetProcessHeap (), 0, infoPtr->tools[i].lpszText);
+	    toolPtr = &infoPtr->tools[i];
+	    if ((toolPtr->hinst) && (toolPtr->lpszText)) {
+		if (toolPtr->lpszText != LPSTR_TEXTCALLBACK32A)
+		    HeapFree (GetProcessHeap (), 0, toolPtr->lpszText);
+	    }
+
+	    /* remove subclassing */
+	    if (toolPtr->uFlags & TTF_SUBCLASS) {
+		LPTT_SUBCLASS_INFO lpttsi;
+
+		if (toolPtr->uFlags & TTF_IDISHWND)
+		    lpttsi = (LPTT_SUBCLASS_INFO)GetProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
+		else
+		    lpttsi = (LPTT_SUBCLASS_INFO)GetProp32A (toolPtr->hwnd, TT_SUBCLASS_PROP);
+
+		if (lpttsi) {
+		    SetWindowLong32A ((HWND32)toolPtr->uId, GWL_WNDPROC,
+				      (LONG)lpttsi->wpOrigProc);
+		    RemoveProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
+		    HeapFree (GetProcessHeap(), 0, &lpttsi);
+		}
 	    }
 	}
 	HeapFree (GetProcessHeap (), 0, infoPtr->tools);
@@ -1249,8 +1347,72 @@ TOOLTIPS_WinIniChange (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-LRESULT WINAPI
-ToolTipsWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+LRESULT CALLBACK
+TOOLTIPS_SubclassProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+{
+    LPTT_SUBCLASS_INFO lpttsi =
+	(LPTT_SUBCLASS_INFO)GetProp32A (hwnd, TT_SUBCLASS_PROP);
+    WND *wndPtr;
+    TOOLTIPS_INFO *infoPtr;
+    UINT32 nTool;
+
+    switch (uMsg) {
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	    {
+		wndPtr = WIN_FindWndPtr(lpttsi->hwndToolTip);
+		infoPtr = TOOLTIPS_GetInfoPtr(wndPtr);
+		nTool = TOOLTIPS_GetToolFromMessage (infoPtr, hwnd);
+
+		TRACE (tooltips, "subclassed mouse message %04x\n", uMsg);
+		infoPtr->nOldTool = infoPtr->nTool;
+		infoPtr->nTool = nTool;
+		TOOLTIPS_Hide (wndPtr, infoPtr);
+	    }
+	    break;
+
+	case WM_MOUSEMOVE:
+	    {
+		wndPtr = WIN_FindWndPtr(lpttsi->hwndToolTip);
+		infoPtr = TOOLTIPS_GetInfoPtr(wndPtr);
+		nTool = TOOLTIPS_GetToolFromMessage (infoPtr, hwnd);
+
+		TRACE (tooltips, "subclassed WM_MOUSEMOVE\n");
+		infoPtr->nOldTool = infoPtr->nTool;
+		infoPtr->nTool = nTool;
+
+		if ((infoPtr->bActive) &&
+		    (infoPtr->nTool != infoPtr->nOldTool)) {
+		    if (infoPtr->nOldTool == -1) {
+			SetTimer32 (wndPtr->hwndSelf, ID_TIMER1,
+				    infoPtr->nInitialTime, 0);
+			TRACE (tooltips, "timer 1 started!\n");
+		    }
+		    else {
+			TOOLTIPS_Hide (wndPtr, infoPtr);
+			SetTimer32 (wndPtr->hwndSelf, ID_TIMER1,
+				infoPtr->nReshowTime, 0);
+			TRACE (tooltips, "timer 2 started!\n");
+		    }
+		}
+		if (infoPtr->nCurrentTool != -1) {
+		    SetTimer32 (wndPtr->hwndSelf, ID_TIMER3, 100, 0);
+		    TRACE (tooltips, "timer 3 started!\n");
+		}
+	    }
+	    break;
+    }
+
+    return CallWindowProc32A (lpttsi->wpOrigProc, hwnd, uMsg, wParam, lParam);
+}
+
+
+LRESULT CALLBACK
+TOOLTIPS_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
@@ -1423,7 +1585,7 @@ TOOLTIPS_Register (void)
 
     ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS;
-    wndClass.lpfnWndProc   = (WNDPROC32)ToolTipsWindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC32)TOOLTIPS_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(TOOLTIPS_INFO *);
     wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);

@@ -1,0 +1,21 @@
+#include "shresdef.h"
+
+// we have to find a solution for the icons
+// IDI_FOLDER              ICON    DISCARDABLE     "folder.ico"
+// IDI_FOLDEROPEN          ICON    DISCARDABLE     "folderop.ico"
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_FILE_TITLE      	"Files: "
+    IDS_MI_FILE         	"&Files"
+    IDS_MI_VIEW_FILES       "&View Files"
+    IDS_TB_VIEW_FILES       "View Filess"
+    IDS_MI_VIEW_IDW         "Show &Docking Window"
+    IDS_TB_VIEW_IDW         "Show Docking Window"
+    IDS_COLUMN1             "Name"
+    IDS_COLUMN2             "Date"
+    IDS_COLUMN3             "Size"
+    IDS_COLUMN4             "Attributes"
+END
+
+

@@ -374,7 +374,7 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
  */
 INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 {
-    HFILE32 fd;
+    HFILE16 fd;
 
     NE_MODULE *pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->res_table || !hRsrc) return -1;
@@ -383,11 +383,11 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 
     assert( !__winelib );  /* Can't use Win16 resource functions in Winelib */
 
-    if ((fd = _lopen32( NE_MODULE_NAME(pModule), OF_READ )) != -1)
+    if ((fd = _lopen16( NE_MODULE_NAME(pModule), OF_READ )) != -1)
     {
         WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
         NE_NAMEINFO *pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-        _llseek32( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
+        _llseek16( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
     }
     return fd;
 }

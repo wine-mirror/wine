@@ -85,7 +85,7 @@ HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPVOID *pprot) {
 }
 
 /***********************************************************************
- *           RegisterDragDrop (OLE2.35)
+ *           RegisterDragDrop16 (OLE2.35)
  */
 HRESULT WINAPI RegisterDragDrop16(
 	HWND16 hwnd,
@@ -95,3 +95,13 @@ HRESULT WINAPI RegisterDragDrop16(
 	return S_OK;
 }
 
+/***********************************************************************
+ *           RegisterDragDrop32 (OLE32.139)
+ */
+HRESULT WINAPI RegisterDragDrop32(
+	HWND32 hwnd,
+	LPDROPTARGET pDropTarget
+) {
+	FIXME(ole,"(0x%04x,%p),stub!\n",hwnd,pDropTarget);
+	return S_OK;
+}

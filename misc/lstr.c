@@ -668,6 +668,7 @@ DWORD WINAPI FormatMessage32A(
 	if (nSize && talloced<nSize) {
 		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
 	}
+    TRACE(resource,"-- %s\n",target);
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
 		/* nSize is the MINIMUM size */
 		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc32(GMEM_ZEROINIT,talloced);

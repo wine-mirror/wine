@@ -1,6 +1,7 @@
 /* File generated automatically by tools/make_requests; DO NOT EDIT!! */
 
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/uio.h>
 #include "server.h"
 #include "server/thread.h"
@@ -46,6 +47,17 @@ static void dump_get_process_info_reply( struct get_process_info_reply *req )
     printf( " exit_code=%d", req->exit_code );
 }
 
+static void dump_get_thread_info_request( struct get_thread_info_request *req )
+{
+    printf( " handle=%d", req->handle );
+}
+
+static void dump_get_thread_info_reply( struct get_thread_info_reply *req )
+{
+    printf( " pid=%p,", req->pid );
+    printf( " exit_code=%d", req->exit_code );
+}
+
 static void dump_close_handle_request( struct close_handle_request *req )
 {
     printf( " handle=%d", req->handle );
@@ -79,6 +91,18 @@ static void dump_open_process_reply( struct open_process_reply *req )
     printf( " handle=%d", req->handle );
 }
 
+static void dump_select_request( struct select_request *req )
+{
+    printf( " count=%d,", req->count );
+    printf( " flags=%d,", req->flags );
+    printf( " timeout=%d", req->timeout );
+}
+
+static void dump_select_reply( struct select_reply *req )
+{
+    printf( " signaled=%d", req->signaled );
+}
+
 struct dumper
 {
     void (*dump_req)();
@@ -103,6 +127,9 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
     { (void(*)())dump_get_process_info_request,
       (void(*)())dump_get_process_info_reply,
       sizeof(struct get_process_info_request) },
+    { (void(*)())dump_get_thread_info_request,
+      (void(*)())dump_get_thread_info_reply,
+      sizeof(struct get_thread_info_request) },
     { (void(*)())dump_close_handle_request,
       (void(*)())0,
       sizeof(struct close_handle_request) },
@@ -112,6 +139,9 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
     { (void(*)())dump_open_process_request,
       (void(*)())dump_open_process_reply,
       sizeof(struct open_process_request) },
+    { (void(*)())dump_select_request,
+      (void(*)())dump_select_reply,
+      sizeof(struct select_request) },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -121,9 +151,11 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "terminate_process",
     "terminate_thread",
     "get_process_info",
+    "get_thread_info",
     "close_handle",
     "dup_handle",
     "open_process",
+    "select",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )

@@ -876,7 +876,6 @@ FAR * ) PURE;
 struct _common_directdrawdata {
     DWORD			depth;
     DWORD			height,width;	/* SetDisplayMode */
-    HWND32			mainwindow;
 };
 
 struct _dga_directdrawdata {
@@ -887,12 +886,16 @@ struct _dga_directdrawdata {
 
 struct _xlib_directdrawdata {
     Window		drawable;
+    int			use_xshm;
     /* are these needed for anything? (draw_surf is the active surface)
-       IDirectDrawSurface	*surfs;
-       DWORD		num_surfs, alloc_surfs, draw_surf; */
+    IDirectDrawSurface	*surfs;
+    DWORD		num_surfs, alloc_surfs, draw_surf; */
+    int			paintable;
 
-       ATOM		winclass;
-       HWND32		window;
+/* current window implementation */
+    ATOM		winclass;
+    HWND32		window;
+    PAINTSTRUCT32	ps;
 };
 
 struct IDirectDraw {
@@ -901,7 +904,6 @@ struct IDirectDraw {
 	struct _common_directdrawdata d;
 	union {
 		struct _xlib_directdrawdata xlib;
-		struct _xlib_directdrawdata xshm;
 		struct _dga_directdrawdata  dga;
 	} e;
 };
@@ -957,8 +959,6 @@ struct IDirectDraw2 {
 	struct _common_directdrawdata	d;
 	union {
 		struct _xlib_directdrawdata xlib;
-		/* only different in image create&put */
-		struct _xlib_directdrawdata xshm;
 		struct _dga_directdrawdata dga;
 	} e;
 };
@@ -967,7 +967,7 @@ struct IDirectDraw2 {
 #define THIS LPDIRECTDRAWSURFACE this
 struct _common_directdrawsurface {
     LPDIRECTDRAWPALETTE		palette;
-    LPDIRECTDRAW		ddraw;
+    LPDIRECTDRAW2		ddraw;
     LPDIRECTDRAWSURFACE3	backbuffer;
     LPVOID			surface;
     DWORD			lpitch,width,height;
@@ -977,15 +977,11 @@ struct _dga_directdrawsurface {
     DWORD		fb_height;
 };
 
-struct _xshm_directdrawsurface {
+struct _xlib_directdrawsurface {
     XImage		*image;
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo	shminfo;
 #endif
-};
-struct _xlib_directdrawsurface {
-    XImage		*image;
-    BOOL32		surface_is_image_data;
 };
 
 typedef struct IDirectDrawSurface_VTable {
@@ -1034,7 +1030,6 @@ struct IDirectDrawSurface {
     struct _common_directdrawsurface	s;
     union {
 	struct _dga_directdrawsurface	dga;
-	struct _xshm_directdrawsurface	xshm;
 	struct _xlib_directdrawsurface	xlib;
     } t;
 };
@@ -1181,5 +1176,8 @@ struct IDirectDrawColorControl  {
 #undef STDMETHOD
 #undef STDMETHOD_
 
-extern HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID,LPDIRECTDRAW *lplpDD,LPUNKNOWN pUnkOuter );
+HRESULT WINAPI DirectDrawCreate(LPGUID,LPDIRECTDRAW*,LPUNKNOWN);
+HRESULT WINAPI DirectDrawEnumerate32A(LPDDENUMCALLBACK32A,LPVOID);
+HRESULT WINAPI DirectDrawEnumerate32W(LPDDENUMCALLBACK32W,LPVOID);
+#define DirectDrawEnumerate WINELIB_NAME_AW(DirectDrawEnumerate)
 #endif

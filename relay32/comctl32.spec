@@ -114,11 +114,11 @@ init	ComCtl32LibMain
 236 stub Str_SetPtrW
 
 320 stdcall DSA_Create(long long) DSA_Create
-321 stdcall DSA_Destroy(long) DSA_Destroy
-322 stdcall DSA_GetItem(long long long) DSA_GetItem
+321 stdcall DSA_Destroy(ptr) DSA_Destroy
+322 stdcall DSA_GetItem(ptr long long) DSA_GetItem
 323 stdcall DSA_GetItemPtr(long long) DSA_GetItemPtr
 324 stdcall DSA_InsertItem(long long long) DSA_InsertItem
-325 stub DSA_SetItem
+325 stdcall DSA_SetItem (long long long) DSA_SetItem
 326 stdcall DSA_DeleteItem(long long) DSA_DeleteItem
 327 stub DSA_DeleteAllItems
 

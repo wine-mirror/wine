@@ -22,6 +22,9 @@ extern int WIN32_LastError;
  */
 #define ERROR_UNKNOWN               99999
 
+#define SEVERITY_SUCCESS    0
+#define SEVERITY_ERROR      1
+
 #define ERROR_SUCCESS               0
 #define ERROR_FILE_NOT_FOUND        2
 #define ERROR_PATH_NOT_FOUND        3

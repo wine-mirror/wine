@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -w
 #
 # Build the server/trace.c and include/server/request.h files
 # from the contents of include/server.h.
@@ -26,6 +26,7 @@ print TRACE <<EOF;
 /* File generated automatically by $0; DO NOT EDIT!! */
 
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/uio.h>
 #include "server.h"
 #include "server/thread.h"
@@ -194,6 +195,7 @@ sub DO_REQUEST
 	last if /^};$/;
         next if /^{$/;
 	s!/\*.*\*/!!g;
+	next if /^\s*$/;
 	/ *(\w+\**( +\w+\**)*) +(\w+);/ or die "Unrecognized syntax $_";
 	my $type = $1;
 	my $var = $3;
@@ -215,6 +217,7 @@ sub DO_REPLY
 	last if /^};$/;
         next if /^{$/;
 	s!/\*.*\*/!!g;
+	next if /^\s*$/;
 	/ *(\w+\**( +\w+\**)*) +(\w+);/ or die "Unrecognized syntax $_";
 	my $type = $1;
 	my $var = $3;
@@ -238,7 +241,6 @@ sub DO_DUMP_FUNC
 	print TRACE "    printf( \" $var=$formats{$type}";
 	print TRACE "," if ($#_ > 0);
 	print TRACE "\", req->$var );\n";
-	$size .= "+sizeof($type)";
     }
     print TRACE "}\n";
 }

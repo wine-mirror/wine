@@ -11,8 +11,8 @@
 
 #include "wintypes.h"
 
-int  TWEAK_Init();
-int  TWEAK_CheckConfiguration();
+int  TWEAK_Init(void);
+int  TWEAK_CheckConfiguration(void);
 void  TWEAK_DrawReliefRect95(HDC32, RECT32 const *);
 void  TWEAK_DrawRevReliefRect95(HDC32, RECT32 const *);
 void  TWEAK_DrawMenuSeparatorHoriz95(HDC32, UINT32, UINT32, UINT32);

@@ -44,6 +44,7 @@ typedef struct
     BOOL32        wait_all;  /* Wait for all objects flag */
     BOOL32        wait_msg;  /* Wait for message flag */
     K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
+    int           server[MAXIMUM_WAIT_OBJECTS];  /* Server handles */
 } WAIT_STRUCT;
 
 /* Thread database */
@@ -128,6 +129,7 @@ extern THDB *THREAD_Create( struct _PDB32 *pdb, DWORD stack_size,
                             int *server_thandle, int *server_phandle,
                             LPTHREAD_START_ROUTINE start_addr, LPVOID param );
 extern THDB *THREAD_Current(void);
+extern BOOL32 THREAD_IsWin16( THDB *thdb );
 extern void THREAD_Start( THDB *thdb );
 extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );

@@ -15,5 +15,5 @@
  */
 void WINAPI INT_Int20Handler( CONTEXT *context )
 {
-        TASK_KillCurrentTask( 0 );
+        ExitProcess( 0 );
 }

@@ -320,7 +320,7 @@ void WINAPI FatalAppExit32A( UINT32 action, LPCSTR str )
 {
     WARN(dialog,"AppExit\n");
     MessageBox32A( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
-    TASK_KillCurrentTask(0);
+    ExitProcess(0);
 }
 
 
@@ -331,7 +331,7 @@ void WINAPI FatalAppExit32W( UINT32 action, LPCWSTR str )
 {
     WARN(dialog,"AppExit\n");
     MessageBox32W( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
-    TASK_KillCurrentTask(0);
+    ExitProcess(0);
 }
 
 

@@ -99,7 +99,9 @@ static struct openhandle {
 }  *openhandles=NULL;
 static int	nrofopenhandles=0;
 /* Starts after 1 because 0,1 are reserved for Win16 */
-static int	currenthandle=1;
+/* Note: Should always be even, as Win95 ADVAPI32.DLL reserves odd
+         HKEYs for remote registry access */
+static int	currenthandle=2;
 
 
 /*
@@ -1743,7 +1745,8 @@ DWORD WINAPI RegOpenKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey, DWORD dwReserved,
     if (!lpszSubKey || !*lpszSubKey) {
         /* Either NULL or pointer to empty string, so return a new handle
            to the original hkey */
-        add_handle(++currenthandle,lpNextKey,samDesired);
+        currenthandle += 2;
+        add_handle(currenthandle,lpNextKey,samDesired);
         *retkey=currenthandle;
         return ERROR_SUCCESS;
     }
@@ -1776,7 +1779,8 @@ DWORD WINAPI RegOpenKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey, DWORD dwReserved,
         lpNextKey = lpxkey;
     }
 
-    add_handle(++currenthandle,lpxkey,samDesired);
+    currenthandle += 2;
+    add_handle(currenthandle,lpxkey,samDesired);
     *retkey = currenthandle;
     TRACE(reg,"  Returning %x\n", currenthandle);
     FREE_KEY_PATH;
@@ -1909,7 +1913,8 @@ DWORD WINAPI RegCreateKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey,
         return ERROR_INVALID_PARAMETER;
 
 	if (!lpszSubKey || !*lpszSubKey) {
-		add_handle(++currenthandle,lpNextKey,samDesired);
+                currenthandle += 2;
+		add_handle(currenthandle,lpNextKey,samDesired);
 		*retkey=currenthandle;
                 TRACE(reg, "Returning %x\n", currenthandle);
 		lpNextKey->flags|=REG_OPTION_TAINTED;
@@ -1938,7 +1943,8 @@ DWORD WINAPI RegCreateKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey,
 		lpNextKey	= lpxkey;
 	}
 	if (lpxkey) {
-		add_handle(++currenthandle,lpxkey,samDesired);
+                currenthandle += 2;
+		add_handle(currenthandle,lpxkey,samDesired);
 		lpxkey->flags  |= REG_OPTION_TAINTED;
 		*retkey		= currenthandle;
                 TRACE(reg, "Returning %x\n", currenthandle);
@@ -1977,7 +1983,8 @@ DWORD WINAPI RegCreateKeyEx32W( HKEY hkey, LPCWSTR lpszSubKey,
 		lpNextKey	= *lplpPrevKey;
 		i++;
 	}
-	add_handle(++currenthandle,lpNextKey,samDesired);
+        currenthandle += 2;
+	add_handle(currenthandle,lpNextKey,samDesired);
 
 	/*FIXME: flag handling correct? */
 	lpNextKey->flags= fdwOptions |REG_OPTION_TAINTED;

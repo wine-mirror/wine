@@ -1,0 +1,31 @@
+/*
+ * 	internal Shell32 Library definitions
+ */
+
+#ifndef __WINE_SHELL_MAIN_H
+#define __WINE_SHELL_MAIN_H
+
+/*******************************************
+*  global SHELL32.DLL variables
+*/
+extern HINSTANCE32 shell32_hInstance;
+extern UINT32      shell32_DllRefCount;
+extern HIMAGELIST ShellSmallIconList;
+extern HIMAGELIST ShellBigIconList;
+
+/*******************************************
+* pointer to functions dynamically loaded
+*/
+extern void (CALLBACK* pDLLInitComctl)();
+extern INT32 (CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
+extern INT32(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
+extern HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
+extern HICON32 (CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
+
+/* FIXME should be moved to a header file. IsEqualGUID 
+is declared but not exported in compobj.c !!!*/
+#define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
+#define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
+#define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
+
+#endif

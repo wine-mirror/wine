@@ -73,7 +73,7 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
     if (lpofn->Flags & OFN_WINE32) {
 	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
 	    {
-		if (!(template = LockResource32( lpofn->hInstance )))
+		if (!(template = LockResource32( MapHModuleSL(lpofn->hInstance ))))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
 		    return FALSE;
@@ -81,13 +81,14 @@ BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 	    }
 	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
 	    {
-		if (!(hResInfo = FindResource32A(lpofn->hInstance,
+		if (!(hResInfo = FindResource32A(MapHModuleSL(lpofn->hInstance),
 						PTR_SEG_TO_LIN(lpofn->lpTemplateName), RT_DIALOG32A)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
 		}
-		if (!(hDlgTmpl = LoadResource32( lpofn->hInstance, hResInfo )) ||
+		if (!(hDlgTmpl = LoadResource32( MapHModuleSL(lpofn->hInstance),
+						 hResInfo )) ||
 		    !(template = LockResource32( hDlgTmpl )))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
@@ -198,7 +199,7 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
     if (lpofn->Flags & OFN_WINE32) {
 	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
 	    {
-		if (!(template = LockResource32( lpofn->hInstance )))
+		if (!(template = LockResource32( MapHModuleSL(lpofn->hInstance ))))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
 		    return FALSE;
@@ -207,14 +208,15 @@ BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
 	    {
 		HANDLE32 hResInfo;
-		if (!(hResInfo = FindResource32A(lpofn->hInstance,
+		if (!(hResInfo = FindResource32A(MapHModuleSL(lpofn->hInstance),
 						 PTR_SEG_TO_LIN(lpofn->lpTemplateName),
                                                  RT_DIALOG32A)))
 		{
 		    CommDlgLastError = CDERR_FINDRESFAILURE;
 		    return FALSE;
 		}
-		if (!(hDlgTmpl = LoadResource32(lpofn->hInstance,hResInfo)) ||
+		if (!(hDlgTmpl = LoadResource32(MapHModuleSL(lpofn->hInstance),
+						hResInfo)) ||
 		    !(template = LockResource32(hDlgTmpl)))
 		{
 		    CommDlgLastError = CDERR_LOADRESFAILURE;
@@ -3646,8 +3648,7 @@ static BOOL32 Commdlg_GetFileName32A( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	memset(ofn16,'\0',sizeof(*ofn16));
 	ofn16->lStructSize = sizeof(*ofn16);
 	ofn16->hwndOwner = ofn->hwndOwner;
-	/* FIXME: OPENFILENAME16 got only 16 bit for HINSTANCE... */
-	ofn16->hInstance = 0;
+	ofn16->hInstance = MapHModuleLS(ofn->hInstance);
 	if (ofn->lpstrFilter) {
 		LPSTR	s,x;
 
@@ -3736,8 +3737,7 @@ static BOOL32 Commdlg_GetFileName32W( BOOL16 (CALLBACK *dofunction)(SEGPTR x),
 	memset(ofn16,'\0',sizeof(*ofn16));
 	ofn16->lStructSize = sizeof(*ofn16);
 	ofn16->hwndOwner = ofn->hwndOwner;
-	/* FIXME: OPENFILENAME16 got only 16 bit for HINSTANCE... */
-	ofn16->hInstance = 0;
+	ofn16->hInstance = MapHModuleLS(ofn->hInstance);
 	if (ofn->lpstrFilter) {
 		LPWSTR	s;
 		LPSTR	x,y;
@@ -3881,7 +3881,7 @@ BOOL32 WINAPI ChooseColor32A(LPCHOOSECOLOR32A lpChCol )
   memset(lpcc16,'\0',sizeof(*lpcc16));
   lpcc16->lStructSize=sizeof(*lpcc16);
   lpcc16->hwndOwner=lpChCol->hwndOwner;
-  lpcc16->hInstance=0; /* FIXME:MODULE_HANDLEtoHMODULE16(lpChCol->hInstance)*/
+  lpcc16->hInstance=MapHModuleLS(lpChCol->hInstance);
   lpcc16->rgbResult=lpChCol->rgbResult;
   memcpy(ccref,lpChCol->lpCustColors,64);
   lpcc16->lpCustColors=(COLORREF*)SEGPTR_GET(ccref);
@@ -3915,7 +3915,7 @@ BOOL32 WINAPI ChooseColor32W(LPCHOOSECOLOR32W lpChCol )
   memset(lpcc16,'\0',sizeof(*lpcc16));
   lpcc16->lStructSize=sizeof(*lpcc16);
   lpcc16->hwndOwner=lpChCol->hwndOwner;
-  lpcc16->hInstance=0; /*FIXME:MODULE_HANDLEtoHMODULE16(lpChCol->hInstance)*/
+  lpcc16->hInstance=MapHModuleLS(lpChCol->hInstance);
   lpcc16->rgbResult=lpChCol->rgbResult;
   memcpy(ccref,lpChCol->lpCustColors,64);
   lpcc16->lpCustColors=(COLORREF*)SEGPTR_GET(ccref);

@@ -80,6 +80,8 @@ extern void QUEUE_WalkQueues(void);
 extern BOOL32 QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
 extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
+extern void QUEUE_Signal( HTASK16 hTask );
+extern void QUEUE_Wait(void);
 extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue );

@@ -142,7 +142,7 @@ extern PDB32 *PROCESS_GetPtr( HANDLE32 handle, DWORD access, int *server_handle 
 extern PDB32 *PROCESS_IdToPDB( DWORD id );
 extern PDB32 *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,
                               LPCSTR env, HINSTANCE16 hInstance,
-                              HINSTANCE16 hPrevInstance, UINT32 cmdShow,
+                              HINSTANCE16 hPrevInstance, STARTUPINFO32A *startup,
                               PROCESS_INFORMATION *info );
 extern void PROCESS_SuspendOtherThreads(void);
 extern void PROCESS_ResumeOtherThreads(void);

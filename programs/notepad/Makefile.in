@@ -49,6 +49,9 @@ notepad: $(MOSTOBJS) $(STRINGOBJS)
 install: dummy
 	$(INSTALL_PROGRAM) notepad $(bindir)/notepad
 
+uninstall: dummy
+	$(RM) $(bindir)/notepad
+
 $(RC_SRCS:.rc=.s): $(WRC)
 
 dummy:

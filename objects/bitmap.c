@@ -394,6 +394,22 @@ LONG WINAPI GetBitmapBits32(
             tbuf += pad;
 	}
         break;
+
+    case 32:
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+	    	long pixel = XGetPixel(image,w,h);
+
+		*tbuf++ = pixel & 0xff;
+		*tbuf++ = (pixel>> 8) & 0xff;
+		*tbuf++ = (pixel>>16) & 0xff;
+		*tbuf++ = (pixel>>24) & 0xff;
+	    }
+            tbuf += pad;
+	}
+        break;
     default:
         FIXME(bitmap, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
     }
@@ -524,6 +540,20 @@ LONG WINAPI SetBitmapBits32(
             sbuf += pad;
         }
         break;
+    case 32: 
+        for (h=0;h<height;h++)
+        {
+            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            {
+                XPutPixel(image,w,h,(sbuf[3]<<24)+(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
+                sbuf += 4;
+            }
+            sbuf += pad;
+        }
+        break;
+    default:
+      FIXME(bitmap, "Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
+
     }
 
     descr.bmp    = bmp;
@@ -684,7 +714,7 @@ HBITMAP32 WINAPI CopyBitmap32 (HBITMAP32 hnd)
  * FIXME: implementation still lacks nearly all features, see LR_*
  * defines in windows.h
  */
-HANDLE32 WINAPI CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
+HICON32 WINAPI CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
                              INT32 desiredy, UINT32 flags )
 {
     switch (type)
@@ -698,7 +728,6 @@ HANDLE32 WINAPI CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
     }
     return 0;
 }
-
 
 /**********************************************************************
  *	    LoadBitmap16    (USER.175)

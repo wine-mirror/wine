@@ -7,6 +7,9 @@
  */
 
 #include <ctype.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <unistd.h>
 
 #include "windows.h"
 #include "winerror.h"
@@ -423,6 +426,31 @@ UINT16 WINAPI WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
 {
 	FIXME(wnet, "(%p, %p, %p): stub\n", lpLocalName, lpUserName, lpSize);
 	return WN_NO_NETWORK;
+}
+
+/**************************************************************************
+ *				WNetGetUser			[MPR.86]
+ * FIXME: we should not return ourselves, but the owner of the drive lpLocalName
+ */
+DWORD WINAPI WNetGetUser32A(LPCSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)
+{
+	struct passwd	*pwd = getpwuid(getuid());
+
+	FIXME(wnet, "(%s, %p, %p), mostly stub\n", lpLocalName, lpUserName, lpSize);
+	if (pwd) {
+		if (strlen(pwd->pw_name)+1>*lpSize) {
+			*lpSize = strlen(pwd->pw_name)+1;
+			SetLastError(ERROR_MORE_DATA);
+			return ERROR_MORE_DATA;
+		}
+		strcpy(lpUserName,pwd->pw_name);
+		if (lpSize)
+			*lpSize = strlen(pwd->pw_name)+1;
+		return WN_SUCCESS;
+	}
+	/* FIXME: wrong return value */
+	SetLastError(ERROR_NO_NETWORK);
+	return ERROR_NO_NETWORK;
 }
 
 /**************************************************************************

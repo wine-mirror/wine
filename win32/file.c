@@ -138,16 +138,15 @@ HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
     if(template)
         FIXME(file, "template handles not supported.\n");
 
+    if(!filename)
+      return HFILE_ERROR32;
     /* If the name starts with '\\?\' or '\\.\', ignore the first 4 chars.
      */
     if(!strncmp(filename, "\\\\?\\", 4) || !strncmp(filename, "\\\\.\\", 4))
     {
         if (filename[2] == '.')
-        {
-            FIXME(file,"device name? %s\n",filename);
-            /* device? */
             return DEVICE_Open( filename+4, access_flags | create_flags );
-        }
+
         filename += 4;
 	if (!strncmp(filename, "UNC", 3))
 	{

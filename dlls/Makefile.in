@@ -1,0 +1,21 @@
+SUBDIRS = \
+	shell32
+
+all: $(SUBDIRS)
+
+$(SUBDIRS): dummy
+	@cd $@; $(MAKE)
+
+depend:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) depend) || exit 1; done
+
+install:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) install) || exit 1; done
+
+uninstall:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) uninstall) || exit 1; done
+
+clean:
+	for i in $(SUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
+
+dummy:

@@ -223,31 +223,6 @@ while ($exe=<FIND>) {
 		#print "skipping $exe, already done.\n";
 		next;
 	}
-
-	# check runfile if the exe is a DOS executeable or 
-	# of different architecture (win32)
-	if (open(RUNFILE,"runs/$runfile.out")) {
-		while ($xrun=<RUNFILE>) {
-			chop($xrun);
-			if ($xrun=~ /LoadModule:.*error=11$/) {
-				$flag=1;
-				last;
-			}
-			if ($xrun=~ /LoadModule:.*error=21$/) {
-				$flag=2;
-				last;
-			}
-		}
-		close(RUNFILE);
-		if ($flag==1) {
-			#print "skipping $exe, seems to be a DOS executable.\n";
-			next;
-		}
-		if ($flag==2) {
-			#print "skipping $exe, seems to be a non i386 executable.\n";
-			next;
-		}
-	}
 	# now testrun...
 	print "$exe:\n";
 	$dir = $exe;

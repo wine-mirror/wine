@@ -166,7 +166,7 @@ type	win32
 162 stdcall GetClipBox(long ptr) GetClipBox32
 163 stdcall GetClipRgn(long long) GetClipRgn32
 164 stub GetColorAdjustment
-165 stub GetColorSpace
+165 stdcall GetColorSpace(long) GetColorSpace
 166 stdcall GetCurrentObject(long long) GetCurrentObject
 167 stdcall GetCurrentPositionEx(long ptr) GetCurrentPositionEx32
 168 stdcall GetDCOrgEx(long ptr) GetDCOrgEx
@@ -319,7 +319,7 @@ type	win32
 315 stdcall SetEnhMetaFileBits(long ptr) SetEnhMetaFileBits
 316 stub SetFontEnumeration
 317 stdcall SetGraphicsMode(long long) SetGraphicsMode
-318 stub SetICMMode
+318 stdcall SetICMMode(long long) SetICMMode
 319 stub SetICMProfileA
 320 stub SetICMProfileW
 321 stdcall SetMapMode(long long) SetMapMode32

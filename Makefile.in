@@ -5,6 +5,7 @@
 # clean:		remove all intermediate files
 # distclean:		also remove all files created by configure
 # install:              install everything
+# uninstall:		uninstall everything
 # depend:		create the dependencies
 # etags:		create a TAGS file for Emacs.
 # manpages:		compile manpages for Wine API
@@ -26,6 +27,7 @@ LIBSUBDIRS = \
 	tools \
 	tools/wrc \
 	controls \
+	dlls/shell32 \
 	files \
 	graphics \
 	graphics/metafiledrv \
@@ -75,6 +77,7 @@ INSTALLSUBDIRS = $(DOCSUBDIRS)
 
 LIBOBJS = \
 	controls/controls.o \
+	dlls/shell32/shell32.o \
 	files/files.o \
 	graphics/graphics.o \
 	graphics/metafiledrv/metafiledrv.o \
@@ -112,6 +115,8 @@ all: $(MAIN_TARGET)
 
 install:: install_$(MAIN_TARGET)
 
+uninstall:: uninstall_$(MAIN_TARGET)
+
 emu: wine
 
 lib: $(LIBSUBDIRS) $(LIB_TARGET)
@@ -129,18 +134,31 @@ libwine.so.1.0: $(LIBOBJS)
 	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 
 install_emu: install_lib
-	-mkdirhier $(bindir)
-	-mkdirhier $(libdir)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
-	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 
+uninstall_emu: uninstall_lib
+	$(RM) $(bindir)/wine $(bindir)/dosmod
+
 install_lib: install_includes
+	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	$(INSTALL_DATA) $(LIB_TARGET) $(libdir)
+	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
+
+uninstall_lib: uninstall_includes
+	cd $(libdir); $(RM) $(LIB_TARGET)
+	$(RM) $(libdir)/wine.sym
 
 install_includes: dummy
-	if [ -d $(includedir) ]; then : ; else $(MKDIR) $(includedir); fi 
+	[ -d $(includedir) ] || $(MKDIR) $(includedir)
 	cd $(TOPSRCDIR)/include; $(INSTALL_DATA) windows.h wintypes.h $(includedir)
+
+# Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
+# anything extra the user may have put there.
+uninstall_includes: dummy
+	$(RM) $(includedir)/windows.h $(includedir)/wintypes.h
+	-rmdir $(includedir)
 
 $(ALLSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
@@ -148,8 +166,14 @@ $(ALLSUBDIRS): dummy
 install_programs: dummy
 	@cd programs; $(SUBMAKE) install
 
+uninstall_programs: dummy
+	@cd programs; $(SUBMAKE) uninstall
+
 install::
 	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) install) || exit 1; done
+
+uninstall::
+	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) uninstall) || exit 1; done
 
 depend:: dummy
 	for i in $(DEPENDSUBDIRS); do (cd $$i && $(MAKE) depend) || exit 1; done

@@ -6,15 +6,29 @@
 
 #include "windows.h"
 #include "winreg.h"
+#include "imagelist.h"
 
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
 
+/****************************************************************************
+* shell 16
+*/
 extern void SHELL_LoadRegistry();
 extern void SHELL_SaveRegistry();
 extern void SHELL_Init();
 
+/* global functions used from shell32 */
+extern HINSTANCE32 SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);
+extern HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16,LPCSTR,UINT16,WORD);
+
+/****************************************************************************
+* shell 32
+*/
+/****************************************************************************
+* common return codes 
+*/
 #define SHELL_ERROR_SUCCESS           0L
 #define SHELL_ERROR_BADDB             1L
 #define SHELL_ERROR_BADKEY            2L
@@ -25,8 +39,8 @@ extern void SHELL_Init();
 #define SHELL_ERROR_INVALID_PARAMETER 7L
 #define SHELL_ERROR_ACCESS_DENIED     8L
 
-/******************************
-* common shell file structures
+/****************************************************************************
+* common shell file structures 
 */
 #define FO_MOVE           0x0001
 #define FO_COPY           0x0002
@@ -63,8 +77,8 @@ typedef struct { 	   /* structure for dropped files */
 	/* memory block with filenames follows */     
 } DROPFILESTRUCT, *LPDROPFILESTRUCT; 
 
-/******************************
-* NOTIFYICONDATA
+/****************************************************************************
+* NOTIFYICONDATA 
 */
 typedef struct _NOTIFYICONDATA {
 	DWORD cbSize;
@@ -76,8 +90,8 @@ typedef struct _NOTIFYICONDATA {
 	CHAR szTip[64];
 } NOTIFYICONDATA, *PNOTIFYICONDATA;
 
-/*******************************
-* SHITEMID, ITEMIDLIST, PIDL API
+/****************************************************************************
+* SHITEMID, ITEMIDLIST, PIDL API 
 */
 typedef struct 
 { WORD		cb;	/* nr of bytes in this item */
@@ -89,6 +103,7 @@ typedef struct
 } ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
 
 LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl);
+LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl);
 LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST iil1,LPCITEMIDLIST iil2);
 DWORD WINAPI ILGetSize(LPITEMIDLIST pidl);
 
@@ -97,7 +112,7 @@ DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define  SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
 /****************************************************************************
-* SHFILEINFO API
+* SHFILEINFO API 
 */
 typedef struct tagSHFILEINFO32A {
 	HICON32	hIcon;			/* icon */
@@ -122,7 +137,7 @@ DWORD    WINAPI SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
 #define  SHGetFileInfo WINELIB_NAME_AW(SHGetFileInfo)
 
 /****************************************************************************
-* SHFILEOPSTRUCT API
+* SHFILEOPSTRUCT API 
 */
 typedef struct _SHFILEOPSTRUCTA
 { HWND32          hwnd;
@@ -153,7 +168,7 @@ DECL_WINELIB_TYPE_AW(SHFILEOPSTRUCT)
 
 DWORD WINAPI SHFileOperation32(LPSHFILEOPSTRUCT32 lpFileOp);
 
-/****************
+/****************************************************************************
 * APPBARDATA 
 */
 typedef struct _AppBarData {
@@ -188,6 +203,7 @@ typedef struct
 { LPITEMIDLIST pidl;
   DWORD unknown;
 } IDSTRUCT;
+
 DWORD WINAPI SHChangeNotifyRegister(HWND32 hwnd,LONG events1,LONG events2,DWORD msg,int count,IDSTRUCT *idlist);
 DWORD WINAPI SHChangeNotifyDeregister(LONG x1,LONG x2);
 
@@ -200,13 +216,17 @@ DWORD WINAPI SHChangeNotifyDeregister(LONG x1,LONG x2);
 DWORD WINAPI SHAddToRecentDocs(UINT32 uFlags, LPCVOID pv);
 
 /****************************************************************************
+*  string and path functions
+*/
+LPSTR WINAPI PathAddBackslash(LPSTR path);	
+LPSTR WINAPI PathCombine(LPSTR target,LPSTR x1,LPSTR x2);
+LPSTR WINAPI PathRemoveBlanks(LPSTR str);
+LPSTR WINAPI PathFindFilename(LPSTR fn);
+/****************************************************************************
 *  other functions
 */
 LPVOID WINAPI SHAlloc(DWORD len);
 DWORD WINAPI SHFree(LPVOID x);
-LPSTR WINAPI PathAddBackslash(LPSTR path);	
-LPSTR WINAPI PathCombine(LPSTR target,LPSTR x1,LPSTR x2);
-LPSTR WINAPI PathRemoveBlanks(LPSTR str);
 
 #define SE_ERR_SHARE            26
 #define SE_ERR_ASSOCINCOMPLETE  27
@@ -232,11 +252,5 @@ LPSTR WINAPI PathRemoveBlanks(LPSTR str);
 #define	CSIDL_NETHOOD		0x0013
 #define	CSIDL_FONTS		0x0014
 #define	CSIDL_TEMPLATES		0x0015
-
-/*******************************************
-*  global SHELL32.DLL variables
-*/
-extern HINSTANCE32 shell32_hInstance;
-extern UINT32      shell32_DllRefCount;
 
 #endif  /* __WINE_SHELL_H */

@@ -18,6 +18,7 @@
 #include "selectors.h"
 #include "task.h"
 #include "win.h"
+#include "file.h"
 #include "debug.h"
 #include "flatthunk.h"
 #include "syslevel.h"
@@ -252,6 +253,7 @@ REGS_ENTRYPOINT(QT_Thunk)
             (LPBYTE)ESP_reg(context)+4, argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
+    EDX_reg(context) = HIWORD(EAX_reg(context));
 }
 
 
@@ -378,6 +380,7 @@ REGS_ENTRYPOINT(FT_Thunk)
 	}
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
+    EDX_reg(context) = HIWORD(EAX_reg(context));
 }
 
 /**********************************************************************
@@ -1066,7 +1069,7 @@ BOOL16 WINAPI IsPeFormat(
 	HFILE16 hf16	/* [in] open file, if filename is NULL */
 ) {
 	IMAGE_DOS_HEADER	mzh;
-	HFILE32			hf=hf16;
+        HFILE32                 hf=HFILE16_TO_HFILE32(hf16);
 	OFSTRUCT		ofs;
 	DWORD			xmagic;
 
@@ -1205,10 +1208,3 @@ REGS_ENTRYPOINT(K32Thk1632Epilog)
    }
 }
 
-/***********************************************************************
- *           VxDCall			(KERNEL32.1-8)
- */
-DWORD WINAPI VxDCall(DWORD x) {
-	FIXME(vxd,"(0x%08lx), stub!\n",x);
-	return 0xffffffff;
-}

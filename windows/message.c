@@ -449,7 +449,8 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
     joySendMessages();
 
     /* If the queue is empty, attempt to fill it */
-    if (!sysMsgQueue->msgCount && TSXPending(display))
+    if (!sysMsgQueue->msgCount && THREAD_IsWin16( THREAD_Current() )
+                               && TSXPending(display))
         EVENT_WaitNetEvent( FALSE, FALSE );
 
     for (i = kbd_msg = 0; i < sysMsgQueue->msgCount; i++, pos++)
@@ -634,7 +635,10 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
       if (!(queue->wakeBits & QS_SMRESULT))
       {
         queue->changeBits &= ~QS_SMRESULT;
-        DirectedYield( destQ->hTask );
+        if (THREAD_IsWin16( THREAD_Current() ))
+          DirectedYield( destQ->hTask );
+        else
+          QUEUE_Signal( destQ->hTask );
         QUEUE_WaitBits( QS_SMRESULT );
 	TRACE(sendmsg,"\tsm: have result!\n");
       }
@@ -684,7 +688,7 @@ void WINAPI ReplyMessage16( LRESULT result )
       }
 
       if(!(senderQ->wakeBits & QS_SMRESULT) ) break;
-      OldYield();
+      if (THREAD_IsWin16(THREAD_Current())) OldYield();
     } 
     if( !senderQ ) { TRACE(msg,"\trpm: done\n"); return; }
 
@@ -696,7 +700,7 @@ void WINAPI ReplyMessage16( LRESULT result )
     queue->InSendMessageHandle = 0;
 
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
-    DirectedYield( queue->hSendingTask );
+    if (THREAD_IsWin16(THREAD_Current())) DirectedYield( queue->hSendingTask );
 }
 
 
@@ -728,6 +732,9 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
     else mask |= QS_MOUSE | QS_KEY | QS_TIMER | QS_PAINT;
 
     if (IsTaskLocked()) flags |= PM_NOYIELD;
+
+    /* Never yield on Win32 threads */
+    if (!THREAD_IsWin16(THREAD_Current())) flags |= PM_NOYIELD;
 
     while(1)
     {    

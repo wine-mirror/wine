@@ -19,7 +19,10 @@ winver: $(OBJS)
 	$(CC) -o winver $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy
-	$(INSTALL_PROGRAM) winver $(bindir)/program
+	$(INSTALL_PROGRAM) winver $(bindir)/winver
+
+uninstall: dummy
+	$(RM) $(bindir)/winver
 
 dummy:
 

@@ -18,32 +18,32 @@ typedef struct
     INT32     fmt;
     LPARAM    lParam;
     INT32     iImage;
-    INT32     iOrder;
+    INT32     iOrder;		/* see documentation of HD_ITEM */
 
-    BOOL32    bDown;
-    RECT32    rect;
+    BOOL32    bDown;		/* is item pressed? (used for drawing) */
+    RECT32    rect;		/* bounding rectangle of the item */
 } HEADER_ITEM;
 
 
 typedef struct
 {
-    UINT32      uNumItem;
-    INT32       nHeight;
-    HFONT32     hFont;
-    HCURSOR32   hcurArrow;
-    HCURSOR32   hcurDivider;
-    HCURSOR32   hcurDivopen;
-    BOOL32      bCaptured;
-    BOOL32      bPressed;
-    BOOL32      bTracking;
-    INT32       iMoveItem;
-    INT32       xTrackOffset;
-    INT32       xOldTrack;
-    INT32       nOldWidth;
-    INT32       iHotItem;
+    UINT32      uNumItem;	/* number of items (columns) */
+    INT32       nHeight;	/* height of the header (pixels) */
+    HFONT32     hFont;		/* handle to the current font */
+    HCURSOR32   hcurArrow;	/* handle to the arrow cursor */
+    HCURSOR32   hcurDivider;	/* handle to a cursor (used over dividers) <-|-> */
+    HCURSOR32   hcurDivopen;	/* handle to a cursor (used over dividers) <-||-> */
+    BOOL32      bCaptured;	/* Is the mouse captured? */
+    BOOL32      bPressed;	/* Is a header item pressed (down)? */
+    BOOL32      bTracking;	/* Is in tracking mode? */
+    INT32       iMoveItem;	/* index of tracked item. (Tracking mode) */
+    INT32       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
+    INT32       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
+    INT32       nOldWidth;	/* width of a sizing item after the last WM_MOUSEMOVE */
+    INT32       iHotItem;	/* index of hot item (cursor is over this item) */
 
-    HIMAGELIST  himl;
-    HEADER_ITEM *items;
+    HIMAGELIST  himl;		/* handle to a image list (may be 0) */
+    HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
 } HEADER_INFO;
 
 

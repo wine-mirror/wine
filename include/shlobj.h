@@ -7,6 +7,7 @@
 #include "compobj.h"
 #include "storage.h"
 #include "commctrl.h"
+#include "interfaces.h"
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(type,xfn) type (CALLBACK *fn##xfn)
@@ -25,11 +26,15 @@ DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
 typedef LPVOID	LPBC; /* *IBindCtx really */
 
 /* foreward declaration of the objects*/
-typedef struct IEnumIDList IEnumIDList,*LPENUMIDLIST;
-typedef struct tagSHELLFOLDER *LPSHELLFOLDER,IShellFolder;
-typedef struct tagSHELLVIEW *LPSHELLVIEW,IShellView;
-typedef struct tagSHELLBROWSER *LPSHELLBROWSER,IShellBrowser;
 
+typedef struct IContextMenu		IContextMenu,	*LPCONTEXTMENU;
+typedef struct IShellExtInit	IShellExtInit, 	*LPSHELLEXTINIT;
+typedef struct IEnumIDList		IEnumIDList,	*LPENUMIDLIST;
+typedef struct tagSHELLFOLDER	*LPSHELLFOLDER,	IShellFolder;
+typedef struct tagSHELLVIEW		*LPSHELLVIEW,	IShellView;
+typedef struct tagSHELLBROWSER	*LPSHELLBROWSER,IShellBrowser;
+
+typedef struct IDataObject		IDataObject,	*LPDATAOBJECT;
 /****************************************************************************
 *  SHELL ID
 */
@@ -114,17 +119,18 @@ typedef struct PidlMgr_VTable
    STDMETHOD_(LPITEMIDLIST, CreateDrive) (THIS_ LPCSTR);
    STDMETHOD_(LPITEMIDLIST, CreateFolder) (THIS_ LPCSTR);
    STDMETHOD_(LPITEMIDLIST, CreateValue) (THIS_ LPCSTR);
-/*   STDMETHOD_(void, Delete) (THIS_ LPITEMIDLIST);*/
-   STDMETHOD_(LPITEMIDLIST, GetNextItem) (THIS_ LPCITEMIDLIST);
+
    STDMETHOD_(BOOL32, GetDesktop) (THIS_ LPCITEMIDLIST, LPSTR);
    STDMETHOD_(BOOL32, GetDrive) (THIS_ LPCITEMIDLIST, LPSTR, UINT16);
    STDMETHOD_(LPITEMIDLIST, GetLastItem) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(DWORD, GetItemText) (THIS_ LPCITEMIDLIST, LPSTR, UINT16);
+
    STDMETHOD_(BOOL32, IsDesktop) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(BOOL32, IsMyComputer) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(BOOL32, IsDrive) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(BOOL32, IsFolder) (THIS_ LPCITEMIDLIST);
    STDMETHOD_(BOOL32, IsValue) (THIS_ LPCITEMIDLIST);
+
    STDMETHOD_(BOOL32, HasFolders) (THIS_ LPSTR, LPCITEMIDLIST);
    STDMETHOD_(DWORD, GetFolderText) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
    STDMETHOD_(DWORD, GetValueText) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
@@ -146,6 +152,136 @@ struct pidlmgr
 extern LPPIDLMGR PidlMgr_Constructor();
 extern void PidlMgr_Destructor(THIS);
 #endif
+
+#undef THIS
+/*****************************************************************************
+ * IContextMenu interface
+ */
+#define THIS LPCONTEXTMENU this
+
+/* QueryContextMenu uFlags */
+#define CMF_NORMAL              0x00000000
+#define CMF_DEFAULTONLY         0x00000001
+#define CMF_VERBSONLY           0x00000002
+#define CMF_EXPLORE             0x00000004
+#define CMF_NOVERBS             0x00000008
+#define CMF_CANRENAME           0x00000010
+#define CMF_NODEFAULT           0x00000020
+#define CMF_INCLUDESTATIC       0x00000040
+#define CMF_RESERVED            0xffff0000      // View specific
+
+/* GetCommandString uFlags */
+#define GCS_VERBA        0x00000000     // canonical verb
+#define GCS_HELPTEXTA    0x00000001     // help text (for status bar)
+#define GCS_VALIDATEA    0x00000002     // validate command exists
+#define GCS_VERBW        0x00000004     // canonical verb (unicode)
+#define GCS_HELPTEXTW    0x00000005     // help text (unicode version)
+#define GCS_VALIDATEW    0x00000006     // validate command exists (unicode)
+#define GCS_UNICODE      0x00000004     // for bit testing - Unicode string
+
+#define GCS_VERB        GCS_VERBA
+#define GCS_HELPTEXT    GCS_HELPTEXTA
+#define GCS_VALIDATE    GCS_VALIDATEA
+
+#define CMDSTR_NEWFOLDERA   "NewFolder"
+#define CMDSTR_VIEWLISTA    "ViewList"
+#define CMDSTR_VIEWDETAILSA "ViewDetails"
+#define CMDSTR_NEWFOLDERW   L"NewFolder"
+#define CMDSTR_VIEWLISTW    L"ViewList"
+#define CMDSTR_VIEWDETAILSW L"ViewDetails"
+
+#define CMDSTR_NEWFOLDER    CMDSTR_NEWFOLDERA
+#define CMDSTR_VIEWLIST     CMDSTR_VIEWLISTA
+#define CMDSTR_VIEWDETAILS  CMDSTR_VIEWDETAILSA
+
+#define CMIC_MASK_HOTKEY        SEE_MASK_HOTKEY
+#define CMIC_MASK_ICON          SEE_MASK_ICON
+#define CMIC_MASK_FLAG_NO_UI    SEE_MASK_FLAG_NO_UI
+#define CMIC_MASK_UNICODE       SEE_MASK_UNICODE
+#define CMIC_MASK_NO_CONSOLE    SEE_MASK_NO_CONSOLE
+#define CMIC_MASK_HASLINKNAME   SEE_MASK_HASLINKNAME
+#define CMIC_MASK_FLAG_SEP_VDM  SEE_MASK_FLAG_SEPVDM
+#define CMIC_MASK_HASTITLE      SEE_MASK_HASTITLE
+#define CMIC_MASK_ASYNCOK       SEE_MASK_ASYNCOK
+
+#define CMIC_MASK_PTINVOKE      0x20000000
+
+/*NOTE: When SEE_MASK_HMONITOR is set, hIcon is treated as hMonitor */
+typedef struct _CMINVOKECOMMANDINFO 
+{   DWORD cbSize;        // sizeof(CMINVOKECOMMANDINFO)
+    DWORD fMask;         // any combination of CMIC_MASK_*
+    HWND32 hwnd;         // might be NULL (indicating no owner window)
+    LPCSTR lpVerb;       // either a string or MAKEINTRESOURCE(idOffset)
+    LPCSTR lpParameters; // might be NULL (indicating no parameter)
+    LPCSTR lpDirectory;  // might be NULL (indicating no specific directory)
+    int nShow;           // one of SW_ values for ShowWindow() API
+
+    DWORD dwHotKey;
+    HANDLE32 hIcon;
+} CMINVOKECOMMANDINFO,  *LPCMINVOKECOMMANDINFO;
+
+typedef struct _CMInvokeCommandInfoEx 
+{   DWORD cbSize;        // must be sizeof(CMINVOKECOMMANDINFOEX)
+    DWORD fMask;         // any combination of CMIC_MASK_*
+    HWND32 hwnd;         // might be NULL (indicating no owner window)
+    LPCSTR lpVerb;       // either a string or MAKEINTRESOURCE(idOffset)
+    LPCSTR lpParameters; // might be NULL (indicating no parameter)
+    LPCSTR lpDirectory;  // might be NULL (indicating no specific directory)
+    int nShow;           // one of SW_ values for ShowWindow() API
+
+    DWORD dwHotKey;
+    
+    HANDLE32 hIcon;
+    LPCSTR lpTitle;        // For CreateProcess-StartupInfo.lpTitle
+    LPCWSTR lpVerbW;       // Unicode verb (for those who can use it)
+    LPCWSTR lpParametersW; // Unicode parameters (for those who can use it)
+    LPCWSTR lpDirectoryW;  // Unicode directory (for those who can use it)
+    LPCWSTR lpTitleW;      // Unicode title (for those who can use it)
+    POINT32 ptInvoke;      // Point where it's invoked
+
+} CMINVOKECOMMANDINFOEX,  *LPCMINVOKECOMMANDINFOEX;
+
+
+typedef struct IContextMenu_VTable
+{   // *** IUnknown methods ***
+    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+    STDMETHOD(QueryContextMenu)(THIS_ HMENU32 hmenu,UINT32 indexMenu,UINT32 idCmdFirst, UINT32 idCmdLast,UINT32 uFlags) PURE;
+    STDMETHOD(InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO lpici) PURE;
+    STDMETHOD(GetCommandString)(THIS_ UINT32 idCmd,UINT32 uType,UINT32 * pwReserved,LPSTR pszName,UINT32 cchMax) PURE;
+} IContextMenu_VTable,*LPCONTEXTMENU_VTABLE;
+
+struct IContextMenu
+{ LPCONTEXTMENU_VTABLE	lpvtbl;
+  DWORD			ref;
+  LPSHELLFOLDER	pSFParent;
+  LPITEMIDLIST	*aPidls;
+  LPPIDLMGR		pPidlMgr;
+  BOOL32		bAllValues;
+};
+
+#undef THIS
+/*****************************************************************************
+ * IShellExtInit interface
+ */
+#define THIS LPSHELLEXTINIT this
+
+typedef struct IShellExtInit_VTable 
+{   // *** IUnknown methods ***
+    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+    // *** IShellExtInit methods ***
+    STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST pidlFolder, LPDATAOBJECT lpdobj, HKEY hkeyProgID) PURE;
+} IShellExtInit_VTable,*LPSHELLEXTINIT_VTABLE;
+
+struct IShellExtInit
+{ LPSHELLEXTINIT_VTABLE	lpvtbl;
+  DWORD			 ref;
+};
 
 #undef THIS
 
@@ -310,16 +446,20 @@ typedef struct IShellFolder_VTable {
     STDMETHOD(GetUIObjectOf)(THIS_ HWND32 hwndOwner, UINT32 cidl, LPCITEMIDLIST * apidl,REFIID riid, UINT32 * prgfInOut, LPVOID * ppvOut) PURE;
     STDMETHOD(GetDisplayNameOf)(THIS_ LPCITEMIDLIST pidl, DWORD uFlags, LPSTRRET lpName) PURE;
     STDMETHOD(SetNameOf)(THIS_ HWND32 hwndOwner, LPCITEMIDLIST pidl,LPCOLESTR32 lpszName, DWORD uFlags,LPITEMIDLIST * ppidlOut) PURE;
+
+	/* utility functions */
+   STDMETHOD_(BOOL32,GetFolderPath)(THIS_ LPSTR, DWORD);
+   
 } *LPSHELLFOLDER_VTABLE,IShellFolder_VTable;
 
 struct tagSHELLFOLDER {
 	LPSHELLFOLDER_VTABLE	lpvtbl;
-	DWORD			   ref;
-	LPSTR        mlpszFolder;
-    LPPIDLMGR	   pPidlMgr;
-	LPITEMIDLIST mpidl;
-	LPITEMIDLIST mpidlNSRoot;
-	LPSHELLFOLDER mpSFParent;
+	DWORD			ref;
+	LPSTR			mlpszFolder;
+    LPPIDLMGR		pPidlMgr;
+	LPITEMIDLIST	mpidl;
+	LPITEMIDLIST	mpidlNSRoot;
+	LPSHELLFOLDER	mpSFParent;
 };
 
 extern LPSHELLFOLDER pdesktopfolder;
@@ -329,6 +469,12 @@ extern LPSHELLFOLDER pdesktopfolder;
 * IShellBrowser Inteface
 */
 #define THIS LPSHELLBROWSER this
+
+#define FCW_STATUS      0x0001
+#define FCW_TOOLBAR     0x0002
+#define FCW_TREE        0x0003
+#define FCW_INTERNETBAR 0x0006
+#define FCW_PROGRESS    0x0008
 
 typedef struct IShellBrowser_VTable 
 {    // *** IUnknown methods ***
@@ -383,6 +529,42 @@ struct tagSHELLBROWSER
 #define SVGIO_SELECTION     0x00000001
 #define SVGIO_ALLVIEW       0x00000002
 
+/* The explorer dispatches WM_COMMAND messages based on the range of
+ command/menuitem IDs. All the IDs of menuitems that the view (right
+ pane) inserts must be in FCIDM_SHVIEWFIRST/LAST (otherwise, the explorer
+ won't dispatch them). The view should not deal with any menuitems
+ in FCIDM_BROWSERFIRST/LAST (otherwise, it won't work with the future
+ version of the shell).
+
+  FCIDM_SHVIEWFIRST/LAST      for the right pane (IShellView)
+  FCIDM_BROWSERFIRST/LAST     for the explorer frame (IShellBrowser)
+  FCIDM_GLOBAL/LAST           for the explorer's submenu IDs
+*/
+#define FCIDM_SHVIEWFIRST           0x0000
+#define FCIDM_SHVIEWLAST            0x7fff
+#define FCIDM_BROWSERFIRST          0xa000
+#define FCIDM_BROWSERLAST           0xbf00
+#define FCIDM_GLOBALFIRST           0x8000
+#define FCIDM_GLOBALLAST            0x9fff
+
+/*
+* Global submenu IDs and separator IDs
+*/
+#define FCIDM_MENU_FILE             (FCIDM_GLOBALFIRST+0x0000)
+#define FCIDM_MENU_EDIT             (FCIDM_GLOBALFIRST+0x0040)
+#define FCIDM_MENU_VIEW             (FCIDM_GLOBALFIRST+0x0080)
+#define FCIDM_MENU_VIEW_SEP_OPTIONS (FCIDM_GLOBALFIRST+0x0081)
+#define FCIDM_MENU_TOOLS            (FCIDM_GLOBALFIRST+0x00c0)
+#define FCIDM_MENU_TOOLS_SEP_GOTO   (FCIDM_GLOBALFIRST+0x00c1)
+#define FCIDM_MENU_HELP             (FCIDM_GLOBALFIRST+0x0100)
+#define FCIDM_MENU_FIND             (FCIDM_GLOBALFIRST+0x0140)
+#define FCIDM_MENU_EXPLORE          (FCIDM_GLOBALFIRST+0x0150)
+#define FCIDM_MENU_FAVORITES        (FCIDM_GLOBALFIRST+0x0170)
+
+/* control IDs known to the view */
+#define FCIDM_TOOLBAR      (FCIDM_BROWSERFIRST + 0)
+#define FCIDM_STATUS       (FCIDM_BROWSERFIRST + 1)
+
 /* uState values for IShellView::UIActivate */
 typedef enum 
 { SVUIA_DEACTIVATE       = 0,
@@ -424,8 +606,11 @@ struct tagSHELLVIEW
   LPSHELLFOLDER      pSFParent;
   LPSHELLBROWSER     pShellBrowser;
   HWND32             hWnd;
+  HWND32             hWndList;
   FOLDERSETTINGS     FolderSettings;
   HWND32             hWndParent;
+  HMENU32            hMenu;
+  UINT32			 uState;
 };
 
 typedef GUID SHELLVIEWID;
@@ -498,19 +683,173 @@ struct IShellLink {
 
 #undef THIS
 
-#ifdef __WINE__
+/****************************************************************************
+ * IExtractIcon interface
+ *
+ * FIXME
+ *  Is the ExtractIconA interface
+ */
+#define THIS LPEXTRACTICON this
 
+/* GetIconLocation() input flags*/
+#define GIL_OPENICON     0x0001      // allows containers to specify an "open" look
+#define GIL_FORSHELL     0x0002      // icon is to be displayed in a ShellFolder
+#define GIL_ASYNC        0x0020      // this is an async extract, return E_ASYNC
+
+/* GetIconLocation() return flags */
+#define GIL_SIMULATEDOC  0x0001      // simulate this document icon for this
+#define GIL_PERINSTANCE  0x0002      // icons from this class are per instance (each file has its own)
+#define GIL_PERCLASS     0x0004      // icons from this class per class (shared for all files of this type)
+#define GIL_NOTFILENAME  0x0008      // location is not a filename, must call ::ExtractIcon
+#define GIL_DONTCACHE    0x0010      // this icon should not be cached
+
+typedef struct IExtractIcon IExtractIcon,*LPEXTRACTICON;
+typedef struct IExtractIcon_VTable
+{ /*** IUnknown methods ***/
+  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+  STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+  STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+  /*** IExtractIcon methods ***/
+  STDMETHOD(GetIconLocation)(THIS_ UINT32 uFlags, LPSTR szIconFile, UINT32 cchMax, int * piIndex, UINT32 * pwFlags) PURE;
+  STDMETHOD(Extract)(THIS_ LPCSTR pszFile, UINT32 nIconIndex, HICON32 *phiconLarge, HICON32 *phiconSmall, UINT32 nIconSize) PURE;
+}IExtractIccon_VTable,*LPEXTRACTICON_VTABLE;
+
+struct IExtractIcon 
+{ LPEXTRACTICON_VTABLE lpvtbl;
+  DWORD ref;
+  LPITEMIDLIST pidl;
+};
+
+#undef THIS
+/****************************************************************************
+ * IShellIcon interface
+ */
+
+#define THIS LPSHELLICON this
+typedef struct IShellIcon IShellIcon,*LPSHELLICON;
+typedef struct IShellIcon_VTable
+{ /*** IUnknown methods ***/
+  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+  STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+  STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+  /*** IShellIcon methods ***/
+  STDMETHOD(GetIconOf)(THIS_ LPCITEMIDLIST pidl, UINT32 flags, LPINT32 lpIconIndex) PURE;
+} IShellIcon_VTable,*LPSHELLICON_VTABLE;
+
+struct IShellIcon
+{ LPSHELLICON_VTABLE lpvtbl;
+  DWORD ref;
+};
+#undef THIS
+
+
+/****************************************************************************
+ * Class constructors
+ */
+#ifdef __WINE__
 extern LPCLASSFACTORY IClassFactory_Constructor();
+extern LPCONTEXTMENU IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT32);
 extern LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
 extern LPSHELLVIEW IShellView_Constructor();
 extern LPSHELLLINK IShellLink_Constructor();
 extern LPENUMIDLIST IEnumIDList_Constructor(LPCSTR,DWORD,HRESULT*);
+extern LPEXTRACTICON IExtractIcon_Constructor(LPITEMIDLIST);
 #endif
+/****************************************************************************
+ * Shell Execute API
+ */
+#define SE_ERR_FNF              2       // file not found
+#define SE_ERR_PNF              3       // path not found
+#define SE_ERR_ACCESSDENIED     5       // access denied
+#define SE_ERR_OOM              8       // out of memory
+#define SE_ERR_DLLNOTFOUND      32
+#define SE_ERR_SHARE                    26
+#define SE_ERR_ASSOCINCOMPLETE          27
+#define SE_ERR_DDETIMEOUT               28
+#define SE_ERR_DDEFAIL                  29
+#define SE_ERR_DDEBUSY                  30
+#define SE_ERR_NOASSOC                  31
+
+#define SEE_MASK_CLASSNAME        0x00000001
+#define SEE_MASK_CLASSKEY         0x00000003
+#define SEE_MASK_IDLIST           0x00000004
+#define SEE_MASK_INVOKEIDLIST     0x0000000c
+#define SEE_MASK_ICON             0x00000010
+#define SEE_MASK_HOTKEY           0x00000020
+#define SEE_MASK_NOCLOSEPROCESS   0x00000040
+#define SEE_MASK_CONNECTNETDRV    0x00000080
+#define SEE_MASK_FLAG_DDEWAIT     0x00000100
+#define SEE_MASK_DOENVSUBST       0x00000200
+#define SEE_MASK_FLAG_NO_UI       0x00000400
+#define SEE_MASK_UNICODE          0x00004000
+#define SEE_MASK_NO_CONSOLE       0x00008000
+#define SEE_MASK_ASYNCOK          0x00100000
+#define SEE_MASK_HMONITOR         0x00200000
+
+typedef struct _SHELLEXECUTEINFOA
+{       DWORD cbSize;
+        ULONG fMask;
+        HWND32 hwnd;
+        LPCSTR   lpVerb;
+        LPCSTR   lpFile;
+        LPCSTR   lpParameters;
+        LPCSTR   lpDirectory;
+        int nShow;
+        HINSTANCE32 hInstApp;
+        /* Optional fields */
+        LPVOID lpIDList;
+        LPCSTR   lpClass;
+        HKEY hkeyClass;
+        DWORD dwHotKey;
+        union 
+        { HANDLE32 hIcon;
+          HANDLE32 hMonitor;
+        } u;
+        HANDLE32 hProcess;
+} SHELLEXECUTEINFOA, *LPSHELLEXECUTEINFOA;
+
+typedef struct _SHELLEXECUTEINFOW
+{       DWORD cbSize;
+        ULONG fMask;
+        HWND32 hwnd;
+        LPCWSTR  lpVerb;
+        LPCWSTR  lpFile;
+        LPCWSTR  lpParameters;
+        LPCWSTR  lpDirectory;
+        int nShow;
+        HINSTANCE32 hInstApp;
+        /* Optional fields*/
+        LPVOID lpIDList;
+        LPCWSTR  lpClass;
+        HKEY hkeyClass;
+        DWORD dwHotKey;
+        union
+        { HANDLE32 hIcon;
+          HANDLE32 hMonitor;
+        } u;
+        HANDLE32 hProcess;
+} SHELLEXECUTEINFOW, *LPSHELLEXECUTEINFOW;
+
+DECL_WINELIB_TYPE_AW(SHELLEXECUTEINFO)
+
+typedef SHELLEXECUTEINFOA SHELLEXECUTEINFO;
+typedef LPSHELLEXECUTEINFOA LPSHELLEXECUTEINFO;
+
+BOOL32 WINAPI ShellExecuteEx32A(LPSHELLEXECUTEINFOA lpExecInfo);
+BOOL32 WINAPI ShellExecuteEx32W(LPSHELLEXECUTEINFOW lpExecInfo);
+#define ShellExecuteEx  WINELIB_NAME_AW(ShellExecuteEx)
+
+void WINAPI WinExecErrorA(HWND32 hwnd, int error, LPCSTR lpstrFileName, LPCSTR lpstrTitle);
+void WINAPI WinExecErrorW(HWND32 hwnd, int error, LPCWSTR lpstrFileName, LPCWSTR lpstrTitle);
+#define WinExecError  WINELIB_NAME_AW(WinExecError)
+
+
 
 /****************************************************************************
  * SHBrowseForFolder API
  */
-
 typedef int (CALLBACK* BFFCALLBACK)(HWND32 hwnd, UINT32 uMsg, LPARAM lParam, LPARAM lpData);
 
 typedef struct tagBROWSEINFO32A {
@@ -585,8 +924,9 @@ LPITEMIDLIST WINAPI SHBrowseForFolder32A(LPBROWSEINFO32A lpbi);
 #define  SHBrowseForFolder WINELIB_NAME_AW(SHBrowseForFolder)
 
 /****************************************************************************
- * shlview structures
- */
+* shlview structures
+*/
+
 /*
 * IShellFolderViewCallback Callback
 *  This "callback" is called by the shells default IShellView implementation (that
@@ -618,6 +958,29 @@ typedef struct _SHELLVIEWDATA   // idl
   SHELLVIEWPROC   pCallBack;
   DWORD           viewmode;  // NF_* enum
 } SHELLVIEWDATA, * LPSHELLVIEWDATA;
+
+/*
+ The shell keeps track of some per-user state to handle display
+ options that is of major interest to ISVs.
+ The key one requested right now is "DoubleClickInWebView".
+*/
+typedef struct 
+{   BOOL32 fShowAllObjects : 1;
+    BOOL32 fShowExtensions : 1;
+    BOOL32 fNoConfirmRecycle : 1;
+    BOOL32 fShowSysFiles : 1;
+    BOOL32 fShowCompColor : 1;
+    BOOL32 fDoubleClickInWebView : 1;
+    BOOL32 fDesktopHTML : 1;
+    BOOL32 fWin95Classic : 1;
+    BOOL32 fDontPrettyPath : 1;
+    BOOL32 fShowAttribCol : 1;
+    BOOL32 fMapNetDrvBtn : 1;
+    BOOL32 fShowInfoTip : 1;
+    BOOL32 fHideIcons : 1;
+    UINT32 fRestFlags : 3;
+} SHELLFLAGSTATE, * LPSHELLFLAGSTATE;
+
 
 #undef PURE
 #undef FAR

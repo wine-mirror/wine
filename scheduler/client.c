@@ -140,8 +140,9 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
     vec[0].iov_base       = &head;
     vec[0].iov_len        = sizeof(head);
 
-    if ((ret = recvmsg( thdb->socket, &msghdr, 0 )) == -1)
+    while ((ret = recvmsg( thdb->socket, &msghdr, 0 )) == -1)
     {
+        if (errno == EINTR) continue;
         perror("recvmsg");
         CLIENT_ProtocolError( "recvmsg\n" );
     }
@@ -378,6 +379,7 @@ int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, in
     return reply.handle;
 }
 
+
 /***********************************************************************
  *           CLIENT_GetProcessInfo
  *
@@ -388,6 +390,22 @@ int CLIENT_GetProcessInfo( int handle, struct get_process_info_reply *reply )
     int len, err;
 
     CLIENT_SendRequest( REQ_GET_PROCESS_INFO, -1, 1, &handle, sizeof(handle) );
+    err = CLIENT_WaitReply( &len, NULL, 1, reply, sizeof(*reply) );
+    CHECK_LEN( len, sizeof(*reply) );
+    return err;
+}
+
+
+/***********************************************************************
+ *           CLIENT_GetThreadInfo
+ *
+ * Send a get thread info request. Return 0 if OK.
+ */
+int CLIENT_GetThreadInfo( int handle, struct get_thread_info_reply *reply )
+{
+    int len, err;
+
+    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &handle, sizeof(handle) );
     err = CLIENT_WaitReply( &len, NULL, 1, reply, sizeof(*reply) );
     CHECK_LEN( len, sizeof(*reply) );
     return err;
@@ -414,3 +432,26 @@ int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit )
     CHECK_LEN( len, sizeof(reply) );
     return reply.handle;
 }
+
+
+/***********************************************************************
+ *           CLIENT_Select
+ */
+int CLIENT_Select( int count, int *handles, int flags, int timeout )
+{
+    struct select_request req;
+    struct select_reply reply;
+    int len;
+
+    req.count   = count;
+    req.flags   = flags;
+    req.timeout = timeout;
+
+    CLIENT_SendRequest( REQ_SELECT, -1, 2,
+                        &req, sizeof(req),
+                        handles, count * sizeof(int) );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    return reply.signaled;
+}
+

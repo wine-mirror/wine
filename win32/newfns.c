@@ -361,32 +361,6 @@ BOOL32 WINAPI IsDebuggerPresent() {
 }
 
 /******************************************************************************
- * SleepEx [KERNEL32.680]
- *
- * BUGS
- *   Unimplemented
- */
-DWORD WINAPI SleepEx(DWORD x1,BOOL32 x2)
-{
-  FIXME(win32,":(%d,%ld): stub\n",x1,x2);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
-}
-
-/******************************************************************************
- * TerminateProcess [KERNEL32.684]
- * 
- * BUGS
- *   Unimplemented
- */
-int WINAPI TerminateProcess(HANDLE32 h, int ret)
-{
-  FIXME(win32,":(%p,%d): stub\n",h,ret);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
-}
-
-/******************************************************************************
  * OpenDesktop32A [USER32.408]
  *
  * NOTES

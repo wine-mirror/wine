@@ -13,6 +13,7 @@
 #include "process.h"
 #include "thread.h"
 #include "winerror.h"
+#include "server.h"
 #include "debug.h"
 
 /***********************************************************************
@@ -25,15 +26,16 @@ static BOOL32 SYNC_BuildWaitStruct( DWORD count, const HANDLE32 *handles,
     DWORD i;
     K32OBJ **ptr;
 
+    SYSTEM_LOCK();
     wait->count    = count;
     wait->signaled = WAIT_FAILED;
     wait->wait_all = wait_all;
     wait->wait_msg = wait_msg;
-    SYSTEM_LOCK();
     for (i = 0, ptr = wait->objs; i < count; i++, ptr++)
     {
         if (!(*ptr = HANDLE_GetObjPtr( PROCESS_Current(), handles[i],
-                                       K32OBJ_UNKNOWN, SYNCHRONIZE, NULL )))
+                                       K32OBJ_UNKNOWN, SYNCHRONIZE,
+                                       &wait->server[i] )))
         { 
             ERR(win32, "Bad handle %08x\n", handles[i]); 
             break; 
@@ -251,7 +253,7 @@ void SYNC_WakeUp( THREAD_QUEUE *wait_queue, DWORD max )
         THDB *thdb = entry->thread;
         if (SYNC_CheckCondition( &thdb->wait_struct, THDB_TO_THREAD_ID(thdb) ))
         {
-            TRACE(win32, "waking up %04x\n", thdb->teb_sel );
+            TRACE(win32, "waking up %04x (pid %d)\n", thdb->teb_sel, thdb->unix_pid );
             if (thdb->unix_pid)
 	    	kill( thdb->unix_pid, SIGUSR1 );
 	    else
@@ -314,13 +316,49 @@ DWORD SYNC_DoWait( DWORD count, const HANDLE32 *handles,
         wait->signaled = WAIT_FAILED;
     else
     {
-        /* Now wait for it */
-        SYNC_WaitForCondition( wait, timeout );
-        SYNC_FreeWaitStruct( wait );
+        int i;
+        /* Check if we can use a server wait */
+        for (i = 0; i < count; i++)
+            if (wait->server[i] == -1) break;
+        if (i == count)
+        {
+            int flags = 0;
+            SYSTEM_UNLOCK();
+            if (wait_all) flags |= SELECT_ALL;
+            if (alertable) flags |= SELECT_ALERTABLE;
+            if (wait_msg) flags |= SELECT_MSG;
+            if (timeout != INFINITE32) flags |= SELECT_TIMEOUT;
+            return CLIENT_Select( count, wait->server, flags, timeout );
+        }
+        else
+        {
+            /* Now wait for it */
+            SYNC_WaitForCondition( wait, timeout );
+            SYNC_FreeWaitStruct( wait );
+        }
     }
     SYSTEM_UNLOCK();
     return wait->signaled;
 }
+
+/***********************************************************************
+ *              Sleep  (KERNEL32.679)
+ */
+VOID WINAPI Sleep( DWORD timeout )
+{
+    SYNC_DoWait( 0, NULL, FALSE, timeout, FALSE, FALSE );
+}
+
+/******************************************************************************
+ *              SleepEx   (KERNEL32.680)
+ */
+DWORD WINAPI SleepEx( DWORD timeout, BOOL32 alertable )
+{
+    DWORD ret = SYNC_DoWait( 0, NULL, FALSE, timeout, alertable, FALSE );
+    if (ret != WAIT_IO_COMPLETION) ret = 0;
+    return ret;
+}
+
 
 /***********************************************************************
  *           WaitForSingleObject   (KERNEL32.723)

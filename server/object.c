@@ -69,6 +69,8 @@ void init_object( struct object *obj, const struct object_ops *ops,
 {
     obj->refcount = 1;
     obj->ops      = ops;
+    obj->head     = NULL;
+    obj->tail     = NULL;
     if (!name) obj->name = NULL;
     else obj->name = add_name( obj, name );
 }
@@ -89,6 +91,9 @@ void release_object( void *ptr )
     assert( obj->refcount );
     if (!--obj->refcount)
     {
+        /* if the refcount is 0, nobody can be in the wait queue */
+        assert( !obj->head );
+        assert( !obj->tail );
         if (obj->name) free_name( obj );
         obj->ops->destroy( obj );
     }

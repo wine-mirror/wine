@@ -53,6 +53,9 @@ install: dummy
 	$(INSTALL_PROGRAM) winhelp $(bindir)/winhelp
 	$(INSTALL_PROGRAM) hlp2sgml $(bindir)/hlp2sgml
 
+uninstall: dummy
+	$(RM) $(bindir)/winhelp $(bindir)/hlp2sgml
+
 y.tab.c y.tab.h: macro.yacc.y
 	$(YACC) -d -t $(SRCDIR)/macro.yacc.y
 

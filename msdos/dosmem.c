@@ -15,7 +15,6 @@
 #include "miscemu.h"
 #include "module.h"
 #include "task.h"
-#include "dosexe.h"
 #include "debug.h"
 
 HANDLE16 DOSMEM_BiosSeg;  /* BIOS data segment at 0x40:0 */
@@ -112,13 +111,14 @@ static dosmem_info*	info_block = NULL;
  *
  * Gets the DOS memory base.
  */
-static char *DOSMEM_MemoryBase(HMODULE16 hModule)
+char *DOSMEM_MemoryBase(HMODULE16 hModule)
 {
     TDB *pTask = hModule ? NULL : (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = (hModule || pTask) ? NE_GetPtr( hModule ? hModule : pTask->hModule ) : NULL;
 
-    if (pModule && pModule->lpDosTask)
-        return pModule->lpDosTask->img;
+    GlobalUnlock16( GetCurrentTask() );
+    if (pModule && pModule->dos_image)
+        return pModule->dos_image;
     else
         return DOSMEM_dosmem;
 }
@@ -431,7 +431,6 @@ LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* pse
 UINT32 DOSMEM_Available(HMODULE16 hModule)
 {
    UINT32  	 blocksize, available = 0;
-   char         *block = NULL;
    dosmem_entry *dm;
    
    dm = root_block;

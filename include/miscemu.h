@@ -17,6 +17,7 @@ extern DWORD DOSMEM_CollateTable;
 extern BOOL32 DOSMEM_Init(HMODULE16 hModule);
 extern void   DOSMEM_Tick(void);
 extern WORD   DOSMEM_AllocSelector(WORD);
+extern char * DOSMEM_MemoryBase(HMODULE16 hModule);
 extern LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* p);
 extern BOOL32 DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr);
 extern LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* p);
@@ -36,6 +37,10 @@ extern void IO_outport( int port, int count, DWORD value );
 
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
+extern void WINAPI INT_Int1aHandler(CONTEXT*);
+
+/* msdos/int2f.c */
+extern void WINAPI INT_Int2fHandler(CONTEXT*);
 
 /* loader/signal.c */
 extern BOOL32 SIGNAL_Init(void);

@@ -1,14 +1,14 @@
 /*
  *	OLE2NLS library
- *      Norway (Bokmael)
+ *      Norway (Bokmaal)
  *	(Norwegian strings in iso-8859-1)
  */
 
 /* LOCVAL(LOCALE_ILANGUAGE,"") */
-LOCVAL(LOCALE_SLANGUAGE,"Norsk (Bokmæl)")
-LOCVAL(LOCALE_SENGLANGUAGE,"Norwegian (Bokmael)")
+LOCVAL(LOCALE_SLANGUAGE,"Norsk (Bokmål)")
+LOCVAL(LOCALE_SENGLANGUAGE,"Norwegian (Bokmaal)")
 LOCVAL(LOCALE_SABBREVLANGNAME,"nor")
-LOCVAL(LOCALE_SNATIVELANGNAME,"bokmæl")
+LOCVAL(LOCALE_SNATIVELANGNAME,"bokmål")
 LOCVAL(LOCALE_ICOUNTRY,"47")
 LOCVAL(LOCALE_SCOUNTRY,"Norge")
 LOCVAL(LOCALE_SENGCOUNTRY,"Norway")

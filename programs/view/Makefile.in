@@ -37,6 +37,9 @@ view: $(OBJS)
 install: dummy
 	$(INSTALL_PROGRAM) view $(bindir)/view
 
+uninstall: dummy
+	$(RM) $(bindir)/view
+
 $(RC_SRCS:.rc=.s): $(WRC)
 
 dummy:

@@ -14,7 +14,8 @@ typedef struct tagPAGER_INFO
     COLORREF clrBk;
     INT32    iBorder;
     INT32    iButtonSize;
-
+    INT32    iPos;
+    BOOL32   bForward;
 
 } PAGER_INFO;
 

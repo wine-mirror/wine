@@ -1,0 +1,30 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = shell32
+WRCEXTRA  = -A -p $*
+
+C_SRCS = \
+	contmenu.c \
+	enumidlist.c \
+	folders.c \
+	pidl.c \
+	shell32_main.c \
+	shellole.c \
+	shellord.c \
+	shlfolder.c \
+	shlview.c
+
+RC_SRCS = \
+	shres.rc
+
+all: check_wrc $(MODULE).o
+
+@MAKE_RULES@
+
+$(RC_SRCS:.rc=.s): $(WRC)
+
+### Dependencies:
+

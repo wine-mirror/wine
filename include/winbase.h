@@ -7,6 +7,7 @@
 #define WAIT_OBJECT_0		0
 #define WAIT_ABANDONED		STATUS_ABANDONED_WAIT_0
 #define WAIT_ABANDONED_0	STATUS_ABANDONED_WAIT_0
+#define WAIT_IO_COMPLETION	STATUS_USER_APC
 #define WAIT_TIMEOUT		STATUS_TIMEOUT
 
 #define	PAGE_NOACCESS		0x01
@@ -189,6 +190,7 @@ void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
 void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
 HANDLE32  WINAPI OpenProcess(DWORD access, BOOL32 inherit, DWORD id);
 void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
-int       WINAPI TerminateProcess(HANDLE32 h, int ret);
+BOOL32    WINAPI TerminateProcess(HANDLE32,DWORD);
+BOOL32    WINAPI TerminateThread(HANDLE32,DWORD);
 
 #endif  /* __WINE_WINBASE_H */

@@ -8,7 +8,6 @@ MODULE    = ole
 C_SRCS = \
 	compobj.c \
 	ifs.c \
-	folders.c \
 	moniker.c \
 	ole2.c \
 	ole2disp.c \

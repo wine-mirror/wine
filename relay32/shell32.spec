@@ -22,7 +22,7 @@ init	Shell32LibMain
   14 stub Control_FillCache_RunDLLW@16   # exported by name
   15 stdcall ILGetDisplayName(ptr ptr) ILGetDisplayName
   16 stdcall ILFindLastID(ptr) ILFindLastID
-  17 stub ILRemoveLastID@4
+  17 stdcall ILRemoveLastID@4(ptr) ILRemoveLastID
   18 stdcall ILClone(ptr) ILClone
   19 stub ILCloneFirst@4
   20 stub ILGlobalClone@4
@@ -158,7 +158,7 @@ init	Shell32LibMain
  150 stub ExtractAssociatedIconExA   # exported by name
  151 stub SHLoadOLE
  152 stdcall ILGetSize(ptr) ILGetSize
- 153 stub ILGetNext
+ 153 stdcall ILGetNext(ptr) ILGetNext
  154 stub ILAppend
  155 stdcall ILFree(ptr) ILFree
  156 stub ILGlobalFree
@@ -297,8 +297,8 @@ init	Shell32LibMain
  288 stdcall ShellAboutA(long str str long) ShellAbout32A
  289 stdcall ShellAboutW(long wstr wstr long) ShellAbout32W
  290 stdcall ShellExecuteA(long str str str str long) ShellExecute32A
- 291 stdcall ShellExecuteEx (long) ShellExecuteEx
- 292 stub ShellExecuteExA
+ 291 stdcall ShellExecuteEx (long) ShellExecuteEx32A
+ 292 stdcall ShellExecuteExA (long) ShellExecuteEx32A
  293 stub ShellExecuteExW
  294 stub ShellExecuteW
  295 stub ShellHookProc   # exported by name
@@ -373,3 +373,6 @@ init	Shell32LibMain
  680 stub IsUserAdmin
 
 1217 stub FOOBAR1217   # no joke! This is the real name!!
+
+# later additions ... FIXME: incorrect ordinals
+1218 stdcall SHGetSpecialFolderPathA(long long long long) SHGetSpecialFolderPath

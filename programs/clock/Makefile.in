@@ -49,6 +49,9 @@ clock: $(MOSTOBJS) $(STRINGOBJS)
 install: dummy
 	$(INSTALL_PROGRAM) clock $(bindir)/clock
 
+uninstall: dummy
+	$(RM) $(bindir)/clock
+
 $(RC_SRCS:.rc=.s): $(WRC)
 
 dummy:

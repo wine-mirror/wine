@@ -40,6 +40,17 @@ typedef struct
     int flags;
 } DOS_DEVICE;
 
+/* Macros to convert 16 bit to 32 bit file handles and back */
+#define HFILE16_TO_HFILE32(handle) \
+(((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
+ ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
+ ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
+ (handle)-5)
+
+#define HFILE32_TO_HFILE16(handle) ({ HFILE32 hnd=handle; \
+      ((hnd==HFILE_ERROR32) ? HFILE_ERROR16 : \
+       (HFILE16)hnd+5); })
+
 
 /* files/file.c */
 extern FILE_OBJECT *FILE_GetFile( HFILE32 handle );

@@ -8,6 +8,14 @@
 #define __WINE_TOOLTIPS_H
 
 
+typedef struct tagTT_SUBCLASS_INFO
+{
+    WNDPROC32 wpOrigProc;
+    HWND32    hwndToolTip;
+    UINT32    uRefCount;
+} TT_SUBCLASS_INFO, *LPTT_SUBCLASS_INFO;
+
+
 typedef struct tagTTTOOL_INFO
 {
     UINT32 uFlags;
@@ -17,8 +25,6 @@ typedef struct tagTTTOOL_INFO
     HINSTANCE32 hinst;
     LPSTR  lpszText;
     LPARAM lParam;
-
-    WNDPROC32 lpfnOrigProc;
 } TTTOOL_INFO; 
 
 

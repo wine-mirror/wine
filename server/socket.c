@@ -165,9 +165,6 @@ static void do_read( int client_fd )
 #endif
     int ret;
 
-    if (client->state == RUNNING) client->state = SENDING;
-    assert( client->state == SENDING );
-
     if (client->count < sizeof(client->head))
     {
         vec.iov_base = (char *)&client->head + client->count;
@@ -206,6 +203,9 @@ static void do_read( int client_fd )
         remove_client( client_fd, BROKEN_PIPE );
         return;
     }
+
+    if (client->state == RUNNING) client->state = SENDING;
+    assert( client->state == SENDING );
 
     client->count += ret;
 

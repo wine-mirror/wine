@@ -236,7 +236,7 @@ void RELAY_Unimplemented16(void)
     MSG("No handler for Win16 routine %s (called from %04x:%04x)\n",
             BUILTIN_GetEntryPoint16(frame->entry_cs,frame->entry_ip,&ordinal),
             frame->cs, frame->ip );
-    TASK_KillCurrentTask(1);
+    ExitProcess(1);
 }
 
 

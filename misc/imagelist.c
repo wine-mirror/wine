@@ -556,7 +556,7 @@ ImageList_Create (INT32 cx, INT32 cy, UINT32 flags,
     himl->clrBk = CLR_NONE;
 
     /* initialize overlay mask indices */
-    for (nCount = 0; nCount <= MAX_OVERLAYIMAGE; nCount++)
+    for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
         himl->nOvlIdx[nCount] = -1;
 
     hdc = CreateCompatibleDC32 (0);
@@ -1691,7 +1691,7 @@ ImageList_Remove (HIMAGELIST himl, INT32 i)
 
         himl->cMaxImage = himl->cInitial + himl->cGrow;
         himl->cCurImage = 0;
-        for (nCount = 0; nCount <= MAX_OVERLAYIMAGE; nCount++)
+        for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
              himl->nOvlIdx[nCount] = -1;
 
         DeleteObject32 (himl->hbmImage);
@@ -1921,10 +1921,10 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
     if (hdcImage)
 	DeleteDC32 (hdcImage);
 
-//    FIXME (imagelist, "deleting hbmColor!\n");
-    DeleteObject32 (ii.hbmColor);
-//    FIXME (imagelist, "deleted hbmColor!\n");
-    DeleteObject32 (ii.hbmMask);
+    if (ii.hbmColor)
+	DeleteObject32 (ii.hbmColor);
+    if (ii.hbmMask)
+	DeleteObject32 (ii.hbmMask);
 
     return (nIndex);
 }

@@ -460,6 +460,8 @@ Make.rules
 Makefile
 controls/Makefile
 debugger/Makefile
+dlls/Makefile
+dlls/shell32/Makefile
 documentation/Makefile
 files/Makefile
 graphics/Makefile

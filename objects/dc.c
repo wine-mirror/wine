@@ -1497,3 +1497,24 @@ WORD WINAPI SetHookFlags(HDC16 hDC, WORD flags)
     return 0;
 }
 
+/***********************************************************************
+ *           SetICMMode    (GDI32.318)
+ */
+INT32 WINAPI SetICMMode(HDC32 hdc, INT32 iEnableICM)
+{
+/*FIXME  Asuming that ICM is always off, and cannot be turned on */
+    if (iEnableICM == ICM_OFF) return ICM_OFF;
+    if (iEnableICM == ICM_ON) return 0;
+    if (iEnableICM == ICM_QUERY) return ICM_OFF;
+    return 0;
+}
+
+
+/***********************************************************************
+ *           GetColorSpace    (GDI32.165)
+ */
+HCOLORSPACE32 WINAPI GetColorSpace(HDC32 hdc)
+{
+/*FIXME    Need to to whatever GetColorSpace actually does */
+    return 0;
+}

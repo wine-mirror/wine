@@ -44,8 +44,10 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODE16 *dm1, PSDRV_DEVMODE16 *dm2,
 	}
 	if(page) {
 	    dm1->dmPublic.dmPaperSize = dm2->dmPublic.dmPaperSize;
-	    dm1->dmPublic.dmPaperWidth = page->PaperDimension->x * 25.4 / 72.0;
-	    dm1->dmPublic.dmPaperLength = page->PaperDimension->y * 25.4 / 72.0;
+	    dm1->dmPublic.dmPaperWidth = page->PaperDimension->x * 
+								254.0 / 72.0;
+	    dm1->dmPublic.dmPaperLength = page->PaperDimension->y *
+								254.0 / 72.0;
 	    TRACE(psdrv, "Changing page to %s %d x %d\n", page->FullName,
 		     dm1->dmPublic.dmPaperWidth, dm1->dmPublic.dmPaperLength );
 	} else {

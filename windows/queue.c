@@ -217,6 +217,59 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
     return sysMsgQueue;
 }
 
+/***********************************************************************
+ *           QUEUE_Signal
+ */
+void QUEUE_Signal( HTASK16 hTask )
+{
+    PDB32 *pdb;
+    THREAD_ENTRY *entry;
+    int wakeup = FALSE;
+
+    TDB *pTask = (TDB *)GlobalLock16( hTask );
+    if ( !pTask ) return;
+
+    TRACE(msg, "calling SYNC_MsgWakeUp\n");
+
+    /* Wake up thread waiting for message */
+    /* NOTE: This should really wake up *the* thread that owns
+             the queue. Since we dont't have thread-local message
+             queues yet, we wake up all waiting threads ... */
+    SYSTEM_LOCK();
+    pdb = pTask->thdb->process;
+    entry = pdb? pdb->thread_list->next : NULL;
+
+    if (entry)
+        for (;;)
+        {
+            if (entry->thread->wait_struct.wait_msg)
+            {
+                SYNC_MsgWakeUp( entry->thread );
+                wakeup = TRUE;
+            }
+            if (entry == pdb->thread_list) break;
+            entry = entry->next;
+        }
+    SYSTEM_UNLOCK();
+
+    if ( !wakeup && THREAD_IsWin16( THREAD_Current() ) )
+        PostEvent( hTask );
+}
+
+/***********************************************************************
+ *           QUEUE_Wait
+ */
+void QUEUE_Wait( void )
+{
+    if ( THREAD_IsWin16( THREAD_Current() ) )
+        WaitEvent( 0 );
+    else
+    {
+        TRACE(msg, "current task is 32-bit, calling SYNC_DoWait\n");
+        SYNC_DoWait( 0, NULL, FALSE, INFINITE32, FALSE, TRUE );
+    }
+}
+
 
 /***********************************************************************
  *           QUEUE_SetWakeBit
@@ -235,28 +288,7 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
     if (queue->wakeMask & bit)
     {
         queue->wakeMask = 0;
-        PostEvent( queue->hTask );
-
-        /* Wake up thread waiting for message */
-        /* NOTE: This should really wake up *the* thread that owns
-                 the queue. Since we dont't have thread-local message
-                 queues yet, we wake up all waiting threads ... */
-        SYSTEM_LOCK();
-        {
-            TDB *pTask = (TDB *)GlobalLock16( queue->hTask );
-            PDB32 *pdb = pTask? pTask->thdb->process : NULL;
-            THREAD_ENTRY *entry = pdb? pdb->thread_list->next : NULL;
-
-            if (entry)
-                for (;;)
-                {
-                    if (entry->thread->wait_struct.wait_msg)
-                        SYNC_MsgWakeUp( entry->thread );
-                    if (entry == pdb->thread_list) break;
-                    entry = entry->next;
-                }
-        }
-        SYSTEM_UNLOCK();
+        QUEUE_Signal( queue->hTask );
     }
 }
 
@@ -306,7 +338,7 @@ void QUEUE_WaitBits( WORD bits )
 	
 	TRACE(msg,"%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
 
-        WaitEvent( 0 );
+        QUEUE_Wait();
     }
 }
 

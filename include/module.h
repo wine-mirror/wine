@@ -52,6 +52,7 @@ typedef struct _NE_MODULE
     HMODULE16  self;          /* 44 Handle for this module */
     WORD    self_loading_sel; /* 46 Selector used for self-loading apps. */
     struct _DOSTASK *lpDosTask;
+    LPVOID  dos_image;        /* pointer to DOS memory (for DOS apps) */
 } NE_MODULE;
 
 
@@ -98,7 +99,7 @@ typedef struct
 {
     LPSTR lpEnvAddress;
     LPSTR lpCmdLine;
-    LPSTR lpCmdShow;
+    UINT16 *lpCmdShow;
     DWORD dwReserved;
 } LOADPARAMS32;
 
@@ -140,8 +141,6 @@ extern FARPROC32 MODULE_GetProcAddress32( struct _PDB32*pdb,HMODULE32 hModule,LP
 extern WINE_MODREF *MODULE32_LookupHMODULE( struct _PDB32 *process, HMODULE32 hModule );
 extern HMODULE32 MODULE_FindModule32( struct _PDB32 *process, LPCSTR path );
 extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
-extern HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit, LPCSTR cmd_line,
-                                LPCSTR env, UINT32 show_cmd );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hmodule, LPCSTR name );
 

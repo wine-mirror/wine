@@ -9,7 +9,9 @@ C_SRCS = \
 	module.c \
 	dosvm.c
 
-all: $(MODULE).o dosmod
+PROGRAMS = dosmod
+
+all: $(MODULE).o $(PROGRAMS)
 
 dosmod: dosmod.c
 	$(CC) $(ALLCFLAGS) -o dosmod $<

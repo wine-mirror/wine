@@ -25,7 +25,6 @@ C_SRCS = \
 	printdrv.c \
 	registry.c \
 	shell.c \
-	shellord.c \
 	sound.c \
 	spy.c \
 	stress.c \

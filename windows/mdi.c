@@ -247,6 +247,23 @@ static LRESULT MDISetMenu( HWND32 hwnd, HMENU32 hmenuFrame,
     return 0;
 }
 
+/**********************************************************************
+ *            MDIRefreshMenu
+ */
+static LRESULT MDIRefreshMenu( HWND32 hwnd, HMENU32 hmenuFrame,
+                           HMENU32 hmenuWindow)
+{
+    HWND32 hwndFrame = GetParent32(hwnd);
+    HMENU32 oldFrameMenu = GetMenu32(hwndFrame);
+
+    TRACE(mdi, "%04x %04x %04x\n",
+                hwnd, hmenuFrame, hmenuWindow);
+
+    FIXME(mdi,"partially function stub");
+
+    return oldFrameMenu;
+}
+
 
 /* ------------------ MDI child window functions ---------------------- */
 
@@ -983,6 +1000,9 @@ LRESULT WINAPI MDIClientWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       case WM_MDISETMENU:
           return MDISetMenu( hwnd, (HMENU32)wParam, (HMENU32)lParam );
 	
+      case WM_MDIREFRESHMENU:
+          return MDIRefreshMenu( hwnd, (HMENU32)wParam, (HMENU32)lParam );
+
       case WM_MDITILE:
 	ci->mdiFlags |= MDIF_NEEDUPDATE;
 	ShowScrollBar32(hwnd,SB_BOTH,FALSE);

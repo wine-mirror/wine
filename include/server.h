@@ -86,6 +86,18 @@ struct get_process_info_reply
 };
 
 
+/* Retrieve information about a thread */
+struct get_thread_info_request
+{
+    int          handle;       /* thread handle */
+};
+struct get_thread_info_reply
+{
+    void*        pid;          /* server thread id */
+    int          exit_code;    /* thread exit code */
+};
+
+
 /* Close a handle for the current process */
 struct close_handle_request
 {
@@ -123,6 +135,23 @@ struct open_process_reply
 };
 
 
+/* Wait for handles */
+struct select_request
+{
+    int          count;        /* handles count */
+    int          flags;        /* wait flags (see below) */
+    int          timeout;      /* timeout in ms */
+    /* int handles[] */
+};
+struct select_reply
+{
+    int          signaled;     /* signaled handle */
+};
+#define SELECT_ALL       1
+#define SELECT_MSG       2
+#define SELECT_ALERTABLE 4
+#define SELECT_TIMEOUT   8
+
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
@@ -134,8 +163,10 @@ extern int CLIENT_TerminateThread( int handle, int exit_code );
 extern int CLIENT_CloseHandle( int handle );
 extern int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process,
                                    int dst_handle, DWORD access, BOOL32 inherit, DWORD options );
+extern int CLIENT_GetThreadInfo( int handle, struct get_thread_info_reply *reply );
 extern int CLIENT_GetProcessInfo( int handle, struct get_process_info_reply *reply );
 extern int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit );
+extern int CLIENT_Select( int count, int *handles, int flags, int timeout );
 #endif  /* __WINE_SERVER__ */
 
 #endif  /* __WINE_SERVER_H */

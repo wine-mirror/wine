@@ -753,7 +753,7 @@ X11DRV_PolyPolygon( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
  *          X11DRV_PolyPolyline
  */
 BOOL32 
-X11DRV_PolyPolyline( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polylines )
+X11DRV_PolyPolyline( DC *dc, LPPOINT32 pt, LPDWORD counts, DWORD polylines )
 {
     if (DC_SetupGCForPen ( dc ))
     {

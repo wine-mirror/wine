@@ -5,7 +5,7 @@ type win32
   2 stdcall WINMM_2(ptr long long) PlaySound32A
   3 stub WINMM_3
   4 stub CloseDriver
-  5 stub DefDriverProc
+  5 stdcall DefDriverProc(long long long long long) DefDriverProc
   6 stub DriverCallback
   7 stub DrvClose
   8 stub DrvDefDriverProc
@@ -19,7 +19,7 @@ type win32
  16 stdcall OpenDriverA(str str long) OpenDriver32A
  17 stdcall PlaySound(ptr long long) PlaySound32A
  18 stdcall PlaySoundW(ptr long long) PlaySound32W
- 19 stub SendDriverMessage
+ 19 stdcall SendDriverMessage(long long long long) SendDriverMessage32
  20 stdcall auxGetDevCapsA(long ptr long) auxGetDevCaps32A
  21 stdcall auxGetDevCapsW(long ptr long) auxGetDevCaps32W
  22 stdcall auxGetNumDevs() auxGetNumDevs32
@@ -127,7 +127,7 @@ type win32
 124 stdcall mmioRead(long ptr long) mmioRead32
 125 stub mmioRenameA
 126 stub mmioRenameW
-127 stub mmioSeek
+127 stdcall mmioSeek(long long long) mmioSeek32
 128 stub mmioSendMessage
 129 stub mmioSetBuffer
 130 stub mmioSetInfo

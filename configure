@@ -3396,6 +3396,8 @@ Make.rules
 Makefile
 controls/Makefile
 debugger/Makefile
+dlls/Makefile
+dlls/shell32/Makefile
 documentation/Makefile
 files/Makefile
 graphics/Makefile
@@ -3531,6 +3533,8 @@ CONFIG_FILES=\${CONFIG_FILES-"Make.rules
 Makefile
 controls/Makefile
 debugger/Makefile
+dlls/Makefile
+dlls/shell32/Makefile
 documentation/Makefile
 files/Makefile
 graphics/Makefile

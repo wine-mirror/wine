@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "windows.h"
+#include "winerror.h"
 #include "class.h"
 #include "file.h"
 #include "global.h"
@@ -284,16 +285,11 @@ HMODULE32 MODULE_FindModule32(
 
 
 /**********************************************************************
- *	    MODULE_Load
- *
- * Implementation of LoadModule().
- *
- * cmd_line must contain the whole command-line, including argv[0] (and
- * without a preceding length byte).
- * If cmd_line is NULL, the module is loaded as a library even if it is a .exe
+ *	    NE_CreateProcess
  */
-HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit,
-                         LPCSTR cmd_line, LPCSTR env, UINT32 show_cmd )
+static HINSTANCE16 NE_CreateProcess( LPCSTR name, LPCSTR cmd_line, LPCSTR env, 
+                                     LPSTARTUPINFO32A startup, 
+                                     LPPROCESS_INFORMATION info )
 {
     HMODULE16 hModule;
     HINSTANCE16 hInstance, hPrevInstance;
@@ -305,38 +301,24 @@ HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit,
         lstrcpyn32A( ofs.szPathName, name, sizeof(ofs.szPathName) );
         if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return hModule;
         pModule = (NE_MODULE *)GlobalLock16( hModule );
-        hInstance = NE_CreateInstance( pModule, &hPrevInstance,
-                                       (cmd_line == NULL) );
+        hInstance = NE_CreateInstance( pModule, &hPrevInstance, FALSE );
     }
     else
     {
-        hInstance = NE_LoadModule( name, &hPrevInstance, implicit,
-                                 (cmd_line == NULL) );
-        if ((hInstance == 21) && cmd_line)
-            return PE_LoadModule( name, cmd_line, env, show_cmd );
-#ifdef linux
-        if (hInstance == 11)
-            return MZ_LoadModule(name, cmd_line, env, show_cmd );
-#endif
+        hInstance = NE_LoadModule( name, &hPrevInstance, FALSE, FALSE );
+        pModule = hInstance >= 32 ? NE_GetPtr( hInstance ) : NULL;
     }
 
     /* Create a task for this instance */
 
-    if (hInstance < 32) return hInstance;
-    pModule = NE_GetPtr( hInstance );
-    if (cmd_line && !(pModule->flags & NE_FFLAGS_LIBMODULE))
+    if (pModule && !(pModule->flags & NE_FFLAGS_LIBMODULE))
     {
         PDB32 *pdb;
-        PROCESS_INFORMATION info;
 
 	pModule->flags |= NE_FFLAGS_GUI;
 
         pdb = PROCESS_Create( pModule, cmd_line, env, hInstance,
-                              hPrevInstance, show_cmd, &info );
-        /* we don't need the handles for now */
-        CloseHandle( info.hThread );
-        CloseHandle( info.hProcess );
-        if (pdb && (GetNumTasks() > 1)) Yield16();
+                              hPrevInstance, startup, info );
     }
 
     return hInstance;
@@ -349,77 +331,239 @@ HINSTANCE16 MODULE_Load( LPCSTR name, BOOL32 implicit,
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
     LOADPARAMS *params;
-    LPSTR cmd_line, new_cmd_line;
-    UINT16 show_cmd = 0;
-    LPCVOID env = NULL;
+    LOADPARAMS32 params32;
     HINSTANCE16 hInstance;
+    LPSTR cmd_line;
 
     if (!paramBlock || (paramBlock == (LPVOID)-1))
         return LoadLibrary16( name );
 
+    /* Transfer arguments to 32-bit param-block */
     params = (LOADPARAMS *)paramBlock;
-    cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
-    /* PowerPoint passes NULL as showCmd */
-    if (params->showCmd)
-        show_cmd = *((UINT16 *)PTR_SEG_TO_LIN(params->showCmd)+1);
+    memset( &params32, '\0', sizeof(params32) );
 
+    cmd_line = (LPSTR)PTR_SEG_TO_LIN( params->cmdLine );
     if (!cmd_line) cmd_line = "";
     else if (*cmd_line) cmd_line++;  /* skip the length byte */
 
-    if (!(new_cmd_line = HeapAlloc( GetProcessHeap(), 0,
-                                    strlen(cmd_line) + strlen(name) + 2 )))
+    if (!(params32.lpCmdLine = HeapAlloc( GetProcessHeap(), 0,
+                                          strlen(cmd_line)+strlen(name)+2 )))
         return 0;
-    strcpy( new_cmd_line, name );
-    strcat( new_cmd_line, " " );
-    strcat( new_cmd_line, cmd_line );
+    strcpy( params32.lpCmdLine, name );
+    strcat( params32.lpCmdLine, " " );
+    strcat( params32.lpCmdLine, cmd_line );
 
-    if (params->hEnvironment) env = GlobalLock16( params->hEnvironment );
-    hInstance = MODULE_Load( name, FALSE, new_cmd_line, env, show_cmd );
+    if (params->hEnvironment)
+        params32.lpEnvAddress = GlobalLock16( params->hEnvironment );
+    if (params->showCmd)
+        params32.lpCmdShow = PTR_SEG_TO_LIN( params->showCmd );
+
+    /* Call LoadModule32 */
+    hInstance = LoadModule32( name, &params32 );
+
+    /* Clean up */
     if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
-    HeapFree( GetProcessHeap(), 0, new_cmd_line );
+    HeapFree( GetProcessHeap(), 0, params32.lpCmdLine );
+
     return hInstance;
 }
 
 /**********************************************************************
  *	    LoadModule32    (KERNEL32.499)
- *
- * FIXME
- *
- *  This should get implemented via CreateProcess -- MODULE_Load
- *  is resolutely 16-bit.
  */
-DWORD WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock ) 
+HINSTANCE32 WINAPI LoadModule32( LPCSTR name, LPVOID paramBlock ) 
 {
     LOADPARAMS32 *params = (LOADPARAMS32 *)paramBlock;
-#if 0
-  STARTUPINFO st;
-  PROCESSINFORMATION pi;
-  st.cb = sizeof(STARTUPINFO);
-  st.wShowWindow = p->lpCmdShow[2] ; WRONG
+    PROCESS_INFORMATION info;
+    STARTUPINFO32A startup;
+    HINSTANCE32 hInstance;
+    PDB32 *pdb;
+    TDB *tdb;
 
-  BOOL32 ret = CreateProcess32A( name, p->lpCmdLine, 
-				 NULL, NULL, FALSE, 0, p->lpEnvAddress,
-				 NULL, &st, &pi);
-  if (!ret) {
-    /*    handle errors appropriately */
-  }
-  CloseHandle32(pi.hProcess);
-  CloseHandle32(pi.hThread); 
+    memset( &startup, '\0', sizeof(startup) );
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = params->lpCmdShow? params->lpCmdShow[1] : 0;
 
-#else
-  return MODULE_Load( name, FALSE, params->lpCmdLine, params->lpEnvAddress, 
-                        *((UINT16 *)params->lpCmdShow + 1) );
-#endif
+    if (!CreateProcess32A( name, params->lpCmdLine,
+                           NULL, NULL, FALSE, 0, params->lpEnvAddress,
+                           NULL, &startup, &info ))
+        return GetLastError();  /* guaranteed to be < 32 */
+    
+    /* Get hInstance from process */
+    pdb = PROCESS_IdToPDB( info.dwProcessId );
+    tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
+    hInstance = tdb? tdb->hInstance : 0;
+
+    /* Close off the handles */
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+
+    return hInstance;
 }
 
+/**********************************************************************
+ *       CreateProcess32A          (KERNEL32.171)
+ */
+BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine, 
+                                LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                                LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                                BOOL32 bInheritHandles, DWORD dwCreationFlags,
+                                LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
+                                LPSTARTUPINFO32A lpStartupInfo,
+                                LPPROCESS_INFORMATION lpProcessInfo )
+{
+    HINSTANCE16 hInstance;
+    LPCSTR cmdline;
+    PDB32 *pdb;
+    char name[256];
+
+    /* Get name and command line */
+
+    if (!lpApplicationName && !lpCommandLine)
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return FALSE;
+    }
+
+    cmdline = lpCommandLine? lpCommandLine : lpApplicationName;
+
+    if (lpApplicationName)
+        lstrcpyn32A(name, lpApplicationName, sizeof(name) - 4);
+    else
+    {
+        char *ptr = strchr(lpCommandLine, ' ');
+        int len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
+        if (len > sizeof(name) - 4) len = sizeof(name) - 4;
+        lstrcpyn32A(name, lpCommandLine, len);
+    }
+
+    if (!strchr(name, '\\') && !strchr(name, '.'))
+        strcat(name, ".exe");
+
+
+    /* Warn if unsupported features are used */
+
+    if (lpProcessAttributes)
+        FIXME(module, "(%s,...): lpProcessAttributes ignored\n", name);
+    if (lpThreadAttributes)
+        FIXME(module, "(%s,...): lpThreadAttributes ignored\n", name);
+    if (bInheritHandles)
+        FIXME(module, "(%s,...): bInheritHandles ignored\n", name);
+    if (dwCreationFlags & DEBUG_PROCESS)
+        FIXME(module, "(%s,...): DEBUG_PROCESS ignored\n", name);
+    if (dwCreationFlags & DEBUG_ONLY_THIS_PROCESS)
+        FIXME(module, "(%s,...): DEBUG_ONLY_THIS_PROCESS ignored\n", name);
+    if (dwCreationFlags & CREATE_SUSPENDED)
+        FIXME(module, "(%s,...): CREATE_SUSPENDED ignored\n", name);
+    if (dwCreationFlags & DETACHED_PROCESS)
+        FIXME(module, "(%s,...): DETACHED_PROCESS ignored\n", name);
+    if (dwCreationFlags & CREATE_NEW_CONSOLE)
+        FIXME(module, "(%s,...): CREATE_NEW_CONSOLE ignored\n", name);
+    if (dwCreationFlags & NORMAL_PRIORITY_CLASS)
+        FIXME(module, "(%s,...): NORMAL_PRIORITY_CLASS ignored\n", name);
+    if (dwCreationFlags & IDLE_PRIORITY_CLASS)
+        FIXME(module, "(%s,...): IDLE_PRIORITY_CLASS ignored\n", name);
+    if (dwCreationFlags & HIGH_PRIORITY_CLASS)
+        FIXME(module, "(%s,...): HIGH_PRIORITY_CLASS ignored\n", name);
+    if (dwCreationFlags & REALTIME_PRIORITY_CLASS)
+        FIXME(module, "(%s,...): REALTIME_PRIORITY_CLASS ignored\n", name);
+    if (dwCreationFlags & CREATE_NEW_PROCESS_GROUP)
+        FIXME(module, "(%s,...): CREATE_NEW_PROCESS_GROUP ignored\n", name);
+    if (dwCreationFlags & CREATE_UNICODE_ENVIRONMENT)
+        FIXME(module, "(%s,...): CREATE_UNICODE_ENVIRONMENT ignored\n", name);
+    if (dwCreationFlags & CREATE_SEPARATE_WOW_VDM)
+        FIXME(module, "(%s,...): CREATE_SEPARATE_WOW_VDM ignored\n", name);
+    if (dwCreationFlags & CREATE_SHARED_WOW_VDM)
+        FIXME(module, "(%s,...): CREATE_SHARED_WOW_VDM ignored\n", name);
+    if (dwCreationFlags & CREATE_DEFAULT_ERROR_MODE)
+        FIXME(module, "(%s,...): CREATE_DEFAULT_ERROR_MODE ignored\n", name);
+    if (dwCreationFlags & CREATE_NO_WINDOW)
+        FIXME(module, "(%s,...): CREATE_NO_WINDOW ignored\n", name);
+    if (dwCreationFlags & PROFILE_USER)
+        FIXME(module, "(%s,...): PROFILE_USER ignored\n", name);
+    if (dwCreationFlags & PROFILE_KERNEL)
+        FIXME(module, "(%s,...): PROFILE_KERNEL ignored\n", name);
+    if (dwCreationFlags & PROFILE_SERVER)
+        FIXME(module, "(%s,...): PROFILE_SERVER ignored\n", name);
+    if (lpCurrentDirectory)
+        FIXME(module, "(%s,...): lpCurrentDirectory %s ignored\n", 
+                      name, lpCurrentDirectory);
+    if (lpStartupInfo->lpDesktop)
+        FIXME(module, "(%s,...): lpStartupInfo->lpDesktop %s ignored\n", 
+                      name, lpStartupInfo->lpDesktop);
+    if (lpStartupInfo->lpTitle)
+        FIXME(module, "(%s,...): lpStartupInfo->lpTitle %s ignored\n", 
+                      name, lpStartupInfo->lpTitle);
+    if (lpStartupInfo->dwFlags & STARTF_USECOUNTCHARS)
+        FIXME(module, "(%s,...): STARTF_USECOUNTCHARS (%ld,%ld) ignored\n", 
+                      name, lpStartupInfo->dwXCountChars, lpStartupInfo->dwYCountChars);
+    if (lpStartupInfo->dwFlags & STARTF_USEFILLATTRIBUTE)
+        FIXME(module, "(%s,...): STARTF_USEFILLATTRIBUTE %lx ignored\n", 
+                      name, lpStartupInfo->dwFillAttribute);
+    if (lpStartupInfo->dwFlags & STARTF_RUNFULLSCREEN)
+        FIXME(module, "(%s,...): STARTF_RUNFULLSCREEN ignored\n", name);
+    if (lpStartupInfo->dwFlags & STARTF_FORCEONFEEDBACK)
+        FIXME(module, "(%s,...): STARTF_FORCEONFEEDBACK ignored\n", name);
+    if (lpStartupInfo->dwFlags & STARTF_FORCEOFFFEEDBACK)
+        FIXME(module, "(%s,...): STARTF_FORCEOFFFEEDBACK ignored\n", name);
+    if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
+        FIXME(module, "(%s,...): STARTF_USEHOTKEY ignored\n", name);
+
+
+    /* Try NE (or winelib) module */
+    hInstance = NE_CreateProcess( name, cmdline, lpEnvironment, 
+                                  lpStartupInfo, lpProcessInfo );
+
+    /* Try PE module */
+    if (hInstance == 21)
+        hInstance = PE_CreateProcess( name, cmdline, lpEnvironment, 
+                                      lpStartupInfo, lpProcessInfo );
+
+    /* Try DOS module */
+#ifdef linux
+    if (hInstance == 11)
+        hInstance = MZ_CreateProcess( name, cmdline, lpEnvironment, 
+                                      lpStartupInfo, lpProcessInfo );
+#endif
+
+    if (hInstance < 32)
+    {
+        SetLastError( hInstance );
+        return FALSE;
+    }
+
+    /* Get hTask from process and start the task */
+    pdb = PROCESS_IdToPDB( lpProcessInfo->dwProcessId );
+    if (pdb) TASK_StartTask( pdb->task );
+
+    return TRUE;
+}
+
+/**********************************************************************
+ *       CreateProcess32W          (KERNEL32.172)
+ */
+BOOL32 WINAPI CreateProcess32W( LPCWSTR lpApplicationName, LPWSTR lpCommandLine, 
+                                LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                                LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                                BOOL32 bInheritHandles, DWORD dwCreationFlags,
+                                LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
+                                LPSTARTUPINFO32W lpStartupInfo,
+                                LPPROCESS_INFORMATION lpProcessInfo )
+{
+    FIXME(win32, "(%s,%s,...): stub\n", debugstr_w(lpApplicationName),
+                 debugstr_w(lpCommandLine));
+
+    /* make from lcc uses system as fallback if CreateProcess returns
+       FALSE, so return false */
+    return FALSE;
+}
 
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */
 HMODULE32 WINAPI GetModuleHandle32A(LPCSTR module)
 {
-
-    TRACE(win32, "%s\n", module ? module : "NULL");
     if (module == NULL)
     	return PROCESS_Current()->exe_modref->module;
     else
@@ -582,9 +726,20 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
     char *p, filename[256];
     static int use_load_module = 1;
     int  spacelimit = 0, exhausted = 0;
+    LOADPARAMS32 params;
+    UINT16 paramCmdShow[2];
 
     if (!lpCmdLine)
         return 2;  /* File not found */
+
+    /* Set up LOADPARAMS32 buffer for LoadModule32 */
+
+    memset( &params, '\0', sizeof(params) );
+    params.lpCmdLine    = (LPSTR)lpCmdLine;
+    params.lpCmdShow    = paramCmdShow;
+    params.lpCmdShow[0] = 2;
+    params.lpCmdShow[1] = nCmdShow;
+
 
     /* Keep trying to load a file by trying different filenames; e.g.,
        for the cmdline "abcd efg hij", try "abcd" with args "efg hij",
@@ -625,7 +780,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 	{
 	    /* Winelib: Use LoadModule() only for the program itself */
 	    if (__winelib) use_load_module = 0;
-            handle = MODULE_Load( filename, FALSE, lpCmdLine, NULL, nCmdShow );
+            handle = LoadModule32( filename, &params );
 	    if (handle == 2)  /* file not found */
 	    {
 		/* Check that the original file name did not have a suffix */
@@ -635,8 +790,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 		{
 		    p = filename + strlen(filename);
 		    strcpy( p, ".exe" );
-                    handle = MODULE_Load( filename, FALSE, lpCmdLine,
-                                          NULL, nCmdShow );
+                    handle = LoadModule32( filename, &params );
                     *p = '\0';  /* Remove extension */
 		}
 	    }

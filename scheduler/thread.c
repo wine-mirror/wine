@@ -9,6 +9,9 @@
 #include <unistd.h>
 #include "thread.h"
 #include "process.h"
+#include "task.h"
+#include "module.h"
+#include "user.h"
 #include "winerror.h"
 #include "heap.h"
 #include "selectors.h"
@@ -76,6 +79,20 @@ THDB *THREAD_Current(void)
 {
     if (!THREAD_InitDone) return NULL;
     return (THDB *)((char *)NtCurrentTeb() - (int)&((THDB *)0)->teb);
+}
+
+/***********************************************************************
+ *           THREAD_IsWin16
+ */
+BOOL32 THREAD_IsWin16( THDB *thdb )
+{
+    if (!thdb || !thdb->process)
+        return TRUE;
+    else
+    {
+        TDB* pTask = (TDB*)GlobalLock16( thdb->process->task );
+        return !pTask || pTask->thdb == thdb;
+    }
 }
 
 
@@ -688,7 +705,7 @@ BOOL32 WINAPI SetThreadPriority(
 
 
 /**********************************************************************
- * TerminateThread [KERNEL32.???]  Terminates a thread
+ * TerminateThread [KERNEL32.685]  Terminates a thread
  *
  * RETURNS
  *    Success: TRUE
@@ -698,9 +715,15 @@ BOOL32 WINAPI TerminateThread(
     HANDLE32 handle, /* [in] Handle to thread */
     DWORD exitcode)  /* [in] Exit code for thread */
 {
-    FIXME(thread,"(0x%08x,%ld): stub\n",handle,exitcode);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return TRUE;
+    int server_handle;
+    BOOL32 ret;
+    THDB *thread;
+    
+    if (!(thread = THREAD_GetPtr( handle, THREAD_TERMINATE, &server_handle )))
+        return FALSE;
+    ret = !CLIENT_TerminateThread( server_handle, exitcode );
+    K32OBJ_DecCount( &thread->header );
+    return ret;
 }
 
 
@@ -716,10 +739,17 @@ BOOL32 WINAPI GetExitCodeThread(
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
     THDB *thread;
-    
-    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, NULL )))
+    int server_handle;
+
+    if (!(thread = THREAD_GetPtr( hthread, THREAD_QUERY_INFORMATION, &server_handle )))
         return FALSE;
-    if (exitcode) *exitcode = thread->exit_code;
+    if (server_handle != -1)
+    {
+        struct get_thread_info_reply info;
+        CLIENT_GetThreadInfo( server_handle, &info );
+        if (exitcode) *exitcode = info.exit_code;
+    }
+    else if (exitcode) *exitcode = thread->exit_code;
     K32OBJ_DecCount( &thread->header );
     return TRUE;
 }

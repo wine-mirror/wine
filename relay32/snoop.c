@@ -4,7 +4,6 @@
  * Copyright 1998 Marcus Meissner
  */
 
-#ifdef __i386__
 
 #include <assert.h>
 #include "windows.h"
@@ -18,6 +17,8 @@
 #include "stackframe.h"
 #include "debugstr.h"
 #include "debug.h"
+
+#ifdef __i386__
 
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 

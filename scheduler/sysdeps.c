@@ -115,6 +115,8 @@ int SYSDEPS_SpawnThread( THDB *thread )
  */
 void SYSDEPS_ExitThread(void)
 {
+    THDB *thdb = THREAD_Current();
+    close( thdb->socket );
     _exit( 0 );
 }
 

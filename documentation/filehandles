@@ -1,0 +1,26 @@
+DOS treats the first 5 file handles as special cases.  They map directly
+to stdin, stdout, stderr, stdaux and stdprn.  Windows 16 inherits this
+behavoir, and in fact, win16 handles are interchangable with DOS handles.
+Some nasty windows programs even do this!
+
+Windows32 issues file handles starting from 1, on the grounds that
+most GUI processes don't need a stdin, out, etc.
+
+The wine handle code is implemented in the Win32 style, and the Win16
+functions use two macros to convert to and from the two types.
+
+The macros are defined in file.h as follows.:
+#define HFILE16_TO_HFILE32(handle) \
+(((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
+ ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
+ ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
+ (handle)-5)
+
+#define HFILE32_TO_HFILE16(handle) ({ HFILE32 hnd=handle; \
+      ((hnd==HFILE_ERROR32) ? HFILE_ERROR16 : \
+       (HFILE16)hnd+5); })
+
+WARNING: be careful not to use the macro HFILE16_TO_HFILE32 on
+functions with side-effects, as it will cause them to be evaluated
+several times.  This could be considered a bug, but the use of this
+macro is limited enough not to need a rewrite.

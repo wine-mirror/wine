@@ -2,6 +2,8 @@
  * DOS Virtual Machine
  *
  * Copyright 1998 Ove Kåven
+ *
+ * This code hasn't been completely cleaned up yet.
  */
 
 #ifdef linux
@@ -17,14 +19,16 @@
 #include <sys/stat.h>
 #include "windows.h"
 #include "winbase.h"
+#include "winnt.h"
 #include "msdos.h"
 #include "miscemu.h"
 #include "debug.h"
 #include "module.h"
+#include "task.h"
 #include "ldt.h"
 #include "dosexe.h"
 
-void DOSVM_Dump( LPDOSTASK lpDosTask)
+static void DOSVM_Dump( LPDOSTASK lpDosTask)
 {
  unsigned iofs;
  BYTE*inst;
@@ -48,6 +52,7 @@ void DOSVM_Dump( LPDOSTASK lpDosTask)
  fprintf(stderr,"AX=%04lX CX=%04lX DX=%04lX BX=%04lX\n",REGS.eax,REGS.ebx,REGS.ecx,REGS.edx);
  fprintf(stderr,"SI=%04lX DI=%04lX SP=%04lX BP=%04lX\n",REGS.esi,REGS.edi,REGS.esp,REGS.ebp);
  fprintf(stderr,"CS=%04X DS=%04X ES=%04X SS=%04X\n",REGS.cs,REGS.ds,REGS.es,REGS.ss);
+ fprintf(stderr,"EIP=%04lX EFLAGS=%08lX\n",REGS.eip,REGS.eflags);
 
  iofs=((DWORD)REGS.cs<<4)+REGS.eip;
 #undef REGS
@@ -59,8 +64,10 @@ void DOSVM_Dump( LPDOSTASK lpDosTask)
  exit(0);
 }
 
-int DOSVM_Int(int vect, LPDOSTASK lpDosTask, PCONTEXT context )
+static int DOSVM_Int(int vect, LPDOSTASK lpDosTask, PCONTEXT context )
 {
+ /* we should really map to if1632/wprocs.spec, but not all
+    interrupt handlers are adapted to support our VM yet */
  switch (vect) {
   case 0x20:
    return -1;
@@ -68,21 +75,30 @@ int DOSVM_Int(int vect, LPDOSTASK lpDosTask, PCONTEXT context )
    if (AH_reg(context)==0x4c) return -1;
    DOS3Call(context);
    break;
+  case 0x1a:
+   INT_Int1aHandler(context);
+   break;
+  case 0x2f:
+   INT_Int2fHandler(context);
+   break;
  }
  return 0;
 }
+
+#define CV CP(eax,Eax); CP(ecx,Ecx); CP(edx,Edx); CP(ebx,Ebx); \
+           CP(esi,Esi); CP(edi,Edi); CP(esp,Esp); CP(ebp,Ebp); \
+           CP(cs,SegCs); CP(ds,SegDs); CP(es,SegEs); \
+           CP(ss,SegSs); CP(fs,SegFs); CP(gs,SegGs); \
+           CP(eip,Eip); CP(eflags,EFlags)
 
 int DOSVM_Process( LPDOSTASK lpDosTask )
 {
  CONTEXT context;
  int ret=0;
 
-#define REGS lpDosTask->VM86.regs
- context.Eax=REGS.eax; context.Ecx=REGS.ecx; context.Edx=REGS.edx; context.Ebx=REGS.ebx;
- context.Esi=REGS.esi; context.Edi=REGS.edi; context.Esp=REGS.esp; context.Ebp=REGS.ebp;
- context.SegCs=REGS.cs; context.SegDs=REGS.ds; context.SegEs=REGS.es;
- context.SegSs=REGS.ss; context.SegFs=REGS.fs; context.SegGs=REGS.gs;
- context.Eip=REGS.eip; context.EFlags=REGS.eflags;
+#define CP(x,y) context.y = lpDosTask->VM86.regs.x
+ CV;
+#undef CP
  (void*)V86BASE(&context)=lpDosTask->img;
 
  switch (VM86_TYPE(lpDosTask->fn)) {
@@ -106,13 +122,67 @@ int DOSVM_Process( LPDOSTASK lpDosTask )
  }
 
  lpDosTask->fn=VM86_ENTER;
- REGS.eax=context.Eax; REGS.ecx=context.Ecx; REGS.edx=context.Edx; REGS.ebx=context.Ebx;
- REGS.esi=context.Esi; REGS.edi=context.Edi; REGS.esp=context.Esp; REGS.ebp=context.Ebp;
- REGS.cs=context.SegCs; REGS.ds=context.SegDs; REGS.es=context.SegEs;
- REGS.ss=context.SegSs; REGS.fs=context.SegFs; REGS.gs=context.SegGs;
- REGS.eip=context.Eip; REGS.eflags=context.EFlags;
-#undef REGS
+#define CP(x,y) lpDosTask->VM86.regs.x = context.y
+ CV;
+#undef CP
  return ret;
+}
+
+int DOSVM_Enter( PCONTEXT context )
+{
+ TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+ NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
+ LPDOSTASK lpDosTask;
+ int stat;
+
+ GlobalUnlock16( GetCurrentTask() );
+ if (!pModule) {
+  ERR(module,"No task is currently active!\n");
+  return -1;
+ }
+ if (!pModule->lpDosTask) {
+  /* no VM86 (dosmod) task is currently running, start one */
+  if ((lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL)
+    return 0;
+  lpDosTask->img=DOSMEM_MemoryBase(pModule->self);
+  lpDosTask->hModule=pModule->self;
+  stat=MZ_InitTask(lpDosTask);
+  if (stat<32) {
+   free(lpDosTask);
+   return -1;
+  }
+  pModule->lpDosTask = lpDosTask;
+  pModule->dos_image = lpDosTask->img;
+  /* Note: we're leaving it running after this, in case we need it again,
+     as this minimizes the overhead of starting it up every time...
+     it will be killed automatically when the current task terminates */
+ } else lpDosTask=pModule->lpDosTask;
+
+ if (context) {
+#define CP(x,y) lpDosTask->VM86.regs.x = context->y
+  CV;
+#undef CP
+ }
+
+ /* main loop */
+ while ((stat = MZ_RunModule(lpDosTask)) >= 0)
+  if (stat > 0 && DOSVM_Process(lpDosTask) < 0)
+   break;
+
+ if (context) {
+#define CP(x,y) context->y = lpDosTask->VM86.regs.x
+  CV;
+#undef CP
+ }
+ return 0;
+}
+
+#else /* !linux */
+
+int DOSVM_Enter( PCONTEXT context )
+{
+ ERR(module,"DOS realmode not supported on this architecture!\n");
+ return -1;
 }
 
 #endif /* linux */

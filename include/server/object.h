@@ -18,17 +18,22 @@
 
 struct object;
 struct object_name;
+struct thread;
 
 struct object_ops
 {
-    void (*dump)(struct object *,int);   /* dump the object (for debugging) */
-    void (*destroy)(struct object *);    /* destroy on refcount == 0 */
+    void (*dump)(struct object *,int);                  /* dump the object (for debugging) */
+    int  (*signaled)(struct object *,struct thread *);  /* is object signaled? */
+    int  (*satisfied)(struct object *,struct thread *); /* wait satisfied; return 1 if abandoned */
+    void (*destroy)(struct object *);                   /* destroy on refcount == 0 */
 };
 
 struct object
 {
     unsigned int              refcount;
     const struct object_ops  *ops;
+    struct wait_queue_entry  *head;
+    struct wait_queue_entry  *tail;
     struct object_name       *name;
 };
 

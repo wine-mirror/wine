@@ -29,6 +29,7 @@
 #include "clipboard.h"
 #include "winproc.h"
 #include "thread.h"
+#include "process.h"
 #include "debug.h"
 #include "winerror.h"
 
@@ -291,7 +292,6 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     PROPERTY_RemoveWindowProps( wndPtr );
 
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
-    wndPtr->hwndSelf = 0;
 
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
     {
@@ -326,10 +326,9 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
        if (wndPtr->wIDmenu) DestroyMenu32( (HMENU32)wndPtr->wIDmenu );
     if (wndPtr->hSysMenu) DestroyMenu32( wndPtr->hSysMenu );
     if (wndPtr->window) EVENT_DestroyWindow( wndPtr );
-    if (wndPtr->class->style & CS_OWNDC) DCE_FreeWindowDCE( wndPtr );
-
+    DCE_FreeWindowDCE( wndPtr );    /* Always do this to catch orphaned DCs */ 
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
-
+    wndPtr->hwndSelf = 0;
     wndPtr->class->cWindows--;
     wndPtr->class = NULL;
     pWnd = wndPtr->next;
@@ -493,13 +492,33 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     /* Fix the coordinates */
 
-    if (cs->x == CW_USEDEFAULT32) cs->x = cs->y = 0;
+    if (cs->x == CW_USEDEFAULT32) 
+    {
+        PDB32 *pdb = PROCESS_Current();
+        if (   !(cs->style & (WS_CHILD | WS_POPUP))
+            &&  (pdb->env_db->startup_info->dwFlags & STARTF_USEPOSITION) )
+        {
+            cs->x = pdb->env_db->startup_info->dwX;
+            cs->y = pdb->env_db->startup_info->dwY;
+        }
+        else
+        {
+            cs->x = 0;
+            cs->y = 0;
+        }
+    }
     if (cs->cx == CW_USEDEFAULT32)
     {
-/*        if (!(cs->style & (WS_CHILD | WS_POPUP))) cs->cx = cs->cy = 0;
-        else */
+        PDB32 *pdb = PROCESS_Current();
+        if (   !(cs->style & (WS_CHILD | WS_POPUP))
+            &&  (pdb->env_db->startup_info->dwFlags & STARTF_USESIZE) )
         {
-            cs->cx = 600;
+            cs->cx = pdb->env_db->startup_info->dwXSize;
+            cs->cy = pdb->env_db->startup_info->dwYSize;
+        }
+        else
+        {
+            cs->cx = 600; /* FIXME */
             cs->cy = 400;
         }
     }
@@ -2274,11 +2293,13 @@ static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
         /* Make sure that the window still exists */
         if (!IsWindow32((*ppWnd)->hwndSelf)) continue;
         /* Build children list first */
-        if (!(childList = WIN_BuildWinArray( *ppWnd, BWA_SKIPOWNED, NULL )))
-            return FALSE;
-        if (!func( (*ppWnd)->hwndSelf, lParam )) return FALSE;
-        ret = WIN_EnumChildWindows( childList, func, lParam );
-        HeapFree( SystemHeap, 0, childList );
+        childList = WIN_BuildWinArray( *ppWnd, BWA_SKIPOWNED, NULL );
+        ret = func( (*ppWnd)->hwndSelf, lParam );
+        if (childList)
+        {
+            if (ret) ret = WIN_EnumChildWindows( childList, func, lParam );
+            HeapFree( SystemHeap, 0, childList );
+        }
         if (!ret) return FALSE;
     }
     return TRUE;

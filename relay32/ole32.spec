@@ -139,7 +139,7 @@ type	win32
 136 stub ReadFmtUserTypeStg
 137 stub ReadOleStg
 138 stub ReadStringStream
-139 stub RegisterDragDrop
+139 stdcall RegisterDragDrop(long ptr) RegisterDragDrop32
 140 stub ReleaseStgMedium
 141 stub RevokeDragDrop
 142 stub SetConvertStg

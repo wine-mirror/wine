@@ -816,9 +816,11 @@ COLORREF COLOR_ToLogical(int pixel)
 {
     XColor color;
 
+#if 0
     /* truecolor visual */
 
     if (screenDepth >= 24) return pixel;
+#endif
 
     /* check for hicolor visuals first */
 

@@ -52,9 +52,15 @@ $(INCLUDES):
 install:: 
 	$(INSTALL_DATA) $(SRCDIR)/wine.man $(mandir)/wine$(manext)
 
+uninstall::
+	$(RM) $(mandir)/wine$(manext)
+
 # Not done by default because of makeinfo bugs
 install_info: $(INFOFILES)
 	for i in $(INFOFILES); do $(INSTALL_DATA) $$i $(infodir)/$$i; done
+
+uninstall_info:
+	for i in $(INFOFILES); do $(RM) $(infodir)/$$i; done
 
 clean::
 	$(RM) $(INFOFILES) $(DVIFILES) $(INCLUDES)

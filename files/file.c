@@ -871,7 +871,7 @@ error:  /* We get here if there was an error opening the file */
  */
 HFILE16 WINAPI OpenFile16( LPCSTR name, OFSTRUCT *ofs, UINT16 mode )
 {
-    return FILE_DoOpenFile( name, ofs, mode, FALSE );
+    return HFILE32_TO_HFILE16(FILE_DoOpenFile( name, ofs, mode, FALSE ));
 }
 
 
@@ -890,7 +890,7 @@ HFILE32 WINAPI OpenFile32( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
 HFILE16 WINAPI _lclose16( HFILE16 hFile )
 {
     TRACE(file, "handle %d\n", hFile );
-    return CloseHandle( hFile ) ? 0 : HFILE_ERROR16;
+    return CloseHandle( HFILE16_TO_HFILE32( hFile )  ) ? 0 : HFILE_ERROR16;
 }
 
 
@@ -917,7 +917,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
     /* Some programs pass a count larger than the allocated buffer */
     maxlen = GetSelectorLimit( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
     if (count > maxlen) count = maxlen;
-    return _lread32( hFile, PTR_SEG_TO_LIN(buffer), count );
+    return _lread32(HFILE16_TO_HFILE32(hFile), PTR_SEG_TO_LIN(buffer), count );
 }
 
 
@@ -955,7 +955,7 @@ UINT32 WINAPI _lread32( HFILE32 handle, LPVOID buffer, UINT32 count )
  */
 UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 {
-    return (UINT16)_lread32( hFile, buffer, (LONG)count );
+    return (UINT16)_lread32(HFILE16_TO_HFILE32(hFile), buffer, (LONG)count );
 }
 
 
@@ -966,7 +966,7 @@ HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
     int mode = (attr & 1) ? 0444 : 0666;
     TRACE(file, "%s %02x\n", path, attr );
-    return (HFILE16)FILE_Create( path, mode, FALSE );
+    return (HFILE16) HFILE32_TO_HFILE16(FILE_Create( path, mode, FALSE ));
 }
 
 
@@ -1038,7 +1038,7 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
  */
 LONG WINAPI _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
 {
-    return SetFilePointer( hFile, lOffset, NULL, nOrigin );
+    return SetFilePointer( HFILE16_TO_HFILE32(hFile), lOffset, NULL, nOrigin );
 }
 
 
@@ -1056,7 +1056,7 @@ LONG WINAPI _llseek32( HFILE32 hFile, LONG lOffset, INT32 nOrigin )
  */
 HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
 {
-    return _lopen32( path, mode );
+    return HFILE32_TO_HFILE16(_lopen32( path, mode ));
 }
 
 
@@ -1091,7 +1091,7 @@ HFILE32 WINAPI _lopen32( LPCSTR path, INT32 mode )
  */
 UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
 {
-    return (UINT16)_hwrite32( hFile, buffer, (LONG)count );
+    return (UINT16)_hwrite32( HFILE16_TO_HFILE32(hFile), buffer, (LONG)count );
 }
 
 /***********************************************************************
@@ -1108,7 +1108,7 @@ UINT32 WINAPI _lwrite32( HFILE32 hFile, LPCSTR buffer, UINT32 count )
  */
 LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
 {
-    return _lread32( hFile, buffer, count );
+    return _lread32( HFILE16_TO_HFILE32(hFile), buffer, count );
 }
 
 
@@ -1126,7 +1126,7 @@ LONG WINAPI _hread32( HFILE32 hFile, LPVOID buffer, LONG count)
  */
 LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 {
-    return _hwrite32( hFile, buffer, count );
+    return _hwrite32( HFILE16_TO_HFILE32(hFile), buffer, count );
 }
 
 

@@ -25,6 +25,17 @@
 
 
 static __inline__ LRESULT
+PAGER_ForwardMouse (WND *wndPtr, WPARAM32 wParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    infoPtr->bForward = (BOOL32)wParam;
+
+    return 0;
+}
+
+
+static __inline__ LRESULT
 PAGER_GetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
@@ -51,6 +62,28 @@ PAGER_GetButtonSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+// << PAGER_GetButtonState >>
+// << PAGER_GetDropTarget >>
+
+
+static __inline__ LRESULT
+PAGER_GetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    return infoPtr->iPos;
+}
+
+
+static LRESULT
+PAGER_RecalcSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+//    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    FIXME (pager, "empty stub!\n");
+
+    return 0;
+}
 
 
 static __inline__ LRESULT
@@ -108,6 +141,18 @@ PAGER_SetChild (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+static __inline__ LRESULT
+PAGER_SetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    infoPtr->iPos = (INT32)lParam;
+
+    /* FIXME: redraw */
+
+    return 0;
+}
+
 
 static LRESULT
 PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
@@ -120,7 +165,7 @@ PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     wndPtr->wExtra[0] = (DWORD)infoPtr;
 
     if (infoPtr == NULL) {
-	ERR (treeview, "could not allocate info memory!\n");
+	ERR (pager, "could not allocate info memory!\n");
 	return 0;
     }
 
@@ -134,6 +179,7 @@ PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     infoPtr->clrBk = GetSysColor32 (COLOR_BTNFACE);
     infoPtr->iBorder = 0;
     infoPtr->iButtonSize = 0;
+    infoPtr->iPos = 0;
 
 
     return 0;
@@ -148,7 +194,7 @@ PAGER_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 
 
-    /* free tree view info data */
+    /* free pager info data */
     HeapFree (GetProcessHeap (), 0, infoPtr);
 
     return 0;
@@ -169,15 +215,19 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+// << PAGER_MouseMove >>
+// << PAGER_Paint >>
+
 
 LRESULT WINAPI
-PagerWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
     switch (uMsg)
     {
-//	case PGM_FORWARDMOUSE:
+	case PGM_FORWARDMOUSE:
+	    return PAGER_ForwardMouse (wndPtr, wParam);
 
 	case PGM_GETBKCOLOR:
 	    return PAGER_GetBkColor (wndPtr, wParam, lParam);
@@ -190,8 +240,12 @@ PagerWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
 //	case PGM_GETBUTTONSTATE:
 //	case PGM_GETDROPTARGET:
-//	case PGM_GETPOS:
-//	case PGM_RECALCSIZE:
+
+	case PGM_GETPOS:
+	    return PAGER_SetPos (wndPtr, wParam, lParam);
+
+	case PGM_RECALCSIZE:
+	    return PAGER_RecalcSize (wndPtr, wParam, lParam);
 
 	case PGM_SETBKCOLOR:
 	    return PAGER_SetBkColor (wndPtr, wParam, lParam);
@@ -205,7 +259,8 @@ PagerWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case PGM_SETCHILD:
 	    return PAGER_SetChild (wndPtr, wParam, lParam);
 
-//	case PGM_SETPOS:
+	case PGM_SETPOS:
+	    return PAGER_SetPos (wndPtr, wParam, lParam);
 
 	case WM_CREATE:
 	    return PAGER_Create (wndPtr, wParam, lParam);
@@ -242,7 +297,7 @@ PAGER_Register (void)
 
     ZeroMemory (&wndClass, sizeof(WNDCLASS32A));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS;
-    wndClass.lpfnWndProc   = (WNDPROC32)PagerWindowProc;
+    wndClass.lpfnWndProc   = (WNDPROC32)PAGER_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(PAGER_INFO *);
     wndClass.hCursor       = LoadCursor32A (0, IDC_ARROW32A);

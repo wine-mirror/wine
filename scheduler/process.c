@@ -128,7 +128,8 @@ static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
 /***********************************************************************
  *           PROCESS_InheritEnvDB
  */
-static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env )
+static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env,
+                                    STARTUPINFO32A *startup )
 {
     if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
         return FALSE;
@@ -143,10 +144,25 @@ static BOOL32 PROCESS_InheritEnvDB( PDB32 *pdb, LPCSTR cmd_line, LPCSTR env )
     if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
         return FALSE;
 
+    /* Remember startup info */
+    if (!(pdb->env_db->startup_info = 
+          HeapAlloc( pdb->heap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFO32A) )))
+        return FALSE;
+    *pdb->env_db->startup_info = *startup;
+
     /* Inherit the standard handles */
-    pdb->env_db->hStdin  = pdb->parent->env_db->hStdin;
-    pdb->env_db->hStdout = pdb->parent->env_db->hStdout;
-    pdb->env_db->hStderr = pdb->parent->env_db->hStderr;
+    if (pdb->env_db->startup_info->dwFlags & STARTF_USESTDHANDLES)
+    {
+        pdb->env_db->hStdin  = pdb->env_db->startup_info->hStdInput;
+        pdb->env_db->hStdout = pdb->env_db->startup_info->hStdOutput;
+        pdb->env_db->hStderr = pdb->env_db->startup_info->hStdError;
+    }
+    else
+    {
+        pdb->env_db->hStdin  = pdb->parent->env_db->hStdin;
+        pdb->env_db->hStdout = pdb->parent->env_db->hStdout;
+        pdb->env_db->hStderr = pdb->parent->env_db->hStderr;
+    }
 
     return TRUE;
 }
@@ -249,13 +265,15 @@ BOOL32 PROCESS_Init(void)
  */
 PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                        HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
-                       UINT32 cmdShow, PROCESS_INFORMATION *info )
+                       STARTUPINFO32A *startup, PROCESS_INFORMATION *info )
 {
     DWORD size, commit;
     int server_thandle, server_phandle;
+    UINT32 cmdShow = 0;
     THDB *thdb = NULL;
     PDB32 *parent = PROCESS_Current();
     PDB32 *pdb = PROCESS_CreatePDB( parent );
+    TDB *pTask;
 
     if (!pdb) return NULL;
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE32;
@@ -278,7 +296,7 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     /* Inherit the env DB from the parent */
 
-    if (!PROCESS_InheritEnvDB( pdb, cmd_line, env )) goto error;
+    if (!PROCESS_InheritEnvDB( pdb, cmd_line, env, startup )) goto error;
 
     /* Create the main thread */
 
@@ -295,11 +313,21 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                                         FALSE, server_phandle )) == INVALID_HANDLE_VALUE32)
         goto error;
     info->dwProcessId = PDB_TO_PROCESS_ID(pdb);
-    info->dwProcessId = THDB_TO_THREAD_ID(thdb);
+    info->dwThreadId  = THDB_TO_THREAD_ID(thdb);
 
+#if 0
     thdb->unix_pid = getpid(); /* FIXME: wrong here ... */
+#else
+    /* All Win16 'threads' have the same unix_pid, no matter by which thread
+       they were created ! */
+    pTask = (TDB *)GlobalLock16( parent->task );
+    thdb->unix_pid = pTask? pTask->thdb->unix_pid : THREAD_Current()->unix_pid;
+#endif
 
     /* Create a Win16 task for this process */
+
+    if (startup->dwFlags & STARTF_USESHOWWINDOW)
+        cmdShow = startup->wShowWindow;
 
     pdb->task = TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow);
     if (!pdb->task) goto error;
@@ -386,6 +414,11 @@ static void PROCESS_Destroy( K32OBJ *ptr )
 void WINAPI ExitProcess( DWORD status )
 {
     PDB32 *pdb = PROCESS_Current();
+    TDB *pTask = (TDB *)GlobalLock16( pdb->task );
+    if ( pTask ) pTask->nEvents++;
+
+    if ( pTask && pTask->thdb != THREAD_Current() )
+        ExitThread( status );
 
     SYSTEM_LOCK();
     /* FIXME: should kill all running threads of this process */
@@ -398,6 +431,20 @@ void WINAPI ExitProcess( DWORD status )
     TASK_KillCurrentTask( status );
 }
 
+
+/******************************************************************************
+ *           TerminateProcess   (KERNEL32.684)
+ */
+BOOL32 WINAPI TerminateProcess( HANDLE32 handle, DWORD exit_code )
+{
+    int server_handle;
+    BOOL32 ret;
+    PDB32 *pdb = PROCESS_GetPtr( handle, PROCESS_TERMINATE, &server_handle );
+    if (!pdb) return FALSE;
+    ret = !CLIENT_TerminateProcess( server_handle, exit_code );
+    K32OBJ_DecCount( &pdb->header );
+    return ret;
+}
 
 /***********************************************************************
  *           GetCurrentProcess   (KERNEL32.198)
@@ -757,7 +804,7 @@ void PROCESS_SuspendOtherThreads(void)
     entry = pdb->thread_list->next;
     for (;;)
     {
-         if (entry->thread != THREAD_Current())
+         if (entry->thread != THREAD_Current() && !THREAD_IsWin16(entry->thread))
          {
              HANDLE32 handle = HANDLE_Alloc( PROCESS_Current(), 
                                              &entry->thread->header,
@@ -787,7 +834,7 @@ void PROCESS_ResumeOtherThreads(void)
     entry = pdb->thread_list->next;
     for (;;)
     {
-         if (entry->thread != THREAD_Current())
+         if (entry->thread != THREAD_Current() && !THREAD_IsWin16(entry->thread))
          {
              HANDLE32 handle = HANDLE_Alloc( PROCESS_Current(), 
                                              &entry->thread->header,

@@ -98,7 +98,7 @@ extern BOOL32 X11DRV_Polygon( struct tagDC *dc, LPPOINT32 pt, INT32 count );
 extern BOOL32 X11DRV_PolyPolygon( struct tagDC *dc, LPPOINT32 pt,
 				  LPINT32 counts, UINT32 polygons);
 extern BOOL32 X11DRV_PolyPolyline( struct tagDC *dc, LPPOINT32 pt,
-				  LPINT32 counts, UINT32 polylines);
+				  LPDWORD counts, DWORD polylines);
 
 extern HGDIOBJ32 X11DRV_SelectObject( struct tagDC *dc, HGDIOBJ32 handle );
 

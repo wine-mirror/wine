@@ -13,6 +13,9 @@
 static CRITICAL_SECTION Win16Mutex;
 static SEGPTR segpWin16Mutex;
 
+/* Global variable to save current TEB while in 16-bit code */
+WORD SYSLEVEL_Win16CurrentTeb = 0;
+
 
 /************************************************************************
  *           SYSLEVEL_Init
@@ -49,6 +52,9 @@ SEGPTR WINAPI GetpWin16Lock16(void)
 VOID WINAPI _EnterSysLevel(CRITICAL_SECTION *lock)
 {
     EnterCriticalSection(lock);
+
+    if (lock == &Win16Mutex)
+        GET_FS( SYSLEVEL_Win16CurrentTeb );
 }
 
 /************************************************************************

@@ -242,6 +242,7 @@ static DWORD WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER this) {
 		this->dsound->nrofbuffers--;
 		this->dsound->lpvtbl->fnRelease(this->dsound);
 	}
+	HeapFree(GetProcessHeap(),0,this->buffer);
 	HeapFree(GetProcessHeap(),0,this);
 	return 0;
 }
@@ -784,7 +785,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 /*			unsigned char	*xbuf = (unsigned char*)(dsb->buffer); */
 			char	*xbuf = dsb->buffer;
 			if (dsb->wfx.nChannels == 1) {
-	printf("Mixing 8-bit stereo into 16!!\n");
+				WARN(dsound,"Mixing 8-bit stereo into 16!!\n");
 				for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0])/2;j++) {
 					dsb->playpos=(dsb->playpos+1)%buflen;
 					if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {

@@ -133,16 +133,6 @@ BOOL32 WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
 
 
 /***********************************************************************
- *              Sleep  (KERNEL32.523)
- */
-VOID WINAPI Sleep(DWORD cMilliseconds)
-{
-    if(cMilliseconds == INFINITE32)
-        while(1) sleep(1000); /* Spin forever */
-    usleep(cMilliseconds*1000);
-}
-
-/***********************************************************************
  *              GetSystemTimeAsFileTime  (KERNEL32)
  */
 VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime) {

@@ -827,8 +827,9 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
  * FIXME: this function should use PE_LoadLibraryEx32A, but currently can't
  * due to the PROCESS_Create stuff.
  */
-HINSTANCE16 PE_LoadModule( LPCSTR name, LPCSTR cmd_line,
-                           LPCSTR env, UINT16 show_cmd )
+HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
+                              LPCSTR env, LPSTARTUPINFO32A startup,
+                              LPPROCESS_INFORMATION info )
 {
     HMODULE16 hModule16;
     HMODULE32 hModule32;
@@ -836,8 +837,8 @@ HINSTANCE16 PE_LoadModule( LPCSTR name, LPCSTR cmd_line,
     NE_MODULE *pModule;
     HFILE32 hFile;
     OFSTRUCT ofs;
-    THDB *thdb = THREAD_Current();
     PDB32 *process;
+    TDB *pTask;
     WINE_MODREF	*wm;
 
     if ((hFile = OpenFile32( name, &ofs, OF_READ )) == HFILE_ERROR32)
@@ -850,21 +851,13 @@ HINSTANCE16 PE_LoadModule( LPCSTR name, LPCSTR cmd_line,
     pModule->module32 = hModule32 = PE_LoadImage( hFile );
     if (hModule32 < 32) return 21;
 
-    hInstance = NE_CreateInstance( pModule, NULL, (cmd_line == NULL) );
-    if (cmd_line &&
-        !(PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL))
-    {
-        PROCESS_INFORMATION info;
-        PDB32 *pdb = PROCESS_Create( pModule, cmd_line, env,
-                                     hInstance, 0, show_cmd, &info );
-        TDB *pTask = (TDB *)GlobalLock16( pdb->task );
-        thdb = pTask->thdb;
-        /* we don't need the handles for now */
-        CloseHandle( info.hThread );
-        CloseHandle( info.hProcess );
-    }
+    if (PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL)
+        return 11;
 
-    process = thdb->process;
+    hInstance = NE_CreateInstance( pModule, NULL, FALSE );
+    process = PROCESS_Create( pModule, cmd_line, env,
+                              hInstance, 0, startup, info );
+    pTask = (TDB *)GlobalLock16( process->task );
 
     wm=(WINE_MODREF*)HeapAlloc(process->heap,HEAP_ZERO_MEMORY,sizeof(*wm));
     wm->type = MODULE32_PE;
@@ -878,8 +871,10 @@ HINSTANCE16 PE_LoadModule( LPCSTR name, LPCSTR cmd_line,
         return 0;
     }
     pModule->module32 = wm->module;
+
     /* FIXME: Yuck. Is there no other good place to do that? */
-    PE_InitTls( thdb );
+    PE_InitTls( pTask->thdb );
+
     return hInstance;
 }
 
@@ -916,7 +911,7 @@ static void PE_InitDLL(WINE_MODREF *wm, DWORD type,LPVOID lpReserved)
     if ((PE_HEADER(wm->module)->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
         (PE_HEADER(wm->module)->OptionalHeader.AddressOfEntryPoint)
     ) {
-        FARPROC32 entry = (FARPROC32)RVA_PTR( wm->module,
+        DWORD (CALLBACK *entry)(HMODULE32,DWORD,LPVOID) = (void*)RVA_PTR( wm->module,
                                           OptionalHeader.AddressOfEntryPoint );
         TRACE(relay, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, wm->module, type, lpReserved );

@@ -137,7 +137,7 @@ INT32 WINAPI LZStart32(void)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
-    return LZInit32( hfSrc );
+    return LZInit32( HFILE16_TO_HFILE32(hfSrc) );
 }
 
 

@@ -22,18 +22,43 @@
 #include "updown.h"
 #include "debug.h"
 
+
 /***********************************************************************
- * ComCtl32LibMain
+ * ComCtl32LibMain [Internal] Initializes the internal 'COMCTL32.DLL'.
+ *
+ * PARAMS
+ *     hinstDLL    [I]
+ *     fdwReason   [I]
+ *     lpvReserved [I]
+ *
  */
 
-BOOL32 WINAPI ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{ TRACE(commctrl,"%x,%lx,%p\n",hinstDLL,fdwReason,lpvReserved);
-  if ( fdwReason == DLL_PROCESS_ATTACH)
-  { InitCommonControls();
-  }
-  return TRUE;
+BOOL32 WINAPI
+ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE (commctrl, "%x,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 
+    switch (fdwReason) {
+	case DLL_PROCESS_ATTACH:
+	    TRACE (commctrl, "No animation class implemented!\n");
+	    HEADER_Register ();
+	    TRACE (commctrl, "No hotkey class implemented!\n");
+	    LISTVIEW_Register ();
+	    PROGRESS_Register ();
+	    STATUS_Register ();
+	    TRACE (commctrl, "No tab class implemented!\n");
+	    TOOLBAR_Register ();
+	    TOOLTIPS_Register ();
+	    TRACKBAR_Register ();
+	    TREEVIEW_Register ();
+	    UPDOWN_Register ();
+	    break;
+    }
+
+    return TRUE;
 }
+
+
 /***********************************************************************
  * DrawStatusText32A [COMCTL32.5][COMCTL32.27]
  *
@@ -73,9 +98,18 @@ DrawStatusText32A (HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style)
 
 /***********************************************************************
  * DrawStatusText32W [COMCTL32.28]
+ *
+ * Draws text with borders, like in a status bar.
+ *
+ * PARAMS
+ *     hdc   [I] handle to the window's display context
+ *     lprc  [I] pointer to a rectangle
+ *     text  [I] pointer to the text
+ *     style [I] 
  */
-void WINAPI DrawStatusText32W( HDC32 hdc, LPRECT32 lprc, LPCWSTR text,
-                               UINT32 style )
+
+VOID WINAPI
+DrawStatusText32W (HDC32 hdc, LPRECT32 lprc, LPCWSTR text, UINT32 style)
 {
   LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
   DrawStatusText32A(hdc, lprc, p, style);
@@ -137,19 +171,14 @@ HWND32 WINAPI CreateUpDownControl( DWORD style, INT32 x, INT32 y,
  *     None.
  *
  * NOTES
- *     Calls InitCommonControlsEx.
- *     InitCommonControlsEx should be used instead.
+ *     This function is just a dummy.
+ *     The Win95 controls are registered at the DLL's initialization.
+ *     To register other controls InitCommonControlsEx must be used.
  */
 
 VOID WINAPI
 InitCommonControls (VOID)
 {
-    INITCOMMONCONTROLSEX icc;
-
-    icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icc.dwICC = ICC_WIN95_CLASSES;
-
-    InitCommonControlsEx (&icc);
 }
 
 
@@ -160,6 +189,10 @@ InitCommonControls (VOID)
  *
  * PARAMS
  *     lpInitCtrls [I] pointer to a INITCOMMONCONTROLS structure.
+ *
+ * NOTES
+ *     Only the additinal common controls are registered by this function.
+ *     The Win95 controls are registered at the DLL's initialization.
  */
 
 BOOL32 WINAPI
@@ -173,49 +206,21 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
   if (lpInitCtrls == NULL) return FALSE;
   if (lpInitCtrls->dwSize < sizeof(INITCOMMONCONTROLSEX)) return FALSE;
 
-  for (cCount = 0; cCount <= 31; cCount++) {
+  for (cCount = 0; cCount < 32; cCount++) {
     dwMask = 1 << cCount;
     if (!(lpInitCtrls->dwICC & dwMask))
       continue;
 
     switch (lpInitCtrls->dwICC & dwMask) {
-      case ICC_LISTVIEW_CLASSES:
-        LISTVIEW_Register ();
-        HEADER_Register ();
-        break;
-
-      case ICC_TREEVIEW_CLASSES:
-        TREEVIEW_Register ();
-	TOOLTIPS_Register ();
-        break;
-
-      case ICC_BAR_CLASSES:
-	TOOLBAR_Register ();
-	STATUS_Register ();
-	TRACKBAR_Register ();
-	TOOLTIPS_Register ();
-        break;
-
-      case ICC_TAB_CLASSES:
-        TRACE (commctrl, "No tab class implemented!\n");
-	TOOLTIPS_Register ();
-        UPDOWN_Register ();
-        break;
-
-      case ICC_UPDOWN_CLASS:
-        UPDOWN_Register ();
-        break;
-
-      case ICC_PROGRESS_CLASS:
-        PROGRESS_Register ();
-        break;
-
-      case ICC_HOTKEY_CLASS:
-        TRACE (commctrl, "No hotkey class implemented!\n");
-        break;
-
+      /* dummy initialization */
       case ICC_ANIMATE_CLASS:
-        TRACE (commctrl, "No animation class implemented!\n");
+      case ICC_BAR_CLASSES:
+      case ICC_LISTVIEW_CLASSES:
+      case ICC_TREEVIEW_CLASSES:
+      case ICC_TAB_CLASSES:
+      case ICC_UPDOWN_CLASS:
+      case ICC_PROGRESS_CLASS:
+      case ICC_HOTKEY_CLASS:
         break;
 
       /* advanced classes - not included in Win95 */
@@ -267,6 +272,10 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
  *     hInst
  *     hwndStatus
  *     lpwIDs
+ *
+ * NOTES
+ *     Some features are still missing because of incomplete WM_MENUSELECT
+ *     messages (16->32 bit conversion).
  */
 
 VOID WINAPI
@@ -528,32 +537,60 @@ GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
 
 
 /***********************************************************************
- * ShowHideMenuCtl [COMCTL32.3]
+ * ShowHideMenuCtl [COMCTL32.3] 
+ *
+ * Shows or hides controls and updates the corresponding menu item.
  *
  * PARAMS
  *     hwnd   [I] handle to the client window.
- *     uFlags [I] menu command id
- *     lpInfo [I] pointer to an array of integers
+ *     uFlags [I] menu command id.
+ *     lpInfo [I] pointer to an array of integers. (See NOTES.)
  *
  * NOTES
+ *     The official documentation is incomplete! This has been fixed.
+ *
+ *     lpInfo
+ *     The array of integers contains pairs of values. BOTH values of
+ *     the first pair must be the handles to application's main menu.
+ *     Each subsequent pair consists of a menu id and control id.
  */
 
 BOOL32 WINAPI
 ShowHideMenuCtl (HWND32 hwnd, UINT32 uFlags, LPINT32 lpInfo)
 {
+    LPINT32 lpMenuId;
     FIXME (commctrl, "(0x%08x 0x%08x %p): empty stub!\n",
 	   hwnd, uFlags, lpInfo);
-#if 0
-    if (GetMenuState (lpInfo[1], uFlags, MF_BYCOMMAND) & MFS_CHECKED) {
-	/* checked -> hide control */
 
+    if (lpInfo == NULL)
+	return FALSE;
+
+    if (!(lpInfo[0]) || !(lpInfo[1]))
+	return FALSE;
+
+    /* search for control */
+    lpMenuId = &lpInfo[2];
+    while (*lpMenuId != uFlags)
+	lpMenuId += 2;
+
+    if (GetMenuState32 (lpInfo[1], uFlags, MF_BYCOMMAND) & MFS_CHECKED) {
+	/* uncheck menu item */
+	CheckMenuItem32 (lpInfo[0], *lpMenuId, MF_BYCOMMAND | MF_UNCHECKED);
+
+	/* hide control */
+	lpMenuId++;
+	SetWindowPos32 (GetDlgItem32 (hwnd, *lpMenuId), 0, 0, 0, 0, 0,
+			SWP_HIDEWINDOW);
     }
     else {
-	/* not checked -> show control */
+	/* check menu item */
+	CheckMenuItem32 (lpInfo[0], *lpMenuId, MF_BYCOMMAND | MF_CHECKED);
 
+	/* show control */
+	lpMenuId++;
+	SetWindowPos32 (GetDlgItem32 (hwnd, *lpMenuId), 0, 0, 0, 0, 0,
+			SWP_SHOWWINDOW);
     }
 
-#endif
-
-    return FALSE;
+    return TRUE;
 }

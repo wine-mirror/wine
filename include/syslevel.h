@@ -10,6 +10,8 @@
 #include "wintypes.h"
 #include "winbase.h"
 
+extern WORD SYSLEVEL_Win16CurrentTeb;
+
 void SYSLEVEL_Init(void);
 VOID SYSLEVEL_EnterWin16Lock(VOID);
 VOID SYSLEVEL_LeaveWin16Lock(VOID);

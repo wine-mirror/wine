@@ -169,6 +169,12 @@ static PSDRV_DEVMODE16 DefaultDevmode =
 
 HANDLE32 PSDRV_Heap = 0;
 
+static HANDLE32 PSDRV_DefaultFont = 0;
+static LOGFONT32A DefaultLogFont = {
+    100, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, 0, 0,
+    DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, ""
+};
+
 /*********************************************************************
  *	     PSDRV_Init
  *
@@ -180,6 +186,7 @@ BOOL32 PSDRV_Init(void)
     TRACE(psdrv, "\n");
     PSDRV_Heap = HeapCreate(0, 0x10000, 0);
     PSDRV_GetFontMetrics();
+    PSDRV_DefaultFont = CreateFontIndirect32A(&DefaultLogFont);
     return DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
 }
 
@@ -225,11 +232,11 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     memcpy(devCaps, &PSDRV_DevCaps, sizeof(PSDRV_DevCaps));
 
     if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
-        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperWidth;
-	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperLength;
+        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperWidth / 10;
+	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperLength / 10;
     } else {
-        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperLength;
-	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperWidth;
+        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperLength / 10;
+	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperWidth / 10;
     }
 
     devCaps->horzRes = physDev->pi->ppd->DefaultResolution * 
@@ -252,6 +259,7 @@ static BOOL32 PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     dc->w.hVisRgn = CreateRectRgn32(0, 0, dc->w.devCaps->horzRes,
     			    dc->w.devCaps->vertRes);
     
+    dc->w.hFont = PSDRV_DefaultFont;
     physDev->job.output = HEAP_strdupA( PSDRV_Heap, 0, output );
     physDev->job.hJob = 0;
     return TRUE;

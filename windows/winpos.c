@@ -53,6 +53,7 @@
 
 static HWND32 hwndActive      = 0;  /* Currently active window */
 static HWND32 hwndPrevActive  = 0;  /* Previously active window */
+static HWND32 hGlobalShellWindow=0; /*the shell*/
 
 static LPCSTR atomInternalPos;
 
@@ -702,9 +703,10 @@ HWND16 WINAPI GetShellWindow16(void)
  *         SetShellWindow32    (USER32.504)
  */
 HWND32 WINAPI SetShellWindow32(HWND32 hwndshell)
-{
-    FIXME(win, "(%08x): empty stub\n",hwndshell );
-    return 0;
+{   WARN(win, "(hWnd=%08x) semi stub\n",hwndshell );
+
+    hGlobalShellWindow = hwndshell;
+    return hGlobalShellWindow;
 }
 
 
@@ -712,9 +714,9 @@ HWND32 WINAPI SetShellWindow32(HWND32 hwndshell)
  *         GetShellWindow32    (USER32.287)
  */
 HWND32 WINAPI GetShellWindow32(void)
-{
-    FIXME(win, "(void): empty stub\n" );
-    return 0;
+{   WARN(win, "(hWnd=%x) semi stub\n",hGlobalShellWindow );
+
+    return hGlobalShellWindow;
 }
 
 

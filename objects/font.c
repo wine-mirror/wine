@@ -927,9 +927,9 @@ BOOL32 WINAPI GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
  *    Success: Non-zero or size of required buffer
  *    Failure: 0
  */
-INT16 WINAPI GetOutlineTextMetrics(
+UINT16 WINAPI GetOutlineTextMetrics16(
     HDC16 hdc,    /* [in]  Handle of device context */
-    INT16 cbData, /* [in]  Size of metric data array */
+    UINT16 cbData, /* [in]  Size of metric data array */
     void *lpOTM)  /* [out] Address of metric data array */
 {
     FIXME(font, "(%04x,%04x,%p): stub\n", hdc,cbData,lpOTM);
@@ -1036,7 +1036,7 @@ DWORD WINAPI SetMapperFlags32( HDC32 hDC, DWORD dwFlag )
 /***********************************************************************
  *          GetAspectRatioFilterEx16  (GDI.486)
  */
-BOOL16 GetAspectRatioFilterEx16( HDC16 hdc, LPVOID pAspectRatio )
+BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
 {
   FIXME(font, "(%04x, %p): -- Empty Stub !\n",
 		hdc, pAspectRatio);
@@ -1290,8 +1290,8 @@ DWORD WINAPI GetFontData32(HDC32 hdc, DWORD table, DWORD offset,
  * GetCharacterPlacement32A [GDI32.160]
  */
 DWORD WINAPI
-GetCharacterPlacement32A(HDC32 hdc, LPCSTR lpString, UINT32 uCount,
-			 INT32 nMaxExtent, GCP_RESULTS32A lpResults,
+GetCharacterPlacement32A(HDC32 hdc, LPCSTR lpString, INT32 uCount,
+			 INT32 nMaxExtent, GCP_RESULTS32A *lpResults,
 			 DWORD dwFlags)
 {
     /* return value 0 is correct for most cases anyway */
@@ -1303,12 +1303,11 @@ GetCharacterPlacement32A(HDC32 hdc, LPCSTR lpString, UINT32 uCount,
  * GetCharacterPlacement32W [GDI32.161]
  */
 DWORD WINAPI
-GetCharacterPlacement32W(HDC32 hdc, LPCWSTR lpString, UINT32 uCount,
-			 INT32 nMaxExtent, GCP_RESULTS32W lpResults,
+GetCharacterPlacement32W(HDC32 hdc, LPCWSTR lpString, INT32 uCount,
+			 INT32 nMaxExtent, GCP_RESULTS32W *lpResults,
 			 DWORD dwFlags)
 {
     /* return value 0 is correct for most cases anyway */
     FIXME(font,":stub!\n");
     return 0;
 }
-

@@ -385,7 +385,7 @@ void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr, int ordinal )
     MSG( " (called from %p)", __builtin_return_address(1) );
 #endif
     MSG( "\n" );
-    TASK_KillCurrentTask(1);
+    ExitProcess(1);
 }
 
 

@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -54,12 +55,17 @@ static struct process *first_process;
 /* process operations */
 
 static void dump_process( struct object *obj, int verbose );
+static int process_signaled( struct object *obj, struct thread *thread );
+static int process_satisfied( struct object *obj, struct thread *thread );
 static void destroy_process( struct object *obj );
 static void free_handles( struct process *process );
+static int copy_handle_table( struct process *process, struct process *parent );
 
 static const struct object_ops process_ops =
 {
     dump_process,
+    process_signaled,
+    process_satisfied,
     destroy_process
 };
 
@@ -67,10 +73,10 @@ static const struct object_ops process_ops =
 struct process *create_process(void)
 {
     struct process *process;
-    struct handle_entry *entries;
 
     if (!(process = malloc( sizeof(*process) ))) return NULL;
-    if (!(entries = malloc( MIN_HANDLE_ENTRIES * sizeof(struct handle_entry))))
+
+    if (!copy_handle_table( process, current ? current->process : NULL ))
     {
         free( process );
         return NULL;
@@ -81,14 +87,12 @@ struct process *create_process(void)
     process->thread_list     = NULL;
     process->exit_code       = 0x103;  /* STILL_ACTIVE */
     process->running_threads = 0;
-    process->handle_count    = MIN_HANDLE_ENTRIES;
-    process->handle_last     = -1;
-    process->entries         = entries;
 
     if (first_process) first_process->prev = process;
     first_process = process;
 
     gettimeofday( &process->start_time, NULL );
+    /* alloc a handle for the process itself */
     alloc_handle( process, process, PROCESS_ALL_ACCESS, 0 );
     return process;
 }
@@ -105,6 +109,7 @@ static void destroy_process( struct object *obj )
     if (process->prev) process->prev->next = process->next;
     else first_process = process->next;
     free_handles( process );
+    if (debug_level) memset( process, 0xbb, sizeof(process) );  /* catch errors */
     free( process );
 }
 
@@ -115,6 +120,17 @@ static void dump_process( struct object *obj, int verbose )
     assert( obj->ops == &process_ops );
 
     printf( "Process next=%p prev=%p\n", process->next, process->prev );
+}
+
+static int process_signaled( struct object *obj, struct thread *thread )
+{
+    struct process *process = (struct process *)obj;
+    return (process->running_threads > 0);
+}
+
+static int process_satisfied( struct object *obj, struct thread *thread )
+{
+    return 0;
 }
 
 /* get a process from an id (and increment the refcount) */
@@ -140,6 +156,7 @@ static void process_killed( struct process *process, int exit_code )
     assert( !process->thread_list );
     process->exit_code = exit_code;
     gettimeofday( &process->end_time, NULL );
+    wake_up( &process->obj, 0 );
     free_handles( process );
 }
 
@@ -308,6 +325,45 @@ static int shrink_handle_table( struct process *process )
     return 1;
 }
 
+/* copy the handle table of the parent process */
+/* return 1 if OK, 0 on error */
+static int copy_handle_table( struct process *process, struct process *parent )
+{
+    struct handle_entry *ptr;
+    int i, count, last;
+
+    if (!parent)  /* first process */
+    {
+        count = MIN_HANDLE_ENTRIES;
+        last  = -1;
+    }
+    else
+    {
+        assert( parent->entries );
+        count = parent->handle_count;
+        last  = parent->handle_last;
+    }
+
+    if (!(ptr = malloc( count * sizeof(struct handle_entry)))) return 0;
+    process->entries      = ptr;
+    process->handle_count = count;
+    process->handle_last  = last;
+
+    if (last >= 0)
+    {
+        memcpy( ptr, parent->entries, (last + 1) * sizeof(struct handle_entry) );
+        for (i = 0; i <= last; i++, ptr++)
+        {
+            if (!ptr->ptr) continue;
+            if (ptr->access & RESERVED_INHERIT) grab_object( ptr->ptr );
+            else ptr->ptr = NULL; /* don't inherit this entry */
+        }
+    }
+    /* attempt to shrink the table */
+    shrink_handle_table( process );
+    return 1;
+}
+
 /* close a handle and decrement the refcount of the associated object */
 /* return 1 if OK, 0 on error */
 int close_handle( struct process *process, int handle )
@@ -390,7 +446,7 @@ void dump_handles( struct process *process )
 
     if (!process->entries) return;
     entry = process->entries;
-    for (i = 0; i < process->handle_last; i++, entry++)
+    for (i = 0; i <= process->handle_last; i++, entry++)
     {
         if (!entry->ptr) continue;
         printf( "%5d: %p %08x ", i + 1, entry->ptr, entry->access );

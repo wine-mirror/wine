@@ -755,8 +755,8 @@ BOOL32 WINAPI PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts,
 /**********************************************************************
  *          PolyPolyline32  (GDI32.272)
  */
-BOOL32 WINAPI PolyPolyline32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts,
-                             UINT32 polylines )
+BOOL32 WINAPI PolyPolyline32( HDC32 hdc, LPPOINT32 pt, LPDWORD counts,
+                             DWORD polylines )
 {
     DC * dc = DC_GetDCPtr( hdc );
 

@@ -1630,7 +1630,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 #endif
     fprintf( outfile, "\tmovw %%bx,%%es\n" );
 
-    fprintf( outfile, "\tmovw " PREFIX "CALLTO16_Current_fs,%%fs\n" );
+    fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb,%%fs\n" );
 
     /* Get the 32-bit stack pointer from the TEB */
 
@@ -1747,7 +1747,6 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2 );
     fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
     fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
-    fprintf( outfile, "\tmovw %%fs," PREFIX "CALLTO16_Current_fs\n" );
 
     if (reg_func)
     {
@@ -1948,12 +1947,11 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 
     fprintf( outfile, "do_callto16_%s:\n", profile );
 
-    /* Save the 32-bit stack and %fs */
+    /* Save the 32-bit stack */
 
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
     fprintf( outfile, "\tmovl %%ebp,%%ebx\n" );
     fprintf( outfile, "\tmovl %%esp,%%edx\n" );
-    fprintf( outfile, "\tmovw %%fs," PREFIX "CALLTO16_Current_fs\n" );
 
     if (reg_func)
     {
@@ -2106,7 +2104,7 @@ static void BuildRet16Func( FILE *outfile )
 #endif
     fprintf( outfile, "\tmovw %%bx,%%es\n" );
 
-    fprintf( outfile, "\tmovw " PREFIX "CALLTO16_Current_fs,%%fs\n" );
+    fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb,%%fs\n" );
 
     /* Restore the 32-bit stack */
 

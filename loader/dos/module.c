@@ -2,6 +2,8 @@
  * DOS (MZ) loader
  *
  * Copyright 1998 Ove Kåven
+ *
+ * This code hasn't been completely cleaned up yet.
  */
 
 #ifdef linux
@@ -15,16 +17,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef MZ_USESYSV
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#else
 #include <sys/mman.h>
-#endif
 #include <sys/vm86.h>
-#ifdef MZ_USESYSV
-#include <linux/mm.h> /* FIXME: where else should I fetch the PAGE_SIZE define? */
-#endif
 #include "windows.h"
 #include "winbase.h"
 #include "module.h"
@@ -35,15 +29,14 @@
 #include "debug.h"
 #include "dosexe.h"
 
+/* define this to try mapping through /proc/pid/mem instead of a temp file,
+   but Linus doesn't like mmapping /proc/pid/mem, so it doesn't work for me */
+#undef MZ_MAPSELF
+
 #define BIOS_DATA_SEGMENT 0x40
 #define BIOS_SEGMENT BIOSSEG /* BIOSSEG is defined to 0xf000 in sys/vm86.h */
 #define STUB_SEGMENT BIOS_SEGMENT
-#ifdef MZ_USESYSV
-/* it might be that SYSV supports START_OFFSET 0 after all, haven't checked */
-#define START_OFFSET PAGE_SIZE
-#else
 #define START_OFFSET 0
-#endif
 #define PSP_SIZE 0x10
 
 #define SEG16(ptr,seg) ((LPVOID)((BYTE*)ptr+((DWORD)(seg)<<4)))
@@ -80,7 +73,10 @@ static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, LPCSTR env )
  psp->nextParagraph=0x9FFF;
  /* copy parameters */
  if (cmd) {
+#if 0
+  /* command.com doesn't do this */
   while (*cmd == ' ') cmd++;
+#endif
   psp->cmdLine[0]=strlen(cmd);
   strcpy(psp->cmdLine+1,cmd);
   psp->cmdLine[psp->cmdLine[0]+1]='\r';
@@ -89,11 +85,11 @@ static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, LPCSTR env )
  /* FIXME: integrate the PDB stuff from Wine (loader/task.c) */
 }
 
-static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env, LPDOSTASK lpDosTask )
+static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
+                         LPDOSTASK lpDosTask, NE_MODULE *pModule )
 {
  IMAGE_DOS_HEADER mz_header;
  DWORD image_start,image_size,min_size,max_size,avail;
- WORD psp_seg,load_seg;
  BYTE*psp_start,*load_start;
  int x;
  SEGPTR reloc;
@@ -111,10 +107,10 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env, LPDOSTASK lp
 
  /* allocate 1MB+64K shared memory */
  lpDosTask->img_ofs=START_OFFSET;
-#ifdef MZ_USESYSV
- lpDosTask->key=ftok(".",'d'); /* FIXME: this is from my IPC intro doc */
- lpDosTask->shm_id=shmget(lpDosTask->key,0x110000-START_OFFSET,IPC_CREAT|SHM_R|SHM_W);
- lpDosTask->img=shmat(lpDosTask->shm_id,NULL,0);
+#ifdef MZ_MAPSELF
+ lpDosTask->img=VirtualAlloc(NULL,0x110000,MEM_COMMIT,PAGE_READWRITE);
+ /* make sure mmap accepts it */
+ ((char*)lpDosTask->img)[0x10FFFF]=0;
 #else
  tmpnam(lpDosTask->mm_name);
 /* strcpy(lpDosTask->mm_name,"/tmp/mydosimage"); */
@@ -131,6 +127,7 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env, LPDOSTASK lp
   return 0;
  }
  TRACE(module,"DOS VM86 image mapped at %08lx\n",(DWORD)lpDosTask->img);
+ pModule->dos_image=lpDosTask->img;
 
  /* initialize the memory */
  MZ_InitSystem(lpDosTask->img);
@@ -147,12 +144,12 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env, LPDOSTASK lp
   return 0;
  }
  if (avail>max_size) avail=max_size;
- psp_start=DOSMEM_GetBlock(lpDosTask->hModule,avail,&psp_seg);
+ psp_start=DOSMEM_GetBlock(lpDosTask->hModule,avail,&lpDosTask->psp_seg);
  if (!psp_start) {
   ERR(module, "error allocating DOS memory\n");
   return 0;
  }
- load_seg=psp_seg+PSP_SIZE;
+ lpDosTask->load_seg=lpDosTask->psp_seg+PSP_SIZE;
  load_start=psp_start+(PSP_SIZE<<4);
  MZ_InitPSP(psp_start, cmdline, env);
 
@@ -169,26 +166,27 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env, LPDOSTASK lp
  for (x=0; x<mz_header.e_crlc; x++) {
   if (_lread16(hFile,&reloc,sizeof(reloc)) != sizeof(reloc))
    return 11; /* invalid exe */
-  *(WORD*)SEGPTR16(load_start,reloc)+=load_seg;
+  *(WORD*)SEGPTR16(load_start,reloc)+=lpDosTask->load_seg;
  }
 
  /* initialize vm86 struct */
  memset(&lpDosTask->VM86,0,sizeof(lpDosTask->VM86));
- lpDosTask->VM86.regs.cs=load_seg+mz_header.e_cs;
+ lpDosTask->VM86.regs.cs=lpDosTask->load_seg+mz_header.e_cs;
  lpDosTask->VM86.regs.eip=mz_header.e_ip;
- lpDosTask->VM86.regs.ss=load_seg+mz_header.e_ss;
+ lpDosTask->VM86.regs.ss=lpDosTask->load_seg+mz_header.e_ss;
  lpDosTask->VM86.regs.esp=mz_header.e_sp;
- lpDosTask->VM86.regs.ds=psp_seg;
- lpDosTask->VM86.regs.es=psp_seg;
+ lpDosTask->VM86.regs.ds=lpDosTask->psp_seg;
+ lpDosTask->VM86.regs.es=lpDosTask->psp_seg;
  /* hmm, what else do we need? */
 
  return 32;
 }
 
-static int MZ_InitTask( LPDOSTASK lpDosTask )
+int MZ_InitTask( LPDOSTASK lpDosTask )
 {
  int read_fd[2],write_fd[2];
  pid_t child;
+ char *fname,*farg,arg[16],fproc[64];
 
  /* create read pipe */
  if (pipe(read_fd)<0) return 0;
@@ -199,15 +197,36 @@ static int MZ_InitTask( LPDOSTASK lpDosTask )
  lpDosTask->write_pipe=write_fd[1];
  lpDosTask->fn=VM86_ENTER;
  lpDosTask->state=1;
- TRACE(module,"Preparing to load DOS EXE support module: forking\n");
+ /* if we have a mapping file, use it */
+ fname=lpDosTask->mm_name; farg=NULL;
+ if (!fname[0]) {
+  /* otherwise, map our own memory image */
+  sprintf(fproc,"/proc/%d/mem",getpid());
+  sprintf(arg,"%ld",(unsigned long)lpDosTask->img);
+  fname=fproc; farg=arg;
+ }
+
+ TRACE(module,"Preparing to load DOS VM support module: forking\n");
  if ((child=fork())<0) {
   close(write_fd[0]); close(write_fd[1]);
   close(read_fd[0]); close(read_fd[1]); return 0;
  }
  if (child!=0) {
   /* parent process */
+  int ret;
+
   close(read_fd[1]); close(write_fd[0]);
   lpDosTask->task=child;
+  /* wait for child process to signal readiness */
+  do {
+   if (read(lpDosTask->read_pipe,&ret,sizeof(ret))!=sizeof(ret)) {
+    if ((errno==EINTR)||(errno==EAGAIN)) continue;
+    /* failure */
+    ERR(module,"dosmod has failed to initialize\n");
+    return 0;
+   }
+  } while (0);
+  /* all systems are now go */
  } else {
   /* child process */
   close(read_fd[0]); close(write_fd[1]);
@@ -215,9 +234,9 @@ static int MZ_InitTask( LPDOSTASK lpDosTask )
   dup2(write_fd[0],0);      /* stdin */
   dup2(read_fd[1],1);       /* stdout */
   /* now load dosmod */
-  execlp("dosmod",lpDosTask->mm_name,NULL);
-  execl("dosmod",lpDosTask->mm_name,NULL);
-  execl("loader/dos/dosmod",lpDosTask->mm_name,NULL);
+  execlp("dosmod",fname,farg,NULL);
+  execl("dosmod",fname,farg,NULL);
+  execl("loader/dos/dosmod",fname,farg,NULL);
   /* if failure, exit */
   ERR(module,"Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
@@ -225,8 +244,8 @@ static int MZ_InitTask( LPDOSTASK lpDosTask )
  return 32;
 }
 
-HINSTANCE16 MZ_LoadModule( LPCSTR name, LPCSTR cmdline, 
-                           LPCSTR env, UINT16 show_cmd )
+HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, 
+                              LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )
 {
  LPDOSTASK lpDosTask;
  HMODULE16 hModule;
@@ -234,7 +253,6 @@ HINSTANCE16 MZ_LoadModule( LPCSTR name, LPCSTR cmdline,
  NE_MODULE *pModule;
  HFILE16 hFile;
  OFSTRUCT ofs;
- PROCESS_INFORMATION info;
  int err;
 
  if ((lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL)
@@ -252,29 +270,41 @@ HINSTANCE16 MZ_LoadModule( LPCSTR name, LPCSTR cmdline,
  pModule->lpDosTask = lpDosTask;
  
  lpDosTask->img=NULL; lpDosTask->mm_name[0]=0; lpDosTask->mm_fd=-1;
- err = MZ_LoadImage( hFile, cmdline, env, lpDosTask );
+ err = MZ_LoadImage( hFile, cmdline, env, lpDosTask, pModule );
  _lclose16(hFile);
+ pModule->dos_image = lpDosTask->img;
  if (err<32) {
-  if (lpDosTask->img!=NULL) munmap(lpDosTask->img,0x110000-START_OFFSET);
-  if (lpDosTask->mm_fd>=0) close(lpDosTask->mm_fd);
-  if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
+  if (lpDosTask->mm_name[0]!=0) {
+   if (lpDosTask->img!=NULL) munmap(lpDosTask->img,0x110000-START_OFFSET);
+   if (lpDosTask->mm_fd>=0) close(lpDosTask->mm_fd);
+   unlink(lpDosTask->mm_name);
+  } else
+   if (lpDosTask->img!=NULL) VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
   return err;
  }
- MZ_InitTask( lpDosTask );
+ err = MZ_InitTask( lpDosTask );
+ if (lpDosTask->mm_name[0]!=0) {
+  /* we unlink the temp file here to avoid leaving a mess in /tmp
+     if/when Wine crashes; the mapping still remains open, though */
+  unlink(lpDosTask->mm_name);
+ }
+ if (err<32) {
+  MZ_KillModule( lpDosTask );
+  /* FIXME: cleanup hModule */
+  return err;
+ }
 
  hInstance = NE_CreateInstance(pModule, NULL, (cmdline == NULL));
- PROCESS_Create( pModule, cmdline, env, hInstance, 0, show_cmd, &info );
- /* we don't need the handles for now */
- CloseHandle( info.hThread );
- CloseHandle( info.hProcess );
+ PROCESS_Create( pModule, cmdline, env, hInstance, 0, startup, info );
  return hInstance;
 }
 
 void MZ_KillModule( LPDOSTASK lpDosTask )
 {
- munmap(lpDosTask->img,0x110000-START_OFFSET);
- close(lpDosTask->mm_fd);
- unlink(lpDosTask->mm_name);
+ if (lpDosTask->mm_name[0]!=0) {
+  munmap(lpDosTask->img,0x110000-START_OFFSET);
+  close(lpDosTask->mm_fd);
+ } else VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
  close(lpDosTask->read_pipe);
  close(lpDosTask->write_pipe);
  kill(lpDosTask->task,SIGTERM);
@@ -310,4 +340,13 @@ int MZ_RunModule( LPDOSTASK lpDosTask )
  return 0;
 }
 
-#endif /* linux */
+#else /* !linux */
+
+HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, 
+                              LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info )
+{
+ WARN(module,"DOS executables not supported on this architecture\n");
+ return (HMODULE16)11;  /* invalid exe */
+}
+
+#endif

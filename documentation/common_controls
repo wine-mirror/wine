@@ -199,7 +199,7 @@
       - Basic functionality is almost done. (dll version 4.0)
 
   Notes:
-      Bitmaps are not correctly displayed.
+      - Bitmaps are not correctly displayed.
 
 
 3.19 Tooltip Control
@@ -212,7 +212,6 @@
 
   Notes:
       - Unicode support is still missing.
-      - No subclassing.
 
 
 3.20 Trackbar Control
@@ -235,9 +234,6 @@
 
   Status:
       - Dummy control. No functionality.
-
-  Notes:
-      Author needed!! Any volunteers??
 
 
 3.22 Updown Control
@@ -270,7 +266,7 @@
 ------------------------
 
   There are quite a lot of undocumented functions like:
-     - DSA (Dynnamic String Array?) functions.
+     - DSA (Dynnamic Structure Array) functions.
      - DPA (Dymnamic Pointer Array?) functions.
      - MRU ("Most Recently Used" List) functions.
      - other unknown functions.
@@ -278,12 +274,13 @@
   Have a look at relay32/comctl32.spec.
 
 
-5.1 Dymnamic String Arrays ??? (DSA)
+5.1 Dymnamic Structure Arrays (DSA)
 ------------------------------------
   Most of the DSA functions are implemented. I used TASKMAN.EXE to write them.
   Since TASKMAN.EXE doesn't bail out or crash I think I've done it right.
 
   Have a look at the source code to get more information.
+
   Further documentation will be written...
 
 
@@ -298,14 +295,30 @@
   Further documentation will be written...
 
 
-5.3 MenuHelp
+5.3 "Most Recently Used" - List (MRU)
+-------------------------------------
+  Currently no information available!
+
+
+5.4 MenuHelp
 ------------
   Has to be written...
 
 
-5.4 GetEffectiveClientRect
+5.5 GetEffectiveClientRect
 --------------------------
   Has to be written...
+
+
+5.6 ShowHideMenuCtl
+-------------------
+  The official documentation provided by MS is incomplete.
+
+  lpInfo:
+  ...
+  Both values of the first pair must be the handle to the applications main
+  menu.
+  ...
 
 
 6. Epilogue

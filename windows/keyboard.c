@@ -277,13 +277,13 @@ BOOL32 KEYBOARD_Init(void)
                 keysym = TSXLookupKeysym(&e2, i);
 		switch (keysym)
 		{
-		case ';': case ':':   vkey = VK_OEM_1; break;
-		case '/': case '?':   vkey = VK_OEM_2; break;
-		case '`': case '~':   vkey = VK_OEM_3; break;
+		case ';':             vkey = VK_OEM_1; break;
+		case '/':             vkey = VK_OEM_2; break;
+		case '`':             vkey = VK_OEM_3; break;
 		case '[':             vkey = VK_OEM_4; break;
 		case '\\':            vkey = VK_OEM_5; break;
 		case ']':             vkey = VK_OEM_6; break;
-		case '\'': case '\"': vkey = VK_OEM_7; break;
+		case '\'':            vkey = VK_OEM_7; break;
 		case ',':             vkey = VK_OEM_COMMA; break;
 		case '.':             vkey = VK_OEM_PERIOD; break;
 		case '-':             vkey = VK_OEM_MINUS; break;
@@ -391,12 +391,18 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     WORD vkey = 0;
     KEYLP keylp;
     static BOOL32 force_extended = FALSE; /* hack for AltGr translation */
-
-    int ascii_chars = TSXLookupString(event, Str, 1, &keysym, &cs);
+    
+    int ascii_chars;
 
     INT32 event_x = pWnd->rectWindow.left + event->x;
     INT32 event_y = pWnd->rectWindow.top + event->y;
     DWORD event_time = event->time - MSG_WineStartTicks;
+
+    /* this allows support for dead keys */
+    if ((event->keycode >> 8) == 0x10)
+	event->keycode=(event->keycode & 0xff);
+
+    ascii_chars = TSXLookupString(event, Str, 1, &keysym, &cs);
 
     TRACE(key, "EVENT_key : state = %X\n", event->state);
     if (keysym == XK_Mode_switch)
@@ -830,6 +836,14 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
     return 0;
 }
 
+
+/**********************************************************************
+ *           ScreenSwitchEnable      (KEYBOARD.100)
+ */
+VOID WINAPI ScreenSwitchEnable(WORD unused)
+{
+    FIXME(keyboard,"(%04x): stub\n",unused);
+}
 
 /**********************************************************************
  *           OemKeyScan      (KEYBOARD.128)(USER32.401)

@@ -1,0 +1,71 @@
+				SHELL32
+			development status
+
+      Author needed!! Any volunteers?? 
+      mail to <juergen.schmied@metronet.de>
+            
+1. Introduction
+---------------
+All parts of this DLL are currently under development. About a third of
+base functionality is roughly in place. The missing parts are the icon
+(shell icon cache) handling and the dialogs provided from the dll like
+the file copy status window.
+
+The basis comes from Marcus Meissner and I <juergen.schmied@metronet.de>
+implemented the classes and filled function stubs.
+            
+2. General Information
+----------------------
+
+3. Functions
+------------
+
+4. Classes
+----------
+
+4.1 IContextMenu
+----------------
+    Status:
+	- development started
+ 
+4.2 IShellExtInit
+-----------------
+ only interface definition
+ 
+4.3 IEnumIDList
+---------------
+  Status:
+      - Almost finished.
+
+ 
+4.4.IShellFolder
+----------------
+  Status:
+      - roughly finished.
+
+
+4.5 IShellView
+--------------
+  Status:
+      - under development
+
+
+4.6 IShellBrowser
+-----------------
+  Status:
+	- only interface definition
+	  it's implemented by the explorer
+	  don't know if we need it 
+ 
+4.7. PIDL Manager
+-----------------
+  Status:
+	- roughly complete will be migrated to a set of functions because it's
+    not holding any instance data,
+
+
+5. Structures
+-------------
+
+5.1 PIDL
+--------

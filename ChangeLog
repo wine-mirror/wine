@@ -1,4 +1,213 @@
 ----------------------------------------------------------------------
+Sat Aug 22 17:46:19 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [include/dosexe.h] [include/module.h] [include/pe_image.h] 
+	  [include/process.h] [include/windows.h] [loader/dos/module.c]
+	  [loader/module.c] [loader/ne/module.c] [loader/pe_image.c]
+	  [scheduler/process.c] [win32/process.c]
+	Partially implemented CreateProcess32.
+
+	* [win32/device.c] [relay32/kernel32.spec] [scheduler/k32obj.c]
+	  [misc/registry.c] [win32/file.c]
+	Partially implemented VxDCall (VMM registry services).
+
+	* [files/dos_fs.c]
+	DOSFS_FindNext made thread-safe.
+
+	* [include/sig_context.h] [include/syslevel.h] [loader/signal.c]
+	  [scheduler/syslevel.c] [tools/build.c]
+	Replaced CALLTO16_Current_fs by SYSLEVEL_Win16CurrentTeb.
+
+	* [win32/kernel32.c]
+	Bugfix: QT_Thunk/FT_Thunk should return 'long' in DX:AX, not EAX.
+
+	* [if1632/relay.c] [relay32/builtin32.c] [windows/msgbox.c]
+	  [msdos/int20.c] [msdos/int21.c]
+	Use ExitProcess instead of TASK_KillCurrentTask.
+
+	* [include/task.h] [include/thread.h] [loader/task.c] 
+	  [scheduler/thread.c] [include/queue.h] [windows/message.c] 
+	  [windows/queue.c] [windows/win.c]
+	Prevent Win32 threads from entering the TASK_Reschedule loop.
+	(Note: Win32 messaging still doesn't work correctly; this patch
+	is just preventing the system from crashing when Win32 threads
+	call messaging functions. Messages will probably still get lost.)
+
+	* [scheduler/critsection.c]
+	Deactivated the use of SEM_UNDO for the SYSTEM_LOCK semaphore;
+	for some reason, this leads to problems after threads terminate... 
+
+Sat Aug 22 15:00:00 1998  Jürgen Schmied <juergen.schmied@metronet.de>
+
+	* [include/authors.h]
+	New file, includes all names of the developer (former shell.c)
+
+	* [Makefile.in][configure][configure.in][dlls/Makefile.in]
+	  [dlls/shell32/Makefile.in][shres.rc]
+	Created dlls/shell32 and moved the shell32 stuff in it.
+	Started to create internal resources.
+
+	* [dlls/shell32/*]
+	Split the shell32 implementation into smaller files.
+	New classes: IContextMenu, IExtractIcon, IShellView.
+	Implemented Shell_GetImageList().
+	shell32 links to comctl32 now dynamically so it can use
+	internal/external implementations.
+
+	* [documentation/internal-dll] [documentation/shell32]
+	New, could anybody do a spellcheck?
+
+	* [include/commctrl.h]
+	Many new LV constants, structures, functions.
+
+	* [controls/comctl32undoc.c]
+	Rewrote the DSA* functions.
+
+	* [windows/winpos.c]
+	SetShellWindow32, GetShellWindow32.
+
+Sat Aug 22 14:02:15 1998  Alexander Lukyanov <lav@long.yar.ru>
+
+	* [loader/resource.c]
+	Mark last accelerator as such in LoadAccelerators32W.
+
+	* [relay32/shell32.spec] [misc/shell.c]
+	Add stubs for SHGetSpecialFolderPath[AW].
+
+Sat Aug 22 02:07:42 1998  Adrian Harvey <adrian@select.com.au>
+
+	* [include/file.h] [file/file.c] [msdos/int21.c] [msdos/vxd.c]
+	  [misc/lzexpand.c] [win32/kernel32.c] [documentation/filehandles]
+	Fixed file handle handling.  Created universal HFILE16 to HFILE32
+	translation macro from msdos/int21 code by Ove Kaaven.
+	Used macro in all Win16 functions so that win32 handles are translated
+	to avoid DOS/Win16 stdxx handles.
+	Removed handle translation from int21.c where Win16 functions are
+	called.  Changed remaining calls to use new macro names.
+	Documented filehandle handling and differences between win 16 & 32.
+
+Fri Aug 21 20:32:49 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [server/process.c] [server/thread.c]
+	Implemented object wait queues and synchronization.
+
+Fri Aug 21 18:40:02 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [graphics/psdrv/*]
+	DEVMODE dmPaper{Width|Length} fields are in 0.1mm.
+	Select a 100 pixel default font in CreateDC.
+
+Thu Aug 20 22:47:39 1998  Uwe Bonnes  <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [objects/bitmap.c]
+	Handle bits=32 in SetBitmapBits32 and GetBitmapBits32.
+
+	* [msdos/int21.c]
+	Add handling of Int21 0A and 37.
+
+	* [misc/commdlg.c]
+	Use MapHModuleLS and MapHModuleSL when translating HINSTANCE16 to
+	HINSTANCE32 and vice versa.
+
+	* [win32/file.c]
+	CreateFile32A: Abort if filename == NULL.
+
+Thu Aug 20 12:28:31 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [*/*]
+	Lots of missing prototypes added, some parameter types adapted to match
+	SDK.
+
+	* [debugger/stabs.c]
+	Don't loop forever if we don't find wine or one of the libxxx.so.
+
+	* [loader/ne/module.c]
+	Implemented MapHModuleLS,MapHModuleSL,MapHinstLS,MapHinstSL.
+
+	* [misc/network.c]
+	Implemented WNetGetUser32A.
+
+	* [misc/shellord.c]
+	Implemented ILRemoveLastID.
+
+	* [multimedia/dsound.c]
+	Fixed StarCraft memory leak.
+
+	* [graphics/ddraw.c]
+	Removed some unnecessary simple relaying functions, tried polishing
+	up the Xlib implementation (still doesn't work), temp. removed Xshm
+	code (to be remerged with working Xlib code).
+
+Tue Aug 18 22:29:17 1998  Ove Kaaven <ovek@arcticnet.no>
+
+	* [multimedia/mmio.c] [multimedia/mmsystem.c]
+	Fixed most mmio bugs, fully implementing mmioSetBuffer
+	buffering, ability to read memory files, and the
+	sndPlaySound() SND_MEMORY flag. Most mmio-using programs
+	now work fine.
+
+	* [include/dosexe.h] [include/miscemu.h] [include/module.h]
+	  [loader/module.c] [loader/task.c] [msdos/dosmem.c]
+	Improved DOS VM flexibility and portability somewhat. (Did
+	I get the #ifdefs right this time, BSD-ers?)
+
+	* [msdos/int21.c]
+	Made "Get Current PSP address" work as expected in a DOS VM.
+
+	* [loader/dos/*]
+	Began improving flexibility and portability somewhat. It
+	should be easier to add DPMI RMCB callbacks now. The
+	DOS VM no longer leaves big files lying around in /tmp
+	after a crash.
+
+Tue Aug 18 12:38:31 1998 Turchanov Sergey <turchanov@usa.net>
+
+	* [relay32/winmm.spec]
+	This patch allows WinAmp to play WAV files (at least in PCM
+	format).
+
+Sun Aug 16 05:34:13 1998  Pablo Saratxaga <srtxg@chanae.alphanet.ch>
+
+	* [windows/keyboard.c]
+	Corrected keyboard code to properly handle keys : ? ~ and "
+	on non US keyboards.
+
+Sat Aug 15 18:47:14 1998  Brian Craft <bcboy@dorothy.wanglab.brandeis.edu>
+
+	* [windows/win.c]
+	Fixed severe bug in EnumChildWindwos().
+
+Thu Aug 13 21:05:35 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [controls/tooltips.c]
+	Fixed some bugs. Added subclassing support.
+
+	* [controls/toolbar.c]
+	Improved tooltip integration. Fixed some bugs.
+
+	* [controls/commctrl.c]
+	Changed control registration and added some documentation.
+	Fixed ShowHideMenuCtl.
+
+	* [controls/rebar.c][include/rebar.h][include/commctrl.h]
+	Improved rebar implementation (still no display).
+
+	* [controls/pager.c][include/pager.h][include/commctrl.h]
+	Improved pager implementation (still no display).
+
+	* [misc/imagelist.c]
+	Fixed a bug.
+
+	* [documentation/common_controls]
+	Updated.
+
+Sun Aug  9 19:50:20 1998  James Juran <jrj120@psu.edu>
+
+	* [Makefile.in] [documentation/Makefile.in] 
+	  [programs/Makefile.in] [programs/*/Makefile.in]
+	Added uninstall rules, cleaned up install rules a little bit.
+
+----------------------------------------------------------------------
 Sun Aug  9 13:21:35 1998  Andreas Mohr <100.30936@germany.net>
 
 	* [loader/ne/module.c] [if1632/kernel.spec]
@@ -14,6 +223,33 @@ Sun Aug  9 13:21:35 1998  Andreas Mohr <100.30936@germany.net>
 
 	* [loader/task.c]
 	InitTask needs to decrement the SP register by two as Win95 does.
+
+Sun Aug  9 02:41:28 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [if1632/kernel.spec] [relay32/kernel32.spec] [scheduler/syslevel.c]
+	  [loader/main.c] [win32/ordinals.c] [include/syslevel.h] 
+	  [scheduler/Makefile.in]
+	Implemented Win95 'syslevel' routines (including Win16Lock).
+
+	* [if1632/relay.c] [if1632/thunk.c] [tools/build.c] [loader/task.c]
+	  [loader/ne/segment.c] [win32/kernel32.c] [memory/selector.c]
+	  [include/stackframe.h] [include/thread.h]
+	16-bit %fs handling revised.  Use Win16Lock where appropriate.
+
+	* [include/thread.h] [scheduler/synchro.c] [windows/message.c] 
+	  [windows/queue.c] [win32/process.c]
+	Implemented MsgWaitForMultipleObjects.
+
+	* [files/change.c] [files/Makefile.in] [scheduler/k32obj.c] 
+	  [win32/newfns.c]
+	Implemented (dummy) file change notification objects.
+
+	* [debugger/dbg.y] [scheduler/process.c] [scheduler/thread.c]
+	  [include/process.h] [include/thread.h]
+	Suspend all threads except current when hitting debugger break point.
+
+	* [objects/dib.c]
+	Bugfix for CreateDIBSection.
 
 Sat Aug  8 19:11:46 1998  Marcus Meissner <marcus@jet.franken.de>
 

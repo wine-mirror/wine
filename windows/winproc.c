@@ -730,6 +730,8 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         *plparam = (LPARAM)HeapAlloc( SystemHeap, 0, sizeof(BOOL32) );
         return 1;
     case WM_MDISETMENU:
+        if(wParam16==TRUE)
+           *pmsg32=WM_MDIREFRESHMENU;
         *pwparam32 = (WPARAM32)(HMENU32)LOWORD(*plparam);
         *plparam   = (LPARAM)(HMENU32)HIWORD(*plparam);
         return 0;

@@ -32,17 +32,18 @@ typedef struct tagTOOLBAR_INFO
     INT32      nBitmapHeight;
     INT32      nBitmapWidth;
     INT32      nIndent;
-    INT32      nMaxRows;        /* maximum number of rows */
-
+    INT32      nMaxRows;        /* maximum number of button rows */
+    INT32      nMaxTextRows;    /* maximum number of text rows */
+    INT32      cxMin;           /* minimum button width */
+    INT32      cxMax;           /* maximum button width */
     INT32      nNumButtons;     /* number of buttons */
     INT32      nNumBitmaps;     /* number of bitmaps */
     INT32      nNumStrings;     /* number of strings */
-
-    BOOL32     bCaptured;
+    BOOL32     bUnicode;        /* ASCII (FALSE) or Unicode (TRUE)? */
+    BOOL32     bCaptured;       /* mouse captured? */
     INT32      nButtonDown;
     INT32      nOldHit;
     INT32      nHotItem;        /* index of the "hot" item */
-
     HFONT32    hFont;           /* text font */
     HIMAGELIST himlDef;         /* default image list */
     HIMAGELIST himlHot;         /* hot image list */
@@ -50,12 +51,13 @@ typedef struct tagTOOLBAR_INFO
     HWND32     hwndToolTip;     /* handle to tool tip control */
     HWND32     hwndNotify;      /* handle to the window that gets notifications */
     BOOL32     bTransparent;    /* background transparency flag */
-    BOOL32     bAutoSize;
+    BOOL32     bAutoSize;       /* auto size deadlock indicator */
     DWORD      dwExStyle;       /* extended toolbar style */
+    SIZE32     maxSize;         /* maximum toolbar size */
 
     COLORREF   clrInsertMark;   /* insert mark color */
 
-    TBUTTON_INFO *buttons;
+    TBUTTON_INFO *buttons;      /* pointer to button array */
     CHAR         **strings;
 } TOOLBAR_INFO;
 

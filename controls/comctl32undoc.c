@@ -2,7 +2,7 @@
  * Undocumented functions from COMCTL32.DLL
  *
  * Copyright 1998 Eric Kohl <ekohl@abo.rhein-zeitung.de>
- *
+ *           1998 Juergen Schmied <j.schmied@metronet.de>
  * NOTES
  *     All of these functions are UNDOCUMENTED!! And I mean UNDOCUMENTED!!!!
  *     Do NOT rely on names or contents of undocumented structures and types!!!
@@ -22,17 +22,6 @@
 #include "heap.h"
 #include "debug.h"
 
-
-typedef struct _DSA_DATA
-{
-    DWORD   dwEntryCount;
-    DWORD   dwMaxCount;
-    DWORD   dwInitial;
-    DWORD   dwGrow;
-    LPSTR   *ptrs;
-} DSA_DATA, *LPDSA_DATA;
-
-
 typedef struct _DPA_DATA
 {
     DWORD   dwEntryCount;
@@ -47,22 +36,30 @@ DWORD WINAPI DPA_GetPtr (DWORD, DWORD);
 DWORD WINAPI DPA_InsertPtr (DWORD, DWORD, DWORD);
 
 
-
-
+CRITICAL_SECTION cs_comctl_alloc;
+HANDLE32 hComctl32Heap=0;
 /**************************************************************************
  * Alloc [COMCTL32.71]
  *
  */
 
-LPVOID WINAPI
-COMCTL32_Alloc (DWORD dwParam)
-{
-    LPVOID lpPtr;
+LPVOID WINAPI COMCTL32_Alloc (DWORD dwParam)
+{   LPVOID lpPtr;
 
-    lpPtr = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, dwParam);
+    TRACE (commctrl, "(0x%08lx)\n", dwParam);
 
-    TRACE (commctrl, "(0x%08lx) ret=0x%08lx\n", dwParam, (DWORD)lpPtr);
+	if (hComctl32Heap==0)
+	{ EnterCriticalSection((void*)&cs_comctl_alloc);
+      hComctl32Heap=HeapCreate(0,1,0x4000000);
+      LeaveCriticalSection((void*)&cs_comctl_alloc);
+      TRACE (commctrl, "Heap created: 0x%08x\n", hComctl32Heap);
+      if (! hComctl32Heap)
+        return FALSE;        
+	}
 
+//    lpPtr = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, dwParam);
+    lpPtr = HeapAlloc (hComctl32Heap, HEAP_ZERO_MEMORY, dwParam);
+    TRACE (commctrl, "-- ret=%p\n", lpPtr);
     return lpPtr;
 }
 
@@ -76,16 +73,16 @@ LPVOID WINAPI
 COMCTL32_ReAlloc (LPVOID dwParam1, DWORD dwParam2)
 {
     LPVOID dwPtr;
-
+    TRACE (commctrl, "(0x%08lx 0x%08lx)\n",(DWORD)dwParam1, dwParam2);
+    
     if (dwParam1 == 0)
-	dwPtr = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+	dwPtr = HeapAlloc (hComctl32Heap, HEAP_ZERO_MEMORY,
 			   dwParam2);
     else
-	dwPtr = HeapReAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+	dwPtr = HeapReAlloc (hComctl32Heap, HEAP_ZERO_MEMORY,
 			     dwParam1, dwParam2);
 
-    TRACE (commctrl, "(0x%08lx 0x%08lx) ret=0x%08lx\n",
-	   (DWORD)dwParam1, dwParam2, (DWORD)dwPtr);
+    TRACE (commctrl, "-- ret=0x%08lx\n", (DWORD)dwPtr);
 
     return dwPtr;
 }
@@ -100,7 +97,7 @@ DWORD WINAPI
 COMCTL32_Free (LPVOID dwParam)
 {
     TRACE (commctrl, "(0x%08lx)\n", (DWORD)dwParam);
-    HeapFree (GetProcessHeap (), 0, dwParam);
+    HeapFree (hComctl32Heap, 0, dwParam);
 
     return 0;
 }
@@ -115,7 +112,7 @@ DWORD WINAPI
 COMCTL32_GetSize (LPVOID dwParam)
 {
     TRACE (commctrl, "(0x%08lx)\n", (DWORD)dwParam);
-    return (HeapSize (GetProcessHeap (), 0, dwParam));
+    return (HeapSize (hComctl32Heap, 0, dwParam));
 }
 
 
@@ -155,217 +152,283 @@ COMCTL32_Str_SetPtrA (LPSTR lpStr, LPVOID *lpPtr)
     return FALSE;
 }
 
-
+/*************************************************************************
+* The DSA-API is a set of functions to create and manipulate arrays of
+* fix sized memory blocks. This arrays can store any kind of data (strings,
+* icons...) so the name "dynamic string array" is a bit misleading.
+*
+* STATUS 
+*  complete
+*/
+typedef struct _DSA_DATA
+{   DWORD   dwEntryCount;
+    BYTE    * pData;
+    DWORD   dwMaxCount;
+    DWORD   dwElementSize;
+    DWORD   dwGrow;
+} DSA_DATA, *LPDSA_DATA;
 
 /**************************************************************************
  * DSA_Create [COMCTL32.320] Creates a dynamic string array
  *
  * PARAMS
- *     dwParam1 [I]
- *     dwParam2 [I]
+ *     dwSize [I] size of the array elements
+ *     dwGrow [I] 
+ * RETURNS
+ *     pointer to a array control structure. use this like a handle.
  */
 
-DWORD WINAPI
-DSA_Create (DWORD dwParam1, DWORD dwParam2)
-{
-    LPDSA_DATA dsaPtr;
+LPDSA_DATA WINAPI DSA_Create (DWORD dwSize, DWORD dwGrow)
+{   LPDSA_DATA dsaPtr;
 
-    dsaPtr = (LPDSA_DATA)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				    sizeof(DSA_DATA));
-    dsaPtr->dwInitial = dwParam1;
-    dsaPtr->dwGrow = dwParam2;
+    TRACE (commctrl, "(size=0x%08lx grow=0x%08lx)\n", dwSize, dwGrow);
 
-    TRACE (commctrl, "(0x%08lx 0x%08lx) ret=0x%08lx\n",
-	   dwParam1, dwParam2, (DWORD)dsaPtr);
-
-    return (DWORD)dsaPtr;
+    if ((dsaPtr=(LPDSA_DATA)COMCTL32_Alloc(sizeof(DSA_DATA))));
+    {  dsaPtr->dwEntryCount=0x00;
+       dsaPtr->pData=NULL;
+       dsaPtr->dwMaxCount=0x00;
+       dsaPtr->dwElementSize=dwSize;
+       if ( dwGrow == 0 )
+         dsaPtr->dwGrow=1;
+       else
+         dsaPtr->dwGrow=dwGrow;
+       return dsaPtr;
+    }
+    return FALSE;   
 }
-
 
 /**************************************************************************
  * DSA_Destroy [COMCTL32.321] Destroys a dynamic string array
  *
  * PARAMS
- *     dwParam1 [I]
+ *     dsaPtr [I] pointer to the array control structure
+ * RETURNS
+ *  TRUE if dsaPtr = NULL or success
+ *  FALSE if failure
  */
 
-DWORD WINAPI
-DSA_Destroy (DWORD dwParam1)
-{
-    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
-    DWORD i;
+BOOL32 WINAPI DSA_Destroy (const LPDSA_DATA dsaPtr )
+{   TRACE (commctrl, "(%p)\n", dsaPtr);
 
-    TRACE (commctrl, "(0x%08lx):semi-stub!\n", dwParam1);
+	if (! dsaPtr)
+      return FALSE;
 
-    if (dsaPtr->ptrs) {
-	for (i = 0; i < dsaPtr->dwEntryCount; i++) {
-	    if (dsaPtr->ptrs[i])
-		HeapFree (GetProcessHeap (), 0, (LPSTR)dsaPtr->ptrs[i]);
-	}
+    if (dsaPtr->pData && (! COMCTL32_Free(dsaPtr->pData)))
+    { return FALSE;
     }
-
-    HeapFree (GetProcessHeap (), 0, dsaPtr);
-
-    return 0;
+    return COMCTL32_Free (dsaPtr);
 }
 
+/**************************************************************************
+ * DSA_GetItem [COMCTL32.322] 
+ *
+ * PARAMS
+ *  dsaPtr [I] pointer to the array control structure
+ *  dwItem [I] number of the Item to get
++ *  pDest  [O] destination buffer. Has to be >= dwElementSize.
+ */
 
-DWORD WINAPI
-DSA_GetItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
-{
-    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
+BOOL32 WINAPI DSA_GetItem (const LPDSA_DATA dsaPtr, DWORD dwItem, LPBYTE pDest)
+{   BYTE * pSrc;
 
-    FIXME (commctrl, "(0x%08lx 0x%08lx 0x%08lx): stub!\n",
-	   dwParam1, dwParam2, dwParam3);
-
-    if (dsaPtr == NULL)
-	return 0;
-    if (dsaPtr->ptrs == NULL)
-	return 0;
-    if ((dwParam2 < 0) || (dwParam2 >= dsaPtr->dwEntryCount))
-	return 0;
-
-//    FIXME (commctrl, "\"%s\"\n", (LPSTR)dsaPtr->ptrs[dwParam2]);
-
-    return (DWORD)lstrcpy32A ((LPSTR)dwParam3, (LPSTR)dsaPtr->ptrs[dwParam2]);
+    TRACE (commctrl, "(%p 0x%08lx %p)\n", dsaPtr, dwItem, pDest);
+    
+    if ( (!dsaPtr) || (dwItem < 0) || (dwItem >= dsaPtr->dwEntryCount))
+      return FALSE;
+    
+    pSrc = dsaPtr->pData + (dsaPtr->dwElementSize * dwItem);
+    memmove(pDest,pSrc,dsaPtr->dwElementSize);
+    return TRUE;
 }
 
+/**************************************************************************
+ * DSA_GetItemPtr [COMCTL32.323] 
+ *
+ * PARAMS
+ *  dsaPtr [I] pointer to the array control structure
+ *  dwItem [I] number of the Item to get
+ * RETURNS
+ *  pointer ti a item 
+ */
+LPBYTE WINAPI DSA_GetItemPtr (const LPDSA_DATA dsaPtr, DWORD dwItem)
+{   BYTE * pSrc;
 
-DWORD WINAPI
-DSA_GetItemPtr (DWORD dwParam1, DWORD dwParam2)
-{
-    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
+	TRACE (commctrl, "(%p 0x%08lx)\n", dsaPtr, dwItem);
 
-    TRACE (commctrl, "(0x%08lx 0x%08lx)\n", dwParam1, dwParam2);
+    if ((!dsaPtr) || (dwItem < 0) || (dwItem >= dsaPtr->dwEntryCount))
+	  return FALSE;
+    pSrc = dsaPtr->pData + (dsaPtr->dwElementSize * dwItem);
+    
+    TRACE (commctrl, "-- ret=%p\n", pSrc);
 
-    if (dsaPtr == NULL)
-	return 0;
-    if (dsaPtr->ptrs == NULL)
-	return 0;
-    if ((dwParam2 < 0) || (dwParam2 >= dsaPtr->dwEntryCount))
-	return 0;
-
-    TRACE (commctrl, "ret=0x%08lx\n", (DWORD)dsaPtr->ptrs[dwParam2]);
-
-    return (DWORD)dsaPtr->ptrs[dwParam2];
+    return  pSrc;
 }
 
+/**************************************************************************
+ * DSA_SetItem [COMCTL32.325] 
+ *
+ * PARAMS
+ *  dsaPtr [I] pointer to the array control structure
+ *  dwItem [I] index for the new element
+ *  pSrc   [I] the element
+ */
+BOOL32 WINAPI DSA_SetItem (const LPDSA_DATA dsaPtr, DWORD dwItem, LPBYTE pSrc)
+{   LPBYTE pDest;
+ 	DWORD  dwSize, dwNewItems;
+	LPBYTE lpTemp;
+    
+    TRACE (commctrl, "(%p 0x%08lx %p)\n", dsaPtr, dwItem, pSrc);
 
-DWORD WINAPI
-DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, LPSTR lpString)
-{
-    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
-    DWORD dwIndex;
-    INT32 len;
-
-    TRACE (commctrl, "(0x%08lx 0x%08lx \"%s\"):semi-stub!\n",
-	   dwParam1, dwParam2, lpString);
-
-    if (dsaPtr->ptrs == NULL) {
-	dsaPtr->ptrs = (LPSTR*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-					  dsaPtr->dwInitial * sizeof(LPVOID));
-	dsaPtr->dwMaxCount = dsaPtr->dwInitial;
-        dwIndex = 0;
-	len = lstrlen32A (lpString);
-	dsaPtr->ptrs[dwIndex] =
-	    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
-	lstrcpy32A (dsaPtr->ptrs[dwIndex], lpString);
+	if ((!dsaPtr) || dwItem<0 )
+      return FALSE;
+      
+    if (dsaPtr->dwEntryCount <= dwItem)	/* within the old array */
+    { if ( dsaPtr->dwMaxCount > dwItem) 
+      { dsaPtr->dwEntryCount = dwItem; /* within the allocated space, set a new boundary */
+      }
+      else
+      { /* resize the block of memory*/
+        dwNewItems = dsaPtr->dwGrow * ( (WORD)((dwItem-1)/dsaPtr->dwGrow) +1);
+        dwSize = dsaPtr->dwElementSize * dwNewItems;
+        lpTemp = (LPBYTE) COMCTL32_ReAlloc(dsaPtr->pData,dwSize);
+        if (! lpTemp )
+        { return FALSE;
+        }
+        dsaPtr->dwMaxCount = dwNewItems;
+        dsaPtr->pData = lpTemp;        
+      }    
     }
-    else {
-	TRACE (commctrl, "(0x%08lx 0x%08lx)\n",
-	       dsaPtr->dwEntryCount, dsaPtr->dwMaxCount);
-	if (dwParam2 >= dsaPtr->dwEntryCount) {
-	    if (dsaPtr->dwEntryCount < dsaPtr->dwMaxCount) {
-		dwIndex = dsaPtr->dwEntryCount;
-		len = lstrlen32A (lpString);
-		dsaPtr->ptrs[dwIndex] =
-		    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
-		lstrcpy32A (dsaPtr->ptrs[dwIndex], lpString);
-	    }
-	    else {
-		/* allocate new pointer list and copy all pointers */
-		LPSTR *lpOldPtrs = dsaPtr->ptrs;
-		dsaPtr->ptrs = (LPSTR*)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
-				(dsaPtr->dwInitial + dsaPtr->dwGrow) *
-				sizeof(LPVOID));
-		memcpy (dsaPtr->ptrs, lpOldPtrs,
-			dsaPtr->dwMaxCount * sizeof(LPVOID));
-		dsaPtr->dwMaxCount += dsaPtr->dwGrow;
-		HeapFree (GetProcessHeap (), 0, lpOldPtrs);
+	/* put the new entry in */
+	pDest = dsaPtr->pData +  (dsaPtr->dwElementSize * dwItem);
+    TRACE (commctrl,"move dest=%p src=%p size=%x",pDest,pSrc,dsaPtr->dwElementSize);
+	memmove(pDest,pSrc,dsaPtr->dwElementSize);
+    return TRUE;
+}
 
-		/* add new string */
-		dwIndex = dsaPtr->dwEntryCount;
-		len = lstrlen32A (lpString);
-		dsaPtr->ptrs[dwIndex] =
-		    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
-		lstrcpy32A (dsaPtr->ptrs[dwIndex], lpString);
-	    }
-	}
-	else {
-	    FIXME (commctrl, "inserting! stub!\n");
+/**************************************************************************
+ * DSA_InsertItem [COMCTL32.325] 
+ *
+ * PARAMS
+ *  dsaPtr [I] pointer to the array control structure
+ *  dwItem [I] index for the new element
+ *  pSrc   [I] the element
+ *
+ * RETURNS
+ *  the position of the new element
+ */
+DWORD WINAPI DSA_InsertItem (const LPDSA_DATA dsaPtr, DWORD dwItem, LPBYTE pSrc)
+{	DWORD dwNewItems, dwSize,i;
+	LPBYTE lpTemp, lpDest;
+    LPDWORD p;
+    
+	TRACE(commctrl, "(%p 0x%08lx %p)\n", dsaPtr, dwItem, pSrc);
 
-	    dwIndex = dwParam2;
-	}
+	if ( (!dsaPtr) || dwItem<0 )
+      return -1;
+
+	for (i=0; i<dsaPtr->dwElementSize;i+=4)
+    { p = *(DWORD**)(pSrc+i);
+      if ( IsBadStringPtr32A ((char*)p,256))
+      { TRACE(commctrl,"-- 0x%04lx=%p\n",i,(DWORD*)p);
+      }
+      else
+      { TRACE(commctrl,"-- 0x%04lx=%p [%s]\n",i,p,debugstr_a((char*)p));
+      }
+    }
+    
+    if (dwItem > dsaPtr->dwEntryCount)		/* when dwItem > dwEntryCount then append*/
+      dwItem = dsaPtr->dwEntryCount+1;
+    
+    if (dwItem >= dsaPtr->dwMaxCount)		/* do we need to resize ? */
+    { dwNewItems = dsaPtr->dwMaxCount + dsaPtr->dwGrow;
+      dwSize = dsaPtr->dwElementSize * dwNewItems;
+	  lpTemp = (LPBYTE)COMCTL32_ReAlloc(dsaPtr->pData,dwSize);
+      if (!lpTemp)
+      { return -1;
+      }
+      dsaPtr->dwMaxCount = dwNewItems;
+      dsaPtr->pData = lpTemp;         
     }
 
+    if (dwItem < dsaPtr->dwEntryCount)		/* do we need to move elements ?*/
+	{ lpTemp = dsaPtr->pData + (dsaPtr->dwElementSize * dwItem);
+      lpDest = lpTemp + dsaPtr->dwElementSize;
+      TRACE (commctrl,"-- move dest=%p src=%p size=%x\n",lpDest,lpTemp,dsaPtr->dwElementSize);
+      memmove (lpDest,lpTemp,dsaPtr->dwElementSize);
+    } 
+    /* ok, we can put the new Item in*/
     dsaPtr->dwEntryCount++;
-
-    TRACE (commctrl, "ret=0x%08lx\n", dwIndex);
-
-    return (dwIndex);
+    lpDest = dsaPtr->pData + (dsaPtr->dwElementSize * dwItem);
+    TRACE (commctrl,"-- move dest=%p src=%p size=%x\n",lpDest,pSrc,dsaPtr->dwElementSize);
+	memmove (lpDest,pSrc,dsaPtr->dwElementSize);
+	return dsaPtr->dwEntryCount;
 }
+/**************************************************************************
+ * DSA_DeleteItem [COMCTL32.326] 
+ *
+ * PARAMS
+ *  dsaPtr [I] pointer to the array control structure
+ *  dwItem [I] index for the element to delete
+ * RETURNS
+ *  number of the element deleted
+ */
+DWORD WINAPI DSA_DeleteItem (const LPDSA_DATA dsaPtr, DWORD dwItem)
+{	LPBYTE	lpDest,lpSrc;
+	DWORD	dwSize;
+    
+    TRACE (commctrl, "(%p 0x%08lx)\n", dsaPtr, dwItem);
 
+	if ( (! dsaPtr) || dwItem<0 || dwItem>=dsaPtr->dwEntryCount)
+      return FALSE;
 
-
-
-DWORD WINAPI
-DSA_DeleteItem (DWORD dwParam1, DWORD dwParam2)
-{
-    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
-
-    TRACE (commctrl, "(0x%08lx 0x%08lx):semi-stub!\n",
-	   dwParam1, dwParam2);
-
-    if (dsaPtr->ptrs) {
-	if (dsaPtr->dwEntryCount == 1) {
-	    if (dsaPtr->ptrs[dwParam2])
-		HeapFree (GetProcessHeap (), 0, dsaPtr->ptrs[dwParam2]);
-	    dsaPtr->dwEntryCount--;
+    if ( dwItem < dsaPtr->dwEntryCount-1 )	/* do we need to move ?*/
+	{ lpDest = dsaPtr->pData + (dsaPtr->dwElementSize * dwItem);
+      lpSrc = lpDest + dsaPtr->dwElementSize;
+      dwSize = dsaPtr->dwElementSize * (dsaPtr->dwEntryCount-dwItem-1);
+      TRACE (commctrl,"-- move dest=%p src=%p size=%x\n",lpDest,lpSrc,dwSize);
+      memmove (lpDest,lpSrc,dwSize);
 	}
-	else {
-	    LPSTR *oldPtrs = dsaPtr->ptrs;
-	    TRACE (commctrl, "complex delete!\n");
+    
+    dsaPtr->dwEntryCount--;
+    
+    if ( (dsaPtr->dwMaxCount-dsaPtr->dwEntryCount) >= dsaPtr->dwGrow) /* free memory ?*/
+    { dwSize = dsaPtr->dwElementSize * dsaPtr->dwEntryCount;
+      lpDest = (LPBYTE) COMCTL32_ReAlloc(dsaPtr->pData,dwSize);
+      if (!lpDest)
+      { return FALSE;
+      }
+      dsaPtr->dwMaxCount = dsaPtr->dwEntryCount;
+      dsaPtr->pData = lpDest;         
 
-	    if (dsaPtr->ptrs[dwParam2])
-		HeapFree (GetProcessHeap (), 0, dsaPtr->ptrs[dwParam2]);
-
-	    dsaPtr->dwEntryCount--;
-	    dsaPtr->ptrs = 
-		(LPSTR*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				   dsaPtr->dwEntryCount * sizeof(LPVOID));
-	    if (dwParam2 > 0) {
-		memcpy (&dsaPtr->ptrs[0], &oldPtrs[0],
-			dwParam2 * sizeof(LPSTR));
-	    }
-
-	    if (dwParam2 < dsaPtr->dwEntryCount) {
-		memcpy (&dsaPtr->ptrs[dwParam2], &oldPtrs[dwParam2+1],
-			(dsaPtr->dwEntryCount - dwParam2) * sizeof(LPSTR));
-	    }
-	    HeapFree (GetProcessHeap (), 0, oldPtrs);
-	}
-
-	if (dsaPtr->dwEntryCount == 0) {
-	    HeapFree (GetProcessHeap (), 0, dsaPtr->ptrs);
-	    dsaPtr->ptrs = NULL;
-	}
     }
-
-    return 0;
+    return dwItem;
 }
 
+/**************************************************************************
+ * DSA_DeleteAllItems [COMCTL32.326] 
+ *  deletes all elements and initializes array
+ *
+ * PARAMS
+ *  dsaPtr [I] pointer to the array control structure
+ *
+ * RETURNS
+ *  TRUE/FALSE
+ */
+BOOL32 WINAPI DSA_DeleteAllItems (const LPDSA_DATA dsaPtr)
+{   TRACE (commctrl, "(%p)\n", dsaPtr);
 
+	if (! dsaPtr) 
+      return FALSE;
 
+    if (dsaPtr->pData && (! COMCTL32_Free(dsaPtr->pData)))
+    { return FALSE;
+    }
+	dsaPtr->dwEntryCount=0x00;
+    dsaPtr->pData=NULL;
+    dsaPtr->dwMaxCount=0x00;
+    return TRUE;
+}
+/**************************************************************************/
 
 
 DWORD WINAPI

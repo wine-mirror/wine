@@ -162,13 +162,17 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 		TRACE(mmsys, "Stop !\n");
 		return FALSE;
 		}
-	hmmio = mmioOpen16((LPSTR)lpszSoundName, NULL, 
-		MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
-
 	if (uFlags & SND_MEMORY) {
-		FIXME(mmsys, "SND_MEMORY flag not implemented!\n");
-		return FALSE;
-	}
+		MMIOINFO16 mminfo;
+		memset(&mminfo, 0, sizeof(mminfo));
+		mminfo.fccIOProc = FOURCC_MEM;
+		mminfo.pchBuffer = (LPSTR)lpszSoundName;
+		mminfo.cchBuffer = -1;
+		TRACE(mmsys, "Memory sound %p\n",lpszSoundName);
+		hmmio = mmioOpen16(NULL, &mminfo, MMIO_READ);
+	} else
+		hmmio = mmioOpen16((LPSTR)lpszSoundName, NULL, 
+			MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 
 	if (hmmio == 0) 
 	{
@@ -233,7 +237,7 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 			    {
 				WAVEHDR		waveHdr;
 				HGLOBAL16	hData;
-				INT32		count, bufsize;
+				INT32		count, bufsize, left = mmckInfo.cksize;
 
 				bufsize = 64000;
 				hData = GlobalAlloc16(GMEM_MOVEABLE, bufsize);
@@ -246,10 +250,12 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
 				dwRet = wodMessage(0,WODM_PREPARE,0,(DWORD)&waveHdr,sizeof(WAVEHDR));
 				if (dwRet == MMSYSERR_NOERROR) 
 				{
-				    while( TRUE )
+				    while( left )
 				    {
+					if (bufsize > left) bufsize = left;
 					count = mmioRead32(hmmio,waveHdr.lpData,bufsize);
 					if (count < 1) break;
+					left -= count;
 					waveHdr.dwBufferLength = count;
 				/*	waveHdr.dwBytesRecorded = count; */
 					/* FIXME: doesn't expect async ops */ 

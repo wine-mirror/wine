@@ -30,19 +30,8 @@
 #include "shlobj.h"
 #include "debug.h"
 #include "winreg.h"
+#include "shell32_main.h"
 
-void pdump (LPCITEMIDLIST pidl)
-{ DWORD type;
-  CHAR * szData;
-  LPITEMIDLIST pidltemp = pidl;
-  TRACE(shell,"---------- pidl=%p \n", pidl);
-  do
-  { szData = ((LPPIDLDATA )(pidltemp->mkid.abID))->szText;
-    type   = ((LPPIDLDATA )(pidltemp->mkid.abID))->type;
-    TRACE (shell,"---- pidl=%p size=%u type=%lx %s\n",pidltemp, pidltemp->mkid.cb,type,debugstr_a(szData));
-    pidltemp = (LPITEMIDLIST)(((BYTE*)pidltemp)+pidltemp->mkid.cb);
-  } while (pidltemp->mkid.cb);
-}
 /*************************************************************************
  * SHChangeNotifyRegister [SHELL32.2]
  * NOTES
@@ -68,116 +57,6 @@ DWORD WINAPI
 SHChangeNotifyDeregister(LONG x1,LONG x2)
 {	FIXME(shell,"(0x%08lx,0x%08lx):stub.\n",x1,x2);
 	return 0;
-}
-/*************************************************************************
- *	 		 ILGetDisplayName			[SHELL32.15]
- * get_path_from_itemlist(itemlist,path); ? not sure...
- */
-BOOL32 WINAPI ILGetDisplayName(LPCITEMIDLIST iil,LPSTR path) {
-	FIXME(shell,"(%p,%p),stub, return e:!\n",iil,path);
-	strcpy(path,"e:\\");
-	return TRUE;
-}
-/*************************************************************************
- * ILFindLastID [SHELL32.16]
- */
-LPSHITEMID WINAPI ILFindLastID(LPITEMIDLIST iil) {
-	LPSHITEMID	lastsii,sii;
-
-  TRACE(shell,"%p\n",iil);
-	if (!iil)
-		return NULL;
-	sii = &(iil->mkid);
-	lastsii = sii;
-	while (sii->cb) {
-		lastsii = sii;
-		sii = (LPSHITEMID)(((char*)sii)+sii->cb);
-	}
-	return lastsii;
-}
-/*************************************************************************
- * ILFindLastID [SHELL32.17]
- * NOTES
- *  Creates a new list with the last item removed
- */
-LPITEMIDLIST WINAPI ILRemoveLastID(LPCITEMIDLIST pidl)
-{ TRACE(shell,"pidl=%p\n",pidl);
-  return NULL;
-}
-
-
-/*************************************************************************
- * ILClone [SHELL32.18]
- *
- * NOTES
- *    dupicate an idlist
- */
-LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
-{ DWORD    len;
-  LPITEMIDLIST  newpidl;
-
-  TRACE(shell,"%p\n",pidl);
-
-  if (!pidl)
-    return NULL;
-    
-  len = ILGetSize(pidl);
-  newpidl = (LPITEMIDLIST)SHAlloc(len);
-  if (newpidl)
-    memcpy(newpidl,pidl,len);
-  return newpidl;
-}
-
-/*************************************************************************
- * ILCloneFirst [SHELL32.19]
- *
- * NOTES
- *  duplicates the first idlist of a complex pidl
- */
-LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
-{ FIXME(shell,"pidl=%p\n",pidl);
-  return NULL;
-}
-
-/*************************************************************************
- * ILCombine [SHELL32.25]
- *
- * NOTES
- *  Concatenates two complex idlists.
- *  The pidl is the first one, pidlsub the next one
- *  Does not destroy the passed in idlists!
- */
-LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
-{ DWORD    len1,len2;
-  LPITEMIDLIST  pidlNew;
-  
-  TRACE(shell,"pidl=%p pidl=%p\n",pidl1,pidl2);
-
-  if(!pidl1 && !pidl2)
-  {  return NULL;
-  }
- 
-  if(!pidl1)
-  { pidlNew = ILClone(pidl2);
-    return pidlNew;
-  }
-
-  if(!pidl2)
-  { pidlNew = ILClone(pidl1);
-    return pidlNew;
-  }
-
-  len1  = ILGetSize(pidl1)-2;
-  len2  = ILGetSize(pidl2);
-  pidlNew  = SHAlloc(len1+len2);
-  
-  if (pidlNew)
-  { memcpy(pidlNew,pidl1,len1);
-    memcpy(((BYTE *)pidlNew)+len1,pidl2,len2);
-  }
-
-/*  TRACE(shell,"--new pidl=%p\n",pidlNew);*/
-  return pidlNew;
 }
 
 /*************************************************************************
@@ -279,14 +158,14 @@ LPSTR WINAPI PathRemoveBlanks(LPSTR str)
  * NOTES
  *     basename(char *fn);
  */
-LPSTR WINAPI PathFindFilename(LPSTR fn) {
-    LPSTR basefn;
-  TRACE(shell,"%s\n",fn);
+LPSTR WINAPI PathFindFilename(LPSTR fn)
+{	LPSTR basefn;
+	TRACE(shell,"%s\n",fn);
     basefn = fn;
-    while (fn[0]) {
-    	if (((fn[0]=='\\') || (fn[0]==':')) && fn[1] && fn[1]!='\\')
-	    basefn = fn+1;
-	fn++;
+    while (fn[0]) 
+    { if (((fn[0]=='\\') || (fn[0]==':')) && fn[1] && fn[1]!='\\')
+	  basefn = fn+1;
+	  fn++;
     }
     return basefn;
 }
@@ -486,17 +365,6 @@ DWORD WINAPI SHGetSettings(DWORD x,DWORD y,DWORD z) {
 	);
 	return 0;
 }
-/*************************************************************************
- * Shell_GetImageList [SHELL32.71]
- * 
- * NOTES
- *     returns internal shell values in the passed pointers
- */
-BOOL32 WINAPI Shell_GetImageList(LPDWORD x,LPDWORD y) {
-
-	FIXME(shell,"(%p,%p):stub.\n",x,y);
-	return TRUE;
-}
 
 /*************************************************************************
  * Shell_GetCachedImageIndex [SHELL32.72]
@@ -558,6 +426,8 @@ SHMapPIDLToSystemImageListIndex(DWORD x,DWORD y,DWORD z)
  * 
  * NOTES
  *     exported by ordinal
+ * FIXME
+ *  wrong implemented OleStr is NOT wide string !!!! (jsch)
  */
 BOOL32 WINAPI
 OleStrToStrN (LPSTR lpMulti, INT32 nMulti, LPCWSTR lpWide, INT32 nWide) {
@@ -570,7 +440,9 @@ OleStrToStrN (LPSTR lpMulti, INT32 nMulti, LPCWSTR lpWide, INT32 nWide) {
  *
  * NOTES
  *     exported by ordinal
- */
+ * FIXME
+ *  wrong implemented OleStr is NOT wide string !!!! (jsch)
+*/
 BOOL32 WINAPI
 StrToOleStrN (LPWSTR lpWide, INT32 nWide, LPCSTR lpMulti, INT32 nMulti) {
     return MultiByteToWideChar (0, 0, lpMulti, nMulti, lpWide, nWide);
@@ -632,125 +504,6 @@ void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
 }
 
 /*************************************************************************
- *
- */
-typedef DWORD (* WINAPI GetClassPtr)(REFCLSID,REFIID,LPVOID);
-
-static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,
-                                      LPSTR name)
-{ HMODULE32  hmod;
-	FARPROC32	dllunload,nameproc;
-
-	if (xhmod) *xhmod = 0;
-	if (!strcasecmp(PathFindFilename(dllname),"shell32.dll"))
-		return (GetClassPtr)SHELL32_DllGetClassObject;
-
-	hmod = LoadLibraryEx32A(dllname,0,LOAD_WITH_ALTERED_SEARCH_PATH);
-	if (!hmod)
-		return NULL;
-	dllunload = GetProcAddress32(hmod,"DllCanUnloadNow");
-	if (!dllunload)
-		if (xhmod) *xhmod = hmod;
-	nameproc = GetProcAddress32(hmod,name);
-	if (!nameproc) {
-		FreeLibrary32(hmod);
-		return NULL;
-	}
-	/* register unloadable dll with unloadproc ... */
-	return (GetClassPtr)nameproc;
-}
-/*************************************************************************
- *
- */
-static DWORD SH_get_instance(
-    REFCLSID clsid,
-		LPSTR dllname,
-	  LPVOID unknownouter,
-		REFIID refiid,
-		LPVOID inst) 
-{ GetClassPtr     dllgetclassob;
-	DWORD		hres;
-	LPCLASSFACTORY	classfac;
-
-  char	xclsid[50],xrefiid[50];
-  WINE_StringFromCLSID((LPCLSID)clsid,xclsid);
-  WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-  TRACE(shell,"\n\tCLSID:%s,%s,%p,\n\tIID:%s,%p\n",
-	   xclsid, dllname,unknownouter,xrefiid,inst);
-	
-	dllgetclassob = SH_find_moduleproc(dllname,NULL,"DllGetClassObject");
-	if (!dllgetclassob)
-		return 0x80070000|GetLastError();
-
-/* FIXME */
-/*
-	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,inst);
-	if (hres<0)
-		return hres;
-
- */
-	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,&classfac);
-	if (hres<0 || (hres>=0x80000000))
-		return hres;
-	if (!classfac) {
-		FIXME(shell,"no classfactory, but hres is 0x%ld!\n",hres);
-		return E_FAIL;
-	}
-	classfac->lpvtbl->fnCreateInstance(classfac,unknownouter,refiid,inst);
-	classfac->lpvtbl->fnRelease(classfac);
-	return 0;
-}
-
-/*************************************************************************
- * SHCoCreateInstance [SHELL32.102]
- * 
- * NOTES
- *     exported by ordinal
- */
-LRESULT WINAPI SHCoCreateInstance(
-	LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownouter,REFIID refiid,LPVOID inst
-) {
-	char	buffer[256],xclsid[48],xiid[48],path[260],tmodel[100];
-	HKEY	inprockey;
-	DWORD	pathlen,type,tmodellen;
-	DWORD	hres;
-	
-	WINE_StringFromCLSID(refiid,xiid);
-
-	if (clsid)
-		WINE_StringFromCLSID(clsid,xclsid);
-	else {
-		if (!aclsid)
-		    return 0x80040154;
-		strcpy(xclsid,aclsid);
-	}
-	TRACE(shell,"(%p,\n\tSID:\t%s,%p,\n\tIID:\t%s,%p)\n",aclsid,xclsid,unknownouter,xiid,inst);
-
-	sprintf(buffer,"CLSID\\%s\\InProcServer32",xclsid);
-	if (RegOpenKeyEx32A(HKEY_CLASSES_ROOT,buffer,0,0x02000000,&inprockey))
-		return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
-	pathlen=sizeof(path);
-	if (RegQueryValue32A(inprockey,NULL,path,&pathlen)) {
-		RegCloseKey(inprockey);
-		return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
-	}
-	TRACE(shell, "Server dll is %s\n",path);
-	tmodellen=sizeof(tmodel);
-	type=REG_SZ;
-	if (RegQueryValueEx32A(inprockey,"ThreadingModel",NULL,&type,tmodel,&tmodellen)) {
-		RegCloseKey(inprockey);
-		return SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
-	}
-	TRACE(shell, "Threading model is %s\n",tmodel);
-	hres=SH_get_instance(clsid,path,unknownouter,refiid,inst);
-	if (hres<0)
-		hres=SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
-	RegCloseKey(inprockey);
-	return hres;
-}
-
-
-/*************************************************************************
  * ShellMessageBoxA [SHELL32.183]
  *
  * Format and output errormessage.
@@ -774,7 +527,6 @@ ShellMessageBoxA(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,LPVOID a
 	);
 	/*MessageBox32A(hwnd,buf3,buf,id|0x10000);*/
 }
-
 
 /*************************************************************************
  * SHRestricted [SHELL32.100]
@@ -814,49 +566,6 @@ DWORD WINAPI SHRestricted (DWORD pol) {
 	/* FIXME: do nothing for now, just return 0 (== "allowed") */
 	RegCloseKey(xhkey);
 	return 0;
-}
-
-/*************************************************************************
- * ILGetSize [SHELL32.152]
- *  gets the byte size of an idlist including zero terminator (pidl)
- *
- * PARAMETERS
- *  pidl ITEMIDLIST
- *
- * RETURNS
- *  size of pidl
- *
- * NOTES
- *  exported by ordinal
- */
-DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
-{ LPSHITEMID si = &(pidl->mkid);
-  DWORD  len=0;
-
-  TRACE(shell,"pidl=%p\n",pidl);
-
-  if (pidl)
-  { while (si->cb) 
-    { len += si->cb;
-      si  = (LPSHITEMID)(((LPBYTE)si)+si->cb);
-    }
-    len += 2;
-	}
-/*  TRACE(shell,"-- size=%lu\n",len);*/
-	return len;
-}
-/*************************************************************************
- * ILAppend [SHELL32.154]
- *
- * NOTES
- *  Adds the single item to the idlist indicated by pidl.
- *  if bEnd is 0, adds the item to the front of the list,
- *  otherwise adds the item to the end.
- *  Destroys the passed in idlist!
- */
-LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
-{ TRACE(shell,"(pidl=%p,pidl=%p,%08u)\n",pidl,item,bEnd);
-  return NULL;
 }
 
 /*************************************************************************
@@ -918,22 +627,6 @@ LPVOID WINAPI SHAlloc(DWORD len) {
   return ret;
 }
 
-
-/*************************************************************************
- * ILFree [SHELL32.155]
- *
- * NOTES
- *     free_check_ptr - frees memory (if not NULL)
- *     allocated by SHMalloc allocator
- *     exported by ordinal
- */
-DWORD WINAPI ILFree(LPVOID pidl) 
-{ TRACE (shell,"(pidl=0x%08lx)\n",(DWORD)pidl);
-  if (!pidl)
-		return 0;
-  return SHFree(pidl);
-}
-
 /*************************************************************************
  * OpenRegStream [SHELL32.85]
  *
@@ -969,7 +662,6 @@ DWORD WINAPI SHRevokeDragDrop(DWORD x) {
     return 0;
 }
 
-
 /*************************************************************************
  * RunFileDlg [SHELL32.61]
  *
@@ -985,7 +677,6 @@ RunFileDlg (HWND32 hwndOwner, DWORD dwParam1, DWORD dwParam2,
     return 0;
 }
 
-
 /*************************************************************************
  * ExitWindowsDialog [SHELL32.60]
  *
@@ -998,7 +689,6 @@ ExitWindowsDialog (HWND32 hwndOwner)
     FIXME (shell,"(0x%08x):stub.\n", hwndOwner);
     return 0;
 }
-
 
 /*************************************************************************
  * ArrangeWindows [SHELL32.184]
@@ -1013,7 +703,6 @@ ArrangeWindows (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
     return 0;
 }
 
-
 /*************************************************************************
  * SHCLSIDFromString [SHELL32.147]
  *
@@ -1024,7 +713,6 @@ DWORD WINAPI
 SHCLSIDFromString (DWORD dwParam1, DWORD dwParam2)
 {
     FIXME (shell,"(0x%lx 0x%lx):stub.\n", dwParam1, dwParam2);
-
     FIXME (shell,"(\"%s\" \"%s\"):stub.\n", (LPSTR)dwParam1, (LPSTR)dwParam2);
 
     return 0;
@@ -1123,8 +811,8 @@ HRESULT WINAPI FileMenu_Create (DWORD u, DWORD v, DWORD w, DWORD x, DWORD z)
  * ShellExecuteEx [SHELL32.291]
  *
  */
-HRESULT WINAPI ShellExecuteEx (DWORD u)
-{ FIXME(shell,"0x%08lx stub\n",u);
+BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFOA u)
+{ FIXME(shell,"%p stub\n",u);
   return 0;
 }
 /*************************************************************************

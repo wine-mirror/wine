@@ -156,7 +156,7 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
             struct sembuf sop;
             sop.sem_num = 0;
             sop.sem_op  = -1;
-            sop.sem_flg = SEM_UNDO;
+            sop.sem_flg = 0/*SEM_UNDO*/;
             do
             {
                 ret = semop( (int)crit->Reserved, &sop, 1 );
@@ -224,7 +224,7 @@ void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
             struct sembuf sop;
             sop.sem_num = 0;
             sop.sem_op  = 1;
-            sop.sem_flg = SEM_UNDO;
+            sop.sem_flg = 0/*SEM_UNDO*/;
             semop( (int)crit->Reserved, &sop, 1 );
         }
     }

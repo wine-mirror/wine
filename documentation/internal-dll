@@ -1,0 +1,75 @@
+This document describes some points you should know when you are going to
+implement the internal counterparts to external DLL's. Only 32  bit DLL's
+are considered.
+
+1. The LibMain function
+-----------------------
+These are the way to do some initialising when a process or thread is attached
+to the dll. The function name is taken from a *.spec file line:
+
+init    YourFunctionName
+
+the you have to implement the function:
+
+
+BOOL32 WINAPI YourLibMain(HINSTANCE32 hinstDLL,
+			 DWORD fdwReason, LPVOID lpvReserved)
+{ if (fdwReason==DLL_PROCESS_ATTACH)
+  { ...
+  } 
+  ....
+}
+
+
+2. Using functions from other build-in DLL's
+--------------------------------------------
+The problem here is, that you can't know if you have to call the function from
+the internal or the external DLL. If you just call the function you will get
+the internal implementation. If the external DLL is loaded the executed program
+will use the external and you the internal DLL. 
+When you -as example- fill a iconlist placed in the internal DLL the
+application wont get the icons from the external DLL.
+
+To go around this you have to call the functions over pointer.
+
+/* definition of the pointer type*/
+void (CALLBACK* pDLLInitComctl)();
+
+/* getting the function address  this should be done in the
+ LibMain function when called with DLL_PROCESS_ATTACH*/
+ 
+BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason,
+							 LPVOID lpvReserved)
+{ HINSTANCE32 hComctl32;
+  if (fdwReason==DLL_PROCESS_ATTACH)
+  { /* load the external / internal DLL*/
+    hComctl32 = LoadLibrary32A("COMCTL32.DLL"); 
+    if (hComctl32)
+    { /* get the function pointer */
+      pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
+
+	  /* check it */
+      if (pDLLInitComctl)
+      { /* use it */
+        pDLLInitComctl();
+      }
+      
+      /* free the DLL / decrease the ref count */
+      FreeLibrary32(hComctl32);
+    }
+    else
+    { /* do some panic*/
+      ERR(shell,"P A N I C error getting functionpointers\n");
+      exit (1);
+    }
+  }
+ ....
+
+3. Getting resources from a *.rc file linked to the DLL
+-------------------------------------------------------
+< If you know how, write some lines>
+
+
+
+----------
+<juergen.schmied@metronet.de>

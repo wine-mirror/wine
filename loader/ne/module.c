@@ -19,6 +19,7 @@
 #include "process.h"
 #include "toolhelp.h"
 #include "snoop.h"
+#include "stackframe.h"
 #include "debug.h"
 
 FARPROC16 (*fnSNOOP16_GetProcAddress16)(HMODULE16,DWORD,FARPROC16) = NULL;
@@ -744,6 +745,8 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, HINSTANCE16 *hPrevInstance,
     {
         HINSTANCE16 prev;
         pModule = NE_GetPtr( hModule );
+        if ( pModule->module32 ) return (HINSTANCE16)21;
+
         hInstance = NE_CreateInstance( pModule, &prev, lib_only );
         if (hInstance != prev)  /* not a library */
             NE_LoadSegment( pModule, pModule->dgroup );
@@ -1114,4 +1117,56 @@ BOOL16 WINAPI ModuleFindHandle( MODULEENTRY *lpme, HMODULE16 hModule )
     hModule = GetExePtr( hModule );
     lpme->wNext = hModule;
     return ModuleNext( lpme );
+}
+
+/***************************************************************************
+ *		MapHModuleLS			(KERNEL32.520)
+ */
+HMODULE16 WINAPI MapHModuleLS(HMODULE32 hmod) {
+	NE_MODULE	*pModule;
+
+	if (!hmod)
+		return ((TDB*)GlobalLock16(GetCurrentTask()))->hInstance;
+	if (!HIWORD(hmod))
+		return hmod; /* we already have a 16 bit module handle */
+	pModule = (NE_MODULE*)GlobalLock16(hFirstModule);
+	while (pModule)  {
+		if (pModule->module32 == hmod)
+			return pModule->self;
+		pModule = (NE_MODULE*)GlobalLock16(pModule->next);
+	}
+	return 0;
+}
+
+/***************************************************************************
+ *		MapHModuleSL			(KERNEL32.521)
+ */
+HMODULE32 WINAPI MapHModuleSL(HMODULE16 hmod) {
+	NE_MODULE	*pModule;
+
+	if (!hmod) {
+		TDB *pTask = (TDB*)GlobalLock16(GetCurrentTask());
+
+		hmod = pTask->hInstance;
+	}
+	pModule = (NE_MODULE*)GlobalLock16(hmod);
+	if (	(pModule->magic!=IMAGE_OS2_SIGNATURE)	||
+		!(pModule->flags & NE_FFLAGS_WIN32)
+	)
+		return 0;
+	return pModule->module32;
+}
+
+/***************************************************************************
+ *		MapHInstLS			(KERNEL32.516)
+ */
+REGS_ENTRYPOINT(MapHInstLS) {
+	EAX_reg(context) = MapHModuleLS(EAX_reg(context));
+}
+
+/***************************************************************************
+ *		MapHInstLS			(KERNEL32.518)
+ */
+REGS_ENTRYPOINT(MapHInstSL) {
+	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
 }

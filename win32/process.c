@@ -59,50 +59,6 @@ BOOL32 WINAPI SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask
 }
 
 /**********************************************************************
- *  CreateProcess32A [KERNEL32.171]
- */
-BOOL32 WINAPI CreateProcess32A(
-	LPCSTR appname,LPSTR cmdline,LPSECURITY_ATTRIBUTES processattributes,
-        LPSECURITY_ATTRIBUTES threadattributes,BOOL32 inherithandles,
-	DWORD creationflags,LPVOID env,LPCSTR curdir,
-	LPSTARTUPINFO32A startupinfo,LPPROCESS_INFORMATION processinfo
-) {
-	HINSTANCE16 hInst = 0;
-	if (processinfo) memset(processinfo, '\0', sizeof(*processinfo));
-
-	FIXME(win32,"(%s,%s,%p,%p,%d,%08lx,%p,%s,%p,%p): calling WinExec32\n",
-		appname,cmdline,processattributes,threadattributes,
-		inherithandles,creationflags,env,curdir,startupinfo,processinfo);
-
-	hInst = WinExec32(cmdline,TRUE);
-
-        return hInst >= 32;
-#if 0
-	/* make from lcc uses system as fallback if CreateProcess returns
-	   FALSE, so return false */
-	return FALSE;
-#endif
-}
-
-/**********************************************************************
- *  CreateProcess32W [KERNEL32.172]
- */
-BOOL32 WINAPI CreateProcess32W(
-	LPCWSTR appname,LPWSTR cmdline,LPSECURITY_ATTRIBUTES processattributes,
-        LPSECURITY_ATTRIBUTES threadattributes,BOOL32 inherithandles,
-	DWORD creationflags,LPVOID env,LPCWSTR curdir,
-	LPSTARTUPINFO32W startupinfo,LPPROCESS_INFORMATION processinfo)
-{
-    FIXME(win32,"(%p,%s,%p,%p,%d,%08lx,%p,%s,%p,%p): stub\n",
-            appname,debugstr_w(cmdline),processattributes,threadattributes,
-            inherithandles,creationflags,env,debugstr_w(curdir),startupinfo,
-	    processinfo );
-    /* make from lcc uses system as fallback if CreateProcess returns
-       FALSE, so return false */
-    return FALSE;
-}
-
-/**********************************************************************
  *  ContinueDebugEvent [KERNEL32.146]
  */
 BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {

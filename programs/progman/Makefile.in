@@ -54,6 +54,9 @@ progman: $(MOSTOBJS) $(STRINGOBJS)
 install: dummy
 	$(INSTALL_PROGRAM) progman $(bindir)/progman
 
+uninstall: dummy
+	$(RM) $(bindir)/progman
+
 $(RC_SRCS:.rc=.s): $(WRC)
 
 dummy:
