@@ -313,7 +313,7 @@
 @ stdcall RtlAssert(ptr ptr long long)
 @ stub RtlCaptureStackBackTrace
 @ stdcall RtlCharToInteger(ptr long ptr)
-@ stub RtlCheckRegistryKey
+@ stdcall RtlCheckRegistryKey(long ptr)
 @ stdcall RtlClearAllBits(ptr)
 @ stdcall RtlClearBits(ptr long long)
 @ stdcall RtlCompactHeap(long long)
@@ -369,7 +369,7 @@
 @ stub RtlDeleteNoSplay
 @ stub RtlDeleteOwnersRanges
 @ stub RtlDeleteRange
-@ stub RtlDeleteRegistryValue
+@ stdcall RtlDeleteRegistryValue(long ptr ptr)
 @ stdcall RtlDeleteResource(ptr)
 @ stdcall RtlDeleteSecurityObject(long)
 @ stdcall RtlDestroyEnvironment(ptr)
@@ -540,7 +540,7 @@
 @ stdcall RtlQueryProcessDebugInformation(long long ptr)
 @ stub RtlQueryProcessHeapInformation
 @ stub RtlQueryProcessLockInformation
-@ stub RtlQueryRegistryValues
+@ stdcall RtlQueryRegistryValues(long ptr ptr ptr ptr)
 @ stub RtlQuerySecurityObject
 @ stub RtlQueryTagHeap
 @ stdcall RtlQueryTimeZoneInformation(ptr)

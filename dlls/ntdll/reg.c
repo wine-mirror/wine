@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1999 Juergen Schmied
  * Copyright (C) 2000 Alexandre Julliard
+ * Copyright 2005 Ivan Leo Puoti, Laurent Pinchart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,11 +38,49 @@
 #include "winreg.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 /* maximum length of a key/value name in bytes (without terminating null) */
 #define MAX_NAME_LENGTH ((MAX_PATH-1) * sizeof(WCHAR))
+
+/* RtlQueryRegistryValues structs and defines */
+#define RTL_REGISTRY_ABSOLUTE             0
+#define RTL_REGISTRY_SERVICES             1
+#define RTL_REGISTRY_CONTROL              2
+#define RTL_REGISTRY_WINDOWS_NT           3
+#define RTL_REGISTRY_DEVICEMAP            4
+#define RTL_REGISTRY_USER                 5
+
+#define RTL_REGISTRY_HANDLE       0x40000000
+#define RTL_REGISTRY_OPTIONAL     0x80000000
+
+#define RTL_QUERY_REGISTRY_SUBKEY         0x00000001
+#define RTL_QUERY_REGISTRY_TOPKEY         0x00000002
+#define RTL_QUERY_REGISTRY_REQUIRED       0x00000004
+#define RTL_QUERY_REGISTRY_NOVALUE        0x00000008
+#define RTL_QUERY_REGISTRY_NOEXPAND       0x00000010
+#define RTL_QUERY_REGISTRY_DIRECT         0x00000020
+#define RTL_QUERY_REGISTRY_DELETE         0x00000040
+
+typedef NTSTATUS (WINAPI *PRTL_QUERY_REGISTRY_ROUTINE)( PCWSTR ValueName,
+                                                        ULONG  ValueType,
+                                                        PVOID  ValueData,
+                                                        ULONG  ValueLength,
+                                                        PVOID  Context,
+                                                        PVOID  EntryContext);
+
+typedef struct _RTL_QUERY_REGISTRY_TABLE
+{
+  PRTL_QUERY_REGISTRY_ROUTINE  QueryRoutine;
+  ULONG  Flags;
+  PWSTR  Name;
+  PVOID  EntryContext;
+  ULONG  DefaultType;
+  PVOID  DefaultData;
+  ULONG  DefaultLength;
+} RTL_QUERY_REGISTRY_TABLE, *PRTL_QUERY_REGISTRY_TABLE;
 
 
 /******************************************************************************
@@ -758,4 +797,477 @@ DWORD WINAPI RtlOpenCurrentUser(
 	ret = NtCreateKey(KeyHandle, DesiredAccess, &ObjectAttributes, 0, NULL, 0, NULL);
 	RtlFreeUnicodeString(&ObjectName);
 	return ret;
+}
+
+
+static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
+                                        PRTL_QUERY_REGISTRY_TABLE pQuery, PVOID pContext, PVOID pEnvironment)
+{
+    PUNICODE_STRING str;
+    UNICODE_STRING src, dst;
+    LONG *bin;
+    ULONG offset;
+    PWSTR wstr;
+    DWORD res;
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG len;
+    LPWSTR String;
+    INT count = 0;
+
+    if (pInfo == NULL)
+    {
+        if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
+        {
+            FIXME("(pInfo == NULL, pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT), stub!\n");
+            return status;
+        }
+        else
+        {
+            status = pQuery->QueryRoutine(pQuery->Name, pQuery->DefaultType, pQuery->DefaultData,
+                                          pQuery->DefaultLength, pContext, pQuery->EntryContext);
+        }
+        return status;
+    }
+    len = pInfo->DataLength;
+
+    if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
+    {
+        str = (PUNICODE_STRING)pQuery->EntryContext;
+ 
+        switch(pInfo->Type)
+        {
+        case REG_EXPAND_SZ:
+            if (!(pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND))
+            {
+                RtlInitUnicodeString(&src, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+                res = 0;
+                dst.MaximumLength = 0;
+                RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
+                dst.Length = 0;
+                dst.MaximumLength = res;
+                dst.Buffer = RtlAllocateHeap(GetProcessHeap(), 0, res * sizeof(WCHAR));
+                RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
+                status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type, dst.Buffer,
+                                     dst.Length, pContext, pQuery->EntryContext);
+                RtlFreeHeap(GetProcessHeap(), 0, dst.Buffer);
+            }
+
+        case REG_SZ:
+        case REG_LINK:
+            if (str->Buffer == NULL)
+                RtlCreateUnicodeString(str, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+            else
+                RtlAppendUnicodeToString(str, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+            break;
+
+        case REG_MULTI_SZ:
+            if (!(pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND))
+                return STATUS_INVALID_PARAMETER;
+
+            if (str->Buffer == NULL)
+            {
+                str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
+                str->MaximumLength = len;
+            }
+            len = min(len, str->MaximumLength);
+            memcpy(str->Buffer, ((CHAR*)pInfo) + pInfo->DataOffset, len);
+            str->Length = len;
+            break;
+
+        default:
+            bin = (LONG*)pQuery->EntryContext;
+            if (pInfo->DataLength <= sizeof(ULONG))
+                memcpy(bin, ((CHAR*)pInfo) + pInfo->DataOffset,
+                    pInfo->DataLength);
+            else
+            {
+                if (bin[0] <= sizeof(ULONG))
+                {
+                    memcpy(&bin[1], ((CHAR*)pInfo) + pInfo->DataOffset,
+                    min(-bin[0], pInfo->DataLength));
+                }
+                else
+                {
+                   len = min(bin[0], pInfo->DataLength);
+                    bin[1] = len;
+                    bin[2] = pInfo->Type;
+                    memcpy(&bin[3], ((CHAR*)pInfo) + pInfo->DataOffset, len);
+                }
+           }
+           break;
+        }
+    }
+    else
+    {
+        if((pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND) ||
+           (pInfo->Type != REG_EXPAND_SZ && pInfo->Type != REG_MULTI_SZ))
+        {
+            status = pQuery->QueryRoutine(pInfo->Name, pInfo->Type,
+                ((CHAR*)pInfo) + pInfo->DataOffset, pInfo->DataLength,
+                pContext, pQuery->EntryContext);
+        }
+        else if (pInfo->Type == REG_EXPAND_SZ)
+        {
+            RtlInitUnicodeString(&src, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+            res = 0;
+            dst.MaximumLength = 0;
+            RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
+            dst.Length = 0;
+            dst.MaximumLength = res;
+            dst.Buffer = RtlAllocateHeap(GetProcessHeap(), 0, res * sizeof(WCHAR));
+            RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
+            status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type, dst.Buffer,
+                                          dst.Length, pContext, pQuery->EntryContext);
+            RtlFreeHeap(GetProcessHeap(), 0, dst.Buffer);
+        }
+        else /* REG_MULTI_SZ */
+        {
+            if(pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND)
+            {
+                for (offset = 0; offset <= pInfo->DataLength; offset += len + sizeof(WCHAR))
+                    {
+                    wstr = (WCHAR*)(((CHAR*)pInfo) + offset);
+                    len = strlenW(wstr) * sizeof(WCHAR);
+                    status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type, wstr, len,
+                        pContext, pQuery->EntryContext);
+                    if(status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+                        return status;
+                    }
+            }
+            else
+            {
+                while(count<=pInfo->DataLength)
+                {
+                    String = (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset)+count;
+                    count+=strlenW(String)+1;
+                    RtlInitUnicodeString(&src, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+                    res = 0;
+                    dst.MaximumLength = 0;
+                    RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
+                    dst.Length = 0;
+                    dst.MaximumLength = res;
+                    dst.Buffer = RtlAllocateHeap(GetProcessHeap(), 0, res * sizeof(WCHAR));
+                    RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
+                    status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type, dst.Buffer,
+                                                  dst.Length, pContext, pQuery->EntryContext);
+                    RtlFreeHeap(GetProcessHeap(), 0, dst.Buffer);
+                    if(status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+                        return status;
+                }
+            }
+        }
+    }
+    return status;
+}
+
+
+static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHKEY handle)
+{
+    UNICODE_STRING KeyString;
+    OBJECT_ATTRIBUTES regkey;
+    PCWSTR base;
+    INT len;
+    NTSTATUS status;
+
+    static const WCHAR empty[] = {0};
+    static const WCHAR control[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e',
+    '\\','S','y','s','t','e','m','\\','C','u','r','r','e','n','t',' ','C','o','n','t','r','o','l','S','e','t','\\',
+    'C','o','n','t','r','o','l','\\',0};
+
+    static const WCHAR devicemap[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
+    'H','a','r','d','w','a','r','e','\\','D','e','v','i','c','e','M','a','p','\\',0};
+
+    static const WCHAR services[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
+    'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+    'S','e','r','v','i','c','e','s','\\',0};
+
+    static const WCHAR user[] = {'\\','R','e','g','i','s','t','r','y','\\','U','s','e','r','\\',
+    'C','u','r','r','e','n','t','U','s','e','r','\\',0};
+
+    static const WCHAR windows_nt[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',0};
+
+    switch (RelativeTo & 0xff)
+    {
+    case RTL_REGISTRY_ABSOLUTE:
+        base = empty;
+        break;
+
+    case RTL_REGISTRY_CONTROL:
+        base = control;
+        break;
+
+    case RTL_REGISTRY_DEVICEMAP:
+        base = devicemap;
+        break;
+
+    case RTL_REGISTRY_SERVICES:
+        base = services;
+        break;
+
+    case RTL_REGISTRY_USER:
+        base = user;
+        break;
+
+    case RTL_REGISTRY_WINDOWS_NT:
+        base = windows_nt;
+        break;
+
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    len = (strlenW(base) + strlenW(Path) + 1) * sizeof(WCHAR);
+    KeyString.Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
+    if (KeyString.Buffer == NULL)
+        return STATUS_NO_MEMORY;
+
+    strcpyW(KeyString.Buffer, base);
+    strcatW(KeyString.Buffer, Path);
+    KeyString.Length = len - sizeof(WCHAR);
+    KeyString.MaximumLength = len;
+    InitializeObjectAttributes(&regkey, &KeyString, 0, NULL, NULL);
+    status = NtOpenKey(handle, KEY_ALL_ACCESS, &regkey);
+    RtlFreeHeap(GetProcessHeap(), 0, KeyString.Buffer);
+    return status;
+}
+
+/*************************************************************************
+ * RtlQueryRegistryValues   [NTDLL.@]
+ *
+ * Query multiple registry values with a signle call.
+ *
+ * PARAMS
+ *  RelativeTo  [I] Registry path that Path refers to
+ *  Path        [I] Path to key
+ *  QueryTable  [I] Table of key values to query
+ *  Context     [I] Paremeter to pass to the application defined QueryRoutine function
+ *  Environment [I] Optional parameter to use when performing expantion
+ *
+ * RETURNS
+ *  STATUS_SUCCESS or an appropriate NTSTATUS error code.
+ */
+NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
+                                       IN PRTL_QUERY_REGISTRY_TABLE QueryTable, IN PVOID Context,
+                                       IN PVOID Environment OPTIONAL)
+{
+    UNICODE_STRING Value;
+    HKEY handle, topkey;
+    PKEY_VALUE_FULL_INFORMATION pInfo = NULL;
+    ULONG len, buflen = 0;
+    NTSTATUS status=STATUS_SUCCESS, ret = STATUS_SUCCESS;
+    INT i;
+
+    TRACE("(%ld, %s, %p, %p, %p)\n", RelativeTo, debugstr_w(Path), QueryTable, Context, Environment);
+
+    /* get a valid handle */
+    if (RelativeTo & RTL_REGISTRY_HANDLE)
+        topkey = handle = (HANDLE)Path;
+    else
+    {
+        status = RTL_GetKeyHandle(RelativeTo, Path, &topkey);
+        handle = topkey;
+    }
+    if(status != STATUS_SUCCESS)
+        return status;
+
+    /* Process query table entries */
+    for (; QueryTable->QueryRoutine != NULL || QueryTable->Name != NULL; ++QueryTable)
+    {
+        if (QueryTable->Flags &
+            (RTL_QUERY_REGISTRY_SUBKEY | RTL_QUERY_REGISTRY_TOPKEY))
+        {
+            /* topkey must be kept open just in case we will reuse it later */
+            if (handle != topkey)
+                NtClose(handle);
+
+            if (QueryTable->Flags & RTL_QUERY_REGISTRY_SUBKEY)
+            {
+                handle = 0;
+                status = RTL_GetKeyHandle((ULONG)QueryTable->Name, Path, &handle);
+                if(status != STATUS_SUCCESS)
+                {
+                    ret = status;
+                    goto out;
+                }
+            }
+            else
+                handle = topkey;
+        }
+
+        if (QueryTable->Flags & RTL_QUERY_REGISTRY_NOVALUE)
+        {
+            QueryTable->QueryRoutine(QueryTable->Name, REG_NONE, NULL, 0,
+                Context, QueryTable->EntryContext);
+            continue;
+        }
+
+        if (!handle)
+        {
+            if (QueryTable->Flags & RTL_QUERY_REGISTRY_REQUIRED)
+            {
+                ret = STATUS_OBJECT_NAME_NOT_FOUND;
+                goto out;
+            }
+            continue;
+        }
+
+        if (QueryTable->Name == NULL)
+        {
+            if (QueryTable->Flags & RTL_QUERY_REGISTRY_DIRECT)
+            {
+                ret = STATUS_INVALID_PARAMETER;
+                goto out;
+            }
+
+            /* Report all subkeys */
+            for (i = 0;; ++i)
+            {
+                status = NtEnumerateValueKey(handle, i,
+                    KeyValueFullInformation, pInfo, buflen, &len);
+                if (status == STATUS_NO_MORE_ENTRIES)
+                    break;
+                if (status == STATUS_BUFFER_OVERFLOW ||
+                    status == STATUS_BUFFER_TOO_SMALL)
+                {
+                    buflen = len;
+                    RtlFreeHeap(GetProcessHeap(), 0, pInfo);
+                    pInfo = (KEY_VALUE_FULL_INFORMATION*)RtlAllocateHeap(
+                        GetProcessHeap(), 0, buflen);
+                    NtEnumerateValueKey(handle, i, KeyValueFullInformation,
+                        pInfo, buflen, &len);
+                }
+
+                status = RTL_ReportRegistryValue(pInfo, QueryTable, Context, Environment);
+                if(status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+                {
+                    ret = status;
+                    goto out;
+                }
+                if (QueryTable->Flags & RTL_QUERY_REGISTRY_DELETE)
+                {
+                    RtlInitUnicodeString(&Value, pInfo->Name);
+                    NtDeleteValueKey(handle, &Value);
+                }
+            }
+
+            if (i == 0  && (QueryTable->Flags & RTL_QUERY_REGISTRY_REQUIRED))
+            {
+                ret = STATUS_OBJECT_NAME_NOT_FOUND;
+                goto out;
+            }
+        }
+        else
+        {
+            RtlInitUnicodeString(&Value, QueryTable->Name);
+            status = NtQueryValueKey(handle, &Value, KeyValueFullInformation,
+                pInfo, buflen, &len);
+            if (status == STATUS_BUFFER_OVERFLOW ||
+                status == STATUS_BUFFER_TOO_SMALL)
+            {
+                buflen = len;
+                RtlFreeHeap(GetProcessHeap(), 0, pInfo);
+                pInfo = (KEY_VALUE_FULL_INFORMATION*)RtlAllocateHeap(
+                    GetProcessHeap(), 0, buflen);
+                status = NtQueryValueKey(handle, &Value,
+                    KeyValueFullInformation, pInfo, buflen, &len);
+            }
+            if (status != STATUS_SUCCESS)
+            {
+                if (QueryTable->Flags & RTL_QUERY_REGISTRY_REQUIRED)
+                {
+                    ret = STATUS_OBJECT_NAME_NOT_FOUND;
+                    goto out;
+                }
+                status = RTL_ReportRegistryValue(NULL, QueryTable, Context, Environment);
+                if(status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+                {
+                    ret = status;
+                    goto out;
+                }
+            }
+            else
+            {
+                status = RTL_ReportRegistryValue(pInfo, QueryTable, Context, Environment);
+                if(status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+                {
+                    ret = status;
+                    goto out;
+                }
+                if (QueryTable->Flags & RTL_QUERY_REGISTRY_DELETE)
+                    NtDeleteValueKey(handle, &Value);
+            }
+        }
+    }
+
+out:
+    RtlFreeHeap(GetProcessHeap(), 0, pInfo);
+    if (handle != topkey)
+        NtClose(handle);
+    NtClose(topkey);
+    return ret;
+}
+
+/*************************************************************************
+ * RtlCheckRegistryKey   [NTDLL.@]
+ *
+ * Query multiple registry values with a signle call.
+ *
+ * PARAMS
+ *  RelativeTo [I] Registry path that Path refers to
+ *  Path       [I] Path to key
+ *
+ * RETURNS
+ *  STATUS_SUCCESS if the specified key exists, or an NTSTATUS error code.
+ */
+NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG  RelativeTo, IN PWSTR  Path)
+{
+    HKEY handle;
+    NTSTATUS status;
+
+    TRACE("(%ld, %s)\n", RelativeTo, debugstr_w(Path));
+
+    if((!RelativeTo) && Path == NULL)
+        return STATUS_OBJECT_PATH_SYNTAX_BAD;
+    if(RelativeTo & RTL_REGISTRY_HANDLE)
+        return STATUS_SUCCESS;
+
+    status = RTL_GetKeyHandle(RelativeTo, Path, &handle);
+    if (handle) NtClose(handle);
+    if (status == STATUS_INVALID_HANDLE) status = STATUS_OBJECT_NAME_NOT_FOUND;
+    return status;
+}
+
+/*************************************************************************
+ * RtlDeleteRegistryValue   [NTDLL.@]
+ *
+ * Query multiple registry values with a signle call.
+ *
+ * PARAMS
+ *  RelativeTo [I] Registry path that Path refers to
+ *  Path       [I] Path to key
+ *  ValueName  [I] Name of the value to delete
+ *
+ * RETURNS
+ *  STATUS_SUCCESS if the specified key is sucesfully deleted, or an NTSTATUS error code.
+ */
+NTSTATUS RtlDeleteRegistryValue(IN ULONG RelativeTo, IN PCWSTR Path, IN PCWSTR ValueName)
+{
+    NTSTATUS status;
+    HKEY handle;
+    UNICODE_STRING Value;
+
+    TRACE("(%ld, %s, %s)\n", RelativeTo, debugstr_w(Path), debugstr_w(ValueName));
+
+    RtlInitUnicodeString(&Value, ValueName);
+    if(RelativeTo == RTL_REGISTRY_HANDLE)
+    {
+        return NtDeleteValueKey((HKEY)Path, &Value);
+    }
+    status = RTL_GetKeyHandle(RelativeTo, Path, &handle);
+    if (status) return status;
+    status = NtDeleteValueKey(handle, &Value);
+    NtClose(handle);
+    return status;
 }
