@@ -27,7 +27,12 @@ typedef struct
  
 #ifdef __i386__
 # define GET_IP(context) ((LPVOID)(context)->Eip)
-#else
+#endif
+#ifdef __sparc__
+# define GET_IP(context) ((LPVOID)(context)->pc)
+#endif
+
+#ifndef GET_IP
 # error You must define GET_IP for this CPU
 #endif  /* __i386__ */
 
