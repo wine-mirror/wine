@@ -141,6 +141,9 @@
 /* Define if you have the <netinet/in.h> header file.  */
 #undef HAVE_NETINET_IN_H
 
+/* Define if you have the <soundcard.h> header file.  */
+#undef HAVE_SOUNDCARD_H
+
 /* Define if you have the <strings.h> header file.  */
 #undef HAVE_STRINGS_H
 
@@ -194,6 +197,9 @@
 
 /* Define if you have the nsl library (-lnsl).  */
 #undef HAVE_LIBNSL
+
+/* Define if you have the ossaudio library (-lossaudio).  */
+#undef HAVE_LIBOSSAUDIO
 
 /* Define if you have the socket library (-lsocket).  */
 #undef HAVE_LIBSOCKET

@@ -42,20 +42,15 @@
 #include "windows.h"
 #include "winerror.h"
 #include "interfaces.h"
-#include "mmsystem.h"
+#include "multimedia.h"
 #include "dsound.h"
 #include "thread.h"
 #include "debug.h"
 #include "xmalloc.h"
 
 #ifdef HAVE_OSS
-# include <sys/ioctl.h>
-# ifdef HAVE_MACHINE_SOUNDCARD_H
-#  include <machine/soundcard.h>
-# endif
-# ifdef HAVE_SYS_SOUNDCARD_H
-#  include <sys/soundcard.h>
-# endif
+
+#include <sys/ioctl.h>
 
 /* #define USE_DSOUND3D 1 */
 

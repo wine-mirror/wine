@@ -20,11 +20,12 @@
 #define MAX_MIDIOUTDRV 	(16)
 #define MAX_MCIMIDIDRV 	(1)
 
-#ifdef HAVE_SYS_SOUNDCARD_H
+#if defined(HAVE_SYS_SOUNDCARD_H)
 # include <sys/soundcard.h>
-#endif
-#ifdef HAVE_MACHINE_SOUNDCARD_H
+#elif defined(HAVE_MACHINE_SOUNDCARD_H)
 # include <machine/soundcard.h>
+#elif defined(HAVE_SOUNDCARD_H)
+# include <soundcard.h>
 #endif
 
 #include <sys/errno.h>

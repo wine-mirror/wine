@@ -13,24 +13,10 @@
 #include "windows.h"
 #include "user.h"
 #include "driver.h"
-#include "mmsystem.h"
+#include "multimedia.h"
 #include "debug.h"
 
-#ifdef HAVE_SYS_SOUNDCARD_H
-# include <sys/soundcard.h>
-#endif
-#ifdef HAVE_MACHINE_SOUNDCARD_H
-# include <machine/soundcard.h>
-#endif
-
 #define MIXER_DEV "/dev/mixer"
-
-#ifdef SOUND_VERSION
-#define IOCTL(a,b,c)		ioctl(a,b,&c)
-#else
-#define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
-#endif
-
 
 static int	NumDev = 6;
 

@@ -14,9 +14,8 @@
 #include "windows.h"
 #include "user.h"
 #include "driver.h"
-#include "mmsystem.h"
-#include "debug.h"
 #include "multimedia.h"
+#include "debug.h"
 
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>
@@ -24,23 +23,16 @@
 #ifdef HAVE_LINUX_UCDROM_H
 # include <linux/ucdrom.h>
 #endif
-#ifdef HAVE_MACHINE_SOUNDCARD_H
-# include <machine/soundcard.h>
-#endif
 #ifdef HAVE_SYS_CDIO_H
 # include <sys/cdio.h>
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__NetBSD__)
+# define CDAUDIO_DEV "/dev/rcd0d"
+#elif defined(__FreeBSD__)
 # define CDAUDIO_DEV "/dev/rcd0c"
 #else
 # define CDAUDIO_DEV "/dev/cdrom"
-#endif
-
-#ifdef SOUND_VERSION
-# define IOCTL(a,b,c)		ioctl(a,b,&c)
-#else
-# define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
 #endif
 
 #define MAX_CDAUDIODRV 		(1)
@@ -50,7 +42,7 @@
 #define CDFRAMES_PERMIN 	4500
 #define SECONDS_PERMIN	 	60
 
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 typedef struct {
     int     		nUseCount;          /* Incremented for each shared open */
     BOOL16  		fShareable;         /* TRUE if first open was shareable */
@@ -61,7 +53,7 @@ typedef struct {
     int			unixdev;
 #ifdef linux
     struct cdrom_subchnl	sc;
-#elif defined(__FreeBSD__)
+#else
     struct cd_sub_channel_info	sc;
 #endif
     int			cdMode;
@@ -103,27 +95,25 @@ static WINE_CDAUDIO*  CDAUDIO_mciGetOpenDrv(UINT16 wDevID)
  */
 static UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 #ifdef linux
     struct cdrom_tochdr	hdr;
-#elif defined(__FreeBSD__)
+#else
     struct ioc_toc_header	hdr;
 #endif
     
     if (wcda->nTracks == 0) {
-	if (ioctl(wcda->unixdev,
 #ifdef linux
-		  CDROMREADTOCHDR
-#elif defined(__FreeBSD__)
-		  CDIOREADTOCHEADER
+	if (ioctl(wcda->unixdev, CDROMREADTOCHDR, &hdr)) {
+#else
+	if (ioctl(wcda->unixdev, CDIOREADTOCHEADER, &hdr)) {
 #endif
-		  , &hdr)) {
 	    WARN(cdaudio, "(%p) -- Error occured !\n", wcda);
 	    return (WORD)-1;
 	}
 #ifdef linux
 	wcda->nTracks = hdr.cdth_trk1;
-#elif defined(__FreeBSD__)
+#else
 	wcda->nTracks = hdr.ending_track - hdr.starting_track + 1;
 #endif
     }
@@ -139,13 +129,13 @@ static UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
  */
 static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		i, length;
     int		start, last_start = 0;
     int		total_length = 0;
 #ifdef linux
     struct cdrom_tocentry	entry;
-#elif defined(__FreeBSD__)
+#else
     struct ioc_read_toc_entry	entry;
     struct cd_toc_entry             toc_buffer;
 #endif
@@ -177,31 +167,29 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	if (i == wcda->nTracks)
 #ifdef linux
 	    entry.cdte_track = CDROM_LEADOUT;
-#elif defined(__FreeBSD__)
+#else
 #define LEADOUT 0xaa
 	entry.starting_track = LEADOUT; /* XXX */
 #endif
 	else
 #ifdef linux
 	    entry.cdte_track = i + 1;
-#elif defined(__FreeBSD__)
+#else
 	entry.starting_track = i + 1;
 #endif
 #ifdef linux
 	entry.cdte_format = CDROM_MSF;
-#elif defined(__FreeBSD__)
+#else
 	bzero((char *)&toc_buffer, sizeof(toc_buffer));
 	entry.address_format = CD_MSF_FORMAT;
 	entry.data_len = sizeof(toc_buffer);
 	entry.data = &toc_buffer;
 #endif
-	if (ioctl(wcda->unixdev, 
 #ifdef linux
-		  CDROMREADTOCENTRY
-#elif defined(__FreeBSD__)
-		  CDIOREADTOCENTRYS
+	if (ioctl(wcda->unixdev, CDROMREADTOCENTRY, &entry)) {
+#else
+	if (ioctl(wcda->unixdev, CDIOREADTOCENTRYS, &entry)) {
 #endif
-		  , &entry)) {
 	    WARN(cdaudio, "error read entry\n");
 	    return FALSE;
 	}
@@ -209,7 +197,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	start = CDFRAMES_PERSEC * (SECONDS_PERMIN * 
 				   entry.cdte_addr.msf.minute + entry.cdte_addr.msf.second) + 
 	    entry.cdte_addr.msf.frame;
-#elif defined(__FreeBSD__)
+#else
 	start = CDFRAMES_PERSEC * (SECONDS_PERMIN *
 				   toc_buffer.addr.msf.minute + toc_buffer.addr.msf.second) +
 	    toc_buffer.addr.msf.frame;
@@ -230,7 +218,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 	wcda->lpbTrackFlags[i] =
 #ifdef linux
 		(entry.cdte_adr << 4) | (entry.cdte_ctrl & 0x0f);
-#elif defined(__FreeBSD__)
+#else
 		(toc_buffer.addr_type << 4) | (toc_buffer.control & 0x0f);
 #endif 
 	TRACE(cdaudio, "track #%u flags=%02x\n", i + 1, wcda->lpbTrackFlags[i]);
@@ -248,7 +236,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
  */
 static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpOpenParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     DWORD	dwDeviceID;
     WINE_CDAUDIO* 	wcda;
 
@@ -328,7 +316,7 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A l
  */
 static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
 
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwParam, lpParms);
@@ -351,7 +339,7 @@ static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS 
 static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags, 
 				   LPMCI_GETDEVCAPS_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
@@ -403,7 +391,7 @@ static DWORD CDAUDIO_mciGetDevCaps(UINT16 wDevID, DWORD dwFlags,
  */
 static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     DWORD		ret = 0;
     LPSTR		str = 0;
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
@@ -445,7 +433,7 @@ static DWORD CDAUDIO_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lp
 static DWORD CDAUDIO_CalcFrame(WINE_CDAUDIO* wcda, DWORD dwTime)
 {
     DWORD	dwFrame = 0;
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     UINT16	wTrack;
     
     TRACE(cdaudio,"(%p, %08lX, %lu);\n", wcda, wcda->dwTimeFormat, dwTime);
@@ -487,9 +475,11 @@ static DWORD CDAUDIO_CalcFrame(WINE_CDAUDIO* wcda, DWORD dwTime)
  */
 static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		oldmode = wcda->cdMode;
-#ifdef __FreeBSD__
+#ifdef linux
+    wcda->sc.cdsc_format = CDROM_MSF;
+#else
     struct ioc_read_subchannel	read_sc;
     
     read_sc.address_format = CD_MSF_FORMAT;
@@ -497,16 +487,12 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
     read_sc.track          = 0;
     read_sc.data_len       = sizeof(wcda->sc);
     read_sc.data	   = (struct cd_sub_channel_info *)&wcda->sc;
-#elif linux
-    wcda->sc.cdsc_format = CDROM_MSF;
 #endif
-    if (ioctl(wcda->unixdev,
 #ifdef linux
-	      CDROMSUBCHNL, &wcda->sc
-#elif defined(__FreeBSD__)
-	      CDIOCREADSUBCHANNEL, &read_sc
+    if (ioctl(wcda->unixdev, CDROMSUBCHNL, &wcda->sc)) {
+#else
+    if (ioctl(wcda->unixdev, CDIOCREADSUBCHANNEL, &read_sc)) {
 #endif
-	      )) {
 	TRACE(cdaudio,"opened or no_media !\n");
 	wcda->cdMode = MCI_MODE_OPEN; /* was NOT_READY */
 	return TRUE;
@@ -514,13 +500,13 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
     switch (
 #ifdef linux
 	    wcda->sc.cdsc_audiostatus
-#elif defined(__FreeBSD__)
+#else
 	    wcda->sc.header.audio_status
 #endif
 	    ) {
 #ifdef linux
     case CDROM_AUDIO_INVALID:
-#elif defined(__FreeBSD__)
+#else
     case CD_AS_AUDIO_INVALID:
 #endif
 	WARN(cdaudio, "device doesn't support status, using MCI status.\n");
@@ -528,7 +514,7 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 	break;
 #ifdef linux
     case CDROM_AUDIO_NO_STATUS: 
-#elif defined(__FreeBSD__)
+#else
     case CD_AS_NO_STATUS:
 #endif
 	wcda->cdMode = MCI_MODE_STOP;
@@ -536,7 +522,7 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 	break;
 #ifdef linux
     case CDROM_AUDIO_PLAY: 
-#elif defined(__FreeBSD__)
+#else
     case CD_AS_PLAY_IN_PROGRESS:
 #endif
 	wcda->cdMode = MCI_MODE_PLAY;
@@ -544,7 +530,7 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 	break;
 #ifdef linux
     case CDROM_AUDIO_PAUSED:
-#elif defined(__FreeBSD__)
+#else
     case CD_AS_PLAY_PAUSED:
 #endif
 	wcda->cdMode = MCI_MODE_PAUSE;
@@ -554,7 +540,7 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 #ifdef linux
 	TRACE(cdaudio,"status=%02X !\n",
 	      wcda->sc.cdsc_audiostatus);
-#elif defined(__FreeBSD__)
+#else
 	TRACE(cdaudio,"status=%02X !\n",
 	      wcda->sc.header.audio_status);
 #endif
@@ -565,7 +551,7 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 	CDFRAMES_PERMIN * wcda->sc.cdsc_absaddr.msf.minute +
 	CDFRAMES_PERSEC * wcda->sc.cdsc_absaddr.msf.second +
 	wcda->sc.cdsc_absaddr.msf.frame;
-#elif defined(__FreeBSD__)
+#else
     wcda->nCurTrack = wcda->sc.what.position.track_number;
     wcda->dwCurFrame = 
 	CDFRAMES_PERMIN * wcda->sc.what.position.absaddr.msf.minute +
@@ -578,7 +564,7 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 	  wcda->sc.cdsc_absaddr.msf.minute,
 	  wcda->sc.cdsc_absaddr.msf.second,
 	  wcda->sc.cdsc_absaddr.msf.frame);
-#elif defined(__FreeBSD__)
+#else
     TRACE(cdaudio,"%02u-%02u:%02u:%02u \n",
 	  wcda->sc.what.position.track_number,
 	  wcda->sc.what.position.absaddr.msf.minute,
@@ -605,7 +591,7 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 static DWORD CDAUDIO_CalcTime(WINE_CDAUDIO* wcda, DWORD dwFrame)
 {
     DWORD	dwTime = 0;
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     UINT16	wTrack;
     UINT16	wMinutes;
     UINT16	wSeconds;
@@ -651,7 +637,7 @@ static DWORD CDAUDIO_CalcTime(WINE_CDAUDIO* wcda, DWORD dwFrame)
  */
 static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
     DWORD	        ret = 0;
 
@@ -759,13 +745,13 @@ static DWORD CDAUDIO_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS 
  */
 static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int 	start, end;
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
     DWORD		ret = 0;
 #ifdef linux
     struct 	cdrom_msf	msf;
-#elif defined(__FreeBSD__)
+#else
     struct	ioc_play_msf	msf;
 #endif
     
@@ -796,7 +782,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     msf.cdmsf_min1 = end / CDFRAMES_PERMIN;
     msf.cdmsf_sec1 = (end % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
     msf.cdmsf_frame1 = end % CDFRAMES_PERSEC;
-#elif defined(__FreeBSD__)
+#else
     msf.start_m     = start / CDFRAMES_PERMIN;
     msf.start_s     = (start % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
     msf.start_f     = start % CDFRAMES_PERSEC;
@@ -804,23 +790,19 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     msf.end_s       = (end % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
     msf.end_f       = end % CDFRAMES_PERSEC;
 #endif
-	if (ioctl(wcda->unixdev,
 #ifdef linux
-	      CDROMSTART
-#elif defined(__FreeBSD__)
-	      CDIOCSTART
+    if (ioctl(wcda->unixdev, CDROMSTART)) {
+#else
+    if (ioctl(wcda->unixdev, CDIOCSTART, NULL)) {
 #endif
-	      )) {
 	WARN(cdaudio, "motor doesn't start !\n");
 	return MCIERR_HARDWARE;
     }
-	if (ioctl(wcda->unixdev, 
 #ifdef linux
-	      CDROMPLAYMSF
-#elif defined(__FreeBSD__)
-	      CDIOCPLAYMSF
+    if (ioctl(wcda->unixdev, CDROMPLAYMSF, &msf)) {
+#else
+    if (ioctl(wcda->unixdev, CDIOCPLAYMSF, &msf)) {
 #endif
-	      , &msf)) {
 	WARN(cdaudio, "device doesn't play !\n");
 	return MCIERR_HARDWARE;
     }
@@ -828,7 +810,7 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
     TRACE(cdaudio,"msf = %d:%d:%d %d:%d:%d\n",
 	  msf.cdmsf_min0, msf.cdmsf_sec0, msf.cdmsf_frame0,
 	  msf.cdmsf_min1, msf.cdmsf_sec1, msf.cdmsf_frame1);
-#elif defined(__FreeBSD__)
+#else
     TRACE(cdaudio,"msf = %d:%d:%d %d:%d:%d\n",
 	  msf.start_m, msf.start_s, msf.start_f,
 	  msf.end_m,   msf.end_s,   msf.end_f);
@@ -854,20 +836,19 @@ static DWORD CDAUDIO_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpPa
  */
 static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
 
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
     if (wcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
-    if (ioctl(wcda->unixdev,
 #ifdef linux
-	      CDROMSTOP
-#elif defined(__FreeBSD__)
-	      CDIOCSTOP
+    if (ioctl(wcda->unixdev, CDROMSTOP))
+#else
+    if (ioctl(wcda->unixdev, CDIOCSTOP, NULL))
 #endif
-	      )) return MCIERR_HARDWARE;
+	return MCIERR_HARDWARE;
     wcda->mciMode = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE(cdaudio, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -885,20 +866,19 @@ static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
  */
 static DWORD CDAUDIO_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
 
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
     if (wcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
 
-    if (ioctl(wcda->unixdev,
 #ifdef linux
-	      CDROMPAUSE
-#elif defined(__FreeBSD__)
-	      CDIOCPAUSE
+    if (ioctl(wcda->unixdev, CDROMPAUSE))
+#else
+    if (ioctl(wcda->unixdev, CDIOCPAUSE, NULL))
 #endif
-	      )) return MCIERR_HARDWARE;
+	return MCIERR_HARDWARE;
     wcda->mciMode = MCI_MODE_PAUSE;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
         TRACE(cdaudio, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -916,20 +896,19 @@ static DWORD CDAUDIO_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS 
  */
 static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
 
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
     if (wcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
-    if (ioctl(wcda->unixdev, 
 #ifdef linux
-	      CDROMRESUME
-#elif defined(__FreeBSD__)
-	      CDIOCRESUME
+    if (ioctl(wcda->unixdev, CDROMRESUME))
+#else
+    if (ioctl(wcda->unixdev, CDIOCRESUME, NULL))
 #endif
-	      )) return MCIERR_HARDWARE;
+	return MCIERR_HARDWARE;
     wcda->mciMode = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE(cdaudio, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
@@ -947,7 +926,7 @@ static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
  */
 static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     DWORD	dwRet;
     MCI_PLAY_PARMS PlayParms;
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
@@ -957,13 +936,11 @@ static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpPa
     if (wcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
     
-    if (ioctl(wcda->unixdev,
 #ifdef linux
-	      CDROMRESUME
-#elif defined(__FreeBSD__)
-	      CDIOCRESUME
+    if (ioctl(wcda->unixdev, CDROMRESUME)) {
+#else
+    if (ioctl(wcda->unixdev, CDIOCRESUME, NULL)) {
 #endif
-	      )) {
 	perror("ioctl CDROMRESUME");
 	return MCIERR_HARDWARE;
     }
@@ -1004,17 +981,7 @@ static DWORD	CDAUDIO_mciSetDoor(UINT16 wDevID, int open)
 
     if (wcda == NULL) return MCIERR_INVALID_DEVICE_ID;
 
-#ifdef __FreeBSD__
-    if (ioctl(wcda->unixdev, CDIOCALLOW)) return MCIERR_HARDWARE;
-    if (open) {
-	if (ioctl(wcda->unixdev, CDIOCEJECT)) return MCIERR_HARDWARE;
-	wcda->mciMode = MCI_MODE_OPEN;
-    } else {
-	if (ioctl(wcda->unixdev, CDIOCCLOSE)) return MCIERR_HARDWARE;
-	wcda->mciMode = MCI_MODE_STOP;
-    }
-    if (ioctl(wcda->unixdev, CDIOCPREVENT)) return MCIERR_HARDWARE;
-#elif linux
+#ifdef linux
     if (open) {
 	if (ioctl(wcda->unixdev, CDROMEJECT)) return MCIERR_HARDWARE;
 	wcda->mciMode = MCI_MODE_OPEN;
@@ -1022,6 +989,16 @@ static DWORD	CDAUDIO_mciSetDoor(UINT16 wDevID, int open)
 	if (ioctl(wcda->unixdev, CDROMEJECT, 1)) return MCIERR_HARDWARE;
 	wcda->mciMode = MCI_MODE_STOP;
     }
+#else
+    if (ioctl(wcda->unixdev, CDIOCALLOW, NULL)) return MCIERR_HARDWARE;
+    if (open) {
+	if (ioctl(wcda->unixdev, CDIOCEJECT, NULL)) return MCIERR_HARDWARE;
+	wcda->mciMode = MCI_MODE_OPEN;
+    } else {
+	if (ioctl(wcda->unixdev, CDIOCCLOSE, NULL)) return MCIERR_HARDWARE;
+	wcda->mciMode = MCI_MODE_STOP;
+    }
+    if (ioctl(wcda->unixdev, CDIOCPREVENT, NULL)) return MCIERR_HARDWARE;
 #endif
     wcda->nTracks = 0;
     return 0;
@@ -1032,7 +1009,7 @@ static DWORD	CDAUDIO_mciSetDoor(UINT16 wDevID, int open)
  */
 static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -1087,7 +1064,7 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
 LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
 			  DWORD dwParam1, DWORD dwParam2)
 {
-#if defined(linux) || defined(__FreeBSD__)
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     switch(wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;

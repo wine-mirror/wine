@@ -26,7 +26,6 @@
 #include "multimedia.h"
 #include "user.h"
 #include "driver.h"
-#include "mmsystem.h"
 #include "xmalloc.h"
 #include "debug.h"
 #include "callback.h"
@@ -108,7 +107,7 @@ LPMIDIINCAPS16  midiInDevices [MAX_MIDIINDRV];
 /*======================================================================*
  *                  Low level MIDI implemantation			*
  *======================================================================*/
-
+#ifdef SNDCTL_MIDI_INFO
 /**************************************************************************
  * 			MIDI_NotifyClient			[internal]
  */
@@ -1482,6 +1481,7 @@ static DWORD modReset(WORD wDevID)
      */
     return MMSYSERR_NOTENABLED;
 }
+#endif
 
 /*======================================================================*
  *                  	    MIDI entry points 				*
@@ -1497,6 +1497,7 @@ DWORD WINAPI modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
+#ifdef SNDCTL_MIDI_INFO
     case MODM_OPEN:
 	return modOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MODM_CLOSE:
@@ -1519,6 +1520,7 @@ DWORD WINAPI modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 	return 0;
     case MODM_RESET:
 	return modReset(wDevID);
+#endif
     default:
 	TRACE(midi, "Unsupported message\n");
     }

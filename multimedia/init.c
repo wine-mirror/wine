@@ -36,6 +36,7 @@ extern LPMIDIINCAPS16	midiInDevices [MAX_MIDIINDRV];
 #ifdef HAVE_OSS
 int unixToWindowsDeviceType(int type)
 {
+#ifndef __NetBSD__
     /* MOD_MIDIPORT     output port 
      * MOD_SYNTH        generic internal synth 
      * MOD_SQSYNTH      square wave internal synth 
@@ -55,6 +56,9 @@ int unixToWindowsDeviceType(int type)
 	    "Assuming FM Synth\n");
 	return MOD_FMSYNTH;
     }
+#else
+    return MOD_FMSYNTH;
+#endif
 }
 #endif
 
@@ -66,7 +70,7 @@ int unixToWindowsDeviceType(int type)
  */
 BOOL32 MULTIMEDIA_MidiInit(void)
 {
-#ifdef HAVE_OSS
+#if defined(HAVE_OSS) && !defined(__NetBSD__)
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
     struct synth_info 	sinfo;
     struct midi_info 	minfo;

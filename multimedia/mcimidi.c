@@ -26,7 +26,6 @@
 #include "multimedia.h"
 #include "user.h"
 #include "driver.h"
-#include "mmsystem.h"
 #include "xmalloc.h"
 #include "debug.h"
 #include "callback.h"
@@ -72,6 +71,7 @@ static WINE_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
  *                  	    MCI MIDI implemantation			*
  *======================================================================*/
 
+#ifdef SNDCTL_MIDI_INFO
 /**************************************************************************
  * 				MIDI_mciGetOpenDev		[internal]	
  */
@@ -1461,6 +1461,7 @@ static DWORD MIDI_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
     }
     return ret;	
 }    
+#endif
 
 /*======================================================================*
  *                  	    MIDI entry points 				*
@@ -1483,6 +1484,7 @@ LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_CONFIGURE:		MessageBox16(0, "Sample Midi Linux Driver !", "MMLinux Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
+#ifdef SNDCTL_MIDI_INFO
     case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMS32A)   dwParam2);
     case MCI_CLOSE_DRIVER:	return MIDI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_PLAY:		return MIDI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)      dwParam2);
@@ -1495,6 +1497,20 @@ LONG MCIMIDI_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
     case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMS32A)   dwParam2);
     case MCI_SEEK:		return MIDI_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)      dwParam2);
+#else
+    case MCI_OPEN_DRIVER:
+    case MCI_CLOSE_DRIVER:
+    case MCI_PLAY:
+    case MCI_RECORD:
+    case MCI_STOP:
+    case MCI_SET:
+    case MCI_PAUSE:
+    case MCI_RESUME:
+    case MCI_STATUS:
+    case MCI_GETDEVCAPS:
+    case MCI_INFO:
+    case MCI_SEEK:
+#endif
     case MCI_LOAD:		
     case MCI_SAVE:		
     case MCI_FREEZE:		
