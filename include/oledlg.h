@@ -833,7 +833,9 @@ BOOL WINAPI  OleUIAddVerbMenuW(LPOLEOBJECT lpOleObj, LPCWSTR lpszShortType, HMEN
 UINT WINAPI  OleUIPasteSpecialA(LPOLEUIPASTESPECIALA lpOleUIPasteSpecial);
 UINT WINAPI  OleUIPasteSpecialW(LPOLEUIPASTESPECIALW lpOleUIPasteSpecial);
 #define      OleUIPasteSpecial WINELIB_NAME_AW(OleUIPasteSpecial)
-
+INT  __cdecl OleUIPromptUserA(INT,HWND, ...);
+INT  __cdecl OleUIPromptUserW(INT,HWND, ...);
+#define      OleUIPromptUser WINELIB_NAME_AW(OleUIPromptUser)
 
 #ifdef __cplusplus
 } /* Extern "C" */

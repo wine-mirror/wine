@@ -1258,17 +1258,13 @@ HRESULT WINAPI AVIClearClipboard(void);
 HRESULT WINAPI AVIGetFromClipboard(PAVIFILE *ppfile);
 HRESULT WINAPI AVIPutFileOnClipboard(PAVIFILE pfile);
 
-#ifdef _WIN32
 #ifdef OFN_READONLY
 BOOL WINAPI GetOpenFileNamePreviewA(LPOPENFILENAMEA lpofn);
 BOOL WINAPI GetOpenFileNamePreviewW(LPOPENFILENAMEW lpofn);
 #define GetOpenFileNamePreview WINELIB_NAME_AW(GetOpenFileNamePreview)
-
 BOOL WINAPI GetSaveFileNamePreviewA(LPOPENFILENAMEA lpofn);
 BOOL WINAPI GetSaveFileNamePreviewW(LPOPENFILENAMEW lpofn);
 #define GetSaveFileNamePreview WINELIB_NAME_AW(GetSaveFileNamePreview)
-
-#endif
 #endif
 
 #define AVIERR_OK		0
@@ -1571,6 +1567,13 @@ BOOL VFWAPI DrawDibClose(HDRAWDIB hdd);
 #define PD_STRETCHDIB_1_N_OK    0x0010
 
 DWORD VFWAPI DrawDibProfileDisplay(LPBITMAPINFOHEADER lpbi);
+
+HWND VFWAPI capCreateCaptureWindowA(LPCSTR,DWORD,INT,INT,INT,INT,HWND,INT);
+HWND VFWAPI capCreateCaptureWindowW(LPCWSTR,DWORD,INT,INT,INT,INT,HWND,INT);
+#define     capCreateCaptureWindow WINELIB_NAME_AW(capCreateCaptureWindow)
+BOOL VFWAPI capGetDriverDescriptionA(WORD,LPSTR,INT,LPSTR,INT);
+BOOL VFWAPI capGetDriverDescriptionW(WORD,LPWSTR,INT,LPWSTR,INT);
+#define     capGetDriverDescription WINELIB_NAME_AW(capGetDriverDescription)
 
 #ifdef __cplusplus
 }

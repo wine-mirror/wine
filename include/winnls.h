@@ -747,6 +747,9 @@ INT         WINAPI LCMapStringA(LCID,DWORD,LPCSTR,INT,LPSTR,INT);
 INT         WINAPI LCMapStringW(LCID,DWORD,LPCWSTR,INT,LPWSTR,INT);
 #define     LCMapString WINELIB_NAME_AW(LCMapString)
 INT         WINAPI MultiByteToWideChar(UINT,DWORD,LPCSTR,INT,LPWSTR,INT);
+INT         WINAPI SetCalendarInfoA(LCID,CALID,CALTYPE,LPCSTR);
+INT         WINAPI SetCalendarInfoW(LCID,CALID,CALTYPE,LPCWSTR);
+#define     SetCalendarInfo WINELIB_NAME_AW(SetCalendarInfo)
 BOOL        WINAPI SetLocaleInfoA(LCID,LCTYPE,LPCSTR);
 BOOL        WINAPI SetLocaleInfoW(LCID,LCTYPE,LPCWSTR);
 #define     SetLocaleInfo WINELIB_NAME_AW(SetLocaleInfo)

@@ -503,10 +503,8 @@ BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
 BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags);
 BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescription,
 		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen);
-/*BOOL WINAPI CryptSignHashW (HCRYPTHASH hHash, DWORD dwKeySpec, LPCWSTR sDescription,
-		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen);*/
-#define CryptSignHashW(hHash, dwKeySpec, sDescription, dwFlags, pbSignature, pdwSigLen) \\
-	CryptSignHashA(hHash, dwKeySpec, (LPCSTR)sDescription, dwFlags, pbSignature, pdwSigLen)
+BOOL WINAPI CryptSignHashW (HCRYPTHASH hHash, DWORD dwKeySpec, LPCWSTR sDescription,
+		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen);
 #define CryptSignHash WINELIB_NAME_AW(CryptSignHash)
 BOOL WINAPI CryptSetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData, DWORD dwFlags);
 BOOL WINAPI CryptSetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags);
@@ -519,10 +517,8 @@ BOOL WINAPI CryptSetProviderExW (LPCWSTR pszProvName, DWORD dwProvType, DWORD *p
 BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DWORD dwFlags);
 BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
 		HCRYPTKEY hPubKey, LPCSTR sDescription, DWORD dwFlags);
-/*BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
-		HCRYPTKEY hPubKey, LPCWSTR sDescription, DWORD dwFlags);*/
-#define CryptVerifySignatureW(hHash, pbSignature, dwSigLen, hPubKey, sDescription, dwFlags) \\
-	CryptVerifySignatureA(hHash, pbSignature, dwSigLen, hPubKey, (LPCSTR)sDescription, dwFlags)
+BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
+		HCRYPTKEY hPubKey, LPCWSTR sDescription, DWORD dwFlags);
 #define CryptVerifySignature WINELIB_NAME_AW(CryptVerifySignature)
 
 #ifdef __cplusplus
