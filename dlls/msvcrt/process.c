@@ -356,8 +356,26 @@ int _spawnl(int flags, const char* name, const char* arg0, ...)
  */
 int _spawnle(int flags, const char* name, const char* arg0, ...)
 {
-    FIXME("stub\n");
-    return -1;
+    va_list ap;
+    char *args, *envs = NULL;
+    const char * const *envp;
+    int ret;
+
+    va_start(ap, arg0);
+    args = msvcrt_valisttos(arg0, ap, ' ');
+    va_end(ap);
+
+    va_start(ap, arg0);
+    while (va_arg( ap, char * ) != NULL) /*nothing*/;
+    envp = va_arg( ap, const char * const * );
+    if (envp) envs = msvcrt_argvtos(envp, 0);
+    va_end(ap);
+
+    ret = msvcrt_spawn(flags, name, args, envs);
+
+    MSVCRT_free(args);
+    if (envs) MSVCRT_free(envs);
+    return ret;
 }
 
 
@@ -391,8 +409,29 @@ int _spawnlp(int flags, const char* name, const char* arg0, ...)
  */
 int _spawnlpe(int flags, const char* name, const char* arg0, ...)
 {
-    FIXME("stub\n");
-    return -1;
+    va_list ap;
+    char *args, *envs = NULL;
+    const char * const *envp;
+    int ret;
+    char fullname[MAX_PATH];
+
+    _searchenv(name, "PATH", fullname);
+
+    va_start(ap, arg0);
+    args = msvcrt_valisttos(arg0, ap, ' ');
+    va_end(ap);
+
+    va_start(ap, arg0);
+    while (va_arg( ap, char * ) != NULL) /*nothing*/;
+    envp = va_arg( ap, const char * const * );
+    if (envp) envs = msvcrt_argvtos(envp, 0);
+    va_end(ap);
+
+    ret = msvcrt_spawn(flags, fullname[0] ? fullname : name, args, envs);
+
+    MSVCRT_free(args);
+    if (envs) MSVCRT_free(envs);
+    return ret;
 }
 
 /*********************************************************************
