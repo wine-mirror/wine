@@ -133,21 +133,23 @@ void XTERM_ResizeScreen(int x, int y);
 
 /* Color defines */
 /* These will eventually be hex triples for dynamic allocation */
-#define WINE_BLACK		1
-#define WINE_BLUE		2
-#define WINE_GREEN		3
-#define WINE_CYAN		4
-#define WINE_MAGENTA		5
-#define WINE_BROWN		6
-#define WINE_RED		7
-#define WINE_LIGHT_GRAY		8
-#define WINE_DARK_GRAY		9
-#define WINE_LIGHT_BLUE		10
-#define WINE_LIGHT_GREEN	11
-#define WINE_LIGHT_RED		12
-#define WINE_LIGHT_MAGENTA	13
-#define WINE_LIGHT_CYAN		14
-#define WINE_YELLOW		15
-#define WINE_WHITE		16
+/* Triplets added by A.C. and commented out until the support  */
+/* code can be written into the console routines.              */
+#define WINE_BLACK		1     /*    0x000000      */ 
+#define WINE_BLUE		2     /*    0x0000ff      */
+#define WINE_GREEN		3     /*    0x008000      */
+#define WINE_CYAN		4     /*    0x00eeee      */
+#define WINE_MAGENTA		5     /*    0xcd00cd      */
+#define WINE_BROWN		6     /*    0xcd3333      */
+#define WINE_RED		7     /*    0xff0000      */
+#define WINE_LIGHT_GRAY		8     /*    0xc0c0c0      */
+#define WINE_DARK_GRAY		9     /*    0x808080      */
+#define WINE_LIGHT_BLUE		10    /*    0x98f5ff      */
+#define WINE_LIGHT_GREEN	11    /*    0x00ff00      */
+#define WINE_LIGHT_RED		12    /*    0xee6363      */
+#define WINE_LIGHT_MAGENTA	13    /*    0xff00ff      */
+#define WINE_LIGHT_CYAN		14    /*    0x00ffff      */
+#define WINE_YELLOW		15    /*    0xffff00      */
+#define WINE_WHITE		16    /*    0xffffff      */
 
 #endif /* CONSOLE_H */
