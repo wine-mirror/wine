@@ -156,6 +156,59 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_FILE_CALLBACK)
 #define MAX_SUBTITLE_LEN            256
 #define SP_MAX_MACHINENAME_LENGTH   (MAX_PATH + 3)
 
+typedef UINT DI_FUNCTION;
+
+typedef struct _SP_CLASSINSTALL_HEADER
+{
+  DWORD       cbSize;
+  DI_FUNCTION InstallFunction;
+} SP_CLASSINSTALL_HEADER, *PSP_CLASSINSTALL_HEADER;
+
+typedef struct _SP_PROPCHANGE_PARAMS
+{
+  SP_CLASSINSTALL_HEADER  ClassInstallHeader;
+  DWORD  StateChange;
+  DWORD  Scope;
+  DWORD  HwProfile;
+} SP_PROPCHANGE_PARAMS, *PSP_PROPCHANGE_PARAMS;
+
+#define DICS_ENABLE      0x00000001
+#define DICS_DISABLE     0x00000002
+#define DICS_PROPCHANGE  0x00000003
+#define DICS_START       0x00000004
+#define DICS_STOP        0x00000005
+
+typedef struct _SP_DEVINSTALL_PARAMS_A
+{
+    DWORD               cbSize;
+    DWORD               Flags;
+    DWORD               FlagsEx;
+    HWND                hwndParent;
+    PSP_FILE_CALLBACK_A InstallMsgHandler;
+    PVOID               InstallMsgHandlerContext;
+    HSPFILEQ            FileQueue;
+    ULONG_PTR           ClassInstallReserved;
+    DWORD               Reserved;
+    CHAR                DriverPath[MAX_PATH];
+} SP_DEVINSTALL_PARAMS_A, *PSP_DEVINSTALL_PARAMS_A;
+
+typedef struct _SP_DEVINSTALL_PARAMS_W
+{
+    DWORD               cbSize;
+    DWORD               Flags;
+    DWORD               FlagsEx;
+    HWND                hwndParent;
+    PSP_FILE_CALLBACK_W InstallMsgHandler;
+    PVOID               InstallMsgHandlerContext;
+    HSPFILEQ            FileQueue;
+    ULONG_PTR           ClassInstallReserved;
+    DWORD               Reserved;
+    WCHAR               DriverPath[MAX_PATH];
+} SP_DEVINSTALL_PARAMS_W, *PSP_DEVINSTALL_PARAMS_W;
+
+DECL_WINELIB_SETUPAPI_TYPE_AW(SP_DEVINSTALL_PARAMS)
+DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_DEVINSTALL_PARAMS)
+
 /* Device Information structure (references a device instance that is a member
    of a device information set) */
 typedef struct _SP_DEVINFO_DATA
