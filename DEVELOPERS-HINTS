@@ -54,12 +54,15 @@ DLLs (under dlls/):
 	glut32/			- OpenGL Utility Toolkit
 	iccvid/			- Radius Cinepak Video Decoder
 	icmp/			- ICMP protocol (networking)
+	ifsmgr.vxd/		- IFSMGR VxD implementation
 	imagehlp/		- PE (Portable Executable) Image Helper lib
 	imm32/			- Input Method Manager
 	iphlpapi/       	- IP Helper API
 	kernel/			- The Windows kernel
 	lzexpand/		- Lempel-Ziv compression/decompression
 	mapi32/			- Mail interface
+	mmdevldr.vxd/		- MMDEVLDR VxD implementation
+	monodebg.vxd/		- MONODEBG VxD implementation
 	mpr/			- Multi-Protocol Router (networking)
 	msacm/			- Audio Compression Manager (multimedia)
 	msacm/imaadp32/		- IMA ADPCM Audio Codec
@@ -115,7 +118,12 @@ DLLs (under dlls/):
 	urlmon/			- URL Moniker allows binding to a URL (like KIO/gnome-vfs)
 	user/			- Window management, standard controls, etc.
 	uxtheme/		- Theme library
+	vdhcp.vxd/		- VDHCP VxD implementation
 	version/		- File installation library
+	vnb.vxd/		- VNB VxD implementation
+	vnetbios.vxd/		- VNETBIOS VxD implementation
+	vtdapi.vxd/		- VTDAPI VxD implementation
+	vwin32.vxd/		- VWIN32 VxD implementation
 	win32s/			- 32-bit function access for 16-bit systems
 	winaspi/		- 16 bit Advanced SCSI Peripheral Interface
 	wined3d/		- Wine internal Direct3D helper
