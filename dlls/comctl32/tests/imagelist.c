@@ -1,6 +1,7 @@
 /* Unit test suite for imagelist control.
  *
  * Copyright 2004 Michael Stefaniuc
+ * Copyright 2002 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -100,11 +101,215 @@ static void testHotspot (void)
 #undef HOTSPOTS_MAX
 }
 
+static HINSTANCE hinst;
+
+static const BYTE icon_bits[32*32/8];
+static const BYTE bitmap_bits[48*48/8];
+
+static BOOL DoTest1(void)
+{
+    HIMAGELIST himl ;
+
+    HICON hicon1 ;
+    HICON hicon2 ;
+    HICON hicon3 ;
+
+    /* create an imagelist to play with */
+    himl = ImageList_Create(84,84,0x10,0,3);
+    ok(himl!=0,"failed to create imagelist");
+
+    /* load the icons to add to the image list */
+    hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon1 != 0, "no hicon1");
+    hicon2 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon2 != 0, "no hicon2");
+    hicon3 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon3 != 0, "no hicon3");
+
+    /* remove when nothing exists */
+    ok(!ImageList_Remove(himl,0),"removed non-existent icon");
+
+    /* add three */
+    ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1");
+    ok(1==ImageList_AddIcon(himl, hicon2),"failed to add icon2");
+    ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3");
+
+    /* remove three */
+    ok(ImageList_Remove(himl,0),"can't remove 0");
+    ok(ImageList_Remove(himl,0),"can't remove 0");
+    ok(ImageList_Remove(himl,0),"can't remove 0");
+
+    /* remove one extra */
+    ok(!ImageList_Remove(himl,0),"removed non-existent icon");
+
+    /* destroy it */
+    ok(ImageList_Destroy(himl),"destroy imagelist failed");
+
+    /* icons should be deleted by the imagelist */
+    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted");
+    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted");
+    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted");
+
+    return TRUE;
+}
+
+static BOOL DoTest2(void)
+{
+    HIMAGELIST himl ;
+
+    HICON hicon1 ;
+    HICON hicon2 ;
+    HICON hicon3 ;
+
+    /* create an imagelist to play with */
+    himl = ImageList_Create(84,84,0x10,0,3);
+    ok(himl!=0,"failed to create imagelist");
+
+    /* load the icons to add to the image list */
+    hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon1 != 0, "no hicon1");
+    hicon2 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon2 != 0, "no hicon2");
+    hicon3 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
+    ok(hicon3 != 0, "no hicon3");
+
+    /* remove when nothing exists */
+    ok(!ImageList_Remove(himl,0),"removed non-existent icon");
+
+    /* add three */
+    ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1");
+    ok(1==ImageList_AddIcon(himl, hicon2),"failed to add icon2");
+    ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3");
+
+    /* destroy it */
+    ok(ImageList_Destroy(himl),"destroy imagelist failed");
+
+    /* icons should be deleted by the imagelist */
+    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted");
+    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted");
+    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted");
+
+    return TRUE;
+}
+
+static HWND create_a_window(void)
+{
+    WNDCLASSA cls;
+    char className[] = "bmwnd";
+    char winName[]   = "Test Bitmap";
+    HWND hWnd;
+
+    cls.style         = CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
+    cls.lpfnWndProc   = DefWindowProcA;
+    cls.cbClsExtra    = 0;
+    cls.cbWndExtra    = 0;
+    cls.hInstance     = 0;
+    cls.hIcon         = LoadIconA (0, (LPSTR)IDI_APPLICATION);
+    cls.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = (HBRUSH) GetStockObject (WHITE_BRUSH);
+    cls.lpszMenuName  = 0;
+    cls.lpszClassName = className;
+
+    RegisterClassA (&cls);
+
+    /* Setup windows */
+    hWnd = CreateWindowA (className, winName, 
+       WS_OVERLAPPEDWINDOW ,
+       CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, 0,
+       0, hinst, 0);
+
+    return hWnd;
+}
+
+static BOOL DoTest3(void)
+{
+    HIMAGELIST himl ;
+
+    HBITMAP hbm1 ;
+    HBITMAP hbm2 ;
+    HBITMAP hbm3 ;
+
+    IMAGELISTDRAWPARAMS imldp;
+    HDC hdc;
+    HWND hwndfortest;
+
+    hwndfortest = create_a_window();
+    hdc = GetDC(hwndfortest);
+    ok(hdc!=NULL, "couldn't get DC\n");
+
+    /* create an imagelist to play with */
+    himl = ImageList_Create(48,48,0x10,0,3);
+    ok(himl!=0,"failed to create imagelist");
+
+    /* load the icons to add to the image list */
+    hbm1 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
+    ok(hbm1 != 0, "no bitmap 1");
+    hbm2 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
+    ok(hbm2 != 0, "no bitmap 2");
+    hbm3 = CreateBitmap(48, 48, 1, 1, bitmap_bits);
+    ok(hbm3 != 0, "no bitmap 3");
+
+    /* remove when nothing exists */
+    ok(!ImageList_Remove(himl,0),"removed non-existent bitmap");
+
+    /* add three */
+    ok(0==ImageList_Add(himl, hbm1, 0),"failed to add bitmap 1");
+    ok(1==ImageList_Add(himl, hbm2, 0),"failed to add bitmap 2");
+
+    ok(ImageList_SetImageCount(himl,3),"Setimage count failed");
+    /*ok(2==ImageList_Add(himl, hbm3, NULL),"failed to add bitmap 3"); */
+    ok(ImageList_Replace(himl, 2, hbm3, 0),"failed to replace bitmap 3");
+
+    Rectangle(hdc, 100, 100, 74, 74);
+    memset(&imldp, 0, sizeof imldp);
+    ok(!ImageList_DrawIndirect(&imldp), "zero data succeeded!");
+    imldp.cbSize = sizeof imldp;
+    ok(!ImageList_DrawIndirect(&imldp), "zero hdc succeeded!");
+    imldp.hdcDst = hdc;
+    ok(!ImageList_DrawIndirect(&imldp),"zero himl succeeded!");
+    imldp.himl = himl;
+    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    imldp.fStyle = SRCCOPY;
+    imldp.rgbBk = CLR_DEFAULT;
+    imldp.rgbFg = CLR_DEFAULT;
+    imldp.y = 100;
+    imldp.x = 100;
+    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    imldp.i ++;
+    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    imldp.i ++;
+    ok(ImageList_DrawIndirect(&imldp),"should succeeded");
+    imldp.i ++;
+    ok(!ImageList_DrawIndirect(&imldp),"should fail");
+
+    /* remove three */
+    ok(ImageList_Remove(himl, 0), "removing 1st bitmap");
+    ok(ImageList_Remove(himl, 0), "removing 2nd bitmap");
+    ok(ImageList_Remove(himl, 0), "removing 3rd bitmap");
+
+    /* destroy it */
+    ok(ImageList_Destroy(himl),"destroy imagelist failed");
+
+    /* icons should be deleted by the imagelist */
+    ok(DeleteObject(hbm1),"bitmap 1 can't be deleted");
+    ok(DeleteObject(hbm2),"bitmap 2 can't be deleted");
+    ok(DeleteObject(hbm3),"bitmap 3 can't be deleted");
+
+    ReleaseDC(hwndfortest, hdc);
+    DestroyWindow(hwndfortest);
+
+    return TRUE;
+}
+
 START_TEST(imagelist)
 {
     desktopDC=GetDC(NULL);
+    hinst = GetModuleHandleA(NULL);
 
     InitCommonControls();
 
     testHotspot();
+    DoTest1();
+    DoTest2();
+    DoTest3();
 }
