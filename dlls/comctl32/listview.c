@@ -3728,11 +3728,13 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC h
 
 	TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
 
+    /*
+     * Even if we do not send the CDRF_NOTIFYITEMDRAW we need to fill the nmlvcd
+     * structure for the rest. of the paint cycle
+     */
+	customdraw_fill(&nmlvcd, infoPtr, hdc, &dis.rcItem, &item);
 	if (cdmode & CDRF_NOTIFYITEMDRAW)
-	{
-	    customdraw_fill(&nmlvcd, infoPtr, hdc, &dis.rcItem, &item);
             cditemmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
-	}
     
 	if (!(cditemmode & CDRF_SKIPDEFAULT))
 	{
