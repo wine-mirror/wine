@@ -19,7 +19,8 @@ sub new {
 
     my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
-    my $spec_files = \%{$self->{SPEC_FILES}};
+    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
+    my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};
     my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
 
     $$options = shift;
@@ -71,12 +72,13 @@ sub new {
 	    } else {
 		$all_spec_files{"$wine_dir/$spec_file"}--;
 	    }
-	    $$spec_files{""}{$spec_file}++; # FIXME: Kludge
+	    $$dir2spec_file{""}{$spec_file}++; # FIXME: Kludge
 	    next;
 	} else {
 	    $allowed_dir = $1;
+	    $$spec_file2dir{$spec_file}{$allowed_dir}++;
 	}
-	$$spec_files{$allowed_dir}{$spec_file}++;
+	$$dir2spec_file{$allowed_dir}{$spec_file}++;
 
 	if(!-d "$wine_dir/$allowed_dir") {
 	    $$output->write("modules.dat: $spec_file: directory ($allowed_dir) doesn't exist or is no directory\n");
@@ -95,6 +97,14 @@ sub new {
     return $self;
 }
 
+sub all_modules {
+    my $self = shift;
+
+    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
+
+    return sort(keys(%$module2spec_file));
+}
+
 sub spec_file_module {
     my $self = shift;
 
@@ -106,14 +116,14 @@ sub spec_file_module {
 
     my $module = shift;
   
-    $$spec_file2module{$spec_file}{$module}++;
-    $$module2spec_file{$module}{$spec_file}++;
+    $$spec_file2module{$spec_file} = $module;
+    $$module2spec_file{$module} = $spec_file;
 }
 
 sub is_allowed_module_in_file {
     my $self = shift;
 
-    my $spec_files = \%{$self->{SPEC_FILES}};
+    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
 
     my $module = shift;
@@ -123,8 +133,8 @@ sub is_allowed_module_in_file {
     my $dir = $file;
     $dir =~ s/\/[^\/]*$//;
 
-    foreach my $spec_file (sort(keys(%{$$spec_files{$dir}}))) {
-	if($$spec_file2module{$spec_file}{$module}) {
+    foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
+	if($$spec_file2module{$spec_file} eq $module) {
 	    return 1;
 	}
     }
@@ -135,7 +145,7 @@ sub is_allowed_module_in_file {
 sub allowed_modules_in_file {
     my $self = shift;
 
-    my $spec_files = \%{$self->{SPEC_FILES}};
+    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
 
     my $file = shift;
@@ -145,13 +155,25 @@ sub allowed_modules_in_file {
     $dir =~ s/\/[^\/]*$//;
 
     my %allowed_modules = ();
-    foreach my $spec_file (sort(keys(%{$$spec_files{$dir}}))) {
-	foreach my $module (sort(keys(%{$$spec_file2module{$spec_file}}))) {
-	    $allowed_modules{$module}++;
-	}
+    foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
+	my $module = $$spec_file2module{$spec_file};
+	$allowed_modules{$module}++;
     }
 
     return join(" & ", sort(keys(%allowed_modules)));
+}
+
+sub allowed_dirs_for_module {
+   my $self = shift;
+
+   my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
+   my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};   
+
+   my $module = shift;
+
+   my $spec_file = $$module2spec_file{$module};
+
+   return sort(keys(%{$$spec_file2dir{$spec_file}}));
 }
 
 sub allowed_spec_files {
@@ -159,7 +181,7 @@ sub allowed_spec_files {
 
     my $options = \${$self->{OPTIONS}};
     my $output = \${$self->{OUTPUT}};
-    my $spec_files = \%{$self->{SPEC_FILES}};
+    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
 
     my $wine_dir = shift;
     my $current_dir = shift;
@@ -179,7 +201,7 @@ sub allowed_spec_files {
 
     my %allowed_spec_files = ();
     foreach my $dir (sort(@dirs)) {
-	foreach my $spec_file (sort(keys(%{$$spec_files{$dir}}))) {
+	foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
 	    $allowed_spec_files{$spec_file}++; 
 	}
     }
@@ -202,18 +224,17 @@ sub global_report {
     my $self = shift;
 
     my $output = \${$self->{OUTPUT}};
-    my $spec_files = \%{$self->{SPEC_FILES}};
+    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $spec_file2module = \%{$self->{SPEC_FILE2MODULE}};
     my $used_module_dirs = \%{$self->{USED_MODULE_DIRS}};
 
     my @messages;
-    foreach my $dir (sort(keys(%$spec_files))) {
+    foreach my $dir (sort(keys(%$dir2spec_file))) {
 	if($dir eq "") { next; }
-	foreach my $spec_file (sort(keys(%{$$spec_files{$dir}}))) {
-	    foreach my $module (sort(keys(%{$$spec_file2module{$spec_file}}))) {
-		if(!$$used_module_dirs{$module}{$dir}) {
-		    push @messages, "modules.dat: $spec_file: directory ($dir) is not used\n";
-		}
+	foreach my $spec_file (sort(keys(%{$$dir2spec_file{$dir}}))) {
+	    my $module = $$spec_file2module{$spec_file};
+	    if(!$$used_module_dirs{$module}{$dir}) {
+		push @messages, "modules.dat: $spec_file: directory ($dir) is not used\n";
 	    }
 	}
     }

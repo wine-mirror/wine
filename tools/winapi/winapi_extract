@@ -14,6 +14,7 @@ use config qw(
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
 use modules;
+use nativeapi;
 use output;
 use options;
 use winapi;
@@ -88,6 +89,9 @@ if($wine_dir eq ".") {
     my @spec_files = $modules->allowed_spec_files($wine_dir, $current_dir);
     'winapi'->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
 }
+
+my $nativeapi = 'nativeapi'->new($options, $output, "$winapi_check_dir/nativeapi.dat", 
+				 "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
 
 my %specifications;
 

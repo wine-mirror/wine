@@ -3,6 +3,7 @@ package winapi_documentation;
 use strict;
 
 use config qw($current_dir $wine_dir);
+use nativeapi qw($nativeapi);
 
 my %comment_width;
 my %comment_indent;

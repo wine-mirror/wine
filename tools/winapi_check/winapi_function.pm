@@ -68,7 +68,7 @@ sub _external_names {
 }
 
 sub external_name16 { my $self = shift; return $self->_external_name($win16api, @_); }
-sub external_name32{ my $self = shift; return $self->_external_name($win32api, @_); }
+sub external_name32 { my $self = shift; return $self->_external_name($win32api, @_); }
 
 sub external_names16 { my $self = shift; return $self->_external_names($win16api, @_); }
 sub external_names32 { my $self = shift; return $self->_external_names($win32api, @_); }

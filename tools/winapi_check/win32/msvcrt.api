@@ -15,6 +15,7 @@ WCHAR
 int
 long
 size_t
+time_t
 unsigned int
 unsigned long
 
@@ -55,6 +56,7 @@ bad_typeid *
 char *
 char **
 char ***
+double *
 exception *
 int *
 jmp_buf
@@ -64,7 +66,9 @@ struct _stat *
 struct _timeb *
 struct _utimbuf *
 struct _wfinddata_t *
+struct tm *
 terminate_function
+time_t *
 type_info *
 unexpected_function
 unsigned char *

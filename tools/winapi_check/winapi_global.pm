@@ -19,16 +19,6 @@ sub check {
 	}
     }
 
-    if($options->declared) {
-	foreach my $internal_name ($winapi->all_internal_functions) {
-	    if(!$winapi->internal_function_found($internal_name) && !$nativeapi->is_function($internal_name)) {
-		my $module = $winapi->function_internal_module($internal_name);
-		$output->write("*.c: $module: $internal_name: ");
-		$output->write("function declared but not implemented: " . $winapi->function_internal_arguments($internal_name) . "\n");
-	    }
-	}
-    }
-
     if($options->argument && $options->argument_forbidden) {
 	my $not_used = $winapi->types_not_used;
 

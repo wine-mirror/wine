@@ -346,7 +346,6 @@ dlls/user
 controls
 dlls/kernel
 dlls/user
-memory
 misc
 windows
 

@@ -23,6 +23,9 @@ package _output;
 
 use strict;
 
+my $stdout_isatty = -t STDOUT;
+my $stderr_isatty = -t STDERR;
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -51,7 +54,7 @@ sub show_progress {
 
     $$progress_count++;
 
-    if($$progress_count > 0 && $$progress) {
+    if($$progress_count > 0 && $$progress && $stderr_isatty) {
 	print STDERR $$progress;
 	$$last_progress = $$progress;
     }
@@ -65,7 +68,7 @@ sub hide_progress  {
 
     $$progress_count--;
 
-    if($$last_progress) {
+    if($$last_progress && $stderr_isatty) {
 	my $message;
 	for (1..length($$last_progress)) {
 	    $message .= " ";
@@ -124,9 +127,9 @@ sub write {
 
     my $prefix = \${$self->{PREFIX}};
 
-    $self->hide_progress;
+    $self->hide_progress if $stdout_isatty;
     print $$prefix . $message;
-    $self->show_progress;
+    $self->show_progress if $stdout_isatty;
 }
 
 1;

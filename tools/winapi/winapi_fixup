@@ -106,7 +106,7 @@ foreach my $file (@c_files) {
 	my @argument_documentations = @{$function->argument_documentations};
 	my $statements = $function->statements;
 
-	if($linkage eq "static" || $linkage eq "extern" || !defined($statements)) {
+	if($linkage eq "static" || ($linkage eq "" && !defined($statements))) {
 	    return;
 	}
 
@@ -137,10 +137,10 @@ foreach my $file (@c_files) {
 
 	    foreach my $winapi (@winapis) {
 		my @entries = ();
-		if($winapi->function_stub($internal_name)) {
-		    my $module = $winapi->function_internal_module($internal_name);
-		    my $ordinal = $winapi->function_internal_ordinal($internal_name);
+		my $module = $winapi->function_internal_module($internal_name);
+		my $ordinal = $winapi->function_internal_ordinal($internal_name);
 
+		if($winapi->is_function_stub_in_module($module, $internal_name)) {
 		    my $external_name = $internal_name;
 		    if($winapi->name eq "win16") {
 			$external_name =~ s/(?:_)?16([AW]?)$//;
@@ -159,7 +159,7 @@ foreach my $file (@c_files) {
 
 			if($external_name ne "@" && 
 			   $winapi->is_module($module) &&
-			   $winapi->function_stub($external_name) &&
+			   $winapi->is_function_stub_in_module($module, $external_name) &&
 			   $internal_name !~ /^\U$module\E_\Q$external_name\E$/)
 			{
 			    push @entries, [$external_name, $module, $ordinal];
@@ -381,8 +381,8 @@ foreach my $file (@c_files) {
 		}
 		# FIXME: Not 100% correct
 		if(!$found && 
-		   !$win16api->function_stub($internal_name) && 
-		   !$win32api->function_stub($internal_name)) 
+		   !$win16api->is_function_stub_in_module($module2, $internal_name) && 
+		   !$win32api->is_function_stub_in_module($module2, $internal_name)) 
 		{
 		    if($line3 > 0) {
 			$part2 = $external_name2 . " " x (length($part2) - length($external_name2));

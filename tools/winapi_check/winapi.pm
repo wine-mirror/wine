@@ -689,6 +689,30 @@ sub all_internal_functions_in_module {
     return sort(@names);
 }
 
+sub all_external_functions {
+    my $self = shift;
+    my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
+
+    return sort(keys(%$function_internal_name));
+}
+
+sub all_external_functions_in_module {
+    my $self = shift;
+    my $function_internal_name = \%{$self->{FUNCTION_INTERNAL_NAME}};
+    my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
+
+    my $module = shift;
+
+    my @names;
+    foreach my $name (keys(%$function_internal_name)) {
+	if($$function_external_module{$name} eq $module) {
+	    push @names, $name;
+	}
+    }
+
+    return sort(@names);
+}
+
 sub all_functions_stub {
     my $self = shift;
     my $function_stub = \%{$self->{FUNCTION_STUB}};

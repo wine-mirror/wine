@@ -56,6 +56,10 @@ sub parse_c_file {
     my $function_end = sub {
 	my $function = 'winapi_function'->new;
 
+	if(!defined($documentation_line)) {
+	    $documentation_line = 0;
+	}
+
 	$function->file($file);
 	$function->debug_channels([@$debug_channels]);
 	$function->documentation($documentation);

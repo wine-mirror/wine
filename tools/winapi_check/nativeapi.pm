@@ -2,6 +2,15 @@ package nativeapi;
 
 use strict;
 
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+require Exporter;
+
+@ISA = qw(Exporter);
+@EXPORT = qw();
+@EXPORT_OK = qw($nativeapi);
+
+use vars qw($nativeapi);
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -32,10 +41,10 @@ sub new {
     open(IN, "< $api_file");
     local $/ = "\n";
     while(<IN>) {
-	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begin and end of line
-	s/^(.*?)\s*#.*$/$1/;  # remove comments
-	/^$/ && next;         # skip empty lines   
-	
+	s/^\s*(.*?)\s*$/$1/; # remove whitespace at begin and end of line
+	s/^(.*?)\s*#.*$/$1/; # remove comments
+	/^$/ && next;        # skip empty lines   
+
 	$$functions{$_}++;
     }
     close(IN);
@@ -109,6 +118,8 @@ sub new {
 	}
     }
     close(IN);
+
+    $nativeapi = $self;
 
     return $self;
 }
