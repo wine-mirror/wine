@@ -581,8 +581,8 @@ int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
 int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag);
 int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag);
 
-BOOL WINSOCK_HandleIO(int* fd_max, int num_pending, fd_set pending_set[3], fd_set master_set[3] );
-void   WINSOCK_Shutdown(void);
+BOOL WINSOCK_Init(void);
+void WINSOCK_Shutdown(void);
 UINT16 wsaErrno(void);
 UINT16 wsaHerrno(void);
 

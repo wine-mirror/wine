@@ -62,6 +62,8 @@ THHOOK *pThhook = &DefaultThhook;
 static HTASK16 hTaskToKill = 0;
 static UINT16 nTaskCount = 0;
 
+static HANDLE TASK_ScheduleEvent = INVALID_HANDLE_VALUE;
+
 static void TASK_YieldToSystem( void );
 
 extern BOOL THREAD_InitDone;
@@ -486,15 +488,12 @@ void TASK_StartTask( HTASK16 hTask )
 
     if ( THREAD_IsWin16( pTask->thdb ) )
     {
-        pTask->nEvents++;
+        /* Post event to start the task */
+        PostEvent16( hTask );
 
-        /* If we ourselves are a 16-bit task, we simply Yield(). 
-           If we are 32-bit however, we need to signal the scheduler. */
-
+        /* If we ourselves are a 16-bit task, we Yield() directly. */
         if ( THREAD_IsWin16( THREAD_Current() ) )
             OldYield16();
-        else
-            EVENT_WakeUp();
     }
 }
 
@@ -683,6 +682,13 @@ BOOL TASK_Reschedule(void)
     HTASK16 hTask = 0;
     STACK16FRAME *newframe16;
 
+    /* Create scheduler event */
+    if ( TASK_ScheduleEvent == INVALID_HANDLE_VALUE )
+    {
+        TASK_ScheduleEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
+        TASK_ScheduleEvent = ConvertToGlobalHandle( TASK_ScheduleEvent );
+    }
+
     /* Get the initial task up and running */
     if (!hCurrentTask && GetCurrentTask())
     {
@@ -766,8 +772,9 @@ BOOL TASK_Reschedule(void)
                  tasks won't execute and Win32 threads are not allowed to enter 
                  TASK_Reschedule anyway, there should be no re-entrancy problem ... */
 
+        ResetEvent( TASK_ScheduleEvent );
         SYSLEVEL_ReleaseWin16Lock();
-        EVENT_WaitNetEvent( );
+        WaitForSingleObject( TASK_ScheduleEvent, INFINITE );
         SYSLEVEL_RestoreWin16Lock();
     }
 
@@ -964,12 +971,7 @@ void WINAPI PostEvent16( HTASK16 hTask )
     }
 
     pTask->nEvents++;
-    
-    if ( !THREAD_IsWin16( THREAD_Current() ) )
-    {
-        /* wake-up the scheduler waiting in EVENT_WaitNetEvent */
-        EVENT_WakeUp();
-    }
+    SetEvent( TASK_ScheduleEvent );    
 }
 
 

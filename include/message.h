@@ -24,10 +24,6 @@ extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
 extern BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
                                  HQUEUE16 hQueue, BOOL remove );
 
-#define EVENT_IO_READ		0
-#define EVENT_IO_WRITE		1
-#define EVENT_IO_EXCEPT		2
-
 /* event.c */
 typedef struct tagEVENT_DRIVER {
   BOOL   (*pInit)(void);
@@ -40,15 +36,11 @@ typedef struct tagEVENT_DRIVER {
 
 extern EVENT_DRIVER *EVENT_Driver;
 
-extern void EVENT_AddIO( int fd, unsigned flag );
-extern void EVENT_DeleteIO( int fd, unsigned flag );
 extern BOOL EVENT_Init( void );
-extern void EVENT_WaitNetEvent( void );
 extern void EVENT_Synchronize( BOOL bProcessEvents );
 extern BOOL EVENT_CheckFocus( void );
 extern BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void EVENT_DummyMotionNotify(void);
-extern void EVENT_WakeUp(void);
 
 /* input.c */
 

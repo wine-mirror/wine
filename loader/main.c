@@ -41,6 +41,7 @@
 #include "winproc.h"
 #include "syslevel.h"
 #include "services.h"
+#include "winsock.h"
 #include "thread.h"
 #include "task.h"
 #include "debug.h"
@@ -59,7 +60,6 @@ int __winelib = 1;  /* Winelib run-time flag */
 BOOL MAIN_MainInit(void)
 {
     /* Set server debug level */
-    /* To fool make_debug: TRACE(server) */
     CLIENT_SetDebug( TRACE_ON(server) );
 
     /* Initialize syslevel handling */
@@ -86,8 +86,11 @@ BOOL MAIN_MainInit(void)
     /* Initialise DOS directories */
     if (!DIR_Init()) return FALSE;
 
-      /* Initialize event handling */
+    /* Initialize event handling */
     if (!EVENT_Init()) return FALSE;
+
+    /* Initialise WINSOCK handling */
+    if (!WINSOCK_Init()) return FALSE;
 
     /* Initialize communications */
     COMM_Init();

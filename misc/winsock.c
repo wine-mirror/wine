@@ -317,6 +317,158 @@ void __ws_memfree(void* ptr)
     WS_FREE(ptr);
 }
 
+/*
+ * Event handling helper routines
+ *
+ * FIXME:  This is all a hack; winsock event handling should be moved
+ *         to the services thread ...
+ */
+
+#define EVENT_IO_READ           0
+#define EVENT_IO_WRITE          1
+#define EVENT_IO_EXCEPT         2
+
+static fd_set __winsock_io_set[3];
+static int    __winsock_max_fd = 0;
+static int    __wakeup_pipe[2];
+
+static CRITICAL_SECTION __winsock_crst;
+static HANDLE __winsock_thread = INVALID_HANDLE_VALUE;
+
+BOOL WINSOCK_HandleIO( int* max_fd, int num_pending, 
+			 fd_set pending_set[3], fd_set event_set[3] );
+
+/***********************************************************************
+ *              WINSOCK_Init
+ *
+ * Initialize network IO.
+ */
+BOOL WINSOCK_Init(void)
+{
+    int i;
+    for( i = 0; i < 3; i++ )
+        FD_ZERO( __winsock_io_set + i );
+
+    /* pipe used to wake up the winsock thread */
+    pipe(__wakeup_pipe);
+
+    /* make the pipe non-blocking */
+    fcntl(__wakeup_pipe[0], F_SETFL, O_NONBLOCK);
+    fcntl(__wakeup_pipe[1], F_SETFL, O_NONBLOCK);
+
+    FD_SET( __wakeup_pipe[0], &__winsock_io_set[EVENT_IO_READ] );
+    __winsock_max_fd = __wakeup_pipe[0];
+    __winsock_max_fd++;
+
+    /* Inititalize critical section */
+    InitializeCriticalSection( &__winsock_crst );
+    MakeCriticalSectionGlobal( &__winsock_crst );
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              WINSOCK_Shutdown
+ */
+void WINSOCK_Shutdown()
+{
+    /* Called on exit(), has to remove all outstanding async DNS processes.  */
+
+    if ( __winsock_thread != INVALID_HANDLE_VALUE )
+    {
+        TerminateThread( __winsock_thread, 0 );
+        __winsock_thread = INVALID_HANDLE_VALUE;
+    }
+}
+
+/***********************************************************************
+ *              WINSOCK_Thread
+ */
+static DWORD CALLBACK WINSOCK_Thread( LPVOID arg )
+{
+    while ( TRUE )
+    {
+        int num_pending, max_fd;
+        fd_set io_set[3];
+
+        EnterCriticalSection( &__winsock_crst );
+        memcpy( io_set, __winsock_io_set, sizeof(io_set) );
+        max_fd = __winsock_max_fd;
+        LeaveCriticalSection( &__winsock_crst );
+
+        num_pending = select( max_fd, &io_set[EVENT_IO_READ],
+                              &io_set[EVENT_IO_WRITE],
+                              &io_set[EVENT_IO_EXCEPT], NULL );
+
+        if ( num_pending == -1 )
+        {
+            /* Error - signal, invalid arguments, out of memory */
+            continue;
+        }
+
+        /* Flush the wake-up pipe */
+        if ( FD_ISSET( __wakeup_pipe[0], &io_set[EVENT_IO_READ] ) )
+        {
+            char tmpBuf[10];
+            ssize_t ret;
+
+            while ( (ret = read(__wakeup_pipe[0], &tmpBuf, 10)) == 10 );
+            num_pending--;
+        }
+
+        /* Handle actual IO */
+        if ( num_pending > 0 )
+        {
+            EnterCriticalSection( &__winsock_crst );
+            WINSOCK_HandleIO( &__winsock_max_fd, num_pending, io_set, __winsock_io_set );
+            LeaveCriticalSection( &__winsock_crst );
+        }
+    }
+}
+
+/***********************************************************************
+ *              WINSOCK_WakeUp
+ *
+ * Wake up the winsock thread.
+ */
+static void WINSOCK_WakeUp(void)
+{
+    if ( __winsock_thread == INVALID_HANDLE_VALUE )
+    {
+        __winsock_thread = CreateThread( NULL, 0, WINSOCK_Thread, NULL, 0, NULL ); 
+        __winsock_thread = ConvertToGlobalHandle( __winsock_thread );
+    }
+
+    if (write (__wakeup_pipe[1], "A", 1) != 1)
+        ERR(winsock, "unable to write in wakeup_pipe\n");
+}
+
+/***********************************************************************
+ *              EVENT_AddIO
+ */
+static void EVENT_AddIO(int fd, unsigned io_type)
+{
+    EnterCriticalSection( &__winsock_crst );
+    FD_SET( fd, &__winsock_io_set[io_type] );
+    if( __winsock_max_fd <= fd ) __winsock_max_fd = fd + 1;
+    LeaveCriticalSection( &__winsock_crst );
+
+    WINSOCK_WakeUp();
+}
+
+/***********************************************************************
+ *              EVENT_DeleteIO
+ */
+static void EVENT_DeleteIO(int fd, unsigned io_type)
+{
+    EnterCriticalSection( &__winsock_crst );
+    FD_CLR( fd, &__winsock_io_set[io_type] );
+    LeaveCriticalSection( &__winsock_crst );
+
+    WINSOCK_WakeUp();
+}
+
+
 /* ----------------------------------- API ----- 
  *
  * Init / cleanup / error checking.
@@ -422,10 +574,6 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
  *
  * Cleanup functions of varying impact.
  */
-void WINSOCK_Shutdown()
-{
-    /* Called on exit(), has to remove all outstanding async DNS processes.  */
-}
 
 INT WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
 {
