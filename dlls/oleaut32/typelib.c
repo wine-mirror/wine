@@ -4192,6 +4192,52 @@ _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
 
 extern int const _argsize(DWORD vt);
 
+HRESULT WINAPI
+DispCallFunc(
+    void* pvInstance, ULONG oVft, CALLCONV cc, VARTYPE vtReturn, UINT cActuals,
+    VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult
+) {
+    int i, argsize, argspos;
+    DWORD *args;
+    HRESULT hres;
+
+    FIXME("(%p, %ld, %d, %d, %d, %p, %p, %p)\n",
+	pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult
+    );
+    argsize = 0;
+    for (i=0;i<cActuals;i++) {
+        FIXME("arg %d: type %d\n",i,prgvt[i]);
+	dump_Variant(prgpvarg[i]);
+        argsize += _argsize(prgvt[i]);
+    }
+    args = (DWORD*)HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
+    argspos = 0;
+    for (i=0;i<cActuals;i++) {
+	int arglen;
+        VARIANT *arg = prgpvarg[i];
+
+	arglen = _argsize(prgvt[i]);
+	if (V_VT(arg) == prgvt[i]) {
+	    memcpy(&args[argspos],&V_UNION(arg,lVal), arglen*sizeof(DWORD));
+	} else {
+	    if (prgvt[i] == VT_VARIANT) {
+		memcpy(&args[argspos],arg, arglen*sizeof(DWORD));
+	    } else {
+		ERR("Set arg %d to disparg type %d vs %d\n",i,
+			V_VT(arg),prgvt[i]
+		);
+	    }
+	}
+	argspos += arglen;
+    }
+
+    FIXME("Do not know how to handle pvargResult %p. Expect crash ...\n",pvargResult);
+
+    hres = _invoke((*(DWORD***)pvInstance)[oVft/4],cc,argsize/4,args);
+    HeapFree(GetProcessHeap(),0,args);
+    return hres;
+}
+
 static HRESULT WINAPI ITypeInfo_fnInvoke(
     ITypeInfo2 *iface,
     VOID  *pIUnk,

@@ -142,7 +142,7 @@
 142 stdcall VarAnd(ptr ptr ptr) VarAnd
 143 stub VarDiv # stdcall (ptr ptr ptr)
 144 stub OACreateTypeLib2
-146 stub DispCallFunc
+146 stdcall DispCallFunc(ptr long long long long ptr ptr ptr) DispCallFunc
 147 stdcall VariantChangeTypeEx(ptr ptr long long long) VariantChangeTypeEx
 148 stdcall SafeArrayPtrOfIndex(ptr ptr ptr) SafeArrayPtrOfIndex
 149 stdcall SysStringByteLen(ptr) SysStringByteLen
