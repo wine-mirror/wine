@@ -63,7 +63,7 @@ VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc,
   pKeyStateTable = lpKeyState;
   
   /* all states to false */
-  memset( lpKeyState, 0, sizeof(lpKeyState) );
+  memset( lpKeyState, 0, 256 );
   
   if (!initDone) KEYBOARD_Driver->pInit();
   initDone = TRUE;
