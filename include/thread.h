@@ -85,6 +85,7 @@ typedef struct _THDB
     void          *server_tid;     /* Server id for this thread */
     void         (*startup)(void); /* Thread startup routine */
     struct _THDB  *next;           /* Global thread list */
+    DWORD          cleanup;        /* Cleanup service handle */
 } THDB;
 
 /* The pseudo handle value returned by GetCurrentThread */

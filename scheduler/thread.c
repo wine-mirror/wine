@@ -20,6 +20,7 @@
 #include "selectors.h"
 #include "winnt.h"
 #include "server.h"
+#include "services.h"
 #include "stackframe.h"
 #include "debug.h"
 #include "queue.h"
@@ -152,9 +153,13 @@ error:
  * Free data structures associated with a thread.
  * Must be called from the context of another thread.
  */
-void THREAD_FreeTHDB( THDB *thdb )
+void CALLBACK THREAD_FreeTHDB( ULONG_PTR arg )
 {
+    THDB *thdb = (THDB *)arg;
     THDB **pptr = &THREAD_First;
+
+    TRACE( thread, "(%p) called\n", thdb );
+    SERVICE_Delete( thdb->cleanup );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0, 0 );
     
@@ -261,6 +266,11 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
     if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, sa )) goto error;
     thdb->next = THREAD_First;
     THREAD_First = thdb;
+
+    /* Install cleanup handler */
+
+    thdb->cleanup = SERVICE_AddObject( *server_handle, 
+                                       THREAD_FreeTHDB, (ULONG_PTR)thdb );
     return thdb;
 
 error:
