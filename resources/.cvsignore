@@ -1,6 +1,6 @@
 Makefile
 sysres_Ca.s
-sysres_Cz.s
+sysres_Cs.s
 sysres_Da.s
 sysres_De.s
 sysres_En.s
@@ -14,6 +14,7 @@ sysres_Ko.s
 sysres_Nl.s
 sysres_No.s
 sysres_Pl.s
-sysres_Po.s
+sysres_Pt.s
 sysres_Ru.s
-sysres_Sw.s
+sysres_Sv.s
+sysres_Wa.s
