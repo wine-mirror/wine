@@ -41,7 +41,6 @@ DECLARE_DEBUG_CHANNEL(file)
 /* Define the VFAT ioctl to get both short and long file names */
 /* FIXME: is it possible to get this to work on other systems? */
 #ifdef linux
-#define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, long)
 /* We want the real kernel dirent structure, not the libc one */
 typedef struct
 {
@@ -50,6 +49,8 @@ typedef struct
     unsigned short d_reclen;
     char d_name[256];
 } KERNEL_DIRENT;
+
+#define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, KERNEL_DIRENT [2] )
 
 #else   /* linux */
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
