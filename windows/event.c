@@ -36,10 +36,11 @@
 #include "drive.h"
 #include "shell.h"
 #include "keyboard.h"
+#include "mouse.h"
 #include "debug.h"
 #include "dde_proc.h"
 #include "winsock.h"
-#include "callback.h"
+#include "mouse.h"
 
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
@@ -61,11 +62,6 @@
 
   /* X context to associate a hwnd to an X window */
 static XContext winContext = 0;
-
-static INT16  captureHT = HTCLIENT;
-static HWND32 captureWnd = 0;
-static BOOL32 InputEnabled = TRUE;
-static BOOL32 SwappedButtons = FALSE;
 
 static Atom wmProtocols = None;
 static Atom wmDeleteWindow = None;
@@ -112,8 +108,6 @@ static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 
 static void EVENT_GetGeometry( Window win, int *px, int *py,
                                unsigned int *pwidth, unsigned int *pheight );
-static void EVENT_SendMouseEvent( WORD mouseStatus, WORD deltaX, WORD deltaY, 
-                                  WORD buttonCount, DWORD extraInfo );
 
 /***********************************************************************
  *           EVENT_Init
@@ -178,18 +172,15 @@ void EVENT_ProcessEvent( XEvent *event )
     {
     case KeyPress:
     case KeyRelease:
-        if (!pWnd) return;
-        if (InputEnabled) EVENT_Key( pWnd, (XKeyEvent*)event );
+        EVENT_Key( pWnd, (XKeyEvent*)event );
 	break;
 	
     case ButtonPress:
-        if (InputEnabled)
-            EVENT_ButtonPress( pWnd, (XButtonEvent*)event );
+        EVENT_ButtonPress( pWnd, (XButtonEvent*)event );
 	break;
 
     case ButtonRelease:
-        if (InputEnabled)
-            EVENT_ButtonRelease( pWnd, (XButtonEvent*)event );
+        EVENT_ButtonRelease( pWnd, (XButtonEvent*)event );
 	break;
 
     case MotionNotify:
@@ -201,12 +192,9 @@ void EVENT_ProcessEvent( XEvent *event )
 	   problems if the event order is important. I'm not yet seen
 	   of any problems. Jon 7/6/96.
 	 */
-        if (InputEnabled)
-	{
-            while (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
-                                          MotionNotify, event));    
-            EVENT_MotionNotify( pWnd, (XMotionEvent*)event );
-	}
+        while (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
+                                        MotionNotify, event));    
+        EVENT_MotionNotify( pWnd, (XMotionEvent*)event );
 	break;
 
     case FocusIn:
@@ -650,6 +638,25 @@ static WORD EVENT_XStateToKeyState( int state )
     return kstate;
 }
 
+/***********************************************************************
+ *           EVENT_QueryPointer
+ */
+BOOL32 EVENT_QueryPointer( DWORD *posX, DWORD *posY, DWORD *state )
+{
+    Window root, child;
+    int rootX, rootY, winX, winY;
+    unsigned int xstate;
+
+    if (!TSXQueryPointer( display, rootWindow, &root, &child,
+                          &rootX, &rootY, &winX, &winY, &xstate )) 
+        return FALSE;
+
+    *posX  = (DWORD)winX;
+    *posY  = (DWORD)winY;
+    *state = EVENT_XStateToKeyState( xstate );
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           EVENT_Expose
@@ -726,16 +733,11 @@ static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
     int xOffset = pWnd? pWnd->rectWindow.left : 0;
     int yOffset = pWnd? pWnd->rectWindow.top  : 0;
 
-    if (pWnd)
-        hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ), 0L,
-                        xOffset + event->x,
-                        yOffset + event->y,
-                        event->time - MSG_WineStartTicks, pWnd->hwndSelf );
-
-    EVENT_SendMouseEvent( ME_MOVE, 
-                          xOffset + event->x,
-                          yOffset + event->y,
-                          0, 0 );
+    MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
+                     xOffset + event->x, yOffset + event->y,
+                     EVENT_XStateToKeyState( event->state ), 
+                     event->time - MSG_WineStartTicks,
+                     pWnd? pWnd->hwndSelf : 0 );
 }
 
 
@@ -746,15 +748,12 @@ static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
  */
 void EVENT_DummyMotionNotify(void)
 {
-    Window root, child;
-    int rootX, rootY, winX, winY;
-    unsigned int state;
+    DWORD winX, winY, state;
 
-    if (TSXQueryPointer( display, rootWindow, &root, &child,
-                       &rootX, &rootY, &winX, &winY, &state ))
+    if ( EVENT_QueryPointer( &winX, &winY, &state ) )
     {
-        hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( state ), 0L,
-                        winX, winY, GetTickCount(), 0 );
+        MOUSE_SendEvent( MOUSEEVENTF_MOVE, winX, winY, state,
+                         GetTickCount(), 0 );
     }
 }
 
@@ -764,31 +763,20 @@ void EVENT_DummyMotionNotify(void)
  */
 static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
 {
-    static WORD messages[NB_BUTTONS] = 
-        { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
     static WORD statusCodes[NB_BUTTONS] = 
-        { ME_LDOWN, 0, ME_RDOWN };
+        { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_RIGHTDOWN };
     int buttonNum = event->button - 1;
 
     int xOffset = pWnd? pWnd->rectWindow.left : 0;
     int yOffset = pWnd? pWnd->rectWindow.top  : 0;
 
     if (buttonNum >= NB_BUTTONS) return;
-    if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
-    MouseButtonsStates[buttonNum] = TRUE;
-    AsyncMouseButtonsStates[buttonNum] = TRUE;
 
-    if (pWnd)
-        hardware_event( messages[buttonNum],
-		        EVENT_XStateToKeyState( event->state ), 0L,
-                        xOffset + event->x,
-                        yOffset + event->y,
-		        event->time - MSG_WineStartTicks, pWnd->hwndSelf );
-
-    EVENT_SendMouseEvent( statusCodes[buttonNum], 
-                          xOffset + event->x,
-                          yOffset + event->y,
-                          0, 0 );
+    MOUSE_SendEvent( statusCodes[buttonNum], 
+                     xOffset + event->x, yOffset + event->y,
+                     EVENT_XStateToKeyState( event->state ), 
+                     event->time - MSG_WineStartTicks,
+                     pWnd? pWnd->hwndSelf : 0 );
 }
 
 
@@ -797,30 +785,20 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
  */
 static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
 {
-    static const WORD messages[NB_BUTTONS] = 
-        { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
     static WORD statusCodes[NB_BUTTONS] = 
-        { ME_LUP, 0, ME_RUP };
+        { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTUP };
     int buttonNum = event->button - 1;
 
     int xOffset = pWnd? pWnd->rectWindow.left : 0;
     int yOffset = pWnd? pWnd->rectWindow.top  : 0;
 
     if (buttonNum >= NB_BUTTONS) return;    
-    if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
-    MouseButtonsStates[buttonNum] = FALSE;
 
-    if (pWnd)
-        hardware_event( messages[buttonNum],
-		        EVENT_XStateToKeyState( event->state ), 0L,
-                        xOffset + event->x,
-                        yOffset + event->y,
-		        event->time - MSG_WineStartTicks, pWnd->hwndSelf );
-
-    EVENT_SendMouseEvent( statusCodes[buttonNum], 
-                          xOffset + event->x,
-                          yOffset + event->y,
-                          0, 0 );
+    MOUSE_SendEvent( statusCodes[buttonNum], 
+                     xOffset + event->x, yOffset + event->y,
+                     EVENT_XStateToKeyState( event->state ), 
+                     event->time - MSG_WineStartTicks,
+                     pWnd? pWnd->hwndSelf : 0 );
 }
 
 
@@ -1412,263 +1390,3 @@ void EVENT_MapNotify( HWND32 hWnd, XMapEvent *event )
     return;
 }
 
-/**********************************************************************
- *              EVENT_Capture
- * 
- * We need this to be able to generate double click messages
- * when menu code captures mouse in the window without CS_DBLCLK style.
- */
-HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
-{
-    HWND32 capturePrev = captureWnd;
-
-    if (!hwnd)
-    {
-        captureWnd = 0L;
-        captureHT = 0; 
-    }
-    else
-    {
-	WND* wndPtr = WIN_FindWndPtr( hwnd );
-        if (wndPtr)
-	{
-            TRACE(win, "(0x%04x)\n", hwnd );
-            captureWnd   = hwnd;
-	    captureHT    = ht;
-        }
-    }
-
-    if( capturePrev && capturePrev != captureWnd )
-    {
-	WND* wndPtr = WIN_FindWndPtr( capturePrev );
-        if( wndPtr && (wndPtr->flags & WIN_ISWIN32) )
-            SendMessage32A( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
-    }
-    return capturePrev;
-}
-
-/**********************************************************************
- *              EVENT_GetCaptureInfo
- */
-INT16 EVENT_GetCaptureInfo()
-{
-    return captureHT;
-}
-
-/**********************************************************************
- *		SetCapture16   (USER.18)
- */
-HWND16 WINAPI SetCapture16( HWND16 hwnd )
-{
-    return (HWND16)EVENT_Capture( hwnd, HTCLIENT );
-}
-
-
-/**********************************************************************
- *		SetCapture32   (USER32.464)
- */
-HWND32 WINAPI SetCapture32( HWND32 hwnd )
-{
-    return EVENT_Capture( hwnd, HTCLIENT );
-}
-
-
-/**********************************************************************
- *		ReleaseCapture   (USER.19) (USER32.439)
- */
-void WINAPI ReleaseCapture(void)
-{
-    TRACE(win, "captureWnd=%04x\n", captureWnd );
-    if( captureWnd ) EVENT_Capture( 0, 0 );
-}
-
-
-/**********************************************************************
- *		GetCapture16   (USER.236)
- */
-HWND16 WINAPI GetCapture16(void)
-{
-    return captureWnd;
-}
-
-
-/**********************************************************************
- *		GetCapture32   (USER32.208)
- */
-HWND32 WINAPI GetCapture32(void)
-{
-    return captureWnd;
-}
-
-
-
-/***********************************************************************
- * Mouse driver routines:
- */
-
-#pragma pack(1)
-typedef struct _MOUSEINFO
-{
-    BYTE msExist;
-    BYTE msRelative;
-    WORD msNumButtons;
-    WORD msRate;
-    WORD msXThreshold;
-    WORD msYThreshold;
-    WORD msXRes;
-    WORD msYRes;
-    WORD msMouseCommPort;
-} MOUSEINFO;
-#pragma pack(4)
-
-static SEGPTR MouseEventProc = 0;
-
-/***********************************************************************
- *           MouseInquire                       (MOUSE.1)
- */
-
-WORD WINAPI MouseInquire(MOUSEINFO *mouseInfo)
-{
-    mouseInfo->msExist = TRUE;
-    mouseInfo->msRelative = FALSE;
-    mouseInfo->msNumButtons = 2;
-    mouseInfo->msRate = 34;  /* the DDK says so ... */
-    mouseInfo->msXThreshold = 0;
-    mouseInfo->msYThreshold = 0;
-    mouseInfo->msXRes = 0;
-    mouseInfo->msYRes = 0;
-    mouseInfo->msMouseCommPort = 0;
-
-    return sizeof(MOUSEINFO);
-}
-
-/***********************************************************************
- *           MouseEnable                        (MOUSE.2)
- */
-VOID WINAPI MouseEnable(SEGPTR eventProc)
-{
-    MouseEventProc = eventProc;
-}
-
-/***********************************************************************
- *           MouseDisable                       (MOUSE.3)
- */
-VOID WINAPI MouseDisable(VOID)
-{
-    MouseEventProc = 0;
-}
-
-/***********************************************************************
- *           EVENT_SendMouseEvent
- */
-static void EVENT_SendMouseEvent( WORD mouseStatus, WORD deltaX, WORD deltaY, 
-                                  WORD buttonCount, DWORD extraInfo )
-{
-    CONTEXT context;
-
-    if ( !MouseEventProc ) return;
-
-    TRACE( event, "(%04X,%d,%d,%d,%ld)\n", mouseStatus, deltaX, deltaY, buttonCount, extraInfo );
-
-    mouseStatus |= 0x8000;
-    deltaX = (((long)deltaX << 16) + screenWidth-1)  / screenWidth;
-    deltaY = (((long)deltaY << 16) + screenHeight-1) / screenHeight;
-
-    memset( &context, 0, sizeof(context) );
-    CS_reg(&context)  = SELECTOROF( MouseEventProc );
-    EIP_reg(&context) = OFFSETOF( MouseEventProc );
-    EAX_reg(&context) = mouseStatus;
-    EBX_reg(&context) = deltaX;
-    ECX_reg(&context) = deltaY;
-    EDX_reg(&context) = buttonCount;
-    ESI_reg(&context) = LOWORD( extraInfo );
-    EDI_reg(&context) = HIWORD( extraInfo );
-
-    Callbacks->CallRegisterShortProc( &context, 0 );
-}
-
-
-
-
-/***********************************************************************
- *           GetMouseEventProc   (USER.337)
- */
-FARPROC16 WINAPI GetMouseEventProc(void)
-{
-    HMODULE16 hmodule = GetModuleHandle16("USER");
-    return NE_GetEntryPoint( hmodule, NE_GetOrdinal( hmodule, "Mouse_Event" ));
-}
-
-
-/***********************************************************************
- *           Mouse_Event   (USER.299)
- */
-void WINAPI Mouse_Event( CONTEXT *context )
-{
-    /* Register values:
-     * AX = mouse event
-     * BX = horizontal displacement if AX & ME_MOVE
-     * CX = vertical displacement if AX & ME_MOVE
-     * DX = button state (?)
-     * SI = mouse event flags (?)
-     */
-    Window root, child;
-    int rootX, rootY, winX, winY;
-    unsigned int state;
-
-    if (AX_reg(context) & ME_MOVE)
-    {
-        /* We have to actually move the cursor */
-        TSXWarpPointer( display, rootWindow, None, 0, 0, 0, 0,
-                      (short)BX_reg(context), (short)CX_reg(context) );
-        return;
-    }
-    if (!TSXQueryPointer( display, rootWindow, &root, &child,
-                        &rootX, &rootY, &winX, &winY, &state )) return;
-    if (AX_reg(context) & ME_LDOWN)
-        hardware_event( WM_LBUTTONDOWN, EVENT_XStateToKeyState( state ),
-                        0L, winX, winY, GetTickCount(), 0 );
-    if (AX_reg(context) & ME_LUP)
-        hardware_event( WM_LBUTTONUP, EVENT_XStateToKeyState( state ),
-                        0L, winX, winY, GetTickCount(), 0 );
-    if (AX_reg(context) & ME_RDOWN)
-        hardware_event( WM_RBUTTONDOWN, EVENT_XStateToKeyState( state ),
-                        0L, winX, winY, GetTickCount(), 0 );
-    if (AX_reg(context) & ME_RUP)
-        hardware_event( WM_RBUTTONUP, EVENT_XStateToKeyState( state ),
-                        0L, winX, winY, GetTickCount(), 0 );
-}
-
-
-/**********************************************************************
- *			EnableHardwareInput   (USER.331)
- */
-BOOL16 WINAPI EnableHardwareInput(BOOL16 bEnable)
-{
-  BOOL16 bOldState = InputEnabled;
-  FIXME(event,"(%d) - stub\n", bEnable);
-  InputEnabled = bEnable;
-  return bOldState;
-}
-
-
-/***********************************************************************
- *	     SwapMouseButton16   (USER.186)
- */
-BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
-{
-    BOOL16 ret = SwappedButtons;
-    SwappedButtons = fSwap;
-    return ret;
-}
-
-
-/***********************************************************************
- *	     SwapMouseButton32   (USER32.537)
- */
-BOOL32 WINAPI SwapMouseButton32( BOOL32 fSwap )
-{
-    BOOL32 ret = SwappedButtons;
-    SwappedButtons = fSwap;
-    return ret;
-}

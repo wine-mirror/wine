@@ -45,7 +45,7 @@
 #include "debug.h"
 #include "task.h"
 #include "user.h"
-#include "keyboard.h"
+#include "input.h"
 #include "x11drv.h"
 #include "winerror.h"
 

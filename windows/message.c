@@ -16,7 +16,7 @@
 #include "sysmetrics.h"
 #include "heap.h"
 #include "hook.h"
-#include "keyboard.h"
+#include "input.h"
 #include "spy.h"
 #include "winpos.h"
 #include "atom.h"
