@@ -668,7 +668,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
 	/* FIXME: Should this be forcing background mode? */
 	(handletable->objectHandle)[ lpSelectPal->ihPal ] = 
-		SelectPalette( hdc, lpSelectPal->ihPal, FALSE );
+		SelectPalette( hdc, (handletable->objectHandle)[lpSelectPal->ihPal], FALSE );
 	break;
       }
 
@@ -678,16 +678,22 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	break;
       }
 
-#if 0
     case EMR_EXTSELECTCLIPRGN:
       {
 	PEMREXTSELECTCLIPRGN lpRgn = (PEMREXTSELECTCLIPRGN)mr;
 
-	/* Need to make a region out of the RGNDATA we have */
-	ExtSelectClipRgn( hdc, ..., (INT)(lpRgn->iMode) );
+	if ((lpRgn->cbRgnData == 0) && (lpRgn->iMode == RGN_COPY)) {
+	  ExtSelectClipRgn( hdc, 0, RGN_COPY );
+	} else {
+	  FIXME("EMR_EXTSELECTCLIPRGN cbRgnData %lu\n", lpRgn->cbRgnData);
 
+	/* Need to make a region out of the RGNDATA we have */
+/*	  ExtCreateRegion(....); */
+/*	  ExtSelectClipRgn( hdc, ..., (INT)(lpRgn->iMode) ); */
+	}
+
+        break;
       }
-#endif
 
     case EMR_SETMETARGN:
       {
