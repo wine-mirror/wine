@@ -98,7 +98,6 @@ DECLARE_HANDLE(HWINSTA);
 DECLARE_HANDLE(HDESK);
 DECLARE_HANDLE(HWND);
 DECLARE_HANDLE(HKL);
-DECLARE_HANDLE(HRASCONN);
 
 /* Handle types that must remain interchangeable even with strict on */
 
