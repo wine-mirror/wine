@@ -148,29 +148,3 @@ HRESULT WINAPI DMUSIC_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *pp
     WARN("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-
-/******************************************************************
- *		DllRegisterServer (DMUSIC.3)
- *
- *
- */
-HRESULT WINAPI DMUSIC_DllRegisterServer(void)
-{
-    FIXME("(void): stub\n");
-
-    return S_OK;
-}
-
-
-/******************************************************************
- *		DllUnregisterServer (DMUSIC.4)
- *
- *
- */
-HRESULT WINAPI DMUSIC_DllUnregisterServer(void)
-{
-    FIXME("(void): stub\n");
-
-    return S_OK;
-}

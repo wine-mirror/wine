@@ -21,7 +21,8 @@ C_SRCS = \
 	dmusic_segment.c \
 	dmusic_style.c \
 	dmusic_synth.c \
-	helper.c
+	helper.c \
+	regsvr.c
 
 RC_SRCS = version.rc
 
