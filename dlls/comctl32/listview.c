@@ -126,6 +126,7 @@ typedef struct tagLISTVIEW_INFO
   INT nItemWidth;
   HDPA hdpaSelectionRanges;
   INT nSelectionMark;
+  BOOL bRemovingAllSelections;
   INT nHotItem;
   SHORT notifyFormat;
   RECT rcList;                 /* This rectangle is really the window
@@ -2069,11 +2070,10 @@ static inline BOOL LISTVIEW_RemoveSelectionRange(LISTVIEW_INFO *infoPtr, INT low
 static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
 {
     RANGE *sel;
-    static BOOL removing_all_selections = FALSE;
 
-    if (removing_all_selections) return TRUE;
+    if (infoPtr->bRemovingAllSelections) return TRUE;
 
-    removing_all_selections = TRUE;
+    infoPtr->bRemovingAllSelections = TRUE;
 
     TRACE("()\n");
 
@@ -2084,7 +2084,7 @@ static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
     }
     while (infoPtr->hdpaSelectionRanges->nItemCount > 0);
 
-    removing_all_selections = FALSE;
+    infoPtr->bRemovingAllSelections = FALSE;
 
     return TRUE;
 }
@@ -2287,7 +2287,7 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	    nFirst = min(infoPtr->nSelectionMark, nItem);
 	    nLast = max(infoPtr->nSelectionMark, nItem);
 	}
-	for (i = nFirst; i < nLast; i++)
+	for (i = nFirst; i <= nLast; i++)
 	    LISTVIEW_SetItemState(infoPtr, i, &item);
     }
     else
@@ -3377,9 +3377,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             dis.CtlID = uID;
             dis.itemID = nItem;
             dis.itemAction = ODA_DRAWENTIRE;
-            if (item.state & LVIS_SELECTED) dis.itemAction |= ODA_SELECT;
-            if (item.state & LVIS_FOCUSED) dis.itemAction |= ODA_FOCUS;
-	    /*dis.itemState = ODS_DEFAULT; */
             if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
             if (item.state & LVIS_FOCUSED) dis.itemState |= ODS_FOCUS;
             dis.hwndItem = infoPtr->hwndSelf;
@@ -6725,19 +6722,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
               : "",
               (dwFlags & LVSICF_NOSCROLL) ? "LVSICF_NOSCROLL" : "");
 
-      /*
-       * Internally remove all the selections.
-       * FIXME: why not RemoveAllSelections
-       */
-      do
-      {
-        RANGE *selection;
-        selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,0);
-        if (selection)
-            LISTVIEW_RemoveSelectionRange(infoPtr,selection->lower,
-                                          selection->upper);
-      }
-      while (infoPtr->hdpaSelectionRanges->nItemCount>0);
+      LISTVIEW_RemoveAllSelections(infoPtr);
 
       precount = infoPtr->hdpaItems->nItemCount;
       topvisible = LISTVIEW_GetTopIndex(infoPtr) +
