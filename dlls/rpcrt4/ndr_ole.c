@@ -36,7 +36,9 @@
 
 #include "objbase.h"
 
+#include "ndr_misc.h"
 #include "rpcndr.h"
+#include "wine/rpcfc.h"
 
 #include "wine/debug.h"
 
@@ -212,6 +214,21 @@ static LPSTREAM RpcStream_Create(PMIDL_STUB_MESSAGE pStubMsg, BOOL init)
   return (LPSTREAM)This;
 }
 
+const IID* get_ip_iid(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
+{
+  const IID *riid;
+  if (!pFormat) return &IID_IUnknown;
+  TRACE("format=%02x %02x\n", pFormat[0], pFormat[1]);
+  if (pFormat[0] != RPC_FC_IP) FIXME("format=%d\n", pFormat[0]);
+  if (pFormat[1] == RPC_FC_CONSTANT_IID)
+    return (const IID*)&pFormat[2];
+
+  ComputeConformance(pStubMsg, pMemory, pFormat+2, 0);
+  riid = (const IID *)pStubMsg->MaxCount;
+  if (!riid) riid = &IID_IUnknown;
+  return riid;
+}
+
 /***********************************************************************
  *           NdrInterfacePointerMarshall [RPCRT4.@]
  */
@@ -219,12 +236,11 @@ unsigned char * WINAPI NdrInterfacePointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                                   unsigned char *pMemory,
                                                   PFORMAT_STRING pFormat)
 {
-  const IID *riid = (const IID *)pStubMsg->MaxCount;
+  const IID *riid = get_ip_iid(pStubMsg, pMemory, pFormat);
   LPSTREAM stream;
   HRESULT hr;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
-  if (!riid) riid = &IID_IUnknown;
   pStubMsg->MaxCount = 0;
   if (!LoadCOM()) return NULL;
   stream = RpcStream_Create(pStubMsg, TRUE);
@@ -262,12 +278,11 @@ void WINAPI NdrInterfacePointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                                          unsigned char *pMemory,
                                          PFORMAT_STRING pFormat)
 {
-  const IID *riid = (const IID *)pStubMsg->MaxCount;
+  const IID *riid = get_ip_iid(pStubMsg, pMemory, pFormat);
   ULONG size = 0;
   HRESULT hr;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
-  if (!riid) riid = &IID_IUnknown;
   if (!LoadCOM()) return;
   hr = COM_GetMarshalSizeMax(&size, riid, (LPUNKNOWN)pMemory,
                             pStubMsg->dwDestContext, pStubMsg->pvDestContext,
