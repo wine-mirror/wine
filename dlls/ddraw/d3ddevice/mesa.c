@@ -86,6 +86,17 @@ inline static Drawable get_drawable( HDC hdc )
     return drawable;
 }
 
+
+static BOOL opengl_flip( LPVOID display, LPVOID drawable)
+{
+    TRACE("(%p, %ld)\n",(Display*)display,(Drawable)drawable);
+    ENTER_GL();
+    glXSwapBuffers((Display*)display,(Drawable)drawable);
+    LEAVE_GL();
+    return TRUE;
+}
+
+
 /*******************************************************************************
  *				OpenGL static functions
  */
@@ -207,6 +218,7 @@ is_OpenGL(
   XVisualInfo *vis;
   int num;
   XVisualInfo template;
+  IDirectDrawSurfaceImpl* surf;
 
   TRACE("rguid = %s, surface = %p, &device = %p, d3d = %p\n",debugstr_guid(rguid),surface,device,d3d);
   if (/* Default device */
@@ -254,17 +266,16 @@ is_OpenGL(
     else
       TRACE("Context created (%p)\n", odev->ctx);
 
-#if COMPILABLE
-    /* Now override the surface's Flip method (if in double buffering) */
-    ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
-    {
-	int i;
-	struct _surface_chain *chain = surface->s.chain;
-	for (i=0;i<chain->nrofsurfaces;i++)
-	  if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
-	      ((x11_ds_private *) chain->surfaces[i]->private)->opengl_flip = TRUE;
-    }
-#endif
+    /* Look for the front buffer and override its surface's Flip method (if in double buffering) */ 
+    for (surf = surface; surf != NULL; surf = surf->surface_owner)
+        if ((surf->surface_desc.ddsCaps.dwCaps&(DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER))
+	    == (DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER))
+	{
+            surface->surface_owner->aux_ctx  = (LPVOID)odev->gdi_display;
+            surface->surface_owner->aux_data = (LPVOID)odev->drawable;
+            surface->surface_owner->aux_flip = opengl_flip;
+            break;
+        }
 
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
@@ -881,6 +892,7 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     HDC device_context;
     int attributeList[]={ GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
     XVisualInfo *xvis;
+    IDirectDrawSurfaceImpl* surf;
 
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DDeviceImpl));
     (*device)->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dd_private));
@@ -921,17 +933,18 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 				 NULL,
 				 GL_TRUE);
     TRACE("Context created\n");
-#if 0
-    /* Now override the surface's Flip method (if in double buffering) */
-    surface->s.d3d_device = (void *) odev;
-    {
-	int i;
-	struct _surface_chain *chain = surface->s.chain;
-	for (i=0;i<chain->nrofsurfaces;i++)
-	  if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
-	      chain->surfaces[i]->s.d3d_device = (void *) odev;
-    }
-#endif
+
+    /* Look for the front buffer and override its surface's Flip method (if in double buffering) */ 
+    for (surf = surface; surf != NULL; surf = surf->surface_owner)
+        if ((surf->surface_desc.ddsCaps.dwCaps&(DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER))
+	    == (DDSCAPS_FLIP|DDSCAPS_FRONTBUFFER))
+	{
+            surface->surface_owner->aux_ctx  = (LPVOID)odev->gdi_display;
+            surface->surface_owner->aux_data = (LPVOID)odev->drawable;
+            surface->surface_owner->aux_flip = opengl_flip;
+            break;
+        }
+	
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
     odev->rs.mag = GL_NEAREST;
