@@ -244,6 +244,10 @@ LONG WINAPI GetBitmapBits(
     LONG height, ret;
     
     if (!bmp) return 0;
+    
+    /* If the bits vector is null, the function should return the read size */
+    if(bits == NULL)
+	return bmp->bitmap.bmWidthBytes * bmp->bitmap.bmHeight;
 
     if (count < 0) {
 	WARN_(bitmap)("(%ld): Negative number of bytes passed???\n", count );
@@ -318,7 +322,8 @@ LONG WINAPI SetBitmapBits(
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     LONG height, ret;
     
-    if (!bmp) return 0;
+    if ((!bmp) || (!bits))
+	return 0;
 
     if (count < 0) {
 	WARN_(bitmap)("(%ld): Negative number of bytes passed???\n", count );
