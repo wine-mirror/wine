@@ -238,8 +238,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
     if (!pe_imp) 
     	ERR(win32, "no import directory????\n");
 
-    /* FIXME: should terminate on 0 Characteristics */
-    for (i = 0; pe_imp->Name; pe_imp++)
+    for (i = 0; pe_imp->Name && pe_imp->u.Characteristics; pe_imp++) 
 	i++;
 
     /* Allocate module dependency list */
@@ -250,8 +249,7 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
      * added to the modref list of the process.
      */
  
-    /* FIXME: should terminate on 0 Characteristics */
-    for (i = 0, pe_imp = pem->pe_import; pe_imp->Name; pe_imp++) {
+    for (i = 0, pe_imp = pem->pe_import; pe_imp->Name && pe_imp->u.Characteristics; pe_imp++) {
     	HMODULE32		hImpModule;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
 	PIMAGE_THUNK_DATA	import_list,thunk_list;
