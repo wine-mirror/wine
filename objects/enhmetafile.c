@@ -40,8 +40,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
+#include "gdi.h"
 #include "wine/debug.h"
-#include "metafile.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
@@ -2189,6 +2189,3 @@ error:
 
      return 0;
 }
-
-
-

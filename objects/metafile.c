@@ -52,8 +52,6 @@
 #include "wine/wingdi16.h"
 #include "bitmap.h"
 #include "global.h"
-#include "metafile.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
@@ -66,6 +64,12 @@ typedef struct
     CHAR filename[0x100];
 } METAHEADERDISK;
 #include "poppack.h"
+
+typedef struct
+{
+    GDIOBJHDR   header;
+    METAHEADER  *mh;
+} METAFILEOBJ;
 
 #define MFHEADERSIZE (sizeof(METAHEADER))
 #define MFVERSION 0x300

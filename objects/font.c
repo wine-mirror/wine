@@ -53,6 +53,12 @@ static const struct gdi_obj_funcs font_funcs =
 
 typedef struct
 {
+    GDIOBJHDR   header;
+    LOGFONTW    logfont;
+} FONTOBJ;
+
+typedef struct
+{
   LPLOGFONT16           lpLogFontParam;
   FONTENUMPROCEX16      lpEnumFunc;
   LPARAM                lpData;

@@ -796,20 +796,19 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     GdiFont ret;
     Face *face;
     Family *family = NULL;
-    WCHAR FaceName[LF_FACESIZE];
     BOOL bd, it;
-    FONTOBJ *font = GDI_GetObjPtr(hfont, FONT_MAGIC);
-    LOGFONTW *plf = &font->logfont;
+    LOGFONTW lf;
+
+    if (!GetObjectW( hfont, sizeof(lf), &lf )) return NULL;
 
     TRACE("%s, h=%ld, it=%d, weight=%ld, PandF=%02x, charset=%d orient %ld escapement %ld\n",
-	  debugstr_w(plf->lfFaceName), plf->lfHeight, plf->lfItalic,
-	  plf->lfWeight, plf->lfPitchAndFamily, plf->lfCharSet, plf->lfOrientation,
-	  plf->lfEscapement);
+	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
+	  lf.lfWeight, lf.lfPitchAndFamily, lf.lfCharSet, lf.lfOrientation,
+	  lf.lfEscapement);
 
     /* check the cache first */
     for(ret = GdiFontList; ret; ret = ret->next) {
 	if(ret->hfont == hfont) {
-	    GDI_ReleaseObj(hfont);
 	    TRACE("returning cached gdiFont(%p) for hFont %x\n", ret, hfont);
 	    return ret;
 	}
@@ -817,45 +816,42 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     if(!FontList) /* No fonts installed */
     {
-	GDI_ReleaseObj(hfont);
 	TRACE("No fonts installed\n");
 	return NULL;
     }
 
     ret = alloc_font();
 
-    strcpyW(FaceName, plf->lfFaceName);
-
-    if(FaceName[0] != '\0') {
+    if(lf.lfFaceName[0] != '\0') {
         FontSubst *psub;
 	for(psub = substlist; psub; psub = psub->next)
-	    if(!strcmpiW(FaceName, psub->from.name) &&
+	    if(!strcmpiW(lf.lfFaceName, psub->from.name) &&
 	       (psub->from.charset == -1 ||
-		psub->from.charset == plf->lfCharSet))
+		psub->from.charset == lf.lfCharSet))
 	      break;
 	if(psub) {
-	    TRACE("substituting %s -> %s\n", debugstr_w(FaceName),
+	    TRACE("substituting %s -> %s\n", debugstr_w(lf.lfFaceName),
 		  debugstr_w(psub->to.name));
-	    strcpyW(FaceName, psub->to.name);
+	    strcpyW(lf.lfFaceName, psub->to.name);
 	}
 
         for(family = FontList; family; family = family->next) {
-	    if(!strcmpiW(family->FamilyName, FaceName))
+	    if(!strcmpiW(family->FamilyName, lf.lfFaceName))
 	         break;
 	}
 
 	if(!family) { /* do other aliases here */
-	    if(!strcmpiW(FaceName, SystemW))
-	        strcpyW(FaceName, defSystem);
-	    else if(!strcmpiW(FaceName, MSSansSerifW))
-	        strcpyW(FaceName, defSans);
-	    else if(!strcmpiW(FaceName, HelvW))
-	        strcpyW(FaceName, defSans);
+	    if(!strcmpiW(lf.lfFaceName, SystemW))
+	        strcpyW(lf.lfFaceName, defSystem);
+	    else if(!strcmpiW(lf.lfFaceName, MSSansSerifW))
+	        strcpyW(lf.lfFaceName, defSans);
+	    else if(!strcmpiW(lf.lfFaceName, HelvW))
+	        strcpyW(lf.lfFaceName, defSans);
 	    else
 	        goto not_found;
 
 	    for(family = FontList; family; family = family->next) {
-	        if(!strcmpiW(family->FamilyName, FaceName))
+	        if(!strcmpiW(family->FamilyName, lf.lfFaceName))
 		    break;
 	    }
 	}
@@ -863,17 +859,17 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
 not_found:
     if(!family) {
-        if(plf->lfPitchAndFamily & FIXED_PITCH ||
-	   plf->lfPitchAndFamily & FF_MODERN)
-	  strcpyW(FaceName, defFixed);
-	else if(plf->lfPitchAndFamily & FF_ROMAN)
-	  strcpyW(FaceName, defSerif);
-	else if(plf->lfPitchAndFamily & FF_SWISS)
-	  strcpyW(FaceName, defSans);
+        if(lf.lfPitchAndFamily & FIXED_PITCH ||
+	   lf.lfPitchAndFamily & FF_MODERN)
+	  strcpyW(lf.lfFaceName, defFixed);
+	else if(lf.lfPitchAndFamily & FF_ROMAN)
+	  strcpyW(lf.lfFaceName, defSerif);
+	else if(lf.lfPitchAndFamily & FF_SWISS)
+	  strcpyW(lf.lfFaceName, defSans);
 	else
-	  strcpyW(FaceName, defSans);
+	  strcpyW(lf.lfFaceName, defSans);
 	for(family = FontList; family; family = family->next) {
-	    if(!strcmpiW(family->FamilyName, FaceName))
+	    if(!strcmpiW(family->FamilyName, lf.lfFaceName))
 	        break;
 	}
     }
@@ -883,8 +879,8 @@ not_found:
 	FIXME("just using first face for now\n");
     }
 
-    it = plf->lfItalic ? 1 : 0;
-    bd = plf->lfWeight > 550 ? 1 : 0;
+    it = lf.lfItalic ? 1 : 0;
+    bd = lf.lfWeight > 550 ? 1 : 0;
 
     for(face = family->FirstFace; face; face = face->next) {
       if(!(face->Italic ^ it) && !(face->Bold ^ bd))
@@ -895,24 +891,22 @@ not_found:
 	if(it && !face->Italic) ret->fake_italic = TRUE;
 	if(bd && !face->Bold) ret->fake_bold = TRUE;
     }
-    ret->charset = get_nearest_charset(face, plf->lfCharSet);
+    ret->charset = get_nearest_charset(face, lf.lfCharSet);
 
     TRACE("Choosen %s %s\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName));
 
     ret->ft_face = OpenFontFile(ret, face->file,
-				INTERNAL_YWSTODS(dc,plf->lfHeight));
+				INTERNAL_YWSTODS(dc,lf.lfHeight));
     if (!ret->ft_face)
     {
-        GDI_ReleaseObj(hfont);
         free_font( ret );
         return 0;
     }
 
     if(ret->charset == SYMBOL_CHARSET)
         pFT_Select_Charmap(ret->ft_face, ft_encoding_symbol);
-    ret->orientation = plf->lfOrientation;
-    GDI_ReleaseObj(hfont);
+    ret->orientation = lf.lfOrientation;
 
     TRACE("caching: gdiFont=%p  hfont=%x\n", ret, hfont);
     ret->hfont = hfont;
@@ -928,11 +922,10 @@ static void DumpGdiFontList(void)
 
     TRACE("---------- gdiFont Cache ----------\n");
     for(gdiFont = GdiFontList; gdiFont; gdiFont = gdiFont->next) {
-	FONTOBJ *font = GDI_GetObjPtr(gdiFont->hfont, FONT_MAGIC);
-	LOGFONTW *plf = &font->logfont;
+	LOGFONTW lf;
+        GetObjectW( gdiFont->hfont, sizeof(lf), &lf );
 	TRACE("gdiFont=%p  hfont=%x (%s)\n",
-	       gdiFont, gdiFont->hfont, debugstr_w(plf->lfFaceName));
-	GDI_ReleaseObj(gdiFont->hfont);
+	       gdiFont, gdiFont->hfont, debugstr_w(lf.lfFaceName));
     }
 }
 
@@ -1867,4 +1860,3 @@ DWORD WineEngGetFontData(GdiFont font, DWORD table, DWORD offset, LPVOID buf,
     return GDI_ERROR;
 }
 #endif /* HAVE_FREETYPE */
-

@@ -283,6 +283,14 @@ typedef struct tagDC_FUNCS
 /* extra stock object: default 1x1 bitmap for memory DCs */
 #define DEFAULT_BITMAP (STOCK_LAST+1)
 
+/* Metafile defines */
+
+#define META_EOF 0x0000
+/* values of mtType in METAHEADER.  Note however that the disk image of a disk
+   based metafile has mtType == 1 */
+#define METAFILE_MEMORY 1
+#define METAFILE_DISK   2
+
   /* Device <-> logical coords conversion */
 
 /* A floating point version of the POINT structure */
@@ -595,11 +603,16 @@ extern DC * DC_GetDCUpdate( HDC hdc );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
 
-/* objects/clipping.c */
+/* clipping.c */
 extern void CLIPPING_UpdateGCRegion( DC * dc );
 
-/* objects/enhmetafile.c */
+/* enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
+
+/* metafile.c */
+extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh);
+extern HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh);
+extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCSTR filename);
 
 /* region.c */
 extern HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt );

@@ -23,52 +23,6 @@
 
 #include "gdi.h"
 
-#include "pshpack1.h"
-
-  /* GDI logical font object */
-typedef struct
-{
-    GDIOBJHDR   header;
-    LOGFONTW    logfont;
-} FONTOBJ;
-
-typedef struct {
-    WORD	dfVersion;
-    DWORD	dfSize;
-    CHAR	dfCopyright[60];
-    WORD	dfType;
-    WORD	dfPoints;
-    WORD	dfVertRes;
-    WORD	dfHorizRes;
-    WORD	dfAscent;
-    WORD	dfInternalLeading;
-    WORD	dfExternalLeading;
-    BYTE	dfItalic;
-    BYTE	dfUnderline;
-    BYTE	dfStrikeOut;
-    WORD	dfWeight;
-    BYTE	dfCharSet;
-    WORD	dfPixWidth;
-    WORD	dfPixHeight;
-    BYTE	dfPitchAndFamily;
-    WORD	dfAvgWidth;
-    WORD	dfMaxWidth;
-    BYTE	dfFirstChar;
-    BYTE	dfLastChar;
-    BYTE	dfDefaultChar;
-    BYTE	dfBreakChar;
-    WORD	dfWidthBytes;
-    DWORD	dfDevice;
-    DWORD	dfFace;
-    DWORD	dfReserved;
-    CHAR	szDeviceName[60]; /* FIXME: length unknown */
-    CHAR	szFaceName[60];   /* dito */
-} FONTDIR16, *LPFONTDIR16;
-
-#include "poppack.h"
-
-#define FONTCACHE 	32	/* dynamic font cache size */
-
 extern BOOL FONT_Init( UINT16* pTextCaps );
 extern void FONT_LogFontATo16( const LOGFONTA* font32, LPLOGFONT16 font16 );
 extern void FONT_LogFontWTo16( const LOGFONTW* font32, LPLOGFONT16 font16 );

@@ -66,6 +66,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #define REMOVE_SUBSETS		1
 #define UNMARK_SUBSETS		0
 
+#define FONTCACHE               32     /* dynamic font cache size */
 
 #define FF_FAMILY       (FF_MODERN | FF_SWISS | FF_ROMAN | FF_DECORATIVE | FF_SCRIPT)
 
