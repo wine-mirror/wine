@@ -343,6 +343,10 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
     if ((left == right) || (top == bottom)
             ||(lines && ((right-left==1)||(bottom-top==1)))) return TRUE;
 
+    if( dc->w.ArcDirection == AD_CLOCKWISE )
+        { INT tmp = xstart; xstart = xend; xend = tmp;
+	  tmp = ystart; ystart = yend; yend = tmp; } 
+	
     oldwidth = width = physDev->pen.width;
     oldendcap = physDev->pen.endcap;
     if (!width) width = 1;
