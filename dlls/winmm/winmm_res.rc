@@ -32,6 +32,7 @@
 #include "winmm_Pt.rc"
 #include "winmm_Es.rc"
 #include "winmm_Ru.rc"
+#include "winmm_Si.rc"
 #include "winmm_Sk.rc"
 
 /* do not add NLS specific stuff below that line */
@@ -865,4 +866,3 @@ MCI_SEQ_MAPPER_S, 		"mapper"
 WAVE_FORMAT_PCM_S, 		"pcm"
 WAVE_MAPPER_S, 			"mapper"
 END
-
