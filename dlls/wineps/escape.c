@@ -205,10 +205,13 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
             /* Write directly to spool file, bypassing normal PS driver
              * processing that is done along with writing PostScript code
              * to the spool.
-	     * (Usually we have a WORD before the data counting the size, but
-	     * cbInput is just this +2.)
+	     * We have a WORD before the data counting the size, but
+	     * cbInput is just this +2.
+             * However Photoshop 7 has a bug that sets cbInput to 2 less than the
+             * length of the string, rather than 2 more.  So we'll use the WORD at
+             * in_data[0] instead.
              */
-            return WriteSpool16(physDev->job.hJob,((char*)in_data)+2,cbInput-2);
+            return WriteSpool16(physDev->job.hJob,((char*)in_data)+2,*(WORD*)in_data);
         }
 
     case POSTSCRIPT_IGNORE:
@@ -330,17 +333,31 @@ INT PSDRV_EndPage( PSDRV_PDEVICE *physDev )
  */
 INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
 {
+    LPCSTR output = "LPT1:";
+    BYTE buf[300];
+    HANDLE hprn = INVALID_HANDLE_VALUE;
+    PRINTER_INFO_5A *pi5 = (PRINTER_INFO_5A*)buf;
+    DWORD needed;
+
     if(physDev->job.hJob) {
         FIXME("hJob != 0. Now what?\n");
 	return 0;
     }
 
-    if(doc->lpszOutput) {
-        HeapFree( PSDRV_Heap, 0, physDev->job.output );
-	physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(doc->lpszOutput)+1 );
-	strcpy( physDev->job.output, doc->lpszOutput );
+    if(doc->lpszOutput)
+        output = doc->lpszOutput;
+    else if(physDev->job.output)
+        output = physDev->job.output;
+    else {
+        if(OpenPrinterA(physDev->pi->FriendlyName, &hprn, NULL) &&
+           GetPrinterA(hprn, 5, buf, sizeof(buf), &needed)) {
+            output = pi5->pPortName;
+        }
+        if(hprn != INVALID_HANDLE_VALUE)
+            ClosePrinter(hprn);
     }
-    physDev->job.hJob = OpenJob16(physDev->job.output,  doc->lpszDocName, HDC_16(physDev->hdc) );
+
+    physDev->job.hJob = OpenJob16(output,  doc->lpszDocName, HDC_16(physDev->hdc) );
     if(!physDev->job.hJob) {
         WARN("OpenJob failed\n");
 	return 0;

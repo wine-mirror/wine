@@ -299,9 +299,11 @@ BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
     physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
     physDev->logPixelsY = physDev->pi->ppd->DefaultResolution;
 
-    if (!output) output = "LPT1:";  /* HACK */
-    physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(output)+1 );
-    strcpy( physDev->job.output, output );
+    if (output) {
+        physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(output)+1 );
+        strcpy( physDev->job.output, output );
+    } else
+        physDev->job.output = NULL;
     physDev->job.hJob = 0;
 
     if(initData) {
@@ -323,7 +325,8 @@ BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
     TRACE("\n");
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
-    HeapFree( PSDRV_Heap, 0, physDev->job.output );
+    if(physDev->job.output)
+        HeapFree( PSDRV_Heap, 0, physDev->job.output );
     HeapFree( PSDRV_Heap, 0, physDev );
 
     return TRUE;
