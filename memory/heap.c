@@ -32,7 +32,7 @@ typedef struct tagARENA_INUSE
     DWORD  size;                    /* Block size; must be the first field */
     WORD   threadId;                /* Allocating thread id */
     WORD   magic;                   /* Magic number */
-    DWORD  callerEIP;               /* EIP of caller upon allocation */
+    void  *callerEIP;               /* EIP of caller upon allocation */
 } ARENA_INUSE;
 
 typedef struct tagARENA_FREE
@@ -101,6 +101,14 @@ HANDLE SystemHeap = 0;
 HANDLE SegptrHeap = 0;
 
 
+#ifdef __GNUC__
+#define GET_EIP()    (__builtin_return_address(1))
+#define SET_EIP(ptr) ((ARENA_INUSE*)(ptr) - 1)->callerEIP = GET_EIP()
+#else
+#define GET_EIP()    0
+#define SET_EIP(ptr) /* nothing */
+#endif  /* __GNUC__ */
+
 /***********************************************************************
  *           HEAP_Dump
  */
@@ -153,7 +161,7 @@ void HEAP_Dump( HEAP *heap )
             else if (*(DWORD *)ptr & ARENA_FLAG_PREV_FREE)
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DUMP( "%08lx Used %08lx %04x back=%08lx EIP=%08lx\n",
+                DUMP( "%08lx Used %08lx %04x back=%08lx EIP=%p\n",
 		      (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
 		      pArena->threadId, *((DWORD *)pArena - 1),
 		      pArena->callerEIP );
@@ -164,7 +172,7 @@ void HEAP_Dump( HEAP *heap )
             else
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DUMP( "%08lx used %08lx %04x EIP=%08lx\n",
+                DUMP( "%08lx used %08lx %04x EIP=%p\n",
 		      (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
 		      pArena->threadId, pArena->callerEIP );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
@@ -966,7 +974,7 @@ LPVOID WINAPI HeapAlloc(
     pInUse = (ARENA_INUSE *)pArena;
     pInUse->size      = (pInUse->size & ~ARENA_FLAG_FREE)
                         + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
-    pInUse->callerEIP = *((DWORD *)&heap - 1);  /* hack hack */
+    pInUse->callerEIP = GET_EIP();
     pInUse->threadId  = GetCurrentTask();
     pInUse->magic     = ARENA_INUSE_MAGIC;
 
@@ -1149,7 +1157,7 @@ LPVOID WINAPI HeapReAlloc(
 
     /* Return the new arena */
 
-    pArena->callerEIP = *((DWORD *)&heap - 1);  /* hack hack */
+    pArena->callerEIP = GET_EIP();
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
 
     TRACE(heap, "(%08x,%08lx,%08lx,%08lx): returning %08lx\n",
@@ -1257,6 +1265,7 @@ BOOL WINAPI HeapValidate(
 ) {
     SUBHEAP *subheap;
     HEAP *heapPtr = (HEAP *)(heap);
+    BOOL ret = TRUE;
 
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
@@ -1264,6 +1273,11 @@ BOOL WINAPI HeapValidate(
         return FALSE;
     }
 
+    flags &= HEAP_NO_SERIALIZE;
+    flags |= heapPtr->flags;
+    /* calling HeapLock may result in infinite recursion, so do the critsect directly */
+    if (!(flags & HEAP_NO_SERIALIZE))
+        EnterCriticalSection( &heapPtr->critSection );
     if (block)
     {
         /* Only check this single memory block */
@@ -1273,33 +1287,43 @@ BOOL WINAPI HeapValidate(
         {
             ERR(heap, "Heap %08lx: block %08lx is not inside heap\n",
                      (DWORD)heap, (DWORD)block );
-            return FALSE;
-        }
-        return HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)block - 1 );
+            ret = FALSE;
+        } else
+            ret = HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)block - 1 );
+
+        if (!(flags & HEAP_NO_SERIALIZE))
+            LeaveCriticalSection( &heapPtr->critSection );
+        return ret;
     }
 
     subheap = &heapPtr->subheap;
-    while (subheap)
+    while (subheap && ret)
     {
         char *ptr = (char *)subheap + subheap->headerSize;
         while (ptr < (char *)subheap + subheap->size)
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
-                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr ))
-                    return FALSE;
+                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) {
+                    ret = FALSE;
+                    break;
+                }
                 ptr += sizeof(ARENA_FREE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
             else
             {
-                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr ))
-                    return FALSE;
+                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr )) {
+                    ret = FALSE;
+                    break;
+                }
                 ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
         }
         subheap = subheap->next;
     }
-    return TRUE;
+    if (!(flags & HEAP_NO_SERIALIZE))
+        LeaveCriticalSection( &heapPtr->critSection );
+    return ret;
 }
 
 
@@ -1333,6 +1357,25 @@ LPVOID HEAP_xalloc( HANDLE heap, DWORD flags, DWORD size )
         MSG("Virtual memory exhausted.\n" );
         exit(1);
     }
+    SET_EIP(p);
+    return p;
+}
+
+
+/***********************************************************************
+ *           HEAP_xrealloc
+ *
+ * Same as HeapReAlloc(), but die on failure.
+ */
+LPVOID HEAP_xrealloc( HANDLE heap, DWORD flags, LPVOID lpMem, DWORD size )
+{
+    LPVOID p = HeapReAlloc( heap, flags, lpMem, size );
+    if (!p)
+    {
+        MSG("Virtual memory exhausted.\n" );
+        exit(1);
+    }
+    SET_EIP(p);
     return p;
 }
 
@@ -1343,6 +1386,7 @@ LPVOID HEAP_xalloc( HANDLE heap, DWORD flags, DWORD size )
 LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
 {
     LPSTR p = HEAP_xalloc( heap, flags, strlen(str) + 1 );
+    SET_EIP(p);
     strcpy( p, str );
     return p;
 }
@@ -1355,6 +1399,7 @@ LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
 {
     INT len = lstrlenW(str) + 1;
     LPWSTR p = HEAP_xalloc( heap, flags, len * sizeof(WCHAR) );
+    SET_EIP(p);
     lstrcpyW( p, str );
     return p;
 }
@@ -1369,6 +1414,7 @@ LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
 
     if (!str) return NULL;
     ret = HEAP_xalloc( heap, flags, (strlen(str)+1) * sizeof(WCHAR) );
+    SET_EIP(ret);
     lstrcpyAtoW( ret, str );
     return ret;
 }
@@ -1383,6 +1429,7 @@ LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
 
     if (!str) return NULL;
     ret = HEAP_xalloc( heap, flags, lstrlenW(str) + 1 );
+    SET_EIP(ret);
     lstrcpyWtoA( ret, str );
     return ret;
 }
