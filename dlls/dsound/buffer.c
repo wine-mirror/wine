@@ -382,9 +382,9 @@ static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
 	return ref;
 }
 
-static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
+static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
+{
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	int	i;
 	DWORD ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
@@ -392,22 +392,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 	ref = InterlockedDecrement(&(This->ref));
 	if (ref) return ref;
 
-	RtlAcquireResourceExclusive(&(This->dsound->lock), TRUE);
-	for (i=0;i<This->dsound->nrofbuffers;i++)
-		if (This->dsound->buffers[i] == This)
-			break;
-	if (i < This->dsound->nrofbuffers) {
-		/* Put the last buffer of the list in the (now empty) position */
-		This->dsound->buffers[i] = This->dsound->buffers[This->dsound->nrofbuffers - 1];
-		This->dsound->nrofbuffers--;
-		This->dsound->buffers = HeapReAlloc(GetProcessHeap(),0,This->dsound->buffers,sizeof(LPDIRECTSOUNDBUFFER8)*This->dsound->nrofbuffers);
-		TRACE("(%p) buffer count is now %d\n", This, This->dsound->nrofbuffers);
-	}
-	if (This->dsound->nrofbuffers == 0) {
-		HeapFree(GetProcessHeap(),0,This->dsound->buffers);
-		This->dsound->buffers = NULL;
-        }
-	RtlReleaseResource(&(This->dsound->lock));
+	DSOUND_RemoveBuffer(This->dsound, This);
 
 	DeleteCriticalSection(&(This->lock));
 
@@ -979,8 +964,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 		return E_NOINTERFACE;
 	}
 
-	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ||
-	     IsEqualGUID( &IID_IDirectSoundNotify8, riid ) ) {
+	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
 		if (!This->notify)
 			IDirectSoundNotifyImpl_Create(This, &(This->notify));
 		if (This->notify) {
@@ -1188,6 +1172,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 				}
 				dsb->buffer->ref = 1;
 			}
+			err = DS_OK;
 		}
 	}
 
@@ -1231,37 +1216,23 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	InitializeCriticalSection(&(dsb->lock));
         dsb->lock.DebugInfo->Spare[1] = (DWORD)"DSOUNDBUFFER_lock";
 
-	/* register buffer */
-	RtlAcquireResourceExclusive(&(ds->lock), TRUE);
+	/* register buffer if not primary */
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
-		IDirectSoundBufferImpl **newbuffers;
-		if (ds->buffers)
-			newbuffers = HeapReAlloc(GetProcessHeap(),0,ds->buffers,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
-		else
-			newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
-
-		if (newbuffers) {
-			ds->buffers = newbuffers;
-			ds->buffers[ds->nrofbuffers] = dsb;
-			ds->nrofbuffers++;
-			TRACE("buffer count is now %d\n", ds->nrofbuffers);
-		} else {
-			ERR("out of memory for buffer list! Current buffer count is %d\n", ds->nrofbuffers);
+		err = DSOUND_AddBuffer(ds, dsb);
+		if (err != DS_OK) {
 			if (dsb->buffer->memory)
 				HeapFree(GetProcessHeap(),0,dsb->buffer->memory);
 			if (dsb->buffer)
 				HeapFree(GetProcessHeap(),0,dsb->buffer);
 			DeleteCriticalSection(&(dsb->lock));
-			RtlReleaseResource(&(ds->lock));
 			HeapFree(GetProcessHeap(),0,dsb->pwfx);
 			HeapFree(GetProcessHeap(),0,dsb);
-			*pdsb = NULL;
-			return DSERR_OUTOFMEMORY;
+			dsb = NULL;
 		}
 	}
-	RtlReleaseResource(&(ds->lock));
+
 	*pdsb = dsb;
-	return S_OK;
+	return err;
 }
 
 HRESULT WINAPI IDirectSoundBufferImpl_Destroy(

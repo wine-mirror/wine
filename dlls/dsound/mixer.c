@@ -838,11 +838,9 @@ static DWORD DSOUND_MixToPrimary(IDirectSoundImpl *dsound, DWORD playpos, DWORD 
 	IDirectSoundBufferImpl	*dsb;
 
 	TRACE("(%ld,%ld,%ld,%d)\n", playpos, writepos, mixlen, recover);
-	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
+	for (i = 0; i < dsound->nrofbuffers; i++) {
 		dsb = dsound->buffers[i];
 
-		if (!dsb || !dsb->lpVtbl)
-			continue;
 		if (dsb->buflen && dsb->state && !dsb->hwbuf) {
 			TRACE("Checking %p, mixlen=%ld\n", dsb, mixlen);
 			EnterCriticalSection(&(dsb->lock));
@@ -853,12 +851,12 @@ static DWORD DSOUND_MixToPrimary(IDirectSoundImpl *dsound, DWORD playpos, DWORD 
 			} else {
 				if ((dsb->state == STATE_STARTING) || recover) {
 					dsb->primary_mixpos = writepos;
-					memcpy(&dsb->cvolpan, &dsb->volpan, sizeof(dsb->cvolpan));
+					dsb->cvolpan = dsb->volpan;
 					dsb->need_remix = FALSE;
 				}
 				else if (dsb->need_remix) {
 					DSOUND_MixCancel(dsb, writepos, TRUE);
-					memcpy(&dsb->cvolpan, &dsb->volpan, sizeof(dsb->cvolpan));
+					dsb->cvolpan = dsb->volpan;
 					dsb->need_remix = FALSE;
 				}
 				len = DSOUND_MixOne(dsb, playpos, writepos, mixlen);
@@ -885,11 +883,9 @@ static void DSOUND_MixReset(IDirectSoundImpl *dsound, DWORD writepos)
 	nfiller = dsound->pwfx->wBitsPerSample == 8 ? 128 : 0;
 
 	/* reset all buffer mix positions */
-	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
+	for (i = 0; i < dsound->nrofbuffers; i++) {
 		dsb = dsound->buffers[i];
 
-		if (!dsb || !dsb->lpVtbl)
-			continue;
 		if (dsb->buflen && dsb->state && !dsb->hwbuf) {
 			TRACE("Resetting %p\n", dsb);
 			EnterCriticalSection(&(dsb->lock));
@@ -900,7 +896,7 @@ static void DSOUND_MixReset(IDirectSoundImpl *dsound, DWORD writepos)
 				/* nothing */
 			} else {
 				DSOUND_MixCancel(dsb, writepos, FALSE);
-				memcpy(&dsb->cvolpan, &dsb->volpan, sizeof(dsb->cvolpan));
+				dsb->cvolpan = dsb->volpan;
 				dsb->need_remix = FALSE;
 			}
 			LeaveCriticalSection(&(dsb->lock));
@@ -960,7 +956,7 @@ void DSOUND_PerformMix(IDirectSoundImpl *dsound)
 	BOOL forced;
 	HRESULT hres;
 
-	TRACE("()\n");
+	TRACE("(%p)\n", dsound);
 
 	/* the sound of silence */
 	nfiller = dsound->pwfx->wBitsPerSample == 8 ? 128 : 0;
@@ -1123,8 +1119,10 @@ void DSOUND_PerformMix(IDirectSoundImpl *dsound)
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
         IDirectSoundImpl* This = (IDirectSoundImpl*)dwUser;
+	DWORD start_time =  GetTickCount();
+        DWORD end_time;
 	TRACE("(%d,%d,0x%lx,0x%lx,0x%lx)\n",timerID,msg,dwUser,dw1,dw2);
-        TRACE("entering at %ld\n", GetTickCount());
+        TRACE("entering at %ld\n", start_time);
 
 	if (dsound != This) {
 		ERR("dsound died without killing us?\n");
@@ -1133,15 +1131,15 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWOR
 		return;
 	}
 
-	RtlAcquireResourceShared(&(This->lock), TRUE);
+	RtlAcquireResourceShared(&(This->buffer_list_lock), TRUE);
 
-	if (This->ref) {
+	if (This->ref)
 		DSOUND_PerformMix(This);
-	}
 
-	RtlReleaseResource(&(This->lock));
+	RtlReleaseResource(&(This->buffer_list_lock));
 
-	TRACE("completed processing at %ld\n", GetTickCount());
+	end_time = GetTickCount();
+	TRACE("completed processing at %ld, duration = %ld\n", end_time, end_time - start_time);
 }
 
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)

@@ -89,7 +89,7 @@ struct IDirectSoundImpl
     BOOL                        need_remix;
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
-    RTL_RWLOCK                  lock;
+    RTL_RWLOCK                  buffer_list_lock;
     CRITICAL_SECTION            mixlock;
     PrimaryBufferImpl*          primary;
     DSBUFFERDESC                dsbd;
@@ -451,6 +451,11 @@ extern IClassFactoryImpl DSOUND_FULLDUPLEX_CF;
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
+
+/* dsound.c */
+
+HRESULT DSOUND_AddBuffer(IDirectSoundImpl * pDS, IDirectSoundBufferImpl * pDSB);
+HRESULT DSOUND_RemoveBuffer(IDirectSoundImpl * pDS, IDirectSoundBufferImpl * pDSB);
 
 /* primary.c */
 

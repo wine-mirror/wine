@@ -681,6 +681,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_DETACH:
         TRACE("DLL_PROCESS_DETACH\n");
         break;
+    case DLL_THREAD_ATTACH:
+        TRACE("DLL_THREAD_ATTACH\n");
+        break;
+    case DLL_THREAD_DETACH:
+        TRACE("DLL_THREAD_DETACH\n");
+        break;
     default:
         TRACE("UNKNOWN REASON\n");
         break;

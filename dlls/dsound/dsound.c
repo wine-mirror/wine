@@ -273,8 +273,8 @@ static ULONG WINAPI IDirectSoundImpl_Release(
         /* The sleep above should have allowed the timer process to expire
          * but try to grab the lock just in case. Can't hold lock because
          * IDirectSoundBufferImpl_Destroy also grabs the lock */
-        RtlAcquireResourceShared(&(This->lock), TRUE);
-        RtlReleaseResource(&(This->lock));
+        RtlAcquireResourceShared(&(This->buffer_list_lock), TRUE);
+        RtlReleaseResource(&(This->buffer_list_lock));
 
         /* It is allowed to release this object even when buffers are playing */
         if (This->buffers) {
@@ -301,7 +301,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(
         if (This->driver)
             IDsDriver_Release(This->driver);
 
-        RtlDeleteResource(&This->lock);
+        RtlDeleteResource(&This->buffer_list_lock);
         DeleteCriticalSection(&This->mixlock);
         HeapFree(GetProcessHeap(),0,This);
         dsound = NULL;
@@ -409,7 +409,7 @@ static HRESULT WINAPI DSOUND_CreateSoundBuffer(
         if (from8 && (dsbd->dwFlags & DSBCAPS_CTRL3D) && (dsbd->lpwfxFormat->nChannels != 1)) {
             WARN("invalid parameter: 3D buffer format must be mono\n");
             return DSERR_INVALIDPARAM;
-        } 
+        }
 
         hres = IDirectSoundBufferImpl_Create(This, (IDirectSoundBufferImpl**)&dsb, dsbd);
         if (dsb) {
@@ -599,39 +599,24 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 
     InitializeCriticalSection(&(dsb->lock));
     dsb->lock.DebugInfo->Spare[1] = (DWORD)"DSOUNDBUFFER_lock";
-    /* register buffer */
-    RtlAcquireResourceExclusive(&(This->lock), TRUE);
-    {
-        IDirectSoundBufferImpl **newbuffers;
-        if (This->buffers)
-            newbuffers = HeapReAlloc(GetProcessHeap(),0,This->buffers,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
-        else
-            newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl**)*(This->nrofbuffers+1));
 
-        if (newbuffers) {
-            This->buffers = newbuffers;
-            This->buffers[This->nrofbuffers] = dsb;
-            This->nrofbuffers++;
-            TRACE("buffer count is now %d\n", This->nrofbuffers);
-        } else {
-            ERR("out of memory for buffer list! Current buffer count is %d\n", This->nrofbuffers);
-            IDirectSoundBuffer8_Release(psb);
-            DeleteCriticalSection(&(dsb->lock));
-            RtlReleaseResource(&(This->lock));
-            HeapFree(GetProcessHeap(),0,dsb->buffer);
-            HeapFree(GetProcessHeap(),0,dsb->pwfx);
-            HeapFree(GetProcessHeap(),0,dsb);
-            *ppdsb = 0;
-            return DSERR_OUTOFMEMORY;
-        }
+    /* register buffer */
+    hres = DSOUND_AddBuffer(This, dsb);
+    if (hres != DS_OK) {
+        IDirectSoundBuffer8_Release(psb);
+        DeleteCriticalSection(&(dsb->lock));
+        HeapFree(GetProcessHeap(),0,dsb->buffer);
+        HeapFree(GetProcessHeap(),0,dsb->pwfx);
+        HeapFree(GetProcessHeap(),0,dsb);
+        *ppdsb = 0;
+    } else {
+        hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
+        if (*ppdsb) {
+            dsb->dsb = (SecondaryBufferImpl*)*ppdsb;
+            IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)*ppdsb);
+        } else
+            WARN("SecondaryBufferImpl_Create failed\n");
     }
-    RtlReleaseResource(&(This->lock));
-    hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
-    if (*ppdsb) {
-        dsb->dsb = (SecondaryBufferImpl*)*ppdsb;
-        IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER8)*ppdsb);
-    } else
-        WARN("SecondaryBufferImpl_Create failed\n");
 
     return hres;
 }
@@ -973,7 +958,8 @@ HRESULT WINAPI IDirectSoundImpl_Create(
 
     InitializeCriticalSection(&(pDS->mixlock));
     pDS->mixlock.DebugInfo->Spare[1] = (DWORD)"DSOUND_mixlock";
-    RtlInitializeResource(&(pDS->lock));
+
+    RtlInitializeResource(&(pDS->buffer_list_lock));
 
     *ppDS = (LPDIRECTSOUND8)pDS;
 
@@ -1834,6 +1820,78 @@ HRESULT WINAPI DirectSoundCreate8(
     hr = DSOUND_Create8(lpcGUID, ppDS, pUnkOuter);
     if (hr == DS_OK)
         IDirectSoundImpl_Initialize((LPDIRECTSOUND8)dsound, lpcGUID);
+
+    return hr;
+}
+
+/*
+ * Add secondary buffer to buffer list.
+ * Gets exclusive access to buffer for writing.
+ */
+HRESULT DSOUND_AddBuffer(
+    IDirectSoundImpl * pDS,
+    IDirectSoundBufferImpl * pDSB)
+{
+    IDirectSoundBufferImpl **newbuffers;
+    HRESULT hr = DS_OK;
+
+    TRACE("(%p, %p)\n", pDS, pDSB);
+
+    RtlAcquireResourceExclusive(&(pDS->buffer_list_lock), TRUE);
+
+    if (pDS->buffers)
+        newbuffers = HeapReAlloc(GetProcessHeap(),0,pDS->buffers,sizeof(IDirectSoundBufferImpl*)*(pDS->nrofbuffers+1));
+    else
+        newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(pDS->nrofbuffers+1));
+
+    if (newbuffers) {
+        pDS->buffers = newbuffers;
+        pDS->buffers[pDS->nrofbuffers] = pDSB;
+        pDS->nrofbuffers++;
+        TRACE("buffer count is now %d\n", pDS->nrofbuffers);
+    } else {
+        ERR("out of memory for buffer list! Current buffer count is %d\n", pDS->nrofbuffers);
+        hr = DSERR_OUTOFMEMORY;
+    }
+
+    RtlReleaseResource(&(pDS->buffer_list_lock));
+
+    return hr;
+}
+
+/*
+ * Remove secondary buffer from buffer list.
+ * Gets exclusive access to buffer for writing.
+ */
+HRESULT DSOUND_RemoveBuffer(
+    IDirectSoundImpl * pDS,
+    IDirectSoundBufferImpl * pDSB)
+{
+    int i;
+    HRESULT hr = DS_OK;
+
+    TRACE("(%p, %p)\n", pDS, pDSB);
+
+    RtlAcquireResourceExclusive(&(pDS->buffer_list_lock), TRUE);
+
+    for (i = 0; i < pDS->nrofbuffers; i++)
+        if (pDS->buffers[i] == pDSB)
+            break;
+
+    if (i < pDS->nrofbuffers) {
+        /* Put the last buffer of the list in the (now empty) position */
+        pDS->buffers[i] = pDS->buffers[pDS->nrofbuffers - 1];
+        pDS->nrofbuffers--;
+        pDS->buffers = HeapReAlloc(GetProcessHeap(),0,pDS->buffers,sizeof(LPDIRECTSOUNDBUFFER8)*pDS->nrofbuffers);
+        TRACE("buffer count is now %d\n", pDS->nrofbuffers);
+    }
+
+    if (pDS->nrofbuffers == 0) {
+        HeapFree(GetProcessHeap(),0,pDS->buffers);
+        pDS->buffers = NULL;
+    }
+
+    RtlReleaseResource(&(pDS->buffer_list_lock));
 
     return hr;
 }
