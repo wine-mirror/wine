@@ -155,9 +155,14 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
                        INT heightSrc, const void *bits,
                        const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
-    DC *dc = DC_GetDCUpdate( hdc );
-    if(!dc) return FALSE;
+    DC *dc;
 
+    if (!bits || !info)
+	return 0;
+
+    dc = DC_GetDCUpdate( hdc );
+    if(!dc) return FALSE;
+    
     if(dc->funcs->pStretchDIBits)
     {
         heightSrc = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
