@@ -17,10 +17,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include "config.h"
+#include "wine/port.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "dmscript_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
+
 
 /*****************************************************************************
  * IDirectMusicScriptImpl implementation
@@ -63,6 +71,10 @@ ULONG WINAPI IDirectMusicScriptImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
+	        if (NULL != This->pHeader) HeapFree(GetProcessHeap(), 0, This->pHeader);
+	        if (NULL != This->pVersion) HeapFree(GetProcessHeap(), 0, This->pVersion);
+	        if (NULL != This->pwzLanguage) HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
+	        if (NULL != This->pwzSource) HeapFree(GetProcessHeap(), 0, This->pwzSource);
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -100,7 +112,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicScript_Init (LPDIRECTMUSICSCRI
 HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicScript_CallRoutine (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszRoutineName, DMUS_SCRIPT_ERRORINFO* pErrorInfo) {
 	ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
 	FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszRoutineName), pErrorInfo);
-	return S_OK;
+	return E_NOTIMPL;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicScript_SetVariableVariant (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, VARIANT varValue, BOOL fSetRef, DMUS_SCRIPT_ERRORINFO* pErrorInfo) {
@@ -412,101 +424,133 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_IsDirty (LPPERSISTSTREAM if
 HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
 	ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
 
-	FOURCC chunkID;
-	DWORD chunkSize, StreamSize, StreamCount, ListSize[3], ListCount[3];
+	DMUS_PRIVATE_CHUNK Chunk;
+	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
 
 	FIXME("(%p, %p): Loading not implemented yet\n", This, pStm);
-	IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
-	IStream_Read (pStm, &chunkSize, sizeof(DWORD), NULL);
-	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
-	switch (chunkID) {	
+	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+	TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+	switch (Chunk.fccID) {	
 		case FOURCC_RIFF: {
-			IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);				
-			TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(chunkID));
-			StreamSize = chunkSize - sizeof(FOURCC);
+			IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
+			TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
+			StreamSize = Chunk.dwSize - sizeof(FOURCC);
 			StreamCount = 0;
-			switch (chunkID) {
+			switch (Chunk.fccID) {
 				case DMUS_FOURCC_SCRIPT_FORM: {
 					TRACE_(dmfile)(": script form\n");
 					do {
-						IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
-						IStream_Read (pStm, &chunkSize, sizeof(FOURCC), NULL);
-						StreamCount += sizeof(FOURCC) + sizeof(DWORD) + chunkSize;
-						TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
-						switch (chunkID) {
+						IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+						StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
+						TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+						switch (Chunk.fccID) { 
+						        case DMUS_FOURCC_SCRIPT_CHUNK: {
+							        TRACE_(dmfile)(": script header chunk\n");
+								This->pHeader = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								IStream_Read (pStm, This->pHeader, Chunk.dwSize, NULL);
+								break;
+						        }
+						        case DMUS_FOURCC_SCRIPTVERSION_CHUNK: {
+							        TRACE_(dmfile)(": script version chunk\n");
+								This->pVersion = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								IStream_Read (pStm, This->pVersion, Chunk.dwSize, NULL); 
+								TRACE_(dmfile)("version: 0x%08lx.0x%08lx \n", This->pVersion->dwVersionMS, This->pVersion->dwVersionLS);
+								break;
+						        }
+						        case DMUS_FOURCC_SCRIPTLANGUAGE_CHUNK: {
+							        TRACE_(dmfile)(": script language chunk\n");
+								This->pwzLanguage = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								IStream_Read (pStm, This->pwzLanguage, Chunk.dwSize, NULL); 
+								TRACE_(dmfile)("using language: %s \n", debugstr_w(This->pwzLanguage));
+								break;
+						        }
+						        case DMUS_FOURCC_SCRIPTSOURCE_CHUNK: {
+							        TRACE_(dmfile)(": script source chunk\n");
+								This->pwzSource = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, Chunk.dwSize);
+								IStream_Read (pStm, This->pwzSource, Chunk.dwSize, NULL); 
+								if (TRACE_ON(dmscript)) {
+								    int count = WideCharToMultiByte(CP_ACP, 0, This->pwzSource, -1, NULL, 0, NULL, NULL);
+								    LPSTR str = HeapAlloc(GetProcessHeap (), 0, count);
+								    WideCharToMultiByte(CP_ACP, 0, This->pwzSource, -1, str, count, NULL, NULL);
+								    str[count-1] = '\n';
+								    TRACE("source:\n");
+								    write( 2, str, count );
+								    HeapFree(GetProcessHeap(), 0, str);
+								}
+								break;
+						        }
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
 								This->pDesc->dwValidData |= DMUS_OBJ_OBJECT;
-								IStream_Read (pStm, &This->pDesc->guidObject, chunkSize, NULL);
+								IStream_Read (pStm, &This->pDesc->guidObject, Chunk.dwSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
 								This->pDesc->dwValidData |= DMUS_OBJ_VERSION;
-								IStream_Read (pStm, &This->pDesc->vVersion, chunkSize, NULL);
+								IStream_Read (pStm, &This->pDesc->vVersion, Chunk.dwSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_CATEGORY_CHUNK: {
 								TRACE_(dmfile)(": category chunk\n");
 								This->pDesc->dwValidData |= DMUS_OBJ_CATEGORY;
-								IStream_Read (pStm, This->pDesc->wszCategory, chunkSize, NULL);
+								IStream_Read (pStm, This->pDesc->wszCategory, Chunk.dwSize, NULL);
 								break;
 							}
 							case FOURCC_LIST: {
-								IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);				
-								TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(chunkID));
-								ListSize[0] = chunkSize - sizeof(FOURCC);
+								IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
+								TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
+								ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
 								ListCount[0] = 0;
-								switch (chunkID) {
+								switch (Chunk.fccID) {
 									case DMUS_FOURCC_UNFO_LIST: {
 										TRACE_(dmfile)(": UNFO list\n");
 										do {
-											IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
-											IStream_Read (pStm, &chunkSize, sizeof(FOURCC), NULL);
-											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + chunkSize;
-											TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
-											switch (chunkID) {
+											IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
+											TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+											switch (Chunk.fccID) {
 												/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
                                               (though strings seem to be valid unicode) */
 												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
 													This->pDesc->dwValidData |= DMUS_OBJ_NAME;
-													IStream_Read (pStm, This->pDesc->wszName, chunkSize, NULL);
+													IStream_Read (pStm, This->pDesc->wszName, Chunk.dwSize, NULL);
 													break;
 												}
 												case mmioFOURCC('I','A','R','T'):
 												case DMUS_FOURCC_UART_CHUNK: {
 													TRACE_(dmfile)(": artist chunk (ignored)\n");
-													liMove.QuadPart = chunkSize;
+													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;
 												}
 												case mmioFOURCC('I','C','O','P'):
 												case DMUS_FOURCC_UCOP_CHUNK: {
 													TRACE_(dmfile)(": copyright chunk (ignored)\n");
-													liMove.QuadPart = chunkSize;
+													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;
 												}
 												case mmioFOURCC('I','S','B','J'):
 												case DMUS_FOURCC_USBJ_CHUNK: {
 													TRACE_(dmfile)(": subject chunk (ignored)\n");
-													liMove.QuadPart = chunkSize;
+													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;
 												}
 												case mmioFOURCC('I','C','M','T'):
 												case DMUS_FOURCC_UCMT_CHUNK: {
 													TRACE_(dmfile)(": comment chunk (ignored)\n");
-													liMove.QuadPart = chunkSize;
+													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;
 												}
 												default: {
 													TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
-													liMove.QuadPart = chunkSize;
+													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;						
 												}
@@ -517,7 +561,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 									}
 									default: {
 										TRACE_(dmfile)(": unknown (skipping)\n");
-										liMove.QuadPart = chunkSize - sizeof(FOURCC);
+										liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
 										IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 										break;						
 									}
@@ -526,7 +570,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 							}	
 							default: {
 								TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
-								liMove.QuadPart = chunkSize;
+								liMove.QuadPart = Chunk.dwSize;
 								IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 								break;						
 							}
@@ -547,7 +591,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 		}
 		default: {
 			TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
-			liMove.QuadPart = chunkSize;
+			liMove.QuadPart = Chunk.dwSize;
 			IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
 			return E_FAIL;
 		}

@@ -78,6 +78,10 @@ struct IDirectMusicScriptImpl {
 
   /* IDirectMusicScriptImpl fields */
   LPDMUS_OBJECTDESC pDesc;
+  DMUS_IO_SCRIPT_HEADER* pHeader;
+  DMUS_IO_VERSION* pVersion;
+  WCHAR* pwzLanguage;
+  WCHAR* pwzSource;
 };
 
 /* IUnknown: */
