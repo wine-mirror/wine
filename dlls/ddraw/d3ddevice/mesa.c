@@ -644,10 +644,13 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
 	} break;
 
 	default:
-	    ERR("Unknown trasnform type %08x !!!\n", dtstTransformStateType);
+	    ERR("Unknown transform type %08x !!!\n", dtstTransformStateType);
 	    break;
     }
     LEAVE_GL();
+
+    /* And set the 'matrix changed' flag */
+    glThis->matrices_changed = TRUE;
 
     return DD_OK;
 }
@@ -695,7 +698,9 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
 					   BOOLEAN vertex_transformed,
 					   BOOLEAN vertex_lit) {
     /* Puts GL in the correct lighting / transformation mode */
-    if ((glThis->last_vertices_transformed == TRUE) && (vertex_transformed == FALSE)) {
+    if ((vertex_transformed == FALSE) && 
+	((glThis->last_vertices_transformed == TRUE) ||
+	 (glThis->matrices_changed == TRUE))) {
         /* Need to put the correct transformation again if we go from Transformed
 	   vertices to non-transformed ones.
 	*/
@@ -704,23 +709,30 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
 	glMultMatrixf((float *) glThis->world_mat);
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf((float *) glThis->proj_mat);
-    } else if ((glThis->last_vertices_transformed == FALSE) && (vertex_transformed == TRUE)) {
-        GLdouble height, width, minZ, maxZ, minX, minY;
-      
+    } else if ((vertex_transformed == TRUE) &&
+	       ((glThis->last_vertices_transformed == FALSE) ||
+		(glThis->matrices_changed == TRUE))) {
+        GLfloat height, width;
+	GLfloat trans_mat[16];
+	
+	width = glThis->parent.surface->surface_desc.dwWidth;
+	height = glThis->parent.surface->surface_desc.dwHeight;
+
+	/* The X axis is straighforward.. For the Y axis, we need to convert 'D3D' screen coordinates
+	   to OpenGL screen coordinates (ie the upper left corner is not the same).
+	   For Z, the mystery is what should it be mapped to ? Ie should the resulting range be between
+	   -1.0 and 1.0 (as the X and Y coordinates) or between 0.0 and 1.0 ? */
+	trans_mat[ 0] = 2.0 / width;  trans_mat[ 4] = 0.0;  trans_mat[ 8] = 0.0; trans_mat[12] = -1.0;
+	trans_mat[ 1] = 0.0; trans_mat[ 5] = -2.0 / height; trans_mat[ 9] = 0.0; trans_mat[13] =  1.0;
+	trans_mat[ 2] = 0.0; trans_mat[ 6] = 0.0; trans_mat[10] = 1.0;           trans_mat[14] = -1.0;
+	trans_mat[ 3] = 0.0; trans_mat[ 7] = 0.0; trans_mat[11] = 0.0;           trans_mat[15] =  1.0;
+
         glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	
-	minX   = (GLdouble) glThis->parent.active_viewport.dwX;
-	minY   = (GLdouble) glThis->parent.active_viewport.dwY;
-	height = (GLdouble) glThis->parent.active_viewport.dwHeight;
-	width  = (GLdouble) glThis->parent.active_viewport.dwWidth;
-	minZ   = (GLdouble) glThis->parent.active_viewport.dvMinZ;
-	maxZ   = (GLdouble) glThis->parent.active_viewport.dvMaxZ;
-
-	glOrtho(minX, width, height, minY, -minZ, -maxZ);
+	glLoadMatrixf(trans_mat);
     }
+    glThis->matrices_changed = FALSE;
     
     if ((glThis->last_vertices_lit == TRUE) && (vertex_lit == FALSE)) {
         glEnable(GL_LIGHTING);
@@ -900,12 +912,15 @@ inline static void handle_xyz(D3DVALUE *coords) {
 }
 inline static void handle_xyzrhw(D3DVALUE *coords) {
     if (coords[3] < 0.00001)
-        glVertex3f(coords[0], coords[1], coords[2]);
-    else
-        glVertex4f(coords[0] / coords[3],
-		   coords[1] / coords[3],
-		   coords[2] / coords[3],
-		   1.0 / coords[3]);
+        glVertex3fv(coords);
+    else {
+        GLfloat w = 1.0 / coords[3];
+	
+        glVertex4f(coords[0] * w,
+		   coords[1] * w,
+		   coords[2] * w,
+		   w);
+    }
 }
 inline static void handle_normal(D3DVALUE *coords) {
     glNormal3fv(coords);
@@ -1148,7 +1163,7 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
     }
     for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
         strided.textureCoords[tex_index].lpvData  = ((char *) lpvVertices) + current_offset;
-        current_offset += 2*sizeof(D3DVALUE);
+        current_offset += 2 * sizeof(D3DVALUE);
     }
     strided.position.dwStride = current_offset;
     strided.normal.dwStride   = current_offset;
@@ -1837,7 +1852,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     gl_object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
     gl_object->view_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
     gl_object->proj_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
-
+    gl_object->matrices_changed = TRUE;
+    
     memcpy(gl_object->world_mat, id_mat, 16 * sizeof(float));
     memcpy(gl_object->view_mat , id_mat, 16 * sizeof(float));
     memcpy(gl_object->proj_mat , id_mat, 16 * sizeof(float));

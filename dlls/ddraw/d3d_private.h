@@ -122,6 +122,9 @@ struct IDirect3DViewportImpl
 
     /* Lights list */
     IDirect3DLightImpl *lights;
+
+    /* Background material */
+    IDirect3DMaterialImpl *background;
 };
 
 /*****************************************************************************

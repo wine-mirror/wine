@@ -27,7 +27,6 @@
 #include "wine/debug.h"
 
 #include "d3d_private.h"
-#include "mesa_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
@@ -193,7 +192,15 @@ Main_IDirect3DViewportImpl_3_2_1_SetBackground(LPDIRECT3DVIEWPORT3 iface,
                                                D3DMATERIALHANDLE hMat)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
-    FIXME("(%p/%p)->(%08lx): stub!\n", This, iface, (DWORD) hMat);
+    TRACE("(%p/%p)->(%08lx)\n", This, iface, (DWORD) hMat);
+    
+    This->background = (IDirect3DMaterialImpl *) hMat;
+    TRACE(" setting background color : %f %f %f %f\n",
+	  This->background->mat.u.diffuse.u1.r,
+	  This->background->mat.u.diffuse.u2.g,
+	  This->background->mat.u.diffuse.u3.b,
+	  This->background->mat.u.diffuse.u4.a);
+
     return DD_OK;
 }
 
@@ -233,12 +240,27 @@ Main_IDirect3DViewportImpl_3_2_1_Clear(LPDIRECT3DVIEWPORT3 iface,
                                        DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
+    DWORD color = 0x00000000;
+    
     TRACE("(%p/%p)->(%08lx,%p,%08lx)\n", This, iface, dwCount, lpRects, dwFlags);
     if (This->active_device == NULL) {
         ERR(" Trying to clear a viewport not attached to a device !\n");
 	return D3DERR_VIEWPORTHASNODEVICE;
     }
-    return This->active_device->clear(This->active_device, dwCount, lpRects, dwFlags, 0x00000000, 0.0, 0x00000000);
+    if (dwFlags & D3DCLEAR_TARGET) {
+        if (This->background == NULL) {
+	    ERR(" Trying to clear the color buffer without background material !\n");
+	} else {
+	    color = 
+	      ((int) ((This->background->mat.u.diffuse.u1.r) * 255) << 16) |
+	      ((int) ((This->background->mat.u.diffuse.u2.g) * 255) <<  8) |
+	      ((int) ((This->background->mat.u.diffuse.u3.b) * 255) <<  0) |
+	      ((int) ((This->background->mat.u.diffuse.u4.a) * 255) << 24);
+	}
+    }
+    return This->active_device->clear(This->active_device, dwCount, lpRects, 
+				      dwFlags & (D3DCLEAR_ZBUFFER | D3DCLEAR_TARGET),
+				      color, 1.0, 0x00000000);
 }
 
 HRESULT WINAPI
