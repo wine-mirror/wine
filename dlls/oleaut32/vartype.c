@@ -1359,7 +1359,7 @@ HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG *piOut)
  * Convert a VT_I2 to a VT_I4.
  *
  * PARAMS
- *  iIn     [I] Source
+ *  sIn     [I] Source
  *  piOut   [O] Destination
  *
  * RETURNS
