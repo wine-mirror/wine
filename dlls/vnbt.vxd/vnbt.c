@@ -1,5 +1,5 @@
 /*
- * VNB VxD implementation
+ * VNBT VxD implementation
  *
  * Copyright 2003 Juan Lang
  *
@@ -20,25 +20,11 @@
 
 #include "config.h"
 
-#include <stdlib.h>
 #include <stdarg.h>
-#include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "iphlpapi.h"
+#include "winsock2.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);
@@ -73,11 +59,11 @@ typedef struct _nbtTable
 /***********************************************************************
  *           DeviceIoControl   (VNB.VXD.@)
  */
-BOOL WINAPI VNB_DeviceIoControl(DWORD dwIoControlCode,
-                                LPVOID lpvInBuffer, DWORD cbInBuffer,
-                                LPVOID lpvOutBuffer, DWORD cbOutBuffer,
-                                LPDWORD lpcbBytesReturned,
-                                LPOVERLAPPED lpOverlapped)
+BOOL WINAPI VNBT_DeviceIoControl(DWORD dwIoControlCode,
+                                 LPVOID lpvInBuffer, DWORD cbInBuffer,
+                                 LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+                                 LPDWORD lpcbBytesReturned,
+                                 LPOVERLAPPED lpOverlapped)
 {
     DWORD error;
 

@@ -1599,7 +1599,7 @@ dlls/uxtheme/Makefile
 dlls/vdhcp.vxd/Makefile
 dlls/version/Makefile
 dlls/vmm.vxd/Makefile
-dlls/vnb.vxd/Makefile
+dlls/vnbt.vxd/Makefile
 dlls/vnetbios.vxd/Makefile
 dlls/vtdapi.vxd/Makefile
 dlls/vwin32.vxd/Makefile
