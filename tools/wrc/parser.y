@@ -1140,7 +1140,7 @@ gen_exctrl
 	;
 
 lab_exctrl
-	: tSTRING opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style_pair opt_data {
+	: tSTRING opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style_pair helpid opt_data {
 		$$=new_control();
 		$$->title = new_name_id();
 		$$->title->type = name_str;
@@ -1163,12 +1163,12 @@ lab_exctrl
 			free($12);
 		}
 
-		$$->extra = $13;
+		$$->extra = $14;
 		}
 	;
 
 exctrl_desc
-	: expr ',' expr ',' expr ',' expr ',' expr optional_style_pair opt_data {
+	: expr ',' expr ',' expr ',' expr ',' expr optional_style_pair helpid opt_data {
 		$$ = new_control();
 		$$->id = $1;
 		$$->x = $3;
@@ -1187,7 +1187,7 @@ exctrl_desc
 			}
 			free($10);
 		}
-		$$->extra = $11;
+		$$->extra = $12;
 		}
 	;
 
