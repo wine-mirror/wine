@@ -109,7 +109,7 @@ static const WCHAR cszRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
 static const WCHAR cszTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 static const WCHAR cszDatabase[]={'D','A','T','A','B','A','S','E',0};
-static const WCHAR c_collen[] = {'C',':','\\',0};
+static const WCHAR c_colon[] = {'C',':','\\',0};
 static const WCHAR szProductCode[]=
 {'P','r','o','d','u','c','t','C','o','d','e',0};
  
@@ -1744,7 +1744,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     static const WCHAR szZero[] = { '0', 0 };
 
     MSI_SetPropertyW(package, szCosting, szZero);
-    MSI_SetPropertyW(package, cszRootDrive , c_collen);
+    MSI_SetPropertyW(package, cszRootDrive , c_colon);
 
     rc = MSI_DatabaseOpenViewW(package->db,Query_all,&view);
     if (rc != ERROR_SUCCESS)
@@ -5300,7 +5300,7 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
 
         TRACE("Registering %s\n",debugstr_w(filename));
         brc = CreateProcessW(NULL, filename, NULL, NULL, FALSE, 0, NULL,
-                  c_collen, &si, &info);
+                  c_colon, &si, &info);
 
         if (brc)
             msi_dialog_check_messages(package->dialog, info.hProcess);
@@ -5440,16 +5440,16 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {0},
     };
 
-    static const WCHAR path[] = {
-    'C',':','\\','W','i','n','d','o','w','s','\\',
+    static const WCHAR installerPathFmt[] = {
+    '%','s','\\',
     'I','n','s','t','a','l','l','e','r','\\',0};
     static const WCHAR fmt[] = {
-    'C',':','\\','W','i','n','d','o','w','s','\\',
+    '%','s','\\',
     'I','n','s','t','a','l','l','e','r','\\',
     '%','x','.','m','s','i',0};
     static const WCHAR szLocalPackage[]=
          {'L','o','c','a','l','P','a','c','k','a','g','e',0};
-    WCHAR packagefile[MAX_PATH];
+    WCHAR windir[MAX_PATH], path[MAX_PATH], packagefile[MAX_PATH];
     INT num,start;
 
     if (!package)
@@ -5486,7 +5486,9 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (!num) 
         num = 1;
     start = num;
-    sprintfW(packagefile,fmt,num);
+    GetWindowsDirectoryW(windir, sizeof(windir) / sizeof(windir[0]));
+    snprintfW(packagefile,sizeof(packagefile)/sizeof(packagefile[0]),fmt,
+     windir,num);
     do 
     {
         HANDLE handle = CreateFileW(packagefile,GENERIC_WRITE, 0, NULL,
@@ -5503,6 +5505,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         sprintfW(packagefile,fmt,num);
     } while (num != start);
 
+    snprintfW(path,sizeof(path)/sizeof(path[0]),installerPathFmt,windir);
     create_full_pathW(path);
     TRACE("Copying to local package %s\n",debugstr_w(packagefile));
     CopyFileW(package->PackagePath,packagefile,FALSE);
@@ -5583,14 +5586,14 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     'R','u','n','O','n','c','e','E','n','t','r','i','e','s',0};
 
     static const WCHAR msiexec_fmt[] = {
-    'C',':','\\','W','i','n','d','o','w','s','\\','S','y','s','t','e','m',
+    '%','s',
     '\\','M','s','i','E','x','e','c','.','e','x','e',' ','/','@',' ',
     '\"','%','s','\"',0};
     static const WCHAR install_fmt[] = {
     '/','I',' ','\"','%','s','\"',' ',
     'A','F','T','E','R','R','E','B','O','O','T','=','1',' ',
     'R','U','N','O','N','C','E','E','N','T','R','Y','=','\"','%','s','\"',0};
-    WCHAR buffer[256];
+    WCHAR buffer[256], sysdir[MAX_PATH];
     HKEY hkey,hukey;
     LPWSTR productcode;
     WCHAR  squished_pc[100];
@@ -5612,8 +5615,10 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
 
     squash_guid(productcode,squished_pc);
 
+    GetSystemDirectoryW(sysdir, sizeof(sysdir)/sizeof(sysdir[0]));
     RegCreateKeyW(HKEY_LOCAL_MACHINE,RunOnce,&hkey);
-    sprintfW(buffer,msiexec_fmt,squished_pc);
+    snprintfW(buffer,sizeof(buffer)/sizeof(buffer[0]),msiexec_fmt,sysdir,
+     squished_pc);
 
     size = strlenW(buffer)*sizeof(WCHAR);
     RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPSTR)buffer,size);
