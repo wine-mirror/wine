@@ -2092,32 +2092,33 @@ INT WINAPI WSOCK32_setsockopt(SOCKET16 s, INT level, INT optname,
 	int fd = _get_sock_fd(s);
         int woptval;
 
-        if(optname == WS_SO_DONTLINGER) {
+        if(optname == WS_SO_DONTLINGER && level == WS_SOL_SOCKET) {
 	    /* This is unique to WinSock and takes special conversion */
             linger.l_onoff	= *((int*)optval) ? 0: 1;
             linger.l_linger	= 0;
             optname=SO_LINGER;
             optval = (char*)&linger;
             optlen = sizeof(struct linger);
+            level = SOL_SOCKET;
         }else{
             if (!convert_sockopt(&level, &optname)) {
 		SetLastError(WSAENOPROTOOPT);
 		close(fd);
 		return SOCKET_ERROR;
 	    }
-	}
-	if (optname == SO_LINGER && optval) {
-	    /* yes, uses unsigned short in both win16/win32 */
-	    linger.l_onoff	= ((UINT16*)optval)[0];
-	    linger.l_linger	= ((UINT16*)optval)[1];
-	    /* FIXME: what is documented behavior if SO_LINGER optval
-	       is null?? */
-	    optval = (char*)&linger;
-	    optlen = sizeof(struct linger);
-	} else if (optlen < sizeof(int)){
-	    woptval= *((INT16 *) optval);
-	    optval= (char*) &woptval;
-	    optlen=sizeof(int);
+            if (optname == SO_LINGER && optval) {
+                /* yes, uses unsigned short in both win16/win32 */
+                linger.l_onoff	= ((UINT16*)optval)[0];
+                linger.l_linger	= ((UINT16*)optval)[1];
+                /* FIXME: what is documented behavior if SO_LINGER optval
+                   is null?? */
+                optval = (char*)&linger;
+                optlen = sizeof(struct linger);
+            } else if (optlen < sizeof(int)){
+                woptval= *((INT16 *) optval);
+                optval= (char*) &woptval;
+                optlen=sizeof(int);
+            }
 	}
         if(optname == SO_RCVBUF && *(int*)optval < 2048) {
             WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(int*)optval );
