@@ -155,40 +155,13 @@ static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
         TEXTMETRICA tm;
         memset(&tm,0,sizeof(tm));
         if (hFont) hFontPrev = SelectFont(hDC,hFont);
-        if (GetTextMetricsA(hDC,&tm))
+        if ((Success = GetTextMetricsA(hDC,&tm)))
         {
             pSize->cx = tm.tmAveCharWidth;
             pSize->cy = tm.tmHeight;
-
-            /* if variable width font */
-            if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH) 
-            {
-                SIZE total;
-                const char* szAvgChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-                /* Calculate a true average as opposed to the one returned 
-                 * by tmAveCharWidth. This works better when dealing with 
-                 * proportional spaced fonts and (more important) that's 
-                 * how Microsoft's dialog creation code calculates the size 
-                 * of the font
-                 */
-                if (GetTextExtentPointA(hDC,szAvgChars,sizeof(szAvgChars),&total))
-                {
-                   /* round up */
-                    pSize->cx = ((2*total.cx/sizeof(szAvgChars)) + 1)/2;
-                    Success = TRUE;
-                }
-            } 
-            else 
-            {
-                Success = TRUE;
-            }
-	    /* Use the text metrics */
-	    TRACE("Using tm: %ldx%ld (dlg: %ld x %ld) (%s)\n",
+            TRACE("Using tm: %ldx%ld (dlg: %ld x %ld) (%s)\n",
                   tm.tmAveCharWidth, tm.tmHeight, pSize->cx, pSize->cy,
-		  tm.tmPitchAndFamily & TMPF_FIXED_PITCH ? "variable" : "fixed");		
-	    pSize->cx = tm.tmAveCharWidth;
-	    pSize->cy = tm.tmHeight;
+                  tm.tmPitchAndFamily & TMPF_FIXED_PITCH ? "variable" : "fixed");
         }
         /* select the original font */
         if (hFontPrev) SelectFont(hDC,hFontPrev);
