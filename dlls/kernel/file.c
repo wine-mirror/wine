@@ -449,13 +449,15 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
                          buffer, bytesToWrite, poffset, NULL);
+
+    if (status != STATUS_PENDING && bytesWritten)
+        *bytesWritten = piosb->Information;
+
     if (status)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
     }
-    if (bytesWritten) *bytesWritten = piosb->Information;
-
     return TRUE;
 }
 

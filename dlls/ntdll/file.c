@@ -531,8 +531,12 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     while ((io_status->Information = read( unix_handle, buffer, length )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
-        if (errno == EFAULT) FIXME( "EFAULT handling broken for now\n" );
-	io_status->u.Status = FILE_GetNtStatus();
+        if (errno == EFAULT)
+        {
+            io_status->Information = 0;
+            io_status->u.Status = STATUS_ACCESS_VIOLATION;
+        }
+        else io_status->u.Status = FILE_GetNtStatus();
 	break;
     }
     wine_server_release_fd( hFile, unix_handle );
@@ -724,8 +728,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     while ((io_status->Information = write( unix_handle, buffer, length )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
-        if (errno == EFAULT) FIXME( "EFAULT handling broken for now\n" );
-        if (errno == ENOSPC) io_status->u.Status = STATUS_DISK_FULL;
+        if (errno == EFAULT)
+        {
+            io_status->Information = 0;
+            io_status->u.Status = STATUS_INVALID_USER_BUFFER;
+        }
+        else if (errno == ENOSPC) io_status->u.Status = STATUS_DISK_FULL;
         else io_status->u.Status = FILE_GetNtStatus();
         break;
     }

@@ -1265,6 +1265,61 @@ static void test_async_file_errors(void)
     /*printf("Error = %ld\n", GetLastError());*/
 }
 
+static void test_read_write(void)
+{
+    DWORD bytes, ret;
+    HANDLE hFile;
+    char temp_path[MAX_PATH];
+    char filename[MAX_PATH];
+    static const char prefix[] = "pfx";
+
+    ret = GetTempPathA(MAX_PATH, temp_path);
+    ok(ret != 0, "GetTempPathA error %ld\n", GetLastError());
+    ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, filename);
+    ok(ret != 0, "GetTempFileNameA error %ld\n", GetLastError());
+
+    hFile = CreateFileA(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                        CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA: error %ld\n", GetLastError());
+
+    SetLastError(12345678);
+    bytes = 12345678;
+    ret = WriteFile(hFile, NULL, 0, &bytes, NULL);
+    ok(ret && GetLastError() == 12345678,
+	"ret = %ld, error %ld\n", ret, GetLastError());
+    ok(!bytes, "bytes = %ld\n", bytes);
+
+    SetLastError(12345678);
+    bytes = 12345678;
+    ret = WriteFile(hFile, NULL, 10, &bytes, NULL);
+    ok((!ret && GetLastError() == ERROR_INVALID_USER_BUFFER) || /* Win2k */
+	(ret && GetLastError() == 12345678), /* Win9x */
+	"ret = %ld, error %ld\n", ret, GetLastError());
+    ok(!bytes || /* Win2k */
+	bytes == 10, /* Win9x */
+	"bytes = %ld\n", bytes);
+
+    SetLastError(12345678);
+    bytes = 12345678;
+    ret = ReadFile(hFile, NULL, 0, &bytes, NULL);
+    ok(ret && GetLastError() == 12345678,
+	"ret = %ld, error %ld\n", ret, GetLastError());
+    ok(!bytes, "bytes = %ld\n", bytes);
+
+    SetLastError(12345678);
+    bytes = 12345678;
+    ret = ReadFile(hFile, NULL, 10, &bytes, NULL);
+    ok(!ret && (GetLastError() == ERROR_NOACCESS || /* Win2k */
+		GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
+	"ret = %ld, error %ld\n", ret, GetLastError());
+    ok(!bytes, "bytes = %ld\n", bytes);
+
+    ok(CloseHandle(hFile), "CloseHandle: error %ld\n", GetLastError());
+    ok(DeleteFileA(filename), "DeleteFileA: error %ld\n", GetLastError());
+}
+
 START_TEST(file)
 {
     test__hread(  );
@@ -1292,4 +1347,5 @@ START_TEST(file)
     test_MapFile();
     test_GetFileType();
     test_async_file_errors();
+    test_read_write();
 }
