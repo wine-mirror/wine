@@ -3,9 +3,9 @@
 Wine is a program which allows running Microsoft Windows programs
 (including DOS, Windows 3.x and Win32 executables) on Unix.  It
 consists of a program loader which loads and executes a Microsoft
-Windows binary, and a library that implements Windows API calls using
-their Unix or X11 equivalents. The library may also be used for
-porting Win32 code into native Unix executables.
+Windows binary, and a library (called Winelib) that implements Windows
+API calls using their Unix or X11 equivalents.  The library may also
+be used for porting Win32 code into native Unix executables.
 
 Wine is free software, and its license (contained in the file LICENSE)
 is BSD style.  Basically, you can do anything with it except claim
@@ -20,8 +20,9 @@ directory (which contains this file), run:
 ./tools/wineinstall
 
 Run programs as "wine [options] program".  For more information and
-problem resolution, read the rest of this file, the Wine manpage,
-and the files in the documentation directory in the Wine source.
+problem resolution, read the rest of this file, the Wine man page,
+the files in the documentation directory in the Wine source, and
+especially the wealth of information found at http://www.winehq.com.
 
 3. REQUIREMENTS
 
@@ -44,7 +45,7 @@ FreeBSD info:
   On FreeBSD, you may want to apply an LDT sharing patch too
   (unless you are tracking -current where it finally has
   been committed just recently), and there also is a small sigtrap
-  fix thats needed for wine's debugger. (Actually now that its using
+  fix that's needed for wine's debugger. (Actually now that it's using
   ptrace() by default it may no longer make a difference but it still
   doesn't hurt...) And if you're running a system from the -stable
   branch older than Nov 15 1999, like a 3.3-RELEASE, then you also
@@ -131,18 +132,13 @@ before installing.
 If you want to build the documentation, you can run "make" in the
 documentation directory.
 
-Wine requires a configuration file named wine.conf. Its default
-location is /usr/local/etc, but you can supply a different name when
-configuring wine by using the --prefix or --sysconfdir options to
-./configure. You can also override the global configuration file with
-a file named "config" in your ~/.wine directory.
-
-The format of this file is explained in the man page. The file
-documentation/samples/config contains an example configuration file
-which has to be adapted and copied to one of the two locations
+Wine requires a configuration file named named "config" in your
+~/.wine directory. The format of this file is explained in the man
+page. The file documentation/samples/config contains an example
+configuration file which has to be adapted and copied to the location
 mentioned above.
 
-See http://www.winehq.com/config.html for further configuration hints.
+See http://www.winehq.com/support.shtml for further configuration hints.
 
 In order to verify the correctness of the environment you need for
 Wine to run successfully, run "./tools/winecheck | less".  You'll get
@@ -181,32 +177,32 @@ directories sometimes.
 
 7. GETTING MORE INFORMATION
 
-DOCU:	grep -i "SearchString" `find documentation/`|more
+WWW:	A great deal of information about Wine is available from WineHQ at
+	http://www.winehq.com/ : various user guides, application database,
+	bug tracking. This is probably the best starting point.
 
 FAQ:	The Wine FAQ is located at http://www.winehq.com/FAQ
-
-WWW:	A great deal of information about Wine is available from WineHQ at
-	http://www.winehq.com/, especially various user guides.
-        Untested patches against the current release
-	are available on the wine-patches mailing list; see 
-	http://www.winehq.com/dev.shtml#ml for more information.
 
 HOWTO:	The Wine HOWTO is available at
 	http://www.westfalen.de/witch/wine-HOWTO.txt .
 
-Usenet:	Please browse old messages on http://www.dejanews.com/ to check whether 
-	your problem is already fixed before posting a bug report to the 
-	newsgroup. 
-
-	The best place to get help or to report bugs is the Usenet newsgroup
+Usenet:	The best place to get help or to report bugs is the Usenet newsgroup
 	comp.emulators.ms-windows.wine. Please read the file 
 	documentation/bugreports to see what information should be included 
 	in a bug report.
 
-IRC:	Online help is available at channel #WineHQ on IRCnet.
+	Please browse old messages on http://groups.google.com/ to check
+	whether your problem is already fixed before posting a bug report
+	to the newsgroup. 
+
+IRC:	Online help is available at channel #WineHQ on irc.openprojects.net.
 
 CVS:	The current Wine development tree is available through CVS.
 	Go to http://www.winehq.com/dev.shtml for more information.
+
+Mailing lists:
+	There are several mailing lists for Wine developers; see 
+	http://www.winehq.com/dev.shtml#ml for more information.
 
 If you add something, or fix a bug, please send a patch ('diff -u'
 format preferred) to julliard@winehq.com or to the
