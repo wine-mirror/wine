@@ -46,7 +46,7 @@
 @ stdcall IsAsyncMoniker(ptr)
 @ stub IsLoggingEnabledA
 @ stub IsLoggingEnabledW
-@ stub IsValidURL
+@ stdcall IsValidURL(ptr wstr long)
 @ stdcall MkParseDisplayNameEx(ptr ptr ptr ptr) ole32.MkParseDisplayName
 @ stdcall ObtainUserAgentString(long str ptr)
 @ stub PrivateCoInstall

@@ -142,3 +142,31 @@ HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCo
     TRACE("(%s,%s,%08lx)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
     return UrlCompareW(pwzUrl1, pwzUrl2, dwCompareFlags)==0?S_OK:S_FALSE;
 }
+
+/**************************************************************************
+ *                 IsValidURL (URLMON.@)
+ * 
+ * Determines if a specified string is a valid URL.
+ *
+ * PARAMS
+ *  pBC        [I] ignored, must be NULL.
+ *  szURL      [I] string that represents the URL in question.
+ *  dwReserved [I] reserved and must be zero.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: S_FALSE.
+ *  returns E_INVALIDARG if one or more of the args is invalid.
+ *
+ * TODO:
+ *  test functionality against windows to see what a valid URL is.
+ */
+HRESULT WINAPI IsValidURL(LPBC pBC, LPCWSTR szURL, DWORD dwReserved)
+{
+    FIXME("(%p, %s, %ld): stub\n", pBC, debugstr_w(szURL), dwReserved);
+    
+    if (pBC != NULL || dwReserved != 0)
+        return E_INVALIDARG;
+    
+    return S_OK;
+}
