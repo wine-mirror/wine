@@ -1,3 +1,4 @@
 Makefile
 iphlpapi.dll.dbg.c
 iphlpapi.spec.c
+iphlpapi.spec.def
