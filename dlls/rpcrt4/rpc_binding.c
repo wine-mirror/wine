@@ -1038,13 +1038,23 @@ RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidA(unsigned char *protseq) {
  * Checks if the given protocol sequence is known by the RPC system.
  * If it is, returns RPC_S_OK, otherwise RPC_S_PROTSEQ_NOT_SUPPORTED.
  *
- * We currently only support ncalrpc.
+ * We currently support:
+ *   ncalrpc   local-only rpc over LPC (LPC is not really used)
+ *   ncacn_np  rpc over named pipes
  */
 RPC_STATUS RPC_ENTRY RpcNetworkIsProtSeqValidW(LPWSTR protseq) {
-  static const WCHAR ncalrpcW[] = {'n','c','a','l','r','p','c',0};
+  static const WCHAR protseqsW[][15] = { 
+    {'n','c','a','l','r','p','c',0},
+    {'n','c','a','c','n','_','n','p',0}
+  };
+  static const int count = sizeof(protseqsW) / sizeof(protseqsW[0]);
+  int i;
 
   if (!protseq) return RPC_S_INVALID_RPC_PROTSEQ; /* ? */
-  if (!strcmpW(protseq, ncalrpcW)) return RPC_S_OK;
+
+  for (i = 0; i < count; i++) {
+    if (!strcmpW(protseq, protseqsW[i])) return RPC_S_OK;
+  }
   
   FIXME("Unknown protseq %s - we probably need to implement it one day", debugstr_w(protseq));
   return RPC_S_PROTSEQ_NOT_SUPPORTED;
