@@ -237,9 +237,8 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
         break;
     case WPR_HEXA:
         len = sprintf( number,
-                        (format->flags & WPRINTF_UPPER_HEX) ? "%X" : "%x",
-                        (UINT)arg->int_view);
-        if (format->flags & WPRINTF_PREFIX_HEX) len += 2;
+                       (format->flags & WPRINTF_UPPER_HEX) ? "%X" : "%x",
+                       (UINT)arg->int_view);
         break;
     default:
         return 0;
@@ -249,6 +248,7 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
     if (format->precision > maxlen) format->precision = maxlen;
     if ((format->flags & WPRINTF_ZEROPAD) && (format->width > format->precision))
         format->precision = format->width;
+    if (format->flags & WPRINTF_PREFIX_HEX) len += 2;
     return len;
 }
 
@@ -351,8 +351,6 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
                 *p++ = (format.flags & WPRINTF_UPPER_HEX) ? 'X' : 'x';
                 maxlen -= 2;
                 len -= 2;
-                format.precision -= 2;
-                format.width -= 2;
             }
             /* fall through */
         case WPR_SIGNED:
@@ -428,8 +426,6 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec,
                 *p++ = (format.flags & WPRINTF_UPPER_HEX) ? 'X' : 'x';
                 maxlen -= 2;
                 len -= 2;
-                format.precision -= 2;
-                format.width -= 2;
             }
             /* fall through */
         case WPR_SIGNED:
@@ -505,8 +501,6 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
                 *p++ = (format.flags & WPRINTF_UPPER_HEX) ? 'X' : 'x';
                 maxlen -= 2;
                 len -= 2;
-                format.precision -= 2;
-                format.width -= 2;
             }
             /* fall through */
         case WPR_SIGNED:
