@@ -66,9 +66,7 @@ extern struct thread *current;
 extern void create_initial_thread( int fd );
 extern struct thread *get_thread_from_id( void *id );
 extern struct thread *get_thread_from_handle( int handle, unsigned int access );
-extern void wait4_thread( struct thread *thread, int wait );
-extern void stop_thread( struct thread *thread );
-extern void continue_thread( struct thread *thread );
+extern struct thread *get_thread_from_pid( int pid );
 extern int suspend_thread( struct thread *thread, int check_limit );
 extern int resume_thread( struct thread *thread );
 extern void suspend_all_threads( void );
@@ -79,6 +77,16 @@ extern void kill_thread( struct thread *thread, int exit_code );
 extern void thread_killed( struct thread *thread, int exit_code );
 extern void thread_timeout(void);
 extern void wake_up( struct object *obj, int max );
+
+/* ptrace functions */
+
+extern void wait4_thread( struct thread *thread, int wait );
+extern void stop_thread( struct thread *thread );
+extern void continue_thread( struct thread *thread );
+extern void detach_thread( struct thread *thread );
+extern int read_thread_int( struct thread *thread, const int *addr, int *data );
+extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
+
 
 static inline int get_error(void)       { return current->error; }
 static inline void set_error( int err ) { current->error = err; }

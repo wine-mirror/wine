@@ -15,10 +15,8 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <stdarg.h>
 
@@ -82,7 +80,6 @@ static const struct object_ops thread_ops =
     destroy_thread
 };
 
-static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
 static struct thread *first_thread;
 
 /* allocate the buffer for the communication with the client */
@@ -214,6 +211,14 @@ struct thread *get_thread_from_handle( int handle, unsigned int access )
                                             access, &thread_ops );
 }
 
+/* find a thread from a Unix pid */
+struct thread *get_thread_from_pid( int pid )
+{
+    struct thread *t = first_thread;
+    while (t && (t->unix_pid != pid)) t = t->next;
+    return t;
+}
+
 /* set all information about a thread */
 static void set_thread_info( struct thread *thread,
                              struct set_thread_info_request *req )
@@ -227,115 +232,6 @@ static void set_thread_info( struct thread *thread,
     }
 }
 
-/* find a thread from a Unix pid */
-static struct thread *get_thread_from_pid( int pid )
-{
-    struct thread *t = first_thread;
-    while (t && (t->unix_pid != pid)) t = t->next;
-    return t;
-}
-
-/* wait for a ptraced child to get a certain signal */
-/* if the signal is 0, we simply check if anything is pending and return at once */
-void wait4_thread( struct thread *thread, int signal )
-{
-    int status;
-    int pid;
-
-
- restart:
-    pid = thread ? thread->unix_pid : -1;
-    if ((pid = wait4( pid, &status, WUNTRACED | (signal ? 0 : WNOHANG), NULL )) == -1)
-    {
-        perror( "wait4" );
-        return;
-    }
-    if (WIFSTOPPED(status))
-    {
-        int sig = WSTOPSIG(status);
-        if (debug_level) fprintf( stderr, "ptrace: pid %d got sig %d\n", pid, sig );
-        switch(sig)
-        {
-        case SIGSTOP:  /* continue at once if not suspended */
-            if (!thread)
-                if (!(thread = get_thread_from_pid( pid ))) break;
-            if (!(thread->process->suspend + thread->suspend))
-                ptrace( PT_CONTINUE, pid, 0, sig );
-            break;
-        default:  /* ignore other signals for now */
-            ptrace( PT_CONTINUE, pid, 0, sig );
-            break;
-        }
-        if (signal && sig != signal) goto restart;
-    }
-    else if (WIFSIGNALED(status))
-    {
-        int exit_code = WTERMSIG(status);
-        if (debug_level)
-            fprintf( stderr, "ptrace: pid %d killed by sig %d\n", pid, exit_code );
-        if (!thread)
-            if (!(thread = get_thread_from_pid( pid ))) return;
-        if (thread->client) remove_client( thread->client, exit_code );
-    }
-    else if (WIFEXITED(status))
-    {
-        int exit_code = WEXITSTATUS(status);
-        if (debug_level)
-            fprintf( stderr, "ptrace: pid %d exited with status %d\n", pid, exit_code );
-        if (!thread)
-            if (!(thread = get_thread_from_pid( pid ))) return;
-        if (thread->client) remove_client( thread->client, exit_code );
-    }
-    else fprintf( stderr, "wait4: pid %d unknown status %x\n", pid, status );
-}
-
-/* attach to a Unix thread */
-static int attach_thread( struct thread *thread )
-{
-    /* this may fail if the client is already being debugged */
-    if (!use_ptrace || (ptrace( PT_ATTACH, thread->unix_pid, 0, 0 ) == -1)) return 0;
-    if (debug_level) fprintf( stderr, "ptrace: attached to pid %d\n", thread->unix_pid );
-    thread->attached = 1;
-    wait4_thread( thread, SIGSTOP );
-    return 1;
-}
-
-/* detach from a Unix thread and kill it */
-static void detach_thread( struct thread *thread )
-{
-    if (!thread->unix_pid) return;
-    kill( thread->unix_pid, SIGTERM );
-    if (thread->suspend + thread->process->suspend) continue_thread( thread );
-    if (thread->attached)
-    {
-        wait4_thread( thread, SIGTERM );
-        if (debug_level) fprintf( stderr, "ptrace: detaching from %d\n", thread->unix_pid );
-        ptrace( PT_DETACH, thread->unix_pid, 0, SIGTERM );
-        thread->attached = 0;
-    }
-}
-
-/* stop a thread (at the Unix level) */
-void stop_thread( struct thread *thread )
-{
-    /* can't stop a thread while initialisation is in progress */
-    if (!thread->unix_pid || thread->process->init_event) return;
-    /* first try to attach to it */
-    if (!thread->attached)
-        if (attach_thread( thread )) return;  /* this will have stopped it */
-    /* attached already, or attach failed -> send a signal */
-    kill( thread->unix_pid, SIGSTOP );
-    if (thread->attached) wait4_thread( thread, SIGSTOP );
-}
-
-/* make a thread continue (at the Unix level) */
-void continue_thread( struct thread *thread )
-{
-    if (!thread->unix_pid) return;
-    if (!thread->attached) kill( thread->unix_pid, SIGCONT );
-    else ptrace( PT_CONTINUE, thread->unix_pid, 0, SIGSTOP );
-}
- 
 /* suspend a thread */
 int suspend_thread( struct thread *thread, int check_limit )
 {

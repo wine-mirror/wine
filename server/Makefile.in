@@ -18,6 +18,7 @@ C_SRCS = \
 	object.c \
 	pipe.c \
 	process.c \
+	ptrace.c \
 	request.c \
 	snapshot.c \
 	select.c \

@@ -316,30 +316,6 @@ static void set_process_info( struct process *process,
     }
 }
 
-/* wrapper for reading an int with ptrace */
-static inline int read_word( int pid, const int *addr, int *data )
-{
-    if (((*data = ptrace( PT_READ_D, pid, addr )) == -1) && errno)
-    {
-        file_set_error();
-        return -1;
-    }
-    return 0;
-}
-
-/* wrapper for writing an int with ptrace */
-static inline int write_word( int pid, int *addr, int data, unsigned int mask )
-{
-    int res;
-    if (mask != ~0)
-    {
-        if (read_word( pid, addr, &res ) == -1) return -1;
-        data = (data & mask) | (res & ~mask);
-    }
-    if ((res = ptrace( PT_WRITE_D, pid, addr, data )) == -1) file_set_error();
-    return res;
-}
-
 /* read data from a process memory space */
 /* len is the total size (in ints), max is the size we can actually store in the output buffer */
 /* we read the total size in all cases to check for permissions */
@@ -347,7 +323,6 @@ static void read_process_memory( struct process *process, const int *addr,
                                  size_t len, size_t max, int *dest )
 {
     struct thread *thread = process->thread_list;
-    int pid = thread->unix_pid;
 
     if ((unsigned int)addr % sizeof(int))  /* address must be aligned */
     {
@@ -359,7 +334,7 @@ static void read_process_memory( struct process *process, const int *addr,
     {
         while (len > 0 && max)
         {
-            if (read_word( pid, addr++, dest++ ) == -1) goto done;
+            if (read_thread_int( thread, addr++, dest++ ) == -1) goto done;
             max--;
             len--;
         }
@@ -371,9 +346,9 @@ static void read_process_memory( struct process *process, const int *addr,
             {
                 addr += page;
                 len -= page;
-                if (read_word( pid, addr - 1, &dummy ) == -1) goto done;
+                if (read_thread_int( thread, addr - 1, &dummy ) == -1) goto done;
             }
-            if (len && (read_word( pid, addr + len - 1, &dummy ) == -1)) goto done;
+            if (len && (read_thread_int( thread, addr + len - 1, &dummy ) == -1)) goto done;
         }
     }
     else set_error( ERROR_ACCESS_DENIED );
@@ -389,7 +364,6 @@ static void write_process_memory( struct process *process, int *addr, size_t len
                                   unsigned int last_mask, const int *src )
 {
     struct thread *thread = process->thread_list;
-    int pid = thread->unix_pid;
 
     if (!len || ((unsigned int)addr % sizeof(int)))  /* address must be aligned */
     {
@@ -402,7 +376,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
         /* first word is special */
         if (len > 1)
         {
-            if (write_word( pid, addr++, *src++, first_mask ) == -1) goto done;
+            if (write_thread_int( thread, addr++, *src++, first_mask ) == -1) goto done;
             len--;
             max--;
         }
@@ -410,7 +384,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
 
         while (len > 1 && max)
         {
-            if (write_word( pid, addr++, *src++, ~0 ) == -1) goto done;
+            if (write_thread_int( thread, addr++, *src++, ~0 ) == -1) goto done;
             max--;
             len--;
         }
@@ -418,7 +392,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
         if (max)
         {
             /* last word is special too */
-            if (write_word( pid, addr, *src, last_mask ) == -1) goto done;
+            if (write_thread_int( thread, addr, *src, last_mask ) == -1) goto done;
         }
         else
         {
@@ -428,9 +402,9 @@ static void write_process_memory( struct process *process, int *addr, size_t len
             {
                 addr += page;
                 len -= page;
-                if (write_word( pid, addr - 1, 0, 0 ) == -1) goto done;
+                if (write_thread_int( thread, addr - 1, 0, 0 ) == -1) goto done;
             }
-            if (len && (write_word( pid, addr + len - 1, 0, 0 ) == -1)) goto done;
+            if (len && (write_thread_int( thread, addr + len - 1, 0, 0 ) == -1)) goto done;
         }
     }
     else set_error( ERROR_ACCESS_DENIED );
