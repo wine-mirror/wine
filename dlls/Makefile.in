@@ -18,6 +18,7 @@ EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @XFILES@
 SUBDIRS = \
 	$(EXTRADIRS) \
 	advapi32 \
+	avicap32 \
 	avifil32 \
 	comctl32 \
 	commdlg \
@@ -40,6 +41,7 @@ SUBDIRS = \
 	msdmo \
 	msimg32 \
 	msnet32 \
+	msrle32 \
 	msvcrt \
 	msvideo \
 	ntdll \
@@ -96,6 +98,7 @@ SUBDIRS = \
 all: \
 	$(EXTRADIRS:%=lib%.$(LIBEXT)) \
 	libadvapi32.$(LIBEXT) \
+	libavicap32.$(LIBEXT) \
 	libavifil32.$(LIBEXT) \
 	libavifile.$(LIBEXT) \
 	libcomctl32.$(LIBEXT) \
@@ -141,6 +144,7 @@ all: \
 	libmsdmo.$(LIBEXT) \
 	libmsimg32.$(LIBEXT) \
 	libmsnet32.$(LIBEXT) \
+	libmsrle32.$(LIBEXT) \
 	libmsvcrt.$(LIBEXT) \
 	libmsvfw32.$(LIBEXT) \
 	libmsvideo.$(LIBEXT) \
@@ -220,6 +224,9 @@ all: \
 
 libadvapi32.$(LIBEXT): advapi32/libadvapi32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) advapi32/libadvapi32.$(LIBEXT) $@
+
+libavicap32.$(LIBEXT): avicap32/libavicap32.$(LIBEXT)
+	$(RM) $@ && $(LN_S) avicap32/libavicap32.$(LIBEXT) $@
 
 libavifil32.$(LIBEXT) libavifile.$(LIBEXT): avifil32/libavifil32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) avifil32/libavifil32.$(LIBEXT) $@
@@ -319,6 +326,9 @@ libmsimg32.$(LIBEXT): msimg32/libmsimg32.$(LIBEXT)
 
 libmsnet32.$(LIBEXT): msnet32/libmsnet32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) msnet32/libmsnet32.$(LIBEXT) $@
+
+libmsrle32.$(LIBEXT): msrle32/libmsrle32.$(LIBEXT)
+	$(RM) $@ && $(LN_S) msrle32/libmsrle32.$(LIBEXT) $@
 
 libmsvcrt.$(LIBEXT): msvcrt/libmsvcrt.$(LIBEXT)
 	$(RM) $@ && $(LN_S) msvcrt/libmsvcrt.$(LIBEXT) $@
@@ -460,6 +470,9 @@ libx11drv.$(LIBEXT): x11drv/libx11drv.$(LIBEXT)
 advapi32/libadvapi32.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd advapi32 && $(MAKE) libadvapi32.$(LIBEXT)
 
+avicap32/libavicap32.$(LIBEXT): dummy libntdll.$(LIBEXT)
+	@cd avicap32 && $(MAKE) libavicap32.$(LIBEXT)
+
 avifil32/libavifil32.$(LIBEXT): dummy libmsvfw32.$(LIBEXT) libole32.$(LIBEXT) \
   libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd avifil32 && $(MAKE) libavifil32.$(LIBEXT)
@@ -543,6 +556,10 @@ msimg32/libmsimg32.$(LIBEXT): dummy libntdll.$(LIBEXT)
 
 msnet32/libmsnet32.$(LIBEXT): dummy libntdll.$(LIBEXT)
 	@cd msnet32 && $(MAKE) libmsnet32.$(LIBEXT)
+
+msrle32/libmsrle32.$(LIBEXT): dummy libwinmm.$(LIBEXT) libuser32.$(LIBEXT) \
+  libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
+	@cd msrle32 && $(MAKE) libmsrle32.$(LIBEXT)
 
 msvcrt/libmsvcrt.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd msvcrt && $(MAKE) libmsvcrt.$(LIBEXT)

@@ -7053,6 +7053,7 @@ controls/Makefile
 debugger/Makefile
 dlls/Makefile
 dlls/advapi32/Makefile
+dlls/avicap32/Makefile
 dlls/avifil32/Makefile
 dlls/comctl32/Makefile
 dlls/commdlg/Makefile
@@ -7077,6 +7078,7 @@ dlls/msacm/Makefile
 dlls/msdmo/Makefile
 dlls/msimg32/Makefile
 dlls/msnet32/Makefile
+dlls/msrle32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvideo/Makefile
 dlls/ntdll/Makefile
@@ -7310,6 +7312,7 @@ controls/Makefile
 debugger/Makefile
 dlls/Makefile
 dlls/advapi32/Makefile
+dlls/avicap32/Makefile
 dlls/avifil32/Makefile
 dlls/comctl32/Makefile
 dlls/commdlg/Makefile
@@ -7334,6 +7337,7 @@ dlls/msacm/Makefile
 dlls/msdmo/Makefile
 dlls/msimg32/Makefile
 dlls/msnet32/Makefile
+dlls/msrle32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvideo/Makefile
 dlls/ntdll/Makefile
