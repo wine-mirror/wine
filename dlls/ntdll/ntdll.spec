@@ -530,6 +530,8 @@
 @ stdcall RtlTimeToSecondsSince1970(ptr ptr) RtlTimeToSecondsSince1970
 @ stdcall RtlTimeToSecondsSince1980(ptr ptr) RtlTimeToSecondsSince1980
 @ stdcall RtlTimeToTimeFields (long long) RtlTimeToTimeFields
+@ cdecl -i386 -norelay RtlUlongByteSwap() RtlUlongByteSwap
+@ cdecl -ret64 RtlUlonglongByteSwap(long long) RtlUlonglongByteSwap
 @ stdcall RtlUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlUnicodeStringToAnsiString(ptr ptr long) RtlUnicodeStringToAnsiString
 @ stub RtlUnicodeStringToCountedOemString
@@ -554,6 +556,7 @@
 @ stdcall RtlUpperChar(long) RtlUpperChar
 @ stdcall RtlUpperString(ptr ptr) RtlUpperString
 @ stub RtlUsageHeap
+@ cdecl -i386 -norelay RtlUshortByteSwap() RtlUshortByteSwap
 @ stub RtlValidAcl
 @ stdcall RtlValidSecurityDescriptor(ptr) RtlValidSecurityDescriptor
 @ stdcall RtlValidSid(ptr) RtlValidSid

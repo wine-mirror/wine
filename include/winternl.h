@@ -1050,6 +1050,7 @@ BOOLEAN   WINAPI RtlTimeToSecondsSince1970(const LARGE_INTEGER *,PULONG);
 BOOLEAN   WINAPI RtlTimeToSecondsSince1980(const LARGE_INTEGER *,LPDWORD);
 BOOL      WINAPI RtlTryEnterCriticalSection(RTL_CRITICAL_SECTION *);
 
+ULONGLONG __cdecl RtlUlonglongByteSwap(ULONGLONG);
 DWORD     WINAPI RtlUnicodeStringToAnsiSize(const UNICODE_STRING*);
 NTSTATUS  WINAPI RtlUnicodeStringToAnsiString(PANSI_STRING,PCUNICODE_STRING,BOOLEAN);
 NTSTATUS  WINAPI RtlUnicodeStringToInteger(const UNICODE_STRING *,ULONG,ULONG *);
@@ -1133,6 +1134,22 @@ inline static BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
         PRTL_BITMAP _p = (p); \
         memset(_p->BitMapBuffer,0xff,((_p->SizeOfBitMap + 31) & 0xffffffe0) >> 3); \
     } while (0)
+
+/* These are implemented as __fastcall, so we can't let Winelib apps link with them */
+inline static USHORT RtlUshortByteSwap(USHORT s)
+{
+    return (s >> 8) | (s << 8);
+}
+inline static ULONG RtlUlongByteSwap(ULONG i)
+{
+#if defined(__i386__) && defined(__GNUC__)
+    ULONG ret;
+    __asm__("bswap %0" : "=r" (ret) : "0" (i) );
+    return ret;
+#else
+    return ((ULONG)RtlUshortByteSwap(i) << 16) | RtlUshortByteSwap(i >> 16);
+#endif
+}
 
 /*************************************************************************
  * Loader functions and structures.
