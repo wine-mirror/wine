@@ -1436,7 +1436,7 @@ UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
  * - On Win32 we should returns ERROR_CALL_NOT_IMPLEMENTED
  * - On Win64 we should returns the SysWow64 (system64) directory
  */
-UINT GetSystemWow64DirectoryW( LPWSTR lpBuffer, UINT uSize )
+UINT WINAPI GetSystemWow64DirectoryW( LPWSTR lpBuffer, UINT uSize )
 {
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return 0;
@@ -1448,7 +1448,7 @@ UINT GetSystemWow64DirectoryW( LPWSTR lpBuffer, UINT uSize )
  *
  * See comment for GetWindowsWow64DirectoryW.
  */
-UINT GetSystemWow64DirectoryA( LPSTR lpBuffer, UINT uSize )
+UINT WINAPI GetSystemWow64DirectoryA( LPSTR lpBuffer, UINT uSize )
 {
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return 0;

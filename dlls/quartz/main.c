@@ -250,13 +250,13 @@ const char * qzdebugstr_State(FILTER_STATE state)
     }
 }
 
-LONG AmpFactorToDB(LONG ampfactor)
+LONG WINAPI AmpFactorToDB(LONG ampfactor)
 {
     FIXME("(%ld) Stub!\n", ampfactor);
     return 0;
 }
 
-LONG DBToAmpFactor(LONG db)
+LONG WINAPI DBToAmpFactor(LONG db)
 {
     FIXME("(%ld) Stub!\n", db);
     /* Avoid divide by zero (probably during range computation) in Windows Media Player 6.4 */
