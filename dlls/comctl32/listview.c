@@ -764,8 +764,10 @@ static int get_ansi_notification(INT unicodeNotificationCode)
 }
 
 /*
-  Send notification. depends on dispinfoW having same
-  structure as dispinfoA.
+  With testing on Windows 2000 it looks like the notify format
+  has nothing to do with this message. It ALWAYS seems to be
+  in ansi format.
+
   infoPtr : listview struct
   notificationCode : *Unicode* notification code
   pdi : dispinfo structure (can be unicode or ansi)
@@ -774,61 +776,49 @@ static int get_ansi_notification(INT unicodeNotificationCode)
 static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNMLVDISPINFOW pdi, BOOL isW)
 {
     BOOL bResult = FALSE;
-    BOOL convertToAnsi = FALSE, convertToUnicode = FALSE;
-    INT realNotifCode;
+    BOOL convertToAnsi = FALSE;
     INT cchTempBufMax = 0, savCchTextMax = 0;
     LPWSTR pszTempBuf = NULL, savPszText = NULL;
 
     if ((pdi->item.mask & LVIF_TEXT) && is_textT(pdi->item.pszText, isW))
-    {
-	convertToAnsi = (isW && infoPtr->notifyFormat == NFR_ANSI);
-        convertToUnicode = (!isW && infoPtr->notifyFormat == NFR_UNICODE);
-    }
+	    convertToAnsi = isW;
 
-    if (convertToAnsi || convertToUnicode)
+    if (convertToAnsi)
     {
-	if (notificationCode != LVN_GETDISPINFOW)
-	{
-	    cchTempBufMax = convertToUnicode ?
-      		MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1, NULL, 0):
-      		WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, NULL, 0, NULL, NULL);
+	    if (notificationCode != LVN_GETDISPINFOW)
+	    {
+            cchTempBufMax = WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText,
+                                                -1, NULL, 0, NULL, NULL);
         }
-	else
-	{
-	    cchTempBufMax = pdi->item.cchTextMax;
-	    *pdi->item.pszText = 0; /* make sure we don't process garbage */
-	}
+	    else
+	    {
+	        cchTempBufMax = pdi->item.cchTextMax;
+	        *pdi->item.pszText = 0; /* make sure we don't process garbage */
+	    }
 
-        pszTempBuf = HeapAlloc(GetProcessHeap(), 0,
-            (convertToUnicode ? sizeof(WCHAR) : sizeof(CHAR)) * cchTempBufMax);
+        pszTempBuf = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR) *
+                               cchTempBufMax);
         if (!pszTempBuf) return FALSE;
-        if (convertToUnicode)
-	    MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pdi->item.pszText, -1,
-                                pszTempBuf, cchTempBufMax);
-        else
-            WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) pszTempBuf,
-                                cchTempBufMax, NULL, NULL);
+
+        WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR)
+                             pszTempBuf, cchTempBufMax, NULL, NULL);
+
         savCchTextMax = pdi->item.cchTextMax;
         savPszText = pdi->item.pszText;
         pdi->item.pszText = pszTempBuf;
         pdi->item.cchTextMax = cchTempBufMax;
     }
 
-    if (infoPtr->notifyFormat == NFR_ANSI)
-	realNotifCode = get_ansi_notification(notificationCode);
-    else
-	realNotifCode = notificationCode;
-    TRACE(" pdi->item=%s\n", debuglvitem_t(&pdi->item, infoPtr->notifyFormat != NFR_ANSI));
-    bResult = notify_hdr(infoPtr, realNotifCode, (LPNMHDR)pdi);
+    TRACE(" pdi->item=%s\n", debuglvitem_t(&pdi->item, infoPtr->notifyFormat !=
+           NFR_ANSI));
 
-    if (convertToUnicode || convertToAnsi)
+    bResult = notify_hdr(infoPtr, get_ansi_notification(notificationCode),
+                        (LPNMHDR)pdi);
+
+    if (convertToAnsi)
     {
-	if (convertToUnicode) /* note : pointer can be changed by app ! */
-	    WideCharToMultiByte(CP_ACP, 0, pdi->item.pszText, -1, (LPSTR) savPszText,
-                                savCchTextMax, NULL, NULL);
-        else
-            MultiByteToWideChar(CP_ACP, 0, (LPSTR) pdi->item.pszText, -1,
-                                savPszText, savCchTextMax);
+        MultiByteToWideChar(CP_ACP, 0, (LPSTR) pdi->item.pszText, -1,
+                            savPszText, savCchTextMax);
         pdi->item.pszText = savPszText; /* restores our buffer */
         pdi->item.cchTextMax = savCchTextMax;
         HeapFree(GetProcessHeap(), 0, pszTempBuf);
