@@ -850,7 +850,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
 
    if (!(lpp->lpcc->Flags & CC_SHOWHELP))
       ShowWindow( GetDlgItem(hDlg,0x40e), SW_HIDE);
-   lpp->msetrgb = RegisterWindowMessageA(SETRGBSTRING);
+   lpp->msetrgb = RegisterWindowMessageA(SETRGBSTRINGA);
 
 #if 0
    cpos = MAKELONG(5,7); /* init */
@@ -1035,7 +1035,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 	       break;
 
 	  case 0x40e:           /* Help! */ /* The Beatles, 1965  ;-) */
-	       i = RegisterWindowMessageA(HELPMSGSTRING);
+	       i = RegisterWindowMessageA(HELPMSGSTRINGA);
                if (lpp->lpcc16)
                {
                    if (lpp->lpcc->hwndOwner)
@@ -1055,7 +1055,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 	       break;
 
           case IDOK :
-		cokmsg = RegisterWindowMessageA(COLOROKSTRING);
+		cokmsg = RegisterWindowMessageA(COLOROKSTRINGA);
                 if (lpp->lpcc16)
                 {
 		    if (lpp->lpcc->hwndOwner)

@@ -240,10 +240,10 @@ BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
     /* old style hook messages */
     if (IsHooked(fodInfos))
     {
-      fodInfos->HookMsg.fileokstring = RegisterWindowMessageA(FILEOKSTRING);
-      fodInfos->HookMsg.lbselchstring = RegisterWindowMessageA(LBSELCHSTRING);
-      fodInfos->HookMsg.helpmsgstring = RegisterWindowMessageA(HELPMSGSTRING);
-      fodInfos->HookMsg.sharevistring = RegisterWindowMessageA(SHAREVISTRING);
+      fodInfos->HookMsg.fileokstring = RegisterWindowMessageA(FILEOKSTRINGA);
+      fodInfos->HookMsg.lbselchstring = RegisterWindowMessageA(LBSELCHSTRINGA);
+      fodInfos->HookMsg.helpmsgstring = RegisterWindowMessageA(HELPMSGSTRINGA);
+      fodInfos->HookMsg.sharevistring = RegisterWindowMessageA(SHAREVISTRINGA);
     }
     
     lRes = DialogBoxIndirectParamA(COMMDLG_hInstance32,

@@ -879,7 +879,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		  }
 		  break;
 	
-	case psh15:i=RegisterWindowMessageA( HELPMSGSTRING );
+	case psh15:i=RegisterWindowMessageA( HELPMSGSTRINGA );
 		  if (lpcf->hwndOwner)
 		    SendMessageA(lpcf->hwndOwner, i, 0, (LPARAM)GetWindowLongA(hDlg, DWL_USER));
 /*		  if (CFn_HookCallChk(lpcf))

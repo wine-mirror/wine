@@ -1212,8 +1212,8 @@ LFSPRIVATE FILEDLG_AllocPrivate(LPARAM lParam, int type, UINT dlgType)
         lfs->open = TRUE;
     else
         lfs->open = FALSE;
-    lfs->lbselchstring = RegisterWindowMessageA(LBSELCHSTRING);
-    lfs->fileokstring = RegisterWindowMessageA(FILEOKSTRING);
+    lfs->lbselchstring = RegisterWindowMessageA(LBSELCHSTRINGA);
+    lfs->fileokstring = RegisterWindowMessageA(FILEOKSTRINGA);
     switch(type)
     {
         case LFS16:

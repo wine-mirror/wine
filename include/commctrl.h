@@ -249,13 +249,8 @@ typedef struct tagNMTTCUSTOMDRAW
 
 #define STATUSCLASSNAME16	"msctls_statusbar"
 #define STATUSCLASSNAMEA	"msctls_statusbar32"
-/* Does not work. gcc creates 4 byte wide strings.
- * #define STATUSCLASSNAME32W	L"msctls_statusbar32"
- */
-static const WCHAR	_scn32w[] = {
-'m','s','c','t','l','s','_','s','t','a','t','u','s','b','a','r','3','2',0
-};
-#define STATUSCLASSNAMEW	_scn32w
+static const WCHAR STATUSCLASSNAMEW[] = { 'm','s','c','t','l','s','_',
+  's','t','a','t','u','s','b','a','r','3','2',0 };
 #define STATUSCLASSNAME		WINELIB_NAME_AW(STATUSCLASSNAME)
 
 #define SBT_NOBORDERS		0x0100
@@ -307,7 +302,7 @@ VOID WINAPI DrawStatusTextW (HDC, LPRECT, LPCWSTR, UINT);
 VOID WINAPI MenuHelp (UINT, WPARAM, LPARAM, HMENU,
                       HINSTANCE, HWND, LPUINT);
 
-typedef struct tagCOLORSCHEME 
+typedef struct tagCOLORSCHEME
 {
    DWORD            dwSize;
    COLORREF         clrBtnHighlight;       /* highlight color */
@@ -341,12 +336,13 @@ BOOL WINAPI MakeDragList (HWND);
 VOID   WINAPI DrawInsert (HWND, HWND, INT);
 INT  WINAPI LBItemFromPt (HWND, POINT, BOOL);
 
-  
+
 /* UpDown */
 
 #define UPDOWN_CLASS16          "msctls_updown"
-#define UPDOWN_CLASSA         "msctls_updown32"
-#define UPDOWN_CLASSW         L"msctls_updown32"
+#define UPDOWN_CLASSA           "msctls_updown32"
+static const WCHAR UPDOWN_CLASSW[] = { 'm','s','c','t','l','s','_',
+  'u','p','d','o','w','n','3','2',0 };
 #define UPDOWN_CLASS            WINELIB_NAME_AW(UPDOWN_CLASS)
 
 typedef struct tagUDACCEL
@@ -405,9 +401,10 @@ HWND WINAPI CreateUpDownControl (DWORD, INT, INT, INT, INT,
 
 /* Progress Bar */
 
+#define PROGRESS_CLASS16  "msctls_progress"
 #define PROGRESS_CLASSA   "msctls_progress32"
-#define PROGRESS_CLASSW  L"msctls_progress32"
-#define PROGRESS_CLASS16    "msctls_progress"
+static const WCHAR PROGRESS_CLASSW[] = { 'm','s','c','t','l','s','_',
+  'p','r','o','g','r','e','s','s','3','2',0 };
 #define PROGRESS_CLASS      WINELIB_NAME_AW(PROGRESS_CLASS)
 
 #define PBM_SETRANGE        (WM_USER+1)
@@ -576,7 +573,7 @@ typedef struct tagTRACKMOUSEEVENT {
     DWORD dwHoverTime;
 } TRACKMOUSEEVENT, *LPTRACKMOUSEEVENT;
 
-#endif 
+#endif
 
 BOOL
 WINAPI
@@ -586,8 +583,9 @@ _TrackMouseEvent(
 /* Flat Scrollbar control */
 
 #define FLATSB_CLASS16        "flatsb_class"
-#define FLATSB_CLASSA       "flatsb_class32"
-#define FLATSB_CLASSW       L"flatsb_class32"
+#define FLATSB_CLASSA         "flatsb_class32"
+static const WCHAR FLATSB_CLASSW[] = { 'f','l','a','t','s','b','_',
+  'c','l','a','s','s','3','2',0 };
 #define FLATSB_CLASS          WINELIB_NAME_AW(FLATSB_CLASS)
 
 #define WSB_PROP_CYVSCROLL     0x00000001L
@@ -627,7 +625,7 @@ HRESULT WINAPI UninitializeFlatSB(HWND);
 
 #define WC_HEADER16		"SysHeader" 
 #define WC_HEADERA		"SysHeader32" 
-#define WC_HEADERW		L"SysHeader32" 
+static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',0 };
 #define WC_HEADER		WINELIB_NAME_AW(WC_HEADER)
  
 #define HDS_HORZ                0x0000 
@@ -868,35 +866,36 @@ typedef struct tagNMHDDISPINFOW
 /* Toolbar */
 
 #define TOOLBARCLASSNAME16      "ToolbarWindow" 
-#define TOOLBARCLASSNAMEW     "ToolbarWindow32" 
-#define TOOLBARCLASSNAMEA     "ToolbarWindow32" 
+#define TOOLBARCLASSNAMEA       "ToolbarWindow32"
+static const WCHAR TOOLBARCLASSNAMEW[] = { 'T','o','o','l','b','a','r',
+  'W','i','n','d','o','w','3','2',0 };
 #define TOOLBARCLASSNAME WINELIB_NAME_AW(TOOLBARCLASSNAME)
 
-#define CMB_MASKED              0x02 
- 
-#define TBSTATE_CHECKED         0x01 
-#define TBSTATE_PRESSED         0x02 
-#define TBSTATE_ENABLED         0x04 
-#define TBSTATE_HIDDEN          0x08 
-#define TBSTATE_INDETERMINATE   0x10 
-#define TBSTATE_WRAP            0x20 
+#define CMB_MASKED              0x02
+
+#define TBSTATE_CHECKED         0x01
+#define TBSTATE_PRESSED         0x02
+#define TBSTATE_ENABLED         0x04
+#define TBSTATE_HIDDEN          0x08
+#define TBSTATE_INDETERMINATE   0x10
+#define TBSTATE_WRAP            0x20
 #define TBSTATE_ELLIPSES        0x40
-#define TBSTATE_MARKED          0x80 
- 
-#define TBSTYLE_BUTTON          0x00 
-#define TBSTYLE_SEP             0x01 
-#define TBSTYLE_CHECK           0x02 
-#define TBSTYLE_GROUP           0x04 
-#define TBSTYLE_CHECKGROUP      (TBSTYLE_GROUP | TBSTYLE_CHECK) 
-#define TBSTYLE_DROPDOWN        0x08 
+#define TBSTATE_MARKED          0x80
+
+#define TBSTYLE_BUTTON          0x00
+#define TBSTYLE_SEP             0x01
+#define TBSTYLE_CHECK           0x02
+#define TBSTYLE_GROUP           0x04
+#define TBSTYLE_CHECKGROUP      (TBSTYLE_GROUP | TBSTYLE_CHECK)
+#define TBSTYLE_DROPDOWN        0x08
 #define TBSTYLE_AUTOSIZE        0x10
 #define TBSTYLE_NOPREFIX        0x20
- 
-#define TBSTYLE_TOOLTIPS        0x0100 
-#define TBSTYLE_WRAPABLE        0x0200 
-#define TBSTYLE_ALTDRAG         0x0400 
-#define TBSTYLE_FLAT            0x0800 
-#define TBSTYLE_LIST            0x1000 
+
+#define TBSTYLE_TOOLTIPS        0x0100
+#define TBSTYLE_WRAPABLE        0x0200
+#define TBSTYLE_ALTDRAG         0x0400
+#define TBSTYLE_FLAT            0x0800
+#define TBSTYLE_LIST            0x1000
 #define TBSTYLE_CUSTOMERASE     0x2000 
 #define TBSTYLE_REGISTERDROP    0x4000
 #define TBSTYLE_TRANSPARENT     0x8000
@@ -921,7 +920,7 @@ typedef struct tagNMHDDISPINFOW
 #define TB_ISBUTTONENABLED       (WM_USER+9) 
 #define TB_ISBUTTONCHECKED       (WM_USER+10) 
 #define TB_ISBUTTONPRESSED       (WM_USER+11) 
-#define TB_ISBUTTONHIDDEN        (WM_USER+12) 
+#define TB_ISBUTTONHIDDEN        (WM_USER+12)
 #define TB_ISBUTTONINDETERMINATE (WM_USER+13)
 #define TB_ISBUTTONHIGHLIGHTED   (WM_USER+14)
 #define TB_SETSTATE              (WM_USER+17)
@@ -1234,8 +1233,9 @@ CreateMappedBitmap (HINSTANCE, INT, UINT, LPCOLORMAP, INT);
 /* Tool tips */
 
 #define TOOLTIPS_CLASS16        "tooltips_class"
-#define TOOLTIPS_CLASSA       "tooltips_class32"
-#define TOOLTIPS_CLASS32W       L"tooltips_class32"
+#define TOOLTIPS_CLASSA         "tooltips_class32"
+static const WCHAR TOOLTIPS_CLASSW[] = { 't','o','o','l','t','i','p','s','_',
+  'c','l','a','s','s','3','2',0 };
 #define TOOLTIPS_CLASS          WINELIB_NAME_AW(TOOLTIPS_CLASS)
 
 #define INFOTIPSIZE             1024
@@ -1408,8 +1408,9 @@ typedef struct tagNMTTDISPINFOW
 /* Rebar control */
 
 #define REBARCLASSNAME16        "ReBarWindow"
-#define REBARCLASSNAMEA       "ReBarWindow32"
-#define REBARCLASSNAMEW       L"ReBarWindow32"
+#define REBARCLASSNAMEA         "ReBarWindow32"
+static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
+  'W','i','n','d','o','w','3','2',0 };
 #define REBARCLASSNAME          WINELIB_NAME_AW(REBARCLASSNAME)
 
 #define RBS_TOOLTIPS            0x0100
@@ -1616,8 +1617,9 @@ typedef struct _RB_HITTESTINFO
 /* Trackbar control */
 
 #define TRACKBAR_CLASS16        "msctls_trackbar"
-#define TRACKBAR_CLASSA       "msctls_trackbar32"
-#define TRACKBAR_CLASSW       L"msctls_trackbar32"
+#define TRACKBAR_CLASSA         "msctls_trackbar32"
+static const WCHAR TRACKBAR_CLASSW[] = { 'm','s','c','t','l','s','_',
+  't','r','a','c','k','b','a','r','3','2',0 };
 #define TRACKBAR_CLASS  WINELIB_NAME_AW(TRACKBAR_CLASS)
 
 #define TBS_AUTOTICKS           0x0001
@@ -1694,7 +1696,7 @@ typedef struct _RB_HITTESTINFO
 /* Pager control */
 
 #define WC_PAGESCROLLERA      "SysPager"
-#define WC_PAGESCROLLERW      L"SysPager"
+static const WCHAR WC_PAGESCROLLERW[] = { 'S','y','s','P','a','g','e','r',0 };
 #define WC_PAGESCROLLER  WINELIB_NAME_AW(WC_PAGESCROLLER)
 
 #define PGS_VERT                0x00000000
@@ -1768,7 +1770,8 @@ typedef struct
 /* Treeview control */
 
 #define WC_TREEVIEWA          "SysTreeView32"
-#define WC_TREEVIEWW          L"SysTreeView32"
+static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
+  'T','r','e','e','V','i','e','w','3','2',0 };
 #define WC_TREEVIEW             WINELIB_NAME_AW(WC_TREEVIEW)
 
 #define TVSIL_NORMAL            0
@@ -2370,7 +2373,8 @@ typedef struct {
 /* Listview control */
 
 #define WC_LISTVIEWA          "SysListView32"
-#define WC_LISTVIEWW          L"SysListView32"
+static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
+  'L','i','s','t','V','i','e','w','3','2',0 };
 #define WC_LISTVIEW  WINELIB_NAME_AW(WC_LISTVIEW)
 
 #define LVSCW_AUTOSIZE -1
@@ -2938,9 +2942,10 @@ typedef struct tagNMLVCUSTOMDRAW
 
 /* Tab Control */
 
-#define WC_TABCONTROL16		 "SysTabControl"
-#define WC_TABCONTROLA	 "SysTabControl32"
-#define WC_TABCONTROLW	L"SysTabControl32"
+#define WC_TABCONTROL16	"SysTabControl"
+#define WC_TABCONTROLA		"SysTabControl32"
+static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
+  'T','a','b','C','o','n','t','r','o','l','3','2',0 };
 
 #define WC_TABCONTROL		WINELIB_NAME_AW(WC_TABCONTROL)
 
@@ -3121,7 +3126,8 @@ typedef struct tagTCITEMW
 /* ComboBoxEx control */
 
 #define WC_COMBOBOXEXA        "ComboBoxEx32"
-#define WC_COMBOBOXEXW        L"ComboBoxEx32"
+static const WCHAR WC_COMBOBOXEXW[] = { 'C','o','m','b','o',
+  'B','o','x','E','x','3','2',0 };
 #define WC_COMBOBOXEX           WINELIB_NAME_AW(WC_COMBOBOXEX)
 
 #define CBEIF_TEXT              0x00000001
@@ -3245,8 +3251,9 @@ typedef struct tagNMCBEENDEDITA
 /* Hotkey control */
 
 #define HOTKEY_CLASS16          "msctls_hotkey"
-#define HOTKEY_CLASSA         "msctls_hotkey32"
-#define HOTKEY_CLASSW         L"msctls_hotkey32"
+#define HOTKEY_CLASSA           "msctls_hotkey32"
+static const WCHAR HOTKEY_CLASSW[] = { 'm','s','c','t','l','s','_',
+  'h','o','t','k','e','y','3','2',0 };
 #define HOTKEY_CLASS            WINELIB_NAME_AW(HOTKEY_CLASS)
 
 #define HOTKEYF_SHIFT           0x01
@@ -3271,7 +3278,8 @@ typedef struct tagNMCBEENDEDITA
 /* animate control */
 
 #define ANIMATE_CLASSA        "SysAnimate32"
-#define ANIMATE_CLASSW        L"SysAnimate32"
+static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
+  'A','n','i','m','a','t','e','3','2',0 };
 #define ANIMATE_CLASS           WINELIB_NAME_AW(ANIMATE_CLASS)
 
 #define ACS_CENTER              0x0001
@@ -3318,7 +3326,8 @@ typedef struct tagNMCBEENDEDITA
  */
 
 #define WC_IPADDRESSA		"SysIPAddress32"
-#define WC_IPADDRESSW		L"SysIPAddress32"
+static const WCHAR WC_IPADDRESSW[] = { 'S','y','s',
+  'I','P','A','d','d','r','e','s','s','3','2',0 };
 #define WC_IPADDRESS		WINELIB_NAME_AW(WC_IPADDRESS)
 
 #define IPM_CLEARADDRESS	(WM_USER+100)
@@ -3355,7 +3364,8 @@ typedef struct tagNMIPADDRESS
  */
 
 #define WC_NATIVEFONTCTLA	"NativeFontCtl"
-#define WC_NATIVEFONTCTLW	L"NativeFontCtl"
+static const WCHAR WC_NATIVEFONTCTLW[] = { 'N','a','t','i','v','e',
+  'F','o','n','t','C','t','l',0 };
 #define WC_NATIVEFONTCTL	WINELIB_NAME_AW(WC_NATIVEFONTCTL)
 
 #define NFS_EDIT		0x0001
@@ -3371,7 +3381,8 @@ typedef struct tagNMIPADDRESS
  */
 
 #define MONTHCAL_CLASSA	"SysMonthCal32"
-#define MONTHCAL_CLASSW	L"SysMonthCal32"
+static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
+  'M','o','n','t','h','C','a','l','3','2',0 };
 #define MONTHCAL_CLASS		WINELIB_NAME_AW(MONTHCAL_CLASS)
 
 #define MCM_FIRST             0x1000
@@ -3533,11 +3544,12 @@ typedef struct tagNMDAYSTATE
  */
 
 #define DATETIMEPICK_CLASSA	"SysDateTimePick32"
-#define DATETIMEPICK_CLASSW	L"SysDateTimePick32"
+static const WCHAR DATETIMEPICK_CLASSW[] = { 'S','y','s',
+  'D','a','t','e','T','i','m','e','P','i','c','k','3','2',0 };
 #define DATETIMEPICK_CLASS	WINELIB_NAME_AW(DATETIMEPICK_CLASS)
 
 #define DTM_FIRST        0x1000
-#define DTN_FIRST       (0U-760U)     
+#define DTN_FIRST       (0U-760U)
 #define DTN_LAST        (0U-799U)
 
 

@@ -659,7 +659,7 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
      */
     if (lppd->Flags & PD_SHOWHELP) {
         if((PrintStructures->HelpMessageID = 
-	    RegisterWindowMessageA(HELPMSGSTRING)) == 0) {
+	    RegisterWindowMessageA(HELPMSGSTRINGA)) == 0) {
 	    COMDLG32_SetCommDlgExtendedError(CDERR_REGISTERMSGFAIL);
 	    return FALSE;
 	}
@@ -748,7 +748,7 @@ static LRESULT PRINTDLG_WMInitDialog16(HWND hDlg, WPARAM wParam,
      */
     if (lppd->Flags & PD_SHOWHELP) {
         if((PrintStructures->HelpMessageID = 
-	    RegisterWindowMessageA(HELPMSGSTRING)) == 0) {
+	    RegisterWindowMessageA(HELPMSGSTRINGA)) == 0) {
 	    COMDLG32_SetCommDlgExtendedError(CDERR_REGISTERMSGFAIL);
 	    return FALSE;
 	}

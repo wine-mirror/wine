@@ -256,8 +256,8 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam,
 			LPSTR lpstrFindWhat, WORD wFindWhatLen, 
 			BOOL fUnicode)
 {
-    int uFindReplaceMessage = RegisterWindowMessageA( FINDMSGSTRING );
-    int uHelpMessage = RegisterWindowMessageA( HELPMSGSTRING );
+    int uFindReplaceMessage = RegisterWindowMessageA( FINDMSGSTRINGA );
+    int uHelpMessage = RegisterWindowMessageA( HELPMSGSTRINGA );
 
     switch (wParam) {
 	case IDOK:
@@ -367,8 +367,8 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 		    LPSTR lpstrReplaceWith, WORD wReplaceWithLen,
 		    BOOL fUnicode)
 {
-    int uFindReplaceMessage = RegisterWindowMessageA( FINDMSGSTRING );
-    int uHelpMessage = RegisterWindowMessageA( HELPMSGSTRING );
+    int uFindReplaceMessage = RegisterWindowMessageA( FINDMSGSTRINGA );
+    int uHelpMessage = RegisterWindowMessageA( HELPMSGSTRINGA );
 
     switch (wParam) {
 	case IDOK:

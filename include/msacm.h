@@ -91,15 +91,18 @@ extern "C" {
 #define ACM_FILTERENUMF_DWFILTERTAG 0x00010000L
 
 #define ACMHELPMSGSTRINGA       "acmchoose_help"
-#define ACMHELPMSGSTRINGW       L"acmchoose_help"
+static const WCHAR ACMHELPMSGSTRINGW[] = { 'a','c','m',
+  'c','h','o','o','s','e','_','h','e','l','p',0 };
 #define ACMHELPMSGSTRING WINELIB_NAME_AW(ACMHELPMSGSTRING)
 
 #define ACMHELPMSGCONTEXTMENUA  "acmchoose_contextmenu"
-#define ACMHELPMSGCONTEXTMENUW  L"acmchoose_contextmenu"
+static const WCHAR ACMHELPMSGCONTEXTMENUW[] = { 'a','c','m',
+  'c','h','o','o','s','e','_','c','o','n','t','e','x','t','m','e','n','u',0 };
 #define ACMHELPMSGCONTEXTMENU WINELIB_NAME_AW(ACMHELPMSGCONTEXTMENU)
 
 #define ACMHELPMSGCONTEXTHELPA  "acmchoose_contexthelp"
-#define ACMHELPMSGCONTEXTHELPW  L"acmchoose_contexthelp"
+static const WCHAR ACMHELPMSGCONTEXTHELPW[] = { 'a','c','m',
+  'c','h','o','o','s','e','_','c','o','n','t','e','x','t','h','e','l','p',0 };
 #define ACMHELPMSGCONTEXTHELP WINELIB_NAME_AW(ACMHELPMSGCONTEXTHELP)
 
 #define MM_ACM_FORMATCHOOSE 0x8000

@@ -1,4 +1,4 @@
-/* 
+/*
  * COMMDLG - Common Wine Dialog ... :-)
  */
 
@@ -296,13 +296,41 @@ DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
 #define WM_CHOOSEFONT_SETLOGFONT	(WM_USER + 101)
 #define WM_CHOOSEFONT_SETFLAGS		(WM_USER + 102)
 
-#define LBSELCHSTRING  "commdlg_LBSelChangedNotify"
-#define SHAREVISTRING  "commdlg_ShareViolation"
-#define FILEOKSTRING   "commdlg_FileNameOK"
-#define COLOROKSTRING  "commdlg_ColorOK"
-#define SETRGBSTRING   "commdlg_SetRGBColor"
-#define FINDMSGSTRING  "commdlg_FindReplace"
-#define HELPMSGSTRING  "commdlg_help"
+#define LBSELCHSTRINGA  "commdlg_LBSelChangedNotify"
+static const WCHAR LBSELCHSTRINGW[] = { 'c','o','m','m','d','l','g','_',
+  'L','B','S','e','l','C','h','a','n','g','e','d','N','o','t','i','f','y',0 };
+#define LBSELCHSTRING   WINELIB_NAME_AW(LBSELCHSTRING)
+
+#define SHAREVISTRINGA  "commdlg_ShareViolation"
+static const WCHAR SHAREVISTRINGW[] = { 'c','o','m','m','d','l','g','_',
+  'S','h','a','r','e','V','i','o','l','a','t','i','o','n',0 };
+#define SHAREVISTRING   WINELIB_NAME_AW(SHAREVISTRING)
+
+#define FILEOKSTRINGA   "commdlg_FileNameOK"
+static const WCHAR FILEOKSTRINGW[] = { 'c','o','m','m','d','l','g','_',
+  'F','i','l','e','N','a','m','e','O','K',0 };
+#define FILEOKSTRING    WINELIB_NAME_AW(FILEOKSTRING)
+
+#define COLOROKSTRINGA  "commdlg_ColorOK"
+static const WCHAR COLOROKSTRINGW[] = { 'c','o','m','m','d','l','g','_',
+  'C','o','l','o','r','O','K',0 };
+#define COLOROKSTRING   WINELIB_NAME_AW(COLOROKSTRING)
+
+#define SETRGBSTRINGA   "commdlg_SetRGBColor"
+static const WCHAR SETRGBSTRINGW[] = { 'c','o','m','m','d','l','g','_',
+  'S','e','t','R','G','B','C','o','l','o','r',0 };
+#define SETRGBSTRING    WINELIB_NAME_AW(SETRGBSTRING)
+
+#define FINDMSGSTRINGA  "commdlg_FindReplace"
+static const WCHAR FINDMSGSTRINGW[] = { 'c','o','m','m','d','l','g','_',
+  'F','i','n','d','R','e','p','l','a','c','e',0 };
+#define FINDMSGSTRING   WINELIB_NAME_AW(FINDMSGSTRING)
+
+#define HELPMSGSTRINGA  "commdlg_help"
+static const WCHAR HELPMSGSTRINGW[] = { 'c','o','m','m','d','l','g','_',
+  'H','e','l','p',0 };
+#define HELPMSGSTRING   WINELIB_NAME_AW(HELPMSGSTRING)
+
 
 #define CD_LBSELNOITEMS -1
 #define CD_LBSELCHANGE   0

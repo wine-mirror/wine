@@ -311,12 +311,12 @@ static BOOL COMDLG32_FR_CheckPartial(
                 return FALSE;
         }
 
-	if((FindReplaceMessage = RegisterWindowMessageA(FINDMSGSTRING)) == 0)
+	if((FindReplaceMessage = RegisterWindowMessageA(FINDMSGSTRINGA)) == 0)
         {
         	COMDLG32_SetCommDlgExtendedError(CDERR_REGISTERMSGFAIL);
                 return FALSE;
         }
-	if((HelpMessage = RegisterWindowMessageA(HELPMSGSTRING)) == 0)
+	if((HelpMessage = RegisterWindowMessageA(HELPMSGSTRINGA)) == 0)
         {
         	COMDLG32_SetCommDlgExtendedError(CDERR_REGISTERMSGFAIL);
                 return FALSE;
