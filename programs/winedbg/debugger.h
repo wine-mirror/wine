@@ -531,7 +531,7 @@ extern int	        DEBUG_Printf(int chn, const char* format, ...) __attribute__(
 extern int	        DEBUG_Printf(int chn, const char* format, ...);
 #endif
 extern DBG_INTVAR*	DEBUG_GetIntVar(const char*);
-extern BOOL             DEBUG_Attach(DWORD pid, BOOL cofe);
+extern BOOL             DEBUG_Attach(DWORD pid, BOOL cofe, BOOL wfe);
 extern BOOL             DEBUG_Detach(void);
 extern void             DEBUG_Run(const char* args);
 extern DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h, const char* imageName);

@@ -262,7 +262,7 @@ DBG_THREAD*	DEBUG_AddThread(DBG_PROCESS* p, DWORD tid,
     t->exec_mode = EXEC_CONT;
     t->exec_count = 0;
 
-    sprintf(t->name, "%08lx", tid);
+    snprintf(t->name, sizeof(t->name), "%08lx", tid);
 
     p->num_threads++;
     t->next = p->threads;
@@ -303,17 +303,40 @@ void			DEBUG_DelThread(DBG_THREAD* t)
     DBG_free(t);
 }
 
-BOOL				DEBUG_Attach(DWORD pid, BOOL cofe)
+static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de);
+
+/******************************************************************
+ *		DEBUG_Attach
+ *
+ * Sets the debuggee to <pid>
+ * cofe instructs winedbg what to do when first exception is received 
+ * (break=FALSE, continue=TRUE)
+ * wfe is set to TRUE if DEBUG_Attach should also proceed with all debug events
+ * until the first exception is received (aka: attach to an already running process)
+ */
+BOOL				DEBUG_Attach(DWORD pid, BOOL cofe, BOOL wfe)
 {
+    DEBUG_EVENT         de;
+
     if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0, NULL))) return FALSE;
 
     if (!DebugActiveProcess(pid)) {
         DEBUG_Printf(DBG_CHN_MESG, "Can't attach process %lx: error %ld\n", pid, GetLastError());
         DEBUG_DelProcess(DEBUG_CurrProcess);
-        DEBUG_CurrProcess = NULL;
 	return FALSE;
     }
     DEBUG_CurrProcess->continue_on_first_exception = cofe;
+
+    if (wfe) /* shall we proceed all debug events until we get an exception ? */
+    {
+        DEBUG_InteractiveP = FALSE;
+        while (DEBUG_CurrProcess && WaitForDebugEvent(&de, INFINITE))
+        {
+            if (DEBUG_HandleDebugEvent(&de)) break;
+            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        }
+        if (DEBUG_CurrProcess) DEBUG_InteractiveP = TRUE;
+    }
     return TRUE;
 }
 
@@ -329,7 +352,6 @@ BOOL				DEBUG_Detach(void)
     SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context);
     DebugActiveProcessStop(DEBUG_CurrProcess->pid);
     DEBUG_DelProcess(DEBUG_CurrProcess);
-    DEBUG_CurrProcess = NULL;
     /* FIXME: should zero out the symbol table too */
     return TRUE;
 }
@@ -1040,18 +1062,18 @@ int main(int argc, char** argv)
 
     if (local_mode == none_mode) local_mode = winedbg_mode;
 
-    /* try the from <myself> pid */
+    /* try the form <myself> pid */
     if (DEBUG_CurrPid == 0 && argc == 2)
     {
         char*   ptr;
 
         DEBUG_CurrPid = strtol(argv[1], &ptr, 10);
         if (DEBUG_CurrPid == 0 || ptr == NULL ||
-            !DEBUG_Attach(DEBUG_CurrPid, local_mode != gdb_mode))
+            !DEBUG_Attach(DEBUG_CurrPid, local_mode != gdb_mode, FALSE))
             DEBUG_CurrPid = 0;
     }
 
-    /* try the from <myself> pid evt (Win32 JIT debugger) */
+    /* try the form <myself> pid evt (Win32 JIT debugger) */
     if (DEBUG_CurrPid == 0 && argc == 3)
     {
 	HANDLE	hEvent;
@@ -1061,7 +1083,7 @@ int main(int argc, char** argv)
 	if ((pid = strtol(argv[1], &ptr, 10)) != 0 && ptr != NULL &&
             (hEvent = (HANDLE)strtol(argv[2], &ptr, 10)) != 0 && ptr != NULL)
         {
-	    if (!DEBUG_Attach(pid, TRUE))
+	    if (!DEBUG_Attach(pid, TRUE, FALSE))
             {
 		/* don't care about result */
 		SetEvent(hEvent);

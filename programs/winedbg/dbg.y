@@ -150,7 +150,7 @@ command:
     | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2, 0); }
     | tSYMBOLFILE pathname tNUM tEOL	{ DEBUG_ReadSymbolTable($2, $3); }
     | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
-    | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE); }
+    | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE, TRUE); }
     | tDETACH tEOL              { return DEBUG_Detach(); /* FIXME: we shouldn't return, but since we cannot simply clean the symbol table, exit debugger for now */ }
     | list_command
     | disassemble_command
@@ -426,7 +426,7 @@ static  void set_default_channels(void)
 /***********************************************************************
  *           DEBUG_Parser
  *
- * Debugger editline parser
+ * Debugger command line parser
  */
 void	DEBUG_Parser(LPCSTR filename)
 {
@@ -453,7 +453,7 @@ void	DEBUG_Parser(LPCSTR filename)
     do
     {
        __TRY
-           {
+       {
 	  ret_ok = TRUE;
 	  yyparse();
        }
