@@ -31,10 +31,12 @@ GLUE = thunk.c
 
 EXTRA_OBJS = \
 	$(TOPOBJDIR)/controls/controls.o \
+	$(TOPOBJDIR)/resources/resources.o \
 	$(TOPOBJDIR)/windows/windows.o
 
 SUBDIRS = \
 	$(TOPOBJDIR)/controls \
+	$(TOPOBJDIR)/resources \
 	$(TOPOBJDIR)/windows
 
 @MAKE_DLL_RULES@

@@ -58,7 +58,6 @@ SUBDIRS = \
 	ole \
 	programs \
 	relay32 \
-	resources \
 	scheduler \
 	server \
 	tools \
@@ -88,7 +87,6 @@ LIBOBJS = \
 	msdos/msdos.o \
 	ole/ole.o \
 	relay32/relay32.o \
-	resources/resources.o \
 	scheduler/scheduler.o \
 	win32/win32.o
 
