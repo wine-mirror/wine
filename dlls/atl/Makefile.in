@@ -15,8 +15,11 @@ RC_SRCS = rsrc.rc
 IDL_SRCS = \
 	atliface.idl
 
-rsrc.res: atl.rgs
-
 @MAKE_DLL_RULES@
 
+rsrc.res: atl.rgs
+
 ### Dependencies:
+
+# note: this will get overwritten by make depend
+$(ALL_OBJS): $(IDL_SRCS:.idl=.h)
