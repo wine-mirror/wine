@@ -57,7 +57,7 @@ typedef struct _PDB
     WORD             module;           /* 2a IMTE for the process module */
     WORD             threads;          /* 2c Number of threads */
     WORD             running_threads;  /* 2e Number of running threads */
-    WORD             unknown3;         /* 30 Unknown */
+    WORD             free_lib_count;   /* 30 Recursion depth of FreeLibrary calls */
     WORD             ring0_threads;    /* 32 Number of ring 0 threads */
     HANDLE           system_heap;      /* 34 System heap to allocate handles */
     HTASK            task;             /* 38 Win16 task */
@@ -96,6 +96,7 @@ typedef struct _PDB
 } PDB;
 
 /* Process flags */
+#define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
 #define PDB32_WIN16_PROC    0x0008  /* Win16 process */
 #define PDB32_DOS_PROC      0x0010  /* Dos process */
 #define PDB32_CONSOLE_PROC  0x0020  /* Console process */

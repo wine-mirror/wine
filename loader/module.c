@@ -1529,17 +1529,19 @@ static void MODULE_FlushModrefs(void)
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {
-    BOOL retv = TRUE;
+    BOOL retv = FALSE;
     WINE_MODREF *wm;
 
     EnterCriticalSection( &PROCESS_Current()->crit_section );
+    PROCESS_Current()->free_lib_count++;
 
     wm = MODULE32_LookupHMODULE( hLibModule );
-    if ( !wm )
+    if ( !wm || !hLibModule )
         SetLastError( ERROR_INVALID_HANDLE );
     else
         retv = MODULE_FreeLibrary( wm );
 
+    PROCESS_Current()->free_lib_count--;
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
 
     return retv;
@@ -1588,13 +1590,14 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
     MODULE_DecRefCount( wm );
 
     /* Call process detach notifications */
-    MODULE_DllProcessDetach( FALSE, NULL );
+    if ( PROCESS_Current()->free_lib_count <= 1 )
+        MODULE_DllProcessDetach( FALSE, NULL );
 
     MODULE_FlushModrefs();
 
     TRACE_(module)("(%s) - END\n", wm->modname );
 
-    return FALSE;
+    return TRUE;
 }
 
 
