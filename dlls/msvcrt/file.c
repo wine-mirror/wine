@@ -2316,7 +2316,7 @@ MSVCRT_FILE* MSVCRT_freopen(const char *path, const char *mode,MSVCRT_FILE* file
 
   if (fd < 0)
     return NULL;
-  if (msvcrt_init_fp(file, fd, stream_flags) != -1)
+  if (msvcrt_init_fp(file, fd, stream_flags) == -1)
   {
       file->_flag = 0;
       WARN(":failed-last error (%ld)\n",GetLastError());
