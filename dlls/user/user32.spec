@@ -263,6 +263,7 @@
 @ stdcall GetKeyboardState(ptr)
 @ stdcall GetKeyboardType(long)
 @ stdcall GetLastActivePopup(long)
+@ stdcall GetLastInputInfo(ptr)
 # @ stub GetListBoxInfo
 @ stdcall GetMenu(long)
 # @ stub GetMenuBarInfo

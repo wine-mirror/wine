@@ -3604,6 +3604,12 @@ typedef struct tagTITLEBARINFO {
     DWORD rgstate[CCHILDREN_TITLEBAR+1];
 } TITLEBARINFO, *PTITLEBARINFO, *LPTITLEBARINFO;
 
+/* used by GetLastInputInfo */
+typedef struct tagLASTINPUTINFO {
+    UINT cbSize;
+    DWORD dwTime;
+} LASTINPUTINFO, *PLASTINPUTINFO;
+
 /* SetWinEventHook() flags */
 #define WINEVENT_OUTOFCONTEXT   0x0
 #define WINEVENT_SKIPOWNTHREAD  0x1
@@ -4192,6 +4198,7 @@ BOOL        WINAPI GetKeyboardLayoutNameW(LPWSTR);
 #define     GetKeyboardLayoutName WINELIB_NAME_AW(GetKeyboardLayoutName)
 SHORT       WINAPI GetKeyState(INT);
 HWND      WINAPI GetLastActivePopup(HWND);
+BOOL      WINAPI GetLastInputInfo(PLASTINPUTINFO);
 HMENU     WINAPI GetMenu(HWND);
 INT       WINAPI GetMenuItemCount(HMENU);
 UINT      WINAPI GetMenuItemID(HMENU,INT);
