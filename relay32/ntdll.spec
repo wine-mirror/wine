@@ -51,7 +51,7 @@ type	win32
 048 stub NPXEMULATORTABLE
 049 stub NlsMbCodePageTag
 050 stub NlsMbOemCodePageTag
-051 stub NtAcceptConnectPort
+051 stdcall NtAcceptConnectPort(long long long long long long) NtAcceptConnectPort
 052 stub NtAccessCheck
 053 stub NtAccessCheckAndAuditAlarm
 054 stub NtAdjustGroupsToken
@@ -67,23 +67,23 @@ type	win32
 064 stub NtClearEvent
 065 stdcall NtClose(long) NtClose
 066 stub NtCloseObjectAuditAlarm
-067 stub NtCompleteConnectPort
-068 stub NtConnectPort
+067 stdcall NtCompleteConnectPort(long) NtCompleteConnectPort
+068 stdcall NtConnectPort(long long long long long long long long) NtConnectPort
 069 stub NtContinue
-070 stub NtCreateDirectoryObject
+070 stdcall NtCreateDirectoryObject(long long long) NtCreateDirectoryObject
 071 stdcall NtCreateEvent(long long long long long) NtCreateEvent
 072 stub NtCreateEventPair
 073 stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr) NtCreateFile
 074 stub NtCreateIoCompletion
-075 stub NtCreateKey
-076 stub NtCreateMailslotFile
+075 stdcall NtCreateKey(long long long long long long long) NtCreateKey
+076 stdcall NtCreateMailslotFile(long long long long long long long long) NtCreateMailslotFile
 077 stub NtCreateMutant
 078 stub NtCreateNamedPipeFile
 079 stdcall NtCreatePagingFile(long long long long) NtCreatePagingFile
 080 stdcall NtCreatePort(long long long long long) NtCreatePort
 081 stub NtCreateProcess
 082 stub NtCreateProfile
-083 stub NtCreateSection
+083 stdcall NtCreateSection(long long long long long long long) NtCreateSection
 084 stub NtCreateSemaphore
 085 stub NtCreateSymbolicLinkObject
 086 stub NtCreateThread
@@ -115,17 +115,17 @@ type	win32
 112 stub NtImpersonateClientOfPort
 113 stub NtImpersonateThread
 114 stub NtInitializeRegistry
-115 stub NtListenPort
+115 stdcall NtListenPort(long long) NtListenPort
 116 stub NtLoadDriver
 117 stub NtLoadKey
 118 stub NtLockFile
 119 stub NtLockVirtualMemory
 120 stub NtMakeTemporaryObject
-121 stub NtMapViewOfSection
+121 stdcall NtMapViewOfSection(long long long long long long long long long long) NtMapViewOfSection
 122 stub NtNotifyChangeDirectoryFile
 123 stub NtNotifyChangeKey
 124 stdcall NtOpenDirectoryObject(long long long) NtOpenDirectoryObject
-125 stub NtOpenEvent
+125 stdcall NtOpenEvent(long long long) NtOpenEvent
 126 stub NtOpenEventPair
 127 stdcall NtOpenFile(ptr long ptr ptr long long) NtOpenFile
 128 stub NtOpenIoCompletion
@@ -134,7 +134,7 @@ type	win32
 131 stub NtOpenObjectAuditAlarm
 132 stub NtOpenProcess
 133 stdcall NtOpenProcessToken(long long long) NtOpenProcessToken
-134 stub NtOpenSection
+134 stdcall NtOpenSection(long long long) NtOpenSection
 135 stub NtOpenSemaphore
 136 stub NtOpenSymbolicLinkObject
 137 stub NtOpenThread
@@ -152,7 +152,7 @@ type	win32
 149 stdcall NtQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 150 stub NtQueryEaFile
 151 stub NtQueryEvent
-152 stub NtQueryInformationFile
+152 stdcall NtQueryInformationFile(long long long long long) NtQueryInformationFile
 153 stub NtQueryInformationPort
 154 stdcall NtQueryInformationProcess(long long long long long) NtQueryInformationProcess
 155 stdcall NtQueryInformationThread (long long long long long) NtQueryInformationThread
@@ -177,40 +177,40 @@ type	win32
 174 stub NtQueryVolumeInformationFile
 175 stub NtRaiseException
 176 stub NtRaiseHardError
-177 stub NtReadFile
+177 stdcall NtReadFile(long long long long long long long long long) NtReadFile
 178 stub NtReadRequestData
 179 stub NtReadVirtualMemory
 180 stub NtRegisterNewDevice
-181 stub NtRegisterThreadTerminatePort
+181 stdcall NtRegisterThreadTerminatePort(long) NtRegisterThreadTerminatePort
 182 stub NtReleaseMutant
 183 stub NtReleaseProcessMutant
 184 stub NtReleaseSemaphore
 185 stub NtRemoveIoCompletion
 186 stub NtReplaceKey
 187 stub NtReplyPort
-188 stub NtReplyWaitReceivePort
+188 stdcall NtReplyWaitReceivePort(long long long long) NtReplyWaitReceivePort
 189 stub NtReplyWaitReplyPort
 190 stub NtRequestPort
-191 stub NtRequestWaitReplyPort
+191 stdcall NtRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
 192 stub NtResetEvent
 193 stub NtRestoreKey
-194 stub NtResumeThread
+194 stdcall NtResumeThread(long long) NtResumeThread
 195 stub NtSaveKey
 196 stub NtSetContextThread
 197 stub NtSetDefaultHardErrorPort
 198 stub NtSetDefaultLocale
 199 stub NtSetEaFile
-200 stub NtSetEvent
+200 stdcall NtSetEvent(long long) NtSetEvent
 201 stub NtSetHighEventPair
 202 stub NtSetHighWaitLowEventPair
 203 stub NtSetHighWaitLowThread
-204 stub NtSetInformationFile
+204 stdcall NtSetInformationFile(long long long long long) NtSetInformationFile
 205 stub NtSetInformationKey
 206 stub NtSetInformationObject
 207 stdcall NtSetInformationProcess(long long long long) NtSetInformationProcess
 208 stdcall NtSetInformationThread(long long long long) NtSetInformationThread
 209 stub NtSetInformationToken
-210 stub NtSetIntervalProfile
+210 stdcall NtSetIntervalProfile(long long) NtSetIntervalProfile
 211 stub NtSetIoCompletion
 212 stub NtSetLdtEntries
 213 stub NtSetLowEventPair
@@ -223,7 +223,7 @@ type	win32
 220 stub NtSetSystemTime
 221 stdcall NtSetTimer(long long long long long long) NtSetTimer
 222 stub NtSetTimerResolution
-223 stub NtSetValueKey
+223 stdcall NtSetValueKey(long long long long long long) NtSetValueKey
 224 stdcall NtSetVolumeInformationFile(long long long long long) NtSetVolumeInformationFile
 225 stub NtShutdownSystem
 226 stub NtStartProfile
@@ -231,7 +231,7 @@ type	win32
 228 stub NtSuspendThread
 229 stub NtSystemDebugControl
 230 stub NtTerminateProcess
-231 stub NtTerminateThread
+231 stdcall NtTerminateThread(long long) NtTerminateThread
 232 stub NtTestAlert
 233 stub NtUnloadDriver
 234 stub NtUnloadKey
@@ -242,7 +242,7 @@ type	win32
 239 stub NtW32Call
 240 stub NtWaitForMultipleObjects
 241 stub NtWaitForProcessMutant
-242 stub NtWaitForSingleObject
+242 stdcall NtWaitForSingleObject(long long long) NtWaitForSingleObject
 243 stub NtWaitHighEventPair
 244 stub NtWaitLowEventPair
 245 stub NtWriteFile
@@ -255,16 +255,16 @@ type	win32
 252 stub RestoreEm87Context
 253 stub RtlAbortRXact
 254 stub RtlAbsoluteToSelfRelativeSD
-255 stub RtlAcquirePebLock
+255 stdcall RtlAcquirePebLock() RtlAcquirePebLock
 256 stub RtlAcquireResourceExclusive
 257 stub RtlAcquireResourceShared
-258 stub RtlAddAccessAllowedAce
+258 stdcall RtlAddAccessAllowedAce(long long long long) RtlAddAccessAllowedAce
 259 stub RtlAddAccessDeniedAce
 260 stdcall RtlAddAce(ptr long long ptr long) RtlAddAce
 261 stub RtlAddActionToRXact
 262 stub RtlAddAttributeActionToRXact
 263 stub RtlAddAuditAccessAce
-264 stub RtlAdjustPrivilege
+264 stdcall RtlAdjustPrivilege(long long long long) RtlAdjustPrivilege
 265 stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr) RtlAllocateAndInitializeSid
 266 stdcall RtlAllocateHeap(long long long) HeapAlloc
 267 stub RtlAnsiCharToUnicodeChar
@@ -333,7 +333,7 @@ type	win32
 330 stub RtlDeleteResource
 331 stdcall RtlDeleteSecurityObject(long) RtlDeleteSecurityObject
 332 stdcall RtlDestroyEnvironment(long) RtlDestroyEnvironment
-333 stub RtlDestroyHeap
+333 stdcall RtlDestroyHeap(long) HeapDestroy
 334 stub RtlDestroyProcessParameters
 335 stub RtlDestroyQueryDebugBuffer
 336 stub RtlDetermineDosPathNameType_U
@@ -354,7 +354,7 @@ type	win32
 351 stub RtlEqualPrefixSid
 352 stdcall RtlEqualSid (long long) RtlEqualSid
 353 stub RtlEqualString
-354 stub RtlEqualUnicodeString
+354 stdcall RtlEqualUnicodeString(long long long) RtlEqualUnicodeString
 355 stub RtlEraseUnicodeString
 356 stub RtlExpandEnvironmentStrings_U
 357 stub RtlExtendHeap
@@ -379,7 +379,7 @@ type	win32
 376 stdcall RtlFreeSid (long) RtlFreeSid
 377 stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
 378 stub RtlGenerate8dot3Name
-379 stub RtlGetAce
+379 stdcall RtlGetAce(ptr long ptr) RtlGetAce
 380 stub RtlGetCallersAddress
 381 stub RtlGetCompressionWorkSpaceSize
 382 stub RtlGetControlSecurityDescriptor
@@ -412,7 +412,7 @@ type	win32
 409 stub RtlInitializeResource
 410 stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
 411 stub RtlInsertElementGenericTable
-412 stub RtlIntegerToChar
+412 stdcall RtlIntegerToChar(long long long long) RtlIntegerToChar
 413 stub RtlIntegerToUnicodeString
 414 stub RtlIsDosDeviceName_U
 415 stub RtlIsGenericTableEmpty
@@ -470,7 +470,7 @@ type	win32
 467 stub RtlReAllocateHeap
 468 stub RtlRealPredecessor
 469 stub RtlRealSuccessor
-470 stub RtlReleasePebLock
+470 stdcall RtlReleasePebLock() RtlReleasePebLock
 471 stub RtlReleaseResource
 472 stub RtlRemoteCall
 473 stub RtlResetRtlTranslations
@@ -503,8 +503,8 @@ type	win32
 500 stub RtlSystemTimeToLocalTime
 501 stub RtlTimeFieldsToTime
 502 stdcall RtlTimeToElapsedTimeFields(long long) RtlTimeToElapsedTimeFields
-503 stub RtlTimeToSecondsSince1970
-504 stub RtlTimeToSecondsSince1980
+503 stdcall RtlTimeToSecondsSince1970(ptr ptr) RtlTimeToSecondsSince1970
+504 stdcall RtlTimeToSecondsSince1980(ptr ptr) RtlTimeToSecondsSince1980
 505 stub RtlTimeToTimeFields
 506 stub RtlUnicodeStringToAnsiSize
 507 stdcall RtlUnicodeStringToAnsiString(ptr ptr long) RtlUnicodeStringToAnsiString
@@ -570,7 +570,7 @@ type	win32
 567 stub ZwClose
 568 stub ZwCloseObjectAuditAlarm
 569 stub ZwCompleteConnectPort
-570 stub ZwConnectPort
+570 stdcall ZwConnectPort(long long long long long long long long) NtConnectPort
 571 stub ZwContinue
 572 stub ZwCreateDirectoryObject
 573 stub ZwCreateEvent
@@ -692,7 +692,7 @@ type	win32
 689 stub ZwReplyWaitReceivePort
 690 stub ZwReplyWaitReplyPort
 691 stub ZwRequestPort
-692 stub ZwRequestWaitReplyPort
+692 stdcall ZwRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
 693 stub ZwResetEvent
 694 stub ZwRestoreKey
 695 stub ZwResumeThread
@@ -862,7 +862,7 @@ type	win32
 859 stub __eFYL2XP1
 860 stub __eGetStatusWord
 861 stub _alloca_probe
-862 cdecl _chkstk() NTDLL_chkstk
+862 register _chkstk() NTDLL_chkstk
 863 stub _fltused
 864 cdecl _ftol(double) CRTDLL__ftol
 865 stub _itoa
@@ -941,14 +941,14 @@ type	win32
 938 stub wcscspn
 939 cdecl wcslen(wstr) CRTDLL_wcslen
 940 stub wcsncat
-941 stub wcsncmp
+941 cdecl wcsncmp(wstr wstr long) CRTDLL_wcsncmp
 942 cdecl wcsncpy(ptr wstr long) CRTDLL_wcsncpy
 943 stub wcspbrk
 944 cdecl wcsrchr(wstr long) CRTDLL_wcsrchr
 945 cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
 946 cdecl wcsstr(wstr wstr) CRTDLL_wcsstr
-947 stub wcstok
-948 stub wcstol
+947 cdecl wcstok(wstr wstr) CRTDLL_wcstok
+948 cdecl wcstol(wstr ptr long) CRTDLL_wcstol
 949 cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
 950 stub wcstoul
 

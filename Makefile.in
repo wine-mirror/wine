@@ -31,6 +31,7 @@ LIBSUBDIRS = \
 	dlls/imagehlp \
 	dlls/msacm \
 	dlls/msacm32 \
+	dlls/ntdll \
 	dlls/psapi \
 	dlls/shell32 \
 	dlls/winaspi \
@@ -88,6 +89,7 @@ LIBOBJS = \
 	dlls/imagehlp/imagehlp.o \
 	dlls/msacm/msacm.o \
 	dlls/msacm32/msacm32.o \
+	dlls/ntdll/ntdll.o \
 	dlls/psapi/psapi.o \
 	dlls/shell32/shell32.o \
 	dlls/winaspi/winaspi.o \

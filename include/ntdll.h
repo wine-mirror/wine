@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+typedef DWORD NTSTATUS;
+
 /* Security Ids of NT */
 
 /* Moved to windows.h

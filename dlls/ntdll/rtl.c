@@ -1,7 +1,9 @@
 /*
  * NT basis DLL
  * 
- * Copyright 1996 Marcus Meissner
+ * This file contains the Rtl* API functions. These should be implementable.
+ * 
+ * Copyright 1996-1998 Marcus Meissner
  */
 
 #include <stdlib.h>
@@ -10,6 +12,8 @@
 #include <ctype.h>
 #include <math.h>
 #include "win.h"
+#include "stackframe.h"
+#include "file.h"
 #include "windows.h"
 #include "winnls.h"
 #include "ntdll.h"
@@ -394,6 +398,16 @@ VOID WINAPI RtlFreeUnicodeString(LPUNICODE_STRING str)
 }
 
 /**************************************************************************
+ * RtlFreeAnsiString [NTDLL.373]
+ */
+VOID WINAPI RtlFreeAnsiString(LPANSI_STRING AnsiString)
+{
+    if( AnsiString->Buffer )
+        HeapFree( GetProcessHeap(),0,AnsiString->Buffer );
+}
+
+
+/**************************************************************************
  *                 RtlUnicodeToOemN			[NTDLL.515]
  */
 DWORD /* NTSTATUS */ 
@@ -440,6 +454,17 @@ WINAPI RtlUnicodeStringToAnsiString(LPANSI_STRING oem,LPUNICODE_STRING uni,BOOL3
 	oem->Length = uni->Length/2;
 	lstrcpynWtoA(oem->Buffer,uni->Buffer,uni->Length/2+1);
 	return 0;
+}
+
+/**************************************************************************
+ *                 RtlEqualUnicodeString		[NTDLL]
+ */
+DWORD WINAPI RtlEqualUnicodeString(LPUNICODE_STRING s1,LPUNICODE_STRING s2,DWORD x) {
+	FIXME(ntdll,"(%s,%s,%ld),stub!\n",debugstr_w(s1->Buffer),debugstr_w(s2->Buffer),x);
+	return 0;
+	if (s1->Length != s2->Length)
+		return 1;
+	return !lstrncmp32W(s1->Buffer,s2->Buffer,s1->Length/2);
 }
 
 /**************************************************************************
@@ -562,140 +587,13 @@ BOOL32  WINAPI RtlDosPathNameToNtPathName_U(
 }
 
 /**************************************************************************
- *                 NtOpenFile				[NTDLL.127]
- */
-DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,DWORD x6)
-{
-	FIXME(ntdll,"(%08lx,0x%08lx,%08lx,%08lx,%08lx,%08lx): stub\n",
-	      x1,flags,x3,x4,alignment,x6);
-	/* returns file io completion status */
-	return 0;
-}
-
-/**************************************************************************
- *		NtCreateFile				[NTDLL.73]
- */
-DWORD /* NTSTATUS */ 
-WINAPI NtCreateFile(PHANDLE filehandle,DWORD access,LPLONG attributes,
-			LPLONG status,LPVOID x5,DWORD x6,DWORD x7,
-			LPLONG x8,DWORD x9,DWORD x10,LPLONG x11)
-{
-	/* parameter count checked with wine debugger */
-	FIXME(ntdll,"(%p,%lx,%lx,%lx,%p,%08lx,%08lx,%p,%08lx,%08lx,%p): empty stub\n",
-	  filehandle,access,*attributes,*status,x5,x6,x7,x8,x9,x10,x11);
-	return 0;
-}
-/**************************************************************************
- *		NtCreateTimer				[NTDLL.87]
- */
-DWORD WINAPI NtCreateTimer(DWORD x1, DWORD x2, DWORD x3)
-{
-	/* parameter count checked (obscure doc from internet said 4, debugger showed only 3) */
-	FIXME(ntdll,"(%08lx,%08lx,%08lx): empty stub\n",
-		x1,x2,x3);
-	return 0;
-}
-/**************************************************************************
- *		NtSetTimer				[NTDLL.221]
- */
-DWORD WINAPI NtSetTimer(DWORD x1,DWORD x2,DWORD x3,DWORD x4,
-		DWORD x5,DWORD x6)
-{
-	/* parameter count checked (obscure doc from internet said 7, debugger showed only 6) */
-	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx): empty stub\n",
-		x1,x2,x3,x4,x5,x6);
-	return 0;
-}
-
-/**************************************************************************
- *		NtCreateEvent				[NTDLL.71]
- */
-DWORD /* NTSTATUS */ 
-WINAPI NtCreateEvent(PHANDLE eventhandle, DWORD desiredaccess, 
-	DWORD attributes, DWORD eventtype, DWORD initialstate)
-{
-	/* parameter count checked with wine debugger */
-	FIXME(ntdll,"(%p,%08lx,%08lx,%08lx,%08lx): empty stub\n",
-		eventhandle,desiredaccess,attributes,eventtype,initialstate);
-	return 0;
-}
-/**************************************************************************
- *		NtDeviceIoControlFile			[NTDLL.94]
- */
-DWORD /* NTSTATUS */ 
-WINAPI NtDeviceIoControlFile(HANDLE32 filehandle, HANDLE32 event, 
-	DWORD x3, DWORD x4, DWORD x5, UINT32 iocontrolcode,
-	LPVOID inputbuffer,  DWORD inputbufferlength,
-	LPVOID outputbuffer, DWORD outputbufferlength)
-{
-	/* parameter count checked with wine debugger */
-	FIXME(ntdll,"(%x,%x,%08lx,%08lx,%08lx,%08x,%lx,%lx): empty stub\n",
-		filehandle,event,x3,x4,x5,iocontrolcode,inputbufferlength,outputbufferlength);
-	return 0;
-}
-/**************************************************************************
  *                 NTDLL_chkstk				[NTDLL.862]
  */
-
-VOID WINAPI NTDLL_chkstk (DWORD x1, DWORD x2, DWORD x3, DWORD x4,
-	DWORD x5, DWORD x6, DWORD x7, DWORD x8,
-	DWORD x9, DWORD x10)
+REGS_ENTRYPOINT(NTDLL_chkstk)
 {
 	/* FIXME: should subtract %eax bytes from stack pointer */
-	FIXME(ntdll, "(void): stub\n");
+	FIXME(ntdll, "(eax=%ld): stub\n",EAX_reg(context));
 }
-
-
-/**************************************************************************
- * NtOpenDirectoryObject [NTDLL.124]
- */
-DWORD WINAPI NtOpenDirectoryObject(DWORD x1,DWORD x2,DWORD x3)
-{
-    FIXME(ntdll,"(%lx,%lx,%lx): stub\n",x1,x2,x3);
-    return 0;
-}
-
-
-/******************************************************************************
- * NtQueryDirectoryObject [NTDLL.149]
- */
-DWORD WINAPI NtQueryDirectoryObject( DWORD x1, DWORD x2, DWORD x3, DWORD x4,
-                                     DWORD x5, DWORD x6, DWORD x7 )
-{
-    FIXME(ntdll,"(%lx,%lx,%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5,x6,x7);
-    return 0;
-}
-
-
-/**************************************************************************
- * RtlFreeAnsiString [NTDLL.373]
- */
-VOID WINAPI RtlFreeAnsiString(LPANSI_STRING AnsiString)
-{
-    if( AnsiString->Buffer )
-        HeapFree( GetProcessHeap(),0,AnsiString->Buffer );
-}
-
-
-/******************************************************************************
- * NtQuerySystemInformation [NTDLL.168]
- */
-DWORD WINAPI NtQuerySystemInformation( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
-{
-    FIXME(ntdll,"(%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4);
-    return 0;
-}
-
-
-/******************************************************************************
- * NtQueryObject [NTDLL.161]
- */
-DWORD WINAPI NtQueryObject( DWORD x1, DWORD x2 ,DWORD x3, DWORD x4, DWORD x5 )
-{
-    FIXME(ntdll,"(0x%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5);
-    return 0;
-}
-
 
 /******************************************************************************
  * RtlTimeToElapsedTimeFields [NTDLL.502]
@@ -706,23 +604,6 @@ DWORD WINAPI RtlTimeToElapsedTimeFields( DWORD x1, DWORD x2 )
     return 0;
 }
 
-
-/******************************************************************************
- * NtSetInformationProcess [NTDLL.207]
- */
-DWORD WINAPI NtSetInformationProcess( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
-{
-    FIXME(ntdll,"(%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4);
-    return 0;
-}
-
-/******************************************************************************
- * NtFsControlFile [NTDLL.108]
- */
-VOID WINAPI NtFsControlFile(VOID)
-{
-    FIXME(ntdll,"(void): stub\n");
-}
 
 /******************************************************************************
  * RtlExtendedLargeIntegerDivide [NTDLL.359]
@@ -761,69 +642,18 @@ WINAPI RtlExtendedIntegerMultiply(
 #endif
 }
 
-DWORD WINAPI NtOpenKey(DWORD x1,DWORD x2,LPUNICODE_STRING key) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx(%s)),stub!\n",x1,x2,key,key->Buffer);
-	return RegOpenKey32W(HKEY_LOCAL_MACHINE,key->Buffer,x1);
-}
-
-DWORD WINAPI NtQueryValueKey(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
-	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx),stub!\n",
-		x1,x2,x3,x4,x5,x6
-	);
-	return 0;
-}
-
-DWORD WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3);
-	return 1;
-}
-
-/**************************************************************************
- *                 NtClose				[NTDLL.65]
+/******************************************************************************
+ *  RtlFormatCurrentUserKeyPath		[NTDLL.371] 
  */
-DWORD WINAPI NtClose(DWORD x1) {
-	FIXME(ntdll,"(0x%08lx),stub!\n",x1);
-	return 1;
-}
-/******************************************************************************
-*  NtQueryInformationProcess		[NTDLL.] 
-*
-*/
-DWORD WINAPI NtQueryInformationProcess(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
-		x1,x2,x3,x4,x5
-	);
-	return 0;
-}
-/******************************************************************************
-*  NtQueryInformationThread		[NTDLL.] 
-*
-*/
-DWORD WINAPI NtQueryInformationThread(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
-		x1,x2,x3,x4,x5
-	);
-	return 0;
-}
-/******************************************************************************
-*  NtQueryInformationToken		[NTDLL.156] 
-*
-*/
-DWORD WINAPI NtQueryInformationToken(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
-		x1,x2,x3,x4,x5
-	);
-	return 0;
-}
-/******************************************************************************
-*  RtlFormatCurrentUserKeyPath		[NTDLL.371] 
-*
-*/
-DWORD WINAPI RtlFormatCurrentUserKeyPath()
+DWORD WINAPI RtlFormatCurrentUserKeyPath(DWORD x)
 {
-    FIXME(ntdll,"(): stub\n");
+    FIXME(ntdll,"(0x%08lx): stub\n",x);
     return 1;
 }
+
+/******************************************************************************
+ *  RtlOpenCurrentUser		[NTDLL] 
+ */
 DWORD WINAPI RtlOpenCurrentUser(DWORD x1, DWORD *x2)
 {
 /* Note: this is not the correct solution, 
@@ -837,9 +667,9 @@ DWORD WINAPI RtlOpenCurrentUser(DWORD x1, DWORD *x2)
 	return FALSE;
 }
 /******************************************************************************
-*  RtlAllocateAndInitializeSid		[NTDLL.265] 
-*
-*/
+ *  RtlAllocateAndInitializeSid		[NTDLL.265] 
+ *
+ */
 BOOL32 WINAPI RtlAllocateAndInitializeSid (LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,DWORD nSubAuthorityCount,
 		DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8,DWORD x9,DWORD x10, LPSID pSid) 
 {	FIXME(ntdll,"(%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p),stub!\n",
@@ -847,11 +677,11 @@ BOOL32 WINAPI RtlAllocateAndInitializeSid (LPSID_IDENTIFIER_AUTHORITY pIdentifie
 	return 0;
 }
 /******************************************************************************
-*  RtlEqualSid		[NTDLL.352] 
-*
-*/
-DWORD WINAPI RtlEqualSid(DWORD x1,DWORD x2) 
-{	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n", x1,x2);
+ *  RtlEqualSid		[NTDLL.352] 
+ *
+ */
+DWORD WINAPI RtlEqualSid(DWORD x1,DWORD x2) {	
+	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n", x1,x2);
 	return TRUE;
 }
 
@@ -864,28 +694,10 @@ DWORD WINAPI RtlFreeSid(DWORD x1)
 }
 
 /******************************************************************************
- *  NtCreatePagingFile		[NTDLL] 
- */
-DWORD WINAPI NtCreatePagingFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
-	return 0;
-}
-
-/******************************************************************************
  *  RtlGetDaclSecurityDescriptor		[NTDLL] 
  */
 DWORD WINAPI RtlGetDaclSecurityDescriptor(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
 	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
-	return 0;
-}
-
-/******************************************************************************
- *  NtDuplicateObject		[NTDLL] 
- */
-DWORD WINAPI NtDuplicateObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,
-	DWORD x6,DWORD x7
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7);
 	return 0;
 }
 
@@ -896,6 +708,7 @@ DWORD WINAPI RtlCreateEnvironment(DWORD x1,DWORD x2) {
 	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
 	return 0;
 }
+
 
 /******************************************************************************
  *  RtlDestroyEnvironment		[NTDLL] 
@@ -908,60 +721,16 @@ DWORD WINAPI RtlDestroyEnvironment(DWORD x) {
 /******************************************************************************
  *  RtlQueryEnvironmentVariable_U		[NTDLL] 
  */
-DWORD WINAPI RtlQueryEnvironmentVariable_U(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
+DWORD WINAPI RtlQueryEnvironmentVariable_U(DWORD x1,LPUNICODE_STRING key,LPUNICODE_STRING val) {
+	FIXME(ntdll,"(0x%08lx,%s,%p),stub!\n",x1,debugstr_w(key->Buffer),val);
 	return 0;
 }
 
 /******************************************************************************
  *  RtlSetEnvironmentVariable		[NTDLL] 
  */
-DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
-	return 0;
-}
-
-/******************************************************************************
- *  NtDuplicateToken		[NTDLL] 
- */
-DWORD WINAPI NtDuplicateToken(
-	DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
-	return 0;
-}
-
-/******************************************************************************
- *  NtAdjustPrivilegesToken		[NTDLL] 
- */
-DWORD WINAPI NtAdjustPrivilegesToken(
-	DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
-	return 0;
-}
-
-/******************************************************************************
- *  NtOpenProcessToken		[NTDLL] 
- */
-DWORD WINAPI NtOpenProcessToken(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
-	return 0;
-}
-
-/******************************************************************************
- *  NtSetInformationThread		[NTDLL] 
- */
-DWORD WINAPI NtSetInformationThread(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
-	return 0;
-}
-
-/******************************************************************************
- *  NtOpenThreadToken		[NTDLL] 
- */
-DWORD WINAPI NtOpenThreadToken(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,LPUNICODE_STRING key,LPUNICODE_STRING val) {
+	FIXME(ntdll,"(0x%08lx,%s,%s),stub!\n",x1,debugstr_w(key->Buffer),debugstr_w(val->Buffer));
 	return 0;
 }
 
@@ -982,20 +751,66 @@ DWORD WINAPI RtlDeleteSecurityObject(DWORD x1) {
 }
 
 /******************************************************************************
- *  NtSetVolumeInformationFile		[NTDLL] 
+ *  RtlToTimeInSecondsSince1980		[NTDLL] 
  */
-DWORD WINAPI NtSetVolumeInformationFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,
-	DWORD x5
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
+BOOL32 WINAPI RtlTimeToSecondsSince1980(LPFILETIME ft,LPDWORD timeret) {
+	/* 1980 = 1970+10*365 days +  29. februar 1972 + 29.februar 1976 */
+	*timeret = DOSFS_FileTimeToUnixTime(ft,NULL) - (10*365+2)*24*3600;
+	return 1;
+}
+
+/******************************************************************************
+ *  RtlToTimeInSecondsSince1970		[NTDLL] 
+ */
+BOOL32 WINAPI RtlTimeToSecondsSince1970(LPFILETIME ft,LPDWORD timeret) {
+	*timeret = DOSFS_FileTimeToUnixTime(ft,NULL);
+	return 1;
+}
+
+/******************************************************************************
+ *  RtlAcquirePebLock		[NTDLL] 
+ */
+VOID WINAPI RtlAcquirePebLock(void) {
+	FIXME(ntdll,"()\n");
+	/* enter critical section ? */
+}
+
+/******************************************************************************
+ *  RtlReleasePebLock		[NTDLL] 
+ */
+VOID WINAPI RtlReleasePebLock(void) {
+	FIXME(ntdll,"()\n");
+	/* leave critical section ? */
+}
+
+/******************************************************************************
+ *  RtlAddAccessAllowedAce		[NTDLL] 
+ */
+DWORD WINAPI RtlAddAccessAllowedAce(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
 }
 
 /******************************************************************************
- *  NtCreatePort		[NTDLL] 
+ *  RtlGetAce		[NTDLL] 
  */
-DWORD WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
+DWORD WINAPI RtlGetAce(LPACL pAcl,DWORD dwAceIndex,LPVOID *pAce ) {
+	FIXME(ntdll,"(%p,%ld,%p),stub!\n",pAcl,dwAceIndex,pAce);
 	return 0;
 }
 
+/******************************************************************************
+ *  RtlAdjustPrivilege		[NTDLL] 
+ */
+DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	return 0;
+}
+
+/******************************************************************************
+ *  RtlIntegerToChar	[NTDLL] 
+ */
+DWORD WINAPI RtlIntegerToChar(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	return 0;
+}

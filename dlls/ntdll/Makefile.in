@@ -1,0 +1,17 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ntdll
+
+C_SRCS = \
+	nt.c \
+	rtl.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

@@ -19,7 +19,6 @@ C_SRCS = \
 	lzexpand.c \
 	main.c \
 	network.c \
-	ntdll.c \
 	port.c \
 	printdrv.c \
 	registry.c \

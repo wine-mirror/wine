@@ -3,6 +3,7 @@ SUBDIRS = \
 	imagehlp \
 	msacm \
 	msacm32 \
+	ntdll \
 	psapi \
 	shell32 \
 	winaspi \
