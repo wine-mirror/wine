@@ -440,7 +440,7 @@ BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
  */
 HWND16 WINAPI GetDlgItem16( HWND16 hwndDlg, INT16 id )
 {
-    return WIN_Handle16( GetDlgItem( WIN_Handle32(hwndDlg), id ));
+    return WIN_Handle16( GetDlgItem( WIN_Handle32(hwndDlg), (UINT16) id ));
 }
 
 
