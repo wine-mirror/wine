@@ -24,6 +24,7 @@ DEFAULT_DEBUG_CHANNEL(pager);
 typedef struct
 {
     HWND   hwndChild;  /* handle of the contained wnd */
+    BOOL   bNoResize;  /* set when created with CCS_NORESIZE */
     BOOL   bHorizontal;/* orientation of the control */
     COLORREF clrBk;    /* background color */
     INT    nBorder;    /* border size for the control */
@@ -309,12 +310,12 @@ PAGER_PositionChildWnd(HWND hwnd, PAGER_INFO* infoPtr)
             SetWindowPos(infoPtr->hwndChild, 0,
                          -nPos, 0,
                          infoPtr->nWidth, infoPtr->nHeight,
-    	     SWP_NOZORDER);
+                         SWP_NOZORDER);
         }
         else
         {
             TRACE("[%04x] SWP %dx%d at (%d,%d)\n", hwnd, 
-	         infoPtr->nWidth, infoPtr->nHeight,
+                         infoPtr->nWidth, infoPtr->nHeight,
                          0, -nPos);
             SetWindowPos(infoPtr->hwndChild, 0,
                          0, -nPos,
@@ -350,6 +351,7 @@ PAGER_GetScrollRange(HWND hwnd, PAGER_INFO* infoPtr)
             childSize = infoPtr->nHeight;
         }
 
+        TRACE("childSize = %d,  wndSize = %d\n", childSize, wndSize);
         if (childSize > wndSize)
             scrollRange = childSize - wndSize + infoPtr->nButtonSize;
     }
@@ -457,45 +459,120 @@ PAGER_SetPos(HWND hwnd, INT newPos, BOOL fromBtnPress)
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     INT scrollRange = PAGER_GetScrollRange(hwnd, infoPtr);
 
-    if (scrollRange <= 0)
-        newPos = 0;
-    else if (newPos < 0)
-        newPos = 0;
+    if ((scrollRange <= 0) || (newPos < 0))
+        infoPtr->nPos = 0;
     else if (newPos > scrollRange)
-        newPos = scrollRange;
-
-    if (newPos != infoPtr->nPos)
-    {
+        infoPtr->nPos = scrollRange;
+    else
         infoPtr->nPos = newPos;
-        TRACE("[%04x] pos=%d\n", hwnd, infoPtr->nPos);
 
-        /* gray and restore btns, and if from WM_SETPOS, hide the gray btns */
-        PAGER_UpdateBtns(hwnd, infoPtr, scrollRange, !fromBtnPress);
+    TRACE("[%04x] pos=%d\n", hwnd, infoPtr->nPos);
 
-        PAGER_PositionChildWnd(hwnd, infoPtr);
+    /* gray and restore btns, and if from WM_SETPOS, hide the gray btns */
+    PAGER_UpdateBtns(hwnd, infoPtr, scrollRange, !fromBtnPress);
+    PAGER_PositionChildWnd(hwnd, infoPtr);
+
+    return 0;
+}
+
+static LRESULT
+PAGER_HandleWindowPosChanging(HWND hwnd, WINDOWPOS *winpos)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
+
+    if (infoPtr->bNoResize && !(winpos->flags & SWP_NOSIZE))
+    {
+        /* don't let the app resize the nonscrollable dimension of a control
+         * that was created with CCS_NORESIZE style
+         * (i.e. height for a horizontal pager, or width for a vertical one) */
+
+        if (infoPtr->bHorizontal)
+            winpos->cy = infoPtr->nHeight;
+        else
+            winpos->cx = infoPtr->nWidth;
     }
 
     return 0;
+}
+
+static void 
+PAGER_SetFixedWidth(HWND hwnd, PAGER_INFO* infoPtr)
+{
+  /* Must set the non-scrollable dimension to be less than the full height/width
+   * so that NCCalcSize is called.  The Msoft docs mention 3/4 factor for button
+   * size, and experimentation shows that affect is almost right. */
+
+    RECT wndRect;
+    INT delta;
+    GetWindowRect(hwnd, &wndRect);
+
+    /* see what the app says for btn width */
+    PAGER_CalcSize(hwnd, &infoPtr->nWidth, TRUE);
+
+    if (infoPtr->bNoResize)
+    {
+        delta = wndRect.right - wndRect.left - infoPtr->nWidth;
+        if (delta > infoPtr->nButtonSize)
+            infoPtr->nWidth += 4 * infoPtr->nButtonSize / 3;
+        else if (delta > 0)
+            infoPtr->nWidth +=  infoPtr->nButtonSize / 3;
+    }
+
+    infoPtr->nDelta = wndRect.bottom - wndRect.top - infoPtr->nButtonSize;
+
+    TRACE("[%04x] infoPtr->nWidth set to %d\n",
+	       hwnd, infoPtr->nWidth);
+}
+
+static void 
+PAGER_SetFixedHeight(HWND hwnd, PAGER_INFO* infoPtr)
+{
+  /* Must set the non-scrollable dimension to be less than the full height/width
+   * so that NCCalcSize is called.  The Msoft docs mention 3/4 factor for button
+   * size, and experimentation shows that affect is almost right. */
+
+    RECT wndRect;
+    INT delta;
+    GetWindowRect(hwnd, &wndRect);
+
+    /* see what the app says for btn height */
+    PAGER_CalcSize(hwnd, &infoPtr->nHeight, FALSE);
+
+    if (infoPtr->bNoResize)
+    {
+        delta = wndRect.bottom - wndRect.top - infoPtr->nHeight;
+        if (delta > infoPtr->nButtonSize)
+            infoPtr->nHeight += 4 * infoPtr->nButtonSize / 3;
+        else if (delta > 0)
+            infoPtr->nHeight +=  infoPtr->nButtonSize / 3;
+    }
+
+    infoPtr->nDelta = wndRect.right - wndRect.left - infoPtr->nButtonSize;
+
+    TRACE("[%04x] infoPtr->nHeight set to %d\n",
+	       hwnd, infoPtr->nHeight);
 }
 
 static LRESULT
 PAGER_RecalcSize(HWND hwnd)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
-    INT scrollRange;
-
     TRACE("[%04x]\n", hwnd);
-    scrollRange = PAGER_GetScrollRange(hwnd, infoPtr);
 
-    if (scrollRange <= 0)
-    PAGER_SetPos(hwnd, 0, FALSE);
-    else 
+    if (infoPtr->hwndChild)
     {
-        PAGER_UpdateBtns(hwnd, infoPtr, scrollRange, TRUE);
-        PAGER_PositionChildWnd(hwnd, infoPtr);
+        INT scrollRange = PAGER_GetScrollRange(hwnd, infoPtr);
+
+        if (scrollRange <= 0)
+            PAGER_SetPos(hwnd, 0, FALSE);
+        else 
+        {
+            PAGER_UpdateBtns(hwnd, infoPtr, scrollRange, TRUE);
+            PAGER_PositionChildWnd(hwnd, infoPtr);
+        }
     }
 
-    return 0;
+    return 1;
 }
 
 
@@ -544,7 +621,6 @@ PAGER_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-
 static LRESULT
 PAGER_SetChild (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -554,28 +630,18 @@ PAGER_SetChild (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr->hwndChild)
     {
-        RECT wndRect;
-        INT wndSizeScrollable;
-
         TRACE("[%04x] hwndChild=%04x\n", hwnd, infoPtr->hwndChild);
 
-        GetWindowRect(hwnd, &wndRect);
-        wndSizeScrollable = infoPtr->bHorizontal ?
-                            wndRect.right - wndRect.left :
-                            wndRect.bottom - wndRect.top;
-
-        infoPtr->nPos = 0;
-        infoPtr->nDelta = wndSizeScrollable;
-
-        PAGER_CalcSize(hwnd, &infoPtr->nWidth, TRUE);
-        PAGER_CalcSize(hwnd, &infoPtr->nHeight, FALSE);
+        if (infoPtr->bHorizontal)
+            PAGER_SetFixedHeight(hwnd, infoPtr);
+        else
+           PAGER_SetFixedWidth(hwnd, infoPtr);
 
         /* adjust non-scrollable dimension to fit the child */
-        SetWindowPos(hwnd, 0,
-                     0,0,
-                     infoPtr->bHorizontal ? wndSizeScrollable : infoPtr->nWidth,
-                     infoPtr->bHorizontal ? infoPtr->nHeight : wndSizeScrollable, 
-                     SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOZORDER);
+        SetWindowPos(hwnd, 0, 0,0,
+           infoPtr->bHorizontal ? infoPtr->nDelta + infoPtr->nButtonSize : infoPtr->nWidth,
+           infoPtr->bHorizontal ? infoPtr->nHeight : infoPtr->nDelta + infoPtr->nButtonSize, 
+           SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOZORDER);
 
         /* position child within the page scroller */
         SetWindowPos(infoPtr->hwndChild, HWND_TOP,
@@ -596,6 +662,7 @@ PAGER_Scroll(HWND hwnd, INT dir)
 
     if (infoPtr->hwndChild)
     {
+        BOOL res = FALSE;
         ZeroMemory (&nmpgScroll, sizeof (NMPGSCROLL));
         nmpgScroll.hdr.hwndFrom = hwnd;
         nmpgScroll.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
@@ -612,10 +679,10 @@ PAGER_Scroll(HWND hwnd, INT dir)
             nmpgScroll.iYpos = infoPtr->nPos;
 
         TRACE("[%04x] sending PGN_SCROLL\n", hwnd);
-        SendMessageA (hwnd, WM_NOTIFY,
+        res = SendMessageA (hwnd, WM_NOTIFY,
                     (WPARAM)nmpgScroll.hdr.idFrom, (LPARAM)&nmpgScroll);
 
-        if (infoPtr->nDelta != nmpgScroll.iScroll)
+        if (res && infoPtr->nDelta != nmpgScroll.iScroll)
         {
             TRACE("delta changing from %d to %d\n",
             infoPtr->nDelta, nmpgScroll.iScroll);
@@ -634,6 +701,8 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr;
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+    RECT rect;
+
     SetWindowLongA(hwnd, GWL_STYLE, dwStyle & WS_CLIPCHILDREN);
 
     /* allocate memory for info structure */
@@ -642,6 +711,7 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* set default settings */
     infoPtr->hwndChild = (HWND)NULL;
+    infoPtr->bNoResize = dwStyle & CCS_NORESIZE;
     infoPtr->clrBk = GetSysColor(COLOR_BTNFACE);
     infoPtr->nBorder = 0;
     infoPtr->nButtonSize = 12;
@@ -667,6 +737,22 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->bHorizontal = dwStyle & PGS_HORZ;
 
+    GetWindowRect(hwnd, &rect);
+    if (infoPtr->bHorizontal)
+    {
+        infoPtr->nHeight = rect.bottom - rect.top;
+        infoPtr->nDelta =  rect.right - rect.left - infoPtr->nButtonSize;
+        TRACE("height = %d %s\n", infoPtr->nHeight,
+		        infoPtr->bNoResize ? "CCS_NORESIZE" : "");
+    }
+    else
+    {
+        infoPtr->nWidth = rect.right - rect.left;
+        infoPtr->nDelta =  rect.bottom - rect.top - infoPtr->nButtonSize;
+        TRACE("width = %d %s\n", infoPtr->nWidth,
+		        infoPtr->bNoResize ? "CCS_NORESIZE" : "");
+    }
+
     TRACE("[%04x] orientation = %s\n", hwnd,
                   infoPtr->bHorizontal ? "PGS_HORZ" : "PGS_VERT");
 
@@ -687,15 +773,15 @@ PAGER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);                                                                         
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
+    LPRECT lpRect = (LPRECT)lParam;
     /*
      * lParam points to a RECT struct.  On entry, the struct
      * contains the proposed wnd rectangle for the window. 
      * On exit, the struct should contain the screen
      * coordinates of the corresponding window's client area.
      */
-    LPRECT lpRect = (LPRECT)lParam;
-
+	
     if (infoPtr->bHorizontal)
     {
         if (infoPtr->TLbtnState) /* != PGF_INVISIBLE */
@@ -985,24 +1071,25 @@ PAGER_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-PAGER_Size (HWND hwnd)
+PAGER_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     /* note that WM_SIZE is sent whenever NCCalcSize resizes the client wnd */
 
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
-    RECT wndRect;
-    GetWindowRect(hwnd, &wndRect);
+    TRACE("[%04x] %dx%d\n", hwnd, LOWORD(lParam), HIWORD(lParam));
 
-    infoPtr->nDelta = infoPtr->bHorizontal ?
-                      wndRect.right - wndRect.left :
-                      wndRect.bottom - wndRect.top;
-    infoPtr->nDelta -= 2*infoPtr->nButtonSize;
-	
-    TRACE("[%04x] nDelta=%d\n", hwnd, infoPtr->nDelta);
+    if (infoPtr->bHorizontal)
+    {
+        infoPtr->nHeight = HIWORD(lParam);
+        infoPtr->nDelta =  LOWORD(lParam) - infoPtr->nButtonSize;
+    }
+    else
+    {
+        infoPtr->nWidth = LOWORD(lParam);
+        infoPtr->nDelta = HIWORD(lParam) - infoPtr->nButtonSize;
+    }
 
-    PAGER_PositionChildWnd(hwnd, infoPtr);
-	
-    return TRUE;
+    return PAGER_RecalcSize(hwnd);
 }
 
 
@@ -1061,10 +1148,13 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return PAGER_Destroy (hwnd, wParam, lParam);
 
         case WM_SIZE:
-            return PAGER_Size (hwnd);
+            return PAGER_Size (hwnd, wParam, lParam);
 
         case WM_NCPAINT:
             return PAGER_NCPaint (hwnd, wParam, lParam);
+
+        case WM_WINDOWPOSCHANGING:
+            return PAGER_HandleWindowPosChanging (hwnd, (WINDOWPOS*)lParam);
 
         case WM_NCCALCSIZE:
             return PAGER_NCCalcSize (hwnd, wParam, lParam);
