@@ -6,9 +6,15 @@ VPATH     = @srcdir@
 MODULE    = ntdll
 
 C_SRCS = \
+	file.c \
 	nt.c \
+	om.c \
 	reg.c \
-	rtl.c
+	rtl.c \
+	rtlstr.c \
+	sec.c \
+	sync.c \
+	time.c
 
 all: $(MODULE).o
 

@@ -153,7 +153,7 @@ type	win32
 145 stub NtPulseEvent
 146 stub NtQueryAttributesFile
 147 stub NtQueryDefaultLocale
-148 stub NtQueryDirectoryFile
+148 stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
 149 stdcall NtQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 150 stub NtQueryEaFile
 151 stub NtQueryEvent
@@ -271,7 +271,7 @@ type	win32
 263 stub RtlAddAuditAccessAce
 264 stdcall RtlAdjustPrivilege(long long long long) RtlAdjustPrivilege
 265 stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr) RtlAllocateAndInitializeSid
-266 stdcall RtlAllocateHeap(long long long) HeapAlloc
+266 stdcall RtlAllocateHeap(long long long) RtlAllocateHeap
 267 stub RtlAnsiCharToUnicodeChar
 268 stub RtlAnsiStringToUnicodeSize
 269 stdcall RtlAnsiStringToUnicodeString(ptr ptr long) RtlAnsiStringToUnicodeString
@@ -314,7 +314,7 @@ type	win32
 306 stdcall RtlCreateAcl(ptr long long) RtlCreateAcl
 307 stub RtlCreateAndSetSD
 308 stdcall RtlCreateEnvironment(long long) RtlCreateEnvironment
-309 stdcall RtlCreateHeap(long long long) HeapCreate
+309 stdcall RtlCreateHeap(long ptr long long ptr) RtlCreateHeap
 310 stub RtlCreateProcessParameters
 311 stub RtlCreateQueryDebugBuffer
 312 stub RtlCreateRegistryKey
@@ -338,7 +338,7 @@ type	win32
 330 stdcall RtlDeleteResource(ptr) RtlDeleteResource
 331 stdcall RtlDeleteSecurityObject(long) RtlDeleteSecurityObject
 332 stdcall RtlDestroyEnvironment(long) RtlDestroyEnvironment
-333 stdcall RtlDestroyHeap(long) HeapDestroy
+333 stdcall RtlDestroyHeap(long) RtlDestroyHeap
 334 stub RtlDestroyProcessParameters
 335 stub RtlDestroyQueryDebugBuffer
 336 stub RtlDetermineDosPathNameType_U
@@ -379,7 +379,7 @@ type	win32
 371 stdcall RtlFormatCurrentUserKeyPath() RtlFormatCurrentUserKeyPath
 372 stub RtlFormatMessage
 373 stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
-374 stdcall RtlFreeHeap(long long long) HeapFree
+374 stdcall RtlFreeHeap(long long long) RtlFreeHeap
 375 stub RtlFreeOemString
 376 stdcall RtlFreeSid (long) RtlFreeSid
 377 stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
@@ -389,7 +389,7 @@ type	win32
 381 stub RtlGetCompressionWorkSpaceSize
 382 stub RtlGetControlSecurityDescriptor
 383 stub RtlGetCurrentDirectory_U
-384 stdcall RtlGetDaclSecurityDescriptor(long long long long) RtlGetDaclSecurityDescriptor
+384 stdcall RtlGetDaclSecurityDescriptor(ptr ptr ptr ptr) RtlGetDaclSecurityDescriptor
 385 stub RtlGetElementGenericTable
 386 stub RtlGetFullPathName_U
 387 stub RtlGetGroupSecurityDescriptor
@@ -398,7 +398,7 @@ type	win32
 390 stdcall RtlGetNtProductType(ptr) RtlGetNtProductType
 391 stub RtlGetOwnerSecurityDescriptor
 392 stub RtlGetProcessHeaps
-393 stub RtlGetSaclSecurityDescriptor
+393 stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)RtlGetSaclSecurityDescriptor
 394 stub RtlGetUserInfoHeap
 395 stub RtlIdentifierAuthoritySid
 396 stub RtlImageDirectoryEntryToData
@@ -654,7 +654,7 @@ type	win32
 646 stub ZwPulseEvent
 647 stub ZwQueryAttributesFile
 648 stub ZwQueryDefaultLocale
-649 stub ZwQueryDirectoryFile
+649 stdcall ZwQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)NtQueryDirectoryFile
 650 stdcall ZwQueryDirectoryObject(long long long long long long long) NtQueryDirectoryObject
 651 stub ZwQueryEaFile
 652 stub ZwQueryEvent

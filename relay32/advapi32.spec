@@ -96,7 +96,7 @@ type	win32
 0092 stdcall GetSecurityDescriptorGroup(ptr ptr ptr) GetSecurityDescriptorGroup
 0093 stdcall GetSecurityDescriptorLength(ptr) GetSecurityDescriptorLength
 0094 stdcall GetSecurityDescriptorOwner(ptr ptr ptr) GetSecurityDescriptorOwner
-0095 stub GetSecurityDescriptorSacl
+0095 stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr) GetSecurityDescriptorSacl
 0096 stub GetServiceDisplayNameA
 0097 stub GetServiceDisplayNameW
 0098 stub GetServiceKeyNameA
