@@ -194,12 +194,15 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 		return origfun;
 	assert(ordinal < dll->nrofordinals);
 	fun = dll->funs+ordinal;
-	if (!fun->name) fun->name = HEAP_strdupA(GetProcessHeap(),0,name);
-	fun->lcall	= 0xe8;
-	/* NOTE: origreturn struct member MUST come directly after snoopentry */
-	fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));
-	fun->origfun	= origfun;
-	fun->nrofargs	= -1;
+	if (!fun->name) 
+	  {
+	    fun->name = HEAP_strdupA(GetProcessHeap(),0,name);
+	    fun->lcall	= 0xe8;
+	    /* NOTE: origreturn struct member MUST come directly after snoopentry */
+	    fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));
+	    fun->origfun	= origfun;
+	    fun->nrofargs	= -1;
+	  }
 	return (FARPROC)&(fun->lcall);
 }
 
