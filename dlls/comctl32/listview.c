@@ -3599,6 +3599,12 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
         cdsubitemmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
     if (nSubItem == 0) infoPtr->cditemmode = cdsubitemmode;
     if (cdsubitemmode & CDRF_SKIPDEFAULT) goto postpaint;
+    /* we have to send a CDDS_SUBITEM customdraw explicitly for subitem 0 */
+    if (nSubItem == 0 && cdsubitemmode == CDRF_NOTIFYITEMDRAW)
+    {
+        cdsubitemmode = notify_customdraw(infoPtr, CDDS_SUBITEM | CDDS_ITEMPREPAINT, &nmlvcd);
+        if (cdsubitemmode & CDRF_SKIPDEFAULT) goto postpaint;
+    }
     if (nSubItem == 0 || (cdmode & CDRF_NOTIFYITEMDRAW))
         prepaint_setup(infoPtr, hdc, &nmlvcd);
 
