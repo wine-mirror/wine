@@ -149,6 +149,7 @@ static HRGN get_server_visible_region( HWND hwnd, HWND top, UINT flags )
                     data->rdh.nCount   = reply_size / sizeof(RECT);
                     data->rdh.nRgnSize = reply_size;
                     ret = ExtCreateRegion( NULL, size, data );
+                    retry = FALSE;
                 }
                 else
                 {
