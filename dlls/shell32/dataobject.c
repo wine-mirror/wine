@@ -229,7 +229,7 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPSHELLFOLDER psf, LPITEMID
 	dto->ref=1;
 	dto->lpvtbl=&dtovt;
 	dto->psf=psf;
-	dto->pidl=ILClone(psf->mpidl); /* FIXME:add a reference and don't copy*/
+	dto->pidl=ILClone(psf->pMyPidl); /* FIXME:add a reference and don't copy*/
 
 	/* fill the ItemID List List */
 	dto->lpill = IDLList_Constructor (8);
