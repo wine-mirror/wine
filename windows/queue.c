@@ -1050,7 +1050,7 @@ QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
                 if (!first && !last)
                     break;   /* found it */
                 
-                if ((msg->message >= first) && (msg->message <= last))
+                if ((msg->message >= first) && (!last || (msg->message <= last)))
                     break;   /* found it */
             }
 	}
