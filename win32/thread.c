@@ -151,7 +151,7 @@ PVOID WINAPI InterlockedCompareExchange(
 	__asm__ ( /* lock for SMP systems */
                   "lock\n\t"
                   "cmpxchgl %2,(%1)"
-                  :"=r" (ret)
+                  :"=a" (ret)
                   :"r" (Destination),"r" (Exchange), "0" (Comperand)
                   :"memory" );
 	return ret;
