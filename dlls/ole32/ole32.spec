@@ -85,9 +85,9 @@ type	win32
  82 stdcall MonikerCommonPrefixWith(ptr ptr ptr) MonikerCommonPrefixWith
  83 stub MonikerRelativePathTo
  84 stdcall OleBuildVersion() OleBuildVersion
- 85 stub OleConvertIStorageToOLESTREAM
+ 85 stdcall OleConvertIStorageToOLESTREAM(ptr ptr) OleConvertIStorageToOLESTREAM
  86 stub OleConvertIStorageToOLESTREAMEx
- 87 stub OleConvertOLESTREAMToIStorage
+ 87 stdcall OleConvertOLESTREAMToIStorage(ptr ptr ptr) OleConvertOLESTREAMToIStorage
  88 stub OleConvertOLESTREAMToIStorageEx
  89 stdcall OleCreate(ptr ptr long ptr ptr ptr ptr) OleCreate
  90 stdcall OleCreateDefaultHandler(ptr ptr ptr ptr) OleCreateDefaultHandler

@@ -209,8 +209,8 @@ type win32
 @ stub    PathGetDriveNumberW #(str) PathGetDriveNumber
 @ stub    PathIsContentTypeA
 @ stub    PathIsContentTypeW
-@ stub    PathIsDirectoryA
-@ stub    PathIsDirectoryW
+@ stdcall PathIsDirectoryA(str) PathIsDirectoryA
+@ stdcall PathIsDirectoryW(wstr) PathIsDirectoryW
 @ stub    PathIsFileSpecA
 @ stub    PathIsFileSpecW
 @ stub    PathIsPrefixA
