@@ -108,6 +108,7 @@ length	540
 102 pascal AdjustWindowRect(ptr long word) AdjustWindowRect(1 2 3)
 103 pascal MapDialogRect(word ptr) MapDialogRect(1 2)
 104 pascal MessageBeep(word) MessageBeep(1)
+105 pascal FlashWindow(word word) FlashWindow(1 2)
 106 pascal GetKeyState(word) GetKeyState(1)
 107 pascal DefWindowProc(word word word long) DefWindowProc(1 2 3 4)
 108 pascal GetMessage(ptr word word word) GetMessage(1 2 3 4)
@@ -357,7 +358,9 @@ length	540
 417 pascal GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions()
 418 pascal SetMenuItemBitmaps(word word word word word) 
 	   SetMenuItemBitmaps(1 2 3 4 5)
-420 pascal wsprintf(ptr ptr) wsprintf(1 2)
+420 pascal wsprintf() windows_wsprintf()
+# windows_wsprintf() handles arguments itself, as libc can't handle an
+# 16-bit stack. DLLRelay() will pass 16-bit stack pointer as 1st arg.
 421 pascal wvsprintf(ptr ptr ptr) wvsprintf(1 2 3)
 #422 DLGDIRSELECTEX
 #423 DLGDIRSELECTCOMBOBOXEX

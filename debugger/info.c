@@ -5,33 +5,23 @@
  */
 
 #include <stdio.h>
+#include "opcodes/dis-asm.h"
 #include "regpos.h"
 
 extern int * regval;
 extern unsigned int dbg_mask;
 extern unsigned int dbg_mode;
 
-extern int print_insn(char * memaddr, char * realaddr, FILE * stream, int addrlen);
-
-/* THese three helper functions eliminate the need for patching the
-module from gdb for disassembly of code */
-
 void application_not_running()
 {
   fprintf(stderr,"Application not running\n");
 }
 
-void read_memory(char * memaddr, char * buffer, int len){
-	memcpy(buffer, memaddr, len);
-}
-
-void fputs_filtered(char * buffer, FILE * outfile){
-	fputs(buffer, outfile);
-}
-
 void print_address(unsigned int addr, FILE * outfile){
 	char * name;
-	name = find_nearest_symbol(addr);
+	extern char * find_nearest_symbol(unsigned int *);
+
+	name = find_nearest_symbol((unsigned int *) addr);
 	if(name)
 		fprintf(outfile,"0x%8.8x(%s)", addr, name);
 	else
@@ -39,12 +29,36 @@ void print_address(unsigned int addr, FILE * outfile){
 
 }
 
+void print_address_info(bfd_vma addr, disassemble_info * info){
+	print_address((unsigned int) addr, info->stream);
+}
+
+int print_insn(char *realmemaddr, char *memaddr, FILE *stream, int addrlen){
+	static disassemble_info info;
+	static int initialized = 0;
+
+	if (!initialized) {
+		INIT_DISASSEMBLE_INFO(info, stderr);
+		info.print_address_func = print_address_info;
+		initialized = 1;
+	}
+	info.stream = stream;
+	info.buffer = memaddr;
+	info.buffer_vma = (bfd_vma) realmemaddr;
+	info.buffer_length = 1024;
+	if (addrlen == 16)
+		return print_insn_i286((bfd_vma) realmemaddr, &info);
+	if (addrlen == 32)
+		return print_insn_i386((bfd_vma) realmemaddr, &info);
+	fprintf(stderr, "invalid address length %d.\n", addrlen);
+	return 0;
+}
 
 void info_reg(){
 
 	  if(!regval) {
 	    application_not_running();
-	    return 0;
+	    return;
 	  }
 
 	fprintf(stderr,"Register dump:\n");
@@ -73,7 +87,7 @@ void info_stack(){
 
 	if(!regval) {
 	  application_not_running();
-	  return 0;
+	  return;
 	}
 
 	fprintf(stderr,"Stack dump:\n");
@@ -234,10 +248,7 @@ char * helptext[] = {
 "",
 "The disassembly code seems to work most of the time, but it does get",
 "a little confused at times.  The 16 bit mode probably has not been used",
-"much so there are probably bugs.  I snagged the file from the gdb-4.7",
-"source tree, which is what was on my latest cdrom.  I should check to see",
-"if newer versions of gdb have anything substanitally different for the",
-"disassembler.",
+"much so there are probably bugs.",
 "",
 NULL};
 
@@ -271,7 +282,7 @@ void dbg_bt(){
 
   if(!regval) {
     application_not_running();
-    return 0;
+    return;
   }
 
   fprintf(stderr,"Backtrace:\n");

@@ -7,6 +7,7 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
+#include "metafile.h"
 
   /* Default DC values */
 const WIN_DC_INFO DCVAL_defaultValues =
@@ -96,25 +97,33 @@ func_type func_name( HDC hdc, func_type val ) \
     return prevVal; \
 }
 
-#define DC_SET_MODE( func_name, dc_field, min_val, max_val ) \
+#define DC_SET_MODE( func_name, dc_field, min_val, max_val, meta_func ) \
 WORD func_name( HDC hdc, WORD mode ) \
 { \
     WORD prevMode; \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
-    if (!dc) return 0; \
     if ((mode < min_val) || (mode > max_val)) return 0; \
+    if (!dc) { \
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC); \
+	if (!dc) return 0; \
+	MF_MetaParam1(dc, meta_func, mode); \
+	return 1; \
+    } \
     prevMode = dc->w.dc_field; \
     dc->w.dc_field = mode; \
     return prevMode; \
 }
 
 
-DC_SET_MODE( SetBkMode, backgroundMode, TRANSPARENT, OPAQUE )     /* GDI.2 */
-DC_SET_MODE( SetROP2, ROPmode, R2_BLACK, R2_WHITE )               /* GDI.4 */
-DC_SET_MODE( SetRelAbs, relAbsMode, ABSOLUTE, RELATIVE )          /* GDI.5 */
-DC_SET_MODE( SetPolyFillMode, polyFillMode, ALTERNATE, WINDING )  /* GDI.6 */
+DC_SET_MODE( SetBkMode, backgroundMode, TRANSPARENT, OPAQUE,
+	     META_SETBKMODE )                                     /* GDI.2 */
+DC_SET_MODE( SetROP2, ROPmode, R2_BLACK, R2_WHITE, META_SETROP2 ) /* GDI.4 */
+DC_SET_MODE( SetRelAbs, relAbsMode, ABSOLUTE, RELATIVE,
+	     META_SETRELABS )                                     /* GDI.5 */
+DC_SET_MODE( SetPolyFillMode, polyFillMode, ALTERNATE, WINDING,
+	     META_SETPOLYFILLMODE )                               /* GDI.6 */
 DC_SET_MODE( SetStretchBltMode, stretchBltMode,
-	     BLACKONWHITE, COLORONCOLOR )                         /* GDI.7 */
+	     BLACKONWHITE, COLORONCOLOR, META_SETSTRETCHBLTMODE ) /* GDI.7 */
 DC_GET_VAL( COLORREF, GetBkColor, backgroundColor )               /* GDI.75 */
 DC_GET_VAL( WORD, GetBkMode, backgroundMode )                     /* GDI.76 */
 DC_GET_X_Y( DWORD, GetCurrentPosition, CursPosX, CursPosY )       /* GDI.78 */

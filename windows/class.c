@@ -110,6 +110,11 @@ ATOM RegisterClass( LPWNDCLASS class )
 	if (!(prevClassPtr->wc.style & CS_GLOBALCLASS)) return 0;
     }
 
+      /* bug for bug compatible */
+
+    if (class->cbClsExtra < 0) class->cbClsExtra = 0;
+    if (class->cbWndExtra < 0) class->cbWndExtra = 0;
+
       /* Create class */
 
     handle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(CLASS)+class->cbClsExtra );

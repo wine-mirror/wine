@@ -573,7 +573,7 @@ HANDLE LoadAccelerators(HANDLE instance, LPSTR lpTableName)
     HANDLE 	rsc_mem;
     BYTE 	*lp;
     ACCELHEADER	*lpAccelTbl;
-    int 	i, image_size;
+    int 	i, image_size, n;
 #ifdef DEBUG_ACCEL
     if (((LONG)lpTableName & 0xFFFF0000L) == 0L)
 	printf("LoadAccelerators: instance = %04X, name = %08X\n",
@@ -597,11 +597,12 @@ HANDLE LoadAccelerators(HANDLE instance, LPSTR lpTableName)
 #ifdef DEBUG_ACCEL
     printf("LoadAccelerators / image_size=%d\n", image_size);
 #endif
+    n = image_size/5;
     hAccel = GlobalAlloc(GMEM_MOVEABLE, 
-    	sizeof(ACCELHEADER) + sizeof(ACCELENTRY) + image_size);
+    	sizeof(ACCELHEADER) + (n + 1)*sizeof(ACCELENTRY));
     lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
     lpAccelTbl->wCount = 0;
-    for (i = 0; ; i++) {
+    for (i = 0; i < n; i++) {
 	lpAccelTbl->tbl[i].type = *(lp++);
 	lpAccelTbl->tbl[i].wEvent = *((WORD *)lp);
 	lp += 2;
@@ -895,6 +896,10 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
 		buffer[i] = '\0';
 		}
 	else {
+		if (buflen > 1) {
+			buffer[0] = '\0';
+			return 0;
+			}
 		printf("LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
 		printf("LoadString // and try to obtain string '%s'\n", p + 1);
 		}

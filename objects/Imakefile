@@ -17,7 +17,8 @@ SRCS = \
 	bitblt.c \
 	linedda.c \
 	color.c \
-	dither.c
+	dither.c \
+	metafile.c
 
 OBJS = \
 	bitmap.o \
@@ -34,7 +35,8 @@ OBJS = \
 	bitblt.o \
 	linedda.o \
 	color.o \
-	dither.o
+	dither.o \
+	metafile.o
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()

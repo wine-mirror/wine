@@ -117,6 +117,7 @@ HANDLE LoadLibrary(LPSTR libname)
 
     if (FindDLLTable(libname))
     {
+    printf("Library was a builtin - returning 0x23\n");
 	return WINE_CODE_SELECTOR;
     }
 

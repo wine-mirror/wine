@@ -12,7 +12,7 @@
  *
  * DEC 93 Erik Bos (erik@(trashcan.)hacktic.nl)
  *		- Existing functions modified to use dosfs functions.
- *		- Added _llseek, _lcreate, GetDriveType, GetTempDrive, 
+ *		- Added _llseek, _lcreat, GetDriveType, GetTempDrive, 
  *		  GetWindowsDirectory, GetSystemDirectory, GetTempFileName.
  *
  ************************************************************************/
@@ -27,7 +27,7 @@
 #include <windows.h>
 #include "prototypes.h"
 
-#define DEBUG_FILE
+/* #define DEBUG_FILE */
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
 
@@ -63,7 +63,7 @@ INT _lopen (LPSTR lpPathName, INT iReadWrite)
 /***************************************************************************
  _lread
  ***************************************************************************/
-WORD _lread (INT hFile, LPSTR lpBuffer, INT wBytes)
+INT _lread (INT hFile, LPSTR lpBuffer, INT wBytes)
 {
   int result;
 
@@ -83,7 +83,7 @@ WORD _lread (INT hFile, LPSTR lpBuffer, INT wBytes)
 /****************************************************************************
  _lwrite
 ****************************************************************************/
-WORD _lwrite (INT hFile, LPSTR lpBuffer, INT wBytes)
+INT _lwrite (INT hFile, LPSTR lpBuffer, INT wBytes)
 {
 	int result;
 
@@ -196,15 +196,15 @@ LONG _llseek (INT hFile, LONG lOffset, INT nOrigin)
 }
 
 /***************************************************************************
- _lcreate
+ _lcreat
  ***************************************************************************/
-INT _lcreate (LPSTR lpszFilename, INT fnAttribute)
+INT _lcreat (LPSTR lpszFilename, INT fnAttribute)
 {
 	int handle;
 	char *UnixFileName;
 
 #ifdef DEBUG_FILE
-	fprintf(stderr, "_lcreate: filename %s, attributes %d\n",lpszFilename, 
+	fprintf(stderr, "_lcreat: filename %s, attributes %d\n",lpszFilename, 
   			fnAttribute);
 #endif
 	if ((UnixFileName = GetUnixFileName(lpszFilename)) == NULL)
@@ -307,7 +307,7 @@ INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 	fprintf(stderr,"GetTempFilename: %c %s %d => %s\n",bDriveLetter,
 		lpszPrefixString,uUnique,lpszTempFileName);
 #endif
-	if ((handle = _lcreate (lpszTempFileName, 0x0000)) == -1) {
+	if ((handle = _lcreat (lpszTempFileName, 0x0000)) == -1) {
 		fprintf(stderr,"GetTempFilename: can't create temp file '%s' !\n", lpszTempFileName);
 		}
 	else

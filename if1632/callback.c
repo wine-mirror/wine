@@ -1,6 +1,8 @@
 static char RCSId[] = "$Id: wine.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "windows.h"
 #include "callback.h"
 #include "wine.h"
@@ -143,9 +145,39 @@ LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam )
 {
     SpyMessage(hwnd, message, wParam, lParam);
-    
-    if (Is16bitAddress(func))
+
+    if (HIWORD((LONG)func) == WINE_CODE_SELECTOR) 
+    {
+	static struct dll_table_entry_s *user_tab = NULL;
+	void *address = (void *) ((LONG) func & 0xffff);
+
+	if (user_tab == NULL)
+	    user_tab = FindDLLTable("USER");
+
+	/* DefWindowProc */
+	if (user_tab[104].address == address)
+	    return DefWindowProc(hwnd, message, wParam, lParam);
+	
+	/* DefDlgProc */
+	else if (user_tab[308].address == address)
+	    return DefDlgProc(hwnd, message, wParam, lParam);
+	
+	/* DefMDIChildProc */
+	else if (user_tab[447].address == address)
+	    return DefMDIChildProc(hwnd, message, wParam, lParam);
+	
+	/* default */
+	else
+	{
+	    fprintf(stderr, "wine: Unknown wine callback %08x\n", func);
+	    exit(1);
+	}
+    }
+    else if (Is16bitAddress(func))
     {	
+#ifdef DEBUG_CALLBACK
+	printf("CallWindowProc // 16bit func=%08X !\n", func);
+#endif 
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
 	PushOn16( CALLBACK_SIZE_WORD, message );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
@@ -155,6 +187,9 @@ LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
     }
     else
     {
+#ifdef DEBUG_CALLBACK
+	printf("CallWindowProc // 32bit func=%08X !\n", func);
+#endif 
 	return (*func)(hwnd, message, wParam, lParam);
     }
 }

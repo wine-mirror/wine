@@ -7,6 +7,7 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
+#include "metafile.h"
 
 
 /***********************************************************************
@@ -75,7 +76,13 @@ WORD SetMapMode( HDC hdc, WORD mode )
 {
     WORD prevMode;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+	MF_MetaParam1(dc, META_SETMAPMODE, mode);
+	return 1;
+    }
 
 #ifdef DEBUG_GDI
     printf( "SetMapMode: %d %d\n", hdc, mode );

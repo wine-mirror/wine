@@ -61,6 +61,7 @@ EMUOBJS = \
 	debugger.o \
 	memory.o \
 	miscemu.o \
+	opcodes.o \
 	readline.o
 
 LIBOBJS = \
@@ -97,3 +98,6 @@ NormalLibraryTarget(wine,$(LIBOBJS) $(COMMONOBJS))
 depend::
 
 install::
+
+etags::
+	etags `find . -name '*.[chS]'`

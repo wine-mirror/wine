@@ -171,6 +171,13 @@ bob@amscons.com
 
 7. WHAT'S NEW
 
+WHAT'S NEW with Wine-940518: (see ChangeLog for details)
+	- debugger improvements
+	- bug fixes to get some dialog boxes working.
+	- skeleton for passing MCI functions.
+	- beginnings of metafile support.
+	- and many many bug fixes!
+
 WHAT'S NEW with Wine-940510: (see ChangeLog for details)
 	- debugger improvements
 	- mmsystem

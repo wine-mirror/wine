@@ -116,23 +116,28 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
 {
     MDESC *m_free;
     MDESC *m;
+
+
+    if (!old_block)
+	return HEAP_Alloc(free_list, flags, new_size);
+    
     /*
      * Check validity of block
      */
     m = (MDESC *) old_block - 1;
+
 #ifdef DEBUG_HEAP
-	printf("HEAP_ReAlloc new_size=%d !\n", new_size);
-	printf("HEAP_ReAlloc old_block=%08X !\n", old_block);
-	printf("HEAP_ReAlloc m=%08X free_list=%08X !\n", m, free_list);
-	printf("HEAP_ReAlloc m->prev=%08X !\n", m->prev);
-	printf("HEAP_ReAlloc m->next=%08X !\n", m->next);
-	printf("HEAP_ReAlloc *free_list=%08X !\n", *free_list);
+    printf("HEAP_ReAlloc new_size=%d !\n", new_size);
+    printf("HEAP_ReAlloc old_block=%08X !\n", old_block);
+    printf("HEAP_ReAlloc m=%08X free_list=%08X !\n", m, free_list);
+    printf("HEAP_ReAlloc m->prev=%08X !\n", m->prev);
+    printf("HEAP_ReAlloc m->next=%08X !\n", m->next);
+    printf("HEAP_ReAlloc *free_list=%08X !\n", *free_list);
 #endif
-	if (m->prev != m || m->next != m || 
+
+    if (m->prev != m || m->next != m || 
 	((int) m & 0xffff0000) != ((int) *free_list & 0xffff0000))
     {
-	printf("Attempt to resize bad pointer, m = %08x, *free_list = %08x\n",
-	       m, free_list);
 #ifdef DEBUG_HEAP
 	printf("Attempt to resize bad pointer, m = %08x, *free_list = %08x\n",
 	       m, free_list);
@@ -144,8 +149,9 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
      * Check for grow block
      */
 #ifdef DEBUG_HEAP
-	printf("HEAP_ReAlloc Check for grow block !\n");
+    printf("HEAP_ReAlloc Check for grow block !\n");
 #endif
+
     if (new_size > m->length)
     {
 	m_free = m + 1 + m->length / sizeof(MDESC);

@@ -171,7 +171,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
  	}
-    lp += 2;
+	(char *)lp += 2;
     for (j = 0; j < 16; j++)
     	printf("%04X ", *(lp + j));
 /*
@@ -180,7 +180,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     else
 */
         lpcur->hBitmap = 0;
-    lp += sizeof(BITMAP);
+/*     lp += sizeof(BITMAP); */
     for (i = 0; i < 81; i++) {
 	char temp = *((char *)lp + 162 + i);
 	*((char *)lp + 162 + i) = *((char *)lp + 324 - i);

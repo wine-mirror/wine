@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <string.h>
 #include "gdi.h"
 #include "bitmap.h"
+#include "metafile.h"
 
 static DeviceCaps * displayDevCaps = NULL;
 
@@ -104,6 +105,7 @@ static void DC_InitDC( HDC hdc )
     SelectObject( hdc, dc->w.hFont );
     XSetGraphicsExposures( XT_display, dc->u.x.gc, False );
     CLIPPING_SetDeviceClipping( dc );
+    FONT_SelectObject(dc, STOCK_SYSTEM_FIXED_FONT, NULL);
 }
 
 
@@ -477,7 +479,13 @@ COLORREF SetBkColor( HDC hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0x80000000;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0x80000000;
+	MF_MetaParam2(dc, META_SETBKCOLOR, HIWORD(color), LOWORD(color));
+	return 0;  /* ?? */
+    }
 
     oldColor = dc->w.backgroundColor;
     dc->w.backgroundColor = color;
@@ -493,7 +501,13 @@ COLORREF SetTextColor( HDC hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0x80000000;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0x80000000;
+	MF_MetaParam2(dc, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color));
+	return 0;  /* ?? */
+    }
 
     oldColor = dc->w.textColor;
     dc->w.textColor = color;

@@ -45,7 +45,10 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
 	if (lpProp == NULL) return 0;
 	while (TRUE) {
-		if (strcmp(lpProp->PropName, lpStr) == 0) {
+		if ((((DWORD)lpStr & 0xFFFF0000) == 0L && 
+			lpProp->Atom == LOWORD((DWORD)lpStr)) ||
+			(((DWORD)lpStr & 0xFFFF0000) != 0L && 
+			strcmp(lpProp->PropName, lpStr) == 0)) {
 		   	printf("RemoveProp // Property found ! hData=%04X\n", lpProp->hData);
 			hOldData = lpProp->hData;
 			if (lpProp->lpPrevProp != NULL) 
@@ -54,7 +57,7 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
 			if (lpProp->lpNextProp != NULL) 
 				((LPPROPENTRY)lpProp->lpNextProp)->lpPrevProp = 
 											lpProp->lpPrevProp;
-			free(lpProp->PropName);
+			if (lpProp->PropName != NULL) free(lpProp->PropName);
 			free(lpProp);
 			GlobalUnlock(wndPtr->hProp);
 			return hOldData;
@@ -84,7 +87,7 @@ HANDLE GetProp(HWND hWnd, LPSTR lpStr)
 	wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) {
     	printf("GetProp // Bad Window handle !\n");
-    	return FALSE;
+    	return 0;
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
 	if (lpProp == NULL) return 0;
@@ -130,7 +133,10 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
 	if (lpProp != NULL) {
 		while (TRUE) {
-			if (strcmp(lpProp->PropName, lpStr) == 0) {
+			if ((((DWORD)lpStr & 0xFFFF0000) == 0L && 
+				lpProp->Atom == LOWORD((DWORD)lpStr)) ||
+				(((DWORD)lpStr & 0xFFFF0000) != 0L && 
+				strcmp(lpProp->PropName, lpStr) == 0)) {
 #ifdef DEBUG_PROP
 			    printf("SetProp // change already exinsting property !\n");
 #endif
@@ -190,8 +196,39 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
  */
 int EnumProps(HWND hWnd, FARPROC lpEnumFunc)
 {
-	printf("EMPTY STUB !!! EnumProps(%04X, %08X)\n", hWnd, lpEnumFunc);
-	return -1;
+    WND 		*wndPtr;
+	LPPROPENTRY lpProp;
+	LPSTR		str;
+	int			nRet;
+	printf("EnumProps(%04X, %08X)\n", hWnd, lpEnumFunc);
+	wndPtr = WIN_FindWndPtr(hWnd);
+    if (wndPtr == NULL) {
+    	printf("EnumProps // Bad Window handle !\n");
+    	return 0;
+    	}
+	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
+	if (lpProp == NULL) return 0;
+	if (lpEnumFunc != NULL)	return 0;
+	while (TRUE) {
+    	printf("EnumProps // lpProp->Atom=%04X !\n", lpProp->Atom);
+		str = (LPSTR)MAKELONG(lpProp->Atom, 0); 
+		if (lpProp->PropName != NULL) {
+	    	printf("EnumProps // lpProp->PropName='%s' !\n", lpProp->PropName);
+			str = lpProp->PropName; 
+			}
+#ifdef WINELIB
+		nRet = (*lpEnumFunc)((HWND)hWnd, (WORD)0, 
+			(LPSTR)str, (HANDLE)lpProp->hData);
+#else
+		nRet = CallBack16(lpEnumFunc, 4, (HANDLE)lpProp->hData, 
+							(LPSTR)str, (WORD)0, (HWND)hWnd);
+#endif
+		if (nRet == 0) break;
+		if (lpProp->lpNextProp == NULL) break;
+		lpProp = lpProp->lpNextProp;
+		}
+	GlobalUnlock(wndPtr->hProp);
+	return 0;
 }
 
 

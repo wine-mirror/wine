@@ -10,6 +10,8 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include "win.h"
 #include "mmsystem.h"
 
+static WORD		mciActiveDev = 0;
+
 
 int MCI_LibMain(HANDLE hInstance, WORD wDataSeg,
 		 WORD cbHeapSize, LPSTR lpCmdLine)
@@ -78,6 +80,9 @@ DWORD WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
 
 
 
+/**************************************************************************
+* 				mciGetErrorString		[MMSYSTEM.706]
+*/
 BOOL mciGetErrorString (DWORD wError, LPSTR lpstrBuffer, UINT uLength)
 {
 	LPSTR	msgptr;
@@ -331,23 +336,204 @@ msg# 543 : tmsf
 			break;
 		}
 	maxbuf = min(uLength - 1, strlen(msgptr));
-	strncpy(lpstrBuffer, msgptr, maxbuf);
+	if (maxbuf > 0) strncpy(lpstrBuffer, msgptr, maxbuf);
 	lpstrBuffer[maxbuf + 1] = '\0';
 	return(TRUE);
 }
 
 
+/**************************************************************************
+* 				mciWaveOpen					[internal]
+*/
+DWORD mciWaveOpen(UINT wDevID, DWORD dwParam, LPMCI_WAVE_OPEN_PARMS lpParms)
+{
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	printf("mciWaveOpen(%04X, %08X, %08X)\n", wDevID, dwParam, lpParms);
+	return MCIERR_INTERNAL;
+}
 
+
+/**************************************************************************
+* 				mciOpen					[internal]
+*/
+DWORD mciOpen(UINT wDevID, DWORD dwParam, LPMCI_OPEN_PARMS lpParms)
+{
+	DWORD	dwDevTyp = 0;
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	printf("mciOpen(%04X, %08X, %08X)\n", wDevID, dwParam, lpParms);
+	if (dwParam & MCI_OPEN_TYPE) {
+		if (lpParms->lpstrDeviceType == NULL) return MCIERR_INTERNAL;
+		if (dwParam & MCI_OPEN_TYPE_ID) {
+			printf("MCI_OPEN // Dev=%08X !\n", lpParms->lpstrDeviceType);
+			dwDevTyp = (DWORD)lpParms->lpstrDeviceType;
+			}
+		else {
+			if (strcmp(lpParms->lpstrDeviceType, "cdaudio") == 0) {
+				dwDevTyp = MCI_DEVTYPE_CD_AUDIO;
+				}
+			else
+			if (strcmp(lpParms->lpstrDeviceType, "waveaudio") == 0) {
+				dwDevTyp = MCI_DEVTYPE_WAVEFORM_AUDIO;
+				}
+			else
+			if (strcmp(lpParms->lpstrDeviceType, "Sequencer") == 0)	{
+				dwDevTyp = MCI_DEVTYPE_SEQUENCER;
+				}
+			else
+			if (strcmp(lpParms->lpstrDeviceType, "Animation1") == 0) {
+				dwDevTyp = MCI_DEVTYPE_ANIMATION;
+				}
+			}
+		switch(dwDevTyp) {
+			case MCI_DEVTYPE_CD_AUDIO:
+				printf("MCI_OPEN // No SEQUENCER yet !\n");
+				return MCIERR_DEVICE_NOT_INSTALLED;
+			case MCI_DEVTYPE_WAVEFORM_AUDIO:
+				printf("MCI_OPEN // No WAVEAUDIO yet !\n");
+				return MCIERR_DEVICE_NOT_INSTALLED;
+			case MCI_DEVTYPE_SEQUENCER:
+				printf("MCI_OPEN // No SEQUENCER yet !\n");
+				return MCIERR_DEVICE_NOT_INSTALLED;
+			case MCI_DEVTYPE_ANIMATION:
+				printf("MCI_OPEN // No ANIMATION yet !\n");
+				return MCIERR_DEVICE_NOT_INSTALLED;
+			case MCI_DEVTYPE_DIGITAL_VIDEO:
+				printf("MCI_OPEN // No DIGITAL_VIDEO yet !\n");
+				return MCIERR_DEVICE_NOT_INSTALLED;
+			default:
+				printf("MCI_OPEN // Invalid Device Name '%08X' !\n", lpParms->lpstrDeviceType);
+				return MCIERR_INVALID_DEVICE_NAME;
+			}
+		lpParms->wDeviceID = ++mciActiveDev;
+		printf("MCI_OPEN // wDeviceID=%04X !\n", lpParms->wDeviceID);
+		return 0;
+		}
+	if (dwParam & MCI_OPEN_ELEMENT) {
+		printf("MCI_OPEN // Element !\n");
+		printf("MCI_OPEN // Elem=%s' !\n", lpParms->lpstrElementName);
+		}
+	return MCIERR_INTERNAL;
+}
+
+
+/**************************************************************************
+* 				mciSound				[internal]
+*/
+DWORD mciSound(UINT wDevID, DWORD dwParam, LPMCI_SOUND_PARMS lpParms)
+{
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	if (dwParam & MCI_SOUND_NAME)
+		printf("MCI_SOUND // file='%s' !\n", lpParms->lpstrSoundName);
+	return MCIERR_INVALID_DEVICE_ID;
+}
+
+
+/**************************************************************************
+* 				mciGetDevCaps			[internal]
+*/
+DWORD mciGetDevCaps(UINT wDevID, DWORD dwParam, LPMCI_GETDEVCAPS_PARMS lpParms)
+{
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	lpParms->dwReturn = 0;
+	return 0;
+}
+
+
+/**************************************************************************
+* 				mciInfo					[internal]
+*/
+DWORD mciInfo(UINT wDevID, DWORD dwParam, LPMCI_INFO_PARMS lpParms)
+{
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	lpParms->lpstrReturn = NULL;
+	lpParms->dwRetSize = 0;
+	return 0;
+}
+
+
+/**************************************************************************
+* 				mciStatus				[internal]
+*/
+DWORD mciStatus(UINT wDevID, DWORD dwParam, LPMCI_STATUS_PARMS lpParms)
+{
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	return 0;
+}
+
+
+/**************************************************************************
+* 				mciPlay					[internal]
+*/
+DWORD mciPlay(UINT wDevID, DWORD dwParam, LPMCI_PLAY_PARMS lpParms)
+{
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	return 0;
+}
+
+
+/**************************************************************************
+* 				mciRecord				[internal]
+*/
+DWORD mciRecord(UINT wDevID, DWORD dwParam, LPMCI_RECORD_PARMS lpParms)
+{
+	if (lpParms == NULL) return MCIERR_INTERNAL;
+	return 0;
+}
+
+
+/**************************************************************************
+* 				mciClose				[internal]
+*/
+DWORD mciClose(UINT wDevID)
+{
+	return 0;
+}
+
+
+/**************************************************************************
+* 				mciSendCommand			[MMSYSTEM.701]
+*/
 DWORD mciSendCommand(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 {
 	printf("mciSendCommand(%04X, %04X, %08X, %08X)\n", 
 					wDevID, wMsg, dwParam1, dwParam2);
+	switch(wMsg) {
+		case MCI_OPEN:
+			printf("mciSendCommand // MCI_OPEN !\n");
+			if (dwParam1 & MCI_WAVE_OPEN_BUFFER)
+				return mciWaveOpen(wDevID, dwParam1, 
+					(LPMCI_WAVE_OPEN_PARMS)dwParam2);
+			else
+				return mciOpen(wDevID, dwParam1, (LPMCI_OPEN_PARMS)dwParam2);
+		case MCI_PLAY:
+			printf("mciSendCommand // MCI_PLAY !\n");
+			return mciPlay(wDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);
+		case MCI_RECORD:
+			printf("mciSendCommand // MCI_RECORD !\n");
+			return mciRecord(wDevID, dwParam1, (LPMCI_RECORD_PARMS)dwParam2);
+		case MCI_CLOSE:
+			printf("mciSendCommand // MCI_CLOSE !\n");
+			return mciClose(wDevID);
+		case MCI_SOUND:
+			printf("mciSendCommand // MCI_SOUND !\n");
+			return mciSound(wDevID, dwParam1, (LPMCI_SOUND_PARMS)dwParam2);
+		case MCI_STATUS:
+			printf("mciSendCommand // MCI_STATUS !\n");
+			return mciStatus(wDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
+		case MCI_INFO:
+			printf("mciSendCommand // MCI_INFO !\n");
+			return mciInfo(wDevID, dwParam1, (LPMCI_INFO_PARMS)dwParam2);
+		case MCI_GETDEVCAPS:
+			printf("mciSendCommand // MCI_GETDEVCAPS !\n");
+			return mciGetDevCaps(wDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
+		}
 	return MCIERR_DEVICE_NOT_INSTALLED;
 }
 
 
-
-
+/**************************************************************************
+* 				mciGetDeviceID			[MMSYSTEM.703]
+*/
 UINT mciGetDeviceID (LPCSTR lpstrName)
 {
 	printf("mciGetDeviceID(%s)\n", lpstrName);
@@ -356,6 +542,9 @@ UINT mciGetDeviceID (LPCSTR lpstrName)
 
 
 
+/**************************************************************************
+* 				mciSendString			[MMSYSTEM.702]
+*/
 DWORD WINAPI mciSendString (LPCSTR lpstrCommand,
     LPSTR lpstrReturnString, UINT uReturnLength, HWND hwndCallback)
 {
@@ -483,7 +672,7 @@ msg# 343 : There are no MIDI devices installed on the system. Use the Drivers op
 			break;
 		}
 	maxbuf = min(uSize - 1, strlen(msgptr));
-	strncpy(lpText, msgptr, maxbuf);
+	if (maxbuf > 0) strncpy(lpText, msgptr, maxbuf);
 	lpText[maxbuf + 1] = '\0';
 	return(TRUE);
 }
@@ -493,6 +682,7 @@ UINT WINAPI midiOutOpen(HMIDIOUT FAR* lphMidiOut, UINT uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 	printf("midiOutOpen\n");
+	if (lphMidiOut != NULL) *lphMidiOut = 0;
 	return 0;
 }
 
@@ -603,6 +793,7 @@ UINT WINAPI midiInOpen(HMIDIIN FAR* lphMidiIn, UINT uDeviceID,
     DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 	printf("midiInOpen\n");
+	if (lphMidiIn != NULL) *lphMidiIn = 0;
 	return 0;
 }
 
@@ -698,65 +889,68 @@ UINT WINAPI waveOutGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 
 UINT WINAPI waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 {
-   if ((lpText == NULL) || (uSize < 1)) return(FALSE);
-   lpText[0] = '\0';
-   switch(uError)
-      {
-      case MMSYSERR_NOERROR:
-         sprintf(lpText, "The specified command was carried out.");
-         break;
-      case MMSYSERR_ERROR:
-         sprintf(lpText, "Undefined external error.");
-         break;
-      case MMSYSERR_BADDEVICEID:
-         sprintf(lpText, "A device ID has been used that is out of range for your system.");
-         break;
-      case MMSYSERR_NOTENABLED:
-         sprintf(lpText, "The driver was not enabled.");
-         break;
-      case MMSYSERR_ALLOCATED:
-         sprintf(lpText, "The specified device is already in use. Wait until it is free, and then try again.");
-         break;
-      case MMSYSERR_INVALHANDLE:
-         sprintf(lpText, "The specified device handle is invalid.");
-         break;
-      case MMSYSERR_NODRIVER:
-         sprintf(lpText, "There is no driver installed on your system !\n");
-         break;
-      case MMSYSERR_NOMEM:
-         sprintf(lpText, "Not enough memory available for this task. Quit one or more applications to increase available memory, and then try again.");
-         break;
-      case MMSYSERR_NOTSUPPORTED:
-         sprintf(lpText, "This function is not supported. Use the Capabilities function to determine which functions and messages the driver supports.");
-         break;
-      case MMSYSERR_BADERRNUM:
-         sprintf(lpText, "An error number was specified that is not defined in the system.");
-         break;
-      case MMSYSERR_INVALFLAG:
-         sprintf(lpText, "An invalid flag was passed to a system function.");
-         break;
-      case MMSYSERR_INVALPARAM:
-         sprintf(lpText, "An invalid parameter was passed to a system function.");
-         break;
-      case WAVERR_BADFORMAT:
-         sprintf(lpText, "The specified format is not supported or cannot be translated. Use the Capabilities function to determine the supported formats");
-         break;
-      case WAVERR_STILLPLAYING:
-         sprintf(lpText, "Cannot perform this operation while media data is still playing. Reset the device, or wait until the data is finished playing.");
-         break;
-      case WAVERR_UNPREPARED:
-         sprintf(lpText, "The wave header was not prepared. Use the Prepare function to prepare the header, and then try again.");
-         break;
-      case WAVERR_SYNC:
-         sprintf(lpText, "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, and then try again.");
-         break;
-         
-      default:
-         sprintf(lpText, "Unkown MMSYSTEM Error !\n");
-         break;
-      }
-   lpText[uSize - 1] = '\0';
-   return(TRUE);
+	LPSTR	msgptr;
+	int		maxbuf;
+	printf("waveGetErrorText(%04X, %08X, %d);\n", uError, lpText, uSize);
+	if ((lpText == NULL) || (uSize < 1)) return(FALSE);
+	lpText[0] = '\0';
+	switch(uError) {
+		case MMSYSERR_NOERROR:
+			msgptr = "The specified command was carried out.";
+			break;
+		case MMSYSERR_ERROR:
+			msgptr = "Undefined external error.";
+			break;
+		case MMSYSERR_BADDEVICEID:
+			msgptr = "A device ID has been used that is out of range for your system.";
+			break;
+		case MMSYSERR_NOTENABLED:
+			msgptr = "The driver was not enabled.";
+			break;
+		case MMSYSERR_ALLOCATED:
+			msgptr = "The specified device is already in use. Wait until it is free, and then try again.";
+			break;
+		case MMSYSERR_INVALHANDLE:
+			msgptr = "The specified device handle is invalid.";
+			break;
+		case MMSYSERR_NODRIVER:
+			msgptr = "There is no driver installed on your system !\n";
+			break;
+		case MMSYSERR_NOMEM:
+			msgptr = "Not enough memory available for this task. Quit one or more applications to increase available memory, and then try again.";
+			break;
+		case MMSYSERR_NOTSUPPORTED:
+			msgptr = "This function is not supported. Use the Capabilities function to determine which functions and messages the driver supports.";
+			break;
+		case MMSYSERR_BADERRNUM:
+			msgptr = "An error number was specified that is not defined in the system.";
+			break;
+		case MMSYSERR_INVALFLAG:
+			msgptr = "An invalid flag was passed to a system function.";
+			break;
+		case MMSYSERR_INVALPARAM:
+			msgptr = "An invalid parameter was passed to a system function.";
+			break;
+		case WAVERR_BADFORMAT:
+			msgptr = "The specified format is not supported or cannot be translated. Use the Capabilities function to determine the supported formats";
+			break;
+		case WAVERR_STILLPLAYING:
+			msgptr = "Cannot perform this operation while media data is still playing. Reset the device, or wait until the data is finished playing.";
+			break;
+		case WAVERR_UNPREPARED:
+			msgptr = "The wave header was not prepared. Use the Prepare function to prepare the header, and then try again.";
+			break;
+		case WAVERR_SYNC:
+			msgptr = "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, and then try again.";
+			break;
+		default:
+			msgptr = "Unkown MMSYSTEM Error !\n";
+			break;
+		}
+	maxbuf = min(uSize - 1, strlen(msgptr));
+	if (maxbuf > 0) strncpy(lpText, msgptr, maxbuf);
+	lpText[maxbuf + 1] = '\0';
+	return(TRUE);
 }
 
 
@@ -764,6 +958,7 @@ UINT WINAPI waveOutOpen(HWAVEOUT FAR* lphWaveOut, UINT uDeviceID,
     const WAVEFORMAT FAR* lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 printf("waveOutOpen\n");
+if (lphWaveOut != NULL) *lphWaveOut = 0;
 return 0;
 }
 
@@ -920,6 +1115,7 @@ UINT WINAPI waveInOpen(HWAVEIN FAR* lphWaveIn, UINT uDeviceID,
     const WAVEFORMAT FAR* lpFormat, DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
 printf("waveInOpen\n");
+if (lphWaveIn != NULL) *lphWaveIn = 0;
 return 0;
 }
 

@@ -60,16 +60,18 @@ extern LHEAP *HEAP_LocalFindHeap(unsigned short owner);
  */
 typedef struct global_mem_desc_s
 {
-    struct global_mem_desc_s *next;
-    struct global_mem_desc_s *prev;
-    unsigned short handle;
-    short sequence;
-    void *addr;
-    int length;
-    int lock_count;
-    void *linear_addr;
-    int linear_key;
-    int linear_count;
+    struct global_mem_desc_s *next;	/* Next GDESC in list              */
+    struct global_mem_desc_s *prev;	/* Previous GDESC in list          */
+    unsigned short handle;		/* Handle of this block.	   */
+    short          sequence;		/* Block sequence # in huge block  */
+    void          *addr;		/* Address allocated with mmap()   */
+    int            length;		/* Length of block		   */
+    int            lock_count;		/* Block lock count		   */
+    unsigned short alias;		/* Offset-zero alias selector      */
+    unsigned int   alias_key;		/* Offset-zero alias sh. mem. key  */
+    void          *linear_addr;		/* Linear address of huge block    */
+    int            linear_key;		/* Linear shared memory key        */
+    int            linear_count;	/* Linear lock count               */
 } GDESC;
 
 extern GDESC *GlobalList;

@@ -52,7 +52,7 @@ void UTILITY_strip015(char *dest) {
 int
 DebugPrintString(char *str)
 {
-    printf("%s", str);
+    fprintf(stderr, "%s", str);
     return 0;
 }
 
@@ -78,7 +78,7 @@ void OutputDebugString(LPSTR foo)
 static void UTILITY_qualify(const char *source, char *dest)
 {
 #ifdef debug_utility
-	printf("UTILITY_qualify(\"%s\", \"%s\");\n", source, dest);
+	fprintf(stderr, "UTILITY_qualify(\"%s\", \"%s\");\n", source, dest);
 #endif
 	if(!source) return;	/* Dumbass attack! */
 	while(*source) {
@@ -130,7 +130,7 @@ size_t UTILITY_argsize(const char *format, BOOL windows)
 		if(*format) {
 			char modifier = ' ';
 #ifdef debug_utility
-			printf("found:\t\"%%");
+			fprintf(stderr, "found:\t\"%%");
 #endif
 			format++;		/* skip past '%' */
 			/* First skip the flags, field width, etc. */
@@ -138,39 +138,39 @@ size_t UTILITY_argsize(const char *format, BOOL windows)
 			if ((*format == '#') || (*format == '-') || (*format == '+')
 				|| (*format == ' ')) {
 #ifdef debug_utility
-				printf("%c", *format);
+				fprintf(stderr, "%c", *format);
 #endif
 				format++;
 			}
 			/* Now the field width, etc. */
 			while(isdigit(*format)) {
 #ifdef debug_utility
-				printf("%c", *format);
+				fprintf(stderr, "%c", *format);
 #endif
 				format++;
 			}
 			if(*format == '.') {
 #ifdef debug_utility
-				printf("%c", *format);
+				fprintf(stderr, "%c", *format);
 #endif
 				format++;
 			}
 			while(isdigit(*format)) {
 #ifdef debug_utility
-				printf("%c", *format);
+				fprintf(stderr, "%c", *format);
 #endif
 				format++;
 			}
 			/* Now we handle the rest */
 			if((*format == 'h') || (*format == 'l') || (*format == 'L')) {
 #ifdef debug_utility
-				printf("%c", modifier);
+				fprintf(stderr, "%c", modifier);
 #endif
 				modifier = *(format++);
 			}
 			/* Handle the actual type. */
 #ifdef debug_utility
-				printf("%c\"\n", *format);
+				fprintf(stderr, "%c\"\n", *format);
 #endif
 			switch(*format) {
 				case 'd':
@@ -200,7 +200,7 @@ size_t UTILITY_argsize(const char *format, BOOL windows)
 	};
 #undef INT_SIZE
 #ifdef debug_utility
-	printf("UTILITY_argsize: returning %i\n", size);
+	fprintf(stderr, "UTILITY_argsize: returning %i\n", size);
 #endif
 	return size;
 };
@@ -228,7 +228,7 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 		if(*format) {
 			char modifier = ' ';
 #ifdef debug_utility
-			printf("found:\t\"%%");
+			fprintf(stderr, "found:\t\"%%");
 #endif
 			format++;		/* skip past '%' */
 			/* First skip the flags, field width, etc. */
@@ -244,7 +244,7 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 				modifier = *(format++);
 			/* Handle the actual type. */
 #ifdef debug_utility
-				printf("%c\"\n", *format);
+				fprintf(stderr, "%c\"\n", *format);
 #endif
 			switch(*format) {
 				case 'd':
@@ -282,18 +282,132 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 	return result;
 };
 
+#ifndef WINELIB
+INT windows_wsprintf(BYTE *win_stack)
+{
+	LPSTR lpOutput, lpFormat;
+	BYTE *new_stack, *stack_ptr, *ptr;
+	int stacklength, result;
+
+	lpOutput = (LPSTR) *(DWORD*)win_stack;
+	win_stack += 4;
+	lpFormat = (LPSTR) *(DWORD*)win_stack;
+	win_stack += 4;
+
+	/* determine # of bytes pushed on 16-bit stack by checking printf's
+	   format string */
+	
+	ptr = lpFormat;
+	stacklength = 0;
+	do {
+		if (*ptr++ != '%')
+			continue;
+
+		/* skip width/precision */
+		while (	*ptr == '-' || *ptr == '+' || *ptr == '.' ||
+			*ptr == ' ' || isdigit(*ptr))
+			ptr++;
+
+		switch(*ptr++) {
+			case 'l': ptr++; /* skip next type character */
+				stacklength += 4;
+				continue;
+			case 's':
+				stacklength += 4;
+				continue;
+			case 'c':
+			case 'd':
+			case 'i':
+			case 'u':
+			case 'x':
+			case 'X':
+				stacklength += 2;
+				continue;
+			default:
+				fprintf(stderr, "wsprintf: oops, unknown formattype `%c' used!\n", *ptr);
+		}
+	} while (*ptr);
+
+	/* create 32-bit stack for libc's vsprintf() */
+
+	new_stack = malloc(2 * stacklength); 
+	stack_ptr = new_stack + 2 * stacklength;
+	win_stack += stacklength;
+	ptr  = lpFormat;
+	do {
+		if (*ptr++ != '%')
+			continue;
+
+		/* skip width/precision */
+		while (	*ptr == '-' || *ptr == '+' || *ptr == '.' ||
+			*ptr == ' ' || isdigit(*ptr))
+			ptr++;
+			
+		switch(*ptr++) {
+			case 's':
+				stack_ptr -= 4;
+ 				win_stack -= 4;
+				*(DWORD*)stack_ptr = *(DWORD*)win_stack;
+				continue;
+			case 'l':
+				stack_ptr -= 4;
+				win_stack -= 4;
+				*(DWORD*)stack_ptr = *(DWORD*)win_stack;
+				ptr++; /* skip next type character */
+				continue;
+			case 'c':
+				stack_ptr -= 4;
+				win_stack -= 2;
+	
+/* windows' wsprintf() %c ignores 0's, we replace 0 with 1 to make sure
+   that the remaining part of the string isn't ignored by the winapp */
+				
+				if (*(WORD*)win_stack)
+					*(DWORD*)stack_ptr = *(WORD*)win_stack;
+				else
+					*(DWORD*)stack_ptr = 1;
+				continue;
+			case 'd':
+			case 'i':
+				stack_ptr -= 4;
+				win_stack -= 2;
+				*(int*)stack_ptr = *(INT*)win_stack;
+				continue;
+			case 'u':
+			case 'x':
+			case 'X':
+				stack_ptr -= 4;
+				win_stack -= 2;
+				*(DWORD*)stack_ptr = *(WORD*)win_stack;
+				continue;
+			default:
+				stack_ptr -= 4;
+				win_stack -= 4;
+				*(DWORD*)stack_ptr = 0;
+				fprintf(stderr, "wsprintf: oops, unknown formattype %c used!\n", *ptr);
+		}
+	} while (*ptr);
+
+	result = vsprintf(lpOutput, lpFormat, stack_ptr);
+	free(new_stack);
+
+	return result;
+}
+#endif
 
 /**************************************************************************
- *                wsprintf        [USER.420]
+ *                wsprintf        [USER.420] (not used by relay)
  */
 int wsprintf(LPSTR lpOutput, LPSTR lpFormat, ...)
 {
-va_list  valist;
-int      ArgCnt;
-va_start(valist, lpFormat);
-ArgCnt = vsprintf(lpOutput, lpFormat, valist);
-va_end(valist);
-return (ArgCnt);
+	va_list valist;
+	int ArgCnt;
+
+	va_start(valist, lpFormat);
+	ArgCnt = vsprintf(lpOutput, lpFormat, valist);
+	va_end(valist);
+
+	return ArgCnt;
 }
 
 
@@ -320,12 +434,11 @@ int wvsprintf(LPSTR buf, LPSTR format, LPSTR args)
 
 	/* Change the format string so that ints are handled as short by
 	   default */
-	UTILITY_qualify(format, qualified_fmt);
 
 	/* Convert agruments to 32-bit values */
 	newargs = UTILITY_convertArgs(format, args);
-
 	result = vsprintf(buf, qualified_fmt, newargs);
+
 	free(newargs);
 	return result;
 };

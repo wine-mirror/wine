@@ -81,7 +81,7 @@ length	415
 #80 RESERVED4
 81  pascal _lclose(word) _lclose(1)
 82  pascal _lread(word ptr word) _lread(1 2 3)
-83  pascal _lcreate(ptr word) _lcreate(1 2)
+83  pascal _lcreat(ptr word) _lcreat(1 2)
 84  pascal _llseek(word long word) _llseek(1 2 3)
 85  pascal _lopen(ptr word) _lopen(1 2)
 86  pascal _lwrite(word ptr word) _lwrite(1 2 3)

@@ -7,6 +7,7 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
+#include "metafile.h"
 
 extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );
 
@@ -60,8 +61,11 @@ HPEN PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
     static char dash_dot[]        = { 2, 2 };      /* --  --  --  --  --  -- */
     static char dash_dashdot[]    = { 4,3,2,3 };   /* ----   --   ----   --  */
     static char dash_dashdotdot[] = { 4,2,2,2,2,2 };  /* ----  --  --  ----  */
-
     HPEN prevHandle = dc->w.hPen;
+
+    if (dc->header.wMagic == METAFILE_DC_MAGIC)
+	return MF_CreatePenIndirect(dc, &(pen->logpen));
+
     dc->w.hPen = hpen;
 
     dc->u.x.pen.style = pen->logpen.lopnStyle;

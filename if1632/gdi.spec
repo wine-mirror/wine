@@ -129,9 +129,9 @@ length	490
 #122 pascal ReSurRection
 #123 pascal PlayMetaFile
 #124 pascal GetMetaFile
-#125 pascal CreateMetaFile
-#126 pascal CloseMetaFile
-#127 pascal DeleteMetaFile
+125 pascal CreateMetaFile(ptr) CreateMetaFile(1)
+126 pascal CloseMetaFile(word) CloseMetaFile(1)
+127 pascal DeleteMetaFile(word) DeleteMetaFile(1)
 128 pascal MulDiv(s_word s_word s_word) MulDiv(1 2 3)
 129 pascal SaveVisRgn(word) SaveVisRgn(1)
 130 pascal RestoreVisRgn(word) RestoreVisRgn(1)
@@ -219,7 +219,7 @@ length	490
 #312 pascal CONVERTOUTLINEFONTFILE
 #313 pascal GETRASTERIZERCAPS
 #314 pascal ENGINEEXTTEXTOUT
-#330 pascal ENUMFONTFAMILIES
+330 pascal EnumFontFamilies(word ptr ptr ptr) EnumFontFamilies(1 2 3 4)
 #332 pascal GETKERNINGPAIRS
 345 pascal GetTextAlign(word) GetTextAlign(1)
 346 pascal SetTextAlign(word word) SetTextAlign(1 2)
@@ -227,7 +227,8 @@ length	490
 	   Chord(1 2 3 4 5 6 7 8 9)
 349 pascal SetMapperFlags(word word) SetMapperFlags(1 2)
 350 pascal GetCharWidth(word word word ptr) GetCharWidth(1 2 3 4)
-#351 pascal EXTTEXTOUT
+351 pascal ExtTextOut(word s_word s_word word ptr ptr s_word ptr) 
+		ExtTextOut(1 2 3 4 5 6 7 8)
 #352 pascal GETPHYSICALFONTHANDLE
 #353 pascal GETASPECTRATIOFILTER
 #354 pascal SHRINKGDIHEAP

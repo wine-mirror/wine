@@ -549,8 +549,12 @@ struct servent *Winsock_getservbyport(INT port, const char FAR *proto)
 /******************** winsock specific functions ************************
  *
  */
+static HANDLE new_handle = 0;
 
-#define AllocWSAHandle() getpid()
+HANDLE AllocWSAHandle(void)
+{
+	return new_handle++;
+}
 
 static void recv_message(int sig)
 {

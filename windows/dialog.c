@@ -4,6 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#define DEBUG_DIALOG /* */
+
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
@@ -266,6 +268,9 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	if (hMenu) DestroyMenu( hMenu );
 	return 0;
     }
+
+    ShowWindow(hwnd, SW_SHOWNORMAL);
+    UpdateWindow(hwnd);
 
       /* Create control windows */
 

@@ -6,6 +6,8 @@
 #ifndef SEGMEM_H
 #define SEGMEM_H
 
+#include "wine.h"
+
 #ifdef __linux__
 #define HAVE_IPC
 #include <sys/ipc.h>
@@ -77,13 +79,10 @@ extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);
 
 static __inline__ int Is16bitAddress(void *address)
 {
-    return ((int) address >= (((FIRST_SELECTOR << 3) | 0x0007) << 16));
+    return ((unsigned int) address 
+	    >= (((FIRST_SELECTOR << 3) | 0x0007) << 16));
 }
 
 extern SEGDESC Segments[];
 
 #endif /* SEGMEM_H */
-
-
-
-

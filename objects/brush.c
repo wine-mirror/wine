@@ -9,6 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "bitmap.h"
 #include "prototypes.h"
+#include "metafile.h"
 
 
 #define NB_HATCH_STYLES  6
@@ -228,6 +229,26 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     HBITMAP hBitmap;
     BITMAPINFO * bmpInfo;
     HBRUSH prevHandle = dc->w.hBrush;
+
+    if (dc->header.wMagic == METAFILE_DC_MAGIC)
+    {
+	switch (brush->logbrush.lbStyle)
+	{
+	case BS_SOLID:
+	case BS_HATCHED:
+	case BS_HOLLOW:
+	    if (!MF_CreateBrushIndirect(dc, &(brush->logbrush)))
+		return 0;
+	    break;
+
+	case BS_PATTERN:
+	case BS_DIBPATTERN:
+	    if (!MF_CreatePatternBrush(dc, &(brush->logbrush)))
+		return 0;
+	    break;
+	}
+	return 1;
+    }
     
     dc->w.hBrush = hbrush;
 

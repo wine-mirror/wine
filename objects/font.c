@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xatom.h>
+#include "user.h"
 #include "gdi.h"
 
 
@@ -414,7 +415,7 @@ BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
     for (i = wFirstChar, j = 0; i <= wLastChar; i++, j++)
     {
 	CI_GET_CHAR_INFO(xfont, i, def, cs);
-	*(lpBuffer + j) = cs->width;
+	*(lpBuffer + j) = cs ? cs->width : xfont->max_bounds.width;
 	if (*(lpBuffer + j) < 0)
 	    *(lpBuffer + j) = 0;
     }
@@ -425,11 +426,138 @@ BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
 /*************************************************************************
  *				EnumFonts			[GDI.70]
  */
-int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpFontFunc, LPSTR lpData)
+int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 {
-	printf("EMPTY STUB !!! EnumFonts(%04X, %08X, %08X, %08X)\n", 
-						hDC, lpFaceName, lpFontFunc, lpData);
-	return -1;
+	HANDLE			hLog;
+	HANDLE			hMet;
+	LPLOGFONT		lpLogFont;
+	LPTEXTMETRIC	lptm;
+	int				nRet;
+	printf("EnumFonts(%04X, %08X, %08X, %08X)\n", 
+			hDC, lpFaceName, lpEnumFunc, lpData);
+	if (lpEnumFunc == NULL) return 0;
+	hLog = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGFONT) + LF_FACESIZE);
+	lpLogFont = (LPLOGFONT) USER_HEAP_ADDR(hLog);
+	if (lpLogFont == NULL) {
+		printf("EnumFonts // can't alloc LOGFONT struct !\n");
+		return 0;
+		}
+	hMet = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(TEXTMETRIC));
+	lptm = (LPTEXTMETRIC) USER_HEAP_ADDR(hMet);
+	if (lptm == NULL) {
+		USER_HEAP_FREE(hLog);
+		printf("EnumFonts // can't alloc TEXTMETRIC struct !\n");
+		return 0;
+		}
+	while (TRUE) {
+    	printf("EnumFonts // !\n");
+		lpLogFont->lfHeight = 18;
+		lpLogFont->lfWidth = 12;
+		lpLogFont->lfEscapement = 0;
+		lpLogFont->lfOrientation = 0;
+		lpLogFont->lfWeight = FW_REGULAR;
+		lpLogFont->lfItalic = 0;
+		lpLogFont->lfUnderline = 0;
+		lpLogFont->lfStrikeOut = 0;
+		lpLogFont->lfCharSet = ANSI_CHARSET;
+		lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+		lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		lpLogFont->lfQuality = DEFAULT_QUALITY;
+		lpLogFont->lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+		strcpy(lpLogFont->lfFaceName, "Courier");
+		printf("lpLogFont=%08X lptm=%08X\n", lpLogFont, lptm);
+#ifdef WINELIB
+		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
+#else
+		nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLogFont,
+					2, (int)lptm, 0, (int)0, 2, (int)lpData);
+#endif
+		if (nRet == 0) break;
+		lpLogFont->lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
+		strcpy(lpLogFont->lfFaceName, "Helvetica");
+		printf("lpLogFont=%08X lptm=%08X\n", lpLogFont, lptm);
+#ifdef WINELIB
+		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
+#else
+		nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLogFont,
+					2, (int)lptm, 0, (int)0, 2, (int)lpData);
+#endif
+		if (nRet == 0) break;
+		else break;
+		}
+	USER_HEAP_FREE(hMet);
+	USER_HEAP_FREE(hLog);
+	return 0;
+}
+
+
+/*************************************************************************
+ *				EnumFontFamilies	[GDI.330]
+ */
+int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData)
+{
+	HANDLE			hLog;
+	HANDLE			hMet;
+	LPLOGFONT		lpLogFont;
+	LPTEXTMETRIC	lptm;
+	int				nRet;
+	printf("EnumFontFamilies(%04X, %08X, %08X, %08X)\n", 
+					hDC, lpszFamily, lpEnumFunc, lpData);
+	if (lpEnumFunc == NULL) return 0;
+	hLog = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGFONT) + LF_FACESIZE);
+	lpLogFont = (LPLOGFONT) USER_HEAP_ADDR(hLog);
+	if (lpLogFont == NULL) {
+		printf("EnumFontFamilies // can't alloc LOGFONT struct !\n");
+		return 0;
+		}
+	hMet = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(TEXTMETRIC));
+	lptm = (LPTEXTMETRIC) USER_HEAP_ADDR(hMet);
+	if (lptm == NULL) {
+		USER_HEAP_FREE(hLog);
+		printf("EnumFontFamilies // can't alloc TEXTMETRIC struct !\n");
+		return 0;
+		}
+	while (TRUE) {
+    	printf("EnumFontFamilies // !\n");
+		lpLogFont->lfHeight = 12;
+		lpLogFont->lfWidth = 8;
+		lpLogFont->lfEscapement = 0;
+		lpLogFont->lfOrientation = 0;
+		lpLogFont->lfWeight = FW_REGULAR;
+		lpLogFont->lfItalic = 0;
+		lpLogFont->lfUnderline = 0;
+		lpLogFont->lfStrikeOut = 0;
+		lpLogFont->lfCharSet = ANSI_CHARSET;
+		lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+		lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		lpLogFont->lfQuality = DEFAULT_QUALITY;
+		lpLogFont->lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+		strcpy(lpLogFont->lfFaceName, "Courier");
+/*		lpLogFont->lfFullName[LF_FACESIZE] = 12;
+		lpLogFont->lfStyle[LF_FACESIZE] = 12; */
+		printf("lpLogFont=%08X lptm=%08X\n", lpLogFont, lptm);
+#ifdef WINELIB
+		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
+#else
+		nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLogFont,
+					2, (int)lptm, 0, (int)0, 2, (int)lpData);
+#endif
+		if (nRet == 0) break;
+		lpLogFont->lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
+		strcpy(lpLogFont->lfFaceName, "Helvetica");
+		printf("lpLogFont=%08X lptm=%08X\n", lpLogFont, lptm);
+#ifdef WINELIB
+		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
+#else
+		nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLogFont,
+					2, (int)lptm, 0, (int)0, 2, (int)lpData);
+#endif
+		if (nRet == 0) break;
+		else break;
+		}
+	USER_HEAP_FREE(hMet);
+	USER_HEAP_FREE(hLog);
+	return 0;
 }
 
 

@@ -5,32 +5,23 @@
 
 MODULE = debugger
 
-SUBDIRS = readline
+SUBDIRS = opcodes readline
 
-DEFINES = -DUSE_READLINE
-
-/* Quick and dirt hack, since i386 is defined as 1. sigh */
-#define temp i386
-#undef i386
+DEFINES = -DUSE_READLINE -Iopcodes
 
 SRCS = \
 	dbg.tab.c \
 	break.c \
 	hash.c \
 	lex.yy.c \
-	info.c \
-	i386-pinsn.c
+	info.c
 
 OBJS = \
 	dbg.tab.o \
 	break.o \
 	hash.o \
 	lex.yy.o \
-	info.o \
-	i386-pinsn.o
-
-#define i386 temp
-#undef temp
+	info.o
 
 /*
  * All the SUBDIR stuff

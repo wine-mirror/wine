@@ -134,30 +134,7 @@ HINSTANCE FindExecutable(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
 }
 
 char AppName[256], AppMisc[256];
-
-/*************************************************************************
- *				AboutDlgProc		[SHELL.33]
- */
-INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
-{
-	char temp[256];
-
-	switch(msg) {
-        case WM_INITDIALOG:
-		sprintf(temp, "About %s", AppName);
-/*		SetDlgItemText(hWnd, 0, temp);*/
-		SetDlgItemText(hWnd, 100, AppMisc);
-		break;
-
-        case WM_COMMAND:
-		switch (wParam) {
-		case IDOK:
-			EndDialog(hWnd, TRUE);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
+INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam);
 
 /*************************************************************************
  *				ShellAbout		[SHELL.22]
@@ -172,6 +149,30 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 	return DialogBox(hSysRes, "SHELL_ABOUT_MSGBOX", hWnd, (FARPROC)AboutDlgProc);
 }
 
+
+/*************************************************************************
+ *				AboutDlgProc		[SHELL.33]
+ */
+INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
+{
+	char temp[256];
+
+	switch(msg) {
+        case WM_INITDIALOG:
+		sprintf(temp, "About %s", AppName);
+		SetWindowText(hWnd, temp);
+		SetDlgItemText(hWnd, 100, AppMisc);
+		break;
+
+        case WM_COMMAND:
+		switch (wParam) {
+		case IDOK:
+			EndDialog(hWnd, TRUE);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
 
 /*************************************************************************
  *				ExtractIcon		[SHELL.34]

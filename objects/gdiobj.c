@@ -356,7 +356,11 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
     if (!ptr) return 0;
     
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+    }
     
     switch(ptr->wMagic)
     {

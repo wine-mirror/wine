@@ -102,14 +102,14 @@ BOOL EnumTaskWindows(HANDLE hTask, FARPROC lpEnumFunc, LONG lParam)
 	printf("EnumTaskWindows // found hTask=%04X !\n", hTask);
 	wptr = lpTask->lpWndList;
 	if (wptr == NULL) return FALSE;
+	if (lpEnumFunc == NULL)	return FALSE;
 	while ((hWnd = *(wptr++)) != 0) {
 		if (++count >= MAXWIN_PER_TASK) return FALSE;
 		printf("EnumTaskWindows // hWnd=%04X count=%d !\n", hWnd, count);
 #ifdef WINELIB
-		if (lpEnumFunc != NULL)	bRet = (*lpEnumFunc)(hWnd, lParam); 
+		bRet = (*lpEnumFunc)(hWnd, lParam); 
 #else
-		if (lpEnumFunc != NULL)	
-			bRet = CallBack16(lpEnumFunc, 2, lParam, (int) hWnd);
+		bRet = CallBack16(lpEnumFunc, 2, 0, (int)hWnd, 2, (int)lParam);
 #endif
 		if (bRet == 0) break;
 		}

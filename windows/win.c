@@ -971,6 +971,15 @@ BOOL AnyPopup()
 	return FALSE;
 }
 
+/*******************************************************************
+ *			FlashWindow		[USER.105]
+ */
+BOOL FlashWindow(HWND hWnd, BOOL bInvert)
+{
+	printf("EMPTY STUB !! FlashWindow !\n");
+	return FALSE;
+}
+
 
 /*******************************************************************
  *			SetSysModalWindow		[USER.188]

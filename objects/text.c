@@ -9,6 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xatom.h>
 #include "windows.h"
 #include "gdi.h"
+#include "metafile.h"
 
 #define TAB     9
 #define LF     10
@@ -255,7 +256,14 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
     XFontStruct *font;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_TextOut(dc, x, y, str, count);
+	return TRUE;
+    }
+
     if (!DC_SetupGCForText( dc )) return TRUE;
     font = dc->u.x.font.fstruct;
 
@@ -403,3 +411,17 @@ BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam,
 		return s;
 	}
 }
+
+/***********************************************************************
+ *			ExtTextOut			[GDI.351]
+ */
+BOOL ExtTextOut(HDC hDC, short x, short y, WORD wOptions, LPRECT lprect,
+			LPSTR str, WORD count, LPINT lpDx)
+{
+	printf("EMPTY STUB !!! ExtTextOut(); ! (call TextOut() for new)\n");
+	TextOut(hDC, x, y, str, count);
+	return FALSE;
+}
+
+
+

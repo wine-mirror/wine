@@ -1,4 +1,77 @@
 ----------------------------------------------------------------------
+Tue May 17 23:03:16 1994  Bob Amstadt  (bob@pooh)
+
+	* [windows/dce.c]
+	Fixed bug with dce initialization that was causing dialog boxes to not
+	be displayed.
+
+	* [if1632/callback.c]
+	Better fix for bug found by Martin.
+
+Sat May 14 19:48:39 1994  Rick Sladkey  (jrs@world.std.com)
+
+        * [ memory/heap.c ]
+        Redirect HEAP_ReAlloc calls with NULL argument to HEAP_Alloc.
+
+May 16, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [objects/font.c]
+	Make EnumFonts() calling a callback with dummy fonts ... :-)
+
+	* [objects/text.c]
+	Add Empty Stub for ExtTextOut(), which temporarely call Textout().
+
+	* [if1632/callback.c]
+	Temporarely go around bug in CallWindowProc(), you will see printfs.
+
+	* [controls/edit.c]
+	Make EDIT controls focused by a mouse click.
+
+	* [misc/property.c]
+	Bug Fix in function EnumProps(), better use of CallBack16().
+
+	* [misc/mmsystem.c]
+	Basic Skelton's for MCI messages dispatching function.
+
+Sun May 15 16:15:17 1994  Erik Bos (erik@hacktic.nl)
+
+        * [windows/utility.c]
+        Added windows_wsprintf() for the emulator, wsprintf() is
+        for libwine.
+
+Sat May 14 22:16:40 1994  Rick Sladkey  (jrs@world.std.com)
+
+        * [misc/cursor.c]
+        Fix pointer problems in LoadCursor leading to heap corruption.
+
+        *  [ controls/menu.c ]
+        Fix two NULL dereferencing bugs.
+
+Sun May 15 20:07:48 1994  Rick Sladkey  (jrs@world.std.com)
+
+        * [objects/font.c]
+        Fix NULL pointer dereferencing bug in GetCharWidth.
+
+        * [loader/resource.c]
+        Fix under-allocation of memory in LoadAccelerators.
+
+        * [windows/class.c]
+        Ignore negative sizes for extra fields in RegisterClass.
+
+Sun May 15 06:35:03 1994  David Metcalfe <david@prism.demon.co.uk>
+
+        * [objects/metafile.c] [include/metafile.h] [include/windows.h]
+          [objects/gdiobj.c] [objects/brush.c] [objects/pen.c]
+          [objects/text.c] [objects/dcvalues.c] [windows/graphics.c]
+          [windows/dc.c] [windows/mapping.c]
+        Beginnings of metafile support.
+
+        * [misc/file.c]
+        Corrected spelling of _lcreat.
+
+        * [controls/edit.c]
+        Minor bug fixes.
+----------------------------------------------------------------------
 May 9, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 
 	* [controls/scroll.c]

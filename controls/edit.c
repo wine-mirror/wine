@@ -309,6 +309,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case WM_KEYDOWN:
+	printf("EDIT WM_KEYDOWN w=%04X !\n", wParam);
 	EDIT_KeyDownMsg(hwnd, wParam);
 	break;
 
@@ -319,6 +320,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 
     case WM_LBUTTONDOWN:
 	HideCaret(hwnd);
+	SetFocus(hwnd);
 	EDIT_LButtonDownMsg(hwnd, wParam, lParam);
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
 	ShowCaret(hwnd);
@@ -2043,8 +2045,6 @@ void EDIT_SetSelMsg(HWND hwnd, LONG lParam)
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
 
-    if ((short)(lParam) < 0 || (short)(lParam >> 16) < 0)
-	return;
     so = LOWORD(lParam);
     eo = HIWORD(lParam);
     if (so > eo)
@@ -2343,7 +2343,7 @@ LONG EDIT_LineFromCharMsg(HWND hwnd, WORD wParam)
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
 
-    if (wParam == 0xffff)   /* really -1 */
+    if (wParam == (WORD)-1)
 	return (LONG)(es->SelBegLine);
     else
 	EDIT_GetLineCol(hwnd, wParam, &row, &col);
@@ -2362,7 +2362,7 @@ LONG EDIT_LineIndexMsg(HWND hwnd, WORD wParam)
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
     unsigned int *textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
 
-    if (wParam == 0xffff)    /* really -1 */
+    if (wParam == (WORD)-1)
 	wParam = es->CurrLine;
 
     return (LONG)(*(textPtrs + wParam));

@@ -26,7 +26,14 @@ extern int COLOR_ToPhysical( DC *dc, COLORREF color );
 BOOL LineTo( HDC hdc, short x, short y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_LINETO, x, y);
+	return TRUE;
+    }
+
     if (DC_SetupGCForPen( dc ))
 	XDrawLine(XT_display, dc->u.x.drawable, dc->u.x.gc, 
 		  dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX ),
@@ -44,9 +51,21 @@ BOOL LineTo( HDC hdc, short x, short y )
  */
 DWORD MoveTo( HDC hdc, short x, short y )
 {
-    POINT pt;
-    if (MoveToEx( hdc, x, y, &pt )) return pt.x | (pt.y << 16);
-    else return 0;
+    short oldx, oldy;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam2(dc, META_MOVETO, x, y);
+	return 0;
+    }
+
+    oldx = dc->w.CursPosX;
+    oldy = dc->w.CursPosY;
+    dc->w.CursPosX = x;
+    dc->w.CursPosY = y;
+    return oldx | (oldy << 16);
 }
 
 
@@ -81,7 +100,29 @@ BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
     double start_angle, end_angle, diff_angle;
     XPoint points[3];
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	switch (lines)
+	{
+	case 0:
+	    MF_MetaParam8(dc, META_ARC, left, top, right, bottom,
+			  xstart, ystart, xend, yend);
+	    break;
+
+	case 1:
+	    MF_MetaParam8(dc, META_CHORD, left, top, right, bottom,
+			  xstart, ystart, xend, yend);
+	    break;
+
+	case 2:
+	    MF_MetaParam8(dc, META_PIE, left, top, right, bottom,
+			  xstart, ystart, xend, yend);
+	    break;
+	}
+	return 0;
+    }
 
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
@@ -166,7 +207,13 @@ BOOL Chord( HDC hdc, int left, int top, int right, int bottom,
 BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam4(dc, META_ELLIPSE, left, top, right, bottom);
+	return 0;
+    }
 
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
@@ -192,7 +239,13 @@ BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
 BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam4(dc, META_RECTANGLE, left, top, right, bottom);
+	return TRUE;
+    }
 
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
@@ -219,7 +272,14 @@ BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
 {
     int		x1, y1, x2, y2;
     DC * dc = (DC *) GDI_GetObjPtr(hDC, DC_MAGIC);
-    if (!dc) return FALSE;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hDC, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam6(dc, META_ROUNDRECT, left, top, right, bottom,
+		      ell_width, ell_height);
+	return TRUE;
+    }
 /*
     printf("RoundRect(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
@@ -350,7 +410,13 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
     PALETTEENTRY entry;
     
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
+	MF_MetaParam4(dc, META_SETPIXEL, x, y, HIWORD(color), LOWORD(color)); 
+	return 1;
+    }
 
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
@@ -522,25 +588,32 @@ void DrawReliefRect( HDC hdc, RECT rect, int thickness, BOOL pressed )
  */
 BOOL Polyline (HDC hdc, LPPOINT pt, int count)
 {
-	register int i;
-    	DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    register int i;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaPoly(dc, META_POLYLINE, pt, count); 
+	return TRUE;
+    }
 
-    	if (DC_SetupGCForPen( dc ))
-    	{
-		for (i = 0; i < count-1; i ++)
-			XDrawLine (XT_display, dc->u.x.drawable, dc->u.x.gc,  
-				   dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
-				   dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
-				   dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
-				   dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
-		XDrawLine (XT_display, dc->u.x.drawable, dc->u.x.gc,  
-			   dc->w.DCOrgX + XLPTODP(dc, pt [count-1].x),
-			   dc->w.DCOrgY + YLPTODP(dc, pt [count-1].y),
-			   dc->w.DCOrgX + XLPTODP(dc, pt [0].x),
-			   dc->w.DCOrgY + YLPTODP(dc, pt [0].y));
-	} 
+    if (DC_SetupGCForPen( dc ))
+    {
+	for (i = 0; i < count-1; i ++)
+	    XDrawLine (XT_display, dc->u.x.drawable, dc->u.x.gc,  
+		       dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
+		       dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
+		       dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
+		       dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
+	XDrawLine (XT_display, dc->u.x.drawable, dc->u.x.gc,  
+		   dc->w.DCOrgX + XLPTODP(dc, pt [count-1].x),
+		   dc->w.DCOrgY + YLPTODP(dc, pt [count-1].y),
+		   dc->w.DCOrgX + XLPTODP(dc, pt [0].x),
+		   dc->w.DCOrgY + YLPTODP(dc, pt [0].y));
+    } 
 	
-	return (TRUE);
+    return (TRUE);
 }
 
 
@@ -549,31 +622,39 @@ BOOL Polyline (HDC hdc, LPPOINT pt, int count)
  */
 BOOL Polygon (HDC hdc, LPPOINT pt, int count)
 {
-	register int i;
-    	DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-	XPoint *points = (XPoint *) malloc (sizeof (XPoint) * count+1);
+    register int i;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    XPoint *points = (XPoint *) malloc (sizeof (XPoint) * count+1);
 
-    	if (DC_SetupGCForBrush( dc ))
-    	{
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaPoly(dc, META_POLYGON, pt, count); 
+	return TRUE;
+    }
+
+    if (DC_SetupGCForBrush( dc ))
+    {
     		
-		for (i = 0; i < count; i++)
-		{
-			points [i].x = dc->w.DCOrgX + XLPTODP(dc, pt [i].x);
-			points [i].y = dc->w.DCOrgY + YLPTODP(dc, pt [i].y);
-		}
-		points [count] = points [0];
-		
-		XFillPolygon( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		  	points, count, Complex, CoordModeOrigin);
-		
-		if (DC_SetupGCForPen ( dc ))
-		{
-		    XDrawLines( XT_display, dc->u.x.drawable, dc->u.x.gc,
-			        points, count, CoordModeOrigin );
-		}
+	for (i = 0; i < count; i++)
+	{
+	    points [i].x = dc->w.DCOrgX + XLPTODP(dc, pt [i].x);
+	    points [i].y = dc->w.DCOrgY + YLPTODP(dc, pt [i].y);
 	}
-    	free ((void *) points);
-	return (TRUE);
+	points [count] = points [0];
+		
+	XFillPolygon( XT_display, dc->u.x.drawable, dc->u.x.gc,
+		     points, count, Complex, CoordModeOrigin);
+		
+	if (DC_SetupGCForPen ( dc ))
+	{
+	    XDrawLines( XT_display, dc->u.x.drawable, dc->u.x.gc,
+		       points, count, CoordModeOrigin );
+	}
+    }
+    free ((void *) points);
+    return (TRUE);
 }
 
 /**********************************************************************
@@ -619,51 +700,57 @@ static BOOL FloodFill_rec(XImage *image, int x, int y,
  */
 BOOL FloodFill(HDC hdc, short x, short y, DWORD crColor)
 {
-	Pixel boundrypixel;
-	int imagex, imagey;
-	XImage *image;
-    	DC *dc;
+    Pixel boundrypixel;
+    int imagex, imagey;
+    XImage *image;
+    DC *dc;
 
 #ifdef DEBUG_GRAPHICS
-	printf("FloodFill %x %d,%d %x\n", hdc, x, y, crColor);
+    printf("FloodFill %x %d,%d %x\n", hdc, x, y, crColor);
 #endif
-    	dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
-
-	if (!dc) return 0;
-
-	x = dc->w.DCOrgX + XLPTODP(dc, x);
-	y = dc->w.DCOrgY + YLPTODP(dc, y);
-
-	if (x < dc->w.DCOrgX || x > dc->w.DCOrgX + dc->w.DCSizeX ||
-	    y < dc->w.DCOrgY || y > dc->w.DCOrgY + dc->w.DCSizeY)
-		return 0;
-
-    	if (!DC_SetupGCForBrush(dc)) 
-		return FALSE;
-
-	boundrypixel = GetNearestPaletteIndex( dc->w.hPalette, crColor );	
-
-	image = XGetImage(display, dc->u.x.drawable,  
-			dc->w.DCOrgX, dc->w.DCOrgY,
-			dc->w.DCSizeX, dc->w.DCSizeY, AllPlanes, ZPixmap);
-	if (XGetPixel(image, x, y) == boundrypixel) 
-		return FALSE;
-	if (!FloodFill_rec(image, x, y, 
-				0,0, 
-				dc->w.DCOrgX + dc->w.DCSizeX, 
-				dc->w.DCOrgY + dc->w.DCSizeY, 
-				boundrypixel, dc->u.x.brush.pixel)) {
-		XDestroyImage(image);
-		return 0;
-	}
-
-	XPutImage(display, dc->u.x.drawable, dc->u.x.gc, image,
-			0, 0,
-			dc->w.DCOrgX, dc->w.DCOrgY,
-                        dc->w.DCSizeX, dc->w.DCSizeY);
-	XDestroyImage(image);
-
+    dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
+    if (!dc) 
+    {
+	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return FALSE;
+	MF_MetaParam4(dc, META_FLOODFILL, x, y, HIWORD(crColor), 
+		      LOWORD(crColor)); 
 	return TRUE;
+    }
+
+    x = dc->w.DCOrgX + XLPTODP(dc, x);
+    y = dc->w.DCOrgY + YLPTODP(dc, y);
+
+    if (x < dc->w.DCOrgX || x > dc->w.DCOrgX + dc->w.DCSizeX ||
+	y < dc->w.DCOrgY || y > dc->w.DCOrgY + dc->w.DCSizeY)
+	return FALSE;
+
+    if (!DC_SetupGCForBrush(dc)) 
+	return FALSE;
+
+    boundrypixel = GetNearestPaletteIndex( dc->w.hPalette, crColor );	
+
+    image = XGetImage(display, dc->u.x.drawable,  
+		      dc->w.DCOrgX, dc->w.DCOrgY,
+		      dc->w.DCSizeX, dc->w.DCSizeY, AllPlanes, ZPixmap);
+    if (XGetPixel(image, x, y) == boundrypixel) 
+	return FALSE;
+    if (!FloodFill_rec(image, x, y, 
+		       0, 0, 
+		       dc->w.DCOrgX + dc->w.DCSizeX, 
+		       dc->w.DCOrgY + dc->w.DCSizeY, 
+		       boundrypixel, dc->u.x.brush.pixel)) {
+	XDestroyImage(image);
+	return FALSE;
+    }
+
+    XPutImage(display, dc->u.x.drawable, dc->u.x.gc, image,
+	      0, 0,
+	      dc->w.DCOrgX, dc->w.DCOrgY,
+	      dc->w.DCSizeX, dc->w.DCSizeY);
+    XDestroyImage(image);
+
+    return TRUE;
 }
 
 

@@ -19,7 +19,8 @@ unsigned int * regval = NULL;
 unsigned int dbg_mask = 0;
 unsigned int dbg_mode = 0;
 
-void issue_prompt();
+void issue_prompt(void);
+void mode_command(int);
 %}
 
 
@@ -50,7 +51,7 @@ void issue_prompt();
 
  line:		'\n'
 	| infocmd '\n'
-	| error '\n'       {yyerrok; }
+	| error '\n'       { yyerrok; }
 	| QUIT  '\n'       { exit(0); };
 	| HELP  '\n'       { dbg_help(); };
 	| CONT '\n'        { return; };
@@ -161,6 +162,7 @@ wine_debug(int signal, int * regs)
 		dbg_mode = 16;
 	};
 #endif
+	fprintf(stderr,"In %d bit mode.\n", dbg_mode);
 
 	/* This is intended to read the entry points from the Windows image, and
 	   insert them in the hash table.  It does not work yet, so it is commented out. */

@@ -45,7 +45,7 @@ DECLARE_HANDLE(HMENU);
 DECLARE_HANDLE(HBITMAP);
 DECLARE_HANDLE(HBRUSH);
 DECLARE_HANDLE(LOCALHANDLE);
-
+DECLARE_HANDLE(HMETAFILE);
 
 #define TRUE 1
 #define FALSE 0
@@ -850,14 +850,6 @@ typedef struct tagLOGPEN
 #define ALTERNATE         1
 #define WINDING           2
 
-typedef struct {
-	DWORD rdSize;
-	WORD rdFunction, rdParam[1];
-} METARECORD;
-typedef METARECORD *LPMETARECORD;
-typedef METARECORD *NPMETARECORD;
-typedef METARECORD *PMETARECORD;
-
   /* Background modes */
 #define TRANSPARENT       1
 #define OPAQUE            2
@@ -1333,12 +1325,6 @@ typedef struct tagCOMSTAT
 #define	WF_80x87	0x0400
 #define	WF_PAGING	0x0800
 #define	WF_WLO          0x8000
-
-typedef struct 
-{
-	HANDLE objectHandle[1];
-}HANDLETABLE;
-typedef HANDLETABLE *LPHANDLETABLE;
 
 #define MAKEINTRESOURCE(i) (LPSTR)((DWORD)((WORD)(i)))
 
@@ -2240,6 +2226,126 @@ typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 #define WM_ASKCBFORMATNAME  0x030C
 #define WM_CHANGECBCHAIN    0x030D
 
+/* Metafile header structure */
+typedef struct tagMETAHEADER
+{
+    WORD       mtType;
+    WORD       mtHeaderSize;
+    WORD       mtVersion;
+    DWORD      mtSize __attribute__ ((packed));
+    WORD       mtNoObjects;
+    DWORD      mtMaxRecord __attribute__ ((packed));
+    WORD       mtNoParameters;
+} METAHEADER;
+
+/* Metafile typical record structure */
+typedef struct tagMETARECORD
+{
+    DWORD      rdSize;
+    WORD       rdFunction;
+    WORD       rdParam[1];
+} METARECORD;
+typedef METARECORD *PMETARECORD;
+typedef METARECORD *LPMETARECORD;
+
+/* Handle table structure */
+typedef struct tagHANDLETABLE
+{
+    HANDLE     objectHandle[1];
+} HANDLETABLE;
+typedef HANDLETABLE *PHANDLETABLE;
+typedef HANDLETABLE *LPHANDLETABLE;
+
+/* Clipboard metafile picture structure */
+typedef struct tagMETAFILEPICT
+{
+    int        mm;
+    int        xExt;
+    int        yExt;
+    HMETAFILE  hMF;
+} METAFILEPICT;
+typedef METAFILEPICT *LPMETAFILEPICT;
+
+/* Metafile functions */
+#define META_SETBKCOLOR              0x0201
+#define META_SETBKMODE               0x0102
+#define META_SETMAPMODE              0x0103
+#define META_SETROP2                 0x0104
+#define META_SETRELABS               0x0105
+#define META_SETPOLYFILLMODE         0x0106
+#define META_SETSTRETCHBLTMODE       0x0107
+#define META_SETTEXTCHAREXTRA        0x0108
+#define META_SETTEXTCOLOR            0x0209
+#define META_SETTEXTJUSTIFICATION    0x020A
+#define META_SETWINDOWORG            0x020B
+#define META_SETWINDOWEXT            0x020C
+#define META_SETVIEWPORTORG          0x020D
+#define META_SETVIEWPORTEXT          0x020E
+#define META_OFFSETWINDOWORG         0x020F
+#define META_SCALEWINDOWEXT          0x0410
+#define META_OFFSETVIEWPORTORG       0x0211
+#define META_SCALEVIEWPORTEXT        0x0412
+#define META_LINETO                  0x0213
+#define META_MOVETO                  0x0214
+#define META_EXCLUDECLIPRECT         0x0415
+#define META_INTERSECTCLIPRECT       0x0416
+#define META_ARC                     0x0817
+#define META_ELLIPSE                 0x0418
+#define META_FLOODFILL               0x0419
+#define META_PIE                     0x081A
+#define META_RECTANGLE               0x041B
+#define META_ROUNDRECT               0x061C
+#define META_PATBLT                  0x061D
+#define META_SAVEDC                  0x001E
+#define META_SETPIXEL                0x041F
+#define META_OFFSETCLIPRGN           0x0220
+#define META_TEXTOUT                 0x0521
+#define META_BITBLT                  0x0922
+#define META_STRETCHBLT              0x0B23
+#define META_POLYGON                 0x0324
+#define META_POLYLINE                0x0325
+#define META_ESCAPE                  0x0626
+#define META_RESTOREDC               0x0127
+#define META_FILLREGION              0x0228
+#define META_FRAMEREGION             0x0429
+#define META_INVERTREGION            0x012A
+#define META_PAINTREGION             0x012B
+#define META_SELECTCLIPREGION        0x012C
+#define META_SELECTOBJECT            0x012D
+#define META_SETTEXTALIGN            0x012E
+#define META_DRAWTEXT                0x062F
+#define META_CHORD                   0x0830
+#define META_SETMAPPERFLAGS          0x0231
+#define META_SETTEXTOUT              0x0A32
+#define META_SETDIBTODEV             0x0D33
+#define META_SELECTPALETTE           0x0234
+#define META_REALIZEPALETTE          0x0035
+#define META_ANIMATEPALETTE          0x0436
+#define META_SETPALENTRIES           0x0037
+#define META_POLYPOLYGON             0x0538
+#define META_RESIZEPALETTE           0x0139
+#define META_DIBBITBLT               0x0940
+#define META_DIBSTRETCHBLT           0x0B41
+#define META_DIBCREATEPATTERNBRUSH   0x0142
+#define META_STRETCHDIB              0x0F43
+#define META_EXTFLOODFILL            0x0548
+#define META_RESETDC                 0x014C
+#define META_STARTDOC                0x014D
+#define META_STARTPAGE               0x004F
+#define META_ENDPAGE                 0x0050
+#define META_ABORTDOC                0x0052
+#define META_ENDDOC                  0x005E
+#define META_DELETEOBJECT            0x01F0
+#define META_CREATEPALETTE           0x00F7
+#define META_CREATEBRUSH             0x00F8
+#define META_CREATEPATTERNBRUSH      0x01F9
+#define META_CREATEPENINDIRECT       0x02FA
+#define META_CREATEFONTINDIRECT      0x02FB
+#define META_CREATEBRUSHINDIRECT     0x02FC
+#define META_CREATEBITMAPINDIRECT    0x02FD
+#define META_CREATEBITMAP            0x06FE
+#define META_CREATEREGION            0x06FF
+
 
 #define F(ret,name) ret name(void);
 #define Fa(ret,name,t1,a1) ret name(t1 a1);
@@ -2338,7 +2444,7 @@ Fa(ATOM,GlobalDeleteAtom,ATOM,a)
 Fa(ATOM,GlobalFindAtom,LPCSTR,a)
 Fa(BOOL,BringWindowToTop,HWND,a)
 Fa(BOOL,DeleteDC,HDC,a)
-Fa(BOOL,DeleteMetaFile,HANDLE,a)
+Fa(BOOL,DeleteMetaFile,HMETAFILE,a)
 Fa(BOOL,DeleteObject,HANDLE,a)
 Fa(BOOL,DestroyCursor,HCURSOR,a)
 Fa(BOOL,DestroyIcon,HICON,a)
@@ -2392,7 +2498,7 @@ Fa(DWORD,GlobalSize,HANDLE,a)
 Fa(DWORD,OemKeyScan,WORD,a)
 Fa(FARPROC,LocalNotify,FARPROC,a)
 Fa(HANDLE,BeginDeferWindowPos,int,nNumWindows)
-Fa(HANDLE,CloseMetaFile,HANDLE,a)
+Fa(HMETAFILE,CloseMetaFile,HANDLE,a)
 Fa(HANDLE,CreateMetaFile,LPSTR,a)
 Fa(HANDLE,GetAtomHandle,ATOM,a)
 Fa(HANDLE,GetClipboardData,WORD,a)
@@ -2680,8 +2786,8 @@ Fb(void,ValidateRgn,HWND,a,HRGN,b)
 Fc(BOOL,LineTo,HDC,a,short,b,short,c)
 Fc(WORD,GetInternalWindowPos,HWND,a,LPRECT,b,LPPOINT,c)
 Fc(LONG,_llseek,INT,a,LONG,b,INT,c)
-Fc(WORD,_lread,INT,a,LPSTR,b,INT,c)
-Fc(WORD,_lwrite,INT,a,LPSTR,b,INT,c)
+Fc(INT,_lread,INT,a,LPSTR,b,INT,c)
+Fc(INT,_lwrite,INT,a,LPSTR,b,INT,c)
 Fc(int,FillRect,HDC,a,LPRECT,b,HBRUSH,c)
 Fc(DWORD,MoveTo,HDC,a,short,b,short,c)
 Fc(BOOL,CheckMenuItem,HMENU,a,WORD,b,WORD,c)
@@ -2896,7 +3002,7 @@ Fg(HICON,CreateIcon,HANDLE,a,int,b,int,c,BYTE,d,BYTE,e,LPSTR,f,LPSTR,g)
 Fg(int,GetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
 Fg(int,SetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
 Fg(BOOL,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
-Fh(BOOL,ExtTextOut,HDC,a,int,b,int,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
+Fh(BOOL,ExtTextOut,HDC,a,short,b,short,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
 Fh(HANDLE,DeferWindowPos,HANDLE,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,int,x,int,y,int,cx,int,cy,WORD,wFlags)
 Fh(LONG,TabbedTextOut,HDC,a,int,b,int,c,LPSTR,d,int,e,int,f,LPINT,g,int,h)
 Fh(int,ScrollWindowEx,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g,WORD,h)
