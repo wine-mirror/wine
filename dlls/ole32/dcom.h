@@ -226,7 +226,7 @@ struct IRemUnknown {
     const IRemUnknownVtbl* lpVtbl;
 };
 struct IRemUnknownVtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -260,8 +260,10 @@ struct IRemUnknownVtbl {
         unsigned short cInterfaceRefs,
         REMINTERFACEREF* InterfaceRefs);
 
+    END_INTERFACE
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRemUnknown_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRemUnknown_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -270,6 +272,7 @@ struct IRemUnknownVtbl {
 #define IRemUnknown_RemQueryInterface(p,a,b,c,d,e) (p)->lpVtbl->RemQueryInterface(p,a,b,c,d,e)
 #define IRemUnknown_RemAddRef(p,a,b,c) (p)->lpVtbl->RemAddRef(p,a,b,c)
 #define IRemUnknown_RemRelease(p,a,b) (p)->lpVtbl->RemRelease(p,a,b)
+#endif
 
 #endif
 
@@ -349,7 +352,7 @@ struct IRemUnknown2 {
     const IRemUnknown2Vtbl* lpVtbl;
 };
 struct IRemUnknown2Vtbl {
-    ICOM_MSVTABLE_COMPAT_FIELDS
+    BEGIN_INTERFACE
 
     /*** IUnknown methods ***/
     HRESULT (STDMETHODCALLTYPE *QueryInterface)(
@@ -392,8 +395,10 @@ struct IRemUnknown2Vtbl {
         HRESULT* phr,
         MInterfacePointer** ppMIF);
 
+    END_INTERFACE
 };
 
+#ifdef COBJMACROS
 /*** IUnknown methods ***/
 #define IRemUnknown2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IRemUnknown2_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -404,6 +409,7 @@ struct IRemUnknown2Vtbl {
 #define IRemUnknown2_RemRelease(p,a,b) (p)->lpVtbl->RemRelease(p,a,b)
 /*** IRemUnknown2 methods ***/
 #define IRemUnknown2_RemQueryInterface2(p,a,b,c,d,e) (p)->lpVtbl->RemQueryInterface2(p,a,b,c,d,e)
+#endif
 
 #endif
 
