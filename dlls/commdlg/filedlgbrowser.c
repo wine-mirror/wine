@@ -72,7 +72,9 @@ static ICOM_VTABLE(ICommDlgBrowser) IShellBrowserImpl_ICommDlgBrowser_Vtbl =
 */
 
 HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IShellView *ppshv);
-//LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
+#if 0
+LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
+#endif
 
 /**************************************************************************
 *   External Prototypes

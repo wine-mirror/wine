@@ -499,8 +499,8 @@ HGLOBAL PRINTDLG_CreateDevNames(
 {
     long size;
     HGLOBAL hDevNames;
-    void*   pDevNamesSpace;
-    void*   pTempPtr;
+    char*   pDevNamesSpace;
+    char*   pTempPtr;
     LPDEVNAMES lpDevNames;
     
     size = strlen(DeviceDriverName) +1

@@ -40,7 +40,7 @@ typedef struct
     WORD   callfrom16;
 } ENTRYPOINT16;
 
-#define EP(target, offset) { 0x5566, 0x68, (target), 0xe866, (offset) }
+#define EP(target, offset) { 0x5566, 0x68, (target), 0xe866, (WORD) (offset) }
 
 typedef struct
 {

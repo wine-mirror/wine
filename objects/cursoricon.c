@@ -437,11 +437,14 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
     int sizeAnd, sizeXor;
     HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
     BITMAPOBJ *bmpXor, *bmpAnd;
-    POINT16 hotspot = { ICON_HOTSPOT, ICON_HOTSPOT };
+    POINT16 hotspot;
     BITMAPINFO *bmi;
     HDC hdc;
     BOOL DoStretch;
     INT size;
+
+    hotspot.x = ICON_HOTSPOT;
+    hotspot.y = ICON_HOTSPOT;
 
     TRACE_(cursor)("%08x (%u bytes), ver %08x, %ix%i %s %s\n",
                         (unsigned)bits, cbSize, (unsigned)dwVersion, width, height,

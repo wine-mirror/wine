@@ -1756,11 +1756,10 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
     args = profile + 5;
     for ( i = 0; args[i]; i++ )
     {
-        fprintf( outfile, "    *--(" );
         switch (args[i])
         {
-        case 'w': fprintf( outfile, "WORD" ); break;
-        case 'l': fprintf( outfile, "LONG" ); break;
+        case 'w': fprintf( outfile, "    args -= sizeof(WORD); *(WORD" ); break;
+        case 'l': fprintf( outfile, "    args -= sizeof(LONG); *(LONG" ); break;
         default:  fprintf( stderr, "Unexpected case '%c' in BuildCallTo16Func\n",
                                    args[i] );
         }

@@ -454,14 +454,20 @@ static int subkey_found(LPKEYSTRUCT lpcurrkey, LPKEYSTRUCT lpkey_to_find)
 static HKEY find_root_key(LPKEYSTRUCT lpkey)
 {
 	typedef struct tagROOT_KEYS {
-    	KEYSTRUCT *lpkey;
-    	HKEY hkey;
+    		KEYSTRUCT *lpkey;
+    		HKEY hkey;
 	} ROOT_KEYS;
-    ROOT_KEYS root_keys[] = { { key_classes_root, HKEY_CLASSES_ROOT },
-                              { key_current_user, HKEY_CURRENT_USER },
-                              { key_local_machine, HKEY_LOCAL_MACHINE },
-                              { key_users, HKEY_USERS } };
+	ROOT_KEYS root_keys[4];
 	int i;
+
+	root_keys[0].lpkey = key_classes_root;
+	root_keys[0].hkey = HKEY_CLASSES_ROOT;
+	root_keys[1].lpkey = key_current_user;
+	root_keys[1].hkey = HKEY_CURRENT_USER;
+	root_keys[2].lpkey = key_local_machine;
+	root_keys[2].hkey = HKEY_LOCAL_MACHINE;
+	root_keys[3].lpkey = key_users;
+	root_keys[3].hkey = HKEY_USERS;
 
 	for (i=0; i<4;i++)
 	{
