@@ -59,6 +59,14 @@ AC_PROG_CPP
 AC_PATH_XTRA
 AC_PROG_YACC
 AC_PROG_LEX
+AC_CHECK_PROGS(XLEX,$LEX flex lex,none)
+if test "$XLEX" = "none"
+then
+	echo "*** Error: No suitable lex found. ***"
+	echo "    Please install the 'flex' package."
+	exit 1
+fi
+AC_DECL_YYTEXT
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S

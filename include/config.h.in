@@ -44,6 +44,9 @@
 /* Define if the X Window System is missing or not being used.  */
 #undef X_DISPLAY_MISSING
 
+/* Define if lex declares yytext as a char * by default, not a char[].  */
+#undef YYTEXT_POINTER
+
 /* Define if symbols declared in assembly code need an underscore prefix */
 #undef NEED_UNDERSCORE_PREFIX
 
