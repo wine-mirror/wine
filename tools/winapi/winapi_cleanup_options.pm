@@ -28,7 +28,7 @@ require Exporter;
 @EXPORT = qw();
 @EXPORT_OK = qw($options);
 
-use options qw($options &parse_comma_list);
+use options qw($options);
 
 my %options_long = (
     "debug" => { default => 0, description => "debug mode" },

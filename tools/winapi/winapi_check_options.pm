@@ -29,7 +29,7 @@ require Exporter;
 @EXPORT_OK = qw($options);
 
 use config qw($current_dir $wine_dir);
-use options qw($options &parse_comma_list);
+use options qw($options parse_comma_list);
 
 my %options_long = (
     "debug" => { default => 0, description => "debug mode" },
@@ -53,7 +53,7 @@ my %options_long = (
     "module" => {
 	default => { active => 1, filter => 0, hash => {} },
 	parent => "local",
-	parser => \&parser_comma_list,
+	parser => \&parse_comma_list,
 	description => "module filter"
     },
 
@@ -62,13 +62,13 @@ my %options_long = (
     "argument-forbidden" => {
 	default => { active => 1, filter => 0, hash => {} },
 	parent => "argument",
-	parser => \&parser_comma_list,
+	parser => \&parse_comma_list,
 	description => "argument forbidden checking"
     },
     "argument-kind" => {
 	default => { active => 1, filter => 1, hash => { double => 1 } },
 	parent => "argument",
-	parser => \&parser_comma_list,
+	parser => \&parse_comma_list,
 	description => "argument kind checking"
     },
     "calling-convention" => { default => 1, parent => "local", description => "calling convention checking" },
