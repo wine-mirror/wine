@@ -329,7 +329,6 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	IDirectSoundImpl* dsound = This->dsound;
-	IDirectSoundBufferImpl** dsb;
 	HRESULT err = DS_OK;
 	int			i;
 	TRACE("(%p,%p)\n",This,wfex);
@@ -360,20 +359,6 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 
 	/* **** */
 	RtlAcquireResourceExclusive(&(dsound->lock), TRUE);
-
-	if (dsound->wfx.nSamplesPerSec != wfex->nSamplesPerSec) {
-		dsb = dsound->buffers;
-		for (i = 0; i < dsound->nrofbuffers; i++, dsb++) {
-			/* **** */
-			EnterCriticalSection(&((*dsb)->lock));
-
-			(*dsb)->freqAdjust = ((*dsb)->freq << DSOUND_FREQSHIFT) /
-				wfex->nSamplesPerSec;
-
-			LeaveCriticalSection(&((*dsb)->lock));
-			/* **** */
-		}
-	}
 
 	dsound->wfx.nSamplesPerSec = wfex->nSamplesPerSec;
 	dsound->wfx.nChannels = wfex->nChannels;
@@ -430,6 +415,20 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
                 /* FIXME: should we set err back to DS_OK in all cases ? */
 	}
 	DSOUND_RecalcPrimary(dsound);
+
+	if (dsound->wfx.nSamplesPerSec != wfex->nSamplesPerSec) {
+		IDirectSoundBufferImpl** dsb = dsound->buffers;
+		for (i = 0; i < dsound->nrofbuffers; i++, dsb++) {
+			/* **** */
+			EnterCriticalSection(&((*dsb)->lock));
+
+			(*dsb)->freqAdjust = ((*dsb)->freq << DSOUND_FREQSHIFT) /
+				wfex->nSamplesPerSec;
+
+			LeaveCriticalSection(&((*dsb)->lock));
+			/* **** */
+		}
+	}
 
 	RtlReleaseResource(&(dsound->lock));
 	/* **** */
