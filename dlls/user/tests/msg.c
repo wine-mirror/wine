@@ -5440,6 +5440,7 @@ static void test_DestroyWindow(void)
     /* test owner/parent of child2 */
     test = GetParent(child2);
     ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    ok(!IsChild(parent, child2), "wrong parent/child %p/%p\n", parent, child2);
     if(pGetAncestor) {
         test = pGetAncestor(child2, GA_PARENT);
         ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
@@ -5453,6 +5454,9 @@ static void test_DestroyWindow(void)
     /* test owner/parent of the parent */
     test = GetParent(parent);
     ok(!test, "wrong parent %p\n", test);
+todo_wine {
+    ok(!IsChild(GetDesktopWindow(), parent), "wrong parent/child %p/%p\n", GetDesktopWindow(), parent);
+}
     if(pGetAncestor) {
         test = pGetAncestor(parent, GA_PARENT);
         ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
@@ -5463,6 +5467,7 @@ static void test_DestroyWindow(void)
     /* test owner/parent of child1 */
     test = GetParent(child1);
     ok(test == parent, "wrong parent %p\n", test);
+    ok(IsChild(parent, child1), "wrong parent/child %p/%p\n", parent, child1);
     if(pGetAncestor) {
         test = pGetAncestor(child1, GA_PARENT);
         ok(test == parent, "wrong parent %p\n", test);
@@ -5473,6 +5478,7 @@ static void test_DestroyWindow(void)
     /* test owner/parent of child2 */
     test = GetParent(child2);
     ok(test == parent, "wrong parent %p\n", test);
+    ok(IsChild(parent, child2), "wrong parent/child %p/%p\n", parent, child2);
     if(pGetAncestor) {
         test = pGetAncestor(child2, GA_PARENT);
         ok(test == parent, "wrong parent %p\n", test);
@@ -5483,6 +5489,7 @@ static void test_DestroyWindow(void)
     /* test owner/parent of child3 */
     test = GetParent(child3);
     ok(test == child1, "wrong parent %p\n", test);
+    ok(IsChild(parent, child3), "wrong parent/child %p/%p\n", parent, child3);
     if(pGetAncestor) {
         test = pGetAncestor(child3, GA_PARENT);
         ok(test == child1, "wrong parent %p\n", test);
@@ -5493,6 +5500,7 @@ static void test_DestroyWindow(void)
     /* test owner/parent of child4 */
     test = GetParent(child4);
     ok(test == parent, "wrong parent %p\n", test);
+    ok(!IsChild(parent, child4), "wrong parent/child %p/%p\n", parent, child4);
     if(pGetAncestor) {
         test = pGetAncestor(child4, GA_PARENT);
         ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
@@ -5514,11 +5522,11 @@ static void test_DestroyWindow(void)
     test_DestroyWindow_flag = FALSE;
     ok_sequence(destroy_window_with_children, "destroy window with children", 0);
 
-    ok(!IsWindow(parent), "parent still exists");
-    ok(!IsWindow(child1), "child1 still exists");
-    ok(!IsWindow(child2), "child2 still exists");
-    ok(!IsWindow(child3), "child3 still exists");
-    ok(!IsWindow(child4), "child4 still exists");
+    ok(!IsWindow(parent), "parent still exists\n");
+    ok(!IsWindow(child1), "child1 still exists\n");
+    ok(!IsWindow(child2), "child2 still exists\n");
+    ok(!IsWindow(child3), "child3 still exists\n");
+    ok(!IsWindow(child4), "child4 still exists\n");
 
     test = GetCapture();
     ok(!test, "wrong capture window %p\n", test);

@@ -2281,8 +2281,7 @@ static void test_validatergn(HWND hwnd)
     DestroyWindow( child );
 }
 
-
-void nccalchelper( HWND hwnd, INT x, INT y, RECT *prc)
+static void nccalchelper(HWND hwnd, INT x, INT y, RECT *prc)
 {
     MoveWindow( hwnd, 0, 0, x, y, 0);
     GetWindowRect( hwnd, prc);
@@ -2293,7 +2292,7 @@ void nccalchelper( HWND hwnd, INT x, INT y, RECT *prc)
             prc->left,prc->top,prc->right,prc->bottom);
 }
 
-void test_nccalcscroll( HWND parent)
+static void test_nccalcscroll(HWND parent)
 {
     RECT rc1;
     INT sbheight = GetSystemMetrics( SM_CYHSCROLL);
@@ -2333,6 +2332,86 @@ void test_nccalcscroll( HWND parent)
 
     DestroyWindow( hwnd);
 }
+
+static void test_SetParent(void)
+{
+    HWND desktop = GetDesktopWindow();
+    BOOL is_win9x = GetWindowLongPtrW(desktop, GWLP_WNDPROC) == 0;
+    HWND parent, child1, child2, child3, child4;
+
+    parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
+			     100, 100, 200, 200, 0, 0, 0, NULL);
+    assert(parent != 0);
+    child1 = CreateWindowExA(0, "static", NULL, WS_CHILD,
+			     0, 0, 50, 50, parent, 0, 0, NULL);
+    assert(child1 != 0);
+    child2 = CreateWindowExA(0, "static", NULL, WS_POPUP,
+			     0, 0, 50, 50, child1, 0, 0, NULL);
+    assert(child2 != 0);
+    child3 = CreateWindowExA(0, "static", NULL, WS_CHILD,
+			     0, 0, 50, 50, child2, 0, 0, NULL);
+    assert(child3 != 0);
+    child4 = CreateWindowExA(0, "static", NULL, WS_POPUP,
+			     0, 0, 50, 50, child3, 0, 0, NULL);
+    assert(child4 != 0);
+
+    trace("parent %p, child1 %p, child2 %p, child3 %p, child4 %p\n",
+	   parent, child1, child2, child3, child4);
+
+    check_parents(parent, desktop, 0, 0, 0, parent, parent);
+    check_parents(child1, parent, parent, parent, 0, parent, parent);
+    check_parents(child2, desktop, parent, parent, parent, child2, parent);
+    check_parents(child3, child2, child2, child2, 0, child2, parent);
+    check_parents(child4, desktop, child2, child2, child2, child4, parent);
+
+todo_wine {
+    ok(!IsChild(desktop, parent), "wrong parent/child %p/%p\n", desktop, parent);
+    ok(!IsChild(desktop, child1), "wrong parent/child %p/%p\n", desktop, child1);
+    ok(!IsChild(desktop, child2), "wrong parent/child %p/%p\n", desktop, child2);
+    ok(!IsChild(desktop, child3), "wrong parent/child %p/%p\n", desktop, child3);
+    ok(!IsChild(desktop, child4), "wrong parent/child %p/%p\n", desktop, child4);
+}
+
+    ok(IsChild(parent, child1), "wrong parent/child %p/%p\n", parent, child1);
+todo_wine {
+    ok(!IsChild(desktop, child2), "wrong parent/child %p/%p\n", desktop, child2);
+}
+    ok(!IsChild(parent, child2), "wrong parent/child %p/%p\n", parent, child2);
+    ok(!IsChild(child1, child2), "wrong parent/child %p/%p\n", child1, child2);
+    ok(!IsChild(parent, child3), "wrong parent/child %p/%p\n", parent, child3);
+    ok(IsChild(child2, child3), "wrong parent/child %p/%p\n", child2, child3);
+    ok(!IsChild(parent, child4), "wrong parent/child %p/%p\n", parent, child4);
+    ok(!IsChild(child3, child4), "wrong parent/child %p/%p\n", child3, child4);
+todo_wine {
+    ok(!IsChild(desktop, child4), "wrong parent/child %p/%p\n", desktop, child4);
+}
+
+    if (!is_win9x) /* Win9x doesn't survive this test */
+    {
+        ok(!SetParent(parent, child1), "SetParent should fail\n");
+        ok(!SetParent(child2, child3), "SetParent should fail\n");
+        ok(SetParent(child1, parent) != 0, "SetParent should not fail\n");
+        ok(SetParent(parent, child2) != 0, "SetParent should not fail\n");
+        ok(SetParent(parent, child3) != 0, "SetParent should not fail\n");
+        ok(!SetParent(child2, parent), "SetParent should fail\n");
+        ok(SetParent(parent, child4) != 0, "SetParent should not fail\n");
+
+        check_parents(parent, child4, child4, 0, 0, child4, parent);
+        check_parents(child1, parent, parent, parent, 0, child4, parent);
+        check_parents(child2, desktop, parent, parent, parent, child2, parent);
+        check_parents(child3, child2, child2, child2, 0, child2, parent);
+        check_parents(child4, desktop, child2, child2, child2, child4, parent);
+    }
+
+    ok(DestroyWindow(parent), "DestroyWindow() error %ld\n", GetLastError());
+
+    ok(!IsWindow(parent), "parent still exists\n");
+    ok(!IsWindow(child1), "child1 still exists\n");
+    ok(!IsWindow(child2), "child2 still exists\n");
+    ok(!IsWindow(child3), "child3 still exists\n");
+    ok(!IsWindow(child4), "child4 still exists\n");
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2376,6 +2455,7 @@ START_TEST(win)
     test_capture_3(hwndMain, hwndMain2);
 
     test_parent_owner();
+    test_SetParent();
     test_shell_window();
 
     test_mdi();

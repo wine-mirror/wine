@@ -2643,6 +2643,13 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
         return 0;
     }
 
+    /* Some applications try to set a child as a parent */
+    if (IsChild(hwnd, parent))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
         return (HWND)SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
 
