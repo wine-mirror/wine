@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = winspool.drv
+IMPORTS   = winspool kernel32
+
+CTESTS = \
+	info.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
