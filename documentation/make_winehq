@@ -26,7 +26,7 @@ if [ -d "$WWWDIR" -o -f "$WWWDIR" ]; then
 fi
 mkdir "$WWWDIR"
 
-## Create four-book HTML tarball
+## Create five-book HTML tarball
 echo "./db2html-winehq wine-user.sgml"
 ./db2html-winehq wine-user.sgml
 echo "./db2html-winehq wine-devel.sgml"
@@ -35,7 +35,9 @@ echo "./db2html-winehq winelib-user.sgml"
 ./db2html-winehq winelib-user.sgml
 echo "./db2html-winehq wine-pkg.sgml"
 ./db2html-winehq wine-pkg.sgml
-tar czf winedoc-html.tgz wine-user wine-devel winelib-user wine-pkg
+echo "./db2html-winehq wine-faq.sgml"
+./db2html-winehq wine-faq.sgml
+tar czf winedoc-html.tgz wine-user wine-devel winelib-user wine-pkg wine-faq
 cp winedoc-html.tgz "$WWWDIR"
 
 ## Create one-book HTML tarball
@@ -53,7 +55,9 @@ echo "db2ps -d ./print.dsl winelib-user.sgml"
 db2ps -d ./print.dsl winelib-user.sgml > /dev/null 2>&1
 echo "db2ps -d ./print.dsl wine-pkg.sgml"
 db2ps -d ./print.dsl wine-pkg.sgml > /dev/null 2>&1
-tar czf winedoc-ps.tgz wine-user.ps wine-devel.ps winelib-user.ps wine-pkg.ps
+echo "db2ps -d ./print.dsl wine-faq.sgml"
+db2ps -d ./print.dsl wine-faq.sgml > /dev/null 2>&1
+tar czf winedoc-ps.tgz wine-user.ps wine-devel.ps winelib-user.ps wine-pkg.ps wine-faq.ps
 cp winedoc-ps.tgz "$WWWDIR"
 
 ## Create PDF tarball
@@ -65,7 +69,9 @@ echo "db2pdf -d ./print.dsl winelib-user.sgml"
 db2pdf -d ./print.dsl winelib-user.sgml > /dev/null 2>&1
 echo "db2pdf -d ./print.dsl wine-pkg.sgml"
 db2pdf -d ./print.dsl wine-pkg.sgml > /dev/null 2>&1
-tar czf winedoc-pdf.tgz wine-user.pdf wine-devel.pdf winelib-user.pdf wine-pkg.pdf
+echo "db2pdf -d ./print.dsl wine-faq.sgml"
+db2pdf -d ./print.dsl wine-faq.sgml > /dev/null 2>&1
+tar czf winedoc-pdf.tgz wine-user.pdf wine-devel.pdf winelib-user.pdf wine-pkg.pdf wine-faq.pdf
 cp winedoc-pdf.tgz "$WWWDIR"
 
 ## Create SGML tarball
@@ -90,6 +96,7 @@ echo "./db2html-winehq winelib-user.sgml"
 ./db2html-winehq winelib-user.sgml
 echo "./db2html-winehq wine-pkg.sgml"
 ./db2html-winehq wine-pkg.sgml
-tar czf winehq-shtml.tgz wine-user wine-devel winelib-user wine-pkg
+echo "./db2html-winehq wine-faq.sgml"
+./db2html-winehq wine-faq.sgml
+tar czf winehq-shtml.tgz wine-user wine-devel winelib-user wine-pkg wine-faq
 cp winehq-shtml.tgz "$WWWDIR"
-

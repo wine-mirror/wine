@@ -46,6 +46,9 @@
 <!-- *** Entities for Wine Packager Guide *** -->
 <!entity packaging SYSTEM "packaging.sgml">
 
+<!-- *** Entities for Wine FAQ *** -->
+<!entity faq SYSTEM "faq.sgml">
+
 ]>
 
 <set id="index">
@@ -138,5 +141,16 @@
     </bookinfo>
 
     &packaging;
+
+  </book>
+  <!-- *** Wine Faq *** -->
+  <book id="faq">
+    <bookinfo>
+
+    <title>Wine FAQ</title>
+    </bookinfo>
+
+    &faq;
+
   </book>
 </set>

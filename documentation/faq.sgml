@@ -1,0 +1,1687 @@
+<!-- *** Wine FAQ *** -->
+    <para>This is the general Wine FAQ.</para>
+    <para>
+       For technical questions, visit the 
+       <ulink url="http://www.winehq.org/fom-meta/cache/19.html">
+       Wine Troubleshooting Guide</ulink> instead.
+    </para>
+  <qandaset>
+    <qandadiv id="About-this-FAQ"><title>About this FAQ</title>
+      <qandaentry>
+      <question id="Who-maintains-this-FAQ">
+        <para>Who maintains this FAQ ?</para>
+      </question>
+      <answer>
+        <para>Dave Gardner maintained it from 1995-1998.</para>
+        <para>Douglas Ridgway (ridgway@winehq.com) took it over in 1999.</para>
+        <para>Andreas Mohr (amohr@codeweavers.com) converted it to FAQ-O-Matic in 2000.</para>
+        <para>Dimitrie O. Paun, Keith Matthews and Thomas Wickline reorganised it in 2002.</para>
+        <para>For suggestions/additions/complaints regarding this FAQ, please send an email to
+        <ulink url="mailto:wine-faq@winehq.org">wine-faq@winehq.org</ulink></para>
+      </answer>
+      </qandaentry>
+      <qandaentry>
+      <question id="What-is-the-copyright-on-the-FAQ-And">
+        <para>What is the copyright on the FAQ ? And how may I use it ?</para>
+      </question>
+      <answer>
+        <para>The original Wine FAQ, which this FAQ was based on, was copyright &copy; 1995-1998 David Gardner.</para>
+        <para>It may be reproduced and modified under the same terms as Wine itself.</para>
+      </answer>
+      </qandaentry>
+    </qandadiv>
+    <qandadiv id="General-Questions-about-Wine">
+      <title>General Questions about Wine</title>
+      <qandaentry>
+
+      <question id="What-is-Wine-and-what-is-it-supposed-to">
+        <para>What is Wine and what is it supposed to do ?</para>
+      </question>
+      <answer>
+        <para>
+          Wine is a program which allows the operation of DOS and MS
+          Windows programs (Windows 3.x and Win32 executables) on UNIX. 
+          It consists of a program loader, which loads and executes a Windows
+          binary, and a library that implements Windows API calls using
+          their UNIX or X11 equivalents. The library may also be used 
+          for porting Win32 code into native UNIX executables, often
+          without many changes in the source. Wine is free software, 
+          and its license (contained in the file LICENSE
+          in each distribution) is LGPL style.
+        </para>
+      </answer>
+      </qandaentry>
+
+     <qandaentry>
+      <question id="Is-Wine-an-emulator">
+        <para> Is Wine an emulator?</para>
+      </question>
+      <answer>
+        <para>
+          Fortunately, no. Wine provides low-level binary compatibility, 
+          but currently only for OSes running on Intel-compatible chips.
+       </para>
+      </answer>
+      </qandaentry
+
+      <qandaentry>
+      <question id="Are-here-any-alternatives-to-Wine">
+        <para>Are there any alternatives to Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Yes, there are. You can use VMWare to run a Windows installation
+          inside a virtual machine, or use Win4Lin to run a specially 
+          adapted Windows version on Linux. Both solutions cost money for 
+          both the software itself and a Windows license.
+       </para>
+       <para>
+         Note that, like Wine, they can only use the hardware platform that
+         the target programs were originally compiled for (see below).
+       </para>
+      </answer>
+      </qandaentry>
+       
+      <qandaentry>
+      <question id="Difference-between-Wine-and-emulators">
+        <para>What is the difference between Wine and x86 hardware emulators?</para>
+      </question>
+      <answer>
+        <para>
+          There are two free x86 hardware emulators:
+          <ulink url="http://bochs.sourceforge.net"> bochs</ulink>, and 
+          <ulink url="http://savannah.nongnu.org/projects/plex86"> plex86</ulink>
+          that allow use of hardware other than x86 to run x86 programs. Both 
+          use the GPL. Bochs is older than plex86, seems to be easier to 
+          install, but plex86 will run faster because plex86 uses a real
+          time binary compiler. The drawback of all emulators is that you
+          need a version of Windows in order to run Windows.
+       </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Why-would-anyone-want-Wine-Windows-suck">
+        <para>Why would anyone want Wine? Doesn't Windows suck?</para>
+      </question>
+      <answer>
+        <para>
+          First Wine is not about running Windows but about running Windows 
+          applications.
+        </para>
+        <para>
+          So if all your computing needs are fulfilled by native Unix 
+          applications, then you do not need Wine and should not be using
+          it. However, if you depend on one or more of the tens of 
+          thousands of Windows applications, then Wine is the best way to
+          use it without giving up on Unix. Let's look at the alternatives
+          to see why:
+        </para>
+        <para>
+          The most obvious alternative is to dual-boot. This is the solution
+          that provides the best compatibility. However it requires that you
+          acquire a Windows license and then dedicate a good chunk of your 
+          hard-drive to Windows. But the worst is yet to come. Each time you
+          will want to use that application you will have to reboot to 
+          Windows. This is especially significant if external factors dictate
+          when you must use this application (e.g. credit card to process, 
+          email to retrieve from a Lotus Notes server). Then you will find
+          yourself forced to close all your Linux applications just to run
+          that one Windows application. You may quickly get tired of this, or
+          will find that such a situation is impossible to justify in a 
+          business environment.
+        </para>
+        <para>
+          The next solution is to install virtual machine emulation software
+          such as VMWare, Win4Lin or Plex86. Then you can use windows 
+          applications without suffering such a big disruption. But it still
+          requires that you acquire a Windows license and dedicate as much 
+          disk space to Windows. Furthermore you will pay for the added 
+          convenience: if using VMWare or Win4Lin you have to buy another 
+          license, and more importantly you now have to dedicate a good chunk
+          of your computer's memory to the virtual machine. Performance will
+          take a significant hit too.
+        </para>
+        <para>
+          Using Wine lets you avoid all of that overhead: Windows license,
+          hard-drive space required by Windows, memory and performance hit 
+          taken by emulated virtual machines. Now you can start your Windows
+          application straight from your regular desktop environment, place
+          that application's window side by side with native application 
+          windows, copy/paste from one to the other, and run it all at full speed.
+        </para>
+        <para>
+          It is also a pretty vital part of migrating a large organisation,
+          you can't change a 5000 desktop setup overnight without a lot of risk.
+       </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Which-one-of-the-different-Wine-packages">
+        <para>Which one of the different Wine packages out there is good for me?</para>
+      </question>
+      <answer>
+        <para>
+          Currently there is a broad selection of different Wine packages/versions:
+        </para>
+        <variablelist>
+
+	  <varlistentry>
+           <term><ulink url="http://www.winehq.com">Wine</ulink></term>
+           <listitem>
+           <para>
+              This is the "standard" source distribution of Wine. Its license is 
+              LGPL, it can be downloaded for free. 
+            </para>
+           </listitem>
+          </varlistentry>
+ 
+	  <varlistentry>
+          <term><ulink url="http://rewind.sourceforge.net">ReWine</ulink></term>
+          <listitem>
+            <para>
+              This is a forked Wine tree that got created when Wine changed its
+              license from X11 to the more restrictive LGPL, in order to let 
+              people continue to maintain an X11 licensed Wine version. Its 
+              license is X11, it can be downloaded for free. 
+            </para>
+         </listitem>
+          </varlistentry>
+ 
+	  <varlistentry>
+          <term><ulink url="http://www.transgaming.com">Transgaming's WineX</ulink></term>
+          <listitem>
+            <para>
+              This is TransGaming's Wine version specially suited for games. 
+              It includes Direct3D support (thus its DirectX support is much
+              more complete than Wine's) and copyprotection support. Its license
+              is AFPL, the source distribution can be downloaded for free, but 
+              the binary pack ages that include copy protection support and good
+              support are only for subscribed customers ($5/month). 
+            </para>
+         </listitem>
+          </varlistentry>
+ 
+	  <varlistentry>
+          <term><ulink url="http://wine.codeweavers.com">Codeweavers' Wine preview</ulink></term>
+          <listitem>
+            <para>
+              This is a specially packaged and more stable/older version of Wine
+              which has a nice setup for easy installation. License X11, free 
+              download. 
+            </para>
+         </listitem>
+          </varlistentry>
+ 
+	  <varlistentry>
+          <term><ulink url="http://www.codeweavers.com/products/crossover/">Codeweavers' Crossover Plugin</ulink></term>
+          <listitem>
+            <para>
+              Special Wine installation to be used for running win32 browser 
+              plugins such as e.g. Quicktime in Linux browsers. Costs $24.95. 
+              Well worth it (very stable and useful packaging). 
+            </para>
+          </listitem>
+          </varlistentry>
+
+	  <varlistentry>
+          <term><ulink url="http://www.codeweavers.com/products/office/">Codeweavers' Crossover Office</ulink></term>
+          <listitem>
+            <para>
+              Wine version with special packaging to make sure almost all 
+              important Office type programs work pretty well. Costs $54.95. 
+              Seems to be well worth it so far according to some comments. 
+              (note: you're supporting a company actively contributing to wine
+              if you decide to buy either Plugin or Office.
+            </para>
+          </listitem>
+          </varlistentry>
+ 
+	  <varlistentry>
+          <term><ulink url="http://www.winehq.org/download/">Other packaged versions of Wine</ulink></term>
+          <listitem>
+            <para>
+              Various wine packages can be downloaded for free, to be found at 
+              Wine HQ. They're not officially packaged by Wine HQ, and as such 
+              may have some configuration inconsistencies.
+            </para>
+          </listitem>
+          </varlistentry>
+        </variablelist>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Whats-the-history-of-Wine">
+        <para>What's the history of Wine?</para>
+      </question>
+      <answer>
+        <para>
+          The Wine project started in 1993 as a way to support running Windows 3.1
+          programs on Linux. Bob Amstadt was the original coordinator, but turned
+          it over fairly early on to Alexandre Julliard, who has run it ever 
+          since. A <ulink url="news:comp.emulators.ms-windows.wine">newsgroup</ulink>
+          was created in July 1994. Over the years, ports for
+          other Unixes have been added, along with support for Win32 as Win32 
+          applications became popular.
+        </para>
+        <para>
+          For more information, see <ulink url="http://www.winehq.com/about.shtml">
+          http://www.winehq.com/about.shtml</ulink>
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="What-is-the-current-version-of-Wine">
+        <para>What is the current version of Wine?</para>
+      </question>
+      <answer>
+        <para>
+          A new version of Wine is distributed about every month. You will be 
+          able to keep up on all the latest releases by reading the newsgroup
+          <ulink url="news:comp.emulators.ms-windows.wine">
+          comp.emulators.ms-windows.wine</ulink>, or by visiting the
+          <ulink url="http://www.winehq.com">Wine HQ homepage</ulink>. When
+          downloading Wine from your FTP site of choice (see
+          <ulink url="http://www.winehq.com/download.shtml">the Download page</ulink>
+          for some of these choices), you can make sure that you are getting 
+          the latest version by watching the version numbers in the distribution
+          filename. For instance, the distribution released on October 31, 2002
+          was called Wine-20021031.tar.gz. Patch files are also available. If
+          you are current to the previous version, you can download and apply 
+          just the current patch file rather than the entire new distribution.
+          The patch filenames follow the same conventions as the monthly 
+          distribution. <ulink url="http://www.winehq.com/dev.shtml">
+          Read-only CVS</ulink> access is also available.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="What-is-the-current-Status-of-Wine">
+        <para>What is the current Status of Wine?</para>
+      </question>
+      <answer>
+        <para>
+          As of mid 2002, Wine consists of over 1 million lines of C code,
+          written by more than 300 developers from dozens of countries around
+          the world. Wine is in active use by an estimated 100K people. Wine
+          implements more than 90% of the calls in popular Windows 
+          specifications such as ECMA-234 and Open32.
+        </para>
+        <para>
+          You may also want to look at the
+          <ulink url="http://www.winehq.com/about/index.php?status">
+          Status page</ulink> for a global view on Wine's implementation progress.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="When-will-Wine-be-finished">
+        <para>When will Wine be finished?</para>
+      </question>
+      <answer>
+        <para>
+          Large software projects are never finished, only released. In any
+          case Wine is chasing a moving target since every new release of 
+          Windows contains new API calls or variations to the existing ones.
+        </para>
+        <para>
+          Because Wine is being developed by volunteers, it is difficult to
+          predict when it will be ready for general release. But due to the
+          much increased interest by companies in porting apps via Wine, Wine
+          development is constantly getting more and more active. Right now
+          we are working on releasing Wine 0.9 during 2003
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Who-is-responsible-for-Wine">
+        <para>Who's responsible for Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Wine is available thanks to the work of many people. Please see the
+          <ulink url="http://www.winehq.com/source/AUTHORS">AUTHORS</ulink>
+          file in the distribution for the complete list. Some companies that
+          are or have been involved with Wine development are Codeweavers,
+          TransGaming, Corel, and Macadamian.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="folks-who-contributed-money-or-equipment">
+        <para>Who are the folks and organizations who have contributed money or equipment to the Wine project?</para>
+      </question>
+      <answer>
+        <para>
+          People and organizations who have given generous contributions of
+          money, equipment, or licenses, include:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>David L. Harper</para>
+          </listitem>
+          <listitem>
+            <para>Bob Hepple</para>
+          </listitem>
+          <listitem>
+            <para>Mark A. Horton</para>
+          </listitem>
+          <listitem>
+            <para>Kevin P. Lawton</para>
+          </listitem>
+          <listitem>
+            <para>The Syntropy Institute</para>
+          </listitem>
+          <listitem>
+            <para>James Woulfe</para>
+          </listitem>
+          <listitem>
+            <para>
+             VMWare Inc. <ulink url="http://www.vmware.com">
+             (http://www.vmware.com)</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+             Corel <ulink url="http://linux.corel.com">
+             (http://linux.corel.com)</ulink>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="What-undocumented-APIs-are-not-understood">
+        <para>What undocumented APIs / interfaces are not understood? Would
+              seeing Microsoft source help?
+        </para>
+      </question>
+      <answer>
+        <para>
+          The best would be if the Windows API was fully documented, so Wine
+          could be a perfect "clean-room" implementation. Seeing the source
+          code might make it harder to prove that no copyright violations have
+          taken place. That said, the documentation is often bad, nonexistent,
+          and even misleading where it exists, so a fair amount of reverse
+          engineering have been necessary, particularly in the shell (Explorer)
+          interface.
+        </para>
+      </answer>
+      </qandaentry>
+
+     <qandaentry>
+      <question id="Is-TransGamings-last-patch-included-in-Wine">
+        <para>Is TransGaming's latest patch included in the standard Wine release?</para>
+      </question>
+      <answer>
+        <para>
+          No, it's not.
+        </para>
+        <para>
+          TransGaming make money via a subscription service. Thus they 
+          submitted their DirectDraw and some DirectSound work, but they will
+          not submit their OpenGL wrapper based Direct3D support.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Will-there-be-a-Windows-version-of-Wine">
+        <para>Will there be a Windows version of Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Some people are working on getting Wine code to compile on Windows.
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem> 
+            <para>
+              Cygwin <ulink url="http:/www.cygwin.com">
+              (http://www.cygwin.com/)</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Reactos <ulink url="http://www.reactos.com/">
+             (http://www.reactos.com/)</ulink>
+            </para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          There's some progress, so a Wine version that's usable on Windows
+          might be available at some time.
+        </para>
+      </answer>
+      </qandaentry>
+  
+    </qandadiv>
+    <qandadiv id="What-do-I-need-in-order-to-use-Wine">
+      <title>What do I need in order to use Wine?</title>
+      <qandaentry>
+      <question id="Under-what-platforms-will-Wine-run">
+        <para>
+          Under what hardware platform(s) and operating system(s) will
+          Wine(Lib) run?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Wine is being developed specifically to run on the Intel x86 class
+          of CPUs under certain UNIXes that run on the x86 platform.
+        </para>
+        <para>
+          NetBSD, OpenBSD, Unixware, and SCO OpenServer 5 worked at one time,
+          but Wine now requires kernel-level threads which are not currently 
+          available (or understood by the Wine team) in those platforms.
+        </para>
+        <para>
+          The Wine development team hopes to attract the interest of other
+          commercial UNIX and UNIX clone vendors as well.
+        </para>
+        <para>
+          BeOS: porting efforts used to be pretty strong, but BeOS has severe
+          limitations in Unix call support, so a port will probably never
+          happen.
+        </para>
+        <para>
+          FreeBSD: Should work, with limitations in specific areas (mainly 
+          missing device/hardware support)
+        </para>
+        <para>
+          Linux/x86: WORKS. If it doesn't, You may also want to see the 
+          <ulink url="http://www.winehq.org/fom-meta/cache/19.html">Wine
+          Troubleshooting Guide</ulink>
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="What-minimum-CPU-must-I-have">
+        <para>
+          What minimum CPU must I have in my computer to be able to run Wine 
+          and MS Windows applications smoothly?
+        </para>
+      </question>
+      <answer>
+        <para>
+          We need to differentiate between Wine and Winelib here.
+        </para>
+        <para>
+          Wine won't run on any x86 CPU less than an 80386 due to address
+          management limitations
+        </para>
+        <para>
+          It is known to also work in the 80486 and upwards compatible CPUs.
+          The basic test is, if you can run X11 now, you should be able to run
+          Wine and MS Windows applications under it.
+        </para>
+        <para>
+          As always, the faster your CPU, the better. Having a math coprocessor
+          is unimportant. However, having a graphics accelerated video card
+          supported by X will help greatly
+        </para>
+        <para>
+          Depending on your application you may find that faster speeds are
+          required for sensible use. We can't give specific advice on that due
+          to the vast range of applications out there.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-much-disk-space-will-Wine-take">
+        <para>
+         How much disk space will the Wine source code and binaries take on my
+         hard drive?
+        </para>
+      </question>
+      <answer>
+        <para>
+          You need approximately 250 megabytes of free hard drive space to
+          store and compile the source code. Wine also needs about 18 megs in
+          your /tmp directory. And about 50 MB are needed to do a make install.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="What-other-software-do-I-need-to-compile">
+        <para>
+          What other software do I need to have installed to compile and run 
+          Wine?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Many development tools need to be installed in order to compile Wine.
+          A list of required packages for several distributions is included in
+          the README <ulink url="http://www.winehq.com/source/README">
+          (http://www.winehq.com/source/README)</ulink>.
+        </para>
+        <para>
+          To run Wine, you will need the following:
+        </para>
+
+        <itemizedlist spacing="compact">
+          <listitem> 
+            <para>The compiled Wine binary</para>
+          </listitem>
+          <listitem>
+            <para>A properly configured wine.conf file (or ~/.winerc file)</para>
+          </listitem>
+          <listitem>
+            <para>An installed and working X Window system</para>
+          </listitem>
+          <listitem>
+            <para>Some Windows programs to test</para>
+          </listitem>
+        </itemizedlist>
+      </answer>
+      </qandaentry>
+       <qandaentry>
+      <question id="How-much-RAM-do-I-need">
+        <para>
+          How much RAM do I need to have on my UNIX system to be able to run 
+          Wine and MS Windows applications smoothly?
+        </para>
+      </question>
+      <answer>
+        <para>
+          If you can run X smoothly on your UNIX system now, you should be 
+          able to run Wine and MS Windows applications just fine too, depending
+          on how memory hungry the application is.
+        </para>
+        <para>
+          A Wine workstation will work with 16 megabytes of RAM and a 16 
+          megabyte swap partition as long as you have a reasonable graphics 
+          card. Most applications will run reasonably with 64/64 Mb, 
+          interactive games are likely to need more. You can run Wine with 8/8,
+          but it is going to be unusably slow and very constraining on the 
+          applications you can run. If you wish to be part of the development
+          team and program Wine itself, be aware that the debugger is rather 
+          memory intensive. Some have suggested that 64 megabytes is the
+          minimum RAM needed for Wine development, although some are able to 
+          work (albeit slowly) with 24 megabytes of physical RAM and lots of
+          swap space.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-long-does-Wine-take-to-build">
+        <para>How long does Wine take to build</para>
+      </question>
+      <answer>
+        <para>
+          Wine is getting to be quite large, and building from scratch takes a
+          lot of processing. As of September 2002, compile times were around 20
+          minutes on an Athlon 1200 with 640 Mb and 45-50 minutes on a Cyrix 
+          300 with 64 Mb. If you have a CVS copy, you may not need to rebuild
+          the whole thing every time you update.
+        </para>
+      </answer>
+      </qandaentry>
+      <qandaentry>
+      <question id="I-have-a-Drivespaced-partition">
+        <para>
+          I have a Drivespaced, Doublespaced or Stackered DOS partition. Can 
+          Wine run MS Windows binaries located in such a partition?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Yes, but only if the operating system supports mounting those types
+          of drives.There is a Linux file system driver called dmsdos that will
+          allow read/write access through Doublespaced and Drivespace 1.0 
+          drives. More specifically, it supports mounting DOS 6.0 and 6.2 
+          Doublespaced, DOS 6.22 Drivespaced, and Windows 95 Doublespaced 
+          compressed partitions (read and write access works fine, but write 
+          access is slow). It can be found at 
+          <ulink url="ftp://metalab.unc.edu/pub/Linux/system/filesystems/dosfs/">
+          ftp://metalab.unc.edu/pub/Linux/system/file systems/dosfs/</ulink>
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Do-I-need-to-have-a-DOS-partition">
+        <para>Do I need to have a DOS partition on my system to use Wine?</para>
+      </question>
+      <answer>
+        <para>
+          You do not need a licensed and installed copy of DOS or MS Windows to
+          install, configure and run Wine. However, Wine has to be able to 
+          'see' an MS Windows binary (i.e. application) if it is to run it.
+        </para>
+      </answer>
+      </qandaentry>
+ 
+      <qandaentry>
+      <question id="Does-MS-Windows-need-to-be-installed">
+        <para>
+          Does MS Windows need to be loaded into that partition in order to
+          run MS Windows programs under Wine?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Many folks have successfully installed and run some small programs
+          in their UNIX filesystem without having a DOS partition or MS 
+          Windows. However, in many cases you need a directory and file 
+          infrastructure that is similar to an existing Windows installation.
+          Some applications' installation programs want to distribute some of
+          the package's files into the /windows and /windows/system 
+          directories in order to run, and unless these exist on your UNIX 
+          file system, those programs will not install correctly and probably
+          will not run well, if at all.
+        </para>
+        <para>
+          If you have a DOS partition with MS Windows installed in it, make
+          sure that your UNIX system can 'see' this partition (check your 
+          /etc/fstab file or mount the partition manually) so that Wine can
+          run the MS Windows binaries located in the DOS partition. To run
+          without a DOS partition, you need to set a UNIX path to be your 
+          drive C, and make sure that the /windows and /windows/system 
+          directories point to some place that actually exist.
+        </para>
+        <para>
+          Here's an example, copied from a machine which has no DOS partition
+          but successfully runs Wine:
+        </para>
+        <screen>
+    [Drive C]      
+          Path=/var/lib/wine
+          Type=hd
+          Label=MS-DOS
+          Filesystem=win95
+    [wine]
+          Windows=c:\windows
+          System=c:\windows\system
+          Temp=e:\
+          Path=c:\windows;c:\windows\system;c:
+        </screen>
+        <para>
+         In <filename>/var/lib/wine/windows</filename>, you will need to
+         install a <filename>win.ini</filename> config file that you might
+         find on a typical MS Windows 3.1 machine. The directory
+         <filename>/var/lib/wine/windows/system</filename> should exist, but
+         doesn't need to contain anything. However, to use MS DLLs, you can
+         copy them into that directory. Note that this is a contravention of
+         the Windows licence unless Windows is properly installed on the
+         machine. If you have DOS/MS Windows installed on your system, you can
+         mount that partition at bootup by modifying the file 
+         <filename>/etc/fstab</filename> in your UNIX partition (assuming that
+         the UNIX kernel supports the DOS/MS Windows filesystem type).
+        </para>
+        <para>
+          If you edit this file by hand, it should contain something similar
+          to the following:
+        </para>
+        <screen>
+/dev/hda1 /dosc msdos uid=0,gid=100,umask=007 0 0
+        </screen>
+        <para>
+          This will allow you to read and write to the DOS partition without
+          being root.
+        </para>
+      </answer>
+      </qandaentry>
+ 
+      <qandaentry>
+      <question id="If-Wine-completely-replaces-MS-Windows">
+        <para>
+          If Wine completely replaces MS Windows, will it duplicate all of the
+          functions of MS Windows?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Most of them, yes. However, some applications and applets that come
+          with MS Windows, such as File Manager and Calculator, can be 
+          considered by some to be redundant, since 32-bit UNIX programs that
+          duplicate these applets' functions already exist.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Will-I-install-on-ony-UNIX-file-system">
+        <para> 
+          Will I be able to install MS Windows applications in any flavor of a
+          UNIX file system?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Wine is written to be file system independent, so MS Windows 
+          applications will install and run under virtually any file system
+          supported by your brand of UNIX.
+        </para>
+      </answer>
+      </qandaentry>
+ 
+      <qandaentry>
+      <question id="Will-Wine-run-only-under-X">
+        <para> Will Wine run only under X, or can it run in character mode?</para>
+      </question>
+      <answer>
+        <para>
+          Most of Wine's development effort is geared against MS Windows' GUI,
+          but some limited support for character mode has appeared, by setting
+          <parameter>GraphicsDriver=ttydrv</parameter> in wine.conf's
+          <parameter>[wine]</parameter> section.
+        </para>
+        <para>
+          Wine's infrastructure is already somewhat prepared for supporting
+          other graphics drivers than x11drv, but no real "alternative" 
+          graphics driver has been used yet.
+        </para>
+      </answer>
+      </qandaentry>
+ 
+      <qandaentry>
+      <question id="Will-Wine-run-under-any-X-window-manager">
+        <para>Will Wine run under any X window manager? Does it require a window manager at all?</para>
+      </question>
+      <answer>
+        <para>
+          Wine is window manager independent, so the X window manager you
+          choose to run has (almost) no bearing on your ability to run MS
+          Windows programs under Wine. Wine uses standard X libraries, so no
+          additional ones are needed. Wine has its own window management,
+          which acts like MS Windows. It can be turned off to use the native
+          window manager by modifying Managed or Desktop settings as described
+          in <command>man wine.conf</command>.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Will-32-bit-applications-run-under-Wine">
+        <para>Will 32-bit Windows 95/98 applications run under Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Yes, 32-bit programs are now about as well supported as 16-bit 
+           programs.
+        </para>
+      </answer>
+      </qandaentry>
+      
+    </qandadiv>
+    <qandadiv id="Getting-Wine-faq">
+      <title>Getting Wine</title>
+      <qandaentry>
+      <question id="Where-can-I-get-Wine">
+        <para>Where can I get Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Because of lags created by using mirror, word of this newest release
+          may reach you before the release is actually available at the ftp
+          sites listed here. The sources are available from the following
+          locations:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+              <ulink url="http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/">
+               http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/
+              </ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <ulink url="ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/">
+              ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/ 
+              </ulink>
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              <ulink url="ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/">
+              ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/ 
+              </ulink>
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              <ulink url="ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/">
+              ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/ 
+              </ulink>
+            </para>
+          </listitem>
+
+        </itemizedlist>
+        <para>
+          It should also be available from any other site that mirrors 
+          ibiblio.org. For more download locations, see 
+          <ulink url="http://ftp search.lycos.com.">lycos</ulink> Some of
+          these ftp sites may archive previous versions of Wine as well as the
+          current one. To determine which is the latest one, look at the 
+          distribution file name, which will take the form 
+          Wine-YYYYMMDD.tar.gz. Simply replace YYYYMMDD in the distribution
+          file name with the numbers for year, month and date, respectively.
+          The latest one is the one to get.
+        </para>
+        <para>
+          Wine binary packages are available for several OS'es and 
+          distributions. See 
+          <ulink url="http://www.winehq.com/download.shtml">
+          the download page</ulink> for the most recent list.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Is-there-a-CVS-tree">
+        <para>Is there a CVS tree?</para>
+      </question>
+      <answer>
+        <para>
+          Current Wine sources are also available via anonymous client/server
+          CVS. You will need CVS 1.9 or above. If you are coming from behind a
+          firewall, you will either need a hole in the firewall for the CVS
+          port (2401) or use SOCKS.
+        </para>
+        <para>
+          To login to the CVS tree, do
+        </para>
+        <screen>
+export CVSROOT=:pserver:cvs@cvs.winehq.com/home/wine
+cvs login
+        </screen>
+        <para>
+          Use "cvs" as the password (without the quotes). Note that 
+          <filename>/home/wine</filename> is a path on the server, not on your
+          machine. To check out the entire Wine source tree (which may be 
+          slow), use
+        </para>
+        <screen>
+cvs -z 3 checkout wine 
+        </screen>
+        <para>
+          or if you just want a subtree, or individual file, you can do that 
+          too with
+        </para>
+        <screen>
+cvs -z 3 checkout wine/ANNOUNCE 
+        </screen>
+        <para>
+          Be aware, though, that getting the entire Wine source tree via CVS
+          is pretty slow, especially compared to getting Wine from an FTP 
+          mirror near you. For a CVS mirror list, see 
+          <ulink url="http://www.winehq.com/dev.shtml">
+          http://www.winehq.com/dev.shtml</ulink>
+        </para>
+        <para>
+          Patch files are also available, so that you don't have to download,
+          install, and configure the entire distribution each week if you are
+          current to the previous release. Patch file release names follow the
+          same numbering convention as do the general releases, and take the 
+          form
+        </para>
+        <para>
+          Wine-YYYYMMDD.diff.gz  
+        </para>
+        <para>
+          Patch files are available from the same sites that distribute the
+          full release. To upgrade to a new release by using a patch file,
+          first cd to the top-level directory of the release (the one
+          containing the README file), then do a "make clean", and patch the
+          release with
+        </para>
+        <screen>
+gunzip -c patch-file | patch -p1 
+        </screen>
+        <para>
+          where patch-file is the name of the patch file something like
+          Wine-YYYYMMDD.diff.gz. You can then re-run ./configure, and then run
+          make depend && make
+        </para>
+        <para>
+          If you are mirroring the Wine distribution from the tsx-11 site and
+          wish to be listed here in this FAQ, please add it to the 
+          "things to go into the documentation" area.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Can-I-get-Wine-using-cvsup">
+        <para>Can I get Wine using cvsup?</para>
+      </question>
+      <answer>
+        <para>
+          The CVS mirrors don't offer cvsup support yet, but the main server
+          does. Use a <filename>wine.sup</filename> file of:
+        </para>
+        <screen>
+*default host=cvs.winehq.com
+*default base=/cvs
+*default prefix=/cvs/wine
+*default release=wine
+*default delete 
+
+# If your network link is a T1 or faster, comment out the following line.
+#*default compress 
+
+*default use-rel-suffix 
+wine 
+        </screen>
+     </answer>
+     </qandaentry>
+    </qandadiv>
+
+    <qandadiv id="Installing-And-Configuring-Wine">
+      <title>Installing And Configuring Wine</title>
+      <qandaentry>
+      <question id="How-do-I-compile-the-Wine-source-code">
+        <para>How do I compile the Wine distribution source code?</para>
+      </question>
+      <answer>
+        <para>
+          See the README (<ulink url="http://www.winehq.com/source/README">
+          http://www.winehq.com/source/README</ulink>) for instructions.
+          Additionally, you may want to set the <parameter>TMPDIR</parameter>
+          environment variable <command>TMPDIR=~/tmp</command> or
+          <command>TMPDIR=/tmp</command> (if you are root).
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-do-I-install-Windows-in-Wine">
+        <para>How do I install Windows in Wine under Linux?</para>
+      </question>
+      <answer>
+        <para>
+          Simple answer: you CAN'T. Windows demands direct access to the
+          hardware and cannot get it with Wine and UNIX in the way
+        </para>
+        <para>
+          Wine is supposed to be used WITHOUT Windows primarily. If you want
+          to use a Windows installation, then use an existing installation 
+          alongside the UNIX installation (see the dual-boot HOWTO for your OS
+          for more details). Or alternatively use the cabextract utility to
+          extract Windows install archives to a directory that you want to use
+          as Wine's Windows tree.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-do-I-configure-Wine-to-run-on-my-system">
+        <para>How do I configure Wine to run on my system?</para>
+      </question>
+      <answer>
+        <para>
+          Wine requires that you have a config file as 
+          <filename>~/.wine/config</filename>. The format of this file is
+          explained in the <filename>wine.conf</filename> man page. The file
+          <filename>documentation/samples/config</filename> ( 
+          <ulink url="http://www.winehq.com/source/documentation/samples/config">
+          http://www.winehq.com/source/documentation/samples/config</ulink>) 
+          contains a config file example. More explicit directions can be 
+          found in the <filename>README</filename> file (
+          <ulink url="http://www.winehq.com/source/README">
+          http://www.winehq.com/source/README</ulink>) that will be located in
+          the base Wine directory after you gunzip and untar the distribution
+          file.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="If-I-use-Windows-which-versions-OK">
+        <para>If I want to use a Windows install, which versions are OK?</para>
+      </question>
+      <answer>
+        <para>
+          Either use a classic no-windows install (Wine is getter better all
+          the time) or use a Win9x install (Win95, 98, 98SE, ME). DON'T 
+          configure Wine to use an NT-based Windows install (NT, Win2K, WinXP).
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="If-I-use-Windows-which-one-works-best">
+        <para>If I use a Windows install with Wine, which one works best?</para>
+      </question>
+      <answer>
+        <para>
+          As of 02/2002:
+        </para>
+        <para>
+          I'd say Win98SE is the best version to use with Wine, as it's fairly
+          widespread amongst developers and relatively old. Using Win2K files
+          is <emphasis>definitely</emphasis> worse than a plain no-windows 
+          Wine install, and Win ME is said to be problematic, too (as probably
+          no developer uses it). In short: all Win9x &lt;= W98SE are good.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Installing-Visual-Basic-apps-wont-run">
+        <para>
+          Installing applications generated by Visual Basic won't run. What
+          should I do?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Make sure you have all the VB runtime libraries installed. You may
+          need to use the native dll vbrun60.dll
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="When-I-click-on-exe-file-nothing-happens">
+        <para>When I click on *.exe file in my file Manager, nothing happens</para>
+      </question>
+      <answer>
+        <para>
+          The normal Wine releases don't have .exe extensions registered for
+          Wine in KDE/Gnome yet. You have to open a terminal window instead
+          (often an icon showing a "black screen") and type something like:
+        </para>
+        <screen>
+cd /my/windows/program/directory
+wine myprogram.exe
+        </screen>
+        <para>
+          Or alternatively you could download the CodeWeavers Wine preview 
+          which includes .exe extension registration for KDE/Gnome and a nice
+          setup program.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="bash-wine-Command-not-found-What-can-I-do">
+        <para>bash "wine: Command not found" What can I do?</para>
+      </question>
+      <answer>
+        <para>
+          Try to relogin into bash. That might fix it.
+        </para>
+        <para>
+          If it doesn't, then make sure the wine binary is in your 
+          <parameter>PATH</parameter>.
+        </para>
+        <para>
+          Run as root:
+        </Para>
+        <screen>
+find / -name "wine" -type f -perm +111
+        </screen>
+        <para>
+          to find the path where the wine binary is in. Then check whether
+        <parameter>PATH</parameter> includes it:
+        </para>
+        <screen>
+echo $PATH 
+        </screen>
+        <para>
+          If not, add that e.g. to <filename>/etc/profile</filename> by doing:
+        </para>
+        <screen>
+export PATH=$PATH:/path/to/wine/binary 
+        </screen>
+        <para>
+          That should help.
+        </para>
+        <para>
+           If you used a package manager (<command>rpm</command> or 
+           <command>apt</command>) - Verify your packages. The package 
+           <filename>winesetuptk.rpm</filename> is only a front-end for 
+           making a meaningfull config file, it DOES NOT install the wine
+           package...
+        </para>
+        <para>
+           For complete packages, use <ulink url="http://www.rpmfind.net/">
+           www.rpmfind.net</ulink> or the <ulink url="http://www.winehq.org/download/">
+           Download</ulink> section.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-do-I-remove-Wine-from-my-Computer">
+        <para>How do I remove Wine from my Computer?</para>
+      </question>
+      <answer>
+        <para>
+          All you have to do is to type:
+        </para>
+        <screen>
+rm -fR \[/path/\]Wine*
+        </screen>
+        <para>
+          Make sure that you specify the exact path when using the powerful
+          <command>rm -fR</command> command. If you are afraid that you might
+          delete something important, or might otherwise delete other files 
+          within your filesystem, <command>cd</command> into each Wine 
+          subdirectory singly and delete the files found there manually, 
+          one file or directory at a time.
+        </para>
+        <para>
+        Neither the Wine developers and programmers, nor the Wine FAQ 
+        author/maintainer, can be held responsible for your deleting any
+        files in your own filesystem.
+        </para>
+      </answer>
+      </qandaentry>
+    </qandadiv>
+
+    <qandadiv id="About-running-Wine">
+      <title>About running Wine</title>
+      <para>
+         In case of problems when running Wine, You may also want to see the
+         <ulink url="http://www.winehq.org/fom-meta/cache/19.html">
+         Wine Troubleshooting Guide</ulink>.
+       </para>
+      <qandaentry>
+      <question id="How-do-I-run-an-MS-Windows-program">
+        <para>How do I run an MS Windows program under Wine?</para>
+      </question>
+      <answer>
+        <para>
+          When invoking Wine, you must specify the entire path to the
+          executable, or by filename only. For example to run Windows'
+          solitaire, type any of the following:
+        </para>
+        <itemizedlist>
+          <listitem>
+          <para>
+            <command>wine sol</command> or <command>wine sol.exe</command>
+           (using the search path to locate the file).
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            <command>wine c:\\windows\\sol.exe</command> 
+           (using a DOS filename).
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            <command>wine /usr/windows/sol.exe</command>
+           (using a UNIX filename).
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            <command>wine "c:\windows\sol.exe"</command>
+            (using quoted DOS filename).
+          </para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          The path of the file will also be added to the path when a full name
+          is supplied on the command line.
+
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Wine-cannot-find-MS-Windows-on-my-drive">
+        <para>
+          I have installed and configured Wine, but Wine cannot find MS 
+          Windows on my drive. Where did I go wrong?
+        </para>
+      </question>
+      <answer>
+        <para>
+          If you have a DOS partition, first make sure that you have mounted
+          it, either by putting the entry into <filename>/etc/fstab</filename>,
+          or by manually mounting it.
+        </para>
+        <para>
+          Remember too that unless your version of UNIX can see through it, or
+          you are running a utility that can see through it, your DOS
+          partition must not be located on a Drivespaced, Doublespaced or
+          Stackered partition, as neither Linux, FreeBSD, NetBSD or Wine can
+          natively 'see' files located in these compressed DOS partitions.
+        </para>
+        <para>
+          Check your path statements in the <filename>wine.conf</filename> 
+          file. No capital letters may be used in paths, as they are 
+          automatically converted to lowercase.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Parts-of-my-app-do-not-work-What-is-wrong">
+        <para>
+          I was able to get various MS Windows programs to run, but parts of
+          them do not work. What is wrong?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Wine is not complete at this time, so some of each programs' 
+          features may not work. They will in time as more of the MS 
+          Windows API calls are included in Wine.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Menus-do-not-work-how-can-I-exit">
+        <para>
+          I have run various MS Windows programs, but since the program menus
+          do not work, how can I exit these programs?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Kill the xterm shell window that you called up to run your MS 
+          Windows program, and the X window that appeared with the program 
+          will be killed too.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Can-I-use-Wine-with-other-Linux-Distros">
+        <para>Can I use Wine with SuSe, Peanut or other Linux Distro's?</para>
+      </question>
+      <answer>
+        <para>
+          You can use Wine on any sufficiently recent Linux installation. The
+          amount of work getting Wine up and running depends on whether there
+          are proper packages available or a source compile has to be done.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Does-Wine-work-with-AMD-Processors">
+        <para>Does Wine work with AMD Processors?</para>
+      </question>
+      <answer>
+        <para>
+          Yes, it does.
+        </para>
+      </answer>
+      </qandaentry>
+
+       <qandaentry>
+      <question id="Can-I-launch-Unix-app-from-Windows-app">
+        <para> Can I launch a Unix program from a Windows program?</para>
+      </question>
+      <answer>
+        <para>
+          Sure, Wine supports that. Just enter the unix program name wherever
+          a program has something that it's supposed to execute,and then it 
+          should just work.
+        </para>
+      </answer>
+      </qandaentry>
+    </qandadiv>
+     
+    <qandadiv id="Getting-help">
+      <title>Getting help</title>
+      <qandaentry>
+      <question id="Is-there-any-documentation-for-Wine">
+        <para>Is there any documentation for Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Yes, see <ulink url="http://www.winehq.org/support.shtml">
+          http://www.winehq.com/support.shtml.</ulink>
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="I-have-written-some-documententation">
+        <para>
+          I couldn't find the answer to my question in the documentation, but
+          I've written a document explaining how to solve it. What should I do?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Updates and additions to the Wine documentation directory should be
+          sent to the wine-patches mailing list at 
+          <ulink url="http://www.winehq.com/dev.shtml#ml">
+          http://www.winehq.com/dev.shtml#ml</ulink>. Website and FAQ 
+          additions should be added to the appropriate Wine Knowledgebase
+          directory.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Is-there-a-Usenet-newsgroup-for-Wine">
+        <para>Is there a Usenet newsgroup for Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Yes, and it's called 
+          <ulink url="news:comp.emulators.ms-windows.wine">
+          comp.emulators.ms-windows.wine</ulink>. The newsgroup serves as a
+          place for users and developers to discuss Wine, and for minor 
+          announcements for the general public. Major announcements will be
+          crossposted to other appropriate newsgroups, such as the following:
+        </para>
+        <itemizedlist>
+          <listitem>
+          <para>
+            <ulink url="news:comp.os.linux.announce">
+            comp.os.linux.announce</ulink>
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            <ulink url="news:ccomp.windows.x.announce">
+            comp.windows.x.announce</ulink>
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            <ulink url="news:ccomp.emulators.announce">
+            comp.emulators.announce</ulink>
+          </para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          If your Usenet site does not carry these newsgroups, please urge 
+          your ISP's sysadmin to add and/or uplink them.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Is-there-a-World-Wide-Web-site-for-Wine">
+        <para>Is there a World Wide Web site for Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Wine HQ (<ulink url="http://www.winehq.com">
+          http://www.winehq.com</ulink>) is the official site.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Is-there-an-IRC-channel-for-Wine">
+        <para>Is there an IRC channel for Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Sure. It's channel <filename>#WineHQ</filename> on 
+          <filename>irc.openprojects.net</filename> see 
+          (<ulink url="http://openprojects.nu/services/irc.html">
+          http://openprojects.nu/services/irc.html</ulink>). Usually several
+          Wine developers hang out there just to help YOU ;-)
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="I-think-I-found-a-bug-How-do-I-report-it">
+        <para>
+          I think I've found a bug. How do I report this bug to the Wine
+          programming team?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Bug reports should be submitted to our online Bugzilla system 
+          (<ulink url="http://bugs.winehq.com">
+          http://bugs.winehq.com/</ulink>). You should include at least the
+          following:
+        </para>
+        <itemizedlist>
+          <listitem>
+          <para>
+            The Wine version tested
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            The MS Windows program name and, if possible, the version number 
+            of the software tested
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            A brief description of the bug
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            The relevant part(s) of the output of the Wine debugger
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            A screenshot of the visual problem, if applicable
+          </para>
+          </listitem>
+        </itemizedlist>
+        <para>
+         For more information about reporting bugs please see the 
+         <ulink url="http://www.winehq.org/Docs/wine-user/bug-reporting.shtml">
+         How to report a bug</ulink> section of the Wine Users Guide.
+        </para>
+      </answer>
+      </qandaentry>
+    </qandadiv>
+ 
+    <qandadiv id="Helping-Wine-or-becoming-a-Wine-developer">
+      <title>Helping Wine or becoming a Wine developer</title>
+      <qandaentry>
+      <question id="How-do-I-become-a-Wine-developer">
+        <para>How do I become a Wine developer? What do I need to know?</para>
+      </question>
+      <answer>
+        <para>
+          If you can program C, that's a good start. Download the sources via
+          CVS, subscribe to the mailing lists, look around the source, and pay
+          attention to the comp.emulators.ms-windows.wine newsgroup and the 
+          mailing lists (<ulink url="http://www.winehq.com/dev.shtml#ml">
+          http://www.winehq.com/dev.shtml#ml</ulink>). See if there's anything
+          that you think you can fix or work on. You won't have much trouble
+          finding areas that need work in Wine (grep for FIXMEs in the source).
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-can-I-contribute-to-the-Wine-project">
+        <para>How can I help contribute to the Wine project, and in what way(s)?</para>
+      </question>
+      <answer>
+        <para>
+          You can contribute programming or documentation skills, or monetary
+          or equipment donations, to aid the Wine developers in reaching their 
+          goals.
+        </para>
+        <para>
+          For a list of ideas of how you can help, please consult the 
+          <ulink url="http://www.winehq.com/about/index.php?contrib">
+          Wine contrib page</ulink>.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="I-want-to-help-beta-test-Wine">
+        <para>I want to help beta test Wine. How can I do this?</para>
+      </question>
+      <answer>
+        <para>
+          Wine still consists of some Alpha code at this time. However, anyone
+          is welcome to download the latest version, and try it out at any
+          time.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="I-wrote-some-code-I-would-like-to-submit">
+        <para>
+          I have written some code that I would like to submit to the Wine
+          project. How do I go about doing this?
+        </para>
+      </question>
+      <answer>
+        <para>
+          Patches are greatly appreciated and should be submitted to the 
+          wine-patches mailing list 
+          (<ulink url="http://www.winehq.com/dev.shtml#ml">
+          http://www.winehq.com/dev.shtml#ml</ulink>). Also see this page for
+          a description of what happens to submitted patches.
+        </para>
+      </answer>
+      </qandaentry>
+    </qandadiv>
+ 
+    <qandadiv id="Developing-programs-using-Wine-WineLib">
+      <title>Developing programs using Wine/WineLib</title>
+      <qandaentry>
+      <question id="Can-I-use-Wine-to-port-Win32-sources-to-Unix">
+        <para>Can I use Wine to port my Win32 sources to Unix?</para>
+      </question>
+      <answer>
+        <para>
+          That is the idea of Winelib. Right now you may still have some 
+          difficulties, but this is changing all the time. Read the 
+          <ulink url="http://www.winehq.org/Docs/winelib-user/">
+          Winelib User's Guide</ulink> for info.
+
+        </para>
+      </answer>
+      </qandaentry>
+      <qandaentry>
+      <question id="Will-MFC-work-with-Wine-What-do-I-need-to-do">
+        <para>Will MFC work with Wine? What do I need to do?</para>
+      </question>
+      <answer>
+        <para>
+          Wine is not implementing an MFC replacement nor does it intend to.
+          However it is possible (with a lot of work) to compile the MFC from
+          source and thus produce an <filename>mfc42.dll.so</filename> library.
+        </para>
+        <para>
+          Please refer to the 
+          <ulink url="http://www.winehq.org/Docs/winelib-user/">
+          Winelib User's Guide</ulink> for how to do this.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="Are-there-commercial-apps-ported-using-Wine">
+        <para>
+          Are there any commercial applications which have been ported
+          using Wine?
+        </para>
+      </question>
+      <answer>
+        <para>
+          A few examples of applications using Winelib:
+        </para>
+        <itemizedlist>
+          <listitem>
+          <para>
+            Corel's WordPerfect Office Suite 
+            (<ulink url="http://linux.corel.com/products/wpo2000_linux/index.htm">
+            http://linux.corel.com/products/wpo2000_linux/index.htm</ulink>)
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            Deneba's Canvas 7 
+            (<ulink url="http://www.deneba.com/dazroot/softlibs/cv7_linux/default.html">
+             http://www.deneba.com/dazroot/softlibs/cv7_linux/default.html</ulink>)
+          </para>
+          </listitem>
+          <listitem>
+          <para>
+            IBM's Websphere
+            (<ulink url="http://www7b.boulder.ibm.com/dl/swws/swwsgddb-p">
+            http://www7b.boulder.ibm.com/dl/swws/swwsgddb-p</ulink>)
+          </para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          Many other important applications have already been ported. (we are
+          speaking of several top 500 applications here)
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-can-I-detect-Wine">
+        <para>How can I detect Wine?</para>
+      </question>
+      <answer>
+        <para>
+          You really shouldn't want to do this. If there's a quirk in Wine 
+          you need to work around, it's much better to fix it in Wine (after
+          all you're a developer, so you should be able to gather enough help
+          and knowledge to fix it for real).
+        </para>
+      </answer>
+      </qandaentry>
+
+  
+    </qandadiv>
+
+    <qandadiv id="Wine-HQ-issues">
+      <title>Wine HQ issues</title>
+      <qandaentry>
+      <question id="Why-are-the-maillists-set-to-reply-to-author">
+        <para>
+          Why are the maillists set to reply to author, not to mailing list?
+        </para>
+      </question>
+      <answer>
+        <para>
+          There are very valid reasons for doing so.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-to-unsubscribe-from-the-mailing-lists">
+        <para>How to unsubscribe from the mailing lists?</para>
+      </question>
+      <answer>
+        <para>
+          Please see: <ulink url="http://www.winehq.org/development/#ml">
+          http://www.winehq.org/development/#ml</ulink>
+        </para>
+      </answer>
+      </qandaentry>
+
+    </qandadiv>
+ 
+  </qandaset>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->
