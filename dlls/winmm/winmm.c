@@ -1145,7 +1145,7 @@ UINT WINAPI midiOutShortMsg(HMIDIOUT hMidiOut, DWORD dwMsg)
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_DATA, dwMsg, 0L, FALSE);
+    return MMDRV_Message(wmld, MODM_DATA, dwMsg, 0L, TRUE);
 }
 
 /**************************************************************************
