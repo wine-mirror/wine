@@ -47,7 +47,7 @@ INT16 WINAPI LZStart16(void)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
-    HFILE ret = LZInit( DosFileHandleToWin32Handle(hfSrc) );
+    HFILE ret = LZInit( (HFILE)DosFileHandleToWin32Handle(hfSrc) );
     if (IS_LZ_HANDLE(ret)) return ret;
     if ((INT)ret <= 0) return ret;
     return hfSrc;
@@ -69,7 +69,7 @@ INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
 INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
     if (IS_LZ_HANDLE(fd)) return LZRead( fd, buf, toread );
-    return _lread( DosFileHandleToWin32Handle(fd), buf, toread );
+    return _lread( (HFILE)DosFileHandleToWin32Handle(fd), buf, toread );
 }
 
 
@@ -79,7 +79,7 @@ INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
     if (IS_LZ_HANDLE(fd)) return LZSeek( fd, off, type );
-    return _llseek( DosFileHandleToWin32Handle(fd), off, type );
+    return _llseek( (HFILE)DosFileHandleToWin32Handle(fd), off, type );
 }
 
 
@@ -90,19 +90,19 @@ LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 {
     /* already a LZ handle? */
-    if (IS_LZ_HANDLE(src)) return LZCopy( src, DosFileHandleToWin32Handle(dest) );
+    if (IS_LZ_HANDLE(src)) return LZCopy( src, (HFILE)DosFileHandleToWin32Handle(dest) );
 
     /* no, try to open one */
     src = LZInit16(src);
     if ((INT16)src <= 0) return 0;
     if (IS_LZ_HANDLE(src))
     {
-        LONG ret = LZCopy( src, DosFileHandleToWin32Handle(dest) );
+        LONG ret = LZCopy( src, (HFILE)DosFileHandleToWin32Handle(dest) );
         LZClose( src );
         return ret;
     }
     /* it was not a compressed file */
-    return LZCopy( DosFileHandleToWin32Handle(src), DosFileHandleToWin32Handle(dest) );
+    return LZCopy( (HFILE)DosFileHandleToWin32Handle(src), (HFILE)DosFileHandleToWin32Handle(dest) );
 }
 
 
@@ -116,7 +116,7 @@ HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
     if ((INT)hfret <= 0) return hfret;
     if (IS_LZ_HANDLE(hfret)) return hfret;
     /* but allocate a dos handle for 'normal' files */
-    return Win32HandleToDosFileHandle(hfret);
+    return Win32HandleToDosFileHandle((HANDLE)hfret);
 }
 
 
@@ -126,7 +126,7 @@ HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 void WINAPI LZClose16( HFILE16 fd )
 {
     if (IS_LZ_HANDLE(fd)) LZClose( fd );
-    else DisposeLZ32Handle( DosFileHandleToWin32Handle(fd) );
+    else DisposeLZ32Handle( DosFileHandleToWin32Handle((HFILE)fd) );
 }
 
 

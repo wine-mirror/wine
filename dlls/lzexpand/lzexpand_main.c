@@ -557,7 +557,7 @@ void WINAPI LZClose( HFILE fd )
         else
         {
             if (lzs->get) HeapFree( GetProcessHeap(), 0, lzs->get );
-            CloseHandle(lzs->realfd);
+            CloseHandle((HANDLE)lzs->realfd);
             lzstates[fd - 0x400] = NULL;
             HeapFree( GetProcessHeap(), 0, lzs );
         }
