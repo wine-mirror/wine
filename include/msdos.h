@@ -1,5 +1,5 @@
-#ifndef __MSDOS_H
-#define __MSDOS_H
+#ifndef __WINE_MSDOS_H
+#define __WINE_MSDOS_H
 
 #include <dirent.h>
 #include "windows.h"
@@ -158,4 +158,4 @@ extern BYTE DOS_ErrorClass, DOS_ErrorAction, DOS_ErrorLocus;
 #define EL_Serial            0x04
 #define EL_Memory            0x05
 
-#endif /* __MSDOS_H */
+#endif /* __WINE_MSDOS_H */

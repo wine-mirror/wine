@@ -4,8 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#ifndef GDI_H
-#define GDI_H
+#ifndef __WINE_GDI_H
+#define __WINE_GDI_H
 
 #include "windows.h"
 #include "ldt.h"
@@ -158,14 +158,11 @@ typedef struct tagDC_FUNCS
     INT32      (*pExcludeVisRect)(DC*,INT32,INT32,INT32,INT32);
     BOOL32     (*pExtFloodFill)(DC*,INT32,INT32,COLORREF,UINT32);
     BOOL32     (*pExtTextOut)(DC*,INT32,INT32,UINT32,const RECT32*,LPCSTR,UINT32,const INT32*);
-    BOOL32     (*pFillRgn)(DC*,HRGN32,HBRUSH32);
-    BOOL32     (*pFloodFill)(DC*,INT32,INT32,COLORREF);
-    BOOL32     (*pFrameRgn)(DC*,HRGN32,HBRUSH32,INT32,INT32);
+    COLORREF   (*pGetPixel)(DC*,INT32,INT32);
     BOOL32     (*pGetTextExtentPoint)(DC*,LPCSTR,INT32,LPSIZE32);
     BOOL32     (*pGetTextMetrics)(DC*,TEXTMETRIC32A*);
     INT32      (*pIntersectClipRect)(DC*,INT32,INT32,INT32,INT32);
     INT32      (*pIntersectVisRect)(DC*,INT32,INT32,INT32,INT32);
-    BOOL32     (*pInvertRgn)(DC*,HRGN32);
     BOOL32     (*pLineTo)(DC*,INT32,INT32);
     BOOL32     (*pMoveToEx)(DC*,INT32,INT32,LPPOINT32);
     INT32      (*pOffsetClipRgn)(DC*,INT32,INT32);
@@ -208,7 +205,6 @@ typedef struct tagDC_FUNCS
     BOOL32     (*pSetWindowOrg)(DC*,INT32,INT32);
     BOOL32     (*pStretchBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,INT32,INT32,DWORD);
     INT32      (*pStretchDIBits)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,LPSTR,LPBITMAPINFO,WORD,DWORD);
-    BOOL32     (*pTextOut)(DC*,INT32,INT32,LPCSTR,INT32);
 } DC_FUNCTIONS;
 
   /* DC hook codes */
@@ -299,4 +295,4 @@ extern Window rootWindow;
 extern int screenWidth, screenHeight, screenDepth;
 extern int desktopX, desktopY;   /* misc/main.c */
 
-#endif  /* GDI_H */
+#endif  /* __WINE_GDI_H */

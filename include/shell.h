@@ -1,8 +1,6 @@
 /*
  * 				Shell Library definitions
  */
-#include "wintypes.h"
-
 #ifndef __WINE_SHELL_H
 #define __WINE_SHELL_H
 

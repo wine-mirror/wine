@@ -38,6 +38,9 @@ UINT32 CRTDLL_winmajor_dll;     /* CRTDLL.329 */
 UINT32 CRTDLL_winminor_dll;     /* CRTDLL.330 */
 UINT32 CRTDLL_winver_dll;       /* CRTDLL.331 */
 
+typedef VOID (*new_handler_type)(VOID);
+
+static new_handler_type new_handler;
 
 /*********************************************************************
  *                  _GetMainArgs  (CRTDLL.022)
@@ -654,6 +657,27 @@ VOID* CRTDLL_malloc(DWORD size)
 }
 
 /*********************************************************************
+ *                  new           (CRTDLL.001)
+ */
+VOID* CRTDLL_new(DWORD size)
+{
+    VOID* result;
+    if(!(result = HeapAlloc(GetProcessHeap(),0,size)) && new_handler)
+	(*new_handler)();
+    return result;
+}
+
+/*********************************************************************
+ *                  set_new_handler(CRTDLL.003)
+ */
+new_handler_type CRTDLL_set_new_handler(new_handler_type func)
+{
+    new_handler_type old_handler = new_handler;
+    new_handler = func;
+    return old_handler;
+}
+
+/*********************************************************************
  *                  calloc        (CRTDLL.350)
  */
 VOID* CRTDLL_calloc(DWORD size, DWORD count)
@@ -673,6 +697,14 @@ VOID* CRTDLL_realloc( VOID *ptr, DWORD size )
  *                  free          (CRTDLL.427)
  */
 VOID CRTDLL_free(LPVOID ptr)
+{
+    HeapFree(GetProcessHeap(),0,ptr);
+}
+
+/*********************************************************************
+ *                  delete       (CRTDLL.002)
+ */
+VOID CRTDLL_delete(VOID* ptr)
 {
     HeapFree(GetProcessHeap(),0,ptr);
 }

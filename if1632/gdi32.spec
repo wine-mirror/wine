@@ -61,8 +61,8 @@ base	1
 0054 stdcall CreatePatternBrush(long) CreatePatternBrush32
 0055 stdcall CreatePen(long long long) CreatePen32
 0056 stdcall CreatePenIndirect(ptr) CreatePenIndirect32
-0057 stub CreatePolyPolygonRgn
-0058 stub CreatePolygonRgn
+0057 stdcall CreatePolyPolygonRgn(ptr ptr long long) CreatePolyPolygonRgn32
+0058 stdcall CreatePolygonRgn(ptr long long) CreatePolygonRgn32
 0059 stdcall CreateRectRgn(long long long long) CreateRectRgn32
 0060 stdcall CreateRectRgnIndirect(ptr) CreateRectRgnIndirect32
 0061 stdcall CreateRoundRectRgn(long long long long long long)
@@ -276,7 +276,7 @@ base	1
 0268 stub PolyBezier
 0269 stub PolyBezierTo
 0270 stub PolyDraw
-0271 stub PolyPolygon
+0271 stdcall PolyPolygon(long ptr ptr long) PolyPolygon32
 0272 stub PolyPolyline
 0273 stub PolyTextOutA
 0274 stub PolyTextOutW

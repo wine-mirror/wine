@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "class.h"
-#include "dos_fs.h"
 #include "file.h"
 #include "global.h"
 #include "heap.h"
@@ -214,8 +213,8 @@ void MODULE_WalkModules(void)
 int MODULE_OpenFile( HMODULE16 hModule )
 {
     NE_MODULE *pModule;
+    DOS_FULL_NAME full_name;
     char *name;
-    const char *unixName;
 
     static int cachedfd = -1;
 
@@ -227,8 +226,8 @@ int MODULE_OpenFile( HMODULE16 hModule )
     close( cachedfd );
     hCachedModule = hModule;
     name = NE_MODULE_NAME( pModule );
-    if (!(unixName = DOSFS_GetUnixFileName( name, TRUE )) ||
-        (cachedfd = open( unixName, O_RDONLY )) == -1)
+    if (!DOSFS_GetFullName( name, TRUE, &full_name ) ||
+        (cachedfd = open( full_name.long_name, O_RDONLY )) == -1)
         fprintf( stderr, "MODULE_OpenFile: can't open file '%s' for module %04x\n",
                  name, hModule );
     dprintf_module( stddeb, "MODULE_OpenFile: opened '%s' -> %d\n",
@@ -701,7 +700,7 @@ WORD MODULE_GetOrdinal( HMODULE16 hModule, const char *name )
       /* Now copy and uppercase the string */
 
     strcpy( buffer, name );
-    AnsiUpper( buffer );
+    CharUpper32A( buffer );
     len = strlen( buffer );
 
       /* First search the resident names */
@@ -1022,6 +1021,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
     WORD *pModRef, *pDLLs;
     HFILE32 hFile;
     int i;
+    extern char * DEBUG_curr_module;
 
     hModule = MODULE_FindModule( name );
 
@@ -1040,6 +1040,12 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
             }
             return 2;  /* File not found */
         }
+
+	/*
+	 * Record this so that the internal debugger gets some
+	 * record of what it is that we are working with.
+	 */
+	DEBUG_curr_module = name;
 
           /* Create the module structure */
 
@@ -1482,7 +1488,8 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
         if (!fork())
 	{
             /* Child process */
-            const char *unixfilename;
+            DOS_FULL_NAME full_name;
+            const char *unixfilename = NULL;
             const char *argv[256], **argptr;
             int iconic = (nCmdShow == SW_SHOWMINIMIZED ||
                           nCmdShow == SW_SHOWMINNOACTIVE);
@@ -1491,7 +1498,10 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
             if (strchr(filename, '/') ||
                 strchr(filename, ':') ||
                 strchr(filename, '\\'))
-                unixfilename = DOSFS_GetUnixFileName(filename, 1);
+            {
+                if (DOSFS_GetFullName( filename, TRUE, &full_name ))
+                    unixfilename = full_name.long_name;
+            }
             else unixfilename = filename;
 
             if (unixfilename)

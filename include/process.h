@@ -10,6 +10,7 @@
 #include "windows.h"
 #include "winbase.h"
 #include "handle32.h"
+#include "task.h"
 
 /* Process handle entry */
 typedef struct
@@ -29,13 +30,13 @@ typedef struct
 typedef struct
 {
     LPSTR           environ;          /* 00 Process environment strings */
-    DWORD           unknown1;         /* 04 Unknown */
+    DWORD           env_size;         /* 04 Environment size (was: Unknown) */
     LPSTR           cmd_line;         /* 08 Command line */
     LPSTR           cur_dir;          /* 0c Current directory */
     STARTUPINFO32A *startup_info;     /* 10 Startup information */
-    HANDLE32        hStdin;            /* 14 Handle for standard input */
-    HANDLE32        hStdout;           /* 18 Handle for standard output */
-    HANDLE32        hStderr;           /* 1c Handle for standard error */
+    HANDLE32        hStdin;           /* 14 Handle for standard input */
+    HANDLE32        hStdout;          /* 18 Handle for standard output */
+    HANDLE32        hStderr;          /* 1c Handle for standard error */
     DWORD           unknown2;         /* 20 Unknown */
     DWORD           inherit_console;  /* 24 Inherit console flag */
     DWORD           break_type;       /* 28 Console events flag */
@@ -66,7 +67,7 @@ typedef struct _PDB32
     HANDLE32         system_heap;      /* 34 System heap to allocate handles */
     HTASK32          task;             /* 38 Win16 task */
     void            *mem_map_files;    /* 3c Pointer to mem-mapped files */
-    ENVDB           *env_DB;           /* 40 Environment database */
+    ENVDB           *env_db;           /* 40 Environment database */
     HANDLE_TABLE    *handle_table;     /* 44 Handle table */
     struct _PDB32   *parent;           /* 48 Parent process */
     void            *modref_list;      /* 4c MODREF list */
@@ -91,13 +92,15 @@ typedef struct _PDB32
     WORD             error_mode;       /* b6 Error mode */
     K32OBJ          *load_done_evt;    /* b8 Event for process loading done */
     DWORD            unknown7;         /* bc Unknown */
+    DWORD            unknown8;         /* c0 Unknown (NT) */
+    LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
 } PDB32;
 
 extern HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags);
 extern K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type );
 extern BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags );
 
-extern PDB32 *PROCESS_Create(void);
+extern PDB32 *PROCESS_Create( TDB *pTask );
 extern void PROCESS_Destroy( K32OBJ *ptr );
 
 extern PDB32 *pCurrentProcess;

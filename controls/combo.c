@@ -756,7 +756,7 @@ static LRESULT CBGetEditSel(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
 
     if ((lphc->dwStyle & 3) == CBS_DROPDOWNLIST)
       return CB_ERR;	/* err, documented for CBSetEditSel */
-    return SendMessage16(lphc->hWndEdit, EM_GETSEL, 0, 0);
+    return SendMessage16(lphc->hWndEdit, EM_GETSEL16, 0, 0);
 }
 
 
@@ -770,7 +770,7 @@ static LRESULT CBSetEditSel(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
 
     if ((lphc->dwStyle & 3) == CBS_DROPDOWNLIST)
       return CB_ERR;
-    return SendMessage16(lphc->hWndEdit, EM_SETSEL, 0, lParam);
+    return SendMessage16(lphc->hWndEdit, EM_SETSEL16, 0, lParam);
 }
 
 /***********************************************************************

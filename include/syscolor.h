@@ -4,8 +4,8 @@
  * Copyright  Alexandre Julliard, 1994
  */
 
-#ifndef SYSCOLOR_H
-#define SYSCOLOR_H
+#ifndef __WINE_SYSCOLOR_H
+#define __WINE_SYSCOLOR_H
 
 #include "windows.h"
 
@@ -37,4 +37,4 @@ struct SysColorObjects
 extern void SYSCOLOR_Init(void);
 extern struct SysColorObjects sysColorObjects;
 
-#endif  /* SYSCOLOR_H */
+#endif  /* __WINE_SYSCOLOR_H */

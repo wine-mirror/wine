@@ -14,6 +14,7 @@
 #if defined(__svr4__)
 #include <sys/filio.h>
 #include <sys/ioccom.h>
+#include <sys/sockio.h>
 #endif
 #include <sys/msg.h>
 #include <sys/wait.h>

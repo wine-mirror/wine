@@ -16,41 +16,38 @@ static BOOL32 X11DRV_DeleteDC( DC *dc );
 
 static const DC_FUNCTIONS X11DRV_Funcs =
 {
-    NULL,                            /* pArc */
+    X11DRV_Arc,                      /* pArc */
     X11DRV_BitBlt,                   /* pBitBlt */
-    NULL,                            /* pChord */
+    X11DRV_Chord,                    /* pChord */
     X11DRV_CreateDC,                 /* pCreateDC */
     X11DRV_DeleteDC,                 /* pDeleteDC */
     NULL,                            /* pDeleteObject */
-    NULL,                            /* pEllipse */
+    X11DRV_Ellipse,                  /* pEllipse */
     NULL,                            /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */
-    NULL,                            /* pExtFloodFill */
-    NULL,                            /* pExtTextOut */
-    NULL,                            /* pFillRgn */
-    NULL,                            /* pFloodFill */
-    NULL,                            /* pFrameRgn */
+    X11DRV_ExtFloodFill,             /* pExtFloodFill */
+    X11DRV_ExtTextOut,               /* pExtTextOut */
+    X11DRV_GetPixel,                 /* pGetPixel */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
-    NULL,                            /* pInvertRgn */
-    NULL,                            /* pLineTo */
-    NULL,                            /* pMoveToEx */
+    X11DRV_LineTo,                   /* pLineTo */
+    X11DRV_MoveToEx,                 /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrg (optional) */
     NULL,                            /* pOffsetWindowOrg (optional) */
-    NULL,                            /* pPaintRgn */
+    X11DRV_PaintRgn,                 /* pPaintRgn */
     X11DRV_PatBlt,                   /* pPatBlt */
-    NULL,                            /* pPie */
-    NULL,                            /* pPolyPolygon */
-    NULL,                            /* pPolygon */
-    NULL,                            /* pPolyline */
+    X11DRV_Pie,                      /* pPie */
+    X11DRV_PolyPolygon,              /* pPolyPolygon */
+    X11DRV_Polygon,                  /* pPolygon */
+    X11DRV_Polyline,                 /* pPolyline */
     NULL,                            /* pRealizePalette */
-    NULL,                            /* pRectangle */
+    X11DRV_Rectangle,                /* pRectangle */
     NULL,                            /* pRestoreDC */
-    NULL,                            /* pRoundRect */
+    X11DRV_RoundRect,                /* pRoundRect */
     NULL,                            /* pSaveDC */
     NULL,                            /* pScaleViewportExt (optional) */
     NULL,                            /* pScaleWindowExt (optional) */
@@ -63,7 +60,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
-    NULL,                            /* pSetPixel */
+    X11DRV_SetPixel,                 /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
     NULL,                            /* pSetROP2 */
     NULL,                            /* pSetRelAbs */
@@ -77,8 +74,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSetWindowExt (optional) */
     NULL,                            /* pSetWindowOrg (optional) */
     X11DRV_StretchBlt,               /* pStretchBlt */
-    NULL,                            /* pStretchDIBits */
-    NULL                             /* pTextOut */
+    NULL                             /* pStretchDIBits */
 };
 
 static DeviceCaps X11DRV_DevCaps;

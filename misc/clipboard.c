@@ -648,9 +648,17 @@ HWND GetClipboardViewer()
 /**************************************************************************
  *			ChangeClipboardChain	[USER.149]
  */
-BOOL ChangeClipboardChain(HWND hWnd, HWND hWndNext)
+BOOL16 ChangeClipboardChain16(HWND16 hWnd, HWND16 hWndNext)
 {
-    BOOL bRet = 0;
+    return ChangeClipboardChain32(hWnd,hWndNext);
+}
+
+/**************************************************************************
+ *			ChangeClipboardChain	[USER32.21]
+ */
+BOOL32 ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
+{
+    BOOL32 bRet = 0;
 
     dprintf_clipboard(stdnimp, "ChangeClipboardChain(%04x, %04x)\n", hWnd, hWndNext);
 
@@ -662,8 +670,9 @@ BOOL ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 
     if( hWnd == hWndViewer ) hWndViewer = hWndNext;
 
-    return 0;
+    return bRet;
 }
+
 
 
 /**************************************************************************

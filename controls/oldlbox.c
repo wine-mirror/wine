@@ -23,10 +23,7 @@
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
-#include "msdos.h"
 #include "listbox.h"
-#include "dos_fs.h"
-#include "drive.h"
 #include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -698,81 +695,6 @@ int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex)
 
 LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
 {
-#if 0
-    char 	mask[13];
-    char*	temp = NULL;
-    const char*	ptr;
-    int 	skip, count;
-    LONG 	ret;
-    DOS_DIRENT 	entry;
-    char *path, *p;
-
-    dprintf_listbox(stddeb, "ListBoxDirectory: '%s' %04x\n", filespec, attrib);
-    if (!filespec) return LB_ERR;
-    if (!(ptr = DOSFS_GetUnixFileName( filespec, FALSE ))) return LB_ERR;
-    path = xstrdup(ptr);
-    p = strrchr( path, '/' );
-    *p++ = '\0';
-    if (!(ptr = DOSFS_ToDosFCBFormat( p )) || 
-        !(temp = SEGPTR_ALLOC( sizeof(char) * 16 )) )
-    {
-        free( path );
-        return LB_ERR;
-    }
-
-    strcpy( mask, ptr );
-
-    dprintf_listbox(stddeb, "ListBoxDirectory: path=%s mask=%s\n", path, mask);
-
-    skip = ret = 0;
-    attrib &= ~FA_LABEL;
-    while ((count = DOSFS_FindNext( path, mask, NULL, 0,
-                                    attrib, skip, &entry )) > 0)
-    {
-        skip += count;
-        if (entry.attr & FA_DIRECTORY)
-        {
-            if ((attrib & DDL_DIRECTORY) && strcmp(entry.name, ".          "))
-            {
-                sprintf(temp, "[%s]", DOSFS_ToDosDTAFormat( entry.name ) );
-                AnsiLower( temp );
-                if ((ret = ListBoxAddString(lphl, SEGPTR_GET(temp))) == LB_ERR) break;
-            }
-        }
-        else  /* not a directory */
-        {
-            if (!(attrib & DDL_EXCLUSIVE) ||
-                ((attrib & (FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_ARCHIVE)) ==
-                 (entry.attr & (FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_ARCHIVE))))
-            {
-                strcpy( temp, DOSFS_ToDosDTAFormat( entry.name ) );
-                AnsiLower( temp );
-                if ((ret = ListBoxAddString(lphl, SEGPTR_GET(temp))) == LB_ERR) break;
-            }
-        }
-
-        dprintf_listbox(stddeb,"\tn - %i, file '%s'\n", count, temp); 
-    }
-    if (attrib & DDL_DRIVES)
-    {
-        int x;
-	DWORD oldstyle = lphl->dwStyle;
-	    
-	lphl->dwStyle &= ~LBS_SORT;
-        strcpy( temp, "[-a-]" );
-        for (x = 0; x < MAX_DOS_DRIVES; x++, temp[2]++)
-        {
-            if (DRIVE_IsValid(x))
-                if ((ret = ListBoxAddString(lphl, SEGPTR_GET(temp))) == LB_ERR) break;
-        }
-	lphl->dwStyle = oldstyle;
-    }
-
-    free( path );
-    SEGPTR_FREE( temp );
-
-    return ret;
-#endif
     return 0;
 }
 

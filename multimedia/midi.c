@@ -300,7 +300,7 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 		dprintf_midi(stddeb, "MIDI_mciOpen // MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 		if (strlen(lpstrElementName) > 0) {
 			strcpy(str, lpstrElementName);
-			AnsiUpper(str);
+			CharUpper32A(str);
 			MCIMidiDev[wDevID].hFile = mmioOpen(str, NULL, 
 				MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
 			if (MCIMidiDev[wDevID].hFile == 0) {

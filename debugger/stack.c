@@ -19,17 +19,14 @@
 struct bt_info
 {
   unsigned int	     eip;
+  unsigned int	     ess;
   unsigned int	     ebp;
-  struct name_hash * frame;
+  struct symbol_info frame;
 };
 
 static int nframe;
 static struct bt_info * frames = NULL;
 int curr_frame;
-static char * reg_name[] =
-{
-  "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"
-};
 
 typedef struct
 {
@@ -62,12 +59,14 @@ void DEBUG_InfoStack(void)
     {  /* 32-bit mode */
         addr.seg = 0;
         addr.off = ESP_reg(&DEBUG_context);
+	addr.type = NULL;
         DEBUG_ExamineMemory( &addr, 24, 'x' );
     }
     else  /* 16-bit mode */
     {
         addr.seg = SS_reg(&DEBUG_context);
         addr.off = SP_reg(&DEBUG_context);
+	addr.type = NULL;
         DEBUG_ExamineMemory( &addr, 24, 'w' );
     }
     fprintf(stderr,"\n");
@@ -153,94 +152,76 @@ void DEBUG_BackTrace(void)
 }
 
 /***********************************************************************
- *           DEBUG_GetSymbolValue
+ *           DEBUG_SilentBackTrace
  *
- * Get the address of a named symbol from the current stack frame.
+ * Display a stack back-trace.
  */
-BOOL32 DEBUG_GetStackSymbolValue( const char * name, DBG_ADDR *addr )
+void DEBUG_SilentBackTrace(void)
 {
-  struct name_hash * curr_func;
-  int		     i;
+    DBG_ADDR addr;
+    int frameno = 0;
 
-  /*
-   * If we don't have a valid backtrace, then just return.
-   */
-  if( frames == NULL )
+    nframe = 1;
+    if (frames) free( frames );
+    frames = (struct bt_info *) xmalloc( sizeof(struct bt_info) );
+
+    if (SS_reg(&DEBUG_context) == WINE_DATA_SELECTOR)  /* 32-bit mode */
     {
-      return FALSE;
+        addr.seg = 0;
+        addr.off = EIP_reg(&DEBUG_context);
+	frames[0].eip = addr.off;
+	DEBUG_FindNearestSymbol( &addr, TRUE, &frames[0].frame.sym, 0, 
+						&frames[0].frame.list);
+	frames[0].ebp = addr.off = EBP_reg(&DEBUG_context);
+	frameno++;
+
+        while (addr.off)
+        {
+            FRAME32 *frame = (FRAME32 *)addr.off;
+            if (!DBG_CHECK_READ_PTR( &addr, sizeof(FRAME32) )) return;
+            if (!frame->ip) break;
+            nframe++;
+            frames = (struct bt_info *)xrealloc(frames,
+                                                nframe*sizeof(struct bt_info));
+            addr.off = frame->ip;
+	    frames[frameno].eip = addr.off;
+	    frames[frameno].ebp = frame->bp;
+	    DEBUG_FindNearestSymbol( &addr, TRUE, 
+				     &frames[frameno].frame.sym, frame->bp, 
+				     &frames[frameno].frame.list);
+	    frameno++;
+            addr.off = frame->bp;
+        }
     }
-
-  curr_func = frames[curr_frame].frame;
-
-  /*
-   * If we don't know what the current function is, then we also have
-   * nothing to report here.
-   */
-  if( curr_func == NULL )
-    {
-      return FALSE;
-    }
-
-  for(i=0; i < curr_func->n_locals; i++ )
+    else  /* 16-bit mode */
     {
       /*
-       * Test the range of validity of the local variable.  This
-       * comes up with RBRAC/LBRAC stabs in particular.
+       * Not implemented here.  I am not entirely sure how best to handle
+       * this stuff.
        */
-      if(    (curr_func->local_vars[i].pc_start != 0)
-	  && ((frames[curr_frame].eip - curr_func->addr.off) 
-	      < curr_func->local_vars[i].pc_start) )
-	{
-	  continue;
-	}
-
-      if(    (curr_func->local_vars[i].pc_end != 0)
-	  && ((frames[curr_frame].eip - curr_func->addr.off) 
-	      > curr_func->local_vars[i].pc_end) )
-	{
-	  continue;
-	}
-
-      if( strcmp(name, curr_func->local_vars[i].name) == 0 )
-	{
-	  /*
-	   * OK, we found it.  Now figure out what to do with this.
-	   */
-	  if( curr_func->local_vars[i].regno != 0 )
-	    {
-	      /*
-	       * Register variable.  We don't know how to treat
-	       * this yet.
-	       */
-	      return FALSE;
-	    }
-
-	  addr->seg = 0;
-	  addr->off = frames[curr_frame].ebp + curr_func->local_vars[i].offset;
-
-	  return TRUE;
-	}
     }
-  return FALSE;
 }
 
 int
 DEBUG_SetFrame(int newframe)
 {
   int		rtn = FALSE;
-  /*
-   * Nothing for now.  Add support later.
-   */
 
   curr_frame = newframe;
+
+  if( curr_frame >= nframe )
+    {
+      curr_frame = nframe - 1;
+    }
+
   if( curr_frame < 0 )
     {
       curr_frame = 0;
     }
 
-  if( curr_frame >= nframe )
+   if( frames[curr_frame].frame.list.sourcefile != NULL )
     {
-      curr_frame = nframe - 1;
+      DEBUG_List(&frames[curr_frame].frame.list, NULL, 0);
     }
 
   rtn = TRUE;
@@ -248,13 +229,9 @@ DEBUG_SetFrame(int newframe)
 }
 
 int
-DEBUG_InfoLocals()
+DEBUG_GetCurrentFrame(struct name_hash ** name, unsigned int * eip,
+		      unsigned int * ebp)
 {
-  struct name_hash * curr_func;
-  int		     i;
-  int		rtn = FALSE;
-  unsigned	int * ptr;
-
   /*
    * If we don't have a valid backtrace, then just return.
    */
@@ -263,54 +240,19 @@ DEBUG_InfoLocals()
       return FALSE;
     }
 
-  curr_func = frames[curr_frame].frame;
-
   /*
    * If we don't know what the current function is, then we also have
    * nothing to report here.
    */
-  if( curr_func == NULL )
+  if( frames[curr_frame].frame.sym == NULL )
     {
       return FALSE;
     }
 
-  for(i=0; i < curr_func->n_locals; i++ )
-    {
-      /*
-       * Test the range of validity of the local variable.  This
-       * comes up with RBRAC/LBRAC stabs in particular.
-       */
-      if(    (curr_func->local_vars[i].pc_start != 0)
-	  && ((frames[curr_frame].eip - curr_func->addr.off) 
-	      < curr_func->local_vars[i].pc_start) )
-	{
-	  continue;
-	}
+  *name = frames[curr_frame].frame.sym;
+  *eip = frames[curr_frame].eip;
+  *ebp = frames[curr_frame].ebp;
 
-      if(    (curr_func->local_vars[i].pc_end != 0)
-	  && ((frames[curr_frame].eip - curr_func->addr.off) 
-	      > curr_func->local_vars[i].pc_end) )
-	{
-	  continue;
-	}
-      
-      if( curr_func->local_vars[i].offset == 0 )
-	{
-	  fprintf(stderr, "%s:%s optimized into register $%s \n",
-		  curr_func->name, curr_func->local_vars[i].name,
-		  reg_name[curr_func->local_vars[i].regno]);
-	}
-      else
-	{
-	  ptr = (unsigned int *) (frames[curr_frame].ebp 
-				   + curr_func->local_vars[i].offset);
-	  fprintf(stderr, "%s:%s == 0x%8.8x\n",
-		  curr_func->name, curr_func->local_vars[i].name,
-		  *ptr);
-	}
-    }
-
-  rtn = TRUE;
-
-  return (rtn);
+  return TRUE;
 }
+

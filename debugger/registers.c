@@ -48,6 +48,41 @@ void DEBUG_SetRegister( enum debug_regs reg, int val )
 }
 
 
+int
+DEBUG_PrintRegister(enum debug_regs reg)
+{
+    switch(reg)
+    {
+        case REG_EAX: fprintf(stderr, "%%eax"); break;
+        case REG_EBX: fprintf(stderr, "%%ebx"); break;
+        case REG_ECX: fprintf(stderr, "%%ecx"); break;
+        case REG_EDX: fprintf(stderr, "%%edx"); break;
+        case REG_ESI: fprintf(stderr, "%%esi"); break;
+        case REG_EDI: fprintf(stderr, "%%edi"); break;
+        case REG_EBP: fprintf(stderr, "%%ebp"); break;
+        case REG_EFL: fprintf(stderr, "%%efl"); break;
+        case REG_EIP: fprintf(stderr, "%%eip"); break;
+        case REG_ESP: fprintf(stderr, "%%esp"); break;
+        case REG_AX:  fprintf(stderr, "%%ax"); break;
+        case REG_BX:  fprintf(stderr, "%%bx"); break;
+        case REG_CX:  fprintf(stderr, "%%cx"); break;
+        case REG_DX:  fprintf(stderr, "%%dx"); break;
+        case REG_SI:  fprintf(stderr, "%%si"); break;
+        case REG_DI:  fprintf(stderr, "%%di"); break;
+        case REG_BP:  fprintf(stderr, "%%bp"); break;
+        case REG_FL:  fprintf(stderr, "%%fl"); break;
+        case REG_IP:  fprintf(stderr, "%%ip"); break;
+        case REG_SP:  fprintf(stderr, "%%sp"); break;
+        case REG_CS:  fprintf(stderr, "%%cs"); break;
+        case REG_DS:  fprintf(stderr, "%%ds"); break;
+        case REG_ES:  fprintf(stderr, "%%es"); break;
+        case REG_SS:  fprintf(stderr, "%%ss"); break;
+        case REG_FS:  fprintf(stderr, "%%fs"); break;
+        case REG_GS:  fprintf(stderr, "%%gs"); break;
+    }
+    return TRUE;
+}
+
 /***********************************************************************
  *           DEBUG_GetRegister
  *

@@ -72,6 +72,13 @@
 static BOOL32 db_disasm_16 = FALSE;
 
 /*
+ * Flag to indicate whether we need to display instruction,
+ * or whether we just need to know the address of the next
+ * instruction.
+ */
+static BOOL32 db_display = FALSE;
+
+/*
  * Size attributes
  */
 #define	BYTE	0
@@ -1009,7 +1016,7 @@ static void db_task_printsym(unsigned int addr, int size)
         break;
     case LONG:
         {
-            DBG_ADDR address = { 0, addr };
+            DBG_ADDR address = { NULL, 0, addr };
             DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32, TRUE );
         }
         break;
@@ -1057,6 +1064,11 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 	const char *	name;
 
 	get_value_inc(regmodrm, addr, 1, FALSE);
+	if( !db_display )
+	  {
+	    return;
+	  }
+
 	fp = &db_Esc_inst[inst - 0xd8][f_reg(regmodrm)];
 	mod = f_mod(regmodrm);
 	if (mod != 3) {
@@ -1128,7 +1140,7 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
  * Disassemble instruction at 'addr'.  addr is changed to point to the
  * start of the next instruction.
  */
-void DEBUG_Disasm( DBG_ADDR *addr )
+void DEBUG_Disasm( DBG_ADDR *addr, int display )
 {
 	int	inst;
 	int	size;
@@ -1145,6 +1157,11 @@ void DEBUG_Disasm( DBG_ADDR *addr )
 	int	imm;
 	int	len;
 	struct i_addr	address;
+
+	/*
+	 * Set this so we get can supress the printout if we need to.
+	 */
+	db_display = display;
 
         if (!addr->seg) db_disasm_16 = FALSE;
         else db_disasm_16 = !(GET_SEL_FLAGS(addr->seg) & LDT_FLAGS_32BIT);
@@ -1263,145 +1280,242 @@ void DEBUG_Disasm( DBG_ADDR *addr )
 	}
 
 	if (i_size == SDEP) {
-	    if (size == WORD)
+	  if( db_display )
+	    {
+	      if (size == WORD)
 		fprintf(stderr,i_name);
-	    else
+	      else
 		fprintf(stderr,ip->i_extra);
+	    }
 	}
 	else {
-	    fprintf(stderr,i_name);
+	  if( db_display )
+	    {
+	      fprintf(stderr,i_name);
+	    }
 	    if (i_size != NONE) {
 		if (i_size == BYTE) {
-		    fprintf(stderr,"b");
+		  if( db_display )
+		    {
+		      fprintf(stderr,"b");
+		    }
 		    size = BYTE;
 		}
 		else if (i_size == WORD) {
-		    fprintf(stderr,"w");
+		  if( db_display )
+		    {
+		      fprintf(stderr,"w");
+		    }
 		    size = WORD;
 		}
 		else if (size == WORD)
-		    fprintf(stderr,"w");
+		  {
+		  if( db_display )
+		    {
+		      fprintf(stderr,"w");
+		    }
+		  }
 		else
-		    fprintf(stderr,"l");
+		  {
+		  if( db_display )
+		    {
+		      fprintf(stderr,"l");
+		    }
+		  }
 	    }
 	}
-	fprintf(stderr,"\t");
+	if( db_display )
+	  {
+	    fprintf(stderr,"\t");
+	  }
 	for (first = TRUE;
 	     i_mode != 0;
 	     i_mode >>= 8, first = FALSE)
 	{
-	    if (!first)
+	    if (!first && db_display)
 		fprintf(stderr,",");
 
 	    switch (i_mode & 0xFF) {
 
 		case E:
-		    db_print_address(seg, size, &address);
+		  if( db_display )
+		    {
+		      db_print_address(seg, size, &address);
+		    }
 		    break;
 
 		case Eind:
-		    fprintf(stderr,"*");
-		    db_print_address(seg, size, &address);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"*");
+		      db_print_address(seg, size, &address);
+		    }
 		    break;
 
 		case Ew:
-		    db_print_address(seg, WORD, &address);
+		  if( db_display )
+		    {
+		      db_print_address(seg, WORD, &address);
+		    }
 		    break;
 
 		case Eb:
-		    db_print_address(seg, BYTE, &address);
+		  if( db_display )
+		    {
+		      db_print_address(seg, BYTE, &address);
+		    }
 		    break;
 
 		case R:
-		    fprintf(stderr,"%s", db_reg[size][f_reg(regmodrm)]);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%s", db_reg[size][f_reg(regmodrm)]);
+		    }
 		    break;
 
 		case Rw:
-		    fprintf(stderr,"%s", db_reg[WORD][f_reg(regmodrm)]);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%s", db_reg[WORD][f_reg(regmodrm)]);
+		    }
 		    break;
 
 		case Ri:
-		    fprintf(stderr,"%s", db_reg[size][f_rm(inst)]);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%s", db_reg[size][f_rm(inst)]);
+		    }
 		    break;
 
 		case S:
-		    fprintf(stderr,"%s", db_seg_reg[f_reg(regmodrm)]);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%s", db_seg_reg[f_reg(regmodrm)]);
+		    }
 		    break;
 
 		case Si:
-		    fprintf(stderr,"%s", db_seg_reg[f_reg(inst)]);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%s", db_seg_reg[f_reg(inst)]);
+		    }
 		    break;
 
 		case A:
-		    fprintf(stderr,"%s", db_reg[size][0]);	/* acc */
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%s", db_reg[size][0]);	/* acc */
+		    }
 		    break;
 
 		case BX:
-		    if (seg)
+		  if( db_display )
+		    {
+		      if (seg)
 			fprintf(stderr,"%s:", seg);
-		    fprintf(stderr,"(%s)", short_addr ? "%bx" : "%ebx");
+		      fprintf(stderr,"(%s)", short_addr ? "%bx" : "%ebx");
+		    }
 		    break;
 
 		case CL:
-		    fprintf(stderr,"%%cl");
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%%cl");
+		    }
 		    break;
 
 		case DX:
-		    fprintf(stderr,"%%dx");
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%%dx");
+		    }
 		    break;
 
 		case SI:
-		    if (seg)
+		  if( db_display )
+		    {
+		      if (seg)
 			fprintf(stderr,"%s:", seg);
-		    fprintf(stderr,"(%s)", short_addr ? "%si" : "%esi");
+		      fprintf(stderr,"(%s)", short_addr ? "%si" : "%esi");
+		    }
 		    break;
 
 		case DI:
-		    fprintf(stderr,"%%es:(%s)", short_addr ? "%di" : "%edi");
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%%es:(%s)", short_addr ? "%di" : "%edi");
+		    }
 		    break;
 
 		case CR:
-		    fprintf(stderr,"%%cr%d", f_reg(regmodrm));
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%%cr%d", f_reg(regmodrm));
+		    }
 		    break;
 
 		case DR:
-		    fprintf(stderr,"%%dr%d", f_reg(regmodrm));
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%%dr%d", f_reg(regmodrm));
+		    }
 		    break;
 
 		case TR:
-		    fprintf(stderr,"%%tr%d", f_reg(regmodrm));
+		  if( db_display )
+		    {
+		      fprintf(stderr,"%%tr%d", f_reg(regmodrm));
+		    }
 		    break;
 
 		case I:
 		    len = db_lengths[size];
 		    get_value_inc(imm, addr, len, FALSE);/* unsigned */
-		    fprintf(stderr,"$0x%x", imm);
+		    if( db_display )
+		      {
+			fprintf(stderr,"$0x%x", imm);
+		      }
 		    break;
 
 		case Is:
 		    len = db_lengths[size];
 		    get_value_inc(imm, addr, len, TRUE); /* signed */
-		    fprintf(stderr,"$%d", imm);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"$%d", imm);
+		    }
 		    break;
 
 		case Ib:
 		    get_value_inc(imm, addr, 1, FALSE); /* unsigned */
-		    fprintf(stderr,"$0x%x", imm);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"$0x%x", imm);
+		    }
 		    break;
 
 		case Ibs:
 		    get_value_inc(imm, addr, 1, TRUE); /* signed */
-		    fprintf(stderr,"$%d", imm);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"$%d", imm);
+		    }
 		    break;
 
 		case Iw:
 		    get_value_inc(imm, addr, 2, FALSE); /* unsigned */
-		    fprintf(stderr,"$0x%x", imm);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"$0x%x", imm);
+		    }
 		    break;
 
 		case Il:
 		    get_value_inc(imm, addr, 4, FALSE);
-		    fprintf(stderr,"$0x%x", imm);
+		  if( db_display )
+		    {
+		      fprintf(stderr,"$0x%x", imm);
+		    }
 		    break;
 
 		case O:
@@ -1411,6 +1525,11 @@ void DEBUG_Disasm( DBG_ADDR *addr )
 		    else {
 			get_value_inc(displ, addr, 4, TRUE);
 		    }
+		    if( !db_display )
+		      {
+			break;
+		      }
+
 		    if (seg)
 			fprintf(stderr,"%s:%d",seg, displ);
 		    else
@@ -1419,6 +1538,11 @@ void DEBUG_Disasm( DBG_ADDR *addr )
 
 		case Db:
 		    get_value_inc(displ, addr, 1, TRUE);
+		    if( !db_display )
+		      {
+			break;
+		      }
+
 		    if (short_addr) {
 			/* offset only affects low 16 bits */
 		        displ = (addr->off & 0xffff0000)
@@ -1439,15 +1563,25 @@ void DEBUG_Disasm( DBG_ADDR *addr )
 			get_value_inc(displ, addr, 4, TRUE);
 			displ += addr->off;
 		    }
+		    if( !db_display )
+		      {
+			break;
+		      }
 		    db_task_printsym( displ, short_addr ? WORD : LONG);
 		    break;
 
 		case o1:
-		    fprintf(stderr,"$1");
+		  if( db_display )
+		    {
+		      fprintf(stderr,"$1");
+		    }
 		    break;
 
 		case o3:
-		    fprintf(stderr,"$3");
+		  if( db_display )
+		    {
+		      fprintf(stderr,"$3");
+		    }
 		    break;
 
 		case OS:
@@ -1457,8 +1591,12 @@ void DEBUG_Disasm( DBG_ADDR *addr )
                                        short_addr ? 2 : 4, FALSE );
                         get_value_inc( address.seg, addr,  /* segment */
                                        2, FALSE );
-                        DEBUG_PrintAddress( &address, short_addr ? 16 : 32, 
-					    TRUE );
+			if( db_display )
+			  {
+			    DEBUG_PrintAddress( &address, short_addr ? 16 : 32, 
+						TRUE );
+			  }
+		      
                     }
 		    break;
 	    }

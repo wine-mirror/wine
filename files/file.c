@@ -20,7 +20,6 @@
 
 #include "windows.h"
 #include "winerror.h"
-#include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
 #include "global.h"
@@ -212,11 +211,8 @@ static HFILE32 FILE_OpenUnixFile( const char *name, int mode )
 
     if ((file->unix_handle = open( name, mode, 0666 )) == -1)
     {
-        if (Options.allowReadOnly && (mode == O_RDWR))
-        {
-            if ((file->unix_handle = open( name, O_RDONLY )) != -1)
-                fprintf( stderr, "Warning: could not open %s for writing, opening read-only.\n", name );
-        }
+        if (!Options.failReadOnly && (mode == O_RDWR))
+            file->unix_handle = open( name, O_RDONLY );
     }
     if ((file->unix_handle == -1) || (fstat( file->unix_handle, &st ) == -1))
     {
@@ -243,6 +239,7 @@ static HFILE32 FILE_OpenUnixFile( const char *name, int mode )
  */
 HFILE32 FILE_Open( LPCSTR path, INT32 mode )
 {
+    DOS_FULL_NAME full_name;
     const char *unixName;
 
     dprintf_file(stddeb, "FILE_Open: '%s' %04x\n", path, mode );
@@ -257,9 +254,11 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
         }
     }
     else /* check for filename, don't check for last entry if creating */
-        if (!(unixName = DOSFS_GetUnixFileName( path, !(mode & O_CREAT) )))
+    {
+        if (!DOSFS_GetFullName( path, !(mode & O_CREAT), &full_name ))
             return HFILE_ERROR32;
-
+        unixName = full_name.long_name;
+    }
     return FILE_OpenUnixFile( unixName, mode );
 }
 
@@ -272,6 +271,7 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
     HFILE32 handle;
     DOS_FILE *file;
     const char *unixName;
+    DOS_FULL_NAME full_name;
 
     dprintf_file(stddeb, "FILE_Create: '%s' %04x %d\n", path, mode, unique );
 
@@ -285,12 +285,12 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
     if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
         return INVALID_HANDLE_VALUE32;
 
-    if (!(unixName = DOSFS_GetUnixFileName( path, FALSE )))
+    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
     {
         CloseHandle( handle );
         return INVALID_HANDLE_VALUE32;
     }
-    if ((file->unix_handle = open( unixName,
+    if ((file->unix_handle = open( full_name.long_name,
                            O_CREAT | O_TRUNC | O_RDWR | (unique ? O_EXCL : 0),
                            mode )) == -1)
     {
@@ -301,7 +301,7 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 
     /* File created OK, now fill the DOS_FILE */
 
-    file->unix_name = HEAP_strdupA( SystemHeap, 0, unixName );
+    file->unix_name = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
     return handle;
 }
 
@@ -317,9 +317,9 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
     if (S_ISDIR(st->st_mode))
         info->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
 
-    DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftCreationTime );
-    DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftLastWriteTime );
-    DOSFS_UnixTimeToFileTime( st->st_atime, &info->ftLastAccessTime );
+    DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftCreationTime, 0 );
+    DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftLastWriteTime, 0 );
+    DOSFS_UnixTimeToFileTime( st->st_atime, &info->ftLastAccessTime, 0 );
 
     info->dwVolumeSerialNumber = 0;  /* FIXME */
     info->nFileSizeHigh = 0;
@@ -385,9 +385,11 @@ DWORD GetFileAttributes16( LPCSTR name )
  */
 DWORD GetFileAttributes32A( LPCSTR name )
 {
+    DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
 
-    if (!FILE_Stat( name, &info )) return -1;
+    if (!DOSFS_GetFullName( name, TRUE, &full_name )) return -1;
+    if (!FILE_Stat( full_name.long_name, &info )) return -1;
     return info.dwFileAttributes;
 }
 
@@ -500,8 +502,9 @@ UINT16 GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
 UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
                            LPSTR buffer)
 {
-    LPSTR p;
+    DOS_FULL_NAME full_name;
     int i;
+    LPSTR p;
     UINT32 num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
 
     if (!path) return 0;
@@ -511,36 +514,38 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
     sprintf( p, "%04x.tmp", num );
 
-    if (unique)
-    {
-        lstrcpyn32A( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
-        dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
-	if (-1==access(DOSFS_GetUnixFileName(buffer,TRUE),W_OK))
-	    fprintf(stderr,"Warning: GetTempFileName returns '%s', which doesn't seem to be writeable. Please check your configuration file if this generates a failure.\n",buffer);
-        return unique;
-    }
-
     /* Now try to create it */
 
-    do
+    if (!unique)
     {
-        HFILE32 handle;
-        if ((handle = FILE_Create(buffer,0666,TRUE)) != INVALID_HANDLE_VALUE32)
-        {  /* We created it */
-            dprintf_file( stddeb, "GetTempFileName: created %s\n", buffer );
-            CloseHandle( handle );
-            break;
-        }
-        if (DOS_ExtendedError != ER_FileExists) break;  /* No need to go on */
-        num++;
-        sprintf( p, "%04x.tmp", num );
-    } while (num != (unique & 0xffff));
+        do
+        {
+            HFILE32 handle = FILE_Create( buffer, 0666, TRUE );
+            if (handle != INVALID_HANDLE_VALUE32)
+            {  /* We created it */
+                dprintf_file( stddeb, "GetTempFileName: created %s\n", buffer);
+                CloseHandle( handle );
+                break;
+            }
+            if (DOS_ExtendedError != ER_FileExists)
+                break;  /* No need to go on */
+            num++;
+            sprintf( p, "%04x.tmp", num );
+        } while (num != (unique & 0xffff));
+    }
 
-    lstrcpyn32A( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
+    /* Get the full path name */
+
+    if (DOSFS_GetFullName( buffer, FALSE, &full_name ))
+    {
+        if (access( full_name.long_name, W_OK ) == -1)
+            fprintf( stderr,
+                     "Warning: GetTempFileName returns '%s', which doesn't seem to be writeable.\n"
+                     "Please check your configuration file if this generates a failure.\n",
+                     buffer);
+    }
     dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
-    if (-1==access(DOSFS_GetUnixFileName(buffer,TRUE),W_OK))
-	fprintf(stderr,"Warning: GetTempFileName returns '%s', which doesn't seem to be writeable. Please check your configuration file if this generates a failure.\n",buffer);
-    return num;
+    return unique ? unique : num;
 }
 
 
@@ -576,7 +581,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     HFILE32 hFileRet;
     FILETIME filetime;
     WORD filedatetime[2];
-    const char *unixName, *dosName;
+    DOS_FULL_NAME full_name;
     char *p;
     int unixMode;
 
@@ -589,9 +594,10 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 
     if (mode & OF_PARSE)
     {
-        if (!(dosName = DOSFS_GetDosTrueName( name, FALSE ))) goto error;
-        lstrcpyn32A( ofs->szPathName, dosName, sizeof(ofs->szPathName) );
-        ofs->fFixedDisk = (GetDriveType16( dosName[0]-'A' ) != DRIVE_REMOVABLE);
+        if (!GetFullPathName32A( name, sizeof(ofs->szPathName),
+                                 ofs->szPathName, NULL )) goto error;
+        ofs->fFixedDisk = (GetDriveType16( ofs->szPathName[0]-'A' )
+                           != DRIVE_REMOVABLE);
         dprintf_file( stddeb, "OpenFile(%s): OF_PARSE, res = '%s'\n",
                       name, ofs->szPathName );
         return 0;
@@ -604,8 +610,8 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     {
         if ((hFileRet = FILE_Create(name,0666,FALSE))== INVALID_HANDLE_VALUE32)
             goto error;
-        lstrcpyn32A( ofs->szPathName, DOSFS_GetDosTrueName( name, FALSE ),
-                     sizeof(ofs->szPathName) );
+        GetFullPathName32A( name, sizeof(ofs->szPathName),
+                            ofs->szPathName, NULL );
         goto success;
     }
 
@@ -614,11 +620,7 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     if ((mode & OF_SEARCH) && !(mode & OF_REOPEN))
     {
         /* First try the file name as is */
-        if ((unixName = DOSFS_GetUnixFileName( name, TRUE )) != NULL)
-        {
-            lstrcpyn32A( ofs->szPathName, name, sizeof(ofs->szPathName) );
-            goto found;
-        }
+        if (DOSFS_GetFullName( name, TRUE, &full_name )) goto found;
         /* Now remove the path */
         if (name[0] && (name[1] == ':')) name += 2;
         if ((p = strrchr( name, '\\' ))) name = p + 1;
@@ -628,20 +630,17 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
 
     /* Now look for the file */
 
-    if (!DIR_SearchPath( NULL, name, NULL, sizeof(ofs->szPathName),
-                         ofs->szPathName, NULL, win32 ))
-        goto not_found;
-    if (!(unixName = DOSFS_GetUnixFileName( ofs->szPathName, TRUE )))
-        goto not_found;
+    if (!DIR_SearchPath( NULL, name, NULL, &full_name, win32 )) goto not_found;
 
 found:
-    dprintf_file( stddeb, "OpenFile: found '%s'\n", unixName );
-    lstrcpyn32A(ofs->szPathName, DOSFS_GetDosTrueName( ofs->szPathName, FALSE),
-                sizeof(ofs->szPathName) );
+    dprintf_file( stddeb, "OpenFile: found %s = %s\n",
+                  full_name.long_name, full_name.short_name );
+    lstrcpyn32A( ofs->szPathName, full_name.short_name,
+                 sizeof(ofs->szPathName) );
 
     if (mode & OF_DELETE)
     {
-        if (unlink( unixName ) == -1) goto not_found;
+        if (unlink( full_name.long_name ) == -1) goto not_found;
         dprintf_file( stddeb, "OpenFile(%s): OF_DELETE return = OK\n", name);
         return 1;
     }
@@ -657,8 +656,8 @@ found:
         unixMode = O_RDONLY; break;
     }
 
-    if ((hFileRet = FILE_OpenUnixFile( unixName, unixMode )) == HFILE_ERROR32)
-        goto not_found;
+    hFileRet = FILE_OpenUnixFile( full_name.long_name, unixMode );
+    if (hFileRet == HFILE_ERROR32) goto not_found;
     GetFileTime( hFileRet, NULL, NULL, &filetime );
     FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );
     if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
@@ -715,7 +714,7 @@ HFILE32 OpenFile32( LPCSTR name, OFSTRUCT *ofs, UINT32 mode )
  */
 HFILE16 _lclose16( HFILE16 hFile )
 {
-    dprintf_file( stddeb, "_lclose: handle %d\n", hFile );
+    dprintf_file( stddeb, "_lclose16: handle %d\n", hFile );
     return CloseHandle( hFile ) ? 0 : HFILE_ERROR16;
 }
 
@@ -725,7 +724,7 @@ HFILE16 _lclose16( HFILE16 hFile )
  */
 HFILE32 _lclose32( HFILE32 hFile )
 {
-    dprintf_file( stddeb, "_lclose: handle %d\n", hFile );
+    dprintf_file( stddeb, "_lclose32: handle %d\n", hFile );
     return CloseHandle( hFile ) ? 0 : HFILE_ERROR32;
 }
 
@@ -817,11 +816,44 @@ HFILE32 _lcreat_uniq( LPCSTR path, INT32 attr )
 
 
 /***********************************************************************
+ *           SetFilePointer   (KERNEL32.492)
+ */
+DWORD SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
+                      DWORD method )
+{
+    DOS_FILE *file;
+    int origin, result;
+
+    if (highword && *highword)
+    {
+        fprintf( stderr, "SetFilePointer: 64-bit offsets not supported yet\n");
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0xffffffff;
+    }
+    dprintf_file( stddeb, "SetFilePointer: handle %d offset %ld origin %ld\n",
+                  hFile, distance, method );
+
+    if (!(file = FILE_GetFile( hFile ))) return 0xffffffff;
+    switch(method)
+    {
+        case 1:  origin = SEEK_CUR; break;
+        case 2:  origin = SEEK_END; break;
+        default: origin = SEEK_SET; break;
+    }
+
+    if ((result = lseek( file->unix_handle, distance, origin )) == -1)
+        FILE_SetDosError();
+    FILE_ReleaseFile( file );
+    return (DWORD)result;
+}
+
+
+/***********************************************************************
  *           _llseek16   (KERNEL.84)
  */
 LONG _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
 {
-    return _llseek32( hFile, lOffset, nOrigin );
+    return SetFilePointer( hFile, lOffset, NULL, nOrigin );
 }
 
 
@@ -830,24 +862,7 @@ LONG _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
  */
 LONG _llseek32( HFILE32 hFile, LONG lOffset, INT32 nOrigin )
 {
-    DOS_FILE *file;
-    int origin, result;
-
-    dprintf_file( stddeb, "_llseek: handle %d, offset %ld, origin %d\n", 
-                  hFile, lOffset, nOrigin);
-
-    if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR32;
-    switch(nOrigin)
-    {
-        case 1:  origin = SEEK_CUR; break;
-        case 2:  origin = SEEK_END; break;
-        default: origin = SEEK_SET; break;
-    }
-
-    if ((result = lseek( file->unix_handle, lOffset, origin )) == -1)
-        FILE_SetDosError();
-    FILE_ReleaseFile( file );
-    return result;
+    return SetFilePointer( hFile, lOffset, NULL, nOrigin );
 }
 
 
@@ -961,47 +976,27 @@ UINT16 SetHandleCount16( UINT16 count )
     HGLOBAL16 hPDB = GetCurrentPDB();
     PDB *pdb = (PDB *)GlobalLock16( hPDB );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    WORD i;
 
     dprintf_file( stddeb, "SetHandleCount(%d)\n", count );
 
     if (count < 20) count = 20;  /* No point in going below 20 */
     else if (count > 254) count = 254;
 
-    /* If shrinking the table, make sure all extra file handles are closed */
-    if (count < pdb->nbFiles)
-    {
-        for (i = count; i < pdb->nbFiles; i++)
-            if (files[i] != 0xff)  /* File open */
-            {
-                DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError,
-                           SA_Abort, EL_Disk );
-                return pdb->nbFiles;
-            }
-    }
-
     if (count == 20)
     {
         if (pdb->nbFiles > 20)
         {
             memcpy( pdb->fileHandles, files, 20 );
-#ifdef WINELIB
-            GlobalFree32( (HGLOBAL32)pdb->fileHandlesPtr );
-            pdb->fileHandlesPtr = (SEGPTR)pdb->fileHandles;
-#else
-            GlobalFree16( GlobalHandle16( SELECTOROF(pdb->fileHandlesPtr) ));
+            GlobalFree16( pdb->hFileHandles );
             pdb->fileHandlesPtr = (SEGPTR)MAKELONG( 0x18,
                                                    GlobalHandleToSel( hPDB ) );
-#endif
+            pdb->hFileHandles = 0;
             pdb->nbFiles = 20;
         }
     }
     else  /* More than 20, need a new file handles table */
     {
         BYTE *newfiles;
-#ifdef WINELIB
-        newfiles = (BYTE *)GlobalAlloc32( GMEM_FIXED, count );
-#else
         HGLOBAL16 newhandle = GlobalAlloc16( GMEM_MOVEABLE, count );
         if (!newhandle)
         {
@@ -1009,21 +1004,16 @@ UINT16 SetHandleCount16( UINT16 count )
             return pdb->nbFiles;
         }
         newfiles = (BYTE *)GlobalLock16( newhandle );
-#endif  /* WINELIB */
+
         if (count > pdb->nbFiles)
         {
             memcpy( newfiles, files, pdb->nbFiles );
             memset( newfiles + pdb->nbFiles, 0xff, count - pdb->nbFiles );
         }
         else memcpy( newfiles, files, count );
-#ifdef WINELIB
-        if (pdb->nbFiles > 20) GlobalFree32( (HGLOBAL32)pdb->fileHandlesPtr );
-        pdb->fileHandlesPtr = (SEGPTR)newfiles;
-#else
-        if (pdb->nbFiles > 20)
-            GlobalFree16( GlobalHandle16( SELECTOROF(pdb->fileHandlesPtr) ));
+        if (pdb->nbFiles > 20) GlobalFree16( pdb->hFileHandles );
         pdb->fileHandlesPtr = WIN16_GlobalLock16( newhandle );
-#endif  /* WINELIB */
+        pdb->hFileHandles   = newhandle;
         pdb->nbFiles = count;
     }
     return pdb->nbFiles;
@@ -1095,6 +1085,7 @@ BOOL16 DeleteFile16( LPCSTR path )
  */
 BOOL32 DeleteFile32A( LPCSTR path )
 {
+    DOS_FULL_NAME full_name;
     const char *unixName;
 
     dprintf_file(stddeb, "DeleteFile: '%s'\n", path );
@@ -1106,8 +1097,8 @@ BOOL32 DeleteFile32A( LPCSTR path )
         return FALSE;
     }
 
-    if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return FALSE;
-    if (unlink( unixName ) == -1)
+    if (!DOSFS_GetFullName( path, TRUE, &full_name )) return FALSE;
+    if (unlink( full_name.long_name ) == -1)
     {
         FILE_SetDosError();
         return FALSE;
@@ -1153,6 +1144,99 @@ DWORD GetFileType( HFILE32 hFile )
 }
 
 
+/**************************************************************************
+ *           MoveFile32A   (KERNEL32.387)
+ */
+BOOL32 MoveFile32A( LPCSTR fn1, LPCSTR fn2 )
+{
+    DOS_FULL_NAME full_name1, full_name2;
+
+    dprintf_file( stddeb, "MoveFile32A(%s,%s)\n", fn1, fn2 );
+
+    if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
+    if (!DOSFS_GetFullName( fn2, FALSE, &full_name2 )) return FALSE;
+    /* FIXME: should not replace an existing file */
+    /* FIXME: should handle renaming across devices */
+    if (rename( full_name1.long_name, full_name2.long_name ) == -1)
+    {
+        FILE_SetDosError();
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *           MoveFile32W   (KERNEL32.390)
+ */
+BOOL32 MoveFile32W( LPCWSTR fn1, LPCWSTR fn2 )
+{
+    LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
+    LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
+    BOOL32 res = MoveFile32A( afn1, afn2 );
+    HeapFree( GetProcessHeap(), 0, afn1 );
+    HeapFree( GetProcessHeap(), 0, afn2 );
+    return res;
+}
+
+
+/**************************************************************************
+ *           CopyFile32A   (KERNEL32.36)
+ */
+BOOL32 CopyFile32A( LPCSTR source, LPCSTR dest, BOOL32 fail_if_exists )
+{
+    HFILE32 h1, h2;
+    BY_HANDLE_FILE_INFORMATION info;
+    UINT32 count;
+    BOOL32 ret = FALSE;
+    int mode;
+    char buffer[2048];
+
+    if ((h1 = _lopen32( source, OF_READ )) == HFILE_ERROR32) return FALSE;
+    if (!GetFileInformationByHandle( h1, &info ))
+    {
+        CloseHandle( h1 );
+        return FALSE;
+    }
+    mode = (info.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
+    if ((h2 = FILE_Create( dest, mode, fail_if_exists )) == HFILE_ERROR32)
+    {
+        CloseHandle( h1 );
+        return FALSE;
+    }
+    while ((count = _lread32( h2, buffer, sizeof(buffer) )) > 0)
+    {
+        char *p = buffer;
+        while (count > 0)
+        {
+            INT32 res = _lwrite32( h2, p, count );
+            if (res <= 0) goto done;
+            p += res;
+            count -= res;
+        }
+    }
+    ret =  TRUE;
+done:
+    CloseHandle( h1 );
+    CloseHandle( h2 );
+    return ret;
+}
+
+
+/**************************************************************************
+ *           CopyFile32W   (KERNEL32.37)
+ */
+BOOL32 CopyFile32W( LPCWSTR source, LPCWSTR dest, BOOL32 fail_if_exists )
+{
+    LPSTR sourceA = HEAP_strdupWtoA( GetProcessHeap(), 0, source );
+    LPSTR destA   = HEAP_strdupWtoA( GetProcessHeap(), 0, dest );
+    BOOL32 ret = CopyFile32A( sourceA, destA, fail_if_exists );
+    HeapFree( GetProcessHeap(), 0, sourceA );
+    HeapFree( GetProcessHeap(), 0, destA );
+    return ret;
+}
+
+
 /***********************************************************************
  *              SetFileTime   (KERNEL32.493)
  */
@@ -1172,11 +1256,11 @@ BOOL32 SetFileTime( HFILE32 hFile,
 	lpLastWriteTime
     );
     if (lpLastAccessTime)
-	utimbuf.actime	= DOSFS_FileTimeToUnixTime(lpLastAccessTime);
+	utimbuf.actime	= DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
     else
 	utimbuf.actime	= 0; /* FIXME */
     if (lpLastWriteTime)
-	utimbuf.modtime	= DOSFS_FileTimeToUnixTime(lpLastWriteTime);
+	utimbuf.modtime	= DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
     else
 	utimbuf.modtime	= 0; /* FIXME */
     if (-1==utime(file->unix_name,&utimbuf))

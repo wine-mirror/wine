@@ -280,7 +280,6 @@ static XFontStruct * FONT_MatchFont( LOGFONT16 * font, DC * dc )
     if (!*font->lfFaceName)
       ParseFontParms(*names, 2, font->lfFaceName , LF_FACESIZE-1);
     /* we need a font name for function GetTextFace() even if there isn't one ;-) */  
-    /*AnsiUpper(font->lfFaceName);*/
 
     fontStruct = XLoadQueryFont( display, *names );
     XFreeFontNames( names );
@@ -1372,7 +1371,6 @@ void InitFontsList(void)
     dprintf_font(stddeb,"InitFontsList // names[%d]='%s' \n", i, names[i]);
 
     ParseFontParms(names[i], 2, str, sizeof(str));
-/*    AnsiUpper(str);*/
     strcpy(lpNewFont->lfFaceName, str);
     ParseFontParms(names[i], 8, str, sizeof(str));
     lpNewFont->lfHeight = atoi(str) / 10;
@@ -1535,7 +1533,6 @@ INT16 EnumFontFamiliesEx16(HDC16 hDC, LPLOGFONT16 lpLF, FONTENUMPROCEX16 lpEnumF
   }
   lpOldName = NULL;
   strcpy(FaceName,lpLF->lfFaceName);
-/*  AnsiUpper(lpLF->lfFaceName);*/
 
   if (lpLogFontList[0] == NULL) InitFontsList();
   for(i = 0; lpLogFontList[i] != NULL; i++) {
@@ -1616,7 +1613,6 @@ INT32 EnumFontFamiliesEx32A(HDC32 hDC, LPLOGFONT32A lpLF,FONTENUMPROCEX32A lpEnu
   }
   lpOldName = NULL;
   strcpy(FaceName,lpLF->lfFaceName);
-/*  AnsiUpper(lpLF->lfFaceName);*/
 
   if (lpLogFontList[0] == NULL) InitFontsList();
   for(i = 0; lpLogFontList[i] != NULL; i++) {
@@ -1694,7 +1690,6 @@ INT32 EnumFontFamiliesEx32W(HDC32 hDC, LPLOGFONT32W lpLF, FONTENUMPROCEX32W lpEn
   }
   lpOldName = NULL;
   lpszFamily = HEAP_strdupWtoA( GetProcessHeap(), 0, lpLF->lfFaceName );
-  AnsiUpper(lpszFamily);
   if (lpLogFontList[0] == NULL) InitFontsList();
   for(i = 0; lpLogFontList[i] != NULL; i++) {
     /* lfCharSet */

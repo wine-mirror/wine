@@ -15,7 +15,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "winbase.h"
-#include "handle32.h"
+#include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -138,7 +138,7 @@ void MEMORY_InsertVrange(VRANGE_OBJECT *r)
 
 VRANGE_OBJECT *MEMORY_AllocVrange(int start,int size)
 {
-	VRANGE_OBJECT *ret=CreateKernelObject(sizeof(VRANGE_OBJECT));
+	VRANGE_OBJECT *ret=HeapAlloc( SystemHeap, 0, sizeof(VRANGE_OBJECT));
 	MEMORY_InsertVrange(ret);
 	return ret;
 }
@@ -149,7 +149,7 @@ void MEMORY_ReleaseVrange(VRANGE_OBJECT *r)
 	if(MEMORY_ranges==r)
 	{
 		MEMORY_ranges=r->next;
-		ReleaseKernelObject(r);
+		HeapFree( SystemHeap, 0, r );
 		return;
 	}
 	for(it=MEMORY_ranges;it;it=it->next)
@@ -160,7 +160,7 @@ void MEMORY_ReleaseVrange(VRANGE_OBJECT *r)
 		return;
 	}
 	it->next=r->next;
-	ReleaseKernelObject(r);
+	HeapFree( SystemHeap, 0, r );
 }
 
 /***********************************************************************

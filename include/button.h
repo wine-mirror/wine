@@ -4,8 +4,8 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef BUTTON_H
-#define BUTTON_H
+#ifndef __WINE_BUTTON_H
+#define __WINE_BUTTON_H
 
 #include "windows.h"
 
@@ -31,4 +31,4 @@ typedef struct
 extern LRESULT ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
                               WPARAM32 wParam, LPARAM lParam );
 
-#endif  /* BUTTON_H */
+#endif  /* __WINE_BUTTON_H */

@@ -8,24 +8,330 @@
  * that run under Windows-NT for example.  I doubt that this would work well
  * for 16 bit applications, but I don't think it really matters since the
  * file format is different, and we should never get in here in such cases.
+ *
+ * TODO:
+ *	Get 16 bit CV stuff working.
+ *	Add symbol size to internal symbol table.
  */
 
 #include <stdio.h>
-
+#include <stdlib.h>
 
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <limits.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <malloc.h>
 
 #include "win.h"
 #include "pe_image.h"
+#include "peexe.h"
 #include "debugger.h"
 #include "peexe.h"
 #include "xmalloc.h"
+
+/*
+ * This is used so that we have some idea of what we are in fact loading
+ * at any given time.
+ */
+char * DEBUG_curr_module = NULL;
+
+/*
+ * This is an index we use to keep track of the debug information
+ * when we have multiple sources.  We use the same database to also
+ * allow us to do an 'info shared' type of deal, and we use the index
+ * to eliminate duplicates.
+ */
+static int DEBUG_next_index = 0;
+
+union any_size
+{
+  char		 * c;
+  short		 * s;
+  int		 * i;
+  unsigned int   * ui;
+};
+
+/*
+ * This is a convenience structure used to map portions of the
+ * line number table.
+ */
+struct startend
+{
+  unsigned int	  start;
+  unsigned int	  end;
+};
+
+/*
+ * This is how we reference the various record types.
+ */
+union codeview_symbol
+{
+  struct
+  {
+    short int	len;
+    short int	id;
+  } generic;
+
+  struct
+  {
+	short int	len;
+	short int	id;
+	unsigned int	offset;
+	unsigned short	seg;
+	unsigned short	symtype;
+	unsigned char	namelen;
+	unsigned char	name[1];
+  } data;
+
+  struct
+  {
+	short int	len;
+	short int	id;
+	unsigned int	pparent;
+	unsigned int	pend;
+	unsigned int	next;
+	unsigned int	offset;
+	unsigned short	segment;
+	unsigned short	thunk_len;
+	unsigned char	thtype;
+	unsigned char	namelen;
+	unsigned char	name[1];
+  } thunk;
+  struct
+  {
+	short int	len;
+	short int	id;
+	unsigned int	pparent;
+	unsigned int	pend;
+	unsigned int	next;
+	unsigned int	proc_len;
+	unsigned int	debug_start;
+	unsigned int	debug_end;
+	unsigned int	offset;
+	unsigned short	segment;
+	unsigned short	proctype;
+	unsigned char	flags;
+	unsigned char	namelen;
+	unsigned char	name[1];
+  } proc;
+  struct
+  {
+	short int	len;	/* Total length of this entry */
+	short int	id;		/* Always S_BPREL32 */
+	unsigned int	offset;	/* Stack offset relative to BP */
+	unsigned short	symtype;
+	unsigned char	namelen;
+	unsigned char	name[1];
+  } stack;
+};
+
+union codeview_type
+{
+  struct
+  {
+    short int	len;
+    short int	id;
+  } generic;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		attribute;
+    short int		datatype;
+    unsigned char	variant[1];
+  } pointer;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    unsigned char	nbits;
+    unsigned char	bitoff;
+    unsigned short	type;
+  } bitfield;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		elemtype;
+    short int		idxtype;
+    unsigned char	arrlen;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } array;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		n_element;
+    short int		fieldlist;
+    short int		property;
+    short int		derived;
+    short int		vshape;
+    unsigned short	structlen;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } structure;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		count;
+    short int		field;
+    short int		property;
+    unsigned short	un_len;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } t_union;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		count;
+    short int		type;
+    short int		field;
+    short int		property;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } enumeration;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned short int	value;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } enumerate;
+
+  struct
+  {
+    short int		id;
+    short int		type;
+    short int		attribute;
+    unsigned short int	offset;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } member;
+
+  struct
+  {
+    short int		len;
+    short int		id;
+    short int		count;
+    short int		type;
+    short int		field;
+    short int		property;
+    unsigned char	namelen;
+    unsigned char	name[1];
+  } fieldlist;
+
+};
+
+#define S_BPREL32	0x200
+#define S_LDATA32	0x201
+#define S_GDATA32	0x202
+#define S_PUB32		0x203
+#define S_LPROC32	0x204
+#define S_GPROC32	0x205
+#define S_THUNK32	0x206
+#define S_BLOCK32	0x207
+#define S_WITH32	0x208
+#define S_LABEL32	0x209
+
+#define S_PROCREF	0x400
+#define S_DATAREF	0x401
+#define S_ALIGN		0x402
+#define S_UNKNOWN	0x403
+
+/*
+ * This covers the basic datatypes that VC++ seems to be using these days.
+ * 32 bit mode only.  There are additional numbers for the pointers in 16
+ * bit mode.  There are many other types listed in the documents, but these
+ * are apparently not used by the compiler, or represent pointer types
+ * that are not used.
+ */
+#define T_NOTYPE	0x0000	/* Notype */
+#define T_ABS		0x0001	/* Abs */
+#define T_VOID		0x0003	/* Void */
+#define T_CHAR		0x0010	/* signed char */
+#define T_SHORT		0x0011	/* short */
+#define T_LONG		0x0012	/* long */
+#define T_QUAD		0x0013	/* long long */
+#define T_UCHAR		0x0020	/* unsigned  char */
+#define T_USHORT	0x0021	/* unsigned short */
+#define T_ULONG		0x0022	/* unsigned long */
+#define T_UQUAD		0x0023	/* unsigned long long */
+#define T_REAL32	0x0040	/* float */
+#define T_REAL64	0x0041	/* double */
+#define T_RCHAR		0x0070	/* real char */
+#define T_WCHAR		0x0071	/* wide char */
+#define T_INT4		0x0074	/* int */
+#define T_UINT4		0x0075	/* unsigned int */
+
+#define T_32PVOID	0x0403	/* 32 bit near pointer to void */
+#define T_32PCHAR	0x0410  /* 16:32 near pointer to signed char */
+#define T_32PSHORT	0x0411  /* 16:32 near pointer to short */
+#define T_32PLONG	0x0412  /* 16:32 near pointer to int */
+#define T_32PQUAD	0x0413  /* 16:32 near pointer to long long */
+#define T_32PUCHAR	0x0420  /* 16:32 near pointer to unsigned char */
+#define T_32PUSHORT	0x0421  /* 16:32 near pointer to unsigned short */
+#define T_32PULONG	0x0422	/* 16:32 near pointer to unsigned int */
+#define T_32PUQUAD	0x0423  /* 16:32 near pointer to long long */
+#define T_32PREAL32	0x0440	/* 16:32 near pointer to float */
+#define T_32PREAL64	0x0441	/* 16:32 near pointer to float */
+#define T_32PRCHAR	0x0470	/* 16:32 near pointer to real char */
+#define T_32PWCHAR	0x0471	/* 16:32 near pointer to real char */
+#define T_32PINT4	0x0474	/* 16:32 near pointer to int */
+#define T_32PUINT4	0x0475  /* 16:32 near pointer to unsigned int */
+
+#define LF_MODIFIER	0x1
+#define LF_POINTER	0x2
+#define LF_ARRAY	0x3
+#define LF_CLASS	0x4
+#define LF_STRUCTURE	0x5
+#define LF_UNION	0x6
+#define LF_ENUMERATION	0x7
+#define LF_PROCEDURE	0x8
+#define LF_MFUNCTION	0x9
+#define LF_VTSHAPE	0xa
+#define LF_BARRAY	0xd
+#define LF_DIMARRAY	0x11
+#define LF_VFTPATH	0x12
+
+#define LF_SKIP		0x200
+#define LF_ARGLIST	0x201
+#define LF_FIELDLIST	0x204
+#define LF_DERIVED	0x205
+#define LF_BITFIELD	0x206
+
+#define LF_BCLASS	0x400
+#define LF_VBCLASS	0x401
+#define LF_IVBCLASS	0x402
+#define LF_ENUMERATE	0x403
+#define LF_FRIENDFCN	0x404
+#define LF_INDEX	0x405
+#define LF_MEMBER	0x406
+#define LF_STMEMBER	0x407
+#define LF_METHOD	0x408
+#define LF_NESTEDTYPE	0x409
+#define LF_VFUNCTAB	0x40a
+#define LF_FRIENDCLS	0x40b
+#define LF_ONEMETHOD	0x40c
+#define LF_FUNCOFF	0x40d
+
+#define MAX_BUILTIN_TYPES	0x480
+static struct datatype * cv_basic_types[MAX_BUILTIN_TYPES];
+static int num_cv_defined_types = 0;
+static struct datatype **cv_defined_types = NULL;
 
 /*
  * For the type CODEVIEW debug directory entries, the debug directory
@@ -60,14 +366,19 @@ struct CoffDebug {
 };
 
 struct CoffLinenum {
-	unsigned int	VirtualAddr;
-	unsigned int	Linenum;
+	unsigned int		VirtualAddr;
+	unsigned short int	Linenum;
 };
 
 struct CoffFiles {
 	unsigned int	startaddr;
 	unsigned int	endaddr;
 	char	      * filename;
+	int		linetab_offset;
+	int		linecnt;
+	struct name_hash **entries;
+	int		       neps;
+	int		 neps_alloc;
 };
 
 
@@ -95,14 +406,118 @@ struct CoffAuxSection{
   char           Selection;
 } Section;
 
+/*
+ * These two structures are used in the directory within a .DBG file
+ * to locate the individual important bits that we might want to see.
+ */
+struct CV4_DirHead {
+  short unsigned int	   dhsize;
+  short unsigned int	   desize;
+  unsigned int		   ndir;
+  unsigned int		   next_offset;
+  unsigned int		   flags;
+};
+
+struct CV4_DirEnt {
+  short unsigned int	   subsect_number;
+  short unsigned int	   module_number;
+  unsigned int		   offset;
+  unsigned int		   size;
+};
+
+/*
+ * These are the values of interest that the subsect_number field takes.
+ */
+#define	sstAlignSym		0x125
+#define	sstSrcModule		0x127
+
+struct codeview_linetab_hdr
+{
+  unsigned int		   nline;
+  unsigned int		   segno;
+  unsigned int		   start;
+  unsigned int		   end;
+  char			 * sourcefile;
+  unsigned short	 * linetab;
+  unsigned int		 * offtab;
+};
+
+struct codeview_pdb_hdr
+{
+  char		ident[44];
+  unsigned int	blocksize;	   /* Extent size */
+  unsigned short loc_freelist;   /* freelist. */
+  unsigned short alloc_filesize; /* # extents allocated. */
+  unsigned int	toc_len;
+  unsigned int	unknown;
+  unsigned short toc_ext[1];	   /* array of extent #'s for toc. */
+};
+
+/*
+ * This is our own structure that we use to keep track of the contents
+ * of a PDB file.
+ */
+struct file_list
+{
+	int		record_len;
+	int		nextents;
+	short int     * extent_list;
+	unsigned int	linetab_offset;
+	unsigned int	linetab_len;
+};
+
+/*
+ * These are the structures that represent how the file table is set up
+ * within the PDB file.
+ */
+struct filetab_hdr
+{
+  unsigned short	tab1_file;
+  unsigned short	tab2_file;
+  unsigned short	gsym_file;
+  unsigned short	padding;
+  unsigned int		ftab_len;
+  unsigned int		fofftab_len;
+  unsigned int		hash_len;
+  unsigned int		strtab_len;
+};
+
+struct file_ent
+{
+  unsigned int		reserved1;
+  unsigned short	datasect_segment;
+  unsigned short	reserved2;
+  unsigned int		datasect_offset;
+  unsigned int		datasect_size;
+  unsigned int		datasect_flags;
+  unsigned short	reserved3;
+  unsigned short	index;
+  unsigned short	num6a;
+  unsigned short	file_number;
+  unsigned int		linetab_offset;
+  unsigned int		linetab_len;
+  unsigned int		num9;
+  unsigned int		num10;
+  unsigned int		num11;
+  unsigned char		filename[1];
+};
+
+/*
+ ********************************************************************
+ */
 struct deferred_debug_info
 {
 	struct deferred_debug_info	* next;
 	char				* load_addr;
+	char				* module_name;
 	char				* dbg_info;
 	int				  dbg_size;
 	struct PE_Debug_dir		* dbgdir;
 	struct pe_data			* pe;
+        struct pe_segment_table         * sectp;
+	int				  nsect;
+	short int			  dbg_index;			
+	char				  loaded;
 };
 
 struct deferred_debug_info * dbglist = NULL;
@@ -124,6 +539,329 @@ struct deferred_debug_info * dbglist = NULL;
 #define IMAGE_SYM_CLASS_STATIC              0x3
 #define IMAGE_SYM_CLASS_FILE                0x67
 
+static 
+struct datatype * DEBUG_GetCVType(int typeno)
+{
+  struct datatype * dt = NULL;
+
+  /*
+   * Convert Codeview type numbers into something we can grok internally.
+   * Numbers < 0x1000 are all fixed builtin types.  Numbers from 0x1000 and
+   * up are all user defined (structs, etc).
+   */
+  if( typeno < 0x1000 )
+    {
+      if( typeno < MAX_BUILTIN_TYPES )
+	{
+	  dt = cv_basic_types[typeno];
+	}
+    }
+  else
+    {
+      if( typeno - 0x1000 < num_cv_defined_types )
+	{
+	  dt = cv_defined_types[typeno - 0x1000];
+	} 
+    }
+
+  return dt;
+}
+
+static int
+DEBUG_ParseTypeTable(char * table, int len)
+{
+  int				  arr_max;
+  int				  curr_type;
+  enum debug_type		  fieldtype;
+  int				  elem_size;
+  union any_size		  ptr;
+  union any_size		  ptr2;
+  struct datatype		* subtype;
+  char				  symname[256];
+  union codeview_type		* type;
+  union codeview_type		* type2;
+  struct datatype		* typeptr;
+
+  curr_type = 0x1000;
+
+  ptr = (union any_size) (table + 16);
+  while( ptr.c - table < len )
+    {
+      type = (union codeview_type *) ptr.c;
+
+      if( curr_type - 0x1000 >= num_cv_defined_types )
+	{
+	  num_cv_defined_types += 0x100;
+	  cv_defined_types = (struct datatype **) realloc(cv_defined_types,
+		  num_cv_defined_types * sizeof(struct datatype *));
+	  memset(cv_defined_types + num_cv_defined_types - 0x100,
+		 0,
+		 0x100 * sizeof(struct datatype *));
+	  if( cv_defined_types == NULL )
+	    {
+	      return FALSE;
+	    }
+	}
+
+      switch(type->generic.id)
+	{
+	case LF_POINTER:
+	  cv_defined_types[curr_type - 0x1000] = 
+	    DEBUG_FindOrMakePointerType(DEBUG_GetCVType(type->pointer.datatype));
+	  break;
+	case LF_ARRAY:
+	  if( type->array.arrlen >= 0x8000 )
+	    {
+	      /*
+	       * This is a numeric leaf, I am too lazy to handle this right
+	       * now.
+	       */
+	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      break;
+	    }
+	  if( type->array.namelen != 0 )
+	    {
+	      memset(symname, 0, sizeof(symname));
+	      memcpy(symname, type->array.name, type->array.namelen);
+	      typeptr = DEBUG_NewDataType(ARRAY, symname);
+	    }
+	  else
+	    {
+	      typeptr = DEBUG_NewDataType(ARRAY, NULL);
+	    }
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  subtype = DEBUG_GetCVType(type->array.elemtype);
+	  if(    (subtype == NULL)
+	      || (elem_size = DEBUG_GetObjectSize(subtype)) == 0 )
+	    {
+	      arr_max = 0;
+	    }
+	  else
+	    {
+	      arr_max = type->array.arrlen / DEBUG_GetObjectSize(subtype);
+	    }
+
+	  DEBUG_SetArrayParams(typeptr, 0, arr_max, subtype);
+	  break;
+	case LF_FIELDLIST:
+	  /*
+	   * This is where the basic list of fields is defined for
+	   * structures and classes.
+	   *
+	   * First, we need to look ahead and see whether we are building
+	   * a fieldlist for an enum or a struct.
+	   */
+	  ptr2.i = ptr.i + 1;
+	  type2 = (union codeview_type *) ptr2.c;
+	  if( type2->member.id == LF_MEMBER )
+	    {
+	      typeptr = DEBUG_NewDataType(STRUCT, NULL);
+	      fieldtype = STRUCT;
+	    }
+	  else if( type2->member.id == LF_ENUMERATE )
+	    {
+	      typeptr = DEBUG_NewDataType(ENUM, NULL);
+	      fieldtype = ENUM;
+	    }
+	  else
+	    {
+	      break;
+	    }
+
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+	  while( ptr2.c < (ptr.c + ((type->generic.len + 3) & ~3)) )
+	    {
+	      type2 = (union codeview_type *) ptr2.c;
+	      if( type2->member.id == LF_MEMBER && fieldtype == STRUCT )
+		{
+		  memset(symname, 0, sizeof(symname));
+		  memcpy(symname, type2->member.name, type2->member.namelen);
+		  
+		  subtype = DEBUG_GetCVType(type2->member.type);
+		  elem_size = 0;
+		  if( subtype != NULL )
+		    {
+		      elem_size = DEBUG_GetObjectSize(subtype);
+		    }
+		  
+		  if( type2->member.offset >= 0x8000 )
+		    {
+		      /*
+		       * This is a numeric leaf, I am too lazy to handle this right
+		       * now.
+		       */
+		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		    }
+		  else
+		    {
+		      DEBUG_AddStructElement(typeptr, symname, subtype, 
+					     type2->member.offset << 3,
+					     elem_size << 3);
+		    }
+		}
+	      else if( type2->member.id == LF_ENUMERATE && fieldtype == ENUM )
+		{
+		  memset(symname, 0, sizeof(symname));
+		  memcpy(symname, type2->enumerate.name, type2->enumerate.namelen);
+		  
+		  if( type2->enumerate.value >= 0x8000 )
+		    {
+		      /*
+		       * This is a numeric leaf, I am too lazy to handle this right
+		       * now.
+		       */
+		      fprintf(stderr, "Ignoring large numberic leaf.\n");
+		    }
+		  else
+		    {
+		      DEBUG_AddStructElement(typeptr, symname, NULL, 
+					     type2->enumerate.value, 0);
+		    }
+		}
+	      else
+		{
+		  /*
+		   * Something else I have never seen before.  Either wrong type of
+		   * object in the fieldlist, or some other problem which I wouldn't
+		   * really know how to handle until it came up.
+		   */
+		  fprintf(stderr, "Unexpected entry in fieldlist\n");
+		  break;
+		}
+
+
+	      ptr2.c += ((type2->member.namelen + 9 + 3) & ~3);
+	    }
+	  break;
+	case LF_STRUCTURE:
+	case LF_CLASS:
+	  if( type->structure.structlen >= 0x8000 )
+	    {
+	      /*
+	       * This is a numeric leaf, I am too lazy to handle this right
+	       * now.
+	       */
+	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      break;
+	    }
+	  memset(symname, 0, sizeof(symname));
+	  memcpy(symname, type->structure.name, type->structure.namelen);
+	  typeptr = DEBUG_NewDataType(STRUCT, symname);
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  /*
+	   * Now copy the relevant bits from the fieldlist that we specified.
+	   */
+	  subtype = DEBUG_GetCVType(type->structure.fieldlist);
+	  DEBUG_SetStructSize(typeptr, type->structure.structlen);
+
+	  if( subtype != NULL )
+	    {
+	      DEBUG_CopyFieldlist(typeptr, subtype);
+	    }
+	  break;
+	case LF_UNION:
+	  if( type->t_union.un_len >= 0x8000 )
+	    {
+	      /*
+	       * This is a numeric leaf, I am too lazy to handle this right
+	       * now.
+	       */
+	      fprintf(stderr, "Ignoring large numberic leaf.\n");
+	      break;
+	    }
+	  memset(symname, 0, sizeof(symname));
+	  memcpy(symname, type->t_union.name, type->t_union.namelen);
+	  typeptr = DEBUG_NewDataType(STRUCT, symname);
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  /*
+	   * Now copy the relevant bits from the fieldlist that we specified.
+	   */
+	  subtype = DEBUG_GetCVType(type->t_union.field);
+	  DEBUG_SetStructSize(typeptr, type->t_union.un_len);
+
+	  if( subtype != NULL )
+	    {
+	      DEBUG_CopyFieldlist(typeptr, subtype);
+	    }
+	  break;
+	case LF_BITFIELD:
+	  typeptr = DEBUG_NewDataType(BITFIELD, NULL);
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+	  DEBUG_SetBitfieldParams(typeptr, type->bitfield.bitoff,
+				  type->bitfield.nbits, 
+				  DEBUG_GetCVType(type->bitfield.type));
+	  break;
+	case LF_ENUMERATION:
+	  memset(symname, 0, sizeof(symname));
+	  memcpy(symname, type->enumeration.name, type->enumeration.namelen);
+	  typeptr = DEBUG_NewDataType(ENUM, symname);
+	  cv_defined_types[curr_type - 0x1000] = typeptr;
+
+	  /*
+	   * Now copy the relevant bits from the fieldlist that we specified.
+	   */
+	  subtype = DEBUG_GetCVType(type->enumeration.field);
+
+	  if( subtype != NULL )
+	    {
+	      DEBUG_CopyFieldlist(typeptr, subtype);
+	    }
+	  break;
+	case LF_DIMARRAY:
+	default:
+	  break;
+	}
+      curr_type++;
+      ptr.c += (type->generic.len + 3) & ~3;
+    }
+
+  return TRUE;
+}
+
+void
+DEBUG_InitCVDataTypes()
+{
+  /*
+   * These are the common builtin types that are used by VC++.
+   */
+  cv_basic_types[T_NOTYPE] = NULL;
+  cv_basic_types[T_ABS] = NULL;
+  cv_basic_types[T_VOID] = DEBUG_NewDataType(BASIC, "void");
+  cv_basic_types[T_CHAR] = DEBUG_NewDataType(BASIC, "char");
+  cv_basic_types[T_SHORT] = DEBUG_NewDataType(BASIC, "short int");
+  cv_basic_types[T_LONG] = DEBUG_NewDataType(BASIC, "long int");
+  cv_basic_types[T_QUAD] = DEBUG_NewDataType(BASIC, "long long int");
+  cv_basic_types[T_UCHAR] = DEBUG_NewDataType(BASIC, "unsigned char");
+  cv_basic_types[T_USHORT] = DEBUG_NewDataType(BASIC, "short unsigned int");
+  cv_basic_types[T_ULONG] = DEBUG_NewDataType(BASIC, "long unsigned int");
+  cv_basic_types[T_UQUAD] = DEBUG_NewDataType(BASIC, "long long unsigned int");
+  cv_basic_types[T_REAL32] = DEBUG_NewDataType(BASIC, "float");
+  cv_basic_types[T_REAL64] = DEBUG_NewDataType(BASIC, "double");
+  cv_basic_types[T_RCHAR] = DEBUG_NewDataType(BASIC, "char");
+  cv_basic_types[T_WCHAR] = DEBUG_NewDataType(BASIC, "short");
+  cv_basic_types[T_INT4] = DEBUG_NewDataType(BASIC, "int");
+  cv_basic_types[T_UINT4] = DEBUG_NewDataType(BASIC, "unsigned int");
+
+  cv_basic_types[T_32PVOID] = DEBUG_FindOrMakePointerType(cv_basic_types[T_VOID]);
+  cv_basic_types[T_32PCHAR] = DEBUG_FindOrMakePointerType(cv_basic_types[T_CHAR]);
+  cv_basic_types[T_32PSHORT] = DEBUG_FindOrMakePointerType(cv_basic_types[T_SHORT]);
+  cv_basic_types[T_32PLONG] = DEBUG_FindOrMakePointerType(cv_basic_types[T_LONG]);
+  cv_basic_types[T_32PQUAD] = DEBUG_FindOrMakePointerType(cv_basic_types[T_QUAD]);
+  cv_basic_types[T_32PUCHAR] = DEBUG_FindOrMakePointerType(cv_basic_types[T_UCHAR]);
+  cv_basic_types[T_32PUSHORT] = DEBUG_FindOrMakePointerType(cv_basic_types[T_USHORT]);
+  cv_basic_types[T_32PULONG] = DEBUG_FindOrMakePointerType(cv_basic_types[T_ULONG]);
+  cv_basic_types[T_32PUQUAD] = DEBUG_FindOrMakePointerType(cv_basic_types[T_UQUAD]);
+  cv_basic_types[T_32PREAL32] = DEBUG_FindOrMakePointerType(cv_basic_types[T_REAL32]);
+  cv_basic_types[T_32PREAL64] = DEBUG_FindOrMakePointerType(cv_basic_types[T_REAL64]);
+  cv_basic_types[T_32PRCHAR] = DEBUG_FindOrMakePointerType(cv_basic_types[T_RCHAR]);
+  cv_basic_types[T_32PWCHAR] = DEBUG_FindOrMakePointerType(cv_basic_types[T_WCHAR]);
+  cv_basic_types[T_32PINT4] = DEBUG_FindOrMakePointerType(cv_basic_types[T_INT4]);
+  cv_basic_types[T_32PUINT4] = DEBUG_FindOrMakePointerType(cv_basic_types[T_UINT4]);
+}
+
 /*
  * In this function, we keep track of deferred debugging information
  * that we may need later if we were to need to use the internal debugger.
@@ -133,16 +871,45 @@ int
 DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe, 
 			int load_addr, u_long v_addr, u_long size)
 {
+  int			  has_codeview = FALSE;
   int			  rtn = FALSE;
+  int			  orig_size;
   struct PE_Debug_dir	* dbgptr;
   struct deferred_debug_info * deefer;
 
+  orig_size = size;
+  dbgptr = (struct PE_Debug_dir *) (load_addr + v_addr);
+  for(; size > 0; size -= sizeof(*dbgptr), dbgptr++ )
+    {
+      switch(dbgptr->type)
+	{
+	case IMAGE_DEBUG_TYPE_CODEVIEW:
+	case IMAGE_DEBUG_TYPE_MISC:
+	  has_codeview = TRUE;
+	  break;
+	}
+    }
+
+  size = orig_size;
   dbgptr = (struct PE_Debug_dir *) (load_addr + v_addr);
   for(; size > 0; size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->type)
 	{
 	case IMAGE_DEBUG_TYPE_COFF:
+	  /*
+	   * If we have both codeview and COFF debug info, ignore the
+	   * coff debug info as  it would just confuse us, and it is 
+	   * less complete.
+	   *
+	   * FIXME - this is broken - if we cannot find the PDB file, then
+	   * we end up with no debugging info at all.  In this case, we
+	   * should use the COFF info as a backup.
+	   */
+	  if( has_codeview )
+	    {
+	      break;
+	    }
 	case IMAGE_DEBUG_TYPE_CODEVIEW:
 	case IMAGE_DEBUG_TYPE_MISC:
 	  /*
@@ -179,21 +946,63 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
 	  deefer->load_addr = (char *) load_addr;
 	  deefer->dbgdir = dbgptr;
 	  deefer->next = dbglist;
+	  deefer->loaded = FALSE;
+	  deefer->dbg_index = DEBUG_next_index;
+	  deefer->module_name = xstrdup(DEBUG_curr_module);
+
+	  deefer->sectp = pe->pe_seg;
+	  deefer->nsect = pe->pe_header->coff.NumberOfSections;
+
 	  dbglist = deefer;
 	  break;
 	default:
 	}
     }
 
+  DEBUG_next_index++;
+
   return (rtn);
 
 }
 
 /*
+ * ELF modules are also entered into the list - this is so that we
+ * can make 'info shared' types of displays possible.
+ */
+int
+DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name)
+{
+  struct deferred_debug_info * deefer;
+
+  deefer = (struct deferred_debug_info *) xmalloc(sizeof(*deefer));
+  deefer->pe = NULL;
+  
+  /*
+   * Read the important bits.  What we do after this depends
+   * upon the type, but this is always enough so we are able
+   * to proceed if we know what we need to do next.
+   */
+  deefer->dbg_size = size;
+  deefer->dbg_info = (char *) NULL;
+  
+  deefer->load_addr = (char *) load_addr;
+  deefer->dbgdir = NULL;
+  deefer->next = dbglist;
+  deefer->loaded = TRUE;
+  deefer->dbg_index = DEBUG_next_index;
+  deefer->module_name = xstrdup(name);
+  dbglist = deefer;
+
+  DEBUG_next_index++;
+
+  return (TRUE);
+}
+
+
+
+/*
  * Process COFF debugging information embedded in a Win32 application.
  *
- * FIXME - we need to process the source file information and the line
- * numbers.
  */
 static
 int
@@ -201,28 +1010,34 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 {
   struct CoffAuxSection * aux;
   struct CoffDebug   * coff;
-  struct CoffSymbol  * coff_sym;
-  struct CoffSymbol  * coff_symbol;
+  struct CoffFiles   * coff_files = NULL;
   struct CoffLinenum * coff_linetab;
   char		     * coff_strtab;
+  struct CoffSymbol  * coff_sym;
+  struct CoffSymbol  * coff_symbol;
+  struct CoffFiles   * curr_file = NULL;
   int		       i;
-  DBG_ADDR	       new_addr;
-  int		       rtn = FALSE;
-  int		       naux;
+  int		       j;
+  int		       k;
+  struct CoffLinenum * linepnt;
+  int		       linetab_indx;
   char		       namebuff[9];
   char		     * nampnt;
+  int		       naux;
+  DBG_ADDR	       new_addr;
   int		       nfiles = 0;
   int		       nfiles_alloc = 0;
-  struct CoffFiles   * coff_files = NULL;
-  struct CoffFiles   * curr_file = NULL;
-  char		     * this_file;
-  int		       j;
+  struct CoffFiles     orig_file;
+  int		       rtn = FALSE;
+  char		     * this_file = NULL;
 
   coff = (struct CoffDebug *) deefer->dbg_info;
 
   coff_symbol = (struct CoffSymbol *) ((unsigned int) coff + coff->SymbolOffset);
   coff_linetab = (struct CoffLinenum *) ((unsigned int) coff + coff->LinenumberOffset);
   coff_strtab = (char *) ((unsigned int) coff_symbol + 18*coff->N_Sym);
+
+  linetab_indx = 0;
 
   for(i=0; i < coff->N_Sym; i++ )
     {
@@ -252,6 +1067,15 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	  curr_file->startaddr = 0xffffffff;
 	  curr_file->endaddr   = 0;
 	  curr_file->filename =  ((char *) coff_sym) + 18;
+	  curr_file->linetab_offset = -1;
+	  curr_file->linecnt = 0;
+	  curr_file->entries = NULL;
+	  curr_file->neps = curr_file->neps_alloc = 0;
+#if 0
+	  fprintf(stderr,"New file %s\n", curr_file->filename);
+#endif
+	  i += naux;
+	  continue;
 	}
 
       /*
@@ -262,9 +1086,67 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
        */
       if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_STATIC)
 	  && (naux != 0)
+	  && (coff_sym->Type == 0)
 	  && (coff_sym->SectionNumber == 1) )
 	{
 	  aux = (struct CoffAuxSection *) ((unsigned int) coff_sym + 18);
+
+	  if( curr_file->linetab_offset != -1 )
+	    {
+#if 0
+	      fprintf(stderr, "Duplicating sect from %s: %x %x %x %d %d\n",
+		      curr_file->filename,
+		      aux->Length,
+		      aux->NumberOfRelocations,
+		      aux->NumberOfLinenumbers,
+		      aux->Number,
+		      aux->Selection);
+	      fprintf(stderr, "More sect %d %x %d %d %d\n", 
+		      coff_sym->SectionNumber,
+		      coff_sym->Value,
+		      coff_sym->Type,
+		      coff_sym->StorageClass,
+		      coff_sym->NumberOfAuxSymbols);
+#endif
+
+	      /*
+	       * Save this so we can copy bits from it.
+	       */
+	      orig_file = *curr_file;
+
+	      /*
+	       * Duplicate the file entry.  We have no way to describe
+	       * multiple text sections in our current way of handling things.
+	       */
+	      if( nfiles + 1 >= nfiles_alloc )
+		{
+		  nfiles_alloc += 10;
+		  coff_files = (struct CoffFiles *) realloc( coff_files,
+							     nfiles_alloc * sizeof(struct CoffFiles));
+		}
+	      curr_file = coff_files + nfiles;
+	      nfiles++;
+	      curr_file->startaddr = 0xffffffff;
+	      curr_file->endaddr   = 0;
+	      curr_file->filename = orig_file.filename;
+	      curr_file->linetab_offset = -1;
+	      curr_file->linecnt = 0;
+	      curr_file->entries = NULL;
+	      curr_file->neps = curr_file->neps_alloc = 0;
+	    }
+#if 0
+	  else
+	    {
+	      fprintf(stderr, "New text sect from %s: %x %x %x %d %d\n",
+		      curr_file->filename,
+		      aux->Length,
+		      aux->NumberOfRelocations,
+		      aux->NumberOfLinenumbers,
+		      aux->Number,
+		      aux->Selection);
+	    }
+#endif
+
 	  if( curr_file->startaddr > coff_sym->Value )
 	    {
 	      curr_file->startaddr = coff_sym->Value;
@@ -280,6 +1162,11 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      curr_file->endaddr = coff_sym->Value + aux->Length;
 	    }
 	  
+	  curr_file->linetab_offset = linetab_indx;
+	  curr_file->linecnt = aux->NumberOfLinenumbers;
+	  linetab_indx += aux->NumberOfLinenumbers;
+	  i += naux;
+	  continue;
 	}
 
       if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_STATIC)
@@ -302,9 +1189,28 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      nampnt = coff_strtab + coff_sym->N.Name.StrTaboff;
 	    }
 
+	  if( nampnt[0] == '_' )
+	    {
+	      nampnt++;
+	    }
+
 	  new_addr.seg = 0;
 	  new_addr.off = (int) (deefer->load_addr + coff_sym->Value);
-	  DEBUG_AddSymbol( nampnt, &new_addr, curr_file->filename );
+
+	  if( curr_file->neps + 1 >= curr_file->neps_alloc )
+	    {
+	      curr_file->neps_alloc += 10;
+	      curr_file->entries = (struct name_hash **) 
+		realloc( curr_file->entries, 
+			 curr_file->neps_alloc * sizeof(struct name_hash *));
+	    }
+#if 0
+	  fprintf(stderr,"\tAdding static symbol %s\n", nampnt);
+#endif
+	  curr_file->entries[curr_file->neps++] =
+	    DEBUG_AddSymbol( nampnt, &new_addr, this_file, SYM_WIN32 );
+	  i += naux;
+	  continue;
 	}
 
       if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
@@ -322,11 +1228,19 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 	      nampnt = coff_strtab + coff_sym->N.Name.StrTaboff;
 	    }
 
+
+	  if( nampnt[0] == '_' )
+	    {
+	      nampnt++;
+	    }
+
 	  new_addr.seg = 0;
 	  new_addr.off = (int) (deefer->load_addr + coff_sym->Value);
 
 #if 0
 	  fprintf(stderr, "%d: %x %s\n", i, new_addr.off, nampnt);
+
+	  fprintf(stderr,"\tAdding global symbol %s\n", nampnt);
 #endif
 
 	  /*
@@ -342,9 +1256,76 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
 		  break;
 		}
 	    }
-	  DEBUG_AddSymbol( nampnt, &new_addr, this_file );
+	  if( coff_files[j].neps + 1 >= coff_files[j].neps_alloc )
+	    {
+	      coff_files[j].neps_alloc += 10;
+	      coff_files[j].entries = (struct name_hash **) 
+		realloc( coff_files[j].entries, 
+			 coff_files[j].neps_alloc * sizeof(struct name_hash *));
+	    }
+	  coff_files[j].entries[coff_files[j].neps++] =
+	    DEBUG_AddSymbol( nampnt, &new_addr, this_file, SYM_WIN32 );
+	  i += naux;
+	  continue;
+	}
+
+      if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
+          && (coff_sym->SectionNumber > 0) )
+	{
+	  /*
+	   * Similar to above, but for the case of data symbols.
+	   * These aren't treated as entrypoints.
+	   */
+	  if( coff_sym->N.Name.NotLong )
+	    {
+	      memcpy(namebuff, coff_sym->N.ShortName, 8);
+	      namebuff[8] = '\0';
+	      nampnt = &namebuff[0];
+	    }
+	  else
+	    {
+	      nampnt = coff_strtab + coff_sym->N.Name.StrTaboff;
+	    }
+
+
+	  if( nampnt[0] == '_' )
+	    {
+	      nampnt++;
+	    }
+
+	  new_addr.seg = 0;
+	  new_addr.off = (int) (deefer->load_addr + coff_sym->Value);
+
+#if 0
+	  fprintf(stderr, "%d: %x %s\n", i, new_addr.off, nampnt);
+
+	  fprintf(stderr,"\tAdding global data symbol %s\n", nampnt);
+#endif
+
+	  /*
+	   * Now we need to figure out which file this guy belongs to.
+	   */
+	  DEBUG_AddSymbol( nampnt, &new_addr, NULL, SYM_WIN32 );
+	  i += naux;
+	  continue;
 	}
 	  
+      if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_STATIC)
+	  && (naux == 0) )
+	{
+	  /*
+	   * Ignore these.  They don't have anything to do with
+	   * reality.
+	   */
+	  i += naux;
+	  continue;
+	}
+
+#if 0
+      fprintf(stderr,"Skipping unknown entry %d %d %d\n", coff_sym->StorageClass, 
+	      coff_sym->SectionNumber, naux);
+#endif
+
       /*
        * For now, skip past the aux entries.
        */
@@ -352,15 +1333,946 @@ DEBUG_ProcessCoff(struct deferred_debug_info * deefer)
       
     }
     
+  /*
+   * OK, we now should have a list of files, and we should have a list
+   * of entrypoints.  We need to sort the entrypoints so that we are
+   * able to tie the line numbers with the given functions within the
+   * file.
+   */
+  if( coff_files != NULL )
+    {
+      for(j=0; j < nfiles; j++)
+	{
+	  if( coff_files[j].entries != NULL )
+	    {
+	      qsort(coff_files[j].entries, coff_files[j].neps,
+		    sizeof(struct name_hash *), DEBUG_cmp_sym);
+	    }
+	}
+
+      /*
+       * Now pick apart the line number tables, and attach the entries
+       * to the given functions.
+       */
+      for(j=0; j < nfiles; j++)
+	{
+	  i = 0;
+	  for(k=0; k < coff_files[j].linecnt; k++)
+	    {
+	      /*
+	       * Another monstrosity caused by the fact that we are using
+	       * a 6 byte structure, and gcc wants to pad structures to 4 byte
+	       * boundaries.  Otherwise we could just index into an array.
+	       */
+	      linepnt = (struct CoffLinenum *) 
+		((unsigned int) coff_linetab + 
+		 6*(coff_files[j].linetab_offset + k));
+	      /*
+	       * If we have spilled onto the next entrypoint, then
+	       * bump the counter..
+	       */
+	      while(TRUE)
+		{
+		  DEBUG_GetSymbolAddr(coff_files[j].entries[i+1], &new_addr);
+		  if(   (i+1 < coff_files[j].neps)
+			&& (   ((unsigned int) deefer->load_addr + linepnt->VirtualAddr)
+			       >= new_addr.off) )
+		    {
+		      i++;
+		    }
+		  else
+		    {
+		      break;
+		    }
+		}
+
+	      /*
+	       * Add the line number.  This is always relative to the
+	       * start of the function, so we need to subtract that offset
+	       * first.
+	       */
+	      DEBUG_GetSymbolAddr(coff_files[j].entries[i], &new_addr);
+	      DEBUG_AddLineNumber(coff_files[j].entries[i], 
+				  linepnt->Linenum,
+				  (unsigned int) deefer->load_addr 
+				  + linepnt->VirtualAddr 
+				  - new_addr.off);
+	    }
+	}
+    }
+
   rtn = TRUE;
 
   if( coff_files != NULL )
     {
+      for(j=0; j < nfiles; j++)
+	{
+	  if( coff_files[j].entries != NULL )
+	    {
+	      free(coff_files[j].entries);
+	    }
+	}
       free(coff_files);
     }
 
   return (rtn);
 
+}
+
+/*
+ * Process a codeview line number table.  Digestify the thing so that
+ * we can easily reference the thing when we process the rest of
+ * the information.
+ */
+static struct codeview_linetab_hdr *
+DEBUG_SnarfLinetab(char			     * linetab,
+		   int			       size)
+{
+  int				  file_segcount;
+  char				  filename[PATH_MAX];
+  unsigned int			* filetab;
+  char				* fn;
+  int				  i;
+  int				  k;
+  struct codeview_linetab_hdr   * lt_hdr;
+  unsigned int			* lt_ptr;
+  int				  nfile;
+  int				  nseg;
+  union any_size		  pnt;
+  union any_size		  pnt2;
+  struct startend		* start;
+  int				  this_seg;
+
+  /*
+   * Now get the important bits.
+   */
+  pnt = (union any_size) linetab;
+  nfile = *pnt.s++;
+  nseg = *pnt.s++;
+
+  filetab = (unsigned int *) pnt.c;
+
+  /*
+   * Now count up the number of segments in the file.
+   */
+  nseg = 0;
+  for(i=0; i<nfile; i++)
+    {
+      pnt2 = (union any_size) (linetab + filetab[i]);
+      nseg += *pnt2.s;
+    }
+
+  /*
+   * Next allocate the header we will be returning.
+   * There is one header for each segment, so that we can reach in
+   * and pull bits as required.
+   */
+  lt_hdr = (struct codeview_linetab_hdr *) 
+    xmalloc((nseg + 1) * sizeof(*lt_hdr));
+  if( lt_hdr == NULL )
+    {
+      goto leave;
+    }
+
+  memset(lt_hdr, 0, sizeof(*lt_hdr) * (nseg+1));
+
+  /*
+   * Now fill the header we will be returning, one for each segment.
+   * Note that this will basically just contain pointers into the existing
+   * line table, and we do not actually copy any additional information
+   * or allocate any additional memory.
+   */
+
+  this_seg = 0;
+  for(i=0; i<nfile; i++)
+    {
+      /*
+       * Get the pointer into the segment information.
+       */
+      pnt2 = (union any_size) (linetab + filetab[i]);
+      file_segcount = *pnt2.s;
+
+      pnt2.ui++;
+      lt_ptr = (unsigned int *) pnt2.c;
+      start = (struct startend *) (lt_ptr + file_segcount);
+
+      /*
+       * Now snarf the filename for all of the segments for this file.
+       */
+      fn = (unsigned char *) (start + file_segcount);
+      memset(filename, 0, sizeof(filename));
+      memcpy(filename, fn + 1, *fn);
+      fn = strdup(filename);
+
+      for(k = 0; k < file_segcount; k++, this_seg++)
+	{
+	  pnt2 = (union any_size) (linetab + lt_ptr[k]);
+	  lt_hdr[this_seg].start      = start[k].start;
+	  lt_hdr[this_seg].end	      = start[k].end;
+	  lt_hdr[this_seg].sourcefile = fn;
+	  lt_hdr[this_seg].segno      = *pnt2.s++;
+	  lt_hdr[this_seg].nline      = *pnt2.s++;
+	  lt_hdr[this_seg].offtab     =  pnt2.ui;
+	  lt_hdr[this_seg].linetab    = (unsigned short *) 
+	    (pnt2.ui + lt_hdr[this_seg].nline);
+	}
+    }
+
+leave:
+
+  return lt_hdr;
+
+}
+
+static int
+DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
+			  char			     * cv_data,
+			  int			       size,
+			  struct codeview_linetab_hdr * linetab)
+{
+  struct name_hash	* curr_func = NULL;
+  struct wine_locals	* curr_sym = NULL;
+  int			  i;
+  int			  j;
+  int			  len;
+  DBG_ADDR		  new_addr;
+  int			  nsect;
+  union any_size	  ptr;
+  struct pe_segment_table * sectp;
+  union	codeview_symbol	* sym;
+  char			  symname[PATH_MAX];
+  struct name_hash	* thunk_sym = NULL;
+
+  ptr = (union any_size) cv_data;
+  nsect = deefer->nsect;
+  sectp = deefer->sectp;
+
+  /*
+   * Skip over the first word.  Don't really know what it means, but
+   * it is useless.
+   */
+  ptr.ui++;
+
+  /*
+   * Loop over the different types of records and whenever we
+   * find something we are interested in, record it and move on.
+   */
+  while( ptr.c - cv_data < size )
+    {
+      sym = (union codeview_symbol *) ptr.c;
+
+      if( sym->generic.len - sizeof(int) == (ptr.c - cv_data) )
+	{
+	  /*
+	   * This happens when we have indirect symbols that VC++ 4.2
+	   * sometimes uses when there isn't a line number table.
+	   * We ignore it - we will process and enter all of the
+	   * symbols in the global symbol table anyways, so there
+	   * isn't much point in keeping track of all of this crap.
+	   */
+	  break;
+	}
+
+      memset(symname, 0, sizeof(symname));
+      switch(sym->generic.id)
+	{
+	case S_GDATA32:
+	case S_LDATA32:
+	case S_PUB32:
+	  /*
+	   * First, a couple of sanity checks.
+	   */
+	  if( sym->data.namelen == 0 )
+	    {
+	      break;
+	    }
+
+	  if( sym->data.seg == 0 || sym->data.seg > nsect )
+	    {
+	      break;
+	    }
+
+	  /*
+	   * Global and local data symbols.  We don't associate these
+	   * with any given source file.
+	   */
+
+	  memcpy(symname, sym->data.name, sym->data.namelen);
+	  new_addr.seg = 0;
+	  new_addr.type = DEBUG_GetCVType(sym->data.symtype);
+	  new_addr.off = (unsigned int) deefer->load_addr + 
+	    sectp[sym->data.seg - 1].Virtual_Address + 
+	    sym->data.offset;
+	  DEBUG_AddSymbol( symname, &new_addr, NULL, SYM_WIN32 | SYM_DATA );
+	  break;
+	case S_THUNK32:
+	  /*
+	   * Sort of like a global function, but it just points
+	   * to a thunk, which is a stupid name for what amounts to
+	   * a PLT slot in the normal jargon that everyone else uses.
+	   */
+	  memcpy(symname, sym->thunk.name, sym->thunk.namelen);
+	  new_addr.seg = 0;
+	  new_addr.type = NULL;
+	  new_addr.off = (unsigned int) deefer->load_addr + 
+	    sectp[sym->thunk.segment - 1].Virtual_Address + 
+	    sym->thunk.offset;
+	  thunk_sym = DEBUG_AddSymbol( symname, &new_addr, NULL, 
+				       SYM_WIN32 | SYM_FUNC);
+	  DEBUG_SetSymbolSize(thunk_sym, sym->thunk.thunk_len);
+	  break;
+	case S_GPROC32:
+	case S_LPROC32:
+	  /*
+	   * Global and static functions.
+	   */
+	  memcpy(symname, sym->proc.name, sym->proc.namelen);
+	  new_addr.seg = 0;
+	  new_addr.type = DEBUG_GetCVType(sym->proc.proctype);
+	  new_addr.off = (unsigned int) deefer->load_addr + 
+	    sectp[sym->proc.segment - 1].Virtual_Address + 
+	    sym->proc.offset;
+	  /*
+	   * See if we can find a segment that this goes with.  If so,
+	   * it means that we also may have line number information
+	   * for this function.
+	   */
+	  for(i=0; linetab[i].linetab != NULL; i++)
+	    {
+	      if(     ((unsigned int) deefer->load_addr 
+		       + sectp[linetab[i].segno - 1].Virtual_Address 
+		       + linetab[i].start <= new_addr.off)
+		  &&  ((unsigned int) deefer->load_addr 
+		       + sectp[linetab[i].segno - 1].Virtual_Address 
+		       + linetab[i].end > new_addr.off) )
+		{
+		  break;
+		}
+	    }
+
+ 	  DEBUG_Normalize(curr_func);
+	  if( linetab[i].linetab == NULL )
+	    {
+	      curr_func = DEBUG_AddSymbol( symname, &new_addr, NULL,
+					   SYM_WIN32 | SYM_FUNC);
+	    }
+	  else
+	    {
+	      /*
+	       * First, create the entry.  Then dig through the linetab
+	       * and add whatever line numbers are appropriate for this
+	       * function.
+	       */
+	      curr_func = DEBUG_AddSymbol( symname, &new_addr, 
+					   linetab[i].sourcefile,
+					   SYM_WIN32 | SYM_FUNC);
+	      for(j=0; j < linetab[i].nline; j++)
+		{
+		  if( linetab[i].offtab[j] >= sym->proc.offset 
+		      && linetab[i].offtab[j] < sym->proc.offset 
+		      + sym->proc.proc_len )
+		    {
+		      DEBUG_AddLineNumber(curr_func, linetab[i].linetab[j],
+					  linetab[i].offtab[j] - sym->proc.offset);
+		    }
+		}
+
+	    }
+
+	  /*
+	   * Add information about where we should set breakpoints
+	   * in this function.
+	   */
+	  DEBUG_SetSymbolBPOff(curr_func, sym->proc.debug_start);
+	  DEBUG_SetSymbolSize(curr_func, sym->proc.proc_len);
+	  break;
+	case S_BPREL32:
+	  /*
+	   * Function parameters and stack variables.
+	   */
+	  memcpy(symname, sym->stack.name, sym->stack.namelen);
+	  curr_sym = DEBUG_AddLocal(curr_func, 
+			 0, 
+			 sym->stack.offset, 
+			 0, 
+			 0, 
+			 symname);
+	  DEBUG_SetLocalSymbolType(curr_sym, DEBUG_GetCVType(sym->stack.symtype));
+	  
+	  break;
+	default:
+	  break;
+	}
+
+      /*
+       * Adjust pointer to point to next entry, rounding up to a word
+       * boundary.  MS preserving alignment?  Stranger things have
+       * happened.
+       */
+      if( sym->generic.id == S_PROCREF
+	  || sym->generic.id == S_DATAREF
+	  || sym->generic.id == S_UNKNOWN )
+	{
+	  len = (sym->generic.len + 3) & ~3;
+	  len += ptr.c[16] + 1;
+	  ptr.c += (len + 3) & ~3;
+	}
+      else
+	{
+	  ptr.c += (sym->generic.len + 3) & ~3;
+	}
+    }
+
+  if( linetab != NULL )
+    {
+      free(linetab);
+    }
+
+  return TRUE;
+}
+
+
+/*
+ * Process PDB file which contains debug information.
+ *
+ * These are really weird beasts.  They are intended to be incrementally
+ * updated by the incremental linker, and this means that you need to 
+ * be able to remove and add information.  Thus the PDB file is sort of
+ * like a block structured device, with a freelist and lists of extent numbers
+ * that are used to get the relevant pieces.  In all cases seen so far, the
+ * blocksize is always 0x400 bytes.  The header has a field which apparently
+ * holds the blocksize, so if it ever changes we are safe.
+ *
+ * In general, every time we need to extract something from the pdb file,
+ * it is easier to copy it into another buffer so we have the information
+ * in one contiguous block rather than attempt to try and keep track of when
+ * we need to grab another extent from the pdb file.
+ *
+ * The thing that is a real pain about some MS stuff is that they choose
+ * data structures which are not representable in C.  Thus we have to
+ * hack around and diddle pointers.
+ */
+/* static */
+int
+DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
+{
+  char			      * addr = (char *) 0xffffffff;
+  unsigned int			blocksize;
+  unsigned int			bufflen = 0;
+  char			      * buffer = NULL;
+  unsigned short	      * extent_table;
+  int				fd = -1;
+  struct file_ent	      * fent;
+  char			      * filename;
+  struct file_list	      * filelist = NULL;
+  unsigned int			gsym_record = 0;
+  char			      * gsymtab = NULL;
+  struct filetab_hdr	      * hd;
+  int				i;
+  int				j;
+  unsigned int			last_extent;
+  struct codeview_linetab_hdr * linetab;
+  unsigned int			nblocks;
+  unsigned int			npair;
+  unsigned int			offset;
+  struct codeview_pdb_hdr     * pdbhdr;
+  unsigned int		      * pnt;
+  struct stat			statbuf;
+  int				status;
+  unsigned short	      * table;
+  char			      * toc;
+  unsigned int			toc_blocks;
+  
+  /*
+   * FIXME - we should use some kind of search path mechanism to locate
+   * PDB files.  Right now we just look in the current working directory,
+   * which works much of the time, I guess.  Ideally we should be able to
+   * map the filename back using the settings in wine.ini and perhaps
+   * we could find it there.  This bit of coding is left as an exercise
+   * for the reader. :-).
+   */
+  filename = strrchr(full_filename, '\\');
+  if( filename == NULL )
+    {
+      filename = full_filename;
+    }
+  else
+    {
+      filename++;
+    }
+
+  status = stat(filename, &statbuf);
+  if( status == -1 )
+    {
+      fprintf(stderr, "Unable to open .PDB file %s\n", filename);
+      goto leave;
+    }
+
+  /*
+   * Now open the file, so that we can mmap() it.
+   */
+  fd = open(filename, O_RDONLY);
+  if( fd == -1 )
+    {
+      fprintf(stderr, "Unable to open .DBG file %s\n", filename);
+      goto leave;
+    }
+
+
+  /*
+   * Now mmap() the file.
+   */
+  addr = mmap(0, statbuf.st_size, PROT_READ, 
+	      MAP_PRIVATE, fd, 0);
+
+  /*
+   * Now that we have the formalities over and done with, we need
+   * to find the table of contents for the PDB file.
+   */
+  pdbhdr = (struct codeview_pdb_hdr *) addr;
+  blocksize = pdbhdr->blocksize;
+  last_extent = (statbuf.st_size + blocksize - 1) / blocksize;
+
+  /*
+   * The TOC itself isn't always contiguous, so we need to extract a few
+   * extents from the file to form the TOC.
+   */
+  toc_blocks = (pdbhdr->toc_len + blocksize - 1) / blocksize;
+  toc = (char *) xmalloc(toc_blocks * blocksize);
+  table = pdbhdr->toc_ext;
+  for(i=0; i < toc_blocks; i++)
+    {
+      memcpy(toc + blocksize*i, addr + table[i]*blocksize, blocksize);
+    }
+
+  /*
+   * Next build our own table which will have the size and extent block
+   * list for each record in the PDB file.
+   *
+   * The TOC starts out with the number of files.  Then it is followed by
+   * (npair * 2*sizeof(int)) bytes of information, which are pairs of ints.
+   * The first one is the size of the record (in bytes), and the second one
+   * is something else which I haven't figured out yet.
+   */
+  pnt = (unsigned int *) toc;
+  npair = *pnt++;
+  extent_table = (unsigned short *) ((unsigned int) toc +
+				     npair * 2 * sizeof(int) + sizeof(int));
+
+  /*
+   * Sanity check.
+   */
+  if( sizeof(int) + 2*sizeof(int)*npair > pdbhdr->toc_len )
+    {
+      goto leave;
+    }
+  
+  filelist = (struct file_list *) xmalloc(npair * sizeof(*filelist));
+  if( filelist == NULL )
+    {
+      goto leave;
+    }
+  memset(filelist, 0, npair * sizeof(*filelist));
+
+  nblocks = 0;
+  for(i=0; i < npair; i++)
+    {
+      filelist[i].record_len = pnt[i*2];
+      filelist[i].nextents   = (filelist[i].record_len + blocksize - 1) 
+	/ blocksize;
+      filelist[i].extent_list = extent_table + nblocks;
+      nblocks += filelist[i].nextents;
+
+      /*
+       * These get filled in later when we parse one of the records.
+       */
+      filelist[i].linetab_offset = 0;
+      filelist[i].linetab_len = 0;
+    }
+
+  /*
+   * OK, now walk through the various records and pick out the bits we
+   * really want to see.  Some of the records are extra special, and
+   * we need to handle these a little bit differently.
+   */
+  for(i=0; i < npair; i++)
+    {
+      if( filelist[i].record_len == 0xffffffff )
+	{
+	  continue;
+	}
+
+      /*
+       * Make sure our buffer is large enough to hold the record.
+       */
+      if( bufflen < filelist[i].nextents * blocksize )
+	{
+	  bufflen = filelist[i].nextents * blocksize;
+	  buffer = (char *) realloc(buffer, bufflen);
+	}
+
+      /*
+       * Do this just for completeness.  It makes debugging easier
+       * if we have a clean indication of where the record ends.
+       */
+      memset(buffer, 0, filelist[i].nextents * blocksize);
+
+      /*
+       * Next, build the record using the extent list.
+       */
+      for(j=0; j < filelist[i].nextents; j++)
+	{
+	  memcpy(buffer + j * blocksize,
+		 addr + filelist[i].extent_list[j] * blocksize,
+		 blocksize);
+	}
+
+      pnt = (unsigned int *) buffer;
+
+      /*
+       * OK, now figure out what to do with it.
+       */
+
+      /*
+       * Always ignore the first entry.  It seems to contain a backup copy
+       * of the TOC (the last time the file was modified??)
+       */
+      if( i == 0 )
+	{
+	  continue;
+	}
+
+      /* 
+       * The second entry as a id block.  It contains a magic number
+       * to identify the compiler, plus it also contains the timestamp
+       * which must match the timestamp in the executable.  
+       */
+      if( i == 1 )
+	{
+
+	  if( ((*pnt != 19950623) && (*pnt != 19950814))
+	      || (filelist[i].record_len != 0x24)
+	      || (pnt[1] != ((struct CodeViewDebug *)(deefer->dbg_info))->cv_timestamp) )
+	    {
+	      goto leave;
+	    }
+	}
+
+      /*
+       * The third entry contains pointers to the global symbol table,
+       * plus it also contains additional information about each record
+       * in the PDB file.
+       */
+      if( i == 3 )
+	{
+	  hd = (struct filetab_hdr *) buffer;
+
+	  gsym_record = hd->gsym_file;
+	  gsymtab = (char *) xmalloc( filelist[gsym_record].nextents 
+				      * blocksize);
+	  memset(gsymtab, 0, filelist[gsym_record].nextents * blocksize);
+	  
+	  for(j=0; j < filelist[gsym_record].nextents; j++)
+	    {
+	      memcpy(gsymtab + j * blocksize,
+		     addr + filelist[gsym_record].extent_list[j] * blocksize,
+		     blocksize);
+	    }
+
+	  /*
+	   * This record also contains information about where in the
+	   * remaining records we will be able to find the start of the
+	   * line number table.  We could locate that bit using heuristics,
+	   * but since we have the info handy, we might as well use it.
+	   */
+	  offset = sizeof(*hd);
+	  while(1==1)
+	    {
+	      fent = (struct file_ent *) (buffer + offset);
+	      if( offset > hd->ftab_len )
+		{
+		  break;
+		}
+
+	      if( fent->file_number == 0 || fent->file_number >= npair )
+		{
+ 		  break;
+		}
+
+	      filelist[fent->file_number].linetab_offset = 
+		fent->linetab_offset;
+	      filelist[fent->file_number].linetab_len = 
+		fent->linetab_len;
+	      /*
+	       * Figure out the offset of the next entry.
+	       * There is a fixed part of the record and a variable
+	       * length filename which we must also skip past.
+	       */
+	      offset += ((unsigned int) &fent->filename - (unsigned int) fent)
+		+ strlen(fent->filename) + 1;
+	      offset += strlen(buffer+offset) + 1;
+	      offset = (offset + 3) & ~3;
+	    }
+	}
+      
+
+      /*
+       * Two different magic numbers used as dates.
+       * These indicate the 'type' table.
+       */
+      if(       *pnt == 19950410
+	     || *pnt == 19951122 )
+	{
+	  DEBUG_ParseTypeTable(buffer, filelist[i].record_len);
+	  continue;
+	}
+
+      /*
+       * This is something we really want to look at, since it contains
+       * real debug info.  Anything that doesn't match this can be
+       * ignored for now.
+       */
+      if( *pnt == 1 )
+	{
+	  /*
+	   * First, snag the line table, if we have one.  This always
+	   * occurs at the end of the record, so we take the linetab
+	   * offset as the end of the normal part of the record.
+	   */
+	  linetab = NULL;
+	  if( filelist[i].linetab_len != 0 )
+	    {
+	      linetab = DEBUG_SnarfLinetab(buffer + filelist[i].linetab_offset,
+					   filelist[i].linetab_len);
+	      DEBUG_SnarfCodeView(deefer, buffer,
+				  filelist[i].linetab_offset,
+				  linetab);
+	    }
+	  else
+	    {
+	      DEBUG_SnarfCodeView(deefer, buffer,
+				  filelist[i].record_len,
+				  linetab);
+	    }
+	  continue;
+	}
+    }
+
+  /*
+   * Finally, process the global symbol table itself.  There isn't
+   * a line number component to this, so we just toss everything
+   * into the mix and it all should work out.
+   */
+  if( gsym_record != 0 )
+    {
+      DEBUG_SnarfCodeView(deefer, gsymtab - sizeof(int), 
+			  filelist[gsym_record].record_len,
+			  NULL);
+    }
+  
+leave:
+
+  if( gsymtab != NULL )
+    {
+      free(gsymtab);
+      gsymtab = NULL;
+    }
+
+  if( buffer != NULL )
+    {
+      free(buffer);
+    }
+
+  if( filelist != NULL )
+    {
+      free(filelist);
+    }
+
+  if( addr != (char *) 0xffffffff )
+    {
+      munmap(addr, statbuf.st_size);
+    }
+
+  if( fd != -1 )
+    {
+      close(fd);
+    }
+
+  return TRUE;
+}
+
+/*
+ * Process DBG file which contains debug information.
+ */
+/* static */
+int
+DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
+{
+  char			      * addr = (char *) 0xffffffff;
+  char			      * codeview;
+  struct CV4_DirHead	      * codeview_dir;
+  struct CV4_DirEnt	      * codeview_dent;
+  struct PE_Debug_dir	      * dbghdr;
+  struct deferred_debug_info    deefer2;
+  int				fd = -1;
+  int				i;
+  int				j;
+  struct codeview_linetab_hdr * linetab;
+  int				nsect;
+  struct PE_DBG_FileHeader    * pdbg = NULL;
+  struct pe_segment_table     * sectp;
+  struct stat			statbuf;
+  int				status;
+  
+  status = stat(filename, &statbuf);
+  if( status == -1 )
+    {
+      fprintf(stderr, "Unable to open .DBG file %s\n", filename);
+      goto leave;
+    }
+
+  /*
+   * Now open the file, so that we can mmap() it.
+   */
+  fd = open(filename, O_RDONLY);
+  if( fd == -1 )
+    {
+      fprintf(stderr, "Unable to open .DBG file %s\n", filename);
+      goto leave;
+    }
+
+
+  /*
+   * Now mmap() the file.
+   */
+  addr = mmap(0, statbuf.st_size, PROT_READ, 
+	      MAP_PRIVATE, fd, 0);
+
+  pdbg = (struct PE_DBG_FileHeader *) addr;
+
+  if( pdbg->TimeDateStamp != deefer->dbgdir->timestamp )
+    {
+      fprintf(stderr, "Warning - %s has incorrect internal timestamp\n",
+	      filename);
+      goto leave;
+   }
+
+  fprintf(stderr, "Processing symbols from %s...\n", filename);
+
+  dbghdr = (struct PE_Debug_dir *) (  addr + sizeof(*pdbg) 
+		 + pdbg->NumberOfSections * sizeof(struct pe_segment_table) 
+		 + pdbg->ExportedNamesSize);
+
+  sectp = (struct pe_segment_table *) ((char *) pdbg + sizeof(*pdbg));
+  nsect = pdbg->NumberOfSections;
+
+  for( i=0; i < pdbg->DebugDirectorySize / sizeof(*pdbg); i++, dbghdr++ )
+    {
+      switch(dbghdr->type)
+		{
+		case IMAGE_DEBUG_TYPE_COFF:
+		  /*
+		   * Dummy up a deferred debug header to handle the
+		   * COFF stuff embedded within the DBG file.
+		   */
+		  memset((char *) &deefer2, 0, sizeof(deefer2));
+		  deefer2.dbg_info = (addr + dbghdr->dbgoff);
+		  deefer2.dbg_size = dbghdr->dbgsize;
+		  deefer2.load_addr = deefer->load_addr;
+
+		  DEBUG_ProcessCoff(&deefer2);
+		  break;
+		case IMAGE_DEBUG_TYPE_CODEVIEW:
+		  /*
+		   * This is the older format by which codeview stuff is 
+		   * stored, known as the 'NB09' format.  Newer executables
+		   * and dlls created by VC++ use PDB files instead, which
+		   * have lots of internal similarities, but the overall
+		   * format and structure is quite different.
+		   */
+		  codeview = (addr + dbghdr->dbgoff);
+
+		  /*
+		   * The first thing in the codeview section should be
+		   * an 'NB09' identifier.  As a sanity check, make sure
+		   * it is there.
+		   */
+		  if( *((unsigned int*) codeview) != 0x3930424e )
+		    {
+		      break;
+		    }
+		  
+		  /*
+		   * Next we need to find the directory.  This is easy too.
+		   */
+		  codeview_dir = (struct CV4_DirHead *) 
+		    (codeview + ((unsigned int*) codeview)[1]);
+
+		  /*
+		   * Some more sanity checks.  Make sure that everything
+		   * is as we expect it.
+		   */
+		  if( codeview_dir->next_offset != 0 
+		      || codeview_dir->dhsize != sizeof(*codeview_dir)
+		      || codeview_dir->desize != sizeof(*codeview_dent) )
+		    {
+		      break;
+		    }
+		  codeview_dent = (struct CV4_DirEnt *) (codeview_dir + 1);
+
+		  for(j=0; j < codeview_dir->ndir; j++, codeview_dent++)
+		    {
+		      if( codeview_dent->subsect_number == sstAlignSym )
+			{
+			  /*
+			   * Check the previous entry.  If it is a
+			   * sstSrcModule, it contains the line number
+			   * info for this file.
+			   */
+			  linetab = NULL;
+			  if( codeview_dent[1].module_number == codeview_dent[0].module_number
+			      && codeview_dent[1].subsect_number == sstSrcModule )
+			    {
+			      linetab = DEBUG_SnarfLinetab(
+					   codeview + codeview_dent[1].offset,
+					   codeview_dent[1].size);
+			    }
+
+			  if( codeview_dent[-1].module_number == codeview_dent[0].module_number
+			      && codeview_dent[-1].subsect_number == sstSrcModule )
+			    {
+			      linetab = DEBUG_SnarfLinetab(
+					   codeview + codeview_dent[-1].offset,
+					   codeview_dent[-1].size);
+			    }
+			  /*
+			   * Now process the CV stuff.
+			   */
+			  DEBUG_SnarfCodeView(deefer, 
+					      codeview + codeview_dent->offset,
+					      codeview_dent->size,
+					      linetab);
+			}
+		    }
+
+		  break;
+		default:
+		  break;
+		}
+    }
+leave:
+
+  if( addr != (char *) 0xffffffff )
+    {
+      munmap(addr, statbuf.st_size);
+    }
+
+  if( fd != -1 )
+    {
+      close(fd);
+    }
+
+  return TRUE;
 }
 
 int
@@ -369,9 +2281,25 @@ DEBUG_ProcessDeferredDebug()
   struct deferred_debug_info * deefer;
   struct CodeViewDebug	     * cvd;
   struct MiscDebug	     * misc;
+  char			     * filename;
+  int			       last_proc = -1;
+
+  DEBUG_InitCVDataTypes();
 
   for(deefer = dbglist; deefer; deefer = deefer->next)
     {
+      if( deefer->loaded )
+	{
+	  continue;
+	}
+
+      if( last_proc != deefer->dbg_index )
+	{
+	  fprintf(stderr, "Loading symbols from Win32 file %s...\n", 
+		  deefer->module_name);
+	  last_proc = deefer->dbg_index;
+	}
+
       switch(deefer->dbgdir->type)
 	{
 	case IMAGE_DEBUG_TYPE_COFF:
@@ -389,18 +2317,47 @@ DEBUG_ProcessDeferredDebug()
 	   * This is a pointer to a PDB file of some sort.
 	   */
 	  cvd = (struct CodeViewDebug *) deefer->dbg_info;
+
+	  if( strcmp(cvd->cv_nbtype, "NB10") != 0 )
+	    {
+	      /*
+	       * Whatever this is, we don't know how to deal with
+	       * it yet.
+	       */
+	      break;
+	    }
+	  DEBUG_ProcessPDBFile(deefer, cvd->cv_name);
 #if 0
 	  fprintf(stderr, "Processing PDB file %s\n", cvd->cv_name);
 #endif
 	  break;
 	case IMAGE_DEBUG_TYPE_MISC:
 	  /*
-	   * A pointer to a .DBG file of some sort.
+	   * A pointer to a .DBG file of some sort.  These files
+	   * can contain either CV4 or COFF information.  Open
+	   * the file, and try to do the right thing with it.
 	   */
 	  misc = (struct MiscDebug *) deefer->dbg_info;
-#if 0
-	  fprintf(stderr, "Processing DBG file %s\n", misc->Data);
-#endif
+
+	  filename = strrchr((char *) &misc->Data, '.');
+
+	  /*
+	   * Ignore the file if it doesn't have a .DBG extension.
+	   */
+	  if(    (filename == NULL)
+	      || (    (strcmp(filename, ".dbg") != 0)
+	           && (strcmp(filename, ".DBG") != 0)) )
+	    {
+	      break;
+	    }
+
+	  filename = (char *) &misc->Data;
+
+	  /*
+	   * Do the dirty deed...
+	   */
+	  DEBUG_ProcessDBGFile(deefer, filename);
+      
 	  break;
 	default:
 	  /*
@@ -410,4 +2367,34 @@ DEBUG_ProcessDeferredDebug()
 	}
     }
   return TRUE;
+
 }
+
+/***********************************************************************
+ *           DEBUG_InfoShare
+ *
+ * Display shared libarary information.
+ */
+void DEBUG_InfoShare(void)
+{
+  struct deferred_debug_info * deefer;
+
+  fprintf(stderr,"Address\t\tModule\tName\n");
+
+  for(deefer = dbglist; deefer; deefer = deefer->next)
+    {
+      if( deefer->pe == NULL )
+	{
+	  fprintf(stderr,"0x%8.8x\t(ELF)\t%s\n", 
+		  (unsigned int) deefer->load_addr,
+		  deefer->module_name);
+	}
+      else
+	{
+	  fprintf(stderr,"0x%8.8x\t(Win32)\t%s\n", 
+		  (unsigned int) deefer->load_addr,
+		  deefer->module_name);
+	}
+    }
+}
+

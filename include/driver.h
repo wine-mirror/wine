@@ -2,6 +2,9 @@
  * Drivers definitions
  */
 
+#ifndef __WINE_DRIVER_H
+#define __WINE_DRIVER_H
+
 #define DRV_LOAD                0x0001
 #define DRV_ENABLE              0x0002
 #define DRV_OPEN                0x0003
@@ -64,5 +67,4 @@ HMODULE16 GetDriverModuleHandle(HDRVR16 hDriver);
 HDRVR16 GetNextDriver(HDRVR16, DWORD);
 BOOL16 GetDriverInfo(HDRVR16, DRIVERINFOSTRUCT16 *);
 
-
-
+#endif  /* __WINE_DRIVER_H */

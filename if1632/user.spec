@@ -148,20 +148,20 @@ heap	65520
 146 pascal16 GetClipboardFormatName(word ptr s_word) GetClipboardFormatName
 147 pascal16 SetClipboardViewer(word) SetClipboardViewer
 148 pascal16 GetClipboardViewer() GetClipboardViewer
-149 pascal16 ChangeClipboardChain(word ptr) ChangeClipboardChain
+149 pascal16 ChangeClipboardChain(word ptr) ChangeClipboardChain16
 150 pascal16 LoadMenu(word segptr) LoadMenu16
-151 pascal16 CreateMenu() CreateMenu
-152 pascal16 DestroyMenu(word) DestroyMenu
+151 pascal16 CreateMenu() CreateMenu16
+152 pascal16 DestroyMenu(word) DestroyMenu16
 153 pascal16 ChangeMenu(word word segptr word word) ChangeMenu16
-154 pascal16 CheckMenuItem(word word word) CheckMenuItem
-155 pascal16 EnableMenuItem(word word word) EnableMenuItem
-156 pascal16 GetSystemMenu(word word) GetSystemMenu
-157 pascal16 GetMenu(word) GetMenu
-158 pascal16 SetMenu(word word) SetMenu
-159 pascal16 GetSubMenu(word word) GetSubMenu
-160 pascal16 DrawMenuBar(word) DrawMenuBar
-161 pascal16 GetMenuString(word word ptr s_word word) GetMenuString
-162 pascal16 HiliteMenuItem(word word word word) HiliteMenuItem
+154 pascal16 CheckMenuItem(word word word) CheckMenuItem16
+155 pascal16 EnableMenuItem(word word word) EnableMenuItem16
+156 pascal16 GetSystemMenu(word word) GetSystemMenu16
+157 pascal16 GetMenu(word) GetMenu16
+158 pascal16 SetMenu(word word) SetMenu16
+159 pascal16 GetSubMenu(word word) GetSubMenu16
+160 pascal16 DrawMenuBar(word) DrawMenuBar16
+161 pascal16 GetMenuString(word word ptr s_word word) GetMenuString16
+162 pascal16 HiliteMenuItem(word word word word) HiliteMenuItem16
 163 pascal16 CreateCaret(word word word word) CreateCaret
 164 pascal16 DestroyCaret() DestroyCaret
 165 pascal16 SetCaretPos(word word) SetCaretPos
@@ -252,7 +252,7 @@ heap	65520
 247 pascal16 GetCursor() GetCursor
 248 pascal16 GetOpenClipboardWindow() GetOpenClipboardWindow
 249 pascal16 GetAsyncKeyState(word) GetAsyncKeyState
-250 pascal16 GetMenuState(word word word) GetMenuState
+250 pascal16 GetMenuState(word word word) GetMenuState16
 251 pascal   SendDriverMessage(word word long long) SendDriverMessage
 252 pascal16 OpenDriver(ptr ptr long) OpenDriver
 253 pascal   CloseDriver(word long long) CloseDriver
@@ -266,8 +266,8 @@ heap	65520
              DeferWindowPos
 261 pascal16 EndDeferWindowPos(word) EndDeferWindowPos
 262 pascal16 GetWindow(word word) GetWindow
-263 pascal16 GetMenuItemCount(word) GetMenuItemCount
-264 pascal16 GetMenuItemID(word word) GetMenuItemID
+263 pascal16 GetMenuItemCount(word) GetMenuItemCount16
+264 pascal16 GetMenuItemID(word word) GetMenuItemID16
 265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups
 266 pascal16 SetMessageQueue(word) SetMessageQueue
 267 pascal16 ShowScrollBar(word word word) ShowScrollBar16
@@ -283,7 +283,7 @@ heap	65520
 277 pascal16 GetDlgCtrlID(word) GetDlgCtrlID
 278 pascal16 GetDesktopHwnd() GetDesktopHwnd
 279 stub OldSetDeskPattern
-280 stub SetSystemMenu
+280 pascal16 SetSystemMenu(word word) SetSystemMenu16
 281 pascal16 GetSysColorBrush(word) GetSysColorBrush16
 282 pascal16 SelectPalette(word word word) SelectPalette
 283 pascal16 RealizePalette(word) RealizePalette
@@ -324,7 +324,7 @@ heap	65520
 343 stub GetFilePortName
 356 stub LoadDIBCursorHandler
 357 stub LoadDIBIconHandler
-358 pascal16 IsMenu(word) IsMenu
+358 pascal16 IsMenu(word) IsMenu16
 359 pascal16 GetDCEx(word word long) GetDCEx16
 362 pascal16 DCHook(word word long long) DCHook
 364 stub LookupIconIDFromDirectoryEx
@@ -364,13 +364,13 @@ heap	65520
 409 stub InitThreadInput
 410 pascal16 InsertMenu(word word word word segptr) InsertMenu16
 411 pascal16 AppendMenu(word word word segptr) AppendMenu16
-412 pascal16 RemoveMenu(word word word) RemoveMenu
-413 pascal16 DeleteMenu(word word word) DeleteMenu
+412 pascal16 RemoveMenu(word word word) RemoveMenu16
+413 pascal16 DeleteMenu(word word word) DeleteMenu16
 414 pascal16 ModifyMenu(word word word word segptr) ModifyMenu16
-415 pascal16 CreatePopupMenu() CreatePopupMenu
+415 pascal16 CreatePopupMenu() CreatePopupMenu16
 416 pascal16 TrackPopupMenu(word word s_word s_word s_word word ptr) TrackPopupMenu16
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
-418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps
+418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps16
 420 pascal16 wsprintf() WIN16_wsprintf16
 421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf16
 422 pascal16 DlgDirSelectEx(word ptr word word) DlgDirSelectEx16
@@ -379,14 +379,14 @@ heap	65520
 428 stub TileWindows
 429 stub CascadeWindows
 430 pascal16 lstrcmp(ptr ptr) lstrcmp16
-431 pascal   AnsiUpper(segptr) WIN16_AnsiUpper
-432 pascal   AnsiLower(segptr) WIN16_AnsiLower
+431 pascal   AnsiUpper(segptr) AnsiUpper16
+432 pascal   AnsiLower(segptr) AnsiLower16
 433 pascal16 IsCharAlpha(byte) IsCharAlpha16
 434 pascal16 IsCharAlphanumeric(byte) IsCharAlphanumeric16
 435 pascal16 IsCharUpper(byte) IsCharUpper16
 436 pascal16 IsCharLower(byte) IsCharLower16
-437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff
-438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff
+437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff16
+438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff16
 441 stub InsertMenuItem
 443 stub GetMenuItemInfo
 445 pascal   DefFrameProc(word word word word long) DefFrameProc16
@@ -413,8 +413,8 @@ heap	65520
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect16
 470 stub StringFunc
 471 pascal16 lstrcmpi(ptr ptr) lstrcmpi16
-472 pascal   AnsiNext(segptr) AnsiNext
-473 pascal   AnsiPrev(segptr segptr) AnsiPrev
+472 pascal   AnsiNext(segptr) AnsiNext16
+473 pascal   AnsiPrev(segptr segptr) AnsiPrev16
 475 pascal16 SetScrollInfo(word s_word ptr word) SetScrollInfo16
 476 pascal16 GetScrollInfo(word s_word ptr) GetScrollInfo16
 477 stub GetKeyboardLayoutName

@@ -82,8 +82,10 @@ int WideCharToMultiByte(UINT page, DWORD flags, WCHAR *src, int srclen,
 	int dont_copy= (dstlen==0);
 	if(page!=GetACP() && page!=CP_OEMCP && page!=CP_ACP)
 		fprintf(stdnimp,"Conversion in CP %d not supported\n",page);
+#if 0
 	if(flags)
 		fprintf(stdnimp,"WideCharToMultiByte flags %lx not supported\n",flags);
+#endif
 	if(used)
 		*used=0;
 	while(srclen && (dont_copy || dstlen))
@@ -112,7 +114,10 @@ int WideCharToMultiByte(UINT page, DWORD flags, WCHAR *src, int srclen,
 }
 
 
-BOOL32 IsDBCSLeadByteEx(UINT32 codepage, BYTE testchar)
+/***********************************************************************
+ *           IsDBCSLeadByteEx   (KERNEL32.359)
+ */
+BOOL32 IsDBCSLeadByteEx( UINT32 codepage, BYTE testchar )
 {
     CPINFO cpinfo;
     int i;
@@ -128,7 +133,20 @@ BOOL32 IsDBCSLeadByteEx(UINT32 codepage, BYTE testchar)
     return FALSE;
 }
 
-BOOL32 IsDBCSLeadByte(BYTE testchar)
+
+/***********************************************************************
+ *           IsDBCSLeadByte16   (KERNEL.207)
+ */
+BOOL16 IsDBCSLeadByte16( BYTE testchar )
+{
+    return IsDBCSLeadByteEx(GetACP(), testchar);
+}
+
+
+/***********************************************************************
+ *           IsDBCSLeadByte32   (KERNEL32.358)
+ */
+BOOL32 IsDBCSLeadByte32( BYTE testchar )
 {
     return IsDBCSLeadByteEx(GetACP(), testchar);
 }

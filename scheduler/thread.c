@@ -83,6 +83,7 @@ HANDLE32 GetCurrentThread(void)
 
 /***********************************************************************
  *           GetCurrentThreadId   (KERNEL32.201)
+ * Returns crypted (xor'ed) pointer to THDB in Win95.
  */
 DWORD GetCurrentThreadId(void)
 {
@@ -228,4 +229,36 @@ BOOL32 GetThreadContext( HANDLE32 handle, CONTEXT *context )
 void NtCurrentTeb( CONTEXT *context )
 {
     EAX_reg(context) = GetSelectorBase( FS_reg(context) );
+}
+
+/**********************************************************************
+ *           GetThreadPriority   (KERNEL32.296)
+ */
+INT32
+GetThreadPriority(HANDLE32 hthread) {
+    THDB *thread;
+    INT32 ret;
+    
+    ret = 0;
+    thread = (THDB*)PROCESS_GetObjPtr(hthread,K32OBJ_THREAD);
+    if (thread) {
+    	ret = thread->delta_priority;
+	K32OBJ_DecCount((K32OBJ*)thread);
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *           SetThreadPriority   (KERNEL32.514)
+ */
+BOOL32
+SetThreadPriority(HANDLE32 hthread,INT32 priority) {
+    THDB *thread;
+    
+    thread = (THDB*)PROCESS_GetObjPtr(hthread,K32OBJ_THREAD);
+    if (thread) {
+	thread->delta_priority = priority;
+	K32OBJ_DecCount((K32OBJ*)thread);
+    }
+    return TRUE;
 }

@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "windows.h"
-#include "dos_fs.h"
+#include "file.h"
 #include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -36,6 +36,8 @@ typedef struct
     BOOL32           changed;
     PROFILESECTION  *section;
     char            *dos_name;
+    char            *unix_name;
+    char            *filename;
 } PROFILE;
 
 
@@ -332,8 +334,7 @@ static BOOL32 PROFILE_FlushFile(void)
     FILE *file = NULL;
 
     if (!CurProfile.changed || !CurProfile.dos_name) return TRUE;
-    if (!(unix_name = DOSFS_GetUnixFileName( CurProfile.dos_name, FALSE )) ||
-        !(file = fopen( unix_name, "w" )))
+    if (!(unix_name = CurProfile.unix_name) || !(file = fopen(unix_name, "w")))
     {
         /* Try to create it in $HOME/.wine */
         /* FIXME: this will need a more general solution */
@@ -343,7 +344,7 @@ static BOOL32 PROFILE_FlushFile(void)
             strcat( buffer, "/.wine/" );
             p = buffer + strlen(buffer);
             strcpy( p, strrchr( CurProfile.dos_name, '\\' ) + 1 );
-            AnsiLower( p );
+            CharLower32A( p );
             file = fopen( buffer, "w" );
             unix_name = buffer;
         }
@@ -372,24 +373,32 @@ static BOOL32 PROFILE_FlushFile(void)
  */
 static BOOL32 PROFILE_Open( LPCSTR filename )
 {
+    DOS_FULL_NAME full_name;
     char buffer[MAX_PATHNAME_LEN];
-    const char *dos_name, *unix_name;
     char *newdos_name, *p;
     FILE *file = NULL;
+
+    if (CurProfile.filename && !strcmp( filename, CurProfile.filename ))
+    {
+        dprintf_profile( stddeb, "PROFILE_Open(%s): already opened\n",
+                         filename );
+        return TRUE;
+    }
 
     if (strchr( filename, '/' ) || strchr( filename, '\\' ) || 
         strchr( filename, ':' ))
     {
-        if (!(dos_name = DOSFS_GetDosTrueName( filename, FALSE))) return FALSE;
+        if (!DOSFS_GetFullName( filename, FALSE, &full_name )) return FALSE;
     }
     else
     {
         GetWindowsDirectory32A( buffer, sizeof(buffer) );
         strcat( buffer, "\\" );
         strcat( buffer, filename );
-        if (!(dos_name = DOSFS_GetDosTrueName( buffer, FALSE ))) return FALSE;
+        if (!DOSFS_GetFullName( buffer, FALSE, &full_name )) return FALSE;
     }
-    if (CurProfile.dos_name && !strcmp( dos_name, CurProfile.dos_name ))
+    if (CurProfile.dos_name &&
+        !strcmp( full_name.short_name, CurProfile.dos_name ))
     {
         dprintf_profile( stddeb, "PROFILE_Open(%s): already opened\n",
                          filename );
@@ -398,12 +407,15 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
 
     /* Flush the previous profile */
 
-    newdos_name = HEAP_strdupA( SystemHeap, 0, dos_name );
+    newdos_name = HEAP_strdupA( SystemHeap, 0, full_name.short_name );
     PROFILE_FlushFile();
     PROFILE_Free( CurProfile.section );
     if (CurProfile.dos_name) HeapFree( SystemHeap, 0, CurProfile.dos_name );
+    if (CurProfile.unix_name) HeapFree( SystemHeap, 0, CurProfile.unix_name );
+    if (CurProfile.filename) HeapFree( SystemHeap, 0, CurProfile.filename );
     CurProfile.section   = NULL;
     CurProfile.dos_name  = newdos_name;
+    CurProfile.filename  = HEAP_strdupA( SystemHeap, 0, filename );
 
     /* Try to open the profile file, first in $HOME/.wine */
 
@@ -414,15 +426,22 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
         strcat( buffer, "/.wine/" );
         p = buffer + strlen(buffer);
         strcpy( p, strrchr( newdos_name, '\\' ) + 1 );
-        AnsiLower( p );
+        CharLower32A( p );
         if ((file = fopen( buffer, "r" )))
-            dprintf_profile( stddeb, "Found it in %s\n", buffer );
+        {
+            dprintf_profile( stddeb, "PROFILE_Open(%s): found it in %s\n",
+                             filename, buffer );
+            CurProfile.unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
+        }
     }
 
-    if (!file && ((unix_name = DOSFS_GetUnixFileName( dos_name, TRUE ))))
+    if (!file)
     {
-        if ((file = fopen( unix_name, "r" )))
-            dprintf_profile( stddeb, "Found it in %s\n", unix_name );
+        CurProfile.unix_name = HEAP_strdupA( SystemHeap, 0,
+                                             full_name.long_name );
+        if ((file = fopen( full_name.long_name, "r" )))
+            dprintf_profile( stddeb, "PROFILE_Open(%s): found it in %s\n",
+                             filename, full_name.long_name );
     }
 
     if (file)
@@ -435,7 +454,6 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
         /* Does not exist yet, we will create it in PROFILE_FlushFile */
         fprintf( stderr, "Warning: profile file %s not found\n", newdos_name );
     }
-    dprintf_profile( stddeb, "PROFILE_Open(%s): successful\n", filename );
     return TRUE;
 }
 

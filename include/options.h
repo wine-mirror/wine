@@ -4,8 +4,8 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#ifndef __WINE_OPTIONS_H
+#define __WINE_OPTIONS_H
 
 #include "wintypes.h"
 
@@ -50,7 +50,7 @@ struct options
     int    backingstore;    /* Use backing store */
     short  cmdShow;
     int    debug;
-    int    allowReadOnly;   /* Opening a read only file will succeed even
+    int    failReadOnly;    /* Opening a read only file will fail
 			       if write access is requested */
     WINE_MODE mode;         /* Start Wine in selected mode
 			       (standard/enhanced) */
@@ -70,4 +70,4 @@ extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
 extern int PROFILE_GetWineIniInt( const char *section, const char *key_name,
                                   int def );
 
-#endif
+#endif  /* __WINE_OPTIONS_H */

@@ -2115,7 +2115,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	*dev++='\0';
 	args=strchr(dev,' ');
 	if (args!=NULL) *args++='\0';
-	AnsiUpper(dev);
+	CharUpper32A(dev);
 	if (args!=NULL) {
 		char	*s;
 		i=1;/* nrofkeywords = nrofspaces+1 */

@@ -1,5 +1,5 @@
-#ifndef __STRESS_H
-#define __STRESS_H
+#ifndef __WINE_STRESS_H
+#define __WINE_STRESS_H
 
 #include <windows.h>
 
@@ -27,4 +27,4 @@ void	UnAllocFileHandles(void);
 }
 #endif
 
-#endif /* __STRESS_H */
+#endif /* __WINE_STRESS_H */

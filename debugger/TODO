@@ -3,28 +3,42 @@ way or another.  No commitment to actually do these, but these sound
 possible to me right now.   In no particular order.  If someone else
 wants to dig in, feel free.
 
-1) Some kind of crude display capability.  Not too hard, I guess.
-	Just keep a list of addresses, counts and formats that we
-	want displayed each time we enter the debugger.
-
-2) Some kind of single step capability.
-	I am not sure - I think you just set a flag
-	in AFLAGS, and you get an interrupt back again.
-	The signal type would proabably be different, however,
-	but Wine could easily be patched to accept this one as well.
-	The main problem with this is that gdb normally runs in a
-	separate process so it is easy to single step second process.
-	Here we are all part of the same process.  Perhaps we could look
-	ahead to the end of the instruction and set another breakpoint?
-
-3) Some kind of breakpoint capability.
-	Requires single step.  When we restart, we
-	remove the breakpoint, single step one instruction
-	replace the breakpoint, and then continue.
-
-4) Some kind of watchpoint capability.  Pretty easy once we have a
+1) Some kind of watchpoint capability.  Pretty easy once we have a
 	single step capability, but we end up running the program
-	really slowly one instruction at a time.
+	really slowly one instruction at a time.  Use hardware debug
+	registers for this???
 
-5) Some kind of .wdbinit file.
+2) Some kind of .wdbinit file.
 
+3) Add 'info line' command.  Not all *that* useful, but it would tell you
+	the range of PC for a given source line.
+
+4) Add search directory list for PDB files.  We have the path in the
+	DOS notation (i.e. C:\foo\bar\xxx.c), which may be a useful hint.
+	Maybe not.
+
+5) Add support for emacs mode so that you  can run under emacs and have
+	the source pop up automatically.  Only useful once the list command
+	is implemented.
+
+6 Add support for Borland.  I have heard rumors that Borland is forthcoming
+	with info about how their stuff works, so this might not be that
+	bad.
+
+7 Add support for Win16.  Not sure if this is really worth the trouble.  How
+	much are people really going to use this in the long run???
+
+8) Some of the newer displays are still a little bit sparse on information.
+	Make these more like gdb.
+
+9) Don't bother to disassemble an instruction when we stop at a breakpoint
+	and if we have a valid source line we are displaying.
+
+10) Add support for '/i', etc in display command.  Make sure 'display/i $eip'
+	does the correct thing, and then skip automatic disassembly completely.
+
+11)	Limit amount of information displayed with print command.
+
+12)	Make sure operator precedence works OK.
+
+****************

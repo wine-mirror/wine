@@ -48,12 +48,10 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 extern LRESULT ColorDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ComboBoxWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ComboLBoxWndProc(HWND,UINT,WPARAM16,LPARAM);
-extern LRESULT EditWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT FileOpenDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT FileSaveDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT FindTextDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT MDIClientWndProc(HWND,UINT,WPARAM16,LPARAM);
-extern LRESULT PopupMenuWndProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT PrintDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT PrintSetupDlgProc(HWND,UINT,WPARAM16,LPARAM);
 extern LRESULT ReplaceTextDlgProc(HWND,UINT,WPARAM16,LPARAM);
@@ -72,13 +70,10 @@ FARPROC16 MODULE_GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("ColorDlgProc",ColorDlgProc);
   MAP_STR_TO_PROC("ComboBoxWndProc",ComboBoxWndProc);
   MAP_STR_TO_PROC("ComboLBoxWndProc",ComboLBoxWndProc);
-  MAP_STR_TO_PROC("DefDlgProc",DefDlgProc16);
-  MAP_STR_TO_PROC("EditWndProc",EditWndProc);
   MAP_STR_TO_PROC("FileOpenDlgProc",FileOpenDlgProc);
   MAP_STR_TO_PROC("FileSaveDlgProc",FileSaveDlgProc);
   MAP_STR_TO_PROC("FindTextDlgProc",FindTextDlgProc);
   MAP_STR_TO_PROC("MDIClientWndProc",MDIClientWndProc);
-  MAP_STR_TO_PROC("PopupMenuWndProc",PopupMenuWndProc);
   MAP_STR_TO_PROC("PrintDlgProc",PrintDlgProc);
   MAP_STR_TO_PROC("PrintSetupDlgProc",PrintSetupDlgProc);
   MAP_STR_TO_PROC("ReplaceTextDlgProc",ReplaceTextDlgProc);

@@ -99,7 +99,11 @@ static void SIGNAL_break(int signal, int code, SIGCONTEXT *context)
  */
 static void SIGNAL_child(void)
 {
-   wait4( 0, NULL, WNOHANG, NULL);
+#ifdef __svr4__
+    wait(NULL);
+#else
+    wait4( 0, NULL, WNOHANG, NULL);
+#endif
 }
 
 

@@ -5,7 +5,11 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "process.h"
+#include "file.h"
 #include "heap.h"
 #include "task.h"
 #include "winerror.h"
@@ -234,10 +238,54 @@ BOOL32 CloseHandle( HANDLE32 handle )
 }
 
 
+static int pstr_cmp( const void *ps1, const void *ps2 )
+{
+    return lstrcmpi32A( *(LPSTR *)ps1, *(LPSTR *)ps2 );
+}
+
+/***********************************************************************
+ *           PROCESS_FillEnvDB
+ */
+static BOOL32 PROCESS_FillEnvDB( PDB32 *pdb, TDB *pTask )
+{
+    LPSTR p, env;
+    INT32 count = 0;
+    LPSTR *pp, *array = NULL;
+
+    /* Copy the Win16 environment, sorting it in the process */
+
+    env = p = GlobalLock16( pTask->pdb.environment );
+    for (p = env; *p; p += strlen(p) + 1) count++;
+    pdb->env_db->env_size = (p - env) + 1;
+    pdb->env_db->environ = HeapAlloc( pdb->heap, 0, pdb->env_db->env_size );
+    if (!pdb->env_db->environ) goto error;
+    if (!(array = HeapAlloc( pdb->heap, 0, count * sizeof(array[0]) )))
+        goto error;
+    for (p = env, pp = array; *p; p += strlen(p) + 1) *pp++ = p;
+    qsort( array, count, sizeof(LPSTR), pstr_cmp );
+    p = pdb->env_db->environ;
+    for (pp = array; count; count--, pp++)
+    {
+        strcpy( p, *pp );
+        p += strlen(p) + 1;
+    }
+    *p = '\0';
+    HeapFree( pdb->heap, 0, array );
+    array = NULL;
+
+    return TRUE;
+
+error:
+    if (array) HeapFree( pdb->heap, 0, array );
+    if (pdb->env_db->environ) HeapFree( pdb->heap, 0, pdb->env_db->environ );
+    return FALSE;
+}
+
+
 /***********************************************************************
  *           PROCESS_Create
  */
-PDB32 *PROCESS_Create(void)
+PDB32 *PROCESS_Create( TDB *pTask )
 {
     PDB32 *pdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(PDB32) );
     if (!pdb) return NULL;
@@ -251,16 +299,17 @@ PDB32 *PROCESS_Create(void)
     pdb->parent          = pCurrentProcess;
     pdb->group           = pdb;
     pdb->priority        = 8;  /* Normal */
+    pdb->heap_list       = pdb->heap;
     InitializeCriticalSection( &pdb->crit_section );
     if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) goto error;
-    if (!(pdb->env_DB = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
+    if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
         goto error;
     if (!(pdb->handle_table = PROCESS_AllocHandleTable( pdb ))) goto error;
-    pdb->heap_list       = pdb->heap;
+    if (!PROCESS_FillEnvDB( pdb, pTask )) goto error;
     return pdb;
 
 error:
-    if (pdb->env_DB) HeapFree( pdb->heap, 0, pdb->env_DB );
+    if (pdb->env_db) HeapFree( pdb->heap, 0, pdb->env_db );
     if (pdb->handle_table) HeapFree( pdb->system_heap, 0, pdb->handle_table );
     if (pdb->heap) HeapDestroy( pdb->heap );
     DeleteCriticalSection( &pdb->crit_section );
@@ -285,7 +334,7 @@ void PROCESS_Destroy( K32OBJ *ptr )
     /* Free everything */
 
     ptr->type = K32OBJ_UNKNOWN;
-    HeapFree( pdb->heap, 0, pdb->env_DB );
+    HeapFree( pdb->heap, 0, pdb->env_db );
     HeapFree( pdb->system_heap, 0, pdb->handle_table );
     HeapDestroy( pdb->heap );
     DeleteCriticalSection( &pdb->crit_section );
@@ -321,10 +370,320 @@ DWORD GetCurrentProcessId(void)
 
 
 /***********************************************************************
+ *      GetEnvironmentStrings32A   (KERNEL32.210) (KERNEL32.211)
+ */
+LPSTR GetEnvironmentStrings32A(void)
+{
+    assert( pCurrentProcess );
+    return pCurrentProcess->env_db->environ;
+}
+
+
+/***********************************************************************
+ *      GetEnvironmentStrings32W   (KERNEL32.212)
+ */
+LPWSTR GetEnvironmentStrings32W(void)
+{
+    INT32 size;
+    LPWSTR ret, pW;
+    LPSTR pA;
+
+    assert( pCurrentProcess );
+    size = HeapSize( GetProcessHeap(), 0, pCurrentProcess->env_db->environ );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) )))
+        return NULL;
+    pA = pCurrentProcess->env_db->environ;
+    pW = ret;
+    while (*pA)
+    {
+        lstrcpyAtoW( pW, pA );
+        size = strlen(pA);
+        pA += size + 1;
+        pW += size + 1;
+    }
+    *pW = 0;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           FreeEnvironmentStrings32A   (KERNEL32.141)
+ */
+BOOL32 FreeEnvironmentStrings32A( LPSTR ptr )
+{
+    assert( pCurrentProcess );
+    if (ptr != pCurrentProcess->env_db->environ)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           FreeEnvironmentStrings32W   (KERNEL32.142)
+ */
+BOOL32 FreeEnvironmentStrings32W( LPWSTR ptr )
+{
+    assert( pCurrentProcess );
+    return HeapFree( GetProcessHeap(), 0, ptr );
+}
+
+
+/***********************************************************************
+ *          GetEnvironmentVariable32A   (KERNEL32.213)
+ */
+DWORD GetEnvironmentVariable32A( LPCSTR name, LPSTR value, DWORD size )
+{
+    LPSTR p;
+    INT32 len, res;
+
+    assert( pCurrentProcess );
+    p = pCurrentProcess->env_db->environ;
+    if (!name || !*name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    len = strlen(name);
+    while (*p)
+    {
+        res = lstrncmpi32A( name, p, len );
+        if (res < 0) goto not_found;
+        if (!res && (p[len] == '=')) break;
+        p += strlen(p) + 1;
+    }
+    if (!*p) goto not_found;
+    if (value) lstrcpyn32A( value, p + len + 1, size );
+    return strlen(p);
+not_found:
+    return 0;  /* FIXME: SetLastError */
+}
+
+
+/***********************************************************************
+ *           GetEnvironmentVariable32W   (KERNEL32.214)
+ */
+DWORD GetEnvironmentVariable32W( LPCWSTR nameW, LPWSTR valW, DWORD size )
+{
+    LPSTR name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
+    LPSTR val  = HeapAlloc( GetProcessHeap(), 0, size );
+    DWORD res  = GetEnvironmentVariable32A( name, val, size );
+    HeapFree( GetProcessHeap(), 0, name );
+    if (valW) lstrcpynAtoW( valW, val, size );
+    HeapFree( GetProcessHeap(), 0, val );
+    return res;
+}
+
+
+/***********************************************************************
+ *           SetEnvironmentVariable32A   (KERNEL32.484)
+ */
+BOOL32 SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
+{
+    INT32 size, len, res;
+    LPSTR p, env, new_env;
+
+    assert( pCurrentProcess );
+    env = p = pCurrentProcess->env_db->environ;
+
+    /* Find a place to insert the string */
+
+    res = -1;
+    len = strlen(name);
+    while (*p)
+    {
+        res = lstrncmpi32A( name, p, len );
+        if (res < 0) break;
+        if (!res && (p[len] == '=')) break;
+        res = 1;
+        p += strlen(p) + 1;
+    }
+    if (!value && res)  /* Value to remove doesn't exist already */
+        return FALSE;
+
+    /* Realloc the buffer */
+
+    len = value ? strlen(name) + strlen(value) + 2 : 0;
+    if (!res) len -= strlen(p) + 1;  /* The name already exists */
+    size = pCurrentProcess->env_db->env_size + len;
+    if (!(new_env = HeapReAlloc( GetProcessHeap(), 0, env, size )))
+        return FALSE;
+    p = new_env + (p - env);
+
+    /* Set the new string */
+
+    memmove( p + len, p, pCurrentProcess->env_db->env_size - (p-new_env) );
+    if (value)
+    {
+        strcpy( p, name );
+        strcat( p, "=" );
+        strcat( p, value );
+    }
+    pCurrentProcess->env_db->env_size = size;
+    pCurrentProcess->env_db->environ  = new_env;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           SetEnvironmentVariable32W   (KERNEL32.485)
+ */
+BOOL32 SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
+{
+    LPSTR nameA  = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
+    LPSTR valueA = HEAP_strdupWtoA( GetProcessHeap(), 0, value );
+    BOOL32 ret = SetEnvironmentVariable32A( nameA, valueA );
+    HeapFree( GetProcessHeap(), 0, nameA );
+    HeapFree( GetProcessHeap(), 0, valueA );
+    return ret;
+}
+
+
+/***********************************************************************
  *           GetProcessHeap    (KERNEL32.259)
  */
 HANDLE32 GetProcessHeap(void)
 {
     if (!pCurrentProcess) return SystemHeap;  /* For the boot-up code */
     return pCurrentProcess->heap;
+}
+
+
+/***********************************************************************
+ *           GetThreadLocale    (KERNEL32.295)
+ */
+LCID GetThreadLocale(void)
+{
+    return pCurrentProcess->locale;
+}
+
+
+/***********************************************************************
+ *           SetPriorityClass   (KERNEL32.503)
+ */
+BOOL32 SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
+{
+    PDB32	*pdb;
+
+    pdb = (PDB32*)PROCESS_GetObjPtr(hprocess,K32OBJ_PROCESS);
+    if (!pdb) return FALSE;
+    switch (priorityclass)
+    {
+    case NORMAL_PRIORITY_CLASS:
+    	pdb->priority = 0x00000008;
+	break;
+    case IDLE_PRIORITY_CLASS:
+    	pdb->priority = 0x00000004;
+	break;
+    case HIGH_PRIORITY_CLASS:
+    	pdb->priority = 0x0000000d;
+	break;
+    case REALTIME_PRIORITY_CLASS:
+    	pdb->priority = 0x00000018;
+    	break;
+    default:
+    	fprintf(stderr,"SetPriorityClass: unknown priority class %ld\n",priorityclass);
+	break;
+    }
+    K32OBJ_DecCount((K32OBJ*)pdb);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetPriorityClass   (KERNEL32.250)
+ */
+DWORD GetPriorityClass(HANDLE32 hprocess)
+{
+    PDB32	*pdb;
+    DWORD	ret;
+
+    pdb = (PDB32*)PROCESS_GetObjPtr(hprocess,K32OBJ_PROCESS);
+    ret = 0;
+    if (pdb)
+    {
+    	switch (pdb->priority)
+        {
+	case 0x00000008:
+	    ret = NORMAL_PRIORITY_CLASS;
+	    break;
+	case 0x00000004:
+	    ret = IDLE_PRIORITY_CLASS;
+	    break;
+	case 0x0000000d:
+	    ret = HIGH_PRIORITY_CLASS;
+	    break;
+	case 0x00000018:
+	    ret = REALTIME_PRIORITY_CLASS;
+	    break;
+	default:
+	    fprintf(stderr,"GetPriorityClass: unknown priority %ld\n",pdb->priority);
+	}
+	K32OBJ_DecCount((K32OBJ*)pdb);
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetStdHandle    (KERNEL32.276)
+ *
+ * FIXME: These should be allocated when a console is created, or inherited
+ *        from the parent.
+ */
+HANDLE32 GetStdHandle( DWORD std_handle )
+{
+    HFILE32 hFile;
+    int fd;
+
+    assert( pCurrentProcess );
+    switch(std_handle)
+    {
+    case STD_INPUT_HANDLE:
+        if (pCurrentProcess->env_db->hStdin)
+            return pCurrentProcess->env_db->hStdin;
+        fd = 0;
+        break;
+    case STD_OUTPUT_HANDLE:
+        if (pCurrentProcess->env_db->hStdout)
+            return pCurrentProcess->env_db->hStdout;
+        fd = 1;
+        break;
+    case STD_ERROR_HANDLE:
+        if (pCurrentProcess->env_db->hStderr)
+            return pCurrentProcess->env_db->hStderr;
+        fd = 2;
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE32;
+    }
+    hFile = FILE_DupUnixHandle( fd );
+    if (hFile != HFILE_ERROR32) FILE_SetFileType( hFile, FILE_TYPE_CHAR );
+    return hFile;
+}
+
+
+/***********************************************************************
+ *           SetStdHandle    (KERNEL32.506)
+ */
+BOOL32 SetStdHandle( DWORD std_handle, HANDLE32 handle )
+{
+    assert( pCurrentProcess );
+    switch(std_handle)
+    {
+    case STD_INPUT_HANDLE:
+        pCurrentProcess->env_db->hStdin = handle;
+        return TRUE;
+    case STD_OUTPUT_HANDLE:
+        pCurrentProcess->env_db->hStdout = handle;
+        return TRUE;
+    case STD_ERROR_HANDLE:
+        pCurrentProcess->env_db->hStderr = handle;
+        return TRUE;
+    }
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
 }

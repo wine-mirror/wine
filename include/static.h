@@ -4,8 +4,8 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef STATIC_H
-#define STATIC_H
+#ifndef __WINE_STATIC_H
+#define __WINE_STATIC_H
 
 #include "windows.h"
 
@@ -19,4 +19,4 @@ typedef struct
 
 extern LRESULT StaticWndProc(HWND hWnd,UINT uMsg,WPARAM16 wParam,LPARAM lParam );
 
-#endif  /* STATIC_H */
+#endif  /* __WINE_STATIC_H */

@@ -31,9 +31,9 @@ DIVINCL   = -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include -I$(SRCDIR) -I.
 ALLCFLAGS = $(CFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL) $(X_CFLAGS)
 LDCOMBINE = ld -r
 RM        = rm -f
-BUILD     = $(TOPOBJDIR)/tools/build
-MAKEDEP   = $(TOPOBJDIR)/tools/makedep
-WINERC    = $(TOPOBJDIR)/rc/winerc
+BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
+MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
+WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
 WINESTUB  = $(TOPOBJDIR)/library/winestub.o
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@
@@ -72,12 +72,17 @@ OBJS = $(GEN_C_SRCS:.c=.o) $(C_SRCS:.c=.o) \
 # Rule to rebuild resource compiler
 
 $(WINERC) check_winerc:
-	cd $(TOPOBJDIR)/rc; $(SUBMAKE) winerc
+	cd $(TOPOBJDIR)/rc; $(SUBMAKE) winerc@PROGEXT@
 
-# Rule to rebuild the makedep program
+# Rule to rebuild the 'makedep' program
 
 $(MAKEDEP) check_makedep:
-	cd $(TOPOBJDIR)/tools; $(SUBMAKE) makedep
+	cd $(TOPOBJDIR)/tools; $(SUBMAKE) makedep@PROGEXT@
+
+# Rule to rebuild the 'build' program
+
+$(BUILD) checkbuild:
+	cd $(TOPOBJDIR)/tools; $(SUBMAKE) build@PROGEXT@
 
 # Rule for main module
 

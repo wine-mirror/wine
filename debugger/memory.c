@@ -142,14 +142,30 @@ void DEBUG_WriteMemory( const DBG_ADDR *address, int value )
  */
 void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 {
-    DBG_ADDR addr = *address;
-    unsigned char * pnt;
-    unsigned int * dump;
-    unsigned short int * wdump;
-    int i;
+    DBG_ADDR addr =	* address;
+    unsigned int	* dump;
+    int			  i;
+    unsigned char	* pnt;
+    struct datatype	* testtype;
+    unsigned short int	* wdump;
 
     DBG_FIX_ADDR_SEG( &addr, (format == 'i') ?
                              CS_reg(&DEBUG_context) : DS_reg(&DEBUG_context) );
+
+    /*
+     * Dereference pointer to get actual memory address we need to be
+     * reading.  We will use the same segment as what we have already,
+     * and hope that this is a sensible thing to do.
+     */
+    if( addr.type != NULL )
+      {
+	if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
+	DEBUG_TypeDerefPointer(&addr, &testtype);
+	if( testtype != NULL || addr.type == DEBUG_TypeIntConst )
+	  {
+	    addr.off = DEBUG_GetExprValue(&addr, NULL);
+	  }
+      }
 
     if (format != 'i' && count > 1)
     {
@@ -179,7 +195,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
                     DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
                     fprintf(stderr,": ");
                     if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
-                    DEBUG_Disasm( &addr );
+                    DEBUG_Disasm( &addr, TRUE );
                     fprintf(stderr,"\n");
 		}
 		return;

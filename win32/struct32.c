@@ -11,25 +11,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-void STRUCT32_POINT32to16(const POINT32* p32, POINT16* p16)
-{
-	p16->x = p32->x;
-	p16->y = p32->y;
-}
-
-void STRUCT32_POINT16to32(const POINT16* p16, POINT32* p32)
-{
-	p32->x = p16->x;
-	p32->y = p16->y;
-}
-
-void STRUCT32_SIZE16to32(const SIZE16* p16, SIZE32* p32) 
-  
-{
-        p32->cx = p16->cx;
-        p32->cy = p16->cy;
-}
-
 void STRUCT32_MSG16to32(const MSG16 *msg16,MSG32 *msg32)
 {
 	msg32->hwnd=(DWORD)msg16->hwnd;
@@ -50,22 +31,6 @@ void STRUCT32_MSG32to16(const MSG32 *msg32,MSG16 *msg16)
 	msg16->time=msg32->time;
 	msg16->pt.x=msg32->pt.x;
 	msg16->pt.y=msg32->pt.y;
-}
-
-void STRUCT32_RECT32to16(const RECT32* r32, RECT16 *r16)
-{
-	r16->left = r32->left;
-	r16->right = r32->right;
-	r16->top = r32->top;
-	r16->bottom = r32->bottom;
-}
-
-void STRUCT32_RECT16to32(const RECT16* r16, RECT32 *r32)
-{
-	r32->left = r16->left;
-	r32->right = r16->right;
-	r32->top = r16->top;
-	r32->bottom = r16->bottom;
 }
 
 void STRUCT32_MINMAXINFO32to16( const MINMAXINFO32 *from, MINMAXINFO16 *to )

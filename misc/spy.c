@@ -136,15 +136,48 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00B0 - Win32 Edit controls */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "EM_GETSEL32",              /* 0x00b0 */
+    "EM_SETSEL32",              /* 0x00b1 */
+    "EM_GETRECT32",             /* 0x00b2 */
+    "EM_SETRECT32",             /* 0x00b3 */
+    "EM_SETRECTNP32",           /* 0x00b4 */
+    "EM_SCROLL32",              /* 0x00b5 */
+    "EM_LINESCROLL32",          /* 0x00b6 */
+    "EM_SCROLLCARET32",         /* 0x00b7 */
+    "EM_GETMODIFY32",           /* 0x00b8 */
+    "EM_SETMODIFY32",           /* 0x00b9 */
+    "EM_GETLINECOUNT32",        /* 0x00ba */
+    "EM_LINEINDEX32",           /* 0x00bb */
+    "EM_SETHANDLE32",           /* 0x00bc */
+    "EM_GETHANDLE32",           /* 0x00bd */
+    "EM_GETTHUMB32",            /* 0x00be */
+    NULL,                       /* 0x00bf */
 
-    /* 0x00C0 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL,                       /* 0x00c0 */
+    "EM_LINELENGTH32",          /* 0x00c1 */
+    "EM_REPLACESEL32",          /* 0x00c2 */
+    NULL,                       /* 0x00c3 */
+    "EM_GETLINE32",             /* 0x00c4 */
+    "EM_LIMITTEXT32",           /* 0x00c5 */
+    "EM_CANUNDO32",             /* 0x00c6 */
+    "EM_UNDO32",                /* 0x00c7 */
+    "EM_FMTLINES32",            /* 0x00c8 */
+    "EM_LINEFROMCHAR32",        /* 0x00c9 */
+    NULL,                       /* 0x00ca */
+    "EM_SETTABSTOPS32",         /* 0x00cb */
+    "EM_SETPASSWORDCHAR32",     /* 0x00cc */
+    "EM_EMPTYUNDOBUFFER32",     /* 0x00cd */
+    "EM_GETFIRSTVISIBLELINE32", /* 0x00ce */
+    "EM_SETREADONLY32",         /* 0x00cf */
 
-    /* 0x00D0 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "EM_SETWORDBREAKPROC32",    /* 0x00d0 */
+    "EM_GETWORDBREAKPROC32",    /* 0x00d1 */
+    "EM_GETPASSWORDCHAR32",     /* 0x00d2 */
+    "EM_SETMARGINS32",          /* 0x00d3 */
+    "EM_GETMARGINS32",          /* 0x00d4 */
+    "EM_GETLIMITTEXT32",        /* 0x00d5 */
+    "EM_POSFROMCHAR32",         /* 0x00d6 */
+    "EM_CHARFROMPOS32",         /* 0x00d7 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00E0 - Win32 Scrollbars */

@@ -952,7 +952,7 @@ BOOL32 HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
     HEAP_MakeInUseBlockFree( subheap, pInUse );
 
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
-    SetLastError( 0 );
+/*    SetLastError( 0 ); */
 
     dprintf_heap( stddeb, "HeapFree(%08x,%08lx,%08lx): returning TRUE\n",
                   heap, flags, (DWORD)ptr );

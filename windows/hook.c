@@ -109,7 +109,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
                 LPMOUSEHOOKSTRUCT32 lpms32 = HeapAlloc( SystemHeap, 0,
                                                         sizeof(*lpms32) );
 
-                STRUCT32_POINT16to32( &lpms16->pt, &lpms32->pt );
+                CONV_POINT16TO32( &lpms16->pt, &lpms32->pt );
 
                 /* wHitTestCode may be negative, so convince compiler to do
                    correct sign extension. Yay. :| */
@@ -126,7 +126,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
                 LPRECT32 lprect32 = HeapAlloc( SystemHeap, 0,
                                                sizeof(*lprect32) );
 
-                STRUCT32_RECT16to32( lprect16, lprect32 );
+                CONV_RECT16TO32( lprect16, lprect32 );
                 *plParam = (LPARAM)lprect32;
                 break;
             }
@@ -138,7 +138,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             LPMOUSEHOOKSTRUCT32 lpms32 = HeapAlloc( SystemHeap, 0,
                                                     sizeof(*lpms32) );
 
-            STRUCT32_POINT16to32( &lpms16->pt, &lpms32->pt );
+            CONV_POINT16TO32( &lpms16->pt, &lpms32->pt );
 
             /* wHitTestCode may be negative, so convince compiler to do
                correct sign extension. Yay. :| */
@@ -413,7 +413,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	      LPMOUSEHOOKSTRUCT32 lpms32 = (LPMOUSEHOOKSTRUCT32)*plParam;
 	      LPMOUSEHOOKSTRUCT16 lpms16 = SEGPTR_NEW( MOUSEHOOKSTRUCT16 );
 
-	      STRUCT32_POINT32to16( &lpms32->pt, &lpms16->pt );
+	      CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
 
 	      lpms16->hwnd         = lpms32->hwnd;
 	      lpms16->wHitTestCode = lpms32->wHitTestCode;
@@ -428,7 +428,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	      LPRECT32 lprect32 = (LPRECT32)*plParam;
 	      LPRECT16 lprect16 = SEGPTR_NEW( RECT16 );
 
-	      STRUCT32_RECT32to16( lprect32, lprect16 );
+	      CONV_RECT32TO16( lprect32, lprect16 );
 
 	      *plParam = (LPARAM)SEGPTR_GET( lprect16 );
 	      break;
@@ -441,7 +441,7 @@ static void HOOK_Map32To16Common(INT32 id, INT32 code, WPARAM32 *pwParam,
 	  LPMOUSEHOOKSTRUCT32 lpms32 = (LPMOUSEHOOKSTRUCT32)*plParam;
 	  LPMOUSEHOOKSTRUCT16 lpms16 = SEGPTR_NEW( MOUSEHOOKSTRUCT16 );
 
-	  STRUCT32_POINT32to16( &lpms32->pt, &lpms16->pt );
+	  CONV_POINT32TO16( &lpms32->pt, &lpms16->pt );
 
 	  lpms16->hwnd = lpms32->hwnd;
 	  lpms16->wHitTestCode = lpms32->wHitTestCode;

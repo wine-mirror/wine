@@ -16,11 +16,14 @@
 #include "win.h"
 #include "debugger.h"
 
+#include "expr.h"
+
 extern FILE * yyin;
 unsigned int dbg_mode = 0;
 int curr_frame = 0;
 
 static enum exec_mode dbg_exec_mode = EXEC_CONT;
+static int dbg_exec_count = 0;
 
 void issue_prompt(void);
 void mode_command(int);
@@ -36,17 +39,18 @@ int yyerror(char *);
     enum debug_regs  reg;
     char *           string;
     int              integer;
+    struct list_id   listing;
+    struct expr *    expression;
 }
 
 %token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
-%token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tDEFINE tABORT
+%token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT
 %token tCLASS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
-%token tNO_SYMBOL tEOL
-%token tSYMBOLFILE
-%token tFRAME
-
-
-%token <string> tIDENTIFIER
+%token tEOL tSTRING
+%token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY
+%token tSTEPI tNEXTI tFINISH tSHOW tDIR 
+%token <string> tPATH
+%token <string> tIDENTIFIER tSTRING
 %token <integer> tNUM tFORMAT
 %token <reg> tREG
 
@@ -62,14 +66,19 @@ int yyerror(char *);
 %left '&'
 %left OP_EQ OP_NE
 %left '<' '>' OP_LE OP_GE
-%left OP_SHL OP_SHR
+%left OP_SHL OP_SHR OP_DRF
 %left '+' '-'
 %left '*' '/' '%'
 %left OP_SIGN '!' '~' OP_DEREF /* OP_INC OP_DEC OP_ADDR */
+%left '.' '['
 %nonassoc ':'
 
-%type <integer> expr
-%type <address> addr segaddr symbol
+%type <expression> expr lval lvalue
+%type <address> expr_addr lval_addr
+%type <integer> expr_value
+%type <string> pathname
+
+%type <listing> list_arg
 
 %%
 
@@ -83,14 +92,28 @@ line: command
 command:
       tQUIT tEOL               { exit(0); }
     | tHELP tEOL               { DEBUG_Help(); }
-    | tCONT tEOL               { dbg_exec_mode = EXEC_CONT; return 0; }
-    | tSTEP tEOL               { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
-    | tNEXT tEOL               { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
-    | tLIST tEOL               { DEBUG_List( NULL, 15 ); }
-    | tLIST addr tEOL          { DEBUG_List( &$2, 15 ); }
+    | tHELP tINFO tEOL         { DEBUG_HelpInfo(); }
+    | tCONT tEOL               { dbg_exec_count = 1; 
+				 dbg_exec_mode = EXEC_CONT; return 0; }
+    | tCONT tNUM tEOL          { dbg_exec_count = $2; 
+				 dbg_exec_mode = EXEC_CONT; return 0; }
+    | tSTEP tEOL               { dbg_exec_count = 1; 
+				 dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+    | tNEXT tEOL               { dbg_exec_count = 1; 
+				 dbg_exec_mode = EXEC_STEP_OVER; return 0; }
+    | tSTEP tNUM tEOL          { dbg_exec_count = $2; 
+				 dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+    | tNEXT tNUM tEOL          { dbg_exec_count = $2; 
+				 dbg_exec_mode = EXEC_STEP_OVER; return 0; }
+    | tSTEPI tEOL              { dbg_exec_count = 1; 
+				 dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
+    | tNEXTI tEOL              { dbg_exec_count = 1; 
+				 dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
+    | tSTEPI tNUM tEOL         { dbg_exec_count = $2; 
+				 dbg_exec_mode = EXEC_STEPI_INSTR; return 0; }
+    | tNEXTI tNUM tEOL         { dbg_exec_count = $2; 
+				 dbg_exec_mode = EXEC_STEPI_OVER; return 0; }
     | tABORT tEOL              { kill(getpid(), SIGABRT); }
-    | tSYMBOLFILE tIDENTIFIER tEOL  { DEBUG_ReadSymbolTable( $2 ); }
-    | tDEFINE tIDENTIFIER addr tEOL { DEBUG_AddSymbol( $2, &$3, NULL ); }
     | tMODE tNUM tEOL          { mode_command($2); }
     | tENABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, TRUE ); }
     | tDISABLE tNUM tEOL       { DEBUG_EnableBreakpoint( $2, FALSE ); }
@@ -100,7 +123,20 @@ command:
     | tUP tNUM tEOL	       { DEBUG_SetFrame( curr_frame + $2 ); }
     | tDOWN tEOL	       { DEBUG_SetFrame( curr_frame - 1 );  }
     | tDOWN tNUM tEOL	       { DEBUG_SetFrame( curr_frame - $2 ); }
-    | tFRAME expr tEOL	       { DEBUG_SetFrame( $2 ); }
+    | tFRAME tNUM tEOL         { DEBUG_SetFrame( $2 ); }
+    | tFINISH tEOL	       { dbg_exec_count = 0;
+				 dbg_exec_mode = EXEC_FINISH; return 0; }
+    | tSHOW tDIR tEOL	       { DEBUG_ShowDir(); }
+    | tDIR pathname tEOL       { DEBUG_AddPath( $2 ); }
+    | tDIR tEOL		       { DEBUG_NukePath(); }
+    | tDISPLAY expr tEOL       { DEBUG_AddDisplay($2); }
+    | tDELETE tDISPLAY tNUM tEOL { DEBUG_DelDisplay( $3 ); }
+    | tDELETE tDISPLAY tEOL    { DEBUG_DelDisplay( -1 ); }
+    | tUNDISPLAY tNUM tEOL     { DEBUG_DelDisplay( $2 ); }
+    | tUNDISPLAY tEOL          { DEBUG_DelDisplay( -1 ); }
+    | tCOND tNUM tEOL          { DEBUG_AddBPCondition($2, NULL); }
+    | tCOND tNUM expr tEOL     { DEBUG_AddBPCondition($2, $3); }
+    | list_command
     | set_command
     | x_command
     | print_command
@@ -109,47 +145,110 @@ command:
     | walk_command
 
 set_command:
-      tSET tREG '=' expr tEOL	     { DEBUG_SetRegister( $2, $4 ); }
-    | tSET '*' addr '=' expr tEOL    { DEBUG_WriteMemory( &$3, $5 ); }
-    | tSET tIDENTIFIER '=' addr tEOL { if (!DEBUG_SetSymbolValue( $2, &$4 ))
-                                       {
-                                           fprintf( stderr,
-                                                 "Symbol %s not found\n", $2 );
-                                           YYERROR;
-                                       }
-                                     }
+      tSET tREG '=' expr_value tEOL	   { DEBUG_SetRegister( $2, $4 ); 
+					     DEBUG_FreeExprMem(); }
+    | tSET lval_addr '=' expr_value tEOL   { DEBUG_WriteMemory( &$2, $4 ); 
+ 					     DEBUG_FreeExprMem(); }
+
+pathname:
+      tIDENTIFIER                    { $$ = $1; }
+    | tPATH			     { $$ = $1; }
+
+list_command:
+      tLIST tEOL               { DEBUG_List( NULL, NULL, 10 ); }
+    | tLIST '-' tEOL	       { DEBUG_List( NULL, NULL, -10 ); }
+    | tLIST list_arg tEOL      { DEBUG_List( & $2, NULL, 10 ); }
+    | tLIST ',' list_arg tEOL  { DEBUG_List( NULL, & $3, -10 ); }
+    | tLIST list_arg ',' list_arg tEOL { DEBUG_List( & $2, & $4, 0 ); }
+
+list_arg:
+      tNUM		       { $$.sourcefile = NULL; $$.line = $1; }
+    | pathname ':' tNUM	       { $$.sourcefile = $1; $$.line = $3; }
+    | tIDENTIFIER	       { DEBUG_GetFuncInfo( & $$, NULL, $1); }
+    | pathname ':' tIDENTIFIER { DEBUG_GetFuncInfo( & $$, $1, $3); }
+    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2, FALSE, NULL, 
+							0, & $$ ); 
+ 					     DEBUG_FreeExprMem(); }
 
 x_command:
-      tEXAM addr tEOL          { DEBUG_ExamineMemory( &$2, 1, 'x'); }
-    | tEXAM tFORMAT addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
+      tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); 
+ 					     DEBUG_FreeExprMem(); }
+    | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); 
+ 					     DEBUG_FreeExprMem(); }
 
 print_command:
-      tPRINT addr tEOL         { DEBUG_Print( &$2, 1, 'x' ); }
-    | tPRINT tFORMAT addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff ); }
+      tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); 
+ 					     DEBUG_FreeExprMem(); }
+    | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 ); 
+ 					     DEBUG_FreeExprMem(); }
 
 break_command:
-      tBREAK '*' addr tEOL     { DEBUG_AddBreakpoint( &$3 ); }
-    | tBREAK symbol tEOL       { DEBUG_AddBreakpoint( &$2 ); }
-    | tBREAK symbol '+' expr tEOL { DBG_ADDR addr = $2;
-                                    addr.off += $4;
-                                    DEBUG_AddBreakpoint( &addr ); 
-                                  }
-    | tBREAK tEOL              { DBG_ADDR addr = { CS_reg(&DEBUG_context),
+      tBREAK '*' expr_addr tEOL { DEBUG_AddBreakpoint( &$3 ); 
+ 					     DEBUG_FreeExprMem(); }
+    | tBREAK tIDENTIFIER tEOL  { DBG_ADDR addr;
+				 if( DEBUG_GetSymbolValue($2, -1, &addr, TRUE) )
+				   {
+				     DEBUG_AddBreakpoint( &addr );
+				   }
+				 else
+				   {
+				     fprintf(stderr,"Unable to add breakpoint\n");
+				   }
+				}
+    | tBREAK tIDENTIFIER ':' tNUM tEOL  { DBG_ADDR addr;
+				 if( DEBUG_GetSymbolValue($2, $4, &addr, TRUE) )
+				   {
+				     DEBUG_AddBreakpoint( &addr );
+				   }
+				 else
+				   {
+				     fprintf(stderr,"Unable to add breakpoint\n");
+				   }
+				}
+    | tBREAK tNUM tEOL	       { struct name_hash *nh;
+				 DBG_ADDR addr = { NULL,
+						   CS_reg(&DEBUG_context),
+                                                   EIP_reg(&DEBUG_context) };
+
+				 DBG_FIX_ADDR_SEG( &addr, CS_reg(&DEBUG_context) );
+				 DEBUG_FindNearestSymbol(&addr, TRUE,
+							 &nh, 0, NULL);
+				 if( nh != NULL )
+				   {
+				     DEBUG_GetLineNumberAddr(nh, 
+						      $2, &addr, TRUE);
+				     DEBUG_AddBreakpoint( &addr );
+				   }
+				 else
+				   {
+				     fprintf(stderr,"Unable to add breakpoint\n");
+				   }
+                               }
+
+    | tBREAK tEOL              { DBG_ADDR addr = { NULL,
+						   CS_reg(&DEBUG_context),
                                                    EIP_reg(&DEBUG_context) };
                                  DEBUG_AddBreakpoint( &addr );
                                }
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
-    | tINFO tCLASS expr tEOL    { CLASS_DumpClass( (CLASS *)$3 ); }
-    | tINFO tMODULE expr tEOL   { MODULE_DumpModule( $3 ); }
-    | tINFO tQUEUE expr tEOL    { QUEUE_DumpQueue( $3 ); }
+    | tINFO tCLASS expr_value tEOL    { CLASS_DumpClass( (CLASS *)$3 ); 
+ 					     DEBUG_FreeExprMem(); }
+    | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
+    | tINFO tMODULE expr_value tEOL   { MODULE_DumpModule( $3 ); 
+ 					     DEBUG_FreeExprMem(); }
+    | tINFO tQUEUE expr_value tEOL    { QUEUE_DumpQueue( $3 ); 
+ 					     DEBUG_FreeExprMem(); }
     | tINFO tREGS tEOL          { DEBUG_InfoRegisters(); }
-    | tINFO tSEGMENTS expr tEOL { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
+    | tINFO tSEGMENTS expr_value tEOL { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); 
+ 					     DEBUG_FreeExprMem(); }
     | tINFO tSEGMENTS tEOL      { LDT_Print( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
-    | tINFO tWND expr tEOL      { WIN_DumpWindow( $3 ); } 
+    | tINFO tWND expr_value tEOL      { WIN_DumpWindow( $3 ); 
+ 					     DEBUG_FreeExprMem(); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
+    | tINFO tDISPLAY tEOL       { DEBUG_InfoDisplay(); }
 
 walk_command:
       tWALK tCLASS tEOL         { CLASS_WalkClasses(); }
@@ -158,70 +257,78 @@ walk_command:
     | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
     | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }
 
-symbol:
-    tIDENTIFIER            { if (!DEBUG_GetSymbolValue( $1, -1, &$$ ))
-                             {
-                               fprintf( stderr, "Symbol %s not found\n", $1 );
-                               YYERROR;
-                             }
-                           }
-    | tIDENTIFIER ':' tNUM { if (!DEBUG_GetSymbolValue( $1, $3, &$$ ))
-                             {
-                               fprintf( stderr, "No code at %s:%d\n", $1, $3 );
-                               YYERROR;
-                             }
-                           }
+expr_addr:
+    expr			 { $$ = DEBUG_EvalExpr($1) }
 
-addr:
-      expr                       { $$.seg = 0xffffffff; $$.off = $1; }
-    | segaddr                    { $$ = $1; }
-
-segaddr:
-      expr ':' expr              { $$.seg = $1; $$.off = $3; }
-    | symbol                     { $$ = $1; }
-    | symbol '+' expr            { $$ = $1; $$.off += $3; }
-    | symbol '-' expr            { $$ = $1; $$.off -= $3; }
-
+expr_value:
+      expr        { DBG_ADDR addr  = DEBUG_EvalExpr($1);
+		    $$ = *(unsigned int *) addr.off; }
+/*
+ * The expr rule builds an expression tree.  When we are done, we call
+ * EvalExpr to evaluate the value of the expression.  The advantage of
+ * the two-step approach is that it is possible to save expressions for
+ * use in 'display' commands, and in conditional watchpoints.
+ */
 expr:
-      tNUM                       { $$ = $1; }
-    | tREG                       { $$ = DEBUG_GetRegister($1); }
-    | expr OP_LOR expr           { $$ = $1 || $3; }
-    | expr OP_LAND expr          { $$ = $1 && $3; }
-    | expr '|' expr              { $$ = $1 | $3; }
-    | expr '&' expr              { $$ = $1 & $3; }
-    | expr '^' expr              { $$ = $1 ^ $3; }
-    | expr OP_EQ expr            { $$ = $1 == $3; }
-    | expr '>' expr              { $$ = $1 > $3; }
-    | expr '<' expr              { $$ = $1 < $3; }
-    | expr OP_GE expr            { $$ = $1 >= $3; }
-    | expr OP_LE expr            { $$ = $1 <= $3; }
-    | expr OP_NE expr            { $$ = $1 != $3; }
-    | expr OP_SHL expr           { $$ = (unsigned)$1 << $3; }
-    | expr OP_SHR expr           { $$ = (unsigned)$1 >> $3; }
-    | expr '+' expr              { $$ = $1 + $3; }
-    | expr '-' expr              { $$ = $1 - $3; }
-    | expr '*' expr              { $$ = $1 * $3; }
-    | expr '/' expr              { if ($3) 
-                                       if ($3 == -1 && $1 == 0x80000000l)
-                                           yyerror ("Division overflow");
-                                       else $$ = $1 / $3;
-                                   else yyerror ("Division by zero");
-                                 }
-    | expr '%' expr              { if ($3) 
-                                       if ($3 == -1 && $1 == 0x80000000l)
-                                           $$ = 0; /* A sensible result in this case.  */
-                                       else $$ = $1 % $3;
-                                   else yyerror ("Division by zero");
-                                 }
-    | '-' expr %prec OP_SIGN     { $$ = -$2; }
+      tNUM                       { $$ = DEBUG_ConstExpr($1); }
+    | tSTRING			 { $$ = DEBUG_StringExpr($1); }
+    | tREG                       { $$ = DEBUG_RegisterExpr($1); }
+    | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
+    | expr OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); } 
+    | expr '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
+    | tIDENTIFIER '(' ')'	 { $$ = DEBUG_CallExpr($1, 0); } 
+    | tIDENTIFIER '(' expr ')'	 { $$ = DEBUG_CallExpr($1, 1, $3); } 
+    | tIDENTIFIER '(' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 2, $3, 
+							       $5); } 
+    | tIDENTIFIER '(' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7); } 
+    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7, $9); } 
+    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7, $9, $11); } 
+    | expr '[' expr ']'		 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); } 
+    | expr ':' expr		 { $$ = DEBUG_BinopExpr(EXP_OP_SEG, $1, $3); } 
+    | expr OP_LOR expr           { $$ = DEBUG_BinopExpr(EXP_OP_LOR, $1, $3); }
+    | expr OP_LAND expr          { $$ = DEBUG_BinopExpr(EXP_OP_LAND, $1, $3); }
+    | expr '|' expr              { $$ = DEBUG_BinopExpr(EXP_OP_OR, $1, $3); }
+    | expr '&' expr              { $$ = DEBUG_BinopExpr(EXP_OP_AND, $1, $3); }
+    | expr '^' expr              { $$ = DEBUG_BinopExpr(EXP_OP_XOR, $1, $3); }
+    | expr OP_EQ expr            { $$ = DEBUG_BinopExpr(EXP_OP_EQ, $1, $3); }
+    | expr '>' expr              { $$ = DEBUG_BinopExpr(EXP_OP_GT, $1, $3); }
+    | expr '<' expr              { $$ = DEBUG_BinopExpr(EXP_OP_LT, $1, $3); }
+    | expr OP_GE expr            { $$ = DEBUG_BinopExpr(EXP_OP_GE, $1, $3); }
+    | expr OP_LE expr            { $$ = DEBUG_BinopExpr(EXP_OP_LE, $1, $3); }
+    | expr OP_NE expr            { $$ = DEBUG_BinopExpr(EXP_OP_NE, $1, $3); }
+    | expr OP_SHL expr           { $$ = DEBUG_BinopExpr(EXP_OP_SHL, $1, $3); }
+    | expr OP_SHR expr           { $$ = DEBUG_BinopExpr(EXP_OP_SHR, $1, $3); }
+    | expr '+' expr              { $$ = DEBUG_BinopExpr(EXP_OP_ADD, $1, $3); }
+    | expr '-' expr              { $$ = DEBUG_BinopExpr(EXP_OP_SUB, $1, $3); }
+    | expr '*' expr              { $$ = DEBUG_BinopExpr(EXP_OP_MUL, $1, $3); }
+    | expr '/' expr              { $$ = DEBUG_BinopExpr(EXP_OP_DIV, $1, $3); }
+    | expr '%' expr              { $$ = DEBUG_BinopExpr(EXP_OP_REM, $1, $3); }
+    | '-' expr %prec OP_SIGN     { $$ = DEBUG_UnopExpr(EXP_OP_NEG, $2); }
     | '+' expr %prec OP_SIGN     { $$ = $2; }
-    | '!' expr                   { $$ = !$2; }
-    | '~' expr                   { $$ = ~$2; }
+    | '!' expr                   { $$ = DEBUG_UnopExpr(EXP_OP_NOT, $2); }
+    | '~' expr                   { $$ = DEBUG_UnopExpr(EXP_OP_LNOT, $2); }
     | '(' expr ')'               { $$ = $2; }
-/* For parser technical reasons we can't use "addr" here.  */
-    | '*' expr %prec OP_DEREF    { DBG_ADDR addr = { 0xffffffff, $2 };
-                                   $$ = DEBUG_ReadMemory( &addr ); }
-    | '*' segaddr %prec OP_DEREF { $$ = DEBUG_ReadMemory( &$2 ); }
+    | '*' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_DEREF, $2); }
+    | '&' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_ADDR, $2); }
+	
+/*
+ * The lvalue rule builds an expression tree.  This is a limited form
+ * of expression that is suitable to be used as an lvalue.
+ */
+lval_addr:
+    lval			 { $$ = DEBUG_EvalExpr($1) }
+
+lval:
+      lvalue                     { $$ = $1; }
+    | '*' expr			 { $$ = DEBUG_UnopExpr(EXP_OP_FORCE_DEREF, $2); }
+	
+lvalue:
+      tNUM                       { $$ = DEBUG_ConstExpr($1); }
+    | tREG                       { $$ = DEBUG_RegisterExpr($1); }
+    | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
+    | lvalue OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); } 
+    | lvalue '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
+    | lvalue '[' expr ']'	 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); } 
 	
 %%
 
@@ -249,7 +356,7 @@ static void DEBUG_Main( int signal )
     static int loaded_symbols = 0;
     static BOOL32 in_debugger = FALSE;
     char SymbolTableFile[256];
-    int instr_len = 0, newmode;
+    int newmode;
     BOOL32 ret_ok;
 #ifdef YYDEBUG
     yydebug = 0;
@@ -268,6 +375,12 @@ static void DEBUG_Main( int signal )
     if (!loaded_symbols)
     {
         loaded_symbols++;
+
+	/*
+	 * Initialize the type handling stuff.
+	 */
+	DEBUG_InitTypes();
+
 	/*
 	 * In some cases we can read the stabs information directly
 	 * from the executable.  If this is the case, we don't need
@@ -294,12 +407,22 @@ static void DEBUG_Main( int signal )
         DEBUG_LoadEntryPoints();
     }
 
-    if ((signal != SIGTRAP) || !DEBUG_ShouldContinue( dbg_exec_mode ))
+#if 0
+    fprintf(stderr, "Entering debugger 	PC=%x, mode=%d, count=%d\n",
+	    EIP_reg(&DEBUG_context),
+	    dbg_exec_mode, dbg_exec_count);
+    
+    sleep(1);
+#endif
+
+    if ((signal != SIGTRAP) || !DEBUG_ShouldContinue( dbg_exec_mode, 
+						      &dbg_exec_count ))
     {
         DBG_ADDR addr;
 
         addr.seg = CS_reg(&DEBUG_context);
         addr.off = EIP_reg(&DEBUG_context);
+	addr.type = NULL;
         DBG_FIX_ADDR_SEG( &addr, 0 );
 
         /* Put the display in a correct state */
@@ -314,6 +437,8 @@ static void DEBUG_Main( int signal )
         if (newmode != dbg_mode)
             fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
 
+	DEBUG_DoDisplay();
+
         if (signal != SIGTRAP)  /* This is a real crash, dump some info */
         {
             DEBUG_InfoRegisters();
@@ -326,6 +451,14 @@ static void DEBUG_Main( int signal )
             }
             DEBUG_BackTrace();
         }
+	else
+	{
+	  /*
+	   * Do a quiet backtrace so that we have an idea of what the situation
+	   * is WRT the source files.
+	   */
+	    DEBUG_SilentBackTrace();
+	}
 
         /* Show where we crashed */
         curr_frame = 0;
@@ -333,9 +466,8 @@ static void DEBUG_Main( int signal )
         fprintf(stderr,":  ");
         if (DBG_CHECK_READ_PTR( &addr, 1 ))
         {
-            DEBUG_Disasm( &addr );
+            DEBUG_Disasm( &addr, TRUE );
             fprintf(stderr,"\n");
-            instr_len = addr.off - EIP_reg(&DEBUG_context);
         }
 
         ret_ok = 0;
@@ -352,7 +484,17 @@ static void DEBUG_Main( int signal )
         } while (!ret_ok);
     }
 
-    DEBUG_RestartExecution( dbg_exec_mode, instr_len );
+    dbg_exec_mode = DEBUG_RestartExecution( dbg_exec_mode, dbg_exec_count );
+    /*
+     * This will have gotten absorbed into the breakpoint info
+     * if it was used.  Otherwise it would have been ignored.
+     * In any case, we don't mess with it any more.
+     */
+    if( dbg_exec_mode == EXEC_CONT )
+      {
+	dbg_exec_count = 0;
+      }
+
     in_debugger = FALSE;
 }
 
@@ -375,6 +517,7 @@ void DebugBreak16( CONTEXT *regs )
 {
     const char *module = MODULE_GetModuleName( GetExePtr(GetCurrentTask()) );
     fprintf( stderr, "%s called DebugBreak\n", module ? module : "???" );
+    DEBUG_context = *regs;
     DEBUG_Main( SIGTRAP );
 }
 

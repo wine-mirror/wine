@@ -14,6 +14,7 @@
 #define PI M_PI
 #endif
 #include "graphics.h"
+#include "gdi.h"
 #include "dc.h"
 #include "bitmap.h"
 #include "callback.h"
@@ -40,24 +41,10 @@ BOOL16 LineTo16( HDC16 hdc, INT16 x, INT16 y )
  */
 BOOL32 LineTo32( HDC32 hdc, INT32 x, INT32 y )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaParam2(dc, META_LINETO, x, y);
-	return TRUE;
-    }
+    DC * dc = DC_GetDCPtr( hdc );
 
-    if (DC_SetupGCForPen( dc ))
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
-		  dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX ),
-		  dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY ),
-		  dc->w.DCOrgX + XLPTODP( dc, x ),
-		  dc->w.DCOrgY + YLPTODP( dc, y ) );
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
-    return TRUE;
+    return dc && dc->funcs->pLineTo &&
+    	   dc->funcs->pLineTo(dc,x,y);
 }
 
 
@@ -66,19 +53,11 @@ BOOL32 LineTo32( HDC32 hdc, INT32 x, INT32 y )
  */
 DWORD MoveTo( HDC16 hdc, INT16 x, INT16 y )
 {
-    DWORD ret;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaParam2(dc, META_MOVETO, x, y);
-	return 0;
-    }
-    ret = MAKELONG( dc->w.CursPosX, dc->w.CursPosY );
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
-    return ret;
+    POINT16	pt;
+
+    if (!MoveToEx16(hdc,x,y,&pt))
+    	return 0;
+    return MAKELONG(pt.x,pt.y);
 }
 
 
@@ -87,16 +66,12 @@ DWORD MoveTo( HDC16 hdc, INT16 x, INT16 y )
  */
 BOOL16 MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
-    if (pt)
-    {
-	pt->x = dc->w.CursPosX;
-	pt->y = dc->w.CursPosY;
-    }
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
+    POINT32 pt32;
+
+    if (!MoveToEx32( (HDC32)hdc, (INT32)x, (INT32)y, &pt32 )) return FALSE;
+    if (pt) CONV_POINT32TO16( &pt32, pt );
     return TRUE;
+
 }
 
 
@@ -105,104 +80,10 @@ BOOL16 MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
  */
 BOOL32 MoveToEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 {
-    POINT16 pt16;
-    if (!MoveToEx16( (HDC16)hdc, (INT16)x, (INT16)y, &pt16 )) return FALSE;
-    if (pt) CONV_POINT16TO32( &pt16, pt );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GRAPH_DrawArc
- *
- * Helper functions for Arc(), Chord() and Pie().
- * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.
- */
-static BOOL32 GRAPH_DrawArc( HDC32 hdc, INT32 left, INT32 top, INT32 right,
-                             INT32 bottom, INT32 xstart, INT32 ystart,
-                             INT32 xend, INT32 yend, INT32 lines )
-{
-    INT32 xcenter, ycenter, istart_angle, idiff_angle, tmp;
-    double start_angle, end_angle;
-    XPoint points[3];
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	switch (lines)
-	{
-	case 0:
-	    MF_MetaParam8(dc, META_ARC, left, top, right, bottom,
-			  xstart, ystart, xend, yend);
-	    break;
-
-	case 1:
-	    MF_MetaParam8(dc, META_CHORD, left, top, right, bottom,
-			  xstart, ystart, xend, yend);
-	    break;
-
-	case 2:
-	    MF_MetaParam8(dc, META_PIE, left, top, right, bottom,
-			  xstart, ystart, xend, yend);
-	    break;
-	}
-	return 0;
-    }
-
-    left   = XLPTODP( dc, left );
-    top    = YLPTODP( dc, top );
-    right  = XLPTODP( dc, right );
-    bottom = YLPTODP( dc, bottom );
-    xstart = XLPTODP( dc, xstart );
-    ystart = YLPTODP( dc, ystart );
-    xend   = XLPTODP( dc, xend );
-    yend   = YLPTODP( dc, yend );
-    if ((left == right) || (top == bottom)) return FALSE;
-
-    xcenter = (right + left) / 2;
-    ycenter = (bottom + top) / 2;
-    start_angle = atan2( (double)(ycenter-ystart)*(right-left),
-			 (double)(xstart-xcenter)*(bottom-top) );
-    end_angle   = atan2( (double)(ycenter-yend)*(right-left),
-			 (double)(xend-xcenter)*(bottom-top) );
-    istart_angle = (INT32)(start_angle * 180 * 64 / PI);
-    idiff_angle  = (INT32)((end_angle - start_angle) * 180 * 64 / PI );
-    if (idiff_angle <= 0) idiff_angle += 360 * 64;
-    if (left > right) { tmp=left; left=right; right=tmp; }
-    if (top > bottom) { tmp=top; top=bottom; bottom=tmp; }
-
-      /* Fill arc with brush if Chord() or Pie() */
-
-    if ((lines > 0) && DC_SetupGCForBrush( dc ))
-    {
-        XSetArcMode( display, dc->u.x.gc, (lines==1) ? ArcChord : ArcPieSlice);
-        XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                 dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-                 right-left-1, bottom-top-1, istart_angle, idiff_angle );
-    }
-
-      /* Draw arc and lines */
-
-    if (!DC_SetupGCForPen( dc )) return TRUE;
-    XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
-	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-	      right-left-1, bottom-top-1, istart_angle, idiff_angle );
-    if (!lines) return TRUE;
-
-    points[0].x = dc->w.DCOrgX + xcenter + (int)(cos(start_angle) * (right-left) / 2);
-    points[0].y = dc->w.DCOrgY + ycenter - (int)(sin(start_angle) * (bottom-top) / 2);
-    points[1].x = dc->w.DCOrgX + xcenter + (int)(cos(end_angle) * (right-left) / 2);
-    points[1].y = dc->w.DCOrgY + ycenter - (int)(sin(end_angle) * (bottom-top) / 2);
-    if (lines == 2)
-    {
-	points[2] = points[1];
-	points[1].x = dc->w.DCOrgX + xcenter;
-	points[1].y = dc->w.DCOrgY + ycenter;
-    }
-    XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
-	        points, lines+1, CoordModeOrigin );
-    return TRUE;
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    return dc && dc->funcs->pMoveToEx &&
+    	   dc->funcs->pMoveToEx(dc,x,y,pt);
 }
 
 
@@ -212,8 +93,9 @@ static BOOL32 GRAPH_DrawArc( HDC32 hdc, INT32 left, INT32 top, INT32 right,
 BOOL16 Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
               INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
 {
-    return GRAPH_DrawArc( hdc, left, top, right, bottom,
-			  xstart, ystart, xend, yend, 0 );
+    return Arc32( (HDC32)hdc, (INT32)left, (INT32)top, (INT32)right,
+   		  (INT32)bottom, (INT32)xstart, (INT32)ystart, (INT32)xend,
+		  (INT32)yend );
 }
 
 
@@ -223,8 +105,10 @@ BOOL16 Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
 BOOL32 Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
               INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
 {
-    return GRAPH_DrawArc( hdc, left, top, right, bottom,
-			  xstart, ystart, xend, yend, 0 );
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    return dc && dc->funcs->pArc &&
+    	   dc->funcs->pArc(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
 
 
@@ -234,8 +118,9 @@ BOOL32 Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 BOOL16 Pie16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
               INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
 {
-    return GRAPH_DrawArc( hdc, left, top, right, bottom,
-			  xstart, ystart, xend, yend, 2 );
+    return Pie32( (HDC32)hdc, (INT32)left, (INT32)top, (INT32)right,
+   		  (INT32)bottom, (INT32)xstart, (INT32)ystart, (INT32)xend,
+		  (INT32)yend );
 }
 
 
@@ -245,8 +130,10 @@ BOOL16 Pie16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
 BOOL32 Pie32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
               INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
 {
-    return GRAPH_DrawArc( hdc, left, top, right, bottom,
-			  xstart, ystart, xend, yend, 2 );
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    return dc && dc->funcs->pPie &&
+    	   dc->funcs->pPie(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
 
 
@@ -256,8 +143,7 @@ BOOL32 Pie32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 BOOL16 Chord16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
                 INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
 {
-    return GRAPH_DrawArc( hdc, left, top, right, bottom,
-			  xstart, ystart, xend, yend, 1 );
+    return Chord32( hdc, left, top, right, bottom, xstart, ystart, xend, yend );
 }
 
 
@@ -267,8 +153,10 @@ BOOL16 Chord16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
 BOOL32 Chord32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
                 INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
 {
-    return GRAPH_DrawArc( hdc, left, top, right, bottom,
-			  xstart, ystart, xend, yend, 1 );
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    return dc && dc->funcs->pChord &&
+    	   dc->funcs->pChord(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
 
 
@@ -286,43 +174,10 @@ BOOL16 Ellipse16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom )
  */
 BOOL32 Ellipse32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaParam4(dc, META_ELLIPSE, left, top, right, bottom);
-	return 0;
-    }
-
-    left   = XLPTODP( dc, left );
-    top    = YLPTODP( dc, top );
-    right  = XLPTODP( dc, right );
-    bottom = YLPTODP( dc, bottom );
-    if ((left == right) || (top == bottom)) return FALSE;
-
-    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
-    
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
-        (dc->u.x.pen.width < right-left-1) &&
-        (dc->u.x.pen.width < bottom-top-1))
-    {
-        left   += dc->u.x.pen.width / 2;
-        right  -= (dc->u.x.pen.width + 1) / 2;
-        top    += dc->u.x.pen.width / 2;
-        bottom -= (dc->u.x.pen.width + 1) / 2;
-    }
-
-    if (DC_SetupGCForBrush( dc ))
-	XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-		  right-left-1, bottom-top-1, 0, 360*64 );
-    if (DC_SetupGCForPen( dc ))
-	XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
-		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-		  right-left-1, bottom-top-1, 0, 360*64 );
-    return TRUE;
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    return dc && dc->funcs->pEllipse &&
+    	   dc->funcs->pEllipse(dc,left,top,right,bottom);
 }
 
 
@@ -340,56 +195,10 @@ BOOL16 Rectangle16(HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom)
  */
 BOOL32 Rectangle32(HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 {
-    INT32 width;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaParam4(dc, META_RECTANGLE, left, top, right, bottom);
-	return TRUE;
-    }
-    left   = XLPTODP( dc, left );
-    top    = YLPTODP( dc, top );
-    right  = XLPTODP( dc, right );
-    bottom = YLPTODP( dc, bottom );
-
-    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
-
-    if ((left == right) || (top == bottom))
-    {
-	if (DC_SetupGCForPen( dc ))
-	    XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
-		  dc->w.DCOrgX + left,
-		  dc->w.DCOrgY + top,
-		  dc->w.DCOrgX + right,
-		  dc->w.DCOrgY + bottom);
-	return TRUE;
-    }
-    width = dc->u.x.pen.width;
-    if (!width) width = 1;
-    if(dc->u.x.pen.style == PS_NULL) width = 0;
-
-    if ((dc->u.x.pen.style == PS_INSIDEFRAME) &&
-        (width < right-left) && (width < bottom-top))
-    {
-        left   += width / 2;
-        right  -= (width + 1) / 2;
-        top    += width / 2;
-        bottom -= (width + 1) / 2;
-    }
-
-    if (DC_SetupGCForBrush( dc ))
-	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + left + (width + 1) / 2,
-		        dc->w.DCOrgY + top + (width + 1) / 2,
-		        right-left-width-1, bottom-top-width-1);
-    if (DC_SetupGCForPen( dc ))
-	XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-		        right-left-1, bottom-top-1 );
-    return TRUE;
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    return dc && dc->funcs->pRectangle &&
+    	   dc->funcs->pRectangle(dc,left,top,right,bottom);
 }
 
 
@@ -409,115 +218,10 @@ BOOL16 RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
 BOOL32 RoundRect32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
                     INT32 bottom, INT32 ell_width, INT32 ell_height )
 {
-    DC * dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaParam6(dc, META_ROUNDRECT, left, top, right, bottom,
-		      ell_width, ell_height);
-	return TRUE;
-    }
-    dprintf_graphics(stddeb, "RoundRect(%d %d %d %d  %d %d\n", 
-    	left, top, right, bottom, ell_width, ell_height);
-
-    left   = XLPTODP( dc, left );
-    top    = YLPTODP( dc, top );
-    right  = XLPTODP( dc, right );
-    bottom = YLPTODP( dc, bottom );
-    ell_width  = abs( ell_width * dc->vportExtX / dc->wndExtX );
-    ell_height = abs( ell_height * dc->vportExtY / dc->wndExtY );
-
-    /* Fix the coordinates */
-
-    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
-    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
-    if (ell_width > right - left) ell_width = right - left;
-    if (ell_height > bottom - top) ell_height = bottom - top;
-
-    if (DC_SetupGCForBrush( dc ))
-    {
-        if (ell_width && ell_height)
-        {
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-                      ell_width, ell_height, 90 * 64, 90 * 64 );
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
-                      ell_width, ell_height, 180 * 64, 90 * 64 );
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + right - ell_width,
-                      dc->w.DCOrgY + bottom - ell_height,
-                      ell_width, ell_height, 270 * 64, 90 * 64 );
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
-                      ell_width, ell_height, 0, 90 * 64 );
-        }
-        if (ell_width < right - left)
-        {
-            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-                            dc->w.DCOrgX + left + ell_width / 2,
-                            dc->w.DCOrgY + top,
-                            right - left - ell_width, ell_height / 2 );
-            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-                            dc->w.DCOrgX + left + ell_width / 2,
-                            dc->w.DCOrgY + bottom - (ell_height+1) / 2,
-                            right - left - ell_width, (ell_height+1) / 2 );
-        }
-        if  (ell_height < bottom - top)
-        {
-            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-                            dc->w.DCOrgX + left,
-                            dc->w.DCOrgY + top + ell_height / 2,
-                            right - left, bottom - top - ell_height );
-        }
-    }
-    if (DC_SetupGCForPen(dc))
-    {
-        if (ell_width && ell_height)
-        {
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-                      ell_width, ell_height, 90 * 64, 90 * 64 );
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
-                      ell_width, ell_height, 180 * 64, 90 * 64 );
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + right - ell_width,
-                      dc->w.DCOrgY + bottom - ell_height,
-                      ell_width, ell_height, 270 * 64, 90 * 64 );
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
-                      dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
-                      ell_width, ell_height, 0, 90 * 64 );
-	}
-        if (ell_width < right - left)
-        {
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + left + ell_width / 2,
-                       dc->w.DCOrgY + top,
-                       dc->w.DCOrgX + right - ell_width / 2,
-                       dc->w.DCOrgY + top );
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + left + ell_width / 2,
-                       dc->w.DCOrgY + bottom,
-                       dc->w.DCOrgX + right - ell_width / 2,
-                       dc->w.DCOrgY + bottom );
-        }
-        if (ell_height < bottom - top)
-        {
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + right,
-                       dc->w.DCOrgY + top + ell_height / 2,
-                       dc->w.DCOrgX + right,
-                       dc->w.DCOrgY + bottom - ell_height / 2 );
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-                       dc->w.DCOrgX + left,
-                       dc->w.DCOrgY + top + ell_height / 2,
-                       dc->w.DCOrgX + left,
-                       dc->w.DCOrgY + bottom - ell_height / 2 );
-        }
-    }
-    return TRUE;
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    return dc && dc->funcs->pRoundRect &&
+    	   dc->funcs->pRoundRect(dc,left,top,right,bottom,ell_width,ell_height);
 }
 
 
@@ -635,28 +339,10 @@ COLORREF SetPixel16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
  */
 COLORREF SetPixel32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 {
-    Pixel pixel;
-    
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-	MF_MetaParam4(dc, META_SETPIXEL, x, y, HIWORD(color), LOWORD(color)); 
-	return 1;
-    }
-
-    x = dc->w.DCOrgX + XLPTODP( dc, x );
-    y = dc->w.DCOrgY + YLPTODP( dc, y );
-    pixel = COLOR_ToPhysical( dc, color );
-    
-    XSetForeground( display, dc->u.x.gc, pixel );
-    XSetFunction( display, dc->u.x.gc, GXcopy );
-    XDrawPoint( display, dc->u.x.drawable, dc->u.x.gc, x, y );
-
-    /* inefficient but simple... */
-
-    return COLOR_ToLogical(pixel);
+    DC * dc = DC_GetDCPtr( hdc );
+  
+    if (!dc || !dc->funcs->pSetPixel) return 0;
+    return dc->funcs->pSetPixel(dc,x,y,color);
 }
 
 
@@ -674,40 +360,17 @@ COLORREF GetPixel16( HDC16 hdc, INT16 x, INT16 y )
  */
 COLORREF GetPixel32( HDC32 hdc, INT32 x, INT32 y )
 {
-    static Pixmap pixmap = 0;
-    XImage * image;
-    int pixel;
+    DC * dc = DC_GetDCPtr( hdc );
 
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
-
 #ifdef SOLITAIRE_SPEED_HACK
     return 0;
 #endif
 
+    /* FIXME: should this be in the graphics driver? */
     if (!PtVisible32( hdc, x, y )) return 0;
-
-    x = dc->w.DCOrgX + XLPTODP( dc, x );
-    y = dc->w.DCOrgY + YLPTODP( dc, y );
-    if (dc->w.flags & DC_MEMORY)
-    {
-        image = XGetImage( display, dc->u.x.drawable, x, y, 1, 1,
-                           AllPlanes, ZPixmap );
-    }
-    else
-    {
-        /* If we are reading from the screen, use a temporary copy */
-        /* to avoid a BadMatch error */
-        if (!pixmap) pixmap = XCreatePixmap( display, rootWindow,
-                                             1, 1, dc->w.bitsPerPixel );
-        XCopyArea( display, dc->u.x.drawable, pixmap, BITMAP_colorGC,
-                   x, y, 1, 1, 0, 0 );
-        image = XGetImage( display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
-    }
-    pixel = XGetPixel( image, 0, 0 );
-    XDestroyImage( image );
-    
-    return COLOR_ToLogical(pixel);
+    if (!dc || !dc->funcs->pGetPixel) return 0;
+    return dc->funcs->pGetPixel(dc,x,y);
 }
 
 
@@ -725,35 +388,10 @@ BOOL16 PaintRgn16( HDC16 hdc, HRGN16 hrgn )
  */
 BOOL32 PaintRgn32( HDC32 hdc, HRGN32 hrgn )
 {
-    RECT32 box;
-    HRGN32 tmpVisRgn, prevVisRgn;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
+    DC * dc = DC_GetDCPtr( hdc );
 
-      /* Modify visible region */
-
-    if (!(prevVisRgn = SaveVisRgn( hdc ))) return FALSE;
-    if (!(tmpVisRgn = CreateRectRgn32( 0, 0, 0, 0 )))
-    {
-        RestoreVisRgn( hdc );
-        return FALSE;
-    }
-    CombineRgn32( tmpVisRgn, prevVisRgn, hrgn, RGN_AND );
-    SelectVisRgn( hdc, tmpVisRgn );
-    DeleteObject32( tmpVisRgn );
-
-      /* Fill the region */
-
-    GetRgnBox32( dc->w.hGCClipRgn, &box );
-    if (DC_SetupGCForBrush( dc ))
-	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + box.left, dc->w.DCOrgY + box.top,
-		        box.right-box.left, box.bottom-box.top );
-
-      /* Restore the visible region */
-
-    RestoreVisRgn( hdc );
-    return TRUE;
+    return dc && dc->funcs->pPaintRgn &&
+	   dc->funcs->pPaintRgn(dc,hrgn);
 }
 
 
@@ -840,6 +478,8 @@ void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 
 /***********************************************************************
  *           DrawFocusRect32    (USER32.155)
+ *
+ * FIXME: should use Rectangle32!
  */
 void DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 {
@@ -948,23 +588,13 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
 BOOL16 Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 {
     register int i;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaPoly(dc, META_POLYLINE, pt, count); 
-	return TRUE;
-    }
+    LPPOINT32 pt32 = (LPPOINT32)xmalloc(count*sizeof(POINT32));
+    BOOL16 ret;
 
-    if (DC_SetupGCForPen( dc ))
-	for (i = 0; i < count-1; i ++)
-	    XDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
-		       dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
-		       dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
-		       dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
-		       dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
-    return TRUE;
+    for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
+    ret = Polyline32(hdc,pt32,count);
+    free(pt32);
+    return ret;
 }
 
 
@@ -973,28 +603,10 @@ BOOL16 Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
  */
 BOOL32 Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
 {
-    register int i;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-        fprintf( stderr, "Polyline32: Metafile Polyline not yet supported for Win32\n");
-/* win 16 code was:
-	MF_MetaPoly(dc, META_POLYLINE, pt, count); 
-	return TRUE;
-*/
-	return FALSE;
-    }
+    DC * dc = DC_GetDCPtr( hdc );
 
-    if (DC_SetupGCForPen( dc ))
-	for (i = 0; i < count-1; i ++)
-	    XDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
-		       dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
-		       dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
-		       dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
-		       dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
-    return TRUE;
+    return dc && dc->funcs->pPolyline &&
+    	   dc->funcs->pPolyline(dc,pt,count);
 }
 
 
@@ -1004,78 +616,26 @@ BOOL32 Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
 BOOL16 Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 {
     register int i;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    XPoint *points;
+    LPPOINT32 pt32 = (LPPOINT32)xmalloc(count*sizeof(POINT32));
+    BOOL32 ret;
 
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaPoly(dc, META_POLYGON, pt, count); 
-	return TRUE;
-    }
 
-    points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
-    for (i = 0; i < count; i++)
-    {
-	points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
-	points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
-    }
-    points[count] = points[0];
-
-    if (DC_SetupGCForBrush( dc ))
-	XFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
-		     points, count+1, Complex, CoordModeOrigin);
-
-    if (DC_SetupGCForPen ( dc ))
-	XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
-		   points, count+1, CoordModeOrigin );
-
-    free( points );
-    return TRUE;
+    for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
+    ret = Polygon32(hdc,pt32,count);
+    free(pt32);
+    return ret;
 }
 
 
 /**********************************************************************
  *          Polygon32  (GDI32.275)
- *
- * This a copy of Polygon16 so that conversion of array of
- * LPPOINT32 to LPPOINT16 is not necessary
- *
  */
 BOOL32 Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
 {
-    register int i;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    XPoint *points;
+    DC * dc = DC_GetDCPtr( hdc );
 
-    if (!dc)
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	/* FIXME: MF_MetaPoly expects LPPOINT16 not 32 */
-	/* MF_MetaPoly(dc, META_POLYGON, pt, count); */
-	return TRUE;
-    }
-
-    points = (XPoint *) xmalloc (sizeof (XPoint) * (count+1));
-    for (i = 0; i < count; i++)
-    {
-	points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
-	points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
-    }
-    points[count] = points[0];
-
-    if (DC_SetupGCForBrush( dc ))
-	XFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
-		     points, count+1, Complex, CoordModeOrigin);
-
-    if (DC_SetupGCForPen ( dc ))
-	XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
-		   points, count+1, CoordModeOrigin );
-
-    free( points );
-    return TRUE;
+    return dc && dc->funcs->pPolygon &&
+    	   dc->funcs->pPolygon(dc,pt,count);
 }
 
 
@@ -1084,154 +644,36 @@ BOOL32 Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
  */
 BOOL16 PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts, UINT16 polygons)
 {
-    HRGN32 hrgn;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    int		i,nrpts;
+    LPPOINT32	pt32;
+    LPINT32	counts32;
+    BOOL16	ret;
 
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	/* MF_MetaPoly(dc, META_POLYGON, pt, count); */
-	return TRUE;
-    }
-      /* FIXME: The points should be converted to device coords before */
-      /* creating the region. But as CreatePolyPolygonRgn is not */
-      /* really correct either, it doesn't matter much... */
-      /* At least the outline will be correct :-) */
-    hrgn = CreatePolyPolygonRgn16( pt, counts, polygons, dc->w.polyFillMode );
-    PaintRgn32( hdc, hrgn );
-    DeleteObject32( hrgn );
-
-      /* Draw the outline of the polygons */
-
-    if (DC_SetupGCForPen ( dc ))
-    {
-	int i, j, max = 0;
-	XPoint *points;
-
-	for (i = 0; i < polygons; i++) if (counts[i] > max) max = counts[i];
-	points = (XPoint *) xmalloc( sizeof(XPoint) * (max+1) );
-
-	for (i = 0; i < polygons; i++)
-	{
-	    for (j = 0; j < counts[i]; j++)
-	    {
-		points[j].x = dc->w.DCOrgX + XLPTODP( dc, pt->x );
-		points[j].y = dc->w.DCOrgY + YLPTODP( dc, pt->y );
-		pt++;
-	    }
-	    points[j] = points[0];
-	    XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
-		        points, j + 1, CoordModeOrigin );
-	}
-	free( points );
-    }
-    return TRUE;
+    nrpts=0;
+    for (i=polygons;i--;)
+    	nrpts+=counts[i];
+    pt32 = (LPPOINT32)xmalloc(sizeof(POINT32)*nrpts);
+    for (i=nrpts;i--;)
+    	CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
+    counts32 = (LPINT32)xmalloc(polygons*sizeof(INT32));
+    for (i=polygons;i--;) counts32[i]=counts[i];
+   
+    ret = PolyPolygon32(hdc,pt32,counts32,polygons);
+    free(counts32);
+    free(pt32);
+    return ret;
 }
-
 
 /**********************************************************************
- *          GRAPH_InternalFloodFill
- *
- * Internal helper function for flood fill.
- * (xorg,yorg) is the origin of the X image relative to the drawable.
- * (x,y) is relative to the origin of the X image.
+ *          PolyPolygon32  (GDI.450)
  */
-static void GRAPH_InternalFloodFill( XImage *image, DC *dc,
-                                     int x, int y,
-                                     int xOrg, int yOrg,
-                                     Pixel pixel, WORD fillType )
+BOOL32 PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
 {
-    int left, right;
+    DC * dc = DC_GetDCPtr( hdc );
 
-#define TO_FLOOD(x,y)  ((fillType == FLOODFILLBORDER) ? \
-                        (XGetPixel(image,x,y) != pixel) : \
-                        (XGetPixel(image,x,y) == pixel))
-
-    if (!TO_FLOOD(x,y)) return;
-
-      /* Find left and right boundaries */
-
-    left = right = x;
-    while ((left > 0) && TO_FLOOD( left-1, y )) left--;
-    while ((right < image->width) && TO_FLOOD( right, y )) right++;
-    XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-                    xOrg + left, yOrg + y, right-left, 1 );
-
-      /* Set the pixels of this line so we don't fill it again */
-
-    for (x = left; x < right; x++)
-    {
-        if (fillType == FLOODFILLBORDER) XPutPixel( image, x, y, pixel );
-        else XPutPixel( image, x, y, ~pixel );
-    }
-
-      /* Fill the line above */
-
-    if (--y >= 0)
-    {
-        x = left;
-        while (x < right)
-        {
-            while ((x < right) && !TO_FLOOD(x,y)) x++;
-            if (x >= right) break;
-            while ((x < right) && TO_FLOOD(x,y)) x++;
-            GRAPH_InternalFloodFill( image, dc, x-1, y,
-                                     xOrg, yOrg, pixel, fillType );
-        }
-    }
-
-      /* Fill the line below */
-
-    if ((y += 2) < image->height)
-    {
-        x = left;
-        while (x < right)
-        {
-            while ((x < right) && !TO_FLOOD(x,y)) x++;
-            if (x >= right) break;
-            while ((x < right) && TO_FLOOD(x,y)) x++;
-            GRAPH_InternalFloodFill( image, dc, x-1, y,
-                                     xOrg, yOrg, pixel, fillType );
-        }
-    }
-#undef TO_FLOOD    
+    return dc && dc->funcs->pPolyPolygon &&
+    	   dc->funcs->pPolyPolygon(dc,pt,counts,polygons);
 }
-
-
-/**********************************************************************
- *          GRAPH_DoFloodFill
- *
- * Main flood-fill routine.
- */
-static BOOL32 GRAPH_DoFloodFill( DC *dc, RECT32 *rect, INT32 x, INT32 y,
-                                 COLORREF color, UINT32 fillType )
-{
-    XImage *image;
-
-    if (!(image = XGetImage( display, dc->u.x.drawable,
-                             dc->w.DCOrgX + rect->left,
-                             dc->w.DCOrgY + rect->top,
-                             rect->right - rect->left,
-                             rect->bottom - rect->top,
-                             AllPlanes, ZPixmap ))) return FALSE;
-
-    if (DC_SetupGCForBrush( dc ))
-    {
-          /* ROP mode is always GXcopy for flood-fill */
-        XSetFunction( display, dc->u.x.gc, GXcopy );
-        GRAPH_InternalFloodFill( image, dc,
-                                 XLPTODP(dc,x) - rect->left,
-                                 YLPTODP(dc,y) - rect->top,
-                                 dc->w.DCOrgX + rect->left,
-                                 dc->w.DCOrgY + rect->top,
-                                 COLOR_ToPhysical( dc, color ), fillType );
-    }
-
-    XDestroyImage( image );
-    return TRUE;
-}
-
 
 /**********************************************************************
  *          ExtFloodFill16   (GDI.372)
@@ -1249,26 +691,10 @@ BOOL16 ExtFloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color,
 BOOL32 ExtFloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
                        UINT32 fillType )
 {
-    RECT32 rect;
-    DC *dc;
+    DC *dc = DC_GetDCPtr( hdc );
 
-    dprintf_graphics( stddeb, "ExtFloodFill %04x %d,%d %06lx %d\n",
-                      hdc, x, y, color, fillType );
-    dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return FALSE;
-	MF_MetaParam4(dc, META_FLOODFILL, x, y, HIWORD(color), 
-		      LOWORD(color)); 
-	return TRUE;
-    }
-
-    if (!PtVisible32( hdc, x, y )) return FALSE;
-    if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
-
-    return CallTo32_LargeStack( (int(*)())GRAPH_DoFloodFill, 6,
-                                dc, &rect, x, y, color, fillType );
+    return dc && dc->funcs->pExtFloodFill &&
+	   dc->funcs->pExtFloodFill(dc,x,y,color,fillType);
 }
 
 

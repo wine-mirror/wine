@@ -34,11 +34,23 @@ static int syntax_error;
 DIGIT	   [0-9]
 HEXDIGIT   [0-9a-fA-F]
 FORMAT     [bcdiswx]
-IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~@]*
+IDENTIFIER [_a-zA-Z~][_a-zA-Z0-9~@]*
+PATHNAME   [/_a-zA-Z\.~][/_a-zA-Z0-9\.~@]*
+STRING     \"[^\n"]+\"
+
+%s FORMAT_EXPECTED
+%s PATH_EXPECTED
+%s INFO_CMD
+%s HELP_CMD
+%s DEL_CMD
+%s WALK_CMD
+%s SHOW_CMD
+%s NOCMD
 
 %%
 
-\n		{ syntax_error = 0; return tEOL; } /*Indicates end of command*/
+\n		{ BEGIN(0); syntax_error = 0; 
+		  return tEOL; } /*Indicates end of command.  Reset state. */
 
 "||"		{ return OP_LOR; }
 "&&"		{ return OP_LAND; }
@@ -48,16 +60,24 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~@]*
 ">="		{ return OP_GE; }
 "<<"		{ return OP_SHL; }
 ">>"		{ return OP_SHR; }
-[-+<=>|&^()*/%:!~]	{ return *yytext; }
+"->"		{ return OP_DRF; }
+[-+<=>|&^()*/%:!~,\.]	{ return *yytext; }
+"["		{ return *yytext; }
+"]"		{ return *yytext; }
 
 "0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval.integer); return tNUM; }
 {DIGIT}+             { sscanf(yytext, "%d", &yylval.integer); return tNUM; }
 
-"/"{DIGIT}+{FORMAT}  { char * last;
+
+<FORMAT_EXPECTED>"/"{DIGIT}+{FORMAT}  { char * last;
                        yylval.integer = strtol( yytext+1, &last, NULL );
                        yylval.integer = (yylval.integer << 8) | *last;
                        return tFORMAT; }
-"/"{FORMAT}          { yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
+
+
+<FORMAT_EXPECTED>"/"{FORMAT}          { yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
+
+{STRING} { yylval.string = make_symbol(yytext); return tSTRING; }
 
 $pc     { yylval.reg = REG_EIP; return tREG; }
 $flags  { yylval.reg = REG_EFL; return tREG; }
@@ -86,48 +106,59 @@ $ss     { yylval.reg = REG_SS;  return tREG; }
 $fs     { yylval.reg = REG_FS;  return tREG; }
 $gs     { yylval.reg = REG_GS;  return tREG; }
 
-up				{ return tUP; }
-down|dow|do			{ return tDOWN; }
-frame|fram|fra|fr		{ return tFRAME; }
-locals|local|loca|loc		{ return tLOCAL; }
-info|inf|in			{ return tINFO; }
-show|sho|sh			{ return tINFO; }
-list|lis|li|l			{ return tLIST; }
-break|brea|bre|br|b		{ return tBREAK; }
-enable|enabl|enab|ena		{ return tENABLE;}
-disable|disabl|disab|disa|dis	{ return tDISABLE; }
-delete|delet|dele|del		{ return tDELETE; }
-quit|qui|qu|q			{ return tQUIT; }
-set|se				{ return tSET; }
-walk|w				{ return tWALK; }
-x				{ return tEXAM; }
+<INITIAL>info|inf|in			{ BEGIN(INFO_CMD); return tINFO; }
+<INITIAL>up				{ BEGIN(NOCMD); return tUP; }
+<INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
+<INITIAL>frame|fram|fra|fr		{ BEGIN(NOCMD); return tFRAME; }
+<INITIAL>list|lis|li|l			{ BEGIN(PATH_EXPECTED); return tLIST; }
+<INITIAL>enable|enabl|enab|ena		{ BEGIN(NOCMD); return tENABLE;}
+<INITIAL>disable|disabl|disab|disa|dis	{ BEGIN(NOCMD); return tDISABLE; }
+<INITIAL,INFO_CMD,DEL_CMD>display|displa|displ|disp	{ BEGIN(NOCMD); return tDISPLAY; }
+<INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ BEGIN(NOCMD); return tUNDISPLAY; }
+<INITIAL>delete|delet|dele|del		{ BEGIN(DEL_CMD); return tDELETE; }
+<INITIAL>quit|qui|qu|q			{ BEGIN(NOCMD); return tQUIT; }
+<INITIAL>set|se				{ BEGIN(NOCMD); return tSET; }
+<INITIAL>walk|w				{ BEGIN(WALK_CMD); return tWALK; }
+<INITIAL>x				{ BEGIN(FORMAT_EXPECTED); return tEXAM; }
+<INITIAL>help|hel|he|"?"		{ BEGIN(HELP_CMD); return tHELP; }
 
-class|clas|cla                  { return tCLASS; }
-module|modul|modu|mod           { return tMODULE; }
-queue|queu|que			{ return tQUEUE; }
-registers|regs|reg|re		{ return tREGS; }
-segments|segment|segm|seg|se	{ return tSEGMENTS; }
-stack|stac|sta|st     		{ return tSTACK; }
-window|windo|wind|win|wnd	{ return tWND; }
+<INITIAL>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
+<INITIAL>where|wher|whe                  { BEGIN(NOCMD); return tBACKTRACE; }
 
-help|hel|he|"?"			{ return tHELP; }
+<INITIAL>cont|con|co|c   		{ BEGIN(NOCMD); return tCONT; }
+<INITIAL>condition|conditio|conditi|condit|condi|cond	{ BEGIN(NOCMD); return tCOND; }
+<INITIAL>step|ste|st|s   		{ BEGIN(NOCMD); return tSTEP; }
+<INITIAL>next|nex|ne|n   		{ BEGIN(NOCMD); return tNEXT; }
+<INITIAL>stepi|si	   		{ BEGIN(NOCMD); return tSTEPI; }
+<INITIAL>nexti|ni	   		{ BEGIN(NOCMD); return tNEXTI; }
+<INITIAL>finish|finis|fini|fin|fi	{ BEGIN(NOCMD); return tFINISH; }
 
-backtrace|backtrac|backtra|backt|back|bac|ba|bt { return tBACKTRACE; }
-where|wher|whe                  { return tBACKTRACE; }
+<INITIAL>abort|abor|abo         	{ BEGIN(NOCMD); return tABORT; }
+<INITIAL>print|prin|pri|pr|p		{ BEGIN(FORMAT_EXPECTED); return tPRINT; }
 
-cont|con|co|c   		{ return tCONT; }
-step|ste|st|s   		{ return tSTEP; }
-next|nex|ne|n   		{ return tNEXT; }
+<INITIAL>mode				{ BEGIN(NOCMD); return tMODE; }
+<INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
 
-symbolfile|symbolfil|symbolfi|symbolf|symbol|symbo|symb { return tSYMBOLFILE; }
+<INFO_CMD,INITIAL>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
 
-define|defin|defi|def|de        { return tDEFINE; }
-abort|abor|abo         	        { return tABORT; }
-print|prin|pri|pr|p		{ return tPRINT; }
+<INFO_CMD>share|shar|sha		{ return tSHARE; }
+<INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
+<INFO_CMD,WALK_CMD>class|clas|cla                  { return tCLASS; }
+<INFO_CMD,WALK_CMD>module|modul|modu|mod  { return tMODULE; }
+<INFO_CMD,WALK_CMD>queue|queu|que			{ return tQUEUE; }
+<INFO_CMD>registers|regs|reg|re		{ return tREGS; }
+<INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
+<INFO_CMD>stack|stac|sta|st     		{ return tSTACK; }
+<INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
+<HELP_CMD>info|inf|in                   { return tINFO; }
 
-mode				{ return tMODE; }
+<INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir { 
+			BEGIN(PATH_EXPECTED); return tDIR; }
 
 {IDENTIFIER}	{ yylval.string = make_symbol(yytext); return tIDENTIFIER; }
+
+<PATH_EXPECTED>{PATHNAME}	{ yylval.string = make_symbol(yytext); return tPATH; }
+
 
 [ \t]+        /* Eat up whitespace */
 
@@ -136,6 +167,7 @@ mode				{ return tMODE; }
 		    syntax_error ++; fprintf(stderr, "Syntax Error\n");
                   }
 		}
+
 
 %%
 
@@ -217,7 +249,7 @@ static int dbg_read(char * buf, int size)
     }
 }
 
-static char *local_symbols[10];
+static char *local_symbols[30];
 static int next_symbol;
 
 char * make_symbol(char * symbol){

@@ -1166,6 +1166,48 @@ void WaitMessage( void )
  * by the keyboard driver.
  */
 
+const struct accent_char
+	{
+	BYTE ac_accent;
+	BYTE ac_char;
+	BYTE ac_result;
+	} accent_chars[] =
+	{
+	{'`', 'A', '\300'},	{'`', 'a', '\340'},
+	{'\'', 'A', '\301'},	{'\'', 'a', '\341'},
+	{'^', 'A', '\302'},	{'^', 'a', '\342'},
+	{'~', 'A', '\303'},	{'~', 'a', '\343'},
+	{'"', 'A', '\304'},	{'"', 'a', '\344'},
+	{'O', 'A', '\305'},	{'o', 'a', '\345'},
+	{'0', 'A', '\305'},	{'0', 'a', '\345'},
+	{'A', 'A', '\305'},	{'a', 'a', '\345'},
+	{'A', 'E', '\306'},	{'a', 'e', '\346'},
+	{',', 'C', '\307'},	{',', 'c', '\347'},
+	{'`', 'E', '\310'},	{'`', 'e', '\350'},
+	{'\'', 'E', '\311'},	{'\'', 'e', '\351'},
+	{'^', 'E', '\312'},	{'^', 'e', '\352'},
+	{'"', 'E', '\313'},	{'"', 'e', '\353'},
+	{'`', 'I', '\314'},	{'`', 'i', '\354'},
+	{'\'', 'I', '\315'},	{'\'', 'i', '\355'},
+	{'^', 'I', '\316'},	{'^', 'i', '\356'},
+	{'"', 'I', '\317'},	{'"', 'i', '\357'},
+	{'-', 'D', '\320'},	{'-', 'd', '\360'},
+	{'~', 'N', '\321'},	{'~', 'n', '\361'},
+	{'`', 'O', '\322'},	{'`', 'o', '\362'},
+	{'\'', 'O', '\323'},	{'\'', 'o', '\363'},
+	{'^', 'O', '\324'},	{'^', 'o', '\364'},
+	{'~', 'O', '\325'},	{'~', 'o', '\365'},
+	{'"', 'O', '\326'},	{'"', 'o', '\366'},
+	{'/', 'O', '\330'},	{'/', 'o', '\370'},
+	{'`', 'U', '\331'},	{'`', 'u', '\371'},
+	{'\'', 'U', '\332'},	{'\'', 'u', '\372'},
+	{'^', 'U', '\333'},	{'^', 'u', '\373'},
+	{'"', 'U', '\334'},	{'"', 'u', '\374'},
+	{'\'', 'Y', '\335'},	{'\'', 'y', '\375'},
+	{'T', 'H', '\336'},	{'t', 'h', '\376'},
+	{'s', 's', '\337'},	{'"', 'y', '\377'},
+	{'s', 'z', '\337'},	{'i', 'j', '\377'},
+	};
 
 BOOL TranslateMessage( LPMSG16 msg )
 {
@@ -1176,25 +1218,54 @@ BOOL TranslateMessage( LPMSG16 msg )
 	&& message != WM_MOUSEMOVE && message != WM_TIMER)
     || (debugging_key
 	&& message >= WM_KEYFIRST && message <= WM_KEYLAST))
-	    fprintf(stddeb, "TranslateMessage(%s, %04x, %08lx)\n",
+	    fprintf(stddeb, "TranslateMessage(%s, %04X, %08lX)\n",
 		SPY_GetMsgName(msg->message), msg->wParam, msg->lParam);
     if ((message == WM_KEYDOWN) || (message == WM_SYSKEYDOWN))
     {
+	static dead_char;
+
 	if (debugging_msg || debugging_key)
-	    fprintf(stddeb, "Translating key %04x, scancode %04x\n",
+	    fprintf(stddeb, "Translating key %04X, scancode %04X\n",
 		msg->wParam, HIWORD(msg->lParam) );
 
 	/* FIXME : should handle ToAscii yielding 2 */
-	if (ToAscii(msg->wParam, HIWORD(msg->lParam), (LPSTR)&QueueKeyStateTable,
-				      wparam, 0)) 
-	      {
-		/* Map WM_KEY* to WM_*CHAR */
-		message += 2 - (message & 0x0001); 
+	switch (ToAscii(msg->wParam, HIWORD(msg->lParam),
+		(LPSTR)&QueueKeyStateTable, wparam, 0)) 
+	    {
+	    case 1 :
+		message = message == WM_KEYDOWN ? WM_CHAR : WM_SYSCHAR;
+		/* Should dead chars handling go in ToAscii ? */
+		if (dead_char)
+		    {
+		    int i;
 
+		    if (wparam[0] == ' ')
+			wparam[0] =  dead_char;
+		    if (dead_char == 0xa8)
+			dead_char = '"';
+		    else if (dead_char == 0xb4)
+			dead_char = '\'';
+		    for (i = 0;
+			i < sizeof(accent_chars) / sizeof(accent_chars[0]);
+			i += 1)
+			if (accent_chars[i].ac_accent == dead_char
+			&& accent_chars[i].ac_char == wparam[0])
+			    {
+			    wparam[0] = accent_chars[i].ac_result;
+			    break;
+			    }
+		    dead_char = 0;
+		    }
+dprintf_key(stddeb, "1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
 		PostMessage( msg->hwnd, message, wparam[0], msg->lParam );
-
 		return TRUE;
-	      }
+	    case -1 :
+		message = message == WM_KEYDOWN ? WM_DEADCHAR : WM_SYSDEADCHAR;
+		dead_char = wparam[0];
+dprintf_key(stddeb, "-1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
+		PostMessage( msg->hwnd, message, wparam[0], msg->lParam );
+		return TRUE;
+	    }
     }
     return FALSE;
 }

@@ -16,9 +16,9 @@
 #include <utime.h>
 #include <ctype.h>
 #include "windows.h"
-#include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
+#include "heap.h"
 #include "msdos.h"
 #include "ldt.h"
 #include "task.h"
@@ -291,32 +291,21 @@ static void ioctlGenericBlkDevReq( CONTEXT *context )
 	}
 }
 
-static void GetSystemDate( CONTEXT *context )
+static void INT21_GetSystemDate( CONTEXT *context )
 {
-	struct tm *now;
-	time_t ltime;
-
-	ltime = time(NULL);
-	now = localtime(&ltime);
-
-	CX_reg(context) = now->tm_year + 1900;
-	DX_reg(context) = ((now->tm_mon + 1) << 8) | now->tm_mday;
-	AX_reg(context) = now->tm_wday;
+    SYSTEMTIME systime;
+    GetLocalTime( &systime );
+    CX_reg(context) = systime.wYear;
+    DX_reg(context) = (systime.wMonth << 8) | systime.wDay;
+    AX_reg(context) = systime.wDayOfWeek;
 }
 
 static void INT21_GetSystemTime( CONTEXT *context )
 {
-	struct tm *now;
-	struct timeval tv;
-	time_t seconds;
-
-	gettimeofday(&tv,NULL);		/* Note use of gettimeofday(), instead of time() */
-	seconds = tv.tv_sec;
-	now = localtime(&seconds);
-	 
-	CX_reg(context) = (now->tm_hour<<8) | now->tm_min;
-	DX_reg(context) = (now->tm_sec<<8) | tv.tv_usec/10000;
-					/* Note hundredths of seconds */
+    SYSTEMTIME systime;
+    GetLocalTime( &systime );
+    CX_reg(context) = (systime.wHour << 8) | systime.wMinute;
+    DX_reg(context) = (systime.wSecond << 8) | (systime.wMilliseconds / 10);
 }
 
 static void INT21_CreateFile( CONTEXT *context )
@@ -345,10 +334,6 @@ void OpenExistingFile( CONTEXT *context )
 	int mode;
 	int lock;
 	
-	dprintf_int (stddeb, "int21: open (%s, %d) = %d\n",
-		DOS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                             DX_reg(context))), mode, handle);
-
         switch (AX_reg(context) & 0x0070)
 	{
 	  case 0x00:    /* compatability mode */
@@ -424,8 +409,6 @@ static void CloseFile( CONTEXT *context )
 void ExtendedOpenCreateFile(CONTEXT *context )
 {
   BYTE action=DL_reg(context);
-  dprintf_int(stddeb, "int21: extended open/create: file= %s \n",
-	      DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),FALSE));
   /* Shuffle arguments to call OpenExistingFile */
   AL_reg(context) = BL_reg(context);
   DX_reg(context) = SI_reg(context);
@@ -433,8 +416,6 @@ void ExtendedOpenCreateFile(CONTEXT *context )
   OpenExistingFile(context);
   if ((EFL_reg(context) & 0x0001)==0) 
     { /* It exists */
-      dprintf_int(stddeb, "int21: extended open/create %s exists \n",
-		  DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),TRUE));
       /* Now decide what do do */
       if ((action & 0x07)== 0)
 	{
@@ -487,9 +468,8 @@ void ExtendedOpenCreateFile(CONTEXT *context )
   else /* file does not exist */
     {
       RESET_CFLAG(context); /* was set by OpenExistingFile(context) */
-     dprintf_int(stddeb, "int21: extended open/create %s dosen't exists \n",
-		  DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),FALSE));
-      if ((action & 0xF0)== 0) {
+      if ((action & 0xF0)== 0)
+      {
 	CX_reg(context) = 0;
 	SET_CFLAG(context);
 	dprintf_int(stddeb, "int21: extended open/create: failed, file dosen't exist\n");
@@ -508,39 +488,6 @@ void ExtendedOpenCreateFile(CONTEXT *context )
       CX_reg(context) = 2;
       return;
     }
-}
-
-
-static int INT21_RenameFile( CONTEXT *context )
-{
-    const char *newname, *oldname;
-    char *buffer;
-
-    /* FIXME: should not rename over an existing file */
-    dprintf_int(stddeb,"int21: renaming %s to %s\n",
-                (char *)PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
-                (char *)PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context)));
-	
-    oldname = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                                DX_reg(context)), TRUE );
-    if (!oldname) return 0;
-    buffer = xstrdup( oldname );
-    newname = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(ES_reg(context),
-                                                   DI_reg(context)), FALSE );
-    if (!newname)
-    {
-        free( buffer );
-        return 0;
-    }
-    
-    if (rename( buffer, newname) == -1)
-    {
-        FILE_SetDosError();
-        free( buffer );
-        return 0;
-    }
-    free( buffer );
-    return 1;
 }
 
 
@@ -566,22 +513,27 @@ static void INT21_ChangeDir( CONTEXT *context )
 
 static int INT21_FindFirst( CONTEXT *context )
 {
-    const char *path, *unixPath, *mask;
     char *p;
+    const char *path;
+    DOS_FULL_NAME full_name;
     FINDFILE_DTA *dta = (FINDFILE_DTA *)GetCurrentDTA();
 
     path = (const char *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     dta->unixPath = NULL;
-    if (!(unixPath = DOSFS_GetUnixFileName( path, FALSE )))
+    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
     {
         AX_reg(context) = DOS_ExtendedError;
         SET_CFLAG(context);
         return 0;
     }
-    dta->unixPath = xstrdup( unixPath );
+    dta->unixPath = xstrdup( full_name.long_name );
     p = strrchr( dta->unixPath, '/' );
     *p = '\0';
-    if (!(mask = DOSFS_ToDosFCBFormat( p + 1 )))
+
+    /* Note: terminating NULL in dta->mask overwrites dta->search_attr
+     *       (doesn't matter as it is set below anyway)
+     */
+    if (!DOSFS_ToDosFCBFormat( p + 1, dta->mask ))
     {
         free( dta->unixPath );
         dta->unixPath = NULL;
@@ -590,7 +542,6 @@ static int INT21_FindFirst( CONTEXT *context )
         SET_CFLAG(context);
         return 0;
     }
-    memcpy( dta->mask, mask, sizeof(dta->mask) );
     dta->drive = (path[0] && (path[1] == ':')) ? toupper(path[0]) - 'A'
                                                : DRIVE_GetCurrentDrive();
     dta->count = 0;
@@ -709,25 +660,19 @@ static int INT21_FindFirstFCB( CONTEXT *context )
 {
     BYTE *fcb = (BYTE *)PTR_SEG_OFF_TO_LIN(DS_reg(context), DX_reg(context));
     FINDFILE_FCB *pFCB;
-    BYTE attr;
-    char buffer[] = "A:.";
-    const char *unixPath;
+    LPCSTR root, cwd;
+    int drive;
 
-    if (*fcb == 0xff)
-    {
-        attr = fcb[6];
-        pFCB = (FINDFILE_FCB *)(fcb + 7);
-    }
-    else
-    {
-        attr = 0;
-        pFCB = (FINDFILE_FCB *)fcb;
-    }
-
-    buffer[0] += DOS_GET_DRIVE( pFCB->drive );
-    pFCB->unixPath = NULL;
-    if (!(unixPath = DOSFS_GetUnixFileName( buffer, TRUE ))) return 0;
-    pFCB->unixPath = xstrdup( unixPath );
+    if (*fcb == 0xff) pFCB = (FINDFILE_FCB *)(fcb + 7);
+    else pFCB = (FINDFILE_FCB *)fcb;
+    drive = DOS_GET_DRIVE( pFCB->drive );
+    root = DRIVE_GetRoot( drive );
+    cwd  = DRIVE_GetUnixCwd( drive );
+    pFCB->unixPath = HeapAlloc( SystemHeap, 0, strlen(root)+strlen(cwd)+2 );
+    if (!pFCB->unixPath) return 0;
+    strcpy( pFCB->unixPath, root );
+    strcat( pFCB->unixPath, "/" );
+    strcat( pFCB->unixPath, cwd );
     pFCB->count = 0;
     return 1;
 }
@@ -758,7 +703,7 @@ static int INT21_FindNextFCB( CONTEXT *context )
                                   DOS_GET_DRIVE( pFCB->drive ), attr,
                                   pFCB->count, &entry )))
     {
-        free( pFCB->unixPath );
+        HeapFree( SystemHeap, 0, pFCB->unixPath );
         pFCB->unixPath = NULL;
         return 0;
     }
@@ -933,21 +878,6 @@ static void fLock( CONTEXT * context )
 } 
 
 
-static int INT21_GetFileAttribute( CONTEXT * context )
-{
-    const char *unixName;
-    BY_HANDLE_FILE_INFORMATION info;
-
-    unixName = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)), TRUE );
-    if (!unixName) return 0;
-    if (!FILE_Stat( unixName, &info )) return 0;
-    CX_reg(context) = info.dwFileAttributes;
-    dprintf_int( stddeb, "INT21_GetFileAttributes(%s) = 0x%x\n",
-                 unixName, CX_reg(context) );
-    return 1;
-}
-
-
 extern void LOCAL_PrintHeap (WORD ds);
 
 /***********************************************************************
@@ -1086,7 +1016,7 @@ void DOS3Call( CONTEXT *context )
         break;
 
     case 0x2a: /* GET SYSTEM DATE */
-        GetSystemDate(context);
+        INT21_GetSystemDate(context);
         break;
 
     case 0x2b: /* SET SYSTEM DATE */
@@ -1284,14 +1214,24 @@ void DOS3Call( CONTEXT *context )
         switch (AL_reg(context))
         {
         case 0x00:
-            if (!INT21_GetFileAttribute(context))
+            AX_reg(context) = (WORD)GetFileAttributes32A(
+                                          PTR_SEG_OFF_TO_LIN(DS_reg(context),
+                                                             DX_reg(context)));
+            if (AX_reg(context) == 0xffff)
             {
                 AX_reg(context) = DOS_ExtendedError;
                 SET_CFLAG(context);
             }
+            else CX_reg(context) = AX_reg(context);
             break;
         case 0x01:
-            RESET_CFLAG(context);
+            if (!SetFileAttributes32A( PTR_SEG_OFF_TO_LIN(DS_reg(context),
+                                                          DX_reg(context)),
+                                       CX_reg(context) ))
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
             break;
         }
         break;
@@ -1466,7 +1406,8 @@ void DOS3Call( CONTEXT *context )
         break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
-        if (!INT21_RenameFile(context))
+        if (!MoveFile32A( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
+                          PTR_SEG_OFF_TO_LIN(ES_reg(context),DI_reg(context))))
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1576,19 +1517,15 @@ void DOS3Call( CONTEXT *context )
 
     case 0x60: /* "TRUENAME" - CANONICALIZE FILENAME OR PATH */
         {
-            const char *truename = DOSFS_GetDosTrueName( PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context) ), FALSE );
-            if (!truename)
+            if (!GetFullPathName32A( PTR_SEG_OFF_TO_LIN(DS_reg(context),
+                                                        SI_reg(context)), 128,
+                                     PTR_SEG_OFF_TO_LIN(ES_reg(context),
+                                                        DI_reg(context)),NULL))
             {
                 AX_reg(context) = DOS_ExtendedError;
                 SET_CFLAG(context);
             }
-            else
-            {
-                lstrcpyn32A( PTR_SEG_OFF_TO_LIN( ES_reg(context),
-                                                 DI_reg(context) ),
-                             truename, 128 );
-                AX_reg(context) = 0;
-            }
+            else AX_reg(context) = 0;
         }
         break;
 

@@ -759,7 +759,11 @@ BOOL16 MemManInfo( MEMMANINFO *info )
 
     if (info->dwSize < sizeof(MEMMANINFO)) return FALSE;
     GlobalMemoryStatus( &status );
+#ifdef __svr4__
+    info->wPageSize            = sysconf(_SC_PAGESIZE);
+#else
     info->wPageSize            = getpagesize();
+#endif
     info->dwLargestFreeBlock   = status.dwAvailVirtual;
     info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
     info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;

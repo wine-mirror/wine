@@ -8,6 +8,7 @@ AC_CONFIG_AUX_DIR(tools)
 
 # We want these before the checks, so the checks can modify their values.
 test -z "$LDLIBS" && LDLIBS=-lm AC_SUBST(LDLIBS)
+test -z "$PROGEXT" && PROGEXT="" AC_SUBST(PROGEXT)
 
 dnl **** Command-line arguments ****
 

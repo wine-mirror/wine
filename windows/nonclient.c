@@ -268,7 +268,7 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT16 *winRect )
  * but without the borders (if any).
  * The rectangle is in window coordinates (for drawing with GetWindowDC()).
  */
-static void NC_GetInsideRect( HWND hwnd, RECT16 *rect )
+static void NC_GetInsideRect( HWND hwnd, RECT32 *rect )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -282,16 +282,16 @@ static void NC_GetInsideRect( HWND hwnd, RECT16 *rect )
       /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
-	InflateRect16( rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
+	InflateRect32( rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
 	if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
-            InflateRect16( rect, -1, 0 );
+            InflateRect32( rect, -1, 0 );
     }
     else
     {
 	if (HAS_THICKFRAME( wndPtr->dwStyle ))
-	    InflateRect16( rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
+	    InflateRect32( rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
 	if (wndPtr->dwStyle & WS_BORDER)
-	    InflateRect16( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
+	    InflateRect32( rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER );
     }
 }
 
@@ -433,9 +433,9 @@ LONG NC_HandleNCHitTest( HWND32 hwnd, POINT16 pt )
 /***********************************************************************
  *           NC_DrawSysButton
  */
-void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL32 down )
+void NC_DrawSysButton( HWND32 hwnd, HDC32 hdc, BOOL32 down )
 {
-    RECT16 rect;
+    RECT32 rect;
     HDC32 hdcMem;
     HBITMAP32 hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -459,7 +459,7 @@ void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL32 down )
  */
 static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
-    RECT16 rect;
+    RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
@@ -479,13 +479,13 @@ static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
  */
 static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
-    RECT16 rect;
+    RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE + 1;
+      if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE+1;
       GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
 		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
 		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
@@ -723,7 +723,8 @@ void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
 
     if (HAS_MENU(wndPtr))
     {
-	RECT16 r = rect;
+	RECT32 r;
+        CONV_RECT16TO32( &rect, &r );
 	r.bottom = rect.top + SYSMETRICS_CYMENU;  /* default height */
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
     }
@@ -844,18 +845,18 @@ LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
 /***********************************************************************
  *           NC_GetSysPopupPos
  */
-BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT16* rect )
+BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT32* rect )
 {
   if( wndPtr->hSysMenu )
   {
       if( wndPtr->dwStyle & WS_MINIMIZE )
-	  GetWindowRect16( wndPtr->hwndSelf, rect );
+	  GetWindowRect32( wndPtr->hwndSelf, rect );
       else
       {
   	  NC_GetInsideRect( wndPtr->hwndSelf, rect );
-  	  OffsetRect16( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
+  	  OffsetRect32( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
   	  if (wndPtr->dwStyle & WS_CHILD)
-     	      ClientToScreen16( wndPtr->parent->hwndSelf, (POINT16 *)rect );
+     	      ClientToScreen32( wndPtr->parent->hwndSelf, (POINT32 *)rect );
           rect->right = rect->left + SYSMETRICS_CXSIZE;
           rect->bottom = rect->top + SYSMETRICS_CYSIZE;
       }
@@ -882,12 +883,13 @@ static void NC_TrackSysMenu( HWND hwnd, POINT16 pt )
 	if( !iconic ) 
 	{
 	     HDC16	hdc = GetWindowDC32(hwnd);
-	     RECT16	rect, rTrack;
+	     RECT32	rect;
+             RECT16     rTrack;
 	     BOOL32 	bNew, bTrack = TRUE;
 	     MSG16	msg;
 	    
 	     NC_GetSysPopupPos( wndPtr, &rect );
-	     rTrack = rect;
+             CONV_RECT32TO16( &rect, &rTrack );
 	     MapWindowPoints16( 0, hwnd, (LPPOINT16)&rTrack, 2 );
 
 	     /* track mouse while waiting for WM_LBUTTONUP */
@@ -936,7 +938,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM16 wParam, POINT16 *capturePoint 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
 	  /* Move pointer at the center of the caption */
-	RECT16 rect;
+	RECT32 rect;
 	NC_GetInsideRect( hwnd, &rect );
 	if (wndPtr->dwStyle & WS_SYSMENU)
 	    rect.left += SYSMETRICS_CXSIZE + 1;
@@ -1450,7 +1452,8 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 	break;
 
     case SC_MOUSEMENU:
-        MENU_TrackMouseMenuBar( wndPtr, wParam & 0x000F, pt );
+        CONV_POINT16TO32( &pt, &pt32 );
+        MENU_TrackMouseMenuBar( wndPtr, wParam & 0x000F, pt32 );
 	break;
 
     case SC_KEYMENU:

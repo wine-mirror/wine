@@ -6,8 +6,8 @@
  * MDI structure definitions.
  */
 
-#ifndef MDI_H
-#define MDI_H
+#ifndef __WINE_MDI_H
+#define __WINE_MDI_H
 
 #include "windows.h"
 
@@ -43,5 +43,5 @@ typedef struct
     HWND   	self;
 } MDICLIENTINFO;
 
-#endif /* MDI_H */
+#endif /* __WINE_MDI_H */
 

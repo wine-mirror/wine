@@ -87,6 +87,7 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
   DBG_ADDR	daddr;
 
   daddr.seg = 0;
+  daddr.type = NULL;
   Module = ((char*)load_addr)+pe_exports->Name;
   dprintf_win32(stddeb,"\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
 	 Module,
@@ -113,7 +114,7 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
 	  daddr.off=load_addr+*functions;
 	  function++;
       }
-      DEBUG_AddSymbol(buffer,&daddr, NULL);
+      DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
   }
 }
 
@@ -379,7 +380,7 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
     DBG_ADDR	daddr;
 
 	daddr.seg=0;
-
+	daddr.type = NULL;
 	pe = xmalloc(sizeof(struct pe_data));
 	memset(pe,0,sizeof(struct pe_data));
 	pe->pe_header = xmalloc(sizeof(struct pe_header_s));
@@ -410,16 +411,23 @@ problem needs to be fixed properly at some stage */
 	dprintf_win32(stddeb, "Load addr is %x\n",load_addr);
 	calc_vma_size(pe);
 
+#if 0
 	/* We use malloc here, while a huge part of that address space does
 	   not be supported by actual memory. It has to be contiguous, though.
 	   I don't know if mmap("/dev/null"); would do any better.
 	   What I'd really like to do is a Win32 style VirtualAlloc/MapViewOfFile
 	   sequence */
 	load_addr = pe->load_addr = (int)xmalloc(pe->vma_size);
+	memset( load_addr, 0, pe->vma_size);
+#else
+	load_addr =  pe->load_addr = VirtualAlloc( NULL, pe->vma_size,
+                                                   MEM_COMMIT,
+                                                   PAGE_EXECUTE_READWRITE );
+#endif
+
 	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
 		pe->load_addr, pe->vma_size);
 	
-	memset( (void *)load_addr, 0, pe->vma_size);
 
 	for(i=0; i < pe->pe_header->coff.NumberOfSections; i++)
 	{
@@ -456,11 +464,14 @@ problem needs to be fixed properly at some stage */
 	}
 #endif
 
+#if 0
+	/* not needed, memory is zero */
         if(strcmp(pe->pe_seg[i].Name, ".bss") == 0)
             memset((void *)result, 0, 
                    pe->pe_seg[i].Virtual_Size ?
                    pe->pe_seg[i].Virtual_Size :
                    pe->pe_seg[i].Size_Of_Raw_Data);
+#endif
 
 	if(strcmp(pe->pe_seg[i].Name, ".idata") == 0)
 		pe->pe_import = (struct PE_Import_Directory *) result;
@@ -560,16 +571,16 @@ problem needs to be fixed properly at some stage */
 				pe->pe_seg[i].Name
 			);
 			daddr.off=load_addr+pe->pe_seg[i].Virtual_Address;
-			DEBUG_AddSymbol(buffer,&daddr, NULL);
+			DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		}
 		/* add entry point */
 		sprintf(buffer,"%s.EntryPoint",((char*)load_addr)+pe->pe_export->Name);
 		daddr.off=load_addr+pe->pe_header->opt_coff.AddressOfEntryPoint;
-		DEBUG_AddSymbol(buffer,&daddr, NULL);
+		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		/* add start of DLL */
 		daddr.off=load_addr;
 		DEBUG_AddSymbol(((char*)load_addr)+pe->pe_export->Name,&daddr,
-				NULL);
+				NULL, SYM_WIN32 | SYM_FUNC);
 	}
         return pe;
 }

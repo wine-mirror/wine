@@ -4,8 +4,8 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef DESKTOP_H
-#define DESKTOP_H
+#ifndef __WINE_DESKTOP_H
+#define __WINE_DESKTOP_H
 
 #include "windows.h"
 
@@ -21,4 +21,4 @@ extern BOOL32 DESKTOP_SetPattern( LPCSTR pattern );
 extern LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
                                WPARAM32 wParam, LPARAM lParam );
 
-#endif  /* DESKTOP_H */
+#endif  /* __WINE_DESKTOP_H */

@@ -4,8 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef _WINE_MODULE_H
-#define _WINE_MODULE_H
+#ifndef __WINE_MODULE_H
+#define __WINE_MODULE_H
 
 #include "wintypes.h"
 #include "pe_image.h"
@@ -140,4 +140,4 @@ extern BOOL16 NE_LoadSegment( HMODULE16 hModule, WORD segnum );
 extern void NE_FixupPrologs( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
 
-#endif  /* _WINE_MODULE_H */
+#endif  /* __WINE_MODULE_H */

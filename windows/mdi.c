@@ -101,10 +101,10 @@ static BOOL MDI_MenuModifyItem(WND* clientWnd, HWND hWndChild )
 
  if (wndPtr->text) lstrcpyn32A(buffer + n, wndPtr->text, sizeof(buffer) - n );
 
- n    = GetMenuState(clientInfo->hWindowMenu,wndPtr->wIDmenu ,MF_BYCOMMAND); 
+ n    = GetMenuState32(clientInfo->hWindowMenu,wndPtr->wIDmenu ,MF_BYCOMMAND); 
  bRet = ModifyMenu32A(clientInfo->hWindowMenu , wndPtr->wIDmenu, 
                       MF_BYCOMMAND | MF_STRING, wndPtr->wIDmenu, buffer );
- CheckMenuItem(clientInfo->hWindowMenu ,wndPtr->wIDmenu , n & MF_CHECKED);
+ CheckMenuItem32(clientInfo->hWindowMenu ,wndPtr->wIDmenu , n & MF_CHECKED);
  return bRet;
 }
 
@@ -122,7 +122,7 @@ static BOOL MDI_MenuDeleteItem(WND* clientWnd, HWND hWndChild )
      !clientInfo->hWindowMenu ) return 0;
 
  id = wndPtr->wIDmenu;
- DeleteMenu(clientInfo->hWindowMenu,id,MF_BYCOMMAND);
+ DeleteMenu32(clientInfo->hWindowMenu,id,MF_BYCOMMAND);
 
  /* walk the rest of MDI children to prevent gaps in the id 
   * sequence and in the menu child list */
@@ -226,7 +226,7 @@ HMENU16 MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU16 hmenuFrame,
     if (!fRefresh) 
        {
 	HWND hwndFrame = GetParent16(hwnd);
-	HMENU16 oldFrameMenu = GetMenu(hwndFrame);
+	HMENU32 oldFrameMenu = GetMenu32(hwndFrame);
         
 	if( ci->hwndChildMaximized && hmenuFrame && hmenuFrame!=oldFrameMenu )
 	    MDI_RestoreFrameMenu(w->parent, ci->hwndChildMaximized );
@@ -236,8 +236,8 @@ HMENU16 MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU16 hmenuFrame,
 	    /* delete menu items from ci->hWindowMenu 
 	     * and add them to hmenuWindow */
 
-            INT		i = GetMenuItemCount(ci->hWindowMenu) - 1;
-	    INT 	pos = GetMenuItemCount(hmenuWindow) + 1;
+            INT32 i = GetMenuItemCount32(ci->hWindowMenu) - 1;
+	    INT32 pos = GetMenuItemCount32(hmenuWindow) + 1;
 
             AppendMenu32A( hmenuWindow, MF_SEPARATOR, 0, NULL);
 
@@ -249,27 +249,27 @@ HMENU16 MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU16 hmenuFrame,
 
 		for( ; i >= j ; i-- )
 		   {
-		     id = GetMenuItemID(ci->hWindowMenu,i );
-		     state = GetMenuState(ci->hWindowMenu,i,MF_BYPOSITION); 
+		     id = GetMenuItemID32(ci->hWindowMenu,i );
+		     state = GetMenuState32(ci->hWindowMenu,i,MF_BYPOSITION); 
 
-		     GetMenuString(ci->hWindowMenu, i, buffer, 100, MF_BYPOSITION);
+		     GetMenuString32A(ci->hWindowMenu, i, buffer, 100, MF_BYPOSITION);
 
-		     DeleteMenu(ci->hWindowMenu, i , MF_BYPOSITION);
+		     DeleteMenu32(ci->hWindowMenu, i , MF_BYPOSITION);
 		     InsertMenu32A(hmenuWindow, pos, MF_BYPOSITION | MF_STRING,
 					     id, buffer);
-		     CheckMenuItem(hmenuWindow ,pos , MF_BYPOSITION | (state & MF_CHECKED));
+		     CheckMenuItem32(hmenuWindow ,pos , MF_BYPOSITION | (state & MF_CHECKED));
 		   }
 	      }
 
 	    /* remove separator */
-	    DeleteMenu(ci->hWindowMenu, i, MF_BYPOSITION); 
+	    DeleteMenu32(ci->hWindowMenu, i, MF_BYPOSITION); 
 
 	    ci->hWindowMenu = hmenuWindow;
 	  } 
 
 	if( hmenuFrame && hmenuFrame!=oldFrameMenu)
 	  {
-	    SetMenu(hwndFrame, hmenuFrame);
+	    SetMenu32(hwndFrame, hmenuFrame);
 	    if( ci->hwndChildMaximized )
 	        MDI_AugmentFrameMenu(ci, w->parent, ci->hwndChildMaximized );
 	    return oldFrameMenu;
@@ -386,7 +386,7 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
     else
     {
 	ci->nActiveChildren--;
-	DeleteMenu(ci->hWindowMenu,wIDmenu,MF_BYCOMMAND);
+	DeleteMenu32(ci->hWindowMenu,wIDmenu,MF_BYCOMMAND);
 	if( IsWindow(hwndMax) )
 	    ShowWindow(hwndMax, SW_SHOWMAXIMIZED);
     }
@@ -550,8 +550,8 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
 #endif 
         /* uncheck menu item */
        	if( clientInfo->hWindowMenu )
-       	        CheckMenuItem( clientInfo->hWindowMenu,
-       	                       wndPrev->wIDmenu, 0);
+       	        CheckMenuItem32( clientInfo->hWindowMenu,
+                                 wndPrev->wIDmenu, 0);
       }
 
     /* set appearance */
@@ -578,8 +578,8 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
 	
     /* check menu item */
     if( clientInfo->hWindowMenu )
-              CheckMenuItem( clientInfo->hWindowMenu,
-                             wndPtr->wIDmenu, MF_CHECKED);
+              CheckMenuItem32( clientInfo->hWindowMenu,
+                               wndPtr->wIDmenu, MF_CHECKED);
 
     /* bring active child to the top */
     SetWindowPos( hWndChild, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
@@ -853,21 +853,21 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
  
  if( !InsertMenu32A(frame->wIDmenu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
                     hSysPopup, (LPSTR)(DWORD)hBmpClose ))
-   {  DestroyMenu(hSysPopup); return 0; }
+   {  DestroyMenu32(hSysPopup); return 0; }
 
  if( !AppendMenu32A(frame->wIDmenu,MF_HELP | MF_BITMAP,
                     SC_RESTORE, (LPSTR)(DWORD)hBmpRestore ))
    {
-      RemoveMenu(frame->wIDmenu,0,MF_BYPOSITION);
+      RemoveMenu32(frame->wIDmenu,0,MF_BYPOSITION);
       return 0;
    }
 
- EnableMenuItem(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
- EnableMenuItem(hSysPopup, SC_MOVE, MF_BYCOMMAND | MF_GRAYED);
- EnableMenuItem(hSysPopup, SC_MAXIMIZE, MF_BYCOMMAND | MF_GRAYED);
+ EnableMenuItem32(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
+ EnableMenuItem32(hSysPopup, SC_MOVE, MF_BYCOMMAND | MF_GRAYED);
+ EnableMenuItem32(hSysPopup, SC_MAXIMIZE, MF_BYCOMMAND | MF_GRAYED);
 
  /* redraw menu */
- DrawMenuBar(frame->hwndSelf);
+ DrawMenuBar32(frame->hwndSelf);
 
  return 1;
 }
@@ -877,18 +877,18 @@ BOOL MDI_AugmentFrameMenu(MDICLIENTINFO* ci, WND *frame, HWND hChild)
  */
 BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild)
 {
- INT	nItems   = GetMenuItemCount(frameWnd->wIDmenu) - 1;
+ INT32 nItems = GetMenuItemCount32(frameWnd->wIDmenu) - 1;
 
  dprintf_mdi(stddeb,"MDI_RestoreFrameMenu: for child %04x\n",hChild);
 
- if( GetMenuItemID(frameWnd->wIDmenu,nItems) != SC_RESTORE )
+ if( GetMenuItemID32(frameWnd->wIDmenu,nItems) != SC_RESTORE )
      return 0; 
 
 
- RemoveMenu(frameWnd->wIDmenu,0,MF_BYPOSITION);
- DeleteMenu(frameWnd->wIDmenu,nItems-1,MF_BYPOSITION);
+ RemoveMenu32(frameWnd->wIDmenu,0,MF_BYPOSITION);
+ DeleteMenu32(frameWnd->wIDmenu,nItems-1,MF_BYPOSITION);
 
- DrawMenuBar(frameWnd->hwndSelf);
+ DrawMenuBar32(frameWnd->hwndSelf);
 
  return 1;
 }
@@ -1019,11 +1019,11 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam
       
       case WM_DESTROY:
 	if( ci->hwndChildMaximized ) MDI_RestoreFrameMenu(w, frameWnd->hwndSelf);
-	if((nItems = GetMenuItemCount(ci->hWindowMenu)) > 0) {
+	if((nItems = GetMenuItemCount32(ci->hWindowMenu)) > 0) {
     	    ci->idFirstChild = nItems - 1;
 	    ci->nActiveChildren++; 		/* to delete a separator */
 	    while( ci->nActiveChildren-- )
-	        DeleteMenu(ci->hWindowMenu,MF_BYPOSITION,ci->idFirstChild--);
+	        DeleteMenu32(ci->hWindowMenu,MF_BYPOSITION,ci->idFirstChild--);
 	}
 	return 0;
 
@@ -1231,11 +1231,11 @@ LRESULT DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient, UINT16 message,
 		if( wParam == VK_LEFT ) 
 		  { if( wndPtr->parent->wIDmenu != LOWORD(lParam) ) break; }
 		else if( wParam == VK_RIGHT )
-		  { if( GetSystemMenu( wndPtr->parent->hwndSelf, 0) 
-				       != LOWORD(lParam) ) break; }
+		  { if( GetSystemMenu16( wndPtr->parent->hwndSelf, 0) 
+                          != LOWORD(lParam) ) break; }
 		else break;
 		
-		return MAKELONG( GetSystemMenu(ci->hwndActiveChild, 0), 
+		return MAKELONG( GetSystemMenu16(ci->hwndActiveChild, 0), 
 				 ci->hwndActiveChild );
 	      }
 	    break;
@@ -1449,7 +1449,7 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
       case WM_NEXTMENU:
 
 	if( wParam == VK_LEFT )		/* switch to frame system menu */
-	  return MAKELONG( GetSystemMenu(clientWnd->parent->hwndSelf, 0), 
+	  return MAKELONG( GetSystemMenu16(clientWnd->parent->hwndSelf, 0), 
 			   clientWnd->parent->hwndSelf );
 	if( wParam == VK_RIGHT )	/* to frame menu bar */
 	  return MAKELONG( clientWnd->parent->wIDmenu,

@@ -8,20 +8,30 @@ MODULE    = debugger
 C_SRCS = \
 	break.c \
 	db_disasm.c \
+	display.c \
 	editline.c \
+	expr.c \
 	hash.c \
 	info.c \
 	memory.c \
 	msc.c	\
 	registers.c \
+	source.c \
 	stabs.c	\
-	stack.c
+	stack.c \
+	types.c
 
 GEN_C_SRCS = \
 	y.tab.c \
 	lex.yy.c
 
 all: $(MODULE).o
+
+#
+# This is a special test program that helps debug the internal debugger.
+#
+debug: $(MODULE).o dbgmain.o ../misc/xmalloc.o
+	$(CC) -o debug $(MODULE).o dbgmain.o ../misc/xmalloc.o
 
 @MAKE_RULES@
 

@@ -204,7 +204,7 @@ type	win16
 204 stub SwapRecording
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
-207 return IsDBCSLeadByte 2 0
+207 pascal16 IsDBCSLeadByte(word) IsDBCSLeadByte16
 216 pascal   RegEnumKey(long long ptr long) RegEnumKey16
 217 pascal   RegOpenKey(long ptr ptr) RegOpenKey16
 218 pascal   RegCreateKey(long ptr ptr) RegCreateKey16

@@ -25,7 +25,6 @@
 
 #include "windows.h"
 #include "winbase.h"
-#include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -410,8 +409,9 @@ UINT32 DRIVE_GetFlags( int drive )
  */
 int DRIVE_Chdir( int drive, const char *path )
 {
+    DOS_FULL_NAME full_name;
     char buffer[MAX_PATHNAME_LEN];
-    const char *unix_cwd, *dos_cwd;
+    LPSTR unix_cwd;
     BY_HANDLE_FILE_INFORMATION info;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
@@ -420,31 +420,30 @@ int DRIVE_Chdir( int drive, const char *path )
     buffer[0] += drive;
     lstrcpyn32A( buffer + 2, path, sizeof(buffer) - 2 );
 
-    if (!(unix_cwd = DOSFS_GetUnixFileName( buffer, TRUE ))) return 0;
-    if (!FILE_Stat( unix_cwd, &info )) return 0;
+    if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
+    if (!FILE_Stat( full_name.long_name, &info )) return 0;
     if (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return 0;
     }
-    unix_cwd += strlen( DOSDrives[drive].root );
+    unix_cwd = full_name.long_name + strlen( DOSDrives[drive].root );
     while (*unix_cwd == '/') unix_cwd++;
-    buffer[2] = '/';
-    lstrcpyn32A( buffer + 3, unix_cwd, sizeof(buffer) - 3 );
-    if (!(dos_cwd = DOSFS_GetDosTrueName( buffer, TRUE ))) return 0;
 
     dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:): unix_cwd=%s dos_cwd=%s\n",
-                   'A' + drive, unix_cwd, dos_cwd + 3 );
+                   'A' + drive, unix_cwd, full_name.short_name + 3 );
 
     HeapFree( SystemHeap, 0, DOSDrives[drive].dos_cwd );
     HeapFree( SystemHeap, 0, DOSDrives[drive].unix_cwd );
-    DOSDrives[drive].dos_cwd  = HEAP_strdupA( SystemHeap, 0, dos_cwd + 3 );
+    DOSDrives[drive].dos_cwd  = HEAP_strdupA( SystemHeap, 0,
+                                              full_name.short_name + 3 );
     DOSDrives[drive].unix_cwd = HEAP_strdupA( SystemHeap, 0, unix_cwd );
 
     if (pTask && (pTask->curdrive & 0x80) && 
         ((pTask->curdrive & ~0x80) == drive))
     {
-        lstrcpyn32A( pTask->curdir, dos_cwd + 2, sizeof(pTask->curdir) );
+        lstrcpyn32A( pTask->curdir, full_name.short_name + 2,
+                     sizeof(pTask->curdir) );
         DRIVE_LastTask = GetCurrentTask();
     }
     return 1;

@@ -21,7 +21,6 @@
 #include "winerror.h"
 #include "file.h"
 #include "heap.h"
-#include "dos_fs.h"
 #include "string32.h"	
 #include "stddebug.h"
 #include "debug.h"
@@ -1228,8 +1227,8 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	/* STEP 2: keydata & values */
 	if (!GetFileInformationByHandle(hfd,&hfdinfo))
 		return;
-	end		= hfdinfo.nFileSizeLow;
-	lastmodified	= DOSFS_FileTimeToUnixTime(&(hfdinfo.ftLastWriteTime));
+	end = hfdinfo.nFileSizeLow;
+	lastmodified = DOSFS_FileTimeToUnixTime(&hfdinfo.ftLastWriteTime,NULL);
 
 	if (-1==_llseek32(hfd,rgdbsection,SEEK_SET))
 		return;
@@ -1532,7 +1531,7 @@ _w31_loadreg() {
 		_lclose32(hf);
 		return;
 	}
-	lastmodified	= DOSFS_FileTimeToUnixTime(&(hfinfo.ftLastWriteTime));
+	lastmodified = DOSFS_FileTimeToUnixTime(&hfinfo.ftLastWriteTime,NULL);
 
 	if (RegCreateKey16(HKEY_LOCAL_MACHINE,"\\SOFTWARE\\Classes",&hkey)!=ERROR_SUCCESS)
 		return;

@@ -5,6 +5,9 @@
  *
  */
 
+#ifndef __WINE_ACCEL_H
+#define __WINE_ACCEL_H
+
 #include "windows.h"
 
 typedef struct {
@@ -23,3 +26,5 @@ typedef struct {
 #define CONTROL_ACCEL	0x08
 #define ALT_ACCEL       0x10
 #define SYSTEM_ACCEL	0x80
+
+#endif  /* __WINE_ACCEL_H */

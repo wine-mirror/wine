@@ -4,8 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#ifndef DIALOG_H
-#define DIALOG_H
+#ifndef __WINE_DIALOG_H
+#define __WINE_DIALOG_H
 
 #include "windows.h"
 #include "winproc.h"
@@ -44,4 +44,4 @@ extern HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
                                      WINDOWPROCTYPE procType );
 extern INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner );
 
-#endif  /* DIALOG_H */
+#endif  /* __WINE_DIALOG_H */

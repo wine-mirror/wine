@@ -3,7 +3,7 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-PROGRAMS  = winerc
+PROGRAMS  = winerc@PROGEXT@
 MODULE    = none
 
 C_SRCS     = winerc.c
@@ -14,7 +14,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 $(PROGRAMS): $(OBJS)
-	$(CC) $(CFLAGS) -o winerc $(OBJS) $(LEXLIB)
+	$(CC) $(CFLAGS) -o winerc@PROGEXT@ $(OBJS) $(LEXLIB)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) -d -t $(SRCDIR)/parser.y

@@ -2,8 +2,8 @@
  * MMSYSTEM - Multimedia Wine Extension ... :-)
  */
 
-#ifndef MMSYSTEM_H
-#define MMSYSTEM_H
+#ifndef __WINE_MMSYSTEM_H
+#define __WINE_MMSYSTEM_H
 
 typedef LPSTR		    HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR			HPCSTR;         /* a huge version of LPCSTR */
@@ -1539,7 +1539,4 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
 
-#endif /* MMSYSTEM_H */
-
-
-
+#endif /* __WINE_MMSYSTEM_H */

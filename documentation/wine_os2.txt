@@ -1,0 +1,35 @@
+	Running & Compiling WINE in OS/2
+
+Here is what you need to (try to) compile Wine for OS/2:
+EMX 0.9c (fix 2)
+XFree86 3.2 OS/2 (with development libraries)
+bash, gnu make, grep, tar, bison, flex
+sed (a working copy of)
+diff and patch are recommended
+
+To compile:
+sh
+tools/make_os2.sh
+make depend
+make (make doesn't work yet... I will need to do some others patch, or
+      you may do it...)
+
+Currently:
+- configure and make depend work...
+- make doesn't work
+- the selectors numbers (0) are wrong...
+
+What needs to be redone:
+File functions, I/O access (do it!), Interrupt (if int unknow, call
+current RealMode one...), verify that everything is thread safe (how
+does Win95/NT handle multi-thread?), move X functions in some files
+(and make a wrapper, to use PM instead latter), etc...
+
+The good things:
+- OS/2 have DOS interrupts
+- OS/2 have I/O port access
+- OS/2 have multi-thread
+- Merlin have Open32 (to be used later...)
+
+Robert Pouliot <krynos@clic.net>
+January 9, 1997

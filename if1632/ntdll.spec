@@ -267,7 +267,7 @@ base	0
 263 stub RtlAddAuditAccessAce
 264 stub RtlAdjustPrivilege
 265 stub RtlAllocateAndInitializeSid
-266 stub RtlAllocateHeap
+266 stdcall RtlAllocateHeap(long long long) HeapAlloc
 267 stub RtlAnsiCharToUnicodeChar
 268 stub RtlAnsiStringToUnicodeSize
 269 stub RtlAnsiStringToUnicodeString
@@ -310,7 +310,7 @@ base	0
 306 stub RtlCreateAcl
 307 stub RtlCreateAndSetSD
 308 stub RtlCreateEnvironment
-309 stub RtlCreateHeap
+309 stdcall RtlCreateHeap(long long long) HeapCreate
 310 stub RtlCreateProcessParameters
 311 stub RtlCreateQueryDebugBuffer
 312 stub RtlCreateRegistryKey
@@ -375,7 +375,7 @@ base	0
 371 stub RtlFormatCurrentUserKeyPath
 372 stub RtlFormatMessage
 373 stub RtlFreeAnsiString
-374 stub RtlFreeHeap
+374 stdcall RtlFreeHeap(long long long) HeapFree
 375 stub RtlFreeOemString
 376 stub RtlFreeSid
 377 stub RtlFreeUnicodeString
@@ -494,7 +494,7 @@ base	0
 490 stub RtlSetTimeZoneInformation
 491 stub RtlSetUserFlagsHeap
 492 stub RtlSetUserValueHeap
-493 stub RtlSizeHeap
+493 stdcall RtlSizeHeap(long long long) HeapSize
 494 stub RtlSplay
 495 stub RtlStartRXact
 496 stdcall RtlSubAuthorityCountSid(ptr) RtlSubAuthorityCountSid
@@ -880,7 +880,7 @@ base	0
 876 stub _strupr
 877 stub _ultoa
 878 stub _vsnprintf
-879 stub _wcsicmp
+879 stdcall _wcsicmp(ptr ptr) lstrcmpi32W
 880 stub _wcslwr
 881 stub _wcsnicmp
 882 stub _wcsupr

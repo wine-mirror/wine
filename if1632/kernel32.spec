@@ -39,7 +39,7 @@ base	1
 0034 stub ContinueDebugEvent
 0035 stub ConvertDefaultLocale
 0036 stdcall CopyFileA(ptr ptr long) CopyFile32A
-0037 stub CopyFileW
+0037 stdcall CopyFileW(ptr ptr long) CopyFile32W
 0038 stub CreateConsoleScreenBuffer
 0039 stdcall CreateDirectoryA(ptr ptr) CreateDirectory32A
 0040 stdcall CreateDirectoryExA(ptr ptr ptr) CreateDirectoryEx32A
@@ -143,8 +143,8 @@ base	1
 0138 stdcall FormatMessageA() WIN32_FormatMessage32A
 0139 stdcall FormatMessageW() WIN32_FormatMessage32W
 0140 stub FreeConsole
-0141 stdcall FreeEnvironmentStringsA(ptr)	FreeEnvironmentStringsA
-0142 stdcall FreeEnvironmentStringsW(ptr)	FreeEnvironmentStringsW
+0141 stdcall FreeEnvironmentStringsA(ptr) FreeEnvironmentStrings32A
+0142 stdcall FreeEnvironmentStringsW(ptr) FreeEnvironmentStrings32W
 0143 stdcall FreeLibrary(long) FreeLibrary32
 0144 stub FreeLibraryAndExitThread
 0145 stdcall FreeResource(long) FreeResource32
@@ -212,9 +212,9 @@ base	1
 0207 	stdcall GetDiskFreeSpaceW(ptr ptr ptr ptr ptr) GetDiskFreeSpace32W
 0208 stdcall GetDriveTypeA(ptr) GetDriveType32A
 0209 stdcall GetDriveTypeW(ptr) GetDriveType32W
-0210	stdcall GetEnvironmentStrings()	GetEnvironmentStrings
-0211 stub GetEnvironmentStringsA
-0212 stdcall GetEnvironmentStringsW() GetEnvironmentStringsW
+0210 stdcall GetEnvironmentStrings() GetEnvironmentStrings32A
+0211 stdcall GetEnvironmentStringsA() GetEnvironmentStrings32A
+0212 stdcall GetEnvironmentStringsW() GetEnvironmentStrings32W
 0213 stdcall GetEnvironmentVariableA(ptr ptr long) GetEnvironmentVariable32A
 0214 stdcall GetEnvironmentVariableW(ptr ptr long) GetEnvironmentVariable32W
 0215 stub GetExitCodeProcess
@@ -252,7 +252,7 @@ base	1
 0247 stub GetNumberOfConsoleMouseButtons
 0248    stdcall GetOEMCP() GetOEMCP
 0249 stub GetOverlappedResult
-0250 stub GetPriorityClass
+0250 stdcall GetPriorityClass(long) GetPriorityClass
 0251 stdcall GetPrivateProfileIntA(ptr ptr long ptr) GetPrivateProfileInt32A
 0252 stdcall GetPrivateProfileIntW(ptr ptr long ptr) GetPrivateProfileInt32W
 0253 stub GetPrivateProfileSectionA
@@ -296,9 +296,9 @@ base	1
 0291 stdcall GetTempFileNameW(ptr ptr long ptr) GetTempFileName32W
 0292 stdcall GetTempPathA(long ptr) GetTempPath32A
 0293 stdcall GetTempPathW(long ptr) GetTempPath32W
-0294	stdcall GetThreadContext(long ptr)	GetThreadContext
-0295 stub GetThreadLocale
-0296 stub GetThreadPriority
+0294 stdcall GetThreadContext(long ptr) GetThreadContext
+0295 stdcall GetThreadLocale() GetThreadLocale
+0296 stdcall GetThreadPriority(long) GetThreadPriority
 0297 stub GetThreadSelectorEntry
 0298 stub GetThreadTimes
 0299 stdcall GetTickCount() GetTickCount
@@ -360,8 +360,8 @@ base	1
 0355 stub IsBadStringPtrA
 0356 stub IsBadStringPtrW
 0357 stdcall IsBadWritePtr(ptr long)	WIN32_IsBadWritePtr
-0358 return IsDBCSLeadByte 4 0
-0359 stub IsDBCSLeadByteEx
+0358 stdcall IsDBCSLeadByte(long) IsDBCSLeadByte32
+0359 stdcall IsDBCSLeadByteEx(long long) IsDBCSLeadByteEx
 0360 stub IsValidCodePage
 0361 stdcall IsValidLocale(long long) IsValidLocale
 0362 stub LCMapStringA
@@ -415,8 +415,8 @@ base	1
 0410 stub PrepareTape
 0411 stub PulseEvent
 0412 stub PurgeComm
-0413 stub QueryDosDeviceA
-0414 stub QueryDosDeviceW
+0413 stdcall QueryDosDeviceA(ptr ptr long) QueryDosDevice32A
+0414 stdcall QueryDosDeviceW(ptr ptr long) QueryDosDevice32W
 0415 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
 0416 stub QueryPerformanceFrequency
 0417 stub QueryWin31IniFilesMappedToRegistry
@@ -505,20 +505,20 @@ base	1
 0500 stub SetLocaleInfoW
 0501 stub SetMailslotInfo
 0502 stub SetNamedPipeHandleState
-0503 stub SetPriorityClass
+0503 stdcall SetPriorityClass(long long) SetPriorityClass
 0504 stub SetProcessShutdownParameters
 0505 stub SetProcessWorkingSetSize
-0506 stub SetStdHandle
-0507    stdcall SetSystemTime(ptr) SetSystemTime
+0506 stdcall SetStdHandle(long long) SetStdHandle
+0507 stdcall SetSystemTime(ptr) SetSystemTime
 0508 stub SetSystemTimeAdjustment
 0509 stub SetTapeParameters
 0510 stub SetTapePosition
 0511 stdcall SetThreadAffinityMask(long long)	SetThreadAffinityMask
 0512 stub SetThreadContext
 0513 stub SetThreadLocale
-0514 stub SetThreadPriority
-0515    stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
-0516    stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
+0514 stdcall SetThreadPriority(long long) SetThreadPriority
+0515 stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
+0516 stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
 0517 stub SetVDMCurrentDirectories
 0518 stub SetVolumeLabelA
 0519 stub SetVolumeLabelW

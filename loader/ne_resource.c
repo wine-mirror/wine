@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "arch.h"
-#include "dos_fs.h"
 #include "global.h"
 #include "ldt.h"
 #include "module.h"

@@ -1487,7 +1487,7 @@ LRESULT LISTBOX_Directory( WND *wnd, LB_DESCR *descr, UINT32 attrib,
                 if (long_names) strcpy( buffer, entry.cFileName );
                 else strcpy( buffer, entry.cAlternateFileName );
             }
-            if (!long_names) AnsiLower( buffer );
+            if (!long_names) CharLower32A( buffer );
             pos = LISTBOX_FindFileStrPos( wnd, descr, buffer );
             if ((ret = LISTBOX_InsertString( wnd, descr, pos, buffer )) < 0)
                 break;
@@ -2206,8 +2206,12 @@ LRESULT ListBoxWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     case LB_SELITEMRANGE16:
     case LB_SELITEMRANGE32:
-        return LISTBOX_SelectItemRange( wnd, descr, LOWORD(lParam),
-                                        HIWORD(lParam), wParam );
+        if (LOWORD(lParam) <= HIWORD(lParam))
+            return LISTBOX_SelectItemRange( wnd, descr, LOWORD(lParam),
+                                            HIWORD(lParam), wParam );
+        else
+            return LISTBOX_SelectItemRange( wnd, descr, HIWORD(lParam),
+                                            LOWORD(lParam), wParam );
 
     case LB_SELITEMRANGEEX16:
     case LB_SELITEMRANGEEX32:

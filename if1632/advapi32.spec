@@ -198,7 +198,7 @@ base	1
 0193 stub SetThreadToken
 0194 stub SetTokenInformation
 0195 stub StartServiceA
-0196 stub StartServiceCtrlDispatcherA
-0197 stub StartServiceCtrlDispatcherW
+0196 stdcall StartServiceCtrlDispatcherA(ptr) StartServiceCtrlDispatcher32A
+0197 stdcall StartServiceCtrlDispatcherW(ptr) StartServiceCtrlDispatcher32W
 0198 stub StartServiceW
 0199 stub UnlockServiceDatabase

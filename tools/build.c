@@ -2,6 +2,7 @@
  * Copyright 1993 Robert J. Amstadt
  * Copyright 1995 Martin von Loewis
  * Copyright 1995, 1996 Alexandre Julliard
+ * Copyright 1997 Eric Youngdale
  */
 
 #ifndef WINELIB
@@ -11,6 +12,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+
 #include "windows.h"
 #include "winnt.h"
 #include "winerror.h"  /* for ERROR_CALL_NOT_IMPLEMENTED */
@@ -105,6 +107,7 @@ typedef struct
 {
     ORD_TYPE    type;
     int         offset;
+    int		lineno;
     char        name[80];
     union
     {
@@ -519,6 +522,7 @@ static int ParseOrdinal(int ordinal)
         return -1;
     }
     strcpy( odp->name, token );
+    odp->lineno = Line;
 
     switch(odp->type)
     {
@@ -968,13 +972,25 @@ static int BuildModule32( FILE *outfile )
  *
  * Build a Win32 assembly file from a spec file.
  */
-static int BuildSpec32File( FILE *outfile )
+static int BuildSpec32File( char * specfile, FILE *outfile )
 {
     ORDDEF *odp;
     int i, module_size, len;
     char buffer[1024];
 
     fprintf( outfile, "/* File generated automatically; do not edit! */\n" );
+    fprintf( outfile, "\t.file\t\"%s\"\n", specfile );
+#ifdef __GNUC__
+    getcwd(buffer, sizeof(buffer));
+
+    /*
+     * The stabs help the internal debugger as they are an indication that it
+     * is sensible to step into a thunk/trampoline.
+     */
+    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", specfile);
+#endif
+
     fprintf( outfile, "\t.text\n" );
     fprintf( outfile, "\t.align 4\n" );
     fprintf( outfile, "Code_Start:\n\n" );
@@ -992,7 +1008,17 @@ static int BuildSpec32File( FILE *outfile )
         case TYPE_STUB:
         case TYPE_REGISTER:
             fprintf( outfile, "/* %s.%d (%s) */\n", DLLName, i, odp->name);
+#ifdef __GNUC__
+	    fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
+		     DLLName, i,
+		     odp->lineno, DLLName, i);
+#endif
+
             fprintf( outfile, "%s_%d:\n", DLLName, i );
+#ifdef __GNUC__
+	    fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
+#endif
+
             fprintf( outfile, "\tpushl %%ebp\n" );
             fprintf( outfile, "\tpushl $" PREFIX "%s\n",odp->u.func.link_name);
             fprintf( outfile, "\tcall " PREFIX "CallFrom32_%s_%d\n",
@@ -1112,6 +1138,11 @@ static int BuildSpec32File( FILE *outfile )
     fprintf( outfile, "\t.long Code_Start\n" );       /* Code start */
     fprintf( outfile, "\t.long Functions\n" );        /* Functions */
     fprintf( outfile, "\t.long FuncNames\n" );        /* Function names */
+#ifdef __GNUC__
+    fprintf( outfile, "\t.text\n");
+    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+    fprintf( outfile, ".Letext:\n");
+#endif
     return 0;
 }
 
@@ -1121,7 +1152,7 @@ static int BuildSpec32File( FILE *outfile )
  *
  * Build a Win16 assembly file from a spec file.
  */
-static int BuildSpec16File( FILE *outfile )
+static int BuildSpec16File( char * specfile, FILE *outfile )
 {
     ORDDEF *odp;
     int i;
@@ -1259,9 +1290,9 @@ static int BuildSpecFile( FILE *outfile, char *specname )
     switch(SpecType)
     {
     case SPEC_WIN16:
-        return BuildSpec16File( outfile );
+        return BuildSpec16File( specname, outfile );
     case SPEC_WIN32:
-        return BuildSpec32File( outfile );
+        return BuildSpec32File( specname, outfile );
     default:
         fprintf( stderr, "%s: Missing 'type' declaration\n", specname );
         return -1;
@@ -1293,6 +1324,9 @@ static void BuildCall32LargeStack( FILE *outfile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
+#ifdef __GNUC__
+    fprintf( outfile, ".stabs \"CallTo32_LargeStack:F1\",36,0,0,CallTo32_LargeStack\n");
+#endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo32_LargeStack\n" );
     fprintf( outfile, PREFIX "CallTo32_LargeStack:\n" );
     
@@ -1454,6 +1488,7 @@ static void BuildContext16( FILE *outfile )
              CONTEXTOFFSET(Esi) - sizeof(CONTEXT) );
     fprintf( outfile, "\tmovl %%edi,%d(%%ebx)\n",
              CONTEXTOFFSET(Edi) - sizeof(CONTEXT) );
+
     fprintf( outfile, "\tmovzwl -10(%%ebp),%%eax\n" ); /* Get %ds from stack*/
     fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(SegDs) - sizeof(CONTEXT) );
@@ -1463,7 +1498,6 @@ static void BuildContext16( FILE *outfile )
     fprintf( outfile, "\tpushfl\n" );
     fprintf( outfile, "\tpopl %d(%%ebx)\n",
              CONTEXTOFFSET(EFlags) - sizeof(CONTEXT) );
-#if 0
     fprintf( outfile, "\tmovzwl 0(%%ebp),%%eax\n" ); /* Get %bp from stack */
     fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(Ebp) - sizeof(CONTEXT) );
@@ -1473,12 +1507,16 @@ static void BuildContext16( FILE *outfile )
     fprintf( outfile, "\tmovzwl 4(%%ebp),%%eax\n" ); /* Get %cs from stack */
     fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(SegCs) - sizeof(CONTEXT) );
-    fprintf( outfile, "\tmovl %%fs,%d(%%ebx)\n",
+    fprintf( outfile, "\tmovw %%fs,%%ax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(SegFs) - sizeof(CONTEXT) );
-    fprintf( outfile, "\tmovl %%gs,%d(%%ebx)\n",
+    fprintf( outfile, "\tmovw %%gs,%%ax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(SegGs) - sizeof(CONTEXT) );
-    fprintf( outfile, "\tmovl %%ss,%d(%%ebx)\n",
+    fprintf( outfile, "\tmovw %%ss,%%ax\n" );
+    fprintf( outfile, "\tmovl %%eax,%d(%%ebx)\n",
              CONTEXTOFFSET(SegSs) - sizeof(CONTEXT) );
+#if 0
     fprintf( outfile, "\tfsave %d(%%ebx)\n",
              CONTEXTOFFSET(FloatSave) - sizeof(CONTEXT) );
 #endif
@@ -1565,6 +1603,10 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
+#ifdef __GNUC__
+    fprintf( outfile, ".stabs \"CallFrom16_%s:F1\",36,0,0,CallFrom16_%s\n", 
+	     profile, profile);
+#endif
     fprintf( outfile, "\t.globl " PREFIX "CallFrom16_%s\n", profile );
     fprintf( outfile, PREFIX "CallFrom16_%s:\n", profile );
 
@@ -1780,6 +1822,10 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
+#ifdef __GNUC__
+    fprintf( outfile, ".stabs \"CallTo16_%s:F1\",36,0,0,CallTo16_%s\n", 
+	     profile, profile);
+#endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo16_%s\n", profile );
     fprintf( outfile, PREFIX "CallTo16_%s:\n", profile );
 
@@ -1813,8 +1859,7 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     if (debugging)
     {
         /* Push the address of the first argument */
-        fprintf( outfile, "\tmovl %%ebx,%%eax\n" );
-        fprintf( outfile, "\taddl $12,%%eax\n" );
+        fprintf( outfile, "\tleal 12(%%ebx),%%eax\n" );
         fprintf( outfile, "\tpushl $%d\n", reg_func ? 8 : strlen(args) );
         fprintf( outfile, "\tpushl %%eax\n" );
         fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16\n" );
@@ -1969,30 +2014,40 @@ static void BuildRet16Func( FILE *outfile )
 /*******************************************************************
  *         BuildContext32
  *
- * Build the context structure on the stack.
+ * Build the CONTEXT structure on the stack.
  */
 static void BuildContext32( FILE *outfile )
 {
     /* Build the context structure */
 
+    fprintf( outfile, "\tpushw $0\n" );
+    fprintf( outfile, "\tpushw %%ss\n" );
+    fprintf( outfile, "\tpushl %%eax\n" );  /* %esp */
     fprintf( outfile, "\tpushfl\n" );
-    fprintf( outfile, "\tsubl $%d,%%esp\n", sizeof(CONTEXT) );
-    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Eax) );
-    fprintf( outfile, "\tmovl %%ebx,%d(%%esp)\n", CONTEXTOFFSET(Ebx) );
-    fprintf( outfile, "\tmovl %%ecx,%d(%%esp)\n", CONTEXTOFFSET(Ecx) );
-    fprintf( outfile, "\tmovl %%edx,%d(%%esp)\n", CONTEXTOFFSET(Edx) );
-    fprintf( outfile, "\tmovl %%esi,%d(%%esp)\n", CONTEXTOFFSET(Esi) );
-    fprintf( outfile, "\tmovl %%edi,%d(%%esp)\n", CONTEXTOFFSET(Edi) );
+    fprintf( outfile, "\tpushw $0\n" );
+    fprintf( outfile, "\tpushw %%cs\n" );
+    fprintf( outfile, "\tsubl $8,%%esp\n" );  /* %eip + %ebp */
 
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", sizeof(CONTEXT) );
-    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(EFlags) );
+    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tpushl %%ecx\n" );
+    fprintf( outfile, "\tpushl %%edx\n" );
+    fprintf( outfile, "\tpushl %%ebx\n" );
+    fprintf( outfile, "\tpushl %%esi\n" );
+    fprintf( outfile, "\tpushl %%edi\n" );
 
-    fprintf( outfile, "\tmovl %%cs,%d(%%esp)\n", CONTEXTOFFSET(SegCs) );
-    fprintf( outfile, "\tmovl %%ds,%d(%%esp)\n", CONTEXTOFFSET(SegDs) );
-    fprintf( outfile, "\tmovl %%es,%d(%%esp)\n", CONTEXTOFFSET(SegEs) );
-    fprintf( outfile, "\tmovl %%fs,%d(%%esp)\n", CONTEXTOFFSET(SegFs) );
-    fprintf( outfile, "\tmovl %%gs,%d(%%esp)\n", CONTEXTOFFSET(SegGs) );
-    fprintf( outfile, "\tmovl %%ss,%d(%%esp)\n", CONTEXTOFFSET(SegSs) );
+    fprintf( outfile, "\txorl %%eax,%%eax\n" );
+    fprintf( outfile, "\tmovw %%ds,%%ax\n" );
+    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tmovw %%es,%%ax\n" );
+    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tmovw %%fs,%%ax\n" );
+    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tmovw %%gs,%%ax\n" );
+    fprintf( outfile, "\tpushl %%eax\n" );
+
+    fprintf( outfile, "\tsubl $%d,%%esp\n",
+             sizeof(FLOATING_SAVE_AREA) + 6 * sizeof(DWORD) /* DR regs */ );
+    fprintf( outfile, "\tpushl $0x0001001f\n" );  /* ContextFlags */
 
     fprintf( outfile, "\tfsave %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 
@@ -2021,32 +2076,33 @@ static void RestoreContext32( FILE *outfile )
     fprintf( outfile, "\tleal %d(%%ebp),%%esp\n", -sizeof(CONTEXT)-12 );
     fprintf( outfile, "\tfrstor %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 
-    fprintf( outfile, "\tmovl %d(%%esp),%%ebx\n", CONTEXTOFFSET(Ebx) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%ecx\n", CONTEXTOFFSET(Ecx) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%edx\n", CONTEXTOFFSET(Edx) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%esi\n", CONTEXTOFFSET(Esi) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%edi\n", CONTEXTOFFSET(Edi) );
-
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(EFlags) );
-    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", sizeof(CONTEXT) );
-
-/*    fprintf( outfile, "\tmovl %d(%%esp),%%cs\n", CONTEXTOFFSET(SegCs) ); */
-    fprintf( outfile, "\tmovl %d(%%esp),%%ds\n", CONTEXTOFFSET(SegDs) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%es\n", CONTEXTOFFSET(SegEs) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%fs\n", CONTEXTOFFSET(SegFs) );
-    fprintf( outfile, "\tmovl %d(%%esp),%%gs\n", CONTEXTOFFSET(SegGs) );
-
     fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eip) );
     fprintf( outfile, "\tmovl %%eax,4(%%ebp)\n" ); /* %eip at time of call */
     fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Ebp) );
     fprintf( outfile, "\tmovl %%eax,0(%%ebp)\n" ); /* %ebp at time of call */
+    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(EFlags) );
+    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", sizeof(CONTEXT) );
 
-/*    fprintf( outfile, "\tmovl %d(%%esp),%%ss\n", CONTEXTOFFSET(SegSs) ); */
-/*    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Esp) ); */
+    fprintf( outfile, "\taddl $%d,%%esp\n",
+             sizeof(FLOATING_SAVE_AREA) + 7 * sizeof(DWORD) );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tmovw %%ax,%%gs\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tmovw %%ax,%%fs\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tmovw %%ax,%%es\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
+    fprintf( outfile, "\tmovw %%ax,%%ds\n" );
 
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eax) );
+    fprintf( outfile, "\tpopl %%edi\n" );
+    fprintf( outfile, "\tpopl %%esi\n" );
+    fprintf( outfile, "\tpopl %%ebx\n" );
+    fprintf( outfile, "\tpopl %%edx\n" );
+    fprintf( outfile, "\tpopl %%ecx\n" );
+    fprintf( outfile, "\tpopl %%eax\n" );
 
-    fprintf( outfile, "\taddl $%d,%%esp\n", sizeof(CONTEXT) );
+    fprintf( outfile, "\taddl $%d,%%esp\n",
+             6 * sizeof(DWORD) /* %ebp + %eip + %cs + %efl + %esp + %ss */ );
     fprintf( outfile, "\tpopfl\n" );
 }
 
@@ -2095,6 +2151,10 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
+#ifdef __GNUC__
+    fprintf( outfile, ".stabs \"CallFrom32_%s:F1\",36,0,0,CallFrom32_%s\n", 
+	     profile, profile);
+#endif
     fprintf( outfile, "\t.globl " PREFIX "CallFrom32_%s\n", profile );
     fprintf( outfile, PREFIX "CallFrom32_%s:\n", profile );
 
@@ -2182,6 +2242,10 @@ static void BuildCallTo32Func( FILE *outfile, int args )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
+#ifdef __GNUC__
+    fprintf( outfile, ".stabs \"CallTo32_%d:F1\",36,0,0,CallTo32_%d\n", 
+	     args, args);
+#endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo32_%d\n", args );
     fprintf( outfile, PREFIX "CallTo32_%d:\n", args );
 
@@ -2240,14 +2304,30 @@ static int BuildSpec( FILE *outfile, int argc, char *argv[] )
  *
  * Build the 16-bit-to-Wine callbacks
  */
-static int BuildCallFrom16( FILE *outfile, int argc, char *argv[] )
+static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[] )
 {
     int i;
+    char buffer[1024];
 
     /* File header */
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
+
+#ifdef __GNUC__
+    fprintf( outfile, "\t.file\t\"%s\"\n", outname );
+    getcwd(buffer, sizeof(buffer));
+
+    /*
+     * The stabs help the internal debugger as they are an indication that it
+     * is sensible to step into a thunk/trampoline.
+     */
+    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
+    fprintf( outfile, "\t.text\n" );
+    fprintf( outfile, "\t.align 4\n" );
+    fprintf( outfile, "Code_Start:\n\n" );
+#endif
 
     /* Build the 32-bit large stack callback */
 
@@ -2268,6 +2348,13 @@ static int BuildCallFrom16( FILE *outfile, int argc, char *argv[] )
             fprintf( outfile, "\t.ascii \"%s\\0\"\n", argv[i] + 5 );
         }
     }
+
+#ifdef __GNUC__
+    fprintf( outfile, "\t.text\n");
+    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+    fprintf( outfile, ".Letext:\n");
+#endif
+
     return 0;
 }
 
@@ -2277,14 +2364,31 @@ static int BuildCallFrom16( FILE *outfile, int argc, char *argv[] )
  *
  * Build the Wine-to-16-bit callbacks
  */
-static int BuildCallTo16( FILE *outfile, int argc, char *argv[] )
+static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] )
 {
+    char buffer[1024];
     int i;
 
     /* File header */
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
+
+#ifdef __GNUC__
+    fprintf( outfile, "\t.file\t\"%s\"\n", outname );
+    getcwd(buffer, sizeof(buffer));
+
+    /*
+     * The stabs help the internal debugger as they are an indication that it
+     * is sensible to step into a thunk/trampoline.
+     */
+    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
+    fprintf( outfile, "\t.text\n" );
+    fprintf( outfile, "\t.align 4\n" );
+    fprintf( outfile, "Code_Start:\n\n" );
+#endif
+
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Start\n" );
     fprintf( outfile, PREFIX "CALLTO16_Start:\n" );
 
@@ -2298,6 +2402,13 @@ static int BuildCallTo16( FILE *outfile, int argc, char *argv[] )
 
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_End\n" );
     fprintf( outfile, PREFIX "CALLTO16_End:\n" );
+
+#ifdef __GNUC__
+    fprintf( outfile, "\t.text\n");
+    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+    fprintf( outfile, ".Letext:\n");
+#endif
+
     return 0;
 }
 
@@ -2307,8 +2418,9 @@ static int BuildCallTo16( FILE *outfile, int argc, char *argv[] )
  *
  * Build the 32-bit-to-Wine callbacks
  */
-static int BuildCallFrom32( FILE *outfile, int argc, char *argv[] )
+static int BuildCallFrom32( FILE *outfile, char * outname, int argc, char *argv[] )
 {
+    char buffer[1024];
     int i;
 
     /* File header */
@@ -2316,9 +2428,31 @@ static int BuildCallFrom32( FILE *outfile, int argc, char *argv[] )
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
+#ifdef __GNUC__
+    fprintf( outfile, "\t.file\t\"%s\"\n", outname );
+    getcwd(buffer, sizeof(buffer));
+
+    /*
+     * The stabs help the internal debugger as they are an indication that it
+     * is sensible to step into a thunk/trampoline.
+     */
+    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
+    fprintf( outfile, "\t.text\n" );
+    fprintf( outfile, "\t.align 4\n" );
+    fprintf( outfile, "Code_Start:\n\n" );
+#endif
+
     /* Build the callback functions */
 
     for (i = 2; i < argc; i++) BuildCallFrom32Func( outfile, argv[i] );
+
+#ifdef __GNUC__
+    fprintf( outfile, "\t.text\n");
+    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+    fprintf( outfile, ".Letext:\n");
+#endif
+
     return 0;
 }
 
@@ -2328,8 +2462,10 @@ static int BuildCallFrom32( FILE *outfile, int argc, char *argv[] )
  *
  * Build the Wine-to-32-bit callbacks
  */
-static int BuildCallTo32( FILE *outfile, int argc, char *argv[] )
+static int BuildCallTo32( FILE *outfile, char * outname, 
+			  int argc, char *argv[] )
 {
+    char buffer[1024];
     int i;
 
     /* File header */
@@ -2337,9 +2473,37 @@ static int BuildCallTo32( FILE *outfile, int argc, char *argv[] )
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
+    /*
+     * Throw in a couple of stabs.  The internal debugger doesn't really
+     * care about trying to step through this crap, but we use the file
+     * names as an indication that we should just step through it to whatever
+     * is on the other side.
+     */
+#ifdef __GNUC__
+    fprintf( outfile, "\t.file\t\"%s\"\n", outname );
+    getcwd(buffer, sizeof(buffer));
+
+    /*
+     * The stabs help the internal debugger as they are an indication that it
+     * is sensible to step into a thunk/trampoline.
+     */
+    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
+    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
+    fprintf( outfile, "\t.text\n" );
+    fprintf( outfile, "\t.align 4\n" );
+    fprintf( outfile, "Code_Start:\n\n" );
+#endif
+
     /* Build the callback functions */
 
     for (i = 2; i < argc; i++) BuildCallTo32Func( outfile, atoi(argv[i]) );
+
+#ifdef __GNUC__
+    fprintf( outfile, "\t.text\n");
+    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
+    fprintf( outfile, ".Letext:\n");
+#endif
+
     return 0;
 }
 
@@ -2385,13 +2549,13 @@ int main(int argc, char **argv)
     if (!strcmp( argv[1], "-spec" ))
         res = BuildSpec( outfile, argc, argv );
     else if (!strcmp( argv[1], "-callfrom16" ))
-        res = BuildCallFrom16( outfile, argc, argv );
+        res = BuildCallFrom16( outfile, outname, argc, argv );
     else if (!strcmp( argv[1], "-callto16" ))
-        res = BuildCallTo16( outfile, argc, argv );
+        res = BuildCallTo16( outfile, outname, argc, argv );
     else if (!strcmp( argv[1], "-callfrom32" ))
-        res = BuildCallFrom32( outfile, argc, argv );
+        res = BuildCallFrom32( outfile, outname, argc, argv );
     else if (!strcmp( argv[1], "-callto32" ))
-        res = BuildCallTo32( outfile, argc, argv );
+        res = BuildCallTo32( outfile, outname, argc, argv );
     else
     {
         fclose( outfile );

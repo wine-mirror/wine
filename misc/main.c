@@ -108,7 +108,7 @@ struct options Options =
     FALSE,          /* backing store */
     SW_SHOWNORMAL,  /* cmdShow */
     FALSE,
-    FALSE,          /* AllowReadOnly */
+    FALSE,          /* failReadOnly */
     MODE_ENHANCED,  /* Enhanced mode */
     FALSE,          /* IPC enabled */
 #ifdef DEFAULT_LANG
@@ -138,7 +138,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
     { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
-    { "-allowreadonly", ".allowreadonly",   XrmoptionNoArg,  (caddr_t)"on" },
+    { "-failreadonly",  ".failreadonly",    XrmoptionNoArg,  (caddr_t)"on" },
     { "-mode",          ".mode",            XrmoptionSepArg, (caddr_t)NULL },
     { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
     { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL }
@@ -150,7 +150,6 @@ static XrmOptionDescRec optionsTable[] =
   "Usage:  %s [options] program_name [arguments]\n" \
   "\n" \
   "Options:\n" \
-  "    -allowreadonly  Read only files may be opened in write mode\n" \
   "    -backingstore   Turn on backing store\n" \
   "    -debug          Enter debugger before starting application\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n" \
@@ -158,6 +157,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -desktop geom   Use a desktop window of the given geometry\n" \
   "    -display name   Use the specified display\n" \
   "    -dll name       Enable or disable built-in DLLs\n" \
+  "    -failreadonly   Read only files may not be opened in write mode\n" \
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
@@ -433,8 +433,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.backingstore = TRUE;	
     if (MAIN_GetResource( db, ".debug", &value ))
 	Options.debug = TRUE;
-    if (MAIN_GetResource( db, ".allowreadonly", &value ))
-        Options.allowReadOnly = TRUE;
+    if (MAIN_GetResource( db, ".failreadonly", &value ))
+        Options.failReadOnly = TRUE;
     if (MAIN_GetResource( db, ".ipc", &value ))
         Options.ipc = TRUE;
     if (MAIN_GetResource( db, ".perfect", &value ))
@@ -870,32 +870,6 @@ int SetEnvironment(LPCSTR lpPortName, LPCSTR lpEnviron, WORD nCount)
 
 
 /***********************************************************************
- *      SetEnvironmentVariable32A   (KERNEL32.484)
- */
-BOOL32 SetEnvironmentVariable32A( LPCSTR lpName, LPCSTR lpValue )
-{
-    int rc;
-
-    rc = SetEnvironment(lpName, lpValue, lpValue?(strlen(lpValue)+1):0);
-    return (rc>0)?TRUE:FALSE;
-}
-
-
-/***********************************************************************
- *      SetEnvironmentVariable32W   (KERNEL32.485)
- */
-BOOL32 SetEnvironmentVariable32W( LPCWSTR lpName, LPCWSTR lpValue )
-{
-    LPSTR lpNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpName );
-    LPSTR lpValueA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpValue );
-    BOOL32 ret = SetEnvironmentVariable32A(lpNameA,lpValueA);
-    HeapFree( GetProcessHeap(), 0, lpNameA );
-    HeapFree( GetProcessHeap(), 0, lpValueA );
-    return ret;
-}
-
-
-/***********************************************************************
  *	GetEnvironment (GDI.134)
  */
 int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
@@ -919,135 +893,6 @@ int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
     return 0;
 }
 
-/***********************************************************************
- *      GetEnvironmentVariable32A   (KERNEL32.213)
- */
-DWORD GetEnvironmentVariable32A( LPSTR lpName, LPSTR lpValue, DWORD size )
-{
-    return GetEnvironment(lpName, lpValue, size);
-}
-
-/***********************************************************************
- *      GetEnvironmentVariable32W   (KERNEL32.214)
- */
-DWORD GetEnvironmentVariable32W( LPWSTR nameW, LPWSTR valW, DWORD size )
-{
-    LPSTR name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
-    LPSTR val  = valW ? HeapAlloc( GetProcessHeap(), 0, size ) : NULL;
-    DWORD res  = GetEnvironment( name, val, size );
-    HeapFree( GetProcessHeap(), 0, name );
-    if (val)
-    {
-        lstrcpyAtoW( valW, val );
-        HeapFree( GetProcessHeap(), 0, val );
-    }
-    return res;
-}
-
-/***********************************************************************
- *      GetEnvironmentStrings (KERNEL32.210)
- */
-LPVOID GetEnvironmentStrings(void)
-{
-    int count;
-    LPENVENTRY lpEnv;
-    char *envtable, *envptr;
-
-    /* Count the total number of bytes we'll need for the string
-     * table.  Include the trailing nuls and the final double nul.
-     */
-    count = 1;
-    lpEnv = lpEnvList;
-    while(lpEnv != NULL)
-    {
-        if(lpEnv->Name != NULL)
-        {
-            count += strlen(lpEnv->Name) + 1;
-            count += strlen(lpEnv->Value) + 1;
-        }
-        lpEnv = lpEnv->Next;
-    }
-
-    envtable = malloc(count);
-    if(envtable)
-    {
-        lpEnv = lpEnvList;
-        envptr = envtable;
-
-        while(lpEnv != NULL)
-        {
-            if(lpEnv->Name != NULL)
-            {
-                count = sprintf(envptr, "%s=%s", lpEnv->Name, lpEnv->Value);
-                envptr += count + 1;
-            }
-            lpEnv = lpEnv->Next;
-        }
-        *envptr = '\0';
-    }
-
-    return envtable;
-}
-
-
-LPVOID GetEnvironmentStringsW(void)
-{
-    int count,len;
-    LPENVENTRY lpEnv;
-    char *envtable, *envptr;
-	WCHAR *wenvtable;
-
-    /* Count the total number of bytes we'll need for the string
-     * table.  Include the trailing nuls and the final double nul.
-     */
-    count = 1;
-    lpEnv = lpEnvList;
-    while(lpEnv != NULL)
-    {
-        if(lpEnv->Name != NULL)
-        {
-            count += strlen(lpEnv->Name) + 1;
-            count += strlen(lpEnv->Value) + 1;
-        }
-        lpEnv = lpEnv->Next;
-    }
-
-	len=count;
-    envtable = malloc(count);
-    if(envtable)
-    {
-        lpEnv = lpEnvList;
-        envptr = envtable;
-
-        while(lpEnv != NULL)
-        {
-            if(lpEnv->Name != NULL)
-            {
-                count = sprintf(envptr, "%s=%s", lpEnv->Name, lpEnv->Value);
-                envptr += count + 1;
-            }
-            lpEnv = lpEnv->Next;
-        }
-        *envptr = '\0';
-    }
-
-	wenvtable = malloc(2*len);
-	for(count=0;count<len;count++)
-		wenvtable[count]=(WCHAR)envtable[count];
-	free(envtable);
-
-    return wenvtable;
-}
-
-void FreeEnvironmentStringsA(void *e)
-{
-	free(e);
-}
-
-void FreeEnvironmentStringsW(void* e)
-{
-	free(e);
-}
 
 /***********************************************************************
  *	GetTimerResolution (USER.14)
@@ -1289,14 +1134,6 @@ BOOL32 SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
     return TRUE;
 }
 
-
-/***********************************************************************
-*	COPY (GDI.250)
-*/
-void Copy(LPVOID lpSource, LPVOID lpDest, WORD nBytes)
-{
-	memcpy(lpDest, lpSource, nBytes);
-}
 
 /***********************************************************************
 *	SWAPMOUSEBUTTON (USER.186)

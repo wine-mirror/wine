@@ -401,6 +401,15 @@ LPSTR lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
 
 
 /***********************************************************************
+ *           Copy   (GDI.250)
+ */
+void Copy( LPVOID src, LPVOID dst, WORD size )
+{
+    memcpy( dst, src, size );
+}
+
+
+/***********************************************************************
  *           RtlFillMemory   (KERNEL32.441)
  */
 VOID RtlFillMemory( LPVOID ptr, UINT32 len, UINT32 fill )

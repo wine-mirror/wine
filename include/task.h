@@ -4,8 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef _WINE_TASK_H
-#define _WINE_TASK_H
+#ifndef __WINE_TASK_H
+#define __WINE_TASK_H
 
 #include "wintypes.h"
 
@@ -28,7 +28,8 @@ typedef struct
     WORD      reserved2[2];
     WORD      nbFiles;                 /* 32 Number of file handles */
     SEGPTR    fileHandlesPtr;          /* 34 Pointer to file handle table */
-    WORD      reserved3[18];
+    HANDLE16  hFileHandles;            /* 38 Handle to fileHandlesPtr */
+    WORD      reserved3[17];
     BYTE      fcb1[16];                /* 5c First FCB */
     BYTE      fcb2[20];                /* 6c Second FCB */
     BYTE      cmdLine[128];            /* 80 Command-line (first byte is len)*/
@@ -117,4 +118,4 @@ extern HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 
-#endif /* _WINE_TASK_H */
+#endif /* __WINE_TASK_H */

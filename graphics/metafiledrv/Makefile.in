@@ -7,8 +7,10 @@ MODULE    = metafiledrv
 
 C_SRCS = \
 	bitblt.c \
+	graphics.c \
 	init.c \
-	mapping.c
+	mapping.c \
+	text.c
 
 all: $(MODULE).o
 

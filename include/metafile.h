@@ -4,8 +4,8 @@
  * Copyright  David W. Metcalfe, 1994
  */
 
-#ifndef METAFILE_H
-#define METAFILE_H
+#ifndef __WINE_METAFILE_H
+#define __WINE_METAFILE_H
 
 #include "windows.h"
 
@@ -37,5 +37,5 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 		   short heightDest, DC *dcSrc, short xSrc, short ySrc, 
 		   short widthSrc, short heightSrc, DWORD rop);
 
-#endif   /* METAFILE_H */
+#endif   /* __WINE_METAFILE_H */
 

@@ -570,7 +570,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     if (!hwnd)
     {
 	if (hFont) DeleteObject32( hFont );
-	if (hMenu) DestroyMenu( hMenu );
+	if (hMenu) DestroyMenu32( hMenu );
 	return 0;
     }
     wndPtr = WIN_FindWndPtr( hwnd );
@@ -1193,9 +1193,9 @@ BOOL16 CheckRadioButton( HWND32 hwndDlg, UINT32 firstID, UINT32 lastID,
 
 
 /***********************************************************************
- *           GetDialogBaseUnits   (USER.243)
+ *           GetDialogBaseUnits   (USER.243) (USER32.232)
  */
-DWORD GetDialogBaseUnits()
+DWORD GetDialogBaseUnits(void)
 {
     return MAKELONG( xBaseUnit, yBaseUnit );
 }
@@ -1491,7 +1491,7 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
         strcpy( temp, "A:\\" );
         temp[0] += drive;
         lstrcpyn32A( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
-        AnsiLower( temp );
+        CharLower32A( temp );
         /* Can't use PostMessage() here, because the string is on the stack */
         SetDlgItemText32A( hDlg, idStatic, temp );
     }

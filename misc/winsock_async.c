@@ -14,6 +14,10 @@
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include <errno.h>
+#ifdef __svr4__
+#include <sys/file.h>
+#include <sys/filio.h>
+#endif
 
 extern int h_errno;
 
@@ -112,7 +116,7 @@ void WINSOCK_sigio(int signal)
  ws_async_op*		p_aop;
 
  check_set = __async_io_fdset;
- bzero(&timeout,sizeof(timeout));
+ memset(&timeout, 0, sizeof(timeout));
 
  while( select(__async_io_max_fd + 1,
               &check_set, NULL, NULL, &timeout) > 0)

@@ -360,8 +360,8 @@ static void WIN_DestroyWindow( WND* wndPtr )
     }
 
     if (!(wndPtr->dwStyle & WS_CHILD))
-       if (wndPtr->wIDmenu) DestroyMenu( (HMENU16)wndPtr->wIDmenu );
-    if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
+       if (wndPtr->wIDmenu) DestroyMenu32( (HMENU32)wndPtr->wIDmenu );
+    if (wndPtr->hSysMenu) DestroyMenu32( wndPtr->hSysMenu );
     if (wndPtr->window) EVENT_DestroyWindow( wndPtr );
     if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->dce );
 
@@ -702,7 +702,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     if ((cs->style & WS_CAPTION) && !(cs->style & WS_CHILD))
     {
-        if (cs->hMenu) SetMenu(hwnd, cs->hMenu);
+        if (cs->hMenu) SetMenu32(hwnd, cs->hMenu);
         else
         {
 #if 0  /* FIXME: should check if classPtr->menuNameW can be used as is */
@@ -715,7 +715,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             if (menuName) cs->hMenu = LoadMenu16( cs->hInstance, menuName );
 #endif
         }
-        if (cs->hMenu) SetMenu( hwnd, cs->hMenu );
+        if (cs->hMenu) SetMenu32( hwnd, cs->hMenu );
     }
     else wndPtr->wIDmenu = (UINT)cs->hMenu;
 

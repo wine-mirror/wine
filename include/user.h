@@ -4,8 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#ifndef USER_H
-#define USER_H
+#ifndef __WINE_USER_H
+#define __WINE_USER_H
 
 #include "ldt.h"
 #include "local.h"
@@ -23,4 +23,4 @@ extern WORD USER_HeapSel;
 #define USER_HEAP_SEG_ADDR(handle)  \
          ((handle) ? PTR_SEG_OFF_TO_SEGPTR(USER_HeapSel, (handle)) : (SEGPTR)0)
 
-#endif  /* USER_H */
+#endif  /* __WINE_USER_H */

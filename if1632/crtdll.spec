@@ -3,9 +3,9 @@ name	crtdll
 type	win32
 base	1
 
-001 cdecl ??2@YAPAXI@Z(long) CRTDLL_malloc
-002 cdecl ??3@YAXPAX@Z(long) CRTDLL_free
-003 stub ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
+001 cdecl ??2@YAPAXI@Z(long) CRTDLL_new
+002 cdecl ??3@YAXPAX@Z(long) CRTDLL_delete
+003 cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) CRTDLL_set_new_handler
 004 stub _CIacos
 005 stub _CIasin
 006 stub _CIatan

@@ -1,10 +1,8 @@
-/* $Id: neexe.h,v 1.4 1993/07/04 04:04:21 root Exp root $
- */
 /*
  * Copyright  Robert J. Amstadt, 1993
  */
-#ifndef NEEXE_H
-#define NEEXE_H
+#ifndef __WINE_NEEXE_H
+#define __WINE_NEEXE_H
 
 #include "wintypes.h"
 
@@ -229,4 +227,4 @@ struct resource_typeinfo_s
 int  load_typeinfo  (int, struct resource_typeinfo_s *);
 int  load_nameinfo  (int, struct resource_nameinfo_s *);
 
-#endif /* NEEXE_H */
+#endif  /* __WINE_NEEXE_H */

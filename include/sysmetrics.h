@@ -4,8 +4,8 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef SYSMETRICS_H
-#define SYSMETRICS_H
+#ifndef __WINE_SYSMETRICS_H
+#define __WINE_SYSMETRICS_H
 
 #include "windows.h"
 
@@ -77,4 +77,4 @@
 extern void SYSMETRICS_Init(void);
 extern short sysMetrics[SM_CMETRICS+1];
 
-#endif
+#endif  /* __WINE_SYSMETRICS_H */

@@ -20,7 +20,6 @@
 #include "file.h"
 #include "heap.h"
 #include "handle32.h"
-#include "dos_fs.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #define DEBUG_WIN32
@@ -66,7 +65,8 @@ HANDLE32 CreateFileMapping32A(HANDLE32 h,LPSECURITY_ATTRIBUTES ats,
         SetLastError(ErrnoToLastError(errno));
         return INVALID_HANDLE_VALUE32;
     }
-    filemap_obj=(FILEMAP_OBJECT *)CreateKernelObject(sizeof(FILEMAP_OBJECT));
+    filemap_obj=(FILEMAP_OBJECT *)HeapAlloc( SystemHeap, 0,
+                                             sizeof(FILEMAP_OBJECT) );
     if(filemap_obj == NULL) {
         SetLastError(ERROR_UNKNOWN);
         return 0;
@@ -128,68 +128,6 @@ BOOL32 UnmapViewOfFile(LPVOID address) {
     return TRUE;
 }
 
-
-
-/***********************************************************************
- *           GetStdHandle             (KERNEL32.276)
- * FIXME: We should probably allocate filehandles for stdin/stdout/stderr
- *	  at task creation (with HFILE-handle 0,1,2 respectively) and
- *	  return them here. Or at least look, if we created them already.
- */
-HFILE32 GetStdHandle(DWORD nStdHandle)
-{
-    HFILE32 hfile;
-    int	unixfd;
-
-    switch(nStdHandle)
-    {
-        case STD_INPUT_HANDLE:
-	    unixfd = 0;
-            break;
-
-        case STD_OUTPUT_HANDLE:
-	    unixfd = 1;
-            break;
-
-        case STD_ERROR_HANDLE:
-	    unixfd = 2;
-            break;
-        default:
-            SetLastError(ERROR_INVALID_HANDLE);
-            return HFILE_ERROR32;
-    }
-    hfile = FILE_DupUnixHandle(unixfd);
-    if (hfile == HFILE_ERROR32)
-    	return HFILE_ERROR32;
-    FILE_SetFileType( hfile, FILE_TYPE_CHAR );
-    return hfile;
-}
-
-
-/***********************************************************************
- *              SetFilePointer          (KERNEL32.492)
- *
- * Luckily enough, this function maps almost directly into an lseek
- * call, the exception being the use of 64-bit offsets.
- */
-DWORD SetFilePointer(HFILE32 hFile, LONG distance, LONG *highword,
-                     DWORD method)
-{
-    LONG rc;
-    if(highword != NULL)
-    {
-        if(*highword != 0)
-        {
-            dprintf_file(stddeb, "SetFilePointer: 64-bit offsets not yet supported.\n");
-            return -1;
-        }
-    }
-
-    rc = _llseek32(hFile, distance, method);
-    if(rc == -1)
-        SetLastError(ErrnoToLastError(errno));
-    return rc;
-}
 
 /***********************************************************************
  *             WriteFile               (KERNEL32.578)
@@ -354,26 +292,32 @@ BOOL16 SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
  */
 BOOL32 SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
 {
-	struct stat buf;
-	LPSTR	fn=(LPSTR)DOSFS_GetUnixFileName(lpFileName,FALSE);
+    struct stat buf;
+    DOS_FULL_NAME full_name;
 
-	dprintf_file(stddeb,"SetFileAttributes(%s,%lx)\n",lpFileName,attributes);
-	if(stat(fn,&buf)==-1) {
-		SetLastError(ErrnoToLastError(errno));
-		return FALSE;
-	}
-	if (attributes & FILE_ATTRIBUTE_READONLY) {
-		buf.st_mode &= ~0222; /* octal!, clear write permission bits */
-		attributes &= ~FILE_ATTRIBUTE_READONLY;
-	}
-	attributes &= ~(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
-	if (attributes)
-		fprintf(stdnimp,"SetFileAttributesA(%s):%lx attribute(s) not implemented.\n",lpFileName,attributes);
-	if (-1==chmod(fn,buf.st_mode)) {
-		SetLastError(ErrnoToLastError(errno));
-		return FALSE;
-	}
-	return TRUE;
+    if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name ))
+        return FALSE;
+
+    dprintf_file(stddeb,"SetFileAttributes(%s,%lx)\n",lpFileName,attributes);
+    if(stat(full_name.long_name,&buf)==-1)
+    {
+        SetLastError(ErrnoToLastError(errno));
+        return FALSE;
+    }
+    if (attributes & FILE_ATTRIBUTE_READONLY)
+    {
+        buf.st_mode &= ~0222; /* octal!, clear write permission bits */
+        attributes &= ~FILE_ATTRIBUTE_READONLY;
+    }
+    attributes &= ~(FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
+    if (attributes)
+        fprintf(stdnimp,"SetFileAttributesA(%s):%lx attribute(s) not implemented.\n",lpFileName,attributes);
+    if (-1==chmod(full_name.long_name,buf.st_mode))
+    {
+        SetLastError(ErrnoToLastError(errno));
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /**************************************************************************
@@ -384,51 +328,6 @@ BOOL32 SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
     LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
     BOOL32 res = SetFileAttributes32A( afn, attributes );
     HeapFree( GetProcessHeap(), 0, afn );
-    return res;
-}
-
-/**************************************************************************
- *              MoveFileA		(KERNEL32.387)
- */
-BOOL32 MoveFile32A(LPCSTR fn1,LPCSTR fn2)
-{
-	LPSTR	ufn1;
-	LPSTR	ufn2;
-
-	dprintf_file(stddeb,"MoveFileA(%s,%s)\n",fn1,fn2);
-	ufn1 = (LPSTR)DOSFS_GetUnixFileName(fn1,FALSE);
-	if (!ufn1) {
-		SetLastError(ErrnoToLastError(ENOENT));
-		return FALSE;
-	}
-	ufn1 = xstrdup(ufn1);
-	ufn2 = (LPSTR)DOSFS_GetUnixFileName(fn2,FALSE);
-	if (!ufn2) {
-		SetLastError(ErrnoToLastError(ENOENT));
-		return FALSE;
-	}
-	ufn2 = xstrdup(ufn2);
-	if (-1==rename(ufn1,ufn2)) {
-		SetLastError(ErrnoToLastError(errno));
-		free(ufn1);
-		free(ufn2);
-		return FALSE;
-	}
-	free(ufn1);
-	free(ufn2);
-	return TRUE;
-}
-
-/**************************************************************************
- *              MoveFileW		(KERNEL32.390)
- */
-BOOL32 MoveFile32W(LPCWSTR fn1,LPCWSTR fn2)
-{
-    LPSTR afn1 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn1 );
-    LPSTR afn2 = HEAP_strdupWtoA( GetProcessHeap(), 0, fn2 );
-    BOOL32 res = MoveFile32A( afn1, afn2 );
-    HeapFree( GetProcessHeap(), 0, afn1 );
-    HeapFree( GetProcessHeap(), 0, afn2 );
     return res;
 }
 
@@ -448,38 +347,6 @@ BOOL32 AreFileApisANSI()
     return TRUE;
 }
 
-
-BOOL32 CopyFile32A(LPCSTR sourcefn,LPCSTR destfn,BOOL32 failifexists)
-{
-	OFSTRUCT	of;
-	HFILE32		hf1,hf2;
-	char		buffer[2048];
-	int		lastread,curlen;
-
-	fprintf(stddeb,"CopyFile: %s -> %s\n",sourcefn,destfn);
-	hf1 = OpenFile32(sourcefn,&of,OF_READ);
-	if (hf1==HFILE_ERROR32) return TRUE;
-	if (failifexists)
-        {
-		hf2 = OpenFile32(sourcefn,&of,OF_WRITE);
-		if (hf2 != HFILE_ERROR32) return FALSE;
-		_lclose32(hf2);
-	}
-	hf2 = OpenFile32(sourcefn,&of,OF_WRITE);
-	if (hf2 == HFILE_ERROR32) return FALSE;
-	curlen = 0;
-	while ((lastread=_lread32(hf1,buffer,sizeof(buffer)))>0) {
-		curlen=0;
-		while (curlen<lastread) {
-			int res = _lwrite32(hf2,buffer+curlen,lastread-curlen);
-			if (res<=0) break;
-			curlen+=res;
-		}
-	}
-	_lclose32(hf1);
-	_lclose32(hf2);
-	return curlen > 0;
-}
 
 BOOL32
 LockFile(

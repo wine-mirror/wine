@@ -1506,6 +1506,33 @@ static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN32 oldVisRgn, LPRECT16 lpOldWndRe
 
 
 /***********************************************************************
+ *           WINPOS_FindDeskTopXWindow
+ *
+ * Find the actual X window which needs be restacked.
+ * Used by WINPOS_SetXWindowPos().
+ */
+static Window WINPOS_FindDeskTopXWindow( WND *wndPtr )
+{
+    if (!(wndPtr->flags & WIN_MANAGED))
+        return wndPtr->window;
+    else
+    {
+        Window window, root, parent, *children;
+        int nchildren;
+        window = wndPtr->window;
+        for (;;)
+        {
+            XQueryTree( display, window, &root, &parent,
+                        &children, &nchildren );
+            XFree( children );
+            if (parent == root)
+                return window;
+            window = parent;
+        }
+    }
+}
+
+/***********************************************************************
  *           WINPOS_SetXWindowPos
  *
  * SetWindowPos() for an X window. Used by the real SetWindowPos().
@@ -1560,8 +1587,8 @@ static void WINPOS_SetXWindowPos( WINDOWPOS16 *winpos )
             WND*   insertPtr = WIN_FindWndPtr( winpos->hwndInsertAfter );
 	    Window stack[2];
 
-	    stack[0] = insertPtr->window;
-	    stack[1] = wndPtr->window;
+	    stack[0] = WINPOS_FindDeskTopXWindow( insertPtr );
+	    stack[1] = WINPOS_FindDeskTopXWindow( wndPtr );
 
 	    /* for stupid window managers (i.e. all of them) */
 
@@ -1644,7 +1671,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 	 if( wnd->parent != wndPtr->parent ) return FALSE;
 	 if( wnd->next == wndPtr ) flags |= SWP_NOZORDER;
        }
-    else
+    else if (!(wndPtr->window))
+         /* FIXME: the following optimization is no good for "X-ed" windows */
        if (hwndInsertAfter == HWND_TOP)
 	   flags |= ( wndPtr->parent->child == wndPtr)? SWP_NOZORDER: 0;
        else /* HWND_BOTTOM */

@@ -5,8 +5,8 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#ifndef SCROLL_H
-#define SCROLL_H
+#ifndef __WINE_SCROLL_H
+#define __WINE_SCROLL_H
 
 #include "windows.h"
 
@@ -26,4 +26,4 @@ extern void SCROLL_DrawScrollBar( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 extern void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar,
                                       UINT32 msg, POINT32 pt );
 
-#endif  /* SCROLL_H */
+#endif  /* __WINE_SCROLL_H */

@@ -4,7 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = build makedep fnt2bdf
+PROGRAMS = build@PROGEXT@ makedep@PROGEXT@ fnt2bdf@PROGEXT@
 MODULE   = none
 
 C_SRCS = build.c makedep.c fnt2bdf.c
@@ -13,13 +13,13 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-build: build.o
-	$(CC) $(CFLAGS) -o build build.o
+build@PROGEXT@: build.o
+	$(CC) $(CFLAGS) -o build@PROGEXT@ build.o
 
-makedep: makedep.o
-	$(CC) $(CFLAGS) -o makedep makedep.o
+makedep@PROGEXT@: makedep.o
+	$(CC) $(CFLAGS) -o makedep@PROGEXT@ makedep.o
 
-fnt2bdf: fnt2bdf.o
-	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o
+fnt2bdf@PROGEXT@: fnt2bdf.o
+	$(CC) $(CFLAGS) -o fnt2bdf@PROGEXT@ fnt2bdf.o
 
 ### Dependencies:

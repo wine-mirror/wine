@@ -81,9 +81,6 @@ all: checkbuild $(MODULE).o
 
 $(SPEC_FILES): $(BUILD)
 
-$(BUILD) checkbuild:
-	cd $(TOPOBJDIR)/tools; $(SUBMAKE) build
-
 callfrom16.s: $(SPEC_FILES)
 	$(BUILD) -o $@ -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq`
 

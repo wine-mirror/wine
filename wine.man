@@ -56,9 +56,6 @@ the --prefix option when running
 .B configure.
 .SH OPTIONS
 .TP
-.I -allowreadonly
-Read only files may be opened in write mode
-.TP
 .I -backingstore
 Turn on backing store
 .TP
@@ -97,6 +94,11 @@ MOUSE, COMMDLG, OLE2, OLE2CONV, OLE2DISP, OLE2NLS, OLE2PROX, OLECLI, OLESVR,
 COMPOBJ, STORAGE, WINPROCS, DDEML, ADVAPI32, COMCTL32, COMDLG32, CRTDLL,
 GDI32, LZ32, MPR, NTDLL, OLE32, SHELL32, USER32, VER, VERSION, W32SYS, WINMM,
 WINSPOOL, WSOCK32
+.TP
+.I -failreadonly
+Read only files may not be opened in write mode (the default is to
+allow opening read-only files for writing, because most Windows
+programs always request read-write access, even on CD-ROM drives...).
 .TP
 .I -fixedmap
 Use a "standard" color map.

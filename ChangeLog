@@ -1,4 +1,154 @@
 ----------------------------------------------------------------------
+Sat Jan 11 18:17:59 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [controls/menu.c]
+	Updated to new Win32 types.
+
+	* [controls/listbox.c]
+	Fixed Winfile extended selection bug.
+
+	* [files/directory.c]
+	Changed DIR_SearchPath to return both long and short file names.
+
+	* [files/dos_fs.c]
+	Implemented VFAT ioctl to retrieve the original short filenames
+	from a VFAT filesystem (Linux only for now).
+	Replaced DOSFS_GetUnixFileName()/DOSFS_GetDosTrueName() by
+	DOS_GetFullName().
+	Properly implemented GetShortPathName() and GetFullPathName().
+	Made all functions re-entrant.
+
+	* [files/file.c] [misc/main.c]
+	Replaced -allowreadonly option by -failreadonly. The default is
+	now to report success when opening a read-only file for writing.
+
+	* [objects/metafile.c]
+	Fixed bug in DIB bitmaps pointer calculation.
+
+	* [scheduler/process.c]
+	Implemented environment strings and Get/SetStdHandle with process
+ 	environment block.
+
+	* [tools/build.c]
+	Rewrote BuildContext32() to avoid instructions that may not be
+	supported by all assemblers.
+	
+Fri Jan 10 17:11:09 1997  David Faure  <david.faure@ifhamy.insa-lyon.fr>
+
+	* [windows/event.c]
+	Created table keyc2vkey, which associate a vkey(+extended bit) to
+	any keycode. Changed EVENT_event_to_vkey to use this table to
+	return the correct vkey. Changed EVENT_ToAscii to get the keycode
+	from this table too.  Assigned OEM specific vkeys arbitrarily.
+
+Fri Jan 10 09:26:17 1997  John Harvey <john@division.co.uk>
+
+	* [misc/winsock.c] [misc/winsoc_async.c]
+        Fixed svr4 header files.
+        Changed bzero() to memset().
+
+	* [tools/fnt2bdf.c]
+        Removed bcopy() and used memcpy() instead.
+
+	* [debugger/msc.c]
+        Include string.h instead of strings.h
+
+	* [debugger/stabs.c]
+        Include string.h instead of strings.h.
+        Define __ELF__ for svr4 systems.
+
+	* [loader/signal.c]
+        Use wait() instead of wait4() which doesnt exist on Unixware.
+
+	* [memory/global.c]
+        Use sysconf() instead of getpagesize() for svr4 systems.
+
+Thu Jan  9 21:07:20 1997  Robert Pouliot <krynos@clic.net>
+
+	* [Make.rules.in] [Makefile.in] [make_os2.sh] [rc/Makefile.in]
+	  [tools/Makefile.in] [documentation/wine_os2.txt]
+	Patches for OS/2 support. Note that it doesn't compile yet.
+
+Tue Jan  7 20:03:53 1997  Eric Youngdale <eric@sub2304.jic.com>
+
+	* [debugger/*]
+	Many more debugger improvements (see debugger/README for details).
+
+Tue Jan  7 15:12:21 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [windows/graphics.c] [objects/text.c] [graphics/x11drv/*]
+	  [graphics/metafiledrv/*]
+	Moved some device dependent code into the resp. subdirs.
+
+	* [include/gdi.h] [include/metafiledrv.h] [include/x11drv.h]
+	Prototypes added,
+	DC_FUNCTIONS: GetPixel added, some unnecessary functions removed.
+
+	* [objects/region.c]
+	CreatePolyPolygonRgn32 added.
+
+	* [files/dos_fs.c]
+	QueryDosDevice added.
+
+	* [misc/lstr.c]
+	FormatMessage: broken heap management fixed.
+
+	* [scheduler/process.c] [scheduler/thread.c]
+	Get/SetThreadPriority/PriorityClass added.
+
+Mon Jan  6 21:55:30 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [misc/keyboard.c]
+	ToAscii : Use EVENT_ToAscii instead.
+
+	* [windows/event.c]
+	keypad_key : Do not convert XK_Mode_switch to VK_MENU; recognize
+	keypad cursor keys.
+	EVENT_event_to_vkey : New function, to transform a X keycode
+	into a MSwin vkey + extended bit.
+	EVENT_ToAscii : New function, to transform a vkey + extended bit
+	(+ key state table) into ascii char(s), using XLookupString, and
+	recognizing dead chars.
+	EVENT_key : Transform AltGr into Ctrl+Alt sequence; call
+	EVENT_event_to_vkey for keycode to vkey conversion; fixed
+	previous, context and extended bits.
+
+	* [windows/keyboard.c]
+	Include stddebug.h, to get -debugmsg messages.
+	GetKeyState : Handle VK_MBUTTON case.
+	GetKeyboardState, SetKeyboardState : Debugging messages added.
+
+	* [windows/message.c]
+	TranslateMessage : Handle dead chars.
+
+Mon Jan  6 20:10:11 1997  Dominik Strasser  <bm424953@muenchen.org>
+
+	* [if1632/crtdll.spec] [misc/crtdll.c]
+	C++ functions new/delete/set_new_handler implemented.
+
+Mon Jan  6 15:48:15 1997 Frans van Dorsselaer <dorssel@rulhmpc49.LeidenUniv.nl>
+
+	* [controls/edit.c] [include/windows.h]
+	Moved the edit control to 32 bits.
+	Included new (win95) message definitions in windows.h
+	Implemented EM_SCROLLCARET, EM_SETMARGINS, EM_GETMARGINS,
+	EM_GETLIMITTEXT, EM_POSFROMCHAR, EM_CHARFROMPOS.
+	Broke EM_SETWORDBREAKPROC (internal wordwrap still works).
+	Fixed some bugs, introduced a couple of others.
+	Text buffer is now initially in 32-bit heap.
+
+	* [controls/EDIT.TODO] [controls/combo.c] [controls/widgets.c]
+	  [if1632/wprocs.spec] [library/miscstubs.c] [windows/defdlg.c]
+	  [misc/commdlg.c]
+	Updated to work with 32-bit edit control.
+
+Sat Jan  4 22:07:27 1997  O.Flebbe  <O.Flebbe@science-computing.uni-tuebingen.de>
+
+	* [loader/pe_image.c]
+	Use mmap rather then malloc. Better workaround for clean
+	segments.
+
+----------------------------------------------------------------------
 Wed Jan  1 15:36:17 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/listbox.c]

@@ -62,5 +62,38 @@ extern BOOL32 X11DRV_StretchBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
                                  INT32 widthDst, INT32 heightDst,
                                  struct tagDC *dcSrc, INT32 xSrc, INT32 ySrc,
                                  INT32 widthSrc, INT32 heightSrc, DWORD rop );
+extern BOOL32 X11DRV_MoveToEx( struct tagDC *dc, INT32 x, INT32 y,LPPOINT32 pt);
+extern BOOL32 X11DRV_LineTo( struct tagDC *dc, INT32 x, INT32 y);
+extern BOOL32 X11DRV_Arc( struct tagDC *dc, INT32 left, INT32 top, INT32 right,
+			  INT32 bottom, INT32 xstart, INT32 ystart, INT32 xend,
+			  INT32 yend );
+extern BOOL32 X11DRV_Pie( struct tagDC *dc, INT32 left, INT32 top, INT32 right,
+			  INT32 bottom, INT32 xstart, INT32 ystart, INT32 xend,
+			  INT32 yend );
+extern BOOL32 X11DRV_Chord( struct tagDC *dc, INT32 left, INT32 top,
+			    INT32 right, INT32 bottom, INT32 xstart,
+			    INT32 ystart, INT32 xend, INT32 yend );
+extern BOOL32 X11DRV_Ellipse( struct tagDC *dc, INT32 left, INT32 top,
+			      INT32 right, INT32 bottom );
+extern BOOL32 X11DRV_Rectangle(struct tagDC *dc, INT32 left, INT32 top,
+			      INT32 right, INT32 bottom);
+extern BOOL32 X11DRV_RoundRect( struct tagDC *dc, INT32 left, INT32 top,
+				INT32 right, INT32 bottom, INT32 ell_width,
+				INT32 ell_height );
+extern COLORREF X11DRV_SetPixel( struct tagDC *dc, INT32 x, INT32 y,
+				 COLORREF color );
+extern COLORREF X11DRV_GetPixel( struct tagDC *dc, INT32 x, INT32 y);
+extern BOOL32 X11DRV_PaintRgn( struct tagDC *dc, HRGN32 hrgn );
+extern BOOL32 X11DRV_Polyline( struct tagDC *dc,const LPPOINT32 pt,INT32 count);
+extern BOOL32 X11DRV_Polygon( struct tagDC *dc, LPPOINT32 pt, INT32 count );
+extern BOOL32 X11DRV_PolyPolygon( struct tagDC *dc, LPPOINT32 pt,
+				  LPINT32 counts, UINT32 polygons);
+
+extern BOOL32 X11DRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
+				   COLORREF color, UINT32 fillType );
+extern BOOL32 X11DRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
+				 UINT32 flags, const RECT32 *lprect,
+				 LPCSTR str, UINT32 count, const INT32 *lpDx );
+
 
 #endif  /* __WINE_X11DRV_H */

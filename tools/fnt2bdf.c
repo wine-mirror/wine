@@ -121,7 +121,7 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
   fnt_fontS	cpe_font_struct; 
   int     	ic=0, t;
 
-  bcopy(file_buffer, (char *) &cpe_font_struct.hdr, sizeof(fnt_hdrS));
+  memcpy((char *) &cpe_font_struct.hdr, file_buffer, sizeof(fnt_hdrS));
 
   /* check font header */
 

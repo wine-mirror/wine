@@ -2,8 +2,8 @@
 * dlgs.h -      Common dialog's dialog control ID numbers                     *
 ******************************************************************************/
 
-#ifndef DLGS_H
-#define DLGS_H
+#ifndef __WINE_DLGS_H
+#define __WINE_DLGS_H
 
 #define ctlFirst    0x0400
 #define ctlLast     0x04ff
@@ -183,4 +183,4 @@
 #define FORMATDLGORD31   1543
 #define FORMATDLGORD30   1544
 
-#endif  /* #ifdef DLGS_H */
+#endif  /* #ifdef __WINE_DLGS_H */

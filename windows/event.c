@@ -33,7 +33,6 @@
 #include "queue.h"
 #include "winpos.h"
 #include "drive.h"
-#include "dos_fs.h"
 #include "shell.h"
 #include "xmalloc.h"
 #include "keyboard.h"
@@ -67,73 +66,6 @@ BYTE InputKeyStateTable[256];
 static INT16  captureHT = HTCLIENT;
 static HWND32 captureWnd = 0;
 static BOOL32 InputEnabled = TRUE;
-
-/* Keyboard translation tables */
-static const int special_key[] =
-{
-    VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
-    0, 0, 0, VK_PAUSE, VK_SCROLL, 0, 0, 0,                      /* FF10 */
-    0, 0, 0, VK_ESCAPE                                          /* FF18 */
-};
-
-static const int cursor_key[] =
-{
-    VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_PRIOR, 
-                                       VK_NEXT, VK_END          /* FF50 */
-};
-
-static const int misc_key[] =
-{
-    VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
-    VK_CANCEL, VK_HELP, VK_CANCEL, VK_MENU                      /* FF68 */
-};
-
-static const int keypad_key[] =
-{
-    VK_MENU, VK_NUMLOCK,                                        /* FF7E */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
-    0, 0, 0, 0, 0, VK_RETURN, 0, 0,                             /* FF88 */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF90 */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF98 */
-    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFA0 */
-    0, 0, VK_MULTIPLY, VK_ADD, VK_SEPARATOR, VK_SUBTRACT, 
-                               VK_DECIMAL, VK_DIVIDE,           /* FFA8 */
-    VK_NUMPAD0, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_NUMPAD4,
-                            VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7, /* FFB0 */
-    VK_NUMPAD8, VK_NUMPAD9                                      /* FFB8 */
-};
-    
-static const int function_key[] =
-{
-    VK_F1, VK_F2,                                               /* FFBE */
-    VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
-    VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16              /* FFC8 */
-};
-
-static const int modifier_key[] =
-{
-    VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL, VK_CAPITAL,
-                                                0, 0,           /* FFE1 */
-    0, VK_MENU, VK_MENU                                         /* FFE8 */
-};
-
-typedef union
-{
-    struct
-    {
-	unsigned long count : 16;
-	unsigned long code : 8;
-	unsigned long extended : 1;
-	unsigned long unused : 2;
-	unsigned long win_internal : 2;
-	unsigned long context : 1;
-	unsigned long previous : 1;
-	unsigned long transition : 1;
-    } lp1;
-    unsigned long lp2;
-} KEYLP;
-
-static BOOL KeyDown = FALSE;
 
 static Atom wmProtocols = None;
 static Atom wmDeleteWindow = None;
@@ -517,17 +449,347 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
  *
  * Handle a X key event
  */
+
+/* Keyboard translation tables */
+static const int special_key[] =
+{
+    VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
+    0, 0, 0, VK_PAUSE, VK_SCROLL, 0, 0, 0,                      /* FF10 */
+    0, 0, 0, VK_ESCAPE                                          /* FF18 */
+};
+
+static const int cursor_key[] =
+{
+    VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_PRIOR, 
+                                       VK_NEXT, VK_END          /* FF50 */
+};
+
+static const int misc_key[] =
+{
+    VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
+    VK_CANCEL, VK_HELP, VK_CANCEL, VK_MENU                      /* FF68 */
+};
+
+static const int keypad_key[] =
+{
+    0, VK_NUMLOCK,                                        	/* FF7E */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
+    0, 0, 0, 0, 0, VK_RETURN, 0, 0,                             /* FF88 */
+    0, 0, 0, 0, 0, VK_HOME, VK_LEFT, VK_UP,                     /* FF90 */
+    VK_RIGHT, VK_DOWN, VK_PRIOR, VK_NEXT, VK_END, 0,
+				 VK_INSERT, VK_DELETE,          /* FF98 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* FFA0 */
+    0, 0, VK_MULTIPLY, VK_ADD, VK_SEPARATOR, VK_SUBTRACT, 
+                               VK_DECIMAL, VK_DIVIDE,           /* FFA8 */
+    VK_NUMPAD0, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3, VK_NUMPAD4,
+                            VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7, /* FFB0 */
+    VK_NUMPAD8, VK_NUMPAD9                                      /* FFB8 */
+};
+    
+static const int function_key[] =
+{
+    VK_F1, VK_F2,                                               /* FFBE */
+    VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
+    VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16              /* FFC8 */
+};
+
+static const int modifier_key[] =
+{
+    VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL, VK_CAPITAL, 0, /* FFE1 */
+    VK_MENU, VK_MENU, VK_MENU, VK_MENU                         /* FFE7 */
+};
+
+static int AltGrMask;
+static int min_keycode, max_keycode;
+static int keyc2vkey [256];
+/* For example : keyc2vkey[10] is the VK_* associated with keycode10 */
+
+static WORD EVENT_event_to_vkey( XKeyEvent *e)
+{
+  static int keysyms_per_keycode;
+  int i;
+  KeySym keysym;
+
+  if (!keysyms_per_keycode) /* First time : Initialization */
+    {
+      KeySym *ksp;
+      XModifierKeymap *mmp;
+      KeyCode *kcp;
+      XKeyEvent e2;
+      WORD vkey, OEMvkey;
+
+      XDisplayKeycodes(e->display, &min_keycode, &max_keycode);
+      ksp = XGetKeyboardMapping(e->display, min_keycode,
+				max_keycode + 1 - min_keycode, &keysyms_per_keycode);
+      /* We are only interested in keysyms_per_keycode.
+	 There is no need to hold a local copy of the keysyms table */
+      XFree(ksp);
+      mmp = XGetModifierMapping(e->display);
+      kcp = mmp->modifiermap;
+      for (i = 0; i < 8; i += 1) /* There are 8 modifier keys */
+	{
+	  int j;
+
+	  for (j = 0; j < mmp->max_keypermod; j += 1, kcp += 1)
+	    if (*kcp)
+	      {
+		int k;
+
+		for (k = 0; k < keysyms_per_keycode; k += 1)
+		  if (XKeycodeToKeysym(e->display, *kcp, k)
+		      == XK_Mode_switch)
+		    {
+		      AltGrMask = 1 << i;
+		      dprintf_key(stddeb, "AltGrMask is %x\n", AltGrMask);
+		    }
+	      }
+	}
+      XFreeModifiermap(mmp);
+	
+	/* Now build two conversion arrays :
+	 * keycode -> vkey + extended
+	 * vkey + extended -> keycode */
+
+      e2.display = e->display;
+      e2.state = 0;
+
+      OEMvkey = 0xb9; /* first OEM virtual key available is ba */
+      for (e2.keycode=min_keycode; e2.keycode<=max_keycode; e2.keycode++)
+	{
+	  XLookupString(&e2, NULL, 0, &keysym, NULL);
+	  vkey = 0;
+	  if (keysym)  /* otherwise, keycode not used */
+	    {
+	      if ((keysym >> 8) == 0xFF)         /* non-character key */
+		{
+		  int key = keysym & 0xff;
+		
+		  if (key >= 0x08 && key <= 0x1B)         /* special key */
+		    vkey = special_key[key - 0x08];
+		  else if (key >= 0x50 && key <= 0x57)    /* cursor key */
+		    vkey = cursor_key[key - 0x50];
+		  else if (key >= 0x60 && key <= 0x6B)    /* miscellaneous key */
+		    vkey = misc_key[key - 0x60];
+		  else if (key >= 0x7E && key <= 0xB9)    /* keypad key */
+		    vkey = keypad_key[key - 0x7E];
+		  else if (key >= 0xBE && key <= 0xCD)    /* function key */
+		    {
+		      vkey = function_key[key - 0xBE];
+		      vkey |= 0x100; /* set extended bit */
+		    }
+		  else if (key >= 0xE1 && key <= 0xEA)    /* modifier key */
+		    vkey = modifier_key[key - 0xE1];
+		  else if (key == 0xFF)                   /* DEL key */
+		    vkey = VK_DELETE;
+		  /* extended must also be set for ALT_R, CTRL_R,
+		     INS, DEL, HOME, END, PAGE_UP, PAGE_DOWN, ARROW keys,
+		     keypad / and keypad ENTER (SDK 3.1 Vol.3 p 138) */
+		  switch (keysym)
+		    {
+		    case XK_Control_R :
+		    case XK_Alt_R :
+		    case XK_Insert :
+		    case XK_Delete :
+		    case XK_Home :
+		    case XK_End :
+		    case XK_Prior :
+		    case XK_Next :
+		    case XK_Left :
+		    case XK_Up :
+		    case XK_Right :
+		    case XK_Down :
+		    case XK_KP_Divide :
+		    case XK_KP_Enter :
+		      vkey |= 0x100;
+		    }
+		}
+	      for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
+		{
+		  keysym = XLookupKeysym(&e2, i);
+		  if ((keysym >= VK_0 && keysym <= VK_9)
+		      || (keysym >= VK_A && keysym <= VK_Z)
+		      || keysym == VK_SPACE)
+		    vkey = keysym;
+		}
+
+	      if (!vkey)
+		{
+		  /* Others keys: let's assign OEM virtual key codes in the allowed range,
+		   * that is ([0xba,0xc0], [0xdb,0xe4], 0xe6 (given up) et [0xe9,0xf5]) */
+		  switch (++OEMvkey)
+		    {
+		    case 0xc1 : OEMvkey=0xdb; break;
+		    case 0xe5 : OEMvkey=0xe9; break;
+		    case 0xf6 : OEMvkey=0xf5; fprintf(stderr,"No more OEM vkey available!\n");
+		    }
+		  
+		  vkey = OEMvkey;
+		  
+		  if (debugging_keyboard)
+		    {
+		      fprintf(stddeb,"OEM specific virtual key %X assigned to keycode %X :\n ("
+			      ,OEMvkey,e2.keycode);
+		      for (i = 0; i < keysyms_per_keycode; i += 1)
+			{
+			  char	*ksname;
+			  
+			  keysym = XLookupKeysym(&e2, i);
+			  ksname = XKeysymToString(keysym);
+			  if (!ksname)
+			    ksname = "NoSymbol";
+			  fprintf(stddeb, "%lX (%s) ", keysym, ksname);
+			}
+		      fprintf(stddeb, ")\n");
+		    }
+		}
+	    }
+	  keyc2vkey[e2.keycode] = vkey;
+	} /* for */
+    } /* Initialization */
+  
+  return keyc2vkey[e->keycode];
+  
+}
+
+int EVENT_ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState, 
+	LPVOID lpChar, WORD wFlags) 
+{
+    XKeyEvent e;
+    KeySym keysym;
+    static XComposeStatus cs;
+    int ret;
+    WORD keyc;
+
+    e.display = display;
+    e.keycode = 0;
+    for (keyc=min_keycode; keyc<=max_keycode; keyc++)
+      { /* this could be speed up by making another table, an array of struct vkey,keycode
+	 * (vkey -> keycode) with vkeys sorted .... but it takes memory (512*3 bytes)!  DF */
+	if ((keyc2vkey[keyc] & 0xFF)== wVirtKey) /* no need to make a more precise test (with the extended bit correctly set above wVirtKey ... VK* are different enough... */
+	  {
+	    if ((e.keycode) && ((wVirtKey<0x10) || (wVirtKey>0x12))) 
+		/* it's normal to have 2 shift, control, and alt ! */
+		dprintf_keyboard(stddeb,"Strange ... the keycodes %X and %X are matching!\n",
+				 e.keycode,keyc);
+	    e.keycode = keyc;
+	  }
+      }
+    if (!e.keycode) 
+      {
+	fprintf(stderr,"Unknown virtual key %X !!! \n",wVirtKey);
+	return wVirtKey; /* whatever */
+      }
+    e.state = 0;
+    if (lpKeyState[VK_SHIFT] & 0x80)
+	e.state |= ShiftMask;
+    if (lpKeyState[VK_CAPITAL] & 0x80)
+	e.state |= LockMask;
+    if (lpKeyState[VK_CONTROL] & 0x80)
+	if (lpKeyState[VK_MENU] & 0x80)
+	    e.state |= AltGrMask;
+	else
+	    e.state |= ControlMask;
+    if (lpKeyState[VK_NUMLOCK] & 0x80)
+	e.state |= Mod2Mask;
+    dprintf_key(stddeb, "EVENT_ToAscii(%04X, %04X) : faked state = %X\n",
+		wVirtKey, wScanCode, e.state);
+    ret = XLookupString(&e, lpChar, 2, &keysym, &cs);
+    if (ret == 0)
+	{
+	BYTE dead_char = 0;
+
+	((char*)lpChar)[1] = '\0';
+	switch (keysym)
+	    {
+	    case XK_dead_tilde :
+	    case 0x1000FE7E : /* Xfree's XK_Dtilde */
+		dead_char = '~';
+		break;
+	    case XK_dead_acute :
+	    case 0x1000FE27 : /* Xfree's XK_Dacute_accent */
+		dead_char = 0xb4;
+		break;
+	    case XK_dead_circumflex :
+	    case 0x1000FE5E : /* Xfree's XK_Dcircumflex_accent */
+		dead_char = '^';
+		break;
+	    case XK_dead_grave :
+	    case 0x1000FE60 : /* Xfree's XK_Dgrave_accent */
+		dead_char = '`';
+		break;
+	    case XK_dead_diaeresis :
+	    case 0x1000FE22 : /* Xfree's XK_Ddiaeresis */
+		dead_char = 0xa8;
+		break;
+	    }
+	if (dead_char)
+	    {
+	    *(char*)lpChar = dead_char;
+	    ret = -1;
+	    }
+	else
+	    {
+	    char	*ksname;
+
+	    ksname = XKeysymToString(keysym);
+	    if (!ksname)
+		ksname = "No Name";
+	    if ((keysym >> 8) != 0xff)
+		{
+		fprintf(stderr, "Please report : no char for keysym %04lX (%s) :\n",
+			keysym, ksname);
+		fprintf(stderr, "  wVirtKey = %X, wScanCode = %X, keycode = %X, state = %X\n",
+			wVirtKey, wScanCode, e.keycode, e.state);
+		}
+	    }
+	}
+    dprintf_key(stddeb, "EVENT_ToAscii about to return %d with char %x\n",
+		ret, *(char*)lpChar);
+    return ret;
+}
+
+typedef union
+{
+    struct
+    {
+	unsigned long count : 16;
+	unsigned long code : 8;
+	unsigned long extended : 1;
+	unsigned long unused : 2;
+	unsigned long win_internal : 2;
+	unsigned long context : 1;
+	unsigned long previous : 1;
+	unsigned long transition : 1;
+    } lp1;
+    unsigned long lp2;
+} KEYLP;
+
 static void EVENT_key( XKeyEvent *event )
 {
     char Str[24]; 
     XComposeStatus cs; 
     KeySym keysym;
     WORD vkey = 0;
-    WORD xkey, key_type, key;
     KEYLP keylp;
-    BOOL extended = FALSE;
+    WORD message;
+    static BOOL force_extended = FALSE; /* hack for AltGr translation */
 
     int ascii_chars = XLookupString(event, Str, 1, &keysym, &cs);
+
+    dprintf_key(stddeb, "EVENT_key : state = %X\n", event->state);
+    if (keysym == XK_Mode_switch)
+	{
+	dprintf_key(stddeb, "Alt Gr key event received\n");
+	event->keycode = XKeysymToKeycode(event->display, XK_Control_L);
+	dprintf_key(stddeb, "Control_L is keycode 0x%x\n", event->keycode);
+	EVENT_key(event);
+	event->keycode = XKeysymToKeycode(event->display, XK_Alt_L);
+	dprintf_key(stddeb, "Alt_L is keycode 0x%x\n", event->keycode);
+	force_extended = TRUE;
+	EVENT_key(event);
+	force_extended = FALSE;
+	return;
+	}
 
     Str[ascii_chars] = '\0';
     if (debugging_key)
@@ -537,8 +799,9 @@ static void EVENT_key( XKeyEvent *event )
 	ksname = XKeysymToString(keysym);
 	if (!ksname)
 	    ksname = "No Name";
-	fprintf(stddeb, "WM_KEY??? : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
-	   keysym, ksname, ascii_chars, Str[0], Str);
+	fprintf(stddeb, "%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
+	    event_names[event->type], keysym, ksname,
+	    ascii_chars, Str[0] & 0xff, Str);
 	}
 
 #if 0
@@ -548,119 +811,51 @@ static void EVENT_key( XKeyEvent *event )
         DEBUG_EnterDebugger();
 #endif
 
-    xkey = LOWORD(keysym);
-    key_type = HIBYTE(xkey);
-    key = LOBYTE(xkey);
-    dprintf_key(stddeb,"            key_type=%X, key=%X\n", key_type, key);
+    vkey = EVENT_event_to_vkey(event);
+    if (force_extended) vkey |= 0x100;
 
-    if (key_type == 0xFF)                          /* non-character key */
-    {
-	if (key >= 0x08 && key <= 0x1B)            /* special key */
-	    vkey = special_key[key - 0x08];
-	else if (key >= 0x50 && key <= 0x57)       /* cursor key */
-	    vkey = cursor_key[key - 0x50];
-	else if (key >= 0x60 && key <= 0x6B)       /* miscellaneous key */
-	    vkey = misc_key[key - 0x60];
-	else if (key >= 0x7E && key <= 0xB9)       /* keypad key */
-	{
-	    vkey = keypad_key[key - 0x7E];
-	    extended = TRUE;
-	}
-	else if (key >= 0xBE && key <= 0xCD)       /* function key */
-	{
-	    vkey = function_key[key - 0xBE];
-	    extended = TRUE;
-	}
-	else if (key >= 0xE1 && key <= 0xEA)       /* modifier key */
-	    vkey = modifier_key[key - 0xE1];
-	else if (key == 0xFF)                      /* DEL key */
-	    vkey = VK_DELETE;
-	/* extended must also be set for ALT_R, CTRL_R,
-	INS, DEL, HOME, END, PAGE_UP, PAGE_DOWN, ARROW keys,
-	keypad / and keypad ENTER (SDK 3.1 Vol.3 p 138) */
-	switch (keysym)
-	    {
-	    case XK_Control_R :
-	    case XK_Alt_R :
-	    case XK_Insert :
-	    case XK_Delete :
-	    case XK_Home :
-	    case XK_End :
-	    case XK_Prior :
-	    case XK_Next :
-	    case XK_Left :
-	    case XK_Up :
-	    case XK_Right :
-	    case XK_Down :
-	    case XK_KP_Divide :
-	    case XK_KP_Enter :
-		extended = 1;
-	    }
-    }
-    else if (key_type == 0)                        /* character key */
-    {
-	if ( isalnum(key) )
-	     vkey = toupper(key);                  /* convert lc to uc */
-	else if ( isspace(key) )
-	  vkey = key;				   /* XXX approximately */
-        else  
-	  switch (key)				   /* the rest... */
-	  {
-#define vkcase(k,val) case k: vkey = val; break;
-#define vkcase2(k1,k2,val) case k1: case k2: vkey = val; break;
-	    WINE_VKEY_MAPPINGS
-#undef vkcase
-#undef vkcase2
-	    default:
-	      fprintf( stderr, "Unknown key! Please report!\n" );
-	      vkey = 0;				   /* whatever */
-	  }
-    }
+    dprintf_key(stddeb, "keycode 0x%x converted to vkey 0x%x\n",
+		    event->keycode, vkey);
 
+    keylp.lp1.count = 1;
+    keylp.lp1.code = LOBYTE(event->keycode) - 8;
+    keylp.lp1.extended = (vkey & 0x100 ? 1 : 0);
+    keylp.lp1.win_internal = 0; /* this has something to do with dialogs, 
+				* don't remember where I read it - AK */
+				/* it's '1' under windows, when a dialog box appears
+				 * and you press one of the underlined keys - DF*/
+    vkey &= 0xff;
     if (event->type == KeyPress)
     {
+	keylp.lp1.previous = (InputKeyStateTable[vkey] & 0x80) != 0;
         if (!(InputKeyStateTable[vkey] & 0x80))
             InputKeyStateTable[vkey] ^= 0x01;
 	InputKeyStateTable[vkey] |= 0x80;
-	keylp.lp1.count = 1;
-	keylp.lp1.code = LOBYTE(event->keycode) - 8;
-	keylp.lp1.extended = (extended ? 1 : 0);
-	keylp.lp1.win_internal = 0;			/* this has something to do with dialogs, 
-							 * don't remember where I read it - AK */
-	keylp.lp1.context = ( (event->state & Mod1Mask) || 
-			       (InputKeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
-	keylp.lp1.previous = (KeyDown ? 0 : 1);
 	keylp.lp1.transition = 0;
-	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
-		    vkey, keylp.lp2 );
-	dprintf_key(stddeb,"            InputKeyState=%X\n", InputKeyStateTable[vkey]);
-	hardware_event( InputKeyStateTable[VK_MENU] & 0x80 ? WM_SYSKEYDOWN : WM_KEYDOWN, 
-		        vkey, keylp.lp2,
-		        event->x_root - desktopX, event->y_root - desktopY,
-		        event->time - MSG_WineStartTicks, 0 );
-	KeyDown = TRUE;
+	message = (InputKeyStateTable[VK_MENU] & 0x80)
+		    && !(InputKeyStateTable[VK_CONTROL] & 0x80)
+			 ? WM_SYSKEYDOWN : WM_KEYDOWN;
     }
     else
     {
-	UINT sysKey = InputKeyStateTable[VK_MENU];
+	UINT sysKey = (InputKeyStateTable[VK_MENU] & 0x80)
+			&& !(InputKeyStateTable[VK_CONTROL] & 0x80)
+			&& (force_extended == FALSE); /* for Alt from AltGr */
 
 	InputKeyStateTable[vkey] &= ~0x80; 
-	keylp.lp1.count = 1;
-	keylp.lp1.code = LOBYTE(event->keycode) - 8;
-	keylp.lp1.extended = (extended ? 1 : 0);
-	keylp.lp1.win_internal = 0;
-	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = 1;
 	keylp.lp1.transition = 1;
-	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
-		    vkey, keylp.lp2 );
-	dprintf_key(stddeb,"            InputKeyState=%X\n", InputKeyStateTable[vkey]);
-	hardware_event( sysKey & 0x80 ? WM_SYSKEYUP : WM_KEYUP, 
-		        vkey, keylp.lp2,
-		        event->x_root - desktopX, event->y_root - desktopY,
-		        event->time - MSG_WineStartTicks, 0 );
-	KeyDown = FALSE;
+	message = sysKey ? WM_SYSKEYUP : WM_KEYUP;
     }
+    keylp.lp1.context = ( (event->state & Mod1Mask)  || 
+			  (InputKeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
+    dprintf_key(stddeb,"            wParam=%04X, lParam=%08lX\n", 
+		vkey, keylp.lp2 );
+    dprintf_key(stddeb,"            InputKeyState=%X\n",
+		InputKeyStateTable[vkey]);
+
+    hardware_event( message, vkey, keylp.lp2, event->x_root - desktopX,
+	    event->y_root - desktopY, event->time - MSG_WineStartTicks, 0 );
 }
 
 
@@ -952,10 +1147,10 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 	  union {
 		   Atom		atom_aux;
 		   POINT32	pt_aux;
-		   BOOL16	bAccept;
 		   int		i;
 		}		u;
 	  int			x, y;
+          BOOL16	        bAccept;
 	  HGLOBAL16		hDragInfo = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, sizeof(DRAGINFO));
 	  LPDRAGINFO            lpDragInfo = (LPDRAGINFO) GlobalLock16(hDragInfo);
 	  SEGPTR		spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
@@ -974,16 +1169,16 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 	  if( x < 0 || y < 0 ||
 	      x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
 	      y > (pWnd->rectWindow.bottom - pWnd->rectWindow.top) )
-	  {   u.bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; x = y = 0; }
+	  {   bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; x = y = 0; }
 	  else
 	  {
-	      u.bAccept = DRAG_QueryUpdate( pWnd->hwndSelf, spDragInfo, TRUE );
+	      bAccept = DRAG_QueryUpdate( pWnd->hwndSelf, spDragInfo, TRUE );
 	      x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
 	  }
 	  pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
 	  GlobalFree16( hDragInfo );
 
-	  if( u.bAccept )
+	  if( bAccept )
 	  {
 	      XGetWindowProperty( display, DefaultRootWindow(display),
 			      dndSelection, 0, 65535, FALSE,
@@ -992,20 +1187,20 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 
 	      if( !aux_long && p_data)	/* don't bother if > 64K */
 	      {
-		char*			p = (char*) p_data;
-		char*			p_filename,*p_drop;
+		char *p = (char*) p_data;
+		char *p_drop;
 
 		aux_long = 0; 
 		while( *p )	/* calculate buffer size */
 		{
 		  p_drop = p;
 		  if((u.i = *p) != -1 ) 
-		      u.i = DRIVE_FindDriveRoot( (const char**)&p_drop );
+		      u.i = DRIVE_FindDriveRoot( (const char **)&p_drop );
 		  if( u.i == -1 ) *p = -1;	/* mark as "bad" */
 		  else
 		  {
-		      p_filename = (char*) DOSFS_GetDosTrueName( (const char*)p, TRUE );
-		      if( p_filename ) aux_long += strlen(p_filename) + 1;
+                      INT32 len = GetShortPathName32A( p, NULL, 0 );
+                      if (len) aux_long += len + 1;
 		      else *p = -1;
 		  }
 		  p += strlen(p) + 1;
@@ -1035,9 +1230,8 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 		    {
 		      if( *p != -1 )	/* use only "good" entries */
 		      {
-			p_filename = (char*) DOSFS_GetDosTrueName( p, TRUE );
-			strcpy(p_drop, p_filename);
-			p_drop += strlen( p_filename ) + 1;
+                          GetShortPathName32A( p, p_drop, 65535 );
+                          p_drop += strlen( p_drop ) + 1;
 		      }
 		      p += strlen(p) + 1;
 		    }

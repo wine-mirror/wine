@@ -50,14 +50,11 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pExcludeVisRect */
     NULL,                            /* pExtFloodFill */
     NULL,                            /* pExtTextOut */
-    NULL,                            /* pFillRgn */
-    NULL,                            /* pFloodFill */
-    NULL,                            /* pFrameRgn */
+    NULL,                            /* pGetPixel */
     WIN16DRV_GetTextExtentPoint,     /* pGetTextExtentPoint */
     WIN16DRV_GetTextMetrics,         /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
-    NULL,                            /* pInvertRgn */
     NULL,                            /* pLineTo */
     NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
@@ -99,8 +96,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetWindowExt (optional) */
     NULL,                            /* pSetWindowOrg (optional) */
     NULL,                            /* pStretchBlt */
-    NULL,                            /* pStretchDIBits */
-    NULL                             /* pTextOut */
+    NULL                             /* pStretchDIBits */
 };
 
 

@@ -4,22 +4,34 @@
  * Copyright (C) 1996, Eric Youngdale.
  */
 
-#include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <stdio.h>
-#include <strings.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "win.h"
 #include "debugger.h"
+#include "xmalloc.h"
+
+#ifdef __svr4__
+#define __ELF__
+#endif
 
 #ifdef __ELF__
 #include <elf.h>
+#include <link.h>
+#else
+#include <a.out.h>
 #endif
 
+#ifndef N_UNDF
 #define N_UNDF		0x00
+#endif
+
 #define N_GSYM		0x20
 #define N_FUN		0x24
 #define N_STSYM		0x26
@@ -40,6 +52,13 @@
 
 
 /*
+ * This is how we translate stab types into our internal representations
+ * of datatypes.
+ */
+static struct datatype ** stab_types = NULL;
+static int num_stab_types = 0;
+
+/*
  * Set so that we know the main executable name and path.
  */
 char * DEBUG_argv0;
@@ -56,44 +75,394 @@ struct stab_nlist {
   unsigned long n_value;
 };
 
-#ifdef __ELF__
-
-int
-DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
+static void stab_strcpy(char * dest, const char * source)
 {
-  int i;
-  int ignore = FALSE;
-  int nstab;
-  struct stab_nlist * stab_ptr;
-  char * strs;
-  char * ptr;
-  char * xptr;
-  char currpath[PATH_MAX];
-  char symname[4096];
-  char * subpath = NULL;
-  DBG_ADDR     new_addr;
-  struct name_hash * curr_func = NULL;
-  int strtabinc;
+  /*
+   * A strcpy routine that stops when we hit the ':' character.
+   * Faster than copying the whole thing, and then nuking the
+   * ':'.
+   */
+  while(*source != '\0' && *source != ':')
+    {
+      *dest++ = *source++;
+    }
+  *dest++ = '\0';
+}
 
-  nstab = stabsect->sh_size / sizeof(struct stab_nlist);
-  stab_ptr = (struct stab_nlist *) (addr + stabsect->sh_offset);
-  strs  = (char *) (addr + stabstr->sh_offset);
+
+static 
+int
+DEBUG_ParseTypedefStab(char * ptr, const char * typename)
+{
+  int		    arrmax;
+  int		    arrmin;
+  char * c;
+  struct datatype * curr_type;
+  struct datatype * datatype;
+  char	            element_name[1024];
+  int		    offset;
+  int		    rtn = FALSE;
+  int		    size;
+  char		  * tc;
+  char		  * tc2;
+  int		    typenum;
+
+  /*
+   * Go from back to front.  First we go through and figure out what type numbers
+   * we need, and register those types.  Then we go in and fill the details.
+   */
+  for( c = strchr(ptr, '='); c != NULL; c = strchr(c + 1, '=') )
+    {
+      /*
+       * Back up until we get to a non-numeric character.  This is the type
+       * number.
+       */
+      tc = c - 1;
+      while( *tc >= '0' && *tc <= '9' )
+	{
+	  tc--;
+	}
+      typenum = atol(tc + 1);
+      if( num_stab_types <= typenum )
+	{
+	  num_stab_types = typenum + 32;
+	  stab_types = (struct datatype **) xrealloc(stab_types, 
+						     num_stab_types * sizeof(struct datatype *));
+	  if( stab_types == NULL )
+	    {
+	      goto leave;
+	    }
+	}
+
+      switch(c[1])
+	{
+	case '*':
+	  stab_types[typenum] = DEBUG_NewDataType(POINTER, NULL);
+	  break;
+	case 's':
+	case 'u':
+	  stab_types[typenum] = DEBUG_NewDataType(STRUCT, typename);
+	  break;
+	case 'a':
+	  stab_types[typenum] = DEBUG_NewDataType(ARRAY, NULL);
+	  break;
+	case '1':
+	case 'r':
+	  stab_types[typenum] = DEBUG_NewDataType(BASIC, typename);
+	  break;
+	case 'x':
+	  stab_strcpy(element_name, c + 3);
+	  stab_types[typenum] = DEBUG_NewDataType(STRUCT, element_name);
+	  break;
+	case 'e':
+	  stab_types[typenum] = DEBUG_NewDataType(ENUM, NULL);
+	  break;
+	case 'f':
+	  stab_types[typenum] = DEBUG_NewDataType(FUNC, NULL);
+	  break;
+	default:
+	  fprintf(stderr, "Unknown type.\n");
+	}
+      typename = NULL;
+    }
+
+     /*
+      * OK, now take a second sweep through.  Now we will be digging out the definitions
+      * of the various components, and storing them in the skeletons that we have already
+      * allocated.  We take a right-to left search as this is much easier to parse.
+      */
+  for( c = strrchr(ptr, '='); c != NULL; c = strrchr(ptr, '=') )
+    {
+      /*
+       * Back up until we get to a non-numeric character.  This is the type
+       * number.
+       */
+      tc = c - 1;
+      while( *tc >= '0' && *tc <= '9' )
+	{
+	  tc--;
+	}
+      typenum = atol(tc + 1);
+      curr_type = stab_types[typenum];
+
+      switch(c[1])
+	{
+	case 'x':
+	  tc = c + 3;
+	  while( *tc != ':' )
+	    {
+	      tc ++;
+	    }
+	  tc++;
+	  if( *tc == '\0' )
+	    {
+	      *c = '\0';
+	    }
+	  else
+	    {
+	      strcpy(c, tc);
+	    }
+
+	  break;
+	case '*':
+	case 'f':
+	  tc = c + 2;
+	  datatype = stab_types[strtol(tc, &tc, 10)];
+	  DEBUG_SetPointerType(curr_type, datatype);
+	  if( *tc == '\0' )
+	    {
+	      *c = '\0';
+	    }
+	  else
+	    {
+	      strcpy(c, tc);
+	    }
+	  break;
+	case '1':
+	case 'r':
+	  /*
+	   * We have already handled these above.
+	   */
+	  *c = '\0';
+	  break;
+	case 'a':
+	  tc  = c + 5;
+ 	  arrmin = strtol(tc, &tc, 10);
+	  tc++;
+ 	  arrmax = strtol(tc, &tc, 10);
+	  tc++;
+	  datatype = stab_types[strtol(tc, &tc, 10)];
+	  if( *tc == '\0' )
+	    {
+	      *c = '\0';
+	    }
+	  else
+	    {
+	      strcpy(c, tc);
+	    }
+	  
+	  DEBUG_SetArrayParams(curr_type, arrmin, arrmax, datatype);
+	  break;
+	case 's':
+	case 'u':
+	  tc = c + 2;
+	  DEBUG_SetStructSize(curr_type, strtol(tc, &tc, 10));
+	  /*
+	   * Now parse the individual elements of the structure/union.
+	   */
+	  while(*tc != ';')
+	    {
+	      tc2 = element_name;
+	      while(*tc != ':')
+		{
+		  *tc2++ = *tc++;
+		}
+	      tc++;
+	      *tc2++ = '\0';
+	      datatype = stab_types[strtol(tc, &tc, 10)];
+	      tc++;
+	      offset  = strtol(tc, &tc, 10);
+	      tc++;
+	      size  = strtol(tc, &tc, 10);
+	      tc++;
+	      DEBUG_AddStructElement(curr_type, element_name, datatype, offset, size);
+	    }
+	  if( *tc == '\0' )
+	    {
+	      *c = '\0';
+	    }
+	  else
+	    {
+	      strcpy(c, tc + 1);
+	    }
+	  break;
+	case 'e':
+	  tc = c + 2;
+	  /*
+	   * Now parse the individual elements of the structure/union.
+	   */
+	  while(*tc != ';')
+	    {
+	      tc2 = element_name;
+	      while(*tc != ':')
+		{
+		  *tc2++ = *tc++;
+		}
+	      tc++;
+	      *tc2++ = '\0';
+	      offset  = strtol(tc, &tc, 10);
+	      tc++;
+	      DEBUG_AddStructElement(curr_type, element_name, NULL, offset, 0);
+	    }
+	  if( *tc == '\0' )
+	    {
+	      *c = '\0';
+	    }
+	  else
+	    {
+	      strcpy(c, tc + 1);
+	    }
+	  break;
+	default:
+	  fprintf(stderr, "Unknown type.\n");
+	  break;
+	}
+    }
+
+  rtn = TRUE;
+
+leave:
+
+  return rtn;
+
+}
+
+static struct datatype *
+DEBUG_ParseStabType(const char * stab)
+{
+  char * c;
+  int    typenum;
+
+  /*
+   * Look through the stab definition, and figure out what datatype
+   * this represents.  If we have something we know about, assign the
+   * type.
+   */
+  c = strchr(stab, ':');
+  if( c == NULL )
+    {
+      return NULL;
+    }
+
+  c++;
+  /*
+   * The next character says more about the type (i.e. data, function, etc)
+   * of symbol.  Skip it.
+   */
+  c++;
+
+  typenum = atol(c);
+
+  if( typenum < num_stab_types && stab_types[typenum] != NULL )
+    {
+      return stab_types[typenum];
+    }
+
+  return NULL;
+}
+
+static 
+int
+DEBUG_ParseStabs(char * addr, unsigned int load_offset,
+		 unsigned int staboff, int stablen, 
+		 unsigned int strtaboff, int strtablen)
+{
+  struct name_hash    * curr_func = NULL;
+  struct wine_locals  * curr_loc = NULL;
+  struct name_hash    * curr_sym = NULL;
+  char			currpath[PATH_MAX];
+  int			i;
+  int			ignore = FALSE;
+  int			last_nso = -1;
+  int			len;
+  DBG_ADDR		new_addr;
+  int			nstab;
+  char		      * ptr;
+  char		      * stabbuff;
+  int			stabbufflen;
+  struct stab_nlist   * stab_ptr;
+  char		      * strs;
+  int			strtabinc;
+  char		      * subpath = NULL;
+  char			symname[4096];
+
+  nstab = stablen / sizeof(struct stab_nlist);
+  stab_ptr = (struct stab_nlist *) (addr + staboff);
+  strs  = (char *) (addr + strtaboff);
 
   memset(currpath, 0, sizeof(currpath));
 
+  /*
+   * Allocate a buffer into which we can build stab strings for cases
+   * where the stab is continued over multiple lines.
+   */
+  stabbufflen = 65536;
+  stabbuff = (char *) xmalloc(stabbufflen);
+  if( stabbuff == NULL )
+    {
+      goto leave;
+    }
+
   strtabinc = 0;
+  stabbuff[0] = '\0';
   for(i=0; i < nstab; i++, stab_ptr++ )
     {
       ptr = strs + (unsigned int) stab_ptr->n_un.n_name;
+      if( ptr[strlen(ptr) - 1] == '\\' )
+	{
+	  /*
+	   * Indicates continuation.  Append this to the buffer, and go onto the
+	   * next record.  Repeat the process until we find a stab without the
+	   * '/' character, as this indicates we have the whole thing.
+	   */
+	  len = strlen(ptr);
+	  if( strlen(stabbuff) + len > stabbufflen )
+	    {
+	      stabbufflen += 65536;
+	      stabbuff = (char *) xrealloc(stabbuff, stabbufflen);
+	      if( stabbuff == NULL )
+		{
+		  goto leave;
+		}
+	    }
+	  strncat(stabbuff, ptr, len - 1);
+	  continue;
+	}
+      else if( stabbuff[0] != '\0' )
+	{
+	  strcat( stabbuff, ptr);
+	  ptr = stabbuff;
+	}
+
+      if( strchr(ptr, '=') != NULL )
+	{
+	  /*
+	   * The stabs aren't in writable memory, so copy it over so we are
+	   * sure we can scribble on it.
+	   */
+	  if( ptr != stabbuff )
+	    {
+	      strcpy(stabbuff, ptr);
+	      ptr = stabbuff;
+	    }
+	  stab_strcpy(symname, ptr);
+	  DEBUG_ParseTypedefStab(ptr, symname);
+	}
+
       switch(stab_ptr->n_type)
 	{
 	case N_GSYM:
 	  /*
-	   * These are useless.  They have no value, and you have to
+	   * These are useless with ELF.  They have no value, and you have to
 	   * read the normal symbol table to get the address.  Thus we
 	   * ignore them, and when we process the normal symbol table
 	   * we should do the right thing.
+	   *
+	   * With a.out, they actually do make some amount of sense.
 	   */
+	  new_addr.seg = 0;
+	  new_addr.type = DEBUG_ParseStabType(ptr);
+	  new_addr.off = load_offset + stab_ptr->n_value;
+
+	  stab_strcpy(symname, ptr);
+#ifdef __ELF__
+	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath,
+				      SYM_WINE | SYM_DATA | SYM_INVALID);
+#else
+	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
+				      SYM_WINE | SYM_DATA );
+#endif
+	  break;
 	case N_RBRAC:
 	case N_LBRAC:
 	  /*
@@ -110,15 +479,12 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	   * These are static symbols and BSS symbols.
 	   */
 	  new_addr.seg = 0;
-	  new_addr.off = stab_ptr->n_value;
+	  new_addr.type = DEBUG_ParseStabType(ptr);
+	  new_addr.off = load_offset + stab_ptr->n_value;
 
-	  strcpy(symname, ptr);
-	  xptr = strchr(symname, ':');
-	  if( xptr != NULL )
-	    {
-	      *xptr = '\0';
-	    }
-	  DEBUG_AddSymbol( symname, &new_addr, currpath );
+	  stab_strcpy(symname, ptr);
+	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
+				      SYM_WINE | SYM_DATA );
 	  break;
 	case N_PSYM:
 	  /*
@@ -127,40 +493,31 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	  if(     (curr_func != NULL)
 	       && (stab_ptr->n_value != 0) )
 	    {
-	      strcpy(symname, ptr);
-	      xptr = strchr(symname, ':');
-	      if( xptr != NULL )
-		{
-		  *xptr = '\0';
-		}
-	      DEBUG_AddLocal(curr_func, 0, 
-			     stab_ptr->n_value, 0, 0, symname);
+	      stab_strcpy(symname, ptr);
+	      curr_loc = DEBUG_AddLocal(curr_func, 0, 
+					stab_ptr->n_value, 0, 0, symname);
+	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr));
 	    }
 	  break;
 	case N_RSYM:
 	  if( curr_func != NULL )
 	    {
-	      strcpy(symname, ptr);
-	      xptr = strchr(symname, ':');
-	      if( xptr != NULL )
-		{
-		  *xptr = '\0';
-		}
-	      DEBUG_AddLocal(curr_func, stab_ptr->n_value, 0, 0, 0, symname);
+	      stab_strcpy(symname, ptr);
+	      curr_loc = DEBUG_AddLocal(curr_func, stab_ptr->n_value, 0, 0, 0, symname);
+	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr));
 	    }
 	  break;
 	case N_LSYM:
 	  if(     (curr_func != NULL)
 	       && (stab_ptr->n_value != 0) )
 	    {
-	      strcpy(symname, ptr);
-	      xptr = strchr(symname, ':');
-	      if( xptr != NULL )
-		{
-		  *xptr = '\0';
-		}
+	      stab_strcpy(symname, ptr);
 	      DEBUG_AddLocal(curr_func, 0, 
 			     stab_ptr->n_value, 0, 0, symname);
+	    }
+	  else if (curr_func == NULL)
+	    {
+	      stab_strcpy(symname, ptr);
 	    }
 	  break;
 	case N_SLINE:
@@ -170,11 +527,28 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	   */
 	  if( curr_func != NULL )
 	    {
+#ifdef __ELF__
 	      DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
 				  stab_ptr->n_value);
+#else
+#if 0
+	      /*
+	       * This isn't right.  The order of the stabs is different under
+	       * a.out, and as a result we would end up attaching the line
+	       * number to the wrong function.
+	       */
+	      DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
+				  stab_ptr->n_value - curr_func->addr.off);
+#endif
+#endif
 	    }
 	  break;
 	case N_FUN:
+	  /*
+	   * First, clean up the previous function we were working on.
+	   */
+	  DEBUG_Normalize(curr_func);
+
 	  /*
 	   * For now, just declare the various functions.  Later
 	   * on, we will add the line number information and the
@@ -183,7 +557,8 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	  if( !ignore )
 	    {
 	      new_addr.seg = 0;
-	      new_addr.off = stab_ptr->n_value;
+	      new_addr.type = DEBUG_ParseStabType(ptr);
+	      new_addr.off = load_offset + stab_ptr->n_value;
 	      /*
 	       * Copy the string to a temp buffer so we
 	       * can kill everything after the ':'.  We do
@@ -191,13 +566,9 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	       * all of the pages related to the stabs, and that
 	       * sucks up swap space like crazy.
 	       */
-	      strcpy(symname, ptr);
-	      xptr = strchr(symname, ':');
-	      if( xptr != NULL )
-		{
-		  *xptr = '\0';
-		}
-	      curr_func = DEBUG_AddSymbol( symname, &new_addr, currpath );
+	      stab_strcpy(symname, ptr);
+	      curr_func = DEBUG_AddSymbol( symname, &new_addr, currpath,
+					   SYM_WINE | SYM_FUNC);
 	    }
 	  else
 	    {
@@ -213,19 +584,40 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	   * This indicates a new source file.  Append the records
 	   * together, to build the correct path name.
 	   */
+#ifndef __ELF__
+	  /*
+	   * With a.out, there is no NULL string N_SO entry at the end of
+	   * the file.  Thus when we find non-consecutive entries,
+	   * we consider that a new file is started.
+	   */
+	  if( last_nso < i-1 )
+	    {
+	      currpath[0] = '\0';
+	      DEBUG_Normalize(curr_func);
+	      curr_func = NULL;
+	    }
+#endif
+
 	  if( *ptr == '\0' )
 	    {
 	      /*
 	       * Nuke old path.
 	       */
 	      currpath[0] = '\0';
+	      DEBUG_Normalize(curr_func);
 	      curr_func = NULL;
+	      /*
+	       * The datatypes that we would need to use are reset when
+	       * we start a new file.
+	       */
+	      memset(stab_types, 0, num_stab_types * sizeof(stab_types));
 	    }
 	  else
 	    {
 	      strcat(currpath, ptr);
 	      subpath = ptr;
 	    }
+	  last_nso = i;
 	  break;
 	case N_SOL:
 	  /*
@@ -240,12 +632,14 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	  else
 	    {
 	      ignore = TRUE;
+	      DEBUG_Normalize(curr_func);
 	      curr_func = NULL;
 	    }
 	  break;
 	case N_UNDF:
 	  strs += strtabinc;
 	  strtabinc = stab_ptr->n_value;
+ 	  DEBUG_Normalize(curr_func);
 	  curr_func = NULL;
 	  break;
 	case N_OPT:
@@ -263,20 +657,128 @@ DEBUG_ParseStabs(char * addr, Elf32_Shdr * stabsect, Elf32_Shdr * stabstr)
 	default:
 	  break;
 	}
+
+      stabbuff[0] = '\0';
+
 #if 0
       fprintf(stderr, "%d %x %s\n", stab_ptr->n_type, 
 	      (unsigned int) stab_ptr->n_value,
 	      strs + (unsigned int) stab_ptr->n_un.n_name);
 #endif
     }
+
+leave:
+
+  if( stab_types != NULL )
+    {
+      free(stab_types);
+      stab_types = NULL;
+      num_stab_types = 0;
+    }
+
   return TRUE;
 }
 
+#ifdef __ELF__
+
+/*
+ * Walk through the entire symbol table and add any symbols we find there.
+ * This can be used in cases where we have stripped ELF shared libraries,
+ * or it can be used in cases where we have data symbols for which the address
+ * isn't encoded in the stabs.
+ *
+ * This is all really quite easy, since we don't have to worry about line
+ * numbers or local data variables.
+ */
+static
 int
-DEBUG_ReadExecutableDbgInfo(void)
+DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
+		       Elf32_Shdr * symtab, Elf32_Shdr * strtab)
+{
+  char		* curfile = NULL;
+  struct name_hash * curr_sym = NULL;
+  int		  flags;
+  int		  i;
+  DBG_ADDR        new_addr;
+  int		  nsym;
+  char		* strp;
+  char		* symname;
+  Elf32_Sym	* symp;
+
+
+  symp = (Elf32_Sym *) (addr + symtab->sh_offset);
+  nsym = symtab->sh_size / sizeof(*symp);
+  strp = (char *) (addr + strtab->sh_offset);
+
+  for(i=0; i < nsym; i++, symp++)
+    {
+      /*
+       * Ignore certain types of entries which really aren't of that much
+       * interest.
+       */
+      if( ELF32_ST_TYPE(symp->st_info) == STT_SECTION )
+	{
+	  continue;
+	}
+
+      symname = strp + symp->st_name;
+
+      /*
+       * Save the name of the current file, so we have a way of tracking
+       * static functions/data.
+       */
+      if( ELF32_ST_TYPE(symp->st_info) == STT_FILE )
+	{
+	  curfile = symname;
+	  continue;
+	}
+
+
+      /*
+       * See if we already have something for this symbol.
+       * If so, ignore this entry, because it would have come from the
+       * stabs or from a previous symbol.  If the value is different,
+       * we will have to keep the darned thing, because there can be
+       * multiple local symbols by the same name.
+       */
+      if(    (DEBUG_GetSymbolValue(symname, -1, &new_addr, FALSE ) == TRUE)
+	  && (new_addr.off == (load_offset + symp->st_value)) )
+	{
+	  continue;
+	}
+
+      new_addr.seg = 0;
+      new_addr.type = NULL;
+      new_addr.off = load_offset + symp->st_value;
+      flags = SYM_WINE | (ELF32_ST_BIND(symp->st_info) == STT_FUNC 
+			  ? SYM_FUNC : SYM_DATA);
+      if( ELF32_ST_BIND(symp->st_info) == STB_GLOBAL )
+	{
+	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, NULL, flags );
+	}
+      else
+	{
+	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, curfile, flags );
+	}
+
+      /*
+       * Record the size of the symbol.  This can come in handy in
+       * some cases.  Not really used yet, however.
+       */
+      if(  symp->st_size != 0 )
+	{
+	  DEBUG_SetSymbolSize(curr_sym, symp->st_size);
+	}
+    }
+
+  return TRUE;
+}
+
+static
+int
+DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
 {
   int			rtn = FALSE;
-  char		      * exe_name;
   struct stat		statbuf;
   int			fd = -1;
   int			status;
@@ -288,6 +790,239 @@ DEBUG_ReadExecutableDbgInfo(void)
   int			i;
   int			stabsect;
   int			stabstrsect;
+
+
+  /*
+   * Make sure we can stat and open this file.
+   */
+  if( filename == NULL )
+    {
+      goto leave;
+    }
+
+  status = stat(filename, &statbuf);
+  if( status == -1 )
+    {
+      goto leave;
+    }
+
+  /*
+   * Now open the file, so that we can mmap() it.
+   */
+  fd = open(filename, O_RDONLY);
+  if( fd == -1 )
+    {
+      goto leave;
+    }
+
+
+  /*
+   * Now mmap() the file.
+   */
+  addr = mmap(0, statbuf.st_size, PROT_READ, 
+	      MAP_PRIVATE, fd, 0);
+
+  /*
+   * Give a nice status message here...
+   */
+  fprintf(stderr, "Loading symbols from ELF file %s...\n", filename);
+
+  /*
+   * Next, we need to find a few of the internal ELF headers within
+   * this thing.  We need the main executable header, and the section
+   * table.
+   */
+  ehptr = (Elf32_Ehdr *) addr;
+
+  if( load_offset == NULL )
+    {
+      DEBUG_RegisterELFDebugInfo(ehptr->e_entry, statbuf.st_size, filename);
+    }
+  else
+    {
+      DEBUG_RegisterELFDebugInfo(load_offset, statbuf.st_size, filename);
+    }
+
+  spnt = (Elf32_Shdr *) (addr + ehptr->e_shoff);
+  nsect = ehptr->e_shnum;
+  shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
+
+  stabsect = stabstrsect = -1;
+
+  for(i=0; i < nsect; i++)
+    {
+      if( strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0 )
+	{
+	  stabsect = i;
+	}
+
+      if( strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0 )
+	{
+	  stabstrsect = i;
+	}
+    }
+
+  if( stabsect == -1 || stabstrsect == -1 )
+    {
+      goto leave;
+    }
+
+  /*
+   * OK, now just parse all of the stabs.
+   */
+  rtn = DEBUG_ParseStabs(addr, load_offset, 
+			 spnt[stabsect].sh_offset,
+			 spnt[stabsect].sh_size,
+			 spnt[stabstrsect].sh_offset,
+			 spnt[stabstrsect].sh_size);
+
+  if( rtn != TRUE )
+    {
+      goto leave;
+    }
+
+  for(i=0; i < nsect; i++)
+    {
+      if(    (strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0)
+	  && (spnt[i].sh_type == SHT_SYMTAB) )
+	{
+	  DEBUG_ProcessElfSymtab(addr, load_offset, 
+				 spnt + i, spnt + spnt[i].sh_link);
+	}
+
+      if(    (strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0)
+	  && (spnt[i].sh_type == SHT_DYNSYM) )
+	{
+	  DEBUG_ProcessElfSymtab(addr, load_offset, 
+				 spnt + i, spnt + spnt[i].sh_link);
+	}
+    }
+
+leave:
+
+  if( addr != (char *) 0xffffffff )
+    {
+      munmap(addr, statbuf.st_size);
+    }
+
+  if( fd != -1 )
+    {
+      close(fd);
+    }
+
+  return (rtn);
+
+}
+
+int
+DEBUG_ReadExecutableDbgInfo(void)
+{
+  Elf32_Ehdr	      * ehdr;
+  char		      * exe_name;
+  Elf32_Dyn	      * dynpnt;
+  struct r_debug      * dbg_hdr;
+  struct link_map     * lpnt = NULL;
+  extern Elf32_Dyn      _DYNAMIC[];
+  int			rtn = FALSE;
+
+  exe_name = DEBUG_argv0;
+
+  /*
+   * Make sure we can stat and open this file.
+   */
+  if( exe_name == NULL )
+    {
+      goto leave;
+    }
+
+  DEBUG_ProcessElfObject(exe_name, 0);
+
+  /*
+   * Finally walk the tables that the dynamic loader maintains to find all
+   * of the other shared libraries which might be loaded.  Perform the
+   * same step for all of these.
+   */
+  dynpnt = _DYNAMIC;
+  if( dynpnt == NULL )
+    {
+      goto leave;
+    }
+
+  /*
+   * Now walk the dynamic section (of the executable, looking for a DT_DEBUG
+   * entry.
+   */
+  for(; dynpnt->d_tag != DT_NULL; dynpnt++)
+    {
+      if( dynpnt->d_tag == DT_DEBUG )
+	{
+	  break;
+	}
+    }
+
+  if(    (dynpnt->d_tag != DT_DEBUG)
+      || (dynpnt->d_un.d_ptr == NULL) )
+    {
+      goto leave;
+    }
+
+  /*
+   * OK, now dig into the actual tables themselves.
+   */
+  dbg_hdr = (struct r_debug *) dynpnt->d_un.d_ptr;
+  lpnt = dbg_hdr->r_map;
+
+  /*
+   * Now walk the linked list.  In all known ELF implementations,
+   * the dynamic loader maintains this linked list for us.  In some
+   * cases the first entry doesn't appear with a name, in other cases it
+   * does.
+   */
+  for(; lpnt; lpnt = lpnt->l_next )
+    {
+      /*
+       * We already got the stuff for the executable using the
+       * argv[0] entry above.  Here we only need to concentrate on any
+       * shared libraries which may be loaded.
+       */
+      ehdr = (Elf32_Ehdr *) lpnt->l_addr;
+      if( (lpnt->l_addr == NULL) || (ehdr->e_type != ET_DYN) )
+	{
+	  continue;
+	}
+
+      if( lpnt->l_name != NULL )
+	{
+	  DEBUG_ProcessElfObject(lpnt->l_name, lpnt->l_addr);
+	}
+    }
+
+  rtn = TRUE;
+
+leave:
+
+  return (rtn);
+
+}
+
+#else	/* !__ELF__ */
+
+#ifdef linux
+/*
+ * a.out linux.
+ */
+int
+DEBUG_ReadExecutableDbgInfo(void)
+{
+  char		      * addr = (char *) 0xffffffff;
+  char		      * exe_name;
+  struct exec	      * ahdr;
+  int			fd = -1;
+  int			rtn = FALSE;
+  unsigned int		staboff;
+  struct stat		statbuf;
+  int			status;
+  unsigned int		stroff;
 
   exe_name = DEBUG_argv0;
 
@@ -321,40 +1056,22 @@ DEBUG_ReadExecutableDbgInfo(void)
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
 
-  /*
-   * Next, we need to find a few of the internal ELF headers within
-   * this thing.  We need the main executable header, and the section
-   * table.
-   */
-  ehptr = (Elf32_Ehdr *) addr;
-  spnt = (Elf32_Shdr *) (addr + ehptr->e_shoff);
-  nsect = ehptr->e_shnum;
-  shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
+  ahdr = (struct exec *) addr;
 
-  stabsect = stabstrsect = -1;
-
-  for(i=0; i < nsect; i++)
-    {
-      if( strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0 )
-	{
-	  stabsect = i;
-	}
-
-      if( strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0 )
-	{
-	  stabstrsect = i;
-	}
-    }
-
-  if( stabsect == -1 || stabstrsect == -1 )
-    {
-      goto leave;
-    }
+  staboff = N_SYMOFF(*ahdr);
+  stroff = N_STROFF(*ahdr);
+  rtn = DEBUG_ParseStabs(addr, 0, 
+			 staboff, 
+			 ahdr->a_syms,
+			 stroff,
+			 statbuf.st_size - stroff);
 
   /*
-   * OK, now just parse all of the stabs.
+   * Give a nice status message here...
    */
-  rtn = DEBUG_ParseStabs(addr, spnt + stabsect, spnt + stabstrsect);
+  fprintf(stderr, "Loading symbols from a.out file %s...\n", exe_name);
+
+  rtn = TRUE;
 
 leave:
 
@@ -371,13 +1088,15 @@ leave:
   return (rtn);
 
 }
-
-#else	/* !__ELF__ */
-
+#else
+/*
+ * Non-linux, non-ELF platforms.
+ */
 int
 DEBUG_ReadExecutableDbgInfo(void)
 {
 return FALSE;
 }
+#endif
 
 #endif  /* __ELF__ */

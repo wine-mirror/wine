@@ -12,12 +12,12 @@
 #include <ctype.h>
 
 #include "windows.h"
+#include "winnt.h"	/* HEAP_ macros */
 #include "heap.h"
 #include "ldt.h"
 #include "module.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "xmalloc.h"
 
 #define ToUpper(c)	toupper(c)
 #define ToLower(c)	tolower(c)
@@ -50,11 +50,9 @@ BOOL16 IsCharLower16(CHAR ch)
 }
 
 /***********************************************************************
- *           AnsiUpper   (USER.431)
+ *           AnsiUpper16   (USER.431)
  */
-
-/* 16-bit version */
-SEGPTR WIN16_AnsiUpper( SEGPTR strOrChar )
+SEGPTR AnsiUpper16( SEGPTR strOrChar )
 {
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
@@ -62,50 +60,28 @@ SEGPTR WIN16_AnsiUpper( SEGPTR strOrChar )
     /* uppercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
-        char *s = PTR_SEG_TO_LIN(strOrChar);
-        while (*s) {
-	    *s = ToUpper( *s );
-	    s++;
-	}
+        char *s;
+        for (s = PTR_SEG_TO_LIN(strOrChar); *s; s++) *s = toupper(*s);
         return strOrChar;
     }
     else return (SEGPTR)ToUpper( (int)strOrChar );
 }
 
-/* 32-bit version */
-LPSTR AnsiUpper(LPSTR strOrChar)
-{
-    char *s = strOrChar;
-  /* I am not sure if the locale stuff works with toupper, but then again 
-     I am not sure if the Linux libc locale stuffs works at all */
-
-    while (*s) {
-	*s = ToUpper( *s );
-	s++;
-    }
-    return strOrChar;
-}
-
 
 /***********************************************************************
- *           AnsiUpperBuff   (USER.437)
+ *           AnsiUpperBuff16   (USER.437)
  */
-UINT AnsiUpperBuff(LPSTR str,UINT len)
+UINT16 AnsiUpperBuff16( LPSTR str, UINT16 len )
 {
-  int i;
-  len=(len==0)?65536:len;
-
-  for(i=0;i<len;i++)
-    str[i]=toupper(str[i]);
-  return i;	
+    UINT32 count = len ? len : 65536;
+    for (; count; count--, str++) *str = toupper(*str);
+    return len;
 }
 
 /***********************************************************************
- *           AnsiLower   (USER.432)
+ *           AnsiLower16   (USER.432)
  */
-
-/* 16-bit version */
-SEGPTR WIN16_AnsiLower(SEGPTR strOrChar)
+SEGPTR AnsiLower16( SEGPTR strOrChar )
 {
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
@@ -113,57 +89,40 @@ SEGPTR WIN16_AnsiLower(SEGPTR strOrChar)
     /* lowercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
-        char *s = PTR_SEG_TO_LIN( strOrChar );
-        while (*s) {	    
-	    *s = ToLower( *s );
-	    s++;
-	}
+        char *s;
+        for (s = PTR_SEG_TO_LIN( strOrChar ); *s; s++) *s = tolower( *s );
         return strOrChar;
     }
-    else return (SEGPTR)ToLower( (int)strOrChar );
-}
-
-/* 32-bit version */
-LPSTR AnsiLower(LPSTR strOrChar)
-{
-    char *s = strOrChar;
-  /* I am not sure if the locale stuff works with toupper, but then again 
-     I am not sure if the Linux libc locale stuffs works at all */
-
-    while (*s) {
-	*s = ToLower( *s );
-	s++;
-    }
-    return strOrChar;
+    else return (SEGPTR)tolower( (int)strOrChar );
 }
 
 
 /***********************************************************************
- *           AnsiLowerBuff   (USER.438)
+ *           AnsiLowerBuff16   (USER.438)
  */
-UINT AnsiLowerBuff(LPSTR str,UINT len)
+UINT16 AnsiLowerBuff16( LPSTR str, UINT16 len )
 {
-  int i;
-  len=(len==0)?65536:len;
-  i=0;
-
-  for(i=0;i<len;i++)
-    str[i]=tolower(str[i]);
- 
-  return i;	
+    UINT32 count = len ? len : 65536;
+    for (; count; count--, str++) *str = tolower(*str);
+    return len;
 }
 
 
-/* AnsiNext USER.472 */
-SEGPTR AnsiNext(SEGPTR current)
+/***********************************************************************
+ *           AnsiNext16   (USER.472)
+ */
+SEGPTR AnsiNext16(SEGPTR current)
 {
     return (*(char *)PTR_SEG_TO_LIN(current)) ? current + 1 : current;
 }
 
-/* AnsiPrev USER.473 */
-SEGPTR AnsiPrev( SEGPTR start, SEGPTR current)
+
+/***********************************************************************
+ *           AnsiPrev16   (USER.473)
+ */
+SEGPTR AnsiPrev16( SEGPTR start, SEGPTR current )
 {
-    return (current==start)?start:current-1;
+    return (current == start) ? start : current - 1;
 }
 
 
@@ -184,24 +143,28 @@ void OutputDebugString( LPCSTR str )
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
-/***********************************************************************
- *           CharNextA   (USER32.28)
- */
-LPSTR CharNext32A(LPCSTR x)
-{
-    if (*x) return (LPSTR)(x+1);
-    else return (LPSTR)x;
-}
 
 /***********************************************************************
- *           CharNextExA   (USER32.29)
+ *           CharNext32A   (USER32.28)
  */
-LPSTR CharNextEx32A(WORD codepage,LPCSTR x,DWORD flags)
+LPSTR CharNext32A( LPCSTR ptr )
 {
-    /* FIXME: add DBCS / codepage stuff */
-    if (*x) return (LPSTR)(x+1);
-    else return (LPSTR)x;
+    if (!*ptr) return (LPSTR)ptr;
+    if (IsDBCSLeadByte32( *ptr )) return (LPSTR)(ptr + 2);
+    return (LPSTR)(ptr + 1);
 }
+
+
+/***********************************************************************
+ *           CharNextEx32A   (USER32.29)
+ */
+LPSTR CharNextEx32A( WORD codepage, LPCSTR ptr, DWORD flags )
+{
+    if (!*ptr) return (LPSTR)ptr;
+    if (IsDBCSLeadByteEx( codepage, *ptr )) return (LPSTR)(ptr + 2);
+    return (LPSTR)(ptr + 1);
+}
+
 
 /***********************************************************************
  *           CharNextExW   (USER32.30)
@@ -223,23 +186,34 @@ LPWSTR CharNext32W(LPCWSTR x)
 }
 
 /***********************************************************************
- *           CharPrevA   (USER32.32)
+ *           CharPrev32A   (USER32.32)
  */
-LPSTR CharPrev32A(LPCSTR start,LPCSTR x)
+LPSTR CharPrev32A( LPCSTR start, LPCSTR ptr )
 {
-    if (x>start) return (LPSTR)(x-1);
-    else return (LPSTR)x;
+    while (*start && (start < ptr))
+    {
+        LPCSTR next = CharNext32A( start );
+        if (next > ptr) break;
+        start = next;
+    }
+    return (LPSTR)start;
 }
 
+
 /***********************************************************************
- *           CharPrevExA   (USER32.33)
+ *           CharPrevEx32A   (USER32.33)
  */
-LPSTR CharPrevEx32A(WORD codepage,LPCSTR start,LPCSTR x,DWORD flags)
+LPSTR CharPrevEx32A( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
 {
-    /* FIXME: add DBCS / codepage stuff */
-    if (x>start) return (LPSTR)(x-1);
-    else return (LPSTR)x;
+    while (*start && (start < ptr))
+    {
+        LPCSTR next = CharNextEx32A( codepage, start, flags );
+        if (next > ptr) break;
+        start = next;
+    }
+    return (LPSTR)start;
 }
+
 
 /***********************************************************************
  *           CharPrevExW   (USER32.34)
@@ -335,7 +309,7 @@ LPWSTR CharLower32W(LPWSTR x)
 }
 
 /***********************************************************************
- *           CharUpperA   (USER32.40)
+ *           CharUpper32A   (USER32.40)
  * FIXME: handle current locale
  */
 LPSTR CharUpper32A(LPSTR x)
@@ -521,15 +495,14 @@ FormatMessage32A(
 			LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
-	target	= HeapAlloc( GetProcessHeap(), 0, 100);
+	target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
 	t	= target;
 	talloced= 100;
-	*t	= 0;
 
 #define ADD_TO_T(c) \
 	*t++=c;\
 	if (t-target == talloced) {\
-		target	= (char*)xrealloc(target,talloced*2);\
+		target	= (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
 		t	= target+talloced;\
 		talloced*=2;\
 	}
@@ -612,7 +585,7 @@ FormatMessage32A(
 		ADD_TO_T('\n');
 	talloced = strlen(target)+1;
 	if (nSize && talloced<nSize) {
-		target = (char*)xrealloc(target,nSize);
+		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
 	}
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
 		/* nSize is the MINIMUM size */
@@ -626,6 +599,7 @@ FormatMessage32A(
 			strlen(*(LPSTR*)lpBuffer):
 			strlen(lpBuffer);
 }
+#undef ADD_TO_T
 
 /***********************************************************************
  *           FormatMessageA   (KERNEL32.138) Emulator Version
@@ -705,15 +679,14 @@ FormatMessage32W(
                     LoadMessage32A(0,dwMessageId,dwLanguageId,from,bufsize+1);
 		}
 	}
-	target	= HeapAlloc( GetProcessHeap(), 0, 100 );
+	target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100 );
 	t	= target;
 	talloced= 100;
-	*t	= 0;
 
 #define ADD_TO_T(c) \
 	*t++=c;\
 	if (t-target == talloced) {\
-		target	= (char*)xrealloc(target,talloced*2);\
+		target	= (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,talloced*2);\
 		t	= target+talloced;\
 		talloced*=2;\
 	}
@@ -805,7 +778,7 @@ FormatMessage32W(
 		ADD_TO_T('\n');
 	talloced = strlen(target)+1;
 	if (nSize && talloced<nSize)
-		target = (char*)xrealloc(target,nSize);
+		target = (char*)HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,target,nSize);
 	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
 		/* nSize is the MINIMUM size */
 		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc32(GMEM_ZEROINIT,talloced*2+2);
@@ -818,6 +791,7 @@ FormatMessage32W(
 			lstrlen32W(*(LPWSTR*)lpBuffer):
 			lstrlen32W(lpBuffer);
 }
+#undef ADD_TO_T
 
 /***********************************************************************
  *           FormatMessageA   (KERNEL32.138) Emulator Version

@@ -1,5 +1,5 @@
-#ifndef COMM_H
-#define COMM_H
+#ifndef __WINE_COMM_H
+#define __WINE_COMM_H
 
 #define MAX_PORTS   16
 
@@ -14,4 +14,4 @@ struct DosDeviceStruct {
 
 extern void COMM_Init(void);
 
-#endif  /* COMM_H */
+#endif  /* __WINE_COMM_H */

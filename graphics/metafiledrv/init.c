@@ -16,41 +16,38 @@ static BOOL32 MFDRV_DeleteDC( DC *dc );
 
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
-    NULL,                            /* pArc */
+    MFDRV_Arc,                       /* pArc */
     MFDRV_BitBlt,                    /* pBitBlt */
-    NULL,                            /* pChord */
+    MFDRV_Chord,                     /* pChord */
     NULL,                            /* pCreateDC */
     MFDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pDeleteObject */
-    NULL,                            /* pEllipse */
+    MFDRV_Ellipse,                   /* pEllipse */
     NULL,                            /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */
-    NULL,                            /* pExtFloodFill */
-    NULL,                            /* pExtTextOut */
-    NULL,                            /* pFillRgn */
-    NULL,                            /* pFloodFill */
-    NULL,                            /* pFrameRgn */
+    MFDRV_ExtFloodFill,              /* pExtFloodFill */
+    MFDRV_ExtTextOut,                /* pExtTextOut */
+    NULL /* no implementation */,    /* pGetPixel */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
-    NULL,                            /* pInvertRgn */
-    NULL,                            /* pLineTo */
-    NULL,                            /* pMoveToEx */
+    MFDRV_LineTo,                    /* pLineTo */
+    MFDRV_MoveToEx,                  /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */
     MFDRV_OffsetWindowOrg,           /* pOffsetWindowOrg */
     NULL,                            /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
-    NULL,                            /* pPie */
-    NULL,                            /* pPolyPolygon */
-    NULL,                            /* pPolygon */
-    NULL,                            /* pPolyline */
+    MFDRV_Pie,                       /* pPie */
+    MFDRV_PolyPolygon,               /* pPolyPolygon */
+    MFDRV_Polygon,                   /* pPolygon */
+    MFDRV_Polyline,                  /* pPolyline */
     NULL,                            /* pRealizePalette */
-    NULL,                            /* pRectangle */
+    MFDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pRestoreDC */
-    NULL,                            /* pRoundRect */
+    MFDRV_RoundRect,                 /* pRoundRect */
     NULL,                            /* pSaveDC */
     MFDRV_ScaleViewportExt,          /* pScaleViewportExt */
     MFDRV_ScaleWindowExt,            /* pScaleWindowExt */
@@ -63,7 +60,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSetDIBitsToDevice */
     MFDRV_SetMapMode,                /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */
-    NULL,                            /* pSetPixel */
+    MFDRV_SetPixel,                  /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
     NULL,                            /* pSetROP2 */
     NULL,                            /* pSetRelAbs */
@@ -77,8 +74,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetWindowExt,              /* pSetWindowExt */
     MFDRV_SetWindowOrg,              /* pSetWindowOrg */
     MFDRV_StretchBlt,                /* pStretchBlt */
-    NULL,                            /* pStretchDIBits */
-    NULL                             /* pTextOut */
+    NULL                             /* pStretchDIBits */
 };
 
 
@@ -237,4 +233,3 @@ BOOL16 DeleteMetaFile16( HMETAFILE16 hmf )
 {
     return !GlobalFree16( hmf );
 }
-

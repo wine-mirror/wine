@@ -587,7 +587,7 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 		t=strrchr(s,'.');
 		if (t) {
 			GetProfileString32A("mci extensions",t+1,"*",str,sizeof(str));
-			AnsiUpper(str);
+			CharUpper32A(str);
 			if (strcmp(str, "CDAUDIO") == 0) {
 				uDevTyp = MCI_DEVTYPE_CD_AUDIO;
 			} else
@@ -636,7 +636,7 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 				(char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType)
 			);
 			strcpy(str, PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
-			AnsiUpper(str);
+			CharUpper32A(str);
 			if (strcmp(str, "CDAUDIO") == 0) {
 				uDevTyp = MCI_DEVTYPE_CD_AUDIO;
 			} else
@@ -829,11 +829,8 @@ UINT mciGetDeviceID (LPCSTR lpstrName)
 {
 	char	str[128];
 	dprintf_mci(stddeb, "mciGetDeviceID(%s)\n", lpstrName);
-	if (lpstrName != NULL) {
-		strcpy(str, lpstrName);
-		AnsiUpper(str);
-		if (strcmp(str, "ALL") == 0) return MCI_ALL_DEVICE_ID;
-		}
+	if (lpstrName && !lstrcmpi32A(lpstrName, "ALL"))
+            return MCI_ALL_DEVICE_ID;
 	return 0;
 }
 

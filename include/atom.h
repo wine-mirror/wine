@@ -4,8 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#ifndef ATOM_H
-#define ATOM_H
+#ifndef __WINE_ATOM_H
+#define __WINE_ATOM_H
 
 #include "windows.h"
 
@@ -25,4 +25,4 @@ typedef struct
     HANDLE16    entries[1];
 } ATOMTABLE;
 
-#endif  /* ATOM_H */
+#endif  /* __WINE_ATOM_H */

@@ -11,7 +11,6 @@
 #include "windows.h"
 #include "task.h"
 #include "callback.h"
-#include "dos_fs.h"
 #include "file.h"
 #include "global.h"
 #include "instance.h"
@@ -508,6 +507,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->pdb.fileHandlesPtr =
         PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(pTask->hPDB),
                                (int)&((PDB *)0)->fileHandles );
+    pTask->pdb.hFileHandles = 0;
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
     pTask->pdb.environment    = hEnvironment;
     pTask->pdb.nbFiles        = 20;
@@ -535,7 +535,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
     /* Create the Win32 part of the task */
 
-    pdb32 = PROCESS_Create();
+    pdb32 = PROCESS_Create( pTask );
     pTask->thdb = THREAD_Create( pdb32, 0 );
 
     /* Create the 32-bit stack frame */
@@ -592,14 +592,14 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     {
         if (pModule->flags & NE_FFLAGS_WIN32)
         {
-            DBG_ADDR addr = { 0, pModule->pe_module->load_addr + 
+            DBG_ADDR addr = { NULL, 0, pModule->pe_module->load_addr + 
                               pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint };
             fprintf( stderr, "Win32 task '%s': ", name );
             DEBUG_AddBreakpoint( &addr );
         }
         else
         {
-            DBG_ADDR addr = { pSegTable[pModule->cs-1].selector, pModule->ip };
+            DBG_ADDR addr = { NULL, pSegTable[pModule->cs-1].selector, pModule->ip };
             fprintf( stderr, "Win16 task '%s': ", name );
             DEBUG_AddBreakpoint( &addr );
         }

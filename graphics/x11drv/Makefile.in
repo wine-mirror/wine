@@ -9,7 +9,9 @@ C_SRCS = \
 	bitblt.c \
 	clipping.c \
 	font.c \
-	init.c
+	graphics.c \
+	init.c \
+	text.c
 
 all: $(MODULE).o
 

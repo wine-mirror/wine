@@ -23,7 +23,7 @@ base	1
 0018 stdcall CallWindowProcW(ptr long long long long) CallWindowProc32W
 0019 stub CascadeChildWindows
 0020 stub CascadeWindows
-0021 stub ChangeClipboardChain
+0021 stdcall ChangeClipboardChain(long long) ChangeClipboardChain32
 0022 stdcall ChangeMenuA(long long ptr long long) ChangeMenu32A
 0023 stdcall ChangeMenuW(long long ptr long long) ChangeMenu32W
 0024 stdcall CharLowerA(ptr) CharLower32A
@@ -47,7 +47,7 @@ base	1
 0042 stdcall CharUpperBuffW(ptr long) CharUpperBuff32W
 0043 stdcall CharUpperW(ptr) CharUpper32W
 0044 stdcall CheckDlgButton(long long long) CheckDlgButton
-0045 stdcall CheckMenuItem(long long long) CheckMenuItem
+0045 stdcall CheckMenuItem(long long long) CheckMenuItem32
 0046 stub CheckMenuRadioItem
 0047 stdcall CheckRadioButton(long long long long) CheckRadioButton
 0048 stdcall ChildWindowFromPoint(long long long) ChildWindowFromPoint32
@@ -82,8 +82,8 @@ base	1
 0077 stub CreateIconIndirect
 0078 stub CreateMDIWindowA
 0079 stub CreateMDIWindowW
-0080 stdcall CreateMenu() CreateMenu
-0081 stdcall CreatePopupMenu() CreatePopupMenu
+0080 stdcall CreateMenu() CreateMenu32
+0081 stdcall CreatePopupMenu() CreatePopupMenu32
 0082 stdcall CreateWindowExA(long ptr ptr long long long long long 
 				long long long ptr) CreateWindowEx32A
 0083 stdcall CreateWindowExW(long ptr ptr long long long long long 
@@ -132,12 +132,12 @@ base	1
 0125 stdcall DefWindowProcA(long long long long) DefWindowProc32A
 0126 stdcall DefWindowProcW(long long long long) DefWindowProc32W
 0127 stdcall DeferWindowPos(long long long long long long long long) DeferWindowPos
-0128 stdcall DeleteMenu(long long long) DeleteMenu
+0128 stdcall DeleteMenu(long long long) DeleteMenu32
 0129 stub DestroyAcceleratorTable
 0130 stdcall DestroyCaret() DestroyCaret
 0131 stub DestroyCursor
 0132 stub DestroyIcon
-0133 stdcall DestroyMenu(long) DestroyMenu
+0133 stdcall DestroyMenu(long) DestroyMenu32
 0134 stdcall DestroyWindow(long) DestroyWindow
 0135 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParam32A
 0136 stub DialogBoxIndirectParamAorW
@@ -164,7 +164,7 @@ base	1
 0157 stdcall DrawFrameControl(long ptr long long) DrawFrameControl32
 0158 stdcall DrawIcon(long long long long) DrawIcon
 0159 stub DrawIconEx
-0160 stdcall DrawMenuBar(long) DrawMenuBar
+0160 stdcall DrawMenuBar(long) DrawMenuBar32
 0161 stub DrawStateA
 0162 stub DrawStateW
 0163 stdcall DrawTextA(long ptr long ptr long) DrawText32A
@@ -172,13 +172,13 @@ base	1
 0165 stub DrawTextExW
 0166 stdcall DrawTextW(long ptr long ptr long) DrawText32W
 0167 stub EditWndProc
-0168 stdcall EmptyClipboard()				EmptyClipboard
-0169 stdcall EnableMenuItem(long long long) EnableMenuItem
+0168 stdcall EmptyClipboard() EmptyClipboard
+0169 stdcall EnableMenuItem(long long long) EnableMenuItem32
 0170 stdcall EnableScrollBar(long long long) EnableScrollBar32
 0171 stdcall EnableWindow(long long) EnableWindow
 0172 stdcall EndDeferWindowPos(long) EndDeferWindowPos
 0173 stdcall EndDialog(long long) EndDialog
-0174 stub EndMenu
+0174 stdcall EndMenu() EndMenu
 0175 stdcall EndPaint(long ptr) EndPaint32
 0176 stub EndTask
 0177 stdcall EnumChildWindows(long ptr long) THUNK_EnumChildWindows32
@@ -260,19 +260,19 @@ base	1
 0253 stub GetKeyboardState
 0254 stub GetKeyboardType
 0255 stub GetLastActivePopup
-0256 stdcall GetMenu(long) GetMenu
-0257 stub GetMenuCheckMarkDimensions
+0256 stdcall GetMenu(long) GetMenu32
+0257 stdcall GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 0258 stub GetMenuContextHelpId
 0259 stub GetMenuDefaultItem
 0260 stub GetMenuIndex
-0261 stdcall GetMenuItemCount(long) GetMenuItemCount
-0262 stdcall GetMenuItemID(long long) GetMenuItemID
+0261 stdcall GetMenuItemCount(long) GetMenuItemCount32
+0262 stdcall GetMenuItemID(long long) GetMenuItemID32
 0263 stub GetMenuItemInfoA
 0264 stub GetMenuItemInfoW
 0265 stub GetMenuItemRect
-0266 stdcall GetMenuState(long long long) GetMenuState
-0267 stdcall GetMenuStringA(long long ptr long long) GetMenuString
-0268 stub GetMenuStringW
+0266 stdcall GetMenuState(long long long) GetMenuState32
+0267 stdcall GetMenuStringA(long long ptr long long) GetMenuString32A
+0268 stdcall GetMenuStringW(long long ptr long long) GetMenuString32W
 0269 stdcall GetMessageA(ptr long long long) USER32_GetMessageA
 0270 stub GetMessageExtraInfo
 0271 stub GetMessagePos
@@ -291,10 +291,10 @@ base	1
 0284 stdcall GetScrollPos(long long) GetScrollPos32
 0285 stdcall GetScrollRange(long long ptr ptr) GetScrollRange32
 0286 return GetShellWindow 0 0
-0287 stdcall GetSubMenu(long long) GetSubMenu
+0287 stdcall GetSubMenu(long long) GetSubMenu32
 0288 stdcall GetSysColor(long) GetSysColor
 0289 stdcall GetSysColorBrush(long) GetSysColorBrush32
-0290 stdcall GetSystemMenu(long long) GetSystemMenu
+0290 stdcall GetSystemMenu(long long) GetSystemMenu32
 0291 stdcall GetSystemMetrics(long) GetSystemMetrics
 0292 stdcall GetTabbedTextExtentA(long ptr long long ptr) GetTabbedTextExtent
 0293 stub GetTabbedTextExtentW
@@ -321,7 +321,7 @@ base	1
 0314 stub GrayStringA
 0315 stub GrayStringW
 0316 stdcall HideCaret(long) HideCaret
-0317 stub HiliteMenuItem
+0317 stdcall HiliteMenuItem(long long long long) HiliteMenuItem32
 0318 stub ImpersonateDdeClientWindow
 0319 stub InSendMessage
 0320 stdcall InflateRect(ptr long long) InflateRect32
@@ -349,7 +349,7 @@ base	1
 0342 stub IsDialogMessageW
 0343 stdcall IsDlgButtonChecked(long long) IsDlgButtonChecked
 0344 stdcall IsIconic(long) IsIconic
-0345 stdcall IsMenu(long) IsMenu
+0345 stdcall IsMenu(long) IsMenu32
 0346 stdcall IsRectEmpty(ptr) IsRectEmpty32
 0347 stdcall IsWindow(long) IsWindow
 0348 stdcall IsWindowEnabled(long) IsWindowEnabled
@@ -444,7 +444,7 @@ base	1
 0437 stdcall RegisterWindowMessageW(ptr) RegisterWindowMessage32W
 0438 stdcall ReleaseCapture() ReleaseCapture
 0439 stdcall ReleaseDC(long long) ReleaseDC32
-0440 stdcall RemoveMenu(long long long) RemoveMenu
+0440 stdcall RemoveMenu(long long long) RemoveMenu32
 0441 stdcall RemovePropA(long ptr) RemoveProp32A
 0442 stdcall RemovePropW(long ptr) RemoveProp32W
 0443 stub ReplyMessage
@@ -490,10 +490,10 @@ base	1
 0483 stub SetKeyboardState
 0484 stdcall SetLastErrorEx(long long) SetLastErrorEx
 0485 stub SetLogonNotifyWindow
-0486 stdcall SetMenu(long long) SetMenu
+0486 stdcall SetMenu(long long) SetMenu32
 0487 stub SetMenuContextHelpId
 0488 stub SetMenuDefaultItem
-0489 stub SetMenuItemBitmaps
+0489 stdcall SetMenuItemBitmaps(long long long long long) SetMenuItemBitmaps32
 0490 stub SetMenuItemInfoA
 0491 stub SetMenuItemInfoW
 0492 stub SetMessageExtraInfo
@@ -511,7 +511,7 @@ base	1
 0504 stub SetSysColors
 0505 stub SetSysColorsTemp
 0506 stub SetSystemCursor
-0507 stub SetSystemMenu
+0507 stdcall SetSystemMenu(long long) SetSystemMenu32
 0508 stdcall SetSystemTimer(long long long ptr) SetSystemTimer32
 0509 stub SetThreadDesktop
 0510 stdcall SetTimer(long long long ptr) SetTimer32

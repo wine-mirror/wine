@@ -8,66 +8,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "debugger.h"
+#include "expr.h"
 
 /***********************************************************************
  *           DEBUG_Print
  *
  * Implementation of the 'print' command.
  */
-void DEBUG_Print( const DBG_ADDR *addr, int count, char format )
+void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format )
 {
-    if (count != 1)
+  char * default_format;
+  long long int value;
+
+    if( addr->type == NULL )
     {
-        fprintf( stderr, "Count other than 1 is meaningless in 'print' command\n" );
-        return;
+      fprintf(stderr, "Unable to evaluate expression\n");
+      return;
     }
+  
+  default_format = NULL;
+  value = DEBUG_GetExprValue((DBG_ADDR *) addr, &default_format);
 
-    if (addr->seg && (addr->seg != 0xffffffff))
-    {
-        switch(format)
-        {
-	case 'x':
-            fprintf( stderr, "0x%04lx:", addr->seg );
-            break;
-
-	case 'd':
-            fprintf( stderr, "%ld:", addr->seg );
-            break;
-
-	case 'c':
-            break;  /* No segment to print */
-
-	case 'i':
-	case 's':
-	case 'w':
-	case 'b':
-            break;  /* Meaningless format */
-        }
-    }
-
-    switch(format)
+  switch(format)
     {
     case 'x':
-        if (addr->seg) fprintf( stderr, "0x%04lx\n", addr->off );
-        else fprintf( stderr, "0x%08lx\n", addr->off );
-        break;
-
+      if (addr->seg) fprintf( stderr, "0x%04lx", (long unsigned int) value );
+      else fprintf( stderr, "0x%08lx", (long unsigned int) value );
+      break;
+      
     case 'd':
-        fprintf( stderr, "%ld\n", addr->off );
-        break;
-
+      fprintf( stderr, "%ld\n", (long int) value );
+      break;
+      
     case 'c':
-        fprintf( stderr, "%d = '%c'\n",
-                 (char)(addr->off & 0xff), (char)(addr->off & 0xff) );
-        break;
-
+      fprintf( stderr, "%d = '%c'",
+	       (char)(value & 0xff), (char)(value & 0xff) );
+      break;
+      
     case 'i':
     case 's':
     case 'w':
     case 'b':
-        fprintf( stderr, "Format specifier '%c' is meaningless in 'print' command\n", format );
-        break;
+      fprintf( stderr, "Format specifier '%c' is meaningless in 'print' command\n", format );
+    case 0:
+      if( default_format != NULL )
+	{
+	  fprintf( stderr, default_format, value );
+	}
+      break;
     }
+
 }
 
 
@@ -76,17 +66,19 @@ void DEBUG_Print( const DBG_ADDR *addr, int count, char format )
  *
  * Print an 16- or 32-bit address, with the nearest symbol if any.
  */
-struct name_hash *
+struct symbol_info
 DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen, int flag )
 {
-    struct name_hash * nh;
-    const char *name = DEBUG_FindNearestSymbol( addr, flag, &nh, 0 );
+    struct symbol_info rtn;
+
+    const char *name = DEBUG_FindNearestSymbol( addr, flag, &rtn.sym, 0, 
+						&rtn.list );
 
     if (addr->seg) fprintf( stderr, "0x%04lx:", addr->seg );
     if (addrlen == 16) fprintf( stderr, "0x%04lx", addr->off );
     else fprintf( stderr, "0x%08lx", addr->off );
     if (name) fprintf( stderr, " (%s)", name );
-    return nh;
+    return rtn;
 }
 /***********************************************************************
  *           DEBUG_PrintAddressAndArgs
@@ -95,19 +87,21 @@ DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen, int flag )
  * Similar to DEBUG_PrintAddress, but we print the arguments to
  * each function (if known).  This is useful in a backtrace.
  */
-struct name_hash *
+struct symbol_info
 DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, int addrlen, 
 			   unsigned int ebp, int flag )
 {
-    struct name_hash * nh;
-    const char *name = DEBUG_FindNearestSymbol( addr, flag, &nh, ebp );
+    struct symbol_info rtn;
+
+    const char *name = DEBUG_FindNearestSymbol( addr, flag, &rtn.sym, ebp, 
+						&rtn.list );
 
     if (addr->seg) fprintf( stderr, "0x%04lx:", addr->seg );
     if (addrlen == 16) fprintf( stderr, "0x%04lx", addr->off );
     else fprintf( stderr, "0x%08lx", addr->off );
     if (name) fprintf( stderr, " (%s)", name );
 
-    return nh;
+    return rtn;
 }
 
 
@@ -121,23 +115,28 @@ void DEBUG_Help(void)
     int i = 0;
     static const char * const helptext[] =
 {
-"The commands accepted by the Wine debugger are a small subset",
-"of the commands that gdb would accept.",
+"The commands accepted by the Wine debugger are a reasonable",
+"of the commands that gdb accepts.",
 "The commands currently are:",
 "  break [*<addr>]                        delete break bpnum",
 "  disable bpnum                          enable bpnum",
+"  condition <bpnum> [<expr>]",
+
 "  help                                   quit",
-"  bt                                     cont",
-"  step                                   next",
+"  bt                                     cont [N]",
+"  step [N]                               next [N]",
+"  stepi [N]                              nexti [N]",
 "  x <addr>                               print <expr>",
 "  set <reg> = <expr>                     set *<addr> = <expr>",
-"  symbolfile <filename>                  define <identifier> <addr>",
-"  up                                     down\n",
-"  list <addr>                            frame <n>\n",
+"  up                                     down",
+"  list <lines>                           frame <n>",
+"  finish                                 show dir",
+"  dir <path>                             display <expr>",
+"  delete display <disnum>                undisplay <disnum>\n",
 
 "Wine-specific commands:",
 "  mode [16,32]                           walk [wnd,class,queue] <handle>",
-"  info [reg,stack,break,segments,locals] info [wnd, queue] <handle>\n",
+"  info (see 'help info' for options)\n",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
 "same way that gdb does.\n",
@@ -155,25 +154,31 @@ NULL
 }
 
 
-
 /***********************************************************************
- *           DEBUG_List
+ *           DEBUG_HelpInfo
  *
- * Implementation of the 'list' command.
+ * Implementation of the 'help info' command.
  */
-void DEBUG_List( DBG_ADDR *addr, int count )
+void DEBUG_HelpInfo(void)
 {
-    static DBG_ADDR lasttime = { 0xffffffff, 0 };
+    int i = 0;
+    static const char * const infotext[] =
+{
+"The info commands allow you to get assorted bits of interesting stuff",
+"to be displayed.  The options are:",
+"  info break           Dumps information about breakpoints",
+"  info display         Shows auto-display expressions in use",
+"  info locals          Displays values of all local vars for current frame",
+"  info module          Displays information about all modules",
+"  info queue <handle>  Dumps queue information",
+"  info reg             Displays values in all registers at top of stack",
+"  info segments        Dumps information about all known segments",
+"  info share           Dumps information about shared libraries",
+"  info stack           Dumps information about top of stack",
+"  info wnd <handle>    Dumps information about all windows",
+"",
+NULL
+};
 
-    if (addr == NULL) addr = &lasttime;
-    DBG_FIX_ADDR_SEG( addr, CS_reg(&DEBUG_context) );
-    while (count-- > 0)
-    {
-        DEBUG_PrintAddress( addr, dbg_mode, FALSE );
-        fprintf( stderr, ":  " );
-        if (!DBG_CHECK_READ_PTR( addr, 1 )) return;
-        DEBUG_Disasm( addr );
-        fprintf (stderr, "\n");
-    }
-    lasttime = *addr;
+    while(infotext[i]) fprintf(stderr,"%s\n", infotext[i++]);
 }

@@ -10,6 +10,7 @@
 #include "win.h"
 #include "windows.h"
 #include "accel.h"
+#include "stddebug.h"
 #include "debug.h"
 
 extern BOOL MouseButtonsStates[3];
@@ -25,21 +26,28 @@ extern BYTE QueueKeyStateTable[256];
  * keyboard-input message.  This function retrieves the state of the key
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
  */
-INT GetKeyState(INT keycode)
+INT GetKeyState(INT vkey)
 {
     INT retval;
 
-    if( keycode >= VK_LBUTTON && keycode <= VK_RBUTTON )
-	retval = MouseButtonsStates[keycode - VK_LBUTTON];
-    else
-    {
-	if (keycode >= 'a' && keycode <= 'z')
-	    keycode += 'A' - 'a';
-	retval = ( (INT)(QueueKeyStateTable[keycode] & 0x80) << 8 ) |
-		   (INT)(QueueKeyStateTable[keycode] & 0x01);
-    }
-
-    dprintf_key(stddeb, "GetKeyState(%x) -> %x\n", keycode, retval);
+    switch (vkey)
+	{
+	case VK_LBUTTON : /* VK_LBUTTON is 1 */
+	    retval = MouseButtonsStates[0];
+	    break;
+	case VK_MBUTTON : /* VK_MBUTTON is 4 */
+	    retval = MouseButtonsStates[1];
+	    break;
+	case VK_RBUTTON : /* VK_RBUTTON is 2 */
+	    retval = MouseButtonsStates[2];
+	    break;
+	default :
+	    if (vkey >= 'a' && vkey <= 'z')
+		vkey += 'A' - 'a';
+	    retval = ( (INT)(QueueKeyStateTable[vkey] & 0x80) << 8 ) |
+		       (INT)(QueueKeyStateTable[vkey] & 0x01);
+	}
+    dprintf_key(stddeb, "GetKeyState(0x%x) -> %x\n", vkey, retval);
     return retval;
 }
 
@@ -51,6 +59,7 @@ INT GetKeyState(INT keycode)
  */
 void GetKeyboardState(BYTE *lpKeyState)
 {
+    dprintf_key(stddeb, "GetKeyboardState()\n");
     if (lpKeyState != NULL) {
 	QueueKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] >> 8;
 	QueueKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] >> 8;
@@ -64,6 +73,7 @@ void GetKeyboardState(BYTE *lpKeyState)
  */
 void SetKeyboardState(BYTE *lpKeyState)
 {
+    dprintf_key(stddeb, "SetKeyboardState()\n");
     if (lpKeyState != NULL) {
 	memcpy(QueueKeyStateTable, lpKeyState, 256);
 	MouseButtonsStates[0] = QueueKeyStateTable[VK_LBUTTON]? 0x8000: 0;
@@ -195,14 +205,14 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
             mesg=3;
           else
           {
-            hMenu=GetMenu(hWnd);
-            hSysMenu=GetSystemMenu(hWnd,FALSE);
+            hMenu=GetMenu32(hWnd);
+            hSysMenu=GetSystemMenu32(hWnd,FALSE);
             if (hSysMenu)
-              iSysStat=GetMenuState(hSysMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
+              iSysStat=GetMenuState32(hSysMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
             else
               iSysStat=-1;
             if (hMenu)
-              iStat=GetMenuState(hMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
+              iStat=GetMenuState32(hMenu,lpAccelTbl->tbl[i].wIDval,MF_BYCOMMAND);
             else
               iStat=-1;
             if (iSysStat!=-1)
@@ -241,7 +251,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
 	  {
 	   /*  some reasons for NOT sending the WM_{SYS}COMMAND message: 
 	    *   #0: unknown (please report!)
-	    *   #1: for WM_KEYUP,WM_SYKEYUP
+	    *   #1: for WM_KEYUP,WM_SYSKEYUP
 	    *   #2: mouse is captured
 	    *   #3: window is disabled 
 	    *   #4: it's a disabled system menu option

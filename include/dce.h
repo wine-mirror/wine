@@ -4,8 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#ifndef DCE_H
-#define DCE_H
+#ifndef __WINE_DCE_H
+#define __WINE_DCE_H
 
 #include "windows.h"
 #include "win.h"
@@ -50,4 +50,4 @@ extern DCE*  DCE_AllocDCE( HWND32 hWnd, DCE_TYPE type );
 extern void  DCE_FreeDCE( DCE *dce );
 extern INT16 DCE_ExcludeRgn( HDC32, WND*, HRGN32 );
 
-#endif  /* DCE_H */
+#endif  /* __WINE_DCE_H */

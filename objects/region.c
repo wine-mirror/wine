@@ -322,8 +322,46 @@ HRGN16 CreatePolygonRgn16( const POINT16 * points, INT16 count, INT16 mode )
 HRGN16 CreatePolyPolygonRgn16( const POINT16 * points, const INT16 * count,
                                INT16 nbpolygons, INT16 mode )
 {
+    int		i,nrofpts;
+    LPINT32	count32;
+    LPPOINT32	points32;
+    HRGN32	ret;
+
+    nrofpts=0;
+    for (i=nbpolygons;i--;)
+	nrofpts+=count[i];
+    points32 = (LPPOINT32)HeapAlloc( GetProcessHeap(), 0,
+                                     nrofpts*sizeof(POINT32) );
+    for (i=nrofpts;i--;)
+    	CONV_POINT16TO32( &(points[i]), &(points32[i]) );
+    count32 = (LPINT32)HeapAlloc( GetProcessHeap(), 0, 
+                                  sizeof(INT32)*nbpolygons );
+    for (i=nbpolygons;i--;)
+    	count32[i]=count[i];
+    ret = CreatePolyPolygonRgn32(points32,count32,nbpolygons,mode);
+    HeapFree( GetProcessHeap(), 0, count32 );
+    HeapFree( GetProcessHeap(), 0, points32 );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           CreatePolygonRgn32    (GDI32.58)
+ */
+HRGN32 CreatePolygonRgn32( const POINT32 *points, INT32 count, INT32 mode )
+{
+    return CreatePolyPolygonRgn32( points, &count, 1, mode );
+}
+
+
+/***********************************************************************
+ *           CreatePolyPolygonRgn32    (GDI32.57)
+ */
+HRGN32 CreatePolyPolygonRgn32( const POINT32 * points, const INT32 * count,
+                               INT32 nbpolygons, INT32 mode )
+{
     RGNOBJ * obj;
-    HRGN16 hrgn;
+    HRGN32 hrgn;
     int i, j, maxPoints;
     XPoint *xpoints, *pt;
     Region xrgn;
@@ -334,14 +372,15 @@ HRGN16 CreatePolyPolygonRgn16( const POINT16 * points, const INT16 * count,
     for (i = maxPoints = 0; i < nbpolygons; i++)
 	if (maxPoints < count[i]) maxPoints = count[i];
     if (!maxPoints) return 0;
-    if (!(xpoints = (XPoint *) malloc( sizeof(XPoint) * maxPoints )))
-	return 0;
+    if (!(xpoints = (XPoint *)HeapAlloc( GetProcessHeap(), 0,
+                                         sizeof(XPoint) * maxPoints )))
+        return 0;
 
       /* Allocate region */
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC )))
     {
-	free( xpoints );
+	HeapFree( GetProcessHeap(), 0, xpoints );
 	return 0;
     }
     obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
@@ -363,7 +402,7 @@ HRGN16 CreatePolyPolygonRgn16( const POINT16 * points, const INT16 * count,
 	if (!xrgn)
         {
             if (obj->xrgn) XDestroyRegion( obj->xrgn );
-            free( xpoints );
+            HeapFree( GetProcessHeap(), 0, xpoints );
             GDI_FreeObject( hrgn );
             return 0;
         }
@@ -378,7 +417,7 @@ HRGN16 CreatePolyPolygonRgn16( const POINT16 * points, const INT16 * count,
 	else obj->xrgn = xrgn;
     }
 
-    free( xpoints );
+    HeapFree( GetProcessHeap(), 0, xpoints );
     return hrgn;
 }
 

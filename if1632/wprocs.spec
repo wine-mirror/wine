@@ -5,9 +5,6 @@ type	win16
 2  pascal StaticWndProc(word word word long) StaticWndProc
 3  pascal ScrollBarWndProc(word word word long) ScrollBarWndProc
 5  pascal ComboBoxWndProc(word word word long) ComboBoxWndProc
-6  pascal EditWndProc(word word word long) EditWndProc
-7  pascal PopupMenuWndProc(word word word long) PopupMenuWndProc
-9  pascal DefDlgProc(word word word long) DefDlgProc16
 10 pascal MDIClientWndProc(word word word long) MDIClientWndProc
 14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc
 15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc

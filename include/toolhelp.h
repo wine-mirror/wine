@@ -1,5 +1,5 @@
-#ifndef __TOOLHELP_H
-#define __TOOLHELP_H
+#ifndef __WINE_TOOLHELP_H
+#define __WINE_TOOLHELP_H
 
 #include "windows.h"
 
@@ -343,4 +343,4 @@ struct {
     FARPROC16   lpfnErrorAddr;
     void      **lpBadParam;
 } NFYLOGPARAMERROR;
-#endif /* __TOOLHELP_H */
+#endif /* __WINE_TOOLHELP_H */

@@ -18,8 +18,12 @@
 
 /* Window procedures */
 
+extern LRESULT EditWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                            LPARAM lParam );
 extern LRESULT ListBoxWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                LPARAM lParam );
+extern LRESULT PopupMenuWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                                 LPARAM lParam );
 
 /* Win16 class info */
 
@@ -42,12 +46,6 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
       8, 0, "ComboBoxWndProc", "ComboBox" },
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,
       8, 0, "ComboLBoxWndProc", "ComboLBox" },
-    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
-      sizeof(DWORD), 0, "EditWndProc", "Edit" },
-    { CS_GLOBALCLASS | CS_SAVEBITS,
-      sizeof(HMENU32), 0, "PopupMenuWndProc", POPUPMENU_CLASS_NAME },
-    { CS_GLOBALCLASS | CS_SAVEBITS,
-      DLGWINDOWEXTRA, 0, "DefDlgProc", DIALOG_CLASS_NAME },
     { CS_GLOBALCLASS, sizeof(MDICLIENTINFO),
       STOCK_LTGRAY_BRUSH, "MDIClientWndProc", "MDIClient" }
 };
@@ -62,11 +60,17 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, 0, 0, 0, "Button" },
     { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
+      EditWndProc, 0, sizeof(void *), 0, 0, 0, 0, 0, "Edit" },
+    { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
       ListBoxWndProc, 0, sizeof(void *), 0, 0, 0, 0, 0, "ListBox" },
+    { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc,
+      0, sizeof(HMENU32), 0, 0, 0, 0, 0, POPUPMENU_CLASS_NAME },
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, 0, 0, 0, "ScrollBar"},
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),
-      0, 0, 0, 0, 0, DESKTOP_CLASS_NAME }
+      0, 0, 0, 0, 0, DESKTOP_CLASS_NAME },
+    { CS_GLOBALCLASS | CS_SAVEBITS, DefDlgProc32A, 0, DLGWINDOWEXTRA,
+      0, 0, 0, 0, 0, DIALOG_CLASS_NAME }
 };
 
 #define NB_BUILTIN_CLASSES32 \

@@ -253,4 +253,22 @@ struct PE_Debug_dir
 #define IMAGE_REL_BASED_HIGHADJ			4
 #define IMAGE_REL_BASED_MIPS_JMPADDR	5
 
+/*
+ * This is the structure that appears at the very start of a .DBG file.
+ */
+struct PE_DBG_FileHeader {
+    unsigned short int Signature;
+    unsigned short int Flags;
+    unsigned short int Machine;
+    unsigned short int Characteristics;
+    unsigned int       TimeDateStamp;
+    unsigned int       CheckSum;
+    unsigned int       ImageBase;
+    unsigned int       SizeOfImage;
+    unsigned int       NumberOfSections;
+    unsigned int       ExportedNamesSize;
+    unsigned int       DebugDirectorySize;
+    unsigned int       Reserved[ 3 ];
+};
+
 #endif /* __WINE_PEEXE_H */

@@ -176,12 +176,8 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
     }
 
     /* Make local copy & lowercase it for reg & 'programs=' lookup */
-    strncpy( tmpext, extension, 5 );
-    if (strlen(extension)<=4)
-	tmpext[strlen(extension)]='\0';
-    else
-	tmpext[4]='\0';
-    for (i=0;i<strlen(tmpext);i++) tmpext[i]=tolower(tmpext[i]);
+    lstrcpyn32A( tmpext, extension, 5 );
+    CharLower32A( tmpext );
     dprintf_exec(stddeb, "SHELL_FindExecutable: %s file\n", tmpext);
     
     /* Three places to check: */

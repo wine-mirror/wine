@@ -186,9 +186,8 @@ void RELAY_Unimplemented32( int nb_args, void *relay_addr,
  * 'stack' points to the called function address on the 32-bit stack.
  * Stack layout:
  *  ...        ...
- * (stack+12)  arg2
- * (stack+8)   arg1
- * (stack+4)   16-bit ds
+ * (stack+8)   arg2
+ * (stack+4)   arg1
  * (stack)     func to call
  */
 void RELAY_DebugCallTo16( int* stack, int nbargs )
@@ -196,8 +195,8 @@ void RELAY_DebugCallTo16( int* stack, int nbargs )
     if (!debugging_relay) return;
 
     printf( "CallTo16(func=%04x:%04x,ds=%04x",
-            HIWORD(stack[0]), LOWORD(stack[0]), LOWORD(stack[1]) );
-    stack += 2;
+            HIWORD(stack[0]), LOWORD(stack[0]), CURRENT_DS );
+    stack++;
     while (nbargs--) printf( ",0x%04x", *stack++ );
     printf( ")\n" );
 }

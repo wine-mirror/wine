@@ -1,3 +1,7 @@
+#ifndef __WINE_WINERROR_H
+#define __WINE_WINERROR_H
+
+
 extern int WIN32_LastError;
 
 /* ERROR_UNKNOWN is a placeholder for error conditions which haven't
@@ -30,3 +34,5 @@ extern int WIN32_LastError;
 #define ERROR_IO_DEVICE             1117
 #define ERROR_POSSIBLE_DEADLOCK     1131
 #define ERROR_BAD_DEVICE            1200
+
+#endif  /* __WINE_WINERROR_H */

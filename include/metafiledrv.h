@@ -43,5 +43,33 @@ extern BOOL32 MFDRV_ScaleViewportExt( struct tagDC *dc, INT32 xNum,
                                       INT32 xDenom, INT32 yNum, INT32 yDenom );
 extern BOOL32 MFDRV_ScaleWindowExt( struct tagDC *dc, INT32 xNum, INT32 xDenom,
                                     INT32 yNum, INT32 yDenom );
+extern BOOL32 MFDRV_MoveToEx(struct tagDC *dc, INT32 x, INT32 y, LPPOINT32 pt);
+extern BOOL32 MFDRV_LineTo( struct tagDC *dc, INT32 x, INT32 y );
+extern BOOL32 MFDRV_Arc( struct tagDC *dc, INT32 left, INT32 top, INT32 right,
+			 INT32 bottom, INT32 xstart, INT32 ystart, INT32 xend,
+			 INT32 yend );
+extern BOOL32 MFDRV_Pie( struct tagDC *dc, INT32 left, INT32 top, INT32 right,
+			 INT32 bottom, INT32 xstart, INT32 ystart, INT32 xend,
+			 INT32 yend );
+extern BOOL32 MFDRV_Chord( struct tagDC *dc, INT32 left, INT32 top, INT32 right,
+			   INT32 bottom, INT32 xstart, INT32 ystart, INT32 xend,
+			   INT32 yend );
+extern BOOL32 MFDRV_Ellipse( struct tagDC *dc, INT32 left, INT32 top,
+			     INT32 right, INT32 bottom );
+extern BOOL32 MFDRV_Rectangle( struct tagDC *dc, INT32 left, INT32 top,
+			       INT32 right, INT32 bottom);
+extern BOOL32 MFDRV_RoundRect( struct tagDC *dc, INT32 left, INT32 top,
+			       INT32 right, INT32 bottom, INT32 ell_width,
+			       INT32 ell_height );
+extern COLORREF MFDRV_SetPixel( struct tagDC *dc, INT32 x, INT32 y, COLORREF color );
+extern BOOL32 MFDRV_Polyline( struct tagDC *dc, const LPPOINT32 pt,INT32 count);
+extern BOOL32 MFDRV_Polygon( struct tagDC *dc, LPPOINT32 pt, INT32 count );
+extern BOOL32 MFDRV_PolyPolygon( struct tagDC *dc, LPPOINT32 pt, LPINT32 counts,
+				 UINT32 polygons);
+extern BOOL32 MFDRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
+				  COLORREF color, UINT32 fillType );
+extern BOOL32 MFDRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
+				UINT32 flags, const RECT32 *lprect, LPCSTR str,
+				UINT32 count, const INT32 *lpDx );
 
 #endif  /* __WINE_METAFILEDRV_H */

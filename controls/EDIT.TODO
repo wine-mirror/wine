@@ -4,25 +4,48 @@ in doing actual work on edit.c only C & D will be of interest to you.
 
 A) basic policy
 B) special functions
-C) not implemented
-D) known bugs
+C) not implemented / implementation ideas / implementation problems
+D) known bugs / features
 
 A) Basic Policy
 
+All messages are handled by EditWndProc(), which is the only external
+function call.  All other functions are static (local to edit.c).
+
+All Windows Messages (WM_XXX) are 32-bit, since the edit control is now a
+32-bit registered class.  The message are dealt with through the helper
+functions EDIT_WM_XXX().
+
+The edit control messages can be either 16 or 32 bit, depending on the type
+of application that sends the message.  Wherever possible EditWndProc()
+converts the 16-bit message parameters to parameters corresponding to their
+32-bit counterparts.  The message is then handled by the appropriate
+EDIT_EM_XXX() helper function. Sometimes it is not possible to handle the
+16-bit and 32-bit versions in the same way, in which case both helper
+functions EDIT_EM_XXX16() and EDIT_EM_XXX() are defined.
+
+All other functions are called EDIT_XXX().
+
+Note: Sometimes a function is internally used a bit different than the specs
+of a similar function.  For instance EDIT_SetSel() is used internally and
+should not be mixed up with EDIT_EM_SetSel(), a message handler that _does_
+conform to the specs of EM_SETSEL.
+
 The code has been made in such a way, that functions try to call other
 (documented) functions if that is sufficient.  This might sometimes not be
-the most efficient way, but it keeps the code clear.  This way I tried to keep
-the number of functions that rely on the internal EDITSTATE structure as
-low as possible.  For instance EDIT_WM_Cut() simply calls EDIT_WM_Copy() and
-EDIT_WM_Clear().  The latter two are well documented message handlers, so
-as long as they are right EDIT_WM_Cut() will never have to change again.
+the most efficient way, but it keeps the code clear.  This way I tried to
+keep the number of functions that rely on the internal EDITSTATE structure
+as low as possible.  For instance EDIT_WM_Cut() simply calls EDIT_WM_Copy()
+and EDIT_WM_Clear().  The latter two are well documented message handlers,
+so as long as they are right EDIT_WM_Cut() will never have to change again.
 
 Example:
 The best thing to do, when you want to know the offset of line 3, is calling
-EDIT_EM_LineIndex().  Again this is a well documented message handler.  Don't
-look at es->LineDefs[2].offset.  It would just be another reference to the
-internal structure, and that would make it more difficult to change things.
-Refer to EDIT_WM_???? and EDIT_EM_????? functions as much as possible.
+EDIT_EM_LineIndex().  Again this is a well documented message handler. 
+Don't look at es->LineDefs[2].offset.  It would just be another reference to
+the internal structure, and that would make it more difficult to change
+things. Refer to EDIT_WM_???? and EDIT_EM_????? functions as much as
+possible.
 
 The WND * pointer is used internally whenever possible.  Although it is not
 the real HWND, it improves performance enough to use it.
@@ -33,20 +56,35 @@ faster.  Although sometimes the response time might appear to be slow, it
 would be much slower even, when everything would be painted instantly.  This
 is especially true for scrollbar tracking and selection changes..
 
+The text buffer is a kind of tricky.  Initially the edit control allocates a
+HLOCAL32 buffer (32 bit linear memory handler).  However, 16 bit application
+might send a EM_GETHANDLE message and expect a HLOCAL16 (16 bit SEG:OFF
+handler).  From that moment on we have to keep using this 16 bit memory
+handler, because it is supposed to be valid at all times after EM_GETHANDLE. 
+What we do is create a HLOCAL16 buffer, copy the text, and do pointer
+conversion.
+
 
 
 B) Special functions
 
-The edit control needs to use local heap memory because applications may
-rely on EM_GETHANDLE.  This is bad, but it can't be helped, we have to live
-with that.  For this reason there is a nice EDIT_GetPointer() function,
-which locks the heap buffer *only once*, no matter how often it is called.
-Only at the end of the message handler EDIT_ReleasePointer() is called.  You
-don't have to worry about unlocking the heap.  Calling EDIT_GetPointer() is
-very fast if the buffer is already locked.
-This way, the buffer gets locked / unlock only once every message, although
-EDIT_GetPointer() may actually have been called a hundred times.
-Only when the actual HLOCAL is needed (for example to ReAlloc), a call to
+Several helper functions try to make your life easier when dealing with the
+allocated buffer.  In principle Windows can move memory blocks around unless
+they are locked.  Currently, WINE doesn't do this, but it might in the
+future.
+
+For this reason there is a nice EDIT_GetPointer() function, which locks the
+heap buffer *only once*, no matter how often it is called. It then returns a
+nice 32-bit pointer to linear memory. Calling EDIT_GetPointer() is very fast
+if the buffer is already locked, so you can call it whenever you feel it
+*might* be useful.
+
+At the end of EditWndProc(), EDIT_ReleasePointer() is automatically called
+which cleans up the initialized pointer.  So you don't have to worry about
+unlocking the memory block. This way, the buffer gets locked / unlock only
+once every message, although EDIT_GetPointer() may actually have been called
+a hundred times.  Only when the actual HLOCAL is needed (for example to
+ReAlloc), an extra call (besides the cleanup at the end of EditWndProc()) to
 EDIT_ReleasePointer() is needed.  Look for instance in EDIT_MakeFit().
 
 This brings us to EDIT_MakeFit().  It automatically re-allocates the buffer
@@ -54,6 +92,9 @@ if the size parameter > buffersize.  If everything is successful TRUE is
 returned, otherwise FALSE.  Only when the buffer contents may grow you need
 to call EDIT_MakeFit().  Currently this is only in EDIT_ReplaceSel() and
 EDIT_WM_SetText().
+
+EDIT_GetPointer(), EDIT_ReleasePointer and EDIT_MakeFit() are aware of the
+HLOCAL32 / HLOCAL16 business.
 
 EDIT_BuildLineDefs() is the most important function in edit.c.  It builds
 the internal EDITSTATE structure.  As soon as text *might* have changed, or
@@ -64,47 +105,93 @@ rely on the stuff this function builds.
 
 
 
-C) Not Implemented
+C) Not Implemented / Implementation Ideas / Implementation Problems
 
-- ES_PASSWORD
+Styles:
+
 - ES_CENTER
 - ES_RIGHT
-- EM_SETRECT
-- EM_SETRECTNP
-- EM_FMTLINES
-- ES_AUTOVSCROLL (every multi line *is* auto vscroll)
-- ES_AUTOHSCROLL (multi line can be yes or no, but single line only yes)
-- WM_UNDO (=EM_UNDO)
-- EM_CANUNDO
-- EM_SCROLL (scrolling works, but this appears to be an undocumented message)
-- ES_LOWERCASE
-- ES_UPPERCASE
+- ES_NUMBER (new since win95)
 - ES_OEMCONVERT
 - ES_WANTRETURN
-- probably much, MUCH more
 
-I encountered several undocumented messages, or message parameters.
-EditWndProc() reports any unknown message with an id > WM_USER.
+None of these should be difficult to include.  I just didn't have the time
+yet.  Feel free ...
+
+- ES_AUTOVSCROLL (every multi line control *is* auto vscroll)
+- ES_AUTOHSCROLL (every single line control *is* auto hscroll)
+		 (for multi line controls it works : wordwrap)
+
+Much, much more difficult.  It comes down to this: When there is no
+autoscrolling, the edit control should first check whether the new text
+(after a typed key for instance) would fit.  If not, an EN_MAXTEXT should be
+sent.  However, currently this would require the actual change to be made,
+then call EDIT_BuildLineDefs() and then find out that the new text doesn't
+fit.  After all this, things should be put back in the state before the
+changes.  Given the fact that even normal UNDO doesn't work ...
+
+Messages:
+
+- EM_SETRECT
+- EM_SETRECTNP
+- EM_SETMARGINS (new since win95)
+- EM_FMTLINES
+
+These shouldn't be really difficult either.  They just confine the visual
+output to something different than the client rectangle.  Currently the
+client area is used everywhere in the code.  At some points this should
+really be so (GetClientRect32()), whereas at other points it should be the
+format rectangle (EDIT_EM_GetRect()). Both functions are now used, but
+inconsistently and mixed up ! If you implement the formatting rectangle /
+margins, be sure to check all references to RECT's, and how they are /
+should be obtained.
+
+- EM_FMTLINES
+
+This means: insert or remove the soft linebreak character (\r\r\n). Probably
+invented by MS to suit their implementation of the edit control.  However,
+with WINE's implementation I've never come up with occasions where it is
+actually useful (we never insert \r\r\n, and applications always request
+removal).  If you are a purist ... implementation shouldn't be difficult. 
+Take care to check if the text still fits the buffer after insertion. If
+not, notify with EN_ERRSPACE.
+
+- WM_UNDO (=EM_UNDO)
+
+I'm working on it.  It is, however, not trivial.  Luckily the only function
+where actual text changes is EM_REPLACESEL, so this is the only spot where
+we have to worry about UNDO capabilities. Before you try: contact me.  I
+already have ideas and might start implementing it myself really soon.
+
+- EM_SETWORDBREAKPROC
+
+Not really difficult.  It used to work, but since we moved to 32 bits there
+are now two kinds of callback functions.  And I don't know the 32-bit specs
+for the WordBreakProc() ...  Look it up and uncomment the code that is still
+there for 16 bit callback.
+
+- EM_SCROLL
+
+Supposed to be the same as WM_VSCROLL, but not quite.  In other words:
+poorly documented.  Somebody that knows ?
 
 
 
-D) Known bugs.
+D) Known bugs / Features
 
--	Scrolling is weird, sometimes.  The current code makes the scrollbar
-	of Notepad work, but the scrollbar code itself is broken.  Currently
-	the scroll code of edit.c is *not* according to specs.  Instead, it
-	is according to the broken scrollbar code.  If that gets fixed, this
-	should be fixed, too.
--	The clipboard is broken.  Whenever things go wrong with
-	cut/copy/paste, it is probably the clipboard that messes up things,
-	not edit.c.
--	Turning on WordWrap with Notepad leaves part of the horizontal
+-	The control still calls GetTabbedTextExtent() and TabbedTextOut() in
+	their 16 bit version (since the 32 bit versions don't yet exist).
+	Therefore the tab list is 16 bits (should be 32).
+-	Scrollbar tracking is broken.
+-	Lots of API calls are to 16 bit functions, because their 32 bit
+	versions haven't been implemented yet (e.g. clipboard).
+-	Turning on WordWrap with 16-bit Notepad leaves part of the horizontal
 	scrollbar visible (problem with WM_ERASEBKGND ???).
+-	FIXME's (grep for them).
 
 
-I am still very actively changing things.  Especially I am working
-on Undo capabilities.  If you want to do things, other than bug fixes,
-please mail me so we can synchronize.
+I am working on Undo capabilities.  If you want to do things, other than bug
+fixes, please mail me so we can synchronize.
 
 Frans van Dorsselaer
 dorssel@rulhm1.LeidenUniv.nl

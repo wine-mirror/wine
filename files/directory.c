@@ -6,13 +6,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 
 #include "windows.h"
 #include "winerror.h"
-#include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -43,25 +43,20 @@ static int DIR_GetPath( const char *keyname, const char *defval,
                         char **dos_path, char **unix_path )
 {
     char path[MAX_PATHNAME_LEN];
-    const char *dos_name ,*unix_name;
+    DOS_FULL_NAME full_name;
+
     BY_HANDLE_FILE_INFORMATION info;
 
     PROFILE_GetWineIniString( "wine", keyname, defval, path, sizeof(path) );
-    if (!(unix_name = DOSFS_GetUnixFileName( path, TRUE )) ||
-        !FILE_Stat( unix_name, &info ) ||
+    if (!DOSFS_GetFullName( path, TRUE, &full_name ) ||
+        !FILE_Stat( full_name.long_name, &info ) ||
         !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
         fprintf(stderr, "Invalid path '%s' for %s directory\n", path, keyname);
         return 0;
     }
-    if (!(dos_name = DOSFS_GetDosTrueName( unix_name, TRUE )))
-    {
-        fprintf( stderr, "Could not get DOS name for %s directory '%s'\n",
-                 keyname, unix_name );
-        return 0;
-    }
-    *unix_path = HEAP_strdupA( SystemHeap, 0, unix_name );
-    *dos_path  = HEAP_strdupA( SystemHeap, 0, dos_name );
+    *unix_path = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
+    *dos_path  = HEAP_strdupA( SystemHeap, 0, full_name.short_name );
     return 1;
 }
 
@@ -72,7 +67,7 @@ static int DIR_GetPath( const char *keyname, const char *defval,
 void DIR_ParseWindowsPath( char *path )
 {
     char *p;
-    const char *dos_name ,*unix_name;
+    DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
     int i;
 
@@ -87,22 +82,18 @@ void DIR_ParseWindowsPath( char *path )
                      MAX_PATH_ELEMENTS );
             break;
         }
-        if (!(unix_name = DOSFS_GetUnixFileName( path, TRUE )) ||
-            !FILE_Stat( unix_name, &info ) ||
+        if (!DOSFS_GetFullName( path, TRUE, &full_name ) ||
+            !FILE_Stat( full_name.long_name, &info ) ||
             !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
             fprintf(stderr,"Warning: invalid dir '%s' in path, deleting it.\n",
                     path );
             continue;
         }
-        if (!(dos_name = DOSFS_GetDosTrueName( unix_name, TRUE )))
-        {
-            fprintf( stderr, "Warning: could not get DOS name for '%s' in path, deleting it.\n",
-                     unix_name );
-            continue;
-        }
-        DIR_UnixPath[DIR_PathElements] = HEAP_strdupA(SystemHeap,0,unix_name);
-        DIR_DosPath[DIR_PathElements]  = HEAP_strdupA(SystemHeap,0,dos_name);
+        DIR_UnixPath[DIR_PathElements] = HEAP_strdupA( SystemHeap, 0,
+                                                       full_name.long_name );
+        DIR_DosPath[DIR_PathElements]  = HEAP_strdupA( SystemHeap, 0,
+                                                       full_name.short_name );
         DIR_PathElements++;
     }
 
@@ -137,9 +128,8 @@ int DIR_Init(void)
     }
     else
     {
-        cwd = DOSFS_GetDosTrueName( path, TRUE );
         DRIVE_SetCurrentDrive( drive );
-        DRIVE_Chdir( drive, cwd + 2 );
+        DRIVE_Chdir( drive, cwd );
     }
 
     if (!(DIR_GetPath( "windows", "c:\\windows",
@@ -344,7 +334,8 @@ BOOL16 CreateDirectory16( LPCSTR path, LPVOID dummy )
  */
 BOOL32 CreateDirectory32A( LPCSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
 {
-    const char *unixName;
+    DOS_FULL_NAME full_name;
+    LPCSTR unixName;
 
     dprintf_file( stddeb, "CreateDirectory32A(%s,%p)\n", path, lpsecattribs );
     if ((unixName = DOSFS_IsDevice( path )) != NULL)
@@ -353,8 +344,8 @@ BOOL32 CreateDirectory32A( LPCSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
         DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
         return FALSE;
     }
-    if (!(unixName = DOSFS_GetUnixFileName( path, FALSE ))) return 0;
-    if ((mkdir( unixName, 0777 ) == -1) && (errno != EEXIST))
+    if (!DOSFS_GetFullName( path, FALSE, &full_name )) return 0;
+    if ((mkdir( full_name.long_name, 0777 ) == -1) && (errno != EEXIST))
     {
         FILE_SetDosError();
         return FALSE;
@@ -409,7 +400,8 @@ BOOL16 RemoveDirectory16( LPCSTR path )
  */
 BOOL32 RemoveDirectory32A( LPCSTR path )
 {
-    const char *unixName;
+    DOS_FULL_NAME full_name;
+    LPCSTR unixName;
 
     dprintf_file(stddeb, "RemoveDirectory: '%s'\n", path );
 
@@ -419,8 +411,8 @@ BOOL32 RemoveDirectory32A( LPCSTR path )
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
         return FALSE;
     }
-    if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return FALSE;
-    if (rmdir( unixName ) == -1)
+    if (!DOSFS_GetFullName( path, TRUE, &full_name )) return FALSE;
+    if (rmdir( full_name.long_name ) == -1)
     {
         FILE_SetDosError();
         return FALSE;
@@ -442,6 +434,56 @@ BOOL32 RemoveDirectory32W( LPCWSTR path )
 
 
 /***********************************************************************
+ *           DIR_TryPath
+ *
+ * Helper function for DIR_SearchPath.
+ */
+static BOOL32 DIR_TryPath( LPCSTR unix_dir, LPCSTR dos_dir, LPCSTR name,
+                           DOS_FULL_NAME *full_name )
+{
+    LPSTR p_l = full_name->long_name + strlen(unix_dir) + 1;
+    LPSTR p_s = full_name->short_name + strlen(dos_dir) + 1;
+
+    if ((p_s >= full_name->short_name + sizeof(full_name->short_name) - 14) ||
+        (p_l >= full_name->long_name + sizeof(full_name->long_name) - 1))
+    {
+        DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        return FALSE;
+    }
+    if (!DOSFS_FindUnixName( unix_dir, name, p_l,
+                   sizeof(full_name->long_name) - (p_l - full_name->long_name),
+                   p_s, DRIVE_GetFlags( dos_dir[0] - 'A' ) ))
+        return FALSE;
+    strcpy( full_name->long_name, unix_dir );
+    p_l[-1] = '/';
+    strcpy( full_name->short_name, dos_dir );
+    p_s[-1] = '\\';
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DIR_TryModulePath
+ *
+ * Helper function for DIR_SearchPath.
+ */
+static BOOL32 DIR_TryModulePath( LPCSTR name, DOS_FULL_NAME *full_name )
+{
+    /* FIXME: for now, GetModuleFileName32A can't return more */
+    /* than OFS_MAXPATHNAME. This may change with Win32. */
+    char buffer[OFS_MAXPATHNAME];
+    LPSTR p;
+
+    if (!GetCurrentTask()) return FALSE;
+    GetModuleFileName32A( GetCurrentTask(), buffer, sizeof(buffer) );
+    if (!(p = strrchr( buffer, '\\' ))) return FALSE;
+    if (sizeof(buffer) - (++p - buffer) <= strlen(name)) return FALSE;
+    strcpy( p, name );
+    return DOSFS_GetFullName( buffer, TRUE, full_name );
+}
+
+
+/***********************************************************************
  *           DIR_SearchPath
  *
  * Implementation of SearchPath32A. 'win32' specifies whether the search
@@ -450,17 +492,24 @@ BOOL32 RemoveDirectory32W( LPCWSTR path )
  * FIXME: should return long path names.
  */
 DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
-                      DWORD buflen, LPSTR buffer, LPSTR *lastpart,
-                      BOOL32 win32 )
+                      DOS_FULL_NAME *full_name, BOOL32 win32 )
 {
     DWORD len;
-    LPSTR tmp;
+    LPCSTR p;
     int i;
+    LPSTR tmp = NULL;
+    BOOL32 ret = TRUE;
 
     /* First check the supplied parameters */
 
-    if (strchr( name, '.' )) ext = NULL;  /* Ignore the specified extension */
+    if (!(p = strrchr( name, '\\' ))) p = name;
+    if (!(p = strrchr( p, '/' ))) p = name;
+    if (strchr( p, '.' )) ext = NULL;  /* Ignore the specified extension */
+    if ((*name && (name[1] == ':')) ||
+        strchr( name, '/' ) || strchr( name, '\\' ))
+        path = NULL;  /* Ignore path if name already contains a path */
     if (path && !*path) path = NULL;  /* Ignore empty path */
+
     len = strlen(name);
     if (ext) len += strlen(ext);
     if (path) len += strlen(path) + 1;
@@ -482,110 +531,52 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
         }
         else strcpy( tmp, name );
         if (ext) strcat( tmp, ext );
+        name = tmp;
     }
-    else tmp = (LPSTR)name;
     
     /* If we have an explicit path, everything's easy */
 
-    if (path || (*tmp && (tmp[1] == ':')) ||
-        strchr( tmp, '/' ) || strchr( tmp, '\\' ))
+    if (path || (*name && (name[1] == ':')) ||
+        strchr( name, '/' ) || strchr( name, '\\' ))
     {
-        if (!DOSFS_GetUnixFileName( tmp, TRUE )) goto not_found;
-        lstrcpyn32A( buffer, tmp, buflen );
-        if (tmp != name) HeapFree( GetProcessHeap(), 0, tmp );
-        return len;
+        ret = DOSFS_GetFullName( name, TRUE, full_name );
+        goto done;
     }
 
     /* Try the path of the current executable (for Win32 search order) */
 
-    if (win32 && GetCurrentTask())
-    {
-        LPSTR p;
-        GetModuleFileName32A( GetCurrentTask(), buffer, buflen );
-        if ((p = strrchr( buffer, '\\' )))
-        {
-            lstrcpyn32A( p + 1, tmp, (INT32)buflen - (p - buffer) );
-            if (DOSFS_GetUnixFileName( buffer, TRUE ))
-            {
-                *p = '\0';
-                goto found;
-            }
-        }
-    }
+    if (win32 && DIR_TryModulePath( name, full_name )) goto done;
 
     /* Try the current directory */
 
-    if (DOSFS_GetUnixFileName( tmp, TRUE ))
-    {
-        GetCurrentDirectory32A( buflen, buffer );
-        goto found;
-    }
+    if (DOSFS_GetFullName( name, TRUE, full_name )) goto done;
 
     /* Try the Windows directory */
 
-    if (DOSFS_FindUnixName( DIR_WindowsUnixDir, name, NULL, 0,
-                            DRIVE_GetFlags( DIR_WindowsDosDir[0] - 'A' ) ))
-    {
-        lstrcpyn32A( buffer, DIR_WindowsDosDir, buflen );
-        goto found;
-    }
+    if (DIR_TryPath( DIR_WindowsUnixDir, DIR_WindowsDosDir, name, full_name ))
+        goto done;
 
     /* Try the Windows system directory */
 
-    if (DOSFS_FindUnixName( DIR_SystemUnixDir, name, NULL, 0,
-                            DRIVE_GetFlags( DIR_SystemDosDir[0] - 'A' ) ))
-    {
-        lstrcpyn32A( buffer, DIR_SystemDosDir, buflen );
-        goto found;
-    }
+    if (DIR_TryPath( DIR_SystemUnixDir, DIR_SystemDosDir, name, full_name ))
+        goto done;
 
     /* Try the path of the current executable (for Win16 search order) */
 
-    if (!win32 && GetCurrentTask())
-    {
-        LPSTR p;
-        GetModuleFileName32A( GetCurrentTask(), buffer, buflen );
-        if ((p = strrchr( buffer, '\\' )))
-        {
-            lstrcpyn32A( p + 1, tmp, (INT32)buflen - (p - buffer) );
-            if (DOSFS_GetUnixFileName( buffer, TRUE ))
-            {
-                *p = '\0';
-                goto found;
-            }
-        }
-    }
+    if (!win32 && DIR_TryModulePath( name, full_name )) goto done;
+
     /* Try all directories in path */
 
     for (i = 0; i < DIR_PathElements; i++)
     {
-        if (DOSFS_FindUnixName( DIR_UnixPath[i], name, NULL, 0,
-                                DRIVE_GetFlags( DIR_DosPath[i][0] - 'A' ) ))
-        {
-            lstrcpyn32A( buffer, DIR_DosPath[i], buflen );
-            goto found;
-        }
+        if (DIR_TryPath( DIR_UnixPath[i], DIR_DosPath[i], name, full_name ))
+            goto done;
     }
 
-not_found:
-    if (tmp != name) HeapFree( GetProcessHeap(), 0, tmp );
-    SetLastError( ERROR_FILE_NOT_FOUND );
-    DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-    return 0;
-
-found:
-    len = strlen(buffer);
-    if (lastpart) *lastpart = buffer + len + 1;
-    if (len + 1 < buflen)
-    {
-        buffer += len;
-        *buffer++ = '\\';
-        buflen -= len + 1;
-        lstrcpyn32A( buffer, tmp, buflen );
-    }
-    len += strlen(tmp) + 1;
-    if (tmp != name) HeapFree( GetProcessHeap(), 0, tmp );
-    return len;
+    ret = FALSE;
+done:
+    if (tmp) HeapFree( GetProcessHeap(), 0, tmp );
+    return ret;
 }
 
 
@@ -595,7 +586,17 @@ found:
 DWORD SearchPath32A( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
                      LPSTR buffer, LPSTR *lastpart )
 {
-    return DIR_SearchPath( path, name, ext, buflen, buffer, lastpart, TRUE );
+    LPSTR p, res;
+    DOS_FULL_NAME full_name;
+
+    if (!DIR_SearchPath( path, name, ext, &full_name, TRUE )) return 0;
+    lstrcpyn32A( buffer, full_name.short_name, buflen );
+    res = full_name.long_name +
+              strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
+    if (*res && (buflen > 3)) lstrcpyn32A( buffer + 3, res + 1, buflen - 3 );
+    for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
+    if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
+    return *res ? strlen(res) + 2 : 3;
 }
 
 
@@ -605,25 +606,30 @@ DWORD SearchPath32A( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
 DWORD SearchPath32W( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
                      LPWSTR buffer, LPWSTR *lastpart )
 {
+    LPWSTR p;
+    LPSTR res;
+    DOS_FULL_NAME full_name;
+
     LPSTR pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     LPSTR extA  = HEAP_strdupWtoA( GetProcessHeap(), 0, ext );
-    LPSTR lastpartA;
-    LPSTR bufferA = HeapAlloc( GetProcessHeap(), 0, buflen + 1 );
-
-    DWORD ret = DIR_SearchPath( pathA, nameA, extA, buflen, bufferA,
-                                &lastpartA, TRUE );
-    lstrcpyAtoW( buffer, bufferA );
-    if (lastpart)
-    {
-        if (lastpartA) *lastpart = buffer + (lastpartA - bufferA);
-        else *lastpart = NULL;
-    }
-    HeapFree( GetProcessHeap(), 0, bufferA );
+    DWORD ret = DIR_SearchPath( pathA, nameA, extA, &full_name, TRUE );
     HeapFree( GetProcessHeap(), 0, extA );
     HeapFree( GetProcessHeap(), 0, nameA );
     HeapFree( GetProcessHeap(), 0, pathA );
-    return ret;
+    if (!ret) return 0;
+
+    lstrcpynAtoW( buffer, full_name.short_name, buflen );
+    res = full_name.long_name +
+              strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
+    if (*res && (buflen > 3)) lstrcpynAtoW( buffer + 3, res + 1, buflen - 3 );
+    for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
+    if (lastpart)
+    {
+        for (p = *lastpart = buffer; *p; p++)
+            if (*p == '\\') *lastpart = p + 1;
+    }
+    return *res ? strlen(res) + 2 : 3;
 }
 
 

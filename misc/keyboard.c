@@ -135,6 +135,9 @@ static const struct KeyTableEntry KeyTable[] =
 int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState, 
 	LPVOID lpChar, WORD wFlags) 
 {
+#if 1
+	return EVENT_ToAscii(wVirtKey, wScanCode, lpKeyState, lpChar, wFlags);
+#else
 	char shift = lpKeyState[VK_SHIFT] < 0;
 	int i;
 
@@ -184,6 +187,7 @@ int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState,
 	  *(BYTE*)lpChar = *(BYTE*)lpChar & 0x1f;
 	dprintf_keyboard(stddeb, "1 (%x)\n", *(BYTE*)lpChar);
 	return 1;
+#endif
 }
 
 DWORD OemKeyScan(WORD wOemChar)

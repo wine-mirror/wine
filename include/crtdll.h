@@ -1,5 +1,5 @@
-#ifndef _WINE_CRTDLL_H
-#define _WINE_CRTDLL_H
+#ifndef __WINE_CRTDLL_H
+#define __WINE_CRTDLL_H
 
 #define CRTDLL_LC_ALL		0
 #define CRTDLL_LC_COLLATE	1

@@ -337,47 +337,6 @@ BOOL EnumMetaFile(HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpD
     return TRUE;
 }
 
-/*******************************************************************
- *   MF_GetDIBitsPointer    [internal helper for e.g. PlayMetaFileRecord]
- *
- * Returns offset to DIB bits or 0 if error
- * (perhaps should be moved to (objects/dib.c ?)
- */
-static LPSTR MF_GetDIBitsPointer(LPBITMAPINFO info)
-{
-      int offset;
-      if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-	{
-        if (info->bmiHeader.biClrUsed)
-	  {
-	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
-	    offset = info->bmiHeader.biClrUsed * 4;
-          else
-	    offset = (1 << info->bmiHeader.biBitCount) * 4;
-          }
-        else
-	  offset = (1 << info->bmiHeader.biBitCount) * 4;
-	}
-      else if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
-	{
-	if (info->bmiHeader.biClrUsed)
-	  {
-	  if (info->bmiHeader.biClrUsed < (1 << info->bmiHeader.biBitCount))
-	    offset = info->bmiHeader.biClrUsed * 3;
-          else
-	    offset = (1 << info->bmiHeader.biBitCount) * 3;
-          }
-        else
-	  offset = (1 << info->bmiHeader.biBitCount) * 3;
-	}
-      else
-	{
-	fprintf(stderr,"Unknown size for BITMAPHEADER in MetaFile!\n");
-	return NULL;
-	}
-      return (LPSTR)info + info->bmiHeader.biSize + offset; 
-}
-
 
 /******************************************************************
  *         PlayMetaFileRecord      GDI.176
@@ -431,7 +390,6 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_SETSTRETCHBLTMODE:
 	SetStretchBltMode16(hdc, *(mr->rdParam));
 	break;
-
     case META_SETTEXTCOLOR:
 	SetTextColor(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
@@ -675,9 +633,8 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_STRETCHDIB:
       {
        LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParam[11]);
-       LPSTR bits = MF_GetDIBitsPointer(info);
-       if (bits)
-        StretchDIBits16(hdc,mr->rdParam[10],mr->rdParam[9],mr->rdParam[8],
+       LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParam[2] );
+       StretchDIBits16(hdc,mr->rdParam[10],mr->rdParam[9],mr->rdParam[8],
                        mr->rdParam[7],mr->rdParam[6],mr->rdParam[5],
                        mr->rdParam[4],mr->rdParam[3],bits,info,
                        mr->rdParam[2],MAKELONG(mr->rdParam[0],mr->rdParam[1]));
@@ -687,9 +644,8 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_DIBSTRETCHBLT:
       {
        LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParam[10]); 
-       LPSTR bits = MF_GetDIBitsPointer(info);
-       if (bits)
-         StretchDIBits16(hdc,mr->rdParam[9],mr->rdParam[8],mr->rdParam[7],
+       LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParam[2] );
+       StretchDIBits16(hdc,mr->rdParam[9],mr->rdParam[8],mr->rdParam[7],
                        mr->rdParam[6],mr->rdParam[5],mr->rdParam[4],
                        mr->rdParam[3],mr->rdParam[2],bits,info,
                        DIB_RGB_COLORS,MAKELONG(mr->rdParam[0],mr->rdParam[1]));
@@ -728,6 +684,32 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
        DeleteDC32(hdcSrc);		    
       }
       break;
+#define META_UNIMP(x) case x: fprintf(stderr,"PlayMetaFileRecord:record type "#x" not implemented.\n");break;
+    META_UNIMP(META_SETTEXTCHAREXTRA)
+    META_UNIMP(META_SETTEXTJUSTIFICATION)
+    META_UNIMP(META_FILLREGION)
+    META_UNIMP(META_FRAMEREGION)
+    META_UNIMP(META_INVERTREGION)
+    META_UNIMP(META_PAINTREGION)
+    META_UNIMP(META_SELECTCLIPREGION)
+    META_UNIMP(META_DRAWTEXT)
+    META_UNIMP(META_SETDIBTODEV)
+    META_UNIMP(META_ANIMATEPALETTE)
+    META_UNIMP(META_SETPALENTRIES)
+    META_UNIMP(META_RESIZEPALETTE)
+    META_UNIMP(META_DIBBITBLT)
+    META_UNIMP(META_DIBCREATEPATTERNBRUSH)
+    META_UNIMP(META_EXTFLOODFILL)
+    META_UNIMP(META_RESETDC)
+    META_UNIMP(META_STARTDOC)
+    META_UNIMP(META_STARTPAGE)
+    META_UNIMP(META_ENDPAGE)
+    META_UNIMP(META_ABORTDOC)
+    META_UNIMP(META_ENDDOC)
+    META_UNIMP(META_CREATEBRUSH)
+    META_UNIMP(META_CREATEBITMAPINDIRECT)
+    META_UNIMP(META_CREATEBITMAP)
+#undef META_UNIMP
 
     default:
 	fprintf(stddeb,"PlayMetaFileRecord: Unknown record type %x\n",
@@ -1242,8 +1224,9 @@ BOOL32 MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
     dprintf_metafile(stddeb,"MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
                len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
     if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT)lpBMI->biHeight,
-              MF_GetDIBitsPointer((LPBITMAPINFO)lpBMI),    /* DIB bits */
-              (LPBITMAPINFO)lpBMI,DIB_RGB_COLORS))         /* DIB info structure */ 
+                  (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
+                                                     DIB_RGB_COLORS ),
+                  (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
 #else
     len = sizeof(METARECORD) + 15 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
     if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))

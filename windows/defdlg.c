@@ -24,10 +24,10 @@ static void DEFDLG_SetFocus( HWND32 hwndDlg, HWND32 hwndCtrl )
     if (IsChild( hwndDlg, hwndPrev ))
     {
         if (SendMessage16( hwndPrev, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
-            SendMessage16( hwndPrev, EM_SETSEL, TRUE, MAKELONG( -1, 0 ) );
+            SendMessage16( hwndPrev, EM_SETSEL16, TRUE, MAKELONG( -1, 0 ) );
     }
     if (SendMessage16( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
-        SendMessage16( hwndCtrl, EM_SETSEL, FALSE, MAKELONG( 0, -1 ) );
+        SendMessage16( hwndCtrl, EM_SETSEL16, FALSE, MAKELONG( 0, -1 ) );
     SetFocus32( hwndCtrl );
 }
 
@@ -142,7 +142,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	      /* Delete menu */
 	    if (dlgInfo->hMenu)
 	    {		
-		DestroyMenu( dlgInfo->hMenu );
+		DestroyMenu32( dlgInfo->hMenu );
 		dlgInfo->hMenu = 0;
 	    }
 

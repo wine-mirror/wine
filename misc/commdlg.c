@@ -16,7 +16,6 @@
 #include "dlgs.h"
 #include "module.h"
 #include "resource.h"
-#include "dos_fs.h"
 #include "drive.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -1486,9 +1485,9 @@ static int CC_CheckDigitsInEdit(HWND hwnd,int maxval)
  }
  if (result)
  {
-  editpos=SendMessage16(hwnd,EM_GETSEL,0,0);
+  editpos=SendMessage16(hwnd,EM_GETSEL16,0,0);
   SetWindowText32A(hwnd,buffer);
-  SendMessage16(hwnd,EM_SETSEL,0,editpos);
+  SendMessage16(hwnd,EM_SETSEL16,0,editpos);
  }
  return value;
 }
@@ -1953,7 +1952,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
       CC_SwitchToFullSize(hDlg,lpp->lpcc->rgbResult,NULL);
    res=TRUE;
    for (i=0x2bf;i<0x2c5;i++)
-     SendMessage16(GetDlgItem(hDlg,i),EM_LIMITTEXT,3,0);      /* max 3 digits:  xyz  */
+     SendMessage16(GetDlgItem(hDlg,i),EM_LIMITTEXT16,3,0);      /* max 3 digits:  xyz  */
    if (CC_HookCallChk(lpp->lpcc))
       res=CallWindowProc16(lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
    return res;

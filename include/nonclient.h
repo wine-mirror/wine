@@ -21,5 +21,7 @@ extern LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam,
 extern LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam);
 extern LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt );
 extern LONG NC_HandleSetCursor( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam );
+extern void NC_DrawSysButton( HWND32 hwnd, HDC32 hdc, BOOL32 down );
+extern BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT32* rect );
 
 #endif /* __WINE_NONCLIENT_H */

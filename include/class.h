@@ -4,8 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#ifndef CLASS_H
-#define CLASS_H
+#ifndef __WINE_CLASS_H
+#define __WINE_CLASS_H
 
 #include "windows.h"
 #include "winproc.h"
@@ -40,4 +40,4 @@ extern void CLASS_WalkClasses(void);
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 extern CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE16 hinstance );
 
-#endif  /* CLASS_H */
+#endif  /* __WINE_CLASS_H */

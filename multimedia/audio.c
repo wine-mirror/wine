@@ -138,7 +138,7 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpPa
 						lpstrElementName);
 		if (strlen(lpstrElementName) > 0) {
 			strcpy(str, lpstrElementName);
-			AnsiUpper(str);
+			CharUpper32A(str);
 			MCIWavDev[wDevID].hFile = mmioOpen(str, NULL, 
 				MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
 			if (MCIWavDev[wDevID].hFile == 0) {

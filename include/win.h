@@ -4,8 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#ifndef WIN_H
-#define WIN_H
+#ifndef __WINE_WIN_H
+#define __WINE_WIN_H
 
 #include <X11/Xlib.h>
 
@@ -111,4 +111,4 @@ extern Display * display;
 extern Screen * screen;
 extern Window rootWindow;
 
-#endif  /* WIN_H */
+#endif  /* __WINE_WIN_H */

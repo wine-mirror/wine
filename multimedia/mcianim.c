@@ -85,7 +85,7 @@ static DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 						lpstrElementName);
 		if (strlen(lpstrElementName) > 0) {
 			strcpy(str, lpstrElementName);
-			AnsiUpper(str);
+			CharUpper32A(str);
 			}
 		}
 	memcpy(&AnimDev[wDevID].openParms, lpParms, sizeof(MCI_OPEN_PARMS));

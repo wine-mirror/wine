@@ -22,7 +22,6 @@
 
 #include "windows.h"
 #include "winerror.h"
-#include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
@@ -31,13 +30,12 @@
 #include "debug.h"
 
 /* Define the VFAT ioctl to get both short and long file names */
-#if 0  /* not working yet */
+/* FIXME: is it possible to get this to work on other systems? */
 #ifdef linux
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, long)
 #else   /* linux */
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
 #endif  /* linux */
-#endif
 
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
@@ -57,6 +55,7 @@ static const char *DOSFS_Devices[][2] =
     { "COM3", "" },
     { "COM4", "" }
 };
+
 
 #define GET_DRIVE(path) \
     (((path)[1] == ':') ? toupper((path)[0]) - 'A' : DOSFS_CurDrive)
@@ -134,47 +133,17 @@ static int DOSFS_ValidDOSName( const char *name, int ignore_case )
 
 
 /***********************************************************************
- *           DOSFS_CheckDotDot
- *
- * Remove all '.' and '..' at the beginning of 'name'.
- */
-static const char * DOSFS_CheckDotDot( const char *name, char *buffer,
-                                       char sep , int *len )
-{
-    char *p = buffer + strlen(buffer);
-
-    while (*name == '.')
-    {
-        if (IS_END_OF_NAME(name[1]))
-        {
-            name++;
-            while ((*name == '\\') || (*name == '/')) name++;
-        }
-        else if ((name[1] == '.') && IS_END_OF_NAME(name[2]))
-        {
-            name += 2;
-            while ((*name == '\\') || (*name == '/')) name++;
-            while ((p > buffer) && (*p != sep)) { p--; (*len)++; }
-            *p = '\0';  /* Remove trailing separator */
-        }
-        else break;
-    }
-    return name;
-}
-
-
-/***********************************************************************
  *           DOSFS_ToDosFCBFormat
  *
  * Convert a file name to DOS FCB format (8+3 chars, padded with blanks),
  * expanding wild cards and converting to upper-case in the process.
  * File name can be terminated by '\0', '\\' or '/'.
- * Return NULL if the name is not a valid DOS name.
+ * Return FALSE if the name is not a valid DOS name.
+ * 'buffer' must be at least 12 characters long.
  */
-const char *DOSFS_ToDosFCBFormat( const char *name )
+BOOL32 DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS;
-    static char buffer[12];
     const char *p = name;
     int i;
 
@@ -188,7 +157,7 @@ const char *DOSFS_ToDosFCBFormat( const char *name )
             buffer[1] = '.';
             p++;
         }
-        return (!*p || (*p == '/') || (*p == '\\')) ? buffer : NULL;
+        return (!*p || (*p == '/') || (*p == '\\'));
     }
 
     for (i = 0; i < 8; i++)
@@ -208,7 +177,7 @@ const char *DOSFS_ToDosFCBFormat( const char *name )
             buffer[i] = '?';
             break;
         default:
-            if (strchr( invalid_chars, *p )) return NULL;
+            if (strchr( invalid_chars, *p )) return FALSE;
             buffer[i] = toupper(*p);
             p++;
             break;
@@ -223,7 +192,7 @@ const char *DOSFS_ToDosFCBFormat( const char *name )
     else
     {
         /* Check if name too long */
-        if (*p && (*p != '/') && (*p != '\\') && (*p != '.')) return NULL;
+        if (*p && (*p != '/') && (*p != '\\') && (*p != '.')) return FALSE;
     }
     if (*p == '.') p++;  /* Skip dot */
 
@@ -237,7 +206,7 @@ const char *DOSFS_ToDosFCBFormat( const char *name )
             buffer[i] = ' ';
             break;
         case '.':
-            return NULL;  /* Second extension not allowed */
+            return FALSE;  /* Second extension not allowed */
         case '?':
             p++;
             /* fall through */
@@ -245,14 +214,14 @@ const char *DOSFS_ToDosFCBFormat( const char *name )
             buffer[i] = '?';
             break;
         default:
-            if (strchr( invalid_chars, *p )) return NULL;
+            if (strchr( invalid_chars, *p )) return FALSE;
             buffer[i] = toupper(*p);
             p++;
             break;
         }
     }
     buffer[11] = '\0';
-    return buffer;
+    return TRUE;
 }
 
 
@@ -262,11 +231,10 @@ const char *DOSFS_ToDosFCBFormat( const char *name )
  * Convert a file name from FCB to DTA format (name.ext, null-terminated)
  * converting to upper-case in the process.
  * File name can be terminated by '\0', '\\' or '/'.
- * Return NULL if the name is not a valid DOS name.
+ * 'buffer' must be at least 13 characters long.
  */
-const char *DOSFS_ToDosDTAFormat( const char *name )
+static void DOSFS_ToDosDTAFormat( LPCSTR name, LPSTR buffer )
 {
-    static char buffer[13];
     char *p;
 
     memcpy( buffer, name, 8 );
@@ -276,7 +244,6 @@ const char *DOSFS_ToDosDTAFormat( const char *name )
     for (p += 3; p[-1] == ' '; p--);
     if (p[-1] == '.') p--;
     *p = '\0';
-    return buffer;
 }
 
 
@@ -397,13 +364,11 @@ static BOOL32 DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
 #ifdef VFAT_IOCTL_READDIR_BOTH
     if (dir->fd != -1)
     {
-        LPCSTR fcb_name;
         if (ioctl( dir->fd, VFAT_IOCTL_READDIR_BOTH, (long)dir->dirent ) == -1)
             return FALSE;
         if (!dir->dirent[0].d_reclen) return FALSE;
-        fcb_name = DOSFS_ToDosFCBFormat( dir->dirent[0].d_name );
-        if (fcb_name) strcpy( dir->short_name, fcb_name );
-        else dir->short_name[0] = '\0';
+        if (!DOSFS_ToDosFCBFormat( dir->dirent[0].d_name, dir->short_name ))
+            dir->short_name[0] = '\0';
         *short_name = dir->short_name;
         if (dir->dirent[1].d_name[0]) *long_name = dir->dirent[1].d_name;
         else *long_name = dir->dirent[0].d_name;
@@ -419,80 +384,20 @@ static BOOL32 DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
 
 
 /***********************************************************************
- *           DOSFS_ToDosDateTime
- *
- * Convert a Unix time in the DOS date/time format.
- */
-void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime )
-{
-    struct tm *tm = localtime( &unixtime );
-    if (pTime)
-        *pTime = (tm->tm_hour << 11) + (tm->tm_min << 5) + (tm->tm_sec / 2);
-    if (pDate)
-        *pDate = ((tm->tm_year - 80) << 9) + ((tm->tm_mon + 1) << 5)
-                 + tm->tm_mday;
-}
-
-/***********************************************************************
- *           DOSFS_DosDateTimeToUnixTime
- *
- * Convert from the DOS (FAT) date/time format into Unix time
- * (borrowed from files/file.c)
- */
-time_t DOSFS_DosDateTimeToUnixTime( WORD date, WORD time )
-{
-    struct tm newtm;
-
-    newtm.tm_sec  = (time & 0x1f) * 2;
-    newtm.tm_min  = (time >> 5) & 0x3f;
-    newtm.tm_hour = (time >> 11);
-    newtm.tm_mday = (date & 0x1f);
-    newtm.tm_mon  = ((date >> 5) & 0x0f) - 1;
-    newtm.tm_year = (date >> 9) + 80;
-    return mktime( &newtm );
-}
-
-
-/***********************************************************************
- *           DOSFS_UnixTimeToFileTime
- *
- * Convert a Unix time to FILETIME format.
- */
-void DOSFS_UnixTimeToFileTime( time_t unixtime, FILETIME *filetime )
-{
-    /* FIXME :-) */
-    filetime->dwLowDateTime  = unixtime;
-    filetime->dwHighDateTime = 0;
-}
-
-
-/***********************************************************************
- *           DOSFS_FileTimeToUnixTime
- *
- * Convert a FILETIME format to Unix time.
- */
-time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime )
-{
-    /* FIXME :-) */
-    return filetime->dwLowDateTime;
-}
-
-
-/***********************************************************************
  *           DOSFS_Hash
  *
  * Transform a Unix file name into a hashed DOS name. If the name is a valid
  * DOS name, it is converted to upper-case; otherwise it is replaced by a
  * hashed version that fits in 8.3 format.
  * File name can be terminated by '\0', '\\' or '/'.
+ * 'buffer' must be at least 13 characters long.
  */
-static const char *DOSFS_Hash( const char *name, int dir_format,
-                               int ignore_case )
+static void DOSFS_Hash( LPCSTR name, LPSTR buffer, BOOL32 dir_format,
+                        BOOL32 ignore_case )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS "~.";
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
-    static char buffer[13];
     const char *p, *ext;
     char *dst;
     unsigned short hash;
@@ -508,7 +413,7 @@ static const char *DOSFS_Hash( const char *name, int dir_format,
             buffer[0] = '.';
             if (!dir_format) buffer[1] = buffer[2] = '\0';
             if (name[1] == '.') buffer[1] = '.';
-            return buffer;
+            return;
         }
 
         /* Simply copy the name, converting to uppercase */
@@ -523,55 +428,53 @@ static const char *DOSFS_Hash( const char *name, int dir_format,
                 *dst++ = toupper(*name);
         }
         if (!dir_format) *dst = '\0';
+        return;
+    }
+
+    /* Compute the hash code of the file name */
+    /* If you know something about hash functions, feel free to */
+    /* insert a better algorithm here... */
+    if (ignore_case)
+    {
+        for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
+            hash = (hash<<3) ^ (hash>>5) ^ tolower(*p) ^ (tolower(p[1]) << 8);
+        hash = (hash<<3) ^ (hash>>5) ^ tolower(*p); /* Last character*/
     }
     else
     {
-        /* Compute the hash code of the file name */
-        /* If you know something about hash functions, feel free to */
-        /* insert a better algorithm here... */
-        if (ignore_case)
-        {
-            for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
-                hash = (hash << 3) ^ (hash >> 5) ^ tolower(*p) ^ (tolower(p[1]) << 8);
-            hash = (hash << 3) ^ (hash >> 5) ^ tolower(*p); /* Last character*/
-        }
-        else
-        {
-            for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
-                hash = (hash << 3) ^ (hash >> 5) ^ *p ^ (p[1] << 8);
-            hash = (hash << 3) ^ (hash >> 5) ^ *p;  /* Last character */
-        }
-
-        /* Find last dot for start of the extension */
-        for (p = name+1, ext = NULL; !IS_END_OF_NAME(*p); p++)
-            if (*p == '.') ext = p;
-        if (ext && IS_END_OF_NAME(ext[1]))
-            ext = NULL;  /* Empty extension ignored */
-
-        /* Copy first 4 chars, replacing invalid chars with '_' */
-        for (i = 4, p = name, dst = buffer; i > 0; i--, p++)
-        {
-            if (IS_END_OF_NAME(*p) || (p == ext)) break;
-            *dst++ = strchr( invalid_chars, *p ) ? '_' : toupper(*p);
-        }
-        /* Pad to 5 chars with '~' */
-        while (i-- >= 0) *dst++ = '~';
-
-        /* Insert hash code converted to 3 ASCII chars */
-        *dst++ = hash_chars[(hash >> 10) & 0x1f];
-        *dst++ = hash_chars[(hash >> 5) & 0x1f];
-        *dst++ = hash_chars[hash & 0x1f];
-
-        /* Copy the first 3 chars of the extension (if any) */
-        if (ext)
-        {
-            if (!dir_format) *dst++ = '.';
-            for (i = 3, ext++; (i > 0) && !IS_END_OF_NAME(*ext); i--, ext++)
-                *dst++ = strchr( invalid_chars, *ext ) ? '_' : toupper(*ext);
-        }
-        if (!dir_format) *dst = '\0';
+        for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
+            hash = (hash << 3) ^ (hash >> 5) ^ *p ^ (p[1] << 8);
+        hash = (hash << 3) ^ (hash >> 5) ^ *p;  /* Last character */
     }
-    return buffer;
+
+    /* Find last dot for start of the extension */
+    for (p = name+1, ext = NULL; !IS_END_OF_NAME(*p); p++)
+        if (*p == '.') ext = p;
+    if (ext && IS_END_OF_NAME(ext[1]))
+        ext = NULL;  /* Empty extension ignored */
+
+    /* Copy first 4 chars, replacing invalid chars with '_' */
+    for (i = 4, p = name, dst = buffer; i > 0; i--, p++)
+    {
+        if (IS_END_OF_NAME(*p) || (p == ext)) break;
+        *dst++ = strchr( invalid_chars, *p ) ? '_' : toupper(*p);
+    }
+    /* Pad to 5 chars with '~' */
+    while (i-- >= 0) *dst++ = '~';
+
+    /* Insert hash code converted to 3 ASCII chars */
+    *dst++ = hash_chars[(hash >> 10) & 0x1f];
+    *dst++ = hash_chars[(hash >> 5) & 0x1f];
+    *dst++ = hash_chars[hash & 0x1f];
+
+    /* Copy the first 3 chars of the extension (if any) */
+    if (ext)
+    {
+        if (!dir_format) *dst++ = '.';
+        for (i = 3, ext++; (i > 0) && !IS_END_OF_NAME(*ext); i--, ext++)
+            *dst++ = strchr( invalid_chars, *ext ) ? '_' : toupper(*ext);
+    }
+    if (!dir_format) *dst = '\0';
 }
 
 
@@ -581,31 +484,34 @@ static const char *DOSFS_Hash( const char *name, int dir_format,
  * Find the Unix file name in a given directory that corresponds to
  * a file name (either in Unix or DOS format).
  * File name can be terminated by '\0', '\\' or '/'.
- * Return 1 if OK, 0 if no file name matches.
+ * Return TRUE if OK, FALSE if no file name matches.
+ *
+ * 'long_buf' must be at least 'long_len' characters long. If the long name
+ * turns out to be larger than that, the function returns FALSE.
+ * 'short_buf' must be at least 13 characters long.
  */
-BOOL32 DOSFS_FindUnixName( const char *path, const char *name,
-                           char *buffer, int maxlen, UINT32 drive_flags )
+BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
+                           INT32 long_len, LPSTR short_buf, BOOL32 ignore_case)
 {
     DOS_DIR *dir;
     LPCSTR long_name, short_name;
-    char dos_name[12];
+    char dos_name[12], tmp_buf[13];
     BOOL32 ret;
 
     const char *p = strchr( name, '/' );
     int len = p ? (int)(p - name) : strlen(name);
+    if ((p = strchr( name, '\\' ))) len = MIN( (int)(p - name), len );
+    if (long_len < len + 1) return FALSE;
 
     dprintf_dosfs( stddeb, "DOSFS_FindUnixName: %s,%s\n", path, name );
 
-    if ((p = strchr( name, '\\' ))) len = MIN( (int)(p - name), len );
-
-    dos_name[0] = '\0';
-    if ((p = DOSFS_ToDosFCBFormat( name ))) strcpy( dos_name, p );
+    if (!DOSFS_ToDosFCBFormat( name, dos_name )) dos_name[0] = '\0';
 
     if (!(dir = DOSFS_OpenDir( path )))
     {
         dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s): can't open dir\n",
                        path, name );
-        return 0;
+        return FALSE;
     }
 
     while ((ret = DOSFS_ReadDir( dir, &long_name, &short_name )))
@@ -613,7 +519,7 @@ BOOL32 DOSFS_FindUnixName( const char *path, const char *name,
         /* Check against Unix name */
         if (len == strlen(long_name))
         {
-            if (drive_flags & DRIVE_CASE_SENSITIVE)
+            if (!ignore_case)
             {
                 if (!lstrncmp32A( long_name, name, len )) break;
             }
@@ -626,14 +532,29 @@ BOOL32 DOSFS_FindUnixName( const char *path, const char *name,
         {
             /* Check against hashed DOS name */
             if (!short_name)
-                short_name = DOSFS_Hash( long_name, TRUE,
-                                       !(drive_flags & DRIVE_CASE_SENSITIVE) );
+            {
+                DOSFS_Hash( long_name, tmp_buf, TRUE, ignore_case );
+                short_name = tmp_buf;
+            }
             if (!strcmp( dos_name, short_name )) break;
         }
     }
-    if (ret && buffer) lstrcpyn32A( buffer, long_name, maxlen );
-    dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s) -> %s\n",
-                   path, name, ret ? long_name : "** Not found **" );
+    if (ret)
+    {
+        if (long_buf) strcpy( long_buf, long_name );
+        if (short_buf)
+        {
+            if (short_name)
+                DOSFS_ToDosDTAFormat( short_name, short_buf );
+            else
+                DOSFS_Hash( long_name, short_buf, FALSE, ignore_case );
+        }
+        dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s) -> %s (%s)\n",
+                       path, name, long_name, short_buf ? short_buf : "***");
+    }
+    else
+        dprintf_dosfs(stddeb,"DOSFS_FindUnixName(%s,%s) -> ** Not found **\n",
+                      path, name );
     DOSFS_CloseDir( dir );
     return ret;
 }
@@ -702,168 +623,278 @@ static int DOSFS_GetPathDrive( const char **name )
 
 
 /***********************************************************************
- *           DOSFS_GetUnixFileName
+ *           DOSFS_GetFullName
  *
- * Convert a file name (DOS or mixed DOS/Unix format) to a valid Unix name.
- * Return NULL if one of the path components does not exist. The last path
+ * Convert a file name (DOS or mixed DOS/Unix format) to a valid
+ * Unix name / short DOS name pair.
+ * Return FALSE if one of the path components does not exist. The last path
  * component is only checked if 'check_last' is non-zero.
+ * The buffers pointed to by 'long_buf' and 'short_buf' must be
+ * at least MAX_PATHNAME_LEN long.
  */
-const char * DOSFS_GetUnixFileName( const char * name, int check_last )
+BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
 {
-    static char buffer[MAX_PATHNAME_LEN];
-    int drive, len;
     BOOL32 found;
     UINT32 flags;
-    char *p, *root;
+    char *p_l, *p_s, *root;
 
-    dprintf_dosfs( stddeb, "DOSFS_GetUnixFileName: %s\n", name );
+    dprintf_dosfs( stddeb, "DOSFS_GetFullName: %s (last=%d)\n",
+                   name, check_last );
 
-    if ((drive = DOSFS_GetPathDrive( &name )) == -1) return NULL;
-    flags = DRIVE_GetFlags(drive);
-    lstrcpyn32A( buffer, DRIVE_GetRoot(drive), MAX_PATHNAME_LEN );
-    if (buffer[1]) root = buffer + strlen(buffer);
-    else root = buffer;  /* root directory */
+    if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
+    flags = DRIVE_GetFlags( full->drive );
 
-    if ((*name == '\\') || (*name == '/'))
+    lstrcpyn32A( full->long_name, DRIVE_GetRoot( full->drive ),
+                 sizeof(full->long_name) );
+    if (full->long_name[1]) root = full->long_name + strlen(full->long_name);
+    else root = full->long_name;  /* root directory */
+
+    strcpy( full->short_name, "A:\\" );
+    full->short_name[0] += full->drive;
+
+    if ((*name == '\\') || (*name == '/'))  /* Absolute path */
     {
         while ((*name == '\\') || (*name == '/')) name++;
     }
-    else
+    else  /* Relative path */
     {
-        lstrcpyn32A( root + 1, DRIVE_GetUnixCwd(drive),
-                     MAX_PATHNAME_LEN - (int)(root - buffer) - 1 );
+        lstrcpyn32A( root + 1, DRIVE_GetUnixCwd( full->drive ),
+                     sizeof(full->long_name) - (root - full->long_name) - 1 );
         if (root[1]) *root = '/';
+        lstrcpyn32A( full->short_name + 3, DRIVE_GetDosCwd( full->drive ),
+                     sizeof(full->short_name) - 3 );
     }
 
-    p = buffer[1] ? buffer + strlen(buffer) : buffer;
-    len = MAX_PATHNAME_LEN - strlen(buffer);
+    p_l = full->long_name[1] ? full->long_name + strlen(full->long_name)
+                             : full->long_name;
+    p_s = full->short_name[3] ? full->short_name + strlen(full->short_name)
+                              : full->short_name + 2;
     found = TRUE;
+
     while (*name && found)
     {
-        const char *newname = DOSFS_CheckDotDot( name, root, '/', &len );
-        if (newname != name)
+        /* Check for '.' and '..' */
+
+        if (*name == '.')
         {
-            p = root + strlen(root);
-            name = newname;
-            continue;
+            if (IS_END_OF_NAME(name[1]))
+            {
+                name++;
+                while ((*name == '\\') || (*name == '/')) name++;
+                continue;
+            }
+            else if ((name[1] == '.') && IS_END_OF_NAME(name[2]))
+            {
+                name += 2;
+                while ((*name == '\\') || (*name == '/')) name++;
+                while ((p_l > root) && (*p_l != '/')) p_l--;
+                while ((p_s > full->short_name + 2) && (*p_s != '\\')) p_s--;
+                *p_l = *p_s = '\0';  /* Remove trailing separator */
+                continue;
+            }
         }
-        if (len <= 1)
+
+        /* Make sure buffers are large enough */
+
+        if ((p_s >= full->short_name + sizeof(full->short_name) - 14) ||
+            (p_l >= full->long_name + sizeof(full->long_name) - 1))
         {
             DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return NULL;
+            return FALSE;
         }
-        if ((found = DOSFS_FindUnixName( buffer, name, p+1, len-1, flags )))
+
+        /* Get the long and short name matching the file name */
+
+        if ((found = DOSFS_FindUnixName( full->long_name, name, p_l + 1,
+                         sizeof(full->long_name) - (p_l - full->long_name) - 1,
+                         p_s + 1, !(flags & DRIVE_CASE_SENSITIVE) )))
         {
-            *p = '/';
-            len -= strlen(p);
-            p += strlen(p);
+            *p_l++ = '/';
+            p_l   += strlen(p_l);
+            *p_s++ = '\\';
+            p_s   += strlen(p_s);
             while (!IS_END_OF_NAME(*name)) name++;
         }
         else if (!check_last)
         {
-            *p++ = '/';
-            for (len--; !IS_END_OF_NAME(*name) && (len > 1); name++, len--)
-                *p++ = tolower(*name);
-            *p = '\0';
+            *p_l++ = '/';
+            *p_s++ = '\\';
+            while (!IS_END_OF_NAME(*name) &&
+                   (p_s < full->short_name + sizeof(full->short_name) - 1) &&
+                   (p_l < full->long_name + sizeof(full->long_name) - 1))
+            {
+                *p_l++ = *p_s++ = tolower(*name);
+                name++;
+            }
+            *p_l = *p_s = '\0';
         }
         while ((*name == '\\') || (*name == '/')) name++;
     }
+
     if (!found)
     {
         if (check_last)
         {
             DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return NULL;
+            return FALSE;
         }
         if (*name)  /* Not last */
         {
             DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return NULL;
+            return FALSE;
         }
     }
-    if (!buffer[0]) strcpy( buffer, "/" );
-    dprintf_dosfs( stddeb, "DOSFS_GetUnixFileName: returning %s\n", buffer );
-    return buffer;
+    if (!full->long_name[0]) strcpy( full->long_name, "/" );
+    if (!full->short_name[2]) strcpy( full->short_name + 2, "\\" );
+    dprintf_dosfs( stddeb, "DOSFS_GetFullName: returning %s = %s\n",
+                   full->long_name, full->short_name );
+    return TRUE;
 }
 
 
 /***********************************************************************
- *           DOSFS_GetDosTrueName
- *
- * Convert a file name (DOS or Unix format) to a complete DOS name.
- * Return NULL if the path name is invalid or too long.
- * The unix_format flag is a hint that the file name is in Unix format.
+ *           GetShortPathName32A   (KERNEL32.271)
  */
-const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
+DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
 {
-    static char buffer[MAX_PATHNAME_LEN];
-    int drive, len;
-    UINT32 flags;
+    DOS_FULL_NAME full_name;
+
+    /* FIXME: is it correct to always return a fully qualified short path? */
+    if (!DOSFS_GetFullName( longpath, TRUE, &full_name )) return 0;
+    lstrcpyn32A( shortpath, full_name.short_name, shortlen );
+    return strlen( full_name.short_name );
+}
+
+
+/***********************************************************************
+ *           GetShortPathName32W   (KERNEL32.272)
+ */
+DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
+{
+    DOS_FULL_NAME full_name;
+    DWORD ret = 0;
+    LPSTR longpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
+
+    /* FIXME: is it correct to always return a fully qualified short path? */
+    if (DOSFS_GetFullName( longpathA, TRUE, &full_name ))
+    {
+        ret = strlen( full_name.short_name );
+        lstrcpynAtoW( shortpath, full_name.short_name, shortlen );
+    }
+    HeapFree( GetProcessHeap(), 0, longpathA );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           DOSFS_DoGetFullPathName
+ *
+ * Implementation of GetFullPathName32A/W.
+ */
+static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
+                                      BOOL32 unicode )
+{
+    char buffer[MAX_PATHNAME_LEN];
+    int drive;
     char *p;
 
-    dprintf_dosfs( stddeb, "DOSFS_GetDosTrueName(%s,%d)\n", name, unix_format);
+    dprintf_dosfs( stddeb, "GetFullPathName: converting %s\n", name );
 
-    if ((drive = DOSFS_GetPathDrive( &name )) == -1) return NULL;
+    if ((drive = DOSFS_GetPathDrive( &name )) == -1) return 0;
     p = buffer;
     *p++ = 'A' + drive;
     *p++ = ':';
-    if (IS_END_OF_NAME(*name))
+    if (IS_END_OF_NAME(*name))  /* Absolute path */
     {
         while ((*name == '\\') || (*name == '/')) name++;
     }
-    else
+    else  /* Relative path */
     {
         *p++ = '\\';
         lstrcpyn32A( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 3 );
         if (*p) p += strlen(p); else p--;
     }
     *p = '\0';
-    len = MAX_PATHNAME_LEN - (int)(p - buffer);
-    flags = DRIVE_GetFlags(drive);
 
     while (*name)
     {
-        const char *newname = DOSFS_CheckDotDot( name, buffer+2, '\\', &len );
-        if (newname != name)
+        if (*name == '.')
         {
-            p = buffer + strlen(buffer);
-            name = newname;
-            continue;
+            if (IS_END_OF_NAME(name[1]))
+            {
+                name++;
+                while ((*name == '\\') || (*name == '/')) name++;
+                continue;
+            }
+            else if ((name[1] == '.') && IS_END_OF_NAME(name[2]))
+            {
+                name += 2;
+                while ((*name == '\\') || (*name == '/')) name++;
+                while ((p > buffer + 2) && (*p != '\\')) p--;
+                *p = '\0';  /* Remove trailing separator */
+                continue;
+            }
         }
-        if (len <= 1)
+        if (p >= buffer + sizeof(buffer) - 1)
         {
             DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return NULL;
+            return 0;
         }
         *p++ = '\\';
-        if (unix_format)  /* Hash it into a DOS name */
-        {
-            lstrcpyn32A( p, DOSFS_Hash( name, FALSE,
-                                     !(flags & DRIVE_CASE_SENSITIVE) ),
-                         len );
-            len -= strlen(p);
-            p += strlen(p);
-            while (!IS_END_OF_NAME(*name)) name++;
-        }
-        else  /* Already DOS format, simply upper-case it */
-        {
-            while (!IS_END_OF_NAME(*name) && (len > 1))
-            {
-                *p++ = toupper(*name);
-                name++;
-                len--;
-            }
-            *p = '\0';
-        }
+        while (!IS_END_OF_NAME(*name) && (p < buffer + sizeof(buffer) - 1))
+            *p++ = *name++;
+        *p = '\0';
         while ((*name == '\\') || (*name == '/')) name++;
     }
+
     if (!buffer[2])
     {
         buffer[2] = '\\';
         buffer[3] = '\0';
     }
-    dprintf_dosfs( stddeb, "DOSFS_GetDosTrueName: returning %s\n", buffer );
-    return buffer;
+    if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
+        CharUpper32A( buffer );
+
+    if (unicode) lstrcpynAtoW( (LPWSTR)result, buffer, len );
+    else lstrcpyn32A( result, buffer, len );
+
+    dprintf_dosfs( stddeb, "GetFullPathName: returning %s\n", buffer );
+    return strlen(buffer);
+}
+
+
+/***********************************************************************
+ *           GetFullPathName32A   (KERNEL32.272)
+ */
+DWORD GetFullPathName32A(LPCSTR name, DWORD len, LPSTR buffer, LPSTR *lastpart)
+{
+    DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer, FALSE );
+    if (ret && lastpart)
+    {
+        LPSTR p = buffer + strlen(buffer);
+        while ((p > buffer + 2) && (*p != '\\')) p--;
+        *lastpart = p + 1;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetFullPathName32W   (KERNEL32.273)
+ */
+DWORD GetFullPathName32W( LPCWSTR name, DWORD len, LPWSTR buffer,
+                          LPWSTR *lastpart )
+{
+    LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
+    DWORD ret = DOSFS_DoGetFullPathName( nameA, len, (LPSTR)buffer, TRUE );
+    HeapFree( GetProcessHeap(), 0, nameA );
+    if (ret && lastpart)
+    {
+        LPWSTR p = buffer + lstrlen32W(buffer);
+        while ((p > buffer + 2) && (*p != '\\')) p--;
+        *lastpart = p + 1;
+    }
+    return ret;
 }
 
 
@@ -885,6 +916,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     static int cur_pos = 0;
     static int drive_root = 0;
     char *p;
+    char dos_name[13];
     LPCSTR long_name, short_name;
     UINT32 flags;
     BY_HANDLE_FILE_INFORMATION info;
@@ -893,15 +925,14 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     {
         if (skip) return 0;
         entry->dwFileAttributes  = FILE_ATTRIBUTE_LABEL;
-        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftCreationTime );
-        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftLastAccessTime );
-        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftLastWriteTime );
+        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftCreationTime, 0 );
+        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftLastAccessTime, 0 );
+        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftLastWriteTime, 0 );
         entry->nFileSizeHigh     = 0;
         entry->nFileSizeLow      = 0;
         entry->dwReserved0       = 0;
         entry->dwReserved1       = 0;
-        strcpy( entry->cFileName,
-                DOSFS_ToDosDTAFormat( DRIVE_GetLabel( drive )) );
+        DOSFS_ToDosDTAFormat( DRIVE_GetLabel( drive ), entry->cFileName );
         strcpy( entry->cAlternateFileName, entry->cFileName );
         return 1;
     }
@@ -956,8 +987,11 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         if (short_mask)
         {
             if (!short_name)
-                short_name = DOSFS_Hash( long_name, TRUE,
-                                         !(flags & DRIVE_CASE_SENSITIVE) );
+            {
+                DOSFS_Hash( long_name, dos_name, TRUE,
+                            !(flags & DRIVE_CASE_SENSITIVE) );
+                short_name = dos_name;
+            }
             if (!DOSFS_MatchShort( short_mask, short_name )) continue;
         }
 
@@ -973,19 +1007,21 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 
         /* We now have a matching entry; fill the result and return */
 
-        if (!short_name)
-            short_name = DOSFS_Hash( long_name, TRUE,
-                                     !(flags & DRIVE_CASE_SENSITIVE) );
-
         entry->dwFileAttributes = info.dwFileAttributes;
         entry->ftCreationTime   = info.ftCreationTime;
         entry->ftLastAccessTime = info.ftLastAccessTime;
         entry->ftLastWriteTime  = info.ftLastWriteTime;
         entry->nFileSizeHigh    = info.nFileSizeHigh;
         entry->nFileSizeLow     = info.nFileSizeLow;
-        strcpy( entry->cAlternateFileName, DOSFS_ToDosDTAFormat(short_name) );
+
+        if (short_name)
+            DOSFS_ToDosDTAFormat( short_name, entry->cAlternateFileName );
+        else
+            DOSFS_Hash( long_name, entry->cAlternateFileName, FALSE,
+                        !(flags & DRIVE_CASE_SENSITIVE) );
+
         lstrcpyn32A( entry->cFileName, long_name, sizeof(entry->cFileName) );
-        if (!(flags & DRIVE_CASE_PRESERVING)) AnsiLower( entry->cFileName );
+        if (!(flags & DRIVE_CASE_PRESERVING)) CharLower32A( entry->cFileName );
         dprintf_dosfs( stddeb, "DOSFS_FindNext: returning %s (%s) %02lx %ld\n",
                        entry->cFileName, entry->cAlternateFileName,
                        entry->dwFileAttributes, entry->nFileSizeLow );
@@ -1004,17 +1040,17 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
  */
 HANDLE16 FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
 {
+    DOS_FULL_NAME full_name;
     HGLOBAL16 handle;
     FIND_FIRST_INFO *info;
-    LPCSTR ptr;
 
     if (!path) return 0;
-    if (!(ptr = DOSFS_GetUnixFileName( path, FALSE )))
+    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
         return INVALID_HANDLE_VALUE16;
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
         return INVALID_HANDLE_VALUE16;
     info = (FIND_FIRST_INFO *)GlobalLock16( handle );
-    info->path = HEAP_strdupA( SystemHeap, 0, ptr );
+    info->path = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
     info->mask = strrchr( info->path, '/' );
     *(info->mask++) = '\0';
     if (path[0] && (path[1] == ':')) info->drive = toupper(*path) - 'A';
@@ -1156,72 +1192,34 @@ BOOL32 FindClose32( HANDLE32 handle )
 
 
 /***********************************************************************
- *           GetShortPathName32A   (KERNEL32.271)
+ *           DOSFS_UnixTimeToFileTime
+ *
+ * Convert a Unix time to FILETIME format.
+ * The FILETIME structure is a 64-bit value representing the number of
+ * 100-nanosecond intervals since January 1, 1601.
+ * 'remainder' is the fraction of 100-ns intervals smaller than 1 second
+ * that couldn't be stored in the time_t value.
  */
-DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
+void DOSFS_UnixTimeToFileTime( time_t unix_time, FILETIME *filetime,
+                               DWORD remainder )
 {
-    LPCSTR dostruename;
-
-    dprintf_dosfs( stddeb, "GetShortPathName32A(%s,%p,%ld)\n",
-                   longpath, shortpath, shortlen );
-
-    dostruename = DOSFS_GetDosTrueName( longpath, TRUE );
-    lstrcpyn32A( shortpath, dostruename, shortlen );
-    return strlen(dostruename);
+    /* FIXME :-) */
+    filetime->dwLowDateTime  = unix_time;
+    filetime->dwHighDateTime = 0;
 }
 
 
 /***********************************************************************
- *           GetShortPathNameW   (KERNEL32.272)
+ *           DOSFS_FileTimeToUnixTime
+ *
+ * Convert a FILETIME format to Unix time.
+ * If not NULL, 'remainder' contains the fractional part of the filetime.
  */
-DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
+time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
 {
-    LPSTR longpatha = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
-    LPCSTR dostruename = DOSFS_GetDosTrueName( longpatha, TRUE );
-    HeapFree( GetProcessHeap(), 0, longpatha );
-    lstrcpynAtoW( shortpath, dostruename, shortlen );
-    return strlen(dostruename);
-}
-
-
-/***********************************************************************
- *           GetFullPathNameA   (KERNEL32.272)
- */
-DWORD GetFullPathName32A( LPCSTR fn, DWORD buflen, LPSTR buf, LPSTR *lastpart)
-{
-	dprintf_file(stddeb,"GetFullPathNameA(%s)\n",fn);
-	/* FIXME */
-        if (buf) {
-            lstrcpyn32A(buf,fn,buflen);
-            if (lastpart) {
-		*lastpart = strrchr(buf,'\\');
-		if (!*lastpart) *lastpart=buf;
-	    }
-	}
-	return strlen(fn);
-}
-
-/***********************************************************************
- *           GetFullPathName32W   (KERNEL32.273)
- */
-DWORD GetFullPathName32W(LPCWSTR fn,DWORD buflen,LPWSTR buf,LPWSTR *lastpart) {
-	LPWSTR  x;
-
-	dprintf_file(stddeb,"GetFullPathNameW(%p)\n",fn);
-	/* FIXME */
-	if (buf) {
-		lstrcpyn32W(buf,fn,buflen);
-		if (lastpart) {
-			x = buf+lstrlen32W(buf)-1;
-			while (x>=buf && *x!='\\')
-			x--;
-			if (x>=buf)
-				*lastpart=x;
-			else
-				*lastpart=buf;
-		}
-	}
-	return lstrlen32W(fn);
+    /* FIXME :-) */
+    if (remainder) *remainder = 0;
+    return filetime->dwLowDateTime;
 }
 
 
@@ -1230,8 +1228,15 @@ DWORD GetFullPathName32W(LPCWSTR fn,DWORD buflen,LPWSTR buf,LPWSTR *lastpart) {
  */
 BOOL32 DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft )
 {
-    time_t unixtime = DOSFS_DosDateTimeToUnixTime(fatdate,fattime);
-    DOSFS_UnixTimeToFileTime(unixtime,ft);
+    struct tm newtm;
+
+    newtm.tm_sec  = (fattime & 0x1f) * 2;
+    newtm.tm_min  = (fattime >> 5) & 0x3f;
+    newtm.tm_hour = (fattime >> 11);
+    newtm.tm_mday = (fatdate & 0x1f);
+    newtm.tm_mon  = ((fatdate >> 5) & 0x0f) - 1;
+    newtm.tm_year = (fatdate >> 9) + 80;
+    DOSFS_UnixTimeToFileTime( mktime( &newtm ), ft, 0 );
     return TRUE;
 }
 
@@ -1242,8 +1247,13 @@ BOOL32 DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft )
 BOOL32 FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
                               LPWORD fattime )
 {
-    time_t unixtime = DOSFS_FileTimeToUnixTime(ft);
-    DOSFS_ToDosDateTime(unixtime,fatdate,fattime);
+    time_t unixtime = DOSFS_FileTimeToUnixTime( ft, NULL );
+    struct tm *tm = localtime( &unixtime );
+    if (fattime)
+        *fattime = (tm->tm_hour << 11) + (tm->tm_min << 5) + (tm->tm_sec / 2);
+    if (fatdate)
+        *fatdate = ((tm->tm_year - 80) << 9) + ((tm->tm_mon + 1) << 5)
+                   + tm->tm_mday;
     return TRUE;
 }
 
@@ -1254,11 +1264,12 @@ BOOL32 FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
 BOOL32 LocalFileTimeToFileTime( const FILETIME *localft, LPFILETIME utcft )
 {
     struct tm *xtm;
+    DWORD remainder;
 
     /* convert from local to UTC. Perhaps not correct. FIXME */
-    xtm = gmtime((time_t*)&(localft->dwLowDateTime));
-    utcft->dwLowDateTime  = mktime(xtm);
-    utcft->dwHighDateTime = 0;
+    time_t unixtime = DOSFS_FileTimeToUnixTime( localft, &remainder );
+    xtm = gmtime( &unixtime );
+    DOSFS_UnixTimeToFileTime( mktime(xtm), utcft, remainder );
     return TRUE; 
 }
 
@@ -1269,11 +1280,12 @@ BOOL32 LocalFileTimeToFileTime( const FILETIME *localft, LPFILETIME utcft )
 BOOL32 FileTimeToLocalFileTime( const FILETIME *utcft, LPFILETIME localft )
 {
     struct tm *xtm;
+    DWORD remainder;
 
     /* convert from UTC to local. Perhaps not correct. FIXME */
-    xtm = localtime((time_t*)&(utcft->dwLowDateTime));
-    localft->dwLowDateTime  = mktime(xtm);
-    localft->dwHighDateTime = 0;
+    time_t unixtime = DOSFS_FileTimeToUnixTime( utcft, &remainder );
+    xtm = localtime( &unixtime );
+    DOSFS_UnixTimeToFileTime( mktime(xtm), localft, remainder );
     return TRUE; 
 }
 
@@ -1284,17 +1296,66 @@ BOOL32 FileTimeToLocalFileTime( const FILETIME *utcft, LPFILETIME localft )
 BOOL32 FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
 {
     struct tm *xtm;
-    time_t xtime = DOSFS_FileTimeToUnixTime(ft);
+    DWORD remainder;
+    time_t xtime = DOSFS_FileTimeToUnixTime( ft, &remainder );
     xtm = gmtime(&xtime);
-    syst->wYear      = xtm->tm_year;
-    syst->wMonth     = xtm->tm_mon;
-    syst->wDayOfWeek = xtm->tm_wday;
-    syst->wDay	     = xtm->tm_mday;
-    syst->wHour	     = xtm->tm_hour;
-    syst->wMinute    = xtm->tm_min;
-    syst->wSecond    = xtm->tm_sec;
-    syst->wMilliseconds	= 0; /* FIXME */
+    syst->wYear         = xtm->tm_year;
+    syst->wMonth        = xtm->tm_mon;
+    syst->wDayOfWeek    = xtm->tm_wday;
+    syst->wDay	        = xtm->tm_mday;
+    syst->wHour	        = xtm->tm_hour;
+    syst->wMinute       = xtm->tm_min;
+    syst->wSecond       = xtm->tm_sec;
+    syst->wMilliseconds	= remainder / 10000;
     return TRUE; 
+}
+
+/***********************************************************************
+ *           QueryDosDeviceA   (KERNEL32.413)
+ *
+ * returns array of strings terminated by \0, terminated by \0
+ */
+DWORD
+QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
+{
+    LPSTR s;
+    char  buffer[200];
+
+    dprintf_dosfs(stddeb,"QueryDosDevice(%s,...)\n",devname?devname:"<null>");
+    if (!devname) {
+	/* return known MSDOS devices */
+	lstrcpy32A(buffer,"CON COM1 COM2 LPT1 NUL ");
+	while ((s=strchr(buffer,' ')))
+		*s='\0';
+
+	lstrcpyn32A(target,buffer,bufsize);
+	return strlen(buffer);
+    }
+    lstrcpy32A(buffer,"\\DEV\\");
+    lstrcat32A(buffer,devname);
+    if (s=strchr(buffer,':'))
+    	*s='\0';
+    lstrcpyn32A(target,buffer,bufsize);
+    return strlen(buffer);
+}
+
+
+/***********************************************************************
+ *           QueryDosDeviceW   (KERNEL32.414)
+ *
+ * returns array of strings terminated by \0, terminated by \0
+ */
+DWORD
+QueryDosDevice32W(LPCWSTR devname,LPWSTR target,DWORD bufsize)
+{
+    LPSTR devnameA = devname?HEAP_strdupWtoA(GetProcessHeap(),0,devname):NULL;
+    LPSTR targetA = (LPSTR)HEAP_xalloc(GetProcessHeap(),0,bufsize);
+    DWORD ret = QueryDosDevice32A(devnameA,targetA,bufsize);
+
+    lstrcpynAtoW(target,targetA,bufsize);
+    if (devnameA) HeapFree(GetProcessHeap(),0,devnameA);
+    if (targetA) HeapFree(GetProcessHeap(),0,targetA);
+    return ret;
 }
 
 
@@ -1312,6 +1373,6 @@ BOOL32 SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     xtm.tm_hour	= syst->wHour;
     xtm.tm_min	= syst->wMinute;
     xtm.tm_sec	= syst->wSecond;
-    DOSFS_UnixTimeToFileTime(mktime(&xtm),ft);
+    DOSFS_UnixTimeToFileTime( mktime(&xtm), ft, syst->wMilliseconds * 10000 );
     return TRUE; 
 }
