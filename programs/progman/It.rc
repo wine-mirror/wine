@@ -54,7 +54,7 @@
 
 #define MENU_INFO                    "&Informazioni su..."
 #define MENU_INFO_LICENSE            "&Licenza"
-#define MENU_INFO_NO_WARRANTY        "&NESSUNA GARANZIA"
+#define MENU_INFO_NO_WARRANTY        "&Garanzia"
 #define MENU_INFO_ABOUT_WINE         "&Informazioni su WINE"
 
 /* Dialogs */
@@ -124,7 +124,7 @@ Provare ad aprirlo in futuro?"
 
 #define STRING_NO_HOT_KEY                 "Nessuno"
 
-#define STRING_ALL_FILES                  "Tutti i files (*.*)"
+#define STRING_ALL_FILES                  "Tutti i file (*.*)"
 #define STRING_PROGRAMS                   "Programmi"
 #define STRING_LIBRARIES_DLL              "Librerie (*.dll)"
 #define STRING_SYMBOL_FILES               "File icona"
