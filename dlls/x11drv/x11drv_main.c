@@ -33,6 +33,9 @@
 #endif
 #include <X11/cursorfont.h>
 #include "ts_xlib.h"
+#ifdef HAVE_XKB
+#include <X11/XKBlib.h>
+#endif
 
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -59,6 +62,7 @@ unsigned int screen_depth;
 Window root_window;
 DWORD desktop_tid = 0;
 int dxgrab, usedga, usexvidmode;
+int use_xkb = 1;
 int use_take_focus = 1;
 int managed_mode = 1;
 int client_side_with_core = 1;
@@ -318,6 +322,20 @@ static void process_attach(void)
     }
     else screen_depth = DefaultDepthOfScreen( screen );
 
+    /* check for Xkb extension */
+#ifdef HAVE_XKB
+    if (use_xkb)
+    {
+        int xkb_opcode, xkb_event, xkb_error;
+        int xkb_major = XkbMajorVersion, xkb_minor = XkbMinorVersion;
+
+        use_xkb = XkbQueryExtension(display, &xkb_opcode, &xkb_event, &xkb_error,
+                                    &xkb_major, &xkb_minor);
+        if (use_xkb) /* we have XKB, approximate Windows behaviour */
+            XkbSetDetectableAutoRepeat(display, True, NULL);
+    }
+#endif
+
     /* Initialize OpenGL */
     X11DRV_OpenGL_Init(display);
 
@@ -426,6 +444,10 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
 
     if (!(data->xim = XOpenIM( data->display, NULL, NULL, NULL )))
         WARN("Can't open input method\n");
+
+#ifdef HAVE_XKB
+    if (use_xkb) XkbSetDetectableAutoRepeat( data->display, True, NULL );
+#endif
 
     if (synchronous) XSynchronize( data->display, True );
     wine_tsx11_unlock();

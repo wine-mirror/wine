@@ -358,6 +358,7 @@ extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;
 extern unsigned int text_caps;
+extern int use_xkb;
 extern int use_take_focus;
 extern int managed_mode;
 

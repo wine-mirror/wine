@@ -58,9 +58,6 @@ WORD keyc2vkey[256], keyc2scan[256];
 static LPBYTE pKeyStateTable;
 static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
 static int kcControl, kcAlt, kcShift, kcNumLock, kcCapsLock; /* keycodes */
-#ifdef HAVE_XKB
-static int is_xkb, xkb_opcode, xkb_event, xkb_error;
-#endif
 
 static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
@@ -1124,7 +1121,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	if ((keysym < 0x8000) && (keysym != ' '))
         {
 #ifdef HAVE_XKB
-            if (!is_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
+            if (!use_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
 #endif
             {
                 TRACE("XKB could not translate keysym %ld\n", keysym);
@@ -1200,9 +1197,6 @@ X11DRV_KEYBOARD_DetectLayout (void)
  */
 void X11DRV_InitKeyboard( BYTE *key_state_table )
 {
-#ifdef HAVE_XKB
-    int xkb_major = XkbMajorVersion, xkb_minor = XkbMinorVersion;
-#endif
     Display *display = thread_display();
     KeySym *ksp;
     XModifierKeymap *mmp;
@@ -1217,15 +1211,6 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
     pKeyStateTable = key_state_table;
 
     wine_tsx11_lock();
-#ifdef HAVE_XKB
-    is_xkb = XkbQueryExtension(display,
-                               &xkb_opcode, &xkb_event, &xkb_error,
-                               &xkb_major, &xkb_minor);
-    if (is_xkb) {
-        /* we have XKB, approximate Windows behaviour */
-        XkbSetDetectableAutoRepeat(display, True, NULL);
-    }
-#endif
     XDisplayKeycodes(display, &min_keycode, &max_keycode);
     ksp = XGetKeyboardMapping(display, min_keycode,
                               max_keycode + 1 - min_keycode, &keysyms_per_keycode);
@@ -1291,7 +1276,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 		if ((keysym<0x8000) && (keysym!=' '))
                 {
 #ifdef HAVE_XKB
-                    if (!is_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
+                    if (!use_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
 #endif
                     {
                         /* FIXME: query what keysym is used as Mode_switch, fill XKeyEvent
