@@ -787,7 +787,7 @@ static HLOCAL16 LOCAL_FindFreeBlock( HANDLE16 ds, WORD size )
 	if (arena == pArena->free_next) break;
         if (pArena->size >= size) return arena;
     }
-    ERR(local, "not enough space\n" );
+    TRACE(local, "not enough space\n" );
     LOCAL_PrintHeap(ds);
     return 0;
 }
@@ -830,13 +830,13 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
     }
     if (arena == 0) {
         if (ds == GDI_HeapSel) { 
-	    WARN(local, "not enough space in GDI local heap "
+	    ERR(local, "not enough space in GDI local heap "
 			 "(%04x) for %d bytes\n", ds, size );
 	} else if (ds == USER_HeapSel) {
-	    WARN(local, "not enough space in USER local heap "
+	    ERR(local, "not enough space in USER local heap "
 			 "(%04x) for %d bytes\n", ds, size );
 	} else {
-	    WARN(local, "not enough space in local heap "
+	    ERR(local, "not enough space in local heap "
 			 "%04x for %d bytes\n", ds, size );
 	}
 	return 0;
