@@ -762,6 +762,8 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpItem->cxy = phdi->cxy;
 
     if (phdi->mask & HDI_TEXT) {
+	if (!phdi->pszText) /* null pointer check */
+		phdi->pszText = "";
 	if (phdi->pszText != LPSTR_TEXTCALLBACKA) {
 	    len = lstrlenA (phdi->pszText);
 	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
@@ -846,6 +848,8 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	lpItem->cxy = phdi->cxy;
 
     if (phdi->mask & HDI_TEXT) {
+	if (!phdi->pszText) /* null pointer check */
+		phdi->pszText = "";
 	if (phdi->pszText != LPSTR_TEXTCALLBACKW) {
 	    len = lstrlenW (phdi->pszText);
 	    lpItem->pszText = COMCTL32_Alloc ((len+1)*sizeof(WCHAR));
