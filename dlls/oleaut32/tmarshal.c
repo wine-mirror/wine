@@ -1185,6 +1185,13 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 	return E_FAIL;
     }
 
+    if (!tpinfo->chanbuf)
+    {
+        WARN("Tried to use disconnected proxy\n");
+        LeaveCriticalSection(&tpinfo->crit);
+        return RPC_E_DISCONNECTED;
+    }
+
     if (relaydeb) {
        TRACE_(olerelay)("->");
 	if (iname)
