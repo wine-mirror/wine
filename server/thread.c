@@ -82,6 +82,7 @@ static const struct object_ops thread_ops =
     destroy_thread
 };
 
+static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
 static struct thread *first_thread;
 
 /* allocate the buffer for the communication with the client */
@@ -292,7 +293,7 @@ void wait4_thread( struct thread *thread, int signal )
 static int attach_thread( struct thread *thread )
 {
     /* this may fail if the client is already being debugged */
-    if (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1) return 0;
+    if (!use_ptrace || (ptrace( PTRACE_ATTACH, thread->unix_pid, 0, 0 ) == -1)) return 0;
     if (debug_level) fprintf( stderr, "ptrace: attached to pid %d\n", thread->unix_pid );
     thread->attached = 1;
     wait4_thread( thread, SIGSTOP );
