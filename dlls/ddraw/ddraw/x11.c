@@ -1122,14 +1122,29 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 }
 
 HRESULT WINAPI Xlib_IDirectDraw2Impl_GetFourCCCodes(
-    LPDIRECTDRAW2 iface,LPDWORD x,LPDWORD y
+    LPDIRECTDRAW2 iface,LPDWORD lpNumCodes, LPDWORD lpCodes
 ) {
 #ifdef HAVE_XVIDEO
   ICOM_THIS(IDirectDraw2Impl,iface);
-  FIXME("(%p,%p,%p), stub\n",This,x,y);
+  DDPRIVATE(This);
+  XvImageFormatValues *fo;
+  int array_size = *lpNumCodes;
+
+  TRACE("(%p,%p,%p) - %d slots available\n",This, lpNumCodes, lpCodes, *lpNumCodes);
+  
+  fo = TSXvListImageFormats(display, ddpriv->port_id, lpNumCodes);
+  if (fo == NULL) *lpNumCodes = 0; /* I am not sure if X is clean in this case... */
+  if (lpCodes != NULL) {
+    /* Fill in the FourCC table */
+    int i;
+    for (i = 0; i < array_size; i++) lpCodes[i] = fo[i].id;
+  }
+  if (fo)
+    TSXFree(fo);
+  
   return DD_OK;
 #else
-  return IDirectDraw2Impl_GetFourCCCodes(iface, x, y);
+  return IDirectDraw2Impl_GetFourCCCodes(iface, lpNumCodes, lpCodes);
 #endif
 }
 
