@@ -156,17 +156,26 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
  * of the size of the "real" control window.
  */
 static void CBForceDummyResize(
-  HWND        hwnd)
+  LPHEADCOMBO lphc)
 {
   RECT windowRect;
 	      
-  GetWindowRect(hwnd, &windowRect);
-  
-  SetWindowPos( hwnd,
+  GetWindowRect(CB_HWND(lphc), &windowRect);
+
+  /*
+   * We have to be careful, resizing a combobox also has the meaning that the
+   * dropped rect will be resized. In this case, we want to trigger a resize
+   * to recalculate layout but we don't want to change the dropped rectangle
+   * So, we add the size of the dropped rectangle to the size of the control. 
+   * this will cancel-out in the processing of the WM_WINDOWPOSCHANGING 
+   * message.
+   */  
+  SetWindowPos( CB_HWND(lphc),
 		(HWND)NULL,
 		0, 0, 
-		windowRect.right - windowRect.left,
-		windowRect.bottom- windowRect.top + 1, /* dummy value adjusted later */
+		windowRect.right  - windowRect.left,
+		windowRect.bottom - windowRect.top + 
+		  lphc->droppedRect.bottom - lphc->droppedRect.top,
 		SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
 }
 
@@ -411,10 +420,28 @@ static LRESULT COMBO_WindowPosChanging(
    * always the same height. We have to make sure they are not resized
    * to another value.
    */
-  if ( CB_GETTYPE(lphc) != CBS_SIMPLE )
+  if ( ( CB_GETTYPE(lphc) != CBS_SIMPLE ) && 
+       ((posChanging->flags & SWP_NOSIZE) == 0) )
   {
-    posChanging->cy = CBGetTextAreaHeight(hwnd,lphc) +
+    int newComboHeight;
+
+    newComboHeight = CBGetTextAreaHeight(hwnd,lphc) +
                       2*COMBO_YBORDERSIZE();
+
+    /*
+     * Resizing a combobox has another side effect, it resizes the dropped
+     * rectangle as well. However, it does it only if the new height for the
+     * combobox is different than the height it should have. In other words,
+     * if the application resizing the combobox only had the intention to resize
+     * the actual control, for example, to do the layout of a dialog that is
+     * resized, the height of the dropdown is not changed.
+     */
+    if (posChanging->cy != newComboHeight)
+    {
+      lphc->droppedRect.bottom = lphc->droppedRect.top + posChanging->cy - newComboHeight;
+
+      posChanging->cy = newComboHeight;
+    }
   }
 
   return 0;
@@ -567,7 +594,7 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 	     */
 	    if( CB_GETTYPE(lphc) != CBS_SIMPLE )
 	    {
-	      CBForceDummyResize(CB_HWND(lphc));
+	      CBForceDummyResize(lphc);
 	    }
 	    
 	    TRACE(combo,"init done\n");
@@ -1054,8 +1081,9 @@ static void CBDropDown( LPHEADCOMBO lphc )
      rect.left += COMBO_EDITBUTTONSPACE();
 
    SetWindowPos( lphc->hWndLBox, HWND_TOP, rect.left, rect.bottom, 
-		 rect.right - rect.left, rect.bottom - rect.top, 
-		 SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREDRAW);
+		 lphc->droppedRect.right - lphc->droppedRect.left,
+		 lphc->droppedRect.bottom - lphc->droppedRect.top, 
+		 SWP_NOACTIVATE | SWP_NOREDRAW);
 
    if( !(lphc->wState & CBF_NOREDRAW) )
      RedrawWindow( lphc->self->hwndSelf, NULL, 0, RDW_INVALIDATE | 
@@ -1477,7 +1505,7 @@ static void COMBO_Font( LPHEADCOMBO lphc, HFONT hFont, BOOL bRedraw )
   }
   else
   {
-    CBForceDummyResize(CB_HWND(lphc));
+    CBForceDummyResize(lphc);
   }
 }
 
@@ -1510,7 +1538,7 @@ static LRESULT COMBO_SetItemHeight( LPHEADCOMBO lphc, INT index, INT height )
 	 }
 	 else
 	 {
-	   CBForceDummyResize(CB_HWND(lphc));
+	   CBForceDummyResize(lphc);
 	 }
 	 	 
 	   lRet = height;
