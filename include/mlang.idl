@@ -537,6 +537,17 @@ interface IMultiLanguage2 : IUnknown
         [in] DWORD dwfIODControl);
 };
 
+[
+    uuid(275C23E2-3747-11d0-9FEA-00AA003f8646)
+]
+coclass CMultiLanguage
+{
+    [default] interface IMultiLanguage;
+    interface IMLangCodePages;
+    interface IMLangFontLink;
+    /* interface IMLangLineBreakConsole; */
+};
+
 cpp_quote("STDAPI LcidToRfc1766A(LCID, LPSTR, INT);")
 cpp_quote("STDAPI LcidToRfc1766W(LCID, LPWSTR, INT);")
 cpp_quote("#define LcidToRfc1766 WINELIB_NAME_AW(LcidToRfc1766)")
@@ -550,7 +561,6 @@ cpp_quote("STDAPI ConvertINetString(LPDWORD, DWORD, DWORD, LPCSTR, LPINT, LPSTR,
 cpp_quote("STDAPI ConvertINetMultiByteToUnicode(LPDWORD, DWORD, LPCSTR, LPINT, LPWSTR, LPINT);")
 cpp_quote("STDAPI ConvertINetUnicodeToMultiByte(LPDWORD, DWORD, LPCWSTR, LPINT, LPSTR, LPINT);")
 
-cpp_quote("DEFINE_GUID(CLSID_CMultiLanguage, 0x275c23e2, 0x3747, 0x11d0, 0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46);")
 cpp_quote("DEFINE_GUID(IID_IMLangCodePages, 0x359F3443,0xBD4A,0x11D0,0xB1,0x88,0x00,0xAA,0x00,0x38,0xC9,0x69);")
 cpp_quote("DEFINE_GUID(IID_IMLangFontLink, 0x359F3441,0xBD4A,0x11D0,0xB1,0x88,0x00,0xAA,0x00,0x38,0xC9,0x69);")
 cpp_quote("DEFINE_GUID(IID_IMultiLanguage2, 0xDCCFC164,0x2B38,0x11d2,0xB7,0xEC,0x00,0xC0,0x4F,0x8F,0x5D,0x9A);")
