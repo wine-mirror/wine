@@ -816,7 +816,7 @@ static void* check_buffer_se(int size)
         HeapFree( GetProcessHeap(), 0, se_buffer );
     }
     se_buffer = HeapAlloc( GetProcessHeap(), 0, (se_len = size) );
-    se_buffer_seg = MapLS( he_buffer );
+    se_buffer_seg = MapLS( se_buffer );
     return se_buffer;
 }
 
