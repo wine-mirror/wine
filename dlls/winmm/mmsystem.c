@@ -549,10 +549,11 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 	goto errCleanUp;
     }
 
+    s.dwEventCount = 1L; /* for first buffer */
+
     do {
 	index = 0;
 	left = mmckInfo.cksize;
-	s.dwEventCount = 1L; /* for first buffer */
 
 	mmioSeek(hmmio, mmckInfo.dwDataOffset, SEEK_SET);
 	while (left)
