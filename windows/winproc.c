@@ -260,7 +260,7 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
 
     /* Check for a linear pointer */
 
-    if (HeapValidate( WinProcHeap, 0, (LPVOID)handle ))
+    if (handle && HeapValidate( WinProcHeap, 0, (LPVOID)handle ))
     {
         ptr = (BYTE *)handle;
         /* First check if it is the jmp address */
