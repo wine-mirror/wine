@@ -96,6 +96,20 @@ extern CRITICAL_SECTION MSVCRT_file_cs;
 #define LOCK_FILES     EnterCriticalSection(&MSVCRT_file_cs)
 #define UNLOCK_FILES   LeaveCriticalSection(&MSVCRT_file_cs)
 
+static void msvcrt_cp_from_stati64(const struct _stati64 *bufi64, struct _stat *buf)
+{
+    buf->st_dev   = bufi64->st_dev;
+    buf->st_ino   = bufi64->st_ino;
+    buf->st_mode  = bufi64->st_mode;
+    buf->st_nlink = bufi64->st_nlink;
+    buf->st_uid   = bufi64->st_uid;
+    buf->st_gid   = bufi64->st_gid;
+    buf->st_rdev  = bufi64->st_rdev;
+    buf->st_size  = bufi64->st_size;
+    buf->st_atime = bufi64->st_atime;
+    buf->st_mtime = bufi64->st_mtime;
+    buf->st_ctime = bufi64->st_ctime;
+}
 
 /* INTERNAL: Get the HANDLE for a fd */
 static HANDLE msvcrt_fdtoh(int fd)
@@ -670,9 +684,9 @@ int _flushall(void)
 }
 
 /*********************************************************************
- *		_fstat (MSVCRT.@)
+ *		_fstati64 (MSVCRT.@)
  */
-int MSVCRT__fstat(int fd, struct _stat* buf)
+int _fstati64(int fd, struct _stati64* buf)
 {
   DWORD dw;
   BY_HANDLE_FILE_INFORMATION hfi;
@@ -690,7 +704,7 @@ int MSVCRT__fstat(int fd, struct _stat* buf)
   }
 
   memset(&hfi, 0, sizeof(hfi));
-  memset(buf, 0, sizeof(struct _stat));
+  memset(buf, 0, sizeof(struct _stati64));
   if (!GetFileInformationByHandle(hand, &hfi))
   {
     WARN(":failed-last error (%ld)\n",GetLastError());
@@ -699,12 +713,25 @@ int MSVCRT__fstat(int fd, struct _stat* buf)
   }
   FIXME(":dwFileAttributes = %ld, mode set to 0\n",hfi.dwFileAttributes);
   buf->st_nlink = hfi.nNumberOfLinks;
-  buf->st_size  = hfi.nFileSizeLow;
+  buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
   buf->st_atime = dw;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
   return 0;
+}
+
+/*********************************************************************
+ *		_fstat (MSVCRT.@)
+ */
+int MSVCRT__fstat(int fd, struct _stat* buf)
+{ int ret;
+  struct _stati64 bufi64;
+
+  ret = _fstati64(fd, &bufi64);
+  if (!ret)
+      msvcrt_cp_from_stati64(&bufi64, buf);
+  return ret;
 }
 
 /*********************************************************************
@@ -1135,9 +1162,9 @@ int _setmode(int fd,int mode)
 }
 
 /*********************************************************************
- *		_stat (MSVCRT.@)
+ *		_stati64 (MSVCRT.@)
  */
-int MSVCRT__stat(const char* path, struct _stat * buf)
+int _stati64(const char* path, struct _stati64 * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;
@@ -1153,7 +1180,7 @@ int MSVCRT__stat(const char* path, struct _stat * buf)
       return -1;
   }
 
-  memset(buf,0,sizeof(struct _stat));
+  memset(buf,0,sizeof(struct _stati64));
 
   /* FIXME: rdev isnt drive num,despite what the docs say-what is it?
      Bon 011120: This FIXME seems incorrect
@@ -1189,14 +1216,28 @@ int MSVCRT__stat(const char* path, struct _stat * buf)
 
   buf->st_mode  = mode;
   buf->st_nlink = 1;
-  buf->st_size  = hfi.nFileSizeLow;
+  buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
   buf->st_atime = dw;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
-  TRACE("\n%d %d %d %ld %ld %ld\n", buf->st_mode,buf->st_nlink,buf->st_size,
-    buf->st_atime,buf->st_mtime, buf->st_ctime);
+  TRACE("%d %d 0x%08lx%08lx %ld %ld %ld\n", buf->st_mode,buf->st_nlink,
+        (long)(buf->st_size >> 32),(long)buf->st_size,
+        buf->st_atime,buf->st_mtime, buf->st_ctime);
   return 0;
+}
+
+/*********************************************************************
+ *		_stat (MSVCRT.@)
+ */
+int MSVCRT__stat(const char* path, struct _stat * buf)
+{ int ret;
+  struct _stati64 bufi64;
+
+  ret = _stati64( path, &bufi64);
+  if (!ret)
+      msvcrt_cp_from_stati64(&bufi64, buf);
+  return ret;
 }
 
 /*********************************************************************

@@ -241,7 +241,7 @@
 @ cdecl _fputwchar(long) _fputwchar
 @ cdecl _fsopen(str str long) _fsopen
 @ cdecl _fstat(long ptr) MSVCRT__fstat
-@ stub _fstati64 #(long ptr)
+@ cdecl _fstati64(long ptr) _fstati64
 @ cdecl _ftime(ptr) _ftime
 @ forward _ftol ntdll._ftol
 @ cdecl _fullpath(ptr str long) _fullpath
@@ -446,7 +446,7 @@
 @ cdecl _spawnvpe(long str ptr ptr) _spawnvpe
 @ forward _splitpath ntdll._splitpath
 @ cdecl _stat(str ptr) MSVCRT__stat
-@ stub _stati64 #(str ptr)
+@ cdecl _stati64(str ptr) _stati64
 @ cdecl _statusfp() _statusfp
 @ cdecl _strcmpi(str str) strcasecmp
 @ cdecl _strdate(str) _strdate
