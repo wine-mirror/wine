@@ -25,9 +25,6 @@
  *     These functions are used by EXPLORER.EXE, IEXPLORE.EXE and
  *     COMCTL32.DLL (internally).
  *
- * TODO
- *     - Add more functions.
- *     - Write some documentation.
  */
 #include "config.h"
 #include "wine/port.h"
@@ -2539,44 +2536,4 @@ DSA_DestroyCallback (HDSA hdsa, PFNDSAENUMCALLBACK enumProc, LPVOID lParam)
 
     DSA_EnumCallback (hdsa, enumProc, lParam);
     DSA_Destroy (hdsa);
-}
-
-
-/**************************************************************************
- * @ [COMCTL32.415]
- *
- * FIXME: What's this supposed to do?
- *        Parameter 1 is an HWND, you're on your own for the rest.
- */
-
-BOOL WINAPI DrawTextWrap( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
-{
-
-   FIXME("(%p, %lx, %lx, %lx, %lx): stub!\n", hwnd, b, c, d, e);
-
-   return TRUE;
-}
-
-/**************************************************************************
- * @ [COMCTL32.417]
- *
- */
-BOOL WINAPI ExtTextOutWrap(HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
-                         LPCWSTR str, UINT count, const INT *lpDx)
-{
-    return ExtTextOutW(hdc, x, y, flags, lprect, str, count, lpDx);
-}
-
-/**************************************************************************
- * @ [COMCTL32.419]
- *
- * FIXME: What's this supposed to do?
- */
-
-BOOL WINAPI GetTextExtentPointWrap( DWORD a, DWORD b, DWORD c, DWORD d)
-{
-
-   FIXME("(%lx, %lx, %lx, %lx): stub!\n", a, b, c, d);
-
-   return TRUE;
 }
