@@ -33,7 +33,7 @@ DLLFILES = \
 	stress/libstress.@LIBEXT@ \
 	tapi32/libtapi32.@LIBEXT@ \
 	version/libversion.@LIBEXT@ \
-	win32s/libwin32s.@LIBEXT@ \
+	win32s/libw32skrnl.@LIBEXT@ \
 	win87em/libwin87em.@LIBEXT@ \
 	windebug/libwindebug.@LIBEXT@ \
 	wing/libwing.@LIBEXT@ \
@@ -207,9 +207,9 @@ libversion.@LIBEXT@: version/libversion.@LIBEXT@
 	$(RM) $@
 	$(LN_S) version/libversion.@LIBEXT@ $@
 
-libwin32s.@LIBEXT@: win32s/libwin32s.@LIBEXT@
+libw32skrnl.@LIBEXT@: win32s/libw32skrnl.@LIBEXT@
 	$(RM) $@
-	$(LN_S) win32s/libwin32s.@LIBEXT@ $@
+	$(LN_S) win32s/libw32skrnl.@LIBEXT@ $@
 
 libwin87em.@LIBEXT@: win87em/libwin87em.@LIBEXT@
 	$(RM) $@

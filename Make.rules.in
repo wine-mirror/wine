@@ -121,7 +121,7 @@ DLLS = \
 	stress \
 	tapi32 \
 	version \
-	win32s \
+	w32skrnl \
 	win87em \
 	windebug \
 	wineoss.drv \

@@ -1,4 +1,4 @@
 *.spec.c
 *.spec.glue.s
 Makefile
-libwin32s.so.1.0
+libw32skrnl.so.1.0

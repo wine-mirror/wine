@@ -4,13 +4,13 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
-MODULE    = win32s
+MODULE    = w32skrnl
 SOVERSION = 1.0
 
 SPEC_SRCS = w32sys.spec win32s16.spec w32skrnl.spec
 
 C_SRCS = \
-	w32skrnl.c \
+	w32skernel.c \
 	w32sys.c \
 	win32s16.c
 
