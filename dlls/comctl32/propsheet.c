@@ -1550,13 +1550,14 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   if (hpage != 0)
   {
     index = PROPSHEET_GetPageIndex(hpage, psInfo);
+  }
 
-    if (index == -1)
+  /* Make shure that index is within range */
+  if (index < 0 || index >= psInfo->nPages)
     {
       TRACE("Could not find page to remove!\n");
       return FALSE;
     }
-  }
 
   TRACE("total pages %d removing page %d active page %d\n",
         psInfo->nPages, index, psInfo->active_page);
@@ -1594,6 +1595,12 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   if (index < psInfo->active_page)
     psInfo->active_page--;
 
+  /* Destroy page dialog window.
+   * If it's last page in modal dialog, it has been destroyed by EndDialog
+   */
+  if (psInfo->isModeless || psInfo->nPages > 1)
+     DestroyWindow(psInfo->proppage[index].hwndPage);
+  
   /* Remove the tab */
   SendMessageA(hwndTabControl, TCM_DELETEITEM, index, 0);
 
