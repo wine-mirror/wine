@@ -156,6 +156,8 @@ static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemas
 }
 
 
+typedef LONGLONG WINAPI (*LONGLONG_FARPROC)();
+
 /***********************************************************************
  *           RELAY_CallFrom32
  *
@@ -234,7 +236,7 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
     }
     else  /* stdcall */
     {
-        LONGLONG (WINAPI *func)() = relay->orig;
+        LONGLONG_FARPROC func = relay->orig;
         switch(nb_args)
         {
         case 0: ret = func(); break;
