@@ -9,6 +9,12 @@
 #ifndef __WINE_TSXSHM_H
 #define __WINE_TSXSHM_H
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+#ifdef HAVE_LIBXXSHM
+
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
 
@@ -21,5 +27,9 @@ extern Status TSXShmPutImage(Display *, Drawable, GC, XImage *, int, int, int, i
 extern Status TSXShmGetImage(Display *, Drawable, XImage *, int, int, unsigned long);
 extern XImage * TSXShmCreateImage(Display *, Visual *, unsigned int, int, char *, XShmSegmentInfo *, unsigned int, unsigned int);
 extern Pixmap TSXShmCreatePixmap(Display *, Drawable, char *, XShmSegmentInfo *, unsigned int, unsigned int, unsigned int);
+
+#endif /* defined(HAVE_LIBXXSHM) */
+
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TSXSHM_H */

@@ -4,11 +4,16 @@
  * DO NOT EDIT!
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
-#include "x11drv.h"
 #include "debug.h"
+#include "x11drv.h"
 
 XClassHint * TSXAllocClassHint(void)
 {
@@ -369,3 +374,5 @@ XContext TSXUniqueContext(void)
   return r;
 }
 
+
+#endif /* !defined(X_DISPLAY_MISSING) */

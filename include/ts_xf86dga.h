@@ -9,6 +9,12 @@
 #ifndef __WINE_TSXF86DGA_H
 #define __WINE_TSXF86DGA_H
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+#ifdef HAVE_LIBXXF86DGA
+
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
 
@@ -21,5 +27,9 @@ extern Status TSXF86DGASetViewPort(Display*,int,int,int);
 extern Status TSXF86DGAInstallColormap(Display*,int,Colormap);
 extern Status TSXF86DGAQueryDirectVideo(Display*,int,int*);
 extern Status TSXF86DGAViewPortChanged(Display*,int,int);
+
+#endif /* defined(HAVE_LIBXXF86DGA) */
+
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TSXF86DGA_H */

@@ -9,6 +9,11 @@
 #ifndef __WINE_TSXRESOURCE_H
 #define __WINE_TSXRESOURCE_H
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 
@@ -18,5 +23,8 @@ extern XrmDatabase  TSXrmGetFileDatabase(const  char*);
 extern XrmDatabase  TSXrmGetStringDatabase(const  char*);
 extern void  TSXrmMergeDatabases(XrmDatabase, XrmDatabase*);
 extern void  TSXrmParseCommand(XrmDatabase*, XrmOptionDescList, int, const  char*, int*, char**);
+
+
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TSXRESOURCE_H */

@@ -4,10 +4,15 @@
  * DO NOT EDIT!
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
-#include "x11drv.h"
 #include "debug.h"
+#include "x11drv.h"
 
 XrmQuark  TSXrmUniqueQuark(void)
 {
@@ -71,3 +76,5 @@ void  TSXrmParseCommand(XrmDatabase* a0, XrmOptionDescList a1, int a2, const  ch
   TRACE(x11, "Ret XrmParseCommand\n");
 }
 
+
+#endif /* !defined(X_DISPLAY_MISSING) */

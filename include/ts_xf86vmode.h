@@ -9,6 +9,14 @@
 #ifndef __WINE_TSXF86VMODE_H
 #define __WINE_TSXF86VMODE_H
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+#include "wintypes.h"
+#ifdef HAVE_LIBXXF86VM
+#define XMD_H
+
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86vmode.h>
 
@@ -26,5 +34,9 @@ extern Bool TSXF86VidModeLockModeSwitch(Display*,int,int);
 extern Bool TSXF86VidModeGetMonitor(Display*,int,XF86VidModeMonitor*);
 extern Bool TSXF86VidModeGetViewPort(Display*,int,int*,int*);
 extern Bool TSXF86VidModeSetViewPort(Display*,int,int,int);
+
+#endif /* defined(HAVE_LIBXXF86VM) */
+
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TSXF86VMODE_H */

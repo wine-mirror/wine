@@ -4,9 +4,14 @@
  * DO NOT EDIT!
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+
 #include <X11/Xlib.h>
-#include "x11drv.h"
 #include "debug.h"
+#include "x11drv.h"
 
 XFontStruct * TSXLoadQueryFont(Display* a0, const  char* a1)
 {
@@ -1293,3 +1298,5 @@ void TS_XInitImageFuncPtrs(XImage *a0)
   TRACE(x11, "Ret _XInitImageFuncPtrs\n");
 }
 
+
+#endif /* !defined(X_DISPLAY_MISSING) */

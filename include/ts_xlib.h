@@ -9,6 +9,11 @@
 #ifndef __WINE_TSXLIB_H
 #define __WINE_TSXLIB_H
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+
 #include <X11/Xlib.h>
 
 extern XFontStruct * TSXLoadQueryFont(Display*, const  char*);
@@ -128,5 +133,8 @@ extern int  TSXWarpPointer(Display*, Window, Window, int, int, unsigned int, uns
 extern XIM  TSXOpenIM(Display*, struct _XrmHashBucketRec*, char*, char*);
 extern int (*TSXSynchronize(Display *, Bool))(Display *);
 extern void TS_XInitImageFuncPtrs(XImage *);
+
+
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TSXLIB_H */

@@ -3,13 +3,17 @@
  * This file was generated automatically by tools/make_X11wrappers
  * DO NOT EDIT!
  */
+
 #include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
 #ifdef HAVE_LIBXXF86DGA
 
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
-#include "x11drv.h"
 #include "debug.h"
+#include "x11drv.h"
 
 Bool TSXF86DGAQueryVersion(Display*a0,int*a1,int*a2)
 {
@@ -109,4 +113,7 @@ Status TSXF86DGAViewPortChanged(Display*a0,int a1,int a2)
   TRACE(x11, "Ret XF86DGAViewPortChanged\n");
   return r;
 }
-#endif
+
+#endif /* defined(HAVE_LIBXXF86DGA) */
+
+#endif /* !defined(X_DISPLAY_MISSING) */

@@ -9,6 +9,11 @@
 #ifndef __WINE_TSXUTIL_H
 #define __WINE_TSXUTIL_H
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
@@ -46,5 +51,8 @@ extern int TSXDestroyImage(struct _XImage *);
 extern struct _XImage * TSXSubImage(struct _XImage *, int, int, unsigned int, unsigned int);
 extern int TSXAddPixel(struct _XImage *, long);
 extern XContext TSXUniqueContext(void);
+
+
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #endif /* __WINE_TSXUTIL_H */

@@ -4,10 +4,16 @@
  * DO NOT EDIT!
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+#ifdef HAVE_LIBXXSHM
+
 #include <X11/Xlib.h>
 #include <X11/extensions/XShm.h>
-#include "x11drv.h"
 #include "debug.h"
+#include "x11drv.h"
 
 Bool TSXShmQueryExtension(Display *a0)
 {
@@ -108,3 +114,6 @@ Pixmap TSXShmCreatePixmap(Display *a0, Drawable a1, char *a2, XShmSegmentInfo *a
   return r;
 }
 
+#endif /* defined(HAVE_LIBXXSHM) */
+
+#endif /* !defined(X_DISPLAY_MISSING) */

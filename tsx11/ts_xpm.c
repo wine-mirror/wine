@@ -4,9 +4,15 @@
  * DO NOT EDIT!
  */
 
+#include "config.h"
+
+#ifndef X_DISPLAY_MISSING
+
+#ifdef HAVE_LIBXXPM
+
 #include <X11/xpm.h>
-#include "x11drv.h"
 #include "debug.h"
+#include "x11drv.h"
 
 int TSXpmCreatePixmapFromData(Display *a0, Drawable a1, char **a2, Pixmap *a3, Pixmap *a4, XpmAttributes *a5)
 {
@@ -30,3 +36,6 @@ int TSXpmAttributesSize(void)
   return r;
 }
 
+#endif /* defined(HAVE_LIBXXPM) */
+
+#endif /* !defined(X_DISPLAY_MISSING) */
