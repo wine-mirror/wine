@@ -136,8 +136,8 @@ typedef struct _PROPSHEETHEADERW
     union
     {
       HICON                  hIcon;
-      LPCSTR                   pszIcon;
-    }DUMMYUNIONNAME1;
+      LPCWSTR                   pszIcon;
+    }DUMMYUNIONNAME;
     LPCWSTR                  pszCaption;
     UINT                   nPages;
     union
@@ -218,6 +218,7 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_USEHICON            0x0002
 #define PSH_USEICONID           0x0004
 #define PSH_PROPSHEETPAGE       0x0008
+#define PSH_WIZARDHASFINISH     0x0010
 #define PSH_WIZARD              0x0020
 #define PSH_USEPSTARTPAGE       0x0040
 #define PSH_NOAPPLYNOW          0x0080
@@ -227,7 +228,10 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_RTLREADING          0x0800
 #define PSH_WIZARDCONTEXTHELP   0x00001000
 
-#define PSH_WIZARD97            0x00002000  
+     /*
+      * for below IE 5 
+      * PSH_WIZARD97            0x00002000
+      */
 #define PSH_WATERMARK           0x00008000
 #define PSH_USEHBMWATERMARK     0x00010000
 #define PSH_USEHPLWATERMARK     0x00020000
@@ -235,7 +239,13 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_HEADER              0x00080000
 #define PSH_USEHBMHEADER        0x00100000
 #define PSH_USEPAGELANG         0x00200000
- 
+#define PSH_WIZARD_LITE         0x00400000
+     /*
+      * for IE 5 and above
+      * PSH_WIZARD97            0x01000000
+      */
+#define PSH_NOCONTEXTHELP       0x02000000
+
 #define PSCB_INITIALIZED  1
 #define PSCB_PRECREATE    2
 
