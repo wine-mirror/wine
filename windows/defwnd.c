@@ -185,34 +185,6 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
 
 
 /***********************************************************************
- *           DEFWND_SetRedraw
- */
-static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
-{
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL bVisible = wndPtr->dwStyle & WS_VISIBLE;
-
-    TRACE("%p %i\n", hwnd, (wParam!=0) );
-
-    if( wParam )
-    {
-	if( !bVisible )
-	{
-            WIN_SetStyle( hwnd, wndPtr->dwStyle | WS_VISIBLE );
-	}
-    }
-    else if( bVisible )
-    {
-	if( wndPtr->dwStyle & WS_MINIMIZE ) wParam = RDW_VALIDATE;
-	else wParam = RDW_ALLCHILDREN | RDW_VALIDATE;
-
-        RedrawWindow( hwnd, NULL, 0, wParam );
-        WIN_SetStyle( hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
-    }
-    WIN_ReleaseWndPtr( wndPtr );
-}
-
-/***********************************************************************
  *           DEFWND_Print
  *
  * This method handles the default behavior for the WM_PRINT message.
@@ -463,7 +435,12 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return 0;
 
     case WM_SETREDRAW:
-        DEFWND_SetRedraw( hwnd, wParam );
+        if (wParam) WIN_SetStyle( hwnd, WS_VISIBLE, 0 );
+        else
+        {
+            RedrawWindow( hwnd, NULL, 0, RDW_ALLCHILDREN | RDW_VALIDATE );
+            WIN_SetStyle( hwnd, 0, WS_VISIBLE );
+        }
         return 0;
 
     case WM_CLOSE:

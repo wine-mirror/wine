@@ -418,9 +418,9 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
                     &newWindowRect, &newClientRect, winpos->flags, wvrFlags );
 
     if( winpos->flags & SWP_SHOWWINDOW )
-        WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );
+        WIN_SetStyle( winpos->hwnd, WS_VISIBLE, 0 );
     else if( winpos->flags & SWP_HIDEWINDOW )
-        WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
+        WIN_SetStyle( winpos->hwnd, 0, WS_VISIBLE );
 
     /* ------------------------------------------------------------------------ FINAL */
 

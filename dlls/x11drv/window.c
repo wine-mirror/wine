@@ -1155,7 +1155,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
         RECT newPos;
         UINT swFlag = (style & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
-        WIN_SetStyle( hwnd, style & ~(WS_MAXIMIZE | WS_MINIMIZE) );
+        WIN_SetStyle( hwnd, 0, WS_MAXIMIZE | WS_MINIMIZE );
         WINPOS_MinMaximize( hwnd, swFlag, &newPos );
         swFlag = ((style & WS_CHILD) || GetActiveWindow())
             ? SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED

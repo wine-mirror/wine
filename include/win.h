@@ -87,7 +87,7 @@ extern HWND WIN_IsCurrentThread( HWND hwnd );
 extern void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter );
 extern void WIN_UnlinkWindow( HWND hwnd );
 extern HWND WIN_SetOwner( HWND hwnd, HWND owner );
-extern LONG WIN_SetStyle( HWND hwnd, LONG style );
+extern ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits );
 extern LONG WIN_SetExStyle( HWND hwnd, LONG style );
 extern BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient );
 extern LRESULT WIN_DestroyWindow( HWND hwnd );

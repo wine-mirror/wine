@@ -738,5 +738,5 @@
 @ cdecl WIN_ListParents(long)
 @ cdecl WIN_ReleaseWndPtr(ptr)
 @ cdecl WIN_SetExStyle(long long)
-@ cdecl WIN_SetStyle(long long)
+@ cdecl WIN_SetStyle(long long long)
 @ cdecl WIN_UnlinkWindow(long)

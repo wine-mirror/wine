@@ -995,7 +995,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         if( wndPtr->dwStyle & WS_MAXIMIZE) wndPtr->flags |= WIN_RESTORE_MAX;
         else wndPtr->flags &= ~WIN_RESTORE_MAX;
 
-        WIN_SetStyle( hwnd, (wndPtr->dwStyle & ~WS_MAXIMIZE) | WS_MINIMIZE );
+        WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
         X11DRV_set_iconic_state( hwnd );
 
@@ -1009,7 +1009,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     case SW_MAXIMIZE:
         WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
 
-        old_style = WIN_SetStyle( hwnd, (wndPtr->dwStyle & ~WS_MINIMIZE) | WS_MAXIMIZE );
+        old_style = WIN_SetStyle( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
         if (old_style & WS_MINIMIZE)
         {
             WINPOS_ShowIconTitle( hwnd, FALSE );
@@ -1019,7 +1019,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         break;
 
     case SW_RESTORE:
-        old_style = WIN_SetStyle( hwnd, wndPtr->dwStyle & ~(WS_MINIMIZE|WS_MAXIMIZE) );
+        old_style = WIN_SetStyle( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
         if (old_style & WS_MINIMIZE)
         {
             WINPOS_ShowIconTitle( hwnd, FALSE );
@@ -1029,7 +1029,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             {
                 /* Restore to maximized position */
                 WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
-                WIN_SetStyle( hwnd, wndPtr->dwStyle | WS_MAXIMIZE );
+                WIN_SetStyle( hwnd, WS_MAXIMIZE, 0 );
                 SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
                 break;
             }
@@ -1198,7 +1198,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         unsigned int width, height, border, depth;
         Window root, top;
         RECT rect;
-        LONG style = (win->dwStyle & ~(WS_MINIMIZE|WS_MAXIMIZE)) | WS_VISIBLE;
+        LONG style = WS_VISIBLE;
 
         /* FIXME: hack */
         wine_tsx11_lock();
@@ -1215,7 +1215,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         DCE_InvalidateDCE( hwnd, &win->rectWindow );
 
         if (win->flags & WIN_RESTORE_MAX) style |= WS_MAXIMIZE;
-        WIN_SetStyle( hwnd, style );
+        WIN_SetStyle( hwnd, style, WS_MINIMIZE );
         WIN_ReleasePtr( win );
 
         SendMessageA( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
@@ -1244,7 +1244,7 @@ void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
         else
             win->flags &= ~WIN_RESTORE_MAX;
 
-        WIN_SetStyle( hwnd, (win->dwStyle & ~WS_MAXIMIZE) | WS_MINIMIZE );
+        WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
         WIN_ReleasePtr( win );
 
         EndMenu();

@@ -462,40 +462,42 @@ HWND WIN_SetOwner( HWND hwnd, HWND owner )
  *
  * Change the style of a window.
  */
-LONG WIN_SetStyle( HWND hwnd, LONG style )
+ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
 {
     BOOL ok;
-    LONG ret = 0;
+    ULONG new_style, old_style = 0;
     WND *win = WIN_GetPtr( hwnd );
 
     if (!win) return 0;
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow(hwnd))
-            ERR( "cannot set style %lx on other process window %p\n", style, hwnd );
+            ERR( "cannot set style %lx/%lx on other process window %p\n",
+                 set_bits, clear_bits, hwnd );
         return 0;
     }
-    if (style == win->dwStyle)
+    new_style = (win->dwStyle | set_bits) & ~clear_bits;
+    if (new_style == win->dwStyle)
     {
         WIN_ReleasePtr( win );
-        return style;
+        return new_style;
     }
     SERVER_START_REQ( set_window_info )
     {
         req->handle = hwnd;
         req->flags  = SET_WIN_STYLE;
-        req->style  = style;
+        req->style  = new_style;
         req->extra_offset = -1;
         if ((ok = !wine_server_call( req )))
         {
-            ret = reply->old_style;
-            win->dwStyle = style;
+            old_style = reply->old_style;
+            win->dwStyle = new_style;
         }
     }
     SERVER_END_REQ;
     WIN_ReleasePtr( win );
-    if (ok && USER_Driver.pSetWindowStyle) USER_Driver.pSetWindowStyle( hwnd, ret );
-    return ret;
+    if (ok && USER_Driver.pSetWindowStyle) USER_Driver.pSetWindowStyle( hwnd, old_style );
+    return old_style;
 }
 
 
@@ -1685,9 +1687,7 @@ HWND WINAPI GetDesktopWindow(void)
  */
 BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 {
-    WND *wndPtr;
     BOOL retvalue;
-    LONG style;
     HWND full_handle;
 
     if (is_broadcast(hwnd))
@@ -1703,14 +1703,11 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 
     TRACE("( %p, %d )\n", hwnd, enable);
 
-    if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
-    style = wndPtr->dwStyle;
-    retvalue = ((style & WS_DISABLED) != 0);
-    WIN_ReleasePtr( wndPtr );
+    retvalue = !IsWindowEnabled( hwnd );
 
     if (enable && retvalue)
     {
-        WIN_SetStyle( hwnd, style & ~WS_DISABLED );
+        WIN_SetStyle( hwnd, 0, WS_DISABLED );
         SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
     }
     else if (!enable && !retvalue)
@@ -1719,7 +1716,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 
         SendMessageA( hwnd, WM_CANCELMODE, 0, 0);
 
-        WIN_SetStyle( hwnd, style | WS_DISABLED );
+        WIN_SetStyle( hwnd, WS_DISABLED, 0 );
 
         if (hwnd == GetFocus())
             SetFocus( 0 );  /* A disabled window can't have the focus */

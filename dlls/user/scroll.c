@@ -1793,10 +1793,9 @@ BOOL WINAPI GetScrollRange(HWND hwnd, INT nBar, LPINT lpMin, LPINT lpMax)
  *
  * Back-end for ShowScrollBar(). Returns FALSE if no action was taken.
  */
-BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
-			     BOOL fShowH, BOOL fShowV )
+static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, BOOL fShowH, BOOL fShowV )
 {
-    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+    ULONG old_style, set_bits = 0, clear_bits = 0;
 
     TRACE("hwnd=%p bar=%d horz=%d, vert=%d\n", hwnd, nBar, fShowH, fShowV );
 
@@ -1808,45 +1807,24 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
 
     case SB_BOTH:
     case SB_HORZ:
-        if (fShowH)
-        {
-            fShowH = !(style & WS_HSCROLL);
-            style |= WS_HSCROLL;
-        }
-        else  /* hide it */
-        {
-            fShowH = (style & WS_HSCROLL);
-            style &= ~WS_HSCROLL;
-        }
-        if( nBar == SB_HORZ ) {
-            fShowV = FALSE;
-            break;
-        }
-	/* fall through */
-
+        if (fShowH) set_bits |= WS_HSCROLL;
+        else clear_bits |= WS_HSCROLL;
+        if( nBar == SB_HORZ ) break;
+        /* fall through */
     case SB_VERT:
-        if (fShowV)
-        {
-            fShowV = !(style & WS_VSCROLL);
-            style |= WS_VSCROLL;
-        }
-	else  /* hide it */
-        {
-            fShowV = (style & WS_VSCROLL);
-            style &= ~WS_VSCROLL;
-        }
-        if ( nBar == SB_VERT )
-           fShowH = FALSE;
+        if (fShowV) set_bits |= WS_VSCROLL;
+        else clear_bits |= WS_VSCROLL;
         break;
 
     default:
         return FALSE;  /* Nothing to do! */
     }
 
-    if( fShowH || fShowV ) /* frame has been changed, let the window redraw itself */
+    old_style = WIN_SetStyle( hwnd, set_bits, clear_bits );
+    if ((old_style & clear_bits) != 0 || (old_style & set_bits) != set_bits)
     {
-        WIN_SetStyle( hwnd, style );
-	SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
+        /* frame has been changed, let the window redraw itself */
+        SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
                     | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
         return TRUE;
     }
