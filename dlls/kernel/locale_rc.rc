@@ -21,6 +21,8 @@
 #include "windef.h"
 #include "winnls.h"
 
+#define LGRPID_RES_BASE 0x2000
+
 /* add languages in numerical order of main language (last two digits)
  * it is much easier to find the missing holes that way */
 

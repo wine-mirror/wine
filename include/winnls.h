@@ -32,7 +32,12 @@ extern "C" {
 #define MB_USEGLYPHCHARS            0x00000004
 #define MB_ERR_INVALID_CHARS        0x00000008
 
+#define LGRPID_INSTALLED            0x00000001
+#define LGRPID_SUPPORTED            0x00000002
+
 #define LCID_INSTALLED              0x00000001
+#define LCID_SUPPORTED              0x00000002
+#define LCID_ALTERNATE_SORTS        0x00000004
 
 /* flags to GetLocaleInfo */
 #define	LOCALE_NOUSEROVERRIDE	    0x80000000
@@ -337,6 +342,30 @@ extern "C" {
 #define CSTR_EQUAL			2
 #define CSTR_GREATER_THAN		3
 
+/*
+ * Language Group ID Values.
+ * Resources in kernel32 are LGRPID_xxx+0x2000 because low values were used by LOCALE_xxx
+ * This is done because resources in win2k kernel32 / winxp kernel32 are not even 
+ * stored the same way.
+ */
+#define LGRPID_WESTERN_EUROPE        0x0001   /* Western Europe & U.S. */
+#define LGRPID_CENTRAL_EUROPE        0x0002   /* Central Europe */
+#define LGRPID_BALTIC                0x0003   /* Baltic */
+#define LGRPID_GREEK                 0x0004   /* Greek */
+#define LGRPID_CYRILLIC              0x0005   /* Cyrillic */
+#define LGRPID_TURKISH               0x0006   /* Turkish */
+#define LGRPID_JAPANESE              0x0007   /* Japanese */
+#define LGRPID_KOREAN                0x0008   /* Korean */
+#define LGRPID_TRADITIONAL_CHINESE   0x0009   /* Traditional Chinese */
+#define LGRPID_SIMPLIFIED_CHINESE    0x000a   /* Simplified Chinese */
+#define LGRPID_THAI                  0x000b   /* Thai */
+#define LGRPID_HEBREW                0x000c   /* Hebrew */
+#define LGRPID_ARABIC                0x000d   /* Arabic */
+#define LGRPID_VIETNAMESE            0x000e   /* Vietnamese */
+#define LGRPID_INDIC                 0x000f   /* Indic */
+#define LGRPID_GEORGIAN              0x0010   /* Georgian */
+#define LGRPID_ARMENIAN              0x0011   /* Armenian */
+
 /* Types
  */
 
@@ -443,6 +472,8 @@ typedef BOOL    (CALLBACK *TIMEFMT_ENUMPROCA)(LPSTR);
 typedef BOOL    (CALLBACK *TIMEFMT_ENUMPROCW)(LPWSTR);
 typedef BOOL    (CALLBACK *LANGUAGEGROUP_ENUMPROCA)(LGRPID, LPSTR, LPSTR, DWORD, LONG_PTR);
 typedef BOOL    (CALLBACK *LANGUAGEGROUP_ENUMPROCW)(LGRPID, LPWSTR, LPWSTR, DWORD, LONG_PTR);
+typedef BOOL    (CALLBACK *LANGGROUPLOCALE_ENUMPROCA)(LGRPID, LCID, LPSTR, LONG_PTR);
+typedef BOOL    (CALLBACK *LANGGROUPLOCALE_ENUMPROCW)(LGRPID, LCID, LPWSTR, LONG_PTR);
 #else
 typedef FARPROC CALINFO_ENUMPROCA;
 typedef FARPROC CALINFO_ENUMPROCW;
@@ -460,6 +491,8 @@ typedef FARPROC TIMEFMT_ENUMPROCA;
 typedef FARPROC TIMEFMT_ENUMPROCW;
 typedef FARPROC LANGUAGEGROUP_ENUMPROCA;
 typedef FARPROC LANGUAGEGROUP_ENUMPROCW;
+typedef FARPROC LANGGROUPLOCALE_ENUMPROCA;
+typedef FARPROC LANGGROUPLOCALE_ENUMPROCW;
 #endif /* STRICT */
 
 DECL_WINELIB_TYPE_AW(CALINFO_ENUMPROC)
@@ -496,6 +529,12 @@ BOOL        WINAPI EnumSystemCodePagesW(CODEPAGE_ENUMPROCW,DWORD);
 BOOL        WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA,DWORD);
 BOOL        WINAPI EnumSystemLocalesW(LOCALE_ENUMPROCW,DWORD);
 #define     EnumSystemLocales WINELIB_NAME_AW(EnumSystemLocales)
+BOOL        WINAPI EnumSystemLanguageGroupsA(LANGUAGEGROUP_ENUMPROCA,DWORD,LONG_PTR);
+BOOL        WINAPI EnumSystemLanguageGroupsW(LANGUAGEGROUP_ENUMPROCW,DWORD,LONG_PTR);
+#define     EnumSystemLanguageGroups WINELIB_NAME_AW(EnumSystemLanguageGroups)
+BOOL        WINAPI EnumLanguageGroupLocalesA(LANGGROUPLOCALE_ENUMPROCA,LGRPID,DWORD,LONG_PTR);
+BOOL        WINAPI EnumLanguageGroupLocalesW(LANGGROUPLOCALE_ENUMPROCW,LGRPID,DWORD,LONG_PTR);
+#define     EnumLanguageGroupLocales WINELIB_NAME_AW(EnumLanguageGroupLocales)
 BOOL        WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA,LCID,DWORD);
 BOOL        WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW,LCID,DWORD);
 #define     EnumTimeFormats WINELIB_NAME_AW(EnumTimeFormats)
@@ -542,6 +581,7 @@ BOOL        WINAPI IsDBCSLeadByte(BYTE);
 BOOL        WINAPI IsDBCSLeadByteEx(UINT,BYTE);
 BOOL        WINAPI IsValidCodePage(UINT);
 BOOL        WINAPI IsValidLocale(LCID,DWORD);
+BOOL        WINAPI IsValidLanguageGroup(LGRPID,DWORD);
 INT         WINAPI LCMapStringA(LCID,DWORD,LPCSTR,INT,LPSTR,INT);
 INT         WINAPI LCMapStringW(LCID,DWORD,LPCWSTR,INT,LPWSTR,INT);
 #define     LCMapString WINELIB_NAME_AW(LCMapString)
