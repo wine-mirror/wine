@@ -11,7 +11,8 @@
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
-static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count);
+static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
+		       BOOL bDrawBackground);
 
 /***********************************************************************
  *           PSDRV_ExtTextOut
@@ -22,6 +23,8 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     BOOL bResult = TRUE;
+    BOOL bClipped = FALSE;
+    BOOL bOpaque = FALSE;
     RECT rect;
 
     TRACE("(x=%d, y=%d, flags=0x%08x, str='%.*s', count=%d)\n", x, y,
@@ -31,7 +34,7 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     PSDRV_SetFont(dc);
 
     /* set clipping and/or draw background */
-    if ((flags & (ETO_OPAQUE | ETO_CLIPPED)) && (lprect != NULL))
+    if ((flags & (ETO_CLIPPED | ETO_OPAQUE)) && (lprect != NULL))
     {
 	rect.left = XLPTODP(dc, lprect->left);
 	rect.right = XLPTODP(dc, lprect->right);
@@ -44,6 +47,7 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
 	if (flags & ETO_OPAQUE)
 	{
+	    bOpaque = TRUE;
 	    PSDRV_WriteGSave(dc);
 	    PSDRV_WriteSetColor(dc, &physDev->bkColor);
 	    PSDRV_WriteFill(dc);
@@ -52,15 +56,16 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
 	if (flags & ETO_CLIPPED)
 	{
+	    bClipped = TRUE;
 	    PSDRV_WriteClip(dc);
 	}
 
-	bResult = PSDRV_Text(dc, x, y, str, count); 
+	bResult = PSDRV_Text(dc, x, y, str, count, !(bClipped && bOpaque)); 
 	PSDRV_WriteGRestore(dc);
     }
     else
     {
-	bResult = PSDRV_Text(dc, x, y, str, count); 
+	bResult = PSDRV_Text(dc, x, y, str, count, TRUE); 
     }
 
     return bResult;
@@ -69,12 +74,12 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 /***********************************************************************
  *           PSDRV_Text
  */
-static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count)
+static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
+		       BOOL bDrawBackground)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char *strbuf;
     SIZE sz;
-    POINT pt;
 
     strbuf = (char *)HeapAlloc( PSDRV_Heap, 0, count + 1);
     if(!strbuf) {
@@ -87,8 +92,8 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count)
 	y = dc->w.CursPosY;
     }
 
-    pt.x = x = XLPTODP(dc, x);
-    pt.y = y = YLPTODP(dc, y);
+    x = XLPTODP(dc, x);
+    y = YLPTODP(dc, y);
 
     GetTextExtentPoint32A(dc->hSelf, str, count, &sz);
     sz.cx = XLSTODS(dc, sz.cx);
@@ -127,14 +132,18 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count)
     memcpy(strbuf, str, count);
     *(strbuf + count) = '\0';
     
-    PSDRV_SetFont(dc);
+    if ((dc->w.backgroundMode != TRANSPARENT) && (bDrawBackground != FALSE))
+    {
+	PSDRV_WriteGSave(dc);
+	PSDRV_WriteNewPath(dc);
+	PSDRV_WriteRectangle(dc, x, y - physDev->font.tm.tmAscent, sz.cx, 
+			     physDev->font.tm.tmAscent + 
+			     physDev->font.tm.tmDescent);
+	PSDRV_WriteSetColor(dc, &physDev->bkColor);
+	PSDRV_WriteFill(dc);
+	PSDRV_WriteGRestore(dc);
+    }
 
-    PSDRV_WriteGSave(dc);
-    PSDRV_WriteNewPath(dc);
-    PSDRV_WriteRectangle(dc, pt.x, pt.y, sz.cx, sz.cy);
-    PSDRV_WriteSetColor(dc, &physDev->bkColor);
-    PSDRV_WriteFill(dc);
-    PSDRV_WriteGRestore(dc);
     PSDRV_WriteMoveTo(dc, x, y);
     PSDRV_WriteShow(dc, strbuf, strlen(strbuf));
 
