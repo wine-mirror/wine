@@ -285,6 +285,9 @@ HRESULT WINAPI OleCreateFontIndirect(
 
   *ppvObj = 0;
 
+  if (lpFontDesc == 0)
+    return NO_ERROR; /* MSDN Oct 2001 */
+
   /*
    * Try to construct a new instance of the class.
    */
@@ -1652,27 +1655,21 @@ static ULONG WINAPI SFCF_Release(LPCLASSFACTORY iface) {
 static HRESULT WINAPI SFCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	FONTDESC fd;
 
-	if (IsEqualGUID(riid,&IID_IFont)) {
-	    FONTDESC fd;
+	WCHAR fname[] = { 'S','y','s','t','e','m',0 };
 
-	    WCHAR fname[] = { 'S','y','s','t','e','m',0 };
+	fd.cbSizeofstruct = sizeof(fd);
+	fd.lpstrName      = fname;
+	fd.cySize.s.Lo    = 80000;
+	fd.cySize.s.Hi    = 0;
+	fd.sWeight 	      = 0;
+	fd.sCharset       = 0;
+	fd.fItalic	      = 0;
+	fd.fUnderline     = 0;
+	fd.fStrikethrough = 0;
+	return OleCreateFontIndirect(&fd,riid,ppobj);
 
-	    fd.cbSizeofstruct = sizeof(fd);
-	    fd.lpstrName      = fname;
-	    fd.cySize.s.Lo    = 80000;
-	    fd.cySize.s.Hi    = 0;
-	    fd.sWeight 	      = 0;
-	    fd.sCharset       = 0;
-	    fd.fItalic	      = 0;
-	    fd.fUnderline     = 0;
-	    fd.fStrikethrough = 0;
-	    return OleCreateFontIndirect(&fd,riid,ppobj);
-	}
-
-	FIXME("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
-	return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI SFCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
