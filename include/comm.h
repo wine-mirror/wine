@@ -1,6 +1,8 @@
 #ifndef __WINE_COMM_H
 #define __WINE_COMM_H
 
+#include "windef.h"
+
 #define MAX_PORTS   9
 
 struct DosDeviceStruct {

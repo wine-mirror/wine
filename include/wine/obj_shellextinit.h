@@ -5,6 +5,7 @@
 #ifndef __WINE_WINE_OBJ_SHELLEXTINIT_H
 #define __WINE_WINE_OBJ_SHELLEXTINIT_H
 
+#include "shell.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wine/obj_base.h"

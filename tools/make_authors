@@ -52,7 +52,7 @@ for ($i = 0; $i <= $#authors; $i++)
   {
     print NEWAUTHORS_H "    \"$authors[$i]\",\n";
   }
-print NEWAUTHORS_H "    NULL\n};\n";
+print NEWAUTHORS_H "    0\n};\n";
 print NEWAUTHORS_H "\n#endif  /* __WINE_AUTHORS_H */\n";
 
 print "Created include/authors.h\n";

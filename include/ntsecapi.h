@@ -2,6 +2,7 @@
 #define __WINE_NTSECAPI_H
 
 #include "ntdef.h"
+#include "winnt.h"
 
 #ifdef __cplusplus
 extern "C" {

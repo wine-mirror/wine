@@ -6,6 +6,7 @@
 #define _NETSPI_H_
 
 #include "windef.h"
+#include "winnetwk.h"
 
 /*
  * Note: The Unicode variants of all these routines/structures

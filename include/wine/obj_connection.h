@@ -7,7 +7,7 @@
 #ifndef __WINE_WINE_OBJ_CONNECTION_H
 #define __WINE_WINE_OBJ_CONNECTION_H
 
-
+#include "wine/obj_base.h"
 #include "winbase.h"
 
 #ifdef __cplusplus

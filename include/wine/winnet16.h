@@ -8,6 +8,8 @@
 #ifndef __WINE_WINNET16_H
 #define __WINE_WINNET16_H
 
+#include "windef.h"
+
 /*
  * Remote printing
  */

@@ -9,6 +9,7 @@
 #define __WINE_DATETIME_H
 
 #include "windef.h"
+#include "winbase.h"
 
 typedef struct tagDATETIME_INFO
 {

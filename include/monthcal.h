@@ -8,6 +8,10 @@
 #ifndef __WINE_MONTHCAL_H
 #define __WINE_MONTHCAL_H
 
+#include "commctrl.h"
+#include "windef.h"
+#include "wingdi.h"
+
 #define MC_SEL_LBUTUP		0			/* Left button released */
 #define MC_SEL_LBUTDOWN		1			/* Left button pressed in calendar */
 #define MC_PREVPRESSED      1           /* Prev month button pressed */

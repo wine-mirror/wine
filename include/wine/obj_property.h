@@ -7,9 +7,10 @@
 #ifndef __WINE_WINE_OBJ_PROPERTY_H
 #define __WINE_WINE_OBJ_PROPERTY_H
 
-
-#include "winbase.h"
 #include "wine/obj_oleaut.h" /* for DISPID */
+#include "wine/obj_storage.h"
+#include "winbase.h"
+#include "winuser.h"
 
 #ifdef __cplusplus
 extern "C" {

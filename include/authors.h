@@ -253,7 +253,7 @@ static const char * const SHELL_People[] =
     "Nathan Zorich",
     "Luiz Otavio L. Zorzella",
     "Per Ångström",
-    NULL
+    0
 };
 
 #endif  /* __WINE_AUTHORS_H */

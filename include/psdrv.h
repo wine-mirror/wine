@@ -83,6 +83,8 @@ typedef struct {
     float	x, y;
 } PAPERDIMENSION;
 
+/* Solaris kludge */
+#undef PAGESIZE
 typedef struct _tagPAGESIZE {
     char		*Name;
     char		*FullName;
