@@ -120,12 +120,16 @@ HMODULE ELF_LoadLibraryExA( LPCSTR libname, HANDLE hf, DWORD flags )
 	x = t+strlen(t);
 	strcat(t,s);
 	s = strchr(x,'.');
-	while (s) {
+	if (s) {
+            while (s) {
 		if (!strcasecmp(s,".dll")) {
-			strcpy(s+1,UNIX_DLL_ENDING);
-			break;
+                    strcpy(s+1,UNIX_DLL_ENDING);
+                    break;
 		}
 		s=strchr(s+1,'.');
+            }
+	} else {
+	    	strcat(x,"."UNIX_DLL_ENDING);
 	}
 
 	/* FIXME: make UNIX filename from DOS fn? */
