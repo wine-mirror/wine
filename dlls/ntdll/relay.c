@@ -808,8 +808,13 @@ void SNOOP_SetupDLL(HMODULE hmod)
         }
         dll = &((*dll)->next);
     }
-    *dll = RtlReAllocateHeap(ntdll_get_process_heap(),
+    if (*dll)
+        *dll = RtlReAllocateHeap(GetProcessHeap(),
                              HEAP_ZERO_MEMORY, *dll,
+                             sizeof(SNOOP_DLL) + strlen(name));
+    else
+        *dll = RtlAllocateHeap(GetProcessHeap(),
+                             HEAP_ZERO_MEMORY,
                              sizeof(SNOOP_DLL) + strlen(name));
     (*dll)->hmod	= hmod;
     (*dll)->ordbase = exports->Base;
