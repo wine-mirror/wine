@@ -307,7 +307,8 @@ inline BOOL operator!=(const GUID& guidOne, const GUID& guidOther)
  *    // ...
  *
  *    static ICOM_VTABLE(IDirect3D) d3dvt = {
- *            IDirect3D_fnQueryInterface,
+ *        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+ *        IDirect3D_fnQueryInterface,
  *        IDirect3D_fnAdd,
  *        IDirect3D_fnAdd2,
  *        IDirect3D_fnInitialize,

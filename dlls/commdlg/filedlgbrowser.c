@@ -31,6 +31,7 @@ DEFAULT_DEBUG_CHANNEL(commdlg)
 */
 static ICOM_VTABLE(IShellBrowser) IShellBrowserImpl_Vtbl =
 {
+        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         /* IUnknown */
         IShellBrowserImpl_QueryInterface,
         IShellBrowserImpl_AddRef,
@@ -56,6 +57,7 @@ static ICOM_VTABLE(IShellBrowser) IShellBrowserImpl_Vtbl =
 
 static ICOM_VTABLE(ICommDlgBrowser) IShellBrowserImpl_ICommDlgBrowser_Vtbl =
 {
+        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         /* IUnknown */
         IShellBrowserImpl_ICommDlgBrowser_QueryInterface,
         IShellBrowserImpl_ICommDlgBrowser_AddRef,

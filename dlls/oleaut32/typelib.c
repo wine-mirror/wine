@@ -347,6 +347,7 @@ static HRESULT WINAPI ITypeLib2_fnGetDocumentation2( ITypeLib * This,
 static HRESULT WINAPI ITypeLib2_fnGetAllCustData( ITypeLib * This,
         CUSTDATA *pCustData);
 static ICOM_VTABLE(ITypeLib) tlbvt = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     ITypeLib_fnQueryInterface,
     ITypeLib_fnAddRef,
     ITypeLib_fnRelease,
@@ -466,6 +467,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData( ITypeInfo * This,
     UINT index, CUSTDATA *pCustData);
 
 static ICOM_VTABLE(ITypeInfo) tinfvt = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     ITypeInfo_fnQueryInterface,
     ITypeInfo_fnAddRef,
     ITypeInfo_fnRelease,
