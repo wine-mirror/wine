@@ -645,22 +645,13 @@ static BOOL QUEUE_TrySetWakeBit( MESSAGEQUEUE *queue, WORD bit, BOOL always )
     if ( wake )
     {
         /* Wake up thread waiting for message */
-        if ( THREAD_IsWin16( queue->teb ) )
+        SERVER_START_REQ( wake_queue )
         {
-            int iWndsLock = WIN_SuspendWndsLock();
-            PostEvent16( queue->teb->htask16 );
-            WIN_RestoreWndsLock( iWndsLock );
+            req->handle = queue->server_queue;
+            req->bits   = bit;
+            SERVER_CALL();
         }
-        else
-        {
-            SERVER_START_REQ( wake_queue )
-            {
-                req->handle = queue->server_queue;
-                req->bits   = bit;
-                SERVER_CALL();
-            }
-            SERVER_END_REQ;
-        }
+        SERVER_END_REQ;
     }
 
     return wake;
@@ -707,19 +698,17 @@ WORD QUEUE_TestWakeBit( MESSAGEQUEUE *queue, WORD bit )
 int QUEUE_WaitBits( WORD bits, DWORD timeout )
 {
     MESSAGEQUEUE *queue;
-    DWORD curTime = 0;
     HQUEUE16 hQueue;
 
     TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
-
-    if ( THREAD_IsWin16( NtCurrentTeb() ) && (timeout != INFINITE) )
-        curTime = GetTickCount();
 
     hQueue = GetFastQueue16();
     if (!(queue = QUEUE_Lock( hQueue ))) return 0;
     
     for (;;)
     {
+        DWORD dwlc;
+
         EnterCriticalSection( &queue->cSection );
 
         if (queue->changeBits & bits)
@@ -745,40 +734,10 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 	TRACE_(msg)("%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
         LeaveCriticalSection( &queue->cSection );
 
-        if ( !THREAD_IsWin16( NtCurrentTeb() ) )
-        {
-	    BOOL		bHasWin16Lock;
-	    DWORD		dwlc;
-
-	    if ( (bHasWin16Lock = _ConfirmWin16Lock()) )
-	    {
-	        TRACE_(msg)("bHasWin16Lock=TRUE\n");
-	        ReleaseThunkLock( &dwlc );
-	    }
-
-	    WaitForSingleObject( queue->server_queue, timeout );
-
-	    if ( bHasWin16Lock ) 
-	    {
-	        RestoreThunkLock( dwlc );
-	    }
-        }
-        else
-        {
-            if ( timeout == INFINITE )
-                WaitEvent16( 0 );  /* win 16 thread, use WaitEvent */
-            else
-            {
-                /* check for timeout, then give control to other tasks */
-                if (GetTickCount() - curTime > timeout)
-                {
-
-		    QUEUE_Unlock( queue );
-                    return 0;   /* exit with timeout */
-                }
-                K32WOWYield16();
-            }
-	}
+        ReleaseThunkLock( &dwlc );
+        if (dwlc) TRACE_(msg)("had win16 lock\n");
+        WaitForSingleObject( queue->server_queue, timeout );
+        if (dwlc) RestoreThunkLock( dwlc );
     }
 }
 
@@ -1630,12 +1589,9 @@ void WINAPI UserYield16(void)
         ;
 
     QUEUE_Unlock( queue );
-    
+
     /* Yield */
-    if ( THREAD_IsWin16( NtCurrentTeb() ) )
-        OldYield16();
-    else
-        WIN32_OldYield16();
+    OldYield16();
 
     /* Handle sent messages again */
     queue = QUEUE_Lock( GetFastQueue16() );

@@ -69,11 +69,30 @@ void TASK_InstallTHHook( THHOOK *pNewThhook )
  */
 HTASK16 TASK_GetNextTask( HTASK16 hTask )
 {
-    TDB* pTask = (TDB*)GlobalLock16(hTask);
+    TDB* pTask = TASK_GetPtr( hTask );
 
     if (pTask->hNext) return pTask->hNext;
     return (hFirstTask != hTask) ? hFirstTask : 0; 
 }
+
+
+/***********************************************************************
+ *	     TASK_GetPtr
+ */
+TDB *TASK_GetPtr( HTASK16 hTask )
+{
+    return GlobalLock16( hTask );
+}
+
+
+/***********************************************************************
+ *	     TASK_GetCurrent
+ */
+TDB *TASK_GetCurrent(void)
+{
+    return TASK_GetPtr( GetCurrentTask() );
+}
+
 
 /***********************************************************************
  *           TASK_LinkTask
@@ -83,11 +102,11 @@ static void TASK_LinkTask( HTASK16 hTask )
     HTASK16 *prevTask;
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
+    if (!(pTask = TASK_GetPtr( hTask ))) return;
     prevTask = &hFirstTask;
     while (*prevTask)
     {
-        TDB *prevTaskPtr = (TDB *)GlobalLock16( *prevTask );
+        TDB *prevTaskPtr = TASK_GetPtr( *prevTask );
         if (prevTaskPtr->priority >= pTask->priority) break;
         prevTask = &prevTaskPtr->hNext;
     }
@@ -108,12 +127,12 @@ static void TASK_UnlinkTask( HTASK16 hTask )
     prevTask = &hFirstTask;
     while (*prevTask && (*prevTask != hTask))
     {
-        pTask = (TDB *)GlobalLock16( *prevTask );
+        pTask = TASK_GetPtr( *prevTask );
         prevTask = &pTask->hNext;
     }
     if (*prevTask)
     {
-        pTask = (TDB *)GlobalLock16( *prevTask );
+        pTask = TASK_GetPtr( *prevTask );
         *prevTask = pTask->hNext;
         pTask->hNext = 0;
         nTaskCount--;
@@ -152,13 +171,13 @@ static void TASK_CreateThunks( HGLOBAL16 handle, WORD offset, WORD count )
  *
  * Allocate a thunk for MakeProcInstance().
  */
-static SEGPTR TASK_AllocThunk( HTASK16 hTask )
+static SEGPTR TASK_AllocThunk(void)
 {
     TDB *pTask;
     THUNKS *pThunk;
     WORD sel, base;
-    
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
+
+    if (!(pTask = TASK_GetCurrent())) return 0;
     sel = pTask->hCSAlias;
     pThunk = &pTask->thunks;
     base = (int)pThunk - (int)pTask;
@@ -187,13 +206,13 @@ static SEGPTR TASK_AllocThunk( HTASK16 hTask )
  *
  * Free a MakeProcInstance() thunk.
  */
-static BOOL TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
+static BOOL TASK_FreeThunk( SEGPTR thunk )
 {
     TDB *pTask;
     THUNKS *pThunk;
     WORD sel, base;
-    
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
+
+    if (!(pTask = TASK_GetCurrent())) return 0;
     sel = pTask->hCSAlias;
     pThunk = &pTask->thunks;
     base = (int)pThunk - (int)pTask;
@@ -228,7 +247,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
 
     hTask = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB) );
     if (!hTask) return NULL;
-    pTask = (TDB *)GlobalLock16( hTask );
+    pTask = TASK_GetPtr( hTask );
     FarSetOwner16( hTask, pModule->self );
 
     /* Fill the task structure */
@@ -340,7 +359,7 @@ static void TASK_DeleteTask( HTASK16 hTask )
     TDB *pTask;
     HGLOBAL16 hPDB;
 
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
+    if (!(pTask = TASK_GetPtr( hTask ))) return;
     hPDB = pTask->hPDB;
 
     pTask->magic = 0xdead; /* invalidate signature */
@@ -439,7 +458,7 @@ void TASK_ExitTask(void)
     /* Enter the Win16Lock to protect global data structures */
     _EnterWin16Lock();
 
-    pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    pTask = TASK_GetCurrent();
     if ( !pTask ) 
     {
         _LeaveWin16Lock();
@@ -466,11 +485,11 @@ void TASK_ExitTask(void)
 
     if( nTaskCount )
     {
-        TDB* p = (TDB *)GlobalLock16( hFirstTask );
+        TDB* p = TASK_GetPtr( hFirstTask );
         while( p )
         {
             if( p->hYieldTo == pTask->hSelf ) p->hYieldTo = 0;
-            p = (TDB *)GlobalLock16( p->hNext );
+            p = TASK_GetPtr( p->hNext );
         }
     }
 
@@ -481,180 +500,10 @@ void TASK_ExitTask(void)
 
     TASK_DeleteTask( pTask->hSelf );
 
-    /* ... schedule another one ... */
-    TASK_Reschedule();
-
     /* ... and completely release the Win16Lock, just in case. */
     ReleaseThunkLock( &lockCount );
 }
 
-/***********************************************************************
- *           TASK_Reschedule
- *
- * This is where all the magic of task-switching happens!
- *
- * 16-bit Windows performs non-preemptive (cooperative) multitasking.
- * This means that each 16-bit task runs until it voluntarily yields 
- * control, at which point the scheduler gets active and selects the
- * next task to run.
- *
- * In Wine, all processes, even 16-bit ones, are scheduled preemptively
- * by the standard scheduler of the underlying OS.  As many 16-bit apps
- * *rely* on the behaviour of the Windows scheduler, however, we have
- * to simulate that behaviour.
- *
- * This is achieved as follows: every 16-bit task is at time (except
- * during task creation and deletion) in one of two states: either it
- * is the one currently running, then the global variable hCurrentTask
- * contains its task handle, or it is not currently running, then it
- * is blocked on a special scheduler event, a global handle which
- * is stored in the task struct.
- *
- * When the current task yields control, this routine gets called. Its
- * purpose is to determine the next task to be active, signal the 
- * scheduler event of that task, and then put the current task to sleep
- * waiting for *its* scheduler event to get signalled again.
- *
- * This routine can get called in a few other special situations as well:
- *
- * - On creation of a 16-bit task, the Unix process executing the task
- *   calls TASK_Reschedule once it has completed its initialization.
- *   At this point, the task needs to be blocked until its scheduler
- *   event is signalled the first time (this will be done by the parent
- *   process to get the task up and running).
- *
- * - When the task currently running terminates itself, this routine gets
- *   called and has to schedule another task, *without* blocking the 
- *   terminating task.
- *
- * - When a 32-bit thread posts an event for a 16-bit task, it might be
- *   the case that *no* 16-bit task is currently running.  In this case
- *   the task that has now an event pending is to be scheduled.
- *
- */
-void TASK_Reschedule(void)
-{
-    TDB *pOldTask = NULL, *pNewTask = NULL;
-    HTASK16 hOldTask = 0, hNewTask = 0;
-    enum { MODE_YIELD, MODE_SLEEP, MODE_WAKEUP } mode;
-    DWORD lockCount;
-
-    _EnterWin16Lock();
-
-    /* Check what we need to do */
-    hOldTask = GetCurrentTask();
-    pOldTask = (TDB *)GlobalLock16( hOldTask );
-    TRACE( "entered with hCurrentTask %04x by hTask %04x (pid %ld)\n", 
-           hCurrentTask, hOldTask, (long) getpid() );
-
-    if ( pOldTask && THREAD_IsWin16( NtCurrentTeb() ) )
-    {
-        /* We are called by an active (non-deleted) 16-bit task */
-
-        /* If we don't even have a current task, or else the current
-           task has yielded, we'll need to schedule a new task and
-           (possibly) put the calling task to sleep.  Otherwise, we
-           only block the caller. */
-
-        if ( !hCurrentTask || hCurrentTask == hOldTask )
-            mode = MODE_YIELD;
-        else
-            mode = MODE_SLEEP;
-    }
-    else
-    {
-        /* We are called by a deleted 16-bit task or a 32-bit thread */
-
-        /* The only situation where we need to do something is if we
-           now do not have a current task.  Then, we'll need to wake up
-           some task that has events pending. */
-
-        if ( !hCurrentTask || hCurrentTask == hOldTask )
-            mode = MODE_WAKEUP;
-        else
-        {
-            /* nothing to do */
-            _LeaveWin16Lock();
-            return;
-        }
-    }
-
-    /* Find a task to yield to: check for DirectedYield() */
-    if ( mode == MODE_YIELD && pOldTask && pOldTask->hYieldTo )
-    {
-        hNewTask = pOldTask->hYieldTo;
-        pNewTask = (TDB *)GlobalLock16( hNewTask );
-        if( !pNewTask || !pNewTask->nEvents || !pNewTask->teb) hNewTask = 0;
-        pOldTask->hYieldTo = 0;
-    }
-
-    /* Find a task to yield to: check for pending events */
-    if ( (mode == MODE_YIELD || mode == MODE_WAKEUP) && !hNewTask )
-    {
-        hNewTask = hFirstTask;
-        while (hNewTask)
-        {
-            pNewTask = (TDB *)GlobalLock16( hNewTask );
-
-            TRACE( "\ttask = %04x, events = %i\n", hNewTask, pNewTask->nEvents );
-
-            if (pNewTask->nEvents) break;
-            hNewTask = pNewTask->hNext;
-        }
-        if (hLockedTask && (hNewTask != hLockedTask)) hNewTask = 0;
-    }
-
-    /* If we are still the task with highest priority, just return ... */
-    if ( mode == MODE_YIELD && hNewTask && hNewTask == hCurrentTask )
-    {
-        TRACE("returning to the current task (%04x)\n", hCurrentTask );
-        _LeaveWin16Lock();
-
-        /* Allow Win32 threads to thunk down even while a Win16 task is
-           in a tight PeekMessage() or Yield() loop ... */
-        ReleaseThunkLock( &lockCount );
-        RestoreThunkLock( lockCount );
-        return;
-    }
-
-    /* If no task to yield to found, suspend 16-bit scheduler ... */
-    if ( mode == MODE_YIELD && !hNewTask )
-    {
-        TRACE("No currently active task\n");
-        hCurrentTask = 0;
-    }
-
-    /* If we found a task to wake up, do it ... */
-    if ( (mode == MODE_YIELD || mode == MODE_WAKEUP) && hNewTask )
-    {
-        TRACE("Switching to task %04x (%.8s)\n",
-                      hNewTask, pNewTask->module_name );
-
-        pNewTask->priority++;
-        TASK_UnlinkTask( hNewTask );
-        TASK_LinkTask( hNewTask );
-        pNewTask->priority--;
-
-        hCurrentTask = hNewTask;
-        NtSetEvent( pNewTask->hEvent, NULL );
-
-        /* This is set just in case some app reads it ... */
-        pNewTask->ss_sp = pNewTask->teb->cur_stack;
-    }
-
-    /* If we need to put the current task to sleep, do it ... */
-    if ( (mode == MODE_YIELD || mode == MODE_SLEEP) && hOldTask != hCurrentTask )
-    {
-        NtResetEvent( pOldTask->hEvent, NULL );
-
-        ReleaseThunkLock( &lockCount );
-        SYSLEVEL_CheckNotLevel( 1 );
-        WaitForSingleObject( pOldTask->hEvent, INFINITE );
-        RestoreThunkLock( lockCount );
-    }
-
-    _LeaveWin16Lock();
-}
 
 /***********************************************************************
  *           InitTask  (KERNEL.91)
@@ -668,7 +517,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
     SEGPTR ptr;
 
     context->Eax = 0;
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
+    if (!(pTask = TASK_GetCurrent())) return;
 
     /* Note: we need to trust that BX/CX contain the stack/heap sizes, 
        as some apps, notably Visual Basic apps, *modify* the heap/stack
@@ -728,7 +577,7 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
     TDB *pTask;
 
     if (!hTask) hTask = GetCurrentTask();
-    pTask = (TDB *)GlobalLock16( hTask );
+    pTask = TASK_GetPtr( hTask );
 
     if ( !THREAD_IsWin16( NtCurrentTeb() ) )
     {
@@ -741,11 +590,20 @@ BOOL16 WINAPI WaitEvent16( HTASK16 hTask )
         pTask->nEvents--;
         return FALSE;
     }
-    TASK_Reschedule();
 
-    /* When we get back here, we have an event */
+    if (pTask->teb == NtCurrentTeb())
+    {
+        DWORD lockCount;
 
-    if (pTask->nEvents > 0) pTask->nEvents--;
+        NtResetEvent( pTask->hEvent, NULL );
+        ReleaseThunkLock( &lockCount );
+        SYSLEVEL_CheckNotLevel( 1 );
+        WaitForSingleObject( pTask->hEvent, INFINITE );
+        RestoreThunkLock( lockCount );
+        if (pTask->nEvents > 0) pTask->nEvents--;
+    }
+    else FIXME("for other task %04x cur=%04x\n",pTask->hSelf,GetCurrentTask());
+
     return TRUE;
 }
 
@@ -758,7 +616,7 @@ void WINAPI PostEvent16( HTASK16 hTask )
     TDB *pTask;
 
     if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
+    if (!(pTask = TASK_GetPtr( hTask ))) return;
 
     if ( !THREAD_IsWin16( pTask->teb ) )
     {
@@ -768,9 +626,7 @@ void WINAPI PostEvent16( HTASK16 hTask )
 
     pTask->nEvents++;
 
-    /* If we are a 32-bit task, we might need to wake up the 16-bit scheduler */
-    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
-        TASK_Reschedule();
+    if (pTask->nEvents == 1) NtSetEvent( pTask->hEvent, NULL );
 }
 
 
@@ -783,14 +639,14 @@ void WINAPI SetPriority16( HTASK16 hTask, INT16 delta )
     INT16 newpriority;
 
     if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
+    if (!(pTask = TASK_GetPtr( hTask ))) return;
     newpriority = pTask->priority + delta;
     if (newpriority < -32) newpriority = -32;
     else if (newpriority > 15) newpriority = 15;
 
     pTask->priority = newpriority + 1;
-    TASK_UnlinkTask( hTask );
-    TASK_LinkTask( hTask );
+    TASK_UnlinkTask( pTask->hSelf );
+    TASK_LinkTask( pTask->hSelf );
     pTask->priority--;
 }
 
@@ -820,17 +676,10 @@ HTASK16 WINAPI IsTaskLocked16(void)
  */
 void WINAPI OldYield16(void)
 {
-    TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
+   DWORD count;
 
-    if ( !THREAD_IsWin16( NtCurrentTeb() ) )
-    {
-        FIXME("called for Win32 thread (%04x)!\n", NtCurrentTeb()->teb_sel);
-        return;
-    }
-
-    if (pCurTask) pCurTask->nEvents++;  /* Make sure we get back here */
-    TASK_Reschedule();
-    if (pCurTask) pCurTask->nEvents--;
+   ReleaseThunkLock(&count);
+   RestoreThunkLock(count);
 }
 
 /***********************************************************************
@@ -849,7 +698,7 @@ void WINAPI WIN32_OldYield16(void)
  */
 void WINAPI DirectedYield16( HTASK16 hTask )
 {
-    TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    TDB *pCurTask = TASK_GetCurrent();
 
     if ( !THREAD_IsWin16( NtCurrentTeb() ) )
     {
@@ -870,7 +719,7 @@ void WINAPI DirectedYield16( HTASK16 hTask )
  */
 void WINAPI Yield16(void)
 {
-    TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    TDB *pCurTask = TASK_GetCurrent();
 
     if (pCurTask) pCurTask->hYieldTo = 0;
     if (pCurTask && pCurTask->hQueue && Callout.UserYield16) Callout.UserYield16();
@@ -938,7 +787,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     if (NE_GetPtr(FarGetOwner16(hInstance))->flags & NE_FFLAGS_LIBMODULE)
 	return func;
 
-    thunkaddr = TASK_AllocThunk( GetCurrentTask() );
+    thunkaddr = TASK_AllocThunk();
     if (!thunkaddr) return (FARPROC16)0;
     thunk = MapSL( thunkaddr );
     lfunc = MapSL( (SEGPTR)func );
@@ -967,7 +816,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 void WINAPI FreeProcInstance16( FARPROC16 func )
 {
     TRACE("(%08lx)\n", (DWORD)func );
-    TASK_FreeThunk( GetCurrentTask(), (SEGPTR)func );
+    TASK_FreeThunk( (SEGPTR)func );
 }
 
 /**********************************************************************
@@ -1103,7 +952,7 @@ HQUEUE16 WINAPI SetTaskQueue16( HTASK16 hTask, HQUEUE16 hQueue )
     TDB *pTask;
 
     if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
+    if (!(pTask = TASK_GetPtr( hTask ))) return 0;
 
     hPrev = pTask->hQueue;
     pTask->hQueue = hQueue;
@@ -1120,7 +969,7 @@ HQUEUE16 WINAPI GetTaskQueue16( HTASK16 hTask )
     TDB *pTask;
 
     if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return 0;
+    if (!(pTask = TASK_GetPtr( hTask ))) return 0;
     return pTask->hQueue;
 }
 
@@ -1154,7 +1003,7 @@ HQUEUE16 WINAPI GetThreadQueue16( DWORD thread )
     else if ( HIWORD(thread) )
         teb = THREAD_IdToTEB( thread );
     else if ( IsTask16( (HTASK16)thread ) )
-        teb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->teb;
+        teb = (TASK_GetPtr( (HANDLE16)thread ))->teb;
 
     return (HQUEUE16)(teb? teb->queue : 0);
 }
@@ -1170,7 +1019,7 @@ VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue )
     else if ( HIWORD(thread) )
         teb = THREAD_IdToTEB( thread );
     else if ( IsTask16( (HTASK16)thread ) )
-        teb = ((TDB *)GlobalLock16( (HANDLE16)thread ))->teb;
+        teb = (TASK_GetPtr( (HANDLE16)thread ))->teb;
 
     if ( teb ) teb->queue = (HQUEUE16) hQueue;
 }
@@ -1213,7 +1062,7 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
     INSTANCEDATA *pData;
     UINT16 copySize;
 
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
+    if (!(pTask = TASK_GetCurrent())) return;
     if (!(pData = (INSTANCEDATA *)GlobalLock16( seg ))) return;
     TRACE("old=%04x:%04x new=%04x:%04x\n",
           SELECTOROF( pTask->teb->cur_stack ),
@@ -1333,7 +1182,7 @@ DWORD WINAPI GetCurrentPDB16(void)
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
+    if (!(pTask = TASK_GetCurrent())) return 0;
     return MAKELONG(pTask->hPDB, 0); /* FIXME */
 }
 
@@ -1367,7 +1216,7 @@ WORD WINAPI GetExeVersion16(void)
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
+    if (!(pTask = TASK_GetCurrent())) return 0;
     return pTask->version;
 }
 
@@ -1378,7 +1227,7 @@ WORD WINAPI GetExeVersion16(void)
 UINT16 WINAPI SetErrorMode16( UINT16 mode )
 {
     TDB *pTask;
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
+    if (!(pTask = TASK_GetCurrent())) return 0;
     pTask->error_mode = mode;
     return SetErrorMode( mode );
 }
@@ -1403,7 +1252,7 @@ HINSTANCE16 WINAPI GetTaskDS16(void)
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
+    if (!(pTask = TASK_GetCurrent())) return 0;
     return GlobalHandleToSel16(pTask->hInstance);
 }
 
@@ -1415,7 +1264,7 @@ WORD WINAPI GetDummyModuleHandleDS16(void)
     TDB *pTask;
     WORD selector;
 
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
+    if (!(pTask = TASK_GetCurrent())) return 0;
     if (!(pTask->flags & TDBF_WIN32)) return 0;
     selector = GlobalHandleToSel16( pTask->hModule );
     CURRENT_DS = selector;
@@ -1430,7 +1279,7 @@ BOOL16 WINAPI IsTask16( HTASK16 hTask )
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return FALSE;
+    if (!(pTask = TASK_GetPtr( hTask ))) return FALSE;
     if (GlobalSize16( hTask ) < sizeof(TDB)) return FALSE;
     return (pTask->magic == TDB_MAGIC);
 }
@@ -1454,7 +1303,7 @@ FARPROC16 WINAPI SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
     FARPROC16 oldProc;
 
     if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = (TDB *)GlobalLock16( hTask ))) return NULL;
+    if (!(pTask = TASK_GetPtr( hTask ))) return NULL;
     oldProc = pTask->userhandler;
     pTask->userhandler = proc;
     return oldProc;
@@ -1468,7 +1317,7 @@ extern WORD CALLBACK TASK_CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD
 /* ### stop build ### */
 void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule )
 {
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    TDB *pTask = TASK_GetCurrent();
     if ( !pTask || !pTask->userhandler ) return;
 
     TASK_CallTo16_word_wwwww( pTask->userhandler, 
@@ -1491,7 +1340,7 @@ WORD WINAPI SetSigHandler16( FARPROC16 newhandler, FARPROC16* oldhandler,
     {
         TDB *pTask;
 
-        if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
+        if (!(pTask = TASK_GetCurrent())) return 0;
         if (oldmode) *oldmode = pTask->signal_flags;
         pTask->signal_flags = newmode;
         if (oldhandler) *oldhandler = pTask->sighandler;
@@ -1511,7 +1360,7 @@ VOID WINAPI GlobalNotify16( FARPROC16 proc )
 {
     TDB *pTask;
 
-    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
+    if (!(pTask = TASK_GetCurrent())) return;
     pTask->discardhandler = proc;
 }
 
@@ -1534,7 +1383,7 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
     *hTask = hFirstTask;
     while (*hTask)
     {
-        TDB *pTask = (TDB *)GlobalLock16( *hTask );
+        TDB *pTask = TASK_GetPtr( *hTask );
         if ((*hTask == handle) ||
             (pTask->hInstance == handle) ||
             (pTask->hQueue == handle) ||
@@ -1553,7 +1402,7 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
     *hTask = hFirstTask;
     while (*hTask)
     {
-        TDB *pTask = (TDB *)GlobalLock16( *hTask );
+        TDB *pTask = TASK_GetPtr( *hTask );
         if ((*hTask == owner) ||
             (pTask->hInstance == owner) ||
             (pTask->hQueue == owner) ||
@@ -1608,7 +1457,7 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
 
     /* make sure that task and hInstance are valid (skip initial Wine task !) */
     while (1) {
-        pTask = (TDB *)GlobalLock16( lpte->hNext );
+        pTask = TASK_GetPtr( lpte->hNext );
         if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;
         if (pTask->hInstance)
             break;
@@ -1650,7 +1499,7 @@ typedef INT (WINAPI *MessageBoxA_funcptr)(HWND hWnd, LPCSTR text, LPCSTR title, 
  */
 void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 {
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    TDB *pTask = TASK_GetCurrent();
 
     if (!pTask || !(pTask->error_mode & SEM_NOGPFAULTERRORBOX))
     {
@@ -1721,7 +1570,7 @@ DWORD WINAPI GetAppCompatFlags( HTASK hTask )
     TDB *pTask;
 
     if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask=(TDB *)GlobalLock16( (HTASK16)hTask ))) return 0;
+    if (!(pTask=TASK_GetPtr( (HTASK16)hTask ))) return 0;
     if (GlobalSize16(hTask) < sizeof(TDB)) return 0;
     return pTask->compat_flags;
 }

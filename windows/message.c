@@ -839,13 +839,7 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
 
     iWndsLocks = WIN_SuspendWndsLock();
 
-    /* force destination task to run next, if 16 bit threads */
-    if ( THREAD_IsWin16(NtCurrentTeb()) && THREAD_IsWin16(destQ->teb) )
-        DirectedYield16( destQ->teb->htask16 );
-
-    /* wait for the result, note that 16-bit apps almost always get out of
-     * DirectedYield() with SMSG_HAVE_RESULT flag already set */
-
+    /* wait for the result */
     while ( TRUE )
     {
         /*
@@ -963,10 +957,6 @@ BOOL WINAPI ReplyMessage( LRESULT result )
 
         /* tell the sending task that its reply is ready */
         QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
-
-        /* switch directly to sending task (16 bit thread only) */
-        if ( THREAD_IsWin16( NtCurrentTeb() ) && THREAD_IsWin16( senderQ->teb ) )
-            DirectedYield16( senderQ->teb->htask16 );
 
         ret = TRUE;
     }
@@ -1134,9 +1124,6 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
 
     if (IsTaskLocked16()) flags |= PM_NOYIELD;
 
-    /* Never yield on Win32 threads */
-    if (!THREAD_IsWin16(NtCurrentTeb())) flags |= PM_NOYIELD;
-
     iWndsLocks = WIN_SuspendWndsLock();
 
     while(1)
@@ -1258,12 +1245,14 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
 
         /* Check for timer messages, but yield first */
 
+#if 0  /* FIXME */
         if (!(flags & PM_NOYIELD))
         {
             UserYield16();
             while ( QUEUE_ReceiveMessage( msgQueue ) )
                 ;
         }
+#endif
 
 	if (QUEUE_TestWakeBit(msgQueue, mask & QS_TIMER))
 	{
@@ -1272,8 +1261,9 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
 
         if (peek)
         {
+#if 0  /* FIXME */
             if (!(flags & PM_NOYIELD)) UserYield16();
-            
+#endif
             QUEUE_Unlock( msgQueue );
             WIN_RestoreWndsLock(iWndsLocks);
             return FALSE;
@@ -2083,64 +2073,11 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
     msgQueue->wakeMask = dwWakeMask;
     LeaveCriticalSection( &msgQueue->cSection );
 
-    if (THREAD_IsWin16(NtCurrentTeb()))
-    {
-      /*
-       * This is a temporary solution to a big problem.
-       * You see, the main thread of all Win32 programs is created as a 16 bit
-       * task. This means that if you wait on an event using Win32 synchronization
-       * methods, the 16 bit scheduler is stopped and things might just stop happening.
-       * This implements a semi-busy loop that checks the handles to wait on and
-       * also the message queue. When either one is ready, the wait function returns.
-       *
-       * This will all go away when the real Win32 threads are implemented for all
-       * the threads of an applications. Including the main thread.
-       */
-      DWORD curTime = GetCurrentTime();
-
-      do
-      {
-	/*
-	 * Check the handles in the list.
-	 */
-	ret = WaitForMultipleObjects(nCount, pHandles, fWaitAll, 5L);
-
-	/*
-	 * If the handles have been triggered, return.
-	 */
-	if (ret != WAIT_TIMEOUT)
-	  break;
-
-	/*
-	 * Then, let the 16 bit scheduler do it's thing.
-	 */
-	K32WOWYield16();
-
-	/*
-	 * If a message matching the wait mask has arrived, return.
-	 */
-        EnterCriticalSection( &msgQueue->cSection );
-	if (msgQueue->changeBits & dwWakeMask)
-	{
-          LeaveCriticalSection( &msgQueue->cSection );
-	  ret = nCount;
-	  break;
-	}
-        LeaveCriticalSection( &msgQueue->cSection );
-
-	/*
-	 * And continue doing this until we hit the timeout.
-	 */
-      } while ((dwMilliseconds == INFINITE) || (GetCurrentTime()-curTime < dwMilliseconds) );
-    }
-    else
-    {
     /* Add the thread event to the handle list */
-      for (i = 0; i < nCount; i++)
- 	handles[i] = pHandles[i];
-      handles[nCount] = msgQueue->server_queue;
-      ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
-    } 
+    for (i = 0; i < nCount; i++) handles[i] = pHandles[i];
+    handles[nCount] = msgQueue->server_queue;
+    ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
+
     QUEUE_Unlock( msgQueue );
     return ret;
 }
