@@ -185,8 +185,8 @@
           "emulation", and is what the applications expect anyway.
         </para>
         <para>
-          However, if the user specified <parameter>--debugmsg
-            +relay</parameter>, a thunk layer is inserted between the
+          However, if the user specified <parameter>WINEDEBUG=+relay
+          </parameter>, a thunk layer is inserted between the
           application imports and the Wine handlers; this layer is
           known as "relay" because all it does is print out the
           arguments/return values (by using the argument lists in the
@@ -194,7 +194,7 @@
           but it's invaluable for debugging misbehaving calls into
           Wine code. A similar mechanism also exists between Windows
           DLLs - Wine can optionally insert thunk layers between them,
-          by using <parameter>--debugmsg +snoop</parameter>, but since
+          by using <parameter>WINEDEBUG=+snoop</parameter>, but since
           no DLL descriptor information exists for non-Wine DLLs, this
           is less reliable and may lead to crashes.
         </para>
