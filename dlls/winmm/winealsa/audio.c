@@ -1849,8 +1849,13 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     ICOM_THIS(IDsDriverBufferImpl,iface);
     WINE_WAVEOUT *      wwo = &(WOutDev[This->drv->wDevID]);
     snd_pcm_uframes_t   hw_ptr;
-    snd_pcm_uframes_t   period_size = snd_pcm_hw_params_get_period_size(wwo->hw_params, 0);
+    snd_pcm_uframes_t   period_size;
 
+    if (wwo->hw_params == NULL) return DSERR_GENERIC;
+
+    period_size  = snd_pcm_hw_params_get_period_size(wwo->hw_params, 0);
+
+    if (wwo->p_handle == NULL) return DSERR_GENERIC;
     /** we need to track down buffer underruns */
     DSDB_CheckXRUN(This);
 
@@ -1875,6 +1880,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
     TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
 
+    if (wwo->p_handle == NULL) return DSERR_GENERIC;
+
     state = snd_pcm_state(wwo->p_handle);
     if ( state == SND_PCM_STATE_SETUP )
     {
@@ -1898,6 +1905,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     DWORD             write;
 
     TRACE("(%p)\n",iface);
+
+    if (wwo->p_handle == NULL) return DSERR_GENERIC;
 
     /* ring buffer wrap up detection */
     IDsDriverBufferImpl_GetPosition(iface, &play, &write);
