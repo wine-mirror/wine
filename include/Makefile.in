@@ -132,6 +132,7 @@ INSTALLED_INCLUDES = \
 	windef.h \
 	windows.h \
 	windowsx.h \
+	wine/debug.h \
 	wine/exception.h \
 	wine/icmpapi.h \
 	wine/ipexport.h \

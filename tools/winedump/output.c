@@ -136,7 +136,7 @@ void  output_header_preamble (void)
            "/*\n * %s.dll\n *\n * Generated from %s.dll by winedump.\n *\n"
            " * DO NOT SEND GENERATED DLLS FOR INCLUSION INTO WINE !\n * \n */"
            "\n#ifndef __WINE_%s_DLL_H\n#define __WINE_%s_DLL_H\n\n#include "
-           "\"config.h\"\n#include \"windef.h\"\n#include \"debugtools.h\"\n"
+           "\"config.h\"\n#include \"windef.h\"\n#include \"wine/debug.h\"\n"
            "#include \"winbase.h\"\n#include \"winnt.h\"\n\n\n",
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_UC_DLL_NAME,
            OUTPUT_UC_DLL_NAME);
@@ -201,7 +201,7 @@ void  output_c_preamble (void)
   fprintf (cfile,
            "/*\n * %s.dll\n *\n * Generated from %s by winedump.\n *\n"
            " * DO NOT SUBMIT GENERATED DLLS FOR INCLUSION INTO WINE!\n * \n */"
-           "\n\n#include \"%s_dll.h\"\n\nDEFAULT_DEBUG_CHANNEL(%s);\n\n",
+           "\n\n#include \"%s_dll.h\"\n\nWINE_DEFAULT_DEBUG_CHANNEL(%s);\n\n",
            OUTPUT_DLL_NAME, globals.input_name, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME);
 
