@@ -192,9 +192,22 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1)
     d1->dwMinStippleHeight = 1;
     d1->dwMaxStippleWidth  = 32;
     d1->dwMaxStippleHeight = 32;
+    d1->dwMaxTextureRepeat = 16;
+    d1->dwMaxTextureAspectRatio = 1024;
+    d1->dwMaxAnisotropy = 0;
+    d1->dvGuardBandLeft = 0.0;
+    d1->dvGuardBandRight = 0.0;
+    d1->dvGuardBandTop = 0.0;
+    d1->dvGuardBandBottom = 0.0;
+    d1->dvExtentsAdjust = 0.0;
+    d1->dwStencilCaps = 0; /* TODO add proper caps according to what OpenGL can do */
+    d1->dwFVFCaps = D3DFVFCAPS_DONOTSTRIPELEMENTS | 1;
+    d1->dwTextureOpCaps = 0; /* TODO add proper caps according to OpenGL multi-texture stuff */
+    d1->wMaxTextureBlendStages = 1;  /* TODO add proper caps according to OpenGL multi-texture stuff */
+    d1->wMaxSimultaneousTextures = 1;  /* TODO add proper caps according to OpenGL multi-texture stuff */
 }
 
-#if 0 /* TODO : fix this... */
+#if 0 /* TODO : fix this and add multitexturing and other needed stuff */
 static void fill_device_capabilities(IDirectDrawImpl* ddraw)
 {
     x11_dd_private *private = (x11_dd_private *) ddraw->d->private;
@@ -601,8 +614,11 @@ inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, 
   
     /* Puts GL in the correct lighting mode */
     if (glThis->vertex_type != d3dvt) {
-        if (glThis->vertex_type == D3DVT_TLVERTEX) {
-	    /* Need to put the correct transformation again */
+        if ((glThis->vertex_type == D3DVT_TLVERTEX) &&
+	     (d3dvt != D3DVT_TLVERTEX)) {
+	    /* Need to put the correct transformation again if we go from Transformed / Lighted
+	       vertices to non-transfromed ones.
+	    */
 	    glMatrixMode(GL_MODELVIEW);
 	    glLoadMatrixf((float *) glThis->world_mat);
 	    glMatrixMode(GL_PROJECTION);
@@ -625,14 +641,16 @@ inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, 
 	        GLdouble height, width, minZ, maxZ;
 
 		TRACE("Transformed - Lighted Vertex\n");
-		/* First, disable lighting */
-		glDisable(GL_LIGHTING);
+		if (glThis->vertex_type != D3DVT_TLVERTEX) {
+		    /* First, disable lighting */
+		    glDisable(GL_LIGHTING);
 
-		/* Then do not put any transformation matrixes */
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+		    /* Then do not put any transformation matrixes */
+		    glMatrixMode(GL_MODELVIEW);
+		    glLoadIdentity();
+		    glMatrixMode(GL_PROJECTION);
+		    glLoadIdentity();
+		}
 
 		if (glThis->parent.current_viewport == NULL) {
 		    ERR("No current viewport !\n");
