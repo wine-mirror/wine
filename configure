@@ -7260,19 +7260,6 @@ done
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -7289,8 +7276,6 @@ for ac_header in \
 	jpeglib.h \
 	lcms/lcms.h \
 	lcms.h \
-	libio.h \
-	libutil.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
@@ -7309,22 +7294,15 @@ for ac_header in \
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
-	openssl/des.h \
-	openssl/md2.h \
-	openssl/rc2.h \
-	openssl/rc4.h \
-	openssl/rsa.h \
 	openssl/ssl.h \
 	process.h \
 	pthread.h \
-	pty.h \
 	pwd.h \
 	regex.h \
 	sched.h \
 	scsi/sg.h \
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
-	socket.h \
 	stdint.h \
 	strings.h \
 	sys/cdio.h \
@@ -7332,9 +7310,7 @@ for ac_header in \
 	sys/errno.h \
 	sys/epoll.h \
 	sys/exec_elf.h \
-	sys/file.h \
 	sys/filio.h \
-	sys/inttypes.h \
 	sys/ioctl.h \
 	sys/ipc.h \
 	sys/link.h \
@@ -7360,8 +7336,6 @@ for ac_header in \
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \
-	sys/v86.h \
-	sys/v86intr.h \
 	sys/vfs.h \
 	sys/vm86.h \
 	sys/wait.h \
@@ -7738,7 +7712,6 @@ _ACEOF
 
 
 
-
 for ac_header in X11/XKBlib.h \
                           X11/Xutil.h \
                           X11/extensions/shape.h \
@@ -7746,7 +7719,6 @@ for ac_header in X11/XKBlib.h \
                           X11/extensions/XShm.h \
                           X11/extensions/Xrandr.h \
                           X11/extensions/Xrender.h \
-                          X11/extensions/Xvlib.h \
                           X11/extensions/xf86dga.h \
                           X11/extensions/xf86vmode.h
 do
@@ -8242,83 +8214,6 @@ fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
         fi
 
-                if test "$ac_cv_header_X11_extensions_Xvlib_h" = "yes"
-        then
-                echo "$as_me:$LINENO: checking for XvShmCreateImage in -lXv" >&5
-echo $ECHO_N "checking for XvShmCreateImage in -lXv... $ECHO_C" >&6
-if test "${ac_cv_lib_Xv_XvShmCreateImage+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXv $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char XvShmCreateImage ();
-int
-main ()
-{
-XvShmCreateImage ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_Xv_XvShmCreateImage=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_Xv_XvShmCreateImage=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_Xv_XvShmCreateImage" >&5
-echo "${ECHO_T}$ac_cv_lib_Xv_XvShmCreateImage" >&6
-if test $ac_cv_lib_Xv_XvShmCreateImage = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_XVIDEO 1
-_ACEOF
-
-                     X_PRE_LIBS="$X_PRE_LIBS -lXv"
-
-fi
-
-        fi
-
                 if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes"
         then
               echo "$as_me:$LINENO: checking for XRenderSetPictureTransform in -lXrender" >&5
@@ -8755,149 +8650,6 @@ fi
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_OPENGL 1
 _ACEOF
-
-
-			echo "$as_me:$LINENO: checking for glXGetProcAddressARB in -lGL" >&5
-echo $ECHO_N "checking for glXGetProcAddressARB in -lGL... $ECHO_C" >&6
-if test "${ac_cv_lib_GL_glXGetProcAddressARB+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lGL $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char glXGetProcAddressARB ();
-int
-main ()
-{
-glXGetProcAddressARB ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_GL_glXGetProcAddressARB=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_GL_glXGetProcAddressARB=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_GL_glXGetProcAddressARB" >&5
-echo "${ECHO_T}$ac_cv_lib_GL_glXGetProcAddressARB" >&6
-if test $ac_cv_lib_GL_glXGetProcAddressARB = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GLX_GETPROCADDRESS 1
-_ACEOF
-
-fi
-
-
-			if test "$ac_cv_lib_GL_glXGetProcAddressARB" = "yes"
-			then
-			       echo "$as_me:$LINENO: checking for OpenGL extension functions prototypes" >&5
-echo $ECHO_N "checking for OpenGL extension functions prototypes... $ECHO_C" >&6
-if test "${wine_cv_extension_prototypes+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <GL/gl.h>
-				  		  #ifdef HAVE_GL_GLEXT_H
-						  # include <GL/glext.h>
-						  #endif
-
-int
-main ()
-{
-PFNGLCOLORTABLEEXTPROC test_proc;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  wine_cv_extension_prototypes="yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-wine_cv_extension_prototypes="no"
-
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-fi
-echo "$as_me:$LINENO: result: $wine_cv_extension_prototypes" >&5
-echo "${ECHO_T}$wine_cv_extension_prototypes" >&6
-				if test "$wine_cv_extension_prototypes" = "yes"
-				then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_GLEXT_PROTOTYPES 1
-_ACEOF
-
-				fi
-			fi
 
 		fi
 	        		echo "$as_me:$LINENO: checking for gluLookAt in -lGLU" >&5
@@ -9780,111 +9532,6 @@ fi
 
 done
 
-    saved_libs="$LIBS"
-    LIBS="$CURSESLIBS $LIBS"
-
-
-for ac_func in getbkgd resizeterm
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define $ac_func innocuous_$ac_func
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef $ac_func
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-return f != $ac_func;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_var=no"
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-    LIBS="$saved_libs"
 fi
 
 
@@ -16547,10 +16194,6 @@ fi
 
 
 
-
-
-
-
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -16571,9 +16214,7 @@ for ac_func in \
 	fstatfs \
 	fstatvfs \
 	ftruncate \
-	ftruncate64 \
 	futimes \
-	getnetbyaddr \
 	getnetbyname \
 	getopt_long \
 	getpagesize \
@@ -16585,7 +16226,6 @@ for ac_func in \
 	gettimeofday \
 	getuid \
 	inet_network \
-	lseek64 \
 	lstat \
 	memmove \
 	mmap \
@@ -16610,7 +16250,6 @@ for ac_func in \
 	tcgetattr \
 	timegm \
 	usleep \
-	vfscanf \
 	vsnprintf \
 	wait4 \
 	waitpid \
@@ -16873,73 +16512,6 @@ cat >>conftest.$ac_ext <<_ACEOF
      #endif
      #if HAVE_ARPA_NAMESER_H
      # include <arpa/nameser.h>
-     #endif
-
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_Header=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_Header=no"
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-
-for ac_header in netinet/ip.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
-if eval "test \"\${$as_ac_Header+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
-     #if HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
      #endif
 
 #include <$ac_header>

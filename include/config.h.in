@@ -152,20 +152,11 @@
 /* Define to 1 if you have the `ftruncate' function. */
 #undef HAVE_FTRUNCATE
 
-/* Define to 1 if you have the `ftruncate64' function. */
-#undef HAVE_FTRUNCATE64
-
 /* Define to 1 if you have the `futimes' function. */
 #undef HAVE_FUTIMES
 
-/* Define to 1 if you have the `getbkgd' function. */
-#undef HAVE_GETBKGD
-
 /* Define to 1 if you have the `gethostbyname' function. */
 #undef HAVE_GETHOSTBYNAME
-
-/* Define to 1 if you have the `getnetbyaddr' function. */
-#undef HAVE_GETNETBYADDR
 
 /* Define to 1 if you have the `getnetbyname' function. */
 #undef HAVE_GETNETBYNAME
@@ -202,12 +193,6 @@
 
 /* Define to 1 if you have the <gif_lib.h> header file. */
 #undef HAVE_GIF_LIB_H
-
-/* Define if the OpenGL headers define extension typedefs */
-#undef HAVE_GLEXT_PROTOTYPES
-
-/* Define if the OpenGL library supports the glXGetProcAddressARB call */
-#undef HAVE_GLX_GETPROCADDRESS
 
 /* Define to 1 if you have the <GL/glext.h> header file. */
 #undef HAVE_GL_GLEXT_H
@@ -269,9 +254,6 @@
 /* Define to 1 if you have the `i386' library (-li386). */
 #undef HAVE_LIBI386
 
-/* Define to 1 if you have the <libio.h> header file. */
-#undef HAVE_LIBIO_H
-
 /* Define if you have the ncurses library (-lncurses) */
 #undef HAVE_LIBNCURSES
 
@@ -289,9 +271,6 @@
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
-
-/* Define to 1 if you have the <libutil.h> header file. */
-#undef HAVE_LIBUTIL_H
 
 /* Define to 1 if you have the `w' library (-lw). */
 #undef HAVE_LIBW
@@ -359,9 +338,6 @@
 /* Define to 1 if the system has the type `long long'. */
 #undef HAVE_LONG_LONG
 
-/* Define to 1 if you have the `lseek64' function. */
-#undef HAVE_LSEEK64
-
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
 
@@ -401,9 +377,6 @@
 /* Define to 1 if you have the <netinet/in_systm.h> header file. */
 #undef HAVE_NETINET_IN_SYSTM_H
 
-/* Define to 1 if you have the <netinet/ip.h> header file. */
-#undef HAVE_NETINET_IP_H
-
 /* Define to 1 if you have the <netinet/tcp_fsm.h> header file. */
 #undef HAVE_NETINET_TCP_FSM_H
 
@@ -430,21 +403,6 @@
 
 /* Define if OpenGL is present on the system */
 #undef HAVE_OPENGL
-
-/* Define to 1 if you have the <openssl/des.h> header file. */
-#undef HAVE_OPENSSL_DES_H
-
-/* Define to 1 if you have the <openssl/md2.h> header file. */
-#undef HAVE_OPENSSL_MD2_H
-
-/* Define to 1 if you have the <openssl/rc2.h> header file. */
-#undef HAVE_OPENSSL_RC2_H
-
-/* Define to 1 if you have the <openssl/rc4.h> header file. */
-#undef HAVE_OPENSSL_RC4_H
-
-/* Define to 1 if you have the <openssl/rsa.h> header file. */
-#undef HAVE_OPENSSL_RSA_H
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
@@ -491,9 +449,6 @@
 /* Define to 1 if the system has the type `pthread_rwlock_t'. */
 #undef HAVE_PTHREAD_RWLOCK_T
 
-/* Define to 1 if you have the <pty.h> header file. */
-#undef HAVE_PTY_H
-
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
@@ -505,9 +460,6 @@
 
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
-
-/* Define to 1 if you have the `resizeterm' function. */
-#undef HAVE_RESIZETERM
 
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
@@ -556,9 +508,6 @@
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
-
-/* Define to 1 if you have the <socket.h> header file. */
-#undef HAVE_SOCKET_H
 
 /* Define to 1 if you have the <soundcard.h> header file. */
 #undef HAVE_SOUNDCARD_H
@@ -653,14 +602,8 @@
 /* Define to 1 if you have the <sys/exec_elf.h> header file. */
 #undef HAVE_SYS_EXEC_ELF_H
 
-/* Define to 1 if you have the <sys/file.h> header file. */
-#undef HAVE_SYS_FILE_H
-
 /* Define to 1 if you have the <sys/filio.h> header file. */
 #undef HAVE_SYS_FILIO_H
-
-/* Define to 1 if you have the <sys/inttypes.h> header file. */
-#undef HAVE_SYS_INTTYPES_H
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
@@ -752,12 +695,6 @@
 /* Define to 1 if you have the <sys/user.h> header file. */
 #undef HAVE_SYS_USER_H
 
-/* Define to 1 if you have the <sys/v86intr.h> header file. */
-#undef HAVE_SYS_V86INTR_H
-
-/* Define to 1 if you have the <sys/v86.h> header file. */
-#undef HAVE_SYS_V86_H
-
 /* Define to 1 if you have the <sys/vfs.h> header file. */
 #undef HAVE_SYS_VFS_H
 
@@ -797,9 +734,6 @@
 /* Define if we have va_copy */
 #undef HAVE_VA_COPY
 
-/* Define to 1 if you have the `vfscanf' function. */
-#undef HAVE_VFSCANF
-
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
@@ -830,9 +764,6 @@
 /* Define to 1 if you have the <X11/extensions/XShm.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XSHM_H
 
-/* Define to 1 if you have the <X11/extensions/Xvlib.h> header file. */
-#undef HAVE_X11_EXTENSIONS_XVLIB_H
-
 /* Define to 1 if you have the <X11/XKBlib.h> header file. */
 #undef HAVE_X11_XKBLIB_H
 
@@ -847,9 +778,6 @@
 
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
-
-/* Define if the X libraries support XVideo */
-#undef HAVE_XVIDEO
 
 /* Define to 1 if you have the `_lwp_create' function. */
 #undef HAVE__LWP_CREATE

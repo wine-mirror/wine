@@ -179,8 +179,6 @@ AC_CHECK_HEADERS(\
 	jpeglib.h \
 	lcms/lcms.h \
 	lcms.h \
-	libio.h \
-	libutil.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
@@ -199,22 +197,15 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
-	openssl/des.h \
-	openssl/md2.h \
-	openssl/rc2.h \
-	openssl/rc4.h \
-	openssl/rsa.h \
 	openssl/ssl.h \
 	process.h \
 	pthread.h \
-	pty.h \
 	pwd.h \
 	regex.h \
 	sched.h \
 	scsi/sg.h \
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
-	socket.h \
 	stdint.h \
 	strings.h \
 	sys/cdio.h \
@@ -222,9 +213,7 @@ AC_CHECK_HEADERS(\
 	sys/errno.h \
 	sys/epoll.h \
 	sys/exec_elf.h \
-	sys/file.h \
 	sys/filio.h \
-	sys/inttypes.h \
 	sys/ioctl.h \
 	sys/ipc.h \
 	sys/link.h \
@@ -250,8 +239,6 @@ AC_CHECK_HEADERS(\
 	sys/times.h \
 	sys/uio.h \
 	sys/un.h \
-	sys/v86.h \
-	sys/v86intr.h \
 	sys/vfs.h \
 	sys/vm86.h \
 	sys/wait.h \
@@ -281,7 +268,6 @@ then
                           X11/extensions/XShm.h \
                           X11/extensions/Xrandr.h \
                           X11/extensions/Xrender.h \
-                          X11/extensions/Xvlib.h \
                           X11/extensions/xf86dga.h \
                           X11/extensions/xf86vmode.h],,,
                          [#include <X11/Xlib.h>
@@ -342,16 +328,6 @@ then
                   [AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])])
         fi
 
-        dnl *** Check for XVideo extension supporting XvImages
-        if test "$ac_cv_header_X11_extensions_Xvlib_h" = "yes"
-        then
-                AC_CHECK_LIB(Xv, XvShmCreateImage,
-                  [ AC_DEFINE(HAVE_XVIDEO, 1, [Define if the X libraries support XVideo])
-                     X_PRE_LIBS="$X_PRE_LIBS -lXv"
-                  ],,
-                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-        fi
-
         dnl *** Check for Transform functions in Xrender
         if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes"
         then
@@ -398,32 +374,6 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 		then
 			OPENGLFILES='$(OPENGLFILES)'
 			AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])
-
-			AC_CHECK_LIB(GL,glXGetProcAddressARB,
-                                     AC_DEFINE(HAVE_GLX_GETPROCADDRESS, 1,
-                                               [Define if the OpenGL library supports the glXGetProcAddressARB call]),,
-                                     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
-
-			if test "$ac_cv_lib_GL_glXGetProcAddressARB" = "yes"
-			then
-			       AC_CACHE_CHECK([for OpenGL extension functions prototypes], wine_cv_extension_prototypes,
-			          [AC_TRY_COMPILE([#include <GL/gl.h>
-				  		  #ifdef HAVE_GL_GLEXT_H
-						  # include <GL/glext.h>
-						  #endif
-						  ],
-						 [PFNGLCOLORTABLEEXTPROC test_proc;],
-						 [wine_cv_extension_prototypes="yes"],
-						 [wine_cv_extension_prototypes="no"]
-				  )]
-				)
-				if test "$wine_cv_extension_prototypes" = "yes"
-				then
-				    AC_DEFINE(HAVE_GLEXT_PROTOTYPES, 1,
-                                              [Define if the OpenGL headers define extension typedefs])
-				fi
-			fi
-
 		fi
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,gluLookAt,
@@ -471,10 +421,6 @@ then
                  [AC_CHECK_LIB(curses,waddch,
                      [AC_DEFINE(HAVE_LIBCURSES, 1, [Define if you have the curses library (-lcurses)])
                       CURSESLIBS="-lcurses"])])])])
-    saved_libs="$LIBS"
-    LIBS="$CURSESLIBS $LIBS"
-    AC_CHECK_FUNCS(getbkgd resizeterm)
-    LIBS="$saved_libs"
 fi
 AC_SUBST(CURSESLIBS)
 
@@ -1186,9 +1132,7 @@ AC_CHECK_FUNCS(\
 	fstatfs \
 	fstatvfs \
 	ftruncate \
-	ftruncate64 \
 	futimes \
-	getnetbyaddr \
 	getnetbyname \
 	getopt_long \
 	getpagesize \
@@ -1200,7 +1144,6 @@ AC_CHECK_FUNCS(\
 	gettimeofday \
 	getuid \
 	inet_network \
-	lseek64 \
 	lstat \
 	memmove \
 	mmap \
@@ -1225,7 +1168,6 @@ AC_CHECK_FUNCS(\
 	tcgetattr \
 	timegm \
 	usleep \
-	vfscanf \
 	vsnprintf \
 	wait4 \
 	waitpid \
@@ -1255,15 +1197,6 @@ AC_CHECK_HEADERS([resolv.h],,,
      #endif
      #if HAVE_ARPA_NAMESER_H
      # include <arpa/nameser.h>
-     #endif])
-
-AC_CHECK_HEADERS(netinet/ip.h,,,
-    [#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
-     #endif
-     #if HAVE_NETINET_IN_SYSTM_H
-     # include <netinet/in_systm.h>
      #endif])
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
