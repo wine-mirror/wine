@@ -39,7 +39,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "fdi.h"
-#include "msvcrt/fcntl.h" /* _O_.* */
 #include "cabinet.h"
 
 #include "wine/debug.h"
@@ -1825,7 +1824,7 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
             TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
         
             /* try to get a handle to the cabfile */
-            cabhf = PFDI_OPEN(CAB(hfdi), fullpath, _O_BINARY | _O_RDONLY | _O_SEQUENTIAL, 0);
+            cabhf = PFDI_OPEN(CAB(hfdi), fullpath, 32768, _S_IREAD | _S_IWRITE);
             if (cabhf == -1) {
               /* no file.  allow the user to try again */
               fdin.fdie = FDIERROR_CABINET_NOT_FOUND;
@@ -1833,6 +1832,13 @@ int fdi_decomp(struct fdi_file *fi, int savemode, fdi_decomp_state *decomp_state
               continue;
             }
         
+            if (cabhf == 0) {
+              ERR("PFDI_OPEN returned zero for %s.\n", fullpath);
+              fdin.fdie = FDIERROR_CABINET_NOT_FOUND;
+              if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
+              continue;
+            }
+ 
             /* check if it's really a cabfile. Note that this doesn't implement the bug */
             if (!FDI_read_entries(CAB(hfdi), cabhf, &fdici, &(cab->next->mii))) {
               WARN("FDIIsCabinet failed.\n");
@@ -2020,8 +2026,17 @@ BOOL __cdecl FDICopy(
   TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
 
   /* get a handle to the cabfile */
-  cabhf = PFDI_OPEN(hfdi, fullpath, _O_BINARY | _O_RDONLY | _O_SEQUENTIAL, 0);
+  cabhf = PFDI_OPEN(hfdi, fullpath, 32768, _S_IREAD | _S_IWRITE);
   if (cabhf == -1) {
+    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
+    PFDI_INT(hfdi)->perf->erfType = ERROR_FILE_NOT_FOUND;
+    PFDI_INT(hfdi)->perf->fError = TRUE;
+    SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+  }
+
+  if (cabhf == 0) {
+    ERR("PFDI_OPEN returned zero for %s.\n", fullpath);
     PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
     PFDI_INT(hfdi)->perf->erfType = ERROR_FILE_NOT_FOUND;
     PFDI_INT(hfdi)->perf->fError = TRUE;

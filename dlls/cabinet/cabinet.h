@@ -24,6 +24,10 @@
 #include "fdi.h"
 #include "fci.h"
 
+/* from msvcrt/sys/stat.h */
+#define _S_IWRITE 0x0080
+#define _S_IREAD  0x0100
+
 #define CAB_SPLITMAX (10)
 
 #define CAB_SEARCH_SIZE (32*1024)
