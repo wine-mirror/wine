@@ -3875,8 +3875,12 @@ static LRESULT EDIT_WM_Create(HWND hwnd, EDITSTATE *es, LPCWSTR name)
             * update caret
             */
 	   es->selection_start = es->selection_end = 0;
-           /* send the notification after the selection start and end are set */
-           EDIT_NOTIFY_PARENT(hwnd, es, EN_CHANGE, "EN_CHANGE");
+           /* Adobe Photoshop does NOT like this. and MSDN says that EN_CHANGE
+            * Messages are only to be sent when the USER does something to
+            * change the contents. So I am removing this EN_CHANGE
+            *
+            * EDIT_NOTIFY_PARENT(hwnd, es, EN_CHANGE, "EN_CHANGE");
+            */
 	   EDIT_EM_ScrollCaret(hwnd, es);
        }
        /* force scroll info update */
