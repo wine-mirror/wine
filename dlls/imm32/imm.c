@@ -612,9 +612,11 @@ UINT WINAPI ImmGetIMEFileNameW(
  */
 BOOL WINAPI ImmGetOpenStatus(HIMC hIMC)
 {
-    InputContextData *data = (InputContextData*)hIMC;
+  InputContextData *data = (InputContextData*)hIMC;
 
   FIXME("(%p): semi-stub\n", hIMC);
+
+  if (!data) return FALSE;
 
   return data->bOpen;
 }
