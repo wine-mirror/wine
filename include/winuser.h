@@ -289,7 +289,7 @@ typedef struct tagHIGHCONTRASTW
 DECL_WINELIB_TYPE_AW(HIGHCONTRAST)
 DECL_WINELIB_TYPE_AW(LPHIGHCONTRAST)
 
-typedef struct
+typedef struct tagEVENTMSG
 {
     UINT  message;
     UINT  paramL;
@@ -349,7 +349,7 @@ typedef struct
 
   /* Debug hook structure */
 
-typedef struct
+typedef struct tagDEBUGHOOKINFO
 {
     DWORD       idThread;
     DWORD       idThreadInstaller;
@@ -461,7 +461,7 @@ typedef struct tagNMHDR
     UINT  code;
 } NMHDR, *LPNMHDR;
 
-typedef struct
+typedef struct tagDRAWTEXTPARAMS
 {
 	UINT	cbSize;
 	INT	iTabLength;
@@ -496,7 +496,7 @@ typedef struct
   HWND        hwnd;
 } CWPRETSTRUCT, *PCWPRETSTRUCT, *LPCWPRETSTRUCT;
 
-typedef struct
+typedef struct tagWINDOWPLACEMENT
 {
     UINT   length;
     UINT   flags;
@@ -1275,7 +1275,7 @@ typedef struct tagCREATESTRUCTA
     DWORD       dwExStyle;
 } CREATESTRUCTA, *LPCREATESTRUCTA;
 
-typedef struct
+typedef struct tagCREATESTRUCTW
 {
     LPVOID      lpCreateParams;
     HINSTANCE hInstance;
@@ -1294,24 +1294,24 @@ typedef struct
 DECL_WINELIB_TYPE_AW(CREATESTRUCT)
 DECL_WINELIB_TYPE_AW(LPCREATESTRUCT)
 
-typedef struct
+typedef struct tagPAINTSTRUCT
 {
     HDC   hdc;
     BOOL  fErase;
     RECT  rcPaint;
     BOOL  fRestore;
     BOOL  fIncUpdate;
-    BYTE    rgbReserved[32];
+    BYTE  rgbReserved[32];
 } PAINTSTRUCT, *PPAINTSTRUCT, *LPPAINTSTRUCT;
 
-typedef struct
+typedef struct tagCLIENTCREATESTRUCT
 {
     HMENU   hWindowMenu;
     UINT    idFirstChild;
 } CLIENTCREATESTRUCT, *LPCLIENTCREATESTRUCT;
 
 
-typedef struct
+typedef struct tagMDICREATESTRUCTA
 {
     LPCSTR       szClass;
     LPCSTR       szTitle;
@@ -1324,7 +1324,7 @@ typedef struct
     LPARAM       lParam;
 } MDICREATESTRUCTA, *LPMDICREATESTRUCTA;
 
-typedef struct
+typedef struct tagMDICREATESTRUCTW
 {
     LPCWSTR      szClass;
     LPCWSTR      szTitle;
@@ -1346,7 +1346,7 @@ DECL_WINELIB_TYPE_AW(LPMDICREATESTRUCT)
 
 #define MDIS_ALLCHILDSTYLES  0x0001
 
-typedef struct {
+typedef struct tagSTYLESTRUCT {
     DWORD   styleOld;
     DWORD   styleNew;
 } STYLESTRUCT, *LPSTYLESTRUCT;
@@ -1393,7 +1393,7 @@ typedef struct {
 #define GA_ROOTOWNER    3
 
   /* WM_GETMINMAXINFO struct */
-typedef struct
+typedef struct tagMINMAXINFO
 {
     POINT   ptReserved;
     POINT   ptMaxSize;
@@ -1648,7 +1648,7 @@ typedef struct
 #define MSGF_USER           0x1000
 #define MSGF_DDEMGR         0x8001
 
-typedef struct
+typedef struct tagWNDCLASSA
 {
     UINT      style;
     WNDPROC   lpfnWndProc;
@@ -1662,7 +1662,7 @@ typedef struct
     LPCSTR      lpszClassName;
 } WNDCLASSA, *PWNDCLASSA, *LPWNDCLASSA;
 
-typedef struct
+typedef struct tagWNDCLASSW
 {
     UINT      style;
     WNDPROC   lpfnWndProc;
@@ -1680,26 +1680,26 @@ DECL_WINELIB_TYPE_AW(WNDCLASS)
 DECL_WINELIB_TYPE_AW(PWNDCLASS)
 DECL_WINELIB_TYPE_AW(LPWNDCLASS)
 
-typedef struct {
+typedef struct tagCOPYDATASTRUCT {
     ULONG_PTR dwData;
     DWORD cbData;
     PVOID lpData;
 } COPYDATASTRUCT, *PCOPYDATASTRUCT;
 
-typedef struct {
+typedef struct tagMDINEXTMENU {
     HMENU hmenuIn;
     HMENU hmenuNext;
     HWND  hwndNext;
 } MDINEXTMENU, *PMDINEXTMENU, *LPMDINEXTMENU;
 
-typedef struct
+typedef struct tagMULTIKEYHELPA
 {
     DWORD   mkSize;
     CHAR    mkKeylist;
     CHAR    szKeyphrase[1];
 } MULTIKEYHELPA, *PMULTIKEYHELPA, *LPMULTIKEYHELPA;
 
-typedef struct
+typedef struct tagMULTIKEYHELPW
 {
     DWORD   mkSize;
     WCHAR   mkKeylist;
@@ -1710,7 +1710,7 @@ DECL_WINELIB_TYPE_AW(MULTIKEYHELP)
 DECL_WINELIB_TYPE_AW(PMULTIKEYHELP)
 DECL_WINELIB_TYPE_AW(LPMULTIKEYHELP)
 
-typedef struct {
+typedef struct tagHELPWININFOA {
 	int wStructSize;
 	int x;
 	int y;
@@ -1720,7 +1720,7 @@ typedef struct {
 	CHAR rgchMember[2];
 } HELPWININFOA, *PHELPWININFOA, *LPHELPWININFOA;
 
-typedef struct {
+typedef struct tagHELPWININFOW {
 	int wStructSize;
 	int x;
 	int y;
@@ -1778,7 +1778,7 @@ DECL_WINELIB_TYPE_AW(LPHELPWININFO)
 #define	CDS_SETRECT		0x20000000
 #define	CDS_NORESET		0x10000000
 
-typedef struct
+typedef struct tagWNDCLASSEXA
 {
     UINT      cbSize;
     UINT      style;
@@ -1794,7 +1794,7 @@ typedef struct
     HICON     hIconSm;
 } WNDCLASSEXA, *PWNDCLASSEXA, *LPWNDCLASSEXA;
 
-typedef struct
+typedef struct tagWNDCLASSEXW
 {
     UINT      cbSize;
     UINT      style;
@@ -1836,7 +1836,7 @@ typedef struct tagMSG
 
 /* Cursors / Icons */
 
-typedef struct {
+typedef struct _ICONINFO {
 	BOOL		fIcon;
 	DWORD		xHotspot;
 	DWORD		yHotspot;
@@ -1845,7 +1845,7 @@ typedef struct {
 } ICONINFO, *PICONINFO;
 
 
-typedef struct
+typedef struct tagCURSORINFO
 {
     DWORD cbSize;
     DWORD flags;
@@ -1935,7 +1935,7 @@ typedef const MENUITEMINFOA *LPCMENUITEMINFOA;
 typedef const MENUITEMINFOW *LPCMENUITEMINFOW;
 DECL_WINELIB_TYPE_AW(LPCMENUITEMINFO)
 
-typedef struct {
+typedef struct tagMENUINFO {
   DWORD   cbSize;
   DWORD   fMask;
   DWORD   dwStyle;
@@ -2346,7 +2346,7 @@ typedef const SCROLLINFO *LPCSCROLLINFO;
 #define	HELPINFO_MENUITEM	0x0002
 
 /* Structure pointed to by lParam of WM_HELP */
-typedef struct
+typedef struct tagHELPINFO
 {
     UINT	cbSize;		/* Size in bytes of this struct  */
     INT	iContextType;	/* Either HELPINFO_WINDOW or HELPINFO_MENUITEM */
@@ -2358,7 +2358,7 @@ typedef struct
 
 typedef void (CALLBACK *MSGBOXCALLBACK)(LPHELPINFO lpHelpInfo);
 
-typedef struct
+typedef struct tagMSGBOXPARAMSA
 {
     UINT	cbSize;
     HWND	hwndOwner;
@@ -2372,7 +2372,7 @@ typedef struct
     DWORD	dwLanguageId;
 } MSGBOXPARAMSA, *PMSGBOXPARAMSA, *LPMSGBOXPARAMSA;
 
-typedef struct
+typedef struct tagMSGBOXPARAMSW
 {
     UINT	cbSize;
     HWND	hwndOwner;
@@ -2485,13 +2485,13 @@ DECL_WINELIB_TYPE_AW(LPDLGITEMTEMPLATE)
 
   /* CBT hook structures */
 
-typedef struct
+typedef struct tagCBT_CREATEWNDA
 {
     CREATESTRUCTA *lpcs;
     HWND           hwndInsertAfter;
 } CBT_CREATEWNDA, *LPCBT_CREATEWNDA;
 
-typedef struct
+typedef struct tagCBT_CREATEWNDW
 {
     CREATESTRUCTW *lpcs;
     HWND           hwndInsertAfter;
@@ -2500,7 +2500,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(CBT_CREATEWND)
 DECL_WINELIB_TYPE_AW(LPCBT_CREATEWND)
 
-typedef struct
+typedef struct tagCBTACTIVATESTRUCT
 {
     BOOL    fMouse;
     HWND    hWndActive;
@@ -2773,7 +2773,7 @@ typedef struct
 #define SPIF_SENDCHANGE                 SPIF_SENDWININICHANGE
 
 #if defined(_WINGDI_) && !defined(NOGDI)
-typedef struct {
+typedef struct tagNONCLIENTMETRICSA {
 	UINT		cbSize;
 	INT		iBorderWidth;
 	INT		iScrollWidth;
@@ -2791,7 +2791,7 @@ typedef struct {
 	LOGFONTA	lfMessageFont;
 } NONCLIENTMETRICSA, *PNONCLIENTMETRICSA, *LPNONCLIENTMETRICSA;
 
-typedef struct {
+typedef struct tagNONCLIENTMETRICSW {
 	UINT		cbSize;
 	INT		iBorderWidth;
 	INT		iScrollWidth;
@@ -3252,7 +3252,7 @@ typedef struct tagDRAWITEMSTRUCT
 } DRAWITEMSTRUCT, *PDRAWITEMSTRUCT, *LPDRAWITEMSTRUCT;
 
 
-typedef struct
+typedef struct tagMEASUREITEMSTRUCT
 {
     UINT      CtlType;
     UINT      CtlID;
@@ -3263,7 +3263,7 @@ typedef struct
 } MEASUREITEMSTRUCT, *PMEASUREITEMSTRUCT, *LPMEASUREITEMSTRUCT;
 
 
-typedef struct
+typedef struct tagDELETEITEMSTRUCT
 {
     UINT     CtlType;
     UINT     CtlID;
@@ -3273,7 +3273,7 @@ typedef struct
 } DELETEITEMSTRUCT, *PDELETEITEMSTRUCT, *LPDELETEITEMSTRUCT;
 
 
-typedef struct
+typedef struct tagCOMPAREITEMSTRUCT
 {
     UINT      CtlType;
     UINT      CtlID;
