@@ -761,27 +761,29 @@ sub process_comment
   # FIXME: If we have no parameters, make sure we have a PARAMS: None. section
 
   # Find header file
-  # FIXME: This sometimes gives the error "sh: <file>.h: Permission denied" - why?
   my $h_file = "";
-  my $tmp = "grep -s -l $comment->{COMMENT_NAME} @opt_header_file_list 2>/dev/null";
-  $tmp = `$tmp`;
-  my $exit_value  = $? >> 8;
-  if ($exit_value == 0)
+  if ($comment->{COMMENT_NAME} ne "")
   {
-    $tmp =~ s/\n.*//;
-    if ($tmp ne "")
-    {
-      $h_file = `basename $tmp`;
-    }
-  }
-  else
-  {
-    $tmp = "grep -s -l $comment->{ALT_NAME} @opt_header_file_list"." 2>/dev/null";
+    my $tmp = "grep -s -l $comment->{COMMENT_NAME} @opt_header_file_list 2>/dev/null";
     $tmp = `$tmp`;
-    $exit_value  = $? >> 8;
+    my $exit_value  = $? >> 8;
     if ($exit_value == 0)
     {
-      $tmp =~ s/\n.*//;
+      $tmp =~ s/\n.*//g;
+      if ($tmp ne "")
+      {
+        $h_file = `basename $tmp`;
+      }
+    }
+  }
+  elsif ($comment->{ALT_NAME} ne "")
+  {
+    my $tmp = "grep -s -l $comment->{ALT_NAME} @opt_header_file_list"." 2>/dev/null";
+    $tmp = `$tmp`;
+    my $exit_value  = $? >> 8;
+    if ($exit_value == 0)
+    {
+      $tmp =~ s/\n.*//g;
       if ($tmp ne "")
       {
         $h_file = `basename $tmp`;
