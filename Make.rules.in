@@ -162,6 +162,7 @@ DLLS = \
 	winmm \
 	winnls32 \
 	winspool.drv \
+	wintrust \
 	wnaspi32 \
 	wow32 \
 	ws2_32 \

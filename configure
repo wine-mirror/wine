@@ -6900,6 +6900,7 @@ dlls/winmm/wineoss/Makefile
 dlls/winnls/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
+dlls/wintrust/Makefile
 dlls/wow32/Makefile
 dlls/wsock32/Makefile
 dlls/x11drv/Makefile
@@ -7144,6 +7145,7 @@ dlls/winmm/wineoss/Makefile
 dlls/winnls/Makefile
 dlls/winsock/Makefile
 dlls/winspool/Makefile
+dlls/wintrust/Makefile
 dlls/wow32/Makefile
 dlls/wsock32/Makefile
 dlls/x11drv/Makefile
