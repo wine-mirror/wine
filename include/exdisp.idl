@@ -117,6 +117,43 @@ interface IWebBrowserApp : IWebBrowser
     [propput] HRESULT FullScreen([in] VARIANT_BOOL bFullScreen);
 }
 
+/*****************************************************************************
+ * IWebBrowser2 interface
+ */
+[
+    object,
+    oleautomation,
+    uuid(d30c1661-cdaf-11d0-8a3e-00c04fc9e26e)
+]
+interface IWebBrowser2 : IWebBrowserApp
+{
+    HRESULT Navigate2(
+        [in] VARIANT *URL,
+        [in] VARIANT *Flags,
+        [in] VARIANT *TargetFrameName,
+        [in] VARIANT *PostData,
+        [in] VARIANT *Headers);
+    HRESULT QueryStatusWB([in] OLECMDID cmdID, [out] OLECMDF *pcmdf);
+    HRESULT ExecWB([in] OLECMDID cmdID, [in] OLECMDEXECOPT cmdexecopt, [in] VARIANT *pvaIn, [out, in] VARIANT *pvaOut);
+    HRESULT ShowBrowserBar([in] VARIANT *pvaClsid, [in] VARIANT *pvarShow, [in] VARIANT *pvarSize);
+
+    [propget] HRESULT ReadyState([out] READYSTATE *plReadyState);
+    [propget] HRESULT Offline([out] VARIANT_BOOL *pbOffline);
+    [propput] HRESULT Offline([in] VARIANT_BOOL bOffline);
+    [propget] HRESULT Silent([out] VARIANT_BOOL *pbSilent);
+    [propput] HRESULT Silent([in] VARIANT_BOOL bSilent);
+    [propget] HRESULT RegisterAsBrowser([out] VARIANT_BOOL *pbRegister);
+    [propput] HRESULT RegisterAsBrowser([in] VARIANT_BOOL bRegister);
+    [propget] HRESULT RegisterAsDropTarget([out] VARIANT_BOOL *pbRegister);
+    [propput] HRESULT RegisterAsDropTarget([in] VARIANT_BOOL bRegister);
+    [propget] HRESULT TheaterMode([out] VARIANT_BOOL *pbRegister);
+    [propput] HRESULT TheaterMode([in] VARIANT_BOOL bRegister);
+    [propget] HRESULT AddressBar([out] VARIANT_BOOL *Value);
+    [propput] HRESULT AddressBar([in] VARIANT_BOOL Value);
+    [propget] HRESULT Resizable([out] VARIANT_BOOL *Value);
+    [propput] HRESULT Resizable([in] VARIANT_BOOL Value);
+}
+
 [
     object,
     oleautomation,
