@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "wine/winbase16.h"
+#include "wine/exception.h"
 #include "global.h"
 #include "heap.h"
 #include "toolhelp.h"
@@ -53,6 +54,21 @@ static int globalArenaSize = 0;
 
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
+
+/* filter for page-fault exceptions */
+/* It is possible for a bogus global pointer to cause a */
+/* page zero reference, so I include EXCEPTION_PRIV_INSTRUCTION too. */
+
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    switch (GetExceptionCode()) {
+        case (EXCEPTION_ACCESS_VIOLATION):
+        case (EXCEPTION_PRIV_INSTRUCTION):
+           return EXCEPTION_EXECUTE_HANDLER;
+        default:
+           return EXCEPTION_CONTINUE_SEARCH;
+    }
+}
 
 /***********************************************************************
  *           GLOBAL_GetArena
@@ -1151,34 +1167,47 @@ HGLOBAL WINAPI GlobalHandle(
 
     if (!pmem)
     {
-       SetLastError( ERROR_INVALID_PARAMETER );
-       return 0;
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
     }
 
-/* note that if pmem is a pointer to a a block allocated by        */
-/* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
-/* will fail.                                                      */
-    if (ISPOINTER(pmem)) {
-        heap = GLOBAL_GetHeap( (HGLOBAL)pmem );
-        if (HeapValidate( heap, 0, pmem ))
-            return (HGLOBAL)pmem;  /* valid fixed block */
-    handle = POINTER_TO_HANDLE(pmem);
-    } else  
-        handle = (HGLOBAL)pmem;
+    __TRY
+    {
+        handle = 0;
 
-/* Now test handle either passed in or retrieved from pointer */
-    heap = GLOBAL_GetHeap( handle );
-    maybe_intern = HANDLE_TO_INTERN( handle );
-    if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
-        test = maybe_intern->Pointer;
-        if (HeapValidate( heap, 0, ((HGLOBAL *)test)-1 ) &&
-	                                      /* obj(-handle) valid arena? */
-            HeapValidate( heap, 0, maybe_intern ))  /* intern valid arena? */
-            return handle;  /* valid moveable block */
+        /* note that if pmem is a pointer to a a block allocated by        */
+        /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
+        /* will fail.                                                      */
+        if (ISPOINTER(pmem)) {
+            heap = GLOBAL_GetHeap( (HGLOBAL)pmem );
+            if (HeapValidate( heap, 0, pmem )) {
+                handle = (HGLOBAL)pmem;  /* valid fixed block */
+                break;
+            }
+            handle = POINTER_TO_HANDLE(pmem);
+        } else
+            handle = (HGLOBAL)pmem;
+
+        /* Now test handle either passed in or retrieved from pointer */
+        heap = GLOBAL_GetHeap( handle );
+        maybe_intern = HANDLE_TO_INTERN( handle );
+        if (maybe_intern->Magic == MAGIC_GLOBAL_USED) {
+            test = maybe_intern->Pointer;
+            if (HeapValidate( heap, 0, ((HGLOBAL *)test)-1 ) && /* obj(-handle) valid arena? */
+                HeapValidate( heap, 0, maybe_intern ))  /* intern valid arena? */
+                break;  /* valid moveable block */
+        }
+        handle = 0;
+        SetLastError( ERROR_INVALID_HANDLE );
     }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
+    __ENDTRY
 
-    SetLastError( ERROR_INVALID_HANDLE );
-    return 0;
+    return handle;
 }
 
 
