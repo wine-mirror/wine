@@ -729,6 +729,17 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         }
         return 0;
 
+    case WM_IME_CHAR:
+        {
+            BYTE ch[2];
+            WCHAR wch;
+            ch[0] = (*pwparam >> 8);
+            ch[1] = *pwparam & 0xff;
+            MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
+            *pwparam = MAKEWPARAM( wch, HIWORD(*pwparam) );
+        }
+        return 0;
+
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg, hwnd), msg );
@@ -982,6 +993,17 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
             BYTE ch;
             WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
             *pwparam = MAKEWPARAM( ch, HIWORD(*pwparam) );
+        }
+        return 0;
+
+    case WM_IME_CHAR:
+        {
+            WCHAR wch = LOWORD(*pwparam);
+            BYTE ch[2];
+
+            ch[1] = 0;
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL );
+            *pwparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(*pwparam) );
         }
         return 0;
 
@@ -1647,6 +1669,15 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         ch = wParam16;
         MultiByteToWideChar( CP_ACP, 0, &ch, 1, &wch, 1);
         *pwparam32 = wch;
+        return 0;
+    case WM_IME_CHAR:
+        {
+            char ch[2];
+            ch[0] = (wParam16 >> 8);
+            ch[1] = wParam16 & 0xff;
+            MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
+            *pwparam32 = wch;
+        }
         return 0;
 
     default:  /* No Unicode translation needed */
@@ -2502,6 +2533,17 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         wch = wParam32;
         WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL);
         *pwparam16 = ch;
+        return 0;
+
+    case WM_IME_CHAR:
+        {
+            BYTE ch[2];
+
+            wch = wParam32;
+            ch[1] = 0;
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL );
+            *pwparam16 = (ch[0] << 8) | ch[1];
+        }
         return 0;
 
     default:  /* No Unicode translation needed (?) */

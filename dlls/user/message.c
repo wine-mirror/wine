@@ -187,7 +187,7 @@ static const unsigned int message_unicode_flags[] =
     /* 0x260 - 0x27f */
     0,
     /* 0x280 - 0x29f */
-    0,
+    SET(WM_IME_CHAR),
     /* 0x2a0 - 0x2bf */
     0,
     /* 0x2c0 - 0x2df */
@@ -325,18 +325,32 @@ static BOOL CALLBACK broadcast_message_callback( HWND hwnd, LPARAM lparam )
  */
 static WPARAM map_wparam_AtoW( UINT message, WPARAM wparam )
 {
-    if (message == WM_CHARTOITEM ||
-        message == EM_SETPASSWORDCHAR ||
-        message == WM_CHAR ||
-        message == WM_DEADCHAR ||
-        message == WM_SYSCHAR ||
-        message == WM_SYSDEADCHAR ||
-        message == WM_MENUCHAR)
+    switch(message)
     {
-        char ch = LOWORD(wparam);
-        WCHAR wch;
-        MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
-        wparam = MAKEWPARAM( wch, HIWORD(wparam) );
+    case WM_CHARTOITEM:
+    case EM_SETPASSWORDCHAR:
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+    case WM_MENUCHAR:
+        {
+            char ch = LOWORD(wparam);
+            WCHAR wch;
+            MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
+            wparam = MAKEWPARAM( wch, HIWORD(wparam) );
+        }
+        break;
+    case WM_IME_CHAR:
+        {
+            char ch[2];
+            WCHAR wch;
+            ch[0] = (wparam >> 8);
+            ch[1] = (wparam & 0xff);
+            MultiByteToWideChar(CP_ACP, 0, ch, 2, &wch, 1);
+            wparam = MAKEWPARAM( wch, HIWORD(wparam) );
+        }
+        break;
     }
     return wparam;
 }
@@ -349,18 +363,32 @@ static WPARAM map_wparam_AtoW( UINT message, WPARAM wparam )
  */
 static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
 {
-    if (message == WM_CHARTOITEM ||
-        message == EM_SETPASSWORDCHAR ||
-        message == WM_CHAR ||
-        message == WM_DEADCHAR ||
-        message == WM_SYSCHAR ||
-        message == WM_SYSDEADCHAR ||
-        message == WM_MENUCHAR)
+    switch(message)
     {
-        WCHAR wch = LOWORD(wparam);
-        char ch;
-        WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
-        wparam = MAKEWPARAM( (unsigned char)ch, HIWORD(wparam) );
+    case WM_CHARTOITEM:
+    case EM_SETPASSWORDCHAR:
+    case WM_CHAR:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+    case WM_MENUCHAR:
+        {
+            WCHAR wch = LOWORD(wparam);
+            BYTE ch;
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
+            wparam = MAKEWPARAM( ch, HIWORD(wparam) );
+        }
+        break;
+    case WM_IME_CHAR:
+        {
+            WCHAR wch = LOWORD(wparam);
+            BYTE ch[2];
+
+            ch[1] = 0;
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL );
+            wparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(wparam) );
+        }
+        break;
     }
     return wparam;
 }
