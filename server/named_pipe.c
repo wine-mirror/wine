@@ -49,7 +49,6 @@
 
 enum pipe_state
 {
-    ps_none,
     ps_idle_server,
     ps_wait_open,
     ps_connected_server,
@@ -69,13 +68,12 @@ struct named_pipe;
 
 struct pipe_server
 {
-    struct object        obj;
-    struct fd           *fd;
-    enum pipe_state      state;
-    struct pipe_client  *client;
+    struct object        obj;        /* object header */
+    struct fd           *fd;         /* pipe file descriptor */
+    struct list          entry;      /* entry in named pipe servers list */
+    enum pipe_state      state;      /* server state */
+    struct pipe_client  *client;     /* client that this server is connected to */
     struct named_pipe   *pipe;
-    struct pipe_server  *next;
-    struct pipe_server  *prev;
     struct timeout_user *flush_poll;
     struct event        *event;
     struct wait_info     wait;
@@ -83,16 +81,16 @@ struct pipe_server
 
 struct pipe_client
 {
-    struct object        obj;
-    struct fd           *fd;
-    struct pipe_server  *server;
+    struct object        obj;        /* object header */
+    struct fd           *fd;         /* pipe file descriptor */
+    struct pipe_server  *server;     /* server that this client is connected to */
     struct wait_info     wait;
 };
 
 struct connect_wait
 {
+    struct list          entry;      /* entry in named pipe wait list */
     struct wait_info     wait;
-    struct connect_wait *next;
 };
 
 struct named_pipe
@@ -104,8 +102,8 @@ struct named_pipe
     unsigned int        insize;
     unsigned int        timeout;
     unsigned int        instances;
-    struct pipe_server *servers;
-    struct connect_wait *connect_waiters;
+    struct list         servers;     /* list of servers using this pipe */
+    struct list         waiters;     /* list of clients waiting to connect */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose );
@@ -187,30 +185,23 @@ static void named_pipe_dump( struct object *obj, int verbose )
 {
     struct named_pipe *pipe = (struct named_pipe *) obj;
     assert( obj->ops == &named_pipe_ops );
-    fprintf( stderr, "named pipe %p\n" ,pipe);
+    fprintf( stderr, "Named pipe " );
+    dump_object_name( &pipe->obj );
+    fprintf( stderr, "\n" );
 }
 
 static void pipe_server_dump( struct object *obj, int verbose )
 {
     struct pipe_server *server = (struct pipe_server *) obj;
     assert( obj->ops == &pipe_server_ops );
-    fprintf( stderr, "named pipe server %p (state %d)\n",
-             server, server->state );
+    fprintf( stderr, "Named pipe server pipe=%p state=%d\n", server->pipe, server->state );
 }
 
 static void pipe_client_dump( struct object *obj, int verbose )
 {
     struct pipe_client *client = (struct pipe_client *) obj;
-    assert( obj->ops == &pipe_server_ops );
-    fprintf( stderr, "named pipe client %p (server state %d)\n",
-             client, client->server->state );
-}
-
-static void named_pipe_destroy( struct object *obj)
-{
-    struct named_pipe *pipe = (struct named_pipe *) obj;
-    assert( !pipe->servers );
-    assert( !pipe->instances );
+    assert( obj->ops == &pipe_client_ops );
+    fprintf( stderr, "Named pipe client server=%p\n", client->server );
 }
 
 static void notify_waiter( struct wait_info *wait, unsigned int status )
@@ -232,22 +223,29 @@ static void set_waiter( struct wait_info *wait, void *func, void *ov )
     wait->overlapped = ov;
 }
 
-static void notify_connect_waiters( struct named_pipe *pipe )
+static void notify_connect_waiters( struct named_pipe *pipe, unsigned int status )
 {
-    struct connect_wait *cw, **x = &pipe->connect_waiters;
+    struct list *ptr;
 
-    while( *x )
+    while ((ptr = list_head( &pipe->waiters )) != NULL)
     {
-        cw = *x;
-        notify_waiter( &cw->wait, STATUS_SUCCESS );
-        release_object( pipe );
-        *x = cw->next;
-        free( cw );
+        struct connect_wait *waiter = LIST_ENTRY( ptr, struct connect_wait, entry );
+        notify_waiter( &waiter->wait, status );
+        list_remove( &waiter->entry );
+        free( waiter );
     }
 }
 
-static void queue_connect_waiter( struct named_pipe *pipe,
-                                  void *func, void *overlapped )
+static void named_pipe_destroy( struct object *obj)
+{
+    struct named_pipe *pipe = (struct named_pipe *) obj;
+
+    assert( list_empty( &pipe->servers ) );
+    assert( !pipe->instances );
+    notify_connect_waiters( pipe, STATUS_HANDLES_CLOSED );
+}
+
+static void queue_connect_waiter( struct named_pipe *pipe, void *func, void *overlapped )
 {
     struct connect_wait *waiter;
 
@@ -255,9 +253,7 @@ static void queue_connect_waiter( struct named_pipe *pipe,
     if( waiter )
     {
         set_waiter( &waiter->wait, func, overlapped );
-        waiter->next = pipe->connect_waiters;
-        pipe->connect_waiters = waiter;
-        grab_object( pipe );
+        list_add_tail( &pipe->waiters, &waiter->entry );
     }
 }
 
@@ -290,9 +286,6 @@ static struct fd *pipe_server_get_fd( struct object *obj )
     case ps_wait_connect:
         set_error( STATUS_PIPE_DISCONNECTED );
         break;
-
-    default:
-        assert( 0 );
     }
     return NULL;
 }
@@ -349,10 +342,7 @@ static void pipe_server_destroy( struct object *obj)
     assert( server->pipe->instances );
     server->pipe->instances--;
 
-    /* remove server from pipe's server list */
-    if( server->next ) server->next->prev = server->prev;
-    if( server->prev ) server->prev->next = server->next;
-    else server->pipe->servers = server->next;
+    list_remove( &server->entry );
     release_object( server->pipe );
 }
 
@@ -381,7 +371,10 @@ static void pipe_client_destroy( struct object *obj)
         case ps_disconnected_server:
             server->state = ps_wait_connect;
             break;
-        default:
+        case ps_idle_server:
+        case ps_wait_open:
+        case ps_wait_disconnect:
+        case ps_wait_connect:
             assert( 0 );
         }
         assert( server->client );
@@ -493,9 +486,9 @@ static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
         if( get_error() != STATUS_OBJECT_NAME_COLLISION )
         {
             /* initialize it if it didn't already exist */
-            pipe->servers = 0;
             pipe->instances = 0;
-            pipe->connect_waiters = NULL;
+            list_init( &pipe->servers );
+            list_init( &pipe->waiters );
         }
     }
     return pipe;
@@ -534,16 +527,12 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe )
 
     server->fd = NULL;
     server->pipe = pipe;
-    server->state = ps_none;
+    server->state = ps_idle_server;
     server->client = NULL;
     server->flush_poll = NULL;
     server->wait.thread = NULL;
 
-    /* add to list of pipe servers */
-    if ((server->next = pipe->servers)) server->next->prev = server;
-    server->prev = NULL;
-    pipe->servers = server;
-
+    list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
 
     return server;
@@ -564,19 +553,28 @@ static struct pipe_client *create_pipe_client( struct pipe_server *server )
     return client;
 }
 
-static struct pipe_server *find_server( struct named_pipe *pipe,
-                                        enum pipe_state state )
+static inline struct pipe_server *find_server( struct named_pipe *pipe, enum pipe_state state )
 {
-    struct pipe_server *x;
+    struct pipe_server *server;
 
-    for( x = pipe->servers; x; x = x->next )
-        if( x->state == state )
-            break;
+    LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
+    {
+        if (server->state == state) return (struct pipe_server *)grab_object( server );
+    }
+    return NULL;
+}
 
-    if( !x )
-        return NULL;
+static inline struct pipe_server *find_server2( struct named_pipe *pipe,
+                                                enum pipe_state state1, enum pipe_state state2 )
+{
+    struct pipe_server *server;
 
-    return (struct pipe_server *) grab_object( x );
+    LIST_FOR_EACH_ENTRY( server, &pipe->servers, struct pipe_server, entry )
+    {
+        if (server->state == state1 || server->state == state2)
+            return (struct pipe_server *)grab_object( server );
+    }
+    return NULL;
 }
 
 DECL_HANDLER(create_named_pipe)
@@ -619,7 +617,6 @@ DECL_HANDLER(create_named_pipe)
     server = create_pipe_server( pipe );
     if(server)
     {
-        server->state = ps_idle_server;
         reply->handle = alloc_handle( current->process, server,
                                       GENERIC_READ|GENERIC_WRITE, req->inherit );
         server->pipe->instances++;
@@ -636,8 +633,6 @@ DECL_HANDLER(open_named_pipe)
     struct named_pipe *pipe;
     int fds[2];
 
-    reply->handle = 0;
-
     pipe = open_named_pipe( get_req_data(), get_req_data_size() );
     if ( !pipe )
     {
@@ -645,10 +640,7 @@ DECL_HANDLER(open_named_pipe)
         return;
     }
 
-    for( server = pipe->servers; server; server = server->next )
-        if( ( server->state==ps_idle_server ) ||
-            ( server->state==ps_wait_open ) )
-            break;
+    server = find_server2( pipe, ps_idle_server, ps_wait_open );
     release_object( pipe );
 
     if ( !server )
@@ -685,6 +677,7 @@ DECL_HANDLER(open_named_pipe)
 
         release_object( client );
     }
+    release_object( server );
 }
 
 DECL_HANDLER(connect_named_pipe)
@@ -702,7 +695,7 @@ DECL_HANDLER(connect_named_pipe)
         assert( !server->fd );
         server->state = ps_wait_open;
         set_waiter( &server->wait, req->func, req->overlapped );
-        notify_connect_waiters( server->pipe );
+        notify_connect_waiters( server->pipe, STATUS_SUCCESS );
         break;
     case ps_connected_server:
         assert( server->fd );
@@ -714,7 +707,7 @@ DECL_HANDLER(connect_named_pipe)
     case ps_wait_disconnect:
         set_error( STATUS_NO_DATA_DETECTED );
         break;
-    default:
+    case ps_wait_open:
         set_error( STATUS_INVALID_HANDLE );
         break;
     }
@@ -780,8 +773,12 @@ DECL_HANDLER(disconnect_named_pipe)
         reply->fd = flush_cached_fd( current->process, req->handle );
         break;
 
-    default:
+    case ps_idle_server:
+    case ps_wait_open:
+    case ps_disconnected_server:
+    case ps_wait_connect:
         set_error( STATUS_PIPE_DISCONNECTED );
+        break;
     }
     release_object( server );
 }
