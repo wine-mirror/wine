@@ -527,6 +527,7 @@ typedef struct _MINIDUMP_THREAD_LIST
     MINIDUMP_THREAD             Threads[1]; /* FIXME: no support of 0 sized array */
 } MINIDUMP_THREAD_LIST, *PMINIDUMP_THREAD_LIST;
 
+
 /*************************
  *    MODULE handling    *
  *************************/
@@ -628,6 +629,9 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, DWORD BaseOfDll,
                          PVOID UserContext);
 BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, DWORD BaseOfDll, LPSTR Name,
                                PSYMBOL_INFO Symbol);
+BOOL WINAPI SymEnumSymbols(HANDLE hProcess, ULONG BaseOfDll, PCSTR Mask,
+                           PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
+                           PVOID UserContext);
 
 /*************************
  *      Source Files     *
@@ -642,6 +646,9 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG ModBase, LPSTR Mask,
 /*************************
  * File & image handling *
  *************************/
+BOOL WINAPI SymInitialize(HANDLE hProcess, PSTR UserSearchPath, BOOL fInvadeProcess);
+BOOL WINAPI SymCleanup(HANDLE hProcess);
+
 HANDLE WINAPI FindDebugInfoFile(PSTR FileName, PSTR SymbolPath, PSTR DebugFilePath);
 typedef BOOL (CALLBACK *PFIND_DEBUG_FILE_CALLBACK)(HANDLE FileHandle, PSTR FileName,
                                                    PVOID CallerData);
@@ -669,6 +676,13 @@ PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(PIMAGE_NT_HEADERS NtHeaders,
                                                PVOID Base, ULONG Rva);
 PVOID WINAPI ImageRvaToVa(PIMAGE_NT_HEADERS NtHeaders, PVOID Base,
                           ULONG Rva, OUT PIMAGE_SECTION_HEADER *LastRvaSection);
+
+/*************************
+ *   Context management  *
+ *************************/
+BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
+                          PIMAGEHLP_CONTEXT Context);
+
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -3504,6 +3504,10 @@ typedef struct NMLVSCROLL
 #define ListView_SubItemHitTest(hwndLV, plvhti) \
     (int)SNDMSGA((hwndLV), LVM_SUBITEMHITTEST, 0, (LPARAM)(LPLVHITTESTINFO)(plvhti))
 
+#define ListView_GetSelectionMark(hwndLV) \
+    (int)SNDMSG((hwndLV), LVM_GETSELECTIONMARK, 0, 0)
+#define ListView_SetSelectionMark(hwndLV, iItem) \
+    (int)SNDMSG((hwndLV), LVM_SETSELECTIONMARK, 0, (LPARAM)(iItem))
 
 /* Tab Control */
 
