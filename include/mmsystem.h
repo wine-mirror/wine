@@ -2787,7 +2787,21 @@ typedef struct {
 	UINT16	wCustomCommandTable;	/* custom command table (0xFFFF if none)
 											 * filled in by the driver */
 	UINT16	wType;			/* driver type (filled in by the driver) */
-} MCI_OPEN_DRIVER_PARMS, *LPMCI_OPEN_DRIVER_PARMS;
+} MCI_OPEN_DRIVER_PARMS16, *LPMCI_OPEN_DRIVER_PARMS16;
+
+typedef struct {
+	UINT	wDeviceID;		/* device ID */
+	LPSTR	lpstrParams;	/* parameter string for entry in SYSTEM.INI */
+	UINT	wCustomCommandTable;	/* custom command table (0xFFFF if none) * filled in by the driver */
+	UINT	wType;			/* driver type (filled in by the driver) */
+} MCI_OPEN_DRIVER_PARMSA, *LPMCI_OPEN_DRIVER_PARMSA;
+
+typedef struct {
+	UINT	wDeviceID;		/* device ID */
+	LPWSTR	lpstrParams;	/* parameter string for entry in SYSTEM.INI */
+	UINT	wCustomCommandTable;	/* custom command table (0xFFFF if none) * filled in by the driver */
+	UINT	wType;			/* driver type (filled in by the driver) */
+} MCI_OPEN_DRIVER_PARMSW, *LPMCI_OPEN_DRIVER_PARMSW;
 
 DWORD  WINAPI mciGetDriverData16(UINT16 uDeviceID);
 DWORD  WINAPI mciGetDriverData(UINT uDeviceID);

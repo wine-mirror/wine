@@ -42,11 +42,11 @@
 #endif
 
 struct WINE_MCIDRIVER {
-	HDRVR16						hDrv;
-	DRIVERPROC16				driverProc;
-	MCI_OPEN_DRIVER_PARMS	modp;
-	MCI_OPEN_PARMS16			mop;
-	DWORD							dwPrivate;
+	HDRVR16			hDrv;
+	DRIVERPROC16		driverProc;
+	MCI_OPEN_DRIVER_PARMS16	modp;
+	MCI_OPEN_PARMS16	mop;
+	DWORD			dwPrivate;
 };
 
 /* function prototypes */
