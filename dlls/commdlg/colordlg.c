@@ -816,14 +816,15 @@ LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
    {
        CHOOSECOLORW *ch32;
        CHOOSECOLOR16 *ch16 = (CHOOSECOLOR16 *) lParam;
-       ch32 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHOOSECOLORW) );
-       lpp->lpcc = ch32;
-       lpp->lpcc16 = ch16;
-       if (lpp->lpcc16->lStructSize != sizeof(CHOOSECOLOR16) )
+       if (ch16->lStructSize != sizeof(CHOOSECOLOR16) )
        {
+           HeapFree(GetProcessHeap(), 0, lpp);
            EndDialog (hDlg, 0) ;
            return FALSE;
        }
+       ch32 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHOOSECOLORW) );
+       lpp->lpcc = ch32;
+       lpp->lpcc16 = ch16;
        ch32->lStructSize = sizeof(CHOOSECOLORW);
        ch32->hwndOwner = HWND_32(ch16->hwndOwner);
        /* Should be an HINSTANCE but MS made a typo */
@@ -833,12 +834,14 @@ LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
        ch32->Flags = ch16->Flags;
    }
    else
-       lpp->lpcc = (LPCHOOSECOLORW) lParam;
-
-   if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLORW) )
    {
-      EndDialog (hDlg, 0) ;
-      return FALSE;
+       lpp->lpcc = (LPCHOOSECOLORW) lParam;
+       if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLORW) )
+       {
+           HeapFree(GetProcessHeap(), 0, lpp);
+           EndDialog (hDlg, 0) ;
+           return FALSE;
+       }
    }
    SetWindowLongA(hDlg, DWL_USER, (LONG)lpp);
 
