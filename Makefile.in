@@ -36,8 +36,7 @@ SUBDIRS = \
 	miscemu \
 	programs \
 	server \
-	tools \
-	unicode
+	tools
 
 # Sub-directories to install for install-lib
 INSTALLLIBSUBDIRS = \
@@ -45,8 +44,7 @@ INSTALLLIBSUBDIRS = \
 	library \
 	miscemu \
 	programs \
-	server \
-	unicode
+	server
 
 # Sub-directories to install for install-dev
 INSTALLDEVSUBDIRS = include tools
@@ -117,18 +115,17 @@ $(INSTALLBOTHSUBDIRS:%=%/__uninstall__): dummy
 # Dependencies between directories
 
 all: $(SUBDIRS)
-dlls: library libs tools unicode
-server: library libs tools unicode
-miscemu programs: dlls library libs tools unicode
-tools: library libs unicode
+dlls: library libs tools
+server: library libs tools
+miscemu programs: dlls library libs tools
+tools: library libs
 
-dlls/__install-lib__ dlls/__install-dev__: library libs tools unicode
-server/__install__: library libs tools unicode
-miscemu/__install__ programs/__install__: library libs tools unicode dlls/__install-lib__
+dlls/__install-lib__ dlls/__install-dev__: library libs tools
+server/__install__: library libs tools
+miscemu/__install__ programs/__install__: library libs tools dlls/__install-lib__
 library/__install__: library
 libs/__install__: libs
 tools/__install__: tools
-unicode/__install__: unicode
 
 # Test rules
 

@@ -6,10 +6,11 @@ MODULE    = none
 
 SUBDIRS = \
 	port \
+	unicode \
 	uuid
 
 # Sub-directories to install for install-lib
-INSTALLLIBSUBDIRS =
+INSTALLLIBSUBDIRS = unicode
 
 # Sub-directories to install for install-dev
 INSTALLDEVSUBDIRS = uuid

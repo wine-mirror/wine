@@ -1,12 +1,12 @@
 DEFS      = @DLLFLAGS@ -D__WINESRC__
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = none
-SOVERSION = 1.0
-SONAME    = libwine_unicode.so
+SOVERSION = 1
+SONAME    = libwine_unicode.so.$(SOVERSION)
 
 CODEPAGES = \
 	037 \
@@ -96,7 +96,6 @@ libwine_unicode.a: $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
-# --export-all doesn't work correctly because of dllwrap's bug
 libwine_unicode.dll: $(OBJS) wine_unicode.def
 	$(DLLWRAP) --def $(SRCDIR)/wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
 
@@ -121,6 +120,6 @@ uninstall::
 	$(RM) $(libdir)/libwine_unicode.a $(libdir)/libwine_unicode.dll $(libdir)/libwine_unicode.so $(libdir)/libwine_unicode.so.$(SOVERSION)
 
 clean::
-	$(RM) libwine_unicode.so.$(SOVERSION)
+	$(RM) libwine_unicode.so.$(SOVERSION) libwine_unicode.dll
 
 ### Dependencies:

@@ -825,9 +825,9 @@ fi
 
 case $build_os in
   cygwin*|mingw32*)
-    AC_SUBST(LDPATH,"PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$PATH\"") ;;
+    AC_SUBST(LDPATH,"PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$PATH\"") ;;
   *)
-    AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$LD_LIBRARY_PATH\"") ;;
+    AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$LD_LIBRARY_PATH\"") ;;
 esac
 
 dnl Mingw needs explicit msvcrt for linking libwine
@@ -1516,6 +1516,7 @@ include/Makefile
 library/Makefile
 libs/Makefile
 libs/port/Makefile
+libs/unicode/Makefile
 libs/uuid/Makefile
 miscemu/Makefile
 programs/Makefile
@@ -1553,8 +1554,7 @@ tools/winebuild/Makefile
 tools/winedump/Makefile
 tools/wmc/Makefile
 tools/wpp/Makefile
-tools/wrc/Makefile
-unicode/Makefile])
+tools/wrc/Makefile])
 
 AC_OUTPUT
 

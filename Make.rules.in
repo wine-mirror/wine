@@ -72,7 +72,7 @@ LDPATH       = @LDPATH@
 DLLDIR       = $(TOPOBJDIR)/dlls
 LIBPORT      = -L$(TOPOBJDIR)/libs/port -lwine_port
 LIBWINE      = -L$(TOPOBJDIR)/library -lwine
-LIBUNICODE   = -L$(TOPOBJDIR)/unicode -lwine_unicode
+LIBUNICODE   = -L$(TOPOBJDIR)/libs/unicode -lwine_unicode
 LIBUUID      = -L$(TOPOBJDIR)/libs/uuid -lwine_uuid
 
 @SET_MAKE@

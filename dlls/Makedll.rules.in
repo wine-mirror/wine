@@ -49,7 +49,7 @@ $(SPEC_DEF): $(WINEBUILD)
 
 # Rules for checking that no imports are missing
 
-CHECKLINK_RPATH = dlls library unicode
+CHECKLINK_RPATH = dlls library libs/unicode
 
 .PHONY: checklink16 $(WIN16_FILES:%=__checklink16__%)
 
