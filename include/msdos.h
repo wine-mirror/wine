@@ -3,6 +3,8 @@
 
 #include "winnt.h"
 
+#include "pshpack1.h"
+
 struct fcb {
         BYTE drive;
 	char name[8];
@@ -18,17 +20,17 @@ struct fcb {
 /* DTA layout for FindFirst/FindNext */
 typedef struct
 {
-    BYTE   drive;                /* 00 drive letter */
-    char   mask[11];             /* 01 search template */
-    BYTE   search_attr;          /* 0c search attributes */
-    WORD   count WINE_PACKED;    /* 0d entry count within directory */
-    WORD   cluster WINE_PACKED;  /* 0f cluster of parent directory */
-    char  *unixPath WINE_PACKED; /* 11 unix path (was: reserved) */
-    BYTE   fileattr;             /* 15 file attributes */
-    WORD   filetime;             /* 16 file time */
-    WORD   filedate;             /* 18 file date */
-    DWORD  filesize WINE_PACKED; /* 1a file size */
-    char   filename[13];         /* 1e file name + extension */
+    BYTE   drive;        /* 00 drive letter */
+    char   mask[11];     /* 01 search template */
+    BYTE   search_attr;  /* 0c search attributes */
+    WORD   count;        /* 0d entry count within directory */
+    WORD   cluster;      /* 0f cluster of parent directory */
+    char  *unixPath;     /* 11 unix path (was: reserved) */
+    BYTE   fileattr;     /* 15 file attributes */
+    WORD   filetime;     /* 16 file time */
+    WORD   filedate;     /* 18 file date */
+    DWORD  filesize;     /* 1a file size */
+    char   filename[13]; /* 1e file name + extension */
 } FINDFILE_DTA;
 
 /* FCB layout for FindFirstFCB/FindNextFCB */
@@ -61,41 +63,44 @@ typedef struct
     char  name[8];
 } DOS_DEVICE_HEADER;
 
+/* Warning: need to return LOL ptr w/ offset 0 (&ptr_first_DPB) to programs ! */
 typedef struct _DOS_LISTOFLISTS
 {
-    WORD  CX_Int21_5e01;	/* contents of CX from INT 21/AX=5E01h */
-    WORD  LRU_count_FCB_cache;	
-    WORD  LRU_count_FCB_open;
-    DWORD OEM_func_handler WINE_PACKED; /* OEM function of INT 21/AH=F8h */
-    WORD  INT21_offset;/* offset in DOS CS of code to return from INT 21 call */
-    WORD  sharing_retry_count;
-    WORD  sharing_retry_delay;
-    DWORD ptr_disk_buf;		/* ptr to current disk buf */
-    WORD  offs_unread_CON;	/* pointer in DOS data segment of unread CON input */
-    WORD  seg_first_MCB;
-    DWORD ptr_first_DPB;
-    DWORD ptr_first_SysFileTable;
-    DWORD ptr_clock_dev_hdr;
-    DWORD ptr_CON_dev_hdr;
-    WORD  max_byte_per_sec;   /* maximum bytes per sector of any block device */
-    DWORD ptr_disk_buf_info WINE_PACKED;
-    DWORD ptr_array_CDS WINE_PACKED; /* current directory structure */
-    DWORD ptr_sys_FCB WINE_PACKED;
-    WORD  nr_protect_FCB;
-    BYTE  nr_block_dev;
-    BYTE  nr_avail_drive_letters;
-    DOS_DEVICE_HEADER NUL_dev WINE_PACKED;
-    BYTE  nr_drives_JOINed;
-    WORD  ptr_spec_prg_names WINE_PACKED;
-    DWORD ptr_SETVER_prg_list WINE_PACKED;
-    WORD DOS_HIGH_A20_func_offs WINE_PACKED;
-    WORD PSP_last_exec WINE_PACKED; /* if DOS in HMA: PSP of program executed last; if DOS low: 0000h */
-    WORD BUFFERS_val WINE_PACKED;
-    WORD BUFFERS_nr_lookahead WINE_PACKED;
-    BYTE boot_drive WINE_PACKED;
-    BYTE flag_DWORD_moves WINE_PACKED; /* 01h for 386+, 00h otherwise */
-    WORD size_extended_mem WINE_PACKED; /* size of extended mem in KB */
+    WORD  CX_Int21_5e01;	/* -24d contents of CX from INT 21/AX=5E01h */
+    WORD  LRU_count_FCB_cache;	/* -22d */
+    WORD  LRU_count_FCB_open;	/* -20d */
+    DWORD OEM_func_handler;	/* -18d OEM function of INT 21/AH=F8h */
+    WORD  INT21_offset;		/* -14d offset in DOS CS of code to return from INT 21 call */
+    WORD  sharing_retry_count;	/* -12d */
+    WORD  sharing_retry_delay;	/* -10d */
+    DWORD ptr_disk_buf;		/* -8d ptr to current disk buf */
+    WORD  offs_unread_CON;	/* -4d pointer in DOS data segment of unread CON input */
+    WORD  seg_first_MCB;	/* -2d */
+    DWORD ptr_first_DPB;	/* 00 */
+    DWORD ptr_first_SysFileTable; /* 04 */
+    DWORD ptr_clock_dev_hdr;	/* 08 */
+    DWORD ptr_CON_dev_hdr;	/* 0C */
+    WORD  max_byte_per_sec;	/* 10 maximum bytes per sector of any block device */
+    DWORD ptr_disk_buf_info;	/* 12 */
+    DWORD ptr_array_CDS;	/* 16 current directory structure */
+    DWORD ptr_sys_FCB;	 	/* 1A */
+    WORD  nr_protect_FCB;	/* 1E */
+    BYTE  nr_block_dev;		/* 20 */
+    BYTE  nr_avail_drive_letters; /* 21 */
+    DOS_DEVICE_HEADER NUL_dev;	/* 22 */
+    BYTE  nr_drives_JOINed;	/* 34 */
+    WORD  ptr_spec_prg_names;	/* 35 */
+    DWORD ptr_SETVER_prg_list;	/* 37 */
+    WORD DOS_HIGH_A20_func_offs;/* 3B */
+    WORD PSP_last_exec;		/* 3D if DOS in HMA: PSP of program executed last; if DOS low: 0000h */
+    WORD BUFFERS_val;		/* 3F */
+    WORD BUFFERS_nr_lookahead;	/* 41 */
+    BYTE boot_drive;		/* 43 */
+    BYTE flag_DWORD_moves;	/* 44 01h for 386+, 00h otherwise */
+    WORD size_extended_mem;	/* 45 size of extended mem in KB */
 } DOS_LISTOFLISTS;
+
+#include "poppack.h"
 
 #define MAX_DOS_DRIVES	26
 
