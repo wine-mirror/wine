@@ -12,6 +12,7 @@
 # error You must include config.h to use this header
 #endif
 
+#ifdef HAVE_X11_XLIB_H
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -56,5 +57,6 @@ extern int TSXAddPixel(struct _XImage *, long);
 extern XContext TSXUniqueContext(void);
 extern int TSXDeleteContext(Display*,XID,XContext);
 
+#endif /* defined(HAVE_X11_XLIB_H) */
 
 #endif /* __WINE_TS_XUTIL_H */

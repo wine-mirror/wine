@@ -6,6 +6,7 @@
 
 #include "config.h"
 
+#ifdef HAVE_X11_XLIB_H
 
 #include <X11/Xlib.h>
 
@@ -1171,13 +1172,5 @@ int (*TSXSynchronize(Display *a0, Bool a1))(Display *)
   return r;
 }
 
-extern void _XInitImageFuncPtrs(XImage *);
-
-void TS_XInitImageFuncPtrs(XImage *a0)
-{
-  wine_tsx11_lock();
-  _XInitImageFuncPtrs(a0);
-  wine_tsx11_unlock();
-}
-
+#endif /* defined(HAVE_X11_XLIB_H) */
 

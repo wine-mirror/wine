@@ -12,6 +12,7 @@
 # error You must include config.h to use this header
 #endif
 
+#ifdef HAVE_X11_XLIB_H
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -26,5 +27,6 @@ extern XrmDatabase  TSXrmGetStringDatabase(const  char*);
 extern void  TSXrmMergeDatabases(XrmDatabase, XrmDatabase*);
 extern void  TSXrmParseCommand(XrmDatabase*, XrmOptionDescList, int, const  char*, int*, char**);
 
+#endif /* defined(HAVE_X11_XLIB_H) */
 
 #endif /* __WINE_TS_XRESOURCE_H */

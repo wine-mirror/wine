@@ -6,6 +6,7 @@
 
 #include "config.h"
 
+#ifdef HAVE_X11_XLIB_H
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -55,15 +56,6 @@ Region  TSXCreateRegion(void)
   Region  r;
   wine_tsx11_lock();
   r = XCreateRegion();
-  wine_tsx11_unlock();
-  return r;
-}
-
-int  TSXDeleteContext(Display* a0, XID a1, XContext a2)
-{
-  int  r;
-  wine_tsx11_lock();
-  r = XDeleteContext(a0, a1, a2);
   wine_tsx11_unlock();
   return r;
 }
@@ -325,4 +317,14 @@ XContext TSXUniqueContext(void)
   return r;
 }
 
+int TSXDeleteContext(Display*a0,XID a1,XContext a2)
+{
+  int r;
+  wine_tsx11_lock();
+  r = XDeleteContext(a0,a1,a2);
+  wine_tsx11_unlock();
+  return r;
+}
+
+#endif /* defined(HAVE_X11_XLIB_H) */
 

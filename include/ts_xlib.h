@@ -12,6 +12,7 @@
 # error You must include config.h to use this header
 #endif
 
+#ifdef HAVE_X11_XLIB_H
 
 #include <X11/Xlib.h>
 
@@ -147,7 +148,7 @@ extern int  TSXUnmapWindow(Display*, Window);
 extern int  TSXWarpPointer(Display*, Window, Window, int, int, unsigned int, unsigned int, int, int);
 extern XIM  TSXOpenIM(Display*, struct _XrmHashBucketRec*, char*, char*);
 extern int (*TSXSynchronize(Display *, Bool))(Display *);
-extern void TS_XInitImageFuncPtrs(XImage *);
 
+#endif /* defined(HAVE_X11_XLIB_H) */
 
 #endif /* __WINE_TS_XLIB_H */

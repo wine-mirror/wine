@@ -185,7 +185,6 @@ XrmInitialize
 XrmMergeDatabases
 XrmParseCommand
 XrmUniqueQuark
-_XInitImageFuncPtrs
 XF86DGAQueryExtension
 XF86DGASetViewPort
 XF86DGAInstallColormap

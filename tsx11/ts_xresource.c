@@ -6,6 +6,7 @@
 
 #include "config.h"
 
+#ifdef HAVE_X11_XLIB_H
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -63,4 +64,5 @@ void  TSXrmParseCommand(XrmDatabase* a0, XrmOptionDescList a1, int a2, const  ch
   wine_tsx11_unlock();
 }
 
+#endif /* defined(HAVE_X11_XLIB_H) */
 

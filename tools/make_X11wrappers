@@ -57,8 +57,8 @@ foreach $name (@dolist) {
 
     $x11_incl = "";
     $extensions_dir = "";
-    $pre_file = "";
-    $post_file = "";
+    $pre_file = "#ifdef HAVE_X11_XLIB_H\n";
+    $post_file = "#endif /* defined(HAVE_X11_XLIB_H) */\n";
     $inc_name = $name;
     if($name eq "Xutil" || $name eq "Xresource" || $name eq "XShm") {
 	$x11_incl = "#include <X11/Xlib.h>\n";
@@ -388,8 +388,6 @@ output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", 
 		  "int (*TSXSynchronize(Display *, Bool))(Display *)",
 		  "int (*TSXSynchronize(Display *a0, Bool a1))(Display *)",
 		  "a0, a1");
-	print OUTC "\nextern void _XInitImageFuncPtrs(XImage *);\n";
-	output_fn("_XInitImageFuncPtrs", "void", "XImage *", "XImage *a0", "a0");
     } elsif($name eq "Xutil") {
 	output_fn("XDestroyImage", "int",
 		  "struct _XImage *", "struct _XImage *a0", "a0");
