@@ -832,6 +832,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case CBEM_INSERTITEMW:
 	    return COMBOEX_InsertItemW (hwnd, wParam, lParam);
 
+	case CBEM_SETEXSTYLE:	/* FIXME: obsoleted, should be the same as: */
 	case CBEM_SETEXTENDEDSTYLE:
 	    return COMBOEX_SetExtendedStyle (hwnd, wParam, lParam);
 
@@ -864,6 +865,8 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case CB_SETEXTENDEDUI:
 	case CB_SETITEMDATA:
 	case CB_SHOWDROPDOWN:
+	case WM_SETTEXT:
+	case WM_GETTEXT:
 	    return COMBOEX_Forward (hwnd, uMsg, wParam, lParam);
 
 	case CB_SETITEMHEIGHT:
