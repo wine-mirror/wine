@@ -25,7 +25,13 @@
 #ifndef __WINE_RPC_H
 #define __WINE_RPC_H
 
-#define __RPC_WIN32__
+#if defined(__PPC__) || defined(_MAC) /* ? */
+ #define __RPC_MAC__
+#elif defined(_WIN64)
+ #define __RPC_WIN64__
+#else
+ #define __RPC_WIN32__
+#endif
 
 #define __RPC_FAR
 #define __RPC_API  WINAPI

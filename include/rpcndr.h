@@ -24,18 +24,64 @@
 #ifndef __WINE_RPCNDR_H
 #define __WINE_RPCNDR_H
 
+#include "basetsd.h"
 #include "rpc.h"
 
-#define NDR_LITTLE_ENDIAN              ((UINT32) 0x00000010)
-#define NDR_BIG_ENDIAN                 ((UINT32) 0x00000000)
+/* stupid #if can't handle casts... this __stupidity 
+   is just a workaround for that limitation */
 
-/*   Character Representation: ASCII
- *   Integer Representation:   Little Endian
- *   FP Representation:        IEEE
- */
-#define NDR_LOCAL_DATA_REPRESENTATION ((UINT32) 0x00000010)
-#define NDR_LOCAL_ENDIAN              NDR_LITTLE_ENDIAN
+#define __NDR_CHAR_REP_MASK  0x000fL
+#define __NDR_INT_REP_MASK   0x00f0L
+#define __NDR_FLOAT_REP_MASK 0xff00L
 
+#define __NDR_IEEE_FLOAT     0x0000L
+#define __NDR_VAX_FLOAT      0x0100L
+#define __NDR_IBM_FLOAT      0x0300L
+
+#define __NDR_ASCII_CHAR     0x0000L
+#define __NDR_EBCDIC_CHAR    0x0001L
+
+#define __NDR_LITTLE_ENDIAN  0x0010L
+#define __NDR_BIG_ENDIAN     0x0000L
+
+/* Mac's are special */
+#if defined(__RPC_MAC__)
+  #define __NDR_LOCAL_DATA_REPRESENTATION \
+    (__NDR_IEEE_FLOAT | __NDR_ASCII_CHAR | __NDR_BIG_ENDIAN)
+#else
+  #define __NDR_LOCAL_DATA_REPRESENTATION \
+    (__NDR_IEEE_FLOAT | __NDR_ASCII_CHAR | __NDR_LITTLE_ENDIAN)
+#endif
+
+#define __NDR_LOCAL_ENDIAN \
+  (__NDR_LOCAL_DATA_REPRESENTATION & __NDR_INT_REP_MASK)
+
+/* for convenience, define NDR_LOCAL_IS_BIG_ENDIAN iff it is */
+#if __NDR_LOCAL_ENDIAN == __NDR_BIG_ENDIAN
+  #define NDR_LOCAL_IS_BIG_ENDIAN
+#elif __NDR_LOCAL_ENDIAN == __NDR_LITTLE_ENDIAN
+  #undef NDR_LOCAL_IS_BIG_ENDIAN
+#else
+  #error alien NDR_LOCAL_ENDIAN - Greg botched the defines again, please report
+#endif
+
+/* finally, do the casts like Microsoft */
+
+#define NDR_CHAR_REP_MASK             ((unsigned long) __NDR_CHAR_REP_MASK)
+#define NDR_INT_REP_MASK              ((unsigned long) __NDR_INT_REP_MASK)
+#define NDR_FLOAT_REP_MASK            ((unsigned long) __NDR_FLOAT_REP_MASK)
+#define NDR_IEEE_FLOAT                ((unsigned long) __NDR_IEEE_FLOAT)
+#define NDR_VAX_FLOAT                 ((unsigned long) __NDR_VAX_FLOAT)
+#define NDR_IBM_FLOAT                 ((unsigned long) __NDR_IBM_FLOAT)
+#define NDR_ASCII_CHAR                ((unsigned long) __NDR_ASCII_CHAR)
+#define NDR_EBCDIC_CHAR               ((unsigned long) __NDR_EBCDIC_CHAR)
+#define NDR_LITTLE_ENDIAN             ((unsigned long) __NDR_LITTLE_ENDIAN)
+#define NDR_BIG_ENDIAN                ((unsigned long) __NDR_BIG_ENDIAN)
+#define NDR_LOCAL_DATA_REPRESENTATION ((unsigned long) __NDR_LOCAL_DATA_REPRESENTATION)
+#define NDR_LOCAL_ENDIAN              ((unsigned long) __NDR_LOCAL_ENDIAN)
+
+
+#define TARGET_IS_NT50_OR_LATER 1
 #define TARGET_IS_NT40_OR_LATER 1
 #define TARGET_IS_NT351_OR_WIN95_OR_LATER 1
 
