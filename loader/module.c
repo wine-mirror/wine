@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "winerror.h"
 #include "heap.h"
 #include "neexe.h"

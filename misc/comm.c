@@ -359,7 +359,7 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 
 	TRACE("(%s), ptr %p\n", device, lpdcb);
 
-	if (!lstrncmpiA(device,"COM",3)) {
+	if (!strncasecmp(device,"COM",3)) {
 		port = device[3] - '0';
 	
 
@@ -456,7 +456,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 	if (port-- == 0)
 		ERR("BUG ! COM0 or LPT0 don't exist !\n");
 
-	if (!lstrncmpiA(device,"COM",3)) {
+	if (!strncasecmp(device,"COM",3)) {
 		
                 TRACE("%s = %s\n", device, COM[port].devicename);
 
@@ -519,7 +519,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 		}
 	} 
 	else 
-	if (!lstrncmpiA(device,"LPT",3)) {
+	if (!strncasecmp(device,"LPT",3)) {
 	
 		if (!ValidLPTPort(port))
 			return IE_BADID;
@@ -1478,7 +1478,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(LPCSTR device, LPDCB lpdcb,
 
 	TRACE("(%s,%p,%p)\n",device,lpdcb,lptimeouts);
 
-	if (!lstrncmpiA(device,"COM",3)) {
+	if (!strncasecmp(device,"COM",3)) {
 		port=device[3]-'0';
 		if (port--==0) {
 			ERR("BUG! COM0 can't exists!.\n");

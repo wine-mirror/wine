@@ -95,7 +95,7 @@ static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
 {
     while (*env)
     {
-        if (!lstrncmpiA( name, env, len ) && (env[len] == '='))
+        if (!strncasecmp( name, env, len ) && (env[len] == '='))
             return env + len + 1;
         env += strlen(env) + 1;
     }
@@ -284,7 +284,7 @@ BOOL WINAPI SetEnvironmentVariableA( LPCSTR name, LPCSTR value )
     len = strlen(name);
     while (*p)
     {
-        if (!lstrncmpiA( name, p, len ) && (p[len] == '=')) break;
+        if (!strncasecmp( name, p, len ) && (p[len] == '=')) break;
         p += strlen(p) + 1;
     }
     if (!value && !*p) goto done;  /* Value to remove doesn't exist */

@@ -17,6 +17,7 @@
 #include "drive.h"
 #include "debugtools.h"
 #include "winbase.h"
+#include "wine/winestring.h"
 
 DEFAULT_DEBUG_CHANNEL(cdrom);
 

@@ -23,6 +23,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "commctrl.h"
 #include "debugtools.h"
 
@@ -1512,8 +1513,10 @@ REBAR_SetBarInfo (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpInfo->fMask & RBIM_IMAGELIST) {
 	infoPtr->himl = lpInfo->himl;
 	if (infoPtr->himl) {
-	    ImageList_GetIconSize (infoPtr->himl, &infoPtr->imageSize.cx,
-				   &infoPtr->imageSize.cy);
+            INT cx, cy;
+	    ImageList_GetIconSize (infoPtr->himl, &cx, &cy);
+	    infoPtr->imageSize.cx = cx;
+	    infoPtr->imageSize.cy = cy;
 	}
 	else {
 	    infoPtr->imageSize.cx = 0;

@@ -14,6 +14,7 @@
 #include "shell32_main.h"
 #include "windef.h"
 #include "options.h"
+#include "wine/winestring.h"
 #include "wine/undocshell.h"
 #include "wine/unicode.h"
 #include "shlwapi.h"

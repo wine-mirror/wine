@@ -71,7 +71,7 @@ BOOL VFWAPI ICInfo(
 	if (GetPrivateProfileStringA("drivers32",NULL,NULL,buf,2000,"system.ini")) {
 		char *s = buf;
 		while (*s) {
-			if (!lstrncmpiA(type,s,4)) {
+			if (!strncasecmp(type,s,4)) {
 				if(!fccHandler--) {
 					lpicinfo->fccHandler = mmioStringToFOURCCA(s+5,0);
 					return TRUE;
@@ -280,7 +280,7 @@ HIC VFWAPI ICLocate(
 	if (GetPrivateProfileSectionA("drivers32",pszBuffer,1024,"system.ini")) {
 		char* s = pszBuffer;
 		while (*s) {
-			if (!lstrncmpiA(type,s,5)) {
+			if (!strncasecmp(type,s,5)) {
 				char *s2 = s;
 				while (*s2 != '\0' && *s2 != '.') s2++;
 				if (*s2) {

@@ -31,6 +31,7 @@
 #include "winerror.h"
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
 #include "winnls.h"         /* for PRIMARYLANGID */
+#include "wine/winestring.h"
 #include "heap.h"
 #include "wine/obj_base.h"
 #include "debugtools.h"

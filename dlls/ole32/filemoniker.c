@@ -8,6 +8,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "debugtools.h"
 #include "objbase.h"
 #include "wine/obj_storage.h"

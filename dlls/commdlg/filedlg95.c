@@ -26,6 +26,7 @@
 
 #include "winbase.h"
 #include "ntddk.h"
+#include "wine/winestring.h"
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"

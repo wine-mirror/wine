@@ -18,6 +18,7 @@
 
 #include "winbase.h"
 #include "wingdi.h"
+#include "wine/winestring.h"
 #include "commctrl.h"
 #include "debugtools.h"
 

@@ -6,6 +6,7 @@
 
 #include "config.h"
 
+#include "wine/winestring.h"
 #include "dc.h"
 #include "heap.h"
 #include "debugtools.h"

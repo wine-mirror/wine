@@ -34,6 +34,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "commctrl.h"
 #include "imagelist.h"
 #include "cache.h"

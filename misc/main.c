@@ -61,7 +61,7 @@ void MAIN_ParseDebugOptions( const char *arg )
       int j;
 
       for(j=0; j<DEBUG_CLASS_COUNT; j++)
-	if(!lstrncmpiA(options, debug_cl_name[j], strlen(debug_cl_name[j])))
+	if(!strncasecmp(options, debug_cl_name[j], strlen(debug_cl_name[j])))
 	  break;
       if(j==DEBUG_CLASS_COUNT)
 	goto error;
@@ -78,7 +78,7 @@ void MAIN_ParseDebugOptions( const char *arg )
     else
       l=strlen(options);
 
-    if (!lstrncmpiA(options+1,"all",l-1))
+    if (!strncasecmp(options+1,"all",l-1))
       {
 	int i, j;
 	for (i=0; i<DEBUG_CHANNEL_COUNT; i++)
@@ -86,8 +86,8 @@ void MAIN_ParseDebugOptions( const char *arg )
 	    if(cls == -1 || cls == j)
                 __SET_DEBUGGING( j, debug_channels[i], (*options=='+') );
       }
-    else if (!lstrncmpiA(options+1, "relay=", 6) ||
-	     !lstrncmpiA(options+1, "snoop=", 6))
+    else if (!strncasecmp(options+1, "relay=", 6) ||
+	     !strncasecmp(options+1, "snoop=", 6))
       {
 	int i, j;
 	char *s, *s2, ***output, c;

@@ -14,6 +14,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"

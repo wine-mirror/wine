@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
@@ -20,6 +21,7 @@
 #include "wine/obj_clientserver.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
+#include "wine/winestring.h"
 #include "debugtools.h"
 #include "ole2ver.h"
 #include "winreg.h"

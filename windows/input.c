@@ -20,6 +20,7 @@
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/winestring.h"
 #include "wine/keyboard16.h"
 #include "win.h"
 #include "heap.h"

@@ -29,6 +29,7 @@
 #include <limits.h>
 #include "winbase.h"
 #include "wingdi.h"
+#include "wine/winestring.h"
 #include "commctrl.h"
 #include "comctl32.h"
 #include "debugtools.h"

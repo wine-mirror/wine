@@ -6,6 +6,7 @@
 
 #include "windef.h"
 #include "winerror.h"
+#include "wine/winestring.h"
 #include "heap.h"
 #include "ntddk.h"
 #include "ntsecapi.h"

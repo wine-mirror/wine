@@ -39,6 +39,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "wine/winestring.h"
 #include "wine/keyboard16.h"
 #include "thread.h"
 #include "file.h"

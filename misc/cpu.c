@@ -102,7 +102,7 @@ VOID WINAPI GetSystemInfo(
 			*s='\0';
 
 		/* 2.1 method */
-		if (!lstrncmpiA(line, "cpu family",strlen("cpu family"))) {
+		if (!strncasecmp(line, "cpu family",strlen("cpu family"))) {
 			if (isdigit (value[0])) {
 				switch (value[0] - '0') {
 				case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
@@ -128,7 +128,7 @@ VOID WINAPI GetSystemInfo(
 			continue;
 		}
 		/* old 2.0 method */
-		if (!lstrncmpiA(line, "cpu",strlen("cpu"))) {
+		if (!strncasecmp(line, "cpu",strlen("cpu"))) {
 			if (	isdigit (value[0]) && value[1] == '8' && 
 				value[2] == '6' && value[3] == 0
 			) {
@@ -155,19 +155,19 @@ VOID WINAPI GetSystemInfo(
 				RegSetValueExA(xhkey,"Identifier",0,REG_SZ,buf,strlen(buf));
 			continue;
 		}
-		if (!lstrncmpiA(line,"fdiv_bug",strlen("fdiv_bug"))) {
-			if (!lstrncmpiA(value,"yes",3))
+		if (!strncasecmp(line,"fdiv_bug",strlen("fdiv_bug"))) {
+			if (!strncasecmp(value,"yes",3))
 				PF[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
 
 			continue;
 		}
-		if (!lstrncmpiA(line,"fpu",strlen("fpu"))) {
-			if (!lstrncmpiA(value,"no",2))
+		if (!strncasecmp(line,"fpu",strlen("fpu"))) {
+			if (!strncasecmp(value,"no",2))
 				PF[PF_FLOATING_POINT_EMULATED] = TRUE;
 
 			continue;
 		}
-		if (!lstrncmpiA(line,"processor",strlen("processor"))) {
+		if (!strncasecmp(line,"processor",strlen("processor"))) {
 			/* processor number counts up...*/
 			int	x;
 
@@ -183,13 +183,13 @@ VOID WINAPI GetSystemInfo(
 				RegCloseKey(xhkey);
 			RegCreateKey16(hkey,buf,&xhkey);
 		}
-		if (!lstrncmpiA(line,"stepping",strlen("stepping"))) {
+		if (!strncasecmp(line,"stepping",strlen("stepping"))) {
 			int	x;
 
 			if (sscanf(value,"%d",&x))
 				cachedsi.wProcessorRevision = x;
 		}
-		if (!lstrncmpiA(line,"flags",strlen("flags"))) {
+		if (!strncasecmp(line,"flags",strlen("flags"))) {
 			if (strstr(value,"cx8"))
 				PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
 			if (strstr(value,"mmx"))

@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
+#include "winnls.h"
 #include "wine/unicode.h"
 #include "syslevel.h"
 #include "server.h"

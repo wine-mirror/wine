@@ -8,11 +8,12 @@
 #include <string.h>
 
 #include "windef.h"
+#include "wine/winestring.h"
 #include "metafiledrv.h"
 #include "debugtools.h"
 #include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(metafile)
+DEFAULT_DEBUG_CHANNEL(metafile);
 
 
 /******************************************************************

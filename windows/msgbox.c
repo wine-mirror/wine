@@ -10,6 +10,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/winestring.h"
 #include "dlgs.h"
 #include "heap.h"
 #include "ldt.h"

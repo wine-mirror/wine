@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "win16drv.h"
 #include "module.h"
 #include "font.h"
@@ -14,7 +15,7 @@
 #include "dc.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win16drv)
+DEFAULT_DEBUG_CHANNEL(win16drv);
 
 
 /***********************************************************************

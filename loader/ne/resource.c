@@ -117,7 +117,7 @@ NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab,
 	    if (!(pTypeInfo->type_id & 0x8000))
 	    {
 		BYTE *p = pResTab + pTypeInfo->type_id;
-		if ((*p == len) && !lstrncmpiA( p+1, str, len ))
+		if ((*p == len) && !strncasecmp( p+1, str, len ))
 		{
 		    TRACE("  Found type '%s'\n", str );
 		    return pTypeInfo;
@@ -164,7 +164,7 @@ NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab,
         {
             if (pNameInfo->id & 0x8000) continue;
             p = pResTab + pNameInfo->id;
-            if ((*p == len) && !lstrncmpiA( p+1, str, len ))
+            if ((*p == len) && !strncasecmp( p+1, str, len ))
                 return pNameInfo;
         }
     }

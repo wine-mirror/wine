@@ -18,6 +18,7 @@
 #include "winbase.h" /* for lstrlenW() and the likes */
 #include "winnls.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "debugtools.h"
 
 #include "storage32.h"

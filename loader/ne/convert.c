@@ -9,6 +9,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "module.h"
 #include "debugtools.h"
 

@@ -9,6 +9,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/winestring.h"
 #include "commdlg.h"
 #include "cderr.h"
 #include "dlgs.h"

@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "windef.h"
+#include "winnls.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "winerror.h"
@@ -258,7 +259,7 @@ ATOM WINAPI AddAtom16( LPCSTR str )
     {
 	entryPtr = ATOM_MakePtr( entry );
 	if ((entryPtr->length == len) && 
-	    (!lstrncmpiA( entryPtr->str, buffer, len )))
+	    (!strncasecmp( entryPtr->str, buffer, len )))
 	{
 	    entryPtr->refCount++;
             TRACE("-- existing 0x%x\n", entry);
@@ -347,7 +348,7 @@ ATOM WINAPI FindAtom16( LPCSTR str )
     {
 	ATOMENTRY * entryPtr = ATOM_MakePtr( entry );
 	if ((entryPtr->length == len) && 
-	    (!lstrncmpiA( entryPtr->str, str, len )))
+	    (!strncasecmp( entryPtr->str, str, len )))
         {
             TRACE("-- found %x\n", entry);
 	    return HANDLETOATOM( entry );

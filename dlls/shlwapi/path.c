@@ -8,6 +8,7 @@
 #include "winerror.h"
 #include "wine/unicode.h"
 #include "wine/undocshell.h"
+#include "wine/winestring.h"
 #include "shlwapi.h"
 #include "debugtools.h"
 

@@ -8,6 +8,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "wine/winestring.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"

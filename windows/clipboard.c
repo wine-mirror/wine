@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "wine/winestring.h"
 #include "heap.h"
 #include "message.h"
 #include "task.h"

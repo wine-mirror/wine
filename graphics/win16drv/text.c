@@ -11,8 +11,9 @@
 #include "gdi.h"
 #include "debugtools.h"
 #include "winbase.h"
+#include "wine/winestring.h"
 
-DEFAULT_DEBUG_CHANNEL(win16drv)
+DEFAULT_DEBUG_CHANNEL(win16drv);
 
 /***********************************************************************
  *           WIN16DRV_ExtTextOut

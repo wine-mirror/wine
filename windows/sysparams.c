@@ -12,6 +12,7 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "wine/winuser16.h"
+#include "wine/winestring.h"
 #include "winerror.h"
 
 #include "keyboard.h"

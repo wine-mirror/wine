@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "winbase.h"
+#include "wine/winestring.h"
 #include "winnetwk.h"
 #include "drive.h"
 #include "heap.h"

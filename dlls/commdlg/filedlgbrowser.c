@@ -10,14 +10,14 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/winestring.h"
 #include "heap.h"
 #include "shlguid.h"
 #include "wine/obj_dataobject.h"
 #include "debugtools.h"
 #include "cdlg.h"
-#include "wine/undocshell.h"
 
-DEFAULT_DEBUG_CHANNEL(commdlg)
+DEFAULT_DEBUG_CHANNEL(commdlg);
 
 /**************************************************************************
 *   Structure

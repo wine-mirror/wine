@@ -23,6 +23,7 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
+#include "wine/winestring.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
 

@@ -12,6 +12,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/winestring.h"
 #include "debugtools.h"
 #include "mmsystem.h"
 #include "msacm.h"

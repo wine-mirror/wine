@@ -843,20 +843,20 @@ static INT LISTBOX_FindString( WND *wnd, LB_DESCR *descr, INT start,
 #define CHECK_DRIVE(item) \
     if ((item)->str[0] == '[') \
     { \
-        if (!lstrncmpiA( str, (item)->str+1, len )) return i; \
-        if (((item)->str[1] == '-') && !lstrncmpiA(str,(item)->str+2,len)) \
+        if (!strncasecmp( str, (item)->str+1, len )) return i; \
+        if (((item)->str[1] == '-') && !strncasecmp(str,(item)->str+2,len)) \
         return i; \
     }
 
             INT len = strlen(str);
             for (i = start + 1; i < descr->nb_items; i++, item++)
             {
-               if (!lstrncmpiA( str, item->str, len )) return i;
+               if (!strncasecmp( str, item->str, len )) return i;
                CHECK_DRIVE(item);
             }
             for (i = 0, item = descr->items; i <= start; i++, item++)
             {
-               if (!lstrncmpiA( str, item->str, len )) return i;
+               if (!strncasecmp( str, item->str, len )) return i;
                CHECK_DRIVE(item);
             }
 #undef CHECK_DRIVE

@@ -20,6 +20,7 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#include "winnls.h"
 #include "winbase.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"

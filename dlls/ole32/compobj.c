@@ -18,6 +18,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "winerror.h"
+#include "wine/winestring.h"
 #include "wownt32.h"
 #include "ole2ver.h"
 #include "debugtools.h"

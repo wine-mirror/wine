@@ -17,6 +17,7 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "dialog.h"
 #include "drive.h"
 #include "heap.h"

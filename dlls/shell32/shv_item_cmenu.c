@@ -10,6 +10,7 @@
 
 #include "pidl.h"
 #include "shlguid.h"
+#include "wine/winestring.h"
 #include "wine/obj_base.h"
 #include "wine/obj_contextmenu.h"
 #include "wine/obj_shellbrowser.h"
@@ -18,9 +19,8 @@
 
 #include "shell32_main.h"
 #include "shellfolder.h"
-#include "shell.h" /* DROPFILESTRUCT */
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 /**************************************************************************
 *  IContextMenu Implementation

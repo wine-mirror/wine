@@ -25,6 +25,7 @@
 #include "ntddk.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
@@ -609,7 +610,7 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
             }
             else
             {
-                if (!lstrncmpiA( long_name, name, len )) break;
+                if (!strncasecmp( long_name, name, len )) break;
             }
         }
         if (dos_name[0])
@@ -660,7 +661,7 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
         const char *dev = DOSFS_Devices[i].name;
-        if (!lstrncmpiA( dev, name, strlen(dev) ))
+        if (!strncasecmp( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) return &DOSFS_Devices[i];
@@ -711,7 +712,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
         const char *dev = DOSFS_Devices[i].name;
-        if (!lstrncmpiA( dev, name, strlen(dev) ))
+        if (!strncasecmp( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) {
@@ -1606,8 +1607,11 @@ HANDLE WINAPI FindFirstFileExW(
           dataW->ftLastWriteTime  = dataA.ftLastWriteTime;
           dataW->nFileSizeHigh    = dataA.nFileSizeHigh;
           dataW->nFileSizeLow     = dataA.nFileSizeLow;
-          lstrcpyAtoW( dataW->cFileName, dataA.cFileName );
-          lstrcpyAtoW( dataW->cAlternateFileName, dataA.cAlternateFileName );
+          MultiByteToWideChar( CP_ACP, 0, dataA.cFileName, -1,
+                               dataW->cFileName, sizeof(dataW->cFileName)/sizeof(WCHAR) );
+          MultiByteToWideChar( CP_ACP, 0, dataA.cAlternateFileName, -1,
+                               dataW->cAlternateFileName,
+                               sizeof(dataW->cAlternateFileName)/sizeof(WCHAR) );
         }
         break;
       default:
@@ -1670,8 +1674,11 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
     data->ftLastWriteTime  = dataA.ftLastWriteTime;
     data->nFileSizeHigh    = dataA.nFileSizeHigh;
     data->nFileSizeLow     = dataA.nFileSizeLow;
-    lstrcpyAtoW( data->cFileName, dataA.cFileName );
-    lstrcpyAtoW( data->cAlternateFileName, dataA.cAlternateFileName );
+    MultiByteToWideChar( CP_ACP, 0, dataA.cFileName, -1,
+                         data->cFileName, sizeof(data->cFileName)/sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, dataA.cAlternateFileName, -1,
+                         data->cAlternateFileName,
+                         sizeof(data->cAlternateFileName)/sizeof(WCHAR) );
     return TRUE;
 }
 

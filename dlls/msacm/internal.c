@@ -81,7 +81,7 @@ void MSACM_RegisterAllDrivers(void)
     if (GetPrivateProfileSectionA("drivers32", pszBuffer, dwBufferLength, "system.ini")) {
 	char* s = pszBuffer;
 	while (*s) {
-	    if (!lstrncmpiA("MSACM.", s, 6)) {
+	    if (!strncasecmp("MSACM.", s, 6)) {
 		char *s2 = s;
 		while (*s2 != '\0' && *s2 != '=') s2++;
 		if (*s2) {

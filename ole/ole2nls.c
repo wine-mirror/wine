@@ -15,6 +15,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"
+#include "wine/winestring.h"
 #include "heap.h"
 #include "options.h"
 #include "winver.h"
