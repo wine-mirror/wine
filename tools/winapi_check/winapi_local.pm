@@ -13,10 +13,10 @@ sub check_function {
     my $winapi = shift;
 
     my $module = $winapi->function_module($name);
-
+       
     if($winapi->name eq "win16") {
 	my $name16 = $name;
-	$name16 =~ s/16$//;   
+	$name16 =~ s/16$//;
 	if($name16 ne $name && $winapi->function_stub($name16)) {
 	    if($options->implemented) {
 		&$output("function implemented but declared as stub in .spec file");
@@ -106,7 +106,13 @@ sub check_function {
     } elsif($#argument_types != -1 && $argument_types[$#argument_types] eq "...") {
 	&$output("function not declared as vararg");
     }
-	
+
+    if($#argument_types != -1 && $argument_types[$#argument_types] eq "CONTEXT *" &&
+       $name !~ /^(Get|Set)ThreadContext$/)
+    {
+	$#argument_types--;
+    }
+    
     if($name =~ /^CRTDLL__ftol|CRTDLL__CIpow$/) {
 	# ignore
     } else {

@@ -170,6 +170,7 @@ sub parse_spec_file {
 
 	if($header)  {
 	    if(/^name\s*(\S*)/) { $module = $1; }
+	    if(/^type\s*(\w+)/) { $type = $1; }
 	    if(/^\d+/) { $header = 0 };
 	    next;
 	} 
@@ -186,14 +187,30 @@ sub parse_spec_file {
 	    # FIXME: Internal name existing more than once not handled properly
 	    $$function_arguments{$internal_name} = $arguments;
 	    $$function_calling_convention{$internal_name} = $calling_convention;
-	    $$function_module{$internal_name} = "$module";
+	    if(!$$function_module{$internal_name}) {
+		$$function_module{$internal_name} = "$module";
+	    } elsif($$function_module{$internal_name} !~ /$module/) {
+		$$function_module{$internal_name} .= " & $module";
+	    }
 	} elsif(/^(\d+)\s+stub\s+(\S+)$/) {
 	    my $external_name = $2;
 
 	    $ordinal = $1;
 
-	    $$function_stub{$external_name} = 1;
-	    $$function_module{$external_name} = $module;
+	    my $internal_name;
+	    if($type eq "win16") {
+		$internal_name = $external_name . "16";
+	    } else {
+		$internal_name = $external_name;
+	    }
+
+	    # FIXME: Internal name existing more than once not handled properly
+	    $$function_stub{$internal_name} = 1;
+	    if(!$$function_module{$internal_name}) {
+		$$function_module{$internal_name} = "$module";
+	    } elsif($$function_module{$internal_name} !~ /$module/) {
+		$$function_module{$internal_name} .= " & $module";
+	    }
 	} elsif(/^\d+\s+(equate|long|word|extern|forward)/) {
 	    # ignore
 	} else {

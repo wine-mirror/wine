@@ -31,6 +31,7 @@ sub parse_c_file {
 	$function = "";
     };
 
+    my %regs_entrypoints;
     my @comments = ();
     my $level = 0;
     my $again = 0;
@@ -146,7 +147,9 @@ sub parse_c_file {
 	    $return_type =~ s/\s*\*\s*/*/g;
 	    $return_type =~ s/(\*+)/ $1/g;
 
-	    $name =~ s/^REGS_FUNC\((.*?)\)/$1/;
+	    if($regs_entrypoints{$name}) {
+		$name = $regs_entrypoints{$name};
+	    } 
 
 	    $arguments =~ y/\t\n/  /;
 	    $arguments =~ s/^\s*(.*?)\s*$/$1/;
@@ -158,7 +161,7 @@ sub parse_c_file {
 		$argument =~ s/^\s*(.*?)\s*$/$1/;
 		#print "  " . ($n + 1) . ": '$argument'\n";
 		$argument =~ s/^(IN OUT(?=\s)|IN(?=\s)|OUT(?=\s)|\s*)\s*//;
-		$argument =~ s/^(const(?=\s)|\s*)\s*//;
+		$argument =~ s/^(const(?=\s)|CONST(?=\s)|\s*)\s*//;
 		if($argument =~ /^...$/) {
 		    $argument = "...";
 		} elsif($argument =~ /^((struct\s+|union\s+|enum\s+)?\w+)\s*((\*\s*?)*)\s*/) {
@@ -238,6 +241,9 @@ sub parse_c_file {
 		&$function_begin($documentation,"UINT", "WINAPI", "waveOut" . $2, \@arguments32);
 		&$function_end;
 	    }
+        } elsif(/DEFINE_REGS_ENTRYPOINT_\d+\(\s*(\S*)\s*,\s*([^\s,\)]*).*?\)/s) {
+	    $_ = $'; $again = 1;
+	    $regs_entrypoints{$2} = $1;
 	} elsif(/;/s) {
 	    $_ = $'; $again = 1;
 	} elsif(/\{/s) {

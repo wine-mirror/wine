@@ -101,8 +101,8 @@ my %includes;
 	close(IN);
     }
 
-    my @files2 = ("acconfig.h", "poppack.h", "pshpack1.h", "pshpack2.h", "pshpack4.h", "pshpack8.h");
-
+    my @files2 = ("acconfig.h", "poppack.h", "pshpack1.h", "pshpack2.h", "pshpack4.h", "pshpack8.h",
+                  "storage.h", "ver.h");
     foreach my $file2 (@files2) {
 	$includes{"include/$file2"}{used}++;
     }    
@@ -264,7 +264,7 @@ foreach my $file ($options->files) {
     my $conditional = 0;
     my $found_include = sub {
 	local $_ = shift;
-	if(/^\"(config\.h|native\.h)\"/) {
+	if(/^\"config\.h\"/) {
 	    $config++;
 	}
     };
