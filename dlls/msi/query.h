@@ -79,7 +79,7 @@ typedef struct _create_col_info
 
 UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phView);
 
-UINT TABLE_CreateView( MSIDATABASE *db, LPWSTR name, MSIVIEW **view );
+UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view );
 
 UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 UINT SELECT_AddColumn( MSIVIEW *select, LPWSTR name );

@@ -250,6 +250,8 @@ static UINT DISTINCT_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS distinct_ops =
 {
     DISTINCT_fetch_int,
+    NULL,
+    NULL,
     DISTINCT_execute,
     DISTINCT_close,
     DISTINCT_get_dimensions,

@@ -3,7 +3,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -98,10 +98,12 @@ static struct expr * EXPR_sval( LPWSTR string );
 %token TK_HAVING TK_HOLD
 %token TK_IGNORE TK_ILLEGAL TK_IMMEDIATE TK_IN TK_INDEX TK_INITIALLY
 %token <string> TK_ID 
-%token TK_INSERT TK_INSTEAD TK_INT TK_INTEGER TK_INTERSECT TK_INTO TK_IS TK_ISNULL
+%token TK_INSERT TK_INSTEAD TK_INT TK_INTEGER TK_INTERSECT TK_INTO TK_IS
+%token TK_ISNULL
 %token TK_JOIN TK_JOIN_KW
 %token TK_KEY
 %token TK_LE TK_LIKE TK_LIMIT TK_LONG TK_LONGCHAR TK_LP TK_LSHIFT TK_LT
+%token TK_LOCALIZABLE
 %token TK_MATCH TK_MINUS
 %token TK_NE TK_NOT TK_NOTNULL TK_NULL
 %token TK_OBJECT TK_OF TK_OFFSET TK_ON TK_OR TK_ORACLE_OUTER_JOIN TK_ORDER
@@ -129,7 +131,7 @@ static struct expr * EXPR_sval( LPWSTR string );
 %type <column_list> selcollist
 %type <query> from unorderedsel oneselect onequery onecreate
 %type <expr> expr val column_val
-%type <column_type> column_type data_type data_count
+%type <column_type> column_type data_type data_type_l data_count
 %type <column_info> column_def table_def
 
 %%
@@ -183,15 +185,24 @@ table_def:
 column_def:
     column_def TK_COMMA column column_type
         {
-            $$ = HeapAlloc( GetProcessHeap(), 0, sizeof *$$ );
-            if( $$ )
+            create_col_info *ci;
+
+            for( ci = $1; ci->next; ci = ci->next )
+                ;
+
+            ci->next = HeapAlloc( GetProcessHeap(), 0, sizeof *$$ );
+            if( ci->next )
             {
-                $$->colname = $3;
-                $$->type = $4;
-                $$->next = $1;
+                ci->next->colname = $3;
+                ci->next->type = $4;
+                ci->next->next = NULL;
             }
             else if( $1 )
+            {
                 HeapFree( GetProcessHeap(), 0, $1 );
+                $1 = NULL;
+            }
+            $$ = $1;
         }
   | column column_type
         {
@@ -206,6 +217,18 @@ column_def:
     ;
 
 column_type:
+    data_type_l
+        {
+            $$ = $1;
+        }
+  | data_type_l TK_LOCALIZABLE
+        {
+            FIXME("LOCALIZABLE ignored\n");
+            $$ = $1;
+        }
+    ;
+
+data_type_l:
     data_type
         {
             $$ |= MSITYPE_NULLABLE;

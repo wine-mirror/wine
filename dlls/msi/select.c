@@ -152,6 +152,8 @@ static UINT SELECT_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS select_ops =
 {
     SELECT_fetch_int,
+    NULL,
+    NULL,
     SELECT_execute,
     SELECT_close,
     SELECT_get_dimensions,

@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include <stdarg.h>
 
@@ -237,17 +240,25 @@ static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
     ULARGE_INTEGER size;
     LARGE_INTEGER pos;
 
-    r = IStorage_OpenStream( stg, stname, NULL, 
+    WCHAR encname[0x20];
+
+    encode_streamname(TRUE, stname, encname);
+    r = IStorage_OpenStream( stg, encname, NULL, 
             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    if( FAILED(r) )
+    {
+        r = IStorage_CreateStream( stg, encname,
+                STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    }
     if( FAILED( r ) )
     {
-        WARN("open stream failed r = %08lx - empty table?\n",r);
+        ERR("open stream failed r = %08lx\n",r);
         return ret;
     }
 
     size.QuadPart = sz;
     r = IStream_SetSize( stm, size );
-    if( FAILED( r ) || ( count != sz ) )
+    if( FAILED( r ) )
     {
         ERR("Failed to SetSize\n");
         goto end;
@@ -255,7 +266,7 @@ static UINT write_stream_data( IStorage *stg, LPCWSTR stname,
 
     pos.QuadPart = 0;
     r = IStream_Seek( stm, pos, STREAM_SEEK_SET, NULL );
-    if( FAILED( r ) || ( count != sz ) )
+    if( FAILED( r ) )
     {
         ERR("Failed to Seek\n");
         goto end;
@@ -300,6 +311,7 @@ UINT read_table_from_storage( MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
     last_col = &cols[num_cols-1];
     row_size = last_col->offset + bytes_per_column( last_col );
 
+    t->row_count = 0;
     t->data = NULL;
     lstrcpyW( t->name, name );
     t->ref_count = 1;
@@ -488,10 +500,91 @@ UINT get_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **ptable)
     return ERROR_SUCCESS;
 }
 
-UINT save_table( MSIDATABASE *db, MSITABLE *ptable )
+UINT save_table( MSIDATABASE *db, MSITABLE *t )
 {
+    USHORT *rawdata = NULL, *p;
+    UINT rawsize, r, i, j, row_size, num_cols = 0;
+    MSICOLUMNINFO *cols, *last_col;
+
+    TRACE("Saving %s\n", debugstr_w( t->name ) );
+
+    r = table_get_column_info( db, t->name, &cols, &num_cols );
+    if( r != ERROR_SUCCESS )
+        return r;
     
-    return ERROR_SUCCESS;
+    last_col = &cols[num_cols-1];
+    row_size = last_col->offset + bytes_per_column( last_col );
+
+    rawsize = t->row_count * row_size;
+    rawdata = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, rawsize );
+    if( !rawdata )
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    p = rawdata;
+    for( i=0; i<num_cols; i++ )
+    {
+        for( j=0; j<t->row_count; j++ )
+        {
+            UINT offset = cols[i].offset;
+
+            *p++ = t->data[j][offset/2];
+            if( 4 == bytes_per_column( &cols[i] ) )
+                *p++ = t->data[j][offset/2+1];
+        }
+    }
+
+    TRACE("writing %d bytes\n", rawsize);
+    r = write_stream_data( db->storage, t->name, rawdata, rawsize );
+
+    HeapFree( GetProcessHeap(), 0, rawdata );
+
+    return r;
+}
+
+HRESULT init_string_table( IStorage *stg )
+{
+    HRESULT r;
+    const WCHAR szStringData[] = { 
+        '_','S','t','r','i','n','g','D','a','t','a',0 };
+    const WCHAR szStringPool[] = { 
+        '_','S','t','r','i','n','g','P','o','o','l',0 };
+    USHORT zero[2] = { 0, 0 };
+    ULONG count = 0;
+    IStream *stm = NULL;
+    WCHAR encname[0x20];
+
+    encode_streamname(TRUE, szStringData, encname);
+
+    /* create the StringData stream... add the zero string to it*/
+    r = IStorage_CreateStream( stg, encname,
+            STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    if( r ) 
+    {
+        TRACE("Failed\n");
+        return r;
+    }
+
+    r = IStream_Write(stm, zero, sizeof zero, &count );
+    IStream_Release( stm );
+
+    if( FAILED( r ) || ( count != sizeof zero ) )
+    {
+        TRACE("Failed\n");
+        return E_FAIL;
+    }
+
+    /* create the StringPool stream... make it zero length */
+    encode_streamname(TRUE, szStringPool, encname);
+    r = IStorage_CreateStream( stg, encname,
+            STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm);
+    if( r ) 
+    {
+        TRACE("Failed\n");
+        return E_FAIL;
+    }
+    IStream_Release( stm );
+
+    return r;
 }
 
 UINT load_string_table( MSIDATABASE *db )
@@ -499,7 +592,7 @@ UINT load_string_table( MSIDATABASE *db )
     CHAR *data;
     USHORT *pool;
     UINT r, ret = ERROR_FUNCTION_FAILED, datasize = 0, poolsize = 0;
-    DWORD i, count, offset, len;
+    DWORD i, count, offset, len, n;
     const WCHAR szStringData[] = { 
         '_','S','t','r','i','n','g','D','a','t','a',0 };
     const WCHAR szStringPool[] = { 
@@ -521,11 +614,15 @@ UINT load_string_table( MSIDATABASE *db )
     count = poolsize/4;
     db->strings = msi_init_stringtable( count );
 
+    if( pool[0] || pool[1] )
+        ERR("The first string should be nul, but isn't\n");
     offset = 0;
-    for( i=0; i<count; i++ )
+    for( i=1; i<count; i++ )
     {
         len = pool[i*2];
-        msi_addstring( db->strings, i, data+offset, len, pool[i*2+1] );
+        n = msi_addstring( db->strings, i, data+offset, len, pool[i*2+1] );
+        if( n != i )
+            ERR("Failed to add string %ld\n", i );
         offset += len;
     }
 
@@ -544,7 +641,7 @@ end:
 
 UINT save_string_table( MSIDATABASE *db )
 {
-    UINT i, count, datasize, poolsize, sz, remaining, r;
+    UINT i, count, datasize, poolsize, sz, used, r;
     UINT ret = ERROR_FUNCTION_FAILED;
     const WCHAR szStringData[] = { 
         '_','S','t','r','i','n','g','D','a','t','a',0 };
@@ -553,6 +650,8 @@ UINT save_string_table( MSIDATABASE *db )
     CHAR *data = NULL;
     USHORT *pool = NULL;
 
+    TRACE("\n");
+
     /* construct the new table in memory first */
     count = msi_string_count( db->strings );
     poolsize = count*2*sizeof(USHORT);
@@ -560,39 +659,51 @@ UINT save_string_table( MSIDATABASE *db )
 
     pool = HeapAlloc( GetProcessHeap(), 0, poolsize );
     if( ! pool )
+    {
+        ERR("Failed to alloc pool %d bytes\n", poolsize );
         goto err;
+    }
     data = HeapAlloc( GetProcessHeap(), 0, datasize );
     if( ! data )
+    {
+        ERR("Failed to alloc data %d bytes\n", poolsize );
         goto err;
+    }
 
-    remaining = datasize;
+    used = 0;
     for( i=0; i<count; i++ )
     {
-        sz = remaining;
-        r = msi_id2stringA( db->strings, i, data+remaining, &sz );
+        sz = datasize - used;
+        r = msi_id2stringA( db->strings, i, data+used, &sz );
         if( r != ERROR_SUCCESS )
-            goto err;
+        {
+            sz = 0;
+        }
+        else
+            sz--;
         pool[ i*2 ] = sz;
         pool[ i*2 + 1 ] = msi_id_refcount( db->strings, i );
-        remaining -= sz;
-        if( remaining < 0 )
+        used += sz;
+        if( used > datasize  )
         {
-            ERR("oops remaining %d < 0\n", remaining);
+            ERR("oops overran %d >= %d\n", used, datasize);
             goto err;
         }
     }
 
-    if( remaining != 0 )
+    if( used != datasize )
     {
-        ERR("oops remaining %d != 0\n", remaining);
+        ERR("oops used %d != datasize %d\n", used, datasize);
         goto err;
     }
 
     /* write the streams */
     r = write_stream_data( db->storage, szStringData, data, datasize );
+    TRACE("Wrote StringData r=%08x\n", r);
     if( r )
         goto err;
     r = write_stream_data( db->storage, szStringPool, pool, poolsize );
+    TRACE("Wrote StringPool r=%08x\n", r);
     if( r )
         goto err;
 
@@ -777,7 +888,7 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
     r = msi_string2id( db->strings, name, &table_id );
     if( r != ERROR_SUCCESS )
     {
-        ERR("Couldn't find id for %s\n", debugstr_w(name));
+        TRACE("Couldn't find id for %s\n", debugstr_w(name));
         return FALSE;
     }
 
@@ -798,6 +909,8 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
 
     if (i!=count)
         return TRUE;
+
+    ERR("Searched %d tables, but %d was not found\n", count, table_id );
 
     return FALSE;
 }
@@ -844,7 +957,8 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     {
     case 4:
         offset = tv->columns[col-1].offset/2;
-        *val = tv->table->data[row][offset] + (tv->table->data[row][offset + 1] << 16);
+        *val = tv->table->data[row][offset] + 
+               (tv->table->data[row][offset + 1] << 16);
         break;
     case 2:
         offset = tv->columns[col-1].offset/2;
@@ -856,6 +970,75 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
     }
 
     TRACE("Data [%d][%d] = %d \n", row, col, *val );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT TABLE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    UINT offset, num_rows, n;
+
+    if( !tv->table )
+        return ERROR_INVALID_PARAMETER;
+
+    if( (col==0) || (col>tv->num_cols) )
+        return ERROR_INVALID_PARAMETER;
+
+    if( tv->columns[col-1].offset >= tv->row_size )
+    {
+        ERR("Stuffed up %d >= %d\n", tv->columns[col-1].offset, tv->row_size );
+        ERR("%p %p\n", tv, tv->columns );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    offset = row + (tv->columns[col-1].offset/2) * num_rows;
+    n = bytes_per_column( &tv->columns[col-1] );
+    switch( n )
+    {
+    case 4:
+        offset = tv->columns[col-1].offset/2;
+        tv->table->data[row][offset]     = val & 0xffff;
+        tv->table->data[row][offset + 1] = (val>>16)&0xffff;
+        break;
+    case 2:
+        offset = tv->columns[col-1].offset/2;
+        tv->table->data[row][offset] = val;
+        break;
+    default:
+        ERR("oops! what is %d bytes per column?\n", n );
+        return ERROR_FUNCTION_FAILED;
+    }
+    return ERROR_SUCCESS;
+}
+
+UINT TABLE_insert_row( struct tagMSIVIEW *view, UINT *num )
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
+    USHORT **p, *row;
+    UINT sz;
+
+    TRACE("%p\n", view);
+
+    if( !tv->table )
+        return ERROR_INVALID_PARAMETER;
+
+    row = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, tv->row_size );
+    if( !row )
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    sz = (tv->table->row_count + 1) * sizeof (UINT*);
+    if( tv->table->data )
+        p = HeapReAlloc( GetProcessHeap(), 0, tv->table->data, sz );
+    else
+        p = HeapAlloc( GetProcessHeap(), 0, sz );
+    if( !p )
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    tv->table->data = p;
+    tv->table->data[tv->table->row_count] = row;
+    *num = tv->table->row_count;
+    tv->table->row_count++;
 
     return ERROR_SUCCESS;
 }
@@ -969,6 +1152,8 @@ static UINT TABLE_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS table_ops =
 {
     TABLE_fetch_int,
+    TABLE_set_int,
+    TABLE_insert_row,
     TABLE_execute,
     TABLE_close,
     TABLE_get_dimensions,
@@ -977,7 +1162,7 @@ MSIVIEWOPS table_ops =
     TABLE_delete
 };
 
-UINT TABLE_CreateView( MSIDATABASE *db, LPWSTR name, MSIVIEW **view )
+UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
 {
     MSITABLEVIEW *tv ;
     UINT r, sz, column_count;
@@ -1042,13 +1227,24 @@ UINT MSI_CommitTables( MSIDATABASE *db )
     UINT r;
     MSITABLE *table = NULL;
 
-    save_string_table( db );
+    TRACE("%p\n",db);
+
+    r = save_string_table( db );
+    if( r != ERROR_SUCCESS )
+    {
+        ERR("failed to save string table r=%08x\n",r);
+        return r;
+    }
 
     for( table = db->first_table; table; table = table->next )
     {
         r = save_table( db, table );
         if( r != ERROR_SUCCESS )
+        {
+            ERR("failed to save table %s (r=%08x)\n",
+                  debugstr_w(table->name), r);
             return r;
+        }
     }
 
     /* force everything to reload next time */

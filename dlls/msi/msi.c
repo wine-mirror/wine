@@ -211,6 +211,8 @@ UINT WINAPI MsiOpenDatabaseW(
     {
         r = StgCreateDocfile( szDBPath, 
               STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stg);
+        if( r == ERROR_SUCCESS )
+            r = init_string_table( stg );
     }
     else if( szPersist == MSIDBOPEN_TRANSACT )
     {

@@ -106,6 +106,7 @@ static const Keyword aKeywordTable[] = {
   { "LEFT", TK_JOIN_KW },
   { "LIKE", TK_LIKE },
   { "LIMIT", TK_LIMIT },
+  { "LOCALIZABLE", TK_LOCALIZABLE },
   { "LONG", TK_LONG },
   { "LONGCHAR", TK_LONGCHAR },
   { "MATCH", TK_MATCH },

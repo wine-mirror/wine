@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2004, Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,7 @@ struct string_table
     msistring *strings; /* an array of strings (in the tree) */
 };
 
-static int msistring_makehash( char *str )
+static int msistring_makehash( const char *str )
 {
     int hash = 0;
 
@@ -78,7 +78,7 @@ string_table *msi_init_stringtable( int entries )
         return NULL;    
     }
     st->count = entries;
-    st->freeslot = 0;
+    st->freeslot = 1;
 
     return st;
 }
@@ -98,18 +98,28 @@ VOID msi_destroy_stringtable( string_table *st )
 
 static int st_find_free_entry( string_table *st )
 {
-    int i;
+    int i, sz;
+    msistring *p;
 
     for( i = st->freeslot; i < st->count; i++ )
         if( !st->strings[i].refcount )
             return i;
-    for( i = 0; i < st->freeslot; i++ )
+    for( i = 1; i < st->freeslot; i++ )
         if( !st->strings[i].refcount )
             return i;
 
-    FIXME("dynamically resize\n");
-
-    return -1;
+    /* dynamically resize */
+    sz = st->count + 1 + st->count/2;
+    p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                     st->strings, sz*sizeof(msistring) );
+    if( !p )
+        return -1;
+    st->strings = p;
+    st->freeslot = st->count;
+    st->count = sz;
+    if( st->strings[st->freeslot].refcount )
+        ERR("oops. expected freeslot to be free...\n");
+    return st->freeslot;
 }
 
 static void st_mark_entry_used( string_table *st, int n )
@@ -119,15 +129,28 @@ static void st_mark_entry_used( string_table *st, int n )
     st->freeslot = n + 1;
 }
 
-int msi_addstring( string_table *st, UINT string_no, CHAR *data, UINT len, UINT refcount )
+int msi_addstring( string_table *st, UINT n, const CHAR *data, UINT len, UINT refcount )
 {
-    int n;
-
     /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
 
-    n = st_find_free_entry( st );
-    if( n < 0 )
-        return -1;
+    if( !data[0] )
+        return 0;
+    if( n > 0 )
+    {
+        if( st->strings[n].refcount )
+            return -1;
+    }
+    else
+    {
+        if( ERROR_SUCCESS == msi_string2idA( st, data, &n ) )
+        {
+            st->strings[n].refcount++;
+            return n;
+        }
+        n = st_find_free_entry( st );
+        if( n < 0 )
+            return -1;
+    }
 
     /* allocate a new string */
     if( len < 0 )
@@ -145,6 +168,47 @@ int msi_addstring( string_table *st, UINT string_no, CHAR *data, UINT len, UINT 
     return n;
 }
 
+int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT refcount )
+{
+    int sz;
+
+    /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
+
+    if( !data[0] )
+        return 0;
+    if( n > 0 )
+    {
+        if( st->strings[n].refcount )
+            return -1;
+    }
+    else
+    {
+        if( ERROR_SUCCESS == msi_string2id( st, data, &n ) )
+        {
+            st->strings[n].refcount++;
+            return n;
+        }
+        n = st_find_free_entry( st );
+        if( n < 0 )
+            return -1;
+    }
+
+    /* allocate a new string */
+    sz = WideCharToMultiByte( CP_UTF8, 0, data, len, NULL, 0, NULL, NULL );
+    st->strings[n].str = HeapAlloc( GetProcessHeap(), 0, sz + 1 );
+    if( !st->strings[n].str )
+        return -1;
+    WideCharToMultiByte( CP_UTF8, 0, data, len, 
+                         st->strings[n].str, sz, NULL, NULL );
+    st->strings[n].str[sz] = 0;
+    st->strings[n].refcount = 1;
+    st->strings[n].hash = msistring_makehash( st->strings[n].str );
+
+    st_mark_entry_used( st, n );
+
+    return n;
+}
+
 UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz )
 {
     UINT len;
@@ -154,7 +218,7 @@ UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz )
     if( string_no >= st->count )
         return ERROR_FUNCTION_FAILED;
 
-    if( !st->strings[string_no].refcount )
+    if( string_no && !st->strings[string_no].refcount )
         return ERROR_FUNCTION_FAILED;
 
     str = st->strings[string_no].str;
@@ -182,7 +246,7 @@ UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz )
     if( string_no >= st->count )
         return ERROR_FUNCTION_FAILED;
 
-    if( !st->strings[string_no].refcount )
+    if( string_no && !st->strings[string_no].refcount )
         return ERROR_FUNCTION_FAILED;
 
     str = st->strings[string_no].str;
@@ -202,25 +266,13 @@ UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz )
     return ERROR_SUCCESS;
 }
 
-UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
+UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id )
 {
-    DWORD sz;
-    UINT i, r = ERROR_INVALID_PARAMETER;
-    LPSTR str;
     int hash;
-
-    TRACE("Finding string %s in string table\n", debugstr_w(buffer) );
-
-    sz = WideCharToMultiByte( CP_ACP, 0, buffer, -1, NULL, 0, NULL, NULL );
-    if( sz <= 0 )
-        return r;
-    str = HeapAlloc( GetProcessHeap(), 0, sz );
-    if( !str )
-        return ERROR_NOT_ENOUGH_MEMORY;
-    WideCharToMultiByte( CP_ACP, 0, buffer, -1, str, sz, NULL, NULL );
+    UINT i, r = ERROR_INVALID_PARAMETER;
 
     hash = msistring_makehash( str );
-    for( i=0; i<st->count; i++)
+    for( i=0; i<st->count; i++ )
     {
         if( ( st->strings[i].hash == hash ) &&
             !strcmp( st->strings[i].str, str ) )
@@ -231,11 +283,32 @@ UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
         }
     }
 
+    return r;
+}
+
+UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
+{
+    DWORD sz;
+    UINT r = ERROR_INVALID_PARAMETER;
+    LPSTR str;
+
+    TRACE("Finding string %s in string table\n", debugstr_w(buffer) );
+
+    sz = WideCharToMultiByte( CP_UTF8, 0, buffer, -1, NULL, 0, NULL, NULL );
+    if( sz <= 0 )
+        return r;
+    str = HeapAlloc( GetProcessHeap(), 0, sz );
+    if( !str )
+        return ERROR_NOT_ENOUGH_MEMORY;
+    WideCharToMultiByte( CP_UTF8, 0, buffer, -1, str, sz, NULL, NULL );
+
+    r = msi_string2idA( st, str, id );
     if( str )
         HeapFree( GetProcessHeap(), 0, str );
 
     return r;
 }
+
 
 UINT msi_string_count( string_table *st )
 {

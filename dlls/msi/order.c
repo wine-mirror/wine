@@ -253,6 +253,8 @@ static UINT ORDER_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS order_ops =
 {
     ORDER_fetch_int,
+    NULL,
+    NULL,
     ORDER_execute,
     ORDER_close,
     ORDER_get_dimensions,

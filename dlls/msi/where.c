@@ -268,6 +268,8 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS where_ops =
 {
     WHERE_fetch_int,
+    NULL,
+    NULL,
     WHERE_execute,
     WHERE_close,
     WHERE_get_dimensions,

@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -59,30 +59,107 @@ static UINT CREATE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
 static UINT CREATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
 {
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
-    create_col_info *c;
+    create_col_info *col;
+    UINT r, nField, row, table_val, column_val;
+    const WCHAR szTables[] =  { '_','T','a','b','l','e','s',0 };
+    const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
+    MSIVIEW *tv = NULL;
 
-    FIXME("%p %ld\n", cv, record);
-
-    FIXME("Table %s (%s)\n", debugstr_w(cv->name), 
+    TRACE("%p Table %s (%s)\n", cv, debugstr_w(cv->name), 
           cv->bIsTemp?"temporary":"permanent");
 
-    for( c = cv->col_info; c; c = c->next )
-    {
-        FIXME("Column %s  type %04x\n", debugstr_w(c->colname), c->type );
-    }
+    /* only add tables that don't exist already */
+    if( TABLE_Exists(cv->db, cv->name ) )
+        return ERROR_BAD_QUERY_SYNTAX;
 
-    return ERROR_SUCCESS;
-    return ERROR_FUNCTION_FAILED;
+    /* add the name to the _Tables table */
+    table_val = msi_addstringW( cv->db->strings, 0, cv->name, -1, 1 );
+    TRACE("New string %s -> %d\n", debugstr_w( cv->name ), table_val );
+    if( table_val < 0 )
+        return ERROR_FUNCTION_FAILED;
+
+    r = TABLE_CreateView( cv->db, szTables, &tv );
+    TRACE("CreateView returned %x\n", r);
+    if( r )
+        return r;
+
+    r = tv->ops->execute( tv, 0 );
+    TRACE("tv execute returned %x\n", r);
+    if( r )
+        return r;
+
+    row = -1;
+    r = tv->ops->insert_row( tv, &row );
+    TRACE("insert_row returned %x\n", r);
+    if( r )
+        goto err;
+
+    r = tv->ops->set_int( tv, row, 1, table_val );
+    if( r )
+        goto err;
+    tv->ops->delete( tv );
+    tv = NULL;
+
+    /* add each column to the _Columns table */
+    r = TABLE_CreateView( cv->db, szColumns, &tv );
+    if( r )
+        return r;
+
+    r = tv->ops->execute( tv, 0 );
+    TRACE("tv execute returned %x\n", r);
+    if( r )
+        return r;
+
+    row = -1;
+    r = tv->ops->insert_row( tv, &row );
+    if( r )
+        goto err;
+
+    /*
+     * need to set the table, column number, col name and type
+     * for each column we enter in the table
+     */
+    nField = 1;
+    for( col = cv->col_info; col; col = col->next )
+    {
+        column_val = msi_addstringW( cv->db->strings, 0, col->colname, -1, 1 );
+        TRACE("New string %s -> %d\n", debugstr_w( col->colname ), column_val );
+        if( column_val < 0 )
+            break;
+
+        r = tv->ops->set_int( tv, row, 1, table_val );
+        if( r )
+            break;
+
+        r = tv->ops->set_int( tv, row, 2, 0x8000|nField );
+        if( r )
+            break;
+
+        r = tv->ops->set_int( tv, row, 3, column_val );
+        if( r )
+            break;
+
+        r = tv->ops->set_int( tv, row, 4, 0x8000|col->type );
+        if( r )
+            break;
+    }
+    if( !col )
+        r = ERROR_SUCCESS;
+
+err:
+    /* FIXME: remove values from the string table on error */
+    if( tv )
+        tv->ops->delete( tv );
+    return r;
 }
 
 static UINT CREATE_close( struct tagMSIVIEW *view )
 {
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
 
-    FIXME("%p\n", cv );
+    TRACE("%p\n", cv);
 
     return ERROR_SUCCESS;
-    return ERROR_FUNCTION_FAILED;
 }
 
 static UINT CREATE_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *cols )
@@ -138,6 +215,8 @@ static UINT CREATE_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS create_ops =
 {
     CREATE_fetch_int,
+    NULL,
+    NULL,
     CREATE_execute,
     CREATE_close,
     CREATE_get_dimensions,
