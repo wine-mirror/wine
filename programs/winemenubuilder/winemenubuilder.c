@@ -45,13 +45,7 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
 #include <stdarg.h>
-#ifdef HAVE_SYS_SIGNAL_H
-#include <signal.h>
-#endif
 
 #include <windows.h>
 #include <shlobj.h>
