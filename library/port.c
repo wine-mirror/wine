@@ -189,65 +189,6 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 }
 
 
-#ifndef HAVE_ECVT
-/***********************************************************************
- *		ecvt
- */
-char *ecvt (double number, int  ndigits,  int  *decpt,  int *sign)
-{
-    static char buf[40]; /* ought to be enough */
-    char *dec;
-    sprintf(buf, "%.*e", ndigits /* FIXME wrong */, number);
-    *sign = (number < 0);
-    dec = strchr(buf, '.');
-    *decpt = (dec) ? (int)dec - (int)buf : -1;
-    return buf;
-}
-#endif /* HAVE_ECVT */
-
-#ifndef HAVE_FCVT
-/***********************************************************************
- *		fcvt
- */
-char *fcvt (double number, int  ndigits,  int  *decpt,  int *sign)
-{
-    static char buf[40]; /* ought to be enough */
-    char *dec;
-    sprintf(buf, "%.*e", ndigits, number);
-    *sign = (number < 0);
-    dec = strchr(buf, '.');
-    *decpt = (dec) ? (int)dec - (int)buf : -1;
-    return buf;
-}
-#endif /* HAVE_FCVT */
-
-#ifndef HAVE_GCVT
-/***********************************************************************
- *		gcvt
- *
- * FIXME: uses both E and F.
- */
-char *gcvt (double number, size_t  ndigit,  char *buff)
-{
-    sprintf(buff, "%.*E", (int)ndigit, number);
-    return buff;
-}
-#endif /* HAVE_GCVT */
-
-
-#ifndef wine_memcpy_unaligned
-/***********************************************************************
- *		wine_memcpy_unaligned
- *
- * This is necessary to defeat optimizations of memcpy by gcc.
- */
-void *wine_memcpy_unaligned( void *dst, const void *src, size_t size )
-{
-    return memcpy( dst, src, size );
-}
-#endif
-
-
 /***********************************************************************
  *		pthread functions
  */

@@ -39,6 +39,7 @@ typedef struct __MSVCRT_thread_data
     int                      errno;
     unsigned long            doserrno;
     char                    *mbstok_next;        /* next ptr for mbstok() */
+    char                    *efcvt_buffer;       /* buffer for ecvt/fcvt */
     terminate_function       terminate_handler;
     unexpected_function      unexpected_handler;
     _se_translator_function  se_translator;

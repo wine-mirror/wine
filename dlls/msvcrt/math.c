@@ -21,6 +21,7 @@
 #include "msvcrt.h"
 #include "msvcrt/errno.h"
 
+#include <stdio.h>
 #define __USE_ISOC9X 1
 #define __USE_ISOC99 1
 #include <math.h>
@@ -679,6 +680,53 @@ double _nextafter(double num, double next)
   if (!finite(num) || !finite(next)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval = nextafter(num,next);
   return retval;
+}
+
+/*********************************************************************
+ *		_ecvt (MSVCRT.@)
+ */
+char *_ecvt( double number, int ndigits, int *decpt, int *sign )
+{
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    char *dec;
+
+    if (!data->efcvt_buffer)
+        data->efcvt_buffer = MSVCRT_malloc( 80 ); /* ought to be enough */
+
+    snprintf(data->efcvt_buffer, 80, "%.*e", ndigits /* FIXME wrong */, number);
+    *sign = (number < 0);
+    dec = strchr(data->efcvt_buffer, '.');
+    *decpt = (dec) ? dec - data->efcvt_buffer : -1;
+    return data->efcvt_buffer;
+}
+
+/***********************************************************************
+ *		_fcvt  (MSVCRT.@)
+ */
+char *_fcvt( double number, int ndigits, int *decpt, int *sign )
+{
+    MSVCRT_thread_data *data = msvcrt_get_thread_data();
+    char *dec;
+
+    if (!data->efcvt_buffer)
+        data->efcvt_buffer = MSVCRT_malloc( 80 ); /* ought to be enough */
+
+    snprintf(data->efcvt_buffer, 80, "%.*e", ndigits, number);
+    *sign = (number < 0);
+    dec = strchr(data->efcvt_buffer, '.');
+    *decpt = (dec) ? dec - data->efcvt_buffer : -1;
+    return data->efcvt_buffer;
+}
+
+/***********************************************************************
+ *		_gcvt  (MSVCRT.@)
+ *
+ * FIXME: uses both E and F.
+ */
+char *_gcvt( double number, int ndigit, char *buff )
+{
+    sprintf(buff, "%.*E", ndigit, number);
+    return buff;
 }
 
 #include <stdlib.h> /* div_t, ldiv_t */

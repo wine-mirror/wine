@@ -916,13 +916,10 @@ AC_CHECK_FUNCS(\
 	_vsnprintf \
 	chsize \
 	clone \
-	ecvt \
-	fcvt \
 	finite \
 	fpclass \
 	ftruncate \
 	ftruncate64 \
-	gcvt \
 	getnetbyaddr \
 	getnetbyname \
 	getopt_long \
