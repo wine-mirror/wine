@@ -50,6 +50,7 @@
 
 #ifdef HAVE_LIBXXF86DGA
 #include "ts_xf86dga.h"
+#include <sys/mman.h>
 #endif
 
 #ifdef HAVE_LIBXXSHM
@@ -2524,19 +2525,13 @@ static HRESULT WINAPI IDirectDraw2_CreateClipper(
 }
 
 static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
-	LPDIRECTDRAW2 this,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
+	LPDIRECTDRAW2 this,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk,int *psize
 ) {
 	*lpddpal = (LPDIRECTDRAWPALETTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPalette));
 	if (*lpddpal == NULL) return E_OUTOFMEMORY;
 	(*lpddpal)->ref = 1;
 	(*lpddpal)->ddraw = (LPDIRECTDRAW)this;
 	(*lpddpal)->installed = 0;
-	if (this->d.depth<=8) {
-		(*lpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(screen),AllocAll);
-	} else {
-		/* we don't want palettes in hicolor or truecolor */
-		(*lpddpal)->cm = 0;
-	}
 
         if (palent)
         {
@@ -2554,56 +2549,52 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
 	    ERR(ddraw, "unhandled palette format\n");
 	  
 	  memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
+	  *psize = size;
         }
 	return DD_OK;
 }
 
 static HRESULT WINAPI DGA_IDirectDraw2_CreatePalette(
-	LPDIRECTDRAW2 this,DWORD x,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
+	LPDIRECTDRAW2 this,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
 ) {
 	HRESULT res;
-	TRACE(ddraw,"(%p)->(%08lx,%p,%p,%p)\n",this,x,palent,lpddpal,lpunk);
-	res = common_IDirectDraw2_CreatePalette(this,x,palent,lpddpal,lpunk);
+	int xsize = 0,i;
+
+	TRACE(ddraw,"(%p)->(%08lx,%p,%p,%p)\n",this,dwFlags,palent,lpddpal,lpunk);
+	res = common_IDirectDraw2_CreatePalette(this,dwFlags,palent,lpddpal,lpunk,&xsize);
 	if (res != 0) return res;
 	(*lpddpal)->lpvtbl = &dga_ddpalvt;
+	if (this->d.depth<=8) {
+		(*lpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(screen),AllocAll);
+	} else {
+		FIXME(ddraw,"why are we doing CreatePalette in hi/truecolor?\n");
+		(*lpddpal)->cm = 0;
+	}
+	if (((*lpddpal)->cm)&&xsize) {
+	  for (i=0;i<xsize;i++) {
+		  XColor xc;
+
+		  xc.red = (*lpddpal)->palents[i].peRed<<8;
+		  xc.blue = (*lpddpal)->palents[i].peBlue<<8;
+		  xc.green = (*lpddpal)->palents[i].peGreen<<8;
+		  xc.flags = DoRed|DoBlue|DoGreen;
+		  xc.pixel = i;
+		  TSXStoreColor(display,(*lpddpal)->cm,&xc);
+	  }
+	}
 	return DD_OK;
 }
 
 static HRESULT WINAPI Xlib_IDirectDraw2_CreatePalette(
 	LPDIRECTDRAW2 this,DWORD dwFlags,LPPALETTEENTRY palent,LPDIRECTDRAWPALETTE *lpddpal,LPUNKNOWN lpunk
 ) {
+	int xsize;
+	HRESULT res;
+
 	TRACE(ddraw,"(%p)->(%08lx,%p,%p,%p)\n",this,dwFlags,palent,lpddpal,lpunk);
-	*lpddpal = (LPDIRECTDRAWPALETTE)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawPalette));
-
-	TRACE(ddraw, "Palette created : %p\n", *lpddpal);
-	
-	if (*lpddpal == NULL) 
-		return E_OUTOFMEMORY;
-
-	(*lpddpal)->ref = 1;
-	(*lpddpal)->installed = 0;
+	res = common_IDirectDraw2_CreatePalette(this,dwFlags,palent,lpddpal,lpunk,&xsize);
+	if (res != 0) return res;
 	(*lpddpal)->lpvtbl = &xlib_ddpalvt;
-
-	(*lpddpal)->ddraw = (LPDIRECTDRAW)this;
-        this->lpvtbl->fnAddRef(this);
-
-	if (palent) {
-	  int size = 0;
-
-	  if (dwFlags & DDPCAPS_1BIT)
-	    size = 2;
-	  else if (dwFlags & DDPCAPS_2BIT)
-	    size = 4;
-	  else if (dwFlags & DDPCAPS_4BIT)
-	    size = 16;
-	  else if (dwFlags & DDPCAPS_8BIT)
-	    size = 256;
-	  else
-	    ERR(ddraw, "unhandled palette format\n");
-	  
-	  memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
-	}
-
 	return DD_OK;
 }
 
