@@ -2014,6 +2014,11 @@ static void XFONT_FixupPointSize(fontInfo* fi)
  *
  * Build font metrics from X font
  */
+static int XLoadQueryFont_ErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
+{
+    return 1;
+}
+
 static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, int x_count)
 {
     int		  i;
@@ -2115,7 +2120,13 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	}
 	else lpstr = x_pattern[i];
 
-	if( (x_fs = TSXLoadQueryFont(gdi_display, lpstr)) )
+	/* X11 may return an error on some bad fonts... So be prepared to handle these. */
+	wine_tsx11_lock();
+	X11DRV_expect_error(gdi_display, XLoadQueryFont_ErrorHandler, NULL);
+	x_fs = XLoadQueryFont(gdi_display, lpstr);
+	if (X11DRV_check_error()) x_fs = 0;
+	wine_tsx11_unlock();
+	if (x_fs != 0)
 	{
 	    XFONT_SetFontMetric( fi, fr, x_fs );
 	    TSXFreeFont( gdi_display, x_fs );
