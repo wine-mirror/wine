@@ -53,7 +53,7 @@ static void activate(LPDIRECT3DMATERIAL2 this) {
   TRACE(ddraw, "Size  : %ld\n", this->mat.dwSize);
   TRACE(ddraw, "Power : %f\n", this->mat.e.power);
 
-  TRACE(ddraw, "Texture handle : %ld\n", (DWORD)this->mat.hTexture);
+  TRACE(ddraw, "Texture handle : %08lx\n", (DWORD)this->mat.hTexture);
   
   return ;
 }

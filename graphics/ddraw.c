@@ -693,6 +693,7 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 
 	dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
 	
+	/* First, all the 'source-less' blits */
 	if (dwFlags & DDBLT_COLORFILL) {
 		int	bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
 		LPBYTE	xline,xpixel;
@@ -738,6 +739,9 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	    return DD_OK;
 	}
 
+	/* Now the 'with source' blits */
+
+	/* Standard 'full-surface' blit without special effects */
 	if (	(xsrc.top ==0) && (xsrc.bottom ==ddesc.dwHeight) &&
 		(xsrc.left==0) && (xsrc.right  ==ddesc.dwWidth) &&
 		(xdst.top ==0) && (xdst.bottom ==ddesc.dwHeight) &&
@@ -768,6 +772,25 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 	    /* This is a basic stretch implementation. It is painfully slow and quite ugly. */
 	    if (bpp == 1) {
 	      /* In this case, we cannot do any anti-aliasing */
+	      if(dwFlags & DDBLT_KEYSRC) {
+		for (y = xdst.top; y < xdst.bottom; y++) {
+		  for (x = xdst.left; x < xdst.right; x++) {
+		    double sx, sy;
+		    unsigned char tmp;
+		    unsigned char *dbuf = (unsigned char *) ddesc.y.lpSurface;
+		    unsigned char *sbuf = (unsigned char *) sdesc.y.lpSurface;
+		    
+		    sx = (((double) (x - xdst.left) / dstwidth) * srcwidth) + xsrc.left;
+		    sy = (((double) (y - xdst.top) / dstheight) * srcheight) + xsrc.top;
+
+		    tmp = sbuf[(((int) sy) * sdesc.lPitch) + ((int) sx)];
+		    
+		    if ((tmp < src->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(tmp > src->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
+		      dbuf[(y * ddesc.lPitch) + x] = tmp;
+		  }
+		}
+	      } else {
 	      for (y = xdst.top; y < xdst.bottom; y++) {
 		for (x = xdst.left; x < xdst.right; x++) {
 		  double sx, sy;
@@ -780,16 +803,63 @@ static HRESULT WINAPI IDirectDrawSurface3_Blt(
 		  dbuf[(y * ddesc.lPitch) + x] = sbuf[(((int) sy) * sdesc.lPitch) + ((int) sx)];
 		}
 	      }
+	      }
 	    } else {
 	      FIXME(ddraw, "Not done yet for depth != 8\n");
 	    }
 	  } else {
 	    /* Same size => fast blit */
+	    if (dwFlags & DDBLT_KEYSRC) {
+	      switch (bpp) {
+	      case 1: {
+		unsigned char tmp,*psrc,*pdst;
+		int h,i;
+		
 	    for (h = 0; h < srcheight; h++) {
+		  psrc=sdesc.y.lpSurface +
+		    ((h + xsrc.top) * sdesc.lPitch) + xsrc.left;
+		  pdst=ddesc.y.lpSurface +
+		    ((h + xdst.top) * ddesc.lPitch) + xdst.left;
+		  for(i=0;i<srcwidth;i++) {
+		    tmp=*(psrc + i);
+		    if ((tmp < src->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(tmp > src->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
+		      *(pdst + i)=tmp;
+		  }
+		}
+		dwFlags&=~(DDBLT_KEYSRC);
+	      } break;
+		
+	      case 2: {
+		unsigned short tmp,*psrc,*pdst;
+		int h,i;
+		
+		for (h = 0; h < srcheight; h++) {
+		  psrc=sdesc.y.lpSurface +
+		    ((h + xsrc.top) * sdesc.lPitch) + xsrc.left;
+		  pdst=ddesc.y.lpSurface +
+		    ((h + xdst.top) * ddesc.lPitch) + xdst.left;
+		  for(i=0;i<srcwidth;i++) {
+		    tmp=*(psrc + i);
+		    if ((tmp < src->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(tmp > src->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
+		      *(pdst + i)=tmp;
+		  }
+		}
+		dwFlags&=~(DDBLT_KEYSRC);
+	      } break;
+		
+	      default:
+		FIXME(ddraw, "Bitblt, KEYSRC: Not done yet for depth > 16\n");
+	      }
+	    } else {
+	      /* Non-stretching Blt without color keying */
+	      for (h = 0; h < srcheight; h++) {
 	    memcpy(ddesc.y.lpSurface + ((h + xdst.top) * ddesc.lPitch) + xdst.left * bpp,
 		   sdesc.y.lpSurface + ((h + xsrc.top) * sdesc.lPitch) + xsrc.left * bpp,
 		   width);
 	  }
+	}
 	}
 	}
 	
@@ -1088,7 +1158,7 @@ static HRESULT WINAPI IDirectDrawSurface3_QueryInterface(LPDIRECTDRAWSURFACE3 th
 		*obj = this;
 		this->lpvtbl->fnAddRef(this);
 
-		TRACE(ddraw, "  Creating IDirect3DSurfaceX interface (%p)\n", *obj);
+		TRACE(ddraw, "  Creating IDirectDrawSurface interface (%p)\n", *obj);
 		
 		return S_OK;
 	}
@@ -1767,7 +1837,7 @@ static HRESULT WINAPI IDirect3D_QueryInterface(
 
                 return S_OK;
         }
-        if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
+        if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D2))) {
                 LPDIRECT3D2     d3d;
 
                 d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -2616,7 +2686,7 @@ static void fill_caps(LPDDCAPS caps) {
     DDCAPS_CANBLTSYSMEM |  DDCAPS_COLORKEY | DDCAPS_PALETTE | DDCAPS_ZBLTS;
   caps->dwCaps2 = DDCAPS2_CERTIFIED | DDCAPS2_NO2DDURING3DSCENE | DDCAPS2_NOPAGELOCKREQUIRED |
     DDCAPS2_WIDESURFACES;
-  caps->dwCKeyCaps = 0xFFFFFFFF;
+  caps->dwCKeyCaps = 0xFFFFFFFF; /* Should put real caps here one day... */
   caps->dwFXCaps = 0;
   caps->dwFXAlphaCaps = 0;
   caps->dwPalCaps = DDPCAPS_8BIT | DDPCAPS_ALLOW256;
@@ -2892,7 +2962,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_QueryInterface(
 		
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
+	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D2))) {
 		LPDIRECT3D2	d3d;
 
 		d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
