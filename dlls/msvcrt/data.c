@@ -262,7 +262,7 @@ void msvcrt_init_args(void)
   MSVCRT___argv = __wine_main_argv;
   MSVCRT___wargv = __wine_main_wargv;
 
-  TRACE("got '%s', wide = %s argc=%d\n", MSVCRT__acmdln,
+  TRACE("got %s, wide = %s argc=%d\n", debugstr_a(MSVCRT__acmdln),
         debugstr_w(MSVCRT__wcmdln),MSVCRT___argc);
 
   version = GetVersion();
