@@ -182,7 +182,7 @@ static void ctl2_init_segdir(
  *  The hash key for the GUID.
  */
 static int ctl2_hash_guid(
-	REFGUID guid)                /* [I] The guid to find. */
+	REFGUID guid)                /* [I] The guid to hash. */
 {
     int hash;
     int i;
@@ -192,7 +192,7 @@ static int ctl2_hash_guid(
 	hash ^= ((const short *)guid)[i];
     }
 
-    return (hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)));
+    return hash & 0x1f;
 }
 
 /****************************************************************************
