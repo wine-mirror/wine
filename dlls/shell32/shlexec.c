@@ -250,7 +250,7 @@ static BOOL SHELL_TryAppPathW( LPCWSTR szName, LPWSTR lpResult, void**env)
     res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, buffer, 0, KEY_READ, &hkApp);
     if (res) goto end;
 
-    len = MAX_PATH;
+    len = MAX_PATH*sizeof(WCHAR);
     res = RegQueryValueW(hkApp, NULL, lpResult, &len);
     if (res) goto end;
     found = TRUE;
@@ -292,9 +292,9 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
     WCHAR *extension = NULL; /* pointer to file extension */
     WCHAR wtmpext[5];        /* local copy to mung as we please */
     WCHAR filetype[256];     /* registry name for this filetype */
-    LONG  filetypelen = 256; /* length of above */
+    LONG  filetypelen = sizeof(filetype); /* length of above */
     WCHAR command[256];      /* command from registry */
-    LONG  commandlen = 256;  /* This is the most DOS can handle :) */
+    LONG  commandlen = sizeof(command);  /* This is the most DOS can handle :) */
     WCHAR wBuffer[256];      /* Used to GetProfileString */
     UINT  retval = 31;       /* default - 'No association was found' */
     WCHAR *tok;              /* token pointer */
@@ -389,6 +389,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
     if (RegQueryValueW(HKEY_CLASSES_ROOT, wtmpext, filetype, 
 			&filetypelen) == ERROR_SUCCESS)
     {
+	filetypelen /= sizeof(WCHAR);
 	filetype[filetypelen] = '\0';
 	TRACE("File type: %s\n", debugstr_w(filetype));
 
@@ -400,11 +401,12 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
 	if (RegQueryValueW(HKEY_CLASSES_ROOT, filetype, command,
                            &commandlen) == ERROR_SUCCESS)
 	{
+	    commandlen /= sizeof(WCHAR);
             if (key) strcpyW(key, filetype);
 #if 0
             LPWSTR tmp;
             WCHAR param[256];
-	    LONG paramlen = 256;
+	    LONG paramlen = sizeof(param);
             static const WCHAR wSpace[] = {' ',0};
 
             /* FIXME: it seems all Windows version don't behave the same here.
@@ -421,6 +423,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
 	    if (RegQueryValueW(HKEY_CLASSES_ROOT, filetype, param,
 					 &paramlen) == ERROR_SUCCESS)
 	    {
+		paramlen /= sizeof(WCHAR);
                 strcatW(command, wSpace);
                 strcatW(command, param);
                 commandlen += paramlen;
@@ -501,7 +504,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
     unsigned    ret = 31;
 
     strcpyW(endkey, wApplication);
-    applen = sizeof(app)/sizeof(WCHAR);
+    applen = sizeof(app);
     if (RegQueryValueW(HKEY_CLASSES_ROOT, key, app, &applen) != ERROR_SUCCESS)
     {
         FIXME("default app name NIY %s\n", debugstr_w(key));
@@ -509,7 +512,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
     }
 
     strcpyW(endkey, wTopic);
-    topiclen = sizeof(topic)/sizeof(WCHAR);
+    topiclen = sizeof(topic);
     if (RegQueryValueW(HKEY_CLASSES_ROOT, key, topic, &topiclen) != ERROR_SUCCESS)
     {
         static const WCHAR wSystem[] = {'S','y','s','t','e','m',0};
@@ -545,7 +548,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
             return 30; /* whatever */
         }
         strcpyW(endkey, wIfexec);
-        ifexeclen = sizeof(ifexec)/sizeof(WCHAR);
+        ifexeclen = sizeof(ifexec);
         if (RegQueryValueW(HKEY_CLASSES_ROOT, key, ifexec, &ifexeclen) == ERROR_SUCCESS)
         {
             exec = ifexec;
@@ -570,7 +573,7 @@ static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, void *env,
                              LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc)
 {
     WCHAR cmd[1024] = {0};
-    LONG cmdlen = 1024;
+    LONG cmdlen = sizeof(cmd);
     UINT retval = 31;
 
     /* Get the application for the registry */
@@ -580,7 +583,7 @@ static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, void *env,
 	static const WCHAR wDdeexec[] = {'d','d','e','e','x','e','c',0};
         LPWSTR tmp;
         WCHAR param[256] = {0};
-        LONG paramlen = 256;
+        LONG paramlen = sizeof(param);
 
         /* Get the parameters needed by the application
            from the associated ddeexec key */
@@ -596,6 +599,7 @@ static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, void *env,
         else
         {
             /* Is there a replace() function anywhere? */
+            cmdlen /= sizeof(WCHAR);
             cmd[cmdlen] = '\0';
             SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile);
             retval = execfunc(param, env, sei, FALSE);
