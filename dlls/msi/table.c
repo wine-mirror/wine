@@ -152,26 +152,22 @@ static BOOL decode_streamname(LPWSTR in, LPWSTR out)
 }
 #endif
 
-UINT read_table_from_storage(IStorage *stg, LPCWSTR name, MSITABLE **ptable)
+static BOOL read_stream_data( IStorage *stg, LPWSTR stname,
+                              USHORT **pdata, UINT *psz )
 {
-    WCHAR buffer[0x20];
     HRESULT r;
-    IStream *stm = NULL;
-    STATSTG stat;
     UINT ret = ERROR_FUNCTION_FAILED;
     VOID *data;
     ULONG sz, count;
-    MSITABLE *t;
+    IStream *stm = NULL;
+    STATSTG stat;
 
-    encode_streamname(TRUE, name, buffer);
-
-    TRACE("%s -> %s\n",debugstr_w(name),debugstr_w(buffer));
-
-    r = IStorage_OpenStream(stg, buffer, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    r = IStorage_OpenStream(stg, stname, NULL, 
+            STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm);
     if( FAILED( r ) )
     {
-        ERR("open stream failed r = %08lx!\n",r);
-        return r;
+        WARN("open stream failed r = %08lx - empty table?\n",r);
+        return ret;
     }
 
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME );
@@ -192,45 +188,52 @@ UINT read_table_from_storage(IStorage *stg, LPCWSTR name, MSITABLE **ptable)
     if( !data )
     {
         ERR("couldn't allocate memory r=%08lx!\n",r);
+        ret = ERROR_NOT_ENOUGH_MEMORY;
         goto end;
     }
         
     r = IStream_Read(stm, data, sz, &count );
-    if( FAILED( r ) )
+    if( FAILED( r ) || ( count != sz ) )
     {
         HeapFree( GetProcessHeap(), 0, data );
         ERR("read stream failed r = %08lx!\n",r);
         goto end;
     }
 
-    t = HeapAlloc( GetProcessHeap(), 0, sizeof (MSITABLE) + lstrlenW(name)*sizeof (WCHAR) );
-    if( !t )
-    {
-        HeapFree( GetProcessHeap(), 0, data );
-        ERR("malloc failed!\n");
-        goto end;
-    }
-
-    if( count == sz )
-    {
-        ret = ERROR_SUCCESS;
-        t->size = sz;
-        t->data = data;
-        lstrcpyW( t->name, name );
-        t->ref_count = 1;
-        *ptable = t;
-    }
-    else
-    {
-        HeapFree( GetProcessHeap(), 0, data );
-        ERR("Count != sz\n");
-    }
+    *pdata = data;
+    *psz = sz;
+    ret = ERROR_SUCCESS;
 
 end:
-    if( stm )
-        IStream_Release( stm );
+    IStream_Release( stm );
 
     return ret;
+}
+
+UINT read_table_from_storage(IStorage *stg, LPCWSTR name, MSITABLE **ptable)
+{
+    WCHAR buffer[0x20];
+    MSITABLE *t;
+
+    TRACE("%s -> %s\n",debugstr_w(name),debugstr_w(buffer));
+
+    /* non-existing tables should be interpretted as empty tables */
+    t = HeapAlloc( GetProcessHeap(), 0, 
+                   sizeof (MSITABLE) + lstrlenW(name)*sizeof (WCHAR) );
+    if( !t )
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    t->size = 0;
+    t->data = NULL;
+    lstrcpyW( t->name, name );
+    t->ref_count = 1;
+    *ptable = t;
+
+    /* if we can't read the table, just assume that it's empty */
+    encode_streamname(TRUE, name, buffer);
+    read_stream_data( stg, buffer, &t->data, &t->size );
+
+    return ERROR_SUCCESS;
 }
 
 /* add this table to the list of cached tables in the database */
