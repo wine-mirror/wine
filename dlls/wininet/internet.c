@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include "windows.h"
 #include "wininet.h"
