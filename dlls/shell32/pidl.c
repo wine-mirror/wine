@@ -1047,6 +1047,9 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW(LPCVOID lpszPath)
  *   nFolder   [I] CSIDL_xxxxx
  *   ppidl     [O] PIDL of a special folder
  *
+ * NOTES
+ *   In NT5, SHGetSpecialFolderLocation needs the <winntdir>/Recent
+ *   directory. If the directory is missing it returns a x80070002.
  */
 HRESULT WINAPI SHGetSpecialFolderLocation(
 	HWND hwndOwner,
