@@ -760,18 +760,13 @@ static HRESULT WINAPI IShellFolder_fnBindToObject( IShellFolder2 * iface, LPCITE
 	      return E_FAIL;
 	    }
 	}
-	else if(_ILIsFolder(pidl))
+	else
 	{
 	  LPITEMIDLIST pidltemp = ILCloneFirst(pidl);
 	  pShellFolder = IShellFolder_Constructor(iface, pidltemp);
 	  ILFree(pidltemp);
 	}
-	else
-	{
-	  ERR("can't bind to a file\n");
-	  return E_FAIL;
-	}
-	
+
 	if (_ILIsPidlSimple(pidl))
 	{
 	  if(IsEqualIID(riid, &IID_IShellFolder))

@@ -1579,13 +1579,20 @@ REFIID _ILGetGUIDPointer(LPCITEMIDLIST pidl)
 {
 	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 
+	TRACE("%p\n", pidl);
+
 	if (pdata)
 	{
+	  TRACE("pdata->type 0x%04x\n", pdata->type);
 	  switch (pdata->type)
 	  {
 	    case PT_SPECIAL:
 	    case PT_MYCOMP:
 	      return (REFIID) &(pdata->u.mycomp.guid);
+
+	    default:
+		TRACE("Unknown pidl type 0x%04x\n", pdata->type);
+		break;
 	  }
 	}
 	return NULL;

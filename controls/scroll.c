@@ -1172,7 +1172,16 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     {
     case WM_CREATE:
         {
+	    SCROLLBAR_INFO *infoPtr;
             CREATESTRUCTW *lpCreat = (CREATESTRUCTW *)lParam;
+
+	    if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, SB_CTL ))) return -1;
+	    if (lpCreat->style & WS_DISABLED)
+	    {
+		TRACE("Created WS_DISABLED scrollbar\n");
+		infoPtr->flags = ESB_DISABLE_BOTH;
+	    }
+
             if (lpCreat->style & SBS_SIZEBOX)
             {
                 FIXME("Unimplemented style SBS_SIZEBOX.\n" );
@@ -1204,7 +1213,18 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         if (!hUpArrow) SCROLL_LoadBitmaps();
         TRACE("ScrollBar creation, hwnd=%04x\n", hwnd );
         return 0;
-	
+
+    case WM_ENABLE:
+        {
+	    SCROLLBAR_INFO *infoPtr;
+	    if ((infoPtr = SCROLL_GetScrollInfo( hwnd, SB_CTL )))
+	    {
+		infoPtr->flags = wParam ? ESB_ENABLE_BOTH : ESB_DISABLE_BOTH;
+		SCROLL_RefreshScrollBar(hwnd, SB_CTL, TRUE, TRUE);
+	    }
+	}
+	return 0;
+
     case WM_LBUTTONDOWN:
         {
 	    POINT pt;

@@ -1136,7 +1136,7 @@ static LRESULT LISTBOX_GetItemHeight( LB_DESCR *descr, INT index )
  *           LISTBOX_SetItemHeight
  */
 static LRESULT LISTBOX_SetItemHeight( HWND hwnd, LB_DESCR *descr, INT index,
-                                      INT height )
+                                      INT height, BOOL repaint )
 {
     if (!height) height = 1;
 
@@ -1146,7 +1146,8 @@ static LRESULT LISTBOX_SetItemHeight( HWND hwnd, LB_DESCR *descr, INT index,
         TRACE("[%04x]: item %d height = %d\n", hwnd, index, height );
         descr->items[index].height = height;
         LISTBOX_UpdateScroll( hwnd, descr );
-        LISTBOX_InvalidateItems( hwnd, descr, index );
+	if (repaint)
+	    LISTBOX_InvalidateItems( hwnd, descr, index );
     }
     else if (height != descr->item_height)
     {
@@ -1154,7 +1155,8 @@ static LRESULT LISTBOX_SetItemHeight( HWND hwnd, LB_DESCR *descr, INT index,
         descr->item_height = height;
         LISTBOX_UpdatePage( hwnd, descr );
         LISTBOX_UpdateScroll( hwnd, descr );
-        InvalidateRect( hwnd, 0, TRUE );
+	if (repaint)
+	    InvalidateRect( hwnd, 0, TRUE );
     }
     return LB_OKAY;
 }
@@ -1238,7 +1240,7 @@ static INT LISTBOX_SetFont( HWND hwnd, LB_DESCR *descr, HFONT font )
     if (oldFont) SelectObject( hdc, oldFont );
     ReleaseDC( hwnd, hdc );
     if (!IS_OWNERDRAW(descr))
-        LISTBOX_SetItemHeight( hwnd, descr, 0, tm.tmHeight );
+        LISTBOX_SetItemHeight( hwnd, descr, 0, tm.tmHeight, FALSE );
     return tm.tmHeight ;
 }
 
@@ -2620,7 +2622,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         lParam = LOWORD(lParam);
         /* fall through */
     case LB_SETITEMHEIGHT:
-        return LISTBOX_SetItemHeight( hwnd, descr, wParam, lParam );
+        return LISTBOX_SetItemHeight( hwnd, descr, wParam, lParam, TRUE );
 
     case LB_ITEMFROMPOINT:
         {

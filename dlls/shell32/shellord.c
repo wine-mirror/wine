@@ -21,6 +21,7 @@
 #include "undocshell.h"
 #include "pidl.h"
 #include "shlwapi.h"
+#include "commdlg.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 DECLARE_DEBUG_CHANNEL(pidl);
@@ -96,14 +97,39 @@ BOOL WINAPI GetFileNameFromBrowse(
 	LPCSTR lpstrFilter,
 	LPCSTR lpstrTitle)
 {
-	FIXME("(%04x,%s,%ld,%s,%s,%s,%s):stub.\n",
+    HMODULE hmodule;
+    FARPROC pGetOpenFileNameA;
+    OPENFILENAMEA ofn;
+    BOOL ret;
+
+    TRACE("%04x, %s, %ld, %s, %s, %s, %s)\n",
 	  hwndOwner, lpstrFile, nMaxFile, lpstrInitialDir, lpstrDefExt,
 	  lpstrFilter, lpstrTitle);
 
-    /* puts up a Open Dialog and requests input into targetbuf */
-    /* OFN_HIDEREADONLY|OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_unknown */
-    strcpy(lpstrFile,"x:\\dummy.exe");
-    return 1;
+    hmodule = LoadLibraryA("comdlg32.dll");
+    if(!hmodule) return FALSE;
+    pGetOpenFileNameA = GetProcAddress(hmodule, "GetOpenFileNameA");
+    if(!pGetOpenFileNameA)
+    {
+	FreeLibrary(hmodule);
+	return FALSE;
+    }
+
+    memset(&ofn, 0, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwndOwner;
+    ofn.lpstrFilter = lpstrFilter;
+    ofn.lpstrFile = lpstrFile;
+    ofn.nMaxFile = nMaxFile;
+    ofn.lpstrInitialDir = lpstrInitialDir;
+    ofn.lpstrTitle = lpstrTitle;
+    ofn.lpstrDefExt = lpstrDefExt;
+    ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
+    ret = pGetOpenFileNameA(&ofn);
+    
+    FreeLibrary(hmodule);
+    return ret;
 }
 
 /*************************************************************************
