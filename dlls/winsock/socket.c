@@ -3158,7 +3158,7 @@ static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
     if( i ) {
         EnterCriticalSection( &csWSgetXXXbyYYY );
         serv = getservbyname(local_buffer,
-                             proto ? (local_buffer + i) : NULL);
+                             proto && *proto ? (local_buffer + i) : NULL);
         if( serv != NULL )
         {
             if( WS_dup_se(serv, dup_flag) )
@@ -3207,7 +3207,8 @@ static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag
     struct servent*     serv;
     if (!proto || wsi_strtolo( proto, NULL )) {
         EnterCriticalSection( &csWSgetXXXbyYYY );
-        if( (serv = getservbyport(port, (proto) ? local_buffer : NULL)) != NULL ) {
+        if( (serv = getservbyport(port, proto && *proto ? local_buffer :
+                                                          NULL)) != NULL ) {
             if( WS_dup_se(serv, dup_flag) )
                 retval = se_buffer;
             else SetLastError(WSAENOBUFS);
