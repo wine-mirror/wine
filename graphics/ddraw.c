@@ -971,6 +971,15 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     This->t.xlib.image			= iflipto->t.xlib.image;
     iflipto->t.xlib.image		= image;
 
+#ifdef HAVE_LIBXXSHM
+    if (This->s.ddraw->e.xlib.xshm_active) {
+/*
+      int compl = InterlockedExchange( &This->s.ddraw->e.xlib.xshm_compl, 0 );
+      if (compl) X11DRV_EVENT_WaitShmCompletion( compl );
+*/
+      X11DRV_EVENT_WaitShmCompletions( This->s.ddraw->d.drawable );
+    }
+#endif
     Xlib_copy_surface_on_screen(This);
 
     if (iflipto->s.palette && iflipto->s.palette->cm)
