@@ -576,6 +576,15 @@ BOOL16 WINAPI GetPrivateProfileStruct16(LPCSTR section, LPCSTR key,
 
 
 /***********************************************************************
+ *           GetCurrentDirectory   (KERNEL.411)
+ */
+UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
+{
+    return GetCurrentDirectoryA( buflen, buf );
+}
+
+
+/***********************************************************************
  *           SetCurrentDirectory   (KERNEL.412)
  */
 BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
@@ -584,13 +593,24 @@ BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
 
     if (!GetFullPathNameA( dir, MAX_PATH, fulldir, NULL )) return FALSE;
 
+    if (!SetCurrentDirectoryA( dir )) return FALSE;
+
     if (fulldir[0] && fulldir[1] == ':')
     {
+        TDB *pTask = GlobalLock16( GetCurrentTask() );
         char env_var[4] = "=A:";
+
         env_var[1] = fulldir[0];
         SetEnvironmentVariableA( env_var, fulldir );
+
+        /* update the directory in the TDB */
+        if (pTask)
+        {
+            pTask->curdrive = 0x80 | (fulldir[0] - 'A');
+            GetShortPathNameA( fulldir + 2, pTask->curdir, sizeof(pTask->curdir) );
+        }
     }
-    return SetCurrentDirectoryA( dir );
+    return TRUE;
 }
 
 

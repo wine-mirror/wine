@@ -1060,23 +1060,13 @@ static char *alloc_env_string( const char *name, const char *value )
  *
  * Build the environment of a new child process.
  */
-static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
+static char **build_envp( const WCHAR *envW )
 {
     const WCHAR *p;
     char **envp;
-    char *env, *extra_env = NULL;
+    char *env;
     int count = 0, length;
 
-    if (extra_envW)
-    {
-        for (p = extra_envW; *p; count++) p += strlenW(p) + 1;
-        p++;
-        length = WideCharToMultiByte( CP_UNIXCP, 0, extra_envW, p - extra_envW,
-                                      NULL, 0, NULL, NULL );
-        if ((extra_env = malloc( length )))
-            WideCharToMultiByte( CP_UNIXCP, 0, extra_envW, p - extra_envW,
-                                 extra_env, length, NULL, NULL );
-    }
     for (p = envW; *p; count++) p += strlenW(p) + 1;
     p++;
     length = WideCharToMultiByte( CP_UNIXCP, 0, envW, p - envW, NULL, 0, NULL, NULL );
@@ -1090,8 +1080,6 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
         char **envptr = envp;
         char *p;
 
-        /* first the extra strings */
-        if (extra_env) for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = p;
         /* then put PATH, TEMP, TMP, HOME and WINEPREFIX from the unix env */
         if ((p = getenv("PATH"))) *envptr++ = alloc_env_string( "PATH=", p );
         if ((p = getenv("TEMP"))) *envptr++ = alloc_env_string( "TEMP=", p );
@@ -1101,8 +1089,6 @@ static char **build_envp( const WCHAR *envW, const WCHAR *extra_envW )
         /* now put the Windows environment strings */
         for (p = env; *p; p += strlen(p) + 1)
         {
-            if (extra_env && p[0]=='=' && 'A'<=p[1] && p[1]<='Z' && p[2]==':' && p[3]=='=')
-                continue; /* skipped */
             if (is_special_env_var( p ))  /* prefix it with "WINE" */
                 *envptr++ = alloc_env_string( "WINE", p );
             else if (strncmp( p, "HOME=", 5 ) &&
@@ -1136,7 +1122,7 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmdline, 0 );
-        char **envp = build_envp( env, NULL );
+        char **envp = build_envp( env );
         close( fd[0] );
 
         /* Reset signals that we previously set to SIG_IGN */
@@ -1224,24 +1210,16 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     BOOL ret, success = FALSE;
     HANDLE process_info;
     RTL_USER_PROCESS_PARAMETERS *params;
-    WCHAR *extra_env = NULL;
     int startfd[2];
     int execfd[2];
     pid_t pid;
     int err;
     char dummy = 0;
 
-    if (!env)
-    {
-        env = GetEnvironmentStringsW();
-        extra_env = DRIVE_BuildEnv();
-    }
+    if (!env) env = GetEnvironmentStringsW();
 
     if (!(params = create_user_params( filename, cmd_line, startup )))
-    {
-        if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
         return FALSE;
-    }
 
     /* create the synchronization pipes */
 
@@ -1249,7 +1227,6 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     {
         SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         RtlDestroyProcessParameters( params );
-        if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
         return FALSE;
     }
     if (pipe( execfd ) == -1)
@@ -1258,7 +1235,6 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         close( startfd[0] );
         close( startfd[1] );
         RtlDestroyProcessParameters( params );
-        if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
         return FALSE;
     }
     fcntl( execfd[1], F_SETFD, 1 );  /* set close on exec */
@@ -1268,7 +1244,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     if (!(pid = fork()))  /* child */
     {
         char **argv = build_argv( cmd_line, 1 );
-        char **envp = build_envp( env, extra_env );
+        char **envp = build_envp( env );
 
         close( startfd[1] );
         close( execfd[0] );
@@ -1300,7 +1276,6 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     close( startfd[0] );
     close( execfd[1] );
-    if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
     if (pid == -1)
     {
         close( startfd[1] );

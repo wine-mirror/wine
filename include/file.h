@@ -59,7 +59,6 @@ extern LPCWSTR DRIVE_GetDosCwd( int drive );
 extern const char * DRIVE_GetUnixCwd( int drive );
 extern const char * DRIVE_GetDevice( int drive );
 extern int DRIVE_Chdir( int drive, LPCWSTR path );
-extern WCHAR *DRIVE_BuildEnv(void);
 
 /* vxd.c */
 extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );

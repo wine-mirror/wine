@@ -1193,6 +1193,87 @@ BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 
 
 /***********************************************************************
+ *           GetCurrentDirectoryW   (KERNEL32.@)
+ */
+UINT WINAPI GetCurrentDirectoryW( UINT buflen, LPWSTR buf )
+{
+    return RtlGetCurrentDirectory_U( buflen * sizeof(WCHAR), buf ) / sizeof(WCHAR);
+}
+
+
+/***********************************************************************
+ *           GetCurrentDirectoryA   (KERNEL32.@)
+ */
+UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
+{
+    WCHAR bufferW[MAX_PATH];
+    DWORD ret, retW;
+
+    retW = GetCurrentDirectoryW(MAX_PATH, bufferW);
+
+    if (!retW)
+        ret = 0;
+    else if (retW > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        ret = 0;
+    }
+    else
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        if (buflen >= ret)
+        {
+            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buf, buflen, NULL, NULL);
+            ret--; /* length without 0 */
+        }
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SetCurrentDirectoryW   (KERNEL32.@)
+ */
+BOOL WINAPI SetCurrentDirectoryW( LPCWSTR dir )
+{
+    UNICODE_STRING dirW;
+    NTSTATUS status;
+
+    RtlInitUnicodeString( &dirW, dir );
+    status = RtlSetCurrentDirectory_U( &dirW );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           SetCurrentDirectoryA   (KERNEL32.@)
+ */
+BOOL WINAPI SetCurrentDirectoryA( LPCSTR dir )
+{
+    UNICODE_STRING dirW;
+    NTSTATUS status;
+
+    if (!RtlCreateUnicodeStringFromAsciiz( &dirW, dir ))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    status = RtlSetCurrentDirectory_U( &dirW );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.
