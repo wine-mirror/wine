@@ -1057,6 +1057,7 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
     INT wlen;
     LPWSTR p = FONT_mbtowc( hdc, str, count, &wlen, NULL);
     ret = GetTextExtentExPointW( hdc, p, wlen, maxExt, lpnFit, alpDx, size);
+    if (lpnFit) *lpnFit = WideCharToMultiByte(CP_ACP,0,p,*lpnFit,NULL,0,NULL,NULL);
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
