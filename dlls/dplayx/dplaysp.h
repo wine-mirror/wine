@@ -331,7 +331,7 @@ typedef HRESULT (WINAPI *LPDPSP_SPINIT)(LPSPINITDATA);
 /* This variable is exported from the DLL at ordinal 6 to be accessed by the 
  * SP directly 
  */
-extern DWORD gdwDPlaySPRefCount;
+extern __declspec(dllimport) DWORD gdwDPlaySPRefCount;
 
 #endif
 

@@ -384,6 +384,8 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 {
   LPDPMSG_SENDENVELOPE lpMsg = (LPDPMSG_SENDENVELOPE)lpMessageBody;
   HRESULT hr = DPERR_GENERIC;
+  WORD wCommandId;
+  WORD wVersion;
 
   ICOM_THIS(IDirectPlaySPImpl,iface);
 
@@ -391,16 +393,20 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   FIXME( "(%p)->(%p,0x%08lx,%p): mostly stub\n", 
          This, lpMessageBody, dwMessageBodySize, lpMessageHeader );
 
+  wCommandId = lpMsg->wCommandId;
+  wVersion   = lpMsg->wVersion;
+
   TRACE( "Incomming message has envelope of 0x%08lx, %u, %u\n", 
-         lpMsg->dwMagic, lpMsg->wCommandId, lpMsg->wVersion );
+         lpMsg->dwMagic, wCommandId, wVersion );
 
   if( lpMsg->dwMagic != DPMSGMAGIC_DPLAYMSG )
   {
-    FIXME( "Unknown magic 0x%08lx!\n", lpMsg->dwMagic );
+    ERR( "Unknown magic 0x%08lx!\n", lpMsg->dwMagic );
   }
 
   switch( lpMsg->wCommandId )
   {
+    /* Name server needs to handle this request */
     case DPMSGCMD_ENUMSESSIONSREQUEST:
     {
       DPSP_REPLYDATA data;
@@ -421,6 +427,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
       break;
     }
 
+    /* Name server needs to handle this request */
     case DPMSGCMD_ENUMSESSIONSREPLY:
     {
       NS_SetRemoteComputerAsNameServer( lpMessageHeader, 
@@ -432,8 +439,43 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 
       break;
     }
+
+    case DPMSGCMD_NEWPLAYERIDREPLY:
+    case DPMSGCMD_REQUESTNEWPLAYERID:
+    {
+      DPSP_REPLYDATA data;
+      
+      data.lpMessage     = NULL;
+      data.dwMessageSize = 0;
+
+      /* Pass this message to the dplay interface to handle */
+      DP_HandleMessage( This->sp->dplay, lpMessageBody, dwMessageBodySize,
+                        lpMessageHeader, wCommandId, wVersion, 
+                        &data.lpMessage, &data.dwMessageSize );
+
+      /* Do we want a reply? */
+      if( data.lpMessage != NULL )
+      {
+        HRESULT hr;
+
+        data.lpSPMessageHeader = lpMessageHeader;
+        data.idNameServer      = 0;
+        data.lpISP             = iface;
+
+        hr = (This->sp->dplay->dp2->spData.lpCB->Reply)( &data );
+
+        if( FAILED(hr) )
+        {
+          ERR( "Reply failed %s\n", DPLAYX_HresultToString(hr) );
+        }
+      }
+
+      break;
+    }
+
     default:
-      FIXME( "Unknown Command of %u\n", lpMsg->wCommandId );
+      FIXME( "Unknown Command of %u and size 0x%08lx\n", 
+             lpMsg->wCommandId, dwMessageBodySize );
   }
 
 #if 0
@@ -443,10 +485,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   /* FIXME: Need some sort of context for this callback. Need to determine
    *        how this is actually done with the SP
    */
-  /* FIXME: Add in size checks for all messages to determine corrupt messages */  /* FIXME: Who needs to delete the message when done? */
-  /* FIXME: Does this get invoked as soon as the message arrives, or as soon
-   *        as it's removed from the queue (or peeked in queue?)
-   */
+  /* FIXME: Who needs to delete the message when done? */
   switch( lpMsg->dwType )
   {
     case DPSYS_CREATEPLAYERORGROUP:

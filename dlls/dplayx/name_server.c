@@ -303,7 +303,8 @@ void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg,
   lpReplyData->lpMessage     = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                           lpReplyData->dwMessageSize );
 
-  rmsg = (LPDPMSG_ENUMSESSIONSREPLY)lpReplyData->lpMessage;  
+  rmsg = (LPDPMSG_ENUMSESSIONSREPLY)( (BYTE*)lpReplyData->lpMessage + 
+                                             lpDP->dp2->spData.dwSPHeaderSize);
 
   rmsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG; 
   rmsg->envelope.wCommandId = DPMSGCMD_ENUMSESSIONSREPLY;
@@ -323,7 +324,7 @@ void NS_ReplyToEnumSessionsRequest( LPVOID lpMsg,
     string = lpDP->dp2->lpSessionDesc->sess.lpszSessionName;
   }
 
-  lstrcpyW( (LPWSTR)rmsg+1, string );
+  lstrcpyW( (LPWSTR)(rmsg+1), string );
  
 }
 

@@ -45,13 +45,15 @@ static void DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
                              LPVOID lpData, DWORD dwDataSize );
 static void DP_DeleteDPNameStruct( LPDPNAME lpDPName );
 static void DP_DeletePlayer( IDirectPlay2Impl* This, DPID dpid );
-static BOOL cbDeletePlayerFromAllGroups( DPID dpId, DWORD dwPlayerType, 
-                                         LPCDPNAME lpName, DWORD dwFlags, 
-                                         LPVOID lpContext );
+static BOOL CALLBACK cbDeletePlayerFromAllGroups( DPID dpId, 
+                                                  DWORD dwPlayerType, 
+                                                  LPCDPNAME lpName, 
+                                                  DWORD dwFlags, 
+                                                  LPVOID lpContext );
 static lpGroupData DP_FindAnyGroup( IDirectPlay2AImpl* This, DPID dpid );
-static BOOL cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType, 
-                                   LPCDPNAME lpName, DWORD dwFlags, 
-                                   LPVOID lpContext );
+static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType, 
+                                            LPCDPNAME lpName, DWORD dwFlags, 
+                                            LPVOID lpContext );
 static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
 /* Helper methods for player/group interfaces */
@@ -152,9 +154,21 @@ static HRESULT WINAPI DP_IF_EnumGroupsInGroup
 static HRESULT WINAPI DP_IF_GetGroupParent
           ( IDirectPlay3AImpl* This, DPID idGroup, LPDPID lpidGroup,
             BOOL bAnsi );
+static HRESULT WINAPI DP_IF_GetCaps
+          ( IDirectPlay2Impl* This, LPDPCAPS lpDPCaps, DWORD dwFlags );
+static HRESULT WINAPI DP_IF_EnumSessions
+          ( IDirectPlay2Impl* This, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout,
+            LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
+            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi );
+static BOOL CALLBACK cbDPCreateEnumConnections( LPCGUID lpguidSP,
+    LPVOID lpConnection, DWORD dwConnectionSize, LPCDPNAME lpName,
+    DWORD dwFlags, LPVOID lpContext );
+
 
 
 static inline DPID DP_NextObjectId(void);
+static DPID DP_GetRemoteNextObjectId(void);
+
 
 static void DP_CopySessionDesc( LPDPSESSIONDESC2 destSessionDesc, 
                                 LPCDPSESSIONDESC2 srcSessDesc, BOOL bAnsi );
@@ -308,6 +322,30 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
     TerminateThread( This->dp2->hEnumSessionThread, 0 );
     CloseHandle( This->dp2->hEnumSessionThread );
   }
+
+  /* Finish with the SP - have it shutdown */
+  if( This->dp2->spData.lpCB->ShutdownEx )
+  {
+    DPSP_SHUTDOWNDATA data;
+
+    TRACE( "Calling SP ShutdownEx\n" );
+
+    data.lpISP = This->dp2->spData.lpISP;
+
+    (*This->dp2->spData.lpCB->ShutdownEx)( &data );
+  }
+  else if (This->dp2->spData.lpCB->Shutdown ) /* obsolete interface */
+  {
+    TRACE( "Calling obsolete SP Shutdown\n" );
+    (*This->dp2->spData.lpCB->Shutdown)();
+  }
+
+  /* Unload the SP */
+  if( This->dp2->hServiceProvider != 0 )
+  {
+    FreeLibrary( This->dp2->hServiceProvider );
+  }
+
 
 #if 0
   DPQ_DELETEQ( This->dp2->players, players, lpPlayerList, cbDeletePlayerElem );
@@ -574,6 +612,82 @@ static inline DPID DP_NextObjectId(void)
   return (DPID)InterlockedIncrement( &kludgePlayerGroupId );
 }
 
+/* *lplpReply will be non NULL iff there is something to reply */
+HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
+                          DWORD  dwMessageBodySize, LPCVOID lpMessageHeader,
+                          WORD wCommandId, WORD wVersion, 
+                          LPVOID* lplpReply, LPDWORD lpdwMsgSize )
+{
+  TRACE( "(%p)->(%p,0x%08lx,%p,%u,%u)\n",
+         This, lpMessageBody, dwMessageBodySize, lpMessageHeader, wCommandId, 
+         wVersion );
+
+  switch( wCommandId )
+  {
+    case DPMSGCMD_REQUESTNEWPLAYERID:
+    {
+#if 0
+      LPCDPMSG_REQUESTNEWPLAYERID lpcMsg = 
+        (LPCDPMSG_REQUESTNEWPLAYERID)lpMessageBody;
+#endif
+      LPDPMSG_NEWPLAYERIDREPLY lpReply;
+
+      *lpdwMsgSize = This->dp2->spData.dwSPHeaderSize + sizeof( *lpReply );
+
+      *lplpReply = (LPDPMSG_NEWPLAYERIDREPLY)HeapAlloc( GetProcessHeap(), 
+                                                        HEAP_ZERO_MEMORY,
+                                                        *lpdwMsgSize );
+
+      FIXME( "Ignoring dwFlags in msg\n" );
+
+      /* Setup the reply */
+      lpReply = (LPDPMSG_NEWPLAYERIDREPLY)( (BYTE*)(*lplpReply) + 
+                                            This->dp2->spData.dwSPHeaderSize );
+
+      lpReply->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
+      lpReply->envelope.wCommandId = DPMSGCMD_NEWPLAYERIDREPLY; 
+      lpReply->envelope.wVersion   = DPMSGVER_DP6; 
+
+#if 0
+      /* FIXME: Need to know the proper contents of the message! */
+      lpReply->dpidNewPlayerId = DP_NextObjectId();
+#endif
+
+      break;
+    }
+
+    case DPMSGCMD_NEWPLAYERIDREPLY:
+    {
+
+      DebugBreak(); 
+
+      if( This->dp2->hMsgReceipt )
+      {
+        /* This is a hack only */
+        This->dp2->lpMsgReceived = HeapAlloc( GetProcessHeap(), 
+                                              HEAP_ZERO_MEMORY,
+                                              dwMessageBodySize );
+        CopyMemory( This->dp2->lpMsgReceived, lpMessageBody, dwMessageBodySize );
+        SetEvent( This->dp2->hMsgReceipt );
+      }
+      else
+      {
+        ERR( "No receipt event set\n" );
+      }
+ 
+      break;
+    }
+
+    default:
+    {
+      FIXME( "Unknown wCommandId %u. Ignoring message\n", wCommandId );
+      break;
+    }
+  }
+
+  return DP_OK;
+}
+
 
 static HRESULT WINAPI DP_IF_AddPlayerToGroup
           ( IDirectPlay2Impl* This, LPVOID lpMsgHdr, DPID idGroup, 
@@ -607,6 +721,7 @@ static HRESULT WINAPI DP_IF_AddPlayerToGroup
   }   
 
   /* Add the shortcut */
+  lpPList->lpPData->uRef++;
   lpNewPList->lpPData = lpPList->lpPData;
 
   /* Add the player to the list of players for this group */
@@ -623,7 +738,7 @@ static HRESULT WINAPI DP_IF_AddPlayerToGroup
     data.idGroup  = idGroup;
     data.lpISP    = This->dp2->spData.lpISP;
 
-    (This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
+    (*This->dp2->spData.lpCB->AddPlayerToGroup)( &data );
   }
 
   /* Inform all other peers of the addition of player to the group. If there are
@@ -668,7 +783,7 @@ static HRESULT WINAPI DP_IF_Close( IDirectPlay2Impl* This, BOOL bAnsi )
 {
   HRESULT hr = DP_OK;
 
-  FIXME("(%p)->(%u): stub\n", This, bAnsi );
+  TRACE("(%p)->(%u)\n", This, bAnsi );
 
   /* FIXME: Need to find a new host I assume (how?) */
   /* FIXME: Need to destroy all local groups */
@@ -683,37 +798,15 @@ static HRESULT WINAPI DP_IF_Close( IDirectPlay2Impl* This, BOOL bAnsi )
 
     data.lpISP = This->dp2->spData.lpISP;
  
-    hr = (This->dp2->spData.lpCB->CloseEx)( &data );
+    hr = (*This->dp2->spData.lpCB->CloseEx)( &data );
         
   }
   else if ( This->dp2->spData.lpCB->Close ) /* Try obsolete version */
   {
     TRACE( "Calling SP Close (obsolete interface)\n" );
 
-    hr = (This->dp2->spData.lpCB->Close)();
+    hr = (*This->dp2->spData.lpCB->Close)();
   }
-
-  /* Even if the SP close failed, we should press on... */
-
-  /* Invoke the SP callback to inform the SP we don't need it any more */
-  if( This->dp2->spData.lpCB->ShutdownEx )
-  {
-    DPSP_SHUTDOWNDATA data;
-
-    TRACE( "Calling SP ShutdownEx\n" );
-
-    data.lpISP = This->dp2->spData.lpISP;
-
-    hr = (This->dp2->spData.lpCB->ShutdownEx)( &data );
-  }
-  else if (This->dp2->spData.lpCB->Shutdown ) /* obsolete interface */
-  {
-    TRACE( "Calling obsolete SP Shutdown\n" );
-    hr = (This->dp2->spData.lpCB->Shutdown)();
-  }
-
-  /* Unload the service provider now that we've stoped it */
-  FreeLibrary( This->dp2->hServiceProvider );
 
   return hr;
 }
@@ -781,6 +874,12 @@ DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid )
     return;
   }
 
+  if( --(lpGList->lpGData->uRef) )
+  {
+    FIXME( "Why is this not the last reference to group?\n" );
+    DebugBreak();
+  }
+
   /* Delete player */
   DP_DeleteDPNameStruct( &lpGList->lpGData->name );
   HeapFree( GetProcessHeap(), 0, lpGList->lpGData );
@@ -803,6 +902,11 @@ static lpGroupData DP_FindAnyGroup( IDirectPlay2AImpl* This, DPID dpid )
   else
   {
     DPQ_FIND_ENTRY( This->dp2->lpSysGroup->groups, groups, lpGData->dpid, ==, dpid, lpGroups );
+  }
+  
+  if( lpGroups == NULL )
+  {
+    return NULL;
   }
 
   return lpGroups->lpGData;
@@ -831,11 +935,7 @@ static HRESULT WINAPI DP_IF_CreateGroup
     }
     else
     {
-      /* Request the id from the name server */
-      FIXME( "Request id from NS for group\n" );
-
-      /* Hack for now */
-      *lpidGroup = DP_NextObjectId();
+      *lpidGroup = DP_GetRemoteNextObjectId();
     }
   }
  
@@ -861,6 +961,9 @@ static HRESULT WINAPI DP_IF_CreateGroup
 
     DPQ_INSERT( This->dp2->lpSysGroup->groups, lpGroup, groups );
   }
+
+  /* Something is now referencing this data */
+  lpGData->uRef++;
 
   /* Set all the important stuff for the group */
   DP_SetGroupData( lpGData, DPSET_REMOTE, lpData, dwDataSize );
@@ -891,7 +994,7 @@ static HRESULT WINAPI DP_IF_CreateGroup
     data.lpSPMessageHeader = lpMsgHdr;
     data.lpISP             = This->dp2->spData.lpISP;
 
-    (This->dp2->spData.lpCB->CreateGroup)( &data );
+    (*This->dp2->spData.lpCB->CreateGroup)( &data );
   }
 
   /* Inform all other peers of the creation of a new group. If there are 
@@ -989,12 +1092,7 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
 
 }
 
-/* This function will just create the storage for the new player.
- * In the future it may want to intialize, but for the time being
- * that will be done seperately. 
- * 
- * If *lpid == DPID_UNKNOWN then assign the next available player
- */
+/* This function will just create the storage for the new player.  */
 static 
 lpPlayerData DP_CreatePlayer( IDirectPlay2Impl* This, LPDPID lpid, 
                               LPDPNAME lpName, DWORD dwFlags, 
@@ -1048,26 +1146,33 @@ DP_DeleteDPNameStruct( LPDPNAME lpDPName )
 static void
 DP_DeletePlayer( IDirectPlay2Impl* This, DPID dpid )
 {
-  lpPlayerList lpPlayers;
+  lpPlayerList lpPList;
 
   TRACE( "(%p)->(0x%08lx)\n", This, dpid );
 
-  DPQ_REMOVE_ENTRY( This->dp2->lpSysGroup->players, players, lpPData->dpid, ==, dpid, lpPlayers );
+  DPQ_REMOVE_ENTRY( This->dp2->lpSysGroup->players, players, lpPData->dpid, ==, dpid, lpPList );
 
-  if( lpPlayers == NULL )
+  if( lpPList == NULL )
   {
     ERR( "DPID 0x%08lx not found\n", dpid );
     return;
   }
+
+  /* Verify that this is the last reference to the data */
+  if( --(lpPList->lpPData->uRef) )
+  {
+    FIXME( "Why is this not the last reference to player?\n" );
+    DebugBreak(); 
+  }
  
   /* Delete player */
-  DP_DeleteDPNameStruct( &lpPlayers->lpPData->name );
+  DP_DeleteDPNameStruct( &lpPList->lpPData->name );
 
-  CloseHandle( lpPlayers->lpPData->hEvent );
-  HeapFree( GetProcessHeap(), 0, lpPlayers->lpPData );
+  CloseHandle( lpPList->lpPData->hEvent );
+  HeapFree( GetProcessHeap(), 0, lpPList->lpPData );
 
   /* Delete Player List object */
-  HeapFree( GetProcessHeap(), 0, lpPlayers );
+  HeapFree( GetProcessHeap(), 0, lpPList );
 }
 
 static lpPlayerList DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid )
@@ -1236,11 +1341,13 @@ static HRESULT WINAPI DP_IF_CreatePlayer
     }
     else
     {
-      /* Request the id from the name server */
-      FIXME( "Request id from NS for new player\n" );
+      HRESULT hr = DP_MSG_SendRequestPlayerId( This, dwFlags, lpidPlayer );
 
-      /* Hack for now */
-      *lpidPlayer = DP_NextObjectId();
+      if( FAILED(hr) )
+      {
+        ERR( "Request for ID failed: %s\n", DPLAYX_HresultToString( hr ) );
+        return hr;
+      }
     }
   }
   else
@@ -1258,9 +1365,6 @@ static HRESULT WINAPI DP_IF_CreatePlayer
     return DPERR_CANTADDPLAYER;
   }
 
-  /* Update the information and send it to all players in the session */
-  DP_SetPlayerData( lpPData, DPSET_REMOTE, lpData, dwDataSize );  
-
   /* Create the list object and link it in */
   lpPList = (lpPlayerList)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                      sizeof( *lpPList ) );
@@ -1270,10 +1374,14 @@ static HRESULT WINAPI DP_IF_CreatePlayer
     return DPERR_CANTADDPLAYER;
   }
 
+  lpPData->uRef = 1;
   lpPList->lpPData = lpPData;
 
+  /* Add the player to the system group */
   DPQ_INSERT( This->dp2->lpSysGroup->players, lpPList, players );
 
+  /* Update the information and send it to all players in the session */
+  DP_SetPlayerData( lpPData, DPSET_REMOTE, lpData, dwDataSize );  
 
   /* Let the SP know that we've created this player */
   if( This->dp2->spData.lpCB->CreatePlayer )
@@ -1301,18 +1409,8 @@ static HRESULT WINAPI DP_IF_CreatePlayer
     data.lpSPMessageHeader = lpMsgHdr;
     data.lpISP             = This->dp2->spData.lpISP;
 
-    (This->dp2->spData.lpCB->CreatePlayer)( &data );
+    (*This->dp2->spData.lpCB->CreatePlayer)( &data );
   }
-
-  /* FIXME: The native version adds everything to group 0 (similar to
-   *        the player queue that we have. I think that the native
-   *        service providers rely on this fact.
-   * NOTE: The lpMsgHdr is always non NULL because there is no requirement to
-   *       broadcast this information since every node will automatically 
-   *       do it.
-   */
-  DP_IF_AddPlayerToGroup( This, NULL, DPID_NOPARENT_GROUP, 
-                          *lpidPlayer, bAnsi );
 
   /* Inform all other peers of the creation of a new player. If there are
    * no peers keep this quiet. 
@@ -1345,7 +1443,8 @@ static HRESULT WINAPI DP_IF_CreatePlayer
 }
 
 static HRESULT WINAPI DirectPlay2AImpl_CreatePlayer
-          ( LPDIRECTPLAY2A iface, LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
+          ( LPDIRECTPLAY2A iface, LPDPID lpidPlayer, LPDPNAME lpPlayerName, 
+            HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
 
@@ -1363,7 +1462,8 @@ static HRESULT WINAPI DirectPlay2AImpl_CreatePlayer
 }
 
 static HRESULT WINAPI DirectPlay2WImpl_CreatePlayer
-          ( LPDIRECTPLAY2 iface, LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
+          ( LPDIRECTPLAY2 iface, LPDPID lpidPlayer, LPDPNAME lpPlayerName, 
+            HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
 
@@ -1378,6 +1478,14 @@ static HRESULT WINAPI DirectPlay2WImpl_CreatePlayer
 
   return DP_IF_CreatePlayer( This, NULL, lpidPlayer, lpPlayerName, hEvent, 
                            lpData, dwDataSize, dwFlags, FALSE );
+}
+
+static DPID DP_GetRemoteNextObjectId(void)
+{
+  FIXME( ":stub\n" );
+
+  /* Hack solution */
+  return DP_NextObjectId();
 }
 
 static HRESULT WINAPI DP_IF_DeletePlayerFromGroup
@@ -1412,6 +1520,9 @@ static HRESULT WINAPI DP_IF_DeletePlayerFromGroup
     return DPERR_INVALIDPLAYER;
   }
 
+  /* One less reference */
+  lpPList->lpPData->uRef--;
+
   /* Delete the Player List element */
   HeapFree( GetProcessHeap(), 0, lpPList );
 
@@ -1426,7 +1537,7 @@ static HRESULT WINAPI DP_IF_DeletePlayerFromGroup
     data.idGroup  = idGroup;
     data.lpISP    = This->dp2->spData.lpISP;
 
-    hr = (This->dp2->spData.lpCB->RemovePlayerFromGroup)( &data );
+    hr = (*This->dp2->spData.lpCB->RemovePlayerFromGroup)( &data );
   }
 
   /* Need to send a DELETEPLAYERFROMGROUP message */
@@ -1451,12 +1562,12 @@ static HRESULT WINAPI DirectPlay2WImpl_DeletePlayerFromGroup
 
 typedef struct _DPRGOPContext
 {
-  LPDIRECTPLAY3 iface;
-  BOOL          bAnsi;
-  DPID          idGroup;
+  IDirectPlay3Impl* This;
+  BOOL              bAnsi;
+  DPID              idGroup;
 } DPRGOPContext, *lpDPRGOPContext;
 
-static BOOL 
+static BOOL CALLBACK
 cbRemoveGroupOrPlayer(
     DPID            dpId,
     DWORD           dwPlayerType,
@@ -1471,8 +1582,8 @@ cbRemoveGroupOrPlayer(
 
   if( dwPlayerType == DPPLAYERTYPE_GROUP )
   {
-    if( FAILED( IDirectPlayX_DeleteGroupFromGroup( lpCtxt->iface, 
-                                                   lpCtxt->idGroup, dpId ) 
+    if( FAILED( DP_IF_DeleteGroupFromGroup( lpCtxt->This, lpCtxt->idGroup, 
+                                            dpId ) 
               ) 
       )
     {
@@ -1482,8 +1593,9 @@ cbRemoveGroupOrPlayer(
   }
   else
   {
-    if( FAILED( IDirectPlayX_DeletePlayerFromGroup( lpCtxt->iface, 
-                                                    lpCtxt->idGroup, dpId )
+    if( FAILED( DP_IF_DeletePlayerFromGroup( (IDirectPlay2Impl*)lpCtxt->This, 
+                                             NULL, lpCtxt->idGroup, 
+                                             dpId, lpCtxt->bAnsi )
               )
       )
     {
@@ -1510,27 +1622,28 @@ static HRESULT WINAPI DP_IF_DestroyGroup
     return DPERR_INVALIDPLAYER; /* yes player */
   }
 
-  context.iface   = (LPDIRECTPLAY3)This;
+  context.This    = (IDirectPlay3Impl*)This;
   context.bAnsi   = bAnsi;
   context.idGroup = idGroup;
 
-  /* Remove all links to groups that this group has since this is dp3 */
-  IDirectPlayX_EnumGroupsInGroup( (LPDIRECTPLAY3A)This, idGroup, NULL, 
-                                  cbRemoveGroupOrPlayer, (LPVOID)&context, 0 );
-
-  /* FIXME: Is it allowed to delete a sub group with a parent? Must be */
-  if( lpGData->parent != DPID_SYSTEM_GROUP )
-  {
-      IDirectPlayX_DeleteGroupFromGroup( (LPDIRECTPLAY3A)This, 
-                                         lpGData->parent, 
-                                         idGroup ); 
-  } 
-  
   /* Remove all players that this group has */
-  IDirectPlayX_EnumGroupPlayers( (LPDIRECTPLAY3A)This, idGroup, NULL, 
-                                 cbRemoveGroupOrPlayer, (LPVOID)&context, 0 );
+  DP_IF_EnumGroupPlayers( This, idGroup, NULL, 
+                          cbRemoveGroupOrPlayer, (LPVOID)&context, 0, bAnsi );
 
-  /* Now delete this group data and list */
+  /* Remove all links to groups that this group has since this is dp3 */
+  DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)This, idGroup, NULL, 
+                           cbRemoveGroupOrPlayer, (LPVOID)&context, 0, bAnsi );
+
+  /* Remove this group from the parent group - if it has one */
+  if( ( idGroup != DPID_SYSTEM_GROUP ) &&
+      ( lpGData->parent != DPID_SYSTEM_GROUP )
+    )
+  {
+    DP_IF_DeleteGroupFromGroup( (IDirectPlay3Impl*)This, lpGData->parent, 
+                                idGroup ); 
+  }
+  
+  /* Now delete this group data and list from the system group */
   DP_DeleteGroup( This, idGroup ); 
 
   /* Let the SP know that we've destroyed this group */
@@ -1544,7 +1657,7 @@ static HRESULT WINAPI DP_IF_DestroyGroup
     data.dwFlags = 0; 
     data.lpISP   = This->dp2->spData.lpISP;
 
-    (This->dp2->spData.lpCB->DeleteGroup)( &data );
+    (*This->dp2->spData.lpCB->DeleteGroup)( &data );
   }
 
   FIXME( "Send out a DESTORYPLAYERORGROUP message\n" );
@@ -1568,8 +1681,9 @@ static HRESULT WINAPI DirectPlay2WImpl_DestroyGroup
 
 typedef struct _DPFAGContext
 {
-  LPDIRECTPLAY2 iface;
-  DPID idPlayer;
+  IDirectPlay2Impl* This;
+  DPID              idPlayer;
+  BOOL              bAnsi;
 } DPFAGContext, *lpDPFAGContext;
 
 static HRESULT WINAPI DP_IF_DestroyPlayer
@@ -1587,15 +1701,16 @@ static HRESULT WINAPI DP_IF_DestroyPlayer
 
   /* FIXME: If the player is remote, we must be the host to delete this */
 
-  cbContext.iface = (LPDIRECTPLAY2)This;
+  cbContext.This     = This;
   cbContext.idPlayer = idPlayer;
+  cbContext.bAnsi    = bAnsi;
 
   /* Find each group and call DeletePlayerFromGroup if the player is a
      member of the group */
-  IDirectPlayX_EnumGroups( (LPDIRECTPLAY2)This, NULL, cbDeletePlayerFromAllGroups,
-                           (LPVOID)&cbContext, DPENUMGROUPS_ALL);
+  DP_IF_EnumGroups( This, NULL, cbDeletePlayerFromAllGroups,
+                    (LPVOID)&cbContext, DPENUMGROUPS_ALL, bAnsi );
 
-  /* Now delete player and player list */
+  /* Now delete player and player list from the sys group */
   DP_DeletePlayer( This, idPlayer );
 
   /* Let the SP know that we've destroyed this group */
@@ -1609,7 +1724,7 @@ static HRESULT WINAPI DP_IF_DestroyPlayer
     data.dwFlags = 0; 
     data.lpISP   = This->dp2->spData.lpISP;
 
-    (This->dp2->spData.lpCB->DeletePlayer)( &data );
+    (*This->dp2->spData.lpCB->DeletePlayer)( &data );
   }
 
   FIXME( "Send a DELETEPLAYERORGROUP msg\n" );
@@ -1617,7 +1732,7 @@ static HRESULT WINAPI DP_IF_DestroyPlayer
   return DP_OK;
 }
 
-static BOOL
+static BOOL CALLBACK
 cbDeletePlayerFromAllGroups(
     DPID            dpId,
     DWORD           dwPlayerType,
@@ -1629,13 +1744,18 @@ cbDeletePlayerFromAllGroups(
 
   if( dwPlayerType == DPPLAYERTYPE_GROUP )
   {
-    IDirectPlayX_DeletePlayerFromGroup( lpCtxt->iface, lpCtxt->idPlayer, dpId );
+    DP_IF_DeletePlayerFromGroup( lpCtxt->This, NULL, dpId, lpCtxt->idPlayer,
+                                 lpCtxt->bAnsi );
 
-    /* Enumerate all groups in this group - yes this is pseudo recursive */
-    IDirectPlayX_EnumGroupsInGroup( (LPDIRECTPLAY3A)lpCtxt->iface, /*FIXME*/
-                                    dpId, NULL, 
-                                    cbDeletePlayerFromAllGroups, 
-                                    lpContext, DPENUMGROUPS_ALL );
+    /* Enumerate all groups in this group since this will normally only
+     * be called for top level groups
+     */
+    DP_IF_EnumGroupsInGroup( (IDirectPlay3Impl*)lpCtxt->This,
+                             dpId, NULL,
+                             cbDeletePlayerFromAllGroups,
+                             (LPVOID)lpContext, DPENUMGROUPS_ALL, 
+                             lpCtxt->bAnsi );
+
   }
   else
   {
@@ -1806,10 +1926,11 @@ static HRESULT WINAPI DirectPlay2WImpl_EnumPlayers
 /* This function should call the registered callback function that the user
    passed into EnumSessions for each entry available.
  */
-static void DP_InvokeEnumSessionCallbacksA( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
-                                     LPVOID lpNSInfo,
-                                     DWORD dwTimeout,
-                                     LPVOID lpContext )
+static void DP_InvokeEnumSessionCallbacks
+       ( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
+         LPVOID lpNSInfo,
+         DWORD dwTimeout,
+         LPVOID lpContext )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
 
@@ -1832,33 +1953,6 @@ static void DP_InvokeEnumSessionCallbacksA( LPDPENUMSESSIONSCALLBACK2 lpEnumSess
   lpEnumSessionsCallback2( NULL, &dwTimeout, DPESC_TIMEDOUT, lpContext );
 }
 
-static void DP_InvokeEnumSessionCallbacksW( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
-                                     LPVOID lpNSInfo,
-                                     DWORD dwTimeout,
-                                     LPVOID lpContext )
-{
-  LPDPSESSIONDESC2 lpSessionDesc;
-
-  FIXME( ": not checking for conditions\n" );
-
-  NS_ResetSessionEnumeration( lpNSInfo );
-
-  /* Enumerate all sessions */
-  /* FIXME: Need to indicate UNICODE */
-  while( (lpSessionDesc = NS_WalkSessions( lpNSInfo ) ) != NULL )
-  {
-    TRACE( "EnumSessionsCallback2 invoked\n" );
-    if( !lpEnumSessionsCallback2( lpSessionDesc, &dwTimeout, 0, lpContext ) )
-    {
-      return;
-    }
-  }
-
-  /* Invoke one last time to indicate that there is no more to come */
-  lpEnumSessionsCallback2( NULL, &dwTimeout, DPESC_TIMEDOUT, lpContext );
-  
-}
-
 static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
 {
   EnumSessionAsyncCallbackData* data = (EnumSessionAsyncCallbackData*)lpContext;
@@ -1869,9 +1963,7 @@ static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
 
   for( ;; )
   {
-    NS_SendSessionRequestBroadcast( &data->requestGuid,
-                                    data->dwEnumSessionFlags,
-                                    data->lpSpData );
+    HRESULT hr;
 
     /* Sleep up to dwTimeout waiting for request to terminate thread */
     if( WaitForSingleObject( hSuicideRequest, dwTimeout ) == WAIT_OBJECT_0 )
@@ -1879,6 +1971,18 @@ static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
       TRACE( "Thread terminating on terminate request\n" );
       break;
     }
+
+    /* Now resend the enum request */
+    hr = NS_SendSessionRequestBroadcast( &data->requestGuid,
+                                         data->dwEnumSessionFlags,
+                                         data->lpSpData );
+
+    if( FAILED(hr) )
+    {
+      ERR( "Enum broadcase request failed: %s\n", DPLAYX_HresultToString(hr) );
+      /* FIXME: Should we kill this thread? How to inform the main thread? */
+    }
+
   }
 
   TRACE( "Thread terminating\n" );
@@ -1886,6 +1990,13 @@ static DWORD CALLBACK DP_EnumSessionsSendAsyncRequestThread( LPVOID lpContext )
   /* Clean up the thread data */
   CloseHandle( hSuicideRequest );
   HeapFree( GetProcessHeap(), 0, lpContext );
+
+  /* FIXME: Need to have some notification to main app thread that this is
+   *        dead. It would serve two purposes. 1) allow sync on termination
+   *        so that we don't actually send something to ourselves when we
+   *        become name server (race condition) and 2) so that if we die
+   *        abnormally something else will be able to tell.
+   */
 
   return 1;
 }
@@ -1908,18 +2019,16 @@ static void DP_KillEnumSessionThread( IDirectPlay2Impl* This )
   }
 }
 
-static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
-          ( LPDIRECTPLAY2A iface, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, 
+static HRESULT WINAPI DP_IF_EnumSessions
+          ( IDirectPlay2Impl* This, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, 
             LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
-            LPVOID lpContext, DWORD dwFlags )
+            LPVOID lpContext, DWORD dwFlags, BOOL bAnsi )
 {
   HRESULT hr = DP_OK;
-  ICOM_THIS(IDirectPlay2Impl,iface);
 
-  /* FIXME: Combine ANSI and UNICODE versions */
-
-  TRACE( "(%p)->(%p,0x%08lx,%p,%p,0x%08lx)\n", 
-         This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags );
+  TRACE( "(%p)->(%p,0x%08lx,%p,%p,0x%08lx,%u)\n", 
+         This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags,
+         bAnsi );
 
   /* Can't enumerate if the interface is already open */
   if( This->dp2->bConnectionOpen )
@@ -1933,7 +2042,7 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
     DPCAPS spCaps;
     spCaps.dwSize = sizeof( spCaps );
 
-    IDirectPlayX_GetCaps( iface, &spCaps, 0 );
+    DP_IF_GetCaps( This, &spCaps, 0 );
     dwTimeout = spCaps.dwTimeout;
 
     /* FIXME: If it's still 0, we need to provide the IP default */
@@ -1949,48 +2058,57 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
   if( ( dwFlags & DPENUMSESSIONS_ASYNC ) )
   {
     /* Enumerate everything presently in the local session cache */
-    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, 
-                                    This->dp2->lpNameServerData, dwTimeout, 
-                                    lpContext );
+    DP_InvokeEnumSessionCallbacks( lpEnumSessionsCallback2, 
+                                   This->dp2->lpNameServerData, dwTimeout, 
+                                   lpContext );
 
 
     /* See if we've already created a thread to service this interface */
     if( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
     {
       DWORD dwThreadId;
-      EnumSessionAsyncCallbackData* lpData 
-        = (EnumSessionAsyncCallbackData*)HeapAlloc( GetProcessHeap(),
-                                                    HEAP_ZERO_MEMORY,
-                                                    sizeof( *lpData ) );
-      /* FIXME: need to kill the thread on object deletion */
-      lpData->lpSpData  = &This->dp2->spData;
-      CopyMemory( &lpData->requestGuid, &lpsd->guidApplication, sizeof(GUID) );
-      lpData->dwEnumSessionFlags = dwFlags;
-      lpData->dwTimeout = dwTimeout;
 
-      This->dp2->hKillEnumSessionThreadEvent = 
-        CreateEventA( NULL, TRUE, FALSE, NULL );
+      /* Send the first enum request inline since the user may cancel a dialog
+       * if one is presented. Also, may also have a connecting return code.
+       */
+      hr = NS_SendSessionRequestBroadcast( &lpsd->guidApplication,
+                                           dwFlags, &This->dp2->spData );
 
-      if( !DuplicateHandle( GetCurrentProcess(), 
-                            This->dp2->hKillEnumSessionThreadEvent,
-                            GetCurrentProcess(),
-                            &lpData->hSuicideRequest,
-                            0, FALSE, DUPLICATE_SAME_ACCESS )
-        )
+      if( !FAILED(hr) )
       {
-        ERR( "Can't duplicate thread killing handle\n" );
+        EnumSessionAsyncCallbackData* lpData 
+          = (EnumSessionAsyncCallbackData*)HeapAlloc( GetProcessHeap(),
+                                                      HEAP_ZERO_MEMORY,
+                                                       sizeof( *lpData ) );
+        /* FIXME: need to kill the thread on object deletion */
+        lpData->lpSpData  = &This->dp2->spData;
+        CopyMemory( &lpData->requestGuid, &lpsd->guidApplication, sizeof(GUID) );
+        lpData->dwEnumSessionFlags = dwFlags;
+        lpData->dwTimeout = dwTimeout;
+  
+        This->dp2->hKillEnumSessionThreadEvent = 
+          CreateEventA( NULL, TRUE, FALSE, NULL );
+  
+        if( !DuplicateHandle( GetCurrentProcess(), 
+                              This->dp2->hKillEnumSessionThreadEvent,
+                              GetCurrentProcess(),
+                              &lpData->hSuicideRequest,
+                              0, FALSE, DUPLICATE_SAME_ACCESS )
+          )
+        {
+          ERR( "Can't duplicate thread killing handle\n" );
+        }
+  
+        TRACE( ": creating EnumSessionsRequest thread\n" );
+  
+        This->dp2->hEnumSessionThread = CreateThread( NULL,
+                                                      0,
+                                                      DP_EnumSessionsSendAsyncRequestThread,
+                                                      lpData,
+                                                      0,
+                                                      &dwThreadId );
       }
-    
-      TRACE( ": creating EnumSessionsRequest thread\n" );
-
-      This->dp2->hEnumSessionThread = CreateThread( NULL,
-                                                    0,
-                                                    DP_EnumSessionsSendAsyncRequestThread,
-                                                    lpData,
-                                                    0,
-                                                    &dwThreadId );
-    }
-
+    } 
   }
   else
   {
@@ -2005,11 +2123,22 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
 
     SleepEx( dwTimeout, FALSE );
 
-    DP_InvokeEnumSessionCallbacksA( lpEnumSessionsCallback2, 
-                                    This->dp2->lpNameServerData, dwTimeout, lpContext );
+    DP_InvokeEnumSessionCallbacks( lpEnumSessionsCallback2, 
+                                   This->dp2->lpNameServerData, dwTimeout, 
+                                   lpContext );
   }
 
   return hr;
+}
+
+static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
+          ( LPDIRECTPLAY2A iface, LPDPSESSIONDESC2 lpsd, DWORD dwTimeout, 
+            LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
+            LPVOID lpContext, DWORD dwFlags )
+{
+  ICOM_THIS(IDirectPlay2Impl,iface);
+  return DP_IF_EnumSessions( This, lpsd, dwTimeout, lpEnumSessionsCallback2,
+                             lpContext, dwFlags, TRUE );
 }
 
 static HRESULT WINAPI DirectPlay2WImpl_EnumSessions
@@ -2017,104 +2146,9 @@ static HRESULT WINAPI DirectPlay2WImpl_EnumSessions
             LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
             LPVOID lpContext, DWORD dwFlags )
 {
-  HRESULT hr = DP_OK;
   ICOM_THIS(IDirectPlay2Impl,iface);
-
-  TRACE( "(%p)->(%p,0x%08lx,%p,%p,0x%08lx)\n", 
-         This, lpsd, dwTimeout, lpEnumSessionsCallback2, lpContext, dwFlags );
-
-  /* Can't enumerate if the interface is already open */
-  if( This->dp2->bConnectionOpen )
-  {
-    return DPERR_GENERIC;
-  }
-
-  /* Use the service provider default? */
-  if( dwTimeout == 0 )
-  {
-    DPCAPS spCaps;
-    spCaps.dwSize = sizeof( spCaps );
-
-    IDirectPlayX_GetCaps( iface, &spCaps, 0 );
-    dwTimeout = spCaps.dwTimeout;
-  }
-
-  /* FIXME: Interface locking ... */
-
-  if( dwFlags & DPENUMSESSIONS_STOPASYNC )
-  {
-    DP_KillEnumSessionThread( This );
-
-    return hr;
-  }
-
-  /* FIXME: Interface locking sucks in this method */
-
-  if( ( dwFlags & DPENUMSESSIONS_ASYNC ) )
-  {
-    /* Enumerate everything presently in the local session cache */
-    DP_InvokeEnumSessionCallbacksW( lpEnumSessionsCallback2, 
-                                    This->dp2->lpNameServerData, 
-                                    dwTimeout, lpContext );
-
-    /* See if we've already created a thread to service this interface */
-    if( This->dp2->hEnumSessionThread == INVALID_HANDLE_VALUE )
-    {
-      DWORD dwThreadId;
-
-      EnumSessionAsyncCallbackData* lpData
-        = (EnumSessionAsyncCallbackData*)HeapAlloc( GetProcessHeap(),
-                                                    HEAP_ZERO_MEMORY,
-                                                    sizeof( *lpData ) );
-      /* FIXME: need to kill the thread on object deletion */
-      lpData->lpSpData  = &This->dp2->spData;
-      CopyMemory( &lpData->requestGuid, &lpsd->guidApplication, sizeof(GUID) );
-      lpData->dwEnumSessionFlags = dwFlags;
-      lpData->dwTimeout = dwTimeout;
-
-      This->dp2->hKillEnumSessionThreadEvent =
-        CreateEventA( NULL, TRUE, FALSE, NULL );
-
-      if( !DuplicateHandle( GetCurrentProcess(),
-                            This->dp2->hKillEnumSessionThreadEvent,
-                            GetCurrentProcess(),
-                            &lpData->hSuicideRequest,
-                            0, FALSE, DUPLICATE_SAME_ACCESS )
-        )
-      {
-        ERR( "Can't duplicate thread killing handle\n" );
-      }
-
-
-      TRACE( ": creating EnumSessionsRequest thread\n" );
-
-      This->dp2->hEnumSessionThread = CreateThread( NULL,
-                                                    0,
-                                                    DP_EnumSessionsSendAsyncRequestThread,
-                                                    lpData,
-                                                    0,
-                                                    &dwThreadId );
-    }
-
-  }
-  else
-  {
-    /* Invalidate the session cache for the interface */
-    NS_InvalidateSessionCache( This->dp2->lpNameServerData );
-
-    /* Send the broadcast for session enumeration */
-    hr = NS_SendSessionRequestBroadcast( &lpsd->guidApplication,
-                                         dwFlags,
-                                         &This->dp2->spData );
-
-    SleepEx( dwTimeout, FALSE );
-
-    DP_InvokeEnumSessionCallbacksW( lpEnumSessionsCallback2, 
-                                    This->dp2->lpNameServerData, 
-                                    dwTimeout, lpContext );
-  }
-
-  return hr;
+  return DP_IF_EnumSessions( This, lpsd, dwTimeout, lpEnumSessionsCallback2,
+                             lpContext, dwFlags, FALSE );
 }
 
 static HRESULT WINAPI DP_IF_GetPlayerCaps
@@ -2131,22 +2165,27 @@ static HRESULT WINAPI DP_IF_GetPlayerCaps
   data.lpCaps   = lpDPCaps;
   data.lpISP    = This->dp2->spData.lpISP;
 
-  return (This->dp2->spData.lpCB->GetCaps)( &data );
+  return (*This->dp2->spData.lpCB->GetCaps)( &data );
 }
 
+static HRESULT WINAPI DP_IF_GetCaps
+          ( IDirectPlay2Impl* This, LPDPCAPS lpDPCaps, DWORD dwFlags )
+{
+  return DP_IF_GetPlayerCaps( This, DPID_ALLPLAYERS, lpDPCaps, dwFlags );
+}
 
 static HRESULT WINAPI DirectPlay2AImpl_GetCaps
           ( LPDIRECTPLAY2A iface, LPDPCAPS lpDPCaps, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
-  return DP_IF_GetPlayerCaps( This, DPID_ALLPLAYERS, lpDPCaps, dwFlags );
+  return DP_IF_GetCaps( This, lpDPCaps, dwFlags );
 }
 
 static HRESULT WINAPI DirectPlay2WImpl_GetCaps
           ( LPDIRECTPLAY2 iface, LPDPCAPS lpDPCaps, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
-  return DP_IF_GetPlayerCaps( This, DPID_ALLPLAYERS, lpDPCaps, dwFlags );
+  return DP_IF_GetCaps( This, lpDPCaps, dwFlags );
 }
 
 static HRESULT WINAPI DP_IF_GetGroupData
@@ -2605,11 +2644,16 @@ static HRESULT WINAPI DP_SecureOpen
     data.dwOpenFlags       = dwFlags;
     data.dwSessionFlags    = This->dp2->lpSessionDesc->dwFlags;
 
-    hr = (This->dp2->spData.lpCB->Open)(&data);
+    hr = (*This->dp2->spData.lpCB->Open)(&data);
+    if( FAILED( hr ) )
+    {
+      ERR( "Unable to open session: %s\n", DPLAYX_HresultToString( hr ) );  
+      return hr;
+    }
   }
- 
+
   {
-    /* FIXME: DPLAY creates this after the name server... */
+    /* Create the system group of which everything is a part of */
     DPID systemGroup = DPID_SYSTEM_GROUP;
 
     hr = DP_IF_CreateGroup( This, NULL, &systemGroup, NULL,
@@ -2630,7 +2674,8 @@ static HRESULT WINAPI DP_SecureOpen
      *        message is directed to.
      */
     hr = DP_IF_CreatePlayer( This, NULL, &dpidServerId, NULL, 0, NULL, 
-                             0, DPPLAYER_SERVERPLAYER, bAnsi );
+                             0, 
+                             DPPLAYER_SERVERPLAYER | DPPLAYER_LOCAL , bAnsi );
   }
   else if( dwFlags & DPOPEN_CREATE )
   {
@@ -3138,6 +3183,7 @@ static HRESULT WINAPI DP_IF_AddGroupToGroup
   }  
 
   /* Add the shortcut */
+  lpGData->uRef++;
   lpNewGList->lpGData = lpGData;
 
   /* Add the player to the list of players for this group */
@@ -3191,6 +3237,9 @@ static HRESULT WINAPI DP_IF_CreateGroupInGroup
   {
     return DPERR_CANTADDPLAYER; /* yes player not group */
   }
+
+  /* Something else is referencing this data */
+  lpGData->uRef++;
   
   DP_SetGroupData( lpGData, DPSET_REMOTE, lpData, dwDataSize );
 
@@ -3220,7 +3269,7 @@ static HRESULT WINAPI DP_IF_CreateGroupInGroup
     data.lpSPMessageHeader = lpMsgHdr;
     data.lpISP             = This->dp2->spData.lpISP;
 
-    (This->dp2->spData.lpCB->CreateGroup)( &data );
+    (*This->dp2->spData.lpCB->CreateGroup)( &data );
   }
 
   /* Inform all other peers of the creation of a new group. If there are 
@@ -3299,6 +3348,9 @@ static HRESULT WINAPI DP_IF_DeleteGroupFromGroup
   {
     return DPERR_INVALIDGROUP;
   }
+
+  /* Decrement the ref count */
+  lpGList->lpGData->uRef--;
 
   /* Free up the list item */
   HeapFree( GetProcessHeap(), 0, lpGList ); 
@@ -3869,9 +3921,6 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
     return DPERR_UNAVAILABLE;
   }  
 
-  /* NOTE: This will crash until I know what parameters/interface this has */
-  /* The first parameter is a pointer to memory which is written to... */
-
   TRACE( "Calling SPInit\n" );
   hr = (*SPInit)( &This->dp2->spData );
 
@@ -4136,7 +4185,7 @@ static HRESULT WINAPI DP_SendEx
   {
     bValidDestination = TRUE;
 
-    /* Have the servie provider send this message */
+    /* Have the service provider send this message */
     /* FIXME: Could optimize for local interface sends */
     return DP_SP_SendEx( This, dwFlags, lpData, dwDataSize, dwPriority,
                          dwTimeout, lpContext, lpdwMsgID );
@@ -4161,6 +4210,21 @@ static HRESULT WINAPI DP_SendEx
     {
       FIXME( "Send to all players using EnumPlayersInGroup\n" );
     }
+
+#if 0
+    if( bExpectReply )
+    {
+      DWORD dwWaitReturn;
+
+      This->dp2->hReplyEvent = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+      dwWaitReturn = WaitForSingleObject( hReplyEvent, dwTimeout );
+      if( dwWaitReturn != WAIT_OBJECT_0 )
+      {
+        ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
+      }
+    }
+#endif
   }
 
   if( !bValidDestination )
@@ -4202,38 +4266,18 @@ static HRESULT WINAPI DP_SP_SendEx
 {
   LPDPMSG lpMElem;
 
-  FIXME( ": stub - wont work for multi process\n" );
+  FIXME( ": stub\n" );
 
-  /* FIXME: Need to send the passed message inside another message type
-   *        I think. System message - but what is the format? 
-   */
+  /* FIXME: This queuing should only be for async messages */
 
-  /* OK. Let's run a nasty hack to bypass the fact that we don't yet know
-     how to initialize the service provider. The hack will place the message
-     to be sent automatically into the send queue. There will
-     be nothing put into the send queue. In reality we should be calling
-     the service provider and only putting things into the send queue if
-     the service provider can't immediately accept/send it. 
-     NOTE: Two hacks are provided. The first is only for a single process,
-           the second is a start towards a allowing sharing across the whole
-           computer (it requires some way of signalling that there's a message
-           available).
-   */
-
-#ifdef SP_MULTIPROCESS_SEND_HACK
-  lpMElem = (LPDPMSG)DPLAYX_PrivHeapAlloc( HEAP_ZERO_MEMORY,
-                                           sizeof( *lpMElem ) );
-  lpMElem->msg = (DPMSG_GENERIC*)DPLAYX_PrivHeapAlloc( HEAP_ZERO_MEMORY,
-                                                       dwDataSize );
-#else
   lpMElem = (LPDPMSG)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                sizeof( *lpMElem ) );
   lpMElem->msg = (DPMSG_GENERIC*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                             dwDataSize );
-#endif
 
   CopyMemory( lpMElem->msg, lpData, dwDataSize );
 
+  /* FIXME: Need to queue based on priority */
   DPQ_INSERT( This->dp2->sendMsgs, lpMElem, msgs ); 
    
   return DP_OK;
@@ -4266,7 +4310,7 @@ static HRESULT WINAPI DP_IF_GetMessageQueue
     data.lpdwNumMsgs  = lpdwNumMsgs;
     data.lpdwNumBytes = lpdwNumBytes;
   
-    hr = (This->dp2->spData.lpCB->GetMessageQueue)( &data );
+    hr = (*This->dp2->spData.lpCB->GetMessageQueue)( &data );
   }
   else
   {
@@ -4318,7 +4362,7 @@ static HRESULT WINAPI DP_IF_CancelMessage
     data.dwMinPriority  = dwMinPriority;
     data.dwMaxPriority  = dwMaxPriority;
 
-    hr = (This->dp2->spData.lpCB->Cancel)( &data );
+    hr = (*This->dp2->spData.lpCB->Cancel)( &data );
   }
   else
   {
@@ -4900,7 +4944,7 @@ typedef struct tagCreateEnum
 } CreateEnumData, *lpCreateEnumData;
 
 /* Find and copy the matching connection for the SP guid */
-BOOL CALLBACK cbDPCreateEnumConnections( 
+static BOOL CALLBACK cbDPCreateEnumConnections( 
     LPCGUID     lpguidSP,
     LPVOID      lpConnection,
     DWORD       dwConnectionSize,

@@ -11,8 +11,11 @@
 
 #include "wingdi.h"
 #include "winuser.h"
+#include "winerror.h"
 
 #include "dplayx_messages.h"
+#include "dplay_global.h"
+#include "dplayx_global.h"
 
 DEFAULT_DEBUG_CHANNEL(dplay)
 
@@ -136,3 +139,103 @@ end_of_thread:
   return 0;
 }
 
+
+HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
+                                    LPDPID lpdpidAllocatedId )
+{
+  LPVOID                     lpMsg;
+  LPDPMSG_REQUESTNEWPLAYERID lpMsgBody;
+  DWORD                      dwMsgSize;
+  DWORD                      dwWaitReturn;
+  HRESULT                    hr = DP_OK;
+
+  FIXME( "semi stub\n" );
+
+  DebugBreak();
+
+  dwMsgSize = This->dp2->spData.dwSPHeaderSize + sizeof( *lpMsgBody );
+
+  lpMsg = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwMsgSize );
+
+  lpMsgBody = (LPDPMSG_REQUESTNEWPLAYERID)( (BYTE*)lpMsg + 
+                                             This->dp2->spData.dwSPHeaderSize );
+
+  lpMsgBody->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
+  lpMsgBody->envelope.wCommandId = DPMSGCMD_REQUESTNEWPLAYERID;
+  lpMsgBody->envelope.wVersion   = DPMSGVER_DP6;
+
+  lpMsgBody->dwFlags = dwFlags;
+
+  /* FIXME: Need to have a more advanced queuing system as this needs to
+   *        block on send until we get response. Otherwise we need to be
+   *        able to ensure we can pick out the exact response. Of course,
+   *        with something as non critical as this, would it matter? The
+   *        id has been effectively reserved for this session...
+   */
+  { 
+    DPSP_SENDDATA data;
+
+    data.dwFlags        = DPSEND_GUARANTEED;
+    data.idPlayerTo     = 0; /* Name server */
+    data.idPlayerFrom   = 0; /* Sending from DP */
+    data.lpMessage      = lpMsg;
+    data.dwMessageSize  = dwMsgSize;
+    data.bSystemMessage = TRUE; /* Allow reply to be sent */
+    data.lpISP          = This->dp2->spData.lpISP;
+
+    /* Setup for receipt */
+    This->dp2->hMsgReceipt = CreateEventA( NULL, FALSE, FALSE, NULL );
+ 
+    hr = (*This->dp2->spData.lpCB->Send)( &data );
+
+    if( FAILED(hr) )
+    {
+      ERR( "Request for new playerID send failed: %s\n",
+           DPLAYX_HresultToString( hr ) );
+    }
+  }
+
+  dwWaitReturn = WaitForSingleObject( This->dp2->hMsgReceipt, 30000 );
+  if( dwWaitReturn != WAIT_OBJECT_0 )
+  {
+    ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
+  }
+
+  CloseHandle( This->dp2->hMsgReceipt );
+  This->dp2->hMsgReceipt = 0;
+
+  /* Need to examine the data and extract the new player id */
+  /* I just hope that dplay doesn't return the whole new player! */
+
+  return hr;
+}
+
+
+/* This function seems to cause a trap in the SP. It would seem unnecessary */
+/* FIXME: Remove this method if not required */
+HRESULT DP_MSG_OpenStream( IDirectPlay2AImpl* This )
+{
+  HRESULT       hr;
+  DPSP_SENDDATA data;
+
+  data.dwFlags        = DPSEND_OPENSTREAM;
+  data.idPlayerTo     = 0; /* Name server */
+  data.idPlayerFrom   = 0; /* From DP itself */
+  data.lpMessage      = NULL;
+  data.dwMessageSize  = This->dp2->spData.dwSPHeaderSize;
+  data.bSystemMessage = FALSE; /* FIXME? */
+  data.lpISP          = This->dp2->spData.lpISP;
+
+  hr = (*This->dp2->spData.lpCB->Send)( &data );
+
+  if( FAILED(hr) )
+  {
+      ERR( "Request for open stream send failed: %s\n",
+           DPLAYX_HresultToString( hr ) );
+  }
+
+  /* FIXME: hack to give some time for channel to open */
+  SleepEx( 1000 /* 1 sec */, FALSE );
+
+  return hr;
+}

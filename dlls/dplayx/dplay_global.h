@@ -43,6 +43,8 @@ struct PlayerData
   DPNAME name;
   HANDLE hEvent;
 
+  ULONG  uRef;  /* What is the reference count on this data? */
+
   /* View of local data */
   LPVOID lpLocalData;
   DWORD  dwLocalDataSize;
@@ -67,6 +69,8 @@ struct GroupData
 {
   /* Internal information */
   DPID parent; /* If parent == 0 it's a top level group */
+
+  ULONG uRef; /* Reference count */
 
   DPQ_HEAD(GroupList)  groups;  /* A group has [0..n] groups */
   DPQ_HEAD(PlayerList) players; /* A group has [0..n] players */
@@ -117,12 +121,7 @@ typedef struct tagDirectPlay2Data
 
   BOOL bHostInterface; /* Did this interface create the session */
 
-#if 0
-  DPQ_HEAD(PlayerList) players; /* All players w/ interface */
-  DPQ_HEAD(GroupList)  groups;  /* All main groups w/ interface */
-#else 
   lpGroupData lpSysGroup; /* System group with _everything_ in it */
-#endif
 
   LPDPSESSIONDESC2 lpSessionDesc;
 
@@ -137,6 +136,11 @@ typedef struct tagDirectPlay2Data
   HMODULE hServiceProvider;
 
   BOOL bConnectionInitialized;
+
+
+  /* proof of concept for message reception */
+  HANDLE hMsgReceipt;
+  LPVOID lpMsgReceived;
 } DirectPlay2Data;
 
 typedef struct tagDirectPlay3Data
@@ -181,5 +185,12 @@ extern ICOM_VTABLE(IDirectPlay4) directPlay4AVT;
 extern ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
 extern ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
 extern ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
+
+
+HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
+                          DWORD  dwMessageBodySize, LPCVOID lpMessageHeader,
+                          WORD wCommandId, WORD wVersion, 
+                          LPVOID* lplpReply, LPDWORD lpdwMsgSize );
+
 
 #endif /* __WINE_DPLAY_GLOBAL_INCLUDED */

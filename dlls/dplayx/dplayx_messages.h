@@ -6,6 +6,8 @@
 #include "dplay.h"
 #include "rpc.h" /* For GUID */
 
+#include "dplay_global.h"
+
 DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart, 
                                          HANDLE hDeath, HANDLE hConnRead );
 
@@ -27,10 +29,12 @@ DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
 #define DPMSGCMD_CREATESESSION        8  
 #define DPMSGCMD_CREATENEWPLAYER      9
 #define DPMSGCMD_SYSTEMMESSAGE        10 
-
+#define DPMSGCMD_DELETEPLAYER         11
 #define DPMSGCMD_DELETEGROUP          12
 
 #define DPMSGCMD_ENUMGROUPS           17
+
+#define DPMSGCMD_FORWARDCREATEPLAYER  19  /* This may be a get name table req */
 
 /* This is what DP 6 defines it as. Don't know what it means. All messages
  * defined below are DPMSGVER_DP6.
@@ -112,12 +116,12 @@ typedef struct tagDPMSG_CREATESESSION
 } DPMSG_CREATESESSION, *LPDPMSG_CREATESESSION;
 typedef const DPMSG_CREATESESSION* LPCDPMSG_CREATESESSION;
 
-/* 28 bytes - ~18 header ~= 10 bytes msg */
+/* 12 bytes msg */
 typedef struct tagDPMSG_REQUESTNEWPLAYERID
 {
   DPMSG_SENDENVELOPE envelope;
 
-  
+  DWORD dwFlags;  /* dwFlags used for CreatePlayer */
 
 } DPMSG_REQUESTNEWPLAYERID, *LPDPMSG_REQUESTNEWPLAYERID;
 typedef const DPMSG_REQUESTNEWPLAYERID* LPCDPMSG_REQUESTNEWPLAYERID;
@@ -127,10 +131,23 @@ typedef struct tagDPMSG_NEWPLAYERIDREPLY
 {
   DPMSG_SENDENVELOPE envelope;
 
+#if 0
+  DPID dpidNewPlayerId;
+#else
+  BYTE unknown[38];
+#endif
+
 } DPMSG_NEWPLAYERIDREPLY, *LPDPMSG_NEWPLAYERIDREPLY;
 typedef const DPMSG_NEWPLAYERIDREPLY* LPCDPMSG_NEWPLAYERIDREPLY;
 
-
 #include "poppack.h"
+
+
+HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
+                                    LPDPID lpdipidAllocatedId );
+
+/* FIXME: I don't think that this is a needed method */
+HRESULT DP_MSG_OpenStream( IDirectPlay2AImpl* This );
+
 
 #endif
