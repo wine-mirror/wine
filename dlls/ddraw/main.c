@@ -315,6 +315,19 @@ HRESULT WINAPI DirectDrawCreate(
 	    break;
 	ddraw_drivers[drvindex] = NULL; /* mark this one as unusable */
     }
+
+    if (IsEqualGUID( &IID_IDirectDraw2, lpGUID ) ||
+	IsEqualGUID( &IID_IDirectDraw4, lpGUID ) ||
+	IsEqualGUID( &IID_IDirectDraw7, lpGUID )
+    ) {
+	LPVOID x;
+	ret = IDirectDraw_QueryInterface(*lplpDD,lpGUID,&x);
+	IDirectDraw_Release(*lplpDD); /* either drop 1 refcount, or release */
+	if (!ret)
+	    *lplpDD = x;
+	else
+	    return ret;
+    }
     wc.style		= CS_GLOBALCLASS;
     wc.lpfnWndProc	= DDWndProc;
     wc.cbClsExtra	= 0;
