@@ -196,7 +196,7 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
 			wndPtr->dwStyle);
             return 1;
 	}
-	if (!HIWORD(cs->lpszName)) {
+	if (!HIWORD(cs->lpszName) && (cs->lpszName)) {
 		FIXME(static,"windowName is 0x%04x, not doing DefWindowProc\n",
 		    LOWORD(cs->lpszName)
 		);
