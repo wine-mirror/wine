@@ -1163,15 +1163,15 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 
        TRACE("[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT)ok );
 
-       /* 
-	* It seems useful to send the WM_LBUTTONUP with (-1,-1) when cancelling 
-	* and with (0,0) (anywhere in the listbox) when Oking.
-	*/
-       SendMessageA( lphc->hWndLBox, WM_LBUTTONUP, 0, ok ? (LPARAM)0 : (LPARAM)(-1) );       
-
        if( lphc->wState & CBF_DROPPED ) 
        {
 	   RECT	rect;
+
+	   /* 
+	    * It seems useful to send the WM_LBUTTONUP with (-1,-1) when cancelling 
+	    * and with (0,0) (anywhere in the listbox) when Oking.
+	    */
+	   SendMessageA( lphc->hWndLBox, WM_LBUTTONUP, 0, ok ? (LPARAM)0 : (LPARAM)(-1) );
 
 	   lphc->wState &= ~CBF_DROPPED;
 	   ShowWindow( lphc->hWndLBox, SW_HIDE );
