@@ -81,6 +81,9 @@ typedef struct IDirect3DTextureGLImpl
     BOOLEAN initial_upload_done;
     BOOLEAN dirty_flag;
 
+    /* Surface optimization */
+    void *surface_ptr;
+    
     /* This is for now used to override 'standard' surface stuff to be as transparent as possible */
     void (*final_release)(struct IDirectDrawSurfaceImpl *This);
     void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags);

@@ -102,7 +102,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
     
     surf_ptr = This;
     while (surf_ptr != NULL) {
-        GLenum format = GL_RGBA, pixel_format = GL_UNSIGNED_BYTE; /* This is only to prevent warnings.. */
+        GLenum internal_format = GL_RGBA, format = GL_RGBA, pixel_format = GL_UNSIGNED_BYTE; /* This is only to prevent warnings.. */
 	VOID *surface = NULL;
 	DDSURFACEDESC *src_d = (DDSURFACEDESC *)&(surf_ptr->surface_desc);
 	IDirect3DTextureGLImpl *gl_surf_ptr = (IDirect3DTextureGLImpl *) surf_ptr->tex_private;
@@ -177,8 +177,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 		} else {
 		    DWORD i;
 		    BYTE *src = (BYTE *) src_d->lpSurface, *dst;
-		    
-		    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+
+		    if (glThis->surface_ptr != NULL)
+		        surface = glThis->surface_ptr;
+		    else
+		        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
 		    dst = (BYTE *) surface;
 		    
 		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
@@ -190,6 +193,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 		    }
 		    
 		    format = GL_RGBA;
+		    internal_format = GL_RGBA;
 		    pixel_format = GL_UNSIGNED_BYTE;
 		}
 	    } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
@@ -209,6 +213,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			    error = TRUE;
 			} else {
 			    format = GL_RGB;
+			    internal_format = GL_RGB;
 			    pixel_format = GL_UNSIGNED_BYTE_3_3_2;
 			}
 		    } else {
@@ -233,8 +238,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			    DWORD i;
 			    WORD *src = (WORD *) src_d->lpSurface, *dst;
 			    
-			    surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-							 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 			    dst = (WORD *) surface;
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        WORD color = *src++;
@@ -246,9 +254,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			    }
 			    
 			    format = GL_RGBA;
+			    internal_format = GL_RGBA;
 			    pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 			} else {
 			    format = GL_RGB;
+			    internal_format = GL_RGB;
 			    pixel_format = GL_UNSIGNED_SHORT_5_6_5;
 			}
 		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
@@ -256,14 +266,18 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x003E) &&
 			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0001)) {
 		        format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;	        
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 			if (src_d->dwFlags & DDSD_CKSRCBLT) {
 			    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
 			    DWORD i;
 			    WORD *src = (WORD *) src_d->lpSurface, *dst;
 			    
-			    surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-							 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 			    dst = (WORD *) surface;
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        WORD color = *src++;
@@ -279,14 +293,18 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x00F0) &&
 			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000F)) {
 		        format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;	      
+			internal_format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
 			if (src_d->dwFlags & DDSD_CKSRCBLT) {
 			    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
 			    DWORD i;
 			    WORD *src = (WORD *) src_d->lpSurface, *dst;
 		    
-			    surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-							 src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 			    dst = (WORD *) surface;
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        WORD color = *src++;
@@ -302,14 +320,17 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000F) &&
 			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xF000)) {
 		        /* Move the four Alpha bits... */
-		        DWORD i;
-			WORD *src = (WORD *) src_d->lpSurface, *dst;
-			
-			surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						     src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			dst = surface;
-			
 			if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			    DWORD i;
+			    WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			    dst = surface;
+			    
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        WORD color = *src++;
 				*dst = (color & 0x0FFF) << 4;
@@ -318,29 +339,29 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 				    *dst |= (color & 0xF000) >> 12;
 				dst++;
 			    }
+			    format = GL_RGBA;
+			    internal_format = GL_RGBA;
+			    pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
 			} else {
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst++ = (((color & 0x0FFF) << 4) |
-					  ((color & 0xF000) >> 12));
-			    }
+			    format = GL_BGRA;
+			    internal_format = GL_RGBA;
+			    pixel_format = GL_UNSIGNED_SHORT_4_4_4_4_REV;
 			}
-
-			format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_SHORT_4_4_4_4; 		
 		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
 			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
 			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
 			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x8000)) {
-		        /* Converting the 1555 format in 5551 packed */
-		        DWORD i;
-			WORD *src = (WORD *) src_d->lpSurface, *dst;
-			
-			surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						     src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
-			dst = (WORD *) surface;
-			
 			if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			    DWORD i;
+			    WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			    dst = (WORD *) surface;
+			
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        WORD color = *src++;
 				*dst = (color & 0x7FFF) << 1;
@@ -349,16 +370,14 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 				    *dst |= (color & 0x8000) >> 15;
 				dst++;
 			    }
+			    format = GL_RGBA;
+			    internal_format = GL_RGBA;
+			    pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 			} else {
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        WORD color = *src++;
-				*dst++ = (((color & 0x7FFF) << 1) |
-					  ((color & 0x8000) >> 15));
-			    }		  
+			    format = GL_BGRA;
+			    internal_format = GL_RGBA;
+			    pixel_format = GL_UNSIGNED_SHORT_1_5_5_5_REV;
 			}
-			
-			format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
 			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
 			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
@@ -367,8 +386,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 		        DWORD i;
 			WORD *src = (WORD *) src_d->lpSurface, *dst;
 			
-			surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-						     src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			if (glThis->surface_ptr != NULL)
+			    surface = glThis->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 			dst = (WORD *) surface;
 			
 			if (src_d->dwFlags & DDSD_CKSRCBLT) {
@@ -388,6 +410,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			}
 			
 			format = GL_RGBA;
+			internal_format = GL_RGBA;
 			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 		    } else {
 		        error = TRUE;
@@ -403,8 +426,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			    BYTE *src = (BYTE *) src_d->lpSurface;
 			    DWORD *dst;
 			    
-			    surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-							  src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
 			    dst = (DWORD *) surface;
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        DWORD color = *((DWORD *) src) & 0x00FFFFFF;
@@ -416,9 +442,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 				dst++;
 			    }
 			    format = GL_RGBA;
+			    internal_format = GL_RGBA;
 			    pixel_format = GL_UNSIGNED_INT_8_8_8_8;
 			} else {
 			    format = GL_BGR;
+			    internal_format = GL_RGB;
 			    pixel_format = GL_UNSIGNED_BYTE;
 			}
 		    } else {
@@ -434,8 +462,12 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			    DWORD i;
 			    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
 			    
-			    surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-							  src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						    src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			    
 			    dst = (DWORD *) surface;
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        DWORD color = *src++;
@@ -447,19 +479,22 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			    }
 			}
 			format = GL_RGBA;
+			internal_format = GL_RGBA;
 			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
 		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
 			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
 			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
 			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xFF000000)) {
-		        /* Convert from ARGB (Windows' format) to RGBA.
-			   Note: need to check for GL extensions handling ARGB instead of always converting */
-		        DWORD i;
-			DWORD *src = (DWORD *) src_d->lpSurface, *dst;
-			
-			surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-			dst = (DWORD *) surface;
 			if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			    DWORD i;
+			    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+			    
+			    if (glThis->surface_ptr != NULL)
+			        surface = glThis->surface_ptr;
+			    else
+			        surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			
+			    dst = (DWORD *) surface;
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        DWORD color = *src++;
 				*dst = (color & 0x00FFFFFF) << 8;
@@ -468,16 +503,14 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 				    *dst |= (color & 0xFF000000) >> 24;
 				dst++;
 			    }
+			    format = GL_RGBA;
+			    internal_format = GL_RGBA;
+			    pixel_format = GL_UNSIGNED_INT_8_8_8_8;
 			} else {
-			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-			        DWORD color = *src++; 
-				*dst  = (color & 0x00FFFFFF) << 8; 
-				*dst |= (color & 0xFF000000) >> 24;
-				dst++;
-			    }
+			    format = GL_BGRA;
+			    internal_format = GL_RGBA;
+			    pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
 			}
-			format = GL_RGBA;
-			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
 		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
 			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
 			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
@@ -486,7 +519,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 		        DWORD i;
 			DWORD *src = (DWORD *) src_d->lpSurface, *dst;
 			
-			surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+			if (glThis->surface_ptr != NULL)
+			    surface = glThis->surface_ptr;
+			else
+			    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
 			dst = (DWORD *) surface;
 			
 			if (src_d->dwFlags & DDSD_CKSRCBLT) {
@@ -504,6 +540,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			    }
 			}
 			format = GL_RGBA;
+			internal_format = GL_RGBA;
 			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
 		    } else {
 		        error = TRUE;
@@ -519,7 +556,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 	        if (gl_surf_ptr->initial_upload_done == FALSE) {
 		    glTexImage2D(GL_TEXTURE_2D,
 				 surf_ptr->mipmap_level,
-				 format,
+				 internal_format,
 				 src_d->dwWidth, src_d->dwHeight,
 				 0,
 				 format,
@@ -537,7 +574,9 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 		}
 		gl_surf_ptr->dirty_flag = FALSE;
 		
-		if (surface) HeapFree(GetProcessHeap(), 0, surface);
+		/* And store the surface pointer for future reuse.. */
+		if (surface)
+		    glThis->surface_ptr = surface;
 	    } else if (error == TRUE) {
 	        if (ERR_ON(ddraw)) {
 		    ERR("  unsupported pixel format for textures : \n");
@@ -648,6 +687,9 @@ gltex_final_release(IDirectDrawSurfaceImpl *This)
     if (glThis->tex_name != 0)
         glDeleteTextures(1, &(glThis->tex_name));
     LEAVE_GL();	
+
+    if (glThis->surface_ptr != NULL)
+        HeapFree(GetProcessHeap(), 0, glThis->surface_ptr);
 
     /* And if this texture was the current one, remove it at the device level */
     if (This->d3ddevice != NULL)

@@ -109,7 +109,7 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 {
     IDirect3DDeviceImpl *d3d_dev = (IDirect3DDeviceImpl *) dev;
     IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) dev;
-    
+
     TRACE("(%p, %ld)\n", gl_d3d_dev->display,(Drawable)drawable);
     ENTER_GL();
     if (gl_d3d_dev->state == SURFACE_MEMORY) {
@@ -119,6 +119,7 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
     gl_d3d_dev->front_state = SURFACE_GL;
     glXSwapBuffers(gl_d3d_dev->display, (Drawable)drawable);
     LEAVE_GL();
+    
     return TRUE;
 }
 
@@ -2523,12 +2524,16 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
         /* This is easy to handle for the D3D Device... */
         DWORD color = lpbltfx->u5.dwFillColor;
 	D3DRECT rect;
+	
         TRACE(" executing D3D Device override.\n");
-	rect.u1.x1 = rdst->left;
-	rect.u2.y1 = rdst->top;
-	rect.u3.x2 = rdst->right;
-	rect.u4.y2 = rdst->bottom;
-	d3ddevice_clear(This->d3ddevice, 1, &rect, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
+
+	if (rdst) {
+	    rect.u1.x1 = rdst->left;
+	    rect.u2.y1 = rdst->top;
+	    rect.u3.x2 = rdst->right;
+	    rect.u4.y2 = rdst->bottom;
+	}
+	d3ddevice_clear(This->d3ddevice, rdst != NULL ? 1 : 0, &rect, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
 	return DD_OK;
     }
     return DDERR_INVALIDPARAMS;
@@ -2845,6 +2850,9 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
     GLint tex_state;
     int x, y;
 
+    /* This is to prevent another thread to actually lock the buffer while we flush it on screen */
+    EnterCriticalSection(&(d3d_dev->crit));
+    
     loc_rect.top = 0;
     loc_rect.left = 0;
     loc_rect.bottom = surf->surface_desc.dwHeight;
@@ -2884,6 +2892,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	glPixelStorei(GL_UNPACK_SWAP_BYTES, TRUE);
     } else {
         ERR(" unsupported pixel format at frame buffer flush.\n");
+	LeaveCriticalSection(&(d3d_dev->crit));
 	return;
     }
 
@@ -2973,6 +2982,9 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	}
     }
 #endif
+
+    /* And leave the critical section... */
+    LeaveCriticalSection(&(d3d_dev->crit));
 }
 
 static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
