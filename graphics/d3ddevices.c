@@ -175,7 +175,7 @@ int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2I
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OpenGL_IDirect3DDevice2));
     odev = (OpenGL_IDirect3DDevice2 *) (*device);
     (*device)->ref = 1;
-    (*device)->lpvtbl = &OpenGL_vtable;
+    ICOM_VTBL(*device) = &OpenGL_vtable;
     (*device)->d3d = d3d;
     (*device)->surface = surface;
     
@@ -1239,7 +1239,7 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OpenGL_IDirect3DDevice));
     odev = (OpenGL_IDirect3DDevice *) (*device);
     (*device)->ref = 1;
-    (*device)->lpvtbl = &OpenGL_vtable_dx3;
+    ICOM_VTBL(*device) = &OpenGL_vtable_dx3;
     (*device)->d3d = NULL;
     (*device)->surface = surface;
     

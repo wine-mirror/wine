@@ -25,7 +25,7 @@ DEFAULT_DEBUG_CHANNEL(shell)
 */
 
 typedef struct 
-{	ICOM_VTABLE(IExtractIconA)*	lpvtbl;
+{	ICOM_VFIELD(IExtractIconA);
 	DWORD	ref;
 	ICOM_VTABLE(IPersistFile)*	lpvtblPersistFile;
 	LPITEMIDLIST	pidl;
@@ -46,7 +46,7 @@ IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
 
 	ei=(IExtractIconAImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IExtractIconAImpl));
 	ei->ref=1;
-	ei->lpvtbl = &eivt;
+	ICOM_VTBL(ei) = &eivt;
 	ei->lpvtblPersistFile = &pfvt;
 	ei->pidl=ILClone(pidl);
 

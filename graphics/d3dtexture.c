@@ -103,7 +103,7 @@ LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf)
   
   tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
   tex->ref = 1;
-  tex->lpvtbl = &texture2_vtable;
+  ICOM_VTBL(tex) = &texture2_vtable;
   tex->surface = surf;
   
   return (LPDIRECT3DTEXTURE2)tex;
@@ -118,7 +118,7 @@ LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf)
   
   tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
   tex->ref = 1;
-  tex->lpvtbl = (ICOM_VTABLE(IDirect3DTexture2)*)&texture_vtable;
+  ICOM_VTBL(tex) = (ICOM_VTABLE(IDirect3DTexture2)*)&texture_vtable;
   tex->surface = surf;
   
   return (LPDIRECT3DTEXTURE)tex;

@@ -27,7 +27,7 @@ struct HGLOBALLockBytesImpl
    * Needs to be the first item in the stuct 
    * since we want to cast this in an ILockBytes pointer
    */
-  ICOM_VTABLE(ILockBytes) *lpvtbl;
+  ICOM_VFIELD(ILockBytes);
 
   /*
    * Reference count
@@ -157,7 +157,7 @@ HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
 {
   HGLOBALLockBytesImpl* const pMemLockBytes = (HGLOBALLockBytesImpl*)plkbyt;
 
-  if (pMemLockBytes->lpvtbl == &HGLOBALLockBytesImpl_Vtbl)
+  if (ICOM_VTBL(pMemLockBytes) == &HGLOBALLockBytesImpl_Vtbl)
     *phglobal = pMemLockBytes->supportHandle;
   else
     *phglobal = 0;
@@ -193,7 +193,7 @@ HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
     /*
      * Set up the virtual function table and reference count.
      */
-    newLockBytes->lpvtbl = &HGLOBALLockBytesImpl_Vtbl;
+    ICOM_VTBL(newLockBytes) = &HGLOBALLockBytesImpl_Vtbl;
     newLockBytes->ref    = 0;
   
     /*

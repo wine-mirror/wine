@@ -671,7 +671,7 @@ LPDIRECT3DEXECUTEBUFFER d3dexecutebuffer_create(IDirect3DDeviceImpl* d3ddev, LPD
   
   eb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DExecuteBufferImpl));
   eb->ref = 1;
-  eb->lpvtbl = &executebuffer_vtable;
+  ICOM_VTBL(eb) = &executebuffer_vtable;
   eb->d3ddev = d3ddev;
 
   /* Initializes memory */

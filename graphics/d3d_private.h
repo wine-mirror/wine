@@ -35,7 +35,7 @@ typedef struct IDirect3DDevice2Impl IDirect3DDevice2Impl;
 struct IDirect3DImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3D)* lpvtbl;
+    ICOM_VFIELD(IDirect3D);
     DWORD                   ref;
     /* IDirect3D fields */
     IDirectDrawImpl* ddraw;
@@ -47,7 +47,7 @@ struct IDirect3DImpl
 struct IDirect3D2Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3D2)* lpvtbl;
+    ICOM_VFIELD(IDirect3D2);
     DWORD                    ref;
     /* IDirect3D2 fields */
     IDirectDrawImpl* ddraw;
@@ -59,7 +59,7 @@ struct IDirect3D2Impl
 struct IDirect3DLightImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3DLight)* lpvtbl;
+    ICOM_VFIELD(IDirect3DLight);
     DWORD                        ref;
     /* IDirect3DLight fields */
     union {
@@ -89,7 +89,7 @@ struct IDirect3DLightImpl
 struct IDirect3DMaterial2Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3DMaterial2)* lpvtbl;
+    ICOM_VFIELD(IDirect3DMaterial2);
     DWORD                            ref;
     /* IDirect3DMaterial2 fields */
     union {
@@ -113,7 +113,7 @@ struct IDirect3DMaterial2Impl
 struct IDirect3DTexture2Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3DTexture2)* lpvtbl;
+    ICOM_VFIELD(IDirect3DTexture2);
     DWORD                           ref;
     /* IDirect3DTexture2 fields */
     void*                    D3Ddevice; /* I put (void *) to use the same pointer for both
@@ -130,7 +130,7 @@ struct IDirect3DTexture2Impl
 struct IDirect3DViewport2Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3DViewport2)* lpvtbl;
+    ICOM_VFIELD(IDirect3DViewport2);
     DWORD                            ref;
     /* IDirect3DViewport2 fields */
     union {
@@ -171,7 +171,7 @@ struct IDirect3DViewport2Impl
 struct IDirect3DExecuteBufferImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3DExecuteBuffer)* lpvtbl;
+    ICOM_VFIELD(IDirect3DExecuteBuffer);
     DWORD                                ref;
     /* IDirect3DExecuteBuffer fields */
     IDirect3DDeviceImpl* d3ddev;
@@ -198,7 +198,7 @@ struct IDirect3DExecuteBufferImpl
 struct IDirect3DDeviceImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3DDevice)* lpvtbl;
+    ICOM_VFIELD(IDirect3DDevice);
     DWORD                         ref;
     /* IDirect3DDevice fields */
     IDirect3DImpl*          d3d;
@@ -216,7 +216,7 @@ struct IDirect3DDeviceImpl
 struct IDirect3DDevice2Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirect3DDevice2)* lpvtbl;
+    ICOM_VFIELD(IDirect3DDevice2);
     DWORD                          ref;
     /* IDirect3DDevice fields */
     IDirect3D2Impl*         d3d;

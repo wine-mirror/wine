@@ -49,7 +49,7 @@ static struct ICOM_VTABLE(IContextMenu) cmvt =
 *  IContextMenu Implementation
 */
 typedef struct 
-{	ICOM_VTABLE(IContextMenu)* lpvtbl;
+{	ICOM_VFIELD(IContextMenu);
 	DWORD		ref;
 	IShellFolder*	pSFParent;
 	LPITEMIDLIST	pidl;		/* root pidl */
@@ -147,7 +147,7 @@ IContextMenu *IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pi
 	UINT  u;
 
 	cm = (IContextMenuImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IContextMenuImpl));
-	cm->lpvtbl=&cmvt;
+	ICOM_VTBL(cm)=&cmvt;
 	cm->ref = 1;
 	cm->pidl = ILClone(pidl);
 

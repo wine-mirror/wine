@@ -78,7 +78,7 @@ struct ICOM_VTABLE(IAVIStream) iavist = {
 
 typedef struct IAVIStreamImpl {
 	/* IUnknown stuff */
-	ICOM_VTABLE(IAVIStream)*	lpvtbl;
+	ICOM_VFIELD(IAVIStream);
 	DWORD		ref;
 	/* IAVIStream stuff */
 	LPVOID		lpInputFormat;
@@ -109,7 +109,7 @@ AVIFileInit(void) {
 
 typedef struct IAVIFileImpl {
 	/* IUnknown stuff */
-	ICOM_VTABLE(IAVIFile)*	lpvtbl;
+	ICOM_VFIELD(IAVIFile);
 	DWORD				ref;
 	/* IAVIFile stuff... */
 } IAVIFileImpl;
@@ -168,7 +168,7 @@ static HRESULT WINAPI IAVIFile_fnCreateStream(IAVIFile*iface,PAVISTREAM*avis,AVI
 	FIXME_(avifile)("(%p,%p,%p)\n",This,avis,asi);
 	istream = (IAVIStreamImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IAVIStreamImpl));
 	istream->ref = 1;
-	istream->lpvtbl = &iavist;
+	ICOM_VTBL(istream) = &iavist;
 	fcc[4]='\0';
 	memcpy(fcc,(char*)&(asi->fccType),4);
 	FIXME_(avifile)("\tfccType '%s'\n",fcc);
@@ -222,7 +222,7 @@ HRESULT WINAPI AVIFileOpenA(
 	FIXME_(avifile)("(%p,%s,0x%08lx,%s),stub!\n",ppfile,szFile,(DWORD)uMode,buf);
 	iavi = (IAVIFileImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IAVIFileImpl));
 	iavi->ref = 1;
-	iavi->lpvtbl = &iavift;
+	ICOM_VTBL(iavi) = &iavift;
 	*ppfile = (LPVOID)iavi;
 	return S_OK;
 }

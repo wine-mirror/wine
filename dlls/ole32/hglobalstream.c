@@ -27,8 +27,8 @@ DEFAULT_DEBUG_CHANNEL(storage)
  */
 struct HGLOBALStreamImpl
 {
-  ICOM_VTABLE(IStream) *lpvtbl;  /* Needs to be the first item in the stuct
-				  * since we want to cast this in a IStream pointer */
+  ICOM_VFIELD(IStream);  /* Needs to be the first item in the stuct
+			  * since we want to cast this in a IStream pointer */
   
   /*
    * Reference count
@@ -201,7 +201,7 @@ HRESULT WINAPI GetHGlobalFromStream(IStream* pstm, HGLOBAL* phglobal)
   /*
    * Verify that the stream object was created with CreateStreamOnHGlobal.
    */
-  if (pStream->lpvtbl == &HGLOBALStreamImpl_Vtbl)
+  if (ICOM_VTBL(pStream) == &HGLOBALStreamImpl_Vtbl)
     *phglobal = pStream->supportHandle;
   else
   {
@@ -237,7 +237,7 @@ HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
     /*
      * Set-up the virtual function table and reference count.
      */
-    newStream->lpvtbl = &HGLOBALStreamImpl_Vtbl;
+    ICOM_VTBL(newStream) = &HGLOBALStreamImpl_Vtbl;
     newStream->ref    = 0;
     
     /*

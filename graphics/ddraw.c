@@ -2196,7 +2196,7 @@ HRESULT WINAPI DirectDrawCreateClipper( DWORD dwFlags,
   TRACE("(%08lx,%p,%p)\n", dwFlags, ilplpDDClipper, pUnkOuter);
 
   *ilplpDDClipper = (IDirectDrawClipperImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawClipperImpl));
-  (*ilplpDDClipper)->lpvtbl = &ddclipvt;
+  ICOM_VTBL(*ilplpDDClipper) = &ddclipvt;
   (*ilplpDDClipper)->ref = 1;
 
   return DD_OK;
@@ -2518,7 +2518,7 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
                 d3d->ref = 1;
                 d3d->ddraw = This->ddraw;
                 IDirect3D_AddRef(iface);
-                d3d->lpvtbl = &d3d2vt;
+                ICOM_VTBL(d3d) = &d3d2vt;
                 *obj = d3d;
 
 		TRACE("  Creating IDirect3D2 interface (%p)\n", *obj);
@@ -2676,7 +2676,7 @@ static HRESULT WINAPI IDirect3D2Impl_QueryInterface(
                 d3d->ref = 1;
                 d3d->ddraw = This->ddraw;
                 IDirect3D2_AddRef(iface);
-                d3d->lpvtbl = &d3dvt;
+                ICOM_VTBL(d3d) = &d3dvt;
                 *obj = d3d;
 
 		TRACE("  Creating IDirect3D interface (%p)\n", *obj);
@@ -2865,7 +2865,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
     IDirectDraw2_AddRef(iface);
 
     (*ilpdsf)->ref = 1;
-    (*ilpdsf)->lpvtbl = (ICOM_VTABLE(IDirectDrawSurface)*)&dga_dds4vt;
+    ICOM_VTBL(*ilpdsf) = (ICOM_VTABLE(IDirectDrawSurface)*)&dga_dds4vt;
     (*ilpdsf)->s.ddraw = This;
     (*ilpdsf)->s.palette = NULL;
     (*ilpdsf)->t.dga.fb_height = -1; /* This is to have non-on screen surfaces freed */
@@ -2927,7 +2927,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface(
 		);
 		IDirectDraw2_AddRef(iface);
 		back->ref = 1;
-		back->lpvtbl = (ICOM_VTABLE(IDirectDrawSurface4)*)&dga_dds4vt;
+		ICOM_VTBL(back) = (ICOM_VTABLE(IDirectDrawSurface4)*)&dga_dds4vt;
 		for (i=0;i<32;i++)
 		    if (!(This->e.dga.vpmask & (1<<i)))
 			break;
@@ -3132,7 +3132,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 
     (*ilpdsf)->s.ddraw             = This;
     (*ilpdsf)->ref                 = 1;
-    (*ilpdsf)->lpvtbl              = (ICOM_VTABLE(IDirectDrawSurface)*)&xlib_dds4vt;
+    ICOM_VTBL(*ilpdsf)             = (ICOM_VTABLE(IDirectDrawSurface)*)&xlib_dds4vt;
     (*ilpdsf)->s.palette = NULL;
     (*ilpdsf)->t.xlib.image = NULL; /* This is for off-screen buffers */
 
@@ -3182,7 +3182,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 		back->s.ddraw = This;
 
 		back->ref = 1;
-		back->lpvtbl = (ICOM_VTABLE(IDirectDrawSurface4)*)&xlib_dds4vt;
+		ICOM_VTBL(back) = (ICOM_VTABLE(IDirectDrawSurface4)*)&xlib_dds4vt;
 		/* Copy the surface description from the front buffer */
 		back->s.surface_desc = (*ilpdsf)->s.surface_desc;
 
@@ -3819,7 +3819,7 @@ static HRESULT WINAPI IDirectDraw2Impl_CreateClipper(
 	);
 	*ilpddclip = (IDirectDrawClipperImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawClipperImpl));
 	(*ilpddclip)->ref = 1;
-	(*ilpddclip)->lpvtbl = &ddclipvt;
+	ICOM_VTBL(*ilpddclip) = &ddclipvt;
 	return DD_OK;
 }
 
@@ -3876,7 +3876,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_CreatePalette(
 	TRACE("(%p)->(%08lx,%p,%p,%p)\n",This,dwFlags,palent,ilpddpal,lpunk);
 	res = common_IDirectDraw2Impl_CreatePalette(This,dwFlags,palent,ilpddpal,lpunk,&xsize);
 	if (res != 0) return res;
-	(*ilpddpal)->lpvtbl = &dga_ddpalvt;
+	ICOM_VTBL(*ilpddpal) = &dga_ddpalvt;
 	if (This->d.directdraw_pixelformat.u.dwRGBBitCount<=8) {
 		(*ilpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
 	} else {
@@ -3910,7 +3910,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreatePalette(
 	TRACE("(%p)->(%08lx,%p,%p,%p)\n",This,dwFlags,palent,ilpddpal,lpunk);
 	res = common_IDirectDraw2Impl_CreatePalette(This,dwFlags,palent,ilpddpal,lpunk,&xsize);
 	if (res != 0) return res;
-	(*ilpddpal)->lpvtbl = &xlib_ddpalvt;
+	ICOM_VTBL(*ilpddpal) = &xlib_ddpalvt;
 	return DD_OK;
 }
 
@@ -4013,7 +4013,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		return S_OK;
 	}
 	if ( IsEqualGUID( &IID_IDirectDraw, refiid ) ) {
-		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&dga_ddvt;
+		ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&dga_ddvt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
 
@@ -4022,7 +4022,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		return S_OK;
 	}
 	if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) {
-		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd2vt;
+		ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd2vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
 
@@ -4031,7 +4031,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		return S_OK;
 	}
 	if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) {
-		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd4vt;
+		ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd4vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
 
@@ -4046,7 +4046,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		d3d->ref = 1;
 		d3d->ddraw = (IDirectDrawImpl*)This;
 		IDirectDraw2_AddRef(iface);
-		d3d->lpvtbl = &d3dvt;
+		ICOM_VTBL(d3d) = &d3dvt;
 		*obj = d3d;
 
 		TRACE("  Creating IDirect3D interface (%p)\n", *obj);
@@ -4060,7 +4060,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		d3d->ref = 1;
 		d3d->ddraw = (IDirectDrawImpl*)This;
 		IDirectDraw2_AddRef(iface);
-		d3d->lpvtbl = &d3d2vt;
+		ICOM_VTBL(d3d) = &d3d2vt;
 		*obj = d3d;
 
 		TRACE("  Creating IDirect3D2 interface (%p)\n", *obj);
@@ -4089,7 +4089,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		return S_OK;
 	}
 	if ( IsEqualGUID( &IID_IDirectDraw, refiid ) ) {
-		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&xlib_ddvt;
+		ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&xlib_ddvt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
 
@@ -4098,7 +4098,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		return S_OK;
 	}
 	if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) {
-		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd2vt;
+		ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd2vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
 
@@ -4107,7 +4107,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		return S_OK;
 	}
 	if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) {
-		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd4vt;
+		ICOM_VTBL(This) = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd4vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
 
@@ -4122,7 +4122,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		d3d->ref = 1;
 		d3d->ddraw = (IDirectDrawImpl*)This;
 		IDirectDraw2_AddRef(iface);
-		d3d->lpvtbl = &d3dvt;
+		ICOM_VTBL(d3d) = &d3dvt;
 		*obj = d3d;
 
 		TRACE("  Creating IDirect3D interface (%p)\n", *obj);
@@ -4136,7 +4136,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		d3d->ref = 1;
 		d3d->ddraw = (IDirectDrawImpl*)This;
 		IDirectDraw2_AddRef(iface);
-		d3d->lpvtbl = &d3d2vt;
+		ICOM_VTBL(d3d) = &d3d2vt;
 		*obj = d3d;
 
 		TRACE("  Creating IDirect3D2 interface (%p)\n", *obj);
@@ -4927,7 +4927,7 @@ static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnk
 	        return DDERR_GENERIC;
 	}
 	*ilplpDD = (IDirectDrawImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawImpl));
-	(*ilplpDD)->lpvtbl = &dga_ddvt;
+	ICOM_VTBL(*ilplpDD) = &dga_ddvt;
 	(*ilplpDD)->ref = 1;
 	TSXF86DGAQueryVersion(display,&major,&minor);
 	TRACE("XF86DGA is version %d.%d\n",major,minor);
@@ -4997,7 +4997,7 @@ static HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUn
 	int depth;
 
 	*ilplpDD = (IDirectDrawImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDrawImpl));
-	(*ilplpDD)->lpvtbl = &xlib_ddvt;
+	ICOM_VTBL(*ilplpDD) = &xlib_ddvt;
 	(*ilplpDD)->ref = 1;
 	(*ilplpDD)->d.drawable = 0; /* in SetDisplayMode */
 
@@ -5097,7 +5097,7 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    ICOM_VFIELD(IClassFactory);
     DWORD                       ref;
 } IClassFactoryImpl;
 

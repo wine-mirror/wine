@@ -23,7 +23,7 @@ DEFAULT_DEBUG_CHANNEL(shell)
 *  IContextMenu Implementation
 */
 typedef struct 
-{	ICOM_VTABLE(IContextMenu)* lpvtbl;
+{	ICOM_VFIELD(IContextMenu);
 	DWORD		ref;
 } BgCmImpl;
 
@@ -38,7 +38,7 @@ IContextMenu *ISvBgCm_Constructor(void)
 	BgCmImpl* cm;
 
 	cm = (BgCmImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(BgCmImpl));
-	cm->lpvtbl=&cmvt;
+	ICOM_VTBL(cm)=&cmvt;
 	cm->ref = 1;
 
 	TRACE("(%p)->()\n",cm);

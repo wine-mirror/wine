@@ -40,7 +40,7 @@ typedef struct
 }LISTVIEW_SORT_INFO, *LPLISTVIEW_SORT_INFO;
 
 typedef struct 
-{	ICOM_VTABLE(IShellView)* lpvtbl;
+{	ICOM_VFIELD(IShellView);
 	DWORD		ref;
 	ICOM_VTABLE(IOleCommandTarget)*	lpvtblOleCommandTarget;
 	ICOM_VTABLE(IDropTarget)*	lpvtblDropTarget;
@@ -132,7 +132,7 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 {	IShellViewImpl * sv;
 	sv=(IShellViewImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellViewImpl));
 	sv->ref=1;
-	sv->lpvtbl=&svvt;
+	ICOM_VTBL(sv)=&svvt;
 	sv->lpvtblOleCommandTarget=&ctvt;
 	sv->lpvtblDropTarget=&dtvt;
 	sv->lpvtblDropSource=&dsvt;

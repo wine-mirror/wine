@@ -70,7 +70,7 @@ LPDIRECT3DMATERIAL2 d3dmaterial2_create(IDirect3D2Impl* d3d2)
   
   mat = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DMaterial2Impl));
   mat->ref = 1;
-  mat->lpvtbl = &material2_vtable;
+  ICOM_VTBL(mat) = &material2_vtable;
 
   mat->use_d3d2 = 1;
   mat->d3d.d3d2 = d3d2;
@@ -86,7 +86,7 @@ LPDIRECT3DMATERIAL d3dmaterial_create(IDirect3DImpl* d3d1)
   
   mat = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DMaterial2Impl));
   mat->ref = 1;
-  mat->lpvtbl = (ICOM_VTABLE(IDirect3DMaterial2)*)&material_vtable;
+  ICOM_VTBL(mat) = (ICOM_VTABLE(IDirect3DMaterial2)*)&material_vtable;
 
   mat->use_d3d2 = 0;
   mat->d3d.d3d1 = d3d1;

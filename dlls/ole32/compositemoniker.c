@@ -38,7 +38,7 @@ typedef struct CompositeMonikerImpl{
 /* EnumMoniker data structure */
 typedef struct EnumMonikerImpl{
 
-    ICOM_VTABLE(IEnumMoniker)*  lpvtbl;  /* VTable relative to the IEnumMoniker interface.*/
+    ICOM_VFIELD(IEnumMoniker);  /* VTable relative to the IEnumMoniker interface.*/
 
     ULONG ref; /* reference counter for this object */
 
@@ -1606,7 +1606,7 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumMoniker(IMoniker** tabMoniker,
         return E_INVALIDARG;
     
     /* Initialize the virtual function table. */
-    newEnumMoniker->lpvtbl      = &VT_EnumMonikerImpl;
+    ICOM_VTBL(newEnumMoniker)    = &VT_EnumMonikerImpl;
     newEnumMoniker->ref          = 0;
 
     newEnumMoniker->tabSize=tabSize;

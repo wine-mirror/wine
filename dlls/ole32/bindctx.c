@@ -31,7 +31,7 @@ typedef struct BindCtxObject{
 /* BindCtx data strucrture */
 typedef struct BindCtxImpl{
 
-    ICOM_VTABLE(IBindCtx)*  lpvtbl; /* VTable relative to the IBindCtx interface.*/
+    ICOM_VFIELD(IBindCtx); /* VTable relative to the IBindCtx interface.*/
                                      
     ULONG ref; /* reference counter for this object */
 
@@ -161,7 +161,7 @@ HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This)
     TRACE("(%p)\n",This);
 
     /* Initialize the virtual function table.*/
-    This->lpvtbl       = &VT_BindCtxImpl;
+    ICOM_VTBL(This)    = &VT_BindCtxImpl;
     This->ref          = 0;
 
     /* Initialize the BIND_OPTS2 structure */

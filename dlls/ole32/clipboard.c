@@ -109,7 +109,7 @@ typedef struct OLEClipbrd OLEClipbrd;
 typedef struct 
 {
   /* IEnumFORMATETC VTable */
-  ICOM_VTABLE(IEnumFORMATETC)* lpvtbl;
+  ICOM_VFIELD(IEnumFORMATETC);
   
   /* IEnumFORMATETC fields */
   UINT                         posFmt;    /* current enumerator position */
@@ -1434,7 +1434,7 @@ LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC a
     return NULL;
   
   ef->ref = 0;
-  ef->lpvtbl = &efvt;
+  ICOM_VTBL(ef) = &efvt;
   ef->pUnkDataObj = pUnkDataObj;
   
   ef->posFmt = 0;

@@ -45,7 +45,7 @@ LPDIRECT3DVIEWPORT2 d3dviewport2_create(IDirect3D2Impl* d3d2)
   
   vp = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DViewport2Impl));
   vp->ref = 1;
-  vp->lpvtbl = &viewport2_vtable;
+  ICOM_VTBL(vp) = &viewport2_vtable;
   vp->d3d.d3d2 = d3d2;
   vp->use_d3d2 = 1;
 
@@ -65,7 +65,7 @@ LPDIRECT3DVIEWPORT d3dviewport_create(IDirect3DImpl* d3d1)
   
   vp = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DViewport2Impl));
   vp->ref = 1;
-  vp->lpvtbl = &viewport2_vtable;
+  ICOM_VTBL(vp) = &viewport2_vtable;
   vp->d3d.d3d1 = d3d1;
   vp->use_d3d2 = 0;
 

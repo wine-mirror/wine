@@ -67,7 +67,7 @@ typedef struct SysMouseAImpl SysMouseAImpl;
 
 struct IDirectInputDevice2AImpl
 {
-        ICOM_VTABLE(IDirectInputDevice2A)* lpvtbl;
+        ICOM_VFIELD(IDirectInputDevice2A);
         DWORD                           ref;
         GUID                            guid;
 };
@@ -75,7 +75,7 @@ struct IDirectInputDevice2AImpl
 struct SysKeyboardAImpl
 {
         /* IDirectInputDevice2AImpl */
-        ICOM_VTABLE(IDirectInputDevice2A)* lpvtbl;
+        ICOM_VFIELD(IDirectInputDevice2A);
         DWORD                           ref;
         GUID                            guid;
         /* SysKeyboardAImpl */
@@ -88,7 +88,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) JoystickAvt;
 struct JoystickAImpl
 {
         /* IDirectInputDevice2AImpl */
-        ICOM_VTABLE(IDirectInputDevice2A)* lpvtbl;
+        ICOM_VFIELD(IDirectInputDevice2A);
         DWORD                           ref;
         GUID                            guid;
 
@@ -106,7 +106,7 @@ struct JoystickAImpl
 struct SysMouseAImpl
 {
         /* IDirectInputDevice2AImpl */
-        ICOM_VTABLE(IDirectInputDevice2A)* lpvtbl;
+        ICOM_VFIELD(IDirectInputDevice2A);
         DWORD                           ref;
         GUID                            guid;
 
@@ -180,7 +180,7 @@ static void _dump_cooperativelevel(DWORD dwFlags) {
 
 struct IDirectInputAImpl
 {
-        ICOM_VTABLE(IDirectInputA)* lpvtbl;
+        ICOM_VFIELD(IDirectInputA);
         DWORD                   ref;
 };
 
@@ -195,7 +195,7 @@ HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 	);
 	This = (IDirectInputAImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputAImpl));
 	This->ref = 1;
-	This->lpvtbl = &ddiavt;
+	ICOM_VTBL(This) = &ddiavt;
 	*ppDI=(IDirectInputA*)This;
 	return 0;
 }
@@ -296,7 +296,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
                 SysKeyboardAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardAImpl));
 		newDevice->ref = 1;
-		newDevice->lpvtbl = &SysKeyboardAvt;
+		ICOM_VTBL(newDevice) = &SysKeyboardAvt;
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
 		memset(newDevice->keystate,0,256);
                 *pdev=(IDirectInputDeviceA*)newDevice;
@@ -307,7 +307,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
                 SysMouseAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseAImpl));
 		newDevice->ref = 1;
-		newDevice->lpvtbl = &SysMouseAvt;
+		ICOM_VTBL(newDevice) = &SysMouseAvt;
 		InitializeCriticalSection(&(newDevice->crit));
 		MakeCriticalSectionGlobal(&(newDevice->crit));
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
@@ -320,7 +320,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
                 JoystickAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickAImpl));
 		newDevice->ref		= 1;
-		newDevice->lpvtbl	= &JoystickAvt;
+		ICOM_VTBL(newDevice)	= &JoystickAvt;
 		newDevice->joyfd	= -1;
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
                 *pdev=(IDirectInputDeviceA*)newDevice;

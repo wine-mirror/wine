@@ -26,7 +26,7 @@ typedef struct IDirectDrawColorControlImpl IDirectDrawColorControlImpl;
 struct IDirectDrawPaletteImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDrawPalette)* lpvtbl;
+    ICOM_VFIELD(IDirectDrawPalette);
     DWORD                            ref;
     /* IDirectDrawPalette fields */
     IDirectDrawImpl* ddraw;
@@ -43,7 +43,7 @@ struct IDirectDrawPaletteImpl
 struct IDirectDrawClipperImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDrawClipper)* lpvtbl;
+    ICOM_VFIELD(IDirectDrawClipper);
     DWORD                            ref;
     /* IDirectDrawClipper fields */
     /* none */
@@ -92,7 +92,7 @@ struct _xlib_directdrawdata
 struct IDirectDrawImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDraw)* lpvtbl;
+    ICOM_VFIELD(IDirectDraw);
     DWORD                     ref;
     /* IDirectDraw fields */
     struct _common_directdrawdata   d;
@@ -108,7 +108,7 @@ struct IDirectDrawImpl
 struct IDirectDraw2Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDraw2)* lpvtbl;
+    ICOM_VFIELD(IDirectDraw2);
     DWORD                      ref;
     /* IDirectDraw2 fields */
     struct _common_directdrawdata   d;
@@ -124,7 +124,7 @@ struct IDirectDraw2Impl
 struct IDirectDraw4Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDraw4)* lpvtbl;
+    ICOM_VFIELD(IDirectDraw4);
     DWORD                      ref;
     /* IDirectDraw4 fields */
     struct _common_directdrawdata   d;
@@ -176,7 +176,7 @@ struct _xlib_directdrawsurface
 struct IDirectDrawSurfaceImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDrawSurface)* lpvtbl;
+    ICOM_VFIELD(IDirectDrawSurface);
     DWORD                            ref;
     /* IDirectDrawSurface fields */
     struct _common_directdrawsurface	s;
@@ -192,7 +192,7 @@ struct IDirectDrawSurfaceImpl
 struct IDirectDrawSurface2Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDrawSurface2)* lpvtbl;
+    ICOM_VFIELD(IDirectDrawSurface2);
     DWORD                             ref;
     /* IDirectDrawSurface2 fields */
     struct _common_directdrawsurface	s;
@@ -208,7 +208,7 @@ struct IDirectDrawSurface2Impl
 struct IDirectDrawSurface3Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDrawSurface3)* lpvtbl;
+    ICOM_VFIELD(IDirectDrawSurface3);
     DWORD                             ref;
     /* IDirectDrawSurface3 fields */
     struct _common_directdrawsurface	s;
@@ -224,7 +224,7 @@ struct IDirectDrawSurface3Impl
 struct IDirectDrawSurface4Impl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDrawSurface4)* lpvtbl;
+    ICOM_VFIELD(IDirectDrawSurface4);
     DWORD                             ref;
     /* IDirectDrawSurface4 fields */
     struct _common_directdrawsurface	s;
@@ -245,7 +245,7 @@ struct _surface_chain {
 struct IDirectDrawColorControlImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectDrawColorControl)* lpvtbl;
+    ICOM_VFIELD(IDirectDrawColorControl);
     DWORD                                 ref;
     /* IDirectDrawColorControl fields */
     /* none */

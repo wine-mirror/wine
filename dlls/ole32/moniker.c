@@ -28,7 +28,7 @@ typedef struct RunObject{
 /* define de RunningObjectTableImpl structure */
 typedef struct RunningObjectTableImpl{
 
-    ICOM_VTABLE(IRunningObjectTable)*  lpvtbl;
+    ICOM_VFIELD(IRunningObjectTable);
     ULONG      ref;
 
     RunObject* runObjTab;            /* pointe to the first object in the table       */
@@ -189,7 +189,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize()
         return E_OUTOFMEMORY;
 
     /* initialize the virtual table function */
-    runningObjectTableInstance->lpvtbl = &VT_RunningObjectTableImpl;
+    ICOM_VTBL(runningObjectTableInstance) = &VT_RunningObjectTableImpl;
 
     /* the initial reference is set to "1" ! because if set to "0" it will be not practis when */
     /* the ROT refered many times  not in the same time (all the objects in the ROT will  */

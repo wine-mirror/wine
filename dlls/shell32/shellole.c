@@ -194,7 +194,7 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    ICOM_VFIELD(IClassFactory);
     DWORD                       ref;
     CLSID			*rclsid;
 } IClassFactoryImpl;
@@ -211,7 +211,7 @@ LPCLASSFACTORY IClassFactory_Constructor(REFCLSID rclsid)
 
 	lpclf= (IClassFactoryImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IClassFactoryImpl));
 	lpclf->ref = 1;
-	lpclf->lpvtbl = &clfvt;
+	ICOM_VTBL(lpclf) = &clfvt;
 	lpclf->rclsid = (CLSID*)rclsid;
 
 	TRACE("(%p)->()\n",lpclf);
@@ -354,7 +354,7 @@ typedef HRESULT (CALLBACK * LPFNCREATEINSTANCE)(IUnknown* pUnkOuter, REFIID riid
 
 typedef struct
 {
-    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    ICOM_VFIELD(IClassFactory);
     DWORD                       ref;
     CLSID			*rclsid;
     LPFNCREATEINSTANCE		lpfnCI;
@@ -377,7 +377,7 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, UINT * pcRefDll
 
 	lpclf = (IDefClFImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDefClFImpl));
 	lpclf->ref = 1;
-	lpclf->lpvtbl = &dclfvt;
+	ICOM_VTBL(lpclf) = &dclfvt;
 	lpclf->lpfnCI = lpfnCI;
 	lpclf->pcRefDll = pcRefDll;
 

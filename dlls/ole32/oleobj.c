@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(ole)
  */
 typedef struct OleAdviseHolderImpl
 {
-  ICOM_VTABLE(IOleAdviseHolder)* lpvtbl;
+  ICOM_VFIELD(IOleAdviseHolder);
 
   DWORD ref;
 
@@ -71,7 +71,7 @@ static LPOLEADVISEHOLDER OleAdviseHolderImpl_Constructor()
 					 0,
 					 sizeof(OleAdviseHolderImpl));
   
-  lpoah->lpvtbl = &oahvt;
+  ICOM_VTBL(lpoah) = &oahvt;
   lpoah->ref = 1;
   lpoah->maxSinks = 10;
   lpoah->arrayOfSinks = HeapAlloc(GetProcessHeap(),
@@ -344,7 +344,7 @@ OleAdviseHolderImpl_SendOnClose (LPOLEADVISEHOLDER iface)
  */
 typedef struct DataAdviseHolder
 {
-  ICOM_VTABLE(IDataAdviseHolder)* lpvtbl;
+  ICOM_VFIELD(IDataAdviseHolder);
 
   DWORD ref;
 } DataAdviseHolder;
@@ -407,7 +407,7 @@ static IDataAdviseHolder* DataAdviseHolder_Constructor()
 					   0,
 					   sizeof(DataAdviseHolder));
   
-  newHolder->lpvtbl = &DataAdviseHolderImpl_VTable;
+  ICOM_VTBL(newHolder) = &DataAdviseHolderImpl_VTable;
   newHolder->ref = 1;
 
   return (IDataAdviseHolder*)newHolder;

@@ -86,7 +86,7 @@ typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
 struct IDirectSoundImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectSound)* lpvtbl;
+    ICOM_VFIELD(IDirectSound);
     DWORD                      ref;
     /* IDirectSoundImpl fields */
     DWORD                       priolevel;
@@ -103,7 +103,7 @@ struct IDirectSoundImpl
 struct IDirectSoundBufferImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectSoundBuffer)* lpvtbl;
+    ICOM_VFIELD(IDirectSoundBuffer);
     DWORD                            ref;
     /* IDirectSoundBufferImpl fields */
     WAVEFORMATEX              wfx;
@@ -130,7 +130,7 @@ struct IDirectSoundBufferImpl
 struct IDirectSoundNotifyImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectSoundNotify)* lpvtbl;
+    ICOM_VFIELD(IDirectSoundNotify);
     DWORD                            ref;
     /* IDirectSoundNotifyImpl fields */
     IDirectSoundBufferImpl* dsb;
@@ -142,7 +142,7 @@ struct IDirectSoundNotifyImpl
 struct IDirectSound3DListenerImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectSound3DListener)* lpvtbl;
+    ICOM_VFIELD(IDirectSound3DListener);
     DWORD                                ref;
     /* IDirectSound3DListenerImpl fields */
     IDirectSoundBufferImpl* dsb;
@@ -156,7 +156,7 @@ struct IDirectSound3DListenerImpl
 struct IDirectSound3DBufferImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectSound3DBuffer)* lpvtbl;
+    ICOM_VFIELD(IDirectSound3DBuffer);
     DWORD                              ref;
     /* IDirectSound3DBufferImpl fields */
     IDirectSoundBufferImpl* dsb;
@@ -976,7 +976,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 
 	DeleteCriticalSection(&(This->lock));
 
-	if (This->ds3db && This->ds3db->lpvtbl)
+	if (This->ds3db && ICOM_VTBL(This->ds3db))
 		IDirectSound3DBuffer_Release((LPDIRECTSOUND3DBUFFER)This->ds3db);
 
 	if (This->parent)
@@ -1242,7 +1242,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 		dsn->ref = 1;
 		dsn->dsb = This;
 		IDirectSoundBuffer_AddRef(iface);
-		dsn->lpvtbl = &dsnvt;
+		ICOM_VTBL(dsn) = &dsnvt;
 		*ppobj = (LPVOID)dsn;
 		return S_OK;
 	}
@@ -1356,7 +1356,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 	(*ippdsb)->playpos = 0;
 	(*ippdsb)->writepos = 0;
 	(*ippdsb)->parent = NULL;
-	(*ippdsb)->lpvtbl = &dsbvt;
+	ICOM_VTBL(*ippdsb) = &dsbvt;
 	(*ippdsb)->dsound = This;
 	(*ippdsb)->playing = 0;
 	(*ippdsb)->lVolAdjust = (1 << 15);
@@ -1392,7 +1392,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 			0,sizeof(*ds3db));
 		ds3db->ref = 1;
 		ds3db->dsb = (*ippdsb);
-		ds3db->lpvtbl = &ds3dbvt;
+		ICOM_VTBL(ds3db) = &ds3dbvt;
 		(*ippdsb)->ds3db = ds3db;
 		ds3db->ds3db.dwSize = sizeof(DS3DBUFFER);
 		ds3db->ds3db.vPosition.x.x = 0.0;
@@ -1543,7 +1543,7 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
 		This->listener = (IDirectSound3DListenerImpl*)HeapAlloc(
 			GetProcessHeap(), 0, sizeof(*(This->listener)));
 		This->listener->ref = 1;
-		This->listener->lpvtbl = &ds3dlvt;
+		ICOM_VTBL(This->listener) = &ds3dlvt;
 		IDirectSound_AddRef(iface);
 		This->listener->ds3dl.dwSize = sizeof(DS3DLISTENER);
 		This->listener->ds3dl.vPosition.x.x = 0.0;
@@ -2060,7 +2060,7 @@ static DWORD WINAPI DSOUND_MixPrimary(void)
 	for (i = dsound->nrofbuffers - 1; i >= 0; i--) {
 		dsb = dsound->buffers[i];
 
-		if (!dsb || !(dsb->lpvtbl))
+		if (!dsb || !(ICOM_VTBL(dsb)))
 			continue;
 		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)dsb);
  		if (dsb->buflen && dsb->playing) {
@@ -2294,7 +2294,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		return DSERR_OUTOFMEMORY;
 
 	(*ippDS)->ref		= 1;
-	(*ippDS)->lpvtbl		= &dsvt;
+	ICOM_VTBL(*ippDS)	= &dsvt;
 	(*ippDS)->buffers	= NULL;
 	(*ippDS)->nrofbuffers	= 0;
 
@@ -2339,7 +2339,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    ICOM_VFIELD(IClassFactory);
     DWORD                       ref;
 } IClassFactoryImpl;
 

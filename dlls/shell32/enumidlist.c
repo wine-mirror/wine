@@ -28,7 +28,7 @@ typedef struct tagENUMLIST
 
 typedef struct
 {
-	ICOM_VTABLE(IEnumIDList)*	lpvtbl;
+	ICOM_VFIELD(IEnumIDList);
 	DWORD				ref;
 	LPENUMLIST			mpFirst;
 	LPENUMLIST			mpLast;
@@ -309,7 +309,7 @@ IEnumIDList * IEnumIDList_Constructor(
 	if (lpeidl)
 	{
 	  lpeidl->ref = 1;
-	  lpeidl->lpvtbl = &eidlvt;
+	  ICOM_VTBL(lpeidl) = &eidlvt;
 
 	  switch (dwKind)
 	  {

@@ -15,7 +15,7 @@
 DEFAULT_DEBUG_CHANNEL(shell)
 
 typedef struct 
-{	ICOM_VTABLE(IStream)* lpvtbl;
+{	ICOM_VFIELD(IStream);
 	DWORD		ref;
 	HKEY		hKey;
 	LPSTR		pszSubKey;
@@ -35,7 +35,7 @@ IStream *IStream_Constructor(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWORD
 	DWORD		dwType;
 	
 	rstr = (ISHRegStream*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ISHRegStream));
-	rstr->lpvtbl=&rstvt;
+	ICOM_VTBL(rstr)=&rstvt;
 	rstr->ref = 1;
 
 	if ( ERROR_SUCCESS == RegOpenKeyExA (hKey, pszSubKey, 0, KEY_READ, &(rstr->hKey)))

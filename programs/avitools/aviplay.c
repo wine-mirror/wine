@@ -166,7 +166,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     	fprintf(stderr,"DirectDrawCreate: 0x%08lx\n",hres);
 	exit(1);
     }
-    hres = ddraw->lpvtbl->fnSetDisplayMode(ddraw,bmi->biWidth,bmi->biHeight,bmi->biBitCount);
+    hres = IDirectDraw_SetDisplayMode(ddraw,bmi->biWidth,bmi->biHeight,bmi->biBitCount);
     if (hres) {
     	fprintf(stderr,"ddraw.SetDisplayMode: 0x%08lx (change resolution!)\n",hres);
 	exit(1);
@@ -174,7 +174,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     dsdesc.dwSize=sizeof(dsdesc);
     dsdesc.dwFlags = DDSD_CAPS;
     dsdesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    hres = ddraw->lpvtbl->fnCreateSurface(ddraw,&dsdesc,&dsurf,NULL);
+    hres = IDirectDraw_CreateSurface(ddraw,&dsdesc,&dsurf,NULL);
     if (hres) {
     	fprintf(stderr,"ddraw.CreateSurface: 0x%08lx\n",hres);
 	exit(1);
@@ -183,18 +183,18 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     	RGBQUAD		*rgb = (RGBQUAD*)(bmi+1);
 	int		i;
 
-	hres = ddraw->lpvtbl->fnCreatePalette(ddraw,DDPCAPS_8BIT,NULL,&dpal,NULL);
+	hres = IDirectDraw_CreatePalette(ddraw,DDPCAPS_8BIT,NULL,&dpal,NULL);
 	if (hres) {
 	    fprintf(stderr,"ddraw.CreateSurface: 0x%08lx\n",hres);
 	    exit(1);
 	}
-	dsurf->lpvtbl->fnSetPalette(dsurf,dpal);
+	IDirectDrawSurface_SetPalette(dsurf,dpal);
 	for (i=0;i<bmi->biClrUsed;i++) {
 	    palent[i].peRed = rgb[i].rgbRed;
 	    palent[i].peBlue = rgb[i].rgbBlue;
 	    palent[i].peGreen = rgb[i].rgbGreen;
 	}
-	dpal->lpvtbl->fnSetEntries(dpal,0,0,bmi->biClrUsed,palent);
+	IDirectDrawPalette_SetEntries(dpal,0,0,bmi->biClrUsed,palent);
     } else
 	dpal = NULL;
 /********************* end display setup *******************************/
@@ -234,11 +234,11 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 		    palent[i].peBlue = rgb[i].rgbBlue;
 		    palent[i].peGreen = rgb[i].rgbGreen;
 		}
-		dpal->lpvtbl->fnSetEntries(dpal,0,0,bmi->biClrUsed,palent);
+		IDirectDrawPalette_SetEntries(dpal,0,0,bmi->biClrUsed,palent);
 	    }
 	}
 	dsdesc.dwSize = sizeof(dsdesc);
-	hres = dsurf->lpvtbl->fnLock(dsurf,NULL,&dsdesc,DDLOCK_WRITEONLY,0);
+	hres = IDirectDrawSurface_Lock(dsurf,NULL,&dsdesc,DDLOCK_WRITEONLY,0);
 	if (hres) {
 	    fprintf(stderr,"dsurf.Lock: 0x%08lx\n",hres);
 	    exit(1);
@@ -250,14 +250,14 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 		    bytesline
 	    );
 	}
-	dsurf->lpvtbl->fnUnlock(dsurf,dsdesc.y.lpSurface);
+	IDirectDrawSurface_Unlock(dsurf,dsdesc.y.lpSurface);
     }
     tend = time(NULL);
     fnAVIStreamGetFrameClose(vidgetframe);
 
-    ((IUnknown*)dsurf)->lpvtbl->fnRelease((IUnknown*)dsurf);
-    ddraw->lpvtbl->fnRestoreDisplayMode(ddraw);
-    ((IUnknown*)ddraw)->lpvtbl->fnRelease((IUnknown*)ddraw);
+    IDirectDrawSurface_Release(dsurf);
+    IDirectDraw_RestoreDisplayMode(ddraw);
+    IDirectDraw_Release(ddraw);
     if (vids) fnAVIStreamRelease(vids);
     if (auds) fnAVIStreamRelease(auds);
     fprintf(stderr,"%d frames at %g frames/s\n",pos,pos*1.0/(tend-tstart));

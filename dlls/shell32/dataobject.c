@@ -24,7 +24,7 @@ DEFAULT_DEBUG_CHANNEL(shell)
 typedef struct 
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IEnumFORMATETC)* lpvtbl;
+    ICOM_VFIELD(IEnumFORMATETC);
     DWORD                        ref;
     /* IEnumFORMATETC fields */
     UINT        posFmt;
@@ -62,7 +62,7 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
 	if(ef)
 	{
 	  ef->ref=1;
-	  ef->lpvtbl=&efvt;
+	  ICOM_VTBL(ef)=&efvt;
 
 	  ef->countFmt = cfmt;
 	  ef->pFmt = SHAlloc (size);
@@ -356,7 +356,7 @@ static void WINAPI IDLList_CleanList(LPIDLLIST this)
 typedef struct
 {
 	/* IUnknown fields */
-	ICOM_VTABLE(IDataObject)* lpvtbl;
+	ICOM_VFIELD(IDataObject);
 	DWORD		ref;
 
 	/* IDataObject fields */
@@ -384,7 +384,7 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITE
 	if (dto)
 	{
 	  dto->ref=1;
-	  dto->lpvtbl=&dtovt;
+	  ICOM_VTBL(dto)=&dtovt;
 	  dto->pidl=ILClone(pMyPidl);
 
 	  /* fill the ItemID List List */

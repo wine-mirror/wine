@@ -104,7 +104,7 @@ LPDIRECT3DLIGHT d3dlight_create(IDirect3D2Impl* d3d2)
   
   light = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DLightImpl));
   light->ref = 1;
-  light->lpvtbl = &light_vtable;
+  ICOM_VTBL(light) = &light_vtable;
   light->d3d.d3d2 = d3d2;
   light->type = D3D_2;
 
@@ -122,7 +122,7 @@ LPDIRECT3DLIGHT d3dlight_create_dx3(IDirect3DImpl* d3d1)
   
   light = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DLightImpl));
   light->ref = 1;
-  light->lpvtbl = &light_vtable;
+  ICOM_VTBL(light) = &light_vtable;
   
   light->d3d.d3d1 = d3d1;
   light->type = D3D_1;

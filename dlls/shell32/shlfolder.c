@@ -187,7 +187,7 @@ static HRESULT SHELL32_GetDisplayNameOfChild(
 
 typedef struct 
 {
-	ICOM_VTABLE(IShellFolder)*	lpvtbl;
+	ICOM_VFIELD(IShellFolder);
 	DWORD				ref;
 
 	ICOM_VTABLE(IPersistFolder)*	lpvtblPersistFolder;
@@ -246,7 +246,7 @@ static IShellFolder * IShellFolder_Constructor(
 	sf=(IGenericSFImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IGenericSFImpl));
 	sf->ref=1;
 
-	sf->lpvtbl=&sfvt;
+	ICOM_VTBL(sf)=&sfvt;
 	sf->lpvtblPersistFolder=&psfvt;
 	sf->lpvtblDropTarget=&dtvt;
 	sf->pclsid = (CLSID*)&CLSID_SFFile;
@@ -1014,7 +1014,7 @@ IShellFolder * ISF_Desktop_Constructor()
 
 	sf=(IGenericSFImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IGenericSFImpl));
 	sf->ref=1;
-	sf->lpvtbl=&sfdvt;
+	ICOM_VTBL(sf)=&sfdvt;
 	sf->absPidl=_ILCreateDesktop();	/* my qualified pidl */
 
 	TRACE("(%p)\n",sf);
@@ -1365,7 +1365,7 @@ static IShellFolder * ISF_MyComputer_Constructor(void)
 	sf=(IGenericSFImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IGenericSFImpl));
 	sf->ref=1;
 
-	sf->lpvtbl = &sfmcvt;
+	ICOM_VTBL(sf) = &sfmcvt;
 	sf->lpvtblPersistFolder = &psfvt;
 	sf->pclsid = (CLSID*)&CLSID_SFMyComp;
 	sf->absPidl=_ILCreateMyComputer();	/* my qualified pidl */

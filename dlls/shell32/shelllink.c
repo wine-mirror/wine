@@ -68,7 +68,7 @@ static ICOM_VTABLE(IPersistStream)	psvt;
 
 typedef struct
 {
-	ICOM_VTABLE(IShellLink)*	lpvtbl;
+	ICOM_VFIELD(IShellLink);
 	DWORD				ref;
 
 	ICOM_VTABLE(IShellLinkW)*	lpvtblw;
@@ -403,7 +403,7 @@ IShellLink * IShellLink_Constructor(BOOL bUnicode)
 
 	sl = (IShellLinkImpl *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellLinkImpl));
 	sl->ref = 1;
-	sl->lpvtbl = &slvt;
+	ICOM_VTBL(sl) = &slvt;
 	sl->lpvtblw = &slvtw;
 	sl->lpvtblPersistFile = &pfvt;
 	sl->lpvtblPersistStream = &psvt;

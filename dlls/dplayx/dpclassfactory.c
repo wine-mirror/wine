@@ -14,7 +14,7 @@ DEFAULT_DEBUG_CHANNEL(dplay)
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    ICOM_VFIELD(IClassFactory);
     DWORD                       ref;
 } IClassFactoryImpl;
 

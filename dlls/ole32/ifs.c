@@ -26,7 +26,7 @@ DEFAULT_DEBUG_CHANNEL(relay)
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IUnknown)* lpvtbl;
+    ICOM_VFIELD(IUnknown);
     DWORD                  ref;
 } IUnknownImpl;
 
@@ -85,7 +85,7 @@ IUnknown_Constructor() {
 	IUnknownImpl*	unk;
 
 	unk = (IUnknownImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IUnknownImpl));
-	unk->lpvtbl	= &uvt;
+	ICOM_VTBL(unk)	= &uvt;
 	unk->ref	= 1;
 	return (LPUNKNOWN)unk;
 }
@@ -97,7 +97,7 @@ IUnknown_Constructor() {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VTABLE(IMalloc16)* lpvtbl;
+        ICOM_VFIELD(IMalloc16);
         DWORD                   ref;
         /* IMalloc16 fields */
         /* Gmm, I think one is not enough, we should probably manage a list of
@@ -221,7 +221,7 @@ IMalloc16_Constructor() {
             VTENT(DidAlloc);
             VTENT(HeapMinimize);
 #undef VTENT
-            This->lpvtbl = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
+            ICOM_VTBL(This) = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
 	}
 	This->ref = 1;
 	/* FIXME: implement multiple heaps */
@@ -236,7 +236,7 @@ IMalloc16_Constructor() {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VTABLE(IMalloc)* lpvtbl;
+        ICOM_VFIELD(IMalloc);
         DWORD                   ref;
 } IMalloc32Impl;
 
@@ -352,7 +352,7 @@ IMalloc_Constructor() {
 	IMalloc32Impl* This;
 
 	This = (IMalloc32Impl*)HeapAlloc(GetProcessHeap(),0,sizeof(IMalloc32Impl));
-	This->lpvtbl = &VT_IMalloc32;
+	ICOM_VTBL(This) = &VT_IMalloc32;
 	This->ref = 1;
 	return (LPMALLOC)This;
 }

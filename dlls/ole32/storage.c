@@ -671,7 +671,7 @@ STORAGE_get_free_pps_entry(HFILE hf) {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VTABLE(IStream16)*         lpvtbl;
+        ICOM_VFIELD(IStream16);
         DWORD                           ref;
         /* IStream16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
@@ -1144,7 +1144,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 		}
 	}
 	lpst = SEGPTR_NEW(IStream16Impl);
-	lpst->lpvtbl	= segstrvt16;
+	ICOM_VTBL(lpst)	= segstrvt16;
 	lpst->ref	= 1;
 	lpst->thisptr	= SEGPTR_GET(lpst);
 	*str = (void*)lpst->thisptr;
@@ -1156,7 +1156,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VTABLE(IStream)*         lpvtbl;
+        ICOM_VFIELD(IStream);
         DWORD                           ref;
         /* IStream32 fields */
         struct storage_pps_entry        stde;
@@ -1212,7 +1212,7 @@ ULONG WINAPI IStream_fnRelease(IStream* iface) {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VTABLE(IStorage16)*        lpvtbl;
+        ICOM_VFIELD(IStorage16);
         DWORD                           ref;
         /* IStorage16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
@@ -1559,7 +1559,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 		}
 	}
 	lpst = SEGPTR_NEW(IStorage16Impl);
-	lpst->lpvtbl	= segstvt16;
+	ICOM_VTBL(lpst)	= segstvt16;
 	lpst->ref	= 1;
 	lpst->thisptr	= SEGPTR_GET(lpst);
 	*stg = (void*)lpst->thisptr;
