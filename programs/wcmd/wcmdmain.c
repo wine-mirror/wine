@@ -555,7 +555,7 @@ int p = 0;
       case '\0':
         return;
       default:
-	while ((*s != '\0') && (*s != ' ') && (*s != '/')) {
+	while ((*s != '\0') && (*s != ' ')) {
 	  if (p == 0) *p1++ = *s++;
 	  else if (p == 1) *p2++ = *s++;
 	  else s++;
