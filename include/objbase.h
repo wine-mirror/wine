@@ -298,7 +298,6 @@
 /* Wine-specific macros */
 
 #define ICOM_VTABLE(iface)       iface##Vtbl
-#define ICOM_VFIELD(iface)       ICOM_VTABLE(iface)* lpVtbl
 #define ICOM_THIS(impl,iface)    impl* const This=(impl*)(iface)
 #define ICOM_THIS_MULTI(impl,field,iface)  impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 

@@ -1638,7 +1638,7 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl          *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 

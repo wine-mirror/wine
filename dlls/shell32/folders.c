@@ -46,11 +46,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 typedef struct
 {
-	ICOM_VFIELD(IExtractIconW);
-	DWORD	ref;
-	ICOM_VTABLE(IPersistFile)*	lpvtblPersistFile;
-	ICOM_VTABLE(IExtractIconA)*	lpvtblExtractIconA;
-	LPITEMIDLIST	pidl;
+	IExtractIconWVtbl *lpVtbl;
+	DWORD              ref;
+	IPersistFileVtbl  *lpvtblPersistFile;
+	IExtractIconAVtbl *lpvtblExtractIconA;
+	LPITEMIDLIST       pidl;
 } IExtractIconWImpl;
 
 static struct ICOM_VTABLE(IExtractIconA) eiavt;

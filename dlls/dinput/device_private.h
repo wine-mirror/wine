@@ -30,7 +30,7 @@
 typedef struct IDirectInputDevice2AImpl IDirectInputDevice2AImpl;
 struct IDirectInputDevice2AImpl
 {
-        ICOM_VFIELD(IDirectInputDevice2A);
+        IDirectInputDevice2AVtbl       *lpVtbl;
         DWORD                           ref;
         GUID                            guid;
 };

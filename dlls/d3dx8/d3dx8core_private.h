@@ -46,7 +46,7 @@ extern ICOM_VTABLE(ID3DXBuffer) D3DXBuffer_Vtbl;
 struct ID3DXBufferImpl
 {
   /* IUnknown fields */
-  ICOM_VFIELD(ID3DXBuffer);
+  ID3DXBufferVtbl *lpVtbl;
   DWORD          ref;
 
   /* ID3DXBuffer fields */
@@ -78,7 +78,7 @@ extern ICOM_VTABLE(ID3DXFont) D3DXFont_Vtbl;
 struct ID3DXFontImpl
 {
   /* IUnknown fields */
-  ICOM_VFIELD(ID3DXFont);
+  ID3DXFontVtbl *lpVtbl;
   DWORD          ref;
 
   /* ID3DXFont fields */

@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  */
 typedef struct OleAdviseHolderImpl
 {
-  ICOM_VFIELD(IOleAdviseHolder);
+  IOleAdviseHolderVtbl *lpVtbl;
 
   DWORD ref;
 
@@ -369,7 +369,7 @@ typedef struct DataAdviseConnection {
 
 typedef struct DataAdviseHolder
 {
-  ICOM_VFIELD(IDataAdviseHolder);
+  IDataAdviseHolderVtbl *lpVtbl;
 
   DWORD                 ref;
   DWORD                 maxCons;

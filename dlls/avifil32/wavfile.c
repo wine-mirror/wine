@@ -173,7 +173,7 @@ typedef struct _IAVIFileImpl IAVIFileImpl;
 
 typedef struct _IPersistFileImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IPersistFile);
+  IPersistFileVtbl *lpVtbl;
 
   /* IPersistFile stuff */
   IAVIFileImpl     *paf;
@@ -181,7 +181,7 @@ typedef struct _IPersistFileImpl {
 
 typedef struct _IAVIStreamImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IAVIStream);
+  IAVIStreamVtbl   *lpVtbl;
 
   /* IAVIStream stuff */
   IAVIFileImpl     *paf;
@@ -189,7 +189,7 @@ typedef struct _IAVIStreamImpl {
 
 struct _IAVIFileImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IAVIFile);
+  IAVIFileVtbl     *lpVtbl;
   DWORD		    ref;
 
   /* IAVIFile, IAVIStream stuff... */

@@ -298,7 +298,7 @@ ICOM_VTABLE(ICatInformation) COMCAT_ICatInformation_Vtbl =
  */
 typedef struct
 {
-    ICOM_VFIELD(IEnumCATEGORYINFO);
+    IEnumCATEGORYINFOVtbl *lpVtbl;
     DWORD ref;
     LCID  lcid;
     HKEY  key;
@@ -601,7 +601,7 @@ static HRESULT COMCAT_IsClassOfCategories(
  */
 typedef struct
 {
-    ICOM_VFIELD(IEnumGUID);
+    IEnumGUIDVtbl *lpVtbl;
     DWORD ref;
     struct class_categories const *categories;
     HKEY  key;
@@ -794,7 +794,7 @@ static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
  */
 typedef struct
 {
-    ICOM_VFIELD(IEnumGUID);
+    IEnumGUIDVtbl *lpVtbl;
     DWORD ref;
     WCHAR keyname[68];
     HKEY  key;

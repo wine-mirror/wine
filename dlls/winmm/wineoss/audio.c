@@ -2306,7 +2306,7 @@ typedef struct IDsDriverBufferImpl IDsDriverBufferImpl;
 struct IDsDriverPropertySetImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverPropertySet);
+    IDsDriverPropertySetVtbl   *lpVtbl;
     DWORD                       ref;
 
     IDsDriverBufferImpl*        buffer;
@@ -2315,7 +2315,7 @@ struct IDsDriverPropertySetImpl
 struct IDsDriverNotifyImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverNotify);
+    IDsDriverNotifyVtbl        *lpVtbl;
     DWORD                       ref;
 
     /* IDsDriverNotifyImpl fields */
@@ -2328,7 +2328,7 @@ struct IDsDriverNotifyImpl
 struct IDsDriverImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriver);
+    IDsDriverVtbl              *lpVtbl;
     DWORD                       ref;
 
     /* IDsDriverImpl fields */
@@ -2342,7 +2342,7 @@ struct IDsDriverImpl
 struct IDsDriverBufferImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverBuffer);
+    IDsDriverBufferVtbl        *lpVtbl;
     DWORD                       ref;
 
     /* IDsDriverBufferImpl fields */
@@ -3950,7 +3950,7 @@ typedef struct IDsCaptureDriverBufferImpl IDsCaptureDriverBufferImpl;
 struct IDsCaptureDriverPropertySetImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverPropertySet);
+    IDsDriverPropertySetVtbl           *lpVtbl;
     DWORD                               ref;
 
     IDsCaptureDriverBufferImpl*         capture_buffer;
@@ -3959,7 +3959,7 @@ struct IDsCaptureDriverPropertySetImpl
 struct IDsCaptureDriverNotifyImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverNotify);
+    IDsDriverNotifyVtbl                *lpVtbl;
     DWORD                               ref;
 
     IDsCaptureDriverBufferImpl*         capture_buffer;
@@ -3968,7 +3968,7 @@ struct IDsCaptureDriverNotifyImpl
 struct IDsCaptureDriverImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsCaptureDriver);
+    IDsCaptureDriverVtbl               *lpVtbl;
     DWORD                               ref;
 
     /* IDsCaptureDriverImpl fields */
@@ -3979,7 +3979,7 @@ struct IDsCaptureDriverImpl
 struct IDsCaptureDriverBufferImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsCaptureDriverBuffer);
+    IDsCaptureDriverBufferVtbl         *lpVtbl;
     DWORD                               ref;
 
     /* IDsCaptureDriverBufferImpl fields */

@@ -52,7 +52,7 @@ struct HGLOBALLockBytesImpl16
    * Needs to be the first item in the stuct
    * since we want to cast this in an ILockBytes pointer
    */
-  ICOM_VFIELD(ILockBytes16);
+  ILockBytes16Vtbl *lpVtbl;
   ULONG        ref;
 
   /*

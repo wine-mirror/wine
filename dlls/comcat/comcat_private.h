@@ -42,7 +42,7 @@ extern DWORD dll_ref;
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl *lpVtbl;
     DWORD ref;
 } ClassFactoryImpl;
 

@@ -44,8 +44,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 typedef struct FilterMapper2Impl
 {
-    ICOM_VFIELD(IFilterMapper2);
-    ICOM_VTABLE(IFilterMapper) * lpVtblFilterMapper;
+    IFilterMapper2Vtbl *lpVtbl;
+    IFilterMapperVtbl  *lpVtblFilterMapper;
     ULONG refCount;
 } FilterMapper2Impl;
 

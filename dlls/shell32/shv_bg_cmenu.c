@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 typedef struct
 {
-	ICOM_VFIELD(IContextMenu2);
+	IContextMenu2Vtbl *lpVtbl;
 	IShellFolder*	pSFParent;
 	DWORD		ref;
 } BgCmImpl;

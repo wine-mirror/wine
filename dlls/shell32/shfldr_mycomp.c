@@ -55,9 +55,9 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    ICOM_VFIELD (IShellFolder2);
-    DWORD ref;
-      ICOM_VTABLE (IPersistFolder2) * lpVtblPersistFolder2;
+    IShellFolder2Vtbl   *lpVtbl;
+    DWORD                ref;
+    IPersistFolder2Vtbl *lpVtblPersistFolder2;
 
     /* both paths are parsible from the desktop */
     LPITEMIDLIST pidlRoot;	/* absolute pidl */

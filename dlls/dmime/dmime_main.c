@@ -25,7 +25,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
 typedef struct {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl          *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 

@@ -79,7 +79,7 @@ static const WCHAR szCat2Fmt[] =
 
 typedef struct
 {
-    ICOM_VFIELD(IEnumDMO);
+    IEnumDMOVtbl               *lpVtbl;
     DWORD			ref;
     DWORD			index;
     const GUID*                 guidCategory;

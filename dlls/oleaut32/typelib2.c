@@ -146,8 +146,8 @@ typedef struct tagMSFT_ImpFile {
 
 typedef struct tagICreateTypeLib2Impl
 {
-    ICOM_VFIELD(ICreateTypeLib2);
-    ICOM_VTABLE(ITypeLib2) *lpVtblTypeLib2;
+    ICreateTypeLib2Vtbl *lpVtbl;
+    ITypeLib2Vtbl       *lpVtblTypeLib2;
 
     UINT ref;
 
@@ -172,8 +172,8 @@ typedef struct tagICreateTypeLib2Impl
 
 typedef struct tagICreateTypeInfo2Impl
 {
-    ICOM_VFIELD(ICreateTypeInfo2);
-    ICOM_VTABLE(ITypeInfo2) *lpVtblTypeInfo2;
+    ICreateTypeInfo2Vtbl *lpVtbl;
+    ITypeInfo2Vtbl       *lpVtblTypeInfo2;
 
     UINT ref;
 

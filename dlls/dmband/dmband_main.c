@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 
 typedef struct {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl          *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 

@@ -50,7 +50,7 @@ extern ICOM_VTABLE(IDirectPlay8Client) DirectPlay8Client_Vtbl;
 struct IDirectPlay8ClientImpl
 {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectPlay8Client);
+  IDirectPlay8ClientVtbl *lpVtbl;
   DWORD         ref;
   /* IDirectPlay8Client fields */
 };
@@ -96,7 +96,7 @@ extern ICOM_VTABLE(IDirectPlay8Address) DirectPlay8Address_Vtbl;
 struct IDirectPlay8AddressImpl
 {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectPlay8Address);
+  IDirectPlay8AddressVtbl *lpVtbl;
   DWORD         ref;
   /* IDirectPlay8Address fields */
   GUID SP_guid;

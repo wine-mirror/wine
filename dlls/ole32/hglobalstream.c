@@ -52,7 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
  */
 struct HGLOBALStreamImpl
 {
-  ICOM_VFIELD(IStream);  /* Needs to be the first item in the stuct
+  IStreamVtbl *lpVtbl;   /* Needs to be the first item in the stuct
 			  * since we want to cast this in a IStream pointer */
 
   /*

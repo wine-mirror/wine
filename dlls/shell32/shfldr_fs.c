@@ -58,12 +58,12 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    ICOM_VFIELD (IUnknown);
-    DWORD ref;
-    ICOM_VTABLE (IShellFolder2) * lpvtblShellFolder;
-    ICOM_VTABLE (IPersistFolder3) * lpvtblPersistFolder3;
-    ICOM_VTABLE (IDropTarget) * lpvtblDropTarget;
-    ICOM_VTABLE (ISFHelper) * lpvtblSFHelper;
+    IUnknownVtbl        *lpVtbl;
+    DWORD                ref;
+    IShellFolder2Vtbl   *lpvtblShellFolder;
+    IPersistFolder3Vtbl *lpvtblPersistFolder3;
+    IDropTargetVtbl     *lpvtblDropTarget;
+    ISFHelperVtbl       *lpvtblSFHelper;
 
     IUnknown *pUnkOuter;	/* used for aggregation */
 

@@ -278,7 +278,7 @@ static ICOM_VTABLE(IMalloc) VT_Shell_IMalloc32;
 
 /* this is the static object instance */
 typedef struct {
-	ICOM_VFIELD(IMalloc);
+	IMallocVtbl *lpVtbl;
 	DWORD dummy;
 } _ShellMalloc;
 
@@ -498,7 +498,7 @@ HRESULT WINAPI SHGetDesktopFolder(IShellFolder **psf)
 
 typedef struct
 {
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl          *lpVtbl;
     DWORD                       ref;
     CLSID			*rclsid;
     LPFNCREATEINSTANCE		lpfnCI;

@@ -122,7 +122,7 @@ extern HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetSizeMax (LPPERS
  */
 struct IDirectMusicComposerImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicComposer);
+  IDirectMusicComposerVtbl *lpVtbl;
   DWORD ref;
 
   /* IDirectMusicComposerImpl fields */

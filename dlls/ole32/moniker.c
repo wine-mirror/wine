@@ -58,7 +58,7 @@ typedef struct RunObject{
 /* define the RunningObjectTableImpl structure */
 typedef struct RunningObjectTableImpl{
 
-    ICOM_VFIELD(IRunningObjectTable);
+    IRunningObjectTableVtbl *lpVtbl;
     ULONG      ref;
 
     RunObject* runObjTab;            /* pointer to the first object in the table       */

@@ -192,7 +192,7 @@ typedef struct DMUSIC_PRIVATE_PCHANNEL_ {
  */
 struct IDirectMusicPerformance8Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicPerformance8);
+  IDirectMusicPerformance8Vtbl *lpVtbl;
   DWORD                  ref;
 
   /* IDirectMusicPerformanceImpl fields */
@@ -361,7 +361,7 @@ extern HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_GetSizeMax (LPPERS
  */
 struct IDirectMusicSegmentState8Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicSegmentState8);
+  IDirectMusicSegmentState8Vtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicSegmentState8Impl fields */
@@ -481,7 +481,7 @@ extern HRESULT WINAPI IDirectMusicAudioPathImpl_IPersistStream_GetSizeMax (LPPER
  */
 struct IDirectMusicTool8Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicTool8);
+  IDirectMusicTool8Vtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicTool8Impl fields */
@@ -505,7 +505,7 @@ extern HRESULT WINAPI IDirectMusicTool8Impl_Clone (LPDIRECTMUSICTOOL8 iface, IDi
  */
 struct IDirectMusicPatternTrackImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicPatternTrack);
+  IDirectMusicPatternTrackVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicPatternTrackImpl fields */

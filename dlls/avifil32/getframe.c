@@ -67,7 +67,7 @@ struct ICOM_VTABLE(IGetFrame) igetframeVtbl = {
 
 typedef struct _IGetFrameImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IGetFrame);
+  IGetFrameVtbl     *lpVtbl;
   DWORD              ref;
 
   /* IGetFrame stuff */

@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /* Layout of ISHFileStream object */
 typedef struct
 {
-  ICOM_VFIELD(IStream);
+  IStreamVtbl *lpVtbl;
   ULONG    ref;
   HANDLE   hFile;
   DWORD    dwMode;

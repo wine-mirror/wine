@@ -48,7 +48,7 @@ typedef struct BindCtxObject{
 /* BindCtx data strucrture */
 typedef struct BindCtxImpl{
 
-    ICOM_VFIELD(IBindCtx); /* VTable relative to the IBindCtx interface.*/
+    IBindCtxVtbl *lpVtbl; /* VTable relative to the IBindCtx interface.*/
 
     ULONG ref; /* reference counter for this object */
 

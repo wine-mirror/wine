@@ -1955,7 +1955,7 @@ static ICOM_VTABLE(IPersistStreamInit) OLEFontImpl_IPersistStreamInit_VTable =
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl          *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 

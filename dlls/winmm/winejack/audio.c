@@ -1784,7 +1784,7 @@ typedef struct IDsDriverBufferImpl IDsDriverBufferImpl;
 struct IDsDriverImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriver);
+    IDsDriverVtbl      *lpVtbl;
     DWORD		ref;
     /* IDsDriverImpl fields */
     UINT		wDevID;
@@ -1794,7 +1794,7 @@ struct IDsDriverImpl
 struct IDsDriverBufferImpl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverBuffer);
+    IDsDriverBufferVtbl *lpVtbl;
     DWORD ref;
     /* IDsDriverBufferImpl fields */
     IDsDriverImpl* drv;

@@ -108,7 +108,7 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, L
  */
 struct IDirectMusic8Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusic8);
+  IDirectMusic8Vtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicImpl fields */
@@ -139,7 +139,7 @@ extern HRESULT WINAPI IDirectMusic8Impl_SetExternalMasterClock (LPDIRECTMUSIC8 i
  */
 struct IDirectMusicBufferImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicBuffer);
+  IDirectMusicBufferVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicBufferImpl fields */
@@ -170,7 +170,7 @@ extern HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER i
  */
 struct IDirectMusicDownloadedInstrumentImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicDownloadedInstrument);
+  IDirectMusicDownloadedInstrumentVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicDownloadedInstrumentImpl fields */
@@ -189,7 +189,7 @@ extern ULONG WINAPI   IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSI
  */
 struct IDirectMusicDownloadImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicDownload);
+  IDirectMusicDownloadVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicDownloadImpl fields */
@@ -208,7 +208,7 @@ extern HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD 
  */
 struct IDirectMusicPortDownloadImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicPortDownload);
+  IDirectMusicPortDownloadVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicPortDownloadImpl fields */
@@ -231,7 +231,7 @@ extern HRESULT WINAPI IDirectMusicPortDownloadImpl_Unload (LPDIRECTMUSICPORTDOWN
  */
 struct IDirectMusicPortImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicPort);
+  IDirectMusicPortVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicPortImpl fields */
@@ -272,7 +272,7 @@ extern HRESULT WINAPI IDirectMusicPortImpl_GetFormat (LPDIRECTMUSICPORT iface, L
  */
 struct IDirectMusicThruImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicThru);
+  IDirectMusicThruVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicThruImpl fields */
@@ -290,7 +290,7 @@ extern HRESULT WINAPI ThruChannel (LPDIRECTMUSICTHRU iface, DWORD dwSourceChanne
  */
 struct IReferenceClockImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IReferenceClock);
+  IReferenceClockVtbl *lpVtbl;
   DWORD          ref;
 
   /* IReferenceClockImpl fields */

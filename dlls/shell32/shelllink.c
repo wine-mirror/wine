@@ -121,12 +121,12 @@ static ICOM_VTABLE(IPersistStream)	psvt;
 
 typedef struct
 {
-	ICOM_VFIELD(IShellLinkA);
-	DWORD				ref;
+	IShellLinkAVtbl    *lpVtbl;
+	DWORD               ref;
 
-	ICOM_VTABLE(IShellLinkW)*	lpvtblw;
-	ICOM_VTABLE(IPersistFile)*	lpvtblPersistFile;
-	ICOM_VTABLE(IPersistStream)*	lpvtblPersistStream;
+	IShellLinkWVtbl    *lpvtblw;
+	IPersistFileVtbl   *lpvtblPersistFile;
+	IPersistStreamVtbl *lpvtblPersistStream;
 
 	/* data structures according to the informations in the link */
 	LPITEMIDLIST	pPidl;

@@ -66,7 +66,7 @@ struct ICOM_VTABLE(IAVIFile) itmpft = {
 
 typedef struct _ITmpFileImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IAVIFile);
+  IAVIFileVtbl *lpVtbl;
   DWORD         ref;
 
   /* IAVIFile stuff */

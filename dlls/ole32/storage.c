@@ -954,7 +954,7 @@ STORAGE_get_free_pps_entry(HANDLE hf) {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VFIELD(IStream16);
+        IStream16Vtbl                  *lpVtbl;
         DWORD                           ref;
         /* IStream16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
@@ -1448,7 +1448,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VFIELD(IStream);
+        IStreamVtbl                    *lpVtbl;
         DWORD                           ref;
         /* IStream32 fields */
         struct storage_pps_entry        stde;
@@ -1502,7 +1502,7 @@ ULONG WINAPI IStream_fnRelease(IStream* iface) {
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VFIELD(IStorage16);
+        IStorage16Vtbl                 *lpVtbl;
         DWORD                           ref;
         /* IStorage16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */

@@ -64,7 +64,7 @@ LPMALLOC16 currentMalloc16=NULL;
 typedef struct
 {
         /* IUnknown fields */
-        ICOM_VFIELD(IMalloc16);
+        IMalloc16Vtbl          *lpVtbl;
         DWORD                   ref;
         /* IMalloc16 fields */
 } IMalloc16Impl;

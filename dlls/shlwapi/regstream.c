@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct
-{	ICOM_VFIELD(IStream);
+{	IStreamVtbl *lpVtbl;
 	DWORD  ref;
 	HKEY   hKey;
 	LPBYTE pbBuffer;

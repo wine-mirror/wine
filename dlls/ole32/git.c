@@ -70,7 +70,7 @@ typedef struct StdGITEntry
 /* Class data */
 typedef struct StdGlobalInterfaceTableImpl
 {
-  ICOM_VFIELD(IGlobalInterfaceTable);
+  IGlobalInterfaceTableVtbl *lpVtbl;
 
   ULONG ref;
   struct StdGITEntry* firstEntry;

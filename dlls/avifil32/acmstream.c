@@ -74,7 +74,7 @@ struct ICOM_VTABLE(IAVIStream) iacmst = {
 
 typedef struct _IAVIStreamImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IAVIStream);
+  IAVIStreamVtbl *lpVtbl;
   DWORD		  ref;
 
   /* IAVIStream stuff */

@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 typedef struct {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl          *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 

@@ -68,7 +68,7 @@ typedef struct tagDirectPlaySPData
 
 struct IDirectPlaySPImpl
 {
-  ICOM_VFIELD(IDirectPlaySP);
+  IDirectPlaySPVtbl *lpVtbl;
   DPSP_IMPL_FIELDS
 };
 

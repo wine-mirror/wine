@@ -40,7 +40,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
  */
 typedef struct {
   /* IUnknown fields */
-  ICOM_VFIELD(IClassFactory);
+  IClassFactoryVtbl *lpVtbl;
   DWORD      ref; 
   REFCLSID   rclsid;
   HRESULT   (*pfnCreateInstanceFactory)(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);

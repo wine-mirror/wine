@@ -62,7 +62,7 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LP
  */
 struct IDirectMusicSynth8Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicSynth8);
+  IDirectMusicSynth8Vtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicSynth8 fields */
@@ -106,7 +106,7 @@ extern HRESULT WINAPI IDirectMusicSynth8Impl_AssignChannelToBuses (LPDIRECTMUSIC
  */
 struct IDirectMusicSynthSinkImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirectMusicSynthSink);
+  IDirectMusicSynthSinkVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicSynthSinkImpl fields */

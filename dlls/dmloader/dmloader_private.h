@@ -105,7 +105,7 @@ extern HRESULT WINAPI DMUSIC_DestroyDirectMusicLoaderGenericStream (LPSTREAM ifa
  */
 struct IDirectMusicLoaderCF {
 	/* IUnknown fields */
-	ICOM_VFIELD(IClassFactory);
+	IClassFactoryVtbl *lpVtbl;
 	DWORD dwRef;
 };
 
@@ -122,7 +122,7 @@ extern HRESULT WINAPI IDirectMusicLoaderCF_LockServer (LPCLASSFACTORY iface,BOOL
  */
 struct IDirectMusicContainerCF {
 	/* IUnknown fields */
-	ICOM_VFIELD(IClassFactory);
+	IClassFactoryVtbl *lpVtbl;
 	DWORD dwRef;
 };
 

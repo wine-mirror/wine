@@ -55,7 +55,7 @@ typedef struct tagDPLobbySPData
 
 struct IDPLobbySPImpl
 {
-  ICOM_VFIELD(IDPLobbySP);
+  IDPLobbySPVtbl *lpVtbl;
   DPLSP_IMPL_FIELDS
 };
 

@@ -1377,7 +1377,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 
 typedef struct {
   /* IUnknown fields */
-  ICOM_VFIELD(IClassFactory);
+  IClassFactoryVtbl          *lpVtbl;
   DWORD                       ref;
 } IClassFactoryImpl;
 

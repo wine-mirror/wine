@@ -177,7 +177,7 @@ extern ICOM_VTABLE(IDirect3D9) Direct3D9_Vtbl;
 struct IDirect3D9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3D9);
+    IDirect3D9Vtbl         *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3D9 fields */
@@ -222,7 +222,7 @@ extern ICOM_VTABLE(IDirect3DDevice9) Direct3DDevice9_Vtbl;
 struct IDirect3DDevice9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DDevice9);
+    IDirect3DDevice9Vtbl         *lpVtbl;
     DWORD                         ref;
 
     /* IDirect3DDevice9 fields */
@@ -427,7 +427,7 @@ extern ICOM_VTABLE(IDirect3DVolume9) Direct3DVolume9_Vtbl;
 struct IDirect3DVolume9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DVolume9);
+    IDirect3DVolume9Vtbl   *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DVolume9 fields */
@@ -478,7 +478,7 @@ extern ICOM_VTABLE(IDirect3DSwapChain9) Direct3DSwapChain9_Vtbl;
 struct IDirect3DSwapChain9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DSwapChain9);
+    IDirect3DSwapChain9Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DSwapChain9 fields */
@@ -519,7 +519,7 @@ extern ICOM_VTABLE(IDirect3DResource9) Direct3DResource9_Vtbl;
 struct IDirect3DResource9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DResource9);
+    IDirect3DResource9Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
@@ -558,7 +558,7 @@ extern ICOM_VTABLE(IDirect3DSurface9) Direct3DSurface9_Vtbl;
 struct IDirect3DSurface9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DSurface9);
+    IDirect3DSurface9Vtbl  *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
@@ -618,7 +618,7 @@ extern ICOM_VTABLE(IDirect3DVertexBuffer9) Direct3DVertexBuffer9_Vtbl;
 struct IDirect3DVertexBuffer9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DVertexBuffer9);
+    IDirect3DVertexBuffer9Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
@@ -666,7 +666,7 @@ extern ICOM_VTABLE(IDirect3DIndexBuffer9) Direct3DIndexBuffer9_Vtbl;
 struct IDirect3DIndexBuffer9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DIndexBuffer9);
+    IDirect3DIndexBuffer9Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
@@ -714,7 +714,7 @@ extern ICOM_VTABLE(IDirect3DBaseTexture9) Direct3DBaseTexture9_Vtbl;
 struct IDirect3DBaseTexture9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DBaseTexture9);
+    IDirect3DBaseTexture9Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
@@ -766,7 +766,7 @@ extern ICOM_VTABLE(IDirect3DCubeTexture9) Direct3DCubeTexture9_Vtbl;
 struct IDirect3DCubeTexture9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DCubeTexture9);
+    IDirect3DCubeTexture9Vtbl *lpVtbl;
     DWORD                     ref;
 
     /* IDirect3DResource9 fields */
@@ -830,7 +830,7 @@ extern ICOM_VTABLE(IDirect3DTexture9) Direct3DTexture9_Vtbl;
 struct IDirect3DTexture9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DTexture9);
+    IDirect3DTexture9Vtbl  *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource9 fields */
@@ -895,7 +895,7 @@ extern ICOM_VTABLE(IDirect3DVolumeTexture9) Direct3DVolumeTexture9_Vtbl;
 struct IDirect3DVolumeTexture9Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DVolumeTexture9);
+    IDirect3DVolumeTexture9Vtbl *lpVtbl;
     DWORD                       ref;
 
     /* IDirect3DResource9 fields */
@@ -960,7 +960,7 @@ extern ICOM_VTABLE(IDirect3DStateBlock9) Direct3DStateBlock9_Vtbl;
  */
 struct  IDirect3DStateBlock9Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirect3DStateBlock9);
+  IDirect3DStateBlock9Vtbl *lpVtbl;
   DWORD                     ref;
 
   /* IDirect3DStateBlock9 fields */
@@ -1058,7 +1058,7 @@ extern ICOM_VTABLE(IDirect3DVertexDeclaration9) Direct3DVertexDeclaration9_Vtbl;
  */
 struct IDirect3DVertexDeclaration9Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirect3DVertexDeclaration9);
+  IDirect3DVertexDeclaration9Vtbl *lpVtbl;
   DWORD   ref;
 
   /* IDirect3DVertexDeclaration9 fields */
@@ -1097,7 +1097,7 @@ extern ICOM_VTABLE(IDirect3DVertexShader9) Direct3DVertexShader9_Vtbl;
  */
 struct IDirect3DVertexShader9Impl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDirect3DVertexShader9);
+  IDirect3DVertexShader9Vtbl *lpVtbl;
   DWORD ref;
 
   /* IDirect3DVertexDeclaration9 fields */
@@ -1139,7 +1139,7 @@ extern ICOM_VTABLE(IDirect3DPixelShader9) Direct3DPixelShader9_Vtbl;
  */
 struct IDirect3DPixelShader9Impl { 
   /* IUnknown fields */
-  ICOM_VFIELD(IDirect3DPixelShader9);
+  IDirect3DPixelShader9Vtbl *lpVtbl;
   DWORD ref;
 
   /* IDirect3DPixelShader9 fields */
@@ -1180,7 +1180,7 @@ extern ICOM_VTABLE(IDirect3DQuery9) Direct3DQuery9_Vtbl;
  */
 struct IDirect3DQuery9Impl { 
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DQuery9);
+    IDirect3DQuery9Vtbl *lpVtbl;
     DWORD ref;
 
     /* IDirect3DQuery9 fields */  

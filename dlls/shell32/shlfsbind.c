@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(pidl);
  */
 typedef struct
 {
-	ICOM_VFIELD(IFileSystemBindData);
+	IFileSystemBindDataVtbl *lpVtbl;
 	DWORD              ref;
 	WIN32_FIND_DATAW findFile;
 } IFileSystemBindDataImpl;

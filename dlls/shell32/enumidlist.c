@@ -45,7 +45,7 @@ typedef struct tagENUMLIST
 
 typedef struct
 {
-	ICOM_VFIELD(IEnumIDList);
+	IEnumIDListVtbl                *lpVtbl;
 	DWORD				ref;
 	LPENUMLIST			mpFirst;
 	LPENUMLIST			mpLast;

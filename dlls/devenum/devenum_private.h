@@ -48,19 +48,19 @@ extern DWORD dll_ref;
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl *lpVtbl;
     DWORD ref;
 } ClassFactoryImpl;
 
 typedef struct
 {
-    ICOM_VFIELD(ICreateDevEnum);
+    ICreateDevEnumVtbl *lpVtbl;
     DWORD ref;
 } CreateDevEnumImpl;
 
 typedef struct
 {
-    ICOM_VFIELD(IEnumMoniker);
+    IEnumMonikerVtbl *lpVtbl;
     DWORD ref;
     DWORD index;
     HKEY hkey;
@@ -68,7 +68,7 @@ typedef struct
 
 typedef struct
 {
-    ICOM_VFIELD(IMoniker);
+    IMonikerVtbl *lpVtbl;
 
     DWORD ref;
     HKEY hkey;
@@ -76,14 +76,14 @@ typedef struct
 
 typedef struct
 {
-    ICOM_VFIELD(IPropertyBag);
+    IPropertyBagVtbl *lpVtbl;
     DWORD ref;
     HKEY hkey;
 } RegPropBagImpl;
 
 typedef struct
 {
-    ICOM_VFIELD(IParseDisplayName);
+    IParseDisplayNameVtbl *lpVtbl;
     DWORD ref;
 } ParseDisplayNameImpl;
 

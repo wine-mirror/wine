@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    ICOM_VFIELD (IDropTargetHelper);
+    IDropTargetHelperVtbl *lpVtbl;
     DWORD ref;
 } IDropTargetHelperImpl;
 

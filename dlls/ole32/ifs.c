@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(olemalloc);
 static ICOM_VTABLE(IMalloc) VT_IMalloc32;
 
 typedef struct {
-        ICOM_VFIELD(IMalloc);
+        IMallocVtbl *lpVtbl;
         DWORD dummy;                /* nothing, we are static */
 	IMallocSpy * pSpy;          /* the spy when active */
 	DWORD SpyedAllocationsLeft; /* number of spyed allocations left */
@@ -364,7 +364,7 @@ static ICOM_VTABLE(IMalloc) VT_IMalloc32 =
 static ICOM_VTABLE(IMallocSpy) VT_IMallocSpy;
 
 typedef struct {
-        ICOM_VFIELD(IMallocSpy);
+        IMallocSpyVtbl *lpVtbl;
         DWORD ref;
 } _MallocSpy;
 

@@ -66,7 +66,7 @@ typedef struct CompositeMonikerImpl{
 /* EnumMoniker data structure */
 typedef struct EnumMonikerImpl{
 
-    ICOM_VFIELD(IEnumMoniker);  /* VTable relative to the IEnumMoniker interface.*/
+    IEnumMonikerVtbl *lpVtbl;  /* VTable relative to the IEnumMoniker interface.*/
 
     ULONG ref; /* reference counter for this object */
 

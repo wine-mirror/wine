@@ -483,7 +483,7 @@ typedef struct tagINTERNAL_BSTR
 
 typedef struct
 {
-  ICOM_VFIELD(IDispatch);
+  IDispatchVtbl *lpVtbl;
   ULONG ref;
   VARTYPE vt;
   BOOL bFailInvoke;

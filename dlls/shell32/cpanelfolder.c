@@ -57,12 +57,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 */
 
 typedef struct {
-    ICOM_VFIELD(IShellFolder2);
-    DWORD ref;
-
-    ICOM_VTABLE(IPersistFolder2)* lpVtblPersistFolder2;
-    ICOM_VTABLE(IShellExecuteHookW)* lpVtblShellExecuteHookW;
-    ICOM_VTABLE(IShellExecuteHookA)* lpVtblShellExecuteHookA;
+    IShellFolder2Vtbl      *lpVtbl;
+    DWORD                   ref;
+    IPersistFolder2Vtbl    *lpVtblPersistFolder2;
+    IShellExecuteHookWVtbl *lpVtblShellExecuteHookW;
+    IShellExecuteHookAVtbl *lpVtblShellExecuteHookA;
 
     IUnknown *pUnkOuter;	/* used for aggregation */
 

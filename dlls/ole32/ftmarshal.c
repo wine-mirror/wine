@@ -35,9 +35,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 typedef struct _FTMarshalImpl {
-	ICOM_VFIELD (IUnknown);
+	IUnknownVtbl *lpVtbl;
 	DWORD ref;
-	ICOM_VTABLE (IMarshal) * lpvtblFTM;
+	IMarshalVtbl *lpvtblFTM;
 
 	IUnknown *pUnkOuter;
 } FTMarshalImpl;

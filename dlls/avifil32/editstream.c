@@ -146,7 +146,7 @@ typedef struct _IAVIEditStreamImpl IAVIEditStreamImpl;
 
 typedef struct _IEditAVIStreamImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IAVIStream);
+  IAVIStreamVtbl *lpVtbl;
 
   /* IAVIStream stuff */
   IAVIEditStreamImpl *pae;
@@ -154,7 +154,7 @@ typedef struct _IEditAVIStreamImpl {
 
 typedef struct _IEditStreamInternalImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IEditStreamInternal);
+  IEditStreamInternalVtbl *lpVtbl;
 
   /* IEditStreamInternal stuff */
   IAVIEditStreamImpl *pae;
@@ -162,7 +162,7 @@ typedef struct _IEditStreamInternalImpl {
 
 struct _IAVIEditStreamImpl {
   /* IUnknown stuff */
-  ICOM_VFIELD(IAVIEditStream);
+  IAVIEditStreamVtbl *lpVtbl;
   DWORD  ref;
 
   /* IAVIEditStream stuff */

@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 *  IContextMenu Implementation
 */
 typedef struct
-{	ICOM_VFIELD(IContextMenu2);
+{	IContextMenu2Vtbl *lpVtbl;
 	DWORD		ref;
 	IShellFolder*	pSFParent;
 	LPITEMIDLIST	pidl;		/* root pidl */

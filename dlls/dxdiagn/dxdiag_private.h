@@ -49,7 +49,7 @@ extern ICOM_VTABLE(IDxDiagProvider) DxDiagProvider_Vtbl;
  */
 struct IDxDiagProviderImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDxDiagProvider);
+  IDxDiagProviderVtbl *lpVtbl;
   DWORD       ref;
   /* IDxDiagProvider fields */
   BOOL        init;
@@ -86,7 +86,7 @@ extern ICOM_VTABLE(IDxDiagContainer) DxDiagContainer_Vtbl;
  */
 struct IDxDiagContainerImpl {
   /* IUnknown fields */
-  ICOM_VFIELD(IDxDiagContainer);
+  IDxDiagContainerVtbl *lpVtbl;
   DWORD       ref;
   /* IDxDiagContainer fields */
   IDxDiagContainerImpl_SubContainer* subContainers;

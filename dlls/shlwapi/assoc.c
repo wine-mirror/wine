@@ -58,7 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct
 {
-  ICOM_VFIELD(IQueryAssociations);
+  IQueryAssociationsVtbl *lpVtbl;
   LONG ref;
   HKEY hkeySource;
   HKEY hkeyProgID;

@@ -65,7 +65,7 @@ HRESULT WINAPI DirectPlay8Create(REFGUID lpGUID, LPVOID *ppvInt, LPUNKNOWN punkO
 typedef struct
 {
   /* IUnknown fields */
-  ICOM_VFIELD(IClassFactory);
+  IClassFactoryVtbl *lpVtbl;
   DWORD      ref; 
   REFCLSID   rclsid;
   HRESULT   (*pfnCreateInstanceFactory)(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);

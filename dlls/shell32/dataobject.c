@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IEnumFORMATETC);
+    IEnumFORMATETCVtbl *lpVtbl;
     DWORD                        ref;
     /* IEnumFORMATETC fields */
     UINT        posFmt;
@@ -208,7 +208,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMAT
 typedef struct
 {
 	/* IUnknown fields */
-	ICOM_VFIELD(IDataObject);
+	IDataObjectVtbl *lpVtbl;
 	DWORD		ref;
 
 	/* IDataObject fields */

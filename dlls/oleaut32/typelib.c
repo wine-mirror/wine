@@ -853,8 +853,8 @@ typedef struct tagTLBImpLib
 /* internal ITypeLib data */
 typedef struct tagITypeLibImpl
 {
-    ICOM_VFIELD(ITypeLib2);
-    ICOM_VTABLE(ITypeComp) * lpVtblTypeComp;
+    ITypeLib2Vtbl *lpVtbl;
+    ITypeCompVtbl *lpVtblTypeComp;
     UINT ref;
     TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
 
@@ -964,8 +964,8 @@ typedef struct tagTLBImplType
 /* internal TypeInfo data */
 typedef struct tagITypeInfoImpl
 {
-    ICOM_VFIELD(ITypeInfo2);
-    ICOM_VTABLE(ITypeComp) * lpVtblTypeComp;
+    ITypeInfo2Vtbl *lpVtbl;
+    ITypeCompVtbl  *lpVtblTypeComp;
     UINT ref;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */

@@ -77,7 +77,7 @@ static HMODULE LoadCOM(void)
  * (which also implements the MInterfacePointer structure) */
 typedef struct RpcStreamImpl
 {
-  ICOM_VFIELD(IStream);
+  IStreamVtbl *lpVtbl;
   DWORD RefCount;
   PMIDL_STUB_MESSAGE pMsg;
   LPDWORD size;

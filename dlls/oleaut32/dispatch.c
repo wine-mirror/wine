@@ -239,7 +239,7 @@ HRESULT WINAPI CreateDispTypeInfo(
 
 typedef struct
 {
-    ICOM_VFIELD(IDispatch);
+    IDispatchVtbl *lpVtbl;
     void * pvThis;
     ITypeInfo * pTypeInfo;
     ULONG ref;

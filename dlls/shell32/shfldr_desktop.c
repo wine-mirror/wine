@@ -58,7 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    ICOM_VFIELD (IShellFolder2);
+    IShellFolder2Vtbl *lpVtbl;
     DWORD ref;
 
     CLSID *pclsid;

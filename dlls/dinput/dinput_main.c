@@ -627,7 +627,7 @@ static ICOM_VTABLE(IDirectInput8W) ddi8wvt = {
 typedef struct
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IClassFactory);
+    IClassFactoryVtbl          *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 

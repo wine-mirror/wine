@@ -118,19 +118,19 @@ typedef struct tagDirectPlayLobby3Data
 
 struct IDirectPlayLobbyImpl
 {
-    ICOM_VFIELD(IDirectPlayLobby);
+    IDirectPlayLobbyVtbl *lpVtbl;
     DPL_IMPL_FIELDS
 };
 
 struct IDirectPlayLobby2Impl
 {
-    ICOM_VFIELD(IDirectPlayLobby2);
+    IDirectPlayLobby2Vtbl *lpVtbl;
     DPL_IMPL_FIELDS
 };
 
 struct IDirectPlayLobby3Impl
 {
-    ICOM_VFIELD(IDirectPlayLobby3);
+    IDirectPlayLobby3Vtbl *lpVtbl;
     DPL_IMPL_FIELDS
 };
 

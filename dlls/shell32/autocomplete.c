@@ -59,8 +59,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct
 {
-    ICOM_VFIELD(IAutoComplete);
-    ICOM_VTABLE (IAutoComplete2) * lpvtblAutoComplete2;
+    IAutoCompleteVtbl  *lpVtbl;
+    IAutoComplete2Vtbl *lpvtblAutoComplete2;
     DWORD ref;
     BOOL  enabled;
     HWND hwndEdit;

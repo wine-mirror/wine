@@ -60,7 +60,7 @@ static ICOM_VTABLE(IClassFactory) iclassfact = {
 typedef struct
 {
   /* IUnknown fields */
-  ICOM_VFIELD(IClassFactory);
+  IClassFactoryVtbl *lpVtbl;
   DWORD	 dwRef;
 
   CLSID  clsid;

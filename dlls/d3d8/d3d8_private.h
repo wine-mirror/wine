@@ -281,7 +281,7 @@ extern ICOM_VTABLE(IDirect3D8) Direct3D8_Vtbl;
 struct IDirect3D8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3D8);
+    IDirect3D8Vtbl         *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3D8 fields */
@@ -331,7 +331,7 @@ extern ICOM_VTABLE(IDirect3DDevice8) Direct3DDevice8_Vtbl;
 struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DDevice8);
+    IDirect3DDevice8Vtbl         *lpVtbl;
     DWORD                         ref;
 
     /* IDirect3DDevice8 fields */
@@ -525,7 +525,7 @@ extern ICOM_VTABLE(IDirect3DVolume8) Direct3DVolume8_Vtbl;
 struct IDirect3DVolume8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DVolume8);
+    IDirect3DVolume8Vtbl   *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DVolume8 fields */
@@ -579,7 +579,7 @@ extern ICOM_VTABLE(IDirect3DSwapChain8) Direct3DSwapChain8_Vtbl;
 struct IDirect3DSwapChain8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DSwapChain8);
+    IDirect3DSwapChain8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DSwapChain8 fields */
@@ -618,7 +618,7 @@ extern ICOM_VTABLE(IDirect3DSurface8) Direct3DSurface8_Vtbl;
 struct IDirect3DSurface8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DSurface8);
+    IDirect3DSurface8Vtbl  *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DSurface8 fields */
@@ -676,7 +676,7 @@ extern ICOM_VTABLE(IDirect3DResource8) Direct3DResource8_Vtbl;
 struct IDirect3DResource8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DResource8);
+    IDirect3DResource8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -718,7 +718,7 @@ extern ICOM_VTABLE(IDirect3DVertexBuffer8) Direct3DVertexBuffer8_Vtbl;
 struct IDirect3DVertexBuffer8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DVertexBuffer8);
+    IDirect3DVertexBuffer8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -766,7 +766,7 @@ extern ICOM_VTABLE(IDirect3DIndexBuffer8) Direct3DIndexBuffer8_Vtbl;
 struct IDirect3DIndexBuffer8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DIndexBuffer8);
+    IDirect3DIndexBuffer8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -814,7 +814,7 @@ extern ICOM_VTABLE(IDirect3DBaseTexture8) Direct3DBaseTexture8_Vtbl;
 struct IDirect3DBaseTexture8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DBaseTexture8);
+    IDirect3DBaseTexture8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -871,7 +871,7 @@ extern ICOM_VTABLE(IDirect3DCubeTexture8) Direct3DCubeTexture8_Vtbl;
 struct IDirect3DCubeTexture8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DCubeTexture8);
+    IDirect3DCubeTexture8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -933,7 +933,7 @@ extern ICOM_VTABLE(IDirect3DTexture8) Direct3DTexture8_Vtbl;
 struct IDirect3DTexture8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DTexture8);
+    IDirect3DTexture8Vtbl  *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResourc8 fields */
@@ -996,7 +996,7 @@ extern ICOM_VTABLE(IDirect3DVolumeTexture8) Direct3DVolumeTexture8_Vtbl;
 struct IDirect3DVolumeTexture8Impl
 {
     /* IUnknown fields */
-    ICOM_VFIELD(IDirect3DVolumeTexture8);
+    IDirect3DVolumeTexture8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -1084,7 +1084,7 @@ typedef struct SAVEDSTATES {
  */
 struct  IDirect3DStateBlockImpl {
   /* IUnknown fields */
-  /*ICOM_VFIELD(IDirect3DStateBlock9);*/
+  /*IDirect3DStateBlock9Vtbl *lpVtbl;*/
   DWORD  ref;
 
   /* The device, to be replaced by a IDirect3DDeviceImpl */
@@ -1173,7 +1173,7 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl
  */
 struct IDirect3DVertexShaderDeclarationImpl {
   /* IUnknown fields */
-  /*ICOM_VFIELD(IDirect3DVertexShaderDeclaration9);*/
+  /*IDirect3DVertexShaderDeclaration9Vtbl *lpVtbl;*/
   DWORD  ref;
 
   /* The device, to be replaced by a IDirect3DDeviceImpl */
@@ -1209,7 +1209,7 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect
  * IDirect3DVertexShader implementation structure
  */
 struct IDirect3DVertexShaderImpl {
-  /*ICOM_VFIELD(IDirect3DVertexShader9);*/
+  /*IDirect3DVertexShader9Vtbl *lpVtbl;*/
   DWORD ref;
 
   /* The device, to be replaced by a IDirect3DDeviceImpl */
@@ -1258,7 +1258,7 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDe
  * IDirect3DPixelShader implementation structure
  */
 struct IDirect3DPixelShaderImpl { 
-  /*ICOM_VFIELD(IDirect3DPixelShader9);*/
+  /*IDirect3DPixelShader9Vtbl *lpVtbl;*/
   DWORD ref;
 
   /* The device, to be replaced by a IDirect3DDeviceImpl */

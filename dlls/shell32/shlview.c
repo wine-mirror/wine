@@ -74,12 +74,13 @@ typedef struct
 }LISTVIEW_SORT_INFO, *LPLISTVIEW_SORT_INFO;
 
 typedef struct
-{	ICOM_VFIELD(IShellView);
-	DWORD		ref;
-	ICOM_VTABLE(IOleCommandTarget)*	lpvtblOleCommandTarget;
-	ICOM_VTABLE(IDropTarget)*	lpvtblDropTarget;
-	ICOM_VTABLE(IDropSource)*	lpvtblDropSource;
-	ICOM_VTABLE(IViewObject)*	lpvtblViewObject;
+{
+	IShellViewVtbl*		lpVtbl;
+	DWORD			ref;
+	IOleCommandTargetVtbl*	lpvtblOleCommandTarget;
+	IDropTargetVtbl*	lpvtblDropTarget;
+	IDropSourceVtbl*	lpvtblDropSource;
+	IViewObjectVtbl*	lpvtblViewObject;
 	IShellFolder*	pSFParent;
 	IShellFolder2*	pSF2Parent;
 	IShellBrowser*	pShellBrowser;

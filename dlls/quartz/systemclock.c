@@ -39,7 +39,7 @@ struct SystemClockAdviseEntry {
 };
 
 typedef struct SystemClockImpl {
-  ICOM_VFIELD(IReferenceClock);
+  IReferenceClockVtbl *lpVtbl;
   ULONG ref;
 
   /** IReferenceClock */
