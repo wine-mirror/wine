@@ -617,6 +617,8 @@ static IDirectDrawSurfaceImpl *current_surface;
 static GLuint current_level;
 static DWORD current_tex_width;
 static DWORD current_tex_height;
+static BOOLEAN need_alignement_restore;
+static int current_storage_width;
 
 HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLuint level, GLenum *current_internal_format,
 					  BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck, DWORD tex_width, DWORD tex_height)
@@ -627,6 +629,8 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     GLenum internal_format = GL_LUMINANCE; /* A bogus value to be sure to have a nice Mesa warning :-) */
     BYTE bpp = GET_BPP(surf_ptr->surface_desc);
     BOOL sub_texture = TRUE;
+
+    need_alignement_restore = FALSE;
     
     current_surface = surf_ptr;
     current_level = level;
@@ -868,16 +872,16 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     }
 
     if ((sub_texture == TRUE) && (convert_type == NO_CONVERSION)) {
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
+	current_storage_width = surf_ptr->surface_desc.u1.lPitch / bpp;
     } else {
 	if (surf_ptr->surface_desc.u1.lPitch == (surf_ptr->surface_desc.dwWidth * bpp)) {
-	    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	    current_storage_width = 0;
 	} else {
-	    glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
-	}
-	
+	    current_storage_width = surf_ptr->surface_desc.u1.lPitch / bpp;
+	}	
     }
-    
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, current_storage_width);
+
     return DD_OK;
 }
 
@@ -1217,10 +1221,31 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
     }
 
     if (convert_type != NO_CONVERSION) {
+	int storage_width;
+	
 	surf_buffer = *temp_buffer;
 	if (width != current_tex_width) {
 	    /* Overide the default PixelStore parameter if only using part of the actual texture */
-	    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+	    storage_width = width;
+	    /* This is needed when locking with a rectangle with 'odd' width */
+	    if (need_alignement_restore == FALSE) {
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		need_alignement_restore = TRUE;
+	    }
+	} else {
+	    if (current_surface->surface_desc.u1.lPitch == (current_surface->surface_desc.dwWidth * bpp)) {
+		storage_width = 0;
+	    } else {
+		storage_width = current_surface->surface_desc.u1.lPitch / bpp;
+	    }
+	    if (need_alignement_restore == TRUE) {
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 0);
+		need_alignement_restore = FALSE;
+	    }
+	}
+	if (storage_width != current_storage_width) {
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, storage_width);
+	    current_storage_width = storage_width;
 	}
     }
     
@@ -1239,5 +1264,9 @@ HRESULT upload_surface_to_tex_memory_release(void)
 {
     current_surface = NULL;
 
+    if (need_alignement_restore == TRUE) {
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    }
+    
     return DD_OK;
 }

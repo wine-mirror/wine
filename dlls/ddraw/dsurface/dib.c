@@ -819,16 +819,16 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 
 
     if (TRACE_ON(ddraw)) {
-	FIXME("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
+	TRACE("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
 		This,dstx,dsty,src,rsrc,trans
 	);
-	FIXME("\ttrans:");
+	TRACE("\ttrans:");
 	if (FIXME_ON(ddraw))
 	  DDRAW_dump_DDBLTFAST(trans);
 	if (rsrc)
-	  FIXME("\tsrcrect: %ldx%ld-%ldx%ld\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	  TRACE("\tsrcrect: %ldx%ld-%ldx%ld\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	else
-	  FIXME(" srcrect: NULL\n");
+	  TRACE(" srcrect: NULL\n");
     }
 
     /* First, check if the possible override function handles this case */

@@ -153,7 +153,6 @@ static DWORD d3ddevice_set_state_for_flush(IDirect3DDeviceImpl *d3d_dev, LPCRECT
     if (gl_d3d_dev->fogging != FALSE) glDisable(GL_FOG);
     if (gl_d3d_dev->current_tex_env != GL_REPLACE)
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    glColor3ub(0xFF, 0xFF, 0xFF);
     
     return opt_bitmap;
 }
@@ -2686,14 +2685,12 @@ static HRESULT d3ddevice_clear_back(IDirect3DDeviceImpl *This,
     return d3ddevice_clear(This, WINE_GL_BUFFER_BACK, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
 }
 
-HRESULT
-d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
-	      LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
-	      DWORD dwFlags, LPDDBLTFX lpbltfx)
+static HRESULT
+setup_rect_and_surface_for_blt(IDirectDrawSurfaceImpl *This,
+			       WINE_GL_BUFFER_TYPE *buffer_type_p, D3DRECT *rect)
 {
     IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
     WINE_GL_BUFFER_TYPE buffer_type;
-    D3DRECT rect;
     
     /* First check if we BLT to the backbuffer... */
     if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) != 0) {
@@ -2704,7 +2701,30 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 	ERR("Only BLT override to front or back-buffer is supported for now !\n");
 	return DDERR_INVALIDPARAMS;
     }
+            
+    if ((gl_d3d_dev->state[buffer_type] == SURFACE_MEMORY_DIRTY) &&
+	(rect->u1.x1 >= gl_d3d_dev->lock_rect[buffer_type].left) &&
+	(rect->u2.y1 >= gl_d3d_dev->lock_rect[buffer_type].top) &&
+	(rect->u3.x2 <= gl_d3d_dev->lock_rect[buffer_type].right) &&
+	(rect->u4.y2 <= gl_d3d_dev->lock_rect[buffer_type].bottom)) {
+	/* If the memory zone is already dirty, use the standard 'in memory' blit operations and not
+	 * GL to do it.
+	 */
+	return DDERR_INVALIDPARAMS;
+    }
+    *buffer_type_p = buffer_type;
     
+    return DD_OK;
+}
+
+HRESULT
+d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
+	      LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
+	      DWORD dwFlags, LPDDBLTFX lpbltfx)
+{
+    WINE_GL_BUFFER_TYPE buffer_type;
+    D3DRECT rect;
+
     if (rdst) {
 	rect.u1.x1 = rdst->left;
 	rect.u2.y1 = rdst->top;
@@ -2716,17 +2736,8 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 	rect.u3.x2 = This->surface_desc.dwWidth;
 	rect.u4.y2 = This->surface_desc.dwHeight;
     }
-        
-    if ((gl_d3d_dev->state[buffer_type] == SURFACE_MEMORY_DIRTY) &&
-	(rect.u1.x1 >= gl_d3d_dev->lock_rect[buffer_type].left) &&
-	(rect.u2.y1 >= gl_d3d_dev->lock_rect[buffer_type].top) &&
-	(rect.u3.x2 <= gl_d3d_dev->lock_rect[buffer_type].right) &&
-	(rect.u4.y2 <= gl_d3d_dev->lock_rect[buffer_type].bottom)) {
-	/* If the memory zone is already dirty, use the standard 'in memory' blit operations and not
-	 * GL to do it.
-	 */
-	return DDERR_INVALIDPARAMS;
-    }
+    
+    if (setup_rect_and_surface_for_blt(This, &buffer_type, &rect) != DD_OK) return DDERR_INVALIDPARAMS;
 
     if (dwFlags & DDBLT_COLORFILL) {
         /* This is easy to handle for the D3D Device... */
@@ -2794,14 +2805,16 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
         LEAVE_GL();
         
         return DD_OK;
-    } else if ((dwFlags & (~(DDBLT_WAIT|DDBLT_ASYNC))) == 0) {
+    } else if ((dwFlags & (~(DDBLT_KEYSRC|DDBLT_WAIT|DDBLT_ASYNC))) == 0) {
 	/* Normal blit without any special case... */
 	if (src != NULL) {
 	    /* And which has a SRC surface */
 	    IDirectDrawSurfaceImpl *src_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src);
+	    
 	    if ((src_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE) &&
-		(src_impl->d3ddevice == This->d3ddevice)) {
-		/* Both are 3D devices and using the same GL device */
+		(src_impl->d3ddevice == This->d3ddevice) &&
+		((dwFlags & DDBLT_KEYSRC) == 0)) {
+		/* Both are 3D devices and using the same GL device and the Blt is without color-keying */
 		D3DRECT src_rect;
 		int width, height;
 		GLenum prev_draw;
@@ -2920,6 +2933,110 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		LEAVE_GL();
 
 		return DD_OK;
+	    } else {
+		/* This is the normal 'with source' Blit. Use the texture engine to do the Blt for us
+		   (this prevents calling glReadPixels) */
+		D3DRECT src_rect;
+		int width, height;
+		GLenum prev_draw;
+		IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
+		BOOLEAN initial = FALSE;
+		DWORD opt_bitmap;
+		int x, y;
+		double x_stretch, y_stretch;
+		
+		if (dwFlags & DDBLT_KEYSRC) {
+		    /* As I have no game using this, did not bother to do it yet as I cannot test it anyway */
+		    FIXME(" Blt overide with color-keying not supported yet.\n");
+		    return DDERR_INVALIDPARAMS;
+		}
+
+		if (rsrc) {
+		    src_rect.u1.x1 = rsrc->left;
+		    src_rect.u2.y1 = rsrc->top;
+		    src_rect.u3.x2 = rsrc->right;
+		    src_rect.u4.y2 = rsrc->bottom;
+		} else {
+		    src_rect.u1.x1 = 0;
+		    src_rect.u2.y1 = 0;
+		    src_rect.u3.x2 = src_impl->surface_desc.dwWidth;
+		    src_rect.u4.y2 = src_impl->surface_desc.dwHeight;
+		}
+
+		width = src_rect.u3.x2 - src_rect.u1.x1;
+		height = src_rect.u4.y2 - src_rect.u2.y1;
+
+		x_stretch = (double) (rect.u3.x2 - rect.u1.x1) / (double) width;
+		y_stretch = (double) (rect.u4.y2 - rect.u2.y1) / (double) height;
+
+		TRACE(" using memory to buffer Blt overide.\n");
+
+		ENTER_GL();
+
+		opt_bitmap = d3ddevice_set_state_for_flush(This->d3ddevice, (LPCRECT) &rect, FALSE, &initial);
+		
+		if (upload_surface_to_tex_memory_init(src_impl, 0, &gl_d3d_dev->current_internal_format,
+						      initial, FALSE, UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
+		    ERR(" unsupported pixel format at memory to buffer Blt overide.\n");
+		    LEAVE_GL();
+		    return DDERR_INVALIDPARAMS;
+		}
+		
+		glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
+		if (buffer_type == WINE_GL_BUFFER_FRONT)
+		    glDrawBuffer(GL_FRONT);
+		else
+		    glDrawBuffer(GL_BACK);
+
+		/* Now the serious stuff happens. This is basically the same code that for the memory
+		   flush to frame buffer ... with stretching and different rectangles added :-) */
+		for (y = 0; y < height; y += UNLOCK_TEX_SIZE) {
+		    RECT flush_rect;
+
+		    flush_rect.top    = src_rect.u2.y1 + y;
+		    flush_rect.bottom = ((src_rect.u2.y1 + y + UNLOCK_TEX_SIZE > src_rect.u4.y2) ?
+					 src_rect.u4.y2 :
+					 (src_rect.u2.y1 + y + UNLOCK_TEX_SIZE));
+		    
+		    for (x = 0; x < width; x += UNLOCK_TEX_SIZE) {
+			flush_rect.left  = src_rect.u1.x1 + x;
+			flush_rect.right = ((src_rect.u1.x1 + x + UNLOCK_TEX_SIZE > src_rect.u3.x2) ?
+					    src_rect.u3.x2 :
+					    (src_rect.u1.x1 + x + UNLOCK_TEX_SIZE));
+			
+			upload_surface_to_tex_memory(&flush_rect, 0, 0, &(gl_d3d_dev->surface_ptr));
+			
+			glBegin(GL_QUADS);
+			glTexCoord2f(0.0, 0.0);
+			glVertex3d(rect.u1.x1 + (x * x_stretch),
+				   rect.u2.y1 + (y * y_stretch),
+				   0.5);
+			glTexCoord2f(1.0, 0.0);
+			glVertex3d(rect.u1.x1 + ((x + UNLOCK_TEX_SIZE) * x_stretch),
+				   rect.u2.y1 + (y * y_stretch),
+				   0.5);
+			glTexCoord2f(1.0, 1.0);
+			glVertex3d(rect.u1.x1 + ((x + UNLOCK_TEX_SIZE) * x_stretch),
+				   rect.u2.y1 + ((y + UNLOCK_TEX_SIZE) * y_stretch),
+				   0.5);
+			glTexCoord2f(0.0, 1.0);
+			glVertex3d(rect.u1.x1 + (x * x_stretch),
+				   rect.u2.y1 + ((y + UNLOCK_TEX_SIZE) * y_stretch),
+				   0.5);
+			glEnd();
+		    }
+		}
+		
+		upload_surface_to_tex_memory_release();
+		d3ddevice_restore_state_after_flush(This->d3ddevice, opt_bitmap, FALSE);
+		
+		if (((buffer_type == WINE_GL_BUFFER_FRONT) && (prev_draw == GL_BACK)) ||
+		    ((buffer_type == WINE_GL_BUFFER_BACK)  && (prev_draw == GL_FRONT)))
+		    glDrawBuffer(prev_draw);
+		
+		LEAVE_GL();
+
+		return DD_OK;		
 	    }
 	}
     }
@@ -2931,7 +3048,117 @@ d3ddevice_bltfast(IDirectDrawSurfaceImpl *This, DWORD dstx,
 		  DWORD dsty, LPDIRECTDRAWSURFACE7 src,
 		  LPRECT rsrc, DWORD trans)
 {
-     return DDERR_INVALIDPARAMS;
+    RECT rsrc2;
+    RECT rdst;
+    IDirectDrawSurfaceImpl *src_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src);
+    IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
+    WINE_GL_BUFFER_TYPE buffer_type;
+    GLenum prev_draw;
+    DWORD opt_bitmap;
+    BOOLEAN initial;
+    int width, height, x, y;
+    
+    /* Cannot support DSTCOLORKEY blitting... */
+    if ((trans & DDBLTFAST_DESTCOLORKEY) != 0) return DDERR_INVALIDPARAMS;
+
+    if (rsrc == NULL) {
+	WARN("rsrc is NULL - getting the whole surface !!\n");
+	rsrc = &rsrc2;
+	rsrc->left = rsrc->top = 0;
+	rsrc->right = src_impl->surface_desc.dwWidth;
+	rsrc->bottom = src_impl->surface_desc.dwHeight;
+    } else {
+	rsrc2 = *rsrc;
+	rsrc = &rsrc2;
+    }
+
+    rdst.left = dstx;
+    rdst.top = dsty;
+    rdst.right = dstx + (rsrc->right - rsrc->left);
+    if (rdst.right > This->surface_desc.dwWidth) {
+	rsrc->right -= (This->surface_desc.dwWidth - rdst.right);
+	rdst.right = This->surface_desc.dwWidth;
+    }
+    rdst.bottom = dsty + (rsrc->bottom - rsrc->top);
+    if (rdst.bottom > This->surface_desc.dwHeight) {
+	rsrc->bottom -= (This->surface_desc.dwHeight - rdst.bottom);
+	rdst.bottom = This->surface_desc.dwHeight;
+    }
+
+    width = rsrc->right - rsrc->left;
+    height = rsrc->bottom - rsrc->top;
+    
+    if (setup_rect_and_surface_for_blt(This, &buffer_type, (D3DRECT *) &rdst) != DD_OK) return DDERR_INVALIDPARAMS;
+
+    TRACE(" using BltFast memory to frame buffer overide.\n");
+    
+    ENTER_GL();
+    
+    opt_bitmap = d3ddevice_set_state_for_flush(This->d3ddevice, &rdst, (trans & DDBLTFAST_SRCCOLORKEY) != 0, &initial);
+    
+    if (upload_surface_to_tex_memory_init(src_impl, 0, &gl_d3d_dev->current_internal_format,
+					  initial, (trans & DDBLTFAST_SRCCOLORKEY) != 0,
+					  UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
+	ERR(" unsupported pixel format at memory to buffer Blt overide.\n");
+	LEAVE_GL();
+	return DDERR_INVALIDPARAMS;
+    }
+    
+    glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
+    if (buffer_type == WINE_GL_BUFFER_FRONT)
+	glDrawBuffer(GL_FRONT);
+    else
+	glDrawBuffer(GL_BACK);
+    
+    /* Now the serious stuff happens. This is basically the same code that for the memory
+       flush to frame buffer but with different rectangles for source and destination :-) */
+    for (y = 0; y < height; y += UNLOCK_TEX_SIZE) {
+	RECT flush_rect;
+	
+	flush_rect.top    = rsrc->top + y;
+	flush_rect.bottom = ((rsrc->top + y + UNLOCK_TEX_SIZE > rsrc->bottom) ?
+			     rsrc->bottom :
+			     (rsrc->top + y + UNLOCK_TEX_SIZE));
+	
+	for (x = 0; x < width; x += UNLOCK_TEX_SIZE) {
+	    flush_rect.left  = rsrc->left + x;
+	    flush_rect.right = ((rsrc->left + x + UNLOCK_TEX_SIZE > rsrc->right) ?
+				rsrc->right :
+				(rsrc->left + x + UNLOCK_TEX_SIZE));
+	    
+	    upload_surface_to_tex_memory(&flush_rect, 0, 0, &(gl_d3d_dev->surface_ptr));
+	    
+	    glBegin(GL_QUADS);
+	    glTexCoord2f(0.0, 0.0);
+	    glVertex3d(rdst.left + x,
+		       rdst.top + y,
+		       0.5);
+	    glTexCoord2f(1.0, 0.0);
+	    glVertex3d(rdst.left + (x + UNLOCK_TEX_SIZE),
+		       rdst.top + y,
+		       0.5);
+	    glTexCoord2f(1.0, 1.0);
+	    glVertex3d(rdst.left + (x + UNLOCK_TEX_SIZE),
+		       rdst.top + (y + UNLOCK_TEX_SIZE),
+		       0.5);
+	    glTexCoord2f(0.0, 1.0);
+	    glVertex3d(rdst.left + x,
+		       rdst.top + (y + UNLOCK_TEX_SIZE),
+		       0.5);
+	    glEnd();
+	}
+    }
+    
+    upload_surface_to_tex_memory_release();
+    d3ddevice_restore_state_after_flush(This->d3ddevice, opt_bitmap, (trans & DDBLTFAST_SRCCOLORKEY) != 0);
+    
+    if (((buffer_type == WINE_GL_BUFFER_FRONT) && (prev_draw == GL_BACK)) ||
+	((buffer_type == WINE_GL_BUFFER_BACK)  && (prev_draw == GL_FRONT)))
+	glDrawBuffer(prev_draw);
+    
+    LEAVE_GL();
+    
+    return DD_OK;
 }
 
 void
@@ -3325,7 +3552,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 	for (x = pRect->left; x < pRect->right; x += UNLOCK_TEX_SIZE) {
 	    /* First, upload the texture... */
 	    flush_rect.left = x;
-	    flush_rect.right  = (x + UNLOCK_TEX_SIZE > pRect->right)  ? pRect->right  : (x + UNLOCK_TEX_SIZE);
+	    flush_rect.right = (x + UNLOCK_TEX_SIZE > pRect->right)  ? pRect->right  : (x + UNLOCK_TEX_SIZE);
 
 	    upload_surface_to_tex_memory(&flush_rect, 0, 0, &(gl_d3d_dev->surface_ptr));
 
