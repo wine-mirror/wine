@@ -262,7 +262,7 @@ LONG WINAPI GetBitmapBits(
     count = height * bmp->bitmap.bmWidthBytes;
     if (count == 0)
       {
-	WARN("Less then one entire line requested\n");
+	WARN("Less than one entire line requested\n");
         ret = 0;
         goto done;
       }

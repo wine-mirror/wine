@@ -353,7 +353,7 @@ static void output_c_postamble (void)
 /*******************************************************************
  *         output_makefile
  *
- * Write a Wine compatable makefile.in
+ * Write a Wine compatible makefile.in
  */
 void  output_makefile (void)
 {

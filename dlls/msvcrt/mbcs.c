@@ -5,7 +5,7 @@
  * Copyright 2000 Jon Griffths
  *
  * FIXME
- * Not currently binary compatable with win32. MSVCRT_mbctype must be
+ * Not currently binary compatible with win32. MSVCRT_mbctype must be
  * populated correctly and the ismb* functions should reference it.
  */
 #include "msvcrt.h"

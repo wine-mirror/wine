@@ -459,7 +459,7 @@ static LRESULT COMBO_WindowPosChanging(
     /*
      * Resizing a combobox has another side effect, it resizes the dropped
      * rectangle as well. However, it does it only if the new height for the
-     * combobox is different than the height it should have. In other words,
+     * combobox is different from the height it should have. In other words,
      * if the application resizing the combobox only had the intention to resize
      * the actual control, for example, to do the layout of a dialog that is
      * resized, the height of the dropdown is not changed.
