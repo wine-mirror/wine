@@ -1,6 +1,7 @@
 WINE_1.0
 {
   global:
+    memicmpW;
     snprintfW;
     sprintfW;
     strcmpiW;

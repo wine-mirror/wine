@@ -1,6 +1,7 @@
 LIBRARY libwine_unicode.dll
 
 EXPORTS
+    memicmpW
     snprintfW
     sprintfW
     strcmpiW

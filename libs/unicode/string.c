@@ -42,6 +42,14 @@ int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n )
     return ret;
 }
 
+int memicmpW( const WCHAR *str1, const WCHAR *str2, int n )
+{
+    int ret = 0;
+    for ( ; n > 0; n--, str1++, str2++)
+        if ((ret = tolowerW(*str1) - tolowerW(*str2))) break;
+    return ret;
+}
+
 WCHAR *strstrW( const WCHAR *str, const WCHAR *sub )
 {
     while (*str)

@@ -86,6 +86,7 @@ extern int wine_fold_string( int flags, const WCHAR *src, int srclen , WCHAR *ds
 
 extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
 extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
+extern int memicmpW( const WCHAR *str1, const WCHAR *str2, int n );
 extern WCHAR *strstrW( const WCHAR *str, const WCHAR *sub );
 extern long int strtolW( const WCHAR *nptr, WCHAR **endptr, int base );
 extern unsigned long int strtoulW( const WCHAR *nptr, WCHAR **endptr, int base );
