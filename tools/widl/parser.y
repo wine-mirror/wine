@@ -280,19 +280,31 @@ args:	  arg
 arg:	  attributes type pident array		{ $$ = $3;
 						  set_type($$, $2, $4);
 						  $$->attrs = $1;
+						  if (!is_attr($$->attrs, ATTR_OUT) &&
+						      !is_attr($$->attrs, ATTR_IN)) {
+						    attr_t *a = make_attr(ATTR_IN);
+						    LINK(a, $$->attrs); $$->attrs = a;
+						  }
 						}
 	| type pident array			{ $$ = $2;
 						  set_type($$, $1, $3);
+						  $$->attrs = make_attr(ATTR_IN);
 						}
 	| attributes type pident '(' m_args ')'	{ $$ = $3;
 						  $$->ptr_level--;
 						  set_type($$, $2, NULL);
 						  $$->attrs = $1;
 						  $$->args = $5;
+						  if (!is_attr($$->attrs, ATTR_OUT) &&
+						      !is_attr($$->attrs, ATTR_IN)) {
+						    attr_t *a = make_attr(ATTR_IN);
+						    LINK(a, $$->attrs); $$->attrs = a;
+						  }
 						}
 	| type pident '(' m_args ')'		{ $$ = $2;
 						  $$->ptr_level--;
 						  set_type($$, $1, NULL);
+						  $$->attrs = make_attr(ATTR_IN);
 						  $$->args = $4;
 						}
 	;
@@ -489,6 +501,13 @@ funcdef:
 	  '(' m_args ')'			{ set_type($4, $2, NULL);
 						  $4->attrs = $1;
 						  $$ = make_func($4, $6);
+						  if (is_attr($4->attrs, ATTR_IN)) {
+						    yyerror("Inapplicatable attribute");
+						  }
+						  if (!is_attr($4->attrs, ATTR_OUT)) {
+						    attr_t *a = make_attr(ATTR_OUT);
+						    LINK(a, $4->attrs); $4->attrs = a;
+						  }
 						}
 	;
 
