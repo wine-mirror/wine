@@ -3466,7 +3466,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_FOGDENSITY                :
         {
-            glFogf(GL_FOG_DENSITY, (float) Value);
+            float *f = (float*) &Value;
+            glFogfv(GL_FOG_DENSITY, f);
             checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
         }
         break;
@@ -3542,12 +3543,151 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
         break; 
 
-        /* Unhandled yet...! */
     case D3DRS_LINEPATTERN               :
+        {
+            D3DLINEPATTERN *pattern = (D3DLINEPATTERN *)&Value;
+            TRACE("Line pattern: repeat %d bits %x\n", pattern->wRepeatFactor, pattern->wLinePattern);
+
+            if (pattern->wRepeatFactor) {
+                glLineStipple(pattern->wRepeatFactor, pattern->wLinePattern);
+                checkGLcall("glLineStipple(repeat, linepattern)\n");
+                glEnable(GL_LINE_STIPPLE);
+                checkGLcall("glEnable(GL_LINE_STIPPLE);\n");
+            } else {
+                glDisable(GL_LINE_STIPPLE);
+                checkGLcall("glDisable(GL_LINE_STIPPLE);\n");
+            }
+        }
+        break;
+
+    case D3DRS_ZBIAS                     :
+        {
+            if (Value) {
+                TRACE("ZBias value %f\n", *((float*)&Value));
+                glPolygonOffset(0, -*((float*)&Value));
+                checkGLcall("glPolygonOffset(0, -Value)");
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL);");
+                glEnable(GL_POLYGON_OFFSET_LINE);
+                checkGLcall("glEnable(GL_POLYGON_OFFSET_LINE);");
+                glEnable(GL_POLYGON_OFFSET_POINT);
+                checkGLcall("glEnable(GL_POLYGON_OFFSET_POINT);");
+            } else {
+                glDisable(GL_POLYGON_OFFSET_FILL);
+                checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL);");
+                glDisable(GL_POLYGON_OFFSET_LINE);
+                checkGLcall("glDisable(GL_POLYGON_OFFSET_LINE);");
+                glDisable(GL_POLYGON_OFFSET_POINT);
+                checkGLcall("glDisable(GL_POLYGON_OFFSET_POINT);");
+            }
+        }
+        break;
+
+    case D3DRS_NORMALIZENORMALS          :
+        if (Value) {
+            glEnable(GL_NORMALIZE);
+            checkGLcall("glEnable(GL_NORMALIZE);");
+        } else {
+            glDisable(GL_NORMALIZE);
+            checkGLcall("glDisable(GL_NORMALIZE);");
+        }
+        break;
+
+    case D3DRS_POINTSIZE                 :
+        TRACE("Set point size to %f\n", *((float*)&Value));
+        glPointSize(*((float*)&Value));
+        checkGLcall("glPointSize(...);\n");
+        break;
+
+    case D3DRS_POINTSIZE_MIN             :
+#if defined(GL_VERSION_1_4)
+        glPointParameterf(GL_POINT_SIZE_MIN, *((float*)&Value));
+        checkGLcall("glPointParameterf(...);\n");
+#elif defined(GL_EXT_point_parameters)
+        glPointParameterfEXT(GL_POINT_SIZE_MIN_EXT, *((float*)&Value));
+        checkGLcall("glPointParameterfEXT(...);\n");
+#elif defined(GL_ARB_point_parameters)
+        glPointParameterfARB(GL_POINT_SIZE_MIN_ARB, *((float*)&Value));
+        checkGLcall("glPointParameterfARB(...);\n");
+#else
+        FIXME("D3DRS_POINTSIZE_MIN not supported on this opengl\n");
+#endif
+        break;
+
+    case D3DRS_POINTSIZE_MAX             :
+#if defined(GL_VERSION_1_4)
+        glPointParameterf(GL_POINT_SIZE_MAX, *((float*)&Value));
+        checkGLcall("glPointParameterf(...);\n");
+#elif defined(GL_EXT_point_parameters)
+        glPointParameterfEXT(GL_POINT_SIZE_MAX_EXT, *((float*)&Value));
+        checkGLcall("glPointParameterfEXT(...);\n");
+#elif defined(GL_ARB_point_parameters)
+        glPointParameterfARB(GL_POINT_SIZE_MAX_ARB, *((float*)&Value));
+        checkGLcall("glPointParameterfARB(...);\n");
+#else
+        FIXME("D3DRS_POINTSIZE_MAX not supported on this opengl\n");
+#endif
+        break;
+
+    case D3DRS_POINTSCALE_A              :
+    case D3DRS_POINTSCALE_B              :
+    case D3DRS_POINTSCALE_C              :
+    case D3DRS_POINTSCALEENABLE          :
+        {
+            /* If enabled, supply the parameters, otherwise fall back to defaults */
+            if (This->StateBlock->renderstate[D3DRS_POINTSCALEENABLE]) {
+                GLfloat att[3] = {1.0, 0.0, 0.0};
+                att[0] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_A]);
+                att[1] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_B]);
+                att[2] = *((float*)&This->StateBlock->renderstate[D3DRS_POINTSCALE_C]);
+
+#if defined(GL_VERSION_1_4)
+                glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, att);
+                checkGLcall("glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, ...);\n");
+#elif defined(GL_EXT_point_parameters)
+                glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, att);
+                checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
+#elif defined(GL_ARB_point_parameters)
+                glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, att);        
+                checkGLcall("glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, ...);\n");
+#else
+                TRACE("D3DRS_POINTSCALEENABLE not supported on this opengl\n");
+#endif
+            } else {
+                GLfloat att[3] = {1.0, 0.0, 0.0};
+#if defined(GL_VERSION_1_4)
+                glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, att);
+                checkGLcall("glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, ...);\n");
+#elif defined(GL_EXT_point_parameters)
+                glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, att);
+                checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...);\n");
+#elif defined(GL_ARB_point_parameters)
+                glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, att);        
+                checkGLcall("glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, ...);\n");
+#else
+                TRACE("D3DRS_POINTSCALEENABLE not supported, but not on either\n");
+#endif
+            }
+            break;
+        }
+
+    case D3DRS_COLORWRITEENABLE          :
+        TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n", 
+                    Value & D3DCOLORWRITEENABLE_RED?1:0,
+                    Value & D3DCOLORWRITEENABLE_GREEN?1:0,
+                    Value & D3DCOLORWRITEENABLE_BLUE?1:0,
+                    Value & D3DCOLORWRITEENABLE_ALPHA?1:0); 
+		glColorMask(Value & D3DCOLORWRITEENABLE_RED, 
+                    Value & D3DCOLORWRITEENABLE_GREEN,
+		            Value & D3DCOLORWRITEENABLE_BLUE, 
+                    Value & D3DCOLORWRITEENABLE_ALPHA);
+        checkGLcall("glColorMask(...)\n");
+		break;
+
+        /* Unhandled yet...! */
     case D3DRS_LASTPIXEL                 :
     case D3DRS_ZVISIBLE                  :
     case D3DRS_EDGEANTIALIAS             :
-    case D3DRS_ZBIAS                     :
     case D3DRS_RANGEFOGENABLE            :
     case D3DRS_WRAP0                     :
     case D3DRS_WRAP1                     :
@@ -3559,22 +3699,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_WRAP7                     :
     case D3DRS_FOGVERTEXMODE             :
     case D3DRS_LOCALVIEWER               :
-    case D3DRS_NORMALIZENORMALS          :
     case D3DRS_SOFTWAREVERTEXPROCESSING  :
-    case D3DRS_POINTSIZE                 :
-    case D3DRS_POINTSIZE_MIN             :
     case D3DRS_POINTSPRITEENABLE         :
-    case D3DRS_POINTSCALEENABLE          :
-    case D3DRS_POINTSCALE_A              :
-    case D3DRS_POINTSCALE_B              :
-    case D3DRS_POINTSCALE_C              :
     case D3DRS_MULTISAMPLEANTIALIAS      :
     case D3DRS_MULTISAMPLEMASK           :
     case D3DRS_PATCHEDGESTYLE            :
     case D3DRS_PATCHSEGMENTS             :
     case D3DRS_DEBUGMONITORTOKEN         :
-    case D3DRS_POINTSIZE_MAX             :
-    case D3DRS_COLORWRITEENABLE          :
     case D3DRS_POSITIONORDER             :
     case D3DRS_NORMALORDER               :
         /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
