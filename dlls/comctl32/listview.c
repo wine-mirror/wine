@@ -2189,55 +2189,39 @@ static SUBITEM_INFO* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems, INT nSubItem)
 
 /***
  * DESCRIPTION:
- * Calculates the width of a specific item.
+ * Caclulates the desired item width.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] nItem : item to calculate width, or -1 for max of all
  *
  * RETURN:
- * Returns the width of an item width an item.
+ *  The desired item width.
  */
-static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr, INT nItem)
+static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    INT nItemWidth = 0, i;
+    INT nItemWidth;
 
-    if (uView == LVS_ICON) 
+    if (uView == LVS_ICON)
 	nItemWidth = infoPtr->iconSpacing.cx;
     else if (uView == LVS_REPORT)
     {
-	RECT rcHeaderItem;
-	
-	/* calculate width of header */
-	for (i = 0; i < infoPtr->hdpaColumns->nItemCount; i++)
-	{
-	    LISTVIEW_GetHeaderRect(infoPtr, i, &rcHeaderItem);
-	    nItemWidth += (rcHeaderItem.right - rcHeaderItem.left);
-	}
+	RECT rcHeader;
+
+	LISTVIEW_GetHeaderRect(infoPtr, infoPtr->hdpaColumns->nItemCount - 1, &rcHeader);
+        nItemWidth = rcHeader.right;	
     }
-    else
+    else /* LVS_SMALLICON, or LVS_LIST */
     {
-	INT nLabelWidth;
+	INT i;
 	
-	if (infoPtr->nItemCount == 0) return DEFAULT_COLUMN_WIDTH;
-    
-        /* get width of string */
-	if (nItem == -1) 
-	{
-	    for (i = 0; i < infoPtr->nItemCount; i++)
-	    {
-		nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, i);
-		nItemWidth = max(nItemWidth, nLabelWidth);
-	    }
-	}
-	else
-            nItemWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
-        if (!nItemWidth)  return DEFAULT_COLUMN_WIDTH;
-        nItemWidth += WIDTH_PADDING;
-        if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx; 
-        if (infoPtr->himlState) nItemWidth += infoPtr->iconStateSize.cx;
-	if (nItem == -1) nItemWidth = max(DEFAULT_COLUMN_WIDTH, nItemWidth);
+	for (nItemWidth = i = 0; i < infoPtr->nItemCount; i++)
+	    nItemWidth = max(LISTVIEW_GetLabelWidth(infoPtr, i), nItemWidth);
+
+        if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx + IMAGE_PADDING; 
+        if (infoPtr->himlState) nItemWidth += infoPtr->iconStateSize.cx + IMAGE_PADDING;
+
+	nItemWidth = max(DEFAULT_COLUMN_WIDTH, nItemWidth + WIDTH_PADDING);
     }
 
     return max(nItemWidth, 1);
@@ -2245,18 +2229,51 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr, INT nItem)
 
 /***
  * DESCRIPTION:
- * Calculates the max width of any item in the list.
+ * Caclulates the desired item height.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  *
  * RETURN:
- * Returns item width.
+ *  The desired item height.
  */
-static inline INT LISTVIEW_CalculateMaxWidth(LISTVIEW_INFO *infoPtr)
+static INT LISTVIEW_CalculateItemHeight(LISTVIEW_INFO *infoPtr)
 {
-    return LISTVIEW_CalculateItemWidth(infoPtr, -1);
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    INT nItemHeight;
+
+    if (uView == LVS_ICON)
+	nItemHeight = infoPtr->iconSpacing.cy;
+    else
+    {
+	nItemHeight = infoPtr->ntmHeight; 
+	if (infoPtr->himlState)
+	    nItemHeight = max(nItemHeight, infoPtr->iconStateSize.cy);
+	if (infoPtr->himlSmall)
+	    nItemHeight = max(nItemHeight, infoPtr->iconSize.cy);
+	if (infoPtr->himlState || infoPtr->himlSmall)
+	    nItemHeight += HEIGHT_PADDING;
+    }
+
+    return max(nItemHeight, 1);
 }
+
+/***
+ * DESCRIPTION:
+ * Updates the width, and height of an item.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ *  None.
+ */
+static inline void LISTVIEW_UpdateItemSize(LISTVIEW_INFO *infoPtr)
+{
+    infoPtr->nItemWidth = LISTVIEW_CalculateItemWidth(infoPtr);
+    infoPtr->nItemHeight = LISTVIEW_CalculateItemHeight(infoPtr);
+}
+
 
 /***
  * DESCRIPTION:
@@ -2280,36 +2297,6 @@ static void LISTVIEW_SaveTextMetrics(LISTVIEW_INFO *infoPtr)
     ReleaseDC(infoPtr->hwndSelf, hdc);
     
     TRACE("tmHeight=%d\n", infoPtr->ntmHeight);
-}
-
-
-/***
- * DESCRIPTION:
- * Calculates the height of an item.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- *
- * RETURN:
- * Returns item height.
- */
-static INT LISTVIEW_CalculateMaxHeight(LISTVIEW_INFO *infoPtr)
-{
-    INT nItemHeight;
-
-    if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_ICON)
-	nItemHeight = infoPtr->iconSpacing.cy;
-    else
-    {
-	nItemHeight = infoPtr->ntmHeight; 
-	if (infoPtr->himlState)
-	    nItemHeight = max(nItemHeight, infoPtr->iconStateSize.cy);
-	if (infoPtr->himlSmall)
-	    nItemHeight = max(nItemHeight, infoPtr->iconSize.cy);
-	if (infoPtr->himlState || infoPtr->himlSmall)
-	    nItemHeight += HEIGHT_PADDING;
-    }
-    return nItemHeight;
 }
 
 /***
@@ -6415,8 +6402,7 @@ static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
 	  infoPtr->ntmHeight);
 
     /* these depend on the iconSpacing */
-    infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-    infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
+    LISTVIEW_UpdateItemSize(infoPtr);
 
     return oldspacing;
 }
@@ -6483,7 +6469,7 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
 	return NULL;
     }
 
-    infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
+    infoPtr->nItemHeight = LISTVIEW_CalculateItemHeight(infoPtr);
     if (infoPtr->nItemHeight != oldHeight)
         LISTVIEW_UpdateScroll(infoPtr);
 
@@ -6525,8 +6511,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
                    LISTVIEW_GetCountPerColumn(infoPtr) + 1;
 
       infoPtr->nItemCount = nItems;
-      infoPtr->nItemWidth = max(LISTVIEW_CalculateMaxWidth(infoPtr),
-                                DEFAULT_COLUMN_WIDTH);
+      LISTVIEW_UpdateItemSize(infoPtr);
 
       LISTVIEW_UpdateSize(infoPtr);
       LISTVIEW_UpdateScroll(infoPtr);
@@ -6974,8 +6959,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->hdpaPosY  = DPA_Create(10);
 
   /* initialize size of items */
-  infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-  infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
+  LISTVIEW_UpdateItemSize(infoPtr);
 
   /* initialize the hover time to -1(indicating the default system hover time) */
   infoPtr->dwHoverTime = -1;
@@ -8139,8 +8123,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
             SetWindowPos(infoPtr->hwndHeader, infoPtr->hwndSelf, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
         }
 
-        infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-        infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
+	LISTVIEW_UpdateItemSize(infoPtr);
     }
 
     if (uNewView == LVS_REPORT)
