@@ -624,6 +624,21 @@
       </answer>
       </qandaentry>
 
+      <qandaentry>
+      <question id="Can-I-use-native-drivers">
+        <para>Can I use Windows printer drivers in Wine?</para>
+      </question>
+      <answer>
+        <para>
+          Native printer drivers are not supported. At one time Wine supported 16bit 
+          native drivers but that was long ago. Wine uses the printers (and other 
+          devices) installed in your operating system. For the most part if you don't 
+          have the device installed on your OS then wine can't use it. 
+        </para>
+      </answer>
+      </qandaentry>
+
+
     </qandadiv>
     <qandadiv id="What-do-I-need-in-order-to-use-Wine">
       <title>What do I need in order to use Wine?</title>
