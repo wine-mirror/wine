@@ -54,6 +54,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(exec);
 
 static const WCHAR wszOpen[] = {'o','p','e','n',0};
 static const WCHAR wszExe[] = {'.','e','x','e',0};
+static const WCHAR wszShell[] = {'\\','s','h','e','l','l','\\',0};
 
 
 /***********************************************************************
@@ -267,6 +268,54 @@ end:
     return found;
 }
 
+static UINT SHELL_FindExecutableByOperation(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation, LPWSTR key, LPWSTR filetype, LPWSTR command, LONG commandlen)
+{
+    static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
+
+    /* Looking for ...buffer\shell\<verb>\command */
+    strcatW(filetype, wszShell);
+    strcatW(filetype, lpOperation);
+    strcatW(filetype, wCommand);
+
+    if (RegQueryValueW(HKEY_CLASSES_ROOT, filetype, command,
+                       &commandlen) == ERROR_SUCCESS)
+    {
+	commandlen /= sizeof(WCHAR);
+        if (key) strcpyW(key, filetype);
+#if 0
+        LPWSTR tmp;
+        WCHAR param[256];
+	LONG paramlen = sizeof(param);
+        static const WCHAR wSpace[] = {' ',0};
+
+        /* FIXME: it seems all Windows version don't behave the same here.
+         * the doc states that this ddeexec information can be found after
+         * the exec names.
+         * on Win98, it doesn't appear, but I think it does on Win2k
+         */
+	/* Get the parameters needed by the application
+	   from the associated ddeexec key */
+	tmp = strstrW(filetype, wCommand);
+	tmp[0] = '\0';
+	strcatW(filetype, wDdeexec);
+	if (RegQueryValueW(HKEY_CLASSES_ROOT, filetype, param,
+				     &paramlen) == ERROR_SUCCESS)
+	{
+	    paramlen /= sizeof(WCHAR);
+            strcatW(command, wSpace);
+            strcatW(command, param);
+            commandlen += paramlen;
+	}
+#endif
+
+	command[commandlen] = '\0';
+
+	return 33; /* FIXME see SHELL_FindExecutable() */
+    }
+
+    return 31;	/* default - 'No association was found' */
+}
+
 /*************************************************************************
  *	SHELL_FindExecutable [Internal]
  *
@@ -284,8 +333,6 @@ end:
 static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
                                  LPWSTR lpResult, LPWSTR key, void **env)
 {
-    static const WCHAR wShell[] = {'\\','s','h','e','l','l','\\',0};
-    static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
     static const WCHAR wWindows[] = {'w','i','n','d','o','w','s',0};
     static const WCHAR wPrograms[] = {'p','r','o','g','r','a','m','s',0};
     static const WCHAR wExtensions[] = {'e','x','e',' ','p','i','f',' ','b','a','t',' ','c','m','d',' ','c','o','m',0};
@@ -294,7 +341,6 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
     WCHAR filetype[256];     /* registry name for this filetype */
     LONG  filetypelen = sizeof(filetype); /* length of above */
     WCHAR command[256];      /* command from registry */
-    LONG  commandlen = sizeof(command);  /* This is the most DOS can handle :) */
     WCHAR wBuffer[256];      /* Used to GetProfileString */
     UINT  retval = 31;       /* default - 'No association was found' */
     WCHAR *tok;              /* token pointer */
@@ -392,46 +438,46 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOpera
 	filetypelen /= sizeof(WCHAR);
 	filetype[filetypelen] = '\0';
 	TRACE("File type: %s\n", debugstr_w(filetype));
+    }
 
-	/* Looking for ...buffer\shell\lpOperation\command */
-	strcatW(filetype, wShell);
-	strcatW(filetype, lpOperation);
-	strcatW(filetype, wCommand);
-
-	if (RegQueryValueW(HKEY_CLASSES_ROOT, filetype, command,
-                           &commandlen) == ERROR_SUCCESS)
+    if (*filetype)
+    {
+	if (lpOperation)
 	{
-	    commandlen /= sizeof(WCHAR);
-            if (key) strcpyW(key, filetype);
-#if 0
-            LPWSTR tmp;
-            WCHAR param[256];
-	    LONG paramlen = sizeof(param);
-            static const WCHAR wSpace[] = {' ',0};
+	    /* pass the operation string to SHELL_FindExecutableByOperation() */
+	    filetype[filetypelen] = '\0';
+	    retval = SHELL_FindExecutableByOperation(lpPath, lpFile, lpOperation, key, filetype, command, sizeof(command));
+	}
+	else
+	{
+	    WCHAR operation[MAX_PATH];
+	    HKEY hkey;
 
-            /* FIXME: it seems all Windows version don't behave the same here.
-             * the doc states that this ddeexec information can be found after
-             * the exec names.
-             * on Win98, it doesn't appear, but I think it does on Win2k
-             */
-	    /* Get the parameters needed by the application
-	       from the associated ddeexec key */
-	    tmp = strstrW(filetype, wCommand);
-	    tmp[0] = '\0';
-	    strcatW(filetype, wDdeexec);
+	    /* Looking for ...buffer\shell\<operation>\command */
+	    strcatW(filetype, wszShell);
 
-	    if (RegQueryValueW(HKEY_CLASSES_ROOT, filetype, param,
-					 &paramlen) == ERROR_SUCCESS)
+	    /* enumerate the operation subkeys in the registry and search for one with an associated command */
+	    if (RegOpenKeyW(HKEY_CLASSES_ROOT, filetype, &hkey) == ERROR_SUCCESS)
 	    {
-		paramlen /= sizeof(WCHAR);
-                strcatW(command, wSpace);
-                strcatW(command, param);
-                commandlen += paramlen;
+		int idx = 0;
+		for(;; ++idx)
+		{
+		    if (RegEnumKeyW(hkey, idx, operation, MAX_PATH) != ERROR_SUCCESS)
+			break;
+
+		    filetype[filetypelen] = '\0';
+		    retval = SHELL_FindExecutableByOperation(lpPath, lpFile, operation, key, filetype, command, sizeof(command));
+
+		    if (retval > 32)
+			break;
 	    }
-#endif
-            command[commandlen] = '\0';
+		RegCloseKey(hkey);
+	    }
+	}
+
+	if (retval > 32)
+        {
             SHELL_ArgifyW(lpResult, 1024 /*FIXME*/, command, xlpFile);
-            retval = 33; /* FIXME see above */
 	}
     }
     else /* Check win.ini */
@@ -680,7 +726,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     void *env;
     int gap, len;
     WCHAR lpstrProtocol[256];
-    LPCWSTR lpFile,lpOperation;
+    LPCWSTR lpFile;
     UINT retval = 31;
     WCHAR wcmd[1024];
     BOOL done;
@@ -765,13 +811,6 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
             return FALSE;
     }
 
-    /* We set the default to open, and that should generally work.
-       But that is not really the way the MS docs say to do it. */
-    if (sei->lpVerb == NULL)
-        lpOperation = wszOpen;
-    else
-        lpOperation = sei->lpVerb;
-
     /* Else, try to execute the filename */
     TRACE("execute:'%s','%s'\n", debugstr_w(wszApplicationName), debugstr_w(wszCommandline));
 
@@ -788,7 +827,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 
     /* Else, try to find the executable */
     wcmd[0] = '\0';
-    retval = SHELL_FindExecutable(sei->lpDirectory, lpFile, lpOperation, wcmd, lpstrProtocol, &env);
+    retval = SHELL_FindExecutable(sei->lpDirectory, lpFile, sei->lpVerb, wcmd, lpstrProtocol, &env);
     if (retval > 32)  /* Found */
     {
         WCHAR wszQuotedCmd[MAX_PATH+2];
@@ -802,7 +841,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
             strcatW(wszQuotedCmd, wSpace);
             strcatW(wszQuotedCmd, wszCommandline);
         }
-        TRACE("%s/%s => %s/%s\n", debugstr_w(wszApplicationName), debugstr_w(lpOperation), debugstr_w(wszQuotedCmd), debugstr_w(lpstrProtocol));
+        TRACE("%s/%s => %s/%s\n", debugstr_w(wszApplicationName), debugstr_w(sei->lpVerb), debugstr_w(wszQuotedCmd), debugstr_w(lpstrProtocol));
         if (*lpstrProtocol)
             retval = execute_from_key(lpstrProtocol, wszApplicationName, env, sei, execfunc);
         else
@@ -827,7 +866,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
         strncpyW(lpstrProtocol, lpFile, iSize);
         lpstrProtocol[iSize] = '\0';
         strcatW(lpstrProtocol, wShell);
-        strcatW(lpstrProtocol, lpOperation);
+        strcatW(lpstrProtocol, sei->lpVerb? sei->lpVerb: wszOpen);
         strcatW(lpstrProtocol, wCommand);
 
         /* Remove File Protocol from lpFile */
@@ -846,7 +885,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
         WCHAR lpstrTmpFile[256];
         strcpyW(lpstrTmpFile, wHttp);
         strcatW(lpstrTmpFile, lpFile);
-        retval = (UINT)ShellExecuteW(sei->hwnd, lpOperation, lpstrTmpFile, NULL, NULL, 0);
+        retval = (UINT)ShellExecuteW(sei->hwnd, sei->lpVerb, lpstrTmpFile, NULL, NULL, 0);
     }
 
     TRACE("retval %u\n", retval);
