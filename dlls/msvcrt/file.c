@@ -748,9 +748,9 @@ int _fileno(MSVCRT_FILE* file)
  */
 int _flushall(void)
 {
-  int num_flushed = 0, i = 3;
+  int i, num_flushed = 0;
 
-  while(i < MSVCRT_fdend)
+  for (i = 3; i < MSVCRT_fdend; i++)
     if (MSVCRT_handles[i] != INVALID_HANDLE_VALUE)
     {
 #if 0
