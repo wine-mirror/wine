@@ -257,6 +257,19 @@ NTSTATUS WINAPI NtQueryInformationToken(
                                          &(tgroups->Groups->Sid));
         }
         break;
+    case TokenPrimaryGroup:
+        if (tokeninfo)
+        {
+            TOKEN_PRIMARY_GROUP *tgroup = tokeninfo;
+            SID_IDENTIFIER_AUTHORITY sid = {SECURITY_NT_AUTHORITY};
+            RtlAllocateAndInitializeSid( &sid,
+                                         2,
+                                         SECURITY_BUILTIN_DOMAIN_RID,
+                                         DOMAIN_ALIAS_RID_ADMINS,
+                                         0, 0, 0, 0, 0, 0,
+                                         &(tgroup->PrimaryGroup));
+        }
+        break;
     case TokenPrivileges:
         if (tokeninfo)
         {
