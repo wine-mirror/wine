@@ -2099,6 +2099,10 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	/*case CBEM_SETWINDOWTHEME:
 	    FIXME("CBEM_SETWINDOWTHEME: stub\n");*/
 
+	case WM_SETTEXT:
+	case WM_GETTEXT:
+            return SendMessageW(infoPtr->hwndEdit, uMsg, wParam, lParam);
+
 /*   Combo messages we are not sure if we need to process or just forward */
 	case CB_GETDROPPEDCONTROLRECT:
 	case CB_GETITEMHEIGHT:
@@ -2108,8 +2112,6 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case CB_LIMITTEXT:
 	case CB_RESETCONTENT:
 	case CB_SELECTSTRING:
-	case WM_SETTEXT:
-	case WM_GETTEXT:
 	    FIXME("(0x%x 0x%x 0x%lx): possibly missing function\n",
 		  uMsg, wParam, lParam);
 
