@@ -7,6 +7,7 @@ VPATH     = @srcdir@
 MODULE    = misc
 
 C_SRCS = \
+	bidi16.c \
 	cdrom.c \
 	comm.c \
 	cpu.c \

@@ -351,26 +351,26 @@ file	gdi.exe
 527 stub SetMiterLimit
 528 stub GDIParametersInfo
 529 pascal16 CreateHalftonePalette(word) CreateHalftonePalette16
-# Stubs for Hebrew version
-530 pascal16 GDI_530() stub_GDI_530
-531 pascal16 GDI_531() stub_GDI_531
-532 pascal16 GDI_532(ptr word) stub_GDI_532
-536 pascal16 GDI_536() stub_GDI_536
-538 pascal16 GDI_538() stub_GDI_538
-540 pascal16 GDI_540() stub_GDI_540
-543 pascal16 GDI_543() stub_GDI_543
-555 pascal16 GDI_555() stub_GDI_555
-560 pascal16 GDI_560() stub_GDI_560
-561 pascal16 GDI_561() stub_GDI_561
-564 pascal16 GDI_564() stub_GDI_564
-565 pascal16 GDI_565() stub_GDI_565
-566 pascal16 GDI_566() stub_GDI_566
-571 pascal16 GDI_571() stub_GDI_571
-572 pascal16 GDI_572() stub_GDI_572
-573 pascal16 GDI_573() stub_GDI_573
-556 pascal16 GDI_556() stub_GDI_556
-558 pascal16 GDI_558() stub_GDI_558
-569 pascal16 GDI_569() stub_GDI_569
+# Hebrew version API's
+530 pascal16 RawTextOut() RawTextOut16
+531 pascal16 RawExtTextOut() RawExtTextOut16
+532 pascal16 RawGetTextExtent(word str word) RawGetTextExtent16
+536 pascal16 BiDiLayout() BiDiLayout16
+538 pascal16 BiDiCreateTabString() BiDiCreateTabString16
+540 pascal16 BiDiGlyphOut() BiDiGlyphOut16
+543 pascal16 BiDiGetStringExtent() BiDiGetStringExtent16
+555 pascal16 BiDiDeleteString() BiDiDeleteString16
+556 pascal16 BiDiSetDefaults() BiDiSetDefaults16
+558 pascal16 BiDiGetDefaults() BiDiGetDefaults16
+560 pascal16 BiDiShape() BiDiShape16
+561 pascal16 BiDiFontComplement() BiDiFontComplement16
+564 pascal16 BiDiSetKashida() BiDiSetKashida16
+565 pascal16 BiDiKExtTextOut() BiDiKExtTextOut16
+566 pascal16 BiDiShapeEx() BiDiShapeEx16
+569 pascal16 BiDiCreateStringEx() BiDiCreateStringEx16
+571 pascal16 GetTextExtentRtoL() GetTextExtentRtoL16
+572 pascal16 GetHDCCharSet() GetHDCCharSet16
+573 pascal16 BiDiLayoutEx() BiDiLayoutEx16
 602 pascal16 SetDIBColorTable(word word word ptr) SetDIBColorTable16
 603 pascal16 GetDIBColorTable(word word word ptr) GetDIBColorTable16
 604 pascal16 SetSolidBrush(word long) SetSolidBrush16
@@ -396,3 +396,5 @@ file	gdi.exe
 822 stub ICMTranslateRGB
 823 stub ICMTranslateRGBs
 824 stub ICMCheckCOlorsInGamut
+1000 pascal16 SetLayout(word long) SetLayout16
+1001 stub GetLayout

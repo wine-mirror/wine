@@ -532,22 +532,25 @@ file	user.exe
 855 stub Usr32ThkConnectionDataSL
 890 stub InstallIMT
 891 stub UninstallIMT
-# Stubs for Hebrew version
-902 pascal16 USER_902() stub_USER_902
-905 pascal16 USER_905() stub_USER_905
-906 pascal16 USER_906() stub_USER_906
-907 pascal16 USER_907() stub_USER_907
-909 pascal16 USER_909() stub_USER_909
-910 pascal16 USER_910() stub_USER_910
-911 pascal16 USER_911() stub_USER_911
-912 pascal16 USER_912() stub_USER_912
-913 pascal16 USER_913() stub_USER_913
-914 pascal16 USER_914() stub_USER_914
-915 pascal16 USER_915() stub_USER_915
-916 pascal16 USER_916() stub_USER_916
-918 pascal16 USER_918() stub_USER_918
-919 pascal16 USER_919() stub_USER_919
-920 pascal16 USER_920() stub_USER_920
-922 pascal16 USER_922() stub_USER_922
-923 pascal16 USER_923() stub_USER_923
-924 stub UsrMpr_ThunkData16
+# API for Hebrew version
+902 pascal16 LoadSystemLanguageString(word word ptr word word) LoadSystemLanguageString16
+905 pascal16 ChangeDialogTemplate() ChangeDialogTemplate16
+906 pascal16 GetNumLanguages() GetNumLanguages16
+907 pascal16 GetLanguageName(word word ptr word) GetLanguageName16
+909 pascal16 SetWindowTextEx(word str word) SetWindowTextEx16
+910 pascal16 BiDiMessageBoxEx() BiDiMessageBoxEx16
+911 pascal16 SetDlgItemTextEx(word word str word) SetDlgItemTextEx16
+912 pascal ChangeKeyboardLanguage(word word) ChangeKeyboardLanguage16
+913 pascal16 GetCodePageSystemFont(word word) GetCodePageSystemFont16
+914 pascal16 QueryCodePage(word word word long) QueryCodePage16
+915 pascal GetAppCodePage(word) GetAppCodePage16
+916 pascal16 CreateDialogIndirectParamML(word ptr word ptr long word word str word) CreateDialogIndirectParamML16
+918 pascal16 DialogBoxIndirectParamML(word word word ptr long word word str word) DialogBoxIndirectParamML16
+919 pascal16 LoadLanguageString(word word word ptr word) LoadLanguageString16
+920 pascal SetAppCodePage(word word word word) SetAppCodePage16
+922 pascal GetBaseCodePage() GetBaseCodePage16
+923 pascal16 FindLanguageResource(word str str word) FindLanguageResource16
+924 pascal ChangeKeyboardCodePage(word word) ChangeKeyboardCodePage16
+930 pascal16 MessageBoxEx(word str str word word) MessageBoxEx16
+1000 pascal16 SetProcessDefaultLayout(long) SetProcessDefaultLayout16
+1001 pascal16 GetProcessDefaultLayout(ptr) GetProcessDefaultLayout16
