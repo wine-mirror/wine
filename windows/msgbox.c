@@ -155,7 +155,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
 	    }
 	}
     }
-    bw = MAX(bw, bh * 2);
+    bw = max(bw, bh * 2);
     /* Button white space */
     bh = bh * 2;
     bw = bw * 2;
@@ -168,14 +168,14 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
 	       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     /* Min text width corresponds to space for the buttons */
     tleft = 2 * ileft + iwidth;
-    twidth = MAX((bw + bspace) * buttons + bspace - tleft, rect.right);
+    twidth = max((bw + bspace) * buttons + bspace - tleft, rect.right);
     theight = rect.bottom;
     
     if (hFont)
 	SelectObject(hdc, hPrevFont);
     ReleaseDC(hItem, hdc);
     
-    tiheight = 16 + MAX(iheight, theight);
+    tiheight = 16 + max(iheight, theight);
     wwidth  = tleft + twidth + ileft + borwidth;
     wheight = 8 + tiheight + bh + borheight;
     

@@ -177,9 +177,9 @@ UINT WINAPI GetEnhMetaFileHeader(
     if (!buf) return sizeof(ENHMETAHEADER);
     emh = EMF_GetEnhMetaHeader(hmf);
     if(!emh) return FALSE;
-    memmove(buf, emh, MIN(sizeof(ENHMETAHEADER), bufsize));
+    memmove(buf, emh, min(sizeof(ENHMETAHEADER), bufsize));
     EMF_ReleaseEnhMetaHeader(hmf);
-    return MIN(sizeof(ENHMETAHEADER), bufsize);
+    return min(sizeof(ENHMETAHEADER), bufsize);
 }
 
 
@@ -213,7 +213,7 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
  		 size - first - 1);
  
      EMF_ReleaseEnhMetaHeader(hmf);
-     return MIN(size, emh->nDescription);
+     return min(size, emh->nDescription);
 }
 
 /*****************************************************************************
@@ -244,9 +244,9 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
      }
  
      memmove(buf, (char *) emh + emh->offDescription, 
- 	    MIN(size,emh->nDescription));
+ 	    min(size,emh->nDescription));
      EMF_ReleaseEnhMetaHeader(hmf);
-     return MIN(size, emh->nDescription);
+     return min(size, emh->nDescription);
 }
 
 /****************************************************************************
@@ -303,7 +303,7 @@ UINT WINAPI GetEnhMetaFileBits(
   }
 
   /* Copy the lesser of the two byte counts */
-  uEnhMetaFileSize = MIN( uEnhMetaFileSize, bufsize );
+  uEnhMetaFileSize = min( uEnhMetaFileSize, bufsize );
 
   /* Copy everything */
   lpEnhMetaFile = EMF_GetEnhMetaHeader( hmf );
@@ -1375,7 +1375,7 @@ INT CALLBACK cbEnhPaletteCopy( HDC a,
   {
     PEMREOF lpEof = (PEMREOF)lpEMR;
     EMF_PaletteCopy* info = (EMF_PaletteCopy*)lpData;
-    DWORD dwNumPalToCopy = MIN( lpEof->nPalEntries, info->cEntries );
+    DWORD dwNumPalToCopy = min( lpEof->nPalEntries, info->cEntries );
 
     TRACE( "copying 0x%08lx palettes\n", dwNumPalToCopy );
 

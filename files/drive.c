@@ -923,7 +923,7 @@ static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPSTR buf )
     assert(s);
     ret = strlen(s) + 3; /* length of WHOLE current directory */
     if (ret >= buflen) return ret + 1;
-    lstrcpynA( buf, "A:\\", MIN( 4, buflen ) );
+    lstrcpynA( buf, "A:\\", min( 4, buflen ) );
     if (buflen) buf[0] += DRIVE_GetCurrentDrive();
     if (buflen > 3) lstrcpynA( buf + 3, s, buflen - 3 );
     return ret;

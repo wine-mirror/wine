@@ -1401,7 +1401,7 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
   drivechar  = strchr(path,':');
   dirchar    = strrchr(path,'/');
   namechar   = strrchr(path,'\\');
-  dirchar = MAX(dirchar,namechar);
+  dirchar = max(dirchar,namechar);
   if (dirchar)
     namechar   = strrchr(dirchar,'.');
   else

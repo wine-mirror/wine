@@ -4171,7 +4171,7 @@ BOOL BlockChainStream_ReadAt(BlockChainStream* This,
      * Calculate how many bytes we can copy from this big block.
      */
     bytesToReadInBuffer = 
-      MIN(This->parentStorage->bigBlockSize - offsetInBlock, size);
+      min(This->parentStorage->bigBlockSize - offsetInBlock, size);
     
     /*
      * Copy those bytes to the buffer
@@ -4261,7 +4261,7 @@ BOOL BlockChainStream_WriteAt(BlockChainStream* This,
      * Calculate how many bytes we can copy from this big block.
      */
     bytesToWrite = 
-      MIN(This->parentStorage->bigBlockSize - offsetInBlock, size);
+      min(This->parentStorage->bigBlockSize - offsetInBlock, size);
     
     /*
      * Copy those bytes to the buffer
@@ -4900,7 +4900,7 @@ BOOL SmallBlockChainStream_ReadAt(
      * Calculate how many bytes we can copy from this small block.
      */
     bytesToReadInBuffer = 
-      MIN(This->parentStorage->smallBlockSize - offsetInBlock, size);
+      min(This->parentStorage->smallBlockSize - offsetInBlock, size);
 
     /*
      * Calculate the offset of the small block in the small block file.
@@ -4990,7 +4990,7 @@ BOOL SmallBlockChainStream_WriteAt(
      * Calculate how many bytes we can copy to this small block.
      */
     bytesToWriteInBuffer = 
-      MIN(This->parentStorage->smallBlockSize - offsetInBlock, size);
+      min(This->parentStorage->smallBlockSize - offsetInBlock, size);
     
     /*
      * Calculate the offset of the small block in the small block file.

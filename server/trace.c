@@ -172,13 +172,13 @@ static void dump_varargs_get_socket_event_reply( const struct get_socket_event_r
 
 static void dump_varargs_read_process_memory_reply( const struct read_process_memory_request *req )
 {
-    int count = MIN( req->len, get_req_size( req->data, sizeof(int) ) );
+    int count = min( req->len, get_req_size( req->data, sizeof(int) ) );
     dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
 }
 
 static void dump_varargs_write_process_memory_request( const struct write_process_memory_request *req )
 {
-    int count = MIN( req->len, get_req_size( req->data, sizeof(int) ) );
+    int count = min( req->len, get_req_size( req->data, sizeof(int) ) );
     dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
 }
 

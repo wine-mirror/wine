@@ -369,7 +369,7 @@ BOOL MFDRV_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
     }
 
     physDev->mh->mtSize += rlen / 2;
-    physDev->mh->mtMaxRecord = MAX(physDev->mh->mtMaxRecord, rlen / 2);
+    physDev->mh->mtMaxRecord = max(physDev->mh->mtMaxRecord, rlen / 2);
     return TRUE;
 }
 

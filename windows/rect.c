@@ -183,10 +183,10 @@ BOOL16 WINAPI IntersectRect16( LPRECT16 dest, const RECT16 *src1,
 	SetRectEmpty16( dest );
 	return FALSE;
     }
-    dest->left   = MAX( src1->left, src2->left );
-    dest->right  = MIN( src1->right, src2->right );
-    dest->top    = MAX( src1->top, src2->top );
-    dest->bottom = MIN( src1->bottom, src2->bottom );
+    dest->left   = max( src1->left, src2->left );
+    dest->right  = min( src1->right, src2->right );
+    dest->top    = max( src1->top, src2->top );
+    dest->bottom = min( src1->bottom, src2->bottom );
     return TRUE;
 }
 
@@ -204,10 +204,10 @@ BOOL WINAPI IntersectRect( LPRECT dest, const RECT *src1,
 	SetRectEmpty( dest );
 	return FALSE;
     }
-    dest->left   = MAX( src1->left, src2->left );
-    dest->right  = MIN( src1->right, src2->right );
-    dest->top    = MAX( src1->top, src2->top );
-    dest->bottom = MIN( src1->bottom, src2->bottom );
+    dest->left   = max( src1->left, src2->left );
+    dest->right  = min( src1->right, src2->right );
+    dest->top    = max( src1->top, src2->top );
+    dest->bottom = min( src1->bottom, src2->bottom );
     return TRUE;
 }
 
@@ -232,10 +232,10 @@ BOOL16 WINAPI UnionRect16( LPRECT16 dest, const RECT16 *src1,
 	if (IsRectEmpty16(src2)) *dest = *src1;
 	else
 	{
-	    dest->left   = MIN( src1->left, src2->left );
-	    dest->right  = MAX( src1->right, src2->right );
-	    dest->top    = MIN( src1->top, src2->top );
-	    dest->bottom = MAX( src1->bottom, src2->bottom );	    
+	    dest->left   = min( src1->left, src2->left );
+	    dest->right  = max( src1->right, src2->right );
+	    dest->top    = min( src1->top, src2->top );
+	    dest->bottom = max( src1->bottom, src2->bottom );	    
 	}
     }
     return TRUE;
@@ -262,10 +262,10 @@ BOOL WINAPI UnionRect( LPRECT dest, const RECT *src1,
 	if (IsRectEmpty(src2)) *dest = *src1;
 	else
 	{
-	    dest->left   = MIN( src1->left, src2->left );
-	    dest->right  = MAX( src1->right, src2->right );
-	    dest->top    = MIN( src1->top, src2->top );
-	    dest->bottom = MAX( src1->bottom, src2->bottom );	    
+	    dest->left   = min( src1->left, src2->left );
+	    dest->right  = max( src1->right, src2->right );
+	    dest->top    = min( src1->top, src2->top );
+	    dest->bottom = max( src1->bottom, src2->bottom );	    
 	}
     }
     return TRUE;

@@ -820,12 +820,12 @@ static int INT21_FindNextFCB( CONTEXT86 *context )
         if (p && p[1] && (p != entry.cAlternateFileName))
         {
             memcpy( pResult->filename, entry.cAlternateFileName,
-                    MIN( (p - entry.cAlternateFileName), 8 ) );
-            memcpy( pResult->filename + 8, p + 1, MIN( strlen(p), 3 ) );
+                    min( (p - entry.cAlternateFileName), 8 ) );
+            memcpy( pResult->filename + 8, p + 1, min( strlen(p), 3 ) );
         }
         else
             memcpy( pResult->filename, entry.cAlternateFileName,
-                    MIN( strlen(entry.cAlternateFileName), 8 ) );
+                    min( strlen(entry.cAlternateFileName), 8 ) );
     }
     return 1;
 }

@@ -229,7 +229,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
   buf = topic.map[0] + 0xc;
   while(buf + 0xc < topic.end)
     {
-      BYTE *end = MIN(buf + GET_UINT(buf, 0), topic.end);
+      BYTE *end = min(buf + GET_UINT(buf, 0), topic.end);
       UINT next, index, offset;
 
       switch (buf[0x14])
@@ -772,7 +772,7 @@ static BOOL HLPFILE_Uncompress1_Topic()
       /* I don't know why, it's necessary for printman.hlp */
       if (ptr + 0x44 > end) ptr = end - 0x44;
 
-      newsize += HLPFILE_Uncompressed1_Size(ptr + 0xc, MIN(end, ptr + 0x1000));
+      newsize += HLPFILE_Uncompressed1_Size(ptr + 0xc, min(end, ptr + 0x1000));
     }
 
   topic.hMap    = GlobalAlloc(GMEM_FIXED, topic.wMapLen * sizeof(topic.map[0]));
@@ -788,7 +788,7 @@ static BOOL HLPFILE_Uncompress1_Topic()
       if (ptr + 0x44 > end) ptr = end - 0x44;
 
       topic.map[i] = newptr - 0xc;
-      newptr = HLPFILE_Uncompress1(ptr + 0xc, MIN(end, ptr + 0x1000), newptr);
+      newptr = HLPFILE_Uncompress1(ptr + 0xc, min(end, ptr + 0x1000), newptr);
     }
 
   return TRUE;

@@ -824,7 +824,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	UNKNOWN_PARAM(UDM_GETACCEL, wParam, lParam);
 	return 0;
       }
-      temp = MIN(infoPtr->AccelCount, wParam);
+      temp = min(infoPtr->AccelCount, wParam);
       memcpy((void *)lParam, infoPtr->AccelVect, temp*sizeof(UDACCEL));
       return temp;
 

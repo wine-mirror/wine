@@ -2157,23 +2157,23 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
         SetRect(&mouseRect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     if (ON_LEFT_BORDER(hittest))
     {
-	mouseRect.left  = MAX( mouseRect.left, sizingRect.right-maxTrack.x );
-	mouseRect.right = MIN( mouseRect.right, sizingRect.right-minTrack.x );
+	mouseRect.left  = max( mouseRect.left, sizingRect.right-maxTrack.x );
+	mouseRect.right = min( mouseRect.right, sizingRect.right-minTrack.x );
     }
     else if (ON_RIGHT_BORDER(hittest))
     {
-	mouseRect.left  = MAX( mouseRect.left, sizingRect.left+minTrack.x );
-	mouseRect.right = MIN( mouseRect.right, sizingRect.left+maxTrack.x );
+	mouseRect.left  = max( mouseRect.left, sizingRect.left+minTrack.x );
+	mouseRect.right = min( mouseRect.right, sizingRect.left+maxTrack.x );
     }
     if (ON_TOP_BORDER(hittest))
     {
-	mouseRect.top    = MAX( mouseRect.top, sizingRect.bottom-maxTrack.y );
-	mouseRect.bottom = MIN( mouseRect.bottom,sizingRect.bottom-minTrack.y);
+	mouseRect.top    = max( mouseRect.top, sizingRect.bottom-maxTrack.y );
+	mouseRect.bottom = min( mouseRect.bottom,sizingRect.bottom-minTrack.y);
     }
     else if (ON_BOTTOM_BORDER(hittest))
     {
-	mouseRect.top    = MAX( mouseRect.top, sizingRect.top+minTrack.y );
-	mouseRect.bottom = MIN( mouseRect.bottom, sizingRect.top+maxTrack.y );
+	mouseRect.top    = max( mouseRect.top, sizingRect.top+minTrack.y );
+	mouseRect.bottom = min( mouseRect.bottom, sizingRect.top+maxTrack.y );
     }
     if (wndPtr->dwStyle & WS_CHILD)
     {
@@ -2231,10 +2231,10 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	    case VK_RIGHT: pt.x += 8; break;		
 	}
 
-	pt.x = MAX( pt.x, mouseRect.left );
-	pt.x = MIN( pt.x, mouseRect.right );
-	pt.y = MAX( pt.y, mouseRect.top );
-	pt.y = MIN( pt.y, mouseRect.bottom );
+	pt.x = max( pt.x, mouseRect.left );
+	pt.x = min( pt.x, mouseRect.right );
+	pt.y = max( pt.y, mouseRect.top );
+	pt.y = min( pt.y, mouseRect.bottom );
 
 	dx = pt.x - capturePoint.x;
 	dy = pt.y - capturePoint.y;

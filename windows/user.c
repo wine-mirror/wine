@@ -69,7 +69,7 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
     default:
         return 0;
     }
-    return (WORD)MIN( userPercent, gdiPercent );
+    return (WORD)min( userPercent, gdiPercent );
 }
 
 

@@ -121,7 +121,7 @@ TRACKBAR_CalcChannel (HWND hwnd, TRACKBAR_INFO *infoPtr)
     GetClientRect (hwnd, &lpRect);
 
     if (dwStyle & TBS_ENABLESELRANGE)
-        cyChannel = MAX(infoPtr->uThumbLen - 8, 4);
+        cyChannel = max(infoPtr->uThumbLen - 8, 4);
     else
         cyChannel = 4;
 

@@ -225,8 +225,8 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
       origin = *mouse;
       ClientToScreen(hParentWnd, &origin);
       origin.x -= size.cx / 2;
-      origin.x  = MIN(origin.x, GetSystemMetrics(SM_CXSCREEN) - size.cx);
-      origin.x  = MAX(origin.x, 0);
+      origin.x  = min(origin.x, GetSystemMetrics(SM_CXSCREEN) - size.cx);
+      origin.x  = max(origin.x, 0);
     }
 
   /* Initialize WINHELP_WINDOW struct */
@@ -466,8 +466,8 @@ static LRESULT WINHELP_ButtonBoxWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPA
 			     lstrlen(button->lpszName), &textsize);
 	  ReleaseDC(button->hWnd, hDc);
 
-	  button_size.cx = MAX(button_size.cx, textsize.cx + BUTTON_CX);
-	  button_size.cy = MAX(button_size.cy, textsize.cy + BUTTON_CY);
+	  button_size.cx = max(button_size.cx, textsize.cx + BUTTON_CX);
+	  button_size.cy = max(button_size.cy, textsize.cy + BUTTON_CY);
 	}
 
       x = 0;
@@ -787,13 +787,13 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
 	      textlen = low;
 	      while (textlen && text[textlen] && text[textlen] != ' ') textlen--;
 	    }
-	  if (!part && !textlen) textlen = MAX(low, 1);
+	  if (!part && !textlen) textlen = max(low, 1);
 
 	  if (free_width <= 0 || !textlen)
 	    {
 	      part = 0;
 	      space.cx = rect.left + indent;
-	      space.cx = MIN(space.cx, rect.right - rect.left - 1);
+	      space.cx = min(space.cx, rect.right - rect.left - 1);
 	      continue;
 	    }
 
@@ -807,7 +807,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
 	    }
 
 	  if (newsize)
-	    newsize->cx = MAX(newsize->cx, (*line)->rect.right + INTERNAL_BORDER_WIDTH);
+	    newsize->cx = max(newsize->cx, (*line)->rect.right + INTERNAL_BORDER_WIDTH);
 
 	  len -= textlen;
 	  text += textlen;
@@ -892,7 +892,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
   part->rect.top      =
     ((*partp) ? line->rect.top : line->rect.bottom) + *line_ascent - ascent;
   part->rect.bottom   = part->rect.top + textsize->cy;
-  line->rect.bottom   = MAX(line->rect.bottom, part->rect.bottom);
+  line->rect.bottom   = max(line->rect.bottom, part->rect.bottom);
   part->hSelf         = handle;
   part->lpsText       = ptr;
   part->wTextLen      = textlen;

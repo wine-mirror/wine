@@ -372,7 +372,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
    * Using the known size of the array, calculate the number of bytes
    * to read.
    */
-  bytesToReadFromBuffer = MIN(This->byteArraySize.s.LowPart -
+  bytesToReadFromBuffer = min(This->byteArraySize.s.LowPart -
                               ulOffset.s.LowPart, cb);
 
   /*

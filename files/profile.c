@@ -149,7 +149,7 @@ static void PROFILE_CopyEntry( char *buffer, const char *value, int len,
             const char *env_p;
             const char *p2 = strchr( p, '}' );
             if (!p2) continue;  /* ignore it */
-            lstrcpynA(env_val, p + 2, MIN( sizeof(env_val), (int)(p2-p)-1 ));
+            lstrcpynA(env_val, p + 2, min( sizeof(env_val), (int)(p2-p)-1 ));
             if ((env_p = getenv( env_val )) != NULL)
             {
                 lstrcpynA( buffer, env_p, len );

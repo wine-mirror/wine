@@ -173,10 +173,10 @@ void EMFDRV_UpdateBBox( DC *dc, RECTL *rect )
         *bounds = *rect;
 	return;
     }
-    bounds->left   = MIN(bounds->left,   rect->left);
-    bounds->top    = MIN(bounds->top,    rect->top);
-    bounds->right  = MAX(bounds->right,  rect->right);
-    bounds->bottom = MAX(bounds->bottom, rect->bottom);
+    bounds->left   = min(bounds->left,   rect->left);
+    bounds->top    = min(bounds->top,    rect->top);
+    bounds->right  = max(bounds->right,  rect->right);
+    bounds->bottom = max(bounds->bottom, rect->bottom);
     return;
 }
 

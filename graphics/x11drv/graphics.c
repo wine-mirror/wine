@@ -668,8 +668,8 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
 
     /* Make sure ell_width and ell_height are >= 1 otherwise XDrawArc gets
        called with width/height < 0 */
-    ell_width  = MAX(abs( ell_width * dc->vportExtX / dc->wndExtX ), 1);
-    ell_height = MAX(abs( ell_height * dc->vportExtY / dc->wndExtY ), 1);
+    ell_width  = max(abs( ell_width * dc->vportExtX / dc->wndExtX ), 1);
+    ell_height = max(abs( ell_height * dc->vportExtY / dc->wndExtY ), 1);
 
     /* Fix the coordinates */
 

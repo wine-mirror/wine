@@ -475,7 +475,7 @@ DWORD WINAPI GetWinFlags16(void)
   GetSystemInfo(&si);
 
   /* There doesn't seem to be any Pentium flag.  */
-  result = cpuflags[MIN (si.wProcessorLevel, 4)] | WF_ENHANCED | WF_PMODE | WF_80x87 | WF_PAGING;
+  result = cpuflags[min(si.wProcessorLevel, 4)] | WF_ENHANCED | WF_PMODE | WF_80x87 | WF_PAGING;
   if (si.wProcessorLevel >= 4) result |= WF_HASCPUID;
   ovi.dwOSVersionInfoSize = sizeof(ovi);
   GetVersionExA(&ovi);

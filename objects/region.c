@@ -1543,7 +1543,7 @@ static void REGION_RegionOp(
      * have to worry about using too much memory. I hope to be able to
      * nuke the Xrealloc() at the end of this function eventually.
      */
-    newReg->size = MAX(reg1->numRects,reg2->numRects) * 2;
+    newReg->size = max(reg1->numRects,reg2->numRects) * 2;
 
     if (! (newReg->rects = HeapAlloc( GetProcessHeap(), 0, 
 			          sizeof(RECT) * newReg->size )))
@@ -1614,8 +1614,8 @@ static void REGION_RegionOp(
 	 */
 	if (r1->top < r2->top)
 	{
-	    top = MAX(r1->top,ybot);
-	    bot = MIN(r1->bottom,r2->top);
+	    top = max(r1->top,ybot);
+	    bot = min(r1->bottom,r2->top);
 
 	    if ((top != bot) && (nonOverlap1Func != (void (*)())NULL))
 	    {
@@ -1626,8 +1626,8 @@ static void REGION_RegionOp(
 	}
 	else if (r2->top < r1->top)
 	{
-	    top = MAX(r2->top,ybot);
-	    bot = MIN(r2->bottom,r1->top);
+	    top = max(r2->top,ybot);
+	    bot = min(r2->bottom,r1->top);
 
 	    if ((top != bot) && (nonOverlap2Func != (void (*)())NULL))
 	    {
@@ -1656,7 +1656,7 @@ static void REGION_RegionOp(
 	 * Now see if we've hit an intersecting band. The two bands only
 	 * intersect if ybot > ytop
 	 */
-	ybot = MIN(r1->bottom, r2->bottom);
+	ybot = min(r1->bottom, r2->bottom);
 	curBand = newReg->numRects;
 	if (ybot > ytop)
 	{
@@ -1699,7 +1699,7 @@ static void REGION_RegionOp(
 		    r1BandEnd++;
 		}
 		(* nonOverlap1Func) (newReg, r1, r1BandEnd,
-				     MAX(r1->top,ybot), r1->bottom);
+				     max(r1->top,ybot), r1->bottom);
 		r1 = r1BandEnd;
 	    } while (r1 != r1End);
 	}
@@ -1714,7 +1714,7 @@ static void REGION_RegionOp(
 		 r2BandEnd++;
 	    }
 	    (* nonOverlap2Func) (newReg, r2, r2BandEnd,
-				MAX(r2->top,ybot), r2->bottom);
+				max(r2->top,ybot), r2->bottom);
 	    r2 = r2BandEnd;
 	} while (r2 != r2End);
     }
@@ -1786,8 +1786,8 @@ static void REGION_IntersectO(WINEREGION *pReg,  RECT *r1, RECT *r1End,
 
     while ((r1 != r1End) && (r2 != r2End))
     {
-	left = MAX(r1->left, r2->left);
-	right =	MIN(r1->right, r2->right);
+	left = max(r1->left, r2->left);
+	right =	min(r1->right, r2->right);
 
 	/*
 	 * If there's any overlap between the two rectangles, add that
@@ -2026,10 +2026,10 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
     REGION_RegionOp (newReg, reg1, reg2, (voidProcp) REGION_UnionO, 
 		(voidProcp) REGION_UnionNonO, (voidProcp) REGION_UnionNonO);
 
-    newReg->extents.left = MIN(reg1->extents.left, reg2->extents.left);
-    newReg->extents.top = MIN(reg1->extents.top, reg2->extents.top);
-    newReg->extents.right = MAX(reg1->extents.right, reg2->extents.right);
-    newReg->extents.bottom = MAX(reg1->extents.bottom, reg2->extents.bottom);
+    newReg->extents.left = min(reg1->extents.left, reg2->extents.left);
+    newReg->extents.top = min(reg1->extents.top, reg2->extents.top);
+    newReg->extents.right = max(reg1->extents.right, reg2->extents.right);
+    newReg->extents.bottom = max(reg1->extents.bottom, reg2->extents.bottom);
     newReg->type = (newReg->numRects) ?
                         ((newReg->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
                         : NULLREGION ;
@@ -2711,8 +2711,8 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 	  (Pts[2].x == Pts[3].x) &&
 	  (Pts[3].y == Pts[0].y))))
     {
-        SetRectRgn( hrgn, MIN(Pts[0].x, Pts[2].x), MIN(Pts[0].y, Pts[2].y), 
-		            MAX(Pts[0].x, Pts[2].x), MAX(Pts[0].y, Pts[2].y) );
+        SetRectRgn( hrgn, min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y), 
+		            max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
 	GDI_HEAP_UNLOCK( hrgn );
 	return hrgn;
     }

@@ -101,7 +101,7 @@ static	BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen)
     if (_lread(hFile, &dw, 4) != 4)			E(("Can't read nr table offset\n"));
     if (_llseek(hFile, dw, SEEK_SET) < 0) 		E(("Can't seek to nr table %lu\n", dw));
     if (_lread(hFile, buf, 1) != 1)			E(("Can't read descr length\n"));
-    buflen = MIN((BYTE)buf[0], buflen - 1);
+    buflen = min((BYTE)buf[0], buflen - 1);
     if (_lread(hFile, buf, buflen) != buflen)		E(("Can't read descr (%d)\n", buflen));
     buf[buflen] = '\0';
     ret = TRUE;

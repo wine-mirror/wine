@@ -420,7 +420,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Read(
    * Using the known size of the stream, calculate the number of bytes
    * to read from the block chain
    */
-  bytesToReadFromBuffer = MIN( This->streamSize.s.LowPart - This->currentPosition.s.LowPart, cb);
+  bytesToReadFromBuffer = min( This->streamSize.s.LowPart - This->currentPosition.s.LowPart, cb);
 
   /*
    * Lock the buffer in position and copy the data.

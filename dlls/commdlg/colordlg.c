@@ -167,7 +167,7 @@ static int CC_HSLtoRGB(char c,int hue,int sat,int lum)
  }
 
  /* l below 120 */
- maxrgb=(256*MIN(120,lum))/120;  /* 0 .. 256 */
+ maxrgb=(256*min(120,lum))/120;  /* 0 .. 256 */
  if (hue< 80)
   res=0;
  else
@@ -193,7 +193,7 @@ static int CC_HSLtoRGB(char c,int hue,int sat,int lum)
  if (lum>120 && res<256)
   res+=((lum-120) * (256-res))/120;
 
- return MIN(res,255);
+ return min(res,255);
 }
 
 /***********************************************************************
@@ -204,10 +204,10 @@ static int CC_RGBtoHSL(char c,int r,int g,int b)
  WORD maxi,mini,mmsum,mmdif,result=0;
  int iresult=0;
 
- maxi=MAX(r,b);
- maxi=MAX(maxi,g);
- mini=MIN(r,b);
- mini=MIN(mini,g);
+ maxi=max(r,b);
+ maxi=max(maxi,g);
+ mini=min(r,b);
+ mini=min(mini,g);
 
  mmsum=maxi+mini;
  mmdif=maxi-mini;
@@ -642,7 +642,7 @@ static void CC_PaintLumBar(HWND16 hDlg,int hue,int sat)
   ydif=client.bottom/YSTEPS+1;
   for(lum=0;lum<240+ldif;lum+=ldif)
   {
-   rect.top=MAX(0,rect.bottom-ydif);
+   rect.top=max(0,rect.bottom-ydif);
    r=CC_HSLtoRGB('R',hue,sat,lum);
    g=CC_HSLtoRGB('G',hue,sat,lum);
    b=CC_HSLtoRGB('B',hue,sat,lum);

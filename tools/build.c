@@ -369,9 +369,9 @@ static void AssignOrdinals(void)
     {
         if (!strcmp( Names[i]->name, Names[i+1]->name ))
         {
-            Line = MAX( Names[i]->lineno, Names[i+1]->lineno );
+            Line = max( Names[i]->lineno, Names[i+1]->lineno );
             fatal_error( "'%s' redefined (previous definition at line %d)\n",
-                         Names[i]->name, MIN( Names[i]->lineno, Names[i+1]->lineno ) );
+                         Names[i]->name, min( Names[i]->lineno, Names[i+1]->lineno ) );
         }
     }
 

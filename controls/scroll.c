@@ -255,7 +255,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         }
         else
         {
-            INT max = info->MaxVal - MAX( info->Page-1, 0 );
+            INT max = info->MaxVal - max( info->Page-1, 0 );
             if (info->MinVal >= max)
                 *thumbPos = *arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
             else
@@ -292,7 +292,7 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
 
     if ((pixels -= thumbSize) <= 0) return infoPtr->MinVal;
 
-    pos = MAX( 0, pos - (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP) );
+    pos = max( 0, pos - (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP) );
     if (pos > pixels) pos = pixels;
 
     if (!infoPtr->Page) pos *= infoPtr->MaxVal - infoPtr->MinVal;
@@ -1350,8 +1350,8 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     if (infoPtr->CurVal < infoPtr->MinVal)
         infoPtr->CurVal = infoPtr->MinVal;
-    else if (infoPtr->CurVal > infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
-        infoPtr->CurVal = infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 );
+    else if (infoPtr->CurVal > infoPtr->MaxVal - max( infoPtr->Page-1, 0 ))
+        infoPtr->CurVal = infoPtr->MaxVal - max( infoPtr->Page-1, 0 );
 
     TRACE("    new values: page=%d pos=%d min=%d max=%d\n",
 		 infoPtr->Page, infoPtr->CurVal,
@@ -1367,7 +1367,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
     if (info->fMask & (SIF_RANGE | SIF_PAGE | SIF_DISABLENOSCROLL))
     {
         new_flags = infoPtr->flags;
-        if (infoPtr->MinVal >= infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
+        if (infoPtr->MinVal >= infoPtr->MaxVal - max( infoPtr->Page-1, 0 ))
         {
             /* Hide or disable scroll-bar */
             if (info->fMask & SIF_DISABLENOSCROLL)

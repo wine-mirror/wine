@@ -222,7 +222,7 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     EnterCriticalSection(&iData->cs);
 
     for (lpTimer = iData->lpTimerList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
-	wNewID = MAX(wNewID, lpTimer->wTimerID);
+	wNewID = max(wNewID, lpTimer->wTimerID);
     }
     
     lpNewTimer->lpNext = iData->lpTimerList;

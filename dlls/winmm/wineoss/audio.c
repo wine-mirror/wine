@@ -389,7 +389,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	TRACE("imhere[1]\n");
 	MsgWaitForMultipleObjects(0, NULL, FALSE, 
 				  (wwo->state == WINE_WS_PLAYING) ? 
-				     (MAX(wwo->wFragsUsedInQueue, 4) - 2) * dwSleepTime : 
+				     (max(wwo->wFragsUsedInQueue, 4) - 2) * dwSleepTime : 
 				     /*INFINITE*/100, 
 				  QS_POSTMESSAGE);
 	TRACE("imhere[2]\n");

@@ -161,7 +161,7 @@ VOID MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
 
   button->wParam = WH_FIRST_BUTTON;
   for (b = &win->first_button; *b; b = &(*b)->next)
-    button->wParam = MAX(button->wParam, (*b)->wParam + 1);
+    button->wParam = max(button->wParam, (*b)->wParam + 1);
   *b = button;
 
   SendMessage(win->hMainWnd, WM_USER, 0, 0);

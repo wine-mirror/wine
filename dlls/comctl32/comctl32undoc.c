@@ -852,7 +852,7 @@ DSA_Create (INT nSize, INT nGrow)
         hdsa->pData = NULL;
 	hdsa->nMaxCount = 0;
 	hdsa->nItemSize = nSize;
-	hdsa->nGrow = MAX(1, nGrow);
+	hdsa->nGrow = max(1, nGrow);
     }
 
     return hdsa;
@@ -1189,7 +1189,7 @@ DPA_Create (INT nGrow)
 
     hdpa = (HDPA)COMCTL32_Alloc (sizeof(DPA));
     if (hdpa) {
-	hdpa->nGrow = MAX(8, nGrow);
+	hdpa->nGrow = max(8, nGrow);
 	hdpa->hHeap = COMCTL32_hHeap;
 	hdpa->nMaxCount = hdpa->nGrow * 2;
 	hdpa->ptrs =
@@ -1250,7 +1250,7 @@ DPA_Grow (const HDPA hdpa, INT nGrow)
     if (!hdpa)
 	return FALSE;
 
-    hdpa->nGrow = MAX(8, nGrow);
+    hdpa->nGrow = max(8, nGrow);
 
     return TRUE;
 }
@@ -1553,7 +1553,7 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
     
     /* free memory ?*/
     if ((hdpa->nMaxCount - hdpa->nItemCount) >= hdpa->nGrow) {
-	INT nNewItems = MAX(hdpa->nGrow * 2, hdpa->nItemCount);
+	INT nNewItems = max(hdpa->nGrow * 2, hdpa->nItemCount);
 	nSize = nNewItems * sizeof(LPVOID);
 	lpDest = (LPVOID)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
 				      hdpa->ptrs, nSize);
@@ -1790,7 +1790,7 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
 	hdpa = (HDPA)COMCTL32_Alloc (sizeof(DPA));
 
     if (hdpa) {
-	hdpa->nGrow = MIN(8, nGrow);
+	hdpa->nGrow = min(8, nGrow);
 	hdpa->hHeap = hHeap ? hHeap : COMCTL32_hHeap;
 	hdpa->nMaxCount = hdpa->nGrow * 2;
 	hdpa->ptrs =

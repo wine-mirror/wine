@@ -410,7 +410,7 @@ static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 		PlaySound_Stop = PlaySound_Loop = FALSE;
 		break;
 	    }
-	    count = mmioRead(hmmio, waveHdr[index].lpData, MIN(bufsize, left));
+	    count = mmioRead(hmmio, waveHdr[index].lpData, min(bufsize, left));
 	    if (count < 1) break;
 	    left -= count;
 	    waveHdr[index].dwBufferLength = count;
@@ -992,7 +992,7 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
     case MIXER_GETCONTROLDETAILSF_LISTTEXT:
 	{
 	    LPVOID	paDetailsW = lpmcd->paDetails;
-	    int		size = MAX(1, lpmcd->cChannels) * sizeof(MIXERCONTROLDETAILS_LISTTEXTA);
+	    int		size = max(1, lpmcd->cChannels) * sizeof(MIXERCONTROLDETAILS_LISTTEXTA);
 
 	    if (lpmcd->u.cMultipleItems != 0 && lpmcd->u.cMultipleItems != lpmcd->u.hwndOwner) {
 		size *= lpmcd->u.cMultipleItems;
@@ -3091,11 +3091,11 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	    DWORD	i;
 	    BYTE	ch;
 	    
-	    for (i = 0; i < MIN(16, lpMidiHdr->dwBufferLength - dwToGo); i++)
+	    for (i = 0; i < min(16, lpMidiHdr->dwBufferLength - dwToGo); i++)
 		printf("%02x ", lpData[dwToGo + i]);
 	    for (; i < 16; i++)
 		printf("   ");
-	    for (i = 0; i < MIN(16, lpMidiHdr->dwBufferLength - dwToGo); i++) {
+	    for (i = 0; i < min(16, lpMidiHdr->dwBufferLength - dwToGo); i++) {
 		ch = lpData[dwToGo + i];
 		printf("%c", (ch >= 0x20 && ch <= 0x7F) ? ch : '.');
 	    }

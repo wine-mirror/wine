@@ -1142,9 +1142,9 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
                       MinMax.ptMaxPosition.x, MinMax.ptMaxPosition.y,
                       MinMax.ptMaxTrackSize.x, MinMax.ptMaxTrackSize.y,
                       MinMax.ptMinTrackSize.x, MinMax.ptMinTrackSize.y);
-    MinMax.ptMaxTrackSize.x = MAX( MinMax.ptMaxTrackSize.x,
+    MinMax.ptMaxTrackSize.x = max( MinMax.ptMaxTrackSize.x,
                                    MinMax.ptMinTrackSize.x );
-    MinMax.ptMaxTrackSize.y = MAX( MinMax.ptMaxTrackSize.y,
+    MinMax.ptMaxTrackSize.y = max( MinMax.ptMaxTrackSize.y,
                                    MinMax.ptMinTrackSize.y );
 
     if (maxSize) *maxSize = MinMax.ptMaxSize;
@@ -2087,8 +2087,8 @@ LONG WINPOS_HandleWindowPosChanging( WND *wndPtr, WINDOWPOS *winpos )
 	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
 	WINPOS_GetMinMaxInfo( wndPtr, &maxSize, NULL, NULL, NULL );
-	winpos->cx = MIN( winpos->cx, maxSize.x );
-	winpos->cy = MIN( winpos->cy, maxSize.y );
+	winpos->cx = min( winpos->cx, maxSize.x );
+	winpos->cy = min( winpos->cy, maxSize.y );
     }
     return 0;
 }
@@ -2239,8 +2239,8 @@ nocopy:
 
 	r.left = Wnd->rectClient.left - Wnd->rectWindow.left;
         r.top = Wnd->rectClient.top  - Wnd->rectWindow.top;
-	r.right = r.left + MIN( ocw, ncw );
-	r.bottom = r.top + MIN( och, nch );
+	r.right = r.left + min( ocw, ncw );
+	r.bottom = r.top + min( och, nch );
 
 	REGION_CropRgn( hrgnValid, hrgnValid, &r, 
 			(uFlags & SWP_EX_PAINTSELF) ? NULL : (POINT*)&(Wnd->rectWindow));

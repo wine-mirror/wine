@@ -255,7 +255,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     if (proc) WINPROC_SetProc( &pTimer->proc, proc, type, WIN_PROC_TIMER );
 
     pTimer->expired  = FALSE;
-    pTimer->hService = SERVICE_AddTimer( MAX( timeout * 1000L, SYS_TIMER_RATE ),
+    pTimer->hService = SERVICE_AddTimer( max( timeout * 1000L, SYS_TIMER_RATE ),
                                        TIMER_CheckTimer, (ULONG_PTR)pTimer );
     
     TRACE("Timer added: %p, %04x, %04x, %04x, %08lx\n", 

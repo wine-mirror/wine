@@ -524,7 +524,7 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
 
     const char *p = strchr( name, '/' );
     int len = p ? (int)(p - name) : strlen(name);
-    if ((p = strchr( name, '\\' ))) len = MIN( (int)(p - name), len );
+    if ((p = strchr( name, '\\' ))) len = min( (int)(p - name), len );
     /* Ignore trailing dots */
     while (len > 1 && name[len-1] == '.') len--;
     if (long_len < len + 1) return FALSE;

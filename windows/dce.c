@@ -411,10 +411,10 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 		goto fail;
             }
 
-	    lprect->left = MAX( lprect->left, wndPtr->rectClient.left );
-	    lprect->right = MIN( lprect->right, wndPtr->rectClient.right );
-	    lprect->top = MAX( lprect->top, wndPtr->rectClient.top );
-	    lprect->bottom = MIN( lprect->bottom, wndPtr->rectClient.bottom );
+	    lprect->left = max( lprect->left, wndPtr->rectClient.left );
+	    lprect->right = min( lprect->right, wndPtr->rectClient.right );
+	    lprect->top = max( lprect->top, wndPtr->rectClient.top );
+	    lprect->bottom = min( lprect->bottom, wndPtr->rectClient.bottom );
 
             WIN_ReleaseWndPtr(wndPtr);
 	}

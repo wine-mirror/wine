@@ -629,7 +629,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
 
     whidx = 0;
-    left = MIN(wmw->dwLength, end - wmw->dwPosition);
+    left = min(wmw->dwLength, end - wmw->dwPosition);
     wmw->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     wmw->dwEventCount = 1L; /* for first buffer */
 
@@ -637,7 +637,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     
     /* FIXME: this doesn't work if wmw->dwPosition != 0 */
     while (left > 0 && wmw->dwStatus != MCI_MODE_STOP && wmw->dwStatus != MCI_MODE_NOT_READY) {
-	count = mmioRead(wmw->hFile, waveHdr[whidx].lpData, MIN(bufsize, left));
+	count = mmioRead(wmw->hFile, waveHdr[whidx].lpData, min(bufsize, left));
 	TRACE("mmioRead bufsize=%ld count=%ld\n", bufsize, count);
 	if (count < 1) 
 	    break;

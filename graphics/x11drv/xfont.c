@@ -3065,10 +3065,10 @@ BOOL X11DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 		    if (CI_NONEXISTCHAR(cs)) cs = def; 
   		} else cs = def;
 		if(pfo->lpX11Trans)
-		    *buffer++ = MAX(cs->attributes, 0) *
+		    *buffer++ = max(cs->attributes, 0) *
 		      pfo->lpX11Trans->pixelsize / 1000.0 * pfo->rescale;
 		else
-		    *buffer++ = MAX(cs->width, 0 ) * pfo->rescale;
+		    *buffer++ = max(cs->width, 0 ) * pfo->rescale;
 	    }
 	}
 

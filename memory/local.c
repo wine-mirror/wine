@@ -390,7 +390,7 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
     }
     ptr = PTR_SEG_OFF_TO_LIN( selector, 0 );
 
-    start = LALIGN( MAX( start, sizeof(INSTANCEDATA) ) );
+    start = LALIGN( max( start, sizeof(INSTANCEDATA) ) );
     heapInfoArena = LALIGN(start + sizeof(LOCALARENA) );
     freeArena = LALIGN( heapInfoArena + ARENA_HEADER_SIZE
                         + sizeof(LOCALHEAPINFO) );
@@ -857,7 +857,7 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
     }
 
     size += ARENA_HEADER_SIZE;
-    size = LALIGN( MAX( size, sizeof(LOCALARENA) ) );
+    size = LALIGN( max( size, sizeof(LOCALARENA) ) );
 
 #if 0
 notify_done:

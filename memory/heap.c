@@ -639,7 +639,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
     }
     size += sizeof(SUBHEAP) + sizeof(ARENA_FREE);
     if (!(subheap = HEAP_CreateSubHeap( heap, heap->flags, size,
-                                        MAX( HEAP_DEF_SIZE, size ) )))
+                                        max( HEAP_DEF_SIZE, size ) )))
         return NULL;
 
     TRACE("created new sub-heap %08lx of %08lx bytes for heap %08lx\n",

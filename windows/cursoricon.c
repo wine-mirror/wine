@@ -499,7 +499,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	 */
 
     	if ((pInfo = (BITMAPINFO *)HeapAlloc( GetProcessHeap(), 0, 
-	  MAX(size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD)))))
+	  max(size, sizeof(BITMAPINFOHEADER) + 2*sizeof(RGBQUAD)))))
 	{	
 	    memcpy( pInfo, bmi, size );	
 	    pInfo->bmiHeader.biHeight /= 2;

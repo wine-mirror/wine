@@ -48,10 +48,10 @@ EMFDRV_LineTo( DC *dc, INT x, INT y )
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
     	return FALSE;
 
-    bounds.left   = MIN(x, dc->w.CursPosX);
-    bounds.top    = MIN(y, dc->w.CursPosY);
-    bounds.right  = MAX(x, dc->w.CursPosX);
-    bounds.bottom = MAX(y, dc->w.CursPosY);
+    bounds.left   = min(x, dc->w.CursPosX);
+    bounds.top    = min(y, dc->w.CursPosY);
+    bounds.right  = max(x, dc->w.CursPosX);
+    bounds.bottom = max(y, dc->w.CursPosY);
 
     EMFDRV_UpdateBBox( dc, &bounds );
 
@@ -116,10 +116,10 @@ EMFDRV_ArcChordPie( DC *dc, INT left, INT top, INT right, INT bottom,
     if(angleEnd < 0) angleEnd += 2 * M_PI;
     if(angleEnd < angleStart) angleEnd += 2 * M_PI;
 
-    bounds.left   = MIN(xinterStart, xinterEnd);
-    bounds.top    = MIN(yinterStart, yinterEnd);
-    bounds.right  = MAX(xinterStart, xinterEnd);
-    bounds.bottom = MAX(yinterStart, yinterEnd);
+    bounds.left   = min(xinterStart, xinterEnd);
+    bounds.top    = min(yinterStart, yinterEnd);
+    bounds.right  = max(xinterStart, xinterEnd);
+    bounds.bottom = max(yinterStart, yinterEnd);
     
     for(i = 0; i <= 8; i++) {
         if(i * M_PI / 2 < angleStart) /* loop until we're past start */

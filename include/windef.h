@@ -421,25 +421,14 @@ typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
                                    ((DWORD)GET_WORD((WORD *)(ptr)+1) << 16)))
 #endif  /* 1 */
 
-/* MIN and MAX macros */
-
-#ifdef MAX
-#undef MAX
-#endif
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-
-#ifdef MIN
-#undef MIN
-#endif
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-
-#define __max(a,b) MAX(a,b)
-#define __min(a,b) MIN(a,b)
+/* min and max macros */
+#define __max(a,b) (((a) > (b)) ? (a) : (b))
+#define __min(a,b) (((a) < (b)) ? (a) : (b))
 #ifndef max
-#define max(a,b)   MAX(a,b)
+#define max(a,b)   (((a) > (b)) ? (a) : (b))
 #endif
 #ifndef min
-#define min(a,b)   MIN(a,b)
+#define min(a,b)   (((a) < (b)) ? (a) : (b))
 #endif
 
 #define _MAX_PATH  260

@@ -397,8 +397,8 @@ static int calc_vma_size( HMODULE hModule )
                       pe_seg->NumberOfRelocations,
                       pe_seg->NumberOfLinenumbers,
                       pe_seg->Characteristics);
-        vma_size=MAX(vma_size, pe_seg->VirtualAddress+pe_seg->SizeOfRawData);
-        vma_size=MAX(vma_size, pe_seg->VirtualAddress+pe_seg->Misc.VirtualSize);
+        vma_size=max(vma_size, pe_seg->VirtualAddress+pe_seg->SizeOfRawData);
+        vma_size=max(vma_size, pe_seg->VirtualAddress+pe_seg->Misc.VirtualSize);
         pe_seg++;
     }
     return vma_size;

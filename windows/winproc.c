@@ -1620,7 +1620,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case LB_GETSELITEMS:
         {
             LPINT16 items;
-            *pwparam16 = (WPARAM16)MIN( wParam32, 0x7f80 ); /* Must be < 64K */
+            *pwparam16 = (WPARAM16)min( wParam32, 0x7f80 ); /* Must be < 64K */
             if (!(items = SEGPTR_ALLOC( *pwparam16 * sizeof(INT16)
                                         + sizeof(LPARAM)))) return -1;
             *((LPARAM *)items)++ = *plparam;  /* Store the previous lParam */
@@ -1633,7 +1633,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         {
             INT i;
             LPINT16 stops;
-            *pwparam16 = (WPARAM16)MIN( wParam32, 0x7f80 ); /* Must be < 64K */
+            *pwparam16 = (WPARAM16)min( wParam32, 0x7f80 ); /* Must be < 64K */
             if (!(stops = SEGPTR_ALLOC( *pwparam16 * sizeof(INT16)
                                         + sizeof(LPARAM)))) return -1;
             for (i = 0; i < *pwparam16; i++) stops[i] = *((LPINT)*plparam+i);
@@ -1765,7 +1765,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_GETTEXT:
         {
             LPSTR str;
-            *pwparam16 = (WPARAM16)MIN( wParam32, 0xff80 ); /* Must be < 64K */
+            *pwparam16 = (WPARAM16)min( wParam32, 0xff80 ); /* Must be < 64K */
             if (!(str = SEGPTR_ALLOC(*pwparam16 + sizeof(LPARAM)))) return -1;
             *((LPARAM *)str)++ = *plparam;  /* Store the previous lParam */
             *plparam = (LPARAM)SEGPTR_GET(str);

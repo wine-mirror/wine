@@ -350,7 +350,7 @@ static struct key *alloc_key( const WCHAR *name, time_t modif )
 static void touch_key( struct key *key )
 {
     key->modif = time(NULL);
-    key->level = MAX( key->level, current_level );
+    key->level = max( key->level, current_level );
 }
 
 /* try to grow the array of subkeys; return 1 if OK, 0 on error */
@@ -1186,7 +1186,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     value->len  = len;
     value->type = type;
     /* update the key level but not the modification time */
-    key->level = MAX( key->level, current_level );
+    key->level = max( key->level, current_level );
     return 1;
 
  error:

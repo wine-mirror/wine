@@ -1488,7 +1488,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
  */
 UINT WINAPI SetHandleCount( UINT count )
 {
-    return MIN( 256, count );
+    return min( 256, count );
 }
 
 
