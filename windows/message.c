@@ -571,17 +571,6 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
 
     EnterCriticalSection(&sysMsgQueue->cSection);
 
-    /* If the queue is empty, attempt to fill it */
-    if (!sysMsgQueue->msgCount && THREAD_IsWin16( THREAD_Current() )
-                               && EVENT_Pending())
-    {
-	LeaveCriticalSection(&sysMsgQueue->cSection);
-        
-        EVENT_WaitNetEvent( FALSE, TRUE );
-        
-	EnterCriticalSection(&sysMsgQueue->cSection);
-    }
-
     /* Loop through the Q and translate the message we wish to process
      * while we own the lock. Based on the translation status (abandon/cont/accept)
      * we then process the message accordingly
@@ -1945,8 +1934,6 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
       for (i = 0; i < nCount; i++)
 	handles[i] = pHandles[i];
     handles[nCount] = msgQueue->hEvent;
-
-    EVENT_Pending();
 
     ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
     } 

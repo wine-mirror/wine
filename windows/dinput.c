@@ -429,7 +429,11 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 
 	TRACE(dinput,"(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
     		This,dodsize,dod,entries,entries?*entries:0,flags);
-	EVENT_WaitNetEvent(FALSE,TRUE);
+
+        /* FIXME !!! */
+
+	EVENT_Synchronize( FALSE );
+
 	if (entries)
 		xentries = *entries; 
 	else
