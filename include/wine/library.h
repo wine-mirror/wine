@@ -15,6 +15,7 @@ typedef void (*load_dll_callback_t)( void *, const char * );
 
 extern void wine_dll_set_callback( load_dll_callback_t load );
 extern void *wine_dll_load( const char *filename );
+extern void *wine_dll_load_main_exe( const char *name, int search_path );
 extern void wine_dll_unload( void *handle );
 
 /* debugging */

@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include "wine/winbase16.h"
 #include "wine/exception.h"
+#include "wine/library.h"
 #include "process.h"
 #include "drive.h"
 #include "main.h"
@@ -170,6 +171,7 @@ static BOOL process_init( char *argv[] )
 
     /* store the program name */
     argv0 = argv[0];
+    main_exe_argv = argv;
 
     /* Fill the initial process structure */
     current_process.exit_code       = STILL_ACTIVE;
@@ -367,6 +369,41 @@ static void start_process(void)
 
 
 /***********************************************************************
+ *           open_winelib_app
+ *
+ * Try to open the Winelib app .so file based on argv[0] or WINEPRELOAD.
+ */
+void *open_winelib_app( const char *argv0 )
+{
+    void *ret = NULL;
+    char *tmp;
+    const char *name;
+
+    if ((name = getenv( "WINEPRELOAD" )))
+    {
+        ret = wine_dll_load_main_exe( name, 0 );
+    }
+    else
+    {
+        /* if argv[0] is "wine", don't try to load anything */
+        if (!(name = strrchr( argv0, '/' ))) name = argv0;
+        else name++;
+        if (!strcmp( name, "wine" )) return NULL;
+
+        /* now try argv[0] with ".so" appended */
+        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv0) + 4 )))
+        {
+            strcpy( tmp, argv0 );
+            strcat( tmp, ".so" );
+            /* search in PATH only if there was no '/' in argv[0] */
+            ret = wine_dll_load_main_exe( tmp, (name == argv0) );
+            HeapFree( GetProcessHeap(), 0, tmp );
+        }
+    }
+    return ret;
+}
+
+/***********************************************************************
  *           PROCESS_InitWine
  *
  * Wine initialisation: load and start the main exe file.
@@ -377,6 +414,8 @@ void PROCESS_InitWine( int argc, char *argv[] )
 
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
+
+    if (open_winelib_app( argv[0] )) goto found; /* try to open argv[0] as a winelib app */
 
     main_exe_argv = ++argv;  /* remove argv[0] (wine itself) */
 
@@ -409,17 +448,18 @@ void PROCESS_InitWine( int argc, char *argv[] )
         if (PE_HEADER(main_module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
             ExitProcess( ERROR_BAD_EXE_FORMAT );
         stack_size = PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve;
-    }
-    else /* it must be 16-bit or DOS format */
-    {
-        NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
-        current_process.flags |= PDB32_WIN16_PROC;
-        main_exe_name[0] = 0;
-        CloseHandle( main_exe_file );
-        main_exe_file = INVALID_HANDLE_VALUE;
-        SYSLEVEL_EnterWin16Lock();
+        goto found;
     }
 
+    /* it must be 16-bit or DOS format */
+    NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
+    current_process.flags |= PDB32_WIN16_PROC;
+    main_exe_name[0] = 0;
+    CloseHandle( main_exe_file );
+    main_exe_file = INVALID_HANDLE_VALUE;
+    SYSLEVEL_EnterWin16Lock();
+
+ found:
     /* allocate main thread stack */
     if (!THREAD_InitStack( NtCurrentTeb(), stack_size, TRUE )) goto error;
 
@@ -439,7 +479,6 @@ void PROCESS_InitWine( int argc, char *argv[] )
 void PROCESS_InitWinelib( int argc, char *argv[] )
 {
     if (!process_init( argv )) exit(1);
-    main_exe_argv = argv;
 
     /* allocate main thread stack */
     if (!THREAD_InitStack( NtCurrentTeb(), 0, TRUE )) ExitProcess( GetLastError() );

@@ -350,3 +350,53 @@ void wine_dll_unload( void *handle )
     if (handle != (void *)1) dlclose( handle );
 #endif
 }
+
+
+/***********************************************************************
+ *           wine_dll_load_main_exe
+ *
+ * Try to load the .so for the main exe, optionally searching for it in PATH.
+ */
+void *wine_dll_load_main_exe( const char *name, int search_path )
+{
+    void *ret = NULL;
+#ifdef HAVE_DL_API
+    const char *path = NULL;
+    if (search_path) path = getenv( "PATH" );
+
+    if (!path)
+    {
+        /* no path, try only the specified name */
+        ret = dlopen( name, RTLD_NOW );
+    }
+    else
+    {
+        char buffer[128], *tmp = buffer;
+        size_t namelen = strlen(name);
+        size_t pathlen = strlen(path);
+
+        if (namelen + pathlen + 2 > sizeof(buffer)) tmp = malloc( namelen + pathlen + 2 );
+        if (tmp)
+        {
+            char *basename = tmp + pathlen;
+            *basename = '/';
+            strcpy( basename + 1, name );
+            for (;;)
+            {
+                int len;
+                const char *p = strchr( path, ':' );
+                if (!p) p = path + strlen(path);
+                if ((len = p - path) > 0)
+                {
+                    memcpy( basename - len, path, len );
+                    if ((ret = dlopen( basename - len, RTLD_NOW ))) break;
+                }
+                if (!*p) break;
+                path = p + 1;
+            }
+            if (tmp != buffer) free( tmp );
+        }
+    }
+#endif  /* HAVE_DL_API */
+    return ret;
+}
