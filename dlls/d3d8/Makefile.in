@@ -3,12 +3,26 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3d8.dll
+IMPORTS   = user32 gdi32 kernel32
+EXTRALIBS = $(LIBUUID) $(X_LIBS) $(XLIB)
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	d3d8_main.c
+	basetexture.c \
+	cubetexture.c \
+	d3d8_main.c \
+	device.c \
+	directx.c \
+	indexbuffer.c \
+	resource.c \
+	surface.c \
+	swapchain.c \
+	texture.c \
+	vertexbuffer.c \
+	volume.c \
+	volumetexture.c \
 
 @MAKE_DLL_RULES@
 

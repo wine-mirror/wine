@@ -1,0 +1,549 @@
+/*
+ * IDirect3D8 implementation
+ *
+ * Copyright 2002 Jason Edmeades
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "wingdi.h"
+#include "wine/debug.h"
+
+#include "config.h"
+#include "x11drv.h"
+
+#include "d3d8_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+
+static const float idmatrix[16] = {
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+};
+
+#define NUM_MODES 10
+static const int modes[NUM_MODES][3] = {
+    {640, 480, 85},
+    {800, 600, 85},
+    {1024, 768, 85},
+    {1152, 864, 85},
+    {1280, 768, 85},
+    {1280, 960, 85},
+    {1280, 1024, 85},
+    {1600, 900, 85},
+    {1600, 1024, 85},
+    {1600, 1200, 85}
+};
+
+/* retrieve the X display to use on a given DC */
+inline static Display *get_display( HDC hdc )
+{
+    Display *display;
+    enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;
+
+    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
+                    sizeof(display), (LPSTR)&display )) display = NULL;
+    return display;
+}
+
+
+/* IDirect3D IUnknown parts follow: */
+HRESULT WINAPI IDirect3D8Impl_QueryInterface(LPDIRECT3D8 iface,REFIID riid,LPVOID *ppobj)
+{
+    ICOM_THIS(IDirect3D8Impl,iface);
+
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IClassFactory)) {
+        IDirect3D8Impl_AddRef(iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
+
+    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI IDirect3D8Impl_AddRef(LPDIRECT3D8 iface) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    TRACE("(%p) : AddRef from %ld\n", This, This->ref);
+    return ++(This->ref);
+}
+
+ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    ULONG ref = --This->ref;
+    TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
+    if (ref == 0)
+        HeapFree(GetProcessHeap(), 0, This);
+    return ref;
+}
+
+/* IDirect3D Interface follow: */
+HRESULT  WINAPI  IDirect3D8Impl_RegisterSoftwareDevice     (LPDIRECT3D8 iface, void* pInitializeFunction) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    FIXME("(%p)->(%p): stub\n", This, pInitializeFunction);
+    return D3D_OK;
+}
+
+UINT     WINAPI  IDirect3D8Impl_GetAdapterCount            (LPDIRECT3D8 iface) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    /* FIXME: Set to one for now to imply the display */
+    TRACE("(%p): Mostly stub, only returns primary display\n", This);
+    return 1;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
+                                                            UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER8* pIdentifier) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+
+    TRACE("(%p}->(Adapter: %d, Flags: %lx, pId=%p)\n", This, Adapter, Flags, pIdentifier);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (Adapter == 0) { /* Display */
+        strcpy(pIdentifier->Driver, "Display");
+        strcpy(pIdentifier->Description, "Direct3D Display");
+        pIdentifier->DriverVersion.s.HighPart = 1;
+        pIdentifier->DriverVersion.s.LowPart = 0;
+        pIdentifier->VendorId = 0;
+        pIdentifier->DeviceId = 0;
+        pIdentifier->SubSysId = 0;
+        pIdentifier->Revision = 0;
+        /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
+        if (Flags & D3DENUM_NO_WHQL_LEVEL ) {
+            pIdentifier->WHQLLevel = 0;
+        } else {
+            pIdentifier->WHQLLevel = 1;
+        }
+    } else {
+        FIXME("Adapter not primary display\n");
+    }
+
+    return D3D_OK;
+}
+
+UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
+                                                            UINT Adapter) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+
+    TRACE("(%p}->(Adapter: %d)\n", This, Adapter);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (Adapter == 0) { /* Display */
+        int maxWidth        = GetSystemMetrics(SM_CXSCREEN);
+        int maxHeight       = GetSystemMetrics(SM_CYSCREEN);
+        int i;
+
+        for (i=0; i<NUM_MODES; i++) {
+            if (modes[i][0] > maxWidth || modes[i][1] > maxHeight) {
+                return i+1;
+            }
+        }
+        return NUM_MODES+1;
+    } else {
+        FIXME("Adapter not primary display\n");
+    }
+
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
+                                                            UINT Adapter, UINT Mode, D3DDISPLAYMODE* pMode) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+
+    TRACE("(%p}->(Adapter: %d, mode: %d, pMode=%p)\n", This, Adapter, Mode, pMode);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (Adapter == 0) { /* Display */
+        HDC hdc;
+        int bpp = 0;
+
+        if (Mode == 0) {
+            pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
+            pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
+            pMode->RefreshRate  = 85; /*FIXME: How to identify? */
+        } else if (Mode < (NUM_MODES+1)) {
+            pMode->Width        = modes[Mode-1][0];
+            pMode->Height       = modes[Mode-1][1];
+            pMode->RefreshRate  = modes[Mode-1][2];
+        } else {
+            TRACE("Requested mode out of range %d\n", Mode);
+            return D3DERR_INVALIDCALL;
+        }
+
+        hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+        bpp = GetDeviceCaps(hdc, BITSPIXEL);
+        DeleteDC(hdc);
+
+        switch (bpp) {
+        case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
+        case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;
+        case 24: pMode->Format       = D3DFMT_R8G8B8;   break;
+        case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
+        default: pMode->Format       = D3DFMT_UNKNOWN;
+        }
+        TRACE("W %d H %d rr %d fmt %x\n", pMode->Width, pMode->Height, pMode->RefreshRate, pMode->Format);
+
+    } else {
+        FIXME("Adapter not primary display\n");
+    }
+
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
+                                                            UINT Adapter, D3DDISPLAYMODE* pMode) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    TRACE("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
+
+    if (Adapter >= IDirect3D8Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (Adapter == 0) { /* Display */
+        HDC hdc;
+        int bpp = 0;
+
+        pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
+        pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
+        pMode->RefreshRate  = 85; /*FIXME: How to identify? */
+
+        hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+        bpp = GetDeviceCaps(hdc, BITSPIXEL);
+        DeleteDC(hdc);
+
+        switch (bpp) {
+        case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
+        case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;
+        case 24: pMode->Format       = D3DFMT_R8G8B8;   break;
+        case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
+        default: pMode->Format       = D3DFMT_UNKNOWN;
+        }
+
+    } else {
+        FIXME("Adapter not primary display\n");
+    }
+
+    TRACE("returning w:%d, h:%d, ref:%d, fmt:%d\n", pMode->Width,
+          pMode->Height, pMode->RefreshRate, pMode->Format);
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
+                                                            UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
+                                                            D3DFORMAT BackBufferFormat, BOOL Windowed) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    FIXME("(%p)->(Adptr:%d, CheckType:%x, DispFmt:%x, BackBuf:%x, Win? %d): stub\n", This, Adapter, CheckType,
+          DisplayFormat, BackBufferFormat, Windowed);
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
+                                                            UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
+                                                            DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    FIXME("(%p)->(Adptr:%d, DevType: %x, AdptFmt: %d, Use: %ld, ResTyp: %x, CheckFmt: %d)\n", This, Adapter, DeviceType,
+          AdapterFormat, Usage, RType, CheckFormat);
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceMultiSampleType (LPDIRECT3D8 iface,
+                                                            UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat,
+                                                            BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    FIXME("(%p)->(Adptr:%d, DevType: %x, SurfFmt: %x, Win? %d, MultiSamp: %x)\n", This, Adapter, DeviceType,
+          SurfaceFormat, Windowed, MultiSampleType);
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch     (LPDIRECT3D8 iface,
+                                                            UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
+                                                            D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    FIXME("(%p)->(Adptr:%d, DevType: %x, AdptFmt: %x, RendrTgtFmt: %x, DepthStencilFmt: %x)\n", This, Adapter, DeviceType,
+          AdapterFormat, RenderTargetFormat, DepthStencilFormat);
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
+                                                            UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS8* pCaps) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    TRACE("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
+
+
+    /* NOTE: Most of the values here are complete garbage for now */
+    pCaps->DeviceType = D3DDEVTYPE_HAL;  /* Not quite true, but use h/w supported by opengl I suppose */
+    pCaps->AdapterOrdinal = Adapter;
+
+    pCaps->Caps = 0;
+    pCaps->Caps2 = D3DCAPS2_CANRENDERWINDOWED;
+    pCaps->Caps3 = D3DDEVCAPS_HWTRANSFORMANDLIGHT;
+    pCaps->PresentationIntervals = D3DPRESENT_INTERVAL_IMMEDIATE;
+
+    pCaps->CursorCaps = 0;
+
+    pCaps->DevCaps = D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_PUREDEVICE;
+
+    pCaps->PrimitiveMiscCaps = D3DPMISCCAPS_CULLCCW | D3DPMISCCAPS_CULLCW | D3DPMISCCAPS_COLORWRITEENABLE | D3DPMISCCAPS_CLIPTLVERTS  |
+                               D3DPMISCCAPS_CLIPPLANESCALEDPOINTS | D3DPMISCCAPS_MASKZ; /*NOT: D3DPMISCCAPS_TSSARGTEMP*/
+    pCaps->RasterCaps = D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_PAT;
+    pCaps->ZCmpCaps = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
+                      D3DPCMPCAPS_LESS | D3DPCMPCAPS_LESSEQUAL | D3DPCMPCAPS_NEVER | D3DPCMPCAPS_NOTEQUAL;
+
+    pCaps->SrcBlendCaps = 0;
+    pCaps->DestBlendCaps = 0;
+    pCaps->AlphaCmpCaps = 0;
+    pCaps->ShadeCaps = D3DPSHADECAPS_SPECULARGOURAUDRGB | D3DPSHADECAPS_COLORGOURAUDRGB ;
+    pCaps->TextureCaps = D3DPTEXTURECAPS_ALPHA | D3DPTEXTURECAPS_ALPHAPALETTE | D3DPTEXTURECAPS_CUBEMAP | D3DPTEXTURECAPS_POW2;
+    pCaps->TextureFilterCaps = 0;
+    pCaps->CubeTextureFilterCaps = 0;
+    pCaps->VolumeTextureFilterCaps = 0;
+    pCaps->TextureAddressCaps = D3DPTADDRESSCAPS_BORDER | D3DPTADDRESSCAPS_CLAMP | D3DPTADDRESSCAPS_WRAP;
+    pCaps->VolumeTextureAddressCaps = 0;
+
+    pCaps->LineCaps = D3DLINECAPS_TEXTURE | D3DLINECAPS_ZTEST;
+
+    pCaps->MaxTextureWidth = 16384;
+    pCaps->MaxTextureHeight = 16384;
+    pCaps->MaxVolumeExtent = 0;
+
+    pCaps->MaxTextureRepeat = 32768;
+    pCaps->MaxTextureAspectRatio = 32768;
+    pCaps->MaxAnisotropy = 0;
+    pCaps->MaxVertexW = 1.0;
+
+    pCaps->GuardBandLeft = 0;
+    pCaps->GuardBandTop = 0;
+    pCaps->GuardBandRight = 0;
+    pCaps->GuardBandBottom = 0;
+
+    pCaps->ExtentsAdjust = 0;
+
+    pCaps->StencilCaps = 0;
+
+    pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x80000;
+    pCaps->TextureOpCaps = 0xFFFFFFFF;
+    pCaps->MaxTextureBlendStages = 256;
+    pCaps->MaxSimultaneousTextures = 256;
+
+    pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_TEXGEN;
+
+    pCaps->MaxActiveLights = 8;
+    pCaps->MaxUserClipPlanes = 1;
+    pCaps->MaxVertexBlendMatrices = 1;
+    pCaps->MaxVertexBlendMatrixIndex = 1;
+
+    pCaps->MaxPointSize = 128.0;
+
+    pCaps->MaxPrimitiveCount = 0xFFFFFFFF;
+    pCaps->MaxVertexIndex = 0xFFFFFFFF;
+    pCaps->MaxStreams = 1;
+    pCaps->MaxStreamStride = 1024;
+
+    pCaps->VertexShaderVersion = 01;
+    pCaps->MaxVertexShaderConst = 1;
+
+    pCaps->PixelShaderVersion = 01;
+    pCaps->MaxPixelShaderValue = 1.0;
+
+    return D3D_OK;
+}
+
+HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor          (LPDIRECT3D8 iface,
+                                                            UINT Adapter) {
+    ICOM_THIS(IDirect3D8Impl,iface);
+    FIXME("(%p)->(Adptr:%d)\n", This, Adapter);
+    return D3D_OK;
+}
+
+HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
+                                                            UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
+                                                            DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
+                                                            IDirect3DDevice8** ppReturnedDeviceInterface) {
+    IDirect3DDevice8Impl *object;
+    HWND whichHWND;
+
+    ICOM_THIS(IDirect3D8Impl,iface);
+    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %x, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
+          hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
+
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice8Impl));
+    object->lpVtbl = &Direct3DDevice8_Vtbl;
+    object->ref = 1;
+    object->direct3d8 = This;
+    object->UpdateStateBlock = &object->StateBlock;
+    CreateStateBlock((LPDIRECT3DDEVICE8) object);
+
+    *ppReturnedDeviceInterface = (LPDIRECT3DDEVICE8)object;
+
+    /* Initialize settings */
+    memcpy(&object->PresentParms, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
+    memcpy(&object->StateBlock.transforms[D3DTS_WORLDMATRIX(0)], &idmatrix, sizeof(idmatrix));
+    memcpy(&object->StateBlock.transforms[D3DTS_PROJECTION], &idmatrix, sizeof(idmatrix));
+    memcpy(&object->StateBlock.transforms[D3DTS_VIEW], &idmatrix, sizeof(idmatrix));
+
+    object->PresentParms.BackBufferCount = 1; /* Opengl only supports one? */
+    pPresentationParameters->BackBufferCount = 1;
+
+    object->adapterNo = Adapter;
+    object->devType = DeviceType;
+
+    /* Initialize openGl */
+    {
+        HDC hDc;
+        int          dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
+        /*int          dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16, None};   // Useful for debugging */
+
+        /* Which hwnd are we using? */
+/*      if (pPresentationParameters->Windowed) { */
+           whichHWND = pPresentationParameters->hDeviceWindow;
+           if (!whichHWND) {
+               whichHWND = hFocusWindow;
+           }
+           object->win     = (Window)GetPropA( whichHWND, "__wine_x11_client_window" );
+/*
+ *      } else {
+ *           whichHWND       = (HWND) GetDesktopWindow();
+ *           object->win     = (Window)GetPropA(whichHWND, "__wine_x11_whole_window" );
+ *	   root_window
+ *        }
+ */
+
+        hDc = GetDC(whichHWND);
+        object->display = get_display(hDc);
+
+        ENTER_GL();
+        object->visInfo = glXChooseVisual(object->display, DefaultScreen(object->display), dblBuf);
+        object->glCtx   = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
+	LEAVE_GL();
+        ReleaseDC(whichHWND, hDc);
+
+    }
+
+    if (object->glCtx == NULL) {
+        ERR("Error in context creation !\n");
+        return D3DERR_INVALIDCALL;
+    } else {
+        TRACE("Context created (HWND=%x, glContext=%p, Window=%ld, VisInfo=%p)\n",
+			whichHWND, object->glCtx, object->win, object->visInfo);
+    }
+
+    TRACE("Creating back buffer\n");
+    /* MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
+       then the corresponding dimension of the client area of the hDeviceWindow
+       (or the focus window, if hDeviceWindow is NULL) is taken. */
+    if (pPresentationParameters->Windowed && ((pPresentationParameters->BackBufferWidth  == 0) ||
+                                              (pPresentationParameters->BackBufferHeight  == 0))) {
+        RECT Rect;
+
+        GetClientRect(whichHWND, &Rect);
+
+        if (pPresentationParameters->BackBufferWidth  == 0) {
+           pPresentationParameters->BackBufferWidth = Rect.right;
+           TRACE("Updating width to %d\n", pPresentationParameters->BackBufferWidth);
+        }
+        if (pPresentationParameters->BackBufferHeight  == 0) {
+           pPresentationParameters->BackBufferHeight = Rect.bottom;
+           TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
+        }
+    }
+
+    IDirect3DDevice8Impl_CreateImageSurface((LPDIRECT3DDEVICE8) object,
+                                            pPresentationParameters->BackBufferWidth,
+                                            pPresentationParameters->BackBufferHeight,
+                                            pPresentationParameters->BackBufferFormat,
+                                            (LPDIRECT3DSURFACE8*) &object->backBuffer);
+
+    /* Now override the surface's Flip method (if in double buffering) ?COPIED from DDRAW!?
+    ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
+    {
+    int i;
+    struct _surface_chain *chain = surface->s.chain;
+    for (i=0;i<chain->nrofsurfaces;i++)
+      if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
+          ((x11_ds_private *) chain->surfaces[i]->private)->opengl_flip = TRUE;
+    }
+    */
+
+    ENTER_GL();
+    if (glXMakeCurrent(object->display, object->win, object->glCtx) == False) {
+        ERR("Error in setting current context (context %p drawable %ld)!\n",
+            object->glCtx, object->win);
+    }
+    checkGLcall("glXMakeCurrent");
+
+    /* Clear the screen */
+    glClearColor(1.0, 0.0, 0.0, 0.0);
+    checkGLcall("glClearColor");
+    glColor3f(1.0, 1.0, 1.0);
+    checkGLcall("glColor3f");
+
+    glEnable(GL_LIGHTING);
+    checkGLcall("glEnable");
+
+    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+    checkGLcall("glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
+
+    LEAVE_GL();
+
+    { /* Set a default viewport */
+       D3DVIEWPORT8 vp;
+       vp.X      = 0;
+       vp.Y      = 0;
+       vp.Width  = pPresentationParameters->BackBufferWidth;
+       vp.Height = pPresentationParameters->BackBufferHeight;
+       vp.MinZ   = 0.0f;
+       vp.MaxZ   = 1.0f;
+       IDirect3DDevice8Impl_SetViewport((LPDIRECT3DDEVICE8) object, &vp);
+    }
+
+    TRACE("(%p,%d) incomplete\n", This, Adapter);
+    return D3D_OK;
+}
+
+ICOM_VTABLE(IDirect3D8) Direct3D8_Vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IDirect3D8Impl_QueryInterface,
+    IDirect3D8Impl_AddRef,
+    IDirect3D8Impl_Release,
+    IDirect3D8Impl_RegisterSoftwareDevice,
+    IDirect3D8Impl_GetAdapterCount,
+    IDirect3D8Impl_GetAdapterIdentifier,
+    IDirect3D8Impl_GetAdapterModeCount,
+    IDirect3D8Impl_EnumAdapterModes,
+    IDirect3D8Impl_GetAdapterDisplayMode,
+    IDirect3D8Impl_CheckDeviceType,
+    IDirect3D8Impl_CheckDeviceFormat,
+    IDirect3D8Impl_CheckDeviceMultiSampleType,
+    IDirect3D8Impl_CheckDepthStencilMatch,
+    IDirect3D8Impl_GetDeviceCaps,
+    IDirect3D8Impl_GetAdapterMonitor,
+    IDirect3D8Impl_CreateDevice
+};

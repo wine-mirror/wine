@@ -18,9 +18,16 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "wine/debug.h"
 
+#include "d3d8_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+
+void (*wine_tsx11_lock_ptr)(void) = NULL;
+void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 HRESULT WINAPI ValidatePixelShader(void)
 {
@@ -48,7 +55,32 @@ HRESULT WINAPI DebugSetMute(void)
 
 LPVOID WINAPI Direct3DCreate8(UINT SDKVersion)
 {
-	FIXME("(0x%08x): stub\n", SDKVersion);
 
-	return NULL;
+    IDirect3D8Impl *object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3D8Impl));
+
+    object->lpVtbl = &Direct3D8_Vtbl;
+    object->ref = 1;
+
+    TRACE("SDKVersion = %x, Created Direct3D object at %p\n", SDKVersion, object);
+
+    /* Dump out the gl supported features
+    TRACE("GL_Extensions reported: %s\n", glGetString(GL_EXTENSIONS)); */
+
+    return object;
+}
+
+/* At process attach */
+BOOL WINAPI D3D8_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+{
+    TRACE("fdwReason=%ld\n", fdwReason);
+       if (fdwReason == DLL_PROCESS_ATTACH)
+       {
+           HMODULE mod = GetModuleHandleA( "x11drv.dll" );
+           if (mod)
+           {
+               wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
+               wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
+           }
+       }
+    return TRUE;
 }

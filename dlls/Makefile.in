@@ -769,7 +769,7 @@ commdlg:  shell32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) comctl32.dll$(DLLEXT) winspo
           user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 crtdll:   msvcrt.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 crypt32:  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
-d3d8:     kernel32.dll$(DLLEXT)
+d3d8:     user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 dciman32: kernel32.dll$(DLLEXT)
 ddraw:    user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 devenum:  kernel32.dll$(DLLEXT)
