@@ -15,7 +15,9 @@
 #define FAR
 #define THIS_ THIS,
 
-
+#define __T(x)      x
+#define _T(x)       __T(x)
+#define TEXT        _T
 
 /****************************************************************************
 *  DllGetClassObject
@@ -237,8 +239,26 @@ struct tagCONTEXTMENU
 
 #undef THIS
 /*****************************************************************************
- * IData structures
+ * structures for shell clipboard formats
  */
+typedef enum tagDVASPECT
+{	DVASPECT_CONTENT	= 1,
+        DVASPECT_THUMBNAIL	= 2,
+        DVASPECT_ICON	= 4,
+        DVASPECT_DOCPRINT	= 8
+} DVASPECT;
+
+enum tagTYMED
+{	TYMED_HGLOBAL   = 1,
+	TYMED_FILE      = 2,
+	TYMED_ISTREAM   = 4,
+	TYMED_ISTORAGE  = 8,
+	TYMED_GDI       = 16,
+	TYMED_MFPICT    = 32,
+	TYMED_ENHMF     = 64,
+	TYMED_NULL      = 0
+} TYMED;
+  
 typedef struct
 {	DWORD tdSize;
 	WORD tdDriverNameOffset;
@@ -246,10 +266,11 @@ typedef struct
 	WORD tdPortNameOffset;
 	WORD tdExtDevmodeOffset;
 	BYTE tdData[ 1 ];
-}   DVTARGETDEVICE32;
+} DVTARGETDEVICE32;
 
 typedef WORD CLIPFORMAT32, *LPCLIPFORMAT32;
 
+/* dataobject as answer to a request */
 typedef struct 
 {	DWORD tymed;
 	union 
@@ -263,7 +284,8 @@ typedef struct
         } u;
 	IUnknown *pUnkForRelease;
 } STGMEDIUM32;   
- 
+
+/* wished data format */
 typedef struct 
 {	CLIPFORMAT32 cfFormat;
 	DVTARGETDEVICE32 *ptd;
@@ -272,6 +294,77 @@ typedef struct
 	DWORD tymed;
 } FORMATETC32, *LPFORMATETC32;
 
+/* shell specific clipboard formats */
+
+/* DATAOBJECT_InitShellIDList*/
+#define CFSTR_SHELLIDLIST       TEXT("Shell IDList Array")      /* CF_IDLIST */
+
+extern UINT32 cfShellIDList;
+
+typedef struct
+{	UINT32 cidl;
+	UINT32 aoffset[1];
+} CIDA, *LPCIDA;
+
+#define CFSTR_SHELLIDLISTOFFSET TEXT("Shell Object Offsets")    /* CF_OBJECTPOSITIONS */
+#define CFSTR_NETRESOURCES      TEXT("Net Resource")            /* CF_NETRESOURCE */
+
+/* DATAOBJECT_InitFileGroupDesc */
+#define CFSTR_FILEDESCRIPTORA   TEXT("FileGroupDescriptor")     /* CF_FILEGROUPDESCRIPTORA */
+extern UINT32 cfFileGroupDesc;
+
+#define CFSTR_FILEDESCRIPTORW   TEXT("FileGroupDescriptorW")    /* CF_FILEGROUPDESCRIPTORW */
+
+/* DATAOBJECT_InitFileContents*/
+#define CFSTR_FILECONTENTS      TEXT("FileContents")            /* CF_FILECONTENTS */
+extern UINT32 cfFileContents;
+
+#define CFSTR_FILENAMEA         TEXT("FileName")                /* CF_FILENAMEA */
+#define CFSTR_FILENAMEW         TEXT("FileNameW")               /* CF_FILENAMEW */
+#define CFSTR_PRINTERGROUP      TEXT("PrinterFriendlyName")     /* CF_PRINTERS */
+#define CFSTR_FILENAMEMAPA      TEXT("FileNameMap")             /* CF_FILENAMEMAPA */
+#define CFSTR_FILENAMEMAPW      TEXT("FileNameMapW")            /* CF_FILENAMEMAPW */
+#define CFSTR_SHELLURL          TEXT("UniformResourceLocator")
+#define CFSTR_PREFERREDDROPEFFECT TEXT("Preferred DropEffect")
+#define CFSTR_PERFORMEDDROPEFFECT TEXT("Performed DropEffect")
+#define CFSTR_PASTESUCCEEDED    TEXT("Paste Succeeded")
+#define CFSTR_INDRAGLOOP        TEXT("InShellDragLoop")
+
+/**************************************************************************
+ *  IDLList "Item ID List List"
+ *
+ *  NOTES
+ *   interal data holder for IDataObject
+ */
+typedef struct tagLPIDLLIST	*LPIDLLIST,	IDLList;
+
+#define THIS LPIDLLIST this
+
+enum
+{	State_UnInit=1,
+	State_Init=2,
+	State_OutOfMem=3
+} IDLListState;
+ 
+typedef struct IDLList_VTable
+{	STDMETHOD_(UINT32, GetState)(THIS);
+	STDMETHOD_(LPITEMIDLIST, GetElement)(THIS_ UINT32 nIndex);
+	STDMETHOD_(UINT32, GetCount)(THIS);
+	STDMETHOD_(BOOL32, StoreItem)(THIS_ LPITEMIDLIST pidl);
+	STDMETHOD_(BOOL32, AddItems)(THIS_ LPITEMIDLIST *apidl, UINT32 cidl);
+	STDMETHOD_(BOOL32, InitList)(THIS);
+	STDMETHOD_(void, CleanList)(THIS);
+} IDLList_VTable,*LPIDLLIST_VTABLE;
+
+struct tagLPIDLLIST
+{	LPIDLLIST_VTABLE	lpvtbl;
+	HDPA	dpa;
+	UINT32	uStep;
+};
+
+extern LPIDLLIST IDLList_Constructor (UINT32 uStep);
+extern void IDLList_Destructor(LPIDLLIST this);
+#undef THIS
 /*****************************************************************************
  * IEnumFORMATETC interface
  */
@@ -324,7 +417,10 @@ typedef struct IDataObject_VTable
 
 struct tagDATAOBJECT
 {	LPDATAOBJECT_VTABLE	lpvtbl;
-	DWORD			 ref;
+	DWORD	ref;
+	LPSHELLFOLDER	psf;
+	LPIDLLIST  lpill;	/* the data of the dataobject */
+	LPITEMIDLIST  pidl;	
 };
 
 #undef THIS
@@ -697,17 +793,19 @@ typedef struct IShellView_VTable
 
 struct tagSHELLVIEW 
 { LPSHELLVIEW_VTABLE lpvtbl;
-  DWORD			     ref;
-  LPITEMIDLIST       mpidl;
-  LPSHELLFOLDER      pSFParent;
-  LPSHELLBROWSER     pShellBrowser;
-  LPCOMMDLGBROWSER   pCommDlgBrowser;
-  HWND32             hWnd;
-  HWND32             hWndList;
-  FOLDERSETTINGS     FolderSettings;
-  HWND32             hWndParent;
-  HMENU32            hMenu;
-  UINT32			 uState;
+  DWORD		ref;
+  LPITEMIDLIST	mpidl;
+  LPSHELLFOLDER	pSFParent;
+  LPSHELLBROWSER	pShellBrowser;
+  LPCOMMDLGBROWSER	pCommDlgBrowser;
+  HWND32	hWnd;
+  HWND32	hWndList;
+  HWND32	hWndParent;
+  FOLDERSETTINGS	FolderSettings;
+  HMENU32	hMenu;
+  UINT32	uState;
+  UINT32	uSelected;
+  LPITEMIDLIST	*aSelectedItems;
 };
 
 typedef GUID SHELLVIEWID;
@@ -925,7 +1023,7 @@ extern LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT32, const FORMATETC32 []);
 extern LPCLASSFACTORY	IClassFactory_Constructor();
 extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT32);
 extern LPSHELLFOLDER	IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
-extern LPSHELLVIEW	IShellView_Constructor();
+extern LPSHELLVIEW	IShellView_Constructor(LPSHELLFOLDER, LPCITEMIDLIST);
 extern LPSHELLLINK	IShellLink_Constructor();
 extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
 extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
