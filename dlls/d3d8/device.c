@@ -2429,8 +2429,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetMaterial(LPDIRECT3DDEVICE8 iface, CONST
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->UpdateStateBlock->material.Diffuse);
     checkGLcall("glMaterialfv");
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
-    checkGLcall("glMaterialfv");
+    /* Only change material color if specular is enabled, otherwise it is set to black */
+    if (This->StateBlock->renderstate[D3DRS_SPECULARENABLE]) {
+       glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
+       checkGLcall("glMaterialfv");
+    }
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->UpdateStateBlock->material.Emissive);
     checkGLcall("glMaterialfv");
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, This->UpdateStateBlock->material.Power);
@@ -3048,13 +3051,48 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_SPECULARENABLE            : 
         {
+            /* Originally this used glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR)
+               and (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR) to swap between enabled/disabled
+               specular color. This is wrong:
+               Seperate specular color means the specular colour is maintained seperately, whereas
+               single color means it is merged in. However in both cases they are being used to
+               some extent.
+               To disable specular color, set it explicitly to black and turn off GL_COLOR_SUM_EXT
+               NOTE: If not supported dont give FIXME as very minimal impact and very few people are
+                  yet running 1.4!
+             */
             if (Value) {
-                glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-                checkGLcall("glLightModel (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);");
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
+                checkGLcall("glMaterialfv");
+#if defined(GL_VERSION_1_4)
+                glEnable(GL_COLOR_SUM);
+#elif defined(GL_EXT_secondary_color)
+                glEnable(GL_COLOR_SUM_EXT);
+#elif defined(GL_ARB_vertex_program)
+                glEnable(GL_COLOR_SUM_ARB);
+#else
+                TRACE("Specular colors cannot be enabled in this version of opengl\n");
+#endif
+                checkGLcall("glEnable(GL_COLOR_)\n");
             } else {
-                glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
-                checkGLcall("glLightModel (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR);");
-            }
+                float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+                /* for the case of enabled lighting: */
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
+                checkGLcall("glMaterialfv");
+
+                /* for the case of disabled lighting: */
+#if defined(GL_VERSION_1_4)
+                glDisable(GL_COLOR_SUM);
+#elif defined(GL_EXT_secondary_color)
+                glDisable(GL_COLOR_SUM_EXT);
+#elif defined(GL_ARB_vertex_program)
+                glDisable(GL_COLOR_SUM_ARB);
+#else
+                TRACE("Specular colors cannot be disabled in this version of opengl\n");
+#endif
+                checkGLcall("glDisable(GL_COLOR_)\n");
+	    }
         }
         break;
 
@@ -3087,6 +3125,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
            }
            TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
+           This->stencilfunc = glParm;
            glStencilFunc(glParm, ref, mask);
            checkGLcall("glStencilFunc");
         }
