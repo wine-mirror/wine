@@ -1627,7 +1627,7 @@ inline static void addline(int* lineNum, char* pgm, char* line)
   strcat(pgm, "\n");
 }
 
-char* shift_tab[] = {
+static const char* shift_tab[] = {
   "dummy",     /*  0 (none) */ 
   "coefmul.x", /*  1 (x2)   */ 
   "coefmul.y", /*  2 (x4)   */ 

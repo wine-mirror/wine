@@ -101,7 +101,7 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 }
 
 /* return the string text of a given variant type */
-char *vtstr(int x)
+static const char *vtstr(int x)
 {
 	switch(x) {
 	case 0:
