@@ -94,7 +94,7 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
 
     if (IsWindow(previous))
     {
-        SendMessageW( previous, WM_NCACTIVATE, FALSE, 0 );
+        SendMessageW( previous, WM_NCACTIVATE, FALSE, (LPARAM)hwnd );
         SendMessageW( previous, WM_ACTIVATE,
                       MAKEWPARAM( WA_INACTIVE, IsIconic(previous) ), (LPARAM)hwnd );
     }
@@ -153,7 +153,7 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
 
     if (IsWindow(hwnd))
     {
-        SendMessageW( hwnd, WM_NCACTIVATE, (hwnd == GetForegroundWindow()), 0 );
+        SendMessageW( hwnd, WM_NCACTIVATE, (hwnd == GetForegroundWindow()), (LPARAM)previous );
         SendMessageW( hwnd, WM_ACTIVATE,
                       MAKEWPARAM( mouse ? WA_CLICKACTIVE : WA_ACTIVE, IsIconic(hwnd) ),
                       (LPARAM)previous );
