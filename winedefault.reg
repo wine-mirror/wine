@@ -3991,6 +3991,13 @@
 "Name"="Uzbekistan"
 "SameAreaRule"="G"
 
+#Show icons for executables
+[HKEY_CLASSES_ROOT\.exe]
+@="exefile"
+
+[HKEY_CLASSES_ROOT\exefile\Defaulticon]
+@="%1"
+
 #
 # Entries to get ShellExecute to map .txt files to notepad
 #
