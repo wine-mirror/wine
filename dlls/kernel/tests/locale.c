@@ -77,6 +77,9 @@ static FoldStringAFn pFoldStringA;
 typedef INT (WINAPI *FoldStringWFn)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static FoldStringWFn pFoldStringW;
 
+typedef BOOL (WINAPI *IsValidLanguageGroupFn)(LGRPID, DWORD);
+static IsValidLanguageGroupFn pIsValidLanguageGroup;
+
 static void InitFunctionPointers(void)
 {
   hKernel32 = GetModuleHandleA("kernel32");
@@ -87,6 +90,7 @@ static void InitFunctionPointers(void)
     pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
     pFoldStringA = (void*)GetProcAddress(hKernel32, "FoldStringA");
     pFoldStringW = (void*)GetProcAddress(hKernel32, "FoldStringW");
+    pIsValidLanguageGroup = (void*)GetProcAddress(hKernel32, "IsValidLanguageGroup");
   }
 }
 
@@ -1429,6 +1433,8 @@ static void test_FoldStringA(void)
   /* MAP_FOLDDIGITS */
   SetLastError(0);
   ret = pFoldStringA(MAP_FOLDDIGITS, digits_src, -1, dst, 256);
+  if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    return;
   EXPECT_LEN(4); EXPECT_VALID;
   ok(strcmp(dst, digits_dst) == 0,
      "MAP_FOLDDIGITS: Expected '%s', got '%s'\n", digits_dst, dst);
@@ -1499,7 +1505,7 @@ static void test_FoldStringA(void)
     src[0] = i;
     src[1] = '\0';
     SetLastError(0);
-    ret = FoldStringA(MAP_FOLDCZONE, src, -1, dst, 256);
+    ret = pFoldStringA(MAP_FOLDCZONE, src, -1, dst, 256);
     EXPECT_LEN(2); EXPECT_VALID;
     ok(src[0] == dst[0],
        "MAP_FOLDCZONE: Expected 0x%02x, got 0x%02x\n",
@@ -1512,7 +1518,7 @@ static void test_FoldStringA(void)
     src[0] = i;
     src[1] = '\0';
     SetLastError(0);
-    ret = FoldStringA(MAP_PRECOMPOSED, src, -1, dst, 256);
+    ret = pFoldStringA(MAP_PRECOMPOSED, src, -1, dst, 256);
     EXPECT_LEN(2); EXPECT_VALID;
     ok(src[0] == dst[0],
        "MAP_PRECOMPOSED: Expected 0x%02x, got 0x%02x\n",
@@ -1709,6 +1715,8 @@ static void test_FoldStringW(void)
     src[0] = dst[0] = '\0';
     SetLastError(0);
     ret = pFoldStringW(badFlags[i], src, 256, dst, 256);
+    if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+      return;
     EXPECT_LEN(0); EXPECT_FLAGS;
   }
 
@@ -1900,7 +1908,7 @@ static BOOL CALLBACK langgrp_procA(LGRPID lgrpid, LPSTR lpszNum, LPSTR lpszName,
   trace("%08lx, %s, %s, %08lx, %08lx\n",
         lgrpid, lpszNum, lpszName, dwFlags, lParam);
 
-  ok(IsValidLanguageGroup(lgrpid, dwFlags) == TRUE,
+  ok(pIsValidLanguageGroup(lgrpid, dwFlags) == TRUE,
      "Enumerated grp %ld not valid (flags %ld)\n", lgrpid, dwFlags);
 
   /* If lParam is one, we are calling with flags defaulted from 0 */
@@ -1912,7 +1920,7 @@ static BOOL CALLBACK langgrp_procA(LGRPID lgrpid, LPSTR lpszNum, LPSTR lpszName,
 
 static void test_EnumSystemLanguageGroupsA(void)
 {
-  if (!pEnumSystemLanguageGroupsA)
+  if (!pEnumSystemLanguageGroupsA || !pIsValidLanguageGroup)
     return;
 
   /* No enumeration proc */
@@ -1940,7 +1948,7 @@ static BOOL CALLBACK lgrplocale_procA(LGRPID lgrpid, LCID lcid, LPSTR lpszNum,
 {
   trace("%08lx, %08lx, %s, %08lx\n", lgrpid, lcid, lpszNum, lParam);
 
-  ok(IsValidLanguageGroup(lgrpid, LGRPID_SUPPORTED) == TRUE,
+  ok(pIsValidLanguageGroup(lgrpid, LGRPID_SUPPORTED) == TRUE,
      "Enumerated grp %ld not valid\n", lgrpid);
   ok(IsValidLocale(lcid, LCID_SUPPORTED) == TRUE,
      "Enumerated grp locale %ld not valid\n", lcid);
@@ -1949,8 +1957,8 @@ static BOOL CALLBACK lgrplocale_procA(LGRPID lgrpid, LCID lcid, LPSTR lpszNum,
 
 static void test_EnumLanguageGroupLocalesA(void)
 {
-  if (!pEnumLanguageGroupLocalesA)
-   return;
+  if (!pEnumLanguageGroupLocalesA || !pIsValidLanguageGroup)
+    return;
 
   /* No enumeration proc */
   SetLastError(0);
