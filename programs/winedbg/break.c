@@ -368,7 +368,7 @@ BOOL DEBUG_AddBreakpoint( const DBG_VALUE *value, BOOL (*func)(void), BOOL verbo
 			TRUE );
     DEBUG_Printf("\n");
 
-    return FALSE;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -472,12 +472,17 @@ void	DEBUG_AddBreakpointFromLineno(int lineno)
             DEBUG_Printf("Unable to add breakpoint\n");
             return;
         }
-        DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE);
+        if (!DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE))
+        {
+            DEBUG_Printf("Unknown line number\n"
+                         "(either out of file, or no code at given line number)\n");
+            return;
+        }
     }
 
     value.type = NULL;
     value.cookie = DV_TARGET;
-    DEBUG_AddBreakpoint( &value,NULL, TRUE );
+    DEBUG_AddBreakpoint( &value, NULL, TRUE );
 }
 
 /***********************************************************************
