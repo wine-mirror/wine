@@ -164,11 +164,11 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source,
                                 const LPWSTR target, const INT type);
 static UINT HANDLE_CustomType2(MSIPACKAGE *package, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
-static UINT HANDLE_CustomType18(MSIPACKAGE *package, const LPWSTR source, 
+static UINT HANDLE_CustomType18(MSIPACKAGE *package, const LPWSTR source,
                                 const LPWSTR target, const INT type);
-static UINT HANDLE_CustomType50(MSIPACKAGE *package, const LPWSTR source, 
+static UINT HANDLE_CustomType50(MSIPACKAGE *package, const LPWSTR source,
                                 const LPWSTR target, const INT type);
-static UINT HANDLE_CustomType34(MSIPACKAGE *package, const LPWSTR source, 
+static UINT HANDLE_CustomType34(MSIPACKAGE *package, const LPWSTR source,
                                 const LPWSTR target, const INT type);
 
 static DWORD deformat_string(MSIPACKAGE *package, WCHAR* ptr,WCHAR** data);
@@ -1566,7 +1566,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, const LPWSTR source,
     return ERROR_SUCCESS;
 }
 
-static UINT HANDLE_CustomType18(MSIPACKAGE *package, const LPWSTR source, 
+static UINT HANDLE_CustomType18(MSIPACKAGE *package, const LPWSTR source,
                                 const LPWSTR target, const INT type)
 {
     STARTUPINFOW si;
@@ -1617,7 +1617,7 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, const LPWSTR source,
     return ERROR_SUCCESS;
 }
 
-static UINT HANDLE_CustomType50(MSIPACKAGE *package, const LPWSTR source, 
+static UINT HANDLE_CustomType50(MSIPACKAGE *package, const LPWSTR source,
                                 const LPWSTR target, const INT type)
 {
     STARTUPINFOW si;
@@ -1668,7 +1668,7 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, const LPWSTR source,
     return ERROR_SUCCESS;
 }
 
-static UINT HANDLE_CustomType34(MSIPACKAGE *package, const LPWSTR source, 
+static UINT HANDLE_CustomType34(MSIPACKAGE *package, const LPWSTR source,
                                 const LPWSTR target, const INT type)
 {
     LPWSTR filename, deformated;
@@ -1731,31 +1731,31 @@ static BOOL create_full_pathW(const WCHAR *path)
 
     while(!CreateDirectoryW(new_path, NULL))
     {
-    WCHAR *slash;
-    DWORD last_error = GetLastError();
-    if(last_error == ERROR_ALREADY_EXISTS)
-        break;
+        WCHAR *slash;
+        DWORD last_error = GetLastError();
+        if(last_error == ERROR_ALREADY_EXISTS)
+            break;
 
-    if(last_error != ERROR_PATH_NOT_FOUND)
-    {
-        ret = FALSE;
-        break;
-    }
+        if(last_error != ERROR_PATH_NOT_FOUND)
+        {
+            ret = FALSE;
+            break;
+        }
 
-    if(!(slash = strrchrW(new_path, '\\')))
-    {
-        ret = FALSE;
-        break;
-    }
+        if(!(slash = strrchrW(new_path, '\\')))
+        {
+            ret = FALSE;
+            break;
+        }
 
-    len = slash - new_path;
-    new_path[len] = 0;
-    if(!create_full_pathW(new_path))
-    {
-        ret = FALSE;
-        break;
-    }
-    new_path[len] = '\\';
+        len = slash - new_path;
+        new_path[len] = 0;
+        if(!create_full_pathW(new_path))
+        {
+            ret = FALSE;
+            break;
+        }
+        new_path[len] = '\\';
     }
 
     HeapFree(GetProcessHeap(), 0, new_path);
@@ -2690,55 +2690,55 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     rc = MSI_DatabaseOpenViewW(package->db, ConditionQuery, &view);
     if (rc == ERROR_SUCCESS)
     {
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-    
-    while (1)
-    {
-        WCHAR Feature[0x100];
-        MSIRECORD * row = 0;
-        DWORD sz;
-        int feature_index;
-
-        rc = MSI_ViewFetch(view,&row);
-
+        rc = MSI_ViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
         {
-            rc = ERROR_SUCCESS;
-            break;
+            MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
+            return rc;
         }
-
-        sz = 0x100;
-        MSI_RecordGetStringW(row,1,Feature,&sz);
-
-        feature_index = get_loaded_feature(package,Feature);
-        if (feature_index < 0)
-            ERR("FAILED to find loaded feature %s\n",debugstr_w(Feature));
-        else
+    
+        while (1)
         {
-            LPWSTR Condition;
-            Condition = load_dynamic_stringW(row,3);
+            WCHAR Feature[0x100];
+            MSIRECORD * row = 0;
+            DWORD sz;
+            int feature_index;
+
+            rc = MSI_ViewFetch(view,&row);
+
+            if (rc != ERROR_SUCCESS)
+            {
+                rc = ERROR_SUCCESS;
+                break;
+            }
+
+            sz = 0x100;
+            MSI_RecordGetStringW(row,1,Feature,&sz);
+
+            feature_index = get_loaded_feature(package,Feature);
+            if (feature_index < 0)
+                ERR("FAILED to find loaded feature %s\n",debugstr_w(Feature));
+            else
+            {
+                LPWSTR Condition;
+                Condition = load_dynamic_stringW(row,3);
 
                 if (MSI_EvaluateConditionW(package,Condition) == 
                     MSICONDITION_TRUE)
-            {
-                int level = MSI_RecordGetInteger(row,2);
+                {
+                    int level = MSI_RecordGetInteger(row,2);
                     TRACE("Reseting feature %s to level %i\n",
                            debugstr_w(Feature), level);
-                package->features[feature_index].Level = level;
+                    package->features[feature_index].Level = level;
+                }
+                HeapFree(GetProcessHeap(),0,Condition);
             }
-            HeapFree(GetProcessHeap(),0,Condition);
-        }
 
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
+            msiobj_release(&row->hdr);
+        }
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
     }
 
     TRACE("Enabling or Disabling Components\n");
