@@ -983,6 +983,33 @@ typedef DWORD (WINAPI *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_I
 #define DMPAPER_FANFOLD_US         39
 #define DMPAPER_FANFOLD_STD_GERMAN 40
 #define DMPAPER_FANFOLD_LGL_GERMAN 41
+#define DMPAPER_ISO_B4              42
+#define DMPAPER_JAPANESE_POSTCARD   43
+#define DMPAPER_9X11                44
+#define DMPAPER_10X11               45
+#define DMPAPER_15X11               46
+#define DMPAPER_ENV_INVITE          47
+#define DMPAPER_RESERVED_48         48
+#define DMPAPER_RESERVED_49         49
+#define DMPAPER_LETTER_EXTRA        50
+#define DMPAPER_LEGAL_EXTRA         51
+#define DMPAPER_TABLOID_EXTRA       52
+#define DMPAPER_A4_EXTRA            53
+#define DMPAPER_LETTER_TRANSVERSE   54
+#define DMPAPER_A4_TRANSVERSE       55
+#define DMPAPER_LETTER_EXTRA_TRANSVERSE 56
+#define DMPAPER_A_PLUS              57
+#define DMPAPER_B_PLUS              58
+#define DMPAPER_LETTER_PLUS         59
+#define DMPAPER_A4_PLUS             60
+#define DMPAPER_A5_TRANSVERSE       61
+#define DMPAPER_B5_TRANSVERSE       62
+#define DMPAPER_A3_EXTRA            63
+#define DMPAPER_A5_EXTRA            64
+#define DMPAPER_B5_EXTRA            65
+#define DMPAPER_A2                  66
+#define DMPAPER_A3_TRANSVERSE       67
+#define DMPAPER_A3_EXTRA_TRANSVERSE 68
 
 #define DMBIN_UPPER		1
 #define DMBIN_LOWER		2
@@ -1554,8 +1581,13 @@ BOOL      WINAPI ReleaseSemaphore(HANDLE,LONG,LPLONG);
 BOOL      WINAPI ResetEvent(HANDLE);
 DWORD       WINAPI ResumeThread(HANDLE);
 VOID        WINAPI RtlFillMemory(LPVOID,UINT,UINT);
+#define     FillMemory RtlFillMemory
 VOID        WINAPI RtlMoveMemory(LPVOID,LPCVOID,UINT);
+#define     MoveMemory RtlMoveMemory
 VOID        WINAPI RtlZeroMemory(LPVOID,UINT);
+#define     ZeroMemory RtlZeroMemory
+VOID        WINAPI RtlCopyMemory(LPVOID,const VOID*, DWORD);
+#define     CopyMemory RtlCopyMemory
 DWORD       WINAPI SearchPathA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI SearchPathW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     SearchPath WINELIB_NAME_AW(SearchPath)
@@ -1620,8 +1652,6 @@ BOOL      WINAPI WriteConsoleA(HANDLE,LPCVOID,DWORD,LPDWORD,LPVOID);
 BOOL      WINAPI WriteConsoleW(HANDLE,LPCVOID,DWORD,LPDWORD,LPVOID);
 #define     WriteConsole WINELIB_NAME_AW(WriteConsole)
 BOOL      WINAPI WriteFile(HANDLE,LPCVOID,DWORD,LPDWORD,LPOVERLAPPED);
-VOID        WINAPI ZeroMemory(LPVOID,UINT);
-#define     ZeroMemory RtlZeroMemory
 DWORD       WINAPI GetLastError(void);
 LANGID      WINAPI GetSystemDefaultLangID(void);
 LCID        WINAPI GetSystemDefaultLCID(void);
