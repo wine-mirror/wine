@@ -1159,10 +1159,10 @@ SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
  * LsaOpenPolicy [ADVAPI32.@]
  *
  * PARAMS
- *   x1 []
- *   x2 []
- *   x3 []
- *   x4 []
+ *   SystemName       [I]
+ *   ObjectAttributes [I]
+ *   DesiredAccess    [I]
+ *   PolicyHandle     [I/O]
  */
 NTSTATUS WINAPI
 LsaOpenPolicy(
