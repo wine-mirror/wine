@@ -197,10 +197,10 @@ static HWND *list_window_children( HWND hwnd, ATOM atom, DWORD tid )
  */
 static void send_parent_notify( HWND hwnd, UINT msg )
 {
-    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)) return;
-    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY) return;
-    SendMessageW( GetParent(hwnd), WM_PARENTNOTIFY,
-                  MAKEWPARAM( msg, GetWindowLongW( hwnd, GWL_ID )), (LPARAM)hwnd );
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD &&
+        !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY))
+        SendMessageW( GetParent(hwnd), WM_PARENTNOTIFY,
+                      MAKEWPARAM( msg, GetWindowLongW( hwnd, GWL_ID )), (LPARAM)hwnd );
 }
 
 
