@@ -35,6 +35,7 @@ typedef struct tagLISTVIEW_INFO
     RECT32     rcList;       /* "client" area of the list (without header) */
     BOOL32     bFocus;
 
+    DWORD      dwExStyle;    /* extended listview style */
     HDPA       hdpaItems;
 
 } LISTVIEW_INFO;

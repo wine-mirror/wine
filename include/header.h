@@ -12,7 +12,7 @@ typedef struct
 {
     INT32     cxy;
     HBITMAP32 hbm;
-    LPSTR     pszText;
+    LPWSTR    pszText;
     INT32     fmt;
     LPARAM    lParam;
     INT32     iImage;
@@ -34,6 +34,7 @@ typedef struct
     BOOL32      bCaptured;	/* Is the mouse captured? */
     BOOL32      bPressed;	/* Is a header item pressed (down)? */
     BOOL32      bTracking;	/* Is in tracking mode? */
+    BOOL32      bUnicode;       /* Unicode flag */
     INT32       iMoveItem;	/* index of tracked item. (Tracking mode) */
     INT32       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
     INT32       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */

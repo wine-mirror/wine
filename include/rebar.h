@@ -34,7 +34,7 @@ typedef struct tagREBAR_BAND
     RECT32    rcCapText;      /* calculated caption text rectangle */
     RECT32    rcChild;        /* calculated child rectangle */
 
-    LPSTR     lpText;
+    LPWSTR    lpText;
     HWND32    hwndPrevParent;
 } REBAR_BAND;
 
@@ -51,6 +51,7 @@ typedef struct tagREBAR_INFO
 
     SIZE32     calcSize;    /* calculated rebar size */
     BOOL32     bAutoResize; /* auto resize deadlock flag */
+    BOOL32     bUnicode;    /* Unicode flag */
     HCURSOR32  hcurArrow;   /* handle to the arrow cursor */
     HCURSOR32  hcurHorz;    /* handle to the EW cursor */
     HCURSOR32  hcurVert;    /* handle to the NS cursor */

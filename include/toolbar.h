@@ -60,7 +60,7 @@ typedef struct tagTOOLBAR_INFO
     RECT32     rcBound;         /* bounding rectangle */
 
     TBUTTON_INFO *buttons;      /* pointer to button array */
-    CHAR         **strings;
+    LPWSTR       *strings;      /* pointer to string array */
 } TOOLBAR_INFO;
 
 

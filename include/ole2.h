@@ -8,7 +8,7 @@
 /* to be implemented */
 typedef LPVOID LPMESSAGEFILTER;
 typedef LPVOID LPDROPTARGET;
-typedef LPVOID LPMONIKER;
+typedef struct tagMONIKER *LPMONIKER, IMoniker;
 
 #define S_OK	0
 #define S_FALSE	1

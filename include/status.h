@@ -12,7 +12,7 @@ typedef struct
     INT32	x;
     INT32	style;
     RECT32	bound;
-    LPSTR	text;
+    LPWSTR	text;
     HICON32     hIcon;
 } STATUSWINDOWPART;
 
@@ -25,8 +25,9 @@ typedef struct
     HWND32              hwndToolTip;
     HFONT32             hFont;
     HFONT32             hDefaultFont;
-    COLORREF            clrBk;  /* background color */
-    STATUSWINDOWPART	part0;	/* simple window */
+    COLORREF            clrBk;     /* background color */
+    BOOL32              bUnicode;  /* unicode flag */
+    STATUSWINDOWPART	part0;	   /* simple window */
     STATUSWINDOWPART   *parts;
 } STATUSWINDOWINFO;
 

@@ -18,19 +18,19 @@ typedef struct tagTT_SUBCLASS_INFO
 
 typedef struct tagTTTOOL_INFO
 {
-    UINT32 uFlags;
-    HWND32 hwnd;
-    UINT32 uId;
-    RECT32 rect;
+    UINT32      uFlags;
+    HWND32      hwnd;
+    UINT32      uId;
+    RECT32      rect;
     HINSTANCE32 hinst;
-    LPSTR  lpszText;
-    LPARAM lParam;
+    LPWSTR      lpszText;
+    LPARAM      lParam;
 } TTTOOL_INFO; 
 
 
 typedef struct tagTOOLTIPS_INFO
 {
-    CHAR       szTipText[INFOTIPSIZE];
+    WCHAR      szTipText[INFOTIPSIZE];
     BOOL32     bActive;
     BOOL32     bTrackActive;
     UINT32     uNumTools;

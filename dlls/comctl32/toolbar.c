@@ -83,21 +83,21 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 	if (!(nState & TBSTATE_ENABLED)) {
 	    clrOld = SetTextColor32 (hdc, GetSysColor32 (COLOR_3DHILIGHT));
 	    OffsetRect32 (&rcText, 1, 1);
-	    DrawText32A (hdc, infoPtr->strings[btnPtr->iString], -1,
+	    DrawText32W (hdc, infoPtr->strings[btnPtr->iString], -1,
 			 &rcText, infoPtr->dwDTFlags);
 	    SetTextColor32 (hdc, GetSysColor32 (COLOR_3DSHADOW));
 	    OffsetRect32 (&rcText, -1, -1);
-	    DrawText32A (hdc, infoPtr->strings[btnPtr->iString], -1,
+	    DrawText32W (hdc, infoPtr->strings[btnPtr->iString], -1,
 			 &rcText, infoPtr->dwDTFlags);
 	}
 	else if (nState & TBSTATE_INDETERMINATE) {
 	    clrOld = SetTextColor32 (hdc, GetSysColor32 (COLOR_3DSHADOW));
-	    DrawText32A (hdc, infoPtr->strings[btnPtr->iString], -1,
+	    DrawText32W (hdc, infoPtr->strings[btnPtr->iString], -1,
 			 &rcText, infoPtr->dwDTFlags);
 	}
 	else {
 	    clrOld = SetTextColor32 (hdc, GetSysColor32 (COLOR_BTNTEXT));
-	    DrawText32A (hdc, infoPtr->strings[btnPtr->iString], -1,
+	    DrawText32W (hdc, infoPtr->strings[btnPtr->iString], -1,
 			 &rcText, infoPtr->dwDTFlags);
 	}
 
@@ -292,8 +292,8 @@ TOOLBAR_CalcStrings (WND *wndPtr, LPSIZE32 lpSize)
 	if (!(btnPtr->fsState & TBSTATE_HIDDEN) &&
 	    (btnPtr->iString > -1) &&
 	    (btnPtr->iString < infoPtr->nNumStrings)) {
-	    LPSTR lpText = infoPtr->strings[btnPtr->iString];
-	    GetTextExtentPoint32A (hdc, lpText, lstrlen32A(lpText), &sz);
+	    LPWSTR lpText = infoPtr->strings[btnPtr->iString];
+	    GetTextExtentPoint32W (hdc, lpText, lstrlen32W (lpText), &sz);
 	    if (sz.cx > lpSize->cx)
 		lpSize->cx = sz.cx;
 	    if (sz.cy > lpSize->cy)
@@ -753,27 +753,28 @@ TOOLBAR_AddString32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	nIndex = infoPtr->nNumStrings;
 	if (infoPtr->nNumStrings == 0) {
 	    infoPtr->strings =
-		COMCTL32_Alloc (sizeof(char *));
+		COMCTL32_Alloc (sizeof(LPWSTR));
 	}
 	else {
-	    char **oldStrings = infoPtr->strings;
+	    LPWSTR *oldStrings = infoPtr->strings;
 	    infoPtr->strings =
-		COMCTL32_Alloc (sizeof(char *) * (infoPtr->nNumStrings + 1));
+		COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
 	    memcpy (&infoPtr->strings[0], &oldStrings[0],
-		    sizeof(char *) * infoPtr->nNumStrings);
+		    sizeof(LPWSTR) * infoPtr->nNumStrings);
 	    COMCTL32_Free (oldStrings);
 	}
 
 	infoPtr->strings[infoPtr->nNumStrings] =
-	    COMCTL32_Alloc (sizeof(char)*(len+1));
-	lstrcpy32A (infoPtr->strings[infoPtr->nNumStrings], szString);
+	    COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+	lstrcpyAtoW (infoPtr->strings[infoPtr->nNumStrings], szString);
 	infoPtr->nNumStrings++;
     }
     else {
-	char *p = (char*)lParam;
+	LPSTR p = (LPSTR)lParam;
 	INT32 len;
 
-	if (p == NULL) return -1;
+	if (p == NULL)
+	    return -1;
 	TRACE (toolbar, "adding string(s) from array!\n");
 	nIndex = infoPtr->nNumStrings;
 	while (*p) {
@@ -782,20 +783,20 @@ TOOLBAR_AddString32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	    if (infoPtr->nNumStrings == 0) {
 		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(char *));
+		    COMCTL32_Alloc (sizeof(LPWSTR));
 	    }
 	    else {
-		char **oldStrings = infoPtr->strings;
+		LPWSTR *oldStrings = infoPtr->strings;
 		infoPtr->strings =
-		    COMCTL32_Alloc (sizeof(char *) * (infoPtr->nNumStrings + 1));
+		    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
 		memcpy (&infoPtr->strings[0], &oldStrings[0],
-			sizeof(char *) * infoPtr->nNumStrings);
+			sizeof(LPWSTR) * infoPtr->nNumStrings);
 		COMCTL32_Free (oldStrings);
 	    }
 
 	    infoPtr->strings[infoPtr->nNumStrings] =
-		COMCTL32_Alloc (sizeof(char)*(len+1));
-	    lstrcpy32A (infoPtr->strings[infoPtr->nNumStrings], p);
+		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+	    lstrcpyAtoW (infoPtr->strings[infoPtr->nNumStrings], p);
 	    infoPtr->nNumStrings++;
 
 	    p += (len+1);
@@ -806,7 +807,76 @@ TOOLBAR_AddString32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << TOOLBAR_AddString32W >>
+static LRESULT
+TOOLBAR_AddString32W (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
+    INT32 nIndex;
+
+    if ((wParam) && (HIWORD(lParam) == 0)) {
+	WCHAR szString[256];
+	INT32 len;
+	TRACE (toolbar, "adding string from resource!\n");
+
+	len = LoadString32W ((HINSTANCE32)wParam, (UINT32)lParam,
+			     szString, 256);
+
+	TRACE (toolbar, "len=%d \"%s\"\n", len, debugstr_w(szString));
+	nIndex = infoPtr->nNumStrings;
+	if (infoPtr->nNumStrings == 0) {
+	    infoPtr->strings =
+		COMCTL32_Alloc (sizeof(LPWSTR));
+	}
+	else {
+	    LPWSTR *oldStrings = infoPtr->strings;
+	    infoPtr->strings =
+		COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+	    memcpy (&infoPtr->strings[0], &oldStrings[0],
+		    sizeof(LPWSTR) * infoPtr->nNumStrings);
+	    COMCTL32_Free (oldStrings);
+	}
+
+	infoPtr->strings[infoPtr->nNumStrings] =
+	    COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+	lstrcpy32W (infoPtr->strings[infoPtr->nNumStrings], szString);
+	infoPtr->nNumStrings++;
+    }
+    else {
+	LPWSTR p = (LPWSTR)lParam;
+	INT32 len;
+
+	if (p == NULL)
+	    return -1;
+	TRACE (toolbar, "adding string(s) from array!\n");
+	nIndex = infoPtr->nNumStrings;
+	while (*p) {
+	    len = lstrlen32W (p);
+	    TRACE (toolbar, "len=%d \"%s\"\n", len, debugstr_w(p));
+
+	    if (infoPtr->nNumStrings == 0) {
+		infoPtr->strings =
+		    COMCTL32_Alloc (sizeof(LPWSTR));
+	    }
+	    else {
+		LPWSTR *oldStrings = infoPtr->strings;
+		infoPtr->strings =
+		    COMCTL32_Alloc (sizeof(LPWSTR) * (infoPtr->nNumStrings + 1));
+		memcpy (&infoPtr->strings[0], &oldStrings[0],
+			sizeof(LPWSTR) * infoPtr->nNumStrings);
+		COMCTL32_Free (oldStrings);
+	    }
+
+	    infoPtr->strings[infoPtr->nNumStrings] =
+		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
+	    lstrcpy32W (infoPtr->strings[infoPtr->nNumStrings], p);
+	    infoPtr->nNumStrings++;
+
+	    p += (len+1);
+	}
+    }
+
+    return nIndex;
+}
 
 
 static LRESULT
@@ -2055,7 +2125,7 @@ TOOLBAR_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     infoPtr->cxMax = -1;
 
     infoPtr->bCaptured = FALSE;
-    infoPtr->bUnicode = FALSE;
+    infoPtr->bUnicode = IsWindowUnicode (wndPtr->hwndSelf);
     infoPtr->nButtonDown = -1;
     infoPtr->nOldHit = -1;
 
@@ -2555,7 +2625,8 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case TB_ADDSTRING32A:
 	    return TOOLBAR_AddString32A (wndPtr, wParam, lParam);
 
-//	case TB_ADDSTRING32W:
+	case TB_ADDSTRING32W:
+	    return TOOLBAR_AddString32W (wndPtr, wParam, lParam);
 
 	case TB_AUTOSIZE:
 	    return TOOLBAR_AutoSize (wndPtr, wParam, lParam);
