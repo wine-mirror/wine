@@ -1198,8 +1198,9 @@ set $BreakAllThreadsStartup = 1
 abort		aborts the debugger
 quit		exits the debugger
 
-attach N	attach to a W-process (N is its ID). IDs can be
-		obtained using the walk process command
+attach N	attach to a W-process (N is its ID, numeric or hexadecimal(0xN)). 
+		IDs can be obtained using the walk process command.  Note the
+		walk process command returns hexadecimal values 
 detach          detach from a W-process. WineDbg will exit (this may
                 be changed later on)
         </screen>
