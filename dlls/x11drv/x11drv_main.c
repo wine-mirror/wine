@@ -5,6 +5,7 @@
  * Copyright 2000 Alexandre Julliard
  */
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/cursorfont.h>
@@ -169,6 +170,7 @@ static void process_attach(void)
                  argv0, Options.display ? Options.display : "(none specified)" );
         ExitProcess(1);
     }
+    fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
     screen = DefaultScreenOfDisplay( display );
     visual = DefaultVisual( display, DefaultScreen(display) );
     root_window = DefaultRootWindow( display );

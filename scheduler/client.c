@@ -390,7 +390,7 @@ int CLIENT_InitServer(void)
     if ((env_fd = getenv( "__WINE_FD" )) && isdigit(env_fd[0]))
     {
         fd = atoi( env_fd );
-        if (fcntl( fd, F_GETFL, 0 ) != -1) return fd;
+        if (fcntl( fd, F_SETFD, 1 ) != -1) return fd; /* set close on exec flag */
     }
 
     /* retrieve the current directory */

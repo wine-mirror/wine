@@ -309,16 +309,9 @@ void FILE_SetDosError(void)
  */
 HFILE FILE_DupUnixHandle( int fd, DWORD access )
 {
-    int unix_handle;
     struct alloc_file_handle_request *req = get_req_buffer();
-
-    if ((unix_handle = dup(fd)) == -1)
-    {
-        FILE_SetDosError();
-        return INVALID_HANDLE_VALUE;
-    }
     req->access  = access;
-    server_call_fd( REQ_ALLOC_FILE_HANDLE, unix_handle, NULL );
+    server_call_fd( REQ_ALLOC_FILE_HANDLE, fd, NULL );
     return req->handle;
 }
 
