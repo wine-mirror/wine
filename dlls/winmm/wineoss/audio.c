@@ -177,7 +177,7 @@ LONG OSS_WaveInit(void)
 
     if (access(SOUND_DEV,0) != 0 ||
 	(audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0)) == -1) {
-	TRACE("Couldn't open out %s (%s)\n", SOUND_DEV, strerror(errno));
+	WARN("Couldn't open out %s (%s)\n", SOUND_DEV, strerror(errno));
 	return -1;
     }
 
@@ -276,7 +276,7 @@ LONG OSS_WaveInit(void)
 
     if (access(SOUND_DEV,0) != 0 ||
 	(audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0)) == -1) {
-	TRACE("Couldn't open in %s (%s)\n", SOUND_DEV, strerror(errno));
+	WARN("Couldn't open in %s (%s)\n", SOUND_DEV, strerror(errno));
 	return -1;
     }
 
@@ -786,7 +786,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
-    if (access(SOUND_DEV, 0) != 0) 
+    if (access(SOUND_DEV, 0) != 0)
 	return MMSYSERR_NOTENABLED;
     if (dwFlags & WAVE_DIRECTSOUND)
 	/* we want to be able to mmap() the device, which means it must be opened readable,
@@ -795,7 +795,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     else
 	audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
     if (audio == -1) {
-	WARN("can't open (%s)!\n", strerror(errno));
+	WARN("can't open sound device %s (%s)!\n", SOUND_DEV, strerror(errno));
 	return MMSYSERR_ALLOCATED;
     }
     fcntl(audio, F_SETFD, 1); /* set close on exec flag */
@@ -1902,7 +1902,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
     audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0);
     if (audio == -1) {
-	WARN("can't open (%s)!\n", strerror(errno));
+	WARN("can't open sound device %s (%s)!\n", SOUND_DEV, strerror(errno));
 	return MMSYSERR_ALLOCATED;
     }
     fcntl(audio, F_SETFD, 1); /* set close on exec flag */
