@@ -228,7 +228,7 @@ void  output_c_preamble (void)
 
   fprintf (cfile,
            "BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
-           "lpvReserved)\n{\n\tTRACE(\"(0x%%08x, %%ld, %%p)\\n\",hinstDLL,"
+           "lpvReserved)\n{\n\tTRACE(\"(0x%%p, %%ld, %%p)\\n\",hinstDLL,"
            "fdwReason,lpvReserved);\n\n\t"
            "if (fdwReason == DLL_PROCESS_ATTACH)\n\t{\n\t\t");
 
@@ -466,40 +466,68 @@ void  output_install_script (void)
     puts ("Creating install script");
 
   fprintf (install_file,
-           "#!/bin/bash\n# Generated from %s.dll by winedump.\n\n"
-           "if [ $# -ne 1 ] || [ ! -d $1 ] || [ ! -f"
-           " $1/AUTHORS ]; then\n\t[ $# -eq 1 ] && echo \"Invalid path\"\n"
-           "\techo \"Usage: $0 wine-base-dir\"\n\texit 1\nfi\n\n"
-           "if [ -d $1/dlls/%s ]; then\n\techo \"DLL is already present\"\n"
-           "\texit 1\nfi\n\necho Adding DLL %s to Wine build tree...\n"
-           "echo\n\nmkdir $1/dlls/%s\ncp %s.spec $1/dlls/%s\n"
-           "cp %s_main.c $1/dlls/%s\ncp %s_dll.h $1/dlls/%s\n"
-           "cp Makefile.in $1/dlls/%s/Makefile.in\necho Copied DLL files\n\n"
-           "cd $1\n\nsed '/dlls\\/"
-           "x11drv\\/Makefile/{G;s/$/dlls\\/%s\\/Makefile/;}' configure.ac"
-           " >t.tmp\nmv -f t.tmp configure.ac\necho Patched configure.ac\n\n"
-           "sed '/^all:/{G;s/$/\\^%s.dll$(DLLEXT) \\\\/;}'"
-           " dlls/Makefile.in| tr ^ \\\\t >t.tmp\n"
-           "sed '/BASEDIRS =/{G;s/$/\\^%s \\\\/;}' t.tmp | tr ^ \\\\t >t.tmp2"
-           "\nsed '/Map symlink name /{G;s/$/^\\$(RM) \\$\\@ \\&\\& \\$\\"
-           "(LN_S\\) %s\\/%s.dll\\$(DLLEXT) \\$\\@/;}' t.tmp2 | tr ^ \\\\t"
-           " > t.tmp\nsed '/Map symlink name /{G;s/$/%s.dll\\$(DLLEXT): "
-           "%s\\/%s.dll\\$(DLLEXT)/;}' t.tmp > t.tmp2\nsed '/all dependencies"
-	   "/{G;s/$/%s\\/__install__: %s.dll$(DLLEXT)/;}' t.tmp2 > t.tmp\n"
-	   "sed '/dll dependencies/{G;s/$/%s: user32.dll\\$(DLLEXT) "
-	   "kernel32.dll\\$(DLLEXT) ntdll.dll\\$(DLLEXT) advapi32.dll"
-	   "\\$(DLLEXT)/;}' t.tmp > t.tmp2\n\nsed '/Map library name "
-	   "/{G;s/$/%s\\/%s.dll\\$(DLLEXT): %s/;}' t.tmp2 >t.tmp\n"
-           "mv -f t.tmp dlls/Makefile.in\nrm -f t.tmp2\necho Patched dlls/"
-           "Makefile.in\n\necho\necho ...done.\necho Run \\'autoconf\\', "
-           "\\'./configure\\' then \\'make\\' to rebuild Wine\n\n",
+    "#!/bin/bash\n"
+    "# Generated from %s.dll by winedump.\n\n"
+    "if [ $# -ne 1 ] || [ ! -d $1 ] || [ ! -f $1/AUTHORS ]; then\n"
+    "\t[ $# -eq 1 ] && echo \"Invalid path\"\n"
+    "\techo \"Usage: $0 wine-base-dir\"\n"
+    "\texit 1\n"
+    "fi\n\n"
+    "if [ -d $1/dlls/%s ]; then\n"
+    "\techo \"DLL is already present\"\n"
+    "\texit 1\n"
+    "fi\n\n"
+    "echo Adding DLL %s to Wine build tree...\n\n"
+    "mkdir $1/dlls/%s\n"
+    "cp %s.spec $1/dlls/%s\n"
+    "cp %s_main.c $1/dlls/%s\n"
+    "cp %s_dll.h $1/dlls/%s\n"
+    "cp Makefile.in $1/dlls/%s/Makefile.in\n"
+    "echo Copied DLL files\n\n"
+    "cd $1\n\n"
+    "sed '/dlls\\/x11drv\\/Makefile/"
+        "{G;s/$/dlls\\/%s\\/Makefile/;}' configure.ac >t.tmp\n"
+    "mv -f t.tmp configure.ac\n"
+    "echo Patched configure.ac\n\n"
+    "sed '/^SYMLINKS =/{G;s/$/"
+        "\\^%s.dll$(DLLEXT) \\\\/;}' dlls/Makefile.in| tr ^ \\\\t >t.tmp\n"
+    "sed '/BASEDIRS =/{G;s/$/\\^%s \\\\/;}' t.tmp | tr ^ \\\\t >t.tmp2\n"
+    "sed '/Map symlink name /{G;s/$/^\\$(RM) \\$\\@ \\&\\& \\$\\"
+        "(LN_S\\) %s\\/%s.dll\\$(DLLEXT) \\$\\@/;}' t.tmp2 | tr ^ \\\\t"
+        " > t.tmp\n"
+    "sed '/Map symlink name /{G;s/$/%s.dll\\$(DLLEXT): "
+        "%s\\/%s.dll\\$(DLLEXT)/;}' t.tmp > t.tmp2\n"
+    "sed '/all dependencies/"
+        "{G;s/$/%s\\/__install__: %s.dll$(DLLEXT)/;}' t.tmp2 > t.tmp\n"
+    "sed '/dll dependencies/{G;s/$/%s: user32.dll\\$(DLLEXT) "
+        "kernel32.dll\\$(DLLEXT) ntdll.dll\\$(DLLEXT) advapi32.dll"
+        "\\$(DLLEXT)/;}' t.tmp > t.tmp2\n"
+    "sed '/^IMPORT_LIBS =/{G;s/$/\\^lib%s \\\\/;}' t.tmp2| tr ^ \\\\t >t.tmp\n"
+    "sed '/^x11drv\\/x11drv.spec.def\\: $(WINEBUILD)/"
+        "{G;s/$/%s\\/%s.spec.def: $(WINEBUILD)/;}' t.tmp >t.tmp2\n"
+    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/"
+        "{G;s/$/lib%s.def: %s\\/%s.spec.def/;}' t.tmp2 >t.tmp\n"
+    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/{G;s/$/\\^$(RM) $@ && $(LN_S) "
+        "%s\\/%s.spec.def $@/;}' t.tmp| tr ^ \\\\t >t.tmp2\n"
+    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/"
+        "{G;s/$/lib%s.a: %s\\/%s.spec.def/;}' t.tmp2 >t.tmp\n"
+    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/"
+        "{G;s/$/\\^$(DLLTOOL) -k -l $@ -d %s\\/%s.spec.def/;}' t.tmp| tr ^ \\\\t >t.tmp2\n"
+    "sed '/Map library name /{G;s/$/%s\\/%s.dll\\$(DLLEXT): %s/;}' t.tmp2 >t.tmp\n"
+    "mv -f t.tmp dlls/Makefile.in\n"
+    "rm -f t.tmp2\n"
+    "echo Patched dlls/Makefile.in\n\n"
+    "echo Run \\'autoconf\\', \\'./configure\\' then \\'make\\' to rebuild Wine\n\n",
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME);
+           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
+           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
+           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
+           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME);
 
   fclose (install_file);
   snprintf (cmd, sizeof (cmd), "chmod a+x %s_install", OUTPUT_DLL_NAME);
