@@ -991,47 +991,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 }
 
 /**************************************************************************
- * 				wodPrepare			[internal]
- */
-static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveHdr->dwFlags &= ~WHDR_DONE;
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				wodUnprepare			[internal]
- */
-static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
-    lpWaveHdr->dwFlags |= WHDR_DONE;
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			wodPause				[internal]
  */
 static DWORD wodPause(WORD wDevID)
@@ -1220,8 +1179,8 @@ DWORD WINAPI LIBAUDIOIO_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_PAUSE:	 	return wodPause		(wDevID);
     case WODM_GETPOS:	 	return wodGetPosition	(wDevID, (LPMMTIME)dwParam1, 		dwParam2);
     case WODM_BREAKLOOP: 	return MMSYSERR_NOTSUPPORTED;
-    case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
+    case WODM_PREPARE:	 	return MMSYSERR_NOTSUPPORTED;
+    case WODM_UNPREPARE: 	return MMSYSERR_NOTSUPPORTED;
     case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
@@ -2092,42 +2051,6 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 }
 
 /**************************************************************************
- * 				widPrepare			[internal]
- */
-static DWORD widPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEINDRV) return MMSYSERR_INVALHANDLE;
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveHdr->dwFlags &= ~(WHDR_INQUEUE|WHDR_DONE);
-    lpWaveHdr->dwBytesRecorded = 0;
-    TRACE("header prepared !\n");
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				widUnprepare			[internal]
- */
-static DWORD widUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-    if (wDevID >= MAX_WAVEINDRV) return MMSYSERR_INVALHANDLE;
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags &= ~(WHDR_PREPARED|WHDR_INQUEUE);
-    lpWaveHdr->dwFlags |= WHDR_DONE;
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			widStart				[internal]
  */
 static DWORD widStart(WORD wDevID)
@@ -2214,8 +2137,8 @@ DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_OPEN:		return widOpen       (wDevID, (LPWAVEOPENDESC)dwParam1, dwParam2);
     case WIDM_CLOSE:		return widClose      (wDevID);
     case WIDM_ADDBUFFER:	return widAddBuffer  (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_PREPARE:		return widPrepare    (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_UNPREPARE:	return widUnprepare  (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+    case WIDM_PREPARE:		return MMSYSERR_NOTSUPPORTED;
+    case WIDM_UNPREPARE:	return MMSYSERR_NOTSUPPORTED;
     case WIDM_GETDEVCAPS:	return widGetDevCaps (wDevID, (LPWAVEINCAPSW)dwParam1, dwParam2);
     case WIDM_GETNUMDEVS:	return wodGetNumDevs ();	/* same number of devices in output as in input */
     case WIDM_GETPOS:		return widGetPosition(wDevID, (LPMMTIME)dwParam1, dwParam2);

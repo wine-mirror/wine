@@ -1047,47 +1047,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 }
 
 /**************************************************************************
- * 				wodPrepare			[internal]
- */
-static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags |= WHDR_PREPARED;
-    lpWaveHdr->dwFlags &= ~WHDR_DONE;
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				wodUnprepare			[internal]
- */
-static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
-{
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
-
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-
-    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
-	return WAVERR_STILLPLAYING;
-
-    lpWaveHdr->dwFlags &= ~WHDR_PREPARED;
-    lpWaveHdr->dwFlags |= WHDR_DONE;
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			wodPause				[internal]
  */
 static DWORD wodPause(WORD wDevID)
@@ -1256,8 +1215,8 @@ DWORD WINAPI NAS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_PAUSE:	 	return wodPause		(wDevID);
     case WODM_GETPOS:	 	return wodGetPosition	(wDevID, (LPMMTIME)dwParam1, 		dwParam2);
     case WODM_BREAKLOOP: 	return wodBreakLoop     (wDevID);
-    case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
+    case WODM_PREPARE:	 	return MMSYSERR_NOTSUPPORTED;
+    case WODM_UNPREPARE: 	return MMSYSERR_NOTSUPPORTED;
     case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
