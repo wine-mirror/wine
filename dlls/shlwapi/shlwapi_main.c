@@ -32,6 +32,7 @@ HINSTANCE shlwapi_hInstance = 0;
 HMODULE SHLWAPI_hshell32 = 0;
 HMODULE SHLWAPI_hwinmm = 0;
 HMODULE SHLWAPI_hcomdlg32 = 0;
+HMODULE SHLWAPI_hcomctl32 = 0;
 HMODULE SHLWAPI_hmpr = 0;
 HMODULE SHLWAPI_hmlang = 0;
 HMODULE SHLWAPI_hversion = 0;

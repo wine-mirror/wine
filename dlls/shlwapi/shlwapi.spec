@@ -298,7 +298,7 @@ init SHLWAPI_LibMain
 296 stub @
 297 stub @
 298 forward @ kernel32.WritePrivateProfileStringW
-299 stub @
+299 stdcall @(long long long long ptr wstr long ptr) SHLWAPI_299
 300 forward @ gdi32.CreateFontW
 301 forward @ user32.DrawTextExW
 302 forward @ user32.GetMenuItemInfoW

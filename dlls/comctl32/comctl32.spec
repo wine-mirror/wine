@@ -110,7 +110,7 @@ init	COMCTL32_LibMain
 414 stub @
 415 stdcall @(long long long long long) COMCTL32_415
 416 stub @
-417 stub @
+417 stdcall @(long long long long ptr wstr long ptr) COMCTL32_417
 418 stub @
 419 stdcall @(long long long long) COMCTL32_419
 420 stub @

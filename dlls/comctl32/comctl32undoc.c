@@ -1845,7 +1845,7 @@ DPA_GetPtrIndex (const HDPA hdpa, LPVOID p)
 {
     INT i;
 
-    if (!hdpa->ptrs)
+    if (!hdpa || !hdpa->ptrs)
 	return -1;
 
     for (i = 0; i < hdpa->nItemCount; i++) {
@@ -2809,6 +2809,16 @@ BOOL WINAPI COMCTL32_415( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
    FIXME("(%x, %lx, %lx, %lx, %lx): stub!\n", hwnd, b, c, d, e);
 
    return TRUE;
+}
+
+/**************************************************************************
+ * @ [COMCTL32.417]
+ *
+ */
+BOOL WINAPI COMCTL32_417(HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
+                         LPCWSTR str, UINT count, const INT *lpDx)
+{
+    return ExtTextOutW(hdc, x, y, flags, lprect, str, count, lpDx);
 }
 
 /**************************************************************************

@@ -47,6 +47,7 @@ extern HINSTANCE shlwapi_hInstance;
 extern HMODULE SHLWAPI_hshell32;
 extern HMODULE SHLWAPI_hwinmm;
 extern HMODULE SHLWAPI_hcomdlg32;
+extern HMODULE SHLWAPI_hcomctl32;
 extern HMODULE SHLWAPI_hmpr;
 extern HMODULE SHLWAPI_hmlang;
 extern HMODULE SHLWAPI_hversion;
@@ -136,6 +137,7 @@ static BOOL    (WINAPI *pGetOpenFileNameW)(LPOPENFILENAMEW);
 static DWORD   (WINAPI *pGetFileVersionInfoSizeW)(LPCWSTR,LPDWORD);
 static BOOL    (WINAPI *pGetFileVersionInfoW)(LPCWSTR,DWORD,DWORD,LPVOID);
 static WORD    (WINAPI *pVerQueryValueW)(LPVOID,LPCWSTR,LPVOID*,UINT*);
+static BOOL    (WINAPI *pCOMCTL32_417)(HDC,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
 
 /*
  NOTES: Most functions exported by ordinal seem to be superflous.
@@ -1821,6 +1823,18 @@ BOOL WINAPI SHLWAPI_295(LPWSTR str1, LPVOID x, LPWSTR str2, LPWSTR str3)
 {
     FIXME("('%s', %p, '%s', '%s'), stub.\n", debugstr_w(str1), x, debugstr_w(str2), debugstr_w(str3));
     return TRUE;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.299]
+ *
+ * Late bound call to comctl32.417
+ */
+BOOL WINAPI SHLWAPI_299(HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
+                         LPCWSTR str, UINT count, const INT *lpDx)
+{
+    GET_FUNC(pCOMCTL32_417, comctl32, (LPCSTR)417, FALSE);
+    return pCOMCTL32_417(hdc, x, y, flags, lprect, str, count, lpDx);
 }
 
 /*************************************************************************
