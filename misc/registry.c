@@ -171,7 +171,7 @@ static LPSTR lmemcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
 }
 
 static void debug_print_value (LPBYTE lpbData, DWORD type, DWORD len)
-{	if (lpbData) 
+{	if (TRACE_ON(reg) && lpbData) 
 	{ switch(type)
 	  { case REG_SZ:
                 TRACE(reg," Data(sz)=%s\n",debugstr_w((LPCWSTR)lpbData));
@@ -588,6 +588,9 @@ static void _save_USTRING( FILE *F, LPWSTR wstr, int escapeeq )
 
 /******************************************************************************
  * _savesubkey [Internal]
+ *
+ * NOTES
+ *  REG_MULTI_SZ is handled as binary (like in win95) (js)
  */
 static int _savesubkey( FILE *F, LPKEYSTRUCT lpkey, int level, int all )
 {
@@ -611,7 +614,7 @@ static int _savesubkey( FILE *F, LPKEYSTRUCT lpkey, int level, int all )
 				_save_USTRING(F,val->name,0);
 				fputc('=',F);
 				fprintf(F,"%ld,%ld,",val->type,val->lastmodified);
-				if ((1<<val->type) & UNICONVMASK)
+				if ( val->type == REG_SZ || val->type == REG_EXPAND_SZ )
 					_save_USTRING(F,(LPWSTR)val->data,0);
 				else
 					for (j=0;j<val->len;j++)
@@ -1002,7 +1005,7 @@ static int _wine_loadsubkey( FILE *F, LPKEYSTRUCT lpkey, int level, char **buf,
 				/* skip the 2 , */
 				s=strchr(s,',');s++;
 				s=strchr(s,',');s++;
-				if ((1<<type) & UNICONVMASK) {
+				if (type == REG_SZ || type == REG_EXPAND_SZ) {
 					s=_wine_read_USTRING(s,(LPWSTR*)&data);
 					if (data)
 						len = lstrlen32W((LPWSTR)data)*2+2;
@@ -2185,8 +2188,8 @@ DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR lpszSubKey, LPHKEY retkey )
  *
  * RETURNS 
  *    ERROR_SUCCESS:   Success
- *    ERROR_MORE_DATA: The specified buffer is not big enough to hold the data
- * 		       !!! buffer is untouched. The MS-documentation is wrong !!!
+ *    ERROR_MORE_DATA: !!! if the specified buffer is not big enough to hold the data
+ * 		       buffer is left untouched. The MS-documentation is wrong (js) !!!
  */
 DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
                                  LPDWORD lpdwReserved, LPDWORD lpdwType,
@@ -2245,26 +2248,15 @@ DWORD WINAPI RegQueryValueEx32W( HKEY hkey, LPWSTR lpValueName,
 	if (lpdwType) 					/* type required ?*/
 	  *lpdwType = lpkey->values[i].type;
 
-	if (lpcbData) 					/* size required ?*/
-	{ if (lpbData)					/* data required ?*/
-	  { if (*lpcbData >= lpkey->values[i].len)	/* buffer large enought ?*/
-	      memcpy(lpbData,lpkey->values[i].data,lpkey->values[i].len);
-	    else
-	      ret = ERROR_MORE_DATA;
-	  }
-	  *lpcbData = lpkey->values[i].len;
+	if (lpbData)					/* data required ?*/
+	{ if (*lpcbData >= lpkey->values[i].len)	/* buffer large enought ?*/
+	    memcpy(lpbData,lpkey->values[i].data,lpkey->values[i].len);
+	  else
+	    ret = ERROR_MORE_DATA;
+	}
 
-	 /* fixme: hack to fake return value for REG_MULTI_SZ */
-	  if(lpkey->values[i].type==REG_MULTI_SZ)
-	  { FIXME(reg,"fake empty return value for REG_MULTI_SZ\n");
-	    *lpcbData = 4;
-	    if (lpbData)
-	    { lpbData[0] = 0x00;
-	      lpbData[1] = 0x00;
-	      lpbData[2] = 0x00;
-	      lpbData[3] = 0x00;
-	    }
-	  }
+	if (lpcbData) 					/* size required ?*/
+	{ *lpcbData = lpkey->values[i].len;
 	}
 
 	debug_print_value ( lpbData, lpkey->values[i].type, lpkey->values[i].len);
@@ -2341,7 +2333,7 @@ DWORD WINAPI RegQueryValueEx32A( HKEY hkey, LPSTR lpszValueName,
 	
 	if (lpcbData)					/* at least length requested? */
 	{ if (UNICONVMASK & (1<<(mytype)))		/* string requested? */
-	  { if (lpbData)				/* value requested? */
+	  { if (lpbData )				/* value requested? */
 	    { mylen = 2*( *lpcbData );
 	      mybuf = (LPBYTE)xmalloc( mylen );
 	    }
@@ -2462,6 +2454,9 @@ DWORD WINAPI RegQueryValue16( HKEY hkey, LPSTR lpszSubKey, LPSTR lpszData,
  * RETURNS
  *    Success: ERROR_SUCCESS
  *    Failure: Error code
+ *
+ * NOTES
+ *   win95 does not care about cbData for REG_SZ and finds out the len by itself (js) 
  */
 DWORD WINAPI RegSetValueEx32W( HKEY hkey, LPWSTR lpszValueName, 
                                DWORD dwReserved, DWORD dwType, LPBYTE lpbData,
@@ -2508,6 +2503,10 @@ DWORD WINAPI RegSetValueEx32W( HKEY hkey, LPWSTR lpszValueName,
 		else
 			lpkey->values[i].name = NULL;
 	}
+
+	if (dwType == REG_SZ)
+	  cbData = 2 * (lstrlen32W ((LPCWSTR)lpbData) + 1);
+	  
 	lpkey->values[i].len	= cbData;
 	lpkey->values[i].type	= dwType;
 	if (lpkey->values[i].data !=NULL)
@@ -2522,6 +2521,8 @@ DWORD WINAPI RegSetValueEx32W( HKEY hkey, LPWSTR lpszValueName,
 /******************************************************************************
  * RegSetValueEx32A [ADVAPI32.169]
  *
+ * NOTES
+ *   win95 does not care about cbData for REG_SZ and finds out the len by itself (js) 
  */
 DWORD WINAPI RegSetValueEx32A( HKEY hkey, LPSTR lpszValueName,
                                DWORD dwReserved, DWORD dwType, LPBYTE lpbData,
@@ -2538,7 +2539,10 @@ DWORD WINAPI RegSetValueEx32A( HKEY hkey, LPSTR lpszValueName,
           dwReserved,dwType,lpbData,cbData);
 
 	if ((1<<dwType) & UNICONVMASK) 
-	{ buf = (LPBYTE)xmalloc( cbData *2 );
+	{ if (dwType == REG_SZ)
+	    cbData = strlen ((LPCSTR)lpbData)+1;
+
+	  buf = (LPBYTE)xmalloc( cbData *2 );
 	  lmemcpynAtoW ((LPVOID)buf, lpbData, cbData );
 	  cbData=2*cbData;
 	} 
@@ -2825,11 +2829,11 @@ DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD iSubkey, LPSTR lpszName,
  *    hkey        [I] Handle to key to query
  *    iValue      [I] Index of value to query
  *    lpszValue   [O] Value string
- *    lpcchValue  [O] Size of value buffer
+ *    lpcchValue  [I/O] Size of value buffer (in wchars)
  *    lpdReserved [I] Reserved
  *    lpdwType    [O] Type code
  *    lpbData     [O] Value data
- *    lpcbData    [O] Size of data buffer
+ *    lpcbData    [I/O] Size of data buffer (in bytes)
  *
  * Note:  wide character functions that take and/or return "character counts"
  *  use TCHAR (that is unsigned short or char) not byte counts.
@@ -2842,34 +2846,37 @@ DWORD WINAPI RegEnumValue32W( HKEY hkey, DWORD iValue, LPWSTR lpszValue,
 	LPKEYSTRUCT	lpkey;
 	LPKEYVALUE	val;
 
-    TRACE(reg,"(%x,%ld,%p,%p,%p,%p,%p,%p)\n",hkey,iValue,debugstr_w(lpszValue),
+	TRACE(reg,"(%x,%ld,%p,%p,%p,%p,%p,%p)\n",hkey,iValue,debugstr_w(lpszValue),
           lpcchValue,lpdReserved,lpdwType,lpbData,lpcbData);
 
-    lpkey = lookup_hkey( hkey );
-    if (!lpkey)
-        return ERROR_INVALID_HANDLE;
+	lpkey = lookup_hkey( hkey );
+	
+	if (!lpcbData && lpbData)
+		return ERROR_INVALID_PARAMETER;
+		
+	if (!lpkey)
+		return ERROR_INVALID_HANDLE;
 
-    if (lpkey->nrofvalues <= iValue)
-        return ERROR_NO_MORE_ITEMS;
+	if (lpkey->nrofvalues <= iValue)
+		return ERROR_NO_MORE_ITEMS;
 
-    /* FIXME: Should this be lpkey->values + iValue * sizeof(KEYVALUE)? */
-    val = lpkey->values + iValue;
+	val = &(lpkey->values[iValue]);
 
 	if (val->name) {
 	        if (lstrlen32W(val->name)+1>*lpcchValue) {
 			*lpcchValue = lstrlen32W(val->name)+1;
 			return ERROR_MORE_DATA;
 		}
-		memcpy(lpszValue,val->name,2*lstrlen32W(val->name)+2);
+		memcpy(lpszValue,val->name,2 * (lstrlen32W(val->name)+1) );
 		*lpcchValue=lstrlen32W(val->name);
 	} else {
 		*lpszValue	= 0;
 		*lpcchValue	= 0;
 	}
 
-    /* Can be NULL if the type code is not required */
-    if (lpdwType)
-        *lpdwType = val->type;
+	/* Can be NULL if the type code is not required */
+	if (lpdwType)
+		*lpdwType = val->type;
 
 	if (lpbData) {
 		if (val->len>*lpcbData)
@@ -2877,6 +2884,8 @@ DWORD WINAPI RegEnumValue32W( HKEY hkey, DWORD iValue, LPWSTR lpszValue,
 		memcpy(lpbData,val->data,val->len);
 		*lpcbData = val->len;
 	}
+
+	debug_print_value ( val->data, val->type, val->len );
 	return ERROR_SUCCESS;
 }
 
