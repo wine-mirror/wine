@@ -161,7 +161,7 @@ static BOOL process_attach(void)
     }
 
     /* Create the shared heap for broken win95 native dlls */
-    HeapCreate( HEAP_SHARED, 0, 0 );
+    if (GetVersion() & 0x80000000) HeapCreate( HEAP_SHARED, 0, 0 );
 
     /* initialize LDT locking */
     wine_ldt_init_locking( ldt_lock, ldt_unlock );
