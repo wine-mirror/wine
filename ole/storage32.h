@@ -298,6 +298,7 @@ struct StorageImpl
 
   ULONG blockDepotCached[NUM_BLOCKS_PER_DEPOT_BLOCK];
   ULONG indexBlockDepotCached;
+  ULONG prevFreeBlock;
 
   /*
    * Abstraction of the big block chains for the chains of the header.

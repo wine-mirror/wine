@@ -1921,6 +1921,11 @@ HRESULT StorageImpl_Construct(
    * There is no block depot cached yet.
    */
   This->indexBlockDepotCached = 0xFFFFFFFF;
+
+  /*
+   * Start searching for free blocks with block 0.
+   */
+  This->prevFreeBlock = 0;
   
   /*
    * Create the block chain abstractions.
@@ -2026,7 +2031,10 @@ ULONG StorageImpl_GetNextFreeBigBlock(
   ULONG blocksPerDepot    = This->bigBlockSize / sizeof(ULONG);
   ULONG nextBlockIndex    = BLOCK_SPECIAL;
   int   depotIndex        = 0;
-  ULONG blockNoInSequence = 0;
+  ULONG freeBlock         = BLOCK_UNUSED;
+
+  depotIndex = This->prevFreeBlock / blocksPerDepot;
+  depotBlockOffset = (This->prevFreeBlock % blocksPerDepot) * sizeof(ULONG);
 
   /*
    * Scan the entire big block depot until we find a block marked free
@@ -2115,15 +2123,16 @@ ULONG StorageImpl_GetNextFreeBigBlock(
 
     if (depotBuffer != 0)
     {
-      depotBlockOffset = 0;
-
       while ( ( (depotBlockOffset/sizeof(ULONG) ) < blocksPerDepot) &&
               ( nextBlockIndex != BLOCK_UNUSED))
       {
         StorageUtl_ReadDWord(depotBuffer, depotBlockOffset, &nextBlockIndex);
 
-        if (nextBlockIndex != BLOCK_UNUSED)
-          blockNoInSequence++;
+        if (nextBlockIndex == BLOCK_UNUSED)
+        {
+          freeBlock = (depotIndex * blocksPerDepot) +
+                      (depotBlockOffset/sizeof(ULONG));
+        }
 
         depotBlockOffset += sizeof(ULONG);
       }
@@ -2132,9 +2141,12 @@ ULONG StorageImpl_GetNextFreeBigBlock(
     }
 
     depotIndex++;
+    depotBlockOffset = 0;
   }
 
-  return blockNoInSequence;
+  This->prevFreeBlock = freeBlock;
+
+  return freeBlock;
 }
 
 /******************************************************************************
@@ -2309,6 +2321,9 @@ void  StorageImpl_FreeBigBlock(
   ULONG          blockIndex)
 {
   StorageImpl_SetNextBlockInChain(This, blockIndex, BLOCK_UNUSED);
+
+  if (blockIndex < This->prevFreeBlock)
+    This->prevFreeBlock = blockIndex;
 }
 
 /************************************************************************
