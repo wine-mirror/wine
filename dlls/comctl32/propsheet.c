@@ -110,10 +110,7 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
                                        PropSheetInfo * psInfo);
 static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
                                        PropSheetInfo * psInfo);
-static BOOL PROPSHEET_CollectPageInfoA(LPCPROPSHEETPAGEA lppsp,
-                                      PropSheetInfo * psInfo,
-                                      int index);
-static BOOL PROPSHEET_CollectPageInfoW(LPCPROPSHEETPAGEW lppsp,
+static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
                                       PropSheetInfo * psInfo,
                                       int index);
 static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
@@ -210,6 +207,21 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
 	FIXME("%s\n", string);
 }
 #undef add_flag
+
+/******************************************************************************
+ *            PROPSHEET_AtoW
+ *
+ * Convert ASCII to Unicode since all data is saved as Unicode.
+ */
+static void PROPSHEET_AtoW(LPCWSTR *tostr, LPCSTR frstr)
+{
+    INT len;
+
+    TRACE("<%s>\n", frstr);
+    len = MultiByteToWideChar(CP_ACP, 0, frstr, -1, 0, 0);
+    *tostr = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, frstr, -1, (LPWSTR)*tostr, len);
+}
 
 /******************************************************************************
  *            PROPSHEET_CollectSheetInfoA
@@ -312,178 +324,12 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
 }
 
 /******************************************************************************
- *            PROPSHEET_CollectPageInfoA
+ *            PROPSHEET_CollectPageInfo
  *
  * Collect property sheet data.
  * With code taken from DIALOG_ParseTemplate32.
  */
-BOOL PROPSHEET_CollectPageInfoA(LPCPROPSHEETPAGEA lppsp,
-                               PropSheetInfo * psInfo,
-                               int index)
-{
-  DLGTEMPLATE* pTemplate;
-  const WORD*  p;
-  DWORD dwFlags;
-  int width, height;
-
-  TRACE("\n");
-  psInfo->proppage[index].hpage = (HPROPSHEETPAGE)lppsp;
-  psInfo->proppage[index].hwndPage = 0;
-  psInfo->proppage[index].isDirty = FALSE;
-
-  /*
-   * Process property page flags.
-   */
-  dwFlags = lppsp->dwFlags;
-  psInfo->proppage[index].useCallback = (dwFlags & PSP_USECALLBACK) && (lppsp->pfnCallback);
-  psInfo->proppage[index].hasHelp = dwFlags & PSP_HASHELP;
-  psInfo->proppage[index].hasIcon = dwFlags & (PSP_USEHICON | PSP_USEICONID);
-
-  /* as soon as we have a page with the help flag, set the sheet flag on */
-  if (psInfo->proppage[index].hasHelp)
-    psInfo->hasHelp = TRUE;
-
-  /*
-   * Process page template.
-   */
-  if (dwFlags & PSP_DLGINDIRECT)
-    pTemplate = (DLGTEMPLATE*)lppsp->u.pResource;
-  else
-  {
-    HRSRC hResource = FindResourceA(lppsp->hInstance,
-                                    lppsp->u.pszTemplate,
-                                    RT_DIALOGA);
-    HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
-                                     hResource);
-    pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
-  }
-
-  /*
-   * Extract the size of the page and the caption.
-   */
-  if (!pTemplate)
-      return FALSE;
-
-  p = (const WORD *)pTemplate;
-
-  if (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF)
-  {
-    /* DIALOGEX template */
-
-    p++;       /* dlgVer    */
-    p++;       /* signature */
-    p += 2;    /* help ID   */
-    p += 2;    /* ext style */
-    p += 2;    /* style     */
-  }
-  else
-  {
-    /* DIALOG template */
-
-    p += 2;    /* style     */
-    p += 2;    /* ext style */
-  }
-
-  p++;    /* nb items */
-  p++;    /*   x      */
-  p++;    /*   y      */
-  width  = (WORD)*p; p++;
-  height = (WORD)*p; p++;
-
-  /* remember the largest width and height */
-  if (width > psInfo->width)
-    psInfo->width = width;
-
-  if (height > psInfo->height)
-    psInfo->height = height;
-
-  /* menu */
-  switch ((WORD)*p)
-  {
-    case 0x0000:
-      p++;
-      break;
-    case 0xffff:
-      p += 2;
-      break;
-    default:
-      p += lstrlenW( (LPCWSTR)p ) + 1;
-      break;
-  } 
-
-  /* class */
-  switch ((WORD)*p)
-  {
-    case 0x0000:
-      p++;
-      break;
-    case 0xffff:
-      p += 2;
-      break;
-    default:
-      p += lstrlenW( (LPCWSTR)p ) + 1;
-      break;
-  }
-
-  /* Extract the caption */
-  psInfo->proppage[index].pszText = (LPCWSTR)p;
-  TRACE("Tab %d %s\n",index,debugstr_w((LPCWSTR)p));
-  p += lstrlenW((LPCWSTR)p) + 1;
-
-  if (dwFlags & PSP_USETITLE)
-  {
-    if ( !HIWORD( lppsp->pszTitle ) )
-    {
-      char szTitle[256];
-      
-      if (LoadStringA( lppsp->hInstance, (UINT)lppsp->pszTitle,szTitle,256 )) {
-        psInfo->proppage[index].pszText = HEAP_strdupAtoW( GetProcessHeap(), 0, szTitle );
-      } else {
-        psInfo->proppage[index].pszText = HEAP_strdupAtoW( GetProcessHeap(), 0, "(null)" );
-	FIXME("Could not load resource #%04x?\n",LOWORD(lppsp->pszTitle));
-      }
-      
-    } else
-      psInfo->proppage[index].pszText = HEAP_strdupAtoW(GetProcessHeap(),
-							0,
-							lppsp->pszTitle);
-  }
-
-  /*
-   * Build the image list for icons
-   */
-  if ((dwFlags & PSP_USEHICON) || (dwFlags & PSP_USEICONID)) 
-  {
-    HICON hIcon;
-    int icon_cx = GetSystemMetrics(SM_CXSMICON);
-    int icon_cy = GetSystemMetrics(SM_CYSMICON);
-
-    if (dwFlags & PSP_USEICONID)
-      hIcon = LoadImageA(lppsp->hInstance, lppsp->u2.pszIcon, IMAGE_ICON, 
-                         icon_cx, icon_cy, LR_DEFAULTCOLOR);
-    else
-      hIcon = lppsp->u2.hIcon;
-
-    if ( hIcon )
-    {
-      if (psInfo->hImageList == 0 )
-	psInfo->hImageList = ImageList_Create(icon_cx, icon_cy, ILC_COLOR, 1, 1);
-
-      ImageList_AddIcon(psInfo->hImageList, hIcon);
-    }
-
-  }
-
-  return TRUE;
-}
-
-/******************************************************************************
- *            PROPSHEET_CollectPageInfoW
- *
- * Collect property sheet data.
- * With code taken from DIALOG_ParseTemplate32.
- */
-BOOL PROPSHEET_CollectPageInfoW(LPCPROPSHEETPAGEW lppsp,
+BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
                                PropSheetInfo * psInfo,
                                int index)
 {
@@ -2027,7 +1873,7 @@ static BOOL PROPSHEET_AddPage(HWND hwndDlg,
   psInfo->proppage = (PropPageInfo*) COMCTL32_ReAlloc(psInfo->proppage,
                                                       sizeof(PropPageInfo) *
                                                       (psInfo->nPages + 1));
-  if (!PROPSHEET_CollectPageInfoW(ppsp, psInfo, psInfo->nPages))
+  if (!PROPSHEET_CollectPageInfo(ppsp, psInfo, psInfo->nPages))
       return FALSE;
 
   psInfo->proppage[psInfo->nPages].hpage = hpage;
@@ -2299,7 +2145,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
        pByte += ((LPPROPSHEETPAGEA)pByte)->dwSize;
     }
 
-    if (!PROPSHEET_CollectPageInfoA((LPCPROPSHEETPAGEA)psInfo->proppage[n].hpage,
+    if (!PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEW)psInfo->proppage[n].hpage,
                                psInfo, n))
     {
 	if (lppsh->dwFlags & PSH_PROPSHEETPAGE)
@@ -2343,7 +2189,7 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
        pByte += ((LPPROPSHEETPAGEW)pByte)->dwSize;
     }
 
-    if (!PROPSHEET_CollectPageInfoW((LPCPROPSHEETPAGEW)psInfo->proppage[n].hpage,
+    if (!PROPSHEET_CollectPageInfo((LPCPROPSHEETPAGEW)psInfo->proppage[n].hpage,
                                psInfo, n))
     {
 	if (lppsh->dwFlags & PSH_PROPSHEETPAGE)
@@ -2365,25 +2211,22 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                           LPCPROPSHEETPAGEA lpPropSheetPage)
 {
-  PROPSHEETPAGEA* ppsp = COMCTL32_Alloc(sizeof(PROPSHEETPAGEA));
+  PROPSHEETPAGEW* ppsp = COMCTL32_Alloc(sizeof(PROPSHEETPAGEW));
 
   memcpy(ppsp,lpPropSheetPage,min(lpPropSheetPage->dwSize,sizeof(PROPSHEETPAGEA)));
 
   if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
   {
-    ppsp->u.pszTemplate = HeapAlloc( GetProcessHeap(),0,strlen(lpPropSheetPage->u.pszTemplate)+1 );
-    strcpy( (char *)ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate );
+      PROPSHEET_AtoW(&ppsp->u.pszTemplate, lpPropSheetPage->u.pszTemplate); 
   }
   if ( (ppsp->dwFlags & PSP_USEICONID) && HIWORD( ppsp->u2.pszIcon ) )
   {
-      ppsp->u2.pszIcon = HeapAlloc( GetProcessHeap(), 0, strlen(lpPropSheetPage->u2.pszIcon)+1 );
-      strcpy( (char *)ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon );
+      PROPSHEET_AtoW(&ppsp->u2.pszIcon, lpPropSheetPage->u2.pszIcon); 
   }
 
   if ((ppsp->dwFlags & PSP_USETITLE) && HIWORD( ppsp->pszTitle ))
   {
-      ppsp->pszTitle = HeapAlloc( GetProcessHeap(), 0, strlen(lpPropSheetPage->pszTitle)+1 );
-      strcpy( (char *)ppsp->pszTitle, lpPropSheetPage->pszTitle );
+      PROPSHEET_AtoW(&ppsp->pszTitle, lpPropSheetPage->pszTitle); 
   }
   else if ( !(ppsp->dwFlags & PSP_USETITLE) )
       ppsp->pszTitle = NULL;
