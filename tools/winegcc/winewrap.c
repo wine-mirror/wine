@@ -100,7 +100,7 @@ static const char *wrapper_code =
     " * Copyright 2002 Dimitrie O. Paun <dpaun@rogers.com>\n"
     " */\n"
     "\n"
-    "#include <dlfcn.h>\n"
+    "#include <stdio.h>\n"
     "#include <windows.h>\n"
     "\n"
     "\n"
@@ -120,7 +120,7 @@ static const char *wrapper_code =
     " * This is the name of the library containing the application,\n"
     " * e.g. 'hello-wrap.dll' if the application is called 'hello.exe'.\n"
     " */\n"
-    "static char* appName     = APPNAME \"-wrap.dll\";\n"
+    "static char* appName     = \"%s\";\n"
     "\n"
     "/**\n"
     " * This is the name of the application's Windows module. If left NULL\n"
@@ -153,7 +153,7 @@ static const char *wrapper_code =
     "\n"
     "    va_start(ap, format);\n"
     "    vsnprintf(msg, sizeof(msg), format, ap);\n"
-    "    MessageBox(NULL, msg, \"Error\", MB_OK);\n"
+    "    fprintf(stderr, \"Error: %%s\\n\", msg);\n"
     "    va_end(ap);\n"
     "    exit(1);\n"
     "}\n"
@@ -337,12 +337,11 @@ static void add_lib_file(const char* library)
     }
 }
 
-static void create_the_wrapper(char* base_file, char* base_name, int gui_mode, int cpp)
+static void create_the_wrapper(char* base_file, char* base_name, char* app_name, int gui_mode)
 {
     char *wrp_temp_name, *wspec_name, *wspec_c_name, *wspec_o_name;
     char *wrap_c_name, *wrap_o_name;
     strarray *wwrap_args, *wspec_args, *wcomp_args, *wlink_args;
-    int i;
 
     wrp_temp_name = tempnam(0, "wwrp");
     wspec_name = strmake("%s.spec", wrp_temp_name);
@@ -363,7 +362,7 @@ static void create_the_wrapper(char* base_file, char* base_name, int gui_mode, i
     strarray_add(wwrap_args, wrap_c_name);
     strarray_add(wwrap_args, NULL);
 
-    create_file(wrap_c_name, wrapper_code, base_name, gui_mode);
+    create_file(wrap_c_name, wrapper_code, base_name, gui_mode, app_name);
     spawn(wwrap_args);
     strarray_free(wwrap_args);
     rm_temp_file(wrap_c_name);
@@ -377,12 +376,8 @@ static void create_the_wrapper(char* base_file, char* base_name, int gui_mode, i
     strarray_add(wspec_args, strmake("%s.exe", base_name));
     strarray_add(wspec_args, gui_mode ? "-mgui" : "-mcui");
     strarray_add(wspec_args, wrap_o_name);
-    for (i = 0; i < llib_paths->size; i++)
-	strarray_add(wspec_args, llib_paths->base[i]);
-    for (i = 0; i < lib_files->size; i++)
-	strarray_add(wspec_args, lib_files->base[i]);
-    for (i = 0; i < dll_files->size; i++)
-	strarray_add(wspec_args, dll_files->base[i]);
+    strarray_add(wspec_args, "-L" DLLDIR);
+    strarray_add(wspec_args, "-lkernel32");
     strarray_add(wspec_args, NULL);
 
     spawn(wspec_args);
@@ -404,11 +399,10 @@ static void create_the_wrapper(char* base_file, char* base_name, int gui_mode, i
 
     /* build wrapper ld's argument list */
     wlink_args = strarray_alloc();
-    strarray_add(wlink_args, cpp ? "g++" : "gcc");
+    strarray_add(wlink_args, "gcc");
     strarray_add(wlink_args, "-shared");
     strarray_add(wlink_args, "-Wl,-Bsymbolic,-z,defs");
     strarray_add(wlink_args, "-lwine");
-    strarray_add(wlink_args, "-ldl");
     strarray_add(wlink_args, "-o");
     strarray_add(wlink_args, strmake("%s.exe.so", base_file));
     strarray_add(wlink_args, wspec_o_name);
@@ -425,7 +419,7 @@ int main(int argc, char **argv)
 {
     char *library = 0, *path = 0;
     int i, len, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = -1;
-    char *base_name, *base_file, *app_temp_name;
+    char *base_name, *base_file, *base_path, *app_temp_name, *app_name = 0;
     char *spec_name, *spec_c_name, *spec_o_name;
     strarray *spec_args, *comp_args, *link_args;
 
@@ -445,6 +439,11 @@ int main(int argc, char **argv)
 	{
 	    switch (argv[i][1])
 	    {
+	    case 'a':
+		if (argv[i][2]) app_name = strdup(argv[i]+ 2);
+		else if (i + 1 < argc) app_name = strdup(argv[++i]);
+		else error("The -a switch takes an argument.");
+		break;
 	    case 'k':
 		keep_generated = 1;
 		break;
@@ -515,9 +514,21 @@ int main(int argc, char **argv)
 	base_file[len - 4 ] = 0; /* remove the .exe extension */
 
     /* we need to get rid of the directory part to get the base name */
-    if ( (base_name = strrchr(base_file, '/')) ) base_name++;
-    else base_name = base_file;
+    if ( (base_name = strrchr(base_file, '/')) ) 
+    {
+	base_path = strdup(base_file);
+	*strrchr(base_path, '/') = 0;
+	base_name++;
+    }
+    else 
+    {
+	base_path = strdup(".");
+	base_name = base_file;
+    }
     
+    /* create default name for the wrapper */
+    if (!app_name) app_name =  strmake("%s-wrap.dll", base_name);
+
     spec_name = strmake("%s.spec", app_temp_name);
     spec_c_name = strmake("%s.c", spec_name);
     spec_o_name = strmake("%s.o", spec_name);
@@ -531,7 +542,7 @@ int main(int argc, char **argv)
     {
 	create_file(spec_name, gui_mode ? app_gui_spec : app_cui_spec);
 	strarray_add(spec_args, "-F");
-	strarray_add(spec_args, strmake("%s-wrap.dll", base_name));
+	strarray_add(spec_args, app_name);
 	strarray_add(spec_args, "--spec");
 	strarray_add(spec_args, spec_name);
     }
@@ -583,7 +594,7 @@ int main(int argc, char **argv)
 	strarray_add(link_args, llib_paths->base[i]);
     strarray_add(link_args, "-o");
     if (create_wrapper)
-	strarray_add(link_args, strmake("%s-wrap.dll.so", base_file));
+	strarray_add(link_args, strmake("%s/%s.so", base_path, app_name));
     else
 	strarray_add(link_args, strmake("%s.exe.so", base_file));
     strarray_add(link_args, spec_o_name);
@@ -600,7 +611,7 @@ int main(int argc, char **argv)
     rm_temp_file(spec_o_name);
 
     if (create_wrapper)
-	create_the_wrapper(base_file, base_name, gui_mode, cpp);
+	create_the_wrapper(base_file, base_name, app_name, gui_mode);
 
     /* create the loader script */
     create_file(base_file, app_loader_script, base_name);
