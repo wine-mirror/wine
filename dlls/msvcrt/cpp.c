@@ -1121,7 +1121,7 @@ void* MSVCRT___RTDynamicCast(void *cppobj, int unknown,
         int i;
         const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
         const rtti_object_hierarchy *obj_bases = obj_locator->type_hierarchy;
-        const rtti_base_descriptor **base_desc = obj_bases->base_classes->bases;
+        const rtti_base_descriptor * const* base_desc = obj_bases->base_classes->bases;
 
         if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
 

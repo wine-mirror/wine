@@ -229,7 +229,7 @@ static inline BOOL is_dib_monochrome( const BITMAPINFO* info )
     }
     else  /* assume BITMAPINFOHEADER */
     {
-        RGBQUAD *rgb = info->bmiColors;
+        const RGBQUAD *rgb = info->bmiColors;
 
         /* Check if the first color is black */
         if ((rgb->rgbRed == 0) && (rgb->rgbGreen == 0) &&
@@ -1162,28 +1162,28 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYBEZIER:
       {
         PEMRPOLYBEZIER lpPolyBez = (PEMRPOLYBEZIER)mr;
-        PolyBezier(hdc, (const LPPOINT)lpPolyBez->aptl, (UINT)lpPolyBez->cptl);
+        PolyBezier(hdc, (const POINT*)lpPolyBez->aptl, (UINT)lpPolyBez->cptl);
         break;
       }
 
     case EMR_POLYGON:
       {
         PEMRPOLYGON lpPoly = (PEMRPOLYGON)mr;
-        Polygon( hdc, (const LPPOINT)lpPoly->aptl, (UINT)lpPoly->cptl );
+        Polygon( hdc, (const POINT*)lpPoly->aptl, (UINT)lpPoly->cptl );
         break;
       }
 
     case EMR_POLYLINE:
       {
         PEMRPOLYLINE lpPolyLine = (PEMRPOLYLINE)mr;
-        Polyline(hdc, (const LPPOINT)lpPolyLine->aptl, (UINT)lpPolyLine->cptl);
+        Polyline(hdc, (const POINT*)lpPolyLine->aptl, (UINT)lpPolyLine->cptl);
         break;
       }
 
     case EMR_POLYBEZIERTO:
       {
         PEMRPOLYBEZIERTO lpPolyBezierTo = (PEMRPOLYBEZIERTO)mr;
-        PolyBezierTo( hdc, (const LPPOINT)lpPolyBezierTo->aptl,
+        PolyBezierTo( hdc, (const POINT*)lpPolyBezierTo->aptl,
 		      (UINT)lpPolyBezierTo->cptl );
         break;
       }
@@ -1191,7 +1191,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYLINETO:
       {
         PEMRPOLYLINETO lpPolyLineTo = (PEMRPOLYLINETO)mr;
-        PolylineTo( hdc, (const LPPOINT)lpPolyLineTo->aptl,
+        PolylineTo( hdc, (const POINT*)lpPolyLineTo->aptl,
 		    (UINT)lpPolyLineTo->cptl );
         break;
       }
@@ -1478,7 +1478,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMRPOLYDRAW lpPolyDraw = (PEMRPOLYDRAW)mr;
         PolyDraw( hdc,
-                  (const LPPOINT)lpPolyDraw->aptl,
+                  (const POINT*)lpPolyDraw->aptl,
                   lpPolyDraw->abTypes,
                   (INT)lpPolyDraw->cptl );
 
