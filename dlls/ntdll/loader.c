@@ -127,6 +127,37 @@ inline static void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
     while (len--) *dst++ = (unsigned char)*src++;
 }
 
+
+/*************************************************************************
+ *		call_dll_entry_point
+ *
+ * Some brain-damaged dlls (ir32_32.dll for instance) modify ebx in
+ * their entry point, so we need a small asm wrapper.
+ */
+#ifdef __i386__
+extern BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module, UINT reason, void *reserved );
+__ASM_GLOBAL_FUNC(call_dll_entry_point,
+                  "pushl %ebp\n\t"
+                  "movl %esp,%ebp\n\t"
+                  "pushl %ebx\n\t"
+                  "pushl 20(%ebp)\n\t"
+                  "pushl 16(%ebp)\n\t"
+                  "pushl 12(%ebp)\n\t"
+                  "movl 8(%ebp),%eax\n\t"
+                  "call *%eax\n\t"
+                  "leal -4(%ebp),%esp\n\t"
+                  "popl %ebx\n\t"
+                  "popl %ebp\n\t"
+                  "ret" );
+#else /* __i386__ */
+static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,
+                                         UINT reason, void *reserved )
+{
+    return proc( module, reason, reserved );
+}
+#endif /* __i386__ */
+
+
 /*************************************************************************
  *		get_modref
  *
@@ -690,7 +721,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
     else TRACE("(%p %s,%s,%p) - CALL\n", module, debugstr_w(wm->ldr.BaseDllName.Buffer),
                reason_names[reason], lpReserved );
 
-    retv = entry( module, reason, lpReserved );
+    retv = call_dll_entry_point( entry, module, reason, lpReserved );
 
     /* The state of the module list may have changed due to the call
        to the dll. We cannot assume that this module has not been
