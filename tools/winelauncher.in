@@ -367,36 +367,26 @@ clean_up_info_message ()
 use_log_name=0
 log_name=`mktemp /tmp/wine.log.XXXXXX`
 if [ $? -eq 0 ] ; then
-    which tail >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        use_log_name=1
-    fi
+    use_log_name=1
+fi
+use_status_name=0
+status_name=`mktemp /tmp/wine.status.XXXXXX`
+if [ $? -eq 0 ] ; then
+    use_status_name=1
 fi
 
 #------------------------------------------------------------------------------
 #  Okay, really launch Wine...
 #------------------------------------------------------------------------------
-if [ $use_log_name -ne 0 ] ; then
-    #------------------------------------------------------------------------------
-    #  Okay, we bend over backwards to run Wine, get that status,
-    #   but still display its output to the screen.
-    #  The obvious thing to do is to run wine and pipe output to tee,
-    #   but then I can't find a way to get the return code of wine;
-    #   I only get the return code of tee.
-    #------------------------------------------------------------------------------
-    $WINEBIN/$WINE_BIN_NAME "$@" >$log_name 2>&1 &
-    wine_pid=$!
-
-    tail -f $log_name &
-    tail_pid=$!
-
-    wait $wine_pid
-    wine_return=$?
-
-    kill $tail_pid
+if [ $use_log_name -ne 0 -a $use_status_name -ne 0 ] ; then
+    ( $WINEBIN/$WINE_BIN_NAME "$@"; echo $? >$status_name ) 2>&1 | tee $log_name
+    wine_return=`cat $status_name`
 else
     $WINEBIN/$WINE_BIN_NAME "$@"
     wine_return=$?
+fi
+if [ $use_status_name -ne 0 ] ; then
+    rm -f $status_name
 fi
 
 #------------------------------------------------------------------------------
