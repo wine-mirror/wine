@@ -457,20 +457,15 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_ICONERASEBKGND:
 	{
 	    RECT rect;
+            HDC hdc = (HDC)wParam;
             HBRUSH hbr = GetClassLongW( wndPtr->hwndSelf, GCL_HBRBACKGROUND );
             if (!hbr) return 0;
 
-	    /*  Since WM_ERASEBKGND may receive either a window dc or a    */ 
-	    /*  client dc, the area to be erased has to be retrieved from  */
-	    /*  the device context.      				   */
-	    GetClipBox( (HDC)wParam, &rect );
-
-            /* Always call the Win32 variant of FillRect even on Win16,
-             * since despite the fact that Win16, as well as Win32,
-             * supports special background brushes for a window class,
-             * the Win16 variant of FillRect does not.
-             */
-            FillRect( (HDC) wParam, &rect, hbr );
+            /* GetClientRect used to be GetClipBox, but it is not what
+             * Windows does, and it breaks badly with CS_PARENTDC */
+            GetClientRect( wndPtr->hwndSelf, &rect );
+            DPtoLP( hdc, (LPPOINT)&rect, 2 );
+            FillRect( hdc, &rect, hbr );
 	    return 1;
 	}
 
