@@ -31,12 +31,15 @@
 #include "winuser.h"
 #include "dshow.h"
 #include "wine/debug.h"
+#include "quartz_private.h"
+#define COM_NO_WINDOWS_H
+#include "ole2.h"
+#include "olectl.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "evcode.h"
 #include "wine/unicode.h"
 
-#include "quartz_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
@@ -163,6 +166,7 @@ typedef struct _IFilterGraphImpl {
     /* IVideoFrameStep */
 
     ULONG ref;
+    IFilterMapper2 * pFilterMapper2;
     IBaseFilter ** ppFiltersInGraph;
     LPWSTR * pFilterNames;
     int nFilters;
@@ -238,6 +242,7 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
     
     ref = --This->ref;
     if (ref == 0) {
+	IFilterMapper2_Release(This->pFilterMapper2);
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
 	HeapFree(GetProcessHeap(), 0, This->ppFiltersInGraph);
@@ -316,7 +321,7 @@ static HRESULT WINAPI Graphbuilder_AddFilter(IGraphBuilder *iface,
 
 	    /* Check if the generated name already exists */
 	    for(i = 0; i < This->nFilters; i++)
-	    	if (!strcmpW(This->pFilterNames[i], pName))
+	    	if (!strcmpW(This->pFilterNames[i], wszFilterName))
 		    break;
 
 	    /* Compute next index and exit if generated name is suitable */
@@ -334,7 +339,6 @@ static HRESULT WINAPI Graphbuilder_AddFilter(IGraphBuilder *iface,
     }
     else
 	memcpy(wszFilterName, pName, (strlenW(pName) + 1) * sizeof(WCHAR));
-
 
     if (This->nFilters + 1 > This->filterCapacity)
     {
@@ -485,23 +489,348 @@ static HRESULT WINAPI Graphbuilder_SetDefaultSyncSource(IGraphBuilder *iface) {
     return S_OK;
 }
 
+static HRESULT GetFilterInfo(IMoniker* pMoniker, GUID* pclsid, VARIANT* pvar)
+{
+    static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
+    static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
+    IPropertyBag * pPropBagCat = NULL;
+    HRESULT hr;
+    
+    VariantInit(pvar);
+    V_VT(pvar) = VT_BSTR;
+
+    hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
+
+    if (SUCCEEDED(hr))
+        hr = IPropertyBag_Read(pPropBagCat, wszClsidName, pvar, NULL);
+
+    if (SUCCEEDED(hr))
+        hr = CLSIDFromString(V_UNION(pvar, bstrVal), pclsid);
+
+    if (SUCCEEDED(hr))
+        hr = IPropertyBag_Read(pPropBagCat, wszFriendlyName, pvar, NULL);
+
+    if (SUCCEEDED(hr))
+        TRACE("Moniker = %s - %s\n", debugstr_guid(pclsid), debugstr_w(V_UNION(pvar, bstrVal)));
+
+    if (pPropBagCat)
+        IPropertyBag_Release(pPropBagCat);
+
+    return hr;
+}
+
+static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* poutputpin, IPin*** pppins, ULONG* pnb)
+{
+    HRESULT hr;
+    ULONG nb = 0;
+
+    TRACE("\n");
+    hr = IPin_QueryInternalConnections(poutputpin, NULL, &nb);
+    if (hr == S_OK) {
+        /* Rendered input */
+    } else if (hr == S_FALSE) {
+        *pppins = CoTaskMemAlloc(sizeof(IPin*)*nb);
+        hr = IPin_QueryInternalConnections(poutputpin, *pppins, &nb);
+        if (hr != S_OK) {
+            ERR("Error (%lx)\n", hr);
+        }
+    } else if (hr == E_NOTIMPL) {
+        /* Input connected to all outputs */
+        IEnumPins* penumpins;
+        IPin* ppin;
+        int i = 0;
+        TRACE("E_NOTIMPL\n");
+        hr = IBaseFilter_EnumPins(pfilter, &penumpins);
+        if (FAILED(hr)) {
+            ERR("filter Enumpins failed (%lx)\n", hr);
+            return hr;
+        }
+        i = 0;
+        /* Count output pins */
+        while(IEnumPins_Next(penumpins, 1, &ppin, &nb) == S_OK) {
+            PIN_DIRECTION pindir;
+            IPin_QueryDirection(ppin, &pindir);
+            if (pindir == PINDIR_OUTPUT)
+                i++;
+            else
+                IPin_Release(ppin);
+        }
+        *pppins = CoTaskMemAlloc(sizeof(IPin*)*i);
+        /* Retreive output pins */
+        IEnumPins_Reset(penumpins);
+        i = 0;
+        while(IEnumPins_Next(penumpins, 1, &ppin, &nb) == S_OK) {
+            PIN_DIRECTION pindir;
+            IPin_QueryDirection(ppin, &pindir);
+            if (pindir == PINDIR_OUTPUT)
+                (*pppins)[i++] = ppin;
+            else
+                IPin_Release(ppin);
+        }
+        nb = i;
+        if (FAILED(hr)) {
+            ERR("Next failed (%lx)\n", hr);
+            return hr;
+        }
+        IEnumPins_Release(penumpins);
+    } else if (FAILED(hr)) {
+        ERR("Cannot get internal connection (%lx)\n", hr);
+        return hr;
+    }
+
+    *pnb = nb;
+    return S_OK;
+}
+
 /*** IGraphBuilder methods ***/
 static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
 					   IPin *ppinOut,
 					   IPin *ppinIn) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    HRESULT hr;
+    AM_MEDIA_TYPE* mt;
+    IEnumMediaTypes* penummt;
+    ULONG nbmt;
+    IEnumPins* penumpins;
+    IEnumMoniker* pEnumMoniker;
+    GUID tab[2];
+    ULONG nb;
+    IMoniker* pMoniker;
+    ULONG pin;
 
-    TRACE("(%p/%p)->(%p, %p): stub !!!\n", This, iface, ppinOut, ppinIn);
+    TRACE("(%p/%p)->(%p, %p)\n", This, iface, ppinOut, ppinIn);
 
+    /* Try direct connection first */
+    TRACE("Try direct connection first\n");
+    hr = IPin_Connect(ppinOut, ppinIn, NULL);
+    if (SUCCEEDED(hr)) {
+        TRACE("Direct connection successfull\n");
+        return S_OK;
+    }
+    TRACE("Direct connection failed, trying to insert other filters\n");
+
+    /* Find the appropriate transform filter than can transform the minor media type of output pin of the upstream 
+     * filter to the minor mediatype of input pin of the renderer */
+    hr = IPin_EnumMediaTypes(ppinOut, &penummt);
+    if (FAILED(hr)) {
+        ERR("EnumMediaTypes (%lx)\n", hr);
+        return hr;
+    }
+
+    hr = IEnumMediaTypes_Next(penummt, 1, &mt, &nbmt);
+    if (FAILED(hr)) {
+        ERR("IEnumMediaTypes_Next (%lx)\n", hr);
+        return hr;
+    }
+
+    if (!nbmt) {
+        ERR("No media type found!\n");
+        return S_OK;
+    }
+    TRACE("MajorType %s\n", debugstr_guid(&mt->majortype));
+    TRACE("SubType %s\n", debugstr_guid(&mt->subtype));
+
+    /* Try to find a suitable filter that can connect to the pin to render */
+    tab[0] = mt->majortype;
+    tab[1] = mt->subtype;
+    hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, 0, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
+    if (FAILED(hr)) {
+        ERR("Unable to enum filters (%lx)\n", hr);
+        return hr;
+    }
+    
+    while(IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, &nb) == S_OK)
+    {
+        VARIANT var;
+        GUID clsid;
+        IPin** ppins;
+        IPin* ppinfilter;
+        IBaseFilter* pfilter = NULL;
+
+        hr = GetFilterInfo(pMoniker, &clsid, &var);
+        IMoniker_Release(pMoniker);
+        if (FAILED(hr)) {
+           ERR("Unable to retreive filter info (%lx)\n", hr);
+           goto error;
+        }
+
+        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pfilter);
+        if (FAILED(hr)) {
+           ERR("Unable to create filter (%lx), trying next one\n", hr);
+           goto error;
+        }
+
+        hr = IGraphBuilder_AddFilter(iface, pfilter, NULL);
+        if (FAILED(hr)) {
+            ERR("Unable to add filter (%lx)\n", hr);
+            IBaseFilter_Release(pfilter);
+            pfilter = NULL;
+            goto error;
+        }
+
+        hr = IBaseFilter_EnumPins(pfilter, &penumpins);
+        if (FAILED(hr)) {
+            ERR("Enumpins (%lx)\n", hr);
+            goto error;
+        }
+        hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin);
+        if (FAILED(hr)) {
+            ERR("Next (%lx)\n", hr);
+            goto error;
+        }
+        if (pin == 0) {
+            ERR("No Pin\n");
+            goto error;
+        }
+        IEnumPins_Release(penumpins);
+
+        hr = IPin_Connect(ppinOut, ppinfilter, NULL);
+        if (FAILED(hr)) {
+            TRACE("Cannot connect to filter (%lx), trying next one\n", hr);
+            goto error;
+        }
+        TRACE("Successfully connected to filter, follow chain...\n");
+
+        /* Render all output pins of the filter by calling IGraphBuilder_Render on each of them */
+        hr = GetInternalConnections(pfilter, ppinfilter, &ppins, &nb);
+
+        if (SUCCEEDED(hr)) {
+            int i;
+            TRACE("pins to consider: %ld\n", nb);
+            for(i = 0; i < nb; i++) {
+                TRACE("Processing pin %d\n", i);
+                hr = IGraphBuilder_Connect(iface, ppins[0], ppinIn);
+                if (FAILED(hr)) {
+                    TRACE("Cannot render pin %p (%lx)\n", ppinfilter, hr);
+                    return hr;
+                }
+            }
+            CoTaskMemFree(ppins);
+        }
+        break;
+
+error:
+        if (pfilter) {
+            IGraphBuilder_RemoveFilter(iface, pfilter);
+            IBaseFilter_Release(pfilter);
+        }
+    }
+
+    IEnumMediaTypes_Release(penummt);
+    DeleteMediaType(mt);
+    
     return S_OK;
 }
 
 static HRESULT WINAPI Graphbuilder_Render(IGraphBuilder *iface,
 					  IPin *ppinOut) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    IEnumMediaTypes* penummt;
+    AM_MEDIA_TYPE* mt;
+    ULONG nbmt;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, ppinOut);
+    IEnumMoniker* pEnumMoniker;
+    GUID tab[2];
+    ULONG nb;
+    IMoniker* pMoniker;
 
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppinOut);
+
+    hr = IPin_EnumMediaTypes(ppinOut, &penummt);
+    if (FAILED(hr)) {
+        ERR("EnumMediaTypes (%lx)\n", hr);
+        return hr;
+    }
+
+    while(1)
+    {
+        hr = IEnumMediaTypes_Next(penummt, 1, &mt, &nbmt);
+        if (FAILED(hr)) {
+            ERR("IEnumMediaTypes_Next (%lx)\n", hr);
+            return hr;
+        }
+        if (!nbmt)
+            break;
+        TRACE("MajorType %s\n", debugstr_guid(&mt->majortype));
+        TRACE("SubType %s\n", debugstr_guid(&mt->subtype));
+
+        /* Try to find a suitable renderer with the same media type */
+        tab[0] = mt->majortype;
+        tab[1] = GUID_NULL;
+        hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, 0, TRUE, 1, tab, NULL, NULL, TRUE, FALSE, 0, NULL, NULL, NULL);
+        if (FAILED(hr)) {
+            ERR("Unable to enum filters (%lx)\n", hr);
+            return hr;
+        }
+
+        while(IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, &nb) == S_OK)
+        {
+            VARIANT var;
+            GUID clsid;
+            IPin* ppinfilter;
+            IBaseFilter* pfilter = NULL;
+            IEnumPins* penumpins;
+            ULONG pin;
+
+            hr = GetFilterInfo(pMoniker, &clsid, &var);
+            IMoniker_Release(pMoniker);
+            if (FAILED(hr)) {
+                ERR("Unable to retreive filter info (%lx)\n", hr);
+                goto error;
+            }
+
+            hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&pfilter);
+            if (FAILED(hr)) {
+               ERR("Unable to create filter (%lx), trying next one\n", hr);
+               goto error;
+            }
+
+            hr = IGraphBuilder_AddFilter(iface, pfilter, NULL);
+            if (FAILED(hr)) {
+                ERR("Unable to add filter (%lx)\n", hr);
+                IBaseFilter_Release(pfilter);
+                pfilter = NULL;
+                goto error;
+            }
+
+            hr = IBaseFilter_EnumPins(pfilter, &penumpins);
+            if (FAILED(hr)) {
+                ERR("Splitter Enumpins (%lx)\n", hr);
+                goto error;
+            }
+            hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin);
+            if (FAILED(hr)) {
+               ERR("Next (%lx)\n", hr);
+               goto error;
+            }
+            if (pin == 0) {
+               ERR("No Pin\n");
+               goto error;
+            }
+            IEnumPins_Release(penumpins);
+
+	    /* Connect the pin to render to the renderer */
+            hr = IGraphBuilder_Connect(iface, ppinOut, ppinfilter);
+            if (FAILED(hr)) {
+                TRACE("Unable to connect to renderer (%lx)\n", hr);
+                goto error;
+            }
+            break;
+
+error:
+            if (pfilter) {
+                IGraphBuilder_RemoveFilter(iface, pfilter);
+                IBaseFilter_Release(pfilter);
+            }
+	}
+       
+        DeleteMediaType(mt);
+        break;	
+    }
+
+    IEnumMediaTypes_Release(penummt);
+    
     return S_OK;
 }
 
@@ -509,9 +838,134 @@ static HRESULT WINAPI Graphbuilder_RenderFile(IGraphBuilder *iface,
 					      LPCWSTR lpcwstrFile,
 					      LPCWSTR lpcwstrPlayList) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    static const WCHAR string[] = {'R','e','a','d','e','r',0};
+    IBaseFilter* preader = NULL;
+    IBaseFilter* psplitter;
+    IPin* ppinreader;
+    IPin* ppinsplitter;
+    IEnumPins* penumpins;
+    ULONG pin;
+    HRESULT hr;
+    IEnumMoniker* pEnumMoniker;
+    GUID tab[2];
+    IPin** ppins;
+    ULONG nb;
+    IMoniker* pMoniker;
+    IFileSourceFilter* pfile = NULL;
+    AM_MEDIA_TYPE mt;
+    WCHAR* filename;
 
-    TRACE("(%p/%p)->(%s (%p), %s (%p)): stub !!!\n", This, iface, debugstr_w(lpcwstrFile), lpcwstrFile, debugstr_w(lpcwstrPlayList), lpcwstrPlayList);
+    TRACE("(%p/%p)->(%s, %s)\n", This, iface, debugstr_w(lpcwstrFile), debugstr_w(lpcwstrPlayList));
 
+    hr = IGraphBuilder_AddSourceFilter(iface, lpcwstrFile, string, &preader);
+
+    /* Retreive file media type */
+    if (SUCCEEDED(hr))
+        hr = IBaseFilter_QueryInterface(preader, &IID_IFileSourceFilter, (LPVOID*)&pfile);
+    if (SUCCEEDED(hr)) {
+        hr = IFileSourceFilter_GetCurFile(pfile, &filename, &mt);
+        IFileSourceFilter_Release(pfile);
+    }
+
+    if (SUCCEEDED(hr)) {
+        tab[0] = mt.majortype;
+        tab[1] = mt.subtype;
+        hr = IFilterMapper2_EnumMatchingFilters(This->pFilterMapper2, &pEnumMoniker, 0, FALSE, 0, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
+    } else {
+        if (preader) {
+             IGraphBuilder_RemoveFilter(iface, preader);
+             IBaseFilter_Release(preader);
+        }
+        return hr;
+    }
+
+    while(IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, &nb) == S_OK)
+    {
+        VARIANT var;
+        GUID clsid;
+
+        hr = GetFilterInfo(pMoniker, &clsid, &var);
+        IMoniker_Release(pMoniker);
+        if (FAILED(hr)) {
+            ERR("Unable to retreive filter info (%lx)\n", hr);
+            continue;
+        }
+
+        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&psplitter);
+        if (FAILED(hr)) {
+           ERR("Unable to create filter (%lx), trying next one\n", hr);
+           continue;
+        }
+
+        hr = IGraphBuilder_AddFilter(iface, psplitter, NULL);
+        if (FAILED(hr)) {
+            ERR("Unable add filter (%lx)\n", hr);
+            return hr;
+        }
+
+        /* Connect file source and splitter filters together */
+        /* Make the splitter analyze incoming data */
+        hr = IBaseFilter_EnumPins(preader, &penumpins);
+        if (FAILED(hr)) {
+            ERR("Enumpins (%lx)\n", hr);
+            return hr;
+        }
+        hr = IEnumPins_Next(penumpins, 1, &ppinreader, &pin);
+        if (FAILED(hr)) {
+            ERR("Next (%lx)\n", hr);
+            return hr;
+        }
+        if (pin == 0) {
+            ERR("No Pin\n");
+            return E_FAIL;
+        }
+        IEnumPins_Release(penumpins);
+
+        hr = IBaseFilter_EnumPins(psplitter, &penumpins);
+        if (FAILED(hr)) {
+            ERR("Splitter Enumpins (%lx)\n", hr);
+            return hr;
+        }
+        hr = IEnumPins_Next(penumpins, 1, &ppinsplitter, &pin);
+        if (FAILED(hr)) {
+            ERR("Next (%lx)\n", hr);
+            return hr;
+        }
+        if (pin == 0) {
+            ERR("No Pin\n");
+            return E_FAIL;
+        }
+        IEnumPins_Release(penumpins);
+
+        hr = IPin_Connect(ppinreader, ppinsplitter, NULL);
+        if (FAILED(hr)) {
+            IBaseFilter_Release(ppinsplitter);
+            ppinsplitter = NULL;
+            TRACE("Cannot connect to filter (%lx), trying next one\n", hr);
+            break;
+        }
+        TRACE("Successfully connected to filter\n");
+        break;
+    }
+
+    /* Render all output pin of the splitter by calling IGraphBuilder_Render on each of them */
+    hr = GetInternalConnections(psplitter, ppinsplitter, &ppins, &nb);
+    
+    if (SUCCEEDED(hr)) {
+        int i;
+        TRACE("pins to consider: %ld\n", nb);
+        for(i = 0; i < nb; i++) {
+            TRACE("Processing pin %d\n", i);
+            hr = IGraphBuilder_Render(iface, ppins[i]);
+            if (FAILED(hr)) {
+                ERR("Cannot render pin %p (%lx)\n", ppins[i], hr);
+                /* FIXME: We should clean created things properly */
+                break;
+            }
+        }
+    }
+    CoTaskMemFree(ppins);
+    
     return S_OK;
 }
 
@@ -520,9 +974,61 @@ static HRESULT WINAPI Graphbuilder_AddSourceFilter(IGraphBuilder *iface,
 						   LPCWSTR lpcwstrFilterName,
 						   IBaseFilter **ppFilter) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    HRESULT hr;
+    IBaseFilter* preader;
+    IFileSourceFilter* pfile = NULL;
+    AM_MEDIA_TYPE mt;
+    WCHAR* filename;
 
-    TRACE("(%p/%p)->(%s (%p), %s (%p), %p): stub !!!\n", This, iface, debugstr_w(lpcwstrFileName), lpcwstrFileName, debugstr_w(lpcwstrFilterName), lpcwstrFilterName, ppFilter);
+    TRACE("(%p/%p)->(%s, %s, %p)\n", This, iface, debugstr_w(lpcwstrFileName), debugstr_w(lpcwstrFilterName), ppFilter);
 
+    /* Instantiate a file source filter */ 
+    hr = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (LPVOID*)&preader);
+    if (FAILED(hr)) {
+        ERR("Unable to create file source filter (%lx)\n", hr);
+        return hr;
+    }
+
+    hr = IGraphBuilder_AddFilter(iface, preader, lpcwstrFilterName);
+    if (FAILED(hr)) {
+        ERR("Unable add filter (%lx)\n", hr);
+        IBaseFilter_Release(preader);
+        return hr;
+    }
+
+    hr = IBaseFilter_QueryInterface(preader, &IID_IFileSourceFilter, (LPVOID*)&pfile);
+    if (FAILED(hr)) {
+        ERR("Unable to get IFileSourceInterface (%lx)\n", hr);
+        goto error;
+    }
+
+    /* Load the file in the file source filter */
+    hr = IFileSourceFilter_Load(pfile, lpcwstrFileName, NULL);
+    if (FAILED(hr)) {
+        ERR("Load (%lx)\n", hr);
+        goto error;
+    }
+    
+    IFileSourceFilter_GetCurFile(pfile, &filename, &mt);
+    if (FAILED(hr)) {
+        ERR("GetCurFile (%lx)\n", hr);
+        goto error;
+    }
+    TRACE("File %s\n", debugstr_w(filename));
+    TRACE("MajorType %s\n", debugstr_guid(&mt.majortype));
+    TRACE("SubType %s\n", debugstr_guid(&mt.subtype));
+
+    if (ppFilter)
+        *ppFilter = preader;
+
+    return S_OK;
+    
+error:
+    if (pfile)
+        IFileSourceFilter_Release(pfile);
+    IGraphBuilder_RemoveFilter(iface, preader);
+    IBaseFilter_Release(preader);
+       
     return S_OK;
 }
 
@@ -2413,6 +2919,7 @@ static IMediaEventSinkVtbl IMediaEventSink_VTable =
 /* This is the only function that actually creates a FilterGraph class... */
 HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     IFilterGraphImpl *fimpl;
+    HRESULT hr;
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
 
@@ -2443,6 +2950,12 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     fimpl->nRenderers = 0;
     fimpl->EcCompleteCount = 0;
     EventsQueue_Init(&fimpl->evqueue);
+
+    hr = CoCreateInstance(&CLSID_FilterMapper, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&fimpl->pFilterMapper2);
+    if (FAILED(hr)) {
+        ERR("Unable to create filter mapper (%lx)\n", hr);
+	return hr;
+    }
 
     *ppObj = fimpl;
     return S_OK;
