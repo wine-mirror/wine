@@ -657,8 +657,15 @@ CreateToolbarEx (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
                  INT iNumButtons, INT dxButton, INT dyButton,
                  INT dxBitmap, INT dyBitmap, UINT uStructSize)
 {
-    HWND hwndTB =
-        CreateWindowExA (0, TOOLBARCLASSNAMEA, "", style, 0, 0, 0, 0,
+    HWND hwndTB;
+
+    /* If not position is specified then put it at the top */
+    if ((style & CCS_BOTTOM) == 0) {
+      style|=CCS_TOP;
+    }
+
+    hwndTB =
+        CreateWindowExA (0, TOOLBARCLASSNAMEA, "", style|WS_CHILD, 0, 0, 0, 0,
 			   hwnd, (HMENU)wID, 0, NULL);
     if(hwndTB) {
 	TBADDBITMAP tbab;
@@ -666,17 +673,21 @@ CreateToolbarEx (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
         SendMessageA (hwndTB, TB_BUTTONSTRUCTSIZE,
 			(WPARAM)uStructSize, 0);
 
-	/* set bitmap and button size */
-	/*If CreateToolbarEx receive 0, windows set default values*/
-	if (dyBitmap < 0)
-	    dyBitmap = 15;
-	if (dxBitmap < 0)
-	    dxBitmap = 16;
+       /* set bitmap and button size */
+       /*If CreateToolbarEx receives 0, windows sets default values*/
+       if (dxBitmap <= 0)
+           dxBitmap = 16;
+       if (dyBitmap <= 0)
+           dyBitmap = 15;
+       SendMessageA (hwndTB, TB_SETBITMAPSIZE, 0,
+                       MAKELPARAM((WORD)dxBitmap, (WORD)dyBitmap));
 
-	    SendMessageA (hwndTB, TB_SETBITMAPSIZE, 0,
-			    MAKELPARAM((WORD)dxBitmap, (WORD)dyBitmap));
-	    SendMessageA (hwndTB, TB_SETBUTTONSIZE, 0,
-			    MAKELPARAM((WORD)dxButton, (WORD)dyButton));
+       if (dxButton <= 0)
+           dxButton = 24;
+       if (dyButton <= 0)
+           dyButton = 22;
+       SendMessageA (hwndTB, TB_SETBUTTONSIZE, 0,
+                       MAKELPARAM((WORD)dxButton, (WORD)dyButton));
 
 
 	/* add bitmaps */
