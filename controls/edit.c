@@ -90,6 +90,8 @@ typedef struct
 	INT left_margin;		/* in pixels */
 	INT right_margin;		/* in pixels */
 	RECT format_rect;
+	INT text_width;			/* width of the widest line in pixels for multi line controls
+					   and just line width for single line controls	*/
 	INT region_posx;		/* Position of cursor relative to region: */
 	INT region_posy;		/* -1: to left, 0: within, 1: to right */
 	EDITWORDBREAKPROC16 word_break_proc16;
@@ -105,7 +107,6 @@ typedef struct
 	INT lock_count;		/* amount of re-entries in the EditWndProc */
 	INT tabs_count;
 	LPINT tabs;
-	INT text_width;		/* width of the widest line in pixels */
 	LINEDEF *first_line_def;	/* linked list of (soft) linebreaks */
 	HLOCAL hloc32W;		/* our unicode local memory block */
 	HLOCAL16 hloc16;	/* alias for 16-bit control receiving EM_GETHANDLE16
@@ -167,6 +168,7 @@ static inline void	EDIT_WM_Cut(WND *wnd, EDITSTATE *es);
  *	Helper functions only valid for one type of control
  */
 static void	EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es);
+static void	EDIT_CalcLineWidth_SL(WND *wnd, EDITSTATE *es);
 static LPWSTR	EDIT_GetPasswordPointer_SL(EDITSTATE *es);
 static void	EDIT_MoveDown_ML(WND *wnd, EDITSTATE *es, BOOL extend);
 static void	EDIT_MovePageDown_ML(WND *wnd, EDITSTATE *es, BOOL extend);
@@ -194,6 +196,7 @@ static INT	EDIT_PaintText(EDITSTATE *es, HDC hdc, INT x, INT y, INT line, INT co
 static void	EDIT_SetCaretPos(WND *wnd, EDITSTATE *es, INT pos, BOOL after_wrap); 
 static void	EDIT_SetRectNP(WND *wnd, EDITSTATE *es, LPRECT lprc);
 static void	EDIT_UnlockBuffer(WND *wnd, EDITSTATE *es, BOOL force);
+static void	EDIT_UpdateScrollInfo(WND *wnd, EDITSTATE *es);
 static INT CALLBACK EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT action);
 /*
  *	EM_XXX message handlers
@@ -209,6 +212,7 @@ static INT	EDIT_EM_LineFromChar(EDITSTATE *es, INT index);
 static INT	EDIT_EM_LineIndex(EDITSTATE *es, INT line);
 static INT	EDIT_EM_LineLength(EDITSTATE *es, INT index);
 static BOOL	EDIT_EM_LineScroll(WND *wnd, EDITSTATE *es, INT dx, INT dy);
+static BOOL	EDIT_EM_LineScroll_internal(WND *wnd, EDITSTATE *es, INT dx, INT dy);
 static LRESULT	EDIT_EM_PosFromChar(WND *wnd, EDITSTATE *es, INT index, BOOL after_wrap);
 static void	EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replace, BOOL send_update);
 static LRESULT	EDIT_EM_Scroll(WND *wnd, EDITSTATE *es, INT action);
@@ -1221,6 +1225,15 @@ static void EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es)
 	ReleaseDC(wnd->hwndSelf, dc);
 }
 
+/*********************************************************************
+ *
+ *	EDIT_CalcLineWidth_SL
+ *
+ */
+static void EDIT_CalcLineWidth_SL(WND *wnd, EDITSTATE *es)
+{
+    es->text_width = SLOWORD(EDIT_EM_PosFromChar(wnd, es, strlenW(es->text), FALSE));
+}
 
 /*********************************************************************
  *
@@ -1474,7 +1487,7 @@ static void EDIT_LockBuffer(WND *wnd, EDITSTATE *es)
 
 	    if(es->hloc32W)
 	    {
-		TRACE("Locking 32-bit UNICODE buffer\n");
+		/*TRACE("Locking 32-bit UNICODE buffer\n");*/
 		es->text = LocalLock(es->hloc32W);
 
 		if(es->hloc32A)
@@ -2047,19 +2060,7 @@ static void EDIT_SetCaretPos(WND *wnd, EDITSTATE *es, INT pos,
 			     BOOL after_wrap)
 {
 	LRESULT res = EDIT_EM_PosFromChar(wnd, es, pos, after_wrap);
-	INT x = SLOWORD(res);
-	INT y = SHIWORD(res);
-
-	if(x < es->format_rect.left)
-		x = es->format_rect.left;
-	if(x > es->format_rect.right - 2)
-		x = es->format_rect.right - 2;
-	if(y > es->format_rect.bottom)
-		y = es->format_rect.bottom;
-	if(y < es->format_rect.top)
-		y = es->format_rect.top;
-	SetCaretPos(x, y);
-	return;
+	SetCaretPos(SLOWORD(res), SHIWORD(res));
 }
 
 
@@ -2087,10 +2088,29 @@ static void EDIT_SetRectNP(WND *wnd, EDITSTATE *es, LPRECT rc)
 	es->format_rect.right -= es->right_margin;
 	es->format_rect.right = max(es->format_rect.right, es->format_rect.left + es->char_width);
 	if (es->style & ES_MULTILINE)
-		es->format_rect.bottom = es->format_rect.top +
-			max(1, (es->format_rect.bottom - es->format_rect.top) / es->line_height) * es->line_height;
+	{
+	    INT fw, vlc, max_x_offset, max_y_offset;
+
+	    vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	    es->format_rect.bottom = es->format_rect.top + max(1, vlc) * es->line_height;
+
+	    /* correct es->x_offset */
+	    fw = es->format_rect.right - es->format_rect.left;
+	    max_x_offset = es->text_width - fw;
+	    if(max_x_offset < 0) max_x_offset = 0;
+	    if(es->x_offset > max_x_offset)
+		es->x_offset = max_x_offset;
+
+	    /* correct es->y_offset */
+	    max_y_offset = es->line_count - vlc;
+	    if(max_y_offset < 0) max_y_offset = 0;
+	    if(es->y_offset > max_y_offset)
+		es->y_offset = max_y_offset;
+	}
 	else
+	/* Windows doesn't care to fix text placement for SL controls */
 		es->format_rect.bottom = es->format_rect.top + es->line_height;
+
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL))
 		EDIT_BuildLineDefs_ML(wnd, es);
 }
@@ -2156,6 +2176,42 @@ static void EDIT_UnlockBuffer(WND *wnd, EDITSTATE *es, BOOL force)
 	es->lock_count--;
 }
 
+
+/*********************************************************************
+ *
+ *	EDIT_UpdateScrollInfo
+ *
+ */
+static void EDIT_UpdateScrollInfo(WND *wnd, EDITSTATE *es)
+{
+    if ((es->style & WS_VSCROLL) && !(es->flags & EF_VSCROLL_TRACK))
+    {
+	SCROLLINFO si;
+	si.cbSize	= sizeof(SCROLLINFO);
+	si.fMask	= SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
+	si.nMin		= 0;
+	si.nMax		= es->line_count - 1;
+	si.nPage	= (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	si.nPos		= es->y_offset;
+	TRACE("SB_VERT, nMin=%d, nMax=%d, nPage=%d, nPos=%d\n",
+		si.nMin, si.nMax, si.nPage, si.nPos);
+	SetScrollInfo(wnd->hwndSelf, SB_VERT, &si, TRUE);
+    }
+
+    if ((es->style & WS_HSCROLL) && !(es->flags & EF_HSCROLL_TRACK))
+    {
+	SCROLLINFO si;
+	si.cbSize	= sizeof(SCROLLINFO);
+	si.fMask	= SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
+	si.nMin		= 0;
+	si.nMax		= es->text_width - 1;
+	si.nPage	= es->format_rect.right - es->format_rect.left;
+	si.nPos		= es->x_offset;
+	TRACE("SB_HORZ, nMin=%d, nMax=%d, nPage=%d, nPos=%d\n",
+		si.nMin, si.nMax, si.nPage, si.nPos);
+	SetScrollInfo(wnd->hwndSelf, SB_HORZ, &si, TRUE);
+    }
+}
 
 /*********************************************************************
  *
@@ -2275,7 +2331,7 @@ static BOOL EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol)
  *
  *	Hopefully this won't fire back at us.
  *	We always start with a fixed buffer in the local heap.
- *	Despite of the documenation says that the local heap is used
+ *	Despite of the documentation says that the local heap is used
  *	only if DS_LOCALEDIT flag is set, NT and 2000 always allocate
  *	buffer on the local heap.
  *
@@ -2542,22 +2598,46 @@ static INT EDIT_EM_LineLength(EDITSTATE *es, INT index)
  *
  *	EM_LINESCROLL
  *
- *	FIXME: dx is in average character widths
- *		However, we assume it is in pixels when we use this
- *		function internally
+ *	NOTE: dx is in average character widths, dy - in lines;
  *
  */
 static BOOL EDIT_EM_LineScroll(WND *wnd, EDITSTATE *es, INT dx, INT dy)
 {
-	INT nyoff;
-
 	if (!(es->style & ES_MULTILINE))
 		return FALSE;
 
-	if (-dx > es->x_offset)
-		dx = -es->x_offset;
-	if (dx > es->text_width - es->x_offset)
-		dx = es->text_width - es->x_offset;
+	dx *= es->char_width;
+	return EDIT_EM_LineScroll_internal(wnd, es, dx, dy);
+}
+
+/*********************************************************************
+ *
+ *	EDIT_EM_LineScroll_internal
+ *
+ *	Version of EDIT_EM_LineScroll for internal use.
+ *	It doesn't refuse if ES_MULTILINE is set and assumes that
+ *	dx is in pixels, dy - in lines.
+ *
+ */
+static BOOL EDIT_EM_LineScroll_internal(WND *wnd, EDITSTATE *es, INT dx, INT dy)
+{
+	INT nyoff;
+	INT x_offset_in_pixels;
+
+	if (es->style & ES_MULTILINE)
+	{
+	    x_offset_in_pixels = es->x_offset;
+	}
+	else
+	{
+	    dy = 0;
+	    x_offset_in_pixels = SLOWORD(EDIT_EM_PosFromChar(wnd, es, es->x_offset, FALSE));
+	}
+
+	if (-dx > x_offset_in_pixels)
+		dx = -x_offset_in_pixels;
+	if (dx > es->text_width - x_offset_in_pixels)
+		dx = es->text_width - x_offset_in_pixels;
 	nyoff = max(0, es->y_offset + dy);
 	if (nyoff >= es->line_count)
 		nyoff = es->line_count - 1;
@@ -2565,12 +2645,17 @@ static BOOL EDIT_EM_LineScroll(WND *wnd, EDITSTATE *es, INT dx, INT dy)
 	if (dx || dy) {
 		RECT rc1;
 		RECT rc;
+
+		es->y_offset = nyoff;
+		if(es->style & ES_MULTILINE)
+		    es->x_offset += dx;
+		else
+		    es->x_offset += dx / es->char_width;
+
 		GetClientRect(wnd->hwndSelf, &rc1);
 		IntersectRect(&rc, &rc1, &es->format_rect);
 		ScrollWindowEx(wnd->hwndSelf, -dx, dy,
 				NULL, &rc, (HRGN)NULL, NULL, SW_INVALIDATE);
-		es->y_offset = nyoff;
-		es->x_offset += dx;
 	}
 	if (dx && !(es->flags & EF_HSCROLL_TRACK))
 		EDIT_NOTIFY_PARENT(wnd, EN_HSCROLL, "EN_HSCROLL");
@@ -2742,6 +2827,8 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 	/* FIXME: really inefficient */
 	if (es->style & ES_MULTILINE)
 		EDIT_BuildLineDefs_ML(wnd, es);
+	else
+	    EDIT_CalcLineWidth_SL(wnd, es);
 
 	EDIT_EM_SetSel(wnd, es, s, s, FALSE);
 	es->flags |= EF_MODIFIED;
@@ -2788,8 +2875,14 @@ static LRESULT EDIT_EM_Scroll(WND *wnd, EDITSTATE *es, INT action)
 		return (LRESULT)FALSE;
 	}
 	if (dy) {
+	    INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	    /* check if we are going to move too far */
+	    if(es->y_offset + dy > es->line_count - vlc)
+		dy = es->line_count - vlc - es->y_offset;
+
+	    /* Notification is done in EDIT_EM_LineScroll */
+	    if(dy)
 		EDIT_EM_LineScroll(wnd, es, 0, dy);
-		EDIT_NOTIFY_PARENT(wnd, EN_VSCROLL, "EN_VSCROLL");
 	}
 	return MAKELONG((INT16)dy, (BOOL16)TRUE);
 }
@@ -2826,7 +2919,13 @@ static void EDIT_EM_ScrollCaret(WND *wnd, EDITSTATE *es)
 		if (x > es->format_rect.right)
 			dx = x - es->format_rect.left - (HSCROLL_FRACTION - 1) * ww / HSCROLL_FRACTION / cw * cw;
 		if (dy || dx)
-			EDIT_EM_LineScroll(wnd, es, dx, dy);
+		{
+		    /* check if we are going to move too far */
+		    if(es->x_offset + dx + ww > es->text_width)
+			dx = es->text_width - ww - es->x_offset;
+		    if(dx || dy)
+			EDIT_EM_LineScroll_internal(wnd, es, dx, dy);
+		}
 	} else {
 		INT x;
 		INT goal;
@@ -2858,6 +2957,9 @@ static void EDIT_EM_ScrollCaret(WND *wnd, EDITSTATE *es)
 			EDIT_UpdateText(wnd, NULL, TRUE);
 		}
 	}
+
+    if(es->flags & EF_FOCUSED)
+	EDIT_SetCaretPos(wnd, es, es->selection_end, es->flags & EF_AFTER_WRAP);
 }
 
 
@@ -3107,8 +3209,6 @@ static void EDIT_EM_SetSel(WND *wnd, EDITSTATE *es, UINT start, UINT end, BOOL a
 		es->flags |= EF_AFTER_WRAP;
 	else
 		es->flags &= ~EF_AFTER_WRAP;
-	if (es->flags & EF_FOCUSED)
-		EDIT_SetCaretPos(wnd, es, end, after_wrap);
 /* This is a little bit more efficient than before, not sure if it can be improved. FIXME? */
         ORDER_UINT(start, end);
         ORDER_UINT(end, old_end);
@@ -3242,6 +3342,7 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 	EDIT_EM_EmptyUndoBuffer(es);
 	EDIT_EM_ReplaceSel(wnd, es, TRUE, utext, TRUE);
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
+	EDIT_EM_ScrollCaret(wnd, es);
 	HeapFree(GetProcessHeap(), 0, utext);
 
 	TRACE("after UNDO:insertion length = %d, deletion buffer = %s\n",
@@ -3636,7 +3737,14 @@ static LRESULT EDIT_HScroll_Hack(WND *wnd, EDITSTATE *es, INT action, INT pos)
 		return 0;
 	}
 	if (dx)
-		EDIT_EM_LineScroll(wnd, es, dx, 0);
+	{
+	    INT fw = es->format_rect.right - es->format_rect.left;
+	    /* check if we are going to move too far */
+	    if(es->x_offset + dx + fw > es->text_width)
+		dx = es->text_width - fw - es->x_offset;
+	    if(dx)
+		EDIT_EM_LineScroll_internal(wnd, es, dx, 0);
+	}
 	return ret;
 }
 
@@ -3706,7 +3814,14 @@ static LRESULT EDIT_WM_HScroll(WND *wnd, EDITSTATE *es, INT action, INT pos)
 		return 0;
 	}
 	if (dx)
-		EDIT_EM_LineScroll(wnd, es, dx, 0);
+	{
+	    INT fw = es->format_rect.right - es->format_rect.left;
+	    /* check if we are going to move too far */
+	    if(es->x_offset + dx + fw > es->text_width)
+		dx = es->text_width - fw - es->x_offset;
+	    if(dx)
+		EDIT_EM_LineScroll_internal(wnd, es, dx, 0);
+	}
 	return 0;
 }
 
@@ -4180,33 +4295,11 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 	}
 	if (es->font)
 		SelectObject(dc, old_font);
-	if (es->flags & EF_FOCUSED)
-		EDIT_SetCaretPos(wnd, es, es->selection_end,
-				 es->flags & EF_AFTER_WRAP);
+
         if (!wParam)
             EndPaint(wnd->hwndSelf, &ps);
-	if ((es->style & WS_VSCROLL) && !(es->flags & EF_VSCROLL_TRACK)) {
-		INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
-		SCROLLINFO si;
-		si.cbSize	= sizeof(SCROLLINFO);
-		si.fMask	= SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
-		si.nMin		= 0;
-		si.nMax		= es->line_count + vlc - 2;
-		si.nPage	= vlc;
-		si.nPos		= es->y_offset;
-		SetScrollInfo(wnd->hwndSelf, SB_VERT, &si, TRUE);
-	}
-	if ((es->style & WS_HSCROLL) && !(es->flags & EF_HSCROLL_TRACK)) {
-		SCROLLINFO si;
-		INT fw = es->format_rect.right - es->format_rect.left;
-		si.cbSize	= sizeof(SCROLLINFO);
-		si.fMask	= SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
-		si.nMin		= 0;
-		si.nMax		= es->text_width + fw - 1;
-		si.nPage	= fw;
-		si.nPos		= es->x_offset;
-		SetScrollInfo(wnd->hwndSelf, SB_HORZ, &si, TRUE);
-	}
+
+	EDIT_UpdateScrollInfo(wnd, es);
 }
 
 
@@ -4289,6 +4382,8 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw)
 
 	if (es->style & ES_MULTILINE)
 		EDIT_BuildLineDefs_ML(wnd, es);
+	else
+	    EDIT_CalcLineWidth_SL(wnd, es);
 
 	if (redraw)
 		EDIT_UpdateText(wnd, NULL, TRUE);
