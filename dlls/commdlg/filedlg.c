@@ -1650,7 +1650,7 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
 
     if (ofn->lpstrFile != NULL)
     {
-      WideCharToMultiByte(CP_ACP, 0, lpstrPathSpec, -1,
+      nSizePath = WideCharToMultiByte(CP_ACP, 0, lpstrPathSpec, -1,
 			  ofn->lpstrFile, ofn->nMaxFile, NULL, NULL);
       if (ofn->nMaxFile > nSizePath)
       {
@@ -1661,7 +1661,7 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
     }
   }
 
-  fodInfos->ofnInfos->nFileOffset = nSizePath + 1;
+  fodInfos->ofnInfos->nFileOffset = nSizePath;
   fodInfos->ofnInfos->nFileExtension = 0;
 
   if ( !FILEDLG95_SendFileOK(hwnd, fodInfos) )
