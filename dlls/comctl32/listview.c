@@ -5548,6 +5548,7 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
   HWND hwndParent = GetParent(hwnd);
   NMLVKEYDOWN nmKeyDown; 
   NMHDR nmh;
+  INT oldFocusedItem = infoPtr->nFocusedItem;
 
   /* send LVN_KEYDOWN notification */
   ZeroMemory(&nmKeyDown, sizeof(NMLVKEYDOWN));
@@ -5736,8 +5737,9 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
     break;
   }
 
-  /* refresh client area */
-  InvalidateRect(hwnd, NULL, TRUE);
+  /* refresh client area if necessary*/
+  if(oldFocusedItem != infoPtr->nFocusedItem)
+    InvalidateRect(hwnd, NULL, TRUE);
 
   return 0;
 }
