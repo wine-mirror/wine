@@ -28,8 +28,9 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "winuser.h"
+#include "wingdi.h"
 #include "commctrl.h"
-#include "sysmetrics.h"
 #include "cache.h"
 #include "comctl32.h"
 #include "toolbar.h"
@@ -1186,7 +1187,7 @@ TOOLBAR_AutoSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	uPosFlags |= SWP_NOMOVE;
 
     if (!(dwStyle & CCS_NODIVIDER))
-	cy += sysMetrics[SM_CYEDGE];
+	cy += GetSystemMetrics(SM_CYEDGE);
 
     infoPtr->bAutoSize = TRUE;
     SetWindowPos (hwnd, HWND_TOP, parent_rect.left, parent_rect.top,
@@ -2756,7 +2757,7 @@ inline static LRESULT
 TOOLBAR_NCCalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     if (!(GetWindowLongA (hwnd, GWL_STYLE) & CCS_NODIVIDER))
-	((LPRECT)lParam)->top += sysMetrics[SM_CYEDGE];
+	((LPRECT)lParam)->top += GetSystemMetrics(SM_CYEDGE);
 
     return DefWindowProcA (hwnd, WM_NCCALCSIZE, wParam, lParam);
 }
@@ -2914,7 +2915,7 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 
 	if (!(dwStyle & CCS_NODIVIDER))
-	    cy += sysMetrics[SM_CYEDGE];
+	    cy += GetSystemMetrics(SM_CYEDGE);
 
 	SetWindowPos (hwnd, 0, parent_rect.left, parent_rect.top,
 			cx, cy, uPosFlags | SWP_NOZORDER);

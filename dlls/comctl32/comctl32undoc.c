@@ -18,8 +18,8 @@
 #include <stdlib.h> /* atoi */
 #include <ctype.h>
 
+#include "winbase.h"
 #include "commctrl.h"
-#include "heap.h"
 #include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl)

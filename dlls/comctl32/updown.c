@@ -32,7 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "win.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "commctrl.h"
 #include "winnls.h"
 #include "updown.h"
@@ -372,6 +373,8 @@ static BOOL UPDOWN_SetBuddy (HWND hwnd, HWND hwndBud)
   if(!(dwStyle & (UDS_ALIGNLEFT | UDS_ALIGNRIGHT)))
     return TRUE;
 
+  infoPtr->Buddy = hwndBud;
+
   /* Get the rect of the buddy relative to its parent */
   GetWindowRect(infoPtr->Buddy, &budRect);
   MapWindowPoints(HWND_DESKTOP, GetParent(infoPtr->Buddy),
@@ -684,12 +687,8 @@ LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	break;
       /*If we released the mouse and our buddy is an edit */
       /* we must select all text in it.                   */
-      {
-          WND *tmpWnd = WIN_FindWndPtr(infoPtr->Buddy);
-          if(WIDGETS_IsControl(tmpWnd, BIC32_EDIT))
-              SendMessageA(infoPtr->Buddy, EM_SETSEL, 0, MAKELONG(0, -1));
-          WIN_ReleaseWndPtr(tmpWnd);
-      }
+      if (!lstrcmpA (infoPtr->szBuddyClass, "Edit"))
+	  SendMessageA(infoPtr->Buddy, EM_SETSEL, 0, MAKELONG(0, -1));
       break;
       
     case WM_LBUTTONDOWN:

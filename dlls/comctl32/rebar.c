@@ -21,9 +21,9 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "wingdi.h"
 #include "commctrl.h"
 #include "rebar.h"
-#include "sysmetrics.h"
 #include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(rebar)
@@ -382,7 +382,7 @@ REBAR_ForceResize (HWND hwnd)
     rc.bottom = infoPtr->calcSize.cy;
 
     if (GetWindowLongA (hwnd, GWL_STYLE) & WS_BORDER) {
-	InflateRect (&rc, sysMetrics[SM_CXEDGE], sysMetrics[SM_CYEDGE]);
+	InflateRect (&rc, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
     }
 
     SetWindowPos (hwnd, 0, 0, 0,
@@ -761,7 +761,8 @@ REBAR_GetBarHeight (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nHeight = infoPtr->calcSize.cy;
 
     if (GetWindowLongA (hwnd, GWL_STYLE) & WS_BORDER)
-	nHeight += (2 * sysMetrics[SM_CYEDGE]);
+	nHeight += (2 * GetSystemMetrics(SM_CYEDGE));
+
 
     FIXME (rebar, "height = %d\n", nHeight);
 
@@ -1669,10 +1670,10 @@ inline static LRESULT
 REBAR_NCCalcSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     if (GetWindowLongA (hwnd, GWL_STYLE) & WS_BORDER) {
-	((LPRECT)lParam)->left   += sysMetrics[SM_CXEDGE];
-	((LPRECT)lParam)->top    += sysMetrics[SM_CYEDGE];
-	((LPRECT)lParam)->right  -= sysMetrics[SM_CXEDGE];
-	((LPRECT)lParam)->bottom -= sysMetrics[SM_CYEDGE];
+	((LPRECT)lParam)->left   += GetSystemMetrics(SM_CXEDGE);
+	((LPRECT)lParam)->top    += GetSystemMetrics(SM_CYEDGE);
+	((LPRECT)lParam)->right  -= GetSystemMetrics(SM_CXEDGE);
+	((LPRECT)lParam)->bottom -= GetSystemMetrics(SM_CYEDGE);
     }
 
     return 0;
