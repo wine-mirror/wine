@@ -1702,4 +1702,9 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
   return FALSE;
 }
 
+int read_elf_info(const char* filename, unsigned long tab[])
+{
+    return 0;
+}
+
 #endif  /* __ELF__ */
