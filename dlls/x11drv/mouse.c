@@ -145,13 +145,10 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
     {
         XImage *image;
         GC gc;
-
-        if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
-        {
-            WARN("Cursor has more than 1 bpp!\n" );
-            return 0;
-        }
-
+        
+        TRACE("Bitmap %dx%d planes=%d bpp=%d bytesperline=%d\n",
+            ptr->nWidth, ptr->nHeight, ptr->bPlanes, ptr->bBitsPerPixel,
+            ptr->nWidthBytes);
         /* Create a pixmap and transfer all the bits to it */
 
         /* NOTE: Following hack works, but only because XFree depth
@@ -159,19 +156,143 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
          *       as the Windows cursor data). Perhaps use a more generic
          *       algorithm here.
          */
+        /* This pixmap will be written with two bitmaps. The first is
+         *  the mask and the second is the image.
+         */
         if (!(pixmapAll = XCreatePixmap( display, root_window,
-                                         ptr->nWidth, ptr->nHeight * 2, 1 ))) return 0;
+                  ptr->nWidth, ptr->nHeight * 2, 1 ))) 
+            return 0;
         if (!(image = XCreateImage( display, visual,
-                                    1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
-                                    ptr->nHeight * 2, 16, ptr->nWidthBytes))) return 0;
+                1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
+                ptr->nHeight * 2, 16, ptr->nWidthBytes/ptr->bBitsPerPixel))) 
+        {
+            XFreePixmap( display, pixmapAll );
+            return 0;
+        }
         gc = XCreateGC( display, pixmapAll, 0, NULL );
         XSetGraphicsExposures( display, gc, False );
         image->byte_order = MSBFirst;
         image->bitmap_bit_order = MSBFirst;
         image->bitmap_unit = 16;
         _XInitImageFuncPtrs(image);
-        XPutImage( display, pixmapAll, gc, image,
-                   0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
+        if (ptr->bPlanes * ptr->bBitsPerPixel == 1)
+        {
+            /* A plain old white on black cursor. */
+            fg.red = fg.green = fg.blue = 0xffff;
+            bg.red = bg.green = bg.blue = 0x0000;
+            XPutImage( display, pixmapAll, gc, image,
+                0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
+        }
+        else
+        {
+            int     rbits, gbits, bbits, red, green, blue;
+            int     rfg, gfg, bfg, rbg, gbg, bbg;
+            int     rscale, gscale, bscale;
+            int     x, y, xmax, ymax, bitIndex, byteIndex, xorIndex;
+            unsigned char *theMask, *theImage, theChar;
+            int     threshold, fgBits, bgBits, bitShifted;
+            BYTE    pXorBits[128];   /* Up to 32x32 icons */
+            
+            switch (ptr->bBitsPerPixel)
+            {
+            case 24:
+                rbits = 8;
+                gbits = 8;
+                bbits = 8;
+                threshold = 0x40;
+                break;
+            default:
+                FIXME("Currently no support for cursors with %d bits per pixel\n",
+                  ptr->bBitsPerPixel);
+                XFreePixmap( display, pixmapAll );
+                XFreeGC( display, gc );
+                image->data = NULL;
+                XDestroyImage( image );
+                return 0;
+            }
+            /* The location of the mask. */
+            theMask = (char *)(ptr + 1);
+            /* The mask should still be 1 bit per pixel. The color image
+             * should immediately follow the mask. 
+             */
+            theImage = &theMask[ptr->nWidth/8 * ptr->nHeight];
+            rfg = gfg = bfg = rbg = gbg = bbg = 0;
+            bitIndex = 0;
+            byteIndex = 0;
+            xorIndex = 0;
+            fgBits = 0;
+            bitShifted = 0x01;
+            xmax = (ptr->nWidth > 32) ? 32 : ptr->nWidth;
+            if (ptr->nWidth > 32) {
+                ERR("Got a %dx%d cursor. Cannot handle larger than 32x32.\n",
+                  ptr->nWidth, ptr->nHeight);
+            }
+            ymax = (ptr->nHeight > 32) ? 32 : ptr->nHeight;
+            
+            memset(pXorBits, 0, 128);
+            for (y=0; y<ymax; y++)
+            {
+                for (x=0; x<xmax; x++)
+                {
+                    theChar = theImage[byteIndex++];
+                    red = green = blue = 0;
+                    blue = theChar;
+                    theChar = theImage[byteIndex++];
+                    green = theChar;
+                    theChar = theImage[byteIndex++];
+                    red = theChar;
+                    if (red+green+blue > threshold)
+                    {
+                        rfg += red;
+                        gfg += green;
+                        bfg += blue;
+                        fgBits++;
+                        pXorBits[xorIndex] |= bitShifted;
+                    }
+                    else
+                    {
+                        rbg += red;
+                        gbg += green;
+                        bbg += blue;
+                    }
+                    if (x%8 == 7)
+                    {
+                        bitShifted = 0x01;
+                        xorIndex++;
+                    }
+                    else
+                        bitShifted = bitShifted << 1;
+                }
+            }
+            rscale = 1 << (16 - rbits);
+            gscale = 1 << (16 - gbits);
+            bscale = 1 << (16 - bbits);
+            fg.red   = rfg * rscale / fgBits;
+            fg.green = gfg * gscale / fgBits;
+            fg.blue  = bfg * bscale / fgBits;
+            bgBits = xmax * ymax - fgBits;
+            bg.red   = rbg * rscale / bgBits;
+            bg.green = gbg * gscale / bgBits;
+            bg.blue  = bbg * bscale / bgBits;
+            pixmapBits = XCreateBitmapFromData( display, root_window, pXorBits, xmax, ymax );
+            if (!pixmapBits)
+            {
+                XFreePixmap( display, pixmapAll );
+                XFreeGC( display, gc );
+                image->data = NULL;
+                XDestroyImage( image );
+                return 0;
+            }
+            
+            /* Put the mask. */
+            XPutImage( display, pixmapAll, gc, image,
+                   0, 0, 0, 0, ptr->nWidth, ptr->nHeight );
+            XSetFunction( display, gc, GXcopy );
+            /* Put the image */
+            XCopyArea( display, pixmapBits, pixmapAll, gc,
+                       0, 0, xmax, ymax, 0, ptr->nHeight );
+            XFreePixmap( display, pixmapBits );
+        }
         image->data = NULL;
         XDestroyImage( image );
 
@@ -230,8 +351,6 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
             XCopyArea( display, pixmapMaskInv, pixmapBits, gc,
                        0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
             XSetFunction( display, gc, GXcopy );
-            fg.red = fg.green = fg.blue = 0xffff;
-            bg.red = bg.green = bg.blue = 0x0000;
             cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
                                 &fg, &bg, ptr->ptHotSpot.x, ptr->ptHotSpot.y );
         }
