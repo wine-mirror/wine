@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,24 +23,6 @@
 #include "thread.h"
 
 /* process structure */
-
-struct process
-{
-    struct object        obj;             /* object header */
-    struct process      *next;            /* system-wide process list */
-    struct process      *prev;
-    struct thread       *thread_list;     /* head of the thread list */
-    struct handle_table  handles;         /* handle table */
-    int                  exit_code;       /* process exit code */
-    int                  running_threads; /* number of threads running in this process */
-    struct timeval       start_time;      /* absolute time at process start */
-    struct timeval       end_time;        /* absolute time at process end */
-    int                  priority;        /* priority class */
-    int                  affinity;        /* process affinity mask */
-    struct object       *console_in;      /* console input */
-    struct object       *console_out;     /* console output */
-    struct new_process_request *info;     /* startup info (freed after startup) */
-};
 
 static struct process initial_process;
 static struct process *first_process = &initial_process;
@@ -73,10 +56,14 @@ static void init_process( struct process *process )
     process->next            = NULL;
     process->prev            = NULL;
     process->thread_list     = NULL;
+    process->debug_next      = NULL;
+    process->debug_prev      = NULL;
+    process->debugger        = NULL;
     process->exit_code       = 0x103;  /* STILL_ACTIVE */
     process->running_threads = 0;
     process->priority        = NORMAL_PRIORITY_CLASS;
     process->affinity        = 1;
+    process->suspend         = 0;
     process->console_in      = NULL;
     process->console_out     = NULL;
     process->info            = NULL;
@@ -200,12 +187,6 @@ struct process *get_process_from_handle( int handle, unsigned int access )
                                              access, &process_ops );
 }
 
-/* get a pointer to the process handle table */
-struct handle_table *get_process_handles( struct process *process )
-{
-    return &process->handles;
-}
-
 /* retrieve the initialization info for a new process */
 static int get_process_init_info( struct process *process, struct init_process_reply *reply )
 {
@@ -261,8 +242,37 @@ void remove_process_thread( struct process *process, struct thread *thread )
     release_object( thread );
 }
 
+/* suspend all the threads of a process */
+void suspend_process( struct process *process )
+{
+    if (!process->suspend++)
+    {
+        struct thread *thread = process->thread_list;
+        for (; thread; thread = thread->proc_next)
+        {
+            if (!thread->suspend && thread->unix_pid)
+                kill( thread->unix_pid, SIGSTOP );
+        }
+    }
+}
+
+/* resume all the threads of a process */
+void resume_process( struct process *process )
+{
+    assert (process->suspend > 0);
+    if (!--process->suspend)
+    {
+        struct thread *thread = process->thread_list;
+        for (; thread; thread = thread->proc_next)
+        {
+            if (!thread->suspend && thread->unix_pid)
+                kill( thread->unix_pid, SIGCONT );
+        }
+    }
+}
+
 /* kill a process on the spot */
-static void kill_process( struct process *process, int exit_code )
+void kill_process( struct process *process, int exit_code )
 {
     while (process->thread_list)
         kill_thread( process->thread_list, exit_code );

@@ -13,16 +13,6 @@
 
 struct process;
 struct object_ops;
-struct handle_entry;
-
-/* handle structures */
-
-struct handle_table
-{
-    int count;
-    int last;
-    struct handle_entry *entries;
-};
 
 /* handle functions */
 
