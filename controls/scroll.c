@@ -229,7 +229,10 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
 	break;
 
       case SB_VERT:
-        lprect->left   = wndPtr->rectClient.right - wndPtr->rectWindow.left;
+        if((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0)
+            lprect->left   = wndPtr->rectClient.left - wndPtr->rectWindow.left - GetSystemMetrics(SM_CXVSCROLL);
+        else
+            lprect->left   = wndPtr->rectClient.right - wndPtr->rectWindow.left;
         lprect->top    = wndPtr->rectClient.top - wndPtr->rectWindow.top;
         lprect->right  = lprect->left + GetSystemMetrics(SM_CXVSCROLL);
         lprect->bottom = wndPtr->rectClient.bottom - wndPtr->rectWindow.top;

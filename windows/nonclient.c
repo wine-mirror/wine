@@ -224,7 +224,13 @@ NC_AdjustRectInner95 (LPRECT rect, DWORD style, DWORD exStyle)
     if (exStyle & WS_EX_CLIENTEDGE)
         InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
 
-    if (style & WS_VSCROLL) rect->right  += GetSystemMetrics(SM_CXVSCROLL);
+    if (style & WS_VSCROLL)
+    {
+        if((exStyle & WS_EX_LEFTSCROLLBAR) != 0)
+            rect->left  -= GetSystemMetrics(SM_CXVSCROLL);
+        else
+            rect->right += GetSystemMetrics(SM_CXVSCROLL);
+    }
     if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
 }
 
@@ -648,8 +654,11 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 
     if (wndPtr->dwStyle & WS_VSCROLL)
     {
-	rect.right += GetSystemMetrics(SM_CXVSCROLL);
-	if (PtInRect( &rect, pt )) return HTVSCROLL;
+        if((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0)
+            rect.left -= GetSystemMetrics(SM_CXVSCROLL);
+        else
+            rect.right += GetSystemMetrics(SM_CXVSCROLL);
+        if (PtInRect( &rect, pt )) return HTVSCROLL;
     }
 
       /* Check horizontal scroll bar */
@@ -661,7 +670,8 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 	{
 	      /* Check size box */
 	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
-		(pt.x >= rect.right - GetSystemMetrics(SM_CXVSCROLL)))
+		((((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0) && (pt.x <= rect.left + GetSystemMetrics(SM_CXVSCROLL))) ||
+		(((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) == 0) && (pt.x >= rect.right - GetSystemMetrics(SM_CXVSCROLL)))))
 		return HTSIZE;
 	    return HTHSCROLL;
 	}
@@ -794,8 +804,11 @@ static LONG NC_DoNCHitTest95 (WND *wndPtr, POINT pt )
 
     if (wndPtr->dwStyle & WS_VSCROLL)
     {
-	rect.right += GetSystemMetrics(SM_CXVSCROLL);
-	if (PtInRect( &rect, pt )) return HTVSCROLL;
+        if((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0)
+            rect.left -= GetSystemMetrics(SM_CXVSCROLL);
+        else
+            rect.right += GetSystemMetrics(SM_CXVSCROLL);
+        if (PtInRect( &rect, pt )) return HTVSCROLL;
     }
 
       /* Check horizontal scroll bar */
@@ -807,7 +820,8 @@ static LONG NC_DoNCHitTest95 (WND *wndPtr, POINT pt )
 	{
 	      /* Check size box */
 	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
-		(pt.x >= rect.right - GetSystemMetrics(SM_CXVSCROLL)))
+		((((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0) && (pt.x <= rect.left + GetSystemMetrics(SM_CXVSCROLL))) ||
+		(((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) == 0) && (pt.x >= rect.right - GetSystemMetrics(SM_CXVSCROLL)))))
 		return HTSIZE;
 	    return HTHSCROLL;
 	}
@@ -1466,7 +1480,10 @@ static void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
     if ((dwStyle & WS_VSCROLL) && (dwStyle & WS_HSCROLL))
     {
         RECT r = rect;
-        r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
+        if((dwExStyle & WS_EX_LEFTSCROLLBAR) != 0)
+            r.right = r.left + GetSystemMetrics(SM_CXVSCROLL) + 1;
+        else
+            r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
         r.top  = r.bottom - GetSystemMetrics(SM_CYHSCROLL) + 1;
 	if(wndPtr->dwStyle & WS_BORDER) {
 	  r.left++;
@@ -1621,7 +1638,10 @@ static void  NC_DoNCPaint95(
     if ((dwStyle & WS_VSCROLL) && (dwStyle & WS_HSCROLL))
     {
         RECT r = rect;
-        r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
+        if((dwExStyle & WS_EX_LEFTSCROLLBAR) != 0)
+            r.right = r.left + GetSystemMetrics(SM_CXVSCROLL) + 1;
+        else
+            r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
         r.top  = r.bottom - GetSystemMetrics(SM_CYHSCROLL) + 1;
         FillRect( hdc, &r,  GetSysColorBrush(COLOR_SCROLLBAR) );
     }
