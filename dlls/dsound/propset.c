@@ -208,7 +208,7 @@ HRESULT WINAPI IKsBufferPropertySetImpl_Create(
     IKsBufferPropertySetImpl *iks;
     TRACE("(%p,%p)\n",dsb,piks);
 
-    iks = (IKsBufferPropertySetImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*iks));
+    iks = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*iks));
     iks->ref = 0;
     iks->dsb = dsb;
     dsb->iks = iks;
@@ -1140,7 +1140,7 @@ HRESULT WINAPI IKsPrivatePropertySetImpl_Create(
 {
     IKsPrivatePropertySetImpl *iks;
 
-    iks = (IKsPrivatePropertySetImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
+    iks = HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
     iks->ref = 0;
     iks->lpVtbl = &ikspvt;
 

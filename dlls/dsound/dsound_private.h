@@ -78,7 +78,7 @@ struct IDirectSoundImpl
     DSDRIVERDESC                drvdesc;
     DSDRIVERCAPS                drvcaps;
     DWORD                       priolevel;
-    WAVEFORMATEX                wfx; /* current main waveformat */
+    PWAVEFORMATEX               pwfx;
     HWAVEOUT                    hwo;
     LPWAVEHDR                   pwave[DS_HEL_FRAGS];
     UINT                        timerID, pwplay, pwwrite, pwqueue, prebuf, precount;
@@ -197,7 +197,7 @@ struct IDirectSoundBufferImpl
     IDirectSoundImpl*           dsound;
     CRITICAL_SECTION            lock;
     PIDSDRIVERBUFFER            hwbuf;
-    WAVEFORMATEX                wfx;
+    PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
     DWORD                       playflags,state,leadin;
     DWORD                       playpos,startpos,writelead,buflen;

@@ -54,11 +54,11 @@ void DSOUND_RecalcPrimary(IDirectSoundImpl *This)
 	DWORD sw;
 	TRACE("(%p)\n",This);
 
-	sw = This->wfx.nChannels * (This->wfx.wBitsPerSample / 8);
+	sw = This->pwfx->nChannels * (This->pwfx->wBitsPerSample / 8);
 	if (This->hwbuf) {
 		DWORD fraglen;
 		/* let fragment size approximate the timer delay */
-		fraglen = (This->wfx.nSamplesPerSec * DS_TIME_DEL / 1000) * sw;
+		fraglen = (This->pwfx->nSamplesPerSec * DS_TIME_DEL / 1000) * sw;
 		/* reduce fragment size until an integer number of them fits in the buffer */
 		/* (FIXME: this may or may not be a good idea) */
 		while (This->buflen % fraglen) fraglen -= sw;
@@ -66,7 +66,7 @@ void DSOUND_RecalcPrimary(IDirectSoundImpl *This)
 		TRACE("fraglen=%ld\n", This->fraglen);
 	}
 	/* calculate the 10ms write lead */
-	This->writelead = (This->wfx.nSamplesPerSec / 100) * sw;
+	This->writelead = (This->pwfx->nSamplesPerSec / 100) * sw;
 }
 
 static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
@@ -85,14 +85,14 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 		else if (This->state == STATE_STOPPING) This->state = STATE_STOPPED;
 		/* use fragments of 10ms (1/100s) each (which should get us within
 		 * the documented write cursor lead of 10-15ms) */
-		buflen = ((This->wfx.nAvgBytesPerSec / 100) & ~3) * DS_HEL_FRAGS;
+		buflen = ((This->pwfx->nAvgBytesPerSec / 100) & ~3) * DS_HEL_FRAGS;
 		TRACE("desired buflen=%ld, old buffer=%p\n", buflen, This->buffer);
 		/* reallocate emulated primary buffer */
 
 		if (This->buffer)
-			newbuf = (LPBYTE)HeapReAlloc(GetProcessHeap(),0,This->buffer,buflen);
+			newbuf = HeapReAlloc(GetProcessHeap(),0,This->buffer,buflen);
 		else
-			newbuf = (LPBYTE)HeapAlloc(GetProcessHeap(),0,buflen);
+			newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
 
 		if (newbuf == NULL) {
 			ERR("failed to allocate primary buffer\n");
@@ -127,26 +127,24 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 			This->pwqueue = 0;
 			This->playpos = 0;
 			This->mixpos = 0;
-			memset(This->buffer, (This->wfx.wBitsPerSample == 16) ? 0 : 128, This->buflen);
+			memset(This->buffer, (This->pwfx->wBitsPerSample == 16) ? 0 : 128, This->buflen);
 			TRACE("fraglen=%ld\n", This->fraglen);
 			DSOUND_WaveQueue(This, (DWORD)-1);
 		}
 		if ((err == DS_OK) && (merr != DS_OK))
 			err = merr;
-	} else {
-		if (!This->hwbuf) {
-			err = IDsDriver_CreateSoundBuffer(This->driver,&(This->wfx),
-							  DSBCAPS_PRIMARYBUFFER,0,
-							  &(This->buflen),&(This->buffer),
-							  (LPVOID*)&(This->hwbuf));
-			if (err != DS_OK) {
-				WARN("IDsDriver_CreateSoundBuffer failed\n");
-				return err;
-			}
-
-			if (dsound->state == STATE_PLAYING) dsound->state = STATE_STARTING;
-			else if (dsound->state == STATE_STOPPING) dsound->state = STATE_STOPPED;
+	} else if (!This->hwbuf) {
+		err = IDsDriver_CreateSoundBuffer(This->driver,This->pwfx,
+						  DSBCAPS_PRIMARYBUFFER,0,
+						  &(This->buflen),&(This->buffer),
+						  (LPVOID*)&(This->hwbuf));
+		if (err != DS_OK) {
+			WARN("IDsDriver_CreateSoundBuffer failed\n");
+			return err;
 		}
+
+		if (dsound->state == STATE_PLAYING) dsound->state = STATE_STARTING;
+		else if (dsound->state == STATE_STOPPING) dsound->state = STATE_STOPPED;
 	}
 
 	return err;
@@ -177,12 +175,12 @@ HRESULT DSOUND_PrimaryCreate(IDirectSoundImpl *This)
 	HRESULT err = DS_OK;
 	TRACE("(%p)\n",This);
 
-	This->buflen = This->wfx.nAvgBytesPerSec;
+	This->buflen = This->pwfx->nAvgBytesPerSec;
 
 	/* FIXME: verify that hardware capabilities (DSCAPS_PRIMARY flags) match */
 
 	if (This->driver) {
-		err = IDsDriver_CreateSoundBuffer(This->driver,&(This->wfx),
+		err = IDsDriver_CreateSoundBuffer(This->driver,This->pwfx,
 						  DSBCAPS_PRIMARYBUFFER,0,
 						  &(This->buflen),&(This->buffer),
 						  (LPVOID*)&(This->hwbuf));
@@ -236,6 +234,10 @@ HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This)
 			HeapFree(GetProcessHeap(),0,This->pwave[c]);
 		}
 	}
+	if (This->pwfx) {
+		HeapFree(GetProcessHeap(),0,This->pwfx);
+		This->pwfx=NULL;
+	}
 	return DS_OK;
 }
 
@@ -274,10 +276,10 @@ HRESULT DSOUND_PrimaryStop(IDirectSoundImpl *This)
 			waveOutClose(This->hwo);
 			This->hwo = 0;
 			err = mmErr(waveOutOpen(&(This->hwo), This->drvdesc.dnDevNode,
-						&(This->wfx), (DWORD)DSOUND_callback, (DWORD)This,
+						This->pwfx, (DWORD)DSOUND_callback, (DWORD)This,
 						flags));
 			if (err == DS_OK) {
-				err = IDsDriver_CreateSoundBuffer(This->driver,&(This->wfx),
+				err = IDsDriver_CreateSoundBuffer(This->driver,This->pwfx,
 								  DSBCAPS_PRIMARYBUFFER,0,
 								  &(This->buflen),&(This->buffer),
 								  (LPVOID)&(This->hwbuf));
@@ -307,8 +309,7 @@ HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWO
 			WARN("IDsDriverBuffer_GetPosition failed\n");
 			return err;
 		}
-	}
-	else {
+	} else {
 		if (playpos) {
 			MMTIME mtime;
 			mtime.wType = TIME_BYTES;
@@ -328,7 +329,6 @@ HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWO
 	return DS_OK;
 }
 
-
 /*******************************************************************************
  *		PrimaryBuffer
  */
@@ -340,8 +340,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	IDirectSoundImpl* dsound = This->dsound;
 	HRESULT err = DS_OK;
-	int i;
-	DWORD nSamplesPerSec; 
+	int i, alloc_size, cp_size;
+	DWORD nSamplesPerSec;
 	TRACE("(%p,%p)\n",This,wfex);
 
 	if (This->dsound->priolevel == DSSCL_NORMAL) {
@@ -360,24 +360,20 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	      wfex->nAvgBytesPerSec, wfex->nBlockAlign,
 	      wfex->wBitsPerSample, wfex->cbSize);
 
-	if ((wfex->wFormatTag != WAVE_FORMAT_PCM) ||
-	    (wfex->nChannels < 1) || (wfex->nChannels > 2) ||
-	    (wfex->nSamplesPerSec < 1) ||
-	    ((wfex->wBitsPerSample != 8) && (wfex->wBitsPerSample != 16))) {
-		WARN("invalid paramemer: unsupported format!\n");
-		return DSERR_INVALIDPARAM;
-	}
-
 	/* **** */
 	RtlAcquireResourceExclusive(&(dsound->lock), TRUE);
 
-	nSamplesPerSec = dsound->wfx.nSamplesPerSec;
-	dsound->wfx.nSamplesPerSec = wfex->nSamplesPerSec;
-	dsound->wfx.nChannels = wfex->nChannels;
-	dsound->wfx.wBitsPerSample = wfex->wBitsPerSample;
-	dsound->wfx.nBlockAlign = dsound->wfx.wBitsPerSample / 8 * dsound->wfx.nChannels;
-	dsound->wfx.nAvgBytesPerSec =
-		dsound->wfx.nSamplesPerSec * dsound->wfx.nBlockAlign;
+	if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
+            alloc_size = sizeof(WAVEFORMATEX);
+            cp_size = sizeof(PCMWAVEFORMAT);
+        } else
+            alloc_size = cp_size = sizeof(WAVEFORMATEX) + wfex->cbSize;
+
+        dsound->pwfx = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,dsound->pwfx,alloc_size);
+
+	nSamplesPerSec = dsound->pwfx->nSamplesPerSec;
+
+        memcpy(dsound->pwfx, wfex, cp_size);
 
 	if (dsound->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) {
 		DWORD flags = CALLBACK_FUNCTION;
@@ -388,7 +384,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 		waveOutClose(dsound->hwo);
 		dsound->hwo = 0;
                 err = mmErr(waveOutOpen(&(dsound->hwo), dsound->drvdesc.dnDevNode,
-                                        &(dsound->wfx), (DWORD)DSOUND_callback, (DWORD)dsound,
+                                        dsound->pwfx, (DWORD)DSOUND_callback, (DWORD)dsound,
                                         flags));
                 if (err == DS_OK) {
                     err = DSOUND_PrimaryOpen(dsound);
@@ -403,11 +399,11 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 			return err;
 		}
 	} else if (dsound->hwbuf) {
-		err = IDsDriverBuffer_SetFormat(dsound->hwbuf, &(dsound->wfx));
+		err = IDsDriverBuffer_SetFormat(dsound->hwbuf, dsound->pwfx);
 		if (err == DSERR_BUFFERLOST) {
 			/* Wine-only: the driver wants us to recreate the HW buffer */
 			IDsDriverBuffer_Release(dsound->hwbuf);
-			err = IDsDriver_CreateSoundBuffer(dsound->driver,&(dsound->wfx),
+			err = IDsDriver_CreateSoundBuffer(dsound->driver,dsound->pwfx,
 							  DSBCAPS_PRIMARYBUFFER,0,
 							  &(dsound->buflen),&(dsound->buffer),
 							  (LPVOID)&(dsound->hwbuf));
@@ -427,7 +423,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	}
 	DSOUND_RecalcPrimary(dsound);
 
-	if (nSamplesPerSec != dsound->wfx.nSamplesPerSec) {
+	if (nSamplesPerSec != dsound->pwfx->nSamplesPerSec) {
 		IDirectSoundBufferImpl** dsb = dsound->buffers;
 		for (i = 0; i < dsound->nrofbuffers; i++, dsb++) {
 			/* **** */
@@ -656,27 +652,38 @@ static HRESULT WINAPI PrimaryBufferImpl_GetStatus(
 
 
 static HRESULT WINAPI PrimaryBufferImpl_GetFormat(
-	LPDIRECTSOUNDBUFFER8 iface,LPWAVEFORMATEX lpwf,DWORD wfsize,LPDWORD wfwritten
-) {
-	ICOM_THIS(PrimaryBufferImpl,iface);
-	TRACE("(%p,%p,%ld,%p)\n",This,lpwf,wfsize,wfwritten);
+    LPDIRECTSOUNDBUFFER8 iface,
+    LPWAVEFORMATEX lpwf,
+    DWORD wfsize,
+    LPDWORD wfwritten)
+{
+    DWORD size;
+    ICOM_THIS(PrimaryBufferImpl,iface);
+    TRACE("(%p,%p,%ld,%p)\n",This,lpwf,wfsize,wfwritten);
 
-	if (wfsize>sizeof(This->dsound->wfx))
-		wfsize = sizeof(This->dsound->wfx);
-	if (lpwf) {	/* NULL is valid */
-		memcpy(lpwf,&(This->dsound->wfx),wfsize);
-		if (wfwritten)
-			*wfwritten = wfsize;
-	} else {
-		if (wfwritten)
-			*wfwritten = sizeof(This->dsound->wfx);
-		else {
-			WARN("invalid parameter: wfwritten == NULL\n");
-			return DSERR_INVALIDPARAM;
-		}
-	}
+    size = sizeof(WAVEFORMATEX) + This->dsound->pwfx->cbSize;
 
-	return DS_OK;
+    if (lpwf) {	/* NULL is valid */
+        if (wfsize >= size) {
+            memcpy(lpwf,This->dsound->pwfx,size);
+            if (wfwritten)
+                *wfwritten = size;
+        } else {
+            WARN("invalid parameter: wfsize to small\n");
+            if (wfwritten)
+                *wfwritten = 0;
+            return DSERR_INVALIDPARAM;
+        }
+    } else {
+        if (wfwritten)
+            *wfwritten = sizeof(WAVEFORMATEX) + This->dsound->pwfx->cbSize;
+        else {
+            WARN("invalid parameter: wfwritten == NULL\n");
+            return DSERR_INVALIDPARAM;
+        }
+    }
+
+    return DS_OK;
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_Lock(
@@ -891,7 +898,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFrequency(
 		return DSERR_CONTROLUNAVAIL;
 	}
 
-	*freq = This->dsound->wfx.nSamplesPerSec;
+	*freq = This->dsound->pwfx->nSamplesPerSec;
 	TRACE("-> %ld\n", *freq);
 
 	return DS_OK;
@@ -993,7 +1000,7 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 
 	*ppobj = NULL;	/* assume failure */
 
-	if ( IsEqualGUID(riid, &IID_IUnknown) || 
+	if ( IsEqualGUID(riid, &IID_IUnknown) ||
 	     IsEqualGUID(riid, &IID_IDirectSoundBuffer) ) {
 		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)This);
 		*ppobj = This;
@@ -1084,7 +1091,7 @@ HRESULT WINAPI PrimaryBufferImpl_Create(
 		return DSERR_INVALIDPARAM;
 	}
 
-	dsb = (PrimaryBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
+	dsb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
 
 	if (dsb == NULL) {
 		WARN("out of memory\n");
@@ -1101,9 +1108,9 @@ HRESULT WINAPI PrimaryBufferImpl_Create(
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
 		"bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-		ds->wfx.wFormatTag, ds->wfx.nChannels, ds->wfx.nSamplesPerSec,
-		ds->wfx.nAvgBytesPerSec, ds->wfx.nBlockAlign,
-		ds->wfx.wBitsPerSample, ds->wfx.cbSize);
+		ds->pwfx->wFormatTag, ds->pwfx->nChannels, ds->pwfx->nSamplesPerSec,
+		ds->pwfx->nAvgBytesPerSec, ds->pwfx->nBlockAlign,
+		ds->pwfx->wBitsPerSample, ds->pwfx->cbSize);
 
 	*pdsb = dsb;
 	return S_OK;

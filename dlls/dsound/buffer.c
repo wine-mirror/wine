@@ -161,7 +161,7 @@ HRESULT WINAPI IDirectSoundNotifyImpl_Create(
     IDirectSoundNotifyImpl * dsn;
     TRACE("(%p,%p)\n",dsb,pdsn);
 
-    dsn = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dsn));
+    dsn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dsn));
 
     if (dsn == NULL) {
         WARN("out of memory\n");
@@ -285,7 +285,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 	}
 
 	if (freq == DSBFREQUENCY_ORIGINAL)
-		freq = This->wfx.nSamplesPerSec;
+		freq = This->pwfx->nSamplesPerSec;
 
 	if ((freq < DSBFREQUENCY_MIN) || (freq > DSBFREQUENCY_MAX)) {
 		WARN("invalid parameter: freq = %ld\n", freq);
@@ -298,8 +298,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 	oldFreq = This->freq;
 	This->freq = freq;
 	if (freq != oldFreq) {
-		This->freqAdjust = (freq << DSOUND_FREQSHIFT) / This->dsound->wfx.nSamplesPerSec;
-		This->nAvgBytesPerSec = freq * This->wfx.nBlockAlign;
+		This->freqAdjust = (freq << DSOUND_FREQSHIFT) / This->dsound->pwfx->nSamplesPerSec;
+		This->nAvgBytesPerSec = freq * This->pwfx->nBlockAlign;
 		DSOUND_RecalcFormat(This);
 		if (!This->hwbuf)
 			DSOUND_ForceRemix(This);
@@ -432,6 +432,9 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 	if (This->notifies != NULL)
 		HeapFree(GetProcessHeap(), 0, This->notifies);
 
+	if (This->pwfx)
+		HeapFree(GetProcessHeap(), 0, This->pwfx);
+
 	HeapFree(GetProcessHeap(),0,This);
 
 	TRACE("(%p) released\n",This);
@@ -469,12 +472,12 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
 		pmix = 0;
 	}
 	/* divide the offset by its sample size */
-	pmix /= This->dsound->wfx.nBlockAlign;
+	pmix /= This->dsound->pwfx->nBlockAlign;
 	TRACE("primary back-samples=%ld\n",pmix);
 	/* adjust for our frequency */
 	pmix = (pmix * This->freqAdjust) >> DSOUND_FREQSHIFT;
 	/* multiply by our own sample size */
-	pmix *= This->wfx.nBlockAlign;
+	pmix *= This->pwfx->nBlockAlign;
 	TRACE("this back-offset=%ld\n", pmix);
 	/* subtract from our last mixed position */
 	bplay = bmix;
@@ -501,13 +504,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 		    WARN("IDsDriverBuffer_GetPosition failed\n");
 		    return hres;
 		}
-	}
-	else {
+	} else {
 		if (playpos && (This->state != STATE_PLAYING)) {
 			/* we haven't been merged into the primary buffer (yet) */
 			*playpos = This->buf_mixpos;
-		}
-		else if (playpos) {
+		} else if (playpos) {
 			DWORD pplay, pwrite, lplay, splay, pstate;
 			/* let's get this exact; first, recursively call GetPosition on the primary */
 			EnterCriticalSection(&(This->dsound->mixlock));
@@ -538,21 +539,23 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 				/* let's just do what might work for Half-Life */
 				DWORD wp;
 				wp = (This->dsound->pwplay + ds_hel_margin) * This->dsound->fraglen;
-				while (wp >= This->dsound->buflen)
-					wp -= This->dsound->buflen;
+				wp %= This->dsound->buflen;
 				*playpos = DSOUND_CalcPlayPosition(This, pstate, wp, pwrite, lplay, splay);
 			}
 			LeaveCriticalSection(&(This->dsound->mixlock));
 		}
-		if (writepos) *writepos = This->buf_mixpos;
+		if (writepos)
+                    *writepos = This->buf_mixpos;
 	}
 	if (writepos) {
-		if (This->state != STATE_STOPPED)
+		if (This->state != STATE_STOPPED) {
 			/* apply the documented 10ms lead to writepos */
 			*writepos += This->writelead;
-		while (*writepos >= This->buflen) *writepos -= This->buflen;
+		}
+		*writepos %= This->buflen;
 	}
-	if (playpos) This->last_playpos = *playpos;
+	if (playpos)
+            This->last_playpos = *playpos;
 	TRACE("playpos = %ld, writepos = %ld (%p, time=%ld)\n", playpos?*playpos:0, writepos?*writepos:0, This, GetTickCount());
 	return DS_OK;
 }
@@ -581,27 +584,38 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 
 
 static HRESULT WINAPI IDirectSoundBufferImpl_GetFormat(
-	LPDIRECTSOUNDBUFFER8 iface,LPWAVEFORMATEX lpwf,DWORD wfsize,LPDWORD wfwritten
-) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	TRACE("(%p,%p,%ld,%p)\n",This,lpwf,wfsize,wfwritten);
+    LPDIRECTSOUNDBUFFER8 iface,
+    LPWAVEFORMATEX lpwf,
+    DWORD wfsize,
+    LPDWORD wfwritten)
+{
+    DWORD size;
+    ICOM_THIS(IDirectSoundBufferImpl,iface);
+    TRACE("(%p,%p,%ld,%p)\n",This,lpwf,wfsize,wfwritten);
 
-	if (wfsize>sizeof(This->wfx))
-		wfsize = sizeof(This->wfx);
-	if (lpwf) {	/* NULL is valid */
-		memcpy(lpwf,&(This->wfx),wfsize);
-		if (wfwritten)
-			*wfwritten = wfsize;
-	} else {
-		if (wfwritten)
-			*wfwritten = sizeof(This->wfx);
-		else {
-			WARN("invalid parameter: wfwritten == NULL\n");
-			return DSERR_INVALIDPARAM;
-		}
-	}
+    size = sizeof(WAVEFORMATEX) + This->pwfx->cbSize;
 
-	return DS_OK;
+    if (lpwf) { /* NULL is valid */
+        if (wfsize >= size) {
+            memcpy(lpwf,This->pwfx,size);
+            if (wfwritten)
+                *wfwritten = size;
+        } else {
+            WARN("invalid parameter: wfsize to small\n");
+            if (wfwritten)
+                *wfwritten = 0;
+            return DSERR_INVALIDPARAM;
+        }
+    } else {
+        if (wfwritten)
+            *wfwritten = sizeof(WAVEFORMATEX) + This->pwfx->cbSize;
+        else {
+            WARN("invalid parameter: wfwritten == NULL\n");
+            return DSERR_INVALIDPARAM;
+        }
+    }
+
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
@@ -632,8 +646,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 		}
 		writecursor += writepos;
 	}
-	while (writecursor >= This->buflen)
-		writecursor -= This->buflen;
+	writecursor %= This->buflen;
 	if (flags & DSBLOCK_ENTIREBUFFER)
 		writebytes = This->buflen;
 	if (writebytes > This->buflen)
@@ -691,8 +704,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 				if (This->buf_mixpos > writecursor &&
 				    This->last_playpos < writecursor+writebytes)
 					remix = TRUE;
-			}
-			else {
+			} else {
 				if (This->buf_mixpos > writecursor ||
 				    This->last_playpos < writecursor+writebytes)
 					remix = TRUE;
@@ -718,8 +730,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
-	while (newpos >= This->buflen)
-		newpos -= This->buflen;
+	newpos %= This->buflen;
 	This->buf_mixpos = newpos;
 	if (This->hwbuf) {
 		hres = IDsDriverBuffer_SetPosition(This->hwbuf, This->buf_mixpos);
@@ -803,10 +814,14 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 
 	TRACE("(%p,%p,%ld,%p,%ld)\n", This,p1,x1,p2,x2);
 
+	/* **** */
+	EnterCriticalSection(&(This->lock));
+
 	if (!(This->dsound->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
 		HRESULT hres;
 		hres = IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
 		if (hres != DS_OK) {
+			LeaveCriticalSection(&(This->lock));
 			WARN("IDsDriverBuffer_Unlock failed\n");
 			return hres;
 		}
@@ -814,8 +829,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 
 	if (p2) probably_valid_to = (((LPBYTE)p2)-This->buffer->memory) + x2;
 	else probably_valid_to = (((LPBYTE)p1)-This->buffer->memory) + x1;
-	while (probably_valid_to >= This->buflen)
-		probably_valid_to -= This->buflen;
+	probably_valid_to %= This->buflen;
 	if ((probably_valid_to == 0) && ((x1+x2) == This->buflen) &&
 	    ((This->state == STATE_STARTING) ||
 	     (This->state == STATE_PLAYING)))
@@ -823,6 +837,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 		probably_valid_to = (DWORD)-1;
 	This->probably_valid_to = probably_valid_to;
 
+	LeaveCriticalSection(&(This->lock));
+	/* **** */
+
+	TRACE("probably_valid_to=%ld\n", This->probably_valid_to);
 	return DS_OK;
 }
 
@@ -1052,7 +1070,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	LPWAVEFORMATEX wfex = dsbd->lpwfxFormat;
 	HRESULT err = DS_OK;
 	DWORD capf = 0;
-	int use_hw;
+	int use_hw, alloc_size, cp_size;
 	TRACE("(%p,%p,%p)\n",ds,pdsb,dsbd);
 
 	if (dsbd->dwBufferBytes < DSBSIZE_MIN || dsbd->dwBufferBytes > DSBSIZE_MAX) {
@@ -1061,24 +1079,41 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 		return DSERR_INVALIDPARAM; /* FIXME: which error? */
 	}
 
-	dsb = (IDirectSoundBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
+	dsb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
 
 	if (dsb == 0) {
 		WARN("out of memory\n");
 		*pdsb = NULL;
 		return DSERR_OUTOFMEMORY;
 	}
+
+	TRACE("Created buffer at %p\n", dsb);
+
 	dsb->ref = 0;
 	dsb->dsb = 0;
 	dsb->dsound = ds;
 	dsb->lpVtbl = &dsbvt;
 	dsb->iks = NULL;
 
-	memcpy(&dsb->dsbd, dsbd, sizeof(*dsbd));
-	if (wfex)
-		memcpy(&dsb->wfx, wfex, sizeof(dsb->wfx));
+	/* size depends on version */
+	memcpy(&dsb->dsbd, dsbd, dsbd->dwSize);
 
-	TRACE("Created buffer at %p\n", dsb);
+	/* variable sized struct so calculate size based on format */
+	if (wfex->wFormatTag == WAVE_FORMAT_PCM) {
+		alloc_size = sizeof(WAVEFORMATEX);
+		cp_size = sizeof(PCMWAVEFORMAT);
+	} else 
+		alloc_size = cp_size = sizeof(WAVEFORMATEX) + wfex->cbSize;
+
+	dsb->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,alloc_size);
+	if (dsb->pwfx == NULL) {
+		WARN("out of memory\n");
+		HeapFree(GetProcessHeap(),0,dsb);
+		*pdsb = NULL;
+		return DSERR_OUTOFMEMORY;
+	}
+
+	memcpy(dsb->pwfx, wfex, cp_size);
 
 	dsb->buflen = dsbd->dwBufferBytes;
 	dsb->freq = dsbd->lpwfxFormat->nSamplesPerSec;
@@ -1107,14 +1142,16 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 		dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
 		if (dsb->buffer == NULL) {
 			WARN("out of memory\n");
+			HeapFree(GetProcessHeap(),0,dsb->pwfx);
 			HeapFree(GetProcessHeap(),0,dsb);
 			*pdsb = NULL;
 			return DSERR_OUTOFMEMORY;
 		}
 
-		dsb->buffer->memory = (LPBYTE)HeapAlloc(GetProcessHeap(),0,dsb->buflen);
+		dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
 		if (dsb->buffer->memory == NULL) {
 			WARN("out of memory\n");
+			HeapFree(GetProcessHeap(),0,dsb->pwfx);
 			HeapFree(GetProcessHeap(),0,dsb->buffer);
 			HeapFree(GetProcessHeap(),0,dsb);
 			*pdsb = NULL;
@@ -1136,15 +1173,17 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 				dsb->buffer = HeapAlloc(GetProcessHeap(),0,sizeof(*(dsb->buffer)));
 				if (dsb->buffer == NULL) {
 					WARN("out of memory\n");
+					HeapFree(GetProcessHeap(),0,dsb->pwfx);
 					HeapFree(GetProcessHeap(),0,dsb);
 					*pdsb = NULL;
 					return DSERR_OUTOFMEMORY;
 				}
 
-				dsb->buffer->memory = (LPBYTE)HeapAlloc(GetProcessHeap(),0,dsb->buflen);
+				dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
 				if (dsb->buffer->memory == NULL) {
 					WARN("out of memory\n");
 					HeapFree(GetProcessHeap(),0,dsb->buffer);
+					HeapFree(GetProcessHeap(),0,dsb->pwfx);
 					HeapFree(GetProcessHeap(),0,dsb);
 					*pdsb = NULL;
 					return DSERR_OUTOFMEMORY;
@@ -1164,7 +1203,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	dsb->state = STATE_STOPPED;
 
 	dsb->freqAdjust = (dsb->freq << DSOUND_FREQSHIFT) /
-		ds->wfx.nSamplesPerSec;
+		ds->pwfx->nSamplesPerSec;
 	dsb->nAvgBytesPerSec = dsb->freq *
 		dsbd->lpwfxFormat->nBlockAlign;
 
@@ -1199,9 +1238,9 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
 		IDirectSoundBufferImpl **newbuffers;
 		if (ds->buffers)
-			newbuffers = (IDirectSoundBufferImpl**)HeapReAlloc(GetProcessHeap(),0,ds->buffers,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
+			newbuffers = HeapReAlloc(GetProcessHeap(),0,ds->buffers,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
 		else
-			newbuffers = (IDirectSoundBufferImpl**)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
+			newbuffers = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBufferImpl*)*(ds->nrofbuffers+1));
 
 		if (newbuffers) {
 			ds->buffers = newbuffers;
@@ -1216,6 +1255,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 				HeapFree(GetProcessHeap(),0,dsb->buffer);
 			DeleteCriticalSection(&(dsb->lock));
 			RtlReleaseResource(&(ds->lock));
+			HeapFree(GetProcessHeap(),0,dsb->pwfx);
 			HeapFree(GetProcessHeap(),0,dsb);
 			*pdsb = NULL;
 			return DSERR_OUTOFMEMORY;
@@ -1545,7 +1585,7 @@ HRESULT WINAPI SecondaryBufferImpl_Create(
 	SecondaryBufferImpl *sb;
 	TRACE("(%p,%p)\n",dsb,psb);
 
-	sb = (SecondaryBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*sb));
+	sb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*sb));
 
 	if (sb == 0) {
 		WARN("out of memory\n");

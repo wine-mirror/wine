@@ -134,7 +134,7 @@ DirectSoundCaptureCreate8(
     if ( !lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL) ) 
 	lpcGUID = &DSDEVID_DefaultCapture;
 
-    *ippDSC = (IDirectSoundCaptureImpl*)HeapAlloc(GetProcessHeap(),
+    *ippDSC = HeapAlloc(GetProcessHeap(),
         HEAP_ZERO_MEMORY, sizeof(IDirectSoundCaptureImpl));
 
     if (*ippDSC == NULL) {
@@ -769,9 +769,9 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 	    buflen = lpcDSCBufferDesc->dwBufferBytes;
             TRACE("desired buflen=%ld, old buffer=%p\n", buflen, ipDSC->buffer);
 	    if (ipDSC->buffer)
-                newbuf = (LPBYTE)HeapReAlloc(GetProcessHeap(),0,ipDSC->buffer,buflen);
+                newbuf = HeapReAlloc(GetProcessHeap(),0,ipDSC->buffer,buflen);
 	    else
-		newbuf = (LPBYTE)HeapAlloc(GetProcessHeap(),0,buflen);	    
+		newbuf = HeapAlloc(GetProcessHeap(),0,buflen);	    
             if (newbuf == NULL) {
                 WARN("failed to allocate capture buffer\n");
                 err = DSERR_OUTOFMEMORY;
@@ -905,7 +905,7 @@ HRESULT WINAPI IDirectSoundCaptureNotifyImpl_Create(
     IDirectSoundCaptureNotifyImpl * dscn;
     TRACE("(%p,%p)\n",dscb,pdscn);
 
-    dscn = (IDirectSoundCaptureNotifyImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscn));
+    dscn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dscn));
 
     if (dscn == NULL) {
 	WARN("out of memory\n");
@@ -1736,7 +1736,7 @@ DirectSoundFullDuplexCreate(
         return DSERR_NOAGGREGATION;
     }
 
-    *ippDSFD = (IDirectSoundFullDuplexImpl*)HeapAlloc(GetProcessHeap(),
+    *ippDSFD = HeapAlloc(GetProcessHeap(),
 	HEAP_ZERO_MEMORY, sizeof(IDirectSoundFullDuplexImpl));
 
     if (*ippDSFD == NULL) {

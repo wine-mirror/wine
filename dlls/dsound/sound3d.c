@@ -733,7 +733,7 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	IDirectSound3DBufferImpl *ds3db;
 	TRACE("(%p,%p)\n",dsb,pds3db);
 
-	ds3db = (IDirectSound3DBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*ds3db));
+	ds3db = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*ds3db));
 
 	if (ds3db == NULL) {
 		WARN("out of memory\n");
@@ -1111,7 +1111,7 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 	IDirectSound3DListenerImpl *dsl;
 	TRACE("(%p,%p)\n",This,pdsl);
 
-	dsl = (IDirectSound3DListenerImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsl));
+	dsl = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsl));
 
 	if (dsl == NULL) {
 		WARN("out of memory\n");

@@ -467,6 +467,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     IDirectSoundBufferImpl* pdsb;
     IDirectSoundBufferImpl* dsb;
     HRESULT hres = DS_OK;
+    int size;
     ICOM_THIS(IDirectSoundImpl,iface);
 
     TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
@@ -553,7 +554,21 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     dsb->ds3db = NULL;
     dsb->iks = NULL; /* FIXME? */
     dsb->dsb = NULL;
-    memcpy(&(dsb->wfx), &(pdsb->wfx), sizeof(dsb->wfx));
+
+    /* variable sized struct so calculate size based on format */
+    size = sizeof(WAVEFORMATEX) + pdsb->pwfx->cbSize;
+
+    dsb->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,size);
+    if (dsb->pwfx == NULL) {
+            WARN("out of memory\n");
+            HeapFree(GetProcessHeap(),0,dsb->buffer);
+            HeapFree(GetProcessHeap(),0,dsb);
+            *ppdsb = NULL;
+            return DSERR_OUTOFMEMORY;
+    }
+
+    memcpy(dsb->pwfx, pdsb->pwfx, size);
+
     InitializeCriticalSection(&(dsb->lock));
     dsb->lock.DebugInfo->Spare[1] = (DWORD)"DSOUNDBUFFER_lock";
     /* register buffer */
@@ -575,6 +590,8 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
             IDirectSoundBuffer8_Release(psb);
             DeleteCriticalSection(&(dsb->lock));
             RtlReleaseResource(&(This->lock));
+            HeapFree(GetProcessHeap(),0,dsb->buffer);
+            HeapFree(GetProcessHeap(),0,dsb->pwfx);
             HeapFree(GetProcessHeap(),0,dsb);
             *ppdsb = 0;
             return DSERR_OUTOFMEMORY;
@@ -821,9 +838,9 @@ HRESULT WINAPI IDirectSoundImpl_Create(
         err = IDsDriver_GetDriverDesc(drv,&(pDS->drvdesc));
         if (err != DS_OK) {
             WARN("IDsDriver_GetDriverDesc failed\n");
-                 HeapFree(GetProcessHeap(),0,pDS);
-                 *ppDS = NULL;
-                 return err;
+            HeapFree(GetProcessHeap(),0,pDS);
+            *ppDS = NULL;
+            return err;
         }
     } else {
         /* if no DirectSound interface available, use WINMM API instead */
@@ -833,17 +850,25 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     pDS->drvdesc.dnDevNode = wod;
 
     /* Set default wave format (may need it for waveOutOpen) */
-    pDS->wfx.wFormatTag = WAVE_FORMAT_PCM;
+    pDS->pwfx = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEFORMATEX));
+    if (pDS->pwfx == NULL) {
+        WARN("out of memory\n");
+        HeapFree(GetProcessHeap(),0,pDS);
+        *ppDS = NULL;
+        return DSERR_OUTOFMEMORY;
+    }
+
+    pDS->pwfx->wFormatTag = WAVE_FORMAT_PCM;
     /* We rely on the sound driver to return the actual sound format of
      * the device if it does not support 22050x8x2 and is given the
      * WAVE_DIRECTSOUND flag.
      */
-    pDS->wfx.nSamplesPerSec = 22050;
-    pDS->wfx.wBitsPerSample = 8;
-    pDS->wfx.nChannels = 2;
-    pDS->wfx.nBlockAlign = pDS->wfx.wBitsPerSample * pDS->wfx.nChannels / 8;
-    pDS->wfx.nAvgBytesPerSec = pDS->wfx.nSamplesPerSec * pDS->wfx.nBlockAlign;
-    pDS->wfx.cbSize = 0;
+    pDS->pwfx->nSamplesPerSec = 22050;
+    pDS->pwfx->wBitsPerSample = 8;
+    pDS->pwfx->nChannels = 2;
+    pDS->pwfx->nBlockAlign = pDS->pwfx->wBitsPerSample * pDS->pwfx->nChannels / 8;
+    pDS->pwfx->nAvgBytesPerSec = pDS->pwfx->nSamplesPerSec * pDS->pwfx->nBlockAlign;
+    pDS->pwfx->cbSize = 0;
 
     /* If the driver requests being opened through MMSYSTEM
      * (which is recommended by the DDK), it is supposed to happen
@@ -857,7 +882,7 @@ HRESULT WINAPI IDirectSoundImpl_Create(
             flags |= WAVE_DIRECTSOUND;
 
         err = mmErr(waveOutOpen(&(pDS->hwo),
-                                pDS->drvdesc.dnDevNode, &(pDS->wfx),
+                                pDS->drvdesc.dnDevNode, pDS->pwfx,
                                 (DWORD)DSOUND_callback, (DWORD)pDS,
                                 flags));
         if (err != DS_OK) {
