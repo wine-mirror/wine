@@ -205,9 +205,12 @@ int DEBUG_ReadLine(const char* pfx, char * buf, int size, int remind)
     for (;;)
     {
         DEBUG_FlushSymbols();
-	WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), pfx, strlen(pfx), NULL, NULL);
+	/* as of today, console handles can be file handles... so better use file APIs rather than
+	 * consoles
+	 */
+	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), pfx, strlen(pfx), &nread, NULL);
 
-	if (!ReadConsole(GetStdHandle(STD_INPUT_HANDLE), buf_line, sizeof(buf_line), &nread, NULL))
+	if (!ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf_line, sizeof(buf_line), &nread, NULL))
 	    break;
 	/* FIXME: should be rewritten not to remove and then add the trailing '\n' */
 	if (nread > 0 && buf_line[nread - 1] == '\n') nread--;
