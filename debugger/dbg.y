@@ -26,6 +26,7 @@
 #include "queue.h"
 #include "wine/winbase16.h"
 #include "winnt.h"
+#include "x11drv.h"
 #include "win.h"
 #include "debugger.h"
 #include "neexe.h"
@@ -460,7 +461,10 @@ static void DEBUG_Main( int signal )
 
         if ( !frozen )
         {
+            /* Don't freeze thread currently holding the X crst! */
+            EnterCriticalSection( &X11DRV_CritSection );
             CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
+            LeaveCriticalSection( &X11DRV_CritSection );
             frozen = TRUE;
         }
 
@@ -526,7 +530,10 @@ static void DEBUG_Main( int signal )
 
         if ( !frozen )
         {
+            /* Don't freeze thread currently holding the X crst! */
+            EnterCriticalSection( &X11DRV_CritSection );
             CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
+            LeaveCriticalSection( &X11DRV_CritSection );
             frozen = TRUE;
         }
 
