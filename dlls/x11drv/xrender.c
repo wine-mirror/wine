@@ -930,7 +930,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
 
     if(lprect)
-      TRACE("rect: %d,%d - %d,%d\n", lprect->left, lprect->top, lprect->right,
+      TRACE("rect: %ld,%ld - %ld,%ld\n", lprect->left, lprect->top, lprect->right,
 	    lprect->bottom);
     TRACE("align = %x bkmode = %x mapmode = %x\n", dc->textAlign, GetBkMode(hdc), dc->MapMode);
 
@@ -1295,7 +1295,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		    cur.y += entry->gis[glyphs[idx]].yOff;
 		}
 	    }
-	    TRACE("glyph extents %d,%d - %d,%d drawable x,y %ld,%ld\n", extents.left, extents.top,
+	    TRACE("glyph extents %ld,%ld - %ld,%ld drawable x,y %ld,%ld\n", extents.left, extents.top,
 		  extents.right, extents.bottom, physDev->org.x + x, physDev->org.y + y);
 
 	    if(physDev->org.x + x + extents.left >= 0) {

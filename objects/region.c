@@ -472,11 +472,11 @@ static void REGION_DumpRegion(WINEREGION *pReg)
 {
     RECT *pRect, *pRectEnd = pReg->rects + pReg->numRects;
 
-    TRACE("Region %p: %d,%d - %d,%d %d rects\n", pReg,
+    TRACE("Region %p: %ld,%ld - %ld,%ld %d rects\n", pReg,
 	    pReg->extents.left, pReg->extents.top,
 	    pReg->extents.right, pReg->extents.bottom, pReg->numRects);
     for(pRect = pReg->rects; pRect < pRectEnd; pRect++)
-        TRACE("\t%d,%d - %d,%d\n", pRect->left, pRect->top,
+        TRACE("\t%ld,%ld - %ld,%ld\n", pRect->left, pRect->top,
 		       pRect->right, pRect->bottom);
     return;
 }

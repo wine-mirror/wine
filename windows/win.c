@@ -576,7 +576,7 @@ void WIN_SetRectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClien
         win->rectWindow = *rectWindow;
         win->rectClient = *rectClient;
 
-        TRACE( "win %p window (%d,%d)-(%d,%d) client (%d,%d)-(%d,%d)\n", hwnd,
+        TRACE( "win %p window (%ld,%ld)-(%ld,%ld) client (%ld,%ld)-(%ld,%ld)\n", hwnd,
                rectWindow->left, rectWindow->top, rectWindow->right, rectWindow->bottom,
                rectClient->left, rectClient->top, rectClient->right, rectClient->bottom );
     }

@@ -1637,7 +1637,7 @@ BOOL WINAPI EnumEnhMetaFile(
 
     if (hdc && (emh->rclFrame.right - emh->rclFrame.left) && (emh->rclFrame.bottom - emh->rclFrame.top))
     {
-        TRACE("rect: %d,%d - %d,%d. rclFrame: %ld,%ld - %ld,%ld\n",
+        TRACE("rect: %ld,%ld - %ld,%ld. rclFrame: %ld,%ld - %ld,%ld\n",
 	      lpRect->left, lpRect->top, lpRect->right, lpRect->bottom,
 	      emh->rclFrame.left, emh->rclFrame.top, emh->rclFrame.right,
 	      emh->rclFrame.bottom);

@@ -146,7 +146,7 @@ static inline const char *wine_dbgstr_size( const SIZE *size )
 static inline const char *wine_dbgstr_rect( const RECT *rect )
 {
     if (!rect) return "(null)";
-    return wine_dbg_sprintf( "(%d,%d)-(%d,%d)", rect->left, rect->top, rect->right, rect->bottom );
+    return wine_dbg_sprintf( "(%ld,%ld)-(%ld,%ld)", rect->left, rect->top, rect->right, rect->bottom );
 }
 
 #define WINE_TRACE                 __WINE_DPRINTF(_TRACE,__wine_dbch___default)

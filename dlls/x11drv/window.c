@@ -536,7 +536,7 @@ int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder )
 
     if (mask)
     {
-        TRACE( "setting win %lx pos %d,%d,%dx%d after %lx changes=%x\n",
+        TRACE( "setting win %lx pos %ld,%ld,%ldx%ld after %lx changes=%x\n",
                data->whole_window, whole_rect.left, whole_rect.top,
                whole_rect.right - whole_rect.left, whole_rect.bottom - whole_rect.top,
                changes.sibling, mask );
@@ -573,7 +573,7 @@ int X11DRV_sync_client_window_position( Display *display, WND *win )
     {
         BOOL was_mapped = is_client_window_mapped( win );
 
-        TRACE( "setting win %lx pos %d,%d,%dx%d (was %d,%d,%dx%d) after %lx changes=%x\n",
+        TRACE( "setting win %lx pos %ld,%ld,%ldx%ld (was %ld,%ld,%ldx%ld) after %lx changes=%x\n",
                data->client_window, client_rect.left, client_rect.top,
                client_rect.right - client_rect.left, client_rect.bottom - client_rect.top,
                data->client_rect.left, data->client_rect.top,
@@ -954,7 +954,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     X11DRV_sync_client_window_position( display, wndPtr );
     X11DRV_register_window( display, hwnd, data );
 
-    TRACE( "win %p window %d,%d,%d,%d client %d,%d,%d,%d whole %d,%d,%d,%d X client %d,%d,%d,%d xwin %x/%x\n",
+    TRACE( "win %p window %ld,%ld,%ld,%ld client %ld,%ld,%ld,%ld whole %ld,%ld,%ld,%ld X client %ld,%ld,%ld,%ld xwin %x/%x\n",
            hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
            wndPtr->rectWindow.right, wndPtr->rectWindow.bottom,
            wndPtr->rectClient.left, wndPtr->rectClient.top,

@@ -231,7 +231,7 @@ TOOLBAR_DumpButton(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *bP, INT btn_num, BOOL in
               bP->fsState, bP->fsStyle, bP->dwData, bP->iString);
 	TRACE("string %s\n", debugstr_w(TOOLBAR_GetText(infoPtr,bP)));
 	if (internal)
-	    TRACE("button %d id %d, hot=%s, row=%d, rect=(%d,%d)-(%d,%d)\n",
+	    TRACE("button %d id %d, hot=%s, row=%d, rect=(%ld,%ld)-(%ld,%ld)\n",
 		  btn_num, bP->idCommand,
 		  (bP->bHot) ? "TRUE":"FALSE", bP->nRow,
 		  bP->rect.left, bP->rect.top,
@@ -474,7 +474,7 @@ TOOLBAR_DrawDDFlatSeparator (LPRECT lpRect, HDC hdc, TBUTTON_INFO *btnPtr, TOOLB
 
     InflateRect (&myrect, -2, 0);
 
-    TRACE("rect=(%d,%d)-(%d,%d)\n",
+    TRACE("rect=(%ld,%ld)-(%ld,%ld)\n",
 	  myrect.left, myrect.top, myrect.right, myrect.bottom);
 
     newcolor = (infoPtr->clrBtnShadow == CLR_DEFAULT) ?
@@ -530,7 +530,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
     /* draw text */
     if (lpText) {
-	TRACE("string rect=(%d,%d)-(%d,%d)\n",
+	TRACE("string rect=(%ld,%ld)-(%ld,%ld)\n",
 	      rcText->left, rcText->top, rcText->right, rcText->bottom);
 
 	hOldFont = SelectObject (hdc, infoPtr->hFont);
@@ -677,7 +677,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     else
         rcBitmap.top+=(infoPtr->nButtonHeight - infoPtr->nBitmapHeight) / 2;
 
-    TRACE("iBitmap: %d, start=(%d,%d) w=%d, h=%d\n",
+    TRACE("iBitmap: %d, start=(%ld,%ld) w=%d, h=%d\n",
 	  btnPtr->iBitmap, rcBitmap.left, rcBitmap.top,
 	  infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
     TRACE ("iString: %x\n", btnPtr->iString);
@@ -3242,7 +3242,7 @@ TOOLBAR_GetMaxSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     lpSize->cx = infoPtr->rcBound.right - infoPtr->rcBound.left;
     lpSize->cy = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
 
-    TRACE("maximum size %d x %d\n",
+    TRACE("maximum size %ld x %ld\n",
 	   infoPtr->rcBound.right - infoPtr->rcBound.left,
 	   infoPtr->rcBound.bottom - infoPtr->rcBound.top);
 
@@ -4578,7 +4578,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    InvalidateRect(hwnd, 0, 1);
 	    GetWindowRect(hwnd, &rc);
 	    MapWindowPoints(0, hwndParent, (LPPOINT)&rc, 2);
-	    TRACE("mapped to (%d,%d)-(%d,%d)\n",
+	    TRACE("mapped to (%ld,%ld)-(%ld,%ld)\n",
 		rc.left, rc.top, rc.right, rc.bottom);
 	    lpsize->cx = max(rc.right-rc.left,
 			     infoPtr->rcBound.right - infoPtr->rcBound.left);
@@ -5397,7 +5397,7 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
 
     hdc = wParam==0 ? BeginPaint(hwnd, &ps) : (HDC)wParam;
 
-    TRACE("psrect=(%d,%d)-(%d,%d)\n",
+    TRACE("psrect=(%ld,%ld)-(%ld,%ld)\n",
 	  ps.rcPaint.left, ps.rcPaint.top,
 	  ps.rcPaint.right, ps.rcPaint.bottom);
 

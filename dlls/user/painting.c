@@ -219,7 +219,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     IntersectRect(&lps->rcPaint, &clientRect, &clipRect);
     DPtoLP(lps->hdc, (LPPOINT)&lps->rcPaint, 2);  /* we must return LP */
 
-    TRACE("hdc = %p box = (%i,%i - %i,%i)\n",
+    TRACE("hdc = %p box = (%ld,%ld - %ld,%ld)\n",
           lps->hdc, lps->rcPaint.left, lps->rcPaint.top, lps->rcPaint.right, lps->rcPaint.bottom );
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;

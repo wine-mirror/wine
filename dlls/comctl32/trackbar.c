@@ -347,7 +347,7 @@ TRACKBAR_CalcSelection (TRACKBAR_INFO *infoPtr)
         }
     }
 
-    TRACE("selection[left=%d, top=%d, right=%d, bottom=%d]\n",
+    TRACE("selection[left=%ld, top=%ld, right=%ld, bottom=%ld]\n",
 	   selection->left, selection->top, selection->right, selection->bottom);
 }
 

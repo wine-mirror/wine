@@ -280,7 +280,7 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
     {
 	DCE *dce;
 
-        TRACE("scope hwnd = %p, (%i,%i - %i,%i)\n",
+        TRACE("scope hwnd = %p, (%ld,%ld - %ld,%ld)\n",
               hwndScope, pRectUpdate->left,pRectUpdate->top,
               pRectUpdate->right,pRectUpdate->bottom);
 	if(TRACE_ON(dc))

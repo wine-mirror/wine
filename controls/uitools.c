@@ -580,7 +580,7 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
  */
 BOOL WINAPI DrawEdge( HDC hdc, LPRECT rc, UINT edge, UINT flags )
 {
-    TRACE("%p %d,%d-%d,%d %04x %04x\n",
+    TRACE("%p %ld,%ld-%ld,%ld %04x %04x\n",
           hdc, rc->left, rc->top, rc->right, rc->bottom, edge, flags );
 
     if(flags & BF_DIAGONAL)

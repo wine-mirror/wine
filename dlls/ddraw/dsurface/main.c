@@ -1013,7 +1013,7 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
     /* If asked only for a part, change the surface pointer.
      * (Not documented.) */
     if (prect != NULL) {
-	TRACE("	lprect: %dx%d-%dx%d\n",
+	TRACE("	lprect: %ldx%ld-%ldx%ld\n",
 		prect->top,prect->left,prect->bottom,prect->right
 	);
 	if ((prect->top < 0) ||

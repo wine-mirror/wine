@@ -589,7 +589,7 @@ static void LISTBOX_PaintItem( HWND hwnd, LB_DESCR *descr, HDC hdc,
         if (!IsWindowEnabled(hwnd)) dis.itemState |= ODS_DISABLED;
         dis.itemData     = item ? item->data : 0;
         dis.rcItem       = *rect;
-        TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%d,%d-%d,%d\n",
+        TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%ld,%ld-%ld,%ld\n",
               hwnd, index, item ? debugstr_w(item->str) : "", action,
               dis.itemState, rect->left, rect->top, rect->right, rect->bottom );
         SendMessageW(descr->owner, WM_DRAWITEM, id, (LPARAM)&dis);
@@ -609,7 +609,7 @@ static void LISTBOX_PaintItem( HWND hwnd, LB_DESCR *descr, HDC hdc,
             oldText = SetTextColor( hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
         }
 
-        TRACE("[%p]: painting %d (%s) action=%02x rect=%d,%d-%d,%d\n",
+        TRACE("[%p]: painting %d (%s) action=%02x rect=%ld,%ld-%ld,%ld\n",
               hwnd, index, item ? debugstr_w(item->str) : "", action,
               rect->left, rect->top, rect->right, rect->bottom );
         if (!item)

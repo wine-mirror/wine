@@ -222,7 +222,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 	physDev->PageSize.cy = 0;
     }
 
-    TRACE("ImageableArea = %d,%d - %d,%d: PageSize = %ldx%ld\n",
+    TRACE("ImageableArea = %ld,%ld - %ld,%ld: PageSize = %ldx%ld\n",
 	  physDev->ImageableArea.left, physDev->ImageableArea.bottom,
 	  physDev->ImageableArea.right, physDev->ImageableArea.top,
 	  physDev->PageSize.cx, physDev->PageSize.cy);

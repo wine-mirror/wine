@@ -1971,7 +1971,7 @@ TREEVIEW_GetItemRect(TREEVIEW_INFO *infoPtr, BOOL fTextRect, LPRECT lpRect)
 	*lpRect = wineItem->rect;
     }
 
-    TRACE("%s [L:%d R:%d T:%d B:%d]\n", fTextRect ? "text" : "item",
+    TRACE("%s [L:%ld R:%ld T:%ld B:%ld]\n", fTextRect ? "text" : "item",
 	  lpRect->left, lpRect->right, lpRect->top, lpRect->bottom);
 
     return TRUE;
@@ -2556,7 +2556,7 @@ TREEVIEW_DrawItem(TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
 
 	    InflateRect(&rcText, -2, -1); /* allow for the focus rect */
 
-	    TRACE("drawing text %s at (%d,%d)-(%d,%d)\n",
+	    TRACE("drawing text %s at (%ld,%ld)-(%ld,%ld)\n",
 		  debugstr_a(wineItem->pszText),
 		  rcText.left, rcText.top, rcText.right, rcText.bottom);
 

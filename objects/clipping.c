@@ -367,7 +367,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     BOOL ret = FALSE;
     DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return FALSE;
-    TRACE("%p %d,%dx%d,%d\n", hdc, rect->left, rect->top, rect->right, rect->bottom );
+    TRACE("%p %ld,%ldx%ld,%ld\n", hdc, rect->left, rect->top, rect->right, rect->bottom );
     if (dc->hGCClipRgn)
     {
         POINT pt[2];

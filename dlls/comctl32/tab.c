@@ -172,7 +172,7 @@ TAB_DumpItemInternal(TAB_INFO *infoPtr, UINT iItem)
 	TRACE("tab %d, mask=0x%08x, dwState=0x%08lx, pszText=%s, iImage=%d\n",
 	      iItem, ti->mask, ti->dwState, debugstr_w(ti->pszText),
 	      ti->iImage);
-	TRACE("tab %d, lParam=0x%08lx, rect.left=%d, rect.top(row)=%d\n",
+	TRACE("tab %d, lParam=0x%08lx, rect.left=%ld, rect.top(row)=%ld\n",
 	      iItem, ti->lParam, ti->rect.left, ti->rect.top);
     }
 }
@@ -366,7 +366,7 @@ static BOOL TAB_InternalGetItemRect(
 	     SELECTED_TAB_OFFSET,
 	     0);
   }
-  TRACE("item %d tab h=%d, rect=(%d,%d)-(%d,%d)\n",
+  TRACE("item %d tab h=%d, rect=(%ld,%ld)-(%ld,%ld)\n",
 	itemIndex, infoPtr->tabHeight,
 	itemRect->left, itemRect->top, itemRect->right, itemRect->bottom);
 
@@ -487,7 +487,7 @@ static LRESULT TAB_FocusChanging(
    */
   if (isVisible)
   {
-      TRACE("invalidate (%d,%d)-(%d,%d)\n",
+      TRACE("invalidate (%ld,%ld)-(%ld,%ld)\n",
 	    selectedRect.left,selectedRect.top,
 	    selectedRect.right,selectedRect.bottom);
     InvalidateRect(hwnd, &selectedRect, TRUE);
@@ -1115,7 +1115,7 @@ static void TAB_SetItemBounds (HWND hwnd)
 	  infoPtr->tabHeight, fontMetrics.tmHeight, icon_height);
   }
 
-  TRACE("client right=%d\n", clientRect.right);
+  TRACE("client right=%ld\n", clientRect.right);
 
   for (curItem = 0; curItem < infoPtr->uNumItem; curItem++)
   {
@@ -1152,7 +1152,7 @@ static void TAB_SetItemBounds (HWND hwnd)
       infoPtr->items[curItem].rect.right = infoPtr->items[curItem].rect.left +
                                            size.cx + icon_width +
                                            num * HORIZONTAL_ITEM_PADDING;
-      TRACE("for <%s>, l,r=%d,%d, num=%d\n",
+      TRACE("for <%s>, l,r=%ld,%ld, num=%d\n",
 	  debugstr_w(infoPtr->items[curItem].pszText),
 	  infoPtr->items[curItem].rect.left,
 	  infoPtr->items[curItem].rect.right,
@@ -1176,7 +1176,7 @@ static void TAB_SetItemBounds (HWND hwnd)
 
 	infoPtr->items[curItem].rect.left = 0;
         curItemRowCount++;
-	TRACE("wrapping <%s>, l,r=%d,%d\n",
+	TRACE("wrapping <%s>, l,r=%ld,%ld\n",
 	    debugstr_w(infoPtr->items[curItem].pszText),
 	    infoPtr->items[curItem].rect.left,
 	    infoPtr->items[curItem].rect.right);
@@ -1186,7 +1186,7 @@ static void TAB_SetItemBounds (HWND hwnd)
     infoPtr->items[curItem].rect.top = curItemRowCount - 1;
 
     TRACE("TextSize: %li\n", size.cx);
-    TRACE("Rect: T %i, L %i, B %i, R %i\n",
+    TRACE("Rect: T %li, L %li, B %li, R %li\n",
 	  infoPtr->items[curItem].rect.top,
 	  infoPtr->items[curItem].rect.left,
 	  infoPtr->items[curItem].rect.bottom,
@@ -1250,7 +1250,7 @@ static void TAB_SetItemBounds (HWND hwnd)
             infoPtr->items[iItm].rect.left;
           infoPtr->items[iItm].rect.left = 0;
 
-	  TRACE("r=%d, cl=%d, cl.r=%d, iCount=%d, iRow=%d, uNumRows=%d, remTab=%d, tabPerRow=%d\n",
+	  TRACE("r=%ld, cl=%d, cl.r=%ld, iCount=%d, iRow=%d, uNumRows=%d, remTab=%d, tabPerRow=%d\n",
 	      infoPtr->items[iItm].rect.right,
 	      curItemLeftPos, clientRect.right,
 	      iCount, iRow, infoPtr->uNumRows, remTab, tabPerRow);
@@ -1299,7 +1299,7 @@ static void TAB_SetItemBounds (HWND hwnd)
           else
             curItemLeftPos = infoPtr->items[iItm].rect.right;
 
-	  TRACE("arranging <%s>, l,r=%d,%d, row=%d\n",
+	  TRACE("arranging <%s>, l,r=%ld,%ld, row=%ld\n",
 	      debugstr_w(infoPtr->items[iItm].pszText),
 	      infoPtr->items[iItm].rect.left,
 	      infoPtr->items[iItm].rect.right,
@@ -1347,7 +1347,7 @@ static void TAB_SetItemBounds (HWND hwnd)
               infoPtr->items[iIndex].rect.left += iCount * widthDiff;
               infoPtr->items[iIndex].rect.right += (iCount + 1) * widthDiff;
 
-	      TRACE("adjusting 1 <%s>, l,r=%d,%d\n",
+	      TRACE("adjusting 1 <%s>, l,r=%ld,%ld\n",
 		  debugstr_w(infoPtr->items[iIndex].pszText),
 		  infoPtr->items[iIndex].rect.left,
 		  infoPtr->items[iIndex].rect.right);
@@ -1360,7 +1360,7 @@ static void TAB_SetItemBounds (HWND hwnd)
           infoPtr->items[iIndexStart].rect.left = clientRect.left;
           infoPtr->items[iIndexStart].rect.right = clientRect.right - 4;
 
-	  TRACE("adjusting 2 <%s>, l,r=%d,%d\n",
+	  TRACE("adjusting 2 <%s>, l,r=%ld,%ld\n",
 	      debugstr_w(infoPtr->items[iIndexStart].pszText),
 	      infoPtr->items[iIndexStart].rect.left,
 	      infoPtr->items[iIndexStart].rect.right);
@@ -1571,7 +1571,7 @@ TAB_DrawItemInterior
       else
         center_offset = ((drawRect->right - drawRect->left) - (cx + HORIZONTAL_ITEM_PADDING + (rcText.right - rcText.left))) / 2;
 
-      TRACE("for <%s>, c_o=%d, draw=(%d,%d)-(%d,%d), textlen=%d\n",
+      TRACE("for <%s>, c_o=%d, draw=(%ld,%ld)-(%ld,%ld), textlen=%ld\n",
 	  debugstr_w(infoPtr->items[iItem].pszText), center_offset,
 	  drawRect->left, drawRect->top, drawRect->right, drawRect->bottom,
 	  (rcText.right-rcText.left));
@@ -1597,7 +1597,7 @@ TAB_DrawItemInterior
 	rcImage.top -= (lStyle & TCS_BOTTOM) ? 2 : 1;
       }
 
-      TRACE("drawing image=%d, left=%d, top=%d\n",
+      TRACE("drawing image=%d, left=%ld, top=%ld\n",
 	    infoPtr->items[iItem].iImage, rcImage.left, rcImage.top-1);
       ImageList_Draw
         (
@@ -1855,7 +1855,7 @@ static void TAB_DrawItem(
 	  /* Adjust both rectangles to match native */
 	  r.left += (1-ZZ);
 
-	  TRACE("<left> item=%d, fill=(%d,%d)-(%d,%d), edge=(%d,%d)-(%d,%d)\n",
+	  TRACE("<left> item=%d, fill=(%ld,%ld)-(%ld,%ld), edge=(%ld,%ld)-(%ld,%ld)\n",
 		iItem,
 		fillRect.left,fillRect.top,fillRect.right,fillRect.bottom,
 		r.left,r.top,r.right,r.bottom);
@@ -1899,7 +1899,7 @@ static void TAB_DrawItem(
 	  /* Adjust both rectangles to match native */
 	  fillRect.right += (1-ZZ);
 
-	  TRACE("<left> item=%d, fill=(%d,%d)-(%d,%d), edge=(%d,%d)-(%d,%d)\n",
+	  TRACE("<left> item=%d, fill=(%ld,%ld)-(%ld,%ld), edge=(%ld,%ld)-(%ld,%ld)\n",
 		iItem,
 		fillRect.left,fillRect.top,fillRect.right,fillRect.bottom,
 		r.left,r.top,r.right,r.bottom);
@@ -1956,7 +1956,7 @@ static void TAB_DrawItem(
 	  r.bottom--;
 	  r.top -= ZZ;
 
-	  TRACE("<bottom> item=%d, fill=(%d,%d)-(%d,%d), edge=(%d,%d)-(%d,%d)\n",
+	  TRACE("<bottom> item=%d, fill=(%ld,%ld)-(%ld,%ld), edge=(%ld,%ld)-(%ld,%ld)\n",
 		iItem,
 		fillRect.left,fillRect.top,fillRect.right,fillRect.bottom,
 		r.left,r.top,r.right,r.bottom);
@@ -2001,7 +2001,7 @@ static void TAB_DrawItem(
 	  /* Adjust both rectangles to match native */
 	  fillRect.bottom += (1-ZZ);
 
-	  TRACE("<top> item=%d, fill=(%d,%d)-(%d,%d), edge=(%d,%d)-(%d,%d)\n",
+	  TRACE("<top> item=%d, fill=(%ld,%ld)-(%ld,%ld), edge=(%ld,%ld)-(%ld,%ld)\n",
 		iItem,
 		fillRect.left,fillRect.top,fillRect.right,fillRect.bottom,
 		r.left,r.top,r.right,r.bottom);
@@ -2096,7 +2096,7 @@ static void TAB_DrawBorder (HWND hwnd, HDC hdc)
     }
   }
 
-  TRACE("border=(%d,%d)-(%d,%d)\n",
+  TRACE("border=(%ld,%ld)-(%ld,%ld)\n",
 	rect.left, rect.top, rect.right, rect.bottom);
 
   DrawEdge(hdc, &rect, EDGE_RAISED, BF_SOFT|BF_RECT);
@@ -2348,7 +2348,7 @@ static void TAB_InvalidateTabArea(
                       ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) + 2;
   }
 
-  TRACE("invalidate (%d,%d)-(%d,%d)\n",
+  TRACE("invalidate (%ld,%ld)-(%ld,%ld)\n",
 	clientRect.left,clientRect.top,
 	clientRect.right,clientRect.bottom);
   InvalidateRect(hwnd, &clientRect, TRUE);
@@ -2362,7 +2362,7 @@ TAB_Paint (HWND hwnd, WPARAM wParam)
 
   hdc = wParam== 0 ? BeginPaint (hwnd, &ps) : (HDC)wParam;
 
-  TRACE("erase %d, rect=(%d,%d)-(%d,%d)\n",
+  TRACE("erase %d, rect=(%ld,%ld)-(%ld,%ld)\n",
 	ps.fErase,
 	ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right,ps.rcPaint.bottom);
 
@@ -2386,7 +2386,7 @@ TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   RECT rect;
 
   GetClientRect (hwnd, &rect);
-  TRACE("Rect: %p T %i, L %i, B %i, R %i\n", hwnd,
+  TRACE("Rect: %p T %li, L %li, B %li, R %li\n", hwnd,
         rect.top, rect.left, rect.bottom, rect.right);
 
   pti = (TCITEMA *)lParam;
@@ -2461,7 +2461,7 @@ TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
   RECT rect;
 
   GetClientRect (hwnd, &rect);
-  TRACE("Rect: %p T %i, L %i, B %i, R %i\n", hwnd,
+  TRACE("Rect: %p T %li, L %li, B %li, R %li\n", hwnd,
         rect.top, rect.left, rect.bottom, rect.right);
 
   pti = (TCITEMW *)lParam;

@@ -650,7 +650,7 @@ static void MDI_ChildGetMinMaxInfo( HWND client, HWND hwnd, MINMAXINFO* lpMinMax
     lpMinMax->ptMaxPosition.x = rect.left;
     lpMinMax->ptMaxPosition.y = rect.top;
 
-    TRACE("max rect (%i,%i - %i, %i)\n",
+    TRACE("max rect (%ld,%ld - %ld, %ld)\n",
                         rect.left,rect.top,rect.right,rect.bottom);
 }
 

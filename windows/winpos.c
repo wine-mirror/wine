@@ -158,7 +158,7 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
     if (ret)
     {
         MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), 0, (POINT *)rect, 2 );
-        TRACE( "hwnd %p (%d,%d)-(%d,%d)\n",
+        TRACE( "hwnd %p (%ld,%ld)-(%ld,%ld)\n",
                hwnd, rect->left, rect->top, rect->right, rect->bottom);
     }
     return ret;

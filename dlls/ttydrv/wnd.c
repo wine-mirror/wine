@@ -456,7 +456,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
     if (winpos->hwnd == GetDesktopWindow()) return FALSE;
     if (!(wndPtr = WIN_FindWndPtr( winpos->hwnd ))) return FALSE;
 
-    TRACE("\tcurrent (%i,%i)-(%i,%i), style %08x\n",
+    TRACE("\tcurrent (%ld,%ld)-(%ld,%ld), style %08x\n",
           wndPtr->rectWindow.left, wndPtr->rectWindow.top,
           wndPtr->rectWindow.right, wndPtr->rectWindow.bottom, (unsigned)wndPtr->dwStyle );
 
@@ -581,7 +581,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
 
         SendMessageW( winpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
-        TRACE( "%d,%d-%d,%d\n", params.rgrc[0].left, params.rgrc[0].top,
+        TRACE( "%ld,%ld-%ld,%ld\n", params.rgrc[0].left, params.rgrc[0].top,
                params.rgrc[0].right, params.rgrc[0].bottom );
 
         /* If the application send back garbage, ignore it */

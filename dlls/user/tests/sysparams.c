@@ -923,10 +923,10 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
                            SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     test_change_message( SPI_SETWORKAREA, "" );
     SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
-    eq( area.left,   curr_val.left,   "left",   "%d" );
-    eq( area.top,    curr_val.top,    "top",    "%d" );
-    eq( area.right,  curr_val.right,  "right",  "%d" );
-    eq( area.bottom, curr_val.bottom, "bottom", "%d" );
+    eq( area.left,   curr_val.left,   "left",   "%ld" );
+    eq( area.top,    curr_val.top,    "top",    "%ld" );
+    eq( area.right,  curr_val.right,  "right",  "%ld" );
+    eq( area.bottom, curr_val.bottom, "bottom", "%ld" );
 
     curr_val.left = 2;
     curr_val.top = 2;
@@ -936,10 +936,10 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     test_change_message( SPI_SETWORKAREA, "" );
     SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
-    eq( area.left,   curr_val.left,   "left",   "%d" );
-    eq( area.top,    curr_val.top,    "top",    "%d" );
-    eq( area.right,  curr_val.right,  "right",  "%d" );
-    eq( area.bottom, curr_val.bottom, "bottom", "%d" );
+    eq( area.left,   curr_val.left,   "left",   "%ld" );
+    eq( area.top,    curr_val.top,    "top",    "%ld" );
+    eq( area.right,  curr_val.right,  "right",  "%ld" );
+    eq( area.bottom, curr_val.bottom, "bottom", "%ld" );
 
     SystemParametersInfoA(SPI_SETWORKAREA, 0, &old_area, SPIF_UPDATEINIFILE);
 }

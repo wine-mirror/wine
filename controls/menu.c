@@ -965,7 +965,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	                   - arrow_bitmap_width;
 	}
     }
-    TRACE("(%d,%d)-(%d,%d)\n", lpitem->rect.left, lpitem->rect.top, lpitem->rect.right, lpitem->rect.bottom);
+    TRACE("(%ld,%ld)-(%ld,%ld)\n", lpitem->rect.left, lpitem->rect.top, lpitem->rect.right, lpitem->rect.bottom);
 }
 
 
@@ -1058,8 +1058,8 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 
     if ((lprect == NULL) || (lppop == NULL)) return;
     if (lppop->nItems == 0) return;
-    TRACE("left=%d top=%d right=%d bottom=%d\n",
-                 lprect->left, lprect->top, lprect->right, lprect->bottom);
+    TRACE("left=%ld top=%ld right=%ld bottom=%ld\n",
+          lprect->left, lprect->top, lprect->right, lprect->bottom);
     lppop->Width  = lprect->right - lprect->left;
     lppop->Height = 0;
     maxY = lprect->top+1;
@@ -1169,7 +1169,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         dis.hDC        = hdc;
         dis.rcItem     = lpitem->rect;
         TRACE("Ownerdraw: owner=%p itemID=%d, itemState=%d, itemAction=%d, "
-	      "hwndItem=%p, hdc=%p, rcItem={%d,%d,%d,%d}\n", hwndOwner,
+	      "hwndItem=%p, hdc=%p, rcItem={%ld,%ld,%ld,%ld}\n", hwndOwner,
 	      dis.itemID, dis.itemState, dis.itemAction, dis.hwndItem,
 	      dis.hDC, dis.rcItem.left, dis.rcItem.top, dis.rcItem.right,
 	      dis.rcItem.bottom);
@@ -1177,7 +1177,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         /* Fall through to draw popup-menu arrow */
     }
 
-    TRACE("rect={%d,%d,%d,%d}\n", lpitem->rect.left, lpitem->rect.top,
+    TRACE("rect={%ld,%ld,%ld,%ld}\n", lpitem->rect.left, lpitem->rect.top,
 					lpitem->rect.right,lpitem->rect.bottom);
 
     if (menuBar && (lpitem->fType & MF_SEPARATOR)) return;
@@ -2688,7 +2688,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     mt.pt.x = x;
     mt.pt.y = y;
 
-    TRACE("hmenu=%p flags=0x%08x (%d,%d) hwnd=%p (%d,%d)-(%d,%d)\n",
+    TRACE("hmenu=%p flags=0x%08x (%d,%d) hwnd=%p (%ld,%ld)-(%ld,%ld)\n",
           hmenu, wFlags, x, y, hwnd, (lprect) ? lprect->left : 0, (lprect) ? lprect->top : 0,
           (lprect) ? lprect->right : 0,  (lprect) ? lprect->bottom : 0);
 

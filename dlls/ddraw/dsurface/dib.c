@@ -359,8 +359,8 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     TRACE("(%p)->(%p,%p,%p,%08lx,%p)\n", This,rdst,src,rsrc,dwFlags,lpbltfx);
 
     if (TRACE_ON(ddraw)) {
-	if (rdst) TRACE("\tdestrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
-	if (rsrc) TRACE("\tsrcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	if (rdst) TRACE("\tdestrect :%ldx%ld-%ldx%ld\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
+	if (rsrc) TRACE("\tsrcrect  :%ldx%ld-%ldx%ld\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	TRACE("\tflags: ");
 	DDRAW_dump_DDBLT(dwFlags);
 	if (dwFlags & DDBLT_DDFX) {
@@ -818,7 +818,7 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	if (FIXME_ON(ddraw))
 	  DDRAW_dump_DDBLTFAST(trans);
 	if (rsrc)
-	  FIXME("\tsrcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
+	  FIXME("\tsrcrect: %ldx%ld-%ldx%ld\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	else
 	  FIXME(" srcrect: NULL\n");
     }

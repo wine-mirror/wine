@@ -1244,7 +1244,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         RECT *pr = (RECT *) pvParam;
 
         spi_idx = SPI_SETWORKAREA_IDX;
-        sprintf(buf, "%d %d %d %d",
+        sprintf(buf, "%ld %ld %ld %ld",
                 pr->left, pr->top,
                 pr->right, pr->bottom );
 
@@ -1274,7 +1274,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                               SPI_SETWORKAREA_VALNAME,
                               buf ))
           {
-              sscanf( buf, "%d %d %d %d",
+              sscanf( buf, "%ld %ld %ld %ld",
                       &work_area.left, &work_area.top,
                       &work_area.right, &work_area.bottom );
           }

@@ -546,7 +546,7 @@ static inline char* debugrect(const RECT *rect)
     if (rect) 
     {
 	char* buf = debug_getbuf();
-	snprintf(buf, DEBUG_BUFFER_SIZE, "[(%d, %d);(%d, %d)]", 
+	snprintf(buf, DEBUG_BUFFER_SIZE, "[(%ld, %ld);(%ld, %ld)]",
 		 rect->left, rect->top, rect->right, rect->bottom);
     	return buf;
     } else return "(null)";
@@ -5204,7 +5204,7 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
         break;
 
     default:
-	WARN("Unknown value: %d\n", lprc->left);
+	WARN("Unknown value: %ld\n", lprc->left);
 	return FALSE;
     }
 
@@ -5240,7 +5240,7 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
     
     if (!lprc || (infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return FALSE;
     
-    TRACE("(nItem=%d, nSubItem=%d)\n", nItem, lprc->top);
+    TRACE("(nItem=%d, nSubItem=%ld)\n", nItem, lprc->top);
     /* On WinNT, a subitem of '0' calls LISTVIEW_GetItemRect */
     if (lprc->top == 0)
         return LISTVIEW_GetItemRect(infoPtr, nItem, lprc);
@@ -5264,7 +5264,7 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
         break;
 
     default:
-	ERR("Unknown bounds=%d\n", lprc->left);
+	ERR("Unknown bounds=%ld\n", lprc->left);
 	return FALSE;
     }
 

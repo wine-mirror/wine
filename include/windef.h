@@ -322,13 +322,12 @@ typedef struct tagPOINTS
 /* The RECT structure */
 typedef struct tagRECT
 {
-    INT  left;
-    INT  top;
-    INT  right;
-    INT  bottom;
+    LONG left;
+    LONG top;
+    LONG right;
+    LONG bottom;
 } RECT, *PRECT, *LPRECT;
 typedef const RECT *LPCRECT;
-
 
 typedef struct tagRECTL
 {

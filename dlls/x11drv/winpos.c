@@ -607,7 +607,7 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, RECT* pNewWindowRect, RECT* pN
 
         wvrFlags = SendMessageW( pWinpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
-        TRACE( "%d,%d-%d,%d\n", params.rgrc[0].left, params.rgrc[0].top,
+        TRACE( "(%ld,%ld)-(%ld,%ld)\n", params.rgrc[0].left, params.rgrc[0].top,
                params.rgrc[0].right, params.rgrc[0].bottom );
 
         /* If the application send back garbage, ignore it */
@@ -904,7 +904,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     if (!(wndPtr = WIN_FindWndPtr( winpos->hwnd ))) return FALSE;
 
-    TRACE("\tcurrent (%i,%i)-(%i,%i), style %08x\n",
+    TRACE("\tcurrent (%ld,%ld)-(%ld,%ld), style %08x\n",
           wndPtr->rectWindow.left, wndPtr->rectWindow.top,
           wndPtr->rectWindow.right, wndPtr->rectWindow.bottom, (unsigned)wndPtr->dwStyle );
 
@@ -1554,7 +1554,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     rect.top    = y;
     rect.right  = x + event->width;
     rect.bottom = y + event->height;
-    TRACE( "win %p new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
+    TRACE( "win %p new X rect %ld,%ld,%ldx%ld (event %d,%d,%dx%d)\n",
            hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
     X11DRV_X_to_window_rect( win, &rect );
@@ -1589,7 +1589,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     GetWindowRect( hwnd, &rect );
     if (rect.left == winpos.x && rect.top == winpos.y) winpos.flags |= SWP_NOMOVE;
     else
-        TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
+        TRACE( "%p moving from (%ld,%ld) to (%d,%d)\n",
                hwnd, rect.left, rect.top, winpos.x, winpos.y );
 
     if ((rect.right - rect.left == winpos.cx && rect.bottom - rect.top == winpos.cy) ||
@@ -1597,7 +1597,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         (IsRectEmpty( &rect ) && winpos.cx == 1 && winpos.cy == 1))
         winpos.flags |= SWP_NOSIZE;
     else
-        TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
+        TRACE( "%p resizing from (%ldx%ld) to (%dx%d)\n",
                hwnd, rect.right - rect.left, rect.bottom - rect.top,
                winpos.cx, winpos.cy );
 

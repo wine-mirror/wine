@@ -1098,7 +1098,7 @@ DATETIME_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->rcClient.bottom = HIWORD(lParam);
   infoPtr->rcClient.right = LOWORD(lParam);
 
-  TRACE("Height=%d, Width=%d\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
+  TRACE("Height=%ld, Width=%ld\n", infoPtr->rcClient.bottom, infoPtr->rcClient.right);
 
   /* use DrawEdge to adjust the size of rcEdge to get rcDraw */
   memcpy((&infoPtr->rcDraw), (&infoPtr->rcClient), sizeof(infoPtr->rcDraw));

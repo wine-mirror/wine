@@ -243,7 +243,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 	    wnd->flags &= ~WIN_NEEDS_NCPAINT;
 	    GETCLIENTRECTW( wnd, r );
 
-	    TRACE_(nonclient)( "\tclient box (%i,%i-%i,%i), hrgnUpdate %p\n",
+	    TRACE_(nonclient)( "\tclient box (%ld,%ld-%ld,%ld), hrgnUpdate %p\n",
 				r.left, r.top, r.right, r.bottom, wnd->hrgnUpdate );
 	    if( wnd->hrgnUpdate > (HRGN)1 )
 	    {
@@ -731,7 +731,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	if( hrgnUpdate )
 	{
 	    GetRgnBox( hrgnUpdate, &r );
-            TRACE( "%p (%p) NULL %p box (%i,%i-%i,%i) flags=%04x\n",
+            TRACE( "%p (%p) NULL %p box (%ld,%ld-%ld,%ld) flags=%04x\n",
 	          hwnd, wndPtr->hrgnUpdate, hrgnUpdate, r.left, r.top, r.right, r.bottom, flags );
 	}
 	else
@@ -740,7 +740,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 		r = *rectUpdate;
 	    else
 		SetRectEmpty( &r );
-	    TRACE( "%p (%p) %s %d,%d-%d,%d %p flags=%04x\n",
+	    TRACE( "%p (%p) %s %ld,%ld-%ld,%ld %p flags=%04x\n",
                    hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left,
                    r.top, r.right, r.bottom, hrgnUpdate, flags );
 	}

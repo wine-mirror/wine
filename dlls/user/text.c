@@ -846,7 +846,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     int prefix_offset;
     ellipsis_data ellip;
 
-    TRACE("%s, %d , [(%d,%d),(%d,%d)]\n", debugstr_wn (str, count), count,
+    TRACE("%s, %d , [(%ld,%ld),(%ld,%ld)]\n", debugstr_wn (str, count), count,
 	  rect->left, rect->top, rect->right, rect->bottom);
 
    if (dtp) TRACE("Params: iTabLength=%d, iLeftMargin=%d, iRightMargin=%d\n",

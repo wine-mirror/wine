@@ -1289,7 +1289,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
-        TRACE("    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
+        TRACE("    vissrc=%ld,%ld-%ld,%ld visdst=%ld,%ld-%ld,%ld\n",
                         visRectSrc.left, visRectSrc.top,
                         visRectSrc.right, visRectSrc.bottom,
                         visRectDst.left, visRectDst.top,
@@ -1301,7 +1301,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
-        TRACE("    vissrc=none visdst=%d,%d-%d,%d\n",
+        TRACE("    vissrc=none visdst=%ld,%ld-%ld,%ld\n",
                         visRectDst.left, visRectDst.top,
                         visRectDst.right, visRectDst.bottom );
     }

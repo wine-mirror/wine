@@ -87,7 +87,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
        terminating newlines seems ok.  MW, April 1998.  */
     if (count > 0 && wstr[count - 1] == '\n') count--;
 
-    if (lprect != NULL) TRACE("\trect=(%d,%d - %d,%d)\n",
+    if (lprect != NULL) TRACE("\trect=(%ld,%ld - %ld,%ld)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );
       /* Setup coordinates */
@@ -128,7 +128,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     x = pt.x;
     y = pt.y;
 
-    TRACE("\treal coord: x=%i, y=%i, rect=(%d,%d - %d,%d)\n",
+    TRACE("\treal coord: x=%i, y=%i, rect=(%ld,%ld - %ld,%ld)\n",
 			  x, y, rect.left, rect.top, rect.right, rect.bottom);
 
       /* Draw the rectangle */

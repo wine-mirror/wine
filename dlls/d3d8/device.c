@@ -1456,7 +1456,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
             int   copyperline   = (r->right - r->left) * bytesPerPixel;
             int j;
 
-            TRACE("Copying rect %d (%d,%d),(%d,%d) -> (%ld,%ld)\n", i, r->left, r->top, 
+            TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top,
                   r->right, r->bottom, p->x, p->y);
 
             /* Find where to start */

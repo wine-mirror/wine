@@ -1122,7 +1122,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
     part->u.text.color      = color;
     part->u.text.wUnderline = underline;
 
-    WINE_TRACE("Appended text '%*.*s'[%d] @ (%d,%d-%d,%d)\n",
+    WINE_TRACE("Appended text '%*.*s'[%d] @ (%ld,%ld-%ld,%ld)\n",
                part->u.text.wTextLen,
                part->u.text.wTextLen,
                part->u.text.lpsText,
@@ -1189,7 +1189,7 @@ static WINHELP_LINE_PART* WINHELP_AppendGfxObject(WINHELP_LINE ***linep, WINHELP
     part->rect.bottom     = part->rect.top + gfxSize->cy;
     line->rect.bottom     = max(line->rect.bottom, part->rect.bottom);
 
-    WINE_TRACE("Appended gfx @ (%d,%d-%d,%d)\n",
+    WINE_TRACE("Appended gfx @ (%ld,%ld-%ld,%ld)\n",
                part->rect.left, part->rect.top, part->rect.right, part->rect.bottom);
 
     part->link = link;

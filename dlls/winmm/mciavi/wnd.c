@@ -153,7 +153,7 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms)
     if (dwFlags & MCI_DGV_PUT_WINDOW) {
 	strncat(buffer, "PUT_WINDOW", sizeof(buffer));
     }
-    TRACE("%s (%d,%d,%d,%d)\n", buffer, rc.left, rc.top, rc.right, rc.bottom);
+    TRACE("%s (%ld,%ld,%ld,%ld)\n", buffer, rc.left, rc.top, rc.right, rc.bottom);
 
     return 0;
 }
@@ -195,7 +195,7 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 	x = "Window";
 	GetClientRect(wma->hWnd, &lpParms->rc);
     }
-    TRACE("%s -> (%d,%d,%d,%d)\n",
+    TRACE("%s -> (%ld,%ld,%ld,%ld)\n",
 	  x, lpParms->rc.left, lpParms->rc.top, lpParms->rc.right, lpParms->rc.bottom);
 
     return 0;

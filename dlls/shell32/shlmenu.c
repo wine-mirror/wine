@@ -618,7 +618,7 @@ LRESULT WINAPI FileMenu_DrawItem(
 	Shell_GetImageList(0, &hImageList);
 	ImageList_Draw(hImageList, pMyItem->iIconIndex, lpdis->hDC, xi, yi, ILD_NORMAL);
 
-	TRACE("-- 0x%04x 0x%04x 0x%04x 0x%04x\n", TextRect.left, TextRect.top, TextRect.right, TextRect.bottom);
+	TRACE("-- 0x%04lx 0x%04lx 0x%04lx 0x%04lx\n", TextRect.left, TextRect.top, TextRect.right, TextRect.bottom);
 
 	SetTextColor(lpdis->hDC, clrPrevText);
 	SetBkColor(lpdis->hDC, clrPrevBkgnd);
@@ -780,7 +780,7 @@ DWORD WINAPI FileMenu_GetItemExtent (HMENU hMenu, UINT uPos)
 	FIXME("%p 0x%08x\n", hMenu, uPos);
 
 	if (GetMenuItemRect(0, hMenu, uPos, &rect))
-	{ FIXME("0x%04x 0x%04x 0x%04x 0x%04x\n",
+	{ FIXME("0x%04lx 0x%04lx 0x%04lx 0x%04lx\n",
 	  rect.right, rect.left, rect.top, rect.bottom);
 	  return ((rect.right-rect.left)<<16) + (rect.top-rect.bottom);
 	}

@@ -622,7 +622,7 @@ static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo)
    * Original tab size.
    */
   GetClientRect(hwndTabCtrl, &rcOrigTab);
-  TRACE("orig tab %d %d %d %d\n", rcOrigTab.left, rcOrigTab.top,
+  TRACE("orig tab %ld %ld %ld %ld\n", rcOrigTab.left, rcOrigTab.top,
         rcOrigTab.right, rcOrigTab.bottom);
 
   /*
@@ -634,7 +634,7 @@ static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo)
   rcPage.bottom = psInfo->height;
 
   MapDialogRect(hwndDlg, &rcPage);
-  TRACE("biggest page %d %d %d %d\n", rcPage.left, rcPage.top,
+  TRACE("biggest page %ld %ld %ld %ld\n", rcPage.left, rcPage.top,
         rcPage.right, rcPage.bottom);
 
   if ( (rcPage.right - rcPage.left) != (rcOrigTab.right - rcOrigTab.left) )
@@ -676,7 +676,7 @@ static BOOL PROPSHEET_IsTooSmallWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   rcPage.bottom = psInfo->height;
 
   MapDialogRect(hwndDlg, &rcPage);
-  TRACE("biggest page %d %d %d %d\n", rcPage.left, rcPage.top,
+  TRACE("biggest page %ld %ld %ld %ld\n", rcPage.left, rcPage.top,
         rcPage.right, rcPage.bottom);
 
   if (rcPage.right > rcSheetClient.right)
@@ -747,14 +747,14 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
 
   rc.right -= rc.left;
   rc.bottom -= rc.top;
-  TRACE("setting tab %08lx, rc (0,0)-(%d,%d)\n",
+  TRACE("setting tab %08lx, rc (0,0)-(%ld,%ld)\n",
         (DWORD)hwndTabCtrl, rc.right, rc.bottom);
   SetWindowPos(hwndTabCtrl, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
   GetClientRect(hwndTabCtrl, &rc);
 
-  TRACE("tab client rc %d %d %d %d\n",
+  TRACE("tab client rc %ld %ld %ld %ld\n",
         rc.left, rc.top, rc.right, rc.bottom);
 
   rc.right += ((padding.x * 2) + tabOffsetX);
@@ -763,7 +763,7 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Resize the property sheet.
    */
-  TRACE("setting dialog %08lx, rc (0,0)-(%d,%d)\n",
+  TRACE("setting dialog %08lx, rc (0,0)-(%ld,%ld)\n",
         (DWORD)hwndDlg, rc.right, rc.bottom);
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -821,7 +821,7 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
       psInfo->width  = MulDiv((rc.right - rc.left), 4, units.left);
   }
 
-  TRACE("Biggest page %d %d %d %d\n", rc.left, rc.top, rc.right, rc.bottom);
+  TRACE("Biggest page %ld %ld %ld %ld\n", rc.left, rc.top, rc.right, rc.bottom);
   TRACE("   constants padx=%d, pady=%d, butH=%d, lH=%d\n",
 	padding.x, padding.y, buttonHeight, lineHeight);
 
@@ -832,7 +832,7 @@ static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Resize the property sheet.
    */
-  TRACE("setting dialog %08lx, rc (0,0)-(%d,%d)\n",
+  TRACE("setting dialog %08lx, rc (0,0)-(%ld,%ld)\n",
         (DWORD)hwndDlg, rc.right, rc.bottom);
   SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -1424,7 +1424,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
       pageHeight = rc.bottom - rc.top;
 
       padding = PROPSHEET_GetPaddingInfoWizard(hwndParent, psInfo);
-      TRACE("setting page %08lx, rc (%d,%d)-(%d,%d) w=%d, h=%d, padx=%d, pady=%d\n",
+      TRACE("setting page %08lx, rc (%ld,%ld)-(%ld,%ld) w=%d, h=%d, padx=%d, pady=%d\n",
 	    (DWORD)hwndPage, rc.left, rc.top, rc.right, rc.bottom,
 	    pageWidth, pageHeight, padding.x, padding.y);
       SetWindowPos(hwndPage, HWND_TOP,
@@ -1440,7 +1440,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
       PROPSHEET_GetPageRect(psInfo, hwndParent, &rc);
       pageWidth = rc.right - rc.left;
       pageHeight = rc.bottom - rc.top;
-      TRACE("setting page %08lx, rc (%d,%d)-(%d,%d) w=%d, h=%d\n",
+      TRACE("setting page %08lx, rc (%ld,%ld)-(%ld,%ld) w=%d, h=%d\n",
 	    (DWORD)hwndPage, rc.left, rc.top, rc.right, rc.bottom,
 	    pageWidth, pageHeight);
       SetWindowPos(hwndPage, HWND_TOP,

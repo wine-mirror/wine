@@ -2106,7 +2106,7 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	    {
 		LPRECT rc = (LPRECT) sp_e->lParam;
 		if (rc) {
-		    TRACE("lParam rect (%d,%d)-(%d,%d)\n",
+		    TRACE("lParam rect (%ld,%ld)-(%ld,%ld)\n",
 			  rc->left, rc->top, rc->right, rc->bottom);
 		}
 		break;
@@ -2149,7 +2149,7 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 		      lpdis->CtlType, lpdis->CtlID);
 		TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
 		      lpdis->itemID, lpdis->itemAction, lpdis->itemState);
-		TRACE("hWnd=%p hDC=%p (%d,%d)-(%d,%d) itemData=0x%08lx\n",
+		TRACE("hWnd=%p hDC=%p (%ld,%ld)-(%ld,%ld) itemData=0x%08lx\n",
 		      lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left,
 		      lpdis->rcItem.top, lpdis->rcItem.right,
 		      lpdis->rcItem.bottom, lpdis->itemData);
@@ -2187,7 +2187,7 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	case WM_NCCALCSIZE:
 	    {
 		RECT *rc = (RECT *)sp_e->lParam;
-		TRACE("Rect (%d,%d)-(%d,%d)\n",
+		TRACE("Rect (%ld,%ld)-(%ld,%ld)\n",
 		      rc->left, rc->top, rc->right, rc->bottom);
 	    }
 	    break;

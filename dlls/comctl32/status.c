@@ -102,7 +102,7 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
     POINT pt;
     INT i;
 
-    TRACE("draw size grip %d,%d - %d,%d\n", lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
+    TRACE("draw size grip %ld,%ld - %ld,%ld\n", lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
 
     pt.x = lpRect->right - 1;
     pt.y = lpRect->bottom - 1;
@@ -146,7 +146,7 @@ STATUSBAR_DrawPart (HDC hdc, const STATUSWINDOWPART *part, const STATUSWINDOWINF
     RECT r = part->bound;
     UINT border = BDR_SUNKENOUTER;
 
-    TRACE("part bound %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom);
+    TRACE("part bound %ld,%ld - %ld,%ld\n", r.left, r.top, r.right, r.bottom);
     if (part->style & SBT_POPOUT)
         border = BDR_RAISEDOUTER;
     else if (part->style & SBT_NOBORDERS)
@@ -272,7 +272,7 @@ STATUSBAR_SetPartBounds (STATUSWINDOWINFO *infoPtr)
 
     /* get our window size */
     GetClientRect (infoPtr->Self, &rect);
-    TRACE("client wnd size is %d,%d - %d,%d\n", rect.left, rect.top, rect.right, rect.bottom);
+    TRACE("client wnd size is %ld,%ld - %ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom);
 
     rect.top += VERT_BORDER;
 

@@ -420,13 +420,13 @@ static void CBCalcPlacement(
        lprLB->right = lprLB->left + lphc->droppedWidth;
   }
 
-  TRACE("\ttext\t= (%i,%i-%i,%i)\n",
+  TRACE("\ttext\t= (%ld,%ld-%ld,%ld)\n",
 	lprEdit->left, lprEdit->top, lprEdit->right, lprEdit->bottom);
 
-  TRACE("\tbutton\t= (%i,%i-%i,%i)\n",
+  TRACE("\tbutton\t= (%ld,%ld-%ld,%ld)\n",
 	lprButton->left, lprButton->top, lprButton->right, lprButton->bottom);
 
-  TRACE("\tlbox\t= (%i,%i-%i,%i)\n",
+  TRACE("\tlbox\t= (%ld,%ld-%ld,%ld)\n",
 	lprLB->left, lprLB->top, lprLB->right, lprLB->bottom );
 }
 
@@ -477,7 +477,7 @@ static LRESULT COMBO_WindowPosChanging(
      */
     if (posChanging->cy != newComboHeight)
     {
-	TRACE("posChanging->cy=%d, newComboHeight=%d, oldbot=%d, oldtop=%d\n",
+	TRACE("posChanging->cy=%d, newComboHeight=%d, oldbot=%ld, oldtop=%ld\n",
 	      posChanging->cy, newComboHeight, lphc->droppedRect.bottom,
 	      lphc->droppedRect.top);
       lphc->droppedRect.bottom = lphc->droppedRect.top + posChanging->cy - newComboHeight;

@@ -48,9 +48,9 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
     RECT rect, rClip, rDst;
 
     TRACE( "%p %d,%d hrgnUpdate=%p rcUpdate = %p\n", hdc, dx, dy, hrgnUpdate, rcUpdate );
-    if (clipRect) TRACE( "cliprc = (%d,%d,%d,%d)\n",
+    if (clipRect) TRACE( "cliprc = (%ld,%ld,%ld,%ld)\n",
                          clipRect->left, clipRect->top, clipRect->right, clipRect->bottom );
-    if (rc) TRACE( "rc = (%d,%d,%d,%d)\n", rc->left, rc->top, rc->right, rc->bottom );
+    if (rc) TRACE( "rc = (%ld,%ld,%ld,%ld)\n", rc->left, rc->top, rc->right, rc->bottom );
 
     /* compute device clipping region (in device coordinates) */
 
@@ -128,10 +128,10 @@ INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     HRGN  hrgnTemp;
     HDC   hDC;
 
-    TRACE( "%p, %d,%d hrgnUpdate=%p rcUpdate = %p rect=(%d,%d-%d,%d) %04x\n",
+    TRACE( "%p, %d,%d hrgnUpdate=%p rcUpdate = %p rect=(%ld,%ld-%ld,%ld) %04x\n",
            hwnd, dx, dy, hrgnUpdate, rcUpdate,
            rect->left, rect->top, rect->right, rect->bottom, flags );
-    TRACE( "clipRect = (%d,%d,%d,%d)\n",
+    TRACE( "clipRect = (%ld,%ld,%ld,%ld)\n",
            clipRect->left, clipRect->top, clipRect->right, clipRect->bottom );
 
     if( hrgnUpdate ) bOwnRgn = FALSE;

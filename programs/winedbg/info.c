@@ -408,7 +408,7 @@ void DEBUG_InfoWindow(HWND hWnd)
 		"next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
 		"inst=%p  active=%p  idmenu=%08lx\n"
 		"style=%08lx  exstyle=%08lx  wndproc=%08lx  text='%s'\n"
-		"client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%p\n",
+		"client=%ld,%ld-%ld,%ld  window=%ld,%ld-%ld,%ld sysmenu=%p\n",
 		GetWindow(hWnd, GW_HWNDNEXT),
 		GetWindow(hWnd, GW_CHILD),
 		GetParent(hWnd),

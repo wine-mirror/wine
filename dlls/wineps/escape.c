@@ -79,7 +79,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
             r->top    = 0;
             r->right  = physDev->horzRes;
             r->bottom = physDev->vertRes;
-            TRACE("NEXTBAND returning %d,%d - %d,%d\n", r->left, r->top, r->right, r->bottom );
+            TRACE("NEXTBAND returning %ld,%ld - %ld,%ld\n", r->left, r->top, r->right, r->bottom );
 	    return 1;
 	}
         r->left   = 0;
@@ -182,7 +182,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
                 WARN("cbInput != sizeof(RECT) (=%d) for SET_BOUNDS\n", cbInput);
 		return 0;
             }
-	    TRACE("SET_BOUNDS (%d,%d) - (%d,%d)\n", r->left, r->top,
+	    TRACE("SET_BOUNDS (%ld,%ld) - (%ld,%ld)\n", r->left, r->top,
 		  r->right, r->bottom);
 	    return 0;
 	}

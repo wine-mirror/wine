@@ -424,7 +424,7 @@ BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exSty
                 WS_EX_STATICEDGE | WS_EX_TOOLWINDOW);
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-    TRACE("(%d,%d)-(%d,%d) %08lx %d %08lx\n",
+    TRACE("(%ld,%ld)-(%ld,%ld) %08lx %d %08lx\n",
           rect->left, rect->top, rect->right, rect->bottom,
           style, menu, exStyle );
 
@@ -469,7 +469,7 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
 
         if (!(style & WS_CHILD) && GetMenu(hwnd))
         {
-            TRACE("Calling GetMenuBarHeight with hwnd %p, width %d, at (%d, %d).\n",
+            TRACE("Calling GetMenuBarHeight with hwnd %p, width %ld, at (%ld, %ld).\n",
                   hwnd, winRect->right - winRect->left, -tmpRect.left, -tmpRect.top );
 
 	    winRect->top +=
@@ -1598,13 +1598,13 @@ static void  NC_DoNCPaint95(
 	RECT r = rect;
 	r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);
 
-	TRACE("Calling DrawMenuBar with rect (%d, %d)-(%d, %d)\n",
+	TRACE("Calling DrawMenuBar with rect (%ld, %ld)-(%ld, %ld)\n",
               r.left, r.top, r.right, r.bottom);
 
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint ) + 1;
     }
 
-    TRACE("After MenuBar, rect is (%d, %d)-(%d, %d).\n",
+    TRACE("After MenuBar, rect is (%ld, %ld)-(%ld, %ld).\n",
           rect.left, rect.top, rect.right, rect.bottom );
 
     if (dwExStyle & WS_EX_CLIENTEDGE)
