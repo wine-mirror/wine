@@ -10,6 +10,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "wingdi.h"
@@ -84,6 +85,196 @@ static int tabstop;
 static int tabwidth;
 static int spacewidth;
 static int prefix_offset;
+
+/*********************************************************************
+ *                      TEXT_Ellipsify (static)
+ *
+ *  Add an ellipsis to the end of the given string whilst ensuring it fits.
+ *
+ * If the ellipsis alone doesn't fit then it will be returned anyway.
+ *
+ * See Also TEXT_PathEllipsify
+ *
+ * Arguments
+ *   hdc        [in] The handle to the DC that defines the font.
+ *   str        [in/out] The string that needs to be modified.
+ *   max_str    [in] The dimension of str (number of WCHAR).
+ *   len_str    [in/out] The number of characters in str
+ *   width      [in] The maximum width permitted (in logical coordinates)
+ *   size       [out] The dimensions of the text
+ *   modstr     [out] The modified form of the string, to be returned to the
+ *                    calling program.  It is assumed that the caller has 
+ *                    made sufficient space available so we don't need to
+ *                    know the size of the space.  This pointer may be NULL if
+ *                    the modified string is not required.
+ *   len_before [out] The number of characters before the ellipsis.
+ *   len_ellip  [out] The number of characters in the ellipsis.
+ *
+ * See for example Microsoft article Q249678.
+ *
+ * For now we will simply use three dots rather than worrying about whether
+ * the font contains an explicit ellipsis character.
+ */
+static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
+                            unsigned int *len_str, int width, SIZE *size,
+                            WCHAR *modstr,
+                            int *len_before, int *len_ellip)
+{
+    unsigned int len_ellipsis;
+
+    len_ellipsis = strlenW (ELLIPSISW);
+    if (len_ellipsis > max_len) len_ellipsis = max_len;
+    if (*len_str > max_len - len_ellipsis)
+        *len_str = max_len - len_ellipsis;
+
+    for ( ; ; )
+    {
+        strncpyW (str + *len_str, ELLIPSISW, len_ellipsis);
+
+        if (!GetTextExtentExPointW (hdc, str, *len_str + len_ellipsis, width,
+                                    NULL, NULL, size)) break;
+
+        if (!*len_str || size->cx <= width) break;
+
+        (*len_str)--;
+    }
+    *len_ellip = len_ellipsis;
+    *len_before = *len_str;
+    *len_str += len_ellipsis;
+
+    if (modstr)
+    {
+        strncpyW (modstr, str, *len_str);
+        *(str+*len_str) = '\0';
+    }
+}
+
+/*********************************************************************
+ *                      TEXT_PathElllipsify (static)
+ *
+ * Add an ellipsis to the provided string in order to make it fit within
+ * the width.  The ellipsis is added as specified for the DT_PATH_ELLIPSIS
+ * flag.
+ *
+ * See Also TEXT_Ellipsify
+ *
+ * Arguments
+ *   hdc        [in] The handle to the DC that defines the font.
+ *   str        [in/out] The string that needs to be modified
+ *   max_str    [in] The dimension of str (number of WCHAR).
+ *   len_str    [in/out] The number of characters in str
+ *   width      [in] The maximum width permitted (in logical coordinates)
+ *   size       [out] The dimensions of the text
+ *   modstr     [out] The modified form of the string, to be returned to the
+ *                    calling program.  It is assumed that the caller has 
+ *                    made sufficient space available so we don't need to
+ *                    know the size of the space.  This pointer may be NULL if
+ *                    the modified string is not required.
+ *   len_before [out] The number of characters before the ellipsis.
+ *   len_ellip  [out] The number of characters in the ellipsis.
+ *   len_after  [out] The number of characters after the ellipsis.
+ *
+ * For now we will simply use three dots rather than worrying about whether
+ * the font contains an explicit ellipsis character.
+ *
+ * The following applies, I think to Win95.  We will need to extend it for
+ * Win98 which can have both path and end ellipsis at the same time (e.g.
+ *  C:\MyLongFileName.Txt becomes ...\MyLongFileN...)
+ *
+ * The resulting string consists of as much as possible of the following:
+ * 1. The ellipsis itself
+ * 2. The last \ or / of the string (if any)
+ * 3. Everything after the last \ or / of the string (if any) or the whole
+ *    string if there is no / or \.  I believe that under Win95 this would
+ *    include everything even though some might be clipped off the end whereas
+ *    under Win98 that might be ellipsified too.  (Not yet implemented).  Yet
+ *    to be investigated is whether this would include wordbreaking if the
+ *    filename is more than 1 word and splitting if DT_EDITCONTROL was in
+ *    effect.  (If DT_EDITCONTROL is in effect then on occasions text will be
+ *    broken within words).
+ * 4. All the stuff before the / or \, which is placed before the ellipsis.
+ */
+static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
+                                unsigned int *len_str, int width, SIZE *size,
+                                WCHAR *modstr,
+                                int *len_before, int *len_ellip, int *len_after)
+{
+    int len_ellipsis;
+    int len_trailing;
+    WCHAR *lastBkSlash, *lastFwdSlash, *lastSlash;
+
+    len_ellipsis = strlenW (ELLIPSISW);
+    if (!max_len) return;
+    if (len_ellipsis >= max_len) len_ellipsis = max_len - 1;
+    if (*len_str + len_ellipsis >= max_len)
+        *len_str = max_len - len_ellipsis-1;
+        /* Hopefully this will never happen, otherwise it would probably lose
+         * the wrong character
+         */
+    str[*len_str] = '\0'; /* to simplify things */
+
+    lastBkSlash  = strrchrW (str, BACK_SLASH);
+    lastFwdSlash = strrchrW (str, FORWARD_SLASH);
+    lastSlash = lastBkSlash > lastFwdSlash ? lastBkSlash : lastFwdSlash;
+    if (!lastSlash) lastSlash = str;
+    len_trailing = *len_str - (lastSlash - str);
+
+    /* overlap-safe movement to the right */
+    memmove (lastSlash+len_ellipsis, lastSlash, len_trailing * sizeof(WCHAR));
+    strncpyW (lastSlash, ELLIPSISW, len_ellipsis);
+    len_trailing += len_ellipsis;
+    /* From this point on lastSlash actually points to the ellipsis in front
+     * of the last slash and len_trailing includes the ellipsis
+     */
+
+    for ( ; ; )
+    {
+        if (!GetTextExtentExPointW (hdc, str, *len_str + len_ellipsis, width,
+                                    NULL, NULL, size)) break;
+
+        if (lastSlash == str || size->cx <= width) break;
+
+        /* overlap-safe movement to the left */
+        memmove (lastSlash-1, lastSlash, len_trailing * sizeof(WCHAR));
+        lastSlash--;
+        
+        assert (*len_str);
+        (*len_str)--;
+    }
+    *len_before = lastSlash-str;
+    *len_ellip = len_ellipsis;
+    *len_after = len_trailing - len_ellipsis;
+    *len_str += len_ellipsis;
+
+    if (modstr)
+    {
+        strncpyW (modstr, str, *len_str);
+        *(str+*len_str) = '\0';
+    }
+}
+
+void TEXT_CopySansPrefix (int noprefix, WCHAR *d, int *len_d, const WCHAR *s, int len_s)
+{
+    if (noprefix)
+    {
+        strncpyW (d, s, len_s);
+        *len_d = len_s;
+    }
+    else
+    {
+        *len_d = 0;
+        while (len_s--)
+        {
+           if (*s == PREFIX && len_s)
+           {
+               len_s--;
+               s++;
+           } 
+           *d++ = *s++;
+           (*len_d)++;
+        }
+    }
+}
 
 /*********************************************************************
  *                      TEXT_Reprefix
@@ -414,99 +605,35 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
         if ((flags & DT_SINGLELINE) && size.cx > width &&
 	    (flags & (DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_WORD_ELLIPSIS)))
-	{
-	        WCHAR swapStr[countof(line)];
-	        WCHAR* fnameDelim = NULL;
-	        int totalLen = i_count >= 0 ? i_count : strlenW(str);
-	            int fnameLen = totalLen;
-                int old_prefix_offset = prefix_offset;
-                int len_before_ellipsis;
-                int len_after_ellipsis;
+        {
+            WCHAR tmpstr[countof(line)];
+            int len_before_ellipsis;
+            int len_ellipsis;
+            int len_after_ellipsis;
 
-	            /* allow room for '...' */
-	            count = min(totalLen+3, countof(line)-3);
+            if (flags & DT_PATH_ELLIPSIS)
+            {
+                /* We may need to remeasure the string because it was clipped */
+                if ((flags & DT_WORDBREAK) || !(flags & DT_NOCLIP))
+                    TEXT_CopySansPrefix ((flags & DT_NOPREFIX), line, &len, str, i_count >= 0 ? i_count : strlenW(str));
+                TEXT_PathEllipsify (hdc, line, countof(line), &len, width, &size, tmpstr, &len_before_ellipsis, &len_ellipsis, &len_after_ellipsis);
+            }
+            else
+            {
+                TEXT_Ellipsify (hdc, line, countof(line), &len, width, &size, tmpstr, &len_before_ellipsis, &len_ellipsis);
+                len_after_ellipsis = 0;
+            }
 
-                    if (flags & DT_WORD_ELLIPSIS)
-	                flags |= DT_WORDBREAK;
+            strPtr = NULL; 
 
-		    if (flags & DT_PATH_ELLIPSIS)
-	            {
-			WCHAR* lastBkSlash = NULL;
-			WCHAR* lastFwdSlash = NULL;
-	                strncpyW(line, str, totalLen);
-                        line[totalLen] = '\0';
-	                lastBkSlash = strrchrW(line, BACK_SLASHW[0]);
-	                lastFwdSlash = strrchrW(line, FORWARD_SLASHW[0]);
-                        fnameDelim = lastBkSlash > lastFwdSlash ? lastBkSlash : lastFwdSlash;
+            if (prefix_offset >= 0 &&
+                prefix_offset >= len_before_ellipsis)
+                prefix_offset = TEXT_Reprefix (str, len_before_ellipsis, strlenW(str)-len_ellipsis-len_before_ellipsis-len_after_ellipsis, len_ellipsis, len_after_ellipsis);
 
-	                if (fnameDelim)
-	                    fnameLen = &line[totalLen] - fnameDelim;
-	                else
-	                    fnameDelim = (WCHAR*)str;
+            if (flags & DT_MODIFYSTRING)
+                strcpyW(str, tmpstr);
 
-	                strcpyW(swapStr, ELLIPSISW);
-	                strncpyW(swapStr+strlenW(swapStr), fnameDelim, fnameLen);
-	                swapStr[fnameLen+3] = '\0';
-	                strncpyW(swapStr+strlenW(swapStr), str, totalLen - fnameLen);
-	                swapStr[totalLen+3] = '\0';
-                    }
-                    else  /* DT_END_ELLIPSIS | DT_WORD_ELLIPSIS */
-	            {
-	                strcpyW(swapStr, ELLIPSISW);
-	                strncpyW(swapStr+strlenW(swapStr), str, totalLen);
-	            }
 
-                    len = MAX_STATIC_BUFFER;
-	            TEXT_NextLineW(hdc, swapStr, &count, line, &len, width, flags);
-                    prefix_offset = old_prefix_offset;
-
-	            /* if only the ELLIPSIS will fit, just let it be clipped */
-	            len = max(3, len);
-	            GetTextExtentPointW(hdc, line, len, &size);
-
-	            /* FIXME:
-	             * NextLine uses GetTextExtentPoint for each character,
-	             * rather than GetCharABCWidth...  So the whitespace between
-	             * characters is ignored in the width measurement, and the
-	             * reported len is too great.  To compensate, we must get
-	             * the width of the entire line and adjust len accordingly.
-	            */
-	            while ((size.cx > width) && (len > 3))
-	            {
-	                line[--len] = '\0';
-	                GetTextExtentPointW(hdc, line, len, &size);
-	            }
-
-	            if (fnameLen < len-3) /* some of the path will fit */
-	            {
-                        len_before_ellipsis = len-3-fnameLen;
-                        len_after_ellipsis = fnameLen;
-	                /* put the ELLIPSIS between the path and filename */
-	                strncpyW(swapStr, &line[fnameLen+3], len_before_ellipsis);
-	                swapStr[len_before_ellipsis] = '\0';
-	                strcatW(swapStr, ELLIPSISW);
-	                strncpyW(swapStr+strlenW(swapStr), &line[3], fnameLen);
-	            }
-	            else
-	            {
-	                /* move the ELLIPSIS to the end */
-                        len_before_ellipsis = len-3;
-                        len_after_ellipsis = 0;
-	                strncpyW(swapStr, &line[3], len_before_ellipsis);
-	                swapStr[len_before_ellipsis] = '\0';
-	                strcpyW(swapStr+strlenW(swapStr), ELLIPSISW);
-	            }
-
-	            strncpyW(line, swapStr, len);
-	            line[len] = '\0';
-	            strPtr = NULL;
-
-               if (prefix_offset >= 0 &&
-                   prefix_offset >= len_before_ellipsis)
-                   prefix_offset = TEXT_Reprefix (str, len_before_ellipsis, strlenW(str)-3-len_before_ellipsis-len_after_ellipsis, 3, len_after_ellipsis);
-
-               if (flags & DT_MODIFYSTRING)
-                    strcpyW(str, swapStr);
 	}
 	if (!(flags & DT_CALCRECT))
 	{
