@@ -57,21 +57,15 @@ static int mailslot_test()
     hSlot = CreateMailslot( "blah", 0, 0, NULL );
     ok( hSlot == INVALID_HANDLE_VALUE,
             "Created mailslot with invalid name\n");
-    todo_wine
-    {
-       ok( GetLastError() == ERROR_INVALID_NAME,
-           "error should be ERROR_INVALID_NAME\n");
-    }
+    ok( GetLastError() == ERROR_INVALID_NAME,
+            "error should be ERROR_INVALID_NAME\n");
 
     /* open a mailslot with a null name */
     hSlot = CreateMailslot( NULL, 0, 0, NULL );
     ok( hSlot == INVALID_HANDLE_VALUE,
             "Created mailslot with invalid name\n");
-    todo_wine
-    {
-        ok( GetLastError() == ERROR_PATH_NOT_FOUND,
+    ok( GetLastError() == ERROR_PATH_NOT_FOUND,
             "error should be ERROR_PATH_NOT_FOUND\n");
-    }
 
     todo_wine
     {

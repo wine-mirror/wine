@@ -1739,3 +1739,45 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE hFile, PIO_STATUS_BLOCK io_status )
     timeout.u.LowPart = timeout.u.HighPart = 0;
     return io_status->u.Status = NtDelayExecution( TRUE, &timeout );
 }
+
+/******************************************************************************
+ *  NtCreateMailslotFile	[NTDLL.@]
+ *  ZwCreateMailslotFile	[NTDLL.@]
+ *
+ * PARAMS
+ *  pHandle          [O] pointer to receive the handle created
+ *  DesiredAccess    [I] access mode (read, write, etc)
+ *  ObjectAttributes [I] fully qualified NT path of the mailslot
+ *  IoStatusBlock    [O] receives completion status and other info
+ *  CreateOptions    [I]
+ *  MailslotQuota    [I]
+ *  MaxMessageSize   [I]
+ *  TimeOut          [I]
+ *
+ * RETURNS
+ *  An NT status code
+ */
+NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
+     POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK IoStatusBlock,
+     ULONG CreateOptions, ULONG MailslotQuota, ULONG MaxMessageSize,
+     PLARGE_INTEGER TimeOut)
+{
+    static const WCHAR leadin[] = {
+        '\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
+    NTSTATUS ret;
+
+    FIXME("%p %08lx %p %p %08lx %08lx %08lx %p\n",
+              pHandle, DesiredAccess, attr, IoStatusBlock,
+              CreateOptions, MailslotQuota, MaxMessageSize, TimeOut);
+
+    if (attr->ObjectName->Length < sizeof(leadin) ||
+        strncmpiW( attr->ObjectName->Buffer, 
+                   leadin, sizeof(leadin)/sizeof(leadin[0]) ))
+    {
+        return STATUS_OBJECT_NAME_INVALID;
+    }
+
+    ret = STATUS_NOT_IMPLEMENTED;
+
+    return ret;
+}

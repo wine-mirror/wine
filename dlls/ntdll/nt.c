@@ -540,16 +540,6 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
 }
 
 /******************************************************************************
- *  NtCreateMailslotFile	[NTDLL.@]
- *  ZwCreateMailslotFile	[NTDLL.@]
- */
-NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8)
-{
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7,x8);
-	return 0;
-}
-
-/******************************************************************************
  * NtQuerySystemInformation [NTDLL.@]
  * ZwQuerySystemInformation [NTDLL.@]
  *

@@ -1576,10 +1576,48 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
                                DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )
 {
-    FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName),
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    LARGE_INTEGER timeout;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    TRACE("%s %ld %ld %p\n", debugstr_w(lpName),
           nMaxMessageSize, lReadTimeout, sa);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return INVALID_HANDLE_VALUE;
+
+    if (!RtlDosPathNameToNtPathName_U( lpName, &nameW, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    if (nameW.Length >= MAX_PATH * sizeof(WCHAR) )
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        RtlFreeUnicodeString( &nameW );
+        return INVALID_HANDLE_VALUE;
+    }
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    timeout.QuadPart = (ULONGLONG) lReadTimeout * -10000;
+
+    status = NtCreateMailslotFile( &handle, GENERIC_READ | GENERIC_WRITE, &attr,
+                                   &iosb, 0, 0, nMaxMessageSize, &timeout );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        handle = INVALID_HANDLE_VALUE;
+    }
+
+    RtlFreeUnicodeString( &nameW );
+    return handle;
 }
 
 
