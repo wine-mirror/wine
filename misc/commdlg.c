@@ -1706,6 +1706,7 @@ BOOL16 WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol)
                                         (DWORD)lpChCol, WIN_PROC_16 );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpChCol->hwndOwner);
     if (hDlgTmpl) FreeResource16( hDlgTmpl );
+
     return bRet;
 }
 
@@ -2425,6 +2426,7 @@ static BOOL32 CC_HookCallChk(LPCHOOSECOLOR16 lpcc)
 static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
    int i,res;
+   int r, g, b;
    HWND16 hwnd;
    RECT16 rect;
    POINT16 point;
@@ -2433,6 +2435,7 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    TRACE(commdlg,"WM_INITDIALOG lParam=%08lX\n", lParam);
    lpp=calloc(1,sizeof(struct CCPRIVATE));
    lpp->lpcc=(LPCHOOSECOLOR16)lParam;
+
    if (lpp->lpcc->lStructSize != sizeof(CHOOSECOLOR16))
    {
       EndDialog32 (hDlg, 0) ;
@@ -2443,6 +2446,7 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    if (!(lpp->lpcc->Flags & CC_SHOWHELP))
       ShowWindow32(GetDlgItem32(hDlg,0x40e),SW_HIDE);
    lpp->msetrgb=RegisterWindowMessage32A( SETRGBSTRING );
+
 #if 0
    cpos=MAKELONG(5,7); /* init */
    if (lpp->lpcc->Flags & CC_RGBINIT)
@@ -2458,6 +2462,7 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
    found:
    /* FIXME: Draw_a_focus_rect & set_init_values */
 #endif
+
    GetWindowRect16(hDlg,&lpp->fullsize);
    if (lpp->lpcc->Flags & CC_FULLOPEN || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
@@ -2486,6 +2491,29 @@ static LONG CC_WMInitDialog(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
      SendMessage16(GetDlgItem32(hDlg,i),EM_LIMITTEXT16,3,0);      /* max 3 digits:  xyz  */
    if (CC_HookCallChk(lpp->lpcc))
       res=CallWindowProc16(lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
+
+   
+   /* Set the initial values of the color chooser dialog */
+   r = GetRValue(lpp->lpcc->rgbResult);
+   g = GetGValue(lpp->lpcc->rgbResult);
+   b = GetBValue(lpp->lpcc->rgbResult);
+
+   CC_PaintSelectedColor(hDlg,lpp->lpcc->rgbResult);
+   lpp->h=CC_RGBtoHSL('H',r,g,b);
+   lpp->s=CC_RGBtoHSL('S',r,g,b);
+   lpp->l=CC_RGBtoHSL('L',r,g,b);
+
+   /* Doing it the long way becaus CC_EditSetRGB/HSL doesn'nt seem to work */
+   SetDlgItemInt32(hDlg, 703, lpp->h, TRUE);
+   SetDlgItemInt32(hDlg, 704, lpp->s, TRUE);
+   SetDlgItemInt32(hDlg, 705, lpp->l, TRUE);
+   SetDlgItemInt32(hDlg, 706, r, TRUE);
+   SetDlgItemInt32(hDlg, 707, g, TRUE);
+   SetDlgItemInt32(hDlg, 708, b, TRUE);
+
+   CC_PaintCross(hDlg,lpp->h,lpp->s);
+   CC_PaintTriangle(hDlg,lpp->l);
+
    return res;
 }
 
@@ -3954,6 +3982,10 @@ BOOL32 WINAPI ChooseColor32A(LPCHOOSECOLOR32A lpChCol )
   lpcc16->lpTemplateName=SEGPTR_GET(str);
   
   ret = ChooseColor16(lpcc16);
+
+  if(ret)
+      lpChCol->rgbResult = lpcc16->rgbResult;
+
   if(str)
     SEGPTR_FREE(str);
   memcpy(lpChCol->lpCustColors,ccref,64);
@@ -3988,6 +4020,10 @@ BOOL32 WINAPI ChooseColor32W(LPCHOOSECOLOR32W lpChCol )
   lpcc16->lpTemplateName=SEGPTR_GET(str);
   
   ret = ChooseColor16(lpcc16);
+
+  if(ret)
+      lpChCol->rgbResult = lpcc16->rgbResult;
+
   if(str)
     SEGPTR_FREE(str);
   memcpy(lpChCol->lpCustColors,ccref,64);
