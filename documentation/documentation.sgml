@@ -208,7 +208,7 @@
 
       <screen>
 /*************************************************************************
- * PathRelativePathToA   [SHLWAPI.@]
+ * PathRelativePathToW   [SHLWAPI.@]
  */
       </screen>
 
@@ -228,7 +228,7 @@
 
       <screen>
 /*************************************************************************
- *		PathRelativePathToA	(SHLWAPI.@)
+ *		PathRelativePathToW	(SHLWAPI.@)
  */
       </screen>
 
@@ -246,7 +246,7 @@
 
       <screen>
 /*************************************************************************
- * PathRelativePathToA   [SHLWAPI.@]
+ * PathRelativePathToW   [SHLWAPI.@]
  *
  * Create a relative path from one path to another.
  */
@@ -264,7 +264,7 @@
 
       <screen>
 /*************************************************************************
- * PathRelativePathToA   [SHLWAPI.@]
+ * PathRelativePathToW   [SHLWAPI.@]
  *
  * Create a relative path from one path to another.
  *
@@ -293,30 +293,6 @@
         description. This field is case insensitive and can be any of the following:
         <command>[I]</command>, <command>[In]</command>, <command>[O]</command>,
         <command>[Out]</command>, <command>[I/O]</command>, <command>[In/Out]</command>.
-      </para>
-
-      <para>
-        Parameters documented in the prototype should be formatted as follows:
-      </para>
-
-      <screen>
-/*************************************************************************
- * PathRelativePathToA   [SHLWAPI.@]
- *
- * Create a relative path from one path to another.
- *
- */
-BOOL WINAPI PathRelativePathToA(
- LPSTR  lpszPath,   /* [O] Destination for relative path */
- LPCSTR lpszFrom,   /* [I] Source path */
- DWORD  dwAttrFrom, /* [I] File attribute of source path */
- LPCSTR lpszTo,     /* [I] Destination path */
- DWORD  dwAttrTo)   /* [I] File attributes of destination path */
-      </screen>
-
-      <para>
-        The choice of which style to use is up to you, although for readability it
-        is suggested you stick with the same style within a single source file.
       </para>
 
       <para>
@@ -364,7 +340,7 @@ BOOL WINAPI PathRelativePathToA(
 
       <screen>
 /*************************************************************************
- * PathRelativePathToA   [SHLWAPI.@]
+ * PathRelativePathToW   [SHLWAPI.@]
  *
  * Create a relative path from one path to another.
  *
@@ -421,14 +397,14 @@ BOOL WINAPI PathRelativePathToA(
 
       <para>
         Where an Ascii and Unicode version of a function are available, it is
-        recommended that you document only the Ascii version and have the Unicode
-        version refer to the Ascii one, as follows:
+        recommended that you document only the Unicode version and have the Ascii
+        version refer to the Unicode one, as follows:
       </para>
       <screen>
 /*************************************************************************
- * PathRelativePathToW   [SHLWAPI.@]
+ * PathRelativePathToA   [SHLWAPI.@]
  *
- * See PathRelativePathToA.
+ * See PathRelativePathToW.
  */
       </screen>
       <para>
@@ -436,9 +412,9 @@ BOOL WINAPI PathRelativePathToA(
       </para>
       <screen>
 /*************************************************************************
- * PathRelativePathToW   [SHLWAPI.@]
+ * PathRelativePathToA   [SHLWAPI.@]
  *
- * Unicode version of PathRelativePathToA.
+ * Unicode version of PathRelativePathToW.
  */
       </screen>
 
