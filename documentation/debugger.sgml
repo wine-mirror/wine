@@ -271,8 +271,9 @@ winedbg "hl.exe -windowed"
       <para>
         This file describes where to start debugging Wine. If at any
         point you get stuck and want to ask for help, please read the
-        file <filename>documentation/bugreports</filename> for
-        information on how to write useful bug reports.
+        <emphasis>How to Report A Bug</emphasis> section of the 
+        <emphasis>Wine Users Guide</emphasis> for information on how to write
+        useful bug reports.
       </para>
 
       <sect2>
@@ -311,8 +312,7 @@ winedbg "hl.exe -windowed"
         <para>
           Steps to debug a crash. You may stop at any step, but please
           report the bug and provide as much of the information
-          gathered to the newsgroup or the relevant developer as
-          feasible.
+          gathered to the bug report as feasible.
         </para>
 
         <orderedlist>
@@ -362,17 +362,26 @@ winedbg "hl.exe -windowed"
               If you have found a misbehaving function, try to find out
               why it misbehaves. Find the function in the source code.
               Try to make sense of the arguments passed. Usually there is
-              a <function>TRACE(&lt;channel>,"(...)\n");</function> at
-              the beginning of the function. Rerun wine with
+              a <function>WINE_DEFAULT_DEBUG_CHANNEL(&lt;channel>);</function>
+              at the beginning of the file. Rerun wine with
               <parameter>-debugmsg +xyz,+relay</parameter> added to the
               commandline.
+            </para>
+            <para>
+              Occasionally there are additional debug channels defined at the 
+              begining of the file in the form.
+              <function>WINE_DECLARE_DEBUG_CHANNEL(&lt;channel>);</function>
+              If so the offending fuction may also uses one of these alternate
+              channels. Look through the the function for  
+             <function>TRACE_(&lt;channel>)(" ... /n");</function> and add any
+             additional channels to the commandline.
             </para>
           </listitem>
           <listitem>
             <para>
               Additional information on how to debug using the internal
               debugger can be  found in
-              <filename>debugger/README</filename>.
+              <filename>programs/winedbg/README</filename>.
             </para>
           </listitem>
           <listitem>
@@ -386,29 +395,25 @@ winedbg "hl.exe -windowed"
           </listitem>
           <listitem>
             <para>
-              If even that isn't enough, add more debug output for
-              yourself into the functions you find relevant.  See
-              <filename>documentation/debug-msgs</filename>. You might
+              If even that isn't enough, add more debug output for yourself 
+              into the functions you find relevant. See The section on Debug 
+              Logging in this guide for more information. You might
               also try to run the program in <command>gdb</command>
               instead of using the WINE-debugger. If you do that, use
               <parameter>handle SIGSEGV nostop noprint</parameter> to
               disable the handling of seg faults inside
-              <command>gdb</command> (needed for Win16). If you don't use
-              the <parameter>--desktop</parameter> or
-              <parameter>--managed</parameter> option, start the WINE
-              process with <parameter>--sync</parameter>, or chances are
-              good to get X into an unusable state.
+              <command>gdb</command> (needed for Win16). 
             </para>
           </listitem>
           <listitem>
             <para>
-              You can also set a breakpoint for that function. Start wine
-              with the <parameter>--debug</parameter> option added to the
-              commandline. After loading the executable wine will enter
-              the internal debugger. Use <parameter>break
-                KERNEL_LSTRLEN</parameter> (replace by function you want
-              to debug, CASE IS RELEVANT) to set a breakpoint.  Then use
-              <command>continue</command> to start normal
+              You can also set a breakpoint for that function. Start wine 
+              useing <command>winedbg</command> instead of 
+              <command>wine</command>. Once the debugger is is running enter 
+              <command>break</command> <parameter>KERNEL_LSTRLEN</parameter>
+              (replace by function you want to debug, CASE IS RELEVANT) 
+              to set a breakpoint.  Then
+              use <command>continue</command> to start normal
               program-execution. Wine will stop if it reaches the
               breakpoint. If the program isn't yet at the crashing call
               of that function, use <command>continue</command> again
@@ -425,6 +430,7 @@ winedbg "hl.exe -windowed"
         <title>Program hangs, nothing happens</title>
 
         <para>
+          <emphasis>Fix me - this is out of date </emphasis>
           Switch to UNIX shell, get the process-ID using <command>ps -a |
             grep wine</command>, and do a <command>kill -HUP
             &lt;pid></command> (without the &lt; and >). Wine will
@@ -449,8 +455,7 @@ winedbg "hl.exe -windowed"
         </para>
         <para>
           Since the failure happens usually directly before setting up
-          the Messagebox you can start wine with
-          <parameter>--debug</parameter> added to the commandline, set a
+          the Messagebox you can start winedbg and set a
           breakpoint at <function>MessageBoxA</function> (called by win16
           and win32 programs) and proceed with
           <command>continue</command>. With <parameter>--debugmsg
