@@ -287,11 +287,15 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
                 dbg_printf("[%d]: ", i + 1);
                 if (sgv.syms[i].flags & SYMFLAG_LOCAL)
                 {
-                    dbg_printf("local variable of %s\n", si->Name);
+                    dbg_printf("local variable %sof %s\n", 
+                               sgv.syms[i].flags & SYMFLAG_REGISTER ? "(in a register) " : "",
+                               si->Name);
                 }
                 else if (sgv.syms[i].flags & SYMFLAG_PARAMETER)
                 {
-                    dbg_printf("parameter of %s\n", si->Name);
+                    dbg_printf("parameter %sof %s\n", 
+                               sgv.syms[i].flags & SYMFLAG_REGISTER ? "(in a register) " : "",
+                               si->Name);
                 }
                 else if (sgv.syms[i].flags & SYMFLAG_THUNK) 
                 {
@@ -333,6 +337,28 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     return sglv_found;
 }
 
+BOOL symbol_is_local(const char* name)
+{
+    struct sgv_data             sgv;
+    char                        tmp[sizeof(SYMBOL_INFO) + 256];
+    SYMBOL_INFO*                si = (SYMBOL_INFO*)tmp;
+
+    sgv.num        = 0;
+    sgv.num_thunks = 0;
+    sgv.name       = name;
+    sgv.filename   = NULL;
+    sgv.lineno     = 0;
+    sgv.bp_disp    = FALSE;
+    sgv.do_thunks  = FALSE;
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen = 256;
+    if (stack_get_frame(si, &sgv.ihsf) &&
+        SymSetContext(dbg_curr_process->handle, &sgv.ihsf, NULL))
+        SymEnumSymbols(dbg_curr_process->handle, 0, name, sgv_cb, (void*)&sgv);
+    return sgv.num > 0;
+}
+
 /***********************************************************************
  *           symbol_read_symtable
  *
@@ -343,8 +369,8 @@ void symbol_read_symtable(const char* filename, unsigned long offset)
     dbg_printf("No longer supported\n");
 
 #if 0
-/* FIXME: have to implement SymAddSymbol in dbghelp, but likely to link this with
- * a loaded module !! 
+/* FIXME: have to implement SymAddSymbol in dbghelp, but likely we'll need to link
+ * this with an already loaded module !! 
  */
     FILE*       symbolfile;
     unsigned    addr;
@@ -575,14 +601,30 @@ int symbol_info_locals(void)
 static BOOL CALLBACK symbols_info_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
     struct dbg_type     type;
+    IMAGEHLP_MODULE     mi;
 
-    dbg_printf("%08lx: %s (", sym->Address, sym->Name);
+    mi.SizeOfStruct = sizeof(mi);
+
+    if (!SymGetModuleInfo(dbg_curr_process->handle, sym->ModBase, &mi))
+        mi.ModuleName[0] = '\0';
+    else
+    {
+        size_t  len = strlen(mi.ModuleName);
+        if (len > 5 && !strcmp(mi.ModuleName + len - 5, "<elf>"))
+            mi.ModuleName[len - 5] = '\0';
+    }
+
+    dbg_printf("%08lx: %s!%s", sym->Address, mi.ModuleName, sym->Name);
+    type.id = sym->TypeIndex;
+    type.module = sym->ModBase;
+
     if (sym->TypeIndex != dbg_itype_none && sym->TypeIndex != 0 &&
         types_get_info(&type, TI_GET_TYPE, &type.id))
     {
+        dbg_printf(" ");
         types_print_type(&type, FALSE);
     }
-    dbg_printf(")\n");
+    dbg_printf("\n");
     return TRUE;
 }
 

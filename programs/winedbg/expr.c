@@ -313,8 +313,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
         case type_expr_udt_class:
         case type_expr_udt_struct:
         case type_expr_udt_union:
-            rtn.type = types_find_type((DWORD)memory_to_linear_addr(&rtn.addr),
-                                       exp->un.cast.cast_to.u.name, SymTagUDT);
+            rtn.type = types_find_type(rtn.type.module, exp->un.cast.cast_to.u.name,
+                                       SymTagUDT);
             if (rtn.type.id == dbg_itype_none)
             {
                 dbg_printf("Can't cast to UDT %s\n", exp->un.cast.cast_to.u.name);
@@ -322,8 +322,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             }
             break;
         case type_expr_enumeration:
-            rtn.type = types_find_type((DWORD)memory_to_linear_addr(&rtn.addr),
-                                       exp->un.cast.cast_to.u.name, SymTagEnum);
+            rtn.type = types_find_type(rtn.type.module, exp->un.cast.cast_to.u.name,
+                                       SymTagEnum);
             if (rtn.type.id == dbg_itype_none)
             {
                 dbg_printf("Can't cast to enumeration %s\n", exp->un.cast.cast_to.u.name);
@@ -643,6 +643,8 @@ struct dbg_lvalue expr_eval(struct expr* exp)
                 RaiseException(DEBUG_STATUS_CANT_DEREF, 0, 0, NULL);
             exp->un.unop.result = (unsigned int)memory_to_linear_addr(&exp1.addr);
             rtn.type = types_find_pointer(&exp1.type);
+            if (rtn.type.id == dbg_itype_none)
+                RaiseException(DEBUG_STATUS_CANT_DEREF, 0, 0, NULL);
             break;
 	default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
 	}
@@ -770,7 +772,7 @@ int expr_print(const struct expr* exp)
     return TRUE;
 }
 
-struct expr* expr_clone(const struct expr* exp)
+struct expr* expr_clone(const struct expr* exp, unsigned* local_binding)
 {
     int		        i;
     struct expr*        rtn;
@@ -785,7 +787,7 @@ struct expr* expr_clone(const struct expr* exp)
     switch (exp->type)
     {
     case EXPR_TYPE_CAST:
-        rtn->un.cast.expr = expr_clone(exp->un.cast.expr);
+        rtn->un.cast.expr = expr_clone(exp->un.cast.expr, local_binding);
         break;
     case EXPR_TYPE_INTVAR:
         rtn->un.intvar.name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.intvar.name) + 1), exp->un.intvar.name);
@@ -798,25 +800,27 @@ struct expr* expr_clone(const struct expr* exp)
         break;
     case EXPR_TYPE_SYMBOL:
         rtn->un.symbol.name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.symbol.name) + 1), exp->un.symbol.name);
+        if (local_binding && symbol_is_local(exp->un.symbol.name))
+            *local_binding = TRUE;
         break;
     case EXPR_TYPE_PSTRUCT:
     case EXPR_TYPE_STRUCT:
-        rtn->un.structure.exp1 = expr_clone(exp->un.structure.exp1);
+        rtn->un.structure.exp1 = expr_clone(exp->un.structure.exp1, local_binding);
         rtn->un.structure.element_name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.structure.element_name) + 1), exp->un.structure.element_name);
         break;
     case EXPR_TYPE_CALL:
         for (i = 0; i < exp->un.call.nargs; i++)
         {
-            rtn->un.call.arg[i] = expr_clone(exp->un.call.arg[i]);
+            rtn->un.call.arg[i] = expr_clone(exp->un.call.arg[i], local_binding);
 	}
         rtn->un.call.funcname = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(exp->un.call.funcname) + 1), exp->un.call.funcname);
         break;
     case EXPR_TYPE_BINOP:
-        rtn->un.binop.exp1 = expr_clone(exp->un.binop.exp1);
-        rtn->un.binop.exp2 = expr_clone(exp->un.binop.exp2);
+        rtn->un.binop.exp1 = expr_clone(exp->un.binop.exp1, local_binding);
+        rtn->un.binop.exp2 = expr_clone(exp->un.binop.exp2, local_binding);
         break;
     case EXPR_TYPE_UNOP:
-        rtn->un.unop.exp1 = expr_clone(exp->un.unop.exp1);
+        rtn->un.unop.exp1 = expr_clone(exp->un.unop.exp1, local_binding);
         break;
     default:
         WINE_FIXME("Unexpected expression (%u).\n", exp->type);

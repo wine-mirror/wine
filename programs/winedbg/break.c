@@ -27,20 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 /***********************************************************************
- *           is_at_func_return
- *
- * Determine if the instruction at current PC is an instruction that
- * is a function return.
- */
-static BOOL is_at_func_return(void)
-{
-    ADDRESS     addr;
-
-    memory_get_current_pc(&addr);
-    return be_cpu->is_function_return(memory_to_linear_addr(&addr));
-}
-
-/***********************************************************************
  *           break_set_xpoints
  *
  * Set or remove all the breakpoints & watchpoints
@@ -703,13 +689,14 @@ static	BOOL should_stop(int bpnum)
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count)
+BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break)
 {
     int 	        bpnum;
     DWORD	        oldval;
     int 	        wpnum;
     enum dbg_exec_mode  mode = dbg_curr_thread->exec_mode;
 
+    *is_break = FALSE;
     /* If not single-stepping, back up to the break instruction */
     if (code == EXCEPTION_BREAKPOINT)
         addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
@@ -724,7 +711,6 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count)
         dbg_printf("Stopped on breakpoint %d at ", bpnum);
         print_address(&dbg_curr_process->bp[bpnum].addr, TRUE);
         dbg_printf("\n");
-        source_list_from_addr(addr, 0);
         return FALSE;
     }
 
@@ -741,7 +727,6 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count)
         print_address(addr, TRUE);
         dbg_printf(" values: old=%lu new=%lu\n",
                      oldval, dbg_curr_process->bp[wpnum].w.oldval);
-        source_list_from_addr(addr, 0);
         return FALSE;
     }
 
@@ -770,19 +755,13 @@ BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count)
 	return TRUE;
     }
 
-    /*
-     * If we are about to stop, then print out the source line if we
-     * have it.
-     */
-    if (mode != dbg_exec_cont && mode != dbg_exec_finish)
-        source_list_from_addr(addr, 0);
-
     /* If there's no breakpoint and we are not single-stepping, then
      * either we must have encountered a break insn in the Windows program
      * or someone is trying to stop us
      */
     if (bpnum == -1 && code == EXCEPTION_BREAKPOINT)
     {
+        *is_break = TRUE;
         addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
         return FALSE;
     }
@@ -815,8 +794,10 @@ void break_restart_execution(int count)
     enum dbg_line_status        status;
     enum dbg_exec_mode          mode, ret_mode;
     ADDRESS                     callee;
+    void*                       linear;
 
     memory_get_current_pc(&addr);
+    linear = memory_to_linear_addr(&addr);
 
     /*
      * This is the mode we will be running in after we finish.  We would like
@@ -841,7 +822,7 @@ void break_restart_execution(int count)
         dbg_printf("Not stopped at any breakpoint; argument ignored.\n");
     }
 
-    if (mode == dbg_exec_finish && is_at_func_return())
+    if (mode == dbg_exec_finish && be_cpu->is_function_return(linear))
     {
 	mode = ret_mode = dbg_exec_step_into_insn;
     }
@@ -852,7 +833,7 @@ void break_restart_execution(int count)
      * FIXME - we need to check for things like thunks or trampolines,
      * as the actual function may in fact have debug info.
      */
-    if (be_cpu->is_function_call(memory_to_linear_addr(&addr), &callee))
+    if (be_cpu->is_function_call(linear, &callee))
     {
 	status = symbol_get_function_line_status(&callee);
 #if 0
@@ -909,6 +890,8 @@ void break_restart_execution(int count)
         dbg_curr_process->bp[0].enabled = TRUE;
         dbg_curr_process->bp[0].refcount = 1;
         dbg_curr_process->bp[0].skipcount = 0;
+        dbg_curr_process->bp[0].xpoint_type = be_xpoint_break;
+        dbg_curr_process->bp[0].condition = NULL;
         be_cpu->single_step(&dbg_context, FALSE);
         break_set_xpoints(TRUE);
         break;
@@ -917,14 +900,15 @@ void break_restart_execution(int count)
     case dbg_exec_finish:
     case dbg_exec_step_over_insn:  /* Stepping over a call */
     case dbg_exec_step_over_line:  /* Stepping over a call */
-        if (be_cpu->is_step_over_insn(memory_to_linear_addr(&addr)))
+        if (be_cpu->is_step_over_insn(linear))
         {
-            be_cpu->single_step(&dbg_context, FALSE);
             be_cpu->disasm_one_insn(&addr, FALSE);
             dbg_curr_process->bp[0].addr = addr;
             dbg_curr_process->bp[0].enabled = TRUE;
             dbg_curr_process->bp[0].refcount = 1;
 	    dbg_curr_process->bp[0].skipcount = 0;
+            dbg_curr_process->bp[0].xpoint_type = be_xpoint_break;
+            dbg_curr_process->bp[0].condition = NULL;
             be_cpu->single_step(&dbg_context, FALSE);
             break_set_xpoints(TRUE);
             break;
@@ -956,7 +940,7 @@ int break_add_condition(int num, struct expr* exp)
 	dbg_curr_process->bp[num].condition = NULL;
     }
 
-    if (exp != NULL) dbg_curr_process->bp[num].condition = expr_clone(exp);
+    if (exp != NULL) dbg_curr_process->bp[num].condition = expr_clone(exp, NULL);
 
     return TRUE;
 }

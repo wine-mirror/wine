@@ -358,17 +358,17 @@ void source_list(IMAGEHLP_LINE* src1, IMAGEHLP_LINE* src2, int delta)
 void source_list_from_addr(const ADDRESS* addr, int nlines)
 {
     IMAGEHLP_LINE       il;
-    DWORD               lin;
+    ADDRESS             la;
 
     if (!addr)
     {
-        ADDRESS la;
         memory_get_current_pc(&la);
-        lin = (unsigned long)memory_to_linear_addr(&la);
+        addr = &la;
     }
-    else lin = (unsigned long)memory_to_linear_addr(addr);
 
     il.SizeOfStruct = sizeof(il);
-    if (SymGetLineFromAddr(dbg_curr_process->handle, lin, NULL, &il))
+    if (SymGetLineFromAddr(dbg_curr_process->handle,
+                           (unsigned long)memory_to_linear_addr(addr),
+                           NULL, &il))
         source_list(&il, NULL, nlines);
 }

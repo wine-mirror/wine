@@ -274,12 +274,12 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index,
 
 struct type_find_t
 {
-    unsigned long       result;  /* out: the found type */
+    unsigned long       result; /* out: the found type */
     enum SymTagEnum     tag;    /* in: the tag to look for */
     union
     {
-        unsigned long           typeid;
-        const char*             name;
+        unsigned long           typeid; /* when tag is SymTagUDT */
+        const char*             name;   /* when tag is SymTagPointerType */
     } u;
 };
 
@@ -288,6 +288,7 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
     struct type_find_t* user = (struct type_find_t*)_user;
     BOOL                ret = TRUE;
     struct dbg_type     type;
+    DWORD               type_id;
 
     if (sym->Tag == user->tag)
     {
@@ -303,11 +304,13 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
         case SymTagPointerType:
             type.module = sym->ModBase;
             type.id = sym->TypeIndex;
-            if (types_get_info(&type, TI_GET_TYPE, &type.id) && type.id == user->u.typeid)
+            types_get_info(&type, TI_GET_TYPE, &type_id);
+            if (types_get_info(&type, TI_GET_TYPE, &type_id) && type_id == user->u.typeid)
             {
                 user->result = sym->TypeIndex;
                 ret = FALSE;
             }
+            break;
         default: break;
         }
     }
@@ -413,7 +416,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
                     for (i = 0; i < min(fcp->Count, count); i++)
                     {
                         ptr = NULL;
-                        type.module = (unsigned long)memory_to_linear_addr(&lvalue->addr);
+                        type.module = lvalue->type.module;
                         type.id = fcp->ChildId[i];
                         types_get_info(&type, TI_GET_SYMNAME, &ptr);
                         if (!ptr) continue;
@@ -546,6 +549,7 @@ int types_print_type(const struct dbg_type* type, BOOL details)
         case UdtStruct: dbg_printf("struct %s", name); break;
         case UdtUnion:  dbg_printf("union %s", name); break;
         case UdtClass:  dbg_printf("class %s", name); break;
+        default:        WINE_ERR("Unsupported UDT type (%ld) for %s", udt, name); break;
         }
         if (details &&
             types_get_info(type, TI_GET_CHILDRENCOUNT, &count))

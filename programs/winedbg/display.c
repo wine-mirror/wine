@@ -57,9 +57,10 @@ static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
         !memcmp(si1->Name, si2->Name, si1->NameLen);
 }
 
-int display_add(struct expr *exp, int count, char format, int in_frame)
+int display_add(struct expr *exp, int count, char format)
 {
-    int                 i;
+    int         i;
+    int         local_binding = FALSE;
 
     for (i = 0; i < ndisplays; i++)
         if (displaypoints[i].exp == NULL)
@@ -75,11 +76,11 @@ int display_add(struct expr *exp, int count, char format, int in_frame)
 
     if (i == ndisplays) ndisplays++;
 
-    displaypoints[i].exp           = expr_clone(exp);
+    displaypoints[i].exp           = expr_clone(exp, &local_binding);
     displaypoints[i].count         = count;
     displaypoints[i].format        = format;
     displaypoints[i].enabled       = TRUE;
-    if (in_frame)
+    if (local_binding)
     {
         displaypoints[i].func = (SYMBOL_INFO*)displaypoints[i].func_buffer;
         memset(displaypoints[i].func, 0, sizeof(SYMBOL_INFO));

@@ -161,7 +161,6 @@ struct dbg_thread
     HANDLE			handle;
     DWORD			tid;
     void*			teb;
-    int				wait_for_first_exception;
     enum dbg_exec_mode          exec_mode;      /* mode the thread is run (step/run...) */
     int			        exec_count;     /* count of mode operations */
     ADDRESS_MODE	        addr_mode;      /* mode */
@@ -252,7 +251,7 @@ extern void             break_delete_xpoint(int num);
 extern void             break_delete_xpoints_from_module(unsigned long base);
 extern void             break_enable_xpoint(int num, BOOL enable);
 extern void             break_info(void);
-extern BOOL             break_should_continue(ADDRESS* addr, DWORD code, int* count);
+extern BOOL             break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break);
 extern void             break_suspend_execution(void);
 extern void             break_restart_execution(int count);
 extern int              break_add_condition(int bpnum, struct expr* exp);
@@ -268,7 +267,7 @@ extern char*            lexeme_alloc(const char*);
 
   /* display.c */
 extern int              display_print(void);
-extern int              display_add(struct expr* exp, int count, char format, int local_frame);
+extern int              display_add(struct expr* exp, int count, char format);
 extern int              display_delete(int displaynum);
 extern int              display_info(void);
 extern int              display_enable(int displaynum, int enable);
@@ -287,7 +286,7 @@ extern struct expr*     expr_alloc_struct(struct expr*, const char* element);
 extern struct expr*     expr_alloc_func_call(const char*, int nargs, ...);
 extern struct expr*     expr_alloc_typecast(struct type_expr_t*, struct expr*);
 extern struct dbg_lvalue expr_eval(struct expr*);
-extern struct expr*     expr_clone(const struct expr* exp);
+extern struct expr*     expr_clone(const struct expr* exp, unsigned* local_binding);
 extern int              expr_free(struct expr* exp);
 extern int              expr_print(const struct expr* exp);
 
@@ -342,6 +341,7 @@ extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS* addr)
 extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE* ret);
 extern void             symbol_info(const char* str);
 extern int              symbol_info_locals(void);
+extern BOOL             symbol_is_local(const char* name);
 
   /* types.c */
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);

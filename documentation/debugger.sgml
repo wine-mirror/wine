@@ -1677,6 +1677,13 @@ set $BreakAllThreadsStartup = 1
           command.
         </para>
 	<para>
+	  <command>winedbg</command> will automatically detect if the
+	  expression you entered contains a local variable. If so,
+	  display will only be shown if the context is still in the
+	  same function as the one the debugger was in when the
+	  display expression was entered.
+	</para>
+	<para>
 	  <table>
 	    <title>WineDbg's displays</title>
 	    <tgroup cols="2" align="left">

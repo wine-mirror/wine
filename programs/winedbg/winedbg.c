@@ -56,12 +56,7 @@
  *      + all computations should be made on long long
  *              o expr computations are in int:s
  *              o bitfield size is on a 4-bytes
- *      + some bits of internal types are missing (like type casts and the address
- *        operator)
  * - execution:
- *      + display: we shouldn't need to tell whether a display is local or not. This
- *        should be automatically guessed by checking whether the variables that are
- *        references are local or not
  *      + set a better fix for gdb (proxy mode) than the step-mode hack
  *      + implement function call in debuggee
  *      + trampoline management is broken when getting 16 <=> 32 thunk destination
@@ -70,8 +65,10 @@
  *        it currently stops at first insn with line number during the library 
  *        loading). We should identify this (__wine_delay_import) and set a
  *        breakpoint instead of single stepping the library loading.
- *      + Ctrl-C (in debugger) doesn't work if we've attached to the debuggee (but
- *        works if winedbg started the debuggee)
+ *      + it's wrong to copy thread->step_over_bp into process->bp[0] (when 
+ *        we have a multi-thread debuggee). complete fix must include storing all
+ *        thread's step-over bp in process-wide bp array, and not to handle bp
+ *        when we have the wrong thread running into that bp
  */
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
@@ -331,7 +328,7 @@ struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid)
 }
 
 struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
-                                       HANDLE h, void* teb)
+                                  HANDLE h, void* teb)
 {
     struct dbg_thread*	t = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dbg_thread));
 
@@ -342,7 +339,6 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->tid = tid;
     t->teb = teb;
     t->process = p;
-    t->wait_for_first_exception = 0;
     t->exec_mode = dbg_exec_cont;
     t->exec_count = 0;
     t->step_over_bp.enabled = FALSE;
@@ -375,10 +371,6 @@ static void dbg_init_current_thread(void* start)
 	    break_set_xpoints(TRUE);
 	}
     } 
-    else 
-    {
-	dbg_curr_thread->wait_for_first_exception = 1;
-    }
 }
 
 void dbg_del_thread(struct dbg_thread* t)
@@ -463,9 +455,10 @@ static unsigned dbg_fetch_context(void)
     return TRUE;
 }
 
-static unsigned dbg_exception_prolog(BOOL is_debug, BOOL force, DWORD code)
+static unsigned dbg_exception_prolog(BOOL is_debug, DWORD code)
 {
     ADDRESS     addr;
+    BOOL        is_break;
 
     dbg_in_exception = TRUE;
     memory_get_current_pc(&addr);
@@ -491,9 +484,8 @@ static unsigned dbg_exception_prolog(BOOL is_debug, BOOL force, DWORD code)
      * is WRT the source files.
      */
     stack_backtrace(dbg_curr_tid, FALSE);
-
-    if (!force && is_debug &&
-	break_should_continue(&addr, code, &dbg_curr_thread->exec_count))
+    if (is_debug &&
+	break_should_continue(&addr, code, &dbg_curr_thread->exec_count, &is_break))
 	return FALSE;
 
     if (addr.Mode != dbg_curr_thread->addr_mode)
@@ -511,10 +503,9 @@ static unsigned dbg_exception_prolog(BOOL is_debug, BOOL force, DWORD code)
         dbg_printf("In %s mode.\n", name);
         dbg_curr_thread->addr_mode = addr.Mode;
     }
-
     display_print();
 
-    if (!is_debug && !force)
+    if (!is_debug)
     {
 	/* This is a real crash, dump some info */
 	be_cpu->print_context(dbg_curr_thread->handle, &dbg_context);
@@ -522,16 +513,17 @@ static unsigned dbg_exception_prolog(BOOL is_debug, BOOL force, DWORD code)
         be_cpu->print_segment_info(dbg_curr_thread->handle, &dbg_context);
 	stack_backtrace(dbg_curr_tid, TRUE);
     }
-
-    if (!is_debug ||
-	dbg_curr_thread->exec_mode == dbg_exec_step_over_insn ||
-	dbg_curr_thread->exec_mode == dbg_exec_step_into_insn)
+    if (!is_debug || is_break ||
+        dbg_curr_thread->exec_mode == dbg_exec_step_over_insn ||
+        dbg_curr_thread->exec_mode == dbg_exec_step_into_insn)
     {
+        ADDRESS tmp = addr;
         /* Show where we crashed */
         dbg_curr_frame = 0;
-        memory_disasm_one_insn(&addr);
-        source_list_from_addr(&addr, 0);
+        memory_disasm_one_insn(&tmp);
     }
+    source_list_from_addr(&addr, 0);
+
     return TRUE;
 }
 
@@ -548,14 +540,16 @@ static void dbg_exception_epilog(void)
     dbg_in_exception = FALSE;
 }
 
-static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance,
-                                  BOOL force)
+static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance)
 {
     BOOL                is_debug = FALSE;
     THREADNAME_INFO*    pThreadName;
     struct dbg_thread*  pThread;
 
     assert(dbg_curr_thread);
+
+    WINE_TRACE("exception=%lx first_chance=%c\n",
+               rec->ExceptionCode, first_chance ? 'Y' : 'N');
 
     switch (rec->ExceptionCode)
     {
@@ -576,7 +570,7 @@ static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance,
         return DBG_CONTINUE;
     }
 
-    if (first_chance && !is_debug && !force && !DBG_IVAR(BreakOnFirstChance))
+    if (first_chance && !is_debug && !DBG_IVAR(BreakOnFirstChance))
     {
         /* pass exception to program except for debug exceptions */
         return DBG_EXCEPTION_NOT_HANDLED;
@@ -693,12 +687,12 @@ static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance,
 
     if (dbg_action_mode == automatic_mode)
     {
-        dbg_exception_prolog(is_debug, FALSE, rec->ExceptionCode);
+        dbg_exception_prolog(is_debug, rec->ExceptionCode);
         dbg_exception_epilog();
         return 0;  /* terminate execution */
     }
 
-    if (dbg_exception_prolog(is_debug, force, rec->ExceptionCode))
+    if (dbg_exception_prolog(is_debug, rec->ExceptionCode))
     {
 	dbg_interactiveP = TRUE;
         return 0;
@@ -740,15 +734,12 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             dbg_curr_process->continue_on_first_exception = FALSE;
             if (!DBG_IVAR(BreakOnAttach)) break;
         }
-
         if (dbg_fetch_context())
         {
             cont = dbg_handle_exception(&de->u.Exception.ExceptionRecord,
-                                        de->u.Exception.dwFirstChance,
-                                        dbg_curr_thread->wait_for_first_exception);
+                                        de->u.Exception.dwFirstChance);
             if (cont && dbg_curr_thread)
             {
-                dbg_curr_thread->wait_for_first_exception = 0;
                 SetThreadContext(dbg_curr_thread->handle, &dbg_context);
             }
         }
@@ -938,7 +929,6 @@ static void dbg_resume_debuggee(DWORD cont)
         {
             if (!SetThreadContext(dbg_curr_thread->handle, &dbg_context))
                 dbg_printf("Cannot set ctx on %lu\n", dbg_curr_tid);
-            dbg_curr_thread->wait_for_first_exception = 0;
         }
     }
     dbg_interactiveP = FALSE;
@@ -966,12 +956,12 @@ void dbg_wait_next_exception(DWORD cont, int count, int mode)
     dbg_interactiveP = TRUE;
 
     memory_get_current_pc(&addr);
-    WINE_TRACE("Exiting debugger      PC=0x%lx mode=%d count=%d\n",
+    WINE_TRACE("Entering debugger     PC=0x%lx mode=%d count=%d\n",
                addr.Offset, dbg_curr_thread->exec_mode,
                dbg_curr_thread->exec_count);
 }
 
-static	DWORD	dbg_main_loop(void)
+static	unsigned        dbg_main_loop(void)
 {
     DEBUG_EVENT		de;
 
@@ -994,7 +984,6 @@ static	DWORD	dbg_main_loop(void)
         break;
     default:
         dbg_interactiveP = TRUE;
-        if (dbg_curr_process) source_list_from_addr(NULL, 0);
         parser(NULL);
     }
     dbg_printf("WineDbg terminated on pid 0x%lx\n", dbg_curr_pid);
@@ -1016,12 +1005,30 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
      * while GUI:s don't
      */
     if (!CreateProcess(NULL, cmdLine, NULL, NULL,
-		       FALSE, 
+                       FALSE, 
                        DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|CREATE_NEW_CONSOLE,
                        NULL, NULL, &startup, &info))
     {
 	dbg_printf("Couldn't start process '%s'\n", cmdLine);
 	return FALSE;
+    }
+    if (!info.dwProcessId)
+    {
+        /* this happens when the program being run is not a Wine binary
+         * (for example, a shell wrapper around a WineLib app)
+         */
+        /* Current fix: list running processes and let the user attach
+         * to one of them (sic)
+         * FIXME: implement a real fix => grab the process (from the
+         * running processes) from its name
+         */
+        dbg_printf("Debuggee has been started (%s)\n"
+                   "But WineDbg isn't attached to it. Maybe you're trying to debug a winelib wrapper ??\n"
+                   "Try to attach to one of those processes:\n", cmdLine);
+        /* FIXME: (HACK) we need some time before the wrapper executes the winelib app */
+        Sleep(100);
+        info_win32_processes();
+        return TRUE;
     }
     dbg_curr_pid = info.dwProcessId;
     if (!(dbg_curr_process = dbg_add_process(dbg_curr_pid, 0, NULL))) return FALSE;
@@ -1056,13 +1063,14 @@ void	dbg_run_debuggee(const char* args)
 
 BOOL dbg_interrupt_debuggee(void)
 {
-    dbg_printf("Ctrl-C: stopping debuggee\n");
+    if (!dbg_process_list) return FALSE;
     /* FIXME: since we likely have a single process, signal the first process
      * in list
      */
-    if (!dbg_process_list) return FALSE;
+    if (dbg_process_list->next) dbg_printf("Ctrl-C: only stopping the first process\n");
+    else dbg_printf("Ctrl-C: stopping debuggee\n");
     dbg_process_list->continue_on_first_exception = FALSE;
-    return DebugBreakProcess(dbg_process_list);
+    return DebugBreakProcess(dbg_process_list->handle);
 }
 
 static BOOL WINAPI ctrl_c_handler(DWORD dwCtrlType)

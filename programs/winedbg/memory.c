@@ -263,7 +263,6 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
     long double         val_real;
     DWORD               tag, size, count, bt;
     struct dbg_type     rtype;
-    DWORD               linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
     if (lvalue->type.id == dbg_itype_none ||
         !types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag))
@@ -362,7 +361,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                     fcp->Count = min(count, 256);
                     if (types_get_info(&lvalue->type, TI_FINDCHILDREN, fcp))
                     {
-                        type.module = linear;
+                        type.module = lvalue->type.module;
                         for (i = 0; i < min(fcp->Count, count); i++)
                         {
                             type.id = fcp->ChildId[i];
@@ -484,13 +483,15 @@ void print_address(const ADDRESS* addr, BOOLEAN with_line)
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
     void*               lin = memory_to_linear_addr(addr);
+    DWORD               disp;
 
     print_bare_address(addr);
 
     si->SizeOfStruct = sizeof(*si);
     si->MaxNameLen   = 256;
-    if (!SymFromAddr(dbg_curr_process->handle, (unsigned long)lin, NULL, si)) return;
+    if (!SymFromAddr(dbg_curr_process->handle, (unsigned long)lin, &disp, si)) return;
     dbg_printf(" %s", si->Name);
+    if (disp) dbg_printf("+0x%lx", disp);
     if (with_line)
     {
         IMAGEHLP_LINE               il;
