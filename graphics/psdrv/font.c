@@ -73,10 +73,25 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 
     TRACE("Trying to find facename '%s'\n", FaceName);
 
+    /* Look for a matching font family */
     for(family = physDev->pi->Fonts; family; family = family->next) {
         if(!strcmp(FaceName, family->FamilyName))
 	    break;
     }
+    if(!family) {
+	/* Fallback for Window's font families to common PostScript families */
+	if(!strcmp(FaceName, "Arial"))
+	    strcpy(FaceName, "Helvetica");
+	else if(!strcmp(FaceName, "System"))
+	    strcpy(FaceName, "Helvetica");
+	else if(!strcmp(FaceName, "Times New Roman"))
+	    strcpy(FaceName, "Times");
+	for(family = physDev->pi->Fonts; family; family = family->next) {
+	    if(!strcmp(FaceName, family->FamilyName))
+		break;
+	}
+    }
+    /* If all else fails, use the first font defined for the printer */
     if(!family)
         family = physDev->pi->Fonts;
 
