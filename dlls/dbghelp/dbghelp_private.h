@@ -306,7 +306,7 @@ struct memory_access
 extern struct memory_access mem_access;
 #define read_mem(p,a,b,l) (mem_access.read_mem)((p),(a),(b),(l))
 #define write_mem(p,a,b,l) (mem_access.write_mem)((p),(a),(b),(l))
-extern unsigned long WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
+extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
 
 /* module.c */
 extern struct module*

@@ -139,7 +139,7 @@ static HRESULT      WINAPI OLEFontImpl_put_Charset(IFont* iface, short charset);
 static HRESULT      WINAPI OLEFontImpl_get_hFont(IFont* iface, HFONT* phfont);
 static HRESULT      WINAPI OLEFontImpl_Clone(IFont* iface, IFont** ppfont);
 static HRESULT      WINAPI OLEFontImpl_IsEqual(IFont* iface, IFont* pFontOther);
-static HRESULT      WINAPI OLEFontImpl_SetRatio(IFont* iface, long cyLogical, long cyHimetric);
+static HRESULT      WINAPI OLEFontImpl_SetRatio(IFont* iface, LONG cyLogical, LONG cyHimetric);
 static HRESULT      WINAPI OLEFontImpl_QueryTextMetrics(IFont* iface, TEXTMETRICOLE* ptm);
 static HRESULT      WINAPI OLEFontImpl_AddRefHfont(IFont* iface, HFONT hfont);
 static HRESULT      WINAPI OLEFontImpl_ReleaseHfont(IFont* iface, HFONT hfont);
@@ -1048,8 +1048,8 @@ static HRESULT WINAPI OLEFontImpl_IsEqual(
  */
 static HRESULT WINAPI OLEFontImpl_SetRatio(
   IFont* iface,
-  long   cyLogical,
-  long   cyHimetric)
+  LONG   cyLogical,
+  LONG   cyHimetric)
 {
   OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%ld, %ld)\n", this, cyLogical, cyHimetric);

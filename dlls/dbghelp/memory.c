@@ -46,7 +46,7 @@ struct memory_access mem_access = {win32_read_mem, win32_write_mem};
  *
  * converts an address into its linear value
  */
-unsigned long WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr)
+DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr)
 {
     LDT_ENTRY	le;
 

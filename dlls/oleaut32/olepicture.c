@@ -519,7 +519,7 @@ static HRESULT WINAPI OLEPictureImpl_get_Height(IPicture *iface,
  * OLEPictureImpl_Render
  */
 static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
-					    long x, long y, long cx, long cy,
+					    LONG x, LONG y, LONG cx, LONG cy,
 					    OLE_XPOS_HIMETRIC xSrc,
 					    OLE_YPOS_HIMETRIC ySrc,
 					    OLE_XSIZE_HIMETRIC cxSrc,

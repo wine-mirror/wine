@@ -386,9 +386,9 @@ interface IMediaSample : IUnknown
 
     HRESULT SetPreroll(BOOL bIsPreroll);
 
-    long GetActualDataLength(void);
+    LONG GetActualDataLength(void);
 
-    HRESULT SetActualDataLength(long length);
+    HRESULT SetActualDataLength(LONG length);
 
     HRESULT GetMediaType(AM_MEDIA_TYPE **ppMediaType);
 

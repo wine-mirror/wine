@@ -3997,8 +3997,8 @@ static ULONG WINAPI ITypeLibComp_fnRelease(ITypeComp * iface)
 static HRESULT WINAPI ITypeLibComp_fnBind(
     ITypeComp * iface,
     OLECHAR * szName,
-    unsigned long lHash,
-    unsigned short wFlags,
+    ULONG lHash,
+    WORD wFlags,
     ITypeInfo ** ppTInfo,
     DESCKIND * pDescKind,
     BINDPTR * pBindPtr)
@@ -4010,7 +4010,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
 static HRESULT WINAPI ITypeLibComp_fnBindType(
     ITypeComp * iface,
     OLECHAR * szName,
-    unsigned long lHash,
+    ULONG lHash,
     ITypeInfo ** ppTInfo,
     ITypeComp ** ppTComp)
 {
@@ -5834,8 +5834,8 @@ static ULONG WINAPI ITypeComp_fnRelease(ITypeComp * iface)
 static HRESULT WINAPI ITypeComp_fnBind(
     ITypeComp * iface,
     OLECHAR * szName,
-    unsigned long lHash,
-    unsigned short wFlags,
+    ULONG lHash,
+    WORD wFlags,
     ITypeInfo ** ppTInfo,
     DESCKIND * pDescKind,
     BINDPTR * pBindPtr)
@@ -5902,7 +5902,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
 static HRESULT WINAPI ITypeComp_fnBindType(
     ITypeComp * iface,
     OLECHAR * szName,
-    unsigned long lHash,
+    ULONG lHash,
     ITypeInfo ** ppTInfo,
     ITypeComp ** ppTComp)
 {
