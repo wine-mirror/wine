@@ -622,8 +622,16 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     }
     else
     {
-        rect.left += template.x * xUnit / 4;
-        rect.top += template.y * yUnit / 8;
+        if (template.style & DS_CENTER)
+        {
+            rect.left = (SYSMETRICS_CXSCREEN - rect.right) / 2;
+            rect.top = (SYSMETRICS_CYSCREEN - rect.bottom) / 2;
+        }
+        else
+        {
+            rect.left += template.x * xUnit / 4;
+            rect.top += template.y * yUnit / 8;
+        }
         if ( !(template.style & WS_CHILD) )
 	{
             INT16 dX, dY;
