@@ -364,26 +364,25 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_QueryInterface(
 
 static ULONG WINAPI IDirectSound3DBufferImpl_AddRef(LPDIRECTSOUND3DBUFFER iface)
 {
-	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	return InterlockedIncrement(&(This->ref));
+    IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface)
 {
-	IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
-	ULONG ulReturn;
+    IDirectSound3DBufferImpl *This = (IDirectSound3DBufferImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	ulReturn = InterlockedDecrement(&(This->ref));
-	if (!ulReturn) {
-		This->dsb->ds3db = NULL;
-		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
-		HeapFree(GetProcessHeap(),0,This);
-		TRACE("(%p) released\n",This);
-	}
-
-	return ulReturn;
+    if (!ref) {
+        This->dsb->ds3db = NULL;
+        IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
+    }
+    return ref;
 }
 
 /* IDirectSound3DBuffer methods */
@@ -801,27 +800,24 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 
 static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(LPDIRECTSOUND3DLISTENER iface)
 {
-	IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	return InterlockedIncrement(&(This->ref));
+    IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER iface)
 {
-	IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
-	ULONG ulReturn;
+    IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	ulReturn = InterlockedDecrement(&(This->ref));
-
-	/* Free all resources */
-	if( ulReturn == 0 ) {
-		This->dsound->listener = 0;
-		HeapFree(GetProcessHeap(),0,This);
-		TRACE("(%p) released\n",This);
-	}
-
-	return ulReturn;
+    if (!ref) {
+        This->dsound->listener = 0;
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
+    }
+    return ref;
 }
 
 /* IDirectSound3DListener methods */

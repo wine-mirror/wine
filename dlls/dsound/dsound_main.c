@@ -427,18 +427,21 @@ DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI
-DSCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return InterlockedIncrement(&(This->ref));
+static ULONG WINAPI DSCF_AddRef(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
-static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return InterlockedDecrement(&(This->ref));
+static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    /* static class, won't be freed */
+    return ref;
 }
 
 static HRESULT WINAPI DSCF_CreateInstance(
@@ -495,19 +498,21 @@ DSPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	return E_NOINTERFACE;
 }
 
-static ULONG WINAPI
-DSPCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return InterlockedIncrement(&(This->ref));
+static ULONG WINAPI DSPCF_AddRef(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
-static ULONG WINAPI
-DSPCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	TRACE("(%p) ref was %ld\n", This, This->ref);
-	return InterlockedDecrement(&(This->ref));
+static ULONG WINAPI DSPCF_Release(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    /* static class, won't be freed */
+    return ref;
 }
 
 static HRESULT WINAPI

@@ -230,21 +230,19 @@ static ULONG WINAPI IDirectSoundImpl_AddRef(
     LPDIRECTSOUND8 iface)
 {
     IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSoundImpl_Release(
     LPDIRECTSOUND8 iface)
 {
     IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) ref was %ld, thread is %04lx\n",
-          This, This->ref, GetCurrentThreadId());
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    if (!ref) {
         HRESULT hres;
         INT i;
 
@@ -291,9 +289,8 @@ static ULONG WINAPI IDirectSoundImpl_Release(
         DeleteCriticalSection(&This->mixlock);
         HeapFree(GetProcessHeap(),0,This);
         dsound = NULL;
-        TRACE("(%p) released\n",This);
+        TRACE("(%p) released\n", This);
     }
-
     return ref;
 }
 
@@ -971,23 +968,23 @@ static ULONG WINAPI IDirectSound_IUnknown_AddRef(
     LPUNKNOWN iface)
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSound_IUnknown_Release(
     LPUNKNOWN iface)
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
-    ULONG ulReturn;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&(This->ref));
-    if (ulReturn == 0) {
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    if (!ref) {
         IDirectSoundImpl_Release(This->pds);
-        HeapFree(GetProcessHeap(),0,This);
-        TRACE("(%p) released\n",This);
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
     }
-    return ulReturn;
+    return ref;
 }
 
 static IUnknownVtbl DirectSound_Unknown_Vtbl =
@@ -1049,23 +1046,23 @@ static ULONG WINAPI IDirectSound_IDirectSound_AddRef(
     LPDIRECTSOUND iface)
 {
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSound_IDirectSound_Release(
     LPDIRECTSOUND iface)
 {
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
-    ULONG ulReturn;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&This->ref);
-    if (ulReturn == 0) {
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    if (!ref) {
         IDirectSoundImpl_Release(This->pds);
-        HeapFree(GetProcessHeap(),0,This);
-        TRACE("(%p) released\n",This);
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
     }
-    return ulReturn;
+    return ref;
 }
 
 static HRESULT WINAPI IDirectSound_IDirectSound_CreateSoundBuffer(
@@ -1210,23 +1207,23 @@ static ULONG WINAPI IDirectSound8_IUnknown_AddRef(
     LPUNKNOWN iface)
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSound8_IUnknown_Release(
     LPUNKNOWN iface)
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
-    ULONG ulReturn;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&(This->ref));
-    if (ulReturn == 0) {
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    if (!ref) {
         IDirectSoundImpl_Release(This->pds);
-        HeapFree(GetProcessHeap(),0,This);
-        TRACE("(%p) released\n",This);
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
     }
-    return ulReturn;
+    return ref;
 }
 
 static IUnknownVtbl DirectSound8_Unknown_Vtbl =
@@ -1288,23 +1285,23 @@ static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(
     LPDIRECTSOUND iface)
 {
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSound8_IDirectSound_Release(
     LPDIRECTSOUND iface)
 {
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
-    ULONG ulReturn;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&(This->ref));
-    if (ulReturn == 0) {
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    if (!ref) {
         IDirectSoundImpl_Release(This->pds);
-        HeapFree(GetProcessHeap(),0,This);
-        TRACE("(%p) released\n",This);
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
     }
-    return ulReturn;
+    return ref;
 }
 
 static HRESULT WINAPI IDirectSound8_IDirectSound_CreateSoundBuffer(
@@ -1449,23 +1446,23 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(
     LPDIRECTSOUND8 iface)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
     LPDIRECTSOUND8 iface)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
-    ULONG ulReturn;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
-    ulReturn = InterlockedDecrement(&(This->ref));
-    if (ulReturn == 0) {
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    if (!ref) {
         IDirectSoundImpl_Release(This->pds);
-        HeapFree(GetProcessHeap(),0,This);
-        TRACE("(%p) released\n",This);
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
     }
-    return ulReturn;
+    return ref;
 }
 
 static HRESULT WINAPI IDirectSound8_IDirectSound8_CreateSoundBuffer(

@@ -64,24 +64,24 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QueryInterface(
 static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
 {
     IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
-    ULONG ulReturn;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-    TRACE("(%p) ref was %ld\n", This, This->ref);
-    ulReturn = InterlockedDecrement(&(This->ref));
-    if (!ulReturn) {
+    if (!ref) {
 	This->dsb->iks = 0;
 	IDirectSoundBuffer_Release((LPDIRECTSOUND3DBUFFER)This->dsb);
-	HeapFree(GetProcessHeap(),0,This);
-	TRACE("(%p) released\n",This);
+	HeapFree(GetProcessHeap(), 0, This);
+	TRACE("(%p) released\n", This);
     }
-    return ulReturn;
+    return ref;
 }
 
 static HRESULT WINAPI IKsBufferPropertySetImpl_Get(
@@ -248,22 +248,22 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
 static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
     IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
-    return InterlockedIncrement(&(This->ref));
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
 {
     IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
-    ULONG ulReturn;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-    TRACE("(%p) ref was %ld\n", This, This->ref);
-    ulReturn = InterlockedDecrement(&(This->ref));
-    if (ulReturn == 0) {
-        HeapFree(GetProcessHeap(),0,This);
-	TRACE("(%p) released\n",This);
+    if (!ref) {
+        HeapFree(GetProcessHeap(), 0, This);
+	TRACE("(%p) released\n", This);
     }
-    return ulReturn;
+    return ref;
 }
 
 static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(

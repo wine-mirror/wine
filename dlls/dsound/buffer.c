@@ -54,25 +54,25 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 
 static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface)
 {
-	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	return InterlockedIncrement(&(This->ref));
+    IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
-static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
-	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
-	ULONG ref;
+static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface)
+{
+    IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-	ref = InterlockedDecrement(&(This->ref));
-	if (ref == 0) {
-		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->dsb);
-		This->dsb->notify = NULL;
-		HeapFree(GetProcessHeap(),0,This);
-		TRACE("(%p) released\n",This);
-	}
-	return ref;
+    if (!ref) {
+        IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->dsb);
+        This->dsb->notify = NULL;
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
+    }
+    return ref;
 }
 
 static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
@@ -350,22 +350,19 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 
 static ULONG WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface)
 {
-	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	return InterlockedIncrement(&(This->ref));
+    IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 {
-	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	ULONG ref;
+    IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-
-	ref = InterlockedDecrement(&(This->ref));
-	if (ref)
-		return ref;
-
+    if (!ref) {
 	DSOUND_RemoveBuffer(This->dsound, This);
 
 	This->lock.DebugInfo->Spare[1] = 0;
@@ -390,10 +387,11 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 
 	HeapFree(GetProcessHeap(), 0, This->notifies);
 	HeapFree(GetProcessHeap(), 0, This->pwfx);
-	HeapFree(GetProcessHeap(),0,This);
+	HeapFree(GetProcessHeap(), 0, This);
 
-	TRACE("(%p) released\n",This);
-	return 0;
+	TRACE("(%p) released\n", This);
+    }
+    return ref;
 }
 
 DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
@@ -1246,25 +1244,25 @@ static HRESULT WINAPI SecondaryBufferImpl_QueryInterface(
 
 static ULONG WINAPI SecondaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface)
 {
-	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
-	return InterlockedIncrement(&(This->ref));
+    IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
+    ULONG ref = InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    return ref;
 }
 
 static ULONG WINAPI SecondaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 {
-	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
-	ULONG ref;
-	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
+    IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
+    ULONG ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, ref + 1);
 
-	ref = InterlockedDecrement(&(This->ref));
-	if (!ref) {
-		This->dsb->dsb = NULL;
-		IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
-		HeapFree(GetProcessHeap(),0,This);
-		TRACE("(%p) released\n",This);
-	}
-	return ref;
+    if (!ref) {
+        This->dsb->dsb = NULL;
+        IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER8)This->dsb);
+        HeapFree(GetProcessHeap(), 0, This);
+        TRACE("(%p) released\n", This);
+    }
+    return ref;
 }
 
 static HRESULT WINAPI SecondaryBufferImpl_GetCaps(
