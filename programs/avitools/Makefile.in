@@ -18,13 +18,13 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 aviinfo.spec.c: aviinfo.spec aviinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviinfo.o -o aviinfo.spec.c -spec aviinfo.spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviinfo.o -o aviinfo.spec.c -spec $(SRCDIR)/aviinfo.spec
 
 aviplay.spec.c: aviplay.spec aviplay.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviplay.o -o aviplay.spec.c -spec aviplay.spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym aviplay.o -o aviplay.spec.c -spec $(SRCDIR)/aviplay.spec
 
 icinfo.spec.c: icinfo.spec icinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym icinfo.o -o icinfo.spec.c -spec icinfo.spec
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L $(DLLDIR) -sym icinfo.o -o icinfo.spec.c -spec $(SRCDIR)/icinfo.spec
 
 aviinfo.so: aviinfo.o aviinfo.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o aviinfo.so aviinfo.o aviinfo.spec.o $(ALL_LIBS)
