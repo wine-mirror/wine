@@ -230,13 +230,18 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOW hIC, HINTERNET hHttpSession,
 
     TRACE("--> Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 
+    lpvNewInfo = lpvStatusInfo;
     if(!(hIC->hdr.dwInternalFlags & INET_CALLBACKW)) {
-        if(dwInternetStatus == INTERNET_STATUS_RESOLVING_NAME)
+        switch(dwInternetStatus)
+        {
+        case INTERNET_STATUS_RESOLVING_NAME:
+        case INTERNET_STATUS_REDIRECT:
             lpvNewInfo = WININET_strdup_WtoA(lpvStatusInfo);
+        }
     }
     hIC->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
-                      lpvNewInfo?lpvNewInfo:lpvStatusInfo, dwStatusInfoLength);
-    if(lpvNewInfo)
+                      lpvNewInfo, dwStatusInfoLength);
+    if(lpvNewInfo != lpvStatusInfo)
         HeapFree(GetProcessHeap(), 0, lpvNewInfo);
 
     TRACE("<-- Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
