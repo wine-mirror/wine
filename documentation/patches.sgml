@@ -14,13 +14,13 @@
       <itemizedlist>
         <listitem>
           <para>
-            A meaningfull subject (very short description of patch)            
+            A meaningful subject (very short description of patch)            
           </para>
         </listitem>
          <listitem>
           <para>
             A long (paragraph) description of what was wrong and what is now 
-            better (and now broken :). (recomended)
+            better (and now broken :). (recommended)
           </para>
         </listitem>
         <listitem>
@@ -48,8 +48,8 @@
       </para>
       <para>
         For additions: mention that you have some new files and
-        include them as either separate attachments or by appending
-        the <command>diff -u /dev/null /my/new/file</command> output of them
+        include them by appending the
+        <command>diff -u /dev/null /my/new/file</command> output of them
 	to any <command>cvs diff -u</command> output you may have.
 	Alternatively, use <command>diff -Nu olddir/ newdir/</command>
 	in case of multiple new files to add.
@@ -80,8 +80,9 @@ diff -u file.old file.c > file.txt
       <itemizedlist>
         <listitem>
         <para>
-          No HTML mail please. It is considered bad netiquette as it uglifies
-          the message, and is not viewable by many of the subscribers.
+          No HTML mail, since patches should be inlined and HTML turns the 
+          patch into garbage. Also it is considered bad netiquette as it 
+          uglifies the message, and is not viewable by many of the subscribers.
         </para>
         </listitem>
          <listitem>
@@ -94,8 +95,9 @@ diff -u file.old file.c > file.txt
         </listitem>
         <listitem>
         <para>
-          Tabs are not forbidden but are defined as 8 characters and the usual
-          amount of indentation is 4 characters. 
+          Tabs are not forbidden but discouraged. A tab is defined as
+          8 characters and the usual amount of indentation is 4
+          characters.
         </para>
         </listitem>
         <listitem>
@@ -175,6 +177,15 @@ code
           emails to yourself too.
         </para>
       </sect2>
+      <sect2 id="Alexandre-Bottom-Line">
+        <title>Alexandre's Bottom Line</title>
+        <para>
+          <quote>The basic rules are: no attachments, no mime crap, no 
+          line wrapping, a single patch per mail. Basically if I can't 
+          do <Command>"cat raw_mail | patch -p0"</command> it's in the
+          wrong format.</quote>
+        </para>
+      </sect2>
     </sect1>
 
     <sect1 id="patch-quality">
@@ -192,7 +203,7 @@ code
         friend!
       </para>
       <para>
-        Save yourself some embarasment and run your patched code
+        Save yourself some embarrassment and run your patched code
         against more than just your current test example.  Experience
         will tell you how much effort to apply here.
       </para>
