@@ -75,7 +75,7 @@ LONG CALLBACK	ARTS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 /*    				ARTS_MidiInit(); FIXME: no midi 
 support in artsc so we don't have any in the arts driver */
 				return 1;
-    case DRV_FREE:	        return ARTS_CloseDevice();
+    case DRV_FREE:	        return ARTS_WaveClose();
     case DRV_OPEN:		return ARTS_drvOpen((LPSTR)dwParam1);
     case DRV_CLOSE:		return ARTS_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;

@@ -29,6 +29,6 @@
 #endif
 
 extern LONG ARTS_WaveInit(void);
-extern LONG ARTS_CloseDevice(void);
+extern LONG ARTS_WaveClose(void);
 
 #endif  /* __WINE_ARTS_H */

@@ -22,13 +22,18 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/*
+/* NOTE:
+ *    with arts we cannot stop the audio that is already in
+ *    the servers buffer, so to reduce delays during starting 
+ *    and stoppping of audio streams adjust the
+ *    audio buffer size in the kde control center or in the
+ *    artsd startup script
+ *
  * FIXME:
  *	pause in waveOut does not work correctly in loop mode
  *
  * TODO:
  *	implement wave-in support with artsc
- *      only one sound card is currently supported, add more
  */
 
 /*#define EMULATE_SB16*/
@@ -60,10 +65,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 #include <artsc.h>
 
-#define	BUFFER_SIZE		16 * 1024
+#define BUFFER_SIZE		16 * 1024
 #define SPACE_THRESHOLD 	5 * 1024
 
-#define MAX_WAVEOUTDRV 	(1)
+#define MAX_WAVEOUTDRV 	(10)
 
 /* state diagram for waveOut writing:
  *
@@ -221,19 +226,45 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
 }
 
 /******************************************************************
- *		ARTS_OpenDevice
+ *		ARTS_CloseDevice
+ *
  */
-static int	ARTS_OpenDevice(void)
+void		ARTS_CloseDevice(WINE_WAVEOUT* wwo)
+{
+  arts_close_stream(wwo->play_stream); 	/* close the arts stream */
+  wwo->play_stream = (arts_stream_t*)-1;
+
+  /* free up the buffer we use for volume and reset the size */
+  if(wwo->sound_buffer)
+    HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
+
+  wwo->buffer_size = 0;
+}
+
+/******************************************************************
+ *		ARTS_Init
+ */
+static int	ARTS_Init(void)
 {
   return arts_init();  /* initialize arts and return errorcode */
 }
 
 /******************************************************************
- *		ARTS_CloseDevice
- *
+ *		ARTS_WaveClose
  */
-LONG	ARTS_CloseDevice(void)
+LONG		ARTS_WaveClose(void)
 {
+    int iDevice;
+
+    /* close all open devices */   
+    for(iDevice = 0; iDevice < MAX_WAVEOUTDRV; iDevice++)
+    {
+      if(WOutDev[iDevice].play_stream != (arts_stream_t*)-1)
+      {
+        ARTS_CloseDevice(&WOutDev[iDevice]);
+      }
+    }
+
     arts_free();    /* free up arts */
     return 1;
 }
@@ -250,54 +281,53 @@ LONG ARTS_WaveInit(void)
 
     TRACE("called\n");
     
-    /* start with output device */
+    if ((errorcode = ARTS_Init()) < 0)
+    {
+	ERR("arts_init() failed (%d)\n", errorcode);
+	return -1;
+    }
 
     /* initialize all device handles to -1 */
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
-	WOutDev[i].play_stream = (arts_stream_t*)-1;
-
-    /* FIXME: only one device is supported */
-    memset(&WOutDev[0].caps, 0, sizeof(WOutDev[0].caps));
-
-    if ((errorcode = ARTS_OpenDevice()) < 0)
     {
-	ERR("arts_init() failed (%d)\n", errorcode);
-         return -1;
-    }
-
+	WOutDev[i].play_stream = (arts_stream_t*)-1;
+	memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps)); /* zero out
+							caps values */
     /* FIXME: some programs compare this string against the content of the registry
      * for MM drivers. The names have to match in order for the program to work 
      * (e.g. MS win9x mplayer.exe)
      */
 #ifdef EMULATE_SB16
-    WOutDev[0].caps.wMid = 0x0002;
-    WOutDev[0].caps.wPid = 0x0104;
-    strcpy(WOutDev[0].caps.szPname, "SB16 Wave Out");
+    	WOutDev[i].caps.wMid = 0x0002;
+    	WOutDev[i].caps.wPid = 0x0104;
+    	strcpy(WOutDev[i].caps.szPname, "SB16 Wave Out");
 #else
-    WOutDev[0].caps.wMid = 0x00FF; 	/* Manufac ID */
-    WOutDev[0].caps.wPid = 0x0001; 	/* Product ID */
-    /*    strcpy(WOutDev[0].caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
-    strcpy(WOutDev[0].caps.szPname, "CS4236/37/38");
+    	WOutDev[i].caps.wMid = 0x00FF; 	/* Manufac ID */
+    	WOutDev[i].caps.wPid = 0x0001; 	/* Product ID */
+    /*    strcpy(WOutDev[i].caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
+    	strcpy(WOutDev[i].caps.szPname, "CS4236/37/38");
 #endif
-    WOutDev[0].caps.vDriverVersion = 0x0100;
-    WOutDev[0].caps.dwFormats = 0x00000000;
-    WOutDev[0].caps.dwSupport = WAVECAPS_VOLUME;
+    	WOutDev[i].caps.vDriverVersion = 0x0100;
+    	WOutDev[i].caps.dwFormats = 0x00000000;
+    	WOutDev[i].caps.dwSupport = WAVECAPS_VOLUME;
     
-    WOutDev[0].caps.wChannels = 2;
-    WOutDev[0].caps.dwSupport |= WAVECAPS_LRVOLUME;
+    	WOutDev[i].caps.wChannels = 2;
+    	WOutDev[i].caps.dwSupport |= WAVECAPS_LRVOLUME;
 
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4M08;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4S08;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4S16;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4M16;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_2M08;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_2S08;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_2M16;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_2S16;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_1M08;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_1S08;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_1M16;
-    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_1S16;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_4S08;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_4S16;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_4M16;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_2M08;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_2S08;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_2M16;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_2S16;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1M08;
+    	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S08;
+	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
+	WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
+    }
+
 
     return 0;
 }
@@ -450,6 +480,7 @@ static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo)
     wwo->dwPlayedTotal = wwo->dwWrittenTotal - 
 	(wwo->dwBufferSize - 
 	arts_stream_get(wwo->play_stream, ARTS_P_BUFFER_SPACE));
+
     return TRUE;
 }
 
@@ -529,10 +560,6 @@ static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
 		ARTS_P_BUFFER_SPACE)) / ((wwo->format.wf.nSamplesPerSec * 
 		wwo->format.wBitsPerSample * wwo->format.wf.nChannels) 
 		/1000);
-
-	/* FIXME: this is a hack since the waitvalue we calculate is too 
-large for some reason.... */
-	waitvalue/=4;
 
 	TRACE("wait value of %d\n", waitvalue);
 
@@ -689,15 +716,10 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 {
     wodUpdatePlayedTotal(wwo);
 
-    /* updates current notify list */
-    wodPlayer_NotifyCompletions(wwo, FALSE);
+    wodPlayer_NotifyCompletions(wwo, FALSE); /* updates current notify list */
 
-    /* flush all possible output */
-    /* close and open the stream to end the playback and prepare for 
-		new playback */
-    arts_close_stream(wwo->play_stream);
-    wwo->play_stream = arts_play_stream(wwo->format.wf.nSamplesPerSec, 
-	wwo->format.wBitsPerSample, wwo->format.wf.nChannels, "winearts");
+    /* we aren't able to flush any data that has already been written */
+    /* to arts, otherwise we would do the flushing here */
 
     if (reset) {
         enum win_wm_message     msg;
@@ -741,19 +763,9 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
             wwo->dwPartialOffset = 0;
             wwo->dwWrittenTotal = wwo->dwPlayedTotal; /* this is wrong !!! */
         } else {
-            LPWAVEHDR   ptr;
-            DWORD       sz = wwo->dwPartialOffset;
-
-            /* reset all the data as if we had written only up to lpPlayedTotal bytes */
-            /* compute the max size playable from lpQueuePtr */
-            for (ptr = wwo->lpQueuePtr; ptr != wwo->lpPlayPtr; ptr = ptr->lpNext) {
-                sz += ptr->dwBufferLength;
-            }
-            /* because the reset lpPlayPtr will be lpQueuePtr */
-            if (wwo->dwWrittenTotal > wwo->dwPlayedTotal + sz) ERR("grin\n");
-            wwo->dwPartialOffset = sz - (wwo->dwWrittenTotal - wwo->dwPlayedTotal);
-            wwo->dwWrittenTotal = wwo->dwPlayedTotal;
-            wwo->lpPlayPtr = wwo->lpQueuePtr;
+	    /* the data already written is going to be played, so take */
+	    /* this fact into account here */
+	    wwo->dwPlayedTotal = wwo->dwWrittenTotal;
         }
 	wwo->state = WINE_WS_PAUSED;
     }
@@ -940,6 +952,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_BADDEVICEID;
     }
 
+    /* if this device is already open tell the app that it is allocated */
+    if(WOutDev[wDevID].play_stream != (arts_stream_t*)-1)
+    {
+      TRACE("device already allocated\n");
+      return MMSYSERR_ALLOCATED;
+    }
+
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
 	lpDesc->lpFormat->nChannels == 0 ||
@@ -990,8 +1009,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	was set to for future use */
     wwo->dwBufferSize = arts_stream_set(wwo->play_stream, 
 		ARTS_P_BUFFER_SIZE, BUFFER_SIZE);
-    TRACE("Tried to set BUFFER_SIZE of %d, wwo->dwBufferSize is actually 
-	%ld\n", BUFFER_SIZE, wwo->dwBufferSize);
+    TRACE("Tried to set BUFFER_SIZE of %d, wwo->dwBufferSize is actually %ld\n", BUFFER_SIZE, wwo->dwBufferSize);
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
 
@@ -1049,14 +1067,8 @@ static DWORD wodClose(WORD wDevID)
 
         ARTS_DestroyRingMessage(&wwo->msgRing);
 
-	arts_close_stream(wwo->play_stream); 	/* close the arts stream */
+	ARTS_CloseDevice(wwo);	/* close the stream and clean things up */
 
-        /* free up the buffer we use for volume and reset the size */
-        if(wwo->sound_buffer)
-	        HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
-        wwo->buffer_size = 0;
-
-	wwo->play_stream = (arts_stream_t*)-1;
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
     return ret;
@@ -1330,10 +1342,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
  */
 static	DWORD	wodGetNumDevs(void)
 {
-    DWORD	ret = 1;
-
-    /* FIXME: For now, only one sound device (SOUND_DEV) is allowed */
-    return ret;
+    return MAX_WAVEOUTDRV;
 }
 
 /**************************************************************************
@@ -1381,30 +1390,6 @@ DWORD WINAPI ARTS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 /*======================================================================*
  *                  Low level DSOUND implementation			*
  *======================================================================*/
-
-typedef struct IDsDriverImpl IDsDriverImpl;
-typedef struct IDsDriverBufferImpl IDsDriverBufferImpl;
-
-struct IDsDriverImpl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDsDriver);
-    DWORD		ref;
-    /* IDsDriverImpl fields */
-    UINT		wDevID;
-    IDsDriverBufferImpl*primary;
-};
-
-struct IDsDriverBufferImpl
-{
-    /* IUnknown fields */
-    ICOM_VFIELD(IDsDriverBuffer);
-    DWORD		ref;
-    /* IDsDriverBufferImpl fields */
-    IDsDriverImpl*	drv;
-    DWORD		buflen;
-};
-
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 {
     /* we can't perform memory mapping as we don't have a file stream 
