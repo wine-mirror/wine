@@ -1109,13 +1109,13 @@ __ASM_GLOBAL_FUNC( SNOOP_Return,
 
 #else  /* __i386__ */
 
-FARPROC RELAY_GetProcAddress( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                               DWORD exp_size, FARPROC proc, const WCHAR *user )
 {
     return proc;
 }
 
-FARPROC SNOOP_GetProcAddress( HMODULE hmod, IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
+FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
                               FARPROC origfun, DWORD ordinal, const WCHAR *user )
 {
     return origfun;
