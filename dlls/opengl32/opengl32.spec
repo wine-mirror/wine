@@ -18,6 +18,7 @@
 @  stub    glGetLevelParameteriv
 @  stub    wglUseFontBitmapsW
 @  stub    wglUseFontOutlinesW
+@  stub    wglGetDefaultProcAddress
 @  forward wglChoosePixelFormat GDI32.ChoosePixelFormat
 @  forward wglDescribePixelFormat GDI32.DescribePixelFormat
 @  forward wglGetPixelFormat GDI32.GetPixelFormat
