@@ -334,7 +334,7 @@ then
 
 		fi
 	        dnl Check for GLU32 library.
-		AC_CHECK_LIB(GLU,glBegin,
+		AC_CHECK_LIB(GLU,gluLookAt,
 			     X_PRE_LIBS="$X_PRE_LIBS -lGLU"
 			     GLU32FILES='$(GLU32FILES)'
 			     GLU32_DLL=glu32

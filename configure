@@ -4079,9 +4079,9 @@ EOF
 			fi
 
 		fi
-	        		echo $ac_n "checking for glBegin in -lGLU""... $ac_c" 1>&6
-echo "configure:4084: checking for glBegin in -lGLU" >&5
-ac_lib_var=`echo GLU'_'glBegin | sed 'y%./+-%__p_%'`
+	        		echo $ac_n "checking for gluLookAt in -lGLU""... $ac_c" 1>&6
+echo "configure:4084: checking for gluLookAt in -lGLU" >&5
+ac_lib_var=`echo GLU'_'gluLookAt | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -4094,10 +4094,10 @@ cat > conftest.$ac_ext <<EOF
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char glBegin();
+char gluLookAt();
 
 int main() {
-glBegin()
+gluLookAt()
 ; return 0; }
 EOF
 if { (eval echo configure:4104: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
