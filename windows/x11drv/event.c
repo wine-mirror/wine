@@ -424,6 +424,7 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
         OffsetRect( &rect, win->rectClient.left, win->rectClient.top );
         WIN_UpdateWndPtr( &win, win->parent );
         flags &= ~RDW_FRAME;  /* parent will invalidate children frame anyway */
+        flags |= RDW_ALLCHILDREN;  /* force invalidating all children of siblings */
     }
     hwnd = win->hwndSelf;
     WIN_ReleaseWndPtr(win);
