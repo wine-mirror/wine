@@ -41,6 +41,7 @@ struct CParserImpl
 	CParserInPinImpl* m_pInPin;
 	ULONG	m_cOutStreams;
 	CParserOutPinImpl**	m_ppOutPins;
+	GUID	m_guidTimeFormat;
 
 	CRITICAL_SECTION	m_csParser;
 	IAsyncReader*	m_pReader;
@@ -86,6 +87,7 @@ struct CParserOutPinImpl
 	LONG	m_lReqLength;
 	REFERENCE_TIME	m_rtReqStart;
 	REFERENCE_TIME	m_rtReqStop;
+	DWORD	m_dwSampleFlags;
 };
 
 
@@ -99,7 +101,7 @@ struct ParserHandlers
 	HRESULT (*pCheckStreamType)( CParserImpl* pImpl, ULONG nStreamIndex, const AM_MEDIA_TYPE* pmt );
 	HRESULT (*pGetAllocProp)( CParserImpl* pImpl, ALLOCATOR_PROPERTIES* pReqProp );
 	/* S_OK - ok, S_FALSE - end of stream */
-	HRESULT (*pGetNextRequest)( CParserImpl* pImpl, ULONG* pnStreamIndex, LONGLONG* pllStart, LONG* plLength, REFERENCE_TIME* prtStart, REFERENCE_TIME* prtStop );
+	HRESULT (*pGetNextRequest)( CParserImpl* pImpl, ULONG* pnStreamIndex, LONGLONG* pllStart, LONG* plLength, REFERENCE_TIME* prtStart, REFERENCE_TIME* prtStop, DWORD* pdwSampleFlags );
 	HRESULT (*pProcessSample)( CParserImpl* pImpl, ULONG nStreamIndex, LONGLONG llStart, LONG lLength, IMediaSample* pSample );
 
 	/* for IQualityControl */
@@ -111,11 +113,9 @@ struct ParserHandlers
 	HRESULT (*pGetCurPos)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllPos );
 	HRESULT (*pSetCurPos)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG llPos );
 	HRESULT (*pGetDuration)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllDuration );
-	HRESULT (*pSetDuration)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG llDuration );
 	HRESULT (*pGetStopPos)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllPos );
 	HRESULT (*pSetStopPos)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG llPos );
 	HRESULT (*pGetPreroll)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllPreroll );
-	HRESULT (*pSetPreroll)( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG llPreroll );
 };
 
 #define	CParserImpl_THIS(iface,member)	CParserImpl*	This = ((CParserImpl*)(((char*)iface)-offsetof(CParserImpl,member)))

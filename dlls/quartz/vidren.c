@@ -1371,390 +1371,1012 @@ static HRESULT WINAPI
 IVideoWindow_fnput_Caption(IVideoWindow* iface,BSTR strCaption)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_Caption(IVideoWindow* iface,BSTR* pstrCaption)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_WindowStyle(IVideoWindow* iface,long lStyle)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	SetLastError(0);
+	if ( SetWindowLongA( This->m_hwnd, GWL_STYLE, (DWORD)lStyle ) == 0 &&
+		 GetLastError() != 0 )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_WindowStyle(IVideoWindow* iface,long* plStyle)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	*plStyle = (LONG)GetWindowLongA( This->m_hwnd, GWL_STYLE );
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_WindowStyleEx(IVideoWindow* iface,long lExStyle)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	SetLastError(0);
+	if ( SetWindowLongA( This->m_hwnd, GWL_EXSTYLE, (DWORD)lExStyle ) == 0 &&
+		 GetLastError() != 0 )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_WindowStyleEx(IVideoWindow* iface,long* plExStyle)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( plExStyle == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	*plExStyle = (LONG)GetWindowLongA( This->m_hwnd, GWL_EXSTYLE );
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_AutoShow(IVideoWindow* iface,long lAutoShow)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_AutoShow(IVideoWindow* iface,long* plAutoShow)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_WindowState(IVideoWindow* iface,long lState)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_WindowState(IVideoWindow* iface,long* plState)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_BackgroundPalette(IVideoWindow* iface,long lBackPal)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_BackgroundPalette(IVideoWindow* iface,long* plBackPal)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_Visible(IVideoWindow* iface,long lVisible)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_Visible(IVideoWindow* iface,long* plVisible)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_Left(IVideoWindow* iface,long lLeft)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	if ( ! MoveWindow( This->m_hwnd, lLeft, rc.top, rc.right-rc.left, rc.bottom-rc.top, TRUE ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_Left(IVideoWindow* iface,long* plLeft)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( plLeft == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	*plLeft = rc.left;
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_Width(IVideoWindow* iface,long lWidth)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( lWidth < 0 )
+		return E_INVALIDARG;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	if ( ! MoveWindow( This->m_hwnd, rc.left, rc.top, lWidth, rc.bottom-rc.top, TRUE ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_Width(IVideoWindow* iface,long* plWidth)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( plWidth == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	*plWidth = rc.right-rc.left;
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_Top(IVideoWindow* iface,long lTop)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	if ( ! MoveWindow( This->m_hwnd, rc.left, lTop, rc.right-rc.left, rc.bottom-rc.top, TRUE ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_Top(IVideoWindow* iface,long* plTop)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( plTop == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	*plTop = rc.top;
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_Height(IVideoWindow* iface,long lHeight)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( lHeight < 0 )
+		return E_INVALIDARG;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	if ( ! MoveWindow( This->m_hwnd, rc.left, rc.top, rc.right-rc.left, lHeight, TRUE ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_Height(IVideoWindow* iface,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( plHeight == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	*plHeight = rc.bottom-rc.top;
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_Owner(IVideoWindow* iface,OAHWND hwnd)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	DWORD	dwStyle;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+
+	dwStyle = (DWORD)GetWindowLongA( This->m_hwnd, GWL_STYLE );
+	if ( hwnd == (HWND)NULL )
+		SetWindowLongA( This->m_hwnd, GWL_STYLE, dwStyle & (~WS_CHILD) );
+	SetParent( This->m_hwnd, (HWND)hwnd );
+	if ( (HWND)hwnd != (HWND)NULL )
+	{
+		SetWindowLongA( This->m_hwnd, GWL_STYLE, dwStyle | WS_CHILD );
+		MoveWindow( This->m_hwnd, 0, 0, rc.right-rc.left, rc.bottom-rc.top, TRUE );
+	}
+
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_Owner(IVideoWindow* iface,OAHWND* phwnd)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( phwnd == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	*phwnd = (OAHWND)GetParent( This->m_hwnd );
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_MessageDrain(IVideoWindow* iface,OAHWND hwnd)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_MessageDrain(IVideoWindow* iface,OAHWND* phwnd)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_BorderColor(IVideoWindow* iface,long* plColor)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_BorderColor(IVideoWindow* iface,long lColor)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnget_FullScreenMode(IVideoWindow* iface,long* plMode)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnput_FullScreenMode(IVideoWindow* iface,long lMode)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnSetWindowForeground(IVideoWindow* iface,long lFocus)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnNotifyOwnerMessage(IVideoWindow* iface,OAHWND hwnd,long message,LONG_PTR wParam,LONG_PTR lParam)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnSetWindowPosition(IVideoWindow* iface,long lLeft,long lTop,long lWidth,long lHeight)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	if ( ! MoveWindow( This->m_hwnd, lLeft, lTop, lWidth, lHeight, TRUE ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+	hr = S_OK;
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnGetWindowPosition(IVideoWindow* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
+	RECT	rc;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	if ( plLeft == NULL || plTop == NULL ||
+		 plWidth == NULL || plHeight == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+	if ( ! GetWindowRect( This->m_hwnd, &rc ) )
+	{
+		hr = E_FAIL;
+		goto end;
+	}
+
+	*plLeft = rc.left;
+	*plTop = rc.top;
+	*plWidth = rc.right-rc.left;
+	*plHeight = rc.bottom-rc.top;
+	hr = S_OK;
+
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnGetMinIdealImageSize(IVideoWindow* iface,long* plWidth,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnGetMaxIdealImageSize(IVideoWindow* iface,long* plWidth,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnGetRestorePosition(IVideoWindow* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnHideCursor(IVideoWindow* iface,long lHide)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IVideoWindow_fnIsCursorHidden(IVideoWindow* iface,long* plHide)
 {
 	CVideoRendererImpl_THIS(iface,vidwin);
+	HRESULT hr = E_NOTIMPL;
 
 	FIXME("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection ( &This->basefilter.csFilter );
+	if ( This->m_hwnd == (HWND)NULL )
+	{
+		hr = VFW_E_NOT_CONNECTED;
+		goto end;
+	}
+
+	/* FIXME */
+end:
+	LeaveCriticalSection ( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 

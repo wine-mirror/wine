@@ -50,28 +50,22 @@ HRESULT CFilterGraph_PollGraphState(
 	FILTER_STATE* pState)
 {
 	HRESULT	hr;
-	QUARTZ_CompListItem*	pItem;
-	IBaseFilter*	pFilter;
+	DWORD	n;
 
 	hr = S_OK;
 	*pState = State_Stopped;
 
 	EnterCriticalSection( &This->m_csGraphState );
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 
-	pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
-
-	while ( pItem != NULL )
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
 	{
-		pFilter = (IBaseFilter*)QUARTZ_CompList_GetItemPtr( pItem );
-		hr = IBaseFilter_GetState( pFilter, (DWORD)0, pState );
+		hr = IBaseFilter_GetState( This->m_pActiveFilters[n].pFilter, (DWORD)0, pState );
 		if ( hr != S_OK )
 			break;
-
-		pItem = QUARTZ_CompList_GetNext( This->m_pFilterList, pItem );
 	}
 
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 	LeaveCriticalSection( &This->m_csGraphState );
 
 	TRACE( "returns %08lx, state %d\n",
@@ -79,6 +73,118 @@ HRESULT CFilterGraph_PollGraphState(
 
 	return hr;
 }
+
+static
+HRESULT CFilterGraph_StopGraph(
+	CFilterGraph* This )
+{
+	HRESULT	hr;
+	HRESULT	hrFilter;
+	DWORD	n;
+
+	hr = S_OK;
+
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		hrFilter = IBaseFilter_Stop( This->m_pActiveFilters[n].pFilter );
+		if ( hrFilter != S_OK )
+		{
+			if ( SUCCEEDED(hr) )
+				hr = hrFilter;
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
+}
+
+static
+HRESULT CFilterGraph_PauseGraph(
+	CFilterGraph* This )
+{
+	HRESULT	hr;
+	HRESULT	hrFilter;
+	DWORD	n;
+
+	hr = S_OK;
+
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		hrFilter = IBaseFilter_Pause( This->m_pActiveFilters[n].pFilter );
+		if ( hrFilter != S_OK )
+		{
+			if ( SUCCEEDED(hr) )
+				hr = hrFilter;
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
+}
+
+static
+HRESULT CFilterGraph_RunGraph(
+	CFilterGraph* This, REFERENCE_TIME rtStart )
+{
+	HRESULT	hr;
+	HRESULT	hrFilter;
+	DWORD	n;
+
+	hr = S_OK;
+
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		hrFilter = IBaseFilter_Run( This->m_pActiveFilters[n].pFilter, rtStart );
+		if ( hrFilter != S_OK )
+		{
+			if ( SUCCEEDED(hr) )
+				hr = hrFilter;
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
+}
+
+static
+HRESULT CFilterGraph_SetSyncSourceGraph(
+	CFilterGraph* This, IReferenceClock* pClock )
+{
+	HRESULT	hr;
+	HRESULT	hrFilter;
+	DWORD	n;
+
+	hr = S_OK;
+
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		hrFilter = IBaseFilter_SetSyncSource( This->m_pActiveFilters[n].pFilter, pClock );
+		if ( hrFilter == E_NOTIMPL )
+			hrFilter = S_OK;
+		if ( hrFilter != S_OK )
+		{
+			if ( SUCCEEDED(hr) )
+				hr = hrFilter;
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
+}
+
+
 
 /*****************************************************************************/
 
@@ -129,9 +235,6 @@ IMediaFilter_fnStop(IMediaFilter* iface)
 {
 	CFilterGraph_THIS(iface,mediafilter);
 	HRESULT	hr;
-	HRESULT	hrFilter;
-	QUARTZ_CompListItem*	pItem;
-	IBaseFilter*	pFilter;
 
 	TRACE("(%p)->()\n",This);
 
@@ -143,24 +246,7 @@ IMediaFilter_fnStop(IMediaFilter* iface)
 	{
 		/* IDistributorNotify_Stop() */
 
-		QUARTZ_CompList_Lock( This->m_pFilterList );
-
-		pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
-
-		while ( pItem != NULL )
-		{
-			pFilter = (IBaseFilter*)QUARTZ_CompList_GetItemPtr( pItem );
-			hrFilter = IBaseFilter_Stop( pFilter );
-			if ( hrFilter != S_OK )
-			{
-				if ( SUCCEEDED(hr) )
-					hr = hrFilter;
-			}
-
-			pItem = QUARTZ_CompList_GetNext( This->m_pFilterList, pItem );
-		}
-
-		QUARTZ_CompList_Unlock( This->m_pFilterList );
+		hr = CFilterGraph_StopGraph(This);
 
 		This->m_stateGraph = State_Stopped;
 	}
@@ -175,9 +261,6 @@ IMediaFilter_fnPause(IMediaFilter* iface)
 {
 	CFilterGraph_THIS(iface,mediafilter);
 	HRESULT	hr;
-	HRESULT	hrFilter;
-	QUARTZ_CompListItem*	pItem;
-	IBaseFilter*	pFilter;
 
 	TRACE("(%p)->()\n",This);
 
@@ -189,26 +272,11 @@ IMediaFilter_fnPause(IMediaFilter* iface)
 	{
 		/* IDistributorNotify_Pause() */
 
-		QUARTZ_CompList_Lock( This->m_pFilterList );
-
-		pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
-
-		while ( pItem != NULL )
-		{
-			pFilter = (IBaseFilter*)QUARTZ_CompList_GetItemPtr( pItem );
-			hrFilter = IBaseFilter_Pause( pFilter );
-			if ( hrFilter != S_OK )
-			{
-				if ( SUCCEEDED(hr) )
-					hr = hrFilter;
-			}
-
-			pItem = QUARTZ_CompList_GetNext( This->m_pFilterList, pItem );
-		}
-
-		QUARTZ_CompList_Unlock( This->m_pFilterList );
-
-		This->m_stateGraph = State_Paused;
+		hr = CFilterGraph_PauseGraph(This);
+		if ( SUCCEEDED(hr) )
+			This->m_stateGraph = State_Paused;
+		else
+			(void)CFilterGraph_StopGraph(This);
 	}
 
 	LeaveCriticalSection( &This->m_csGraphState );
@@ -221,9 +289,6 @@ IMediaFilter_fnRun(IMediaFilter* iface,REFERENCE_TIME rtStart)
 {
 	CFilterGraph_THIS(iface,mediafilter);
 	HRESULT	hr;
-	HRESULT	hrFilter;
-	QUARTZ_CompListItem*	pItem;
-	IBaseFilter*	pFilter;
 	IReferenceClock*	pClock;
 
 	TRACE("(%p)->()\n",This);
@@ -254,26 +319,12 @@ IMediaFilter_fnRun(IMediaFilter* iface,REFERENCE_TIME rtStart)
 	{
 		/* IDistributorNotify_Run() */
 
-		QUARTZ_CompList_Lock( This->m_pFilterList );
+		hr = CFilterGraph_RunGraph(This,rtStart);
 
-		pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
-
-		while ( pItem != NULL )
-		{
-			pFilter = (IBaseFilter*)QUARTZ_CompList_GetItemPtr( pItem );
-			hrFilter = IBaseFilter_Run( pFilter, rtStart );
-			if ( hrFilter != S_OK )
-			{
-				if ( SUCCEEDED(hr) )
-					hr = hrFilter;
-			}
-
-			pItem = QUARTZ_CompList_GetNext( This->m_pFilterList, pItem );
-		}
-
-		QUARTZ_CompList_Unlock( This->m_pFilterList );
-
-		This->m_stateGraph = State_Running;
+		if ( SUCCEEDED(hr) )
+			This->m_stateGraph = State_Running;
+		else
+			(void)CFilterGraph_StopGraph(This);
 	}
 
 end:
@@ -327,42 +378,33 @@ static HRESULT WINAPI
 IMediaFilter_fnSetSyncSource(IMediaFilter* iface,IReferenceClock* pobjClock)
 {
 	CFilterGraph_THIS(iface,mediafilter);
-	QUARTZ_CompListItem*	pItem;
-	IBaseFilter*	pFilter;
 	HRESULT hr = NOERROR;
-	HRESULT hrCur;
 
 	TRACE("(%p)->(%p)\n",This,pobjClock);
 
 	/* IDistributorNotify_SetSyncSource() */
 
 	EnterCriticalSection( &This->m_csClock );
-	QUARTZ_CompList_Lock( This->m_pFilterList );
 
-	if ( This->m_pClock != NULL )
+	hr = CFilterGraph_SetSyncSourceGraph( This, pobjClock );
+
+	if ( SUCCEEDED(hr) )
 	{
-		IReferenceClock_Release(This->m_pClock);
-		This->m_pClock = NULL;
+		if ( This->m_pClock != NULL )
+		{
+			IReferenceClock_Release(This->m_pClock);
+			This->m_pClock = NULL;
+		}
+		This->m_pClock = pobjClock;
+		if ( pobjClock != NULL )
+			IReferenceClock_AddRef( pobjClock );
+		IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
+			EC_CLOCK_CHANGED, 0, 0);
 	}
-
-	This->m_pClock = pobjClock;
-	if ( pobjClock != NULL )
-		IReferenceClock_AddRef( pobjClock );
-
-	pItem = QUARTZ_CompList_GetFirst( This->m_pFilterList );
-	while ( pItem != NULL )
+	else
 	{
-		pFilter = (IBaseFilter*)QUARTZ_CompList_GetItemPtr( pItem );
-		hrCur = IBaseFilter_SetSyncSource(pFilter,pobjClock);
-		if ( FAILED(hrCur) )
-			hr = hrCur;
-		pItem = QUARTZ_CompList_GetNext( This->m_pFilterList, pItem );
+		(void)CFilterGraph_SetSyncSourceGraph( This, This->m_pClock );
 	}
-
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
-
-	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-		EC_CLOCK_CHANGED, 0, 0);
 
 	LeaveCriticalSection( &This->m_csClock );
 

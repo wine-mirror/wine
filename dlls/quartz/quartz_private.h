@@ -29,5 +29,10 @@ void* QUARTZ_ReallocMem( void* pMem, DWORD dwSize );
 
 #define QUARTZ_TIMEUNITS		((LONGLONG)10000000)
 
+/* undocument APIs. */
+LONG WINAPI QUARTZ_AmpFactorToDB( LONG amp );
+LONG WINAPI QUARTZ_DBToAmpFactor( LONG dB );
+
+
 #endif	/* QUARTZ_PRIVATE_H */
 

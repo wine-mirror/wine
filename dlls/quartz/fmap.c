@@ -379,6 +379,7 @@ BOOL QUARTZ_CheckPinType( BOOL bExactMatch, const REGFILTERPINS2* pPin, DWORD cT
 				}
 			}
 		}
+		TRACE("Check media type %d\n",(int)bMatch);
 		if ( !bMatch )
 			return FALSE;
 	}
@@ -394,6 +395,7 @@ BOOL QUARTZ_CheckPinType( BOOL bExactMatch, const REGFILTERPINS2* pPin, DWORD cT
 				break;
 			}
 		}
+		TRACE("Check medium %d\n",(int)bMatch);
 		if ( !bMatch )
 			return FALSE;
 	}
@@ -408,7 +410,10 @@ BOOL QUARTZ_CheckPinType( BOOL bExactMatch, const REGFILTERPINS2* pPin, DWORD cT
 	}
 
 	if ( bRender && (!(pPin->dwFlags & REG_PINFLAG_B_RENDERER)) )
+	{
+		TRACE("not a renderer\n");
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -926,6 +931,14 @@ IFilterMapper3_fnEnumMatchingFilters(IFilterMapper3* iface,
 				QUARTZ_FreeMem(pbFilterData);
 				pbFilterData = NULL;
 			}
+			if(TRACE_ON(quartz))
+			{
+				CLSID clsidTrace;
+				if (SUCCEEDED(QUARTZ_GetCLSIDFromMoniker(pFilter,&clsidTrace)))
+				{
+					TRACE("moniker clsid %s\n",debugstr_guid(&clsidTrace));
+				}
+			}
 			hr = QUARTZ_GetFilterDataFromMoniker(pFilter,&pbFilterData,&cbFilterData);
 			if ( hr != S_OK )
 				continue;
@@ -938,7 +951,7 @@ IFilterMapper3_fnEnumMatchingFilters(IFilterMapper3* iface,
 			prf2 = QUARTZ_RegFilterV2FromFilterData(pbFilterData,cbFilterData);
 			if ( prf2 == NULL )
 				continue;
-			TRACE("prf2 %p, Merit %lu\n",prf2,prf2->dwMerit);
+			TRACE("prf2 %p, Merit %08lx\n",prf2,prf2->dwMerit);
 			if ( prf2->dwMerit < dwMerit || prf2->dwVersion != 2 )
 				continue;
 
@@ -956,7 +969,10 @@ IFilterMapper3_fnEnumMatchingFilters(IFilterMapper3* iface,
 						break;
 				}
 				if ( !bMatch )
+				{
+					TRACE("no matching input pin\n");
 					continue;
+				}
 			}
 
 			/* check output pins. */
@@ -973,7 +989,10 @@ IFilterMapper3_fnEnumMatchingFilters(IFilterMapper3* iface,
 						break;
 				}
 				if ( !bMatch )
+				{
+					TRACE("no matching output pin\n");
 					continue;
+				}
 			}
 
 			/* matched - add pFilter to the list. */
@@ -986,6 +1005,7 @@ IFilterMapper3_fnEnumMatchingFilters(IFilterMapper3* iface,
 					goto err;
 				}
 			}
+			TRACE("matched\n");
 			hr = QUARTZ_CompList_AddComp(
 				pList, (IUnknown*)pFilter, NULL, 0 );
 			if ( FAILED(hr) )

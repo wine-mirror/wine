@@ -435,6 +435,7 @@ static const TransformBaseHandlers transhandlers =
 	ColorConv_GetOutputTypes,
 	ColorConv_GetAllocProp,
 	ColorConv_BeginTransform,
+	NULL,
 	ColorConv_Transform,
 	ColorConv_EndTransform,
 };

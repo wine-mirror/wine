@@ -3,7 +3,6 @@
  *
  * FIXME
  *  - implement IReferenceClock.
- *  - implement seeking.
  *
  * Copyright (C) Hidenori TAKESHIMA <hidenori@a2.ctktv.ne.jp>
  *
@@ -209,9 +208,6 @@ err:
 	return hr;
 }
 
-#if 0
-/* FIXME: Not used for now */
-
 static HRESULT CAudioRendererImpl_waveOutPause( CAudioRendererImpl* This )
 {
 	if ( !This->m_fWaveOutInit )
@@ -229,7 +225,6 @@ static HRESULT CAudioRendererImpl_waveOutRun( CAudioRendererImpl* This )
 	return QUARTZ_HRESULT_From_MMRESULT( waveOutRestart(
 			This->m_hWaveOut ) );
 }
-#endif
 
 static
 WAVEHDR* CAudioRendererImpl_waveOutGetBuffer(
@@ -341,6 +336,8 @@ HRESULT CAudioRendererImpl_waveOutGetVolume(
 	return NOERROR;
 }
 
+#endif
+
 static
 HRESULT CAudioRendererImpl_waveOutSetVolume(
 	CAudioRendererImpl* This,
@@ -358,7 +355,34 @@ HRESULT CAudioRendererImpl_waveOutSetVolume(
 		This->m_hWaveOut, dwVol );
 	return QUARTZ_HRESULT_From_MMRESULT( mr );
 }
-#endif
+
+static HRESULT CAudioRendererImpl_UpdateVolume( CAudioRendererImpl* This )
+{
+	HRESULT hr;
+	long	leftlevel;
+	long	rightlevel;
+
+	if ( This->m_lAudioBalance >= 0 )
+	{
+		leftlevel = This->m_lAudioVolume - This->m_lAudioBalance;
+		rightlevel = This->m_lAudioVolume;
+	}
+	else
+	{
+		leftlevel = This->m_lAudioVolume;
+		rightlevel = This->m_lAudioVolume + This->m_lAudioBalance;
+	}
+	leftlevel = QUARTZ_DBToAmpFactor( leftlevel );
+	rightlevel = QUARTZ_DBToAmpFactor( rightlevel );
+
+	hr = CAudioRendererImpl_waveOutSetVolume(
+		This, (DWORD)leftlevel, (DWORD)rightlevel );
+	if ( hr == E_UNEXPECTED )
+		hr = S_OK;
+
+	return hr;
+}
+
 
 /***************************************************************************
  *
@@ -370,7 +394,7 @@ HRESULT CAudioRendererImpl_waveOutSetVolume(
 static HRESULT CAudioRendererImpl_OnActive( CBaseFilterImpl* pImpl )
 {
 	CAudioRendererImpl_THIS(pImpl,basefilter);
-	/* HRESULT hr; */
+	HRESULT hr;
 
 	FIXME( "(%p)\n", This );
 
@@ -379,11 +403,9 @@ static HRESULT CAudioRendererImpl_OnActive( CBaseFilterImpl* pImpl )
 
 	This->m_fInFlush = FALSE;
 
-	/* FIXME - don't work correctly.
 	hr = CAudioRendererImpl_waveOutRun(This);
 	if ( FAILED(hr) )
 		return hr;
-	*/
 
 	return NOERROR;
 }
@@ -409,11 +431,9 @@ static HRESULT CAudioRendererImpl_OnInactive( CBaseFilterImpl* pImpl )
 	if ( FAILED(hr) )
 		return hr;
 
-	/* FIXME - may cause deadlock.
 	hr = CAudioRendererImpl_waveOutPause(This);
 	if ( FAILED(hr) )
 		return hr;
-	*/
 
 	return NOERROR;
 }
@@ -423,6 +443,8 @@ static HRESULT CAudioRendererImpl_OnStop( CBaseFilterImpl* pImpl )
 	CAudioRendererImpl_THIS(pImpl,basefilter);
 
 	FIXME( "(%p)\n", This );
+
+	This->m_fInFlush = TRUE;
 
 	CAudioRendererImpl_waveOutUninit(This);
 
@@ -511,12 +533,10 @@ static HRESULT CAudioRendererPinImpl_Receive( CPinBaseImpl* pImpl, IMediaSample*
 	DWORD	dwDataLength;
 	DWORD	dwWritten;
 
-	FIXME( "(%p,%p)\n",This,pSample );
+	TRACE( "(%p,%p)\n",This,pSample );
 
 	if ( !This->pRender->m_fWaveOutInit )
 		return E_UNEXPECTED;
-	if ( This->pRender->m_fInFlush )
-		return S_FALSE;
 	if ( pSample == NULL )
 		return E_POINTER;
 
@@ -528,6 +548,9 @@ static HRESULT CAudioRendererPinImpl_Receive( CPinBaseImpl* pImpl, IMediaSample*
 	while ( 1 )
 	{
 		TRACE("trying to write %lu bytes\n",dwDataLength);
+
+		if ( This->pRender->m_fInFlush )
+			return S_FALSE;
 
 		ResetEvent( This->pRender->m_hEventRender );
 		hr = CAudioRendererImpl_waveOutWriteData(
@@ -695,6 +718,8 @@ HRESULT QUARTZ_CreateAudioRenderer(IUnknown* punkOuter,void** ppobj)
 	This->pSeekPass = NULL;
 	This->pPin = NULL;
 	This->m_fInFlush = FALSE;
+	This->m_lAudioVolume = 0;
+	This->m_lAudioBalance = 0;
 	This->m_fWaveOutInit = FALSE;
 	This->m_hEventRender = (HANDLE)NULL;
 
@@ -919,10 +944,19 @@ static HRESULT WINAPI
 IBasicAudio_fnput_Volume(IBasicAudio* iface,long lVol)
 {
 	CAudioRendererImpl_THIS(iface,basaud);
+	HRESULT hr;
 
-	FIXME("(%p)->()\n",This);
+	FIXME("(%p)->(%ld)\n",This,lVol);
 
-	return E_NOTIMPL;
+	if ( lVol > 0 || lVol < -10000 )
+		return E_INVALIDARG;
+
+	EnterCriticalSection( &This->basefilter.csFilter );
+	This->m_lAudioVolume = lVol;
+	hr = CAudioRendererImpl_UpdateVolume( This );
+	LeaveCriticalSection( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -930,19 +964,35 @@ IBasicAudio_fnget_Volume(IBasicAudio* iface,long* plVol)
 {
 	CAudioRendererImpl_THIS(iface,basaud);
 
-	FIXME("(%p)->()\n",This);
+	FIXME("(%p)->(%p)\n",This,plVol);
 
-	return E_NOTIMPL;
+	if ( plVol == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->basefilter.csFilter );
+	*plVol = This->m_lAudioVolume;
+	LeaveCriticalSection( &This->basefilter.csFilter );
+
+	return S_OK;
 }
 
 static HRESULT WINAPI
 IBasicAudio_fnput_Balance(IBasicAudio* iface,long lBalance)
 {
 	CAudioRendererImpl_THIS(iface,basaud);
+	HRESULT hr;
 
-	FIXME("(%p)->()\n",This);
+	FIXME("(%p)->(%ld)\n",This,lBalance);
 
-	return E_NOTIMPL;
+	if ( lBalance > 0 || lBalance < -10000 )
+		return E_INVALIDARG;
+
+	EnterCriticalSection( &This->basefilter.csFilter );
+	This->m_lAudioBalance = lBalance;
+	hr = CAudioRendererImpl_UpdateVolume( This );
+	LeaveCriticalSection( &This->basefilter.csFilter );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -950,9 +1000,16 @@ IBasicAudio_fnget_Balance(IBasicAudio* iface,long* plBalance)
 {
 	CAudioRendererImpl_THIS(iface,basaud);
 
-	FIXME("(%p)->()\n",This);
+	FIXME("(%p)->(%p)\n",This,plBalance);
 
-	return E_NOTIMPL;
+	if ( plBalance == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->basefilter.csFilter );
+	*plBalance = This->m_lAudioBalance;
+	LeaveCriticalSection( &This->basefilter.csFilter );
+
+	return S_OK;
 }
 
 

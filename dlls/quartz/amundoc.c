@@ -20,9 +20,12 @@
 
 #include <math.h>
 #include "windef.h"
+#include "wine/obj_base.h"
 
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+
+#include "quartz_private.h"
 
 /***********************************************************************
  *		AmpFactorToDB (QUARTZ.@)
@@ -35,7 +38,7 @@ LONG WINAPI QUARTZ_AmpFactorToDB( LONG amp )
 {
 	LONG	dB;
 
-	FIXME( "(%08ld): undocumented API.\n", amp );
+	TRACE( "(%ld)\n", amp );
 
 	if ( amp <= 0 || amp > 65536 )
 		return 0;
@@ -57,7 +60,7 @@ LONG WINAPI QUARTZ_DBToAmpFactor( LONG dB )
 {
 	LONG	amp;
 
-	FIXME( "(%08ld): undocumented API.\n", dB );
+	TRACE( "(%ld)\n", dB );
 
 	if ( dB >= 0 )
 		return 65535;

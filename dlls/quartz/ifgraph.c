@@ -435,14 +435,15 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 	CFilterGraph_THIS(iface,fgraph);
 	FILTER_STATE fs;
 	FILTER_INFO	info;
+	IBaseFilter*	pTempFilter;
+	FG_FilterData*	pActiveFiltersNew;
 	HRESULT	hr;
 	HRESULT	hrSucceeded = S_OK;
-	QUARTZ_CompListItem*	pItem;
 	int i,iLen;
 
 	TRACE( "(%p)->(%p,%s)\n",This,pFilter,debugstr_w(pName) );
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 
 	hr = IMediaFilter_GetState(CFilterGraph_IMediaFilter(This),0,&fs);
 	if ( hr == VFW_S_STATE_INTERMEDIATE )
@@ -456,13 +457,16 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 
 	if ( pName != NULL )
 	{
-		pItem = QUARTZ_CompList_SearchData(
-			This->m_pFilterList,
-			pName, sizeof(WCHAR)*(lstrlenW(pName)+1) );
-		if ( pItem == NULL )
+		hr = IFilterGraph2_FindFilterByName( CFilterGraph_IFilterGraph2(This), pName, &pTempFilter );
+		if ( hr == S_OK )
+		{
+			IBaseFilter_Release(pTempFilter);
+			hrSucceeded = VFW_S_DUPLICATE_NAME;
+		}
+		else
+		{
 			goto name_ok;
-
-		hrSucceeded = VFW_S_DUPLICATE_NAME;
+		}
 
 		iLen = lstrlenW(pName);
 		if ( iLen > 32 )
@@ -476,12 +480,15 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 		hr = IBaseFilter_QueryFilterInfo( pFilter, &info );
 		if ( FAILED(hr) )
 			goto end;
+		if ( info.pGraph != NULL )
+		{
+			IFilterGraph_Release(info.pGraph);
+			hr = E_FAIL;	/* FIXME */
+			goto end;
+		}
 
-		iLen = lstrlenW(info.achName);
-		pItem = QUARTZ_CompList_SearchData(
-			This->m_pFilterList,
-			info.achName, sizeof(WCHAR)*(iLen+1) );
-		if ( iLen > 0 && pItem == NULL )
+		hr = IFilterGraph2_FindFilterByName( CFilterGraph_IFilterGraph2(This), pName, &pTempFilter );
+		if ( hr != S_OK )
 		{
 			pName = info.achName;
 			goto name_ok;
@@ -499,10 +506,9 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 		info.achName[iLen+0] = (i%10) + '0';
 		info.achName[iLen+1] = ((i/10)%10) + '0';
 		info.achName[iLen+2] = 0;
-		pItem = QUARTZ_CompList_SearchData(
-			This->m_pFilterList,
-			info.achName, sizeof(WCHAR)*(iLen+3) );
-		if ( pItem == NULL )
+
+		hr = IFilterGraph2_FindFilterByName( CFilterGraph_IFilterGraph2(This), info.achName, &pTempFilter );
+		if ( hr != S_OK )
 		{
 			pName = info.achName;
 			goto name_ok;
@@ -516,11 +522,38 @@ name_ok:
 	TRACE( "(%p) add this filter - %s.\n",This,debugstr_w(pName) );
 
 	/* register this filter. */
-	hr = QUARTZ_CompList_AddComp(
-		This->m_pFilterList, (IUnknown*)pFilter,
-		pName, sizeof(WCHAR)*(lstrlenW(pName)+1) );
-	if ( FAILED(hr) )
+	pActiveFiltersNew = (FG_FilterData*)QUARTZ_ReallocMem(
+		This->m_pActiveFilters,
+		sizeof(FG_FilterData) * (This->m_cActiveFilters+1) );
+	if ( pActiveFiltersNew == NULL )
+	{
+		hr = E_OUTOFMEMORY;
 		goto end;
+	}
+	This->m_pActiveFilters = pActiveFiltersNew;
+	pActiveFiltersNew = &This->m_pActiveFilters[This->m_cActiveFilters];
+
+	pActiveFiltersNew->pFilter = NULL;
+	pActiveFiltersNew->pPosition = NULL;
+	pActiveFiltersNew->pSeeking = NULL;
+	pActiveFiltersNew->pwszName = NULL;
+	pActiveFiltersNew->cbName = 0;
+
+	pActiveFiltersNew->cbName = sizeof(WCHAR)*(lstrlenW(pName)+1);
+	pActiveFiltersNew->pwszName = (WCHAR*)QUARTZ_AllocMem( pActiveFiltersNew->cbName );
+	if ( pActiveFiltersNew->pwszName == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		goto end;
+	}
+	memcpy( pActiveFiltersNew->pwszName, pName, pActiveFiltersNew->cbName );
+
+	pActiveFiltersNew->pFilter = pFilter;
+	IBaseFilter_AddRef(pFilter);
+	IBaseFilter_QueryInterface( pFilter, &IID_IMediaPosition, (void**)&pActiveFiltersNew->pPosition );
+	IBaseFilter_QueryInterface( pFilter, &IID_IMediaSeeking, (void**)&pActiveFiltersNew->pSeeking );
+
+	This->m_cActiveFilters ++;
 
 	hr = IBaseFilter_JoinFilterGraph(pFilter,(IFilterGraph*)iface,pName);
 	if ( SUCCEEDED(hr) )
@@ -532,8 +565,7 @@ name_ok:
 	if ( FAILED(hr) )
 	{
 		IBaseFilter_JoinFilterGraph(pFilter,NULL,pName);
-		QUARTZ_CompList_RemoveComp(
-			This->m_pFilterList,(IUnknown*)pFilter);
+		IFilterGraph2_RemoveFilter(CFilterGraph_IFilterGraph2(This),pFilter);
 		goto end;
 	}
 
@@ -543,7 +575,7 @@ name_ok:
 
 	hr = hrSucceeded;
 end:
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	TRACE( "(%p) return %08lx\n", This, hr );
 
@@ -554,13 +586,13 @@ static HRESULT WINAPI
 IFilterGraph2_fnRemoveFilter(IFilterGraph2* iface,IBaseFilter* pFilter)
 {
 	CFilterGraph_THIS(iface,fgraph);
-	QUARTZ_CompListItem*	pItem;
 	FILTER_STATE fs;
+	DWORD	n,copy;
 	HRESULT	hr = NOERROR;
 
 	TRACE( "(%p)->(%p)\n",This,pFilter );
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 
 	hr = IMediaFilter_GetState(CFilterGraph_IMediaFilter(This),0,&fs);
 	if ( hr == VFW_S_STATE_INTERMEDIATE )
@@ -571,24 +603,39 @@ IFilterGraph2_fnRemoveFilter(IFilterGraph2* iface,IBaseFilter* pFilter)
 		goto end;
 
 	hr = S_FALSE; /* FIXME? */
-	pItem = QUARTZ_CompList_SearchComp(
-		This->m_pFilterList, (IUnknown*)pFilter );
-	if ( pItem != NULL )
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
 	{
-		CFilterGraph_DisconnectAllPins(pFilter);
-		IBaseFilter_SetSyncSource( pFilter, NULL );
-		hr = IBaseFilter_JoinFilterGraph(
-			pFilter, NULL, QUARTZ_CompList_GetDataPtr(pItem) );
-		QUARTZ_CompList_RemoveComp(
-			This->m_pFilterList, (IUnknown*)pFilter );
+		if ( This->m_pActiveFilters[n].pFilter == pFilter )
+		{
+			CFilterGraph_DisconnectAllPins(pFilter);
+			(void)IBaseFilter_SetSyncSource( pFilter, NULL );
+			(void)IBaseFilter_JoinFilterGraph(
+				pFilter, NULL, This->m_pActiveFilters[n].pwszName );
+
+			if ( This->m_pActiveFilters[n].pFilter != NULL )
+				IMediaPosition_Release(This->m_pActiveFilters[n].pFilter);
+			if ( This->m_pActiveFilters[n].pPosition != NULL )
+				IMediaPosition_Release(This->m_pActiveFilters[n].pPosition);
+			if ( This->m_pActiveFilters[n].pSeeking != NULL )
+				IMediaSeeking_Release(This->m_pActiveFilters[n].pSeeking);
+			if ( This->m_pActiveFilters[n].pwszName != NULL )
+				QUARTZ_FreeMem(This->m_pActiveFilters[n].pwszName);
+
+			copy = This->m_cActiveFilters - n - 1;
+			if ( copy > 0 )
+				memmove( &This->m_pActiveFilters[n],
+						 &This->m_pActiveFilters[n+1],
+						 sizeof(FG_FilterData) * copy );
+			This->m_cActiveFilters --;
+
+			hr = CFilterGraph_GraphChanged(This);
+			break;
+		}
 	}
 
-	hr = CFilterGraph_GraphChanged(This);
-	if ( FAILED(hr) )
-		goto end;
-
 end:;
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	return hr;
 }
@@ -597,16 +644,35 @@ static HRESULT WINAPI
 IFilterGraph2_fnEnumFilters(IFilterGraph2* iface,IEnumFilters** ppEnum)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	QUARTZ_CompList*	pList = NULL;
+	DWORD	n;
 	HRESULT	hr;
 
 	TRACE( "(%p)->(%p)\n",This,ppEnum );
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
+
+	pList = QUARTZ_CompList_Alloc();
+	if ( pList == NULL )
+	{
+		hr = E_OUTOFMEMORY;
+		goto err;
+	}
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		hr = QUARTZ_CompList_AddTailComp(
+			pList, (IUnknown*)This->m_pActiveFilters[n].pFilter, NULL, 0 );
+		if ( FAILED(hr) )
+			goto err;
+	}
 
 	hr = QUARTZ_CreateEnumUnknown(
-		&IID_IEnumFilters, (void**)ppEnum, This->m_pFilterList );
+		&IID_IEnumFilters, (void**)ppEnum, pList );
+err:
+	if ( pList != NULL )
+		QUARTZ_CompList_Free( pList );
 
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	return hr;
 }
@@ -615,27 +681,32 @@ static HRESULT WINAPI
 IFilterGraph2_fnFindFilterByName(IFilterGraph2* iface,LPCWSTR pName,IBaseFilter** ppFilter)
 {
 	CFilterGraph_THIS(iface,fgraph);
-	QUARTZ_CompListItem*	pItem;
-	HRESULT	hr = E_FAIL;
+	DWORD	n;
+	DWORD	cbName;
+	HRESULT	hr = E_FAIL;	/* FIXME */
 
 	TRACE( "(%p)->(%s,%p)\n",This,debugstr_w(pName),ppFilter );
 
-	if ( ppFilter == NULL )
+	if ( pName == NULL || ppFilter == NULL )
 		return E_POINTER;
 	*ppFilter = NULL;
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	cbName = sizeof(WCHAR) * (lstrlenW(pName) + 1);
 
-	pItem = QUARTZ_CompList_SearchData(
-		This->m_pFilterList,
-		pName, sizeof(WCHAR)*(lstrlenW(pName)+1) );
-	if ( pItem != NULL )
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
 	{
-		*ppFilter = (IBaseFilter*)QUARTZ_CompList_GetItemPtr(pItem);
-		hr = NOERROR;
+		if ( This->m_pActiveFilters[n].cbName == cbName &&
+			 !memcmp( This->m_pActiveFilters[n].pwszName, pName, cbName ) )
+		{
+			*ppFilter = This->m_pActiveFilters[n].pFilter;
+			IBaseFilter_AddRef(*ppFilter);
+			hr = NOERROR;
+		}
 	}
 
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	return hr;
 }
@@ -659,7 +730,7 @@ IFilterGraph2_fnConnectDirect(IFilterGraph2* iface,IPin* pOut,IPin* pIn,const AM
 	finfoIn.pGraph = NULL;
 	finfoOut.pGraph = NULL;
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 
 	hr = IMediaFilter_GetState(CFilterGraph_IMediaFilter(This),0,&fs);
 	if ( hr == VFW_S_STATE_INTERMEDIATE )
@@ -728,7 +799,7 @@ IFilterGraph2_fnConnectDirect(IFilterGraph2* iface,IPin* pOut,IPin* pIn,const AM
 		goto end;
 
 end:
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	if ( infoIn.pFilter != NULL )
 		IBaseFilter_Release(infoIn.pFilter);
@@ -761,7 +832,7 @@ IFilterGraph2_fnDisconnect(IFilterGraph2* iface,IPin* pPin)
 
 	TRACE( "(%p)->(%p)\n",This,pPin );
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 
 	pConnTo = NULL;
 	hr = IPin_ConnectedTo(pPin,&pConnTo);
@@ -779,7 +850,7 @@ IFilterGraph2_fnDisconnect(IFilterGraph2* iface,IPin* pPin)
 		goto end;
 
 end:
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	return hr;
 }
@@ -954,6 +1025,10 @@ IFilterGraph2_fnConnect(IFilterGraph2* iface,IPin* pOut,IPin* pIn)
 				if ( SUCCEEDED(hr) )
 					hr = S_OK;
 			}
+			else
+			{
+				hr = S_OK;
+			}
 			IMoniker_Release(pMon); pMon = NULL;
 		}
 		IEnumMoniker_Release(pEnumMon); pEnumMon = NULL;
@@ -969,103 +1044,10 @@ static HRESULT WINAPI
 IFilterGraph2_fnRender(IFilterGraph2* iface,IPin* pOut)
 {
 	CFilterGraph_THIS(iface,fgraph);
-	HRESULT	hr;
-	IFilterMapper2*	pMap2 = NULL;
-	IEnumMoniker*	pEnumMon = NULL;
-	IMoniker*	pMon = NULL;
-	IBaseFilter*	pFilter = NULL;
-	IEnumPins*	pEnumPin = NULL;
-	IPin*	pPin = NULL;
-	PIN_DIRECTION	pindir;
-	BOOL	bRendered = FALSE;
-	ULONG	cReturned;
 
-	FIXME( "(%p)->(%p)\n",This,pOut );
+	TRACE( "(%p)->(%p)\n",This,pOut);
 
-	/* FIXME - must be locked */
-	/*QUARTZ_CompList_Lock( This->m_pFilterList );*/
-
-	if ( pOut == NULL )
-		return E_POINTER;
-
-	hr = CoCreateInstance(
-		&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
-		&IID_IFilterMapper2, (void**)&pMap2 );
-	if ( FAILED(hr) )
-		return hr;
-	hr = IFilterMapper2_EnumMatchingFilters(
-		pMap2,&pEnumMon,0,FALSE,MERIT_DO_NOT_USE+1,
-		TRUE,0,NULL,NULL,NULL,TRUE,
-		FALSE,0,NULL,NULL,NULL);
-	IFilterMapper2_Release(pMap2);
-	if ( FAILED(hr) )
-		return hr;
-	TRACE("try to render pin\n");
-
-	if ( hr == S_OK )
-	{
-		/* try to render pin. */
-		while ( !bRendered && hr == S_OK )
-		{
-			hr = IEnumMoniker_Next(pEnumMon,1,&pMon,&cReturned);
-			if ( hr != S_OK )
-				break;
-			hr = IMoniker_BindToObject(pMon,NULL,NULL,&IID_IBaseFilter,(void**)&pFilter );
-			if ( hr == S_OK )
-			{
-				hr = IFilterGraph2_AddFilter(iface,pFilter,NULL);
-				if ( hr == S_OK )
-				{
-					hr = IBaseFilter_EnumPins(pFilter,&pEnumPin);
-					if ( hr == S_OK )
-					{
-						while ( !bRendered )
-						{
-							hr = IEnumPins_Next(pEnumPin,1,&pPin,&cReturned);
-							if ( hr != S_OK )
-								break;
-							hr = IPin_QueryDirection(pPin,&pindir);
-							if ( hr == S_OK && pindir == PINDIR_INPUT )
-							{
-								/* try to connect. */
-								hr = IFilterGraph2_Connect(iface,pOut,pPin);
-								if ( hr == S_OK )
-									bRendered = TRUE;
-								hr = S_OK;
-							}
-							IPin_Release(pPin); pPin = NULL;
-						}
-						IEnumPins_Release(pEnumPin); pEnumPin = NULL;
-					}
-					if ( !bRendered )
-						hr = IFilterGraph2_RemoveFilter(iface,pFilter);
-				}
-				IBaseFilter_Release(pFilter); pFilter = NULL;
-				if ( SUCCEEDED(hr) )
-					hr = S_OK;
-			}
-			IMoniker_Release(pMon); pMon = NULL;
-		}
-		IEnumMoniker_Release(pEnumMon); pEnumMon = NULL;
-	}
-
-	if ( bRendered )
-	{
-		/* successfully rendered(but may be partial now) */
-		hr = S_OK;
-
-		/* FIXME - try to render all inserted filters. */
-		/* hr = VFW_S_PARTIAL_RENDER; */
-	}
-	else
-	{
-		if ( SUCCEEDED(hr) )
-			hr = VFW_E_CANNOT_RENDER;
-	}
-
-	/*QUARTZ_CompList_Unlock( This->m_pFilterList );*/
-
-	return hr;
+	return IFilterGraph2_RenderEx( CFilterGraph_IFilterGraph2(This), pOut, 0, NULL );
 }
 
 static HRESULT WINAPI
@@ -1224,7 +1206,8 @@ IFilterGraph2_fnSetLogFile(IFilterGraph2* iface,DWORD_PTR hFile)
 	CFilterGraph_THIS(iface,fgraph);
 
 	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+
+	return S_OK;	/* no debug output */
 }
 
 static HRESULT WINAPI
@@ -1232,10 +1215,11 @@ IFilterGraph2_fnAbort(IFilterGraph2* iface)
 {
 	CFilterGraph_THIS(iface,fgraph);
 
-	/* undoc. */
-
 	FIXME( "(%p)->() stub!\n", This );
-	return E_NOTIMPL;
+
+	/* FIXME - abort the current asynchronous task. */
+
+	return S_OK;
 }
 
 static HRESULT WINAPI
@@ -1243,9 +1227,8 @@ IFilterGraph2_fnShouldOperationContinue(IFilterGraph2* iface)
 {
 	CFilterGraph_THIS(iface,fgraph);
 
-	/* undoc. */
-
 	FIXME( "(%p)->() stub!\n", This );
+
 	return E_NOTIMPL;
 }
 
@@ -1268,21 +1251,127 @@ IFilterGraph2_fnReconnectEx(IFilterGraph2* iface,IPin* pPin,const AM_MEDIA_TYPE*
 
 	/* reconnect asynchronously. */
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 	hr = CFilterGraph_GraphChanged(This);
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	return E_NOTIMPL;
 }
 
 static HRESULT WINAPI
-IFilterGraph2_fnRenderEx(IFilterGraph2* iface,IPin* pPin,DWORD dwParam1,DWORD* pdwParam2)
+IFilterGraph2_fnRenderEx(IFilterGraph2* iface,IPin* pOut,DWORD dwFlags,DWORD* pdwReserved)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	HRESULT	hr;
+	IFilterMapper2*	pMap2 = NULL;
+	IEnumMoniker*	pEnumMon = NULL;
+	IMoniker*	pMon = NULL;
+	IBaseFilter*	pFilter = NULL;
+	IEnumPins*	pEnumPin = NULL;
+	IPin*	pPin = NULL;
+	PIN_DIRECTION	pindir;
+	BOOL	bRendered = FALSE;
+	ULONG	cReturned;
 
-	/* undoc. */
-	FIXME( "(%p)->(%p,%08lx,%p) stub!\n",This,pPin,dwParam1,pdwParam2);
-	return E_NOTIMPL;
+	FIXME( "(%p)->(%p,%08lx,%p) stub!\n",This,pPin,dwFlags,pdwReserved);
+
+	if ( pdwReserved != NULL )
+		return E_INVALIDARG;
+
+	if ( dwFlags != 0 )
+	{
+		FIXME( "dwFlags != 0...\n" );
+		return E_INVALIDARG;
+	}
+
+	/* FIXME - must be locked */
+	/*EnterCriticalSection( &This->m_csFilters );*/
+
+	if ( pOut == NULL )
+		return E_POINTER;
+
+	hr = CoCreateInstance(
+		&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+		&IID_IFilterMapper2, (void**)&pMap2 );
+	if ( FAILED(hr) )
+		return hr;
+	hr = IFilterMapper2_EnumMatchingFilters(
+		pMap2,&pEnumMon,0,FALSE,MERIT_DO_NOT_USE+1,
+		TRUE,0,NULL,NULL,NULL,TRUE,
+		FALSE,0,NULL,NULL,NULL);
+	IFilterMapper2_Release(pMap2);
+	if ( FAILED(hr) )
+		return hr;
+	TRACE("try to render pin\n");
+
+	if ( hr == S_OK )
+	{
+		/* try to render pin. */
+		while ( !bRendered && hr == S_OK )
+		{
+			hr = IEnumMoniker_Next(pEnumMon,1,&pMon,&cReturned);
+			if ( hr != S_OK )
+				break;
+			hr = IMoniker_BindToObject(pMon,NULL,NULL,&IID_IBaseFilter,(void**)&pFilter );
+			if ( hr == S_OK )
+			{
+				hr = IFilterGraph2_AddFilter(iface,pFilter,NULL);
+				if ( hr == S_OK )
+				{
+					hr = IBaseFilter_EnumPins(pFilter,&pEnumPin);
+					if ( hr == S_OK )
+					{
+						while ( !bRendered )
+						{
+							hr = IEnumPins_Next(pEnumPin,1,&pPin,&cReturned);
+							if ( hr != S_OK )
+								break;
+							hr = IPin_QueryDirection(pPin,&pindir);
+							if ( hr == S_OK && pindir == PINDIR_INPUT )
+							{
+								/* try to connect. */
+								hr = IFilterGraph2_Connect(iface,pOut,pPin);
+								if ( hr == S_OK )
+									bRendered = TRUE;
+								hr = S_OK;
+							}
+							IPin_Release(pPin); pPin = NULL;
+						}
+						IEnumPins_Release(pEnumPin); pEnumPin = NULL;
+					}
+					if ( !bRendered )
+						hr = IFilterGraph2_RemoveFilter(iface,pFilter);
+				}
+				IBaseFilter_Release(pFilter); pFilter = NULL;
+				if ( SUCCEEDED(hr) )
+					hr = S_OK;
+			}
+			else
+			{
+				hr = S_OK;
+			}
+			IMoniker_Release(pMon); pMon = NULL;
+		}
+		IEnumMoniker_Release(pEnumMon); pEnumMon = NULL;
+	}
+
+	if ( bRendered )
+	{
+		/* successfully rendered(but may be partial now) */
+		hr = S_OK;
+
+		/* FIXME - try to render all inserted filters. */
+		/* hr = VFW_S_PARTIAL_RENDER; */
+	}
+	else
+	{
+		if ( SUCCEEDED(hr) )
+			hr = VFW_E_CANNOT_RENDER;
+	}
+
+	/*LeaveCriticalSection( &This->m_csFilters );*/
+
+	return hr;
 }
 
 
@@ -1323,31 +1412,29 @@ HRESULT CFilterGraph_InitIFilterGraph2( CFilterGraph* pfg )
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->fgraph) = &ifgraph;
 
-	pfg->m_pFilterList = QUARTZ_CompList_Alloc();
-	if ( pfg->m_pFilterList == NULL )
-		return E_OUTOFMEMORY;
+	InitializeCriticalSection( &pfg->m_csFilters );
+	pfg->m_cActiveFilters = 0;
+	pfg->m_pActiveFilters = NULL;
 
 	return NOERROR;
 }
 
 void CFilterGraph_UninitIFilterGraph2( CFilterGraph* pfg )
 {
-	QUARTZ_CompListItem*	pItem;
-
 	TRACE("(%p)\n",pfg);
 
 	/* remove all filters... */
-	while ( 1 )
+	while ( pfg->m_cActiveFilters > 0 )
 	{
-		pItem = QUARTZ_CompList_GetFirst( pfg->m_pFilterList );
-		if ( pItem == NULL )
-			break;
 		IFilterGraph2_RemoveFilter(
-			(IFilterGraph2*)(&pfg->fgraph),
-			(IBaseFilter*)QUARTZ_CompList_GetItemPtr(pItem) );
+			CFilterGraph_IFilterGraph2(pfg),
+			pfg->m_pActiveFilters[pfg->m_cActiveFilters-1].pFilter );
 	}
 
-	QUARTZ_CompList_Free( pfg->m_pFilterList );
+	if ( pfg->m_pActiveFilters != NULL )
+		QUARTZ_FreeMem( pfg->m_pActiveFilters );
+
+	DeleteCriticalSection( &pfg->m_csFilters );
 }
 
 /***************************************************************************
@@ -1397,9 +1484,9 @@ IGraphVersion_fnQueryVersion(IGraphVersion* iface,LONG* plVersion)
 	if ( plVersion == NULL )
 		return E_POINTER;
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 	*plVersion = This->m_lGraphVersion;
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	return NOERROR;
 }
@@ -1489,13 +1576,13 @@ IGraphConfig_fnReconfigure(IGraphConfig* iface,IGraphConfigCallback* pCallback,P
 
 	FIXME("(%p)->(%p,%p,%08lx,%08x) stub!\n",This,pCallback,pvParam,dwFlags,hAbort);
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
+	EnterCriticalSection( &This->m_csFilters );
 	EnterCriticalSection( &This->m_csGraphState );
 
 	hr = IGraphConfigCallback_Reconfigure(pCallback,pvParam,dwFlags);
 
 	LeaveCriticalSection( &This->m_csGraphState );
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+	LeaveCriticalSection( &This->m_csFilters );
 
 	return hr;
 }

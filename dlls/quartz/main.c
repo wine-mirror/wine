@@ -90,6 +90,7 @@ typedef struct
 static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 {
 	{ &CLSID_FilterGraph, &QUARTZ_CreateFilterGraph },
+	{ &CLSID_FilterGraphNoThread, &QUARTZ_CreateFilterGraph }, /* FIXME? */
 	{ &CLSID_SystemClock, &QUARTZ_CreateSystemClock },
 	{ &CLSID_MemoryAllocator, &QUARTZ_CreateMemoryAllocator },
 	{ &CLSID_SystemDeviceEnum, &QUARTZ_CreateSystemDeviceEnum },

@@ -53,6 +53,8 @@ struct CAudioRendererImpl
 	BOOL	m_fInFlush;
 
 	/* for waveOut */
+	long		m_lAudioVolume;
+	long		m_lAudioBalance;
 	BOOL		m_fWaveOutInit;
 	HANDLE		m_hEventRender;
 	HWAVEOUT	m_hWaveOut;

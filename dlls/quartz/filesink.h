@@ -73,6 +73,8 @@ struct CFileWriterPinImpl
 #define	CFileWriterImpl_THIS(iface,member)	CFileWriterImpl*	This = ((CFileWriterImpl*)(((char*)iface)-offsetof(CFileWriterImpl,member)))
 #define	CFileWriterPinImpl_THIS(iface,member)	CFileWriterPinImpl*	This = ((CFileWriterPinImpl*)(((char*)iface)-offsetof(CFileWriterPinImpl,member)))
 
+#define CFileWriterPinImpl_IStream(th)	((IStream*)&((th)->stream))
+
 
 HRESULT CFileWriterPinImpl_InitIStream( CFileWriterPinImpl* This );
 HRESULT CFileWriterPinImpl_UninitIStream( CFileWriterPinImpl* This );

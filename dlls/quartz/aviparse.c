@@ -570,7 +570,7 @@ static HRESULT CAVIParseImpl_GetAllocProp( CParserImpl* pImpl, ALLOCATOR_PROPERT
 	return NOERROR;
 }
 
-static HRESULT CAVIParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStreamIndex, LONGLONG* pllStart, LONG* plLength, REFERENCE_TIME* prtStart, REFERENCE_TIME* prtStop )
+static HRESULT CAVIParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStreamIndex, LONGLONG* pllStart, LONG* plLength, REFERENCE_TIME* prtStart, REFERENCE_TIME* prtStop, DWORD* pdwSampleFlags )
 {
 	CAVIParseImpl*	This = (CAVIParseImpl*)pImpl->m_pUserData;
 	REFERENCE_TIME	rtNext;
@@ -579,10 +579,11 @@ static HRESULT CAVIParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStream
 	CAVIParseStream*	pStream;
 	const WAVEFORMATEX*	pwfx;
 
+	TRACE("(%p)\n",This);
+
 	if ( This == NULL )
 		return E_UNEXPECTED;
-
-	TRACE("(%p)\n",This);
+	*pdwSampleFlags = AM_SAMPLE_SPLICEPOINT;
 
 	nIndexNext = This->avih.dwStreams;
 	rtNext = ((REFERENCE_TIME)0x7fffffff<<32)|((REFERENCE_TIME)0xffffffff);
@@ -607,6 +608,8 @@ static HRESULT CAVIParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStream
 		*plLength = (LONG)pStream->pIndexEntries[pStream->cIndexCur].dwChunkLength;
 		*prtStart = rtNext;
 		*prtStop = rtNext;
+		/* FIXME - is this frame keyframe?? */
+		*pdwSampleFlags = AM_SAMPLE_SPLICEPOINT;
 
 		switch ( pStream->strh.fccType )
 		{
@@ -690,11 +693,9 @@ static const struct ParserHandlers CAVIParseImpl_Handlers =
 	NULL, /* pGetCurPos */
 	NULL, /* pSetCurPos */
 	NULL, /* pGetDuration */
-	NULL, /* pSetDuration */
 	NULL, /* pGetStopPos */
 	NULL, /* pSetStopPos */
 	NULL, /* pGetPreroll */
-	NULL, /* pSetPreroll */
 };
 
 HRESULT QUARTZ_CreateAVISplitter(IUnknown* punkOuter,void** ppobj)

@@ -440,6 +440,7 @@ static const TransformBaseHandlers transhandlers =
 	AVIDec_GetOutputTypes,
 	AVIDec_GetAllocProp,
 	AVIDec_BeginTransform,
+	NULL,
 	AVIDec_Transform,
 	AVIDec_EndTransform,
 };

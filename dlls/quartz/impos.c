@@ -118,110 +118,385 @@ static HRESULT WINAPI
 IMediaPosition_fnget_Duration(IMediaPosition* iface,REFTIME* prefTime)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,prefTime);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_get_Duration( This->m_pActiveFilters[n].pPosition, prefTime );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnput_CurrentPosition(IMediaPosition* iface,REFTIME refTime)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_put_CurrentPosition( This->m_pActiveFilters[n].pPosition, refTime );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnget_CurrentPosition(IMediaPosition* iface,REFTIME* prefTime)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_get_CurrentPosition( This->m_pActiveFilters[n].pPosition, prefTime );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnget_StopTime(IMediaPosition* iface,REFTIME* prefTime)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_get_StopTime( This->m_pActiveFilters[n].pPosition, prefTime );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnput_StopTime(IMediaPosition* iface,REFTIME refTime)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_put_StopTime( This->m_pActiveFilters[n].pPosition, refTime );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnget_PrerollTime(IMediaPosition* iface,REFTIME* prefTime)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_get_PrerollTime( This->m_pActiveFilters[n].pPosition, prefTime );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnput_PrerollTime(IMediaPosition* iface,REFTIME refTime)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_put_PrerollTime( This->m_pActiveFilters[n].pPosition, refTime );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnput_Rate(IMediaPosition* iface,double dblRate)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_put_Rate( This->m_pActiveFilters[n].pPosition, dblRate );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnget_Rate(IMediaPosition* iface,double* pdblRate)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_get_Rate( This->m_pActiveFilters[n].pPosition, pdblRate );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnCanSeekForward(IMediaPosition* iface,LONG* pCanSeek)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_CanSeekForward( This->m_pActiveFilters[n].pPosition, pCanSeek );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnCanSeekBackward(IMediaPosition* iface,LONG* pCanSeek)
 {
 	CFilterGraph_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	HRESULT	hrFilter;
+	DWORD	n;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
+	{
+		if ( This->m_pActiveFilters[n].pPosition != NULL )
+		{
+			hrFilter = IMediaPosition_CanSeekBackward( This->m_pActiveFilters[n].pPosition, pCanSeek );
+			if ( hr == E_NOTIMPL )
+			{
+				hr = hrFilter;
+			}
+			else
+			if ( hrFilter != E_NOTIMPL )
+			{
+				if ( SUCCEEDED(hr) )
+					hr = hrFilter;
+			}
+		}
+	}
+
+	LeaveCriticalSection( &This->m_csFilters );
+
+	return hr;
 }
 
 

@@ -180,8 +180,10 @@ typedef struct CWavParseImpl
 	WAVEFORMATEX*	pFmt;
 	DWORD	dwBlockSize;
 	LONGLONG	llDataStart;
+	LONGLONG	llBytesStop;
 	LONGLONG	llBytesTotal;
 	LONGLONG	llBytesProcessed;
+	BOOL	bDataDiscontinuity;
 	WavParseFmtType	iFmtType;
 } CWavParseImpl;
 
@@ -330,8 +332,10 @@ static HRESULT CWavParseImpl_InitParser( CParserImpl* pImpl, ULONG* pcStreams )
 	This->pFmt = NULL;
 	This->dwBlockSize = 0;
 	This->llDataStart = 0;
+	This->llBytesStop = 0;
 	This->llBytesTotal = 0;
 	This->llBytesProcessed = 0;
+	This->bDataDiscontinuity = TRUE;
 	This->iFmtType = WaveParse_Native;
 
 	hr = IAsyncReader_SyncRead( pImpl->m_pReader, 0, 12, header );
@@ -369,6 +373,8 @@ static HRESULT CWavParseImpl_InitParser( CParserImpl* pImpl, ULONG* pcStreams )
 	{
 		return hr;
 	}
+
+	This->llBytesStop = This->llBytesTotal;
 
 	/* initialized successfully. */
 	*pcStreams = 1;
@@ -461,7 +467,7 @@ static HRESULT CWavParseImpl_GetAllocProp( CParserImpl* pImpl, ALLOCATOR_PROPERT
 	return NOERROR;
 }
 
-static HRESULT CWavParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStreamIndex, LONGLONG* pllStart, LONG* plLength, REFERENCE_TIME* prtStart, REFERENCE_TIME* prtStop )
+static HRESULT CWavParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStreamIndex, LONGLONG* pllStart, LONG* plLength, REFERENCE_TIME* prtStart, REFERENCE_TIME* prtStop, DWORD* pdwSampleFlags )
 {
 	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
 	LONGLONG	llAvail;
@@ -472,8 +478,14 @@ static HRESULT CWavParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStream
 
 	if ( This == NULL || This->pFmt == NULL )
 		return E_UNEXPECTED;
+	*pdwSampleFlags = AM_SAMPLE_SPLICEPOINT;
+	if ( This->bDataDiscontinuity )
+	{
+		*pdwSampleFlags |= AM_SAMPLE_DATADISCONTINUITY;
+		This->bDataDiscontinuity = FALSE;
+	}
 
-	llAvail = This->llBytesTotal - This->llBytesProcessed;
+	llAvail = This->llBytesStop - This->llBytesProcessed;
 	if ( llAvail > (LONGLONG)This->dwBlockSize )
 		llAvail = (LONGLONG)This->dwBlockSize;
 	llStart = This->llDataStart + This->llBytesProcessed;
@@ -529,6 +541,172 @@ static HRESULT CWavParseImpl_ProcessSample( CParserImpl* pImpl, ULONG nStreamInd
 	return NOERROR;
 }
 
+/***************************************************************************/
+
+static HRESULT CWavParseImpl_GetSeekingCaps( CParserImpl* pImpl, DWORD* pdwCaps )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+
+	TRACE("(%p,%p)\n",This,pdwCaps);
+
+	*pdwCaps =
+		AM_SEEKING_CanSeekAbsolute |
+		AM_SEEKING_CanSeekForwards |
+		AM_SEEKING_CanSeekBackwards |
+		AM_SEEKING_CanGetCurrentPos |
+		AM_SEEKING_CanGetStopPos |
+		AM_SEEKING_CanGetDuration;
+
+	return S_OK;
+}
+
+static HRESULT CWavParseImpl_IsTimeFormatSupported( CParserImpl* pImpl, const GUID* pTimeFormat )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+
+	TRACE("(%p,%s)\n",This,debugstr_guid(pTimeFormat));
+
+	if ( IsEqualGUID(pTimeFormat,&TIME_FORMAT_MEDIA_TIME) )
+		return S_OK;
+
+	return S_FALSE;
+}
+
+static HRESULT CWavParseImpl_GetCurPos( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllPos )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+
+	TRACE("(%p,%s,%lu,...)\n",This,debugstr_guid(pTimeFormat),nStreamIndex);
+
+	if ( This == NULL || This->pFmt == NULL )
+		return E_UNEXPECTED;
+
+	if ( IsEqualGUID(pTimeFormat,&TIME_FORMAT_MEDIA_TIME) )
+	{
+		if ( This->pFmt->nAvgBytesPerSec == 0 )
+			return E_FAIL;
+		*pllPos = This->llBytesProcessed * QUARTZ_TIMEUNITS / (LONGLONG)This->pFmt->nAvgBytesPerSec;
+		TRACE("curpos %f\n",(double)(*pllPos/QUARTZ_TIMEUNITS));
+		return S_OK;
+	}
+
+	return E_NOTIMPL;
+}
+
+static HRESULT CWavParseImpl_SetCurPos( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG llPos )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+	LONGLONG	llBytesCur;
+
+	TRACE("(%p,%s,%lu,...)\n",This,debugstr_guid(pTimeFormat),nStreamIndex);
+
+	if ( This == NULL || This->pFmt == NULL )
+		return E_UNEXPECTED;
+
+	if ( IsEqualGUID(pTimeFormat,&TIME_FORMAT_MEDIA_TIME) )
+	{
+		if ( This->pFmt->nAvgBytesPerSec == 0 )
+			return E_FAIL;
+		llBytesCur = llPos * This->pFmt->nAvgBytesPerSec / QUARTZ_TIMEUNITS;
+		if ( llBytesCur > This->llBytesTotal )
+			llBytesCur = This->llBytesTotal;
+		This->llBytesProcessed = llBytesCur;
+		This->bDataDiscontinuity = TRUE;
+
+		return S_OK;
+	}
+
+	return E_NOTIMPL;
+}
+
+static HRESULT CWavParseImpl_GetDuration( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllDuration )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+
+	TRACE("(%p,%s,%lu,...)\n",This,debugstr_guid(pTimeFormat),nStreamIndex);
+
+	if ( This == NULL || This->pFmt == NULL )
+		return E_UNEXPECTED;
+
+	if ( IsEqualGUID(pTimeFormat,&TIME_FORMAT_MEDIA_TIME) )
+	{
+		if ( This->pFmt->nAvgBytesPerSec == 0 )
+			return E_FAIL;
+		*pllDuration = This->llBytesTotal * QUARTZ_TIMEUNITS / (LONGLONG)This->pFmt->nAvgBytesPerSec;
+		TRACE("duration %f\n",(double)(*pllDuration/QUARTZ_TIMEUNITS));
+		return S_OK;
+	}
+
+	return E_NOTIMPL;
+}
+
+static HRESULT CWavParseImpl_GetStopPos( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllPos )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+
+	TRACE("(%p,%s,%lu,...)\n",This,debugstr_guid(pTimeFormat),nStreamIndex);
+
+	if ( This == NULL || This->pFmt == NULL )
+		return E_UNEXPECTED;
+
+	if ( IsEqualGUID(pTimeFormat,&TIME_FORMAT_MEDIA_TIME) )
+	{
+		if ( This->pFmt->nAvgBytesPerSec == 0 )
+			return E_FAIL;
+		*pllPos = This->llBytesStop * QUARTZ_TIMEUNITS / (LONGLONG)This->pFmt->nAvgBytesPerSec;
+		return S_OK;
+	}
+
+	return E_NOTIMPL;
+}
+
+static HRESULT CWavParseImpl_SetStopPos( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG llPos )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+	LONGLONG	llBytesStop;
+
+	TRACE("(%p,%s,%lu,...)\n",This,debugstr_guid(pTimeFormat),nStreamIndex);
+
+	if ( This == NULL || This->pFmt == NULL )
+		return E_UNEXPECTED;
+
+	if ( IsEqualGUID(pTimeFormat,&TIME_FORMAT_MEDIA_TIME) )
+	{
+		if ( This->pFmt->nAvgBytesPerSec == 0 )
+			return E_FAIL;
+		llBytesStop = llPos * This->pFmt->nAvgBytesPerSec / QUARTZ_TIMEUNITS;
+		if ( llBytesStop > This->llBytesTotal )
+			llBytesStop = This->llBytesTotal;
+		This->llBytesStop = llBytesStop;
+
+		return S_OK;
+	}
+
+	return E_NOTIMPL;
+}
+
+static HRESULT CWavParseImpl_GetPreroll( CParserImpl* pImpl, const GUID* pTimeFormat, DWORD nStreamIndex, LONGLONG* pllPreroll )
+{
+	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+
+	TRACE("(%p,%s,%lu,...)\n",This,debugstr_guid(pTimeFormat),nStreamIndex);
+
+	if ( This == NULL || This->pFmt == NULL )
+		return E_UNEXPECTED;
+
+	if ( IsEqualGUID(pTimeFormat,&TIME_FORMAT_MEDIA_TIME) )
+	{
+		*pllPreroll = 0;
+		return S_OK;
+	}
+
+	return E_NOTIMPL;
+}
+
+
+
+
+/***************************************************************************/
 
 static const struct ParserHandlers CWavParseImpl_Handlers =
 {
@@ -545,16 +723,14 @@ static const struct ParserHandlers CWavParseImpl_Handlers =
 	NULL, /* pQualityNotify */
 
 	/* for seeking */
-	NULL, /* pGetSeekingCaps */
-	NULL, /* pIsTimeFormatSupported */
-	NULL, /* pGetCurPos */
-	NULL, /* pSetCurPos */
-	NULL, /* pGetDuration */
-	NULL, /* pSetDuration */
-	NULL, /* pGetStopPos */
-	NULL, /* pSetStopPos */
-	NULL, /* pGetPreroll */
-	NULL, /* pSetPreroll */
+	CWavParseImpl_GetSeekingCaps,
+	CWavParseImpl_IsTimeFormatSupported,
+	CWavParseImpl_GetCurPos,
+	CWavParseImpl_SetCurPos,
+	CWavParseImpl_GetDuration,
+	CWavParseImpl_GetStopPos,
+	CWavParseImpl_SetStopPos,
+	CWavParseImpl_GetPreroll,
 };
 
 HRESULT QUARTZ_CreateWaveParser(IUnknown* punkOuter,void** ppobj)

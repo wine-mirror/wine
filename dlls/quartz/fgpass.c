@@ -39,23 +39,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 static HRESULT CFilterGraph_QIFilters(
 	CFilterGraph* This, REFIID riid, void** ppvobj )
 {
-	QUARTZ_CompListItem*	pItem;
 	HRESULT hr = E_NOINTERFACE;
+	DWORD	n;
 
 	TRACE( "(%p,%p,%p)\n",This,riid,ppvobj);
 
-	QUARTZ_CompList_Lock( This->m_pFilterList );
-	pItem = QUARTZ_CompList_GetLast( This->m_pFilterList );
-	while ( pItem != NULL )
+	EnterCriticalSection ( &This->m_csFilters );
+
+	for ( n = 0; n < This->m_cActiveFilters; n++ )
 	{
-		if ( IUnknown_QueryInterface( QUARTZ_CompList_GetItemPtr(pItem),riid,ppvobj) == S_OK )
+		if ( IUnknown_QueryInterface(This->m_pActiveFilters[n].pFilter,riid,ppvobj) == S_OK )
 		{
 			hr = S_OK;
 			break;
 		}
-		pItem = QUARTZ_CompList_GetPrev( This->m_pFilterList, pItem );
 	}
-	QUARTZ_CompList_Unlock( This->m_pFilterList );
+
+	LeaveCriticalSection ( &This->m_csFilters );
 
 	return hr;
 }

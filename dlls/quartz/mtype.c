@@ -61,7 +61,6 @@ HRESULT QUARTZ_MediaType_Copy(
 		pmtDst->pbFormat = (BYTE*)CoTaskMemAlloc( pmtSrc->cbFormat );
 		if ( pmtDst->pbFormat == NULL )
 		{
-			CoTaskMemFree( pmtDst );
 			return E_OUTOFMEMORY;
 		}
 		memcpy( pmtDst->pbFormat, pmtSrc->pbFormat, pmtSrc->cbFormat );

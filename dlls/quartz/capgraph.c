@@ -81,9 +81,9 @@ ICaptureGraphBuilder_fnSetFiltergraph(ICaptureGraphBuilder* iface,IGraphBuilder*
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return ICaptureGraphBuilder2_SetFiltergraph(CCaptureGraph_ICaptureGraphBuilder2(This),pgb);
 }
 
 static HRESULT WINAPI
@@ -91,9 +91,9 @@ ICaptureGraphBuilder_fnGetFiltergraph(ICaptureGraphBuilder* iface,IGraphBuilder*
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return ICaptureGraphBuilder2_GetFiltergraph(CCaptureGraph_ICaptureGraphBuilder2(This),ppgb);
 }
 
 static HRESULT WINAPI
@@ -141,9 +141,9 @@ ICaptureGraphBuilder_fnAllocCapFile(ICaptureGraphBuilder* iface,LPCOLESTR pName,
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return ICaptureGraphBuilder2_AllocCapFile(CCaptureGraph_ICaptureGraphBuilder2(This),pName,llSize);
 }
 
 static HRESULT WINAPI
@@ -151,9 +151,9 @@ ICaptureGraphBuilder_fnCopyCaptureFile(ICaptureGraphBuilder* iface,LPOLESTR pOrg
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	return ICaptureGraphBuilder2_CopyCaptureFile(CCaptureGraph_ICaptureGraphBuilder2(This),pOrgName,pNewName,fAllowEscAbort,pCallback);
 }
 
 static ICOM_VTABLE(ICaptureGraphBuilder) icapgraph1 =

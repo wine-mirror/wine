@@ -46,6 +46,8 @@ typedef struct CCaptureGraph
 
 #define	CCaptureGraph_THIS(iface,member)	CCaptureGraph*	This = ((CCaptureGraph*)(((char*)iface)-offsetof(CCaptureGraph,member)))
 
+#define CCaptureGraph_ICaptureGraphBuilder(th)	((ICaptureGraphBuilder*)&((th)->capgraph1))
+#define CCaptureGraph_ICaptureGraphBuilder2(th)	((ICaptureGraphBuilder2*)&((th)->capgraph2))
 
 HRESULT QUARTZ_CreateCaptureGraph(IUnknown* punkOuter,void** ppobj);
 

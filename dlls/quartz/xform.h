@@ -88,6 +88,7 @@ struct TransformBaseHandlers
 	/* prepare the filter */
 	HRESULT (*pBeginTransform)( CTransformBaseImpl* pImpl, const AM_MEDIA_TYPE* pmtIn, const AM_MEDIA_TYPE* pmtOut, BOOL bReuseSample );
 	/* process a sample */
+	HRESULT (*pProcessReceive)( CTransformBaseImpl* pImpl, IMediaSample* pSampIn ); /* override Transform */
 	HRESULT (*pTransform)( CTransformBaseImpl* pImpl, IMediaSample* pSampIn, IMediaSample* pSampOut );
 	/* unprepare the filter */
 	HRESULT (*pEndTransform)( CTransformBaseImpl* pImpl );

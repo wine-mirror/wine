@@ -39,6 +39,7 @@
 		+ IDispatch - IBasicVideo[2] (pass to a renderer)
 		+ IDispatch - IBasicAudio (pass to a renderer)
 		+ IDispatch - IVideoWindow  (pass to a renderer)
+		+ IDispatch - IAMStats
 	(following interfaces are not implemented)
 		+ IMarshal
 		+ IFilterMapper2 - IFilterMapper3
@@ -119,6 +120,21 @@ typedef struct FG_IVideoWindowImpl
 	ICOM_VFIELD(IVideoWindow);
 } FG_IVideoWindowImpl;
 
+typedef struct FG_IAMStatsImpl
+{
+	ICOM_VFIELD(IAMStats);
+} FG_IAMStatsImpl;
+
+
+typedef struct FG_FilterData
+{
+	IBaseFilter*	pFilter;
+	IMediaPosition*	pPosition;
+	IMediaSeeking*	pSeeking;
+	WCHAR*	pwszName;
+	DWORD	cbName;
+} FG_FilterData;
+
 typedef struct FilterGraph_MEDIAEVENT	FilterGraph_MEDIAEVENT;
 
 typedef struct CFilterGraph
@@ -138,10 +154,13 @@ typedef struct CFilterGraph
 	FG_IBasicVideoImpl	basvid;
 	FG_IBasicAudioImpl	basaud;
 	FG_IVideoWindowImpl	vidwin;
+	FG_IAMStatsImpl	amstats;
 
 	/* IDispatch fields. */
 	/* IFilterGraph2 fields. */
-	QUARTZ_CompList*	m_pFilterList;
+	CRITICAL_SECTION	m_csFilters;
+	DWORD	m_cActiveFilters;
+	FG_FilterData*		m_pActiveFilters;
 	/* IGraphVersion fields. */
 	LONG	m_lGraphVersion;
 	/* IMediaControl fields. */
@@ -167,6 +186,7 @@ typedef struct CFilterGraph
 	/* IBasicVideo2 fields. */
 	/* IBasicAudio fields. */
 	/* IVideoWindow fields. */
+	/* IAMStats fields. */
 } CFilterGraph;
 
 #define	CFilterGraph_THIS(iface,member)		CFilterGraph*	This = ((CFilterGraph*)(((char*)iface)-offsetof(CFilterGraph,member)))
@@ -208,6 +228,8 @@ HRESULT CFilterGraph_InitIBasicAudio( CFilterGraph* pfg );
 void CFilterGraph_UninitIBasicAudio( CFilterGraph* pfg );
 HRESULT CFilterGraph_InitIVideoWindow( CFilterGraph* pfg );
 void CFilterGraph_UninitIVideoWindow( CFilterGraph* pfg );
+HRESULT CFilterGraph_InitIAMStats( CFilterGraph* pfg );
+void CFilterGraph_UninitIAMStats( CFilterGraph* pfg );
 
 
 #endif	/* WINE_DSHOW_FGRAPH_H */

@@ -62,6 +62,7 @@ static QUARTZ_IFEntry IFEntries[] =
   { &IID_IBasicVideo2, offsetof(CFilterGraph,basvid)-offsetof(CFilterGraph,unk) },
   { &IID_IBasicAudio, offsetof(CFilterGraph,basaud)-offsetof(CFilterGraph,unk) },
   { &IID_IVideoWindow, offsetof(CFilterGraph,vidwin)-offsetof(CFilterGraph,unk) },
+  { &IID_IAMStats, offsetof(CFilterGraph,amstats)-offsetof(CFilterGraph,unk) },
 };
 
 
@@ -89,6 +90,7 @@ static const struct FGInitEntry FGRAPH_Init[] =
 	FGENT(IBasicVideo2)
 	FGENT(IBasicAudio)
 	FGENT(IVideoWindow)
+	FGENT(IAMStats)
 
 	#undef	FGENT
 	{ NULL, NULL },
@@ -339,3 +341,176 @@ void CFilterGraph_UninitIDispatch( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 }
+
+/***************************************************************************
+ *
+ *	CFilterGraph::IAMStats
+ *
+ */
+
+static HRESULT WINAPI
+IAMStats_fnQueryInterface(IAMStats* iface,REFIID riid,void** ppobj)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
+}
+
+static ULONG WINAPI
+IAMStats_fnAddRef(IAMStats* iface)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_AddRef(This->unk.punkControl);
+}
+
+static ULONG WINAPI
+IAMStats_fnRelease(IAMStats* iface)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	TRACE("(%p)->()\n",This);
+
+	return IUnknown_Release(This->unk.punkControl);
+}
+
+static HRESULT WINAPI
+IAMStats_fnGetTypeInfoCount(IAMStats* iface,UINT* pcTypeInfo)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p)->()\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnGetTypeInfo(IAMStats* iface,UINT iTypeInfo, LCID lcid, ITypeInfo** ppobj)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p)->()\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnGetIDsOfNames(IAMStats* iface,REFIID riid, LPOLESTR* ppwszName, UINT cNames, LCID lcid, DISPID* pDispId)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p)->()\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnInvoke(IAMStats* iface,DISPID DispId, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarRes, EXCEPINFO* pExcepInfo, UINT* puArgErr)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p)->()\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnReset(IAMStats* iface)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p) stub\n",This);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnget_Count(IAMStats* iface,long* plCount)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p,%p) stub\n",This,plCount);
+
+	if ( plCount == NULL )
+		return E_POINTER;
+	*plCount = 0;
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnGetValueByIndex(IAMStats* iface,long lIndex,BSTR* pbstrName,long* lCount,double* pdblLast,double* pdblAverage,double* pdblStdDev,double* pdblMin,double* pdblMax)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p) stub\n",This);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnGetValueByName(IAMStats* iface,BSTR bstrName,long* plIndex,long* plCount,double* pdblLast,double* pdblAverage,double* pdblStdDev,double* pdblMin,double* pdblMax)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p) stub\n",This);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnGetIndex(IAMStats* iface,BSTR bstrName,long lCreate,long* plIndex)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p) stub\n",This);
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+IAMStats_fnAddValue(IAMStats* iface,long lIndex,double dValue)
+{
+	CFilterGraph_THIS(iface,amstats);
+
+	FIXME("(%p) stub\n",This);
+	return E_NOTIMPL;
+}
+
+
+static ICOM_VTABLE(IAMStats) iamstats =
+{
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	/* IUnknown fields */
+	IAMStats_fnQueryInterface,
+	IAMStats_fnAddRef,
+	IAMStats_fnRelease,
+	/* IDispatch fields */
+	IAMStats_fnGetTypeInfoCount,
+	IAMStats_fnGetTypeInfo,
+	IAMStats_fnGetIDsOfNames,
+	IAMStats_fnInvoke,
+	/* IAMStats fields */
+	IAMStats_fnReset,
+	IAMStats_fnget_Count,
+	IAMStats_fnGetValueByIndex,
+	IAMStats_fnGetValueByName,
+	IAMStats_fnGetIndex,
+	IAMStats_fnAddValue,
+};
+
+HRESULT CFilterGraph_InitIAMStats( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+	ICOM_VTBL(&pfg->amstats) = &iamstats;
+
+	return NOERROR;
+}
+
+void CFilterGraph_UninitIAMStats( CFilterGraph* pfg )
+{
+	TRACE("(%p)\n",pfg);
+}
+
+
+

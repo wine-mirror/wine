@@ -124,7 +124,9 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 		hr = IPin_QueryAccept(iface,pmt);
 		if ( FAILED(hr) )
 			goto err;
+		This->pPinConnectedTo = pPin;
 		hr = IPin_ReceiveConnection(pPin,iface,pmt);
+		This->pPinConnectedTo = NULL;
 		if ( FAILED(hr) )
 			goto err;
 	}
@@ -136,7 +138,10 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 			hr = IPin_QueryAccept(iface,pmt);
 			if ( SUCCEEDED(hr) )
 			{
+				This->pPinConnectedTo = pPin;
 				hr = IPin_ReceiveConnection(pPin,iface,pmt);
+				This->pPinConnectedTo = NULL;
+
 				TRACE("ReceiveConnection - %08lx\n",hr);
 				if ( SUCCEEDED(hr) )
 				{

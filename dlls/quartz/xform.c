@@ -208,49 +208,56 @@ static HRESULT CTransformBaseInPinImpl_Receive( CPinBaseImpl* pImpl, IMediaSampl
 	if ( This->pFilter->m_bInFlush )
 		return S_FALSE;
 
-	if ( This->meminput.pAllocator != This->pFilter->m_pOutPinAllocator )
+	if ( This->pFilter->m_pHandler->pProcessReceive != NULL )
 	{
-		if ( This->pFilter->m_pSample == NULL )
+		hr = This->pFilter->m_pHandler->pProcessReceive( This->pFilter, pSample );
+	}
+	else
+	{
+		if ( This->meminput.pAllocator != This->pFilter->m_pOutPinAllocator )
 		{
-			hr = IMemAllocator_GetBuffer( This->pFilter->m_pOutPinAllocator, &This->pFilter->m_pSample, NULL, NULL, 0 );
+			if ( This->pFilter->m_pSample == NULL )
+			{
+				hr = IMemAllocator_GetBuffer( This->pFilter->m_pOutPinAllocator, &This->pFilter->m_pSample, NULL, NULL, 0 );
+				if ( FAILED(hr) )
+					goto end;
+			}
+			hr = QUARTZ_IMediaSample_Copy(
+				This->pFilter->m_pSample, pSample, This->pFilter->m_bPreCopy );
 			if ( FAILED(hr) )
 				goto end;
 		}
-		hr = QUARTZ_IMediaSample_Copy(
-			This->pFilter->m_pSample, pSample, This->pFilter->m_bPreCopy );
+
+		if ( This->pFilter->m_bPreCopy )
+			hr = This->pFilter->m_pHandler->pTransform( This->pFilter, This->pFilter->m_pSample, NULL );
+		else
+			hr = This->pFilter->m_pHandler->pTransform( This->pFilter, pSample, This->pFilter->m_pSample );
+
 		if ( FAILED(hr) )
 			goto end;
-	}
 
-	if ( This->pFilter->m_bPreCopy )
-		hr = This->pFilter->m_pHandler->pTransform( This->pFilter, This->pFilter->m_pSample, NULL );
-	else
-		hr = This->pFilter->m_pHandler->pTransform( This->pFilter, pSample, This->pFilter->m_pSample );
-
-	if ( FAILED(hr) )
-		goto end;
-
-	if ( hr == NOERROR )
-	{
-		hr = CPinBaseImpl_SendSample(&This->pFilter->pOutPin->pin,This->pFilter->m_pSample);
-		if ( FAILED(hr) )
-			goto end;
-	}
-
-	hr = NOERROR;
-end:
-	if ( !This->pFilter->m_bReuseSample )
-	{
-		if ( This->pFilter->m_pSample != NULL )
+		if ( hr == NOERROR )
 		{
-			IMediaSample_Release( This->pFilter->m_pSample );
-			This->pFilter->m_pSample = NULL;
+			hr = CPinBaseImpl_SendSample(&This->pFilter->pOutPin->pin,This->pFilter->m_pSample);
+			if ( FAILED(hr) )
+				goto end;
 		}
-	}
 
-	if ( FAILED(hr) )
-	{
-		/* Notify(ABORT) */
+		hr = NOERROR;
+	end:
+		if ( !This->pFilter->m_bReuseSample )
+		{
+			if ( This->pFilter->m_pSample != NULL )
+			{
+				IMediaSample_Release( This->pFilter->m_pSample );
+				This->pFilter->m_pSample = NULL;
+			}
+		}
+
+		if ( FAILED(hr) )
+		{
+			/* Notify(ABORT) */
+		}
 	}
 
 	return hr;

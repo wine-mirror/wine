@@ -46,6 +46,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 #define	QUARTZ_MSG_EXITTHREAD	(WM_APP+2)
 #define	QUARTZ_MSG_SEEK			(WM_APP+3)
 
+#ifndef OATRUE
+#define OATRUE (-1)
+#define OAFALSE (0)
+#endif
+
 HRESULT CParserOutPinImpl_InitIMediaSeeking( CParserOutPinImpl* This );
 void CParserOutPinImpl_UninitIMediaSeeking( CParserOutPinImpl* This );
 HRESULT CParserOutPinImpl_InitIMediaPosition( CParserOutPinImpl* This );
@@ -264,6 +269,10 @@ HRESULT CParserImplThread_ProcessNextSample( CParserImpl* This )
 		if ( This->m_pHandler->pProcessSample != NULL )
 			hr = This->m_pHandler->pProcessSample(This,nIndex,pOutPin->m_llReqStart,pOutPin->m_lReqLength,pOutPin->m_pReqSample);
 
+		IMediaSample_SetSyncPoint( pOutPin->m_pReqSample, (pOutPin->m_dwSampleFlags & AM_SAMPLE_SPLICEPOINT) ? TRUE : FALSE );
+		IMediaSample_SetPreroll( pOutPin->m_pReqSample, (pOutPin->m_dwSampleFlags & AM_SAMPLE_PREROLL) ? TRUE : FALSE );
+		IMediaSample_SetDiscontinuity( pOutPin->m_pReqSample, (pOutPin->m_dwSampleFlags & AM_SAMPLE_DATADISCONTINUITY) ? TRUE : FALSE );
+
 		if ( SUCCEEDED(hr) )
 		{
 			if ( pOutPin->m_pOutPinAllocator != NULL &&
@@ -312,6 +321,7 @@ DWORD WINAPI CParserImplThread_Entry( LPVOID pv )
 	REFERENCE_TIME	rtSampleTimeStart, rtSampleTimeEnd;
 	LONGLONG	llReqStart;
 	LONG	lReqLength;
+	DWORD	dwSampleFlags;
 	REFERENCE_TIME	rtReqStart, rtReqStop;
 	IMediaSample*	pSample;
 	MSG	msg;
@@ -332,7 +342,7 @@ DWORD WINAPI CParserImplThread_Entry( LPVOID pv )
 		if ( bReqNext )
 		{
 			/* Get the next request.  */
-			hr = This->m_pHandler->pGetNextRequest( This, &nIndex, &llReqStart, &lReqLength, &rtReqStart, &rtReqStop );
+			hr = This->m_pHandler->pGetNextRequest( This, &nIndex, &llReqStart, &lReqLength, &rtReqStart, &rtReqStop, &dwSampleFlags );
 			if ( FAILED(hr) )
 			{
 				CParserImplThread_ErrorAbort(This,hr);
@@ -402,6 +412,7 @@ DWORD WINAPI CParserImplThread_Entry( LPVOID pv )
 			This->m_ppOutPins[nIndex]->m_lReqLength = lReqLength;
 			This->m_ppOutPins[nIndex]->m_rtReqStart = rtSampleTimeStart;
 			This->m_ppOutPins[nIndex]->m_rtReqStop = rtSampleTimeEnd;
+			This->m_ppOutPins[nIndex]->m_dwSampleFlags = dwSampleFlags;
 			bReqNext = TRUE;
 			continue;
 		}
@@ -617,6 +628,37 @@ void CParserImpl_MemDecommit( CParserImpl* This )
 	}
 }
 
+static
+HRESULT CParserImpl_GetPreferredTimeFormat( CParserImpl* This, GUID* pguidFormat )
+{
+	static const GUID* tryformats[] =
+	{
+		&TIME_FORMAT_MEDIA_TIME,
+		&TIME_FORMAT_FRAME,
+		&TIME_FORMAT_SAMPLE,
+		&TIME_FORMAT_FIELD,
+		&TIME_FORMAT_BYTE,
+		NULL,
+	};
+	DWORD	n;
+
+	if ( This->m_pHandler->pIsTimeFormatSupported == NULL )
+		return E_NOTIMPL;
+
+	n = 0;
+	while ( tryformats[n] != NULL )
+	{
+		if ( This->m_pHandler->pIsTimeFormatSupported( This, tryformats[n] ) == S_OK )
+		{
+			memcpy( pguidFormat, tryformats[n], sizeof(GUID) );
+			return S_OK;
+		}
+		n ++;
+	}
+
+	return E_FAIL;
+
+}
 
 
 /***************************************************************************
@@ -663,6 +705,7 @@ static HRESULT CParserImpl_OnInactive( CBaseFilterImpl* pImpl )
 static HRESULT CParserImpl_OnStop( CBaseFilterImpl* pImpl )
 {
 	CParserImpl_THIS(pImpl,basefilter);
+	DWORD	n;
 
 	FIXME( "(%p)\n", This );
 
@@ -670,7 +713,12 @@ static HRESULT CParserImpl_OnStop( CBaseFilterImpl* pImpl )
 	CParserImpl_MemDecommit(This);
 	This->m_bSendEOS = FALSE;
 
-	/* FIXME - reset streams. */
+	/* reset streams. */
+	if ( This->m_pHandler->pSetCurPos != NULL )
+	{
+		for ( n = 0; n < This->m_cOutStreams; n++ )
+			This->m_pHandler->pSetCurPos(This,&This->m_guidTimeFormat,n,(LONGLONG)0);
+	}
 
 	return NOERROR;
 }
@@ -1021,6 +1069,7 @@ HRESULT QUARTZ_CreateParser(
 	This->m_pInPin = NULL;
 	This->m_cOutStreams = 0;
 	This->m_ppOutPins = NULL;
+	memcpy( &This->m_guidTimeFormat, &TIME_FORMAT_NONE, sizeof(GUID) );
 	This->m_pReader = NULL;
 	This->m_pAllocator = NULL;
 	ZeroMemory( &This->m_propAlloc, sizeof(ALLOCATOR_PROPERTIES) );
@@ -1080,6 +1129,8 @@ HRESULT QUARTZ_CreateParser(
 	}
 
 	*ppobj = (void*)&(This->unk);
+
+	(void)CParserImpl_GetPreferredTimeFormat( This, &This->m_guidTimeFormat );
 
 	return S_OK;
 }
@@ -1226,6 +1277,7 @@ HRESULT QUARTZ_CreateParserOutPin(
 	This->m_lReqLength = 0;
 	This->m_rtReqStart = 0;
 	This->m_rtReqStop = 0;
+	This->m_dwSampleFlags = 0;
 
 
 	hr = CPinBaseImpl_InitIPin(
@@ -1324,18 +1376,63 @@ static HRESULT WINAPI
 IMediaSeeking_fnGetCapabilities(IMediaSeeking* iface,DWORD* pdwCaps)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pdwCaps);
 
-	return E_NOTIMPL;
+	if ( pdwCaps == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetSeekingCaps == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pdwCaps);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetSeekingCaps( This->pParser, pdwCaps );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnCheckCapabilities(IMediaSeeking* iface,DWORD* pdwCaps)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
+	DWORD	dwCaps;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pdwCaps);
+
+	if ( pdwCaps == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetSeekingCaps == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pdwCaps);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetSeekingCaps( This->pParser, &dwCaps );
+		if ( SUCCEEDED(hr) )
+		{
+			dwCaps &= *pdwCaps;
+			if ( dwCaps == *pdwCaps )
+				hr = S_OK;
+			else
+			if ( dwCaps != 0 )
+				hr = S_FALSE;
+			else
+				hr = E_FAIL;
+			*pdwCaps = dwCaps;
+		}
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 
 	return E_NOTIMPL;
 }
@@ -1344,81 +1441,193 @@ static HRESULT WINAPI
 IMediaSeeking_fnIsFormatSupported(IMediaSeeking* iface,const GUID* pidFormat)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%s)\n",This,debugstr_guid(pidFormat));
 
-	return E_NOTIMPL;
+	if ( pidFormat == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pIsTimeFormatSupported == NULL )
+	{
+		FIXME("(%p)->(%s) not implemented\n",This,debugstr_guid(pidFormat));
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pIsTimeFormatSupported( This->pParser, pidFormat );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnQueryPreferredFormat(IMediaSeeking* iface,GUID* pidFormat)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT hr;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pidFormat);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->pParser->m_csParser );
+	hr = CParserImpl_GetPreferredTimeFormat( This->pParser, pidFormat );
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnGetTimeFormat(IMediaSeeking* iface,GUID* pidFormat)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pidFormat);
 
-	return E_NOTIMPL;
+	if ( pidFormat == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pIsTimeFormatSupported == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pidFormat);
+	}
+	else
+	{
+		memcpy( pidFormat, &This->pParser->m_guidTimeFormat, sizeof(GUID) );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnIsUsingTimeFormat(IMediaSeeking* iface,const GUID* pidFormat)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pidFormat);
 
-	return E_NOTIMPL;
+	if ( pidFormat == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pIsTimeFormatSupported == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pidFormat);
+	}
+	else
+	{
+		hr = IsEqualGUID( pidFormat, &This->pParser->m_guidTimeFormat ) ? S_OK : S_FALSE;
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnSetTimeFormat(IMediaSeeking* iface,const GUID* pidFormat)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pidFormat);
 
-	return E_NOTIMPL;
+	if ( pidFormat == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pIsTimeFormatSupported == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pidFormat);
+	}
+	else
+	{
+		if ( This->pParser->m_pHandler->pIsTimeFormatSupported( This->pParser, pidFormat ) == S_OK )
+		{
+			memcpy( &This->pParser->m_guidTimeFormat, pidFormat, sizeof(GUID) );
+		}
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnGetDuration(IMediaSeeking* iface,LONGLONG* pllDuration)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	/* the following line may produce too many FIXMEs... */
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pllDuration);
 
-	return E_NOTIMPL;
+	if ( pllDuration == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetDuration == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pllDuration);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetDuration( This->pParser, &This->pParser->m_guidTimeFormat, This->nStreamIndex, pllDuration );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnGetStopPosition(IMediaSeeking* iface,LONGLONG* pllPos)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pllPos);
 
-	return E_NOTIMPL;
+	if ( pllPos == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetStopPos == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pllPos);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetStopPos( This->pParser, &This->pParser->m_guidTimeFormat, This->nStreamIndex, pllPos );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaSeeking_fnGetCurrentPosition(IMediaSeeking* iface,LONGLONG* pllPos)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pllPos);
 
-	return E_NOTIMPL;
+	if ( pllPos == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetCurPos == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pllPos);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetCurPos( This->pParser, &This->pParser->m_guidTimeFormat, This->nStreamIndex, pllPos );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1445,10 +1654,28 @@ static HRESULT WINAPI
 IMediaSeeking_fnGetPositions(IMediaSeeking* iface,LONGLONG* pllCur,LONGLONG* pllStop)
 {
 	CParserOutPinImpl_THIS(iface,mediaseeking);
+	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p,%p)\n",This,pllCur,pllStop);
 
-	return E_NOTIMPL;
+	if ( pllCur == NULL || pllStop == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetCurPos == NULL ||
+		 This->pParser->m_pHandler->pGetStopPos == NULL )
+	{
+		FIXME("(%p)->(%p,%p) not implemented\n",This,pllCur,pllStop);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetCurPos( This->pParser, &This->pParser->m_guidTimeFormat, This->nStreamIndex, pllCur );
+		if ( SUCCEEDED(hr) )
+			hr = This->pParser->m_pHandler->pGetStopPos( This->pParser, &This->pParser->m_guidTimeFormat, This->nStreamIndex, pllStop );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1615,50 +1842,135 @@ static HRESULT WINAPI
 IMediaPosition_fnget_Duration(IMediaPosition* iface,REFTIME* prefTime)
 {
 	CParserOutPinImpl_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	LONGLONG	llPos;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,prefTime);
 
-	return E_NOTIMPL;
+	if ( prefTime == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetDuration == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,prefTime);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetDuration( This->pParser, &TIME_FORMAT_MEDIA_TIME, This->nStreamIndex, &llPos );
+		if ( SUCCEEDED(hr) )
+			*prefTime = (REFTIME)llPos;
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnput_CurrentPosition(IMediaPosition* iface,REFTIME refTime)
 {
 	CParserOutPinImpl_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	/*LONGLONG	llPos;*/
 
 	FIXME("(%p)->() stub!\n",This);
 
-	return E_NOTIMPL;
+#if 0	/* not yet */
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pSetCurPos == NULL )
+	{
+		FIXME("(%p)->() not implemented\n",This);
+	}
+	else
+	{
+		llPos = (LONGLONG)refTime;
+		hr = This->pParser->m_pHandler->pSetCurPos( This->pParser, &TIME_FORMAT_MEDIA_TIME, This->nStreamIndex, llPos );
+		/* FIXME - flush all streams. */
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+#endif
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnget_CurrentPosition(IMediaPosition* iface,REFTIME* prefTime)
 {
 	CParserOutPinImpl_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	LONGLONG	llPos;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,prefTime);
 
-	return E_NOTIMPL;
+	if ( prefTime == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetCurPos == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,prefTime);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetCurPos( This->pParser, &TIME_FORMAT_MEDIA_TIME, This->nStreamIndex, &llPos );
+		if ( SUCCEEDED(hr) )
+			*prefTime = (REFTIME)llPos;
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnget_StopTime(IMediaPosition* iface,REFTIME* prefTime)
 {
 	CParserOutPinImpl_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	LONGLONG	llPos;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,prefTime);
 
-	return E_NOTIMPL;
+	if ( prefTime == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetStopPos == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,prefTime);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetStopPos( This->pParser, &TIME_FORMAT_MEDIA_TIME, This->nStreamIndex, &llPos );
+		if ( SUCCEEDED(hr) )
+			*prefTime = (REFTIME)llPos;
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnput_StopTime(IMediaPosition* iface,REFTIME refTime)
 {
 	CParserOutPinImpl_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	LONGLONG	llPos;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	return E_NOTIMPL;
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pSetStopPos == NULL )
+	{
+		FIXME("(%p)->() not implemented\n",This);
+	}
+	else
+	{
+		llPos = (LONGLONG)refTime;
+		hr = This->pParser->m_pHandler->pSetStopPos( This->pParser, &TIME_FORMAT_MEDIA_TIME, This->nStreamIndex, llPos );
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1701,20 +2013,62 @@ static HRESULT WINAPI
 IMediaPosition_fnCanSeekForward(IMediaPosition* iface,LONG* pCanSeek)
 {
 	CParserOutPinImpl_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	DWORD	dwCaps;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pCanSeek);
 
-	return E_NOTIMPL;
+	if ( pCanSeek == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetSeekingCaps == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pCanSeek);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetSeekingCaps( This->pParser, &dwCaps );
+		if ( SUCCEEDED(hr) )
+		{
+			*pCanSeek = (dwCaps & AM_SEEKING_CanSeekForwards) ? OATRUE : OAFALSE;
+			hr = S_OK;
+		}
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IMediaPosition_fnCanSeekBackward(IMediaPosition* iface,LONG* pCanSeek)
 {
 	CParserOutPinImpl_THIS(iface,mediaposition);
+	HRESULT	hr = E_NOTIMPL;
+	DWORD	dwCaps;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pCanSeek);
 
-	return E_NOTIMPL;
+	if ( pCanSeek == NULL )
+		return E_POINTER;
+
+	EnterCriticalSection( &This->pParser->m_csParser );
+	if ( This->pParser->m_pHandler->pGetSeekingCaps == NULL )
+	{
+		FIXME("(%p)->(%p) not implemented\n",This,pCanSeek);
+	}
+	else
+	{
+		hr = This->pParser->m_pHandler->pGetSeekingCaps( This->pParser, &dwCaps );
+		if ( SUCCEEDED(hr) )
+		{
+			*pCanSeek = (dwCaps & AM_SEEKING_CanSeekBackwards) ? OATRUE : OAFALSE;
+			hr = S_OK;
+		}
+	}
+	LeaveCriticalSection( &This->pParser->m_csParser );
+
+	return hr;
 }
 
 

@@ -142,6 +142,9 @@ static HRESULT CFileWriterPinImpl_Receive( CPinBaseImpl* pImpl, IMediaSample* pS
 	LONG	lLength;
 	ULONG	cbWritten;
 	HRESULT hr;
+	REFERENCE_TIME	rtStart;
+	REFERENCE_TIME	rtEnd;
+	LARGE_INTEGER	dlibMove;
 
 	TRACE( "(%p,%p)\n",This,pSample );
 
@@ -163,7 +166,16 @@ static HRESULT CFileWriterPinImpl_Receive( CPinBaseImpl* pImpl, IMediaSample* pS
 		return S_OK;
 	}
 
-	hr = IStream_Write((IStream*)(&This->stream),pData,lLength,&cbWritten);
+	hr = IMediaSample_GetTime( pSample, &rtStart, &rtEnd );
+	if ( FAILED(hr) )
+		return hr;
+
+	dlibMove.QuadPart = rtStart;
+	hr = IStream_Seek(CFileWriterPinImpl_IStream(This),dlibMove,STREAM_SEEK_SET,NULL);
+	if ( FAILED(hr) )
+		return hr;
+
+	hr = IStream_Write(CFileWriterPinImpl_IStream(This),pData,lLength,&cbWritten);
 
 	return hr;
 }
