@@ -1203,7 +1203,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
 
     memset(&ov,0,sizeof(ov));
-    ov.hEvent = CreateEventA( NULL, 0, 0, NULL );
+    ov.hEvent = CreateEventW( NULL, 0, 0, NULL );
     if (!ov.hEvent)
         return FALSE;
 
