@@ -465,6 +465,7 @@ BOOL ENUMPRINTERS_AddStringFromRegistryA(
 
  if (DataType == REG_SZ)
  	{                   
+	 if (bCalcSpaceOnly==FALSE)
 	 *Dest = &lpbPrinters[*dwNextStringPos];
 	 *dwNextStringPos += DataSize+1;
 	 if (*dwNextStringPos > dwBufSize)
@@ -571,6 +572,8 @@ BOOL ENUMPRINTERS_AddInfo2A(
      			                  "Parameters", &(lpPInfo2->pParameters), 
                                   lpbPrinters, dwNextStringPos, 
                                   dwBufSize, bCalcSpaceOnly);
+     if (bCalcSpaceOnly == FALSE)
+     	{                             
      lpPInfo2->pSecurityDescriptor = NULL; /* EnumPrinters doesn't return this*/
 
      					  /* FIXME: Attributes gets LOCAL as no REMOTE exists*/
@@ -594,8 +597,9 @@ BOOL ENUMPRINTERS_AddInfo2A(
      /* and read the devModes structure... */
       RegQueryValueExA(hPrinterSettings, "pDevMode", NULL, &DataType,
   					NULL, &DevSize); /* should return ERROR_MORE_DATA */
-      lpPInfo2->pDevMode = &lpbPrinters[*dwNextStringPos];
+	      lpPInfo2->pDevMode = (LPDEVMODEA) &lpbPrinters[*dwNextStringPos];
       *dwNextStringPos += DevSize + 1;      
+        } 
  if (*dwNextStringPos > dwBufSize)
  	bCalcSpaceOnly=TRUE;
  if (bCalcSpaceOnly==FALSE)
@@ -653,6 +657,7 @@ BOOL ENUMPRINTERS_AddInfo4A(
                                   lpbPrinters, dwNextStringPos, 
                                   dwBufSize, bCalcSpaceOnly);
      					  /* FIXME: Attributes gets LOCAL as no REMOTE exists*/
+     if (bCalcSpaceOnly==FALSE)	                     
 	 lpPInfo4->Attributes = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
      								"Attributes") +PRINTER_ATTRIBUTE_LOCAL; 
     }
@@ -706,6 +711,8 @@ BOOL ENUMPRINTERS_AddInfo5A(
      			                  "Port", &(lpPInfo5->pPortName), lpbPrinters,
                                   dwNextStringPos, dwBufSize, bCalcSpaceOnly);
      					  /* FIXME: Attributes gets LOCAL as no REMOTE exists*/
+     if (bCalcSpaceOnly == FALSE)
+   	   {
 	 lpPInfo5->Attributes = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
      								"Attributes") +PRINTER_ATTRIBUTE_LOCAL; 
 	 lpPInfo5->DeviceNotSelectedTimeOut 
@@ -714,6 +721,7 @@ BOOL ENUMPRINTERS_AddInfo5A(
 	 lpPInfo5->TransmissionRetryTimeout
      					  = ENUMPRINTERS_GetDWORDFromRegistryA(hPrinterSettings,
      								"dnsTimeout"); 
+    }
     }
     
  if (lpszPrinterSettings)
@@ -792,11 +800,15 @@ BOOL  WINAPI EnumPrintersA(
  DWORD dwStructPrinterInfoSize;	/* size of a Printer_Info_X structure */
  BOOL  bCalcSpaceOnly=FALSE;/* if TRUE: don't store data, just calculate space*/
  
- TRACE(print, "EnumPrintersA\n");
+ TRACE(print, "entered.\n");
 
- /* zero out the data area, and initialise some returns to zero,
+ /* test whether we're requested to really fill in. If so,
+  * zero out the data area, and initialise some returns to zero,
   * to prevent problems 
   */
+ if (lpbPrinters==NULL || cbBuf==0)
+ 	 bCalcSpaceOnly=TRUE;
+ else
  {
   int i;
   for (i=0; i<cbBuf; i++)
@@ -920,9 +932,12 @@ BOOL  WINAPI EnumPrintersA(
  
  if (bCalcSpaceOnly==TRUE)
  	{
+    if  (lpbPrinters!=NULL)
+ 		{
 	  int i;
 	  for (i=0; i<cbBuf; i++)
 	  	  lpbPrinters[i]=0;
+	    } 
      *lpdwReturned=0;    
     } 
  LeaveCriticalSection(&PRINT32_RegistryBlocker); 
