@@ -227,6 +227,89 @@ HINSTANCE	WINAPI ShellExecuteA(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,INT);
 HINSTANCE	WINAPI ShellExecuteW(HWND,LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR,INT);
 #define     ShellExecute WINELIB_NAME_AW(ShellExecute)
 
+#define SE_ERR_FNF              2       /* file not found */
+#define SE_ERR_PNF              3       /* path not found */
+#define SE_ERR_ACCESSDENIED     5       /* access denied */
+#define SE_ERR_OOM              8       /* out of memory */
+#define SE_ERR_DLLNOTFOUND      32
+#define SE_ERR_SHARE                    26
+#define SE_ERR_ASSOCINCOMPLETE          27
+#define SE_ERR_DDETIMEOUT               28
+#define SE_ERR_DDEFAIL                  29
+#define SE_ERR_DDEBUSY                  30
+#define SE_ERR_NOASSOC                  31
+
+#define SEE_MASK_CLASSNAME        0x00000001
+#define SEE_MASK_CLASSKEY         0x00000003
+#define SEE_MASK_IDLIST           0x00000004
+#define SEE_MASK_INVOKEIDLIST     0x0000000c
+#define SEE_MASK_ICON             0x00000010
+#define SEE_MASK_HOTKEY           0x00000020
+#define SEE_MASK_NOCLOSEPROCESS   0x00000040
+#define SEE_MASK_CONNECTNETDRV    0x00000080
+#define SEE_MASK_FLAG_DDEWAIT     0x00000100
+#define SEE_MASK_DOENVSUBST       0x00000200
+#define SEE_MASK_FLAG_NO_UI       0x00000400
+#define SEE_MASK_UNICODE          0x00004000
+#define SEE_MASK_NO_CONSOLE       0x00008000
+#define SEE_MASK_ASYNCOK          0x00100000
+#define SEE_MASK_HMONITOR         0x00200000
+
+typedef struct _SHELLEXECUTEINFOA
+{       DWORD cbSize;
+        ULONG fMask;
+        HWND hwnd;
+        LPCSTR   lpVerb;
+        LPCSTR   lpFile;
+        LPCSTR   lpParameters;
+        LPCSTR   lpDirectory;
+       INT nShow;
+        HINSTANCE hInstApp;
+        /* Optional fields */
+        LPVOID lpIDList;
+        LPCSTR   lpClass;
+        HKEY hkeyClass;
+        DWORD dwHotKey;
+        union
+        { HANDLE hIcon;
+          HANDLE hMonitor;
+        } DUMMYUNIONNAME;
+        HANDLE hProcess;
+} SHELLEXECUTEINFOA, *LPSHELLEXECUTEINFOA;
+
+typedef struct _SHELLEXECUTEINFOW
+{       DWORD cbSize;
+        ULONG fMask;
+        HWND hwnd;
+        LPCWSTR  lpVerb;
+        LPCWSTR  lpFile;
+        LPCWSTR  lpParameters;
+        LPCWSTR  lpDirectory;
+       INT nShow;
+        HINSTANCE hInstApp;
+        /* Optional fields*/
+        LPVOID lpIDList;
+        LPCWSTR  lpClass;
+        HKEY hkeyClass;
+        DWORD dwHotKey;
+        union
+        { HANDLE hIcon;
+          HANDLE hMonitor;
+        } DUMMYUNIONNAME;
+        HANDLE hProcess;
+} SHELLEXECUTEINFOW, *LPSHELLEXECUTEINFOW;
+
+#define SHELLEXECUTEINFO   WINELIB_NAME_AW(SHELLEXECUTEINFO)
+#define LPSHELLEXECUTEINFO WINELIB_NAME_AW(LPSHELLEXECUTEINFO)
+
+BOOL WINAPI ShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo);
+BOOL WINAPI ShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo);
+#define ShellExecuteEx  WINELIB_NAME_AW(ShellExecuteEx)
+
+void WINAPI WinExecErrorA(HWND hwnd,INT error, LPCSTR lpstrFileName, LPCSTR lpstrTitle);
+void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName, LPCWSTR lpstrTitle);
+#define WinExecError  WINELIB_NAME_AW(WinExecError)
+
 /******************************************
  * Tray Notification
  */

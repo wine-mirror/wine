@@ -33,6 +33,7 @@
 #include "docobj.h"
 #include "undocshell.h"
 #include "shlobj.h"
+#include "shellapi.h"
 #include "wine/windef16.h"
 
 /*******************************************
