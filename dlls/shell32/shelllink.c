@@ -1299,10 +1299,43 @@ static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA * iface, LPCSTR 
 
 static HRESULT WINAPI IShellLinkA_fnResolve(IShellLinkA * iface, HWND hwnd, DWORD fFlags)
 {
-	IShellLinkImpl *This = (IShellLinkImpl *)iface;
+    HRESULT hr = S_OK;
 
-	FIXME("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
-	return S_OK;
+    IShellLinkImpl *This = (IShellLinkImpl *)iface;
+
+    FIXME("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
+
+    /*FIXME: use IResolveShellLink interface */
+
+    if (!This->sPath && This->pPidl) {
+	WCHAR buffer[MAX_PATH];
+
+	hr = SHELL_GetPathFromIDListW(This->pPidl, buffer, MAX_PATH);
+
+	if (SUCCEEDED(hr) && *buffer) {
+	    This->sPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(buffer)+1)*sizeof(WCHAR));
+	    if (!This->sPath)
+		return E_OUTOFMEMORY;
+
+	    lstrcpyW(This->sPath, buffer);
+
+	    This->bDirty = TRUE;
+	} else
+	    hr = S_OK;    /* don't report any error occured while just caching information */
+    }
+
+    if (!This->sIcoPath && This->sPath) {
+	This->sIcoPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(This->sPath)+1)*sizeof(WCHAR));
+	if (!This->sIcoPath)
+	    return E_OUTOFMEMORY;
+
+	lstrcpyW(This->sIcoPath, This->sPath);
+	This->iIcoNdx = 0;
+
+	This->bDirty = TRUE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
@@ -1683,11 +1716,43 @@ static HRESULT WINAPI IShellLinkW_fnSetRelativePath(IShellLinkW * iface, LPCWSTR
 
 static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWORD fFlags)
 {
+    HRESULT hr = S_OK;
+
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
     FIXME("(%p)->(hwnd=%p flags=%lx)\n",This, hwnd, fFlags);
 
-    return S_OK;
+    /*FIXME: use IResolveShellLink interface */
+
+    if (!This->sPath && This->pPidl) {
+	WCHAR buffer[MAX_PATH];
+
+	hr = SHELL_GetPathFromIDListW(This->pPidl, buffer, MAX_PATH);
+
+	if (SUCCEEDED(hr) && *buffer) {
+	    This->sPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(buffer)+1)*sizeof(WCHAR));
+	    if (!This->sPath)
+		return E_OUTOFMEMORY;
+
+	    lstrcpyW(This->sPath, buffer);
+
+	    This->bDirty = TRUE;
+	} else
+	    hr = S_OK;    /* don't report any error occured while just caching information */
+    }
+
+    if (!This->sIcoPath && This->sPath) {
+	This->sIcoPath = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, (lstrlenW(This->sPath)+1)*sizeof(WCHAR));
+	if (!This->sIcoPath)
+	    return E_OUTOFMEMORY;
+
+	lstrcpyW(This->sIcoPath, This->sPath);
+	This->iIcoNdx = 0;
+
+	This->bDirty = TRUE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile)
