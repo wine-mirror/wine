@@ -50,7 +50,7 @@ DWORD WINAPI WNetCachePassword(
 	   pbPassword, debugstr_a(pbPassword), cbPassword,
 	   nType, x );
 
-    return WN_SUCCESS;
+    return WN_NOT_SUPPORTED;
 }
 
 /*****************************************************************
@@ -62,7 +62,7 @@ UINT WINAPI WNetRemoveCachedPassword( LPSTR pbResource, WORD cbResource,
     FIXME( "(%p(%s), %d, %d): stub\n",
            pbResource, debugstr_a(pbResource), cbResource, nType );
 
-    return WN_SUCCESS;
+    return WN_NOT_SUPPORTED;
 }
 
 /*****************************************************************
@@ -93,8 +93,7 @@ DWORD WINAPI WNetGetCachedPassword(
            pbResource, debugstr_a(pbResource), cbResource,
 	   pbPassword, pcbPassword, nType );
 
-    SetLastError(WN_NO_NETWORK);
-    return WN_NO_NETWORK;
+    return WN_NOT_SUPPORTED;
 }
 
 /*******************************************************************
@@ -120,8 +119,5 @@ UINT WINAPI WNetEnumCachedPasswords( LPSTR pbPrefix, WORD cbPrefix,
            pbPrefix, debugstr_a(pbPrefix), cbPrefix,
 	   nType, enumPasswordProc, x );
 
-    SetLastError(WN_NO_NETWORK);
-    return WN_NO_NETWORK;
+    return WN_NOT_SUPPORTED;
 }
-
-
