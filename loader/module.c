@@ -1179,6 +1179,11 @@ HMODULE WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
 HMODULE WINAPI LoadLibraryExA(LPCSTR libname,HFILE hfile,DWORD flags)
 {
     HMODULE hmod;
+
+    if (!libname) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
     hmod = MODULE_LoadLibraryExA( libname, hfile, flags );
 
     if ( hmod >= 32 )
@@ -1188,6 +1193,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname,HFILE hfile,DWORD flags)
 
         /* Initialize DLL just loaded */
         MODULE_InitializeDLLs( hmod, DLL_PROCESS_ATTACH, NULL );
+	/* FIXME: check for failure, SLE(ERROR_DLL_INIT_FAILED) */
     }
 
     return hmod;
@@ -1365,21 +1371,29 @@ FARPROC MODULE_GetProcAddress(
 	BOOL snoop )
 {
     WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
+    FARPROC	retproc;
 
     if (HIWORD(function))
 	TRACE(win32,"(%08lx,%s)\n",(DWORD)hModule,function);
     else
 	TRACE(win32,"(%08lx,%p)\n",(DWORD)hModule,function);
-    if (!wm)
+    if (!wm) {
+    	SetLastError(ERROR_INVALID_HANDLE);
         return (FARPROC)0;
+    }
     switch (wm->type)
     {
     case MODULE32_PE:
-     	return PE_FindExportedFunction( wm, function, snoop );
+     	retproc = PE_FindExportedFunction( wm, function, snoop );
+	if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
+	return retproc;
     case MODULE32_ELF:
-    	return ELF_FindExportedFunction( wm, function);
+    	retproc = ELF_FindExportedFunction( wm, function);
+	if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
+	return retproc;
     default:
     	ERR(module,"wine_modref type %d not handled.\n",wm->type);
+    	SetLastError(ERROR_INVALID_HANDLE);
     	return (FARPROC)0;
     }
 }
