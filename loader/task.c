@@ -260,13 +260,14 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
     TDB *pTask;
     char name[10];
     FARPROC16 proc;
+    HMODULE16 hModule = pModule ? pModule->self : 0;
 
       /* Allocate the task structure */
 
     hTask = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB) );
     if (!hTask) return NULL;
     pTask = TASK_GetPtr( hTask );
-    FarSetOwner16( hTask, pModule->self );
+    FarSetOwner16( hTask, hModule );
 
     /* Fill the task structure */
 
@@ -275,14 +276,14 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
     if (teb && teb->tibflags & TEBF_WIN32)
     {
         pTask->flags        |= TDBF_WIN32;
-        pTask->hInstance     = pModule->self;
+        pTask->hInstance     = hModule;
         pTask->hPrevInstance = 0;
         /* NOTE: for 16-bit tasks, the instance handles are updated later on
            in NE_InitProcess */
     }
 
-    pTask->version       = pModule->expected_version;
-    pTask->hModule       = pModule->self;
+    pTask->version       = pModule ? pModule->expected_version : 0x0400;
+    pTask->hModule       = hModule;
     pTask->hParent       = GetCurrentTask();
     pTask->magic         = TDB_MAGIC;
     pTask->nCmdShow      = cmdShow;
@@ -299,13 +300,16 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
 
       /* Copy the module name */
 
-    GetModuleName16( pModule->self, name, sizeof(name) );
-    strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
+    if (hModule)
+    {
+        GetModuleName16( hModule, name, sizeof(name) );
+        strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
+    }
 
       /* Allocate a selector for the PDB */
 
     pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB16),
-                                      pModule->self, WINE_LDT_FLAGS_DATA );
+                                      hModule, WINE_LDT_FLAGS_DATA );
 
       /* Fill the PDB */
 
@@ -416,8 +420,7 @@ void TASK_CreateMainTask(void)
 
     GetStartupInfoA( &startup_info );
     if (startup_info.dwFlags & STARTF_USESHOWWINDOW) cmdShow = startup_info.wShowWindow;
-    pTask = TASK_Create( (NE_MODULE *)GlobalLock16( MapHModuleLS(GetModuleHandleA(0)) ),
-                         cmdShow, NtCurrentTeb(), NULL, 0 );
+    pTask = TASK_Create( NULL, cmdShow, NtCurrentTeb(), NULL, 0 );
     if (!pTask)
     {
         ERR("could not create task for main process\n");

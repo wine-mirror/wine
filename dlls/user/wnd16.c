@@ -1473,7 +1473,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 
     msgbox32.cbSize             = msgbox->cbSize;
     msgbox32.hwndOwner          = WIN_Handle32( msgbox->hwndOwner );
-    msgbox32.hInstance          = MapHModuleSL(msgbox->hInstance);
+    msgbox32.hInstance          = HINSTANCE_32(msgbox->hInstance);
     msgbox32.lpszText           = MapSL(msgbox->lpszText);
     msgbox32.lpszCaption        = MapSL(msgbox->lpszCaption);
     msgbox32.dwStyle            = msgbox->dwStyle;

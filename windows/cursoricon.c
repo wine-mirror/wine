@@ -754,9 +754,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 
         /* Normalize hInstance (must be uniquely represented for icon cache) */
 
-        if ( HIWORD( hInstance ) )
-            hInstance = HINSTANCE_32(MapHModuleLS( hInstance ));
-        else
+        if (!HIWORD( hInstance ))
             hInstance = HINSTANCE_32(GetExePtr( HINSTANCE_16(hInstance) ));
 
         /* Get directory resource ID */
@@ -993,8 +991,7 @@ HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
     info.bPlanes = 1;
     info.bBitsPerPixel = 1;
 
-    return HICON_32(CreateCursorIconIndirect16(MapHModuleLS(hInstance), &info,
-		    lpANDbits, lpXORbits));
+    return HICON_32(CreateCursorIconIndirect16(0, &info, lpANDbits, lpXORbits));
 }
 
 
@@ -1084,8 +1081,7 @@ HICON WINAPI CreateIcon(
         info.bPlanes = bPlanes;
         info.bBitsPerPixel = bBitsPixel;
 
-        hIcon=HICON_32(CreateCursorIconIndirect16(MapHModuleLS(hInstance), &info,
-						  lpANDbits, lpXORbits));
+        hIcon=HICON_32(CreateCursorIconIndirect16(0, &info, lpANDbits, lpXORbits));
     } else {
         ICONINFO iinfo;
         BITMAPINFO bmi;

@@ -221,7 +221,7 @@ static LRESULT CALLBACK call_WH_CBT( INT code, WPARAM wp, LPARAM lp )
             CREATESTRUCT16 cs16;
 
             cs16.lpCreateParams = cbtcw32->lpcs->lpCreateParams;
-            cs16.hInstance      = MapHModuleLS(cbtcw32->lpcs->hInstance);
+            cs16.hInstance      = HINSTANCE_16(cbtcw32->lpcs->hInstance);
             cs16.hMenu          = HMENU_16(cbtcw32->lpcs->hMenu);
             cs16.hwndParent     = HWND_16(cbtcw32->lpcs->hwndParent);
             cs16.cy             = cbtcw32->lpcs->cy;
@@ -524,7 +524,7 @@ LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wparam, LPARA
                 cbtcw32.hwndInsertAfter = WIN_Handle32( cbtcw16->hwndInsertAfter );
 
                 cs32.lpCreateParams = cs16->lpCreateParams;
-                cs32.hInstance      = MapHModuleSL(cs16->hInstance);
+                cs32.hInstance      = HINSTANCE_32(cs16->hInstance);
                 cs32.hMenu          = HMENU_32(cs16->hMenu);
                 cs32.hwndParent     = WIN_Handle32(cs16->hwndParent);
                 cs32.cy             = cs16->cy;
