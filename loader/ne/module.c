@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "winerror.h"
@@ -38,6 +39,8 @@
 #include "snoop.h"
 #include "builtin16.h"
 #include "stackframe.h"
+#include "msvcrt/excpt.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
@@ -68,6 +71,16 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name );
 /* ### start build ### */
 extern WORD CALLBACK NE_CallTo16_word_w(FARPROC16,WORD);
 /* ### stop build ### */
+
+
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
+        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 
 /***********************************************************************
  *           NE_GetPtr
@@ -1240,9 +1253,22 @@ HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
  */
 static BOOL16 MODULE_CallWEP( HMODULE16 hModule )
 {
+    BOOL16 ret;
     FARPROC16 WEP = GetProcAddress16( hModule, "WEP" );
     if (!WEP) return FALSE;
-    return NE_CallTo16_word_w( WEP, WEP_FREE_DLL );
+
+    __TRY
+    {
+        ret = NE_CallTo16_word_w( WEP, WEP_FREE_DLL );
+    }
+    __EXCEPT(page_fault)
+    {
+        WARN("Page fault\n");
+        ret = 0;
+    }
+    __ENDTRY
+
+    return ret;
 }
 
 
