@@ -296,10 +296,13 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
 
     if (!(ci = get_client_info( hwnd ))) return 0;
 
-    if (hmenuFrame == ci->hFrameMenu) return (LRESULT)hmenuFrame;
+    if (hmenuFrame)
+    {
+        if (hmenuFrame == ci->hFrameMenu) return (LRESULT)hmenuFrame;
 
-    if( IsZoomed(ci->hwndActiveChild) && hmenuFrame && hmenuFrame!= ci->hFrameMenu )
-        MDI_RestoreFrameMenu( hwndFrame, ci->hwndActiveChild );
+        if( IsZoomed(ci->hwndActiveChild) && hmenuFrame != ci->hFrameMenu )
+            MDI_RestoreFrameMenu( hwndFrame, ci->hwndActiveChild );
+    }
 
     if( hmenuWindow && hmenuWindow != ci->hWindowMenu )
     {
@@ -358,7 +361,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
  */
 static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
 {
-    UINT i, count, visible, separator_pos, id;
+    UINT i, count, visible, id;
     WCHAR buf[MDI_MAXTITLELENGTH];
 
     TRACE("children %u, window menu %p\n", ci->nActiveChildren, ci->hWindowMenu);
@@ -376,8 +379,6 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
      * there is a menu item with MDI magic ID removes all existing
      * menu items after it, and then adds visible MDI children.
      */
-    id = (UINT)-1;
-    separator_pos = 0;
     count = GetMenuItemCount(ci->hWindowMenu);
     for (i = 0; i < count; i++)
     {
@@ -390,22 +391,23 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
         {
             if (mii.fType & MF_SEPARATOR)
             {
-                separator_pos = i;
-
                 /* Windows checks only ID of the menu item */
                 memset(&mii, 0, sizeof(mii));
                 mii.cbSize = sizeof(mii);
                 mii.fMask  = MIIM_ID;
                 if (GetMenuItemInfoW(ci->hWindowMenu, i + 1, TRUE, &mii))
-                    id = mii.wID;
+                {
+                    if (mii.wID == ci->idFirstChild)
+                    {
+                        TRACE("removing %u items including separator\n", count - i);
+                        while (RemoveMenu(ci->hWindowMenu, i, MF_BYPOSITION))
+                            /* nothing */;
+
+                        break;
+                    }
+                }
             }
         }
-    }
-
-    if (separator_pos && id == ci->idFirstChild)
-    {
-        for (i = separator_pos; i < count; i++)
-            RemoveMenu(ci->hWindowMenu, separator_pos, MF_BYPOSITION);
     }
 
     visible = 0;
@@ -1022,7 +1024,8 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 
 	if (!hBmpClose) hBmpClose = CreateMDIMenuBitmap();
 
-        TRACE("Client created - hwnd = %p, idFirst = %u\n", hwnd, ci->idFirstChild );
+        TRACE("Client created: hwnd %p, Window menu %p, idFirst = %u\n",
+              hwnd, ci->hWindowMenu, ci->idFirstChild );
         return 0;
       }
 
