@@ -18,6 +18,7 @@ typedef struct
   INT32       Step;         /* Step to use on PMB_STEPIT */
   COLORREF    ColorBar;     /* Bar color */
   COLORREF    ColorBk;      /* Background color */
+  HFONT32     hFont;        /* Handle to font (not unused) */
 } PROGRESS_INFO;
 
 

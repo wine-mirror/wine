@@ -3,8 +3,6 @@
  *
  * Copyright 1997 Dimitrie O. Paun
  *
- * TODO:
- *   - I do not know what to to on WM_[SG]ET_FONT
  */
 
 #include "windows.h"
@@ -165,6 +163,24 @@ static void PROGRESS_CoercePos(WND *wndPtr)
     infoPtr->CurVal = infoPtr->MaxVal;
 }
 
+
+/***********************************************************************
+ *           PROGRESS_SetFont
+ * Set new Font for progress bar
+ */
+static HFONT32
+PROGRESS_SetFont (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+  PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(wndPtr); 
+  HFONT32 hOldFont = infoPtr->hFont;
+
+  infoPtr->hFont = (HFONT32)wParam;
+  if (LOWORD(lParam))
+    PROGRESS_Refresh (wndPtr);
+  return hOldFont;
+}
+
+
 /***********************************************************************
  *           ProgressWindowProc
  */
@@ -194,6 +210,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       infoPtr->Step=10;
       infoPtr->ColorBar=CLR_DEFAULT;
       infoPtr->ColorBk=CLR_DEFAULT;
+      infoPtr->hFont=(HANDLE32)NULL;
       TRACE(progress, "Progress Ctrl creation, hwnd=%04x\n", hwnd);
       break;
     
@@ -208,14 +225,11 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       return 1;
 	
     case WM_GETFONT:
-      FIXME (progress, "WM_GETFONT - empty message!\n");
-      /* FIXME: What do we need to do? */
-      break;
+      return (LRESULT)infoPtr->hFont;
 
     case WM_SETFONT:
-      FIXME (progress, "WM_SETFONT - empty message!\n");
-      /* FIXME: What do we need to do? */
-      break;
+      return PROGRESS_SetFont (wndPtr, wParam, lParam);
+/*      break; */
 
     case WM_PAINT:
       PROGRESS_Paint (wndPtr);
