@@ -27,6 +27,7 @@
 #include "wine/obj_base.h"
 #include "wine/obj_enumguid.h"
 #include "wine/obj_comcat.h"
+#include "wine/unicode.h"
 
 /**********************************************************************
  * Dll lifetime tracking declaration for comcat.dll
