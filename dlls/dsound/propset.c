@@ -219,6 +219,16 @@ HRESULT WINAPI IKsBufferPropertySetImpl_Create(
     return S_OK;
 }
 
+HRESULT WINAPI IKsBufferPropertySetImpl_Destroy(
+    IKsBufferPropertySetImpl *piks)
+{
+    TRACE("(%p)\n",piks);
+
+    while (IKsBufferPropertySetImpl_Release((LPKSPROPERTYSET)piks) > 0);
+
+    return S_OK;
+}
+
 /*******************************************************************************
  *              IKsPrivatePropertySet
  */
@@ -258,7 +268,7 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
 
 static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(
     REFGUID guidPropSet,
-    LPVOID pPropData, 
+    LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
 {
@@ -282,7 +292,7 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(
     ppd->DeviceId = GUID_NULL;
 
     if (pcbReturned) {
-	*pcbReturned = cbPropData; 
+	*pcbReturned = cbPropData;
 	FIXME("*pcbReturned=%ld\n", *pcbReturned);
     }
 
@@ -291,7 +301,7 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(
 
 static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingW(
     REFGUID guidPropSet,
-    LPVOID pPropData, 
+    LPVOID pPropData,
     ULONG cbPropData,
     PULONG pcbReturned )
 {
@@ -315,7 +325,7 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingW(
     ppd->DeviceId = GUID_NULL;
 
     if (pcbReturned) {
-	*pcbReturned = cbPropData; 
+	*pcbReturned = cbPropData;
 	FIXME("*pcbReturned=%ld\n", *pcbReturned);
     }
 
@@ -359,7 +369,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
     ppd->Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
     GetDeviceID(&ppd->DeviceId, &dev_guid);
 
-    if ( IsEqualGUID( &ppd->DeviceId, &DSDEVID_DefaultPlayback) || 
+    if ( IsEqualGUID( &ppd->DeviceId, &DSDEVID_DefaultPlayback) ||
 	 IsEqualGUID( &ppd->DeviceId, &DSDEVID_DefaultVoicePlayback) ) {
 	ULONG wod;
 	int wodn;
@@ -475,7 +485,7 @@ static HRESULT WINAPI DSPROPERTY_Description1(
     }
 
     if (pcbReturned) {
-	*pcbReturned = cbPropData; 
+	*pcbReturned = cbPropData;
 	TRACE("*pcbReturned=%ld\n", *pcbReturned);
     }
 
@@ -686,7 +696,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
     ppd->Type = DIRECTSOUNDDEVICE_TYPE_EMULATED;
     GetDeviceID(&ppd->DeviceId, &dev_guid);
 
-    if ( IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultPlayback) || 
+    if ( IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultPlayback) ||
 	 IsEqualGUID( &ppd->DeviceId , &DSDEVID_DefaultVoicePlayback) ) {
 	ULONG wod;
 	int wodn;
@@ -823,7 +833,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionW(
     }
 
     if (pcbReturned) {
-	*pcbReturned = cbPropData; 
+	*pcbReturned = cbPropData;
 	TRACE("*pcbReturned=%ld\n", *pcbReturned);
     }
 
@@ -906,10 +916,10 @@ static HRESULT WINAPI DSPROPERTY_EnumerateA(
     }
 
     if (pcbReturned) {
-	*pcbReturned = 0; 
+	*pcbReturned = 0;
 	FIXME("*pcbReturned=%ld\n", *pcbReturned);
     }
-    
+
     return E_PROP_ID_UNSUPPORTED;
 }
 
@@ -942,7 +952,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 			    WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
-			    
+
 			    memset(&data, 0, sizeof(data));
 			    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
 			    data.WaveDeviceId = wod;
@@ -971,7 +981,7 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
 			    WCHAR * wDescription = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wModule = HeapAlloc(GetProcessHeap(),0,0x200);
 			    WCHAR * wInterface = HeapAlloc(GetProcessHeap(),0,0x200);
-			    
+
 			    memset(&data, 0, sizeof(data));
 			    data.DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 			    data.WaveDeviceId = wid;
@@ -998,10 +1008,10 @@ static HRESULT WINAPI DSPROPERTY_EnumerateW(
     }
 
     if (pcbReturned) {
-	*pcbReturned = 0; 
+	*pcbReturned = 0;
 	FIXME("*pcbReturned=%ld\n", *pcbReturned);
     }
-    
+
     return E_PROP_ID_UNSUPPORTED;
 }
 
@@ -1046,7 +1056,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Get(
     }
 
     if (pcbReturned) {
-	*pcbReturned = 0; 
+	*pcbReturned = 0;
 	FIXME("*pcbReturned=%ld\n", *pcbReturned);
     }
 

@@ -121,11 +121,11 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
         } else if (howmuch > 0) {
 	    /* Make an internal copy of the caller-supplied array.
 	     * Replace the existing copy if one is already present. */
-	    if (This->dsb->notifies) 
-		    This->dsb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+	    if (This->dsb->notifies)
+		    This->dsb->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			This->dsb->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	    else
-		    This->dsb->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
+		    This->dsb->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			howmuch * sizeof(DSBPOSITIONNOTIFY));
 
 	    if (This->dsb->notifies == NULL) {
@@ -160,9 +160,9 @@ HRESULT WINAPI IDirectSoundNotifyImpl_Create(
 {
     IDirectSoundNotifyImpl * dsn;
     TRACE("(%p,%p)\n",dsb,pdsn);
-                                                                                                                             
+
     dsn = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(dsn));
-                                                                                                                                
+
     if (dsn == NULL) {
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
@@ -173,11 +173,21 @@ HRESULT WINAPI IDirectSoundNotifyImpl_Create(
     dsn->dsb = dsb;
     dsb->notify = dsn;
     IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)dsb);
-                                                                                                                                
+
     *pdsn = dsn;
     return DS_OK;
 }
-                                                                                                                                
+
+HRESULT WINAPI IDirectSoundNotifyImpl_Destroy(
+    IDirectSoundNotifyImpl *pdsn)
+{
+    TRACE("(%p)\n",pdsn);
+
+    while (IDirectSoundNotifyImpl_Release((LPDIRECTSOUNDNOTIFY)pdsn) > 0);
+
+    return DS_OK;
+}
+
 /*******************************************************************************
  *		IDirectSoundBuffer
  */
@@ -220,7 +230,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	} else {
 		oldVol = This->volpan.lVolume;
 		This->volpan.lVolume = vol;
-		if (vol != oldVol) 
+		if (vol != oldVol)
 			DSOUND_RecalcVolPan(&(This->volpan));
 	}
 
@@ -230,7 +240,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 			hres = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 	    		if (hres != DS_OK)
 		    		WARN("IDsDriverBuffer_SetVolumePan failed\n");
-		} else 
+		} else
 			DSOUND_ForceRemix(This);
 	}
 
@@ -291,7 +301,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 		This->freqAdjust = (freq << DSOUND_FREQSHIFT) / This->dsound->wfx.nSamplesPerSec;
 		This->nAvgBytesPerSec = freq * This->wfx.nBlockAlign;
 		DSOUND_RecalcFormat(This);
-		if (!This->hwbuf) 
+		if (!This->hwbuf)
 			DSOUND_ForceRemix(This);
 	}
 
@@ -393,7 +403,6 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 		This->dsound->nrofbuffers--;
 		This->dsound->buffers = HeapReAlloc(GetProcessHeap(),0,This->dsound->buffers,sizeof(LPDIRECTSOUNDBUFFER8)*This->dsound->nrofbuffers);
 		TRACE("(%p) buffer count is now %d\n", This, This->dsound->nrofbuffers);
-		IDirectSound_Release((LPDIRECTSOUND)This->dsound);
 	}
 	RtlReleaseResource(&(This->dsound->lock));
 
@@ -757,7 +766,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 			hres = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 			if (hres != DS_OK)
 				WARN("IDsDriverBuffer_SetVolumePan failed\n");
-		} else 
+		} else
 			DSOUND_ForceRemix(This);
 	}
 
@@ -941,8 +950,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 
 	*ppobj = NULL;	/* assume failure */
 
-	if ( IsEqualGUID(riid, &IID_IUnknown) || 
-	     IsEqualGUID(riid, &IID_IDirectSoundBuffer) || 
+	if ( IsEqualGUID(riid, &IID_IUnknown) ||
+	     IsEqualGUID(riid, &IID_IDirectSoundBuffer) ||
 	     IsEqualGUID(riid, &IID_IDirectSoundBuffer8) ) {
 		if (!This->dsb)
 			SecondaryBufferImpl_Create(This, &(This->dsb));
@@ -987,8 +996,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
 		/* only supported on hardware 3D secondary buffers */
-		if (!(This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) && 
-		     (This->dsbd.dwFlags & DSBCAPS_CTRL3D) && 
+		if (!(This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) &&
+		     (This->dsbd.dwFlags & DSBCAPS_CTRL3D) &&
 		     (This->hwbuf != NULL) ) {
 			if (!This->iks)
 				IKsBufferPropertySetImpl_Create(This, &(This->iks));
@@ -1214,9 +1223,46 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 		}
 	}
 	RtlReleaseResource(&(ds->lock));
-	IDirectSound8_AddRef((LPDIRECTSOUND8)ds);
 	*pdsb = dsb;
 	return S_OK;
+}
+
+HRESULT WINAPI IDirectSoundBufferImpl_Destroy(
+    IDirectSoundBufferImpl *pdsb)
+{
+    TRACE("(%p)\n",pdsb);
+
+    /* This keeps the *_Destroy functions from possibly deleting
+     * this object until it is ready to be deleted */
+    IDirectSoundBufferImpl_AddRef((LPDIRECTSOUNDBUFFER8)pdsb);
+
+    if (pdsb->iks) {
+        WARN("iks not NULL\n");
+        IKsBufferPropertySetImpl_Destroy(pdsb->iks);
+        pdsb->iks = NULL;
+    }
+
+    if (pdsb->ds3db) {
+        WARN("ds3db not NULL\n");
+        IDirectSound3DBufferImpl_Destroy(pdsb->ds3db);
+        pdsb->ds3db = NULL;
+    }
+
+    if (pdsb->notify) {
+        WARN("notify not NULL\n");
+        IDirectSoundNotifyImpl_Destroy(pdsb->notify);
+        pdsb->notify = NULL;
+    }
+
+    if (pdsb->dsb) {
+        WARN("dsb not NULL\n");
+        SecondaryBufferImpl_Destroy(pdsb->dsb);
+        pdsb->dsb = NULL;
+    }
+
+    while (IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)pdsb) > 0);
+
+    return S_OK;
 }
 
 /*******************************************************************************
@@ -1224,7 +1270,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
  */
 
 static HRESULT WINAPI SecondaryBufferImpl_QueryInterface(
-	LPDIRECTSOUNDBUFFER8 iface,REFIID riid,LPVOID *ppobj) 
+	LPDIRECTSOUNDBUFFER8 iface,REFIID riid,LPVOID *ppobj)
 {
 	ICOM_THIS(SecondaryBufferImpl,iface);
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
@@ -1514,4 +1560,14 @@ HRESULT WINAPI SecondaryBufferImpl_Create(
 	IDirectSoundBuffer8_AddRef((LPDIRECTSOUNDBUFFER8)dsb);
 	*psb = sb;
 	return S_OK;
+}
+
+HRESULT WINAPI SecondaryBufferImpl_Destroy(
+    SecondaryBufferImpl *pdsb)
+{
+    TRACE("(%p)\n",pdsb);
+
+    while (SecondaryBufferImpl_Release((LPDIRECTSOUNDBUFFER8)pdsb) > 0);
+
+    return S_OK;
 }

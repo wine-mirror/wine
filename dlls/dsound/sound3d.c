@@ -207,7 +207,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	TRACE("(%p)\n",dsb);
 
 	/* initial buffer volume */
-	lVolume = dsb->ds3db_lVolume; 
+	lVolume = dsb->ds3db_lVolume;
 	
 	switch (dsb->ds3db_ds3db.dwMode)
 	{
@@ -448,8 +448,8 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_GetConeOrientation(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 	TRACE("returning: Cone Orientation vector = (%f,%f,%f)\n",
-		This->dsb->ds3db_ds3db.vConeOrientation.x, 
-		This->dsb->ds3db_ds3db.vConeOrientation.y, 
+		This->dsb->ds3db_ds3db.vConeOrientation.x,
+		This->dsb->ds3db_ds3db.vConeOrientation.y,
 		This->dsb->ds3db_ds3db.vConeOrientation.z);
 	*lpvConeOrientation = This->dsb->ds3db_ds3db.vConeOrientation;
 	return DS_OK;
@@ -770,6 +770,16 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	return S_OK;
 }
 
+HRESULT WINAPI IDirectSound3DBufferImpl_Destroy(
+    IDirectSound3DBufferImpl *pds3db)
+{
+    TRACE("(%p)\n",pds3db);
+
+    while (IDirectSound3DBufferImpl_Release((LPDIRECTSOUND3DBUFFER)pds3db) > 0);
+
+    return S_OK;
+}
+
 /*******************************************************************************
  *	      IDirectSound3DListener
  */
@@ -835,7 +845,6 @@ static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER i
 
 	/* Free all resources */
 	if( ulReturn == 0 ) {
-		IDirectSound8_Release((LPDIRECTSOUND8)This->dsound);
 		This->dsound->listener = 0;
 		HeapFree(GetProcessHeap(),0,This);
 		TRACE("(%p) released\n",This);
@@ -1133,8 +1142,6 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 	dsl->dsound->ds3dl.flDopplerFactor = DS3D_DEFAULTDOPPLERFACTOR;
 
 	dsl->dsound->ds3dl_need_recalc = TRUE;
-
-	IDirectSound8_AddRef((LPDIRECTSOUND8)This->dsound);
 
 	*pdsl = dsl;
 	return S_OK;

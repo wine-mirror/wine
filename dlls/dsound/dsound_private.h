@@ -222,6 +222,8 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
     IDirectSoundImpl *ds,
     IDirectSoundBufferImpl **pdsb,
     LPCDSBUFFERDESC dsbd);
+HRESULT WINAPI IDirectSoundBufferImpl_Destroy(
+    IDirectSoundBufferImpl *pdsb);
 
 /*****************************************************************************
  * SecondaryBuffer implementation structure
@@ -236,6 +238,8 @@ struct SecondaryBufferImpl
 HRESULT WINAPI SecondaryBufferImpl_Create(
     IDirectSoundBufferImpl *dsb,
     SecondaryBufferImpl **pdsb);
+HRESULT WINAPI SecondaryBufferImpl_Destroy(
+    SecondaryBufferImpl *pdsb);
 
 /*****************************************************************************
  * PrimaryBuffer implementation structure
@@ -338,6 +342,8 @@ struct IDirectSoundNotifyImpl
 HRESULT WINAPI IDirectSoundNotifyImpl_Create(
     IDirectSoundBufferImpl *dsb,
     IDirectSoundNotifyImpl **pdsn);
+HRESULT WINAPI IDirectSoundNotifyImpl_Destroy(
+    IDirectSoundNotifyImpl *pdsn);
 
 /*****************************************************************************
  * IDirectSoundCaptureNotify implementation structure
@@ -385,6 +391,8 @@ struct IKsBufferPropertySetImpl
 HRESULT WINAPI IKsBufferPropertySetImpl_Create(
     IDirectSoundBufferImpl *dsb,
     IKsBufferPropertySetImpl **piks);
+HRESULT WINAPI IKsBufferPropertySetImpl_Destroy(
+    IKsBufferPropertySetImpl *piks);
 
 /*****************************************************************************
  *  IKsPrivatePropertySet implementation structure
@@ -414,6 +422,8 @@ struct IDirectSound3DBufferImpl
 HRESULT WINAPI IDirectSound3DBufferImpl_Create(
     IDirectSoundBufferImpl *dsb,
     IDirectSound3DBufferImpl **pds3db);
+HRESULT WINAPI IDirectSound3DBufferImpl_Destroy(
+    IDirectSound3DBufferImpl *pds3db);
 
 /*******************************************************************************
  * DirectSound ClassFactory implementation structure

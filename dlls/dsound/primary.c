@@ -601,7 +601,6 @@ static DWORD WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 
 	if (ref == 0) {
 		This->dsound->primary = NULL;
-		IDirectSound_Release((LPDIRECTSOUND)This->dsound);
 		HeapFree(GetProcessHeap(),0,This);
 		TRACE("(%p) released\n",This);
 	}
@@ -1098,7 +1097,6 @@ HRESULT WINAPI PrimaryBufferImpl_Create(
 		ds->wfx.nAvgBytesPerSec, ds->wfx.nBlockAlign,
 		ds->wfx.wBitsPerSample, ds->wfx.cbSize);
 
-	IDirectSound_AddRef((LPDIRECTSOUND)ds);
 	*pdsb = dsb;
 	return S_OK;
 }

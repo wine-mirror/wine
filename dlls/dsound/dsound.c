@@ -233,7 +233,8 @@ static ULONG WINAPI IDirectSoundImpl_Release(
 {
     ICOM_THIS(IDirectSoundImpl,iface);
     ULONG ref;
-    TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
+    TRACE("(%p) ref was %ld, thread is %04lx\n",
+          This, This->ref, GetCurrentThreadId());
 
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
@@ -245,14 +246,18 @@ static ULONG WINAPI IDirectSoundImpl_Release(
         /* wait for timer to expire */
         Sleep(DS_TIME_RES+1);
 
+        /* The sleep above should have allowed the timer process to expire
+         * but try to grab the lock just in case. Can't hold lock because
+         * IDirectSoundBufferImpl_Destroy also grabs the lock */
         RtlAcquireResourceShared(&(This->lock), TRUE);
-
-        if (This->buffers) {
-            for( i=0;i<This->nrofbuffers;i++)
-                IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)This->buffers[i]);
-        }
-
         RtlReleaseResource(&(This->lock));
+
+        /* It is allowed to release this object even when buffers are playing */
+        if (This->buffers) {
+            WARN("%d secondary buffers not released\n", This->nrofbuffers);
+            for( i=0;i<This->nrofbuffers;i++)
+                IDirectSoundBufferImpl_Destroy(This->buffers[i]);
+        }
 
         if (This->primary) {
             WARN("primary buffer not released\n");
@@ -530,7 +535,6 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
         }
     }
     RtlReleaseResource(&(This->lock));
-    IDirectSound_AddRef(iface);
     hres = SecondaryBufferImpl_Create(dsb, (SecondaryBufferImpl**)ppdsb);
     if (*ppdsb) {
         dsb->dsb = (SecondaryBufferImpl*)*ppdsb;
