@@ -115,7 +115,7 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
     LPVOID * ppobj)
 {
     TRACE("(%p,%s,%p)\n",iface,debugstr_guid(riid),ppobj);
-    FIXME("shouldnt be called directly\n");
+    FIXME("shouldn't be called directly\n");
     return E_NOINTERFACE;
 }
 

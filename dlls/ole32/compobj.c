@@ -119,10 +119,10 @@ static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 
  * This section contains OpenDllList definitions
  *
  * The OpenDllList contains only handles of dll loaded by CoGetClassObject or
- * other functions what do LoadLibrary _without_ giving back a HMODULE.
- * Without this list these handles would be freed never.
+ * other functions that do LoadLibrary _without_ giving back a HMODULE.
+ * Without this list these handles would never be freed.
  *
- * FIXME: a DLL what says OK whenn asked for unloading is unloaded in the
+ * FIXME: a DLL that says OK when asked for unloading is unloaded in the
  * next unload-call but not before 600 sec.
  */
 
@@ -536,7 +536,7 @@ void WINAPI CoUninitialize(void)
  *		CoDisconnectObject	[OLE32.@]
  *
  * Disconnects all connections to this object from remote processes. Dispatches
- * pending RPCs while blocking new RPCs from occuring, and then calls
+ * pending RPCs while blocking new RPCs from occurring, and then calls
  * IMarshal::DisconnectObject on the given object.
  *
  * Typically called when the object server is forced to shut down, for instance by

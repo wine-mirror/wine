@@ -894,7 +894,7 @@ HRESULT WINAPI SHSetThreadRef(IUnknown*);
 HRESULT WINAPI SHReleaseThreadRef();
 
 /* SHCreateThread flags */
-#define CTF_INSIST          0x01 /* Allways call */
+#define CTF_INSIST          0x01 /* Always call */
 #define CTF_THREAD_REF      0x02 /* Hold thread ref */
 #define CTF_PROCESS_REF     0x04 /* Hold process ref */
 #define CTF_COINIT          0x08 /* Startup COM first */
