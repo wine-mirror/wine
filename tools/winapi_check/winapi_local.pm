@@ -127,16 +127,7 @@ sub _check_function {
     my $declared_calling_convention = $winapi->function_internal_calling_convention($internal_name);
     my @declared_argument_kinds = split(/\s+/, $winapi->function_internal_arguments($internal_name));
 
-    if($declared_calling_convention =~ /^register|interrupt$/) {
-	push @declared_argument_kinds, "ptr";
-    }
-   
-    if($declared_calling_convention =~ /^register|interupt$/ && 
-         (($winapi->name eq "win32" && $implemented_calling_convention eq "stdcall") ||
-         (($winapi->name eq "win16" && $implemented_calling_convention =~ /^pascal/))))
-    {
-	# correct
-    } elsif($implemented_calling_convention ne $declared_calling_convention &&
+    if($implemented_calling_convention ne $declared_calling_convention &&
        $implemented_calling_convention ne "asm" &&
        !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type) &&
        !($implemented_calling_convention =~ /^cdecl|varargs$/ && $declared_calling_convention =~ /^cdecl|varargs$/))
@@ -178,7 +169,9 @@ sub _check_function {
 	    my $type = $_;
 	    my $kind = "unknown";
 	    $winapi->type_used_in_module($type,$module);
-	    if(!defined($kind = $winapi->translate_argument($type))) {
+	    if($type eq "CONTEXT86 *") {
+		$kind = "context86";
+	    } elsif(!defined($kind = $winapi->translate_argument($type))) {
 		$output->write("no translation defined: " . $type . "\n");
 	    } elsif(!$winapi->is_allowed_kind($kind) ||
 		    !$winapi->allowed_type_in_module($type, $module)) {
@@ -211,7 +204,9 @@ sub _check_function {
 		$argument_types[$n] = "";
 	    }
 
-	    if(!$winapi->is_allowed_kind($argument_kinds[$n]) ||
+	    if($argument_kinds[$n] eq "context86") {
+		# Nothing
+	    } elsif(!$winapi->is_allowed_kind($argument_kinds[$n]) ||
 	       !$winapi->allowed_type_in_module($argument_types[$n], $module)) 
 	    {
 		if($options->report_argument_forbidden($argument_types[$n])) {

@@ -528,7 +528,7 @@ sub parse_c_file {
 	    &$type_end([@names]);
 	} elsif(/typedef\s+
 		(?:(?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
-		(\w+)\s+
+		(\w+(?:\s*\*+\s*)?)\s+
 		(?:(\w+)\s*)?
 		\((?:(\w+)\s+)?\s*\*\s*(\w+)\s*\)\s*
 		(?:\(([^\)]*)\)|\[([^\]]*)\])\s*;/sx) 

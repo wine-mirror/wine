@@ -8,8 +8,10 @@ long
 %ptr
 
 IBindCtx *
+IBindCtx **
 IBindStatusCallback *
 IBindStatusCallback **
+IEnumFORMATETC *
 IMoniker *
 IMoniker **
 LPVOID *

@@ -36,7 +36,6 @@ WCHAR
 
 int
 long
-size_t
 unsigned int
 unsigned long
 
@@ -69,6 +68,7 @@ PACE_HEADER *
 PACL
 PACL *
 PBOOLEAN
+PCVOID
 PDWORD
 PEXCEPTION_FRAME
 PEXCEPTION_RECORD
@@ -103,18 +103,17 @@ ULONGLONG *
 UNICODE_STRING *
 VOID *
 struct _TEB *
+union cptable *
 void *
 
 %ptr --extension
 
-EXCEPTION_FRAME **
 GUID *
 WCHAR *
 WCHAR ***
 char *
 char ***
 enum __DEBUG_CLASS
-union generic_request *
 va_list
 
 %str

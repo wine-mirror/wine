@@ -237,15 +237,23 @@ sub parse_spec_file {
 
 	my $ordinal;
 	if(/^(\d+|@)\s+
-	   (pascal|pascal16|stdcall|cdecl|register|interrupt|varargs)
-	   (?:\s+(?:-noimport|-norelay|-i386|-ret64))*\s+(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/x)
+	   (pascal|pascal16|stdcall|cdecl|varargs)\s+
+	   ((?:(?:-noimport|-norelay|-i386|-ret64|-register|-interrupt)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/x)
 	{
 	    my $calling_convention = $2;
-	    my $external_name = $3;
-	    my $arguments = $4;
-	    my $internal_name = $5;
-	   
+	    my $flags = $3;
+	    my $external_name = $4;
+	    my $arguments = $5;
+	    my $internal_name = $6;
+
 	    $ordinal = $1;
+
+	    $flags =~ s/\s+/ /g;
+
+	    if($flags =~ /(?:-register|-interrupt)/) {
+		if($arguments) { $arguments .= " "; }
+		$arguments .= "ptr";
+	    }
 
 	    if(!$$function_internal_name{$external_name}) {
 		$$function_internal_name{$external_name} = $internal_name;
