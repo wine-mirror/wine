@@ -897,6 +897,12 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
         bDesktopDC = TRUE;
     }
 
+    /* Windows ignores the supplied values of biClrUsed and biClrImportant thus: */
+    if (bmi->bmiHeader.biBitCount >= 1 && bmi->bmiHeader.biBitCount <= 8)
+        bmi->bmiHeader.biClrUsed = bmi->bmiHeader.biClrImportant = 1L << bmi->bmiHeader.biBitCount;
+    else
+        bmi->bmiHeader.biClrUsed = bmi->bmiHeader.biClrImportant = 0;
+
     if ((dc = DC_GetDCPtr( hdc )))
     {
         hbitmap = dc->funcs->pCreateDIBSection(dc->physDev, bmi, usage, bits, section, offset, ovr_pitch);
