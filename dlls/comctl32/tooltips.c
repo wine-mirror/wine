@@ -785,7 +785,8 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* delete text string */
     toolPtr = &infoPtr->tools[nTool]; 
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
-	if (toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
+	if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
+	     (HIWORD((INT)toolPtr->lpszText) != 0) )
 	    COMCTL32_Free (toolPtr->lpszText);
     }
 
@@ -871,7 +872,8 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* delete text string */
     toolPtr = &infoPtr->tools[nTool]; 
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
-	if (toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
+	if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
+	     (HIWORD((INT)toolPtr->lpszText) != 0) )
 	    COMCTL32_Free (toolPtr->lpszText);
     }
 
@@ -1572,7 +1574,8 @@ TOOLTIPS_SetToolInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lpToolInfo->lpszText == LPSTR_TEXTCALLBACKA)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
-	    if (toolPtr->lpszText) {
+	    if ( (toolPtr->lpszText) &&
+		 (HIWORD((INT)toolPtr->lpszText) != 0) ) {
 		COMCTL32_Free (toolPtr->lpszText);
 		toolPtr->lpszText = NULL;
 	    }
@@ -1626,7 +1629,8 @@ TOOLTIPS_SetToolInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lpToolInfo->lpszText == LPSTR_TEXTCALLBACKW)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
-	    if (toolPtr->lpszText) {
+	    if ( (toolPtr->lpszText) &&
+		 (HIWORD((INT)toolPtr->lpszText) != 0) ) {
 		COMCTL32_Free (toolPtr->lpszText);
 		toolPtr->lpszText = NULL;
 	    }
@@ -1740,7 +1744,8 @@ TOOLTIPS_UpdateTipTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lpToolInfo->lpszText == LPSTR_TEXTCALLBACKA)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
-	    if (toolPtr->lpszText) {
+	    if ( (toolPtr->lpszText) &&
+		 (HIWORD((INT)toolPtr->lpszText) != 0) ) {
 		COMCTL32_Free (toolPtr->lpszText);
 		toolPtr->lpszText = NULL;
 	    }
@@ -1793,7 +1798,8 @@ TOOLTIPS_UpdateTipTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (lpToolInfo->lpszText == LPSTR_TEXTCALLBACKW)
 	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
 	else {
-	    if (toolPtr->lpszText) {
+	    if ( (toolPtr->lpszText)  &&
+		 (HIWORD((INT)toolPtr->lpszText) != 0) ) {
 		COMCTL32_Free (toolPtr->lpszText);
 		toolPtr->lpszText = NULL;
 	    }
@@ -1887,8 +1893,12 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	for (i = 0; i < infoPtr->uNumTools; i++) {
 	    toolPtr = &infoPtr->tools[i];
 	    if ((toolPtr->hinst) && (toolPtr->lpszText)) {
-		if (toolPtr->lpszText != LPSTR_TEXTCALLBACKW)
+		if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
+		     (HIWORD((INT)toolPtr->lpszText) != 0) ) 
+		{
 		    COMCTL32_Free (toolPtr->lpszText);
+		    toolPtr->lpszText = NULL;
+		}
 	    }
 
 	    /* remove subclassing */
