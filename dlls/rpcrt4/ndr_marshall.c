@@ -32,6 +32,7 @@
 #include "winreg.h"
 
 #include "ndr_misc.h"
+#include "rpcndr.h"
 
 #include "wine/rpcfc.h"
 #include "wine/obj_base.h"
@@ -43,24 +44,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define BUFFER_PARANOIA 20
 
 #if defined(__i386__)
-  #define LITTLE_ENDIAN_UINT32_WRITE(pchar, word32) \
-    (*((UINT32 *)(pchar)) = (word32))
+  #define LITTLE_ENDIAN_UINT32_WRITE(pchar, uint32) \
+    (*((UINT32 *)(pchar)) = (uint32))
 
   #define LITTLE_ENDIAN_UINT32_READ(pchar) \
     (*((UINT32 *)(pchar)))
 #else
   /* these would work for i386 too, but less efficient */
-  #define LITTLE_ENDIAN_UINT32_WRITE(pchar, word32) \
-    (*(pchar)     = LOBYTE(LOWORD(word32)), \
-     *((pchar)+1) = HIBYTE(LOWORD(word32)), \
-     *((pchar)+2) = LOBYTE(HIWORD(word32)), \
-     *((pchar)+3) = HIBYTE(HIWORD(word32)), \
-     (word32)) /* allow as r-value */
+  #define LITTLE_ENDIAN_UINT32_WRITE(pchar, uint32) \
+    (*(pchar)     = LOBYTE(LOWORD(uint32)), \
+     *((pchar)+1) = HIBYTE(LOWORD(uint32)), \
+     *((pchar)+2) = LOBYTE(HIWORD(uint32)), \
+     *((pchar)+3) = HIBYTE(HIWORD(uint32)), \
+     (uint32)) /* allow as r-value */
 
   #define LITTLE_ENDIAN_UINT32_READ(pchar) \
     (MAKELONG( \
       MAKEWORD(*(pchar), *((pchar)+1)), \
       MAKEWORD(*((pchar)+2), *((pchar)+3))))
+#endif
+
+#define BIG_ENDIAN_UINT32_WRITE(pchar, uint32) \
+  (*((pchar)+3) = LOBYTE(LOWORD(uint32)), \
+   *((pchar)+2) = HIBYTE(LOWORD(uint32)), \
+   *((pchar)+1) = LOBYTE(HIWORD(uint32)), \
+   *(pchar)     = HIBYTE(HIWORD(uint32)), \
+   (uint32)) /* allow as r-value */
+
+#define BIG_ENDIAN_UINT32_READ(pchar) \
+  (MAKELONG( \
+    MAKEWORD(*((pchar)+3), *((pchar)+2)) \
+    MAKEWORD(*((pchar)+1), *(pchar))))
+
+#ifdef NDR_LOCAL_IS_BIG_ENDIAN
+  #define NDR_LOCAL_UINT32_WRITE(pchar, uint32) \
+    BIG_ENDIAN_UINT32_WRITE(pchar, uint32)
+  #define NDR_LOCAL_UINT32_READ(pchar) \
+    BIG_ENDIAN_UINT32_READ(pchar)
+#else
+  #define NDR_LOCAL_UINT32_WRITE(pchar, uint32) \
+    LITTLE_ENDIAN_UINT32_WRITE(pchar, uint32)
+  #define NDR_LOCAL_UINT32_READ(pchar) \
+    LITTLE_ENDIAN_UINT32_READ(pchar)
 #endif
 
 /*
@@ -83,8 +108,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 /***********************************************************************
  *            NdrConformantStringMarshall [RPCRT4.@]
  */
-unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pszMessage,
-  PFORMAT_STRING pFormat)
+unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg,
+  unsigned char *pszMessage, PFORMAT_STRING pFormat)
 { 
   UINT32 len, i;
   unsigned char *c;
@@ -97,9 +122,9 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
     assert( (pStubMsg->BufferLength > (len + 13)) && (pStubMsg->Buffer != NULL) );
     c = pStubMsg->Buffer;
     memset(c, 0, 12);
-    LITTLE_ENDIAN_UINT32_WRITE(c, len + 1); /* max length: strlen + 1 (for '\0') */
+    NDR_LOCAL_UINT32_WRITE(c, len + 1); /* max length: strlen + 1 (for '\0') */
     c += 8;                             /* offset: 0 */
-    LITTLE_ENDIAN_UINT32_WRITE(c, len + 1); /* actual length: (same) */
+    NDR_LOCAL_UINT32_WRITE(c, len + 1); /* actual length: (same) */
     c += 4;
     for (i = 0; i <= len; i++)
       *(c++) = *(pszMessage++);         /* the string itself */
@@ -117,7 +142,8 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
 /***********************************************************************
  *           NdrConformantStringBufferSize [RPCRT4.@]
  */
-void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+  unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
   TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
 
@@ -134,7 +160,8 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 /************************************************************************
  *            NdrConformantStringMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
+unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
+  PFORMAT_STRING pFormat )
 {
   unsigned long rslt = 0;
 
@@ -143,7 +170,7 @@ unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
   assert(pStubMsg && pFormat);
 
   if (*pFormat == RPC_FC_C_CSTRING) {
-    rslt = LITTLE_ENDIAN_UINT32_READ(pStubMsg->Buffer); /* maxlen */
+    rslt = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer); /* maxlen */
   } else {
     ERR("Unhandled string type: %#x\n", *pFormat);
     /* FIXME: raise an exception */
@@ -156,8 +183,8 @@ unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
 /************************************************************************
  *           NdrConformantStringUnmarshall [RPCRT4.@]
  */
-unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char** ppMemory,
-  PFORMAT_STRING pFormat, unsigned char fMustAlloc )
+unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg,
+  unsigned char** ppMemory, PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
   unsigned long len, ofs;
 
@@ -181,7 +208,8 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
     pStubMsg->MemorySize = len + BUFFER_PARANOIA;
     pStubMsg->Memory = *ppMemory;
     /* FIXME: pfnAllocate? or does that not apply to these "Memory" parts? */
-    *ppMemory = pStubMsg->Memory = HeapReAlloc(GetProcessHeap(), 0, pStubMsg->Memory, pStubMsg->MemorySize);   
+    *ppMemory = pStubMsg->Memory =
+      HeapReAlloc(GetProcessHeap(), 0, pStubMsg->Memory, pStubMsg->MemorySize);   
   } 
 
   if (!(pStubMsg->Memory)) {
@@ -195,9 +223,9 @@ unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg
     char *c = *ppMemory;
 
     pStubMsg->Buffer += 4;
-    ofs = LITTLE_ENDIAN_UINT32_READ(pStubMsg->Buffer);
+    ofs = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
     pStubMsg->Buffer += 4;
-    len = LITTLE_ENDIAN_UINT32_READ(pStubMsg->Buffer);
+    len = NDR_LOCAL_UINT32_READ(pStubMsg->Buffer);
     pStubMsg->Buffer += 4;
 
     c += ofs; /* presumably this will always be zero, otherwise the string is no good */
@@ -227,7 +255,8 @@ void WINAPI NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
  */
 void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, long NumberParams )
 {
-  FIXME("(pStubMsg == ^%p, pFormat == ^%p, NumberParams == %ld): stub.\n", pStubMsg, pFormat, NumberParams);
+  FIXME("(pStubMsg == ^%p, pFormat == ^%p, NumberParams == %ld): stub.\n",
+    pStubMsg, pFormat, NumberParams);
   /* FIXME: since this stub doesn't do any converting, the proper behavior
      is to raise an exception */
 }
