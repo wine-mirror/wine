@@ -522,3 +522,13 @@ void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
     else ERR( "%s\n", debugstr_w(str) );
     ExitProcess(0);
 }
+
+
+/**************************************************************************
+ *           FatalExit   (KERNEL32.@)
+ */
+void WINAPI FatalExit(int ExitCode)
+{
+    WARN("FatalExit\n");
+    ExitProcess(ExitCode);
+}

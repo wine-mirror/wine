@@ -1564,6 +1564,7 @@ BOOL        WINAPI DeleteFileW(LPCWSTR);
 #define     DeleteFile WINELIB_NAME_AW(DeleteFile)
 void        WINAPI FatalAppExitA(UINT,LPCSTR);
 void        WINAPI FatalAppExitW(UINT,LPCWSTR);
+void        WINAPI FatalExit(int);
 #define     FatalAppExit WINELIB_NAME_AW(FatalAppExit)
 ATOM        WINAPI FindAtomA(LPCSTR);
 ATOM        WINAPI FindAtomW(LPCWSTR);

@@ -286,7 +286,7 @@
 @ stdcall -register -i386 FT_Thunk() FT_Thunk
 @ stdcall FatalAppExitA(long str) FatalAppExitA
 @ stdcall FatalAppExitW(long wstr) FatalAppExitW
-@ stub FatalExit
+@ stdcall FatalExit(long) FatalExit
 @ stdcall FileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
 @ stdcall FileTimeToLocalFileTime(ptr ptr) FileTimeToLocalFileTime
 @ stdcall FileTimeToSystemTime(ptr ptr) FileTimeToSystemTime
@@ -512,7 +512,7 @@
 @ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) GetVolumeInformationA
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) GetVolumeInformationW
 @ stub GetVolumeNameForVolumeMountPointA
-@ stub GetVolumeNameForVolumeMountPointW
+@ stdcall GetVolumeNameForVolumeMountPointW(wstr long long) GetVolumeNameForVolumeMountPointW
 @ stub GetVolumePathNameA
 @ stub GetVolumePathNameW
 @ stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectoryA
@@ -1039,6 +1039,8 @@
 @ stdcall SetThreadExecutionState(long) SetThreadExecutionState
 
 # Windows 2000, Terminal Server 4.0 SP4 functions
+@ stub AssignProcessToJobObject
+@ stub CreateJobObjectW
 @ stdcall CreateTimerQueue () CreateTimerQueue
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long) CreateTimerQueueTimer
 @ stdcall DeleteTimerQueueEx (long long) DeleteTimerQueueEx
@@ -1055,6 +1057,8 @@
 @ stdcall SetCalendarInfoA(long long long str) SetCalendarInfoA
 @ stdcall SetCalendarInfoW(long long long wstr) SetCalendarInfoW
 @ stdcall SetCriticalSectionSpinCount(ptr long) SetCriticalSectionSpinCount
+@ stub SetInformationJobObject
+@ stub SetTermsrvAppInstallMode
 @ stdcall VerifyVersionInfoA(long long long long) VerifyVersionInfoA
 @ stdcall VerifyVersionInfoW(long long long long) VerifyVersionInfoW
 

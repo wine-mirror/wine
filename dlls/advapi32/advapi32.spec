@@ -333,3 +333,7 @@
 @ stub EnumServiceGroupA
 @ stub EnumServiceGroupW
 @ stdcall CheckTokenMembership(long ptr ptr) CheckTokenMembership
+@ stub WmiQuerySingleInstanceW
+@ stub WmiSetSingleInstanceW
+@ stub WmiOpenBlock
+@ stub WmiCloseBlock

@@ -894,6 +894,7 @@
 @ stub _fltused
 @ cdecl _ftol() NTDLL__ftol
 @ cdecl _itoa(long ptr long) _itoa
+@ stub _itow #(long ptr long) _itow
 @ cdecl _ltoa(long ptr long) _ltoa
 @ cdecl _memccpy(ptr ptr long long) memccpy
 @ cdecl _memicmp(str str long) NTDLL__memicmp

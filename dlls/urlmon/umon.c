@@ -880,12 +880,32 @@ HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, /*IInternetSession*/voi
 }
 
 /***********************************************************************
+ *           CoInternetQueryInfo (URLMON.@)
+ *
+ * Retrieves information relevant to a specified URL
+ *
+ * RETURNS
+ *    S_OK 			success
+ *    S_FALSE			buffer too small
+ *    INET_E_QUERYOPTIONUNKNOWN	invalid option
+ *
+ */
+HRESULT CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
+  DWORD dwQueryFlags, LPVOID pvBuffer, DWORD cbBuffer, DWORD * pcbBuffer,
+  DWORD dwReserved)
+{
+  FIXME("(%s, %x, %lx, %p, %lx, %p, %lx): stub\n", debugstr_w(pwzUrl),
+    QueryOption, dwQueryFlags, pvBuffer, cbBuffer, pcbBuffer, dwReserved);
+  return S_OK;
+}
+
+/***********************************************************************
  *           FindMimeFromData (URLMON.@)
  *
  * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
  *
  */
-HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer, 
+HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
    DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
    LPWSTR* ppwzMimeOut, DWORD dwReserved)
 {

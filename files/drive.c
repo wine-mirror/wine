@@ -2061,3 +2061,12 @@ BOOL WINAPI SetVolumeLabelA(LPCSTR root, LPCSTR volname)
     RtlFreeUnicodeString(&volnameW);
     return ret;
 }
+
+/***********************************************************************
+ *           GetVolumeNameForVolumeMountPointW   (KERNEL32.@)
+ */
+DWORD WINAPI GetVolumeNameForVolumeMountPointW(LPWSTR str, DWORD a, DWORD b)
+{
+    FIXME("(%s, %lx, %lx): stub\n", debugstr_w(str), a, b);
+    return 0;
+}

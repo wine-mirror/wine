@@ -68,6 +68,7 @@
 @ stdcall SetupCommitFileQueueW(long long ptr ptr) SetupCommitFileQueueW
 @ stub SetupCopyErrorA
 @ stub SetupCopyErrorW
+@ stub SetupCopyOEMInfW
 @ stub SetupCreateDiskSpaceListA
 @ stub SetupCreateDiskSpaceListW
 @ stub SetupDecompressOrCopyFileA
@@ -120,6 +121,7 @@
 @ stdcall SetupDiGetClassDevsW(ptr ptr long long) SetupDiGetClassDevsW
 @ stub SetupDiGetClassImageIndex
 @ stub SetupDiGetClassImageList
+@ stub SetupDiGetClassImageListExW
 @ stub SetupDiGetClassInstallParamsA
 @ stub SetupDiGetClassInstallParamsW
 @ stub SetupDiGetDeviceInfoListClass
@@ -157,6 +159,7 @@
 @ stub SetupDiOpenDevRegKey
 @ stub SetupDiOpenDeviceInfoA
 @ stub SetupDiOpenDeviceInfoW
+@ stub SetupDiOpenDeviceInterfaceRegKey
 @ stub SetupDiRegisterDeviceInfo
 @ stub SetupDiRemoveDevice
 @ stub SetupDiSelectDevice
@@ -245,6 +248,7 @@
 @ stub SetupQueryInfFileInformationW
 @ stub SetupQueryInfVersionInformationA
 @ stub SetupQueryInfVersionInformationW
+@ stub SetupQueryInfOriginalFileInformationW
 @ stub SetupQuerySourceListA
 @ stub SetupQuerySourceListW
 @ stub SetupQuerySpaceRequiredOnDriveA

@@ -13,7 +13,7 @@
 @ stub CoInternetGetSecurityUrl
 @ stdcall CoInternetGetSession(long ptr long) CoInternetGetSession
 @ stub CoInternetParseUrl
-@ stub CoInternetQueryInfo
+@ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long) CoInternetQueryInfo
 @ stub CopyBindInfo
 @ stub CopyStgMedium
 @ stub CreateAsyncBindCtx
