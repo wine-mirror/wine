@@ -2616,7 +2616,7 @@ static HRESULT WINAPI ISFPersistFolder2_Initialize(
 	/* set my path */
 	if (SHGetPathFromIDListA(pidl, sTemp))
 	{
-	  This->sMyPath = SHAlloc(strlen(sTemp+1));
+	  This->sMyPath = SHAlloc(strlen(sTemp)+1);
 	  strcpy(This->sMyPath, sTemp);
 	}
 
