@@ -248,6 +248,9 @@
 /* Define to 1 if you have the <linux/joystick.h> header file. */
 #undef HAVE_LINUX_JOYSTICK_H
 
+/* Define to 1 if you have the <linux/param.h> header file. */
+#undef HAVE_LINUX_PARAM_H
+
 /* Define to 1 if you have the <linux/serial.h> header file. */
 #undef HAVE_LINUX_SERIAL_H
 

@@ -915,6 +915,7 @@ AC_CHECK_HEADERS(\
 	linux/cdrom.h \
 	linux/input.h \
 	linux/joystick.h \
+	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
 	net/if.h \

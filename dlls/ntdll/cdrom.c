@@ -31,10 +31,14 @@
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "ntddcdrm.h"
+#include "ntddscsi.h"
 #include "drive.h"
 #include "file.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_LINUX_PARAM_H
+# include <linux/param.h>
+#endif
 #ifdef HAVE_LINUX_CDROM_H
 # include <linux/cdrom.h>
 #endif
@@ -830,6 +834,159 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
 }
 
 /******************************************************************
+ *		CDROM_ScsiPassThroughDirect
+ *
+ *
+ */
+static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPacket)
+{
+    int ret = STATUS_NOT_SUPPORTED;
+#if defined(linux)
+    struct cdrom_generic_command cmd;
+    struct request_sense sense;
+    int io;
+
+    if (pPacket->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
+	return STATUS_BUFFER_TOO_SMALL;
+
+    if (pPacket->CdbLength > 12)
+        return STATUS_INVALID_PARAMETER;
+
+    if (pPacket->SenseInfoLength > sizeof(sense))
+        return STATUS_INVALID_PARAMETER;
+
+    memset(&cmd, 0, sizeof(cmd));
+    memset(&sense, 0, sizeof(sense));
+
+    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
+
+    cmd.buffer         = pPacket->DataBuffer;
+    cmd.buflen         = pPacket->DataTransferLength;
+    cmd.sense          = &sense;
+    cmd.quiet          = 0;
+    cmd.timeout        = pPacket->TimeOutValue*HZ;
+
+    switch (pPacket->DataIn)
+    {
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.data_direction = CGC_DATA_WRITE;
+	break;
+    case SCSI_IOCTL_DATA_IN:
+        cmd.data_direction = CGC_DATA_READ;
+	break;
+    case SCSI_IOCTL_DATA_UNSPECIFIED:
+        cmd.data_direction = CGC_DATA_NONE;
+	break;
+    default:
+       return STATUS_INVALID_PARAMETER;
+       break;
+    }
+
+    io = ioctl(dev, CDROM_SEND_PACKET, &cmd);
+
+    if (pPacket->SenseInfoLength != 0)
+    {
+        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
+	       &sense, pPacket->SenseInfoLength);
+    }
+
+    pPacket->ScsiStatus = cmd.stat;
+
+    ret = CDROM_GetStatusCode(io);
+#endif
+    return ret;
+}
+
+/******************************************************************
+ *		CDROM_ScsiPassThrough
+ *
+ *
+ */
+static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
+{
+    int ret = STATUS_NOT_SUPPORTED;
+#if defined(linux)
+    struct cdrom_generic_command cmd;
+    struct request_sense sense;
+    int io;
+
+    if (pPacket->Length < sizeof(SCSI_PASS_THROUGH))
+	return STATUS_BUFFER_TOO_SMALL;
+
+    if (pPacket->CdbLength > 12)
+        return STATUS_INVALID_PARAMETER;
+
+    if (pPacket->SenseInfoLength > sizeof(sense))
+        return STATUS_INVALID_PARAMETER;
+
+    memset(&cmd, 0, sizeof(cmd));
+    memset(&sense, 0, sizeof(sense));
+
+    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
+
+    if ( pPacket->DataBufferOffset > 0x1000 )
+    {
+        cmd.buffer     = (void*)pPacket->DataBufferOffset;
+    }
+    else
+    {
+        cmd.buffer     = ((void*)pPacket) + pPacket->DataBufferOffset;
+    }
+    cmd.buflen         = pPacket->DataTransferLength;
+    cmd.sense          = &sense;
+    cmd.quiet          = 0;
+    cmd.timeout        = pPacket->TimeOutValue*HZ;
+
+    switch (pPacket->DataIn)
+    {
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.data_direction = CGC_DATA_WRITE;
+	break;
+    case SCSI_IOCTL_DATA_IN:
+        cmd.data_direction = CGC_DATA_READ;
+	break;
+    case SCSI_IOCTL_DATA_UNSPECIFIED:
+        cmd.data_direction = CGC_DATA_NONE;
+	break;
+    default:
+       return STATUS_INVALID_PARAMETER;
+       break;
+    }
+
+    io = ioctl(dev, CDROM_SEND_PACKET, &cmd);
+
+    if (pPacket->SenseInfoLength != 0)
+    {
+        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
+	       &sense, pPacket->SenseInfoLength);
+    }
+
+    pPacket->ScsiStatus = cmd.stat;
+
+    ret = CDROM_GetStatusCode(io);
+#endif
+    return ret;
+}
+
+/******************************************************************
+ *		CDROM_ScsiGetAddress
+ *
+ *
+ */
+static DWORD CDROM_ScsiGetAddress(int dev, PSCSI_ADDRESS addr)
+{
+    FIXME("IOCTL_SCSI_GET_ADDRESS: stub\n");
+
+    addr->Length = sizeof(SCSI_ADDRESS);
+    addr->PortNumber = 0;
+    addr->PathId = 0;
+    addr->TargetId = 1;
+    addr->Lun = 0;
+
+    return 0;
+}
+
+/******************************************************************
  *		CDROM_DeviceIoControl
  *
  *
@@ -891,6 +1048,12 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
             error = STATUS_INVALID_PARAMETER;
         else error = CDROM_SetTray(dev, TRUE);
         break;
+
+    case IOCTL_CDROM_MEDIA_REMOVAL:
+	FIXME("IOCTL_CDROM_MEDIA_REMOVAL: stub\n");
+        sz = 0;
+	error = 0;
+	break;
 
     case IOCTL_DISK_MEDIA_REMOVAL:
     case IOCTL_STORAGE_MEDIA_REMOVAL:
@@ -1009,6 +1172,26 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         else error = CDROM_RawRead(dev, (const RAW_READ_INFO*)lpInBuffer, 
                                    lpOutBuffer, nOutBufferSize, &sz);
         break;
+
+    case IOCTL_SCSI_PASS_THROUGH_DIRECT:
+        sz = sizeof(SCSI_PASS_THROUGH_DIRECT);
+        if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH_DIRECT)) error = STATUS_BUFFER_TOO_SMALL;
+        else error = CDROM_ScsiPassThroughDirect(dev, (PSCSI_PASS_THROUGH_DIRECT)lpOutBuffer);
+        break;
+    case IOCTL_SCSI_PASS_THROUGH:
+        sz = sizeof(SCSI_PASS_THROUGH);
+        if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH)) error = STATUS_BUFFER_TOO_SMALL;
+        else error = CDROM_ScsiPassThrough(dev, (PSCSI_PASS_THROUGH)lpOutBuffer);
+        break;
+    case IOCTL_SCSI_GET_ADDRESS:
+        sz = 0;
+        if (lpOutBuffer == NULL) error = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sizeof(SCSI_ADDRESS)) error = STATUS_BUFFER_TOO_SMALL;
+        else error = CDROM_ScsiGetAddress(dev, (PSCSI_ADDRESS)lpOutBuffer);
+        break;
+
     default:
         FIXME("Unsupported IOCTL %lx\n", dwIoControlCode);
         sz = 0;
