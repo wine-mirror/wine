@@ -512,7 +512,8 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
 	    read_mem(pcs->handle, (ULONG)lm.l_name, bufstr, sizeof(bufstr))) 
         {
 	    bufstr[sizeof(bufstr) - 1] = '\0';
-            elf_search_and_load_file(pcs, bufstr, lm.l_addr, &elf_info);
+            elf_search_and_load_file(pcs, bufstr, (unsigned long)lm.l_addr,
+                                     &elf_info);
 	}
     }
 
@@ -604,7 +605,8 @@ struct module*  elf_load_module(struct process* pcs, const char* name)
             if (!p++) p = bufstr;
             if (!memcmp(p, xname, strlen(xname)))
             {
-                sym_type = elf_search_and_load_file(pcs, bufstr, lm.l_addr, &elf_info);
+                sym_type = elf_search_and_load_file(pcs, bufstr,
+                                         (unsigned long)lm.l_addr, &elf_info);
                 break;
             }
         }
