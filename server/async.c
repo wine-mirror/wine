@@ -213,25 +213,25 @@ DECL_HANDLER(create_async)
 static void async_poll_event( struct object *obj, int event )
 {
     struct async *ov = (struct async *) obj;
- 
+
     /* queue an APC in the client thread to do our dirty work */
     ov->obj.ops->remove_queue(&ov->obj,&ov->wait);
 
     /* FIXME: this should be a function pointer */
     event = serial_async_poll_event(obj,event);
 
-    thread_queue_apc(ov->thread, NULL, ov->func, APC_ASYNC, 3,
+    thread_queue_apc(ov->thread, NULL, ov->func, APC_ASYNC, 1, 3,
                      ov->client_overlapped, ov->buffer, event);
-} 
+}
 
 /* handler for async i/o timeouts */
 static void overlapped_timeout (void *private)
 {
     struct async *ov = (struct async *) private;
- 
+
     ov->obj.ops->remove_queue(&ov->obj,&ov->wait);
- 
-    thread_queue_apc(ov->thread, NULL, ov->func, APC_ASYNC, 3,
+
+    thread_queue_apc(ov->thread, NULL, ov->func, APC_ASYNC, 1, 3,
                      ov->client_overlapped,ov->buffer, 0);
 }
 

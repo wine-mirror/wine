@@ -771,8 +771,12 @@ DECL_HANDLER(wait_process)
     }
     else
     {
+        struct timeval timeout;
         struct object *obj = &current->info->obj;
-        sleep_on( 1, &obj, SELECT_TIMEOUT, req->timeout, build_wait_process_reply );
+        gettimeofday( &timeout, 0 );
+        add_timeout( &timeout, req->timeout );
+        sleep_on( 1, &obj, SELECT_TIMEOUT, timeout.tv_sec, timeout.tv_usec,
+                  build_wait_process_reply );
     }
 }
 

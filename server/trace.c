@@ -466,12 +466,14 @@ static void dump_unload_dll_request( const struct unload_dll_request *req )
 static void dump_queue_apc_request( const struct queue_apc_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " user=%d,", req->user );
     fprintf( stderr, " func=%p,", req->func );
     fprintf( stderr, " param=%p", req->param );
 }
 
 static void dump_get_apc_request( const struct get_apc_request *req )
 {
+    fprintf( stderr, " alertable=%d", req->alertable );
 }
 
 static void dump_get_apc_reply( const struct get_apc_request *req )
@@ -537,7 +539,8 @@ static void dump_open_process_reply( const struct open_process_request *req )
 static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
-    fprintf( stderr, " timeout=%d,", req->timeout );
+    fprintf( stderr, " sec=%d,", req->sec );
+    fprintf( stderr, " usec=%d,", req->usec );
     fprintf( stderr, " handles=" );
     cur_pos += dump_varargs_handles( req );
 }

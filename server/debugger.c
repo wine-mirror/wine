@@ -363,14 +363,21 @@ static int wait_for_debug_event( int timeout )
     struct debug_ctx *debug_ctx = current->debug_ctx;
     struct object *obj = &debug_ctx->obj;
     int flags = 0;
+    struct timeval tv;
 
     if (!debug_ctx)  /* current thread is not a debugger */
     {
         set_error( STATUS_INVALID_HANDLE );
         return 0;
     }
-    if (timeout != -1) flags = SELECT_TIMEOUT;
-    return sleep_on( 1, &obj, flags, timeout, build_wait_debug_reply );
+    if (timeout != -1)
+    {
+        flags = SELECT_TIMEOUT;
+        gettimeofday( &tv, 0 );
+        add_timeout( &tv, timeout );
+    }
+    else tv.tv_sec = tv.tv_usec = 0;
+    return sleep_on( 1, &obj, flags, tv.tv_sec, tv.tv_usec, build_wait_debug_reply );
 }
 
 /* continue a debug event */
@@ -603,7 +610,7 @@ DECL_HANDLER(exception_event)
         {
             struct object *obj = &event->obj;
             current->context = context;
-            sleep_on( 1, &obj, 0, -1, build_exception_event_reply );
+            sleep_on( 1, &obj, 0, 0, 0, build_exception_event_reply );
             release_object( event );
         }
     }

@@ -340,6 +340,7 @@ struct queue_apc_request
 {
     REQUEST_HEADER;                /* request header */
     IN  handle_t     handle;       /* thread handle */
+    IN  int          user;         /* user or system apc? */
     IN  void*        func;         /* function to call */
     IN  void*        param;        /* param for function to call */
 };
@@ -349,6 +350,7 @@ struct queue_apc_request
 struct get_apc_request
 {
     REQUEST_HEADER;                /* request header */
+    IN  int          alertable;    /* is thread alertable? */
     OUT void*        func;         /* function to call */
     OUT int          type;         /* function type */
     OUT VARARG(args,ptrs);         /* function arguments */
@@ -412,13 +414,15 @@ struct select_request
 {
     REQUEST_HEADER;                /* request header */
     IN  int          flags;        /* wait flags (see below) */
-    IN  int          timeout;      /* timeout in ms */
+    IN  int          sec;          /* absolute timeout */
+    IN  int          usec;         /* absolute timeout */
     OUT int          signaled;     /* signaled handle */
     IN  VARARG(handles,handles);   /* handles to select on */
 };
-#define SELECT_ALL       1
-#define SELECT_ALERTABLE 2
-#define SELECT_TIMEOUT   4
+#define SELECT_ALL           1
+#define SELECT_ALERTABLE     2
+#define SELECT_INTERRUPTIBLE 4
+#define SELECT_TIMEOUT       8
 
 
 /* Create an event */
@@ -1576,7 +1580,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 33
+#define SERVER_PROTOCOL_VERSION 34
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

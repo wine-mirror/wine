@@ -30,6 +30,11 @@ enum run_state
     TERMINATED  /* terminated */
 };
 
+struct apc_queue
+{
+    struct thread_apc *head;
+    struct thread_apc *tail;
+};
 
 struct thread
 {
@@ -45,8 +50,8 @@ struct thread
     struct msg_queue   *queue;       /* message queue */
     struct startup_info*info;        /* startup info for child process */
     struct thread_wait *wait;        /* current wait condition if sleeping */
-    struct thread_apc  *apc_head;    /* queue of async procedure calls */
-    struct thread_apc  *apc_tail;    /* queue of async procedure calls */
+    struct apc_queue    system_apc;  /* queue of system async procedure calls */
+    struct apc_queue    user_apc;    /* queue of user async procedure calls */
     unsigned int        error;       /* current error code */
     struct object      *request_fd;  /* fd for receiving client requests */
     int                 pass_fd;     /* fd to pass to the client */
@@ -92,10 +97,10 @@ extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
 extern void wake_up( struct object *obj, int max );
 extern int sleep_on( int count, struct object *objects[], int flags,
-                     int timeout, sleep_reply func );
+                     int sec, int usec, sleep_reply func );
 extern int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
-                             enum apc_type type, int nb_args, ... );
-extern void thread_cancel_apc( struct thread *thread, struct object *owner );
+                             enum apc_type type, int system, int nb_args, ... );
+extern void thread_cancel_apc( struct thread *thread, struct object *owner, int system );
 extern struct thread_snapshot *thread_snap( int *count );
 
 /* ptrace functions */

@@ -64,7 +64,7 @@ static void dump_thread( struct object *obj, int verbose );
 static int thread_signaled( struct object *obj, struct thread *thread );
 extern void thread_poll_event( struct object *obj, int event );
 static void destroy_thread( struct object *obj );
-static struct thread_apc *thread_dequeue_apc( struct thread *thread );
+static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only );
 
 static const struct object_ops thread_ops =
 {
@@ -147,8 +147,10 @@ struct thread *create_thread( int fd, struct process *process )
     thread->queue       = NULL;
     thread->info        = NULL;
     thread->wait        = NULL;
-    thread->apc_head    = NULL;
-    thread->apc_tail    = NULL;
+    thread->system_apc.head = NULL;
+    thread->system_apc.tail = NULL;
+    thread->user_apc.head   = NULL;
+    thread->user_apc.tail   = NULL;
     thread->error       = 0;
     thread->pass_fd     = -1;
     thread->request_fd  = NULL;
@@ -211,7 +213,7 @@ static void destroy_thread( struct object *obj )
     if (thread->next) thread->next->prev = thread->prev;
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
-    while ((apc = thread_dequeue_apc( thread ))) free( apc );
+    while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
     if (thread->info) release_object( thread->info );
     if (thread->queue) release_object( thread->queue );
     if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
@@ -354,7 +356,7 @@ static void end_wait( struct thread *thread )
 
 /* build the thread wait structure */
 static int wait_on( int count, struct object *objects[], int flags,
-                    int timeout, sleep_reply func )
+                    int sec, int usec, sleep_reply func )
 {
     struct thread_wait *wait;
     struct wait_queue_entry *entry;
@@ -368,8 +370,8 @@ static int wait_on( int count, struct object *objects[], int flags,
     wait->reply   = func;
     if (flags & SELECT_TIMEOUT)
     {
-        gettimeofday( &wait->timeout, 0 );
-        add_timeout( &wait->timeout, timeout );
+        wait->timeout.tv_sec = sec;
+        wait->timeout.tv_usec = usec;
     }
 
     for (i = 0, entry = wait->queues; i < count; i++, entry++)
@@ -425,7 +427,8 @@ static int check_wait( struct thread *thread, struct object **object )
     }
 
  other_checks:
-    if ((wait->flags & SELECT_ALERTABLE) && thread->apc_head) return STATUS_USER_APC;
+    if ((wait->flags & SELECT_INTERRUPTIBLE) && thread->system_apc.head) return STATUS_USER_APC;
+    if ((wait->flags & SELECT_ALERTABLE) && thread->user_apc.head) return STATUS_USER_APC;
     if (wait->flags & SELECT_TIMEOUT)
     {
         struct timeval now;
@@ -469,10 +472,10 @@ static void thread_timeout( void *ptr )
 }
 
 /* sleep on a list of objects */
-int sleep_on( int count, struct object *objects[], int flags, int timeout, sleep_reply func )
+int sleep_on( int count, struct object *objects[], int flags, int sec, int usec, sleep_reply func )
 {
     assert( !current->wait );
-    if (!wait_on( count, objects, flags, timeout, func )) return 0;
+    if (!wait_on( count, objects, flags, sec, usec, func )) return 0;
     if (wake_thread( current )) return 1;
     /* now we need to wait */
     if (flags & SELECT_TIMEOUT)
@@ -488,7 +491,7 @@ int sleep_on( int count, struct object *objects[], int flags, int timeout, sleep
 }
 
 /* select on a list of handles */
-static int select_on( int count, handle_t *handles, int flags, int timeout )
+static int select_on( int count, handle_t *handles, int flags, int sec, int usec )
 {
     int ret = 0;
     int i;
@@ -504,7 +507,7 @@ static int select_on( int count, handle_t *handles, int flags, int timeout )
         if (!(objects[i] = get_handle_obj( current->process, handles[i], SYNCHRONIZE, NULL )))
             break;
     }
-    if (i == count) ret = sleep_on( count, objects, flags, timeout, build_select_reply );
+    if (i == count) ret = sleep_on( count, objects, flags, sec, usec, build_select_reply );
     while (--i >= 0) release_object( objects[i] );
     return ret;
 }
@@ -528,15 +531,16 @@ void wake_up( struct object *obj, int max )
 
 /* queue an async procedure call */
 int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
-                      enum apc_type type, int nb_args, ... )
+                      enum apc_type type, int system, int nb_args, ... )
 {
     struct thread_apc *apc;
+    struct apc_queue *queue = system ? &thread->system_apc : &thread->user_apc;
 
     /* cancel a possible previous APC with the same owner */
-    if (owner) thread_cancel_apc( thread, owner );
+    if (owner) thread_cancel_apc( thread, owner, system );
 
     if (!(apc = mem_alloc( sizeof(*apc) + (nb_args-1)*sizeof(apc->args[0]) ))) return 0;
-    apc->prev    = thread->apc_tail;
+    apc->prev    = queue->tail;
     apc->next    = NULL;
     apc->owner   = owner;
     apc->func    = func;
@@ -550,40 +554,44 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
         for (i = 0; i < nb_args; i++) apc->args[i] = va_arg( args, void * );
         va_end( args );
     }
-    thread->apc_tail = apc;
+    queue->tail = apc;
     if (!apc->prev)  /* first one */
     {
-        thread->apc_head = apc;
+        queue->head = apc;
         if (thread->wait && wake_thread( thread )) send_reply( thread );
     }
     return 1;
 }
 
 /* cancel the async procedure call owned by a specific object */
-void thread_cancel_apc( struct thread *thread, struct object *owner )
+void thread_cancel_apc( struct thread *thread, struct object *owner, int system )
 {
     struct thread_apc *apc;
-    for (apc = thread->apc_head; apc; apc = apc->next)
+    struct apc_queue *queue = system ? &thread->system_apc : &thread->user_apc;
+    for (apc = queue->head; apc; apc = apc->next)
     {
         if (apc->owner != owner) continue;
         if (apc->next) apc->next->prev = apc->prev;
-        else thread->apc_tail = apc->prev;
+        else queue->tail = apc->prev;
         if (apc->prev) apc->prev->next = apc->next;
-        else thread->apc_head = apc->next;
+        else queue->head = apc->next;
         free( apc );
         return;
     }
 }
 
 /* remove the head apc from the queue; the returned pointer must be freed by the caller */
-static struct thread_apc *thread_dequeue_apc( struct thread *thread )
+static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only )
 {
-    struct thread_apc *apc = thread->apc_head;
-    if (apc)
+    struct thread_apc *apc;
+    struct apc_queue *queue = &thread->system_apc;
+
+    if (!queue->head && !system_only) queue = &thread->user_apc;
+    if ((apc = queue->head))
     {
         if (apc->next) apc->next->prev = NULL;
-        else thread->apc_tail = NULL;
-        thread->apc_head = apc->next;
+        else queue->tail = NULL;
+        queue->head = apc->next;
     }
     return apc;
 }
@@ -811,7 +819,7 @@ DECL_HANDLER(resume_thread)
 DECL_HANDLER(select)
 {
     int count = get_req_data_size(req) / sizeof(int);
-    if (!select_on( count, get_req_data(req), req->flags, req->timeout ))
+    if (!select_on( count, get_req_data(req), req->flags, req->sec, req->usec ))
         req->signaled = -1;
 }
 
@@ -821,7 +829,7 @@ DECL_HANDLER(queue_apc)
     struct thread *thread;
     if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
     {
-        thread_queue_apc( thread, NULL, req->func, APC_USER, 1, req->param );
+        thread_queue_apc( thread, NULL, req->func, APC_USER, !req->user, 1, req->param );
         release_object( thread );
     }
 }
@@ -834,7 +842,7 @@ DECL_HANDLER(get_apc)
 
     for (;;)
     {
-        if (!(apc = thread_dequeue_apc( current )))
+        if (!(apc = thread_dequeue_apc( current, !req->alertable )))
         {
             /* no more APCs */
             req->func    = NULL;

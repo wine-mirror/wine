@@ -16,11 +16,30 @@
 
 
 /***********************************************************************
+ *              get_timeout
+ */
+inline static void get_timeout( struct timeval *when, int timeout )
+{
+    gettimeofday( when, 0 );
+    if (timeout)
+    {
+        long sec = timeout / 1000;
+        if ((when->tv_usec += (timeout - 1000*sec) * 1000) >= 1000000)
+        {
+            when->tv_usec -= 1000000;
+            when->tv_sec++;
+        }
+        when->tv_sec += sec;
+    }
+}
+
+
+/***********************************************************************
  *              call_apcs
  *
  * Call outstanding APCs.
  */
-static void call_apcs(void)
+static void call_apcs( BOOL alertable )
 {
     FARPROC proc = NULL;
     FILETIME ft;
@@ -32,6 +51,7 @@ static void call_apcs(void)
         SERVER_START_REQ
         {
             struct get_apc_request *req = server_alloc_req( sizeof(*req), sizeof(args) );
+            req->alertable = alertable;
             if (!server_call( REQ_GET_APC ))
             {
                 type = req->type;
@@ -119,6 +139,7 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
                                        BOOL alertable )
 {
     int i, ret;
+    struct timeval tv;
 
     if (count > MAXIMUM_WAIT_OBJECTS)
     {
@@ -126,24 +147,33 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         return WAIT_FAILED;
     }
 
-    SERVER_START_REQ
+    if (timeout == INFINITE) tv.tv_sec = tv.tv_usec = 0;
+    else get_timeout( &tv, timeout );
+
+    for (;;)
     {
-        struct select_request *req = server_alloc_req( sizeof(*req), count * sizeof(int) );
-        int *data = server_data_ptr( req );
+        SERVER_START_REQ
+        {
+            struct select_request *req = server_alloc_req( sizeof(*req), count * sizeof(int) );
+            int *data = server_data_ptr( req );
 
-        req->flags   = 0;
-        req->timeout = timeout;
-        for (i = 0; i < count; i++) data[i] = handles[i];
+            req->flags   = SELECT_INTERRUPTIBLE;
+            req->sec     = tv.tv_sec;
+            req->usec    = tv.tv_usec;
+            for (i = 0; i < count; i++) data[i] = handles[i];
 
-        if (wait_all) req->flags |= SELECT_ALL;
-        if (alertable) req->flags |= SELECT_ALERTABLE;
-        if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
+            if (wait_all) req->flags |= SELECT_ALL;
+            if (alertable) req->flags |= SELECT_ALERTABLE;
+            if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
 
-        server_call( REQ_SELECT );
-        ret = req->signaled;
+            server_call( REQ_SELECT );
+            ret = req->signaled;
+        }
+        SERVER_END_REQ;
+        if (ret != STATUS_USER_APC) break;
+        call_apcs( alertable );
+        if (alertable) break;
     }
-    SERVER_END_REQ;
-    if (ret == STATUS_USER_APC) call_apcs();
     return ret;
 }
 

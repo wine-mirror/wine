@@ -78,7 +78,7 @@ static void timer_callback( void *private )
 
     /* queue an APC */
     if (timer->thread)
-        thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 3,
+        thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 0, 3,
                           (void *)timer->when.tv_sec, (void *)timer->when.tv_usec, timer->arg );
 
     if (timer->period)  /* schedule the next expiration */
@@ -103,7 +103,7 @@ static void cancel_timer( struct timer *timer )
     }
     if (timer->thread)
     {
-        thread_cancel_apc( timer->thread, &timer->obj );
+        thread_cancel_apc( timer->thread, &timer->obj, 0 );
         timer->thread = NULL;
     }
 }

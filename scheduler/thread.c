@@ -638,6 +638,7 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
     {
         struct queue_apc_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hthread;
+        req->user   = 1;
         req->func   = func;
         req->param  = (void *)data;
         ret = !server_call( REQ_QUEUE_APC );
