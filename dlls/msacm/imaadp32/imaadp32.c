@@ -1,9 +1,7 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
-
 /*
- * ADPCM handling (includes both MS and IMA forms)
+ * IMA ADPCM handling
  *
- *      Copyright (C) 2001		Eric Pouech
+ *      Copyright (C) 2001,2002		Eric Pouech
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -650,7 +648,7 @@ static	LRESULT	ADPCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
         /* FIXME: not handling header overhead */
         adfs->pwfxDst->nAvgBytesPerSec = ((adfs->pwfxDst->nSamplesPerSec * 4) / 8) * adfs->pwfxSrc->nChannels;
         ((IMAADPCMWAVEFORMAT*)adfs->pwfxDst)->wSamplesPerBlock = (1024 - 4 * adfs->pwfxSrc->nChannels) * (2 / adfs->pwfxSrc->nChannels) + 1;
-        FIXME("setting spb=%u\n", ((IMAADPCMWAVEFORMAT*)adfs->pwfxDst)->wSamplesPerBlock);
+        TRACE("setting spb=%u\n", ((IMAADPCMWAVEFORMAT*)adfs->pwfxDst)->wSamplesPerBlock);
         break;
     default:
         FIXME("\n");
@@ -706,7 +704,7 @@ static	LRESULT	ADPCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 	    goto theEnd;
 
         nspb = ((LPIMAADPCMWAVEFORMAT)adsi->pwfxSrc)->wSamplesPerBlock;
-        FIXME("spb=%u\n", nspb);
+        TRACE("spb=%u\n", nspb);
 
         /* we check that in a block, after the header, samples are present on
          * 4-sample packet pattern
@@ -731,7 +729,7 @@ static	LRESULT	ADPCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 	    goto theEnd;
 
         nspb = ((LPIMAADPCMWAVEFORMAT)adsi->pwfxDst)->wSamplesPerBlock;
-        FIXME("spb=%u\n", nspb);
+        TRACE("spb=%u\n", nspb);
 
         /* we check that in a block, after the header, samples are present on
          * 4-sample packet pattern
