@@ -1983,7 +1983,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	lpMidiHdr = (LPMIDIHDR)msg->lParam;
 	lpMidiHdr->lpNext = 0;
 	lpMidiHdr->dwFlags |= MHDR_INQUEUE;
-	lpMidiHdr->dwFlags &= MHDR_DONE;
+	lpMidiHdr->dwFlags &= ~MHDR_DONE;
 	lpMidiHdr->dwOffset = 0;
 
 	break;
