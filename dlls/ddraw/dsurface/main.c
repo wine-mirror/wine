@@ -581,7 +581,10 @@ HRESULT WINAPI IDirectDrawSurface4Impl_GetAttachedSurface(
     if (!found)
 	return DDERR_NOTFOUND;
     *lpdsf = (LPDIRECTDRAWSURFACE4)chain->surfaces[found-1-xstart];
-    /* FIXME: AddRef? */
+
+    /* For EverQuest testing */
+    IDirectDrawSurface4_AddRef(*lpdsf);
+    
     TRACE("found %p\n",*lpdsf);
     return DD_OK;
 }
@@ -950,7 +953,8 @@ HRESULT WINAPI IDirectDrawSurface4Impl_DeleteAttachedSurface(
     chain = This->s.chain;
     for (i=0;i<chain->nrofsurfaces;i++) {
 	if ((IDirectDrawSurface4Impl*)lpDDSAttachedSurface==chain->surfaces[i]){
-	    IDirectDrawSurface4_Release(lpDDSAttachedSurface);
+	    /* There is no AddRef in AddAttachedSurface, so why a release here :-) 
+	       IDirectDrawSurface4_Release(lpDDSAttachedSurface); */
 
 	    chain->surfaces[i]->s.chain = NULL;
 	    memcpy( chain->surfaces+i,

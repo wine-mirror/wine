@@ -530,6 +530,28 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
 		       GL_RGBA,
 		       GL_UNSIGNED_SHORT_4_4_4_4,
 		       src_d->u1.lpSurface);
+	} else if (src_d->ddpfPixelFormat.u4.dwRGBAlphaBitMask == 0x00008000) {
+	  /* Converting the 1555 format in 5551 packed */
+	  WORD *surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+	  DWORD i;
+	  WORD *src = (WORD *) src_d->u1.lpSurface, *dst = surface;
+
+	  for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+	    *dst++ = (((*src & 0x8000) >> 15) |
+		      ((*src & 0x7FFF) <<  1));
+	    src++;
+	  }
+	  
+	  glTexImage2D(GL_TEXTURE_2D,
+		       0,
+		       GL_RGBA,
+		       src_d->dwWidth, src_d->dwHeight,
+		       0,
+		       GL_RGBA,
+		       GL_UNSIGNED_SHORT_5_5_5_1,
+		       surface);
+	  
+	  HeapFree(GetProcessHeap(), 0, surface);	  
 	} else {
 	  ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
 	}

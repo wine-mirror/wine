@@ -357,6 +357,16 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
     return DD_OK;
 #endif
 
+  TRACE("Enumerating GL_ARGB (no direct OpenGL equivalent - conversion needed)\n");
+  pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+  pformat->u.dwRGBBitCount = 16;
+  pformat->u1.dwRBitMask =         0x00007C00;
+  pformat->u2.dwGBitMask =         0x000003E0;
+  pformat->u3.dwBBitMask =         0x0000001F;
+  pformat->u4.dwRGBAlphaBitMask =  0x00008000;
+  if (cb(&sdesc, context) == 0)
+    return DD_OK;  
+  
   TRACE("Enumerating Paletted (8)\n");
   pformat->dwFlags = DDPF_PALETTEINDEXED8;
   pformat->u.dwRGBBitCount = 8;
