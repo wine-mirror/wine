@@ -1,0 +1,592 @@
+#!/usr/bin/perl -w
+
+# This program checks the whole Wine environment configuration.
+# (or that's at least what it's supposed to do once it's finished)
+# (C) 2001 Andreas Mohr
+# Redistributable under Wine License
+#
+# FIXME:
+# - implement cmdline arguments e.g. for confirmation keypress
+#   in case of a problem
+#
+# TODO:
+# - implement it in a much more systematic way. This is a quick hack for now
+#   (like every Perl program ;-)
+#   And much more so since I'm NOT a Perl hacker
+# - test/tweak on non-Linux systems
+#
+
+use Getopt::Long;
+use strict;
+
+my $hold = 0;
+
+my $count_tests = 0;
+my $count_ok = 0;
+my $count_suspect = 0;
+my $count_bad = 0;
+my $count_critical = 0;
+my $count_failed = 0;
+
+my $is_notchecked = 0;
+my $is_ok = 1;
+my $is_suspect = 2;
+my $is_bad = 3;
+my $is_critical = 4;
+my $is_failed = 5;
+
+my $factor_suspect = 0.995;
+my $factor_bad = 0.95;
+my $factor_critical = 0.85;
+my $factor_failed = 0.15;
+
+my $correctness = 100.0;
+
+my $indent = 0;
+
+my ($level, $reason, $advice);
+
+my $advice_chmod = "Use chmod as root to fix it (\"man chmod\")";
+my $advice_fs = "The Filesystem option indicates the filesystem behaviour Wine is supposed to *emulate*, not the filesystem which is there";
+
+my $dev_read = 1;
+my $dev_write = 2;
+my $dev_open = 4;
+
+select(STDERR); $| = 1;     # make unbuffered
+select(STDOUT); $| = 1;     # make unbuffered
+
+#--------------------------------- main program --------------------------------
+&Introduction();
+&Check_BaseFiles();
+&Check_ConfigFile();
+&Check_Devices();
+&Check_Registry();
+&Check_WindowsFiles();
+&Print_Score();
+
+#------------------------------- support functions -----------------------------
+sub Do_PrintHeader {
+  my ($str) = @_;
+  my $len = length($str);
+  my $num = int((80 - $len - 2)/2);
+  my $i;
+
+  print "\n";
+  for ($i = 0; $i < $num; $i++) {
+    print "-";
+  }
+  print " ".$str." ";
+  for ($i = 0; $i < $num; $i++) {
+    print "-";
+  }
+  if ($len % 2)
+  {
+    print "-";
+  }
+  print "\n";
+}
+
+sub Do_Check {
+  my ($text) = @_;
+  my $test_no;
+  my $indent_str = "";
+  
+  $count_tests++;
+  $test_no = sprintf("%03d", $count_tests);
+  for (my $i = 0; $i < $indent; $i++)
+  {
+    $indent_str = $indent_str." ";
+  }
+  print sprintf("%.60s", $test_no.".".$indent_str." Checking ".$text."...                                           ");
+}
+
+sub Do_PrintResult {
+  my($level, $str, $advice, $skip_score) = @_;
+  my $err;
+  my $key;
+
+  if ($level == $is_notchecked)
+  {
+    $err = "NOT CHECKED";
+    $str = "";
+    $advice = "";
+  }
+  elsif ($level == $is_ok)
+  {
+    $err = "OK";
+    $str = "";
+    $advice = "";
+    $count_ok++;
+  }
+  elsif ($level == $is_suspect)
+  {
+    $err = "SUSPICIOUS";
+    $count_suspect++;
+    if (! $skip_score)
+    {
+      $correctness *= $factor_suspect;
+    }
+  }
+  elsif ($level == $is_bad)
+  {
+    $err = "BAD";
+    $count_bad++;
+    if (! $skip_score)
+    {
+      $correctness *= $factor_bad;
+    }
+  }
+  elsif ($level == $is_critical)
+  {
+    $err = "CRITICAL";
+    $count_critical++;
+    if (! $skip_score)
+    {
+      $correctness *= $factor_critical;
+    }
+  }
+  elsif ($level == $is_failed)
+  {
+    $err = "FAILED";
+    $count_failed++;
+    if (! $skip_score)
+    {
+      $correctness *= $factor_failed;
+    }
+  }
+  print $err;
+  if ($str)
+  {
+    print " (".$str.")";
+  }
+  print ".";
+  if ($hold)
+  {
+    print " Press Enter.";
+    $key = getc(STDIN);
+  }
+  else
+  {
+    print "\n";
+  }
+  if ($advice)
+  {
+    print "- ADVICE: ".$advice.".\n";
+  }
+}
+
+#-------------------------------- main functions ------------------------------
+sub Introduction {
+  print "This script verifies the configuration of the whole Wine environment.\n";
+  print "Note that this is an ALPHA version, and thus it doesn't catch all problems !\n";
+  print "The results of the checks are printed on the right side:\n";
+  print "OK         - test passed without problems.\n";
+  print "SUSPICIOUS - potentially problematic. You might want to look into that.\n";
+  print "BAD        - This is a problem, and it leads to configuration score penalty.\n";
+  print "CRITICAL   - A critical problem which can easily lead to malfunction.\n";
+  print "FAILED     - This problem leads to Wine failure almost certainly.\n";
+  print "\nThe result will be printed as a percentage score indicating config completeness.\n";
+  print "\n";
+  if ($hold)
+  {
+    my $key;
+    print "Press Enter to continue or Ctrl-C to exit.";
+    $key = getc(STDIN);
+  }
+}
+
+sub Check_BaseFiles {
+  my $line;
+
+  Do_PrintHeader("checking Wine base files");
+
+  $level = $is_ok;
+  Do_Check("for file \"wine\"");
+  $line = `which wine`;
+  if (!$line)
+  {
+    $level = $is_failed;
+    $reason = "file not found";
+    $advice = "Make sure the \"wine\" command is in your PATH (echo \$PATH; export PATH=xxx)";
+  }
+  Do_PrintResult($level, $reason, $advice);
+  
+  # check for config mess
+  $level = $is_ok;
+  my @output = ();
+  Do_Check("for correct .so lib config (please wait)");
+  push (@output, `find / -name libwine.so 2>/dev/null`);
+  if (@output > 1)
+  {
+    $level = $is_suspect;
+    my $dirs = "";
+    foreach $line (@output) {
+      chomp $line;
+      $dirs = $dirs." ".$line;
+    }
+    $reason = "libwine.so found ".@output." times:".$dirs;
+    $advice = "check whether this is really ok";
+  }
+  Do_PrintResult($level, $reason, $advice);
+}
+
+sub Do_Config_Drive {
+  my ($drive, $entries, $values) = @_;
+  my $index = 0;
+  my $arg;
+  my $path = "";
+  my $type = "";
+  my $label = "";
+  my $serial = "";
+  my $device = "";
+  my $fs = "";
+  my $unknown = "";
+  my $level;
+  my $my_advice_fat = "If that doesn't help, change mount options in case of VFAT (\"umask\" option)";
+
+  print "\n>>> Checking drive ".$drive." settings:\n";
+  $reason = "";
+  while (@$entries[$index])
+  {
+    $arg = @$values[$index];
+    SWITCH: for (@$entries[$index]) {
+	/^path$/i	&& do { $path = $arg; last; };
+	/^type$/i && do { $type = $arg; last; };
+	/^label$/i && do { $label = $arg; last; };
+	/^serial$/i && do { $serial = $arg; last; };
+	/^device$/i && do { $device = $arg; last; };
+	/^filesystem$/i && do { $fs = $arg; last; };
+	$unknown = @$entries[$index];
+    }
+    $index++;
+  }
+
+  $indent++;
+
+  my $serious = ($drive =~ /^C$/i) || ($type =~ /^cdrom$/i);
+  
+  ##### check Path #####
+  Do_Check("Path option");
+  $level = $is_ok;
+  $advice = "The syntax of the Path option has to be something like /my/mount/point";
+  if (! $path)
+  {
+    $level = $serious ? $is_failed : $is_bad;
+    $reason = "no Path option given in config file";
+  }
+  elsif ($path =~ /\\/)
+  {
+    $level = $serious ? $is_failed : $is_bad;
+    $reason = "wrong Path format ".$path;
+  }
+  elsif ($path =~ /\$\{(.*)\}$/)
+  {
+    # get path assigned to environment variable
+    my $envpath = $ENV{$1};
+    if (! $envpath)
+    {
+      $level = $serious ? $is_failed : $is_critical;
+      $reason = "Path \"".$path."\" references environment variable \"".$1."\" which is undefined";
+      $advice = "set environment variable before starting Wine or give a \"real\" directory instead";
+    }
+    else
+    {
+      $path = $envpath;
+      goto PERMCHECK; # hmpf
+    }
+  }
+  else
+  {
+PERMCHECK:
+    if (!-e $path)
+    {
+      $level = $serious ? $is_failed : $is_suspect;
+      $reason = $path." does not exist !";
+      $advice = "create this directory or point Path to a real directory";
+    }
+    elsif (!-r $path)
+    {
+      $level = $serious ? $is_failed : $is_bad;
+      $reason = $path." is not readable for you";
+      $advice = $advice_chmod.". ".$my_advice_fat;
+    }
+    elsif ((! ($type =~ /^cdrom$/i)) && (!-w $path))
+    {
+      $level = ($drive =~ /^C$/i) ? $is_failed : $is_suspect;
+      $reason = $path." is not writable for you";
+      $advice = $advice_chmod.". ".$my_advice_fat;
+    }
+    else # check permissions of the drive's directories
+    {
+        my(@output) = ();
+        push (@output, `find $path 2>&1 1>/dev/null`);
+	foreach my $line (@output) {
+	    if ($line =~ /find:\ (.*):\ Permission denied$/)
+	    {
+	        $level = ($drive =~ /^C$/i) ? $is_critical : $is_suspect;
+		$reason = "directory $1 is not accessible for you";
+		$advice = $advice_chmod.". ".$my_advice_fat;
+		last;
+	    }
+	}
+    }
+  }
+  Do_PrintResult($level, $reason, $advice);
+
+  ##### check Type #####
+  if ($type)
+  {
+    Do_Check("Type option");
+    $level = $is_ok;
+    SWITCH: for ($type) {
+        /^floppy$/i && do { last; };
+        /^hd$/i && do { last; };
+        /^network$/i && do { last; };
+        /^cdrom$/i && do {
+                        if (! $device)
+		        {
+			  $level = $is_critical;
+		          $reason = "no Device option found -> CD-ROM labels can''t be read";
+			  $advice = "add Device option and make sure the device given is accessible by you";
+		        }
+                        last;
+		         };
+        /^ramdisk$/i && do { last; };
+        if ($type)
+        {
+          $level = $is_bad;
+          $reason = "invalid Type setting ".$type;
+          $advice = "use one of \"floppy\", \"hd\", \"network\" or \"cdrom\"";
+        }
+    }
+    Do_PrintResult($level, $reason, $advice);
+  }
+
+  ##### FIXME: check Label and Serial here #####
+
+  ##### check Device #####
+  if ($device)
+  {
+    my $mode = ($type =~ /^cdrom$/i) ? $dev_read : $dev_read|$dev_write;
+    &Do_CheckDevice("device", $device, 1, $mode);
+  }
+
+  ##### check Filesystem #####
+  if ($fs)
+  {
+    Do_Check("Filesystem option");
+    $level = $is_ok;
+    SWITCH: for ($fs) {
+        /^(dos|fat|msdos|unix)$/i && do {
+                         $level = $is_bad;
+	                 $reason = "You probably don't want to use \"".$fs."\". ".$advice_fs;
+			 if ($fs =~ /^unix$/i)
+			 {
+			   $advice = "This should almost never be used";
+			 }
+			 else
+			 {
+			   $advice = "only use ".$fs." if you only have a crappy 8.3 filename (i.e.: non-LFN) DOS FAT kernel filesystem driver";
+			 }
+	                 last;
+			   };
+        /^vfat$/i && do { last; };
+        /^win95$/i && do { last; };
+        if ($fs)
+        {
+          $level = $is_bad;
+          $reason = "invalid Filesystem setting ".$type;
+          $advice = "use one of \"win95\", \"msdos\" or \"unix\"";
+        }
+    }
+    Do_PrintResult($level, $reason, $advice);
+  }
+  $indent--;
+  if ($reason) {
+    print "--> PROBLEM.\n";
+  }
+  else
+  {
+    print "--> OK.\n";
+  }
+}
+
+sub Do_Config_Main {
+  my ($file) = shift;
+  my ($config, $line);
+  my $section = "";
+  my (@entries, @values);
+  LINE: while (<$file>)
+  {
+    $line = $_;
+    next LINE if ($line =~ /[\ ]*[;#]/);	# skip comments
+    chomp $line;
+    #print "line: ".$line."\n";
+    if ($line =~ /\[(.*)\]/) # end of section/next section ?
+    {
+      my $nextsection = $1;
+      my $found = 1;
+      SWITCH: for ($section) {
+	/Drive\ (.)/i	&& do { &Do_Config_Drive($1, \@entries, \@values); last; };
+	if ($section)
+	{
+	  $found = 0;
+	}
+      }
+      $section = $found ? $nextsection : "";
+      @entries = (); @values = ();
+      next LINE;
+    }
+    if ($line =~ /^[\ \t]*\"(.*)\"[\ \t]*\=[\ \t]*\"(.*)\"/)
+    {
+      push(@entries, $1);
+      push(@values, $2);
+    }
+  }
+}
+
+sub Check_ConfigFile {
+  my $config = "$ENV{'HOME'}/.wine/config";
+  my $indrive = 0;
+
+  Do_PrintHeader("checking config file");
+
+  Do_Check("config file access");
+  open(CFGFILE, $config);
+  if (! <CFGFILE>)
+  {
+    if (!-e $config) {
+      $reason = $config." does not exist";
+      $advice = "it is ok in case you have ~/.winerc. If you don''t, then you''re in trouble !";
+    }
+    elsif (!-r $config) {
+      $reason = $config." not readable";
+      $advice = $advice_chmod;
+    }
+    Do_PrintResult($is_failed, $reason, $advice);
+    return;
+  }
+  if (!-w $config)
+  {
+    Do_PrintResult($is_failed, $config." not writable", "wineserver needs to be able to write to config file. ".$advice_chmod);
+  }
+  else
+  {
+    Do_PrintResult($is_ok);
+  }
+  Do_Config_Main(\*CFGFILE);
+  close(CFGFILE);
+}
+
+sub Do_CheckDevice {
+  my($descr, $dev, $output, $mode) = @_;
+  my $level = $is_ok;
+  my $errstr = "";
+
+  if (! $mode)
+  {
+    $mode = $dev_read|$dev_write|$dev_open;
+  }
+  ($output != -1) && Do_Check($descr." ".$dev);
+
+  my $err_level = ($output == 1) ? $is_critical : $is_bad;
+
+  if (!-e $dev)
+  {
+    $level = $err_level;
+    $reason = $dev." does not exist";
+    $advice = "use MAKEDEV script to create it";
+    goto FAILED;
+  }
+  if (($mode & $dev_read) && (!-r $dev))
+  {
+    $level = $err_level;
+    $reason = $dev." is not readable for you";
+    $advice = $advice_chmod;
+    goto FAILED;
+  }
+  if (($mode & $dev_write) && (!-w $dev))
+  {
+    $level = $err_level;
+    $reason = $dev." is not writable for you";
+    $advice = $advice_chmod;
+    goto FAILED;
+  }
+  if (($mode & $dev_open) && (!open(DEVICE, ">$dev")))
+  {
+    $level = $err_level;
+    $reason = "no kernel driver for ".$dev."?";
+    $advice = "module loading problems ? Read /usr/src/linux/Documentation/modules.txt";
+    goto FAILED;
+  }
+
+FAILED:
+  close(DEVICE);
+  ($output != -1) && Do_PrintResult($level, $reason, $advice);
+}
+
+sub Check_Devices {
+# FIXME: check joystick and scsi devices !
+  my $dev_sound = "/dev/dsp";
+  my $dev_mixer = "/dev/mixer";
+  my $dev_sequencer = "/dev/sequencer";
+  my $dev_mem = "/dev/mem";
+
+  Do_PrintHeader("checking system devices used by Wine");
+  &Do_CheckDevice("sound device", $dev_sound, 1);
+  &Do_CheckDevice("audio mixer device", $dev_mixer, 1);
+  &Do_CheckDevice("MIDI sequencer device", $dev_sequencer, 0);
+  &Do_CheckDevice("device needed for DGA (option \"UseDGA\"):", $dev_mem, 0);
+}
+
+sub Check_Registry {
+  my(@entries) = ();
+  my $regfile = $ENV{'HOME'}."/.wine/system.reg";
+
+  Do_PrintHeader("checking registry configuration");
+
+  Do_Check("availability of winedefault.reg entries");
+  push (@entries, `grep "SHAREDMEMLOCATION" $regfile`);
+  if (@entries)
+  {
+    Do_PrintResult($is_ok);
+  }
+  else
+  {
+    Do_PrintResult($is_critical, "entry \"SHAREDMEMLOCATION\" not found", "file winedefault.reg doesn't seem to have been applied using regapi");
+  }
+  @entries = ();
+
+  Do_Check("availability of windows registry entries");
+# FIXME: use a different key for check if Wine adds this one to its
+#        default registry.
+  push (@entries, `grep "Default Taskbar" $regfile`);
+  if (@entries)
+  {
+    Do_PrintResult($is_ok);
+  }
+  else
+  {
+    Do_PrintResult($is_critical, "entry \"Default Taskbar\" not found", "Windows registry does not seem to be added to Wine. This can affect many newer programs");
+  }
+  @entries = ();
+}
+
+sub Check_WindowsFiles {
+}
+
+sub Print_Score {
+#  my ($score_total, $score_reached, $score_percent);
+
+#  $score_total   =	$count_tests * 20;
+#  $score_reached =	$count_ok * 20 +
+#  			$count_bad * 15 +
+#			$count_critical * 5 +
+#			$count_failed * 0;
+#  $score_percent =	$score_reached * 100 / $score_total;
+
+  print "\n";
+  print $count_tests." tests. ".$count_suspect." suspicious, ".$count_bad." bad, ".$count_critical." critical, ".$count_failed." failed.\n";
+  print sprintf "Wine configuration correctness score: %2.2f%%\n", $correctness;
+}

@@ -140,6 +140,9 @@ mentioned above.
 
 See http://www.winehq.com/config.html for further configuration hints.
 
+In order to verify the correctness of the environment you need for
+Wine to run successfully, run "./tools/winecheck | less".  You'll get
+a percentage score indicating "Wine configuration correctness".
 
 6. RUNNING PROGRAMS
 
