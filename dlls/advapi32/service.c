@@ -34,12 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
-static DWORD   start_dwNumServiceArgs;
-static LPWSTR *start_lpServiceArgVectors;
-
-static const WCHAR _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
-                                            'e','r','v','i','c','e','S','t',
-                                            'a','r','t','D','a','t','a',0};
 static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
       'S','e','r','v','i','c','e','s','\\',0 };
@@ -184,30 +178,70 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
 }
 
 /******************************************************************************
+ * read_scm_lock_data
+ *
+ * helper function for StartServiceCtrlDispatcherA/W
+ *
+ * SCM database is locked by StartService;
+ * open global SCM lock object and read service name
+ */
+static BOOL read_scm_lock_data( LPWSTR buffer )
+{
+    HANDLE hLock;
+    LPWSTR argptr;
+
+    hLock = OpenFileMappingW( FILE_MAP_ALL_ACCESS, FALSE, szSCMLock );
+    if( NULL == hLock )
+    {
+        SetLastError( ERROR_FAILED_SERVICE_CONTROLLER_CONNECT );
+        return FALSE;
+    }
+    argptr = MapViewOfFile( hLock, FILE_MAP_ALL_ACCESS,
+                            0, 0, MAX_SERVICE_NAME * sizeof(WCHAR) );
+    if( NULL == argptr )
+    {
+        CloseHandle( hLock );
+        return FALSE;
+    }
+    strcpyW( buffer, argptr );
+    UnmapViewOfFile( argptr );
+    CloseHandle( hLock );
+    return TRUE;
+}
+
+/******************************************************************************
  * StartServiceCtrlDispatcherA [ADVAPI32.@]
  */
 BOOL WINAPI
 StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 {
     LPSERVICE_MAIN_FUNCTIONA fpMain;
-    HANDLE wait;
+    WCHAR service_name[ MAX_SERVICE_NAME ];
+    LPWSTR argv0;
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpArgVecW;
     LPSTR  *lpArgVecA;
     unsigned int i;
 
     TRACE("(%p)\n", servent);
-    wait = CreateSemaphoreW(NULL,1,1,_ServiceStartDataW);
-    if (!wait)
+
+    if( ! read_scm_lock_data( service_name ) )
     {
-        ERR("Couldn't create data semaphore\n");
-        return FALSE;
+        /* FIXME: Instead of exiting we fall through and allow
+           service to be executed as ordinary program.
+           This behaviour was specially introduced in the patch
+           submitted against revision 1.45 and so preserved here.
+         */
+        FIXME("should fail with ERROR_FAILED_SERVICE_CONTROLLER_CONNECT\n");
+        dwNumServiceArgs = 0;
+        lpArgVecA = NULL;
+        goto run_service;
     }
 
-    dwNumServiceArgs = start_dwNumServiceArgs;
-    lpArgVecW        = start_lpServiceArgVectors;
-
-    ReleaseSemaphore(wait, 1, NULL);
+    /* FIXME: other args */
+    dwNumServiceArgs = 1;
+    argv0            = service_name;
+    lpArgVecW        = &argv0;
 
     /* Convert the Unicode arg vectors back to ASCII */
     if(dwNumServiceArgs)
@@ -219,6 +253,7 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
     for(i=0; i<dwNumServiceArgs; i++)
         lpArgVecA[i]=HEAP_strdupWtoA(GetProcessHeap(), 0, lpArgVecW[i]);
 
+run_service:
     /* FIXME: should we blindly start all services? */
     while (servent->lpServiceName) {
         TRACE("%s at %p)\n", debugstr_a(servent->lpServiceName),servent);
@@ -251,23 +286,20 @@ BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {
     LPSERVICE_MAIN_FUNCTIONW fpMain;
-    HANDLE wait;
+    LPWSTR argv0;
+    WCHAR service_name[ MAX_SERVICE_NAME ];
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpServiceArgVectors ;
 
     TRACE("(%p)\n", servent);
-    wait = OpenSemaphoreW(SEMAPHORE_ALL_ACCESS, FALSE, _ServiceStartDataW);
-    if(wait == 0)
-    {
-        ERR("Couldn't find wait semaphore\n");
-        ERR("perhaps you need to start services using StartService\n");
+
+    if( ! read_scm_lock_data( service_name ) )
         return FALSE;
-    }
 
-    dwNumServiceArgs    = start_dwNumServiceArgs;
-    lpServiceArgVectors = start_lpServiceArgVectors;
-
-    ReleaseSemaphore(wait, 1, NULL);
+    /* FIXME: other args */
+    dwNumServiceArgs    = 1;
+    argv0               = service_name;
+    lpServiceArgVectors = &argv0;
 
     /* FIXME: should we blindly start all services? */
     while (servent->lpServiceName) {
@@ -873,7 +905,9 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     WCHAR path[MAX_PATH],str[MAX_PATH];
     DWORD type,size;
     long r;
-    HANDLE data,wait;
+    HANDLE hLock;
+    HANDLE wait = NULL;
+    LPWSTR shmem_lock = NULL;
     PROCESS_INFORMATION procinfo;
     STARTUPINFOW startupinfo;
     BOOL ret = FALSE;
@@ -889,35 +923,35 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
 
     TRACE("Starting service %s\n", debugstr_w(path) );
 
-    data = CreateSemaphoreW(NULL,1,1,_ServiceStartDataW);
-    if (!data)
-    {
-        ERR("Couldn't create data semaphore\n");
+    hLock = LockServiceDatabase( hsvc->u.service.sc_manager );
+    if( NULL == hLock )
         return FALSE;
+
+    /*
+     * FIXME: start dependent services
+     */
+
+    /* pass argv[0] (service name) to the service via global SCM lock object */
+    shmem_lock = MapViewOfFile( hLock, FILE_MAP_ALL_ACCESS,
+                                0, 0, MAX_SERVICE_NAME * sizeof(WCHAR) );
+    if( NULL == shmem_lock )
+    {
+        ERR("Couldn't map shared memory\n");
+        goto done;
     }
+    strcpyW( shmem_lock, hsvc->u.service.name );
+
     wait = CreateSemaphoreW(NULL,0,1,_WaitServiceStartW);
     if (!wait)
     {
         ERR("Couldn't create wait semaphore\n");
-        return FALSE;
+        goto done;
     }
 
     /*
      * FIXME: lpServiceArgsVectors need to be stored and returned to
      *        the service when it calls StartServiceCtrlDispatcher
-     *
-     * Chuck these in a global (yuk) so we can pass them to
-     * another process - address space separation will break this.
      */
-
-    r = WaitForSingleObject(data,INFINITE);
-
-    if( r == WAIT_FAILED)
-        return FALSE;
-
-    FIXME("problematic because of address space separation.\n");
-    start_dwNumServiceArgs    = dwNumServiceArgs;
-    start_lpServiceArgVectors = (LPWSTR *)lpServiceArgVectors;
 
     ZeroMemory(&startupinfo,sizeof(STARTUPINFOW));
     startupinfo.cb = sizeof(STARTUPINFOW);
@@ -953,9 +987,9 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     ret = TRUE;
 
 done:
-    CloseHandle( wait );
-    ReleaseSemaphore(data, 1, NULL);
-    CloseHandle( data );
+    if( wait ) CloseHandle( wait );
+    if( shmem_lock != NULL ) UnmapViewOfFile( shmem_lock );
+    UnlockServiceDatabase( hLock );
     return ret;
 }
 
