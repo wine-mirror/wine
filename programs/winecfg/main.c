@@ -160,7 +160,7 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-#define NUM_PROPERTY_PAGES 4
+#define NUM_PROPERTY_PAGES 5
 INT_PTR
 doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 {
@@ -219,6 +219,15 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[3].pszTitle = "X11 Driver";
     psp[3].lParam = 0;
 
+    psp[4].dwSize = sizeof (PROPSHEETPAGE);
+    psp[4].dwFlags = PSP_USETITLE;
+    psp[4].hInstance = hInstance;
+    psp[4].u.pszTemplate = MAKEINTRESOURCE (IDD_DRIVECFG);
+    psp[4].u2.pszIcon = NULL;
+    psp[4].pfnDlgProc = DriveDlgProc;
+    psp[4].pszTitle = "Drives";
+    psp[4].lParam = 0;
+    
     /*
      * Fill out the PROPSHEETHEADER
      */

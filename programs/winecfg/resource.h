@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2003 Mark Westcott
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,11 @@
 #define IDD_APPCFG                      108
 #define IDD_X11DRVCFG                   109
 #define IDD_DLLCFG                      110
+#define IDD_DRIVECFG                    111
+#define IDD_SYSTEMCFG                   112
+#define IDD_DRIVE_EDIT                  113
+#define IDD_DRIVE_EDIT2                 114
+#define IDB_WINE_LOGO                   200
 #define IDC_TABABOUT                    1001
 #define IDC_APPLYBTN                    1002
 #define IDC_WINEVER                     1011
@@ -51,3 +57,47 @@
 #define IDC_RAD_BUILTIN                 1029
 #define IDC_RAD_NATIVE                  1030
 #define IDC_LIST_DLLS                   1031
+#define IDC_LIST_BUILTIN_DLLS           1031
+#define IDC_LIST_NATIVE_DLLS            1032
+#define IDC_RADIO_DEFAULT_BUILTIN       1033
+#define IDC_RADIO_DEFAULT_NATIVE        1034
+#define IDC_RADIO_VIRTUAL               1035
+#define IDC_EDIT_VIRTUAL                1036
+#define IDC_BUTTON_VIRTUAL              1037
+#define IDC_RADIO_REAL                  1038
+#define IDC_EDIT_REAL                   1039
+#define IDC_BUTTON_REAL                 1040
+#define IDC_BUTTON_FOLDERS              1041
+#define IDC_LIST_DRIVES                 1042
+#define IDC_BUTTON_ADD                  1043
+#define IDC_BUTTON_REMOVE               1044
+#define IDC_BUTTON_EDIT                 1045
+#define IDC_BUTTON7                     1046
+#define IDC_BUTTON_AUTODETECT           1046
+#define IDC_DRIVE_ADD                   1047
+#define IDC_DRIVE_REMOVE                1048
+#define IDC_DRIVE_EDIT                  1049
+#define IDC_DRIVE_EDIT_NAME             1050
+#define IDC_DRIVE_EDIT_LABEL            1051
+#define IDC_DRIVE_EDIT_TYPE             1052
+#define IDC_DRIVE_EDIT_FS               1053
+#define IDC_DRIVE_EDIT_PATH             1054
+#define IDC_DRIVE_EDIT_DEVICE           1055
+#define ID_DRIVE_OK                     1056
+#define ID_DRIVE_CANCEL                 1057
+#define ID_BUTTON_CANCEL                1058
+#define ID_BUTTON_OK                    1059
+#define IDC_EDIT_LABEL                  1060
+#define IDC_EDIT_PATH                   1061
+#define IDC_EDIT_SERIAL                 1062
+#define IDC_COMBO_LETTER                1063
+#define IDC_COMBO_NAMES                 1064
+#define IDC_COMBO_TYPE                  1065
+#define IDC_EDIT_DEVICE                 1066
+#define IDC_BUTTON_BROWSE_PATH          1067
+#define IDC_RADIO_AUTODETECT            1068
+#define IDC_RADIO_ASSIGN                1069
+#define IDC_BUTTON_BROWSE_DEVICE        1070
+#define IDC_BOX_CDROM                   1071
+#define IDC_STATIC_SERIAL               1072
+#define IDC_STATIC_LABEL                1073

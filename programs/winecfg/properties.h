@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2003 Mark Westcott
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,6 +52,18 @@ typedef struct
     char  szDOSVer[MAX_VERSION_LENGTH];
     HDPA  DLLs;
 } APP_DESC;
+
+
+typedef struct
+{
+    char szName[MAX_NAME_LENGTH];
+    char szPath[MAX_NAME_LENGTH];
+    char szType[MAX_NAME_LENGTH];
+    char szFS[MAX_NAME_LENGTH];
+    char szLabel[MAX_NAME_LENGTH];
+    char szDevice[MAX_NAME_LENGTH];
+    char szSerial[MAX_NAME_LENGTH];
+} DRIVE_DESC;
 
 typedef struct
 {

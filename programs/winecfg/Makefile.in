@@ -7,6 +7,7 @@ APPMODE   = gui
 IMPORTS   = comctl32 user32 advapi32
 
 C_SRCS = \
+	drive.c \
 	main.c \
 	properties.c \
 	winecfg.c \

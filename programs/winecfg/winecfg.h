@@ -44,8 +44,11 @@ typedef struct structWineCfg
 
     char   szGraphDriver[MAX_NAME_LENGTH];
 
-    HDPA     pDlls;
-    HDPA     pApps;
+    HDPA   pDlls;
+    HDPA   pApps;
+    HDPA   pDrives;
+
+    int    driveCount;
 
     X11DRV_DESC sX11Drv;
 } WINECFG_DESC;
@@ -61,9 +64,18 @@ int saveConfig(const WINECFG_DESC *pCfg);
 int setConfigValue (HKEY hCurrent, char *subkey, char *valueName, const char *value);
 int getConfigValue (HKEY hCurrent, char *subkey, char *valueName, char *retVal, int length, char *defaultResult);
 
+
+/* X11DRV */
 void initX11DrvDlg (HWND hDlg);
 void saveX11DrvDlgSettings (HWND hDlg);
 INT_PTR CALLBACK X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+/* Drive management */
+void initDriveDlg (HWND hDlg);
+void saveDriveSettings (HWND hDlg);
+
+INT_PTR CALLBACK DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 #define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
 
