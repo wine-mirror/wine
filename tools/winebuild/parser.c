@@ -580,9 +580,23 @@ SPEC_TYPE ParseTopLevel( FILE *file )
         }
         else if (strcmp(token, "import") == 0)
         {
+            const char* name;
+            int delay = 0;
+
             if (SpecType != SPEC_WIN32)
                 fatal_error( "Imports not supported for Win16\n" );
-            add_import_dll( GetToken(0) );
+            name = GetToken(0);
+            if (*name == '-')
+            {
+                name = GetToken(0);
+                if (!strcmp(name, "delay"))
+                {
+                    name = GetToken(0);
+                    delay = 1;
+                }
+                else fatal_error( "Unknown option '%s' for import directive\n", name );
+            }
+            add_import_dll( name, delay );
         }
         else if (strcmp(token, "rsrc") == 0)
         {

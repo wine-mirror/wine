@@ -2,6 +2,7 @@
  * DLL imports support
  *
  * Copyright 2000 Alexandre Julliard
+ *           2000 Eric Pouech
  */
 
 #include <fcntl.h>
@@ -15,6 +16,7 @@
 struct import
 {
     char        *dll;         /* dll name */
+    int          delay;       /* delay or not dll loading ? */
     char       **exports;     /* functions exported from this dll */
     int          nb_exports;  /* number of exported functions */
     char       **imports;     /* functions we want to import from this dll */
@@ -31,9 +33,10 @@ static int nb_ignore_symbols;
 static int ignore_size;
 
 static struct import **dll_imports = NULL;
-static int nb_imports = 0;  /* number of imported dlls */
-static int total_imports = 0;  /* total number of imported functions */
-
+static int nb_imports = 0;      /* number of imported dlls (delayed or not) */
+static int nb_delayed = 0;      /* number of delayed dlls */
+static int total_imports = 0;   /* total number of imported functions */
+static int total_delayed = 0;   /* total number of imported functions in delayed DLLs */
 
 /* compare function names; helper for resolve_imports */
 static int name_cmp( const void *name, const void *entry )
@@ -44,7 +47,6 @@ static int name_cmp( const void *name, const void *entry )
 /* locate a symbol in a (sorted) list */
 inline static const char *find_symbol( const char *name, char **table, int size )
 {
-    
     char **res = NULL;
 
     if (table) {
@@ -138,15 +140,17 @@ static void read_exported_symbols( const char *name, struct import *imp )
 }
 
 /* add a dll to the list of imports */
-void add_import_dll( const char *name )
+void add_import_dll( const char *name, int delay )
 {
     struct import *imp = xmalloc( sizeof(*imp) );
     imp->dll        = xstrdup( name );
+    imp->delay      = delay;
     imp->imports    = NULL;
     imp->nb_imports = 0;
     /* GetToken for the file name has swallowed the '\n', hence pointing to next line */
     imp->lineno = current_line - 1;
 
+    if (delay) nb_delayed++;
     read_exported_symbols( name, imp );
 
     dll_imports = xrealloc( dll_imports, (nb_imports+1) * sizeof(*dll_imports) );
@@ -170,6 +174,7 @@ static void add_import_func( struct import *imp, const char *name )
     imp->imports = xrealloc( imp->imports, (imp->nb_imports+1) * sizeof(*imp->imports) );
     imp->imports[imp->nb_imports++] = xstrdup( name );
     total_imports++;
+    if (imp->delay) total_delayed++;
 }
 
 /* add a symbol to the undef list */
@@ -233,6 +238,11 @@ static void add_extra_undef_symbols(void)
         break;
     }
     ADD_SYM( "RtlRaiseException" );
+    if (nb_delayed)
+    {
+       ADD_SYM( "LoadLibraryA" );
+       ADD_SYM( "GetProcAddress" );
+    }
 
     if (count)
     {
@@ -334,11 +344,12 @@ int resolve_imports( FILE *outfile )
 }
 
 /* output the import table of a Win32 module */
-int output_imports( FILE *outfile )
+static int output_immediate_imports( FILE *outfile )
 {
     int i, j, pos;
+    int nb_imm = nb_imports - nb_delayed;
 
-    if (!nb_imports) goto done;
+    if (!nb_imm) goto done;
 
     /* main import header */
 
@@ -349,18 +360,21 @@ int output_imports( FILE *outfile )
     fprintf( outfile, "    unsigned int ForwarderChain;\n" );
     fprintf( outfile, "    const char  *Name;\n" );
     fprintf( outfile, "    void        *FirstThunk;\n" );
-    fprintf( outfile, "  } imp[%d];\n", nb_imports+1 );
-    fprintf( outfile, "  const char *data[%d];\n", total_imports + nb_imports );
+    fprintf( outfile, "  } imp[%d];\n", nb_imm+1 );
+    fprintf( outfile, "  const char *data[%d];\n",
+             total_imports - total_delayed + nb_imm );
     fprintf( outfile, "} imports = {\n  {\n" );
 
     /* list of dlls */
 
     for (i = j = 0; i < nb_imports; i++)
     {
+        if (dll_imports[i]->delay) continue;
         fprintf( outfile, "    { 0, 0, 0, \"%s\", &imports.data[%d] },\n",
                  dll_imports[i]->dll, j );
         j += dll_imports[i]->nb_imports + 1;
     }
+
     fprintf( outfile, "    { 0, 0, 0, 0, 0 },\n" );
     fprintf( outfile, "  },\n  {\n" );
 
@@ -368,6 +382,7 @@ int output_imports( FILE *outfile )
 
     for (i = 0; i < nb_imports; i++)
     {
+        if (dll_imports[i]->delay) continue;
         fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
             fprintf( outfile, "    \"\\0\\0%s\",\n", dll_imports[i]->imports[j] );
@@ -378,10 +393,11 @@ int output_imports( FILE *outfile )
     /* thunks for imported functions */
 
     fprintf( outfile, "#ifndef __GNUC__\nstatic void __asm__dummy_import(void) {\n#endif\n\n" );
-    pos = 20 * (nb_imports + 1);  /* offset of imports.data from start of imports */
+    pos = 20 * (nb_imm + 1);  /* offset of imports.data from start of imports */
     fprintf( outfile, "asm(\".align 8\\n\"\n" );
-    for (i = 0; i < nb_imports; i++, pos += 4)
+    for (i = 0; i < nb_imports; i++)
     {
+        if (dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
@@ -394,9 +410,174 @@ int output_imports( FILE *outfile )
             else
                 fprintf( outfile, "jmp *(imports+%d)\\n\\tmovl %%esi,%%esi\\n\"\n", pos );
         }
+        pos += 4;
     }
     fprintf( outfile, ");\n#ifndef __GNUC__\n}\n#endif\n\n" );
 
  done:
-    return nb_imports;
+    return nb_imm;
+}
+
+/* output the delayed import table of a Win32 module */
+static int output_delayed_imports( FILE *outfile )
+{
+    int i, idx, j, pos;
+
+    if (!nb_delayed) goto done;
+
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!dll_imports[i]->delay) continue;
+        fprintf( outfile, "static void *__wine_delay_imp_%d_hmod;\n", i);
+        for (j = 0; j < dll_imports[i]->nb_imports; j++)
+        {
+            fprintf( outfile, "void __wine_delay_imp_%d_%s();\n",
+                     i, dll_imports[i]->imports[j] );
+        }
+    }
+    fprintf( outfile, "\n" );
+    fprintf( outfile, "static struct {\n" );
+    fprintf( outfile, "  struct ImgDelayDescr {\n" );
+    fprintf( outfile, "    unsigned int  grAttrs;\n" );
+    fprintf( outfile, "    const char   *szName;\n" );
+    fprintf( outfile, "    void        **phmod;\n" );
+    fprintf( outfile, "    void        **pIAT;\n" );
+    fprintf( outfile, "    const char  **pINT;\n" );
+    fprintf( outfile, "    void*         pBoundIAT;\n" );
+    fprintf( outfile, "    void*         pUnloadIAT;\n" );
+    fprintf( outfile, "    unsigned long dwTimeStamp;\n" );
+    fprintf( outfile, "  } imp[%d];\n", nb_delayed );
+    fprintf( outfile, "  void         *IAT[%d];\n", total_delayed );
+    fprintf( outfile, "  const char   *INT[%d];\n", total_delayed );
+    fprintf( outfile, "} delay_imports = {\n" );
+    fprintf( outfile, "  {\n" );
+    for (i = j = 0; i < nb_imports; i++)
+    {
+        if (!dll_imports[i]->delay) continue;
+        fprintf( outfile, "    { 0, \"%s\", &__wine_delay_imp_%d_hmod, &delay_imports.IAT[%d], &delay_imports.INT[%d], 0, 0, 0 },\n",
+                 dll_imports[i]->dll, i, j, j );
+        j += dll_imports[i]->nb_imports;
+    }
+    fprintf( outfile, "  },\n  {\n" );
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!dll_imports[i]->delay) continue;
+        fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
+        for (j = 0; j < dll_imports[i]->nb_imports; j++)
+        {
+            fprintf( outfile, "    &__wine_delay_imp_%d_%s,\n", i, dll_imports[i]->imports[j] );
+        }
+    }
+    fprintf( outfile, "  },\n  {\n" );
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!dll_imports[i]->delay) continue;
+        fprintf( outfile, "    /* %s */\n", dll_imports[i]->dll );
+        for (j = 0; j < dll_imports[i]->nb_imports; j++)
+        {
+            fprintf( outfile, "    \"\\0\\0%s\",\n", dll_imports[i]->imports[j] );
+        }
+    }
+    fprintf( outfile, "  }\n};\n\n" );
+
+    /* check if there's some stub defined. if so, exception struct 
+     *  is already defined, so don't emit it twice 
+     */
+    for (i = 0; i < nb_entry_points; i++) if (EntryPoints[i]->type == TYPE_STUB) break;
+
+    if (i == nb_entry_points) {
+       fprintf( outfile, "struct exc_record {\n" );
+       fprintf( outfile, "  unsigned int code, flags;\n" );
+       fprintf( outfile, "  void *rec, *addr;\n" );
+       fprintf( outfile, "  unsigned int params;\n" );
+       fprintf( outfile, "  const void *info[15];\n" );
+       fprintf( outfile, "};\n\n" );
+       fprintf( outfile, "extern void __stdcall RtlRaiseException( struct exc_record * );\n" );
+    }
+
+    fprintf( outfile, "extern void * __stdcall LoadLibraryA(const char*);\n");
+    fprintf( outfile, "extern void * __stdcall GetProcAddress(void *, const char*);\n");
+    fprintf( outfile, "\n" );
+
+    fprintf( outfile, "void *__stdcall __wine_delay_load(struct ImgDelayDescr* imd, void **pIAT)\n" );
+    fprintf( outfile, "{\n" );
+    fprintf( outfile, "  int idx = pIAT - imd->pIAT;\n" );
+    fprintf( outfile, "  const char** pINT = imd->pINT + idx;\n" );
+    fprintf( outfile, "  void *fn;\n\n" );
+
+    fprintf( outfile, "  if (!*imd->phmod) *imd->phmod = LoadLibraryA(imd->szName);\n" );
+    fprintf( outfile, "  if (*imd->phmod && (fn = GetProcAddress(*imd->phmod, *pINT + 2)))\n");
+    fprintf( outfile, "    /* patch IAT with final value */\n" );
+    fprintf( outfile, "    return *pIAT = fn;\n" );
+    fprintf( outfile, "  else {\n");
+    fprintf( outfile, "    struct exc_record rec;\n" );
+    fprintf( outfile, "    rec.code    = 0x80000100;\n" );
+    fprintf( outfile, "    rec.flags   = 1;\n" );
+    fprintf( outfile, "    rec.rec     = 0;\n" );
+    fprintf( outfile, "    rec.params  = 2;\n" );
+    fprintf( outfile, "    rec.info[0] = imd->szName;\n" );
+    fprintf( outfile, "    rec.info[1] = *pINT + 2;\n" );
+    fprintf( outfile, "#ifdef __GNUC__\n" );
+    fprintf( outfile, "    rec.addr = __builtin_return_address(1);\n" );
+    fprintf( outfile, "#else\n" );
+    fprintf( outfile, "    rec.addr = 0;\n" );
+    fprintf( outfile, "#endif\n" );
+    fprintf( outfile, "    for (;;) RtlRaiseException( &rec );\n" );
+    fprintf( outfile, "    return 0; /* shouldn't go here */\n" );
+    fprintf( outfile, "  }\n}\n\n" );
+
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy_delay_import(void) {\n" );
+    fprintf( outfile, "#endif\n" );
+    fprintf( outfile, "asm(\".align 8\\n\"\n" );
+    pos = nb_delayed * 32;
+    for (i = idx = 0; i < nb_imports; i++)
+    {
+        char buffer[128];
+
+        if (!dll_imports[i]->delay) continue;
+
+        sprintf(buffer, "__wine_dl_%d", i);
+        fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
+        fprintf( outfile, "    \"" PREFIX "%s:\\t", buffer );
+        fprintf( outfile, "push $delay_imports+%d\\n\"\n", idx * 32 );
+        fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
+        fprintf( outfile, "    \"\\tpop %%edx\\n\\tpop %%ecx\\n\\tjmp *%%eax\\n\"\n" );
+
+        for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
+        {
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
+                     dll_imports[i]->imports[j] );
+            fprintf( outfile, "    \"\\t.globl " PREFIX "%s\\n\"\n",
+                     dll_imports[i]->imports[j] );
+            fprintf( outfile, "    \"" PREFIX "%s:\\t", dll_imports[i]->imports[j] );
+            fprintf( outfile, "jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n\"\n", pos );
+
+            sprintf( buffer, "__wine_delay_imp_%d_%s", i, dll_imports[i]->imports[j]);
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
+            fprintf( outfile, "    \"" PREFIX "%s:\\t", buffer );
+            fprintf( outfile, "push %%ecx\\n\\tpush %%edx\\n\"\n" );
+            fprintf( outfile, "    \"\\tpush $delay_imports+%d\\n\"\n", pos );
+            fprintf( outfile, "    \"\\tjmp __wine_dl_%d\\n\"\n", i );
+        }
+        idx++;
+    }
+
+    fprintf( outfile, ");\n" );
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif\n" );
+    fprintf( outfile, "\n" );
+
+ done:
+    return nb_delayed;
+}
+
+/* output the import and delayed import tables of a Win32 module
+ * returns number of DLLs exported in 'immediate' mode
+ */
+int output_imports( FILE *outfile )
+{
+   output_delayed_imports( outfile );
+   return output_immediate_imports( outfile );
 }

@@ -7,7 +7,7 @@ type    win16|win32
 [mode	dll|cuiexe|guiexe|cuiexe_unicode|guiexe_unicode]
 [heap   SIZE]
 [init	FUNCTION]
-[import DLL]
+[import [IMP_FLAGS] DLL]
 [rsrc	RESFILE]
 [debug_channels ([CHANNEL [CHANNEL...]])]
 [ignore ([SYMBOL [SYMBOL...]])]
@@ -50,6 +50,12 @@ is loaded. This is only valid for Win32 modules.
 "import" names a module that this one depends on (only for Win32
 modules at the present). The import declaration can be present several
 times.
+
+"IMP_FLAGS" is a series of optional flags, preceded by a '-'
+character. The supported flags are:
+"-delay":       the module this module depends upon will be loaded
+	 	when the first API will be called (and not while this
+		module is loaded)
 
 "rsrc" specifies the path of the compiled resource file.
 
