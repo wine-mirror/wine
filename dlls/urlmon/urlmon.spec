@@ -61,8 +61,8 @@
 @ stub URLDownloadA
 @ stub URLDownloadToCacheFileA
 @ stub URLDownloadToCacheFileW
-@ stub URLDownloadToFileA
-@ stub URLDownloadToFileW
+@ stdcall URLDownloadToFileA(ptr str str long ptr)
+@ stdcall URLDownloadToFileW(ptr wstr wstr long ptr)
 @ stub URLDownloadW
 @ stub URLOpenBlockingStreamA
 @ stub URLOpenBlockingStreamW

@@ -312,6 +312,10 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
 HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pbsc, IBindStatusCallback **ppbsc, DWORD dwReserved);
 HRESULT WINAPI CompareSecurityIds(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 
+HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL,  LPCSTR  szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);
+HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);
+
+
 #ifdef __cplusplus
 }      /* extern "C" */
 #endif /* defined(__cplusplus) */
