@@ -145,15 +145,46 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         HBITMAP hBitmap, hOldBitmap;
 	HDC hdcMem;
 
-	hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
-				    bits, info, wUsage );
 	hdcMem = CreateCompatibleDC( hdc );
-	hOldBitmap = SelectObject( hdcMem, hBitmap );
+	if (info->bmiHeader.biCompression == BI_RLE4 ||
+	    info->bmiHeader.biCompression == BI_RLE8) {
+
+	   /* when RLE compression is used, there may be some gaps (ie the DIB doesn't
+	    * contain all the rectangle described in bmiHeader, but only part of it.
+	    * This mean that those undescribed pixels must be left untouched.
+	    * So, we first copy on a memory bitmap the current content of the 
+	    * destination rectangle, blit the DIB bits on top of it - hence leaving
+	    * the gaps untouched -, and blitting the rectangle back.
+	    * This insure that gaps are untouched on the destination rectangle
+	    * Not doing so leads to trashed images (the gaps contain what was on the
+	    * memory bitmap => generally black or garbage)
+	    * Unfortunately, RLE DIBs without gaps will be slowed down. But this is
+	    * another speed vs correctness issue. Anyway, if speed is needed, then the
+	    * pStretchDIBits function shall be implemented.
+	    * ericP (2000/09/09)
+	    */
+	   hBitmap = CreateCompatibleBitmap(hdc, info->bmiHeader.biWidth, 
+					    info->bmiHeader.biHeight);
+	   hOldBitmap = SelectObject( hdcMem, hBitmap );
+	   
+	   /* copy existing bitmap from destination dc */
+	   StretchBlt( hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
+		       widthSrc, heightSrc, hdc, xDst, yDst, widthDst, heightDst,
+		       dwRop );
+	   SetDIBits(hdcMem, hBitmap, 0, info->bmiHeader.biHeight, bits, 
+		     info, DIB_RGB_COLORS); 
+	   
+	} else {
+	   hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
+				     bits, info, wUsage );
+	   hOldBitmap = SelectObject( hdcMem, hBitmap );
+	}
+
         /* Origin for DIBitmap may be bottom left (positive biHeight) or top
            left (negative biHeight) */
         StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-                      hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc, 
-                      widthSrc, heightSrc, dwRop );
+		    hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc, 
+		    widthSrc, heightSrc, dwRop );
 	SelectObject( hdcMem, hOldBitmap );
 	DeleteDC( hdcMem );
 	DeleteObject( hBitmap );
