@@ -177,6 +177,26 @@ static HBITMAP STATIC_LoadBitmapW( HWND hwnd, LPCWSTR name )
 }
 
 /***********************************************************************
+ *           STATIC_TryPaintFcn
+ *
+ * Try to immediately paint the control.
+ */
+static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
+{
+    LONG style = full_style & SS_TYPEMASK;
+    RECT rc;
+
+    GetClientRect( hwnd, &rc );
+    if (!IsRectEmpty(&rc) && IsWindowVisible(hwnd) && staticPaintFunc[style])
+    {
+	HDC hdc;
+	hdc = GetDC( hwnd );
+	(staticPaintFunc[style])( hwnd, hdc, full_style );
+	ReleaseDC( hwnd, hdc );
+    }
+}
+
+/***********************************************************************
  *           StaticWndProc_common
  */
 static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
@@ -247,7 +267,8 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    lParam = (LPARAM)(((LPCREATESTRUCTA)lParam)->lpszName);
 	/* fall through */
     case WM_SETTEXT:
-        if (style == SS_ICON)
+	switch (style) {
+	case SS_ICON:
 	{
 	    HICON hIcon;
 	    if(unicode)
@@ -256,8 +277,9 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 		hIcon = STATIC_LoadIconA(hwnd, (LPCSTR)lParam);
             /* FIXME : should we also return the previous hIcon here ??? */
             STATIC_SetIcon(hwnd, hIcon, style);
+	    break;
 	}
-        else if (style == SS_BITMAP) 
+        case SS_BITMAP: 
 	{
 	    HBITMAP hBitmap;
 	    if(unicode)
@@ -265,23 +287,56 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    else
 		hBitmap = STATIC_LoadBitmapA(hwnd, (LPCSTR)lParam);
             STATIC_SetBitmap(hwnd, hBitmap, style);
+	    break;
 	}
-	else if (HIWORD(lParam))
-	{
-	    if(unicode)
-                lResult = DefWindowProcW( hwnd, WM_SETTEXT, wParam, lParam );
-	    else
-                lResult = DefWindowProcA( hwnd, WM_SETTEXT, wParam, lParam );
+	case SS_LEFT:
+	case SS_CENTER:
+	case SS_RIGHT:
+	case SS_SIMPLE:
+	case SS_LEFTNOWORDWRAP:
+        {
+	    if (HIWORD(lParam))
+	    {
+		if(unicode)
+		    lResult = DefWindowProcW( hwnd, WM_SETTEXT, wParam, lParam );
+		else
+		    lResult = DefWindowProcA( hwnd, WM_SETTEXT, wParam, lParam );
+	    }
+	    if (uMsg == WM_SETTEXT)
+		STATIC_TryPaintFcn( hwnd, full_style );
+	    break;
 	}
-	if(uMsg == WM_SETTEXT)
-	    InvalidateRect(hwnd, NULL, FALSE);
+	default:
+	    if (HIWORD(lParam))
+	    {
+		if(unicode)
+		    lResult = DefWindowProcW( hwnd, WM_SETTEXT, wParam, lParam );
+		else
+		    lResult = DefWindowProcA( hwnd, WM_SETTEXT, wParam, lParam );
+	    }
+	    if(uMsg == WM_SETTEXT)
+		InvalidateRect(hwnd, NULL, FALSE);
+	}
         return 1; /* success. FIXME: check text length */
 
     case WM_SETFONT:
         if ((style == SS_ICON) || (style == SS_BITMAP)) return 0;
         SetWindowLongA( hwnd, HFONT_GWL_OFFSET, wParam );
-        if (LOWORD(lParam))
-            InvalidateRect( hwnd, NULL, FALSE );
+	switch (style) {
+	case SS_LEFT:
+	case SS_CENTER:
+	case SS_RIGHT:
+	case SS_SIMPLE:
+	case SS_LEFTNOWORDWRAP:
+        {
+	    if (uMsg == WM_SETTEXT)
+		STATIC_TryPaintFcn( hwnd, full_style );
+	    break;
+	}
+	default:
+	    if (LOWORD(lParam))
+		InvalidateRect( hwnd, NULL, FALSE );
+	}
         break;
 
     case WM_GETFONT:
