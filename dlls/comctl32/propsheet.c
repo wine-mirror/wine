@@ -96,7 +96,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
                                       int index);
 static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
                                        PropSheetInfo * psInfo);
-static int PROPSHEET_CreatePage(HWND hwndParent, int index,
+static BOOL PROPSHEET_CreatePage(HWND hwndParent, int index,
                                 const PropSheetInfo * psInfo,
                                 LPCPROPSHEETPAGEA ppshpage);
 static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo);
@@ -1002,7 +1002,7 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
  *
  * Creates a page.
  */
-static int PROPSHEET_CreatePage(HWND hwndParent,
+static BOOL PROPSHEET_CreatePage(HWND hwndParent,
                                 int index,
                                 const PropSheetInfo * psInfo,
                                 LPCPROPSHEETPAGEA ppshpage)
@@ -1013,6 +1013,8 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   PropPageInfo* ppInfo = psInfo->proppage;
   PADDING_INFO padding;
   UINT pageWidth,pageHeight;
+  DWORD resSize;
+  LPVOID temp = NULL;
 
   TRACE("index %d\n", index);
 
@@ -1020,11 +1022,31 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
     pTemplate = (DLGTEMPLATE*)ppshpage->u.pResource;
   else
   {
-    HRSRC hResource = FindResourceA(ppshpage->hInstance,
+    HRSRC hResource;
+    HANDLE hTemplate;
+
+    hResource = FindResourceA(ppshpage->hInstance,
                                     ppshpage->u.pszTemplate,
                                     RT_DIALOGA);
-    HGLOBAL hTemplate = LoadResource(ppshpage->hInstance, hResource);
+    if(!hResource)
+	return FALSE;
+
+    resSize = SizeofResource(ppshpage->hInstance, hResource);
+
+    hTemplate = LoadResource(ppshpage->hInstance, hResource);
+    if(!hTemplate)
+	return FALSE;
+
     pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
+    /*
+     * Make a copy of the dialog template to make it writable
+     */
+    temp = COMCTL32_Alloc(resSize);
+    if (!temp)
+      return FALSE;
+
+    memcpy(temp, pTemplate, resSize);
+    pTemplate = temp;
   }
 
   if (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF)
@@ -1058,6 +1080,9 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
 					hwndParent,
 					ppshpage->pfnDlgProc,
 					(LPARAM)ppshpage);
+  /* Free a no more needed copy */
+  if(temp)
+      COMCTL32_Free(temp);
 
   ppInfo[index].hwndPage = hwndPage;
 
@@ -2270,8 +2295,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return TRUE;
       }
 
-
-      return 0;
+      return FALSE;
     }
 
     case PSM_GETCURRENTPAGEHWND:
@@ -2417,16 +2441,20 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case PSM_SETTITLEW:
         FIXME("Unimplemented msg PSM_SETTITLE32W\n");
-        return 0;
+        return FALSE;
+
     case PSM_SETCURSELID:
         FIXME("Unimplemented msg PSM_SETCURSELID\n");
-        return 0;
+        return FALSE;
+
     case PSM_SETFINISHTEXTW:
         FIXME("Unimplemented msg PSM_SETFINISHTEXT32W\n");
-        return 0;
+        return FALSE;
 
     default:
       return FALSE;
   }
+  
+  return FALSE;
 }
 
