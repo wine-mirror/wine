@@ -34,7 +34,7 @@ DEFAULT_DEBUG_CHANNEL(monthcal)
  * we want full month-names, and abbreviated weekdays, so these are
  * defined here */
 
-static const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
 const char * const monthtxt[] = {"January", "February", "March", "April", "May", 
                       "June", "July", "August", "September", "October", 
