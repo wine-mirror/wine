@@ -512,10 +512,6 @@ HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
     *ppv = NULL;
     if (IsEqualIID(rclsid,&CLSID_PSFactoryBuffer)) {
 	*ppv = &lppsfac;
-	/* If we create a ps factory, we might need a stub manager later
-	 * anyway
-	 */
-	STUBMGR_Start();
 	return S_OK;
     }
     if (IsEqualIID(rclsid,&CLSID_DfMarshal)&&(

@@ -58,6 +58,21 @@ extern const CLSID CLSID_DfMarshal;
  * Note that the IUnknown_QI(ob,xiid,&ppv) always returns the SAME ppv value!
  */
 
+inline static HRESULT
+get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {
+    HRESULT       hres;
+    CLSID         pxclsid;
+
+    if ((hres = CoGetPSClsid(riid,&pxclsid)))
+	return hres;
+    return CoGetClassObject(&pxclsid,CLSCTX_INPROC_SERVER,NULL,&IID_IPSFactoryBuffer,(LPVOID*)facbuf);
+}
+
+typedef struct _wine_marshal_data {
+    DWORD	dwDestContext;
+    DWORD	mshlflags;
+} wine_marshal_data;
+
 typedef struct _mid2unknown {
     wine_marshal_id	mid;
     LPUNKNOWN		pUnk;
