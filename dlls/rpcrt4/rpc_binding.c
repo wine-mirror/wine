@@ -52,7 +52,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION conn_cache_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-LPSTR RPCRT4_strndupA(LPSTR src, INT slen)
+LPSTR RPCRT4_strndupA(LPCSTR src, INT slen)
 {
   DWORD len;
   LPSTR s;
@@ -195,7 +195,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
       /* protseq=ncalrpc: supposed to use NT LPC ports,
        * but we'll implement it with named pipes for now */
       if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
-        static LPSTR prefix = "\\\\.\\pipe\\lrpc\\";
+        static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
         LPSTR pname;
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
@@ -216,7 +216,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
       }
       /* protseq=ncacn_np: named pipes */
       else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
-        static LPSTR prefix = "\\\\.";
+        static LPCSTR prefix = "\\\\.";
         LPSTR pname;
         pname = HeapAlloc(GetProcessHeap(), 0, strlen(prefix) + strlen(Connection->Endpoint) + 1);
         strcat(strcpy(pname, prefix), Connection->Endpoint);
@@ -244,7 +244,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
       /* protseq=ncalrpc: supposed to use NT LPC ports,
        * but we'll implement it with named pipes for now */
       if (strcmp(Connection->Protseq, "ncalrpc") == 0) {
-        static LPSTR prefix = "\\\\.\\pipe\\lrpc\\";
+        static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
         LPSTR pname;
         HANDLE conn;
         DWORD err;
@@ -278,7 +278,7 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
       }
       /* protseq=ncacn_np: named pipes */
       else if (strcmp(Connection->Protseq, "ncacn_np") == 0) {
-        static LPSTR prefix = "\\\\.";
+        static LPCSTR prefix = "\\\\.";
         LPSTR pname;
         HANDLE conn;
         DWORD err;

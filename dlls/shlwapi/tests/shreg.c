@@ -40,15 +40,15 @@ static SHCopyKeyA_func pSHCopyKeyA;
 typedef DWORD (WINAPI *SHRegGetPathA_func)(HKEY,LPCSTR,LPCSTR,LPSTR,DWORD);
 static SHRegGetPathA_func pSHRegGetPathA;
 
-static char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
-static char * sTestpath2 = "%FOO%\\subdir1";
+static const char * sTestpath1 = "%LONGSYSTEMVAR%\\subdir1";
+static const char * sTestpath2 = "%FOO%\\subdir1";
 
 static char sExpTestpath1[MAX_PATH];
 static char sExpTestpath2[MAX_PATH];
 static unsigned sExpLen1;
 static unsigned sExpLen2;
 
-static char * sEmptyBuffer ="0123456789";
+static const char * sEmptyBuffer ="0123456789";
 
 /* delete key and all its subkeys */
 static DWORD delete_key( HKEY hkey )
@@ -135,7 +135,7 @@ static void test_SHQUeryValueEx(void)
 	DWORD dwType;
 	char buf[MAX_PATH];
 	DWORD dwRet;
-	char * sTestedFunction = "";
+	const char * sTestedFunction = "";
 	DWORD nUsedBuffer1,nUsedBuffer2;
 
 	ok(! RegOpenKeyExA(HKEY_CURRENT_USER, REG_TEST_KEY, 0,  KEY_QUERY_VALUE, &hKey), "test4 RegOpenKey");

@@ -408,11 +408,12 @@ LONG ALSA_WaveInit(void)
     snd_pcm_info_t *            info;
     snd_pcm_hw_params_t *       hw_params;
     WINE_WAVEOUT*	        wwo;
+    char			device[] = "hw";
 
     wwo = &WOutDev[0];
 
     /* FIXME: use better values */
-    wwo->device = "hw";
+    wwo->device = device;
     wwo->caps.wMid = 0x0002;
     wwo->caps.wPid = 0x0104;
     strcpy(wwo->caps.szPname, "SB16 Wave Out");

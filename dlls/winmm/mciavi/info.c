@@ -145,7 +145,7 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
  */
 DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
 {
-    LPSTR		str = 0;
+    LPCSTR		str = 0;
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret = 0;
 
@@ -281,7 +281,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	FIXME("%s\n", buffer);
     }
     if (dwFlags & MCI_DGV_SET_FILEFORMAT) {
-	LPSTR	str = "save";
+	LPCSTR	str = "save";
 	if (dwFlags & MCI_DGV_SET_STILL)
 	    str = "capture";
 

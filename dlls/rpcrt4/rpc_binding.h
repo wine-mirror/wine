@@ -51,7 +51,7 @@ typedef struct _RpcBinding
   RpcConnection* FromConn;
 } RpcBinding;
 
-LPSTR RPCRT4_strndupA(LPSTR src, INT len);
+LPSTR RPCRT4_strndupA(LPCSTR src, INT len);
 LPWSTR RPCRT4_strndupW(LPWSTR src, INT len);
 LPSTR RPCRT4_strdupWtoA(LPWSTR src);
 LPWSTR RPCRT4_strdupAtoW(LPSTR src);

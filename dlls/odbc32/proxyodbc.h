@@ -30,7 +30,7 @@
 typedef struct dm_func                          /* driver manager functions */
 {
     int            ordinal;
-    char           *name;
+    const char     *name;
     void           *d_func;
     SQLRETURN      (*func)();
 } DM_FUNC;

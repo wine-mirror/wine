@@ -1042,7 +1042,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		if (TRACE_ON(mcimidi)) {
 		    char	buf[1024];
 		    WORD	len = mmt->wEventLength - HIWORD(mmt->dwEventData);
-		    static	char*	info[8] = {"", "Text", "Copyright", "Seq/Trk name",
+		    static const char*	info[8] = {"", "Text", "Copyright", "Seq/Trk name",
 						   "Instrument", "Lyric", "Marker", "Cue-point"};
 		    WORD	idx = HIBYTE(LOWORD(mmt->dwEventData));
 

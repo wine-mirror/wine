@@ -463,7 +463,7 @@ static DWORD CDROM_Audio_GetSerial(CDROM_TOC* toc)
  */
 static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
-    LPSTR		str = NULL;
+    LPCSTR		str = NULL;
     WINE_MCICDAUDIO*	wmcda = MCICDA_GetOpenDrv(wDevID);
     DWORD		ret = 0;
     char		buffer[16];

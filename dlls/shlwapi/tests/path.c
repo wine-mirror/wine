@@ -71,7 +71,7 @@ static void test_UrlHash(void)
   hash_url(TEST_URL_3);
 }
 
-static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, char* szExpected)
+static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const char* szExpected)
 {
   CHAR szPart[INTERNET_MAX_URL_LENGTH];
   WCHAR wszPart[INTERNET_MAX_URL_LENGTH];

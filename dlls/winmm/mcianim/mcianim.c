@@ -346,7 +346,7 @@ static DWORD MCIANIM_CalcFrame(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwTi
 static DWORD MCIANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
     WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
-    LPSTR		str = 0;
+    LPCSTR		str = 0;
     DWORD		ret = 0;
 
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);

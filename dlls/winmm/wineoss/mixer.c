@@ -70,8 +70,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmaux);
 
 /* FIXME: the two following string arrays should be moved to a resource file in a string table */
 /* if it's done, better use a struct to hold labels, name, and muted channel volume cache */
-static char*	MIX_Labels[SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_LABELS;
-static char*	MIX_Names [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
+static const char*	MIX_Labels[SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_LABELS;
+static const char*	MIX_Names [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
 
 struct mixerCtrl
 {
