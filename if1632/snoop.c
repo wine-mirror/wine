@@ -100,7 +100,7 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 		snr[0].realfun	= (DWORD)SNOOP16_Entry;
 		snr[0].lcall 	= 0x9a;
 		snr[0].callfromregs = (DWORD)CallFrom16Register;
-		GET_CS(snr[0].seg);
+		snr[0].seg      = __get_cs();
 		snr[0].lret     = 0xcb66;
 
 		snr[1].pushbp	= 0x5566;
@@ -110,7 +110,7 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 		snr[1].realfun	= (DWORD)SNOOP16_Return;
 		snr[1].lcall 	= 0x9a;
 		snr[1].callfromregs = (DWORD)CallFrom16Register;
-		GET_CS(snr[1].seg);
+		snr[1].seg      = __get_cs();
 		snr[1].lret     = 0xcb66;
 	}
 	while (*dll) {

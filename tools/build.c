@@ -20,7 +20,6 @@
 #include "winnt.h"
 #include "module.h"
 #include "neexe.h"
-#include "selectors.h"
 #include "stackframe.h"
 #include "builtin16.h"
 #include "thread.h"
@@ -41,6 +40,16 @@
 # define USE_STABS
 #else
 # undef USE_STABS
+#endif
+
+#ifdef __i386__
+extern WORD __get_cs(void);
+extern WORD __get_ds(void);
+__ASM_GLOBAL_FUNC( __get_cs, "movl %cs,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_ds, "movl %ds,%eax\n\tret" );
+#else
+static inline WORD __get_cs(void) { return 0; }
+static inline WORD __get_ds(void) { return 0; }
 #endif
 
 typedef enum
@@ -3182,8 +3191,8 @@ int main(int argc, char **argv)
      * the asm files on the platform that will also run them. Probably
      * a safe assumption to make.
      */
-    GET_CS( Code_Selector );
-    GET_DS( Data_Selector );
+    Code_Selector = __get_cs();
+    Data_Selector = __get_ds();
 
     if (!strcmp( argv[1], "-spec" )) BuildSpecFile( outfile, open_input( argv[2] ) );
     else if (!strcmp( argv[1], "-glue" )) BuildGlue( outfile, open_input( argv[2] ) );

@@ -176,16 +176,12 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
 #ifdef __i386__
     {
         /* Check if we are freeing current %fs or %gs selector */
-
-        WORD fs, gs;
-        GET_FS(fs);
-        if ((fs >= sel) && (fs < nextsel))
+        if ((__get_fs() >= sel) && (__get_fs() < nextsel))
         {
-            WARN("Freeing %%fs selector (%04x), not good.\n", fs );
-            SET_FS( 0 );
+            WARN("Freeing %%fs selector (%04x), not good.\n", __get_fs() );
+            __set_fs( 0 );
         }
-        GET_GS(gs);
-        if ((gs >= sel) && (gs < nextsel)) SET_GS( 0 );
+        if ((__get_gs() >= sel) && (__get_gs() < nextsel)) __set_gs( 0 );
     }
 #endif  /* __i386__ */
 
@@ -614,7 +610,6 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
 
     if (!(sel & 4))  /* GDT selector */
     {
-        WORD seg;
         sel &= ~3;  /* ignore RPL */
         if (!sel)  /* null selector */
         {
@@ -633,12 +628,9 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
         ldtent->HighWord.Bits.Default_Big = 1;
         ldtent->HighWord.Bits.Type        = 0x12;
         /* it has to be one of the system GDT selectors */
-        GET_DS(seg);
-        if (sel == (seg & ~3)) return TRUE;
-        GET_SS(seg);
-        if (sel == (seg & ~3)) return TRUE;
-        GET_CS(seg);
-        if (sel == (seg & ~3))
+        if (sel == (__get_ds() & ~3)) return TRUE;
+        if (sel == (__get_ss() & ~3)) return TRUE;
+        if (sel == (__get_cs() & ~3))
         {
             ldtent->HighWord.Bits.Type |= 8;  /* code segment */
             return TRUE;
@@ -826,3 +818,14 @@ SEGPTR WINAPI UTLinearToSelectorOffset16(LPVOID lptr)
 {
     return (SEGPTR)lptr;
 }
+
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( __get_cs, "movl %cs,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_ds, "movl %ds,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_es, "movl %es,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_fs, "movl %fs,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_gs, "movl %gs,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __get_ss, "movl %ss,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( __set_fs, "movl 4(%esp),%eax\n\tmovl %eax,%fs\n\tret" );
+__ASM_GLOBAL_FUNC( __set_gs, "movl 4(%esp),%eax\n\tmovl %eax,%gs\n\tret" );
+#endif

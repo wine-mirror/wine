@@ -10,7 +10,6 @@
 #include "config.h"
 #include "winbase.h"
 #include "syslevel.h"
-#include "selectors.h"  /* for SET_FS */
 #include "ntdef.h" /* UNICODE_STRING */
 
 struct _PDB;

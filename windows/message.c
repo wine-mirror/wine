@@ -24,6 +24,7 @@
 #include "winproc.h"
 #include "task.h"
 #include "process.h"
+#include "selectors.h"
 #include "thread.h"
 #include "options.h"
 #include "struct32.h"

@@ -257,8 +257,8 @@ BOOL DEBUG_ValidateRegisters(void)
         return FALSE; \
     }
 
-    GET_CS(cs);
-    GET_DS(ds);
+    cs = __get_cs();
+    ds = __get_ds();
     if (CS_reg(&DEBUG_context) != cs) CHECK_SEG(CS_reg(&DEBUG_context), "CS");
     if (SS_reg(&DEBUG_context) != ds) CHECK_SEG(SS_reg(&DEBUG_context), "SS");
     if (DS_reg(&DEBUG_context) != ds) CHECK_SEG(DS_reg(&DEBUG_context), "DS");

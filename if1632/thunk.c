@@ -19,6 +19,7 @@
 #include "win.h"
 #include "flatthunk.h"
 #include "mouse.h"
+#include "selectors.h"
 #include "keyboard.h"
 #include "debugtools.h"
 
@@ -498,9 +499,8 @@ UINT WINAPI ThunkConnect16(
 void WINAPI C16ThkSL(CONTEXT86 *context)
 {
     LPBYTE stub = PTR_SEG_TO_LIN(EAX_reg(context)), x = stub;
-    WORD cs, ds;
-    GET_CS(cs);
-    GET_DS(ds);
+    WORD cs = __get_cs();
+    WORD ds = __get_ds();
 
     /* We produce the following code:
      *
@@ -551,8 +551,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         struct ThunkDataSL *td = SL16->fpData;
 
         DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), 631);
-        WORD cs;
-        GET_CS(cs);
+        WORD cs = __get_cs();
 
         if (!td)
         {

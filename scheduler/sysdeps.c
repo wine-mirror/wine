@@ -27,6 +27,7 @@ static int *ph_errno = &h_errno;
 #endif
 #include "wine/port.h"
 #include "thread.h"
+#include "selectors.h"
 #include "server.h"
 #include "winbase.h"
 #include "wine/exception.h"
@@ -108,7 +109,7 @@ void SYSDEPS_SetCurThread( TEB *teb )
 {
 #if defined(__i386__)
     /* On the i386, the current thread is in the %fs register */
-    SET_FS( teb->teb_sel );
+    __set_fs( teb->teb_sel );
 #elif defined(HAVE__LWP_CREATE)
     /* On non-i386 Solaris, we use the LWP private pointer */
     _lwp_setprivate( teb );
@@ -206,10 +207,9 @@ int SYSDEPS_SpawnThread( TEB *teb )
  */
 void SYSDEPS_ExitThread(void)
 {
-#ifdef HAVE__LWP_CREATE
+#if !defined(__i386__) && defined(HAVE__LWP_CREATE)
     _lwp_exit();
 #endif
-
     _exit( 0 );
 }
 
@@ -219,14 +219,14 @@ void SYSDEPS_ExitThread(void)
  *
  * This will crash and burn if called before threading is initialized
  */
-
-/* if it was defined as a macro, we need to do some magic */
-#ifdef NtCurrentTeb
-#undef NtCurrentTeb
-#endif
-
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" );
+#elif defined(HAVE__LWP_CREATE)
 struct _TEB * WINAPI NtCurrentTeb(void)
 {
-    return __get_teb();
+    extern void *_lwp_getprivate(void);
+    return (struct _TEB *)_lwp_getprivate();
 }
-
+#else
+# error NtCurrentTeb not defined for this architecture
+#endif  /* __i386__ */

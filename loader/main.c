@@ -45,6 +45,7 @@
 #include "syslevel.h"
 #include "services.h"
 #include "winsock.h"
+#include "selectors.h"
 #include "thread.h"
 #include "task.h"
 #include "debugtools.h"
@@ -129,15 +130,12 @@ BOOL WINAPI MAIN_KernelInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
     hModule = GetModuleHandle16( "KERNEL" );
     if ( hModule )
     {
-        WORD cs, ds;
-
         /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
         NE_SetEntryPoint( hModule, 178, GetWinFlags16() );
 
         /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
-        GET_CS(cs); GET_DS(ds);
-        NE_SetEntryPoint( hModule, 454, cs );
-        NE_SetEntryPoint( hModule, 455, ds );
+        NE_SetEntryPoint( hModule, 454, __get_cs() );
+        NE_SetEntryPoint( hModule, 455, __get_ds() );
 
         /* Initialize KERNEL.THHOOK */
         TASK_InstallTHHook((THHOOK *)PTR_SEG_TO_LIN(

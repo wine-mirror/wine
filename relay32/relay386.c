@@ -100,7 +100,6 @@ int RELAY_CallFrom32( int ret_addr, ... )
     char buffer[80];
     unsigned int typemask;
     FARPROC func;
-    WORD fs;
 
     int *args = &ret_addr + 1;
     /* Relay addr is the return address for this function */
@@ -111,8 +110,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     func = (FARPROC)BUILTIN32_GetEntryPoint( buffer, relay_addr - 5, &typemask );
     DPRINTF( "Call %s(", buffer );
     RELAY_PrintArgs( args, nb_args, typemask );
-    GET_FS( fs );
-    DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, fs );
+    DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, __get_fs() );
 
     SYSLEVEL_CheckNotLevel( 2 );
 
@@ -202,7 +200,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
         }
     }
     DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
-             buffer, ret, ret_addr, fs );
+             buffer, ret, ret_addr, __get_fs() );
 
     SYSLEVEL_CheckNotLevel( 2 );
 

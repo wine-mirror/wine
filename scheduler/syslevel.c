@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include "syslevel.h"
 #include "heap.h"
+#include "selectors.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -94,7 +95,7 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
                   teb->sys_count[lock->level] );
 
     if (lock == &Win16Mutex)
-        GET_FS( SYSLEVEL_Win16CurrentTeb );
+        SYSLEVEL_Win16CurrentTeb = __get_fs();
 }
 
 /************************************************************************

@@ -25,6 +25,8 @@
 # endif
 #endif
 
+#include "selectors.h"
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -309,13 +311,13 @@ static inline void handler_init( CONTEXT *context, const SIGCONTEXT *sigcontext 
 #ifdef FS_sig
     fs = FS_sig(sigcontext);
 #else
-    GET_FS(fs);
+    fs = __get_fs();
 #endif
     context->SegFs = fs;
     /* now restore a proper %fs for the fault handler */
     if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext))) fs = SYSLEVEL_Win16CurrentTeb;
     if (!fs) fs = SYSLEVEL_EmergencyTeb;
-    SET_FS(fs);
+    __set_fs(fs);
 }
 
 /***********************************************************************
@@ -357,8 +359,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 #ifdef GS_sig
     context->SegGs  = LOWORD(GS_sig(sigcontext));
 #else
-    GET_GS( context->SegGs );
-    context->SegGs &= 0xffff;
+    context->SegGs  = __get_gs();
 #endif
     if (ISV86(context)) V86BASE(context) = (DWORD)DOSMEM_MemoryBase(0);
 }
@@ -388,12 +389,12 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 #ifdef FS_sig
     FS_sig(sigcontext)  = context->SegFs;
 #else
-    SET_FS( context->SegFs );
+    __set_fs( context->SegFs );
 #endif
 #ifdef GS_sig
     GS_sig(sigcontext)  = context->SegGs;
 #else
-    SET_GS( context->SegGs );
+    __set_gs( context->SegGs );
 #endif
 }
 

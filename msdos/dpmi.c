@@ -495,7 +495,7 @@ static RMCB *DPMI_AllocRMCB( void )
 	*p++ = 0x9a; /* lcall */
 	*(FARPROC16 *)p = (FARPROC16)RMCallbackProc; /* FIXME: register relay */
 	p+=4;
-	GET_CS(*(WORD *)p);
+	*(WORD *)p = __get_cs();
 	p+=2;
 	*p++=0xc3; /* lret (FIXME?) */
 #endif

@@ -16,6 +16,7 @@
 #include "drive.h"
 #include "heap.h"
 #include "spy.h"
+#include "selectors.h"
 #include "win.h"
 #include "combo.h"
 #include "debugtools.h"

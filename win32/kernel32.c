@@ -968,7 +968,7 @@ FreeSLCallback(
  */
 void WINAPI GetTEBSelectorFS16(void) 
 {
-    GET_FS( CURRENT_STACK16->fs );
+    CURRENT_STACK16->fs = __get_fs();
 }
 
 /**********************************************************************

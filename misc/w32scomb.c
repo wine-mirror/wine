@@ -28,7 +28,6 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name) {
 	LPVOID tmpheap = HeapAlloc(ThunkHeap, 0, 32);
 	SEGPTR thunk = HEAP_GetSegptr(ThunkHeap, 0, tmpheap);
 	DWORD proc_16;
-	WORD cs;
 
         if (!handle) handle=GetModuleHandle16("WIN32S16");
         proc_16 = (DWORD)WIN32_GetProcAddress16(handle, func_name);
@@ -36,6 +35,6 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name) {
         x=PTR_SEG_TO_LIN(thunk);
         *x++=0xba; *(DWORD*)x=proc_16;x+=4;             /* movl proc_16, $edx */
         *x++=0xea; *(DWORD*)x=(DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");x+=4;     /* jmpl QT_Thunk */
-	GET_CS(cs); *(WORD*)x=(WORD)cs;
+	*(WORD*)x=__get_cs();
         return thunk;
 }

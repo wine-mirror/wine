@@ -301,7 +301,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
                                            (void(*)())WINPROC_Thunk16To32W;
             proc->thunk.t_from16.lcall       = 0x9a;   /* lcall cs:glue */
             proc->thunk.t_from16.glue        = (void*)CallFrom16Long;
-            GET_CS(proc->thunk.t_from16.cs);
+            proc->thunk.t_from16.cs          = __get_cs();
             proc->thunk.t_from16.lret        = 0xca66;
             proc->thunk.t_from16.nArgs       = 10;
             proc->jmp.jmp  = 0xe9;

@@ -671,15 +671,36 @@ typedef HANDLE *PHANDLE;
 /* Macros to retrieve the current context */
 
 #ifdef __i386__
-#define _DEFINE_REGS_ENTRYPOINT( name, fn, args ) \
-  __asm__(".align 4\n\t"                         \
-          ".globl " #name "\n\t"                 \
-          ".type " #name ",@function\n\t"        \
-          #name ":\n\t"                          \
-          "call CALL32_Regs\n\t"                 \
-          ".long " #fn "\n\t"                    \
-          ".byte " #args ", " #args "\n\t");
 
+#ifdef NEED_UNDERSCORE_PREFIX
+# define __ASM_NAME(name) "_" name
+#else
+# define __ASM_NAME(name) name
+#endif
+
+#ifdef __GNUC__
+# define __ASM_GLOBAL_FUNC(name,code) \
+      __asm__( ".align 4\n\t" \
+               ".globl " __ASM_NAME(#name) "\n\t" \
+               ".type " __ASM_NAME(#name) ",@function\n" \
+               __ASM_NAME(#name) ":\n\t" \
+               code );
+#else  /* __GNUC__ */
+# define __ASM_GLOBAL_FUNC(name,code) \
+      void __asm_dummy_##name(void) { \
+          asm( ".align 4\n\t" \
+               ".globl " __ASM_NAME(#name) "\n\t" \
+               ".type " __ASM_NAME(#name) ",@function\n" \
+               __ASM_NAME(#name) ":\n\t" \
+               code ); \
+      }
+#endif  /* __GNUC__ */
+
+#define _DEFINE_REGS_ENTRYPOINT( name, fn, args ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "call " __ASM_NAME("CALL32_Regs") "\n\t" \
+                       ".long " __ASM_NAME(#fn) "\n\t" \
+                       ".byte " #args ", " #args )
 #define DEFINE_REGS_ENTRYPOINT_0( name, fn ) \
   _DEFINE_REGS_ENTRYPOINT( name, fn, 0 )
 #define DEFINE_REGS_ENTRYPOINT_1( name, fn, t1 ) \
@@ -1046,28 +1067,14 @@ typedef struct _NT_TIB
 
 struct _TEB;
 
-#ifdef __WINE__
-
-#if defined(__i386__)
-static inline struct _TEB * WINE_UNUSED __get_teb(void)
+#if defined(__i386__) && defined(__GNUC__)
+extern inline struct _TEB * WINAPI NtCurrentTeb(void)
 {
     struct _TEB *teb;
     __asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (teb));
     return teb;
 }
-#elif defined(HAVE__LWP_CREATE)
-extern void *_lwp_getprivate(void);
-static inline struct _TEB * WINE_UNUSED __get_teb(void)
-{
-    return (struct _TEB *)_lwp_getprivate();
-}
 #else
-#error NtCurrentTeb() not defined for this architecture!
-#endif
-
-#define NtCurrentTeb() __get_teb()
-
-#else /* __WINE__ */
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
 
