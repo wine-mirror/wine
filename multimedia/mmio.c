@@ -4,8 +4,6 @@
  * Copyright 1998 Andrew Taylor
  * Copyright 1998 Ove Kåven
  *
- * Buffering is not guaranteed to work properly yet, but if it does...
- * Buffering should almost give us memory files for free.
  */
 
 
