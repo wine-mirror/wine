@@ -274,15 +274,6 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
 }
 
 /***********************************************************************
- *           CreateStreamOnHGlobal     [OLE32.61]
- */
-HRESULT WINAPI CreateStreamOnHGlobal (HGLOBAL hGlobal, BOOL fDeleteOnRelease, LPSTREAM* ppstm)
-{
-    FIXME(ole,"(%x,%x,%p), stub!\n", hGlobal, fDeleteOnRelease, ppstm);
-    return S_OK;
-}
-
-/***********************************************************************
  *           OleSave     [OLE32.124]
  */
 HRESULT WINAPI OleSave(

@@ -169,7 +169,7 @@ HRESULT WINAPI StgStreamImpl_QueryInterface(
   {
     *ppvObject = (IStream*)This;
   }
-  else if (memcmp(&IID_IStorage, riid, sizeof(IID_IStream)) == 0) 
+  else if (memcmp(&IID_IStream, riid, sizeof(IID_IStream)) == 0) 
   {
     *ppvObject = (IStream*)This;
   }
@@ -644,7 +644,6 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
 				    ULARGE_INTEGER* pcbRead,      /* [out] */        
 				    ULARGE_INTEGER* pcbWritten)   /* [out] */        
 {
-  StgStreamImpl* const This=(StgStreamImpl*)iface;
   HRESULT        hr = S_OK;
   BYTE           tmpBuffer[128];
   ULONG          bytesRead, bytesWritten, copySize;

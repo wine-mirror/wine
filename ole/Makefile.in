@@ -12,6 +12,7 @@ C_SRCS = \
 	compositemoniker.c \
 	filemoniker.c \
 	guid.c \
+	hglobalstream.c \
 	ifs.c \
 	itemmoniker.c \
 	moniker.c \
