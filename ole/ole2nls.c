@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <locale.h>
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -2215,6 +2216,7 @@ INT WINAPI LCMapStringA(
     return j;
   }
 
+  /* FIXME: This function completely ignores the "lcid" parameter. */
   /* else ... (mapflags & LCMAP_SORTKEY)  */
   {
     int unicode_len=0;
@@ -2365,8 +2367,8 @@ INT WINAPI LCMapStringW(
   int i;
  
   TRACE_(string)("(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
-	lcid,mapflags,srcstr,srclen,dststr,dstlen);
-
+                 lcid, mapflags, srcstr, srclen, dststr, dstlen);
+  
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
   {
     ERR("(src=%p,dst=%p): Invalid NULL string\n", srcstr, dststr);
@@ -2376,24 +2378,266 @@ INT WINAPI LCMapStringW(
   if (srclen==-1) 
     srclen = lstrlenW(srcstr)+1;
 
-  if (dstlen==0)
-    return srclen;  
-  if (dstlen<srclen) 
-  {
-    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-    return 0;
-  }
+  /* FIXME: Both this function and it's companion LCMapStringA()
+   * completely ignore the "lcid" parameter.  In place of the "lcid"
+   * parameter the application must set the "LC_COLLATE" or "LC_ALL"
+   * environment variable prior to invoking this function.  */
   if (mapflags & LCMAP_SORTKEY) 
   {
-    FIXME_(string)("(0x%04lx,0x%08lx,%p,%d,%p,%d): "
-	  "unimplemented flags: 0x%08lx.  Ignoring LC_COLLATE.\n",
-	  lcid,mapflags,srcstr,srclen,dststr,dstlen,mapflags);
-    memcpy(dststr, srcstr, srclen * sizeof(*srcstr));
-    return srclen;
+      /* Possible values of LC_COLLATE. */
+      char *lc_collate_default = 0; /* value prior to this function */
+      char *lc_collate_env = 0;     /* value retrieved from the environment */
+
+      /* General purpose index into strings of any type. */
+      int str_idx = 0;
+
+      /* Lengths of various strings where the length is measured in
+       * wide characters for wide character strings and in bytes for
+       * native strings.  The lengths include the NULL terminator.  */
+      size_t returned_len    = 0;
+      size_t src_native_len  = 0;
+      size_t dst_native_len  = 0;
+      size_t dststr_libc_len = 0;
+
+      /* Native (character set determined by locale) versions of the
+       * strings source and destination strings.  */
+      LPSTR src_native = 0;
+      LPSTR dst_native = 0;
+
+      /* Version of the source and destination strings using the
+       * "wchar_t" Unicode data type needed by various libc functions.  */
+      wchar_t *srcstr_libc = 0;
+      wchar_t *dststr_libc = 0;
+
+      if(!(srcstr_libc = (wchar_t *)HeapAlloc(GetProcessHeap(), 0,
+                                       srclen * sizeof(wchar_t))))
+      {
+          ERR("Unable to allocate %d bytes for srcstr_libc\n",
+              srclen * sizeof(wchar_t));
+          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+          return 0;
+      }
+
+      /* Convert source string to a libc Unicode string. */
+      for(str_idx = 0; str_idx < srclen; str_idx++)
+      {
+          srcstr_libc[str_idx] = srcstr[str_idx];
+      }
+
+      /* src_native should contain at most 3 bytes for each
+       * multibyte characters in the original srcstr string.  */
+      src_native_len = 3 * srclen;
+      if(!(src_native = (LPSTR)HeapAlloc(GetProcessHeap(), 0,
+                                          src_native_len)))
+      {
+          ERR("Unable to allocate %d bytes for src_native\n", src_native_len);
+          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          return 0;
+      }
+
+      /* FIXME: Prior to to setting the LC_COLLATE locale category the
+       * current value is backed up so it can be restored after the
+       * last LC_COLLATE sensitive function returns.
+       * 
+       * Even though the locale is adjusted for a minimum amount of
+       * time a race condition exists where other threads may be
+       * affected if they invoke LC_COLLATE sensitive functions.  One
+       * possible solution is to wrap all LC_COLLATE sensitive Wine
+       * functions, like LCMapStringW(), in a mutex.
+       *
+       * Another enhancement to the following would be to set the
+       * LC_COLLATE locale category as a function of the "lcid"
+       * parameter instead of the "LC_COLLATE" environment variable. */
+      if(!(lc_collate_default = setlocale(LC_COLLATE, NULL)))
+      {
+          ERR("Unable to query the LC_COLLATE catagory\n");
+          SetLastError(ERROR_INVALID_PARAMETER);
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          return 0;
+      }
+
+      if(!(lc_collate_env = setlocale(LC_COLLATE, "")))
+      {
+          ERR("Unable to inherit the LC_COLLATE locale category from the "
+              "environment.  The \"LC_COLLATE\" environment variable is "
+              "\"%s\".\n", getenv("LC_COLLATE") ?
+              getenv("LC_COLLATE") : "<unset>");
+          SetLastError(ERROR_INVALID_PARAMETER);
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          return 0;
+      }
+
+      TRACE_(string)("lc_collate_default = %s\n", lc_collate_default);
+      TRACE_(string)("lc_collate_env = %s\n", lc_collate_env);
+
+      /* Convert the libc Unicode string to a native multibyte character
+       * string. */
+      returned_len = wcstombs(src_native, srcstr_libc, src_native_len) + 1;
+      if(returned_len == 0)
+      {
+          LPSTR srcstr_ascii = (LPSTR)HEAP_strdupWtoA(GetProcessHeap(),
+					   0, srcstr);
+          ERR("wcstombs failed.  The string specified (%s) may contains an "
+              "invalid character.\n", srcstr_ascii);
+          SetLastError(ERROR_INVALID_PARAMETER);
+          if(srcstr_ascii) HeapFree(GetProcessHeap(), 0, srcstr_ascii);
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          setlocale(LC_COLLATE, lc_collate_default);
+          return 0;
+      }
+      else if(returned_len > src_native_len)
+      {
+          src_native[src_native_len - 1] = 0;
+          ERR("wcstombs returned a string (%s) that was longer (%d bytes) " 
+              "than expected (%d bytes).\n", src_native, returned_len,
+              dst_native_len);
+
+          /* Since this is an internal error I'm not sure what the correct
+           * error code is.  */
+          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          setlocale(LC_COLLATE, lc_collate_default);
+          return 0;
+      }
+      src_native_len = returned_len;
+
+      TRACE_(string)("src_native = %s  src_native_len = %d\n",
+             src_native, src_native_len);
+
+      /* dst_native seems to contain at most 4 bytes for each byte in
+       * the original src_native string.  Change if need be since this
+       * isn't documented by the strxfrm() man page. */
+      dst_native_len = 4 * src_native_len;
+      if(!(dst_native = (LPSTR)HeapAlloc(GetProcessHeap(), 0, dst_native_len)))
+      {
+          ERR("Unable to allocate %d bytes for dst_native\n", dst_native_len);
+          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          setlocale(LC_COLLATE, lc_collate_default);
+          return 0;
+      }
+
+      /* The actual translation is done by the following call to
+       * strxfrm().  The surrounding code could have been simplified
+       * by calling wcsxfrm() instead except that wcsxfrm() is not
+       * available on older Linux systems (RedHat 4.1 with
+       * libc-5.3.12-17).
+       *
+       * Also, it is possible that the translation could be done by
+       * various tables as it is done in LCMapStringA().  However, I'm
+       * not sure what those tables are. */
+      returned_len = strxfrm(dst_native, src_native, dst_native_len) + 1;
+      
+      if(returned_len > dst_native_len)
+      {
+          dst_native[dst_native_len - 1] = 0;
+          ERR("strxfrm returned a string (%s) that was longer (%d bytes) " 
+              "than expected (%d bytes).\n", dst_native, returned_len,
+              dst_native_len);
+
+          /* Since this is an internal error I'm not sure what the correct
+           * error code is.  */
+          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          if(dst_native) HeapFree(GetProcessHeap(), 0, dst_native);
+          setlocale(LC_COLLATE, lc_collate_default);
+          return 0;
+      }
+      dst_native_len = returned_len;
+      
+      TRACE_(string)("dst_native = %s  dst_native_len = %d\n",
+             dst_native, dst_native_len);
+
+      dststr_libc_len = dst_native_len;
+      if(!(dststr_libc = (wchar_t *)HeapAlloc(GetProcessHeap(), 0,
+                                       dststr_libc_len * sizeof(wchar_t))))
+      {
+          ERR("Unable to allocate %d bytes for dststr_libc\n",
+              dststr_libc_len * sizeof(wchar_t));
+          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          if(dst_native) HeapFree(GetProcessHeap(), 0, dst_native);
+          setlocale(LC_COLLATE, lc_collate_default);
+          return 0;
+      }
+
+      /* Convert the native multibyte string to a libc Unicode string. */
+      returned_len = mbstowcs(dststr_libc, dst_native, dst_native_len) + 1;
+
+      /* Restore LC_COLLATE now that the last LC_COLLATE sensitive
+       * function has returned. */
+      setlocale(LC_COLLATE, lc_collate_default); 
+
+      if(returned_len == 0)
+      {
+          ERR("mbstowcs failed.  The native version of the translated string "
+              "(%s) may contain an invalid character.\n", dst_native);
+          SetLastError(ERROR_INVALID_PARAMETER);
+          if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+          if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+          if(dst_native) HeapFree(GetProcessHeap(), 0, dst_native);
+          if(dststr_libc) HeapFree(GetProcessHeap(), 0, dststr_libc);
+          return 0;
+      }
+      if(dstlen)
+      {
+          if(returned_len > dstlen)
+          {
+              ERR("mbstowcs returned a string that was longer (%d chars) " 
+                  "than the buffer provided (%d chars).\n", returned_len,
+                  dstlen);
+              SetLastError(ERROR_INSUFFICIENT_BUFFER);
+              if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+              if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+              if(dst_native) HeapFree(GetProcessHeap(), 0, dst_native);
+              if(dststr_libc) HeapFree(GetProcessHeap(), 0, dststr_libc);
+              return 0;          
+          }
+          dstlen = returned_len;
+
+          /* Convert a libc Unicode string to the destination string. */
+          for(str_idx = 0; str_idx < dstlen; str_idx++)
+          {
+              dststr[str_idx] = dststr_libc[str_idx];
+          }
+          TRACE_(string)("1st 4 int sized chunks of dststr = %x %x %x %x\n",
+                         *(((int *)dststr) + 0),
+                         *(((int *)dststr) + 1),
+                         *(((int *)dststr) + 2),
+                         *(((int *)dststr) + 3));
+      }
+      else
+      {
+          dstlen = returned_len;
+      }
+      TRACE_(string)("dstlen (return) = %d\n", dstlen);
+      if(srcstr_libc) HeapFree(GetProcessHeap(), 0, srcstr_libc);
+      if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
+      if(dst_native) HeapFree(GetProcessHeap(), 0, dst_native);
+      if(dststr_libc) HeapFree(GetProcessHeap(), 0, dststr_libc);
+      return dstlen;
   }
   else
   {
     int (*f)(int)=identity; 
+
+    if (dstlen==0)
+        return srclen;  
+    if (dstlen<srclen) 
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return 0;
+    }
 
     if (mapflags & LCMAP_UPPERCASE)
       f = toupper;
