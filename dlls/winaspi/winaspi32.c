@@ -363,6 +363,8 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
     sg_hd->reply_len = out_len;
   }
 
+  SCSI_Fix_CMD_LEN(fd, lpPRB->CDBByte[0], lpPRB->SRB_CDBLen);
+
   if(!SCSI_LinuxDeviceIo( fd,
 			  sg_hd, in_len,
 			  sg_reply_hdr, out_len,
@@ -453,7 +455,7 @@ error_exit:
  */
 DWORD WINAPI GetASPI32SupportInfo()
 {
-    return ((SS_COMP << 8) | 1); /* FIXME: get # of host adapters installed */
+    return ((SS_COMP << 8) | ASPI_GetNumControllers());
 }
 
 
@@ -468,10 +470,11 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
     lpSRB->inquiry.SRB_Status = SS_COMP;       /* completed successfully */
     lpSRB->inquiry.HA_Count = 1;               /* not always */
     lpSRB->inquiry.HA_SCSI_ID = 7;             /* not always ID 7 */
-    strcat(lpSRB->inquiry.HA_ManagerId, "ASPI for WIN32"); /* max 15 chars, don't change */
-    strcat(lpSRB->inquiry.HA_Identifier, "Wine host"); /* FIXME: return host adapter name */
+    strcpy(lpSRB->inquiry.HA_ManagerId, "ASPI for WIN32"); /* max 15 chars, don't change */
+    strcpy(lpSRB->inquiry.HA_Identifier, "Wine host"); /* FIXME: return host adapter name */
     memset(lpSRB->inquiry.HA_Unique, 0, 16); /* default HA_Unique content */
     lpSRB->inquiry.HA_Unique[6] = 0x02; /* Maximum Transfer Length (128K, Byte> 4-7) */
+    lpSRB->inquiry.HA_Unique[3] = 0x08; /* Maximum number of SCSI targets */
     FIXME("ASPI: Partially implemented SC_HA_INQUIRY for adapter %d.\n", lpSRB->inquiry.SRB_HaId);
     return SS_COMP;
 
@@ -540,8 +543,10 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
 DWORD WINAPI GetASPI32DLLVersion()
 {
 #ifdef linux
+	TRACE("Returning version 1\n");
         return (DWORD)1;
 #else
+	FIXME("Please add SCSI support for your operating system, returning 0\n");
         return (DWORD)0;
 #endif
 }

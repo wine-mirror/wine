@@ -199,6 +199,22 @@ SCSI_OpenDevice( int h, int c, int t, int d )
 }
 
 #ifdef linux
+/* SCSI_Fix_CMD_LEN
+ * 	Checks to make sure the CMD_LEN is correct
+ */
+void
+SCSI_Fix_CMD_LEN(int fd, int cmd, int len)
+{
+	int index=(cmd>>5)&7;
+
+	if (len!=scsi_command_size[index])
+	{
+		TRACE("CDBLen for command %d claims to be %d, expected %d\n",
+				cmd, len, scsi_command_size[index]);
+		ioctl(fd,SG_NEXT_CMD_LEN,&len);
+	}
+}
+
 int
 SCSI_LinuxSetTimeout( int fd, int timeout )
 {
