@@ -207,8 +207,6 @@ typedef struct
 #define BS_AUTORADIOBUTTON     0x00000009L
 #define BS_OWNERDRAW           0x0000000BL
 #define BS_LEFTTEXT            0x00000020L
-#define BS_ICON                0x00000040L
-#define BS_BITMAP              0x00000080L
 
 #define BS_TEXT                0x00000000L
 #define BS_ICON                0x00000040L
@@ -223,14 +221,6 @@ typedef struct
 #define BS_MULTILINE           0x00002000L
 #define BS_NOTIFY              0x00004000L
 #define BS_FLAT                0x00008000L
-
-/* Button control messages */
-
-#define BST_UNCHECKED      0x0000
-#define BST_CHECKED        0x0001
-#define BST_INDETERMINATE  0x0002
-#define BST_PUSHED         0x0004
-#define BST_FOCUS          0x0008
 
   /* Dialog styles */
 #define DS_ABSALIGN		0x0001
@@ -684,14 +674,19 @@ typedef struct
 #define WM_EXITSIZEMOVE     0x0232
 #define WM_DROPFILES	    0x0233
 
+/* Clipboard command messages */
 #define WM_CUT               0x0300
 #define WM_COPY              0x0301
 #define WM_PASTE             0x0302
 #define WM_CLEAR             0x0303
 #define WM_UNDO              0x0304
+
+/* Clipboard owner messages */
 #define WM_RENDERFORMAT      0x0305
 #define WM_RENDERALLFORMATS  0x0306
 #define WM_DESTROYCLIPBOARD  0x0307
+
+/* Clipboard viewer messages */
 #define WM_DRAWCLIPBOARD     0x0308
 #define WM_PAINTCLIPBOARD    0x0309
 #define WM_VSCROLLCLIPBOARD  0x030A
@@ -699,6 +694,7 @@ typedef struct
 #define WM_ASKCBFORMATNAME   0x030C
 #define WM_CHANGECBCHAIN     0x030D
 #define WM_HSCROLLCLIPBOARD  0x030E
+
 #define WM_QUERYNEWPALETTE   0x030F
 #define WM_PALETTEISCHANGING 0x0310
 #define WM_PALETTECHANGED    0x0311
@@ -1054,10 +1050,6 @@ typedef struct
 #define GCW_ATOM            (-32)
 #define GCW_HICONSM         (-34)
 #define GCL_HICONSM         GCW_HICONSM
-
-#ifndef NOWINOFFSETS
-#define GCW_HBRBACKGROUND (-10)
-#endif
 
 
 /***** Window hooks *****/
@@ -2282,8 +2274,6 @@ DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS)
 #define PM_REMOVE	0x0001
 #define PM_NOYIELD	0x0002
 
-#define WM_SHOWWINDOW       0x0018
-
 /* WM_SHOWWINDOW wParam codes */
 #define SW_PARENTCLOSING    1
 #define SW_OTHERMAXIMIZED   2
@@ -2815,28 +2805,6 @@ typedef struct
 #define CF_GDIOBJFIRST      0x0300
 #define CF_GDIOBJLAST       0x03FF
 
-/* Clipboard command messages */
-#define WM_CUT              0x0300
-#define WM_COPY             0x0301
-#define WM_PASTE            0x0302
-#define WM_CLEAR            0x0303
-#define WM_UNDO             0x0304
-
-/* Clipboard owner messages */
-#define WM_RENDERFORMAT     0x0305
-#define WM_RENDERALLFORMATS 0x0306
-#define WM_DESTROYCLIPBOARD 0x0307
-
-/* Clipboard viewer messages */
-#define WM_DRAWCLIPBOARD    0x0308
-#define WM_PAINTCLIPBOARD   0x0309
-#define WM_SIZECLIPBOARD    0x030B
-#define WM_VSCROLLCLIPBOARD 0x030A
-#define WM_HSCROLLCLIPBOARD 0x030E
-#define WM_ASKCBFORMATNAME  0x030C
-#define WM_CHANGECBCHAIN    0x030D
-
-
 
 /* DragObject stuff */
 
@@ -2889,7 +2857,6 @@ typedef struct
 #define DI_DEFAULTSIZE          8
 
   /* misc messages */
-#define WM_NULL             0x0000
 #define WM_CPL_LAUNCH       (WM_USER + 1000)
 #define WM_CPL_LAUNCHED     (WM_USER + 1001)
 

@@ -2196,12 +2196,6 @@ typedef struct tagNMTVGETINFOTIPW
 #define LVSIL_SMALL             1
 #define LVSIL_STATE             2
 
-#define LVIS_FOCUSED            0x0001
-#define LVIS_SELECTED           0x0002
-#define LVIS_CUT                0x0004
-#define LVIS_DROPHILITED        0x0008
-#define LVIS_ACTIVATING         0x0020
-
 #define LVFI_PARAM              0X0001
 #define LVFI_STRING             0X0002
 #define LVFI_PARTIAL            0X0008
@@ -2572,8 +2566,6 @@ typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
     (BOOL)SendMessageA((hwnd),LVM_ENSUREVISIBLE,(WPARAM)(INT)i,(LPARAM)(BOOL)fPartialOk)
 #define ListView_SetBkColor(hwnd,clrBk) \
     (BOOL)SendMessageA((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
-#define ListView_GetImageList(hwnd,iImageList) \
-    (HIMAGELIST)SendMessageA((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
 #define ListView_SetImageList(hwnd,himl,iImageList) \
     (HIMAGELIST)(UINT)SendMessageA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(UINT)(HIMAGELIST)(himl))
 #define ListView_GetItemCount(hwnd) \
