@@ -758,10 +758,14 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    TRACE("\tskipping hVisRgn update\n");
 	    bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
 
-	    if( (dce->DCXflags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN)) &&
-		(flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN)) )
+            /* Abey - 16Jul99. to take care of the nested GetDC. first one
+               with DCX_EXCLUDERGN or DCX_INTERSECTRGN flags and the next
+               one with or without these flags. */
+
+	    if(dce->DCXflags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
 	    {
-		/* This is likely to be a nested BeginPaint(). */
+		/* This is likely to be a nested BeginPaint().
+                   or a BeginPaint() followed by a GetDC()*/
 
 		if( dce->hClipRgn != hrgnClip )
 		{
