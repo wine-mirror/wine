@@ -408,5 +408,11 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
 
 #define MAX_REPLY_LEN	 	0x5B4
 
+/* Used for debugging - maybe need to be shared in the Wine debugging code ? */
+typedef struct
+{
+    DWORD val;
+    const char* name;
+} wininet_flag_info;
 
 #endif /* _WINE_INTERNET_H_ */

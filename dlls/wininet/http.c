@@ -725,13 +725,121 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     BOOL bSuccess = FALSE;
     LPWININETHTTPREQA lpwhr;
 
-    TRACE("(0x%08lx)--> %ld\n", dwInfoLevel, dwInfoLevel);
+    if (TRACE_ON(wininet)) {
+#define FE(x) { x, #x }
+	static const wininet_flag_info query_flags[] = {
+	    FE(HTTP_QUERY_MIME_VERSION),
+	    FE(HTTP_QUERY_CONTENT_TYPE),
+	    FE(HTTP_QUERY_CONTENT_TRANSFER_ENCODING),
+	    FE(HTTP_QUERY_CONTENT_ID),
+	    FE(HTTP_QUERY_CONTENT_DESCRIPTION),
+	    FE(HTTP_QUERY_CONTENT_LENGTH),
+	    FE(HTTP_QUERY_CONTENT_LANGUAGE),
+	    FE(HTTP_QUERY_ALLOW),
+	    FE(HTTP_QUERY_PUBLIC),
+	    FE(HTTP_QUERY_DATE),
+	    FE(HTTP_QUERY_EXPIRES),
+	    FE(HTTP_QUERY_LAST_MODIFIED),
+	    FE(HTTP_QUERY_MESSAGE_ID),
+	    FE(HTTP_QUERY_URI),
+	    FE(HTTP_QUERY_DERIVED_FROM),
+	    FE(HTTP_QUERY_COST),
+	    FE(HTTP_QUERY_LINK),
+	    FE(HTTP_QUERY_PRAGMA),
+	    FE(HTTP_QUERY_VERSION),
+	    FE(HTTP_QUERY_STATUS_CODE),
+	    FE(HTTP_QUERY_STATUS_TEXT),
+	    FE(HTTP_QUERY_RAW_HEADERS),
+	    FE(HTTP_QUERY_RAW_HEADERS_CRLF),
+	    FE(HTTP_QUERY_CONNECTION),
+	    FE(HTTP_QUERY_ACCEPT),
+	    FE(HTTP_QUERY_ACCEPT_CHARSET),
+	    FE(HTTP_QUERY_ACCEPT_ENCODING),
+	    FE(HTTP_QUERY_ACCEPT_LANGUAGE),
+	    FE(HTTP_QUERY_AUTHORIZATION),
+	    FE(HTTP_QUERY_CONTENT_ENCODING),
+	    FE(HTTP_QUERY_FORWARDED),
+	    FE(HTTP_QUERY_FROM),
+	    FE(HTTP_QUERY_IF_MODIFIED_SINCE),
+	    FE(HTTP_QUERY_LOCATION),
+	    FE(HTTP_QUERY_ORIG_URI),
+	    FE(HTTP_QUERY_REFERER),
+	    FE(HTTP_QUERY_RETRY_AFTER),
+	    FE(HTTP_QUERY_SERVER),
+	    FE(HTTP_QUERY_TITLE),
+	    FE(HTTP_QUERY_USER_AGENT),
+	    FE(HTTP_QUERY_WWW_AUTHENTICATE),
+	    FE(HTTP_QUERY_PROXY_AUTHENTICATE),
+	    FE(HTTP_QUERY_ACCEPT_RANGES),
+	    FE(HTTP_QUERY_SET_COOKIE),
+	    FE(HTTP_QUERY_COOKIE),
+	    FE(HTTP_QUERY_REQUEST_METHOD),
+	    FE(HTTP_QUERY_REFRESH),
+	    FE(HTTP_QUERY_CONTENT_DISPOSITION),
+	    FE(HTTP_QUERY_AGE),
+	    FE(HTTP_QUERY_CACHE_CONTROL),
+	    FE(HTTP_QUERY_CONTENT_BASE),
+	    FE(HTTP_QUERY_CONTENT_LOCATION),
+	    FE(HTTP_QUERY_CONTENT_MD5),
+	    FE(HTTP_QUERY_CONTENT_RANGE),
+	    FE(HTTP_QUERY_ETAG),
+	    FE(HTTP_QUERY_HOST),
+	    FE(HTTP_QUERY_IF_MATCH),
+	    FE(HTTP_QUERY_IF_NONE_MATCH),
+	    FE(HTTP_QUERY_IF_RANGE),
+	    FE(HTTP_QUERY_IF_UNMODIFIED_SINCE),
+	    FE(HTTP_QUERY_MAX_FORWARDS),
+	    FE(HTTP_QUERY_PROXY_AUTHORIZATION),
+	    FE(HTTP_QUERY_RANGE),
+	    FE(HTTP_QUERY_TRANSFER_ENCODING),
+	    FE(HTTP_QUERY_UPGRADE),
+	    FE(HTTP_QUERY_VARY),
+	    FE(HTTP_QUERY_VIA),
+	    FE(HTTP_QUERY_WARNING),
+	    FE(HTTP_QUERY_CUSTOM)
+	};
+	static const wininet_flag_info modifier_flags[] = {
+	    FE(HTTP_QUERY_FLAG_REQUEST_HEADERS),
+	    FE(HTTP_QUERY_FLAG_SYSTEMTIME),
+	    FE(HTTP_QUERY_FLAG_NUMBER),
+	    FE(HTTP_QUERY_FLAG_COALESCE)
+	};
+#undef FE
+	DWORD info_mod = dwInfoLevel & HTTP_QUERY_MODIFIER_FLAGS_MASK;
+	DWORD info = dwInfoLevel & HTTP_QUERY_HEADER_MASK;
+	int i;
 
+	TRACE("(%p, 0x%08lx)--> %ld\n", hHttpRequest, dwInfoLevel, dwInfoLevel);
+	TRACE("  Attribute:");
+	for (i = 0; i < (sizeof(query_flags) / sizeof(query_flags[0])); i++) {
+	    if (query_flags[i].val == info) {
+		DPRINTF(" %s", query_flags[i].name);
+		break;
+	    }
+	}
+	if (i == (sizeof(query_flags) / sizeof(query_flags[0]))) {
+	    DPRINTF(" Unknown (%08lx)", info);
+	}
+
+	DPRINTF(" Modifier:");
+	for (i = 0; i < (sizeof(modifier_flags) / sizeof(modifier_flags[0])); i++) {
+	    if (modifier_flags[i].val & info_mod) {
+		DPRINTF(" %s", modifier_flags[i].name);
+		info_mod &= ~ modifier_flags[i].val;
+	    }
+	}
+	
+	if (info_mod) {
+	    DPRINTF(" Unknown (%08lx)", info_mod);
+	}
+	DPRINTF("\n");
+    }
+    
     lpwhr = (LPWININETHTTPREQA) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return FALSE;
+	goto lend;
     }
 
     /* Find requested header structure */
@@ -831,8 +939,10 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     /* coalesce value to reuqested type */
     if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER)
     {
-       *(int *)lpBuffer = atoi(lphttpHdr->lpszValue);
-	   bSuccess = TRUE;
+	*(int *)lpBuffer = atoi(lphttpHdr->lpszValue);
+	bSuccess = TRUE;
+
+	TRACE(" returning number : %d\n", *(int *)lpBuffer);
     }
     else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME)
     {
@@ -847,16 +957,20 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
         if(STHook==NULL)
             goto lend;
 
-	    STHook->wDay = tmpTM.tm_mday;
-	    STHook->wHour = tmpTM.tm_hour;
-	    STHook->wMilliseconds = 0;
-	    STHook->wMinute = tmpTM.tm_min;
-	    STHook->wDayOfWeek = tmpTM.tm_wday;
-	    STHook->wMonth = tmpTM.tm_mon + 1;
-	    STHook->wSecond = tmpTM.tm_sec;
-	    STHook->wYear = tmpTM.tm_year;
-
-	    bSuccess = TRUE;
+	STHook->wDay = tmpTM.tm_mday;
+	STHook->wHour = tmpTM.tm_hour;
+	STHook->wMilliseconds = 0;
+	STHook->wMinute = tmpTM.tm_min;
+	STHook->wDayOfWeek = tmpTM.tm_wday;
+	STHook->wMonth = tmpTM.tm_mon + 1;
+	STHook->wSecond = tmpTM.tm_sec;
+	STHook->wYear = tmpTM.tm_year;
+	
+	bSuccess = TRUE;
+	
+	TRACE(" returning time : %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n", 
+	      STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
+	      STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
     }
     else if (dwInfoLevel & HTTP_QUERY_FLAG_COALESCE)
     {
@@ -885,6 +999,8 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
         ((char*)lpBuffer)[len]=0;
         *lpdwBufferLength = len;
         bSuccess = TRUE;
+
+	TRACE(" returning string : '%s'\n", debugstr_a(lpBuffer));
     }
 
 lend:

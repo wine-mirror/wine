@@ -405,10 +405,45 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
     LPWININETAPPINFOA lpwai = NULL;
-    HINTERNET handle;
+    HINTERNET handle = NULL;
 
-    TRACE("(%s, %li, %s, %s, %li)\n", debugstr_a(lpszAgent), dwAccessType,
-	 debugstr_a(lpszProxy), debugstr_a(lpszProxyBypass), dwFlags);
+    if (TRACE_ON(wininet)) {
+#define FE(x) { x, #x }
+	static const wininet_flag_info access_type[] = {
+	    FE(INTERNET_OPEN_TYPE_PRECONFIG),
+	    FE(INTERNET_OPEN_TYPE_DIRECT),
+	    FE(INTERNET_OPEN_TYPE_PROXY),
+	    FE(INTERNET_OPEN_TYPE_PRECONFIG_WITH_NO_AUTOPROXY)
+	};
+	static const wininet_flag_info flag[] = {
+	    FE(INTERNET_FLAG_ASYNC),
+	    FE(INTERNET_FLAG_FROM_CACHE),
+	    FE(INTERNET_FLAG_OFFLINE)
+	};
+#undef FE
+	int i;
+	const char *access_type_str = "Unknown";
+	DWORD flag_val = dwFlags;
+	
+	TRACE("(%s, %li, %s, %s, %li)\n", debugstr_a(lpszAgent), dwAccessType,
+	      debugstr_a(lpszProxy), debugstr_a(lpszProxyBypass), dwFlags);
+	for (i = 0; i < (sizeof(access_type) / sizeof(access_type[0])); i++) {
+	    if (access_type[i].val == dwAccessType) {
+		access_type_str = access_type[i].name;
+		break;
+	    }
+	}
+	TRACE("  access type : %s\n", access_type_str);
+	TRACE("  flags       :");
+	for (i = 0; i < (sizeof(flag) / sizeof(flag[0])); i++) {
+	    if (flag[i].val & flag_val) {
+		DPRINTF(" %s", flag[i].name);
+		flag_val &= ~flag[i].val;
+	    }
+	}	
+	if (flag_val) DPRINTF(" Unknown flags (%08lx)", flag_val);
+	DPRINTF("\n");
+    }
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
@@ -417,7 +452,7 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     if (NULL == lpwai)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-        return NULL;
+	goto lend;
     }
  
     memset(lpwai, 0, sizeof(WININETAPPINFOA));
@@ -433,7 +468,7 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     {
         HeapFree( GetProcessHeap(), 0, lpwai );
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-        return NULL;
+	goto lend;
     }
 
     if (NULL != lpszAgent)
@@ -461,6 +496,7 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
             strcpy( lpwai->lpszProxyBypass, lpszProxyBypass );
     }
 
+ lend:
     TRACE("returning %p\n", (HINTERNET)lpwai);
 
     return handle;
@@ -2382,7 +2418,39 @@ VOID INTERNET_ExecuteWork()
 
     if (!INTERNET_GetWorkRequest(&workRequest))
         return;
-    TRACE("Got work %d\n", workRequest.asyncall);
+
+    if (TRACE_ON(wininet)) {
+	static const wininet_flag_info work_request_types[] = {
+#define FE(x) { x, #x }
+	    FE(FTPPUTFILEA),
+	    FE(FTPSETCURRENTDIRECTORYA),
+	    FE(FTPCREATEDIRECTORYA),
+	    FE(FTPFINDFIRSTFILEA),
+	    FE(FTPGETCURRENTDIRECTORYA),
+	    FE(FTPOPENFILEA),
+	    FE(FTPGETFILEA),
+	    FE(FTPDELETEFILEA),
+	    FE(FTPREMOVEDIRECTORYA),
+	    FE(FTPRENAMEFILEA),
+	    FE(INTERNETFINDNEXTA),
+	    FE(HTTPSENDREQUESTA),
+	    FE(HTTPOPENREQUESTA),
+	    FE(SENDCALLBACK),
+	    FE(INTERNETOPENURLA)
+#undef FE
+	};
+	int i;
+	const char *val = "Unknown";
+
+	for (i = 0; i < (sizeof(work_request_types) / sizeof(work_request_types[0])); i++) {
+	    if (work_request_types[i].val == workRequest.asyncall) {
+		val = work_request_types[i].name;
+		break;
+	    }
+	}
+
+	TRACE("Got work %d (%s)\n", workRequest.asyncall, val);
+    }
     switch (workRequest.asyncall)
     {
     case FTPPUTFILEA:

@@ -169,6 +169,49 @@ BOOL GetAddress(LPCSTR lpszServerName, INTERNET_PORT nServerPort,
  * Helper function for sending async Callbacks
  */
 
+static const char *get_callback_name(DWORD dwInternetStatus) {
+    static const wininet_flag_info internet_status[] = {
+#define FE(x) { x, #x }
+	FE(INTERNET_STATUS_RESOLVING_NAME),
+	FE(INTERNET_STATUS_NAME_RESOLVED),
+	FE(INTERNET_STATUS_CONNECTING_TO_SERVER),
+	FE(INTERNET_STATUS_CONNECTED_TO_SERVER),
+	FE(INTERNET_STATUS_SENDING_REQUEST),
+	FE(INTERNET_STATUS_REQUEST_SENT),
+	FE(INTERNET_STATUS_RECEIVING_RESPONSE),
+	FE(INTERNET_STATUS_RESPONSE_RECEIVED),
+	FE(INTERNET_STATUS_CTL_RESPONSE_RECEIVED),
+	FE(INTERNET_STATUS_PREFETCH),
+	FE(INTERNET_STATUS_CLOSING_CONNECTION),
+	FE(INTERNET_STATUS_CONNECTION_CLOSED),
+	FE(INTERNET_STATUS_HANDLE_CREATED),
+	FE(INTERNET_STATUS_HANDLE_CLOSING),
+	FE(INTERNET_STATUS_REQUEST_COMPLETE),
+	FE(INTERNET_STATUS_REDIRECT),
+	FE(INTERNET_STATUS_INTERMEDIATE_RESPONSE),
+	FE(INTERNET_STATUS_USER_INPUT_REQUIRED),
+	FE(INTERNET_STATUS_STATE_CHANGE),
+	FE(INTERNET_STATUS_COOKIE_SENT),
+	FE(INTERNET_STATUS_COOKIE_RECEIVED),
+	FE(INTERNET_STATUS_PRIVACY_IMPACTED),
+	FE(INTERNET_STATUS_P3P_HEADER),
+	FE(INTERNET_STATUS_P3P_POLICYREF),
+	FE(INTERNET_STATUS_COOKIE_HISTORY),
+	FE(INTERNET_STATE_CONNECTED),
+	FE(INTERNET_STATE_DISCONNECTED),
+	FE(INTERNET_STATE_DISCONNECTED_BY_USER),
+	FE(INTERNET_STATE_IDLE),
+	FE(INTERNET_STATE_BUSY)
+#undef FE
+    };
+    int i;
+
+    for (i = 0; i < (sizeof(internet_status) / sizeof(internet_status[0])); i++) {
+	if (internet_status[i].val == dwInternetStatus) return internet_status[i].name;
+    }
+    return "Unknown";
+}
+
 VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo, DWORD dwStatusInfoLength)
@@ -181,12 +224,12 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
         if( !dwContext )
             return;
 
-        TRACE("--> Callback %ld\n",dwInternetStatus);
+        TRACE("--> Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 
         hIC->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
                           lpvStatusInfo, dwStatusInfoLength);
 
-        TRACE("<-- Callback %ld\n",dwInternetStatus);
+        TRACE("<-- Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 }
 
 
@@ -195,7 +238,7 @@ VOID SendAsyncCallback(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo,  DWORD dwStatusInfoLength)
 {
-        TRACE("Send Callback %ld\n",dwInternetStatus);
+        TRACE("Send Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 
         if (! (hIC->lpfnStatusCB))
             return;
