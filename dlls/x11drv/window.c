@@ -95,7 +95,7 @@ inline static BOOL is_window_top_level( WND *win )
 inline static BOOL is_client_window_mapped( WND *win )
 {
     struct x11drv_win_data *data = win->pDriverData;
-    return !IsIconic( win->hwndSelf ) && !IsRectEmpty( &data->client_rect );
+    return !(win->dwStyle & WS_MINIMIZE) && !IsRectEmpty( &data->client_rect );
 }
 
 
@@ -217,9 +217,11 @@ inline static void destroy_icon_window( Display *display, WND *win )
     struct x11drv_win_data *data = win->pDriverData;
 
     if (!data->icon_window) return;
+    wine_tsx11_lock();
     XDeleteContext( display, data->icon_window, winContext );
     XDestroyWindow( display, data->icon_window );
     data->icon_window = 0;
+    wine_tsx11_unlock();
     RemovePropA( win->hwndSelf, "__wine_x11_icon_window" );
 }
 
@@ -357,23 +359,6 @@ static void set_wm_hints( Display *display, WND *win )
     }
     else group_leader = data->whole_window;
 
-    /* wm hints */
-    if ((wm_hints = XAllocWMHints()))
-    {
-        wm_hints->flags = InputHint | StateHint | WindowGroupHint;
-        /* use globally active model if take focus is supported,
-         * passive model otherwise (cf. ICCCM) */
-        wm_hints->input = !wmTakeFocus;
-
-        set_icon_hints( display, win, wm_hints );
-
-        wm_hints->initial_state = (win->dwStyle & WS_MINIMIZE) ? IconicState : NormalState;
-        wm_hints->window_group = group_leader;
-
-        XSetWMHints( display, data->whole_window, wm_hints );
-        XFree(wm_hints);
-    }
-
     /* size hints */
     set_size_hints( display, win );
 
@@ -390,6 +375,25 @@ static void set_wm_hints( Display *display, WND *win )
     }
 
     wine_tsx11_unlock();
+
+    /* wm hints */
+    if ((wm_hints = TSXAllocWMHints()))
+    {
+        wm_hints->flags = InputHint | StateHint | WindowGroupHint;
+        /* use globally active model if take focus is supported,
+         * passive model otherwise (cf. ICCCM) */
+        wm_hints->input = !wmTakeFocus;
+
+        set_icon_hints( display, win, wm_hints );
+
+        wm_hints->initial_state = (win->dwStyle & WS_MINIMIZE) ? IconicState : NormalState;
+        wm_hints->window_group = group_leader;
+
+        wine_tsx11_lock();
+        XSetWMHints( display, data->whole_window, wm_hints );
+        XFree(wm_hints);
+        wine_tsx11_unlock();
+    }
 }
 
 
@@ -405,13 +409,10 @@ void X11DRV_set_iconic_state( WND *win )
     XWMHints* wm_hints;
     BOOL iconic = IsIconic( win->hwndSelf );
 
-    if (!(win->dwExStyle & WS_EX_MANAGED))
-    {
-        if (iconic) TSXUnmapWindow( display, data->client_window );
-        else if (is_client_window_mapped( win )) TSXMapWindow( display, data->client_window );
-    }
-
     wine_tsx11_lock();
+
+    if (iconic) XUnmapWindow( display, data->client_window );
+    else if (is_client_window_mapped( win )) XMapWindow( display, data->client_window );
 
     if (!(wm_hints = XGetWMHints( display, data->whole_window ))) wm_hints = XAllocWMHints();
     wm_hints->flags |= StateHint | IconPositionHint;
@@ -686,7 +687,11 @@ static Window create_whole_window( Display *display, WND *win )
                                         mask, &attr );
     if (attr.cursor) XFreeCursor( display, attr.cursor );
 
-    if (!data->whole_window) goto done;
+    if (!data->whole_window)
+    {
+        wine_tsx11_unlock();
+        return 0;
+    }
 
     /* non-maximized child must be at bottom of Z order */
     if ((win->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
@@ -696,10 +701,10 @@ static Window create_whole_window( Display *display, WND *win )
         XConfigureWindow( display, data->whole_window, CWStackMode, &changes );
     }
 
+    wine_tsx11_unlock();
+
     if (is_top_level) set_wm_hints( display, win );
 
- done:
-    wine_tsx11_unlock();
     return data->whole_window;
 }
 
@@ -1066,9 +1071,9 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
             }
         }
 
+        if (is_window_top_level( wndPtr )) set_wm_hints( display, wndPtr );
         wine_tsx11_lock();
         sync_window_style( display, wndPtr );
-        if (is_window_top_level( wndPtr )) set_wm_hints( display, wndPtr );
         XReparentWindow( display, data->whole_window, get_client_window(pWndParent),
                          data->whole_rect.left, data->whole_rect.top );
         wine_tsx11_unlock();

@@ -1254,13 +1254,13 @@ X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
                                rect.bottom - rect.top,
                                AllPlanes, ZPixmap ))) return FALSE;
 
-    wine_tsx11_lock();
     if (X11DRV_SetupGCForBrush( dc ))
     {
 	/* Update the pixmap from the DIB section */
 	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
 
           /* ROP mode is always GXcopy for flood-fill */
+        wine_tsx11_lock();
         XSetFunction( gdi_display, physDev->gc, GXcopy );
         X11DRV_InternalFloodFill(image, dc,
                                  XLPTODP(dc,x) + dc->DCOrgX - rect.left,
@@ -1268,12 +1268,12 @@ X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
                                  rect.left, rect.top,
                                  X11DRV_PALETTE_ToPhysical( dc, color ),
                                  fillType );
+        wine_tsx11_unlock();
         /* Update the DIBSection of the dc's bitmap */
         X11DRV_UnlockDIBSection(dc, TRUE);
     }
 
-    XDestroyImage( image );
-    wine_tsx11_unlock();
+    TSXDestroyImage( image );
     return TRUE;
 }
 

@@ -1279,6 +1279,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     if (!fStretch) switch(rop)  /* A few optimisations */
     {
     case BLACKNESS:  /* 0x00 */
+        wine_tsx11_lock();
         if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( gdi_display, physDevDst->gc, GXclear );
         else
@@ -1289,12 +1290,14 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         }
         XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
                         visRectDst.left, visRectDst.top, width, height );
+        wine_tsx11_unlock();
         return TRUE;
 
     case DSTINVERT:  /* 0x55 */
         if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
             !perfect_graphics())
         {
+            wine_tsx11_lock();
             XSetFunction( gdi_display, physDevDst->gc, GXinvert );
 
             if( X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_VIRTUAL) )
@@ -1312,6 +1315,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
             }
             XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
                             visRectDst.left, visRectDst.top, width, height ); 
+            wine_tsx11_unlock();
             return TRUE;
         }
         break;
@@ -1320,9 +1324,11 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
 	if (perfect_graphics()) break;
         if (X11DRV_SetupGCForBrush( dcDst ))
         {
+            wine_tsx11_lock();
             XSetFunction( gdi_display, physDevDst->gc, GXxor );
             XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
 			    visRectDst.left, visRectDst.top, width, height );
+            wine_tsx11_unlock();
         }
         return TRUE;
 
@@ -1330,25 +1336,30 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
 	if (perfect_graphics()) break;
 	if (X11DRV_SetupGCForBrush( dcDst ))
 	{
+            wine_tsx11_lock();
 	    XSetFunction( gdi_display, physDevDst->gc, GXequiv );
 	    XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
 			    visRectDst.left, visRectDst.top, width, height );
+            wine_tsx11_unlock();
 	}
 	return TRUE;
 
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->bitsPerPixel == dcDst->bitsPerPixel)
         {
+            wine_tsx11_lock();
             XSetFunction( gdi_display, physDevDst->gc, GXcopy );
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
                        visRectSrc.left, visRectSrc.top,
                        width, height, visRectDst.left, visRectDst.top );
             physDevDst->exposures++;
+            wine_tsx11_unlock();
             return TRUE;
         }
         if (dcSrc->bitsPerPixel == 1)
         {
+            wine_tsx11_lock();
             XSetBackground( gdi_display, physDevDst->gc, physDevDst->textPixel );
             XSetForeground( gdi_display, physDevDst->gc, physDevDst->backgroundPixel );
             XSetFunction( gdi_display, physDevDst->gc, GXcopy );
@@ -1357,18 +1368,22 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
                         visRectSrc.left, visRectSrc.top,
                         width, height, visRectDst.left, visRectDst.top, 1 );
             physDevDst->exposures++;
+            wine_tsx11_unlock();
             return TRUE;
         }
         break;
 
     case PATCOPY:  /* 0xf0 */
         if (!X11DRV_SetupGCForBrush( dcDst )) return TRUE;
+        wine_tsx11_lock();
         XSetFunction( gdi_display, physDevDst->gc, GXcopy );
         XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
                         visRectDst.left, visRectDst.top, width, height );
+        wine_tsx11_unlock();
         return TRUE;
 
     case WHITENESS:  /* 0xff */
+        wine_tsx11_lock();
         if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( gdi_display, physDevDst->gc, GXset );
         else
@@ -1380,8 +1395,11 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         }
         XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
                         visRectDst.left, visRectDst.top, width, height );
+        wine_tsx11_unlock();
         return TRUE;
     }
+
+    wine_tsx11_lock();
 
     tmpGC = XCreateGC( gdi_display, physDevDst->drawable, 0, NULL );
     XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
@@ -1401,6 +1419,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
             BITBLT_GetSrcArea( dcSrc, dcDst, pixmaps[SRC], tmpGC,
                                xSrc, ySrc, &visRectSrc );
     }
+
     if (useDst) BITBLT_GetDstArea( dcDst, pixmaps[DST], tmpGC, &visRectDst );
     if (usePat) fNullBrush = !X11DRV_SetupGCForPatBlt( dcDst, tmpGC, TRUE );
     else fNullBrush = FALSE;
@@ -1449,6 +1468,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     if (pixmaps[SRC]) XFreePixmap( gdi_display, pixmaps[SRC] );
     if (pixmaps[TMP]) XFreePixmap( gdi_display, pixmaps[TMP] );
     XFreeGC( gdi_display, tmpGC );
+    wine_tsx11_unlock();
     return TRUE;
 }
 
@@ -1462,9 +1482,7 @@ BOOL X11DRV_PatBlt( DC *dc, INT left, INT top,
     BOOL result;
 
     X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
-    wine_tsx11_lock();
     result = BITBLT_InternalStretchBlt( dc, left, top, width, height, NULL, 0, 0, 0, 0, rop );
-    wine_tsx11_unlock();
     X11DRV_UnlockDIBSection( dc, TRUE );
     return result;
 }
@@ -1525,10 +1543,8 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
     X11DRV_CoerceDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
     X11DRV_CoerceDIBSection( dcSrc, DIB_Status_GdiMod, FALSE );
 
-    wine_tsx11_lock();
     result = BITBLT_InternalStretchBlt( dcDst, xDst, yDst, width, height,
                                         dcSrc, xSrc, ySrc, width, height, rop );
-    wine_tsx11_unlock();
 
 END:
     X11DRV_UnlockDIBSection( dcSrc, FALSE );
@@ -1551,10 +1567,8 @@ BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
     X11DRV_LockDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
     X11DRV_LockDIBSection( dcSrc, DIB_Status_GdiMod, FALSE );
 
-    wine_tsx11_lock();
     result = BITBLT_InternalStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
                                         dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
-    wine_tsx11_unlock();
 
     X11DRV_UnlockDIBSection( dcSrc, FALSE );
     X11DRV_UnlockDIBSection( dcDst, TRUE );
