@@ -122,7 +122,7 @@ send_file (const char *name)
         "Content-Disposition: form-data; name=reportfile; filename=\"%s\"\r\n"
         "Content-Type: application/octet-stream\r\n\r\n";
     const char body2[] = "\r\n--" SEP "\r\n"
-        "Content-Dispoition: form-data; name=submit\r\n\r\n"
+        "Content-Disposition: form-data; name=submit\r\n\r\n"
         "Upload File\r\n"
         "--" SEP "--\r\n";
 
