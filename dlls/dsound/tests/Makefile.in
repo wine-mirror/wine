@@ -7,6 +7,7 @@ IMPORTS   = dsound user32 kernel32
 EXTRALIBS = $(LIBUUID)
 
 CTESTS = \
+	capture.c \
 	dsound.c \
 	propset.c
 

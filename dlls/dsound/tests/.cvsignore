@@ -1,4 +1,5 @@
 Makefile
+capture.ok
 dsound.ok
 dsound_test.exe.spec.c
 propset.ok
