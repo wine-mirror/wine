@@ -676,6 +676,7 @@ static LONG load_VDMX(GdiFont font, LONG height)
     numRecs = GET_BE_WORD(&hdr[2]);
     numRatios = GET_BE_WORD(&hdr[4]);
 
+    TRACE("numRecs = %d numRatios = %d\n", numRecs, numRatios);
     for(i = 0; i < numRatios; i++) {
 	Ratios ratio;
 	
@@ -784,7 +785,7 @@ static LONG load_VDMX(GdiFont font, LONG height)
  * WineEngCreateFontInstance
  *
  */
-GdiFont WineEngCreateFontInstance(HFONT hfont)
+GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 {
     GdiFont ret;
     Face *face;
@@ -893,7 +894,14 @@ not_found:
     TRACE("Choosen %s %s\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName));
 
-    ret->ft_face = OpenFontFile(ret, face->file, plf->lfHeight);
+    ret->ft_face = OpenFontFile(ret, face->file,
+				INTERNAL_YWSTODS(dc,plf->lfHeight));
+    if (!ret->ft_face)
+    {
+        GDI_ReleaseObj(hfont);
+        free_font( ret );
+        return 0;
+    }
 
     if(ret->charset == SYMBOL_CHARSET)
         pFT_Select_Charmap(ret->ft_face, ft_encoding_symbol);
@@ -959,7 +967,11 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     UINT size;
     GdiFont font = alloc_font();
 
-    font->ft_face = OpenFontFile(font, face->file, 100);
+    if (!(font->ft_face = OpenFontFile(font, face->file, 100)))
+    {
+        free_font(font);
+        return;
+    }
 
     memset(&pelf->elfLogFont, 0, sizeof(LOGFONTW));
 
@@ -1476,8 +1488,39 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
     ptm->tmUnderlined = 0; /* entry in OS2 table */
     ptm->tmStruckOut = 0; /* entry in OS2 table */
 
-    /* Yes this is correct; braindead api */
-    ptm->tmPitchAndFamily = FT_IS_FIXED_WIDTH(ft_face) ? 0 : TMPF_FIXED_PITCH;
+    /* Yes TPMF_FIXED_PITCH is correct; braindead api */
+    if(!FT_IS_FIXED_WIDTH(ft_face))
+        ptm->tmPitchAndFamily = TMPF_FIXED_PITCH;
+    else
+        ptm->tmPitchAndFamily = 0;
+
+    switch(pOS2->panose[PAN_FAMILYTYPE_INDEX]) {
+    case PAN_FAMILY_SCRIPT:
+        ptm->tmPitchAndFamily |= FF_SCRIPT;
+	break;
+    case PAN_FAMILY_DECORATIVE:
+    case PAN_FAMILY_PICTORIAL:
+        ptm->tmPitchAndFamily |= FF_DECORATIVE;
+	break;
+    case PAN_FAMILY_TEXT_DISPLAY:
+        if(ptm->tmPitchAndFamily == 0) /* fixed */
+	    ptm->tmPitchAndFamily = FF_MODERN;
+	else {
+	    switch(pOS2->panose[PAN_SERIFSTYLE_INDEX]) {
+	    case PAN_SERIF_NORMAL_SANS:
+	    case PAN_SERIF_OBTUSE_SANS:
+	    case PAN_SERIF_PERP_SANS:
+	        ptm->tmPitchAndFamily |= FF_SWISS;
+		break;
+	    default:
+	        ptm->tmPitchAndFamily |= FF_ROMAN;
+	    }
+	}
+	break;
+    default:
+        ptm->tmPitchAndFamily |= FF_DONTCARE;
+    }
+
     if(FT_IS_SCALABLE(ft_face))
         ptm->tmPitchAndFamily |= TMPF_VECTOR;
     if(FT_IS_SFNT(ft_face))
@@ -1726,7 +1769,7 @@ BOOL WineEngInit(void)
 {
     return FALSE;
 }
-GdiFont WineEngCreateFontInstance(HFONT hfont)
+GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 {
     return NULL;
 }

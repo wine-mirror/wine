@@ -87,7 +87,7 @@ extern void FONT_EnumLogFontEx16ToW(const ENUMLOGFONTEX16*, LPENUMLOGFONTEXW);
 
 extern LPWSTR FONT_mbtowc(HDC, LPCSTR, INT, INT*, UINT*);
 
-extern GdiFont WineEngCreateFontInstance(HFONT);
+extern GdiFont WineEngCreateFontInstance(DC*, HFONT);
 extern BOOL WineEngDestroyFontInstance(HFONT handle);
 extern DWORD WineEngEnumFonts(LPLOGFONTW, DEVICEFONTENUMPROC, LPARAM);
 extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);

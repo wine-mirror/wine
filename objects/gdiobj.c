@@ -1153,7 +1153,7 @@ static HGDIOBJ FONT_SelectObject(DC *dc, HGDIOBJ hFont)
 
     if(dc->hFont != hFont || dc->gdiFont == NULL) {
 	if(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_VA_ABLE)
-	    dc->gdiFont = WineEngCreateFontInstance(hFont);
+	    dc->gdiFont = WineEngCreateFontInstance(dc, hFont);
     }
 
     if(dc->funcs->pSelectFont)

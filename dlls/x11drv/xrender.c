@@ -578,6 +578,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     GetTextMetricsW(hdc, &tm);
 
+    tm.tmAscent = INTERNAL_YWSTODS(dc, tm.tmAscent);
+    tm.tmDescent = INTERNAL_YWSTODS(dc, tm.tmDescent);
     switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
         if (dc->textAlign & TA_UPDATECP) {
@@ -775,7 +777,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				       (unsigned short *)wstr + idx, 1);
 	    offset += INTERNAL_XWSTODS(dc, lpDx[idx]);
 	    xoff = offset * cosEsc;
-	    yoff = offset * sinEsc;
+	    yoff = offset * -sinEsc;
 	}
     }
 
