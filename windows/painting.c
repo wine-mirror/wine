@@ -712,8 +712,6 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
     if (flags & RDW_UPDATENOW)
     {
-        /* process pending events and messages before painting */
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_ALLINPUT );
         if (wndPtr->hrgnUpdate) /* wm_painticon wparam is 1 */
             SendMessageW( hWnd, (bIcon) ? WM_PAINTICON : WM_PAINT, bIcon, 0 );
     }
@@ -818,6 +816,11 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 			r.top, r.right, r.bottom, hrgnUpdate, flags );
 	}
     }
+
+
+    /* process pending events and messages before painting */
+    if (flags & RDW_UPDATENOW)
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, 0, QS_ALLINPUT );
 
     /* prepare an update region in window coordinates */
 
