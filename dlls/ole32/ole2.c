@@ -2156,3 +2156,15 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
     mf->hMF = CloseMetaFile16(hdc);
     return hmf;
 }
+
+/******************************************************************************
+ * DllDebugObjectRPCHook
+ * turns on and off internal debugging,  pointer is only used on macintosh
+ */
+
+BOOL WINAPI DllDebugObjectRPCHook(BOOL b, void *dummy)
+{
+  FIXME("stub\n");
+  return TRUE;
+}
+

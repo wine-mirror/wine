@@ -73,7 +73,7 @@ debug_channels (ole relay storage)
  59 stdcall CreateOleAdviseHolder(ptr) CreateOleAdviseHolder
  60 stub CreatePointerMoniker       # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  61 stdcall CreateStreamOnHGlobal(ptr long ptr) CreateStreamOnHGlobal
- 62 stub DllDebugObjectRPCHook
+ 62 stdcall DllDebugObjectRPCHook(long ptr) DllDebugObjectRPCHook
  63 stdcall DllGetClassObject (ptr ptr ptr) OLE32_DllGetClassObject
  64 stub DllGetClassObjectWOW
  65 stdcall DoDragDrop(ptr ptr long ptr) DoDragDrop
