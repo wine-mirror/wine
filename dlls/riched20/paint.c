@@ -310,6 +310,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor, int ypos)
   GetScrollInfo(hWnd, SB_VERT, &si);
   
   if (ypos < 0) {
+    if (si.nMax<1) si.nMax = 1;
     perc = 1.0*si.nPos/si.nMax;
     ypos = perc*overflow;
   }
