@@ -265,6 +265,8 @@ StdMarshalImpl_MarshalInterface(
 
   TRACE("(...,%s,...)\n",debugstr_guid(riid));
 
+  start_listener_thread(); /* just to be sure we have one running. */
+
   IUnknown_QueryInterface((LPUNKNOWN)pv,&IID_IUnknown,(LPVOID*)&pUnk);
   mid.oxid = COM_CurrentApt()->oxid;
   mid.oid = (DWORD)pUnk; /* FIXME */
@@ -413,6 +415,17 @@ IMarshalVtbl stdmvtbl = {
     StdMarshalImpl_DisconnectObject
 };
 
+static HRESULT StdMarshalImpl_Construct(REFIID riid, void** ppvObject)
+{
+    StdMarshalImpl * pStdMarshal = 
+        HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(StdMarshalImpl));
+    if (!pStdMarshal)
+        return E_OUTOFMEMORY;
+    pStdMarshal->lpvtbl = &stdmvtbl;
+    pStdMarshal->ref = 0;
+    return IMarshal_QueryInterface((IMarshal*)pStdMarshal, riid, ppvObject);
+}
+
 /***********************************************************************
  *		CoGetStandardMarshal	[OLE32.@]
  *
@@ -471,190 +484,279 @@ _GetMarshaller(REFIID riid, IUnknown *pUnk,DWORD dwDestContext,
 }
 
 /***********************************************************************
+ *		get_unmarshaler_from_stream	[internal]
+ *
+ * Creates an IMarshal* object according to the data marshaled to the stream.
+ * The function leaves the stream pointer at the start of the data written
+ * to the stream by the IMarshal* object.
+ */
+static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal)
+{
+    HRESULT hr;
+    ULONG res;
+    OBJREF objref;
+
+    /* read common OBJREF header */
+    hr = IStream_Read(stream, &objref, FIELD_OFFSET(OBJREF, u_objref), &res);
+    if (hr || (res != FIELD_OFFSET(OBJREF, u_objref)))
+    {
+        ERR("Failed to read common OBJREF header, 0x%08lx\n", hr);
+        return STG_E_READFAULT;
+    }
+
+    /* sanity check on header */
+    if (objref.signature != OBJREF_SIGNATURE)
+    {
+        ERR("Bad OBJREF signature 0x%08lx\n", objref.signature);
+        return RPC_E_INVALID_OBJREF;
+    }
+
+    /* FIXME: handler marshaling */
+    if (objref.flags & OBJREF_STANDARD)
+    {
+        TRACE("Using standard unmarshaling\n");
+        hr = StdMarshalImpl_Construct(&IID_IMarshal, (LPVOID*)marshal);
+    }
+    else if (objref.flags & OBJREF_CUSTOM)
+    {
+        ULONG custom_header_size = FIELD_OFFSET(OBJREF, u_objref.u_custom.size) - 
+                                   FIELD_OFFSET(OBJREF, u_objref.u_custom);
+        TRACE("Using custom unmarshaling\n");
+        /* read constant sized OR_CUSTOM data from stream */
+        hr = IStream_Read(stream, &objref.u_objref.u_custom,
+                          custom_header_size, &res);
+        if (hr || (res != custom_header_size))
+        {
+            ERR("Failed to read OR_CUSTOM header, 0x%08lx\n", hr);
+            return STG_E_READFAULT;
+        }
+        /* now create the marshaler specified in the stream */
+        hr = CoCreateInstance(&objref.u_objref.u_custom.clsid, NULL,
+                              CLSCTX_INPROC_SERVER, &IID_IMarshal,
+                              (LPVOID*)marshal);
+    }
+    else
+    {
+        FIXME("Invalid or unimplemented marshaling type specified: %lx\n",
+            objref.flags);
+        return RPC_E_INVALID_OBJREF;
+    }
+
+    if (hr)
+        ERR("Failed to create marshal, 0x%08lx\n", hr);
+
+    return hr;
+}
+
+/***********************************************************************
  *		CoGetMarshalSizeMax	[OLE32.@]
  */
-HRESULT WINAPI
-CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
-  DWORD dwDestContext, void *pvDestContext, DWORD mshlFlags
-) {
-  HRESULT	hres;
-  LPMARSHAL	pMarshal;
+HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
+                                   DWORD dwDestContext, void *pvDestContext,
+                                   DWORD mshlFlags)
+{
+    HRESULT hr;
+    LPMARSHAL pMarshal;
+    CLSID marshaler_clsid;
 
-  hres = _GetMarshaller(riid,pUnk,dwDestContext,pvDestContext,mshlFlags,&pMarshal);
-  if (hres)
-    return hres;
-  hres = IMarshal_GetMarshalSizeMax(pMarshal,riid,pUnk,dwDestContext,pvDestContext,mshlFlags,pulSize);
-  *pulSize += sizeof(wine_marshal_id)+sizeof(wine_marshal_data)+sizeof(CLSID);
-  IMarshal_Release(pMarshal);
-  return hres;
+    hr = _GetMarshaller(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
+    if (hr)
+        return hr;
+
+    hr = IMarshal_GetUnmarshalClass(pMarshal, riid, pUnk, dwDestContext,
+                                    pvDestContext, mshlFlags, &marshaler_clsid);
+    if (hr)
+    {
+        ERR("IMarshal::GetUnmarshalClass failed, 0x%08lx\n", hr);
+        IMarshal_Release(pMarshal);
+        return hr;
+    }
+
+    hr = IMarshal_GetMarshalSizeMax(pMarshal, riid, pUnk, dwDestContext,
+                                    pvDestContext, mshlFlags, pulSize);
+    /* add on the size of the common header */
+    *pulSize += FIELD_OFFSET(OBJREF, u_objref);
+
+    /* if custom marshaling, add on size of custom header */
+    if (!IsEqualCLSID(&marshaler_clsid, &CLSID_DfMarshal))
+        *pulSize += FIELD_OFFSET(OBJREF, u_objref.u_custom.size) - 
+                    FIELD_OFFSET(OBJREF, u_objref.u_custom);
+
+    IMarshal_Release(pMarshal);
+    return hr;
 }
 
 
 /***********************************************************************
  *		CoMarshalInterface	[OLE32.@]
  */
-HRESULT WINAPI
-CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
-  DWORD dwDestContext, void *pvDestContext, DWORD mshlflags
-) {
-  HRESULT 		hres;
-  LPMARSHAL		pMarshal;
-  CLSID			xclsid;
-  ULONG			writeres;
-  wine_marshal_id	mid;
-  wine_marshal_data 	md;
-  ULONG			res;
-  IUnknown		*pUnknown;
+HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
+                                  DWORD dwDestContext, void *pvDestContext,
+                                  DWORD mshlFlags)
+{
+    HRESULT	hr;
+    CLSID marshaler_clsid;
+    OBJREF objref;
+    IStream * pMarshalStream = NULL;
+    LPMARSHAL pMarshal;
 
-  TRACE("(%p, %s, %p, %lx, %p, %lx)\n",
-    pStm,debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags
-  );
+    TRACE("(%p, %s, %p, %lx, %p, %lx)\n", pStream, debugstr_guid(riid), pUnk,
+        dwDestContext, pvDestContext, mshlFlags);
 
-  if (pUnk == NULL)
-    return E_INVALIDARG;
+    if (pUnk == NULL)
+        return E_INVALIDARG;
 
-  start_listener_thread(); /* Just to be sure we have one running. */
-  
-  mid.oxid = COM_CurrentApt()->oxid;
-  IUnknown_QueryInterface(pUnk,&IID_IUnknown,(LPVOID*)&pUnknown);
-  mid.oid = (DWORD)pUnknown;
-  IUnknown_Release(pUnknown);
-  memcpy(&mid.iid,riid,sizeof(mid.iid));
-  md.dwDestContext	= dwDestContext;
-  md.mshlflags		= mshlflags;
-  hres = IStream_Write(pStm,&mid,sizeof(mid),&res);
-  if (hres) return hres;
-  hres = IStream_Write(pStm,&md,sizeof(md),&res);
-  if (hres) return hres;
-  hres = _GetMarshaller(riid,pUnk,dwDestContext,pvDestContext,mshlflags,&pMarshal);
-  if (hres) {
-    FIXME("Failed to get marshaller, %lx?\n",hres);
-    return hres;
-  }
-  hres = IMarshal_GetUnmarshalClass(pMarshal,riid,pUnk,dwDestContext,pvDestContext,mshlflags,&xclsid);
-  if (hres) {
-    FIXME("IMarshal:GetUnmarshalClass failed, %lx\n",hres);
-    goto release_marshal;
-  }
-  hres = IStream_Write(pStm,&xclsid,sizeof(xclsid),&writeres);
-  if (hres) {
-    FIXME("Stream write failed, %lx\n",hres);
-    goto release_marshal;
-  }
+    objref.signature = OBJREF_SIGNATURE;
+    objref.iid = *riid;
 
-  TRACE("Calling IMarshal::MarshalInterace\n");
-  hres = IMarshal_MarshalInterface(pMarshal,pStm,riid,pUnk,dwDestContext,pvDestContext,mshlflags);
-
-  if (hres) {
-    if (IsEqualGUID(riid,&IID_IOleObject)) {
-      ERR("WINE currently cannot marshal IOleObject interfaces. This means you cannot embed/link OLE objects between applications.\n");
-    } else {
-      FIXME("Failed to marshal the interface %s, %lx?\n",debugstr_guid(riid),hres);
+    /* get the marshaler for the specified interface */
+    hr = _GetMarshaller(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
+    if (hr)
+    {
+        ERR("Failed to get marshaller, 0x%08lx\n", hr);
+        return hr;
     }
-  }
-release_marshal:
-  IMarshal_Release(pMarshal);
-  return hres;
-}
 
+    hr = IMarshal_GetUnmarshalClass(pMarshal, riid, pUnk, dwDestContext,
+                                    pvDestContext, mshlFlags, &marshaler_clsid);
+    if (hr)
+    {
+        ERR("IMarshal::GetUnmarshalClass failed, 0x%08lx\n", hr);
+        goto cleanup;
+    }
+
+    /* FIXME: implement handler marshaling too */
+    if (IsEqualCLSID(&marshaler_clsid, &CLSID_DfMarshal))
+    {
+        TRACE("Using standard marshaling\n");
+        objref.flags = OBJREF_STANDARD;
+        pMarshalStream = pStream;
+    }
+    else
+    {
+        TRACE("Using custom marshaling\n");
+        objref.flags = OBJREF_CUSTOM;
+        /* we do custom marshaling into a memory stream so that we know what
+         * size to write into the OR_CUSTOM header */
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &pMarshalStream);
+        if (hr)
+        {
+            ERR("CreateStreamOnHGLOBAL failed with 0x%08lx\n", hr);
+            goto cleanup;
+        }
+    }
+
+    /* write the common OBJREF header to the stream */
+    hr = IStream_Write(pStream, &objref, FIELD_OFFSET(OBJREF, u_objref), NULL);
+    if (hr)
+    {
+        ERR("Failed to write OBJREF header to stream, 0x%08lx\n", hr);
+        goto cleanup;
+    }
+
+    TRACE("Calling IMarshal::MarshalInterace\n");
+    /* call helper object to do the actual marshaling */
+    hr = IMarshal_MarshalInterface(pMarshal, pMarshalStream, riid, pUnk, dwDestContext,
+                                   pvDestContext, mshlFlags);
+
+    if (hr)
+    {
+        ERR("Failed to marshal the interface %s, %lx\n", debugstr_guid(riid), hr);
+        goto cleanup;
+    }
+
+    if (objref.flags & OBJREF_CUSTOM)
+    {
+        ULONG custom_header_size = FIELD_OFFSET(OBJREF, u_objref.u_custom.size) - 
+                                   FIELD_OFFSET(OBJREF, u_objref.u_custom);
+        HGLOBAL hGlobal;
+        LPVOID data;
+        hr = GetHGlobalFromStream(pMarshalStream, &hGlobal);
+        if (hr)
+        {
+            ERR("Couldn't get HGLOBAL from stream\n");
+            hr = E_UNEXPECTED;
+            goto cleanup;
+        }
+        objref.u_objref.u_custom.cbExtension = 0;
+        objref.u_objref.u_custom.size = GlobalSize(hGlobal);
+        /* write constant sized OR_CUSTOM data into stream */
+        hr = IStream_Write(pStream, &objref.u_objref.u_custom,
+                          custom_header_size, NULL);
+        if (hr)
+        {
+            ERR("Failed to write OR_CUSTOM header to stream with 0x%08lx\n", hr);
+            goto cleanup;
+        }
+
+        data = GlobalLock(hGlobal);
+        if (!data)
+        {
+            ERR("GlobalLock failed\n");
+            hr = E_UNEXPECTED;
+            goto cleanup;
+        }
+        /* write custom marshal data */
+        hr = IStream_Write(pStream, data, objref.u_objref.u_custom.size, NULL);
+        if (hr)
+        {
+            ERR("Failed to write custom marshal data with 0x%08lx\n", hr);
+            goto cleanup;
+        }
+        GlobalUnlock(hGlobal);
+    }
+
+cleanup:
+    if (pMarshalStream && (objref.flags & OBJREF_CUSTOM))
+        IStream_Release(pMarshalStream);
+    IMarshal_Release(pMarshal);
+    return hr;
+}
 
 /***********************************************************************
  *		CoUnmarshalInterface	[OLE32.@]
  */
-HRESULT WINAPI
-CoUnmarshalInterface(IStream *pStm, REFIID riid, LPVOID *ppv) {
-  HRESULT 		hres;
-  wine_marshal_id	mid;
-  wine_marshal_data	md;
-  ULONG			res;
-  LPMARSHAL		pMarshal;
-  LPUNKNOWN		pUnk;
-  CLSID			xclsid;
+HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
+{
+    HRESULT	hr;
+    LPMARSHAL pMarshal;
 
-  TRACE("(%p,%s,%p)\n",pStm,debugstr_guid(riid),ppv);
+    TRACE("(%p, %s, %p)\n", pStream, debugstr_guid(riid), ppv);
 
-  hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
-  if (hres) {
-      FIXME("Stream read 1 failed, %lx, (%ld of %d)\n",hres,res,sizeof(mid));
-      return hres;
-  }
-  hres = IStream_Read(pStm,&md,sizeof(md),&res);
-  if (hres) {
-      FIXME("Stream read 2 failed, %lx, (%ld of %d)\n",hres,res,sizeof(md));
-      return hres;
-  }
-  hres = IStream_Read(pStm,&xclsid,sizeof(xclsid),&res);
-  if (hres) {
-      FIXME("Stream read 3 failed, %lx, (%ld of %d)\n",hres,res,sizeof(xclsid));
-      return hres;
-  }
-  hres=CoCreateInstance(&xclsid,NULL,CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER,&IID_IMarshal,(void**)&pUnk);
-  if (hres) {
-      FIXME("Failed to create instance of unmarshaller %s.\n",debugstr_guid(&xclsid));
-      return hres;
-  }
-  hres = _GetMarshaller(riid,pUnk,md.dwDestContext,NULL,md.mshlflags,&pMarshal);
-  if (hres) {
-      FIXME("Failed to get unmarshaller, %lx?\n",hres);
-      return hres;
-  }
-  hres = IMarshal_UnmarshalInterface(pMarshal,pStm,riid,ppv);
-  if (hres) {
-    FIXME("Failed to Unmarshal the interface, %lx?\n",hres);
-    goto release_marshal;
-  }
-release_marshal:
-  IMarshal_Release(pMarshal);
-  return hres;
+    hr = get_unmarshaler_from_stream(pStream, &pMarshal);
+    if (hr != S_OK)
+        return hr;
+
+    /* call the helper object to do the actual unmarshaling */
+    hr = IMarshal_UnmarshalInterface(pMarshal, pStream, riid, ppv);
+    if (hr)
+        ERR("IMarshal::UnmarshalInterface failed, 0x%08lx\n", hr);
+
+    IMarshal_Release(pMarshal);
+    return hr;
 }
 
 /***********************************************************************
  *		CoReleaseMarshalData	[OLE32.@]
  */
-HRESULT WINAPI
-CoReleaseMarshalData(IStream *pStm) {
-  HRESULT 		hres;
-  wine_marshal_id	mid;
-  wine_marshal_data	md;
-  ULONG			res;
-  LPMARSHAL		pMarshal;
-  LPUNKNOWN		pUnk;
-  CLSID			xclsid;
+HRESULT WINAPI CoReleaseMarshalData(IStream *pStream)
+{
+    HRESULT	hr;
+    LPMARSHAL pMarshal;
 
-  TRACE("(%p)\n",pStm);
+    TRACE("(%p)\n", pStream);
 
-  hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
-  if (hres) {
-      FIXME("Stream read 1 failed, %lx, (%ld of %d)\n",hres,res,sizeof(mid));
-      return hres;
-  }
-  hres = IStream_Read(pStm,&md,sizeof(md),&res);
-  if (hres) {
-      FIXME("Stream read 2 failed, %lx, (%ld of %d)\n",hres,res,sizeof(md));
-      return hres;
-  }
-  hres = IStream_Read(pStm,&xclsid,sizeof(xclsid),&res);
-  if (hres) {
-      FIXME("Stream read 3 failed, %lx, (%ld of %d)\n",hres,res,sizeof(xclsid));
-      return hres;
-  }
-  hres=CoCreateInstance(&xclsid,NULL,CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER,&IID_IMarshal,(void**)(char*)&pUnk);
-  if (hres) {
-      FIXME("Failed to create instance of unmarshaller %s.\n",debugstr_guid(&xclsid));
-      return hres;
-  }
-  hres = IUnknown_QueryInterface(pUnk,&IID_IMarshal,(LPVOID*)(char*)&pMarshal);
-  if (hres) {
-      FIXME("Failed to get IMarshal iface, %lx?\n",hres);
-      return hres;
-  }
-  hres = IMarshal_ReleaseMarshalData(pMarshal,pStm);
-  if (hres) {
-    FIXME("Failed to releasemarshaldata the interface, %lx?\n",hres);
-  }
-  IMarshal_Release(pMarshal);
-  IUnknown_Release(pUnk);
-  return hres;
+    hr = get_unmarshaler_from_stream(pStream, &pMarshal);
+    if (hr != S_OK)
+        return hr;
+
+    /* call the helper object to do the releasing of marshal data */
+    hr = IMarshal_ReleaseMarshalData(pMarshal, pStream);
+    if (hr)
+        ERR("IMarshal::ReleaseMarshalData failed with error 0x%08lx\n", hr);
+
+    IMarshal_Release(pMarshal);
+    return hr;
 }
 
 
@@ -741,16 +843,9 @@ static HRESULT WINAPI
 SMCF_CreateInstance(
   LPCLASSFACTORY iface, LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv
 ) {
-  if (IsEqualIID(riid,&IID_IMarshal)) {
-      StdMarshalImpl	*dm;
-      dm=(StdMarshalImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
-      if (!dm)
-	  return E_FAIL;
-      dm->lpvtbl	= &stdmvtbl;
-      dm->ref		= 1;
-      *ppv = (LPVOID)dm;
-      return S_OK;
-  }
+  if (IsEqualIID(riid,&IID_IMarshal))
+    return StdMarshalImpl_Construct(riid, ppv);
+
   FIXME("(%s), not supported.\n",debugstr_guid(riid));
   return E_NOINTERFACE;
 }
