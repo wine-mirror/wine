@@ -1492,7 +1492,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
     INTERNET_STATUS_CALLBACK retVal = INTERNET_INVALID_STATUS_CALLBACK;
     LPWININETAPPINFOW lpwai;
 
-    TRACE("0x%08lx\n", (ULONG)hInternet);
+    TRACE("(%p, %p)\n", hInternet, lpfnIntCB);
     
     lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
     if (!lpwai)
@@ -1526,7 +1526,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
     INTERNET_STATUS_CALLBACK retVal = INTERNET_INVALID_STATUS_CALLBACK;
     LPWININETAPPINFOW lpwai;
 
-    TRACE("0x%08lx\n", (ULONG)hInternet);
+    TRACE("(%p, %p)\n", hInternet, lpfnIntCB);
     
     lpwai = (LPWININETAPPINFOW)WININET_GetObject(hInternet);
     if (!lpwai)
@@ -1657,6 +1657,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     }
     WININET_Release( lpwh );
 
+    TRACE("-- %s (bytes read: %ld)\n", retval ? "TRUE": "FALSE", dwNumOfBytesRead ? *dwNumOfBytesRead : -1);
     return retval;
 }
 
