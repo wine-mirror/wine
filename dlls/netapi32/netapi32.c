@@ -21,7 +21,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "winbase.h"
 #include "winreg.h"

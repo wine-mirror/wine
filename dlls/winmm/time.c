@@ -24,8 +24,12 @@
 #include "wine/port.h"
 
 #include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "mmsystem.h"
 #include "windef.h"

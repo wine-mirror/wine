@@ -22,7 +22,9 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <errno.h>
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>

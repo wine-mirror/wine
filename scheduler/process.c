@@ -29,7 +29,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"

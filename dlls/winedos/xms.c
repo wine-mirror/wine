@@ -20,7 +20,11 @@
  * Note: This XMS emulation is hooked through the DPMI interrupt.
  */
 
-#include <unistd.h>
+#include "config.h"
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"

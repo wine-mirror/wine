@@ -24,7 +24,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <memory.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <string.h>
 #include <stdio.h>
 

@@ -28,10 +28,14 @@
  * TTY clipboard  driver are available)
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <string.h>
 
 #include "windef.h"

@@ -78,7 +78,9 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <stdlib.h>
 #ifdef HAVE_ARPA_NAMESER_H
 # include <arpa/nameser.h>

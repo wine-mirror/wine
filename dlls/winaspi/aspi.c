@@ -46,7 +46,9 @@ HKEY_DYN_DATA
 #endif
 #include <fcntl.h>
 #include <dirent.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <errno.h>
 #include <string.h>
 

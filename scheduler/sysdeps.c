@@ -23,8 +23,12 @@
 
 #include <signal.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/time.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif

@@ -28,7 +28,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <fcntl.h>
 #include "winbase.h"
 #include "winuser.h"

@@ -21,10 +21,16 @@
 /* Misc. new functions - they should be moved into appropriate files
 at a later date. */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
-#include <unistd.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"

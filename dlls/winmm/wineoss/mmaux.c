@@ -25,7 +25,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <fcntl.h>
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>

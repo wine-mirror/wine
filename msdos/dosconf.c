@@ -21,7 +21,9 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
