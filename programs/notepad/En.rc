@@ -4,6 +4,7 @@
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ *  Copyright 2003 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,14 +47,13 @@ POPUP "&Edit" {
   MENUITEM SEPARATOR
   MENUITEM "Select &all\tCtrl+A",       CMD_SELECT_ALL
   MENUITEM "&Time/Date\tF5",    CMD_TIME_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Wrap long lines",  CMD_WRAP
+  MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "&Search" {
   MENUITEM "&Search\tCtrl+F",   CMD_SEARCH
   MENUITEM "&Search next\tF3",  CMD_SEARCH_NEXT
- }
-POPUP "F&ormat" {
-  MENUITEM "&Wrap long lines",  CMD_WRAP
-  MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "&Help" {
   MENUITEM "&Contents",         CMD_HELP_CONTENTS

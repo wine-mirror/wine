@@ -1,9 +1,11 @@
 /*
  * Help Viewer
+ * Portuguese Language Support
  *
  * Copyright 1996 Ulrich Schmid
  * Portuguese translation by Gustavo Junior Alves <alves@correionet.com.br>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ * Copyright 2003 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,31 +22,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* Menu */
+LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
 
-MAIN_MENU MENU LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+/* Menu */
+MAIN_MENU MENU
 {
- POPUP "&Arquiv" {
-  MENUITEM "A&brir...", MNID_FILE_OPEN
+ POPUP "&Arquivo" {
+  MENUITEM "&Abrir...", MNID_FILE_OPEN
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir", MNID_FILE_PRINT
   MENUITEM "&Configurar Impressora...", MNID_FILE_SETUP
    MENUITEM SEPARATOR
-  MENUITEM "&Sair", MNID_FILE_EXIT
+  MENUITEM "Sai&r", MNID_FILE_EXIT
  }
  POPUP "&Editar" {
    MENUITEM "&Copiar...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
    MENUITEM "&Anotar...", MNID_EDIT_ANNOTATE
  }
- POPUP "&Marcador" {
+ POPUP "In&dicador" {
    MENUITEM "&Definir...", MNID_BKMK_DEFINE
  }
- POPUP "&Ajuda" {
+ POPUP "Aj&uda" {
    MENUITEM "Ajuda &na ajuda", MNID_HELP_HELPON
    MENUITEM "Sempre &visível", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
-   MENUITEM "&Info...", MNID_HELP_ABOUT
+   MENUITEM "&Informações...", MNID_HELP_ABOUT
 #ifdef WINELIB
    MENUITEM "&Sobre WINE", MNID_HELP_WINE
 #endif
@@ -53,19 +56,19 @@ MAIN_MENU MENU LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
 STID_WINE_HELP, 	"Ajuda WINE"
 STID_WHERROR, 		"ERRO"
 STID_WARNING,  		"AVISO"
-STID_INFO,  		"Informaçãi"
+STID_INFO,  		"Informação"
 STID_NOT_IMPLEMENTED, 	"Não implementado"
-STID_HLPFILE_ERROR_s, 	"Foi encontrado um erro enquanto lia `%s'"
+STID_HLPFILE_ERROR_s, 	"Erro encontrado na leitura do arquivo de ajuda '%s'"
 STID_CONTENTS, 		"&Conteúdo"
 STID_SEARCH, 		"&Procurar"
 STID_BACK, 		"&Voltar"
 STID_HISTORY, 		"&Histórico"
-STID_TOPICS,		"&Topics"
-STID_ALL_FILES, 	"Todos os arquivo (*.*)"
+STID_TOPICS,		"&Tópicos"
+STID_ALL_FILES, 	"Todos os arquivos (*.*)"
 STID_HELP_FILES_HLP, 	"Arquivos de ajuda (*.hlp)"
 }

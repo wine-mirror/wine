@@ -1,8 +1,10 @@
 /*
- *  Notepad (Portuguese resources)
+ * Notepad
+ * Portuguese Language Support
  *
- *  Copyright 1999 Marcel Baur <alves@correionet.com.br>
- *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ * Copyright 1999 Marcel Baur <alves@correionet.com.br>
+ * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ * Copyright 2003 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,37 +31,38 @@ MAIN_MENU MENU
   MENUITEM "&Salvar",		CMD_SAVE
   MENUITEM "Salvar &como...",	CMD_SAVE_AS
   MENUITEM "&Imprimir",		CMD_PRINT
-  MENUITEM "C&onfigurar Página...",	CMD_PAGE_SETUP
-  MENUITEM "Configurar I&mpressora...", CMD_PRINTER_SETUP
+  MENUITEM "C&onfigurar página...",	CMD_PAGE_SETUP
+  MENUITEM "Configurar i&mpressora...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "&Sair",		CMD_EXIT
+  MENUITEM "Sai&r",		CMD_EXIT
  }
 POPUP "&Editar" {
   MENUITEM "&Desfazer\tCtrl+Z", CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "C&ortar\tCtrl+X",	CMD_CUT
+  MENUITEM "&Recortar\tCtrl+X",	CMD_CUT
   MENUITEM "&Copiar\tCtrl+C",	CMD_COPY
-  MENUITEM "Co&lar\tCtrl+V",	CMD_PASTE
-  MENUITEM "&Delete\tDel",	CMD_DELETE
+  MENUITEM "C&olar\tCtrl+V",	CMD_PASTE
+  MENUITEM "E&xcluir\tDel",	CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Selecionar &Tudo",	CMD_SELECT_ALL
+  MENUITEM "Selecionar &tudo",	CMD_SELECT_ALL
   MENUITEM "&Data/Hora\tF5",	CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Quebrar linhas longas",	CMD_WRAP
+  MENUITEM "&Quebrar automática de linha",	CMD_WRAP
+  MENUITEM "&Fonte...",          CMD_FONT
  }
 POPUP "&Pesquisa" {
-  MENUITEM "Pesquisar...",	CMD_SEARCH
-  MENUITEM "&Procurar Próxima\tF3",	CMD_SEARCH_NEXT
+  MENUITEM "&Localizar...",	CMD_SEARCH
+  MENUITEM "Localizar &próxima\tF3",	CMD_SEARCH_NEXT
  }
 POPUP "&Ajuda" {
   MENUITEM "&Conteúdo",		CMD_HELP_CONTENTS
   MENUITEM "&Procurar...",	CMD_HELP_SEARCH
   MENUITEM "&Ajuda na ajuda",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&ormações..." {
+  POPUP "&Informações..." {
    MENUITEM "&Licença",		CMD_LICENSE
    MENUITEM "&SEM GARANTIA",	CMD_NO_WARRANTY
-   MENUITEM "&Sobre Wine",	CMD_ABOUT_WINE
+   MENUITEM "&Sobre o Wine",	CMD_ABOUT_WINE
   }
  }
 }
@@ -69,7 +72,7 @@ POPUP "&Ajuda" {
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"
-CAPTION "Configurar Página"
+CAPTION "Configurar página"
 {
 LTEXT    "&Cabeçalho:",  0x140,   10, 07, 40, 15
 EDITTEXT                         0x141,       60, 05,110, 12, WS_BORDER | WS_TABSTOP
@@ -114,13 +117,12 @@ STRING_TOOLARGE,				"Arquivo '%s' é muito longo para o notepad.\n \
 Por favor use um editor diferente."
 STRING_NOTEXT,					"Você não digitou nenhum texto. \
 \nPor favor digite alguma coisa e tente novamente"
-STRING_DOESNOTEXIST,				"File '%s'\ndoes not exist\n\n \
-Do you want to create a new file ?"
+STRING_DOESNOTEXIST,				"Arquivo '%s'\nnão existe\n\n \
+Você deseja criar um novo arquivo?"
 STRING_NOTSAVED,				"Arquivo '%s'\nfoi modificado\n\n \
-Gostaria de salvar as alteraçÕes ?"
+Gostaria de salvar as alteraçÕes?"
 STRING_NOTFOUND,					"'%s' não pode ser encontrado."
 STRING_OUT_OF_MEMORY,			"Não há memória suficiente para completar essa \
-tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória \
-livre."
+tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
 
 }

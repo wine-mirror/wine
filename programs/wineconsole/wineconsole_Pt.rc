@@ -1,0 +1,123 @@
+/*
+ * Wineconsole
+ * Portuguese Language Support
+ *
+ * Copyright 2003 Marcelo Duarte
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+
+STRINGTABLE
+BEGIN
+IDS_EDIT,		"&Editar"
+IDS_DEFAULT,		"&Definir padrões"
+IDS_PROPERTIES,		"&Propriedades"
+IDS_MARK,		"&Marcar"
+IDS_COPY,		"&Copiar"
+IDS_PASTE,		"&Colar"
+IDS_SELECTALL,		"&Selecionar tudo"
+IDS_SCROLL,		"&Rolar"
+IDS_SEARCH,		"&Pesquisar"
+IDS_FNT_DISPLAY,	"Cada caracter tem %ld pixels de largura por %ld pixels de altura"
+IDS_FNT_PREVIEW_1,	"Este é um teste"
+IDS_FNT_PREVIEW_2,	""
+IDS_DLG_TIT_DEFAULT,    "Setup - configurações padrões"
+IDS_DLG_TIT_CURRENT,    "Setup - configurações atuais"
+IDS_DLG_TIT_ERROR,	"Erro de configuração"
+IDS_DLG_ERR_SBWINSIZE,	"Tamanho do buffer de tela deve ser maior ou igual ao da janela"
+END
+
+IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Opções "
+FONT 8, "Helv"
+{
+	GROUPBOX "Cursor", -1, 10, 11, 60, 44, BS_GROUPBOX
+	AUTORADIOBUTTON "&Pequeno", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Médio", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Grande", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
+
+	GROUPBOX "Controle", -1, 75, 11, 125, 44, BS_GROUPBOX
+	LTEXT "Popup menu", -1, 79, 23, 40, 10
+	AUTOCHECKBOX "&Controle", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "&Rotação", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
+	LTEXT "Edição rápida", -1, 79, 43, 50, 10
+	AUTOCHECKBOX "&Habilitado", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
+
+	GROUPBOX "Histórico de comandos", -1, 10, 57, 190, 35, BS_GROUPBOX
+	LTEXT "&Número de comandos rechamados :", -1, 14, 67, 78, 18
+	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	AUTOCHECKBOX "&Remover duplicados", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
+}
+
+IDD_FONT DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Fonte "
+FONT 8, "Helv"
+{
+	LTEXT "&Fonte", -1, 5, 5, 24, 8
+	LISTBOX IDC_FNT_LIST_FONT, 5, 18, 90, 42, LBS_SORT|WS_VSCROLL
+	LTEXT "&Cores", -1, 100, 5, 50, 8
+	CONTROL "", IDC_FNT_COLOR_FG, "WineConColorPreview", 0L, 100, 18, 48, 16
+	CONTROL "", IDC_FNT_COLOR_BK, "WineConColorPreview", 0L, 100, 40, 48, 16
+	LTEXT "&Tamanho", -1, 158, 5, 40, 8
+	LISTBOX IDC_FNT_LIST_SIZE, 158, 18, 40, 60, WS_VSCROLL
+	CONTROL "", IDC_FNT_PREVIEW, "WineConFontPreview", 0L, 5, 60, 109, 40
+	LTEXT "", IDC_FNT_FONT_INFO, 128, 76, 80, 18
+}
+
+IDD_CONFIG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION " Configuração "
+FONT 8, "Helv"
+{
+	GROUPBOX "Buffer zone", -1, 10, 11, 100, 42, BS_GROUPBOX
+	LTEXT "&Largura :", -1, 14, 25, 54, 9
+	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "&Altura :", -1, 14, 39, 54, 9
+	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "Window size", -1, 10, 55, 100, 42
+	LTEXT "L&argura :", -1, 14, 69, 54, 9
+	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+	LTEXT "A&ltura :", -1, 14, 83, 54, 9
+	EDITTEXT IDC_CNF_WIN_HEIGHT, 68, 81, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
+
+	GROUPBOX "Finalizar programa", -1, 115, 11, 80, 42, BS_GROUPBOX
+	AUTOCHECKBOX "&Fechar o console", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
+
+	GROUPBOX "Edição", -1, 115, 55, 80, 42
+	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
+}
+
+IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 140, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Parâmetros do console"
+FONT 8, "Helv"
+{
+	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
+	AUTORADIOBUTTON "Manter configurações nas sessões seguintes", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Modificar somente sessão atual", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
+
+	PUSHBUTTON "OK", IDOK, 20, 45, 35, 12
+	PUSHBUTTON "Cancelar", IDCANCEL, 65, 45, 35, 12
+}

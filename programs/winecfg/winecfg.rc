@@ -23,95 +23,11 @@
 #include "winresrc.h"
 #include "resource.h"
 
-/* English (U.S.) resources */
+#include "En.rc"
+#include "Pt.rc"
 
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #pragma code_page(1252)
-
-IDD_GENERALCFG DIALOGEX 0, 0, 260, 250
-STYLE WS_CHILD
-FONT 8, "MS Sans Serif"
-BEGIN
-    COMBOBOX        IDC_WINVER,83,153,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_DOSVER,83,172,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_WINELOOK,83,190,158,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Wine Version:",IDC_STATIC,119,17,45,8
-    LTEXT           "CVS",IDC_WINEVER,169,17,56,8
-    LTEXT           "Windows Version:",IDC_STATIC,17,155,58,8
-    LTEXT           "Windows Look:",IDC_STATIC,17,193,58,8
-    LTEXT           "DOS Version:",IDC_STATIC,17,173,57,8
-    CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
-    LTEXT           "http://www.winehq.com/",IDC_STATIC,119,31,106,8
-    GROUPBOX        "Default Behaviour",IDC_STATIC,8,115,244,97
-    LTEXT           "Wine provides the ability for Windows applications to mimic various Windows versions and styles",
-                    IDC_STATIC,15,128,227,20
-    GROUPBOX        "Information",IDC_STATIC,8,4,244,106
-    CTEXT           "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
-                    IDC_STATIC,119,44,124,59
-END
-
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
-STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
-BEGIN
-    CONTROL         "List2",IDC_LIST_APPS,"SysListView32",LVS_LIST | 
-                    LVS_NOLABELWRAP | WS_BORDER | WS_TABSTOP,16,39,226,108
-    GROUPBOX        "Application Specific Setting",IDC_STATIC,8,4,244,151
-    LTEXT           "These settings allow you to overwrite Wine default settings (as specified in other configuration tabs) on a per-application basis.",
-                    IDC_STATIC,15,17,228,20
-END
-
-IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
-STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
-BEGIN
-    EDITTEXT        IDC_SYSCOLORS,100,41,40,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Use a private color map",IDC_PRIVATEMAP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,62,91,10
-    CONTROL         "Favor correctness over speed",IDC_PERFECTGRAPH,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,76,117,10
-    CONTROL         "Use XFree DGA extension",IDC_XDGA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,62,97,10
-    CONTROL         "Use XFree Shm extension",IDC_XSHM,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,76,96,10
-    CONTROL         "Enable Wine desktop",IDC_MANAGED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,17,143,84,10
-    EDITTEXT        IDC_DESKTOP_WIDTH,64,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    EDITTEXT        IDC_DESKTOP_HEIGHT,117,159,40,14,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
-    GROUPBOX        "Render Settings",IDC_STATIC,8,4,244,90
-    LTEXT           "The driver color and render settings are used to optimise the way in which colors and applications are displayed.",
-                    IDC_STATIC,15,17,228,22
-    LTEXT           "Allocated system colors:",IDC_STATIC,17,43,76,8
-    GROUPBOX        "Wine Desktop",IDC_STATIC,8,99,244,83
-    LTEXT           "Wine can be setup to emulate a windows desktop, or can be run in ""Managed"" mode (default) where the default X11 windows manager/environment is resposible for placing the windows.",
-                    IDC_STATIC,15,112,228,28
-    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,17,161,44,8,WS_DISABLED
-    LTEXT           "X",IDC_DESKTOP_BY,108,161,8,8,WS_DISABLED
-END
-
-IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
-STYLE WS_CHILD | WS_DISABLED
-FONT 8, "MS Sans Serif"
-BEGIN
-    GROUPBOX        "Static",IDC_STATIC,8,4,244,157
-    CONTROL         "Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,59,144,57,10
-    CONTROL         "Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,121,144,72,10
-    LTEXT           "Libraries can be specified individually to be either builtin or native. A DLL entry specified as ""*"" pertains to all DLLs not specified explicitly.",
-                    IDC_STATIC,15,17,228,27
-    CONTROL         "List3",IDC_LIST_DLLS,"SysListView32",LVS_LIST | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | 
-                    WS_TABSTOP,15,47,227,90
-    LTEXT           "Load order:",IDC_STATIC,16,144,37,8
-END
-
-STRINGTABLE DISCARDABLE 
-BEGIN
-    IDS_WINE_VERSION        "CVS"
-    IDS_TAB_GENERAL         "General"
-    IDS_TAB_DLLS            "Libraries"
-    IDS_TAB_DRIVES          "Drives"
-END
 
 /* BINRES idb_wine.bmp */
 IDB_WINE BITMAP
