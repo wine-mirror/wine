@@ -1219,8 +1219,6 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 
     ii.fIcon = TRUE;
     ii.hbmMask  = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
-    ii.hbmColor = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
-
 
     /* draw mask*/
     SelectObject (hdcDst, ii.hbmMask);
@@ -1233,8 +1231,9 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 	PatBlt (hdcDst, 0, 0, himl->cx, himl->cy, BLACKNESS);
 
     /* draw image*/
-    SelectObject (hdcDst, ii.hbmColor);
     SelectObject (hdcSrc, himl->hbmImage);
+    ii.hbmColor = CreateCompatibleBitmap (hdcSrc, himl->cx, himl->cy);
+    SelectObject (hdcDst, ii.hbmColor);
     BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
 	      hdcSrc, i * himl->cx, 0, SRCCOPY);
 
