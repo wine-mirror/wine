@@ -19,6 +19,10 @@
 #ifndef __WINE_WINCRYPT_H
 #define __WINE_WINCRYPT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* some typedefs for function parameters */
 typedef unsigned int ALG_ID;
 typedef unsigned long HCRYPTPROV;
@@ -520,5 +524,9 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 #define CryptVerifySignatureW(hHash, pbSignature, dwSigLen, hPubKey, sDescription, dwFlags) \\
 	CryptVerifySignatureA(hHash, pbSignature, dwSigLen, hPubKey, (LPCSTR)sDescription, dwFlags)
 #define CryptVerifySignature WINELIB_NAME_AW(CryptVerifySignature)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
