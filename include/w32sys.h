@@ -4,8 +4,10 @@
  * Copyright (c) 1996 Anand Kumria
  */
 
-#ifndef __WINE__W32SYS_H
-#define __WINE__W32SYS_H
+#ifndef __WINE_W32SYS_H
+#define __WINE_W32SYS_H
+
+#include "windef.h"
 
 typedef struct _WIN32SINFO {
     BYTE   bMajor;

@@ -1,5 +1,5 @@
-#ifndef _WINE_SHELLAPI_H
-#define _WINE_SHELLAPI_H
+#ifndef __WINE_SHELLAPI_H
+#define __WINE_SHELLAPI_H
 
 #include "windef.h"
 
@@ -274,4 +274,4 @@ BOOL      WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
 
 #include "poppack.h"
 
-#endif /* _WINE_SHELLAPI_H */
+#endif /* __WINE_SHELLAPI_H */

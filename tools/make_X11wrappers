@@ -82,8 +82,8 @@ foreach $name (@dolist) {
  * Copyright 1998 Kristian Nielsen
  */
 
-#ifndef __WINE_TS$ucname\_H
-#define __WINE_TS$ucname\_H
+#ifndef __WINE_TS_$ucname\_H
+#define __WINE_TS_$ucname\_H
 
 #include "config.h"
 
@@ -344,7 +344,7 @@ END
 $post_file
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#endif /* __WINE_TS$ucname\_H */
+#endif /* __WINE_TS_$ucname\_H */
 END
     print OUTC <<END;
 

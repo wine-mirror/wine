@@ -6,8 +6,8 @@
  * Copyright 1998 Kristian Nielsen
  */
 
-#ifndef __WINE_TSXRESOURCE_H
-#define __WINE_TSXRESOURCE_H
+#ifndef __WINE_TS_XRESOURCE_H
+#define __WINE_TS_XRESOURCE_H
 
 #include "config.h"
 
@@ -27,4 +27,4 @@ extern void  TSXrmParseCommand(XrmDatabase*, XrmOptionDescList, int, const  char
 
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#endif /* __WINE_TSXRESOURCE_H */
+#endif /* __WINE_TS_XRESOURCE_H */

@@ -53,7 +53,13 @@ print OUT " * Automatically generated file -- do not edit!\n";
 print OUT " * (Use tools/unimap.pl for generation)\n";
 print OUT " *\n";
 print OUT " * Mapping tables for Unicode case conversion\n";
-print OUT " */\n\n";
+print OUT " */\n";
+print OUT "\n";
+print OUT "#ifndef __WINE_CASEMAP_H\n";
+print OUT "#define __WINE_CASEMAP_H\n";
+print OUT "\n";
+print OUT "#include \"windef.h\"\n";
+print OUT "\n";
 
 #Write out the non-trivial mappings
 for ($high = 0; $high < 256; $high++) {
@@ -116,6 +122,8 @@ for ($i = 0; $i < 256; $i += 8) {
 	printf OUT "\t%06s, %06s, %06s, %06s, %06s, %06s, %06s, %06s,\n",
 		@patch;
 }
-print OUT "};\n\n";
+print OUT "};\n";
+print OUT "\n";
+print OUT "#endif /* !defined(__WINE_CASEMAP_H) */\n";
 
 close(OUT);

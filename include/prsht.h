@@ -1,5 +1,5 @@
-#ifndef _WINE_PRSHT_H
-#define _WINE_PRSHT_H
+#ifndef __WINE_PRSHT_H
+#define __WINE_PRSHT_H
 
 #include "winuser.h"
 
@@ -382,6 +382,4 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 }
 #endif
 
-
-
-#endif /* _WINE_PRSHT_H */
+#endif /* __WINE_PRSHT_H */

@@ -2,6 +2,8 @@
  *      mmreg.h   -       Declarations for ???
  */
 
+#ifndef __WINE_MMREG_H
+#define __WINE_MMREG_H
 
 /***********************************************************************
  * Defines/Enums
@@ -99,3 +101,4 @@ typedef struct _WAVEFORMATEX {
 
 #define WAVE_FORMAT_DEVELOPMENT         	(0xFFFF)
 
+#endif /* __WINE_MMREG_H */

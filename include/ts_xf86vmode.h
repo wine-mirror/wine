@@ -6,8 +6,8 @@
  * Copyright 1998 Kristian Nielsen
  */
 
-#ifndef __WINE_TSXF86VMODE_H
-#define __WINE_TSXF86VMODE_H
+#ifndef __WINE_TS_XF86VMODE_H
+#define __WINE_TS_XF86VMODE_H
 
 #include "config.h"
 
@@ -40,4 +40,4 @@ extern Bool TSXF86VidModeSetViewPort(Display*,int,int,int);
 
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#endif /* __WINE_TSXF86VMODE_H */
+#endif /* __WINE_TS_XF86VMODE_H */

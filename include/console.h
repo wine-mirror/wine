@@ -5,8 +5,8 @@
    interface. 
 */
 
-#ifndef CONSOLE_H
-#define CONSOLE_H
+#ifndef __WINE_CONSOLE_H
+#define __WINE_CONSOLE_H
 
 #include <stdio.h>
 #include "config.h"

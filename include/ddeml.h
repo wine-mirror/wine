@@ -5,8 +5,8 @@
  * Copyright 1997 Len White
  */
 
-#ifndef __WINE__DDEML_H
-#define __WINE__DDEML_H
+#ifndef __WINE_DDEML_H
+#define __WINE_DDEML_H
 
 #include "windef.h"
 
@@ -198,7 +198,6 @@ typedef DWORD HCONVLIST;
 typedef DWORD HCONV;
 typedef DWORD HSZ;
 typedef DWORD HDDEDATA;
-typedef CHAR *LPTSTR;
 
 
 
@@ -342,4 +341,4 @@ UINT      WINAPI DdeQueryConvInfo(HCONV,DWORD,LPCONVINFO);
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif  /* __WINE__DDEML_H */
+#endif  /* __WINE_DDEML_H */

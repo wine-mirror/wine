@@ -2,8 +2,8 @@
  *    IExtractIconA
  */
 
-#ifndef __WINE_WINE_OBJ_IEXTRACTICONA_H
-#define __WINE_WINE_OBJ_IEXTRACTICONA_H
+#ifndef __WINE_WINE_OBJ_EXTRACTICON_H
+#define __WINE_WINE_OBJ_EXTRACTICON_H
 
 #include "winbase.h"
 #include "winuser.h"
@@ -54,4 +54,5 @@ ICOM_DEFINE(IExtractIconA,IUnknown)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_WINE_OBJ_IEXTRACTICONA_H */
+#endif /* __WINE_WINE_OBJ_EXTRACTICON_H */
+

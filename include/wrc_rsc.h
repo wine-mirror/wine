@@ -5,8 +5,7 @@
  *
  */
 
-#if !defined(__WRC_RSC_H) && !defined(__WINE_WRC_RSC_H)
-#define __WRC_RSC_H
+#ifndef __WINE_WRC_RSC_H
 #define __WINE_WRC_RSC_H
 
 #include "windef.h"		/* For types in structure */
@@ -40,5 +39,5 @@ typedef struct wrc_resource32
 	UINT	datasize;	/* The size of the resource */
 } wrc_resource32_t;
 
-#endif
+#endif /* __WINE_WRC_RSC_H */
 

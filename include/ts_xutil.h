@@ -6,8 +6,8 @@
  * Copyright 1998 Kristian Nielsen
  */
 
-#ifndef __WINE_TSXUTIL_H
-#define __WINE_TSXUTIL_H
+#ifndef __WINE_TS_XUTIL_H
+#define __WINE_TS_XUTIL_H
 
 #include "config.h"
 
@@ -56,4 +56,4 @@ extern XContext TSXUniqueContext(void);
 
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#endif /* __WINE_TSXUTIL_H */
+#endif /* __WINE_TS_XUTIL_H */

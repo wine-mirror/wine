@@ -1,5 +1,5 @@
-#ifndef _INCLUDE_WINE_WINBASE16_H
-#define _INCLUDE_WINE_WINBASE16_H
+#ifndef __WINE_WINE_WINBASE16_H
+#define __WINE_WINE_WINBASE16_H
 
 #include "windef.h"
 #include "pshpack1.h"
@@ -210,4 +210,4 @@ SEGPTR      WINAPI WIN16_LockResource16(HGLOBAL16);
 LONG        WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 UINT16      WINAPI WIN16_lread(HFILE16,SEGPTR,UINT16);
 
-#endif /* _INCLUDE_WINE_WINBASE16_H */
+#endif /* __WINE_WINE_WINBASE16_H */

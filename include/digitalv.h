@@ -1,8 +1,14 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
 
+#ifndef __WINE_DIGITALV_H
+#define __WINE_DIGITALV_H
+
 /*
  * Wine Digital Video extensions
  */
+
+#include "mmsystem.h"
+#include "windef.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1000,3 +1006,4 @@ typedef struct {
 }
 #endif
 
+#endif /* __WINE_DIGITALV_H */

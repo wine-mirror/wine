@@ -2,8 +2,8 @@
  *    ICommDlgBrowser
  */
 
-#ifndef __WINE_WINE_OBJ_ICOMMDLGBROWSER_H
-#define __WINE_WINE_OBJ_ICOMMDLGBROWSER_H
+#ifndef __WINE_WINE_OBJ_COMMDLGBROWSER_H
+#define __WINE_WINE_OBJ_COMMDLGBROWSER_H
 
 #include "winbase.h"
 #include "winuser.h"
@@ -48,4 +48,4 @@ ICOM_DEFINE(ICommDlgBrowser,IUnknown)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_WINE_OBJ_ICOMMDLGBROWSER_H */
+#endif /* __WINE_WINE_OBJ_COMMDLGBROWSER_H */

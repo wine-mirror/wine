@@ -2,8 +2,8 @@
  *    IContextMenu
  */
 
-#ifndef __WINE_WINE_OBJ_ICONTEXTMENU_H
-#define __WINE_WINE_OBJ_ICONTEXTMENU_H
+#ifndef __WINE_WINE_OBJ_CONTEXTMENU_H
+#define __WINE_WINE_OBJ_CONTEXTMENU_H
 
 #include "winbase.h"
 #include "winuser.h"
@@ -132,4 +132,4 @@ ICOM_DEFINE(IContextMenu,IUnknown)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_WINE_OBJ_ICONTEXTMENU_H */
+#endif /* __WINE_WINE_OBJ_CONTEXTMENU_H */

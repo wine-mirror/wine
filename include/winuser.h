@@ -1,5 +1,5 @@
-#ifndef __INCLUDE_WINUSER_H
-#define __INCLUDE_WINUSER_H
+#ifndef _WINUSER_
+#define _WINUSER_
 
 #ifndef RC_INVOKED
 #include <stdarg.h>
@@ -3622,4 +3622,4 @@ VOID        WINAPI ScreenSwitchEnable16(WORD);
 }
 #endif
 
-#endif /* __INCLUDE_WINUSER_H */
+#endif /* _WINUSER_ */

@@ -6,8 +6,8 @@
  * Copyright 1998 Kristian Nielsen
  */
 
-#ifndef __WINE_TSXSHM_H
-#define __WINE_TSXSHM_H
+#ifndef __WINE_TS_XSHM_H
+#define __WINE_TS_XSHM_H
 
 #include "config.h"
 
@@ -32,4 +32,4 @@ extern Pixmap TSXShmCreatePixmap(Display *, Drawable, char *, XShmSegmentInfo *,
 
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#endif /* __WINE_TSXSHM_H */
+#endif /* __WINE_TS_XSHM_H */

@@ -2,8 +2,8 @@
  *    IShellBrowser
  */
 
-#ifndef __WINE_WINE_OBJ_ISHELLBROWSER_H
-#define __WINE_WINE_OBJ_ISHELLBROWSER_H
+#ifndef __WINE_WINE_OBJ_SHELLBROWSER_H
+#define __WINE_WINE_OBJ_SHELLBROWSER_H
 
 #include "winbase.h"
 #include "winuser.h"
@@ -110,4 +110,4 @@ ICOM_DEFINE(IShellBrowser,IOleWindow)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_WINE_OBJ_ISHELLBROWSER_H */
+#endif /* __WINE_WINE_OBJ_SHELLBROWSER_H */

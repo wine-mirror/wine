@@ -2,8 +2,8 @@
  *    IShellExtInit
  */
 
-#ifndef __WINE_WINE_OBJ_ISHELLEXTINIT_H
-#define __WINE_WINE_OBJ_ISHELLEXTINIT_H
+#ifndef __WINE_WINE_OBJ_SHELLEXTINIT_H
+#define __WINE_WINE_OBJ_SHELLEXTINIT_H
 
 #include "winbase.h"
 #include "winuser.h"
@@ -37,4 +37,4 @@ ICOM_DEFINE(IShellExtInit,IUnknown)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_WINE_OBJ_ISHELLEXTINIT_H */
+#endif /* __WINE_WINE_OBJ_SHELLEXTINIT_H */

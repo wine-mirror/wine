@@ -1,7 +1,9 @@
 /* ASPI definitions used for both WNASPI16 and WNASPI32 */
 
-#if !defined(ASPI_H)
-#define ASPI_H
+#ifndef __WINE_ASPI_H
+#define __WINE_ASPI_H
+
+#include "windef.h"
 
 #include "pshpack1.h"
 

@@ -1,5 +1,5 @@
-#ifndef __WINE_WINGDI16_H
-#define __WINE_WINGDI16_H
+#ifndef __WINE_WINE_WINGDI16_H
+#define __WINE_WINE_WINGDI16_H
 
 #include "wingdi.h"
 
@@ -528,4 +528,4 @@ int         WINAPI WriteDialog16(HANDLE16,LPSTR,WORD);
 int         WINAPI WriteSpool16(HANDLE16,LPSTR,WORD);
 
 
-#endif /* __WINE_WINGDI16_H */
+#endif /* __WINE_WINE_WINGDI16_H */

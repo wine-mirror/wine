@@ -6,7 +6,7 @@
  *
  *****************************************************************************/
 
-#if !defined(__WINE_TWEAK_H)
+#ifndef __WINE_TWEAK_H
 #define __WINE_TWEAK_H
 
 #include "windef.h"

@@ -1,5 +1,5 @@
-#ifndef _INCLUDE_WINE_STRINGS_H
-#define _INCLUDE_WINE_STRINGS_H
+#ifndef __WINE_WINE_WINESTRING_H
+#define __WINE_WINE_WINESTRING_H
 
 #include "windef.h"
 
@@ -17,4 +17,5 @@ LPWSTR      WINAPI lstrcpyAtoW(LPWSTR,LPCSTR);
 LPSTR       WINAPI lstrcpyWtoA(LPSTR,LPCWSTR);
 LPWSTR      WINAPI lstrcpynAtoW(LPWSTR,LPCSTR,INT);
 LPSTR       WINAPI lstrcpynWtoA(LPSTR,LPCWSTR,INT);
-#endif /* _INCLUDE_WINE_STRINGS_H */
+
+#endif /* __WINE_WINE_WINESTRING_H */

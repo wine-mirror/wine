@@ -63,12 +63,13 @@ char h_file_head_str[] =
 	" * Source : %s\n"
 	" * Cmdline: %s\n"
 	" * Date   : %s"
-	" */\n\n"
+	" */\n"
+        "\n"
 	"#ifndef __%08lx_H\n"	/* This becomes the date of compile */
-	"#define __%08lx_H\n\n"
-	"#ifndef __WRC_RSC_H\n"
+	"#define __%08lx_H\n"
+	"\n"
 	"#include <wrc_rsc.h>\n"
-	"#endif\n\n"
+	"\n"
 	;
 
 char h_file_tail_str[] =

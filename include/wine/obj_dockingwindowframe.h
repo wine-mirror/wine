@@ -2,8 +2,8 @@
  *    IDockingWindowFrame
  */
 
-#ifndef __WINE_WINE_OBJ_IDOCKINGWINDOWFRAME_H
-#define __WINE_WINE_OBJ_IDOCKINGWINDOWFRAME_H
+#ifndef __WINE_WINE_OBJ_DOCKINGWINDOWFRAME_H
+#define __WINE_WINE_OBJ_DOCKINGWINDOWFRAME_H
 
 #include "winbase.h"
 #include "winuser.h"
@@ -47,4 +47,4 @@ ICOM_DEFINE(IDockingWindowFrame,IOleWindow)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_WINE_OBJ_IDOCKINGWINDOWFRAME_H */
+#endif /* __WINE_WINE_OBJ_DOCKINGWINDOWFRAME_H */

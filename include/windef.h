@@ -318,29 +318,6 @@ typedef LRESULT (CALLBACK *WNDENUMPROC)(HWND,LPARAM);
 typedef LRESULT (CALLBACK *WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 
-/* TCHAR data types definitions for Winelib. */
-/* These types are _not_ defined for the emulator, because they */
-/* depend on the UNICODE macro that only exists in user's code. */
-
-#ifndef __WINE__
-# ifdef UNICODE
-typedef WCHAR TCHAR;
-typedef LPWSTR LPTSTR;
-typedef LPCWSTR LPCTSTR;
-#define __TEXT(string) L##string /*probably wrong */
-# else  /* UNICODE */
-typedef CHAR TCHAR;
-typedef LPSTR LPTSTR;
-typedef LPCSTR LPCTSTR;
-#define __TEXT(string) string
-# endif /* UNICODE */
-#endif   /* __WINE__ */
-#define TEXT(quote) __TEXT(quote)
-
-/* Data types specific to the library. These do _not_ exist in the emulator. */
-
-
-
 /* Define some empty macros for compatibility with Windows code. */
 
 #ifndef __WINE__

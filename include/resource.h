@@ -8,10 +8,7 @@
 #define __WINE_RESOURCE_H
 
 #include "windef.h"
-
-#ifndef __WRC_RSC_H
 #include "wrc_rsc.h"
-#endif
 
 /*
  * BS: I comment this out to catch all occurences

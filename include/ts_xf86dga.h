@@ -6,8 +6,8 @@
  * Copyright 1998 Kristian Nielsen
  */
 
-#ifndef __WINE_TSXF86DGA_H
-#define __WINE_TSXF86DGA_H
+#ifndef __WINE_TS_XF86DGA_H
+#define __WINE_TS_XF86DGA_H
 
 #include "config.h"
 
@@ -32,4 +32,4 @@ extern Status TSXF86DGAViewPortChanged(Display*,int,int);
 
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#endif /* __WINE_TSXF86DGA_H */
+#endif /* __WINE_TS_XF86DGA_H */

@@ -6,8 +6,8 @@
  * shlguid.h
  */
 
-#ifndef __INIT_GUID_H
-#define __INIT_GUID_H
+#ifndef __WINE_INITGUID_H
+#define __WINE_INITGUID_H
 
 #include "wtypes.h"
 
@@ -22,4 +22,4 @@
 
 DEFINE_GUID(GUID_NULL,   0,0,0,0,0,0,0,0,0,0,0);
 
-#endif 
+#endif /* __WINE_INITGUID_H */

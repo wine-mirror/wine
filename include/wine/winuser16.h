@@ -1,5 +1,5 @@
-#ifndef __WINE_WINUSER16_H
-#define __WINE_WINUSER16_H
+#ifndef __WINE_WINE_WINUSER16_H
+#define __WINE_WINE_WINUSER16_H
 
 #include "winuser.h" /* winuser.h needed for MSGBOXCALLBACK */
                      /* wingdi.h needed for COLORREF */
@@ -950,4 +950,4 @@ BOOL16      WINAPI GrayString16(HDC16,HBRUSH16,GRAYSTRINGPROC16,LPARAM,
 BOOL16      WINAPI EnumTaskWindows16(HTASK16,WNDENUMPROC16,LPARAM);
 
 
-#endif /* __WINE_WINUSER16_H */
+#endif /* __WINE_WINE_WINUSER16_H */

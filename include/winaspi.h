@@ -1,5 +1,7 @@
-#if !defined(WINASPI_H)
-#define WINASPI_H
+#ifndef __WINE_WINASPI_H
+#define __WINE_WINASPI_H
+
+#include "windef.h"
 
 #include "pshpack1.h"
 
@@ -99,4 +101,4 @@ typedef union SRB16 SRB16;
 
 #include "poppack.h"
 
-#endif
+#endif /* __WINE_WINASPI_H */

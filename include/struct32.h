@@ -1,6 +1,6 @@
 /* Structure definitions for Win32 -- used only internally */
-#ifndef __WINE__STRUCT32_H
-#define __WINE__STRUCT32_H
+#ifndef __WINE_STRUCT32_H
+#define __WINE_STRUCT32_H
 
 #include "winbase.h"
 #include "wine/winuser16.h"

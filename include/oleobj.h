@@ -1,5 +1,5 @@
-#ifndef _WINE_OLEOBJ_H
-#define _WINE_OLEOBJ_H
+#ifndef __WINE_OLEOBJ_H
+#define __WINE_OLEOBJ_H
 
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
@@ -7,5 +7,5 @@
 #include "wine/obj_dataobject.h"
 #include "wine/obj_oleobj.h"
 
-#endif /*_WINE_OLEOBJ_H*/
+#endif /* __WINE_OLEOBJ_H */
 

@@ -54,6 +54,23 @@
 
 /* Types */
 
+/* TCHAR data types definitions for Winelib. */
+/* These types are _not_ defined for the emulator, because they */
+/* depend on the UNICODE macro that only exists in user's code. */
+
+#ifndef __WINE__
+# ifdef UNICODE
+typedef LPWSTR LPTSTR;
+typedef LPCWSTR LPCTSTR;
+#define __TEXT(string) L##string /*probably wrong */
+# else  /* UNICODE */
+typedef LPSTR LPTSTR;
+typedef LPCSTR LPCTSTR;
+#define __TEXT(string) string
+# endif /* UNICODE */
+#endif   /* __WINE__ */
+#define TEXT(quote) __TEXT(quote)
+
 typedef BYTE     BOOLEAN;
 typedef BOOLEAN *PBOOLEAN;
 

@@ -17,6 +17,7 @@
 #include "heap.h"
 #include "shm_semaph.h"
 #include "debug.h"
+#include "tchar.h"
 #include "winnt.h"
 
 DEFAULT_DEBUG_CHANNEL(ddeml)
@@ -302,7 +303,7 @@ static void InsertHSZNode( HSZ hsz )
  *  1.1	     Mar 1999  Keith Matthews	     Corrected Heap handling. Corrected re-initialisation handling
  *
  */
- DWORD Release_reserved_mutex (HANDLE mutex, LPTSTR mutex_name, BOOL release_handle_m, BOOL release_this_i )
+static DWORD Release_reserved_mutex (HANDLE mutex, LPSTR mutex_name, BOOL release_handle_m, BOOL release_this_i )
 {
 	ReleaseMutex(mutex);
         if ( (err_no=GetLastError()) != 0 )
@@ -411,7 +412,7 @@ void FindNotifyMonitorCallbacks(DWORD ThisInstance, DWORD DdeEvent )
  *
  */
 
-DdeReserveAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
+void DdeReserveAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
 {
   CHAR SNameBuffer[MAX_BUFFER_LEN];
   UINT rcode;
@@ -441,7 +442,7 @@ DdeReserveAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
  *
  */
 
-DdeReleaseAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
+void DdeReleaseAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
 {
   CHAR SNameBuffer[MAX_BUFFER_LEN];
   UINT rcode;

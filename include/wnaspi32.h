@@ -1,5 +1,7 @@
-#if !defined(WNASPI32_H)
-#define WNASPI32_H
+#ifndef __WINE_WNASPI32_H
+#define __WINE_WNASPI32_H
+
+#include "windef.h"
 
 #include "pshpack1.h"
 
@@ -99,4 +101,4 @@ typedef union SRB SRB;
 
 #include "poppack.h"
 
-#endif
+#endif /* __WINE_WNASPI32_H */

@@ -1,5 +1,5 @@
-#ifndef _WINE_DINPUT_H
-#define _WINE_DINPUT_H
+#ifndef __WINE_DINPUT_H
+#define __WINE_DINPUT_H
 
 #include "windef.h" /* for MAX_PATH */
 #include "unknwn.h"

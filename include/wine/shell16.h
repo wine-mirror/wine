@@ -1,8 +1,10 @@
-#ifndef _SHELL16_H
-#define _SHELL16_H
+#ifndef __WINE_WINE_SHELL16_H
+#define __WINE_WINE_SHELL16_H
+
+#include "windef.h"
 
 BOOL16      WINAPI AboutDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
 BOOL      WINAPI AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
 
 
-#endif /* _SHELL16_H */
+#endif /* __WINE_WINE_SHELL16_H */

@@ -5,6 +5,11 @@
  * Mapping tables for Unicode case conversion
  */
 
+#ifndef __WINE_CASEMAP_H
+#define __WINE_CASEMAP_H
+
+#include "windef.h"
+
 /* Lowercase mappings 0000 - 00FF */
 static const WCHAR lblk00[256] = {
 	0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
@@ -903,3 +908,4 @@ static const WCHAR * const uprtable[256] = {
 	000000, 000000, 000000, 000000, 000000, 000000, 000000, ublkFF,
 };
 
+#endif /* __WINE_CASEMAP_H */

@@ -6,8 +6,8 @@
  * Copyright 1998 Kristian Nielsen
  */
 
-#ifndef __WINE_TSXPM_H
-#define __WINE_TSXPM_H
+#ifndef __WINE_TS_XPM_H
+#define __WINE_TS_XPM_H
 
 #include "config.h"
 
@@ -24,4 +24,4 @@ extern int TSXpmAttributesSize(void);
 
 #endif /* !defined(X_DISPLAY_MISSING) */
 
-#endif /* __WINE_TSXPM_H */
+#endif /* __WINE_TS_XPM_H */

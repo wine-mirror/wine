@@ -4,8 +4,8 @@
    This wrapper is needed because Mesa uses also the CALLBACK / WINAPI
    constants. */
 
-#ifndef __WINE_GL_H
-#define __WINE_GL_H
+#ifndef __WINE_WINE_GL_H
+#define __WINE_WINE_GL_H
 
 #include "config.h"
 
@@ -38,4 +38,4 @@
 
 #endif /* HAVE_LIBMESAGL */
 
-#endif /* __WINE_GL_H */
+#endif /* __WINE_WINE_GL_H */

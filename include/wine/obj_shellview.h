@@ -2,8 +2,8 @@
  *    IShellView
  */
 
-#ifndef __WINE_WINE_OBJ_ISHELLVIEW_H
-#define __WINE_WINE_OBJ_ISHELLVIEW_H
+#ifndef __WINE_WINE_OBJ_SHELLVIEW_H
+#define __WINE_WINE_OBJ_SHELLVIEW_H
 
 #include "winbase.h"
 #include "winuser.h"
@@ -147,4 +147,4 @@ ICOM_DEFINE(IShellView,IOleWindow)
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_WINE_OBJ_ISHELLVIEW_H */
+#endif /* __WINE_WINE_OBJ_SHELLVIEW_H */
