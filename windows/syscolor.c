@@ -18,7 +18,6 @@
 #include "debugtools.h"
 #include "tweak.h"
 #include "winreg.h"
-#include "winversion.h"
 
 DEFAULT_DEBUG_CHANNEL(syscolor)
 
@@ -126,42 +125,37 @@ void SYSCOLOR_Init(void)
     p = (TWEAK_WineLook == WIN31_LOOK) ? DefSysColors : DefSysColors95;
 
     /* first, try to read the values from the registry */
-    if (VERSION_GetVersion() != WIN31)
-    {
-      if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
-        bNoReg = TRUE;
-	
-    }	
-      for (i = 0; i < NUM_SYS_COLORS; i++)
-      { bOk = FALSE;
+    if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
+      bNoReg = TRUE;
+    for (i = 0; i < NUM_SYS_COLORS; i++)
+    { bOk = FALSE;
 
-	/* first try, registry */
-	if (!bNoReg)
-        {
-          DWORD dwDataSize = sizeof(buffer);
-          if (!(RegQueryValueExA(hKey,(LPSTR)p[i*2], 0, 0, buffer, &dwDataSize)))
-            if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) 
-              bOk = TRUE;
-        }
-
-	/* second try, win.ini */
-	if (!bOk)
-	{ GetProfileStringA( "colors", p[i*2], p[i*2+1], buffer, 100 );
-	  if (sscanf( buffer, " %d %d %d", &r, &g, &b ) == 3)
-	    bOk = TRUE;
-	}
-	
-	/* last chance, take the default */
-	if (!bOk)
-	{ int iNumColors = sscanf( p[i*2+1], " %d %d %d", &r, &g, &b );
-	  assert (iNumColors==3);
-	}
-	
-	SYSCOLOR_SetColor( i, RGB(r,g,b) );
-      }
+      /* first try, registry */
       if (!bNoReg)
-        RegCloseKey(hKey);
+      {
+	DWORD dwDataSize = sizeof(buffer);
+	if (!(RegQueryValueExA(hKey,(LPSTR)p[i*2], 0, 0, buffer, &dwDataSize)))
+	  if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) 
+	    bOk = TRUE;
+      }
 
+      /* second try, win.ini */
+      if (!bOk)
+      { GetProfileStringA( "colors", p[i*2], p[i*2+1], buffer, 100 );
+	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) == 3)
+	  bOk = TRUE;
+      }
+      
+      /* last chance, take the default */
+      if (!bOk)
+      { int iNumColors = sscanf( p[i*2+1], " %d %d %d", &r, &g, &b );
+	assert (iNumColors==3);
+      }
+      
+      SYSCOLOR_SetColor( i, RGB(r,g,b) );
+    }
+    if (!bNoReg)
+      RegCloseKey(hKey);
 }
 
 
