@@ -89,15 +89,25 @@ static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
 
 
 /***********************************************************************
+ *		update_button_state
+ *
+ * Update the button state with what X provides us
+ */
+static void update_button_state( unsigned int state )
+{
+    pKeyStateTable[VK_LBUTTON] = (state & Button1Mask ? 0x80 : 0);
+    pKeyStateTable[VK_MBUTTON] = (state & Button2Mask ? 0x80 : 0);
+    pKeyStateTable[VK_RBUTTON] = (state & Button3Mask ? 0x80 : 0);
+}
+
+
+/***********************************************************************
  *		update_key_state
  *
  * Update the key state with what X provides us
  */
 static void update_key_state( unsigned int state )
 {
-    pKeyStateTable[VK_LBUTTON] = (state & Button1Mask ? 0x80 : 0);
-    pKeyStateTable[VK_MBUTTON] = (state & Button2Mask ? 0x80 : 0);
-    pKeyStateTable[VK_RBUTTON] = (state & Button3Mask ? 0x80 : 0);
     pKeyStateTable[VK_SHIFT]   = (state & ShiftMask   ? 0x80 : 0);
     pKeyStateTable[VK_CONTROL] = (state & ControlMask ? 0x80 : 0);
 }
@@ -516,6 +526,7 @@ void X11DRV_GetCursorPos(LPPOINT pos)
     return;
 
   update_key_state( xstate );
+  update_button_state( xstate );
   TRACE("pointer at (%d,%d)\n", winX, winY );
   pos->x = winX;
   pos->y = winY;
