@@ -612,7 +612,7 @@ typedef struct _CONTEXT
 
 } CONTEXT;
 
-#endif
+#endif  /* __sparc__ */
 
 #if !defined(CONTEXT_FULL) && !defined(RC_INVOKED)
 #error You need to define a CONTEXT for your CPU
@@ -1622,11 +1622,80 @@ typedef enum tagSID_NAME_USE {
 #define	FILE_256_BYTE_ALIGNMENT		0x000000ff
 #define	FILE_512_BYTE_ALIGNMENT		0x000001ff
 
+#define REG_NONE		0	/* no type */
+#define REG_SZ			1	/* string type (ASCII) */
+#define REG_EXPAND_SZ		2	/* string, includes %ENVVAR% (expanded by caller) (ASCII) */
+#define REG_BINARY		3	/* binary format, callerspecific */
+/* YES, REG_DWORD == REG_DWORD_LITTLE_ENDIAN */
+#define REG_DWORD		4	/* DWORD in little endian format */
+#define REG_DWORD_LITTLE_ENDIAN	4	/* DWORD in little endian format */
+#define REG_DWORD_BIG_ENDIAN	5	/* DWORD in big endian format  */
+#define REG_LINK		6	/* symbolic link (UNICODE) */
+#define REG_MULTI_SZ		7	/* multiple strings, delimited by \0, terminated by \0\0 (ASCII) */
+#define REG_RESOURCE_LIST	8	/* resource list? huh? */
+#define REG_FULL_RESOURCE_DESCRIPTOR	9	/* full resource descriptor? huh? */
+#define REG_RESOURCE_REQUIREMENTS_LIST	10
+
+/* ----------------------------- begin registry ----------------------------- */
+
 /* Registry security values */
-#define OWNER_SECURITY_INFORMATION  0x00000001
-#define GROUP_SECURITY_INFORMATION  0x00000002
-#define DACL_SECURITY_INFORMATION   0x00000004
-#define SACL_SECURITY_INFORMATION   0x00000008
+#define OWNER_SECURITY_INFORMATION	0x00000001
+#define GROUP_SECURITY_INFORMATION	0x00000002
+#define DACL_SECURITY_INFORMATION	0x00000004
+#define SACL_SECURITY_INFORMATION	0x00000008
+
+#define REG_OPTION_RESERVED		0x00000000
+#define REG_OPTION_NON_VOLATILE		0x00000000
+#define REG_OPTION_VOLATILE		0x00000001
+#define REG_OPTION_CREATE_LINK		0x00000002
+#define REG_OPTION_BACKUP_RESTORE	0x00000004 /* FIXME */
+#define REG_OPTION_OPEN_LINK		0x00000008
+#define REG_LEGAL_OPTION	       (REG_OPTION_RESERVED|  \
+					REG_OPTION_NON_VOLATILE|  \
+					REG_OPTION_VOLATILE|  \
+					REG_OPTION_CREATE_LINK|  \
+					REG_OPTION_BACKUP_RESTORE|  \
+					REG_OPTION_OPEN_LINK)
+
+
+#define REG_CREATED_NEW_KEY	0x00000001
+#define REG_OPENED_EXISTING_KEY	0x00000002
+
+/* For RegNotifyChangeKeyValue */
+#define REG_NOTIFY_CHANGE_NAME	0x1
+
+#define KEY_QUERY_VALUE		0x00000001
+#define KEY_SET_VALUE		0x00000002
+#define KEY_CREATE_SUB_KEY	0x00000004
+#define KEY_ENUMERATE_SUB_KEYS	0x00000008
+#define KEY_NOTIFY		0x00000010
+#define KEY_CREATE_LINK		0x00000020
+
+#define KEY_READ	      ((STANDARD_RIGHTS_READ|  \
+				KEY_QUERY_VALUE|  \
+				KEY_ENUMERATE_SUB_KEYS|  \
+				KEY_NOTIFY)  \
+				& (~SYNCHRONIZE)  \
+			      )
+#define KEY_WRITE	      ((STANDARD_RIGHTS_WRITE|  \
+				KEY_SET_VALUE|  \
+				KEY_CREATE_SUB_KEY)  \
+				& (~SYNCHRONIZE)  \
+			      )
+#define KEY_EXECUTE	      ((KEY_READ)  \
+				& (~SYNCHRONIZE))  \
+			      )
+#define KEY_ALL_ACCESS        ((STANDARD_RIGHTS_ALL|  \
+				KEY_QUERY_VALUE|  \
+				KEY_SET_VALUE|  \
+				KEY_CREATE_SUB_KEY|  \
+				KEY_ENUMERATE_SUB_KEYS|  \
+				KEY_NOTIFY|  \
+				KEY_CREATE_LINK)  \
+				& (~SYNCHRONIZE)  \
+			      )
+/* ------------------------------ end registry ------------------------------ */
+
 
 #define RtlEqualMemory(Destination, Source, Length) (!memcmp((Destination),(Source),(Length)))
 #define RtlMoveMemory(Destination, Source, Length) memmove((Destination),(Source),(Length))

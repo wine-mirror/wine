@@ -23,6 +23,7 @@
 
 #include "winbase.h"
 #include "winreg.h"
+#include "winnt.h" /* registry definitions */
 
 
 /* a registry key */
