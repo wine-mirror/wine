@@ -27,7 +27,6 @@
 #include "dosexe.h"
 #include "vga.h"
 #include "ddraw.h"
-#include "services.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
@@ -45,6 +44,8 @@ static int vga_depth;
 
 typedef HRESULT (WINAPI *DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
 static DirectDrawCreateProc pDirectDrawCreate;
+
+static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high );
 
 /*
  * For simplicity, I'm creating a second palette.
@@ -168,19 +169,43 @@ static PALETTEENTRY vga_def64_palette[256]={
   {0,0,0} /* The next 192 entries are all zeros  */
 };
 
+static HANDLE VGA_timer;
+static HANDLE VGA_timer_thread;
+
+/* set the timer rate; called in the polling thread context */
+static void CALLBACK set_timer_rate( ULONG_PTR arg )
+{
+    LARGE_INTEGER when;
+
+    when.s.LowPart = when.s.HighPart = 0;
+    SetWaitableTimer( VGA_timer, &when, arg, VGA_Poll, 0, FALSE );
+}
+
+static DWORD CALLBACK VGA_TimerThread( void *dummy )
+{
+    for (;;) WaitForMultipleObjectsEx( 0, NULL, FALSE, INFINITE, TRUE );
+}
+
 static void VGA_DeinstallTimer(void)
 {
-    if (poll_timer) {
-        SERVICE_Delete( poll_timer );
-        poll_timer = 0;
+    if (VGA_timer_thread)
+    {
+        CancelWaitableTimer( VGA_timer );
+        CloseHandle( VGA_timer );
+        TerminateThread( VGA_timer_thread, 0 );
+        CloseHandle( VGA_timer_thread );
+        VGA_timer_thread = 0;
     }
 }
 
 static void VGA_InstallTimer(unsigned Rate)
 {
-    VGA_DeinstallTimer();
-    if (!poll_timer)
-        poll_timer = SERVICE_AddTimer( Rate, VGA_Poll, 0 );
+    if (!VGA_timer_thread)
+    {
+        VGA_timer = CreateWaitableTimerA( NULL, FALSE, NULL );
+        VGA_timer_thread = CreateThread( NULL, 0, VGA_TimerThread, NULL, 0, NULL );
+    }
+    QueueUserAPC( set_timer_rate, VGA_timer_thread, (ULONG_PTR)Rate );
 }
 
 HANDLE VGA_AlphaConsole(void)
@@ -484,7 +509,7 @@ static void VGA_Poll_Graphics(void)
 }
 
 
-void CALLBACK VGA_Poll( ULONG_PTR arg )
+static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high )
 {
     char *dat;
     unsigned int Height,Width,Y,X;

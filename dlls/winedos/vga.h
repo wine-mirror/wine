@@ -42,7 +42,6 @@ void VGA_GetCursorPos(unsigned*X,unsigned*Y);
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count);
 
 /* control */
-void CALLBACK VGA_Poll(ULONG_PTR arg);
 void VGA_ioport_out(WORD port, BYTE val);
 BYTE VGA_ioport_in(WORD port);
 void VGA_Clean(void);

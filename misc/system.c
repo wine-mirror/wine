@@ -22,7 +22,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "services.h"
 #include "stackframe.h"
 #include "wine/debug.h"
 
@@ -41,16 +40,18 @@ typedef struct
 
 static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS];
 static int SYS_NbTimers = 0;
-static HANDLE SYS_Service = INVALID_HANDLE_VALUE;
-
+static HANDLE SYS_timer;
+static HANDLE SYS_thread;
+static int SYS_timers_disabled;
 
 /***********************************************************************
  *           SYSTEM_TimerTick
  */
-static void CALLBACK SYSTEM_TimerTick( ULONG_PTR arg )
+static void CALLBACK SYSTEM_TimerTick( LPVOID arg, DWORD low, DWORD high )
 {
     int i;
 
+    if (SYS_timers_disabled) return;
     for (i = 0; i < NB_SYS_TIMERS; i++)
     {
         if (!SYS_Timers[i].callback) continue;
@@ -62,6 +63,22 @@ static void CALLBACK SYSTEM_TimerTick( ULONG_PTR arg )
     }
 }
 
+
+/***********************************************************************
+ *           SYSTEM_TimerThread
+ */
+static DWORD CALLBACK SYSTEM_TimerThread( void *dummy )
+{
+    LARGE_INTEGER when;
+
+    if (!(SYS_timer = CreateWaitableTimerA( NULL, FALSE, NULL ))) return 0;
+
+    when.s.LowPart = when.s.HighPart = 0;
+    SetWaitableTimer( SYS_timer, &when, (SYS_TIMER_RATE+500)/1000, SYSTEM_TimerTick, 0, FALSE );
+    for (;;) WaitForMultipleObjectsEx( 0, NULL, FALSE, INFINITE, TRUE );
+}
+
+
 /**********************************************************************
  *           SYSTEM_StartTicks
  *
@@ -69,8 +86,7 @@ static void CALLBACK SYSTEM_TimerTick( ULONG_PTR arg )
  */
 static void SYSTEM_StartTicks(void)
 {
-    if ( SYS_Service == INVALID_HANDLE_VALUE )
-        SYS_Service = SERVICE_AddTimer( (SYS_TIMER_RATE+500)/1000, SYSTEM_TimerTick, 0L );
+    if (!SYS_thread) SYS_thread = CreateThread( NULL, 0, SYSTEM_TimerThread, NULL, 0, NULL );
 }
 
 
@@ -81,10 +97,13 @@ static void SYSTEM_StartTicks(void)
  */
 static void SYSTEM_StopTicks(void)
 {
-    if ( SYS_Service != INVALID_HANDLE_VALUE )
+    if (SYS_thread)
     {
-        SERVICE_Delete( SYS_Service );
-        SYS_Service = INVALID_HANDLE_VALUE;
+        CancelWaitableTimer( SYS_timer );
+        TerminateThread( SYS_thread, 0 );
+        CloseHandle( SYS_thread );
+        CloseHandle( SYS_timer );
+        SYS_thread = 0;
     }
 }
 
@@ -186,8 +205,7 @@ WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
  */
 void WINAPI EnableSystemTimers16(void)
 {
-    if ( SYS_Service != INVALID_HANDLE_VALUE )
-        SERVICE_Enable( SYS_Service );
+    SYS_timers_disabled = 0;
 }
 
 
@@ -196,8 +214,7 @@ void WINAPI EnableSystemTimers16(void)
  */
 void WINAPI DisableSystemTimers16(void)
 {
-    if ( SYS_Service != INVALID_HANDLE_VALUE )
-        SERVICE_Disable( SYS_Service );
+    SYS_timers_disabled = 1;
 }
 
 
