@@ -362,12 +362,12 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     }
     else
     {
-        if ( dwFlags & MOUSEEVENTF_MOVE ) /* we have to actually move the cursor */
-            SetCursorPos( PosX, PosY );
-
         input.u.mi.time = GetCurrentTime();
         input.u.mi.dwExtraInfo = dwExtraInfo;
         SendInput( 1, &input, sizeof(input) );
+
+        if ( dwFlags & MOUSEEVENTF_MOVE ) /* we have to actually move the cursor */
+            SetCursorPos( PosX, PosY );
     }
 }
 
