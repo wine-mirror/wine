@@ -435,7 +435,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 		/* fall through */
 	case EM_GETMODIFY:
 		DPRINTF_EDIT_MSG32("EM_GETMODIFY");
-		return ((es->flags & EF_MODIFIED) != 0);
+		result = ((es->flags & EF_MODIFIED) != 0);
 		break;
 
 	case EM_SETMODIFY16:

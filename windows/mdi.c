@@ -1129,9 +1129,10 @@ LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
       case WM_SETFOCUS:
 	if( ci->hwndActiveChild )
 	{
-	   w = WIN_FindWndPtr( ci->hwndActiveChild );
-	   if( !(w->dwStyle & WS_MINIMIZE) )
+	   WND*	pw = WIN_FindWndPtr( ci->hwndActiveChild );
+	   if( !(pw->dwStyle & WS_MINIMIZE) )
 	       SetFocus( ci->hwndActiveChild );
+	   WIN_ReleaseWndPtr(pw);
 	} 
         retvalue = 0;
         goto END;

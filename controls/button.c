@@ -242,8 +242,9 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 	return oldHbitmap;
 
     case BM_GETIMAGE:
+        retvalue = infoPtr->hImage;
         WIN_ReleaseWndPtr(wndPtr);
-	return infoPtr->hImage;
+	return retvalue;
 
     case BM_GETCHECK16:
     case BM_GETCHECK:
