@@ -57,8 +57,6 @@ struct rev_info
 static struct wine_test *wine_tests;
 static struct rev_info *rev_infos = NULL;
 
-static const char *wineloader;
-
 static int running_under_wine ()
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
@@ -410,8 +408,6 @@ run_tests (char *logname, const char *tag, const char *url)
     char build_tag[128];
 
     SetErrorMode (SEM_NOGPFAULTERRORBOX);
-
-    if (!(wineloader = getenv("WINELOADER"))) wineloader = "wine";
 
     tempdir = tempnam (0, "wct");
     if (!tempdir)
