@@ -12,7 +12,6 @@
 #include "gdi.h"
 #include "bitmap.h"
 #include "heap.h"
-#include "color.h"
 #include "font.h"
 #include "options.h"
 #include "xmalloc.h"
@@ -66,6 +65,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
     WIN16DRV_LineTo,                 /* pLineTo */
+    NULL,                            /* pLoadOEMResource */
     WIN16DRV_MoveToEx,               /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrgEx */

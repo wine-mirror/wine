@@ -137,12 +137,15 @@ extern INT32 X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP32 hbitmap,
 				      WORD fGet, UINT32 startscan,
 				      UINT32 lines, LPSTR bits,
 				      LPBITMAPINFO info, UINT32 coloruse );
+extern HANDLE32 X11DRV_LoadOEMResource( WORD id, WORD type );
+
 /* X11 driver internal functions */
 
 extern BOOL32 X11DRV_BITMAP_Init(void);
 extern BOOL32 X11DRV_BRUSH_Init(void);
 extern BOOL32 X11DRV_DIB_Init(void);
 extern BOOL32 X11DRV_FONT_Init( struct tagDeviceCaps* );
+extern BOOL32 X11DRV_OBM_Init(void);
 
 struct tagBITMAPOBJ;
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );

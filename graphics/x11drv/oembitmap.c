@@ -1,5 +1,5 @@
 /*
- * GDI OEM bitmap objects
+ * X11DRV OEM bitmap objects
  *
  * Copyright 1994, 1995 Alexandre Julliard
  *
@@ -11,6 +11,7 @@
 #include "ts_xutil.h"
 #include "ts_xpm.h"
 #include "gdi.h"
+#include "x11drv.h"
 #include "bitmap.h"
 #include "callback.h"
 #include "color.h"
@@ -399,7 +400,7 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
 /***********************************************************************
  *           OBM_LoadBitmap
  */
-HBITMAP16 OBM_LoadBitmap( WORD id )
+static HBITMAP16 OBM_LoadBitmap( WORD id )
 {
     OBM_BITMAP_DESCR descr;
 
@@ -427,7 +428,7 @@ HBITMAP16 OBM_LoadBitmap( WORD id )
 /***********************************************************************
  *           OBM_LoadCursorIcon
  */
-HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
+static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
 {
     OBM_BITMAP_DESCR descr;
     HGLOBAL16 handle;
@@ -533,13 +534,35 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     return handle;
 }
 
+/***********************************************************************
+ *           X11DRV_LoadOEMResource
+ *
+ */
+HANDLE32 X11DRV_LoadOEMResource(WORD resid, WORD type)
+{
+    switch(type) {
+    case OEM_BITMAP:
+        return OBM_LoadBitmap(resid);
+
+    case OEM_CURSOR:
+        return OBM_LoadCursorIcon(resid, TRUE);
+
+    case OEM_ICON:
+        return OBM_LoadCursorIcon(resid, FALSE);
+
+    default:
+        ERR(x11drv, "Unknown type\n");
+    }
+    return 0;
+}
+
 
 /***********************************************************************
- *           OBM_Init
+ *           X11DRV_OBM_Init
  *
  * Initializes the OBM_Pixmaps_Data and OBM_Icons_Data struct
  */
-BOOL32 OBM_Init()
+BOOL32 X11DRV_OBM_Init(void)
 {
     if (TWEAK_WineLook == WIN31_LOOK) {
 	OBM_Pixmaps_Data[OBM_ZOOMD - OBM_FIRST].data = obm_zoomd;

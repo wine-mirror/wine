@@ -215,14 +215,13 @@ HBITMAP32 WINAPI CreateCompatibleBitmap32( HDC32 hdc, INT32 width, INT32 height)
     if ((width >0x1000) || (height > 0x1000)) {
 	FIXME(bitmap,"got bad width %d or height %d, please look for reason\n",
 	      width, height );
-	return 0;
+    } else {
+        hbmpRet = CreateBitmap32( width, height, 1, dc->w.bitsPerPixel, NULL );
+	if(dc->funcs->pCreateBitmap)
+	    dc->funcs->pCreateBitmap( hbmpRet );
     }
-    hbmpRet = CreateBitmap32( width, height, 1, dc->w.bitsPerPixel, NULL );
-
-    if(dc->funcs->pCreateBitmap)
-        dc->funcs->pCreateBitmap( hbmpRet );
-
     TRACE(bitmap,"\t\t%04x\n", hbmpRet);
+    GDI_HEAP_UNLOCK(hdc);
     return hbmpRet;
 }
 
@@ -587,8 +586,18 @@ HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 
     if (!instance)  /* OEM bitmap */
     {
+        HDC32 hdc;
+	DC *dc;
+
         if (HIWORD((int)name)) return 0;
-        return OBM_LoadBitmap( LOWORD((int)name) );
+	hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	dc = DC_GetDCPtr( hdc );
+	if(dc->funcs->pLoadOEMResource)
+	  hbitmap = dc->funcs->pLoadOEMResource( LOWORD((int)name),
+						 OEM_BITMAP );
+	GDI_HEAP_UNLOCK( hdc );
+	DeleteDC32( hdc );
+	return hbitmap;
     }
 
     if (!(hRsrc = FindResource16( instance, name, RT_BITMAP16 ))) return 0;
@@ -625,8 +634,18 @@ HBITMAP32 BITMAP_LoadBitmap32W(HINSTANCE32 instance,LPCWSTR name,
     if (!(loadflags & LR_LOADFROMFILE)) {
       if (!instance)  /* OEM bitmap */
       {
-          if (HIWORD((int)name)) return 0;
-          return OBM_LoadBitmap( LOWORD((int)name) );
+          HDC32 hdc;
+	  DC *dc;
+
+	  if (HIWORD((int)name)) return 0;
+	  hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	  dc = DC_GetDCPtr( hdc );
+	  if(dc->funcs->pLoadOEMResource)
+	      hbitmap = dc->funcs->pLoadOEMResource( LOWORD((int)name), 
+						     OEM_BITMAP );
+	  GDI_HEAP_UNLOCK( hdc );
+	  DeleteDC32( hdc );
+	  return hbitmap;
       }
 
       if (!(hRsrc = FindResource32W( instance, name, RT_BITMAP32W ))) return 0;

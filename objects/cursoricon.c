@@ -37,6 +37,8 @@
 #include "color.h"
 #include "bitmap.h"
 #include "cursoricon.h"
+#include "dc.h"
+#include "gdi.h"
 #include "sysmetrics.h"
 #include "global.h"
 #include "module.h"
@@ -608,19 +610,29 @@ static HGLOBAL16 CURSORICON_Load16( HINSTANCE16 hInstance, SEGPTR name,
                                     INT32 width, INT32 height, INT32 colors,
                                     BOOL32 fCursor, UINT32 loadflags)
 {
-    HGLOBAL16 handle;
+    HGLOBAL16 handle = 0;
     HRSRC16 hRsrc;
     CURSORICONDIRENTRY dirEntry;
 
     if (!hInstance)  /* OEM cursor/icon */
     {
+        HDC32 hdc;
+	DC *dc;
+
         if (HIWORD(name))  /* Check for '#xxx' name */
         {
             char *ptr = PTR_SEG_TO_LIN( name );
             if (ptr[0] != '#') return 0;
             if (!(name = (SEGPTR)atoi( ptr + 1 ))) return 0;
         }
-        return OBM_LoadCursorIcon( LOWORD(name), fCursor );
+	hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	dc = DC_GetDCPtr( hdc );
+	if(dc->funcs->pLoadOEMResource)
+	    handle = dc->funcs->pLoadOEMResource( LOWORD(name), fCursor ?
+						  OEM_CURSOR : OEM_ICON);
+	GDI_HEAP_UNLOCK( hdc );
+	DeleteDC32( hdc );
+	return handle;
     }
 
     /* Find the best entry in the directory */
@@ -653,7 +665,7 @@ HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
                              int width, int height, int colors,
                              BOOL32 fCursor, UINT32 loadflags )
 {
-    HANDLE32 handle, h = 0;
+    HANDLE32 handle = 0, h = 0;
     HANDLE32 hRsrc;
     CURSORICONDIRENTRY dirEntry;
     LPBYTE bits;
@@ -663,6 +675,9 @@ HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
         if (!hInstance)  /* OEM cursor/icon */
         {
             WORD resid;
+	    HDC32 hdc;
+	    DC *dc;
+
             if(HIWORD(name))
             {
                 LPSTR ansi = HEAP_strdupWtoA(GetProcessHeap(),0,name);
@@ -678,7 +693,14 @@ HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
                 }
             }
             else resid = LOWORD(name);
-            return OBM_LoadCursorIcon(resid, fCursor);
+	    hdc = CreateDC32A( "DISPLAY", NULL, NULL, NULL );
+	    dc = DC_GetDCPtr( hdc );
+	    if(dc->funcs->pLoadOEMResource)
+	        handle = dc->funcs->pLoadOEMResource( resid, fCursor ?
+						      OEM_CURSOR : OEM_ICON );
+	    GDI_HEAP_UNLOCK( hdc );
+	    DeleteDC32(  hdc );
+            return handle;
         }
 
         /* Find the best entry in the directory */

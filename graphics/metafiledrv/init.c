@@ -37,6 +37,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
     MFDRV_LineTo,                    /* pLineTo */
+    NULL,                            /* pLoadOEMResource */
     MFDRV_MoveToEx,                  /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */

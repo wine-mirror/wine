@@ -42,6 +42,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
     X11DRV_LineTo,                   /* pLineTo */
+    X11DRV_LoadOEMResource,          /* pLoadOEMResource */
     X11DRV_MoveToEx,                 /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrg (optional) */
@@ -119,6 +120,8 @@ BOOL32 X11DRV_Init(void)
     if( !X11DRV_DIB_Init() ) return FALSE;
 
     if( !COLOR_Init() ) return FALSE;
+
+    if( !X11DRV_OBM_Init() ) return FALSE;
 
     /* Finish up device caps */
 

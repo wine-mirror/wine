@@ -192,10 +192,7 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
     /* Initialize Wine tweaks */
     if (!TWEAK_Init()) return FALSE;
 
-    /* Initialize OEM Bitmaps */
-    if (!OBM_Init()) return FALSE;
-
-    /* Global atom table initialisation */
+     /* Global atom table initialisation */
     if (!ATOM_Init( USER_HeapSel )) return FALSE;
 
     /* Initialize system colors and metrics*/

@@ -76,9 +76,4 @@ extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );
 extern void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT32 loadflags,
   BYTE pix);
 
-  /* objects/oembitmap.c */
-extern BOOL32 OBM_Init(void);
-extern HBITMAP16 OBM_LoadBitmap( WORD id );
-extern HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor );
-
 #endif  /* __WINE_BITMAP_H */

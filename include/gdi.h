@@ -188,6 +188,7 @@ typedef struct tagDC_FUNCS
     INT32      (*pIntersectClipRect)(DC*,INT32,INT32,INT32,INT32);
     INT32      (*pIntersectVisRect)(DC*,INT32,INT32,INT32,INT32);
     BOOL32     (*pLineTo)(DC*,INT32,INT32);
+    HANDLE32   (*pLoadOEMResource)(WORD,WORD);
     BOOL32     (*pMoveToEx)(DC*,INT32,INT32,LPPOINT32);
     INT32      (*pOffsetClipRgn)(DC*,INT32,INT32);
     BOOL32     (*pOffsetViewportOrg)(DC*,INT32,INT32);
@@ -232,6 +233,11 @@ typedef struct tagDC_FUNCS
     BOOL32     (*pStretchBlt)(DC*,INT32,INT32,INT32,INT32,DC*,INT32,INT32,INT32,INT32,DWORD);
     INT32     (*pStretchDIBits)(DC*,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,const void *,const BITMAPINFO *,UINT32,DWORD);
 } DC_FUNCTIONS;
+
+  /* LoadOEMResource types */
+#define OEM_BITMAP  1
+#define OEM_CURSOR  2
+#define OEM_ICON    3
 
   /* DC hook codes */
 #define DCHC_INVALIDVISRGN      0x0001

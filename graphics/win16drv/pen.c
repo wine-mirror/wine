@@ -5,7 +5,6 @@
  */
 
 #include "pen.h"
-#include "color.h"
 #include "win16drv.h"
 #include "heap.h"
 #include "debug.h"
