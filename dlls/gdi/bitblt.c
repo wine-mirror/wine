@@ -404,20 +404,21 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
 {
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
-    DWORD bfn = 0;
 
     if ((dcSrc = DC_GetDCUpdate( hdcSrc ))) GDI_ReleaseObj( hdcSrc );
     /* FIXME: there is a race condition here */
     if ((dcDst = DC_GetDCUpdate( hdcDst )))
     {
         dcSrc = DC_GetDCPtr( hdcSrc );
-        TRACE("%p %d,%d %dx%d -> %p %d,%d %dx%d blend=%08lx\n",
+        TRACE("%p %d,%d %dx%d -> %p %d,%d %dx%d op=%02x flags=%02x srcconstalpha=%02x alphafmt=%02x\n",
               hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-              hdcDst, xDst, yDst, widthDst, heightDst, bfn );
+              hdcDst, xDst, yDst, widthDst, heightDst,
+              blendFunction.BlendOp, blendFunction.BlendFlags,
+              blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat);
         if (dcDst->funcs->pAlphaBlend)
             ret = dcDst->funcs->pAlphaBlend( dcDst->physDev, xDst, yDst, widthDst, heightDst,
                                              dcSrc ? dcSrc->physDev : NULL,
-                                             xSrc, ySrc, widthSrc, heightSrc, bfn );
+                                             xSrc, ySrc, widthSrc, heightSrc, blendFunction );
         if (dcSrc) GDI_ReleaseObj( hdcSrc );
         GDI_ReleaseObj( hdcDst );
     }

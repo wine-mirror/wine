@@ -1518,7 +1518,7 @@ done:
 
 BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
                        X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                       DWORD blendfn)
+                       BLENDFUNCTION blendfn)
 {
     XRenderPictureAttributes pa;
     XRenderPictFormat *src_format;
@@ -1679,7 +1679,7 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 
 BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
                        X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
-                       DWORD blendfn)
+                       BLENDFUNCTION blendfn)
 {
   FIXME("not supported - XRENDER headers were missing at compile time\n");
   return FALSE;
