@@ -293,7 +293,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
                                                             DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
     ICOM_THIS(IDirect3D8Impl,iface);
-    FIXME("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n", 
+    TRACE("(%p)->(Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n", 
           This, 
 	  Adapter, 
 	  DeviceType, debug_d3ddevicetype(DeviceType), 
@@ -746,7 +746,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
-    FIXME("GL_Extensions reported:\n");  
+    TRACE("GL_Extensions reported:\n");  
     
     if (NULL == GL_Extensions) {
       ERR("   GL_Extensions returns NULL\n");      
@@ -760,105 +760,105 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	  GL_Extensions++;
         }
         memcpy(ThisExtn, Start, (GL_Extensions - Start));
-        FIXME("- %s\n", ThisExtn);
+        TRACE("- %s\n", ThisExtn);
 
 	/**
 	 * ARB 
 	 */
 	if (strcmp(ThisExtn, "GL_ARB_fragment_program") == 0) {
 	  This->gl_info.ps_arb_version = PS_VERSION_11;
-	  FIXME(" FOUND: ARB Pixel Shader support - version=%02x\n", This->gl_info.ps_arb_version);
+	  TRACE(" FOUND: ARB Pixel Shader support - version=%02x\n", This->gl_info.ps_arb_version);
 	  This->gl_info.supported[ARB_FRAGMENT_PROGRAM] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
-	  FIXME(" FOUND: ARB Multisample support\n");
+	  TRACE(" FOUND: ARB Multisample support\n");
 	  This->gl_info.supported[ARB_MULTISAMPLE] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
 	  glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-	  FIXME(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
+	  TRACE(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
 	  This->gl_info.supported[ARB_MULTITEXTURE] = TRUE;
 	  This->gl_info.max_textures = min(8, gl_max);
         } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
-	  FIXME(" FOUND: ARB Texture Cube Map support\n");
+	  TRACE(" FOUND: ARB Texture Cube Map support\n");
 	  This->gl_info.supported[ARB_TEXTURE_CUBE_MAP] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_compression") == 0) {
-	  FIXME(" FOUND: ARB Texture Compression support\n");
+	  TRACE(" FOUND: ARB Texture Compression support\n");
 	  This->gl_info.supported[ARB_TEXTURE_COMPRESSION] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_add") == 0) {
-	  FIXME(" FOUND: ARB Texture Env Add support\n");
+	  TRACE(" FOUND: ARB Texture Env Add support\n");
 	  This->gl_info.supported[ARB_TEXTURE_ENV_ADD] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_combine") == 0) {
-	  FIXME(" FOUND: ARB Texture Env combine support\n");
+	  TRACE(" FOUND: ARB Texture Env combine support\n");
 	  This->gl_info.supported[ARB_TEXTURE_ENV_COMBINE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ARB_texture_env_dot3") == 0) {
-	  FIXME(" FOUND: ARB Dot3 support\n");
+	  TRACE(" FOUND: ARB Dot3 support\n");
 	  This->gl_info.supported[ARB_TEXTURE_ENV_DOT3] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_ARB_texture_border_clamp") == 0) {
-	  FIXME(" FOUND: ARB Texture border clamp support\n");
+	  TRACE(" FOUND: ARB Texture border clamp support\n");
 	  This->gl_info.supported[ARB_TEXTURE_BORDER_CLAMP] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_ARB_texture_mirrored_repeat") == 0) {
-	  FIXME(" FOUND: ARB Texture mirrored repeat support\n");
+	  TRACE(" FOUND: ARB Texture mirrored repeat support\n");
 	  This->gl_info.supported[ARB_TEXTURE_MIRRORED_REPEAT] = TRUE;
 	} else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
 	  This->gl_info.vs_arb_version = VS_VERSION_11;
-	  FIXME(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);
+	  TRACE(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);
 	  This->gl_info.supported[ARB_VERTEX_PROGRAM] = TRUE;
 
 	/**
 	 * EXT
 	 */
         } else if (strcmp(ThisExtn, "GL_EXT_fog_coord") == 0) {
-	  FIXME(" FOUND: EXT Fog coord support\n");
+	  TRACE(" FOUND: EXT Fog coord support\n");
 	  This->gl_info.supported[EXT_FOG_COORD] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_paletted_texture") == 0) { /* handle paletted texture extensions */
-	  FIXME(" FOUND: EXT Paletted texture support\n");
+	  TRACE(" FOUND: EXT Paletted texture support\n");
 	  This->gl_info.supported[EXT_PALETTED_TEXTURE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_point_parameters") == 0) {
-	  FIXME(" FOUND: EXT Point parameters support\n");
+	  TRACE(" FOUND: EXT Point parameters support\n");
 	  This->gl_info.supported[EXT_POINT_PARAMETERS] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
-	  FIXME(" FOUND: EXT Secondary coord support\n");
+	  TRACE(" FOUND: EXT Secondary coord support\n");
 	  This->gl_info.supported[EXT_SECONDARY_COLOR] = TRUE;
 #if defined(GL_EXT_texture_compression_s3tc)
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_compression_s3tc") == 0) {
-	  FIXME(" FOUND: EXT Texture S3TC compression support\n");
+	  TRACE(" FOUND: EXT Texture S3TC compression support\n");
 	  This->gl_info.supported[EXT_TEXTURE_COMPRESSION_S3TC] = TRUE;
 #endif
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_add") == 0) {
-	  FIXME(" FOUND: EXT Texture Env Add support\n");
+	  TRACE(" FOUND: EXT Texture Env Add support\n");
 	  This->gl_info.supported[EXT_TEXTURE_ENV_ADD] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_combine") == 0) {
-	  FIXME(" FOUND: EXT Texture Env combine support\n");
+	  TRACE(" FOUND: EXT Texture Env combine support\n");
 	  This->gl_info.supported[EXT_TEXTURE_ENV_COMBINE] = TRUE;
         } else if (strcmp(ThisExtn, "GL_EXT_texture_env_dot3") == 0) {
-	  FIXME(" FOUND: EXT Dot3 support\n");
+	  TRACE(" FOUND: EXT Dot3 support\n");
 	  This->gl_info.supported[EXT_TEXTURE_ENV_DOT3] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
-	  FIXME(" FOUND: EXT Texture Anisotropic filter support\n");
+	  TRACE(" FOUND: EXT Texture Anisotropic filter support\n");
 	  This->gl_info.supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_lod") == 0) {
-	  FIXME(" FOUND: EXT Texture LOD support\n");
+	  TRACE(" FOUND: EXT Texture LOD support\n");
 	  This->gl_info.supported[EXT_TEXTURE_LOD] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_texture_lod_bias") == 0) {
-	  FIXME(" FOUND: EXT Texture LOD bias support\n");
+	  TRACE(" FOUND: EXT Texture LOD bias support\n");
 	  This->gl_info.supported[EXT_TEXTURE_LOD_BIAS] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_vertex_weighting") == 0) {
-	  FIXME(" FOUND: EXT Vertex weighting support\n");
+	  TRACE(" FOUND: EXT Vertex weighting support\n");
 	  This->gl_info.supported[EXT_VERTEX_WEIGHTING] = TRUE;
 
 	/**
 	 * NVIDIA 
 	 */
         } else if (strcmp(ThisExtn, "GL_NV_texture_env_combine4") == 0) {
-	  FIXME(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
+	  TRACE(" FOUND: NVIDIA (NV) Texture Env combine (4) support\n");
 	  This->gl_info.supported[NV_TEXTURE_ENV_COMBINE4] = TRUE;
 	} else if (strstr(ThisExtn, "GL_NV_fragment_program")) {
 	  This->gl_info.ps_nv_version = PS_VERSION_11;
-	  FIXME(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
+	  TRACE(" FOUND: NVIDIA (NV) Pixel Shader support - version=%02x\n", This->gl_info.ps_nv_version);
 	  This->gl_info.supported[NV_FRAGMENT_PROGRAM] = TRUE;
 	} else if (strstr(ThisExtn, "GL_NV_vertex_program")) {
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program1_1")) ? VS_VERSION_11 : VS_VERSION_10);
 	  This->gl_info.vs_nv_version = max(This->gl_info.vs_nv_version, (0 == strcmp(ThisExtn, "GL_NV_vertex_program2"))   ? VS_VERSION_20 : VS_VERSION_10);
-	  FIXME(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", This->gl_info.vs_nv_version);
+	  TRACE(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", This->gl_info.vs_nv_version);
 	  This->gl_info.supported[NV_VERTEX_PROGRAM] = TRUE;
 
 	/**
@@ -866,14 +866,14 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	 */
 	/** TODO */
         } else if (strcmp(ThisExtn, "GL_ATI_texture_env_combine3") == 0) {
-	  FIXME(" FOUND: ATI Texture Env combine (3) support\n");
+	  TRACE(" FOUND: ATI Texture Env combine (3) support\n");
 	  This->gl_info.supported[ATI_TEXTURE_ENV_COMBINE3] = TRUE;
         } else if (strcmp(ThisExtn, "GL_ATI_texture_mirror_once") == 0) {
-	  FIXME(" FOUND: ATI Texture Mirror Once support\n");
+	  TRACE(" FOUND: ATI Texture Mirror Once support\n");
 	  This->gl_info.supported[ATI_TEXTURE_MIRROR_ONCE] = TRUE;
 	} else if (strcmp(ThisExtn, "GL_EXT_vertex_shader") == 0) {
 	  This->gl_info.vs_ati_version = VS_VERSION_11;
-	  FIXME(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", This->gl_info.vs_ati_version);
+	  TRACE(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", This->gl_info.vs_ati_version);
 	  This->gl_info.supported[EXT_VERTEX_SHADER] = TRUE;
 	}
 
@@ -888,7 +888,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 
     if (display != NULL) {
         GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-        FIXME("GLX_Extensions reported:\n");  
+        TRACE("GLX_Extensions reported:\n");  
     
         if (NULL == GLX_Extensions) {
           ERR("   GLX_Extensions returns NULL\n");      
@@ -902,7 +902,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
               GLX_Extensions++;
             }
             memcpy(ThisExtn, Start, (GLX_Extensions - Start));
-            FIXME("- %s\n", ThisExtn);
+            TRACE("- %s\n", ThisExtn);
             if (*GLX_Extensions == ' ') GLX_Extensions++;
           }
         }
