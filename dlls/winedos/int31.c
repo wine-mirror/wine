@@ -916,7 +916,8 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
     case 0x000a:  /* Allocate selector alias */
         TRACE( "allocate selector alias (0x%04x)\n", BX_reg(context) );
-        if (!SET_AX( context, AllocCStoDSAlias16( BX_reg(context) )))
+        SET_AX( context, AllocCStoDSAlias16( BX_reg(context) ) );
+        if (!AX_reg(context))
         {
             SET_AX( context, 0x8011 );  /* descriptor unavailable */
             SET_CFLAG(context);
