@@ -107,11 +107,12 @@ void MAIN_EmulatorRun( void )
 
     /* Start message loop for desktop window */
 
-    while ( GetNumTasks16() > 1 && Callout.GetMessageA( &msg, 0, 0, 0 ) )
+    do
     {
+        if (!Callout.GetMessageA( &msg, 0, 0, 0 )) break;
         Callout.TranslateMessage( &msg );
         Callout.DispatchMessageA( &msg );
-    }
+    } while (GetNumTasks16() > 1);
 
     ExitProcess( 0 );
 }
@@ -156,7 +157,7 @@ int main( int argc, char *argv[] )
     if (!LoadLibraryA( "KERNEL32" )) return 1;
 
     /* Create initial task */
-    if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL32" ) )) ) return 1;
+    if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;
     if ( !TASK_Create( THREAD_Current(), pModule, 0, 0, FALSE ) ) return 1;
 
     /* Initialize CALL32 routines */
