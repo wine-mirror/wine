@@ -28,12 +28,13 @@
 #include <assert.h>
 #define START_TEST(name) main(int argc, char **argv)
 #define ok(condition, msg) assert(condition)
+#define todo_wine
 #endif
 
+#include <wtypes.h>
 #include <windef.h>
 #include <winbase.h>
 #include <winerror.h>
-#include <wtypes.h>
 
 #define PIPENAME "\\\\.\\PiPe\\tests_" __FILE__
 
@@ -70,6 +71,10 @@ void test_CreateNamedPipeA(void)
     ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
         "CreateNamedPipe should fail if name is NULL");
 
+    hFile = CreateFileA(PIPENAME, GENERIC_READ|GENERIC_WRITE, 0, 
+	NULL, OPEN_EXISTING, 0, 0);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND, "connecting to nonexistent named pipe should fail with ERROR_FILE_NOT_FOUND");
+
     /* Functional checks */
 
     hnp = CreateNamedPipeA(PIPENAME,
@@ -90,6 +95,8 @@ void test_CreateNamedPipeA(void)
 
     /* don't try to do i/o if one side couldn't be opened, as it hangs */
     if (hFile != INVALID_HANDLE_VALUE) {
+	HANDLE hFile2;
+
 	/* Make sure we can read and write a few bytes in both directions*/
 	memset(ibuf, 0, sizeof(ibuf));
 	ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile");
@@ -105,10 +112,42 @@ void test_CreateNamedPipeA(void)
 	ok(gelesen == sizeof(obuf), "read file len");
 	ok(memcmp(obuf, ibuf, written) == 0, "content check");
 
-	CloseHandle(hFile);
+	/* Picky conformance tests */
+
+	/* Verify that you can't connect to pipe again
+	 * until server calls DisconnectNamedPipe+ConnectNamedPipe
+	 * or creates a new pipe
+	 * case 1: other client not yet closed
+	 */
+	hFile2 = CreateFileA(PIPENAME, GENERIC_READ|GENERIC_WRITE, 0, 
+	    NULL, OPEN_EXISTING, 0, 0);
+	ok(hFile2 == INVALID_HANDLE_VALUE, "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail");
+	ok(GetLastError() == ERROR_PIPE_BUSY, "connecting to named pipe before other client closes should fail with ERROR_PIPE_BUSY");
+
+	ok(CloseHandle(hFile), "CloseHandle");
+
+	/* case 2: other client already closed */
+	hFile = CreateFileA(PIPENAME, GENERIC_READ|GENERIC_WRITE, 0, 
+	    NULL, OPEN_EXISTING, 0, 0);
+	ok(hFile == INVALID_HANDLE_VALUE, "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail");
+	ok(GetLastError() == ERROR_PIPE_BUSY, "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail with ERROR_PIPE_BUSY");
+
+	ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe");
+
+	/* case 3: server has called DisconnectNamedPipe but not ConnectNamed Pipe */
+	hFile = CreateFileA(PIPENAME, GENERIC_READ|GENERIC_WRITE, 0, 
+	    NULL, OPEN_EXISTING, 0, 0);
+	ok(hFile == INVALID_HANDLE_VALUE, "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail");
+	ok(GetLastError() == ERROR_PIPE_BUSY, "connecting to named pipe after other client closes but before ConnectNamedPipe should fail with ERROR_PIPE_BUSY");
+
+	/* to be complete, we'd call ConnectNamedPipe here and loop,
+	 * but by default that's blocking, so we'd either have
+	 * to turn on the uncommon nonblocking mode, or
+	 * use another thread.
+	 */
     }
 
-    CloseHandle(hnp);
+    ok(CloseHandle(hnp), "CloseHandle");
 }
 
 START_TEST(pipe)
