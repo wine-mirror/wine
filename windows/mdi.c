@@ -582,6 +582,14 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND hWndChild )
         }
     }
 
+    /* Don't activate if it is already active. Might happen 
+       since ShowWindow DOES activate MDI children */
+    if (clientInfo->hwndActiveChild == hWndChild)
+    {
+      retvalue = 0L;
+      goto END;
+    }
+
     TRACE("%04x\n", hWndChild);
 
     if( GetActiveWindow() == clientPtr->parent->hwndSelf )
@@ -606,7 +614,6 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND hWndChild )
       if( clientInfo->hwndChildMaximized != hWndChild ) {
         if( hWndChild ) {
 		  clientInfo->hwndActiveChild = hWndChild;
-		  clientInfo->hwndChildMaximized = hWndChild;
 		  ShowWindow( hWndChild, SW_SHOWMAXIMIZED);
 	} else
 		ShowWindow( clientInfo->hwndActiveChild, SW_SHOWNORMAL );
