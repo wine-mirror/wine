@@ -3845,9 +3845,83 @@ TOOLBAR_IsButtonPressed (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << TOOLBAR_LoadImages >> */
-/* << TOOLBAR_MapAccelerator >> */
-/* << TOOLBAR_MarkButton >> */
+static LRESULT
+TOOLBAR_LoadImages (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TBADDBITMAP tbab;
+    tbab.hInst = (HINSTANCE)lParam;
+    tbab.nID = (UINT_PTR)wParam;
+
+    TRACE("hwnd = %p, hInst = %p, nID = %u\n", hwnd, tbab.hInst, tbab.nID);
+
+    return TOOLBAR_AddBitmap(hwnd, 0, (LPARAM)&tbab);
+}
+
+
+static LRESULT
+TOOLBAR_MapAccelerator (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    WCHAR wAccel = (WCHAR)wParam;
+    UINT* pIDButton = (UINT*)lParam;
+    WCHAR wszAccel[] = {'&',wAccel,0};
+    int i;
+    
+    TRACE("hwnd = %p, wAccel = %x(%s), pIDButton = %p\n",
+        hwnd, wAccel, debugstr_wn(&wAccel,1), pIDButton);
+    
+    for (i = 0; i < infoPtr->nNumButtons; i++)
+    {
+        TBUTTON_INFO *btnPtr = infoPtr->buttons+i;
+        if (!(btnPtr->fsStyle & BTNS_NOPREFIX) &&
+            !(btnPtr->fsState & TBSTATE_HIDDEN))
+        {
+            int iLen = strlenW(wszAccel);
+            LPCWSTR lpszStr = TOOLBAR_GetText(infoPtr, btnPtr);
+            
+            if (!lpszStr)
+                continue;
+
+            while (*lpszStr)
+            {
+                if ((lpszStr[0] == '&') && (lpszStr[1] == '&'))
+                {
+                    lpszStr += 2;
+                    continue;
+                }
+                if (!strncmpiW(lpszStr, wszAccel, iLen))
+                {
+                    *pIDButton = btnPtr->idCommand;
+                    return TRUE;
+                }
+                lpszStr++;
+            }
+        }
+    }
+    return FALSE;
+}
+
+
+static LRESULT
+TOOLBAR_MarkButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    INT nIndex;
+
+    TRACE("hwnd = %p, wParam = %d, lParam = 0x%08lx\n", hwnd, wParam, lParam);
+
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
+    if (nIndex == -1)
+        return FALSE;
+
+    if (LOWORD(lParam))
+        infoPtr->buttons[nIndex].fsState |= TBSTATE_MARKED;
+    else
+        infoPtr->buttons[nIndex].fsState &= ~TBSTATE_MARKED;
+
+    return TRUE;
+}
+
 /* << TOOLBAR_MoveButton >> */
 
 
@@ -4708,9 +4782,12 @@ TOOLBAR_GetStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return ret;
 }
 
+/* UNDOCUMENTED MESSAGE: This appears to set some kind of size. Perhaps it
+ * is the maximum size of the toolbar? */
 static LRESULT TOOLBAR_Unkwn45D(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    FIXME("hwnd=%p wParam %08x lParam %08lx stub!\n", hwnd, wParam, lParam);
+    SIZE * pSize = (SIZE*)lParam;
+    FIXME("hwnd=%p, wParam=0x%08x, size.cx=%ld, size.cy=%ld stub!\n", hwnd, wParam, pSize->cx, pSize->cy);
     return 0;
 }
 
@@ -4766,11 +4843,23 @@ TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return (LRESULT)nOldHotItem;
 }
 
+/* UNDOCUMENTED MESSAGE: This sets the toolbar global iListGap parameter
+ * which controls the amount of spacing between the image and the text
+ * of buttons for TBSTYLE_LIST toolbars. */
 static LRESULT TOOLBAR_Unkwn460(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    FIXME("hwnd=%p wParam %08x lParam %08lx\n", hwnd, wParam, lParam);
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
 
+    TRACE("hwnd=%p iListGap=%d\n", hwnd, wParam);
+    
+    if (lParam != 0)
+        FIXME("lParam = 0x%08lx. Please report\n", lParam);
+    
+    infoPtr->iListGap = (INT)wParam;
+
+    TOOLBAR_CalcToolbar(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
+
     return 0;
 }
 
@@ -6034,13 +6123,16 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_ISBUTTONPRESSED:
 	    return TOOLBAR_IsButtonPressed (hwnd, wParam, lParam);
 
-	case TB_LOADIMAGES:			   /* 4.70 */
-	    FIXME("missing standard imagelists\n");
-	    return 0;
+	case TB_LOADIMAGES:
+	    return TOOLBAR_LoadImages (hwnd, wParam, lParam);
 
-/*	case TB_MAPACCELERATORA:		*/ /* 4.71 */
-/*	case TB_MAPACCELERATORW:		*/ /* 4.71 */
-/*	case TB_MARKBUTTON:			*/ /* 4.71 */
+	case TB_MAPACCELERATORA:
+	case TB_MAPACCELERATORW:
+	    return TOOLBAR_MapAccelerator (hwnd, wParam, lParam);
+
+	case TB_MARKBUTTON:
+	    return TOOLBAR_MarkButton (hwnd, wParam, lParam);
+
 /*	case TB_MOVEBUTTON:			*/ /* 4.71 */
 
 	case TB_PRESSBUTTON:
