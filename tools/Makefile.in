@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__ -DNO_LIBWINE -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\""
+DEFS      = -DNO_LIBWINE -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -47,7 +47,7 @@ bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o
 
 mingwrap: mingwrap.o
-	$(CC) $(CFLAGS) -DINCLUDEDIR="$(includedir)" -o mingwrap mingwrap.o
+	$(CC) $(CFLAGS) -o mingwrap mingwrap.o
 
 install::
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
