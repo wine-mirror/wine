@@ -318,6 +318,70 @@ void SYSDEPS_AbortThread( int status )
 }
 
 
+/* default errno before threading is initialized */
+static int *default_errno_location(void)
+{
+    static int errno;
+    return &errno;
+}
+
+/* default h_errno before threading is initialized */
+static int *default_h_errno_location(void)
+{
+    static int h_errno;
+    return &h_errno;
+}
+
+/* errno once threading is working */
+static int *thread_errno_location(void)
+{
+    return &NtCurrentTeb()->thread_errno;
+}
+
+/* h_errno once threading is working */
+static int *thread_h_errno_location(void)
+{
+    return &NtCurrentTeb()->thread_h_errno;
+}
+
+static int* (*errno_location_ptr)(void) = default_errno_location;
+static int* (*h_errno_location_ptr)(void) = default_h_errno_location;
+
+/***********************************************************************
+ *           __errno_location/__error/___errno
+ *
+ * Get the per-thread errno location.
+ */
+#ifdef ERRNO_LOCATION
+int *ERRNO_LOCATION(void)
+{
+    return errno_location_ptr();
+}
+#endif /* ERRNO_LOCATION */
+
+/***********************************************************************
+ *           __h_errno_location
+ *
+ * Get the per-thread h_errno location.
+ */
+int *__h_errno_location(void)
+{
+    return h_errno_location_ptr();
+}
+
+
+/***********************************************************************
+ *           SYSDEPS_InitErrno
+ *
+ * Initialize errno handling.
+ */
+void SYSDEPS_InitErrno(void)
+{
+    errno_location_ptr = thread_errno_location;
+    h_errno_location_ptr = thread_h_errno_location;
+}
+
+
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
  *

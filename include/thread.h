@@ -147,6 +147,7 @@ extern TEB *THREAD_IdToTEB( DWORD id );
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( TEB *teb );
 extern void SYSDEPS_SetCurThread( TEB *teb );
+extern void SYSDEPS_InitErrno(void);
 extern void DECLSPEC_NORETURN SYSDEPS_ExitThread( int status );
 extern void DECLSPEC_NORETURN SYSDEPS_AbortThread( int status );
 extern void DECLSPEC_NORETURN SYSDEPS_SwitchToThreadStack( void (*func)(void) );
