@@ -109,8 +109,6 @@ typedef struct
 #define CB_HWND( lphc )       ((lphc)->self->hwndSelf)
 
 extern BOOL COMBO_FlipListbox( LPHEADCOMBO, BOOL, BOOL );
-extern LRESULT COMBO_Directory( LPHEADCOMBO, UINT, LPSTR, BOOL );
-
 
 /* Dialog info structure.
  * This structure is stored into the window extra bytes (cbWndExtra).

@@ -2005,7 +2005,7 @@ static LRESULT ComboWndProc_locked( WND* pWnd, UINT message,
 		if ((wParam == VK_RETURN || wParam == VK_ESCAPE) &&
 		     (lphc->wState & CBF_DROPPED))
 		{
-		   CBRollUp( lphc, (CHAR)wParam == VK_RETURN, FALSE );
+		   CBRollUp( lphc, wParam == VK_RETURN, FALSE );
 		   return TRUE;
 		}
 
@@ -2136,25 +2136,13 @@ static LRESULT ComboWndProc_locked( WND* pWnd, UINT message,
 		return  (lphc->wState & CBF_DROPPED) ? TRUE : FALSE;
 	case CB_DIR16: 
                 lParam = (LPARAM)MapSL(lParam);
+		message = LB_DIR16;
                 /* fall through */
 	case CB_DIR:
-	{
-		LRESULT res;
-		LPSTR dir; /* temporary, until listbox is unicoded */
-		if(unicode)
-		{
-		    LPWSTR textW = (LPWSTR)lParam;
-		    INT countA = WideCharToMultiByte(CP_ACP, 0, textW, -1, NULL, 0, NULL, NULL);
-		    dir = HeapAlloc(GetProcessHeap(), 0, countA);
-		    WideCharToMultiByte(CP_ACP, 0, textW, -1, dir, countA, NULL, NULL);
-		}
-		else
-		    dir = (LPSTR)lParam;
-		res = COMBO_Directory(lphc, (UINT)wParam, dir, (message == CB_DIR));
-		if(unicode)
-		    HeapFree(GetProcessHeap(), 0, dir);
-		return res;
-	}
+		if(message == CB_DIR) message = LB_DIR;
+		return unicode ? SendMessageW(lphc->hWndLBox, message, wParam, lParam) :
+				 SendMessageA(lphc->hWndLBox, message, wParam, lParam);
+
 	case CB_SHOWDROPDOWN16:
 	case CB_SHOWDROPDOWN:
 		if( CB_GETTYPE(lphc) != CBS_SIMPLE )
