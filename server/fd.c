@@ -242,17 +242,6 @@ void add_timeout( struct timeval *when, int timeout )
     }
 }
 
-/* handle the next expired timeout */
-inline static void handle_timeout(void)
-{
-    struct timeout_user *user = timeout_head;
-    timeout_head = user->next;
-    if (user->next) user->next->prev = user->prev;
-    else timeout_tail = user->prev;
-    user->callback( user->private );
-    free( user );
-}
-
 
 /****************************************************************/
 /* poll support */
@@ -327,20 +316,46 @@ void main_loop(void)
         long diff = -1;
         if (timeout_head)
         {
+            struct timeout_user *first = timeout_head;
             struct timeval now;
             gettimeofday( &now, NULL );
-            while (timeout_head)
+
+            /* first remove all expired timers from the list */
+
+            while (timeout_head && !time_before( &now, &timeout_head->when ))
+                timeout_head = timeout_head->next;
+
+            if (timeout_head)
             {
-                if (!time_before( &now, &timeout_head->when )) handle_timeout();
-                else
+                if (timeout_head->prev)
                 {
-                    diff = (timeout_head->when.tv_sec - now.tv_sec) * 1000
-                            + (timeout_head->when.tv_usec - now.tv_usec) / 1000;
-                    break;
+                    timeout_head->prev->next = NULL;
+                    timeout_head->prev = NULL;
                 }
+                else first = NULL;  /* no timer removed */
             }
+            else timeout_tail = NULL;  /* all timers removed */
+
+            /* now call the callback for all the removed timers */
+
+            while (first)
+            {
+                struct timeout_user *next = first->next;
+                first->callback( first->private );
+                free( first );
+                first = next;
+            }
+
             if (!active_users) break;  /* last user removed by a timeout */
+
+            if (timeout_head)
+            {
+                diff = (timeout_head->when.tv_sec - now.tv_sec) * 1000
+                     + (timeout_head->when.tv_usec - now.tv_usec) / 1000;
+                if (diff < 0) diff = 0;
+            }
         }
+
         ret = poll( pollfd, nb_users, diff );
         if (ret > 0)
         {
