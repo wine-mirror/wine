@@ -25,6 +25,7 @@
 #include "windowsx.h"
 #include "mmsystem.h"
 #include "vfw.h"
+#include "msacm.h"
 
 #include "avifile_private.h"
 #include "extrachunk.h"
@@ -285,11 +286,15 @@ static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile *iface, LPAVIFILEINFOW afi,
   This->fInfo.dwFlags = 0;
   This->fInfo.dwCaps  = AVIFILECAPS_CANREAD|AVIFILECAPS_CANWRITE;
   if (This->lpFormat != NULL) {
+    assert(This->sInfo.dwScale != 0);
+
     This->fInfo.dwStreams             = 1;
     This->fInfo.dwScale               = This->sInfo.dwScale;
     This->fInfo.dwRate                = This->sInfo.dwRate;
     This->fInfo.dwLength              = This->sInfo.dwLength;
     This->fInfo.dwSuggestedBufferSize = This->ckData.cksize;
+    This->fInfo.dwMaxBytesPerSec =
+      MulDiv(This->sInfo.dwSampleSize,This->sInfo.dwRate,This->sInfo.dwScale);
   }
 
   memcpy(afi, &This->fInfo, min(size, sizeof(This->fInfo)));
@@ -1000,6 +1005,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   This->fDirty = FALSE;
 
   /* search for RIFF chunk */
+  ckRIFF.fccType = 0; /* find any */
   if (mmioDescend(This->hmmio, &ckRIFF, NULL, MMIO_FINDRIFF) != S_OK) {
     return AVIFILE_LoadSunFile(This);
   }
@@ -1010,7 +1016,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   /* search WAVE format chunk */
   ck.ckid = ckidWAVEFORMAT;
   if (FindChunkAndKeepExtras(&This->extra, This->hmmio, &ck,
-			     &ckRIFF, MMIO_FINDCHUNK != S_OK))
+			     &ckRIFF, MMIO_FINDCHUNK) != S_OK)
     return AVIERR_FILEREAD;
 
   /* get memory for format and read it */
@@ -1024,14 +1030,9 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
     return AVIERR_FILEREAD;
 
-  /* non-pcm formats have a fact chunk */
-  if (This->lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
-    ck.ckid = ckidWAVEFACT;
-    if (mmioDescend(This->hmmio, &ck, NULL, MMIO_FINDCHUNK) != S_OK) {
-      /* FIXME: if codec is installed could ask him */
-      return AVIERR_BADFORMAT;
-    }
-  }
+  /* Non-pcm formats have a fact chunk.
+   * We don't need it, so simply add it to the extra chunks.
+   */
 
   /* find the big data chunk */
   This->ckData.ckid = ckidWAVEDATA;
@@ -1046,6 +1047,8 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
     This->sInfo.dwScale    = This->lpFormat->nBlockAlign;
   This->sInfo.dwLength     = This->ckData.cksize / This->lpFormat->nBlockAlign;
   This->sInfo.dwSuggestedBufferSize = This->ckData.cksize;
+
+  This->fInfo.dwStreams = 1;
 
   if (mmioAscend(This->hmmio, &This->ckData, 0) != S_OK) {
     /* seems to be truncated */
@@ -1064,12 +1067,109 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 
 static HRESULT AVIFILE_LoadSunFile(IAVIFileImpl *This)
 {
-  FIXME(": pherhpas sun-audio file -- not implemented !\n");
+  FIXME(": pherhaps sun-audio file -- not implemented !\n");
 
   return AVIERR_UNSUPPORTED;
 }
 
 static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
 {
-  return AVIERR_UNSUPPORTED;
+  MMCKINFO ckRIFF;
+  MMCKINFO ck;
+
+  mmioSeek(This->hmmio, 0, SEEK_SET);
+
+  /* create the RIFF chunk with formtype WAVE */
+  ckRIFF.fccType = formtypeWAVE;
+  ckRIFF.cksize  = 0;
+  if (mmioCreateChunk(This->hmmio, &ckRIFF, MMIO_CREATERIFF) != S_OK)
+    return AVIERR_FILEWRITE;
+
+  /* the next chunk is the format */
+  ck.ckid   = ckidWAVEFORMAT;
+  ck.cksize = This->cbFormat;
+  if (mmioCreateChunk(This->hmmio, &ck, 0) != S_OK)
+    return AVIERR_FILEWRITE;
+  if (This->lpFormat != NULL && This->cbFormat > 0) {
+    if (mmioWrite(This->hmmio, (HPSTR)This->lpFormat, ck.cksize) != ck.cksize)
+      return AVIERR_FILEWRITE;
+  }
+  if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
+    return AVIERR_FILEWRITE;
+
+  /* fact chunk is needed for non-pcm waveforms */
+  if (This->lpFormat != NULL && This->cbFormat > sizeof(PCMWAVEFORMAT) &&
+      This->lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
+    WAVEFORMATEX wfx;
+    DWORD        dwFactLength;
+    HACMSTREAM   has;
+
+    /* try to open an appropriate audio codec to figure out
+     * data for fact-chunk */
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    if (acmFormatSuggest((HACMDRIVER)NULL, This->lpFormat, &wfx,
+			 sizeof(wfx), ACM_FORMATSUGGESTF_WFORMATTAG)) {
+      acmStreamOpen(&has, (HACMDRIVER)NULL, This->lpFormat, &wfx, NULL,
+		    0, 0, ACM_STREAMOPENF_NONREALTIME);
+      acmStreamSize(has, This->ckData.cksize, &dwFactLength,
+		    ACM_STREAMSIZEF_SOURCE);
+      dwFactLength /= wfx.nBlockAlign;
+      acmStreamClose(has, 0);
+
+      /* crete the fact chunk */
+      ck.ckid   = ckidWAVEFACT;
+      ck.cksize = sizeof(dwFactLength);
+
+      /* test for enough space before data chunk */
+      if (mmioSeek(This->hmmio, 0, SEEK_CUR) > This->ckData.dwDataOffset
+	  - ck.cksize - 4 * sizeof(DWORD))
+	return AVIERR_FILEWRITE;
+      if (mmioCreateChunk(This->hmmio, &ck, 0) != S_OK)
+	return AVIERR_FILEWRITE;
+      if (mmioWrite(This->hmmio, (HPSTR)&dwFactLength, ck.cksize) != ck.cksize)
+	return AVIERR_FILEWRITE;
+      if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
+	return AVIERR_FILEWRITE;
+    } else
+      ERR(": fact chunk is needed for non-pcm files -- currently no codec found, so skipped!\n");
+  }
+
+  /* if here was extra stuff, we need to fill it with JUNK */
+  if (mmioSeek(This->hmmio, 0, SEEK_CUR) + 2 * sizeof(DWORD) < This->ckData.dwDataOffset) {
+    ck.ckid   = ckidAVIPADDING;
+    ck.cksize = 0;
+    if (mmioCreateChunk(This->hmmio, &ck, 0) != S_OK)
+      return AVIERR_FILEWRITE;
+
+    if (mmioSeek(This->hmmio, This->ckData.dwDataOffset
+		 - 2 * sizeof(DWORD), SEEK_SET) == -1)
+      return AVIERR_FILEWRITE;
+    if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
+      return AVIERR_FILEWRITE;
+  }
+
+  /* crete the data chunk */
+  ck.ckid   = ckidWAVEDATA;
+  ck.cksize = This->ckData.cksize;
+  if (mmioCreateChunk(This->hmmio, &ck, 0) != S_OK)
+    return AVIERR_FILEWRITE;
+  if (mmioSeek(This->hmmio, This->ckData.cksize, SEEK_CUR) == -1)
+    return AVIERR_FILEWRITE;
+  if (mmioAscend(This->hmmio, &ck, 0) != S_OK)
+    return AVIERR_FILEWRITE;
+
+  /* some optional extra chunks? */
+  if (This->extra.lp != NULL && This->extra.cb > 0) {
+    /* chunk headers are already in structure */
+    if (mmioWrite(This->hmmio, This->extra.lp, This->extra.cb) != This->extra.cb)
+      return AVIERR_FILEWRITE;
+  }
+
+  /* close RIFF chunk */
+  if (mmioAscend(This->hmmio, &ckRIFF, 0) != S_OK)
+    return AVIERR_FILEWRITE;
+  if (mmioFlush(This->hmmio, 0) != S_OK)
+    return AVIERR_FILEWRITE;
+
+  return AVIERR_OK;
 }
