@@ -321,7 +321,7 @@ static void EMS_restore_context( CONTEXT86 *context )
 }
 
 /**********************************************************************
- *          DOSVM_Int67Handler
+ *          DOSVM_Int67Handler (WINEDOS16.203)
  *
  * Handler for interrupt 67h EMS routines.
  */

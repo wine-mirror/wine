@@ -24,7 +24,7 @@
 #include "miscemu.h"
 
 /**********************************************************************
- *	    DOSVM_Int20Handler
+ *	    DOSVM_Int20Handler (WINEDOS16.132)
  *
  * Handler for int 20h.
  */

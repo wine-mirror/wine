@@ -50,6 +50,7 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
 
 /**********************************************************************
  *	    DOSVM_Int10Handler (WPROCS.116)
+ *	    DOSVM_Int10Handler (WINEDOS16.116)
  *
  * Handler for int 10h (video).
  *
@@ -332,6 +333,8 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
         break;
     }
 }
+
+/**********************************************************************/
 
 void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 {

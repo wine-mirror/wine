@@ -42,7 +42,7 @@ static struct
 } mouse_info;
 
 /**********************************************************************
- *	    DOSVM_Int33Handler
+ *	    DOSVM_Int33Handler (WINEDOS16.151)
  *
  * Handler for int 33h (MS MOUSE).
  */

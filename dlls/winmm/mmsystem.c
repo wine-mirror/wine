@@ -2096,7 +2096,7 @@ HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl)
 }
 
 /**************************************************************************
- * 			        WINE_mmThreadEntryPoint (MMSYSTEM.2047)
+ * 			        __wine_mmThreadEntryPoint (MMSYSTEM.2047)
  */
 void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 {

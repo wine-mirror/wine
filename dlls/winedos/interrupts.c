@@ -24,7 +24,31 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-/*
+/***********************************************************************
+ *		DOSVM_Int11Handler (WINEDOS16.117)
+ *		DOSVM_Int12Handler (WINEDOS16.118)
+ *		DOSVM_Int13Handler (WINEDOS16.119)
+ *		DOSVM_Int15Handler (WINEDOS16.121)
+ *		DOSVM_Int1aHandler (WINEDOS16.126)
+ *		DOSVM_Int25Handler (WINEDOS16.137)
+ *		DOSVM_Int26Handler (WINEDOS16.138)
+ *		DOSVM_Int2aHandler (WINEDOS16.142)
+ *		DOSVM_Int2fHandler (WINEDOS16.147)
+ *		DOSVM_Int34Handler (WINEDOS16.152)
+ *		DOSVM_Int35Handler (WINEDOS16.153)
+ *		DOSVM_Int36Handler (WINEDOS16.154)
+ *		DOSVM_Int37Handler (WINEDOS16.155)
+ *		DOSVM_Int38Handler (WINEDOS16.156)
+ *		DOSVM_Int39Handler (WINEDOS16.157)
+ *		DOSVM_Int3aHandler (WINEDOS16.158)
+ *		DOSVM_Int3bHandler (WINEDOS16.159)
+ *		DOSVM_Int3cHandler (WINEDOS16.160)
+ *		DOSVM_Int3dHandler (WINEDOS16.161)
+ *		DOSVM_Int3eHandler (WINEDOS16.162)
+ *		DOSVM_Int41Handler (WINEDOS16.165)
+ *		DOSVM_Int4bHandler (WINEDOS16.175)
+ *		DOSVM_Int5cHandler (WINEDOS16.192)
+ *
  * FIXME: Interrupt handlers for interrupts implemented in other DLLs.
  *        These functions should be removed when the interrupt handlers have
  *        been moved to winedos.
@@ -89,7 +113,7 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
 #define FIRST_INTERRUPT 100
 
 /**********************************************************************
- *         DOSVM_DefaultHandler
+ *         DOSVM_DefaultHandler (WINEDOS16.356)
  *
  * Default interrupt handler. This will be used to emulate all
  * interrupts that don't have their own interrupt handler.

@@ -28,7 +28,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
- *          DOSVM_Int17Handler
+ *          DOSVM_Int17Handler (WINEDOS16.123)
  *
  * Handler for int 17h (printer - output character).
  */

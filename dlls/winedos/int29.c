@@ -26,7 +26,7 @@
 #include "dosexe.h"
 
 /**********************************************************************
- *	    DOSVM_Int29Handler
+ *	    DOSVM_Int29Handler (WINEDOS16.141)
  *
  * Handler for int 29h (fast console output)
  */

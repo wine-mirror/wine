@@ -70,7 +70,7 @@ void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           DOSVM_Int21Handler
+ *           DOSVM_Int21Handler (WINEDOS16.133)
  *
  * int 21h handler. Most calls are passed directly to DOS3Call.
  */
