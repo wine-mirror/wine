@@ -834,9 +834,11 @@ static void test_Environment(void)
     char                buffer[MAX_PATH];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
-    char                child_env[4096];
+    char*               child_env;
+    int                 child_env_len;
     char*               ptr;
     char*               env;
+    int                 slen;
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -864,6 +866,19 @@ static void test_Environment(void)
     /* the basics */
     get_file_name(resfile);
     sprintf(buffer, "%s tests/process.c %s", selfname, resfile);
+    
+    child_env_len = 0;
+    ptr = GetEnvironmentStringsA();
+    while(*ptr)
+    {
+        slen = strlen(ptr)+1;
+        child_env_len += slen;
+        ptr += slen;
+    }
+    /* Add space for additional environment variables */
+    child_env_len += 256;
+    child_env = HeapAlloc(GetProcessHeap(), 0, child_env_len);
+    
     ptr = child_env;
     sprintf(ptr, "=%c:=%s", 'C', "C:\\FOO\\BAR");
     ptr += strlen(ptr) + 1;
@@ -897,6 +912,7 @@ static void test_Environment(void)
     
     cmpEnvironment(child_env);
 
+    HeapFree(GetProcessHeap(), 0, child_env);
     release_memory();
     assert(DeleteFileA(resfile) != 0);
 }
