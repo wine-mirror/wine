@@ -30,8 +30,6 @@ interface IWinTypes
 
 cpp_quote("#include \"basetsd.h\"")
 cpp_quote("#include \"guiddef.h\"")
-cpp_quote("#include \"rpc.h\"")
-cpp_quote("#include \"rpcndr.h\"")
 
 /* from Wine's pre-WIDL wtypes.h */
 /* FIXME: does not belong here */
