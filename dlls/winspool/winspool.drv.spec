@@ -56,8 +56,8 @@
 @ stdcall DocumentPropertiesA(long long ptr ptr ptr long) DocumentPropertiesA
 @ stdcall DocumentPropertiesW(long long ptr ptr ptr long) DocumentPropertiesW
 @ stub EXTDEVICEMODE
-@ stub EndDocPrinter
-@ stub EndPagePrinter
+@ stdcall EndDocPrinter(long) EndDocPrinter
+@ stdcall EndPagePrinter(long) EndPagePrinter
 @ stub EnumFormsA
 @ stub EnumFormsW
 @ stdcall EnumJobsA(long long long long ptr long ptr ptr) EnumJobsA
@@ -127,8 +127,8 @@
 @ stub SpoolerInit
 @ stub StartDocDlgA
 @ stub StartDocDlgW
-@ stub StartDocPrinterA
-@ stub StartDocPrinterW
-@ stub StartPagePrinter
+@ stdcall StartDocPrinterA(long long ptr) StartDocPrinterA
+@ stdcall StartDocPrinterW(long long ptr) StartDocPrinterW
+@ stdcall StartPagePrinter(long) StartPagePrinter
 @ stub WaitForPrinterChange
 @ stdcall WritePrinter(long ptr long ptr) WritePrinter

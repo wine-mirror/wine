@@ -1274,6 +1274,51 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
 }
 
 /*****************************************************************************
+ *          EndDocPrinter  [WINSPOOL.@]
+ */
+BOOL WINAPI EndDocPrinter(HANDLE hPrinter)
+{
+    FIXME("(hPrinter=%p): stub\n", hPrinter);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          EndPagePrinter  [WINSPOOL.@]
+ */
+BOOL WINAPI EndPagePrinter(HANDLE hPrinter)
+{
+    FIXME("(hPrinter=%p): stub\n", hPrinter);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          StartDocPrinterA  [WINSPOOL.@]
+ */
+DWORD WINAPI StartDocPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
+{
+    FIXME("(hPrinter=%p, Level=0x%lx, pDocInfo=%p): stub\n", hPrinter, Level, pDocInfo);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          StartDocPrinterW  [WINSPOOL.@]
+ */
+DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
+{
+    FIXME("(hPrinter=%p, Level=0x%lx, pDocInfo=%p): stub\n", hPrinter, Level, pDocInfo);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          StartPagePrinter  [WINSPOOL.@]
+ */
+BOOL WINAPI StartPagePrinter(HANDLE hPrinter)
+{
+    FIXME("(hPrinter=%p): stub\n", hPrinter);
+    return FALSE;
+}
+
+/*****************************************************************************
  *          GetFormA  [WINSPOOL.@]
  */
 BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
