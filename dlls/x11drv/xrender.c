@@ -1651,7 +1651,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 #endif
     pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
                       xSrc, ySrc, 0, 0,
-                      xDst + devDst->org.x, yDst + devDst->org.y, widthSrc, heightSrc);
+                      xDst + devDst->org.x, yDst + devDst->org.y, widthDst, heightDst);
 
 
     pXRenderFreePicture(gdi_display, src_pict);
