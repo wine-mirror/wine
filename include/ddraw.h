@@ -1843,10 +1843,10 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
     ICOM_METHOD2(HRESULT,GetOverlayPosition,    LPLONG,lplX, LPLONG,lplY) \
     ICOM_METHOD1(HRESULT,GetPalette,            LPDIRECTDRAWPALETTE*,lplpDDPalette) \
     ICOM_METHOD1(HRESULT,GetPixelFormat,        LPDDPIXELFORMAT,lpDDPixelFormat) \
-    ICOM_METHOD1(HRESULT,GetSurfaceDesc,        LPDDSURFACEDESC,lpDDSurfaceDesc) \
-    ICOM_METHOD2(HRESULT,Initialize,            LPDIRECTDRAW,lpDD, LPDDSURFACEDESC,lpDDSurfaceDesc) \
+    ICOM_METHOD1(HRESULT,GetSurfaceDesc,        LPDDSURFACEDESC2,lpDDSurfaceDesc) \
+    ICOM_METHOD2(HRESULT,Initialize,            LPDIRECTDRAW,lpDD, LPDDSURFACEDESC2,lpDDSurfaceDesc) \
     ICOM_METHOD (HRESULT,IsLost) \
-    ICOM_METHOD4(HRESULT,Lock,                  LPRECT,lpDestRect, LPDDSURFACEDESC,lpDDSurfaceDesc, DWORD,dwFlags, HANDLE,hEvent) \
+    ICOM_METHOD4(HRESULT,Lock,                  LPRECT,lpDestRect, LPDDSURFACEDESC2,lpDDSurfaceDesc, DWORD,dwFlags, HANDLE,hEvent) \
     ICOM_METHOD1(HRESULT,ReleaseDC,             HDC,hDC) \
     ICOM_METHOD (HRESULT,Restore) \
     ICOM_METHOD1(HRESULT,SetClipper,            LPDIRECTDRAWCLIPPER,lpDDClipper) \
@@ -1862,7 +1862,7 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
     ICOM_METHOD1(HRESULT,PageLock,       DWORD,dwFlags) \
     ICOM_METHOD1(HRESULT,PageUnlock,     DWORD,dwFlags) \
     /* added in v3 */ \
-    ICOM_METHOD2(HRESULT,SetSurfaceDesc, LPDDSURFACEDESC,lpDDSD, DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,SetSurfaceDesc, LPDDSURFACEDESC2,lpDDSD, DWORD,dwFlags) \
     /* added in v4 */ \
     ICOM_METHOD4(HRESULT,SetPrivateData,       REFGUID,, LPVOID,, DWORD,, DWORD,) \
     ICOM_METHOD3(HRESULT,GetPrivateData,       REFGUID,, LPVOID,, LPDWORD,) \
