@@ -609,6 +609,9 @@ FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
     return 0;
 }
 
+/**************************************************************************
+ *                  CreateMRUListLazyA [COMCTL32.157]
+ */
 HANDLE WINAPI
 CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 {

@@ -392,7 +392,7 @@ INT WINAPI RtlExtendedLargeIntegerDivide(
 }
 
 /******************************************************************************
- * RtlExtendedLargeIntegerMultiply [NTDLL.359]
+ * RtlExtendedIntegerMultiply [NTDLL.359]
  * Note: This even works, since gcc returns 64bit values in eax/edx just like
  * the caller expects. However... The relay code won't grok this I think.
  */

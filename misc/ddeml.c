@@ -1064,7 +1064,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
  *  1.0      March 1999 K Matthews		stub only
  */
 
-DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, int codepage)
+DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, INT16 codepage)
 {
 	FIXME("(%ld, 0x%lx, %p, %ld, %d): stub \n", 
          idInst,
@@ -2051,7 +2051,7 @@ UINT WINAPI DdeGetLastError( DWORD idInst )
 /*****************************************************************
  *            DdeCmpStringHandles16 (DDEML.36)
  */
-int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
+INT16 WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
 {
      return DdeCmpStringHandles(hsz1, hsz2);
 }
@@ -2067,7 +2067,7 @@ int WINAPI DdeCmpStringHandles16( HSZ hsz1, HSZ hsz2 )
  * 0  The values of hsz 1 and 2 are the same or both zero.
  * 1  The value of hsz2 is zero of less than hsz1
  */
-int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
+INT WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
 {
     CHAR psz1[MAX_BUFFER_LEN];
     CHAR psz2[MAX_BUFFER_LEN];

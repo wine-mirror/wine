@@ -24,7 +24,7 @@
 DEFAULT_DEBUG_CHANNEL(shell);
 
 /*************************************************************************
- * ParseField					[SHELL32.58]
+ * ParseFieldA					[SHELL32.58]
  *
  * copys a field from a ',' delimited string
  * 
@@ -885,8 +885,11 @@ HRESULT WINAPI SHRegQueryValueExW (HKEY hkey, LPWSTR pszValue, LPDWORD pdwReserv
 	return ret;
 }
 
- /* SHGetValue: Gets a value from the registry */
-
+/*************************************************************************
+ * SHGetValueA
+ *
+ * Gets a value from the registry
+ */
 DWORD WINAPI SHGetValueA(
     HKEY     hkey,
     LPCSTR   pSubKey,
@@ -901,6 +904,11 @@ DWORD WINAPI SHGetValueA(
 	return ERROR_SUCCESS;  /* return success */
 }
 
+/*************************************************************************
+ * SHGetValueW
+ *
+ * Gets a value from the registry
+ */
 DWORD WINAPI SHGetValueW(
     HKEY     hkey,
     LPCWSTR  pSubKey,
@@ -915,8 +923,11 @@ DWORD WINAPI SHGetValueW(
 	return ERROR_SUCCESS;  /* return success */
 }
 
-/* gets a user-specific registry value. */
-
+/*************************************************************************
+ * SHRegGetUSValueA
+ *
+ * Gets a user-specific registry value
+ */
 LONG WINAPI SHRegGetUSValueA(
     LPCSTR   pSubKey,
     LPCSTR   pValue,
@@ -933,6 +944,11 @@ LONG WINAPI SHRegGetUSValueA(
 	return ERROR_SUCCESS;  /* return success */
 }
 
+/*************************************************************************
+ * SHRegGetUSValueW
+ *
+ * Gets a user-specific registry value
+ */
 LONG WINAPI SHRegGetUSValueW(
     LPCWSTR  pSubKey,
     LPCWSTR  pValue,
@@ -998,8 +1014,9 @@ HRESULT WINAPI IsUserAdmin(void)
 {	FIXME("stub\n");
 	return TRUE;
 }
+
 /*************************************************************************
- * StrRetToStrN					[SHELL32.96]
+ * StrRetToBufA					[SHLWAPI.@]
  * 
  * converts a STRRET to a normal string
  *
@@ -1011,6 +1028,27 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest, DWORD 
 	return StrRetToStrNA(dest, len, src, pidl);
 }
 
+/*************************************************************************
+ * StrRetToBufW					[SHLWAPI.@]
+ * 
+ * converts a STRRET to a normal string
+ *
+ * NOTES
+ *  the pidl is for STRRET OFFSET
+ */
+HRESULT WINAPI StrRetToBufW (LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest, DWORD len)
+{
+	return StrRetToStrNW(dest, len, src, pidl);
+}
+
+/*************************************************************************
+ * StrRetToStrN					[SHELL32.96]
+ * 
+ * converts a STRRET to a normal string
+ *
+ * NOTES
+ *  the pidl is for STRRET OFFSET
+ */
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
 {
 	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
@@ -1039,11 +1077,6 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST
 	    return(FALSE);
 	}
 	return S_OK;
-}
-
-HRESULT WINAPI StrRetToBufW (LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest, DWORD len)
-{
-	return StrRetToStrNW(dest, len, src, pidl);
 }
 
 HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
@@ -1219,8 +1252,8 @@ HRESULT WINAPI SHFlushClipboard(void)
 }
 
 /*************************************************************************
-* StrFormatByteSize				[SHLWAPI]
-*/
+ * StrFormatByteSizeA				[SHLWAPI]
+ */
 LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 {	char buf[64];
 	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
@@ -1239,6 +1272,10 @@ LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 	lstrcpynA (pszBuf, buf, cchBuf);
 	return pszBuf;	
 }
+
+/*************************************************************************
+ * StrFormatByteSizeW				[SHLWAPI]
+ */
 LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
 {	char buf[64];
 	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
@@ -1346,7 +1383,7 @@ HRESULT WINAPI SHValidateUNC (DWORD x, DWORD y, DWORD z)
 }
 
 /************************************************************************
- *	DoEnvironmentSubstW			[SHELL32.53]
+ *	DoEnvironmentSubstA			[SHELL32.1222]
  *
  */
 HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
@@ -1355,12 +1392,20 @@ HRESULT WINAPI DoEnvironmentSubstA(LPSTR x, LPSTR y)
 	return 0;
 }
 
+/************************************************************************
+ *	DoEnvironmentSubstW			[SHELL32.1223]
+ *
+ */
 HRESULT WINAPI DoEnvironmentSubstW(LPWSTR x, LPWSTR y)
 {
 	FIXME("(%p %s, %p %s) stub\n", x, debugstr_w(x), y, debugstr_w(y));
 	return 0;
 }
 
+/************************************************************************
+ *	DoEnvironmentSubst			[SHELL32.53]
+ *
+ */
 HRESULT WINAPI DoEnvironmentSubstAW(LPVOID x, LPVOID y)
 {
 	if (VERSION_OsIsUnicode())

@@ -1441,7 +1441,7 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 #else /* !HAVE_OSS */
 
 /**************************************************************************
- * 				wodMessage			[sample driver]
+ * 				OSS_wodMessage			[sample driver]
  */
 DWORD WINAPI OSS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -1451,7 +1451,7 @@ DWORD WINAPI OSS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 /**************************************************************************
- * 				widMessage			[sample driver]
+ * 				OSS_widMessage			[sample driver]
  */
 DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)

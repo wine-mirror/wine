@@ -1086,7 +1086,7 @@ HICON16 WINAPI ExtractIconEx16(
 }
 
 /*************************************************************************
- *				ExtractAssociatedIcon	[SHELL.36]
+ *				ExtractAssociatedIconA	[SHELL.36]
  * 
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.

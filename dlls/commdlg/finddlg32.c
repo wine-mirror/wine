@@ -464,7 +464,7 @@ HWND WINAPI ReplaceTextA(
 }
 
 /***********************************************************************
- *	FinfText32W 				[COMDLG32.7]
+ *	FindText32W 				[COMDLG32.7]
  *	RETURNS
  *		Window handle to created dialog: Succes
  *		NULL: Failure

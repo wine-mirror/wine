@@ -158,7 +158,7 @@ static int  testFileExclusiveExistence(
 
 /*****************************************************************************
  *
- *   VerFindFile() [VER.8]
+ *   VerFindFileA() [VER.8]
  *   Determines where to install a file based on whether it locates another
  *   version of the file in the system.  The values VerFindFile returns are
  *   used in a subsequent call to the VerInstallFile function.
@@ -319,7 +319,9 @@ DWORD WINAPI VerFindFileA(
     return retval;
 }
 
-/* VerFindFile32W						[VERSION.6] */
+/*****************************************************************************
+ * VerFindFileW						[VERSION.6]
+ */
 DWORD WINAPI VerFindFileW(
 	UINT flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
 	LPWSTR curdir,UINT *pcurdirlen,LPWSTR destdir,UINT *pdestdirlen )
@@ -389,7 +391,7 @@ _error2vif(DWORD error) {
 
 
 /******************************************************************************
- * VerInstallFile32A [VERSION.7]
+ * VerInstallFileA [VERSION.7]
  */
 DWORD WINAPI VerInstallFileA(
 	UINT flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
@@ -555,7 +557,9 @@ DWORD WINAPI VerInstallFileA(
 }
 
 
-/* VerInstallFile32W				[VERSION.8] */
+/******************************************************************************
+ * VerInstallFileW				[VERSION.8]
+ */
 DWORD WINAPI VerInstallFileW(
 	UINT flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
 	LPCWSTR destdir,LPCWSTR curdir,LPWSTR tmpfile,UINT *tmpfilelen )

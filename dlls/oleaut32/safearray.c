@@ -103,6 +103,7 @@ const static int LAST_VARTYPE = sizeof(VARTYPE_SIZE)/sizeof(ULONG);
 
 
 /*************************************************************************
+ *		SafeArrayAllocDescriptor
  * Allocate the appropriate amount of memory for the SafeArray descriptor
  */
 HRESULT WINAPI SafeArrayAllocDescriptor( 
@@ -127,6 +128,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
 }
 
 /*************************************************************************
+ *		SafeArrayAllocData
  * Allocate the appropriate amount of data for the SafeArray data
  */
 HRESULT WINAPI SafeArrayAllocData(
@@ -151,6 +153,7 @@ HRESULT WINAPI SafeArrayAllocData(
 }
 
 /*************************************************************************
+ *		SafeArrayCreate
  * Create a SafeArray object by encapsulating AllocDescriptor and AllocData 
  */
 SAFEARRAY* WINAPI SafeArrayCreate(
@@ -195,6 +198,7 @@ SAFEARRAY* WINAPI SafeArrayCreate(
 }
 
 /*************************************************************************
+ *		SafeArrayDestroyDescriptor
  * Frees the memory associated with the descriptor.
  */
 HRESULT WINAPI SafeArrayDestroyDescriptor(
@@ -213,6 +217,7 @@ HRESULT WINAPI SafeArrayDestroyDescriptor(
 
 
 /*************************************************************************
+ *		SafeArrayLock
  * Increment the lock counter
  *
  * Doc says (MSDN Library ) that psa->pvData should be made available (!= NULL)
@@ -231,6 +236,7 @@ HRESULT WINAPI SafeArrayLock(
 }
 
 /*************************************************************************
+ *		SafeArrayUnlock
  * Decrement the lock counter
  */
 HRESULT WINAPI SafeArrayUnlock(
@@ -247,6 +253,7 @@ HRESULT WINAPI SafeArrayUnlock(
 
 
 /*************************************************************************
+ *		SafeArrayPutElement
  * Set the data at the given coordinate
  */
 HRESULT WINAPI SafeArrayPutElement(
@@ -303,6 +310,7 @@ HRESULT WINAPI SafeArrayPutElement(
 
 
 /*************************************************************************
+ *		SafeArrayGetElement
  * Return the data element corresponding the the given coordinate
  */
 HRESULT WINAPI SafeArrayGetElement(
@@ -351,6 +359,7 @@ HRESULT WINAPI SafeArrayGetElement(
 }
 
 /*************************************************************************
+ *		SafeArrayGetUBound
  * return the UP bound for a given array dimension
  */
 HRESULT WINAPI SafeArrayGetUBound(
@@ -371,6 +380,7 @@ HRESULT WINAPI SafeArrayGetUBound(
 }
 
 /*************************************************************************
+ *		SafeArrayGetLBound
  * Return the LO bound for a given array dimension 
  */
 HRESULT WINAPI SafeArrayGetLBound(
@@ -389,6 +399,7 @@ HRESULT WINAPI SafeArrayGetLBound(
 }
 
 /*************************************************************************
+ *		SafeArrayGetDim
  * returns the number of dimension in the array
  */
 UINT WINAPI SafeArrayGetDim(
@@ -405,6 +416,7 @@ UINT WINAPI SafeArrayGetDim(
 }
 
 /*************************************************************************
+ *		SafeArrayGetElemsize
  * Return the size of the element in the array
  */
 UINT WINAPI SafeArrayGetElemsize(
@@ -421,6 +433,7 @@ UINT WINAPI SafeArrayGetElemsize(
 }
 
 /*************************************************************************
+ *		SafeArrayAccessData
  * increment the access count and return the data 
  */
 HRESULT WINAPI SafeArrayAccessData(
@@ -448,6 +461,7 @@ HRESULT WINAPI SafeArrayAccessData(
 
 
 /*************************************************************************
+ *		SafeArrayUnaccessData
  * Decrement the access count
  */
 HRESULT WINAPI SafeArrayUnaccessData(
@@ -460,6 +474,7 @@ HRESULT WINAPI SafeArrayUnaccessData(
 }
 
 /************************************************************************ 
+ *		SafeArrayPtrOfIndex
  * Return a pointer to the element at rgIndices
  */
 HRESULT WINAPI SafeArrayPtrOfIndex(
@@ -485,6 +500,7 @@ HRESULT WINAPI SafeArrayPtrOfIndex(
 }
 
 /************************************************************************ 
+ *		SafeArrayDestroyData
  * Frees the memory data bloc
  */
 HRESULT WINAPI SafeArrayDestroyData(
@@ -539,6 +555,7 @@ HRESULT WINAPI SafeArrayDestroyData(
 }
 
 /************************************************************************ 
+ *		SafeArrayCopyData
  * Copy the psaSource's data block into psaTarget if dimension and size
  * permits it.
  */
@@ -591,6 +608,7 @@ HRESULT WINAPI SafeArrayCopyData(
 }
 
 /************************************************************************ 
+ *		SafeArrayDestroy
  * Deallocates all memory reserved for the SafeArray
  */
 HRESULT WINAPI SafeArrayDestroy(
@@ -612,6 +630,7 @@ HRESULT WINAPI SafeArrayDestroy(
 }
 
 /************************************************************************ 
+ *		SafeArrayCopy
  * Make a dupplicate of a SafeArray
  */
 HRESULT WINAPI SafeArrayCopy(
@@ -658,6 +677,7 @@ HRESULT WINAPI SafeArrayCopy(
 }
 
 /************************************************************************ 
+ *		SafeArrayCreateVector
  * Creates a one dimension safearray where the data is next to the 
  * SAFEARRAY structure.
  */
@@ -694,6 +714,7 @@ SAFEARRAY* WINAPI SafeArrayCreateVector(
 } 
 
 /************************************************************************ 
+ *		SafeArrayRedim
  * Changes the caracteristics of the last dimension of the SafeArray
  */
 HRESULT WINAPI SafeArrayRedim(

@@ -227,6 +227,9 @@ void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	}
 }
 
+/*************************************************************************
+ * SHChangeNotify				[SHELL32.239]
+ */
 void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {
 	LPITEMIDLIST Pidls[2];
@@ -271,6 +274,9 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	}
 }
 
+/*************************************************************************
+ * SHChangeNotifyAW				[SHELL32.239]
+ */
 void WINAPI SHChangeNotifyAW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVOID dwItem2)
 {
 	if(VERSION_OsIsUnicode())

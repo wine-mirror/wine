@@ -493,7 +493,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
 }
 
 /*************************************************************************
- * Shell_NotifyIconA			[SHELL32.297]
+ * Shell_NotifyIconW			[SHELL32.297]
  */
 BOOL WINAPI Shell_NotifyIconW (DWORD dwMessage, PNOTIFYICONDATAW pnid )
 {

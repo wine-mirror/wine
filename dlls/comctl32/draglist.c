@@ -20,7 +20,9 @@ DEFAULT_DEBUG_CHANNEL(commctrl)
 
 static DWORD dwLastScrollTime = 0;
 
-
+/***********************************************************************
+ *		MakeDragList
+ */
 BOOL WINAPI MakeDragList (HWND hwndLB)
 {
     FIXME("(0x%x)\n", hwndLB);
@@ -29,7 +31,9 @@ BOOL WINAPI MakeDragList (HWND hwndLB)
     return FALSE;
 }
 
-
+/***********************************************************************
+ *		DrawInsert
+ */
 VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 {
     FIXME("(0x%x 0x%x %d)\n", hwndParent, hwndLB, nItem);
@@ -37,7 +41,9 @@ VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 
 }
 
-
+/***********************************************************************
+ *		LBItemFromPt
+ */
 INT WINAPI LBItemFromPt (HWND hwndLB, POINT pt, BOOL bAutoScroll)
 {
     RECT rcClient;

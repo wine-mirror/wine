@@ -20,6 +20,9 @@ DEFAULT_DEBUG_CHANNEL(ole);
 static WCHAR	_delimiter[2] = {'!',0}; /* default delimiter apparently */
 static WCHAR	*pdelimiter = &_delimiter[0];
 
+/***********************************************************************
+ *		RegisterActiveObject
+ */
 HRESULT WINAPI RegisterActiveObject(
 	LPUNKNOWN punk,REFCLSID rcid,DWORD dwFlags,LPDWORD pdwRegister
 ) {
@@ -43,6 +46,9 @@ HRESULT WINAPI RegisterActiveObject(
 	return ret;
 }
 
+/***********************************************************************
+ *		RevokeActiveObject
+ */
 HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 {
 	LPRUNNINGOBJECTTABLE	runobtable;
@@ -56,6 +62,9 @@ HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 	return ret;
 }
 
+/***********************************************************************
+ *		GetActiveObject
+ */
 HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
 {
 	WCHAR 			guidbuf[80];

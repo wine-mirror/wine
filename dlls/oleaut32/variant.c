@@ -4242,7 +4242,7 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
 }
 
 /**********************************************************************
- *              VarCyFromDate32 [OLEAUT32.104]
+ *              VarCyFromStr [OLEAUT32.104]
  */
 HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut) {
 				/* FIXME */

@@ -201,7 +201,9 @@ static void DSOUND_CloseAudio(void);
 
 #endif
 
-
+/*******************************************************************************
+ *		DirectSoundEnumerateA
+ */
 HRESULT WINAPI DirectSoundEnumerateA(
 	LPDSENUMCALLBACKA enumcb,
 	LPVOID context)
@@ -2259,6 +2261,9 @@ static DWORD WINAPI DSOUND_thread(LPVOID arg)
 
 #endif /* HAVE_OSS */
 
+/*******************************************************************************
+ *		DirectSoundCreate
+ */
 HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUnkOuter )
 {
 	IDirectSoundImpl** ippDS=(IDirectSoundImpl**)ppDS;

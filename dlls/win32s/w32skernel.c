@@ -10,6 +10,9 @@
 #include "wine/w32skrnl.h"
 #include "winbase.h"
 
+/***********************************************************************
+ *		GetWin32sDirectory
+ */
 LPSTR WINAPI GetWin32sDirectory(void)
 {
     static char sysdir[0x80];
@@ -23,7 +26,10 @@ LPSTR WINAPI GetWin32sDirectory(void)
     return text; 
 }
 
-/* FIXME */
+/***********************************************************************
+ *		_GetThunkBuff
+ * FIXME: ???
+ */
 SEGPTR WINAPI _GetThunkBuff(void)
 {
 	return (SEGPTR)NULL;

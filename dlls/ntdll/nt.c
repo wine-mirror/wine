@@ -501,7 +501,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
 }
 
 /******************************************************************************
- *  NtCreateMailSlotFile	[NTDLL] 
+ *  NtCreateMailslotFile	[NTDLL] 
  */
 NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) 
 {

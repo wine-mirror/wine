@@ -1384,7 +1384,7 @@ UINT16 WINAPI auxGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				auxGetDevCaps		[WINMM.20]
+ * 				auxGetDevCapsW		[WINMM.20]
  */
 UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 {
@@ -1401,7 +1401,7 @@ UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
 }
 
 /**************************************************************************
- * 				auxGetDevCaps		[WINMM.21]
+ * 				auxGetDevCapsA		[WINMM.21]
  */
 UINT WINAPI auxGetDevCapsA(UINT uDeviceID, LPAUXCAPSA lpCaps, UINT uSize)
 {
@@ -2522,7 +2522,7 @@ UINT16 WINAPI midiInGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				midiInGetDevCaps	[WINMM.60]
+ * 				midiInGetDevCapsW	[WINMM.60]
  */
 UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 {
@@ -2540,7 +2540,7 @@ UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 }
 
 /**************************************************************************
- * 				midiInGetDevCaps	[WINMM.59]
+ * 				midiInGetDevCapsA	[WINMM.59]
  */
 UINT WINAPI midiInGetDevCapsA(UINT uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSize)
 {
@@ -2575,7 +2575,7 @@ UINT16 WINAPI midiInGetDevCaps16(UINT16 uDeviceID, LPMIDIINCAPS16 lpCaps,
 }
 
 /**************************************************************************
- * 				midiInGetErrorText 		[WINMM.62]
+ * 				midiInGetErrorTextW 		[WINMM.62]
  */
 UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
@@ -2588,7 +2588,7 @@ UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 }
 
 /**************************************************************************
- * 				midiInGetErrorText 		[WINMM.61]
+ * 				midiInGetErrorTextA 		[WINMM.61]
  */
 UINT WINAPI midiInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
@@ -4186,7 +4186,7 @@ UINT16 WINAPI waveInGetNumDevs16(void)
 }
 
 /**************************************************************************
- * 				waveInGetDevCapsA 		[WINMM.147]
+ * 				waveInGetDevCapsW 		[WINMM.147]
  */
 UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {

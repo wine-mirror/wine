@@ -15,7 +15,7 @@
 
 DEFAULT_DEBUG_CHANNEL(msvideo)
 
-/****************************************************************************
+/***********************************************************************
  *		VideoForWindowsVersion		[MSVFW.2][MSVIDEO.2]
  * Returns the version in major.minor form.
  * In Windows95 this returns 0x040003b6 (4.950)
@@ -25,7 +25,7 @@ VideoForWindowsVersion(void) {
 	return 0x040003B6; /* 4.950 */
 }
 
-/****************************************************************************
+/***********************************************************************
  *		VideoCapDriverDescAndVer	[MSVIDEO.22]
  */
 DWORD WINAPI
@@ -36,7 +36,7 @@ VideoCapDriverDescAndVer(WORD nr,LPVOID buf1,WORD buf1len,LPVOID buf2,WORD buf2l
 
 /* system.ini: [drivers] */
 
-/**************************************************************************
+/***********************************************************************
  *		ICInfo				[MSVFW.33]
  * Get information about an installable compressor. Return TRUE if there
  * is one.
@@ -70,7 +70,7 @@ ICInfo(
 	return FALSE;
 }
 
-/**************************************************************************
+/***********************************************************************
  *		ICOpen				[MSVFW.37]
  * Opens an installable compressor. Return special handle.
  */
@@ -110,6 +110,10 @@ ICOpen(DWORD fccType,DWORD fccHandler,UINT wMode) {
 	whic->private	= ICSendMessage((HIC)whic,DRV_OPEN,0,(LPARAM)&icopen);
 	return (HIC)whic;
 }
+
+/***********************************************************************
+ *		ICOpenFunction			[MSVFW.38]
+ */
 HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
 FARPROC lpfnHandler) {
 	char		type[5],handler[5];
@@ -128,6 +132,9 @@ FARPROC lpfnHandler) {
 }
 
 
+/***********************************************************************
+ *		ICGetInfo			[MSVFW.30]
+ */
 LRESULT WINAPI
 ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	LRESULT		ret;
@@ -138,6 +145,9 @@ ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	return ret;
 }
 
+/***********************************************************************
+ *		ICLocate			[MSVFW.35]
+ */
 HIC  VFWAPI
 ICLocate(
 	DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
@@ -182,6 +192,9 @@ ICLocate(
 	return 0;
 }
 
+/***********************************************************************
+ *		ICGetDisplayFormat			[MSVFW.29]
+ */
 HIC VFWAPI ICGetDisplayFormat(
 	HIC hic,LPBITMAPINFOHEADER lpbiIn,LPBITMAPINFOHEADER lpbiOut,
 	INT depth,INT dx,INT dy
@@ -225,6 +238,9 @@ errout:
 	return 0;
 }
 
+/***********************************************************************
+ *		ICCompress			[MSVFW.23]
+ */
 DWORD VFWAPIV
 ICCompress(
 	HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiOutput,LPVOID lpData,
@@ -251,6 +267,9 @@ ICCompress(
 	return ICSendMessage(hic,ICM_COMPRESS,(LPARAM)&iccmp,sizeof(iccmp));
 }
 
+/***********************************************************************
+ *		ICDecompress			[MSVFW.26]
+ */
 DWORD VFWAPIV 
 ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,LPBITMAPINFOHEADER  lpbi,LPVOID lpBits) {
 	ICDECOMPRESS	icd;
@@ -265,6 +284,9 @@ ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,L
 	return ICSendMessage(hic,ICM_DECOMPRESS,(LPARAM)&icd,sizeof(icd));
 }
 
+/***********************************************************************
+ *		ICSendMessage			[MSVFW.40]
+ */
 LRESULT VFWAPI
 ICSendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2) {
 	LRESULT		ret;
@@ -327,6 +349,9 @@ ICSendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2) {
 	return ret;
 }
 
+/***********************************************************************
+ *		ICDrawBegin		[MSVFW.28]
+ */
 DWORD	VFWAPIV	ICDrawBegin(
         HIC			hic,
         DWORD			dwFlags,/* flags */
@@ -364,6 +389,9 @@ DWORD	VFWAPIV	ICDrawBegin(
 	return ICSendMessage(hic,ICM_DRAW_BEGIN,(LPARAM)&icdb,sizeof(icdb));
 }
 
+/***********************************************************************
+ *		ICDraw			[MSVFW.27]
+ */
 DWORD VFWAPIV ICDraw(
 	HIC hic,DWORD dwFlags,LPVOID lpFormat,LPVOID lpData,DWORD cbData,
 	LONG lTime
@@ -378,6 +406,9 @@ DWORD VFWAPIV ICDraw(
 	return ICSendMessage(hic,ICM_DRAW,(LPARAM)&icd,sizeof(icd));
 }
 
+/***********************************************************************
+ *		ICClose			[MSVFW.22]
+ */
 LRESULT WINAPI ICClose(HIC hic) {
 	WINE_HIC	*whic = (WINE_HIC*)hic;
 	TRACE("(%d).\n",hic);
@@ -387,18 +418,27 @@ LRESULT WINAPI ICClose(HIC hic) {
 	return 0;
 }
 
+/***********************************************************************
+ *		DrawDibOpen		[MSVFW.10]
+ */
 HANDLE /* HDRAWDIB */ WINAPI
 DrawDibOpen( void ) {
 	FIXME("stub!\n");
 	return 0xdead;
 }
 
+/***********************************************************************
+ *		DrawDibClose		[MSVFW.5]
+ */
 BOOL WINAPI
 DrawDibClose( HANDLE /*HDRAWDIB*/ hDib ) {
        FIXME("stub!\n");
        return TRUE;
 }
 
+/***********************************************************************
+ *		DrawDibBegin		[MSVFW.3]
+ */
 BOOL VFWAPI DrawDibBegin(HANDLE /*HDRAWDIB*/ hdd,
                                     HDC      hdc,
                                     INT      dxDst,
@@ -414,28 +454,44 @@ BOOL VFWAPI DrawDibBegin(HANDLE /*HDRAWDIB*/ hdd,
 }
 
 
+/***********************************************************************
+ *		DrawDibSetPalette	[MSVFW.13]
+ */
 BOOL VFWAPI
 DrawDibSetPalette(HANDLE /*HDRAWDIB*/ hdd, HPALETTE hpal) {
 	FIXME("(%d,%d),stub!\n",hdd,hpal);
 	return TRUE;
 }
 
+/***********************************************************************
+ *		DrawDibRealize		[MSVFW.12]
+ */
 UINT VFWAPI DrawDibRealize(HANDLE /*HDRAWDIB*/ hdd, HDC hdc, BOOL fBackground) {
 	FIXME("(0x%08lx,0x%08lx,%d),stub!\n",(DWORD)hdd,(DWORD)hdc,fBackground);
 	return 0;
 }
 
-
+/***********************************************************************
+ *		MCIWndCreate		[MSVFW.44]
+ */
 HWND VFWAPIV MCIWndCreate (HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPVOID szFile)
 {	FIXME("%x %x %lx %p\n",hwndParent, hInstance, dwStyle, szFile);
 	return 0;
 }
+
+/***********************************************************************
+ *		MCIWndCreateA		[MSVFW.45]
+ */
 HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPCSTR szFile)
 {	FIXME("%x %x %lx %s\n",hwndParent, hInstance, dwStyle, szFile);
 	return 0;
 }
+
+/***********************************************************************
+ *		MCIWndCreateW		[MSVFW.46]
+ */
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPCWSTR szFile)
 {	FIXME("%x %x %lx %s\n",hwndParent, hInstance, dwStyle, debugstr_w(szFile));

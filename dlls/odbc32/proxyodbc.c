@@ -1002,7 +1002,7 @@ SQLRETURNTYPE  SQLGetInfo(SQLHDBC ConnectionHandle,
 
 
 /*************************************************************************
- *				SQLiGetStmtAttr           [ODBC32.038]
+ *				SQLGetStmtAttr           [ODBC32.038]
  */
 SQLRETURNTYPE  SQLGetStmtAttr(SQLHSTMT StatementHandle,
              SQLINTEGER Attribute, SQLPOINTER Value,
@@ -1036,7 +1036,7 @@ SQLRETURNTYPE  SQLGetStmtOption(SQLHSTMT StatementHandle, SQLUSMALLINT Option, S
 
 
 /*************************************************************************
- *				SQLgetTypeInfo           [ODBC32.047]
+ *				SQLGetTypeInfo           [ODBC32.047]
  */
 SQLRETURNTYPE  SQLGetTypeInfo(SQLHSTMT StatementHandle, SQLSMALLINT DataType)
 {
@@ -1315,7 +1315,7 @@ SQLRETURNTYPE  SQLSpecialColumns(SQLHSTMT StatementHandle,
 
 
 /*************************************************************************
- *				SQLStatisitics           [ODBC32.053]
+ *				SQLStatistics           [ODBC32.053]
  */
 SQLRETURNTYPE  SQLStatistics(SQLHSTMT StatementHandle,
              SQLCHAR *CatalogName, SQLSMALLINT NameLength1,

@@ -44,7 +44,7 @@ BOOL WINAPI MPR_Free( LPVOID lpMem )
 }
 
 /*****************************************************************
- *  [MPR.25]
+ *  _MPR_25  [MPR.25]
  */
 BOOL WINAPI _MPR_25( LPBYTE lpMem, INT len )
 {

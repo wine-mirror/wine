@@ -157,6 +157,9 @@ static int in_cksum(u_short *addr, int len)
  * Exported Routines.
  */
 
+/***********************************************************************
+ *		IcmpCreateFile
+ */
 HANDLE WINAPI IcmpCreateFile(VOID)
 {
     icmp_t* icp;
@@ -194,6 +197,9 @@ BOOL WINAPI IcmpCloseHandle(HANDLE  IcmpHandle)
 }
 
 
+/***********************************************************************
+ *		IcmpSendEcho
+ */
 DWORD WINAPI IcmpSendEcho(
     HANDLE                   IcmpHandle,
     IPAddr                   DestinationAddress,

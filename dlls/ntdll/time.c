@@ -179,7 +179,7 @@ VOID WINAPI RtlSystemTimeToLocalTime(
 	memcpy (LocalTime, SystemTime, sizeof (PLARGE_INTEGER));
 }
 /******************************************************************************
- *  RtlToTimeInSecondsSince1980		[NTDLL] 
+ *  RtlTimeToSecondsSince1980		[NTDLL] 
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1980(
 	LPFILETIME ft,
@@ -191,7 +191,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980(
 }
 
 /******************************************************************************
- *  RtlToTimeInSecondsSince1970		[NTDLL] 
+ *  RtlTimeToSecondsSince1970		[NTDLL] 
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1970(
 	LPFILETIME ft,

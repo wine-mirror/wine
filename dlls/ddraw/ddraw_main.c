@@ -5723,52 +5723,79 @@ typedef void *LPDDENUMCALLBACKEXA;
 typedef void *LPDDENUMCALLBACKEXW;
 typedef void *LPDDENUMCALLBACKW;
 
+/***********************************************************************
+ *		DSoundHelp
+ */
 HRESULT WINAPI DSoundHelp(DWORD x, DWORD y, DWORD z) 
 {
   return DD_OK;
 }
 
+/***********************************************************************
+ *		DirectDrawCreate
+ */
 HRESULT WINAPI DirectDrawCreate(
   LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 {
   return DD_OK;
 }
 
+/***********************************************************************
+ *		DirectDrawCreateClipper
+ */
 HRESULT WINAPI DirectDrawCreateClipper(
   DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, LPUNKNOWN pUnkOuter)
 {
   return DD_OK;
 }
 
+/***********************************************************************
+ *		DirectDrawEnumerateA
+ */
 HRESULT WINAPI DirectDrawEnumerateA(
   LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) 
 {
   return DD_OK;
 }
 
+/***********************************************************************
+ *		DirectDrawEnumerateExA
+ */
 HRESULT WINAPI DirectDrawEnumerateExA(
   LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
 {
   return DD_OK;
 }
 
+/***********************************************************************
+ *		DirectDrawEnumerateExW
+ */
 HRESULT WINAPI DirectDrawEnumerateExW(
   LPDDENUMCALLBACKEXW lpCallback, LPVOID lpContext, DWORD dwFlags)
 {
   return DD_OK;
 }
 
+/***********************************************************************
+ *		DirectDrawEnumerateW
+ */
 HRESULT WINAPI DirectDrawEnumerateW(
   LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) 
 {
   return DD_OK;
 }
 
+/***********************************************************************
+ *		DDRAW_DllGetClassObject
+ */
 DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+/***********************************************************************
+ *		DDRAW_DllCanUnloadNow
+ */
 DWORD WINAPI DDRAW_DllCanUnloadNow(void)
 {
     return DD_OK;

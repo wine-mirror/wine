@@ -26,6 +26,9 @@ DEFAULT_DEBUG_CHANNEL(commctrl)
 #define FlatSB_GetInfoPtr(hwnd) ((FLATSB_INFO*)GetWindowLongA (hwnd, 0))
 
 
+/***********************************************************************
+ *		FlatSB_EnableScrollBar
+ */
 BOOL WINAPI 
 FlatSB_EnableScrollBar(HWND hwnd, INT dummy, UINT dummy2)
 {
@@ -33,6 +36,9 @@ FlatSB_EnableScrollBar(HWND hwnd, INT dummy, UINT dummy2)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_ShowScrollBar
+ */
 BOOL WINAPI 
 FlatSB_ShowScrollBar(HWND hwnd, INT code, BOOL flag)
 {
@@ -40,6 +46,9 @@ FlatSB_ShowScrollBar(HWND hwnd, INT code, BOOL flag)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_GetScrollRange
+ */
 BOOL WINAPI 
 FlatSB_GetScrollRange(HWND hwnd, INT code, LPINT min, LPINT max)
 {
@@ -47,6 +56,9 @@ FlatSB_GetScrollRange(HWND hwnd, INT code, LPINT min, LPINT max)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_GetScrollInfo
+ */
 BOOL WINAPI 
 FlatSB_GetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info)
 {
@@ -54,6 +66,9 @@ FlatSB_GetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_GetScrollPos
+ */
 INT WINAPI 
 FlatSB_GetScrollPos(HWND hwnd, INT code)
 {
@@ -61,6 +76,9 @@ FlatSB_GetScrollPos(HWND hwnd, INT code)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_GetScrollProp
+ */
 BOOL WINAPI 
 FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 {
@@ -68,7 +86,9 @@ FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
     return 0;
 }
 
-
+/***********************************************************************
+ *		FlatSB_SetScrollPos
+ */
 INT WINAPI 
 FlatSB_SetScrollPos(HWND hwnd, INT code, INT pos, BOOL fRedraw)
 {
@@ -76,6 +96,9 @@ FlatSB_SetScrollPos(HWND hwnd, INT code, INT pos, BOOL fRedraw)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_SetScrollInfo
+ */
 INT WINAPI 
 FlatSB_SetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info, BOOL fRedraw)
 {
@@ -83,6 +106,9 @@ FlatSB_SetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info, BOOL fRedraw)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_SetScrollRange
+ */
 INT WINAPI 
 FlatSB_SetScrollRange(HWND hwnd, INT code, INT min, INT max, BOOL fRedraw)
 {
@@ -90,6 +116,9 @@ FlatSB_SetScrollRange(HWND hwnd, INT code, INT min, INT max, BOOL fRedraw)
     return 0;
 }
 
+/***********************************************************************
+ *		FlatSB_SetScrollProp
+ */
 BOOL WINAPI 
 FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
 {
@@ -97,13 +126,18 @@ FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
     return 0;
 }
 
-
+/***********************************************************************
+ *		InitializeFlatSB
+ */
 BOOL WINAPI InitializeFlatSB(HWND hwnd)
 {
     FIXME("stub\n");
     return 0;
 }
 
+/***********************************************************************
+ *		UninitializeFlatSB
+ */
 HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 {
     FIXME("stub\n");

@@ -9,26 +9,38 @@
 #include "tapi.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(tapi)
+DEFAULT_DEBUG_CHANNEL(tapi);
 
+/***********************************************************************
+ *		phoneClose (TAPI32.@)
+ */
 DWORD WINAPI phoneClose(HPHONE hPhone)
 {
     FIXME("(%04x), stub.\n", hPhone);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneConfigDialog (TAPI32.@)
+ */
 DWORD WINAPI phoneConfigDialog(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDeviceClass)
 {
     FIXME("(%08lx, %04x, %s): stub.\n", dwDeviceID, hwndOwner, lpszDeviceClass);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneDevSpecific (TAPI32.@)
+ */
 DWORD WINAPI phoneDevSpecific(HPHONE hPhone, LPVOID lpParams, DWORD dwSize)
 {
     FIXME("(%04x, %p, %08ld): stub.\n", hPhone, lpParams, dwSize);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneGetButtonInfo (TAPI32.@)
+ */
 DWORD WINAPI phoneGetButtonInfo(HPHONE hPhone, DWORD dwButtonLampID,
                                 LPPHONEBUTTONINFO lpButtonInfo)
 {
@@ -36,12 +48,18 @@ DWORD WINAPI phoneGetButtonInfo(HPHONE hPhone, DWORD dwButtonLampID,
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetData (TAPI32.@)
+ */
 DWORD WINAPI phoneGetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dwSize)
 {
     FIXME("(%04x, %08ld, %p, %08ld): stub.\n", hPhone, dwDataID, lpData, dwSize);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetDevCaps (TAPI32.@)
+ */
 DWORD WINAPI phoneGetDevCaps(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
                DWORD dwAPIVersion, DWORD dwExtVersion, LPPHONECAPS lpPhoneCaps)
 {
@@ -49,30 +67,45 @@ DWORD WINAPI phoneGetDevCaps(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetDisplay (TAPI32.@)
+ */
 DWORD WINAPI phoneGetDisplay(HPHONE hPhone, LPVARSTRING lpDisplay)
 {
     FIXME("(%04x, %p): stub.\n", hPhone, lpDisplay);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetGain (TAPI32.@)
+ */
 DWORD WINAPI phoneGetGain(HPHONE hPhone, DWORD dwHookSwitchDev, LPDWORD lpdwGain)
 {
     FIXME("(%04x, %08lx, %p): stub.\n", hPhone, dwHookSwitchDev, lpdwGain);
     return 0;
 }	
 		
+/***********************************************************************
+ *		phoneGetHookSwitch (TAPI32.@)
+ */
 DWORD WINAPI phoneGetHookSwitch(HPHONE hPhone, LPDWORD lpdwHookSwitchDevs)
 {
    FIXME("(%04x, %p): stub.\n", hPhone, lpdwHookSwitchDevs);
    return 0;
 }
 
+/***********************************************************************
+ *		phoneGetID (TAPI32.@)
+ */
 DWORD WINAPI phoneGetID(HPHONE hPhone, LPVARSTRING lpDeviceID,
                         LPCSTR lpszDeviceClass)
 {
     FIXME("(%04x, %p, %s): stub.\n", hPhone, lpDeviceID, lpszDeviceClass);    return 0;
 }
 
+/***********************************************************************
+ *		phoneGetIcon (TAPI32.@)
+ */
 DWORD WINAPI phoneGetIcon(DWORD dwDeviceID, LPCSTR lpszDeviceClass,
 		          HICON *lphIcon)
 {
@@ -80,6 +113,9 @@ DWORD WINAPI phoneGetIcon(DWORD dwDeviceID, LPCSTR lpszDeviceClass,
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetLamp (TAPI32.@)
+ */
 DWORD WINAPI phoneGetLamp(HPHONE hPhone, DWORD dwButtonLampID,
 		          LPDWORD lpdwLampMode)
 {
@@ -87,18 +123,27 @@ DWORD WINAPI phoneGetLamp(HPHONE hPhone, DWORD dwButtonLampID,
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetRing (TAPI32.@)
+ */
 DWORD WINAPI phoneGetRing(HPHONE hPhone, LPDWORD lpdwRingMode, LPDWORD lpdwVolume)
 {
     FIXME("(%04x, %p, %p): stub.\n", hPhone, lpdwRingMode, lpdwVolume);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetStatus (TAPI32.@)
+ */
 DWORD WINAPI phoneGetStatus(HPHONE hPhone, LPPHONESTATUS lpPhoneStatus)
 {
     FIXME("(%04x, %p): stub.\n", hPhone, lpPhoneStatus);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetStatusMessages (TAPI32.@)
+ */
 DWORD WINAPI phoneGetStatusMessages(HPHONE hPhone, LPDWORD lpdwPhoneStates,
 		          LPDWORD lpdwButtonModes, LPDWORD lpdwButtonStates)
 {
@@ -106,6 +151,9 @@ DWORD WINAPI phoneGetStatusMessages(HPHONE hPhone, LPDWORD lpdwPhoneStates,
     return 0;
 }
 
+/***********************************************************************
+ *		phoneGetVolume (TAPI32.@)
+ */
 DWORD WINAPI phoneGetVolume(HPHONE hPhone, DWORD dwHookSwitchDevs,
 		            LPDWORD lpdwVolume)
 {
@@ -113,18 +161,27 @@ DWORD WINAPI phoneGetVolume(HPHONE hPhone, DWORD dwHookSwitchDevs,
     return 0;
 }
 
+/***********************************************************************
+ *		phoneInitialize (TAPI32.@)
+ */
 DWORD WINAPI phoneInitialize(LPHPHONEAPP lphPhoneApp, HINSTANCE hInstance, PHONECALLBACK lpfnCallback, LPCSTR lpszAppName, LPDWORD lpdwNumDevs)
 {
     FIXME("(%p, %04x, %p, %s, %p): stub.\n", lphPhoneApp, hInstance, lpfnCallback, lpszAppName, lpdwNumDevs);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneNegotiateAPIVersion (TAPI32.@)
+ */
 DWORD WINAPI phoneNegotiateAPIVersion(HPHONEAPP hPhoneApp, DWORD dwDeviceID, DWORD dwAPILowVersion, DWORD dwAPIHighVersion, LPDWORD lpdwAPIVersion, LPPHONEEXTENSIONID lpExtensionID)
 {
     FIXME("(): stub.\n");
     return 0;
 }
 
+/***********************************************************************
+ *		phoneNegotiateExtVersion (TAPI32.@)
+ */
 DWORD WINAPI phoneNegotiateExtVersion(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
 		                 DWORD dwAPIVersion, DWORD dwExtLowVersion,
 				 DWORD dwExtHighVersion, LPDWORD lpdwExtVersion)
@@ -133,66 +190,99 @@ DWORD WINAPI phoneNegotiateExtVersion(HPHONEAPP hPhoneApp, DWORD dwDeviceID,
     return 0;
 }
 
+/***********************************************************************
+ *		phoneOpen (TAPI32.@)
+ */
 DWORD WINAPI phoneOpen(HPHONEAPP hPhoneApp, DWORD dwDeviceID, LPHPHONE lphPhone, DWORD dwAPIVersion, DWORD dwExtVersion, DWORD dwCallbackInstance, DWORD dwPrivileges)
 {
     FIXME("(): stub.\n");
     return 0;
 }
 
+/***********************************************************************
+ *		phoneSetButtonInfo (TAPI32.@)
+ */
 DWORD WINAPI phoneSetButtonInfo(HPHONE hPhone, DWORD dwButtonLampID, LPPHONEBUTTONINFO lpButtonInfo)
 {
     FIXME("(%04x, %08lx, %p): stub.\n", hPhone, dwButtonLampID, lpButtonInfo);
     return 0;
 }
 
+/***********************************************************************
+ *		phoneSetData (TAPI32.@)
+ */
 DWORD WINAPI phoneSetData(HPHONE hPhone, DWORD dwDataID, LPVOID lpData, DWORD dwSize)
 {
     FIXME("(%04x, %08lx, %p, %ld): stub.\n", hPhone, dwDataID, lpData, dwSize);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneSetDisplay (TAPI32.@)
+ */
 DWORD WINAPI phoneSetDisplay(HPHONE hPhone, DWORD dwRow, DWORD dwColumn, LPCSTR lpszDisplay, DWORD dwSize)
 {
     FIXME("(%04x, '%s' at %ld/%ld, len %ld): stub.\n", hPhone, lpszDisplay, dwRow, dwColumn, dwSize);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneSetGain (TAPI32.@)
+ */
 DWORD WINAPI phoneSetGain(HPHONE hPhone, DWORD dwHookSwitchDev, DWORD dwGain)
 {
     FIXME("(%04x, %08lx, %ld): stub.\n", hPhone, dwHookSwitchDev, dwGain);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneSetHookSwitch (TAPI32.@)
+ */
 DWORD WINAPI phoneSetHookSwitch(HPHONE hPhone, DWORD dwHookSwitchDevs, DWORD dwHookSwitchMode)
 {
     FIXME("(%04x, %08lx, %08lx): stub.\n", hPhone, dwHookSwitchDevs, dwHookSwitchMode);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneSetLamp (TAPI32.@)
+ */
 DWORD WINAPI phoneSetLamp(HPHONE hPhone, DWORD dwButtonLampID, DWORD lpdwLampMode)
 {
     FIXME("(%04x, %08lx, %08lx): stub.\n", hPhone, dwButtonLampID, lpdwLampMode);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneSetRing (TAPI32.@)
+ */
 DWORD WINAPI phoneSetRing(HPHONE hPhone, DWORD dwRingMode, DWORD dwVolume)
 {
     FIXME("(%04x, %08lx, %08ld): stub.\n", hPhone, dwRingMode, dwVolume);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneSetStatusMessages (TAPI32.@)
+ */
 DWORD WINAPI phoneSetStatusMessages(HPHONE hPhone, DWORD dwPhoneStates, DWORD dwButtonModes, DWORD dwButtonStates)
 {
     FIXME("(%04x, %08lx, %08lx, %08lx): stub.\n", hPhone, dwPhoneStates, dwButtonModes, dwButtonStates);
     return 0; /* FIXME ? */
 }
 
+/***********************************************************************
+ *		phoneSetVolume (TAPI32.@)
+ */
 DWORD WINAPI phoneSetVolume(HPHONE hPhone, DWORD dwHookSwitchDev, DWORD dwVolume)
 {
     FIXME("(%04x, %08lx, %08ld): stub.\n", hPhone, dwHookSwitchDev, dwVolume);
     return 1;
 }
 
+/***********************************************************************
+ *		phoneShutdown (TAPI32.@)
+ */
 DWORD WINAPI phoneShutdown(HPHONEAPP hPhoneApp)
 {
     FIXME("(%04x): stub.\n", hPhoneApp);

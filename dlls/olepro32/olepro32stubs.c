@@ -11,25 +11,37 @@
 #include "windef.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
- 
+
+/***********************************************************************
+ *		OLEPRO32_DllUnregisterServer
+ */
 HRESULT WINAPI OLEPRO32_DllUnregisterServer()
 {
 	FIXME("not implemented (olepro32.dll) \n");
 	return S_OK;
 }
 
+/***********************************************************************
+ *		OLEPRO32_DllRegisterServer
+ */
 HRESULT WINAPI OLEPRO32_DllRegisterServer()
 {
 	FIXME("not implemented (olepro32.dll) \n");
 	return S_OK;
 }
 
+/***********************************************************************
+ *		OLEPRO32_DllCanUnloadNow
+ */
 HRESULT WINAPI OLEPRO32_DllCanUnloadNow( )
 {
 	FIXME("not implemented (olepro32.dll) \n");
 	return S_OK;
 }
 
+/***********************************************************************
+ *		OLEPRO32_DllGetClassObject
+ */
 HRESULT WINAPI OLEPRO32_DllGetClassObject( REFCLSID rclsid, REFIID riid, LPVOID* ppv )
 {
 	FIXME("not implemented (olepro32.dll) \n");

@@ -647,6 +647,9 @@ RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 	return TRUE;
 }
 
+/******************************************************************************
+ *  NtAccessCheck		[NTDLL]
+ */
 NTSTATUS WINAPI 
 NtAccessCheck(
 	IN PSECURITY_DESCRIPTOR SecurityDescriptor,
@@ -665,6 +668,9 @@ NtAccessCheck(
 	return STATUS_SUCCESS;
 }
 
+/******************************************************************************
+ *  NtSetSecurityObject		[NTDLL]
+ */
 NTSTATUS WINAPI
 NtSetSecurityObject(
         IN HANDLE Handle,

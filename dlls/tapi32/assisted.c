@@ -9,8 +9,11 @@
 #include "tapi.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(tapi)
+DEFAULT_DEBUG_CHANNEL(tapi);
 
+/***********************************************************************
+ *		tapiGetLocationInfo (TAPI32.@)
+ */
 DWORD WINAPI tapiGetLocationInfo(LPSTR lpszCountryCode, LPSTR lpszCityCode)
 {
     char temp[30];
@@ -23,6 +26,9 @@ DWORD WINAPI tapiGetLocationInfo(LPSTR lpszCountryCode, LPSTR lpszCityCode)
     return 0;
 }
 
+/***********************************************************************
+ *		tapiRequestMakeCall (TAPI32.@)
+ */
 DWORD WINAPI tapiRequestMakeCall(LPCSTR lpszDestAddress, LPCSTR lpszAppName,
                                  LPCSTR lpszCalledParty, LPCSTR lpszComment)
 {
