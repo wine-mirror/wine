@@ -1022,7 +1022,6 @@ AC_CHECK_HEADERS(\
 	sys/wait.h \
 	syscall.h \
 	termios.h \
-	ucontext.h \
 	unistd.h \
 	utime.h \
 )
@@ -1056,6 +1055,8 @@ AC_CHECK_HEADERS(resolv.h,,,
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
      #endif])
+
+AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
 
 dnl **** Check for types ****
 
