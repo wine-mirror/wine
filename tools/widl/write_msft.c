@@ -1166,15 +1166,25 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     char *namedata;
     attr_t *attr;
     unsigned int funcflags = 0, callconv = 4 /* CC_STDCALL */;
-    unsigned int funckind = 1 /* FUNC_PUREVIRTUAL */, invokekind = 1 /* INVOKE_FUNC */;
+    unsigned int funckind, invokekind = 1 /* INVOKE_FUNC */;
     int help_context = 0, help_string_context = 0, help_string_offset = -1;
+    int entry = -1, entry_is_ord = 0;
+
+    chat("add_func_desc(%p,%d)\n", typeinfo, index);
 
     id = ((0x6000 | (typeinfo->typeinfo->datatype2 & 0xffff)) << 16) | index;
 
-    if((typeinfo->typeinfo->typekind & 15) == TKIND_DISPATCH)
+    switch(typeinfo->typeinfo->typekind & 15) {
+    case TKIND_DISPATCH:
         funckind = 0x4; /* FUNC_DISPATCH */
-
-    chat("add_func_desc(%p,%d)\n", typeinfo, index);
+        break;
+    case TKIND_MODULE:
+        funckind = 0x3; /* FUNC_STATIC */
+        break;
+    default:
+        funckind = 0x1; /* FUNC_PUREVIRTUAL */
+        break;
+    }
 
     for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
         if(attr->type == ATTR_LOCAL) {
@@ -1201,16 +1211,25 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
         expr_t *expr = attr->u.pval; 
         switch(attr->type) {
+        case ATTR_ENTRY_ORDINAL:
+            extra_attr = max(extra_attr, 3);
+            entry = expr->cval;
+            entry_is_ord = 1;
+            break;
+        case ATTR_ENTRY_STRING:
+            extra_attr = max(extra_attr, 3);
+            entry = ctl2_alloc_string(typeinfo->typelib, attr->u.pval);
+            break;
         case ATTR_HELPCONTEXT:
-            extra_attr = 1;
+            extra_attr = max(extra_attr, 1);
             help_context = expr->u.lval;
             break;
         case ATTR_HELPSTRING:
-            extra_attr = 2;
+            extra_attr = max(extra_attr, 2);
             help_string_offset = ctl2_alloc_string(typeinfo->typelib, attr->u.pval);
             break;
         case ATTR_HELPSTRINGCONTEXT:
-            extra_attr = 6;
+            extra_attr = max(extra_attr, 6);
             help_string_context = expr->u.lval;
             break;
         case ATTR_HIDDEN:
@@ -1304,6 +1323,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (next_idx << 16) | (callconv << 8) | (invokekind << 3) | funckind;
     if(num_defaults) typedata[4] |= 0x1000;
+    if(entry_is_ord) typedata[4] |= 0x2000;
     typedata[5] = num_params;
 
     /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
@@ -1315,7 +1335,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     case 6: typedata[11] = help_string_context;
     case 5: typedata[10] = -1;
     case 4: typedata[9] = -1;
-    case 3: typedata[8] = -1;
+    case 3: typedata[8] = entry;
     case 2: typedata[7] = help_string_offset;
     case 1: typedata[6] = help_context;
     case 0:
@@ -1403,7 +1423,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     if(num_defaults) typeinfo->typeinfo->res3 += num_params * 0x4;
 
     /* adjust size of VTBL */
-    typeinfo->typeinfo->cbSizeVft += 4;
+    if(funckind != 0x3 /* FUNC_STATIC */)
+        typeinfo->typeinfo->cbSizeVft += 4;
 
     /* Increment the number of function elements */
     typeinfo->typeinfo->cElement += 1;
@@ -1411,8 +1432,13 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + name_offset;
     if (*((INT *)namedata) == -1) {
 	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
+        if((typeinfo->typeinfo->typekind & 15) == TKIND_MODULE)
+            namedata[9] |= 0x10;
+    } else
         namedata[9] &= ~0x10;
-    }
+
+    if((typeinfo->typeinfo->typekind & 15) == TKIND_MODULE)
+        namedata[9] |= 0x20;
 
     if(invokekind != 0x4 /* INVOKE_PROPERTYPUT */ && invokekind != 0x8 /* INVOKE_PROPERTYPUTREF */) { 
         /* don't give the arg of a [propput*] func a name */
@@ -1625,6 +1651,15 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
 
     for( ; attr; attr = NEXT_LINK(attr)) {
         switch(attr->type) {
+        case ATTR_DISPINTERFACE:
+            break;
+
+        case ATTR_DLLNAME:
+          {
+            int offset = ctl2_alloc_string(typelib, attr->u.pval);
+            typeinfo->datatype1 = offset;
+            break;
+          }
         case ATTR_HELPCONTEXT:
           {
             expr_t *expr = (expr_t*)attr->u.pval;
@@ -1764,7 +1799,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
         func = PREV_LINK(func);
     }
 }
-    
+
 static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 {
     int idx = 0;
@@ -1953,6 +1988,28 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, class_t *cls)
     msft_typeinfo->typeinfo->typekind |= 0x2200;
 }
 
+static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
+{
+    int idx = 0;
+    func_t *func;
+    msft_typeinfo_t *msft_typeinfo;
+
+    module->typelib_idx = typelib->typelib_header.nrtypeinfos;
+    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_MODULE, module->name, module->attrs,
+                                         typelib->typelib_header.nrtypeinfos);
+    msft_typeinfo->typeinfo->typekind |= 0x0a00;
+
+    if((func = module->funcs)) {
+        while(NEXT_LINK(func)) func = NEXT_LINK(func);
+        while(func) {
+            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+                idx++;
+            func = PREV_LINK(func);
+        }
+    }
+    msft_typeinfo->typeinfo->size = idx;
+}
+
 static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
 {
     switch(entry->kind) {
@@ -1974,6 +2031,10 @@ static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
 
     case TKIND_COCLASS:
         add_coclass_typeinfo(typelib, entry->u.class);
+        break;
+
+    case TKIND_MODULE:
+        add_module_typeinfo(typelib, entry->u.module);
         break;
 
     default:
