@@ -7,6 +7,7 @@ MODULE    = psdrv
 
 C_SRCS = \
 	afm.c \
+	bitblt.c \
 	bitmap.c \
 	brush.c \
 	color.c \

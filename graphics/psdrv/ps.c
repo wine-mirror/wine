@@ -741,7 +741,7 @@ BOOL PSDRV_WriteRGB(DC *dc, COLORREF *map, int number)
 
 BOOL PSDRV_WriteImageDict(DC *dc, WORD depth, INT xDst, INT yDst,
 			  INT widthDst, INT heightDst, INT widthSrc,
-			  INT heightSrc)
+			  INT heightSrc, char *bits)
 {
     char start[] = "%d %d translate\n%d %d scale\n<<\n"
       " /ImageType 1\n /Width %d\n /Height %d\n /BitsPerComponent %d\n"
@@ -751,6 +751,7 @@ BOOL PSDRV_WriteImageDict(DC *dc, WORD depth, INT xDst, INT yDst,
     char decode3[] = " /Decode [0 1 0 1 0 1]\n";
 
     char end[] = " /DataSource currentfile /ASCIIHexDecode filter\n>> image\n";
+    char endbits[] = " /DataSource <%s>\n>> image\n";
 
     char *buf = HeapAlloc(PSDRV_Heap, 0, 1000);
 
@@ -779,11 +780,17 @@ BOOL PSDRV_WriteImageDict(DC *dc, WORD depth, INT xDst, INT yDst,
 
     PSDRV_WriteSpool(dc, buf, strlen(buf));
 
-    PSDRV_WriteSpool(dc, end, sizeof(end) - 1);
+    if(!bits)
+        PSDRV_WriteSpool(dc, end, sizeof(end) - 1);
+    else {
+        sprintf(buf, endbits, bits);
+        PSDRV_WriteSpool(dc, buf, strlen(buf));
+    }
 
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }
+
 
 BOOL PSDRV_WriteBytes(DC *dc, const BYTE *bytes, int number)
 {
@@ -872,3 +879,42 @@ BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number)
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }
+
+
+BOOL PSDRV_WritePatternDict(DC *dc, BITMAP *bm, BYTE *bits)
+{
+    char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+      "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
+
+    char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
+    char *buf, *ptr;
+    INT w, h, x, y;
+    COLORREF map[2];
+
+    w = bm->bmWidth & ~0x7;
+    h = bm->bmHeight & ~0x7;
+
+    buf = HeapAlloc(PSDRV_Heap, 0, sizeof(start) + 100);
+    sprintf(buf, start, w, h, w, h);
+    PSDRV_WriteSpool(dc,  buf, strlen(buf));
+    PSDRV_WriteIndexColorSpaceBegin(dc, 1);
+    map[0] = dc->w.textColor;
+    map[1] = dc->w.backgroundColor;
+    PSDRV_WriteRGB(dc, map, 2);
+    PSDRV_WriteIndexColorSpaceEnd(dc);
+    ptr = buf;
+    for(y = h-1; y >= 0; y--) {
+        for(x = 0; x < w/8; x++) {
+	    sprintf(ptr, "%02x", *(bits + x/8 + y * bm->bmWidthBytes));
+	    ptr += 2;
+	}
+    }
+    PSDRV_WriteImageDict(dc, 1, 0, 0, 8, 8, 8, 8, buf);
+    PSDRV_WriteSpool(dc, end, sizeof(end) - 1);
+    HeapFree(PSDRV_Heap, 0, buf);
+    return TRUE;
+}
+
+
+
+

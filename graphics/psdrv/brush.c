@@ -9,6 +9,7 @@
 #include "brush.h"
 #include "debugtools.h"
 #include "gdi.h"
+#include "winbase.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -191,6 +192,28 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
     case BS_NULL:
         return TRUE;
 	break;
+
+    case BS_PATTERN:
+        {
+	    BITMAP bm;
+	    BYTE *bits;
+	    GetObjectA(brush->logbrush.lbHatch, sizeof(BITMAP), &bm);
+	    TRACE("BS_PATTERN %dx%d %d bpp\n", bm.bmWidth, bm.bmHeight,
+		  bm.bmBitsPixel);
+	    bits = HeapAlloc(PSDRV_Heap, 0, bm.bmWidthBytes * bm.bmHeight);
+	    GetBitmapBits(brush->logbrush.lbHatch,
+			  bm.bmWidthBytes * bm.bmHeight, bits);
+
+	    PSDRV_WriteGSave(dc);
+	    PSDRV_WritePatternDict(dc, &bm, bits);
+	    HeapFree(PSDRV_Heap, 0, bits);	
+	    PSDRV_Fill(dc, EO);
+	    PSDRV_WriteGRestore(dc);
+	    return TRUE;
+	}
+	break;
+
+
 
     default:
         return FALSE;

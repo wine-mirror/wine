@@ -58,7 +58,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pOffsetViewportOrg (optional) */
     NULL,                            /* pOffsetWindowOrg (optional) */
     NULL,                            /* pPaintRgn */
-    NULL,                            /* pPatBlt */
+    PSDRV_PatBlt,                    /* pPatBlt */
     PSDRV_Pie,                       /* pPie */
     PSDRV_PolyPolygon,               /* pPolyPolygon */
     PSDRV_PolyPolyline,              /* pPolyPolyline */

@@ -296,14 +296,13 @@ extern BOOL PSDRV_WriteIndexColorSpaceEnd(DC *dc);
 extern BOOL PSDRV_WriteRGB(DC *dc, COLORREF *map, int number);
 extern BOOL PSDRV_WriteImageDict(DC *dc, WORD depth, INT xDst, INT yDst,
 				 INT widthDst, INT heightDst, INT widthSrc,
-				 INT heightSrc);
+				 INT heightSrc, char *bits);
 extern BOOL PSDRV_WriteBytes(DC *dc, const BYTE *bytes, int number);
 extern BOOL PSDRV_WriteDIBits16(DC *dc, const WORD *words, int number);
 extern BOOL PSDRV_WriteDIBits24(DC *dc, const BYTE *bits, int number);
 extern BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number);
 extern int PSDRV_WriteSpool(DC *dc, LPSTR lpData, WORD cch);
-
-
+extern BOOL PSDRV_WritePatternDict(DC *dc, BITMAP *bm, BYTE *bits);
 
 extern BOOL PSDRV_Arc( DC *dc, INT left, INT top, INT right,
 			 INT bottom, INT xstart, INT ystart,
@@ -327,6 +326,8 @@ extern BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
 extern BOOL PSDRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics );
 extern BOOL PSDRV_LineTo( DC *dc, INT x, INT y );
 extern BOOL PSDRV_MoveToEx( DC *dc, INT x, INT y, LPPOINT pt );
+extern BOOL PSDRV_PatBlt( DC *dc, INT x, INT y, INT width, INT height, DWORD
+			  dwRop);
 extern BOOL PSDRV_Pie( DC *dc, INT left, INT top, INT right,
 			 INT bottom, INT xstart, INT ystart,
 			 INT xend, INT yend );

@@ -83,7 +83,7 @@ static BOOL PSDRV_WriteImageHeader(DC *dc, const BITMAPINFO *info, INT xDst,
     }
 
     PSDRV_WriteImageDict(dc, info->bmiHeader.biBitCount, xDst, yDst,
-			  widthDst, heightDst, widthSrc, heightSrc);
+			  widthDst, heightDst, widthSrc, heightSrc, NULL);
     return TRUE;
 }
 
