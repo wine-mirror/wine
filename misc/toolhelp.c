@@ -211,3 +211,19 @@ BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY lpme)
     FIXME(toolhelp,"(%d,%p),stub!\n",hSnapshot,lpme);
     return FALSE;
 }
+
+/************************************************************************
+ *              GlobalMasterHandle16 (KERNEL.28)
+ *
+ *
+ * Should return selector and handle of the information structure for 
+ * the global heap. selector and handle are stored in the THHOOK as
+ * pGlobalHeap and hGlobalHeap.
+ * As Wine doesn't have this structure, we return both values as zero
+ * Applications should interpret this as "No Global Heap"
+ */
+DWORD WINAPI GlobalMasterHandle16(void)
+{
+    FIXME(toolhelp,": stub\n");
+    return 0;
+}

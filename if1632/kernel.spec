@@ -32,7 +32,7 @@ file	krnl386.exe
 25  pascal GlobalCompact(long) GlobalCompact16
 26  pascal16 GlobalFreeAll(word) GlobalFreeAll16
 27  pascal16 GetModuleName(word ptr word) GetModuleName16
-28  stub GlobalMasterHandle
+28  pascal   GlobalMasterHandle() GlobalMasterHandle16
 29  pascal16 Yield() Yield16
 30  pascal16 WaitEvent(word) WaitEvent16
 31  pascal16 PostEvent(word) PostEvent16
