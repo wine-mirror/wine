@@ -263,31 +263,6 @@ static void fill_opengl_caps_7(D3DDEVICEDESC7 *d)
     d->dwReserved4 = 0;
 }
 
-#if 0 /* TODO : fix this and add multitexturing and other needed stuff */
-static void fill_device_capabilities(IDirectDrawImpl* ddraw)
-{
-    x11_dd_private *private = (x11_dd_private *) ddraw->d->private;
-    const char *ext_string;
-    Mesa_DeviceCapabilities *devcap;
-
-    private->device_capabilities = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(Mesa_DeviceCapabilities));
-    devcap = (Mesa_DeviceCapabilities *) private->device_capabilities;
-
-    ENTER_GL();
-    ext_string = glGetString(GL_EXTENSIONS);
-    /* Query for the ColorTable Extension */
-    if (strstr(ext_string, "GL_EXT_paletted_texture")) {
-        devcap->ptr_ColorTableEXT = (PFNGLCOLORTABLEEXTPROC) glXGetProcAddressARB("glColorTableEXT");
-	TRACE("Color table extension supported (function at %p)\n", devcap->ptr_ColorTableEXT);
-    } else {
-        TRACE("Color table extension not found.\n");
-    }
-    LEAVE_GL();
-}
-#endif
-
-
-
 HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD version)
 {
     D3DDEVICEDESC dref, d1, d2;

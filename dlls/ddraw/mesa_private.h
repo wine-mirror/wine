@@ -148,16 +148,9 @@ extern void apply_render_state(IDirect3DDeviceImpl* This, STATEBLOCK* lpStateBlo
 
 /* Memory to texture conversion code. Split in three functions to do some optimizations. */
 extern HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surface, GLuint level, GLenum *prev_internal_format,
-						 BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck);
+						 BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck, DWORD tex_width, DWORD tex_height);
 extern HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer);
 extern HRESULT upload_surface_to_tex_memory_release(void);
-
-/* This structure contains all the function pointers to OpenGL extensions
-   that are used by Wine */
-typedef struct {
-    void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
-			       GLsizei width, GLenum format, GLenum type, const GLvoid *table);
-} Mesa_DeviceCapabilities;
 
 #endif /* HAVE_OPENGL */
 

@@ -576,15 +576,34 @@ static IDirectDrawSurfaceImpl *current_surface;
 static GLuint current_level;
 
 HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLuint level, GLenum *current_internal_format,
-					  BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck)
+					  BOOLEAN need_to_alloc, BOOLEAN need_alpha_ck, DWORD tex_width, DWORD tex_height)
 {
     const DDPIXELFORMAT * const src_pf = &(surf_ptr->surface_desc.u4.ddpfPixelFormat);
     BOOL error = FALSE;
     BOOL colorkey_active = need_alpha_ck && (surf_ptr->surface_desc.dwFlags & DDSD_CKSRCBLT);
     GLenum internal_format = GL_LUMINANCE; /* A bogus value to be sure to have a nice Mesa warning :-) */
+    BYTE bpp = GET_BPP(surf_ptr->surface_desc);
 
     current_surface = surf_ptr;
     current_level = level;
+
+    /* First, do some sanity checks ... */
+    if ((surf_ptr->surface_desc.u1.lPitch % bpp) != 0) {
+	FIXME("Warning : pitch is not a multiple of BPP - not supported yet !\n");
+    }
+
+    /* Note: we only check width here as you cannot have width non-zero while height is set to zero */
+    if (tex_width != 0) {
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
+    } else {
+	if (surf_ptr->surface_desc.u1.lPitch == (surf_ptr->surface_desc.dwWidth * bpp)) {
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	} else {
+	    glPixelStorei(GL_UNPACK_ROW_LENGTH, surf_ptr->surface_desc.u1.lPitch / bpp);
+	}
+	tex_width = surf_ptr->surface_desc.dwWidth;
+	tex_height = surf_ptr->surface_desc.dwHeight;
+    }
 
     if (src_pf->dwFlags & DDPF_PALETTEINDEXED8) {
 	/* ****************
@@ -780,7 +799,7 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 	if ((need_to_alloc) ||
 	    (internal_format != *current_internal_format)) {
 	    glTexImage2D(GL_TEXTURE_2D, level, internal_format,
-			 surf_ptr->surface_desc.dwWidth, surf_ptr->surface_desc.dwHeight, 0,
+			 tex_width, tex_height, 0,
 			 current_format, current_pixel_format, NULL);
 	    *current_internal_format = internal_format;
 	}
@@ -793,7 +812,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, void **temp_buffer)
 {
     const DDSURFACEDESC * const src_d = (DDSURFACEDESC *)&(current_surface->surface_desc);
     void *surf_buffer = NULL;
-    
+
     switch (convert_type) {
         case CONVERT_PALETTED: {
 	    IDirectDrawPaletteImpl* pal = current_surface->palette;

@@ -120,7 +120,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr) {
 	    snoop_texture(surf_ptr);
 
 	    if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
-						  gl_surf_ptr->initial_upload_done == FALSE, TRUE) == D3D_OK) {
+						  gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) == D3D_OK) {
 	        upload_surface_to_tex_memory(NULL, &(gl_surf_ptr->surface_ptr));
 		upload_surface_to_tex_memory_release();
 		gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
@@ -231,7 +231,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 		  (width == surf_ptr->surface_desc.dwWidth) && (height == surf_ptr->surface_desc.dwHeight))) {
 		/* If not 'full size' and the surface is dirty, first flush it to GL before doing the copy. */
 	        if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
-						      gl_surf_ptr->initial_upload_done == FALSE, TRUE) != D3D_OK) {
+						      gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) != D3D_OK) {
 		    upload_surface_to_tex_memory(NULL, &(gl_surf_ptr->surface_ptr));
 		    upload_surface_to_tex_memory_release();
 		    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
@@ -244,7 +244,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 	    if (gl_surf_ptr->initial_upload_done == FALSE) {
 		gl_surf_ptr->dirty_flag = SURFACE_MEMORY_DIRTY;
 		if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
-						       gl_surf_ptr->initial_upload_done == FALSE, TRUE) != D3D_OK) {
+						       gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) != D3D_OK) {
 		    upload_surface_to_tex_memory(NULL, &(gl_surf_ptr->surface_ptr));
 		    upload_surface_to_tex_memory_release();
 		    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
