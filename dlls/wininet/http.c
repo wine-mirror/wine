@@ -1508,10 +1508,9 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         static const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
         static const WCHAR szColon[] = { ':',' ',0 };
         LPCWSTR *req;
-        LPWSTR p;
+        LPWSTR p, szCookedHeaders = NULL;
         int len, n;
         char *ascii_req;
-
 
         TRACE("Going to url %s %s\n", debugstr_w(lpwhr->lpszHostName), debugstr_w(lpwhr->lpszPath));
         loop_next = FALSE;
@@ -1532,8 +1531,22 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             lpwhr->lpszPath = fixurl;
         }
 
+        /* add the headers the caller supplied */
+        if( lpszHeaders )
+        {
+            len = strlenW(lpszHeaders)+3;
+            szCookedHeaders = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR)*len );
+            strcpyW( szCookedHeaders, lpszHeaders );
+
+            /* make sure there's exactly one linebreak at the end of the string */
+            p = &szCookedHeaders[len-4];
+            while( (szCookedHeaders <= p) && ((*p == '\n') || (*p == '\r')) )
+                p--;
+            p[1] = 0;
+        }
+
         /* allocate space for an array of all the string pointers to be added */
-        len = (2 + HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 3;
+        len = (HTTP_QUERY_MAX + lpwhr->nCustHeaders)*4 + 8;
         req = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(LPCWSTR) );
 
         /* add the verb, path and HTTP/1.0 */
@@ -1542,6 +1555,11 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         req[n++] = szSpace;
         req[n++] = lpwhr->lpszPath;
         req[n++] = HTTPHEADER;
+        if( szCookedHeaders )
+        {
+            req[n++] = szcrlf;
+            req[n++] = szCookedHeaders;
+        }
 
         /* Append standard request headers */
         for (i = 0; i <= HTTP_QUERY_MAX; i++)
@@ -1584,8 +1602,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         if( n > len )
             ERR("oops. buffer overrun\n");
 
+        req[n] = NULL;
         requestString = HTTP_build_req( req, 4 );
         HeapFree( GetProcessHeap(), 0, req );
+        HeapFree( GetProcessHeap(), 0, szCookedHeaders );
  
         /*
          * Set (header) termination string for request
@@ -1602,9 +1622,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         if (!HTTP_OpenConnection(lpwhr))
             goto lend;
 
-        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
-                          INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
-
         /* send the request as ASCII, tack on the optional data */
         if( !lpOptional )
             dwOptionalLength = 0;
@@ -1614,8 +1631,14 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                              ascii_req, len, NULL, NULL );
         if( lpOptional )
-            memcpy( &ascii_req[len], lpOptional, dwOptionalLength );
-        len += dwOptionalLength;
+            memcpy( &ascii_req[len-1], lpOptional, dwOptionalLength );
+        len = (len + dwOptionalLength - 1);
+        ascii_req[len] = 0;
+        TRACE("full request -> %s\n", ascii_req );
+
+        SendAsyncCallback(hIC, &lpwhr->hdr, lpwhr->hdr.dwContext,
+                          INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
+
         NETCON_send(&lpwhr->netConnection, ascii_req, len, 0, &cnt);
         HeapFree( GetProcessHeap(), 0, ascii_req );
 
