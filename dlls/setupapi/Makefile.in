@@ -24,6 +24,9 @@ C_SRCS = \
 	stubs.c \
 	virtcopy.c
 
+C_SRCS16 = \
+	devinst16.c
+
 RC_SRCS= setupapi.rc
 
 @MAKE_DLL_RULES@
