@@ -64,7 +64,7 @@ static void X11DRV_MONITOR_CreateDesktop(MONITOR *pMonitor)
   X11DRV_MONITOR_DATA *pX11Monitor =
     (X11DRV_MONITOR_DATA *) pMonitor->pDriverData;
 
-  int x, y, flags;
+  int x = 0, y = 0, flags;
   unsigned int width = 640, height = 480;  /* Default size = 640x480 */
   char *name = "Wine desktop";
   XSizeHints *size_hints;
