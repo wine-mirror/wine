@@ -3823,12 +3823,30 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
       goto done;
   }
 
+  descr.colorMap = NULL;
+
   switch (descr.infoBpp)
   {
       case 1:
       case 4:
       case 8:
           descr.rMask= descr.gMask = descr.bMask = 0;
+          if(coloruse == DIB_RGB_COLORS)
+              descr.colorMap = info->bmiColors;
+          else {
+              int num_colors = 1 << descr.infoBpp, i;
+              RGBQUAD *rgb;
+              COLORREF colref;
+              WORD *index = (WORD*)info->bmiColors;
+              descr.colorMap = rgb = HeapAlloc(GetProcessHeap(), 0, num_colors * sizeof(RGBQUAD));
+              for(i = 0; i < num_colors; i++, rgb++, index++) {
+                  colref = X11DRV_PALETTE_ToLogical(X11DRV_PALETTE_ToPhysical(physDev, PALETTEINDEX(*index)));
+                  rgb->rgbRed = GetRValue(colref);
+                  rgb->rgbGreen = GetGValue(colref);
+                  rgb->rgbBlue = GetBValue(colref);
+                  rgb->rgbReserved = 0;
+              }
+          }
           break;
       case 15:
       case 16:
@@ -3854,7 +3872,6 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.gc        = BITMAP_GC(bmp);
   descr.width     = bmp->bitmap.bmWidth;
   descr.height    = bmp->bitmap.bmHeight;
-  descr.colorMap  = info->bmiColors;
   descr.xDest     = 0;
   descr.yDest     = 0;
   descr.xSrc      = 0;
@@ -3897,6 +3914,8 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
     info->bmiHeader.biCompression = 0;
   }
 
+  if(descr.colorMap && descr.colorMap != info->bmiColors)
+      HeapFree(GetProcessHeap(), 0, descr.colorMap);
 done:
   GDI_ReleaseObj( hbitmap );
   return lines;
