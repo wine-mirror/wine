@@ -72,13 +72,6 @@ HDRAWDIB VFWAPI DrawDibOpen(void) {
 }
 
 /***********************************************************************
- *		DrawDibOpen		[MSVIDEO.102]
- */
-HDRAWDIB16 VFWAPI DrawDibOpen16(void) {
-	return (HDRAWDIB16)DrawDibOpen();
-}
-
-/***********************************************************************
  *		DrawDibClose		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibClose(HDRAWDIB hdd) {
@@ -95,13 +88,6 @@ BOOL VFWAPI DrawDibClose(HDRAWDIB hdd) {
 	GlobalUnlock16(hdd);
 	GlobalFree16(hdd);
 	return TRUE;
-}
-
-/***********************************************************************
- *		DrawDibClose		[MSVIDEO.103]
- */
-BOOL16 VFWAPI DrawDibClose16(HDRAWDIB16 hdd) {
-	return DrawDibClose(hdd);
 }
 
 /***********************************************************************
@@ -146,13 +132,6 @@ BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd) {
 
 	GlobalUnlock16(hdd);
 	return ret;
-}
-
-/***********************************************************************
- *		DrawDibEnd		[MSVIDEO.105]
- */
-BOOL16 VFWAPI DrawDibEnd16(HDRAWDIB16 hdd) {
-	return DrawDibEnd(hdd);
 }
 
 /***********************************************************************
@@ -266,20 +245,6 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 	return ret;
 }
 
-/************************************************************************
- *		DrawDibBegin		[MSVIDEO.104]
- */
-BOOL16 VFWAPI DrawDibBegin16(HDRAWDIB16 hdd,
-						   HDC16      hdc,
-						   INT16      dxDst,
-						   INT16      dyDst,
-						   LPBITMAPINFOHEADER lpbi,
-						   INT16      dxSrc,
-						   INT16      dySrc,
-						   UINT16     wFlags) {
-	return DrawDibBegin(hdd,hdc,dxDst,dyDst,lpbi,dxSrc,dySrc,wFlags);
-}
-
 /**********************************************************************
  *		DrawDibDraw		[MSVFW32.@]
  */
@@ -351,25 +316,6 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 	return ret;
 }
 
-/**********************************************************************
- *		DrawDibDraw		[MSVIDEO.106]
- */
-BOOL16 VFWAPI DrawDibDraw16(HDRAWDIB16 hdd,
-						  HDC16 hdc,
-						  INT16 xDst,
-						  INT16 yDst,
-						  INT16 dxDst,
-						  INT16 dyDst,
-						  LPBITMAPINFOHEADER lpbi,
-						  LPVOID lpBits,
-						  INT16 xSrc,
-						  INT16 ySrc,
-						  INT16 dxSrc,
-						  INT16 dySrc,
-						  UINT16 wFlags) {
-	return DrawDibDraw(hdd,hdc,xDst,yDst,dxDst,dyDst,lpbi,lpBits,xSrc,ySrc,dxSrc,dySrc,wFlags);
-}
-
 /*************************************************************************
  *		DrawDibStart		[MSVFW32.@]
  */
@@ -379,25 +325,11 @@ BOOL VFWAPI DrawDibStart(HDRAWDIB hdd, DWORD rate) {
 }
 
 /*************************************************************************
- *		DrawDibStart		[MSVIDEO.118]
- */
-BOOL16 VFWAPI DrawDibStart16(HDRAWDIB16 hdd, DWORD rate) {
-	return DrawDibStart(hdd,rate);
-}
-
-/*************************************************************************
  *		DrawDibStop		[MSVFW32.@]
  */
 BOOL VFWAPI DrawDibStop(HDRAWDIB hdd) {
 	FIXME("(0x%08lx), stub\n",(DWORD)hdd);
 	return TRUE;
-}
-
-/*************************************************************************
- *		DrawDibStop		[MSVIDEO.119]
- */
-BOOL16 DrawDibStop16(HDRAWDIB16 hdd) {
-	return DrawDibStop(hdd);
 }
 
 /***********************************************************************
@@ -420,13 +352,6 @@ BOOL VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal) {
 }
 
 /***********************************************************************
- *              DrawDibSetPalette       [MSVIDEO.110]
- */
-BOOL16 VFWAPI DrawDibSetPalette16(HDRAWDIB16 hdd, HPALETTE16 hpal) {
-	return DrawDibSetPalette(hdd,hpal);
-}
-
-/***********************************************************************
  *              DrawDibGetPalette       [MSVFW32.@]
  */
 HPALETTE VFWAPI DrawDibGetPalette(HDRAWDIB hdd) {
@@ -439,13 +364,6 @@ HPALETTE VFWAPI DrawDibGetPalette(HDRAWDIB hdd) {
 	ret = whdd->hpal;
 	GlobalUnlock16(hdd);
 	return ret;
-}
-
-/***********************************************************************
- *              DrawDibGetPalette       [MSVIDEO.108]
- */
-HPALETTE16 VFWAPI DrawDibGetPalette16(HDRAWDIB16 hdd) {
-	return (HPALETTE16)DrawDibGetPalette(hdd);
 }
 
 /***********************************************************************
@@ -476,11 +394,4 @@ UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground) {
 
 	TRACE("=> %u\n",ret);
 	return ret;
-}
-
-/***********************************************************************
- *              DrawDibRealize          [MSVIDEO.112]
- */
-UINT16 VFWAPI DrawDibRealize16(HDRAWDIB16 hdd, HDC16 hdc, BOOL16 fBackground) {
-	return (UINT16)DrawDibRealize(hdd,hdc,fBackground);
 }
