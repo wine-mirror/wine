@@ -21,18 +21,15 @@
 #include "winerror.h"
 
 DECLARE_DEBUG_CHANNEL(elfdll)
-DECLARE_DEBUG_CHANNEL(win32)
 
 #if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
 
 /*------------------ HACKS -----------------*/
-#ifndef elfdll
-#define elfdll	win32
-#endif
-
 extern DWORD fixup_imports(WINE_MODREF *wm);
 /*---------------- END HACKS ---------------*/
+
+char *extra_ld_library_path = NULL;	/* The extra search-path set in wine.conf */
 
 struct elfdll_image
 {
@@ -46,28 +43,30 @@ struct elfdll_image
 /****************************************************************************
  *	ELFDLL_dlopen
  *
- * Wrapper for dlopen to search the LD_LIBRARY_PATH manually because
- * libdl.so caches the environment and does not accept our changes.
+ * Wrapper for dlopen to search the EXTRA_LD_LIBRARY_PATH from wine.conf
+ * manually because libdl.so caches the environment and does not accept our
+ * changes.
  */
 void *ELFDLL_dlopen(const char *libname, int flags)
 {
-	char *ldpath = getenv("LD_LIBRARY_PATH");
 	char buffer[256];
 	int namelen;
+	void *handle;
+	char *ldpath;
 
-	if(!ldpath)
-	{
-		WARN(elfdll, "No LD_LIBRARY_PATH set\n");
-		return dlopen(libname, flags);
-	}
+	/* First try the default path search of dlopen() */
+	handle = dlopen(libname, flags);
+	if(handle)
+		return handle;
 
+	/* Now try to construct searches through our extra search-path */
 	namelen = strlen(libname);
-	while(ldpath)
+	ldpath = extra_ld_library_path;
+	while(ldpath && *ldpath)
 	{
 		int len;
 		char *cptr;
 		char *from;
-		void *handle;
 
 		from = ldpath;
 		cptr = strchr(ldpath, ':');
@@ -84,7 +83,7 @@ void *ELFDLL_dlopen(const char *libname, int flags)
 
 		if(len + namelen + 1 >= sizeof(buffer))
 		{
-			ERR(elfdll, "Buffer overflow! Check LD_LIBRARY_PATH or increase buffer size.\n");
+			ERR(elfdll, "Buffer overflow! Check EXTRA_LD_LIBRARY_PATH or increase buffer size.\n");
 			return NULL;
 		}
 
@@ -207,7 +206,7 @@ static WINE_MODREF *ELFDLL_CreateModref(HMODULE hModule, LPCSTR path)
 	if(!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
 	{
 		if(PROCESS_Current()->exe_modref)
-			FIXME(win32, "overwriting old exe_modref... arrgh\n");
+			FIXME(elfdll, "overwriting old exe_modref... arrgh\n");
 		PROCESS_Current()->exe_modref = wm;
 	}
 
@@ -227,7 +226,7 @@ static WINE_MODREF *ELFDLL_CreateModref(HMODULE hModule, LPCSTR path)
 			}
 		}
 		if(wm == PROCESS_Current()->exe_modref)
-			ERR(win32, "Have to delete current exe_modref. Expect crash now\n");
+			ERR(elfdll, "Have to delete current exe_modref. Expect crash now\n");
 		HeapFree(procheap, 0, wm->shortname);
 		HeapFree(procheap, 0, wm->longname);
 		HeapFree(procheap, 0, wm->modname);

@@ -8,12 +8,15 @@
 #include <string.h>
 #include <assert.h>
 
+#include "config.h"
 #include "windef.h"
 #include "options.h"
 #include "debug.h"
 #include "loadorder.h"
 #include "heap.h"
 #include "options.h"
+#include "module.h"
+#include "elfdll.h"
 
 DEFAULT_DEBUG_CHANNEL(module)
 
@@ -330,26 +333,16 @@ BOOL MODULE_InitLoadOrder(void)
 	char buffer[BUFFERSIZE];
 	int nbuffer;
 
+#if defined(HAVE_LIBDL) && defined(HAVE_DLFCN_H)
 	/* Get/set the new LD_LIBRARY_PATH */
 	nbuffer = PROFILE_GetWineIniString("DllDefaults", "EXTRA_LD_LIBRARY_PATH", "", buffer, sizeof(buffer));
 
 	if(nbuffer)
 	{
-		char *ld_lib_path = getenv("LD_LIBRARY_PATH");
-		if(ld_lib_path)
-		{
-			/*
-			 * Append new path to current
-			 */
-			char *tmp = HEAP_strdupA(SystemHeap, 0, buffer);
-			sprintf(buffer, "LD_LIBRARY_PATH=%s:%s", ld_lib_path, tmp);
-			HeapFree( SystemHeap, 0, tmp );
-		}
-
-		TRACE(module, "Setting new LD_LIBRARY_PATH=%s\n", buffer);
-
-		putenv(buffer);
+		extra_ld_library_path = HEAP_strdupA(SystemHeap, 0, buffer);
+		TRACE(module, "Setting extra LD_LIBRARY_PATH=%s\n", buffer);
 	}
+#endif
 
 	/* Get the default load order */
 	nbuffer = PROFILE_GetWineIniString("DllDefaults", "DefaultLoadOrder", "n,e,s,b", buffer, sizeof(buffer));
