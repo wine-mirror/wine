@@ -4455,8 +4455,13 @@ again:
         lvItem.iSubItem = 0;
         if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
 
-	if (lvItem.mask & LVIF_PARAM && lpFindInfo->lParam == lvItem.lParam)
-	    return nItem;
+	if (lvItem.mask & LVIF_PARAM)
+        {
+            if (lpFindInfo->lParam == lvItem.lParam)
+                return nItem;
+            else
+                continue;
+        }
 	
         if (lvItem.mask & LVIF_TEXT)
 	{
