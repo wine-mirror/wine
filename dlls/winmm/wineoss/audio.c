@@ -101,7 +101,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 /* events to be send to device */
 enum win_wm_message {
     WINE_WM_PAUSING = WM_USER + 1, WINE_WM_RESTARTING, WINE_WM_RESETTING, WINE_WM_HEADER,
-    WINE_WM_UPDATE, WINE_WM_BREAKLOOP, WINE_WM_CLOSING
+    WINE_WM_UPDATE, WINE_WM_BREAKLOOP, WINE_WM_CLOSING, WINE_WM_STARTING, WINE_WM_STOPPING
 };
 
 #ifdef USE_PIPE_SYNC
@@ -160,6 +160,8 @@ typedef struct tagOSS_DEVICE {
     unsigned                    audio_fragment;
     BOOL                        full_duplex;
     BOOL                        bTriggerSupport;
+    BOOL                        bOutputEnabled;
+    BOOL                        bInputEnabled;
 } OSS_DEVICE;
 
 static OSS_DEVICE   OSS_Devices[MAX_WAVEDRV];
@@ -234,7 +236,15 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_UPDATE",
     "WINE_WM_BREAKLOOP",
     "WINE_WM_CLOSING",
+    "WINE_WM_STARTING",
+    "WINE_WM_STOPPING",
 };
+
+static int getEnables(OSS_DEVICE *ossdev)
+{
+    return ( (ossdev->bOutputEnabled ? PCM_ENABLE_OUTPUT : 0) | 
+             (ossdev->bInputEnabled  ? PCM_ENABLE_INPUT  : 0) );
+}
 
 /*======================================================================*
  *                  Low level WAVE implementation			*
@@ -296,6 +306,9 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
         }
     }
     ossdev->fd = fd;
+    ossdev->bOutputEnabled = TRUE;	/* OSS enables by default */
+    ossdev->bInputEnabled  = TRUE;	/* OSS enables by default */
+
     return MMSYSERR_NOERROR;
 
 error:
@@ -396,20 +409,28 @@ static void	OSS_CloseDevice(OSS_DEVICE* ossdev)
  * Resets the device. OSS Commercial requires the device to be closed
  * after a SNDCTL_DSP_RESET ioctl call... this function implements
  * this behavior...
+ * FIXME: This causes problems when doing full duplex so we really
+ * only reset when not doing full duplex. We need to do this better
+ * someday. 
  */
 static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
 {
-    DWORD       ret;
+    DWORD       ret = MMSYSERR_NOERROR;
     int         old_fd = ossdev->fd;
+    TRACE("(%p)\n", ossdev);
 
-    if (ioctl(ossdev->fd, SNDCTL_DSP_RESET, NULL) == -1) 
-    {
-	perror("ioctl SNDCTL_DSP_RESET");
-        return -1;
-    }
-    close(ossdev->fd);
-    ret = OSS_RawOpenDevice(ossdev, 1);
-    TRACE("Changing fd from %d to %d\n", old_fd, ossdev->fd);
+    if (ossdev->open_count == 1) {
+	if (ioctl(ossdev->fd, SNDCTL_DSP_RESET, NULL) == -1) 
+	{
+	    perror("ioctl SNDCTL_DSP_RESET");
+            return -1;
+	}
+	close(ossdev->fd);
+	ret = OSS_RawOpenDevice(ossdev, 1);
+	TRACE("Changing fd from %d to %d\n", old_fd, ossdev->fd);
+    } else 
+	WARN("Not resetting device because it is in full duplex mode!\n");
+    
     return ret;
 }
 
@@ -1702,7 +1723,8 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 
     if (lpdwVol == NULL)
 	return MMSYSERR_NOTENABLED;
-    if (wDevID >= numOutDev) return MMSYSERR_INVALPARAM;
+    if (wDevID >= numOutDev) 
+	return MMSYSERR_INVALPARAM;
 
     if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_RDONLY|O_NDELAY)) < 0) {
 	WARN("mixer device not available !\n");
@@ -1994,10 +2016,13 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwRes1, DWORD dwRes2, DWORD dwFlags)
 {
     ICOM_THIS(IDsDriverBufferImpl,iface);
-    int enable = PCM_ENABLE_OUTPUT;
+    int enable;
     TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
+    WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
+    enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
     if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
+	WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
 	return DSERR_GENERIC;
     }
     return DS_OK;
@@ -2006,9 +2031,11 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 {
     ICOM_THIS(IDsDriverBufferImpl,iface);
-    int enable = 0;
+    int enable;
     TRACE("(%p)\n",iface);
     /* no more playing */
+    WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
+    enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
     if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
 	return DSERR_GENERIC;
@@ -2092,10 +2119,12 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
 static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
 {
     ICOM_THIS(IDsDriverImpl,iface);
-    int enable = 0;
-
+    int enable;
     TRACE("(%p)\n",iface);
+
     /* make sure the card doesn't start playing before we want it to */
+    WOutDev[This->wDevID].ossdev->bOutputEnabled = FALSE;
+    enable = getEnables(WOutDev[This->wDevID].ossdev);
     if (ioctl(WOutDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
 	return DSERR_GENERIC;
@@ -2179,6 +2208,8 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     *ppbBuffer		= WOutDev[This->wDevID].mapping;
 
     /* some drivers need some extra nudging after mapping */
+    WOutDev[This->wDevID].ossdev->bOutputEnabled = FALSE;
+    enable = getEnables(WOutDev[This->wDevID].ossdev);
     if (ioctl(WOutDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
 	return DSERR_GENERIC;
@@ -2300,12 +2331,19 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     enum win_wm_message msg;
     DWORD		param;
     HANDLE		ev;
+    int                 enable;
 
     wwi->state = WINE_WS_STOPPED;
     wwi->dwTotalRecorded = 0;
     wwi->lpQueuePtr = NULL;
 
     SetEvent(wwi->hStartUpEvent);
+
+    /* disable input so capture will begin when triggered */
+    wwi->ossdev->bInputEnabled = FALSE;
+    enable = getEnables(wwi->ossdev);
+    if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0)
+	ERR("ioctl(SNDCTL_DSP_SETTRIGGER) failed (%d)\n", errno);
 
     /* the soundblaster live needs a micro wake to get its recording started
      * (or GETISPACE will have 0 frags all the time)
@@ -2444,25 +2482,25 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	while (OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
-            TRACE("msg=0x%x param=0x%lx\n", msg, param);
+            TRACE("msg=%s param=0x%lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
 	    switch (msg) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
                 /*FIXME("Device should stop recording\n");*/
 		SetEvent(ev);
 		break;
-	    case WINE_WM_RESTARTING:
-            {
-                int enable = PCM_ENABLE_INPUT;
+	    case WINE_WM_STARTING:
 		wwi->state = WINE_WS_PLAYING;
 
                 if (wwi->ossdev->bTriggerSupport)
                 {
                     /* start the recording */
-                    if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0)
-                    {
+		    wwi->ossdev->bInputEnabled = TRUE;
+                    enable = getEnables(wwi->ossdev);
+                    if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+		        wwi->ossdev->bInputEnabled = FALSE;
                         ERR("ioctl(SNDCTL_DSP_SETTRIGGER) failed (%d)\n", errno);
-                    }
+		    }
                 }
                 else
                 {
@@ -2473,7 +2511,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 		SetEvent(ev);
 		break;
-            }
 	    case WINE_WM_HEADER:
 		lpWaveHdr = (LPWAVEHDR)param;
 		lpWaveHdr->lpNext = 0;
@@ -2485,6 +2522,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    *wh = lpWaveHdr;
 		}
 		break;
+	    case WINE_WM_STOPPING:
 	    case WINE_WM_RESETTING:
 		wwi->state = WINE_WS_STOPPED;
 		/* return all buffers to the app */
@@ -2739,7 +2777,7 @@ static DWORD widStart(WORD wDevID)
 	return MMSYSERR_INVALHANDLE;
     }
 
-    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_RESTARTING, 0, TRUE);
+    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_STARTING, 0, TRUE);
     return MMSYSERR_NOERROR;
 }
 
@@ -2753,8 +2791,8 @@ static DWORD widStop(WORD wDevID)
 	WARN("can't stop !\n");
 	return MMSYSERR_INVALHANDLE;
     }
-    /* FIXME: reset aint stop */
-    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_RESETTING, 0, TRUE);
+
+    OSS_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_STOPPING, 0, TRUE);
 
     return MMSYSERR_NOERROR;
 }
@@ -2996,33 +3034,34 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Unlock(PIDSCDRIVERBUFFER iface,
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(PIDSCDRIVERBUFFER iface,
-						             LPDWORD lpdwCapture, LPDWORD lpdwWrite)
+						             LPDWORD lpdwCapture, 
+							     LPDWORD lpdwRead)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
     count_info info;
     DWORD ptr;
-    TRACE("(%p,%p,%p)\n",This,lpdwCapture,lpdwWrite);
+    TRACE("(%p,%p,%p)\n",This,lpdwCapture,lpdwRead);
 
     if (WInDev[This->drv->wDevID].state == WINE_WS_CLOSED) {
 	ERR("device not open, but accessing?\n");
 	return DSERR_UNINITIALIZED;
     }
-    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_GETOPTR, &info) < 0) {
+    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_GETIPTR, &info) < 0) {
 	ERR("ioctl failed (%s)\n", strerror(errno));
 	return DSERR_GENERIC;
     }
     ptr = info.ptr & ~3; /* align the pointer, just in case */
     if (lpdwCapture) *lpdwCapture = ptr;
-    if (lpdwWrite) {
+    if (lpdwRead) {
 	/* add some safety margin (not strictly necessary, but...) */
-	if (WInDev[This->drv->wDevID].ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
-	    *lpdwWrite = ptr + 32;
+	if (WInDev[This->drv->wDevID].ossdev->in_caps_support & WAVECAPS_SAMPLEACCURATE)
+	    *lpdwRead = ptr + 32;
 	else
-	    *lpdwWrite = ptr + WInDev[This->drv->wDevID].dwFragmentSize;
-	while (*lpdwWrite > This->buflen)
-	    *lpdwWrite -= This->buflen;
+	    *lpdwRead = ptr + WInDev[This->drv->wDevID].dwFragmentSize;
+	while (*lpdwRead > This->buflen)
+	    *lpdwRead -= This->buflen;
     }
-    TRACE("capturepos=%ld, writepos=%ld\n", lpdwCapture?*lpdwCapture:0, lpdwWrite?*lpdwWrite:0);
+    TRACE("capturepos=%ld, readpos=%ld\n", lpdwCapture?*lpdwCapture:0, lpdwRead?*lpdwRead:0);
     return DS_OK;
 }
 
@@ -3036,10 +3075,13 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetStatus(PIDSCDRIVERBUFFER ifa
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, DWORD dwFlags)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
-    int enable = PCM_ENABLE_INPUT;
+    int enable;
     TRACE("(%p,%lx)\n",This,dwFlags);
+    WInDev[This->drv->wDevID].ossdev->bInputEnabled = TRUE;
+    enable = getEnables(WInDev[This->drv->wDevID].ossdev);
     if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
+	WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
 	return DSERR_GENERIC;
     }
     return DS_OK;
@@ -3048,9 +3090,11 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Start(PIDSCDRIVERBUFFER iface, 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
 {
     ICOM_THIS(IDsCaptureDriverBufferImpl,iface);
-    int enable = 0;
+    int enable;
     TRACE("(%p)\n",This);
     /* no more captureing */
+    WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
+    enable = getEnables(WInDev[This->drv->wDevID].ossdev);
     if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
 	return DSERR_GENERIC;
@@ -3160,7 +3204,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(PIDSCDRIVER iface, PDSCDRIVER
     ICOM_THIS(IDsCaptureDriverImpl,iface);
     TRACE("(%p,%p)\n",This,pCaps);
 
-    if ( !pCaps || (pCaps->dwSize != 0) ) {
+    if ( !pCaps || (pCaps->dwSize != sizeof(*pCaps)) ) {
 	TRACE("invalid parameter\n");
 	return DSERR_INVALIDPARAM;
     }
@@ -3184,7 +3228,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
     IDsCaptureDriverBufferImpl** ippdscdb = (IDsCaptureDriverBufferImpl**)ppvObj;
     HRESULT err;
     audio_buf_info info;
-    int enable = 0;
+    int enable;
     TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",This,pwfx,dwFlags,dwCardAddress,pdwcbBufferSize,ppbBuffer,ppvObj);
 
     if (This->capture_buffer) {
@@ -3218,7 +3262,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
     }
 
     /* check how big the DMA buffer is now */
-    if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
+    if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
 	ERR("ioctl failed (%s)\n", strerror(errno));
 	HeapFree(GetProcessHeap(),0,*ippdscdb);
 	*ippdscdb = NULL;
@@ -3239,6 +3283,8 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(PIDSCDRIVER iface
     *ppbBuffer		= WInDev[This->wDevID].mapping;
 
     /* some drivers need some extra nudging after mapping */
+    WInDev[This->wDevID].ossdev->bInputEnabled = FALSE;
+    enable = getEnables(WInDev[This->wDevID].ossdev);
     if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
 	return DSERR_GENERIC;
