@@ -163,13 +163,12 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_WINE_BPP] = GetDeviceCaps( hdc, BITSPIXEL );
     sysMetrics[SM_CXBORDER] = 1;
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
-    sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL] - 1;
+    sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL];
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
     sysMetrics[SM_CXICON] = 32;
     sysMetrics[SM_CYICON] = 32;
     sysMetrics[SM_CXFULLSCREEN] = sysMetrics[SM_CXSCREEN];
-    sysMetrics[SM_CYFULLSCREEN] =
-	sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];
+    sysMetrics[SM_CYFULLSCREEN] = sysMetrics[SM_CYSCREEN] - sysMetrics[SM_CYCAPTION];
     sysMetrics[SM_CYKANJIWINDOW] = 0;
     sysMetrics[SM_MOUSEPRESENT] = 1;
     sysMetrics[SM_CYVSCROLL] = SYSMETRICS_GetRegistryMetric (hkey, "ScrollHeight", sysMetrics[SM_CXVSCROLL]);
@@ -220,8 +219,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXSMICON] = sysMetrics[SM_CYSIZE] - (sysMetrics[SM_CYSIZE] % 2);
     sysMetrics[SM_CYSMICON] = sysMetrics[SM_CXSMICON];
     sysMetrics[SM_CYSMCAPTION] = 16;
-    sysMetrics[SM_CXSMSIZE] = 15;
-    sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CXSMSIZE];
+    sysMetrics[SM_CXSMSIZE] = 13;
+    sysMetrics[SM_CYSMSIZE] = 15;
     sysMetrics[SM_CXMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
     sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CXMENUSIZE];
 
@@ -242,8 +241,8 @@ void SYSMETRICS_Init(void)
 
     sysMetrics[SM_CXDRAG] = 2;
     sysMetrics[SM_CYDRAG] = 2;
-    sysMetrics[SM_CXMENUCHECK] = 14;
-    sysMetrics[SM_CYMENUCHECK] = 14;
+    sysMetrics[SM_CXMENUCHECK] = 13;
+    sysMetrics[SM_CYMENUCHECK] = 13;
 
     /* FIXME: Should check the type of processor for the following */
     sysMetrics[SM_SLOWMACHINE] = 0;
