@@ -470,7 +470,7 @@ static DWORD VERSION_GetLinkedDllVersion(void)
         case 0  :
             switch(ophd->MajorImageVersion)
             {
-            case 4 : return NT40;
+            case 4 : return WIN98;  /* most apps will use this */
             case 0 : return WIN95;
             }
             break;
