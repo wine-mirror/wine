@@ -52,19 +52,6 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
-
-
-/* GUIDs defined in dxguid.lib */
-
-#include "d3d.h"
-#include "ddraw.h"
-#include "dsound.h"
-#include "dplay.h"
-#include "dplobby.h"
-#include "dinput.h"
-
-#include "ddrawi.h"
-
 /* other GUIDs */
 
 #include "wine/obj_webbrowser.h"

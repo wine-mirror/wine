@@ -6,15 +6,17 @@ VPATH     = @srcdir@
 MODULE    = none
 
 C_SRCS = \
+	dx8guid.c \
+	dxguid.c \
 	uuid.c
 
 all: libwine_uuid.a
 
 @MAKE_RULES@
 
-libwine_uuid.a: uuid.o
+libwine_uuid.a: $(OBJS)
 	$(RM) $@
-	$(AR) $@ uuid.o
+	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
 install:: libwine_uuid.a
