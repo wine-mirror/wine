@@ -770,27 +770,47 @@ static inline BOOL iterator_empty(ITERATOR* i)
 static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT* lprc)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    INT nPerCol, nPerRow;
+    INT lower, upper;
+    RECT frame = *lprc;
+    POINT Origin;
     
     /* in case we fail, we want to return an empty iterator */
     if (!iterator_empty(i)) return FALSE;
 
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+
+    OffsetRect(&frame, -Origin.x, -Origin.y);
+
     if (uView == LVS_ICON || uView == LVS_SMALLICON)
     {
+	/* FIXME: we got to do better then this */
 	i->range.lower = 0;
 	i->range.upper = infoPtr->nItemCount - 1;
 	return TRUE;
     }
-    
-    i->range.lower = LISTVIEW_GetTopIndex(infoPtr);
-    
-    nPerCol = max((infoPtr->rcList.bottom - infoPtr->rcList.top) / infoPtr->nItemHeight, 1) + 1;
-    if (uView == LVS_REPORT)
-	nPerRow = 1;
-    else /* uView == LVS_LIST */
-	nPerRow = max((infoPtr->rcList.right - infoPtr->rcList.left)/infoPtr->nItemWidth, 1);
+    else if (uView == LVS_REPORT)
+    {
+	if (frame.left >= infoPtr->nItemWidth) return TRUE;
+	if (frame.top >= infoPtr->nItemHeight * infoPtr->nItemCount) return TRUE;
+	
+	lower = frame.top / infoPtr->nItemHeight;
+	upper = (frame.bottom - 1) / infoPtr->nItemHeight;
+    }
+    else
+    {
+	INT nPerCol = max((infoPtr->rcList.bottom - infoPtr->rcList.top) / infoPtr->nItemHeight, 1);
+	if (frame.top >= infoPtr->nItemHeight * nPerCol) return TRUE;
+	lower = (frame.left / infoPtr->nItemWidth) * nPerCol + frame.top / infoPtr->nItemHeight;
+	upper = ((frame.right - 1) / infoPtr->nItemWidth) * nPerCol + (frame.bottom - 1) / infoPtr->nItemHeight;
+    }
 
-    i->range.upper = min(i->range.lower + nPerCol * nPerRow, infoPtr->nItemCount - 1);
+    if (upper < 0 || lower >= infoPtr->nItemCount) return TRUE;
+    lower = max(lower, 0);
+    upper = min(upper, infoPtr->nItemCount - 1);
+    if (upper < lower) return TRUE;
+    i->range.lower = lower;
+    i->range.upper = upper;
+    
     return TRUE;
 }
 
@@ -3539,10 +3559,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     	isFocused = FALSE;	    
 	for (j = nFirstCol; j <= nLastCol; j++)
 	{
-	    if (cdmode & CDRF_NOTIFYITEMDRAW)
-		cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, j, CDDS_ITEMPREPAINT);
-	    if (cditemmode & CDRF_SKIPDEFAULT) continue;
-
 	    rcItem = lpCols[j].rc;
 	    rcItem.left += REPORT_MARGINX;
 	    rcItem.right = max(rcItem.left, rcItem.right - REPORT_MARGINX);
@@ -3551,6 +3567,12 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 
 	    /* Offset the Scroll Bar Pos */
 	    OffsetRect(&rcItem, ptOrig.x, ptOrig.y);
+
+	    if (rgntype == COMPLEXREGION && !RectVisible(hdc, &rcItem)) continue;
+
+	    if (cdmode & CDRF_NOTIFYITEMDRAW)
+		cditemmode = notify_customdrawitem (infoPtr, hdc, i.nItem, j, CDDS_ITEMPREPAINT);
+	    if (cditemmode & CDRF_SKIPDEFAULT) continue;
 
 	    if (j == 0)
 		isFocused = LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, rcItem);
@@ -4415,8 +4437,8 @@ static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 	
 	FIXME("LVFI_NEARESTXY is slow.\n");
         if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
-	Destination.x = lpFindInfo->pt.x + Origin.x;
-	Destination.y = lpFindInfo->pt.y + Origin.y;
+	Destination.x = lpFindInfo->pt.x - Origin.x;
+	Destination.y = lpFindInfo->pt.y - Origin.y;
 	switch(lpFindInfo->vkDirection)
 	{
 	case VK_DOWN:  Destination.y += infoPtr->nItemHeight; break;
@@ -5622,15 +5644,16 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	else
 	{
 	    POINT Origin, Position;
+	    INT nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
 
 	    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
 	    Position.x = lpht->pt.x - Origin.x;
 	    Position.y = lpht->pt.y - Origin.y;
 
-	    if (Position.x < LISTVIEW_GetCountPerRow(infoPtr) * infoPtr->nItemWidth &&
-	        Position.y < LISTVIEW_GetCountPerColumn(infoPtr) * infoPtr->nItemHeight)
+	    if (Position.y < nPerCol * infoPtr->nItemHeight)
 	    {
-		lpht->iItem = (Position.x / infoPtr->nItemWidth) * (Position.y / infoPtr->nItemHeight);
+		lpht->iItem = (Position.x / infoPtr->nItemWidth) * nPerCol + (Position.y / infoPtr->nItemHeight);
+		if (lpht->iItem < 0 || lpht->iItem >= infoPtr->nItemCount) lpht->iItem = -1;
 	    }
 	}
     }
