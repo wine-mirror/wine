@@ -95,7 +95,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 
 	EnterCriticalSection(&SHELL32_SicCS);
 
-	index = pDPA_InsertPtr(sic_hdpa, 0x7fff, lpsice);
+	index = DPA_InsertPtr(sic_hdpa, 0x7fff, lpsice);
 	if ( INVALID_INDEX == index )
 	{
 	  SHFree(lpsice);
@@ -159,10 +159,10 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 
 	EnterCriticalSection(&SHELL32_SicCS);
 
-	if (NULL != pDPA_GetPtr (sic_hdpa, 0))
+	if (NULL != DPA_GetPtr (sic_hdpa, 0))
 	{
 	  /* search linear from position 0*/
-	  index = pDPA_Search (sic_hdpa, &sice, 0, SIC_CompareEntries, 0, 0);
+	  index = DPA_Search (sic_hdpa, &sice, 0, SIC_CompareEntries, 0, 0);
 	}
 
 	if ( INVALID_INDEX == index )
@@ -172,7 +172,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 	else
 	{
 	  TRACE("-- found\n");
-	  ret = ((LPSIC_ENTRY)pDPA_GetPtr(sic_hdpa, index))->dwListIndex;
+	  ret = ((LPSIC_ENTRY)DPA_GetPtr(sic_hdpa, index))->dwListIndex;
 	}
 
 	LeaveCriticalSection(&SHELL32_SicCS);
@@ -218,7 +218,7 @@ BOOL SIC_Initialize(void)
 	if (sic_hdpa)	/* already initialized?*/
 	  return TRUE;
 
-	sic_hdpa = pDPA_Create(16);
+	sic_hdpa = DPA_Create(16);
 
 	if (!sic_hdpa)
 	{
@@ -262,14 +262,14 @@ void SIC_Destroy(void)
 
 	EnterCriticalSection(&SHELL32_SicCS);
 
-	if (sic_hdpa && NULL != pDPA_GetPtr (sic_hdpa, 0))
+	if (sic_hdpa && NULL != DPA_GetPtr (sic_hdpa, 0))
 	{
-	  for (i=0; i < pDPA_GetPtrCount(sic_hdpa); ++i)
+	  for (i=0; i < DPA_GetPtrCount(sic_hdpa); ++i)
 	  {
-	    lpsice = pDPA_GetPtr(sic_hdpa, i);
+	    lpsice = DPA_GetPtr(sic_hdpa, i);
 	    SHFree(lpsice);
 	  }
-	  pDPA_Destroy(sic_hdpa);
+	  DPA_Destroy(sic_hdpa);
 	}
 
 	sic_hdpa = NULL;

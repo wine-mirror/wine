@@ -42,6 +42,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(pidl);
 WINE_DECLARE_DEBUG_CHANNEL(shell);
 
+/* from comctl32.dll */
+extern LPVOID WINAPI Alloc(INT);
+extern BOOL WINAPI Free(LPVOID);
 
 /*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
@@ -297,7 +300,7 @@ LPITEMIDLIST WINAPI ILGlobalClone(LPCITEMIDLIST pidl)
 	  return NULL;
 
 	len = ILGetSize(pidl);
-	newpidl = (LPITEMIDLIST)pCOMCTL32_Alloc(len);
+	newpidl = (LPITEMIDLIST)Alloc(len);
 	if (newpidl)
 	  memcpy(newpidl,pidl,len);
 
@@ -640,7 +643,7 @@ void WINAPI ILGlobalFree( LPCITEMIDLIST pidl)
 	TRACE("%p\n",pidl);
 
 	if(!pidl) return;
-	pCOMCTL32_Free(pidl);
+	Free(pidl);
 }
 /*************************************************************************
  * ILCreateFromPath [SHELL32.157]

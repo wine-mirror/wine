@@ -40,6 +40,29 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 WINE_DECLARE_DEBUG_CHANNEL(pidl);
 
+/* FIXME: !!! move CREATEMRULIST and flags to header file !!! */
+/*        !!! it is in both here and comctl32undoc.c      !!! */
+typedef struct tagCREATEMRULIST
+{
+    DWORD  cbSize;        /* size of struct */
+    DWORD  nMaxItems;     /* max no. of items in list */
+    DWORD  dwFlags;       /* see below */
+    HKEY   hKey;          /* root reg. key under which list is saved */
+    LPCSTR lpszSubKey;    /* reg. subkey */
+    PROC   lpfnCompare;   /* item compare proc */
+} CREATEMRULISTA, *LPCREATEMRULISTA;
+
+/* dwFlags */
+#define MRUF_STRING_LIST  0 /* list will contain strings */
+#define MRUF_BINARY_LIST  1 /* list will contain binary data */
+#define MRUF_DELAYED_SAVE 2 /* only save list order to reg. is FreeMRUList */
+
+extern HANDLE WINAPI CreateMRUListA(LPCREATEMRULISTA lpcml);
+extern DWORD  WINAPI FreeMRUList(HANDLE hMRUList);
+extern INT    WINAPI AddMRUData(HANDLE hList, LPCVOID lpData, DWORD cbData);
+extern INT    WINAPI FindMRUData(HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum);
+extern INT    WINAPI EnumMRUListA(HANDLE hList, INT nItemPos, LPVOID lpBuffer, DWORD nBufferSize);
+
 /*************************************************************************
  * ParseFieldA					[internal]
  *
@@ -526,7 +549,7 @@ static INT SHADD_create_add_mru_data(HANDLE mruhandle, LPSTR doc_name, LPSTR new
 
     /* Add the new entry into the MRU list
      */
-    return pAddMRUData(mruhandle, (LPCVOID)buffer, *len);
+    return AddMRUData(mruhandle, (LPCVOID)buffer, *len);
 }
 
 /*************************************************************************
@@ -543,24 +566,6 @@ static INT SHADD_create_add_mru_data(HANDLE mruhandle, LPSTR doc_name, LPSTR new
  */
 DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
 {
-
-/* FIXME: !!! move CREATEMRULIST and flags to header file !!! */
-/*        !!! it is in both here and comctl32undoc.c      !!! */
-typedef struct tagCREATEMRULIST
-{
-    DWORD  cbSize;        /* size of struct */
-    DWORD  nMaxItems;     /* max no. of items in list */
-    DWORD  dwFlags;       /* see below */
-    HKEY   hKey;          /* root reg. key under which list is saved */
-    LPCSTR lpszSubKey;    /* reg. subkey */
-    PROC   lpfnCompare;   /* item compare proc */
-} CREATEMRULIST, *LPCREATEMRULIST;
-
-/* dwFlags */
-#define MRUF_STRING_LIST  0 /* list will contain strings */
-#define MRUF_BINARY_LIST  1 /* list will contain binary data */
-#define MRUF_DELAYED_SAVE 2 /* only save list order to reg. is FreeMRUList */
-
 /* If list is a string list lpfnCompare has the following prototype
  * int CALLBACK MRUCompareString(LPCSTR s1, LPCSTR s2)
  * for binary lists the prototype is
@@ -709,7 +714,7 @@ typedef struct tagCREATEMRULIST
 	*      new_lnk_filepath
 	*                  -  path and file name of new .lnk file
 	*/
-	CREATEMRULIST mymru;
+	CREATEMRULISTA mymru;
 	HANDLE mruhandle;
 	INT len, pos, bufused, err;
 	INT i;
@@ -719,13 +724,13 @@ typedef struct tagCREATEMRULIST
 	CHAR old_lnk_name[MAX_PATH];
 	short int slen;
 
-	mymru.cbSize = sizeof(CREATEMRULIST);
+	mymru.cbSize = sizeof(CREATEMRULISTA);
 	mymru.nMaxItems = 15;
 	mymru.dwFlags = MRUF_BINARY_LIST | MRUF_DELAYED_SAVE;
 	mymru.hKey = HCUbasekey;
 	mymru.lpszSubKey = "RecentDocs";
 	mymru.lpfnCompare = &SHADD_compare_mru;
-	mruhandle = pCreateMRUListA(&mymru);
+	mruhandle = CreateMRUListA(&mymru);
 	if (!mruhandle) {
 	    /* MRU failed */
 	    ERR("MRU processing failed, handle zero\n");
@@ -733,13 +738,13 @@ typedef struct tagCREATEMRULIST
 	    return 0;
 	}
 	len = lstrlenA(doc_name);
-	pos = pFindMRUData(mruhandle, doc_name, len, 0);
+	pos = FindMRUData(mruhandle, doc_name, len, 0);
 
 	/* Now get the MRU entry that will be replaced
 	 * and delete the .lnk file for it
 	 */
-	if ((bufused = pEnumMRUListA(mruhandle, (pos == -1) ? 14 : pos,
-				     buffer, 2048)) != -1) {
+	if ((bufused = EnumMRUListA(mruhandle, (pos == -1) ? 14 : pos,
+                                    buffer, 2048)) != -1) {
 	    ptr = buffer;
 	    ptr += (lstrlenA(buffer) + 1);
 	    slen = *((short int*)ptr);
@@ -795,7 +800,7 @@ typedef struct tagCREATEMRULIST
 	 */
 	pos = SHADD_create_add_mru_data(mruhandle, doc_name, new_lnk_name,
 					buffer, &len);
-	pFreeMRUListA(mruhandle);
+	FreeMRUList(mruhandle);
 	TRACE("Updated MRU list, new doc is position %d\n", pos);
     }
 

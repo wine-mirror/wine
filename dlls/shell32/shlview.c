@@ -577,7 +577,7 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 	}
 
 	/* create a pointer array */
-	hdpa = pDPA_Create(16);
+	hdpa = DPA_Create(16);
 	if (!hdpa)
 	{
 	  return(E_OUTOFMEMORY);
@@ -586,21 +586,21 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 	/* copy the items into the array*/
 	while((S_OK == IEnumIDList_Next(pEnumIDList,1, &pidl, &dwFetched)) && dwFetched)
 	{
-	  if (pDPA_InsertPtr(hdpa, 0x7fff, pidl) == -1)
+	  if (DPA_InsertPtr(hdpa, 0x7fff, pidl) == -1)
 	  {
 	    SHFree(pidl);
 	  }
 	}
 
 	/* sort the array */
-	pDPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
+	DPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
 
 	/*turn the listview's redrawing off*/
 	SendMessageA(This->hWndList, WM_SETREDRAW, FALSE, 0);
 
 	for (i=0; i < DPA_GetPtrCount(hdpa); ++i) 	/* DPA_GetPtrCount is a macro*/
 	{
-	  pidl = (LPITEMIDLIST)pDPA_GetPtr(hdpa, i);
+	  pidl = (LPITEMIDLIST)DPA_GetPtr(hdpa, i);
 
 	  /* in a commdlg This works as a filemask*/
 	  if ( IncludeObject(This, pidl)==S_OK )
@@ -612,7 +612,7 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 	SendMessageA(This->hWndList, WM_SETREDRAW, TRUE, 0);
 
 	IEnumIDList_Release(pEnumIDList); /* destroy the list*/
-	pDPA_Destroy(hdpa);
+	DPA_Destroy(hdpa);
 
 	return S_OK;
 }

@@ -47,24 +47,6 @@ extern HDPA		sic_hdpa;
 */
 extern void	(WINAPI *pDLLInitComctl)(LPVOID);
 
-extern LPVOID	(WINAPI *pCOMCTL32_Alloc) (INT);
-extern BOOL	(WINAPI *pCOMCTL32_Free) (LPVOID);
-
-extern HDPA	(WINAPI *pDPA_Create) (INT);
-extern INT	(WINAPI *pDPA_InsertPtr) (const HDPA, INT, LPVOID);
-extern BOOL	(WINAPI *pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM);
-extern LPVOID	(WINAPI *pDPA_GetPtr) (const HDPA, INT);
-extern BOOL	(WINAPI *pDPA_Destroy) (const HDPA);
-extern INT	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
-extern LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
-extern HANDLE   (WINAPI *pCreateMRUListA) (LPVOID lpcml);
-extern DWORD    (WINAPI *pFreeMRUListA) (HANDLE hMRUList);
-extern INT      (WINAPI *pAddMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData);
-extern INT      (WINAPI *pFindMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum);
-extern INT      (WINAPI *pEnumMRUListA) (HANDLE hList, INT nItemPos, LPVOID lpBuffer, DWORD nBufferSize);
-#define pDPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))
-
-
 BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
 
 /* Iconcache */

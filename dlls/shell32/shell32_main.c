@@ -908,13 +908,6 @@ void	(WINAPI *pDLLInitComctl)(LPVOID);
 LPVOID	(WINAPI *pCOMCTL32_Alloc) (INT);
 BOOL	(WINAPI *pCOMCTL32_Free) (LPVOID);
 
-HDPA	(WINAPI *pDPA_Create) (INT);
-INT	(WINAPI *pDPA_InsertPtr) (const HDPA, INT, LPVOID);
-BOOL	(WINAPI *pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM);
-LPVOID	(WINAPI *pDPA_GetPtr) (const HDPA, INT);
-BOOL	(WINAPI *pDPA_Destroy) (const HDPA);
-INT	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
-LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
 HANDLE  (WINAPI *pCreateMRUListA) (LPVOID lpcml);
 DWORD   (WINAPI *pFreeMRUListA) (HANDLE hMRUList);
 INT     (WINAPI *pAddMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData);
@@ -954,21 +947,6 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	    /* comctl32 */
 	    pDLLInitComctl=(void*)GetProcAddress(hComctl32,"InitCommonControlsEx");
-	    pCOMCTL32_Alloc=(void*)GetProcAddress(hComctl32, (LPCSTR)71L);
-	    pCOMCTL32_Free=(void*)GetProcAddress(hComctl32, (LPCSTR)73L);
-	    pDPA_Create=(void*)GetProcAddress(hComctl32, (LPCSTR)328L);
-	    pDPA_Destroy=(void*)GetProcAddress(hComctl32, (LPCSTR)329L);
-	    pDPA_GetPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)332L);
-	    pDPA_InsertPtr=(void*)GetProcAddress(hComctl32, (LPCSTR)334L);
-	    pDPA_DeletePtr=(void*)GetProcAddress(hComctl32, (LPCSTR)336L);
-	    pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
-	    pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
-	    pCreateMRUListA=(void*)GetProcAddress(hComctl32, (LPCSTR)151L /*"CreateMRUListA"*/);
-	    pFreeMRUListA=(void*)GetProcAddress(hComctl32, (LPCSTR)152L /*"FreeMRUList"*/);
-	    pAddMRUData=(void*)GetProcAddress(hComctl32, (LPCSTR)167L /*"AddMRUData"*/);
-	    pFindMRUData=(void*)GetProcAddress(hComctl32, (LPCSTR)169L /*"FindMRUData"*/);
-	    pEnumMRUListA=(void*)GetProcAddress(hComctl32, (LPCSTR)154L /*"EnumMRUListA"*/);
-
 	    /* initialize the common controls */
 	    if (pDLLInitComctl)
 	    {
