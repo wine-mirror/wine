@@ -9,7 +9,8 @@ C_SRCS = \
 	generic.c \
 	interface.c \
 	ncurses.c \
-	tty.c
+	tty.c \
+	xterm.c
 
 all: $(MODULE).o
 

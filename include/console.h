@@ -7,6 +7,8 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include <stdio.h>
+
 #include "config.h"
 
 typedef struct CONSOLE_DRIVER
@@ -36,6 +38,9 @@ typedef struct CONSOLE_DRIVER
    
    /* Other data */
    int norefresh;
+   FILE *console_out;
+   FILE *console_in;
+
 } CONSOLE_device;
 
 CONSOLE_device driver; /* Global driver struct */
@@ -86,5 +91,10 @@ void NCURSES_Refresh();
 void NCURSES_ClearScreen();
 
 #endif /* WINE_NCURSES */
+
+/* Xterm specific defines */
+void XTERM_Start();
+void XTERM_Close();
+void XTERM_Init();
 
 #endif /* CONSOLE_H */

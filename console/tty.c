@@ -28,14 +28,14 @@ void TTY_Start()
 void TTY_Write(char output, int fg, int bg, int attribute)
 {
    /* We can discard all extended information. */
-   printf("%c", output);
+   fprintf(driver.console_out, "%c", output);
 }
 
 void TTY_GetKeystroke(char *ch, char *scan)
 {
    /* All we have are character input things, nothing for extended */
    /* This is just the TTY driver, after all. We'll cope. */
-   _lread16(0, ch, 0);
+   *ch = fgetc(driver.console_in);
 }
 
 

@@ -6,9 +6,15 @@
    This could be done using a macro, but additional functionality
    may be provided here in the future. */
 
+#include <stdio.h>
+
 #include "windows.h"
 #include "console.h"
 #include "config.h"
+
+/* I did this without realizing that CONSOLE_* was actually used by
+   the Win32 console driver. I will definately have to rename these
+   functions to avoid the name clash... */
 
 void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute)
 {
@@ -22,6 +28,9 @@ void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute)
 
 void CONSOLE_Init()
 {
+      /* Suitable defaults... */
+      driver.console_out = stdout;
+      driver.console_in = stdin;
       /* Eventually, this will be a command-line choice */
 #ifndef WINE_NCURSES
     TTY_Start(); 
@@ -29,6 +38,8 @@ void CONSOLE_Init()
     NCURSES_Start();
 #endif
     GENERIC_Start();
+
+    /*XTERM_Start();*/
 
    if (driver.init)
       driver.init();

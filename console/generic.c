@@ -10,6 +10,7 @@
    driver, it should make sure to perserve the old values. */
 
 #include <stdio.h>
+
 #include "console.h"
 #include "config.h"
 #include "debug.h"

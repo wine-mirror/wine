@@ -23,6 +23,8 @@
 #undef ERR /* Use ncurses's err() */
 #include <curses.h>
 
+SCREEN *ncurses_screen;
+
 void NCURSES_Start()
 {
    /* This should be the root driver so we can ignore anything
@@ -46,7 +48,9 @@ void NCURSES_Start()
 
 void NCURSES_Init()
 {
-   initscr();
+   ncurses_screen = newterm("xterm", driver.console_out,
+      driver.console_in);
+   set_term(ncurses_screen);
    cbreak();
    noecho();
    nonl();
@@ -58,7 +62,7 @@ void NCURSES_Init()
 void NCURSES_Write(char output, int fg, int bg, int attribute)
 {
    /* We can discard all extended information. */
-   addch(output);
+   waddch(stdscr, output);
 }
 
 void NCURSES_Close()
@@ -74,7 +78,7 @@ void NCURSES_GetKeystroke(char *scan, char *ascii)
    /* When it is detected, we will already have the right value 
       in scan and ascii, but we need to take this keystroke
       out of the buffer. */
-   getch();
+   wgetch(stdscr);
 }
 
 int NCURSES_CheckForKeystroke(char *scan, char *ascii)
@@ -82,7 +86,7 @@ int NCURSES_CheckForKeystroke(char *scan, char *ascii)
    /* We don't currently support scan codes here */
    /* FIXME */
    int temp;
-   temp = getch();
+   temp = wgetch(stdscr);
    if (temp == ERR)
    {
       return FALSE;
@@ -97,7 +101,7 @@ int NCURSES_CheckForKeystroke(char *scan, char *ascii)
 
 void NCURSES_MoveCursor(char row, char col)
 {
-   move(row, col);
+   wmove(stdscr, row, col);
 }
 
 void NCURSES_GetCursorPosition(char *row, char *col)
@@ -114,7 +118,7 @@ void NCURSES_GetCharacterAtCursor(char *ch, int *fg_color, int
    *bg_color, int *attribute)
 {
    /* We will eventually have to convert the color data */
-   *ch = (char) inch();
+   *ch = (char) winch(stdscr);
    *fg_color = 0;
    *bg_color = 0;
    *attribute = 0;
@@ -122,12 +126,12 @@ void NCURSES_GetCharacterAtCursor(char *ch, int *fg_color, int
 
 void NCURSES_Refresh()
 {
-   refresh();
+   wrefresh(stdscr);
 }
 
 void NCURSES_ClearScreen()
 {
-   erase();
+   werase(stdscr);
 }
 
 #endif /* WINE_NCURSES */
