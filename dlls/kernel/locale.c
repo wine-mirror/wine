@@ -1034,6 +1034,12 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
     lcid = ConvertDefaultLocale(lcid);
 
     if (!(lctype & LOCALE_USE_CP_ACP)) codepage = get_lcid_codepage( lcid );
+
+    if (!data)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     len = MultiByteToWideChar( codepage, 0, data, -1, NULL, 0 );
     if (!(strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
     {
