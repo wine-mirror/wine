@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------
+Version 1.0.18 (28-Dec-1999)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Bugfix: The named resources were not named correctly for indirectly
+  addressable resources, which resulted in an undefined variable. The
+  previous fix was incomplete (I was probably sleeping while I made it).
+
+---------------------------------------------------------------------------
+Version 1.0.17 (20-Dec-1999)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Bugfix: Named resources of different types generated the same assembly-
+  label twice, resulting in a compile failure.
+
+---------------------------------------------------------------------------
 Version 1.0.16 (6-Nov-1999)
 
 Juergen.Schmied@debitel.net

@@ -633,10 +633,9 @@ void write_pe_segment(FILE *fp, resource_t *top)
 				fprintf(fp, "\t.long\t%d\n", rsc->name->name.i_name);
 			else
 			{
-				char *label = prep_nid_for_label(rsc->name);
-				fprintf(fp, "\t.long\t(%s_%s_name - %s%s) | 0x80000000\n",
+				fprintf(fp, "\t.long\t(%s%s_name - %s%s) | 0x80000000\n",
 					prefix,
-					label,
+					rsc->c_name,
 					prefix,
 					_PEResTab);
 			}
@@ -872,10 +871,9 @@ void write_rsc_names(FILE *fp, resource_t *top)
 
 				if(rsc->name->type == name_str)
 				{
-					char *name = prep_nid_for_label(rsc->name);
-					fprintf(fp, "%s_%s_name:\n",
+					fprintf(fp, "%s%s_name:\n",
 						prefix,
-						name);
+						rsc->c_name);
 					write_name_str(fp, rsc->name);
 				}
 			}
@@ -1024,7 +1022,6 @@ void write_s_file(char *outname, resource_t *top)
 		{
 			int type;
 			char *type_name = NULL;
-			char *label;
 
 			if(!rsc->binres)
 				continue;
@@ -1063,12 +1060,10 @@ void write_s_file(char *outname, resource_t *top)
 			fprintf(fo, "%s%s:\n", prefix, rsc->c_name);
 			if(global)
 				fprintf(fo, "\t.globl\t%s%s\n", prefix, rsc->c_name);
-			label = prep_nid_for_label(rsc->name);
-			fprintf(fo, "\t.long\t%d, %s%s%s%s, %d, %s%s%s%s, %s%s_data, %d\n",
+			fprintf(fo, "\t.long\t%d, %s%s%s, %d, %s%s%s%s, %s%s_data, %d\n",
 				rsc->name->type == name_ord ? rsc->name->name.i_name : 0,
 				rsc->name->type == name_ord ? "0" : prefix,
-				rsc->name->type == name_ord ? "" : "_",
-				rsc->name->type == name_ord ? "" : label,
+				rsc->name->type == name_ord ? "" : rsc->c_name,
 				rsc->name->type == name_ord ? "" : "_name",
 				type,
 				type ? "0" : prefix,
