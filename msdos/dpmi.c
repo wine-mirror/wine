@@ -384,6 +384,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     	TRACE("get descriptor (0x%04x)\n",BX_reg(context));
         {
             LDT_ENTRY entry;
+            wine_ldt_get_entry( LOWORD(context->Ebx), &entry);
             wine_ldt_set_base( &entry, (void*)W32S_WINE2APP(wine_ldt_get_base(&entry)) );
             /* FIXME: should use ES:EDI for 32-bit clients */
             *(LDT_ENTRY *)MapSL( MAKESEGPTR( context->SegEs, LOWORD(context->Edi) )) = entry;
