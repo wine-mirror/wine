@@ -876,18 +876,18 @@ BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
 /***********************************************************************
  *		ValidateRgn (USER32.@)
  */
-void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
+BOOL WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 {
-    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+    return RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
 }
 
 
 /***********************************************************************
  *		ValidateRect (USER32.@)
  */
-void WINAPI ValidateRect( HWND hwnd, const RECT *rect )
+BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 {
-    RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
+    return RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
 }
 
 

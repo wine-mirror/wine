@@ -4384,8 +4384,8 @@ BOOL      WINAPI UnregisterClassW(LPCWSTR,HINSTANCE);
 #define     UnregisterClass WINELIB_NAME_AW(UnregisterClass)
 VOID        WINAPI UpdateWindow(HWND);
 UINT        WINAPI UserRealizePalette(HDC);
-VOID        WINAPI ValidateRect(HWND,const RECT*);
-VOID        WINAPI ValidateRgn(HWND,HRGN);
+BOOL        WINAPI ValidateRect(HWND,const RECT*);
+BOOL        WINAPI ValidateRgn(HWND,HRGN);
 WORD        WINAPI VkKeyScanA(CHAR);
 WORD        WINAPI VkKeyScanW(WCHAR);
 #define     VkKeyScan WINELIB_NAME_AW(VkKeyScan)
