@@ -1752,7 +1752,7 @@ WINE REGISTRY Version 2
 
     <chapter id="pkg-implementation"> <title>Implementation</title>
 
-    <sect1 id="pkg-openlinux"><title>OpenLinux Sample</title>
+    <sect1 id="pkg-openlinux"><title>RedHat 8.0 Sample</title>
 
           <orderedlist inheritnum="inherit">
             <listitem>
@@ -1767,7 +1767,7 @@ WINE REGISTRY Version 2
                 configuration files (<filename>wine.conf</filename>,
                 <filename>wine.userreg</filename>,
                 <filename>wine.systemreg</filename>) are targeted for
-                <filename>/etc/wine/</filename> (rationale: FHS 2.0,
+                <filename>/etc/wine/</filename> (rationale: FHS 2.2,
                 multiple readonly configuration files of a package).
               </para>
               <para>
@@ -1800,7 +1800,7 @@ install -m 755 server/wineserver $BR/usr/X11R6/bin/
                 <filename>wineuser.reg</filename> and
                 <filename>winesystem.reg</filename> from the Wine
                 distributed <filename>winedefault.reg</filename>. This
-                can be done using <command>./regapi</command> once for
+                can be done using <command>./regedit</command> once for
                 one example user and then reusing his
                 <filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/user.reg</filename> and
                 <filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/system.reg</filename> files.
@@ -2071,307 +2071,230 @@ Path=/
           </orderedlist>
 
 
-      <sect2 id=sample><title>Sample <filename>wine.ini</filename> for OpenLinux 2.x (outdated, for review purposes only !):</title>
+      <sect2 id=sample><title>Sample RedHat 8.0 .spec file for review purposes</title>
+
 
 <programlisting>
 
+%define DATE 20030115
+Summary: A Windows 16/32 bit emulator.
+Name: wine
+Version: %{DATE}
+Release: 1rh8winehq
+Group: Applications/Emulators
+License: LGPL
+URL: http://www.winehq.com/
+Source: ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/Wine-%{version}.tar.bz2
+Source1: wine.init
+Patch: wine-%{version}-initial.patch
+Patch1: wine-%{version}-kde2.patch
+Patch2: wine-%{version}-winelauncher.patch
+Patch3: wine-%{version}-defaultcfg.patch
+Patch4: wine-%{version}-stabs+.patch
+Buildroot: %{_tmppath}/%{name}-root
+ExclusiveArch: %{ix86}
+Prereq: shadow-utils
+Conflicts: kdebase < 2.0
+Requires: cups-libs >= 1.1.12
+BuildRequires: docbook-utils, cups-devel >= 1.1.12, autoconf253, perl
 
-;;
-;; MS-DOS drives configuration
-;;
-;; Each section has the following format:
-;; [Drive X]
-;; Path=xxx       (Unix path for drive root)
-;; Type=xxx       (supported types are 'floppy', 'hd', 'cdrom' and 'network')
-;; Label=xxx      (drive label, at most 11 characters)
-;; Serial=xxx     (serial number, 8 characters hexadecimal number)
-;; Filesystem=xxx (supported types are 'msdos'/'dos'/'fat', 'win95'/'vfat', 'unix')
-;;   This is the FS Wine is supposed to emulate on a certain
-;;   directory structure.
-;;   Recommended:
-;;   - "win95" for ext2fs, VFAT and FAT32
-;;   - "msdos" for FAT16 (ugly, upgrading to VFAT driver strongly recommended)
-;;   DON'T use "unix" unless you intend to port programs using Winelib !
-;; Device=/dev/xx (only if you want to allow raw device access)
-;;
+%description
+While Wine is usually thought of as a Windows(TM) emulator, the Wine
+developers would prefer that users thought of Wine as a Windows
+compatibility layer for UNIX. This package includes a program loader,
+which allows unmodified Windows 3.1/95/NT binaries to run under Intel
+Unixes. Wine does not require MS Windows, but it can use native system
+.dll files if they are available.
 
-;
-;
-; Floppy 'A' and 'B'
-;
-; OpenLinux uses an automounter under /auto/, so we use that too.
-;
-[Drive A]
-Path=/auto/floppy/
-Type=floppy
-Label=Floppy
-Serial=87654321
-Device=/dev/fd0
-Filesystem=win95
+%package devel
+Summary: Wine development environment.
+Group: System Environment/Libraries
+Requires: wine = %{version}
 
-;
-; Comment in ONLY if you have a second floppy or the automounter hangs
-; for 5 minutes.
-;
-;[Drive B]
-;Path=/auto/floppy2/
-;Type=floppy
-;Label=Floppy
-;Serial=87654321
-;Device=/dev/fd1
-;Filesystem=win95
+%description devel
+Header and include files for developing applications with the Wine
+Windows(TM) emulation libraries.
 
+%prep
+%setup -q -n wine-%{version}
+find . -type d -name CVS |xargs rm -rf
+%patch -p1 -b .initial
+%patch1 -p1 -b .kde2
+%patch2 -p1 -b .wl
+%patch3 -p1 -b .defcfg
+%patch4 -p1 -b .stabs+
 
-;
-; Drive 'C' links to the user's homedirectory.
-;
-; This must point to a writeable directory structure (not your readonly
-; mounted DOS partitions!) since programs want to dump stuff into
-; "Program Files/" "Programme/", "windows/", "windows/system/" etc.
-;
-; The basic structure is set up using the config script.
-;
+%build
+export CFLAGS="$RPM_OPT_FLAGS"
+autoconf || autoconf-2.53
+%configure \
+	--with-x \
+	--libdir=%{_libdir}/wine \
+	--includedir=%{_includedir}/wine \
+	--sysconfdir=%{_sysconfdir}/wine
+
+make depend
+make
+make -C documentation doc
+
+%install
+rm -rf $RPM_BUILD_ROOT
+
+%makeinstall \
+	includedir=%{?buildroot:%{buildroot}}%{_includedir}/wine \
+	libdir=%{?buildroot:%{buildroot}}%{_libdir}/wine \
+	sysconfdir=%{?buildroot:%{buildroot}}%{_sysconfdir}/wine \
+	dlldir=%{?buildroot:%{buildroot}}%{_libdir}/wine/wine \
+	LDCONFIG=/bin/true
+
+for i in system "Start Menu/Programs/Startup" Profiles/Administrator Fonts \
+         Desktop Favorites NetHood Recent SendTo ShellNew; do
+	mkdir -p "$RPM_BUILD_ROOT%{_datadir}/wine-c/windows/$i"
+done
+mkdir -p "$RPM_BUILD_ROOT%{_datadir}/wine-c/My Documents"
+mkdir -p "$RPM_BUILD_ROOT%{_datadir}/wine-c/Program Files/Common Files"
+
+# Take care of wine and windows configuration files...
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/wine
+mv documentation/samples/config documentation/samples/config.orig
+sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"ttydrv\"/" documentation/samples/config.orig |\
+sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"$RPM_BUILD_ROOT%{_datadir}/wine-c\"|" |\
+sed "s|\"Path\" = \"\${HOME}\"$|\"Path\" = \"%{_builddir}/%{buildsubdir}\"|" -> documentation/samples/config
+WINEPREFIX=%{_builddir}/%{buildsubdir}/documentation/samples programs/regedit/regedit winedefault.reg > /dev/null
+# Wait until wineserver finishes and closes those files
+sleep 5
+install -c -m 0644 documentation/samples/system.reg $RPM_BUILD_ROOT%{_sysconfdir}/wine/system.reg
+install -c -m 0644 documentation/samples/user.reg $RPM_BUILD_ROOT%{_sysconfdir}/wine/user.reg
+install -c -m 0644 documentation/samples/userdef.reg $RPM_BUILD_ROOT%{_sysconfdir}/wine/userdef.reg
+rm -f documentation/samples/system.reg
+rm -f documentation/samples/user.reg
+rm -f documentation/samples/userdef.reg
+
+sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"%{_datadir}/wine-c\"|" documentation/samples/config.orig > documentation/samples/config.rh
+install -c -m 0644 documentation/samples/config.rh $RPM_BUILD_ROOT%{_sysconfdir}/wine/wine.conf
+rm -f documentation/samples/config
+rm -f documentation/samples/config.rh
+mv documentation/samples/config.orig documentation/samples/config
+
+# Install link to windows applications replacements
+ln -sf %{_libdir}/wine/notepad.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/notepad.exe
+ln -sf %{_libdir}/wine/regedit.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/regedit.exe
+ln -sf %{_libdir}/wine/rundll32.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/rundll32.exe
+ln -sf %{_libdir}/wine/wcmd.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/cmd.exe
+ln -sf %{_libdir}/wine/control.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/control.exe
+ln -sf %{_libdir}/wine/winhelp.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/help.exe
+ln -sf %{_libdir}/wine/notepad.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/notepad.exe
+ln -sf %{_libdir}/wine/progman.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/progman.exe
+ln -sf %{_libdir}/wine/regsvr32.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/regsvr32.exe
+ln -sf %{_libdir}/wine/winemine.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/winmine.exe
+ln -sf %{_libdir}/wine/winver.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/winver.exe
+ln -sf %{_libdir}/wine/uninstaller.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/uninstaller.exe
+ln -sf %{_libdir}/wine/winhelp.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/winhelp.exe
+ln -sf %{_libdir}/wine/winhelp.exe.so $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/winhlp32.exe
+
+for i in shell.dll shell32.dll winsock.dll wnsock32.dll; do
+	touch $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system/$i
+done
+touch $RPM_BUILD_ROOT%{_datadir}/wine-c/autoexec.bat
+touch $RPM_BUILD_ROOT%{_datadir}/wine-c/config.sys
+touch $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/win.ini
+install -c -m 0644 documentation/samples/system.ini $RPM_BUILD_ROOT%{_datadir}/wine-c/windows/system.ini
+
+cat >RedHat &lt;&lt;EOF
+Wine directory structure used in Red Hat Linux:
+===============================================
+
+%{_datadir}/wine-c is the root directory (aka C: drive) wine looks for
+by default. It contains (empty) C:\windows and C:\windows\system
+directories, needed to operate Wine without an existing Windows installation.
+
+If you want to use Wine with an existing Windows installation that is mounted,
+for example, in /mnt/windows-c, edit /etc/wine.conf to say
+
 [Drive C]
-Path=${HOME}
+Path=/mnt/windows-c
 Type=hd
-Label=MS-DOS
+Label=Whatever
 Filesystem=win95
 
-;
-; /tmp/ directory
-;
-; The temp drive (and directory) points to /tmp/. Windows programs fill it
-; with junk, so it is approbiate.
-;
-[Drive T]
-Path=/tmp
-Type=hd
-Label=Tmp Drive
-Filesystem=win95
+instead of the defaults set by installation.
 
-;
-; 'U'ser homedirectory
-;
-; Just in case you want C:\ elsewhere.
-;
-[Drive U]
-Path=${HOME}
-Type=hd
-Label=Home
-Filesystem=win95
+If you do this, you can safely remove %{_datadir}/wine-c.
+(Alternatively, just mount your Windows partition to %{_datadir}/wine-c.)
+EOF
 
-;
-; CD-'R'OM drive (automounted)
-;
-; The default cdrom drive.
-;
-; If an application (or game) wants a specific CD-ROM you might have to
-; temporary change the Label to the one of the CD itself.
-;
-; How to read them is described in /usr/doc/wine-cvs-xxxxx/cdrom-labels.
-;
-[Drive R]
-Path=/auto/cdrom
-Type=cdrom
-Label=CD-Rom
-Filesystem=win95
+# Allow users to launch Windows programs by just clicking on the .exe file...
+mkdir -p $RPM_BUILD_ROOT%{_initrddir}
+install -c -m 755 %SOURCE1 $RPM_BUILD_ROOT%{_initrddir}/wine
 
-;
-; The drive where the old windows installation resides (it points to the
-; windows/ subdirectory).
-;
-; The Path is modified by the winesetup script.
-;
-[Drive W]
-Path=/
-Type=network
-Label=Windows
-Filesystem=win95
-;
-; The UNIX Root directory, so all other programs and directories are reachable.
-;
-; type network is used to tell programs to not write here.
-;
-[Drive Z]
-Path=/
-Type=network
-Label=ROOT
-Filesystem=win95
+%clean
+rm -rf $RPM_BUILD_ROOT
 
-;
-; Standard Windows path entries. Wine will not work if they are incorrect.
-;
-[wine]
-;
-; The windows/ directory. It must be writeable, for programs write into it.
-;
-Windows=c:\windows
-;
-; The windows/system/ directory. It must be writeable, for especially setup
-; programs install dlls in there.
-;
-System=c:\windows\system
-;
-; The temp directory. Should be cleaned regulary, since install programs leave
-; junk without end in there.
-;
-Temp=t:\
-;
-; The dll search path. It should contain at least:
-; - the windows and the windows/system directory of the user.
-; - the global windows and windows/system directory (from a possible readonly
-;   windows installation either on msdos filesystems or somewhere in the UNIX
-;   directory tree)
-; - any other windows style directories you want to add.
-;
-Path=c:\windows;c:\windows\system;c:\windows\system32;t:\;w:\;w:\system;w:\system32
-;
-; Outdated and no longer used. (but needs to be present).
-;
-SymbolTableFile=./wine.sym
+%pre
+/usr/sbin/groupadd -g 66 -r wine &>/dev/null || :
 
-# &lt;wineconf&gt;
+%post
+if ! grep -q "^/usr/lib/wine$" /etc/ld.so.conf; then
+	echo "/usr/lib/wine" >>/etc/ld.so.conf
+fi
+/sbin/ldconfig
+/sbin/chkconfig --add wine
+/sbin/chkconfig --level 2345 wine on
+/sbin/service wine start &>/dev/null || :
 
-;
-; Dll loadorder defaults. No need to modify.
-;
-[DllDefaults]
-EXTRA_LD_LIBRARY_PATH=${HOME}/wine/cvs/lib
-DefaultLoadOrder = native, elfdll, so, builtin
+%preun
+if test "$1" = "0"; then
+	/sbin/chkconfig --del wine
+fi
 
-;
-; What 32/16 dlls belong to each other (context wise). No need to modify.
-;
-[DllPairs]
-kernel	= kernel32
-gdi	= gdi32
-user	= user32
-commdlg	= comdlg32
-commctrl= comctl32
-ver	= version
-shell	= shell32
-lzexpand= lz32
-mmsystem= winmm
-msvideo = msvfw32
-winsock	= wsock32
+%postun
+if test "$1" = "0"; then
+	perl -pi -e "s,^/usr/lib/wine$,,g" /etc/ld.so.conf
+	/usr/sbin/groupdel wine &>/dev/null || :
+fi
+/sbin/ldconfig
 
-;
-; What type of dll to use in their respective loadorder.
-;
-[DllOverrides]
-kernel32, gdi32, user32	= builtin
-kernel, gdi, user	= builtin
-toolhelp		= builtin
-comdlg32, commdlg	= elfdll, builtin, native
-version, ver		= elfdll, builtin, native
-shell32, shell		= builtin, native
-lz32, lzexpand		= builtin, native
-commctrl, comctl32	= builtin, native
-wsock32, winsock	= builtin
-advapi32, crtdll, ntdll	= builtin, native
-mpr, winspool		= builtin, native
-ddraw, dinput, dsound	= builtin, native
-winmm, mmsystem         = builtin
-msvideo, msvfw32        = builtin, native
-mcicda.drv, mciseq.drv  = builtin, native
-mciwave.drv		= builtin, native
-mciavi.drv, mcianim.drv = native, builtin
-w32skrnl                = builtin
-wnaspi32, wow32		= builtin
-system, display, wprocs	= builtin
-wineps			= builtin
+%files
+%defattr(-,root,root)
+%attr(0775, root, wine) %dir %{_datadir}/wine-c
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/system
+%attr(0775, root, wine) %dir "%{_datadir}/wine-c/windows/Start Menu"
+%attr(0775, root, wine) %dir "%{_datadir}/wine-c/windows/Start Menu/Programs"
+%attr(0775, root, wine) %dir "%{_datadir}/wine-c/windows/Start Menu/Programs/Startup"
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/Profiles
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/Profiles/Administrator
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/Fonts
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/Desktop
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/Favorites
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/NetHood
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/Recent
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/SendTo
+%attr(0775, root, wine) %dir %{_datadir}/wine-c/windows/ShellNew
+%attr(0775, root, wine) %dir "%{_datadir}/wine-c/My Documents"
+%attr(0775, root, wine) %dir "%{_datadir}/wine-c/Program Files"
+%attr(0775, root, wine) %dir "%{_datadir}/wine-c/Program Files/Common Files"
+%{_libdir}/wine
+%{_bindir}/*
+%{_mandir}/man?/*
+%{_datadir}/wine-c/windows/system/*.dll
+%{_datadir}/wine-c/windows/*.exe
+%config %{_datadir}/wine-c/autoexec.bat
+%config %{_datadir}/wine-c/config.sys
+%attr(0664, root, wine) %config %{_datadir}/wine-c/windows/win.ini
+%attr(0664, root, wine) %config %{_datadir}/wine-c/windows/system.ini
+%config %{_sysconfdir}/wine/*
+%config %{_initrddir}/*
+%doc ANNOUNCE BUGS COPYING.LIB ChangeLog DEVELOPERS-HINTS LICENSE LICENSE.OLD README VERSION
+%doc AUTHORS RedHat
+%doc documentation/ChangeLog.OLD documentation/HOWTO-winelib documentation/README.fr
+%doc documentation/wine-devel documentation/wine-user documentation/winelib-user documentation/samples
 
-;
-; Options section. Does not need to be edited.
-;
-[options]
-; allocate how much system colors on startup. No need to modify.
-AllocSystemColors=100
+%files devel
+%defattr(-,root,root)
+%{_includedir}/*
 
-;;
-; Font specification. You usually do not need to edit this section.
-;
-; Read documentation/fonts before adding aliases
-;
-[fonts]
-; The resolution defines what fonts to use (usually either 75 or 100 dpi fonts,
-; or nearest match).
-Resolution = 96
-; Default font
-Default = -adobe-times-
 
-;
-; serial ports used by "COM1" "COM2" "COM3" "COM4". Useful for applications
-; that try to access serial ports.
-;
-[serialports]
-Com1=/dev/ttyS0
-Com2=/dev/ttyS1
-Com3=/dev/modem,38400
-Com4=/dev/modem
-
-;
-; parallel port(s) used by "LPT1" etc. Useful for applications that try to
-; access these ports.
-;
-[parallelports]
-Lpt1=/dev/lp0
-
-;
-; What spooling program to use on printing.
-; Use "|program" or "filename", where the output will be dumped into.
-;
-[spooler]
-LPT1:=|lpr
-LPT2:=|gs -sDEVICE=bj200 -sOutputFile=/tmp/fred -q -
-LPT3:=/dev/lp3
-
-;
-; Allow port access to Wine started by the root user. Useful for some
-; supported devices, but it can make the system unstable.
-; Read /usr/doc/wine-cvs-xxxxx/ioport-trace-hints.
-;
-[ports]
-;read=0x779,0x379,0x280-0x2a0
-;write=0x779,0x379,0x280-0x2a0
-
-; debugging, not need to be modified.
-[spy]
-Exclude=WM_SIZE;WM_TIMER;
-
-;
-; What names for the registry datafiles, no need to modify.
-;
-[Registry]
-; Paths must be given in /dir/dir/file.reg format.
-; Wine will not understand dos file names here...
-;UserFileName=xxx		; alternate registry file name (user.reg)
-;LocalMachineFileName=xxx	; (system.reg)
-
-;
-; Layout/Look modifications. Here you can switch with a single line between
-; windows 3.1 and windows 95 style.
-; This does not change Wine behaviour or reported versions, just the look!
-;
-[Tweak.Layout]
-;; WineLook=xxx  (supported styles are 'Win31'(default), 'Win95', 'Win98')
-WineLook=Win95
-
-;
-; What programs to start on Wine startup. (you should probably leave it empty)
-;
-[programs]
-Default=
-Startup=
-
-; defunct section.
-[Console]
-;XtermProg=nxterm
-;InitialRows=25
-;InitialColumns=80
-;TerminalType=nxterm
-
-# &lt;/wineconf&gt;
       </programlisting>
 
       </sect2>
