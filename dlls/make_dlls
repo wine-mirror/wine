@@ -78,7 +78,6 @@ foreach my $i (split(/\s/,$makefiles))
             my @list = split(/\s+/,$specs);
             @list = map { $_ =~ s/\.spec$//; $_ .= ".dll" unless $_ =~ /\./; $_; } @list;
             $altnames{$module} = \@list;
-            printf "\"$specs\" -> %s\n", join(',',@list);
             next;
         }
     }
