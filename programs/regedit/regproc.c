@@ -23,10 +23,12 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <windows.h>
 #include <winnt.h>
 #include <winreg.h>
+#include <assert.h>
 #include "regproc.h"
 
 #define REG_VAL_BUF_SIZE        4096
@@ -36,8 +38,7 @@
 
 /* maximal number of characters in hexadecimal data line,
    not including '\' character */
-/*#define REG_FILE_HEX_LINE_LEN   77*/
-#define REG_FILE_HEX_LINE_LEN   75
+#define REG_FILE_HEX_LINE_LEN   76
 
 /* Globals used by the api setValue, queryValue */
 static LPSTR currentKeyName   = NULL;
@@ -61,6 +62,7 @@ static HKEY reg_class_keys[REG_CLASS_NUMBER] = {
 
 /* return values */
 #define NOT_ENOUGH_MEMORY     1
+#define IO_ERROR              2
 
 /* processing macros */
 
@@ -235,6 +237,7 @@ char* convertHexToDWORDStr(BYTE *buf, ULONG bufLen)
 
 /******************************************************************************
  * Converts a hex comma separated values list into a hex list.
+ * The Hex input string must be in exactly the correct form.
  */
 DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
 {
@@ -251,9 +254,11 @@ DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
    * warn the user if we are here with a string longer than 2 bytes that does
    * not contains ",".  It is more likely because the data is invalid.
    */
-  if ( ( strlen(str) > 2) && ( strchr(str, ',') == NULL) )
+  if ( ( strLen > 2) && ( strchr(str, ',') == NULL) )
     printf("%s: WARNING converting CSV hex stream with no comma, "
            "input data seems invalid.\n", getAppName());
+  if (strLen > 3*bufLen)
+    printf ("%s: ERROR converting CSV hex stream.  Too long\n", getAppName());
 
   while (strPos < strLen)
   {
@@ -262,7 +267,8 @@ DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
 
     memcpy(xbuf,s,2); xbuf[3]='\0';
     sscanf(xbuf,"%02x",(UINT*)&wc);
-    *b++ =(unsigned char)wc;
+    if (byteCount < bufLen)
+      *b++ =(unsigned char)wc;
 
     s+=3;
     strPos+=3;
@@ -398,6 +404,7 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
   DWORD   dwDataType, dwParseType;
   LPBYTE lpbData;
   BYTE   convert[KEY_MAX_LEN];
+  BYTE *bBigBuffer = 0;
   DWORD  dwLen;
 
   if ( (val_name == NULL) || (val_data == NULL) )
@@ -425,8 +432,19 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
   }
   else                               /* Convert the hexadecimal types */
   {
-    dwLen   = convertHexCSVToHex(val_data, convert, KEY_MAX_LEN);
-    lpbData = convert;
+    int b_len = strlen (val_data)+2/3;
+    if (b_len > KEY_MAX_LEN)
+    {
+      bBigBuffer = HeapAlloc (GetProcessHeap(), 0, b_len);
+      CHECK_ENOUGH_MEMORY(bBigBuffer);
+      dwLen = convertHexCSVToHex(val_data, bBigBuffer, b_len);
+      lpbData = bBigBuffer;
+    }
+    else
+    {
+      dwLen   = convertHexCSVToHex(val_data, convert, KEY_MAX_LEN);
+      lpbData = convert;
+    }
   }
 
   hRes = RegSetValueEx(
@@ -437,6 +455,8 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
           lpbData,
           dwLen);
 
+  if (bBigBuffer)
+      HeapFree (GetProcessHeap(), 0, bBigBuffer);
   return hRes;
 }
 
@@ -893,43 +913,6 @@ void processQueryValue(LPSTR cmdline)
 }
 
 /******************************************************************************
- * Reads one phisical line from the stream, removes newline.
- * Removes newline character, resizes the buffer if necessary.
- *
- * Parameters:
- * in - input stream to read from
- * pLine - pointer to the buffer to read the line to.
- * pSize - pointer to the variable which contains size of the buffer.
- */
-void readLine(FILE *in, LPSTR *pLine, ULONG *pLineSize)
-{
-    (*pLine)[0] = 0;
-
-    if (!feof(in))
-    {
-        LPSTR readRes   = "";       /* result of the last read */
-        ULONG curLen    = 0;        /* length of a read string */
-        while ( readRes )
-        {
-            if (strchr(*pLine, '\n'))
-            {
-                (*pLine)[curLen - 1] = '\0';        /* get rid of new line */
-                curLen--;
-                break;
-            }
-            readRes = fgets(*pLine + curLen, *pLineSize - curLen, in);
-            curLen = strlen(*pLine);
-            if (curLen == *pLineSize - 1)
-            {
-                *pLineSize += REG_VAL_BUF_SIZE;
-                *pLine = HeapReAlloc(GetProcessHeap(), 0, *pLine, *pLineSize);
-                CHECK_ENOUGH_MEMORY(*pLine);
-            }
-        }
-    }
-}
-
-/******************************************************************************
  * Calls command for each line of a registry file.
  * Correctly processes comments (in # form), line continuation.
  *
@@ -940,58 +923,109 @@ void readLine(FILE *in, LPSTR *pLine, ULONG *pLineSize)
 void processRegLines(FILE *in, CommandAPI command)
 {
     LPSTR line           = NULL;  /* line read from input stream */
-    LPSTR nextLine       = NULL;
     ULONG lineSize       = REG_VAL_BUF_SIZE;
-    ULONG nextLineSize   = REG_VAL_BUF_SIZE;
 
     line = HeapAlloc(GetProcessHeap(), 0, lineSize);
-    nextLine = HeapAlloc(GetProcessHeap(), 0, nextLineSize);
-
-    if (!line || !nextLine)
-    {
-        printf("%s: file %s, line %d: Not enough memory",
-                getAppName(), __FILE__, __LINE__);
-        exit(NOT_ENOUGH_MEMORY);
-    }
+    CHECK_ENOUGH_MEMORY(line);
 
     while (!feof(in))
     {
-        ULONG curLen;
-
-        readLine(in, &line, &lineSize);
-        curLen = strlen(line);
-
-        if ( curLen )
+        LPSTR s; /* The pointer into line for where the current fgets should read */
+        s = line;
+        for (;;)
         {
-            if( line[0] == '#' )    /* this is a comment */
-                continue;
+            size_t size_remaining;
+            int size_to_get;
+            char *s_eol; /* various local uses */
 
-            /* a '\' char in the end of the current line means  */
-            /* that this line is not complete and we have to get */
-            /* the rest in the next lines */
-            while( line[curLen - 1] == '\\' && !feof(in))
+            /* Do we need to expand the buffer ? */
+            assert (s >= line && s <= line + lineSize);
+            size_remaining = lineSize - (s-line);
+            if (size_remaining < 2) /* room for 1 character and the \0 */
             {
-                line[curLen - 1]= '\0';
-                readLine(in, &nextLine, &nextLineSize);
-                strcat(line, nextLine + 2);
-                curLen = strlen(line);
+                char *new_buffer;
+                size_t new_size = lineSize + REG_VAL_BUF_SIZE;
+                if (new_size > lineSize) /* no arithmetic overflow */
+                    new_buffer = HeapReAlloc (GetProcessHeap(), 0, line, new_size);
+                else
+                    new_buffer = NULL;
+                CHECK_ENOUGH_MEMORY(new_buffer);
+                line = new_buffer;
+                s = line + lineSize - size_remaining;
+                lineSize = new_size;
+                size_remaining = lineSize - (s-line);
             }
 
+            /* Get as much as possible into the buffer, terminated either by
+             * eof, error, eol or getting the maximum amount.  Abort on error.
+             */
+            size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
+            if (NULL == fgets (s, size_to_get, in))
+            {
+                if (ferror(in))
+                {
+                    perror ("While reading input");
+                    exit (IO_ERROR);
+                }
+                else
+                {
+                    assert (feof(in));
+                    *s = '\0';
+                    /* It is not clear to me from the definition that the
+                     * contents of the buffer are well defined on detecting
+                     * an eof without managing to read anything.
+                     */
+                }
+            }
+
+            /* If we didn't read the eol nor the eof go around for the rest */
+            s_eol = strchr (s, '\n');
+            if (!feof (in) && !s_eol)
+            {
+                s = strchr (s, '\0');
+                /* It should be s + size_to_get - 1 but this is safer */
+                continue;
+            }
+
+            /* If it is a comment line then discard it and go around again */
+            if (line [0] == '#')
+            {
+                s = line;
+                continue;
+            }
+
+            /* Remove any line feed.  Leave s_eol on the \0 */
+            if (s_eol)
+            {
+                *s_eol = '\0';
+                if (s_eol > line && *(s_eol-1) == '\r')
+                    *--s_eol = '\0';
+            }
+            else
+                s_eol = strchr (s, '\0');
+
+            /* If there is a concatenating \\ then go around again */
+            if (s_eol > line && *(s_eol-1) == '\\')
+            {
+                int c;
+                s = s_eol-1;
+                /* The following error protection could be made more self-
+                 * correcting but I thought it not worth trying.
+                 */
+                if ((c = fgetc (in)) == EOF || c != ' ' ||
+                    (c = fgetc (in)) == EOF || c != ' ')
+                    printf ("%s: ERROR - invalid continuation.\n", getAppName());
+                continue;
+            }
+
+            break; /* That is the full virtual line */
         }
 
         command(line);
     }
     command(NULL);
 
-#if 0
-    /*
-     * Save the registry only if it was modified
-     */
-    if ( commandSaveRegistry[cmdIndex] )
-        SHELL_SaveRegistry();
-#endif
     HeapFree(GetProcessHeap(), 0, line);
-    HeapFree(GetProcessHeap(), 0, nextLine);
 }
 
 /******************************************************************************
