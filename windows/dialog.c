@@ -1183,7 +1183,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
 	    {
 	        hwndNext = GetWindow( hwndControl, GW_HWNDNEXT );
 	    }
-	    while (!hwndNext)
+	    while (!hwndNext && hwndControl)
 	    {
 		hwndControl = GetParent( hwndControl );
 		if (hwndControl == hwndDlg)
@@ -1201,7 +1201,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
 	    }
             hwndControl = hwndNext;
         }
-        while (hwndControl != hwnd);
+        while (hwndControl && (hwndControl != hwnd));
     }
     return RetVal;
 }
