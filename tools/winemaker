@@ -3,7 +3,7 @@
 # Copyright 2000 Francois Gouget for CodeWeavers
 # fgouget@codeweavers.com
 #
-my $version="0.5.5";
+my $version="0.5.6";
 
 use Cwd;
 use File::Basename;
@@ -1268,14 +1268,16 @@ sub fix_file
   my $rc_textinclude_state=0;
   while (<FILEI>) {
     $line++;
-    $_ =~ s/\r\n$/\n/;
+    s/\r\n$/\n/;
+    if (!/\n$/) {
+      # Make sure all files are '\n' terminated
+      $_ .= "\n";
+    }
     if ($is_rc and !$is_mfc and /^(\s*\#\s*include\s*)\"afxres\.h\"/) {
       # VC6 automatically includes 'afxres.h', an MFC specific header, in 
       # the RC files it generates (even in non-MFC projects). So we replace 
       # it with 'winres.h' its very close standard cousin so that non MFC 
-      # projects can compile in Wine without the MFC sources. This does not 
-      # harm VC but it will put 'afxres.h' back the next time the file is 
-      # edited.
+      # projects can compile in Wine without the MFC sources.
       my $warning="mfc:afxres.h";
       if (!defined $warnings{$warning}) {
 	$warnings{$warning}="1";
@@ -1320,7 +1322,7 @@ sub fix_file
 	$modified=1;
       }
     } elsif ($is_rc) {
-      if ($rc_block_depth == 0 and /^(\w+\s+(BITMAP|CURSOR|FONT|FONTDIR|ICON|MESSAGETABLE|TEXT)\s+((DISCARDABLE|FIXED|IMPURE|LOADONCALL|MOVEABLE|PRELOAD|PURE)\s+)*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
+      if ($rc_block_depth == 0 and /^(\w+\s+(BITMAP|CURSOR|FONT|FONTDIR|ICON|MESSAGETABLE|TEXT)\s+((DISCARDABLE|FIXED|IMPURE|LOADONCALL|MOVEABLE|PRELOAD|PURE|RTF)\s+)*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
 	my $from_file=($5 eq "<"?"":$dirname);
 	my $real_include_name=get_real_include_name($line,$6,$from_file,$project,$target);
 	print FILEO "$1$5$real_include_name$7$'";
