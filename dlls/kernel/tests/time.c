@@ -34,11 +34,11 @@ void test_GetTimeZoneInformation()
 {
     TIME_ZONE_INFORMATION tzinfo, tzinfo1;
     DWORD res =  GetTimeZoneInformation(&tzinfo);
-    ok(res != 0, "GetTimeZoneInformation failed\n");
+    ok(res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     ok(SetEnvironmentVariableA("TZ","GMT0") != 0,
        "SetEnvironmentVariableA failed\n");
     res =  GetTimeZoneInformation(&tzinfo1);
-    ok(res != 0, "GetTimeZoneInformation failed\n");
+    ok(res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
 
     ok(((tzinfo.Bias == tzinfo1.Bias) && 
 	(tzinfo.StandardBias == tzinfo1.StandardBias) &&
@@ -82,10 +82,12 @@ void test_FileTimeToLocalFileTime()
     SYSTEMTIME st;
     TIME_ZONE_INFORMATION tzinfo;
     DWORD res =  GetTimeZoneInformation(&tzinfo);
-    ULONGLONG time = (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970 
-	+ (ULONGLONG)tzinfo.Bias*SECSPERMIN *TICKSPERSEC;
-
-    ok( res != 0, "GetTimeZoneInformation failed\n");
+    ULONGLONG time = (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970 +
+        (LONGLONG)(tzinfo.Bias + 
+            ( res == TIME_ZONE_ID_STANDARD ? tzinfo.StandardBias :
+            ( res == TIME_ZONE_ID_DAYLIGHT ? tzinfo.DaylightBias : 0 ))) *
+             SECSPERMIN *TICKSPERSEC;
+    ok( res != TIME_ZONE_ID_INVALID , "GetTimeZoneInformation failed\n");
     ft.dwHighDateTime = (UINT)(time >> 32);
     ft.dwLowDateTime  = (UINT)time;
     ok(FileTimeToLocalFileTime(&ft, &lft) !=0 ,
@@ -100,7 +102,7 @@ void test_FileTimeToLocalFileTime()
 
     ok(SetEnvironmentVariableA("TZ","GMT") != 0,
        "SetEnvironmentVariableA failed\n");
-    ok(res != 0, "GetTimeZoneInformation failed\n");
+    ok(res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     ok(FileTimeToLocalFileTime(&ft, &lft) !=0 ,
        "FileTimeToLocalFileTime() failed with Error 0x%08lx\n",GetLastError());
     FileTimeToSystemTime(&lft, &st);
