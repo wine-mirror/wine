@@ -644,15 +644,19 @@ init	UserClientDllInitialize
 # win98/win2k
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
 @ stdcall AnimateWindow(long long long) AnimateWindow
-@ stdcall GetAncestor(long long) GetAncestor
 @ stdcall DrawMenuBarTemp(long long long long long) DrawMenuBarTemp
 @ stdcall EnumDisplaySettingsExA(str long ptr long) EnumDisplaySettingsExA
 @ stdcall EnumDisplaySettingsExW(wstr long ptr long) EnumDisplaySettingsExW
+@ stdcall GetAncestor(long long) GetAncestor
 @ stdcall GetClipboardSequenceNumber () GetClipboardSequenceNumber
 @ stdcall GetWindowModuleFileNameA(long ptr long) GetWindowModuleFileNameA
 @ stdcall GetWindowModuleFileNameW(long ptr long) GetWindowModuleFileNameW
+@ stdcall IsWinEventHookInstalled(long) IsWinEventHookInstalled
 @ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow
+@ stdcall NotifyWinEvent(long long long long) NotifyWinEvent
 @ stdcall SendInput(long ptr long) SendInput
+@ stdcall SetWinEventHook(long long long ptr long long long) SetWinEventHook
+@ stdcall UnhookWinEvent(long) UnhookWinEvent
 
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls

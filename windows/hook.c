@@ -1140,3 +1140,102 @@ BOOL WINAPI CallMsgFilterW( LPMSG msg, INT code )
     return HOOK_CallHooksW( WH_MSGFILTER, code, 0, (LPARAM)msg );
 }
 
+
+/***********************************************************************
+ *           SetWinEventHook                            [USER32.@]
+ *
+ * Set up an event hook for a set of events.
+ *
+ * PARAMS
+ *  dwMin     [I] Lowest event handled by pfnProc
+ *  dwMax     [I] Highest event handled by pfnProc
+ *  hModule   [I] DLL containing pfnProc
+ *  pfnProc   [I] Callback event hook function
+ *  dwProcess [I] Process to get events from, or 0 for all processes
+ *  dwThread  [I] Thread to get events from, or 0 for all threads
+ *  dwFlags   [I] Flags indicating the status of pfnProc
+ *
+ * RETURNS
+ *  Success: A handle representing the hook.
+ *  Failure: A NULL handle.
+ *
+ * BUGS
+ *  Not implemented.
+ */
+HWINEVENTHOOK WINAPI SetWinEventHook(DWORD dwMin, DWORD dwMax, HMODULE hModule,
+                                     WINEVENTPROC pfnProc, DWORD dwProcess,
+                                     DWORD dwThread, DWORD dwFlags)
+{
+  FIXME("(%ld,%ld,0x%08x,%p,%ld,%ld,0x%08lx)-stub!\n", dwMin, dwMax, hModule,
+        pfnProc, dwProcess, dwThread, dwFlags);
+
+  return (HWINEVENTHOOK)0;
+}
+
+/***********************************************************************
+ *           UnhookWinEvent                             [USER32.@]
+ *
+ * Remove an event hook for a set of events.
+ *
+ * PARAMS
+ *  hEventHook [I] Event hook to remove
+ *
+ * RETURNS
+ *  Success: TRUE. The event hook has been removed.
+ *  Failure: FALSE, if hEventHook is invalid.
+ *
+ * BUGS
+ *  Not implemented.
+ */
+BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
+{
+  FIXME("(%p)-stub!\n", (void*)hEventHook);
+
+  if (!hEventHook)
+    return FALSE;
+
+  return TRUE;
+}
+
+/***********************************************************************
+ *           NotifyWinEvent                             [USER32.@]
+ *
+ * Inform the OS that an event has occurred.
+ *
+ * PARAMS
+ *  dwEvent  [I] Id of the event
+ *  hWnd     [I] Window holding the object that created the event
+ *  nId      [I] Type of object that created the event
+ *  nChildId [I] Child object of nId, or CHILDID_SELF.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * BUGS
+ *  Not implemented.
+ */
+VOID WINAPI NotifyWinEvent(DWORD dwEvent, HWND hWnd, LONG nId, LONG nChildId)
+{
+  FIXME("(%ld,0x%08x,%ld,%ld)-stub!\n", dwEvent, hWnd, nId, nChildId);
+}
+
+/***********************************************************************
+ *           IsWinEventHookInstalled                       [USER32.@]
+ *
+ * Determine if an event hook is installed for an event.
+ *
+ * PARAMS
+ *  dwEvent  [I] Id of the event
+ *
+ * RETURNS
+ *  TRUE,  If there are any hooks installed for the event.
+ *  FALSE, Otherwise.
+ *
+ * BUGS
+ *  Not implemented.
+ */
+BOOL WINAPI IsWinEventHookInstalled(DWORD dwEvent)
+{
+  FIXME("(%ld)-stub!\n", dwEvent);
+  return TRUE;
+}

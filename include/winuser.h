@@ -44,7 +44,10 @@ typedef BOOL    (CALLBACK *PROPENUMPROCEXA)(HWND,LPCSTR,HANDLE,ULONG_PTR);
 typedef BOOL    (CALLBACK *PROPENUMPROCEXW)(HWND,LPCWSTR,HANDLE,ULONG_PTR);
 typedef VOID    (CALLBACK *SENDASYNCPROC)(HWND,UINT,ULONG_PTR,LRESULT);
 typedef VOID    (CALLBACK *TIMERPROC)(HWND,UINT,UINT,DWORD);
+typedef VOID    (CALLBACK *WINEVENTPROC)(HWINEVENTHOOK,DWORD,HWND,LONG,LONG,
+                                         DWORD,DWORD);
 typedef BOOL    (CALLBACK *WNDENUMPROC)(HWND,LPARAM);
+
 #else
 typedef FARPROC DLGPROC;
 typedef FARPROC DRAWSTATEPROC;
@@ -60,6 +63,7 @@ typedef FARPROC PROPENUMPROCEXA;
 typedef FARPROC PROPENUMPROCEXW;
 typedef FARPROC SENDASYNCPROC;
 typedef FARPROC TIMERPROC;
+typedef FARPROC WINEVENTPROC;
 typedef FARPROC WNDENUMPROC;
 #endif /* STRICT || __WINE__ */
 
@@ -3500,6 +3504,124 @@ typedef struct tagWINDOWINFO {
     WORD  wCreatorVersion;
 } WINDOWINFO, *PWINDOWINFO, *LPWINDOWINFO;
 
+/* SetWinEventHook() flags */
+#define WINEVENT_OUTOFCONTEXT   0x0
+#define WINEVENT_SKIPOWNTHREAD  0x1
+#define WINEVENT_SKIPOWNPROCESS 0x2
+#define WINEVENT_INCONTEXT      0x4
+
+/* Object Id's */
+#define CHILDID_SELF      0
+#define INDEXID_OBJECT    0
+#define INDEXID_CONTAINER 0
+
+/* System object Id's */
+#define OBJID_WINDOW            0
+#define OBJID_SYSMENU           -1
+#define OBJID_TITLEBAR          -2
+#define OBJID_MENU              -3
+#define OBJID_CLIENT            -4
+#define OBJID_VSCROLL           -5
+#define OBJID_HSCROLL           -6
+#define OBJID_SIZEGRIP          -7
+#define OBJID_CARET             -8
+#define OBJID_CURSOR            -9
+#define OBJID_ALERT             -10
+#define OBJID_SOUND             -11
+#define OBJID_QUERYCLASSNAMEIDX -12
+#define OBJID_NATIVEOM          -16
+
+/* User event Id limits */
+#define EVENT_MIN 0x00000001
+#define EVENT_MAX 0x7FFFFFFF
+
+/* System events */
+#define EVENT_SYSTEM_SOUND            0x01
+#define EVENT_SYSTEM_ALERT            0x02
+#define EVENT_SYSTEM_FOREGROUND       0x03
+#define EVENT_SYSTEM_MENUSTART        0x04
+#define EVENT_SYSTEM_MENUEND          0x05
+#define EVENT_SYSTEM_MENUPOPUPSTART   0x06
+#define EVENT_SYSTEM_MENUPOPUPEND     0x07
+#define EVENT_SYSTEM_CAPTURESTART     0x08
+#define EVENT_SYSTEM_CAPTUREEND       0x09
+#define EVENT_SYSTEM_MOVESIZESTART    0x0A
+#define EVENT_SYSTEM_MOVESIZEEND      0x0B
+#define EVENT_SYSTEM_CONTEXTHELPSTART 0x0C
+#define EVENT_SYSTEM_CONTEXTHELPEND   0x0D
+#define EVENT_SYSTEM_DRAGDROPSTART    0x0E
+#define EVENT_SYSTEM_DRAGDROPEND      0x0F
+#define EVENT_SYSTEM_DIALOGSTART      0x10
+#define EVENT_SYSTEM_DIALOGEND        0x11
+#define EVENT_SYSTEM_SCROLLINGSTART   0x12
+#define EVENT_SYSTEM_SCROLLINGEND     0x13
+#define EVENT_SYSTEM_SWITCHSTART      0x14
+#define EVENT_SYSTEM_SWITCHEND        0x15
+#define EVENT_SYSTEM_MINIMIZESTART    0x16
+#define EVENT_SYSTEM_MINIMIZEEND      0x17
+
+/* Console events */
+#define EVENT_CONSOLE_CARET             0x4001
+#define EVENT_CONSOLE_UPDATE_REGION     0x4002
+#define EVENT_CONSOLE_UPDATE_SIMPLE     0x4003
+#define EVENT_CONSOLE_UPDATE_SCROLL     0x4004
+#define EVENT_CONSOLE_LAYOUT            0x4005
+#define EVENT_CONSOLE_START_APPLICATION 0x4006
+#define EVENT_CONSOLE_END_APPLICATION   0x4007
+
+#define CONSOLE_APPLICATION_16BIT 0x1
+#define CONSOLE_CARET_SELECTION   0x1
+#define CONSOLE_CARET_VISIBLE     0x2
+
+/* Object events */
+#define EVENT_OBJECT_CREATE            0x8000
+#define EVENT_OBJECT_DESTROY           0x8001
+#define EVENT_OBJECT_SHOW              0x8002
+#define EVENT_OBJECT_HIDE              0x8003
+#define EVENT_OBJECT_REORDER           0x8004
+#define EVENT_OBJECT_FOCUS             0x8005
+#define EVENT_OBJECT_SELECTION         0x8006
+#define EVENT_OBJECT_SELECTIONADD      0x8007
+#define EVENT_OBJECT_SELECTIONREMOVE   0x8008
+#define EVENT_OBJECT_SELECTIONWITHIN   0x8009
+#define EVENT_OBJECT_STATECHANGE       0x800A
+#define EVENT_OBJECT_LOCATIONCHANGE    0x800B
+#define EVENT_OBJECT_NAMECHANGE        0x800C
+#define EVENT_OBJECT_DESCRIPTIONCHANGE 0x800D
+#define EVENT_OBJECT_VALUECHANGE       0x800E
+#define EVENT_OBJECT_PARENTCHANGE      0x800F
+#define EVENT_OBJECT_HELPCHANGE        0x8010
+#define EVENT_OBJECT_DEFACTIONCHANGE   0x8011
+#define EVENT_OBJECT_ACCELERATORCHANGE 0x8012
+
+/* Sound events */
+#define SOUND_SYSTEM_STARTUP      1
+#define SOUND_SYSTEM_SHUTDOWN     2
+#define SOUND_SYSTEM_BEEP         3
+#define SOUND_SYSTEM_ERROR        4
+#define SOUND_SYSTEM_QUESTION     5
+#define SOUND_SYSTEM_WARNING      6
+#define SOUND_SYSTEM_INFORMATION  7
+#define SOUND_SYSTEM_MAXIMIZE     8
+#define SOUND_SYSTEM_MINIMIZE     9
+#define SOUND_SYSTEM_RESTOREUP   10
+#define SOUND_SYSTEM_RESTOREDOWN 11
+#define SOUND_SYSTEM_APPSTART    12
+#define SOUND_SYSTEM_FAULT       13
+#define SOUND_SYSTEM_APPEND      14
+#define SOUND_SYSTEM_MENUCOMMAND 15
+#define SOUND_SYSTEM_MENUPOPUP   16
+#define CSOUND_SYSTEM            16
+
+/* Alert events */
+#define ALERT_SYSTEM_INFORMATIONAL 1
+#define ALERT_SYSTEM_WARNING       2
+#define ALERT_SYSTEM_ERROR         3
+#define ALERT_SYSTEM_QUERY         4
+#define ALERT_SYSTEM_CRITICAL      5
+#define CALERT_SYSTEM              6
+
+
 #define     EnumTaskWindows(handle,proc,lparam) \
             EnumThreadWindows(handle,proc,lparam)
 #define     OemToAnsiA OemToCharA
@@ -3564,18 +3686,20 @@ BOOL      WINAPI GetMonitorInfoW(HMONITOR,LPMONITORINFO);
 #define     GetMonitorInfo WINELIB_NAME_AW(GetMonitorInfo)
 DWORD       WINAPI GetWindowContextHelpId(HWND);
 DWORD       WINAPI GetWindowThreadProcessId(HWND,LPDWORD);
-BOOL      WINAPI IsWindowUnicode(HWND);
-HKL       WINAPI LoadKeyboardLayoutA(LPCSTR,UINT);
-HKL       WINAPI LoadKeyboardLayoutW(LPCWSTR,UINT);
+BOOL        WINAPI IsWinEventHookInstalled(DWORD);
+BOOL        WINAPI IsWindowUnicode(HWND);
+HKL         WINAPI LoadKeyboardLayoutA(LPCSTR,UINT);
+HKL         WINAPI LoadKeyboardLayoutW(LPCWSTR,UINT);
 #define     LoadKeyboardLayout WINELIB_NAME_AW(LoadKeyboardLayout)
-INT       WINAPI MessageBoxExA(HWND,LPCSTR,LPCSTR,UINT,WORD);
-INT       WINAPI MessageBoxExW(HWND,LPCWSTR,LPCWSTR,UINT,WORD);
+INT         WINAPI MessageBoxExA(HWND,LPCSTR,LPCSTR,UINT,WORD);
+INT         WINAPI MessageBoxExW(HWND,LPCWSTR,LPCWSTR,UINT,WORD);
 #define     MessageBoxEx WINELIB_NAME_AW(MessageBoxEx)
 HMONITOR    WINAPI MonitorFromPoint(POINT,DWORD);
 HMONITOR    WINAPI MonitorFromRect(LPRECT,DWORD);
 HMONITOR    WINAPI MonitorFromWindow(HWND,DWORD);
 DWORD       WINAPI MsgWaitForMultipleObjects(DWORD,CONST HANDLE*,BOOL,DWORD,DWORD);
 DWORD       WINAPI MsgWaitForMultipleObjectsEx(DWORD,CONST HANDLE*,DWORD,DWORD,DWORD);
+VOID        WINAPI NotifyWinEvent(DWORD,HWND,LONG,LONG);
 BOOL        WINAPI PaintDesktop(HDC);
 BOOL        WINAPI PostThreadMessageA(DWORD,UINT,WPARAM,LPARAM);
 BOOL        WINAPI PostThreadMessageW(DWORD,UINT,WPARAM,LPARAM);
@@ -3598,11 +3722,13 @@ BOOL      WINAPI SetMenuItemInfoA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
 BOOL      WINAPI SetMenuItemInfoW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
 #define     SetMenuItemInfo WINELIB_NAME_AW(SetMenuItemInfo)
 BOOL      WINAPI SetWindowContextHelpId(HWND,DWORD);
+HWINEVENTHOOK WINAPI SetWinEventHook(DWORD,DWORD,HMODULE,WINEVENTPROC,DWORD,DWORD,DWORD);
 WORD        WINAPI TileWindows (HWND, UINT, const LPRECT,
                                 UINT, const HWND *);
 INT         WINAPI ToUnicode(UINT,UINT,PBYTE,LPWSTR,int,UINT);
 BOOL      WINAPI TrackPopupMenuEx(HMENU,UINT,INT,INT,HWND,
                                     LPTPMPARAMS);
+BOOL        WINAPI UnhookWinEvent(HWINEVENTHOOK);
 BOOL        WINAPI UnregisterDeviceNotification(HDEVNOTIFY);
 BOOL        WINAPI UnregisterHotKey(HWND,INT);
 DWORD       WINAPI WaitForInputIdle(HANDLE,DWORD);
