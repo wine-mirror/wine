@@ -384,7 +384,6 @@ char string[MAX_PATH];
 
 void WCMD_if (char *p) {
 
-HANDLE h;
 int negate = 0, test = 0;
 char condition[MAX_PATH], *command, *s;
 
@@ -401,11 +400,8 @@ char condition[MAX_PATH], *command, *s;
     WCMD_parameter (p, 2+negate, &command);
   }
   else if (!lstrcmpi (condition, "exist")) {
-    if ((h = CreateFile (WCMD_parameter (p, 1+negate, NULL), GENERIC_READ,
-                         FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-	OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE) {
-      CloseHandle (h);
-      test = 1;
+    if (GetFileAttributesA(WCMD_parameter (p, 1+negate, NULL)) != INVALID_FILE_ATTRIBUTES) {
+        test = 1;
     }
     WCMD_parameter (p, 2+negate, &command);
   }
