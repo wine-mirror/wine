@@ -794,7 +794,7 @@ static HRESULT test_for_driver8(LPGUID lpGuid)
     int ref;
 
     /* Create the DirectSound object */
-    rc=DirectSoundCreate8(lpGuid,&dso,NULL);
+    rc=pDirectSoundCreate8(lpGuid,&dso,NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
