@@ -81,9 +81,6 @@ static HANDLE	     	handle_mutex = 0;
 #define FALSE	0
 
 
-
-
-
 /******************************************************************************
  *            RemoveHSZNodes    (INTERNAL)
  *
@@ -669,7 +666,7 @@ BOOL WINAPI DdeUninitialize( DWORD idInst )
                	ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
                	return DMLERR_SYS_ERROR;
 	}
-  	TRACE(ddeml,"Uninitialize - Handle Mutex created/reserved\n");
+  	TRACE(ddeml,"Handle Mutex created/reserved\n");
   	/*  First check instance 
   	*/
   	this_instance = Find_Instance_Entry(idInst);
@@ -781,6 +778,7 @@ HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
  *  Vn       Date    	Author         		Comment
  *
  *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *  1.1      Mar 1999  Keith Matthews      Added links to instance table and related processing
  *
  */
 DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT iCodePage)
@@ -789,12 +787,40 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
     CHAR pString[MAX_BUFFER_LEN];
 
     FIXME(ddeml,
-         "(%ld, 0x%lx, %p, %ld, %d): stub\n",
+         "(%ld, 0x%lx, %p, %ld, %d): partial stub\n",
          idInst,
          hsz,
          psz, 
          cchMax,
          iCodePage);
+  if ( DDE_Max_Assigned_Instance == 0 )
+  {
+          /*  Nothing has been initialised - exit now ! */
+	  /*  needs something for DdeGetLAstError even if the manual doesn't say so */
+          return FALSE;
+  }
+  WaitForSingleObject(handle_mutex,1000);
+  if ( (err_no=GetLastError()) != 0 )
+  {
+          /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+	  /*  needs something for DdeGetLAstError even if the manual doesn't say so */
+          return FALSE;
+  }
+  TRACE(ddeml,"Handle Mutex created/reserved\n");
+
+  /*  First check instance 
+  */
+  reference_inst = Find_Instance_Entry(idInst);
+  if ( reference_inst == NULL )
+  {
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return FALSE;
+        /*
+        Needs something here to record NOT_INITIALIZED ready for DdeGetLastError
+        */
+        return FALSE;
+  }
 
     if( iCodePage == CP_WINANSI )
     {
@@ -809,7 +835,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
 
         ret = GlobalGetAtomNameA( hsz, (LPSTR)psz, cchMax );
     }
-    
+   TRACE(ddeml,"returning pointer\n"); 
     return ret;
 }
 
@@ -1033,8 +1059,6 @@ HSZ WINAPI DdeCreateStringHandle16( DWORD idInst, LPCSTR str, INT16 codepage )
 HSZ WINAPI DdeCreateStringHandleA( DWORD idInst, LPCSTR psz, INT codepage )
 {
   HSZ hsz = 0;
-  SECURITY_ATTRIBUTES s_attrib;
-  s_att = &s_attrib;
   TRACE(ddeml, "(%ld,%s,%d): partial stub\n",idInst,debugstr_a(psz),codepage);
   
 
@@ -1108,20 +1132,25 @@ HSZ WINAPI DdeCreateStringHandleW(
     INT codepage) /* [in] Code page identifier */
 {
   HSZ hsz = 0;
-  SECURITY_ATTRIBUTES s_attrib;
-  s_att = &s_attrib;
 
-  /*  Need to set up Mutex in case it is not already present */
-  s_att->bInheritHandle = TRUE;
-  s_att->lpSecurityDescriptor = NULL;
-  s_att->nLength = sizeof(s_att);
-  handle_mutex = CreateMutexW(s_att,1,DDEHandleAccess);
+   TRACE(ddeml, "(%ld,%s,%d): partial stub\n",idInst,debugstr_w(psz),codepage);
+  
+
+  if ( DDE_Max_Assigned_Instance == 0 )
+  {
+          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+          return TRUE;
+  }
+  WaitForSingleObject(handle_mutex,1000);
   if ( (err_no=GetLastError()) != 0 )
   {
-	  ERR(ddeml,"CreateMutex failed - handle list  %li\n",err_no);
-	  return 0;
+          /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          return DMLERR_SYS_ERROR;
   }
   TRACE(ddeml,"CreateString - Handle Mutex created/reserved\n");
+  
   /*  First check instance 
   */
   reference_inst = Find_Instance_Entry(idInst);
@@ -1151,8 +1180,10 @@ HSZ WINAPI DdeCreateStringHandleW(
 		reference_inst->Last_Error = DMLERR_SYS_ERROR;
 		return 0;
 	}
+      TRACE(ddeml,"Returning pointer\n");
       return hsz;
 }
+    TRACE(ddeml,"Returning error\n");
   return 0;
 }
 
@@ -1171,10 +1202,51 @@ BOOL16 WINAPI DdeFreeStringHandle16( DWORD idInst, HSZ hsz )
  *            DdeFreeStringHandle   (USER32.101)
  * RETURNS: success: nonzero
  *          fail:    zero
+ *
+ *****************************************************************
+ *
+ *      Change History
+ *
+ *  Vn       Date       Author                  Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *  1.1      Apr 1999  Keith Matthews      Added links to instance table and related processing
+ *
  */
 BOOL WINAPI DdeFreeStringHandle( DWORD idInst, HSZ hsz )
 {
-    TRACE( ddeml, "(%ld,%ld): stub\n",idInst, hsz );
+    TRACE(ddeml, "(%ld,%ld): \n",idInst,hsz);
+  if ( DDE_Max_Assigned_Instance == 0 )
+{
+          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+          return TRUE;
+  }
+  if ( ( err_no = GetLastError()) != 0 )
+  {
+	/*	something earlier failed !! */
+	ERR(ddeml,"Error %li before WaitForSingleObject - trying to continue\n",err_no);
+  }
+  WaitForSingleObject(handle_mutex,1000);
+  if ( (err_no=GetLastError()) != 0 )
+  {
+          /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+          ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+          return DMLERR_SYS_ERROR;
+  }
+  TRACE(ddeml,"Handle Mutex created/reserved\n");
+
+  /*  First check instance 
+  */
+  reference_inst = Find_Instance_Entry(idInst);
+  if ( (reference_inst == NULL) | (reference_inst->Node_list == NULL))
+  {
+        if ( Release_reserved_mutex(handle_mutex,"handle_mutex",FALSE,FALSE)) return TRUE;
+          /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+          return TRUE;
+
+  }
+
     /* Remove the node associated with this HSZ.
      */
     RemoveHSZNode( hsz );
