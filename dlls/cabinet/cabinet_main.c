@@ -125,9 +125,10 @@ HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what)
    * DXDDEX.CAB, DXMINI.CAB, SWFLASH.CAB on win2k
    * but it crashes the ie5.5 installer :-( . The native dll does not return
    * the four zeros. The value depends on the combination of the cab file and
-   * the destination path
+   * the destination path. It appears to be a pointer to an optional return struct.
+   * The IE6 installer derefs this value + 4. Contents currently unknown.
    */
-  dest->result2=0x130000;
+  dest->result2 = 0;
 
   LocalFree(dir);
 
