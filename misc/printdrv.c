@@ -138,14 +138,14 @@ INT32 WINAPI AbortDoc32(HDC32 hdc)
  * Helper for DrvGetPrinterData
  */
 static DWORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer,
-LPBYTE lpPrinterData, int cbData)
+LPBYTE lpPrinterData, int cbData, int what)
 {
     DWORD res = -1;
     HKEY hkey;
     DWORD dwType, cbQueryData;
 
     if (!(RegOpenKey32A(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey))) {
-        if (cbData > 1) { /* "Default DevMode" */
+        if (what == INT_PD_DEFAULT_DEVMODE) { /* "Default DevMode" */
             if (!(RegQueryValueEx32A(hkey, DefaultDevMode, 0, &dwType, 0, &cbQueryData))) {
                 if (!lpPrinterData)
 		    res = cbQueryData;
@@ -200,7 +200,8 @@ DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
 
     if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, DefaultDevMode)))) {
-	size = DrvGetPrinterDataInternal(RegStr_Printer, lpPrinterData, cbData);
+	size = DrvGetPrinterDataInternal(RegStr_Printer, lpPrinterData, cbData,
+					 INT_PD_DEFAULT_DEVMODE);
 	if (size+1) {
 	    *lpNeeded = size;
 	    if ((lpPrinterData) && (*lpNeeded > cbData))
@@ -217,7 +218,8 @@ DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
 	    res = ERROR_MORE_DATA;
 	    goto failed;
 	}
-	size = DrvGetPrinterDataInternal(RegStr_Printer, lpPrinterData, 1);
+	size = DrvGetPrinterDataInternal(RegStr_Printer, lpPrinterData, cbData,
+					 INT_PD_DEFAULT_MODEL);
 	if ((size+1) && (lpType))
 	    *lpType = REG_SZ;
 	else
