@@ -23,24 +23,19 @@ rsrc	version16.res
 20  pascal   MoveTo(word s_word s_word) MoveTo16
 21  pascal16 ExcludeClipRect(word s_word s_word s_word s_word) ExcludeClipRect16
 22  pascal16 IntersectClipRect(word s_word s_word s_word s_word) IntersectClipRect16
-23  pascal16 Arc(word s_word s_word s_word s_word s_word s_word s_word s_word)
-             Arc16
+23  pascal16 Arc(word s_word s_word s_word s_word s_word s_word s_word s_word) Arc16
 24  pascal16 Ellipse(word s_word s_word s_word s_word) Ellipse16
 25  pascal16 FloodFill(word s_word s_word long) FloodFill16
-26  pascal16 Pie(word s_word s_word s_word s_word s_word s_word s_word s_word)
-             Pie16
+26  pascal16 Pie(word s_word s_word s_word s_word s_word s_word s_word s_word) Pie16
 27  pascal16 Rectangle(word s_word s_word s_word s_word) Rectangle16
-28  pascal16 RoundRect(word s_word s_word s_word s_word s_word s_word)
-             RoundRect16
+28  pascal16 RoundRect(word s_word s_word s_word s_word s_word s_word) RoundRect16
 29  pascal16 PatBlt(word s_word s_word s_word s_word long) PatBlt16
 30  pascal16 SaveDC(word) SaveDC16
 31  pascal   SetPixel(word s_word s_word long) SetPixel16
 32  pascal16 OffsetClipRgn(word s_word s_word) OffsetClipRgn16
 33  pascal16 TextOut(word s_word s_word str word) TextOut16
-34  pascal16 BitBlt( word s_word s_word s_word s_word word s_word s_word long)
-             BitBlt16
-35  pascal16 StretchBlt(word s_word s_word s_word s_word word s_word s_word
-                        s_word s_word long) StretchBlt16
+34  pascal16 BitBlt( word s_word s_word s_word s_word word s_word s_word long) BitBlt16
+35  pascal16 StretchBlt(word s_word s_word s_word s_word word s_word s_word s_word s_word long) StretchBlt16
 36  pascal16 Polygon (word ptr word) Polygon16
 37  pascal16 Polyline (word ptr word) Polyline16
 38  pascal   Escape(word word word segptr ptr) Escape16
@@ -61,8 +56,7 @@ rsrc	version16.res
 53  pascal16 CreateDC(str str str ptr) CreateDC16
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn16
 55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
-56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word
-                        word word word word word str) CreateFont16
+56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word word word word word word str) CreateFont16
 57  pascal16 CreateFontIndirect(ptr) CreateFontIndirect16
 58  pascal16 CreateHatchBrush(word long) CreateHatchBrush16
 #59 ??? (not even in W1.1, W2.0)
@@ -104,8 +98,7 @@ rsrc	version16.res
 95  pascal   GetViewportOrg(word) GetViewportOrg16
 96  pascal   GetWindowExt(word) GetWindowExt16
 97  pascal   GetWindowOrg(word) GetWindowOrg16
-98  pascal16 IntersectVisRect(word s_word s_word s_word s_word)
-             IntersectVisRect16
+98  pascal16 IntersectVisRect(word s_word s_word s_word s_word) IntersectVisRect16
 99  pascal16 LPtoDP(word ptr s_word) LPtoDP16
 100 pascal16 LineDDA(s_word s_word s_word s_word segptr long) LineDDA16
 101 pascal16 OffsetRgn(word s_word s_word) OffsetRgn16
@@ -185,7 +178,7 @@ rsrc	version16.res
 186 stub DELETEABOVELINEFONTS # W2.0 (only ?)
 188 stub GetTextExtentEx
 190 pascal16 SetDCHook(word segptr long) SetDCHook16
-191 pascal   GetDCHook(word ptr) GetDCHook
+191 pascal   GetDCHook(word ptr) GetDCHook16
 192 pascal16 SetHookFlags(word word) SetHookFlags16
 193 pascal16 SetBoundsRect(word ptr word) SetBoundsRect16
 194 pascal16 GetBoundsRect(word ptr word) GetBoundsRect16
@@ -260,8 +253,7 @@ rsrc	version16.res
 345 pascal16 GetTextAlign(word) GetTextAlign16
 346 pascal16 SetTextAlign(word word) SetTextAlign16
 347 stub MFDRAWTEXT # W2.0 (only ?)
-348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word
-                   s_word s_word) Chord16
+348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word s_word s_word) Chord16
 349 pascal   SetMapperFlags(word long) SetMapperFlags16
 350 pascal16 GetCharWidth(word word word ptr) GetCharWidth16
 351 pascal16 ExtTextOut(word s_word s_word word ptr str word ptr) ExtTextOut16
@@ -303,15 +295,12 @@ rsrc	version16.res
 410 pascal16 IsValidMetaFile (word) IsValidMetaFile16
 411 pascal16 GetCurLogFont(word) GetCurLogFont16
 412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette16
-439 pascal16 StretchDIBits (word s_word s_word s_word s_word s_word s_word
-                            s_word s_word ptr ptr word long) StretchDIBits16
+439 pascal16 StretchDIBits (word s_word s_word s_word s_word s_word s_word s_word s_word ptr ptr word long) StretchDIBits16
 440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits16
 441 pascal16 GetDIBits(word word word word ptr ptr word) GetDIBits16
 442 pascal16 CreateDIBitmap(word ptr long ptr ptr word) CreateDIBitmap16
-443 pascal16 SetDIBitsToDevice(word s_word s_word s_word s_word s_word s_word
-                               word word ptr ptr word) SetDIBitsToDevice16
-444 pascal16 CreateRoundRectRgn(s_word s_word s_word s_word s_word s_word)
-             CreateRoundRectRgn16
+443 pascal16 SetDIBitsToDevice(word s_word s_word s_word s_word s_word s_word word word ptr ptr word) SetDIBitsToDevice16
+444 pascal16 CreateRoundRectRgn(s_word s_word s_word s_word s_word s_word) CreateRoundRectRgn16
 445 pascal16 CreateDIBPatternBrush(word word) CreateDIBPatternBrush16
 449 stub DEVICECOLORMATCH
 450 pascal16 PolyPolygon(word ptr ptr word) PolyPolygon16
@@ -341,10 +330,8 @@ rsrc	version16.res
 481 pascal16 SetWindowExtEx(word s_word s_word ptr) SetWindowExtEx16
 482 pascal16 SetWindowOrgEx(word s_word s_word ptr) SetWindowOrgEx16
 483 pascal16 MoveToEx(word s_word s_word ptr) MoveToEx16
-484 pascal16 ScaleViewportExtEx(word s_word s_word s_word s_word ptr)
-             ScaleViewportExtEx16
-485 pascal16 ScaleWindowExtEx(word s_word s_word s_word s_word ptr)
-             ScaleWindowExtEx16
+484 pascal16 ScaleViewportExtEx(word s_word s_word s_word s_word ptr) ScaleViewportExtEx16
+485 pascal16 ScaleWindowExtEx(word s_word s_word s_word s_word ptr) ScaleWindowExtEx16
 486 pascal16 GetAspectRatioFilterEx(word ptr) GetAspectRatioFilterEx16
 489 pascal16 CreateDIBSection(word ptr word ptr long long) CreateDIBSection16
 490 stub CloseEnhMetafile

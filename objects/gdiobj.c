@@ -662,7 +662,7 @@ inline static GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
     if ((obj = HeapAlloc( GetProcessHeap(), 0, size )))
     {
         large_handles[i] = obj;
-        *handle = (i + FIRST_LARGE_HANDLE) << 2;
+        *handle = (HGDIOBJ)(ULONG_PTR)((i + FIRST_LARGE_HANDLE) << 2);
         next_large_handle = i;
     }
     return obj;
@@ -675,6 +675,7 @@ inline static GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
 void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_obj_funcs *funcs )
 {
     GDIOBJHDR *obj;
+    HLOCAL16 hlocal;
 
     _EnterSysLevel( &GDI_level );
     switch(magic)
@@ -691,9 +692,10 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
         if (!(obj = alloc_large_heap( size, handle ))) goto error;
         break;
     default:
-        if (!(*handle = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size ))) goto error;
-        assert( *handle & 2 );
-        obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, *handle );
+        if (!(hlocal = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size ))) goto error;
+        assert( hlocal & 2 );
+        obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, hlocal );
+        *handle = (HGDIOBJ)(ULONG_PTR)hlocal;
         break;
     }
 
@@ -751,7 +753,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
     }
     else  /* large heap handle */
     {
-        int i = (handle >> 2) - FIRST_LARGE_HANDLE;
+        int i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
         if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
         {
             HeapFree( GetProcessHeap(), 0, large_handles[i] );
@@ -836,16 +838,6 @@ void GDI_CheckNotLock(void)
 
 
 /***********************************************************************
- *           DeleteObject    (GDI.69)
- *           SysDeleteObject (GDI.605)
- */
-BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
-{
-    return DeleteObject( obj );
-}
-
-
-/***********************************************************************
  *           DeleteObject    (GDI32.@)
  */
 BOOL WINAPI DeleteObject( HGDIOBJ obj )
@@ -882,14 +874,6 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     GDI_ReleaseObj( obj );
     return FALSE;
-}
-
-/***********************************************************************
- *           GetStockObject    (GDI.87)
- */
-HGDIOBJ16 WINAPI GetStockObject16( INT16 obj )
-{
-    return (HGDIOBJ16)GetStockObject( obj );
 }
 
 
@@ -1055,15 +1039,6 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
 
 
 /***********************************************************************
- *           SelectObject    (GDI.45)
- */
-HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
-{
-    return (HGDIOBJ16)SelectObject( hdc, handle );
-}
-
-
-/***********************************************************************
  *           SelectObject    (GDI32.@)
  */
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
@@ -1085,15 +1060,6 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
     }
     GDI_ReleaseObj( handle );
     return ret;
-}
-
-
-/***********************************************************************
- *           UnrealizeObject    (GDI.150)
- */
-BOOL16 WINAPI UnrealizeObject16( HGDIOBJ16 obj )
-{
-    return UnrealizeObject( obj );
 }
 
 
@@ -1281,15 +1247,6 @@ BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle )
 
 
 /***********************************************************************
- *           SetObjectOwner    (GDI.461)
- */
-void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
-{
-    /* Nothing to do */
-}
-
-
-/***********************************************************************
  *           SetObjectOwner    (GDI32.@)
  */
 void WINAPI SetObjectOwner( HGDIOBJ handle, HANDLE owner )
@@ -1409,33 +1366,6 @@ WORD WINAPI GdiFreeResources16( DWORD reserve )
 {
    return (WORD)( (int)LOCAL_CountFree( GDI_HeapSel ) * 100 /
                   (int)LOCAL_HeapSize( GDI_HeapSel ) );
-}
-
-/***********************************************************************
- *           MulDiv   (GDI.128)
- */
-INT16 WINAPI MulDiv16(
-	     INT16 nMultiplicand,
-	     INT16 nMultiplier,
-	     INT16 nDivisor)
-{
-    INT ret;
-    if (!nDivisor) return -32768;
-    /* We want to deal with a positive divisor to simplify the logic. */
-    if (nDivisor < 0)
-    {
-      nMultiplicand = - nMultiplicand;
-      nDivisor = -nDivisor;
-    }
-    /* If the result is positive, we "add" to round. else,
-     * we subtract to round. */
-    if ( ( (nMultiplicand <  0) && (nMultiplier <  0) ) ||
-	 ( (nMultiplicand >= 0) && (nMultiplier >= 0) ) )
-        ret = (((int)nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
-    else
-        ret = (((int)nMultiplicand * nMultiplier) - (nDivisor/2)) / nDivisor;
-    if ((ret > 32767) || (ret < -32767)) return -32768;
-    return (INT16) ret;
 }
 
 

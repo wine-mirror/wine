@@ -42,6 +42,7 @@ C_SRCS = \
 	enhmfdrv/mapping.c \
 	enhmfdrv/objects.c \
 	freetype.c \
+	gdi16.c \
 	gdi_main.c \
 	mfdrv/bitblt.c \
 	mfdrv/dc.c \

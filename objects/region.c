@@ -552,13 +552,6 @@ static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
     return (HGDIOBJ)SelectClipRgn( hdc, handle );
 }
 
-/***********************************************************************
- *           OffsetRgn    (GDI.101)
- */
-INT16 WINAPI OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
-{
-    return OffsetRgn( hrgn, x, y );
-}
 
 /***********************************************************************
  *           OffsetRgn   (GDI32.@)
@@ -598,17 +591,6 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 
 
 /***********************************************************************
- *           GetRgnBox    (GDI.134)
- */
-INT16 WINAPI GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
-{
-    RECT r;
-    INT16 ret = (INT16)GetRgnBox( hrgn, &r );
-    CONV_RECT32TO16( &r, rect );
-    return ret;
-}
-
-/***********************************************************************
  *           GetRgnBox    (GDI32.@)
  */
 INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
@@ -631,23 +613,6 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 
 
 /***********************************************************************
- *           CreateRectRgn    (GDI.64)
- *
- * NOTE: Doesn't call CreateRectRgn because of differences in SetRectRgn16/32
- */
-HRGN16 WINAPI CreateRectRgn16(INT16 left, INT16 top, INT16 right, INT16 bottom)
-{
-    HRGN16 hrgn;
-
-    if (!(hrgn = (HRGN16)REGION_CreateRegion(RGN_DEFAULT_RECTS)))
-	return 0;
-    TRACE("\n");
-    SetRectRgn16(hrgn, left, top, right, bottom);
-    return hrgn;
-}
-
-
-/***********************************************************************
  *           CreateRectRgn   (GDI32.@)
  */
 HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
@@ -663,14 +628,6 @@ HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
     return hrgn;
 }
 
-/***********************************************************************
- *           CreateRectRgnIndirect    (GDI.65)
- */
-HRGN16 WINAPI CreateRectRgnIndirect16( const RECT16* rect )
-{
-    return CreateRectRgn16( rect->left, rect->top, rect->right, rect->bottom );
-}
-
 
 /***********************************************************************
  *           CreateRectRgnIndirect    (GDI32.@)
@@ -678,21 +635,6 @@ HRGN16 WINAPI CreateRectRgnIndirect16( const RECT16* rect )
 HRGN WINAPI CreateRectRgnIndirect( const RECT* rect )
 {
     return CreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
-}
-
-
-/***********************************************************************
- *           SetRectRgn    (GDI.172)
- *
- * NOTE: Win 3.1 sets region to empty if left > right
- */
-VOID WINAPI SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
-			  INT16 right, INT16 bottom )
-{
-    if(left < right)
-        SetRectRgn( hrgn, left, top, right, bottom );
-    else
-        SetRectRgn( hrgn, 0, 0, 0, 0 );
 }
 
 
@@ -729,25 +671,6 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
     return TRUE;
 }
 
-
-/***********************************************************************
- *           CreateRoundRectRgn    (GDI.444)
- *
- * If either ellipse dimension is zero we call CreateRectRgn16 for its
- * `special' behaviour. -ve ellipse dimensions can result in GPFs under win3.1
- * we just let CreateRoundRectRgn convert them to +ve values.
- */
-
-HRGN16 WINAPI CreateRoundRectRgn16( INT16 left, INT16 top,
-				    INT16 right, INT16 bottom,
-				    INT16 ellipse_width, INT16 ellipse_height )
-{
-    if( ellipse_width == 0 || ellipse_height == 0 )
-        return CreateRectRgn16( left, top, right, bottom );
-    else
-        return (HRGN16)CreateRoundRectRgn( left, top, right, bottom,
-					 ellipse_width, ellipse_height );
-}
 
 /***********************************************************************
  *           CreateRoundRectRgn    (GDI32.@)
@@ -858,17 +781,6 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 
 
 /***********************************************************************
- *           CreateEllipticRgn    (GDI.54)
- */
-HRGN16 WINAPI CreateEllipticRgn16( INT16 left, INT16 top,
-				   INT16 right, INT16 bottom )
-{
-    return (HRGN16)CreateRoundRectRgn( left, top, right, bottom,
-					 right-left, bottom-top );
-}
-
-
-/***********************************************************************
  *           CreateEllipticRgn    (GDI32.@)
  */
 HRGN WINAPI CreateEllipticRgn( INT left, INT top,
@@ -876,17 +788,6 @@ HRGN WINAPI CreateEllipticRgn( INT left, INT top,
 {
     return CreateRoundRectRgn( left, top, right, bottom,
 				 right-left, bottom-top );
-}
-
-
-/***********************************************************************
- *           CreateEllipticRgnIndirect    (GDI.55)
- */
-HRGN16 WINAPI CreateEllipticRgnIndirect16( const RECT16 *rect )
-{
-    return CreateRoundRectRgn( rect->left, rect->top, rect->right,
-				 rect->bottom, rect->right - rect->left,
-				 rect->bottom - rect->top );
 }
 
 
@@ -947,14 +848,6 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     return size + sizeof(RGNDATAHEADER);
 }
 
-/***********************************************************************
- *           GetRegionData   (GDI.607)
- * FIXME: is LPRGNDATA the same in Win16 and Win32 ?
- */
-DWORD WINAPI GetRegionData16(HRGN16 hrgn, DWORD count, LPRGNDATA rgndata)
-{
-    return GetRegionData((HRGN)hrgn, count, rgndata);
-}
 
 /***********************************************************************
  *           ExtCreateRegion   (GDI32.@)
@@ -999,14 +892,6 @@ fail:
     return 0;
 }
 
-/***********************************************************************
- *           PtInRegion    (GDI.161)
- */
-BOOL16 WINAPI PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
-{
-    return PtInRegion( hrgn, x, y );
-}
-
 
 /***********************************************************************
  *           PtInRegion    (GDI32.@)
@@ -1030,19 +915,6 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 	GDI_ReleaseObj( hrgn );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           RectInRegion    (GDI.466)
- *           RectInRegionOld (GDI.181)
- */
-BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
-{
-    RECT r32;
-
-    CONV_RECT16TO32(rect, &r32);
-    return (BOOL16)RectInRegion(hrgn, &r32);
 }
 
 
@@ -1088,15 +960,6 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
     }
     return ret;
 }
-
-/***********************************************************************
- *           EqualRgn    (GDI.72)
- */
-BOOL16 WINAPI EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
-{
-    return EqualRgn( rgn1, rgn2 );
-}
-
 
 /***********************************************************************
  *           EqualRgn    (GDI32.@)
@@ -1192,15 +1055,6 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 	bRet = FALSE;
     GDI_ReleaseObj( hSrc );
     return bRet;
-}
-
-
-/***********************************************************************
- *           CombineRgn    (GDI.47)
- */
-INT16 WINAPI CombineRgn16(HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode)
-{
-    return (INT16)CombineRgn( hDest, hSrc1, hSrc2, mode );
 }
 
 
@@ -2845,41 +2699,6 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     return hrgn;
 }
 
-
-/***********************************************************************
- *           CreatePolygonRgn    (GDI.63)
- */
-HRGN16 WINAPI CreatePolygonRgn16( const POINT16 * points, INT16 count,
-                                  INT16 mode )
-{
-    return CreatePolyPolygonRgn16( points, &count, 1, mode );
-}
-
-/***********************************************************************
- *           CreatePolyPolygonRgn    (GDI.451)
- */
-HRGN16 WINAPI CreatePolyPolygonRgn16( const POINT16 *points,
-                const INT16 *count, INT16 nbpolygons, INT16 mode )
-{
-    HRGN hrgn;
-    int i, npts = 0;
-    INT *count32;
-    POINT *points32;
-
-    for (i = 0; i < nbpolygons; i++)
-	npts += count[i];
-    points32 = HeapAlloc( GetProcessHeap(), 0, npts * sizeof(POINT) );
-    for (i = 0; i < npts; i++)
-    	CONV_POINT16TO32( &(points[i]), &(points32[i]) );
-
-    count32 = HeapAlloc( GetProcessHeap(), 0, nbpolygons * sizeof(INT) );
-    for (i = 0; i < nbpolygons; i++)
-    	count32[i] = count[i];
-    hrgn = CreatePolyPolygonRgn( points32, count32, nbpolygons, mode );
-    HeapFree( GetProcessHeap(), 0, count32 );
-    HeapFree( GetProcessHeap(), 0, points32 );
-    return hrgn;
-}
 
 /***********************************************************************
  *           CreatePolygonRgn    (GDI32.@)

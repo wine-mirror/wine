@@ -140,15 +140,6 @@ static void PALETTE_ValidateFlags(PALETTEENTRY* lpPalE, int size)
 
 
 /***********************************************************************
- *           CreatePalette    (GDI.360)
- */
-HPALETTE16 WINAPI CreatePalette16( const LOGPALETTE* palette )
-{
-    return CreatePalette( palette );
-}
-
-
-/***********************************************************************
  * CreatePalette [GDI32.@]  Creates a logical color palette
  *
  * RETURNS
@@ -177,20 +168,6 @@ HPALETTE WINAPI CreatePalette(
 
     TRACE("   returning %04x\n", hpalette);
     return hpalette;
-}
-
-
-/***********************************************************************
- * CreateHalftonePalette [GDI.529]  Creates a halftone palette
- *
- * RETURNS
- *    Success: Handle to logical halftone palette
- *    Failure: 0
- */
-HPALETTE16 WINAPI CreateHalftonePalette16(
-    HDC16 hdc) /* [in] Handle to device context */
-{
-    return CreateHalftonePalette(hdc);
 }
 
 
@@ -290,16 +267,6 @@ HPALETTE WINAPI CreateHalftonePalette(
 
 
 /***********************************************************************
- *           GetPaletteEntries    (GDI.363)
- */
-UINT16 WINAPI GetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
-                                   UINT16 count, LPPALETTEENTRY entries )
-{
-    return GetPaletteEntries( hpalette, start, count, entries );
-}
-
-
-/***********************************************************************
  * GetPaletteEntries [GDI32.@]  Retrieves palette entries
  *
  * RETURNS
@@ -350,16 +317,6 @@ UINT WINAPI GetPaletteEntries(
 
 
 /***********************************************************************
- *           SetPaletteEntries    (GDI.364)
- */
-UINT16 WINAPI SetPaletteEntries16( HPALETTE16 hpalette, UINT16 start,
-                                   UINT16 count, const PALETTEENTRY *entries )
-{
-    return SetPaletteEntries( hpalette, start, count, entries );
-}
-
-
-/***********************************************************************
  * SetPaletteEntries [GDI32.@]  Sets color values for range in palette
  *
  * RETURNS
@@ -395,15 +352,6 @@ UINT WINAPI SetPaletteEntries(
     UnrealizeObject( hpalette );
     GDI_ReleaseObj( hpalette );
     return count;
-}
-
-
-/***********************************************************************
- *           ResizePalette   (GDI.368)
- */
-BOOL16 WINAPI ResizePalette16( HPALETTE16 hPal, UINT16 cEntries )
-{
-    return ResizePalette( hPal, cEntries );
 }
 
 
@@ -465,16 +413,6 @@ BOOL WINAPI ResizePalette(
 
 
 /***********************************************************************
- *           AnimatePalette   (GDI.367)
- */
-void WINAPI AnimatePalette16( HPALETTE16 hPal, UINT16 StartIndex,
-                              UINT16 NumEntries, const PALETTEENTRY* PaletteColors)
-{
-    AnimatePalette( hPal, StartIndex, NumEntries, PaletteColors );
-}
-
-
-/***********************************************************************
  * AnimatePalette [GDI32.@]  Replaces entries in logical palette
  *
  * RETURNS
@@ -504,15 +442,6 @@ BOOL WINAPI AnimatePalette(
 
 
 /***********************************************************************
- *           SetSystemPaletteUse   (GDI.373)
- */
-UINT16 WINAPI SetSystemPaletteUse16( HDC16 hdc, UINT16 use )
-{
-    return SetSystemPaletteUse( hdc, use );
-}
-
-
-/***********************************************************************
  * SetSystemPaletteUse [GDI32.@]
  *
  * RETURNS
@@ -531,15 +460,6 @@ UINT WINAPI SetSystemPaletteUse(
 
 
 /***********************************************************************
- *           GetSystemPaletteUse   (GDI.374)
- */
-UINT16 WINAPI GetSystemPaletteUse16( HDC16 hdc )
-{
-    return SystemPaletteUse;
-}
-
-
-/***********************************************************************
  * GetSystemPaletteUse [GDI32.@]  Gets state of system palette
  *
  * RETURNS
@@ -549,16 +469,6 @@ UINT WINAPI GetSystemPaletteUse(
     HDC hdc) /* [in] Handle of device context */
 {
     return SystemPaletteUse;
-}
-
-
-/***********************************************************************
- *           GetSystemPaletteEntries   (GDI.375)
- */
-UINT16 WINAPI GetSystemPaletteEntries16( HDC16 hdc, UINT16 start, UINT16 count,
-                                         LPPALETTEENTRY entries )
-{
-    return GetSystemPaletteEntries( hdc, start, count, entries );
 }
 
 
@@ -587,15 +497,6 @@ UINT WINAPI GetSystemPaletteEntries(
         GDI_ReleaseObj( hdc );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           GetNearestPaletteIndex   (GDI.370)
- */
-UINT16 WINAPI GetNearestPaletteIndex16( HPALETTE16 hpalette, COLORREF color )
-{
-    return GetNearestPaletteIndex( hpalette, color );
 }
 
 
@@ -638,15 +539,6 @@ UINT WINAPI GetNearestPaletteIndex(
     }
     TRACE("(%04x,%06lx): returning %d\n", hpalette, color, index );
     return index;
-}
-
-
-/***********************************************************************
- *           GetNearestColor   (GDI.154)
- */
-COLORREF WINAPI GetNearestColor16( HDC16 hdc, COLORREF color )
-{
-    return GetNearestColor( hdc, color );
 }
 
 
@@ -922,16 +814,6 @@ BOOL WINAPI UpdateColors(
         }
     }
     return 0x666;
-}
-
-
-/**********************************************************************
- *            UpdateColors   (GDI.366)
- */
-INT16 WINAPI UpdateColors16( HDC16 hDC )
-{
-    UpdateColors( hDC );
-    return TRUE;
 }
 
 

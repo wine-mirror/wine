@@ -197,7 +197,7 @@ HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont )
 
     if (!GetObject16( hfont, sizeof(lf16), &lf16 )) return GDI_ERROR;
     if (MFDRV_CreateFontIndirect(dev, hfont, &lf16)) return 0;
-    return GDI_ERROR;
+    return HGDI_ERROR;
 }
 
 /******************************************************************

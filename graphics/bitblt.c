@@ -25,16 +25,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
 
 
 /***********************************************************************
- *           PatBlt    (GDI.29)
- */
-BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
-                        INT16 width, INT16 height, DWORD rop)
-{
-    return PatBlt( hdc, left, top, width, height, rop );
-}
-
-
-/***********************************************************************
  *           PatBlt    (GDI32.@)
  */
 BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
@@ -52,17 +42,6 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
     }
     GDI_ReleaseObj( hdc );
     return bRet;
-}
-
-
-/***********************************************************************
- *           BitBlt    (GDI.34)
- */
-BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
-                        INT16 height, HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
-                        DWORD rop )
-{
-    return BitBlt( hdcDst, xDst, yDst, width, height, hdcSrc, xSrc, ySrc, rop );
 }
 
 
@@ -90,19 +69,6 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
         GDI_ReleaseObj( hdcDst );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           StretchBlt    (GDI.35)
- */
-BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
-                            INT16 widthDst, INT16 heightDst,
-                            HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
-                            INT16 widthSrc, INT16 heightSrc, DWORD rop )
-{
-    return StretchBlt( hdcDst, xDst, yDst, widthDst, heightDst,
-                       hdcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
 }
 
 
@@ -143,27 +109,6 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
 
 
 /***********************************************************************
- *           FastWindowFrame    (GDI.400)
- */
-BOOL16 WINAPI FastWindowFrame16( HDC16 hdc, const RECT16 *rect,
-                               INT16 width, INT16 height, DWORD rop )
-{
-    HBRUSH hbrush = SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
-    PatBlt( hdc, rect->left, rect->top,
-              rect->right - rect->left - width, height, rop );
-    PatBlt( hdc, rect->left, rect->top + height, width,
-              rect->bottom - rect->top - height, rop );
-    PatBlt( hdc, rect->left + width, rect->bottom - 1,
-              rect->right - rect->left - width, -height, rop );
-    PatBlt( hdc, rect->right - 1, rect->top, -width,
-              rect->bottom - rect->top - height, rop );
-    SelectObject( hdc, hbrush );
-    return TRUE;
-
-}
-
-
-/***********************************************************************
  *           MaskBlt [GDI32.@]
  */
 BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
@@ -188,4 +133,3 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
     FIXME("PlgBlt, stub\n");
         return 1;
 }
-

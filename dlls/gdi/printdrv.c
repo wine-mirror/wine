@@ -49,30 +49,6 @@ static char DefaultDevMode[]	= "Default DevMode";
 static char PrinterDriverData[] = "PrinterDriverData";
 static char Printers[]		= "System\\CurrentControlSet\\Control\\Print\\Printers\\";
 
-/******************************************************************
- *                  StartDoc  [GDI.377]
- *
- */
-INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
-{
-    DOCINFOA docA;
-
-    docA.cbSize = lpdoc->cbSize;
-    docA.lpszDocName = MapSL(lpdoc->lpszDocName);
-    docA.lpszOutput = MapSL(lpdoc->lpszOutput);
-
-    if(lpdoc->cbSize >= 14)
-        docA.lpszDatatype = MapSL(lpdoc->lpszDatatype);
-    else
-        docA.lpszDatatype = NULL;
-
-    if(lpdoc->cbSize >= 18)
-        docA.fwType = lpdoc->fwType;
-    else
-        docA.fwType = 0;
-
-    return StartDocA(hdc, &docA);
-}
 
 /******************************************************************
  *                  StartDocA  [GDI32.@]
@@ -129,14 +105,6 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
     return ret;
 }
 
-/******************************************************************
- *                  EndDoc  [GDI.378]
- *
- */
-INT16 WINAPI EndDoc16(HDC16 hdc)
-{
-    return EndDoc(hdc);
-}
 
 /******************************************************************
  *                  EndDoc  [GDI32.@]
@@ -153,14 +121,6 @@ INT WINAPI EndDoc(HDC hdc)
     return ret;
 }
 
-/******************************************************************
- *                  StartPage  [GDI.379]
- *
- */
-INT16 WINAPI StartPage16(HDC16 hdc)
-{
-    return StartPage(hdc);
-}
 
 /******************************************************************
  *                  StartPage  [GDI32.@]
@@ -180,14 +140,6 @@ INT WINAPI StartPage(HDC hdc)
     return ret;
 }
 
-/******************************************************************
- *                  EndPage  [GDI.380]
- *
- */
-INT16 WINAPI EndPage16( HDC16 hdc )
-{
-    return EndPage(hdc);
-}
 
 /******************************************************************
  *                  EndPage  [GDI32.@]
@@ -209,13 +161,6 @@ INT WINAPI EndPage(HDC hdc)
     return ret;
 }
 
-/******************************************************************************
- *                 AbortDoc  [GDI.382]
- */
-INT16 WINAPI AbortDoc16(HDC16 hdc)
-{
-    return AbortDoc(hdc);
-}
 
 /******************************************************************************
  *                 AbortDoc  [GDI32.@]

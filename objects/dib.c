@@ -147,20 +147,6 @@ int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
 
 
 /***********************************************************************
- *           StretchDIBits   (GDI.439)
- */
-INT16 WINAPI StretchDIBits16(HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
-                       INT16 heightDst, INT16 xSrc, INT16 ySrc, INT16 widthSrc,
-                       INT16 heightSrc, const VOID *bits,
-                       const BITMAPINFO *info, UINT16 wUsage, DWORD dwRop )
-{
-    return (INT16)StretchDIBits( hdc, xDst, yDst, widthDst, heightDst,
-                                   xSrc, ySrc, widthSrc, heightSrc, bits,
-                                   info, wUsage, dwRop );
-}
-
-
-/***********************************************************************
  *           StretchDIBits   (GDI32.@)
  */
 INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
@@ -232,17 +218,6 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 }
 
 
-/***********************************************************************
- *           SetDIBits    (GDI.440)
- */
-INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
-                          UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
-                          UINT16 coloruse )
-{
-    return SetDIBits( hdc, hbitmap, startscan, lines, bits, info, coloruse );
-}
-
-
 /******************************************************************************
  * SetDIBits [GDI32.@]  Sets pixels in a bitmap using colors from DIB
  *
@@ -292,19 +267,6 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
 
 /***********************************************************************
- *           SetDIBitsToDevice    (GDI.443)
- */
-INT16 WINAPI SetDIBitsToDevice16(HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
-                           INT16 cy, INT16 xSrc, INT16 ySrc, UINT16 startscan,
-                           UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
-                           UINT16 coloruse )
-{
-    return SetDIBitsToDevice( hdc, xDest, yDest, cx, cy, xSrc, ySrc,
-                                startscan, lines, bits, info, coloruse );
-}
-
-
-/***********************************************************************
  *           SetDIBitsToDevice   (GDI32.@)
  */
 INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
@@ -331,15 +293,6 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 }
 
 /***********************************************************************
- *           SetDIBColorTable    (GDI.602)
- */
-UINT16 WINAPI SetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
-				  RGBQUAD *colors )
-{
-    return SetDIBColorTable( hdc, startpos, entries, colors );
-}
-
-/***********************************************************************
  *           SetDIBColorTable    (GDI32.@)
  */
 UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *colors )
@@ -356,14 +309,6 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
     return result;
 }
 
-/***********************************************************************
- *           GetDIBColorTable    (GDI.603)
- */
-UINT16 WINAPI GetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
-				  RGBQUAD *colors )
-{
-    return GetDIBColorTable( hdc, startpos, entries, colors );
-}
 
 /***********************************************************************
  *           GetDIBColorTable    (GDI32.@)
@@ -432,16 +377,6 @@ static RGBQUAD DefLogPalette[20] = { /* Copy of Default Logical Palette */
     { 0xff, 0xff, 0x00, 0x00 },
     { 0xff, 0xff, 0xff, 0x00 }
 };
-
-/***********************************************************************
- *           GetDIBits    (GDI.441)
- */
-INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
-                          UINT16 lines, LPVOID bits, BITMAPINFO * info,
-                          UINT16 coloruse )
-{
-    return GetDIBits( hdc, hbitmap, startscan, lines, bits, info, coloruse );
-}
 
 
 /******************************************************************************
@@ -781,17 +716,6 @@ INT WINAPI GetDIBits(
     GDI_ReleaseObj( hbitmap );
 
     return lines;
-}
-
-
-/***********************************************************************
- *           CreateDIBitmap    (GDI.442)
- */
-HBITMAP16 WINAPI CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
-                            DWORD init, LPCVOID bits, const BITMAPINFO * data,
-                            UINT16 coloruse )
-{
-    return CreateDIBitmap( hdc, header, init, bits, data, coloruse );
 }
 
 

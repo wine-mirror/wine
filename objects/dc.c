@@ -440,15 +440,6 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 
 
 /***********************************************************************
- *           SaveDC    (GDI.30)
- */
-INT16 WINAPI SaveDC16( HDC16 hdc )
-{
-    return (INT16)SaveDC( hdc );
-}
-
-
-/***********************************************************************
  *           SaveDC    (GDI32.@)
  */
 INT WINAPI SaveDC( HDC hdc )
@@ -495,15 +486,6 @@ INT WINAPI SaveDC( HDC hdc )
     GDI_ReleaseObj( hdcs );
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           RestoreDC    (GDI.39)
- */
-BOOL16 WINAPI RestoreDC16( HDC16 hdc, INT16 level )
-{
-    return RestoreDC( hdc, level );
 }
 
 
@@ -565,15 +547,6 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     return success;
 }
 
-
-/***********************************************************************
- *           CreateDC    (GDI.53)
- */
-HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
-                         const DEVMODEA *initData )
-{
-    return CreateDCA( driver, device, output, initData );
-}
 
 /***********************************************************************
  *           CreateDCA    (GDI32.@)
@@ -651,17 +624,6 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
 
 /***********************************************************************
- *           CreateIC    (GDI.153)
- */
-HDC16 WINAPI CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
-                         const DEVMODEA* initData )
-{
-      /* Nothing special yet for ICs */
-    return CreateDC16( driver, device, output, initData );
-}
-
-
-/***********************************************************************
  *           CreateICA    (GDI32.@)
  */
 HDC WINAPI CreateICA( LPCSTR driver, LPCSTR device, LPCSTR output,
@@ -680,15 +642,6 @@ HDC WINAPI CreateICW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 {
       /* Nothing special yet for ICs */
     return CreateDCW( driver, device, output, initData );
-}
-
-
-/***********************************************************************
- *           CreateCompatibleDC    (GDI.52)
- */
-HDC16 WINAPI CreateCompatibleDC16( HDC16 hdc )
-{
-    return (HDC16)CreateCompatibleDC( hdc );
 }
 
 
@@ -750,15 +703,6 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     GDI_ReleaseObj( dc->hSelf );
     if (origDC) GDI_ReleaseObj( hdc );
     return dc->hSelf;
-}
-
-
-/***********************************************************************
- *           DeleteDC    (GDI.68)
- */
-BOOL16 WINAPI DeleteDC16( HDC16 hdc )
-{
-    return DeleteDC( hdc );
 }
 
 
@@ -826,15 +770,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
 
 /***********************************************************************
- *           ResetDC    (GDI.376)
- */
-HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
-{
-    return ResetDCA(hdc, devmode);
-}
-
-
-/***********************************************************************
  *           ResetDCA    (GDI32.@)
  */
 HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
@@ -861,18 +796,6 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 
 
 /***********************************************************************
- *           GetDeviceCaps    (GDI.80)
- */
-INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
-{
-    INT16 ret = GetDeviceCaps( hdc, cap );
-    /* some apps don't expect -1 and think it's a B&W screen */
-    if ((cap == NUMCOLORS) && (ret == -1)) ret = 2048;
-    return ret;
-}
-
-
-/***********************************************************************
  *           GetDeviceCaps    (GDI32.@)
  */
 INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
@@ -886,15 +809,6 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
         GDI_ReleaseObj( hdc );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           SetBkColor    (GDI.1)
- */
-COLORREF WINAPI SetBkColor16( HDC16 hdc, COLORREF color )
-{
-    return SetBkColor( hdc, color );
 }
 
 
@@ -924,15 +838,6 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextColor    (GDI.9)
- */
-COLORREF WINAPI SetTextColor16( HDC16 hdc, COLORREF color )
-{
-    return SetTextColor( hdc, color );
-}
-
-
-/***********************************************************************
  *           SetTextColor    (GDI32.@)
  */
 COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
@@ -954,14 +859,6 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
     dc->textColor = color;
     GDI_ReleaseObj( hdc );
     return oldColor;
-}
-
-/***********************************************************************
- *           SetTextAlign    (GDI.346)
- */
-UINT16 WINAPI SetTextAlign16( HDC16 hdc, UINT16 align )
-{
-    return SetTextAlign( hdc, align );
 }
 
 
@@ -1001,18 +898,6 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 
 
 /***********************************************************************
- *           GetDCOrg    (GDI.79)
- */
-DWORD WINAPI GetDCOrg16( HDC16 hdc )
-{
-    POINT	pt;
-    if( GetDCOrgEx( hdc, &pt) )
-  	return MAKELONG( (WORD)pt.x, (WORD)pt.y );
-    return 0;
-}
-
-
-/***********************************************************************
  *           SetDCOrg    (GDI.117)
  */
 DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
@@ -1047,15 +932,6 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
     }
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           SetArcDirection    (GDI.525)
- */
-INT16 WINAPI SetArcDirection16( HDC16 hdc, INT16 nDirection )
-{
-    return SetArcDirection( (HDC)hdc, (INT)nDirection );
 }
 
 
@@ -1278,7 +1154,7 @@ BOOL16 WINAPI SetDCHook16( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 /***********************************************************************
  *           GetDCHook   (GDI.191)
  */
-DWORD WINAPI GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
+DWORD WINAPI GetDCHook16( HDC16 hdc, FARPROC16 *phookProc )
 {
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
@@ -1455,29 +1331,6 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
     if (dc) ret = dc->relAbsMode;
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-/***********************************************************************
- *           Death    (GDI.121)
- *
- * Disables GDI, switches back to text mode.
- * We don't have to do anything here,
- * just let console support handle everything
- */
-void WINAPI Death16(HDC16 hDC)
-{
-    MESSAGE("Death(%04x) called. Application enters text mode...\n", hDC);
-}
-
-/***********************************************************************
- *           Resurrection    (GDI.122)
- *
- * Restores GDI functionality
- */
-void WINAPI Resurrection16(HDC16 hDC,
-                           WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6)
-{
-    MESSAGE("Resurrection(%04x, %04x, %04x, %04x, %04x, %04x, %04x) called. Application left text mode.\n", hDC, w1, w2, w3, w4, w5, w6);
 }
 
 /***********************************************************************

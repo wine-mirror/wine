@@ -95,7 +95,7 @@ HFONT WIN16DRV_SelectFont( PHYSDEV dev, HFONT hfont)
     int	nSize;
 
     if (!GetObject16( hfont, sizeof(physDev->lf), &physDev->lf ))
-        return GDI_ERROR;
+        return HGDI_ERROR;
 
     TRACE("WIN16DRV_FONT_SelectObject %s h=%d\n",
           debugstr_a(physDev->lf.lfFaceName), physDev->lf.lfHeight);
@@ -258,4 +258,3 @@ WORD WINAPI EnumCallback16(LPENUMLOGFONT16 lpLogFont,
     return (*(((WEPFC *)lpClientData)->proc))( &lfW, &tmW, wFontType,
 					       ((WEPFC *)lpClientData)->lp );
 }
-

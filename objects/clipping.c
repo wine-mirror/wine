@@ -55,15 +55,6 @@ void CLIPPING_UpdateGCRegion( DC * dc )
 
 
 /***********************************************************************
- *           SelectClipRgn    (GDI.44)
- */
-INT16 WINAPI SelectClipRgn16( HDC16 hdc, HRGN16 hrgn )
-{
-    return (INT16)SelectClipRgn( hdc, hrgn );
-}
-
-
-/***********************************************************************
  *           SelectClipRgn    (GDI32.@)
  */
 INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
@@ -71,13 +62,6 @@ INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
     return ExtSelectClipRgn( hdc, hrgn, RGN_COPY );
 }
 
-/******************************************************************************
- *		ExtSelectClipRgn	[GDI.508]
- */
-INT16 WINAPI ExtSelectClipRgn16( HDC16 hdc, HRGN16 hrgn, INT16 fnMode )
-{
-  return (INT16) ExtSelectClipRgn((HDC) hdc, (HRGN) hrgn, fnMode);
-}
 
 /******************************************************************************
  *		ExtSelectClipRgn	[GDI32.@]
@@ -155,15 +139,6 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
 
 
 /***********************************************************************
- *           OffsetClipRgn    (GDI.32)
- */
-INT16 WINAPI OffsetClipRgn16( HDC16 hdc, INT16 x, INT16 y )
-{
-    return (INT16)OffsetClipRgn( hdc, x, y );
-}
-
-
-/***********************************************************************
  *           OffsetClipRgn    (GDI32.@)
  */
 INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
@@ -198,16 +173,6 @@ INT16 WINAPI OffsetVisRgn16( HDC16 hdc, INT16 x, INT16 y )
     CLIPPING_UpdateGCRegion( dc );
     GDI_ReleaseObj( hdc );
     return retval;
-}
-
-
-/***********************************************************************
- *           ExcludeClipRect    (GDI.21)
- */
-INT16 WINAPI ExcludeClipRect16( HDC16 hdc, INT16 left, INT16 top,
-                                INT16 right, INT16 bottom )
-{
-    return (INT16)ExcludeClipRect( hdc, left, top, right, bottom );
 }
 
 
@@ -254,20 +219,9 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
 
 
 /***********************************************************************
- *           IntersectClipRect    (GDI.22)
- */
-INT16 WINAPI IntersectClipRect16( HDC16 hdc, INT16 left, INT16 top,
-                                  INT16 right, INT16 bottom )
-{
-    return (INT16)IntersectClipRect( hdc, left, top, right, bottom );
-}
-
-
-/***********************************************************************
  *           IntersectClipRect    (GDI32.@)
  */
-INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
-                                  INT right, INT bottom )
+INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     INT ret;
     DC *dc = DC_GetDCUpdate( hdc );
@@ -375,15 +329,6 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
 
 
 /***********************************************************************
- *           PtVisible    (GDI.103)
- */
-BOOL16 WINAPI PtVisible16( HDC16 hdc, INT16 x, INT16 y )
-{
-    return PtVisible( hdc, x, y );
-}
-
-
-/***********************************************************************
  *           PtVisible    (GDI32.@)
  */
 BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
@@ -408,18 +353,6 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 
 
 /***********************************************************************
- *           RectVisible    (GDI.465)
- *           RectVisibleOld (GDI.104)
- */
-BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect16 )
-{
-    RECT rect;
-    CONV_RECT16TO32( rect16, &rect );
-    return RectVisible( hdc, &rect );
-}
-
-
-/***********************************************************************
  *           RectVisible    (GDI32.@)
  */
 BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
@@ -437,22 +370,6 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
         LPtoDP( hdc, (LPPOINT)&tmpRect, 2 );
         ret = RectInRegion( dc->hGCClipRgn, &tmpRect );
     }
-    GDI_ReleaseObj( hdc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetClipBox    (GDI.77)
- */
-INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
-{
-    int ret;
-    DC *dc = DC_GetDCUpdate( hdc );
-    if (!dc) return ERROR;
-    ret = GetRgnBox16( dc->hGCClipRgn, rect );
-    DPtoLP16( hdc, (LPPOINT16)rect, 2 );
-    TRACE("%d,%d-%d,%d\n", rect->left,rect->top,rect->right,rect->bottom );
     GDI_ReleaseObj( hdc );
     return ret;
 }

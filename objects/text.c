@@ -107,29 +107,6 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
     return strW;
 }
 
-/***********************************************************************
- *           ExtTextOut (GDI.351)
- */
-BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
-                            const RECT16 *lprect, LPCSTR str, UINT16 count,
-                            const INT16 *lpDx )
-{
-    BOOL	ret;
-    int		i;
-    RECT	rect32;
-    LPINT	lpdx32 = NULL;
-
-    if (lpDx) {
-	lpdx32 = (LPINT)HeapAlloc( GetProcessHeap(),0, sizeof(INT)*count );
-	if(lpdx32 == NULL) return FALSE;
-	for (i=count;i--;) lpdx32[i]=lpDx[i];
-    }
-    if (lprect)	CONV_RECT16TO32(lprect,&rect32);
-    ret = ExtTextOutA(hdc,x,y,flags,lprect?&rect32:NULL,str,count,lpdx32);
-    if (lpdx32) HeapFree( GetProcessHeap(), 0, lpdx32 );
-    return ret;
-}
-
 
 /***********************************************************************
  *           ExtTextOutA    (GDI32.@)
@@ -214,15 +191,6 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
 
 /***********************************************************************
- *           TextOut    (GDI.33)
- */
-BOOL16 WINAPI TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
-{
-    return ExtTextOut16( hdc, x, y, 0, NULL, str, count, NULL );
-}
-
-
-/***********************************************************************
  *           TextOutA    (GDI32.@)
  */
 BOOL WINAPI TextOutA( HDC hdc, INT x, INT y, LPCSTR str, INT count )
@@ -258,13 +226,6 @@ UINT WINAPI GetTextCharset(
     return GetTextCharsetInfo(hdc, NULL, 0);
 }
 
-/***********************************************************************
- * GetTextCharset [GDI.612]
- */
-UINT16 WINAPI GetTextCharset16(HDC16 hdc)
-{
-    return (UINT16)GetTextCharset(hdc);
-}
 
 /***********************************************************************
  * GetTextCharsetInfo [GDI32.@]  Gets character set for font

@@ -35,15 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 
 /***********************************************************************
- *           LineTo    (GDI.19)
- */
-BOOL16 WINAPI LineTo16( HDC16 hdc, INT16 x, INT16 y )
-{
-    return LineTo( hdc, x, y );
-}
-
-
-/***********************************************************************
  *           LineTo    (GDI32.@)
  */
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
@@ -63,31 +54,6 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
     }
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           MoveTo    (GDI.20)
- */
-DWORD WINAPI MoveTo16( HDC16 hdc, INT16 x, INT16 y )
-{
-    POINT pt;
-
-    if (!MoveToEx( (HDC)hdc, x, y, &pt )) return 0;
-    return MAKELONG(pt.x,pt.y);
-}
-
-
-/***********************************************************************
- *           MoveToEx    (GDI.483)
- */
-BOOL16 WINAPI MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
-{
-    POINT pt32;
-
-    if (!MoveToEx( (HDC)hdc, (INT)x, (INT)y, &pt32 )) return FALSE;
-    if (pt) CONV_POINT32TO16( &pt32, pt );
-    return TRUE;
 }
 
 
@@ -112,19 +78,6 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
     else if (dc->funcs->pMoveTo) ret = dc->funcs->pMoveTo(dc->physDev,x,y);
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           Arc    (GDI.23)
- */
-BOOL16 WINAPI Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
-                     INT16 bottom, INT16 xstart, INT16 ystart,
-                     INT16 xend, INT16 yend )
-{
-    return Arc( (HDC)hdc, (INT)left, (INT)top, (INT)right,
-   		  (INT)bottom, (INT)xstart, (INT)ystart, (INT)xend,
-		  (INT)yend );
 }
 
 
@@ -187,18 +140,6 @@ BOOL WINAPI ArcTo( HDC hdc,
     return result;
 }
 
-/***********************************************************************
- *           Pie    (GDI.26)
- */
-BOOL16 WINAPI Pie16( HDC16 hdc, INT16 left, INT16 top,
-                     INT16 right, INT16 bottom, INT16 xstart, INT16 ystart,
-                     INT16 xend, INT16 yend )
-{
-    return Pie( (HDC)hdc, (INT)left, (INT)top, (INT)right,
-   		  (INT)bottom, (INT)xstart, (INT)ystart, (INT)xend,
-		  (INT)yend );
-}
-
 
 /***********************************************************************
  *           Pie   (GDI32.@)
@@ -218,17 +159,6 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
 
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           Chord    (GDI.348)
- */
-BOOL16 WINAPI Chord16( HDC16 hdc, INT16 left, INT16 top,
-                       INT16 right, INT16 bottom, INT16 xstart, INT16 ystart,
-                       INT16 xend, INT16 yend )
-{
-    return Chord( hdc, left, top, right, bottom, xstart, ystart, xend, yend );
 }
 
 
@@ -254,16 +184,6 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top,
 
 
 /***********************************************************************
- *           Ellipse    (GDI.24)
- */
-BOOL16 WINAPI Ellipse16( HDC16 hdc, INT16 left, INT16 top,
-                         INT16 right, INT16 bottom )
-{
-    return Ellipse( hdc, left, top, right, bottom );
-}
-
-
-/***********************************************************************
  *           Ellipse    (GDI32.@)
  */
 BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
@@ -280,16 +200,6 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
 
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           Rectangle    (GDI.27)
- */
-BOOL16 WINAPI Rectangle16( HDC16 hdc, INT16 left, INT16 top,
-                           INT16 right, INT16 bottom )
-{
-    return Rectangle( hdc, left, top, right, bottom );
 }
 
 
@@ -314,16 +224,6 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
 
 
 /***********************************************************************
- *           RoundRect    (GDI.28)
- */
-BOOL16 WINAPI RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
-                           INT16 bottom, INT16 ell_width, INT16 ell_height )
-{
-    return RoundRect( hdc, left, top, right, bottom, ell_width, ell_height );
-}
-
-
-/***********************************************************************
  *           RoundRect    (GDI32.@)
  */
 BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
@@ -342,15 +242,6 @@ BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
     }
     return ret;
 }
-
-/***********************************************************************
- *           SetPixel    (GDI.31)
- */
-COLORREF WINAPI SetPixel16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
-{
-    return SetPixel( hdc, x, y, color );
-}
-
 
 /***********************************************************************
  *           SetPixel    (GDI32.@)
@@ -385,15 +276,6 @@ BOOL WINAPI SetPixelV( HDC hdc, INT x, INT y, COLORREF color )
     }
     return ret;
 }
-
-/***********************************************************************
- *           GetPixel    (GDI.83)
- */
-COLORREF WINAPI GetPixel16( HDC16 hdc, INT16 x, INT16 y )
-{
-    return GetPixel( hdc, x, y );
-}
-
 
 /***********************************************************************
  *           GetPixel    (GDI32.@)
@@ -571,15 +453,6 @@ BOOL WINAPI SwapBuffers( HDC hdc )
 
 
 /***********************************************************************
- *           PaintRgn    (GDI.43)
- */
-BOOL16 WINAPI PaintRgn16( HDC16 hdc, HRGN16 hrgn )
-{
-    return PaintRgn( hdc, hrgn );
-}
-
-
-/***********************************************************************
  *           PaintRgn    (GDI32.@)
  */
 BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
@@ -592,15 +465,6 @@ BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
         GDI_ReleaseObj( hdc );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           FillRgn    (GDI.40)
- */
-BOOL16 WINAPI FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
-{
-    return FillRgn( hdc, hrgn, hbrush );
 }
 
 
@@ -623,16 +487,6 @@ BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
     }
     GDI_ReleaseObj( hdc );
     return retval;
-}
-
-
-/***********************************************************************
- *           FrameRgn     (GDI.41)
- */
-BOOL16 WINAPI FrameRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush,
-                          INT16 nWidth, INT16 nHeight )
-{
-    return FrameRgn( hdc, hrgn, hbrush, nWidth, nHeight );
 }
 
 
@@ -667,15 +521,6 @@ BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
 
 
 /***********************************************************************
- *           InvertRgn    (GDI.42)
- */
-BOOL16 WINAPI InvertRgn16( HDC16 hdc, HRGN16 hrgn )
-{
-    return InvertRgn( hdc, hrgn );
-}
-
-
-/***********************************************************************
  *           InvertRgn    (GDI32.@)
  */
 BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
@@ -698,23 +543,6 @@ BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
     }
     GDI_ReleaseObj( hdc );
     return retval;
-}
-
-/**********************************************************************
- *          Polyline  (GDI.37)
- */
-BOOL16 WINAPI Polyline16( HDC16 hdc, const POINT16* pt, INT16 count )
-{
-    register int i;
-    BOOL16 ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
-                                           count*sizeof(POINT) );
-
-    if (!pt32) return FALSE;
-    for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
-    ret = Polyline(hdc,pt32,count);
-    HeapFree( GetProcessHeap(), 0, pt32 );
-    return ret;
 }
 
 
@@ -770,23 +598,6 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
     return ret;
 }
 
-/**********************************************************************
- *          Polygon  (GDI.36)
- */
-BOOL16 WINAPI Polygon16( HDC16 hdc, const POINT16* pt, INT16 count )
-{
-    register int i;
-    BOOL ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
-                                           count*sizeof(POINT) );
-
-    if (!pt32) return FALSE;
-    for (i=count;i--;) CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
-    ret = Polygon(hdc,pt32,count);
-    HeapFree( GetProcessHeap(), 0, pt32 );
-    return ret;
-}
-
 
 /**********************************************************************
  *          Polygon  (GDI32.@)
@@ -804,37 +615,6 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
     return ret;
 }
 
-
-/**********************************************************************
- *          PolyPolygon (GDI.450)
- */
-BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
-                             UINT16 polygons )
-{
-    int		i,nrpts;
-    LPPOINT	pt32;
-    LPINT	counts32;
-    BOOL16	ret;
-
-    nrpts=0;
-    for (i=polygons;i--;)
-    	nrpts+=counts[i];
-    pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT)*nrpts);
-    if(pt32 == NULL) return FALSE;
-    for (i=nrpts;i--;)
-    	CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
-    counts32 = (LPINT)HeapAlloc( GetProcessHeap(), 0, polygons*sizeof(INT) );
-    if(counts32 == NULL) {
-	HeapFree( GetProcessHeap(), 0, pt32 );
-	return FALSE;
-    }
-    for (i=polygons;i--;) counts32[i]=counts[i];
-
-    ret = PolyPolygon(hdc,pt32,counts32,polygons);
-    HeapFree( GetProcessHeap(), 0, counts32 );
-    HeapFree( GetProcessHeap(), 0, pt32 );
-    return ret;
-}
 
 /**********************************************************************
  *          PolyPolygon  (GDI32.@)
@@ -871,16 +651,6 @@ BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
 }
 
 /**********************************************************************
- *          ExtFloodFill   (GDI.372)
- */
-BOOL16 WINAPI ExtFloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color,
-                              UINT16 fillType )
-{
-    return ExtFloodFill( hdc, x, y, color, fillType );
-}
-
-
-/**********************************************************************
  *          ExtFloodFill   (GDI32.@)
  */
 BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
@@ -898,15 +668,6 @@ BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
 
 
 /**********************************************************************
- *          FloodFill   (GDI.25)
- */
-BOOL16 WINAPI FloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
-{
-    return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
-}
-
-
-/**********************************************************************
  *          FloodFill   (GDI32.@)
  */
 BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
@@ -914,38 +675,6 @@ BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
     return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
 }
 
-
-/******************************************************************************
- * PolyBezier [GDI.502]
- */
-BOOL16 WINAPI PolyBezier16( HDC16 hDc, const POINT16* lppt, INT16 cPoints )
-{
-    int i;
-    BOOL16 ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
-                                           cPoints*sizeof(POINT) );
-    if(!pt32) return FALSE;
-    for (i=cPoints;i--;) CONV_POINT16TO32(&(lppt[i]),&(pt32[i]));
-    ret= PolyBezier(hDc, pt32, cPoints);
-    HeapFree( GetProcessHeap(), 0, pt32 );
-    return ret;
-}
-
-/******************************************************************************
- * PolyBezierTo [GDI.503]
- */
-BOOL16 WINAPI PolyBezierTo16( HDC16 hDc, const POINT16* lppt, INT16 cPoints )
-{
-    int i;
-    BOOL16 ret;
-    LPPOINT pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0,
-                                           cPoints*sizeof(POINT) );
-    if(!pt32) return FALSE;
-    for (i=cPoints;i--;) CONV_POINT16TO32(&(lppt[i]),&(pt32[i]));
-    ret= PolyBezierTo(hDc, pt32, cPoints);
-    HeapFree( GetProcessHeap(), 0, pt32 );
-    return ret;
-}
 
 /******************************************************************************
  * PolyBezier [GDI32.@]

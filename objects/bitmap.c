@@ -81,37 +81,6 @@ INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
     return -1;
 }
 
-/***********************************************************************
- *           CreateUserBitmap    (GDI.407)
- */
-HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
-                                     UINT16 bpp, LPCVOID bits )
-{
-    return CreateBitmap16( width, height, planes, bpp, bits );
-}
-
-/***********************************************************************
- *           CreateUserDiscardableBitmap    (GDI.409)
- */
-HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy,
-                                                INT16 width, INT16 height )
-{
-    HDC hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
-    HBITMAP16 ret = CreateCompatibleBitmap16( hdc, width, height );
-    DeleteDC( hdc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           CreateBitmap    (GDI.48)
- */
-HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
-                                 UINT16 bpp, LPCVOID bits )
-{
-    return CreateBitmap( width, height, planes, bpp, bits );
-}
-
 
 /******************************************************************************
  * CreateBitmap [GDI32.@]  Creates a bitmap with the specified info
@@ -182,15 +151,6 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
 }
 
 
-/***********************************************************************
- *           CreateCompatibleBitmap    (GDI.51)
- */
-HBITMAP16 WINAPI CreateCompatibleBitmap16(HDC16 hdc, INT16 width, INT16 height)
-{
-    return CreateCompatibleBitmap( hdc, width, height );
-}
-
-
 /******************************************************************************
  * CreateCompatibleBitmap [GDI32.@]  Creates a bitmap compatible with the DC
  *
@@ -232,16 +192,6 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 }
 
 
-/***********************************************************************
- *           CreateBitmapIndirect    (GDI.49)
- */
-HBITMAP16 WINAPI CreateBitmapIndirect16( const BITMAP16 * bmp )
-{
-    return CreateBitmap16( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
-                           bmp->bmBitsPixel, MapSL( bmp->bmBits ) );
-}
-
-
 /******************************************************************************
  * CreateBitmapIndirect [GDI32.@]  Creates a bitmap with the specifies info
  *
@@ -254,15 +204,6 @@ HBITMAP WINAPI CreateBitmapIndirect(
 {
     return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
                            bmp->bmBitsPixel, bmp->bmBits );
-}
-
-
-/***********************************************************************
- *           GetBitmapBits    (GDI.74)
- */
-LONG WINAPI GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
-{
-    return GetBitmapBits( hbitmap, count, buffer );
 }
 
 
@@ -335,15 +276,6 @@ LONG WINAPI GetBitmapBits(
  done:
     GDI_ReleaseObj( hbitmap );
     return ret;
-}
-
-
-/***********************************************************************
- *           SetBitmapBits    (GDI.106)
- */
-LONG WINAPI SetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPCVOID buffer )
-{
-    return SetBitmapBits( hbitmap, count, buffer );
 }
 
 
@@ -644,16 +576,6 @@ static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer
 }
 
 
-/***********************************************************************
- *           CreateDiscardableBitmap    (GDI.156)
- */
-HBITMAP16 WINAPI CreateDiscardableBitmap16( HDC16 hdc, INT16 width,
-                                            INT16 height )
-{
-    return CreateCompatibleBitmap16( hdc, width, height );
-}
-
-
 /******************************************************************************
  * CreateDiscardableBitmap [GDI32.@]  Creates a discardable bitmap
  *
@@ -667,23 +589,6 @@ HBITMAP WINAPI CreateDiscardableBitmap(
     INT height) /* [in] Bitmap height */
 {
     return CreateCompatibleBitmap( hdc, width, height );
-}
-
-
-/***********************************************************************
- *           GetBitmapDimensionEx    (GDI.468)
- *
- * NOTES
- *    Can this call GetBitmapDimensionEx?
- */
-BOOL16 WINAPI GetBitmapDimensionEx16( HBITMAP16 hbitmap, LPSIZE16 size )
-{
-    BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (!bmp) return FALSE;
-    size->cx = bmp->size.cx;
-    size->cy = bmp->size.cy;
-    GDI_ReleaseObj( hbitmap );
-    return TRUE;
 }
 
 
@@ -701,37 +606,6 @@ BOOL WINAPI GetBitmapDimensionEx(
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
     *size = bmp->size;
-    GDI_ReleaseObj( hbitmap );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetBitmapDimension    (GDI.162)
- */
-DWORD WINAPI GetBitmapDimension16( HBITMAP16 hbitmap )
-{
-    SIZE16 size;
-    if (!GetBitmapDimensionEx16( hbitmap, &size )) return 0;
-    return MAKELONG( size.cx, size.cy );
-}
-
-
-/***********************************************************************
- *           SetBitmapDimensionEx    (GDI.478)
- */
-BOOL16 WINAPI SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
-                                      LPSIZE16 prevSize )
-{
-    BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (!bmp) return FALSE;
-    if (prevSize)
-    {
-        prevSize->cx = bmp->size.cx;
-        prevSize->cy = bmp->size.cy;
-    }
-    bmp->size.cx = x;
-    bmp->size.cy = y;
     GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
@@ -758,15 +632,3 @@ BOOL WINAPI SetBitmapDimensionEx(
     GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
-
-
-/***********************************************************************
- *           SetBitmapDimension    (GDI.163)
- */
-DWORD WINAPI SetBitmapDimension16( HBITMAP16 hbitmap, INT16 x, INT16 y )
-{
-    SIZE16 size;
-    if (!SetBitmapDimensionEx16( hbitmap, x, y, &size )) return 0;
-    return MAKELONG( size.cx, size.cy );
-}
-

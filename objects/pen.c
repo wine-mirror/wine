@@ -52,23 +52,6 @@ static const struct gdi_obj_funcs pen_funcs =
     GDI_FreeObject     /* pDeleteObject */
 };
 
-/***********************************************************************
- *           CreatePen    (GDI.61)
- */
-HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
-{
-    LOGPEN logpen;
-
-    TRACE("%d %d %06lx\n", style, width, color );
-
-    logpen.lopnStyle = style;
-    logpen.lopnWidth.x = width;
-    logpen.lopnWidth.y = 0;
-    logpen.lopnColor = color;
-
-    return CreatePenIndirect( &logpen );
-}
-
 
 /***********************************************************************
  *           CreatePen    (GDI32.@)
@@ -85,24 +68,6 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
     logpen.lopnColor = color;
 
     return CreatePenIndirect( &logpen );
-}
-
-
-/***********************************************************************
- *           CreatePenIndirect    (GDI.62)
- */
-HPEN16 WINAPI CreatePenIndirect16( const LOGPEN16 * pen )
-{
-    PENOBJ * penPtr;
-    HPEN hpen;
-
-    if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
-    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen, &pen_funcs ))) return 0;
-    penPtr->logpen.lopnStyle = pen->lopnStyle;
-    penPtr->logpen.lopnColor = pen->lopnColor;
-    CONV_POINT16TO32( &pen->lopnWidth, &penPtr->logpen.lopnWidth );
-    GDI_ReleaseObj( hpen );
-    return hpen;
 }
 
 

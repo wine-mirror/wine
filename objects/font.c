@@ -454,22 +454,6 @@ void FONT_NewTextMetricEx16ToW(const NEWTEXTMETRICEX16 *ptm16, LPNEWTEXTMETRICEX
 
 
 /***********************************************************************
- *           CreateFontIndirect   (GDI.57)
- */
-HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *plf16 )
-{
-    LOGFONTW lfW;
-
-    if(plf16) {
-        FONT_LogFont16ToW( plf16, &lfW );
-	return CreateFontIndirectW( &lfW );
-    } else {
-        return CreateFontIndirectW( NULL );
-    }
-}
-
-
-/***********************************************************************
  *           CreateFontIndirectA   (GDI32.@)
  */
 HFONT WINAPI CreateFontIndirectA( const LOGFONTA *plfA )
@@ -973,15 +957,6 @@ INT WINAPI EnumFontsW( HDC hDC, LPCWSTR lpName, FONTENUMPROCW efproc,
 
 
 /***********************************************************************
- *           GetTextCharacterExtra    (GDI.89)
- */
-INT16 WINAPI GetTextCharacterExtra16( HDC16 hdc )
-{
-    return (INT16)GetTextCharacterExtra( hdc );
-}
-
-
-/***********************************************************************
  *           GetTextCharacterExtra    (GDI32.@)
  */
 INT WINAPI GetTextCharacterExtra( HDC hdc )
@@ -993,15 +968,6 @@ INT WINAPI GetTextCharacterExtra( HDC hdc )
                  / dc->vportExtX );
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           SetTextCharacterExtra    (GDI.8)
- */
-INT16 WINAPI SetTextCharacterExtra16( HDC16 hdc, INT16 extra )
-{
-    return (INT16)SetTextCharacterExtra( hdc, extra );
 }
 
 
@@ -1023,15 +989,6 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
     }
     GDI_ReleaseObj( hdc );
     return prev;
-}
-
-
-/***********************************************************************
- *           SetTextJustification    (GDI.10)
- */
-INT16 WINAPI SetTextJustification16( HDC16 hdc, INT16 extra, INT16 breaks )
-{
-    return SetTextJustification( hdc, extra, breaks );
 }
 
 
@@ -1066,14 +1023,6 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
     return ret;
 }
 
-
-/***********************************************************************
- *           GetTextFace    (GDI.92)
- */
-INT16 WINAPI GetTextFace16( HDC16 hdc, INT16 count, LPSTR name )
-{
-        return GetTextFaceA(hdc,count,name);
-}
 
 /***********************************************************************
  *           GetTextFaceA    (GDI32.@)
@@ -1118,37 +1067,6 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
     }
     GDI_ReleaseObj( hdc );
     return ret;
-}
-
-
-/***********************************************************************
- *           GetTextExtent    (GDI.91)
- */
-DWORD WINAPI GetTextExtent16( HDC16 hdc, LPCSTR str, INT16 count )
-{
-    SIZE16 size;
-    if (!GetTextExtentPoint16( hdc, str, count, &size )) return 0;
-    return MAKELONG( size.cx, size.cy );
-}
-
-
-/***********************************************************************
- *           GetTextExtentPoint    (GDI.471)
- *
- * FIXME: Should this have a bug for compatibility?
- * Original Windows versions of GetTextExtentPoint{A,W} have documented
- * bugs (-> MSDN KB q147647.txt).
- */
-BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
-                                    LPSIZE16 size )
-{
-    SIZE size32;
-    BOOL ret;
-    TRACE("%04x, %p (%s), %d, %p\n", hdc, str, debugstr_an(str, count), count, size);
-    ret = GetTextExtentPoint32A( hdc, str, count, &size32 );
-    size->cx = size32.cx;
-    size->cy = size32.cy;
-    return (BOOL16)ret;
 }
 
 
@@ -1349,19 +1267,6 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 done:
     return ret;
 }
-
-/***********************************************************************
- *           GetTextMetrics    (GDI.93)
- */
-BOOL16 WINAPI GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
-{
-    TEXTMETRICW tm32;
-
-    if (!GetTextMetricsW( (HDC)hdc, &tm32 )) return FALSE;
-    FONT_TextMetricWTo16( &tm32, metrics );
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           GetTextMetricsA    (GDI32.@)
@@ -1637,42 +1542,6 @@ UINT WINAPI GetOutlineTextMetricsW(
 
 
 /***********************************************************************
- *           GetCharWidth    (GDI.350)
- */
-BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
-                              LPINT16 buffer )
-{
-    BOOL	retVal = FALSE;
-
-    if( firstChar != lastChar )
-    {
-	LPINT	buf32 = (LPINT)HeapAlloc(GetProcessHeap(), 0,
-				 sizeof(INT)*(1 + (lastChar - firstChar)));
-	if( buf32 )
-	{
-	    LPINT	obuf32 = buf32;
-	    int		i;
-
-            retVal = GetCharWidth32A(hdc, firstChar, lastChar, buf32);
-	    if (retVal)
-	    {
-		for (i = firstChar; i <= lastChar; i++)
-		    *buffer++ = *buf32++;
-	    }
-	    HeapFree(GetProcessHeap(), 0, obuf32);
-	}
-    }
-    else /* happens quite often to warrant a special treatment */
-    {
-	INT chWidth;
-	retVal = GetCharWidth32A(hdc, firstChar, lastChar, &chWidth );
-       *buffer = chWidth;
-    }
-    return retVal;
-}
-
-
-/***********************************************************************
  *           GetCharWidthW      (GDI32.@)
  *           GetCharWidth32W    (GDI32.@)
  */
@@ -1744,15 +1613,6 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
 
 
 /***********************************************************************
- *           SetMapperFlags    (GDI.349)
- */
-DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
-{
-    return SetMapperFlags( hDC, dwFlag );
-}
-
-
-/***********************************************************************
  *           SetMapperFlags    (GDI32.@)
  */
 DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
@@ -1784,29 +1644,6 @@ BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 {
   FIXME("(%04x, %p): -- Empty Stub !\n", hdc, pAspectRatio);
   return FALSE;
-}
-
-/***********************************************************************
- *           GetCharABCWidths   (GDI.307)
- */
-BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
-                                  LPABC16 abc )
-{
-    LPABC	abc32 = HeapAlloc(GetProcessHeap(),0,sizeof(ABC)*(lastChar-firstChar+1));
-    int		i;
-
-    if (!GetCharABCWidthsA( hdc, firstChar, lastChar, abc32 )) {
-	HeapFree(GetProcessHeap(),0,abc32);
-	return FALSE;
-    }
-
-    for (i=firstChar;i<=lastChar;i++) {
-	abc[i-firstChar].abcA = abc32[i-firstChar].abcA;
-	abc[i-firstChar].abcB = abc32[i-firstChar].abcB;
-	abc[i-firstChar].abcC = abc32[i-firstChar].abcC;
-    }
-    HeapFree(GetProcessHeap(),0,abc32);
-    return TRUE;
 }
 
 
@@ -1945,16 +1782,6 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
     return ret;
 }
 
-/***********************************************************************
- *           CreateScalableFontResource   (GDI.310)
- */
-BOOL16 WINAPI CreateScalableFontResource16( UINT16 fHidden,
-                                            LPCSTR lpszResourceFile,
-                                            LPCSTR fontFile, LPCSTR path )
-{
-    return CreateScalableFontResourceA( fHidden, lpszResourceFile,
-                                          fontFile, path );
-}
 
 /***********************************************************************
  *           CreateScalableFontResourceA   (GDI32.@)
@@ -1998,15 +1825,6 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
 
 
 /*************************************************************************
- *             GetRasterizerCaps   (GDI.313)
- */
-BOOL16 WINAPI GetRasterizerCaps16( LPRASTERIZER_STATUS lprs, UINT16 cbNumBytes)
-{
-    return GetRasterizerCaps( lprs, cbNumBytes );
-}
-
-
-/*************************************************************************
  *             GetRasterizerCaps   (GDI32.@)
  */
 BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
@@ -2019,31 +1837,9 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 
 
 /*************************************************************************
- *             GetKerningPairs   (GDI.332)
- *
- */
-INT16 WINAPI GetKerningPairs16( HDC16 hDC, INT16 cPairs,
-                                LPKERNINGPAIR16 lpKerningPairs )
-{
-    /* At this time kerning is ignored (set to 0) */
-    int i;
-    FIXME("(%x,%d,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
-    if (lpKerningPairs)
-        for (i = 0; i < cPairs; i++)
-            lpKerningPairs[i].iKernAmount = 0;
- /* FIXME: Should this function call SetLastError (0)?  This is yet another
-  * Microsoft function that can return 0 on success or failure
-  */
-    return 0;
-}
-
-
-
-/*************************************************************************
  *             GetKerningPairsA   (GDI32.@)
  */
-DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
-                                 LPKERNINGPAIR lpKerningPairs )
+DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs, LPKERNINGPAIR lpKerningPairs )
 {
     int i;
     FIXME("(%x,%ld,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
@@ -2153,14 +1949,6 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 	return result;
 }
 
-/*************************************************************************
- *             GetFontLanguageInfo   (GDI.616)
- */
-DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
-	/* return value 0 is correct for most cases anyway */
-	FIXME("(%x):stub!\n",hdc);
-	return 0;
-}
 
 /*************************************************************************
  * GetFontData [GDI32.@] Retrieve data for TrueType font
@@ -2188,16 +1976,6 @@ DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset,
 
     GDI_ReleaseObj(hdc);
     return ret;
-}
-
-/*************************************************************************
- * GetFontData [GDI.311]
- *
- */
-DWORD WINAPI GetFontData16(HDC16 hdc, DWORD dwTable, DWORD dwOffset,
-			    LPVOID lpvBuffer, DWORD cbData)
-{
-    return GetFontData(hdc, dwTable, dwOffset, lpvBuffer, cbData);
 }
 
 /*************************************************************************
@@ -2485,16 +2263,6 @@ BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
  *           Font Resource API					       *
  *								       *
  ***********************************************************************/
-/***********************************************************************
- *           AddFontResource    (GDI.119)
- *
- *  Can be either .FON, or .FNT, or .TTF, or .FOT font file.
- *
- */
-INT16 WINAPI AddFontResource16( LPCSTR filename )
-{
-    return AddFontResourceA( filename );
-}
 
 /***********************************************************************
  *           AddFontResourceA    (GDI32.@)
@@ -2534,14 +2302,6 @@ INT WINAPI AddFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
 INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 {
     return WineEngAddFontResourceEx(str, fl, pdv);
-}
-
-/***********************************************************************
- *           RemoveFontResource    (GDI.136)
- */
-BOOL16 WINAPI RemoveFontResource16( LPCSTR str )
-{
-    return RemoveFontResourceA(str);
 }
 
 /***********************************************************************

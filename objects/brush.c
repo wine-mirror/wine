@@ -198,15 +198,6 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 
 
 /***********************************************************************
- *           CreateHatchBrush    (GDI.58)
- */
-HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
-{
-    return CreateHatchBrush( style, color );
-}
-
-
-/***********************************************************************
  *           CreateHatchBrush    (GDI32.@)
  */
 HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
@@ -220,15 +211,6 @@ HBRUSH WINAPI CreateHatchBrush( INT style, COLORREF color )
     logbrush.lbHatch = style;
 
     return CreateBrushIndirect( &logbrush );
-}
-
-
-/***********************************************************************
- *           CreatePatternBrush    (GDI.60)
- */
-HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
-{
-    return (HBRUSH16)CreatePatternBrush( hbitmap );
 }
 
 
@@ -326,15 +308,6 @@ HBRUSH WINAPI CreateDIBPatternBrushPt(
 
 
 /***********************************************************************
- *           CreateSolidBrush    (GDI.66)
- */
-HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
-{
-    return CreateSolidBrush( color );
-}
-
-
-/***********************************************************************
  *           CreateSolidBrush    (GDI32.@)
  */
 HBRUSH WINAPI CreateSolidBrush( COLORREF color )
@@ -348,22 +321,6 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
     logbrush.lbHatch = 0;
 
     return CreateBrushIndirect( &logbrush );
-}
-
-
-/***********************************************************************
- *           SetBrushOrg    (GDI.148)
- */
-DWORD WINAPI SetBrushOrg16( HDC16 hdc, INT16 x, INT16 y )
-{
-    DWORD retval;
-    DC *dc = DC_GetDCPtr( hdc );
-    if (!dc) return FALSE;
-    retval = dc->brushOrgX | (dc->brushOrgY << 16);
-    dc->brushOrgX = x;
-    dc->brushOrgY = y;
-    GDI_ReleaseObj( hdc );
-    return retval;
 }
 
 
@@ -497,4 +454,3 @@ BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
      GDI_ReleaseObj( hBrush );
      return res;
 }
-

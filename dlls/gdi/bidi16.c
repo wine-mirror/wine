@@ -122,14 +122,3 @@ LONG WINAPI GetHDCCharSet16(void) { FIXME("stub (no prototype)\n"); return 0; }
  *		BiDiLayoutEx   (GDI.573)
  */
 LONG WINAPI BiDiLayoutEx16(void) { FIXME("stub (no prototype)\n"); return 0; }
-
-/***********************************************************************
- *           SetLayout   (GDI.1000)
- *
- * Sets left->right or right->left text layout flags of a dc.
- */
-BOOL16 WINAPI SetLayout16( HDC16 hdc, DWORD layout )
-{
-    FIXME( "( %04hx, %08lx ): No BiDi16\n", hdc, layout );
-    return SetLayout( hdc, layout );
-}

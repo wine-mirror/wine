@@ -202,9 +202,9 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
     return TRUE;
 }
 
+
 /**********************************************************************
- *	     CreateMetaFile     (GDI.125)
- *	     CreateMetaFile16   (GDI32.@)
+ *	     CreateMetaFileA   (GDI32.@)
  *
  *  Create a new DC and associate it with a metafile. Pass a filename
  *  to create a disk-based metafile, NULL to create a memory metafile.
@@ -212,9 +212,7 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
  * RETURNS
  *  A handle to the metafile DC if successful, NULL on failure.
  */
-HDC16 WINAPI CreateMetaFile16(
-			      LPCSTR filename /* [in] Filename of disk metafile */
-)
+HDC WINAPI CreateMetaFileA( LPCSTR filename ) /* [in] Filename of disk metafile */
 {
     HDC ret;
     DC *dc;
@@ -251,16 +249,6 @@ HDC16 WINAPI CreateMetaFile16(
     ret = dc->hSelf;
     GDI_ReleaseObj( dc->hSelf );
     return ret;
-}
-
-/**********************************************************************
- *	     CreateMetaFileA   (GDI32.@)
- */
-HDC WINAPI CreateMetaFileA(
-			      LPCSTR filename /* [in] Filename of disk metafile */
-)
-{
-  return CreateMetaFile16( filename );
 }
 
 /**********************************************************************

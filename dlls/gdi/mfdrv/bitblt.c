@@ -46,11 +46,11 @@ BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
     BOOL ret;
     DWORD len;
     METARECORD *mr;
-    BITMAP16  BM;
+    BITMAP BM;
     METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
     DC *dcSrc = physDevSrc->dc;
 
-    GetObject16(dcSrc->hBitmap, sizeof(BITMAP16), &BM);
+    GetObjectA(dcSrc->hBitmap, sizeof(BITMAP), &BM);
     len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
     if (!(mr = HeapAlloc(GetProcessHeap(), 0, len)))
 	return FALSE;
@@ -98,14 +98,14 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     BOOL ret;
     DWORD len;
     METARECORD *mr;
-    BITMAP16  BM;
+    BITMAP BM;
     METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
     DC *dcSrc = physDevSrc->dc;
 #ifdef STRETCH_VIA_DIB
     LPBITMAPINFOHEADER lpBMI;
     WORD nBPP;
 #endif
-    GetObject16(dcSrc->hBitmap, sizeof(BITMAP16), &BM);
+    GetObjectA(dcSrc->hBitmap, sizeof(BITMAP), &BM);
 #ifdef STRETCH_VIA_DIB
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
     len = sizeof(METARECORD) + 10 * sizeof(INT16)
@@ -247,5 +247,3 @@ INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
     HeapFree( GetProcessHeap(), 0, mr );
     return lines;
 }
-
-

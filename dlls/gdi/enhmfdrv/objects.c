@@ -202,13 +202,13 @@ HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont )
             goto found;
         }
     }
-    if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return GDI_ERROR;
+    if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return HGDI_ERROR;
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
-        return GDI_ERROR;
+        return HGDI_ERROR;
     return 0;
 }
 

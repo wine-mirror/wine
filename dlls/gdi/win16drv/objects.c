@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 HBITMAP WIN16DRV_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     FIXME("BITMAP not implemented\n");
-    return 1;
+    return (HBITMAP)1;
 }
 
 
