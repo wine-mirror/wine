@@ -546,7 +546,8 @@
 # define		rtfIndexRange		71
 # define		rtfTOC			72
 # define		rtfNeXTGraphic		73
-# define		rtfMaxDestination	74	/* highest dest + 1 */
+# define		rtfGenerator		74
+# define		rtfMaxDestination	75	/* highest dest + 1 */
 
 # define	rtfFontFamily	4
 # define		rtfFFNil		0

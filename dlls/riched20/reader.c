@@ -2845,6 +2845,7 @@ static RTFKey	rtfKey[] =
 	{ rtfDestination,	rtfStyleSheet,		"stylesheet",	0 },
 	{ rtfDestination,	rtfKeyCode,		"keycode",	0 },
 	{ rtfDestination,	rtfRevisionTbl,		"revtbl",	0 },
+	{ rtfDestination,	rtfGenerator,		"generator",	0 },
 	{ rtfDestination,	rtfInfo,		"info",		0 },
 	{ rtfDestination,	rtfITitle,		"title",	0 },
 	{ rtfDestination,	rtfISubject,		"subject",	0 },
@@ -3667,6 +3668,7 @@ Destination (RTF_Info *info)
 
 	switch (info->rtfMinor)
 	{
+	case rtfGenerator:
 	case rtfPict:
 	case rtfFNContSep:
 	case rtfFNContNotice:
