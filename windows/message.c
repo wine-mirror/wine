@@ -62,27 +62,28 @@ static BOOL MSG_CheckFilter(DWORD uMsg, DWORD first, DWORD last)
  */
 static void MSG_SendParentNotify(WND* wndPtr, WORD event, WORD idChild, LPARAM lValue)
 {
-#define lppt ((LPPOINT16)&lValue)
+    POINT pt;
 
     /* pt has to be in the client coordinates of the parent window */
     WND *tmpWnd = WIN_LockWndPtr(wndPtr);
 
-    MapWindowPoints16( 0, tmpWnd->hwndSelf, lppt, 1 );
+    pt.x = SLOWORD(lValue);
+    pt.y = SHIWORD(lValue);
+    MapWindowPoints( 0, tmpWnd->hwndSelf, &pt, 1 );
     while (tmpWnd)
     {
         if (!(tmpWnd->dwStyle & WS_CHILD) || (tmpWnd->dwExStyle & WS_EX_NOPARENTNOTIFY))
-    {
+        {
             WIN_ReleaseWndPtr(tmpWnd);
             break;
         }
-	lppt->x += tmpWnd->rectClient.left;
-	lppt->y += tmpWnd->rectClient.top;
+	pt.x += tmpWnd->rectClient.left;
+	pt.y += tmpWnd->rectClient.top;
 	WIN_UpdateWndPtr(&tmpWnd,tmpWnd->parent);
 	SendMessageA( tmpWnd->hwndSelf, WM_PARENTNOTIFY,
-			MAKEWPARAM( event, idChild ), lValue );
+		      MAKEWPARAM( event, idChild ), 
+                      MAKELONG( pt.x, pt.y ) );
     }
-
-#undef lppt
 }
 
 
@@ -468,9 +469,12 @@ static void MSG_JournalRecordMsg( MSG *msg )
     }
     else if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
     {
-        event->paramL = LOWORD(msg->lParam);       /* X pos */
-        event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
-        ClientToScreen16( msg->hwnd, (LPPOINT16)&event->paramL );
+        POINT pt;
+        pt.x = SLOWORD(msg->lParam);
+        pt.y = SHIWORD(msg->lParam);
+        ClientToScreen( msg->hwnd, &pt );
+        event->paramL = pt.x;
+        event->paramH = pt.y;
         HOOK_CallHooksA( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)event );
     }
     else if ((msg->message >= WM_NCMOUSEFIRST) &&
@@ -1126,7 +1130,6 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
     int mask;
     MESSAGEQUEUE *msgQueue;
     HQUEUE16 hQueue;
-    POINT16 pt16;
     int iWndsLocks;
 
     mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
@@ -1198,8 +1201,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
 
             *msg = tmpMsg;
             msgQueue->GetMessageTimeVal      = msg->time;
-            CONV_POINT32TO16(&msg->pt, &pt16);
-            msgQueue->GetMessagePosVal       = *(DWORD *)&pt16;
+            msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg->pt.x, (INT16)msg->pt.y );
             msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
             if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, qmsg );
@@ -1214,8 +1216,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
         {
             /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;
-            CONV_POINT32TO16(&msg->pt, &pt16);
-	    msgQueue->GetMessagePosVal       = *(DWORD *)&pt16;
+            msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg->pt.x, (INT16)msg->pt.y );
 	    msgQueue->GetMessageExtraInfoVal = 0;  /* Always 0 for now */
             break;
         }
