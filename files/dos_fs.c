@@ -1984,7 +1984,7 @@ HANDLE WINAPI FindFirstFileExW(
           if (!FindNextFileW( handle, data ))
           {
               FindClose( handle );
-              SetLastError( ERROR_NO_MORE_FILES );
+              SetLastError( ERROR_FILE_NOT_FOUND );
               break;
           }
           return handle;
