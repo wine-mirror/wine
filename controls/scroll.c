@@ -877,6 +877,22 @@ END:
     WIN_ReleaseWndPtr(wndPtr);
 }
 
+/***********************************************************************
+ *           SCROLL_DrawSizeGrip
+ *
+ *  Draw the size grip.
+ */
+static void SCROLL_DrawSizeGrip( HWND hwnd,  HDC hdc)
+{
+    RECT rc;
+
+    GetClientRect( hwnd, &rc );
+    FillRect( hdc, &rc, GetSysColorBrush(COLOR_SCROLLBAR) );
+    rc.left = max( rc.left, rc.right - GetSystemMetrics(SM_CXVSCROLL) - 1 );
+    rc.top  = max( rc.top, rc.bottom - GetSystemMetrics(SM_CYHSCROLL) - 1 );
+    DrawFrameControl( hdc, &rc, DFC_SCROLL, DFCS_SCROLLSIZEGRIP );
+}
+
 
 /***********************************************************************
  *           SCROLL_RefreshScrollBar
@@ -957,6 +973,32 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     if (!infoPtr) return;
     if ((SCROLL_trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN))
 		  return;
+
+    if (GetWindowLongW( hwnd, GWL_STYLE ) & (SBS_SIZEGRIP | SBS_SIZEBOX))
+    {
+        switch(msg)
+        {
+            case WM_LBUTTONDOWN:  /* Initialise mouse tracking */
+                HideCaret(hwnd);  /* hide caret while holding down LBUTTON */
+                SetCapture( hwnd );
+                prevPt = pt;
+                SCROLL_trackHitTest  = hittest = SCROLL_THUMB;
+                break;
+            case WM_MOUSEMOVE:
+                GetClientRect(GetParent(GetParent(hwnd)),&rect);
+                prevPt = pt;
+                break;
+            case WM_LBUTTONUP:
+                ReleaseCapture();
+                SCROLL_trackHitTest  = hittest = SCROLL_NOWHERE;
+                if (hwnd==GetFocus()) ShowCaret(hwnd);
+                break;
+            case WM_SYSTIMER:
+                pt = prevPt;
+                break;
+        }
+        return;
+    }
 
     hdc = GetDCEx( hwnd, 0, DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW));
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
@@ -1235,7 +1277,20 @@ LPCREATESTRUCTW lpCreate /* [in] The style and place of the scroll bar */)
         TRACE("Created WS_DISABLED scrollbar\n");
     }
 
-    if (lpCreate->style & SBS_VERT)
+
+    if (lpCreate->style & SBS_SIZEBOXTOPLEFTALIGN)
+    {
+        MoveWindow( hwnd, lpCreate->x, lpCreate->y, GetSystemMetrics(SM_CXVSCROLL)+1,
+                    GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+    }
+    else if(lpCreate->style & SBS_SIZEBOXBOTTOMRIGHTALIGN)
+    {
+        MoveWindow( hwnd, lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1, 
+                    lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
+                    GetSystemMetrics(SM_CXVSCROLL)+1,
+                    GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+    }
+    else if (lpCreate->style & SBS_VERT)
     {
         if (lpCreate->style & SBS_LEFTALIGN)
             MoveWindow( hwnd, lpCreate->x, lpCreate->y,
@@ -1432,7 +1487,11 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         {
             PAINTSTRUCT ps;
             HDC hdc = wParam ? (HDC)wParam : BeginPaint(hwnd, &ps);
-            if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEBOX)
+            if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEGRIP)
+            {
+                SCROLL_DrawSizeGrip( hwnd, hdc);
+            }
+            else if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEBOX)
             {
                 RECT rc;
                 GetClientRect( hwnd, &rc );
