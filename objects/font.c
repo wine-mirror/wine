@@ -1475,11 +1475,20 @@ BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
                                   LPABC16 abc )
 {
-    ABC abc32;
-    if (!GetCharABCWidthsA( hdc, firstChar, lastChar, &abc32 )) return FALSE;
-    abc->abcA = abc32.abcA;
-    abc->abcB = abc32.abcB;
-    abc->abcC = abc32.abcC;
+    LPABC	abc32 = HeapAlloc(GetProcessHeap(),0,sizeof(ABC)*(lastChar-firstChar+1));
+    int		i;
+
+    if (!GetCharABCWidthsA( hdc, firstChar, lastChar, abc32 )) {
+	HeapFree(GetProcessHeap(),0,abc32);
+	return FALSE;
+    }
+
+    for (i=firstChar;i<=lastChar;i++) {
+	abc[i-firstChar].abcA = abc32[i-firstChar].abcA;
+	abc[i-firstChar].abcB = abc32[i-firstChar].abcB;
+	abc[i-firstChar].abcC = abc32[i-firstChar].abcC;
+    }
+    HeapFree(GetProcessHeap(),0,abc32);
     return TRUE;
 }
 
@@ -1513,9 +1522,20 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
 BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
                                    LPABC abc )
 {
-    /* No TrueType fonts in Wine so far */
-    FIXME("(%04x,%04x,%04x,%p): stub\n", hdc, firstChar, lastChar, abc);
-    return FALSE;
+    int		i;
+    LPINT	widths = HeapAlloc(GetProcessHeap(),0,(lastChar-firstChar+1)*sizeof(INT));
+
+    FIXME("(%04x,%04x,%04x,%p), returns slightly bogus values.\n", hdc, firstChar, lastChar, abc);
+
+    GetCharWidth32A(hdc,firstChar,lastChar,widths);
+
+    for (i=firstChar;i<=lastChar;i++) {
+	abc[i-firstChar].abcA = 0;	/* left distance */
+	abc[i-firstChar].abcB = widths[i-firstChar];/* width */
+	abc[i-firstChar].abcC = 0;	/* right distance */
+    }
+    HeapFree(GetProcessHeap(),0,widths);
+    return TRUE;
 }
 
 
