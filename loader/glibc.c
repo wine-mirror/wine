@@ -60,7 +60,7 @@ static const char *get_threading(void)
 
     pthread_create( &id, NULL, needs_pthread, NULL );
     pthread_join( id, &ret );
-    return ret ? "-pthread" : "-kthread";
+    return ret ? "wine-pthread" : "wine-kthread";
 }
 
 
@@ -71,23 +71,21 @@ int main( int argc, char *argv[] )
 {
     const char *loader = getenv( "WINELOADER" );
     const char *threads = get_threading();
-    const char *name;
-    char *new_name;
-
-    if (!(name = loader))
-    {
-        /* if no WINELOADER specified, get base name of argv[0] */
-        if ((name = strrchr( argv[0], '/' ))) name++;
-        else name = argv[0];
-    }
-    new_name = xmalloc( strlen(name) + strlen(threads) + 1 );
-    strcpy( new_name, name );
-    strcat( new_name, threads );
 
     if (loader)
     {
+        const char *path;
+        char *new_name, *new_loader;
+
+        if ((path = strrchr( loader, '/' ))) path++;
+        else path = loader;
+
+        new_name = xmalloc( (path - loader) + strlen(threads) + 1 );
+        memcpy( new_name, loader, path - loader );
+        strcpy( new_name + (path - loader), threads );
+
         /* update WINELOADER with the new name */
-        char *new_loader = xmalloc( sizeof("WINELOADER=") + strlen(new_name) );
+        new_loader = xmalloc( sizeof("WINELOADER=") + strlen(new_name) );
         strcpy( new_loader, "WINELOADER=" );
         strcat( new_loader, new_name );
         putenv( new_loader );
@@ -97,7 +95,7 @@ int main( int argc, char *argv[] )
     else
     {
         wine_init_argv0_path( argv[0] );
-        wine_exec_wine_binary( new_name, argv, NULL );
+        wine_exec_wine_binary( threads, argv, NULL );
     }
     fprintf( stderr, "wine: could not exec %s\n", argv[0] );
     exit(1);
