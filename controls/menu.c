@@ -3555,7 +3555,7 @@ void WINAPI EndMenu(void)
 HMENU16 WINAPI LookupMenuHandle( HMENU16 hmenu, INT16 id )
 {
     HMENU32 hmenu32 = hmenu;
-    INT32 id32 = id;
+    UINT32 id32 = id;
     if (!MENU_FindItem( &hmenu32, &id32, MF_BYCOMMAND )) return 0;
     else return hmenu32;
 }
