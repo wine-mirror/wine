@@ -134,6 +134,16 @@ struct statvfs
 # define O_NONBLOCK 0
 #endif
 
+#if !defined(S_IXUSR) && defined(S_IEXEC)
+# define S_IXUSR S_IEXEC
+#endif
+#if !defined(S_IXGRP) && defined(S_IEXEC)
+# define S_IXGRP S_IEXEC
+#endif
+#if !defined(S_IXOTH) && defined(S_IEXEC)
+# define S_IXOTH S_IEXEC
+#endif
+
 /****************************************************************
  * Constants
  */
