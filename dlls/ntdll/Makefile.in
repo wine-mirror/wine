@@ -18,7 +18,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/if1632/relay.c \
 	$(TOPOBJDIR)/if1632/snoop.c \
 	$(TOPOBJDIR)/loader/loadorder.c \
-	$(TOPOBJDIR)/loader/main.c \
 	$(TOPOBJDIR)/loader/module.c \
 	$(TOPOBJDIR)/loader/pe_image.c \
 	$(TOPOBJDIR)/loader/task.c \

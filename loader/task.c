@@ -526,6 +526,18 @@ void TASK_ExitTask(void)
 
 
 /***********************************************************************
+ *           ExitKernel (KERNEL.2)
+ *
+ * Clean-up everything and exit the Wine process.
+ */
+void WINAPI ExitKernel16(void)
+{
+    WriteOutProfiles16();
+    TerminateProcess( GetCurrentProcess(), 0 );
+}
+
+
+/***********************************************************************
  *           InitTask  (KERNEL.91)
  *
  * Called by the application startup code.

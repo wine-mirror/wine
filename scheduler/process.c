@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <locale.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -49,6 +50,7 @@
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
+WINE_DECLARE_DEBUG_CHANNEL(server);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(win32);
@@ -134,7 +136,7 @@ extern STARTUPINFOA current_startupinfo;
 extern void PTHREAD_init_done(void);
 
 extern void RELAY_InitDebugLists(void);
-extern BOOL MAIN_MainInit(void);
+extern void SHELL_LoadRegistry(void);
 extern void VERSION_Init( const char *appname );
 
 /***********************************************************************
@@ -292,6 +294,10 @@ static BOOL process_init( char *argv[] )
     BOOL ret;
     size_t info_size = 0;
 
+    setbuf(stdout,NULL);
+    setbuf(stderr,NULL);
+    setlocale(LC_CTYPE,"");
+
     /* store the program name */
     argv0 = argv[0];
 
@@ -372,10 +378,20 @@ static BOOL process_init( char *argv[] )
     process_pmts.CurrentDirectoryName.Buffer[3] = '\0';
     /* </hack: to be changed later on> */
 
-    ret = MAIN_MainInit();
+    /* initialise DOS drives */
+    if (!DRIVE_Init()) return FALSE;
+
+    /* initialise DOS directories */
+    if (!DIR_Init()) return FALSE;
+
+    /* registry initialisation */
+    SHELL_LoadRegistry();
+
+    /* global boot finished, the rest is process-local */
+    CLIENT_BootDone( TRACE_ON(server) );
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY_InitDebugLists();
 
-    return ret;
+    return TRUE;
 }
 
 
