@@ -2008,7 +2008,6 @@ static control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control
 			case BS_CHECKBOX:
 			case BS_DEFPUSHBUTTON:
 			case BS_PUSHBUTTON:
-			case BS_GROUPBOX:
 /*			case BS_PUSHBOX:	*/
 			case BS_AUTORADIOBUTTON:
 			case BS_AUTO3STATE:
@@ -2018,6 +2017,7 @@ static control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control
 				break;
 			default:
 				yywarning("Unknown default button control-style 0x%08x", special_style);
+			case BS_GROUPBOX:
 			case BS_RADIOBUTTON:
 				break;
 			}
