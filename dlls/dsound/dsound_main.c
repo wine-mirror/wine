@@ -2094,7 +2094,7 @@ static int DSOUND_OpenAudio(void)
 	/* we will most likely not get one, avoid excessive opens ... */
 	if (audiofd == -ENODEV)
 		return -1;
-	audiofd = open("/dev/audio",O_WRONLY);
+	audiofd = open("/dev/audio",O_WRONLY|O_NDELAY);
 	if (audiofd==-1) {
 		/* Don't worry if sound is busy at the moment */
 		if ((errno != EBUSY) && (errno != ENODEV))
@@ -2290,7 +2290,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	/* If we do, whether it's busy or not, we continue */
 	/* otherwise we return with DSERR_NODRIVER */
 
-	audiofd = open("/dev/audio",O_WRONLY);
+	audiofd = open("/dev/audio",O_WRONLY|O_NDELAY);
 	if (audiofd == -1) {
 		audiofd = -errno;
 		if (errno == ENODEV) {

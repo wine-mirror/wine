@@ -474,7 +474,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
     }
     
     if (WOutDev[wDevID].unixdev == 0) {
-	audio = open(SOUND_DEV, O_WRONLY, 0);
+	audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
 	if (audio == -1) return MMSYSERR_ALLOCATED;
     } else {
 	audio = WOutDev[wDevID].unixdev;
@@ -598,7 +598,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WOutDev[wDevID].unixdev = 0;
     if (access(SOUND_DEV, 0) != 0) 
 	return MMSYSERR_NOTENABLED;
-    audio = open(SOUND_DEV, O_WRONLY, 0);
+    audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
     if (audio == -1) {
 	WARN("can't open !\n");
 	return MMSYSERR_ALLOCATED ;
@@ -909,7 +909,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     
     if (lpdwVol == NULL) 
 	return MMSYSERR_NOTENABLED;
-    if ((mixer = open(MIXER_DEV, O_RDONLY)) < 0) {
+    if ((mixer = open(MIXER_DEV, O_RDONLY|O_NDELAY)) < 0) {
 	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
     }
@@ -941,7 +941,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     right = (HIWORD(dwParam) * 100) / 0xFFFFl;
     volume = left + (right << 8);
     
-    if ((mixer = open(MIXER_DEV, O_WRONLY)) < 0) {
+    if ((mixer = open(MIXER_DEV, O_WRONLY|O_NDELAY)) < 0) {
 	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
     }
@@ -961,7 +961,7 @@ static	DWORD	wodGetNumDevs(void)
     DWORD	ret = 1;
     
     /* FIXME: For now, only one sound device (SOUND_DEV) is allowed */
-    int audio = open(SOUND_DEV, O_WRONLY, 0);
+    int audio = open(SOUND_DEV, O_WRONLY|O_NDELAY, 0);
     
     if (audio == -1) {
 	if (errno != EBUSY)
@@ -1026,7 +1026,7 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
-    audio = open(SOUND_DEV, O_RDONLY, 0);
+    audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0);
     if (audio == -1) return MMSYSERR_ALLOCATED ;
 #ifdef EMULATE_SB16
     lpCaps->wMid = 0x0002;
@@ -1115,7 +1115,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     WInDev[wDevID].unixdev = 0;
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
-    audio = open(SOUND_DEV, O_RDONLY, 0);
+    audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0);
     if (audio == -1) {
 	WARN("can't open !\n");
 	return MMSYSERR_ALLOCATED;
