@@ -179,6 +179,7 @@ typedef struct
 #define TOP_BORDER         2
 #define BOTTOM_BORDER      2
 #define DDARROW_WIDTH      11
+#define ARROW_HEIGHT       3
 
 #define TOOLBAR_GetInfoPtr(hwnd) ((TOOLBAR_INFO *)GetWindowLongA(hwnd,0))
 #define TOOLBAR_HasText(x, y) (TOOLBAR_GetText(x, y) ? TRUE : FALSE)
@@ -502,7 +503,7 @@ TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, INT colorRef)
     if (!(hPen = CreatePen( PS_SOLID, 1, GetSysColor( colorRef )))) return;
     hOldPen = SelectObject ( hdc, hPen );
     x = left + 2;
-    y = top + 8;
+    y = top;
     MoveToEx (hdc, x, y, NULL);
     LineTo (hdc, x+5, y++); x++;
     MoveToEx (hdc, x, y, NULL);
@@ -642,7 +643,6 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     CopyRect (&rcFill, &rc);
     CopyRect (&rcArrow, &rc);
     CopyRect(&rcBitmap, &rc);
-    CopyRect(&rcText, &rc);
 
     /* get a pointer to the text */
     lpText = TOOLBAR_GetText(infoPtr, btnPtr);
@@ -655,6 +655,11 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
             rc.right = max(rc.left, rc.right - DDARROW_WIDTH - 2);
 	rcArrow.left = rc.right;
     }
+
+    /* copy text rect after adjusting for drop-down arrow
+     * so that text is centred in the rectangle not containing
+     * the arrow */
+    CopyRect(&rcText, &rc);
 
     /* Center the bitmap horizontally and vertically */
     if (dwStyle & TBSTYLE_LIST)
@@ -794,8 +799,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
         if (hasDropDownArrow)
 	{
-	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top+1, COLOR_3DHIGHLIGHT);
-	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_3DSHADOW);
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top+1 + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, COLOR_3DHIGHLIGHT);
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, COLOR_3DSHADOW);
 	}
 
 	if (!TOOLBAR_DrawImageList (infoPtr, btnPtr, himlDis,
@@ -827,7 +832,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	}
 
         if (hasDropDownArrow)
-	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_WINDOWFRAME);
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, COLOR_WINDOWFRAME);
 
 	TOOLBAR_DrawImageList (infoPtr, btnPtr, himlDef,
 			       hdc, rcBitmap.left+offset, rcBitmap.top+offset,
@@ -940,7 +945,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
 		DrawEdge (hdc, &rcArrow, EDGE_RAISED,
 			  BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
-	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top, COLOR_WINDOWFRAME);
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, COLOR_WINDOWFRAME);
 	}
 
 	TOOLBAR_DrawImageList (infoPtr, btnPtr, himlDef,
