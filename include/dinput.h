@@ -2,6 +2,7 @@
 #define _WINE_DINPUT_H
 
 #include "unknwn.h"
+#include "mouse.h"
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
@@ -716,20 +717,36 @@ struct IDirectInputDevice32A {
 };
 
 /* "Standard" Mouse report... */
-struct DIMOUSESTATE {
+typedef struct DIMOUSESTATE {
   LONG lX;
   LONG lY;
   LONG lZ;
   BYTE rgbButtons[4];
-};
+} DIMOUSESTATE;
+
+#define DIMOFS_X        FIELD_OFFSET(DIMOUSESTATE, lX)
+#define DIMOFS_Y        FIELD_OFFSET(DIMOUSESTATE, lY)
+#define DIMOFS_Z        FIELD_OFFSET(DIMOUSESTATE, lZ)
+#define DIMOFS_BUTTON0 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 0)
+#define DIMOFS_BUTTON1 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 1)
+#define DIMOFS_BUTTON2 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 2)
+#define DIMOFS_BUTTON3 (FIELD_OFFSET(DIMOUSESTATE, rgbButtons) + 3)
+
 struct SysMouse32A {
 	LPDIRECTINPUTDEVICEA_VTABLE	lpvtbl;
 	DWORD				ref;
 	GUID				guid;
 	BYTE                            absolute;
 	/* Previous position for relative moves */
-	LONG prevX;
-	LONG prevY;
+	LONG prevX, prevY;
+	LPMOUSE_EVENT_PROC prev_handler;
+	HWND32 win;
+	int xwin;
+	DWORD win_centerX, win_centerY;
+	LPDIDEVICEOBJECTDATA data_queue;
+	int queue_pos, queue_len;
+	int need_warp;
+	int acquired;
 };
 
 struct SysKeyboard32A {
