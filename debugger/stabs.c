@@ -1,3 +1,5 @@
+/* -*- tab-width: 8; c-basic-offset: 2 -*- */
+
 /*
  * File stabs.c - read stabs information from the wine executable itself.
  *
@@ -6,6 +8,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -61,15 +64,8 @@
 #define N_PSYM		0xa0
 #define N_EINCL		0xa2
 #define N_LBRAC		0xc0
+#define N_EXCL		0xc2
 #define N_RBRAC		0xe0
-
-
-/*
- * This is how we translate stab types into our internal representations
- * of datatypes.
- */
-static struct datatype ** stab_types = NULL;
-static int num_stab_types = 0;
 
 /*
  * Set so that we know the main executable name and path.
@@ -138,44 +134,151 @@ static void stab_strcpy(char * dest, const char * source)
   *dest++ = '\0';
 }
 
-#define MAX_TD_NESTING	128
+extern void DEBUG_PrintAType(struct datatype*, int);
 
-static int **typenums;
-static int *nroftypenums=NULL;
-static int nrofnroftypenums=0;
-static int curtypenum = 0;
+typedef struct {
+   char*		name;
+   unsigned long	value;
+   int			idx;
+   struct datatype**	vector;
+   int			nrofentries;
+} include_def;
 
-static
+#define MAX_INCLUDES	256
+
+static	include_def* 	include_defs = NULL;
+static	int	     	num_include_def = 0;
+static  int		num_alloc_include_def = 0;
+static	int		cu_include_stack[MAX_INCLUDES];
+static	int		cu_include_stk_idx = 0;
+static  struct datatype**	cu_vector = NULL;
+static  int 		cu_nrofentries = 0;
+
+static 
+int	
+DEBUG_CreateInclude(const char* file, unsigned long val)
+{
+  if (num_include_def == num_alloc_include_def) 
+    {
+      num_alloc_include_def += 256;
+      include_defs = DBG_realloc(include_defs, sizeof(include_defs[0])*num_alloc_include_def);
+      memset(include_defs+num_include_def, 0, sizeof(include_defs[0])*256);
+    }
+  include_defs[num_include_def].name = DBG_strdup(file);
+  include_defs[num_include_def].value = val;
+  include_defs[num_include_def].vector = NULL;
+  include_defs[num_include_def].nrofentries = 0;
+  
+  return num_include_def++;
+}
+
+static 
+int	
+DEBUG_FindInclude(const char* file, unsigned long val)
+{
+  int		i;
+  
+  for (i = 0; i < num_include_def; i++) 
+    {
+      if (val == include_defs[i].value && 
+	  strcmp(file, include_defs[i].name) == 0)
+	return i;
+    }
+  return -1;
+}
+
+static 
 int
-DEBUG_FileSubNr2StabEnum(int filenr,int subnr) {
-    if (nrofnroftypenums<=filenr) {
-    	nroftypenums = DBG_realloc(nroftypenums,sizeof(nroftypenums[0])*(filenr+1));
-	memset(nroftypenums+nrofnroftypenums,0,(filenr+1-nrofnroftypenums)*sizeof(nroftypenums[0]));
-	typenums = DBG_realloc(typenums,sizeof(typenums[0])*(filenr+1));
-	memset(typenums+nrofnroftypenums,0,sizeof(typenums[0])*(filenr+1-nrofnroftypenums));
-	nrofnroftypenums=filenr+1;
-    }
-    if (nroftypenums[filenr]<=subnr) {
-    	typenums[filenr] = DBG_realloc(typenums[filenr],sizeof(typenums[0][0])*(subnr+1));
-	memset(typenums[filenr]+nroftypenums[filenr],0,sizeof(typenums[0][0])*(subnr+1-nroftypenums[filenr]));
-	nroftypenums[filenr] = subnr+1;
-    }
-    if (!typenums[filenr][subnr])
-    	typenums[filenr][subnr]=++curtypenum;
-
-    if( num_stab_types <= curtypenum ) {
-	num_stab_types = curtypenum + 256;
-	stab_types = (struct datatype **) DBG_realloc(stab_types, 
-		    num_stab_types * sizeof(struct datatype *)
-	);
-        memset( stab_types + curtypenum, 0, sizeof(struct datatype *) * (num_stab_types - curtypenum) );
-    }
-    /*fprintf(stderr,"(%d,%d) is %d\n",filenr,subnr,typenums[filenr][subnr]); */
-    return typenums[filenr][subnr];
+DEBUG_AddInclude(int idx)
+{
+  ++cu_include_stk_idx;
+  
+  /* is this happen, just bump MAX_INCLUDES */
+  /* we could also handle this as another dynarray */
+  assert(cu_include_stk_idx < MAX_INCLUDES);
+  
+  cu_include_stack[cu_include_stk_idx] = idx;
+  return cu_include_stk_idx;
 }
 
 static
-int
+void
+DEBUG_ResetIncludes(void)
+{
+  /*
+   * The datatypes that we would need to use are reset when
+   * we start a new file. (at least the ones in filenr == 0
+   */
+  cu_include_stk_idx = 0;/* keep 0 as index for the .c file itself */
+  memset(cu_vector, 0, sizeof(cu_vector[0]) * cu_nrofentries);
+}
+
+static
+void
+DEBUG_FreeIncludes(void)
+{
+  int	i;
+  
+  DEBUG_ResetIncludes();
+  
+  for (i = 0; i < num_include_def; i++) 
+    {
+      DBG_free(include_defs[i].name);
+      DBG_free(include_defs[i].vector);
+    }
+  DBG_free(include_defs);
+  include_defs = NULL;
+  num_include_def = 0;
+  DBG_free(cu_vector);
+  cu_vector = NULL;
+  cu_nrofentries = 0;
+}
+
+#define MAX_TD_NESTING	128
+
+static
+struct datatype**
+DEBUG_FileSubNr2StabEnum(int filenr, int subnr) 
+{
+  struct datatype** ret;
+  
+  /* fprintf(stderr, "creating type id for (%d,%d)\n", filenr, subnr); */
+  
+  /* FIXME: I could perhaps create a dummy include_def for each compilation
+   * unit which would allow not to handle those two cases separately
+   */
+  if (filenr == 0) 
+    {
+      if (cu_nrofentries <= subnr) 
+	{
+	  cu_vector = DBG_realloc(cu_vector, sizeof(cu_vector[0])*(subnr+1));
+	  memset(cu_vector+cu_nrofentries, 0, sizeof(cu_vector[0])*(subnr+1-cu_nrofentries));
+	  cu_nrofentries = subnr + 1;
+	}
+      ret = &cu_vector[subnr];
+    }
+  else
+    {
+      include_def*	idef;
+      
+      assert(filenr <= cu_include_stk_idx);
+      
+      idef = &include_defs[cu_include_stack[filenr]];
+      
+      if (idef->nrofentries <= subnr)
+	{
+	  idef->vector = DBG_realloc(idef->vector, sizeof(idef->vector[0])*(subnr+1));
+	  memset(idef->vector + idef->nrofentries, 0, sizeof(idef->vector[0])*(subnr+1-idef->nrofentries));
+	  idef->nrofentries = subnr + 1;
+	}
+      ret = &idef->vector[subnr];
+    }
+  /* fprintf(stderr,"(%d,%d) is %d\n",filenr,subnr,ret); */
+  return ret;
+}
+
+static
+struct datatype**
 DEBUG_ReadTypeEnumBackwards(char*x) {
     int	filenr,subnr;
 
@@ -197,7 +300,7 @@ DEBUG_ReadTypeEnumBackwards(char*x) {
 }
 
 static 
-int
+struct datatype**
 DEBUG_ReadTypeEnum(char **x) {
     int filenr,subnr;
 
@@ -285,8 +388,10 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
 	case 'a':
 	  expect = DT_ARRAY;
 	  break;
+	case '(':	/* it's mainly a ref to another typedef, skip it */
+          expect = -1;
+	  break;
 	case '1':
-	case '(':
 	case 'r':
 	  expect = DT_BASIC;
 	  break;
@@ -301,9 +406,9 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
 	  break;
 	default:
 	  fprintf(stderr, "Unknown type (%c).\n",ptr[1]);
-          return FALSE;
+	  return FALSE;
 	}
-      if( expect != DEBUG_GetType(ktd->types[count]) )
+      if( expect != -1 && expect != DEBUG_GetType(ktd->types[count]) )
 	  return FALSE;
       count++;
     }
@@ -317,7 +422,7 @@ DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
    */
   count = 0;
   for(ptr = strchr(stab, '='); ptr; ptr = strchr(ptr+1, '='))
-      stab_types[DEBUG_ReadTypeEnumBackwards(ptr-1)] = ktd->types[count++];
+      *DEBUG_ReadTypeEnumBackwards(ptr-1) = ktd->types[count++];
 
   return TRUE;
 }
@@ -357,19 +462,19 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
   struct datatype * datatype;
   struct datatype * curr_types[MAX_TD_NESTING];
   char	            element_name[1024];
-  int		    ntypes = 0;
+  int		    ntypes = 0, ntp;
   int		    offset;
   const char	  * orig_typename;
   int		    size;
   char		  * tc;
   char		  * tc2;
-  int		    typenum;
-
+  int 		    failure;
+  
   orig_typename = typename;
 
   if( DEBUG_HandlePreviousTypedef(typename, ptr) )
-      return TRUE;
-
+    return TRUE;
+  
   /* 
    * Go from back to front.  First we go through and figure out what
    * type numbers we need, and register those types.  Then we go in
@@ -379,11 +484,10 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
   for( c = strchr(ptr, '='); c != NULL; c = strchr(c + 1, '=') )
     {
       /*
-       * Back up until we get to a non-numeric character.  This is the type
-       * number.
+       * Back up until we get to a non-numeric character, to get datatype
        */
-      typenum = DEBUG_ReadTypeEnumBackwards(c-1);
-
+      struct datatype** dt = DEBUG_ReadTypeEnumBackwards(c-1);
+      
       if( ntypes >= MAX_TD_NESTING )
 	{
 	  /*
@@ -392,207 +496,246 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	  fprintf(stderr, "Typedef nesting overflow\n");
 	  return FALSE;
 	}
-
+      
       switch(c[1])
 	{
 	case '*':
-	  stab_types[typenum] = DEBUG_NewDataType(DT_POINTER, NULL);
-	  curr_types[ntypes++] = stab_types[typenum];
+	  *dt = DEBUG_NewDataType(DT_POINTER, NULL);
+	  curr_types[ntypes++] = *dt;
 	  break;
 	case 's':
 	case 'u':
-	  stab_types[typenum] = DEBUG_NewDataType(DT_STRUCT, typename);
-	  curr_types[ntypes++] = stab_types[typenum];
+	  *dt = DEBUG_NewDataType(DT_STRUCT, typename);
+	  curr_types[ntypes++] = *dt;
 	  break;
 	case 'a':
-	  stab_types[typenum] = DEBUG_NewDataType(DT_ARRAY, NULL);
-	  curr_types[ntypes++] = stab_types[typenum];
+	  *dt = DEBUG_NewDataType(DT_ARRAY, NULL);
+	  curr_types[ntypes++] = *dt;
 	  break;
 	case '(':
+	  /* will be handled in next loop, 
+	   * just a ref to another type 
+	   */
+	  curr_types[ntypes++] = NULL;
+	  break;
 	case '1':
 	case 'r':
-	  stab_types[typenum] = DEBUG_NewDataType(DT_BASIC, typename);
-	  curr_types[ntypes++] = stab_types[typenum];
+	  *dt = DEBUG_NewDataType(DT_BASIC, typename);
+	  curr_types[ntypes++] = *dt;
 	  break;
 	case 'x':
 	  stab_strcpy(element_name, c + 3);
-	  stab_types[typenum] = DEBUG_NewDataType(DT_STRUCT, element_name);
-	  curr_types[ntypes++] = stab_types[typenum];
+	  *dt = DEBUG_NewDataType(DT_STRUCT, element_name);
+	  curr_types[ntypes++] = *dt;
 	  break;
 	case 'e':
-	  stab_types[typenum] = DEBUG_NewDataType(DT_ENUM, NULL);
-	  curr_types[ntypes++] = stab_types[typenum];
+	  *dt = DEBUG_NewDataType(DT_ENUM, NULL);
+	  curr_types[ntypes++] = *dt;
 	  break;
 	case 'f':
-	  stab_types[typenum] = DEBUG_NewDataType(DT_FUNC, NULL);
-	  curr_types[ntypes++] = stab_types[typenum];
+	  *dt = DEBUG_NewDataType(DT_FUNC, NULL);
+	  curr_types[ntypes++] = *dt;
 	  break;
 	default:
 	  fprintf(stderr, "Unknown type (%c).\n",c[1]);
 	}
       typename = NULL;
+      
     }
 
-      /*
-      * Now register the type so that if we encounter it again, we will know
-      * what to do.
-      */
-     DEBUG_RegisterTypedef(orig_typename, curr_types, ntypes);
-
-     /* 
-      * OK, now take a second sweep through.  Now we will be digging
-      * out the definitions of the various components, and storing
-      * them in the skeletons that we have already allocated.  We take
-      * a right-to left search as this is much easier to parse.  
-      */
-     for( c = strrchr(ptr, '='); c != NULL; c = strrchr(ptr, '=') )
-       {
-         int typenum = DEBUG_ReadTypeEnumBackwards(c-1);
-	 curr_type = stab_types[typenum];
-	 
-	 switch(c[1])
-	   {
-	   case 'x':
-	     tc = c + 3;
-	     while( *tc != ':' )
-		 tc++;
-	     tc++;
-	     if( *tc == '\0' )
-		 *c = '\0';
-	     else
-		 strcpy(c, tc);
-	     break;
-	   case '*':
-	   case 'f':
-	     tc = c + 2;
-	     datatype = stab_types[DEBUG_ReadTypeEnum(&tc)];
-	     DEBUG_SetPointerType(curr_type, datatype);
-	     if( *tc == '\0' )
-		 *c = '\0';
-	     else
-		 strcpy(c, tc);
-	     break;
-	   case '(':
-	   case '1':
-	   case 'r':
-	     /*
-	      * We have already handled these above.
-	      */
-	     *c = '\0';
-	     break;
-	   case 'a':
-	     /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo>,<int>,<int>;; */
-
-	     tc  = c + 3;
-	     						/* 'r' */
-	     DEBUG_ReadTypeEnum(&tc);
-	     tc++;		 			/* ';' */
-	     arrmin = strtol(tc, &tc, 10); 		/* <int> */
-	     tc++;		 			/* ';' */
-	     arrmax = strtol(tc, &tc, 10);		/* <int> */
-	     tc++;		 			/* ';' */
-	     datatype = stab_types[DEBUG_ReadTypeEnum(&tc)]; /* <typeinfo> */
-	     if( *tc == '\0' )
-		 *c = '\0';
-	     else
-		 strcpy(c, tc);
-	     DEBUG_SetArrayParams(curr_type, arrmin, arrmax, datatype);
-	     break;
-	   case 's':
-	   case 'u': {
-	     int failure = 0;
-
-	     tc = c + 2;
-	     if( DEBUG_SetStructSize(curr_type, strtol(tc, &tc, 10)) == FALSE )
-	       {
-		 /*
-		  * We have already filled out this structure.  Nothing to do,
-		  * so just skip forward to the end of the definition.
-		  */
-		 while( tc[0] != ';' && tc[1] != ';' )
-		     tc++;
-		 
-		 tc += 2;
-		 
-		 if( *tc == '\0' )
-		     *c = '\0';
-		 else
-		     strcpy(c, tc + 1);
-		 continue;
-	       }
-
-	     /*
-	      * Now parse the individual elements of the structure/union.
-	      */
-	     while(*tc != ';')
-	       {
-	         char *ti;
-		 tc2 = element_name;
-		 while(*tc != ':')
-		     *tc2++ = *tc++;
-		 tc++;
-		 *tc2++ = '\0';
-		 ti=tc;
-		 datatype = stab_types[DEBUG_ReadTypeEnum(&tc)];
-		 *tc='\0';
-		 tc++;
-		 offset  = strtol(tc, &tc, 10);
-		 tc++;
-		 size  = strtol(tc, &tc, 10);
-		 tc++;
-		 if (datatype)
-		    DEBUG_AddStructElement(curr_type, element_name, datatype, offset, size);
-		 else {
-		    failure = 1;
-		    /* ... but proceed parsing to the end of the stab */
-		 }
-	       }
-
-	     if (failure) {
-	        /* if we had a undeclared value this one is undeclared too.
-		 * remove it from the stab_types. 
-		 * I just set it to NULL to detect bugs in my thoughtprocess.
-		 * FIXME: leaks the memory for the structure elements.
-		 * FIXME: such structures should have been optimized away
-		 *        by ld.
-		 */
-	     	stab_types[typenum] = NULL;
-	     }
-	     if( *tc == '\0' )
-		 *c = '\0';
-	     else
-		 strcpy(c, tc + 1);
-	     break;
-	   }
-	   case 'e':
-	     tc = c + 2;
-	     /*
-	      * Now parse the individual elements of the structure/union.
-	      */
-	     while(*tc != ';')
-	       {
-		 tc2 = element_name;
-		 while(*tc != ':')
-		     *tc2++ = *tc++;
-		 tc++;
-		 *tc2++ = '\0';
-		 offset  = strtol(tc, &tc, 10);
-		 tc++;
-		 DEBUG_AddStructElement(curr_type, element_name, NULL, offset, 0);
-	       }
-	     if( *tc == '\0' )
-		 *c = '\0';
-	     else
-		 strcpy(c, tc + 1);
-	     break;
-	   default:
-	     fprintf(stderr, "Unknown type (%c).\n",c[1]);
-	     break;
-	   }
-       }
-     
-     return TRUE;
-
+  ntp = ntypes - 1;
+  /* 
+   * OK, now take a second sweep through.  Now we will be digging
+   * out the definitions of the various components, and storing
+   * them in the skeletons that we have already allocated.  We take
+   * a right-to left search as this is much easier to parse.  
+   */
+  for( c = strrchr(ptr, '='); c != NULL; c = strrchr(ptr, '=') )
+    {
+      struct datatype** dt = DEBUG_ReadTypeEnumBackwards(c-1);
+      struct datatype** dt2;
+	
+      curr_type = *dt;
+      
+      switch(c[1])
+	{
+	case 'x':
+	  ntp--;
+	  tc = c + 3;
+	  while( *tc != ':' )
+	    tc++;
+	  tc++;
+	  if( *tc == '\0' )
+	    *c = '\0';
+	  else
+	    strcpy(c, tc);
+	  break;
+	case '*':
+	case 'f':
+	  ntp--;
+	  tc = c + 2;
+	  datatype = *DEBUG_ReadTypeEnum(&tc);
+	  DEBUG_SetPointerType(curr_type, datatype);
+	  if( *tc == '\0' )
+	    *c = '\0';
+	  else
+	    strcpy(c, tc);
+	  break;
+	case '(':
+	  tc = c + 1;
+	  dt2 = DEBUG_ReadTypeEnum(&tc);
+	  
+	  if (!*dt && *dt2) 
+	    {
+	      *dt = *dt2;
+	    } 
+	  else if (!*dt && !*dt2) 
+	    {
+	      /* this should be a basic type, define it */
+	      *dt2 = *dt = DEBUG_NewDataType(DT_BASIC, typename);
+	    } 
+	  else 
+	    {
+	      fprintf(stderr, "Unknown condition %p %p (%s)\n", *dt, *dt2, ptr);
+	    }
+	  if( *tc == '\0' )
+	    *c = '\0';
+	  else
+	    strcpy(c, tc);
+	  curr_types[ntp--] = *dt;
+	  break;
+	case '1':
+	case 'r':
+	  ntp--;
+	  /*
+	   * We have already handled these above.
+	   */
+	  *c = '\0';
+	  break;
+	case 'a':
+	  ntp--;
+	  /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo>,<int>,<int>;; */
+	  
+	  tc  = c + 3;
+	  /* 'r' */
+	  DEBUG_ReadTypeEnum(&tc);
+	  tc++;		 			/* ';' */
+	  arrmin = strtol(tc, &tc, 10); 	/* <int> */
+	  tc++;		 			/* ';' */
+	  arrmax = strtol(tc, &tc, 10);		/* <int> */
+	  tc++;		 			/* ';' */
+	  datatype = *DEBUG_ReadTypeEnum(&tc);  /* <typeinfo> */
+	  if( *tc == '\0' )
+	    *c = '\0';
+	  else
+	    strcpy(c, tc);
+	  DEBUG_SetArrayParams(curr_type, arrmin, arrmax, datatype);
+	  break;
+	case 's':
+	case 'u':
+	  ntp--;
+	  failure = 0;
+	  
+	  tc = c + 2;
+	  if( DEBUG_SetStructSize(curr_type, strtol(tc, &tc, 10)) == FALSE )
+	    {
+	      /*
+	       * We have already filled out this structure.  Nothing to do,
+	       * so just skip forward to the end of the definition.
+	       */
+	      while( tc[0] != ';' && tc[1] != ';' )
+		tc++;
+	      
+	      tc += 2;
+	      
+	      if( *tc == '\0' )
+		*c = '\0';
+	      else
+		strcpy(c, tc + 1);
+	      continue;
+	    }
+	  
+	  /*
+	   * Now parse the individual elements of the structure/union.
+	   */
+	  while(*tc != ';')
+	    {
+	      char *ti;
+	      tc2 = element_name;
+	      while(*tc != ':')
+		*tc2++ = *tc++;
+	      tc++;
+	      *tc2++ = '\0';
+	      ti=tc;
+	      datatype = *DEBUG_ReadTypeEnum(&tc);
+	      *tc='\0';
+	      tc++;
+	      offset  = strtol(tc, &tc, 10);
+	      tc++;
+	      size  = strtol(tc, &tc, 10);
+	      tc++;
+	      if (datatype)
+		DEBUG_AddStructElement(curr_type, element_name, datatype, 
+				       offset, size);
+	      else 
+		{
+		  failure = 1;
+		  /* ... but proceed parsing to the end of the stab */
+		  fprintf(stderr, "failure on %s %s\n", ptr, ti);
+		}
+	    }
+	  
+	  if (failure) 
+	    {
+	      
+	      /* if we had a undeclared value this one is undeclared too.
+	       * remove it from the stab_types. 
+	       * I just set it to NULL to detect bugs in my thoughtprocess.
+	       * FIXME: leaks the memory for the structure elements.
+	       * FIXME: such structures should have been optimized away
+	       *        by ld.
+	       */
+	      *dt = NULL;
+	    }
+	  if( *tc == '\0' )
+	    *c = '\0';
+	  else
+	    strcpy(c, tc + 1);
+	  break;
+	case 'e':
+	  ntp--;
+	  tc = c + 2;
+	  /*
+	   * Now parse the individual elements of the structure/union.
+	   */
+	  while(*tc != ';')
+	    {
+	      tc2 = element_name;
+	      while(*tc != ':')
+		*tc2++ = *tc++;
+	      tc++;
+	      *tc2++ = '\0';
+	      offset  = strtol(tc, &tc, 10);
+	      tc++;
+	      DEBUG_AddStructElement(curr_type, element_name, NULL, offset, 0);
+	    }
+	  if( *tc == '\0' )
+	    *c = '\0';
+	  else
+	    strcpy(c, tc + 1);
+	  break;
+	default:
+	  fprintf(stderr, "Unknown type (%c).\n",c[1]);
+	  break;
+	}
+    }
+  /*
+   * Now register the type so that if we encounter it again, we will know
+   * what to do.
+   */
+  DEBUG_RegisterTypedef(orig_typename, curr_types, ntypes);
+    
+  return TRUE;
 }
 
 static struct datatype *
@@ -614,37 +757,38 @@ DEBUG_ParseStabType(const char * stab)
    * The next character says more about the type (i.e. data, function, etc)
    * of symbol.  Skip it.
    */
-  c++;
+  if (*c != '(')
+    c++;
   /* 
    * The next is either an integer or a (integer,integer).
    * The DEBUG_ReadTypeEnum takes care that stab_types is large enough.
    */
-  return stab_types[DEBUG_ReadTypeEnum(&c)];
+  return *DEBUG_ReadTypeEnum(&c);
 }
 
 int
 DEBUG_ParseStabs(char * addr, unsigned int load_offset,
-		 unsigned int staboff, int stablen, 
-		 unsigned int strtaboff, int strtablen)
+                 unsigned int staboff, int stablen, 
+                 unsigned int strtaboff, int strtablen)
 {
   struct name_hash    * curr_func = NULL;
   struct wine_locals  * curr_loc = NULL;
   struct name_hash    * curr_sym = NULL;
-  char			currpath[PATH_MAX];
-  int			i;
-  int			ignore = FALSE;
-  int			last_nso = -1;
-  int			len;
-  DBG_ADDR		new_addr;
-  int			nstab;
-  char		      * ptr;
-  char		      * stabbuff;
-  int			stabbufflen;
+  char                  currpath[PATH_MAX];
+  int                   i;
+  int                   ignore = FALSE;
+  int                   last_nso = -1;
+  int                   len;
+  DBG_ADDR              new_addr;
+  int                   nstab;
+  char                * ptr;
+  char                * stabbuff;
+  int                   stabbufflen;
   struct stab_nlist   * stab_ptr;
-  char		      * strs;
-  int			strtabinc;
-  char		      * subpath = NULL;
-  char			symname[4096];
+  char                * strs;
+  int                   strtabinc;
+  char                * subpath = NULL;
+  char                  symname[4096];
 
   nstab = stablen / sizeof(struct stab_nlist);
   stab_ptr = (struct stab_nlist *) (addr + staboff);
@@ -665,286 +809,280 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
     {
       ptr = strs + (unsigned int) stab_ptr->n_un.n_name;
       if( ptr[strlen(ptr) - 1] == '\\' )
-	{
-	  /*
-	   * Indicates continuation.  Append this to the buffer, and go onto the
-	   * next record.  Repeat the process until we find a stab without the
-	   * '/' character, as this indicates we have the whole thing.
-	   */
-	  len = strlen(ptr);
-	  if( strlen(stabbuff) + len > stabbufflen )
-	    {
-	      stabbufflen += 65536;
-	      stabbuff = (char *) DBG_realloc(stabbuff, stabbufflen);
-	    }
-	  strncat(stabbuff, ptr, len - 1);
-	  continue;
-	}
+        {
+          /*
+           * Indicates continuation.  Append this to the buffer, and go onto the
+           * next record.  Repeat the process until we find a stab without the
+           * '/' character, as this indicates we have the whole thing.
+           */
+          len = strlen(ptr);
+          if( strlen(stabbuff) + len > stabbufflen )
+            {
+              stabbufflen += 65536;
+              stabbuff = (char *) DBG_realloc(stabbuff, stabbufflen);
+            }
+          strncat(stabbuff, ptr, len - 1);
+          continue;
+        }
       else if( stabbuff[0] != '\0' )
-	{
-	  strcat( stabbuff, ptr);
-	  ptr = stabbuff;
-	}
+        {
+          strcat( stabbuff, ptr);
+          ptr = stabbuff;
+        }
 
       if( strchr(ptr, '=') != NULL )
-	{
-	  /*
-	   * The stabs aren't in writable memory, so copy it over so we are
-	   * sure we can scribble on it.
-	   */
-	  if( ptr != stabbuff )
-	    {
-	      strcpy(stabbuff, ptr);
-	      ptr = stabbuff;
-	    }
-	  stab_strcpy(symname, ptr);
-	  DEBUG_ParseTypedefStab(ptr, symname);
-	}
+        {
+          /*
+           * The stabs aren't in writable memory, so copy it over so we are
+           * sure we can scribble on it.
+           */
+          if( ptr != stabbuff )
+            {
+              strcpy(stabbuff, ptr);
+              ptr = stabbuff;
+            }
+          stab_strcpy(symname, ptr);
+          DEBUG_ParseTypedefStab(ptr, symname);
+        }
 
       switch(stab_ptr->n_type)
-	{
-	case N_GSYM:
-	  /*
-	   * These are useless with ELF.  They have no value, and you have to
-	   * read the normal symbol table to get the address.  Thus we
-	   * ignore them, and when we process the normal symbol table
-	   * we should do the right thing.
-	   *
-	   * With a.out, they actually do make some amount of sense.
-	   */
-	  new_addr.seg = 0;
-	  new_addr.type = DEBUG_ParseStabType(ptr);
-	  new_addr.off = load_offset + stab_ptr->n_value;
+        {
+        case N_GSYM:
+          /*
+           * These are useless with ELF.  They have no value, and you have to
+           * read the normal symbol table to get the address.  Thus we
+           * ignore them, and when we process the normal symbol table
+           * we should do the right thing.
+           *
+           * With a.out, they actually do make some amount of sense.
+           */
+          new_addr.seg = 0;
+          new_addr.type = DEBUG_ParseStabType(ptr);
+          new_addr.off = load_offset + stab_ptr->n_value;
 
-	  stab_strcpy(symname, ptr);
+          stab_strcpy(symname, ptr);
 #ifdef __ELF__
-	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath,
-				      SYM_WINE | SYM_DATA | SYM_INVALID);
+          curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath,
+                                      SYM_WINE | SYM_DATA | SYM_INVALID);
 #else
-	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
-				      SYM_WINE | SYM_DATA );
+          curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
+                                      SYM_WINE | SYM_DATA );
 #endif
-	  break;
-	case N_RBRAC:
-	case N_LBRAC:
-	  /*
-	   * We need to keep track of these so we get symbol scoping
-	   * right for local variables.  For now, we just ignore them.
-	   * The hooks are already there for dealing with this however,
-	   * so all we need to do is to keep count of the nesting level,
-	   * and find the RBRAC for each matching LBRAC.
-	   */
-	  break;
-	case N_LCSYM:
-	case N_STSYM:
-	  /*
-	   * These are static symbols and BSS symbols.
-	   */
-	  new_addr.seg = 0;
-	  new_addr.type = DEBUG_ParseStabType(ptr);
-	  new_addr.off = load_offset + stab_ptr->n_value;
+          break;
+        case N_RBRAC:
+        case N_LBRAC:
+          /*
+           * We need to keep track of these so we get symbol scoping
+           * right for local variables.  For now, we just ignore them.
+           * The hooks are already there for dealing with this however,
+           * so all we need to do is to keep count of the nesting level,
+           * and find the RBRAC for each matching LBRAC.
+           */
+          break;
+        case N_LCSYM:
+        case N_STSYM:
+          /*
+           * These are static symbols and BSS symbols.
+           */
+          new_addr.seg = 0;
+          new_addr.type = DEBUG_ParseStabType(ptr);
+          new_addr.off = load_offset + stab_ptr->n_value;
 
-	  stab_strcpy(symname, ptr);
-	  curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
-				      SYM_WINE | SYM_DATA );
-	  break;
-	case N_PSYM:
-	  /*
-	   * These are function parameters.
-	   */
-	  if(     (curr_func != NULL)
-	       && (stab_ptr->n_value != 0) )
-	    {
-	      stab_strcpy(symname, ptr);
-	      curr_loc = DEBUG_AddLocal(curr_func, 0, 
-					stab_ptr->n_value, 0, 0, symname);
-	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr));
-	    }
-	  break;
-	case N_RSYM:
-	  if( curr_func != NULL )
-	    {
-	      stab_strcpy(symname, ptr);
-	      curr_loc = DEBUG_AddLocal(curr_func, stab_ptr->n_value, 0, 0, 0, symname);
-	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr));
-	    }
-	  break;
-	case N_LSYM:
-	  if(     (curr_func != NULL)
-	       && (stab_ptr->n_value != 0) )
-	    {
-	      stab_strcpy(symname, ptr);
-	      DEBUG_AddLocal(curr_func, 0, 
-			     stab_ptr->n_value, 0, 0, symname);
-	    }
-	  else if (curr_func == NULL)
-	    {
-	      stab_strcpy(symname, ptr);
-	    }
-	  break;
-	case N_SLINE:
-	  /*
-	   * This is a line number.  These are always relative to the start
-	   * of the function (N_FUN), and this makes the lookup easier.
-	   */
-	  if( curr_func != NULL )
-	    {
+          stab_strcpy(symname, ptr);
+          curr_sym = DEBUG_AddSymbol( symname, &new_addr, currpath, 
+                                      SYM_WINE | SYM_DATA );
+          break;
+        case N_PSYM:
+          /*
+           * These are function parameters.
+           */
+          if(     (curr_func != NULL)
+               && (stab_ptr->n_value != 0) )
+            {
+              stab_strcpy(symname, ptr);
+              curr_loc = DEBUG_AddLocal( curr_func, 0, 
+                                         stab_ptr->n_value, 0, 0, symname );
+              DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
+            }
+          break;
+        case N_RSYM:
+          if( curr_func != NULL )
+            {
+              stab_strcpy(symname, ptr);
+              curr_loc = DEBUG_AddLocal( curr_func, stab_ptr->n_value, 
+					 0, 0, 0, symname );
+              DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
+            }
+          break;
+        case N_LSYM:
+          if(     (curr_func != NULL)
+               && (stab_ptr->n_value != 0) )
+            {
+              stab_strcpy(symname, ptr);
+              curr_loc = DEBUG_AddLocal( curr_func, 0, 
+					 stab_ptr->n_value, 0, 0, symname );
+	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
+            }
+          else if (curr_func == NULL)
+            {
+              stab_strcpy(symname, ptr);
+            }
+          break;
+        case N_SLINE:
+          /*
+           * This is a line number.  These are always relative to the start
+           * of the function (N_FUN), and this makes the lookup easier.
+           */
+          if( curr_func != NULL )
+            {
 #ifdef __ELF__
-	      DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
-				  stab_ptr->n_value);
+              DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
+                                  stab_ptr->n_value);
 #else
 #if 0
-	      /*
-	       * This isn't right.  The order of the stabs is different under
-	       * a.out, and as a result we would end up attaching the line
-	       * number to the wrong function.
-	       */
-	      DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
-				  stab_ptr->n_value - curr_func->addr.off);
+              /*
+               * This isn't right.  The order of the stabs is different under
+               * a.out, and as a result we would end up attaching the line
+               * number to the wrong function.
+               */
+              DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
+                                  stab_ptr->n_value - curr_func->addr.off);
 #endif
 #endif
-	    }
-	  break;
-	case N_FUN:
-	  /*
-	   * First, clean up the previous function we were working on.
-	   */
-	  DEBUG_Normalize(curr_func);
+            }
+          break;
+        case N_FUN:
+          /*
+           * First, clean up the previous function we were working on.
+           */
+          DEBUG_Normalize(curr_func);
 
-	  /*
-	   * For now, just declare the various functions.  Later
-	   * on, we will add the line number information and the
-	   * local symbols.
-	   */
-	  if( !ignore )
-	    {
-	      new_addr.seg = 0;
-	      new_addr.type = DEBUG_ParseStabType(ptr);
-	      new_addr.off = load_offset + stab_ptr->n_value;
-	      /*
-	       * Copy the string to a temp buffer so we
-	       * can kill everything after the ':'.  We do
-	       * it this way because otherwise we end up dirtying
-	       * all of the pages related to the stabs, and that
-	       * sucks up swap space like crazy.
-	       */
-	      stab_strcpy(symname, ptr);
-	      curr_func = DEBUG_AddSymbol( symname, &new_addr, currpath,
-					   SYM_WINE | SYM_FUNC);
-	    }
-	  else
-	    {
-	      /*
-	       * Don't add line number information for this function
-	       * any more.
-	       */
-	      curr_func = NULL;
-	    }
-	  break;
-	case N_SO:
-	  /*
-	   * This indicates a new source file.  Append the records
-	   * together, to build the correct path name.
-	   */
+          /*
+           * For now, just declare the various functions.  Later
+           * on, we will add the line number information and the
+           * local symbols.
+           */
+          if( !ignore )
+            {
+              new_addr.seg = 0;
+              new_addr.type = DEBUG_ParseStabType(ptr);
+              new_addr.off = load_offset + stab_ptr->n_value;
+              /*
+               * Copy the string to a temp buffer so we
+               * can kill everything after the ':'.  We do
+               * it this way because otherwise we end up dirtying
+               * all of the pages related to the stabs, and that
+               * sucks up swap space like crazy.
+               */
+              stab_strcpy(symname, ptr);
+              curr_func = DEBUG_AddSymbol( symname, &new_addr, currpath,
+                                           SYM_WINE | SYM_FUNC);
+            }
+          else
+            {
+              /*
+               * Don't add line number information for this function
+               * any more.
+               */
+              curr_func = NULL;
+            }
+          break;
+        case N_SO:
+          /*
+           * This indicates a new source file.  Append the records
+           * together, to build the correct path name.
+           */
 #ifndef __ELF__
-	  /*
-	   * With a.out, there is no NULL string N_SO entry at the end of
-	   * the file.  Thus when we find non-consecutive entries,
-	   * we consider that a new file is started.
-	   */
-	  if( last_nso < i-1 )
-	    {
-	      currpath[0] = '\0';
-	      DEBUG_Normalize(curr_func);
-	      curr_func = NULL;
-	    }
+          /*
+           * With a.out, there is no NULL string N_SO entry at the end of
+           * the file.  Thus when we find non-consecutive entries,
+           * we consider that a new file is started.
+           */
+          if( last_nso < i-1 )
+            {
+              currpath[0] = '\0';
+              DEBUG_Normalize(curr_func);
+              curr_func = NULL;
+            }
 #endif
 
-	  if( *ptr == '\0' )
-	    {
-	      /*
-	       * Nuke old path.
-	       */
-	      currpath[0] = '\0';
-	      DEBUG_Normalize(curr_func);
-	      curr_func = NULL;
-	      /*
-	       * The datatypes that we would need to use are reset when
-	       * we start a new file.
-	       */
-	      memset(stab_types, 0, num_stab_types * sizeof(stab_types[0]));
-	      /*
-	      for (i=0;i<nrofnroftypenums;i++)
-		memset(typenums[i],0,sizeof(typenums[i][0])*nroftypenums[i]);
-	       */
-	    }
-	  else
-	    {
-	      if (*ptr != '/')
-	        strcat(currpath, ptr);
-	      else
-	        strcpy(currpath, ptr);
-	      subpath = ptr;
-	    }
-	  last_nso = i;
-	  break;
-	case N_SOL:
-	  /*
-	   * This indicates we are including stuff from an include file.
-	   * If this is the main source, enable the debug stuff, otherwise
-	   * ignore it.
-	   */
-	  if( subpath == NULL || strcmp(ptr, subpath) == 0 )
-	    {
-	      ignore = FALSE;
-	    }
-	  else
-	    {
-	      ignore = TRUE;
-	      DEBUG_Normalize(curr_func);
-	      curr_func = NULL;
-	    }
-	  break;
-	case N_UNDF:
-	  strs += strtabinc;
-	  strtabinc = stab_ptr->n_value;
- 	  DEBUG_Normalize(curr_func);
-	  curr_func = NULL;
-	  break;
-	case N_OPT:
-	  /*
-	   * Ignore this.  We don't care what it points to.
-	   */
-	  break;
-	case N_BINCL:
-	case N_EINCL:
-	case N_MAIN:
-	  /*
-	   * Always ignore these.  GCC doesn't even generate them.
-	   */
-	  break;
-	default:
-	  break;
-	}
+          if( *ptr == '\0' )
+            {
+              /*
+               * Nuke old path.
+               */
+              currpath[0] = '\0';
+              DEBUG_Normalize(curr_func);
+              curr_func = NULL;
+            }
+          else
+            {
+              if (*ptr != '/')
+                strcat(currpath, ptr);
+              else
+                strcpy(currpath, ptr);
+              subpath = ptr;
+	      DEBUG_ResetIncludes();
+            }
+          last_nso = i;
+          break;
+        case N_SOL:
+          /*
+           * This indicates we are including stuff from an include file.
+           * If this is the main source, enable the debug stuff, otherwise
+           * ignore it.
+           */
+          if( subpath == NULL || strcmp(ptr, subpath) == 0 )
+            {
+              ignore = FALSE;
+            }
+          else
+            {
+              ignore = TRUE;
+              DEBUG_Normalize(curr_func);
+              curr_func = NULL;
+            }
+          break;
+        case N_UNDF:
+          strs += strtabinc;
+          strtabinc = stab_ptr->n_value;
+          DEBUG_Normalize(curr_func);
+          curr_func = NULL;
+          break;
+        case N_OPT:
+          /*
+           * Ignore this.  We don't care what it points to.
+           */
+          break;
+        case N_BINCL:
+	   DEBUG_AddInclude(DEBUG_CreateInclude(ptr, stab_ptr->n_value));
+	   break;
+        case N_EINCL:
+	   break;
+	case N_EXCL:
+	   DEBUG_AddInclude(DEBUG_FindInclude(ptr, stab_ptr->n_value));
+	   break;
+        case N_MAIN:
+          /*
+           * Always ignore these.  GCC doesn't even generate them.
+           */
+          break;
+        default:
+	  fprintf(stderr, "Unkown stab type 0x%02x\n", stab_ptr->n_type);
+          break;
+        }
 
       stabbuff[0] = '\0';
 
 #if 0
       fprintf(stderr, "%d %x %s\n", stab_ptr->n_type, 
-	      (unsigned int) stab_ptr->n_value,
-	      strs + (unsigned int) stab_ptr->n_un.n_name);
+              (unsigned int) stab_ptr->n_value,
+              strs + (unsigned int) stab_ptr->n_un.n_name);
 #endif
     }
 
-  if( stab_types != NULL )
-    {
-      DBG_free(stab_types);
-      stab_types = NULL;
-      num_stab_types = 0;
-    }
-
-
   DEBUG_FreeRegisteredTypedefs();
+  DEBUG_FreeIncludes();
 
   return TRUE;
 }
@@ -1029,7 +1167,7 @@ DEBUG_ProcessElfSymtab(char * addr, unsigned int load_offset,
        * Record the size of the symbol.  This can come in handy in
        * some cases.  Not really used yet, however.
        */
-      if(  symp->st_size != 0 )
+      if( symp->st_size != 0 )
 	  DEBUG_SetSymbolSize(curr_sym, symp->st_size);
     }
 
