@@ -231,8 +231,8 @@ DWORD VERSION_GetLinkedDllVersion(PDB *pdb)
 	    ophd->MajorImageVersion, ophd->MinorImageVersion,
 	    ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
 
-	  /* test if it a external dll */
-	  if ( !(wm->flags & WINE_MODREF_INTERNAL) )
+	  /* test if it is a external (native) dll */
+	  if ( !(wm->flags & WINE_MODREF_INTERNAL) && wm->type==MODULE32_PE)
 	  {
 	    int i;
 	    for (i = 0; special_dlls[i]; i++)
