@@ -628,7 +628,7 @@ sub _generate_dsp {
 		@defines = (qw(WIN32 _DEBUG _MBCS _LIB));
 	    } else {
 		print OUT "# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od";
-		@defines = (qw(WIN32 _DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
+		@defines = (qw(_WIN32_WINNT=0x0501 _WIN32_IE=0x0600 WIN32 _DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
 	    }
 	} else {
 	    if($lib || $exe) {
