@@ -596,14 +596,14 @@ LONG ALSA_WaveInit(void)
           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_U8)) \
           { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##S08; \
+                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##M08; \
               if (chmin <= 2 && 2 <= chmax) \
                   wwo->caps.dwFormats |= WAVE_FORMAT_##v##S08; \
           } \
           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_S16_LE)) \
           { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##S16; \
+                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##M16; \
               if (chmin <= 2 && 2 <= chmax) \
                   wwo->caps.dwFormats |= WAVE_FORMAT_##v##S16; \
           } \
@@ -703,14 +703,14 @@ LONG ALSA_WaveInit(void)
           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_U8)) \
           { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##S08; \
+                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##M08; \
               if (chmin <= 2 && 2 <= chmax) \
                   wwi->caps.dwFormats |= WAVE_FORMAT_##v##S08; \
           } \
           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_S16_LE)) \
           { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##S16; \
+                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##M16; \
               if (chmin <= 2 && 2 <= chmax) \
                   wwi->caps.dwFormats |= WAVE_FORMAT_##v##S16; \
           } \
@@ -947,7 +947,7 @@ static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, snd_pcm_status_t* ps)
 {
    snd_pcm_sframes_t delay = 0;
    snd_pcm_delay(wwo->p_handle, &delay);
-   wwo->dwPlayedTotal = wwo->dwWrittenTotal - delay;
+   wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->p_handle, delay);
    return TRUE;
 }
 
