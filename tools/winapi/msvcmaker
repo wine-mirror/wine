@@ -32,15 +32,9 @@ my $wine = 1;
 my $output_prefix_dir = "Output";
 my $no_release = 1;
 
-if ($options->wine || $options->winetest) {
-    foreach my $spec_file (@spec_files) {
-	read_spec_file($spec_file);
-    }
-}
-
 my %modules;
 
-sub read_spec_file {
+sub read_spec_file($) {
     my $spec_file = shift;
 
     my $module = $spec_file;
@@ -87,13 +81,19 @@ sub read_spec_file {
     }
 }
 
+if ($options->wine || $options->winetest) {
+    foreach my $spec_file (@spec_files) {
+	read_spec_file($spec_file);
+    }
+}
+
 my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv);
 my @ntdll_dirs = qw(misc);
 my @user32_dirs = qw(dlls/user/dde windows);
 
 push @makefile_in_files, "tools/winebuild/Makefile.in";
 
-sub filter_files {
+sub filter_files($$) {
     my $files = shift;
     my $filter = shift;
 
@@ -441,7 +441,7 @@ foreach my $module (@modules) {
     replace_file("$wine_dir/$dsp_file", \&_generate_dsp, $module);
 }
 
-sub _generate_dsp {
+sub _generate_dsp($$) {
     local *OUT = shift;
 
     my $module = shift;
@@ -967,7 +967,7 @@ sub _generate_dsp {
     close(OUT);
 }
 
-sub _generate_dsw_header {
+sub _generate_dsw_header($) {
     local *OUT = shift;
 
     print OUT "Microsoft Developer Studio Workspace File, Format Version 6.00\r\n";
@@ -975,7 +975,7 @@ sub _generate_dsw_header {
     print OUT "\r\n";
 }
 
-sub _generate_dsw_project {
+sub _generate_dsw_project($$$$) {
     local *OUT = shift;
 
     my $project = shift;
@@ -1006,7 +1006,7 @@ sub _generate_dsw_project {
     print OUT "\r\n";
 }
 
-sub _generate_dsw_footer {
+sub _generate_dsw_footer($) {
     local *OUT = shift;
 
     print OUT "###############################################################################\r\n";
@@ -1031,7 +1031,7 @@ if ($options->wine) {
     replace_file("$wine_dir/$dsw_file", \&_generate_wine_dsw);
 }
 
-sub _generate_wine_dsw {
+sub _generate_wine_dsw($) {
     local *OUT = shift;
 
     _generate_dsw_header(\*OUT);
@@ -1091,7 +1091,7 @@ if ($options->winetest) {
     replace_file("$wine_dir/$dsw_file", \&_generate_winetest_dsw);
 }
 
-sub _generate_winetest_dsw {
+sub _generate_winetest_dsw($) {
     local *OUT = shift;
 
     _generate_dsw_header(\*OUT);
@@ -1143,7 +1143,7 @@ if ($options->winetest) {
 }
 
 # ***** Keep in sync with tools/make_ctests *****
-sub _generate_testlist_c {
+sub _generate_testlist_c($$) {
     local *OUT = shift;
 
     my @tests = @{(shift)};
@@ -1183,7 +1183,7 @@ if ($options->winetest) {
     replace_file("$wine_dir/runtests.c", \&_generate_runtests_c);
 }
 
-sub _generate_runtests_c {
+sub _generate_runtests_c($) {
     local *OUT = shift;
 
     print OUT "/* Automatically generated file; DO NOT EDIT!! */\n";
@@ -1220,7 +1220,7 @@ if ($options->winetest) {
     replace_file("$wine_dir/winetest.c", \&_generate_winetest_c);
 }
 
-sub _generate_winetest_c {
+sub _generate_winetest_c($) {
     local *OUT = shift;
 
     print OUT "/* Automatically generated file; DO NOT EDIT!! */\n\n";
@@ -1237,7 +1237,7 @@ if ($options->wine) {
     replace_file("$wine_dir/$config_h", \&_generate_config_h);
 }
 
-sub _generate_config_h {
+sub _generate_config_h($) {
     local *OUT = shift;
 
     print OUT "#define __WINE_CONFIG_H\n";
