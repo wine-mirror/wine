@@ -13,14 +13,6 @@
  *
  * FIXME: The Xshm implementation has been temporarily removed. It will be
  * later reintegrated into the Xlib implementation.
- *
- * FIXME: The Xlib implementation hangs the windowmanager and all other 
- *	  running X clients, even though I am polling X events and answering
- *	  them. But you can switch to another console (ctrl-alt-fx) and
- *	  "killall wine" processes. Any help on this one appreciated. -Marcus
- *        NOTE: The hanging only seems to happen with -managed. I have 
- *              implemented support for the -desktop option. This seems
- *              to not have the hanging problems. - Peter Hunnisett
  */
 
 #include "config.h"
@@ -376,9 +368,9 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 				this->t.xlib.image->width,
 				this->t.xlib.image->height
 	);
-	if (this->s.palette && this->s.palette->cm) {
+	if (this->s.palette && this->s.palette->cm)
 		TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
-	}
+
 	return DD_OK;
 }
 
@@ -421,7 +413,6 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_Flip(
 static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWSURFACE3 flipto,DWORD dwFlags
 ) {
-
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",this,flipto,dwFlags);
 	Xlib_MessagePump(this->s.ddraw->e.xlib.window);
 	if (!this->s.ddraw->e.xlib.paintable)
@@ -433,7 +424,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 		else
 			flipto = this;
 	}
- 
+  
 	TSXPutImage(display,
 				this->s.ddraw->e.xlib.drawable,
 				DefaultGCOfScreen(screen),
@@ -441,11 +432,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 				0, 0, 0, 0,
 				flipto->t.xlib.image->width,
 				flipto->t.xlib.image->height);
-	if (this->s.palette && this->s.palette->cm) {
-		TSXSetWindowColormap(display,
-				     this->s.ddraw->e.xlib.drawable,
-				     this->s.palette->cm);
-	}
+	TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
 	if (flipto!=this) {
 		XImage *tmp;
 		LPVOID	*surf;
@@ -463,7 +450,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
  * DirectDrawPalette object to a surface. The surface uses this palette for all
  * subsequent operations. The palette change takes place immediately.
  */
-static HRESULT WINAPI IDirectDrawSurface3_SetPalette(
+static HRESULT WINAPI Xlib_IDirectDrawSurface3_SetPalette(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
 ) {
 	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
@@ -474,36 +461,53 @@ static HRESULT WINAPI IDirectDrawSurface3_SetPalette(
         if( this->s.palette != pal )
         {
           if( pal != NULL )
-          {
             pal->lpvtbl->fnAddRef( pal );
-          }
           if( this->s.palette != NULL )
-          {
             this->s.palette->lpvtbl->fnRelease( this->s.palette );
-          }
 	  this->s.palette = pal; 
 
           /* I think that we need to attach it to all backbuffers...*/
-          if( this->s.backbuffer )
-          {
+          if( this->s.backbuffer ) {
              if( this->s.backbuffer->s.palette )
-             {
                this->s.backbuffer->s.palette->lpvtbl->fnRelease(
                  this->s.backbuffer->s.palette );
-             } 
              this->s.backbuffer->s.palette = pal;
              if( pal )
-             { 	
                 pal->lpvtbl->fnAddRef( pal );
-             } 
            }
       
           /* Perform the refresh */
-          TSXSetWindowColormap(display,
-			       this->s.ddraw->e.xlib.drawable,
-			       this->s.palette->cm);
+          TSXSetWindowColormap(display,this->s.ddraw->e.xlib.drawable,this->s.palette->cm);
         }
 
+	return 0;
+}
+
+static HRESULT WINAPI DGA_IDirectDrawSurface3_SetPalette(
+	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWPALETTE pal
+) {
+	TRACE(ddraw,"(%p)->SetPalette(%p)\n",this,pal);
+
+        /* According to spec, we are only supposed to 
+         * AddRef if this is not the same palette.
+         */
+        if( this->s.palette != pal )
+        {
+          if( pal != NULL ) 
+	  	pal->lpvtbl->fnAddRef( pal );
+          if( this->s.palette != NULL )
+            this->s.palette->lpvtbl->fnRelease( this->s.palette );
+	  this->s.palette = pal; 
+
+          /* I think that we need to attach it to all backbuffers...*/
+          if( this->s.backbuffer ) {
+             if( this->s.backbuffer->s.palette )
+               this->s.backbuffer->s.palette->lpvtbl->fnRelease(this->s.backbuffer->s.palette );
+             this->s.backbuffer->s.palette = pal;
+             if( pal ) pal->lpvtbl->fnAddRef( pal );
+          }
+	  TSXF86DGAInstallColormap(display,DefaultScreen(display),this->s.palette->cm);
+        }
 	return 0;
 }
 
@@ -678,9 +682,9 @@ static ULONG WINAPI Xlib_IDirectDrawSurface3_Release(LPDIRECTDRAWSURFACE3 this) 
 		TSXDestroyImage(this->t.xlib.image);
 		this->t.xlib.image = 0;
 
-		if (this->s.palette) {
-		  this->s.palette->lpvtbl->fnRelease(this->s.palette);
-		}
+		if (this->s.palette)
+                	this->s.palette->lpvtbl->fnRelease(this->s.palette);
+
 
 		HeapFree(GetProcessHeap(),0,this);
 		return 0;
@@ -790,7 +794,7 @@ static HRESULT WINAPI IDirectDrawSurface3_QueryInterface(LPDIRECTDRAWSURFACE3 th
 }
 
 static HRESULT WINAPI IDirectDrawSurface3_IsLost(LPDIRECTDRAWSURFACE3 this) {
-	FIXME(ddraw,"(%p)->(), stub!\n",this);
+	TRACE(ddraw,"(%p)->(), stub!\n",this);
 	return 0; /* hmm */
 }
 
@@ -854,7 +858,7 @@ static struct IDirectDrawSurface3_VTable dga_dds3vt = {
 	IDirectDrawSurface3_SetClipper,
 	IDirectDrawSurface3_SetColorKey,
 	(void*)31,
-	IDirectDrawSurface3_SetPalette,
+	DGA_IDirectDrawSurface3_SetPalette,
 	DGA_IDirectDrawSurface3_Unlock,
 	(void*)34,
 	(void*)35,
@@ -897,7 +901,7 @@ static struct IDirectDrawSurface3_VTable xlib_dds3vt = {
 	IDirectDrawSurface3_SetClipper,
 	IDirectDrawSurface3_SetColorKey,
 	(void*)31,
-	IDirectDrawSurface3_SetPalette,
+	Xlib_IDirectDrawSurface3_SetPalette,
 	Xlib_IDirectDrawSurface3_Unlock,
 	(void*)34,
 	(void*)35,
@@ -1364,9 +1368,10 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 		(lpddsd->ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
 	) {
 		if (!(lpddsd->dwFlags & DDSD_WIDTH))
-			lpddsd->dwWidth = this->d.width;
+			lpddsd->dwWidth = this->e.dga.fb_width;
 		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
-			lpddsd->dwHeight = this->d.height;
+			lpddsd->dwHeight = this->e.dga.fb_height;
+		(*lpdsf)->s.surface = (LPBYTE)HeapAlloc(GetProcessHeap(),0,lpddsd->dwWidth*lpddsd->dwHeight*this->d.depth/8);
 		TRACE(ddraw,"using system memory for a primary surface\n");
 	} else {
 		TRACE(ddraw,"using standard XImage for a primary surface\n");
@@ -1376,7 +1381,6 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 		if (!(lpddsd->dwFlags & DDSD_HEIGHT))
 			lpddsd->dwHeight = this->d.height;
 	}
-
 	(*lpdsf)->s.surface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpddsd->dwHeight*lpddsd->dwWidth*this->d.depth/8);
 	(*lpdsf)->s.width	= lpddsd->dwWidth;
 	(*lpdsf)->s.height	= lpddsd->dwHeight;
@@ -1397,7 +1401,6 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
 		);
 		/* END FIXME: Xlib */
 	}
-
 	(*lpdsf)->s.lpitch = img->bytes_per_line;
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
 		LPDIRECTDRAWSURFACE3	back;
@@ -1584,10 +1587,11 @@ static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 
 	this->d.width	= width;
 	this->d.height	= height;
+
 	/* adjust fb_height, so we don't overlap */
 	/*
 	if (this->e.dga.fb_height < height)
-	this->e.dga.fb_height = height; */
+		this->e.dga.fb_height = height;*/
 	this->d.depth	= depth;
 	return 0;
 }
@@ -2220,8 +2224,9 @@ LRESULT WINAPI Xlib_DDWndProc(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lPar
         if( !ret )
         {
           /* We didn't handle the message - give it to the application */
-          ret = CallWindowProc32A( WIN_FindWndPtr( ddraw->d.mainWindow )->winproc,
-                                  ddraw->d.mainWindow, msg, wParam, lParam );
+	  if (ddraw && ddraw->d.mainWindow && WIN_FindWndPtr(ddraw->d.mainWindow))
+          	ret = CallWindowProc32A( WIN_FindWndPtr( ddraw->d.mainWindow )->winproc,
+               	                   ddraw->d.mainWindow, msg, wParam, lParam );
         }
         
       }
