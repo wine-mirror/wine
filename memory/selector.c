@@ -663,7 +663,7 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
     if (!(req->flags & LDT_FLAGS_READONLY)) ldtent->HighWord.Bits.Type |= 0x2;
     return TRUE;
 #else
-    SetLastError( ERROR_NOT_IMPLEMENTED );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 #endif
 }

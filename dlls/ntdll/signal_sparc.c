@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include <sys/ucontext.h>
 
@@ -346,6 +347,22 @@ BOOL SIGNAL_Init(void)
  error:
     perror("sigaction");
     return FALSE;
+}
+
+/**********************************************************************
+ *              DbgBreakPoint   (NTDLL)
+ */
+void WINAPI DbgBreakPoint(void)
+{
+    /* FIXME */
+}
+
+/**********************************************************************
+ *              DbgUserBreakPoint   (NTDLL)
+ */
+void WINAPI DbgUserBreakPoint(void)
+{
+    /* FIXME */
 }
 
 #endif  /* __sparc__ */

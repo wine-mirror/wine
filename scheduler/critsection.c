@@ -222,6 +222,80 @@ __ASM_GLOBAL_FUNC(InterlockedDecrement,
                   "decl %eax\n\t"
                   "ret $4");
 
-#else /* __i386__ */
+#elif defined(__sparc__) && defined(__sun__)
+
+/*
+ * As the earlier Sparc processors lack necessary atomic instructions,
+ * I'm simply falling back to the library-provided _lwp_mutex routines
+ * to ensure mutual exclusion in a way appropriate for the current 
+ * architecture.  
+ *
+ * FIXME:  If we have the compare-and-swap instruction (Sparc v9 and above)
+ *         we could use this to speed up the Interlocked operations ...
+ */
+
+#include <synch.h>
+static lwp_mutex_t interlocked_mutex = DEFAULTMUTEX;
+
+PVOID WINAPI InterlockedCompareExchange( PVOID *dest, PVOID xchg, PVOID compare )
+{
+    _lwp_mutex_lock( &interlocked_mutex );
+
+    if ( *dest == compare )
+        *dest = xchg;
+    else
+        compare = *dest;
+    
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return compare;
+}
+
+LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
+{
+    LONG retv;
+    _lwp_mutex_lock( &interlocked_mutex );
+
+    retv = *dest;
+    *dest = val;
+
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
+{
+    LONG retv;
+    _lwp_mutex_lock( &interlocked_mutex );
+
+    retv = *dest;
+    *dest += incr;
+
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+LONG WINAPI InterlockedIncrement( PLONG dest )
+{
+    LONG retv;
+    _lwp_mutex_lock( &interlocked_mutex );
+
+    retv = ++*dest;
+
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+LONG WINAPI InterlockedDecrement( PLONG dest )
+{
+    LONG retv;
+    _lwp_mutex_lock( &interlocked_mutex );
+
+    retv = --*dest;
+
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return retv;
+}
+
+#else
 #error You must implement the Interlocked* functions for your CPU
-#endif /* __i386__ */
+#endif
