@@ -1478,11 +1478,19 @@ static void SetLoadLevel(int level)
 /**********************************************************************************
  * SHELL_LoadRegistry [Internal]
  */
+#define REG_DONTLOAD -1
+#define REG_WIN31  0
+#define REG_WIN95  1
+#define REG_WINNT  2
+
 void SHELL_LoadRegistry( void )
 {
   int	save_timeout;
   char	*fn, *home;
   HKEY	hkey;
+  char windir[MAX_PATHNAME_LEN];
+  char path[MAX_PATHNAME_LEN];
+  int  systemtype = REG_WIN31;
 
   TRACE("(void)\n");
 
@@ -1491,59 +1499,132 @@ void SHELL_LoadRegistry( void )
   REGISTRY_Init();
   SetLoadLevel(0);
 
-  if (PROFILE_GetWineIniBool ("registry", "LoadWin311RegistryFiles", 1)) 
-  { 
-      /* Load windows 3.1 entries */
-      _w31_loadreg();
+  GetWindowsDirectoryA( windir, MAX_PATHNAME_LEN );
+
+  if (PROFILE_GetWineIniBool( "Registry", "LoadWindowsRegistryFiles", 1))
+  {
+    /* test %windir%/system32/config/system --> winnt */
+    strcpy(path, windir);
+    strncat(path, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(path) - 1);
+    if(GetFileAttributesA(path) != -1) 
+    {
+      systemtype = REG_WINNT;
+    }
+    else
+    {
+       /* test %windir%/system.dat --> win95 */
+      strcpy(path, windir);
+      strncat(path, "\\system.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+      if(GetFileAttributesA(path) != -1)
+      {
+        systemtype = REG_WIN95;
+      }
+    }
+
+    if ((systemtype==REG_WINNT)
+      && (! PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN)))
+    {
+       MESSAGE("When you are running with a native NT directory specify\n");
+       MESSAGE("'Profile=<profiledirectory>' or disable loading of Windows\n");
+       MESSAGE("registry (LoadWindowsRegistryFiles=N)\n");
+       systemtype = REG_DONTLOAD;
+    }
   }
-  if (PROFILE_GetWineIniBool ("registry", "LoadWin95RegistryFiles", 1)) 
-  { 
+  else
+  {
+    /* only wine registry */
+    systemtype = REG_DONTLOAD;
+  }  
+
+  switch (systemtype)
+  {
+    case REG_WIN31:
+      _w31_loadreg();
+      break;
+
+    case REG_WIN95:  
       /* Load windows 95 entries */
       NativeRegLoadKey(HKEY_LOCAL_MACHINE, "C:\\system.1st", 0);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, "system.dat", 0);
-      NativeRegLoadKey(HKEY_CURRENT_USER, "user.dat", 1);
-  }
-  if (PROFILE_GetWineIniBool ("registry", "LoadWinNTRegistryFiles", 1)) 
-  { 
-      fn = xmalloc( MAX_PATHNAME_LEN ); 
-      home = xmalloc ( MAX_PATHNAME_LEN );
-      if ( PROFILE_GetWineIniString( "registry", "NTUser", "", home, MAX_PATHNAME_LEN - 1)) 
+
+      strcpy(path, windir);
+      strncat(path, "\\system.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
+
+      if (PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN))
       {
-         GetWindowsDirectoryA( fn, MAX_PATHNAME_LEN );
-	 strncat(fn, "\\Profiles\\", MAX_PATHNAME_LEN - strlen(fn) - 1);
-	 strncat(fn, home, MAX_PATHNAME_LEN - strlen(fn) - 1);
-	 strncat(fn, "\\ntuser.dat", MAX_PATHNAME_LEN - strlen(fn) - 1);
-         NativeRegLoadKey( HKEY_CURRENT_USER, fn, 1 );
-      }     
+	/* user specific user.dat */
+	strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+        if (!NativeRegLoadKey( HKEY_CURRENT_USER, path, 1 ))
+	{
+	  MESSAGE("can't load win95 user-registry %s\n", path);
+	  MESSAGE("check wine.conf, section [Wine], value 'Profile'\n");
+	}
+	/* default user.dat */
+	if (!RegCreateKeyA(HKEY_USERS, ".Default", &hkey))
+	{
+          strcpy(path, windir);
+          strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+          NativeRegLoadKey(hkey, path, 1);
+	  RegCloseKey(hkey);
+	}
+      }
+      else
+      {
+        /* global user.dat */
+	strcpy(path, windir);
+        strncat(path, "\\user.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+        NativeRegLoadKey(HKEY_CURRENT_USER, path, 1);
+      }
+      break;
+
+    case REG_WINNT:  
+      /* default user.dat */
+      if (PROFILE_GetWineIniString( "Wine", "Profile", "", path, MAX_PATHNAME_LEN))
+      {
+        strncat(path, "\\ntuser.dat", MAX_PATHNAME_LEN - strlen(path) - 1);
+        if(!NativeRegLoadKey( HKEY_CURRENT_USER, path, 1 ))
+        {
+           MESSAGE("can't load NT user-registry %s\n", path);
+	   MESSAGE("check wine.conf, section [Wine], value 'Profile'\n");
+        }
+      }
+
+      /* default user.dat */
+      if (!RegCreateKeyA(HKEY_USERS, ".Default", &hkey))
+      {
+        strcpy(path, windir);
+        strncat(path, "\\system32\\config\\default", MAX_PATHNAME_LEN - strlen(path) - 1);
+        NativeRegLoadKey(hkey, path, 1);
+        RegCloseKey(hkey);
+      }
+
       /*
       * FIXME
       *  map HLM\System\ControlSet001 to HLM\System\CurrentControlSet
       */
-      GetSystemDirectoryA( fn, MAX_PATHNAME_LEN );
 
-      strcpy(home, fn);
-      strncat(home, "\\config\\system", MAX_PATHNAME_LEN - strlen(home) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
+      strcpy(path, windir);
+      strncat(path, "\\system32\\config\\system", MAX_PATHNAME_LEN - strlen(path) - 1);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
 
-      strcpy(home, fn);
-      strncat(home, "\\config\\software", MAX_PATHNAME_LEN - strlen(home) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
+      strcpy(path, windir);
+      strncat(path, "\\system32\\config\\software", MAX_PATHNAME_LEN - strlen(path) - 1);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
 
-      strcpy(home, fn);
-      strncat(home, "\\config\\sam", MAX_PATHNAME_LEN - strlen(home) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
+      strcpy(path, windir);
+      strncat(path, "\\system32\\config\\sam", MAX_PATHNAME_LEN - strlen(path) - 1);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
 
-      strcpy(home, fn);
-      strncat(home, "\\config\\security", MAX_PATHNAME_LEN - strlen(home) - 1);
-      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
+      strcpy(path, windir);
+      strncat(path, "\\system32\\config\\security", MAX_PATHNAME_LEN - strlen(path) - 1);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, path, 0);
 
-      free (home);
-      free (fn);
       /* this key is generated when the nt-core booted successfully */
       if (!RegCreateKeyA(HKEY_LOCAL_MACHINE,"System\\Clone",&hkey))
         RegCloseKey(hkey);
-  }
-
+      break;
+  } /* switch */
+  
   if (PROFILE_GetWineIniBool ("registry","LoadGlobalRegistryFiles", 1))
   {
       /* 

@@ -118,6 +118,14 @@ default: C:\\TEMP
 Used to specify a directory where Windows applications can store 
 temporary files.
 .PP
+.I format: profile = <directory>
+.br
+default: nothing
+.br
+Used to specify a directory where Windows stores special folders and the user-registry files (user.dat or ntuser.dat). 
+Mapped to environment variable %USERPROFILE%. 
+Set this value when running with a native NT or a native win95 directory with per-user settings.
+.PP
 .I format: path = <directories separated by semi-colons>
 .br
 default: C:\\WINDOWS;C:\\WINDOWS\\SYSTEM
@@ -288,23 +296,9 @@ Home registries (stored in ~user/.wine/)
 .br
 TRY to write all changes to alt registries
 .PP
-.I format: LoadWin311RegistryFiles=<boolean>
+.I format: LoadWindowsRegistryFiles=<boolean>
 .br
-Windows 3.1 registry files stored in windows directory
-.PP
-.I format: LoadWin95RegistryFiles=<boolean>
-.br
-Windows 95 registry files stored in windows directory and c:
-.PP
-.I format: LoadWinNTRegistryFiles=<boolean>
-.br
-Windows NT registry files stored in <windows directory>/system32/config and <windows directory>/<profiles>/user.dat. (not yet completely implemented)
-.PP
-.I format: NTUser=<username>
-.br
-Needed for building path to the user registry file: <windows directory>/profiles/<username>/ntuser.dat
-.PP
-To avoid interferences between all registrys you should only activate the win311, win95 or the winnt registry.
+Load Windows registry from the current Windows directory. 
 .PP
 booleans: Y/y/T/t/1 are true, N/n/F/f/0 are false.
 .br

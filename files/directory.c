@@ -66,7 +66,7 @@ static int DIR_GetPath( const char *keyname, const char *defval,
 int DIR_Init(void)
 {
     char path[MAX_PATHNAME_LEN];
-    DOS_FULL_NAME tmp_dir;
+    DOS_FULL_NAME tmp_dir, profile_dir;
     int drive;
     const char *cwd;
 
@@ -140,6 +140,15 @@ int DIR_Init(void)
     TRACE("Path       = %s\n", path );
     TRACE("Cwd        = %c:\\%s\n",
           'A' + drive, DRIVE_GetDosCwd( drive ) );
+
+    if (DIR_GetPath( "profile", "", &profile_dir ))
+    {
+        TRACE("USERPROFILE= %s\n", profile_dir.short_name );
+        SetEnvironmentVariableA( "USERPROFILE", profile_dir.short_name );
+    }	
+
+    TRACE("SYSTEMROOT = %s\n", DIR_Windows.short_name );
+    SetEnvironmentVariableA( "SYSTEMROOT", DIR_Windows.short_name );
 
     return 1;
 }
