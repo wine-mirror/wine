@@ -572,8 +572,11 @@ static KeyEntry EmacsKeyMapAlt[] =
 
 static KeyEntry EmacsKeyMapExtended[] = 
 {
+    {/*RETURN*/  0x0d,	WCEL_Done },
     {/*VK_PRIOR*/0x21, 	WCEL_MoveToPrevHist	},
     {/*VK_NEXT*/0x22,	WCEL_MoveToNextHist 	},
+    {/*VK_END*/  0x23,	WCEL_MoveToEnd		},
+    {/*VK_HOME*/ 0x24,	WCEL_MoveToBeg		},
     {/*VK_RIGHT*/0x27,	WCEL_MoveRight 		},
     {/*VK_LEFT*/0x25,	WCEL_MoveLeft 		},
     {	0,		NULL 			}
