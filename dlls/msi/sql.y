@@ -767,6 +767,7 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview )
     {
         if( *sql.view )
             (*sql.view)->ops->delete( *sql.view );
+        *sql.view = NULL;
         return ERROR_BAD_QUERY_SYNTAX;
     }
 

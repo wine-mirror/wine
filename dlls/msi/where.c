@@ -295,7 +295,8 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
     wv->reorder = NULL;
     wv->row_count = 0;
 
-    delete_expr( wv->cond );
+    if( wv->cond )
+        delete_expr( wv->cond );
 
     HeapFree( GetProcessHeap(), 0, wv );
 
@@ -340,6 +341,7 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
     wv->table = table;
     wv->row_count = 0;
     wv->reorder = NULL;
+    wv->cond = NULL;
     *view = (MSIVIEW*) wv;
 
     return ERROR_SUCCESS;
