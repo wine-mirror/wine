@@ -55,14 +55,14 @@ void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 	TRACE("(%p)\n",volpan);
 
 	/* the AmpFactors are expressed in 16.16 fixed point */
-	volpan->dwVolAmpFactor = (ULONG) (pow(2.0, volpan->lVolume / 600.0) * 65536);
+	volpan->dwVolAmpFactor = (ULONG) (pow(2.0, volpan->lVolume / 600.0) * 0xffff);
 	/* FIXME: dwPan{Left|Right}AmpFactor */
 
 	/* FIXME: use calculated vol and pan ampfactors */
 	temp = (double) (volpan->lVolume - (volpan->lPan > 0 ? volpan->lPan : 0));
-	volpan->dwTotalLeftAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 65536);
+	volpan->dwTotalLeftAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 0xffff);
 	temp = (double) (volpan->lVolume + (volpan->lPan < 0 ? volpan->lPan : 0));
-	volpan->dwTotalRightAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 65536);
+	volpan->dwTotalRightAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 0xffff);
 
 	TRACE("left = %lx, right = %lx\n", volpan->dwTotalLeftAmpFactor, volpan->dwTotalRightAmpFactor);
 }

@@ -1891,7 +1891,10 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     right = (HIWORD(dwParam) * 100) / 0xFFFFl;
     volume = left + (right << 8);
 
-    if (wDevID >= numOutDev) return MMSYSERR_INVALPARAM;
+    if (wDevID >= numOutDev) {
+	WARN("invalid parameter: wDevID > %d\n", numOutDev);
+	return MMSYSERR_INVALPARAM;
+    }
 
     if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_WRONLY|O_NDELAY)) < 0) {
 	WARN("mixer device not available !\n");
@@ -2138,9 +2141,17 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetFrequency(PIDSDRIVERBUFFER iface, D
 
 static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, PDSVOLUMEPAN pVolPan)
 {
-    /* ICOM_THIS(IDsDriverBufferImpl,iface); */
-    FIXME("(%p,%p): stub!\n",iface,pVolPan);
-    /* FIXME: the dsound software mixer does this for us so don't return an error */
+    DWORD vol;
+    ICOM_THIS(IDsDriverBufferImpl,iface);
+    TRACE("(%p,%p)\n",This,pVolPan);
+
+    vol = pVolPan->dwTotalLeftAmpFactor | (pVolPan->dwTotalRightAmpFactor << 16);
+
+    if (wodSetVolume(This->drv->wDevID, vol) != MMSYSERR_NOERROR) {
+	WARN("wodSetVolume failed\n");
+	return DSERR_INVALIDPARAM;
+    }
+
     return DS_OK;
 }
 

@@ -254,7 +254,8 @@ STOP:
 }
 
 static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
-			int is_primary, int play, int buffer3d, 
+			int is_primary, BOOL set_volume, LONG volume,
+			BOOL set_pan, LONG pan, int play, int buffer3d, 
 			LPDIRECTSOUND3DLISTENER listener, 
 			int move_listener, int move_sound)
 {
@@ -358,7 +359,7 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
 
     if (play) {
 	play_state_t state;
-	LONG volume,pan;
+
 	LPDIRECTSOUND3DBUFFER buffer=NULL;
 	DS3DBUFFER buffer_param;
 	DS3DLISTENER listener_param;
@@ -417,34 +418,50 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
 	    rc=IDirectSound3DBuffer_GetAllParameters(buffer,&buffer_param);
 	    ok(rc==DS_OK,"IDirectSound3DBuffer_GetAllParameters failed: 0x%lx\n",rc);
 	}
-	if (dsbcaps.dwFlags & DSBCAPS_CTRLVOLUME) {
-	    rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
-	    ok(rc==DS_OK,"GetVolume failed: 0x%lx\n",rc);
-
-	    rc=IDirectSoundBuffer_SetVolume(dsbo,-300);
+	if (set_volume) {
+	    rc=IDirectSoundBuffer_SetVolume(dsbo,volume);
 	    ok(rc==DS_OK,"SetVolume failed: 0x%lx\n",rc);
 
 	    rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
 	    trace("    volume=%ld\n",volume);
 	} else {
-	    /* DSOUND: Error: Buffer does not have CTRLVOLUME */
-	    rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
-	    ok(rc==DSERR_CONTROLUNAVAIL,"GetVolume should have failed: 0x%lx\n",rc);
+	    if (dsbcaps.dwFlags & DSBCAPS_CTRLVOLUME) {
+		rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
+		ok(rc==DS_OK,"GetVolume failed: 0x%lx\n",rc);
+
+		rc=IDirectSoundBuffer_SetVolume(dsbo,-300);
+		ok(rc==DS_OK,"SetVolume failed: 0x%lx\n",rc);
+
+		rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
+		trace("    volume=%ld\n",volume);
+	    } else {
+		/* DSOUND: Error: Buffer does not have CTRLVOLUME */
+		rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
+		ok(rc==DSERR_CONTROLUNAVAIL,"GetVolume should have failed: 0x%lx\n",rc);
+	    }
 	}
 
-	if (dsbcaps.dwFlags & DSBCAPS_CTRLPAN) {
-	    rc=IDirectSoundBuffer_GetPan(dsbo,&pan);
-	    ok(rc==DS_OK,"GetPan failed: 0x%lx\n",rc);
-
-	    rc=IDirectSoundBuffer_SetPan(dsbo,0);
+	if (set_pan) {
+	    rc=IDirectSoundBuffer_SetPan(dsbo,pan);
 	    ok(rc==DS_OK,"SetPan failed: 0x%lx\n",rc);
 
 	    rc=IDirectSoundBuffer_GetPan(dsbo,&pan);
 	    trace("    pan=%ld\n",pan);
 	} else {
-	    /* DSOUND: Error: Buffer does not have CTRLPAN */
-	    rc=IDirectSoundBuffer_GetPan(dsbo,&pan);
-	    ok(rc==DSERR_CONTROLUNAVAIL,"GetPan should have failed: 0x%lx\n",rc);
+	    if (dsbcaps.dwFlags & DSBCAPS_CTRLPAN) {
+		rc=IDirectSoundBuffer_GetPan(dsbo,&pan);
+		ok(rc==DS_OK,"GetPan failed: 0x%lx\n",rc);
+
+		rc=IDirectSoundBuffer_SetPan(dsbo,0);
+		ok(rc==DS_OK,"SetPan failed: 0x%lx\n",rc);
+
+		rc=IDirectSoundBuffer_GetPan(dsbo,&pan);
+		trace("    pan=%ld\n",pan);
+	    } else {
+		/* DSOUND: Error: Buffer does not have CTRLPAN */
+		rc=IDirectSoundBuffer_GetPan(dsbo,&pan);
+		ok(rc==DSERR_CONTROLUNAVAIL,"GetPan should have failed: 0x%lx\n",rc);
+	    }
 	}
 
 	state.wave=wave_generate_la(&wfx,((double)TONE_DURATION)/1000,&state.wave_len);
@@ -639,7 +656,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
 		}
 
 		if (rc==DS_OK&&secondary!=NULL) {
-		    test_buffer(dso,secondary,0,winetest_interactive,has_3dbuffer,listener,move_listener,move_sound);
+		    test_buffer(dso,secondary,0,FALSE,0,FALSE,0,winetest_interactive,has_3dbuffer,listener,move_listener,move_sound);
 		    ref=IDirectSoundBuffer_Release(secondary);
 		    ok(ref==0,"IDirectSoundBuffer_Release %s has %d references, should have 0\n",has_duplicate?"duplicated":"secondary",ref);
 		}
@@ -768,7 +785,7 @@ static HRESULT test_primary(LPGUID lpGuid)
     LPDIRECTSOUNDBUFFER primary=NULL,second=NULL,third=NULL;
     DSBUFFERDESC bufdesc;
     DSCAPS dscaps;
-    int ref;
+    int ref, i;
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
@@ -829,7 +846,22 @@ static HRESULT test_primary(LPGUID lpGuid)
 	rc=IDirectSound_DuplicateSoundBuffer(dso,primary,&third);
 	/* rc=0x88780032 */
 	ok(rc!=DS_OK,"IDirectSound_DuplicateSoundBuffer primary buffer should have failed 0x%lx\n",rc);
-	test_buffer(dso,primary,1,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,0,0,0);
+	test_buffer(dso,primary,1,FALSE,0,FALSE,0,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,0,0,0);
+	test_buffer(dso,primary,1,TRUE,0,TRUE,0,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,0,0,0);
+	if (winetest_interactive) {
+	    LONG volume = DSBVOLUME_MAX;
+	    for (i = 0; i < 6; i++) {
+	    	test_buffer(dso,primary,1,TRUE,volume,TRUE,0,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,0,0,0);
+		volume -= ((DSBVOLUME_MAX-DSBVOLUME_MIN) / 40);
+	    }
+	    if (winetest_interactive) {
+		LONG pan = DSBPAN_LEFT;
+		for (i = 0; i < 7; i++) {
+	    	    test_buffer(dso,primary,1,TRUE,0,TRUE,pan,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,0,0,0);
+		    pan += ((DSBPAN_RIGHT-DSBPAN_LEFT) / 6);
+		}
+	    }
+	}
 	ref=IDirectSoundBuffer_Release(primary);
 	ok(ref==0,"IDirectSoundBuffer_Release primary has %d references, should have 0\n",ref); 
     }
@@ -894,7 +926,7 @@ static HRESULT test_primary_3d(LPGUID lpGuid)
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
         ok(rc==DS_OK&&primary!=NULL,"CreateSoundBuffer failed to create a 3D primary buffer: 0x%lx\n",rc);
         if (rc==DS_OK&&primary!=NULL) {
-	    test_buffer(dso,primary,1,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,0,0,0);
+	    test_buffer(dso,primary,1,FALSE,0,FALSE,0,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,0,0,0);
 	    ref=IDirectSoundBuffer_Release(primary);
 	    ok(ref==0,"IDirectSoundBuffer_Release primary has %d references, should have 0\n",ref); 
 	}
@@ -971,7 +1003,7 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
 		ok(ref==1,"IDirectSoundBuffer_Release has %d references, should have 1\n",ref);
 
 		/* Testing the buffer */
-		test_buffer(dso,primary,1,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,listener,0,0);
+		test_buffer(dso,primary,1,FALSE,0,FALSE,0,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),0,listener,0,0);
 	    }
 
 	    /* Testing the reference counting */

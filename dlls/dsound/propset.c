@@ -431,8 +431,47 @@ static HRESULT WINAPI DSPROPERTY_Description1(
 	    }
 	}
     } else {
-	FIXME("DeviceId=Unknown\n");
-	return E_PROP_ID_UNSUPPORTED;
+	BOOL found = FALSE;
+	ULONG wod;
+	int wodn;
+	/* given specific device so try the render devices first */
+	wodn = waveOutGetNumDevs();
+	for (wod = 0; wod < wodn; wod++) {
+	    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)(&guid),0));
+	    if (err == DS_OK) {
+		if (IsEqualGUID( &ppd->DeviceId, &guid) ) {
+		    DSDRIVERDESC desc;
+		    TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
+		    ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_RENDER;
+		    ppd->WaveDeviceId = wod;
+		    ppd->Devnode = wod;
+		    err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDDESC,(DWORD)&(desc),0));
+		    if (err == DS_OK) {
+			PIDSDRIVER drv = NULL;
+			strncpy(ppd->DescriptionA, desc.szDesc, sizeof(ppd->DescriptionA) - 1);
+			strncpy(ppd->ModuleA, desc.szDrvName, sizeof(ppd->ModuleA) - 1);
+			MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1, ppd->DescriptionW, sizeof(ppd->DescriptionW)/sizeof(WCHAR) );
+			MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, ppd->ModuleW, sizeof(ppd->ModuleW)/sizeof(WCHAR) );
+			err = mmErr(waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0));
+			if (err == DS_OK && drv)
+				ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
+			found = TRUE;
+			break;
+		    } else {
+			WARN("waveOutMessage failed\n");
+			return E_PROP_ID_UNSUPPORTED;
+		    }
+		}
+	    } else {
+		WARN("waveOutMessage failed\n");
+		return E_PROP_ID_UNSUPPORTED;
+	    }
+	}
+
+	if (found == FALSE) {
+	    WARN("device not found\n");
+	    return E_PROP_ID_UNSUPPORTED;
+	}
     }
 
     if (pcbReturned) {

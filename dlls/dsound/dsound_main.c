@@ -1140,6 +1140,8 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 		(*ippDS)->drvcaps.dwPrimaryBuffers = 1;
 	}
 
+	(*ippDS)->volpan.lVolume = 0;
+	(*ippDS)->volpan.lPan = 0;
 	DSOUND_RecalcVolPan(&((*ippDS)->volpan));
 
 	InitializeCriticalSection(&((*ippDS)->mixlock));

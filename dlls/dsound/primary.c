@@ -74,6 +74,8 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 	HRESULT err = DS_OK;
 	TRACE("(%p)\n",This);
 
+	DSOUND_RecalcVolPan(&(This->volpan));
+
 	/* are we using waveOut stuff? */
 	if (!This->hwbuf) {
 		LPBYTE newbuf;
@@ -128,7 +130,15 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 		}
 		if ((err == DS_OK) && (merr != DS_OK))
 			err = merr;
+
+		if (!err) {
+			DWORD vol = (This->volpan.dwTotalLeftAmpFactor & 0xffff) | (This->volpan.dwTotalRightAmpFactor << 16);
+			err = mmErr(waveOutSetVolume(This->hwo, vol));
+		}
+	} else {
+		err = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 	}
+
 	return err;
 }
 
@@ -431,7 +441,6 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 
 	TRACE("(%p,%ld)\n",This,vol);
 
-	/* I'm not sure if we need this for primary buffer */
 	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
@@ -458,15 +467,9 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 				WARN("IDsDriverBuffer_SetVolumePan failed\n");
 				return hres;
 			}
-		}
-		else {
-#if 0 /* should we really do this? */
-			/* the DS volume ranges from 0 (max, 0dB attenuation) to -10000 (min, 100dB attenuation) */
-			/* the MM volume ranges from 0 to 0xffff in an unspecified logarithmic scale */
-			WORD cvol = 0xffff + vol*6 + vol/2;
-			DWORD vol = cvol | ((DWORD)cvol << 16)
+		} else {
+			DWORD vol = (dsound->volpan.dwTotalLeftAmpFactor & 0xffff) | (dsound->volpan.dwTotalRightAmpFactor << 16);
 			waveOutSetVolume(dsound->hwo, vol);
-#endif
 		}
 	}
 
@@ -778,13 +781,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 			}
 		}
 		else {
-#if 0 /* should we really do this? */
-			/* the DS volume ranges from 0 (max, 0dB attenuation) to -10000 (min, 100dB attenuation) */
-			/* the MM volume ranges from 0 to 0xffff in an unspecified logarithmic scale */
-			WORD cvol = 0xffff + vol*6 + vol/2;
-			DWORD vol = cvol | ((DWORD)cvol << 16)
+			DWORD vol = (dsound->volpan.dwTotalLeftAmpFactor & 0xffff) | (dsound->volpan.dwTotalRightAmpFactor << 16);
 			waveOutSetVolume(dsound->hwo, vol);
-#endif
 		}
 	}
 
