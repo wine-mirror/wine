@@ -13,6 +13,8 @@
  * and translated. The language 0,0 is a hack to get it
  * loaded properly for all languages by pretending that
  * they are neutral.
+ * The menus are not jet properly implemented.
+ * Don't localize it yet. (js)
  */
 
 LANGUAGE 0,0
@@ -39,6 +41,11 @@ BEGIN
 	  MENUITEM SEPARATOR
 	  POPUP "Arrange &Icons"
 	  BEGIN
+	    MENUITEM "By &Name",	0x30	/* column 0 */
+	    MENUITEM "By &Type",	0x32	/* column 2 */
+	    MENUITEM "By &Size",	0x31	/* ... */
+	    MENUITEM "By &Date",	0x33
+	    MENUITEM SEPARATOR
 	    MENUITEM "&Auto Arrange",	FCIDM_SHVIEW_AUTOARRANGE
 	  END
 	  MENUITEM "Lin&e up Icons",	FCIDM_SHVIEW_SNAPTOGRID

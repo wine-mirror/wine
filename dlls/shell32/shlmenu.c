@@ -196,7 +196,9 @@ static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
 	}
 
 	if ( GetMenuItemCount (hmenu) == 0 )
-	  FileMenu_AppendItemA (hmenu, "(empty)", uID, FM_BLANK_ICON, 0, FM_DEFAULT_HEIGHT);
+	{ FileMenu_AppendItemA (hmenu, "(empty)", uID, FM_BLANK_ICON, 0, FM_DEFAULT_HEIGHT);
+	  NumberOfItems++;
+	}
 
 	menudata->bInitialized = TRUE;
 	SetMenuInfo(hmenu, &MenuInfo);
@@ -889,3 +891,4 @@ HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uI
 	}
 	return(uIDMax);
 }
+

@@ -3,6 +3,8 @@
  *
  *	Copyright 1997	Marcus Meissner
  *	Copyright 1998	Juergen Schmied
+ *	
+ *	IShellFolder with IDropTarget, IPersistFolder
  *
  */
 
@@ -217,8 +219,8 @@ LPSTR GetNextElement(LPSTR pszNext,LPSTR pszOut,DWORD dwOut)
 */
 
 static struct ICOM_VTABLE(IShellFolder) sfvt;
-static struct ICOM_VTABLE(IPersistFolder) psfvt;
 
+static struct ICOM_VTABLE(IPersistFolder) psfvt;
 #define _IPersistFolder_Offset ((int)(&(((IGenericSFImpl*)0)->lpvtblPersistFolder))) 
 #define _ICOM_THIS_From_IPersistFolder(class, name) class* This = (class*)(((char*)name)-_IPersistFolder_Offset); 
 
@@ -235,8 +237,10 @@ IShellFolder * IShellFolder_Constructor(
 
 	sf=(IGenericSFImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IGenericSFImpl));
 	sf->ref=1;
+
 	sf->lpvtbl=&sfvt;
 	sf->lpvtblPersistFolder=&psfvt;
+	
 	sf->sMyPath=NULL;	/* path of the folder */
 	sf->pMyPidl=NULL;	/* my qualified pidl */
 
@@ -302,7 +306,8 @@ static HRESULT WINAPI IShellFolder_fnQueryInterface(
 	}   
 
 	if(*ppvObj)
-	{ IShellFolder_AddRef((IShellFolder*)*ppvObj);
+	{
+	  IUnknown_AddRef((IUnknown*)(*ppvObj));
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -822,7 +827,7 @@ static HRESULT WINAPI IShellFolder_fnGetDisplayNameOf(
 	
 	/* test if simple(relative) or complex(absolute) pidl */
 	pidlTemp = ILGetNext(pidl);
-	if (pidlTemp && pidlTemp->mkid.cb==0x00)
+	if (pidlTemp && !pidlTemp->mkid.cb )
 	{ bSimplePidl = TRUE;
 	  TRACE("-- simple pidl\n");
 	}
@@ -1077,3 +1082,4 @@ static ICOM_VTABLE(IPersistFolder) psfvt =
 	ISFPersistFolder_GetClassID,
 	ISFPersistFolder_Initialize
 };
+

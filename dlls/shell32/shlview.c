@@ -1212,7 +1212,7 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid
 	}   
 
 	if(*ppvObj)
-	{ IShellView_AddRef( (IShellView*) *ppvObj);
+	{ IShellView_AddRef( (IShellView*)This );
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -1221,7 +1221,7 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid
 }
 
 /**************************************************************************
-*  IShellView::AddRef
+*  IShellView_AddRef
 */
 static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 {
@@ -1564,7 +1564,7 @@ static ULONG WINAPI ISVOleCmdTarget_Release(
 }
 
 /************************************************************************
- * ISVOleCmdTarget_Exec (IOleCommandTarget)
+ * ISVOleCmdTarget_QueryStatus (IOleCommandTarget)
  */
 static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
 	IOleCommandTarget *iface,
@@ -1573,14 +1573,20 @@ static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
 	OLECMD * prgCmds,
 	OLECMDTEXT* pCmdText)
 {
+	char    xguid[50];
+
 	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
 
-	FIXME("(%p)->(%p 0x%08lx %p %p\n", This, pguidCmdGroup, cCmds, prgCmds, pCmdText);
+	WINE_StringFromCLSID((LPCLSID)pguidCmdGroup,xguid);
+
+	FIXME("(%p)->(%p(%s) 0x%08lx %p %p\n", This, pguidCmdGroup, xguid, cCmds, prgCmds, pCmdText);
 	return E_NOTIMPL;
 }
 
 /************************************************************************
  * ISVOleCmdTarget_Exec (IOleCommandTarget)
+ *
+ * nCmdID is the OLECMDID_* enumeration
  */
 static HRESULT WINAPI ISVOleCmdTarget_Exec(
 	IOleCommandTarget *iface,
@@ -1590,9 +1596,13 @@ static HRESULT WINAPI ISVOleCmdTarget_Exec(
 	VARIANT* pvaIn,
 	VARIANT* pvaOut)
 {
+	char    xguid[50];
+
 	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
 
-	FIXME("(%p)->(%p 0x%08lx 0x%08lx %p %p)\n", This, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+	WINE_StringFromCLSID((LPCLSID)pguidCmdGroup,xguid);
+
+	FIXME("(%p)->(\n\tTarget GUID:%s Command:0x%08lx Opt:0x%08lx %p %p)\n", This, xguid, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 	return E_NOTIMPL;
 }
 

@@ -736,9 +736,25 @@ HRESULT WINAPI SheChangeDirW(LPWSTR u)
 /*************************************************************************
 *	PathProcessCommand	[SHELL32.653]
 */
-HRESULT WINAPI PathProcessCommand (DWORD u, DWORD v, DWORD w, DWORD x)
-{	FIXME("0x%04lx 0x%04lx 0x%04lx 0x%04lx stub\n",u,v,w,x);
+HRESULT WINAPI PathProcessCommandA (LPSTR lpCommand, LPSTR v, DWORD w, DWORD x)
+{
+	FIXME("%p(%s) %p 0x%04lx 0x%04lx stub\n",
+	lpCommand, lpCommand, v, w,x );
 	return 0;
+}
+
+HRESULT WINAPI PathProcessCommandW (LPWSTR lpCommand, LPSTR v, DWORD w, DWORD x)
+{
+	FIXME("%p(%s) %p 0x%04lx 0x%04lx stub\n",
+	lpCommand, debugstr_w(lpCommand), v, w,x );
+	return 0;
+}
+
+HRESULT WINAPI PathProcessCommandAW (LPVOID lpCommand, LPSTR v, DWORD w, DWORD x)
+{
+	if (VERSION_OsIsUnicode())
+	  return PathProcessCommandW(lpCommand, v, w, x);
+	return PathProcessCommandA(lpCommand, v, w, x);
 }
 
 /*************************************************************************
