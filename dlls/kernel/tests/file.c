@@ -270,9 +270,8 @@ static void test__lcreat( void )
     } else { /* only NT succeeds */
       _lclose(filehandle);
       find=FindFirstFileA (slashname, &search_results);
-      if (INVALID_HANDLE_VALUE==find)
-        ok (0, "file \"%s\" not found\n", slashname);
-      else {
+      if (INVALID_HANDLE_VALUE!=find)
+      {
         ok (0!=FindClose (find), "FindClose complains (%ld)\n", GetLastError ());
         slashname[strlen(slashname)-1]=0;
         ok (!strcmp (slashname, search_results.cFileName),

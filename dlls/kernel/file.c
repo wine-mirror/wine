@@ -40,6 +40,8 @@
 #include "wine/winbase16.h"
 #include "kernel_private.h"
 
+#include "wine/exception.h"
+#include "excpt.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "async.h"
@@ -47,6 +49,26 @@
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 HANDLE dos_handles[DOS_TABLE_SIZE];
+
+/* info structure for FindFirstFile handle */
+typedef struct
+{
+    HANDLE           handle;      /* handle to directory */
+    CRITICAL_SECTION cs;          /* crit section protecting this structure */
+    UNICODE_STRING   mask;        /* file mask */
+    BOOL             is_root;     /* is directory the root of the drive? */
+    UINT             data_pos;    /* current position in dir data */
+    UINT             data_len;    /* length of dir data */
+    BYTE             data[8192];  /* directory data */
+} FIND_FIRST_INFO;
+
+
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /**************************************************************************
  *                      Operations on file handles                        *
@@ -556,4 +578,297 @@ BOOL WINAPI ReplaceFileA(LPCSTR lpReplacedFileName,LPCSTR lpReplacementFileName,
                                           lpBackupFileName,dwReplaceFlags,lpExclude,lpReserved);
     SetLastError(ERROR_UNABLE_TO_MOVE_REPLACEMENT);
     return FALSE;
+}
+
+
+/*************************************************************************
+ *           FindFirstFileExW  (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
+                                LPVOID data, FINDEX_SEARCH_OPS search_op,
+                                LPVOID filter, DWORD flags)
+{
+    WCHAR buffer[MAX_PATH];
+    WCHAR *mask, *tmp = buffer;
+    FIND_FIRST_INFO *info = NULL;
+    DWORD size;
+
+    if ((search_op != FindExSearchNameMatch) || (flags != 0))
+    {
+        FIXME("options not implemented 0x%08x 0x%08lx\n", search_op, flags );
+        return INVALID_HANDLE_VALUE;
+    }
+    if (level != FindExInfoStandard)
+    {
+        FIXME("info level %d not implemented\n", level );
+        return INVALID_HANDLE_VALUE;
+    }
+    size = RtlGetFullPathName_U( filename, sizeof(buffer), buffer, &mask );
+    if (!size)
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return INVALID_HANDLE_VALUE;
+    }
+    if (size > sizeof(buffer))
+    {
+        tmp = HeapAlloc( GetProcessHeap(), 0, size );
+        if (!tmp)
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return INVALID_HANDLE_VALUE;
+        }
+        size = RtlGetFullPathName_U( filename, size, tmp, &mask );
+    }
+
+    if (!mask || !*mask)
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        goto error;
+    }
+
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info))))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        goto error;
+    }
+
+    if (!RtlCreateUnicodeString( &info->mask, mask ))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        goto error;
+    }
+    *mask = 0;
+
+    /* check if path is the root of the drive */
+    info->is_root = FALSE;
+    if (tmp[0] && tmp[1] == ':')
+    {
+        WCHAR *p = tmp + 2;
+        while (*p == '\\') p++;
+        info->is_root = (*p == 0);
+    }
+
+    info->handle = CreateFileW( tmp, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+                                OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+    if (info->handle == INVALID_HANDLE_VALUE)
+    {
+        RtlFreeUnicodeString( &info->mask );
+        goto error;
+    }
+
+    RtlInitializeCriticalSection( &info->cs );
+    info->data_pos = 0;
+    info->data_len = 0;
+    if (tmp != buffer) HeapFree( GetProcessHeap(), 0, tmp );
+
+    if (!FindNextFileW( (HANDLE)info, data ))
+    {
+        TRACE( "%s not found\n", debugstr_w(filename) );
+        FindClose( (HANDLE)info );
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        return INVALID_HANDLE_VALUE;
+    }
+    return (HANDLE)info;
+
+error:
+    if (tmp != buffer) HeapFree( GetProcessHeap(), 0, tmp );
+    if (info) HeapFree( GetProcessHeap(), 0, info );
+    return INVALID_HANDLE_VALUE;
+}
+
+
+/*************************************************************************
+ *           FindNextFileW   (KERNEL32.@)
+ */
+BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
+{
+    FIND_FIRST_INFO *info;
+    FILE_BOTH_DIR_INFORMATION *dir_info;
+    BOOL ret = FALSE;
+
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return ret;
+    }
+    info = (FIND_FIRST_INFO *)handle;
+
+    RtlEnterCriticalSection( &info->cs );
+
+    for (;;)
+    {
+        if (info->data_pos >= info->data_len)  /* need to read some more data */
+        {
+            IO_STATUS_BLOCK io;
+
+            NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, sizeof(info->data),
+                                  FileBothDirectoryInformation, FALSE, &info->mask, FALSE );
+            if (io.u.Status)
+            {
+                SetLastError( RtlNtStatusToDosError( io.u.Status ) );
+                break;
+            }
+            info->data_len = io.Information;
+            info->data_pos = 0;
+        }
+
+        dir_info = (FILE_BOTH_DIR_INFORMATION *)(info->data + info->data_pos);
+
+        if (dir_info->NextEntryOffset) info->data_pos += dir_info->NextEntryOffset;
+        else info->data_pos = info->data_len;
+
+        /* don't return '.' and '..' in the root of the drive */
+        if (info->is_root)
+        {
+            if (dir_info->FileNameLength == sizeof(WCHAR) && dir_info->FileName[0] == '.') continue;
+            if (dir_info->FileNameLength == 2 * sizeof(WCHAR) &&
+                dir_info->FileName[0] == '.' && dir_info->FileName[1] == '.') continue;
+        }
+
+        data->dwFileAttributes = dir_info->FileAttributes;
+        data->ftCreationTime   = *(FILETIME *)&dir_info->CreationTime;
+        data->ftLastAccessTime = *(FILETIME *)&dir_info->LastAccessTime;
+        data->ftLastWriteTime  = *(FILETIME *)&dir_info->LastWriteTime;
+        data->nFileSizeHigh    = dir_info->EndOfFile.QuadPart >> 32;
+        data->nFileSizeLow     = (DWORD)dir_info->EndOfFile.QuadPart;
+        data->dwReserved0      = 0;
+        data->dwReserved1      = 0;
+
+        memcpy( data->cFileName, dir_info->FileName, dir_info->FileNameLength );
+        data->cFileName[dir_info->FileNameLength/sizeof(WCHAR)] = 0;
+        memcpy( data->cAlternateFileName, dir_info->ShortName, dir_info->ShortNameLength );
+        data->cAlternateFileName[dir_info->ShortNameLength/sizeof(WCHAR)] = 0;
+
+        TRACE("returning %s (%s)\n",
+              debugstr_w(data->cFileName), debugstr_w(data->cAlternateFileName) );
+
+        ret = TRUE;
+        break;
+    }
+
+    RtlLeaveCriticalSection( &info->cs );
+    return ret;
+}
+
+
+/*************************************************************************
+ *           FindClose   (KERNEL32.@)
+ */
+BOOL WINAPI FindClose( HANDLE handle )
+{
+    FIND_FIRST_INFO *info = (FIND_FIRST_INFO *)handle;
+
+    if (!handle || handle == INVALID_HANDLE_VALUE) goto error;
+
+    __TRY
+    {
+        RtlEnterCriticalSection( &info->cs );
+        if (info->handle) CloseHandle( info->handle );
+        info->handle = 0;
+        RtlFreeUnicodeString( &info->mask );
+        info->mask.Buffer = NULL;
+        info->data_pos = 0;
+        info->data_len = 0;
+    }
+    __EXCEPT(page_fault)
+    {
+        WARN("Illegal handle %p\n", handle);
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    __ENDTRY
+
+    RtlLeaveCriticalSection( &info->cs );
+    RtlDeleteCriticalSection( &info->cs );
+    HeapFree(GetProcessHeap(), 0, info);
+    return TRUE;
+
+ error:
+    SetLastError( ERROR_INVALID_HANDLE );
+    return FALSE;
+}
+
+
+/*************************************************************************
+ *           FindFirstFileA   (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstFileA( LPCSTR lpFileName, WIN32_FIND_DATAA *lpFindData )
+{
+    return FindFirstFileExA(lpFileName, FindExInfoStandard, lpFindData,
+                            FindExSearchNameMatch, NULL, 0);
+}
+
+/*************************************************************************
+ *           FindFirstFileExA   (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstFileExA( LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId,
+                                LPVOID lpFindFileData, FINDEX_SEARCH_OPS fSearchOp,
+                                LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
+{
+    HANDLE handle;
+    WIN32_FIND_DATAA *dataA;
+    WIN32_FIND_DATAW dataW;
+    UNICODE_STRING pathW;
+
+    if (!lpFileName)
+    {
+        SetLastError(ERROR_PATH_NOT_FOUND);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    if (!RtlCreateUnicodeStringFromAsciiz(&pathW, lpFileName))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    handle = FindFirstFileExW(pathW.Buffer, fInfoLevelId, &dataW, fSearchOp, lpSearchFilter, dwAdditionalFlags);
+    RtlFreeUnicodeString(&pathW);
+    if (handle == INVALID_HANDLE_VALUE) return handle;
+
+    dataA = (WIN32_FIND_DATAA *) lpFindFileData;
+    dataA->dwFileAttributes = dataW.dwFileAttributes;
+    dataA->ftCreationTime   = dataW.ftCreationTime;
+    dataA->ftLastAccessTime = dataW.ftLastAccessTime;
+    dataA->ftLastWriteTime  = dataW.ftLastWriteTime;
+    dataA->nFileSizeHigh    = dataW.nFileSizeHigh;
+    dataA->nFileSizeLow     = dataW.nFileSizeLow;
+    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
+                         dataA->cFileName, sizeof(dataA->cFileName), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
+                         dataA->cAlternateFileName, sizeof(dataA->cAlternateFileName), NULL, NULL );
+    return handle;
+}
+
+
+/*************************************************************************
+ *           FindFirstFileW   (KERNEL32.@)
+ */
+HANDLE WINAPI FindFirstFileW( LPCWSTR lpFileName, WIN32_FIND_DATAW *lpFindData )
+{
+    return FindFirstFileExW(lpFileName, FindExInfoStandard, lpFindData,
+                            FindExSearchNameMatch, NULL, 0);
+}
+
+
+/*************************************************************************
+ *           FindNextFileA   (KERNEL32.@)
+ */
+BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
+{
+    WIN32_FIND_DATAW dataW;
+
+    if (!FindNextFileW( handle, &dataW )) return FALSE;
+    data->dwFileAttributes = dataW.dwFileAttributes;
+    data->ftCreationTime   = dataW.ftCreationTime;
+    data->ftLastAccessTime = dataW.ftLastAccessTime;
+    data->ftLastWriteTime  = dataW.ftLastWriteTime;
+    data->nFileSizeHigh    = dataW.nFileSizeHigh;
+    data->nFileSizeLow     = dataW.nFileSizeLow;
+    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
+                         data->cFileName, sizeof(data->cFileName), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
+                         data->cAlternateFileName,
+                         sizeof(data->cAlternateFileName), NULL, NULL );
+    return TRUE;
 }
