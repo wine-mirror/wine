@@ -27,10 +27,17 @@ extern "C" {
 
 DEFINE_OLEGUID(IID_StdOle, 0x00020430,0,0);
 
-/*
- * BSTR API
- */
+#define STDOLE_MAJORVERNUM  1
+#define STDOLE_MINORVERNUM  0
+#define STDOLE_LCID         0
 
+#define STDOLE2_MAJORVERNUM 2
+#define STDOLE2_MINORVERNUM 0
+#define STDOLE2_LCID        0
+
+ULONG WINAPI OaBuildVersion(void);
+
+/* BSTR functions */
 BSTR WINAPI SysAllocString(const OLECHAR*);
 BSTR WINAPI SysAllocStringByteLen(LPCSTR,UINT);
 BSTR WINAPI SysAllocStringLen(const OLECHAR*,UINT);
@@ -40,19 +47,12 @@ int  WINAPI SysReAllocStringLen(BSTR*,const OLECHAR*,UINT);
 int  WINAPI SysStringByteLen(BSTR);
 int  WINAPI SysStringLen(BSTR);
 
-
-/*****************************************************************
- *  ErrorInfo API
- */
-
+/* IErrorInfo helpers */
 HRESULT WINAPI SetErrorInfo(ULONG,IErrorInfo*);
 HRESULT WINAPI GetErrorInfo(ULONG,IErrorInfo**);
 HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo**);
 
-/*****************************************************************
- *  SafeArray API
- */
-
+/* SafeArray functions */
 SAFEARRAY* WINAPI SafeArrayCreate(VARTYPE,UINT,SAFEARRAYBOUND*);
 SAFEARRAY* WINAPI SafeArrayCreateEx(VARTYPE,UINT,SAFEARRAYBOUND*,LPVOID);
 SAFEARRAY* WINAPI SafeArrayCreateVector(VARTYPE,LONG,ULONG);
@@ -84,73 +84,101 @@ HRESULT WINAPI SafeArrayGetRecordInfo(SAFEARRAY*,IRecordInfo**);
 HRESULT WINAPI SafeArraySetIID(SAFEARRAY*,REFGUID);
 HRESULT WINAPI SafeArrayGetIID(SAFEARRAY*,GUID*);
 
-/* These are macros that help accessing the VARIANT date type.
- */
-#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
-#define V_UNION(A, B)	((A)->n1.n2.n3.B)
-#define V_VT(A) 		((A)->n1.n2.vt)
-#else
-#define V_UNION(A, B)	((A)->B)
-#define V_VT(A) 		((A)->vt)
-#endif /* cplusplus */
+HRESULT WINAPI VectorFromBstr(BSTR,SAFEARRAY**);
+HRESULT WINAPI BstrFromVector(SAFEARRAY*,BSTR*);
 
-#define V_ISBYREF(A)	 (V_VT(A)&VT_BYREF)
-#define V_ISARRAY(A)	 (V_VT(A)&VT_ARRAY)
-#define V_ISVECTOR(A)	 (V_VT(A)&VT_VECTOR)
-#define V_NONE(A)		 V_I2(A)
+/* Object registration helpers */
+#define ACTIVEOBJECT_STRONG 0
+#define ACTIVEOBJECT_WEAK   1
 
-#define V_UI1(A)		 V_UNION(A, bVal)
-#define V_UI1REF(A) 	 V_UNION(A, pbVal)
-#define V_I2(A) 		 V_UNION(A, iVal)
-#define V_I2REF(A)		 V_UNION(A, piVal)
-#define V_I4(A) 		 V_UNION(A, lVal)
-#define V_I4REF(A)		 V_UNION(A, plVal)
-#define V_R4(A) 		 V_UNION(A, fltVal)
-#define V_R4REF(A)		 V_UNION(A, pfltVal)
-#define V_R8(A) 		 V_UNION(A, dblVal)
-#define V_R8REF(A)		 V_UNION(A, pdblVal)
-#define V_I1(A) 		 V_UNION(A, cVal)
-#define V_I1REF(A)		 V_UNION(A, pcVal)
-#define V_UI2(A)		 V_UNION(A, uiVal)
-#define V_UI2REF(A) 	 V_UNION(A, puiVal)
-#define V_UI4(A)		 V_UNION(A, ulVal)
-#define V_UI4REF(A) 	 V_UNION(A, pulVal)
-#define V_INT(A)		 V_UNION(A, intVal)
-#define V_INTREF(A) 	 V_UNION(A, pintVal)
-#define V_UINT(A)		 V_UNION(A, uintVal)
-#define V_UINTREF(A)	 V_UNION(A, puintVal)
-#define V_I8(A)		 V_UNION(A, llVal)
-#define V_I8REF(A) 	 V_UNION(A, pllVal)
-#define V_UI8(A)		 V_UNION(A, ullVal)
-#define V_UI8REF(A)	 V_UNION(A, pullVal)
-#define V_CY(A) 		 V_UNION(A, cyVal)
-#define V_CYREF(A)		 V_UNION(A, pcyVal)
-#define V_DATE(A)		 V_UNION(A, date)
-#define V_DATEREF(A)	 V_UNION(A, pdate)
-#define V_BSTR(A)		 V_UNION(A, bstrVal)
-#define V_BSTRREF(A)	 V_UNION(A, pbstrVal)
-#define V_DISPATCH(A)	 V_UNION(A, pdispVal)
-#define V_DISPATCHREF(A) V_UNION(A, ppdispVal)
-#define V_ERROR(A)		 V_UNION(A, scode)
-#define V_ERRORREF(A)	 V_UNION(A, pscode)
-#define V_BOOL(A)		 V_UNION(A, boolVal)
-#define V_BOOLREF(A)	 V_UNION(A, pboolVal)
-#define V_UNKNOWN(A)	 V_UNION(A, punkVal)
-#define V_UNKNOWNREF(A)  V_UNION(A, ppunkVal)
-#define V_VARIANTREF(A)  V_UNION(A, pvarVal)
-#define V_ARRAY(A)		 V_UNION(A, parray)
-#define V_ARRAYREF(A)	 V_UNION(A, pparray)
-#define V_BYREF(A)		 V_UNION(A, byref)
-#define V_DECIMALREF(A)  V_UNION(A, pdecVal)
-#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
-#define V_DECIMAL(A)    ((A)->n1.decVal)
-#else
-#define V_DECIMAL(A)    ((A)->decVal)
-#endif
+HRESULT WINAPI RegisterActiveObject(LPUNKNOWN,REFCLSID,DWORD,LPDWORD);
+HRESULT WINAPI RevokeActiveObject(DWORD,LPVOID);
+HRESULT WINAPI GetActiveObject(REFCLSID,LPVOID,LPUNKNOWN*);
+
+/* IRecordInfo helpers */
+HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo*,IRecordInfo**);
+HRESULT WINAPI GetRecordInfoFromGuids(REFGUID,ULONG,ULONG,LCID,REFGUID,IRecordInfo**);
 
 /*
- * VARIANT API
+ * Variants
  */
+
+/* Macros for accessing the fields of the VARIANT type */
+#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
+#define V_UNION(A,B) ((A)->n1.n2.n3.B)
+#define V_VT(A)      ((A)->n1.n2.vt)
+#else
+#define V_UNION(A,B) ((A)->B)
+#define V_VT(A)      ((A)->vt)
+#endif
+
+#define V_ISBYREF(A)  (V_VT(A) & VT_BYREF)
+#define V_ISARRAY(A)  (V_VT(A) & VT_ARRAY)
+#define V_ISVECTOR(A) (V_VT(A) & VT_VECTOR)
+#define V_NONE(A)     V_I2(A)
+
+#define V_ARRAY(A)       V_UNION(A,parray)
+#define V_ARRAYREF(A)    V_UNION(A,pparray)
+#define V_BOOL(A)        V_UNION(A,boolVal)
+#define V_BOOLREF(A)     V_UNION(A,pboolVal)
+#define V_BSTR(A)        V_UNION(A,bstrVal)
+#define V_BSTRREF(A)     V_UNION(A,pbstrVal)
+#define V_BYREF(A)       V_UNION(A,byref)
+#define V_CY(A)          V_UNION(A,cyVal)
+#define V_CYREF(A)       V_UNION(A,pcyVal)
+#define V_DATE(A)        V_UNION(A,date)
+#define V_DATEREF(A)     V_UNION(A,pdate)
+#if (__STDC__ && !defined(_FORCENAMELESSUNION)) || defined(NONAMELESSUNION)
+#define V_DECIMAL(A)     ((A)->n1.decVal)
+#else
+#define V_DECIMAL(A)     ((A)->decVal)
+#endif
+#define V_DECIMALREF(A)  V_UNION(A,pdecVal)
+#define V_DISPATCH(A)    V_UNION(A,pdispVal)
+#define V_DISPATCHREF(A) V_UNION(A,ppdispVal)
+#define V_ERROR(A)       V_UNION(A,scode)
+#define V_ERRORREF(A)    V_UNION(A,pscode)
+#define V_I1(A)          V_UNION(A,cVal)
+#define V_I1REF(A)       V_UNION(A,pcVal)
+#define V_I2(A)          V_UNION(A,iVal)
+#define V_I2REF(A)       V_UNION(A,piVal)
+#define V_I4(A)          V_UNION(A,lVal)
+#define V_I4REF(A)       V_UNION(A,plVal)
+#define V_I8(A)          V_UNION(A,llVal)
+#define V_I8REF(A)       V_UNION(A,pllVal)
+#define V_INT(A)         V_UNION(A,intVal)
+#define V_INTREF(A)      V_UNION(A,pintVal)
+#ifdef _WIN64
+#define V_INT_PTR(A)     V_I8(A)
+#define V_INT_PTRREF(A)  V_I8REF(A)
+#else
+#define V_INT_PTR(A)     V_I4(A)
+#define V_INT_PTRREF(A)  V_I4REF(A)
+#endif
+#define V_R4(A)          V_UNION(A,fltVal)
+#define V_R4REF(A)       V_UNION(A,pfltVal)
+#define V_R8(A)          V_UNION(A,dblVal)
+#define V_R8REF(A)       V_UNION(A,pdblVal)
+#define V_UINT(A)        V_UNION(A,uintVal)
+#define V_UINTREF(A)     V_UNION(A,puintVal)
+#define V_UI1(A)         V_UNION(A,bVal)
+#define V_UI1REF(A)      V_UNION(A,pbVal)
+#define V_UI2(A)         V_UNION(A,uiVal)
+#define V_UI2REF(A)      V_UNION(A,puiVal)
+#define V_UI4(A)         V_UNION(A,ulVal)
+#define V_UI4REF(A)      V_UNION(A,pulVal)
+#define V_UI8(A)         V_UNION(A,ullVal)
+#define V_UI8REF(A)      V_UNION(A,pullVal)
+#ifdef _WIN64
+#define V_UINT_PTR(A)    V_UI8(A)
+#define V_UINT_PTRREF(A) V_UI8REF(A)
+#else
+#define V_UINT_PTR(A)    V_UI4(A)
+#define V_UINT_PTRREF(A) V_UI4REF(A)
+#endif
+#define V_UNKNOWN(A)     V_UNION(A,punkVal)
+#define V_UNKNOWNREF(A)  V_UNION(A,ppunkVal)
+#define V_VARIANTREF(A)  V_UNION(A,pvarVal)
 
 void    WINAPI VariantInit(VARIANT*);
 HRESULT WINAPI VariantClear(VARIANT*);
@@ -159,62 +187,40 @@ HRESULT WINAPI VariantCopyInd(VARIANT*,VARIANT*);
 HRESULT WINAPI VariantChangeType(VARIANT*,VARIANT*,USHORT,VARTYPE);
 HRESULT WINAPI VariantChangeTypeEx(VARIANT*,VARIANT*,LCID,USHORT,VARTYPE);
 
-/*
- * These flags are used for the VariantChangeType and VariantChangeTypeEx APIs.
- */
+/* VariantChangeType/VariantChangeTypeEx flags */
+#define VARIANT_NOVALUEPROP        0x01 /* Don't get the default value property from IDispatch */
+#define VARIANT_ALPHABOOL          0x02 /* Coerce to "True"|"False" instead of "-1"|"0" */
+#define VARIANT_NOUSEROVERRIDE     0x04 /* Pass LOCALE_NOUSEROVERRIDE to low level conversions */
+#define VARIANT_CALENDAR_HIJRI     0x08 /* Use the Hijri calendar */
+#define VARIANT_LOCALBOOL          0x10 /* Like VARIANT_ALPHABOOL, but use localised text */
+#define VARIANT_CALENDAR_THAI      0x20 /* Use the Thai buddhist calendar */
+#define VARIANT_CALENDAR_GREGORIAN 0x40 /* Use the Gregorian calendar */
+#define VARIANT_USE_NLS            0x80 /* Format result using NLS calls */
 
 /*
- * This one is of general use.
- */
-#define VARIANT_NOVALUEPROP    0x1
-/*
- * This one is used for conversions of VT_BOOL to VT_BSTR,
- * the API will convert to "True"|"False" instead of "-1"|"0".
- */
-#define VARIANT_ALPHABOOL      0x2
-/*
- * This one is used for conversions to or from a VT_BSTR string,
- * it passes LOCALE_NOUSEROVERRIDE to the core (low-level) coercion routines.
- * This means it will use the system default locale settings instead of custom
- * local settings.
- */
-#define VARIANT_NOUSEROVERRIDE 0x4
-
-/*
- * This one is used for conversions of VT_BOOL to VT_BSTR,
- * Convert to the localised text of "True"|"False" instead of "-1"|"0".
- */
-#define VARIANT_LOCALBOOL      0x10
-
-/*
- * Alternate calendar support.
- */
-#define VARIANT_CALENDAR_HIJRI 0x08
-#define VARIANT_CALENDAR_THAI  0x20
-#define VARIANT_CALENDAR_GREGORIAN 0x40
-
-/*
- * Use NLS calls in conversion
- */
-#define VARIANT_USE_NLS        0x80
-
-/*
- * Convert between SafeArray vectors and BSTR's
- */
-HRESULT WINAPI VectorFromBstr(BSTR,SAFEARRAY**);
-HRESULT WINAPI BstrFromVector(SAFEARRAY*,BSTR*);
-
-/*
- * VARTYPE Coercion API
+ * Low level Variant coercion functions
  */
 
-/* Omits the date portion and return only the time value.
- */
-#define VAR_TIMEVALUEONLY	((DWORD)0x00000001)
-/* Omits the time portion and return only the date value.
- */
-#define VAR_DATEVALUEONLY	((DWORD)0x00000002)
+#define VT_HARDTYPE VT_RESERVED /* Don't coerce this variant when comparing it to others */
 
+/* Flags for low level coercions. LOCALE_ flags can also be passed */
+#define VAR_TIMEVALUEONLY       0x001 /* Ignore date portion of VT_DATE */
+#define VAR_DATEVALUEONLY       0x002 /* Ignore time portion of VT_DATE */
+#define VAR_VALIDDATE           0x004
+#define VAR_CALENDAR_HIJRI      0x008 /* Use the Hijri calender */
+#define VAR_LOCALBOOL           0x010 /* VT_BOOL<->VT_BSTR: Use localised boolean text */
+#define VAR_FORMAT_NOSUBSTITUTE 0x020 /* Don't change format strings for un-coercable types */
+#define VAR_FOURDIGITYEARS      0x040 /* Always print years with 4 digits */
+#define VAR_CALENDAR_THAI       0x080 /* Use the Thai buddhist calendar */
+#define VAR_CALENDAR_GREGORIAN  0x100 /* Use the Gregorian calendar */
+
+#ifndef LOCALE_USE_NLS
+/* This is missing from native winnls.h, but may be added at some point */
+#define LOCALE_USE_NLS          0x10000000
+#endif
+
+#define VTDATEGRE_MIN -657434 /* Minimum possible Gregorian date: 1/1/100 */
+#define VTDATEGRE_MAX 2958465 /* Maximum possible Gregorian date: 31/12/9999 */
 
 HRESULT WINAPI VarUI1FromI2(SHORT,BYTE*);
 HRESULT WINAPI VarUI1FromI4(LONG,BYTE*);
@@ -462,70 +468,70 @@ HRESULT WINAPI VarDecFromDisp(IDispatch*,LCID,DECIMAL*);
 #define VarUI4FromUI4( in,pOut ) ( *(pOut) =  (in) )
 #define VarI4FromI4( in,pOut )   ( *(pOut) =  (in) )
 
-#define VarUI1FromInt		VarUI1FromI4
-#define VarUI1FromUint	VarUI1FromUI4
-#define VarI2FromInt		VarI2FromI4
-#define VarI2FromUint		VarI2FromUI4
-#define VarI4FromInt		VarI4FromI4
-#define VarI4FromUint		VarI4FromUI4
-#define VarI8FromInt		VarI8FromI4
-#define VarI8FromUint		VarI8FromUI4
-#define VarR4FromInt		VarR4FromI4
-#define VarR4FromUint		VarR4FromUI4
-#define VarR8FromInt		VarR8FromI4
-#define VarR8FromUint		VarR8FromUI4
-#define VarDateFromInt	VarDateFromI4
-#define VarDateFromUint	VarDateFromUI4
-#define VarCyFromInt		VarCyFromI4
-#define VarCyFromUint		VarCyFromUI4
-#define VarBstrFromInt	VarBstrFromI4
-#define VarBstrFromUint	VarBstrFromUI4
-#define VarBoolFromInt	VarBoolFromI4
-#define VarBoolFromUint	VarBoolFromUI4
-#define VarI1FromInt		VarI1FromI4
-#define VarI1FromUint		VarI1FromUI4
-#define VarUI2FromInt		VarUI2FromI4
-#define VarUI2FromUint	VarUI2FromUI4
-#define VarUI4FromInt		VarUI4FromI4
-#define VarUI4FromUint	VarUI4FromUI4
-#define VarUI8FromInt		VarUI8FromI4
-#define VarUI8FromUint	VarUI8FromUI4
-#define VarDecFromInt		VarDecFromI4
-#define VarDecFromUint	VarDecFromUI4
-#define VarIntFromUI1		VarI4FromUI1
-#define VarIntFromI2		VarI4FromI2
-#define VarIntFromI4		VarI4FromI4
-#define VarIntFromI8		VarI4FromI8
-#define VarIntFromR4		VarI4FromR4
-#define VarIntFromR8		VarI4FromR8
-#define VarIntFromDate	VarI4FromDate
-#define VarIntFromCy		VarI4FromCy
-#define VarIntFromStr		VarI4FromStr
-#define VarIntFromDisp	VarI4FromDisp
-#define VarIntFromBool	VarI4FromBool
-#define VarIntFromI1		VarI4FromI1
-#define VarIntFromUI2		VarI4FromUI2
-#define VarIntFromUI4		VarI4FromUI4
-#define VarIntFromUI8		VarI4FromUI8
-#define VarIntFromDec		VarI4FromDec
-#define VarIntFromUint	VarI4FromUI4
-#define VarUintFromUI1	VarUI4FromUI1
-#define VarUintFromI2		VarUI4FromI2
-#define VarUintFromI4		VarUI4FromI4
-#define VarUintFromI8		VarUI4FromI8
-#define VarUintFromR4		VarUI4FromR4
-#define VarUintFromR8		VarUI4FromR8
-#define VarUintFromDate	VarUI4FromDate
-#define VarUintFromCy		VarUI4FromCy
-#define VarUintFromStr	VarUI4FromStr
-#define VarUintFromDisp	VarUI4FromDisp
-#define VarUintFromBool	VarUI4FromBool
-#define VarUintFromI1		VarUI4FromI1
-#define VarUintFromUI2	VarUI4FromUI2
-#define VarUintFromUI4	VarUI4FromUI4
-#define VarUintFromUI8	VarUI4FromUI8
-#define VarUintFromDec	VarUI4FromDec
-#define VarUintFromInt	VarUI4FromI4
+#define VarUI1FromInt   VarUI1FromI4
+#define VarUI1FromUint  VarUI1FromUI4
+#define VarI2FromInt    VarI2FromI4
+#define VarI2FromUint   VarI2FromUI4
+#define VarI4FromInt    VarI4FromI4
+#define VarI4FromUint   VarI4FromUI4
+#define VarI8FromInt    VarI8FromI4
+#define VarI8FromUint   VarI8FromUI4
+#define VarR4FromInt    VarR4FromI4
+#define VarR4FromUint   VarR4FromUI4
+#define VarR8FromInt    VarR8FromI4
+#define VarR8FromUint   VarR8FromUI4
+#define VarDateFromInt  VarDateFromI4
+#define VarDateFromUint VarDateFromUI4
+#define VarCyFromInt    VarCyFromI4
+#define VarCyFromUint   VarCyFromUI4
+#define VarBstrFromInt  VarBstrFromI4
+#define VarBstrFromUint VarBstrFromUI4
+#define VarBoolFromInt  VarBoolFromI4
+#define VarBoolFromUint VarBoolFromUI4
+#define VarI1FromInt    VarI1FromI4
+#define VarI1FromUint   VarI1FromUI4
+#define VarUI2FromInt   VarUI2FromI4
+#define VarUI2FromUint  VarUI2FromUI4
+#define VarUI4FromInt   VarUI4FromI4
+#define VarUI4FromUint  VarUI4FromUI4
+#define VarUI8FromInt   VarUI8FromI4
+#define VarUI8FromUint  VarUI8FromUI4
+#define VarDecFromInt   VarDecFromI4
+#define VarDecFromUint  VarDecFromUI4
+#define VarIntFromUI1   VarI4FromUI1
+#define VarIntFromI2    VarI4FromI2
+#define VarIntFromI4    VarI4FromI4
+#define VarIntFromI8    VarI4FromI8
+#define VarIntFromR4    VarI4FromR4
+#define VarIntFromR8    VarI4FromR8
+#define VarIntFromDate  VarI4FromDate
+#define VarIntFromCy    VarI4FromCy
+#define VarIntFromStr   VarI4FromStr
+#define VarIntFromDisp  VarI4FromDisp
+#define VarIntFromBool  VarI4FromBool
+#define VarIntFromI1    VarI4FromI1
+#define VarIntFromUI2   VarI4FromUI2
+#define VarIntFromUI4   VarI4FromUI4
+#define VarIntFromUI8   VarI4FromUI8
+#define VarIntFromDec   VarI4FromDec
+#define VarIntFromUint  VarI4FromUI4
+#define VarUintFromUI1  VarUI4FromUI1
+#define VarUintFromI2   VarUI4FromI2
+#define VarUintFromI4   VarUI4FromI4
+#define VarUintFromI8   VarUI4FromI8
+#define VarUintFromR4   VarUI4FromR4
+#define VarUintFromR8   VarUI4FromR8
+#define VarUintFromDate VarUI4FromDate
+#define VarUintFromCy   VarUI4FromCy
+#define VarUintFromStr  VarUI4FromStr
+#define VarUintFromDisp VarUI4FromDisp
+#define VarUintFromBool VarUI4FromBool
+#define VarUintFromI1   VarUI4FromI1
+#define VarUintFromUI2  VarUI4FromUI2
+#define VarUintFromUI4  VarUI4FromUI4
+#define VarUintFromUI8  VarUI4FromUI8
+#define VarUintFromDec  VarUI4FromDec
+#define VarUintFromInt  VarUI4FromI4
 
 /*
  * Variant Math operations
@@ -534,6 +540,11 @@ HRESULT WINAPI VarDecFromDisp(IDispatch*,LCID,DECIMAL*);
 #define VARCMP_EQ   1
 #define VARCMP_GT   2
 #define VARCMP_NULL 3
+
+HRESULT WINAPI VarR4CmpR8(float,double);
+
+HRESULT WINAPI VarR8Pow(double,double,double*);
+HRESULT WINAPI VarR8Round(double,int,double*);
 
 HRESULT WINAPI VarDecAbs(const DECIMAL*,DECIMAL*);
 HRESULT WINAPI VarDecAdd(const DECIMAL*,const DECIMAL*,DECIMAL*);
@@ -584,28 +595,113 @@ HRESULT WINAPI VarRound(LPVARIANT,int,LPVARIANT);
 
 HRESULT WINAPI VarCmp(LPVARIANT,LPVARIANT,LCID,ULONG);
 
+HRESULT WINAPI VarBstrCmp(BSTR,BSTR,LCID,ULONG);
+HRESULT WINAPI VarBstrCat(BSTR,BSTR,BSTR*);
 
 
-typedef struct tagPARAMDATA {
-    OLECHAR * szName;   /* parameter name */
-    VARTYPE vt;         /* parameter type */
-} PARAMDATA, * LPPARAMDATA;
+typedef struct {
+    SYSTEMTIME st;
+    USHORT wDayOfYear;
+} UDATE;
 
-typedef struct tagMETHODDATA {
-    OLECHAR * szName;   /* method name */
-    PARAMDATA * ppdata; /* pointer to an array of PARAMDATAs */
-    DISPID dispid;      /* method ID */
-    UINT iMeth;         /* method index */
-    CALLCONV cc;        /* calling convention */
-    UINT cArgs;         /* count of arguments */
-    WORD wFlags;        /* same wFlags as on IDispatch::Invoke() */
-    VARTYPE vtReturn;
-} METHODDATA, * LPMETHODDATA;
+typedef struct
+{
+    INT   cDig;       /* Number of parsed digits */
+    ULONG dwInFlags;  /* Acceptable state of the input string (NUMPRS_ flags) */
+    ULONG dwOutFlags; /* Parsed state of the output string (NUMPRS_ flags) */
+    INT   cchUsed;    /* Number of characters parsed from input string */
+    INT   nBaseShift; /* Base of the number (but apparently unused) */
+    INT   nPwr10;     /* Scale of the number in powers of 10 */
+} NUMPARSE;
 
-typedef struct tagINTERFACEDATA {
-    METHODDATA * pmethdata;  /* pointer to an array of METHODDATAs */
-    UINT         cMembers;   /* count of members */
-} INTERFACEDATA, * LPINTERFACEDATA;
+#define NUMPRS_LEADING_WHITE  0x00001 /* Leading whitespace */
+#define NUMPRS_TRAILING_WHITE 0x00002 /* Trailing whitespace */
+#define NUMPRS_LEADING_PLUS   0x00004 /* Leading '+' sign */
+#define NUMPRS_TRAILING_PLUS  0x00008 /* Trailing '+' sign */
+#define NUMPRS_LEADING_MINUS  0x00010 /* Leading '-' sign */
+#define NUMPRS_TRAILING_MINUS 0x00020 /* Trailing '-' sign */
+#define NUMPRS_HEX_OCT        0x00040 /* Octal number (with a leading 0) */
+#define NUMPRS_PARENS         0x00080 /* Parentheses for negative numbers */
+#define NUMPRS_DECIMAL        0x00100 /* Decimal seperator */
+#define NUMPRS_THOUSANDS      0x00200 /* Thousands seperator */
+#define NUMPRS_CURRENCY       0x00400 /* Currency symbol */
+#define NUMPRS_EXPONENT       0x00800 /* Exponent (e.g. "e-14") */
+#define NUMPRS_USE_ALL        0x01000 /* Parse the entire string */
+#define NUMPRS_STD            0x01FFF /* Standard flags for internal coercions (All of the above) */
+#define NUMPRS_NEG            0x10000 /* Number is negative (dwOutFlags only) */
+#define NUMPRS_INEXACT        0x20000 /* Number is represented inexactly (dwOutFlags only) */
+
+#define VTBIT_I1      (1 << VT_I1)
+#define VTBIT_UI1     (1 << VT_UI1)
+#define VTBIT_I2      (1 << VT_I2)
+#define VTBIT_UI2     (1 << VT_UI2)
+#define VTBIT_I4      (1 << VT_I4)
+#define VTBIT_UI4     (1 << VT_UI4)
+#define VTBIT_I8      (1 << VT_I8)
+#define VTBIT_UI8     (1 << VT_UI8)
+#define VTBIT_R4      (1 << VT_R4)
+#define VTBIT_R8      (1 << VT_R8)
+#define VTBIT_CY      (1 << VT_CY)
+#define VTBIT_DECIMAL (1 << VT_DECIMAL)
+
+HRESULT WINAPI VarParseNumFromStr(OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
+HRESULT WINAPI VarNumFromParseNum(NUMPARSE*,BYTE*,ULONG,VARIANT*);
+
+INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,double*);
+INT WINAPI VariantTimeToDosDateTime(double,USHORT*,USHORT*);
+
+INT WINAPI VariantTimeToSystemTime(DOUBLE,LPSYSTEMTIME);
+INT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME,double*);
+
+HRESULT WINAPI VarDateFromUdate(UDATE*,ULONG,DATE*);
+HRESULT WINAPI VarDateFromUdateEx(UDATE*,LCID,ULONG,DATE*);
+HRESULT WINAPI VarUdateFromDate(DATE,ULONG,UDATE*);
+
+/* Variant formatting */
+HRESULT WINAPI VarWeekdayName(int,int,int,ULONG,BSTR*);
+HRESULT WINAPI VarMonthName(int,int,ULONG,BSTR*);
+HRESULT WINAPI GetAltMonthNames(LCID,LPOLESTR**);
+
+HRESULT WINAPI VarFormat(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
+HRESULT WINAPI VarFormatCurrency(LPVARIANT,int,int,int,int,ULONG,BSTR*);
+HRESULT WINAPI VarFormatDateTime(LPVARIANT,int,ULONG,BSTR*);
+HRESULT WINAPI VarFormatNumber(LPVARIANT,int,int,int,int,ULONG,BSTR*);
+HRESULT WINAPI VarFormatPercent(LPVARIANT,int,int,int,int,ULONG,BSTR*);
+
+HRESULT WINAPI VarFormatFromTokens(LPVARIANT,LPOLESTR,LPBYTE,ULONG,BSTR*,LCID);
+HRESULT WINAPI VarTokenizeFormatString(LPOLESTR,LPBYTE,int,int,int,LCID,int*);
+
+
+/*
+ * IDispatch types and helper functions
+ */
+
+/* A structure describing a single parameter to a com object method. */
+typedef struct tagPARAMDATA
+{
+    OLECHAR *szName; /* Name of Parameter */
+    VARTYPE  vt;     /* Type of Parameter */
+} PARAMDATA, *LPPARAMDATA;
+
+/* A structure describing a single method of a com object. */
+typedef struct tagMETHODDATA
+{
+    OLECHAR   *szName;   /* Name of method */
+    PARAMDATA *ppdata;   /* Parameters of the method */
+    DISPID     dispid;   /* Id of the method */
+    UINT       iMeth;    /* Vtable index of the method */
+    CALLCONV   cc;       /* Calling convention of the method */
+    UINT       cArgs;    /* Number of parameters in the method */
+    WORD       wFlags;   /* Type of the method (DISPATCH_ flags) */
+    VARTYPE    vtReturn; /* Type of the return value */
+} METHODDATA, *LPMETHODDATA;
+
+/* Structure describing a single com object */
+typedef struct tagINTERFACEDATA
+{
+    METHODDATA *pmethdata;  /* Methods of the object */
+    UINT        cMembers;   /* Number of methods in the object */
+} INTERFACEDATA, *LPINTERFACEDATA;
 
 typedef enum tagREGKIND
 {
@@ -613,66 +709,6 @@ typedef enum tagREGKIND
     REGKIND_REGISTER,
     REGKIND_NONE
 } REGKIND;
-
-typedef struct {
-    SYSTEMTIME st;
-    USHORT wDayOfYear;
-} UDATE;
-
-typedef struct {
-    INT   cDig;
-    ULONG dwInFlags;
-    ULONG dwOutFlags;
-    INT   cchUsed;
-    INT   nBaseShift;
-    INT   nPwr10;
-} NUMPARSE;
-
-#define NUMPRS_LEADING_WHITE    0x0001
-#define NUMPRS_TRAILING_WHITE   0x0002
-#define NUMPRS_LEADING_PLUS     0x0004
-#define NUMPRS_TRAILING_PLUS    0x0008
-#define NUMPRS_LEADING_MINUS    0x0010
-#define NUMPRS_TRAILING_MINUS   0x0020
-#define NUMPRS_HEX_OCT          0x0040
-#define NUMPRS_PARENS           0x0080
-#define NUMPRS_DECIMAL          0x0100
-#define NUMPRS_THOUSANDS        0x0200
-#define NUMPRS_CURRENCY         0x0400
-#define NUMPRS_EXPONENT         0x0800
-#define NUMPRS_USE_ALL          0x1000
-#define NUMPRS_STD              0x1FFF
-
-#define NUMPRS_NEG              0x10000
-#define NUMPRS_INEXACT          0x20000
-
-#define VTBIT_I1        (1 << VT_I1)
-#define VTBIT_UI1       (1 << VT_UI1)
-#define VTBIT_I2        (1 << VT_I2)
-#define VTBIT_UI2       (1 << VT_UI2)
-#define VTBIT_I4        (1 << VT_I4)
-#define VTBIT_UI4       (1 << VT_UI4)
-#define VTBIT_I8        (1 << VT_I8)
-#define VTBIT_UI8       (1 << VT_UI8)
-#define VTBIT_R4        (1 << VT_R4)
-#define VTBIT_R8        (1 << VT_R8)
-#define VTBIT_CY        (1 << VT_CY)
-#define VTBIT_DECIMAL   (1 << VT_DECIMAL)
-
-HRESULT WINAPI VarParseNumFromStr(OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
-HRESULT WINAPI VarNumFromParseNum(NUMPARSE*,BYTE*,ULONG,VARIANT*);
-
-INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
-INT WINAPI VariantTimeToDosDateTime(DATE,USHORT*,USHORT*);
-
-HRESULT WINAPI VariantTimeToSystemTime(DOUBLE,LPSYSTEMTIME);
-HRESULT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME,double*);
-
-HRESULT WINAPI VarDateFromUdate(UDATE*,ULONG,DATE*);
-HRESULT WINAPI VarUdateFromDate(DATE,ULONG,UDATE*);
-
-ULONG WINAPI LHashValOfNameSysA(SYSKIND,LCID,LPCSTR);
-ULONG WINAPI LHashValOfNameSys (SYSKIND,LCID,LPCOLESTR);
 
 HRESULT WINAPI DispGetParam(DISPPARAMS*,UINT,VARTYPE,VARIANT*,UINT*);
 HRESULT WINAPI DispGetIDsOfNames(ITypeInfo*,OLECHAR**,UINT,DISPID*);
@@ -689,12 +725,24 @@ HRESULT WINAPI GetActiveObject(REFCLSID,void*,IUnknown**);
  * TypeLib API
  */
 
-#define MEMBERID_NIL DISPID_UNKNOWN
+ULONG WINAPI LHashValOfNameSysA(SYSKIND,LCID,LPCSTR);
+ULONG WINAPI LHashValOfNameSys(SYSKIND,LCID,LPCOLESTR);
+
+#define LHashValOfName(lcid,name) LHashValOfNameSys(SYS_WIN32,lcid,name)
+#define WHashValOfLHashVal(hash) ((USHORT)((hash) & 0xffff))
+#define IsHashValCompatible(hash1,hash2) ((hash1) & 0xff0000 == (hash2) & 0xff0000)
+
+#define MEMBERID_NIL   DISPID_UNKNOWN
+#define ID_DEFAULTINST -2
 
 #define DISPATCH_METHOD         0x1
 #define DISPATCH_PROPERTYGET    0x2
 #define DISPATCH_PROPERTYPUT    0x4
 #define DISPATCH_PROPERTYPUTREF 0x8
+
+#define LOAD_TLB_AS_32BIT       0x20
+#define LOAD_TLB_AS_64BIT       0x40
+#define MASK_TO_RESET_TLB_BITS  ~(LOAD_TLB_AS_32BIT|LOAD_TLB_AS_64BIT)
 
 HRESULT WINAPI CreateTypeLib(SYSKIND,const OLECHAR*,ICreateTypeLib**);
 HRESULT WINAPI CreateTypeLib2(SYSKIND,LPCOLESTR,ICreateTypeLib2**);
@@ -704,6 +752,8 @@ HRESULT WINAPI LoadTypeLibEx(LPCOLESTR,REGKIND,ITypeLib**);
 HRESULT WINAPI QueryPathOfRegTypeLib(REFGUID,WORD,WORD,LCID,LPBSTR);
 HRESULT WINAPI RegisterTypeLib(ITypeLib*,OLECHAR*,OLECHAR*);
 HRESULT WINAPI UnRegisterTypeLib(REFGUID,WORD,WORD,LCID,SYSKIND);
+
+VOID WINAPI ClearCustData(LPCUSTDATA);
 
 #ifdef __cplusplus
 } /* extern "C" */
