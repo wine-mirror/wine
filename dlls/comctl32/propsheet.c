@@ -113,6 +113,7 @@ static void PROPSHEET_SetTitleA(HWND hwndDlg, DWORD dwStyle, LPCSTR lpszText);
 static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg);
 static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
                                 int index,
+                                int skipdir,
                                 HPROPSHEETPAGE hpage);
 static LRESULT PROPSHEET_QuerySiblings(HWND hwndDlg,
                                        WPARAM wParam, LPARAM lParam);
@@ -1092,32 +1093,18 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
 {
   if (index == psInfo->active_page)
-    {
+  {
       if (GetTopWindow(hwndDlg) != psInfo->proppage[index].hwndPage)
           SetWindowPos(psInfo->proppage[index].hwndPage, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-    return TRUE;
-    }
+      return TRUE;
+  }
 
   if (psInfo->proppage[index].hwndPage == 0)
   {
      LPCPROPSHEETPAGEA ppshpage;
-     PSHNOTIFY psn;
 
      ppshpage = (LPCPROPSHEETPAGEA)psInfo->proppage[index].hpage;
      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
-
-     psn.hdr.hwndFrom = hwndDlg;
-     psn.hdr.code     = PSN_SETACTIVE;
-     psn.hdr.idFrom   = 0;
-     psn.lParam       = 0;
-
-     /* Send the notification before showing the page. */
-     SendMessageA(psInfo->proppage[index].hwndPage,
-                  WM_NOTIFY, 0, (LPARAM) &psn);
-
-     /*
-      * TODO: check return value. 
-      */
   }
 
   if (psInfo->active_page != -1)
@@ -1150,6 +1137,7 @@ static BOOL PROPSHEET_Back(HWND hwndDlg)
   HWND hwndPage;
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
                                                     PropSheetInfoStr);
+  LRESULT result;
 
   if (psInfo->active_page < 0)
      return FALSE;
@@ -1161,7 +1149,8 @@ static BOOL PROPSHEET_Back(HWND hwndDlg)
  
   hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
 
-  if (SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn) == -1)
+  result = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
+  if (result == -1)
     return FALSE;
 
   if (psInfo->active_page > 0)
@@ -1169,7 +1158,7 @@ static BOOL PROPSHEET_Back(HWND hwndDlg)
      res = PROPSHEET_CanSetCurSel(hwndDlg);
      if(res != FALSE)
      {
-       res = PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page - 1, 0);
+       res = PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page - 1, -1, 0);
      }
   }
 
@@ -1198,15 +1187,12 @@ static BOOL PROPSHEET_Next(HWND hwndDlg)
   hwndPage = psInfo->proppage[psInfo->active_page].hwndPage;
 
   msgResult = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
-
-  TRACE("msg result %ld\n", msgResult);
-
   if (msgResult == -1)
     return FALSE;
 
   if(PROPSHEET_CanSetCurSel(hwndDlg) != FALSE)
   {
-    PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page + 1, 0);
+    PROPSHEET_SetCurSel(hwndDlg, psInfo->active_page + 1, 1, 0);
   }
 
   return TRUE;
@@ -1512,11 +1498,11 @@ static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
  */
 static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
                                 int index,
-                                HPROPSHEETPAGE hpage)
+				int skipdir,
+                                HPROPSHEETPAGE hpage
+				)
 {
-  PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
-                                                    PropSheetInfoStr);
-  HWND hwndPage;
+  PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg, PropSheetInfoStr);
   HWND hwndHelp  = GetDlgItem(hwndDlg, IDHELP);
 
   /* hpage takes precedence over index */
@@ -1529,14 +1515,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     return FALSE;
   }
 
-  hwndPage = psInfo->proppage[index].hwndPage;
-
-  /*
-   * Notify the new page if it's already created.
-   * If not it will get created and notified in PROPSHEET_ShowPage.
-   */
-  if (hwndPage)
-  {
+  while (1) {
     int result;
     PSHNOTIFY psn;
 
@@ -1545,13 +1524,28 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     psn.hdr.idFrom   = 0;
     psn.lParam       = 0;
 
-    result = SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
+    if (!psInfo->proppage[index].hwndPage) {
+      LPCPROPSHEETPAGEA ppshpage = (LPCPROPSHEETPAGEA)psInfo->proppage[index].hpage;
+      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
+    }
 
-    /*
-     * TODO: check return value. 
-     */
+    result = SendMessageA(psInfo->proppage[index].hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
+    if (!result)
+      break;
+    if (result == -1) {
+      index+=skipdir;
+      if (index < 0) {
+	index = 0;
+	FIXME("Tried to skip before first property sheet page!\n");
+	break;
+      }
+      if (index >= psInfo->nPages) {
+	FIXME("Tried to skip after last property sheet page!\n");
+	index = psInfo->nPages-1;
+	break;
+      }
+    }
   }
-
   /*
    * Display the new page.
    */
@@ -1691,8 +1685,7 @@ static BOOL PROPSHEET_AddPage(HWND hwndDlg,
 
   /* If it is the only page - show it */
   if(psInfo->nPages == 1)
-     PROPSHEET_ShowPage(hwndDlg, 0, psInfo);
-
+     PROPSHEET_SetCurSel(hwndDlg, 0, 1, 0);
   return TRUE;
 }
 
@@ -1739,12 +1732,12 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
       if (index > 0)
       {
         /* activate previous page  */
-        PROPSHEET_ShowPage(hwndDlg, index - 1, psInfo);
+        PROPSHEET_SetCurSel(hwndDlg, index - 1, -1, 0);
       }
       else
       {
         /* activate the next page */
-        PROPSHEET_ShowPage(hwndDlg, index + 1, psInfo);
+        PROPSHEET_SetCurSel(hwndDlg, index + 1, 1, 0);
         psInfo->active_page = index;
       }
     }
@@ -2059,7 +2052,7 @@ static BOOL PROPSHEET_IsDialogMessage(HWND hwnd, LPMSG lpMsg)
             else if (new_page >= psInfo->nPages)
                new_page = 0;
 
-            PROPSHEET_SetCurSel(hwnd, new_page, 0);
+            PROPSHEET_SetCurSel(hwnd, new_page, 1, 0);
          }
 
          return TRUE;
@@ -2152,7 +2145,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       ppshpage = (LPCPROPSHEETPAGEA)psInfo->proppage[idx].hpage;
       psInfo->active_page = -1;
  
-      PROPSHEET_SetCurSel(hwnd, idx, psInfo->proppage[idx].hpage);
+      PROPSHEET_SetCurSel(hwnd, idx, 1, psInfo->proppage[idx].hpage);
 
       if (!(psInfo->ppshheader.dwFlags & PSH_WIZARD))
         SendMessageA(hwndTabCtrl, TCM_SETCURSEL, psInfo->active_page, 0);
@@ -2252,7 +2245,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if (pnmh->code == TCN_SELCHANGE)
       {
         int index = SendMessageA(pnmh->hwndFrom, TCM_GETCURSEL, 0, 0);
-        PROPSHEET_SetCurSel(hwnd, index, 0);
+        PROPSHEET_SetCurSel(hwnd, index, 1, 0);
       }
 
       if(pnmh->code == TCN_SELCHANGING)
@@ -2305,6 +2298,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       {
         msgResult = PROPSHEET_SetCurSel(hwnd,
                                        (int)wParam,
+				       1,
                                        (HPROPSHEETPAGE)lParam);
       }
 
