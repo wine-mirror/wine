@@ -2438,7 +2438,10 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
                                       RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW | RDW_ALLCHILDREN, 0 );
                 }
 		if( !wErase ) /* just update the nonclient area */
-		    wndPtr->flags |= WIN_NEEDS_NCPAINT; 
+                    // the previous command (wndPtr->flags |= WIN_NEEDS_NCPAINT)
+                    // was not enough. Absolutly need a non client update at this point
+                    // Cannot wait for the next WM_PAINT message, particularly in the menu-bar redrawing
+                    WIN_UpdateNCArea(wndPtr,TRUE);
 	      }
         }
 	uFlags |= SMC_NOPARENTERASE; /* X windows do not have eraseable parents */
