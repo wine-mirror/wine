@@ -110,18 +110,18 @@ typedef struct _SINGLE_LIST_ENTRY {
 
 /* The Win32 register context */
 
-#define CONTEXT_i386      0x00010000
-#define CONTEXT_i486      CONTEXT_i386
-#define CONTEXT_CONTROL   (CONTEXT_i386 | 0x0001) /* SS:SP, CS:IP, FLAGS, BP */
-#define CONTEXT_INTEGER   (CONTEXT_i386 | 0x0002) /* AX, BX, CX, DX, SI, DI */
-#define CONTEXT_SEGMENTS  (CONTEXT_i386 | 0x0004) /* DS, ES, FS, GS */
-#define CONTEXT_FLOATING_POINT  (CONTEXT_i386 | 0x0008L) /* 387 state */
-#define CONTEXT_DEBUG_REGISTERS (CONTEXT_i386 | 0x0010L) /* DB 0-3,6,7 */
-#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS)
+/* CONTEXT is the CPU-dependent context; it should be used        */
+/* wherever a platform-specific context is needed (e.g. exception */
+/* handling, Win32 register functions). */
+
+/* CONTEXT86 is the i386-specific context; it should be used     */
+/* wherever only a 386 context makes sense (e.g. DOS interrupts, */
+/* Win16 register functions), so that this code can be compiled  */
+/* on all platforms. */
 
 #define SIZE_OF_80387_REGISTERS      80
 
-typedef struct
+typedef struct _FLOATING_SAVE_AREA
 {
     DWORD   ControlWord;
     DWORD   StatusWord;
@@ -132,9 +132,9 @@ typedef struct
     DWORD   DataSelector;    
     BYTE    RegisterArea[SIZE_OF_80387_REGISTERS];
     DWORD   Cr0NpxState;
-} FLOATING_SAVE_AREA;
+} FLOATING_SAVE_AREA, *PFLOATING_SAVE_AREA;
 
-typedef struct
+typedef struct _CONTEXT86
 {
     DWORD   ContextFlags;
 
@@ -170,13 +170,148 @@ typedef struct
     DWORD   EFlags;
     DWORD   Esp;
     DWORD   SegSs;
-} CONTEXT, *PCONTEXT;
+} CONTEXT86;
 
+#define CONTEXT86_CONTROL   (CONTEXT_i386 | 0x0001) /* SS:SP, CS:IP, FLAGS, BP */
+#define CONTEXT86_INTEGER   (CONTEXT_i386 | 0x0002) /* AX, BX, CX, DX, SI, DI */
+#define CONTEXT86_SEGMENTS  (CONTEXT_i386 | 0x0004) /* DS, ES, FS, GS */
+#define CONTEXT86_FLOATING_POINT  (CONTEXT_i386 | 0x0008L) /* 387 state */
+#define CONTEXT86_DEBUG_REGISTERS (CONTEXT_i386 | 0x0010L) /* DB 0-3,6,7 */
+#define CONTEXT86_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS)
+
+/* i386 context definitions */
+#ifdef __i386__
+
+#define CONTEXT_X86       0x00010000
+#define CONTEXT_i386      CONTEXT_X86
+#define CONTEXT_i486      CONTEXT_X86
+
+#define CONTEXT_CONTROL         CONTEXT86_CONTROL
+#define CONTEXT_INTEGER         CONTEXT86_INTEGER
+#define CONTEXT_SEGMENTS        CONTEXT86_SEGMENTS
+#define CONTEXT_FLOATING_POINT  CONTEXT86_FLOATING_POINT
+#define CONTEXT_DEBUG_REGISTERS CONTEXT86_DEBUG_REGISTERS
+#define CONTEXT_FULL            CONTEXT86_FULL
+
+typedef CONTEXT86 CONTEXT;
+
+#endif  /* __i386__ */
+
+/* PowerPC context definitions (untested) */
+#ifdef __ppc__
+
+#define CONTEXT_CONTROL         0x0001
+#define CONTEXT_FLOATING_POINT  0x0002
+#define CONTEXT_INTEGER         0x0004
+#define CONTEXT_DEBUG_REGISTERS 0x0008
+#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_FLOATING_POINT | CONTEXT_INTEGER)
+
+typedef struct
+{
+    /* These are selected by CONTEXT_FLOATING_POINT */
+    double Fpr0;
+    double Fpr1;
+    double Fpr2;
+    double Fpr3;
+    double Fpr4;
+    double Fpr5;
+    double Fpr6;
+    double Fpr7;
+    double Fpr8;
+    double Fpr9;
+    double Fpr10;
+    double Fpr11;
+    double Fpr12;
+    double Fpr13;
+    double Fpr14;
+    double Fpr15;
+    double Fpr16;
+    double Fpr17;
+    double Fpr18;
+    double Fpr19;
+    double Fpr20;
+    double Fpr21;
+    double Fpr22;
+    double Fpr23;
+    double Fpr24;
+    double Fpr25;
+    double Fpr26;
+    double Fpr27;
+    double Fpr28;
+    double Fpr29;
+    double Fpr30;
+    double Fpr31;
+    double Fpscr;
+
+    /* These are selected by CONTEXT_INTEGER */
+    DWORD Gpr0;
+    DWORD Gpr1;
+    DWORD Gpr2;
+    DWORD Gpr3;
+    DWORD Gpr4;
+    DWORD Gpr5;
+    DWORD Gpr6;
+    DWORD Gpr7;
+    DWORD Gpr8;
+    DWORD Gpr9;
+    DWORD Gpr10;
+    DWORD Gpr11;
+    DWORD Gpr12;
+    DWORD Gpr13;
+    DWORD Gpr14;
+    DWORD Gpr15;
+    DWORD Gpr16;
+    DWORD Gpr17;
+    DWORD Gpr18;
+    DWORD Gpr19;
+    DWORD Gpr20;
+    DWORD Gpr21;
+    DWORD Gpr22;
+    DWORD Gpr23;
+    DWORD Gpr24;
+    DWORD Gpr25;
+    DWORD Gpr26;
+    DWORD Gpr27;
+    DWORD Gpr28;
+    DWORD Gpr29;
+    DWORD Gpr30;
+    DWORD Gpr31;
+
+    DWORD Cr;
+    DWORD Xer;
+
+    /* These are selected by CONTEXT_CONTROL */
+    DWORD Msr;
+    DWORD Iar;
+    DWORD Lr;
+    DWORD Ctr;
+
+    DWORD ContextFlags;
+    DWORD Fill[3];
+
+    /* These are selected by CONTEXT_DEBUG_REGISTERS */
+    DWORD Dr0;
+    DWORD Dr1;
+    DWORD Dr2;
+    DWORD Dr3;
+    DWORD Dr4;
+    DWORD Dr5;
+    DWORD Dr6;
+    DWORD Dr7;
+} CONTEXT;
+
+#endif  /* __ppc__ */
+
+#if !defined(CONTEXT_FULL) && !defined(RC_INVOKED)
+#error You need to define a CONTEXT for your CPU
+#endif
+
+typedef CONTEXT *PCONTEXT;
 typedef HANDLE *PHANDLE;
 
 #ifdef __WINE__
 
-/* Macros for easier access to context registers */
+/* Macros for easier access to i386 context registers */
 
 #define EAX_reg(context)     ((context)->Eax)
 #define EBX_reg(context)     ((context)->Ebx)
