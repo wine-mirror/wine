@@ -26,6 +26,8 @@
 #include "gdi.h"
 #include "heap.h"
 #include "keyboard.h"
+#include "mouse.h"
+#include "input.h"
 #include "miscemu.h"
 #include "options.h"
 #include "process.h"
@@ -89,22 +91,10 @@ BOOL32 WINAPI MAIN_KernelInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvR
 {
     static BOOL32 initDone = FALSE;
 
-    NE_MODULE *pModule;
     HMODULE16 hModule;
 
     if ( initDone ) return TRUE;
     initDone = TRUE;
-
-    /* Create and switch to initial task */
-    pModule = NE_GetPtr( GetModuleHandle16( "KERNEL32" ) );
-    if ( pModule )
-    {
-        THDB *thdb = THREAD_Current();
-        HINSTANCE16 hInstance = NE_CreateInstance( pModule, NULL, TRUE );
-        thdb->process->task = TASK_Create( thdb, pModule, hInstance, 0, FALSE );
-
-        TASK_StartTask( thdb->process->task );
-    }
 
     /* Initialize special KERNEL entry points */
     hModule = GetModuleHandle16( "KERNEL" );
@@ -211,9 +201,6 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
     /* Create the DCEs */
     DCE_Init();
 
-    /* Initialize keyboard */
-    if (!KEYBOARD_Init()) return FALSE;
-
     /* Initialize window procedures */
     if (!WINPROC_Init()) return FALSE;
 
@@ -251,6 +238,12 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
         queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
         if (!SetMessageQueue32( queueSize )) return FALSE;
     }
+
+    /* Initialize keyboard driver */
+    KEYBOARD_Enable( keybd_event, InputKeyStateTable );
+
+    /* Initialize mouse driver */
+    MOUSE_Enable( mouse_event );
 
     return TRUE;
 }

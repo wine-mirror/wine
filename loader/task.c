@@ -642,7 +642,6 @@ void TASK_Reschedule(void)
             newframe32->ebp          = oldframe32->ebp;
             newframe32->restore_addr = oldframe32->restore_addr;
             newframe32->codeselector = oldframe32->codeselector;
-            newframe32->retaddr      = oldframe32->retaddr;  /* don't call TASK_CallToStart */
 
             THREAD_Current()->cur_stack = oldframe32->frame16;
         }
