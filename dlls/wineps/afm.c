@@ -824,7 +824,7 @@ static VOID CalcWindowsMetrics()
 		
 	    wm.usUnitsPerEm = 1000;         	    /* for PostScript fonts */
 	    wm.sTypoAscender = (SHORT)(afm->Ascender + 0.5);
-	    wm.sTypoDescender = (SHORT)(afm->Descender + 0.5);
+	    wm.sTypoDescender = (SHORT)(afm->Descender - 0.5);
 	    
 	    wm.sTypoLineGap = 1200 - (wm.sTypoAscender - wm.sTypoDescender);
 	    if (wm.sTypoLineGap < 0)
