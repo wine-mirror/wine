@@ -208,6 +208,14 @@ static void test_CreateDirectoryA(void)
        "CreateDirectoryA with * wildcard name should fail, ret=%s error=%ld\n",
        ret ? " True" : "False", GetLastError());
     ret = RemoveDirectoryA(tmpdir);
+    
+    GetTempPathA(MAX_PATH, tmpdir);
+    lstrcatA(tmpdir, "Please Remove Me/Please Remove Me");
+    ret = CreateDirectoryA(tmpdir, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, 
+      "CreateDirectoryA with multiple non existing directories in path should fail\n");
+    ret = RemoveDirectoryA(tmpdir);
+    
 }
 
 static void test_CreateDirectoryW(void)
@@ -217,6 +225,7 @@ static void test_CreateDirectoryW(void)
     static const WCHAR empty_strW[] = { 0 };
     static const WCHAR tmp_dir_name[] = {'P','l','e','a','s','e',' ','R','e','m','o','v','e',' ','M','e',0};
     static const WCHAR dotW[] = {'.',0};
+    static const WCHAR slashW[] = {'/',0};
     static const WCHAR dotdotW[] = {'.','.',0};
     static const WCHAR questionW[] = {'?',0};
 
@@ -268,6 +277,15 @@ static void test_CreateDirectoryW(void)
     ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
        "CreateDirectoryW with * wildcard name should fail with error 183, ret=%s error=%ld\n",
        ret ? " True" : "False", GetLastError());
+    ret = RemoveDirectoryW(tmpdir);
+    
+    GetTempPathW(MAX_PATH, tmpdir);
+    lstrcatW(tmpdir, tmp_dir_name);
+    lstrcatW(tmpdir, slashW);
+    lstrcatW(tmpdir, tmp_dir_name);
+    ret = CreateDirectoryW(tmpdir, NULL);
+    ok(ret == FALSE && GetLastError() == ERROR_PATH_NOT_FOUND, 
+      "CreateDirectoryW with multiple non existing directories in path should fail\n");
     ret = RemoveDirectoryW(tmpdir);
 }
 
