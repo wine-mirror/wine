@@ -59,11 +59,11 @@ static DWORD delete_key( HKEY hkey, LPSTR parent, LPSTR keyname )
     RegCloseKey(hkey);
 
     /* open the parent of the key to close */
-    ret = RegOpenKeyEx( HKEY_CURRENT_USER, parent, 0, KEY_ALL_ACCESS, &parentKey);
+    ret = RegOpenKeyExA( HKEY_CURRENT_USER, parent, 0, KEY_ALL_ACCESS, &parentKey);
     if (ret != ERROR_SUCCESS)
         return ret;
 
-    ret = SHDeleteKey( parentKey, keyname );
+    ret = SHDeleteKeyA( parentKey, keyname );
     RegCloseKey(parentKey);
 
     return ret;
