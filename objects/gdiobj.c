@@ -394,6 +394,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
     case METAFILE_DC_MAGIC:
     case ENHMETAFILE_MAGIC:
     case ENHMETAFILE_DC_MAGIC:
+    case BITMAP_MAGIC:   
         if (!(obj = alloc_large_heap( size, handle ))) goto error;
         break;
     default:
