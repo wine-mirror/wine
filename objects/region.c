@@ -333,7 +333,7 @@ VOID WINAPI SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
  *
  * Allows either or both left and top to be greater than right or bottom.
  */
-VOID WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
+BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 			  INT right, INT bottom )
 {
     RGNOBJ * obj;
@@ -341,7 +341,7 @@ VOID WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
     TRACE(region, " %04x %d,%d-%d,%d\n", 
 		   hrgn, left, top, right, bottom );
     
-    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return;
+    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
 
     if (left > right) { INT tmp = left; left = right; right = tmp; }
     if (top > bottom) { INT tmp = top; top = bottom; bottom = tmp; }
@@ -359,6 +359,7 @@ VOID WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 	EMPTY_REGION(obj->rgn);
 
     GDI_HEAP_UNLOCK( hrgn );
+    return TRUE;
 }
 
 

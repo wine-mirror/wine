@@ -10,6 +10,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "winspool.h"
+#include "winbase.h"
+#include "wine/wingdi16.h"
 #include "ldt.h"
 #include "winerror.h"
 #include "winreg.h"

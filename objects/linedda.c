@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 #include "wingdi.h"
-
+#include "wine/wingdi16.h"
 
 /**********************************************************************
  *           LineDDA16   (GDI.100)

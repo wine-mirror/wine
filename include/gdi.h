@@ -7,8 +7,11 @@
 #ifndef __WINE_GDI_H
 #define __WINE_GDI_H
 
+#include "config.h"
+
 #include "windef.h"
 #include "wingdi.h"
+#include "wine/wingdi16.h"
 #include "ldt.h"
 #include "local.h"
 #include "path.h"
@@ -302,7 +305,7 @@ typedef struct tagFLOAT_POINT
  * transformation process is done in floating point internally. This function
  * is then used to round these coordinates to integer values.
  */
-static __inline__ INT WINE_UNUSED GDI_ROUND(FLOAT val)
+static inline INT WINE_UNUSED GDI_ROUND(FLOAT val)
 {
    return (int)floor(val + 0.5);
 }
@@ -310,7 +313,7 @@ static __inline__ INT WINE_UNUSED GDI_ROUND(FLOAT val)
 /* Performs a viewport-to-world transformation on the specified point (which
  * is in floating point format). Returns TRUE if successful, else FALSE.
  */
-static __inline__ BOOL WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
+static inline BOOL WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
     
@@ -334,7 +337,7 @@ static __inline__ BOOL WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *po
 /* Performs a viewport-to-world transformation on the specified point (which
  * is in integer format). Returns TRUE if successful, else FALSE.
  */
-static __inline__ BOOL WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT point)
+static inline BOOL WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT point)
 {
     FLOAT_POINT floatPoint;
     
@@ -354,7 +357,7 @@ static __inline__ BOOL WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT point)
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
  */
-static __inline__ void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
+static inline void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
     
@@ -372,7 +375,7 @@ static __inline__ void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *po
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in integer format).
  */
-static __inline__ void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
+static inline void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
 {
     FLOAT_POINT floatPoint;
     

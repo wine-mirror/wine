@@ -97,7 +97,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     if(physDev->font.tm.tmHeight < 0) {
         physDev->font.tm.tmHeight *= - (afm->FullAscender - afm->Descender) /
 				       (afm->Ascender - afm->Descender);
-	TRACE(psdrv, "Fixed -ve height to %d\n", physDev->font.tm.tmHeight);
+	TRACE(psdrv, "Fixed -ve height to %ld\n", physDev->font.tm.tmHeight);
     }
     physDev->font.size = physDev->font.tm.tmHeight * 1000.0 /
 				(afm->FullAscender - afm->Descender);
@@ -131,10 +131,10 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 
     physDev->font.set = FALSE;
 
-    TRACE(psdrv, "Selected PS font '%s' size %d weight %d.\n", 
+    TRACE(psdrv, "Selected PS font '%s' size %d weight %ld.\n", 
 	  physDev->font.afm->FontName, physDev->font.size,
 	  physDev->font.tm.tmWeight );
-    TRACE(psdrv, "H = %d As = %d Des = %d IL = %d EL = %d\n",
+    TRACE(psdrv, "H = %ld As = %ld Des = %ld IL = %ld EL = %ld\n",
 	  physDev->font.tm.tmHeight, physDev->font.tm.tmAscent,
 	  physDev->font.tm.tmDescent, physDev->font.tm.tmInternalLeading,
 	  physDev->font.tm.tmExternalLeading);

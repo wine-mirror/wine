@@ -52,7 +52,8 @@ BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics )
 
     FONT_TextMetric16to32A( &physDev->tm, metrics );
 
-    TRACE(win16drv, "H %d, A %d, D %d, Int %d, Ext %d, AW %d, MW %d, W %d\n",
+    TRACE(win16drv,
+	  "H %ld, A %ld, D %ld, Int %ld, Ext %ld, AW %ld, MW %ld, W %ld\n",
            metrics->tmHeight,
            metrics->tmAscent,
            metrics->tmDescent,

@@ -368,6 +368,53 @@ typedef struct
 #define OIC_HDISK           32524
 #define OIC_NETWORK         32525
 
+#define COLOR_SCROLLBAR		    0
+#define COLOR_BACKGROUND	    1
+#define COLOR_ACTIVECAPTION	    2
+#define COLOR_INACTIVECAPTION	    3
+#define COLOR_MENU		    4
+#define COLOR_WINDOW		    5
+#define COLOR_WINDOWFRAME	    6
+#define COLOR_MENUTEXT		    7
+#define COLOR_WINDOWTEXT	    8
+#define COLOR_CAPTIONTEXT  	    9
+#define COLOR_ACTIVEBORDER	   10
+#define COLOR_INACTIVEBORDER	   11
+#define COLOR_APPWORKSPACE	   12
+#define COLOR_HIGHLIGHT		   13
+#define COLOR_HIGHLIGHTTEXT	   14
+#define COLOR_BTNFACE              15
+#define COLOR_BTNSHADOW            16
+#define COLOR_GRAYTEXT             17
+#define COLOR_BTNTEXT		   18
+#define COLOR_INACTIVECAPTIONTEXT  19
+#define COLOR_BTNHIGHLIGHT         20
+/* win95 colors */
+#define COLOR_3DDKSHADOW           21
+#define COLOR_3DLIGHT              22
+#define COLOR_INFOTEXT             23
+#define COLOR_INFOBK               24
+#define COLOR_DESKTOP              COLOR_BACKGROUND
+#define COLOR_3DFACE               COLOR_BTNFACE
+#define COLOR_3DSHADOW             COLOR_BTNSHADOW
+#define COLOR_3DHIGHLIGHT          COLOR_BTNHIGHLIGHT
+#define COLOR_3DHILIGHT            COLOR_BTNHIGHLIGHT
+#define COLOR_BTNHILIGHT           COLOR_BTNHIGHLIGHT
+/* win98 colors */
+#define COLOR_ALTERNATEBTNFACE         25  /* undocumented, constant's name unknown */
+#define COLOR_HOTLIGHT                 26
+#define COLOR_GRADIENTACTIVECAPTION    27
+#define COLOR_GRADIENTINACTIVECAPTION  28
+
+  /* WM_CTLCOLOR values */
+#define CTLCOLOR_MSGBOX             0
+#define CTLCOLOR_EDIT               1
+#define CTLCOLOR_LISTBOX            2
+#define CTLCOLOR_BTN                3
+#define CTLCOLOR_DLG                4
+#define CTLCOLOR_SCROLLBAR          5
+#define CTLCOLOR_STATIC             6
+
 /* Edit control messages */
 #define EM_GETSEL                0x00b0
 #define EM_SETSEL                0x00b1
@@ -760,6 +807,16 @@ typedef struct
 
 DECL_WINELIB_TYPE_AW(CREATESTRUCT)
 DECL_WINELIB_TYPE_AW(LPCREATESTRUCT)
+
+typedef struct
+{
+    HDC   hdc;
+    BOOL  fErase;
+    RECT  rcPaint;
+    BOOL  fRestore;
+    BOOL  fIncUpdate;
+    BYTE    rgbReserved[32];
+} PAINTSTRUCT, *PPAINTSTRUCT, *LPPAINTSTRUCT;
 
 typedef struct 
 {
@@ -2109,6 +2166,46 @@ typedef struct
 #define SPIF_UPDATEINIFILE              1
 #define SPIF_SENDWININICHANGE           2
 #define SPIF_SENDCHANGE                 SPIF_SENDWININICHANGE
+
+typedef struct {
+	UINT		cbSize;
+	INT		iBorderWidth;
+	INT		iScrollWidth;
+	INT		iScrollHeight;
+	INT		iCaptionWidth;
+	INT		iCaptionHeight;
+	LOGFONTA	lfCaptionFont;
+	INT		iSmCaptionWidth;
+	INT		iSmCaptionHeight;
+	LOGFONTA	lfSmCaptionFont;
+	INT		iMenuWidth;
+	INT		iMenuHeight;
+	LOGFONTA	lfMenuFont;
+	LOGFONTA	lfStatusFont;
+	LOGFONTA	lfMessageFont;
+} NONCLIENTMETRICSA,*LPNONCLIENTMETRICSA;
+
+typedef struct {
+	UINT		cbSize;
+	INT		iBorderWidth;
+	INT		iScrollWidth;
+	INT		iScrollHeight;
+	INT		iCaptionWidth;
+	INT		iCaptionHeight;
+	LOGFONTW	lfCaptionFont;
+	INT		iSmCaptionWidth;
+	INT		iSmCaptionHeight;
+	LOGFONTW	lfSmCaptionFont;
+	INT		iMenuWidth;
+	INT		iMenuHeight;
+	LOGFONTW	lfMenuFont;
+	LOGFONTW	lfStatusFont;
+	LOGFONTW	lfMessageFont;
+} NONCLIENTMETRICSW,*LPNONCLIENTMETRICSW;
+
+DECL_WINELIB_TYPE_AW(NONCLIENTMETRICS)
+DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS)
+
 
 /* Window Styles */
 #define WS_OVERLAPPED    0x00000000L

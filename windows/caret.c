@@ -8,6 +8,7 @@
 #include "winuser.h"
 #include "module.h"
 #include "debug.h"
+#include "wine/wingdi16.h"
 
 DEFAULT_DEBUG_CHANNEL(caret)
 

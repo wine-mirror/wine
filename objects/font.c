@@ -980,16 +980,16 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
     metrics->tmOverhang         = WDPTOLP(metrics->tmOverhang);
 
     TRACE_(font)("text metrics:\n"
-    "    Weight = %03i\t FirstChar = %03i\t AveCharWidth = %i\n"
-    "    Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %i\n"
-    "    UnderLined = %01i\t DefaultChar = %03i\t Overhang = %i\n"
+    "    Weight = %03li\t FirstChar = %03i\t AveCharWidth = %li\n"
+    "    Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %li\n"
+    "    UnderLined = %01i\t DefaultChar = %03i\t Overhang = %li\n"
     "    StruckOut = %01i\t BreakChar = %03i\t CharSet = %i\n"
     "    PitchAndFamily = %02x\n"
     "    --------------------\n"
-    "    InternalLeading = %i\n"
-    "    Ascent = %i\n"
-    "    Descent = %i\n"
-    "    Height = %i\n",
+    "    InternalLeading = %li\n"
+    "    Ascent = %li\n"
+    "    Descent = %li\n"
+    "    Height = %li\n",
     metrics->tmWeight, metrics->tmFirstChar, metrics->tmAveCharWidth,
     metrics->tmItalic, metrics->tmLastChar, metrics->tmMaxCharWidth,
     metrics->tmUnderlined, metrics->tmDefaultChar, metrics->tmOverhang,

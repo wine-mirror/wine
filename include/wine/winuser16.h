@@ -3,7 +3,7 @@
 
 #include "winuser.h" /* winuser.h needed for MSGBOXCALLBACK */
                      /* wingdi.h needed for COLORREF */
-
+#include "wine/wingdi16.h"
 
 
 #include "pshpack1.h"
@@ -256,6 +256,16 @@ typedef struct
     DWORD       dwExStyle WINE_PACKED;
 } CREATESTRUCT16, *LPCREATESTRUCT16;
 
+typedef struct
+{
+    HDC16   hdc;
+    BOOL16  fErase;
+    RECT16  rcPaint;
+    BOOL16  fRestore;
+    BOOL16  fIncUpdate;
+    BYTE    rgbReserved[16];
+} PAINTSTRUCT16, *LPPAINTSTRUCT16;
+
 typedef struct 
 {
     HMENU16   hWindowMenu;
@@ -303,6 +313,24 @@ typedef struct
     RECT16  rgrc[3];
     SEGPTR  lppos;
 } NCCALCSIZE_PARAMS16, *LPNCCALCSIZE_PARAMS16;
+
+typedef struct {
+	UINT16		cbSize;
+	INT16		iBorderWidth;
+	INT16		iScrollWidth;
+	INT16		iScrollHeight;
+	INT16		iCaptionWidth;
+	INT16		iCaptionHeight;
+	LOGFONT16	lfCaptionFont;
+	INT16		iSmCaptionWidth;
+	INT16		iSmCaptionHeight;
+	LOGFONT16	lfSmCaptionFont;
+	INT16		iMenuWidth;
+	INT16		iMenuHeight;
+	LOGFONT16	lfMenuFont;
+	LOGFONT16	lfStatusFont;
+	LOGFONT16	lfMessageFont;
+} NONCLIENTMETRICS16,*LPNONCLIENTMETRICS16;
 
   /* Journalling hook structure */
 
