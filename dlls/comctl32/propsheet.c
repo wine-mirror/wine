@@ -1528,7 +1528,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   PropPageInfo* oldPages;
 
   if (!psInfo) {
-    FIXME("No psInfo for propertysheet at windows 0x%04x? returning FALSE...\n");
+    FIXME("No psInfo for propertysheet at windows 0x%04x, returning FALSE...\n", hwndDlg);
     return FALSE;
   }
   oldPages = psInfo->proppage;
@@ -1839,6 +1839,10 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
       }
 
+      if (psInfo->useCallback) 
+             (*(psInfo->ppshheader->pfnCallback))(hwnd, 
+					      PSCB_INITIALIZED, (LPARAM)0); 
+
       ppshpage = PROPSHEET_GetPSPPage(psInfo, psInfo->active_page);      
       PROPSHEET_CreatePage(hwnd, psInfo->active_page, psInfo, ppshpage, TRUE);
 
@@ -1847,9 +1851,21 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       SetPropA(hwnd, PropSheetInfoStr, (HANDLE)psInfo);
 
-      PROPSHEET_SetTitleA(hwnd,
-                          psInfo->ppshheader->dwFlags,
-                          psInfo->ppshheader->pszCaption);
+
+      if (!HIWORD(psInfo->ppshheader->pszCaption) &&
+              psInfo->ppshheader->hInstance)
+      {
+         char szText[256];
+
+         if (LoadStringA(psInfo->ppshheader->hInstance, 
+                 (UINT)psInfo->ppshheader->pszCaption, szText, 255))
+            PROPSHEET_SetTitleA(hwnd, psInfo->ppshheader->dwFlags, szText);
+      }
+      else
+      {
+         PROPSHEET_SetTitleA(hwnd, psInfo->ppshheader->dwFlags,
+                         psInfo->ppshheader->pszCaption);
+      }
 
       return TRUE;
     }
