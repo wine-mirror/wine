@@ -4796,12 +4796,19 @@ static HRESULT WINAPI ITypeInfo_fnGetContainingTypeLib( ITypeInfo2 *iface,
         ITypeLib  * *ppTLib, UINT  *pIndex)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
-    if (!pIndex)
-        return E_INVALIDARG;
-    *ppTLib=(LPTYPELIB )(This->pTypeLib);
-    *pIndex=This->index;
-    ITypeLib2_AddRef(*ppTLib);
-    TRACE("(%p) returns (%p) index %d!\n", This, *ppTLib, *pIndex);
+    
+    /* If a pointer is null, we simply ignore it, the ATL in particular passes pIndex as 0 */
+    if (pIndex) {
+      *pIndex=This->index;
+      TRACE("returning pIndex=%d", *pIndex);
+    }
+    
+    if (ppTLib) {
+      *ppTLib=(LPTYPELIB )(This->pTypeLib);
+      ITypeLib2_AddRef(*ppTLib);
+      TRACE("returning ppTLib=%p", *ppTLib);
+    }
+    
     return S_OK;
 }
 
