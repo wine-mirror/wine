@@ -205,8 +205,9 @@ HRESULT User_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
 					 &This->surface_desc, ppDup, NULL);
 }
 
-void User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				      IDirectDrawSurfaceImpl* back)
+BOOL User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back,
+				      DWORD dwFlags)
 {
     USER_PRIV_VAR(front_priv, front);
     USER_PRIV_VAR(back_priv, back);
@@ -218,10 +219,10 @@ void User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 	back_priv->user.cached_dc = tmp;
     }
 
-    DIB_DirectDrawSurface_flip_data(front, back);
+    return DIB_DirectDrawSurface_flip_data(front, back, dwFlags);
 }
 
-void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This)
+void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This, DWORD dwFlags)
 {
 #ifdef SYNC_UPDATE
     assert(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE);

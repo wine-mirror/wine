@@ -46,9 +46,11 @@ void User_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
 					   LPPALETTEENTRY palent);
 HRESULT User_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
 						 LPDIRECTDRAWSURFACE7* ppDup);
-void User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				      IDirectDrawSurfaceImpl* back);
-void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This);
+BOOL User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back,
+				      DWORD dwFlags);
+void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This,
+					DWORD dwFlags);
 HWND User_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
 
 HRESULT User_DirectDrawSurface_get_dc(IDirectDrawSurfaceImpl* This, HDC* phDC);

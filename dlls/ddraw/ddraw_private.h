@@ -1,4 +1,4 @@
-/* Copyright 2000 TransGaming Technologies Inc. */
+/* Copyright 2000-2001 TransGaming Technologies Inc. */
 
 #ifndef __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H
 #define __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H
@@ -11,6 +11,7 @@
 #include "winuser.h"
 #include "ddraw.h"
 #include "ddcomimpl.h"
+#include "ddrawi.h"
 
 /* XXX Put this somewhere proper. */
 #define DD_STRUCT_INIT(x)			\
@@ -68,6 +69,9 @@ struct IDirectDrawImpl
 
     IDirectDrawSurfaceImpl* primary_surface;
 
+    DDRAWI_DIRECTDRAW_LCL local;
+    DDCAPS caps;
+
     HWND window;
     DWORD cooperative_level;
     WNDPROC original_wndproc;
@@ -83,6 +87,8 @@ struct IDirectDrawImpl
 
     /* Called when the refcount goes to 0. */
     void (*final_release)(IDirectDrawImpl *This);
+
+    HRESULT (*set_exclusive_mode)(IDirectDrawImpl *This, DWORD dwExcl);
 
     HRESULT (*create_palette)(IDirectDrawImpl* This, DWORD dwFlags,
 			      LPDIRECTDRAWPALETTE* ppPalette,
@@ -144,6 +150,9 @@ struct IDirectDrawPaletteImpl
     ICOM_VFIELD_MULTI(IDirectDrawPalette);
     DWORD ref;
 
+    DDRAWI_DDRAWPALETTE_LCL local;
+    DDRAWI_DDRAWPALETTE_GBL global;
+
     /* IDirectDrawPalette fields */
     DWORD		flags;
     HPALETTE		hpal;
@@ -187,6 +196,7 @@ struct IDirectDrawSurfaceImpl
     /* IUnknown fields */
     ICOM_VFIELD_MULTI(IDirectDrawSurface7);
     ICOM_VFIELD_MULTI(IDirectDrawSurface3);
+    ICOM_VFIELD_MULTI(IDirectDrawGammaControl);
     DWORD ref;
 
     struct IDirectDrawSurfaceImpl* attached; /* attached surfaces */
@@ -202,6 +212,14 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawPaletteImpl* palette; /* strong ref */
     IDirectDrawClipperImpl* clipper; /* strong ref */
 
+    DDRAWI_DDRAWSURFACE_LCL local;
+    DDRAWI_DDRAWSURFACE_MORE more;
+    /* FIXME: since Flip should swap the GBL structures, they should
+     * probably not be embedded into the IDirectDrawSurfaceImpl structure... */
+    LPDDRAWI_DDRAWSURFACE_GBL_MORE gmore;
+    DDRAWI_DDRAWSURFACE_GBL global;
+    DDRAWI_DDRAWSURFACE_GBL_MORE global_more;
+
     DDSURFACEDESC2 surface_desc;
 
     HDC hDC;
@@ -210,20 +228,24 @@ struct IDirectDrawSurfaceImpl
     HRESULT (*duplicate_surface)(IDirectDrawSurfaceImpl* src,
 				 LPDIRECTDRAWSURFACE7* dst);
     void (*final_release)(IDirectDrawSurfaceImpl *This);
+    HRESULT (*late_allocate)(IDirectDrawSurfaceImpl *This);
     BOOL (*attach)(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *to);
     BOOL (*detach)(IDirectDrawSurfaceImpl *This);
     void (*lock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
     void (*unlock_update)(IDirectDrawSurfaceImpl* This, LPCRECT pRect);
     void (*lose_surface)(IDirectDrawSurfaceImpl* This);
-    void (*flip_data)(IDirectDrawSurfaceImpl* front,
-		      IDirectDrawSurfaceImpl* back);
-    void (*flip_update)(IDirectDrawSurfaceImpl* front);
+    BOOL (*flip_data)(IDirectDrawSurfaceImpl* front,
+		      IDirectDrawSurfaceImpl* back,
+		      DWORD dwFlags);
+    void (*flip_update)(IDirectDrawSurfaceImpl* front, DWORD dwFlags);
     HRESULT (*get_dc)(IDirectDrawSurfaceImpl* This, HDC* phDC);
     HRESULT (*release_dc)(IDirectDrawSurfaceImpl* This, HDC hDC);
     void (*set_palette)(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal);
     void (*update_palette)(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteImpl* pal,
 			   DWORD dwStart, DWORD dwCount, LPPALETTEENTRY palent);
     HWND (*get_display_window)(IDirectDrawSurfaceImpl *This);
+    HRESULT (*get_gamma_ramp)(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp);
+    HRESULT (*set_gamma_ramp)(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp);
 
     struct PrivateData* private_data;
 
@@ -249,6 +271,7 @@ struct IDirectDrawSurfaceImpl
 /*****************************************************************************
  * Driver initialisation functions.
  */
+BOOL DDRAW_HAL_Init(HINSTANCE, DWORD, LPVOID);
 BOOL DDRAW_User_Init(HINSTANCE, DWORD, LPVOID);
 
 typedef struct {

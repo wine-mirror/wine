@@ -316,8 +316,9 @@ Main_DirectDrawSurface_EnumOverlayZOrders(LPDIRECTDRAWSURFACE7 iface,
     return DD_OK;
 }
 
-void Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				      IDirectDrawSurfaceImpl* back)
+BOOL Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back,
+				      DWORD dwFlags)
 {
     /* uniqueness_value? */
     /* This is necessary. But is it safe? */
@@ -332,6 +333,8 @@ void Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 	front->dc_in_use = back->dc_in_use;
 	back->dc_in_use = tmp;
     }
+
+    return TRUE;
 }
 
 HRESULT WINAPI
@@ -398,8 +401,8 @@ Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
     }
 
     TRACE("flip to backbuffer: %p\n",target);
-    This->flip_data(This, target);
-    This->flip_update(This);
+    if (This->flip_data(This, target, dwFlags))
+	This->flip_update(This, dwFlags);
 
     return DD_OK;
 }

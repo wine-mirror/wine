@@ -662,14 +662,14 @@ error:
 /* EnumAttachedSurfaces: generic */
 /* EnumOverlayZOrders: generic, unimplemented */
 
-void DIB_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				     IDirectDrawSurfaceImpl* back)
+BOOL DIB_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				     IDirectDrawSurfaceImpl* back,
+				     DWORD dwFlags)
 {
     DIB_DirectDrawSurfaceImpl* front_priv = front->private;
     DIB_DirectDrawSurfaceImpl* back_priv = back->private;
 
     TRACE("(%p,%p)\n",front,back);
-    Main_DirectDrawSurface_flip_data(front, back);
 
     {
 	HBITMAP tmp;
@@ -696,6 +696,8 @@ void DIB_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 	front_priv->dib.client_memory = back_priv->dib.client_memory;
 	back_priv->dib.client_memory = tmp;
     }
+
+    return Main_DirectDrawSurface_flip_data(front, back, dwFlags);
 }
 
 /* Flip: generic */

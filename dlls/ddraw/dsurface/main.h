@@ -57,8 +57,9 @@ Main_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
 HWND
 Main_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
 
-void Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				      IDirectDrawSurfaceImpl* back);
+BOOL Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back,
+				      DWORD dwFlags);
 
 #define CHECK_LOST(This)					\
 	do {							\

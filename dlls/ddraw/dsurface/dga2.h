@@ -42,9 +42,10 @@ void XF86DGA2_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
 					       LPPALETTEENTRY palent);
 HRESULT XF86DGA2_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
 						 LPDIRECTDRAWSURFACE7* ppDup);
-void XF86DGA2_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-					  IDirectDrawSurfaceImpl* back);
-void XF86DGA2_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This);
+BOOL XF86DGA2_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+					  IDirectDrawSurfaceImpl* back,
+					  DWORD dwFlags);
+void XF86DGA2_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This, DWORD dwFlags);
 HWND XF86DGA2_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
 
 #endif

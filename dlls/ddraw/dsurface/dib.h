@@ -34,8 +34,9 @@ DIB_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
 			     IUnknown *pUnkOuter);
 
 void DIB_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
-void DIB_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				     IDirectDrawSurfaceImpl* back);
+BOOL DIB_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				     IDirectDrawSurfaceImpl* back,
+				     DWORD dwFlags);
 
 void DIB_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
 				       IDirectDrawPaletteImpl* pal);

@@ -159,8 +159,9 @@ HRESULT XF86DGA2_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* Thi
 					     &This->surface_desc, ppDup, NULL);
 }
 
-void XF86DGA2_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
-				      IDirectDrawSurfaceImpl* back)
+BOOL XF86DGA2_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back,
+				      DWORD dwFlags)
 {
     XF86DGA2_PRIV_VAR(front_priv, front);
     XF86DGA2_PRIV_VAR(back_priv, back);
@@ -178,10 +179,10 @@ void XF86DGA2_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 	back_priv->xf86dga2.fb_addr = tmp;
     }
 
-    DIB_DirectDrawSurface_flip_data(front, back);
+    return DIB_DirectDrawSurface_flip_data(front, back, dwFlags);
 }
 
-void XF86DGA2_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This)
+void XF86DGA2_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This, DWORD dwFlags)
 {
     XF86DGA2_PRIV_VAR(priv, This);
 

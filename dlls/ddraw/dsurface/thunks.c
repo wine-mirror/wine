@@ -6,9 +6,9 @@
 #include "ddraw.h"
 #include "winerror.h"
 
-#include "ddcomimpl.h"
 #include "dsurface/main.h"
 #include "dsurface/thunks.h"
+#include "ddcomimpl.h"
 
 #define CONVERT(pdds) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,	\
 					 IDirectDrawSurface3,		\
