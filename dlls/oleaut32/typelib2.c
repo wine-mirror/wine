@@ -649,6 +649,208 @@ static int ctl2_alloc_importfile(
     return offset;
 }
 
+/****************************************************************************
+ *	ctl2_encode_typedesc
+ *
+ *  Encodes a type description, storing information in the TYPEDESC and ARRAYDESC
+ *  segments as needed.
+ *
+ * RETURNS
+ *
+ *  Success: 0.
+ *  Failure: -1.
+ */
+static int ctl2_encode_typedesc(
+	ICreateTypeLib2Impl *This, /* [I] The type library in which to encode the TYPEDESC. */
+	TYPEDESC *tdesc,           /* [I] The type description to encode. */
+	int *encoded_tdesc,        /* [O] The encoded type description. */
+	int *width,                /* [O] The width of the type, or NULL. */
+	int *alignment,            /* [O] The alignment of the type, or NULL. */
+	int *decoded_size)         /* [O] The total size of the unencoded TYPEDESCs, including nested descs. */
+{
+    int default_tdesc;
+    int scratch;
+    int typeoffset;
+    int arrayoffset;
+    int *typedata;
+    int *arraydata;
+    int target_type;
+    int child_size;
+
+    default_tdesc = 0x80000000 | (tdesc->vt << 16) | tdesc->vt;
+    if (!width) width = &scratch;
+    if (!alignment) alignment = &scratch;
+    if (!decoded_size) decoded_size = &scratch;
+
+    *decoded_size = 0;
+
+    switch (tdesc->vt) {
+    case VT_UI1:
+    case VT_I1:
+	*encoded_tdesc = default_tdesc;
+	*width = 1;
+	*alignment = 1;
+	break;
+
+    case VT_UINT:
+	*encoded_tdesc = 0x80000000 | (VT_UI4 << 16) | VT_UINT;
+	if ((This->typelib_header.varflags & 0x0f) == SYS_WIN16) {
+	    *width = 2;
+	    *alignment = 2;
+	} else {
+	    *width = 4;
+	    *alignment = 4;
+	}
+	break;
+
+    case VT_UI2:
+	*encoded_tdesc = default_tdesc;
+	*width = 2;
+	*alignment = 2;
+	break;
+
+    case VT_I4:
+    case VT_UI4:
+    case VT_ERROR:
+    case VT_BSTR:
+    case VT_HRESULT:
+	*encoded_tdesc = default_tdesc;
+	*width = 4;
+	*alignment = 4;
+	break;
+
+    case VT_VOID:
+	*encoded_tdesc = 0x80000000 | (VT_EMPTY << 16) | tdesc->vt;
+	*width = 0;
+	*alignment = 1;
+	break;
+
+    case VT_PTR:
+	/* FIXME: Make with the error checking. */
+	FIXME("PTR vartype, may not work correctly.\n");
+
+	ctl2_encode_typedesc(This, tdesc->u.lptdesc, &target_type, NULL, NULL, &child_size);
+
+	for (typeoffset = 0; typeoffset < This->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
+	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+	    if (((typedata[0] & 0xffff) == VT_PTR) && (typedata[1] == target_type)) break;
+	}
+
+	if (typeoffset == This->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
+	    int mix_field;
+	    
+	    if (target_type & 0x80000000) {
+		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
+	    } else {
+		typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
+		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
+	    }
+
+	    typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
+	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	    typedata[0] = (mix_field << 16) | VT_PTR;
+	    typedata[1] = target_type;
+	}
+
+	*encoded_tdesc = typeoffset;
+
+	*width = 4;
+	*alignment = 4;
+	*decoded_size = sizeof(TYPEDESC) + child_size;
+	break;
+
+    case VT_SAFEARRAY:
+	/* FIXME: Make with the error checking. */
+	FIXME("SAFEARRAY vartype, may not work correctly.\n");
+
+	ctl2_encode_typedesc(This, tdesc->u.lptdesc, &target_type, NULL, NULL, &child_size);
+
+	for (typeoffset = 0; typeoffset < This->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
+	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+	    if (((typedata[0] & 0xffff) == VT_SAFEARRAY) && (typedata[1] == target_type)) break;
+	}
+
+	if (typeoffset == This->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
+	    int mix_field;
+	    
+	    if (target_type & 0x80000000) {
+		mix_field = ((target_type >> 16) & VT_TYPEMASK) | VT_ARRAY;
+	    } else {
+		typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
+		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
+	    }
+
+	    typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
+	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	    typedata[0] = (mix_field << 16) | VT_SAFEARRAY;
+	    typedata[1] = target_type;
+	}
+
+	*encoded_tdesc = typeoffset;
+
+	*width = 4;
+	*alignment = 4;
+	*decoded_size = sizeof(TYPEDESC) + child_size;
+	break;
+
+    case VT_CARRAY:
+	/* FIXME: Make with the error checking. */
+	FIXME("Array vartype, hacking badly.\n");
+
+	ctl2_encode_typedesc(This, &tdesc->u.lpadesc->tdescElem, &target_type, width, alignment, NULL);
+	arrayoffset = ctl2_alloc_segment(This, MSFT_SEG_ARRAYDESC, 16, 0);
+	arraydata = (void *)&This->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
+
+	arraydata[0] = target_type;
+	arraydata[1] = 0x00080001;
+	arraydata[2] = 0x8;
+	arraydata[3] = 0;
+
+	typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
+	typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	typedata[0] = (0x7ffe << 16) | VT_CARRAY;
+	typedata[1] = arrayoffset;
+
+	*encoded_tdesc = typeoffset;
+	*width = 8;
+	*alignment = 1;
+	*decoded_size = sizeof(ARRAYDESC);
+
+	break;
+
+    case VT_USERDEFINED:
+	TRACE("USERDEFINED.\n");
+	for (typeoffset = 0; typeoffset < This->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
+	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+	    if ((typedata[0] == ((0x7fff << 16) | VT_USERDEFINED)) && (typedata[1] == tdesc->u.hreftype)) break;
+	}
+
+	if (typeoffset == This->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
+	    typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
+	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	    typedata[0] = (0x7fff << 16) | VT_USERDEFINED;
+	    typedata[1] = tdesc->u.hreftype;
+	}
+
+	*encoded_tdesc = typeoffset;
+	*width = 0;
+	*alignment = 1;
+	break;
+
+    default:
+	FIXME("Unrecognized type %d.\n", tdesc->vt);
+	*encoded_tdesc = default_tdesc;
+	*width = 0;
+	*alignment = 1;
+	break;
+    }
+
+    return 0;
+}
 
 /*================== ICreateTypeInfo2 Implementation ===================================*/
 
@@ -955,6 +1157,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     int offset;
     INT *typedata;
     int var_datawidth;
+    int var_alignment;
+    int var_type_size;
     int alignment;
 
     TRACE("(%p,%d,%p), stub!\n", iface, index, pVarDesc);
@@ -980,10 +1184,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 
     /* fill out the basic type information */
     typedata[0] = 0x14 | (index << 16);
-    typedata[1] = 0x80000000 | (pVarDesc->elemdescVar.tdesc.vt << 16) | pVarDesc->elemdescVar.tdesc.vt;
     typedata[2] = pVarDesc->wVarFlags;
-    typedata[3] = 0x00240000;
-    typedata[4] = This->datawidth;
+    typedata[3] = (sizeof(VARDESC) << 16) | 0;
 
     /* update the index data */
     This->indices[index] = 0x40000000 + index;
@@ -991,59 +1193,25 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     This->offsets[index] = offset;
 
     /* figure out type widths and whatnot */
-    if (pVarDesc->elemdescVar.tdesc.vt == VT_UI4) {
-	var_datawidth = 4;
-    } else if (pVarDesc->elemdescVar.tdesc.vt == VT_BSTR) {
-	var_datawidth = 4;
-    } else if (pVarDesc->elemdescVar.tdesc.vt == VT_UI2) {
-	var_datawidth = 2;
-    } else if (pVarDesc->elemdescVar.tdesc.vt == VT_UI1) {
-	var_datawidth = 1;
-    } else if (pVarDesc->elemdescVar.tdesc.vt == VT_CARRAY) {
-	int *typedesc;
-	int *arraydesc;
-	int typeoffset;
-	int arrayoffset;
+    ctl2_encode_typedesc(This->typelib, &pVarDesc->elemdescVar.tdesc,
+			 &typedata[1], &var_datawidth, &var_alignment,
+			 &var_type_size);
 
-	FIXME("Array vartype, hacking badly.\n");
-	typeoffset = ctl2_alloc_segment(This->typelib, MSFT_SEG_TYPEDESC, 8, 0);
-	arrayoffset = ctl2_alloc_segment(This->typelib, MSFT_SEG_ARRAYDESC, 16, 0);
+    /* pad out starting position to data width */
+    This->datawidth += var_alignment - 1;
+    This->datawidth &= ~(var_alignment - 1);
+    typedata[4] = This->datawidth;
+    
+    /* add the new variable to the total data width */
+    This->datawidth += var_datawidth;
 
-	typedesc = (void *)&This->typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-	arraydesc = (void *)&This->typelib->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
-
-	typedesc[0] = 0x7ffe001c;
-	typedesc[1] = arrayoffset;
-
-	arraydesc[0] = 0x80000000 | (pVarDesc->elemdescVar.tdesc.u.lpadesc->tdescElem.vt << 16) | pVarDesc->elemdescVar.tdesc.u.lpadesc->tdescElem.vt;
-	arraydesc[1] = 0x00080001;
-	arraydesc[2] = 0x8;
-	arraydesc[3] = 0;
-
-	typedata[1] = typeoffset;
-	typedata[3] = 0x00380000;
-
-	This->datawidth += 8;
-	var_datawidth = 0; /* FIXME: Probably wrong. */
-    } else {
-	FIXME("Unrecognized vartype %d.\n", pVarDesc->elemdescVar.tdesc.vt);
-	var_datawidth = 0;
-    }
-
-    if (pVarDesc->elemdescVar.tdesc.vt != VT_CARRAY) {
-	/* pad out starting position to data width */
-	This->datawidth += var_datawidth - 1;
-	This->datawidth &= ~(var_datawidth - 1);
-	typedata[4] = This->datawidth;
-	
-	/* add the new variable to the total data width */
-	This->datawidth += var_datawidth;
-    }
+    /* add type description size to total required allocation */
+    typedata[3] += var_type_size << 16;
 
     /* fix type alignment */
     alignment = (This->typeinfo->typekind >> 11) & 0x1f;
-    if (alignment < var_datawidth) {
-	alignment = var_datawidth;
+    if (alignment < var_alignment) {
+	alignment = var_alignment;
 	This->typeinfo->typekind &= ~0xf800;
 	This->typeinfo->typekind |= alignment << 11;
     }
@@ -1107,8 +1275,11 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
     if (offset == -1) return E_OUTOFMEMORY;
 
     namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
-    *((INT *)namedata) = 0;
+    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
     namedata[9] = 0x10;
+    if ((This->typeinfo->typekind & 15) == TKIND_ENUM) {
+	namedata[9] |= 0x20;
+    }
     This->names[index] = offset;
 
     return S_OK;
