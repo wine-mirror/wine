@@ -168,6 +168,7 @@ HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkn
 
 /* Client-side identity of the server object */
 
+static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnknown **remunk);
 static void proxy_manager_destroy(struct proxy_manager * This);
 static HRESULT proxy_manager_find_ifproxy(struct proxy_manager * This, REFIID riid, struct ifproxy ** ifproxy_found);
 
@@ -236,6 +237,9 @@ static const IInternalUnknownVtbl ClientIdentity_Vtbl =
 
 static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
 {
+    /* FIXME: as this call could possibly be going over the network, we
+     * are going to spend a long time in this CS. We might want to replace
+     * this with a mutex */
     EnterCriticalSection(&This->parent->cs);
     if (This->refs == 0)
     {
@@ -269,20 +273,40 @@ static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
 
 static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
 {
+    HRESULT hr = S_OK;
+
+    /* FIXME: as this call could possibly be going over the network, we
+     * are going to spend a long time in this CS. We might want to replace
+     * this with a mutex */
     EnterCriticalSection(&This->parent->cs);
-    /*
     if (This->refs > 0)
     {
-        // FIXME: call IRemUnknown::RemRelease
-        This->refs = 0;
+        IRemUnknown *remunk = NULL;
+
+        TRACE("releasing %ld refs\n", This->refs);
+
+        hr = proxy_manager_get_remunknown(This->parent, &remunk);
+        if (hr == S_OK)
+        {
+            REMINTERFACEREF rif;
+            rif.ipid = This->ipid;
+            rif.cPublicRefs = This->refs;
+            rif.cPrivateRefs = 0;
+            hr = IRemUnknown_RemRelease(remunk, 1, &rif);
+            if (hr == S_OK)
+                This->refs = 0;
+            else
+                ERR("IRemUnknown_RemRelease failed with error 0x%08lx\n", hr);
+        }
     }
-    */
     LeaveCriticalSection(&This->parent->cs);
-    return S_OK;
+
+    return hr;
 }
 
 static void ifproxy_disconnect(struct ifproxy * This)
 {
+    ifproxy_release_public_refs(This);
     IRpcProxyBuffer_Disconnect(This->proxy);
 }
 
@@ -327,11 +351,22 @@ static HRESULT proxy_manager_construct(
     This->refs = 1;
     This->sorflags = sorflags;
 
+    /* the DCOM draft specification states that the SORF_NOPING flag is
+     * proxy manager specific, not ifproxy specific, so this implies that we
+     * should store the STDOBJREF flags in the proxy manager. */
+    This->sorflags = sorflags;
+
     This->chan = channel; /* FIXME: we should take the binding strings and construct the channel in this function */
+
+    /* we create the IRemUnknown proxy on demand */
+    This->remunk = NULL;
 
     EnterCriticalSection(&apt->cs);
     list_add_head(&apt->proxies, &This->entry);
     LeaveCriticalSection(&apt->cs);
+
+    TRACE("%p created for OXID %s, OID %s\n", This,
+        wine_dbgstr_longlong(oxid), wine_dbgstr_longlong(oid));
 
     *proxy_manager = This;
     return S_OK;
@@ -442,9 +477,64 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
     LeaveCriticalSection(&This->cs);
 }
 
+static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnknown **remunk)
+{
+    HRESULT hr = S_OK;
+
+    /* we don't want to try and unmarshal or use IRemUnknown if we don't want
+     * lifetime management */
+    if (This->sorflags & SORFP_NOLIFETIMEMGMT)
+        return S_FALSE;
+
+    EnterCriticalSection(&This->cs);
+    if (This->remunk)
+        /* already created - return existing object */
+        *remunk = This->remunk;
+    else if (!This->parent)
+        /* disconnected - we can't create IRemUnknown */
+        hr = S_FALSE;
+    else
+    {
+        STDOBJREF stdobjref;
+        /* Don't want IRemUnknown lifetime management as this is IRemUnknown!
+         * We also don't care about whether or not the stub is still alive */
+        stdobjref.flags = SORFP_NOLIFETIMEMGMT | SORF_NOPING;
+        stdobjref.cPublicRefs = 1;
+        /* oxid of destination object */
+        stdobjref.oxid = This->oxid;
+        /* FIXME: what should be used for the oid? The DCOM draft doesn't say */
+        stdobjref.oid = (OID)-1;
+        /* FIXME: this is a hack around not having an OXID resolver yet -
+         * the OXID resolver should give us the IPID of the IRemUnknown
+         * interface */
+        stdobjref.ipid.Data1 = 0xffffffff;
+        stdobjref.ipid.Data2 = 0xffff;
+        stdobjref.ipid.Data3 = 0xffff;
+        assert(sizeof(stdobjref.ipid.Data4) == sizeof(stdobjref.oxid));
+        memcpy(&stdobjref.ipid.Data4, &stdobjref.oxid, sizeof(OXID));
+        
+        /* do the unmarshal */
+        hr = unmarshal_object(&stdobjref, This->parent, &IID_IRemUnknown, (void**)&This->remunk);
+        if (hr == S_OK)
+            *remunk = This->remunk;
+    }
+    LeaveCriticalSection(&This->cs);
+
+    TRACE("got IRemUnknown* pointer %p, hr = 0x%08lx\n", *remunk, hr);
+
+    return hr;
+}
+
+/* destroys a proxy manager, freeing the memory it used.
+ * Note: this function should not be called from a list iteration in the
+ * apartment, due to the fact that it removes itself from the apartment and
+ * it could add a proxy to IRemUnknown into the apartment. */
 static void proxy_manager_destroy(struct proxy_manager * This)
 {
     struct list * cursor;
+
+    TRACE("oxid = %s, oid = %s\n", wine_dbgstr_longlong(This->oxid),
+        wine_dbgstr_longlong(This->oid));
 
     if (This->parent)
     {
@@ -470,6 +560,7 @@ static void proxy_manager_destroy(struct proxy_manager * This)
         ifproxy_destroy(ifproxy);
     }
 
+    if (This->remunk) IRemUnknown_Release(This->remunk);
     if (This->chan) IRpcChannelBuffer_Release(This->chan);
 
     DeleteCriticalSection(&This->cs);
@@ -593,6 +684,7 @@ StdMarshalImpl_MarshalInterface(
   }
 
   start_apartment_listener_thread(); /* just to be sure we have one running. */
+  start_apartment_remote_unknown();
 
   IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
 
@@ -629,6 +721,14 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
 {
     struct proxy_manager *proxy_manager = NULL;
     HRESULT hr = S_OK;
+
+    assert(apt);
+
+    TRACE("stdobjref:\n\tflags = %04lx\n\tcPublicRefs = %ld\n\toxid = %s\n\toid = %s\n\tipid = %s\n",
+        stdobjref->flags, stdobjref->cPublicRefs,
+        wine_dbgstr_longlong(stdobjref->oxid),
+        wine_dbgstr_longlong(stdobjref->oid),
+        debugstr_guid(&stdobjref->ipid));
 
     /* create an a new proxy manager if one doesn't already exist for the
      * object */

@@ -458,4 +458,211 @@ BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid)
     return ret;
 }
 
+
+/*****************************************************************************
+ *
+ * IRemUnknown implementation
+ *
+ *
+ * Note: this object is not related to the lifetime of a stub_manager, but it
+ * interacts with stub managers.
+ */
+
 const IID IID_IRemUnknown = { 0x00000131, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
+
+typedef struct rem_unknown
+{
+    const IRemUnknownVtbl *lpVtbl;
+    ULONG refs;
+} RemUnknown;
+
+static const IRemUnknownVtbl RemUnknown_Vtbl;
+
+
+/* construct an IRemUnknown object with one outstanding reference */
+static HRESULT RemUnknown_Construct(IRemUnknown **ppRemUnknown)
+{
+    RemUnknown *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+
+    if (!This) return E_OUTOFMEMORY;
+
+    This->lpVtbl = &RemUnknown_Vtbl;
+    This->refs = 1;
+
+    *ppRemUnknown = (IRemUnknown *)This;
+    return S_OK;
+}
+
+static HRESULT WINAPI RemUnknown_QueryInterface(IRemUnknown *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IRemUnknown))
+    {
+        *ppv = (LPVOID)iface;
+        IRemUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    FIXME("No interface for iid %s\n", debugstr_guid(riid));
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI RemUnknown_AddRef(IRemUnknown *iface)
+{
+    ULONG refs;
+    RemUnknown *This = (RemUnknown *)iface;
+
+    refs = InterlockedIncrement(&This->refs);
+
+    TRACE("%p before: %ld\n", iface, refs-1);
+    return refs;
+}
+
+static ULONG WINAPI RemUnknown_Release(IRemUnknown *iface)
+{
+    ULONG refs;
+    RemUnknown *This = (RemUnknown *)iface;
+
+    refs = InterlockedDecrement(&This->refs);
+    if (!refs)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    TRACE("%p after: %ld\n", iface, refs);
+    return refs;
+}
+
+static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
+    REFIPID ripid, ULONG cRefs, USHORT cIids, IID *iids /* [size_is(cIids)] */,
+    REMQIRESULT **ppQIResults /* [size_is(,cIids)] */)
+{
+    HRESULT hr;
+    USHORT i;
+    APARTMENT *apt;
+    struct stub_manager *stubmgr;
+
+    TRACE("(%p)->(%s, %ld, %d, %p, %p)\n", iface, debugstr_guid(ripid), cRefs, cIids, iids, ppQIResults);
+
+    hr = ipid_to_stub_manager(ripid, &apt, &stubmgr);
+    if (hr != S_OK) return hr;
+
+    *ppQIResults = CoTaskMemAlloc(sizeof(REMQIRESULT) * cIids);
+
+    for (i = 0; i < cIids; i++)
+    {
+        (*ppQIResults)[i].hResult = register_ifstub(apt, &(*ppQIResults)[i].std,
+                                                 &iids[i], stubmgr->object,
+                                                 MSHLFLAGS_NORMAL);
+    }
+
+    stub_manager_int_release(stubmgr);
+    COM_ApartmentRelease(apt);
+
+    return hr;
+}
+
+static HRESULT WINAPI RemUnknown_RemAddRef(IRemUnknown *iface,
+    USHORT cInterfaceRefs,
+    REMINTERFACEREF* InterfaceRefs /* [size_is(cInterfaceRefs)] */,
+    HRESULT *pResults /* [size_is(cInterfaceRefs)] */)
+{
+    HRESULT hr = S_OK;
+    USHORT i;
+
+    TRACE("(%p)->(%d, %p, %p)\n", iface, cInterfaceRefs, InterfaceRefs, pResults);
+
+    for (i = 0; i < cInterfaceRefs; i++)
+    {
+        APARTMENT *apt;
+        struct stub_manager *stubmgr;
+
+        pResults[i] = ipid_to_stub_manager(&InterfaceRefs[i].ipid, &apt, &stubmgr);
+        if (pResults[i] != S_OK)
+        {
+            hr = S_FALSE;
+            continue;
+        }
+
+        stub_manager_ext_addref(stubmgr, InterfaceRefs[i].cPublicRefs);
+        if (InterfaceRefs[i].cPrivateRefs)
+            FIXME("Adding %ld refs securely not implemented\n", InterfaceRefs[i].cPrivateRefs);
+
+        stub_manager_int_release(stubmgr);
+        COM_ApartmentRelease(apt);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI RemUnknown_RemRelease(IRemUnknown *iface,
+    USHORT cInterfaceRefs,
+    REMINTERFACEREF* InterfaceRefs /* [size_is(cInterfaceRefs)] */)
+{
+    HRESULT hr = S_OK;
+    USHORT i;
+
+    TRACE("(%p)->(%d, %p)\n", iface, cInterfaceRefs, InterfaceRefs);
+
+    for (i = 0; i < cInterfaceRefs; i++)
+    {
+        APARTMENT *apt;
+        struct stub_manager *stubmgr;
+
+        hr = ipid_to_stub_manager(&InterfaceRefs[i].ipid, &apt, &stubmgr);
+        if (hr != S_OK)
+        {
+            hr = E_INVALIDARG;
+            /* FIXME: we should undo any changes already made in this function */
+            break;
+        }
+
+        stub_manager_ext_release(stubmgr, InterfaceRefs[i].cPublicRefs);
+        if (InterfaceRefs[i].cPrivateRefs)
+            FIXME("Releasing %ld refs securely not implemented\n", InterfaceRefs[i].cPrivateRefs);
+
+        stub_manager_int_release(stubmgr);
+        COM_ApartmentRelease(apt);
+    }
+
+    return hr;
+}
+
+static const IRemUnknownVtbl RemUnknown_Vtbl =
+{
+    RemUnknown_QueryInterface,
+    RemUnknown_AddRef,
+    RemUnknown_Release,
+    RemUnknown_RemQueryInterface,
+    RemUnknown_RemAddRef,
+    RemUnknown_RemRelease
+};
+
+/* starts the IRemUnknown listener for the current apartment */
+HRESULT start_apartment_remote_unknown()
+{
+    IRemUnknown *pRemUnknown;
+    HRESULT hr = S_OK;
+    APARTMENT *apt = COM_CurrentApt();
+
+    EnterCriticalSection(&apt->cs);
+    if (!apt->remunk_exported)
+    {
+        /* create the IRemUnknown object */
+        hr = RemUnknown_Construct(&pRemUnknown);
+        if (hr == S_OK)
+        {
+            STDOBJREF stdobjref; /* dummy - not used */
+            /* register it with the stub manager */
+            hr = register_ifstub(COM_CurrentApt(), &stdobjref, &IID_IRemUnknown, (IUnknown *)pRemUnknown, MSHLFLAGS_NORMAL);
+            /* release our reference to the object as the stub manager will manage the life cycle for us */
+            IRemUnknown_Release(pRemUnknown);
+            if (hr == S_OK)
+                apt->remunk_exported = TRUE;
+        }
+    }
+    LeaveCriticalSection(&apt->cs);
+    return hr;
+}

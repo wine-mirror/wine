@@ -291,15 +291,18 @@ static ULONG WINAPI
 PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
     PipeBuf *This = (PipeBuf *)iface;
     ULONG ref;
+#if 0
     struct disconnect_header header;
     HANDLE pipe;
     DWORD reqtype = REQTYPE_DISCONNECT;
     DWORD magic;
+#endif
 
     ref = InterlockedDecrement(&This->ref);
     if (ref)
 	return ref;
 
+#if 0 /* no longer needed now we've got IRemUnknown ref counting */
     memcpy(&header.mid, &This->mid, sizeof(wine_marshal_id));
 
     pipe = PIPE_FindByMID(&This->mid);
@@ -313,7 +316,8 @@ PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
      * necessary for real dcom but the test suite needs it */
     
     read_pipe(pipe, &magic, sizeof(magic));
-    if (magic != 0xcafebabe) ERR("bad disconnection magic: expecting 0xcafebabe but got 0x%lx", magic);
+    if (magic != 0xcafebabe) ERR("bad disconnection magic: expecting 0xcafebabe but got 0x%lx\n", magic);
+#endif
 
     HeapFree(GetProcessHeap(),0,This);
     return 0;
