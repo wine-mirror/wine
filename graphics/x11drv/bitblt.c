@@ -1490,6 +1490,7 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
     struct StretchBlt_params params;
     BOOL result = FALSE;
     INT sSrc, sDst;
+    RECT visRectDst, visRectSrc;
 
     if (((rop >> 16) & 0x55) == ((rop >> 17) & 0x55)) {
       /* FIXME: seems the ROP doesn't include destination;
@@ -1499,29 +1500,36 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
     }
     sDst = X11DRV_LockDIBSection( dcDst, DIB_Status_None, FALSE );
     sSrc = X11DRV_LockDIBSection( dcSrc, DIB_Status_None, FALSE );
+
     if ((sSrc == DIB_Status_AppMod) && (rop == SRCCOPY)) {
-      BITMAPOBJ *bmp;
-      BOOL done = FALSE;
+      /* do everything ourselves; map coordinates */
+      xSrc = dcSrc->DCOrgX + XLPTODP( dcSrc, xSrc );
+      ySrc = dcSrc->DCOrgY + YLPTODP( dcSrc, ySrc );
+      xDst = dcDst->DCOrgX + XLPTODP( dcDst, xDst );
+      yDst = dcDst->DCOrgY + YLPTODP( dcDst, yDst );
+      width  = MulDiv(width, dcDst->vportExtX, dcDst->wndExtX);
+      height = MulDiv(height, dcDst->vportExtY, dcDst->wndExtY);
+
+      /* Perform basic clipping */
+      if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, width, height,
+                                      dcSrc, xSrc, ySrc, width, height,
+                                      &visRectSrc, &visRectDst ))
+        goto END;
       
+      xSrc = visRectSrc.left;
+      ySrc = visRectSrc.top;
+      xDst = visRectDst.left;
+      yDst = visRectDst.top;
+      width = visRectDst.right - visRectDst.left;
+      height = visRectDst.bottom - visRectDst.top;
+
       if (sDst == DIB_Status_AppMod) {
         FIXME("potential optimization - client-side DIB copy\n");
       }
-
       X11DRV_CoerceDIBSection( dcDst, DIB_Status_GdiMod, FALSE );
 
-      bmp = (BITMAPOBJ *)GDI_GetObjPtr( dcSrc->hBitmap, BITMAP_MAGIC );
-      if (bmp->dib) {
-        if (bmp->dib->dsBmih.biBitCount > 8) {
-          if (X11DRV_SetDIBitsToDevice( dcDst, xDst, yDst, width, height, xSrc, ySrc,
-                                        0, bmp->dib->dsBm.bmHeight, bmp->dib->dsBm.bmBits,
-                                        (BITMAPINFO*)&(bmp->dib->dsBmih), 0))
-            result = TRUE;
-          done = TRUE;
-        }
-        else FIXME("potential optimization - 8 bpp SetDIBitsToDevice\n");
-      }
-      GDI_ReleaseObj( dcSrc->hBitmap );
-      if (done) goto END;
+      X11DRV_DIB_CopyDIBSection( dcSrc, dcDst, xSrc, ySrc, xDst, yDst, width, height );
+      goto END;
     }
 
     params.dcDst = dcDst;

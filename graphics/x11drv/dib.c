@@ -122,10 +122,15 @@ int *X11DRV_DIB_GenColorMap( DC *dc, int *colorMapping,
     }
     else  /* DIB_PAL_COLORS */
     {
-        WORD * index = (WORD *)colorPtr;
+        if (colorPtr) {
+            WORD * index = (WORD *)colorPtr;
 
-        for (i = start; i < end; i++, index++)
-            colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, PALETTEINDEX(*index) );
+            for (i = start; i < end; i++, index++)
+                colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, PALETTEINDEX(*index) );
+        } else {
+            for (i = start; i < end; i++)
+                colorMapping[i] = X11DRV_PALETTE_ToPhysical( dc, PALETTEINDEX(i) );
+        }
     }
 
     return colorMapping;
@@ -142,14 +147,14 @@ int *X11DRV_DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
 {
     int colors;
     BOOL isInfo;
-    WORD *colorPtr;
+    const void *colorPtr;
     int *colorMapping;
 
     if ((isInfo = (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))))
     {
         colors = info->bmiHeader.biClrUsed;
         if (!colors) colors = 1 << info->bmiHeader.biBitCount;
-        colorPtr = (WORD *)info->bmiColors;
+        colorPtr = info->bmiColors;
     }
     else  /* assume BITMAPCOREINFO */
     {
@@ -162,6 +167,9 @@ int *X11DRV_DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
         ERR("called with >256 colors!\n");
         return NULL;
     }
+
+    /* just so CopyDIBSection doesn't have to create an identity palette */
+    if (coloruse == (WORD)-1) colorPtr = NULL;
 
     if (!(colorMapping = (int *)HeapAlloc(GetProcessHeap(), 0,
                                           colors * sizeof(int) ))) 
@@ -2684,6 +2692,10 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         break;
     }
 
+    TRACE("XPutImage(%p,%ld,%p,%p,%d,%d,%d,%d,%d,%d)\n",
+     display, descr->drawable, descr->gc, bmpImage,
+     descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
+     descr->width, descr->height);
     if (descr->useShm)
     {
         XShmPutImage( display, descr->drawable, descr->gc, bmpImage,
@@ -3126,7 +3138,12 @@ static void X11DRV_DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
 /***********************************************************************
  *           X11DRV_DIB_DoUpdateDIBSection
  */
-static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
+static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
+					void *colorMap, int nColorMap,
+					Drawable dest,
+					DWORD xSrc, DWORD ySrc,
+					DWORD xDest, DWORD yDest,
+					DWORD width, DWORD height)
 {
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
@@ -3138,8 +3155,8 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
   descr.dc        = NULL;
   descr.palentry  = NULL;
   descr.image     = dib->image;
-  descr.colorMap  = (RGBQUAD *)dib->colorMap;
-  descr.nColorMap = dib->nColorMap;
+  descr.colorMap  = colorMap;
+  descr.nColorMap = nColorMap;
   descr.bits      = dib->dibSection.dsBm.bmBits;
   descr.depth     = bmp->bitmap.bmBitsPixel;
   
@@ -3166,14 +3183,14 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
   }
 
   /* Hack for now */
-  descr.drawable  = (Pixmap)bmp->physBitmap;
+  descr.drawable  = dest;
   descr.gc        = BITMAP_GC(bmp);
-  descr.xSrc      = 0;
-  descr.ySrc      = 0;
-  descr.xDest     = 0;
-  descr.yDest     = 0;
-  descr.width     = bmp->bitmap.bmWidth;
-  descr.height    = bmp->bitmap.bmHeight;
+  descr.xSrc      = xSrc;
+  descr.ySrc      = ySrc;
+  descr.xDest     = xDest;
+  descr.yDest     = yDest;
+  descr.width     = width;
+  descr.height    = height;
 #ifdef HAVE_LIBXXSHM
   descr.useShm = (dib->shminfo.shmid != -1);
 #else
@@ -3195,6 +3212,70 @@ static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
       CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
       LeaveCriticalSection( &X11DRV_CritSection );
     }
+}
+
+/***********************************************************************
+ *           X11DRV_DIB_CopyDIBSection
+ */
+void X11DRV_DIB_CopyDIBSection(DC *dcSrc, DC *dcDst,
+			       DWORD xSrc, DWORD ySrc,
+			       DWORD xDest, DWORD yDest,
+			       DWORD width, DWORD height)
+{
+  BITMAPOBJ *bmp;
+  X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcDst->physDev;
+  int nColorMap = 0, *colorMap = NULL;
+
+  TRACE("(%p,%p,%ld,%ld,%ld,%ld,%ld,%ld)\n", dcSrc, dcDst,
+    xSrc, ySrc, xDest, yDest, width, height);
+  /* this function is meant as an optimization for BitBlt,
+   * not to be called otherwise */
+  if (!(dcSrc->flags & DC_MEMORY)) {
+    ERR("called for non-memory source DC!?\n");
+    return;
+  }
+
+  bmp = (BITMAPOBJ *)GDI_GetObjPtr( dcSrc->hBitmap, BITMAP_MAGIC );
+  if (!(bmp && bmp->dib)) {
+    ERR("called for non-DIBSection!?\n");
+    GDI_ReleaseObj( dcSrc->hBitmap );
+    return;
+  }
+  /* while BitBlt should already have made sure we only get
+   * positive values, we should check for oversize values */
+  if ((xSrc < bmp->bitmap.bmWidth) &&
+      (ySrc < bmp->bitmap.bmHeight)) {
+    if (xSrc + width > bmp->bitmap.bmWidth)
+      width = bmp->bitmap.bmWidth - xSrc;
+    if (ySrc + height > bmp->bitmap.bmHeight)
+      height = bmp->bitmap.bmHeight - ySrc;
+    /* if the source bitmap is 8bpp or less, we're supposed to use the
+     * DC's palette for color conversion (not the DIB color table) */
+    if (bmp->dib->dsBm.bmBitsPixel <= 8)
+      colorMap = X11DRV_DIB_BuildColorMap( dcSrc, (WORD)-1,
+					   bmp->dib->dsBm.bmBitsPixel,
+					   (BITMAPINFO*)&(bmp->dib->dsBmih),
+					   &nColorMap );
+    /* perform the copy */
+    X11DRV_DIB_DoCopyDIBSection(bmp, FALSE, colorMap, nColorMap,
+				physDev->drawable, xSrc, ySrc, xDest, yDest,
+				width, height);
+    /* free color mapping */
+    if (colorMap)
+      HeapFree(GetProcessHeap(), 0, colorMap);
+  }
+  GDI_ReleaseObj( dcSrc->hBitmap );
+}
+
+/***********************************************************************
+ *           X11DRV_DIB_DoUpdateDIBSection
+ */
+static void X11DRV_DIB_DoUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
+{
+  X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
+  X11DRV_DIB_DoCopyDIBSection(bmp, toDIB, dib->colorMap, dib->nColorMap,
+			      (Drawable)bmp->physBitmap, 0, 0, 0, 0,
+			      bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
 }
 
 /***********************************************************************

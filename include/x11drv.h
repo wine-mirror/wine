@@ -298,6 +298,10 @@ extern UINT X11DRV_DIB_GetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC*,UINT
 extern INT X11DRV_DIB_Coerce(struct tagBITMAPOBJ *,INT,BOOL);
 extern INT X11DRV_DIB_Lock(struct tagBITMAPOBJ *,INT,BOOL);
 extern void X11DRV_DIB_Unlock(struct tagBITMAPOBJ *,BOOL);
+void X11DRV_DIB_CopyDIBSection(DC *dcSrc, DC *dcDst,     
+			       DWORD xSrc, DWORD ySrc,   
+			       DWORD xDest, DWORD yDest, 
+			       DWORD width, DWORD height);
 
 /**************************************************************************
  * X11 GDI driver
