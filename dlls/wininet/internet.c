@@ -938,7 +938,7 @@ INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp)
 }
 
 /***********************************************************************
- *	InternetCheckConnection
+ *	InternetCheckConnectionA
  *
  * Pings a requested host to check internet connection
  *

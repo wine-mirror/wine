@@ -25,7 +25,7 @@
 #undef HAVE_LIBXXSHM
 
 /* Define if you have the X Shape extension */
-#undef HAVE_LIBXSHAPE                         
+#undef HAVE_LIBXSHAPE
 
 /* Define if you have the Xxf86vm library */
 #undef HAVE_LIBXXF86VM
