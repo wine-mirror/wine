@@ -39,6 +39,9 @@ EXTRASUBDIRS = \
 	nls \
 	tests
 
+CTESTS = \
+	tests/directory.c
+
 PLTESTS = \
 	tests/atom.pl
 
