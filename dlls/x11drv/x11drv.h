@@ -553,6 +553,9 @@ inline static BOOL is_window_top_level( HWND hwnd )
             GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow());
 }
 
+/* X context to associate a hwnd to an X window */
+extern XContext winContext;
+
 extern void X11DRV_SetFocus( HWND hwnd );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
 
@@ -560,7 +563,6 @@ typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void
 
 extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
-extern void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data *data );
 extern void X11DRV_set_iconic_state( HWND hwnd );
 extern void X11DRV_window_to_X_rect( HWND hwnd, RECT *rect );
 extern void X11DRV_X_to_window_rect( HWND hwnd, RECT *rect );

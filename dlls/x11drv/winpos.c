@@ -240,7 +240,6 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
     HWND top = get_top_clipping_window( hwnd );
     WND *win = WIN_GetPtr( hwnd );
-    struct x11drv_win_data *data = win->pDriverData;
     struct x11drv_escape_set_drawable escape;
 
     escape.mode = IncludeInferiors;
@@ -282,6 +281,14 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     }
     else
     {
+        struct x11drv_win_data *data;
+
+        if (!(data = X11DRV_get_win_data( hwnd )))
+        {
+            WIN_ReleasePtr( win );
+            return FALSE;
+        }
+
         if (IsIconic( hwnd ))
         {
             escape.drawable = data->icon_window ? data->icon_window : data->whole_window;
@@ -683,12 +690,14 @@ void X11DRV_SetWindowStyle( HWND hwnd, DWORD old_style )
 BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                             const RECT *rectClient, UINT swp_flags, UINT wvr_flags )
 {
+    struct x11drv_win_data *data;
     HWND top = get_top_clipping_window( hwnd );
-    WND *win = WIN_GetPtr( hwnd );
+    WND *win;
     DWORD old_style, new_style;
     BOOL ret;
 
-    if (!win) return FALSE;
+    if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
+    if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
     if (win == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
@@ -717,7 +726,6 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
 
     if (ret)
     {
-        struct x11drv_win_data *data = win->pDriverData;
         Display *display = thread_display();
 
         /* invalidate DCEs */
@@ -1188,8 +1196,11 @@ END:
  */
 void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
 {
+    struct x11drv_win_data *data;
     HWND hwndFocus = GetFocus();
     WND *win;
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     if (!(win = WIN_GetPtr( hwnd ))) return;
 
@@ -1197,7 +1208,6 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         (win->dwStyle & WS_MINIMIZE) &&
         (win->dwExStyle & WS_EX_MANAGED))
     {
-        struct x11drv_win_data *data = win->pDriverData;
         int x, y;
         unsigned int width, height, border, depth;
         Window root, top;

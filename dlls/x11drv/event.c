@@ -50,9 +50,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(clipboard);
 
-/* X context to associate a hwnd to an X window */
-extern XContext winContext;
-
 extern BOOL ximInComposeMode;
 
 #define DndNotDnd       -1    /* OffiX drag&drop */

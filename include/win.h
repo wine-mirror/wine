@@ -62,7 +62,6 @@ typedef struct tagWND
     int            cbWndExtra;    /* class cbWndExtra at window creation */
     int            irefCount;     /* window's reference count*/
     DWORD          userdata;      /* User private data */
-    void          *pDriverData;   /* Window driver data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 

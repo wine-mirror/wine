@@ -76,11 +76,11 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     /* patch the desktop window queue to point to our queue */
     win = WIN_GetPtr( hwnd );
     win->tid = GetCurrentThreadId();
-    X11DRV_register_window( display, hwnd, win->pDriverData );
     WIN_ReleasePtr( win );
 
     SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_winproc );
     wine_tsx11_lock();
+    XSaveContext( display, root_window, winContext, (char *)hwnd );
     XChangeProperty ( display, root_window, x11drv_atom(WM_PROTOCOLS),
                       XA_ATOM, 32, PropModeReplace, (char *)&atom, 1 );
     XMapWindow( display, root_window );

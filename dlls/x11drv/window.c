@@ -50,6 +50,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 
+/* X context to associate a struct x11drv_win_data to an hwnd */
+static XContext win_data_context;
+
 Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
 
 static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
@@ -743,20 +746,6 @@ int X11DRV_sync_client_window_position( Display *display, struct x11drv_win_data
 }
 
 
-/***********************************************************************
- *		X11DRV_register_window
- *
- * Associate an X window to a HWND.
- */
-void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data *data )
-{
-    wine_tsx11_lock();
-    XSaveContext( display, data->whole_window, winContext, (char *)hwnd );
-    XSaveContext( display, data->client_window, winContext, (char *)hwnd );
-    wine_tsx11_unlock();
-}
-
-
 /**********************************************************************
  *		create_desktop
  */
@@ -828,6 +817,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
         wine_tsx11_unlock();
         return 0;
     }
+    XSaveContext( display, data->whole_window, winContext, (char *)data->hwnd );
 
     /* non-maximized child must be at bottom of Z order */
     if ((style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
@@ -878,6 +868,7 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
                                          0, screen_depth,
                                          InputOutput, visual,
                                          CWEventMask | CWBitGravity | CWBackingStore, &attr );
+    XSaveContext( display, data->client_window, winContext, (char *)data->hwnd );
     if (data->client_window && is_mapped) XMapWindow( display, data->client_window );
     wine_tsx11_unlock();
     return data->client_window;
@@ -947,9 +938,9 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     Display *display = thread_data->display;
     WND *wndPtr = WIN_GetPtr( hwnd );
-    struct x11drv_win_data *data = wndPtr->pDriverData;
+    struct x11drv_win_data *data;
 
-    if (!data) goto done;
+    if (!(data = X11DRV_get_win_data( hwnd ))) goto done;
 
     if (data->whole_window)
     {
@@ -972,8 +963,11 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
 
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
+    wine_tsx11_lock();
+    XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
+    wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
-    wndPtr->pDriverData = NULL;
+
  done:
     WIN_ReleasePtr( wndPtr );
     return TRUE;
@@ -988,7 +982,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     Display *display = thread_display();
     WND *wndPtr;
     struct x11drv_win_data *data;
-    HWND insert_after;
+    HWND parent, insert_after;
     RECT rect;
     DWORD style;
     CBT_CREATEWNDA cbtc;
@@ -1024,20 +1018,22 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     data->hWMIconBitmap = 0;
     data->hWMIconMask   = 0;
 
-    wndPtr = WIN_GetPtr( hwnd );
-    wndPtr->pDriverData = data;
+    /* use gdi_display so that it's available from all threads (FIXME) */
+    wine_tsx11_lock();
+    if (!win_data_context) win_data_context = XUniqueContext();
+    XSaveContext( gdi_display, (XID)hwnd, win_data_context, (char *)data );
+    wine_tsx11_unlock();
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
     X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 );
 
-    if (!wndPtr->parent)
+    parent = GetAncestor( hwnd, GA_PARENT );
+    if (!parent)
     {
         create_desktop( display, data );
-        WIN_ReleasePtr( wndPtr );
         return TRUE;
     }
-    WIN_ReleasePtr( wndPtr );
 
     if (!create_whole_window( display, data, cs->style )) goto failed;
     if (!create_client_window( display, data )) goto failed;
@@ -1103,7 +1099,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     insert_after = ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
     X11DRV_set_window_pos( hwnd, insert_after, &wndPtr->rectWindow, &rect, 0, 0 );
-    X11DRV_register_window( display, hwnd, data );
 
     TRACE( "win %p window %ld,%ld,%ld,%ld client %ld,%ld,%ld,%ld whole %ld,%ld,%ld,%ld X client %ld,%ld,%ld,%ld xwin %x/%x\n",
            hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
@@ -1179,15 +1174,9 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
  */
 struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
 {
-    struct x11drv_win_data *ret = NULL;
-    WND *win = WIN_GetPtr( hwnd );
-
-    if (win && win != WND_OTHER_PROCESS)
-    {
-        ret = win->pDriverData;
-        WIN_ReleasePtr( win );
-    }
-    return ret;
+    char *data;
+    if (XFindContext( gdi_display, (XID)hwnd, win_data_context, &data )) data = NULL;
+    return (struct x11drv_win_data *)data;
 }
 
 
@@ -1239,27 +1228,27 @@ XIC X11DRV_get_ic( HWND hwnd )
 HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 {
     Display *display = thread_display();
-    WND *wndPtr;
-    HWND retvalue;
+    HWND old_parent;
 
     /* Windows hides the window first, then shows it again
      * including the WM_SHOWWINDOW messages and all */
     BOOL was_visible = ShowWindow( hwnd, SW_HIDE );
 
     if (!IsWindow( parent )) return 0;
-    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return 0;
 
-    retvalue = wndPtr->parent;  /* old parent */
-    if (parent != retvalue)
+    old_parent = GetAncestor( hwnd, GA_PARENT );
+    if (parent != old_parent)
     {
-        struct x11drv_win_data *data = wndPtr->pDriverData;
+        struct x11drv_win_data *data;
         Window new_parent = X11DRV_get_client_window( parent );
+
+        if (!(data = X11DRV_get_win_data( hwnd ))) return 0;
 
         WIN_LinkWindow( hwnd, parent, HWND_TOP );
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
-            if (!(wndPtr->dwStyle & WS_CHILD))
+            if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD))
             {
                 HMENU menu = (HMENU)SetWindowLongPtrW( hwnd, GWLP_ID, 0 );
                 if (menu) DestroyMenu( menu );
@@ -1273,7 +1262,6 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
                          data->whole_rect.left, data->whole_rect.top );
         wine_tsx11_unlock();
     }
-    WIN_ReleasePtr( wndPtr );
 
     /* SetParent additionally needs to make hwnd the topmost window
        in the x-order and send the expected WM_WINDOWPOSCHANGING and
@@ -1284,7 +1272,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
     /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
      * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
 
-    return retvalue;
+    return old_parent;
 }
 
 
