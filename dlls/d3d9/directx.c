@@ -172,9 +172,6 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     IDirect3DDevice9Impl *object = NULL;
     WINED3DPRESENT_PARAMETERS localParameters;
 
-    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
-          hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
-
     /* Check the validity range of the adapter parameter */
     if (Adapter >= IDirect3D9Impl_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
@@ -183,7 +180,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     /* Allocate the storage for the device object */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice9Impl));
     if (NULL == object) {
-      return D3DERR_OUTOFVIDEOMEMORY;
+        return D3DERR_OUTOFVIDEOMEMORY;
     }
     object->lpVtbl = &Direct3DDevice9_Vtbl;
     object->ref = 1;
@@ -192,9 +189,21 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     *ppReturnedDeviceInterface = (IDirect3DDevice9 *)object;
     
     /* Allocate an associated WineD3DDevice object */
-    memcpy(&localParameters, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
+    localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;
+    localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;           
+    localParameters.BackBufferFormat               = &pPresentationParameters->BackBufferFormat;           
+    localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;            
+    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;            
+    localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;         
+    localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;                 
+    localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;              
+    localParameters.Windowed                       = &pPresentationParameters->Windowed;                   
+    localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;     
+    localParameters.AutoDepthStencilFormat         = &pPresentationParameters->AutoDepthStencilFormat;     
+    localParameters.Flags                          = &pPresentationParameters->Flags;                      
+    localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
+    localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;       
     IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice);
-    memcpy(pPresentationParameters, &localParameters, sizeof(D3DPRESENT_PARAMETERS));
 
     FIXME("(%p) : incomplete stub\n", This);
     return D3D_OK;

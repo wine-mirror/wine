@@ -306,8 +306,10 @@ ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-      IDirect3DDevice8Impl_CleanRender(iface);
-      HeapFree(GetProcessHeap(), 0, This);
+        IDirect3DDevice8Impl_CleanRender(iface);
+        IDirect3D8_Release((LPDIRECT3D8) This->direct3d8);
+        IWineD3DDevice_Release(This->WineD3DDevice);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
 }

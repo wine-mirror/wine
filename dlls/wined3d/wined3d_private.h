@@ -32,6 +32,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "d3d9.h"
 #include "d3d9types.h"
@@ -75,6 +76,16 @@ extern int num_lock;
 #define WINED3D_VSHADER_MAX_CONSTANTS  96   
                          /* Maximum number of constants provided to the shaders */
 
+#define checkGLcall(A) \
+{ \
+    GLint err = glGetError();   \
+    if (err != GL_NO_ERROR) { \
+       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n", err, A, __FILE__, __LINE__); \
+    } else { \
+       TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__); \
+    } \
+}
+
 /*****************************************************************************
  * IWineD3D implementation structure
  */
@@ -99,14 +110,35 @@ extern IWineD3DVtbl IWineD3D_Vtbl;
  */
 typedef struct IWineD3DDeviceImpl
 {
-    /* IUnknown fields */
+    /* IUnknown fields      */
     IWineD3DDeviceVtbl     *lpVtbl;
     DWORD                   ref;     /* Note: Ref counting not required */
 
-    /* WineD3D Information */
+    /* WineD3D Information  */
     IWineD3D               *WineD3D;
 
-    /* GL Information */
+    /* X and GL Information */
+    HWND                    win_handle;
+    Window                  win;
+    Display                *display;
+    GLXContext              glCtx;
+    XVisualInfo            *visInfo;
+    GLXContext              render_ctx;
+    Drawable                drawable;
+    GLint                   maxConcurrentLights;
+
+    /* Optimization */
+    BOOL                    modelview_valid;
+    BOOL                    proj_valid;
+    BOOL                    view_ident;        /* true iff view matrix is identity                */
+    BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
+
+    /* Internal use fields  */
+    D3DDEVICE_CREATION_PARAMETERS   createParms;
+    D3DPRESENT_PARAMETERS           presentParms;
+    UINT                            adapterNo;
+    D3DDEVTYPE                      devType;
+
 } IWineD3DDeviceImpl;
 
 extern IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;

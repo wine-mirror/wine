@@ -54,20 +54,20 @@ typedef struct _WINED3DADAPTER_IDENTIFIER {
 } WINED3DADAPTER_IDENTIFIER;
 
 typedef struct _WINED3DPRESENT_PARAMETERS {
-    UINT                BackBufferWidth;
-    UINT                BackBufferHeight;
-    D3DFORMAT           BackBufferFormat;
-    UINT                BackBufferCount;
-    D3DMULTISAMPLE_TYPE MultiSampleType;
-    DWORD               MultiSampleQuality;
-    D3DSWAPEFFECT       SwapEffect;
-    HWND                hDeviceWindow;
-    BOOL                Windowed;
-    BOOL                EnableAutoDepthStencil;
-    D3DFORMAT           AutoDepthStencilFormat;
-    DWORD               Flags;
-    UINT                FullScreen_RefreshRateInHz;
-    UINT                PresentationInterval;
+    UINT                *BackBufferWidth;
+    UINT                *BackBufferHeight;
+    D3DFORMAT           *BackBufferFormat;
+    UINT                *BackBufferCount;
+    D3DMULTISAMPLE_TYPE *MultiSampleType;
+    DWORD               *MultiSampleQuality;
+    D3DSWAPEFFECT       *SwapEffect;
+    HWND                *hDeviceWindow;
+    BOOL                *Windowed;
+    BOOL                *EnableAutoDepthStencil;
+    D3DFORMAT           *AutoDepthStencilFormat;
+    DWORD               *Flags;
+    UINT                *FullScreen_RefreshRateInHz;
+    UINT                *PresentationInterval;
 } WINED3DPRESENT_PARAMETERS;
 
 typedef struct IWineD3D IWineD3D;
@@ -143,9 +143,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
-#define IWineD3D_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
-#define IWineD3D_AddRef(p)                                (p)->lpVtbl->AddRef(p)
-#define IWineD3D_Release(p)                               (p)->lpVtbl->Release(p)
+#define IWineD3DDevice_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DDevice_AddRef(p)                                (p)->lpVtbl->AddRef(p)
+#define IWineD3DDevice_Release(p)                               (p)->lpVtbl->Release(p)
 /*** IWineD3D methods ***/
 #endif
 

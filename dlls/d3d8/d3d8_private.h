@@ -340,6 +340,7 @@ struct IDirect3DDevice8Impl
 
     /* IDirect3DDevice8 fields */
     IDirect3D8Impl               *direct3d8;
+    IWineD3DDevice               *WineD3DDevice;
 
     IDirect3DSurface8Impl        *frontBuffer;
     IDirect3DSurface8Impl        *backBuffer;

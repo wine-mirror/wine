@@ -1258,6 +1258,7 @@ typedef struct _D3DPRESENT_PARAMETERS_ {
     UINT                    BackBufferCount;
 
     D3DMULTISAMPLE_TYPE     MultiSampleType;
+    DWORD                   MultiSampleQuality;
 
     D3DSWAPEFFECT           SwapEffect;
     HWND                    hDeviceWindow;
@@ -1267,7 +1268,7 @@ typedef struct _D3DPRESENT_PARAMETERS_ {
     DWORD                   Flags;
 
     UINT                    FullScreen_RefreshRateInHz;
-    UINT                    FullScreen_PresentationInterval;
+    UINT                    PresentationInterval;
 
 } D3DPRESENT_PARAMETERS;
 

@@ -547,6 +547,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     int num;
     XVisualInfo template;
     HDC hDc;
+    WINED3DPRESENT_PARAMETERS localParameters;
 
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
@@ -566,6 +567,23 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->direct3d8 = This;
     /** The device AddRef the direct3d8 Interface else crash in propers clients codes */
     IDirect3D8_AddRef((LPDIRECT3D8) object->direct3d8);
+
+    /* Allocate an associated WineD3DDevice object */
+    localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;             
+    localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
+    localParameters.BackBufferFormat               = &pPresentationParameters->BackBufferFormat;           
+    localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;            
+    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;            
+    localParameters.MultiSampleQuality             = NULL; /* New at dx9 */
+    localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;                 
+    localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;              
+    localParameters.Windowed                       = &pPresentationParameters->Windowed;                   
+    localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;     
+    localParameters.AutoDepthStencilFormat         = &pPresentationParameters->AutoDepthStencilFormat;     
+    localParameters.Flags                          = &pPresentationParameters->Flags;                      
+    localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
+    localParameters.PresentationInterval           = &pPresentationParameters->FullScreen_PresentationInterval;    /* Renamed in dx9 */
+    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice);
 
     /** use StateBlock Factory here, for creating the startup stateBlock */
     object->StateBlock = NULL;
