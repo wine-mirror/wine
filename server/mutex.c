@@ -34,6 +34,9 @@ static const struct object_ops mutex_ops =
     remove_queue,
     mutex_signaled,
     mutex_satisfied,
+    no_read_fd,
+    no_write_fd,
+    no_flush,
     mutex_destroy
 };
 

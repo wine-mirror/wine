@@ -31,6 +31,9 @@ static const struct object_ops semaphore_ops =
     remove_queue,
     semaphore_signaled,
     semaphore_satisfied,
+    no_read_fd,
+    no_write_fd,
+    no_flush,
     semaphore_destroy
 };
 

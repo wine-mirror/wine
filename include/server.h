@@ -268,6 +268,50 @@ struct get_unix_handle_request
 };
 
 
+/* Get a Unix fd to read from a file */
+struct get_read_fd_request
+{
+    int          handle;        /* handle to the file */
+};
+
+
+/* Get a Unix fd to write to a file */
+struct get_write_fd_request
+{
+    int          handle;        /* handle to the file */
+};
+
+
+/* Set a file current position */
+struct set_file_pointer_request
+{
+    int          handle;        /* handle to the file */
+    int          low;           /* position low word */
+    int          high;          /* position high word */
+    int          whence;        /* whence to seek */
+};
+struct set_file_pointer_reply
+{
+    int          low;           /* new position low word */
+    int          high;          /* new position high word */
+};
+
+
+/* Truncate (or extend) a file */
+struct truncate_file_request
+{
+    int          handle;        /* handle to the file */
+};
+
+
+/* Flush a file buffers */
+struct flush_file_request
+{
+    int          handle;        /* handle to the file */
+};
+
+
+/* Get information about a file */
 struct get_file_info_request
 {
     int          handle;        /* handle to the file */
@@ -284,6 +328,38 @@ struct get_file_info_reply
     int          index_low;     /* unique index */
     unsigned int serial;        /* volume serial number */
 };
+
+
+/* Create an anonymous pipe */
+struct create_pipe_request
+{
+    int          inherit;       /* inherit flag */
+};
+struct create_pipe_reply
+{
+    int          handle_read;   /* handle to the read-side of the pipe */
+    int          handle_write;  /* handle to the write-side of the pipe */
+};
+
+
+/* Create a console */
+struct create_console_request
+{
+    int          inherit;       /* inherit flag */
+};
+struct create_console_reply
+{
+    int          handle_read;   /* handle to read from the console */
+    int          handle_write;  /* handle to write to the console */
+};
+
+
+/* Set a console file descriptor */
+struct set_console_fd_request
+{
+    int          handle;        /* handle to the console */
+};
+
 
 /* client-side functions */
 

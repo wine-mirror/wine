@@ -4,6 +4,7 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -156,6 +157,8 @@ DECL_HANDLER(init_thread)
 DECL_HANDLER(set_debug)
 {
     debug_level = req->level;
+    /* Make sure last_req is initialized */
+    current->last_req = REQ_SET_DEBUG;
     CLEAR_ERROR();
     send_reply( current, -1, 0 );
 }
@@ -408,10 +411,123 @@ DECL_HANDLER(get_unix_handle)
     send_reply( current, handle, 0 );
 }
 
+/* get a Unix fd to read from a file */
+DECL_HANDLER(get_read_fd)
+{
+    struct object *obj;
+    int read_fd;
+
+    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_READ, NULL )))
+    {
+        read_fd = obj->ops->get_read_fd( obj );
+        release_object( obj );
+    }
+    else read_fd = -1;
+    send_reply( current, read_fd, 0 );
+}
+
+/* get a Unix fd to write to a file */
+DECL_HANDLER(get_write_fd)
+{
+    struct object *obj;
+    int write_fd;
+
+    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_WRITE, NULL )))
+    {
+        write_fd = obj->ops->get_write_fd( obj );
+        release_object( obj );
+    }
+    else write_fd = -1;
+    send_reply( current, write_fd, 0 );
+}
+
+/* set a file current position */
+DECL_HANDLER(set_file_pointer)
+{
+    struct set_file_pointer_reply reply = { req->low, req->high };
+    set_file_pointer( req->handle, &reply.low, &reply.high, req->whence );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* truncate (or extend) a file */
+DECL_HANDLER(truncate_file)
+{
+    truncate_file( req->handle );
+    send_reply( current, -1, 0 );
+}
+
+/* flush a file buffers */
+DECL_HANDLER(flush_file)
+{
+    struct object *obj;
+
+    if ((obj = get_handle_obj( current->process, req->handle, GENERIC_WRITE, NULL )))
+    {
+        obj->ops->flush( obj );
+        release_object( obj );
+    }
+    send_reply( current, -1, 0 );
+}
+
 /* get a file information */
 DECL_HANDLER(get_file_info)
 {
     struct get_file_info_reply reply;
     get_file_info( req->handle, &reply );
     send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* create an anonymous pipe */
+DECL_HANDLER(create_pipe)
+{
+    struct create_pipe_reply reply = { -1, -1 };
+    struct object *obj[2];
+    if (create_pipe( obj ))
+    {
+        reply.handle_read = alloc_handle( current->process, obj[0],
+                                          STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_READ,
+                                          req->inherit );
+        if (reply.handle_read != -1)
+        {
+            reply.handle_write = alloc_handle( current->process, obj[1],
+                                               STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
+                                               req->inherit );
+            if (reply.handle_write == -1)
+                close_handle( current->process, reply.handle_read );
+        }
+        release_object( obj[0] );
+        release_object( obj[1] );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* create a console */
+DECL_HANDLER(create_console)
+{
+    struct create_console_reply reply = { -1, -1 };
+    struct object *obj[2];
+    if (create_console( fd, obj ))
+    {
+        reply.handle_read = alloc_handle( current->process, obj[0],
+                                          STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_READ,
+                                          req->inherit );
+        if (reply.handle_read != -1)
+        {
+            reply.handle_write = alloc_handle( current->process, obj[1],
+                                               STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
+                                               req->inherit );
+            if (reply.handle_write == -1)
+                close_handle( current->process, reply.handle_read );
+        }
+        release_object( obj[0] );
+        release_object( obj[1] );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set a console fd */
+DECL_HANDLER(set_console_fd)
+{
+    set_console_fd( req->handle, fd );
+    send_reply( current, -1, 0 );
 }

@@ -144,3 +144,35 @@ struct object *find_object( const char *name )
     if (!ptr) return NULL;
     return grab_object( ptr->obj );
 }
+
+/* functions for unimplemented object operations */
+
+int no_satisfied( struct object *obj, struct thread *thread )
+{
+    return 0;  /* not abandoned */
+}
+
+int no_read_fd( struct object *obj )
+{
+    SET_ERROR( ERROR_INVALID_HANDLE );
+    return -1;
+}
+
+int no_write_fd( struct object *obj )
+{
+    SET_ERROR( ERROR_INVALID_HANDLE );
+    return -1;
+}
+
+int no_flush( struct object *obj )
+{
+    SET_ERROR( ERROR_INVALID_HANDLE );
+    return 0;
+}
+
+void default_select_event( int fd, int event, void *private )
+{
+    struct object *obj = (struct object *)private;
+    assert( obj );
+    wake_up( obj, 0 );
+}

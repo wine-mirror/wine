@@ -31,6 +31,9 @@ static const struct object_ops event_ops =
     remove_queue,
     event_signaled,
     event_satisfied,
+    no_read_fd,
+    no_write_fd,
+    no_flush,
     event_destroy
 };
 

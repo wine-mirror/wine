@@ -30,7 +30,9 @@ static void file_dump( struct object *obj, int verbose );
 static void file_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void file_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int file_signaled( struct object *obj, struct thread *thread );
-static int file_satisfied( struct object *obj, struct thread *thread );
+static int file_get_read_fd( struct object *obj );
+static int file_get_write_fd( struct object *obj );
+static int file_flush( struct object *obj );
 static void file_destroy( struct object *obj );
 
 static const struct object_ops file_ops =
@@ -39,17 +41,17 @@ static const struct object_ops file_ops =
     file_add_queue,
     file_remove_queue,
     file_signaled,
-    file_satisfied,
+    no_satisfied,
+    file_get_read_fd,
+    file_get_write_fd,
+    file_flush,
     file_destroy
 };
 
-static void file_event( int fd, int event, void *private );
-static void file_timeout( int fd, void *private );
-
 static const struct select_ops select_ops =
 {
-    file_event,
-    file_timeout
+    default_select_event,
+    NULL   /* we never set a timeout on a file */
 };
 
 struct object *create_file( int fd )
@@ -123,10 +125,42 @@ static int file_signaled( struct object *obj, struct thread *thread )
     return select( file->fd + 1, &read_fds, &write_fds, NULL, &tv ) > 0;
 }
 
-static int file_satisfied( struct object *obj, struct thread *thread )
+static int file_get_read_fd( struct object *obj )
 {
-    /* Nothing to do */
-    return 0;  /* Not abandoned */
+    struct file *file = (struct file *)obj;
+    assert( obj->ops == &file_ops );
+
+    if (!(file->event & READ_EVENT))  /* FIXME: should not be necessary */
+    {
+        SET_ERROR( ERROR_ACCESS_DENIED );
+        return -1;
+    }
+    return dup( file->fd );
+}
+
+static int file_get_write_fd( struct object *obj )
+{
+    struct file *file = (struct file *)obj;
+    assert( obj->ops == &file_ops );
+
+    if (!(file->event & WRITE_EVENT))  /* FIXME: should not be necessary */
+    {
+        SET_ERROR( ERROR_ACCESS_DENIED );
+        return -1;
+    }
+    return dup( file->fd );
+}
+
+static int file_flush( struct object *obj )
+{
+    int ret;
+    struct file *file = (struct file *)grab_object(obj);
+    assert( obj->ops == &file_ops );
+
+    ret = (fsync( file->fd ) != -1);
+    if (!ret) file_set_error();
+    release_object( file );
+    return ret;
 }
 
 static void file_destroy( struct object *obj )
@@ -137,18 +171,28 @@ static void file_destroy( struct object *obj )
     free( file );
 }
 
-static void file_event( int fd, int event, void *private )
+/* set the last error depending on errno */
+void file_set_error(void)
 {
-    struct file *file = (struct file *)private;
-    assert( file );
-
-    wake_up( &file->obj, 0 );
-}
-
-static void file_timeout( int fd, void *private )
-{
-    /* we never set a timeout on a file */
-    assert( 0 );
+    switch (errno)
+    {
+    case EAGAIN:    SET_ERROR( ERROR_SHARING_VIOLATION ); break;
+    case EBADF:     SET_ERROR( ERROR_INVALID_HANDLE ); break;
+    case ENOSPC:    SET_ERROR( ERROR_HANDLE_DISK_FULL ); break;
+    case EACCES:
+    case EPERM:     SET_ERROR( ERROR_ACCESS_DENIED ); break;
+    case EROFS:     SET_ERROR( ERROR_WRITE_PROTECT ); break;
+    case EBUSY:     SET_ERROR( ERROR_LOCK_VIOLATION ); break;
+    case ENOENT:    SET_ERROR( ERROR_FILE_NOT_FOUND ); break;
+    case EISDIR:    SET_ERROR( ERROR_CANNOT_MAKE ); break;
+    case ENFILE:
+    case EMFILE:    SET_ERROR( ERROR_NO_MORE_FILES ); break;
+    case EEXIST:    SET_ERROR( ERROR_FILE_EXISTS ); break;
+    case EINVAL:    SET_ERROR( ERROR_INVALID_PARAMETER ); break;
+    case ESPIPE:    SET_ERROR( ERROR_SEEK ); break;
+    case ENOTEMPTY: SET_ERROR( ERROR_DIR_NOT_EMPTY ); break;
+    default:        perror("file_set_error"); SET_ERROR( ERROR_UNKNOWN ); break;
+    }
 }
 
 int file_get_unix_handle( int handle, unsigned int access )
@@ -164,6 +208,56 @@ int file_get_unix_handle( int handle, unsigned int access )
     return unix_handle;
 }
 
+int set_file_pointer( int handle, int *low, int *high, int whence )
+{
+    struct file *file;
+    int result;
+
+    if (*high)
+    {
+        fprintf( stderr, "set_file_pointer: offset > 4Gb not supported yet\n" );
+        SET_ERROR( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!(file = (struct file *)get_handle_obj( current->process, handle,
+                                                0, &file_ops )))
+        return 0;
+    if ((result = lseek( file->fd, *low, whence )) == -1)
+    {
+        /* Check for seek before start of file */
+        if ((errno == EINVAL) && (whence != SEEK_SET) && (*low < 0))
+            SET_ERROR( ERROR_NEGATIVE_SEEK );
+        else
+            file_set_error();
+        release_object( file );
+        return 0;
+    }
+    *low = result;
+    release_object( file );
+    return 1;
+}
+
+int truncate_file( int handle )
+{
+    struct file *file;
+    int result;
+
+    if (!(file = (struct file *)get_handle_obj( current->process, handle,
+                                                GENERIC_WRITE, &file_ops )))
+        return 0;
+    if (((result = lseek( file->fd, 0, SEEK_CUR )) == -1) ||
+        (ftruncate( file->fd, result ) == -1))
+    {
+        file_set_error();
+        release_object( file );
+        return 0;
+    }
+    release_object( file );
+    return 1;
+    
+}
+
 int get_file_info( int handle, struct get_file_info_reply *reply )
 {
     struct file *file;
@@ -174,7 +268,7 @@ int get_file_info( int handle, struct get_file_info_reply *reply )
         return 0;
     if (fstat( file->fd, &st ) == -1)
     {
-        /* file_set_error(); */
+        file_set_error();
         release_object( file );
         return 0;
     }

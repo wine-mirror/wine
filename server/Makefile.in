@@ -6,10 +6,12 @@ VPATH     = @srcdir@
 MODULE    = server
 
 C_SRCS = \
+	console.c \
 	event.c \
 	file.c \
 	mutex.c \
 	object.c \
+	pipe.c \
 	process.c \
 	request.c \
 	select.c \

@@ -229,6 +229,46 @@ static int dump_get_unix_handle_request( struct get_unix_handle_request *req, in
     return (int)sizeof(*req);
 }
 
+static int dump_get_read_fd_request( struct get_read_fd_request *req, int len )
+{
+    printf( " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_get_write_fd_request( struct get_write_fd_request *req, int len )
+{
+    printf( " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_file_pointer_request( struct set_file_pointer_request *req, int len )
+{
+    printf( " handle=%d,", req->handle );
+    printf( " low=%d,", req->low );
+    printf( " high=%d,", req->high );
+    printf( " whence=%d", req->whence );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_file_pointer_reply( struct set_file_pointer_reply *req, int len )
+{
+    printf( " low=%d,", req->low );
+    printf( " high=%d", req->high );
+    return (int)sizeof(*req);
+}
+
+static int dump_truncate_file_request( struct truncate_file_request *req, int len )
+{
+    printf( " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_flush_file_request( struct flush_file_request *req, int len )
+{
+    printf( " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
 static int dump_get_file_info_request( struct get_file_info_request *req, int len )
 {
     printf( " handle=%d", req->handle );
@@ -246,6 +286,38 @@ static int dump_get_file_info_reply( struct get_file_info_reply *req, int len )
     printf( " index_high=%d,", req->index_high );
     printf( " index_low=%d,", req->index_low );
     printf( " serial=%08x", req->serial );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_pipe_request( struct create_pipe_request *req, int len )
+{
+    printf( " inherit=%d", req->inherit );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_pipe_reply( struct create_pipe_reply *req, int len )
+{
+    printf( " handle_read=%d,", req->handle_read );
+    printf( " handle_write=%d", req->handle_write );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_console_request( struct create_console_request *req, int len )
+{
+    printf( " inherit=%d", req->inherit );
+    return (int)sizeof(*req);
+}
+
+static int dump_create_console_reply( struct create_console_reply *req, int len )
+{
+    printf( " handle_read=%d,", req->handle_read );
+    printf( " handle_write=%d", req->handle_write );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_console_fd_request( struct set_console_fd_request *req, int len )
+{
+    printf( " handle=%d", req->handle );
     return (int)sizeof(*req);
 }
 
@@ -297,8 +369,24 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())dump_create_file_reply },
     { (int(*)(void *,int))dump_get_unix_handle_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_get_read_fd_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_get_write_fd_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_set_file_pointer_request,
+      (void(*)())dump_set_file_pointer_reply },
+    { (int(*)(void *,int))dump_truncate_file_request,
+      (void(*)())0 },
+    { (int(*)(void *,int))dump_flush_file_request,
+      (void(*)())0 },
     { (int(*)(void *,int))dump_get_file_info_request,
       (void(*)())dump_get_file_info_reply },
+    { (int(*)(void *,int))dump_create_pipe_request,
+      (void(*)())dump_create_pipe_reply },
+    { (int(*)(void *,int))dump_create_console_request,
+      (void(*)())dump_create_console_reply },
+    { (int(*)(void *,int))dump_set_console_fd_request,
+      (void(*)())0 },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -323,7 +411,15 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "open_named_obj",
     "create_file",
     "get_unix_handle",
+    "get_read_fd",
+    "get_write_fd",
+    "set_file_pointer",
+    "truncate_file",
+    "flush_file",
     "get_file_info",
+    "create_pipe",
+    "create_console",
+    "set_console_fd",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )

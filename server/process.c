@@ -56,7 +56,6 @@ static struct process *first_process;
 
 static void process_dump( struct object *obj, int verbose );
 static int process_signaled( struct object *obj, struct thread *thread );
-static int process_satisfied( struct object *obj, struct thread *thread );
 static void process_destroy( struct object *obj );
 static void free_handles( struct process *process );
 static int copy_handle_table( struct process *process, struct process *parent );
@@ -67,7 +66,10 @@ static const struct object_ops process_ops =
     add_queue,
     remove_queue,
     process_signaled,
-    process_satisfied,
+    no_satisfied,
+    no_read_fd,
+    no_write_fd,
+    no_flush,
     process_destroy
 };
 
@@ -128,11 +130,6 @@ static int process_signaled( struct object *obj, struct thread *thread )
 {
     struct process *process = (struct process *)obj;
     return (process->running_threads > 0);
-}
-
-static int process_satisfied( struct object *obj, struct thread *thread )
-{
-    return 0;
 }
 
 /* get a process from an id (and increment the refcount) */

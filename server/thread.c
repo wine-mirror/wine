@@ -43,7 +43,6 @@ struct thread_wait
 
 static void dump_thread( struct object *obj, int verbose );
 static int thread_signaled( struct object *obj, struct thread *thread );
-static int thread_satisfied( struct object *obj, struct thread *thread );
 static void destroy_thread( struct object *obj );
 
 static const struct object_ops thread_ops =
@@ -52,7 +51,10 @@ static const struct object_ops thread_ops =
     add_queue,
     remove_queue,
     thread_signaled,
-    thread_satisfied,
+    no_satisfied,
+    no_read_fd,
+    no_write_fd,
+    no_flush,
     destroy_thread
 };
 
@@ -151,11 +153,6 @@ static int thread_signaled( struct object *obj, struct thread *thread )
 {
     struct thread *mythread = (struct thread *)obj;
     return (mythread->state == TERMINATED);
-}
-
-static int thread_satisfied( struct object *obj, struct thread *thread )
-{
-    return 0;
 }
 
 /* get a thread pointer from a thread id (and increment the refcount) */
