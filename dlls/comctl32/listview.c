@@ -167,7 +167,6 @@ typedef struct tagLISTVIEW_INFO
   PFNLVCOMPARE pfnCompare;
   LPARAM lParamSort;
   HWND hwndEdit;
-  BOOL bEditing;
   WNDPROC EditWndProc;
   INT nEditLabelItem;
   DWORD dwHoverTime;
@@ -280,7 +279,7 @@ static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *, INT, LPRECT);
 static INT LISTVIEW_CalculateMaxWidth(LISTVIEW_INFO *);
 static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *, INT);
-static LRESULT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *, INT);
+static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *, INT);
 static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *, INT);
@@ -3228,7 +3227,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 			(lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus) ? ILD_SELECTED : ILD_NORMAL);
 
     /* Don't bother painting item being edited */
-    if (infoPtr->bEditing && lprcFocus && nSubItem == 0) goto postpaint;
+    if (infoPtr->hwndEdit && lprcFocus && nSubItem == 0) goto postpaint;
 
     /* Set the text attributes */
     SetBkMode(hdc, nmlvcd.clrTextBk == CLR_NONE ? TRANSPARENT : OPAQUE);
@@ -3985,8 +3984,6 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
 
     TRACE("(pszText=%s, isW=%d)\n", debugtext_t(pszText, isW), isW);
 
-    infoPtr->bEditing = FALSE;
-
     ZeroMemory(&dispInfo, sizeof(dispInfo));
     dispInfo.item.mask = LVIF_PARAM | LVIF_STATE;
     dispInfo.item.iItem = infoPtr->nEditLabelItem;
@@ -4067,7 +4064,6 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 	return 0;
     }
 
-    infoPtr->bEditing = TRUE;
     ShowWindow(infoPtr->hwndEdit, SW_NORMAL);
     SetFocus(infoPtr->hwndEdit);
     SendMessageW(infoPtr->hwndEdit, EM_SETSEL, 0, -1);
@@ -4444,7 +4440,7 @@ static LRESULT LISTVIEW_GetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, 
  *   SUCCESS : column width
  *   FAILURE : zero
  */
-static LRESULT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
+static INT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
 {
     INT nColumnWidth = 0;
     HDITEMW hdi;
@@ -7011,7 +7007,7 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 
     TRACE("(nScrollCode=%d, nScrollDiff=%d)\n", nScrollCode, nScrollDiff);
 
-    SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
+    if (infoPtr->hwndEdit) SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
     scrollInfo.cbSize = sizeof(SCROLLINFO);
     scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
@@ -7114,7 +7110,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 
     TRACE("(nScrollCode=%d, nScrollDiff=%d)\n", nScrollCode, nScrollDiff);
 
-    SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
+    if (infoPtr->hwndEdit) SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
 
     scrollInfo.cbSize = sizeof(SCROLLINFO);
     scrollInfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_TRACKPOS;
@@ -8157,7 +8153,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
      we will need to kill the control since the redraw will
      misplace the edit control.
    */
-  if (infoPtr->bEditing &&
+  if (infoPtr->hwndEdit &&
         ((uNewView & (LVS_ICON|LVS_LIST|LVS_SMALLICON)) !=
         ((LVS_ICON|LVS_LIST|LVS_SMALLICON) & uOldView)))
   {
@@ -8700,12 +8696,13 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 	     * Adjust the edit window size
 	     */
 	    WCHAR buffer[1024];
-	    HDC           hdc      = GetDC(infoPtr->hwndEdit);
+	    HDC           hdc = GetDC(infoPtr->hwndEdit);
             HFONT         hFont, hOldFont = 0;
 	    RECT	  rect;
 	    SIZE	  sz;
 	    int		  len;
 
+	    if (!infoPtr->hwndEdit || !hdc) return 0;
 	    len = GetWindowTextW(infoPtr->hwndEdit, buffer, sizeof(buffer)/sizeof(buffer[0]));
 	    GetWindowRect(infoPtr->hwndEdit, &rect);
 
@@ -8761,7 +8758,6 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
 	WPARAM wParam, LPARAM lParam, BOOL isW)
 {
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(GetParent(hwnd), 0);
-    static BOOL bIgnoreKillFocus = FALSE;
     BOOL cancel = FALSE;
 
     TRACE("(hwnd=%x, uMsg=%x, wParam=%x, lParam=%lx, isW=%d)\n",
@@ -8773,7 +8769,6 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
 	  return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
 
 	case WM_KILLFOCUS:
-            if(bIgnoreKillFocus) return TRUE;
 	    break;
 
 	case WM_DESTROY:
@@ -8797,10 +8792,12 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
 	    return CallWindowProcT(infoPtr->EditWndProc, hwnd, uMsg, wParam, lParam, isW);
     }
 
-    if (infoPtr->bEditing)
+    /* kill the edit */
+    if (infoPtr->hwndEdit)
     {
 	LPWSTR buffer = NULL;
 
+        infoPtr->hwndEdit = 0;
 	if (!cancel)
 	{
 	    DWORD len = isW ? GetWindowTextLengthW(hwnd) : GetWindowTextLengthA(hwnd);
@@ -8814,14 +8811,10 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg,
 		}
 	    }
 	}
-        /* Processing LVN_ENDLABELEDIT message could kill the focus       */
-        /* eg. Using a messagebox                                         */
-        bIgnoreKillFocus = TRUE;
 	LISTVIEW_EndEditLabelT(infoPtr, buffer, isW);
 
 	if (buffer) COMCTL32_Free(buffer);
 
-        bIgnoreKillFocus = FALSE;
     }
 
     SendMessageW(hwnd, WM_CLOSE, 0, 0);
