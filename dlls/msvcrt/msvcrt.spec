@@ -605,7 +605,7 @@ debug_channels (msvcrt)
 @ cdecl fgetpos(ptr ptr) MSVCRT_fgetpos
 @ cdecl fgets(str long ptr) MSVCRT_fgets
 @ cdecl fgetwc(ptr) MSVCRT_fgetwc
-@ stub fgetws #(wstr long ptr)
+@ cdecl fgetws(wstr long ptr) MSVCRT_fgetws
 @ forward -noimport floor ntdll.floor
 @ cdecl fmod(double double) fmod
 @ cdecl fopen(str str) MSVCRT_fopen
@@ -736,8 +736,8 @@ debug_channels (msvcrt)
 @ cdecl toupper(long) toupper
 @ forward -noimport towlower ntdll.towlower
 @ forward -noimport towupper ntdll.towupper
-@ stub ungetc #(long ptr)
-@ stub ungetwc #(long ptr)
+@ cdecl ungetc(long ptr) MSVCRT_ungetc
+@ cdecl ungetwc(long ptr) MSVCRT_ungetwc
 @ cdecl vfprintf(ptr str long) MSVCRT_vfprintf
 @ cdecl vfwprintf(ptr wstr long) MSVCRT_vfwprintf
 @ cdecl vprintf(str long) MSVCRT_vprintf

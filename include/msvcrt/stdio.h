@@ -72,6 +72,8 @@
 
 #define MSVCRT_EOF       (-1)
 
+#define MSVCRT_BUFSIZ    512
+
 #endif /* USE_MSVCRT_PREFIX */
 
 typedef struct MSVCRT(_iobuf)
