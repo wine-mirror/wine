@@ -253,7 +253,7 @@ struct file *create_temp_file( int access )
     int fd;
 
     sprintf( tmpfn, "anonmap.XXXXXX" );  /* create it in the server directory */
-    fd = mkstemp(tmpfn);
+    fd = mkstemps( tmpfn, 0 );
     if (fd == -1)
     {
         file_set_error();

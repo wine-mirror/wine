@@ -65,65 +65,6 @@
 #endif
 
 
-/***********************************************************************
- *		clone
- */
-#if !defined(HAVE_CLONE) && defined(__linux__)
-int clone( int (*fn)(void *), void *stack, int flags, void *arg )
-{
-#ifdef __i386__
-    int ret;
-    void **stack_ptr = (void **)stack;
-    *--stack_ptr = arg;  /* Push argument on stack */
-    *--stack_ptr = fn;   /* Push function pointer (popped into ebx) */
-    __asm__ __volatile__( "pushl %%ebx\n\t"
-                          "movl %2,%%ebx\n\t"
-                          "int $0x80\n\t"
-                          "popl %%ebx\n\t"   /* Contains fn in the child */
-                          "testl %%eax,%%eax\n\t"
-                          "jnz 0f\n\t"
-                          "xorl %ebp,%ebp\n\t"    /* Terminate the stack frames */
-                          "call *%%ebx\n\t"       /* Should never return */
-                          "xorl %%eax,%%eax\n\t"  /* Just in case it does*/
-                          "0:"
-                          : "=a" (ret)
-                          : "0" (SYS_clone), "r" (flags), "c" (stack_ptr) );
-    assert( ret );  /* If ret is 0, we returned from the child function */
-    if (ret > 0) return ret;
-    errno = -ret;
-    return -1;
-#else
-    errno = EINVAL;
-    return -1;
-#endif  /* __i386__ */
-}
-#endif  /* !HAVE_CLONE && __linux__ */
-
-
-/***********************************************************************
- *		getsockopt
- */
-#ifndef HAVE_GETSOCKOPT
-int getsockopt(int socket, int level, int option_name,
-               void *option_value, size_t *option_len)
-{
-    errno = ENOSYS;
-    return -1;
-}
-#endif /* !defined(HAVE_GETSOCKOPT) */
-
-/***********************************************************************
- *		inet_network
- */
-#ifndef HAVE_INET_NETWORK
-unsigned long inet_network(const char *cp)
-{
-    errno = ENOSYS;
-    return 0;
-}
-#endif /* defined(HAVE_INET_NETWORK) */
-
-
 #if defined(__svr4__) || defined(__NetBSD__)
 /***********************************************************************
  *             try_mmap_fixed

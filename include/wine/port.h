@@ -167,7 +167,7 @@ struct statfs;
  * Function definitions (only when using libwine)
  */
 
-#ifndef NO_LIBWINE
+#ifndef NO_LIBWINE_PORT
 
 #if !defined(HAVE_CLONE) && defined(linux)
 int clone(int (*fn)(void *arg), void *stack, int flags, void *arg);
@@ -199,21 +199,9 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 size_t getpagesize(void);
 #endif  /* HAVE_GETPAGESIZE */
 
-#ifndef HAVE_GETSOCKOPT
-int getsockopt(int socket, int level, int option_name, void *option_value, size_t *option_len);
-#endif /* !defined(HAVE_GETSOCKOPT) */
-
-#ifndef HAVE_INET_NETWORK
-unsigned long inet_network(const char *cp);
-#endif /* !defined(HAVE_INET_NETWORK) */
-
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
-
-#ifndef HAVE_MKSTEMP
-int mkstemp(char *tmpfn);
-#endif /* HAVE_MKSTEMP */
 
 #ifndef HAVE_MEMMOVE
 void *memmove(void *dest, const void *src, size_t len);
@@ -260,6 +248,8 @@ int usleep (unsigned int useconds);
 #else
 extern void *wine_memcpy_unaligned( void *dst, const void *src, size_t size );
 #endif /* __i386__ */
+
+extern int mkstemps(char *template, int suffix_len);
 
 /* Interlocked functions */
 
@@ -315,14 +305,12 @@ extern long interlocked_xchg_add( long *dest, long incr );
 
 #endif  /* __i386___ && __GNUC__ */
 
-#else /* NO_LIBWINE */
+#else /* NO_LIBWINE_PORT */
 
 #define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
 
 #define clone             __WINE_NOT_PORTABLE(clone)
 #define getpagesize       __WINE_NOT_PORTABLE(getpagesize)
-#define getsockopt        __WINE_NOT_PORTABLE(getsockopt)
-#define inet_network      __WINE_NOT_PORTABLE(inet_network)
 #define lstat             __WINE_NOT_PORTABLE(lstat)
 #define memmove           __WINE_NOT_PORTABLE(memmove)
 #define pread             __WINE_NOT_PORTABLE(pread)
@@ -333,6 +321,6 @@ extern long interlocked_xchg_add( long *dest, long incr );
 #define strncasecmp       __WINE_NOT_PORTABLE(strncasecmp)
 #define usleep            __WINE_NOT_PORTABLE(usleep)
 
-#endif /* NO_LIBWINE */
+#endif /* NO_LIBWINE_PORT */
 
 #endif /* !defined(__WINE_WINE_PORT_H) */

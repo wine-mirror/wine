@@ -11,7 +11,7 @@ C_SRCS = \
 	getpagesize.c \
 	lstat.c \
 	memmove.c \
-	mkstemp.c \
+	mkstemps.c \
 	pread.c \
 	pwrite.c \
 	statfs.c \

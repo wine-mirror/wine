@@ -931,12 +931,10 @@ AC_CHECK_FUNCS(\
 	getprotobynumber \
 	getpwuid \
 	getservbyport \
-	getsockopt \
 	inet_network \
 	lseek64 \
 	lstat \
 	memmove \
-	mkstemp \
 	mmap \
 	pclose \
 	popen \

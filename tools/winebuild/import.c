@@ -616,13 +616,13 @@ static const char *ldcombine_files( char **argv )
 
     if (output_file_name && output_file_name[0])
     {
-        ld_tmp_file = xmalloc( strlen(output_file_name) + 8 );
+        ld_tmp_file = xmalloc( strlen(output_file_name) + 10 );
         strcpy( ld_tmp_file, output_file_name );
-        strcat( ld_tmp_file, ".XXXXXX" );
+        strcat( ld_tmp_file, ".XXXXXX.o" );
     }
-    else ld_tmp_file = xstrdup( "/tmp/winebuild.tmp.XXXXXX" );
+    else ld_tmp_file = xstrdup( "/tmp/winebuild.tmp.XXXXXX.o" );
 
-    if ((fd = mkstemp( ld_tmp_file ) == -1)) fatal_error( "could not generate a temp file\n" );
+    if ((fd = mkstemps( ld_tmp_file, 2 ) == -1)) fatal_error( "could not generate a temp file\n" );
     close( fd );
     atexit( remove_ld_tmp_file );
 

@@ -25,6 +25,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -1981,7 +1982,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
 
                 if (!(gdb_path = getenv("WINE_GDB"))) gdb_path = "gdb";
 		strcpy(buf,"/tmp/winegdb.XXXXXX");
-		fd = mkstemp(buf);
+		fd = mkstemps(buf,0);
 		if (fd == -1) return FALSE;
                 if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
                 fprintf(f, "file %s\n", wine_path);

@@ -562,8 +562,8 @@ static char *extract_icon( const char *path, int index)
     int fd, nodefault = 1;
     char *filename, tmpfn[25];
 
-    strcpy(tmpfn,"/tmp/icon.XXXXXX");
-    fd = mkstemp( tmpfn );
+    strcpy(tmpfn,"/tmp/icon.XXXXXX.xpm");
+    fd = mkstemps( tmpfn, 4 );
     if (fd == -1)
         return NULL;
     filename = heap_strdup( tmpfn );

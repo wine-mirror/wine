@@ -41,6 +41,10 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif
+
 #include "thread.h"
 #include "wine/server.h"
 #include "winbase.h"
@@ -50,19 +54,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
-
-#if defined(linux) || defined(HAVE_CLONE)
-# ifdef HAVE_SCHED_H
-#  include <sched.h>
-# endif
-# ifndef CLONE_VM
-#  define CLONE_VM      0x00000100
-#  define CLONE_FS      0x00000200
-#  define CLONE_FILES   0x00000400
-#  define CLONE_SIGHAND 0x00000800
-#  define CLONE_PID     0x00001000
-# endif  /* CLONE_VM */
-#endif  /* linux || HAVE_CLONE */
 
 struct thread_cleanup_info
 {
@@ -185,18 +176,12 @@ static void SYSDEPS_StartThread( TEB *teb )
  */
 int SYSDEPS_SpawnThread( TEB *teb )
 {
-#ifdef ERRNO_LOCATION
-
-#if defined(linux) || defined(HAVE_CLONE)
-    const int flags = CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD;
-    if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top, flags, teb ) < 0)
+#ifdef HAVE_CLONE
+    if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
+               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
         return -1;
-    if (!(flags & CLONE_FILES)) close( teb->request_fd );  /* close the child socket in the parent */
     return 0;
-#endif
-
-#ifdef HAVE_RFORK
-    const int flags = RFPROC | RFMEM; /*|RFFDG*/
+#elif defined(HAVE_RFORK)
     void **sp = (void **)teb->stack_top;
     *--sp = teb;
     *--sp = 0;
@@ -212,13 +197,10 @@ int SYSDEPS_SpawnThread( TEB *teb )
     "ret;\n"
     "1:\n\t"		/* parent -> caller thread */
     "addl $8,%%esp" :
-    : "r" (sp), "g" (SYS_rfork), "g" (flags)
+    : "r" (sp), "g" (SYS_rfork), "g" (RFPROC | RFMEM)
     : "eax", "edx");
-    if (flags & RFFDG) close( teb->request_fd );  /* close the child socket in the parent */
     return 0;
-#endif
-
-#ifdef HAVE__LWP_CREATE
+#elif defined(HAVE__LWP_CREATE)
     ucontext_t context;
     _lwp_makecontext( &context, (void(*)(void *))SYSDEPS_StartThread, teb,
                       NULL, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
@@ -227,10 +209,8 @@ int SYSDEPS_SpawnThread( TEB *teb )
     return 0;
 #endif
 
-#endif /* ERRNO_LOCATION */
-
     FIXME("CreateThread: stub\n" );
-    return 0;
+    return -1;
 }
 
 

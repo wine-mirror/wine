@@ -296,7 +296,11 @@ INT WINAPI EnumProtocolsW( LPINT lpiProtocols, LPVOID lpBuffer,
  */
 UINT WINAPI WSOCK32_inet_network(const char *cp)
 {
+#ifdef HAVE_INET_NETWORK
     return inet_network(cp);
+#else
+    return 0;
+#endif
 }
 
 /*****************************************************************************

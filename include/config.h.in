@@ -161,9 +161,6 @@
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
-/* Define to 1 if you have the `getsockopt' function. */
-#undef HAVE_GETSOCKOPT
-
 /* Define to 1 if you have the <gif_lib.h> header file. */
 #undef HAVE_GIF_LIB_H
 
@@ -325,9 +322,6 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `mkstemp' function. */
-#undef HAVE_MKSTEMP
 
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP

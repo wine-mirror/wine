@@ -13081,8 +13081,6 @@ fi
 
 
 
-
-
 for ac_func in \
 	_lwp_create \
 	_pclose \
@@ -13108,12 +13106,10 @@ for ac_func in \
 	getprotobynumber \
 	getpwuid \
 	getservbyport \
-	getsockopt \
 	inet_network \
 	lseek64 \
 	lstat \
 	memmove \
-	mkstemp \
 	mmap \
 	pclose \
 	popen \

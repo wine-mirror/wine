@@ -124,7 +124,7 @@ int wpp_parse_temp( const char *input, const char *output_base, char **output_na
     strcpy( temp_name, output_base );
     strcat( temp_name, ".XXXXXX" );
 
-    if((fd = mkstemp( temp_name )) == -1)
+    if((fd = mkstemps( temp_name, 0 )) == -1)
     {
         fprintf(stderr, "Could not generate a temp name from %s\n", temp_name);
         exit(2);
