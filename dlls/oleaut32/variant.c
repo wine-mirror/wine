@@ -20,20 +20,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * NOTES
- *   This implements the low-level and hi-level APIs for manipulating VARIANTs.
- *   The low-level APIs are used to do data coercion between different data types.
- *   The hi-level APIs are built on top of these low-level APIs and handle
- *   initialization, copying, destroying and changing the type of VARIANTs.
- *
- * TODO:
- *   - The Variant APIs do not support international languages, currency
- *     types, number formating and calendar.  They only support U.S. English format.
- *   - The Variant APIs do not the following types: IUknown, IDispatch, DECIMAL and SafeArray.
- *   - The parsing of date for the VarDateFromStr is not complete.
- *   - The date manipulations do not support dates prior to 1900.
- *   - The parsing does not accept as many formats as the Windows implementation.
  */
 
 #include "config.h"
@@ -59,7 +45,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "winerror.h"
-#include "parsedt.h"
 #include "typelib.h"
 #include "winternl.h"
 #include "variant.h"
@@ -116,471 +101,6 @@ const char* wine_vflags[16] =
 #define BUFFER_MAX 1024
 static char pBuffer[BUFFER_MAX];
 
-/*
- * Note a leap year is one that is a multiple of 4
- * but not of a 100.  Except if it is a multiple of
- * 400 then it is a leap year.
- */
-
-/*
- * Use 365 days/year and a manual calculation for leap year days
- * to keep arithmetic simple
- */
-static const double DAYS_IN_ONE_YEAR = 365.0;
-
-/******************************************************************************
- *	   DateTimeStringToTm	[INTERNAL]
- *
- * Converts a string representation of a date and/or time to a tm structure.
- *
- * Note this function uses the postgresql date parsing functions found
- * in the parsedt.c file.
- *
- * Returns TRUE if successful.
- *
- * Note: This function does not parse the day of the week,
- * daylight savings time. It will only fill the followin fields in
- * the tm struct, tm_sec, tm_min, tm_hour, tm_year, tm_day, tm_mon.
- *
- ******************************************************************************/
-static BOOL DateTimeStringToTm( OLECHAR* strIn, DWORD dwFlags, struct tm* pTm )
-{
-	BOOL res = FALSE;
-	double		fsec;
-	int 		tzp;
-	int 		dtype;
-	int 		nf;
-	char	   *field[MAXDATEFIELDS];
-	int 		ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
-	char* strDateTime = NULL;
-
-	/* Convert the string to ASCII since this is the only format
-	 * postgesql can handle.
-	 */
-	strDateTime = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
-
-	if( strDateTime != NULL )
-	{
-		/* Make sure we don't go over the maximum length
-		 * accepted by postgesql.
-		 */
-		if( strlen( strDateTime ) <= MAXDATELEN )
-		{
-			if( ParseDateTime( strDateTime, lowstr, field, ftype, MAXDATEFIELDS, &nf) == 0 )
-			{
-				if( dwFlags & VAR_DATEVALUEONLY )
-				{
-					/* Get the date information.
-					 * It returns 0 if date information was
-					 * present and 1 if only time information was present.
-					 * -1 if an error occures.
-					 */
-					if( DecodeDateTime(field, ftype, nf, &dtype, pTm, &fsec, &tzp) == 0 )
-					{
-						/* Eliminate the time information since we
-						 * were asked to get date information only.
-						 */
-						pTm->tm_sec = 0;
-						pTm->tm_min = 0;
-						pTm->tm_hour = 0;
-						res = TRUE;
-					}
-				}
-				if( dwFlags & VAR_TIMEVALUEONLY )
-				{
-					/* Get time information only.
-					 */
-					if( DecodeTimeOnly(field, ftype, nf, &dtype, pTm, &fsec) == 0 )
-					{
-						res = TRUE;
-					}
-				}
-				else
-				{
-					/* Get both date and time information.
-					 * It returns 0 if date information was
-					 * present and 1 if only time information was present.
-					 * -1 if an error occures.
-					 */
-					if( DecodeDateTime(field, ftype, nf, &dtype, pTm, &fsec, &tzp) != -1 )
-					{
-						res = TRUE;
-					}
-				}
-			}
-		}
-		HeapFree( GetProcessHeap(), 0, strDateTime );
-	}
-
-	return res;
-}
-
-
-
-
-
-
-/******************************************************************************
- *	   TmToDATE 	[INTERNAL]
- *
- * The date is implemented using an 8 byte floating-point number.
- * Days are represented by whole numbers increments starting with 0.00 has
- * being December 30 1899, midnight.
- * The hours are expressed as the fractional part of the number.
- * December 30 1899 at midnight = 0.00
- * January 1 1900 at midnight = 2.00
- * January 4 1900 at 6 AM = 5.25
- * January 4 1900 at noon = 5.50
- * December 29 1899 at midnight = -1.00
- * December 18 1899 at midnight = -12.00
- * December 18 1899 at 6AM = -12.25
- * December 18 1899 at 6PM = -12.75
- * December 19 1899 at midnight = -11.00
- * The tm structure is as follows:
- * struct tm {
- *		  int tm_sec;	   seconds after the minute - [0,59]
- *		  int tm_min;	   minutes after the hour - [0,59]
- *		  int tm_hour;	   hours since midnight - [0,23]
- *		  int tm_mday;	   day of the month - [1,31]
- *		  int tm_mon;	   months since January - [0,11]
- *		  int tm_year;	   years
- *		  int tm_wday;	   days since Sunday - [0,6]
- *		  int tm_yday;	   days since January 1 - [0,365]
- *		  int tm_isdst;    daylight savings time flag
- *		  };
- *
- * Note: This function does not use the tm_wday, tm_yday, tm_wday,
- * and tm_isdst fields of the tm structure. And only converts years
- * after 1900.
- *
- * Returns TRUE if successful.
- */
-static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
-{
-    int leapYear = 0;
-
-    /* Hmmm... An uninitialized Date in VB is December 30 1899 so
-       Start at 0. This is the way DATE is defined. */
-
-    /* Start at 1. This is the way DATE is defined.
-     * January 1, 1900 at Midnight is 1.00.
-     * January 1, 1900 at 6AM is 1.25.
-     * and so on.
-     */
-    *pDateOut = 1;
-
-    if( (pTm->tm_year - 1900) >= 0 ) {
-
-        /* Add the number of days corresponding to
-         * tm_year.
-         */
-        *pDateOut += (pTm->tm_year - 1900) * 365;
-
-        /* Add the leap days in the previous years between now and 1900.
-         * Note a leap year is one that is a multiple of 4
-         * but not of a 100.  Except if it is a multiple of
-         * 400 then it is a leap year.
-         * Copied + reversed functionality into TmToDate
-         */
-        *pDateOut += ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
-        *pDateOut -= ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
-        *pDateOut += ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
-
-        /* Set the leap year flag if the
-         * current year specified by tm_year is a
-         * leap year. This will be used to add a day
-         * to the day count.
-         */
-        if( isleap( pTm->tm_year ) )
-            leapYear = 1;
-
-        /* Add the number of days corresponding to
-         * the month. (remember tm_mon is 0..11)
-         */
-        switch( pTm->tm_mon )
-        {
-        case 1:
-            *pDateOut += 31;
-            break;
-        case 2:
-            *pDateOut += ( 59 + leapYear );
-            break;
-        case 3:
-            *pDateOut += ( 90 + leapYear );
-            break;
-        case 4:
-            *pDateOut += ( 120 + leapYear );
-            break;
-        case 5:
-            *pDateOut += ( 151 + leapYear );
-            break;
-        case 6:
-            *pDateOut += ( 181 + leapYear );
-            break;
-        case 7:
-            *pDateOut += ( 212 + leapYear );
-            break;
-        case 8:
-            *pDateOut += ( 243 + leapYear );
-            break;
-        case 9:
-            *pDateOut += ( 273 + leapYear );
-            break;
-        case 10:
-            *pDateOut += ( 304 + leapYear );
-            break;
-        case 11:
-            *pDateOut += ( 334 + leapYear );
-            break;
-        }
-        /* Add the number of days in this month.
-         */
-        *pDateOut += pTm->tm_mday;
-
-        /* Add the number of seconds, minutes, and hours
-         * to the DATE. Note these are the fractional part
-         * of the DATE so seconds / number of seconds in a day.
-         */
-    } else {
-        *pDateOut = 0;
-    }
-
-    *pDateOut += pTm->tm_hour / 24.0;
-    *pDateOut += pTm->tm_min / 1440.0;
-    *pDateOut += pTm->tm_sec / 86400.0;
-    return TRUE;
-}
-
-/******************************************************************************
- *	   DateToTm 	[INTERNAL]
- *
- * This function converts a windows DATE to a tm structure.
- *
- * It does not fill all the fields of the tm structure.
- * Here is a list of the fields that are filled:
- * tm_sec, tm_min, tm_hour, tm_year, tm_day, tm_mon.
- *
- * Note this function does not support dates before the January 1, 1900
- * or ( dateIn < 2.0 ).
- *
- * Returns TRUE if successful.
- */
-BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm )
-{
-    double decimalPart = 0.0;
-    double wholePart = 0.0;
-
-    memset(pTm,0,sizeof(*pTm));
-
-    /* Because of the nature of DATE format which
-     * associates 2.0 to January 1, 1900. We will
-     * remove 1.0 from the whole part of the DATE
-     * so that in the following code 1.0
-     * will correspond to January 1, 1900.
-     * This simplifies the processing of the DATE value.
-     */
-    decimalPart = fmod( dateIn, 1.0 ); /* Do this before the -1, otherwise 0.xx goes negative */
-    dateIn -= 1.0;
-    wholePart = (double) floor( dateIn );
-
-    if( !(dwFlags & VAR_TIMEVALUEONLY) )
-    {
-        unsigned int nDay = 0;
-        int leapYear = 0;
-        double yearsSince1900 = 0;
-
-        /* Hard code dates smaller than January 1, 1900. */
-        if( dateIn < 2.0 ) {
-            pTm->tm_year = 1899;
-            pTm->tm_mon  = 11; /* December as tm_mon is 0..11 */
-            if( dateIn < 1.0 ) {
-                pTm->tm_mday  = 30;
-                dateIn = dateIn * -1.0; /* Ensure +ve for time calculation */
-                decimalPart = decimalPart * -1.0; /* Ensure +ve for time calculation */
-            } else {
-                pTm->tm_mday  = 31;
-            }
-
-        } else {
-
-            /* Start at 1900, this is where the DATE time 0.0 starts.
-             */
-            pTm->tm_year = 1900;
-            /* find in what year the day in the "wholePart" falls into.
-             * add the value to the year field.
-             */
-            yearsSince1900 = floor( (wholePart / DAYS_IN_ONE_YEAR) + 0.001 );
-            pTm->tm_year += yearsSince1900;
-            /* determine if this is a leap year.
-             */
-            if( isleap( pTm->tm_year ) )
-            {
-                leapYear = 1;
-                wholePart++;
-            }
-
-            /* find what day of that year the "wholePart" corresponds to.
-             * Note: nDay is in [1-366] format
-             */
-            nDay = (((unsigned int) wholePart) - ((pTm->tm_year-1900) * DAYS_IN_ONE_YEAR ));
-
-            /* Remove the leap days in the previous years between now and 1900.
-             * Note a leap year is one that is a multiple of 4
-             * but not of a 100.  Except if it is a multiple of
-             * 400 then it is a leap year.
-             * Copied + reversed functionality from TmToDate
-             */
-            nDay -= ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
-            nDay += ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
-            nDay -= ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
-
-            /* Set the tm_yday value.
-             * Note: The day must be converted from [1-366] to [0-365]
-             */
-            /*pTm->tm_yday = nDay - 1;*/
-            /* find which month this day corresponds to.
-             */
-            if( nDay <= 31 )
-            {
-                pTm->tm_mday = nDay;
-                pTm->tm_mon = 0;
-            }
-            else if( nDay <= ( 59 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - 31;
-                pTm->tm_mon = 1;
-            }
-            else if( nDay <= ( 90 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 59 + leapYear );
-                pTm->tm_mon = 2;
-            }
-            else if( nDay <= ( 120 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 90 + leapYear );
-                pTm->tm_mon = 3;
-            }
-            else if( nDay <= ( 151 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 120 + leapYear );
-                pTm->tm_mon = 4;
-            }
-            else if( nDay <= ( 181 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 151 + leapYear );
-                pTm->tm_mon = 5;
-            }
-            else if( nDay <= ( 212 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 181 + leapYear );
-                pTm->tm_mon = 6;
-            }
-            else if( nDay <= ( 243 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 212 + leapYear );
-                pTm->tm_mon = 7;
-            }
-            else if( nDay <= ( 273 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 243 + leapYear );
-                pTm->tm_mon = 8;
-            }
-            else if( nDay <= ( 304 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 273 + leapYear );
-                pTm->tm_mon = 9;
-            }
-            else if( nDay <= ( 334 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 304 + leapYear );
-                pTm->tm_mon = 10;
-            }
-            else if( nDay <= ( 365 + leapYear ) )
-            {
-                pTm->tm_mday = nDay - ( 334 + leapYear );
-                pTm->tm_mon = 11;
-            }
-        }
-    }
-    if( !(dwFlags & VAR_DATEVALUEONLY) )
-    {
-        /* find the number of seconds in this day.
-         * fractional part times, hours, minutes, seconds.
-         * Note: 0.1 is hack to ensure figures come out in whole numbers
-         *   due to floating point inaccuracies
-         */
-        pTm->tm_hour = (int) ( decimalPart * 24 );
-        pTm->tm_min = (int) ( ( ( decimalPart * 24 ) - pTm->tm_hour ) * 60 );
-        /* Note: 0.1 is hack to ensure seconds come out in whole numbers
-             due to floating point inaccuracies */
-        pTm->tm_sec = (int) (( ( ( decimalPart * 24 * 60 ) - ( pTm->tm_hour * 60 ) - pTm->tm_min ) * 60 ) + 0.1);
-    }
-    return TRUE;
-}
-
-
-
-/******************************************************************************
- *	   SizeOfVariantData   	[INTERNAL]
- *
- * This function finds the size of the data referenced by a Variant based
- * the type "vt" of the Variant.
- */
-static int SizeOfVariantData( VARIANT* parg )
-{
-    int size = 0;
-    switch( V_VT(parg) & VT_TYPEMASK )
-    {
-    case( VT_I2 ):
-        size = sizeof(short);
-        break;
-    case( VT_INT ):
-        size = sizeof(int);
-        break;
-    case( VT_I4 ):
-        size = sizeof(long);
-        break;
-    case( VT_UI1 ):
-        size = sizeof(BYTE);
-        break;
-    case( VT_UI2 ):
-        size = sizeof(unsigned short);
-        break;
-    case( VT_UINT ):
-        size = sizeof(unsigned int);
-        break;
-    case( VT_UI4 ):
-        size = sizeof(unsigned long);
-        break;
-    case( VT_R4 ):
-        size = sizeof(float);
-        break;
-    case( VT_R8 ):
-        size = sizeof(double);
-        break;
-    case( VT_DATE ):
-        size = sizeof(DATE);
-        break;
-    case( VT_BOOL ):
-        size = sizeof(VARIANT_BOOL);
-        break;
-    case( VT_BSTR ):
-    case( VT_DISPATCH ):
-    case( VT_UNKNOWN ):
-        size = sizeof(void*);
-        break;
-    case( VT_CY ):
-	size = sizeof(CY);
-	break;
-    case( VT_DECIMAL ):		/* hmm, tricky, DECIMAL is only VT_BYREF */
-    default:
-        FIXME("Add size information for type vt=%d\n", V_VT(parg) & VT_TYPEMASK );
-        break;
-    }
-
-    return size;
-}
 /******************************************************************************
  *	   StringDupAtoBstr		[INTERNAL]
  *
@@ -590,7 +110,7 @@ static BSTR StringDupAtoBstr( char* strIn )
 	BSTR bstr = NULL;
 	OLECHAR* pNewString = NULL;
 	UNICODE_STRING usBuffer;
-	
+
 	RtlCreateUnicodeStringFromAsciiz( &usBuffer, strIn );
 	pNewString = usBuffer.Buffer;
 
@@ -1290,7 +810,10 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarBstrFromR8( V_UNION(ps,dblVal), lcid, 0, &V_UNION(pd,bstrVal) );
 			break;
 		case( VT_DATE ):
-			res = VarBstrFromDate( V_UNION(ps,date), lcid, 0, &V_UNION(pd,bstrVal) );
+            if (dwFlags & VARIANT_NOUSEROVERRIDE)
+              res = VarBstrFromDate( V_UNION(ps,date), lcid, LOCALE_NOUSEROVERRIDE, &V_UNION(pd,bstrVal) );
+            else
+			  res = VarBstrFromDate( V_UNION(ps,date), lcid, 0, &V_UNION(pd,bstrVal) );
 			break;
 		case( VT_BOOL ):
 			if (dwFlags & VARIANT_ALPHABOOL)
@@ -1655,7 +1178,7 @@ HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
 {
   HRESULT hres = S_OK;
 
-  TRACE("(%p)\n", pVarg);
+  TRACE("(%p->(%s%s))\n", pVarg, debugstr_VT(pVarg), debugstr_VF(pVarg));
 
   hres = VARIANT_ValidateType(V_VT(pVarg));
 
@@ -1700,7 +1223,40 @@ HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
 }
 
 /******************************************************************************
- *		VariantCopy	[OLEAUT32.10]
+ * Copy an IRecordInfo object contained in a variant.
+ */
+static HRESULT VARIANT_CopyIRecordInfo(struct __tagBRECORD* pBr)
+{
+  HRESULT hres = S_OK;
+
+  if (pBr->pRecInfo)
+  {
+    ULONG ulSize;
+
+    hres = IRecordInfo_GetSize(pBr->pRecInfo, &ulSize);
+    if (SUCCEEDED(hres))
+    {
+      PVOID pvRecord = HeapAlloc(GetProcessHeap(), 0, ulSize);
+      if (!pvRecord)
+        hres = E_OUTOFMEMORY;
+      else
+      {
+        memcpy(pvRecord, pBr->pvRecord, ulSize);
+        pBr->pvRecord = pvRecord;
+
+        hres = IRecordInfo_RecordCopy(pBr->pRecInfo, pvRecord, pvRecord);
+        if (SUCCEEDED(hres))
+          IRecordInfo_AddRef(pBr->pRecInfo);
+      }
+    }
+  }
+  else if (pBr->pvRecord)
+    hres = E_INVALIDARG;
+  return hres;
+}
+
+/******************************************************************************
+ *    VariantCopy  [OLEAUT32.10]
  *
  * Copy a variant.
  *
@@ -1710,92 +1266,104 @@ HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
  *
  * RETURNS
  *  Success: S_OK. pvargDest contains a copy of pvargSrc.
- *  Failure: An HRESULT error code indicating the error.
+ *  Failure: DISP_E_BADVARTYPE, if either variant has an invalid type.
+ *           E_OUTOFMEMORY, if memory cannot be allocated. Otherwise an
+ *           HRESULT error code from SafeArrayCopy(), IRecordInfo_GetSize(),
+ *           or IRecordInfo_RecordCopy(), depending on the type of pvargSrc.
  *
  * NOTES
- *  pvargDest is always freed, and may be equal to pvargSrc.
- *  If pvargSrc is by-reference, pvargDest is by-reference also.
+ *  - If pvargSrc == pvargDest, this function does nothing, and succeeds if
+ *    pvargSrc is valid. Otherwise, pvargDest is always cleared using
+ *    VariantClear() before pvargSrc is copied to it. If clearing pvargDest
+ *    fails, so does this function.
+ *  - VT_CLSID is a valid type type for pvargSrc, but not for pvargDest.
+ *  - For by-value non-intrinsic types, a deep copy is made, i.e. The whole value
+ *    is copied rather than just any pointers to it.
+ *  - For by-value object types the object pointer is copied and the objects
+ *    reference count increased using IUnknown_AddRef().
+ *  - For all by-reference types, only the referencing pointer is copied.
  */
 HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 {
-  HRESULT res = S_OK;
+  HRESULT hres = S_OK;
 
-  TRACE("(%p, %p), vt=%d\n", pvargDest, pvargSrc, V_VT(pvargSrc));
+  TRACE("(%p->(%s%s),%p->(%s%s))\n", pvargDest, debugstr_VT(pvargDest),
+        debugstr_VF(pvargDest), pvargSrc, debugstr_VT(pvargSrc),
+        debugstr_VF(pvargSrc));
 
-  res = ValidateVariantType( V_VT(pvargSrc) );
+  if (V_TYPE(pvargSrc) == VT_CLSID || /* VT_CLSID is a special case */
+      FAILED(VARIANT_ValidateType(V_VT(pvargSrc))))
+    return DISP_E_BADVARTYPE;
 
-  /* If the pointer are to the same variant we don't need
-   * to do anything.
-   */
-  if( pvargDest != pvargSrc && res == S_OK )
+  if (pvargSrc != pvargDest &&
+      SUCCEEDED(hres = VariantClear(pvargDest)))
   {
-    VariantClear( pvargDest ); /* result is not checked */
+    *pvargDest = *pvargSrc; /* Shallow copy the value */
 
-    if( V_VT(pvargSrc) & VT_BYREF )
+    if (!V_ISBYREF(pvargSrc))
     {
-      /* In the case of byreference we only need
-       * to copy the pointer.
-       */
-      pvargDest->n1.n2.n3 = pvargSrc->n1.n2.n3;
-      V_VT(pvargDest) = V_VT(pvargSrc);
-    }
-    else
-    {
-      /*
-       * The VT_ARRAY flag is another way to designate a safe array.
-       */
-      if (V_VT(pvargSrc) & VT_ARRAY)
+      if (V_ISARRAY(pvargSrc))
       {
-	SafeArrayCopy(V_UNION(pvargSrc,parray), &V_UNION(pvargDest,parray));
+        if (V_ARRAY(pvargSrc))
+          hres = SafeArrayCopy(V_ARRAY(pvargSrc), &V_ARRAY(pvargDest));
       }
-      else
+      else if (V_VT(pvargSrc) == VT_BSTR)
       {
-	/* In the case of by value we need to
-	 * copy the actual value. In the case of
-	 * VT_BSTR a copy of the string is made,
-	 * if VT_DISPATCH or VT_IUNKNOWN AddRef is
-	 * called to increment the object's reference count.
-	 */
-	switch( V_VT(pvargSrc) & VT_TYPEMASK )
-	{
-	  case( VT_BSTR ):
-	    V_UNION(pvargDest,bstrVal) = SYSDUPSTRING( V_UNION(pvargSrc,bstrVal) );
-	    break;
-	  case( VT_DISPATCH ):
-	    V_UNION(pvargDest,pdispVal) = V_UNION(pvargSrc,pdispVal);
-	    if (V_UNION(pvargDest,pdispVal)!=NULL)
-	      IDispatch_AddRef(V_UNION(pvargDest,pdispVal));
-	    break;
-	  case( VT_VARIANT ):
-	    VariantCopy(V_UNION(pvargDest,pvarVal),V_UNION(pvargSrc,pvarVal));
-	    break;
-	  case( VT_UNKNOWN ):
-	    V_UNION(pvargDest,punkVal) = V_UNION(pvargSrc,punkVal);
-	    if (V_UNION(pvargDest,pdispVal)!=NULL)
-	      IUnknown_AddRef(V_UNION(pvargDest,punkVal));
-	    break;
-	  case( VT_SAFEARRAY ):
-	    SafeArrayCopy(V_UNION(pvargSrc,parray), &V_UNION(pvargDest,parray));
-	    break;
-	  default:
-	    pvargDest->n1.n2.n3 = pvargSrc->n1.n2.n3;
-	    break;
-	}
+        if (V_BSTR(pvargSrc))
+        {
+          V_BSTR(pvargDest) = SysAllocStringLen(V_BSTR(pvargSrc), SysStringLen(V_BSTR(pvargSrc)));
+          if (!V_BSTR(pvargDest))
+            hres = E_OUTOFMEMORY;
+        }
       }
-      V_VT(pvargDest) = V_VT(pvargSrc);
-      dump_Variant(pvargDest);
+      else if (V_VT(pvargSrc) == VT_RECORD)
+      {
+        hres = VARIANT_CopyIRecordInfo(&V_UNION(pvargDest,brecVal));
+      }
+      else if (V_VT(pvargSrc) == VT_DISPATCH ||
+               V_VT(pvargSrc) == VT_UNKNOWN)
+      {
+        if (V_UNKNOWN(pvargSrc))
+          IUnknown_AddRef(V_UNKNOWN(pvargSrc));
+      }
     }
   }
-
-  return res;
+  return hres;
 }
 
+/* Return the byte size of a variants data */
+static inline size_t VARIANT_DataSize(const VARIANT* pv)
+{
+  switch (V_TYPE(pv))
+  {
+  case VT_I1:
+  case VT_UI1:   return sizeof(BYTE); break;
+  case VT_I2:
+  case VT_UI2:   return sizeof(SHORT); break;
+  case VT_INT:
+  case VT_UINT:
+  case VT_I4:
+  case VT_UI4:   return sizeof(LONG); break;
+  case VT_I8:
+  case VT_UI8:   return sizeof(LONGLONG); break;
+  case VT_R4:    return sizeof(float); break;
+  case VT_R8:    return sizeof(double); break;
+  case VT_DATE:  return sizeof(DATE); break;
+  case VT_BOOL:  return sizeof(VARIANT_BOOL); break;
+  case VT_DISPATCH:
+  case VT_UNKNOWN:
+  case VT_BSTR:  return sizeof(void*); break;
+  case VT_CY:    return sizeof(CY); break;
+  case VT_ERROR: return sizeof(SCODE); break;
+  }
+  TRACE("Shouldn't be called for vt %s%s!\n", debugstr_VT(pv), debugstr_VF(pv));
+  return 0;
+}
 
 /******************************************************************************
- *		VariantCopyInd	[OLEAUT32.11]
+ *    VariantCopyInd  [OLEAUT32.11]
  *
- *
- * Copy a variant, dereferencing if it is by-reference.
+ * Copy a variant, dereferencing it it is by-reference.
  *
  * PARAMS
  *  pvargDest [O] Destination for copy
@@ -1804,138 +1372,117 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
  * RETURNS
  *  Success: S_OK. pvargDest contains a copy of pvargSrc.
  *  Failure: An HRESULT error code indicating the error.
- *  
+ *
  * NOTES
- *  pvargDest is always freed, and may be equal to pvargSrc.
- *  If pvargSrc is not by-reference, this function acts as VariantCopy().
+ *  Failure: DISP_E_BADVARTYPE, if either variant has an invalid by-value type.
+ *           E_INVALIDARG, if pvargSrc  is an invalid by-reference type.
+ *           E_OUTOFMEMORY, if memory cannot be allocated. Otherwise an
+ *           HRESULT error code from SafeArrayCopy(), IRecordInfo_GetSize(),
+ *           or IRecordInfo_RecordCopy(), depending on the type of pvargSrc.
+ *
+ * NOTES
+ *  - If pvargSrc is by-value, this function behaves exactly as VariantCopy().
+ *  - If pvargSrc is by-reference, the value copied to pvargDest is the pointed-to
+ *    value.
+ *  - if pvargSrc == pvargDest, this function dereferences in place. Otherwise,
+ *    pvargDest is always cleared using VariantClear() before pvargSrc is copied
+ *    to it. If clearing pvargDest fails, so does this function.
  */
 HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 {
-  HRESULT res = S_OK;
+  VARIANTARG vTmp, *pSrc = pvargSrc;
+  VARTYPE vt;
+  HRESULT hres = S_OK;
 
-  TRACE("(%p, %p)\n", pvargDest, pvargSrc);
+  TRACE("(%p->(%s%s),%p->(%s%s))\n", pvargDest, debugstr_VT(pvargDest),
+        debugstr_VF(pvargDest), pvargSrc, debugstr_VT(pvargSrc),
+        debugstr_VF(pvargSrc));
 
-  res = ValidateVariantType( V_VT(pvargSrc) );
+  if (!V_ISBYREF(pvargSrc))
+    return VariantCopy(pvargDest, pvargSrc);
 
-  if( res != S_OK )
-    return res;
-
-  if( V_VT(pvargSrc) & VT_BYREF )
+  /* Argument checking is more lax than VariantCopy()... */
+  vt = V_TYPE(pvargSrc);
+  if (V_ISARRAY(pvargSrc) ||
+     (vt > VT_NULL && vt != (VARTYPE)15 && vt < VT_VOID &&
+     !(V_VT(pvargSrc) & (VT_VECTOR|VT_RESERVED))))
   {
-    VARIANTARG varg;
-    VariantInit( &varg );
+    /* OK */
+  }
+  else
+    return E_INVALIDARG; /* ...And the return value for invalid types differs too */
 
-    /* handle the in place copy.
+  if (pvargSrc == pvargDest)
+  {
+    /* In place copy. Use a shallow copy of pvargSrc & init pvargDest.
+     * This avoids an expensive VariantCopy() call - e.g. SafeArrayCopy().
      */
-    if( pvargDest == pvargSrc )
-    {
-      /* we will use a copy of the source instead.
-       */
-      res = VariantCopy( &varg, pvargSrc );
-      pvargSrc = &varg;
-    }
-
-    if( res == S_OK )
-    {
-      res = VariantClear( pvargDest );
-
-      if( res == S_OK )
-      {
-	/*
-	 * The VT_ARRAY flag is another way to designate a safearray variant.
-	 */
-	if ( V_VT(pvargSrc) & VT_ARRAY)
-	{
-	  SafeArrayCopy(*V_UNION(pvargSrc,pparray), &V_UNION(pvargDest,parray));
-	}
-	else
-	{
-	  /* In the case of by reference we need
-	   * to copy the date pointed to by the variant.
-	   */
-
-	  /* Get the variant type.
-	   */
-	  switch( V_VT(pvargSrc) & VT_TYPEMASK )
-	  {
-	    case( VT_BSTR ):
-	      V_UNION(pvargDest,bstrVal) = SYSDUPSTRING( *(V_UNION(pvargSrc,pbstrVal)) );
-	      break;
-	    case( VT_DISPATCH ):
-	      V_UNION(pvargDest,pdispVal) = *V_UNION(pvargSrc,ppdispVal);
-	      if (V_UNION(pvargDest,pdispVal)!=NULL)
-		IDispatch_AddRef(V_UNION(pvargDest,pdispVal));
-	      break;
-	    case( VT_VARIANT ):
-	      {
-		/* Prevent from cycling.  According to tests on
-		 * VariantCopyInd in Windows and the documentation
-		 * this API dereferences the inner Variants to only one depth.
-		 * If the inner Variant itself contains an
-		 * other inner variant the E_INVALIDARG error is
-		 * returned.
-		 */
-		if( pvargSrc->n1.n2.wReserved1 & PROCESSING_INNER_VARIANT )
-		{
-		  /* If we get here we are attempting to deference
-		   * an inner variant that that is itself contained
-		   * in an inner variant so report E_INVALIDARG error.
-		   */
-		  res = E_INVALIDARG;
-		}
-		else
-		{
-		  /* Set the processing inner variant flag.
-		   * We will set this flag in the inner variant
-		   * that will be passed to the VariantCopyInd function.
-		   */
-		  (V_UNION(pvargSrc,pvarVal))->n1.n2.wReserved1 |= PROCESSING_INNER_VARIANT;
-
-		  /* Dereference the inner variant.
-		   */
-		  res = VariantCopyInd( pvargDest, V_UNION(pvargSrc,pvarVal) );
-		  /* We must also copy its type, I think.
-		   */
-		  V_VT(pvargSrc) = V_VT(V_UNION(pvargSrc,pvarVal));
-		}
-	      }
-	      break;
-	    case( VT_UNKNOWN ):
-	      V_UNION(pvargDest,punkVal) = *V_UNION(pvargSrc,ppunkVal);
-	      if (V_UNION(pvargDest,pdispVal)!=NULL)
-		IUnknown_AddRef(V_UNION(pvargDest,punkVal));
-	      break;
-	    case( VT_SAFEARRAY ):
-	      SafeArrayCopy(*V_UNION(pvargSrc,pparray), &V_UNION(pvargDest,parray));
-	      break;
-	    default:
-	      /* This is a by reference Variant which means that the union
-	       * part of the Variant contains a pointer to some data of
-	       * type "V_VT(pvargSrc) & VT_TYPEMASK".
-	       * We will deference this data in a generic fashion using
-	       * the void pointer "Variant.u.byref".
-	       * We will copy this data into the union of the destination
-	       * Variant.
-	       */
-	      memcpy( &pvargDest->n1.n2.n3, V_UNION(pvargSrc,byref), SizeOfVariantData( pvargSrc ) );
-	      break;
-	  }
-	}
-
-        if (res == S_OK) V_VT(pvargDest) = V_VT(pvargSrc) & VT_TYPEMASK;
-      }
-    }
-
-    /* this should not fail.
-     */
-    VariantClear( &varg );
+    vTmp = *pvargSrc;
+    pSrc = &vTmp;
+    V_VT(pvargDest) = VT_EMPTY;
   }
   else
   {
-    res = VariantCopy( pvargDest, pvargSrc );
+    /* Copy into another variant. Free the variant in pvargDest */
+    if (FAILED(hres = VariantClear(pvargDest)))
+      return hres;
   }
 
-  return res;
+  if (V_ISARRAY(pSrc))
+  {
+    /* Native doesn't check that *V_ARRAYREF(pSrc) is valid */
+    hres = SafeArrayCopy(*V_ARRAYREF(pSrc), &V_ARRAY(pvargDest));
+  }
+  else if (V_VT(pSrc) == (VT_BSTR|VT_BYREF))
+  {
+    /* Native doesn't check that *V_BSTRREF(pSrc) is valid */
+    V_BSTR(pvargDest) = SysAllocStringLen(*V_BSTRREF(pSrc), SysStringLen(*V_BSTRREF(pSrc)));
+  }
+  else if (V_VT(pSrc) == (VT_RECORD|VT_BYREF))
+  {
+    V_UNION(pvargDest,brecVal) = V_UNION(pvargSrc,brecVal);
+    hres = VARIANT_CopyIRecordInfo(&V_UNION(pvargDest,brecVal));
+  }
+  else if (V_VT(pSrc) == (VT_DISPATCH|VT_BYREF) ||
+           V_VT(pSrc) == (VT_UNKNOWN|VT_BYREF))
+  {
+    /* Native doesn't check that *V_UNKNOWNREF(pSrc) is valid */
+    V_UNKNOWN(pvargDest) = *V_UNKNOWNREF(pSrc);
+    if (*V_UNKNOWNREF(pSrc))
+      IUnknown_AddRef(*V_UNKNOWNREF(pSrc));
+  }
+  else if (V_VT(pSrc) == (VT_VARIANT|VT_BYREF))
+  {
+    /* Native doesn't check that *V_VARIANTREF(pSrc) is valid */
+    if (V_VT(V_VARIANTREF(pSrc)) == (VT_VARIANT|VT_BYREF))
+      hres = E_INVALIDARG; /* Don't dereference more than one level */
+    else
+      hres = VariantCopyInd(pvargDest, V_VARIANTREF(pSrc));
+
+    /* Use the dereferenced variants type value, not VT_VARIANT */
+    goto VariantCopyInd_Return;
+  }
+  else if (V_VT(pSrc) == (VT_DECIMAL|VT_BYREF))
+  {
+    memcpy(&DEC_SCALE(&V_DECIMAL(pvargDest)), &DEC_SCALE(V_DECIMALREF(pSrc)),
+           sizeof(DECIMAL) - sizeof(USHORT));
+  }
+  else
+  {
+    /* Copy the pointed to data into this variant */
+    memcpy(&V_BYREF(pvargDest), V_BYREF(pSrc), VARIANT_DataSize(pSrc));
+  }
+
+  V_VT(pvargDest) = V_VT(pSrc) & ~VT_BYREF;
+
+VariantCopyInd_Return:
+
+  if (pSrc != pvargSrc)
+    VariantClear(pSrc);
+
+  TRACE("returning 0x%08lx, %p->(%s%s)\n", hres, pvargDest,
+        debugstr_VT(pvargDest), debugstr_VF(pvargDest));
+  return hres;
 }
 
 /******************************************************************************
@@ -1996,7 +1543,7 @@ coerce_array(
  * RETURNS
  *  Success: S_OK. pvargDest contains the converted value.
  *  Failure: An HRESULT error code describing the failure.
- *    
+ *
  * NOTES
  *  The LCID used for the conversion is LOCALE_USER_DEFAULT.
  *  See VariantChangeTypeEx.
@@ -2987,53 +2534,575 @@ HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut)
 	return S_OK;
 }
 
-/******************************************************************************
- *		VarDateFromStr		[OLEAUT32.94]
- * The string representing the date is composed of two parts, a date and time.
- *
- * The format of the time is has follows:
- * hh[:mm][:ss][AM|PM]
- * Whitespace can be inserted anywhere between these tokens.  A whitespace consists
- * of space and/or tab characters, which are ignored.
- *
- * The formats for the date part are has follows:
- * mm/[dd/][yy]yy
- * [dd/]mm/[yy]yy
- * [yy]yy/mm/dd
- * January dd[,] [yy]yy
- * dd January [yy]yy
- * [yy]yy January dd
- * Whitespace can be inserted anywhere between these tokens.
- *
- * The formats for the date and time string are has follows.
- * date[whitespace][time]
- * [time][whitespace]date
- *
- * These are the only characters allowed in a string representing a date and time:
- * [A-Z] [a-z] [0-9] ':' '-' '/' ',' ' ' '\t'
- */
-HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
+/* Date string parsing */
+#define DP_TIMESEP 0x01 /* Time seperator ( _must_ remain 0x1, used as a bitmask) */
+#define DP_DATESEP 0x02 /* Date seperator */
+#define DP_MONTH   0x04 /* Month name */
+#define DP_AM      0x08 /* AM */
+#define DP_PM      0x10 /* PM */
+
+typedef struct tagDATEPARSE
 {
-    HRESULT ret = S_OK;
-    struct tm TM;
+    DWORD dwCount;      /* Number of fields found so far (maximum 6) */
+    DWORD dwParseFlags; /* Global parse flags (DP_ Flags above) */
+    DWORD dwFlags[6];   /* Flags for each field */
+    DWORD dwValues[6];  /* Value of each field */
+} DATEPARSE;
 
-    memset( &TM, 0, sizeof(TM) );
+#define TIMEFLAG(i) ((dp.dwFlags[i] & DP_TIMESEP) << i)
 
-    TRACE("( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
+#define IsLeapYear(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
 
-    if( DateTimeStringToTm( strIn, dwFlags, &TM ) )
+/* Determine if a day is valid in a given month of a given year */
+static BOOL VARIANT_IsValidMonthDay(DWORD day, DWORD month, DWORD year)
+{
+  static const BYTE days[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+  if (day && month && month < 13)
+  {
+    if (day <= days[month] || (month == 2 && day == 29 && IsLeapYear(year)))
+      return TRUE;
+  }
+  return FALSE;
+}
+
+/* Possible orders for 3 numbers making up a date */
+#define ORDER_MDY 0x01
+#define ORDER_YMD 0x02
+#define ORDER_YDM 0x04
+#define ORDER_DMY 0x08
+#define ORDER_MYD 0x10 /* Synthetic order, used only for funky 2 digit dates */
+
+/* Determine a date for a particular locale, from 3 numbers */
+static inline HRESULT VARIANT_MakeDate(DATEPARSE *dp, DWORD iDate,
+                                       DWORD offset, SYSTEMTIME *st)
+{
+  DWORD dwAllOrders, dwTry, dwCount = 0, v1, v2, v3;
+
+  if (!dp->dwCount)
+  {
+    v1 = 30; /* Default to (Variant) 0 date part */
+    v2 = 12;
+    v3 = 1899;
+    goto VARIANT_MakeDate_OK;
+  }
+
+  v1 = dp->dwValues[offset + 0];
+  v2 = dp->dwValues[offset + 1];
+  if (dp->dwCount == 2)
+  {
+    SYSTEMTIME current;
+    GetSystemTime(&current);
+    v3 = current.wYear;
+  }
+  else
+    v3 = dp->dwValues[offset + 2];
+
+  TRACE("(%ld,%ld,%ld,%ld,%ld)\n", v1, v2, v3, iDate, offset);
+
+  /* If one number must be a month (Because a month name was given), then only
+   * consider orders with the month in that position.
+   * If we took the current year as 'v3', then only allow a year in that position.
+   */
+  if (dp->dwFlags[offset + 0] & DP_MONTH)
+  {
+    dwAllOrders = ORDER_MDY;
+  }
+  else if (dp->dwFlags[offset + 1] & DP_MONTH)
+  {
+    dwAllOrders = ORDER_DMY;
+    if (dp->dwCount > 2)
+      dwAllOrders |= ORDER_YMD;
+  }
+  else if (dp->dwCount > 2 && dp->dwFlags[offset + 2] & DP_MONTH)
+  {
+    dwAllOrders = ORDER_YDM;
+  }
+  else
+  {
+    dwAllOrders = ORDER_MDY|ORDER_DMY;
+    if (dp->dwCount > 2)
+      dwAllOrders |= (ORDER_YMD|ORDER_YDM);
+  }
+
+VARIANT_MakeDate_Start:
+  TRACE("dwAllOrders is 0x%08lx\n", dwAllOrders);
+
+  while (dwAllOrders)
+  {
+    DWORD dwTemp;
+
+    if (dwCount == 0)
     {
-        if( TmToDATE( &TM, pdateOut ) == FALSE )
-        {
-            ret = E_INVALIDARG;
-        }
+      /* First: Try the order given by iDate */
+      switch (iDate)
+      {
+      case 0:  dwTry = dwAllOrders & ORDER_MDY; break;
+      case 1:  dwTry = dwAllOrders & ORDER_DMY; break;
+      default: dwTry = dwAllOrders & ORDER_YMD; break;
+      }
+    }
+    else if (dwCount == 1)
+    {
+      /* Second: Try all the orders compatable with iDate */
+      switch (iDate)
+      {
+      case 0:  dwTry = dwAllOrders & ~(ORDER_DMY|ORDER_YDM); break;
+      case 1:  dwTry = dwAllOrders & ~(ORDER_MDY|ORDER_YMD|ORDER_MYD); break;
+      default: dwTry = dwAllOrders & ~(ORDER_DMY|ORDER_YDM); break;
+      }
     }
     else
     {
-        ret = DISP_E_TYPEMISMATCH;
+      /* Finally: Try any remaining orders */
+      dwTry = dwAllOrders;
     }
-    TRACE("Return value %f\n", *pdateOut);
-	return ret;
+
+    TRACE("Attempt %ld, dwTry is 0x%08lx\n", dwCount, dwTry);
+
+    dwCount++;
+    if (!dwTry)
+      continue;
+
+#define DATE_SWAP(x,y) do { dwTemp = x; x = y; y = dwTemp; } while (0)
+
+    if (dwTry & ORDER_MDY)
+    {
+      if (VARIANT_IsValidMonthDay(v2,v1,v3))
+      {
+        DATE_SWAP(v1,v2);
+        goto VARIANT_MakeDate_OK;
+      }
+      dwAllOrders &= ~ORDER_MDY;
+    }
+    if (dwTry & ORDER_YMD)
+    {
+      if (VARIANT_IsValidMonthDay(v3,v2,v1))
+      {
+        DATE_SWAP(v1,v3);
+        goto VARIANT_MakeDate_OK;
+      }
+      dwAllOrders &= ~ORDER_YMD;
+    }
+    if (dwTry & ORDER_YDM)
+    {
+      if (VARIANT_IsValidMonthDay(v2,v3,v1))
+      {
+        DATE_SWAP(v1,v2);
+        DATE_SWAP(v2,v3);
+        goto VARIANT_MakeDate_OK;
+      }
+      dwAllOrders &= ~ORDER_YDM;
+    }
+    if (dwTry & ORDER_DMY)
+    {
+      if (VARIANT_IsValidMonthDay(v1,v2,v3))
+        goto VARIANT_MakeDate_OK;
+      dwAllOrders &= ~ORDER_DMY;
+    }
+    if (dwTry & ORDER_MYD)
+    {
+      /* Only occurs if we are trying a 2 year date as M/Y not D/M */
+      if (VARIANT_IsValidMonthDay(v3,v1,v2))
+      {
+        DATE_SWAP(v1,v3);
+        DATE_SWAP(v2,v3);
+        goto VARIANT_MakeDate_OK;
+      }
+      dwAllOrders &= ~ORDER_MYD;
+    }
+  }
+
+  if (dp->dwCount == 2)
+  {
+    /* We couldn't make a date as D/M or M/D, so try M/Y or Y/M */
+    v3 = 1; /* 1st of the month */
+    dwAllOrders = ORDER_YMD|ORDER_MYD;
+    dp->dwCount = 0; /* Don't return to this code path again */
+    dwCount = 0;
+    goto VARIANT_MakeDate_Start;
+  }
+
+  /* No valid dates were able to be constructed */
+  return DISP_E_TYPEMISMATCH;
+
+VARIANT_MakeDate_OK:
+
+  /* Check that the time part is ok */
+  if (st->wHour > 23 || st->wMinute > 59 || st->wSecond > 59)
+    return DISP_E_TYPEMISMATCH;
+
+  TRACE("Time %d %d %d\n", st->wHour, st->wMinute, st->wSecond);
+  if (st->wHour < 12 && (dp->dwParseFlags & DP_PM))
+    st->wHour += 12;
+  else if (st->wHour == 12 && (dp->dwParseFlags & DP_AM))
+    st->wHour = 0;
+  TRACE("Time %d %d %d\n", st->wHour, st->wMinute, st->wSecond);
+
+  st->wDay = v1;
+  st->wMonth = v2;
+  /* FIXME: For 2 digit dates, I'm not sure if 30 is hard coded or not. It may
+   * be retrieved from:
+   * HKCU\Control Panel\International\Calendars\TwoDigitYearMax
+   * But Wine doesn't have/use that key as at the time of writing.
+   */
+  st->wYear = v3 < 30 ? 2000 + v3 : v3 < 100 ? 1900 + v3 : v3;
+  TRACE("Returning date %ld/%ld/%d\n", v1, v2, st->wYear);
+  return S_OK;
+}
+
+/******************************************************************************
+ * VarDateFromStr [OLEAUT32.94]
+ *
+ * Convert a VT_BSTR to at VT_DATE.
+ *
+ * PARAMS
+ *  strIn    [I] String to convert
+ *  lcid     [I] Locale identifier for the conversion
+ *  dwFlags  [I] Flags affecting the conversion (VAR_ flags from "oleauto.h")
+ *  pdateOut [O] Destination for the converted value
+ *
+ * RETURNS
+ *  Success: S_OK. pdateOut contains the converted value.
+ *  FAILURE: An HRESULT error code indicating the prolem.
+ *
+ * NOTES
+ *  Any date format that can be created using the date formats from lcid
+ *  (Either from kernel Nls functions, variant conversion or formatting) is a
+ *  valid input to this function. In addition, a few more esoteric formats are
+ *  also supported for compatability with the native version. The date is
+ *  interpreted according to the date settings in the control panel, unless
+ *  the date is invalid in that format, in which the most compatable format
+ *  that produces a valid date will be used.
+ */
+HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
+{
+  static const USHORT ParseDateTokens[] =
+  {
+    LOCALE_SMONTHNAME1, LOCALE_SMONTHNAME2, LOCALE_SMONTHNAME3, LOCALE_SMONTHNAME4,
+    LOCALE_SMONTHNAME5, LOCALE_SMONTHNAME6, LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME8,
+    LOCALE_SMONTHNAME9, LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME11, LOCALE_SMONTHNAME12,
+    LOCALE_SMONTHNAME13,
+    LOCALE_SABBREVMONTHNAME1, LOCALE_SABBREVMONTHNAME2, LOCALE_SABBREVMONTHNAME3,
+    LOCALE_SABBREVMONTHNAME4, LOCALE_SABBREVMONTHNAME5, LOCALE_SABBREVMONTHNAME6,
+    LOCALE_SABBREVMONTHNAME7, LOCALE_SABBREVMONTHNAME8, LOCALE_SABBREVMONTHNAME9,
+    LOCALE_SABBREVMONTHNAME10, LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12,
+    LOCALE_SABBREVMONTHNAME13,
+    LOCALE_SDAYNAME1, LOCALE_SDAYNAME2, LOCALE_SDAYNAME3, LOCALE_SDAYNAME4,
+    LOCALE_SDAYNAME5, LOCALE_SDAYNAME6, LOCALE_SDAYNAME7,
+    LOCALE_SABBREVDAYNAME1, LOCALE_SABBREVDAYNAME2, LOCALE_SABBREVDAYNAME3,
+    LOCALE_SABBREVDAYNAME4, LOCALE_SABBREVDAYNAME5, LOCALE_SABBREVDAYNAME6,
+    LOCALE_SABBREVDAYNAME7,
+    LOCALE_S1159, LOCALE_S2359
+  };
+  static const BYTE ParseDateMonths[] =
+  {
+    1,2,3,4,5,6,7,8,9,10,11,12,13,
+    1,2,3,4,5,6,7,8,9,10,11,12,13
+  };
+  size_t i;
+  BSTR tokens[sizeof(ParseDateTokens)/sizeof(ParseDateTokens[0])];
+  DATEPARSE dp;
+  DWORD dwDateSeps = 0, iDate = 0;
+  HRESULT hRet = S_OK;
+
+  if ((dwFlags & (VAR_TIMEVALUEONLY|VAR_DATEVALUEONLY)) ==
+      (VAR_TIMEVALUEONLY|VAR_DATEVALUEONLY))
+    return E_INVALIDARG;
+
+  if (!strIn)
+    return DISP_E_TYPEMISMATCH;
+
+  *pdateOut = 0.0;
+
+  TRACE("(%s,0x%08lx,0x%08lx,%p)\n", debugstr_w(strIn), lcid, dwFlags, pdateOut);
+
+  memset(&dp, 0, sizeof(dp));
+
+  GetLocaleInfoW(lcid, LOCALE_IDATE|LOCALE_RETURN_NUMBER|(dwFlags & LOCALE_NOUSEROVERRIDE),
+                 (LPWSTR)&iDate, sizeof(iDate)/sizeof(WCHAR));
+  TRACE("iDate is %ld\n", iDate);
+
+  /* Get the month/day/am/pm tokens for this locale */
+  for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++)
+  {
+    WCHAR buff[128];
+    LCTYPE lctype =  ParseDateTokens[i] | (dwFlags & LOCALE_NOUSEROVERRIDE);
+
+    /* FIXME: Alternate calendars - should use GetCalendarInfo() and/or
+     *        GetAltMonthNames(). We should really cache these strings too.
+     */
+    buff[0] = '\0';
+    GetLocaleInfoW(lcid, lctype, buff, sizeof(buff)/sizeof(WCHAR));
+    tokens[i] = SysAllocString(buff);
+    TRACE("token %d is %s\n", i, debugstr_w(tokens[i]));
+  }
+
+  /* Parse the string into our structure */
+  while (*strIn)
+  {
+    if (dp.dwCount > 6)
+      break;
+
+    if (isdigitW(*strIn))
+    {
+      dp.dwValues[dp.dwCount] = strtoulW(strIn, &strIn, 10);
+      dp.dwCount++;
+      strIn--;
+    }
+    else if (isalpha(*strIn))
+    {
+      BOOL bFound = FALSE;
+
+      for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++)
+      {
+        DWORD dwLen = strlenW(tokens[i]);
+        if (dwLen && !strncmpiW(strIn, tokens[i], dwLen))
+        {
+          if (i <= 25)
+          {
+            dp.dwValues[dp.dwCount] = ParseDateMonths[i];
+            dp.dwFlags[dp.dwCount] |= (DP_MONTH|DP_DATESEP);
+            dp.dwCount++;
+          }
+          else if (i > 39)
+          {
+            if (!dp.dwCount || dp.dwParseFlags & (DP_AM|DP_PM))
+              hRet = DISP_E_TYPEMISMATCH;
+            else
+            {
+              dp.dwFlags[dp.dwCount - 1] |= (i == 40 ? DP_AM : DP_PM);
+              dp.dwParseFlags |= (i == 40 ? DP_AM : DP_PM);
+            }
+          }
+          strIn += (dwLen - 1);
+          bFound = TRUE;
+          break;
+        }
+      }
+
+      if (!bFound)
+      {
+        if ((*strIn == 'a' || *strIn == 'A' || *strIn == 'p' || *strIn == 'P') &&
+            (dp.dwCount && !(dp.dwParseFlags & (DP_AM|DP_PM))))
+        {
+          /* Special case - 'a' and 'p' are recognised as short for am/pm */
+          if (*strIn == 'a' || *strIn == 'A')
+          {
+            dp.dwFlags[dp.dwCount - 1] |= DP_AM;
+            dp.dwParseFlags |=  DP_AM;
+          }
+          else
+          {
+            dp.dwFlags[dp.dwCount - 1] |= DP_PM;
+            dp.dwParseFlags |=  DP_PM;
+          }
+          strIn++;
+        }
+        else
+        {
+          TRACE("No matching token for %s\n", debugstr_w(strIn));
+          hRet = DISP_E_TYPEMISMATCH;
+          break;
+        }
+      }
+    }
+    else if (*strIn == ':' ||  *strIn == '.')
+    {
+      if (!dp.dwCount || !strIn[1])
+        hRet = DISP_E_TYPEMISMATCH;
+      else
+        dp.dwFlags[dp.dwCount - 1] |= DP_TIMESEP;
+    }
+    else if (*strIn == '-' || *strIn == '/')
+    {
+      dwDateSeps++;
+      if (dwDateSeps > 2 || !dp.dwCount || !strIn[1])
+        hRet = DISP_E_TYPEMISMATCH;
+      else
+        dp.dwFlags[dp.dwCount - 1] |= DP_DATESEP;
+    }
+    else if (*strIn == ',' || isspaceW(*strIn))
+    {
+      if (*strIn == ',' && !strIn[1])
+        hRet = DISP_E_TYPEMISMATCH;
+    }
+    else
+    {
+      hRet = DISP_E_TYPEMISMATCH;
+    }
+    strIn++;
+  }
+
+  if (!dp.dwCount || dp.dwCount > 6 ||
+      (dp.dwCount == 1 && !(dp.dwParseFlags & (DP_AM|DP_PM))))
+    hRet = DISP_E_TYPEMISMATCH;
+
+  if (SUCCEEDED(hRet))
+  {
+    SYSTEMTIME st;
+    DWORD dwOffset = 0; /* Start of date fields in dp.dwValues */
+
+    st.wDayOfWeek = st.wHour = st.wMinute = st.wSecond = st.wMilliseconds = 0;
+
+    /* Figure out which numbers correspond to which fields.
+     *
+     * This switch statement works based on the fact that native interprets any
+     * fields that are not joined with a time seperator ('.' or ':') as date
+     * fields. Thus we construct a value from 0-32 where each set bit indicates
+     * a time field. This encapsulates the hundreds of permutations of 2-6 fields.
+     * For valid permutations, we set dwOffset to point to the first date field
+     * and shorten dp.dwCount by the number of time fields found. The real
+     * magic here occurs in VARIANT_MakeDate() above, where we determine what
+     * each date number must represent in the context of iDate.
+     */
+    TRACE("0x%08lx\n", TIMEFLAG(0)|TIMEFLAG(1)|TIMEFLAG(2)|TIMEFLAG(3)|TIMEFLAG(4));
+
+    switch (TIMEFLAG(0)|TIMEFLAG(1)|TIMEFLAG(2)|TIMEFLAG(3)|TIMEFLAG(4))
+    {
+    case 0x1: /* TT TTDD TTDDD */
+      if (dp.dwCount > 3 &&
+          ((dp.dwFlags[2] & (DP_AM|DP_PM)) || (dp.dwFlags[3] & (DP_AM|DP_PM)) ||
+          (dp.dwFlags[4] & (DP_AM|DP_PM))))
+        hRet = DISP_E_TYPEMISMATCH;
+      else if (dp.dwCount != 2 && dp.dwCount != 4 && dp.dwCount != 5)
+        hRet = DISP_E_TYPEMISMATCH;
+      st.wHour = dp.dwValues[0];
+      st.wMinute  = dp.dwValues[1];
+      dp.dwCount -= 2;
+      dwOffset = 2;
+      break;
+
+    case 0x3: /* TTT TTTDD TTTDDD */
+      if (dp.dwCount > 4 &&
+          ((dp.dwFlags[3] & (DP_AM|DP_PM)) || (dp.dwFlags[4] & (DP_AM|DP_PM)) ||
+          (dp.dwFlags[5] & (DP_AM|DP_PM))))
+        hRet = DISP_E_TYPEMISMATCH;
+      else if (dp.dwCount != 3 && dp.dwCount != 5 && dp.dwCount != 6)
+        hRet = DISP_E_TYPEMISMATCH;
+      st.wHour   = dp.dwValues[0];
+      st.wMinute = dp.dwValues[1];
+      st.wSecond = dp.dwValues[2];
+      dwOffset = 3;
+      dp.dwCount -= 3;
+      break;
+
+    case 0x4: /* DDTT */
+      if (dp.dwCount != 4 ||
+          (dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)))
+        hRet = DISP_E_TYPEMISMATCH;
+
+      st.wHour = dp.dwValues[2];
+      st.wMinute  = dp.dwValues[3];
+      dp.dwCount -= 2;
+      break;
+
+   case 0x0: /* T DD DDD TDDD TDDD */
+      if (dp.dwCount == 1 && (dp.dwParseFlags & (DP_AM|DP_PM)))
+      {
+        st.wHour = dp.dwValues[0]; /* T */
+        dp.dwCount = 0;
+        break;
+      }
+      else if (dp.dwCount > 4 || (dp.dwCount < 3 && dp.dwParseFlags & (DP_AM|DP_PM)))
+      {
+        hRet = DISP_E_TYPEMISMATCH;
+      }
+      else if (dp.dwCount == 3)
+      {
+        if (dp.dwFlags[0] & (DP_AM|DP_PM)) /* TDD */
+        {
+          dp.dwCount = 2;
+          st.wHour = dp.dwValues[0];
+          dwOffset = 1;
+          break;
+        }
+        if (dp.dwFlags[2] & (DP_AM|DP_PM)) /* DDT */
+        {
+          dp.dwCount = 2;
+          st.wHour = dp.dwValues[2];
+          break;
+        }
+        else if (dp.dwParseFlags & (DP_AM|DP_PM))
+          hRet = DISP_E_TYPEMISMATCH;
+      }
+      else if (dp.dwCount == 4)
+      {
+        dp.dwCount = 3;
+        if (dp.dwFlags[0] & (DP_AM|DP_PM)) /* TDDD */
+        {
+          st.wHour = dp.dwValues[0];
+          dwOffset = 1;
+        }
+        else if (dp.dwFlags[3] & (DP_AM|DP_PM)) /* DDDT */
+        {
+          st.wHour = dp.dwValues[3];
+        }
+        else
+          hRet = DISP_E_TYPEMISMATCH;
+        break;
+      }
+      /* .. fall through .. */
+
+    case 0x8: /* DDDTT */
+      if ((dp.dwCount == 2 && (dp.dwParseFlags & (DP_AM|DP_PM))) ||
+          (dp.dwCount == 5 && ((dp.dwFlags[0] & (DP_AM|DP_PM)) ||
+           (dp.dwFlags[1] & (DP_AM|DP_PM)) || (dp.dwFlags[2] & (DP_AM|DP_PM)))) ||
+           dp.dwCount == 4 || dp.dwCount == 6)
+        hRet = DISP_E_TYPEMISMATCH;
+      st.wHour   = dp.dwValues[3];
+      st.wMinute = dp.dwValues[4];
+      if (dp.dwCount == 5)
+        dp.dwCount -= 2;
+      break;
+
+    case 0xC: /* DDTTT */
+      if (dp.dwCount != 5 ||
+          (dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)))
+        hRet = DISP_E_TYPEMISMATCH;
+      st.wHour   = dp.dwValues[2];
+      st.wMinute = dp.dwValues[3];
+      st.wSecond = dp.dwValues[4];
+      dp.dwCount -= 3;
+      break;
+
+    case 0x18: /* DDDTTT */
+      if ((dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)) ||
+          (dp.dwFlags[2] & (DP_AM|DP_PM)))
+        hRet = DISP_E_TYPEMISMATCH;
+      st.wHour   = dp.dwValues[3];
+      st.wMinute = dp.dwValues[4];
+      st.wSecond = dp.dwValues[5];
+      dp.dwCount -= 3;
+      break;
+
+    default:
+      hRet = DISP_E_TYPEMISMATCH;
+      break;
+    }
+
+    if (SUCCEEDED(hRet))
+    {
+      hRet = VARIANT_MakeDate(&dp, iDate, dwOffset, &st);
+
+      if (dwFlags & VAR_TIMEVALUEONLY)
+      {
+        st.wYear = 1899;
+        st.wMonth = 12;
+        st.wDay = 30;
+      }
+      else if (dwFlags & VAR_DATEVALUEONLY)
+       st.wHour = st.wMinute = st.wSecond = 0;
+
+      /* Finally, convert the value to a VT_DATE */
+      if (SUCCEEDED(hRet))
+        hRet = SystemTimeToVariantTime(&st, pdateOut) ? S_OK : DISP_E_TYPEMISMATCH;
+    }
+  }
+
+  for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++)
+    SysFreeString(tokens[i]);
+  return hRet;
 }
 
 /******************************************************************************
@@ -3184,56 +3253,73 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) 
 
 
 /******************************************************************************
- *		VarBstrFromDate		[OLEAUT32.114]
+ *    VarBstrFromDate    [OLEAUT32.114]
  *
- * The date is implemented using an 8 byte floating-point number.
- * Days are represented by whole numbers increments starting with 0.00 as
- * being December 30 1899, midnight.
- * The hours are expressed as the fractional part of the number.
- * December 30 1899 at midnight = 0.00
- * January 1 1900 at midnight = 2.00
- * January 4 1900 at 6 AM = 5.25
- * January 4 1900 at noon = 5.50
- * December 29 1899 at midnight = -1.00
- * December 18 1899 at midnight = -12.00
- * December 18 1899 at 6AM = -12.25
- * December 18 1899 at 6PM = -12.75
- * December 19 1899 at midnight = -11.00
- * The tm structure is as follows:
- * struct tm {
- *		  int tm_sec;	   seconds after the minute - [0,59]
- *		  int tm_min;	   minutes after the hour - [0,59]
- *		  int tm_hour;	   hours since midnight - [0,23]
- *		  int tm_mday;	   day of the month - [1,31]
- *		  int tm_mon;	   months since January - [0,11]
- *		  int tm_year;	   years
- *		  int tm_wday;	   days since Sunday - [0,6]
- *		  int tm_yday;	   days since January 1 - [0,365]
- *		  int tm_isdst;    daylight savings time flag
- *		  };
+ * Convert a VT_DATE to a VT_BSTR.
+ *
+ * PARAMS
+ *  dateIn   [I] Source
+ *  lcid     [I] LCID for the conversion
+ *  dwFlags  [I] Flags controlling the conversion (VAR_ flags from "oleauto.h")
+ *  pbstrOut [O] Destination
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: E_INVALIDARG, if pbstrOut or dateIn is invalid.
+ *           E_OUTOFMEMORY, if memory allocation fails.
  */
 HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-    struct tm TM;
-    memset( &TM, 0, sizeof(TM) );
+  SYSTEMTIME st;
+  DWORD dwFormatFlags = dwFlags & LOCALE_NOUSEROVERRIDE;
+  WCHAR date[128], *time;
 
-    TRACE("( %20.20f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
+  TRACE("(%g,0x%08lx,0x%08lx,%p)\n", dateIn, lcid, dwFlags, pbstrOut);
 
-    if( DateToTm( dateIn, dwFlags, &TM ) == FALSE )
-			{
-        return E_INVALIDARG;
-		}
+  if (!pbstrOut || !VariantTimeToSystemTime(dateIn, &st))
+    return E_INVALIDARG;
 
-    if( dwFlags & VAR_DATEVALUEONLY )
-			strftime( pBuffer, BUFFER_MAX, "%x", &TM );
-    else if( dwFlags & VAR_TIMEVALUEONLY )
-			strftime( pBuffer, BUFFER_MAX, "%X", &TM );
-		else
-        strftime( pBuffer, BUFFER_MAX, "%x %X", &TM );
+  *pbstrOut = NULL;
 
-        TRACE("result: %s\n", pBuffer);
-		*pbstrOut = StringDupAtoBstr( pBuffer );
-	return S_OK;
+  if (dwFlags & VAR_CALENDAR_THAI)
+      st.wYear += 553; /* Use the Thai buddhist calendar year */
+  else if (dwFlags & (VAR_CALENDAR_HIJRI|VAR_CALENDAR_GREGORIAN))
+      FIXME("VAR_CALENDAR_HIJRI/VAR_CALENDAR_GREGORIAN not handled\n");
+
+  if (dwFlags & LOCALE_USE_NLS)
+    dwFlags &= ~(VAR_TIMEVALUEONLY|VAR_DATEVALUEONLY);
+  else
+  {
+    double whole = dateIn < 0 ? ceil(dateIn) : floor(dateIn);
+    double partial = dateIn - whole;
+
+    if (whole == 0.0)
+      dwFlags |= VAR_TIMEVALUEONLY;
+    else if (partial < 1e-12)
+      dwFlags |= VAR_DATEVALUEONLY;
+  }
+
+  if (dwFlags & VAR_TIMEVALUEONLY)
+    date[0] = '\0';
+  else
+    if (!GetDateFormatW(lcid, dwFormatFlags|DATE_SHORTDATE, &st, NULL, date,
+                        sizeof(date)/sizeof(WCHAR)))
+      return E_INVALIDARG;
+
+  if (!(dwFlags & VAR_DATEVALUEONLY))
+  {
+    time = date + strlenW(date);
+    if (time != date)
+      *time++ = ' ';
+    if (!GetTimeFormatW(lcid, dwFormatFlags, &st, NULL, time,
+                        sizeof(date)/sizeof(WCHAR)-(time-date)))
+      return E_INVALIDARG;
+  }
+
+  *pbstrOut = SysAllocString(date);
+  if (*pbstrOut)
+    TRACE("returning %s\n", debugstr_w(*pbstrOut));
+  return *pbstrOut ? S_OK : E_OUTOFMEMORY;
 }
 
 /******************************************************************************
@@ -4543,7 +4629,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
   lpUdate->st.wSecond = timePart;
   timePart -= lpUdate->st.wSecond;
   lpUdate->st.wMilliseconds = 0;
-  if (timePart > 0.0005)
+  if (timePart > 0.5)
   {
     /* Round the milliseconds, adjusting the time/date forward if needed */
     if (lpUdate->st.wSecond < 59)
@@ -4583,11 +4669,8 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
 void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
 {
   static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',',','$',0,'.',',' };
-  LCTYPE lctype = 0;
+  LCTYPE lctype = dwFlags & LOCALE_NOUSEROVERRIDE;
   WCHAR buff[4];
-
-  if (dwFlags & VARIANT_NOUSEROVERRIDE)
-    lctype |= LOCALE_NOUSEROVERRIDE;
 
   memcpy(lpChars, &defaultChars, sizeof(defaultChars));
   GET_NUMBER_TEXT(LOCALE_SNEGATIVESIGN, cNegativeSymbol);
@@ -4625,7 +4708,7 @@ void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, D
  * PARAMS
  *  lpszStr [I]   String to parse number from
  *  lcid    [I]   Locale Id for the conversion
- *  dwFlags [I]   Apparently not used
+ *  dwFlags [I]   0, or LOCALE_NOUSEROVERRIDE to use system default number chars
  *  pNumprs [I/O] Destination for parsed number
  *  rgbDig  [O]   Destination for digits read in
  *
@@ -4656,7 +4739,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   int iMaxDigits = sizeof(rgbTmp) / sizeof(BYTE);
   int cchUsed = 0;
 
-  TRACE("(%s,%ld,%ld,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
+  TRACE("(%s,%ld,0x%08lx,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
 
   if (pNumprs->dwInFlags & NUMPRS_HEX_OCT)
     FIXME("dwInFlags & NUMPRS_HEX_OCT not yet implemented!\n");
@@ -6058,33 +6141,192 @@ HRESULT WINAPI VarOr(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 }
 
 /**********************************************************************
- *              VarNot [OLEAUT32.174]
+ * VarAbs [OLEAUT32.168]
  *
+ * Convert a variant to its absolute value.
+ *
+ * PARAMS
+ *  pVarIn  [I] Source variant
+ *  pVarOut [O] Destination for converted value
+ *
+ * RETURNS
+ *  Success: S_OK. pVarOut contains the absolute value of pVarIn.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  - This function does not process by-reference variants.
+ *  - The type of the value stored in pVarOut depends on the type of pVarIn,
+ *    according to the following table:
+ *| Input Type       Output Type
+ *| ----------       -----------
+ *| VT_BOOL          VT_I2
+ *| VT_BSTR          VT_R8
+ *| (All others)     Unchanged
  */
-HRESULT WINAPI VarNot(LPVARIANT in, LPVARIANT result)
+HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
 {
-    HRESULT rc = E_FAIL;
+    VARIANT varIn;
+    HRESULT hRet = S_OK;
 
-    TRACE("Var In:\n");
-    dump_Variant(in);
+    TRACE("(%p->(%s%s),%p)\n", pVarIn, debugstr_VT(pVarIn),
+          debugstr_VF(pVarIn), pVarOut);
 
-    if ((V_VT(in)&VT_TYPEMASK) == VT_BOOL) {
+    if (V_ISARRAY(pVarIn) || V_VT(pVarIn) == VT_UNKNOWN ||
+        V_VT(pVarIn) == VT_DISPATCH || V_VT(pVarIn) == VT_RECORD ||
+        V_VT(pVarIn) == VT_ERROR)
+        return DISP_E_TYPEMISMATCH;
 
-        V_VT(result) = VT_BOOL;
-        if (V_BOOL(in)) {
-            V_BOOL(result) = VARIANT_FALSE;
-        } else {
-            V_BOOL(result) = VARIANT_TRUE;
-        }
-        rc = S_OK;
+    *pVarOut = *pVarIn; /* Shallow copy the value, and invert it if needed */
 
-    } else {
-        FIXME("VarNot stub\n");
+#define ABS_CASE(typ,min) \
+    case VT_##typ: if (V_##typ(pVarIn) == min) hRet = DISP_E_OVERFLOW; \
+                  else if (V_##typ(pVarIn) < 0) V_##typ(pVarOut) = -V_##typ(pVarIn); \
+                  break
+
+    switch (V_VT(pVarIn))
+    {
+    ABS_CASE(I1,I1_MIN);
+    case VT_BOOL:
+        V_VT(pVarOut) = VT_I2;
+        /* BOOL->I2, Fall through ... */
+    ABS_CASE(I2,I2_MIN);
+    case VT_INT:
+    ABS_CASE(I4,I4_MIN);
+    ABS_CASE(I8,I8_MIN);
+    ABS_CASE(R4,R4_MIN);
+    case VT_BSTR:
+        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(&varIn));
+        if (FAILED(hRet))
+            break;
+        V_VT(pVarOut) = VT_R8;
+        pVarIn = &varIn;
+        /* Fall through ... */
+    case VT_DATE:
+    ABS_CASE(R8,R8_MIN);
+    case VT_CY:
+        /* FIXME: Waiting for this function to be implemented */
+#if 0
+        hRet = VarCyAbs(V_CY(pVarIn), & V_CY(pVarOut));
+#endif
+        break;
+    case VT_DECIMAL:
+        DEC_SIGN(&V_DECIMAL(pVarOut)) &= ~DECIMAL_NEG;
+        break;
+    case VT_UI1:
+    case VT_UI2:
+    case VT_UINT:
+    case VT_UI4:
+    case VT_UI8:
+    case VT_EMPTY:
+    case VT_NULL:
+        /* No-Op */
+        break;
+    default:
+        hRet = DISP_E_BADVARTYPE;
     }
 
-    TRACE("rc=%d, Result:\n", (int) rc);
-    dump_Variant(result);
-    return rc;
+    return hRet;
+}
+
+/**********************************************************************
+ *              VarNot [OLEAUT32.174]
+ *
+ * Perform a not operation on a variant.
+ *
+ * PARAMS
+ *  pVarIn  [I] Source variant
+ *  pVarOut [O] Destination for converted value
+ *
+ * RETURNS
+ *  Success: S_OK. pVarOut contains the converted value.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  - Strictly speaking, this function performs a bitwise ones compliment
+ *    on the variants value (after possibly converting to VT_I4, see below).
+ *    This only behaves like a boolean not operation if the value in
+ *    pVarIn is either VARIANT_TRUE or VARIANT_FALSE and the type is signed.
+ *  - To perform a genuine not operation, convert the variant to a VT_BOOL
+ *    before calling this function.
+ *  - This function does not process by-reference variants.
+ *  - The type of the value stored in pVarOut depends on the type of pVarIn,
+ *    according to the following table:
+ *| Input Type       Output Type
+ *| ----------       -----------
+ *| VT_R4            VT_I4
+ *| VT_R8            VT_I4
+ *| VT_BSTR          VT_I4
+ *| VT_DECIMAL       VT_I4
+ *| VT_CY            VT_I4
+ *| (All others)     Unchanged
+ */
+HRESULT WINAPI VarNot(LPVARIANT pVarIn, LPVARIANT pVarOut)
+{
+    VARIANT varIn;
+    HRESULT hRet = S_OK;
+
+    TRACE("(%p->(%s%s),%p)\n", pVarIn, debugstr_VT(pVarIn),
+          debugstr_VF(pVarIn), pVarOut);
+
+    V_VT(pVarOut) = V_VT(pVarIn);
+
+    switch (V_VT(pVarIn))
+    {
+    case VT_I1:  V_I1(pVarOut) = ~V_I1(pVarIn); break;
+    case VT_UI1: V_UI1(pVarOut) = ~V_UI1(pVarIn); break;
+    case VT_BOOL:
+    case VT_I2:  V_I2(pVarOut) = ~V_I2(pVarIn); break;
+    case VT_UI2: V_UI2(pVarOut) = ~V_UI2(pVarIn); break;
+    case VT_DECIMAL:
+        /* FIXME  Waiting for this function to be implemented */
+/*        hRet = VarI4FromDec(&V_DECIMAL(pVarIn), &V_I4(&varIn)); */
+        hRet = DISP_E_OVERFLOW;
+        if (FAILED(hRet))
+            break;
+        pVarIn = &varIn;
+        V_VT(pVarOut) = VT_I4;
+        /* Fall through ... */
+    case VT_INT:
+    case VT_I4:  V_I4(pVarOut) = ~V_I4(pVarIn); break;
+    case VT_UINT:
+    case VT_UI4: V_UI4(pVarOut) = ~V_UI4(pVarIn); break;
+    case VT_I8:  V_I8(pVarOut) = ~V_I8(pVarIn); break;
+    case VT_UI8: V_UI8(pVarOut) = ~V_UI8(pVarIn); break;
+    case VT_R4:
+        hRet = VarI4FromR4(V_R4(pVarIn), &V_I4(pVarOut));
+        V_I4(pVarOut) = ~V_I4(pVarOut);
+        V_VT(pVarOut) = VT_I4;
+        break;
+    case VT_BSTR:
+        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(&varIn));
+        if (FAILED(hRet))
+            break;
+        pVarIn = &varIn;
+        /* Fall through ... */
+    case VT_DATE:
+    case VT_R8:
+        hRet = VarI4FromR8(V_R8(pVarIn), &V_I4(pVarOut));
+        V_I4(pVarOut) = ~V_I4(pVarOut);
+        V_VT(pVarOut) = VT_I4;
+        break;
+    case VT_CY:
+        /* FIXME: */
+        break;
+    case VT_EMPTY:
+    case VT_NULL:
+        /* No-Op */
+        break;
+    default:
+        if (V_TYPE(pVarIn) == VT_CLSID || /* VT_CLSID is a special case */
+            FAILED(VARIANT_ValidateType(V_VT(pVarIn))))
+            hRet = DISP_E_BADVARTYPE;
+        else
+            hRet = DISP_E_TYPEMISMATCH;
+    }
+    if (FAILED(hRet))
+      V_VT(pVarOut) = VT_EMPTY;
+
+    return hRet;
 }
 
 /**********************************************************************

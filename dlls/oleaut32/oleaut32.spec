@@ -163,7 +163,7 @@
 165 stdcall LHashValOfNameSys(long long wstr)
 166 stdcall LHashValOfNameSysA(long long str)
 167 stub VarXor # stdcall (ptr ptr ptr)
-168 stub VarAbs # stdcall (ptr ptr)
+168 stdcall VarAbs(ptr ptr)
 169 stub VarFix # stdcall (ptr ptr)
 170 stdcall OaBuildVersion()
 171 stub ClearCustData
@@ -320,6 +320,43 @@
 330 stdcall VarDateFromUdate(ptr long ptr)
 331 stdcall VarUdateFromDate(double long ptr)
 332 stub GetAltMonthNames
+333 stub VarI8FromUI1
+334 stub VarI8FromI2
+335 stub VarI8FromR4
+336 stub VarI8FromR8
+337 stub VarI8FromCy
+338 stub VarI8FromDate
+339 stub VarI8FromStr
+340 stub VarI8FromDisp
+341 stub VarI8FromBool
+342 stub VarI8FromI1
+343 stub VarI8FromUI2
+344 stub VarI8FromUI4
+345 stub VarI8FromDec
+346 stub VarI2FromI8
+347 stub VarI2FromUI8
+348 stub VarI4FromI8
+349 stub VarI4FromUI8
+360 stub VarR4FromI8
+361 stub VarR4FromUI8
+362 stub VarR8FromI8
+363 stub VarR8FromUI8
+364 stub VarDateFromI8
+365 stub VarDateFromUI8
+366 stub VarCyFromI8
+367 stub VarCyFromUI8
+368 stub VarBstrFromI8
+369 stub VarBstrFromUI8
+370 stub VarBoolFromI8
+371 stub VarBoolFromUI8
+372 stub VarUI1FromI8
+373 stub VarUI1FromUI8
+374 stub VarDecFromI8
+375 stub VarDecFromUI8
+376 stub VarI1FromI8
+377 stub VarI1FromUI8
+378 stub VarUI2FromI8
+379 stub VarUI2FromUI8
 380 stub UserHWND_from_local
 381 stub UserHWND_to_local
 382 stub UserHWND_free_inst
@@ -357,3 +394,20 @@
 422 stub OleLoadPictureFile
 423 stub OleSavePictureFile
 424 stub OleLoadPicturePath
+425 stub VarUI4FromI8
+426 stub VarUI4FromUI8
+427 stub VarI8FromUI8
+428 stub VarUI8FromI8
+429 stub VarUI8FromUI1
+430 stub VarUI8FromI2
+431 stub VarUI8FromR4
+432 stub VarUI8FromR8
+433 stub VarUI8FromCy
+434 stub VarUI8FromDate
+435 stub VarUI8FromStr
+436 stub VarUI8FromDisp
+437 stub VarUI8FromBool
+438 stub VarUI8FromI1
+439 stub VarUI8FromUI2
+440 stub VarUI8FromUI4
+441 stub VarUI8FromDec
