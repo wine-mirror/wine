@@ -16,6 +16,7 @@ DLLs (under dlls/):
 
 	advapi32/		- Crypto, systeminfo, security, eventlogging
 	amstream/               - MultiMedia Streams
+	atl			- Active Template Library
 	avicap32/		- AVI capture window class
 	avifil32/		- COM object to play AVI files
 	cabinet/		- Cabinet file interface
@@ -33,6 +34,7 @@ DLLs (under dlls/):
 	d3dim/			- Direct3D Immediate Mode
 	d3drm/			- Direct3D Retained Mode
 	d3dx8/			- Direct3D (3D graphics)
+	d3dxof/			- DirectX Files Functions
 	dbghelp/                - Engine for symbol and module enumeration
 	dciman32/		- DCI Manager (graphics)
 	ddraw/			- DirectDraw (graphics)
@@ -68,6 +70,7 @@ DLLs (under dlls/):
 	kernel/			- The Windows kernel
 	lzexpand/		- Lempel-Ziv compression/decompression
 	mapi32/			- Mail interface
+	mlang/			- Multi Language Support
 	mmdevldr.vxd/		- MMDEVLDR VxD implementation
 	monodebg.vxd/		- MONODEBG VxD implementation
 	mpr/			- Multi-Protocol Router (networking)
@@ -82,13 +85,13 @@ DLLs (under dlls/):
 	msimg32/		- Gradient and transparency (graphics)
 	msisys/			- System information
 	msnet32/		- Network interface
+	msrle32/		- Video codecs
 	msvcrt/			- C runtime library 
 	msvcrt20/		- C runtime library version 2.0
 	msvcrt40/		- C runtime library version 4.0
 	msvcrtd/		- C runtime library debugging
 	msvidc32/		- Microsoft Video-1 Decoder
 	msvideo/		- 16 bit video manager
-	msvideo/msrle32/	- Video codecs
 	mswsock/		- Misc networking
 	netapi32/		- Network interface
 	newdev/			- New Hardware Device Library
@@ -128,6 +131,7 @@ DLLs (under dlls/):
 	user/			- Window management, standard controls, etc.
 	uxtheme/		- Theme library
 	vdhcp.vxd/		- VDHCP VxD implementation
+	vdmdbg/			- Virtual DOS machine debug library
 	version/		- File installation library
 	vmm.vxd/		- VMM VxD implementation
 	vnbt.vxd/               - VNBT VxD implementation
