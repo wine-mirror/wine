@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
+#include "winversion.h"
 #include "file.h"
 #include "process.h"
 #include "mmsystem.h"
@@ -63,6 +64,8 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
+
+static DWORD VxDCall_VWin32( DWORD service, CONTEXT *context );
 
 static BOOL DeviceIo_VWin32(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
@@ -132,7 +135,7 @@ static const struct VxDInfo VxDList[] =
     { "VXDLDR",   0x0027, NULL, NULL },
     { "NDIS",     0x0028, NULL, NULL },
     { "BIOS_EXT", 0x0029, NULL, NULL },
-    { "VWIN32",   0x002A, NULL, DeviceIo_VWin32 },
+    { "VWIN32",   0x002A, VxDCall_VWin32, DeviceIo_VWin32 },
     { "VCOMM",    0x002B, NULL, NULL },
     { "SPOOLER",  0x002C, NULL, NULL },
     { "WIN32S",   0x002D, NULL, NULL },
@@ -782,6 +785,66 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 
     return retv;
 }
+
+/********************************************************************************
+ *      VxDCall_VWin32
+ *
+ *  Service numbers taken from page 448 of Pietrek's "Windows 95 System
+ *  Progrmaming Secrets".  Parameters from experimentation on real Win98.
+ *
+ */
+
+static DWORD VxDCall_VWin32( DWORD service, CONTEXT *context )
+{
+  switch ( LOWORD(service) )
+    {
+    case 0x0000: /* GetVersion */
+    {
+        DWORD vers = VERSION_GetVersion();
+	switch (vers)
+	{
+	case WIN31:
+	  return(0x0301);  /* Windows 3.1 */
+	  break;
+
+	case WIN95:
+	  return(0x0400);  /* Win95 aka 4.0 */
+	  break;
+
+	case WIN98:
+	  return(0x040a);  /* Win98 aka 4.10 */
+	  break;
+
+	case NT351:
+        case NT40:
+	  ERR("VxDCall when emulating NT???\n");
+	  break;
+
+	default:
+	  WARN("Unknown version %lx\n", vers);
+	  break;
+	}
+
+	return(0x040a); /* default to win98 */
+    }
+    break;
+
+    case 0x002a: /* Int41 dispatch - parm = int41 service number */
+    {
+	DWORD callnum = (DWORD) stack32_pop(context);
+
+	return callnum; /* FIXME: should really call INT_Int41Handler() */
+    }
+    break;
+
+    default:
+      FIXME("Unknown VWin32 service %08lx\n", service);
+      break;
+    }
+
+  return 0xffffffff;
+}
+                         
 
  
 /***********************************************************************
