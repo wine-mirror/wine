@@ -320,7 +320,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   }
 
   if (p_glXGetProcAddressARB == NULL) {
-    ERR("Warning : dynamic GL extension loading not supported by native GL library.");
+    ERR("Warning : dynamic GL extension loading not supported by native GL library.\n");
     return NULL;
   }
   
