@@ -5113,6 +5113,11 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
     if (lpLVItem->pszText!=dispInfo.item.pszText) {
       lstrcpynA(lpLVItem->pszText, dispInfo.item.pszText, lpLVItem->cchTextMax);
     }
+    
+    if (ppszText == NULL)
+    {
+       lstrcpynA(lpLVItem->pszText, "", lpLVItem->cchTextMax);
+    }
   }
   else if (lpLVItem->mask & LVIF_TEXT)
   {
