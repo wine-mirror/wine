@@ -791,10 +791,11 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
     if (mipmap_level == 0) {
 	glGenTextures(1, &(private->tex_name));
 	if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
-	TRACE(" GL texture created (private data at %p and GL id %d).\n", private, private->tex_name);
+	TRACE(" GL texture created for surface %p (private data at %p and GL id %d).\n", surf, private, private->tex_name);
     } else {
-        private->tex_name = ((IDirect3DTextureGLImpl *) main->tex_private)->tex_name;
-	TRACE(" GL texture created (private data at %p and GL id reusing id %d).\n", private, private->tex_name);
+        private->tex_name = ((IDirect3DTextureGLImpl *) (main->tex_private))->tex_name;
+	TRACE(" GL texture created for surface %p (private data at %p and GL id reusing id %d from surface %p (%p)).\n",
+	      surf, private, private->tex_name, main, main->tex_private);
     }
 
     if ((at_creation == FALSE) &&

@@ -397,7 +397,7 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 		IDirectDrawSurface7_Release(*ppSurf);
 		return hr;
 	    }
-	    if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), TRUE,
+	    if (This->d3d) This->d3d->create_texture(This->d3d, ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, mipmap), TRUE,
 						     ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, *ppSurf), mipmap_level);
 
 	    IDirectDrawSurface7_AddAttachedSurface(prev_mipmap, mipmap);

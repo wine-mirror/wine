@@ -354,14 +354,6 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 
     TRACE("(%p)->(%p,%p,%p,%08lx,%p)\n", This,rdst,src,rsrc,dwFlags,lpbltfx);
 
-    DD_STRUCT_INIT(&ddesc);
-    DD_STRUCT_INIT(&sdesc);
-
-    sdesc.dwSize = sizeof(sdesc);
-    if (src) IDirectDrawSurface7_Lock(src, NULL, &sdesc, DDLOCK_READONLY, 0);
-    ddesc.dwSize = sizeof(ddesc);
-    IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
-
     if (TRACE_ON(ddraw)) {
 	if (rdst) TRACE("\tdestrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
 	if (rsrc) TRACE("\tsrcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
@@ -372,6 +364,14 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	    DDRAW_dump_DDBLTFX(lpbltfx->dwDDFX);
 	}
     }
+
+    DD_STRUCT_INIT(&ddesc);
+    DD_STRUCT_INIT(&sdesc);
+
+    sdesc.dwSize = sizeof(sdesc);
+    if (src) IDirectDrawSurface7_Lock(src, NULL, &sdesc, DDLOCK_READONLY, 0);
+    ddesc.dwSize = sizeof(ddesc);
+    IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
 
     if (rdst) {
 	memcpy(&xdst,rdst,sizeof(xdst));
