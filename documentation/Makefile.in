@@ -56,8 +56,8 @@ install::
 	$(INSTALL_DATA) wine.conf.man $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 uninstall::
-	$(RM) $(mandir)/man($prog_manext)/wine.$(prog_manext)
-	$(RM) $(mandir)/man($conf_manext)/wine.conf.$(conf_manext)
+	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
+	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 # Not done by default because of makeinfo bugs
 install_info: $(INFOFILES)
