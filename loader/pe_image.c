@@ -273,7 +273,11 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
 
 	wmImp = MODULE_LoadLibraryExA( name, 0, 0 );
 	if (!wmImp) {
-	    ERR_(module)("Module (file) %s (which is needed by %s) not found\n", name, wm->filename);
+            if(GetLastError() == ERROR_FILE_NOT_FOUND)
+                ERR_(module)("Module (file) %s (which is needed by %s) not found\n", name, wm->filename);
+            else
+                ERR_(module)("Loading module (file) %s (which is needed by %s) failed (error %ld).\n",
+                        name, wm->filename, GetLastError());
 	    return 1;
 	}
         wm->deps[i++] = wmImp;
