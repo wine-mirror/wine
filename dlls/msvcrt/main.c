@@ -34,6 +34,8 @@ void msvcrt_init_args(void);
 void msvcrt_free_args(void);
 void msvcrt_init_vtables(void);
 
+typedef void* (*MSVCRT_malloc_func)(unsigned int);
+typedef void (*MSVCRT_free_func)(void*);
 
 /*********************************************************************
  *                  Init
@@ -159,21 +161,41 @@ void MSVCRT_I10_OUTPUT(void)
   /* FIXME: This is probably data, not a function */
 }
 
+
 /*********************************************************************
  *		__unDName (MSVCRT.@)
  * Function not really understood but needed to make the DLL work
  */
-void MSVCRT___unDName(void)
+char* MSVCRT___unDName(int unknown, const char* mangled,
+                       MSVCRT_malloc_func memget,
+                       MSVCRT_free_func memfree,
+                       unsigned int flags)
 {
-  /* Called by all VC compiled progs on startup. No idea what it does */
+  char* ret;
+
+  FIXME("(%d,%s,%p,%p,%x) stub!\n", unknown, mangled, memget, memfree, flags);
+
+  /* Experimentation reveals the following flag meanings when set:
+   * 0x0001 - Dont show __ in calling convention
+   * 0x0002 - Dont show calling convention at all
+   * 0x0004 - Dont show function/method return value
+   * 0x0010 - Same as 0x1
+   * 0x0080 - Dont show access specifier (public/protected/private)
+   * 0x0200 - Dont show static specifier
+   * 0x1000 - Only report the variable/class name
+   */
+  /* Duplicate the mangled name; for comparisons it doesn't matter anyway */
+  ret = memget(strlen(mangled) + 1);
+  strcpy(ret, mangled);
+  return ret;
 }
+
 
 /*********************************************************************
  *		__unDNameEx (MSVCRT.@)
  * Function not really understood but needed to make the DLL work
  */
-void MSVCRT___unDNameEx(void)
+char* MSVCRT___unDNameEx(void)
 {
-  /* As above */
+   return NULL;
 }
-

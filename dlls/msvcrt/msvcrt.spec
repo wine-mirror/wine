@@ -51,12 +51,12 @@ debug_channels (msvcrt)
 @ stub ?before@type_info@@QBEHABV1@@Z #(ptr ptr) stdcall
 @ stdcall ?name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_name
 @ stdcall ?raw_name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_raw_name
-@ stub ?set_new_handler@@YAP6AXXZP6AXXZ@Z
+@ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT__set_new_handler
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_terminate
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_unexpected
 @ cdecl ?terminate@@YAXXZ() MSVCRT_terminate
 @ cdecl ?unexpected@@YAXXZ() MSVCRT_unexpected
-@ stdcall ?what@exception@@UBEPBDXZ(ptr) MSVCRT_exception_what
+@ cdecl ?what@exception@@UBEPBDXZ(ptr) MSVCRT_what_exception
 @ cdecl -noimport _CIacos() _CIacos
 @ cdecl -noimport _CIasin() _CIasin
 @ cdecl -noimport _CIatan() _CIatan
@@ -81,11 +81,11 @@ debug_channels (msvcrt)
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(str long str ptr ptr) _Strftime
 @ cdecl _XcptFilter(long ptr) _XcptFilter
-@ stub __CxxFrameHandler
+@ cdecl __CxxFrameHandler(ptr ptr ptr ptr) __CxxFrameHandler
 @ stub __CxxLongjmpUnwind
-@ stub __RTCastToVoid
-@ stub __RTDynamicCast
-@ stub __RTtypeid
+@ cdecl -noimport __RTCastToVoid(ptr) MSVCRT___RTCastToVoid
+@ cdecl -noimport __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast
+@ cdecl -noimport __RTtypeid(ptr) MSVCRT___RTtypeid
 @ stub __STRINGTOLD
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
@@ -143,7 +143,7 @@ debug_channels (msvcrt)
 @ forward __threadhandle kernel32.GetCurrentThread
 @ forward __threadid kernel32.GetCurrentThreadId
 @ cdecl __toascii(long) MSVCRT___toascii
-@ cdecl __unDName() MSVCRT___unDName #FIXME
+@ cdecl __unDName(long str ptr ptr long) MSVCRT___unDName
 @ cdecl __unDNameEx() MSVCRT___unDNameEx #FIXME
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ extern __wargv MSVCRT___wargv
@@ -177,7 +177,7 @@ debug_channels (msvcrt)
 @ cdecl _beginthreadex (ptr long ptr ptr long ptr) _beginthreadex
 @ cdecl _c_exit() MSVCRT__c_exit
 @ cdecl _cabs(long) _cabs
-@ stub _callnewh
+@ cdecl _callnewh(long) _callnewh
 @ cdecl _cexit() MSVCRT__cexit
 @ cdecl _cgets(str) _cgets
 @ cdecl _chdir(str) _chdir

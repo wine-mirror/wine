@@ -48,6 +48,36 @@ typedef struct __type_info
   char name[1];
 } type_info;
 
+typedef struct _rtti_base_descriptor
+{
+  type_info *type_descriptor;
+  int num_base_classes;
+  int base_class_offset;
+  unsigned int flags;
+} rtti_base_descriptor;
+
+typedef struct _rtti_base_array
+{
+  rtti_base_descriptor *bases[1]; /* First element is the class itself */
+} rtti_base_array;
+
+typedef struct _rtti_object_hierachy
+{
+  int unknown1;
+  int unknown2;
+  int array_len; /* Size of the array pointed to by 'base_classes' */
+  rtti_base_array *base_classes;
+} rtti_object_hierachy;
+
+typedef struct _rtti_object_locator
+{
+  int unknown1;
+  int base_class_offset;
+  unsigned int flags;
+  type_info *type_descriptor;
+  rtti_object_hierachy *type_hierachy;
+} rtti_object_locator;
+
 /******************************************************************
  *		??0exception@@QAE@ABQBD@Z (MSVCRT.@)
  */
@@ -124,7 +154,7 @@ void * MSVCRT_exception__unknown_G(exception * _this, unsigned int arg1)
 /******************************************************************
  *		?what@exception@@UBEPBDXZ (MSVCRT.@)
  */
-const char * __stdcall MSVCRT_exception_what(exception * _this)
+const char * MSVCRT_what_exception(exception * _this)
 {
   TRACE("(%p) returning %s\n",_this,_this->name);
   return _this->name;
@@ -358,13 +388,109 @@ const char * __stdcall MSVCRT_type_info_raw_name(type_info * _this)
 }
 
 
+/******************************************************************
+ *		__RTtypeid (MSVCRT.@)
+ */
+type_info* MSVCRT___RTtypeid(type_info *cppobj)
+{
+  /* Note: cppobj _isn't_ a type_info, we use that struct for its vtable ptr */
+  TRACE("(%p)\n",cppobj);
+
+  if (!IsBadReadPtr(cppobj, sizeof(void *)) &&
+      !IsBadReadPtr(cppobj->vtable - 1,sizeof(void *)) &&
+      !IsBadReadPtr((void*)cppobj->vtable[-1], sizeof(rtti_object_locator)))
+  {
+    rtti_object_locator *obj_locator = (rtti_object_locator *)cppobj->vtable[-1];
+    return obj_locator->type_descriptor;
+  }
+  /* FIXME: throw a C++ exception */
+  FIXME("Should throw(bad_typeid). Creating NULL reference, expect crash!\n");
+  return NULL;
+}
+
+/******************************************************************
+ *		__RTDynamicCast (MSVCRT.@)
+ */
+void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
+                             type_info *src, type_info *dst,
+                             int do_throw)
+{
+  /* Note: cppobj _isn't_ a type_info, we use that struct for its vtable ptr */
+  TRACE("(%p,%d,%p,%p,%d)\n",cppobj, unknown, src, dst, do_throw);
+
+  if (unknown)
+    FIXME("Unknown prameter is non-zero: please report\n");
+
+  /* To cast an object at runtime:
+   * 1.Find out the true type of the object from the typeinfo at vtable[-1]
+   * 2.Search for the destination type in the class heirachy
+   * 3.If destination type is found, return base object address + dest offset
+   *   Otherwise, fail the cast
+   */
+  if (!IsBadReadPtr(cppobj, sizeof(void *)) &&
+      !IsBadReadPtr(cppobj->vtable - 1,sizeof(void *)) &&
+      !IsBadReadPtr((void*)cppobj->vtable[-1], sizeof(rtti_object_locator)))
+  {
+    int count = 0;
+    rtti_object_locator *obj_locator = (rtti_object_locator *)cppobj->vtable[-1];
+    rtti_object_hierachy *obj_bases = obj_locator->type_hierachy;
+    rtti_base_descriptor **base_desc = obj_bases->base_classes->bases;
+    int src_offset = obj_locator->base_class_offset, dst_offset = -1;
+
+    while (count < obj_bases->array_len)
+    {
+      type_info *typ = (*base_desc)->type_descriptor;
+
+      if (!strcmp(typ->name, dst->name))
+      {
+        dst_offset = (*base_desc)->base_class_offset;
+        break;
+      }
+      base_desc++;
+      count++;
+    }
+    if (dst_offset >= 0)
+      return (void*)((unsigned long)cppobj - src_offset + dst_offset);
+  }
+
+  /* VC++ sets do_throw to 1 when the result of a dynamic_cast is assigned
+   * to a reference, since references cannot be NULL.
+   */
+  if (do_throw)
+    FIXME("Should throw(bad_cast). Creating NULL reference, expect crash!\n");
+  return NULL;
+}
+
+
+/******************************************************************
+ *		__RTCastToVoid (MSVCRT.@)
+ */
+void* MSVCRT___RTCastToVoid(type_info *cppobj)
+{
+  /* Note: cppobj _isn't_ a type_info, we use that struct for its vtable ptr */
+  TRACE("(%p)\n",cppobj);
+
+  /* Casts to void* simply cast to the base object */
+  if (!IsBadReadPtr(cppobj, sizeof(void *)) &&
+      !IsBadReadPtr(cppobj->vtable - 1,sizeof(void *)) &&
+      !IsBadReadPtr((void*)cppobj->vtable[-1], sizeof(rtti_object_locator)))
+  {
+    rtti_object_locator *obj_locator = (rtti_object_locator *)cppobj->vtable[-1];
+    int src_offset = obj_locator->base_class_offset;
+
+    return (void*)((unsigned long)cppobj - src_offset);
+  }
+  return NULL;
+}
+
+
 /* INTERNAL: Set up vtables
  * FIXME:should be static, cope with versions?
  */
 void msvcrt_init_vtables(void)
 {
   exception_vtable[0] = MSVCRT_exception_dtor;
-  exception_vtable[1] = (void*)MSVCRT_exception_what;
+  exception_vtable[1] = (void*)MSVCRT_what_exception;
 
   bad_typeid_vtable[0] = MSVCRT_bad_typeid_dtor;
   bad_typeid_vtable[1] = exception_vtable[1];

@@ -8,6 +8,7 @@
  */
 
 #include "msvcrt.h"
+#include "ms_errno.h"
 
 #include "msvcrt/malloc.h"
 
@@ -19,7 +20,7 @@ extern CRITICAL_SECTION MSVCRT_heap_cs;
 #define LOCK_HEAP      EnterCriticalSection(&MSVCRT_heap_cs)
 #define UNLOCK_HEAP    LeaveCriticalSection(&MSVCRT_heap_cs)
 
-typedef void (*MSVCRT_new_handler_func)(void);
+typedef void (*MSVCRT_new_handler_func)(unsigned long size);
 
 static MSVCRT_new_handler_func MSVCRT_new_handler;
 static int MSVCRT_new_mode;
@@ -34,7 +35,7 @@ void* MSVCRT_operator_new(unsigned long size)
   TRACE("(%ld) returning %p\n", size, retval);
   LOCK_HEAP;
   if(retval && MSVCRT_new_handler)
-    (*MSVCRT_new_handler)();
+    (*MSVCRT_new_handler)(size);
   UNLOCK_HEAP;
   return retval;
 }
@@ -80,6 +81,16 @@ MSVCRT_new_handler_func MSVCRT__set_new_handler(MSVCRT_new_handler_func func)
 }
 
 /*********************************************************************
+ *		?set_new_handler@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)
+ */
+MSVCRT_new_handler_func MSVCRT_set_new_handler(void *func)
+{
+  TRACE("(%p)\n",func);
+  MSVCRT__set_new_handler(NULL);
+  return NULL;
+}
+
+/*********************************************************************
  *		?_set_new_mode@@YAHH@Z (MSVCRT.@)
  */
 int MSVCRT__set_new_mode(int mode)
@@ -90,6 +101,16 @@ int MSVCRT__set_new_mode(int mode)
   MSVCRT_new_mode = mode;
   UNLOCK_HEAP;
   return old_mode;
+}
+
+/*********************************************************************
+ *		_callnewh (MSVCRT.@)
+ */
+int _callnewh(unsigned long size)
+{
+  if(MSVCRT_new_handler)
+    (*MSVCRT_new_handler)(size);
+  return 0;
 }
 
 /*********************************************************************
@@ -185,6 +206,16 @@ int _heapset(unsigned int value)
   }
   UNLOCK_HEAP;
   return retval == _HEAPEND? _HEAPOK : retval;
+}
+
+/*********************************************************************
+ *		_heapadd (MSVCRT.@)
+ */
+int _heapadd(void* mem, MSVCRT_size_t size)
+{
+  TRACE("(%p,%d) unsupported in Win32\n", mem,size);
+  SET_THREAD_VAR(errno,MSVCRT_ENOSYS);
+  return -1;
 }
 
 /*********************************************************************
