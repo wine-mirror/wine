@@ -1562,7 +1562,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
             MENUITEM *ip = &lppop->items[lppop->FocusedItem];
 	    SendMessageW( hwndOwner, WM_MENUSELECT,
                      MAKELONG(ip->fType & MF_POPUP ? wIndex: ip->wID,
-                     ip->fType | ip->fState | MF_MOUSESELECT |
+                     ip->fType | ip->fState |
                      (lppop->wFlags & MF_SYSMENU)), (LPARAM)hmenu);
         }
     }
@@ -1573,7 +1573,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
                 POPUPMENU *ptm = MENU_GetMenu( topmenu );
                 MENUITEM *ip = &ptm->items[pos];
                 SendMessageW( hwndOwner, WM_MENUSELECT, MAKELONG(pos,
-                         ip->fType | ip->fState | MF_MOUSESELECT |
+                         ip->fType | ip->fState |
                          (ptm->wFlags & MF_SYSMENU)), (LPARAM)topmenu);
             }
         }
@@ -2572,6 +2572,8 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	fEndMenu = !fRemove;
     }
 
+    if (wFlags & TF_ENDMENU) fEndMenu = TRUE;
+
     MENU_SetCapture( mt.hOwnerWnd );
 
     while (!fEndMenu)
@@ -2937,7 +2939,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
         {
             if( uItem == (UINT)(-1) ) MessageBeep(0);
             /* schedule end of menu tracking */
-            PostMessageW( hwnd, WM_CANCELMODE, 0, 0 );
+            wFlags |= TF_ENDMENU;
             goto track_menu;
         }
     }
@@ -2946,8 +2948,9 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
         /* prevent sysmenu activation for managed windows on Alt down/up */
         if ((wParam & HTSYSMENU) && (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MANAGED))
         {
+            MENU_SelectItem( hwnd, hTrackMenu, 0, TRUE, 0 );
             /* schedule end of menu tracking */
-            PostMessageW( hwnd, WM_CANCELMODE, 0, 0 );
+            wFlags |= TF_ENDMENU;
             goto track_menu;
         }
     }

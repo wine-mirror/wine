@@ -3,7 +3,7 @@
  *
  * Copyright 1999 Ove Kaaven
  * Copyright 2003 Dimitrie O. Paun
- * Copyright 2004 Dmitry Timoshkov
+ * Copyright 2004, 2005 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -513,6 +513,9 @@ static const struct message WmCreateCustomDialogSeq[] = {
     { HCBT_ACTIVATE, hook },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
 
+    { EVENT_OBJECT_DEFACTIONCHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+
     { EVENT_OBJECT_DEFACTIONCHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
 
@@ -628,7 +631,10 @@ static const struct message WmShowCustomDialogSeq[] = {
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_ACTIVATE, hook },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
+
+    { EVENT_OBJECT_DEFACTIONCHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
+
     { EVENT_OBJECT_DEFACTIONCHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
     { EVENT_OBJECT_DEFACTIONCHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
@@ -679,6 +685,7 @@ static const struct message WmModalDialogSeq[] = {
     { WM_SHOWWINDOW, sent },
     { HCBT_ACTIVATE, hook },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_GETICON, sent|optional },
@@ -2655,6 +2662,8 @@ static void test_messages(void)
     HMENU hmenu;
     MSG msg;
 
+    flush_sequence();
+
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hwnd != 0, "Failed to create overlapped window\n");
@@ -3693,6 +3702,8 @@ static DWORD WINAPI thread_proc(void *param)
 	DispatchMessage(&msg);
     }
 
+    ok(IsWindow(wnd_event->hwnd), "window should still exist\n");
+
     return 0;
 }
 
@@ -3760,6 +3771,8 @@ static void test_interthread_messages(void)
 
     ok(WaitForSingleObject(hThread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
     CloseHandle(hThread);
+
+    ok(!IsWindow(wnd_event.hwnd), "window should be destroyed on thread exit\n");
 }
 
 
@@ -3862,6 +3875,43 @@ static const struct message WmCtrlAltVkN[] = {
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
 };
+static const struct message WmAltPressRelease[] = {
+    { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_SYSKEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_SYSCOMMAND, sent|defwinproc|wparam|lparam, SC_KEYMENU, 0 },
+    { HCBT_SYSCOMMAND, hook },
+    { WM_ENTERMENULOOP, sent|defwinproc|wparam|lparam, 0, 0 },
+    { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_INITMENU, sent|defwinproc },
+    { EVENT_SYSTEM_MENUSTART, winevent_hook|wparam|lparam, OBJID_SYSMENU, 0 },
+    { WM_MENUSELECT, sent|defwinproc|wparam, MAKEWPARAM(0,MF_SYSMENU|MF_POPUP|MF_HILITE) },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_SYSMENU, 1 },
+
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_SYSMENU, 0 },
+    { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0, },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { WM_MENUSELECT, sent|defwinproc|wparam|optional, MAKEWPARAM(0,0xffff) },
+    { EVENT_SYSTEM_MENUEND, winevent_hook|wparam|lparam, OBJID_SYSMENU, 0 },
+    { WM_EXITMENULOOP, sent|defwinproc },
+    { WM_SYSKEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmAltMouseButton[] = {
+    { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_MOUSEMOVE, wparam|optional, 0, 0 },
+    { WM_MOUSEMOVE, sent|wparam|optional, 0, 0 },
+    { WM_LBUTTONDOWN, wparam, MK_LBUTTON, 0 },
+    { WM_LBUTTONDOWN, sent|wparam, MK_LBUTTON, 0 },
+    { WM_LBUTTONUP, wparam, 0, 0 },
+    { WM_LBUTTONUP, sent|wparam, 0, 0 },
+    { WM_SYSKEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { 0 }
+};
 
 static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 {
@@ -3873,13 +3923,17 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 
         trace("accel: %p, %04x, %08x, %08lx\n", msg.hwnd, msg.message, msg.wParam, msg.lParam);
 
+        /* ignore some unwanted messages */
+        if (msg.message == WM_MOUSEMOVE)
+            continue;
+
         log_msg.message = msg.message;
         log_msg.flags = wparam|lparam;
         log_msg.wParam = msg.wParam;
         log_msg.lParam = msg.lParam;
         add_message(&log_msg);
 
-        if (!TranslateAccelerator(hwnd, hAccel, &msg))
+        if (!hAccel || !TranslateAccelerator(hwnd, hAccel, &msg))
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -3889,13 +3943,15 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 
 static void test_accelerators(void)
 {
+    RECT rc;
     SHORT state;
     HACCEL hAccel;
-    HWND hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+    HWND hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                 100, 100, 200, 200, 0, 0, 0, NULL);
     BOOL ret;
 
     assert(hwnd != 0);
+    UpdateWindow(hwnd);
     SetFocus(hwnd);
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
@@ -3906,6 +3962,9 @@ static void test_accelerators(void)
 
     hAccel = LoadAccelerators(GetModuleHandleA(0), MAKEINTRESOURCE(1));
     assert(hAccel != 0);
+
+    pump_msg_loop(hwnd, 0);
+    flush_sequence();
 
     trace("testing VK_N press/release\n");
     flush_sequence();
@@ -4006,6 +4065,33 @@ static void test_accelerators(void)
     ret = DestroyAcceleratorTable(hAccel);
     ok( ret, "DestroyAcceleratorTable error %ld\n", GetLastError());
 
+    trace("testing Alt press/release\n");
+    flush_sequence();
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, 0);
+    /* this test doesn't pass in Wine for managed windows */
+    ok_sequence(WmAltPressRelease, "Alt press/release", TRUE);
+
+    trace("testing Alt+MouseButton press/release\n");
+    /* first, move mouse pointer inside of the window client area */
+    GetClientRect(hwnd, &rc);
+    MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
+    rc.left += (rc.right - rc.left)/2;
+    rc.top += (rc.bottom - rc.top)/2;
+    SetCursorPos(rc.left, rc.top);
+
+    pump_msg_loop(hwnd, 0);
+    flush_sequence();
+    keybd_event(VK_MENU, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, 0);
+    ok_sequence(WmAltMouseButton, "Alt+MouseButton press/release", FALSE);
+
     DestroyWindow(hwnd);
 }
 
@@ -4018,15 +4104,19 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     LRESULT ret;
     struct message msg;
 
-    /* do not log mouse messages */
-    if (message == WM_NCHITTEST ||
-	message == WM_SETCURSOR)
-	return 0;
-
     trace("%p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
     switch (message)
     {
+	/* test_accelerators() depends on this */
+	case WM_NCHITTEST:
+	    return HTCLIENT;
+    
+	/* ignore */
+	case WM_MOUSEMOVE:
+	case WM_SETCURSOR:
+	    return 0;
+
         case WM_WINDOWPOSCHANGING:
         case WM_WINDOWPOSCHANGED:
         {
@@ -4548,7 +4638,11 @@ static void test_winevents(void)
     flush_sequence();
 
     /* Windows ignores events with hwnd == 0 */
+    SetLastError(0xdeadbeef);
     pNotifyWinEvent(events[0].message, 0, events[0].wParam, events[0].lParam);
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE || /* Win2k */
+       GetLastError() == 0xdeadbeef, /* Win9x */
+       "unexpected error %ld\n", GetLastError());
     ok_sequence(WmEmptySeq, "empty notify winevents", FALSE);
 
     for (i = 0; i < sizeof(WmWinEventsSeq)/sizeof(WmWinEventsSeq[0]); i++)
@@ -4562,7 +4656,7 @@ START_TEST(msg)
 {
     HMODULE user32 = GetModuleHandleA("user32.dll");
     FARPROC pSetWinEventHook = 0;/*GetProcAddress(user32, "SetWinEventHook");*/
-    FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
+    FARPROC pUnhookWinEvent = 0;/*GetProcAddress(user32, "UnhookWinEvent");*/
     FARPROC pIsWinEventHookInstalled = GetProcAddress(user32, "IsWinEventHookInstalled");
 
     if (!RegisterWindowClasses()) assert(0);
@@ -4599,5 +4693,13 @@ START_TEST(msg)
     test_winevents();
 
     UnhookWindowsHookEx(hCBT_hook);
-    if (pUnhookWinEvent) pUnhookWinEvent(hEvent_hook);
+    if (pUnhookWinEvent)
+    {
+	ok(pUnhookWinEvent(hEvent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+	SetLastError(0xdeadbeef);
+	ok(!pUnhookWinEvent(hEvent_hook), "UnhookWinEvent succeeded\n");
+	ok(GetLastError() == ERROR_INVALID_HANDLE || /* Win2k */
+	   GetLastError() == 0xdeadbeef, /* Win9x */
+	   "unexpected error %ld\n", GetLastError());
+    }
 }

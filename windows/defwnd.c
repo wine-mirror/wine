@@ -339,6 +339,12 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             return NC_HandleNCHitTest( hwnd, pt );
         }
 
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+        iF10Key = iMenuSysKey = 0;
+        break;
+
     case WM_NCLBUTTONDOWN:
         return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
 
