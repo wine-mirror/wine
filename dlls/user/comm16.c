@@ -504,7 +504,8 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			return IE_OPEN;
 
 		handle = CreateFileA(device, GENERIC_READ|GENERIC_WRITE,
-			FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
+			FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 
+			FILE_FLAG_OVERLAPPED|FILE_FLAG_NO_BUFFERING, 0 );
 		if (handle == INVALID_HANDLE_VALUE) {
 			ERR("Couldn't open %s ! (%s)\n", COM[port].devicename, strerror(errno));
 			return IE_HARDWARE;
@@ -874,10 +875,36 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 
 	memset(&dcb,0,sizeof dcb);
 	dcb.DCBlength = sizeof dcb;
-	if(lpdcb->BaudRate==57601)
+
+	/*
+	 * according to MSDN, we should first interpret lpdcb->BaudRate as follows:
+	 * 1. if the baud rate is a CBR constant, interpret it.
+	 * 2. if it is greater than 57600, the baud rate is 115200
+	 * 3. use the actual baudrate
+	 * steps 2 and 3 are equivilent to 16550 baudrate divisor = 115200/BaudRate
+	 * see http://support.microsoft.com/support/kb/articles/q108/9/28.asp
+	 */
+	switch(lpdcb->BaudRate)
+	{
+	case CBR_110:    dcb.BaudRate = 110;    break;
+	case CBR_300:    dcb.BaudRate = 300;    break;
+	case CBR_600:    dcb.BaudRate = 600;    break;
+	case CBR_1200:   dcb.BaudRate = 1200;   break;
+	case CBR_2400:   dcb.BaudRate = 2400;   break;
+	case CBR_4800:   dcb.BaudRate = 4800;   break;
+	case CBR_9600:   dcb.BaudRate = 9600;   break;
+	case CBR_14400:  dcb.BaudRate = 14400;  break;
+	case CBR_19200:  dcb.BaudRate = 19200;  break;
+	case CBR_38400:  dcb.BaudRate = 38400;  break;
+	case CBR_56000:  dcb.BaudRate = 56000;  break;
+	case CBR_128000: dcb.BaudRate = 128000; break;
+	case CBR_256000: dcb.BaudRate = 256000; break;
+	default:
+		if(lpdcb->BaudRate>57600)
 		dcb.BaudRate = 115200;
         else
 		dcb.BaudRate = lpdcb->BaudRate;
+ 	}
 	
         dcb.ByteSize=lpdcb->ByteSize;
         dcb.StopBits=lpdcb->StopBits;

@@ -211,7 +211,7 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 		lpdcb->fRtsControl	= RTS_CONTROL_ENABLE;
 	}
 
-	return 0;
+	return TRUE;
 }
 
 /**************************************************************************
@@ -844,10 +844,6 @@ BOOL WINAPI SetCommState(
 	port.c_lflag &= ~(ICANON|ECHO|ISIG);
 	port.c_lflag |= NOFLSH;
 
-     /*
-     ** MJM - removed default baudrate settings
-     ** TRACE(comm,"baudrate %ld\n",lpdcb->BaudRate);
-     */
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
 	switch (lpdcb->BaudRate) {
