@@ -144,17 +144,13 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     ADDRESS             addr;
     void               *linear;
 
-    if (lvalue->type.id == dbg_itype_none)
-    {
-        addr = lvalue->addr;
-        linear = memory_to_linear_addr( &addr );
-    }
+    if (lvalue->type.id == dbg_itype_none) addr = lvalue->addr;
     else
     {
-        linear = types_extract_as_integer( lvalue );
         addr.Mode = AddrModeFlat;
-        addr.Offset = (unsigned long)linear;
+        addr.Offset = types_extract_as_integer( lvalue );
     }
+    linear = memory_to_linear_addr( &addr );
 
     if (format != 'i' && count > 1)
     {
