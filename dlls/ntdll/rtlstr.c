@@ -835,3 +835,76 @@ out:
 		*pf = out_flags;
 	return len;
 }
+
+/**************************************************************************
+ *	RtlUnicodeStringToInteger (NTDLL.@)
+ *
+ *	Convert a text buffer into its integer form
+ */
+NTSTATUS WINAPI RtlUnicodeStringToInteger(
+	const UNICODE_STRING *str,
+	int base,
+	int * pdest)
+{
+	LPWSTR lpwstr = str->Buffer;
+	WCHAR wchCurrent = 0;
+	int CharsParsed = 0;
+	int RunningTotal = 0;
+	char bMinus = 0;
+
+	/* no checking done on UNICODE_STRING and int* in native DLL either */
+	TRACE("(%p, %d, %p)", str, base, pdest);
+
+	switch (base)
+	{
+		case 0:
+			base = 10;
+			break;
+		case 2:
+		case 8:
+		case 10:
+		case 16:
+			break;
+		default:
+			return STATUS_INVALID_PARAMETER;
+	}
+
+	if ((str->Length) >= 4 && (base == 10) && (*lpwstr == '0') && (*(lpwstr+1) == 'x'))
+	{
+		lpwstr+=2;
+		base = 16;
+	}
+
+	*pdest = 0;
+	for (; (CharsParsed*sizeof(WCHAR) < str->Length) && (*lpwstr <= ' '); lpwstr++)
+		CharsParsed++;
+
+	if (*lpwstr == '+')
+		lpwstr++;
+	else if (*lpwstr == '-')
+	{
+		bMinus = 1;
+		lpwstr++;
+	}
+
+	for (; (CharsParsed*sizeof(WCHAR) < str->Length) && (*lpwstr != '\0'); lpwstr++)
+	{
+		CharsParsed++;
+		wchCurrent = *lpwstr;
+		if (wchCurrent >= 'A')
+			wchCurrent = '0' + 10 + wchCurrent - 'A';
+		if ((wchCurrent - '0') >= base || wchCurrent < '0')
+		{
+			*pdest = bMinus ? -RunningTotal: RunningTotal;
+			return STATUS_SUCCESS;
+		}
+		/*
+		 * increase significance of previous digits each time
+		 * we find another valid one and add on this valid one
+		 */
+		RunningTotal = wchCurrent - '0' + RunningTotal * base;
+	}
+
+	*pdest = bMinus ? -RunningTotal : RunningTotal;
+	return STATUS_SUCCESS;
+}

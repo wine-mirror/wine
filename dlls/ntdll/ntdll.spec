@@ -528,7 +528,7 @@
 @ stdcall RtlUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlUnicodeStringToAnsiString(ptr ptr long) RtlUnicodeStringToAnsiString
 @ stub RtlUnicodeStringToCountedOemString
-@ stub RtlUnicodeStringToInteger
+@ stdcall RtlUnicodeStringToInteger(ptr long ptr) RtlUnicodeStringToInteger
 @ stdcall RtlUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stdcall RtlUnicodeStringToOemString(ptr ptr long) RtlUnicodeStringToOemString
 @ stub RtlUnicodeToCustomCPN
