@@ -22,9 +22,14 @@ extern struct  w_files * wine_files;
 
 extern char *GetFilenameFromInstance(unsigned short instance);
 extern struct w_files *GetFileInfo(unsigned short instance);
-extern char *FindFileInPath(char *buffer, int buflen, char *rootname, 
-			    char **extensions, char *path);
-extern char *GetSystemIniFilename(void);
+extern char *WineIniFileName(void);
+extern char *WinIniFileName(void);
+
+#define MAX_DOS_DRIVES	26
+
+#define WINE_INI WineIniFileName()
+#define WIN_INI WinIniFileName()
+
 #ifdef linux
 struct sigcontext_struct {
 	unsigned short sc_gs, __gsh;

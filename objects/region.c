@@ -31,6 +31,7 @@ BOOL REGION_Init()
 	XFreePixmap( XT_display, tmpPixmap );
 	if (!regionGC) return FALSE;
 	XSetForeground( XT_display, regionGC, 1 );
+	XSetGraphicsExposures( XT_display, regionGC, False );
 	return TRUE;
     }
     else return FALSE;

@@ -6,14 +6,16 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "windows.h"
 #include "user.h"
-
-#define DEFAULT_MSG_QUEUE_SIZE  8
+#include "message.h"
 
 #define USER_HEAP_SIZE          0x10000
 
 
 MDESC *USER_Heap = NULL;
 
+
+extern BOOL ATOM_Init();
+extern BOOL GDI_Init();
 
 /***********************************************************************
  *           USER_HeapInit
@@ -24,7 +26,6 @@ static BOOL USER_HeapInit()
     s = GetNextSegment( 0, 0x10000 );
     if (s == NULL) return FALSE;
     HEAP_Init( &USER_Heap, s->base_addr, USER_HEAP_SIZE );
-    free(s);
     return TRUE;
 }
 
@@ -37,6 +38,11 @@ static BOOL USER_HeapInit()
 int
 USER_InitApp(int hInstance)
 {
+    int queueSize;
+
+      /* Global atom table initialisation */
+    if (!ATOM_Init()) return 0;
+    
       /* GDI initialisation */
     if (!GDI_Init()) return 0;
 
@@ -54,9 +60,14 @@ USER_InitApp(int hInstance)
 
       /* Initialize dialog manager */
     if (!DIALOG_Init()) return 0;
-    
+
+      /* Create system message queue */
+    queueSize = GetProfileInt( "windows", "TypeAhead", 120 );
+    if (!MSG_CreateSysMsgQueue( queueSize )) return 0;
+
       /* Create task message queue */
-    if (!SetMessageQueue( DEFAULT_MSG_QUEUE_SIZE )) return 0;
+    queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
+    if (!SetMessageQueue( queueSize )) return 0;
         
     return 1;
 }

@@ -153,7 +153,6 @@ BOOL GDI_Init()
     s = (struct segment_descriptor_s *)GetNextSegment( 0, 0x10000 );
     if (s == NULL) return FALSE;
     HEAP_Init( &GDI_Heap, s->base_addr, GDI_HEAP_SIZE );
-    free(s);
 
       /* Create default palette */
 
@@ -200,8 +199,11 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
     GDIOBJHDR * obj;
     HANDLE handle = GDI_HEAP_ALLOC( GMEM_MOVEABLE, size );
     if (!handle) return 0;
-    
     obj = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+    if (obj == NULL) {
+    	printf("GDI_AllocObject // Error trying to get GDI_HEAD_ADDR !\n");
+    	return 0;
+    	}
     obj->hNext   = 0;
     obj->wMagic  = magic;
     obj->dwCount = ++count;

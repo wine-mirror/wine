@@ -1,0 +1,25 @@
+#include "../../Wine.tmpl"
+
+MODULE = readline
+
+YACC = yacc -b dbg -d
+
+DEFINES	= -DANSI_ARROWS -DHAVE_TCGETATTR -DHIDE -DUSE_DIRENT -DSYS_UNIX
+
+SRCS = \
+	complete.c \
+	editline.c \
+	sysunix.c
+
+OBJS = \
+	complete.o \
+	editline.o \
+	sysunix.o
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

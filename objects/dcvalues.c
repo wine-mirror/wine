@@ -45,6 +45,8 @@ const WIN_DC_INFO DCVAL_defaultValues =
     MM_TEXT,                /* MapMode */
     0,                      /* DCOrgX */
     0,                      /* DCOrgY */
+    0,                      /* DCSizeX */
+    0,                      /* DCSizeY */
     0,                      /* CursPosX */
     0,                      /* CursPosY */
     0,                      /* WndOrgX */

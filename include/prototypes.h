@@ -10,6 +10,7 @@
 #include "neexe.h"
 #include "segmem.h"
 #include "wine.h"
+#include "int21.h"
 
 extern struct segment_descriptor_s *
     CreateSelectors(struct w_files *);
@@ -33,5 +34,15 @@ extern int CurrentNEFile;
 extern do_int1A(struct sigcontext_struct * context);
 extern do_int21(struct sigcontext_struct * context);
 
-#endif /* PROTOTYPES_H */
+extern void GetUnixDirName(char *rootdir, char *name);
+extern char *GetDirectUnixFileName(char *dosfilename);
+extern char *GetUnixFileName(char *dosfilename);
 
+extern char *FindFile(char *buffer, int buflen, char *rootname, char **extensions, char *path);
+extern char *WineIniFileName(void);
+extern char *WinIniFileName(void);
+extern struct dosdirent *DOS_opendir(char *dosdirname);
+extern struct dosdirent *DOS_readdir(struct dosdirent *de);
+extern void DOS_closedir(struct dosdirent *de);
+
+#endif /* PROTOTYPES_H */

@@ -27,7 +27,10 @@ typedef struct tagMENUITEM
     Widget	w;
     Widget	menu_w;
     char	menu_name[10];
-} MENUITEM;
+    RECT	rect;
+    HBITMAP	hCheckBit;
+    HBITMAP	hUnCheckBit;
+} MENUITEM, *LPMENUITEM;
 
 typedef struct tagMENUBAR
 {
@@ -39,6 +42,16 @@ typedef struct tagMENUBAR
     Widget	menuBarWidget;		/* Widget to contain menu options */
     MENUITEM   *firstItem;
 } MENUBAR, *LPMENUBAR;
+
+typedef struct tagPOPUPMENU
+{
+    HWND	hWnd;			/* PopupMenu window handle	  */
+    HWND	ownerWnd;		/* Owner window			  */
+    WORD	nItems;    		/* Number of items on menu	  */
+    MENUITEM   *firstItem;
+    WORD	FocusedItem;
+    WORD	MouseFlags;
+} POPUPMENU, *LPPOPUPMENU;
 
 typedef struct
 {

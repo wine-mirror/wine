@@ -1,7 +1,7 @@
 CFLAGS=$(COPTS) $(DEBUGOPTS) -I../include
 
-OBJS=dump.o files.o ldt.o ldtlib.o resource.o selector.o signal.o int1a.o \
-     int21.o wine.o library.o
+OBJS=dump.o ldt.o ldtlib.o resource.o selector.o signal.o library.o \
+     wine.o cursor.o
 
 default: loader.o
 

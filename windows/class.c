@@ -9,6 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "class.h"
 #include "user.h"
 #include "win.h"
+#include "dce.h"
 
 
 static HCLASS firstClass = 0;
@@ -18,18 +19,49 @@ static HCLASS firstClass = 0;
  *           CLASS_FindClassByName
  *
  * Return a handle and a pointer to the class.
+ * 'ptr' can be NULL if the pointer is not needed.
  */
 HCLASS CLASS_FindClassByName( char * name, CLASS **ptr )
 {
-    HCLASS class = firstClass;
-    while(class)
+    ATOM atom;
+    HCLASS class;
+    CLASS * classPtr;
+
+      /* First search task-specific classes */
+
+    if ((atom = FindAtom( name )) != 0)
     {
-	*ptr = (CLASS *) USER_HEAP_ADDR(class);
-	if (!strcasecmp( (*ptr)->wc.lpszClassName, name )) return class;
-	class = (*ptr)->hNext;
+	for (class = firstClass; (class); class = classPtr->hNext)
+	{
+	    classPtr = (CLASS *) USER_HEAP_ADDR(class);
+	    if (classPtr->wc.style & CS_GLOBALCLASS) continue;
+	    if (classPtr->atomName == atom)
+	    {
+		if (ptr) *ptr = classPtr;
+		return class;
+	    }
+	}
     }
+    
+      /* Then search global classes */
+
+    if ((atom = GlobalFindAtom( name )) != 0)
+    {
+	for (class = firstClass; (class); class = classPtr->hNext)
+	{
+	    classPtr = (CLASS *) USER_HEAP_ADDR(class);
+	    if (!(classPtr->wc.style & CS_GLOBALCLASS)) continue;
+	    if (classPtr->atomName == atom)
+	    {
+		if (ptr) *ptr = classPtr;
+		return class;
+	    }
+	}
+    }
+
     return 0;
 }
+
 
 /***********************************************************************
  *           CLASS_FindClassPtr
@@ -52,37 +84,50 @@ CLASS * CLASS_FindClassPtr( HCLASS hclass )
  */
 ATOM RegisterClass( LPWNDCLASS class )
 {
-    CLASS * newClass;
-    HCLASS handle;
+    CLASS * newClass, * prevClassPtr;
+    HCLASS handle, prevClass;
     
 #ifdef DEBUG_CLASS
     printf( "RegisterClass: wndproc=%08x hinst=%d name='%s'\n", 
 	    class->lpfnWndProc, class->hInstance, class->lpszClassName );
 #endif
 
+      /* Check if a class with this name already exists */
+
+    prevClass = CLASS_FindClassByName( class->lpszClassName, &prevClassPtr );
+    if (prevClass)
+    {
+	  /* Class can be created only if it is local and */
+	  /* if the class with the same name is global.   */
+
+	if (class->style & CS_GLOBALCLASS) return 0;
+	if (!(prevClassPtr->wc.style & CS_GLOBALCLASS)) return 0;
+    }
+
+      /* Create class */
+
     handle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(CLASS)+class->cbClsExtra );
     if (!handle) return 0;
     newClass = (CLASS *) USER_HEAP_ADDR( handle );
     newClass->hNext      = firstClass;
     newClass->wMagic     = CLASS_MAGIC;
-    newClass->atomName   = handle;  /* Should be an atom */
     newClass->cWindows   = 0;  
     newClass->wc         = *class;
 
-    if (newClass->wc.style & CS_CLASSDC)
-	newClass->hdc = CreateDC( "DISPLAY", NULL, NULL, NULL );
-    else newClass->hdc = 0;
+    if (newClass->wc.style & CS_GLOBALCLASS)
+	newClass->atomName = GlobalAddAtom( class->lpszClassName );
+    else newClass->atomName = AddAtom( class->lpszClassName );
 
-      /* Class name should also be set to zero. For now we need the
-       * name because we don't have atoms.
-       */
-    newClass->wc.lpszClassName = (char *)malloc(strlen(class->lpszClassName)+1);
-    strcpy( newClass->wc.lpszClassName, class->lpszClassName );
+    if (newClass->wc.style & CS_CLASSDC)
+	newClass->hdce = DCE_AllocDCE( DCE_CLASS_DC );
+    else newClass->hdce = 0;
+
+      /* Menu name should also be set to zero. */
+    newClass->wc.lpszClassName = NULL;
     
     if (class->cbClsExtra) memset( newClass->wExtra, 0, class->cbClsExtra );
-    
     firstClass = handle;
-    return handle;  /* Should be an atom */
+    return newClass->atomName;
 }
 
 
@@ -118,8 +163,10 @@ BOOL UnregisterClass( LPSTR className, HANDLE instance )
     }
 
       /* Delete the class */
-    if (classPtr->hdc) DeleteDC( classPtr->hdc );
+    if (classPtr->hdce) DCE_FreeDCE( classPtr->hdce );
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
+    if (classPtr->wc.style & CS_GLOBALCLASS) GlobalDeleteAtom( classPtr->atomName );
+    else DeleteAtom( classPtr->atomName );
     USER_HEAP_FREE( class );
     return TRUE;
 }
@@ -181,4 +228,35 @@ LONG SetClassLong( HWND hwnd, short offset, LONG newval )
     retval = *ptr;
     *ptr = newval;
     return retval;
+}
+
+
+/***********************************************************************
+ *           GetClassName      (USER.58)
+ */
+int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
+{
+    WND *wndPtr;
+    CLASS *classPtr;
+
+    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
+    if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
+
+    return (GetAtomName(classPtr->atomName, lpClassName, maxCount));
+}
+
+
+/***********************************************************************
+ *           GetClassInfo      (USER.404)
+ */
+BOOL GetClassInfo(HANDLE hInstance, LPSTR lpClassName, 
+		                    LPWNDCLASS lpWndClass)
+{
+    CLASS *classPtr;
+
+    if (!(CLASS_FindClassByName(lpClassName, &classPtr))) return FALSE;
+    if (hInstance && (hInstance != classPtr->wc.hInstance)) return FALSE;
+
+    memcpy(lpWndClass, &(classPtr->wc), sizeof(WNDCLASS));
+    return TRUE;
 }

@@ -64,7 +64,8 @@ typedef int *LPCATCHBUF;
 #define LOWORD(l)           ((WORD)(l))
 #define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
 
-#define MAKELONG(low, high) ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
+#define MAKELONG(low, high) ((LONG)(((WORD)(low)) | \
+				    (((DWORD)((WORD)(high))) << 16)))
 
 #ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
@@ -208,6 +209,36 @@ typedef struct {
 #define GW_OWNER	4
 #define GW_CHILD	5
 
+  /* WM_WINDOWPOSCHANGING/CHANGED struct */
+typedef struct
+{
+    HWND    hwnd;
+    HWND    hwndInsertAfter;
+    int     x;
+    int     y;
+    int     cx;
+    int     cy;
+    UINT    flags;
+} WINDOWPOS;
+
+  /* WM_NCCALCSIZE parameter structure */
+typedef struct
+{
+    RECT	   rgrc[3];
+    WINDOWPOS FAR* lppos;
+} NCCALCSIZE_PARAMS;
+
+  /* WM_NCCALCSIZE return flags */
+#define WVR_ALIGNTOP        0x0010
+#define WVR_ALIGNLEFT       0x0020
+#define WVR_ALIGNBOTTOM     0x0040
+#define WVR_ALIGNRIGHT      0x0080
+#define WVR_HREDRAW         0x0100
+#define WVR_VREDRAW         0x0200
+#define WVR_REDRAW          (WVR_HREDRAW | WVR_VREDRAW)
+#define WVR_VALIDRECTS      0x0400
+
+
   /* Dialogs */
 
   /* cbWndExtra bytes for dialog class */
@@ -274,6 +305,9 @@ typedef struct tagMSG
 } MSG, *LPMSG;
 	
 typedef WORD ATOM;
+
+#define MAKEINTATOM(i)     ((LPCSTR)MAKELP(0, (i)))
+
 
   /* Raster operations */
 
@@ -558,6 +592,19 @@ typedef struct tagLOGPEN
 #define RGN_DIFF          4
 #define RGN_COPY          5
 
+  /* Device contexts */
+
+/* GetDCEx flags */
+#define DCX_WINDOW           0x00000001
+#define DCX_CACHE            0x00000002
+#define DCX_CLIPCHILDREN     0x00000008
+#define DCX_CLIPSIBLINGS     0x00000010
+#define DCX_PARENTCLIP       0x00000020
+#define DCX_EXCLUDERGN       0x00000040
+#define DCX_INTERSECTRGN     0x00000080
+#define DCX_LOCKWINDOWUPDATE 0x00000400
+#define DCX_USESTYLE         0x00010000
+
   /* Polygon modes */
 #define ALTERNATE         1
 #define WINDING           2
@@ -797,18 +844,6 @@ typedef struct tagBITMAPCOREHEADER
 #define DIB_PAL_COLORS   1
 #define CBM_INIT         4
 
-
-/* Unimplemented structs */
-typedef struct {
-	BYTE Id;  /* much more .... */
-} DCB;
-
-typedef struct {
-	BYTE i;  /* much more .... */
-} COMSTAT;
-
-
-
 typedef struct {
 	BYTE i;  /* much more .... */
 } KANJISTRUCT;
@@ -842,6 +877,160 @@ typedef OFSTRUCT *LPOFSTRUCT;
 #define OF_SHARE_EXCLUSIVE 0x0010
 #define OF_VERIFY 0x0400
 
+#define DRIVE_REMOVABLE	2
+#define DRIVE_FIXED	3
+#define DRIVE_REMOTE	4
+
+#define HFILE_ERROR	-1
+
+#define DDL_READWRITE	0x0000
+#define DDL_READONLY	0x0001
+#define DDL_HIDDEN	0x0002
+#define DDL_SYSTEM	0x0004
+#define DDL_DIRECTORY	0x0010
+#define DDL_ARCHIVE	0x0020
+
+#define DDL_POSTMSGS	0x2000
+#define DDL_DRIVES	0x4000
+#define DDL_EXCLUSIVE	0x8000
+
+/* comm */
+
+#define CBR_110	0xFF10
+#define CBR_300	0xFF11
+#define CBR_600	0xFF12
+#define CBR_1200	0xFF13
+#define CBR_2400	0xFF14
+#define CBR_4800	0xFF15
+#define CBR_9600	0xFF16
+#define CBR_14400	0xFF17
+#define CBR_19200	0xFF18
+#define CBR_38400	0xFF1B
+#define CBR_56000	0xFF1F
+#define CBR_128000	0xFF23
+#define CBR_256000	0xFF27
+
+#define NOPARITY	0
+#define ODDPARITY	1
+#define EVENPARITY	2
+#define MARKPARITY	3
+#define SPACEPARITY	4
+#define ONESTOPBIT	0
+#define ONE5STOPBITS	1
+#define TWOSTOPBITS	2
+#define IGNORE		0
+#define INFINITE	0xFFFF
+
+#define CE_RXOVER	0x0001
+#define CE_OVERRUN	0x0002
+#define CE_RXPARITY	0x0004
+#define CE_FRAME	0x0008
+#define CE_BREAK	0x0010
+#define CE_CTSTO	0x0020
+#define CE_DSRTO	0x0040
+#define CE_RLSDTO	0x0080
+#define CE_TXFULL	0x0100
+#define CE_PTO		0x0200
+#define CE_IOE		0x0400
+#define CE_DNS		0x0800
+#define CE_OOP		0x1000
+#define CE_MODE	0x8000
+
+#define IE_BADID	-1
+#define IE_OPEN	-2
+#define IE_NOPEN	-3
+#define IE_MEMORY	-4
+#define IE_DEFAULT	-5
+#define IE_HARDWARE	-10
+#define IE_BYTESIZE	-11
+#define IE_BAUDRATE	-12
+
+#define EV_RXCHAR	0x0001
+#define EV_RXFLAG	0x0002
+#define EV_TXEMPTY	0x0004
+#define EV_CTS		0x0008
+#define EV_DSR		0x0010
+#define EV_RLSD	0x0020
+#define EV_BREAK	0x0040
+#define EV_ERR		0x0080
+#define EV_RING	0x0100
+#define EV_PERR	0x0200
+#define EV_CTSS	0x0400
+#define EV_DSRS	0x0800
+#define EV_RLSDS	0x1000
+#define EV_RINGTE	0x2000
+#define EV_RingTe	EV_RINGTE
+
+#define SETXOFF	1
+#define SETXON		2
+#define SETRTS		3
+#define CLRRTS		4
+#define SETDTR		5
+#define CLRDTR		6
+#define RESETDEV	7
+#define GETMAXLPT	8
+#define GETMAXCOM	9
+#define GETBASEIRQ	10
+
+#define CN_RECEIVE	0x0001
+#define CN_TRANSMIT	0x0002
+#define CN_EVENT	0x0004
+
+typedef struct tagDCB
+{
+    BYTE Id;
+    UINT BaudRate;
+    BYTE ByteSize;
+    BYTE Parity;
+    BYTE StopBits;
+    UINT RlsTimeout;
+    UINT CtsTimeout;
+    UINT DsrTimeout;
+
+    UINT fBinary        :1;
+    UINT fRtsDisable    :1;
+    UINT fParity        :1;
+    UINT fOutxCtsFlow   :1;
+    UINT fOutxDsrFlow   :1;
+    UINT fDummy         :2;
+    UINT fDtrDisable    :1;
+
+    UINT fOutX          :1;
+    UINT fInX           :1;
+    UINT fPeChar        :1;
+    UINT fNull          :1;
+    UINT fChEvt         :1;
+    UINT fDtrflow       :1;
+    UINT fRtsflow       :1;
+    UINT fDummy2        :1;
+
+    char XonChar;
+    char XoffChar;
+    UINT XonLim;
+    UINT XoffLim;
+    char PeChar;
+    char EofChar;
+    char EvtChar;
+    UINT TxDelay;
+} DCB;
+typedef DCB FAR* LPDCB;
+
+typedef struct tagCOMSTAT
+{
+    BYTE status;
+    UINT cbInQue;
+    UINT cbOutQue;
+} COMSTAT;
+
+#define CSTF_CTSHOLD	0x01
+#define CSTF_DSRHOLD	0x02
+#define CSTF_RLSDHOLD	0x04
+#define CSTF_XOFFHOLD	0x08
+#define CSTF_XOFFSENT	0x10
+#define CSTF_EOF	0x20
+#define CSTF_TXIM	0x40
+
+/* */
 
 typedef struct 
 {
@@ -903,8 +1092,12 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 	WM_DELETEITEM, WM_VKEYTOITEM,
 	WM_CHARTOITEM, WM_SETFONT, WM_GETFONT };
 
+#define WM_WINDOWPOSCHANGING 0x0046
+#define WM_WINDOWPOSCHANGED 0x0047
+
 #define WM_NCCREATE         0x0081
 #define WM_NCDESTROY        0x0082
+#define WM_NCCALCSIZE	    0x0083
 
 #define WM_GETDLGCODE	    0x0087
 
@@ -1008,6 +1201,12 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define HWND_TOPMOST        ((HWND)-1)
 #define HWND_NOTOPMOST      ((HWND)-2)
 
+/* Flags for TrackPopupMenu */
+#define TPM_LEFTBUTTON  0x0000
+#define TPM_RIGHTBUTTON 0x0002
+#define TPM_LEFTALIGN   0x0000
+#define TPM_CENTERALIGN 0x0004
+#define TPM_RIGHTALIGN  0x0008
 
 #define MF_INSERT 0
 #define MF_CHANGE 0x0080
@@ -1016,7 +1215,7 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define MF_REMOVE 0x1000
 #define MF_BYCOMMAND 0
 #define MF_BYPOSITION 0x0400
-#define MF_SEPARATOR 0x080
+#define MF_SEPARATOR 0x0800
 #define MF_ENABLED 0
 #define MF_GRAYED 0x0001
 #define MF_DISABLED 0x0002
@@ -1492,6 +1691,80 @@ typedef struct tagCOMPAREITEMSTRUCT
 typedef COMPAREITEMSTRUCT NEAR* PCOMPAREITEMSTRUCT;
 typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
 
+/* Virtual key codes */
+#define VK_LBUTTON          0x01
+#define VK_RBUTTON          0x02
+#define VK_CANCEL           0x03
+#define VK_MBUTTON          0x04
+#define VK_BACK             0x08
+#define VK_TAB              0x09
+#define VK_CLEAR            0x0C
+#define VK_RETURN           0x0D
+#define VK_SHIFT            0x10
+#define VK_CONTROL          0x11
+#define VK_MENU             0x12
+#define VK_PAUSE            0x13
+#define VK_CAPITAL          0x14
+#define VK_ESCAPE           0x1B
+#define VK_SPACE            0x20
+#define VK_PRIOR            0x21
+#define VK_NEXT             0x22
+#define VK_END              0x23
+#define VK_HOME             0x24
+#define VK_LEFT             0x25
+#define VK_UP               0x26
+#define VK_RIGHT            0x27
+#define VK_DOWN             0x28
+#define VK_SELECT           0x29
+#define VK_PRINT            0x2A
+#define VK_EXECUTE          0x2B
+#define VK_SNAPSHOT         0x2C
+#define VK_INSERT           0x2D
+#define VK_DELETE           0x2E
+#define VK_HELP             0x2F
+#define VK_NUMPAD0          0x60
+#define VK_NUMPAD1          0x61
+#define VK_NUMPAD2          0x62
+#define VK_NUMPAD3          0x63
+#define VK_NUMPAD4          0x64
+#define VK_NUMPAD5          0x65
+#define VK_NUMPAD6          0x66
+#define VK_NUMPAD7          0x67
+#define VK_NUMPAD8          0x68
+#define VK_NUMPAD9          0x69
+#define VK_MULTIPLY         0x6A
+#define VK_ADD              0x6B
+#define VK_SEPARATOR        0x6C
+#define VK_SUBTRACT         0x6D
+#define VK_DECIMAL          0x6E
+#define VK_DIVIDE           0x6F
+#define VK_F1               0x70
+#define VK_F2               0x71
+#define VK_F3               0x72
+#define VK_F4               0x73
+#define VK_F5               0x74
+#define VK_F6               0x75
+#define VK_F7               0x76
+#define VK_F8               0x77
+#define VK_F9               0x78
+#define VK_F10              0x79
+#define VK_F11              0x7A
+#define VK_F12              0x7B
+#define VK_F13              0x7C
+#define VK_F14              0x7D
+#define VK_F15              0x7E
+#define VK_F16              0x7F
+#define VK_F17              0x80
+#define VK_F18              0x81
+#define VK_F19              0x82
+#define VK_F20              0x83
+#define VK_F21              0x84
+#define VK_F22              0x85
+#define VK_F23              0x86
+#define VK_F24              0x87
+#define VK_NUMLOCK          0x90
+#define VK_SCROLL           0x91
+
   
 #define LMEM_MOVEABLE   0x0002
 
@@ -1719,6 +1992,7 @@ Fa(WORD,EnumClipboardFormats,WORD,a)
 Fa(WORD,FreeSelector,WORD,a)
 Fa(WORD,GetDriveType,int,a)
 Fa(WORD,GetMenuItemCount,HMENU,a)
+Fa(WORD,GetTaskQueue,HANDLE,a)
 Fa(WORD,GetTextAlign,HDC,a)
 Fa(WORD,GlobalFlags,HANDLE,a)
 Fa(WORD,GlobalPageLock,HANDLE,a)
@@ -1726,9 +2000,9 @@ Fa(WORD,GlobalPageUnlock,HANDLE,a)
 Fa(WORD,LocalCompact,WORD,a)
 Fa(WORD,LocalFlags,HANDLE,a)
 Fa(WORD,LocalSize,HANDLE,a)
-Fa(WORD,RealizePalette,HDC,a)
-Fa(WORD,RegisterClipboardFormat,LPSTR,a)
-Fa(WORD,RegisterWindowMessage,LPSTR,a)
+Fa(int,RealizePalette,HDC,a)
+Fa(WORD,RegisterClipboardFormat,LPCSTR,a)
+Fa(WORD,RegisterWindowMessage,LPCSTR,a)
 Fa(WORD,SetHandleCount,WORD,a)
 Fa(WORD,VkKeyScan,WORD,a)
 Fa(char NEAR*,LocalLock,HANDLE,a)
@@ -1872,6 +2146,7 @@ Fb(WORD,IsDlgButtonChecked,HWND,a,WORD,b)
 Fb(WORD,LocalShrink,HANDLE,a,WORD,b)
 Fb(WORD,MapVirtualKey,WORD,a,WORD,b)
 Fb(WORD,SetSystemPaletteUse,HDC,a,WORD,b)
+Fb(WORD,SetTaskQueue,HANDLE,a,HANDLE,b)
 Fb(WORD,SetTextAlign,HDC,a,WORD,b)
 Fb(WORD,SizeofResource,HANDLE,a,HANDLE,b)
 Fb(WORD,WinExec,LPSTR,a,WORD,b)
@@ -1881,7 +2156,7 @@ Fb(int,BuildCommDCB,LPSTR,a,DCB*,b)
 Fb(int,ConvertRequest,HWND,a,LPKANJISTRUCT,b)
 Fb(void,CopyRect,LPRECT,a,LPRECT,b)
 Fb(int,EnumProps,HWND,a,FARPROC,b)
-Fb(int,EscapeCommFunction,int,a,int,b)
+Fb(LONG,EscapeCommFunction,int,a,int,b)
 Fb(int,ExcludeUpdateRgn,HDC,a,HWND,b)
 Fb(int,FlushComm,int,a,int,b)
 Fb(int,GetClipBox,HDC,a,LPRECT,b)
@@ -1910,8 +2185,8 @@ Fb(void,MapDialogRect,HWND,a,LPRECT,b)
 Fb(void,ProfSampRate,int,a,int,b)
 Fb(void,ProfSetup,int,a,int,b)
 Fb(void,ScreenToClient,HWND,a,LPPOINT,b)
-Fb(void,SetCaretPos,int,a,int,b)
-Fb(void,SetCursorPos,int,a,int,b)
+Fb(void,SetCaretPos,short,a,short,b)
+Fb(void,SetCursorPos,short,a,short,b)
 Fb(void,SetWindowText,HWND,a,LPSTR,b)
 Fb(void,ShowOwnedPopups,HWND,a,BOOL,b)
 Fb(void,Throw,LPCATCHBUF,a,int,b)
@@ -1963,6 +2238,7 @@ Fc(HANDLE,GlobalReAlloc,HANDLE,a,DWORD,b,WORD,c)
 Fc(HANDLE,LocalReAlloc,HANDLE,a,WORD,b,WORD,c)
 Fc(HBITMAP,CreateCompatibleBitmap,HDC,a,short,b,short,c)
 Fc(HBITMAP,CreateDiscardableBitmap,HDC,a,short,b,short,c)
+Fc(HDC,GetDCEx,HWND,a,HRGN,b,DWORD,c)
 Fc(HPALETTE,SelectPalette,HDC,a,HPALETTE,b,BOOL,c)
 Fc(HPEN,CreatePen,short,a,short,b,COLORREF,c)
 Fc(HRGN,CreatePolygonRgn,LPPOINT,a,short,b,short,c)
@@ -1985,7 +2261,7 @@ Fb(WORD,SetRelAbs,HDC,a,WORD,b)
 Fb(WORD,SetROP2,HDC,a,WORD,b)
 Fb(WORD,SetStretchBltMode,HDC,a,WORD,b)
 Fc(int,FrameRect,HDC,a,LPRECT,b,HBRUSH,c)
-Fc(int,GetClassName,HWND,a,LPSTR,b,int,c)
+Fc(int,GetClassName,HWND,a,LPSTR,b,short,c)
 Fc(int,GetClipboardFormatName,WORD,a,LPSTR,b,int,c)
 Fc(int,GetEnvironment,LPSTR,a,LPSTR,b,WORD,c)
 Fc(int,GetInstanceData,HANDLE,a,NPSTR,b,int,c)
@@ -2066,7 +2342,7 @@ Fd(int,DialogBoxIndirect,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d)
 Fd(int,EnumFonts,HDC,a,LPSTR,b,FARPROC,c,LPSTR,d)
 Fd(int,EnumObjects,HDC,a,int,b,FARPROC,c,LPSTR,d)
 Fd(int,GetDlgItemText,HWND,a,WORD,b,LPSTR,c,WORD,d)
-Fd(int,GetTempFileName,BYTE,a,LPSTR,b,WORD,c,LPSTR,d)
+Fd(int,GetTempFileName,BYTE,a,LPCSTR,b,UINT,c,LPSTR,d)
 Fd(int,LoadString,HANDLE,a,WORD,b,LPSTR,c,int,d)
 Fd(int,MessageBox,HWND,a,LPSTR,b,LPSTR,c,WORD,d)
 Fd(int,SetScrollPos,HWND,a,int,b,int,c,BOOL,d)
@@ -2074,9 +2350,10 @@ Fd(int,SetVoiceNote,int,a,int,b,int,c,int,d)
 Fd(void,AdjustWindowRectEx,LPRECT,a,LONG,b,BOOL,c,DWORD,d)
 Fd(void,AnimatePalette,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
 Fd(void,CheckRadioButton,HWND,a,WORD,b,WORD,c,WORD,d)
-Fd(void,CreateCaret,HWND,a,HBITMAP,b,int,c,int,d)
+Fd(void,CreateCaret,HWND,a,HBITMAP,b,short,c,short,d)
 Fd(void,FillWindow,HWND,a,HWND,b,HDC,c,HBRUSH,d)
 Fd(void,GetScrollRange,HWND,a,int,b,LPINT,c,LPINT,d)
+Fd(void,MapWindowPoints,HWND,a,HWND,b,LPPOINT,c,WORD,d)
 Fd(void,PlayMetaFileRecord,HDC,a,LPHANDLETABLE,b,LPMETARECORD,c,WORD,d)
 Fd(void,SetDlgItemInt,HWND,a,WORD,b,WORD,c,BOOL,d)
 Fe(BOOL,Rectangle,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom)
@@ -2122,17 +2399,17 @@ Ff(HBITMAP,CreateDIBitmap,HDC,a,LPBITMAPINFOHEADER,b,DWORD,c,LPSTR,d,LPBITMAPINF
 Ff(HRGN,CreateRoundRectRgn,short,a,short,b,short,c,short,d,short,e,short,f)
 Ff(short,GetPrivateProfileString,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d,short,e,LPSTR,f)
 Ff(void,LineDDA,short,a,short,b,short,c,short,d,FARPROC,e,long,f)
-Ff(void,MoveWindow,HWND,a,short,b,short,c,short,d,short,e,BOOL,f)
+Ff(BOOL,MoveWindow,HWND,a,short,b,short,c,short,d,short,e,BOOL,f)
 Ff(BOOL,ScaleViewportExtEx,HDC,a,short,b,short,c,short,d,short,e,LPSIZE,f)
 Ff(BOOL,ScaleWindowExtEx,HDC,a,short,b,short,c,short,d,short,e,LPSIZE,f)
 Fg(BOOL,RoundRect,HDC,a,short,b,short,c,short,d,short,e,short,f,short,g)
 Fg(BOOL,ScrollDC,HDC,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g)
-Fg(BOOL,TrackPopupMenu,HMENU,a,WORD,b,int,c,int,d,int,e,HWND,f,LPRECT,g)
-Fg(HCURSOR,CreateCursor,HANDLE,a,int,b,int,c,int,d,int,e,LPSTR,f,LPSTR,g)
+Fg(BOOL,TrackPopupMenu,HMENU,a,WORD,b,short,c,short,d,short,e,HWND,f,LPRECT,g)
+Fg(HCURSOR,CreateCursor,HANDLE,a,short,b,short,c,short,d,short,e,LPSTR,f,LPSTR,g)
 Fg(HICON,CreateIcon,HANDLE,a,int,b,int,c,BYTE,d,BYTE,e,LPSTR,f,LPSTR,g)
 Fg(int,GetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
 Fg(int,SetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
-Fg(void,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
+Fg(BOOL,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
 Fh(BOOL,ExtTextOut,HDC,a,int,b,int,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
 Fh(HANDLE,DeferWindowPos,HANDLE,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,int,x,int,y,int,cx,int,cy,WORD,wFlags)
 Fh(LONG,TabbedTextOut,HDC,a,int,b,int,c,LPSTR,d,int,e,int,f,LPINT,g,int,h)

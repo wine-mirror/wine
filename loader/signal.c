@@ -3,7 +3,11 @@
 #include <stdlib.h>
 #include <time.h>
 
+#ifdef __NetBSD__
+#include <sys/syscall.h>
+#else
 #include <syscall.h>
+#endif
 #include <signal.h>
 #include <errno.h>
 #ifdef linux
@@ -85,11 +89,11 @@ static void win_fault(int signal, int code, struct sigcontext *scp){
 		if(!do_int21(scp)) goto oops;
 		break;
         case 0x11:  
-  		scp->sc_eax = 0x00000000;  /* get equipment list: we haven't */
-         	break;                                       /* got anything */
+  		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | DOS_GetEquipment();
+		break;
         case 0x12:               
-          	scp->sc_eax = 640L; /* get base mem size */                
-                break;
+          	scp->sc_eax = (scp->sc_eax & 0xffff0000L) | 640L; 
+          	break;				/* get base mem size */                
 	case 0x1A:
 		if(!do_int1A(scp)) goto oops;
 		break;

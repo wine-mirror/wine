@@ -8,7 +8,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "windows.h"
 #include "dialog.h"
-#include "prototypes.h"
 #include "win.h"
 
 
@@ -149,25 +148,19 @@ HWND CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     HWND hwnd = 0;
     HANDLE hres, hmem;
     LPCSTR data;
-    int size;
 
 #ifdef DEBUG_DIALOG
     printf( "CreateDialogParam: %d,'%s',%d,%p,%d\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
 #endif
-    
-#if 0
-    if (!(hres = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
+     
+      /* FIXME: MAKEINTRESOURCE should be replaced by RT_DIALOG */
+    if (!(hres = FindResource( hInst, dlgTemplate, MAKEINTRESOURCE(0x8005) )))
+	return 0;
     if (!(hmem = LoadResource( hInst, hres ))) return 0;
     if (!(data = LockResource( hmem ))) hwnd = 0;
     else hwnd = CreateDialogIndirectParam(hInst, data, owner, dlgProc, param);
     FreeResource( hmem );
-#else
-    hmem = RSC_LoadResource( hInst, dlgTemplate, NE_RSCTYPE_DIALOG, &size );
-    data = (LPCSTR) GlobalLock( hmem );
-    hwnd = CreateDialogIndirectParam( hInst, data, owner, dlgProc, param );
-    GlobalFree( hmem );
-#endif
     return hwnd;
 }
 
@@ -314,8 +307,8 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     if (dlgInfo->hUserFont) 
 	SendMessage( hwnd, WM_SETFONT, dlgInfo->hUserFont, 0);
     SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param );
-    if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
-	SetFocus( dlgInfo->hwndFocus );
+/*    if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
+	SetFocus( dlgInfo->hwndFocus ); */
 
     return hwnd;
 }

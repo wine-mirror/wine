@@ -229,7 +229,8 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
 	}
 
-	if (!TextOut(hdc, x, y, line, len)) return 0;
+	if (!(flags & DT_CALCRECT))
+	    if (!TextOut(hdc, x, y, line, len)) return 0;
 	if (prefix_offset != -1)
 	{
 	    MoveTo(hdc, x + prefix_x, y + size.cy);
@@ -247,7 +248,7 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	}
     }
     while (strPtr);
-
+    if (flags & DT_CALCRECT) rect->bottom = y;
     return 1;
 }
 
@@ -314,10 +315,10 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
     {
 	if (dc->w.backgroundMode == TRANSPARENT)
 	    XDrawString( XT_display, dc->u.x.drawable, dc->u.x.gc, 
-			 x, y, str, count );
+			 dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
 	else
 	    XDrawImageString( XT_display, dc->u.x.drawable, dc->u.x.gc,
-			      x, y, str, count );
+			      dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
     }
     else
     {
@@ -340,14 +341,15 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
 
 	    if (dc->w.backgroundMode == TRANSPARENT)
 		XDrawString( XT_display, dc->u.x.drawable, dc->u.x.gc,
-			     xchar, y, p, 1 );
+			     dc->w.DCOrgX + xchar, dc->w.DCOrgY + y, p, 1 );
 	    else
 	    {
 		XDrawImageString( XT_display, dc->u.x.drawable, dc->u.x.gc,
-				  xchar, y, p, 1 );
+				  dc->w.DCOrgX + xchar, dc->w.DCOrgY + y, p, 1 );
 		XSetForeground( XT_display, dc->u.x.gc, dc->w.backgroundPixel);
 		XFillRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-			        xchar + charStr->width, y - font->ascent,
+			        dc->w.DCOrgX + xchar + charStr->width,
+			        dc->w.DCOrgY + y - font->ascent,
 			        extraWidth, font->ascent + font->descent );
 		XSetForeground( XT_display, dc->u.x.gc, dc->w.textPixel );
 	    }
@@ -368,7 +370,8 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
 	XSetLineAttributes( XT_display, dc->u.x.gc, lineWidth,
 			    LineSolid, CapRound, JoinBevel ); 
 	XDrawLine( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		   x, y + linePos, x + info.width, y + linePos );
+		   dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
+		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y + linePos );
     }
     if (dc->u.x.font.metrics.tmStruckOut)
     {
@@ -380,7 +383,8 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
 	XSetLineAttributes( XT_display, dc->u.x.gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel ); 
 	XDrawLine( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		   x, y - lineAscent, x + info.width, y - lineAscent );
+		   dc->w.DCOrgX + x, dc->w.DCOrgY + y - lineAscent,
+		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y - lineAscent );
     }
     
     return TRUE;

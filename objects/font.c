@@ -331,6 +331,36 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
 }
 
 
+/***********************************************************************/
+
+#define CI_NONEXISTCHAR(cs) (((cs)->width == 0) && \
+			     (((cs)->rbearing|(cs)->lbearing| \
+			       (cs)->ascent|(cs)->descent) == 0))
+
+/* 
+ * CI_GET_CHAR_INFO - return the charinfo struct for the indicated 8bit
+ * character.  If the character is in the column and exists, then return the
+ * appropriate metrics (note that fonts with common per-character metrics will
+ * return min_bounds).  If none of these hold true, try again with the default
+ * char.
+ */
+#define CI_GET_CHAR_INFO(fs,col,def,cs) \
+{ \
+    cs = def; \
+    if (col >= fs->min_char_or_byte2 && col <= fs->max_char_or_byte2) { \
+	if (fs->per_char == NULL) { \
+	    cs = &fs->min_bounds; \
+	} else { \
+	    cs = &fs->per_char[(col - fs->min_char_or_byte2)]; \
+	    if (CI_NONEXISTCHAR(cs)) cs = def; \
+	} \
+    } \
+}
+
+#define CI_GET_DEFAULT_INFO(fs,cs) \
+  CI_GET_CHAR_INFO(fs, fs->default_char, NULL, cs)
+
+
 /***********************************************************************
  *           GetCharWidth    (GDI.350)
  */
@@ -338,8 +368,7 @@ BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
 {
     int i, j;
     XFontStruct *xfont;
-    XCharStruct *charPtr;
-    int default_width;
+    XCharStruct *cs, *def;
 
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
     if (!dc) return FALSE;
@@ -353,15 +382,12 @@ BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
 	return TRUE;
     }
 
-    charPtr = xfont->per_char;
-    default_width = (charPtr + xfont->default_char)->width;
+    CI_GET_DEFAULT_INFO(xfont, def);
 	
     for (i = wFirstChar, j = 0; i <= wLastChar; i++, j++)
     {
-	if (i < xfont->min_char_or_byte2 || i > xfont->max_char_or_byte2)
-	    *(lpBuffer + j) = default_width;
-	else
-	    *(lpBuffer + j) = charPtr->width;
+	CI_GET_CHAR_INFO(xfont, i, def, cs);
+	*(lpBuffer + j) = cs->width;
     }
     return TRUE;
 }

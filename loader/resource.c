@@ -14,7 +14,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "gdi.h"
 #include "wine.h"
 #include "icon.h"
-#include "cursor.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 
@@ -31,7 +30,6 @@ static int ResourceFd = -1;
 static HANDLE ResourceInst = 0;
 static struct w_files *ResourceFileInfo = NULL;
 static RESOURCE *Top = NULL;
-static HCURSOR hActiveCursor;
 extern HINSTANCE hSysRes;
 
 HANDLE RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret);
@@ -313,23 +311,26 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
 	   instance, icon_name);
 #endif
     
-    if (instance == (HANDLE)NULL)  instance = hSysRes;
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
+    if (instance == (HANDLE)NULL)  instance = hSysRes;
     rsc_mem = RSC_LoadResource(instance, icon_name, NE_RSCTYPE_GROUP_ICON, 
 			       &image_size);
     if (rsc_mem == (HANDLE)NULL) {
 	printf("LoadIcon / Icon %04X not Found !\n", icon_name);
+	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
     lp = (WORD *)GlobalLock(rsc_mem);
     if (lp == NULL) {
 	GlobalFree(rsc_mem);
+	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
     lpicodesc = (ICONDESCRIP *)(lp + 3);
     hIcon = GlobalAlloc(GMEM_MOVEABLE, sizeof(ICONALLOC) + 1024);
     if (hIcon == (HICON)NULL) {
 	GlobalFree(rsc_mem);
+	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
     printf("LoadIcon Alloc hIcon=%X\n", hIcon);
@@ -344,11 +345,13 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     	NE_RSCTYPE_ICON, &image_size);
     if (rsc_mem == (HANDLE)NULL) {
 	printf("LoadIcon / Icon %04X Bitmaps not Found !\n", icon_name);
+	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
     lp = (WORD *)GlobalLock(rsc_mem);
     if (lp == NULL) {
 	GlobalFree(rsc_mem);
+	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
  	}
     bmi = (BITMAPINFO *)lp;
@@ -378,7 +381,6 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
 	(BITMAPINFO *)bih, DIB_RGB_COLORS );
     GlobalUnlock(rsc_mem);
     GlobalFree(rsc_mem);
-    
     hMemDC = CreateCompatibleDC(hdc);
     hMemDC2 = CreateCompatibleDC(hdc);
     SelectObject(hMemDC, lpico->hBitmap);
@@ -386,8 +388,7 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     BitBlt(hMemDC, 0, 0, bih->biWidth, bih->biHeight, hMemDC2, 0, 0, SRCINVERT);
     DeleteDC(hMemDC);
     DeleteDC(hMemDC2);
-
-    ReleaseDC(0, hdc);
+    ReleaseDC(GetDesktopWindow(), hdc);
     return hIcon;
 }
 
@@ -403,165 +404,6 @@ BOOL DestroyIcon(HICON hIcon)
     if (lpico->hBitmap != (HBITMAP)NULL) DeleteObject(lpico->hBitmap);
     GlobalFree(hIcon);
     return TRUE;
-}
-
-
-/**********************************************************************
- *			LoadCursor [USER.173]
- */
-HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
-{
-    XColor	bkcolor;
-    XColor	fgcolor;
-    HCURSOR 	hCursor;
-    HANDLE 	rsc_mem;
-    WORD 	*lp;
-    CURSORDESCRIP *lpcurdesc;
-    CURSORALLOC	  *lpcur;
-    BITMAP 	BitMap;
-    HBITMAP 	hBitMap;
-    HDC 	hMemDC;
-    HDC 	hdc;
-    int i, j, image_size;
-#ifdef DEBUG_RESOURCE
-    printf("LoadCursor: instance = %04x, name = %08x\n",
-	   instance, cursor_name);
-#endif    
-    if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
-    if (instance == (HANDLE)NULL)  instance = hSysRes;
-    rsc_mem = RSC_LoadResource(instance, cursor_name, NE_RSCTYPE_GROUP_CURSOR, 
-			       &image_size);
-    if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadCursor / Cursor %08X not Found !\n", cursor_name);
-	return 0;
-	}
-    lp = (WORD *)GlobalLock(rsc_mem);
-    if (lp == NULL) {
-	GlobalFree(rsc_mem);
-	return 0;
-	}
-    lpcurdesc = (CURSORDESCRIP *)(lp + 3);
-#ifdef DEBUG_CURSOR
-    printf("LoadCursor / image_size=%d\n", image_size);
-    printf("LoadCursor / curReserved=%X\n", *lp);
-    printf("LoadCursor / curResourceType=%X\n", *(lp + 1));
-    printf("LoadCursor / curResourceCount=%X\n", *(lp + 2));
-    printf("LoadCursor / cursor Width=%d\n", (int)lpcurdesc->Width);
-    printf("LoadCursor / cursor Height=%d\n", (int)lpcurdesc->Height);
-    printf("LoadCursor / cursor curXHotspot=%d\n", (int)lpcurdesc->curXHotspot);
-    printf("LoadCursor / cursor curYHotspot=%d\n", (int)lpcurdesc->curYHotspot);
-    printf("LoadCursor / cursor curDIBSize=%lX\n", (DWORD)lpcurdesc->curDIBSize);
-    printf("LoadCursor / cursor curDIBOffset=%lX\n", (DWORD)lpcurdesc->curDIBOffset);
-#endif
-    hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(CURSORALLOC) + 1024L); 
-    if (hCursor == (HCURSOR)NULL) {
-	GlobalFree(rsc_mem);
-	return 0;
-	}
-    printf("LoadCursor Alloc hCursor=%X\n", hCursor);
-    lpcur = (CURSORALLOC *)GlobalLock(hCursor);
-    lpcur->descriptor = *lpcurdesc;
-    GlobalUnlock(rsc_mem);
-    GlobalFree(rsc_mem);
-    rsc_mem = RSC_LoadResource(instance, 
-    	MAKEINTRESOURCE(lpcurdesc->curDIBOffset), 
-    	NE_RSCTYPE_CURSOR, &image_size);
-    if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadCursor / Cursor %08X Bitmap not Found !\n", cursor_name);
-	return 0;
-	}
-    lp = (WORD *)GlobalLock(rsc_mem);
-    if (lp == NULL) {
-	GlobalFree(rsc_mem);
-	return 0;
- 	}
-    lp += 2;
-    for (j = 0; j < 16; j++)
-    	printf("%04X ", *(lp + j));
-    if (*lp == sizeof(BITMAPINFOHEADER))
-	lpcur->hBitmap = ConvertInfoBitmap(hdc, (BITMAPINFO *)lp);
-    else
-        lpcur->hBitmap = 0;
-    lp += sizeof(BITMAP);
-    for (i = 0; i < 81; i++) {
-	char temp = *((char *)lp + 162 + i);
-	*((char *)lp + 162 + i) = *((char *)lp + 324 - i);
-	*((char *)lp + 324 - i) = temp;
-	}
-printf("LoadCursor / before XCreatePixmapFromBitmapData !\n");
-    lpcur->pixshape = XCreatePixmapFromBitmapData(
-    	XT_display, DefaultRootWindow(XT_display), 
-        ((char *)lp + 211), 32, 32,
-/*
-        lpcurdesc->Width / 2, lpcurdesc->Height / 4, 
-*/
-        WhitePixel(XT_display, DefaultScreen(XT_display)), 
-        BlackPixel(XT_display, DefaultScreen(XT_display)), 1);
-    lpcur->pixmask = lpcur->pixshape;
-    bkcolor.pixel = WhitePixel(XT_display, DefaultScreen(XT_display)); 
-    fgcolor.pixel = BlackPixel(XT_display, DefaultScreen(XT_display));
-printf("LoadCursor / before XCreatePixmapCursor !\n");
-    lpcur->xcursor = XCreatePixmapCursor(XT_display,
- 	lpcur->pixshape, lpcur->pixmask, 
- 	&fgcolor, &bkcolor, lpcur->descriptor.curXHotspot, 
- 	lpcur->descriptor.curYHotspot);
-
-    ReleaseDC(0, hdc); 
-    GlobalUnlock(rsc_mem);
-    GlobalFree(rsc_mem);
-    return hCursor;
-}
-
-
-
-/**********************************************************************
- *			DestroyCursor [USER.458]
- */
-BOOL DestroyCursor(HCURSOR hCursor)
-{
-    CURSORALLOC	*lpcur;
-    if (hCursor == (HCURSOR)NULL) return FALSE;
-    lpcur = (CURSORALLOC *)GlobalLock(hCursor);
-    if (lpcur->hBitmap != (HBITMAP)NULL) DeleteObject(lpcur->hBitmap);
-    GlobalUnlock(hCursor);
-    GlobalFree(hCursor);
-    return TRUE;
-}
-
-
-/**********************************************************************
- *			SetCursor [USER.69]
- */
-HCURSOR SetCursor(HCURSOR hCursor)
-{
-    HDC		hDC;
-    HDC		hMemDC;
-    BITMAP	bm;
-    CURSORALLOC	*lpcur;
-    HCURSOR	hOldCursor;
-#ifdef DEBUG_CURSOR
-    printf("SetCursor / hCursor=%04X !\n", hCursor);
-#endif
-    if (hCursor == (HCURSOR)NULL) return FALSE;
-    lpcur = (CURSORALLOC *)GlobalLock(hCursor);
-    hOldCursor = hActiveCursor;
-    
-printf("SetCursor / before XDefineCursor !\n");
-    XDefineCursor(XT_display, DefaultRootWindow(XT_display), lpcur->xcursor);
-    GlobalUnlock(hCursor);
-    hActiveCursor = hCursor;
-    return hOldCursor;
-}
-
-
-/**********************************************************************
- *			ShowCursor [USER.71]
- */
-int ShowCursor(BOOL bShow)
-{
-    if (bShow) {
-    	}
-    return 0;
 }
 
 
@@ -586,6 +428,10 @@ HANDLE FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name)
     if (instance == 0)
 	return 0;
     
+#ifdef DEBUG_RESOURCE
+    printf("FindResource hInst=%04X typename=%08X resname=%08X\n", 
+		instance, type_name, resource_name);
+#endif
     if (OpenResourceFile(instance) < 0)
 	return 0;
     
@@ -643,6 +489,8 @@ HANDLE LoadResource(HANDLE instance, HANDLE hResInfo)
 
     h = r->rsc_mem = GlobalAlloc(GMEM_MOVEABLE, image_size);
     image = GlobalLock(h);
+
+    lseek(ResourceFd, ((int) r->nameinfo.offset << r->size_shift), SEEK_SET);
 
     if (image == NULL || read(ResourceFd, image, image_size) != image_size)
     {

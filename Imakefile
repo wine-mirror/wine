@@ -1,0 +1,66 @@
+#include "Wine.tmpl"
+
+/*
+ * This is the first try at using Imakefiles. There are probably many
+ * problems and things I haven't even considered. I do not have a Linux
+ * system to test them on, just NetBSD, so you may need to change things
+ * like the the SYSLIBS definition below...
+ *
+ * Peter Galbavy, 5th Dec 1993 peter@wonderland.org
+ */
+
+#define IHaveSubDirs
+#define	PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)'
+
+SUBDIRS = \
+	tools \
+	controls \
+	debugger \
+	etc \
+	if1632 \
+	include \
+	loader \
+	memory \
+	misc \
+	objects \
+	test \
+	windows
+
+WINEDIR = $(LIBDIR)/wine
+
+OBJS = \
+	if1632.o \
+	controls.o \
+	loader.o \
+	memory.o \
+	misc.o \
+	objects.o \
+	windows.o \
+	debugger.o \
+	readline.o
+
+#ifdef i386BsdArchitecture
+SYSLIBS = -ll -lm -li386 -lgnumalloc
+#else
+#ifdef LinuxArchitechture
+SYSLIBS = -lm
+#endif
+#endif
+
+AllTarget(wine)
+
+NamedTargetSubdirs($(OBJS),$(SUBDIRS),"making",PassCDebugFlags,all)
+MakefileSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+IncludesSubdirs($(SUBDIRS))
+CleanSubdirs($(SUBDIRS))
+
+NormalProgramTarget(wine,$(OBJS),XawClientDepLibs,XawClientLibs,$(SYSLIBS))
+
+depend::
+
+install::
+
+includes::
+
+clean::

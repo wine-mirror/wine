@@ -1,0 +1,53 @@
+#include "../Wine.tmpl"
+
+MODULE = windows
+
+SRCS = \
+	class.c \
+	dc.c \
+	dce.c \
+	event.c \
+	message.c \
+	win.c \
+	timer.c \
+	graphics.c \
+	clipping.c \
+	mapping.c \
+	painting.c \
+	keyboard.c \
+	utility.c \
+	syscolor.c \
+	defwnd.c \
+	defdlg.c \
+	dialog.c \
+	focus.c \
+	scroll.c
+
+OBJS = \
+	class.o \
+	dc.o \
+	dce.o \
+	event.o \
+	message.o \
+	win.o \
+	timer.o \
+	graphics.o \
+	clipping.o \
+	mapping.o \
+	painting.o \
+	keyboard.o \
+	utility.o \
+	syscolor.o \
+	defwnd.o \
+	defdlg.o \
+	dialog.o \
+	focus.o \
+	scroll.o
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

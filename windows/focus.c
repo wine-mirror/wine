@@ -32,7 +32,7 @@ HWND SetFocus(HWND hwnd)
     else
     {
 	wndPtr = WIN_FindWndPtr(hwnd);
-	XSetInputFocus(XT_display, XtWindow(wndPtr->winWidget),
+	XSetInputFocus(XT_display, wndPtr->window,
 		       RevertToParent, CurrentTime);
     }
 

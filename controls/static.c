@@ -109,6 +109,18 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    InvalidateRect(hWnd, NULL, TRUE);
 	    break;
 
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+	case WM_CHAR:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MOUSEMOVE:
+	    return(SendMessage(wndPtr->hwndParent, uMsg, wParam, lParam));
+
 	default:
 		lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
 		break;

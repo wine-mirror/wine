@@ -1,0 +1,62 @@
+#include "../Wine.tmpl"
+
+#define IHavSubDirs
+#define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)' 'CC=$(CC)'
+
+MODULE = debugger
+
+DEFINES = -DUSE_READLINE
+
+SUBDIRS = readline
+
+/* Quick and dirt hack, since i386 is defined as 1. sigh */
+#define temp i386
+#undef i386
+
+SRCS = \
+	dbg.tab.c \
+	hash.c \
+	lex.yy.c \
+	info.c \
+	i386-pinsn.c
+
+OBJS = \
+	dbg.tab.o \
+	hash.o \
+	lex.yy.o \
+	info.o \
+	i386-pinsn.o
+
+#define i386 temp
+#undef temp
+
+/*
+ * All the SUBDIR stuff
+ */
+MakeSubdirs($(SUBDIRS))
+MakefileSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+CleanSubdirs($(SUBDIRS))
+IncludesSubdirs($(SUBDIRS))
+
+/*
+ * The main act
+ */
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+
+depend:: dbg.tab.c dbg.tab.h lex.yy.c
+
+DependTarget()
+
+includes::
+
+install::
+
+clean::
+	$(RM) lex.yy.c dbg.tab* y.tab.c
+
+dbg.tab.c dbg.tab.h: dbg.y
+	$(YACC) -b dbg -d dbg.y
+
+lex.yy.c: debug.l
+	$(LEX) -I debug.l

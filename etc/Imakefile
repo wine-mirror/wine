@@ -1,0 +1,11 @@
+#include "../Wine.tmpl"
+
+MODULE = etc
+
+AllTarget()
+
+depend::
+
+CleanTarget()
+
+includes::

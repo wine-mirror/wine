@@ -28,6 +28,8 @@ length	415
 24  pascal UnlockSegment(s_word) KERNEL_UnlockSegment(1)
 25  pascal GlobalCompact(long) GlobalCompact(1)
 30  pascal WaitEvent(word) KERNEL_WaitEvent(1)
+34  pascal SetTaskQueue(word word) SetTaskQueue(1 2)
+35  pascal GetTaskQueue(word) GetTaskQueue(1)
 49  pascal GetModuleFileName(word ptr s_word) KERNEL_GetModuleFileName(1 2 3)
 50  pascal GetProcAddress(word ptr) GetProcAddress(1 2)
 51  pascal MakeProcInstance(ptr word) CALLBACK_MakeProcInstance(1 2)
@@ -43,6 +45,8 @@ length	415
 74  pascal OpenFile(ptr ptr word) KERNEL_OpenFile(1 2 3)
 81  pascal _lclose(word) KERNEL__lclose(1)
 82  pascal _lread(word ptr word) KERNEL__lread(1 2 3)
+83  pascal _lcreate(ptr word) KERNEL__lcreate(1 2)
+84  pascal _llseek(word long word) KERNEL__llseek(1 2 3)
 85  pascal _lopen(ptr word) KERNEL__lopen(1 2)
 86  pascal _lwrite(word ptr word) KERNEL__lwrite(1 2 3)
 88  pascal lstrcpy(ptr ptr) lstrcpy(1 2)
@@ -51,11 +55,14 @@ length	415
 91  register InitTask(word word word word word
 		      word word word word word) 
 	     KERNEL_InitTask()
+92  pascal GetTempDrive(byte) GetTempDrive(1)
 95  pascal LoadLibrary(ptr) LoadLibrary(1)
 96  pascal FreeLibrary(word) FreeLibrary(1)
+97  pascal GetTempFileName(byte ptr word ptr) GetTempDrive(1 2 3 4)
 102 register DOS3Call(word word word word word
 		      word word word word word) 
 	     KERNEL_DOS3Call()
+107 pascal SetErrorMode(word) SetErrorMode(1)
 111 pascal GlobalWire(word) GlobalLock(1)
 112 pascal GlobalUnWire(word) GlobalUnlock(1)
 115 pascal OutputDebugString(ptr) OutputDebugString(1)
@@ -68,6 +75,9 @@ length	415
 	   WritePrivateProfileString(1 2 3 4)
 131 pascal GetDOSEnvironment() GetDOSEnvironment()
 132 return GetWinFlags 0 0x413
+134 pascal GetWindowsDirectory(ptr word) GetWindowsDirectory(1 2)
+135 pascal GetSystemDirectory(ptr word) GetSystemDirectory(1 2)
+136 pascal GetDriveType(byte) GetWindowsDirectory(1)
 154 return GlobalNotify 4 0
 163 pascal GlobalLRUOldest(word) ReturnArg(1)
 164 pascal GlobalLRUNewest(word) ReturnArg(1)

@@ -28,10 +28,13 @@ extern void CallTo32();
 
 char * GetModuleName(struct w_files * wpnt, int index, char *buffer);
 extern unsigned char ran_out;
+extern char WindowsPath[256];
 unsigned short WIN_StackSize;
 unsigned short WIN_HeapSize;
 
 struct  w_files * wine_files = NULL;
+
+int WineForceFail = 0;
 
 char **Argv;
 int Argc;
@@ -40,10 +43,8 @@ struct ne_header_s *CurrentNEHeader;
 int CurrentNEFile;
 HINSTANCE hSysRes;
 
-static char *dllExtensions[] = { "dll", "exe", NULL };
-static char *exeExtensions[] = { "exe", NULL };
+static char *Extensions[] = { "dll", "exe", NULL };
 static char *WinePath = NULL;
-
 
 /**********************************************************************
  *					DebugPrintString
@@ -101,12 +102,13 @@ GetFileInfo(unsigned short instance)
  *					LoadImage
  * Load one NE format executable into memory
  */
-HINSTANCE LoadImage(char * filename,  char * modulename)
+HINSTANCE LoadImage(char *modulename)
 {
     unsigned int read_size;
     int i;
     struct w_files * wpnt, *wpnt1;
     unsigned int status;
+    char buffer[256];
 
     /* First allocate a spot to store the info we collect, and add it to
      * our linked list.
@@ -123,9 +125,23 @@ HINSTANCE LoadImage(char * filename,  char * modulename)
     wpnt->next = NULL;
 
     /*
+     * search file
+     */
+
+    if (FindFile(buffer, sizeof(buffer), modulename, Extensions, WindowsPath)
+    	==NULL)
+    {
+    	char temp[256];
+    	
+    	sprintf(temp,"LoadImage: I can't find %s !\n",modulename);
+    	myerror(temp);
+    }
+	fprintf(stderr,"LoadImage: loading %s (%s)\n", modulename, buffer);
+
+    /*
      * Open file for reading.
      */
-    wpnt->fd = open(filename, O_RDONLY);
+    wpnt->fd = open(buffer, O_RDONLY);
     if (wpnt->fd < 0)
     {
 	myerror(NULL);
@@ -133,7 +149,7 @@ HINSTANCE LoadImage(char * filename,  char * modulename)
     /*
      * Establish header pointers.
      */
-    wpnt->filename = strdup(filename);
+    wpnt->filename = strdup(buffer);
     wpnt->name = NULL;
     if(modulename)  wpnt->name = strdup(modulename);
 
@@ -181,7 +197,7 @@ HINSTANCE LoadImage(char * filename,  char * modulename)
     wpnt->selector_table = CreateSelectors(wpnt);
     wpnt->hinstance 
 	= wpnt->
-	    selector_table[wine_files->ne_header->auto_data_seg-1].selector;
+	    selector_table[wpnt->ne_header->auto_data_seg-1].selector;
 
     /* Get the lookup  table.  This is used for looking up the addresses
        of functions that are exported */
@@ -227,16 +243,10 @@ HINSTANCE LoadImage(char * filename,  char * modulename)
       
       if(FindDLLTable(buff)) continue;  /* This module already loaded */
 
-      if (FindFileInPath(buff2, sizeof(buff2), 
-			 buff, dllExtensions, WinePath) != NULL &&
-	  (fd = open(buff2, O_RDONLY)) >= 0)
-      {
-	  close(fd);
-	  LoadImage(buff2, buff);
-	  continue;
-      }
-
+      LoadImage(buff);
+/*
       fprintf(stderr,"Unable to load:%s\n",  buff);
+*/
     }
 return(wpnt->hinstance);
 }
@@ -249,6 +259,8 @@ _WinMain(int argc, char **argv)
 {
 	int segment;
 	char *p;
+	char *sysresname;
+	char syspath[256];
 	char exe_path[256];
 #ifdef WINESTAT
 	char * cp;
@@ -273,19 +285,20 @@ _WinMain(int argc, char **argv)
 	strcat(WinePath, ";");
 	strcat(WinePath, p);
 
-	if (FindFileInPath(exe_path, 256, argv[1], exeExtensions, WinePath)
-	    == NULL)
-	{
-	    fprintf(stderr, "Could not find file '%s'\n", argv[1]);
-	    exit(1);
-	}
-	
-	LoadImage(exe_path, NULL);
-    	hSysRes = LoadImage("sysres.dll", NULL);
+	LoadImage(argv[1]);
+	hSysRes = LoadImage("sysres.dll");
+	if (hSysRes == (HINSTANCE)NULL)
+ 	    printf("Error Loading System Resources !!!\n");
+ 	else
+ 	    printf("System Resources Loaded // hSysRes='%04X'\n", hSysRes);
 	
 	if(ran_out) exit(1);
 #ifdef DEBUG
-	GetEntryDLLName("USER", "INITAPP", 0, 0);
+	{
+	    int dummy1, dummy2;
+
+	    GetEntryDLLName("USER", "INITAPP", &dummy1, &dummy2);
+	}
 	for(i=0; i<1024; i++) {
 		int j;
 		j = GetEntryPointFromOrdinal(wine_files, i);
@@ -326,6 +339,21 @@ _WinMain(int argc, char **argv)
 #endif
 
     init_wine_signals();
+
+    if (WineForceFail)
+    {
+	p = (char *) ((cs_reg << 16) | ip_reg);
+	
+	*p++ = 0xcd;
+	*p++ = 0x20;
+    }
+
+    if (ss_reg == 0)
+    {
+	fprintf(stderr, "SS is 0.  Send email to bob@amscons.com.\n");
+	fprintf(stderr, "    No. Really.  I want to know what programs\n");
+	fprintf(stderr, "    do this.\n");
+    }
 
     rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
     printf ("rv = %x\n", rv);
@@ -392,12 +420,11 @@ GetModuleName(struct w_files * wpnt, int index, char *buffer)
 int
 FixupSegment(struct w_files * wpnt, int segment_num)
 {
-  int fd =  wpnt->fd;
-  struct mz_header_s * mz_header = wpnt->mz_header;
-  struct ne_header_s *ne_header =  wpnt->ne_header;
-  struct ne_segment_table_entry_s *seg_table = wpnt->seg_table;
-  struct segment_descriptor_s *selector_table = wpnt->selector_table;
-
+    int fd =  wpnt->fd;
+    struct mz_header_s * mz_header = wpnt->mz_header;
+    struct ne_header_s *ne_header =  wpnt->ne_header;
+    struct ne_segment_table_entry_s *seg_table = wpnt->seg_table;
+    struct segment_descriptor_s *selector_table = wpnt->selector_table;
     struct relocation_entry_s *rep, *rep1;
     struct ne_segment_table_entry_s *seg;
     struct segment_descriptor_s *sel;
@@ -410,9 +437,13 @@ FixupSegment(struct w_files * wpnt, int segment_num)
     char dll_name[257];
     char func_name[257];
     int i, n_entries;
+    int additive;
 
     seg = &seg_table[segment_num];
     sel = &selector_table[segment_num];
+
+    fprintf(stderr, "Segment fixups for %s, segment %d, selector %x\n", 
+	    wpnt->name, segment_num, (int) sel->base_addr >> 16);
 
     if ((seg->seg_data_offset == 0) ||
 	!(seg->seg_flags & NE_SEGFLAGS_RELOC_DATA))
@@ -445,8 +476,13 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	/*
 	 * Get the target address corresponding to this entry.
 	 */
+	additive = 0;
+	
 	switch (rep->relocation_type)
 	{
+	  case NE_RELTYPE_ORDINALADD:
+	    additive = 1;
+	    
 	  case NE_RELTYPE_ORDINAL:
 	    if (GetModuleName(wpnt, rep->target1,
 			      dll_name) == NULL)
@@ -473,6 +509,9 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		   selector, address);
 #endif
 	    break;
+	    
+	  case NE_RELTYPE_NAMEADD:
+	    additive = 1;
 	    
 	  case NE_RELTYPE_NAME:
 	    if (GetModuleName(wpnt, rep->target1, dll_name)
@@ -543,30 +582,50 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    continue;
 	    
 	  default:
-#ifndef DEBUG_FIXUP
 	    fprintf(stderr,"%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    fprintf(stderr,"TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
-#endif
+	    fprintf(stderr,"TARGET %04.4x %04.4x\n", 
+		    rep->target1, rep->target2);
 	    free(rep1);
-
 	    return -1;
+#if 0
+	    sp = (unsigned short *) ((char *) sel->base_addr + rep->offset);
+	    fprintf(stderr, "  FIXUP ADDRESS %04.4x:%04.4x\n",
+		    (int) sel->base_addr >> 16, rep->offset);
+	    WineForceFail = 1;
+	    continue;
+#endif
 	}
 
 	/*
 	 * Stuff the right size result in.
 	 */
 	sp = (unsigned short *) ((char *) sel->base_addr + rep->offset);
+	if (additive)
+	{
+	    if (FindDLLTable(dll_name) == NULL)
+		additive = 2;
+
+	    fprintf(stderr,"%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+		   i + 1, rep->address_type, rep->relocation_type, 
+		   rep->offset);
+	    fprintf(stderr,"TARGET %04.4x %04.4x\n", 
+		    rep->target1, rep->target2);
+	    fprintf(stderr, "    Additive = %d\n", additive);
+	}
+	
 	switch (rep->address_type)
 	{
 	  case NE_RADDR_OFFSET16:
 	    do {
 		next_addr = *sp;
 		*sp = (unsigned short) address;
+		if (additive == 2)
+		    *sp += next_addr;
 		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
 	    } 
-	    while (next_addr != 0xffff);
+	    while (next_addr != 0xffff && !additive);
 
 	    break;
 	    
@@ -574,10 +633,12 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    do {
 		next_addr = *sp;
 		*sp     = (unsigned short) address;
+		if (additive == 2)
+		    *sp += next_addr;
 		*(sp+1) = (unsigned short) selector;
 		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
 	    } 
-	    while (next_addr != 0xffff);
+	    while (next_addr != 0xffff && !additive);
 
 	    break;
 	    
@@ -589,17 +650,15 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		if (rep->relocation_type == NE_RELTYPE_INT1) break;
 
 	    } 
-	    while (next_addr != 0xffff);
+	    while (next_addr != 0xffff && !additive);
 
 	    break;
 	    
 	  default:
-#ifndef DEBUG_FIXUP
 	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
 	    printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
-#endif
 	    free(rep1);
 	    return -1;
 	}

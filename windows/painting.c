@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xlib.h>
 
 #include "win.h"
+#include "message.h"
 
   /* Last CTLCOLOR id */
 #define CTLCOLOR_MAX   CTLCOLOR_STATIC
@@ -23,27 +24,21 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
 
-    lps->hdc = GetDC( hwnd );
-    if (!lps->hdc) return 0;
-    
-    SelectVisRgn( lps->hdc, wndPtr->hrgnUpdate );
+    if (!(lps->hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
+			      DCX_INTERSECTRGN | DCX_USESTYLE ))) return 0;
+    GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
+
     if (wndPtr->hrgnUpdate)
     {
-	GetRgnBox( wndPtr->hrgnUpdate, &lps->rcPaint );
 	DeleteObject( wndPtr->hrgnUpdate );
 	wndPtr->hrgnUpdate = 0;
+	MSG_DecPaintCount( wndPtr->hmemTaskQ );
     }
-    else
-    {
-	lps->rcPaint.left   = 0;
-	lps->rcPaint.top    = 0;
-	lps->rcPaint.right  = wndPtr->rectClient.right-wndPtr->rectClient.left;
-	lps->rcPaint.bottom = wndPtr->rectClient.bottom-wndPtr->rectClient.top;
-    }    
-
+    wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+    
     if (!(wndPtr->flags & WIN_ERASE_UPDATERGN)) lps->fErase = TRUE;
     else lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
-
+    
     return lps->hdc;
 }
 
@@ -63,12 +58,7 @@ void EndPaint( HWND hwnd, LPPAINTSTRUCT lps )
 void FillWindow( HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush )
 {
     RECT rect;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
-    rect.left   = 0;
-    rect.top    = 0;
-    rect.right  = wndPtr->rectClient.right - wndPtr->rectClient.left;
-    rect.bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+    GetClientRect( hwnd, &rect );
     PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
 }
 

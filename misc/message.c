@@ -21,6 +21,8 @@ typedef struct tagMSGBOX {
     HWND	hWndNo;
     HWND	hWndCancel;
     HICON	hIcon;
+    RECT	rectIcon;
+    RECT	rectStr;
 } MSGBOX;
 typedef MSGBOX FAR* LPMSGBOX;
 
@@ -46,7 +48,7 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
     wndClass.cbWndExtra      = 0;
     wndClass.hInstance       = wndPtr->hInstance;
     wndClass.hIcon           = (HICON)NULL;
-    wndClass.hCursor         = LoadCursor((HANDLE)NULL, IDC_ARROW);
+    wndClass.hCursor         = LoadCursor((HANDLE)NULL, IDC_ARROW); 
     wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
     wndClass.lpszMenuName    = NULL;
     wndClass.lpszClassName   = "MESSAGEBOX";
@@ -57,7 +59,7 @@ int MessageBox( HWND hWnd, LPSTR str, LPSTR title, WORD type )
     mb.wType = type;
     mb.ActiveFlg = TRUE;
     hDlg = CreateWindow("MESSAGEBOX", title, 
-    	WS_POPUP | WS_DLGFRAME | WS_VISIBLE, 100, 150, 320, 120,
+    	WS_POPUP | WS_DLGFRAME | WS_VISIBLE, 100, 150, 400, 120,
     	(HWND)NULL, (HMENU)NULL, wndPtr->hInstance, (LPSTR)&mb);
     if (hDlg == 0) return 0;
     while(TRUE) {
@@ -113,46 +115,62 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    *((LPMSGBOX *)&wndPtr->wExtra[1]) = lpmbInit;
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
 	    GetClientRect(hWnd, &rect);
+	    CopyRect(&lpmb->rectStr, &rect);
+	    lpmb->rectStr.bottom -= 32;
 	    switch(lpmb->wType & MB_TYPEMASK) {
 		case MB_OK :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 70, rect.bottom - 25, 
+			rect.right / 2 - 30, rect.bottom - 25, 
 			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
 		    break;
 		case MB_OKCANCEL :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 70, rect.bottom - 25, 
+			rect.right / 2 - 65, rect.bottom - 25, 
 			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
 		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 10, rect.bottom - 25, 
+			rect.right / 2 + 5, rect.bottom - 25, 
 			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
 		    break;
 		case MB_ABORTRETRYIGNORE :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Retry", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 70, rect.bottom - 25, 
+			rect.right / 2 - 100, rect.bottom - 25, 
 			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
 		    lpmb->hWndNo = CreateWindow("BUTTON", "&Ignore", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 10, rect.bottom - 25, 
+			rect.right / 2 - 30, rect.bottom - 25, 
 			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
 		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Abort", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 80, rect.bottom - 25, 
+			rect.right / 2 + 40, rect.bottom - 25, 
 			60, 18, hWnd, 3, wndPtr->hInstance, 0L);
 		    break;
 		case MB_YESNO :
 		    lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 70, rect.bottom - 25, 
+			rect.right / 2 - 65, rect.bottom - 25, 
 			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
 		    lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
 			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 10, rect.bottom - 25, 
+			rect.right / 2 + 5, rect.bottom - 25, 
 			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
+		    break;
+		case MB_YESNOCANCEL :
+		    lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
+			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+			rect.right / 2 - 100, rect.bottom - 25, 
+			60, 18, hWnd, 1, wndPtr->hInstance, 0L);
+		    lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
+			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+			rect.right / 2 - 30, rect.bottom - 25, 
+			60, 18, hWnd, 2, wndPtr->hInstance, 0L);
+		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
+			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+			rect.right / 2 + 40, rect.bottom - 25, 
+			60, 18, hWnd, 3, wndPtr->hInstance, 0L);
 		    break;
 		}
 	    switch(lpmb->wType & MB_ICONMASK) {
@@ -173,16 +191,25 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		    lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_HAND);
 		    break;
 	    	}
+	    if (lpmb->hIcon != (HICON)NULL) {
+		SetRect(&lpmb->rectIcon, 16,
+		    lpmb->rectStr.bottom / 2 - 16, 48,
+		    lpmb->rectStr.bottom / 2 + 16);
+		lpmb->rectStr.left += 64;
+		}
 	    break;
 	case WM_PAINT:
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
-	    GetClientRect(hWnd, &rect);
+	    CopyRect(&rect, &lpmb->rectStr);
 	    hDC = BeginPaint(hWnd, &ps);
-	    if (lpmb->hIcon) DrawIcon(hDC, 30, 20, lpmb->hIcon);
-	    TextOut(hDC, rect.right / 2, 15, 
-	    	lpmb->Title, strlen(lpmb->Title));
-	    TextOut(hDC, rect.right / 2, 30, 
-	    	lpmb->Str, strlen(lpmb->Str));
+	    if (lpmb->hIcon) 
+		DrawIcon(hDC, lpmb->rectIcon.left,
+		    lpmb->rectIcon.top, lpmb->hIcon);
+	    DrawText(hDC, lpmb->Str, -1, &rect, 
+		DT_CALCRECT | DT_CENTER | DT_WORDBREAK);
+	    rect.top = lpmb->rectStr.bottom / 2 - rect.bottom / 2;
+	    rect.bottom = lpmb->rectStr.bottom / 2 + rect.bottom / 2;
+	    DrawText(hDC, lpmb->Str, -1, &rect, DT_CENTER | DT_WORDBREAK);
 	    EndPaint(hWnd, &ps);
 	    break;
 	case WM_DESTROY:
@@ -216,7 +243,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 			DeleteDC(hMemDC);
 			}
 */
-		    hBitMap = LoadBitmap((HINSTANCE)NULL, "SMILE");
+		    hBitMap = LoadBitmap((HINSTANCE)NULL, "WINELOGO");
 		    GetObject(hBitMap, sizeof(BITMAP), (LPSTR)&bm);
 		    printf("bm.bmWidth=%d bm.bmHeight=%d\n",
 		    	bm.bmWidth, bm.bmHeight);  
@@ -234,12 +261,15 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		    break;
 		case 3:
 		    hDC = GetDC(hWnd);
-		    hInst2 = LoadImage("ev3lite.exe", NULL);
+		    hInst2 = LoadImage("ev3lite.exe");
+		    printf("hInst2=%04X\n", hInst2);
 		    hIcon = LoadIcon(hInst2, "EV3LITE");
 		    DrawIcon(hDC, 20, 20, hIcon);
 		    DestroyIcon(hIcon);
-		    hInst2 = LoadImage("sysres.dll", NULL);
-		    hIcon = LoadIcon(hInst2, "WINEICON");
+		    hInst2 = LoadImage("moricons.dll");
+		    printf("hInst2=%04X\n", hInst2);
+		    hIcon = LoadIcon(hInst2, MAKEINTRESOURCE(1));
+/*		    hIcon = LoadIcon(hInst2, "WINEICON"); */
 		    DrawIcon(hDC, 60, 20, hIcon);
 		    DestroyIcon(hIcon);
 		    hIcon = LoadIcon((HINSTANCE)NULL, IDI_EXCLAMATION);

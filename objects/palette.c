@@ -177,3 +177,21 @@ int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
     memcpy( buffer, &palette->logpalette.palNumEntries, count );
     return count;
 }
+
+
+/***********************************************************************
+ *           SelectPalette    (USER.282)
+ */
+HPALETTE SelectPalette(HDC hDC, HPALETTE hPal, BOOL bForceBackground)
+{
+    return (HPALETTE)NULL;
+}
+
+/***********************************************************************
+ *           RealizePalette    (USER.283)
+ */
+int RealizePalette(HDC hDC)
+{
+    return 0;
+}
+

@@ -17,7 +17,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "scroll.h"
 #include "heap.h"
 #include "win.h"
-#include "dirent.h"
+#include <sys/types.h>
+#include <dirent.h>
 #include <sys/stat.h>
 
 LPHEADSCROLL ScrollBarGetWindowAndStorage(HWND hwnd, WND **wndPtr);
@@ -26,50 +27,10 @@ void StdDrawScrollBar(HWND hwnd);
 int CreateScrollBarStruct(HWND hwnd);
 
 
-void SCROLLBAR_CreateScrollBar(LPSTR className, LPSTR scrollLabel, HWND hwnd)
-{
-    WND *wndPtr    = WIN_FindWndPtr(hwnd);
-    WND *parentPtr = WIN_FindWndPtr(wndPtr->hwndParent);
-    DWORD style;
-    char widgetName[15];
-
-#ifdef DEBUG_SCROLLBAR
-    printf("scroll: label = %s, x = %d, y = %d\n", scrollLabel,
-	   wndPtr->rectClient.left, wndPtr->rectClient.top);
-    printf("        width = %d, height = %d\n",
-	   wndPtr->rectClient.right - wndPtr->rectClient.left,
-	   wndPtr->rectClient.bottom - wndPtr->rectClient.top);
-#endif
-
-    if (!wndPtr)
-	return;
-
-    style = wndPtr->dwStyle & 0x0000FFFF;
-/*
-    if ((style & SBS_NOTIFY) == SBS_NOTIFY)
-*/    
-    sprintf(widgetName, "%s%d", className, wndPtr->wIDmenu);
-    wndPtr->winWidget = XtVaCreateManagedWidget(widgetName,
-				    compositeWidgetClass,
-				    parentPtr->winWidget,
-				    XtNx, wndPtr->rectClient.left,
-				    XtNy, wndPtr->rectClient.top,
-				    XtNwidth, wndPtr->rectClient.right -
-				        wndPtr->rectClient.left,
-				    XtNheight, wndPtr->rectClient.bottom -
-				        wndPtr->rectClient.top,
-				    NULL );
-    GlobalUnlock(hwnd);
-    GlobalUnlock(wndPtr->hwndParent);
-}
-
-
-
 /***********************************************************************
  *           WIDGETS_ScrollBarWndProc
  */
-LONG SCROLLBAR_ScrollBarWndProc( HWND hwnd, WORD message,
-			   WORD wParam, LONG lParam )
+LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {    
     WORD	wRet;
     short	x, y;
@@ -169,8 +130,11 @@ LONG SCROLLBAR_ScrollBarWndProc( HWND hwnd, WORD message,
 	break;
 
     case WM_KEYDOWN:
-        printf("ScrollBar WM_KEYDOWN wParam %X !\n", wParam);
-	break;
+    case WM_KEYUP:
+    case WM_CHAR:
+	lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
+	return(SendMessage(wndPtr->hwndParent, message, wParam, lParam));
+
     case WM_PAINT:
 	StdDrawScrollBar(hwnd);
 	break;
@@ -330,36 +294,36 @@ int CreateScrollBarStruct(HWND hwnd)
         	wndPtr->hInstance, 0L);
 	}
     if (lphs->MaxPix < 1)  lphs->MaxPix = 1;
+    if (wndPtr->hCursor == (HCURSOR)NULL)
+	wndPtr->hCursor = LoadCursor((HINSTANCE)NULL, IDC_ARROW);
     return TRUE;
 }
 
 
-
-int GetScrollPos(HWND hwnd, int nBar)
+/*************************************************************************
+ *			GetScrollWindowHandle
+ */
+HWND GetScrollWindowHandle(HWND hWnd, int nBar)
 {
-    LPHEADSCROLL lphs;
-    lphs = ScrollBarGetStorageHeader(hwnd);
-    if (lphs == NULL) return 0;
-    return lphs->CurVal;
+    WND *wndPtr;
+    if (nBar != SB_CTL) {
+    wndPtr = WIN_FindWndPtr(hWnd);
+    	if (nBar == SB_VERT) return wndPtr->hWndVScroll;
+    	if (nBar == SB_HORZ) return wndPtr->hWndHScroll;
+    	return (HWND)NULL;
+	}
+    return hWnd;
 }
 
 
-
-void GetScrollRange(HWND hwnd, int nBar, LPINT lpMin, LPINT lpMax)
-{
-    LPHEADSCROLL lphs;
-    lphs = ScrollBarGetStorageHeader(hwnd);
-    if (lphs == NULL) return;
-    *lpMin = lphs->MinVal;
-    *lpMax = lphs->MaxVal;
-}
-
-
-
+/*************************************************************************
+ *			SetScrollPos [USER.62]
+ */
 int SetScrollPos(HWND hwnd, int nBar, int nPos, BOOL bRedraw)
 {
     int nRet;
     LPHEADSCROLL lphs;
+    hwnd = GetScrollWindowHandle(hwnd, nBar);
     lphs = ScrollBarGetStorageHeader(hwnd);
     if (lphs == NULL) return 0;
     nRet = lphs->CurVal;
@@ -383,9 +347,27 @@ int SetScrollPos(HWND hwnd, int nBar, int nPos, BOOL bRedraw)
 
 
 
+/*************************************************************************
+ *			GetScrollPos [USER.63]
+ */
+int GetScrollPos(HWND hwnd, int nBar)
+{
+    LPHEADSCROLL lphs;
+    hwnd = GetScrollWindowHandle(hwnd, nBar);
+    lphs = ScrollBarGetStorageHeader(hwnd);
+    if (lphs == NULL) return 0;
+    return lphs->CurVal;
+}
+
+
+
+/*************************************************************************
+ *			SetScrollRange [USER.64]
+ */
 void SetScrollRange(HWND hwnd, int nBar, int MinPos, int MaxPos, BOOL bRedraw)
 {
     LPHEADSCROLL lphs;
+    hwnd = GetScrollWindowHandle(hwnd, nBar);
     lphs = ScrollBarGetStorageHeader(hwnd);
     if (lphs == NULL) return;
     lphs->MinVal = (short)MinPos;
@@ -406,5 +388,50 @@ void SetScrollRange(HWND hwnd, int nBar, int MinPos, int MaxPos, BOOL bRedraw)
 
 
 
+/*************************************************************************
+ *			GetScrollRange [USER.65]
+ */
+void GetScrollRange(HWND hwnd, int nBar, LPINT lpMin, LPINT lpMax)
+{
+    LPHEADSCROLL lphs;
+    hwnd = GetScrollWindowHandle(hwnd, nBar);
+    lphs = ScrollBarGetStorageHeader(hwnd);
+    if (lphs == NULL) return;
+    *lpMin = lphs->MinVal;
+    *lpMax = lphs->MaxVal;
+}
+
+
+
+/*************************************************************************
+ *			ShowScrollBar [USER.267]
+ */
+void ShowScrollBar(HWND hWnd, WORD wBar, BOOL bFlag)
+{
+    WND  *wndPtr;
+#ifdef DEBUG_SCROLL
+    printf("ShowScrollBar hWnd=%04X wBar=%d bFlag=%d\n", hWnd, wBar, bFlag);
+#endif
+    if (wBar == SB_CTL) {
+    	if (bFlag)
+	    ShowWindow(hWnd, SW_SHOW);
+	else
+	    ShowWindow(hWnd, SW_HIDE);
+	return;
+	}
+    wndPtr = WIN_FindWndPtr(hWnd);
+    if ((wBar == SB_VERT) || (wBar == SB_BOTH)) {
+    	if (bFlag)
+	    ShowWindow(wndPtr->hWndVScroll, SW_SHOW);
+	else
+	    ShowWindow(wndPtr->hWndVScroll, SW_HIDE);
+	}
+    if ((wBar == SB_HORZ) || (wBar == SB_BOTH)) {
+    	if (bFlag)
+	    ShowWindow(wndPtr->hWndHScroll, SW_SHOW);
+	else
+	    ShowWindow(wndPtr->hWndHScroll, SW_HIDE);
+	}
+}
 
 

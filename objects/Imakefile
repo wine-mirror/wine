@@ -1,0 +1,43 @@
+#include "../Wine.tmpl"
+
+MODULE = objects
+
+SRCS = \
+	bitmap.c \
+	brush.c \
+	font.c \
+	gdiobj.c \
+	palette.c \
+	pen.c \
+	dib.c \
+	region.c \
+	text.c \
+	dcvalues.c \
+	clipping.c \
+	bitblt.c \
+	linedda.c \
+	color.c
+
+OBJS = \
+	bitmap.o \
+	brush.o \
+	font.o \
+	gdiobj.o \
+	palette.o \
+	pen.o \
+	dib.o \
+	region.o \
+	text.o \
+	dcvalues.o \
+	clipping.o \
+	bitblt.o \
+	linedda.o \
+	color.o
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

@@ -1,0 +1,45 @@
+#include "../Wine.tmpl"
+
+MODULE = misc
+
+SRCS = \
+	kernel.c \
+	user.c \
+	rect.c \
+	file.c \
+	sound.c \
+	emulate.c \
+	keyboard.c \
+	profile.c \
+	lstr.c \
+	exec.c \
+	message.c \
+	int1a.c \
+	int21.c \
+	dos_fs.c \
+	xt.c
+
+OBJS = \
+	kernel.o \
+	user.o \
+	rect.o \
+	file.o \
+	sound.o \
+	emulate.o \
+	keyboard.o \
+	profile.o \
+	lstr.o \
+	exec.o \
+	message.o \
+	int1a.o \
+	int21.o \
+	dos_fs.o \
+	xt.o
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

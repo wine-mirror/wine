@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "windows.h"
 #include "win.h"
+#include "message.h"
 
 
 /***********************************************************************
@@ -34,6 +35,7 @@ void InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 	else CombineRgn( newRgn, wndPtr->hrgnUpdate, hrgn, RGN_OR );
     }
     if (wndPtr->hrgnUpdate) DeleteObject( wndPtr->hrgnUpdate );
+    else MSG_IncPaintCount( wndPtr->hmemTaskQ );
     wndPtr->hrgnUpdate = newRgn;
     if (erase) wndPtr->flags |= WIN_ERASE_UPDATERGN;
 }
@@ -112,17 +114,14 @@ BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 
     if (rect)
     {
-        if (wndPtr->hrgnUpdate) GetRgnBox( wndPtr->hrgnUpdate, rect );
-	else SetRectEmpty( rect );
-	if (erase && wndPtr->hrgnUpdate)
+	if (wndPtr->hrgnUpdate)
 	{
-	    HDC hdc = GetDC( hwnd );
-	    if (hdc)
-	    {
-		SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 );
-		ReleaseDC( hwnd, hdc );
-	    }
+	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+	    if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR) return FALSE;
+	    GetRgnBox( hrgn, rect );
+	    DeleteObject( hrgn );
 	}
+	else SetRectEmpty( rect );
     }
     return (wndPtr->hrgnUpdate != 0);
 }
@@ -133,17 +132,34 @@ BOOL GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
  */
 int GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
+    HRGN hrgnClip;
+    int retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return ERROR;
 
-    if (erase && wndPtr->hrgnUpdate)
+    if (!wndPtr->hrgnUpdate)
     {
-	HDC hdc = GetDC( hwnd );
-	if (hdc)
-	{
-	    SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 );
-	    ReleaseDC( hwnd, hdc );
-	}
+	if (!(hrgnClip = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
+	retval = CombineRgn( hrgn, hrgnClip, 0, RGN_COPY );
     }
-    return CombineRgn( hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY );
+    else
+    {
+	hrgnClip = CreateRectRgn( 0, 0,
+			   wndPtr->rectClient.right-wndPtr->rectClient.left,
+			   wndPtr->rectClient.bottom-wndPtr->rectClient.top );
+	if (!hrgnClip) return ERROR;
+	retval = CombineRgn( hrgn, wndPtr->hrgnUpdate, hrgnClip, RGN_AND );
+	if (erase)
+	{
+	    HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
+			      DCX_INTERSECTRGN | DCX_USESTYLE );
+	    if (hdc)
+	    {
+		SendMessage( hwnd, WM_ERASEBKGND, hdc, 0 );
+		ReleaseDC( hwnd, hdc );
+	    }
+	}	
+    }
+    DeleteObject( hrgnClip );
+    return retval;
 }

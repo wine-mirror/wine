@@ -75,7 +75,7 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	else if (count)
 	    count = 0;
     }
-
+    
     /*
      * If we couldn't find enough segments, then we need to create some.
      */
@@ -87,18 +87,22 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	g_prev = NULL;
 	for (g = GlobalList; g != NULL; g = g->next)
 	    g_prev = g;
-
+	    
 	/*
 	 * Allocate segments.
 	 */
 	for (count = 0; count < n_segments; count++)
 	{
 	    s = GetNextSegment(flags, 0x10000);
-	    if (s == NULL)
+	    if (s == NULL) {
+		printf("GlobalGetFreeSegments // bad GetNextSegment !\n");
 		return NULL;
-
+		}
 	    g = (GDESC *) malloc(sizeof(*g));
-	    
+	    if (g == NULL) {
+		printf("GlobalGetFreeSegments // bad GDESC malloc !\n");
+		return NULL;
+		}
 	    g->prev = g_prev;
 	    g->next = NULL;
 	    g->handle = s->selector;
@@ -110,18 +114,15 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	    else
 		g->lock_count = 0;
 	    
-	    free(s);
-
-	    if (count == 0)
-		g_start = g;
+	    if (count == 0) g_start = g;
 
 	    if (g_prev != NULL)
 	    {
 		g_prev->next = g;
-		g->prev = g_prev;
 	    }
 	    else
 		GlobalList = g;
+	    g_prev = g;
 	}
     }
 
@@ -131,6 +132,10 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
     g = g_start;
     for (i = 0; i < n_segments; i++, g = g->next)
     {
+	if (g == NULL) {
+	    printf("GlobalGetFreeSegments // bad Segments chain !\n");
+	    return NULL;
+	    }
 	g->sequence = i + 1;
 	g->length = n_segments;
     }

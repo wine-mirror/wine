@@ -1,0 +1,35 @@
+#include "../Wine.tmpl"
+
+MODULE = loader
+
+SRCS = \
+	dump.c \
+	files.c \
+	ldt.c \
+	ldtlib.c \
+	resource.c \
+	selector.c \
+	signal.c \
+	library.c \
+	wine.c \
+	cursor.c
+
+OBJS = \
+	dump.o \
+	files.o \
+	ldt.o \
+	ldtlib.o \
+	resource.o \
+	selector.o \
+	signal.o \
+	library.o \
+	wine.o \
+	cursor.o
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

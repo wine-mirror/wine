@@ -46,6 +46,7 @@ BOOL BITMAP_Init()
 	if (tmpPixmap)
 	{
 	    bitmapGC[i] = XCreateGC( XT_display, tmpPixmap, 0, NULL );
+	    XSetGraphicsExposures( XT_display, bitmapGC[i], False );
 	    XFreePixmap( XT_display, tmpPixmap );
 	}
 	else bitmapGC[i] = 0;
@@ -355,6 +356,8 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
 				        DefaultRootWindow( XT_display ), 
 				        bmp->bmWidth, bmp->bmHeight,
 				        bmp->bmBitsPixel );
+    dc->w.DCSizeX      = bmp->bmWidth;
+    dc->w.DCSizeY      = bmp->bmHeight;
     BITMAP_CopyToPixmap( bmp, dc->u.x.drawable,
 			 0, 0, bmp->bmWidth, bmp->bmHeight );
 

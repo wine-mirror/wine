@@ -14,16 +14,17 @@ typedef LISTSTRUCT FAR* LPLISTSTRUCT;
 
 typedef struct tagHEADLIST {
     short	FirstVisible;
-    short	ItemSelect;
     short	ItemsCount;
     short	ItemsVisible;
-    short	ItemSelected;
-    short	PrevSelected;
+    short	ColumnsVisible;
+    short	ItemsPerColumn;
+    short	ItemFocused;
+    short	PrevFocused;
     short 	StdItemHeight;
+    short	ColumnsWidth;
     short	DrawCtlType;
     void	*lpFirst; 
     DWORD	dwStyle;
-    HWND	hWndScroll;
     HWND	hWndLogicParent;
 } HEADLIST;
 typedef HEADLIST FAR* LPHEADLIST;

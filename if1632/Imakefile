@@ -1,0 +1,37 @@
+#include "../Wine.tmpl"
+
+MODULE = if1632
+
+SRCS = \
+	call.S \
+	callback.c \
+	relay.c
+
+OBJS = \
+	call.o \
+	callback.o \
+	relay.o
+
+/*
+ * If you add a new spec file, copy one of these lines
+ */
+MakeDllFromSpec(gdi,$(TOP)/$(MODULE))
+MakeDllFromSpec(kernel,$(TOP)/$(MODULE))
+MakeDllFromSpec(keyboard,$(TOP)/$(MODULE))
+MakeDllFromSpec(shell,$(TOP)/$(MODULE))
+MakeDllFromSpec(sound,$(TOP)/$(MODULE))
+MakeDllFromSpec(unixlib,$(TOP)/$(MODULE))
+MakeDllFromSpec(user,$(TOP)/$(MODULE))
+MakeDllFromSpec(win87em,$(TOP)/$(MODULE))
+
+/*
+ * Yes I know *.o is not veru clever, but can you do it cleaner ?
+ */
+WineRelocatableTarget($(TOP)/$(MODULE),*.o,$(OBJS))
+
+clean::
+	$(RM) dll*
+
+depend::
+
+includes::

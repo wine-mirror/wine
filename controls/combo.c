@@ -17,60 +17,24 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "combo.h"
 #include "heap.h"
 #include "win.h"
-#include "dirent.h"
+#include <sys/types.h>
+#include <dirent.h>
 #include <sys/stat.h>
 
 LPHEADCOMBO ComboGetStorageHeader(HWND hwnd);
 int CreateComboStruct(HWND hwnd);
 
 
-void COMBOBOX_CreateComboBox(LPSTR className, LPSTR comboLabel, HWND hwnd)
-{
-    WND *wndPtr    = WIN_FindWndPtr(hwnd);
-    WND *parentPtr = WIN_FindWndPtr(wndPtr->hwndParent);
-    DWORD style;
-    char widgetName[15];
-
-#ifdef DEBUG_COMBO
-    printf("combo: label = %s, x = %d, y = %d\n", comboLabel,
-	   wndPtr->rectClient.left, wndPtr->rectClient.top);
-    printf("        width = %d, height = %d\n",
-	   wndPtr->rectClient.right - wndPtr->rectClient.left,
-	   wndPtr->rectClient.bottom - wndPtr->rectClient.top);
-#endif
-
-    if (!wndPtr)
-	return;
-
-    style = wndPtr->dwStyle & 0x0000FFFF;
-/*
-    if ((style & LBS_NOTIFY) == LBS_NOTIFY)
-*/    
-    sprintf(widgetName, "%s%d", className, wndPtr->wIDmenu);
-    wndPtr->winWidget = XtVaCreateManagedWidget(widgetName,
-				    compositeWidgetClass,
-				    parentPtr->winWidget,
-				    XtNx, wndPtr->rectClient.left,
-				    XtNy, wndPtr->rectClient.top,
-				    XtNwidth, wndPtr->rectClient.right -
-				        wndPtr->rectClient.left,
-				    XtNheight, 16,
-				    NULL );
-    GlobalUnlock(hwnd);
-    GlobalUnlock(wndPtr->hwndParent);
-}
-
-
 /***********************************************************************
- *           WIDGETS_ComboWndProc
+ *           ComboWndProc
  */
-LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
-			   WORD wParam, LONG lParam )
+LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {    
     WORD	wRet;
     RECT	rect;
-    int		y;
+    int		y, count;
     int		width, height;
+    int		AltState;
     WND  	*wndPtr;
     LPHEADCOMBO lphc;
     char	str[128];
@@ -106,17 +70,20 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
     case WM_DESTROY:
 	lphc = ComboGetStorageHeader(hwnd);
 	if (lphc == 0) return 0;
+/*
 	DestroyWindow(lphc->hWndDrop);
 	DestroyWindow(lphc->hWndEdit);
-/*
-	DestroyWindow(lphc->hWndLBox);
 */
+	DestroyWindow(lphc->hWndLBox);
 	free(lphc);
-	*((LPHEADCOMBO *)&wndPtr->wExtra[1]) = 0;
+/*
+	*((LPHEADCOMBO *)&wndPtr->wExtra[1]) = 0; 
+        printf("Combo WM_DESTROY after clearing wExtra !\n");
+*/
 #ifdef DEBUG_COMBO
         printf("Combo WM_DESTROY %lX !\n", lphc);
 #endif
-	return 0;
+	return DefWindowProc( hwnd, message, wParam, lParam );
 	
     case WM_COMMAND:
 	wndPtr = WIN_FindWndPtr(hwnd);
@@ -169,9 +136,56 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
 	break;
     case WM_LBUTTONDOWN:
         printf("Combo WM_LBUTTONDOWN wParam=%x lParam=%lX !\n", wParam, lParam);
+	wndPtr = WIN_FindWndPtr(hwnd);
+	lphc = ComboGetStorageHeader(hwnd);
+	lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
+	if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN)
+	    ShowWindow(lphc->hWndLBox, SW_SHOW);
 	break;
     case WM_KEYDOWN:
-        printf("Combo WM_KEYDOWN wParam %X!\n", wParam);
+	wndPtr = WIN_FindWndPtr(hwnd);
+	lphc = ComboGetStorageHeader(hwnd);
+	y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
+	count = SendMessage(lphc->hWndLBox, LB_GETCOUNT, 0, 0L);
+	printf("COMBOBOX // GetKeyState(VK_MENU)=%d\n", GetKeyState(VK_MENU));
+	if (GetKeyState(VK_MENU) < 0) {
+	    lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
+	    if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN) {
+		ShowWindow(lphc->hWndLBox, SW_SHOW);
+		}
+	    else {
+		ShowWindow(lphc->hWndLBox, SW_HIDE);
+		y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
+		if (y != LB_ERR) {
+		    SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
+		    SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+		    }
+		}
+	    }
+	else
+	    {
+	    switch(wParam) {
+		case VK_HOME:
+		    y = 0;
+			break;
+		case VK_END:
+		    y = count - 1;
+		    break;
+		case VK_UP:
+		    y--;
+		    break;
+		case VK_DOWN:
+		    y++;
+		    break;
+		}
+	    if (y < 0) y = 0;
+	    if (y >= count) y = count - 1;
+	    SendMessage(lphc->hWndLBox, LB_SETCURSEL, y, 0L);
+	    SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
+	    SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+	    SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
+				    MAKELONG(hwnd, CBN_SELCHANGE));
+	    }
 	break;
     case WM_CTLCOLOR:
     	return(SendMessage(GetParent(hwnd), WM_CTLCOLOR, wParam, lParam));

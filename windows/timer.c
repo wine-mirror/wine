@@ -6,21 +6,19 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
-#include <X11/Intrinsic.h>
-
 #include "windows.h"
+#include "message.h"
 
-extern XtAppContext XT_app_context;
 
-
-typedef struct
+typedef struct tagTIMER
 {
-    HWND          hwnd;
-    WORD          msg;  /* WM_TIMER or WM_SYSTIMER */
-    WORD          id;
-    WORD          timeout;
-    FARPROC       proc;
-    XtIntervalId  xtid;
+    HWND             hwnd;
+    WORD             msg;  /* WM_TIMER or WM_SYSTIMER */
+    WORD             id;
+    WORD             timeout;
+    struct tagTIMER *next;
+    DWORD            expires;
+    FARPROC          proc;
 } TIMER;
 
 #define NB_TIMERS            34
@@ -28,39 +26,100 @@ typedef struct
 
 static TIMER TimersArray[NB_TIMERS];
 
+static TIMER * pNextTimer = NULL;  /* Next timer to expire */
+
 
 /***********************************************************************
- *           TIMER_callback
+ *           TIMER_InsertTimer
+ *
+ * Insert the timer at its place in the chain.
  */
-static void TIMER_callback( XtPointer data, XtIntervalId * xtid )
+static void TIMER_InsertTimer( TIMER * pTimer )
 {
-    TIMER * pTimer = (TIMER *) data;
-    
-    pTimer->xtid = 0;  /* In case the timer procedure calls KillTimer */
-    
-    if (pTimer->proc)
+    if (!pNextTimer || (pTimer->expires < pNextTimer->expires))
     {
-	CallWindowProc(pTimer->proc, pTimer->hwnd, pTimer->msg, 
-		       pTimer->id, GetTickCount());
+	pTimer->next = pNextTimer;
+	pNextTimer = pTimer;
     }
-    else 
-	PostMessage( pTimer->hwnd, pTimer->msg, pTimer->id, 0 );
+    else
+    {
+        TIMER * ptr = pNextTimer;	
+	while (ptr->next && (pTimer->expires >= ptr->next->expires))
+	    ptr = ptr->next;
+	pTimer->next = ptr;
+	ptr->next = pTimer;
+    }
+}
+
+
+/***********************************************************************
+ *           TIMER_RemoveTimer
+ *
+ * Remove the timer from the chain.
+ */
+static void TIMER_RemoveTimer( TIMER * pTimer )
+{
+    if (pTimer == pNextTimer) pNextTimer = pTimer->next;
+    else
+    {
+	TIMER * ptr = pNextTimer;
+	while (ptr && (ptr->next != pTimer)) ptr = ptr->next;
+	if (ptr) ptr->next = pTimer->next;
+    }
+    pTimer->next = NULL;
+}
+
+
+/***********************************************************************
+ *           TIMER_NextExpire
+ *
+ * Return time until next timer expiration (-1 if none).
+ */
+static DWORD TIMER_NextExpire( DWORD curTime )
+{
+    if (!pNextTimer) return -1;
+    if (pNextTimer->expires <= curTime) return 0;
+    return pNextTimer->expires - curTime;
+}
+
+
+/***********************************************************************
+ *           TIMER_CheckTimer
+ *
+ * Check whether a timer has expired, and post a message if necessary.
+ * Return TRUE if msg posted, and return time until next expiration in 'next'.
+ */
+BOOL TIMER_CheckTimer( DWORD *next )
+{
+    TIMER * pTimer = pNextTimer;
+    DWORD curTime = GetTickCount();
+    
+    if ((*next = TIMER_NextExpire( curTime )) != 0) return FALSE;
+
+    PostMessage( pTimer->hwnd, pTimer->msg, pTimer->id, (LONG)pTimer->proc );
+    TIMER_RemoveTimer( pTimer );
 
       /* If timeout == 0, the timer has been removed by KillTimer */
     if (pTimer->timeout)
-	pTimer->xtid = XtAppAddTimeOut( XT_app_context, pTimer->timeout,
-				        TIMER_callback, pTimer );
+    {
+	  /* Restart the timer */
+	pTimer->expires = curTime + pTimer->timeout;
+	TIMER_InsertTimer( pTimer );
+    }
+    *next = TIMER_NextExpire( curTime );
+    return TRUE;
 }
 
 
 /***********************************************************************
  *           TIMER_SetTimer
  */
-WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc, BOOL sys )
+static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
+			    FARPROC proc, BOOL sys )
 {
     int i;
     TIMER * pTimer;
-    
+
     if (!timeout) return 0;
     if (!hwnd && !proc) return 0;
     
@@ -79,9 +138,10 @@ WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc, BOOL sys )
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;
+    pTimer->expires = GetTickCount() + timeout;
     pTimer->proc    = proc;
-    pTimer->xtid    = XtAppAddTimeOut( XT_app_context, timeout,
-				       TIMER_callback, pTimer );
+    TIMER_InsertTimer( pTimer );
+    MSG_IncTimerCount( GetTaskQueue(0) );
     return id;
 }
 
@@ -89,7 +149,7 @@ WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc, BOOL sys )
 /***********************************************************************
  *           TIMER_KillTimer
  */
-BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
+static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
 {
     int i;
     TIMER * pTimer;
@@ -106,13 +166,13 @@ BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
 
       /* Delete the timer */
 
-    if (pTimer->xtid) XtRemoveTimeOut( pTimer->xtid );
     pTimer->hwnd    = 0;
     pTimer->msg     = 0;
     pTimer->id      = 0;
     pTimer->timeout = 0;
     pTimer->proc    = 0;
-    pTimer->xtid    = 0;
+    TIMER_RemoveTimer( pTimer );
+    MSG_DecTimerCount( GetTaskQueue(0) );
     return TRUE;
 }
 
@@ -123,7 +183,7 @@ BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
 WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
 #ifdef DEBUG_TIMER    
-    printf( "SetTimer: %d %d %d %08x\n", hwnd, id, timeout, proc );
+    printf( "SetTimer: %d %d %d %p\n", hwnd, id, timeout, proc );
 #endif
     return TIMER_SetTimer( hwnd, id, timeout, proc, FALSE );
 }
@@ -135,7 +195,7 @@ WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 WORD SetSystemTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
 #ifdef DEBUG_TIMER    
-    printf( "SetSystemTimer: %d %d %d %08x\n", hwnd, id, timeout, proc );
+    printf( "SetSystemTimer: %d %d %d %p\n", hwnd, id, timeout, proc );
 #endif
     return TIMER_SetTimer( hwnd, id, timeout, proc, TRUE );
 }

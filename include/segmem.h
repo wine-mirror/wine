@@ -6,6 +6,12 @@
 #ifndef SEGMEM_H
 #define SEGMEM_H
 
+#ifdef __linux__
+#define HAVE_IPC
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#endif
+
 /*
  * Array to track selector allocation.
  */
@@ -15,21 +21,32 @@
 
 extern unsigned short SelectorMap[MAX_SELECTORS];
 
+#ifdef HAVE_IPC
+#define SAFEMAKEPTR(s, o) (((int) (s) << 16) | ((o) & 0xffff))
+#define FIXPTR(p)	  (p)
+#else
 #define SAFEMAKEPTR(s, o) \
     (((int) SelectorMap[SelectorMap[(s) >> 3] & SELECTOR_INDEXMASK] << 19) \
      | 0x70000 | ((o) & 0xffff))
+#define FIXPTR(p)	  SAFEMAKEPTR((unsigned long) (p) >> 16, (p))
+#endif
 
 /*
  * Structure to hold info about each selector we create.
  */
 
-struct segment_descriptor_s
+typedef struct segment_descriptor_s
 {
     void          *base_addr;	/* Pointer to segment in flat memory	*/
     unsigned int   length;	/* Length of segment			*/
     unsigned int   flags;	/* Segment flags (see neexe.h and below)*/
     unsigned short selector;	/* Selector used to access this segment */
-};
+    unsigned short owner;	/* Handle of owner program		*/
+    unsigned char  type;	/* DATA or CODE				*/
+#ifdef HAVE_IPC
+    key_t	   shm_key;	/* Shared memory key or IPC_PRIVATE     */
+#endif
+} SEGDESC;
 
 /*
  * Additional flags

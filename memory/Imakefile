@@ -1,0 +1,21 @@
+#include "../Wine.tmpl"
+
+MODULE = memory
+
+SRCS = \
+	global.c \
+	heap.c \
+	atom.c
+
+OBJS = \
+	global.o \
+	heap.o \
+	atom.o
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

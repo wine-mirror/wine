@@ -23,8 +23,10 @@ BOOL LineTo( HDC hdc, short x, short y )
     if (!dc) return FALSE;
     if (DC_SetupGCForPen( dc ))
 	XDrawLine(XT_display, dc->u.x.drawable, dc->u.x.gc, 
-		  XLPTODP( dc, dc->w.CursPosX ), YLPTODP( dc, dc->w.CursPosY ),
-		  XLPTODP( dc, x ), YLPTODP( dc, y ) );
+		  dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX ),
+		  dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY ),
+		  dc->w.DCOrgX + XLPTODP( dc, x ),
+		  dc->w.DCOrgY + YLPTODP( dc, y ) );
     dc->w.CursPosX = x;
     dc->w.CursPosY = y;
     return TRUE;
@@ -97,20 +99,21 @@ BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
     if (diff_angle < 0.0) diff_angle += 2*PI;
 
     XDrawArc( XT_display, dc->u.x.drawable, dc->u.x.gc,
-	      left, top, right-left-1, bottom-top-1,
+	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+	      right-left-1, bottom-top-1,
 	      (int)(start_angle * 180 * 64 / PI),
 	      (int)(diff_angle * 180 * 64 / PI) );
     if (!lines) return TRUE;
 
-    points[0].x = xcenter + (int)(cos(start_angle) * (right-left) / 2);
-    points[0].y = ycenter - (int)(sin(start_angle) * (bottom-top) / 2);
-    points[1].x = xcenter + (int)(cos(end_angle) * (right-left) / 2);
-    points[1].y = ycenter - (int)(sin(end_angle) * (bottom-top) / 2);
+    points[0].x = dc->w.DCOrgX + xcenter + (int)(cos(start_angle) * (right-left) / 2);
+    points[0].y = dc->w.DCOrgY + ycenter - (int)(sin(start_angle) * (bottom-top) / 2);
+    points[1].x = dc->w.DCOrgX + xcenter + (int)(cos(end_angle) * (right-left) / 2);
+    points[1].y = dc->w.DCOrgY + ycenter - (int)(sin(end_angle) * (bottom-top) / 2);
     if (lines == 2)
     {
 	points[2] = points[1];
-	points[1].x = xcenter;
-	points[1].y = ycenter;
+	points[1].x = dc->w.DCOrgX + xcenter;
+	points[1].y = dc->w.DCOrgY + ycenter;
     }
     XDrawLines( XT_display, dc->u.x.drawable, dc->u.x.gc,
 	        points, lines+1, CoordModeOrigin );
@@ -167,10 +170,12 @@ BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
     
     if (DC_SetupGCForBrush( dc ))
 	XFillArc( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		  left, top, right-left-1, bottom-top-1, 0, 360*64 );
+		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+		  right-left-1, bottom-top-1, 0, 360*64 );
     if (DC_SetupGCForPen( dc ))
 	XDrawArc( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		  left, top, right-left-1, bottom-top-1, 0, 360*64 );
+		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+		  right-left-1, bottom-top-1, 0, 360*64 );
     return TRUE;
 }
 
@@ -190,10 +195,12 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
     
     if (DC_SetupGCForBrush( dc ))
 	XFillRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		        left, top, right-left-1, bottom-top-1 );
+		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+		        right-left-1, bottom-top-1 );
     if (DC_SetupGCForPen( dc ))
 	XDrawRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		        left, top, right-left-1, bottom-top-1 );
+		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+		        right-left-1, bottom-top-1 );
     return TRUE;
 }
 
@@ -244,10 +251,16 @@ int FrameRect( HDC hdc, LPRECT rect, HBRUSH hbrush )
     right  = XLPTODP( dc, rect->right );
     bottom = YLPTODP( dc, rect->bottom );
     
-    if (DC_SetupGCForBrush( dc ))
-	XDrawRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		        left, top, right-left-1, bottom-top-1 );
-	    
+    if (DC_SetupGCForBrush( dc )) {
+   	PatBlt( hdc, rect->left, rect->top, 1,
+	    rect->bottom - rect->top, PATCOPY );
+	PatBlt( hdc, rect->right - 1, rect->top, 1,
+	    rect->bottom - rect->top, PATCOPY );
+	PatBlt( hdc, rect->left, rect->top,
+	    rect->right - rect->left, 1, PATCOPY );
+	PatBlt( hdc, rect->left, rect->bottom - 1,
+	    rect->right - rect->left, 1, PATCOPY );
+	}    
     SelectObject( hdc, prevBrush );
     return 1;
 }
@@ -264,8 +277,8 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
 
-    x = XLPTODP( dc, x );
-    y = YLPTODP( dc, y );
+    x = dc->w.DCOrgX + XLPTODP( dc, x );
+    y = dc->w.DCOrgY + YLPTODP( dc, y );
     pixel = GetNearestPaletteIndex( dc->w.hPalette, color );
     GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
     
@@ -288,15 +301,14 @@ COLORREF GetPixel( HDC hdc, short x, short y )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
 
-    x = XLPTODP( dc, x );
-    y = YLPTODP( dc, y );
+    x = dc->w.DCOrgX + XLPTODP( dc, x );
+    y = dc->w.DCOrgY + YLPTODP( dc, y );
     if ((x < 0) || (y < 0)) return 0;
     
-    if (dc->u.x.widget)
+    if (!(dc->w.flags & DC_MEMORY))
     {
 	XWindowAttributes win_attr;
 	
-	if (!XtIsRealized(dc->u.x.widget)) return 0;
 	if (!XGetWindowAttributes( XT_display, dc->u.x.drawable, &win_attr ))
 	    return 0;
 	if (win_attr.map_state != IsViewable) return 0;
@@ -342,7 +354,7 @@ BOOL PaintRgn( HDC hdc, HRGN hrgn )
     GetClipBox( hdc, &box );
     if (DC_SetupGCForBrush( dc ))
 	XFillRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		        box.left, box.top,
+		        dc->w.DCOrgX + box.left, dc->w.DCOrgY + box.top,
 		        box.right-box.left, box.bottom-box.top );
 
       /* Restore the visible region */
@@ -385,15 +397,16 @@ void DrawFocusRect( HDC hdc, LPRECT rc )
     
     hPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_WINDOWTEXT)); 
     hOldPen = (HPEN)SelectObject(hdc, (HANDLE)hPen);
-/*    oldDrawMode = SetROP2(hdc, R2_XORPEN);  */
+    oldDrawMode = SetROP2(hdc, R2_XORPEN);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
 
     if (DC_SetupGCForPen( dc ))
 	XDrawRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		        left, top, right-left-1, bottom-top-1 );
+		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+		        right-left-1, bottom-top-1 );
 
     SetBkMode(hdc, oldBkMode);
-/*    SetROP2(hdc, oldDrawMode);  */
+    SetROP2(hdc, oldDrawMode);
     SelectObject(hdc, (HANDLE)hOldPen);
     DeleteObject((HANDLE)hPen);
 }
@@ -441,3 +454,64 @@ while(ThickNess > 0) {
 SelectObject(hDC, hOldPen);
 DeleteObject(hDKGRAYPen);
 }
+
+/**********************************************************************
+ *          Polyline  (GDI.37)
+ */
+BOOL Polyline (HDC hdc, LPPOINT pt, int count)
+{
+	register int i;
+    	DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+
+    	if (DC_SetupGCForPen( dc ))
+    	{
+		for (i = 0; i < count-1; i ++)
+			XDrawLine (XT_display, dc->u.x.drawable, dc->u.x.gc,  
+				   dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
+				   dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
+				   dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
+				   dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
+		XDrawLine (XT_display, dc->u.x.drawable, dc->u.x.gc,  
+			   dc->w.DCOrgX + XLPTODP(dc, pt [count-1].x),
+			   dc->w.DCOrgY + YLPTODP(dc, pt [count-1].y),
+			   dc->w.DCOrgX + XLPTODP(dc, pt [0].x),
+			   dc->w.DCOrgY + YLPTODP(dc, pt [0].y));
+	} 
+	
+	return (TRUE);
+}
+
+
+/**********************************************************************
+ *          Polygon  (GDI.36)
+ */
+BOOL Polygon (HDC hdc, LPPOINT pt, int count)
+{
+	register int i;
+    	DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+	XPoint *points = (XPoint *) malloc (sizeof (XPoint) * count+1);
+
+    	if (DC_SetupGCForBrush( dc ))
+    	{
+    		
+		for (i = 0; i < count; i++)
+		{
+			points [i].x = dc->w.DCOrgX + XLPTODP(dc, pt [i].x);
+			points [i].y = dc->w.DCOrgY + YLPTODP(dc, pt [i].y);
+		}
+		points [count] = points [0];
+		
+		XFillPolygon( XT_display, dc->u.x.drawable, dc->u.x.gc,
+		  	points, count, Complex, CoordModeOrigin);
+		
+		if (DC_SetupGCForPen ( dc ))
+		{
+		    XDrawLines( XT_display, dc->u.x.drawable, dc->u.x.gc,
+			        points, count, CoordModeOrigin );
+		}
+	}
+    	free ((void *) points);
+	return (TRUE);
+}
+ 
+

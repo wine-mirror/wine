@@ -1,0 +1,37 @@
+#include "../Wine.tmpl"
+
+MODULE = controls
+
+SRCS = \
+	menu.c \
+	widgets.c \
+	button.c \
+	scroll.c \
+	listbox.c \
+	combo.c \
+	static.c \
+	SmeMenuButto.c \
+	WinLabel.c \
+	WinCommand.c \
+	WinMenuButto.c
+
+OBJS = \
+	menu.o \
+	widgets.o \
+	button.o \
+	scroll.o \
+	listbox.o \
+	combo.o \
+	static.o \
+	SmeMenuButto.o \
+	WinLabel.o \
+	WinCommand.o \
+	WinMenuButto.o
+
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
+
+includes::
+
+install::

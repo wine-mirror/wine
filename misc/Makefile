@@ -1,7 +1,8 @@
-CFLAGS=$(COPTS) $(DEBUGOPTS) -I$(INCLUDE_DIR)
+CFLAGS=$(COPTS) $(DEBUGOPTS) -I../include
 
-OBJS=dos.o kernel.o user.o xt.o rect.o file.o sound.o emulate.o \
-     keyboard.o profile.o lstr.o exec.o message.o
+OBJS=kernel.o user.o xt.o rect.o file.o sound.o emulate.o \
+     keyboard.o profile.o lstr.o exec.o message.o int1a.o int21.o \
+     dos_fs.o comm.o
 
 default: misc.o
 

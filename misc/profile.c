@@ -3,6 +3,12 @@
  *
  * Copyright (c) 1993 Miguel de Icaza
  *
+ * 1/Dec o Corrected return values for Get*ProfileString
+ *
+ *       o Now, if AppName == NULL in Get*ProfileString it returns a list
+ *            of the KeyNames (as documented in the MS-SDK).
+ *
+ *       o if KeyValue == NULL now clears the value in Get*ProfileString
  */
 
 static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
@@ -12,7 +18,8 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include "windows.h"
 #include "wine.h"
 
-#define INIFILE	GetSystemIniFilename()
+/* #define DEBUG */
+
 #define STRSIZE 255
 #define xmalloc(x) malloc(x)
 #define overflow (next == &CharBuffer [STRSIZE-1])
@@ -63,9 +70,15 @@ static TSecHeader *load (char *file)
     char *next;
     char c;
     
+#ifdef DEBUG
+    printf("Load %s\n", file);
+#endif		
     if ((f = fopen (file, "r"))==NULL)
 	return NULL;
 
+#ifdef DEBUG
+    printf("Loading %s\n", file);
+#endif		
     state = FirstBrace;
     while ((c = getc (f)) != EOF){
 	if (c == '\r')		/* Ignore Carriage Return */
@@ -79,6 +92,9 @@ static TSecHeader *load (char *file)
 		next = CharBuffer;
 		SecHeader->AppName = strdup (CharBuffer);
 		state = IgnoreToEOL;
+#ifdef DEBUG
+		printf("%s: section %s\n", file, CharBuffer);
+#endif		
 	    } else
 		*next++ = c;
 	    break;
@@ -122,6 +138,9 @@ static TSecHeader *load (char *file)
 		SecHeader->Keys->KeyName = strdup (CharBuffer);
 		state = KeyValue;
 		next = CharBuffer;
+#ifdef DEBUG
+		printf("%s:   key %s\n", file, CharBuffer);
+#endif		
 	    } else
 		*next++ = c;
 	    break;
@@ -175,22 +194,36 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	section = New->Section;
 	Current = New;
     }
-    
     /* Start search */
     for (; section; section = section->link){
 	if (strcasecmp (section->AppName, AppName))
 	    continue;
+
+	/* If no key value given, then list all the keys */
+	if ((!AppName) && (!set)){
+	    char *p = ReturnedString;
+	    int left = Size - 1;
+	    int slen;
+	    
+	    for (key = section->Keys; key; key = key->link){
+		strncpy (p, key->KeyName, left);
+		slen = strlen (key->KeyName) + 1;
+		left -= slen+1;
+		p += slen;
+	    }
+	    return left;
+	}
 	for (key = section->Keys; key; key = key->link){
 	    if (strcasecmp (key->KeyName, KeyName))
 		continue;
 	    if (set){
 		free (key->Value);
-		key->Value = strdup (Default);
+		key->Value = strdup (Default ? Default : "");
 		return 1;
 	    }
 	    ReturnedString [Size-1] = 0;
 	    strncpy (ReturnedString, key->Value, Size-1);
-	    return 1;
+	    return 1; 
 	}
 	/* If Getting the information, then don't write the information
 	   to the INI file, need to run a couple of tests with windog */
@@ -222,14 +255,20 @@ short GetPrivateProfileString (LPSTR AppName, LPSTR KeyName,
 			       LPSTR Default, LPSTR ReturnedString,
 			       short Size, LPSTR FileName)
 {
-    return (GetSetProfile (0, AppName, KeyName, Default, ReturnedString, Size, FileName));
+    int v;
+    
+    v = GetSetProfile (0,AppName,KeyName,Default,ReturnedString,Size,FileName);
+    if (AppName)
+	return strlen (ReturnedString);
+    else
+	return Size - v;
 }
 
 int GetProfileString (LPSTR AppName, LPSTR KeyName, LPSTR Default, 
 		      LPSTR ReturnedString, int Size)
 {
     return GetPrivateProfileString (AppName, KeyName, Default,
-				    ReturnedString, Size, INIFILE);
+				    ReturnedString, Size, WIN_INI);
 }
 
 WORD GetPrivateProfileInt (LPSTR AppName, LPSTR KeyName, short Default,
@@ -251,7 +290,7 @@ WORD GetPrivateProfileInt (LPSTR AppName, LPSTR KeyName, short Default,
 
 WORD GetProfileInt (LPSTR AppName, LPSTR KeyName, int Default)
 {
-    return GetPrivateProfileInt (AppName, KeyName, Default, INIFILE);
+    return GetPrivateProfileInt (AppName, KeyName, Default, WIN_INI);
 }
 
 BOOL WritePrivateProfileString (LPSTR AppName, LPSTR KeyName, LPSTR String,
@@ -262,7 +301,7 @@ BOOL WritePrivateProfileString (LPSTR AppName, LPSTR KeyName, LPSTR String,
 
 BOOL WriteProfileString (LPSTR AppName, LPSTR KeyName, LPSTR String)
 {
-    return (WritePrivateProfileString (AppName, KeyName, String, INIFILE));
+    return (WritePrivateProfileString (AppName, KeyName, String, WIN_INI));
 }
 
 static void dump_keys (FILE *profile, TKeys *p)

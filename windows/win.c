@@ -10,21 +10,17 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/StringDefs.h>
 #include <X11/Core.h>
 #include <X11/Shell.h>
-#include <X11/Xaw/Box.h>
 
 #include "class.h"
 #include "win.h"
 #include "user.h"
+#include "dce.h"
 
 extern Display * XT_display;
 extern Screen * XT_screen;
 extern Colormap COLOR_WinColormap;
 
 static HWND firstWindow = 0;
-
-void SCROLLBAR_CreateScrollBar(LPSTR className, LPSTR Label, HWND hwnd);
-void LISTBOX_CreateListBox(LPSTR className, LPSTR Label, HWND hwnd);
-void COMBOBOX_CreateComboBox(LPSTR className, LPSTR Label, HWND hwnd);
 
 /***********************************************************************
  *           WIN_FindWndPtr
@@ -43,6 +39,76 @@ WND * WIN_FindWndPtr( HWND hwnd )
 
 
 /***********************************************************************
+ *           WIN_UnlinkWindow
+ *
+ * Remove a window from the siblings linked list.
+ */
+BOOL WIN_UnlinkWindow( HWND hwnd )
+{    
+    HWND * curWndPtr;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return FALSE;
+    if (wndPtr->hwndParent)
+    {
+	WND * parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+	curWndPtr = &parentPtr->hwndChild;
+    }    
+    else curWndPtr = &firstWindow;
+
+    while (*curWndPtr != hwnd)
+    {
+	WND * curPtr = WIN_FindWndPtr( *curWndPtr );
+	curWndPtr = &curPtr->hwndNext;
+    }
+    *curWndPtr = wndPtr->hwndNext;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           WIN_LinkWindow
+ *
+ * Insert a window into the siblings linked list.
+ * The window is inserted after the specified window, which can also
+ * be specified as HWND_TOP or HWND_BOTTOM.
+ */
+BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
+{    
+    HWND * hwndPtr = NULL;  /* pointer to hwnd to change */
+
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return FALSE;
+    
+    if ((hwndInsertAfter == HWND_TOP) || (hwndInsertAfter == HWND_BOTTOM))
+    {
+	  /* Make hwndPtr point to the first sibling hwnd */
+	if (wndPtr->hwndParent)
+	{
+	    WND * parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+	    if (parentPtr) hwndPtr = &parentPtr->hwndChild;
+	}
+	else hwndPtr = &firstWindow;
+	if (hwndInsertAfter == HWND_BOTTOM)  /* Find last sibling hwnd */
+	    while (*hwndPtr)
+	    {
+		WND * nextPtr = WIN_FindWndPtr( *hwndPtr );
+		hwndPtr = &nextPtr->hwndNext;
+	    }
+    }
+    else  /* Normal case */
+    {
+	WND * afterPtr = WIN_FindWndPtr( hwndInsertAfter );
+	if (afterPtr) hwndPtr = &afterPtr->hwndNext;
+    }
+    if (!hwndPtr) return FALSE;
+    wndPtr->hwndNext = *hwndPtr;
+    *hwndPtr = hwnd;
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           WIN_FindWinToRepaint
  *
  * Find a window that needs repaint.
@@ -55,8 +121,6 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     for ( ; hwnd != 0; hwnd = wndPtr->hwndNext )
     {
 	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-	if (!wndPtr || !wndPtr->winWidget) continue;
-	if (!XtIsRealized( wndPtr->winWidget )) continue;
 	if (wndPtr->hrgnUpdate) return hwnd;
 	if (wndPtr->hwndChild)
 	{
@@ -114,9 +178,11 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     CREATESTRUCT *createStruct;
     HANDLE hcreateStruct;
     int wmcreate;
+    short newwidth, newheight;
 
 #ifdef DEBUG_WIN
-    printf( "CreateWindowEx: %s %s %d,%d %dx%d\n", className, windowName, x, y, width, height );
+    printf( "CreateWindowEx: %s %s %d,%d %dx%d %08x\n",
+	    className, windowName, x, y, width, height, style );
 #endif
 
     if (x == CW_USEDEFAULT) x = 0;
@@ -155,11 +221,12 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->hwndOwner  = parent;  /* What else? */
     wndPtr->hClass     = class;
     wndPtr->hInstance  = instance;
-    wndPtr->rectClient.left   = x;
-    wndPtr->rectClient.top    = y;
-    wndPtr->rectClient.right  = x + width;
-    wndPtr->rectClient.bottom = y + height;
-    wndPtr->rectWindow        = wndPtr->rectClient;
+    wndPtr->rectWindow.left   = x;
+    wndPtr->rectWindow.top    = y;
+    wndPtr->rectWindow.right  = x + width;
+    wndPtr->rectWindow.bottom = y + height;
+    wndPtr->rectClient        = wndPtr->rectWindow;
+    wndPtr->hmemTaskQ         = GetTaskQueue(0);
     wndPtr->hrgnUpdate        = 0;
     wndPtr->hwndLastActive    = 0;
     wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
@@ -169,43 +236,70 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->wIDmenu           = menu;
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
+    wndPtr->hCursor           = 0;
+    wndPtr->hWndVScroll       = 0;
+    wndPtr->hWndHScroll       = 0;
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
-    if (classPtr->wc.style & CS_OWNDC)
-	wndPtr->hdc = CreateDC( "DISPLAY", NULL, NULL, NULL);
-    else wndPtr->hdc = 0;
     classPtr->cWindows++;
+
+      /* Get class or window DC if needed */
+    if (classPtr->wc.style & CS_OWNDC)
+    {
+	wndPtr->flags |= WIN_OWN_DC;
+	wndPtr->hdce = DCE_AllocDCE( DCE_WINDOW_DC );
+    }
+    else if (classPtr->wc.style & CS_CLASSDC)
+    {
+	wndPtr->flags |= WIN_CLASS_DC;
+	wndPtr->hdce = classPtr->hdce;
+    }
+    else wndPtr->hdce = 0;
 
       /* Insert the window in the linked list */
 
-    if (parent)
-    {
-	wndPtr->hwndNext = parentPtr->hwndChild;
-	parentPtr->hwndChild = hwnd;
-    }
-    else  /* Top-level window */
-    {
-	wndPtr->hwndNext = firstWindow;
-	firstWindow = hwnd;
-    }
-    
-    if (!strcasecmp(className, "SCROLLBAR"))
-    {
-	SCROLLBAR_CreateScrollBar(className, windowName, hwnd);
-	goto WinCreated;
-    }
-    if (!strcasecmp(className, "LISTBOX"))
-    {
-	LISTBOX_CreateListBox(className, windowName, hwnd);
-	goto WinCreated;
-    }
+    WIN_LinkWindow( hwnd, HWND_TOP );
+
     if (!strcasecmp(className, "COMBOBOX"))
     {
-	COMBOBOX_CreateComboBox(className, windowName, hwnd);
-	goto WinCreated;
+	height = 16;
     }
-      /* Create the widgets */
+
+#ifdef USE_XLIB
+    {
+	XSetWindowAttributes win_attr;
+	Window parentWindow;
+	int x_rel, y_rel;
+	
+	win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
+	                      PointerMotionMask | ButtonPressMask |
+			      ButtonReleaseMask | StructureNotifyMask |
+			      FocusChangeMask | EnterWindowMask;
+	win_attr.override_redirect = /*True*/ False;
+	win_attr.colormap = COLOR_WinColormap;
+	if (style & WS_CHILD)
+	{
+	    parentWindow = parentPtr->window;
+	    x_rel = x + parentPtr->rectClient.left-parentPtr->rectWindow.left;
+	    y_rel = y + parentPtr->rectClient.top-parentPtr->rectWindow.top;
+	}
+	else
+	{
+	    parentWindow = DefaultRootWindow( XT_display );
+	    x_rel = x;
+	    y_rel = y;
+	}
+	wndPtr->window = XCreateWindow( XT_display, parentWindow,
+				        x_rel, y_rel, width, height, 0,
+				        CopyFromParent, InputOutput,
+				        CopyFromParent,
+				        CWEventMask | CWOverrideRedirect |
+				        CWColormap, &win_attr );
+	XStoreName( XT_display, wndPtr->window, windowName );
+    }
+#else
+    /* Create the widgets */
 
     if (style & WS_CHILD)
     {
@@ -223,6 +317,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 						    XtNwidth, width,
 						    XtNheight, height,
 						    XtNborderColor, borderCol,
+						    XtNmappedWhenManaged, FALSE,
 						    NULL );
 	}
 	else
@@ -235,6 +330,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 						    XtNwidth, width,
 						    XtNheight, height,
 						    XtNborderWidth, 0,
+						    XtNmappedWhenManaged, FALSE,
 						    NULL );
 	}
     }
@@ -247,6 +343,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 						 XtNx, x,
 						 XtNy, y,
 						 XtNcolormap, COLOR_WinColormap,
+						 XtNmappedWhenManaged, FALSE,
 						 NULL );
 	wndPtr->compositeWidget = XtVaCreateManagedWidget(className,
 						    formWidgetClass,
@@ -296,8 +393,24 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 					NULL );
 	}
     }
+    if (wndPtr->shellWidget) XtRealizeWidget( wndPtr->shellWidget );
+    if (wndPtr->compositeWidget) XtRealizeWidget( wndPtr->compositeWidget );
+    XtRealizeWidget( wndPtr->winWidget );
+    wndPtr->window = XtWindow( wndPtr->winWidget );
+#endif  /* USE_XLIB */
 
-WinCreated:
+    if ((style & WS_VSCROLL) == WS_VSCROLL) {
+    	newheight = height - (((style & WS_HSCROLL) == WS_HSCROLL) ? 16 : 0);
+	wndPtr->hWndVScroll = CreateWindow("SCROLLBAR", "",
+		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_VERT,
+		width - 16, 0, 16, newheight, hwnd, 2, instance, 0L);
+	}
+    if ((style & WS_HSCROLL) == WS_HSCROLL) {
+    	newwidth = width - (((style & WS_VSCROLL) == WS_VSCROLL) ? 16 : 0);
+	wndPtr->hWndHScroll = CreateWindow("SCROLLBAR", "",
+		WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBS_HORZ,
+		0, height - 16, newwidth, 16, hwnd, 3, instance, 0L);
+	}
 
       /* Send the WM_CREATE message */
 	
@@ -318,7 +431,24 @@ WinCreated:
 
     wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, (LONG)createStruct );
     if (!wmcreate) wmcreate = -1;
-    else wmcreate = SendMessage( hwnd, WM_CREATE, 0, (LONG)createStruct );
+    else
+    {
+	  /* Send WM_NCCALCSIZE message */
+	NCCALCSIZE_PARAMS *params;
+	HANDLE hparams;
+	hparams = GlobalAlloc( GMEM_MOVEABLE, sizeof(*params) );
+	if (hparams)
+	{
+	    params = (NCCALCSIZE_PARAMS *) GlobalLock( hparams );
+	    params->rgrc[0] = wndPtr->rectWindow;
+	    params->lppos = NULL;
+	    SendMessage( hwnd, WM_NCCALCSIZE, FALSE, (LONG)params );
+	    wndPtr->rectClient = params->rgrc[0];
+	    GlobalUnlock( hparams );
+	    GlobalFree( hparams );
+	}	
+	wmcreate = SendMessage( hwnd, WM_CREATE, 0, (LONG)createStruct );
+    }
 
     GlobalUnlock( hcreateStruct );
     GlobalFree( hcreateStruct );
@@ -329,18 +459,27 @@ WinCreated:
 
 	if (parent) parentPtr->hwndChild = wndPtr->hwndNext;
 	else firstWindow = wndPtr->hwndNext;
+#ifdef USE_XLIB
+	XDestroyWindow( XT_display, wndPtr->window );
+#else	
 	if (wndPtr->shellWidget) XtDestroyWidget( wndPtr->shellWidget );
 	else XtDestroyWidget( wndPtr->winWidget );
-	if (wndPtr->hdc) DeleteDC( wndPtr->hdc );
+#endif
+	if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
 	classPtr->cWindows--;
 	USER_HEAP_FREE( hwnd );
 	return 0;
     }
-    
-    EVENT_AddHandlers( wndPtr->winWidget, hwnd );
 
-    if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
+#ifdef USE_XLIB    
+    EVENT_AddHandlers( wndPtr->window, hwnd );
+#else
+    EVENT_AddHandlers( wndPtr->winWidget, hwnd );
+#endif
+
     WIN_SendParentNotify( hwnd, wndPtr, WM_CREATE );
+    
+    if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
     return hwnd;
 }
 
@@ -350,7 +489,6 @@ WinCreated:
 BOOL DestroyWindow( HWND hwnd )
 {
     WND * wndPtr;
-    HWND * curWndPtr;
     CLASS * classPtr;
     
       /* Initialisation */
@@ -366,126 +504,26 @@ BOOL DestroyWindow( HWND hwnd )
     
       /* Destroy all children */
 
+    if (wndPtr->hWndVScroll) DestroyWindow(wndPtr->hWndVScroll);
+    if (wndPtr->hWndHScroll) DestroyWindow(wndPtr->hWndHScroll);
     while (wndPtr->hwndChild)  /* The child removes itself from the list */
 	DestroyWindow( wndPtr->hwndChild );
 
       /* Remove the window from the linked list */
 
-    if (wndPtr->hwndParent)
-    {
-	WND * parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
-	curWndPtr = &parentPtr->hwndChild;
-    }    
-    else curWndPtr = &firstWindow;
-
-    while (*curWndPtr != hwnd)
-    {
-	WND * curPtr = WIN_FindWndPtr( *curWndPtr );
-	curWndPtr = &curPtr->hwndNext;
-    }
-    *curWndPtr = wndPtr->hwndNext;
+    WIN_UnlinkWindow( hwnd );
 
       /* Destroy the window */
 
+#ifdef USE_XLIB
+    XDestroyWindow( XT_display, wndPtr->window );
+#else
     if (wndPtr->shellWidget) XtDestroyWidget( wndPtr->shellWidget );
     else XtDestroyWidget( wndPtr->winWidget );
-    if (wndPtr->hdc) DeleteDC( wndPtr->hdc );
+#endif
+    if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
     classPtr->cWindows--;
     USER_HEAP_FREE( hwnd );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetWindowRect   (USER.32)
- */
-void GetWindowRect( HWND hwnd, LPRECT rect ) 
-{
-    int x, y, width, height;  
-    WND * wndPtr = WIN_FindWndPtr( hwnd ); 
-
-    if (wndPtr) 
-    {
-	XtVaGetValues(wndPtr->winWidget,
-		      XtNx, &x, XtNy, &y,
-		      XtNwidth, &width,
-		      XtNheight, &height,
-		      NULL );
-	rect->left  = x & 0xffff;
-	rect->top = y & 0xffff;
-	rect->right  = width & 0xffff;
-	rect->bottom = height & 0xffff;
-    }
-}
-
-
-/***********************************************************************
- *           GetClientRect   (USER.33)
- */
-void GetClientRect( HWND hwnd, LPRECT rect ) 
-{
-    int width, height;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-
-    rect->left = rect->top = rect->right = rect->bottom = 0;
-    if (wndPtr) 
-    {
-	XtVaGetValues(wndPtr->winWidget,
-		      XtNwidth, &width,
-		      XtNheight, &height,
-		      NULL );
-	rect->right  = width & 0xffff;
-	rect->bottom = height & 0xffff;
-    }
-}
-
-
-/***********************************************************************
- *           ShowWindow   (USER.42)
- */
-BOOL ShowWindow( HWND hwnd, int cmd ) 
-{    
-    int width, height;
-    
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (wndPtr) 
-    {
-	if (wndPtr->shellWidget) XtRealizeWidget( wndPtr->shellWidget );
-	XtVaGetValues(wndPtr->winWidget, 
-		      XtNwidth, &width,
-		      XtNheight, &height,
-		      NULL );
-	switch(cmd)
-	    {
-	    case SW_HIDE:
-		XtSetMappedWhenManaged(wndPtr->winWidget, FALSE);
-	    	wndPtr->dwStyle &= (WS_VISIBLE ^ 0xFFFFFFFL);
-		SendMessage( hwnd, WM_SHOWWINDOW, FALSE, 0 );
-		break;
-	    case SW_SHOWMINNOACTIVE:
-	    case SW_SHOWMINIMIZED:
-	    case SW_MINIMIZE:
-	    	wndPtr->dwStyle |= WS_ICONIC;
-	    	goto WINVisible;
-	    case SW_SHOWNA:
-	    case SW_SHOWNOACTIVATE:
-	    case SW_MAXIMIZE:
-	    case SW_SHOWMAXIMIZED:
-	    case SW_SHOW:
-	    case SW_NORMAL:
-	    case SW_SHOWNORMAL:
-	    	wndPtr->dwStyle &= (WS_ICONIC ^ 0xFFFFFFFL);
-WINVisible:
-		XtSetMappedWhenManaged(wndPtr->winWidget, TRUE);
-	    	wndPtr->dwStyle |= WS_VISIBLE;
-		SendMessage( hwnd, WM_SIZE, SIZE_RESTORED, 
-			(width & 0xffff) | (height << 16) );
-		SendMessage( hwnd, WM_SHOWWINDOW, TRUE, 0 );
-		break;
-	    default:
-		break;
-	    }
-    }
     return TRUE;
 }
 
@@ -498,7 +536,6 @@ void CloseWindow(HWND hWnd)
     WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr->dwStyle & WS_CHILD) return;
     ShowWindow(hWnd, SW_MINIMIZE);
-    PostMessage(hWnd, WM_CLOSE, 0, 0L);
 }
 
  
@@ -508,7 +545,6 @@ void CloseWindow(HWND hWnd)
  */
 BOOL OpenIcon(HWND hWnd)
 {
-    WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (!IsIconic(hWnd)) return FALSE;
     ShowWindow(hWnd, SW_SHOWNORMAL);
     return(TRUE);
@@ -523,34 +559,8 @@ HWND FindWindow(LPSTR ClassMatch, LPSTR TitleMatch)
 {
     return((HWND)NULL);
 }
-
  
  
-/***********************************************************************
- *           MoveWindow   (USER.56)
- */
-void MoveWindow(HWND hWnd, short x, short y, short w, short h, BOOL bRepaint)
-{    
-    WND * wndPtr = WIN_FindWndPtr( hWnd );
-    if (wndPtr) 
-    {
-	wndPtr->rectClient.left   = x;
-	wndPtr->rectClient.top    = y;
-	wndPtr->rectClient.right  = x + w;
-	wndPtr->rectClient.bottom = y + h;
-	XtVaSetValues(wndPtr->winWidget, XtNx, x, XtNy, y,
-		      XtNwidth, w, XtNheight, h, NULL );
-	SendMessage(hWnd, WM_MOVE, 0, MAKELONG(x, y)); 
-	printf("MoveWindow(%X, %d, %d, %d, %d, %d); !\n", 
-			hWnd, x, y, w, h, bRepaint);
-	if (bRepaint) {
-	    InvalidateRect(hWnd, NULL, TRUE);
-	    UpdateWindow(hWnd);
-	    }
-    }
-}
-
-
 /***********************************************************************
  *           UpdateWindow   (USER.124)
  */
@@ -578,8 +588,10 @@ HMENU GetMenu( HWND hwnd )
  */
 BOOL SetMenu(HWND hwnd, HMENU hmenu)
 {
+#ifdef USE_XLIB
+    return FALSE;
+#else
     WND *wndPtr;
-    
     wndPtr = WIN_FindWndPtr(hwnd);
     if (wndPtr == NULL)
 	return FALSE;
@@ -618,44 +630,7 @@ BOOL SetMenu(HWND hwnd, HMENU hmenu)
     }
 
     return TRUE;
-}
-
-
-/***********************************************************************
- *           SetWindowPos   (USER.232)
- */
-void SetWindowPos(HWND hWnd, HWND hWndInsertAfter, short x, short y, short w, short h, WORD wFlag)
-{    
-    WND * wndPtr = WIN_FindWndPtr( hWnd );
-    if (wndPtr) 
-    {
-	if ((wFlag & SWP_NOMOVE) != SWP_NOMOVE) {
-	    wndPtr->rectClient.left   = x;
-	    wndPtr->rectClient.top    = y;
-	    XtVaSetValues(wndPtr->winWidget, XtNx, x, XtNy, y, NULL );
-	    }
-	if ((wFlag & SWP_NOSIZE) != SWP_NOSIZE) {
-	    wndPtr->rectClient.right  = x + w;
-	    wndPtr->rectClient.bottom = y + h;
-	    XtVaSetValues(wndPtr->winWidget, XtNwidth, w, XtNheight, h, NULL );
-	    }
-	if ((wFlag & SWP_NOREDRAW) != SWP_NOREDRAW) {
-	    InvalidateRect(hWnd, NULL, TRUE);
-	    UpdateWindow(hWnd);
-	    }
-	if ((wFlag & SWP_HIDEWINDOW) == SWP_HIDEWINDOW) 
-	    ShowWindow(hWnd, SW_HIDE);
-	if ((wFlag & SWP_SHOWWINDOW) == SWP_SHOWWINDOW) 
-	    ShowWindow(hWnd, SW_SHOW);
-/*
-	if ((wFlag & SWP_NOACTIVATE) != SWP_NOACTIVATE) 
-	    SetActiveWindow(hWnd);
-	if ((wFlag & SWP_NOZORDER) != SWP_NOZORDER) 
-	    { }
-*/
-	printf("SetWindowPos(%X, %X, %d, %d, %d, %d, %X); !\n", 
-		hWnd, hWndInsertAfter, x, y, w, h, wFlag);
-    }
+#endif  /* USE_XLIB */
 }
 
 
@@ -748,21 +723,6 @@ LONG SetWindowLong( HWND hwnd, short offset, LONG newval )
 }
 
 
-/***********************************************************************
- *           IsIconic   (USER.31)
- */
-BOOL IsIconic(HWND hWnd)
-{
-    WND * wndPtr; 
-    if (hWnd == 0) return(FALSE);
-    wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr == 0) return(FALSE);
-    if (wndPtr->dwStyle & WS_ICONIC) return(TRUE);
-    return(FALSE);
-}
-
- 
- 
 /*******************************************************************
  *         GetWindowText          (USER.36)
  */
@@ -796,7 +756,7 @@ int GetWindowTextLength(HWND hwnd)
 BOOL IsWindow( HWND hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    return (wndPtr->dwMagic == WND_MAGIC);
+    return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
 }
 
 
@@ -806,6 +766,7 @@ BOOL IsWindow( HWND hwnd )
 HWND GetParent(HWND hwnd)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
+    if (!wndPtr) return 0;
     return wndPtr->hwndParent;
 }
 
@@ -838,14 +799,9 @@ BOOL IsChild( HWND parent, HWND child )
  */
 BOOL IsWindowVisible(HWND hWnd)
 {
-    WND * wndPtr; 
-    if (hWnd == 0) return(FALSE);
-    wndPtr = WIN_FindWndPtr(hWnd);
+    WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == 0) return(FALSE);
-    if (wndPtr->dwStyle & WS_VISIBLE) {
-	if (XtIsRealized(wndPtr->winWidget))  return(TRUE);
-    	}
-    return(FALSE);
+    else return ((wndPtr->dwStyle & WS_VISIBLE) != 0);
 }
 
  

@@ -41,6 +41,8 @@ void main(int argc, char **argv)
     XT_display = XtDisplay( topLevelWidget );
     XT_screen  = XtScreen( topLevelWidget );
     
+    DOS_InitFS();
+    Comm_Init();
     _WinMain( argc, argv );
 }
 
@@ -56,12 +58,6 @@ void main(int argc, char **argv)
 void MessageBeep( WORD i )
 {
     XBell(XT_display, 100);
-}
-
-WORD RegisterWindowMessage( LPSTR str )
-{
-    printf( "RegisterWindowMessage: '%s'\n", str );
-    return 0xc000;
 }
 
 /***********************************************************************
@@ -94,11 +90,10 @@ void AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 {
     printf( "AdjustWindowRect: (%d,%d)-(%d,%d) %d %d\n", rect->left, rect->top,
 	   rect->right, rect->bottom, style, menu );
+#ifdef USE_XLIB
+    rect->right += 8;
+    rect->bottom += 34;
+#endif
 }
 
 
-HMENU CreateMenu() { return 0; }
-
-BOOL AppendMenu( HMENU hmenu, WORD flags, WORD id, LPSTR text ) { return TRUE;}
-
-BOOL DestroyMenu( HMENU hmenu ) { return TRUE; }

@@ -7,7 +7,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "segmem.h"
 #include <setjmp.h>
 
-extern unsigned short SelectorOwners[];
+extern SEGDESC Segments[];
 extern unsigned short IF1632_Saved16_ss;
 extern unsigned long  IF1632_Saved16_ebp;
 extern unsigned long  IF1632_Saved16_esp;
@@ -56,7 +56,7 @@ FindDataSegmentForCode(unsigned long csip)
     unsigned int seg_idx;
     
     seg_idx = (unsigned short) (csip >> 19);
-    return SelectorOwners[seg_idx];
+    return Segments[seg_idx].owner;
 }
 
 /**********************************************************************

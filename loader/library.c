@@ -20,7 +20,7 @@ HANDLE LoadLibrary(LPSTR libname)
 {
     HANDLE hRet;
     printf("LoadLibrary '%s'\n", libname);
-    hRet = LoadImage(libname, NULL);
+    hRet = LoadImage(libname);
     printf("after LoadLibrary hRet=%04X\n", hRet);
     return hRet;
 }

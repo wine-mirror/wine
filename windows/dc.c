@@ -7,7 +7,6 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
-#include <X11/Intrinsic.h>
 
 #include "gdi.h"
 
@@ -16,6 +15,8 @@ extern HBITMAP BITMAP_hbitmapMemDC;
 static DeviceCaps * displayDevCaps = NULL;
 
 extern const WIN_DC_INFO DCVAL_defaultValues;
+
+extern void CLIPPING_SetDeviceClipping( DC * dc );  /* in objects/clipping.c */
 
 
   /* ROP code to GC function conversion */
@@ -100,18 +101,8 @@ void DC_SetDeviceInfo( HDC hdc, DC * dc )
     SelectObject( hdc, dc->w.hBrush );
     SelectObject( hdc, dc->w.hFont );
     
-    if (dc->w.hGCClipRgn)
-    {
-	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
-	XSetClipMask( XT_display, dc->u.x.gc, obj->region.pixmap );
-	XSetClipOrigin( XT_display, dc->u.x.gc,
-		        obj->region.box.left, obj->region.box.top );
-    }
-    else
-    {
-	XSetClipMask( XT_display, dc->u.x.gc, None );
-	XSetClipOrigin( XT_display, dc->u.x.gc, 0, 0 );
-    }
+    XSetGraphicsExposures( XT_display, dc->u.x.gc, False );
+    CLIPPING_SetDeviceClipping( dc );
 }
 
 
@@ -145,8 +136,11 @@ int DC_SetupGCForBrush( DC * dc )
 	XSetFillStyle( XT_display, dc->u.x.gc,
 		       (dc->w.backgroundMode == OPAQUE) ? 
 		          FillOpaqueStippled : FillStippled );
-    XSetTSOrigin( XT_display, dc->u.x.gc, dc->w.brushOrgX, dc->w.brushOrgY );
+    XSetTSOrigin( XT_display, dc->u.x.gc, dc->w.DCOrgX + dc->w.brushOrgX,
+		  dc->w.DCOrgY + dc->w.brushOrgY );
     XSetFunction( XT_display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
+    XSetFillRule( XT_display, dc->u.x.gc, 
+		 (dc->w.polyFillMode == WINDING) ? WindingRule : EvenOddRule );
     return 1;
 }
 
@@ -226,8 +220,7 @@ HDC GetDCState( HDC hdc )
     if (dc->w.hVisRgn)
     {
 	newdc->w.hVisRgn = CreateRectRgn( 0, 0, 0, 0 );
-	CombineRgn( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );
-	
+	CombineRgn( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );	
     }
     newdc->w.hGCClipRgn = 0;
     return handle;
@@ -255,7 +248,7 @@ void SetDCState( HDC hdc, HDC hdcs )
     dc->w.flags &= ~DC_SAVED;
     DC_SetDeviceInfo( hdc, dc );
     SelectClipRgn( hdc, dcs->w.hClipRgn );
-    SelectVisRgn( hdc, dcs->w.hGCClipRgn );
+    SelectVisRgn( hdc, dcs->w.hVisRgn );
 }
 
 
@@ -337,6 +330,8 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
     dc->w.devCaps      = displayDevCaps;
     dc->w.planes       = displayDevCaps->planes;
     dc->w.bitsPerPixel = displayDevCaps->bitsPixel;
+    dc->w.DCSizeX      = displayDevCaps->horzRes;
+    dc->w.DCSizeY      = displayDevCaps->vertRes;
 
     DC_SetDeviceInfo( handle, dc );
 
@@ -372,6 +367,8 @@ HDC CreateCompatibleDC( HDC hdc )
     dc->w.planes       = 1;
     dc->w.bitsPerPixel = 1;
     dc->w.devCaps      = displayDevCaps;
+    dc->w.DCSizeX      = 1;
+    dc->w.DCSizeY      = 1;
 
     SelectObject( handle, BITMAP_hbitmapMemDC );
     DC_SetDeviceInfo( handle, dc );

@@ -1,6 +1,6 @@
 Copyright  Robert J. Amstadt, 1993.  All code is provided without
-warranty.  It is my intent to cover this code with the Gnu Public
-License.
+warranty.  All code is covered by the license contained in the file
+LICENSE unless explicitly stated in the individual source file.
 
 INSTALLATION:
 
@@ -19,17 +19,55 @@ All:
 
 To build Wine, first do a "make depend" and then a "make".  The
 executable "wine" will be built.  "wine" will load and run Windows'
-executables.  You must specify the entire path to the executable,
-have the executable in the current directory, or specify a load
-path with environment variable WINEPATH.
+executables.  You must have a file "wine.ini" in the current directory,
+your homedirectory, or in the path specified by the environment 
+variable WINEPATH. Multiple directories in WINEPATH should be seperated
+by semi-colons and NOT by colons!
 
-For example, to run Windows' solitaire:
+You must specify the entire path to the executable, or a filename only
+(using the path= statement in wine.ini as the search path)
 
-	export WINEPATH=/dos/windows;/dos/windows/system
-	wine sol
+For example: to run Windows' solitaire:
+
+	export WINEPATH=/etc;/usr/windows
+
+	wine sol		   (using the path= statement in wine.ini
+	wine sol.exe		    as the search path)
+
+	wine c:\\windows\\sol.exe  (using a dosfilename)
+
+	wine /usr/windows/sol.exe  (using a unixfilename)
 
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
+
+WHAT'S NEW with version 0.5: (see ChangeLog for details)
+	- Working towards elimination of Xt-dependent code.
+	- StretchBlt()
+	- GetClassName() & GetClassInfo()
+	- Implemented loader relocation types 5 and 6.
+
+WHAT'S NEW with version 0.4.14: (see ChangeLog for details)
+	- Bug fixes and enhancements
+	- Comm functions
+	- Text caret functions
+
+WHAT'S NEW with version 0.4.13: (see ChangeLog for details)
+	- Bug fixes
+	- GetCapture()
+	- More keyboard handling
+	- Polyline() and Polygon()
+
+WHAT'S NEW with version 0.4.12: (see ChangeLog for details)
+	- Bug fixes
+	- New DOS file functions
+	- Experimental Imakefiles
+
+WHAT'S NEW with version 0.4.11: (see ChangeLog for details)
+	- Bug fixes
+	- New cursor functions
+	- New file system handling
+	- Atoms
 
 WHAT'S NEW with version 0.4.10: (see ChangeLog for details)
 	- Bug fixes

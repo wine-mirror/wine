@@ -7,7 +7,7 @@
 #ifndef GDI_H
 #define GDI_H
 
-#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 
 #include "windows.h"
 #include "segmem.h"
@@ -158,6 +158,8 @@ typedef struct
     WORD          MapMode;
     short         DCOrgX;            /* DC origin */
     short         DCOrgY;
+    short         DCSizeX;           /* DC dimensions */
+    short         DCSizeY;
     short         CursPosX;          /* Current position */
     short         CursPosY;
     short         WndOrgX;
@@ -200,7 +202,6 @@ typedef struct
 {
     GC            gc;          /* X Window GC */
     Drawable      drawable;
-    Widget        widget;
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;

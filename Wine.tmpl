@@ -1,0 +1,29 @@
+XCOMM $Id$
+
+INCLUDES = -I$(TOP)/include
+
+XCOMM Imake rules go here
+
+XCOMM First, dll description to files etc
+#ifndef MakeDllFromSpec
+#define MakeDllFromSpec(name,objfile)					@@\
+objfile.o: Concat(dll_,name.o) Concat3(dll_,name,_tab.o)		@@\
+									@@\
+Concat(dll_,name.S) Concat3(dll_,name,_tab.c): name.spec $(TOP)/tools/build  @@\
+	$(TOP)/tools/build name.spec					@@\
+
+#endif
+
+/*
+ * WineRelocatableTarget - generate rules to produce a relocatable object
+ * file instead of a library.  
+ */
+#ifndef WineRelocatableTarget
+#define WineRelocatableTarget(objname,objlist,depobj)				@@\
+AllTarget(objname.o)							@@\
+									@@\
+objname.o: depobj							@@\
+	$(RM) $@							@@\
+	$(LD) $(LDCOMBINEFLAGS) objlist depobj -o $@
+#endif /* WineRelocatableTarget */
+

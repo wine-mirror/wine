@@ -11,9 +11,32 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 
 /***********************************************************************
+ *           CLIPPING_SetDeviceClipping
+ *
+ * Set the clip region of the physical device.
+ */
+void CLIPPING_SetDeviceClipping( DC * dc )
+{
+    if (dc->w.hGCClipRgn)
+    {
+	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
+	XSetClipMask( XT_display, dc->u.x.gc, obj->region.pixmap );
+	XSetClipOrigin( XT_display, dc->u.x.gc,
+		        dc->w.DCOrgX + obj->region.box.left,
+		        dc->w.DCOrgY + obj->region.box.top );
+    }
+    else
+    {
+	XSetClipMask( XT_display, dc->u.x.gc, None );
+	XSetClipOrigin( XT_display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
+    }
+}
+
+
+/***********************************************************************
  *           CLIPPING_UpdateGCRegion
  *
- * Update the GC clip region when the ClipRgn of VisRgn have changed.
+ * Update the GC clip region when the ClipRgn or VisRgn have changed.
  */
 static void CLIPPING_UpdateGCRegion( DC * dc )
 {
@@ -36,19 +59,7 @@ static void CLIPPING_UpdateGCRegion( DC * dc )
 	else
 	    CombineRgn( dc->w.hGCClipRgn, dc->w.hClipRgn, dc->w.hVisRgn, RGN_AND );
     }
-    
-    if (dc->w.hGCClipRgn)
-    {
-	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hGCClipRgn, REGION_MAGIC );
-	XSetClipMask( XT_display, dc->u.x.gc, obj->region.pixmap );
-	XSetClipOrigin( XT_display, dc->u.x.gc,
-		        obj->region.box.left, obj->region.box.top );
-    }
-    else
-    {
-	XSetClipMask( XT_display, dc->u.x.gc, None );
-	XSetClipOrigin( XT_display, dc->u.x.gc, 0, 0 );
-    }	
+    CLIPPING_SetDeviceClipping( dc );
 }
 
 
@@ -157,26 +168,40 @@ int OffsetVisRgn( HDC hdc, short x, short y )
 int CLIPPING_IntersectRect( DC * dc, HRGN * hrgn, short left, short top,
 			    short right, short bottom, int exclude )
 {
-    HRGN tempRgn, newRgn;
+    HRGN tempRgn = 0, prevRgn = 0, newRgn = 0;
     RGNOBJ *newObj, *prevObj;
     int retval;
 
-    if (!*hrgn) return NULLREGION;
-    if (!(newRgn = CreateRectRgn( 0, 0, 0, 0))) return ERROR;
-    if (!(tempRgn = CreateRectRgn( left, top, right, bottom )))
+    if (!*hrgn)
     {
-	DeleteObject( newRgn );
-	return ERROR;
+	if (!(*hrgn = CreateRectRgn( 0, 0, dc->w.DCSizeX, dc->w.DCSizeY )))
+	    goto Error;
+	prevRgn = *hrgn;
     }
+    if (!(newRgn = CreateRectRgn( 0, 0, 0, 0))) goto Error;
+    if (!(tempRgn = CreateRectRgn( left, top, right, bottom ))) goto Error;
+
     retval = CombineRgn( newRgn, *hrgn, tempRgn, exclude ? RGN_DIFF : RGN_AND);
+    if (retval == ERROR) goto Error;
+
     newObj = (RGNOBJ *) GDI_GetObjPtr( newRgn, REGION_MAGIC );
     prevObj = (RGNOBJ *) GDI_GetObjPtr( *hrgn, REGION_MAGIC );
     if (newObj && prevObj) newObj->header.hNext = prevObj->header.hNext;
     DeleteObject( tempRgn );
-    DeleteObject( *hrgn );
+    if (*hrgn) DeleteObject( *hrgn );
     *hrgn = newRgn;    
     CLIPPING_UpdateGCRegion( dc );
     return retval;
+
+ Error:
+    if (tempRgn) DeleteObject( tempRgn );
+    if (newRgn) DeleteObject( newRgn );
+    if (prevRgn)
+    {
+	DeleteObject( prevRgn );
+	*hrgn = 0;
+    }
+    return ERROR;
 }
 
 
@@ -292,13 +317,9 @@ int GetClipBox( HDC hdc, LPRECT rect )
     if (dc->w.hGCClipRgn) return GetRgnBox( dc->w.hGCClipRgn, rect );
     else
     {
-	Window root;
-	int width, height, x, y, border, depth;
-	XGetGeometry( XT_display, dc->u.x.drawable, &root, &x, &y, 
-		      &width, &height, &border, &depth );
 	rect->top = rect->left = 0;
-	rect->right  = width & 0xffff;
-	rect->bottom = height & 0xffff;
+	rect->right = dc->w.DCSizeX;
+	rect->bottom = dc->w.DCSizeY;
 	return SIMPLEREGION;
     }
 }

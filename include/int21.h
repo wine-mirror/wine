@@ -1,15 +1,40 @@
 #ifndef INT21_H
 #define INT21_H
+#include <dirent.h>
+
+struct dosdirent {
+	int  inuse;
+	DIR *ds;
+	char unixpath[256];
+	char filename[256];
+	char attribute;
+	long filesize;
+	long filetime;
+	long filedate;
+};
+
+struct diskinfo {
+	unsigned int infolevel;
+	unsigned long serialnumber;
+	char	label[11];
+	char	fstype[8];
+};
 
 #define DosVersion 	  0x0303;
 
 #define SectorSize 	  0x200;
 #define SectorsPerCluster 0x04;
 
-#define AX context->sc_eax
-#define BX context->sc_ebx
-#define CX context->sc_ecx
-#define DX context->sc_edx
+#define EAX context->sc_eax
+#define EBX context->sc_ebx
+#define ECX context->sc_ecx
+#define EDX context->sc_edx
+
+#define AX (context->sc_eax & 0x0000ffffL)
+#define BX (context->sc_ebx & 0x0000ffffL)
+#define CX (context->sc_ecx & 0x0000ffffL)
+#define DX (context->sc_edx & 0x0000ffffL)
+
 #define ES context->sc_es
 #define DS context->sc_ds
 #define DI context->sc_edi
@@ -21,13 +46,6 @@
 
 #define SetCflag	(context->sc_efl |= 0x00000001L)
 #define ResetCflag	(context->sc_efl &= 0xfffffffeL)
-
-struct diskinfo {
-	WORD	infolevel;
-	DWORD	serialnumber;
-	char	label[11];
-	char	fstype[8];
-};
 
 /* extended error codes */
 
