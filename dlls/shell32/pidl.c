@@ -403,7 +403,12 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
 	     SHFree (pidl);
 	   return idlRet;
 	}  
-	idlRet=ILCombine(pidl,item);
+	if (bEnd)
+	{ idlRet=ILCombine(pidl,item);
+	}
+	else
+	{ idlRet=ILCombine(item,pidl);
+	}
 	SHFree(pidl);
 	return idlRet;
 }
