@@ -296,7 +296,7 @@ static BOOL _GetTimezoneBias(
     LONG*                         pBias)                 /* [out] The calulated bias in minutes */
 {
     int ret;
-    BOOL beforedaylightsaving, afterdaylightsaving;
+    BOOL beforeStandardDate, afterDaylightDate;
     BOOL daylightsaving = FALSE;
     LONG bias = lpTimeZoneInformation->Bias;
 
@@ -313,19 +313,19 @@ static BOOL _GetTimezoneBias(
         }
 
          /* check for daylight saving */
-       ret = _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->StandardDate);
-       if (ret == -2)
+        ret = _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->StandardDate);
+        if (ret == -2)
           return FALSE;
 
-        beforedaylightsaving = ret < 0;
+        beforeStandardDate = ret < 0;
 
-       _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->DaylightDate);
-       if (ret == -2)
+        ret = _DayLightCompareDate(lpSystemTime, &lpTimeZoneInformation->DaylightDate);
+        if (ret == -2)
           return FALSE;
 
-        afterdaylightsaving = ret >= 0;
+        afterDaylightDate = ret >= 0;
 
-        if (!beforedaylightsaving && !afterdaylightsaving)
+        if (beforeStandardDate && afterDaylightDate)
             daylightsaving = TRUE;
     }
 
@@ -426,7 +426,7 @@ BOOL WINAPI TzSpecificLocalTimeToSystemTime(
     t <<= 32;
     t += (UINT)ft.dwLowDateTime;
 
-    if (!_GetTimezoneBias(&tzinfo, lpUniversalTime, &lBias))
+    if (!_GetTimezoneBias(&tzinfo, lpLocalTime, &lBias))
         return FALSE;
 
     bias = (LONGLONG)lBias * 600000000; /* 60 seconds per minute, 100000 [100-nanoseconds-ticks] per second */
