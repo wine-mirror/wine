@@ -33,6 +33,23 @@ typedef HRESULT  (CALLBACK * MYPROC)(REFCLSID, REFIID, LPVOID FAR*);
 
 BOOL CALLBACK callback(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_DATA data, LPVOID context)
 {
+	trace("found device:\n");
+	trace("\tType: %s\n", 
+		data->Type == DIRECTSOUNDDEVICE_TYPE_EMULATED ? "Emulated" :
+		data->Type == DIRECTSOUNDDEVICE_TYPE_VXD ? "VxD" :
+        	data->Type == DIRECTSOUNDDEVICE_TYPE_WDM ? "WDM" : "Unknown");
+	trace("\tDataFlow: %s\n",
+        	data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER ? "Render" :
+        	data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE ? "Capture" : "Unknown");
+	trace("\tDeviceId: {%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+		data->DeviceId.Data1,data->DeviceId.Data2,data->DeviceId.Data3,
+		data->DeviceId.Data4[0],data->DeviceId.Data4[1],data->DeviceId.Data4[2],data->DeviceId.Data4[3],
+		data->DeviceId.Data4[4],data->DeviceId.Data4[5],data->DeviceId.Data4[6],data->DeviceId.Data4[7]);
+	trace("\tDescription: %s\n", data->Description);
+	trace("\tModule: %s\n", data->Module);
+	trace("\tInterface: %s\n", data->Interface);
+	trace("\tWaveDeviceId: %ld\n", data->WaveDeviceId);
+
 	return TRUE;
 }
 
@@ -117,10 +134,12 @@ static void propset_tests()
 	/* direct sound private does have an IKsPropertySet */
 	hr = pcf->lpVtbl->CreateInstance(pcf, NULL, &IID_IKsPropertySet, (void **)(&pps));
 	ok(hr==DS_OK, "CreateInstance(IID_IKsPropertySet) failed: 0x%lx\n",hr);
+	if (hr!=DS_OK)
 		goto error;
 
 	hr = pps->lpVtbl->QuerySupport(pps, &DSPROPSETID_DirectSoundDevice, DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION, &support);
 	ok(hr==DS_OK, "QuerySupport(DSPROPSETID_DirectSoundDevice, DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION) failed: 0x%lx\n",hr);
+	if (hr!=DS_OK)
 		goto error;
 
 	ok (support & KSPROPERTY_SUPPORT_GET, "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION: support = 0x%lx\n",support);
@@ -128,6 +147,7 @@ static void propset_tests()
 
 	hr = pps->lpVtbl->QuerySupport(pps, &DSPROPSETID_DirectSoundDevice, DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING, &support);
 	ok(hr==DS_OK, "QuerySupport(DSPROPSETID_DirectSoundDevice, DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING) failed: 0x%lx\n",hr);
+	if (hr!=DS_OK)
 		goto error;
 
 	ok (support & KSPROPERTY_SUPPORT_GET, "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING: support = 0x%lx\n",support);
@@ -135,6 +155,7 @@ static void propset_tests()
 
 	hr = pps->lpVtbl->QuerySupport(pps, &DSPROPSETID_DirectSoundDevice, DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE, &support);
 	ok(hr==DS_OK, "QuerySupport(DSPROPSETID_DirectSoundDevice, DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE) failed: 0x%lx\n",hr);
+	if (hr!=DS_OK)
 		goto error;
 
 	ok (support & KSPROPERTY_SUPPORT_GET, "Couldn't get DSPROPERTY_DIRECTSOUNDDEVICE_ENUMERATE: support = 0x%lx\n",support);
