@@ -2848,7 +2848,7 @@ static fontObject* XFONT_GetCacheEntry(void)
 	    TRACE("\tgrowing font cache from %i to %i\n", fontCacheSize, prev_i );
 
 	    if( (newCache = (fontObject*)HeapReAlloc(GetProcessHeap(), 0,
-						     fontCache, prev_i)) )
+						     fontCache, prev_i * sizeof(fontObject))) )
 	    {
 		i = fontCacheSize;
 		fontCacheSize  = prev_i;
