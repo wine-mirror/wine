@@ -124,6 +124,7 @@ DLLS = \
 	olesvr32 \
 	psapi \
 	rasapi32 \
+	riched32 \
 	setupx \
 	shell32 \
 	sound \

@@ -1,0 +1,17 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = riched32
+SOVERSION = 1.0
+IMPORTS   = 
+WRCEXTRA  = -s -p$(MODULE)
+
+SPEC_SRCS = riched32.spec
+
+C_SRCS = \
+	riched32_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
