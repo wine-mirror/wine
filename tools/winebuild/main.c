@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "config.h"
 #include "winnt.h"
 #include "build.h"
 
