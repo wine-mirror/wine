@@ -140,8 +140,23 @@ WINE REGISTRY Version 2
 
 [fonts]
 ;Read documentation/fonts before adding aliases
+;See a couple of examples for russian users below
 "Resolution" = "96"
-"Default" = "-adobe-times-"
+"Default" = "-adobe-helvetica-"
+"DefaultFixed" = "fixed"
+"DefaultSerif" = "-adobe-times-"
+"DefaultSansSerif" = "-adobe-helvetica-"
+
+;; default TrueType fonts with russian koi8-r encoding
+;"Default" = "-monotype-arial-*-*-*--*-*-*-*-*-*-koi8-r"
+;"DefaultFixed" = "-monotype-courier new-*-*-*--*-*-*-*-*-*-koi8-r"
+;"DefaultSerif" = "-monotype-times new roman-*-*-*--*-*-*-*-*-*-koi8-r"
+;"DefaultSansSerif" = "-monotype-arial-*-*-*--*-*-*-*-*-*-koi8-r"
+;; default cyrillic bitmap X fonts
+;"Default" = "-cronyx-helvetica-"
+;"DefaultFixed" = "fixed"
+;"DefaultSerif" = "-cronyx-times-"
+;"DefaultSansSerif" = "-cronyx-helvetica-"
 
 [serialports]
 "Com1" = "/dev/ttyS0"
