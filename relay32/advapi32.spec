@@ -80,7 +80,7 @@ type	win32
 0076 stub InitiateSystemShutdownW
 0077 stdcall IsTextUnicode(ptr long ptr) RtlIsTextUnicode
 0078 stub IsValidAcl
-0079 stub IsValidSecurityDescriptor
+0079 stdcall IsValidSecurityDescriptor(ptr) IsValidSecurityDescriptor
 0080 stdcall IsValidSid(ptr) IsValidSid
 0081 stub LockServiceDatabase
 0082 stub LogonUserA
@@ -96,9 +96,9 @@ type	win32
 0092 stdcall LookupPrivilegeValueA(ptr ptr ptr) LookupPrivilegeValue32A
 0093 stdcall LookupPrivilegeValueW(ptr ptr ptr) LookupPrivilegeValue32W
 0094 stub MakeAbsoluteSD
-0095 stub MakeSelfRelativeSD
+0095 stdcall MakeSelfRelativeSD(ptr ptr ptr) MakeSelfRelativeSD
 0096 stub MapGenericMask
-0097 stub NotifyBootConfigStatus
+0097 stdcall NotifyBootConfigStatus(long) NotifyBootConfigStatus
 0098 stub NotifyChangeEventLog
 0099 stub ObjectCloseAuditAlarmA
 0100 stub ObjectCloseAuditAlarmW
@@ -108,7 +108,7 @@ type	win32
 0104 stub ObjectPrivilegeAuditAlarmW
 0105 stub OpenBackupEventLogA
 0106 stub OpenBackupEventLogW
-0107 stub OpenEventLogA
+0107 stdcall OpenEventLogA(str str) OpenEventLog32A
 0108 stub OpenEventLogW
 0109 stdcall OpenProcessToken(long long ptr) OpenProcessToken
 0110 stdcall OpenSCManagerA(ptr ptr long) OpenSCManager32A
@@ -124,7 +124,7 @@ type	win32
 0120 stub QueryServiceLockStatusA
 0121 stub QueryServiceLockStatusW
 0122 stub QueryServiceObjectSecurity
-0123 stub QueryServiceStatus
+0123 stdcall QueryServiceStatus(long ptr) QueryServiceStatus
 0124 stub ReadEventLogA
 0125 stub ReadEventLogW
 0126 stdcall RegCloseKey(long) RegCloseKey
@@ -201,7 +201,7 @@ type	win32
 0197 stdcall StartServiceCtrlDispatcherW(ptr) StartServiceCtrlDispatcher32W
 0198 stdcall StartServiceW(long long ptr) StartService32W
 0199 stub UnlockServiceDatabase
-0200 stub LsaOpenPolicy
+0200 stdcall LsaOpenPolicy(long long long long) LsaOpenPolicy
 0201 stub LsaLookupSids
 0202 stub LsaFreeMemory
 0203 stub LsaQueryInformationPolicy
@@ -265,3 +265,9 @@ type	win32
 0261 stub ElfReportEventW
 0262 stub ElfDeregisterEventSource
 0263 stub ElfDeregisterEventSourceW
+0264 stub I_ScSetServiceBit
+0265 stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long) SynchronizeWindows31FilesAndWindowsNTRegistry
+0266 stdcall QueryWindows31FilesMigration(long) QueryWindows31FilesMigration
+0267 stub LsaICLookupSids
+0268 stub SystemFunction031
+0269 stub I_ScSetServiceBitsA

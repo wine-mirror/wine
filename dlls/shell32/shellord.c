@@ -1557,8 +1557,17 @@ HRESULT WINAPI SHFlushClipboard()
  * SheGetDirW [SHELL32.281]
  *
  */
-HRESULT WINAPI SheGetDirW(LPWSTR u, LPWSTR v)
+HRESULT WINAPI SheGetDir32W(LPWSTR u, LPWSTR v)
 {	FIXME(shell,"%s %s stub\n",debugstr_w(u),debugstr_w(v) );
+	return 0;
+}
+
+/*************************************************************************
+ * SheChangeDirW [SHELL32.274]
+ *
+ */
+HRESULT WINAPI SheChangeDir32W(LPWSTR u)
+{	FIXME(shell,"(%s),stub\n",debugstr_w(u));
 	return 0;
 }
 /*************************************************************************

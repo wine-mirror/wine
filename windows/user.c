@@ -421,12 +421,18 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
     }
 }
 
+/***********************************************************************
+ *           RegisterLogonProcess   (USER32.434)
+ */
 DWORD WINAPI RegisterLogonProcess(HANDLE32 hprocess,BOOL32 x) {
 	FIXME(win32,"(%d,%d),stub!\n",hprocess,x);
 	return 1;
 }
 
-HANDLE32 /* HWINSTA */ WINAPI CreateWindowStation32W(
+/***********************************************************************
+ *           CreateWindowStation32W   (USER32.86)
+ */
+HWINSTA32 WINAPI CreateWindowStation32W(
 	LPWSTR winstation,DWORD res1,DWORD desiredaccess,
 	LPSECURITY_ATTRIBUTES lpsa
 ) {
@@ -436,11 +442,17 @@ HANDLE32 /* HWINSTA */ WINAPI CreateWindowStation32W(
 	return 0xdeadcafe;
 }
 
-BOOL32 WINAPI SetProcessWindowStation(/*HWINSTA*/ HANDLE32 hWinSta) {
+/***********************************************************************
+ *           SetProcessWindowStation   (USER32.496)
+ */
+BOOL32 WINAPI SetProcessWindowStation(HWINSTA32 hWinSta) {
 	FIXME(win32,"(%d),stub!\n",hWinSta);
 	return TRUE;
 }
 
+/***********************************************************************
+ *           SetUserObjectSecurity   (USER32.514)
+ */
 BOOL32 WINAPI SetUserObjectSecurity(
 	HANDLE32 hObj,
 	/*LPSECURITY_INFORMATION*/LPVOID pSIRequested,
@@ -450,7 +462,10 @@ BOOL32 WINAPI SetUserObjectSecurity(
 	return TRUE;
 }
 
-/*HDESK*/HANDLE32 WINAPI CreateDesktop32W(
+/***********************************************************************
+ *           CreateDesktop32W   (USER32.69)
+ */
+HDESK32 WINAPI CreateDesktop32W(
 	LPWSTR lpszDesktop,LPWSTR lpszDevice,LPDEVMODE32W pDevmode,
 	DWORD dwFlags,DWORD dwDesiredAccess,LPSECURITY_ATTRIBUTES lpsa
 ) {
@@ -461,7 +476,26 @@ BOOL32 WINAPI SetUserObjectSecurity(
 	return 0xcafedead;
 }
 
+/***********************************************************************
+ *           SetWindowStationUser   (USER32.521)
+ */
 DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
-	FIXME(win32,"(%d,%d),stub!\n",x1,x2);
+	FIXME(win32,"(%ld,%ld),stub!\n",x1,x2);
 	return 1;
+}
+
+/***********************************************************************
+ *           SetLogonNotifyWindow   (USER32.486)
+ */
+DWORD WINAPI SetLogonNotifyWindow(HWINSTA32 hwinsta,HWND32 hwnd) {
+	FIXME(win32,"(0x%lx,%ld),stub!\n",hwinsta,hwnd);
+	return 1;
+}
+
+/***********************************************************************
+ *           LoadLocalFonts   (USER32.486)
+ */
+VOID WINAPI LoadLocalFonts(VOID) {
+	/* are loaded. */
+	return;
 }

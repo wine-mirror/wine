@@ -369,7 +369,7 @@ type	win32
 366 stdcall LoadImageW(long wstr long long long long) LoadImage32W
 367 stub LoadKeyboardLayoutA
 368 stub LoadKeyboardLayoutW
-369 stub LoadLocalFonts
+369 stdcall LoadLocalFonts() LoadLocalFonts
 370 stdcall LoadMenuA(long str) LoadMenu32A
 371 stdcall LoadMenuIndirectA(ptr) LoadMenuIndirect32A
 372 stdcall LoadMenuIndirectW(ptr) LoadMenuIndirect32W
@@ -423,7 +423,7 @@ type	win32
 420 stdcall PostMessageW(long long long long) PostMessage32W
 421 stdcall PostQuitMessage(long) PostQuitMessage32
 422 stdcall PostThreadMessageA(long long long long) PostThreadMessage32A
-423 stub PostThreadMessageW
+423 stdcall PostThreadMessageW(long long long long) PostThreadMessage32W
 424 stdcall PtInRect(ptr long long) PtInRect32
 425 stub QuerySendMessage
 426 stdcall RedrawWindow(long ptr long long) RedrawWindow32
@@ -486,7 +486,7 @@ type	win32
 483 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos32
 484 stdcall SetKeyboardState(ptr) SetKeyboardState
 485 stdcall SetLastErrorEx(long long) SetLastErrorEx
-486 stub SetLogonNotifyWindow
+486 stdcall SetLogonNotifyWindow(long long) SetLogonNotifyWindow
 487 stdcall SetMenu(long long) SetMenu32
 488 stub SetMenuContextHelpId
 489 stdcall SetMenuDefaultItem(long long long) SetMenuDefaultItem32

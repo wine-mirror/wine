@@ -122,7 +122,7 @@ type	win32
 118 stub _getch
 119 stub _getche
 120 cdecl _getcwd(ptr long) CRTDLL__getcwd
-121 stub _getdcwd
+121 cdecl _getdcwd(long ptr long) CRTDLL__getdcwd
 122 stub _getdiskfree
 123 stub _getdllprocaddr
 124 cdecl _getdrive() CRTDLL__getdrive
@@ -449,7 +449,7 @@ type	win32
 445 stub raise
 446 cdecl rand() CRTDLL_rand
 447 cdecl realloc(ptr long) CRTDLL_realloc
-448 stub remove
+448 cdecl remove(str) CRTDLL_remove
 449 cdecl rename(str str) CRTDLL_rename
 450 stub rewind
 451 stub scanf
@@ -520,8 +520,8 @@ type	win32
 516 cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
 517 cdecl wcsstr(wstr wstr) CRTDLL_wcsstr
 518 stub wcstod
-519 stub wcstok
-520 stub wcstol
+519 cdecl wcstok(wstr wstr) CRTDLL_wcstok
+520 cdecl wcstol(wstr ptr long) CRTDLL_wcstol
 521 cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
 522 stub wcstoul
 523 stub wcsxfrm

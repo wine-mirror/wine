@@ -1274,6 +1274,24 @@ BOOL32 WINAPI PostThreadMessage32A(DWORD idThread , UINT32 message,
    return PostAppMessage16(thdb->process->task, message, wParam, lParam);
 }
 
+/**********************************************************************
+ *           PostThreadMessage32W    (USER32.423)
+ *
+ * BUGS
+ *
+ *  Thread-local message queues are not supported.
+ * 
+ */
+BOOL32 WINAPI PostThreadMessage32W(DWORD idThread , UINT32 message,
+                                   WPARAM32 wParam, LPARAM lParam )
+{
+   THDB *thdb = THREAD_ID_TO_THDB(idThread);
+   if (!thdb || !thdb->process) return FALSE;
+
+   FIXME(sendmsg, "(...): Should use thread-local message queue!\n");
+   return PostAppMessage16(thdb->process->task, message, wParam, lParam);
+}
+
 /***********************************************************************
  *           SendMessage32A   (USER32.454)
  */

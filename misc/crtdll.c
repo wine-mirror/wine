@@ -3,7 +3,7 @@
  * 
  * Implements C run-time functionality as known from UNIX.
  *
- * Copyright 1996 Marcus Meissner
+ * Copyright 1996,1998 Marcus Meissner
  * Copyright 1996 Jukka Iivonen
  * Copyright 1997 Uwe Bonnes
  */
@@ -17,6 +17,11 @@ Unresolved issues Uwe Bonnes 970904:
 - tested with ftp://ftp.remcomp.com/pub/remcomp/lcc-win32.zip, a C-Compiler
  		for Win32, based on lcc, from Jacob Navia
 */
+
+/* NOTE: This file also implements the wcs* functions. They _ARE_ in 
+ * the newer Linux libcs, but use 4 byte wide characters, so are unusable,
+ * since we need 2 byte wide characters. - Marcus Meissner, 981031
+ */
 
 /* FIXME: all the file handling is hopelessly broken -- AJ */
 
@@ -1721,6 +1726,40 @@ CHAR* __cdecl CRTDLL__getcwd(LPSTR buf, INT32 size)
 }
 
 /*********************************************************************
+ *                  _getdcwd           (CRTDLL.121)
+ */
+CHAR* __cdecl CRTDLL__getdcwd(INT32 drive,LPSTR buf, INT32 size)
+{
+  char test[1];
+  int len;
+
+  FIXME(crtdll,"(\"%c:\",%s,%d)\n",drive+'A',buf,size);
+  len = size;
+  if (!buf) {
+    if (size < 0) /* allocate as big as nescessary */
+      len =GetCurrentDirectory32A(1,test) + 1;
+    if(!(buf = CRTDLL_malloc(len)))
+    {
+	/* set error to OutOfRange */
+	return( NULL );
+    }
+  }
+  size = len;
+  if(!(len =GetCurrentDirectory32A(len,buf)))
+    {
+      return NULL;
+    }
+  if (len > size)
+    {
+      /* set error to ERANGE */
+      TRACE(crtdll,"buffer to small\n");
+      return NULL;
+    }
+  return buf;
+
+}
+
+/*********************************************************************
  *                  _getdrive           (CRTDLL.124)
  *
  *  Return current drive, 1 for A, 2 for B
@@ -1736,6 +1775,16 @@ INT32 __cdecl CRTDLL__getdrive(VOID)
 INT32 __cdecl CRTDLL__mkdir(LPCSTR newdir)
 {
 	if (!CreateDirectory32A(newdir,NULL))
+		return -1;
+	return 0;
+}
+
+/*********************************************************************
+ *                  remove           (CRTDLL.448)
+ */
+INT32 __cdecl CRTDLL_remove(LPCSTR file)
+{
+	if (!DeleteFile32A(file))
 		return -1;
 	return 0;
 }
@@ -1933,5 +1982,43 @@ INT32 __cdecl CRTDLL__memicmp(
  *                  __dllonexit           (CRTDLL.25)
  */
 VOID __cdecl CRTDLL__dllonexit ()
-{	FIXME(crtdll,"stub\n");
- }
+{	
+	FIXME(crtdll,"stub\n");
+}
+
+/*********************************************************************
+ *                  wcstok           (CRTDLL.519)
+ * Like strtok, but for wide character strings. s is modified, yes.
+ */
+LPWSTR CRTDLL_wcstok(LPWSTR s,LPCWSTR delim) {
+	static LPWSTR nexttok = NULL;
+	LPWSTR	x,ret;
+
+	if (!s)
+		s = nexttok;
+	if (!s)	
+		return NULL;
+	x = s;
+	while (*x && !CRTDLL_wcschr(delim,*x))
+		x++;
+	ret = nexttok;
+	if (*x) {
+		*x='\0';
+		nexttok = x+1;
+	} else
+		nexttok = NULL;
+	return ret;
+}
+
+/*********************************************************************
+ *                  wcstol           (CRTDLL.520)
+ * Like strtol, but for wide character strings.
+ */
+INT32 CRTDLL_wcstol(LPWSTR s,LPWSTR *end,INT32 base) {
+	LPSTR	sA = HEAP_strdupWtoA(GetProcessHeap(),0,s),endA;
+	INT32	ret = strtol(sA,&endA,base);
+
+	HeapFree(GetProcessHeap(),0,sA);
+	if (end) *end = s+(endA-sA); /* pointer magic checked. */
+	return ret;
+}

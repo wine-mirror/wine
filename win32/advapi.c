@@ -428,3 +428,70 @@ HANDLE32 WINAPI RegisterEventSource32W( LPCWSTR lpUNCServerName,
     return 1;
 }
 
+/******************************************************************************
+ * QueryServiceStatus [ADVAPI32]
+ */
+BOOL32 WINAPI QueryServiceStatus(/*SC_HANDLE*/HANDLE32 hService,/*LPSERVICE_STATUS*/LPVOID lpservicestatus) {
+	FIXME(advapi,"(%d,%p),stub!\n",hService,lpservicestatus);
+	return TRUE;
+}
+
+/******************************************************************************
+ * IsValidSecurityDescriptor [ADVAPI32]
+ */
+BOOL32 WINAPI IsValidSecurityDescriptor(LPSECURITY_DESCRIPTOR lpsecdesc) {
+	FIXME(advapi,"(%p),stub!\n",lpsecdesc);
+	return TRUE;
+}
+
+/******************************************************************************
+ * MakeSelfRelativeSD [ADVAPI32]
+ */
+BOOL32 WINAPI MakeSelfRelativeSD(
+	LPSECURITY_DESCRIPTOR lpabssecdesc,
+	LPSECURITY_DESCRIPTOR lpselfsecdesc,LPDWORD lpbuflen
+) {
+	FIXME(advapi,"(%p,%p,%p),stub!\n",lpabssecdesc,lpselfsecdesc,lpbuflen);
+	return TRUE;
+}
+
+/******************************************************************************
+ * QueryWindows31FilesMigration [ADVAPI32]
+ */
+BOOL32 WINAPI QueryWindows31FilesMigration(DWORD x1) {
+	FIXME(advapi,"(%ld),stub!\n",x1);
+	return TRUE;
+}
+
+/******************************************************************************
+ * SynchronizeWindows31FilesAndWindowsNTRegistry [ADVAPI32]
+ */
+BOOL32 WINAPI SynchronizeWindows31FilesAndWindowsNTRegistry(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
+	FIXME(advapi,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	return TRUE;
+}
+
+/******************************************************************************
+ * LsaOpenPolicy [ADVAPI32]
+ */
+BOOL32 WINAPI LsaOpenPolicy(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
+	FIXME(advapi,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	return 0xc0000000; /* generic error */
+}
+
+/******************************************************************************
+ * NotifyBootConfigStatus [ADVAPI32]
+ */
+BOOL32 WINAPI NotifyBootConfigStatus(DWORD x1) {
+	FIXME(advapi,"(0x%08lx),stub!\n",x1);
+	return 1;
+}
+
+/******************************************************************************
+ * OpenEventLogA [ADVAPI32]
+ */
+HANDLE32 WINAPI OpenEventLog32A(LPCSTR uncname,LPCSTR source) {
+	FIXME(advapi,"(%s,%s),stub!\n",uncname,source);
+	return 0xcafe4242;
+}
+

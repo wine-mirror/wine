@@ -280,14 +280,14 @@ init	Shell32LibMain
  271 stub SheChangeDirA
  272 stub SheChangeDirExA
  273 stub SheChangeDirExW
- 274 stub SheChangeDirW
+ 274 stdcall SheChangeDirW(wstr) SheChangeDir32W
  275 stub SheConvertPathW
  276 stub SheFullPathA
  277 stub SheFullPathW
  278 stub SheGetCurDrive
  279 stub SheGetDirA@8
  280 stub SheGetDirExW@12
- 281 stdcall SheGetDirW (long long) SheGetDirW
+ 281 stdcall SheGetDirW (long long) SheGetDir32W
  282 stub SheGetPathOffsetW
  283 stub SheRemoveQuotesA
  284 stub SheRemoveQuotesW
@@ -376,3 +376,4 @@ init	Shell32LibMain
 
 # later additions ... FIXME: incorrect ordinals
 1218 stdcall SHGetSpecialFolderPathA(long long long long) SHGetSpecialFolderPath
+1219 stub DoEnvironmentSubstW
