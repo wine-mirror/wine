@@ -170,9 +170,18 @@ static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
     LPWSTR buffer;
     WCHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
     BOOL bSuccess = FALSE;
+    DWORD len;
 
     TRACE("copying header: %s\n", debugstr_w(lpszHeader));
-    buffer = WININET_strdupW(lpszHeader);
+
+    if( dwHeaderLength == ~0UL )
+        len = strlenW(lpszHeader);
+    else
+        len = dwHeaderLength;
+    buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR)*(len+1) );
+    strncpyW( buffer, lpszHeader, len );
+    buffer[len]=0;
+
     lpszStart = buffer;
 
     do
@@ -1512,7 +1521,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         static const WCHAR szSetCookie[] = {'S','e','t','-','C','o','o','k','i','e',0 };
         static const WCHAR szColon[] = { ':',' ',0 };
         LPCWSTR *req;
-        LPWSTR p, szCookedHeaders = NULL;
+        LPWSTR p;
         DWORD len, n;
         char *ascii_req;
 
@@ -1536,17 +1545,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         }
 
         /* add the headers the caller supplied */
-        if( lpszHeaders )
+        if( lpszHeaders && dwHeaderLength )
         {
-            len = strlenW(lpszHeaders)+3;
-            szCookedHeaders = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR)*len );
-            strcpyW( szCookedHeaders, lpszHeaders );
-
-            /* make sure there's exactly one linebreak at the end of the string */
-            p = &szCookedHeaders[len-4];
-            while( (szCookedHeaders <= p) && ((*p == '\n') || (*p == '\r')) )
-                p--;
-            p[1] = 0;
+            HTTP_HttpAddRequestHeadersW(lpwhr, lpszHeaders, dwHeaderLength,
+                        HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
         /* allocate space for an array of all the string pointers to be added */
@@ -1559,11 +1561,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         req[n++] = szSpace;
         req[n++] = lpwhr->lpszPath;
         req[n++] = HTTPHEADER;
-        if( szCookedHeaders )
-        {
-            req[n++] = szcrlf;
-            req[n++] = szCookedHeaders;
-        }
 
         /* Append standard request headers */
         for (i = 0; i <= HTTP_QUERY_MAX; i++)
@@ -1609,7 +1606,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         req[n] = NULL;
         requestString = HTTP_build_req( req, 4 );
         HeapFree( GetProcessHeap(), 0, req );
-        HeapFree( GetProcessHeap(), 0, szCookedHeaders );
  
         /*
          * Set (header) termination string for request
