@@ -474,57 +474,123 @@ static BOOL WINAPI CONSOLE_DefaultHandler(DWORD dwCtrlType)
  * This doesn't yet matter, since these handlers are not yet called...!
  */
 
-static unsigned int console_ignore_ctrl_c = 0; /* FIXME: this should be inherited somehow */
-static PHANDLER_ROUTINE handlers[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,CONSOLE_DefaultHandler};
+struct ConsoleHandler {
+    PHANDLER_ROUTINE            handler;
+    struct ConsoleHandler*      next;
+};
+
+static unsigned int             CONSOLE_IgnoreCtrlC = 0; /* FIXME: this should be inherited somehow */
+static struct ConsoleHandler    CONSOLE_DefaultConsoleHandler = {CONSOLE_DefaultHandler, NULL};
+static struct ConsoleHandler*   CONSOLE_Handlers = &CONSOLE_DefaultConsoleHandler;
+static CRITICAL_SECTION         CONSOLE_CritSect = CRITICAL_SECTION_INIT("console_ctrl_section");
 
 /*****************************************************************************/
 
 BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
 {
-    int alloc_loop = sizeof(handlers)/sizeof(handlers[0]) - 1;
+    BOOL        ret = TRUE;
 
     FIXME("(%p,%i) - no error checking or testing yet\n", func, add);
 
     if (!func)
     {
-	console_ignore_ctrl_c = add;
-	return TRUE;
+	CONSOLE_IgnoreCtrlC = add;
     }
-    if (add)
+    else if (add)
     {
-	for (; alloc_loop >= 0 && handlers[alloc_loop]; alloc_loop--);
-	if (alloc_loop <= 0)
-	{
-	    FIXME("Out of space on CtrlHandler table\n");
-	    return FALSE;
-	}
-	handlers[alloc_loop] = func;
+        struct ConsoleHandler*  ch = HeapAlloc(GetProcessHeap(), 0, sizeof(struct ConsoleHandler));
+
+        if (!ch) return FALSE;
+        ch->handler = func;
+        EnterCriticalSection(&CONSOLE_CritSect);
+        ch->next = CONSOLE_Handlers;
+        CONSOLE_Handlers = ch;
+        LeaveCriticalSection(&CONSOLE_CritSect);
     }
     else
     {
-	for (; alloc_loop >= 0 && handlers[alloc_loop] != func; alloc_loop--);
-	if (alloc_loop <= 0)
-	{
-	    WARN("Attempt to remove non-installed CtrlHandler %p\n", func);
-	    return FALSE;
-	}
-	/* sanity check */
-	if (alloc_loop == sizeof(handlers)/sizeof(handlers[0]) - 1)
-	{
-	    ERR("Who's trying to remove default handler???\n");
-	    return FALSE;
-	}
-	if (alloc_loop)
-	    memmove(&handlers[1], &handlers[0], alloc_loop * sizeof(handlers[0]));
-	handlers[0] = 0;
+        struct ConsoleHandler**  ch;
+        EnterCriticalSection(&CONSOLE_CritSect);
+        for (ch = &CONSOLE_Handlers; *ch; *ch = (*ch)->next)
+        {
+            if ((*ch)->handler == func) break;
+        }
+        if (*ch)
+        {
+            struct ConsoleHandler*   rch = *ch;
+
+            /* sanity check */
+            if (rch == &CONSOLE_DefaultConsoleHandler)
+            {
+                ERR("Who's trying to remove default handler???\n");
+                ret = FALSE;
+            }
+            else
+            {
+                rch = *ch;
+                *ch = (*ch)->next;
+                HeapFree(GetProcessHeap(), 0, rch);
+            }
+        }
+        else
+        {
+            WARN("Attempt to remove non-installed CtrlHandler %p\n", func);
+            ret = FALSE;
+        }
+        LeaveCriticalSection(&CONSOLE_CritSect);
     }
-    return TRUE;
+    return ret;
 }
 
 static WINE_EXCEPTION_FILTER(CONSOLE_CtrlEventHandler)
 {
     TRACE("(%lx)\n", GetExceptionCode());
     return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static DWORD WINAPI CONSOLE_HandleCtrlCEntry(void* pmt)
+{
+    struct ConsoleHandler*  ch;
+
+    EnterCriticalSection(&CONSOLE_CritSect);
+    /* the debugger didn't continue... so, pass to ctrl handlers */
+    for (ch = CONSOLE_Handlers; ch; ch = ch->next)
+    {
+        if (ch->handler((DWORD)pmt)) break;
+    }
+    LeaveCriticalSection(&CONSOLE_CritSect);
+    return 0;
+}
+
+/******************************************************************
+ *		CONSOLE_HandleCtrlC
+ *
+ * Check whether the shall manipulate CtrlC events
+ */
+int     CONSOLE_HandleCtrlC(void)
+{
+    /* FIXME: better test whether a console is attached to this process ??? */
+    extern    unsigned CONSOLE_GetNumHistoryEntries(void);
+    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return 0;
+    if (CONSOLE_IgnoreCtrlC) return 1;
+
+    /* try to pass the exception to the debugger
+     * if it continues, there's nothing more to do
+     * otherwise, we need to send the ctrl-event to the handlers
+     */
+    __TRY
+    {
+        RaiseException( DBG_CONTROL_C, 0, 0, NULL );
+    }
+    __EXCEPT(CONSOLE_CtrlEventHandler)
+    {
+        /* Create a separate thread to signal all the events. This would allow to
+         * synchronize between setting the handlers and actually calling them
+         */
+        CreateThread(NULL, 0, CONSOLE_HandleCtrlCEntry, (void*)CTRL_C_EVENT, 0, NULL);
+    }
+    __ENDTRY;
+    return 1;
 }
 
 /******************************************************************************
@@ -1379,41 +1445,3 @@ unsigned CONSOLE_GetNumHistoryEntries(void)
     SERVER_END_REQ;
     return ret;
 }
-
-/******************************************************************
- *		CONSOLE_HandleCtrlC
- *
- * Check whether the shall manipulate CtrlC events
- */
-int     CONSOLE_HandleCtrlC(void)
-{
-    int i;
-
-    /* FIXME: better test whether a console is attached to this process ??? */
-    extern    unsigned CONSOLE_GetNumHistoryEntries(void);
-    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return 0;
-    
-    /* try to pass the exception to the debugger
-     * if it continues, there's nothing more to do
-     * otherwise, we need to send the ctrl-event to the handlers
-     */
-    __TRY
-    {
-        RaiseException( DBG_CONTROL_C, 0, 0, NULL );
-    }
-    __EXCEPT(CONSOLE_CtrlEventHandler)
-    {
-        /* the debugger didn't continue... so, pass to ctrl handlers */
-        /* FIXME: since this routine is called while in a signal handler, 
-         * there are some serious synchronisation issues with
-         * SetConsoleCtrlHandler (trouble ahead)
-         */
-        for (i = 0; i < sizeof(handlers)/sizeof(handlers[0]); i++)
-        {
-            if (handlers[i] && (handlers[i])(CTRL_C_EVENT)) break;
-        }
-    }
-    __ENDTRY;
-    return 1;
-}
-
