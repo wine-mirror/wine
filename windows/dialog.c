@@ -276,8 +276,10 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
             { 'C','o','m','b','o','B','o','x', }      /* 0x85 */
         };
         WORD id = GET_WORD(p+1);
-        if ((id >= 0x80) && (id <= 0x85))
-            info->className = class_names[id - 0x80];
+        /* Windows treats dialog control class ids 0-5 same way as 0x80-0x85 */
+        if ((id >= 0x80) && (id <= 0x85)) id -= 0x80;
+        if (id <= 5)
+            info->className = class_names[id];
         else
         {
             info->className = NULL;
