@@ -1833,7 +1833,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	} break;
 
 	case D3DTSS_MAXMIPLEVEL: 
-	    TRACE(" Stage type : D3DTSS_MAXMIPLEVEL => 0 (disabled) \n");
+	    TRACE(" Stage type : D3DTSS_MAXMIPLEVEL => %ld\n", dwState);
 	    break;
 
 	case D3DTSS_BORDERCOLOR:

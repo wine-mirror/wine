@@ -244,19 +244,31 @@ void set_render_state(IDirect3DDeviceImpl* This,
 			    convert_D3D_blendop_to_GL(lpStateBlock->render_state[D3DRENDERSTATE_DESTBLEND - 1]));
 	        break;
 
-	    case D3DRENDERSTATE_TEXTUREMAPBLEND:    /* 21 */
+	    case D3DRENDERSTATE_TEXTUREMAPBLEND: {  /* 21 */
+		IDirect3DDevice7 *d3ddev = ICOM_INTERFACE(This, IDirect3DDevice7);
+		
 	        switch ((D3DTEXTUREBLEND) dwRenderState) {
 		    case D3DTBLEND_DECAL:
+		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			break;
+		    case D3DTBLEND_DECALALPHA:
 		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 			break;
 		    case D3DTBLEND_MODULATE:
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			break;
 		    case D3DTBLEND_MODULATEALPHA:
-		        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			IDirect3DDevice7_SetTextureStageState(d3ddev, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			IDirect3DDevice7_SetTextureStageState(d3ddev, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+			IDirect3DDevice7_SetTextureStageState(d3ddev, 0, D3DTSS_COLORARG2, D3DTA_CURRENT);
+			IDirect3DDevice7_SetTextureStageState(d3ddev, 0, D3DTSS_ALPHAARG2, D3DTA_CURRENT);
+			IDirect3DDevice7_SetTextureStageState(d3ddev, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			IDirect3DDevice7_SetTextureStageState(d3ddev, 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
 			break;
 		    default:
 		        ERR("Unhandled texture environment %ld !\n",dwRenderState);
 		}
-	        break;
+	    } break;
 
 	    case D3DRENDERSTATE_CULLMODE:           /* 22 */
 	        switch ((D3DCULL) dwRenderState) {
@@ -968,7 +980,7 @@ HRESULT upload_surface_to_tex_memory(RECT *rect, DWORD xoffset, DWORD yoffset, v
 	    DWORD i;
 	    WORD *src = (WORD *) (((BYTE *) src_d->lpSurface) + (bpp * rect->left) + (src_d->u1.lPitch * rect->top)), *dst;
 	    
-	    if (*temp_buffer != NULL)
+	    if (*temp_buffer == NULL)
 		*temp_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 					 current_tex_width * current_tex_height * sizeof(WORD));
 	    dst = (WORD *) *temp_buffer;
