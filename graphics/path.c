@@ -1578,6 +1578,19 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     SetGraphicsMode(dc->hSelf, GM_ADVANCED);
     SetWorldTransform(dc->hSelf, &xform);
     SetGraphicsMode(dc->hSelf, graphicsMode);
+
+    /* If we've moved the current point then get its new position
+       which will be in device (MM_TEXT) co-ords, convert it to
+       logical co-ords and re-set it.  This basically updates
+       dc->CurPosX|Y so that their values are in the correct mapping
+       mode.
+    */
+    if(i > 0) {
+        POINT pt;
+        GetCurrentPositionEx(dc->hSelf, &pt);
+        DPtoLP(dc->hSelf, &pt, 1);
+        MoveToEx(dc->hSelf, pt.x, pt.y, NULL);
+    }
     return ret;
 }
 
