@@ -43,7 +43,6 @@
 #endif
 
 #include "fnt2bdf.h"
-#include "module.h"
 
 #define FILE_ERROR	0
 #define FILE_DLL	1

@@ -44,7 +44,6 @@
 #include "selectors.h"
 #include "miscemu.h"
 #include "stackframe.h"
-#include "module.h"
 #include "wine/debug.h"
 #include "winerror.h"
 #include "excpt.h"

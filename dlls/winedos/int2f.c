@@ -26,7 +26,6 @@
 #include <string.h>
 #include "wine/winbase16.h"
 #include "miscemu.h"
-#include "module.h"
 /* #define DEBUG_INT */
 #include "wine/debug.h"
 #include "winioctl.h"

@@ -27,7 +27,6 @@
 # include <unistd.h>
 #endif
 
-#include "module.h"
 #include "dosexe.h"
 #include "wincon.h"
 #include "wine/debug.h"

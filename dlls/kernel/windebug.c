@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "windef.h"
-#include "module.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 

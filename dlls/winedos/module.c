@@ -42,7 +42,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "module.h"
 #include "task.h"
 #include "file.h"
 #include "miscemu.h"

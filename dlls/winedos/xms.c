@@ -28,7 +28,6 @@
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "module.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 
