@@ -1514,6 +1514,8 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   psInfo->proppage[index].hwndPage = hwndPage;
 
+  /* NOTE: This code should be most probably moved to PROPSHEET_SetCurSel,
+   * but until it will be proved with test case it's left here. */
   if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) {     
       int offsety = 0;
       HWND hwndChild;
@@ -1548,21 +1550,6 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 		   rc.left + padding.x/2,
 		   rc.top + padding.y/2 + offsety,
 		   pageWidth, pageHeight - offsety, 0);
-  }
-  else {
-      /*
-       * Ask the Tab control to reduce the client rectangle to that
-       * it has available.
-       */
-      PROPSHEET_GetPageRect(psInfo, hwndParent, &rc);
-      pageWidth = rc.right - rc.left;
-      pageHeight = rc.bottom - rc.top;
-      TRACE("setting page %08lx, rc (%ld,%ld)-(%ld,%ld) w=%d, h=%d\n",
-	    (DWORD)hwndPage, rc.left, rc.top, rc.right, rc.bottom,
-	    pageWidth, pageHeight);
-      SetWindowPos(hwndPage, HWND_TOP,
-		   rc.left, rc.top,
-		   pageWidth, pageHeight, 0);
   }
 
   return TRUE;
@@ -2027,8 +2014,6 @@ static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
   HWND hwndPage;
   PSHNOTIFY psn;
   BOOL res = FALSE;
-  HWND hwndTabControl;
-  RECT rect;
 
   TRACE("active_page %d\n", psInfo->active_page);
   if (!psInfo)
@@ -2053,16 +2038,6 @@ static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
   psn.lParam       = 0;
 
   res = !SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
-
-  /*
-   *  Re-adjust the tab control's contents
-   */
-  hwndTabControl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
-  memset( &rect, 0, sizeof rect );
-  GetClientRect( hwndTabControl, &rect );
-  SendMessageW( hwndTabControl, TCM_ADJUSTRECT, 0, (LPARAM) &rect );
-  SetWindowPos( hwndPage, NULL, rect.left, rect.top,
-                rect.right - rect.left, rect.bottom - rect.top, 0 );
 
 end:
   TRACE("<-- %d\n", res);
@@ -2096,6 +2071,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
   while (1) {
     int result;
     PSHNOTIFY psn;
+    RECT rc;
 
     if (hwndTabControl)
 	SendMessageW(hwndTabControl, TCM_SETCURSEL, index, 0);
@@ -2108,6 +2084,22 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     if (!psInfo->proppage[index].hwndPage) {
       LPCPROPSHEETPAGEW ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
       PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
+    }
+
+    /* NOTE: The resizing happens every time the page is selected and
+     * not only when it's created (some applications depend on it). */
+    if (!(psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)) {
+      /*
+       * Ask the Tab control to reduce the client rectangle to that
+       * it has available.
+       */
+      PROPSHEET_GetPageRect(psInfo, hwndDlg, &rc);
+      TRACE("setting page %p, rc (%ld,%ld)-(%ld,%ld) w=%ld, h=%ld\n",
+	    psInfo->proppage[index].hwndPage, rc.left, rc.top, rc.right, rc.bottom,
+	    rc.right - rc.left, rc.bottom - rc.top);
+      SetWindowPos(psInfo->proppage[index].hwndPage, HWND_TOP,
+		   rc.left, rc.top,
+		   rc.right - rc.left, rc.bottom - rc.top, 0);
     }
 
     result = SendMessageW(psInfo->proppage[index].hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
