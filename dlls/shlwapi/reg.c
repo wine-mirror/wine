@@ -223,17 +223,78 @@ HRESULT WINAPI SHQueryValueExW (
 
 /*************************************************************************
  * SHDeleteKeyA   [SHLWAPI.@]
+ *
+ * It appears this function is made available to account for the differences
+ * between the Win9x and WinNT/2k RegDeleteKeyA functions.
+ *
+ * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
+ * WinNt/2k will only delete the key if empty.
  */
 HRESULT WINAPI SHDeleteKeyA(
-	HKEY hkey,
-	LPCSTR pszSubKey)
+	HKEY hKey,
+	LPCSTR lpszSubKey)
 {
-	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_a(pszSubKey));
-	return 0;
+    DWORD r, dwKeyCount, dwSize, i, dwMaxSubkeyLen;
+    HKEY hSubKey;
+    LPSTR lpszName;
+
+    TRACE("hkey=0x%08x, %s\n", hKey, debugstr_a(lpszSubKey));
+
+    hSubKey = 0;
+    r = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+    if(r != ERROR_SUCCESS)
+        return r;
+
+    /* find how many subkeys there are */
+    dwKeyCount = 0;
+    dwMaxSubkeyLen = 0;
+    r = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, &dwKeyCount, 
+                    &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
+    if(r != ERROR_SUCCESS)
+    {
+        RegCloseKey(hSubKey);
+        return r;
+    }
+
+    /* alloc memory for the longest string terminating 0 */
+    dwMaxSubkeyLen++;
+    lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(CHAR));
+    if(!lpszName)
+    {
+        RegCloseKey(hSubKey);
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+
+    /* recursively delete all the subkeys */
+    for(i=0; i<dwKeyCount; i++)
+    {
+        dwSize = dwMaxSubkeyLen;
+        r = RegEnumKeyExA(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
+        if(r != ERROR_SUCCESS)
+            break;
+        r = SHDeleteKeyA(hSubKey, lpszName);
+        if(r != ERROR_SUCCESS)
+            break;
+    }
+
+    HeapFree(GetProcessHeap(), 0, lpszName);
+
+    RegCloseKey(hSubKey);
+
+    if(r == ERROR_SUCCESS)
+        r = RegDeleteKeyA(hKey, lpszSubKey);
+
+    return r;
 }
 
 /*************************************************************************
  * SHDeleteKeyW   [SHLWAPI.@]
+ *
+ * It appears this function is made available to account for the differences
+ * between the Win9x and WinNT/2k RegDeleteKeyA functions.
+ *
+ * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
+ * WinNt/2k will only delete the key if empty.
  */
 HRESULT WINAPI SHDeleteKeyW(
 	HKEY hkey,
@@ -242,3 +303,56 @@ HRESULT WINAPI SHDeleteKeyW(
 	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_w(pszSubKey));
 	return 0;
 }
+
+/*************************************************************************
+ * SHDeleteEmptyKeyA   [SHLWAPI.@]
+ *
+ * It appears this function is made available to account for the differences
+ * between the Win9x and WinNT/2k RegDeleteKeyA functions.
+ *
+ * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
+ * WinNt/2k will only delete the key if empty.
+ */
+DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey)
+{
+    DWORD r, dwKeyCount;
+    HKEY hSubKey;
+
+    TRACE("hkey=0x%08x, %s\n", hKey, debugstr_a(lpszSubKey));
+
+    hSubKey = 0;
+    r = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+    if(r != ERROR_SUCCESS)
+        return r;
+
+    dwKeyCount = 0;
+    r = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, &dwKeyCount, 
+                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    if(r != ERROR_SUCCESS)
+        return r;
+
+    RegCloseKey(hSubKey);
+
+    if(dwKeyCount)
+        return ERROR_KEY_HAS_CHILDREN;
+
+    r = RegDeleteKeyA(hKey, lpszSubKey);
+
+    return r;
+}
+
+/*************************************************************************
+ * SHDeleteEmptyKeyW   [SHLWAPI.@]
+ *
+ * It appears this function is made available to account for the differences
+ * between the Win9x and WinNT/2k RegDeleteKeyA functions.
+ *
+ * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
+ * WinNt/2k will only delete the key if empty.
+ */
+DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey)
+{
+    FIXME("hkey=0x%08x, %s\n", hKey, debugstr_w(lpszSubKey));
+    return 0;
+}
+

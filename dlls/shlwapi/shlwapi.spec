@@ -558,8 +558,8 @@ import kernel32
 @ stdcall PathUnquoteSpacesA (str) PathUnquoteSpacesA
 @ stdcall PathUnquoteSpacesW (wstr) PathUnquoteSpacesW
 @ stdcall SHCreateShellPalette(long)SHCreateShellPalette
-@ stub    SHDeleteEmptyKeyA
-@ stub    SHDeleteEmptyKeyW
+@ stdcall SHDeleteEmptyKeyA(long ptr) SHDeleteEmptyKeyA
+@ stdcall SHDeleteEmptyKeyW(long ptr) SHDeleteEmptyKeyW
 @ stdcall SHDeleteKeyA(long str) SHDeleteKeyA
 @ stdcall SHDeleteKeyW(long wstr) SHDeleteKeyW
 @ stub    SHDeleteOrphanKeyA

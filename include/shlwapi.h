@@ -122,6 +122,14 @@ void WINAPI PathRemoveBlanksW(LPWSTR lpszPath);
 #define  PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
 void WINAPI PathRemoveBlanksAW(LPVOID lpszPath);
 
+HRESULT WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey);
+HRESULT WINAPI SHDeleteKeyW(HKEY hkey, LPCWSTR pszSubKey);
+#define  SHDeleteKey WINELIB_NAME_AW(SHDeleteKey)
+
+DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey);
+DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey);
+#define  SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
