@@ -326,6 +326,7 @@ static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM l
     RECT rectWindow, rectClient;
     WND *wndPtr;
     HWND *list = WIN_ListChildren( parent );
+    HWND retvalue = 0;
 
     if (!list) return 0;
     for (i = 0; list[i]; i++)
@@ -361,40 +362,43 @@ static HWND find_child_from_point( HWND parent, POINT pt, INT *hittest, LPARAM l
         if (style & WS_MINIMIZE)
         {
             *hittest = HTCAPTION;
-            return list[i];
+            retvalue = list[i];
+            break;
         }
         if (style & WS_DISABLED)
         {
             *hittest = HTERROR;
-            return list[i];
+            retvalue = list[i];
+            break;
         }
 
         /* If point is in client area, explore children */
         if (PtInRect( &rectClient, pt ))
         {
             POINT new_pt;
-            HWND ret;
 
             new_pt.x = pt.x - rectClient.left;
             new_pt.y = pt.y - rectClient.top;
-            if ((ret = find_child_from_point( list[i], new_pt, hittest, lparam )))
-                return ret;
+            if ((retvalue = find_child_from_point( list[i], new_pt, hittest, lparam ))) break;
         }
 
         /* Now it's inside window, send WM_NCCHITTEST (if same thread) */
         if (!WIN_IsCurrentThread( list[i] ))
         {
             *hittest = HTCLIENT;
-            return list[i];
+            retvalue = list[i];
+            break;
         }
         if ((res = SendMessageA( list[i], WM_NCHITTEST, 0, lparam )) != HTTRANSPARENT)
         {
             *hittest = res;  /* Found the window */
-            return list[i];
+            retvalue = list[i];
+            break;
         }
         /* continue search with next sibling */
     }
-    return 0;
+    HeapFree( GetProcessHeap(), 0, list );
+    return retvalue;
 }
 
 
