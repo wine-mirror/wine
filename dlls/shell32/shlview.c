@@ -43,6 +43,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"
@@ -808,6 +810,90 @@ static UINT ShellView_GetSelections(IShellViewImpl * This)
 	return This->cidl;
 
 }
+
+/**********************************************************
+ *	ShellView_OpenSelectedItems()
+ */
+static HRESULT ShellView_OpenSelectedItems(IShellViewImpl * This)
+{
+	static UINT CF_IDLIST = 0;
+	HRESULT hr;
+	IDataObject* selection;
+	FORMATETC fetc;
+	STGMEDIUM stgm;
+	LPIDA pIDList;
+	LPCITEMIDLIST parent_pidl;
+	int i;
+
+	if (0 == ShellView_GetSelections(This))
+	{
+	  return S_OK;
+	}
+	hr = IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl,
+	                                (LPCITEMIDLIST*)This->apidl, &IID_IDataObject,
+	                                0, (LPVOID *)&selection);
+	if (FAILED(hr))
+	  return hr;
+
+	if (0 == CF_IDLIST)
+	{
+	  CF_IDLIST = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
+	}
+	fetc.cfFormat = CF_IDLIST;
+	fetc.ptd = NULL;
+	fetc.dwAspect = DVASPECT_CONTENT;
+	fetc.lindex = -1;
+	fetc.tymed = TYMED_HGLOBAL;
+
+	hr = IDataObject_QueryGetData(selection, &fetc);
+	if (FAILED(hr))
+	  return hr;
+
+	hr = IDataObject_GetData(selection, &fetc, &stgm);
+	if (FAILED(hr))
+	  return hr;
+
+	pIDList = GlobalLock(stgm.u.hGlobal);
+
+	parent_pidl = (LPCITEMIDLIST) ((LPBYTE)pIDList+pIDList->aoffset[0]);
+	for (i = pIDList->cidl; i > 0; --i)
+	{
+	  LPCITEMIDLIST pidl;
+	  SFGAOF attribs;
+
+	  pidl = (LPCITEMIDLIST)((LPBYTE)pIDList+pIDList->aoffset[i]);
+
+	  attribs = SFGAO_FOLDER;
+	  hr = IShellFolder_GetAttributesOf(This->pSFParent, 1, &pidl, &attribs);
+
+	  if (SUCCEEDED(hr) && ! (attribs & SFGAO_FOLDER))
+	  {
+	    SHELLEXECUTEINFOA shexinfo;
+
+	    shexinfo.cbSize = sizeof(SHELLEXECUTEINFOA);
+	    shexinfo.fMask = SEE_MASK_INVOKEIDLIST;	/* SEE_MASK_IDLIST is also possible. */
+	    shexinfo.hwnd = NULL;
+	    shexinfo.lpVerb = NULL;
+	    shexinfo.lpFile = NULL;
+	    shexinfo.lpParameters = NULL;
+	    shexinfo.lpDirectory = NULL;
+	    shexinfo.nShow = SW_NORMAL;
+	    shexinfo.lpIDList = ILCombine(parent_pidl, pidl);
+
+	    ShellExecuteExA(&shexinfo);    /* Discard error/success info */
+
+	    ILFree((LPITEMIDLIST)shexinfo.lpIDList);
+	  }
+	}
+
+	GlobalUnlock(stgm.u.hGlobal);
+	ReleaseStgMedium(&stgm);
+
+	IDataObject_Release(selection);
+
+	return S_OK;
+}
+
 /**********************************************************
  *	ShellView_DoContextMenu()
  */
@@ -849,6 +935,9 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 	      /* let the ContextMenu merge its items in */
 	      if (SUCCEEDED(IContextMenu_QueryContextMenu( pContextMenu, hMenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, wFlags )))
 	      {
+	        if (This->FolderSettings.fFlags & FWF_DESKTOP)
+		  SetMenuDefaultItem(hMenu, FCIDM_SHVIEW_OPEN, MF_BYCOMMAND);
+
 		if( bDefault )
 		{
 		  TRACE("-- get menu default command\n");
@@ -863,10 +952,13 @@ static void ShellView_DoContextMenu(IShellViewImpl * This, WORD x, WORD y, BOOL 
 		if(uCommand > 0)
 		{
 		  TRACE("-- uCommand=%u\n", uCommand);
-		  if (IsInCommDlg(This) && ((uCommand==FCIDM_SHVIEW_EXPLORE) || (uCommand==FCIDM_SHVIEW_OPEN)))
+		  if (uCommand==FCIDM_SHVIEW_OPEN && IsInCommDlg(This))
 		  {
 		    TRACE("-- dlg: OnDefaultCommand\n");
-		    OnDefaultCommand(This);
+		    if (FAILED(OnDefaultCommand(This)))
+		    {
+		      ShellView_OpenSelectedItems(This);
+		    }
 		  }
 		  else
 		  {
@@ -1144,6 +1236,22 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    OnStateChange(This,CDBOSC_KILLFOCUS);
 	    break;
 
+	  case NM_CUSTOMDRAW:
+	    TRACE("-- NM_CUSTOMDRAW %p\n",This);
+	    return CDRF_DODEFAULT;
+
+	  case NM_RELEASEDCAPTURE:
+	    TRACE("-- NM_RELEASEDCAPTURE %p\n",This);
+	    break;
+
+	  case NM_CLICK:
+	    TRACE("-- NM_CLICK %p\n",This);
+	    break;
+
+	  case NM_RCLICK:
+	    TRACE("-- NM_RCLICK %p\n",This);
+	    break;	    
+
 	  case HDN_ENDTRACKA:
 	    TRACE("-- HDN_ENDTRACKA %p\n",This);
 	    /*nColumn1 = ListView_GetColumnWidth(This->hWndList, 0);
@@ -1154,6 +1262,10 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    TRACE("-- LVN_DELETEITEM %p\n",This);
 	    SHFree((LPITEMIDLIST)lpnmlv->lParam);     /*delete the pidl because we made a copy of it*/
 	    break;
+
+	  case LVN_DELETEALLITEMS:
+	    TRACE("-- LVN_DELETEALLITEMS %p\n",This);
+	    return FALSE;
 
 	  case LVN_INSERTITEM:
 	    TRACE("-- LVN_INSERTITEM (STUB)%p\n",This);
