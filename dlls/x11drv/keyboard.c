@@ -589,6 +589,26 @@ static const char main_key_SI[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Serbian keyboard layout (setxkbmap sr) ***/
+static const char main_key_SR[MAIN_LEN][4] =
+{
+ "`~","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?","+*",
+ "©¹","ªº","Åå","Òò","Ôô","Úú","Õõ","Éé","Ïï","Ğğ","Ûû","[]",
+ "Áá","Óó","Ää","Ææ","Çç","Èè","¨¸","Ëë","Ìì","Şş","«»","-_",
+ "¡±","¯¿","Ãã","×÷","Ââ","Îî","Íí",",;",".:","Öö",
+ "<>" /* the phantom key */
+};
+
+/*** Serbian keyboard layout (setxkbmap us,sr) ***/
+static const char main_key_US_SR[MAIN_LEN][4] =
+{
+ "`~","1!","2@2\"","3#","4$","5%","6^6&","7&7/","8*8(","9(9)","0)0=","-_'?","=++*",
+ "qQ©¹","wWªº","eEÅå","rRÒò","tTÔô","yYÚú","uUÕõ","iIÉé","oOÏï","pPĞğ","[{Ûû","]}[]",
+ "aAÁá","sSÓó","dDÄä","fFÆæ","gGÇç","hHÈè","jJ¨¸","kKËë","lLÌì",";:Şş","'\"«»","\\|-_",
+ "zZ¡±","xX¯¿","cCÃã","vV×÷","bBÂâ","nNÎî","mMÍí",",<,;",".>.:","/?Öö",
+ "<>" /* the phantom key */
+};
+
 /*** Croatian keyboard layout specific for me <jelly@srk.fer.hr> ***/
 static const char main_key_HR_jelly[MAIN_LEN][4] =
 {
@@ -879,6 +899,8 @@ static const struct {
  {0x040e, "Hungarian keyboard layout", &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x0415, "Polish (programmer's) keyboard layout", &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0424, "Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwertz},
+ {0x0c1a, "Serbian keyboard layout sr", &main_key_SR, &main_key_scan_qwerty, &main_key_vkey_qwerty}, /* LANG_SERBIAN,SUBLANG_SERBIAN_CYRILLIC */
+ {0x0c1a, "Serbian keyboard layout us,sr", &main_key_US_SR, &main_key_scan_qwerty, &main_key_vkey_qwerty}, /* LANG_SERBIAN,SUBLANG_SERBIAN_CYRILLIC */
  {0x041a, "Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x041a, "Croatian keyboard layout (specific)", &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0411, "Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
