@@ -35,7 +35,7 @@ rolex: rolex.o $(WINELIB)
 	$(CC) -o rolex rolex.o $(LDOPTIONS) $(ALL_LIBS)
 
 clean::
-	$(RM) hello hello2 hello3 hello3res.c hello3res.h hello4 new rolex
+	$(RM) $(PROGRAMS) hello3res.c hello3res.h
 
 hello3res.c hello3res.h: $(WINERC)
 

@@ -20,6 +20,7 @@
 
 
 extern HRGN DCE_GetVisRgn(HWND, WORD);
+extern HWND CARET_GetHwnd();
 
 static int RgnType;
 
@@ -122,9 +123,10 @@ BOOL	SCROLL_ScrollChildren( HWND hScroll, short dx, short dy)
 
 void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
 {
-    HDC hdc;
+    HDC  hdc;
     HRGN hrgnUpdate,hrgnClip;
     RECT rc, cliprc;
+    HWND hCaretWnd = CARET_GetHwnd();
 
     dprintf_scroll(stddeb,"ScrollWindow: dx=%d, dy=%d, lpRect =%08lx clipRect=%i,%i,%i,%i\n", 
 	    dx, dy, (LONG)rect, (int)((clipRect)?clipRect->left:0),
@@ -138,6 +140,10 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
 	GetClientRect(hwnd, &rc);
 	  hrgnClip = CreateRectRgnIndirect( &rc );
 
+          if ((hCaretWnd == hwnd) || IsChild(hwnd,hCaretWnd))
+              HideCaret(hCaretWnd);
+          else hCaretWnd = 0;
+ 
 	  /* children will be Blt'ed too */
 	  hdc      = GetDCEx(hwnd, hrgnClip, DCX_CACHE | DCX_CLIPSIBLINGS);
           DeleteObject(hrgnClip);
@@ -150,7 +156,9 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
 			 (int)rect->bottom,(int)rc.left,(int)rc.top,
 			 (int)rc.right,(int)rc.bottom);
 
-	CopyRect(&rc, rect);
+          if (hCaretWnd == hwnd) HideCaret(hCaretWnd);
+          else hCaretWnd = 0;
+          CopyRect(&rc, rect);
 	  hdc = GetDC(hwnd);
        }
 
@@ -189,6 +197,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
       }
 
     DeleteObject(hrgnUpdate);
+    if( hCaretWnd ) ShowCaret(hCaretWnd);
 }
 
 

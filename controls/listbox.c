@@ -10,8 +10,8 @@
  /*
   * FIXME: 
   * - check if multi-column listboxes work
-  * - implement more messages and styles (LB_EXTENDEDSEL for instance)
-  * - exterminate evil InvalidateRect(whole listbox) where possible!!!!
+  * - implement more messages and styles 
+  * - implement caret for LBS_EXTENDEDSEL
   */
 
 #include <stdio.h>
@@ -21,6 +21,7 @@
 #include "windows.h"
 #include "user.h"
 #include "win.h"
+#include "gdi.h"
 #include "msdos.h"
 #include "listbox.h"
 #include "dos_fs.h"
@@ -574,13 +575,9 @@ int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex)
   DWORD	       dwStyle = GetWindowWord(lphl->hSelf,GWL_STYLE);
 
   /* use ListBoxSetSel instead */
-  if (dwStyle & LBS_MULTIPLESEL ) return 0;
+  if (dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) ) return 0;
 
-  /* unselect all previously selected */
-  if (dwStyle & LBS_EXTENDEDSEL )
-      ListBoxSetSel(lphl,-1,0);
-  else 
-      /* unselect previous item */
+  /* unselect previous item */
   if (lphl->ItemFocused != -1) {
     lpls = ListBoxGetItem(lphl, lphl->ItemFocused);
     if (lpls == 0) return LB_ERR;
@@ -602,23 +599,27 @@ int ListBoxSetCurSel(LPHEADLIST lphl, WORD wIndex)
 
 int ListBoxSetSel(LPHEADLIST lphl, WORD wIndex, WORD state)
 {
-  LPLISTSTRUCT lpls;
+  LPLISTSTRUCT  lpls;
+  int           n = 0;
 
   if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & 
        (LBS_MULTIPLESEL | LBS_EXTENDEDSEL)  )) 
-        return 0;
+        return LB_ERR;
 
   if (wIndex == (UINT)-1) {
     for (lpls = lphl->lpFirst; lpls != NULL; lpls = lpls->lpNext) {
-      lpls->itemState = state;
+      if( lpls->itemState & ODS_SELECTED) n++;
+      lpls->itemState = state? lpls->itemState |  ODS_SELECTED
+                             : lpls->itemState & ~ODS_SELECTED;
     }
-    return 0;
+    return n;
   }
 
   if (wIndex >= lphl->ItemsCount) return LB_ERR;
 
   lpls = ListBoxGetItem(lphl, wIndex);
-  lpls->itemState = state;
+  lpls->itemState = state? lpls->itemState |  ODS_SELECTED
+                         : lpls->itemState & ~ODS_SELECTED;
 
   return 0;
 }
@@ -629,7 +630,7 @@ int ListBoxGetSel(LPHEADLIST lphl, WORD wIndex)
   LPLISTSTRUCT lpls = ListBoxGetItem(lphl, wIndex);
 
   if (lpls == NULL) return LB_ERR;
-  return lpls->itemState;
+  return lpls->itemState & ODS_SELECTED;
 }
 
 /* ------------------------- dir listing ------------------------ */
@@ -902,7 +903,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD       wRet;
-  int        y;
+  int        y,n;
   RECT       rectsel;
   LONG	     dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
   POINT      tmpPOINT;
@@ -914,31 +915,62 @@ static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
   lphl->PrevFocused = lphl->ItemFocused;
 
   y = ListBoxFindMouse(lphl, LOWORD(lParam), HIWORD(lParam));
-  if (y == -1)
-    return 0;
 
-  if (dwStyle & LBS_MULTIPLESEL) {
-    lphl->ItemFocused = y;
-    wRet = ListBoxGetSel(lphl, y);
-    ListBoxSetSel(lphl, y, !wRet);
+  if (y == -1) return 0;
 
-    InvalidateRect(hwnd, NULL, TRUE);
-  } else {
-    ListBoxSetCurSel(lphl, y);
+  if (dwStyle & LBS_NOTIFY && y!= LB_ERR )
+     if( SendMessage(lphl->hParent, WM_LBTRACKPOINT, y, lParam) )
+         return 0;
 
-  ListBoxGetItemRect(lphl, y, &rectsel);
-    InvalidateRect(hwnd, &rectsel, TRUE);
-    if(lphl->PrevFocused) {
-        ListBoxGetItemRect(lphl, lphl->PrevFocused, &rectsel);
-	InvalidateRect(hwnd, &rectsel, TRUE);
-    } 
-  }
 
-  if (dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL))
-    ListBoxSendNotification(lphl, LBN_SELCHANGE);
+  switch( dwStyle & (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )
+   {
+        case LBS_MULTIPLESEL:
+                lphl->ItemFocused = y;
+                wRet = ListBoxGetSel(lphl, y);
+                ListBoxSetSel(lphl, y, !wRet);
+                break;
+        case LBS_EXTENDEDSEL:
+                /* should handle extended mode here and in kbd handler 
+                 */ 
 
-  if (dwStyle & LBS_NOTIFY)
-    SendMessage(lphl->hParent, WM_LBTRACKPOINT, y, lParam);
+                if ( lphl->PrevFocused != y && y!= LB_ERR)
+                 {
+                   LPLISTSTRUCT lpls = ListBoxGetItem( lphl, lphl->ItemFocused = y );
+                   n = ListBoxSetSel(lphl,-1,FALSE);
+
+                   lpls->itemState = ODS_FOCUS | ODS_SELECTED;
+
+                   if( n > 1 && n != LB_ERR )
+                     InvalidateRect(hwnd,NULL,TRUE);
+                 }
+                else
+                       return 0;
+
+                break;
+        case 0:
+                if( y!=lphl->ItemFocused )
+                  ListBoxSetCurSel(lphl, y);
+                else
+                  return 0;
+                break;
+        default:
+                fprintf(stdnimp,"Listbox: LBS_MULTIPLESEL and LBS_EXTENDEDSEL are on!\n");
+                return 0;
+   }
+
+ /* invalidate changed items */
+ if( dwStyle & LBS_MULTIPLESEL || y!=lphl->PrevFocused )
+   {
+     ListBoxGetItemRect(lphl, y, &rectsel);
+     InvalidateRect(hwnd, &rectsel, TRUE);
+   }
+ if( lphl->PrevFocused!=-1 && y!=lphl->PrevFocused ) 
+   {
+     ListBoxGetItemRect(lphl, lphl->PrevFocused, &rectsel);
+     InvalidateRect(hwnd, &rectsel, TRUE);
+   }
+
 #ifndef WINELIB
   if (GetWindowLong(lphl->hSelf,GWL_EXSTYLE) & WS_EX_DRAGDETECT)
      if( DragDetect(lphl->hSelf,tmpPOINT) )
@@ -987,8 +1019,8 @@ static LONG LBRButtonUp(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  int  y;
-  WORD wRet;
+  int  y,redraw_prev = 0;
+  int  iRet;
   LONG  dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
   RECT rect, rectsel;   /* XXX Broken */
 
@@ -1014,19 +1046,33 @@ static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
     }
     if ((y > 0) && (y < (rect.bottom - 4))) {
       if ((y < rectsel.top) || (y > rectsel.bottom)) {
-	wRet = ListBoxFindMouse(lphl, LOWORD(lParam), HIWORD(lParam));
-	if (wRet == lphl->ItemFocused)  {
+        iRet = ListBoxFindMouse(lphl, LOWORD(lParam), HIWORD(lParam));
+        if (iRet == lphl->ItemFocused || iRet == -1)  {
 	  return 0;
 	}
 	if (dwStyle & LBS_MULTIPLESEL) {
-	  lphl->ItemFocused = wRet;
+          lphl->ItemFocused = iRet;
 	  ListBoxSendNotification(lphl, LBN_SELCHANGE);
-	} else {
-	  ListBoxSetCurSel(lphl, wRet);
-	  if(dwStyle & LBS_EXTENDEDSEL)
-	     ListBoxSendNotification(lphl, LBN_SELCHANGE);
-	}
-	ListBoxGetItemRect(lphl, wRet, &rectsel);
+        } else if ( dwStyle & LBS_EXTENDEDSEL )
+                  {
+                     /* Fixme: extended selection mode */
+                     ListBoxSetSel( lphl, lphl->ItemFocused, 0);
+                     lphl->PrevFocused = lphl->ItemFocused;
+                     lphl->ItemFocused = iRet;
+                     ListBoxSetSel( lphl, iRet, TRUE);
+                     redraw_prev = 1;
+                  }
+               else
+                  {
+                     ListBoxSetCurSel(lphl, (WORD)iRet);
+                     redraw_prev = 1; 
+                  }
+        if( lphl->PrevFocused!=-1 && redraw_prev )
+          {
+            ListBoxGetItemRect(lphl, lphl->PrevFocused, &rectsel);
+            InvalidateRect(hwnd, &rectsel, TRUE);
+          }
+        ListBoxGetItemRect(lphl, iRet, &rectsel);
 	InvalidateRect(hwnd, &rectsel, TRUE);
       }
     }
@@ -1050,8 +1096,6 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
   ListBoxGetItemRect(lphl,lphl->ItemFocused,&rect);
   switch(wParam) 
     {
-	/* ugly kludge that belongs in TranslateMessage */
-
 	case VK_HOME:
 	case VK_END:
 	case VK_LEFT:
@@ -1065,7 +1109,7 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 		  newFocused = (WORD)(INT)SendMessage(lphl->hParent,WM_VKEYTOITEM,
 					              wParam,MAKELPARAM(lphl->ItemFocused,hwnd));
 	          if ( newFocused == 0xFFFE ) return 0L;
-  }
+                }
 	     if ( newFocused == 0xFFFF ) 
 		{
 		  newFocused = lphl->ItemFocused;
@@ -1073,42 +1117,42 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 		  /* nested switch */
 		  switch(wParam)
 		    {
-  case VK_HOME:
-    newFocused = 0;
-    break;
-  case VK_END:
-    newFocused = lphl->ItemsCount - 1;
-    break;
-  case VK_LEFT:
+                        case VK_HOME:
+                          newFocused = 0;
+                          break;
+                        case VK_END:
+                          newFocused = lphl->ItemsCount - 1;
+                          break;
+                        case VK_LEFT:
   			  if (dwStyle & LBS_MULTICOLUMN) {
-      if (newFocused >= lphl->ItemsPerColumn) {
-	newFocused -= lphl->ItemsPerColumn;
-      } else {
-	newFocused = 0;
-      }
-    }
-    break;
-  case VK_UP:
-    if (newFocused > 0) newFocused--;
-    break;
-  case VK_RIGHT:
-			    if (dwStyle & LBS_MULTICOLUMN) 
-      newFocused += lphl->ItemsPerColumn;
-    break;
-  case VK_DOWN:
-    newFocused++;
-    break;
-  case VK_PRIOR:
-			    if (newFocused > lphl->ItemsVisible)
-      newFocused -= lphl->ItemsVisible;
+                            if (newFocused >= lphl->ItemsPerColumn) {
+                                newFocused -= lphl->ItemsPerColumn;
+                            } else {
+                                newFocused = 0;
+                            }
+                          }
+                          break;
+                        case VK_UP:
+                          if (newFocused > 0) newFocused--;
+                          break;
+                        case VK_RIGHT:
+                          if (dwStyle & LBS_MULTICOLUMN) 
+                             newFocused += lphl->ItemsPerColumn;
+                          break;
+                        case VK_DOWN:
+                          newFocused++;
+                          break;
+                        case VK_PRIOR:
+                          if (newFocused > lphl->ItemsVisible)
+                              newFocused -= lphl->ItemsVisible;
 			    else  newFocused = 0;
-    break;
-  case VK_NEXT:
-    newFocused += lphl->ItemsVisible;
-    break;
-  default:
-    return 0;
-  }
+                            break;
+                        case VK_NEXT:
+                          newFocused += lphl->ItemsVisible;
+                          break;
+                        default:
+                          return 0;
+                    }
 		  /* end of nested switch */
 		}
 	     break;   
@@ -1132,9 +1176,9 @@ static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
   
   if (!(dwStyle & LBS_MULTIPLESEL)) 
      {
-    ListBoxSetCurSel(lphl, newFocused);
+        ListBoxSetCurSel(lphl, newFocused);
 	ListBoxSendNotification(lphl, LBN_SELCHANGE);
-  }
+     }
 
   lphl->ItemFocused = newFocused;
 
@@ -1235,17 +1279,22 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   PAINTSTRUCT  ps;
   HBRUSH       hBrush;
   HFONT        hOldFont;
-  HDC 	hdc;
-  RECT 	rect;
+  HDC   hdc    = BeginPaint( hwnd, &ps );
+  DC    *dc    = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
+  RECT  rect, paintRect, scratchRect;
   int   i, top, height, maxwidth, ipc;
 
+
   top = 0;
-  hdc = BeginPaint( hwnd, &ps );
 
   if (!IsWindowVisible(hwnd) || !lphl->bRedrawFlag) {
     EndPaint(hwnd, &ps);
     return 0;
   }
+
+  GetRgnBox(dc->w.hGCClipRgn,&paintRect);
+  GetClientRect(hwnd, &rect);
+  IntersectRect(&paintRect,&rect,&paintRect);
 
   hOldFont = SelectObject(hdc, lphl->hFont);
 
@@ -1259,7 +1308,6 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
-  GetClientRect(hwnd, &rect);
   FillRect(hdc, &rect, hBrush);
 
   maxwidth = rect.right;
@@ -1295,17 +1343,23 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
       lpls->itemRect.left   = rect.left;
       lpls->itemRect.right  = rect.right;
 
-      dprintf_listbox(stddeb,"drawing item: %ld %d %ld %d %d\n",(LONG)rect.left,top,(LONG)rect.right,top+height,lpls->itemState);
-      if (lphl->OwnerDrawn) {
-	ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 0);
-	if (lpls->itemState)
-	  ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_SELECT, ODS_SELECTED);
-      } else {
-	ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 
-			 lpls->itemState);
-      }
-      if ((lphl->ItemFocused == i) && GetFocus() == hwnd)
-	ListBoxDrawItem (hwnd,lphl, hdc, lpls, &lpls->itemRect, ODA_FOCUS, ODS_FOCUS);
+      if( IntersectRect(&scratchRect,&paintRect,&lpls->itemRect) )
+       {
+        dprintf_listbox(stddeb,"drawing item: %ld %d %ld %d %d\n",(LONG)rect.left,top,
+                            (LONG)rect.right,top+height,lpls->itemState);
+
+        if (lphl->OwnerDrawn && (lphl->ItemFocused == i) && GetFocus() == hwnd)
+           {
+             ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_FOCUS, 
+                                                      lpls->itemState & ~ODS_FOCUS);
+             ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 
+                                                      lpls->itemState & ~ODS_FOCUS);
+             ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_FOCUS, lpls->itemState);
+           }
+        else
+            ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE,
+                                                     lpls->itemState);
+       }
 
       top += height;
       lphl->ItemsVisible++;
@@ -1325,7 +1379,29 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
  */
 static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
-  dprintf_listbox(stddeb,"ListBox WM_SETFOCUS !\n");
+  LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
+  LONG       dwStyle;
+
+  dprintf_listbox(stddeb,"ListBox WM_SETFOCUS for "NPFMT"\n",hwnd);
+
+  dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
+
+  if(!(dwStyle & LBS_MULTIPLESEL) )
+       if( lphl->ItemsCount && lphl->ItemFocused != -1)
+         {
+           HDC          hDC = GetDC(hwnd);
+           HFONT        hOldFont = SelectObject(hDC, lphl->hFont);
+           LPLISTSTRUCT lpls;
+
+           lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
+           lpls->itemState |= ODS_FOCUS;
+
+           ListBoxDrawItem(hwnd,lphl,hDC,lpls,&lpls->itemRect, ODA_FOCUS, lpls->itemState);
+           SelectObject(hDC, hOldFont);
+           ReleaseDC(hwnd,hDC);
+         }
+
+  ListBoxSendNotification(lphl, LBN_SETFOCUS);
 
   return 0;
 }
@@ -1335,10 +1411,37 @@ static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
  */
 static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
-  dprintf_listbox(stddeb,"ListBox WM_KILLFOCUS !\n");
+  LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
+  LONG       dwStyle;
 
-  InvalidateRect(hwnd, NULL, TRUE);
-  
+  dprintf_listbox(stddeb,"ListBox WM_KILLFOCUS for "NPFMT"\n",hwnd);
+
+  dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
+
+  if (!(dwStyle & LBS_MULTIPLESEL))
+     {
+       if( lphl->ItemsCount )
+           if( lphl->ItemFocused != -1 )
+             {
+              HDC          hDC = GetDC(hwnd);
+              HFONT        hOldFont = SelectObject(hDC, lphl->hFont);
+              LPLISTSTRUCT lpls;
+
+              lpls = ListBoxGetItem(lphl,lphl->ItemFocused);
+              lpls->itemState &= ~ODS_FOCUS;
+
+              ListBoxDrawItem(hwnd,lphl,hDC,lpls,&lpls->itemRect, ODA_FOCUS, lpls->itemState);
+              SelectObject(hDC, hOldFont);
+              ReleaseDC(hwnd,hDC);
+             }
+           else
+             dprintf_listbox(stddeb,"LBKillFocus: no focused item!\n");
+     }
+  else
+     InvalidateRect(hwnd, NULL, TRUE);
+
+  ListBoxSendNotification(lphl, LBN_KILLFOCUS);
+
   return 0;
 }
 
@@ -1466,7 +1569,7 @@ static LONG LBGetCurSel(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST  lphl;
 
   lphl = ListBoxGetStorageHeader(hwnd);
-  dprintf_listbox(stddeb,"ListBox LB_GETCURSEL %u !\n", 
+  dprintf_listbox(stddeb,"ListBox LB_GETCURSEL %i !\n", 
 		  lphl->ItemFocused);
   return lphl->ItemFocused;
 }
@@ -1506,7 +1609,11 @@ static LONG LBGetItemRect(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBGetSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  return (ListBoxGetSel(lphl, wParam) )? 1 : 0;
+  int        iSel = ListBoxGetSel(lphl, wParam);
+
+  dprintf_listbox(stdnimp,"LBGetSel: item %u - %i\n",wParam,iSel);
+
+  return (iSel)? 1 : 0;
 }
 
 /***********************************************************************
@@ -1602,13 +1709,22 @@ static LONG LBGetTopIndex(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBSelectString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  WORD  wRet;
+  INT  iRet;
 
-  wRet = ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
+  iRet = ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
 
-  /* XXX add functionality here */
+  if( iRet != LB_ERR)
+    {
+      if( GetWindowLong(hwnd, GWL_STYLE) &
+         (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )
+         ListBoxSetSel(lphl,iRet,TRUE);
+      else
+         ListBoxSetCurSel(lphl,iRet);
 
-  return 0;
+      lphl->ItemFocused = iRet;
+      InvalidateRect(hwnd,0,TRUE);
+    }
+  return iRet;
 }
 
 /***********************************************************************
@@ -1635,7 +1751,7 @@ static LONG LBSelItemRange(HWND hwnd, WORD wParam, LONG lParam)
 
   while (lpls != NULL) {
     if (cnt++ >= first)
-      lpls->itemState = select ? ODS_SELECTED : 0;
+      lpls->itemState = select ? lpls->itemState | ODS_SELECTED : 0;
 
     if (cnt > last)
       break;
@@ -1651,17 +1767,24 @@ static LONG LBSelItemRange(HWND hwnd, WORD wParam, LONG lParam)
  */
 static LONG LBSetCaretIndex(HWND hwnd, WORD wParam, LONG lParam)
 {
-  LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
+  LPHEADLIST   lphl = ListBoxGetStorageHeader(hwnd);
+  int          i;
 
-  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & LBS_MULTIPLESEL)) return 0;
+  if (!(GetWindowLong(lphl->hSelf,GWL_STYLE) & 
+       (LBS_MULTIPLESEL | LBS_EXTENDEDSEL) )) return 0;
+
+  dprintf_listbox(stddeb,"LBSetCaretIndex: hwnd "NPFMT" n=%i\n",hwnd,wParam);  
+
   if (wParam >= lphl->ItemsCount) return LB_ERR;
 
   lphl->ItemFocused = wParam;
-  ListBoxScrollToFocus (lphl);
+  i = ListBoxScrollToFocus (lphl);
 
   SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-  InvalidateRect(hwnd, NULL, TRUE);
-  return 0;
+  if(i)
+    InvalidateRect(hwnd, NULL, TRUE);
+ 
+  return 1;
 }
 
 /***********************************************************************
@@ -1752,14 +1875,29 @@ static LONG LBSetCurSel(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBSetSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  WORD wRet;
+  RECT rect;
+  int iRet;
 
   dprintf_listbox(stddeb,"ListBox LB_SETSEL wParam=%x lParam=%lX !\n", wParam, lParam);
 
-  wRet = ListBoxSetSel(lphl, LOWORD(lParam), wParam);
-  InvalidateRect(hwnd, NULL, TRUE);
+  iRet = ListBoxSetSel(lphl, LOWORD(lParam), wParam);
 
-  return wRet;
+  if( iRet > 1 )   
+      InvalidateRect(hwnd, NULL, TRUE);
+  else if( iRet != LB_ERR )
+      {
+        if( GetWindowLong(hwnd,GWL_STYLE) & LBS_EXTENDEDSEL &&
+            lphl->ItemFocused != LOWORD(lParam) )
+          {
+            ListBoxGetItemRect(lphl, lphl->ItemFocused , &rect);
+            InvalidateRect(hwnd,&rect,TRUE);
+            lphl->ItemFocused = LOWORD(lParam);
+          }
+        ListBoxGetItemRect(lphl,LOWORD(lParam),&rect);
+        InvalidateRect(hwnd,&rect,TRUE);
+      }
+
+  return (iRet == (WORD)LB_ERR)? LB_ERR: 0;
 }
 
 /***********************************************************************
@@ -1863,6 +2001,15 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
      case WM_DROPFILES: return LBPassToParent(hwnd, message, wParam, lParam);
 
+     /* these will have to be implemented for proper LBS_EXTENDEDSEL -
+      *
+      * anchor item is an item that with caret (focused) item defines a 
+      * range of currently selected items when listbox is in the extended 
+      * selection mode.
+      */
+     case LB_SETANCHORINDEX: return LB_SETANCHORINDEX; /* that's what Windows returns */
+     case LB_GETANCHORINDEX: return 0;
+
 	case WM_DROPOBJECT:
 	case WM_QUERYDROPOBJECT:
 	case WM_DRAGSELECT:
@@ -1870,8 +2017,6 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	        {
 		 LPDRAGINFO lpDragInfo = (LPDRAGINFO) PTR_SEG_TO_LIN((SEGPTR)lParam);
 		 LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-
-	         /* more undocumented Microsoft crap - drag&drop depends on it - AK */
 
 		 lpDragInfo->l = ListBoxFindMouse(lphl,lpDragInfo->pt.x,
 						       lpDragInfo->pt.y);

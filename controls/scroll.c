@@ -812,7 +812,10 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
         break;
 
     case WM_ERASEBKGND:
-        break;
+         return 1;
+
+    case WM_GETDLGCODE:
+         return DLGC_WANTARROWS; /* Windows returns this value */
 
     case WM_PAINT:
         {
@@ -822,6 +825,13 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
             EndPaint( hwnd, &ps );
         }
         break;
+
+    case 0x400: /* SB_SETSCROLLPOS */
+    case 0x401: /* SB_GETSCROLLPOS */
+    case 0x402: /* SB_GETSCROLLRANGE */
+    case 0x403: /* SB_ENABLE */
+    case 0x404: /* SB_REDRAW */
+        fprintf(stdnimp,"ScrollBarWndProc: undocumented message %04x, please report\n", message );
 
     default:
         return DefWindowProc( hwnd, message, wParam, lParam );

@@ -1,0 +1,17 @@
+Due to the implementation of FindText() and ReplaceText() in /misc/commdlg.c
+I had to change the definition in sysres_En.rc of the dialogs FIND_TEXT and
+REPLACE_TEXT.  These changes should also be made for the other languages.
+Not only should the definitions in sysres_??.rc made up to date with the
+Enlish version, but also the dimensions of the controls should be changed so
+that they will be big enough to contain the text for every individual
+language.
+
+Therefore:
+
+- Definitions of FIND_TEXT and REPLACE_TEXT in sysres_??.rc should match
+  those in sysres_En.rc
+- Dimensions of controls are based on sysres_En.rc.  Other languages should
+  change these dimensions in order to make the text fit.
+
+Frans van Dorsselaer
+dorssel@rulhm1.LeidenUniv.nl

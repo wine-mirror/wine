@@ -56,43 +56,14 @@ the --prefix option when running
 .B configure.
 .SH OPTIONS
 .TP
-.I -depth n
-Change the depth to use for multiple-depth screens
-.TP
-.I -desktop geom
-Use a desktop window of the given geometry
-.TP
-.I -display name
-Use the specified display
-.TP
-.I -iconic
-Start as an icon
-.TP
-.I -debug
-Enter the debugger before starting application
-.TP
-.I -language xx
-Set the language to
-.I xx
-(one of En, Es, De, No, Fr, Fi, Da Cz)
-.TP
-.I -managed
-Create each top-level window as a properly managed X window
-.TP
-.I -name name
-Set the application name
-.TP
-.I -privatemap
-Use a private color map
-.TP
-.I -synchronous
-Turn on synchronous display mode
+.I -allowreadonly
+Read only files may be opened in write mode
 .TP
 .I -backingstore
 Turn on backing store
 .TP
-.I -spy file
-Turn on message spying to the specified file
+.I -debug
+Enter the debugger before starting application
 .TP
 .I -debugmsg name[,name]
 Turn debugging messages on or off - for instance, 
@@ -106,6 +77,15 @@ metafile, midi, mmio, mmsys, mmtime, module, msg, nonclient, ole, palette,
 profile, prop, reg, region, relay, resource, scroll, selector, selectors, 
 stress, syscolor, task, text, timer, toolhelp, utility, win, winsock.
 .TP
+.I -depth n
+Change the depth to use for multiple-depth screens
+.TP
+.I -desktop geom
+Use a desktop window of the given geometry
+.TP
+.I -display name
+Use the specified display
+.TP
 .I -dll name
 Enables/disables built-in DLL's - starting wine with
 .I -dll -commdlg
@@ -115,11 +95,37 @@ KERNEL, USER, GDI, WIN87EM, SHELL, SOUND, KEYBOARD, WINSOCK, STRESS, MMSYSTEM,
 SYSTEM, TOOLHELP, MOUSE, COMMDLG, OLE2, OLE2CONV, OLE2DISP, OLE2NLS, OLE2PROX,
 OLECLI, OLESVR, COMPOBJ, STORAGE, WINPROCS, DDEML
 .TP
-.I -allowreadonly
-Read only files may be opened in write mode
+.I -fixedmap
+Use a "standard" color map.
 .TP
-.I -enhanced
-Starts wine in Enhanced mode
+.I -iconic
+Start as an icon
+.TP
+.I -language xx
+Set the language to
+.I xx
+(one of En, Es, De, No, Fr, Fi, Da, Cz)
+.TP
+.I -managed
+Create each top-level window as a properly managed X window
+.TP
+.I -mode modename
+Determines the mode in which
+.B wine
+is started. Possible mode names are
+.I standard
+and
+.I enhanced.
+Enhanced mode is the default (when no -mode option is specified).
+.TP
+.I -name name
+Set the application name
+.TP
+.I -privatemap
+Use a private color map
+.TP
+.I -synchronous
+Turn on synchronous display mode
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (C:\\WINDOWS\\SOL.EXE) or in 

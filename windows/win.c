@@ -1240,8 +1240,41 @@ BOOL AnyPopup()
  */
 BOOL FlashWindow(HWND hWnd, BOOL bInvert)
 {
-	dprintf_win(stdnimp,"EMPTY STUB !! FlashWindow !\n");
-	return FALSE;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+
+    dprintf_win(stddeb,"FlashWindow: "NPFMT"\n", hWnd);
+
+    if (!wndPtr) return FALSE;
+
+    if (wndPtr->dwStyle & WS_MINIMIZE)
+    {
+        if (bInvert && !(wndPtr->flags & WIN_NCACTIVATED))
+        {
+            HDC hDC = GetDC(hWnd);
+            
+            if (!SendMessage( hWnd, WM_ERASEBKGND, (WPARAM)hDC, (LPARAM)0 ))
+                wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
+            
+            ReleaseDC( hWnd, hDC );
+            wndPtr->flags |= WIN_NCACTIVATED;
+        }
+        else
+        {
+            RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE |
+                          RDW_UPDATENOW | RDW_FRAME );
+            wndPtr->flags &= ~WIN_NCACTIVATED;
+        }
+        return TRUE;
+    }
+    else
+    {
+        WPARAM wparam;
+        if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
+        else wparam = (hWnd == GetActiveWindow());
+
+        SendMessage( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
+        return wparam;
+    }
 }
 
 

@@ -110,12 +110,12 @@ static void PROFILE_Save( FILE *file, PROFILESECTION *section )
 
     for ( ; section; section = section->next)
     {
-        if (section->name) fprintf( file, "[%s]\n", section->name );
+        if (section->name) fprintf( file, "[%s]\r\n", section->name );
         for (key = section->key; key; key = key->next)
         {
             fprintf( file, "%s", key->name );
             if (key->value) fprintf( file, "=%s", key->value );
-            fprintf( file, "\n" );
+            fprintf( file, "\r\n" );
         }
     }
 }

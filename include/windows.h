@@ -689,6 +689,14 @@ typedef struct tagTEXTMETRIC
 #define ETO_OPAQUE          0x02
 #define ETO_CLIPPED         0x04
 
+  /* for GetCharABCWidths() */
+typedef struct tagABC
+{
+    INT   abcA;
+    UINT  abcB;
+    INT   abcC;
+} ABC, *LPABC;
+
   /* Rasterizer status */
 typedef struct
 {
@@ -1999,6 +2007,8 @@ typedef struct tagDRAGINFO {
 #define LB_GETITEMDATA         (WM_USER+26)
 #define LB_SETITEMDATA         (WM_USER+27)
 #define LB_SELITEMRANGE        (WM_USER+28)
+#define LB_SETANCHORINDEX      (WM_USER+29) /* undoc. - for LBS_EXTENDEDSEL */
+#define LB_GETANCHORINDEX      (WM_USER+30) /* - * - */
 #define LB_SETCARETINDEX       (WM_USER+31)
 #define LB_GETCARETINDEX       (WM_USER+32)
 #define LB_SETITEMHEIGHT       (WM_USER+33)
@@ -2794,6 +2804,7 @@ BOOL       GetBrushOrgEx(HDC,LPPOINT);
 HWND       GetCapture(void);
 WORD       GetCaretBlinkTime(void);
 void       GetCaretPos(LPPOINT);
+BOOL       GetCharABCWidths(HDC,UINT,UINT,LPABC);
 BOOL       GetCharWidth(HDC,WORD,WORD,LPINT);
 BOOL       GetClassInfo(HANDLE,SEGPTR,LPWNDCLASS);
 LONG       GetClassLong(HWND,short);

@@ -240,7 +240,7 @@ typedef struct tagTIMERINFO {
 	DWORD dwmsThisVM;
 } TIMERINFO;
 
-BOOL TimerInfo( TIMERINFO *pTimerInfo );
+BOOL TimerCount( TIMERINFO *pTimerInfo );
 
 /* Window classes */
 

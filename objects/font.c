@@ -594,7 +594,14 @@ DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
 }
 
  
-/***********************************************************************/
+/***********************************************************************
+ *           GetCharABCWidths   (GDI.307)
+ */
+BOOL GetCharABCWidths(HDC hdc, UINT wFirstChar, UINT wLastChar, LPABC lpABC)
+{
+    /* No TrueType fonts in Wine */
+    return FALSE;
+}
 
 
 /***********************************************************************

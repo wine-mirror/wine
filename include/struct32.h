@@ -19,8 +19,15 @@ typedef struct tagPOINT32
 	LONG y;
 } POINT32;
 
+typedef struct tagSIZE32
+{
+        LONG cx;
+        LONG cy;
+} SIZE32;
+  
 void PARAM32_POINT32to16(const POINT32*,POINT*);
 void PARAM32_POINT16to32(const POINT*,POINT32*);
+void PARAM32_SIZE16to32(const SIZE* p16, SIZE32* p32);
 
 typedef struct {
 	DWORD style;

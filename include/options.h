@@ -20,6 +20,13 @@ typedef enum
     LANG_Cz   /* Czech */
 } WINE_LANGUAGE;
 
+/* Supported modes */
+typedef enum
+{
+    MODE_STANDARD,
+    MODE_ENHANCED
+} WINE_MODE;
+
 struct options
 {
     char * desktopGeometry; /* NULL when no desktop */
@@ -32,7 +39,8 @@ struct options
     int    debug;
     int    allowReadOnly;   /* Opening a read only file will succeed even
 			       if write access is requested */
-    int    enhanced;        /* Start Wine in enhanced mode */
+    WINE_MODE mode;         /* Start Wine in selected mode
+			       (standard/enhanced) */
     int    ipc;             /* Use IPC mechanisms */
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */

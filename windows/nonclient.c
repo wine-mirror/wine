@@ -807,6 +807,37 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
 
 /***********************************************************************
+ *           NC_TrackSysMenu
+ *
+ * Track a mouse button press on the system menu.
+ */
+static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
+{
+    RECT rect;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    int iconic = wndPtr->dwStyle & WS_MINIMIZE;
+
+    if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
+    /* If window has a menu, track the menu bar normally if it not minimized */
+    if (HAS_MENU(wndPtr) && !iconic) MENU_TrackMouseMenuBar( hwnd, pt );
+    else
+    {
+	  /* Otherwise track the system menu like a normal popup menu */
+	NC_GetInsideRect( hwnd, &rect );
+	OffsetRect( &rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
+	if (wndPtr->dwStyle & WS_CHILD)
+	    ClientToScreen( wndPtr->hwndParent, (POINT *)&rect );
+	rect.right = rect.left + SYSMETRICS_CXSIZE;
+	rect.bottom = rect.top + SYSMETRICS_CYSIZE;
+	if (!iconic) NC_DrawSysButton( hwnd, hdc, TRUE );
+	TrackPopupMenu( wndPtr->hSysMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
+		        rect.left, rect.bottom, 0, hwnd, &rect );
+	if (!iconic) NC_DrawSysButton( hwnd, hdc, FALSE );
+    }
+}
+
+
+/***********************************************************************
  *           NC_StartSizeMove
  *
  * Initialisation of a move or resize, when initiatied from a menu choice.
@@ -904,6 +935,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     BOOL thickframe;
     POINT minTrack, maxTrack, capturePoint = pt;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
+    int moved = 0;
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
         (wndPtr->flags & WIN_MANAGED)) return;
@@ -977,7 +1009,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 
     while(1)
     {
-	int dx = 0, dy = 0;
+        int dx = 0, dy = 0;
 
 	MSG_GetHardwareMessage( &msg );
 
@@ -1012,6 +1044,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 
 	if (dx || dy)
 	{
+            moved = 1;
 	    if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
 	    else
 	    {
@@ -1032,6 +1065,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
     ReleaseCapture();
+
     if (wndPtr->dwStyle & WS_CHILD) ReleaseDC( wndPtr->hwndParent, hdc );
     else
     {
@@ -1040,6 +1074,14 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     }
     SendMessage( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessage( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
+
+    /* Single click brings up the system menu */
+
+    if (!moved)
+    {
+        NC_TrackSysMenu( hwnd, hdc, pt );
+        return;
+    }
 
       /* If Esc key, don't move the window */
     if ((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) return;
@@ -1150,36 +1192,6 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
         }
     } while (msg.message != WM_LBUTTONUP);
 }
-
-/***********************************************************************
- *           NC_TrackSysMenu
- *
- * Track a mouse button press on the system menu.
- */
-static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
-{
-    RECT rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-
-    if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
-      /* If window has a menu, track the menu bar normally */
-    if (HAS_MENU(wndPtr)) MENU_TrackMouseMenuBar( hwnd, pt );
-    else
-    {
-	  /* Otherwise track the system menu like a normal popup menu */
-	NC_GetInsideRect( hwnd, &rect );
-	OffsetRect( &rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
-	if (wndPtr->dwStyle & WS_CHILD)
-	    ClientToScreen( wndPtr->hwndParent, (POINT *)&rect );
-	rect.right = rect.left + SYSMETRICS_CXSIZE;
-	rect.bottom = rect.top + SYSMETRICS_CYSIZE;
-	NC_DrawSysButton( hwnd, hdc, TRUE );
-	TrackPopupMenu( wndPtr->hSysMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
-		        rect.left, rect.bottom, 0, hwnd, &rect );
-	NC_DrawSysButton( hwnd, hdc, FALSE );
-    }
-}
-
 
 /***********************************************************************
  *           NC_HandleNCLButtonDown

@@ -49,14 +49,14 @@ static pfPaint staticPaintFunc[LAST_STATIC_TYPE+1] =
  *
  * Set the icon for an SS_ICON control.
  */
-static void STATIC_SetIcon( HWND hwnd, HICON hicon )
+static HICON STATIC_SetIcon( HWND hwnd, HICON hicon )
 {
+    HICON prevIcon;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
-    if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return;
-/*  FIXME: is this OK?
-    if (infoPtr->hIcon) DestroyIcon( infoPtr->hIcon ); */
+    if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return 0;
+    prevIcon = infoPtr->hIcon;
     infoPtr->hIcon = hicon;
     if (hicon)
     {
@@ -65,6 +65,7 @@ static void STATIC_SetIcon( HWND hwnd, HICON hicon )
                      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         GlobalUnlock( hicon );
     }
+    return prevIcon;
 }
 
 
@@ -114,7 +115,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_NCDESTROY:
             if (style == SS_ICON)
-                STATIC_SetIcon( hWnd, 0 );  /* Destroy the current icon */
+                DestroyIcon( STATIC_SetIcon( hWnd, 0 ) );
             else 
                 lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
             break;
@@ -138,6 +139,7 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETTEXT:
 	    if (style == SS_ICON)
+	        /* FIXME : should we also return the previous hIcon here ??? */
                 STATIC_SetIcon( hWnd, LoadIcon( wndPtr->hInstance,
                                                 (SEGPTR)lParam ));
             else
@@ -169,10 +171,10 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return (LONG)infoPtr->hIcon;
 
 	case STM_SETICON:
-            STATIC_SetIcon( hWnd, (HICON)wParam );
+            lResult = (LONG)STATIC_SetIcon( hWnd, (HICON)wParam );
             InvalidateRect( hWnd, NULL, FALSE );
             UpdateWindow( hWnd );
-	    return 0;
+	    break;
 
 	default:
 		lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);

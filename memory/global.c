@@ -333,7 +333,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     ptr = (void *)pArena->base;
     oldsize = pArena->size;
     dprintf_global(stddeb,"oldsize %08lx\n",oldsize);
-    if (size == oldsize) return handle;  /* Nothing to do */
+    if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
     ptr = realloc( ptr, size );
     if (!ptr)

@@ -233,7 +233,7 @@ base	1
 0229 stub GetTextExtentExPointW
 0230 stub GetTextExtentPoint32A
 0231 stub GetTextExtentPoint32W
-0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint
+0232 stdcall GetTextExtentPointA(long ptr long ptr) WIN32_GetTextExtentPointA
 0233 stub GetTextExtentPointW
 0234 stub GetTextFaceA
 0235 stub GetTextFaceW

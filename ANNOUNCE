@@ -1,14 +1,15 @@
-This is release 960218 of Wine the MS Windows emulator.  This is still a
+This is release 960225 of Wine the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-960218: (see ChangeLog for details)
-	- Lots of edit control fixes.
-	- Czech language support.
-	- As usual, more Win32 code.
+WHAT'S NEW with Wine-960225: (see ChangeLog for details)
+	- Many caret fixes.
+	- New -mode option to replace -enhanced.
+	- Many listboxes improvements.
+	- Find and Replace dialogs in built-in COMMDLG fixed.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,19 +18,21 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-    sunsite.unc.edu:/pub/Linux/ALPHA/wine/Wine-960218.tar.gz
-    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-960218.tar.gz
-    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-960218.tar.gz
-    aris.com:/pub/linux/ALPHA/Wine/development/Wine-960218.tar.gz
+    sunsite.unc.edu:/pub/Linux/ALPHA/wine/development/Wine-960225.tar.gz
+    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-960225.tar.gz
+    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-960225.tar.gz
+    aris.com:/pub/linux/ALPHA/Wine/development/Wine-960225.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 
 If you submitted a patch, please check to make sure it has been
 included in the new release.
 
-New developers should read the info files available from the ftp sites.
-The files NEWBIE-PROJECTS, DEVELOPERS-HINTS and Wine.FAQ are required
-reading for new developers.
+If you want to get the new releases faster, you can subscribe to the
+wine-patches mailing list by sending a mail containing 'subscribe
+wine-patches your_address' to majordomo@tiger.informatik.hu-berlin.de.
+To avoid overloading the mail host, please subscribe only if you
+really intend to test the new releases as soon as they're out.
 
 Wine is available thanks to the work of Bob Amstadt, Dag Asheim,
 Martin Ayotte, Ross Biro, Erik Bos, Fons Botman, John Brezak,

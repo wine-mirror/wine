@@ -71,13 +71,13 @@ static void do_int2f_16(struct sigcontext_struct *context)
     switch(AL_reg(context))
     {
     case 0x00:  /* Windows enhanced mode installation check */
-        AX_reg(context) = Options.enhanced ? WINVERSION : 0;
+        AX_reg(context) = (Options.mode == MODE_ENHANCED) ? WINVERSION : 0;
         break;
 	
     case 0x0a:  /* Get Windows version and type */
         AX_reg(context) = 0;
         BX_reg(context) = (WINVERSION >> 8) | ((WINVERSION << 8) & 0xff00);
-        CX_reg(context) = Options.enhanced ? 3 : 2;
+        CX_reg(context) = (Options.mode == MODE_ENHANCED) ? 3 : 2;
         break;
 
     case 0x80:  /* Release time-slice */

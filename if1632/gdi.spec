@@ -215,7 +215,7 @@ id	3
 304 stub ENGINESETFONTCONTEXT
 305 stub ENGINEGETGLYPHBMP
 306 stub ENGINEMAKEFONTDIR
-307 stub GetCharABCWidths
+307 pascal16 GetCharABCWidths(word word word ptr) GetCharABCWidths
 308 stub GetOutLineTextMetrics
 309 pascal   GetGlyphOutLine(word word word ptr long ptr ptr) GetGlyphOutLine
 310 pascal16 CreateScalableFontResource(word ptr ptr ptr) CreateScalableFontResource

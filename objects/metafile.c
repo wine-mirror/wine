@@ -117,12 +117,7 @@ HANDLE CreateMetaFile(LPCTSTR lpFilename)
     {
 	mh->mtType = 1;
 	strcpy(mf->Filename, lpFilename);
-#ifndef WINELIB
 	mf->hFile = _lcreat(lpFilename, 0);
-#else
-        /* temporary fix until _lcreate works under WINELIB */
-	mf->hFile = creat(lpFilename, 0666);
-#endif
 	if (_lwrite(mf->hFile, (char *)mh, MFHEADERSIZE) == -1)
 	{
 	    GlobalFree(mf->hMetaHdr);

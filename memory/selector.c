@@ -105,8 +105,8 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size,
     ldt_entry entry;
     WORD i, count;
 
-      /* The limit for the first selector is the whole */
-      /* block. The next selectors get a 64k limit.    */
+    /* The limit for the first selector is the whole */
+    /* block. The next selectors get a 64k limit.    */
     entry.base           = (unsigned long)base;
     entry.type           = type;
     entry.seg_32bit      = is32bit;
@@ -114,6 +114,8 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size,
     entry.limit_in_pages = (size > 0x100000);
     if (entry.limit_in_pages) entry.limit = ((size + 0xfff) >> 12) - 1;
     else entry.limit = size - 1;
+    /* Make sure base and limit are not 0 together if the size is not 0 */
+    if (!base && !entry.limit && size) entry.limit = 1;
     count = (size + 0xffff) / 0x10000;
     for (i = 0; i < count; i++)
     {

@@ -1609,11 +1609,13 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
 void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    HideCaret(0);
     SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
     SendMessage( hwnd, WM_INITMENU, wndPtr->wIDmenu, 0 );
     MENU_TrackMenu( (HMENU)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		    pt.x, pt.y, hwnd, NULL );
     SendMessage( hwnd, WM_EXITMENULOOP, 0, 0 );
+    ShowCaret(0);
 }
 
 
@@ -1626,6 +1628,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr->wIDmenu) return;
+    HideCaret(0);
     SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
     SendMessage( hwnd, WM_INITMENU, wndPtr->wIDmenu, 0 );
       /* Select first selectable item */
@@ -1634,6 +1637,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam )
     MENU_TrackMenu( (HMENU)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		    0, 0, hwnd, NULL );
     SendMessage( hwnd, WM_EXITMENULOOP, 0, 0 );
+    ShowCaret(0);
 }
 
 
@@ -1643,8 +1647,14 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam )
 BOOL TrackPopupMenu( HMENU hMenu, UINT wFlags, short x, short y,
 		     short nReserved, HWND hWnd, LPRECT lpRect )
 {
-    if (!MENU_ShowPopup( hWnd, hMenu, 0, x, y )) return FALSE;
-    return MENU_TrackMenu( hMenu, wFlags, 0, 0, hWnd, lpRect );
+    BOOL ret;
+    HideCaret(0);
+    if (!MENU_ShowPopup( hWnd, hMenu, 0, x, y )) 
+	ret = FALSE;
+    else
+	ret = MENU_TrackMenu( hMenu, wFlags, 0, 0, hWnd, lpRect );
+    ShowCaret(0);
+    return ret;
 }
 
 

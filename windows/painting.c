@@ -30,12 +30,14 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     hrgnUpdate = wndPtr->hrgnUpdate;  /* Save update region */
     if (!hrgnUpdate)    /* Create an empty region */
 	if (!(hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
-    
+
     if (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT))
 	MSG_DecPaintCount( wndPtr->hmemTaskQ );
 
     wndPtr->hrgnUpdate = 0;
     wndPtr->flags &= ~(WIN_NEEDS_BEGINPAINT | WIN_INTERNAL_PAINT);
+
+    HideCaret( hwnd );
 
     if (wndPtr->flags & WIN_NEEDS_NCPAINT)
     {
@@ -71,6 +73,7 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 BOOL EndPaint( HWND hwnd, const PAINTSTRUCT* lps )
 {
     ReleaseDC( hwnd, lps->hdc );
+    ShowCaret( hwnd );
     return TRUE;
 }
 

@@ -108,7 +108,7 @@ static int MEMORY_IsVrangeFree(DWORD start,DWORD size)
 	static int warned=0;
 	if(!warned)
 	{
-		fprintf("Don't know how to perform MEMORY_IsVrangeFree on "
+		fprintf(stdnimp, "Don't know how to perform MEMORY_IsVrangeFree on "
 			"this system.\n Please fix\n");
 		warned=0;
 	}

@@ -89,7 +89,7 @@ struct options Options =
     SW_SHOWNORMAL,  /* cmdShow */
     FALSE,
     FALSE,          /* AllowReadOnly */
-    FALSE,          /* Enhanced mode */
+    MODE_ENHANCED,  /* Enhanced mode */
     FALSE,          /* IPC enabled */
 #ifdef DEFAULT_LANG
     DEFAULT_LANG,   /* Default language */
@@ -117,7 +117,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
     { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
     { "-allowreadonly", ".allowreadonly",   XrmoptionNoArg,  (caddr_t)"on" },
-    { "-enhanced",      ".enhanced",        XrmoptionNoArg,  (caddr_t)"off"},
+    { "-mode",          ".mode",            XrmoptionSepArg, (caddr_t)NULL },
     { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"}
 };
 
@@ -127,24 +127,23 @@ static XrmOptionDescRec optionsTable[] =
   "Usage:  %s [options] program_name [arguments]\n" \
   "\n" \
   "Options:\n" \
+  "    -allowreadonly  Read only files may be opened in write mode\n" \
+  "    -backingstore   Turn on backing store\n" \
+  "    -debug          Enter debugger before starting application\n" \
+  "    -debugmsg name  Turn debugging-messages on or off\n" \
   "    -depth n        Change the depth to use for multiple-depth screens\n" \
   "    -desktop geom   Use a desktop window of the given geometry\n" \
   "    -display name   Use the specified display\n" \
+  "    -dll name       Enable or disable built-in DLLs\n" \
+  "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
-  "    -debug          Enter debugger before starting application\n" \
   "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
+  "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
-  "    -fixedmap       Use a \"standard\" color map\n" \
-  "    -synchronous    Turn on synchronous display mode\n" \
-  "    -backingstore   Turn on backing store\n" \
-  "    -spy file       Obsolete. Use -debugmsg +message for messages\n" \
-  "    -debugmsg name  Turn debugging-messages on or off\n" \
-  "    -dll name       Enable or disable built-in DLLs\n" \
-  "    -allowreadonly  Read only files may be opened in write mode\n" \
-  "    -enhanced       Start wine in enhanced mode (like 'win /3') \n"
+  "    -synchronous    Turn on synchronous display mode\n"
 
 
 
@@ -319,6 +318,24 @@ static void MAIN_ParseLanguageOption( char *arg )
 
 
 /***********************************************************************
+ *           MAIN_ParseModeOption
+ *
+ * Parse -mode option.
+ */
+static void MAIN_ParseModeOption( char *arg )
+{
+    if (!lstrcmpi("enhanced", arg)) Options.mode = MODE_ENHANCED;
+    else if (!lstrcmpi("standard", arg)) Options.mode = MODE_STANDARD;
+    else
+    {
+        fprintf(stderr, "Invalid mode '%s' specified.\n", arg);
+        fprintf(stderr, "Valid modes are: 'standard', 'enhanced' (default).\n");
+	exit(1);
+    }
+}
+
+
+/***********************************************************************
  *           MAIN_ParseOptions
  *
  * Parse command line options and open display.
@@ -368,8 +385,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.debug = TRUE;
     if (MAIN_GetResource( db, ".allowreadonly", &value ))
         Options.allowReadOnly = TRUE;
-    if (MAIN_GetResource( db, ".enhanced", &value ))
-        Options.enhanced = TRUE;
     if (MAIN_GetResource( db, ".ipc", &value ))
         Options.ipc = TRUE;
     if (MAIN_GetResource( db, ".depth", &value))
@@ -380,6 +395,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         MAIN_ParseLanguageOption( (char *)value.addr );
     if (MAIN_GetResource( db, ".managed", &value))
         Options.managed = TRUE;
+    if (MAIN_GetResource( db, ".mode", &value))
+        MAIN_ParseModeOption( (char *)value.addr );
+
 #ifdef DEBUG_RUNTIME
     if (MAIN_GetResource( db, ".debugoptions", &value))
 	ParseDebugOptions((char*)value.addr);
@@ -629,6 +647,8 @@ LONG GetWinFlags(void)
   static const long cpuflags[5] =
     { WF_CPU086, WF_CPU186, WF_CPU286, WF_CPU386, WF_CPU486 };
 
+  long result = 0;
+
   /* There doesn't seem to be any Pentium flag.  */
 #ifndef WINELIB
   long cpuflag = cpuflags[MIN (runtime_cpu (), 4)];
@@ -636,10 +656,21 @@ LONG GetWinFlags(void)
   long cpuflag = cpuflags[4];
 #endif
 
-  if (Options.enhanced)
-    return (WF_ENHANCED | cpuflag | WF_PMODE | WF_80x87 | WF_PAGING);
-  else
-    return (WF_STANDARD | cpuflag | WF_PMODE | WF_80x87);
+  switch(Options.mode) {
+  case MODE_STANDARD:
+    result = (WF_STANDARD | cpuflag | WF_PMODE | WF_80x87);
+    break;
+
+  case MODE_ENHANCED:
+    result = (WF_ENHANCED | cpuflag | WF_PMODE | WF_80x87 | WF_PAGING);
+    break;
+
+  default:
+    fprintf(stderr, "Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
+    break;
+  }
+
+  return result;
 }
 
 /***********************************************************************

@@ -1,4 +1,102 @@
 ----------------------------------------------------------------------
+Sat Feb 24 16:17:05 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [files/profile.c]
+	Added \r when writing profile files, for DOS compatibility.
+
+	* [memory/global.c]
+	Fixed bug in GlobalReAlloc() that caused a discarded block not to
+ 	be reallocated if its size was not changed.
+
+	* [memory/selector.c]
+	Avoid setting a valid LDT entry with base and limit set to 0, as
+ 	this causes the kernel to clear the entry. This fixes a crash when
+ 	exiting Windows program manager.
+
+	* [objects/metafile.c]
+	Removed call to creat() instead of _lcreat() for WINELIB.
+
+Fri Feb 23 00:35:54 1996  Thomas Sandford <tdgsandf@prds-grn.demon.co.uk>
+
+	* [if1632/gdi32.spec]
+	GetTextExtentPointA now has win32 specific implementation.
+
+	* [include/struct32.h]
+	Define new structure tagSIZE32 and typedef SIZE32 to it.
+	Define prototype for function PARAM32_SIZE16to32
+
+	* [win32/param32.c]
+	New functions PARAM32_SIZE16to32 and WIN32_GetTextExtentPointA
+
+	* [win32/memory.c]
+	Added missing file pointer parameter to fprintf.
+
+Thu Feb 22 01:14:21 1996  Eric Warnke <ew2193@csc.albany.edu>
+
+	* [windows/nonclient.c]
+	Added more familiar icon activity, ie single click brings up
+ 	system menu.
+
+Wed Feb 21 13:07:04 1996  Frans van Dorsselaer <dorssel@rulhm1.leidenuniv.nl>
+
+	* [controls/menu.c]
+	Added calls to HideCaret() and ShowCaret() from within
+ 	TrackPopupMenu(), MENU_TrackMouseMenuBar() and
+ 	MENU_TrackKbdMenuBar().  Are there any more places where this
+ 	should be done?
+
+	* [controls/static.c]
+	Fixed a FIXME in STATIC_SetIcon(), which now returns a handle to
+ 	the previous icon.  Added a new FIXME at the point where
+ 	WM_SETTEXT is handled for a SS_ICON static control.
+
+	* [misc/commdlg.c]
+	Implemented FindText() and ReplaceText()
+	Still missing : Templates and Hooks handling / error checking
+
+	* [resources/sysres_En.c]
+	Redesigned FIND_TEXT and REPLACE_TEXT dialogs, so they now work.
+	Languages other than En should update these too, though, as well
+ 	as redimension the controls because some of the text doesn't fit.
+  	Created file resources/TODO to explain this.
+
+	* [windows/caret.c]
+	Re-written.  It now uses the correct R2_XORPEN.  It resets the
+ 	blink timer on SetCaretPos().  It does its own hide/show scheme
+ 	when SetCaretPos() is called (should be faster).
+
+Mon Feb 19 21:50:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [controls/listbox.c]
+	Miscellaneous changes for better LBS_EXTENDEDSEL support.
+	Removed several superfluous redrawals of item list.
+
+	* [controls/scroll.c]
+	WM_GETDLGCODE return value.
+
+	* [windows/win.c]
+	FlashWindow function.
+
+	* [windows/painting.c] [windows/scroll.c]
+	Added HideCaret/ShowCaret calls.
+
+	* [objects/font.c]
+	Added GetCharABCWidths stub.
+
+	* [include/windows.h]
+	"#define"s needed for changes mentioned above.
+
+Mon Feb 19 20:12:03 1996  Hans de Graaff  <Hans.deGraaff@twi72.twi.tudelft.nl>
+
+	* [include/winsock.h]
+	Change order of includes to get in_addr struct defined in time.
+	(Note: Linux 1.3.66, libc 5.2.18)
+
+	* [misc/main.c] [include/options.h] [miscemu/int2f.c]
+	Changed the -enhanced option into a -mode option, which can be
+	either 'standard' or 'enhanced'. 'enhanced' is the default.
+
+----------------------------------------------------------------------
 Sun Feb 18 16:35:54 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/desktop.c]

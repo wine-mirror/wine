@@ -669,12 +669,23 @@ BOOL FindText(LPFINDREPLACE lpFind)
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
+    SEGPTR ptr;
 
+    /*
+     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
+     * For now, only the standard dialog works.
+     */
+    /*
+     * FIXME : We should do error checking on the lpFind structure here
+     * and make CommDlgExtendedError() return the error condition.
+     */
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_FIND_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpFind->hwndOwner,
-                                   GetWndProcEntry16("FindTextDlgProc"), 
-                                   (DWORD)lpFind );
+    if (!(ptr = (SEGPTR)WIN16_GlobalLock( hDlgTmpl ))) return -1;
+    bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
+                                      GetWndProcEntry16("FindTextDlgProc"),
+                                      (DWORD)lpFind );
+    GlobalUnlock( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
@@ -687,15 +698,112 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
+    SEGPTR ptr;
 
+    /*
+     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
+     * For now, only the standard dialog works.
+     */
+    /*
+     * FIXME : We should do error checking on the lpFind structure here
+     * and make CommDlgExtendedError() return the error condition.
+     */
     hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_REPLACE_TEXT );
     hInst = WIN_GetWindowInstance( lpFind->hwndOwner );
-    bRet = DialogBoxIndirectParam( hInst, hDlgTmpl, lpFind->hwndOwner,
-                                   GetWndProcEntry16("ReplaceTextDlgProc"), 
-                                   (DWORD)lpFind );
+    if (!(ptr = (SEGPTR)WIN16_GlobalLock( hDlgTmpl ))) return -1;
+    bRet = CreateDialogIndirectParam( hInst, ptr, lpFind->hwndOwner,
+                                      GetWndProcEntry16("ReplaceTextDlgProc"),
+                                      (DWORD)lpFind );
+    GlobalUnlock( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
+
+
+/***********************************************************************
+ *                              FINDDLG_WMInitDialog            [internal]
+ */
+static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    LPFINDREPLACE lpfr;
+
+    SetWindowLong(hWnd, DWL_USER, lParam);
+    lpfr = (LPFINDREPLACE)lParam;
+    lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+    /*
+     * FIXME : If the initial FindWhat string is empty, we should disable the
+     * FindNext (IDOK) button.  Only after typing some text, the button should be
+     * enabled.
+     */
+    SetDlgItemText(hWnd, edt1, lpfr->lpstrFindWhat);
+    CheckRadioButton(hWnd, rad1, rad2, (lpfr->Flags & FR_DOWN) ? rad2 : rad1);
+    if (lpfr->Flags & (FR_HIDEUPDOWN | FR_NOUPDOWN)) {
+	EnableWindow(GetDlgItem(hWnd, rad1), FALSE);
+	EnableWindow(GetDlgItem(hWnd, rad2), FALSE);
+    }
+    if (lpfr->Flags & FR_HIDEUPDOWN) {
+	ShowWindow(GetDlgItem(hWnd, rad1), SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, rad2), SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, grp1), SW_HIDE);
+    }
+    CheckDlgButton(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
+    if (lpfr->Flags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
+	EnableWindow(GetDlgItem(hWnd, chx1), FALSE);
+    if (lpfr->Flags & FR_HIDEWHOLEWORD)
+	ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE);
+    CheckDlgButton(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
+    if (lpfr->Flags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
+	EnableWindow(GetDlgItem(hWnd, chx2), FALSE);
+    if (lpfr->Flags & FR_HIDEMATCHCASE)
+	ShowWindow(GetDlgItem(hWnd, chx2), SW_HIDE);
+    if (!(lpfr->Flags & FR_SHOWHELP)) {
+	EnableWindow(GetDlgItem(hWnd, pshHelp), FALSE);
+	ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
+    }
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    return TRUE;
+}    
+
+
+/***********************************************************************
+ *                              FINDDLG_WMCommand               [internal]
+ */
+static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    LPFINDREPLACE lpfr;
+    int uFindReplaceMessage = RegisterWindowMessage(MAKE_SEGPTR(FINDMSGSTRING));
+    int uHelpMessage = RegisterWindowMessage(MAKE_SEGPTR(HELPMSGSTRING));
+
+    lpfr = (LPFINDREPLACE)GetWindowLong(hWnd, DWL_USER);
+    switch (wParam) {
+	case IDOK:
+	    GetDlgItemText(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
+	    if (IsDlgButtonChecked(hWnd, rad2))
+		lpfr->Flags |= FR_DOWN;
+		else lpfr->Flags &= ~FR_DOWN;
+	    if (IsDlgButtonChecked(hWnd, chx1))
+		lpfr->Flags |= FR_WHOLEWORD; 
+		else lpfr->Flags &= ~FR_WHOLEWORD;
+	    if (IsDlgButtonChecked(hWnd, chx2))
+		lpfr->Flags |= FR_MATCHCASE; 
+		else lpfr->Flags &= ~FR_MATCHCASE;
+            lpfr->Flags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+	    lpfr->Flags |= FR_FINDNEXT;
+	    SendMessage(lpfr->hwndOwner, uFindReplaceMessage, 0, (LPARAM)MAKE_SEGPTR(lpfr));
+	    return TRUE;
+	case IDCANCEL:
+            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
+	    lpfr->Flags |= FR_DIALOGTERM;
+	    SendMessage(lpfr->hwndOwner, uFindReplaceMessage, 0, (LPARAM)MAKE_SEGPTR(lpfr));
+	    DestroyWindow(hWnd);
+	    return TRUE;
+	case pshHelp:
+	    /* FIXME : should lpfr structure be passed as an argument ??? */
+	    SendMessage(lpfr->hwndOwner, uHelpMessage, 0, 0);
+	    return TRUE;
+    }
+    return FALSE;
+}    
 
 
 /***********************************************************************
@@ -703,26 +811,115 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
  */
 LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
-  switch (wMsg)
-    {
-    case WM_INITDIALOG:
-      dprintf_commdlg(stddeb,"FindTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow(hWnd, SW_SHOWNORMAL);
-      return (TRUE);
-    case WM_COMMAND:
-      switch (wParam)
-	{
-	case IDOK:
-	  EndDialog(hWnd, TRUE);
-	  return(TRUE);
-	case IDCANCEL:
-	  EndDialog(hWnd, FALSE);
-	  return(TRUE);
-	}
-      return(FALSE);
+    switch (wMsg) {
+	case WM_INITDIALOG:
+	    return FINDDLG_WMInitDialog(hWnd, wParam, lParam);
+	case WM_COMMAND:
+	    return FINDDLG_WMCommand(hWnd, wParam, lParam);
     }
-  return FALSE;
+    return FALSE;
 }
+
+
+/***********************************************************************
+ *                              REPLACEDLG_WMInitDialog         [internal]
+ */
+static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    LPFINDREPLACE lpfr;
+
+    SetWindowLong(hWnd, DWL_USER, lParam);
+    lpfr = (LPFINDREPLACE)lParam;
+    lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+    /*
+     * FIXME : If the initial FindWhat string is empty, we should disable the FinNext /
+     * Replace / ReplaceAll buttons.  Only after typing some text, the buttons should be
+     * enabled.
+     */
+    SetDlgItemText(hWnd, edt1, lpfr->lpstrFindWhat);
+    SetDlgItemText(hWnd, edt2, lpfr->lpstrReplaceWith);
+    CheckDlgButton(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
+    if (lpfr->Flags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
+	EnableWindow(GetDlgItem(hWnd, chx1), FALSE);
+    if (lpfr->Flags & FR_HIDEWHOLEWORD)
+	ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE);
+    CheckDlgButton(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
+    if (lpfr->Flags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
+	EnableWindow(GetDlgItem(hWnd, chx2), FALSE);
+    if (lpfr->Flags & FR_HIDEMATCHCASE)
+	ShowWindow(GetDlgItem(hWnd, chx2), SW_HIDE);
+    if (!(lpfr->Flags & FR_SHOWHELP)) {
+	EnableWindow(GetDlgItem(hWnd, pshHelp), FALSE);
+	ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
+    }
+    ShowWindow(hWnd, SW_SHOWNORMAL);
+    return TRUE;
+}    
+
+
+/***********************************************************************
+ *                              REPLACEDLG_WMCommand            [internal]
+ */
+static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    LPFINDREPLACE lpfr;
+    int uFindReplaceMessage = RegisterWindowMessage(MAKE_SEGPTR(FINDMSGSTRING));
+    int uHelpMessage = RegisterWindowMessage(MAKE_SEGPTR(HELPMSGSTRING));
+
+    lpfr = (LPFINDREPLACE)GetWindowLong(hWnd, DWL_USER);
+    switch (wParam) {
+	case IDOK:
+	    GetDlgItemText(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
+	    GetDlgItemText(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
+	    if (IsDlgButtonChecked(hWnd, chx1))
+		lpfr->Flags |= FR_WHOLEWORD; 
+		else lpfr->Flags &= ~FR_WHOLEWORD;
+	    if (IsDlgButtonChecked(hWnd, chx2))
+		lpfr->Flags |= FR_MATCHCASE; 
+		else lpfr->Flags &= ~FR_MATCHCASE;
+            lpfr->Flags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
+	    lpfr->Flags |= FR_FINDNEXT;
+	    SendMessage(lpfr->hwndOwner, uFindReplaceMessage, 0, (LPARAM)MAKE_SEGPTR(lpfr));
+	    return TRUE;
+	case IDCANCEL:
+            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL);
+	    lpfr->Flags |= FR_DIALOGTERM;
+	    SendMessage(lpfr->hwndOwner, uFindReplaceMessage, 0, (LPARAM)MAKE_SEGPTR(lpfr));
+	    DestroyWindow(hWnd);
+	    return TRUE;
+	case psh1:
+	    GetDlgItemText(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
+	    GetDlgItemText(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
+	    if (IsDlgButtonChecked(hWnd, chx1))
+		lpfr->Flags |= FR_WHOLEWORD; 
+		else lpfr->Flags &= ~FR_WHOLEWORD;
+	    if (IsDlgButtonChecked(hWnd, chx2))
+		lpfr->Flags |= FR_MATCHCASE; 
+		else lpfr->Flags &= ~FR_MATCHCASE;
+            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACEALL | FR_DIALOGTERM);
+	    lpfr->Flags |= FR_REPLACE;
+	    SendMessage(lpfr->hwndOwner, uFindReplaceMessage, 0, (LPARAM)MAKE_SEGPTR(lpfr));
+	    return TRUE;
+	case psh2:
+	    GetDlgItemText(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
+	    GetDlgItemText(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
+	    if (IsDlgButtonChecked(hWnd, chx1))
+		lpfr->Flags |= FR_WHOLEWORD; 
+		else lpfr->Flags &= ~FR_WHOLEWORD;
+	    if (IsDlgButtonChecked(hWnd, chx2))
+		lpfr->Flags |= FR_MATCHCASE; 
+		else lpfr->Flags &= ~FR_MATCHCASE;
+            lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_DIALOGTERM);
+	    lpfr->Flags |= FR_REPLACEALL;
+	    SendMessage(lpfr->hwndOwner, uFindReplaceMessage, 0, (LPARAM)MAKE_SEGPTR(lpfr));
+	    return TRUE;
+	case pshHelp:
+	    /* FIXME : should lpfr structure be passed as an argument ??? */
+	    SendMessage(lpfr->hwndOwner, uHelpMessage, 0, 0);
+	    return TRUE;
+    }
+    return FALSE;
+}    
 
 
 /***********************************************************************
@@ -730,25 +927,13 @@ LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
-  switch (wMsg)
-    {
-    case WM_INITDIALOG:
-      dprintf_commdlg(stddeb,"ReplaceTextDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow(hWnd, SW_SHOWNORMAL);
-      return (TRUE);
-    case WM_COMMAND:
-      switch (wParam)
-	{
-	case IDOK:
-	  EndDialog(hWnd, TRUE);
-	  return(TRUE);
-	case IDCANCEL:
-	  EndDialog(hWnd, FALSE);
-	  return(TRUE);
-	}
-      return(FALSE);
+    switch (wMsg) {
+	case WM_INITDIALOG:
+	    return REPLACEDLG_WMInitDialog(hWnd, wParam, lParam);
+	case WM_COMMAND:
+	    return REPLACEDLG_WMCommand(hWnd, wParam, lParam);
     }
-  return FALSE;
+    return FALSE;
 }
 
 
