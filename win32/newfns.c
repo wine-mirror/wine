@@ -200,14 +200,6 @@ BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
 }
 
 /******************************************************************************
- *		EnumPortsA
- */
-BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD bufneeded,LPDWORD bufreturned) {
-	FIXME("(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
-	return FALSE;
-}
-
-/******************************************************************************
  *		CreateIoCompletionPort
  */
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,

@@ -2328,3 +2328,14 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
 
     return ret;
 }
+
+
+/******************************************************************************
+ *		EnumPortsA   (WINSPOOL.166)
+ */
+BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,
+                       LPDWORD bufneeded,LPDWORD bufreturned)
+{
+    FIXME("(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
+    return FALSE;
+}
