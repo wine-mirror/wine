@@ -149,7 +149,7 @@ END
 
 IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Editar texto"
+CAPTION "Editar DWORD"
 FONT 8, "System"
 BEGIN
     LTEXT           "Nome do valor:",IDC_STATIC,5,5,119,8
@@ -228,7 +228,8 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "Erro"
-    IDS_BAD_VALUE           "Não pode perguntar o valor '%s'"
+    IDS_BAD_KEY		    "Não pode consultar a chave '%s'"
+    IDS_BAD_VALUE           "Não pode consultar o valor '%s'"
     IDS_UNSUPPORTED_TYPE    "Não pode editar chaves deste tipo (%ld)"
     IDS_TOO_BIG_VALUE       "Valor é muito grande (%ld)"
     IDS_DELETE_BOX_TITLE    "Confirmar exclusão de valor"

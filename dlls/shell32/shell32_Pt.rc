@@ -178,3 +178,12 @@ BEGIN
 	IDS_SHV_COLUMN8		"Nome"
 	IDS_SHV_COLUMN9		"Comentários"
 END
+
+/* message box strings */
+STRINGTABLE DISCARDABLE
+{
+       IDS_RESTART_TITLE       "Reiniciar"
+       IDS_RESTART_PROMPT      "Você quer simular a reinicialização do Windows?"
+       IDS_SHUTDOWN_TITLE      "Desligar"
+       IDS_SHUTDOWN_PROMPT     "Você quer terminar sua sessão Wine?"
+}
