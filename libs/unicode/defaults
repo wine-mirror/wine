@@ -40,6 +40,7 @@
 00a2,20a1      'c'  # CENT SIGN, COLON SIGN
 00a3,20a4      'L'  # POUND SIGN, LIRA SIGN
 00a5           'Y'  # YEN SIGN
+00a6           '|'  # BROKEN BAR
 00a9           'c'  # COPYRIGHT SIGN
 00ae           'r'  # REGISTERED SIGN
 00b5,03bc      'u'  # MICRO SIGN, GREEK SMALL LETTER MU

@@ -976,6 +976,9 @@ sub HANDLE_FILE
     elsif ($codepage == 20932) { READ_JIS0208_FILE($MAPPREFIX . $filename); }
     else { READ_FILE($MAPPREFIX . $filename); }
 
+    # hack: 0x00a5 must map to backslash in Shift-JIS
+    if ($codepage == 932) { $uni2cp[0x00a5] = 0x5c; }
+
     ADD_DEFAULT_MAPPINGS();
 
     my $output = sprintf "c_%03d.c", $codepage;
