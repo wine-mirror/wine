@@ -527,7 +527,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 if (SendMessageW(GetParent(hwnd), WM_SETCURSOR, wParam, lParam)) return TRUE;
             }
         }
-	return NC_HandleSetCursor( hwnd, wParam, lParam );
+	NC_HandleSetCursor( hwnd, wParam, lParam );
+        break;
 
     case WM_SYSCOMMAND:
         return NC_HandleSysCommand( hwnd, wParam, lParam );
