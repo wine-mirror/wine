@@ -37,6 +37,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
+/* FIXME: fixed at 2005/2/22 */
+static LONGLONG boottime = (LONGLONG)1275356510 * 100000000;
+
 /* Structures used by NtConnectPort */
 
 typedef struct LpcSectionInfo
@@ -512,8 +515,10 @@ NTSTATUS WINAPI NtSetIntervalProfile(DWORD x1,DWORD x2) {
 /******************************************************************************
  *  NtQueryPerformanceCounter	[NTDLL.@]
  *
- *  Note: Windows uses a timer clocked at a multiple of 1193182 Hz.
- *  
+ *  Note: Windows uses a timer clocked at a multiple of 1193182 Hz. There is a
+ *  good number of applications that crash when the returned frequency is either
+ *  lower or higher then what Windows gives. Also too high counter values are
+ *  reported to give problems.
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter(
 	OUT PLARGE_INTEGER Counter,
@@ -523,9 +528,14 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
 
     if (!Counter) return STATUS_ACCESS_VIOLATION;
     NtQuerySystemTime( &time );
-    Counter->QuadPart = time.QuadPart;
+    time.QuadPart -= boottime;
+    /* convert a counter that increments at a rate of 10 MHz
+     * to one of 1193182 Hz, with some care for arithmetic
+     * overflow ( will not overflow until 3396 or so ) and
+     * good accuracy ( 21/176 = 0.119318182) */
+    Counter->QuadPart = (time.QuadPart * 21) / 176;
     if (Frequency)
-        Frequency->QuadPart = 10000000;
+        Frequency->QuadPart = 1193182;
     return 0;
 }
 
@@ -625,7 +635,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             SYSTEM_TIMEOFDAY_INFORMATION* sti = (SYSTEM_TIMEOFDAY_INFORMATION*)SystemInformation;
             if (Length >= sizeof(*sti))
             {
-                sti->liKeBootTime.QuadPart = 0; /* FIXME */
+                sti->liKeBootTime.QuadPart = boottime;
                 sti->liKeSystemTime.QuadPart = 0; /* FIXME */
                 sti->liExpTimeZoneBias.QuadPart  = 0; /* FIXME */
                 sti->uCurrentTimeZoneId = 0; /* FIXME */

@@ -192,8 +192,7 @@ static void create_registry_keys( const SYSTEM_INFO *info )
  */
 BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 {
-    LARGE_INTEGER frequency;
-    NtQueryPerformanceCounter( counter, &frequency );
+    NtQueryPerformanceCounter( counter, NULL );
     return TRUE;
 }
 
