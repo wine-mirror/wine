@@ -604,7 +604,5 @@ LRESULT MCIAVI_DrawFrame(WINE_MCIAVI* wma)
        ReleaseDC(wma->hWndPaint, hDC);
     }
 
-    LeaveCriticalSection(&wma->cs);
-
     return TRUE;
 }
