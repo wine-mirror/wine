@@ -284,7 +284,7 @@ static void TREEVIEW_RemoveAllChildren(
  	killItem=& infoPtr->items[kill];
 	if (killItem->pszText!=LPSTR_TEXTCALLBACKA) 
 		COMCTL32_Free (killItem->pszText);
- 	TREEVIEW_SendTreeviewNotify (hwnd, TVN_DELETEITEM, 0, (HTREEITEM)kill, 0);
+ 	TREEVIEW_SendTreeviewNotify (hwnd, TVN_DELETEITEMA, 0, (HTREEITEM)kill, 0);
 	if (killItem->firstChild) 
 			TREEVIEW_RemoveAllChildren (hwnd, killItem);
 	kill=(INT)killItem->sibling;
@@ -314,7 +314,7 @@ TREEVIEW_RemoveItem (HWND hwnd, TREEVIEW_ITEM *wineItem)
  if (wineItem->pszText!=LPSTR_TEXTCALLBACKA) 
 	COMCTL32_Free (wineItem->pszText);
 
- TREEVIEW_SendTreeviewNotify (hwnd, TVN_DELETEITEM, 0, (HTREEITEM)iItem, 0);
+ TREEVIEW_SendTreeviewNotify (hwnd, TVN_DELETEITEMA, 0, (HTREEITEM)iItem, 0);
 
  if (wineItem->firstChild) 
  	TREEVIEW_RemoveAllChildren (hwnd,wineItem);
@@ -367,7 +367,7 @@ static void TREEVIEW_RemoveTree (HWND hwnd)
 		if (killItem->pszText!=LPSTR_TEXTCALLBACKA)
 			COMCTL32_Free (killItem->pszText);
 		TREEVIEW_SendTreeviewNotify 
-					(hwnd, TVN_DELETEITEM, 0, killItem->hItem, 0);
+					(hwnd, TVN_DELETEITEMA, 0, killItem->hItem, 0);
 		} 
 
  if (infoPtr->uNumPtrsAlloced) {
@@ -743,14 +743,14 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
       /* The item is curently selected */
 		  if (wineItem->iSelectedImage == I_IMAGECALLBACK) 
   			TREEVIEW_SendDispInfoNotify 
-					(hwnd, wineItem, TVN_GETDISPINFO, TVIF_SELECTEDIMAGE);
+					(hwnd, wineItem, TVN_GETDISPINFOA, TVIF_SELECTEDIMAGE);
 
       	  imageIndex = wineItem->iSelectedImage;
 	  } else { 
       /* The item is not selected */
 		  if (wineItem->iImage == I_IMAGECALLBACK) 
 			  TREEVIEW_SendDispInfoNotify 
-					(hwnd, wineItem, TVN_GETDISPINFO, TVIF_IMAGE);
+					(hwnd, wineItem, TVN_GETDISPINFOA, TVIF_IMAGE);
 
       imageIndex = wineItem->iImage;
   	}
@@ -788,7 +788,7 @@ TREEVIEW_DrawItem (HWND hwnd, HDC hdc, TREEVIEW_ITEM *wineItem)
 
     if (wineItem->pszText== LPSTR_TEXTCALLBACKA) {
       TRACE("LPSTR_TEXTCALLBACK\n");
-      TREEVIEW_SendDispInfoNotify (hwnd, wineItem, TVN_GETDISPINFO, TVIF_TEXT);
+      TREEVIEW_SendDispInfoNotify (hwnd, wineItem, TVN_GETDISPINFOA, TVIF_TEXT);
     }
 
 /* Yep, there are some things that need to be straightened out here. 
@@ -1512,13 +1512,13 @@ static INT WINAPI TREEVIEW_SortOnName (
 	
   item=(TREEVIEW_ITEM *) first;
   if (item->pszText==LPSTR_TEXTCALLBACKA)  {
-	 TREEVIEW_SendDispInfoNotify (hwnd, item, TVN_GETDISPINFO, TVIF_TEXT);
+	 TREEVIEW_SendDispInfoNotify (hwnd, item, TVN_GETDISPINFOA, TVIF_TEXT);
 	}
   txt1=item->pszText;
 
   item=(TREEVIEW_ITEM *) second;
   if (item->pszText==LPSTR_TEXTCALLBACKA)  {
-	 TREEVIEW_SendDispInfoNotify (hwnd, item, TVN_GETDISPINFO, TVIF_TEXT);
+	 TREEVIEW_SendDispInfoNotify (hwnd, item, TVN_GETDISPINFOA, TVIF_TEXT);
 	}
   txt2=item->pszText;
 
@@ -1844,7 +1844,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   
         /* lookup the text if using LPSTR_TEXTCALLBACKs */
         if (wineItem->pszText==LPSTR_TEXTCALLBACKA) {
-          TREEVIEW_SendDispInfoNotify (hwnd, wineItem, TVN_GETDISPINFO, TVIF_TEXT);
+          TREEVIEW_SendDispInfoNotify (hwnd, wineItem, TVN_GETDISPINFOA, TVIF_TEXT);
         }
     
         /* Iterate the parent children to see where we fit in */
@@ -1854,7 +1854,7 @@ TREEVIEW_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
           /* lookup the text if using LPSTR_TEXTCALLBACKs */
           if (aChild->pszText==LPSTR_TEXTCALLBACKA) {
-            TREEVIEW_SendDispInfoNotify (hwnd, aChild, TVN_GETDISPINFO, TVIF_TEXT);
+            TREEVIEW_SendDispInfoNotify (hwnd, aChild, TVN_GETDISPINFOA, TVIF_TEXT);
 	  }
 
           comp = strcmp(wineItem->pszText, aChild->pszText);
@@ -2754,17 +2754,17 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
         /* this item has never been expanded */
         if (TREEVIEW_SendTreeviewNotify (
               hwnd, 
-              TVN_ITEMEXPANDING, 
+              TVN_ITEMEXPANDINGA, 
               TVE_EXPAND, 
               0, 
               (HTREEITEM)expand))
         {
-          TRACE("  TVN_ITEMEXPANDING returned TRUE, exiting...\n");
+          TRACE("  TVN_ITEMEXPANDINGA returned TRUE, exiting...\n");
           return FALSE;   
         }
 
         /* FIXME
-         * Since the TVN_ITEMEXPANDING message may has caused the parent to
+         * Since the TVN_ITEMEXPANDINGA message may has caused the parent to
          * insert new items which in turn may have cause items placeholder 
          * reallocation, I reassign the current item pointer so we have 
          * something valid to work with... 
@@ -2781,16 +2781,16 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
         }
 
         wineItem->state |= TVIS_EXPANDEDONCE;
-        TRACE("  TVN_ITEMEXPANDING sent...\n");
+        TRACE("  TVN_ITEMEXPANDINGA sent...\n");
 
         TREEVIEW_SendTreeviewNotify (
           hwnd, 
-          TVN_ITEMEXPANDED, 
+          TVN_ITEMEXPANDEDA, 
           TVE_EXPAND, 
           0, 
           (HTREEITEM)expand);
 
-        TRACE("  TVN_ITEMEXPANDED sent...\n");
+        TRACE("  TVN_ITEMEXPANDEDA sent...\n");
 
       }
       else
@@ -2917,7 +2917,7 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		if ( TREEVIEW_SendDispInfoNotify(  /* return true to cancel edition */
            hwnd, 
            editedItem,
-           TVN_ENDLABELEDIT, 
+           TVN_ENDLABELEDITA, 
            0))
     {
       bRevert = TRUE;
@@ -3059,7 +3059,7 @@ TREEVIEW_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   		if ( TREEVIEW_SendDispInfoNotify(  /* Return true to cancel edition */
               hwnd, 
               wineItem, 
-              TVN_BEGINLABELEDIT, 
+              TVN_BEGINLABELEDITA, 
               0))
       {
         return 0; 
@@ -3148,7 +3148,7 @@ TREEVIEW_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
  if ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_DISABLEDRAGDROP) return 0;
 
  if (infoPtr->uInternalStatus & TV_LDRAG) {
-	TREEVIEW_SendTreeviewDnDNotify (hwnd, TVN_BEGINDRAG, hotItem->hItem, pt);
+	TREEVIEW_SendTreeviewDnDNotify (hwnd, TVN_BEGINDRAGA, hotItem->hItem, pt);
 	infoPtr->uInternalStatus &= ~TV_LDRAG;
 	infoPtr->uInternalStatus |= TV_LDRAGGING;
 	infoPtr->dropItem=hotItem->hItem;
@@ -3156,7 +3156,7 @@ TREEVIEW_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
  }
 
  if (infoPtr->uInternalStatus & TV_RDRAG) {
-	TREEVIEW_SendTreeviewDnDNotify (hwnd, TVN_BEGINRDRAG, hotItem->hItem, pt);
+	TREEVIEW_SendTreeviewDnDNotify (hwnd, TVN_BEGINRDRAGA, hotItem->hItem, pt);
 	infoPtr->uInternalStatus &= ~TV_RDRAG;
 	infoPtr->uInternalStatus |= TV_RDRAGGING;
 	infoPtr->dropItem=hotItem->hItem;
@@ -3188,7 +3188,7 @@ TREEVIEW_CreateDragImage (HWND hwnd, WPARAM wParam, LPARAM lParam)
  if (!dragItem) return 0;
 
  if (dragItem->pszText==LPSTR_TEXTCALLBACKA) {
-     TREEVIEW_SendDispInfoNotify (hwnd, dragItem, TVN_GETDISPINFO, TVIF_TEXT);
+     TREEVIEW_SendDispInfoNotify (hwnd, dragItem, TVN_GETDISPINFOA, TVIF_TEXT);
  }
  itemtxt=dragItem->pszText;
 
@@ -3271,7 +3271,7 @@ TREEVIEW_DoSelectItem (HWND hwnd, INT action, HTREEITEM newSelect, INT cause)
 	  if (newSelect) 
 		if (TREEVIEW_SendTreeviewNotify(
 			  hwnd, 
-			  TVN_SELCHANGING, 
+			  TVN_SELCHANGINGA, 
 			  cause, 
 			  (HTREEITEM)prevSelect, 
 			  (HTREEITEM)newSelect)) 
@@ -3286,7 +3286,7 @@ TREEVIEW_DoSelectItem (HWND hwnd, INT action, HTREEITEM newSelect, INT cause)
 
 	  TREEVIEW_SendTreeviewNotify(
 		hwnd, 
-		TVN_SELCHANGED, 
+		TVN_SELCHANGEDA, 
 		cause,
 		(HTREEITEM)prevSelect,
 		(HTREEITEM)newSelect);
