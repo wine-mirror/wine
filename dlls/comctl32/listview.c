@@ -682,6 +682,7 @@ static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HD
 	 !((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && 
 	   (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) )
 	isSelected = FALSE;
+
     if (isSelected && infoPtr->bFocus)
     {
 	lpnmlvcd->clrTextBk = comctl32_color.clrHighlight;
@@ -3122,8 +3123,9 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, DWORD 
     rcSelect = rcLabel;
     if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
 	rcSelect.right = rcBox.right;
-    
-    ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
+   
+    if (lvItem.state & LVIS_SELECTED) 
+        ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
     if(lprcFocus) *lprcFocus = rcSelect;
     
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, LV_SL_DT_FLAGS | DT_CENTER);
