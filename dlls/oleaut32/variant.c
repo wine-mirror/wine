@@ -1882,14 +1882,14 @@ HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
 	    break;
 	  case( VT_DISPATCH ):
 	    if(V_UNION(pvarg,pdispVal)!=NULL)
-	      ICOM_CALL(Release,V_UNION(pvarg,pdispVal));
+	      IDispatch_Release(V_UNION(pvarg,pdispVal));
 	    break;
 	  case( VT_VARIANT ):
 	    VariantClear(V_UNION(pvarg,pvarVal));
 	    break;
 	  case( VT_UNKNOWN ):
 	    if(V_UNION(pvarg,punkVal)!=NULL)
-	      ICOM_CALL(Release,V_UNION(pvarg,punkVal));
+	      IUnknown_Release(V_UNION(pvarg,punkVal));
 	    break;
 	  case( VT_SAFEARRAY ):
 	    SafeArrayDestroy(V_UNION(pvarg,parray));
@@ -1963,7 +1963,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 	  case( VT_DISPATCH ):
 	    V_UNION(pvargDest,pdispVal) = V_UNION(pvargSrc,pdispVal);
 	    if (V_UNION(pvargDest,pdispVal)!=NULL)
-	      ICOM_CALL(AddRef,V_UNION(pvargDest,pdispVal));
+	      IDispatch_AddRef(V_UNION(pvargDest,pdispVal));
 	    break;
 	  case( VT_VARIANT ):
 	    VariantCopy(V_UNION(pvargDest,pvarVal),V_UNION(pvargSrc,pvarVal));
@@ -1971,7 +1971,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 	  case( VT_UNKNOWN ):
 	    V_UNION(pvargDest,punkVal) = V_UNION(pvargSrc,punkVal);
 	    if (V_UNION(pvargDest,pdispVal)!=NULL)
-	      ICOM_CALL(AddRef,V_UNION(pvargDest,punkVal));
+	      IUnknown_AddRef(V_UNION(pvargDest,punkVal));
 	    break;
 	  case( VT_SAFEARRAY ):
 	    SafeArrayCopy(V_UNION(pvargSrc,parray), &V_UNION(pvargDest,parray));
@@ -2051,7 +2051,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	    case( VT_DISPATCH ):
 	      V_UNION(pvargDest,pdispVal) = *V_UNION(pvargSrc,ppdispVal);
 	      if (V_UNION(pvargDest,pdispVal)!=NULL)
-		ICOM_CALL(AddRef,V_UNION(pvargDest,pdispVal));
+		IDispatch_AddRef(V_UNION(pvargDest,pdispVal));
 	      break;
 	    case( VT_VARIANT ):
 	      {
@@ -2090,7 +2090,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	    case( VT_UNKNOWN ):
 	      V_UNION(pvargDest,punkVal) = *V_UNION(pvargSrc,ppunkVal);
 	      if (V_UNION(pvargDest,pdispVal)!=NULL)
-		ICOM_CALL(AddRef,V_UNION(pvargDest,punkVal));
+		IUnknown_AddRef(V_UNION(pvargDest,punkVal));
 	      break;
 	    case( VT_SAFEARRAY ):
 	      SafeArrayCopy(*V_UNION(pvargSrc,pparray), &V_UNION(pvargDest,parray));
