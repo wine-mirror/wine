@@ -397,14 +397,17 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
 
     if ( dwParseType == REG_SZ)        /* no conversion for string */
     {
+        REGPROC_unescape_string(val_data);
+        /* Compute dwLen after REGPROC_unescape_string because it may
+         * have changed the string length and we don't want to store
+         * the extra garbage in the registry.
+         */
         dwLen = strlen(val_data);
         if (dwLen>0 && val_data[dwLen-1]=='"')
         {
             dwLen--;
             val_data[dwLen]='\0';
         }
-        dwLen++;
-        REGPROC_unescape_string(val_data);
         lpbData = val_data;
     } else if (dwParseType == REG_DWORD)  /* Convert the dword types */
     {
