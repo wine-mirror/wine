@@ -43,7 +43,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(win32);
+WINE_DEFAULT_DEBUG_CHANNEL(time);
 
 /* maximum time adjustment in seconds for SetLocalTime and SetSystemTime */
 #define SETTIME_MAX_ADJUST 120
