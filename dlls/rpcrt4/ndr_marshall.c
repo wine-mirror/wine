@@ -73,7 +73,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define BIG_ENDIAN_UINT32_READ(pchar) \
   (MAKELONG( \
-    MAKEWORD(*((pchar)+3), *((pchar)+2)) \
+    MAKEWORD(*((pchar)+3), *((pchar)+2)), \
     MAKEWORD(*((pchar)+1), *(pchar))))
 
 #ifdef NDR_LOCAL_IS_BIG_ENDIAN
