@@ -59,6 +59,8 @@ typedef enum {
     ACTION_UNDEF, ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
 } REGEDIT_ACTION;
 
+BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s);
+
 /**
  * Process unknown switch.
  *
@@ -78,8 +80,7 @@ void error_unknown_switch(char chu, char *s)
     exit(1);
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine, int nCmdShow)
+BOOL ProcessCmdLine(LPSTR lpCmdLine)
 {
     REGEDIT_ACTION action = ACTION_UNDEF;
     LPSTR s = lpCmdLine;        /* command line pointer */
@@ -153,10 +154,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
     if (action == ACTION_UNDEF)
-    {
-        action = ACTION_ADD;
+        return FALSE;
+
+    return PerformRegAction(action, s);
     }
 
+BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
+{
     switch (action)
     {
     case ACTION_ADD:
@@ -167,7 +171,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         get_file_name(&s, filename);
         if (!filename[0])
         {
-            printf("%s: No file name is specified\n%s", getAppName(), usage);
+            printf("%s: No file name is specified\n", getAppName());
+            printf(usage);
             exit(1);
         }
 
@@ -193,8 +198,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         get_file_name(&s, reg_key_name);
         if (!reg_key_name[0])
         {
-            printf("%s: No registry key is specified for removal\n%s",
-                   getAppName(), usage);
+            printf("%s: No registry key is specified for removal\n",
+                   getAppName());
+            printf(usage);
             exit(1);
         }
         delete_registry_key(reg_key_name);
@@ -208,7 +214,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         get_file_name(&s, filename);
         if (!filename[0])
         {
-            printf("%s: No file name is specified\n%s", getAppName(), usage);
+            printf("%s: No file name is specified\n", getAppName());
+            printf(usage);
             exit(1);
         }
 

@@ -36,7 +36,8 @@ void doQueryValue(LPSTR lpsLine);
 void doRegisterDLL(LPSTR lpsLine);
 void doUnregisterDLL(LPSTR lpsLine);
 
-void export_registry_key(CHAR *file_name, CHAR *reg_key_name);
+BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name);
+BOOL import_registry_file(LPTSTR filename);
 void delete_registry_key(CHAR *reg_key_name);
 
 void setAppName(CHAR *name);
@@ -70,4 +71,3 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data);
  * api queryValue prototypes
  */
 void    processQueryValue(LPSTR cmdline);
-

@@ -103,7 +103,7 @@ char* getToken(char** str, const char* delims)
 
 /******************************************************************************
  * Copies file name from command line string to the buffer.
- * Rewinds the command line string pointer to the next non-spece character
+ * Rewinds the command line string pointer to the next non-space character
  * after the file name.
  * Buffer contains an empty string if no filename was found;
  *
@@ -616,7 +616,7 @@ void doSetValue(LPSTR stdInput)
       closeKey();                    /* Close the previous key before */
 
     if ( openKey(stdInput) != ERROR_SUCCESS )
-      printf ("%s: doSetValue failed to open key %s\n", getAppName(), stdInput);
+      printf("%s: setValue failed to open key %s\n", getAppName(), stdInput);
   }
   else if( ( bTheKeyIsOpen ) &&
            (( stdInput[0] == '@') || /* reading a default @=data pair */
@@ -655,7 +655,7 @@ void doQueryValue(LPSTR stdInput) {
       closeKey();                    /* Close the previous key before */
 
     if ( openKey(stdInput) != ERROR_SUCCESS )
-      printf ("%s: doSetValue failed to open key %s\n", getAppName(), stdInput);
+      printf("%s: queryValue failed to open key %s\n", getAppName(), stdInput);
   }
   else if( ( bTheKeyIsOpen ) &&
            (( stdInput[0] == '@') || /* reading a default @=data pair */
@@ -743,14 +743,14 @@ void processSetValue(LPSTR line)
       if (line[line_idx] != '=')
       {
           line[line_idx] = '\"';
-          printf("Warning! uncrecognized line:\n%s\n", line);
+          printf("Warning! unrecognized line:\n%s\n", line);
           return;
       }
 
   }
   else
   {
-      printf("Warning! uncrecognized line:\n%s\n", line);
+      printf("Warning! unrecognized line:\n%s\n", line);
       return;
   }
   line_idx++;                   /* skip the '=' character */
@@ -890,7 +890,7 @@ void processQueryValue(LPSTR cmdline)
       currentKeyName);
 
   else
-    printf("%s: ERROR Value \"%s\" not found. for key \"%s\"\n",
+    printf("%s: ERROR Value \"%s\" not found for key \"%s\".\n",
       getAppName(),
       keyValue,
       currentKeyName);
@@ -1375,7 +1375,7 @@ FILE *REGPROC_open_export_file(CHAR *file_name)
  * reg_key_name - registry branch to export. The whole registry is exported if
  *      reg_key_name is NULL or contains an empty string.
  */
-void export_registry_key(CHAR *file_name, CHAR *reg_key_name)
+BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name)
 {
     HKEY reg_key_class;
 
@@ -1463,6 +1463,21 @@ void export_registry_key(CHAR *file_name, CHAR *reg_key_name)
     }
     HeapFree(GetProcessHeap(), 0, reg_key_name);
     HeapFree(GetProcessHeap(), 0, val_buf);
+    return TRUE;
+}
+
+/******************************************************************************
+ * Reads contents of the specified file into the registry.
+ */
+BOOL import_registry_file(LPTSTR filename)
+{
+    FILE* reg_file = fopen(filename, "r");
+
+    if (reg_file) {
+        processRegLines(reg_file, doSetValue);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /******************************************************************************

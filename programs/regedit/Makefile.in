@@ -9,8 +9,17 @@ EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 EXTRADEFS = -DNO_LIBWINE_PORT
 
 C_SRCS = \
+	about.c \
+	childwnd.c \
+	framewnd.c \
+	listview.c \
+	main.c \
 	regedit.c \
-	regproc.c
+	regproc.c \
+	treeview.c
+
+RC_SRCS = rsrc.rc
+EXTRARCFLAGS = -D__WINE__
 
 PLTESTS = \
 	tests/regedit.pl

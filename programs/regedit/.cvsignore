@@ -1,3 +1,4 @@
 Makefile
 regedit.exe.dbg.c
 regedit.exe.spec.c
+rsrc.res
