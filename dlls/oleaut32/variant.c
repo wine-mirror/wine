@@ -88,12 +88,15 @@ static char pBuffer[BUFFER_MAX];
  * (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
  * So according to this there is 365.2515 days in one year.
  * One + every four years: 1/4 -> 365.25
- * One - every 100 years: 1/100 -> 365.001
+ * One - every 100 years: 1/100 -> 365.01
  * One + every 400 years: 1/400 -> 365.0025
  */
-static const double DAYS_IN_ONE_YEAR = 365.2515;
-
-
+/* static const double DAYS_IN_ONE_YEAR = 365.2515;
+ *
+ *  ^^  Might this be the key to an easy way to factor large prime numbers?
+ *  Let's try using arithmetic.  <lawson_whitney@juno.com> 7 Mar 2000
+ */
+static const double DAYS_IN_ONE_YEAR = 365.2425;
 
 /******************************************************************************
  *	   DateTimeStringToTm	[INTERNAL]
