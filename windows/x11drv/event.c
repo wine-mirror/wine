@@ -648,11 +648,8 @@ static void EVENT_Expose( HWND hWnd, XExposeEvent *event )
 
   RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
 
-  /* FIXME: We should use SendNotifyMessage here, but this function is not
-     implemented correctly, so for now we used SendMessage */
-  /*SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);*/
   if (event->count == 0)
-    SendMessageA(hWnd,WM_SYNCPAINT, 0, 0);
+    SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);
 }
 
 
@@ -682,11 +679,8 @@ static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event )
 
   RedrawWindow( hWnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
 
-  /* FIXME: We should use SendNotifyMessage here, but this function is not
-     implemented correctly, so for now we used SendMessage */
-  /*SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);*/
   if (event->count == 0)
-    SendMessageA(hWnd,WM_SYNCPAINT, 0, 0);
+    SendNotifyMessageA(hWnd,WM_SYNCPAINT, 0, 0);
 }
 
 
