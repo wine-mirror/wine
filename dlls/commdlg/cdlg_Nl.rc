@@ -193,3 +193,106 @@ FONT 8, "Helv"
  PUSHBUTTON "Annuleren", IDCANCEL, 174, 55, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Help", pshHelp	 , 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
 }
+
+
+PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Print32"
+FONT 8, "Helv"
+{
+    DEFPUSHBUTTON   "OK",     IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
+    PUSHBUTTON      "Cancel", IDCANCEL, 232,164, 48,14, WS_GROUP
+    PUSHBUTTON      "&Help",  pshHelp,  50, 161, 48,14, WS_GROUP
+
+    GROUPBOX        "Printer",        grp4,   8,  4, 272,84, WS_GROUP
+    CONTROL         "Naar &bestand",  chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+    PUSHBUTTON      "&Eigenschappen", psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Naam:",         stc6,  16, 20,  36,8
+    COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Status:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Type:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Waar:",          stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Opmerking:",     stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Aantal ",         grp2, 160, 92, 120,64, WS_GROUP
+    LTEXT           "Aantal e&xemplaren:",stc5,168,108,68,8
+    ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
+    CONTROL         "&Sorteren",      chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
+    EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
+
+    GROUPBOX        "Afdrukbereik",   grp1,   8,92,  144,64, WS_GROUP
+    CONTROL         "&Alle xx",       rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
+    CONTROL         "&Pagina's",      rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
+    CONTROL         "Sele&ctie",      rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+    EDITTEXT                          edt1,  74,122,  26,12, WS_GROUP | ES_NUMBER
+    EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP | ES_NUMBER
+    RTEXT           "&van:",          stc2,  52,124,  20,8
+    RTEXT           "&t/m:",           stc3, 100,124,  16,8
+}
+
+
+
+STRINGTABLE DISCARDABLE
+{
+    PD32_PRINT_TITLE       "Print"
+
+    PD32_VALUE_UREADABLE                  "Onleesbare ingave"
+    PD32_INVALID_PAGE_RANGE "Deze waarde ligt niet binnen het bereik\n\
+Voert u s.v.p. een waarde tussen %d en %d in."
+    PD32_FROM_NOT_ABOVE_TO                "De VAN ingave kan niet groter zijn \
+dan de TO waarde"
+    PD32_MARGINS_OVERLAP                  "De marges overlappen of vallen \
+buiten het papier.\nVoer s.v.p. nieuwe marges in."
+    PD32_NR_OF_COPIES_EMPTY               "Het aantal invoerveld kan niet leeg \
+zijn."
+    PD32_TOO_LARGE_COPIES                 "Zoveel exemplaren kan de printer \
+niet in een keer aan, het maximum is %d"
+    PD32_PRINT_ERROR                      "Er ontstond een printer fout."
+    PD32_NO_DEFAULT_PRINTER               "Er is geen default printer"
+    PD32_CANT_FIND_PRINTER                "De printer werd niet gevonden"
+    PD32_OUT_OF_MEMORY                    "Er was onvoldoende geheugen \
+beschikbaar"
+    PD32_GENERIC_ERROR                    "Er onstond een niet nader \
+gespecifieerde fout"
+    PD32_DRIVER_UNKNOWN                   "De printer driver is onbekend"
+
+    PD32_DEFAULT_PRINTER                  "Default Printer, "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Er staan %d documenten in de \
+wachtrij"
+    PD32_PRINT_ALL_X_PAGES                "&Alle %d pagina's"
+    PD32_MARGINS_IN_INCHES                "Marges [inch]"
+    PD32_MARGINS_IN_MILIMETERS            "Marges [mm]"
+    PD32_MILIMETERS                       "mm"
+
+    PD32_PRINTER_STATUS_READY             "Klaar"
+    PD32_PRINTER_STATUS_PAUSED            "Gepauseerd, "
+    PD32_PRINTER_STATUS_ERROR             "Fout, "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "Bezig met verwijderen, "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Paper jam, "
+    PD32_PRINTER_STATUS_PAPER_OUT         "Papier is op, "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "Voer s.v.p. met de hand papier in, "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Papier probleem, "
+    PD32_PRINTER_STATUS_OFFLINE           "Printer offline, "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Actief, "
+    PD32_PRINTER_STATUS_BUSY              "Druk bezig, "
+    PD32_PRINTER_STATUS_PRINTING          "Aan het printen, "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "De uitvoerlade is vol, "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "Niet aanwezig, "
+    PD32_PRINTER_STATUS_WAITING           "Aan het wachten, "
+    PD32_PRINTER_STATUS_PROCESSING        "Aan het Verwerken, "
+    PD32_PRINTER_STATUS_INITIALIZING      "Aan het opstarten, "
+    PD32_PRINTER_STATUS_WARMING_UP        "Aan het opwarmen, "
+    PD32_PRINTER_STATUS_TONER_LOW         "Er is nog maar weinig toner, "
+    PD32_PRINTER_STATUS_NO_TONER          "Toner is op, "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "Storing in papieruitvoer, "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "Onderbroken door een gebruiker, "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Onvoldoende geheugen beschikbaar, "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "De printer staat is open, "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Print server onbekend; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Power safe mode; "
+}
