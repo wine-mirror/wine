@@ -42,44 +42,7 @@
 
 USER_DRIVER *USER_Driver = NULL;
 
-/* when adding new languages look at ole/ole2nls.c 
- * for proper iso name and Windows code (add 0x0400 
- * to the code listed there)
- */
-const WINE_LANGUAGE_DEF Languages[] =
-{
-    {"En",0x0409},	/* LANG_En */
-    {"Es",0x040A},	/* LANG_Es */
-    {"De",0x0407},	/* LANG_De */
-    {"No",0x0414},	/* LANG_No */
-    {"Fr",0x040C},	/* LANG_Fr */
-    {"Fi",0x040B},	/* LANG_Fi */
-    {"Da",0x0406},	/* LANG_Da */
-    {"Cs",0x0405},	/* LANG_Cs */
-    {"Eo",0x048f},	/* LANG_Eo */
-    {"It",0x0410},	/* LANG_It */
-    {"Ko",0x0412},	/* LANG_Ko */
-    {"Hu",0x040e},	/* LANG_Hu */
-    {"Pl",0x0415},	/* LANG_Pl */
-    {"Pt",0x0416},	/* LANG_Pt */
-    {"Sk",0x041b},	/* LANG_Sk */
-    {"Sv",0x041d},	/* LANG_Sv */
-    {"Ca",0x0403},	/* LANG_Ca */
-    {"Nl",0x0413},	/* LANG_Nl */
-    {"Ru",0x0419},	/* LANG_Ru */
-    {"Wa",0x0490},      /* LANG_Wa */
-    {"Ga",0x043c},	/* LANG_Ga */
-    {"Gd",0x083c},	/* LANG_Gd */
-    {"Gv",0x0c3c},	/* LANG_Gv */
-    {"Kw",0x0491},	/* LANG_Kw */
-    {"Cy",0x0492},	/* LANG_Cy */
-    {"Br",0x0493},	/* LANG_Br  */
-    {"Ja",0x0411},	/* LANG_Ja */
-    {"Hr",0x041A},	/* LANG_Hr */
-    {NULL,0}
-};
 
-WORD WINE_LanguageId = 0x409;	/* english as default */
 
 /***********************************************************************
  *          MAIN_ParseDebugOptions
@@ -574,38 +537,11 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 	LANG_ENTRY_BEGIN( "wa", WALON )	/* not official */ 
 	LANG_ENTRY_END( WALON )
 
-	ret = LANG_ENGLISH;
-
 end_MAIN_GetLanguageID:
 	if (Charset) free(charset);
 	free(dialect);
 
 	return ret;
-}
-
-/***********************************************************************
- *           MAIN_ParseLanguageOption
- *
- * Parse -language option.
- */
-void MAIN_ParseLanguageOption( const char *arg )
-{
-    const WINE_LANGUAGE_DEF *p = Languages;
-
-    Options.language = LANG_Xx;  /* First (dummy) language */
-    for (;p->name;p++)
-    {
-        if (!lstrcmpiA( p->name, arg ))
-        {
-	    WINE_LanguageId = p->langid;
-	    return;
-	}
-        Options.language++;
-    }
-    MESSAGE( "Invalid language specified '%s'. Supported languages are: ", arg );
-    for (p = Languages; p->name; p++) MESSAGE( "%s ", p->name );
-    MESSAGE( "\n" );
-    ExitProcess(1);
 }
 
 

@@ -585,9 +585,6 @@ DWORD WINAPI RtlGetAce(
 
 /*	string functions */
 
-WCHAR CDECL NTDLL_towupper(WCHAR code);
-WCHAR CDECL NTDLL_towlower(WCHAR code);
-
 VOID WINAPI RtlInitAnsiString(
 	PANSI_STRING target,
 	LPCSTR source);

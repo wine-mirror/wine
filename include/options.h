@@ -9,58 +9,12 @@
 
 #include "windef.h"
 
-  /* Supported languages */
-  /* When adding a new language look at ole/ole2nls.c 
-   * for the LANG_Xx name to choose, and uncomment there
-   * the proper case line
-   */
-typedef enum
-{   LANG_Xx,  /* Just to ensure value 0 is not used */  
-    LANG_En,  /* English */
-    LANG_Es,  /* Spanish */
-    LANG_De,  /* German */
-    LANG_No,  /* Norwegian */
-    LANG_Fr,  /* French */
-    LANG_Fi,  /* Finnish */
-    LANG_Da,  /* Danish */
-    LANG_Cs,  /* Czech */
-    LANG_Eo,  /* Esperanto */
-    LANG_It,  /* Italian */
-    LANG_Ko,  /* Korean */
-    LANG_Hu,  /* Hungarian */
-    LANG_Pl,  /* Polish */
-    LANG_Pt,  /* Portuguese */
-    LANG_Sk,  /* Slovak */
-    LANG_Sv,  /* Swedish */
-    LANG_Ca,  /* Catalan */
-    LANG_Nl,  /* Dutch */
-    LANG_Ru,  /* Russian */
-    LANG_Wa,   /* Walon */
-    LANG_Br,  /* Breton */
-    LANG_Cy,  /* Welsh */
-    LANG_Ga,  /* Irish Gaelic */
-    LANG_Gd,  /* Scots Gaelic */
-    LANG_Gv,  /* Manx Gaelic */
-    LANG_Kw,  /* Cornish */
-    LANG_Ja,  /* Japanese */
-    LANG_Hr   /* Croatian */
-} WINE_LANGUAGE;
-
-typedef struct
-{
-    const char *name;
-    WORD        langid;
-} WINE_LANGUAGE_DEF;
-
-extern const WINE_LANGUAGE_DEF Languages[];
-
 struct options
 {
     char * desktopGeometry; /* NULL when no desktop */
     char * display;         /* display name */
     char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    synchronous;     /* X synchronous mode */
-    WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
     char * configFileName;  /* Command line config file */
 };

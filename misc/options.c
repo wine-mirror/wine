@@ -36,7 +36,6 @@ struct options Options =
     NULL,           /* display */
     NULL,           /* dllFlags */
     FALSE,          /* synchronous */
-    0,              /* language */
     FALSE,          /* Managed windows */
     NULL            /* Alternate config file name */
 };
@@ -64,6 +63,7 @@ static void do_desktop( const char *arg );
 static void do_display( const char *arg );
 static void do_dll( const char *arg );
 static void do_help( const char *arg );
+static void do_language( const char *arg );
 static void do_managed( const char *arg );
 static void do_synchronous( const char *arg );
 static void do_version( const char *arg );
@@ -84,7 +84,7 @@ static const struct option option_table[] =
       "--dosver x.xx    DOS version to imitate (e.g. 6.22). Only valid with --winver win31" },
     { "help",       'h', 0, 0, do_help,
       "--help,-h        Show this help message" },
-    { "language",     0, 1, 1, MAIN_ParseLanguageOption,
+    { "language",     0, 1, 1, do_language,
       "--language xx    Set the language (one of Br,Ca,Cs,Cy,Da,De,En,Eo,Es,Fi,Fr,Ga,Gd,Gv,\n"
       "                    Hr,Hu,It,Ja,Ko,Kw,Nl,No,Pl,Pt,Sk,Sv,Ru,Wa)" },
     { "managed",      0, 0, 0, do_managed,
@@ -136,6 +136,11 @@ static void do_dll( const char *arg )
         ExitProcess(1);
     }
     Options.dllFlags = xstrdup( arg );
+}
+
+static void do_language( const char *arg )
+{
+    SetEnvironmentVariableA( "LANGUAGE", arg );
 }
 
 static void do_managed( const char *arg )

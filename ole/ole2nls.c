@@ -166,25 +166,23 @@ LANGID WINAPI GetUserDefaultLangID(void)
 {
 	/* caching result, if defined from environment, which should (?) not change during a WINE session */
 	static	LANGID	userLCID = 0;
-	if (Options.language) {
-		return Languages[Options.language].langid;
-	}
 
-	if (userLCID == 0) {
-		char *buf=NULL;
+	if (userLCID == 0)
+        {
+                char buf[256];
 		char *lang,*country,*charset,*dialect,*next;
-		int 	ret=0;
-		
-		buf=getenv("LANGUAGE");
-		if (!buf) buf=getenv("LANG");
-		if (!buf) buf=getenv("LC_ALL");
-		if (!buf) buf=getenv("LC_MESSAGES");
-		if (!buf) buf=getenv("LC_CTYPE");
-		if (!buf) return userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-		
-		if (!strcmp(buf,"POSIX") || !strcmp(buf,"C")) {
-			return MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-		}
+
+		if (GetEnvironmentVariableA( "LANGUAGE", buf, sizeof(buf) )) goto ok;
+		if (GetEnvironmentVariableA( "LANG", buf, sizeof(buf) )) goto ok;
+		if (GetEnvironmentVariableA( "LC_ALL", buf, sizeof(buf) )) goto ok;
+		if (GetEnvironmentVariableA( "LC_MESSAGES", buf, sizeof(buf) )) goto ok;
+		if (GetEnvironmentVariableA( "LC_CTYPE", buf, sizeof(buf) )) goto ok;
+
+		return userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+
+        ok:
+		if (!strcmp(buf,"POSIX") || !strcmp(buf,"C"))
+                    return userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
 		
 		lang=buf;
 		
@@ -194,14 +192,17 @@ LANGID WINAPI GetUserDefaultLangID(void)
 			charset=strchr(lang,'.'); if (charset) *charset++='\0';
 			country=strchr(lang,'_'); if (country) *country++='\0';
 			
-			ret=MAIN_GetLanguageID(lang, country, charset, dialect);
+			userLCID = MAIN_GetLanguageID(lang, country, charset, dialect);
 			
 			lang=next;
-			
-		} while (lang && !ret);
-		
-		/* FIXME : are strings returned by getenv() to be free()'ed ? */
-		userLCID = (LANGID)ret;
+		} while (lang && !userLCID);
+
+		if (!userLCID)
+                {
+                    MESSAGE( "Warning: language '%s' not recognized, defaulting to English\n",
+                             buf );
+                    userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+                }
 	}
 	return userLCID;
 }
