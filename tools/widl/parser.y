@@ -350,8 +350,8 @@ attribute:
 	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
 	| tCONTROL				{ $$ = make_attr(ATTR_CONTROL); }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
-	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
-	| tDEFAULTVALUE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DEFAULTVALUE, $3); }
+	| tDEFAULTVALUE '(' expr_const ')'	{ $$ = make_attrp(ATTR_DEFAULTVALUE_EXPR, $3); }
+	| tDEFAULTVALUE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DEFAULTVALUE_STRING, $3); }
 	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
 	| tENDPOINT '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }

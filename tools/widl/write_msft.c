@@ -648,9 +648,9 @@ static int ctl2_alloc_importfile(
 
 
 /****************************************************************************
- *	ctl2_encode_typedesc
+ *	ctl2_encode_type
  *
- *  Encodes a type description, storing information in the TYPEDESC and ARRAYDESC
+ *  Encodes a type, storing information in the TYPEDESC and ARRAYDESC
  *  segments as needed.
  *
  * RETURNS
@@ -927,13 +927,53 @@ static int ctl2_find_nth_reference(
 }
 
 
+static void write_value(msft_typeinfo_t* typeinfo, int *out, var_t *arg, int type, void *value)
+{
+    int vt = (type >> 16) & 0x1ff;
+    switch(vt) {
+    case VT_I2:
+    case VT_I4:
+    case VT_R4:
+    case VT_BOOL:
+    case VT_I1:
+    case VT_UI1:
+    case VT_UI2:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
+      {
+        unsigned long *lv = value;
+        if((*lv & 0x3ffffff) == *lv) {
+            *out = 0x80000000;
+            *out |= vt << 26;
+            *out |= *lv;
+        } else {
+            int offset = ctl2_alloc_segment(typeinfo->typelib, MSFT_SEG_CUSTDATA, 8, 0);
+            *((unsigned short *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
+            memcpy(&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2], value, 4);
+            *((unsigned short *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6]) = 0x5757;
+            *out = offset;
+        }
+        return;
+      }
+    case VT_BSTR:
+        warning("default value BSTR %s\n", (char*)value);
+        break;
+
+      default:
+          warning("can't write value of type %d yet\n", vt);
+    }
+    return;
+}
+
 static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
 {
     int offset;
     int *typedata;
     int i, index = func->idx, id;
     int decoded_size;
-    int num_params = 0;
+    int num_params = 0, num_defaults = 0;
     var_t *arg, *last_arg = NULL;
     char *namedata;
     attr_t *attr;
@@ -951,6 +991,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     for(arg = func->args; arg; arg = NEXT_LINK(arg)) {
         last_arg = arg;
         num_params++;
+        for(attr = arg->attrs; attr; attr = NEXT_LINK(attr)) {
+            if(attr->type == ATTR_DEFAULTVALUE_EXPR || attr->type == ATTR_DEFAULTVALUE_STRING) {
+                num_defaults++;
+                break;
+            }
+        }
     }
 
     chat("num of params %d\n", num_params);
@@ -973,29 +1019,55 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     }
     /* allocate type data space for us */
     offset = typeinfo->typedata[0];
-    typeinfo->typedata[0] += 0x18 + (num_params * 12);
+    typeinfo->typedata[0] += 0x18 + (num_params * (num_defaults ? 16 : 12));
     typedata = typeinfo->typedata + (offset >> 2) + 1;
 
     /* fill out the basic type information */
-    typedata[0] = (0x18 + (num_params * 12)) | (index << 16);
+    typedata[0] = (0x18 + (num_params * (num_defaults ? 16 : 12))) | (index << 16);
     ctl2_encode_type(typeinfo->typelib, func->def->type, func->def->ptr_level, func->def->array, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (index << 16) | (callconv << 8) | 9;
+    if(num_defaults) typedata[4] |= 0x10;
     typedata[5] = num_params;
 
     /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
     /* That is, total memory allocation required to reconstitute the FUNCDESC in its entirety. */
     typedata[3] += (16 /*sizeof(ELEMDESC)*/ * num_params) << 16;
+    typedata[3] += (24 /*sizeof(PARAMDESCEX)*/ * num_defaults) << 16;
 
     for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
         attr_t *attr;
         int paramflags = 0;
+        int *paramdata = typedata + 6 + (num_defaults ? num_params : 0) + i * 3;
+        int *defaultdata = num_defaults ? typedata + 6 + i : NULL;
 
+        if(defaultdata) *defaultdata = -1;
+
+	ctl2_encode_type(typeinfo->typelib, arg->type, arg->ptr_level, arg->array, paramdata, NULL, NULL, &decoded_size);
         for(attr = arg->attrs; attr; attr = NEXT_LINK(attr)) {
             switch(attr->type) {
+            case ATTR_DEFAULTVALUE_EXPR:
+              {
+                expr_t *expr = (expr_t *)attr->u.pval;
+                paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
+                chat("default value %ld\n", expr->cval);
+                write_value(typeinfo, defaultdata, arg, *paramdata, &expr->cval);
+                break;
+              }
+            case ATTR_DEFAULTVALUE_STRING:
+              {
+                char *s = (char *)attr->u.pval;
+                paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
+                chat("default value '%s'\n", s);
+                write_value(typeinfo, defaultdata, arg, *paramdata, s);
+                break;
+              }
             case ATTR_IN:
                 paramflags |= 0x01; /* PARAMFLAG_FIN */
+                break;
+            case ATTR_OPTIONAL:
+                paramflags |= 0x10; /* PARAMFLAG_FOPT */
                 break;
             case ATTR_OUT:
                 paramflags |= 0x02; /* PARAMFLAG_FOUT */
@@ -1008,17 +1080,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
                 break;
             }
         }
-	ctl2_encode_type(typeinfo->typelib, arg->type, arg->ptr_level, arg->array, &typedata[6+(i*3)], NULL, NULL, &decoded_size);
-	typedata[7+(i*3)] = -1;
-	typedata[8+(i*3)] = paramflags;
+	paramdata[1] = -1;
+	paramdata[2] = paramflags;
 	typedata[3] += decoded_size << 16;
-
-#if 0
-	/* FIXME: Doesn't work. Doesn't even come up with usable VTs for varDefaultValue. */
-	if (pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
-	    ctl2_alloc_custdata(This->typelib, &pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
-	}
-#endif
     }
 
     /* update the index data */
@@ -1029,14 +1093,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     /* ??? */
     if (!typeinfo->typeinfo->res2) typeinfo->typeinfo->res2 = 0x20;
     typeinfo->typeinfo->res2 <<= 1;
-
-    /* ??? */
-    if (typeinfo->typeinfo->res3 == -1) typeinfo->typeinfo->res3 = 0;
-    typeinfo->typeinfo->res3 += 0x38;
-
     /* ??? */
     if (index < 2) typeinfo->typeinfo->res2 += num_params << 4;
-    typeinfo->typeinfo->res3 += num_params << 4;
+
+    if (typeinfo->typeinfo->res3 == -1) typeinfo->typeinfo->res3 = 0;
+    typeinfo->typeinfo->res3 += 0x38 + num_params * 0x10;
+    if(num_defaults) typeinfo->typeinfo->res3 += num_params * 0x4;
 
     /* adjust size of VTBL */
     typeinfo->typeinfo->cbSizeVft += 4;
@@ -1058,9 +1120,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
 	/* FIXME: Almost certainly easy to break */
 	int *paramdata = &typeinfo->typedata[typeinfo->offsets[index] >> 2];
-        
+        paramdata += 7 + (num_defaults ? num_params : 0) + i * 3;
 	offset = ctl2_alloc_name(typeinfo->typelib, arg->name);
-	paramdata[(i * 3) + 8] = offset;
+	paramdata[1] = offset;
         chat("param %d name %s offset %d\n", i, arg->name, offset);
     }
     return S_OK;
