@@ -182,7 +182,7 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
 
 
 /***********************************************************************
- *           CreateDIBPatternBrushPt32    (GDI32.35)
+ *           CreateDIBPatternBrushPt    (GDI32.35)
  *
  *	Create a logical brush which has the pattern specified by the DIB
  *
@@ -193,7 +193,7 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
  * BUGS
  *	
  */
-HBRUSH32 WINAPI CreateDIBPatternBrushPt32( 	
+HBRUSH32 WINAPI CreateDIBPatternBrushPt(
 		BITMAPINFO *info,		/* Pointer to a BITMAPINFO structure */ 
 		UINT32 coloruse 		/* Specifies color format, if provided */
 )

@@ -130,10 +130,10 @@ BOOL32 WINAPI Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
  *           ArcTo32    (GDI32.8)
  */
 BOOL32 WINAPI ArcTo32( HDC32 hdc, 
-                      INT32 left,   INT32 top, 
-                      INT32 right,  INT32 bottom,
-                      INT32 xstart, INT32 ystart,
-                      INT32 xend,   INT32 yend )
+                       INT32 left,   INT32 top, 
+                       INT32 right,  INT32 bottom,
+                       INT32 xstart, INT32 ystart,
+                       INT32 xend,   INT32 yend )
 {
     BOOL32 result;
 
@@ -724,6 +724,14 @@ BOOL32 WINAPI Polyline32( HDC32 hdc, const POINT32* pt, INT32 count )
     	   dc->funcs->pPolyline(dc,pt,count);
 }
 
+/**********************************************************************
+ *          PolylineTo32   (GDI32.277)
+ */
+BOOL32 WINAPI PolylineTo32( HDC32 hdc, const POINT32* pt, DWORD cCount )
+{
+        FIXME(gdi,"PolylineTo, stub\n");
+        return 0;
+}
 
 /**********************************************************************
  *          Polygon16  (GDI.36)
@@ -1181,12 +1189,24 @@ BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
     return ret;
 }
 
-
-/******************************************************************************
- *                 PolylineTo32      [GDI32.277]
+/***************************************************************
+ *      AngleArc32 (GDI32.5)
+ *
  */
-BOOL32 WINAPI PolylineTo32(HDC32 hdc, const POINT32 *lppt, DWORD cCount)
+BOOL32 WINAPI AngleArc32(HDC32 hdc, INT32 x, INT32 y, DWORD dwRadius,
+                         FLOAT eStartAngle, FLOAT eSweepAngle)
 {
-    FIXME(gdi, "(%d,%p,%ld): stub\n", hdc, lppt, cCount);
-    return 1;
+        FIXME(gdi,"AngleArc, stub\n");
+        return 0;
+}
+
+/***************************************************************
+ *      PolyDraw (GDI32.270)
+ *
+ */
+BOOL32 WINAPI PolyDraw(HDC32 hdc, const POINT32 *lppt, const BYTE *lpbTypes,
+                       DWORD cCount)
+{
+        FIXME(gdi,"PolyDraw, stub\n");
+        return 0;
 }

@@ -10,6 +10,8 @@
 
 #include "wintypes.h"
 
+#define MSGF_DDEMGR 0x8001
+
 typedef DWORD HCONVLIST;
 typedef DWORD HCONV;
 typedef DWORD HSZ;

@@ -1968,7 +1968,7 @@ LONG WINAPI BroadcastSystemMessage(
  *  with a higher priority as the other "Posted" messages.
  *  QUEUE_AddMsg has to be modifyed.
  */
-LONG WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
+BOOL32 WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
 {	BOOL32 ret = TRUE;
 	FIXME(msg,"(%04x,%08x,%08x,%08lx) not complete\n",
 	      hwnd, msg, wParam, lParam);
@@ -1983,13 +1983,24 @@ LONG WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM l
 }
 
 /***********************************************************************
- *           SendNotifyMessage32W    (USER32.461)
+ *           SendNotifyMessageW    (USER32.461)
+ * FIXME
+ *  The message sended with PostMessage has to be put in the queue
+ *  with a higher priority as the other "Posted" messages.
+ *  QUEUE_AddMsg has to be modifyed.
  */
-BOOL32 WINAPI SendNotifyMessage32W(HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
-                                   LPARAM lParam)
-{
-  FIXME(msg, "(%04x,%08x,%08x,%08lx): stub\n", hWnd, msg, wParam, lParam);
-  return 0; 
+BOOL32 WINAPI SendNotifyMessage32W(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
+{       BOOL32 ret = TRUE;
+	FIXME(msg,"(%04x,%08x,%08x,%08lx) not complete\n",
+	      hwnd, msg, wParam, lParam);
+
+	if ( GetCurrentThreadId() == GetWindowThreadProcessId ( hwnd, NULL))
+	{       ret=SendMessage32W ( hwnd, msg, wParam, lParam );
+	}
+	else
+	{       PostMessage32W ( hwnd, msg, wParam, lParam );
+	}
+	return ret;
 }
 
 /***********************************************************************

@@ -1755,27 +1755,27 @@ INT32 WINAPI GetWindowText32W( HWND32 hwnd, LPWSTR lpString, INT32 nMaxCount )
 /*******************************************************************
  *	     SetWindowText16    (USER.37)
  */
-void WINAPI SetWindowText16( HWND16 hwnd, SEGPTR lpString )
+BOOL16 WINAPI SetWindowText16( HWND16 hwnd, SEGPTR lpString )
 {
-    SendMessage16( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
+    return (BOOL16)SendMessage16( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
 /*******************************************************************
  *	     SetWindowText32A    (USER32.521)
  */
-void WINAPI SetWindowText32A( HWND32 hwnd, LPCSTR lpString )
+BOOL32 WINAPI SetWindowText32A( HWND32 hwnd, LPCSTR lpString )
 {
-    SendMessage32A( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
+    return (BOOL32)SendMessage32A( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
 /*******************************************************************
  *	     SetWindowText32W    (USER32.523)
  */
-void WINAPI SetWindowText32W( HWND32 hwnd, LPCWSTR lpString )
+BOOL32 WINAPI SetWindowText32W( HWND32 hwnd, LPCWSTR lpString )
 {
-    SendMessage32W( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
+    return (BOOL32)SendMessage32W( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 

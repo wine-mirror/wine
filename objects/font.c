@@ -1137,6 +1137,15 @@ BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
   return FALSE;
 }
 
+/***********************************************************************
+ *          GetAspectRatioFilterEx32  (GDI32.142)
+ */
+BOOL32 WINAPI GetAspectRatioFilterEx32( HDC32 hdc, LPSIZE32 pAspectRatio )
+{
+  FIXME(font, "(%04x, %p): -- Empty Stub !\n",
+        hdc, pAspectRatio);
+  return FALSE;
+}
 
 /***********************************************************************
  *           GetCharABCWidths16   (GDI.307)
@@ -1405,3 +1414,44 @@ GetCharacterPlacement32W(HDC32 hdc, LPCWSTR lpString, INT32 uCount,
     FIXME(font,":stub!\n");
     return 0;
 }
+
+/*************************************************************************
+ *      GetCharABCWidthsFloat32A [GDI32.150]
+ */
+BOOL32 WINAPI GetCharABCWidthsFloat32A(HDC32 hdc, UINT32 iFirstChar, UINT32 iLastChar,
+		                        LPABCFLOAT lpABCF)
+{
+       FIXME(gdi, "GetCharABCWidthsFloatA, stub\n");
+       return 0;
+}
+
+/*************************************************************************
+ *      GetCharABCWidthsFloat32W [GDI32.151]
+ */
+BOOL32 WINAPI GetCharABCWidthsFloat32W(HDC32 hdc, UINT32 iFirstChar,
+		                        UINT32 iLastChar, LPABCFLOAT lpABCF)
+{
+       FIXME(gdi, "GetCharABCWidthsFloatW, stub\n");
+       return 0;
+}
+
+/*************************************************************************
+ *      GetCharWidthFloat32A [GDI32.156]
+ */
+BOOL32 WINAPI GetCharWidthFloat32A(HDC32 hdc, UINT32 iFirstChar,
+		                    UINT32 iLastChar, PFLOAT pxBuffer)
+{
+       FIXME(gdi, "GetCharWidthFloatA, stub\n");
+       return 0;
+}
+
+/*************************************************************************
+ *      GetCharWidthFloat32W [GDI32.157]
+ */
+BOOL32 WINAPI GetCharWidthFloat32W(HDC32 hdc, UINT32 iFirstChar,
+		                    UINT32 iLastChar, PFLOAT pxBuffer)
+{
+       FIXME(gdi, "GetCharWidthFloatW, stub\n");
+       return 0;
+}
+ 

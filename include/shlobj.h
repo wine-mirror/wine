@@ -568,9 +568,6 @@ typedef struct
 
 typedef const FOLDERSETTINGS * LPCFOLDERSETTINGS;
 
-typedef BOOL32 (CALLBACK FAR * LPFNADDPROPSHEETPAGE)(HPROPSHEETPAGE, LPARAM);
-typedef BOOL32 (CALLBACK FAR * LPFNADDPROPSHEETPAGES)(LPVOID, LPFNADDPROPSHEETPAGE,LPARAM);
-
 /************************************************************************
  * IShellFolder interface
  */

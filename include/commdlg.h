@@ -116,6 +116,23 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(OPENFILENAME)
 DECL_WINELIB_TYPE_AW(LPOPENFILENAME)
 
+typedef struct
+{
+	NMHDR           hdr;
+	LPOPENFILENAME32A lpOFN;
+	LPSTR           pszFile;
+} OFNOTIFY32A, *LPOFNOTIFY32A;
+
+typedef struct
+{
+	NMHDR           hdr;
+	LPOPENFILENAME32W lpOFN;
+	LPWSTR          pszFile;
+} OFNOTIFY32W, *LPOFNOTIFY32W;
+
+DECL_WINELIB_TYPE_AW(OFNOTIFY)
+DECL_WINELIB_TYPE_AW(LPOFNOTIFY)
+ 
 typedef UINT32 (CALLBACK *LPCCHOOKPROC) (HWND32, UINT32, WPARAM32, LPARAM);
 
 typedef struct {
@@ -361,6 +378,28 @@ DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
 #define CD_LBSELSUB      1
 #define CD_LBSELADD      2
 
+#define CDN_FIRST   (0U-601U)
+#define CDN_LAST    (0U-699U)
+
+#define CDN_INITDONE            (CDN_FIRST - 0x0000)
+#define CDN_SELCHANGE           (CDN_FIRST - 0x0001)
+#define CDN_FOLDERCHANGE        (CDN_FIRST - 0x0002)
+#define CDN_SHAREVIOLATION      (CDN_FIRST - 0x0003)
+#define CDN_HELP                (CDN_FIRST - 0x0004)
+#define CDN_FILEOK              (CDN_FIRST - 0x0005)
+#define CDN_TYPECHANGE          (CDN_FIRST - 0x0006)
+
+#define CDM_FIRST               (WM_USER + 100)
+#define CDM_LAST                (WM_USER + 200)
+
+#define CDM_GETSPEC             (CDM_FIRST + 0x0000)
+#define CDM_GETFILEPATH         (CDM_FIRST + 0x0001)
+#define CDM_GETFOLDERPATH       (CDM_FIRST + 0x0002)
+#define CDM_GETFOLDERLIST       (CDM_FIRST + 0x0003)
+#define CDM_SETCONTROLTEXT      (CDM_FIRST + 0x0004)
+#define CDM_HIDECONTROL         (CDM_FIRST + 0x0005)
+#define CDM_SETDEFEXT           (CDM_FIRST + 0x0006)
+
 typedef struct
 {
     DWORD            lStructSize;
@@ -387,7 +426,7 @@ typedef struct
 typedef UINT32 (CALLBACK *LPPRINTHOOKPROC) (HWND32, UINT32, WPARAM32, LPARAM);
 typedef UINT32 (CALLBACK *LPSETUPHOOKPROC) (HWND32, UINT32, WPARAM32, LPARAM);
 
-typedef struct
+typedef struct tagPDA
 {
     DWORD            lStructSize;
     HWND32           hwndOwner;
@@ -410,7 +449,7 @@ typedef struct
     HGLOBAL32        hSetupTemplate;
 } PRINTDLG32A, *LPPRINTDLG32A;
 
-typedef struct
+typedef struct tagPDW
 {
     DWORD            lStructSize;
     HWND32           hwndOwner;
@@ -459,6 +498,17 @@ DECL_WINELIB_TYPE_AW(LPPRINTDLG)
 #define PD_DISABLEPRINTTOFILE        0x00080000
 #define PD_HIDEPRINTTOFILE           0x00100000
 
+typedef enum __MIDL_IPrint_0001
+{
+	PRINTFLAG_MAYBOTHERUSER = 1,
+	PRINTFLAG_PROMPTUSER    = 2,
+	PRINTFLAG_USERMAYCHANGEPRINTER  = 4,
+	PRINTFLAG_RECOMPOSETODEVICE     = 8,
+	PRINTFLAG_DONTACTUALLYPRINT     = 16,
+	PRINTFLAG_FORCEPROPERTIES       = 32,
+	PRINTFLAG_PRINTTOFILE   = 64
+} PRINTFLAG;
+ 
 typedef struct {
 	UINT16 	wDriverOffset;
 	UINT16 	wDeviceOffset;
@@ -484,6 +534,20 @@ typedef DEVNAMES * LPDEVNAMES;
 #define CDERR_MEMLOCKFAILURE   0x000A
 #define CDERR_NOHOOK           0x000B
 #define CDERR_REGISTERMSGFAIL  0x000C
+
+#define PDERR_PRINTERCODES     0x1000
+#define PDERR_SETUPFAILURE     0x1001
+#define PDERR_PARSEFAILURE     0x1002
+#define PDERR_RETDEFFAILURE    0x1003
+#define PDERR_LOADDRVFAILURE   0x1004
+#define PDERR_GETDEVMODEFAIL   0x1005
+#define PDERR_INITFAILURE      0x1006
+#define PDERR_NODEVICES        0x1007
+#define PDERR_NODEFAULTPRN     0x1008
+#define PDERR_DNDMMISMATCH     0x1009
+#define PDERR_CREATEICFAILURE  0x100A
+#define PDERR_PRINTERNOTFOUND  0x100B
+#define PDERR_DEFAULTDIFFERENT 0x100C
 
 /* PageSetupDlg stuff ... */
 #define WM_PSD_PAGESETUPDLG	(WM_USER  )

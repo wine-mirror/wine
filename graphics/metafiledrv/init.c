@@ -407,9 +407,7 @@ HDC32 WINAPI CreateEnhMetaFile32W(
     return hReturnDC;
 }
 
-HENHMETAFILE32 WINAPI CloseEnhMetaFile32( 
-               HDC32 hdc  /* metafile DC */
-	       )
+HENHMETAFILE32 WINAPI CloseEnhMetaFile32( HDC32 hdc /* metafile DC */ )
 {
   /* write EMR_EOF(0x0, 0x10, 0x14) */
   return 0;

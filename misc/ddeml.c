@@ -637,7 +637,7 @@ int WINAPI DdeCmpStringHandles32( HSZ hsz1, HSZ hsz2 )
  *   success: nonzero
  *   failure: zero
  */
-UINT32 WINAPI PackDDElParam32(UINT32 msg, UINT32 uiLo, UINT32 uiHi)
+UINT32 WINAPI PackDDElParam(UINT32 msg, UINT32 uiLo, UINT32 uiHi)
 {
     FIXME(ddeml, "stub.\n");
     return 0;
@@ -651,8 +651,8 @@ UINT32 WINAPI PackDDElParam32(UINT32 msg, UINT32 uiLo, UINT32 uiHi)
  *   success: nonzero
  *   failure: zero
  */
-UINT32 WINAPI UnpackDDElParam32(UINT32 msg, UINT32 lParam,
-				UINT32 *uiLo, UINT32 *uiHi)
+UINT32 WINAPI UnpackDDElParam(UINT32 msg, UINT32 lParam,
+                              UINT32 *uiLo, UINT32 *uiHi)
 {
     FIXME(ddeml, "stub.\n");
     return 0;
@@ -666,8 +666,19 @@ UINT32 WINAPI UnpackDDElParam32(UINT32 msg, UINT32 lParam,
  *   success: nonzero
  *   failure: zero
  */
-UINT32 WINAPI FreeDDElParam32(UINT32 msg, UINT32 lParam)
+UINT32 WINAPI FreeDDElParam(UINT32 msg, UINT32 lParam)
 {
     FIXME(ddeml, "stub.\n");
     return 0;
 }
+
+/*****************************************************************
+ *            ReuseDDElParam (USER32.446)
+ *
+ */
+UINT32 WINAPI ReuseDDElParam(UINT32 lParam, UINT32 msgIn, UINT32 msgOut,
+                             UINT32 uiLi, UINT32 uiHi)
+{
+    FIXME(ddeml, "stub.\n");
+    return 0;
+} 

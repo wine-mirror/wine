@@ -126,7 +126,6 @@ typedef BYTE           *PBYTE;
 typedef ULONG          *PULONG;
 typedef LONG           *PLONG;
 typedef DWORD          *PDWORD;
-typedef UINT32         *PUINT32;
 /* common win32 types */
 typedef CHAR           *LPSTR;
 typedef const CHAR     *LPCSTR;
@@ -140,10 +139,14 @@ typedef VOID           *LPVOID;
 typedef const VOID     *LPCVOID;
 typedef INT16          *LPINT16;
 typedef UINT16         *LPUINT16;
+typedef INT32          *PINT32;
 typedef INT32          *LPINT32;
+typedef UINT32         *PUINT32;
 typedef UINT32         *LPUINT32;
 typedef HKEY           *LPHKEY;
+typedef FLOAT          *PFLOAT;
 typedef FLOAT          *LPFLOAT;
+typedef BOOL32         *PBOOL32;
 typedef BOOL32         *LPBOOL32;
 
 /* Special case: a segmented pointer is just a pointer in the user's code. */
@@ -339,6 +342,9 @@ DECL_WINELIB_TYPE(HWND)
 #define FAR
 #define _far
 #define _near
+#define IN
+#define OUT
+#define OPTIONAL
 #endif  /* __WINE__ */
 
 /* Macro for structure packing. */
@@ -360,8 +366,8 @@ DECL_WINELIB_TYPE(HWND)
 #define SLOWORD(l)             ((INT16)(LONG)(l))
 #define SHIWORD(l)             ((INT16)((LONG)(l) >> 16))
 
-#define MAKELONG(low,high)     ((LONG)(((WORD)(low)) | \
-                                       (((DWORD)((WORD)(high))) << 16)))
+#define MAKEWORD(low,high)     ((WORD)(((BYTE)(low)) | ((WORD)((BYTE)(high))) << 8))
+#define MAKELONG(low,high)     ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
 #define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
 #define MAKEWPARAM(low,high)   ((WPARAM32)MAKELONG(low,high))
 #define MAKELRESULT(low,high)  ((LRESULT)MAKELONG(low,high))
@@ -400,6 +406,11 @@ DECL_WINELIB_TYPE(HWND)
 #endif
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
+#define __max(a,b) MAX(a,b)
+#define __min(a,b) MIN(a,b)
+#define max(a,b)   MAX(a,b)
+#define min(a,b)   MIN(a,b)
+
 /* Winelib run-time flag */
 
 #ifdef __WINE__
@@ -414,7 +425,7 @@ typedef struct
     INT16  cy;
 } SIZE16, *LPSIZE16;
 
-typedef struct
+typedef struct tagSIZE
 {
     INT32  cx;
     INT32  cy;
@@ -436,7 +447,7 @@ typedef struct
     INT16  y;
 } POINT16, *LPPOINT16;
 
-typedef struct
+typedef struct tagPOINT
 {
     INT32  x;
     INT32  y;
@@ -463,7 +474,7 @@ typedef struct
     INT16  bottom;
 } RECT16, *LPRECT16;
 
-typedef struct
+typedef struct tagRECT
 {
     INT32  left;
     INT32  top;

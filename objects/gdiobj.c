@@ -991,3 +991,57 @@ INT32 WINAPI MulDiv32(
     return (nMultiplicand * nMultiplier) / nDivisor;
 #endif
 }
+/*******************************************************************
+ *      GetColorAdjustment [GDI32.164]
+ *
+ *
+ */
+BOOL32 WINAPI GetColorAdjustment32(HDC32 hdc, LPCOLORADJUSTMENT lpca)
+{
+        FIXME(gdi, "GetColorAdjustment, stub\n");
+        return 0;
+}
+
+/*******************************************************************
+ *      GetMiterLimit [GDI32.201]
+ *
+ *
+ */
+BOOL32 WINAPI GetMiterLimit(HDC32 hdc, PFLOAT peLimit)
+{
+        FIXME(gdi, "GetMiterLimit, stub\n");
+        return 0;
+}
+
+/*******************************************************************
+ *      SetMiterLimit [GDI32.325]
+ *
+ *
+ */
+BOOL32 WINAPI SetMiterLimit(HDC32 hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
+{
+        FIXME(gdi, "SetMiterLimit, stub\n");
+        return 0;
+}
+
+/*******************************************************************
+ *      GdiComment [GDI32.109]
+ *
+ *
+ */
+BOOL32 WINAPI GdiComment32(HDC32 hdc, UINT32 cbSize, const BYTE *lpData)
+{
+        FIXME(gdi, "GdiComment, stub\n");
+        return 0;
+}
+/*******************************************************************
+ *      SetColorAdjustment [GDI32.309]
+ *
+ *
+ */
+BOOL32 WINAPI SetColorAdjustment32(HDC32 hdc, const COLORADJUSTMENT* lpca)
+{
+        FIXME(gdi, "SetColorAdjustment, stub\n");
+        return 0;
+}
+ 

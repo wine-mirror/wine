@@ -1116,3 +1116,48 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[],
    *pY=(double)(pPoint->y-corners[0].y)/(double)(corners[1].y-corners[0].y) *
       2.0 - 1.0;
 }
+
+/*******************************************************************
+ *      FlattenPath32 [GDI32.103]
+ *
+ *
+ */
+BOOL32 WINAPI FlattenPath32(HDC32 hdc)
+{
+        FIXME(gdi, "FlattenPath, stub\n");
+        return 0;
+}
+
+/*******************************************************************
+ *      StrokeAndFillPath [GDI32.352]
+ *
+ *
+ */
+BOOL32 WINAPI StrokeAndFillPath32(HDC32 hdc)
+{
+        FIXME(gdi, "StrokeAndFillPath, stub\n");
+        return 0;
+}
+
+/*******************************************************************
+ *      StrokePath [GDI32.353]
+ *
+ *
+ */
+BOOL32 WINAPI StrokePath32(HDC32 hdc)
+{
+        FIXME(gdi, "StrokePath, stub\n");
+        return 0;
+}
+
+/*******************************************************************
+ *      WidenPath [GDI32.360]
+ *
+ *
+ */
+BOOL32 WINAPI WidenPath32(HDC32 hdc)
+{
+        FIXME(gdi, "WidenPath, stub\n");
+        return 0;
+}
+   

@@ -7,7 +7,7 @@ init	MAIN_GdiInit
   2 stdcall AddFontResourceA(str) AddFontResource32A
   3 stub AddFontResourceTracking
   4 stdcall AddFontResourceW(wstr) AddFontResource32W
-  5 stub AngleArc
+  5 stdcall AngleArc(long long long long long long) AngleArc32
   6 stdcall AnimatePalette(long long long ptr) AnimatePalette32
   7 stdcall Arc(long long long long long long long long long) Arc32
   8 stdcall ArcTo(long long long long long long long long long) ArcTo32
@@ -37,7 +37,7 @@ init	MAIN_GdiInit
  32 stdcall CreateDCA(str str str ptr) CreateDC32A
  33 stdcall CreateDCW(wstr wstr wstr ptr) CreateDC32W
  34 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush32
- 35 stdcall CreateDIBPatternBrushPt(long long) CreateDIBPatternBrushPt32
+ 35 stdcall CreateDIBPatternBrushPt(long long) CreateDIBPatternBrushPt
  36 stdcall CreateDIBSection(long ptr long ptr long long) CreateDIBSection32
  37 stdcall CreateDIBitmap(long ptr long ptr ptr long) CreateDIBitmap32
  38 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap32
@@ -76,7 +76,7 @@ init	MAIN_GdiInit
  71 stdcall DescribePixelFormat(long long long ptr) DescribePixelFormat
  72 stub DeviceCapabilitiesExA
  73 stub DeviceCapabilitiesExW
- 74 stub DrawEscape
+ 74 stdcall DrawEscape(long long long ptr) DrawEscape32
  75 stdcall Ellipse(long long long long long) Ellipse32
  76 stdcall EndDoc(long) EndDoc32
  77 stdcall EndPage(long) EndPage32
@@ -105,13 +105,13 @@ init	MAIN_GdiInit
 100 stdcall FillPath(long) FillPath32
 101 stdcall FillRgn(long long long) FillRgn32
 102 stdcall FixBrushOrgEx(long long long ptr) FixBrushOrgEx
-103 stub FlattenPath
+103 stdcall FlattenPath(long) FlattenPath32
 104 stdcall FloodFill(long long long long) FloodFill32
 105 stdcall FrameRgn(long long long long long) FrameRgn32
 106 stub FreeImageColorMatcher
 107 stub GdiAssociateObject
 108 stub GdiCleanCacheDC
-109 stub GdiComment
+109 stdcall GdiComment(long long ptr) GdiComment32
 110 stub GdiConvertAndCheckDC
 111 stub GdiConvertBitmap
 112 stub GdiConvertBrush
@@ -144,29 +144,29 @@ init	MAIN_GdiInit
 139 stdcall GdiSetBatchLimit(long) GdiSetBatchLimit
 140 stub GdiSetServerAttr
 141 stdcall GetArcDirection(long) GetArcDirection32
-142 stub GetAspectRatioFilterEx
+142 stdcall GetAspectRatioFilterEx(long ptr) GetAspectRatioFilterEx32
 143 stdcall GetBitmapBits(long long ptr) GetBitmapBits32
 144 stdcall GetBitmapDimensionEx(long ptr) GetBitmapDimensionEx32
 145 stdcall GetBkColor(long) GetBkColor32
 146 stdcall GetBkMode(long) GetBkMode32
-147 stub GetBoundsRect
+147 stdcall GetBoundsRect(long ptr long) GetBoundsRect32
 148 stdcall GetBrushOrgEx(long ptr) GetBrushOrgEx32
 149 stdcall GetCharABCWidthsA(long long long ptr) GetCharABCWidths32A
-150 stub GetCharABCWidthsFloatA
-151 stub GetCharABCWidthsFloatW
+150 stdcall GetCharABCWidthsFloatA(long long long ptr) GetCharABCWidthsFloat32A
+151 stdcall GetCharABCWidthsFloatW(long long long ptr) GetCharABCWidthsFloat32W
 152 stdcall GetCharABCWidthsW(long long long ptr) GetCharABCWidths32W
 153 stdcall GetCharWidth32A(long long long long) GetCharWidth32A
 154 stdcall GetCharWidth32W(long long long long) GetCharWidth32W
 155 stdcall GetCharWidthA(long long long long) GetCharWidth32A
-156 stub GetCharWidthFloatA
-157 stub GetCharWidthFloatW
+156 stdcall GetCharWidthFloatA(long long long ptr) GetCharWidthFloat32A
+157 stdcall GetCharWidthFloatW(long long long ptr) GetCharWidthFloat32W
 158 stdcall GetCharWidthW(long long long long) GetCharWidth32W
 159 stub GetCharWidthWOW
 160 stdcall GetCharacterPlacementA(long str long long ptr long) GetCharacterPlacement32A
 161 stdcall GetCharacterPlacementW(long wstr long long ptr long) GetCharacterPlacement32W
 162 stdcall GetClipBox(long ptr) GetClipBox32
 163 stdcall GetClipRgn(long long) GetClipRgn32
-164 stub GetColorAdjustment
+164 stdcall GetColorAdjustment(long ptr) GetColorAdjustment32
 165 stdcall GetColorSpace(long) GetColorSpace
 166 stdcall GetCurrentObject(long long) GetCurrentObject
 167 stdcall GetCurrentPositionEx(long ptr) GetCurrentPositionEx32
@@ -203,7 +203,7 @@ init	MAIN_GdiInit
 198 stdcall GetMetaFileBitsEx(long long ptr) GetMetaFileBitsEx
 199 stdcall GetMetaFileW(wstr) GetMetaFile32W
 200 stub GetMetaRgn
-201 stub GetMiterLimit
+201 stdcall GetMiterLimit(long ptr) GetMiterLimit
 202 stdcall GetNearestColor(long long) GetNearestColor32
 203 stdcall GetNearestPaletteIndex(long long) GetNearestPaletteIndex32
 204 stdcall GetObjectA(long long ptr) GetObject32A
@@ -269,10 +269,10 @@ init	MAIN_GdiInit
 264 stdcall PlayEnhMetaFileRecord(long ptr ptr long) PlayEnhMetaFileRecord
 265 stdcall PlayMetaFile(long long) PlayMetaFile32
 266 stdcall PlayMetaFileRecord(long ptr ptr long) PlayMetaFileRecord32
-267 stub PlgBlt
+267 stdcall PlgBlt(long ptr long long long long long long long long) PlgBlt32
 268 stdcall PolyBezier(long ptr long) PolyBezier32
 269 stdcall PolyBezierTo(long ptr long) PolyBezierTo32
-270 stub PolyDraw
+270 stdcall PolyDraw(long ptr ptr long) PolyDraw
 271 stdcall PolyPolygon(long ptr ptr long) PolyPolygon32
 272 stdcall PolyPolyline(long ptr ptr long) PolyPolyline32
 273 stub PolyTextOutA
@@ -311,7 +311,7 @@ init	MAIN_GdiInit
 306 stdcall SetBkMode(long long) SetBkMode32
 307 stdcall SetBoundsRect(long ptr long) SetBoundsRect32
 308 stdcall SetBrushOrgEx(long long long ptr) SetBrushOrgEx
-309 stub SetColorAdjustment
+309 stdcall SetColorAdjustment(long ptr) SetColorAdjustment32
 310 stub SetColorSpace
 311 stdcall SetDIBColorTable(long long long ptr) SetDIBColorTable32
 312 stdcall SetDIBits(long long long long ptr ptr long) SetDIBits32
@@ -327,7 +327,7 @@ init	MAIN_GdiInit
 322 stdcall SetMapperFlags(long long) SetMapperFlags32
 323 stdcall SetMetaFileBitsEx(long ptr) SetMetaFileBitsEx
 324 stub SetMetaRgn
-325 stub SetMiterLimit
+325 stdcall SetMiterLimit(long long ptr) SetMiterLimit
 326 stdcall SetPaletteEntries(long long long ptr) SetPaletteEntries32
 327 stdcall SetPixel(long long long long) SetPixel32
 328 stdcall SetPixelFormat(long long ptr) SetPixelFormat
@@ -354,15 +354,15 @@ init	MAIN_GdiInit
 349 stdcall StartPage(long) StartPage32 
 350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt32
 351 stdcall StretchDIBits(long long long long long long long long long ptr ptr long long) StretchDIBits32
-352 stub StrokeAndFillPath
-353 stub StrokePath
+352 stdcall StrokeAndFillPath(long) StrokeAndFillPath32
+353 stdcall StrokePath(long) StrokePath32
 354 stdcall SwapBuffers(long) SwapBuffers
 355 stdcall TextOutA(long long long str long) TextOut32A
 356 stdcall TextOutW(long long long wstr long) TextOut32W
 357 stub UnloadNetworkFonts
 358 stdcall UnrealizeObject(long) UnrealizeObject32
 359 stdcall UpdateColors(long) UpdateColors32
-360 stub WidenPath
+360 stdcall WidenPath(long) WidenPath32
 361 stub pstackConnect
 #late additions
 362 stub DeviceCapabilitiesEx

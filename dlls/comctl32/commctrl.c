@@ -857,4 +857,3 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 
     return S_OK;
 }
-

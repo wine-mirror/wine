@@ -357,8 +357,8 @@ file	user.exe
 381 stub UsrMPR_ThunkData16
 382 stub SetWindowContextHelpID
 383 stub GetWindowContextHelpID
-384 stub SetMenuContextHelpID
-385 stub GetMenuContextHelpID
+384 pascal16 SetMenuContextHelpId(word word) SetMenuContextHelpId16
+385 pascal16 GetMenuContextHelpId(word) GetMenuContextHelpId16
 389 pascal LoadImage(word segstr word word word word) LoadImage16
 390 stub CopyImage
 391 stub SignalProc32

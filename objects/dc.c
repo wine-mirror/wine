@@ -1240,6 +1240,15 @@ UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
 }
 
 /***********************************************************************
+ *           GetBoundsRect32    (GDI32.147)
+ */
+UINT32 WINAPI GetBoundsRect32(HDC32 hdc, LPRECT32 rect, UINT32 flags)
+{
+    FIXME(dc, "(): stub\n");
+    return DCB_RESET;   /* bounding rectangle always empty */
+}
+ 
+/***********************************************************************
  *           SetBoundsRect16    (GDI.193)
  */
 UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)

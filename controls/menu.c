@@ -4069,3 +4069,39 @@ BOOL16 WINAPI GetMenuItemRect16 (HWND16 hwnd, HMENU16 hMenu, UINT16 uItem,
      CONV_RECT32TO16 (&r32, rect);
      return res;
 }
+
+/**********************************************************************
+ *         SetMenuContextHelpId16    (USER.384)
+ */
+BOOL16 WINAPI SetMenuContextHelpId16( HMENU16 hMenu, DWORD dwContextHelpId)
+{
+	return SetMenuContextHelpId32( hMenu, dwContextHelpId );
+}
+
+
+/**********************************************************************
+ *         SetMenuContextHelpId32    (USER32.488)
+ */
+BOOL32 WINAPI SetMenuContextHelpId32( HMENU32 hMenu, DWORD dwContextHelpId)
+{
+        FIXME(menu, "SetMenuContextHelpId, stub\n");
+	return 0;
+}
+
+/**********************************************************************
+ *         GetMenuContextHelpId16    (USER.385)
+ */
+DWORD WINAPI GetMenuContextHelpId16( HMENU16 hMenu )
+{
+	return GetMenuContextHelpId16( hMenu );
+}
+ 
+/**********************************************************************
+ *         GetMenuContextHelpId32    (USER32.488)
+ */
+DWORD WINAPI GetMenuContextHelpId32( HMENU32 hMenu )
+{
+        FIXME(menu, "GetMenuContextHelpId, stub\n");
+        return 0;
+}
+ 

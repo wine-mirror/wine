@@ -161,3 +161,13 @@ INT32 WINAPI ExtEscape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
     return 0;
 }
 
+/*******************************************************************
+ *      DrawEscape [GDI32.74]
+ *
+ *
+ */
+INT32 WINAPI DrawEscape32(HDC32 hdc, INT32 nEscape, INT32 cbInput, LPCSTR lpszInData)
+{
+    FIXME(gdi, "DrawEscape, stub\n");
+    return 0;
+}

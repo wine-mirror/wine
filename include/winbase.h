@@ -117,7 +117,7 @@ extern "C" {
 typedef struct 
 {
   int type;
-} exception;
+} wine_exception;
 
 typedef struct 
 {

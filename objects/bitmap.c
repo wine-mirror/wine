@@ -928,22 +928,3 @@ DWORD WINAPI SetBitmapDimension( HBITMAP16 hbitmap, INT16 x, INT16 y )
     return MAKELONG( size.cx, size.cy );
 }
 
-/***********************************************************************
- *           MaskBlt32 [GDI32.252]
- */
-BOOL32 WINAPI MaskBlt32(HDC32 hdcDest, 
-                       INT32 nXDest, INT32 nYDest, 
-                       INT32 nWidth, INT32 nHeight, 
-                       HDC32 hdcSource, 
-                       INT32 nXSrc, INT32 nYSrc,
-                       HBITMAP32 hbmMask, 
-                       INT32 xMask, INT32 yMask, 
-                       DWORD dwRop)
-{
-    FIXME(bitmap, "(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld): stub\n",
-          hdcDest,nXDest,nYDest,nWidth,nHeight,hdcSource,nXSrc,nYSrc,
-          hbmMask,xMask,yMask,dwRop);
- 
-    return 1;
-}
-

@@ -205,7 +205,7 @@ init	MAIN_UserInit
 201 stdcall FindWindowW(wstr wstr) FindWindow32W
 202 stdcall FlashWindow(long long) FlashWindow32
 203 stdcall FrameRect(long ptr long) FrameRect32
-204 stdcall FreeDDElParam(long long) FreeDDElParam32
+204 stdcall FreeDDElParam(long long) FreeDDElParam
 205 stdcall GetActiveWindow() GetActiveWindow32
 206 stdcall GetAppCompatFlags(long) GetAppCompatFlags32
 207 stdcall GetAsyncKeyState(long) GetAsyncKeyState32
@@ -260,7 +260,7 @@ init	MAIN_UserInit
 256 stdcall GetLastActivePopup(long) GetLastActivePopup32
 257 stdcall GetMenu(long) GetMenu32
 258 stdcall GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
-259 stub GetMenuContextHelpId
+259 stdcall GetMenuContextHelpId(long) GetMenuContextHelpId32
 260 stdcall GetMenuDefaultItem(long long long) GetMenuDefaultItem32
 261 stub GetMenuIndex
 262 stdcall GetMenuItemCount(long) GetMenuItemCount32
@@ -415,7 +415,7 @@ init	MAIN_UserInit
 411 stub OpenInputDesktop
 412 stub OpenWindowStationA
 413 stub OpenWindowStationW
-414 stdcall PackDDElParam(long long long) PackDDElParam32
+414 stdcall PackDDElParam(long long long) PackDDElParam
 415 stdcall PaintDesktop(long) PaintDesktop
 416 stdcall PeekMessageA(ptr long long long long) PeekMessage32A
 417 stdcall PeekMessageW(ptr long long long long) PeekMessage32W
@@ -447,7 +447,7 @@ init	MAIN_UserInit
 443 stdcall RemovePropW(long wstr) RemoveProp32W
 444 stub ReplyMessage
 445 stub ResetDisplay
-446 stub ReuseDDElParam
+446 stdcall ReuseDDElParam(long long long long long) ReuseDDElParam
 447 stdcall ScreenToClient(long ptr) ScreenToClient32
 448 stdcall ScrollChildren(long long long long) ScrollChildren32
 449 stdcall ScrollDC(long long long ptr ptr long ptr) ScrollDC32
@@ -489,7 +489,7 @@ init	MAIN_UserInit
 485 stdcall SetLastErrorEx(long long) SetLastErrorEx
 486 stdcall SetLogonNotifyWindow(long long) SetLogonNotifyWindow
 487 stdcall SetMenu(long long) SetMenu32
-488 stub SetMenuContextHelpId
+488 stdcall SetMenuContextHelpId(long long) SetMenuContextHelpId32
 489 stdcall SetMenuDefaultItem(long long long) SetMenuDefaultItem32
 490 stdcall SetMenuItemBitmaps(long long long long long) SetMenuItemBitmaps32
 491 stdcall SetMenuItemInfoA(long long long ptr) SetMenuItemInfo32A
@@ -563,7 +563,7 @@ init	MAIN_UserInit
 559 stdcall UnionRect(ptr ptr ptr) UnionRect32
 560 stub UnloadKeyboardLayout
 561 stub UnlockWindowStation
-562 stdcall UnpackDDElParam(long long ptr ptr) UnpackDDElParam32
+562 stdcall UnpackDDElParam(long long ptr ptr) UnpackDDElParam
 563 stdcall UnregisterClassA(str long) UnregisterClass32A
 564 stdcall UnregisterClassW(wstr long) UnregisterClass32W
 565 stdcall UnregisterHotKey(long long) UnregisterHotKey
