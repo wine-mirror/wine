@@ -1120,10 +1120,9 @@ static void INT21_GetExtendedError( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           DOS3Call         (KERNEL.102)
- *           INT_Int21Handler (WPROCS.133)
+ *           INT_Int21Handler
  */
-void WINAPI DOS3Call( CONTEXT86 *context )
+void WINAPI INT_Int21Handler( CONTEXT86 *context )
 {
     BOOL	bSetDOSExtendedError = FALSE;
 
@@ -2408,13 +2407,4 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                  DX_reg(context), SI_reg(context), DI_reg(context),
                  (WORD)context->SegDs, (WORD)context->SegEs,
                  context->EFlags);
-}
-
-/***********************************************************************
- *		GetSetKernelDOSProc (KERNEL.311)
- */
-FARPROC16 WINAPI GetSetKernelDOSProc16(FARPROC16 DosProc)
-{
-	FIXME("(DosProc=0x%08x): stub\n", (UINT)DosProc);
-	return NULL;
 }

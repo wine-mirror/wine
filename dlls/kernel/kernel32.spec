@@ -986,7 +986,6 @@
 @ stdcall AllocCStoDSAlias16(long) AllocCStoDSAlias16
 @ stdcall AllocSelectorArray16(long) AllocSelectorArray16
 @ stdcall ConvertDialog32To16(ptr long ptr) ConvertDialog32To16
-@ stdcall DOS3Call(ptr) DOS3Call
 @ stdcall ExitKernel16() ExitKernel16
 @ stdcall FarGetOwner16(long) FarGetOwner16
 @ stdcall FarSetOwner16(long long) FarSetOwner16
@@ -1057,6 +1056,7 @@
 @ cdecl DOSMEM_GetDPMISegments() DOSMEM_GetDPMISegments
 @ cdecl DOSMEM_Init(long) DOSMEM_Init
 @ cdecl DRIVE_OpenDevice(long long) DRIVE_OpenDevice
+@ stdcall INT_Int21Handler(ptr) INT_Int21Handler
 @ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc
 @ cdecl LOCAL_Compact(long long long) LOCAL_Compact
 @ cdecl LOCAL_CountFree(long) LOCAL_CountFree

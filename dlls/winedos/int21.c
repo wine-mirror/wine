@@ -35,6 +35,11 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+/*
+ * FIXME: Delete this reference when all int21 code has been moved to winedos.
+ */
+extern void WINAPI INT_Int21Handler( CONTEXT86 *context );
+
 WINE_DEFAULT_DEBUG_CHANNEL(int21);
 
 void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
@@ -65,7 +70,7 @@ void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
       RESET_CFLAG(context);
       break;
   default:
-      DOS3Call( context );
+      INT_Int21Handler( context );
   }
 }
 
@@ -79,7 +84,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     BYTE ascii;
 
     if (DOSVM_IsWin16()) {
-        DOS3Call( context );
+        INT_Int21Handler( context );
         return;
     }
 
@@ -200,7 +205,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
           for(i=0; i<CX_reg(context); i++)
             DOSVM_PutChar(ptr[i]);
         } else
-          DOS3Call( context );
+          INT_Int21Handler( context );
         break;
 
     case 0x44: /* IOCTL */
@@ -256,6 +261,6 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     default:
-        DOS3Call( context );
+        INT_Int21Handler( context );
     }
 }

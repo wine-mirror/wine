@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "callback.h"
 #include "wine/debug.h"
+#include "wine/windef16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);
 
@@ -65,4 +66,24 @@ void WINAPI NetBIOSCall16( CONTEXT86 *context )
 {
     if (Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
         Dosvm.CallBuiltinHandler( context, 0x5c );
+}
+
+
+/***********************************************************************
+ *           DOS3Call         (KERNEL.102)
+ */
+void WINAPI DOS3Call( CONTEXT86 *context )
+{
+    if (Dosvm.CallBuiltinHandler || DPMI_LoadDosSystem())
+        Dosvm.CallBuiltinHandler( context, 0x21 );
+}
+
+
+/***********************************************************************
+ *		GetSetKernelDOSProc (KERNEL.311)
+ */
+FARPROC16 WINAPI GetSetKernelDOSProc16( FARPROC16 DosProc )
+{
+    FIXME("(DosProc=0x%08x): stub\n", (UINT)DosProc);
+    return NULL;
 }
