@@ -41,6 +41,7 @@ typedef struct tagTAB_INFO
   BOOL       DoRedraw;        /* flag for redrawing when tab contents is changed*/
   BOOL       needsScrolling;  /* TRUE if the size of the tabs is greater than 
 			       * the size of the control */
+  BOOL	     fSizeSet;	      /* was the size of the tabs explicitly set? */
   HWND       hwndUpDown;      /* Updown control used for scrolling */
 } TAB_INFO;
 
