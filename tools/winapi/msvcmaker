@@ -780,7 +780,7 @@ sub _generate_dsp {
 	    print OUT " /nologo";
 	    print OUT " libcmt.lib" if $project =~ /^ntdll$/; # FIXME: Kludge
 	    foreach my $import (@imports) {
-		print OUT " $import.lib";
+		print OUT " $import.lib" if ($import ne "msvcrt");
 	    }
 	    print OUT " /dll" if $dll;
             print OUT " /subsystem:console" if $console;
