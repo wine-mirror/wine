@@ -67,12 +67,13 @@
 #endif
 #include "heap.h"
 #include "options.h"
-#include "debug.h"
 
 #include "server/request.h"
 #include "server.h"
 #include "process.h"
 #include "winerror.h"
+
+#include "debug.h"
 
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD
