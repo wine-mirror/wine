@@ -279,6 +279,7 @@ static HMENU MENU_CopySysPopup(void)
     if( hMenu ) {
         POPUPMENU* menu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hMenu);
         menu->wFlags |= MF_SYSMENU | MF_POPUP;
+	SetMenuDefaultItem(hMenu, SC_CLOSE, FALSE);
     }
     else {
 	hMenu = 0;
@@ -4395,6 +4396,10 @@ UINT WINAPI GetMenuDefaultItem(HMENU hmenu, UINT bypos, UINT flags)
 
 	/* find default item */
 	item = menu->items;
+	
+	/* empty menu */
+	if (! item) return -1;
+	
 	while ( !( item->fState & MFS_DEFAULT ) )
 	{
 	    i++; item++;
