@@ -401,7 +401,7 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
     if ((nt->OptionalHeader.ImageBase & 0x80000000) && !((DWORD)base & 0x80000000))
         ERR( "Forced to relocate system DLL (base > 2GB). This is not good.\n" );
 
-    for ( ; ((char *)rel < base + dir->VirtualAddress + dir->Size) && rel->VirtualAddress;
+    for ( ; ((char *)rel < base + dir->VirtualAddress + dir->Size) && rel->SizeOfBlock;
           rel = (IMAGE_BASE_RELOCATION*)((char*)rel + rel->SizeOfBlock))
     {
         char *page = base + rel->VirtualAddress;
