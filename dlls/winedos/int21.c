@@ -59,6 +59,42 @@ WINE_DEFAULT_DEBUG_CHANNEL(int21);
 #include "pshpack1.h"
 
 /*
+ * Extended Drive Parameter Block.
+ * This structure is compatible with standard DOS4+ DPB and 
+ * extended DOS7 DPB.
+ */
+typedef struct _INT21_DPB {
+    BYTE   drive;                /* 00 drive number (0=A, ...) */
+    BYTE   unit;                 /* 01 unit number within device driver */
+    WORD   sector_bytes;         /* 02 bytes per sector */
+    BYTE   cluster_sectors;      /* 04 highest sector number within a cluster */
+    BYTE   shift;                /* 05 shift count to convert clusters into sectors */
+    WORD   num_reserved;         /* 06 reserved sectors at beginning of drive */
+    BYTE   num_FAT;              /* 08 number of FATs */
+    WORD   num_root_entries;     /* 09 number of root directory entries */
+    WORD   first_data_sector;    /* 0b number of first sector containing user data */
+    WORD   num_clusters1;        /* 0d highest cluster number (number of data clusters + 1) */
+    WORD   sectors_per_FAT;      /* 0f number of sectors per FAT */
+    WORD   first_dir_sector;     /* 11 sector number of first directory sector */
+    SEGPTR driver_header;        /* 13 address of device driver header */
+    BYTE   media_ID;             /* 17 media ID byte */
+    BYTE   access_flag;          /* 18 0x00 if disk accessed, 0xff if not */
+    SEGPTR next;                 /* 19 pointer to next DPB */
+    WORD   search_cluster1;      /* 1d cluster at which to start search for free space */
+    WORD   free_clusters_lo;     /* 1f number of free clusters on drive or 0xffff if unknown */
+    WORD   free_clusters_hi;     /* 21 hiword of clusters_free */
+    WORD   mirroring_flags;      /* 23 active FAT/mirroring flags */
+    WORD   info_sector;          /* 25 sector number of file system info sector or 0xffff for none */
+    WORD   spare_boot_sector;    /* 27 sector number of backup boot sector or 0xffff for none */
+    DWORD  first_cluster_sector; /* 29 sector number of the first cluster */
+    DWORD  num_clusters2;        /* 2d maximum cluster number */
+    DWORD  fat_clusters;         /* 31 number of clusters occupied by FAT */
+    DWORD  root_cluster;         /* 35 cluster number of start of root directory */
+    DWORD  search_cluster2;      /* 39 cluster at which to start searching for free space */
+} INT21_DPB;
+
+
+/*
  * Structure for DOS data that can be accessed directly from applications.
  * Real and protected mode pointers will be returned to this structure so
  * the structure must be correctly packed.
@@ -87,7 +123,11 @@ typedef struct _INT21_HEAP {
     WORD dbcs_size;                  /* Number of valid ranges in the following table */
     BYTE dbcs_table[16];             /* Start/end bytes for N ranges and 00/00 as terminator */
 
-    BYTE misc_indos;                 /* Interrupt 21 nesting flag */
+    BYTE      misc_indos;                    /* Interrupt 21 nesting flag */
+    WORD      misc_segment;                  /* Real mode segment for INT21_HEAP */
+    WORD      misc_selector;                 /* Protected mode selector for INT21_HEAP */
+    INT21_DPB misc_dpb_list[MAX_DOS_DRIVES]; /* Drive parameter blocks for all drives */
+
 } INT21_HEAP;
 
 
@@ -353,6 +393,39 @@ static void INT21_FillHeap( INT21_HEAP *heap )
      * Initialize InDos flag.
      */
     heap->misc_indos = 0;
+
+    /*
+     * FIXME: Should drive parameter blocks (DPB) be
+     *        initialized here and linked to DOS LOL?
+     */
+}
+
+
+/***********************************************************************
+ *           INT21_GetHeapPointer
+ *
+ * Get pointer for DOS heap (INT21_HEAP).
+ * Creates and initializes heap on first call.
+ */
+static INT21_HEAP *INT21_GetHeapPointer( void )
+{
+    static INT21_HEAP *heap_pointer = NULL;
+
+    if (!heap_pointer)
+    {
+        WORD heap_segment;
+        WORD heap_selector;
+
+        heap_pointer = DOSVM_AllocDataUMB( sizeof(INT21_HEAP), 
+                                           &heap_segment,
+                                           &heap_selector );
+
+        heap_pointer->misc_segment  = heap_segment;
+        heap_pointer->misc_selector = heap_selector;
+        INT21_FillHeap( heap_pointer );
+    }
+
+    return heap_pointer;
 }
 
 
@@ -364,23 +437,94 @@ static void INT21_FillHeap( INT21_HEAP *heap )
  */
 static WORD INT21_GetHeapSelector( CONTEXT86 *context )
 {
-    static WORD heap_segment = 0;
-    static WORD heap_selector = 0;
-    static BOOL heap_initialized = FALSE;
-
-    if (!heap_initialized)
-    {
-        INT21_HEAP *ptr = DOSVM_AllocDataUMB( sizeof(INT21_HEAP), 
-                                              &heap_segment,
-                                              &heap_selector );
-        INT21_FillHeap( ptr );
-        heap_initialized = TRUE;
-    }
+    INT21_HEAP *heap = INT21_GetHeapPointer();
 
     if (!ISV86(context) && DOSVM_IsWin16())
-        return heap_selector;
+        return heap->misc_selector;
     else
-        return heap_segment;
+        return heap->misc_segment;
+}
+
+
+/***********************************************************************
+ *           INT21_FillDrivePB
+ *
+ * Fill DOS heap drive parameter block for the specified drive.
+ * Return TRUE if drive was valid and there were
+ * no errors while reading drive information.
+ */
+static BOOL INT21_FillDrivePB( BYTE drive )
+{
+    WCHAR       drivespec[3] = {'A', ':', 0};
+    INT21_HEAP *heap = INT21_GetHeapPointer();
+    INT21_DPB  *dpb;
+    UINT        drivetype;
+    DWORD       cluster_sectors;
+    DWORD       sector_bytes;
+    DWORD       free_clusters;
+    DWORD       total_clusters;
+
+    if (drive >= MAX_DOS_DRIVES)
+        return FALSE;
+
+    dpb = &heap->misc_dpb_list[drive];
+    drivespec[0] += drive;
+    drivetype = GetDriveTypeW( drivespec );
+
+    /*
+     * FIXME: Does this check work correctly with floppy/cdrom drives?
+     */
+    if (drivetype == DRIVE_NO_ROOT_DIR || drivetype == DRIVE_UNKNOWN)
+        return FALSE;
+
+    /*
+     * FIXME: Does this check work correctly with floppy/cdrom drives?
+     */
+    if (!GetDiskFreeSpaceW( drivespec, &cluster_sectors, &sector_bytes,
+                            &free_clusters, &total_clusters ))
+        return FALSE;
+
+    /*
+     * FIXME: Most of the values listed below are incorrect.
+     *        All values should be validated.
+     */
+ 
+    dpb->drive           = drive;
+    dpb->unit            = 0;
+    dpb->sector_bytes    = sector_bytes;
+    dpb->cluster_sectors = cluster_sectors - 1;
+
+    dpb->shift = 0;
+    while (cluster_sectors > 1)
+    {
+        cluster_sectors /= 2;
+        dpb->shift++;
+    }
+
+    dpb->num_reserved         = 0;
+    dpb->num_FAT              = 1;
+    dpb->num_root_entries     = 2;
+    dpb->first_data_sector    = 2;
+    dpb->num_clusters1        = total_clusters;
+    dpb->sectors_per_FAT      = 1;
+    dpb->first_dir_sector     = 1;
+    dpb->driver_header        = 0;
+    dpb->media_ID             = (drivetype == DRIVE_FIXED) ? 0xF8 : 0xF0;
+    dpb->access_flag          = 0;
+    dpb->next                 = 0;
+    dpb->search_cluster1      = 0;
+    dpb->free_clusters_lo     = LOWORD(free_clusters);
+    dpb->free_clusters_hi     = HIWORD(free_clusters);
+    dpb->mirroring_flags      = 0;
+    dpb->info_sector          = 0xffff;
+    dpb->spare_boot_sector    = 0xffff;
+    dpb->first_cluster_sector = 0;
+    dpb->num_clusters2        = total_clusters;
+    dpb->fat_clusters         = 32;
+    dpb->root_cluster         = 0;
+    dpb->search_cluster2      = 0;
+
+    return TRUE;
 }
 
 
@@ -2283,6 +2427,62 @@ static void INT21_Ioctl( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_Fat32
+ *
+ * Handler for function 0x73.
+ */
+static BOOL INT21_Fat32( CONTEXT86 *context )
+{
+    switch (AL_reg(context))
+    {
+    case 0x02: /* FAT32 - GET EXTENDED DPB */
+        {
+            BYTE drive = INT21_MapDrive( DL_reg(context) );
+            WORD *ptr = CTX_SEG_OFF_TO_LIN(context, 
+                                           context->SegEs, context->Edi);
+            INT21_DPB *target = (INT21_DPB*)(ptr + 1);
+            INT21_DPB *source;
+
+            TRACE( "FAT32 - GET EXTENDED DPB %d\n", DL_reg(context) );
+
+            if ( CX_reg(context) < sizeof(INT21_DPB) + 2 || *ptr < sizeof(INT21_DPB) )
+            {
+                SetLastError( ERROR_BAD_LENGTH );
+                return FALSE;
+            }
+
+            if ( !INT21_FillDrivePB( drive ) )
+            {
+                SetLastError( ERROR_INVALID_DRIVE );
+                return FALSE;
+            }
+
+            source = &INT21_GetHeapPointer()->misc_dpb_list[drive];
+
+            *ptr = sizeof(INT21_DPB);
+            memcpy( target, source, sizeof(INT21_DPB));
+
+            if (LOWORD(context->Esi) != 0xF1A6)
+            {
+                target->driver_header = 0;
+                target->next          = 0;
+            }
+            else
+            {
+                FIXME( "Caller requested driver and next DPB pointers!\n" );
+            }
+        }
+        break;
+
+    default:
+        INT_BARF( context, 0x21 );
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           INT21_LongFilename
  *
  * Handler for function 0x71.
@@ -2862,7 +3062,21 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x1f: /* GET DRIVE PARAMETER BLOCK FOR DEFAULT DRIVE */
-        INT_Int21Handler( context );
+        {
+            BYTE drive = INT21_MapDrive( 0 ); 
+            TRACE( "GET DPB FOR DEFAULT DRIVE\n" );
+
+            if (INT21_FillDrivePB( drive ))
+            {
+                SET_AL( context, 0x00 ); /* success */
+                SET_BX( context, offsetof( INT21_HEAP, misc_dpb_list[drive] ) );
+                context->SegDs = INT21_GetHeapSelector( context );
+            }
+            else
+            {
+                SET_AL( context, 0xff ); /* invalid or network drive */
+            }
+        }
         break;
 
     case 0x20: /* NULL FUNCTION FOR CP/M COMPATIBILITY */
@@ -3008,7 +3222,21 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
-        INT_Int21Handler( context );
+        {
+            BYTE drive = INT21_MapDrive( DL_reg(context) );           
+            TRACE( "GET DPB FOR SPECIFIC DRIVE %d\n", DL_reg(context) );
+
+            if (INT21_FillDrivePB( drive ))
+            {
+                SET_AL( context, 0x00 ); /* success */
+                SET_DX( context, offsetof( INT21_HEAP, misc_dpb_list[drive] ) );
+                context->SegDs = INT21_GetHeapSelector( context );
+            }
+            else
+            {
+                SET_AL( context, 0xff ); /* invalid or network drive */
+            }
+        }
         break;
 
     case 0x33: /* MULTIPLEXED */
@@ -3695,7 +3923,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x73: /* MSDOS7 - FAT32 */
-        INT_Int21Handler( context );
+        if (!INT21_Fat32( context ))
+            bSetDOSExtendedError = TRUE;
         break;
 
     case 0xdc: /* CONNECTION SERVICES - GET CONNECTION NUMBER */

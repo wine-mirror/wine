@@ -73,62 +73,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(int21);
 
 #define DOS_GET_DRIVE(reg) ((reg) ? (reg) - 1 : DRIVE_GetCurrentDrive())
 
-/* Define the drive parameter block, as used by int21/1F
- * and int21/32.  This table can be accessed through the
- * global 'dpb' pointer, which points into the local dos
- * heap.
- */
-struct DPB
-{
-    BYTE drive_num;         /* 0=A, etc. */
-    BYTE unit_num;          /* Drive's unit number (?) */
-    WORD sector_size;       /* Sector size in bytes */
-    BYTE high_sector;       /* Highest sector in a cluster */
-    BYTE shift;             /* Shift count (?) */
-    WORD reserved;          /* Number of reserved sectors at start */
-    BYTE num_FAT;           /* Number of FATs */
-    WORD dir_entries;       /* Number of root dir entries */
-    WORD first_data;        /* First data sector */
-    WORD high_cluster;      /* Highest cluster number */
-    WORD sectors_in_FAT;    /* Number of sectors per FAT */
-    WORD start_dir;         /* Starting sector of first dir */
-    DWORD driver_head;      /* Address of device driver header (?) */
-    BYTE media_ID;          /* Media ID */
-    BYTE access_flag;       /* Prev. accessed flag (0=yes,0xFF=no) */
-    DWORD next;             /* Pointer to next DPB in list */
-    WORD free_search;       /* Free cluster search start */
-    WORD free_clusters;     /* Number of free clusters (0xFFFF=unknown) */
-};
-
-struct EDPB			/* FAT32 extended Drive Parameter Block */
-{				/* from Ralf Brown's Interrupt List */
-	struct DPB dpb;		/* first 24 bytes = original DPB */
-
-	BYTE edpb_flags;	/* undocumented/unknown flags */
-	DWORD next_edpb;	/* pointer to next EDPB */
-	WORD free_cluster;	/* cluster to start search for free space on write, typically
-	                           the last cluster allocated */
-	WORD clusters_free;	/* number of free clusters on drive or FFFF = unknown */
-	WORD clusters_free_hi;	/* hiword of clusters_free */
-	WORD mirroring_flags;	/* mirroring flags: bit 7 set = do not mirror active FAT */
-				/* bits 0-3 = 0-based number of the active FAT */
-	WORD info_sector;	/* sector number of file system info sector, or FFFF for none */
-	WORD spare_boot_sector;	/* sector number of backup boot sector, or FFFF for none */
-	DWORD first_cluster;	/* sector number of the first cluster */
-	DWORD max_cluster;	/* sector number of the last cluster */
-	DWORD fat_clusters;	/* number of clusters occupied by FAT */
-	DWORD root_cluster;	/* cluster number of start of root directory */
-	DWORD free_cluster2;	/* same as free_cluster: cluster at which to start
-	                           search for free space when writing */
-
-};
-
-DWORD dpbsegptr;
-
 struct DosHeap {
         BYTE mediaID;
 	BYTE biosdate[8];
-        struct DPB dpb;
 };
 static struct DosHeap *heap;
 static WORD DosHeapHandle;
@@ -143,7 +90,6 @@ static BOOL INT21_CreateHeap(void)
         return FALSE;
     }
     heap = (struct DosHeap *) GlobalLock16(DosHeapHandle);
-    dpbsegptr = MAKESEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
     strcpy(heap->biosdate, "01/01/80");
     return TRUE;
 }
@@ -222,60 +168,6 @@ static int INT21_GetDriveAllocInfo( CONTEXT86 *context )
     SET_BX( context, (int)&heap->mediaID - (int)heap );
     return 1;
 }
-
-static int FillInDrivePB( int drive )
-{
-        if(!DRIVE_IsValid(drive))
-        {
-            SetLastError( ERROR_INVALID_DRIVE );
-			return 0;
-        }
-        else if (heap || INT21_CreateHeap())
-        {
-                /* FIXME: I have no idea what a lot of this information should
-                 * say or whether it even really matters since we're not allowing
-                 * direct block access.  However, some programs seem to depend on
-                 * getting at least _something_ back from here.  The 'next' pointer
-                 * does worry me, though.  Should we have a complete table of
-                 * separate DPBs per drive?  Probably, but I'm lazy. :-)  -CH
-                 */
-                heap->dpb.drive_num = heap->dpb.unit_num = drive; /*The same?*/
-                heap->dpb.sector_size = 512;
-                heap->dpb.high_sector = 1;
-                heap->dpb.shift = drive < 2 ? 0 : 6; /*6 for HD, 0 for floppy*/
-                heap->dpb.reserved = 0;
-                heap->dpb.num_FAT = 1;
-                heap->dpb.dir_entries = 2;
-                heap->dpb.first_data = 2;
-                heap->dpb.high_cluster = 64000;
-                heap->dpb.sectors_in_FAT = 1;
-                heap->dpb.start_dir = 1;
-                heap->dpb.driver_head = 0;
-                heap->dpb.media_ID = (drive > 1) ? 0xF8 : 0xF0;
-                heap->dpb.access_flag = 0;
-                heap->dpb.next = 0;
-                heap->dpb.free_search = 0;
-                heap->dpb.free_clusters = 0xFFFF;    /* unknown */
-				return 1;
-		}
-
-		return 0;
-}
-
-static void GetDrivePB( CONTEXT86 *context, int drive )
-{
-	if (FillInDrivePB( drive ))
-	{
-                SET_AL( context, 0x00 );
-                context->SegDs = SELECTOROF(dpbsegptr);
-                SET_BX( context, OFFSETOF(dpbsegptr) );
-        }
-	else
-	{
-        SET_AX( context, 0x00ff );
-	}
-}
-
 
 static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 {
@@ -722,18 +614,8 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         if (!INT21_GetDriveAllocInfo(context)) SET_AX( context, 0xffff );
         break;
 
-    case 0x1f: /* GET DRIVE PARAMETER BLOCK FOR DEFAULT DRIVE */
-        GetDrivePB(context, DRIVE_GetCurrentDrive());
-        break;
-
     case 0x29: /* PARSE FILENAME INTO FCB */
         INT21_ParseFileNameIntoFCB(context);
-        break;
-
-    case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
-        TRACE("GET DOS DRIVE PARAMETER BLOCK FOR DRIVE %s\n",
-	      INT21_DriveName( DL_reg(context)));
-        GetDrivePB(context, DOS_GET_DRIVE( DL_reg(context) ) );
         break;
 
     case 0x36: /* GET FREE DISK SPACE */
@@ -940,86 +822,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             break;
         }
         break;
-
-
-    case 0x73: /* MULTIPLEXED: Win95 OSR2/Win98 FAT32 calls */
-        TRACE("windows95 function AX %04x\n",
-                    AX_reg(context));
-
-        switch (AL_reg(context))
-		{
-		case 0x02:	/* Get Extended Drive Parameter Block for specific drive */
-		    		/* ES:DI points to word with length of data (should be 0x3d) */
-			{
-				WORD *buffer;
-				struct EDPB *edpb;
-			    DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
-			    char root[] = "A:\\";
-
-				buffer = (WORD *)CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Edi);
-
-				TRACE("Get Extended DPB: linear buffer address is %p\n", buffer);
-
-				/* validate passed-in buffer lengths */
-				if ((*buffer != 0x3d) || (context->Ecx != 0x3f))
-				{
-					WARN("Get Extended DPB: buffer lengths incorrect\n");
-					WARN("CX = %lx, buffer[0] = %x\n", context->Ecx, *buffer);
-					SET_CFLAG(context);
-					SET_AL( context, 0x18 );		/* bad buffer length */
-				}
-
-				/* buffer checks out */
-				buffer++;		/* skip over length word now */
-				if (FillInDrivePB( DX_reg(context) ) )
-				{
-				 	edpb = (struct EDPB *)buffer;
-
-					/* copy down the old-style DPB portion first */
-					memcpy(&edpb->dpb, &heap->dpb, sizeof(struct DPB));
-
-					/* now fill in the extended entries */
-					edpb->edpb_flags = 0;
-					edpb->next_edpb = 0;
-					edpb->free_cluster = edpb->free_cluster2 = 0;
-
-					/* determine free disk space */
-				    *root += DOS_GET_DRIVE( DX_reg(context) );
-				    GetDiskFreeSpaceA( root, &cluster_sectors, &sector_bytes,
-                              &free_clusters, &total_clusters );
-
-					edpb->clusters_free = (free_clusters&0xffff);
-
-					edpb->clusters_free_hi = free_clusters >> 16;
-					edpb->mirroring_flags = 0;
-					edpb->info_sector = 0xffff;
-					edpb->spare_boot_sector = 0xffff;
-					edpb->first_cluster = 0;
-					edpb->max_cluster = total_clusters;
-					edpb->fat_clusters = 32;	/* made-up value */
-					edpb->root_cluster = 0;
-
-					RESET_CFLAG(context);	/* clear carry */
-					SET_AX( context, 0 );
-				}
-				else
-				{
-                                    SET_AX( context, 0x00ff );
-                                    SET_CFLAG(context);
-				}
-			}
-			break;
-
-		case 0x03:	/* Get Extended free space on drive */
-		case 0x04:  /* Set DPB for formatting */
-		case 0x05:  /* extended absolute disk read/write */
-			FIXME("Unimplemented FAT32 int32 function %04x\n", AX_reg(context));
-			SET_CFLAG(context);
-			SET_AL( context, 0 );
-			break;
-		}
-
-		break;
 
     default:
         INT_BARF( context, 0x21 );
