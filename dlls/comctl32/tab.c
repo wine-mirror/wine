@@ -1352,7 +1352,7 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
    len=lstrlenA (tabItem->pszText);
    if (len>wineItem->cchTextMax) 
      wineItem->pszText= COMCTL32_ReAlloc (wineItem->pszText, len+1);
-   lstrcpynA (wineItem->pszText, tabItem->pszText, len);
+   lstrcpyA (wineItem->pszText, tabItem->pszText);
   }
 
   return TRUE;
