@@ -62,6 +62,23 @@ static void init_proxy(void)
   write_stubdesc();
 }
 
+static void clear_output_vars( var_t *arg )
+{
+  if (arg) {
+    while (NEXT_LINK(arg))
+      arg = NEXT_LINK(arg);
+  }
+  while (arg) {
+    if (is_attr(arg->attrs, ATTR_OUT)) {
+      fprintf( proxy, "    if(%s)\n", arg->name );
+      fprintf( proxy, "        MIDL_memset( %s, 0, sizeof( ", arg->name );
+      write_type(proxy, arg->type, arg, arg->tname);
+      fprintf( proxy, " ));\n" );
+    }
+    arg = PREV_LINK(arg);
+  }
+}
+
 static void gen_proxy(type_t *iface, func_t *cur, int idx)
 {
   var_t *def = cur->def;
@@ -85,7 +102,7 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
   fprintf(proxy, "\n");
 
   /* FIXME: trace */
-  /* FIXME: clear output vars? */
+  clear_output_vars( cur->args );
 
   fprintf(proxy, "    NdrProxyInitialize(This, &_Msg, &_StubMsg, &Object_StubDesc, %d);\n", idx);
 
