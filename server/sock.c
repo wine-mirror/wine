@@ -304,6 +304,8 @@ static void sock_poll_event( struct object *obj, int event )
             }
 
         }
+        else if (event & POLLHUP) empty_recv = 1;
+
         if (event & POLLOUT)
         {
             sock->pmask |= FD_WRITE;
@@ -325,7 +327,7 @@ static void sock_poll_event( struct object *obj, int event )
         else if ( empty_recv && (sock->state & (FD_READ|FD_WRITE) ))
         {
             sock->errors[FD_CLOSE_BIT] = sock_error( sock->obj.fd );
-            if ( event & ( POLLERR|POLLHUP ) )
+            if ( event & POLLERR)
                  sock->state &= ~(FD_WINE_CONNECTED|FD_WRITE);
             sock->pmask |= FD_CLOSE;
             sock->hmask |= FD_CLOSE;
