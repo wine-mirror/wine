@@ -620,7 +620,7 @@ then {
 
   # Make sure we are on a Windows drive
   mv $LCONF $LCONF.orig
-  sed "s/\"Path\" = \"%HOME%\"$/\"Path\" = \"\${PWD}\"/" $LCONF.orig> $LCONF
+  sed "s/\"Path\" = \"%HOME%\"$/\"Path\" = \"%PWD%\"/" $LCONF.orig> $LCONF
 
   echo "Installing default Wine registry entries..."
   echo
