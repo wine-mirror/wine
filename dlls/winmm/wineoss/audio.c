@@ -2717,9 +2717,10 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                             lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
                             lpWaveHdr->dwFlags |=  WHDR_DONE;
 
+			    wwi->lpQueuePtr = lpNext;
                             widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
 
-			    wwi->lpQueuePtr = lpWaveHdr = lpNext;
+			    lpWaveHdr = lpNext;
 			    if (!lpNext && bytesRead) {
 				/* before we give up, check for more header messages */
 				while (OSS_PeekRingMessage(&wwi->msgRing, &msg, &param, &ev))

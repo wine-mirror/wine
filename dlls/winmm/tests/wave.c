@@ -371,6 +371,7 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
     HANDLE hevent;
     WAVEHDR frag;
     MMRESULT rc;
+    DWORD res;
 
     hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
     ok(hevent!=NULL,"CreateEvent: error=%ld\n",GetLastError());
@@ -397,6 +398,8 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
         CloseHandle(hevent);
         return;
     }
+    res=WaitForSingleObject(hevent,1000);
+    ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for open\n");
 
     ok(wfx.nChannels==win_formats[format][3] &&
        wfx.wBitsPerSample==win_formats[format][2] &&
@@ -423,16 +426,23 @@ static void wave_in_test_deviceIn(int device, int format, DWORD flags)
 
         rc=waveInStart(win);
         ok(rc==MMSYSERR_NOERROR,"waveInStart: device=%d rc=%d\n",device,rc);
-        WaitForSingleObject(hevent,INFINITE);
+        res = WaitForSingleObject(hevent,1200);
+        ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for header\n");
+                                                                                                                                
+        ok(frag.dwFlags&WHDR_DONE,"WHDR_DONE no set in frag.dwFlags\n");
+        ok(frag.dwBytesRecorded==wfx.nAvgBytesPerSec,"frag.dwBytesRecorded=%ld, should=%ld\n",
+            frag.dwBytesRecorded,wfx.nAvgBytesPerSec);
     }
 
     rc=waveInUnprepareHeader(win, &frag, sizeof(frag));
     ok(rc==MMSYSERR_NOERROR,
        "waveInUnprepareHeader: device=%d rc=%d\n",device,rc);
 
+    waveInClose(win);
+    res=WaitForSingleObject(hevent,1000);
+    ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for close\n");
     free(frag.lpData);
     CloseHandle(hevent);
-    waveInClose(win);
 }
 
 static void wave_in_tests()
