@@ -88,6 +88,8 @@ int main(int argc,char**argv)
   return 1;
  }
 /* fprintf(stderr,"Successfully mapped DOS memory, entering vm86 loop\n"); */
+ signal(SIGHUP,SIG_IGN);
+ signal(SIGINT,SIG_IGN);
 /* report back to the main program that we're ready */
  ret=0;
  write(1,&ret,sizeof(ret));
