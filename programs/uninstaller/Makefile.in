@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = uninstaller
 WRCEXTRA  = -s -p uninstaller
-IMPORTS   = user32
+IMPORTS   = user32 gdi32 kernel32
 
 LICENSELANG = En
 

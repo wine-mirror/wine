@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = icinfo aviinfo aviplay
-IMPORTS   = msvfw32 winmm ddraw x11drv
+IMPORTS   = msvfw32 winmm ddraw x11drv user32 gdi32 kernel32
 
 SPEC_SRCS = \
 	icinfo.spec \

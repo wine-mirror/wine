@@ -5,6 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = regtest
+IMPORTS   = kernel32
 
 C_SRCS = regtest.c
 

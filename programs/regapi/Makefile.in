@@ -5,6 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = regapi
+IMPORTS   = kernel32
 
 C_SRCS = \
 	regapi.c
