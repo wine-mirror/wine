@@ -49,7 +49,10 @@ DEFAULT_DEBUG_CHANNEL(dsound);
 
 /* these are eligible for tuning... they must be high on slow machines... */
 /* especially since the WINMM overhead is pretty high, and could be improved quite a bit;
- * the high DS_HEL_MARGIN reflects the currently high wineoss/HEL latency */
+ * the high DS_HEL_MARGIN reflects the currently high wineoss/HEL latency
+ * some settings here should probably get ported to wine.conf */
+#define DS_EMULDRIVER 1 /* some games (Quake 2, UT) refuse to accept
+				emulated dsound devices. set to 0 ! */ 
 #define DS_HEL_FRAGS 48 /* HEL only: number of waveOut fragments in primary buffer */
 #define DS_HEL_QUEUE 28 /* HEL only: number of waveOut fragments to prebuffer */
 			/* (Starcraft videos won't work with higher than 32 x10ms) */
@@ -3057,8 +3060,10 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		unsigned c;
 
 		/* FIXME: look at wcaps */
-		(*ippDS)->drvcaps.dwFlags = DSCAPS_EMULDRIVER |
+		(*ippDS)->drvcaps.dwFlags =
 			DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
+		if (DS_EMULDRIVER)
+		    (*ippDS)->drvcaps.dwFlags |= DSCAPS_EMULDRIVER;
 
 		/* Allocate memory for HEL buffer headers */
 		for (c=0; c<DS_HEL_FRAGS; c++) {
