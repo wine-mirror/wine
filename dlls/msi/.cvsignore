@@ -2,7 +2,7 @@ Makefile
 cond.tab.c
 cond.tab.h
 msi.dll.dbg.c
+msi.res
 msi.spec.def
 sql.tab.c
 sql.tab.h
-version.res

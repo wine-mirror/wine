@@ -62,6 +62,7 @@ INSTALLUI_HANDLERW gUIHandlerW = NULL;
 DWORD gUIFilter = 0;
 LPVOID gUIContext = NULL;
 WCHAR gszLogFile[MAX_PATH];
+HINSTANCE msi_hInstance;
 
 /*
  *  .MSI  file format
@@ -848,18 +849,93 @@ INSTALLUI_HANDLERW WINAPI MsiSetExternalUIW(INSTALLUI_HANDLERW puiHandler,
     return prev;
 }
 
-UINT WINAPI MsiLoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer,
-                int nBufferMax, DWORD e)
+/******************************************************************
+ *  MsiLoadStringW            [MSI.@]
+ *
+ * Loads a string from MSI's string resources.
+ *
+ * PARAMS
+ *
+ *   handle        [I]  only -1 is handled currently
+ *   id            [I]  id of the string to be loaded
+ *   lpBuffer      [O]  buffer for the string to be written to
+ *   nBufferMax    [I]  maximum size of the buffer in characters
+ *   lang          [I]  the prefered language for the string
+ *
+ * RETURNS
+ *
+ *   If successful, this function returns the language id of the string loaded
+ *   If the function fails, the function returns zero.
+ *
+ * NOTES
+ *
+ *   The type of the first parameter is unknown.  LoadString's prototype
+ *  suggests that it might be a module handle.  I have made it an MSI handle
+ *  for starters, as -1 is an invalid MSI handle, but not an invalid module
+ *  handle.  Maybe strings can be stored in an MSI database somehow.
+ */
+LANGID WINAPI MsiLoadStringW( MSIHANDLE handle, UINT id, LPWSTR lpBuffer,
+                int nBufferMax, LANGID lang )
 {
-    FIXME("%p %u %p %d %08lx\n",hInstance,uID,lpBuffer,nBufferMax,e);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    HRSRC hres;
+    HGLOBAL hResData;
+    LPWSTR p;
+    DWORD i, len;
+
+    TRACE("%ld %u %p %d %d\n", handle, id, lpBuffer, nBufferMax, lang);
+
+    if( handle != -1 )
+        FIXME("don't know how to deal with handle = %08lx\n", handle);
+
+    if( !lang )
+        lang = GetUserDefaultLangID();
+
+    hres = FindResourceExW( msi_hInstance, (LPCWSTR) RT_STRING,
+                            (LPWSTR)1, lang );
+    if( !hres )
+        return 0;
+    hResData = LoadResource( msi_hInstance, hres );
+    if( !hResData )
+        return 0;
+    p = LockResource( hResData );
+    if( !p )
+        return 0;
+
+    for (i = 0; i < (id&0xf); i++)
+	p += *p + 1;
+    len = *p;
+
+    if( nBufferMax <= len )
+        return 0;
+
+    memcpy( lpBuffer, p+1, len * sizeof(WCHAR));
+    lpBuffer[ len ] = 0;
+
+    TRACE("found -> %s\n", debugstr_w(lpBuffer));
+
+    return lang;
 }
 
-UINT WINAPI MsiLoadStringW(HINSTANCE hInstance, UINT uID, LPWSTR lpBuffer,
-                int nBufferMax, DWORD e)
+LANGID WINAPI MsiLoadStringA( MSIHANDLE handle, UINT id, LPSTR lpBuffer,
+                int nBufferMax, LANGID lang )
 {
-    FIXME("%p %u %p %d %08lx\n",hInstance,uID,lpBuffer,nBufferMax,e);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR bufW;
+    LANGID r;
+    DWORD len;
+
+    bufW = HeapAlloc(GetProcessHeap(), 0, nBufferMax*sizeof(WCHAR));
+    r = MsiLoadStringW(handle, id, bufW, nBufferMax, lang);
+    if( r )
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, bufW, -1, NULL, 0, NULL, NULL );
+        if( len <= nBufferMax )
+            WideCharToMultiByte( CP_ACP, 0, bufW, -1,
+                                 lpBuffer, nBufferMax, NULL, NULL );
+        else
+            r = 0;
+    }
+    HeapFree(GetProcessHeap(), 0, bufW);
+    return r;
 }
 
 INSTALLSTATE WINAPI MsiLocateComponentA(LPCSTR szComponent, LPSTR lpPathBuf,
@@ -1466,6 +1542,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+        msi_hInstance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
         msi_dialog_register_class();
         break;
