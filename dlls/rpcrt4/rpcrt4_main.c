@@ -114,7 +114,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ole);
+WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
 static UUID uuid_nil;
 static HANDLE master_mutex;
