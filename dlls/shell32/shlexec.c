@@ -123,7 +123,7 @@ static BOOL argify(char* res, int len, const char* fmt, const char* lpFile)
  *	SHELL_ExecuteA [Internal]
  *
  */
-static UINT SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
+static UINT SHELL_ExecuteA(char *lpCmd, void *env, LPSHELLEXECUTEINFOA sei, BOOL shWait)
 {
     STARTUPINFOA  startup;
     PROCESS_INFORMATION info;
@@ -135,7 +135,7 @@ static UINT SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = sei->nShow;
     if (CreateProcessA(NULL, lpCmd, NULL, NULL, FALSE, 0,
-                       NULL, sei->lpDirectory, &startup, &info))
+                       env, sei->lpDirectory, &startup, &info))
     {
         /* Give 30 seconds to the app to come up, if desired. Probably only needed
            when starting app immediately before making a DDE connection. */
@@ -159,6 +159,64 @@ static UINT SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
     return retval;
 }
 
+
+/***********************************************************************
+ *           build_env
+ *
+ * Build the environment for the new process, adding the specified
+ * path to the PATH variable. Returned pointer must be freed by caller.
+ */
+static void *build_env( const char *path )
+{
+    char *strings, *new_env;
+    char *p, *p2;
+    int total = strlen(path) + 1;
+    BOOL got_path = FALSE;
+
+    if (!(strings = GetEnvironmentStringsA())) return NULL;
+    p = strings;
+    while (*p)
+    {
+        int len = strlen(p) + 1;
+        if (!strncasecmp( p, "PATH=", 5 )) got_path = TRUE;
+        total += len;
+        p += len;
+    }
+    if (!got_path) total += 5;  /* we need to create PATH */
+    total++;  /* terminating null */
+
+    if (!(new_env = HeapAlloc( GetProcessHeap(), 0, total )))
+    {
+        FreeEnvironmentStringsA( strings );
+        return NULL;
+    }
+    p = strings;
+    p2 = new_env;
+    while (*p)
+    {
+        int len = strlen(p) + 1;
+        memcpy( p2, p, len );
+        if (!strncasecmp( p, "PATH=", 5 ))
+        {
+            p2[len - 1] = ';';
+            strcpy( p2 + len, path );
+            p2 += strlen(path) + 1;
+        }
+        p += len;
+        p2 += len;
+    }
+    if (!got_path)
+    {
+        strcpy( p2, "PATH=" );
+        strcat( p2, path );
+        p2 += strlen(p2) + 1;
+    }
+    *p2 = 0;
+    FreeEnvironmentStringsA( strings );
+    return new_env;
+}
+
+
 /***********************************************************************
  *           SHELL_TryAppPath
  *
@@ -167,29 +225,30 @@ static UINT SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL shWait)
  * On entry: szName is a filename (probably without path separators).
  * On exit: if szName found in "App Path", place full path in lpResult, and return true
  */
-static BOOL SHELL_TryAppPath( LPCSTR szName, LPSTR lpResult)
+static BOOL SHELL_TryAppPath( LPCSTR szName, LPSTR lpResult, void**env)
 {
     HKEY hkApp = 0;
-    char szAppKey[256];
+    char buffer[256];
     LONG len;
-    LONG res; 
+    LONG res;
     BOOL found = FALSE;
 
-    sprintf(szAppKey, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\%s", szName);
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, szAppKey, 0, KEY_READ, &hkApp);
-    if (res) {
-        /*TRACE("RegOpenKeyExA(HKEY_LOCAL_MACHINE, %s,) returns %ld\n", szAppKey, res);*/
-        goto end;
-    }
+    if (env) *env = NULL;
+    sprintf(buffer, "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\%s", szName);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, buffer, 0, KEY_READ, &hkApp);
+    if (res) goto end;
 
     len = MAX_PATH;
     res = RegQueryValueA(hkApp, NULL, lpResult, &len);
-    if (res) {
-        /*TRACE("RegQueryValueA(hkApp, NULL,) returns %ld\n", res);*/
-        goto end;
-    }
-    /*TRACE("%s -> %s\n", szName, lpResult);*/
+    if (res) goto end;
     found = TRUE;
+
+    if (env)
+    {
+        DWORD count = sizeof(buffer);
+        if (!RegQueryValueExA(hkApp, "Path", NULL, NULL, buffer, &count) && buffer[0])
+            *env = build_env( buffer );
+    }
 
 end:
     if (hkApp) RegCloseKey(hkApp);
@@ -211,7 +270,7 @@ end:
  *              on the operation)
  */
 static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperation,
-                                 LPSTR lpResult, LPSTR key)
+                                 LPSTR lpResult, LPSTR key, void **env)
 {
     char *extension = NULL; /* pointer to file extension */
     char tmpext[5];         /* local copy to mung as we please */
@@ -237,7 +296,7 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
         return 2; /* File not found. Close enough, I guess. */
     }
 
-    if (SHELL_TryAppPath( lpFile, lpResult ))
+    if (SHELL_TryAppPath( lpFile, lpResult, env ))
     {
         TRACE("found %s via App Paths\n", lpResult);
         return 33;
@@ -401,7 +460,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
  *
  */
 static unsigned dde_connect(char* key, char* start, char* ddeexec,
-                            const char* lpFile,
+                            const char* lpFile, void *env,
                             LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
 {
     char*       endkey = key + strlen(key);
@@ -442,7 +501,7 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
     if (!hConv)
     {
         TRACE("Launching '%s'\n", start);
-        ret = execfunc(start, sei, TRUE);
+        ret = execfunc(start, env, sei, TRUE);
         if (ret < 32)
         {
             TRACE("Couldn't launch\n");
@@ -477,7 +536,8 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
 /*************************************************************************
  *	execute_from_key [Internal]
  */
-static UINT execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
+static UINT execute_from_key(LPSTR key, LPCSTR lpFile, void *env,
+                             LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc)
 {
     char cmd[1024] = "";
     LONG cmdlen = sizeof(cmd);
@@ -499,14 +559,14 @@ static UINT execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA sei, 
         if (RegQueryValueA(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
         {
             TRACE("Got ddeexec %s => %s\n", key, param);
-            retval = dde_connect(key, cmd, param, lpFile, sei, execfunc);
+            retval = dde_connect(key, cmd, param, lpFile, env, sei, execfunc);
         }
         else
         {
             /* Is there a replace() function anywhere? */
             cmd[cmdlen] = '\0';
             argify(param, sizeof(param), cmd, lpFile);
-            retval = execfunc(param, sei, FALSE);
+            retval = execfunc(param, env, sei, FALSE);
         }
     }
     else TRACE("ooch\n");
@@ -540,7 +600,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
         SetCurrentDirectoryA(lpDirectory);
     }
 
-    retval = SHELL_FindExecutable(lpDirectory, lpFile, "open", lpResult, NULL);
+    retval = SHELL_FindExecutable(lpDirectory, lpFile, "open", lpResult, NULL, NULL);
 
     TRACE("returning %s\n", lpResult);
     if (lpDirectory)
@@ -564,6 +624,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
 {
     CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20],fileName[MAX_PATH];
     LPSTR pos;
+    void *env;
     int gap, len;
     char lpstrProtocol[256];
     LPCSTR lpFile,lpOperation;
@@ -644,7 +705,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
             strcat(cmd, " ");
             strcat(cmd, szApplicationName);
         }
-        retval = execfunc(cmd, sei, FALSE);
+        retval = execfunc(cmd, NULL, sei, FALSE);
         if (retval > 32)
             return TRUE;
         else
@@ -668,13 +729,13 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
         strcat(szApplicationName, szCommandline);
     }
 
-    retval = execfunc(szApplicationName, sei, FALSE);
+    retval = execfunc(szApplicationName, NULL, sei, FALSE);
     if (retval > 32)
         return TRUE;
 
     /* Else, try to find the executable */
     cmd[0] = '\0';
-    retval = SHELL_FindExecutable(sei->lpDirectory, lpFile, lpOperation, cmd, lpstrProtocol);
+    retval = SHELL_FindExecutable(sei->lpDirectory, lpFile, lpOperation, cmd, lpstrProtocol, &env);
     if (retval > 32)  /* Found */
     {
         CHAR szQuotedCmd[MAX_PATH+2];
@@ -687,9 +748,10 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
             sprintf(szQuotedCmd, "\"%s\"", cmd);
         TRACE("%s/%s => %s/%s\n", szApplicationName, lpOperation, szQuotedCmd, lpstrProtocol);
         if (*lpstrProtocol)
-            retval = execute_from_key(lpstrProtocol, szApplicationName, sei, execfunc);
+            retval = execute_from_key(lpstrProtocol, szApplicationName, env, sei, execfunc);
         else
-            retval = execfunc(szQuotedCmd, sei, FALSE);
+            retval = execfunc(szQuotedCmd, env, sei, FALSE);
+        if (env) HeapFree( GetProcessHeap(), 0, env );
     }
     else if (PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
     {
@@ -717,7 +779,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
             lpFile += iSize;
             while (*lpFile == ':') lpFile++;
         }
-        retval = execute_from_key(lpstrProtocol, lpFile, sei, execfunc);
+        retval = execute_from_key(lpstrProtocol, lpFile, NULL, sei, execfunc);
     }
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncasecmp(lpFile, "www", 3))

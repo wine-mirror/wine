@@ -795,64 +795,6 @@ static BOOL DIR_TryModulePath( LPCWSTR name, DOS_FULL_NAME *full_name, BOOL win3
 
 
 /***********************************************************************
- *           DIR_TryAppPath
- *
- * Helper function for DIR_SearchPath.
- */
-static BOOL DIR_TryAppPath( LPCWSTR name, DOS_FULL_NAME *full_name )
-{
-    HKEY hkAppPaths = 0, hkApp = 0;
-    WCHAR buffer[MAX_PATHNAME_LEN], *lpAppPaths;
-    LPWSTR lpFileName;
-    BOOL res = FALSE;
-    DWORD count;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    KEY_VALUE_PARTIAL_INFORMATION *info;
-    static const WCHAR PathW[] = {'P','a','t','h',0};
-    static const WCHAR AppPathsW[] = {'M','a','c','h','i','n','e','\\',
-                                      'S','o','f','t','w','a','r','e','\\',
-                                      'M','i','c','r','o','s','o','f','t','\\',
-                                      'W','i','n','d','o','w','s','\\',
-                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                      'A','p','p',' ','P','a','t','h','s',0};
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, AppPathsW );
-    if (NtOpenKey( &hkAppPaths, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return FALSE;
-
-    if (!GetModuleFileNameW(0, buffer, MAX_PATHNAME_LEN))
-    {
-	WARN("huh, module not found ??\n");
-	goto end;
-    }
-    lpFileName = strrchrW(buffer, '\\');
-    if (!lpFileName) lpFileName = buffer;
-    else lpFileName++; /* skip '\\' */
-
-    attr.RootDirectory = hkAppPaths;
-    RtlInitUnicodeString( &nameW, lpFileName );
-    if (NtOpenKey( &hkApp, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) goto end;
-
-    RtlInitUnicodeString( &nameW, PathW );
-    if (NtQueryValueKey( hkApp, &nameW, KeyValuePartialInformation,
-                         buffer, sizeof(buffer)-sizeof(WCHAR), &count )) goto end;
-    info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    lpAppPaths = (WCHAR *)info->Data;
-    lpAppPaths[info->DataLength/sizeof(WCHAR)] = 0;
-    res = DIR_SearchSemicolonedPaths(name, full_name, lpAppPaths);
-end:
-    if (hkApp) NtClose(hkApp);
-    if (hkAppPaths) NtClose(hkAppPaths);
-    return res;
-}
-
-/***********************************************************************
  *           DIR_SearchPath
  *
  * Implementation of SearchPathA. 'win32' specifies whether the search
@@ -928,10 +870,6 @@ DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
     /* Try the path of the current executable (for Win16 search order) */
 
     if (!win32 && DIR_TryModulePath( name, full_name, win32 )) goto done;
-
-    /* Try the "App Paths" entry if existing (undocumented ??) */
-    if (DIR_TryAppPath(name, full_name))
-	goto done;
 
     /* Try all directories in path */
 
