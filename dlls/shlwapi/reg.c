@@ -17,6 +17,8 @@
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
+typedef DWORD (WINAPI *RegQueryFn)(HKEY,LPCVOID,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
+
 static const char *lpszContentTypeA = "Content Type";
 static const WCHAR lpszContentTypeW[] = { 'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
 
@@ -230,7 +232,7 @@ LONG WINAPI SHRegQueryUSValueA(
 
 	/* if user wants HKCU, and it exists, then try it */
 	if (!fIgnoreHKCU && (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU)))
-	    ret = RegQueryValueExA(dokey, 
+	    ret = RegQueryValueExA(dokey,
 				   pszValue, 0, pdwType, pvData, pcbData);
 
 	/* if HKCU did not work and HKLM exists, then try it */
@@ -275,7 +277,7 @@ LONG WINAPI SHRegQueryUSValueW(
 
 	/* if user wants HKCU, and it exists, then try it */
 	if (!fIgnoreHKCU && (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU)))
-	    ret = RegQueryValueExW(dokey, 
+	    ret = RegQueryValueExW(dokey,
 				   pszValue, 0, pdwType, pvData, pcbData);
 
 	/* if HKCU did not work and HKLM exists, then try it */
@@ -501,7 +503,7 @@ LONG WINAPI SHRegQueryInfoUSKeyA(
 
 	/* if user wants HKCU, and it exists, then try it */
 	if (((enumRegFlags == SHREGENUM_HKCU) ||
-	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
+	     (enumRegFlags == SHREGENUM_DEFAULT)) &&
 	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
 	    ret = RegQueryInfoKeyA(dokey, 0, 0, 0,
 				   pcSubKeys, pcchMaxSubKeyLen, 0,
@@ -585,7 +587,7 @@ LONG WINAPI SHRegEnumUSKeyA(
 	if (((enumRegFlags == SHREGENUM_HKLM) ||
 	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
 	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
-	    return RegEnumKeyExA(dokey, dwIndex, pszName, pcchValueNameLen, 
+	    return RegEnumKeyExA(dokey, dwIndex, pszName, pcchValueNameLen,
 				0, 0, 0, 0);
 	}
 	FIXME("no support for SHREGNUM_BOTH\n");
@@ -611,14 +613,14 @@ LONG WINAPI SHRegEnumUSKeyW(
 	if (((enumRegFlags == SHREGENUM_HKCU) ||
 	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
 	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
-	    return RegEnumKeyExW(dokey, dwIndex, pszName, pcchValueNameLen, 
+	    return RegEnumKeyExW(dokey, dwIndex, pszName, pcchValueNameLen,
 				0, 0, 0, 0);
 	}
 
 	if (((enumRegFlags == SHREGENUM_HKLM) ||
-	     (enumRegFlags == SHREGENUM_DEFAULT)) && 
+	     (enumRegFlags == SHREGENUM_DEFAULT)) &&
 	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
-	    return RegEnumKeyExW(dokey, dwIndex, pszName, pcchValueNameLen, 
+	    return RegEnumKeyExW(dokey, dwIndex, pszName, pcchValueNameLen,
 				0, 0, 0, 0);
 	}
 	FIXME("no support for SHREGNUM_BOTH\n");
@@ -649,330 +651,796 @@ LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
 
 /*************************************************************************
  * SHRegGetPathA   [SHLWAPI.@]
+ *
+ * Get a path from the registry.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key containing path to get
+ *   lpszValue  [I] Name of value containing path to get
+ *   lpszPath   [O] Buffer for returned path
+ *   dwFlags    [I] Reserved
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. lpszPath contains the path.
+ *   Failure: An error code from RegOpenKeyExA or SHQueryValueExA.
  */
-DWORD WINAPI SHRegGetPathA(
-	HKEY hKey,
-	LPCSTR pcszSubKey,
-	LPCSTR pcszValue,
-	LPSTR pszPath,
-	DWORD dwFlags)
+DWORD WINAPI SHRegGetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
+                           LPSTR lpszPath, DWORD dwFlags)
 {
-	FIXME("%s %s\n", pcszSubKey, pcszValue);
-	return 0;
+  HKEY hSubKey;
+  DWORD dwType = REG_SZ, dwSize = MAX_PATH, dwRet = ERROR_SUCCESS;
+
+  TRACE("(hkey=0x%08x,%s,%s,%p,%ld)\n", hKey, debugstr_a(lpszSubKey),
+        debugstr_a(lpszValue), lpszPath, dwFlags);
+
+  if (lpszSubKey && *lpszSubKey)
+    dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+  else
+    hSubKey = hKey;
+
+  if (!dwRet)
+    dwRet = SHQueryValueExA(hSubKey, lpszValue, NULL, &dwType, lpszPath, &dwSize);
+
+  if (hSubKey != hKey)
+    RegCloseKey(hSubKey);
+
+  return dwRet;
 }
 
 /*************************************************************************
  * SHRegGetPathW   [SHLWAPI.@]
+ *
+ * See SHRegGetPathA.
  */
-DWORD WINAPI SHRegGetPathW(
-	HKEY hKey,
-	LPCWSTR pcszSubKey,
-	LPCWSTR pcszValue,
-	LPWSTR pszPath,
-	DWORD dwFlags)
+DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
+                           LPWSTR lpszPath, DWORD dwFlags)
 {
-	FIXME("%s %s\n", debugstr_w(pcszSubKey), debugstr_w(pcszValue));
-	return 0;
+  HKEY hSubKey;
+  DWORD dwType = REG_SZ, dwSize = MAX_PATH, dwRet = ERROR_SUCCESS;
+
+  TRACE("(hkey=0x%08x,%s,%s,%p,%ld)\n", hKey, debugstr_w(lpszSubKey),
+        debugstr_w(lpszValue), lpszPath, dwFlags);
+
+  if (lpszSubKey && *lpszSubKey)
+    dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+  else
+    hSubKey = hKey;
+
+  if (!dwRet)
+    dwRet = SHQueryValueExW(hSubKey, lpszValue, NULL, &dwType, lpszPath, &dwSize);
+
+  if (hSubKey != hKey)
+    RegCloseKey(hSubKey);
+
+  return dwRet;
+}
+
+
+/*************************************************************************
+ * SHRegSetPathA   [SHLWAPI.@]
+ *
+ * Write a path to the registry.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key containing path to set
+ *   lpszValue  [I] Name of value containing path to set
+ *   lpszPath   [O] Path to write
+ *   dwFlags    [I] Reserved
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS.
+ *   Failure: An error code from SHSetValueA.
+ */
+DWORD WINAPI SHRegSetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
+                           LPCSTR lpszPath, DWORD dwFlags)
+{
+  char szBuff[MAX_PATH];
+
+  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub",hKey, debugstr_a(lpszSubKey),
+        debugstr_a(lpszValue), lpszPath, dwFlags);
+
+  lstrcpyA(szBuff, lpszPath);
+
+  /* FIXME: PathUnExpandEnvStringsA(szBuff); */
+
+  return SHSetValueA(hKey,lpszSubKey, lpszValue, REG_SZ, szBuff,
+                     lstrlenA(szBuff));
+}
+
+/*************************************************************************
+ * SHRegSetPathW   [SHLWAPI.@]
+ *
+ * See SHRegSetPathA.
+ */
+DWORD WINAPI SHRegSetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
+                           LPCWSTR lpszPath, DWORD dwFlags)
+{
+  WCHAR szBuff[MAX_PATH];
+
+  FIXME("(hkey=0x%08x,%s,%s,%p,%ld) - semi-stub",hKey, debugstr_w(lpszSubKey),
+        debugstr_w(lpszValue), lpszPath, dwFlags);
+
+  lstrcpyW(szBuff, lpszPath);
+
+  /* FIXME: PathUnExpandEnvStringsW(szBuff); */
+
+  return SHSetValueW(hKey,lpszSubKey, lpszValue, REG_SZ, szBuff,
+                     lstrlenW(szBuff));
 }
 
 /*************************************************************************
  * SHGetValueA   [SHLWAPI.@]
  *
- * Gets a value from the registry
+ * Get a value from the registry.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key containing value to get
+ *   lpszValue  [I] Name of value to get
+ *   pwType     [O] Pointer to the values type
+ *   pvData     [O] Pointer to the values data
+ *   pcbData    [O] Pointer to the values size
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. Output parameters contain the details read.
+ *   Failure: An error code from RegOpenKeyExA or RegQueryValueExA.
  */
-DWORD WINAPI SHGetValueA(
-	HKEY     hkey,
-	LPCSTR   pSubKey,
-	LPCSTR   pValue,
-	LPDWORD  pwType,
-	LPVOID   pvData,
-	LPDWORD  pbData)
+DWORD WINAPI SHGetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
+                         LPDWORD pwType, LPVOID pvData, LPDWORD pcbData)
 {
-	HKEY hSubKey;
-	DWORD res;
+  DWORD dwRet;
+  HKEY hSubKey;
 
-	TRACE("(%s %s)\n", pSubKey, pValue);
+  TRACE("(hkey=0x%08x,%s,%s,%p,%p,%p)\n", hKey, debugstr_a(lpszSubKey),
+        debugstr_a(lpszValue), pwType, pvData, pcbData);
 
-	if((res = RegOpenKeyA(hkey, pSubKey, &hSubKey))) return res;
-	res = RegQueryValueExA(hSubKey, pValue, 0, pwType, pvData, pbData);
-	RegCloseKey( hSubKey );
-
-	return res;
+  dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_QUERY_VALUE, &hSubKey);
+  if (!dwRet)
+  {
+    dwRet = RegQueryValueExA(hSubKey, lpszValue, 0, pwType, pvData, pcbData);
+    RegCloseKey(hSubKey);
+  }
+  return dwRet;
 }
 
 /*************************************************************************
  * SHGetValueW   [SHLWAPI.@]
  *
- * Gets a value from the registry
+ * See SHGetValueA.
  */
-DWORD WINAPI SHGetValueW(
-	HKEY     hkey,
-	LPCWSTR  pSubKey,
-	LPCWSTR  pValue,
-	LPDWORD  pwType,
-	LPVOID   pvData,
-	LPDWORD  pbData)
+DWORD WINAPI SHGetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
+                         LPDWORD pwType, LPVOID pvData, LPDWORD pcbData)
 {
-	HKEY hSubKey;
-	DWORD res;
+  DWORD dwRet;
+  HKEY hSubKey;
 
-	TRACE("(%s %s)\n", debugstr_w(pSubKey), debugstr_w(pValue));
+  TRACE("(hkey=0x%08x,%s,%s,%p,%p,%p)\n", hKey, debugstr_w(lpszSubKey),
+        debugstr_w(lpszValue), pwType, pvData, pcbData);
 
-	if((res = RegOpenKeyW(hkey, pSubKey, &hSubKey))) return res;
-	res = RegQueryValueExW(hSubKey, pValue, 0, pwType, pvData, pbData);
-	RegCloseKey( hSubKey );
-
-	return res;
+  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_QUERY_VALUE, &hSubKey);
+  if (!dwRet)
+  {
+    dwRet = RegQueryValueExW(hSubKey, lpszValue, 0, pwType, pvData, pcbData);
+    RegCloseKey(hSubKey);
+  }
+  return dwRet;
 }
 
 /*************************************************************************
- *      SHSetValueA   [SHLWAPI.@]
- */
-DWORD WINAPI SHSetValueA(
-	HKEY hkey,
-	LPCSTR pszSubKey,
-	LPCSTR pszValue,
-	DWORD dwType,
-	LPCVOID pvData,
-	DWORD cbData)
-{
-    HKEY	subkey;
-    HRESULT	hres;
-
-    hres = RegCreateKeyA(hkey,pszSubKey,&subkey);
-    if (!hres)
-	return hres;
-    hres = RegSetValueExA(subkey,pszValue,0,dwType,pvData,cbData);
-    RegCloseKey(subkey);
-    return hres;
-}
-
-/*************************************************************************
- *      SHSetValueW   [SHLWAPI.@]
- */
-DWORD WINAPI SHSetValueW(
-	HKEY hkey,
-	LPCWSTR pszSubKey,
-	LPCWSTR pszValue,
-	DWORD dwType,
-	LPCVOID pvData,
-	DWORD cbData)
-{
-    HKEY	subkey;
-    HRESULT	hres;
-
-    hres = RegCreateKeyW(hkey,pszSubKey,&subkey);
-    if (!hres)
-	return hres;
-    hres = RegSetValueExW(subkey,pszValue,0,dwType,pvData,cbData);
-    RegCloseKey(subkey);
-    return hres;
-}
-
-/*************************************************************************
- * SHQueryValueExA		[SHLWAPI.@]
+ * SHSetValueA   [SHLWAPI.@]
  *
+ * Set a value in the registry.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key under hKey
+ *   lpszValue  [I] Name of value to set
+ *   dwType     [I] Type of the value
+ *   pvData     [I] Data of the value
+ *   cbData     [I] Size of the value
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. The value is set with the data given.
+ *   Failure: An error code from RegCreateKeyExA or RegSetValueExA
+ *
+ * NOTES
+ *   If the sub key does not exist, it is created before the value is set. If
+ *   The sub key is NULL or an empty string, then the value is added directly
+ *   to hKey instead.
  */
-DWORD WINAPI SHQueryValueExA(
-	HKEY hkey,
-	LPCSTR lpValueName,
-	LPDWORD lpReserved,
-	LPDWORD lpType,
-	LPBYTE lpData,
-	LPDWORD lpcbData)
+DWORD WINAPI SHSetValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
+                         DWORD dwType, LPCVOID pvData, DWORD cbData)
 {
-	TRACE("0x%04x %s %p %p %p %p\n", hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
-	return RegQueryValueExA (hkey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+  DWORD dwRet = ERROR_SUCCESS, dwDummy;
+  HKEY  hSubKey;
+  LPSTR szEmpty = "";
+
+  TRACE("(hkey=0x%08x,%s,%s,%ld,%p,%ld)\n", hKey, debugstr_a(lpszSubKey),
+          debugstr_a(lpszValue), dwType, pvData, cbData);
+
+  if (lpszSubKey && *lpszSubKey)
+    dwRet = RegCreateKeyExA(hKey, lpszSubKey, 0, szEmpty,
+                            0, KEY_SET_VALUE, NULL, &hSubKey, &dwDummy);
+  else
+    hSubKey = hKey;
+  if (!dwRet)
+  {
+    dwRet = RegSetValueExA(hSubKey, lpszValue, 0, dwType, pvData, cbData);
+    if (hSubKey != hKey)
+      RegCloseKey(hSubKey);
+  }
+  return dwRet;
 }
 
+/*************************************************************************
+ * SHSetValueW   [SHLWAPI.@]
+ *
+ * See SHSetValueA.
+ */
+DWORD WINAPI SHSetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
+                         DWORD dwType, LPCVOID pvData, DWORD cbData)
+{
+  DWORD dwRet = ERROR_SUCCESS, dwDummy;
+  HKEY  hSubKey;
+  WCHAR szEmpty[] = { '\0' };
+
+  TRACE("(hkey=0x%08x,%s,%s,%ld,%p,%ld)\n", hKey, debugstr_w(lpszSubKey),
+        debugstr_w(lpszValue), dwType, pvData, cbData);
+
+  if (lpszSubKey && *lpszSubKey)
+    dwRet = RegCreateKeyExW(hKey, lpszSubKey, 0, szEmpty,
+                            0, KEY_SET_VALUE, NULL, &hSubKey, &dwDummy);
+  else
+    hSubKey = hKey;
+  if (!dwRet)
+  {
+    dwRet = RegSetValueExW(hSubKey, lpszValue, 0, dwType, pvData, cbData);
+    if (hSubKey != hKey)
+      RegCloseKey(hSubKey);
+  }
+  return dwRet;
+}
+
+/*************************************************************************
+ * SHQueryInfoKeyA   [SHLWAPI.@]
+ *
+ * Get information about a registry key. See RegQueryInfoKeyA.
+ */
+LONG WINAPI SHQueryInfoKeyA(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
+                            LPDWORD pwValues, LPDWORD pwValueMax)
+{
+  TRACE("(hkey=0x%08x,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
+        pwValues, pwValueMax);
+  return RegQueryInfoKeyA(hKey, NULL, NULL, NULL, pwSubKeys, pwSubKeyMax,
+                          NULL, pwValues, pwValueMax, NULL, NULL, NULL);
+}
+
+/*************************************************************************
+ * SHQueryInfoKeyW   [SHLWAPI.@]
+ *
+ * See SHQueryInfoKeyA
+ */
+LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
+                            LPDWORD pwValues, LPDWORD pwValueMax)
+{
+  TRACE("(hkey=0x%08x,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
+        pwValues, pwValueMax);
+  return RegQueryInfoKeyW(hKey, NULL, NULL, NULL, pwSubKeys, pwSubKeyMax,
+                          NULL, pwValues, pwValueMax, NULL, NULL, NULL);
+}
+
+/*************************************************************************
+ * SHQueryValueExAW
+ *
+ * Internal implementation of SHQueryValueExA/SHQueryValueExW.
+ */
+static DWORD WINAPI SHQueryValueExAW(RegQueryFn pfn,
+                                     HKEY hKey, LPCVOID lpszValue,
+                                     LPDWORD lpReserved, LPDWORD pwType,
+                                     LPBYTE pvData, LPDWORD pcbData)
+{
+  DWORD dwRet, dwType, dwDataLen;
+
+  if (pcbData)
+    dwDataLen = *pcbData;
+
+  dwRet = pfn(hKey, lpszValue, lpReserved, &dwType, pvData, &dwDataLen);
+  if (!dwRet)
+  {
+    if (dwType == REG_EXPAND_SZ)
+    {
+      /* Expand type REG_EXPAND_SZ into REG_SZ */
+      LPSTR szExpand;
+      LPBYTE pData = pvData;
+
+      if (!pData)
+      {
+        /* Create a buffer to hold the data, to get the size */
+        if (!pcbData ||
+            !(pData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pcbData)))
+          return ERROR_OUTOFMEMORY;
+        /* Read the data in to the buffer */
+        if ((dwRet = pfn(hKey, lpszValue, lpReserved, &dwType,
+                         pData, &dwDataLen)))
+          return dwRet;
+      }
+
+      if (!pcbData && pData != pvData)
+      {
+        /* Note: In this case the caller will crash under Win32 */
+        WARN("Invalid pcbData would crash under Win32!");
+        return ERROR_OUTOFMEMORY;
+      }
+
+      szExpand = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pcbData);
+      if (!szExpand)
+      {
+        if (pData != pvData)
+          HeapFree(GetProcessHeap(), 0, pData);
+        return ERROR_OUTOFMEMORY;
+      }
+      if ((ExpandEnvironmentStringsA(pvData, szExpand, *pcbData) <= 0))
+      {
+        dwDataLen = strlen(szExpand) + 1;
+        strncpy(pvData, szExpand, *pcbData);
+      }
+      else
+      {
+        if (pData != pvData)
+          HeapFree(GetProcessHeap(), 0, pData);
+        HeapFree(GetProcessHeap(), 0, szExpand);
+        return GetLastError();
+      }
+      if (pData != pvData)
+        HeapFree(GetProcessHeap(), 0, pData);
+      HeapFree(GetProcessHeap(), 0, szExpand);
+      dwType = REG_SZ;
+    }
+    if (dwType == REG_SZ && pvData && pcbData && dwDataLen >= *pcbData)
+    {
+      /* String type too long: truncate it */
+      pvData[*pcbData] = '\0';
+    }
+  }
+  /* Update the type and data size if the caller wanted them */
+  if (pwType)
+    *pwType = dwType;
+  if (pcbData)
+    *pcbData  = dwDataLen;
+  return dwRet;
+}
+
+/*************************************************************************
+ * SHQueryValueExA   [SHLWAPI.@]
+ *
+ * Get a value from the registry, expanding environment variable strings.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszValue  [I] Name of value to delete
+ *   lpReserved [O] Reserved for future use; must be NULL
+ *   pwType     [O] Optional pointer updated with the values type
+ *   pvData     [O] Optional pointer updated with the values data
+ *   pcbData    [O] Optional pointer updated with the values size
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. Any non-NULL output parameters are updated with
+ *            information about the value.
+ *   Failure: ERROR_OUTOFMEMORY if memory allocation fails, or the type of the
+ *            data is REG_EXPAND_SZ and pcbData is NULL. Otherwise an error
+ *            code from RegQueryValueExA or ExpandEnvironmentStringsA.
+ *
+ * NOTES
+ *   Either pwType, pvData or pcbData may be NULL if the caller doesn't want
+ *   the type, data or size information for the value.
+ *
+ *   If the type of the data is REG_EXPAND_SZ, it is expanded to REG_SZ. The
+ *   value returned will be truncated if it is of type REG_SZ and bigger than
+ *   the buffer given to store it.
+ */
+DWORD WINAPI SHQueryValueExA(HKEY hKey, LPCSTR lpszValue,
+                             LPDWORD lpReserved, LPDWORD pwType,
+                             LPVOID pvData, LPDWORD pcbData)
+{
+  TRACE("(hkey=0x%08x,%s,%p,%p,%p,%p=%ld)\n", hKey, debugstr_a(lpszValue),
+        lpReserved, pwType, pvData, pcbData, pcbData ? *pcbData : 0);
+
+  return SHQueryValueExAW((RegQueryFn)RegQueryValueExA, hKey, lpszValue,
+                          lpReserved, pwType, pvData, pcbData);
+}
 
 /*************************************************************************
  * SHQueryValueExW   [SHLWAPI.@]
  *
- * FIXME 
- *  if the datatype REG_EXPAND_SZ then expand the string and change
- *  *pdwType to REG_SZ.
+ * See SHQueryValueExA.
  */
-DWORD WINAPI SHQueryValueExW (
-	HKEY hkey,
-	LPCWSTR pszValue,
-	LPDWORD pdwReserved,
-	LPDWORD pdwType,
-	LPVOID pvData,
-	LPDWORD pcbData)
+DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
+                             LPDWORD lpReserved, LPDWORD pwType,
+                             LPVOID pvData, LPDWORD pcbData)
 {
-	WARN("0x%04x %s %p %p %p %p semi-stub\n",
-             hkey, debugstr_w(pszValue), pdwReserved, pdwType, pvData, pcbData);
-	return RegQueryValueExW ( hkey, pszValue, pdwReserved, pdwType, pvData, pcbData);
+  TRACE("(hkey=0x%08x,%s,%p,%p,%p,%p=%ld)\n", hKey, debugstr_w(lpszValue),
+        lpReserved, pwType, pvData, pcbData, pcbData ? *pcbData : 0);
+
+  return SHQueryValueExAW((RegQueryFn)RegQueryValueExW, hKey, lpszValue,
+                          lpReserved, pwType, pvData, pcbData);
 }
 
 /*************************************************************************
  * SHDeleteKeyA   [SHLWAPI.@]
  *
- * It appears this function is made available to account for the differences
- * between the Win9x and WinNT/2k RegDeleteKeyA functions.
+ * Delete a registry key and any sub keys/values present
  *
- * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
- * WinNt/2k will only delete the key if empty.
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key to delete
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. The key is deleted.
+ *   Failure: An error code from RegOpenKeyExA, RegQueryInfoKeyA,
+ *          RegEnumKeyExA or RegDeleteKeyA.
  */
-DWORD WINAPI SHDeleteKeyA(
-	HKEY hKey,
-	LPCSTR lpszSubKey)
+DWORD WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey)
 {
-    DWORD r, dwKeyCount, dwSize, i, dwMaxSubkeyLen;
-    HKEY hSubKey;
-    LPSTR lpszName;
+  DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
+  CHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+  HKEY hSubKey = 0;
 
-    TRACE("hkey=0x%08x, %s\n", hKey, debugstr_a(lpszSubKey));
+  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_a(lpszSubKey));
 
-    hSubKey = 0;
-    r = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
-    if(r != ERROR_SUCCESS)
-        return r;
-
-    /* find how many subkeys there are */
-    dwKeyCount = 0;
-    dwMaxSubkeyLen = 0;
-    r = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, &dwKeyCount,
-                    &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
-    if(r != ERROR_SUCCESS)
+  dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+  if(!dwRet)
+  {
+    /* Find how many subkeys there are */
+    dwRet = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+                             &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
+    if(!dwRet)
     {
-        RegCloseKey(hSubKey);
-        return r;
-    }
+      dwMaxSubkeyLen++;
+      if (dwMaxSubkeyLen > sizeof(szNameBuf))
+        /* Name too big: alloc a buffer for it */
+        lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(CHAR));
 
-    /* alloc memory for the longest string terminating 0 */
-    dwMaxSubkeyLen++;
-    lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(CHAR));
-    if(!lpszName)
-    {
-        RegCloseKey(hSubKey);
-        return ERROR_NOT_ENOUGH_MEMORY;
+      if(!lpszName)
+        dwRet = ERROR_NOT_ENOUGH_MEMORY;
+      else
+      {
+        /* Recursively delete all the subkeys */
+        for(i = 0; i < dwKeyCount && !dwRet; i++)
+        {
+          dwSize = dwMaxSubkeyLen;
+          dwRet = RegEnumKeyExA(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
+          if(!dwRet)
+            dwRet = SHDeleteKeyA(hSubKey, lpszName);
+        }
+        if (lpszName != szNameBuf)
+          HeapFree(GetProcessHeap(), 0, lpszName); /* Free buffer if allocated */
+      }
     }
-
-    /* recursively delete all the subkeys */
-    for(i=0; i<dwKeyCount; i++)
-    {
-        dwSize = dwMaxSubkeyLen;
-        r = RegEnumKeyExA(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
-        if(r != ERROR_SUCCESS)
-            break;
-        r = SHDeleteKeyA(hSubKey, lpszName);
-        if(r != ERROR_SUCCESS)
-            break;
-    }
-
-    HeapFree(GetProcessHeap(), 0, lpszName);
 
     RegCloseKey(hSubKey);
-
-    if(r == ERROR_SUCCESS)
-        r = RegDeleteKeyA(hKey, lpszSubKey);
-
-    return r;
+    if(!dwRet)
+      dwRet = RegDeleteKeyA(hKey, lpszSubKey);
+  }
+  return dwRet;
 }
 
 /*************************************************************************
  * SHDeleteKeyW   [SHLWAPI.@]
  *
- * It appears this function is made available to account for the differences
- * between the Win9x and WinNT/2k RegDeleteKeyA functions.
- *
- * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
- * WinNt/2k will only delete the key if empty.
+ * See SHDeleteKeyA.
  */
-DWORD WINAPI SHDeleteKeyW(
-	HKEY hkey,
-	LPCWSTR pszSubKey)
+DWORD WINAPI SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
 {
-	FIXME("hkey=0x%08x, %s\n", hkey, debugstr_w(pszSubKey));
-	return 0;
-}
+  DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
+  WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+  HKEY hSubKey = 0;
 
-/*************************************************************************
- * SHDeleteValueA   [SHLWAPI.@]
- *
- * Function opens the key, get/set/delete the value, then close the key.
- */
-DWORD WINAPI SHDeleteValueA(HKEY hkey, LPCSTR pszSubKey, LPCSTR pszValue) {
-    HKEY	subkey;
-    DWORD	hres;
+  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_w(lpszSubKey));
 
-    hres = RegOpenKeyA(hkey,pszSubKey,&subkey);
-    if (hres)
-	return hres;
-    hres = RegDeleteValueA(subkey,pszValue);
-    RegCloseKey(subkey);
-    return hres;
-}
+  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+  if(!dwRet)
+  {
+    /* Find how many subkeys there are */
+    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+                             &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
+    if(!dwRet)
+    {
+      dwMaxSubkeyLen++;
+      if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
+        /* Name too big: alloc a buffer for it */
+        lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(WCHAR));
 
-/*************************************************************************
- * SHDeleteValueW   [SHLWAPI.@]
- *
- * Function opens the key, get/set/delete the value, then close the key.
- */
-DWORD WINAPI SHDeleteValueW(HKEY hkey, LPCWSTR pszSubKey, LPCWSTR pszValue) {
-    HKEY	subkey;
-    DWORD	hres;
+      if(!lpszName)
+        dwRet = ERROR_NOT_ENOUGH_MEMORY;
+      else
+      {
+        /* Recursively delete all the subkeys */
+        for(i = 0; i < dwKeyCount && !dwRet; i++)
+        {
+          dwSize = dwMaxSubkeyLen;
+          dwRet = RegEnumKeyExW(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
+          if(!dwRet)
+            dwRet = SHDeleteKeyW(hSubKey, lpszName);
+        }
 
-    hres = RegOpenKeyW(hkey,pszSubKey,&subkey);
-    if (hres)
-	return hres;
-    hres = RegDeleteValueW(subkey,pszValue);
-    RegCloseKey(subkey);
-    return hres;
+        if (lpszName != szNameBuf)
+          HeapFree(GetProcessHeap(), 0, lpszName); /* Free buffer if allocated */
+      }
+    }
+
+    RegCloseKey(hSubKey);
+    if(!dwRet)
+      dwRet = RegDeleteKeyW(hKey, lpszSubKey);
+  }
+  return dwRet;
 }
 
 /*************************************************************************
  * SHDeleteEmptyKeyA   [SHLWAPI.@]
  *
- * It appears this function is made available to account for the differences
- * between the Win9x and WinNT/2k RegDeleteKeyA functions.
+ * Delete a registry key with no sub keys.
  *
- * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
- * WinNt/2k will only delete the key if empty.
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key to delete
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. The key is deleted.
+ *   Failure: If the key is not empty, returns ERROR_KEY_HAS_CHILDREN. Otherwise
+ *          returns an error code from RegOpenKeyExA, RegQueryInfoKeyA or
+ *          RegDeleteKeyA.
  */
 DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey)
 {
-    DWORD r, dwKeyCount;
-    HKEY hSubKey;
+  DWORD dwRet, dwKeyCount = 0;
+  HKEY hSubKey = 0;
 
-    TRACE("hkey=0x%08x, %s\n", hKey, debugstr_a(lpszSubKey));
+  TRACE("(hkey=0x%08x,%s)\n", hKey, debugstr_a(lpszSubKey));
 
-    hSubKey = 0;
-    r = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
-    if(r != ERROR_SUCCESS)
-        return r;
-
-    dwKeyCount = 0;
-    r = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, &dwKeyCount,
-                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    if(r != ERROR_SUCCESS)
-        return r;
-
+  dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+  if(!dwRet)
+  {
+    dwRet = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     RegCloseKey(hSubKey);
-
-    if(dwKeyCount)
-        return ERROR_KEY_HAS_CHILDREN;
-
-    r = RegDeleteKeyA(hKey, lpszSubKey);
-
-    return r;
+    if(!dwRet)
+    {
+      if (!dwKeyCount)
+        dwRet = RegDeleteKeyA(hKey, lpszSubKey);
+      else
+        dwRet = ERROR_KEY_HAS_CHILDREN;
+    }
+  }
+  return dwRet;
 }
 
 /*************************************************************************
  * SHDeleteEmptyKeyW   [SHLWAPI.@]
  *
- * It appears this function is made available to account for the differences
- * between the Win9x and WinNT/2k RegDeleteKeyA functions.
- *
- * According to docs, Win9x RegDeleteKeyA will delete all subkeys, whereas
- * WinNt/2k will only delete the key if empty.
+ * See SHDeleteEmptyKeyA.
  */
 DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey)
 {
-    FIXME("hkey=0x%08x, %s\n", hKey, debugstr_w(lpszSubKey));
-    return 0;
+  DWORD dwRet, dwKeyCount = 0;
+  HKEY hSubKey = 0;
+
+  TRACE("(hkey=0x%08x, %s)\n", hKey, debugstr_w(lpszSubKey));
+
+  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+  if(!dwRet)
+  {
+    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    RegCloseKey(hSubKey);
+    if(!dwRet)
+    {
+      if (!dwKeyCount)
+        dwRet = RegDeleteKeyW(hKey, lpszSubKey);
+      else
+        dwRet = ERROR_KEY_HAS_CHILDREN;
+    }
+  }
+  return dwRet;
+}
+
+/*************************************************************************
+ * SHDeleteOrphanKeyA   [SHLWAPI.@]
+ *
+ * Delete a registry key with no sub keys or values.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key to possibly delete
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. The key has been deleted if it was an orphan.
+ *   Failure: An error from RegOpenKeyExA, RegQueryValueExA, or RegDeleteKeyA.
+ */
+DWORD WINAPI SHDeleteOrphanKeyA(HKEY hKey, LPCSTR lpszSubKey)
+{
+  HKEY hSubKey;
+  DWORD dwKeyCount = 0, dwValueCount = 0, dwRet;
+
+  TRACE("(hkey=0x%08x,%s)", hKey, debugstr_a(lpszSubKey));
+
+  dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+
+  if(!dwRet)
+  {
+    /* Get subkey and value count */
+    dwRet = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+                             NULL, NULL, &dwValueCount, NULL, NULL, NULL, NULL);
+
+    if(!dwRet && !dwKeyCount && !dwValueCount)
+    {
+      dwRet = RegDeleteKeyA(hKey, lpszSubKey);
+    }
+    RegCloseKey(hSubKey);
+  }
+  return dwRet;
+}
+
+/*************************************************************************
+ * SHDeleteOrphanKeyW   [SHLWAPI.@]
+ *
+ * See SHDeleteOrphanKeyA.
+ */
+DWORD WINAPI SHDeleteOrphanKeyW(HKEY hKey, LPCWSTR lpszSubKey)
+{
+  HKEY hSubKey;
+  DWORD dwKeyCount = 0, dwValueCount = 0, dwRet;
+
+  TRACE("(hkey=0x%08x,%s)", hKey, debugstr_w(lpszSubKey));
+
+  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+
+  if(!dwRet)
+  {
+    /* Get subkey and value count */
+    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+                             NULL, NULL, &dwValueCount, NULL, NULL, NULL, NULL);
+
+    if(!dwRet && !dwKeyCount && !dwValueCount)
+    {
+      dwRet = RegDeleteKeyW(hKey, lpszSubKey);
+    }
+    RegCloseKey(hSubKey);
+  }
+  return dwRet;
+}
+
+/*************************************************************************
+ * SHDeleteValueA   [SHLWAPI.@]
+ *
+ * Delete a value from the registry.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key containing value to delete
+ *   lpszValue  [I] Name of value to delete
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. The value is deleted.
+ *   Failure: An error code from RegOpenKeyExA or RegDeleteValueA.
+ */
+DWORD WINAPI SHDeleteValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue)
+{
+  DWORD dwRet;
+  HKEY hSubKey;
+
+  TRACE("(hkey=0x%08x,%s,%s)\n", hKey, debugstr_a(lpszSubKey), debugstr_a(lpszValue));
+
+  dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_SET_VALUE, &hSubKey);
+  if (!dwRet)
+  {
+    dwRet = RegDeleteValueA(hSubKey, lpszValue);
+    RegCloseKey(hSubKey);
+  }
+  return dwRet;
+}
+
+/*************************************************************************
+ * SHDeleteValueW   [SHLWAPI.@]
+ *
+ * See SHDeleteValueA.
+ */
+DWORD WINAPI SHDeleteValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue)
+{
+  DWORD dwRet;
+  HKEY hSubKey;
+
+  TRACE("(hkey=0x%08x,%s,%s)\n", hKey, debugstr_w(lpszSubKey), debugstr_w(lpszValue));
+
+  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_SET_VALUE, &hSubKey);
+  if (!dwRet)
+  {
+    dwRet = RegDeleteValueW(hSubKey, lpszValue);
+    RegCloseKey(hSubKey);
+  }
+  return dwRet;
+}
+
+/*************************************************************************
+ * SHEnumKeyExA   [SHLWAPI.@]
+ *
+ * Enumerate sub keys in a registry key.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   dwIndex    [I] Index of key to enumerate
+ *   lpszSubKey [O] Pointer updated with the subkey name
+ *   pwLen      [O] Pointer updated with the subkey length
+ *
+ * RETURN
+ *   Success: ERROR_SUCCESS. lpszSubKey and pwLen are updated.
+ *   Failure: An error code from RegEnumKeyExA.
+ */
+LONG WINAPI SHEnumKeyExA(HKEY hKey, DWORD dwIndex, LPSTR lpszSubKey,
+                         LPDWORD pwLen)
+{
+  TRACE("(hkey=0x%08x,%ld,%s,%p)\n", hKey, dwIndex, debugstr_a(lpszSubKey), pwLen);
+
+  return RegEnumKeyExA(hKey, dwIndex, lpszSubKey, pwLen, NULL, NULL, NULL, NULL);
+}
+
+/*************************************************************************
+ * SHEnumKeyExW   [SHLWAPI.@]
+ *
+ * See SHEnumKeyExA.
+ */
+LONG WINAPI SHEnumKeyExW(HKEY hKey, DWORD dwIndex, LPWSTR lpszSubKey,
+                         LPDWORD pwLen)
+{
+  TRACE("(hkey=0x%08x,%ld,%s,%p)\n", hKey, dwIndex, debugstr_w(lpszSubKey), pwLen);
+
+  return RegEnumKeyExW(hKey, dwIndex, lpszSubKey, pwLen, NULL, NULL, NULL, NULL);
+}
+
+/*************************************************************************
+ * SHEnumValueA   [SHLWAPI.@]
+ *
+ * Enumerate values in a registry key.
+ *
+ * PARAMS
+ *   hKey      [I] Handle to registry key
+ *   dwIndex   [I] Index of key to enumerate
+ *   lpszValue [O] Pointer updated with the values name
+ *   pwLen     [O] Pointer updated with the values length
+ *   pwType    [O] Pointer updated with the values type
+ *   pvData    [O] Pointer updated with the values data
+ *   pcbData   [O] Pointer updated with the values size
+ *
+ * RETURNS
+ *   Success: ERROR_SUCCESS. Output parameters are updated.
+ *   Failure: An error code from RegEnumValueExA.
+ */
+LONG WINAPI SHEnumValueA(HKEY hKey, DWORD dwIndex, LPSTR lpszValue,
+                         LPDWORD pwLen, LPDWORD pwType,
+                         LPVOID pvData, LPDWORD pcbData)
+{
+  TRACE("(hkey=0x%08x,%ld,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
+        debugstr_a(lpszValue), pwLen, pwType, pvData, pcbData);
+
+ return RegEnumValueA(hKey, dwIndex, lpszValue, pwLen, NULL,
+                      pwType, pvData, pcbData);
+}
+
+/*************************************************************************
+ * SHEnumValueW   [SHLWAPI.@]
+ *
+ * See SHEnumValueA.
+ */
+LONG WINAPI SHEnumValueW(HKEY hKey, DWORD dwIndex, LPWSTR lpszValue,
+                         LPDWORD pwLen, LPDWORD pwType,
+                         LPVOID pvData, LPDWORD pcbData)
+{
+  TRACE("(hkey=0x%08x,%ld,%s,%p,%p,%p,%p)\n", hKey, dwIndex,
+        debugstr_w(lpszValue), pwLen, pwType, pvData, pcbData);
+
+  return RegEnumValueW(hKey, dwIndex, lpszValue, pwLen, NULL,
+                       pwType, pvData, pcbData);
 }
 
 /*************************************************************************
@@ -1004,13 +1472,30 @@ DWORD WINAPI SHLWAPI_206(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
 /*************************************************************************
  * @   [SHLWAPI.320]
  *
+ * Set a content type in the registry.
+ *
+ * PARAMS
+ *   hKey       [I] Handle to registry key
+ *   lpszSubKey [I] Name of sub key under hKey
+ *   lpszValue  [I] Value to set
+ *
+ * RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
  */
 BOOL WINAPI SHLWAPI_320(LPCSTR lpszSubKey, LPCSTR lpszValue)
 {
-  DWORD dwLen = strlen(lpszValue);
-  HRESULT ret = SHSetValueA(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeA,
-                            REG_SZ, lpszValue, dwLen);
-  return ret ? FALSE : TRUE;
+  DWORD dwRet;
+
+  if (!lpszValue)
+  {
+    WARN("Invalid lpszValue would crash under Win32!");
+    return FALSE;
+  }
+
+  dwRet = SHSetValueA(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeA,
+                      REG_SZ, lpszValue, strlen(lpszValue));
+  return dwRet ? FALSE : TRUE;
 }
 
 /*************************************************************************
@@ -1020,15 +1505,30 @@ BOOL WINAPI SHLWAPI_320(LPCSTR lpszSubKey, LPCSTR lpszValue)
  */
 BOOL WINAPI SHLWAPI_321(LPCWSTR lpszSubKey, LPCWSTR lpszValue)
 {
-  DWORD dwLen = strlenW(lpszValue);
-  HRESULT ret = SHSetValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW,
-                            REG_SZ, lpszValue, dwLen);
-  return ret ? FALSE : TRUE;
+  DWORD dwRet;
+
+  if (!lpszValue)
+  {
+    WARN("Invalid lpszValue would crash under Win32!");
+    return FALSE;
+  }
+
+  dwRet = SHSetValueW(HKEY_CLASSES_ROOT, lpszSubKey, lpszContentTypeW,
+                      REG_SZ, lpszValue, strlenW(lpszValue));
+  return dwRet ? FALSE : TRUE;
 }
 
 /*************************************************************************
  * @   [SHLWAPI.322]
  *
+ * Delete a content type from the registry.
+ *
+ * PARAMS
+ *   lpszSubKey [I] Name of sub key
+ *
+ * RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
  */
 BOOL WINAPI SHLWAPI_322(LPCSTR lpszSubKey)
 {

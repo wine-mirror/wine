@@ -565,14 +565,14 @@ debug_channels (shell)
 @ stdcall SHDeleteEmptyKeyW(long ptr) SHDeleteEmptyKeyW
 @ stdcall SHDeleteKeyA(long str) SHDeleteKeyA
 @ stdcall SHDeleteKeyW(long wstr) SHDeleteKeyW
-@ stub    SHDeleteOrphanKeyA
-@ stub    SHDeleteOrphanKeyW
+@ stdcall SHDeleteOrphanKeyA(long str) SHDeleteOrphanKeyA
+@ stdcall SHDeleteOrphanKeyW(long wstr) SHDeleteOrphanKeyW
 @ stdcall SHDeleteValueA(long  str  str) SHDeleteValueA
 @ stdcall SHDeleteValueW(long wstr wstr) SHDeleteValueW
-@ stub    SHEnumKeyExA
-@ stub    SHEnumKeyExW
-@ stub    SHEnumValueA
-@ stub    SHEnumValueW
+@ stdcall SHEnumKeyExA(long long str ptr) SHEnumKeyExA
+@ stdcall SHEnumKeyExW(long long wstr ptr) SHEnumKeyExW
+@ stdcall SHEnumValueA(long long str ptr ptr ptr ptr) SHEnumValueA
+@ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr) SHEnumValueW
 @ stdcall SHGetInverseCMAP ( ptr long ) SHGetInverseCMAP
 @ stdcall SHGetValueA ( long str str ptr ptr ptr ) SHGetValueA
 @ stdcall SHGetValueW ( long wstr wstr ptr ptr ptr ) SHGetValueW
@@ -581,8 +581,8 @@ debug_channels (shell)
 @ stdcall SHOpenRegStreamW(long wstr str long)SHOpenRegStreamW
 @ stdcall SHOpenRegStream2A(long str str long)SHOpenRegStreamA
 @ stdcall SHOpenRegStream2W(long wstr str long)SHOpenRegStreamW
-@ stub    SHQueryInfoKeyA
-@ stub    SHQueryInfoKeyW
+@ stdcall SHQueryInfoKeyA(long ptr ptr ptr ptr) SHQueryInfoKeyA
+@ stdcall SHQueryInfoKeyW(long ptr ptr ptr ptr) SHQueryInfoKeyW
 @ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) SHQueryValueExA
 @ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr) SHQueryValueExW
 @ stdcall SHRegCloseUSKey(ptr) SHRegCloseUSKey
@@ -724,8 +724,8 @@ debug_channels (shell)
 @ stub    SHCreateThread
 @ stub    SHGetThreadRef
 @ stdcall SHRegDuplicateHKey (long) SHRegDuplicateHKey
-@ stub    SHRegSetPathA
-@ stub    SHRegSetPathW
+@ stdcall SHRegSetPathA(long str str str long) SHRegSetPathA
+@ stdcall SHRegSetPathW(long wstr wstr wstr long) SHRegSetPathW
 @ stub    SHRegisterValidateTemplate
 @ stub    SHSetThreadRef
 @ stub    SHSkipJunction
