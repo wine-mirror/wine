@@ -426,6 +426,7 @@ static BOOL UPDOWN_SetBuddy (HWND hwnd, HWND hwndBud)
   DWORD        dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
   RECT         budRect;  /* new coord for the buddy */
   int          x,width;  /* new x position and width for the up-down */
+  WNDPROC baseWndProc, currWndProc;
  	  
   /* Is it a valid bud? */
   if(!IsWindow(hwndBud))
@@ -450,19 +451,17 @@ static BOOL UPDOWN_SetBuddy (HWND hwnd, HWND hwndBud)
        when we reset the upDown ctrl buddy to another buddy because it is not 
        good to break the window proc chain. */
 
-    /* keep buddy supperclass wndproc in prop instead of in ptr struct
-       to prevent accessing freed memory */
-    SetPropA(
-      hwndBud, 
-      BUDDY_SUPERCLASS_WNDPROC,
-      (LONG)GetWindowLongA(hwndBud, GWL_WNDPROC) );  
-
-    /* Assign the buddy wndproc to local wndproc in order to override 
-       keyboard's up and down arrow */
-    SetWindowLongA(
-      hwndBud, 
-      GWL_WNDPROC, 
-      (LONG)UPDOWN_Buddy_SubclassProc);
+	currWndProc = (WNDPROC) GetWindowLongA(hwndBud, GWL_WNDPROC);
+	if (currWndProc != UPDOWN_Buddy_SubclassProc) 
+	{
+		// replace the buddy's WndProc with ours
+		baseWndProc = (WNDPROC)SetWindowLongA(hwndBud, GWL_WNDPROC,
+			      (LPARAM)UPDOWN_Buddy_SubclassProc); 
+		// and save the base class' WndProc 
+ 		SetPropA(hwndBud, BUDDY_SUPERCLASS_WNDPROC, (HANDLE)baseWndProc);
+	}
+	// else
+	// its already been subclassed, don't overwrite BUDDY_SUPERCLASS_WNDPROC
   }
 
   /* do we need to do any adjustments? */
@@ -951,7 +950,7 @@ UPDOWN_Buddy_SubclassProc (
   WPARAM wParam, 
   LPARAM lParam)
 {
-  LONG superClassWndProc = GetPropA(hwnd, BUDDY_SUPERCLASS_WNDPROC);
+  WNDPROC superClassWndProc = (WNDPROC)GetPropA(hwnd, BUDDY_SUPERCLASS_WNDPROC);
   TRACE("hwnd=%04x, wndProc=%d, uMsg=%04x, wParam=%d, lParam=%d\n", 
 	 hwnd, (INT)superClassWndProc, uMsg, wParam, (UINT)lParam);
 
@@ -980,12 +979,8 @@ UPDOWN_Buddy_SubclassProc (
       }
       /* else Fall Through */
     }
-
-    default:
-      return CallWindowProcA( (WNDPROC)superClassWndProc, hwnd, uMsg, wParam, lParam);
   }
-
-  return 0;
+  return CallWindowProcA( superClassWndProc, hwnd, uMsg, wParam, lParam);
 }
 
 /***********************************************************************
