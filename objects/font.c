@@ -860,8 +860,11 @@ INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
     GetTextFaceW( hdc, res, nameW );
 
     if (name)
-        res = WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, count,
-				   NULL, NULL);
+    {
+        if (count && !WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, count, NULL, NULL))
+            name[count-1] = 0;
+        res = strlen(name);
+    }
     else
         res = WideCharToMultiByte( CP_ACP, 0, nameW, -1, NULL, 0, NULL, NULL);
     HeapFree( GetProcessHeap(), 0, nameW );
