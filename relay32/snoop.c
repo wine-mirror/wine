@@ -214,7 +214,8 @@ SNOOP_PrintArg(DWORD x) {
 
 	if (	!HIWORD(x)					||
 		!VirtualQuery((LPVOID)x,&mbi,sizeof(mbi))	||
-		!mbi.Type
+		!mbi.Type					||
+		(mbi.Protect == PAGE_NOACCESS)
 	) {
 		sprintf(buf,"%08lx",x);
 		return buf;
