@@ -284,6 +284,11 @@ static inline void EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es)
 static inline void EDIT_WM_Clear(WND *wnd, EDITSTATE *es)
 {
 	EDIT_EM_ReplaceSel(wnd, es, TRUE, "");
+
+	if (es->flags & EF_UPDATE) {
+		es->flags &= ~EF_UPDATE;
+		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+	}
 }
 
 
@@ -533,6 +538,10 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 	case EM_REPLACESEL:
 		DPRINTF_EDIT_MSG32("EM_REPLACESEL");
 		EDIT_EM_ReplaceSel(wnd, es, (BOOL)wParam, (LPCSTR)lParam);
+		if (es->flags & EF_UPDATE) {
+			es->flags &= ~EF_UPDATE;
+			EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+		}
 		result = 1;
 		break;
 
@@ -2914,6 +2923,11 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 	TRACE("after UNDO:insertion length = %d, deletion buffer = %s\n",
 			es->undo_insert_count, es->undo_text);
 
+	if (es->flags & EF_UPDATE) {
+		es->flags &= ~EF_UPDATE;
+		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+	}
+
 	return TRUE;
 }
 
@@ -2936,13 +2950,24 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 			if (es->style & ES_READONLY) {
 				EDIT_MoveHome(wnd, es, FALSE);
 				EDIT_MoveDown_ML(wnd, es, FALSE);
-			} else
+			} else {
 				EDIT_EM_ReplaceSel(wnd, es, TRUE, "\r\n");
+				if (es->flags & EF_UPDATE) {
+					es->flags &= ~EF_UPDATE;
+					EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+				}
+			}
 		}
 		break;
 	case '\t':
 		if ((es->style & ES_MULTILINE) && !(es->style & ES_READONLY))
+		{
 			EDIT_EM_ReplaceSel(wnd, es, TRUE, "\t");
+			if (es->flags & EF_UPDATE) {
+				es->flags &= ~EF_UPDATE;
+				EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+			}
+		}
 		break;
 	case VK_BACK:
 		if (!(es->style & ES_READONLY) && !control) {
@@ -2972,6 +2997,10 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
  			str[0] = c;
  			str[1] = '\0';
  			EDIT_EM_ReplaceSel(wnd, es, TRUE, str);
+			if (es->flags & EF_UPDATE) {
+				es->flags &= ~EF_UPDATE;
+				EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+			}
  		}
 		break;
 	}
@@ -3109,6 +3138,10 @@ static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCREATESTRUCTA cs)
             */
 	   es->selection_start = es->selection_end = 0;
 	   EDIT_EM_ScrollCaret(wnd, es);
+	   if (es->flags & EF_UPDATE) {
+		es->flags &= ~EF_UPDATE;
+		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+	   }
        }
        return 0;
 }
@@ -3824,11 +3857,6 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 		si.nPos		= es->x_offset;
 		SetScrollInfo(wnd->hwndSelf, SB_HORZ, &si, TRUE);
 	}
-
-	if (es->flags & EF_UPDATE) {
-		es->flags &= ~EF_UPDATE;
-		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
-	}
 }
 
 
@@ -3847,6 +3875,11 @@ static void EDIT_WM_Paste(WND *wnd, EDITSTATE *es)
 		src = (LPSTR)GlobalLock(hsrc);
 		EDIT_EM_ReplaceSel(wnd, es, TRUE, src);
 		GlobalUnlock(hsrc);
+
+		if (es->flags & EF_UPDATE) {
+			es->flags &= ~EF_UPDATE;
+			EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+		}
 	}
 	CloseClipboard();
 }
@@ -3951,8 +3984,10 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 	EDIT_EM_SetSel(wnd, es, 0, 0, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
 
-	if (es->flags & EF_UPDATE)
-		EDIT_NOTIFY_PARENT(wnd, EN_UPDATE, "EN_UPDATE");
+	if (es->flags & EF_UPDATE) {
+		es->flags &= ~EF_UPDATE;
+		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
+	}
 }
 
 
