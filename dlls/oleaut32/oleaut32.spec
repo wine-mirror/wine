@@ -133,7 +133,7 @@ import ole32.dll
 149 stdcall SysStringByteLen(ptr) SysStringByteLen
 150 stdcall SysAllocStringByteLen(ptr long) SysAllocStringByteLen
 160 stub CreateTypeLib
-161 stdcall LoadTypeLib (ptr ptr) LoadTypeLib
+161 stdcall LoadTypeLib (wstr ptr) LoadTypeLib
 162 stdcall LoadRegTypeLib (ptr long long long ptr) LoadRegTypeLib
 163 stdcall RegisterTypeLib(ptr str str) RegisterTypeLib
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr) QueryPathOfRegTypeLib
