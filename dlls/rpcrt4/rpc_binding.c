@@ -136,9 +136,13 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
 
   EnterCriticalSection(&conn_cache_cs);
   PrevConnection = conn_cache;
-  while (PrevConnection && PrevConnection->Next != Connection)
-    PrevConnection = PrevConnection->Next;
-  if (PrevConnection) PrevConnection->Next = Connection->Next;
+  if (PrevConnection == Connection) {
+    conn_cache = Connection->Next;
+  } else {
+    while (PrevConnection && PrevConnection->Next != Connection)
+      PrevConnection = PrevConnection->Next;
+    if (PrevConnection) PrevConnection->Next = Connection->Next;
+  }
   LeaveCriticalSection(&conn_cache_cs);
 
   RPCRT4_CloseConnection(Connection);
