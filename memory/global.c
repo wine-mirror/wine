@@ -43,6 +43,7 @@ typedef struct
 #define GA_DGROUP       0x04
 #define GA_DISCARDABLE  0x08
 #define GA_IPCSHARE     0x10  /* same as GMEM_DDESHARE */
+#define GA_DOSMEM       0x20
 
   /* Arena array */
 static GLOBALARENA *pGlobalArena = NULL;
@@ -310,8 +311,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     TRACE("oldsize %08lx\n",oldsize);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
-    if (((char *)ptr >= DOSMEM_MemoryBase()) &&
-        ((char *)ptr <= DOSMEM_MemoryBase() + 0x100000))
+    if (pArena->flags & GA_DOSMEM)
         ptr = DOSMEM_ResizeBlock(ptr, size, NULL);
     else
         ptr = HeapReAlloc( GetProcessHeap(), 0, ptr, size );
@@ -681,9 +681,12 @@ DWORD WINAPI GlobalDOSAlloc16(
    {
        HMODULE16 hModule = GetModuleHandle16("KERNEL");
        WORD	 wSelector;
+       GLOBALARENA *pArena;
    
        wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, 
 				      hModule, 0, 0, 0 );
+       pArena = GET_ARENA_PTR(wSelector);
+       pArena->flags |= GA_DOSMEM;
        return MAKELONG(wSelector,uParagraph);
    }
    return 0;
@@ -904,6 +907,7 @@ BOOL16 WINAPI GlobalEntryHandle16( GLOBALENTRY *pGlobal, HGLOBAL16 hItem )
 BOOL16 WINAPI GlobalEntryModule16( GLOBALENTRY *pGlobal, HMODULE16 hModule,
                                  WORD wSeg )
 {
+    FIXME("(%p, 0x%04x, 0x%04x), stub.\n", pGlobal, hModule, wSeg);
     return FALSE;
 }
 
@@ -1132,10 +1136,6 @@ BOOL WINAPI GlobalUnlock(
 /***********************************************************************
  *           GlobalHandle   (KERNEL32.325)
  * Returns the handle associated with the specified pointer.
- *
- * NOTES
- *	Since there in only one goto, can it be removed and the return
- *	be put 'inline'?
  *
  * RETURNS
  *	Handle: Success
