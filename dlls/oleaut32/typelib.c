@@ -76,7 +76,7 @@
 #include "ole2disp.h"
 #include "typelib.h"
 #include "wine/debug.h"
-#include "parsedt.h"
+#include "variant.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
@@ -797,48 +797,6 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI, int offset);
 /*
  debug
 */
-static void dump_VarType(VARTYPE vt,char *szVarType) {
-    /* FIXME : we could have better trace here, depending on the VARTYPE
-     * of the variant
-     */
-    if (vt & VT_RESERVED)
-	szVarType += strlen(strcpy(szVarType, "reserved | "));
-    if (vt & VT_BYREF)
-	szVarType += strlen(strcpy(szVarType, "ref to "));
-    if (vt & VT_ARRAY)
-	szVarType += strlen(strcpy(szVarType, "array of "));
-    if (vt & VT_VECTOR)
-	szVarType += strlen(strcpy(szVarType, "vector of "));
-    switch(vt & VT_TYPEMASK) {
-    case VT_EMPTY: sprintf(szVarType, "VT_EMPTY"); break;
-    case VT_NULL: sprintf(szVarType, "VT_NULL"); break;
-    case VT_RECORD: sprintf(szVarType, "VT_RECORD"); break;
-    case VT_I8: sprintf(szVarType, "VT_I8"); break;
-    case VT_UI8: sprintf(szVarType, "VT_UI8"); break;
-    case VT_UI1: sprintf(szVarType, "VT_UI"); break;
-    case VT_I2: sprintf(szVarType, "VT_I2"); break;
-    case VT_I4: sprintf(szVarType, "VT_I4"); break;
-    case VT_R4: sprintf(szVarType, "VT_R4"); break;
-    case VT_R8: sprintf(szVarType, "VT_R8"); break;
-    case VT_BOOL: sprintf(szVarType, "VT_BOOL"); break;
-    case VT_ERROR: sprintf(szVarType, "VT_ERROR"); break;
-    case VT_CY: sprintf(szVarType, "VT_CY"); break;
-    case VT_DATE: sprintf(szVarType, "VT_DATE"); break;
-    case VT_BSTR: sprintf(szVarType, "VT_BSTR"); break;
-    case VT_UNKNOWN: sprintf(szVarType, "VT_UNKNOWN"); break;
-    case VT_DISPATCH: sprintf(szVarType, "VT_DISPATCH"); break;
-    case VT_I1: sprintf(szVarType, "VT_I1"); break;
-    case VT_UI2: sprintf(szVarType, "VT_UI2"); break;
-    case VT_UI4: sprintf(szVarType, "VT_UI4"); break;
-    case VT_INT: sprintf(szVarType, "VT_INT"); break;
-    case VT_UINT: sprintf(szVarType, "VT_UINT"); break;
-    case VT_VARIANT: sprintf(szVarType, "VT_VARIANT"); break;
-    case VT_VOID: sprintf(szVarType, "VT_VOID"); break;
-    case VT_USERDEFINED: sprintf(szVarType, "VT_USERDEFINED\n"); break;
-    default: sprintf(szVarType, "unknown(%d)", vt & VT_TYPEMASK); break;
-    }
-}
-
 static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
     if (pTD->vt & VT_RESERVED)
 	szVarType += strlen(strcpy(szVarType, "reserved | "));
@@ -1037,101 +995,57 @@ static void dump_TLBImplType(TLBImplType * impl)
 
 void dump_Variant(VARIANT * pvar)
 {
-    char szVarType[32];
-    LPVOID ref;
+    SYSTEMTIME st;
 
-    TRACE("(%p)\n", pvar);
+    TRACE("%p->{%s%s", pvar, debugstr_VT(pvar), debugstr_VF(pvar));
 
-    if (!pvar)  return;
-
-    ZeroMemory(szVarType, sizeof(szVarType));
-
-    /* FIXME : we could have better trace here, depending on the VARTYPE
-     * of the variant
-     */
-    dump_VarType(V_VT(pvar),szVarType);
-
-    TRACE("VARTYPE: %s\n", szVarType);
-
-    if (V_VT(pvar) & VT_BYREF) {
-      ref = V_UNION(pvar, byref);
-      TRACE("%p\n", ref);
-    }
-    else ref = &V_UNION(pvar, cVal);
-
-    if (V_VT(pvar) & VT_ARRAY) {
-      /* FIXME */
-      return;
-    }
-    if (V_VT(pvar) & VT_VECTOR) {
-      /* FIXME */
-      return;
-    }
-
-    switch (V_VT(pvar) & VT_TYPEMASK)
+    if (pvar)
     {
-        case VT_I2:
-            TRACE("%d\n", *(short*)ref);
-            break;
-
-        case VT_UI4:
-        case VT_UINT:
-            TRACE("%u\n", *(UINT*)ref);
-            break;
-
-        case VT_I4:
-        case VT_INT:
-            TRACE("%d\n", *(INT*)ref);
-            break;
-
-        case VT_R4:
-            TRACE("%3.3e\n", *(float*)ref);
-            break;
-
-        case VT_R8:
-            TRACE("%3.3e\n", *(double*)ref);
-            break;
-
-        case VT_BOOL:
-            TRACE("%s\n", *(VARIANT_BOOL*)ref ? "TRUE" : "FALSE");
-            break;
-
-        case VT_BSTR:
-            TRACE("%s\n", debugstr_w(*(BSTR*)ref));
-            break;
-
-        case VT_UNKNOWN:
-        case VT_DISPATCH:
-            TRACE("%p\n", *(LPVOID*)ref);
-            break;
-
-        case VT_VARIANT:
-            if (V_VT(pvar) & VT_BYREF) dump_Variant(ref);
-            break;
-
-        case VT_DATE:
-        {
-            SYSTEMTIME st;
-
-            if(!VariantTimeToSystemTime(*(DATE*)ref, &st)) {
-                TRACE("invalid date? (?)%ld %f\n", *(long*)ref, *(double *)ref);
-            } else {
-                TRACE("(yyyymmdd) %4.4d-%2.2d-%2.2d (time) %2.2d:%2.2d:%2.2d [%f]\n",
-                       st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute,
-                       st.wSecond, *(double *)ref);
-            }
-            break;
-        }
-
-        case VT_CY:
-            TRACE("%ld (hi), %lu (lo)\n", ((CY *)ref)->s.Hi, ((CY *)ref)->s.Lo);
-            break;
-
-
-        default:
-            TRACE("(?)%ld\n", *(long*)ref);
-            break;
+      if (V_ISBYREF(pvar) || V_TYPE(pvar) == VT_UNKNOWN ||
+          V_TYPE(pvar) == VT_DISPATCH || V_TYPE(pvar) == VT_RECORD)
+      {
+        TRACE(",%p", V_BYREF(pvar));
+      }
+      else if (V_ISARRAY(pvar) || V_ISVECTOR(pvar))
+      {
+        TRACE(",FIXME");
+      }
+      else switch (V_TYPE(pvar))
+      {
+      case VT_I1:   TRACE(",%d", V_I1(pvar)); break;
+      case VT_UI1:  TRACE(",%d", V_UI1(pvar)); break;
+      case VT_I2:   TRACE(",%d", V_I2(pvar)); break;
+      case VT_UI2:  TRACE(",%d", V_UI2(pvar)); break;
+      case VT_INT:
+      case VT_I4:   TRACE(",%ld", V_I4(pvar)); break;
+      case VT_UINT:
+      case VT_UI4:  TRACE(",%ld", V_UI4(pvar)); break;
+      case VT_I8:   TRACE(",0x%08lx,0x%08lx", (ULONG)(V_I8(pvar) >> 32),
+                          (ULONG)(V_I8(pvar) & 0xffffffff)); break;
+      case VT_UI8:  TRACE(",0x%08lx,0x%08lx", (ULONG)(V_UI8(pvar) >> 32),
+                          (ULONG)(V_UI8(pvar) & 0xffffffff)); break;
+      case VT_R4:   TRACE(",%3.3e", V_R4(pvar)); break;
+      case VT_R8:   TRACE(",%3.3e", V_R8(pvar)); break;
+      case VT_BOOL: TRACE(",%s", V_BOOL(pvar) ? "TRUE" : "FALSE"); break;
+      case VT_BSTR: TRACE(",%s", debugstr_w(V_BSTR(pvar))); break;
+      case VT_CY:   TRACE(",0x%08lx,0x%08lx", V_CY(pvar).s.Hi,
+                           V_CY(pvar).s.Lo); break;
+      case VT_DATE:
+        if(!VariantTimeToSystemTime(V_DATE(pvar), &st))
+          TRACE(",<invalid>");
+        else
+          TRACE(",%04d/%02d/%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay,
+                st.wHour, st.wMinute, st.wSecond);
+        break;
+      case VT_ERROR:
+      case VT_VOID:
+      case VT_USERDEFINED:
+      case VT_EMPTY:
+      case VT_NULL:  break;
+      default:       TRACE(",?"); break;
+      }
     }
+    TRACE("}\n");
 }
 
 static void dump_DispParms(DISPPARAMS * pdp)
