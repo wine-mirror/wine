@@ -460,7 +460,7 @@ map_axis(JoystickImpl* This, int axis, int val) {
     if (xmin == xmax) return val;
     if ((hmin == hmax) || (hmax==xmid) || (hmin==xmid)) return val;
 
-    /* dont assume total linearity, but linearity starting from a zeropoint */
+    /* don't assume total linearity, but linearity starting from a zeropoint */
     if (val > xmid) {
 	ret = (val-xmid)*((wmax-wmin)/2)/(hmax-xmid)+0;
     } else {

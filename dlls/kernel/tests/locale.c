@@ -259,7 +259,7 @@ static void test_GetTimeFormatA()
   ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
-  STRINGSA("h", "text"); /* Dont write to buffer if len is 0*/
+  STRINGSA("h", "text"); /* Don't write to buffer if len is 0 */
   strcpy(buffer, "text");
   ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, 0);
   EXPECT_VALID; EXPECT_LEN(2); EXPECT_EQA;

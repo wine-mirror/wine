@@ -3206,7 +3206,7 @@ static void test_VarDateFromStr(void)
   /* 1 element - can only be a time, and only if it has am/pm */
   DFS("1 am"); EXPECT_DBL(0.04166666666666666);
   /* 2 elements */
-  /* A decimal point is treated as a time seperator.
+  /* A decimal point is treated as a time separator.
    * The following are converted as hours/minutes.
    */
   DFS("0.1");  EXPECT_DBL(0.0006944444444444445);
@@ -3255,7 +3255,7 @@ static void test_VarDateFromStr(void)
   DFS("Jan/35"); EXPECT_DBL(12785.0);
   DFS("35/Jan"); EXPECT_DBL(12785.0);
   /* 3 elements */
-  /* 3 numbers and time seperator => h:m:s */
+  /* 3 numbers and time separator => h:m:s */
   DFS("0.1.0");  EXPECT_DBL(0.0006944444444444445);
   DFS("1.5.2");  EXPECT_DBL(0.04516203703703704);
   /* 3 numbers => picks date giving preference to lcid format */
@@ -4402,7 +4402,7 @@ static void test_VarBoolFromStr(void)
   if (HAVE_OLEAUT32_LOCALES)
   {
     /* Numeric strings are read as floating point numbers. The line below fails
-     * because '.' is not a valid decimal seperator for Polish numbers */
+     * because '.' is not a valid decimal separator for Polish numbers */
     CONVERT_STR(VarBoolFromStr,"0.1",0); EXPECT_MISMATCH;
   }
 
@@ -4481,8 +4481,8 @@ static void test_VarBstrFromR4(void)
   if (bstr)
   {
     todo_wine {
-    /* MSDN states that rounding of R4/R8 is dependant on the underlying
-     * bit pattern of the number and so is architecture dependant. In this
+    /* MSDN states that rounding of R4/R8 is dependent on the underlying
+     * bit pattern of the number and so is architecture dependent. In this
      * case Wine returns .2 (which is more correct) and Native returns .3
      */
     ok(memcmp(bstr, szNative, sizeof(szNative)) == 0, "string different\n");

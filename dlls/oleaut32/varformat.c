@@ -88,11 +88,11 @@ static const WCHAR szPercentZeroStar_d[] = { '%','0','*','d','\0' };
  *| True/False     Localised text of "True" or "False"
  *| Yes/No         Localised text of "Yes" or "No"
  *| On/Off         Localised text of "On" or "Off"
- *| General Number No thousands seperator. No decimal points for integers
+ *| General Number No thousands separator. No decimal points for integers
  *| Currency       General currency format using localised characters
  *| Fixed          At least one whole and two fractional digits
- *| Standard       As for 'Fixed', but including decimal seperators
- *| Percent        Multiply by 100 and dispaly a traling '%' character
+ *| Standard       Same as 'Fixed', but including decimal separators
+ *| Percent        Multiply by 100 and display a trailing '%' character
  *| Scientific     Display with exponent
  *
  *  User-defined formats consist of a combination of tokens and literal
@@ -103,7 +103,7 @@ static const WCHAR szPercentZeroStar_d[] = { '%','0','*','d','\0' };
  *  (e.g. "\L\i\t\e\r\a\l") or enclosing it in double quotes.
  *
  *  A user-defined format can have up to 4 sections, depending on the type of
- *  format, The following table lists sections and their meaning:
+ *  format. The following table lists sections and their meaning:
  *| Format Type  Sections Meaning
  *| -----------  -------- -------
  *| Number       1        Use the same format for all numbers
@@ -208,7 +208,7 @@ typedef struct tagFMT_STRING_HEADER
 
 #define FMT_FLAG_PERCENT   0x1  /* Has '%' (Percentage) */
 #define FMT_FLAG_EXPONENT  0x2  /* Has 'e' (Exponent/Scientific notation) */
-#define FMT_FLAG_THOUSANDS 0x4  /* Has ',' (Standard use of the thousands seperator) */
+#define FMT_FLAG_THOUSANDS 0x4  /* Has ',' (Standard use of the thousands separator) */
 #define FMT_FLAG_BOOL      0x20 /* Boolean format */
 
 typedef struct tagFMT_NUMBER_HEADER
@@ -238,8 +238,8 @@ typedef struct tagFMT_DATE_HEADER
 #define FMT_GEN_COPY        0x00 /* \n, "lit" => 0,pos,len: Copy len chars from input+pos */
 #define FMT_GEN_INLINE      0x01 /*      => 1,len,[chars]: Copy len chars from token stream */
 #define FMT_GEN_END         0x02 /* \0,; => 2: End of the tokenised format */
-#define FMT_DATE_TIME_SEP   0x03 /* Time seperator char */
-#define FMT_DATE_DATE_SEP   0x04 /* Date seperator char */
+#define FMT_DATE_TIME_SEP   0x03 /* Time separator char */
+#define FMT_DATE_DATE_SEP   0x04 /* Date separator char */
 #define FMT_DATE_GENERAL    0x05 /* General format date */
 #define FMT_DATE_QUARTER    0x06 /* Quarter of the year from 1-4 */
 #define FMT_DATE_TIME_SYS   0x07 /* System long time format */
@@ -278,7 +278,7 @@ typedef struct tagFMT_DATE_HEADER
 #define FMT_DATE_A_LOWER    0x33 /* Lower-case A or P */
 #define FMT_NUM_COPY_ZERO   0x34 /* Copy 1 digit or 0 if no digit */
 #define FMT_NUM_COPY_SKIP   0x35 /* Copy 1 digit or skip if no digit */
-#define FMT_NUM_DECIMAL     0x36 /* Decimal seperator */
+#define FMT_NUM_DECIMAL     0x36 /* Decimal separator */
 #define FMT_NUM_EXP_POS_U   0x37 /* Scientific notation, uppercase, + sign */
 #define FMT_NUM_EXP_NEG_U   0x38 /* Scientific notation, lowercase, - sign */
 #define FMT_NUM_EXP_POS_L   0x39 /* Scientific notation, uppercase, + sign */
@@ -481,7 +481,7 @@ static inline const BYTE *VARIANT_GetNamedFormat(LPCWSTR lpszFormat)
 
 /* State during tokenising */
 #define FMT_STATE_OPEN_COPY     0x1 /* Last token written was a copy */
-#define FMT_STATE_WROTE_DECIMAL 0x2 /* Already wrote a decimal seperator */
+#define FMT_STATE_WROTE_DECIMAL 0x2 /* Already wrote a decimal separator */
 #define FMT_STATE_SEEN_HOURS    0x4 /* See the hh specifier */
 #define FMT_STATE_WROTE_MINUTES 0x8 /* Wrote minutes */
 
@@ -624,7 +624,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
     else if (*pFormat == '"')
     {
       /* Escaped string
-       * Note: Native encodes "" as a copy of length zero. Thats just dumb, so
+       * Note: Native encodes "" as a copy of length zero. That's just dumb, so
        * here we avoid encoding anything in this case.
        */
       if (!pFormat[1])
@@ -701,7 +701,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
     else if (*pFormat == '.' && COULD_BE(FMT_TYPE_NUMBER) &&
               !(fmt_state & FMT_STATE_WROTE_DECIMAL))
     {
-      /* Number formats: Decimal seperator when 1st seen, literal thereafter
+      /* Number formats: Decimal separator when 1st seen, literal thereafter
        * Other formats: Literal
        * Types the format if found
        */
@@ -717,7 +717,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
     /* FIXME: %% => Divide by 1000 */
     else if (*pFormat == ',' && header->type == FMT_TYPE_NUMBER)
     {
-      /* Number formats: Use the thousands seperator
+      /* Number formats: Use the thousands separator
        * Other formats: Literal
        */
       num_header->flags |= FMT_FLAG_THOUSANDS;
@@ -731,7 +731,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
      */
     else if (*pFormat == '/' && COULD_BE(FMT_TYPE_DATE))
     {
-      /* Date formats: Date seperator
+      /* Date formats: Date separator
        * Other formats: Literal
        * Types the format if found
        */
@@ -744,7 +744,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
     }
     else if (*pFormat == ':' && COULD_BE(FMT_TYPE_DATE))
     {
-      /* Date formats: Time seperator
+      /* Date formats: Time separator
        * Other formats: Literal
        * Types the format if found
        */
@@ -1159,7 +1159,7 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
 }
 
 /* Number formatting state flags */
-#define NUM_WROTE_DEC  0x01 /* Written the decimal seperator */
+#define NUM_WROTE_DEC  0x01 /* Written the decimal separator */
 
 /* Format a variant using a number format */
 static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
@@ -1347,7 +1347,7 @@ VARIANT_FormatNumber_Bool:
       break;
 
     case FMT_NUM_DECIMAL:
-      TRACE("write decimal seperator\n");
+      TRACE("write decimal separator\n");
       localeValue = LOCALE_SDECIMAL;
       defaultChar = '.';
       dwState |= NUM_WROTE_DEC;
@@ -1552,13 +1552,13 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       break;
 
     case FMT_DATE_TIME_SEP:
-      TRACE("time seperator\n");
+      TRACE("time separator\n");
       localeValue = LOCALE_STIME;
       defaultChar = ':';
       break;
 
     case FMT_DATE_DATE_SEP:
-      TRACE("date seperator\n");
+      TRACE("date separator\n");
       localeValue = LOCALE_SDATE;
       defaultChar = '/';
       break;

@@ -286,7 +286,7 @@ void WCMD_process_command (char *command)
       return;
     }
 
-    /* Dont issue newline WCMD_output (newline);           @JED*/
+    /* Don't issue newline WCMD_output (newline);           @JED*/
 
     sa.nLength = sizeof(sa);
     sa.lpSecurityDescriptor = NULL;

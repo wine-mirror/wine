@@ -22,9 +22,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- * Note large hacks done to effectively  disable DSound altogether
- *  Also Input is not yet working (Lots more work to be done there)
-  * But this does make a reasonable output driver for solaris untill the arts driver comes up to speed
+ * Note large hacks done to effectively disable DSound altogether
+ * Also Input is not yet working (Lots more work to be done there)
+ * But this does make a reasonable output driver for solaris until the arts
+ * driver comes up to speed
  */
 
 /*
@@ -248,9 +249,9 @@ LONG LIBAUDIOIO_WaveInit(void)
     WOutDev[0].caps.dwSupport = WAVECAPS_VOLUME;
 
     /*
-     * Libaudioio works differently, you tell it what spec audio you want to write and it
-     * Guarantees to match it by converting to the final format on the fly
-     *So we dont need to read  back and compare
+     * Libaudioio works differently, you tell it what spec audio you want to write
+     * and it guarantees to match it by converting to the final format on the fly.
+     * So we don't need to read  back and compare.
      */
 
     bytespersmpl = spec[PLAYBACK].precision/8;
@@ -273,7 +274,7 @@ LONG LIBAUDIOIO_WaveInit(void)
 	    if (WOutDev[0].caps.wChannels > 1)
 		WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4S16;
 
-/* Don't understand this yet, but I dont think this functionality is portable, leave here for future evaluation
+/* Don't understand this yet, but I don't think this functionality is portable, leave it here for future evaluation
  *   if (IOCTL(audio, SNDCTL_DSP_GETCAPS, caps) == 0) {
  *	TRACE("OSS dsp out caps=%08X\n", caps);
  *	if ((caps & DSP_CAP_REALTIME) && !(caps & DSP_CAP_BATCH)) {

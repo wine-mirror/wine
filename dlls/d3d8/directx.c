@@ -458,7 +458,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
     }
 
-    /* If we dont know the device settings, go query them now */
+    /* If we don't know the device settings, go query them now */
     if (This->isGLInfoValid == FALSE) IDirect3D8Impl_FillGLCaps(iface, NULL);
 
     pCaps->DeviceType = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
@@ -928,7 +928,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 
     /* Initialize openGl - Note the visual is chosen as the window is created and the glcontext cannot
          use different properties after that point in time. FIXME: How to handle when requested format 
-         doesnt match actual visual? Cannot choose one here - code removed as it ONLY works if the one 
+         doesn't match actual visual? Cannot choose one here - code removed as it ONLY works if the one
          it chooses is identical to the one already being used!                                        */
     /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
 

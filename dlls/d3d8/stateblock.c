@@ -219,7 +219,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
 #endif
             checkGLcall("glActiveTextureARB");
         } else if (i > 0) {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
         }
 
         /* Generate an opengl texture name */

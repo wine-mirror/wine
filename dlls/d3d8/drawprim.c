@@ -180,7 +180,7 @@ void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
 
     } else if ((This->tracking_color == IS_TRACKING && isDiffuseSupplied == FALSE) ||
                (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied == FALSE)) {
-        /* If we are tracking the current color but one isnt supplied, dont! */
+        /* If we are tracking the current color but one isn't supplied, don't! */
         glDisable(GL_COLOR_MATERIAL);
         checkGLcall("glDisable GL_COLOR_MATERIAL");
         This->tracking_color = NEEDS_TRACKING;
@@ -225,7 +225,7 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
     BOOL isLightingOn = FALSE;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    /* If no normals, DISABLE lighting otherwise, dont touch lighing as it is 
+    /* If no normals, DISABLE lighting otherwise, don't touch lighing as it is
        set by the appropriate render state. Note Vertex Shader output is already lit */
     if (vtx_lit || useVS) {
         isLightingOn = glIsEnabled(GL_LIGHTING);
@@ -538,7 +538,7 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
     for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
 
         if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
             continue ;
         }
 
@@ -681,7 +681,7 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
     /* Blend Data ----------------------------------------------*/
     if ((sd->u.s.blendWeights.lpData != NULL) || 
         (sd->u.s.blendMatrixIndices.lpData != NULL)) {
-        /* FIXME: Wont get here as will drop to slow method        */
+        /* FIXME: Won't get here as will drop to slow method        */
         FIXME("Blending not supported in fast draw routine\n");
 
 #if 0 /* Vertex blend support needs to be added */
@@ -737,7 +737,7 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
     if (sd->u.s.pSize.lpData != NULL) {
 
         /* no such functionality in the fixed function GL pipeline */
-        /* FIXME: Wont get here as will drop to slow method        */
+        /* FIXME: Won't get here as will drop to slow method        */
         FIXME("Cannot change ptSize here in openGl\n");
     }
 
@@ -829,7 +829,7 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
             int coordIdx = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
-                FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
                 continue;
@@ -1021,7 +1021,7 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
         for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
-                FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 continue ;
             }
 

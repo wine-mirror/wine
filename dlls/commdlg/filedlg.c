@@ -1711,7 +1711,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
   nOpenAction = ONOPEN_BROWSE;
 
-  /* dont apply any checks with OFN_NOVALIDATE */
+  /* don't apply any checks with OFN_NOVALIDATE */
   {
     LPWSTR lpszTemp, lpszTemp1;
     LPITEMIDLIST pidl = NULL;

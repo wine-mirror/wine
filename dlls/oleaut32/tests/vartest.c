@@ -3799,7 +3799,7 @@ static void test_VarFormatNumber(void)
   GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
   if (buff[0] != '.' || buff[1])
   {
-    trace("Skipping VarFormatNumber tests as decimal seperator is '%s'\n", buff);
+    trace("Skipping VarFormatNumber tests as decimal separator is '%s'\n", buff);
     return;
   }
 
@@ -3962,7 +3962,7 @@ static void test_VarFormat(void)
   GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
   if (buff[0] != '.' || buff[1])
   {
-    trace("Skipping VarFormat tests as decimal seperator is '%s'\n", buff);
+    trace("Skipping VarFormat tests as decimal separator is '%s'\n", buff);
     return;
   }
   GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IDIGITS, buff, sizeof(buff)/sizeof(char));
@@ -4122,7 +4122,7 @@ static void test_VarAbs(void)
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
     if (buff[0] != '.' || buff[1])
     { 
-        trace("Skipping VarAbs(BSTR) as decimal seperator is '%s'\n", buff);
+        trace("Skipping VarAbs(BSTR) as decimal separator is '%s'\n", buff);
         return;
     }
     V_VT(&v) = VT_BSTR;

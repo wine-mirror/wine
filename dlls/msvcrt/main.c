@@ -153,12 +153,12 @@ char* MSVCRT___unDName(int unknown, const char* mangled, int unknown2,
    */
 
   /* Experimentation reveals the following flag meanings when set:
-   * 0x0001 - Dont show __ in calling convention
-   * 0x0002 - Dont show calling convention at all
-   * 0x0004 - Dont show function/method return value
+   * 0x0001 - Don't show __ in calling convention
+   * 0x0002 - Don't show calling convention at all
+   * 0x0004 - Don't show function/method return value
    * 0x0010 - Same as 0x1
-   * 0x0080 - Dont show access specifier (public/protected/private)
-   * 0x0200 - Dont show static specifier
+   * 0x0080 - Don't show access specifier (public/protected/private)
+   * 0x0200 - Don't show static specifier
    * 0x0800 - Unknown, passed by type_info::name()
    * 0x1000 - Only report the variable/class name
    * 0x2000 - Unknown, passed by type_info::name()

@@ -138,7 +138,7 @@ static void msvcrt_free_fd(int fd)
   MSVCRT_flags[fd] = 0;
   TRACE(":fd (%d) freed\n",fd);
   if (fd < 3)
-    return; /* dont use 0,1,2 for user files */
+    return; /* don't use 0,1,2 for user files */
   if (fd == MSVCRT_fdend - 1)
     MSVCRT_fdend--;
   if (fd < MSVCRT_fdstart)
@@ -450,7 +450,7 @@ int _close(int fd)
 		MSVCRT_free(MSVCRT_files[fd]->_base);
   }
 
-  /* Dont free std FILE*'s, they are not dynamic */
+  /* Don't free std FILE*'s, they are not dynamic */
   if (fd > 2 && MSVCRT_files[fd])
     MSVCRT_free(MSVCRT_files[fd]);
 
@@ -846,7 +846,7 @@ long _get_osfhandle(int fd)
   {
     /* FIXME: I'm not convinced that I should be copying the
      * handle here - it may be leaked if the app doesn't
-     * close it (and the API docs dont say that it should)
+     * close it (and the API docs don't say that it should)
      * Not duplicating it means that it can't be inherited
      * and so lcc's wedit doesn't cope when it passes it to
      * child processes. I've an idea that it should either
@@ -1213,7 +1213,7 @@ int _read(int fd, void *buf, unsigned int count)
   char *bufstart = buf;
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  /* Dont trace small reads, it gets *very* annoying */
+  /* Don't trace small reads, it gets *very* annoying */
   if (count > 4)
     TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n",fd,hand,buf,count);
   if (hand == INVALID_HANDLE_VALUE)
@@ -1309,10 +1309,10 @@ int _stati64(const char* path, struct _stati64 * buf)
 
   memset(buf,0,sizeof(struct _stati64));
 
-  /* FIXME: rdev isnt drive num,despite what the docs say-what is it?
+  /* FIXME: rdev isn't drive num, despite what the docs say-what is it?
      Bon 011120: This FIXME seems incorrect
-                 Also a letter as first char isn't enough to be classify
-		 as drive letter
+                 Also a letter as first char isn't enough to be classified
+		 as a drive letter
   */
   if (isalpha(*path)&& (*(path+1)==':'))
     buf->st_dev = buf->st_rdev = toupper(*path) - 'A'; /* drive num */
@@ -1523,7 +1523,7 @@ int _write(int fd, const void* buf, unsigned int count)
   DWORD num_written;
   HANDLE hand = msvcrt_fdtoh(fd);
 
-  /* Dont trace small writes, it gets *very* annoying */
+  /* Don't trace small writes, it gets *very* annoying */
 #if 0
   if (count > 32)
     TRACE(":fd (%d) handle (%d) buf (%p) len (%d)\n",fd,hand,buf,count);

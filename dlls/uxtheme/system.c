@@ -161,7 +161,7 @@ BOOL WINAPI IsThemeActive(void)
  *      EnableTheming                                       (UXTHEME.@)
  *
  * NOTES
- * This is a global and persistant change
+ * This is a global and persistent change
  */
 HRESULT WINAPI EnableTheming(BOOL fEnable)
 {
@@ -228,7 +228,7 @@ HRESULT UXTHEME_SetWindowProperty(HWND hwnd, ATOM aProp, LPCWSTR pszValue)
 /***********************************************************************
  *      SetWindowTheme                                      (UXTHEME.@)
  *
- * Persistant through the life of the window, even after themes change
+ * Persistent through the life of the window, even after themes change
  */
 HRESULT WINAPI SetWindowTheme(HWND hwnd, LPCWSTR pszSubAppName,
                               LPCWSTR pszSubIdList)
@@ -396,9 +396,9 @@ HRESULT WINAPI ApplyTheme(HTHEMEFILE hThemeFile, char *unknown, HWND hWnd)
  *
  * PARAMS
  *     pszThemeFileName    Path to a msstyles theme file
- *     pszColorName        Buffer to recieve the default color name
+ *     pszColorName        Buffer to receive the default color name
  *     dwColorNameLen      Length, in characters, of color name buffer
- *     pszSizeName         Buffer to recieve the default size name
+ *     pszSizeName         Buffer to receive the default size name
  *     dwSizeNameLen       Length, in characters, of size name buffer
  */
 HRESULT WINAPI GetThemeDefaults(LPCWSTR pszThemeFileName, LPWSTR pszColorName,

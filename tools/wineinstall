@@ -286,7 +286,7 @@ then {
           sucommand="$sucommand;echo $libdir>>/etc/ld.so.conf"
         }
         fi
-        # run ldconfig always just in case some updated files dont get linked
+        # run ldconfig always just in case some updated files don't get linked
         sucommand="$sucommand;$ac_cv_path_LDCONFIG"
       fi
     }

@@ -434,7 +434,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     /* Only allow mouse events every 10 ms.
      * This is to allow the cursor to start acceleration before
      * the warps happen. But if it involves a mouse button event we
-     * allow it since we dont want to loose the clicks.
+     * allow it since we don't want to loose the clicks.
      */
     if (((GetCurrentTime() - last_event) < 10)
         && wparam == WM_MOUSEMOVE)

@@ -60,7 +60,7 @@ typedef BOOL (CALLBACK *EnumThemeProc)(LPVOID lpReserved, LPCWSTR pszThemeFileNa
  *     lpData              Value passed through lpData from ParseThemeIniFile
  *
  * NOTES
- * I dont know what the valid entry types are
+ * I don't know what the valid entry types are
  */
 typedef BOOL (CALLBACK*ParseThemeIniFileProc)(DWORD dwType, LPWSTR pszParam1,
                                               LPWSTR pszParam2, LPWSTR pszParam3,

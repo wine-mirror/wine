@@ -2136,8 +2136,8 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 	return TRUE;
 
     if (dwType & PRINTER_ENUM_CONNECTIONS) {
-        FIXME("We dont handle PRINTER_ENUM_CONNECTIONS\n");
-	dwType &= ~PRINTER_ENUM_CONNECTIONS; /* we dont handle that */
+        FIXME("We don't handle PRINTER_ENUM_CONNECTIONS\n");
+	dwType &= ~PRINTER_ENUM_CONNECTIONS; /* we don't handle that */
         if(!dwType) return TRUE;
     }
 

@@ -348,7 +348,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 	    buffer[0] = '\0';
 	    return 0;
 	}
-	WARN("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
+	WARN("Don't know why caller gave buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
     }
     FreeResource16( hmem );
 
@@ -399,7 +399,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 	    return 0;
 	}
 #if 0
-	WARN("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
+	WARN("Don't know why caller gave buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
 #endif
     }
 

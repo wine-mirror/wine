@@ -4282,7 +4282,7 @@ static HRESULT VARIANT_DecScale(const DECIMAL** ppDecLeft,
   /* Multiply up the value to be scaled by the correct amount */
   while (SUCCEEDED(hRet) && i--)
   {
-    /* Note we are multiplying by a value with a scale of 0, so we dont recurse */
+    /* Note we are multiplying by a value with a scale of 0, so we don't recurse */
     hRet = VarDecMul(&decTemp, &scaleFactor, pDecOut);
     decTemp = *pDecOut;
   }
@@ -5863,8 +5863,8 @@ HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut)
 }
 
 /* Date string parsing */
-#define DP_TIMESEP 0x01 /* Time seperator ( _must_ remain 0x1, used as a bitmask) */
-#define DP_DATESEP 0x02 /* Date seperator */
+#define DP_TIMESEP 0x01 /* Time separator ( _must_ remain 0x1, used as a bitmask) */
+#define DP_DATESEP 0x02 /* Date separator */
 #define DP_MONTH   0x04 /* Month name */
 #define DP_AM      0x08 /* AM */
 #define DP_PM      0x10 /* PM */
@@ -5972,7 +5972,7 @@ VARIANT_MakeDate_Start:
     }
     else if (dwCount == 1)
     {
-      /* Second: Try all the orders compatable with iDate */
+      /* Second: Try all the orders compatible with iDate */
       switch (iDate)
       {
       case 0:  dwTry = dwAllOrders & ~(ORDER_DMY|ORDER_YDM); break;
@@ -6098,9 +6098,9 @@ VARIANT_MakeDate_OK:
  *  Any date format that can be created using the date formats from lcid
  *  (Either from kernel Nls functions, variant conversion or formatting) is a
  *  valid input to this function. In addition, a few more esoteric formats are
- *  also supported for compatability with the native version. The date is
+ *  also supported for compatibility with the native version. The date is
  *  interpreted according to the date settings in the control panel, unless
- *  the date is invalid in that format, in which the most compatable format
+ *  the date is invalid in that format, in which the most compatible format
  *  that produces a valid date will be used.
  */
 HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pdateOut)
@@ -6276,7 +6276,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
     /* Figure out which numbers correspond to which fields.
      *
      * This switch statement works based on the fact that native interprets any
-     * fields that are not joined with a time seperator ('.' or ':') as date
+     * fields that are not joined with a time separator ('.' or ':') as date
      * fields. Thus we construct a value from 0-32 where each set bit indicates
      * a time field. This encapsulates the hundreds of permutations of 2-6 fields.
      * For valid permutations, we set dwOffset to point to the first date field

@@ -190,7 +190,7 @@ enum
     ASSOCF_VERIFY               = 0x040, /* Verify data */
     ASSOCF_REMAPRUNDLL          = 0x080, /* Get rundll args */
     ASSOCF_NOFIXUPS             = 0x100, /* Don't fixup errors */
-    ASSOCF_IGNOREBASECLASS      = 0x200, /* Dont read baseclass */
+    ASSOCF_IGNOREBASECLASS      = 0x200, /* Don't read baseclass */
 };
 
 typedef DWORD ASSOCF;

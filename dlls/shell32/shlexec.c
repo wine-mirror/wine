@@ -273,7 +273,7 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
                                  LPSTR lpResult, LPSTR key, void **env)
 {
     char *extension = NULL; /* pointer to file extension */
-    char tmpext[5];         /* local copy to mung as we please */
+    char tmpext[5];         /* local copy to munge as we please */
     char filetype[256];     /* registry name for this filetype */
     LONG filetypelen = 256; /* length of above */
     char command[256];      /* command from registry */

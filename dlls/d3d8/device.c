@@ -124,7 +124,7 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags) {
 #endif
                    checkGLcall("glActiveTextureARB");
                 } else if (Stage > 0) {
-                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 }
                 changeTexture = FALSE;
            }
@@ -487,7 +487,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST REC
 
 
     glXSwapBuffers(This->display, This->drawable);
-    /* Dont call checkGLcall, as glGetError is not applicable here */
+    /* Don't call checkGLcall, as glGetError is not applicable here */
     TRACE("glXSwapBuffers called, Starting new frame\n");
 
     /* FPS support */
@@ -986,7 +986,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
           pSourceSurface, pSourceRectsArray, cRects, pDestinationSurface, pDestPointsArray);
 
     /* Note: Not sure about the d3dfmt_unknown bit, but seems to avoid a problem inside
-         a sample and doesnt seem to break anything as far as I can tell               */
+         a sample and doesn't seem to break anything as far as I can tell               */
     if (src->myDesc.Format != dst->myDesc.Format && (dst->myDesc.Format != D3DFMT_UNKNOWN)) {
         TRACE("Formats do not match (%x,%s) / (%x,%s)\n", 
                src->myDesc.Format, debug_d3dformat(src->myDesc.Format), 
@@ -2119,7 +2119,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 
     /* Validate Index */
     if (Index >= GL_LIMITS(clipplanes)) {
-        TRACE("Application has requested clipplane this device doesnt support\n");
+        TRACE("Application has requested clipplane this device doesn't support\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -2165,7 +2165,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 
     /* Validate Index */
     if (Index >= GL_LIMITS(clipplanes)) {
-        TRACE("Application has requested clipplane this device doesnt support\n");
+        TRACE("Application has requested clipplane this device doesn't support\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -2271,7 +2271,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             checkGLcall("glShadeModel");
             break;
         case D3DSHADE_PHONG:
-            FIXME("D3DSHADE_PHONG isnt supported?\n");
+            FIXME("D3DSHADE_PHONG isn't supported?\n");
 
 	    LEAVE_GL();
             return D3DERR_INVALIDCALL;
@@ -2508,7 +2508,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 #endif
                     checkGLcall("Activate texture.. to update const color");
                 } else if (i>0) {
-                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                    FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 }
 
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
@@ -2526,8 +2526,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
                single color means it is merged in. However in both cases they are being used to
                some extent.
                To disable specular color, set it explicitly to black and turn off GL_COLOR_SUM_EXT
-               NOTE: If not supported dont give FIXME as very minimal impact and very few people are
-                  yet running 1.4!
+               NOTE: If not supported don't give FIXMEs the impact is really minimal and very few people are
+                  running 1.4 yet!
              */
               if (Value) {
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
@@ -3072,7 +3072,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 #endif
         checkGLcall("glActiveTextureARB");
     } else if (Stage>0) {
-        FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
     }
 
     /* Decrement the count of the previous texture */
@@ -3206,7 +3206,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         vcheckGLcall("glActiveTextureARB");
 #endif
     } else if (Stage > 0) {
-        FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
     }
 
     switch (Type) {
@@ -3243,7 +3243,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     realVal = GL_LINEAR_MIPMAP_LINEAR;
                 }
             } else if (ValueMIN == D3DTEXF_NONE) {
-                /* Doesnt really make sense - Windows just seems to disable
+                /* Doesn't really make sense - Windows just seems to disable
                    mipmapping when this occurs                              */
                 FIXME("Odd - minfilter of none, just disabling mipmaps\n");
                 realVal = GL_LINEAR;
@@ -3292,7 +3292,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                 checkGLcall("Disable GL_TEXTURE_2D");
                 glDisable(GL_TEXTURE_3D);
                 checkGLcall("Disable GL_TEXTURE_3D");
-                break; /* Dont bother setting the texture operations */
+                break; /* Don't bother setting the texture operations */
             } else {
                 /* Enable only the appropriate texture dimension */
                 if (Type == D3DTSS_COLOROP) {

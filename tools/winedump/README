@@ -507,7 +507,7 @@ winedump foo -c -I "inc/*.h" -v | grep FIXME | sort | uniq > fixup.h
 By adding '#include "fixup.h"' to foobar_dll.h your compile errors will be
 greatly reduced.
 
-If winedump encounters a type it doesnt know that is passed by value (as in
+If winedump encounters a type it doesn't know that is passed by value (as in
 the _cabs example above), it also prints a FIXME message like:
 
 /* FIXME: By value type: Assumed 'int' */ typedef int ldiv_t;
@@ -634,7 +634,7 @@ prototype. The more examples I have the easier it is to decypher the scheme,
 and generating them myself is very slow.
 
 Finally, although it is easy to generate a DLL, I _very strongly_ suggest that
-you dont submit a generated DLL for inclusion into Wine unless you have
+you don't submit a generated DLL for inclusion into Wine unless you have
 actually implemented a fairly reasonable portion of it. Even then, you should
 only send the portions of the DLL you have implemented. Thousands of lines of
 stub code don't help the project at all.

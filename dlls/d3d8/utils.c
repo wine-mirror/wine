@@ -660,8 +660,8 @@ void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum*
     break;
   case D3DTA_SPECULAR:
     /**
-     * According to the GL_ARB_texture_env_combine specs, SPECULAR is 'Secondary color' and
-     * isnt supported until base GL supports it
+     * According to the GL_ARB_texture_env_combine specs, SPECULAR is
+     * 'Secondary color' and isn't supported until base GL supports it
      * There is no concept of temp registers as far as I can tell
      */
 

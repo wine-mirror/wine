@@ -987,7 +987,7 @@ static void INT10_HandleVESA( CONTEXT86 *context )
         break;
 
     case 0xff: /* Turn VESA ON/OFF */
-        /* i dont know what to do */
+        /* I don't know what to do */
         break;
 
     default:
@@ -1024,8 +1024,8 @@ static void INT10_HandleVESA( CONTEXT86 *context )
  *
  *  Jess Haas 2/99
  *	Added support for Vesa. It is not complete but is a start.
- *	NOTE: Im not sure if i did all this right or if eny of it works.
- *	Currently i dont have a program that uses Vesa that actually gets far
+ *	NOTE: Im not sure if I did all this right or if any of it works.
+ *	Currently I don't have a program that uses Vesa that actually gets far
  *	enough without crashing to do vesa stuff.
  *
  *      Added additional vga graphic support - 3/99

@@ -1782,7 +1782,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 
     /* FIXME: <Gerhard W. Gruber>sparhawk@gmx.at
        In case of W9x and lesser this function should return 120 (ERROR_CALL_NOT_IMPLEMENTED)
-       to be really compatible. Most programs wont have any problems though. In case
+       to be really compatible. Most programs won't have any problems though. In case
        you encounter one, this is what you should return here. I don't know what's up
        with NT 3.5. Is this function available there or not?
        Does anybody really care about 3.5? :)

@@ -501,7 +501,7 @@ static void LFD_UnParse(LPSTR dp, UINT buf_size, LFD* lfd)
     int i;
 
     if (!buf_size)
-	return; /* Dont be silly */
+	return; /* Don't be silly */
 
     lfd_fld[0]  = lfd->foundry;
     lfd_fld[1]	= lfd->family;
@@ -2520,7 +2520,7 @@ static UINT XFONT_Match( fontMatch* pfm )
 	   else
 	   {
 	       ERR("PixHeight == InternalLeading\n");
-	       penalty += 0x1000; /* dont want this */
+	       penalty += 0x1000; /* don't want this */
 	   }
        }
    }

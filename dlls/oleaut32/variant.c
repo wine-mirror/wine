@@ -1829,7 +1829,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
 HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
                                   ULONG dwVtBits, VARIANT *pVarDst)
 {
-  /* Scale factors and limits for double arithmatic */
+  /* Scale factors and limits for double arithmetic */
   static const double dblMultipliers[11] = {
     1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0,
     1000000.0, 10000000.0, 100000000.0, 1000000000.0, 10000000000.0
@@ -1937,7 +1937,7 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
     }
 
     /* If we have any fractional digits, round the value.
-     * Note we dont have to do this if divisor10 is < 1,
+     * Note we don't have to do this if divisor10 is < 1,
      * because this means the fractional part must be < 0.5
      */
     if (!bOverflow && fractionalDigits && divisor10 > 0)
@@ -2420,7 +2420,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
             return VARCMP_GT;
         }
     }
-    FIXME("VarCmp partial implementation, doesnt support vt 0x%x / 0x%x\n",V_VT(left), V_VT(right));
+    FIXME("VarCmp partial implementation, doesn't support vt 0x%x / 0x%x\n",V_VT(left), V_VT(right));
     return E_FAIL;
 }
 

@@ -146,7 +146,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
     }
     
     if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
-      /* Dont dirtify */
+      /* Don't dirtify */
     } else {
       /**
        * Dirtify on lock

@@ -620,7 +620,7 @@ sub process_comment
 {
   my $comment = shift(@_);
 
-  # Don't process this comment if the function isnt exported
+  # Don't process this comment if the function isn't exported
   my $spec_details = $spec_files{$comment->{DLL_NAME}}[0];
 
   if (!defined($spec_details))
@@ -793,7 +793,7 @@ sub process_comment
       {
         if ( !/^[A-Z]+$/ )
         {
-          # Dont reject comments that refer to another doc (e.g. A/W)
+          # Don't reject comments that refer to another doc (e.g. A/W)
           if ( /^See ([A-Za-z0-9_]+)\.$/ )
           {
             if ($comment->{COMMENT_NAME} =~ /W$/ )

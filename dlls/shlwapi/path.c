@@ -2974,7 +2974,7 @@ BOOL WINAPI PathMakeSystemFolderW(LPCWSTR lpszPath)
   if (!lpszPath || !*lpszPath)
     return FALSE;
 
-  /* If the directory is already a system directory, dont do anything */
+  /* If the directory is already a system directory, don't do anything */
   GetSystemDirectoryW(buff, MAX_PATH);
   if (!strcmpW(buff, lpszPath))
     return TRUE;
