@@ -45,7 +45,7 @@ static void* BSTR_GetAddr(BSTR16 in)
 /******************************************************************************
  *		SysAllocString16	[OLE2DISP.2]
  */
-BSTR16 WINAPI SysAllocString16(LPOLESTR16 in)
+BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 {
 	BSTR16 out=BSTR_AllocBytes(strlen(in)+1);
 	if(!out)return 0;
@@ -56,7 +56,7 @@ BSTR16 WINAPI SysAllocString16(LPOLESTR16 in)
 /******************************************************************************
  *		SysAllocString32	[OLEAUT32.2]
  */
-BSTR WINAPI SysAllocString(LPOLESTR in)
+BSTR WINAPI SysAllocString(LPCOLESTR in)
 {
     /* Delegate this to the SysAllocStringLen32 method. */
     return SysAllocStringLen(in, lstrlenW(in));
@@ -65,7 +65,7 @@ BSTR WINAPI SysAllocString(LPOLESTR in)
 /******************************************************************************
  *		SysReAllocString16	[OLE2DISP.3]
  */
-INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPOLESTR16 in)
+INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPCOLESTR16 in)
 {
 	BSTR16 new=SysAllocString16(in);
 	BSTR_Free(*old);
@@ -76,7 +76,7 @@ INT16 WINAPI SysReAllocString16(LPBSTR16 old,LPOLESTR16 in)
 /******************************************************************************
  *		SysReAllocString32	[OLEAUT32.3]
  */
-INT WINAPI SysReAllocString(LPBSTR old,LPOLESTR in)
+INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR in)
 {
     /*
      * Sanity check
@@ -101,7 +101,7 @@ INT WINAPI SysReAllocString(LPBSTR old,LPOLESTR in)
 /******************************************************************************
  *		SysAllocStringLen16	[OLE2DISP.4]
  */
-BSTR16 WINAPI SysAllocStringLen16(char *in, int len)
+BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
 {
 	BSTR16 out=BSTR_AllocBytes(len+1);
 	if(!out)return 0;
@@ -119,7 +119,7 @@ BSTR16 WINAPI SysAllocStringLen16(char *in, int len)
  * the string. Meaning that the count is double the number of wide 
  * characters in the string.
  */
-BSTR WINAPI SysAllocStringLen(WCHAR *in, int len)
+BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
 {
     DWORD  bufferSize;
     DWORD* newBuffer;
@@ -179,7 +179,7 @@ BSTR WINAPI SysAllocStringLen(WCHAR *in, int len)
 /******************************************************************************
  *		SysReAllocStringLen16	[OLE2DISP.5]
  */
-int WINAPI SysReAllocStringLen16(BSTR16 *old,char *in,int len)
+int WINAPI SysReAllocStringLen16(BSTR16 *old,const char *in,int len)
 {
 	BSTR16 new=SysAllocStringLen16(in,len);
 	BSTR_Free(*old);
@@ -191,7 +191,7 @@ int WINAPI SysReAllocStringLen16(BSTR16 *old,char *in,int len)
 /******************************************************************************
  *             SysReAllocStringLen32   [OLEAUT32.5]
  */
-int WINAPI SysReAllocStringLen(BSTR* old, WCHAR* in, int len)
+int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
 {
     /*
      * Sanity check

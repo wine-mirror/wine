@@ -10,16 +10,16 @@ extern "C" {
 #include "wine/obj_oleaut.h"
 #include "oaidl.h"
 
-BSTR16 WINAPI SysAllocString16(LPOLESTR16);
-BSTR WINAPI SysAllocString(LPOLESTR);
-INT16 WINAPI SysReAllocString16(LPBSTR16,LPOLESTR16);
-INT WINAPI SysReAllocString(LPBSTR,LPOLESTR);
+BSTR16 WINAPI SysAllocString16(LPCOLESTR16);
+BSTR WINAPI SysAllocString(const OLECHAR*);
+INT16 WINAPI SysReAllocString16(LPBSTR16,LPCOLESTR16);
+INT WINAPI SysReAllocString(LPBSTR,const OLECHAR*);
 VOID WINAPI SysFreeString16(BSTR16);
 VOID WINAPI SysFreeString(BSTR);
-BSTR16 WINAPI SysAllocStringLen16(char*, int);
-BSTR WINAPI SysAllocStringLen(WCHAR*, int);
-int WINAPI SysReAllocStringLen16(BSTR16*, char*,  int);
-int WINAPI SysReAllocStringLen(BSTR*, WCHAR*, int);
+BSTR16 WINAPI SysAllocStringLen16(const char*, int);
+BSTR WINAPI SysAllocStringLen(const OLECHAR*, UINT);
+int WINAPI SysReAllocStringLen16(BSTR16*, const char*,  int);
+int WINAPI SysReAllocStringLen(BSTR*, const OLECHAR*, UINT);
 int WINAPI SysStringLen16(BSTR16);
 int WINAPI SysStringLen(BSTR);
 
