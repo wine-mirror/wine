@@ -48,7 +48,6 @@
 #include "winerror.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
-#include "heap.h"
 #include "user_private.h"
 #include "win.h"
 
@@ -225,13 +224,13 @@ static BOOL CLIPBOARD_CloseClipboard(void)
  **************************************************************************/
 
 /**************************************************************************
- *		RegisterClipboardFormatA (USER32.@)
+ *		RegisterClipboardFormatW (USER32.@)
  */
-UINT WINAPI RegisterClipboardFormatA(LPCSTR FormatName)
+UINT WINAPI RegisterClipboardFormatW(LPCWSTR FormatName)
 {
     UINT wFormatID = 0;
 
-    TRACE("%s\n", debugstr_a(FormatName));
+    TRACE("%s\n", debugstr_w(FormatName));
 
     if (USER_Driver.pRegisterClipboardFormat)
         wFormatID = USER_Driver.pRegisterClipboardFormat(FormatName);
@@ -241,21 +240,28 @@ UINT WINAPI RegisterClipboardFormatA(LPCSTR FormatName)
 
 
 /**************************************************************************
- *		RegisterClipboardFormatW (USER32.@)
+ *		RegisterClipboardFormatA (USER32.@)
  */
-UINT WINAPI RegisterClipboardFormatW(LPCWSTR formatName)
+UINT WINAPI RegisterClipboardFormatA(LPCSTR formatName)
 {
-    LPSTR aFormat = HEAP_strdupWtoA( GetProcessHeap(), 0, formatName );
-    UINT ret = RegisterClipboardFormatA( aFormat );
-    HeapFree( GetProcessHeap(), 0, aFormat );
+    int len;
+    LPWSTR wFormat;
+    UINT ret;
+
+    len = MultiByteToWideChar(CP_ACP, 0, formatName, -1, NULL, 0);
+    wFormat = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, formatName, -1, wFormat, len);
+
+    ret = RegisterClipboardFormatW(wFormat);
+    HeapFree(GetProcessHeap(), 0, wFormat);
     return ret;
 }
 
 
 /**************************************************************************
- *		GetClipboardFormatNameA (USER32.@)
+ *		GetClipboardFormatNameW (USER32.@)
  */
-INT WINAPI GetClipboardFormatNameA(UINT wFormat, LPSTR retStr, INT maxlen)
+INT WINAPI GetClipboardFormatNameW(UINT wFormat, LPWSTR retStr, INT maxlen)
 {
     INT len = 0;
 
@@ -269,17 +275,17 @@ INT WINAPI GetClipboardFormatNameA(UINT wFormat, LPSTR retStr, INT maxlen)
 
 
 /**************************************************************************
- *		GetClipboardFormatNameW (USER32.@)
+ *		GetClipboardFormatNameA (USER32.@)
  */
-INT WINAPI GetClipboardFormatNameW(UINT wFormat, LPWSTR retStr, INT maxlen)
+INT WINAPI GetClipboardFormatNameA(UINT wFormat, LPSTR retStr, INT maxlen)
 {
     INT ret;
-    LPSTR p = HeapAlloc( GetProcessHeap(), 0, maxlen );
+    LPWSTR p = HeapAlloc( GetProcessHeap(), 0, maxlen*sizeof(WCHAR) );
     if(p == NULL) return 0; /* FIXME: is this the correct failure value? */
 
-    ret = GetClipboardFormatNameA( wFormat, p, maxlen );
+    ret = GetClipboardFormatNameW( wFormat, p, maxlen );
 
-    if (maxlen > 0 && !MultiByteToWideChar( CP_ACP, 0, p, -1, retStr, maxlen ))
+    if (maxlen > 0 && !WideCharToMultiByte( CP_ACP, 0, p, -1, retStr, maxlen, 0, 0))
         retStr[maxlen-1] = 0;
     HeapFree( GetProcessHeap(), 0, p );
     return ret;

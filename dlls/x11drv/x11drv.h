@@ -469,7 +469,7 @@ typedef HANDLE (*DRVIMPORTFUNC)(LPBYTE hData, UINT cBytes);
 
 typedef struct tagWINE_CLIPFORMAT {
     UINT        wFormatID;
-    LPSTR       Name;
+    LPCWSTR     Name;
     UINT        drvData;
     UINT        wFlags;
     DRVIMPORTFUNC  lpDrvImportFunc;
