@@ -81,9 +81,32 @@ static BOOL ANIMATE_LoadFileA(ANIMATE_INFO *infoPtr, LPSTR lpName)
 }
 
 
+static LRESULT ANIMATE_DoStop(ANIMATE_INFO *infoPtr)
+{
+    EnterCriticalSection(&infoPtr->cs);
+
+    /* should stop playing */
+    if (infoPtr->hService) {
+	SERVICE_Delete(infoPtr->hService);
+	infoPtr->hService = 0;
+    }
+    if (infoPtr->uTimer) {
+	KillTimer(infoPtr->hWnd, infoPtr->uTimer);
+	infoPtr->uTimer = 0;
+    }
+
+    LeaveCriticalSection(&infoPtr->cs);
+
+    ANIMATE_Notify(infoPtr, ACN_STOP);
+
+    return TRUE;
+}
+
+
 static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
 {
     if (infoPtr->hMMio) {
+	ANIMATE_DoStop(infoPtr);
 	mmioClose(infoPtr->hMMio, 0);
 	if (infoPtr->hRes) {
  	    FreeResource(infoPtr->hRes);
@@ -117,31 +140,21 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
 }
 
 
-static LRESULT ANIMATE_DoStop(ANIMATE_INFO *infoPtr)
-{
-    /* should stop playing */
-    if (infoPtr->hService) {
-	SERVICE_Delete(infoPtr->hService);
-	infoPtr->hService = 0;
-    }
-    if (infoPtr->uTimer) {
-	KillTimer(infoPtr->hWnd, infoPtr->uTimer);
-	infoPtr->uTimer = 0;
-    }
-
-    ANIMATE_Notify(infoPtr, ACN_STOP);
-
-    return TRUE;
-}
-
 static LRESULT ANIMATE_PaintFrame(ANIMATE_INFO* infoPtr, HDC hDC)
 {
-    if (hDC) {
+    if (!hDC || !infoPtr->inbih)
+	return TRUE;
+    if (infoPtr->hic)
 	StretchDIBits(hDC, 0, 0, infoPtr->outbih->biWidth, infoPtr->outbih->biHeight, 
 		      0, 0, infoPtr->outbih->biWidth, infoPtr->outbih->biHeight, 
 		      infoPtr->outdata, (LPBITMAPINFO)infoPtr->outbih, DIB_RGB_COLORS, 
 		      SRCCOPY);
-    }
+    else
+	StretchDIBits(hDC, 0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, 
+		      0, 0, infoPtr->inbih->biWidth, infoPtr->inbih->biHeight, 
+		      infoPtr->indata, (LPBITMAPINFO)infoPtr->inbih, DIB_RGB_COLORS, 
+		      SRCCOPY);
+
     return TRUE;
 }
 
@@ -156,7 +169,8 @@ static LRESULT ANIMATE_DrawFrame(ANIMATE_INFO* infoPtr)
     mmioSeek(infoPtr->hMMio, infoPtr->lpIndex[infoPtr->currFrame], SEEK_SET);
     mmioRead(infoPtr->hMMio, infoPtr->indata, infoPtr->ash.dwSuggestedBufferSize);
     
-    if ((infoPtr->fnICDecompress)(infoPtr->hic, 0, infoPtr->inbih, infoPtr->indata, 
+    if (infoPtr->hic &&
+	(infoPtr->fnICDecompress)(infoPtr->hic, 0, infoPtr->inbih, infoPtr->indata, 
 				  infoPtr->outbih, infoPtr->outdata) != ICERR_OK) {
 	LeaveCriticalSection(&infoPtr->cs);
 	WARN("Decompression error\n");
@@ -407,6 +421,13 @@ static BOOL    ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 {
     DWORD	outSize;
 
+    /* check uncompressed AVI */
+    if (infoPtr->ash.fccHandler == mmioFOURCC('D', 'I', 'B', ' ')) {
+	infoPtr->hic = 0;
+	return TRUE;
+    }
+
+    /* try to get a decompressor for that type */
     infoPtr->hic = (infoPtr->fnICOpen)(ICTYPE_VIDEO, 
 				       infoPtr->ash.fccHandler, 
 				       ICMODE_DECOMPRESS);
@@ -527,7 +548,6 @@ static LRESULT ANIMATE_Stop(HWND hWnd, WPARAM wParam, LPARAM lParam)
     ANIMATE_DoStop(infoPtr);
     return TRUE;
 }
-
 
 
 static LRESULT ANIMATE_Create(HWND hWnd, WPARAM wParam, LPARAM lParam)
