@@ -9,12 +9,6 @@ extern "C" {
 #endif
 #include "basetsd.h"
 #include "guiddef.h"
-typedef CHAR OLECHAR16;
-typedef LPSTR LPOLESTR16;
-typedef LPCSTR LPCOLESTR16;
-typedef OLECHAR16 *BSTR16;
-typedef BSTR16 *LPBSTR16;
-#define OLESTR16(x) x
 #if 0 /* winnt.h */
 typedef unsigned char BYTE;
 
@@ -160,6 +154,15 @@ typedef const OLECHAR *LPCOLESTR;
 #ifndef __WINE__
 #define OLESTR(str) WINE_UNICODE_TEXT(str)
 #endif
+typedef CHAR OLECHAR16;
+
+typedef LPSTR LPOLESTR16;
+
+typedef LPCSTR LPCOLESTR16;
+
+typedef OLECHAR16 *BSTR16;
+typedef BSTR16 *LPBSTR16;
+#define OLESTR16(x) x
 typedef LONG SCODE;
 
 typedef struct _COAUTHIDENTITY {

@@ -31,15 +31,6 @@ interface IWinTypes
 cpp_quote("#include \"basetsd.h\"")
 cpp_quote("#include \"guiddef.h\"")
 
-/* from Wine's pre-WIDL wtypes.h */
-/* FIXME: does not belong here */
-cpp_quote("typedef CHAR OLECHAR16;")
-cpp_quote("typedef LPSTR LPOLESTR16;")
-cpp_quote("typedef LPCSTR LPCOLESTR16;")
-cpp_quote("typedef OLECHAR16 *BSTR16;")
-cpp_quote("typedef BSTR16 *LPBSTR16;")
-cpp_quote("#define OLESTR16(x) x")
-
 /******************** BASIC WIN32 TYPES ********************/
 cpp_quote("#if 0 /* winnt.h */") /* don't redefine these */
 
@@ -165,6 +156,18 @@ typedef [string] const OLECHAR *LPCOLESTR;
 cpp_quote("#ifndef __WINE__")
 cpp_quote("#define OLESTR(str) WINE_UNICODE_TEXT(str)")
 cpp_quote("#endif")
+
+/* from Wine's pre-WIDL wtypes.h */
+/* FIXME: does not belong here */
+typedef CHAR OLECHAR16;
+typedef LPSTR LPOLESTR16;
+typedef LPCSTR LPCOLESTR16;
+/* quoted because if BSTR16 is ever used in IDL files,
+ * it'll probably need some wire_marshal stuff too,
+ * and quoting these will detect any such necessity */
+cpp_quote("typedef OLECHAR16 *BSTR16;")
+cpp_quote("typedef BSTR16 *LPBSTR16;")
+cpp_quote("#define OLESTR16(x) x")
 
 typedef LONG SCODE;
 
