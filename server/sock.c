@@ -355,6 +355,7 @@ static struct object *accept_socket( int handle )
     clear_error();
     sock->pmask &= ~FD_ACCEPT;
     sock->hmask &= ~FD_ACCEPT;
+    sock_reselect( sock );
     release_object( sock );
     return &acceptsock->obj;
 }
