@@ -1295,6 +1295,8 @@ BOOL WINAPI SetConsoleCursorPosition( HANDLE hcon, COORD pos )
  */
 BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE hcon,LPDWORD nrofevents)
 {
+    CONSOLE_get_input (hcon, FALSE);
+
     return read_console_input( hcon, NULL, 0, nrofevents, FALSE );
 }
 
