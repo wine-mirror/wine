@@ -331,14 +331,47 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 
 
 /***********************************************************************
+ *             GetFileInformationByHandle   (KERNEL32.@)
+ */
+BOOL WINAPI GetFileInformationByHandle( HANDLE hFile, BY_HANDLE_FILE_INFORMATION *info )
+{
+    FILE_ALL_INFORMATION all_info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtQueryInformationFile( hFile, &io, &all_info, sizeof(all_info), FileAllInformation );
+    if (status == STATUS_SUCCESS)
+    {
+        info->dwFileAttributes                = all_info.BasicInformation.FileAttributes;
+        info->ftCreationTime.dwHighDateTime   = all_info.BasicInformation.CreationTime.u.HighPart;
+        info->ftCreationTime.dwLowDateTime    = all_info.BasicInformation.CreationTime.u.LowPart;
+        info->ftLastAccessTime.dwHighDateTime = all_info.BasicInformation.LastAccessTime.u.HighPart;
+        info->ftLastAccessTime.dwLowDateTime  = all_info.BasicInformation.LastAccessTime.u.LowPart;
+        info->ftLastWriteTime.dwHighDateTime  = all_info.BasicInformation.LastWriteTime.u.HighPart;
+        info->ftLastWriteTime.dwLowDateTime   = all_info.BasicInformation.LastWriteTime.u.LowPart;
+        info->dwVolumeSerialNumber            = 0;  /* FIXME */
+        info->nFileSizeHigh                   = all_info.StandardInformation.EndOfFile.u.HighPart;
+        info->nFileSizeLow                    = all_info.StandardInformation.EndOfFile.u.LowPart;
+        info->nNumberOfLinks                  = all_info.StandardInformation.NumberOfLinks;
+        info->nFileIndexHigh                  = all_info.InternalInformation.IndexNumber.u.HighPart;
+        info->nFileIndexLow                   = all_info.InternalInformation.IndexNumber.u.LowPart;
+        return TRUE;
+    }
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           GetFileSize   (KERNEL32.@)
  */
 DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
 {
-    BY_HANDLE_FILE_INFORMATION info;
-    if (!GetFileInformationByHandle( hFile, &info )) return -1;
-    if (filesizehigh) *filesizehigh = info.nFileSizeHigh;
-    return info.nFileSizeLow;
+    LARGE_INTEGER size;
+    if (!GetFileSizeEx( hFile, &size )) return INVALID_FILE_SIZE;
+    if (filesizehigh) *filesizehigh = size.u.HighPart;
+    if (size.u.LowPart == INVALID_FILE_SIZE) SetLastError(0);
+    return size.u.LowPart;
 }
 
 
@@ -347,23 +380,53 @@ DWORD WINAPI GetFileSize( HANDLE hFile, LPDWORD filesizehigh )
  */
 BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
 {
-    BY_HANDLE_FILE_INFORMATION info;
+    FILE_END_OF_FILE_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
-    if (!lpFileSize)
+    status = NtQueryInformationFile( hFile, &io, &info, sizeof(info), FileEndOfFileInformation );
+    if (status == STATUS_SUCCESS)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
+        *lpFileSize = info.EndOfFile;
+        return TRUE;
     }
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
+}
 
-    if (!GetFileInformationByHandle( hFile, &info ))
+
+/***********************************************************************
+ *           GetFileTime   (KERNEL32.@)
+ */
+BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
+                         FILETIME *lpLastAccessTime, FILETIME *lpLastWriteTime )
+{
+    FILE_BASIC_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtQueryInformationFile( hFile, &io, &info, sizeof(info), FileBasicInformation );
+    if (status == STATUS_SUCCESS)
     {
-        return FALSE;
+        if (lpCreationTime)
+        {
+            lpCreationTime->dwHighDateTime = info.CreationTime.u.HighPart;
+            lpCreationTime->dwLowDateTime  = info.CreationTime.u.LowPart;
+        }
+        if (lpLastAccessTime)
+        {
+            lpLastAccessTime->dwHighDateTime = info.LastAccessTime.u.HighPart;
+            lpLastAccessTime->dwLowDateTime  = info.LastAccessTime.u.LowPart;
+        }
+        if (lpLastWriteTime)
+        {
+            lpLastWriteTime->dwHighDateTime = info.LastWriteTime.u.HighPart;
+            lpLastWriteTime->dwLowDateTime  = info.LastWriteTime.u.LowPart;
+        }
+        return TRUE;
     }
-
-    lpFileSize->u.LowPart = info.nFileSizeLow;
-    lpFileSize->u.HighPart = info.nFileSizeHigh;
-
-    return TRUE;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
 }
 
 

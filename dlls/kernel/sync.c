@@ -1037,27 +1037,29 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
                                 DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES attr )
 {
     HANDLE ret;
-    DWORD len;
-    static const WCHAR leadin[] = {'\\','\\','.','\\','P','I','P','E','\\'};
+    UNICODE_STRING nt_name;
+    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
 
     TRACE("(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p)\n",
           debugstr_w(name), dwOpenMode, dwPipeMode, nMaxInstances,
           nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
 
-    if (!name)
+    if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
     }
-    len = strlenW(name);
-    if (len >= MAX_PATH)
+    if (nt_name.Length >= MAX_PATH * sizeof(WCHAR) )
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        RtlFreeUnicodeString( &nt_name );
         return INVALID_HANDLE_VALUE;
     }
-    if (strncmpiW(name, leadin, sizeof(leadin)/sizeof(leadin[0])))
+    if (nt_name.Length < sizeof(leadin) ||
+        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(leadin[0])))
     {
         SetLastError( ERROR_INVALID_NAME );
+        RtlFreeUnicodeString( &nt_name );
         return INVALID_HANDLE_VALUE;
     }
     SERVER_START_REQ( create_named_pipe )
@@ -1069,12 +1071,13 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
         req->insize = nInBufferSize;
         req->timeout = nDefaultTimeOut;
         req->inherit = (attr && (attr->nLength>=sizeof(*attr)) && attr->bInheritHandle);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
+        wine_server_add_data( req, nt_name.Buffer + 4, nt_name.Length - 4*sizeof(WCHAR) );
         SetLastError(0);
         if (!wine_server_call_err( req )) ret = reply->handle;
         else ret = INVALID_HANDLE_VALUE;
     }
     SERVER_END_REQ;
+    RtlFreeUnicodeString( &nt_name );
     return ret;
 }
 
