@@ -91,8 +91,8 @@ type	win32
 188 stub GetPrinterDataA
 189 stub GetPrinterDataW
 190 stdcall GetPrinterDriverA(long str long ptr long ptr) GetPrinterDriverA
-191 stub GetPrinterDriverDirectoryA
-192 stub GetPrinterDriverDirectoryW
+191 stdcall GetPrinterDriverDirectoryA(str str long ptr long ptr) GetPrinterDriverDirectoryA
+192 stdcall GetPrinterDriverDirectoryW(wstr wstr long ptr long ptr) GetPrinterDriverDirectoryW
 193 stdcall GetPrinterDriverW(long str long ptr long ptr) GetPrinterDriverW
 194 stdcall GetPrinterW(long long ptr long ptr) GetPrinterW
 195 stub InitializeDll

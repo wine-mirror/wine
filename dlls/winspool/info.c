@@ -14,6 +14,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "debugtools.h"
+#include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(winspool)
 
@@ -44,7 +45,10 @@ static OPENEDPRINTERA OpenedPrinterTableA[NUM_PRINTER_MAX] =
     {NULL, -1, NULL}
 };
 
-static char Printers[]		= "System\\CurrentControlSet\\Control\\Print\\Printers\\";
+static char Printers[] =
+ "System\\CurrentControlSet\\control\\Print\\Printers\\";
+static char Drivers[] =
+ "System\\CurrentControlSet\\control\\Print\\Environments\\Wine\\Drivers\\";
 
 
 /******************************************************************
@@ -646,7 +650,7 @@ BOOL  WINAPI EnumPrintersA(
 
  /* Enter critical section to prevent AddPrinters() et al. to
   * modify whilst we're reading in the registry
- */
+  */
  InitializeCriticalSection(&PRINT32_RegistryBlocker);
  EnterCriticalSection(&PRINT32_RegistryBlocker);
  
@@ -894,8 +898,100 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
  */
 HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 {
-    FIXME("(%s,%ld,%p): stub\n", pName, Level, pPrinter);
-    return 0;
+    PRINTER_INFO_2A *pi = (PRINTER_INFO_2A *) pPrinter;
+
+    HANDLE retval;
+    HKEY hkeyPrinter, hkeyPrinters, hkeyDriver, hkeyDrivers;
+
+    TRACE("(%s,%ld,%p)\n", pName, Level, pPrinter);
+    
+    if(pName != NULL) {
+        FIXME("pName = `%s' - unsupported\n", pName);
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
+    if(Level != 2) {
+        WARN("Level = %ld\n", Level);
+	SetLastError(ERROR_INVALID_LEVEL);
+	return 0;
+    }
+    if(!pPrinter) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Printers key\n");
+	return 0;
+    }
+    if(RegOpenKeyA(hkeyPrinters, pi->pPrinterName, &hkeyPrinter) ==
+       ERROR_SUCCESS) {
+        SetLastError(ERROR_PRINTER_ALREADY_EXISTS);
+	RegCloseKey(hkeyPrinter);
+	RegCloseKey(hkeyPrinters);
+	return 0;
+    }
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &hkeyDrivers) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Drivers key\n");
+	RegCloseKey(hkeyPrinters);
+	return 0;
+    }
+    if(RegOpenKeyA(hkeyDrivers, pi->pDriverName, &hkeyDriver) != 
+       ERROR_SUCCESS) {
+        WARN("Can't find driver `%s'\n", pi->pDriverName);
+	RegCloseKey(hkeyPrinters);
+	RegCloseKey(hkeyDrivers);
+	SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER);
+	return 0;
+    }
+    RegCloseKey(hkeyDriver);
+    RegCloseKey(hkeyDrivers);
+    if(strcasecmp(pi->pPrintProcessor, "WinPrint")) {  /* FIXME */
+        WARN("Can't find processor `%s'\n", pi->pPrintProcessor);
+	SetLastError(ERROR_UNKNOWN_PRINTPROCESSOR);
+	RegCloseKey(hkeyPrinters);
+	return 0;
+    }
+    if(RegCreateKeyA(hkeyPrinters, pi->pPrinterName, &hkeyPrinter) !=
+       ERROR_SUCCESS) {
+        WARN("Can't create printer `%s'\n", pi->pPrinterName);
+	SetLastError(ERROR_INVALID_PRINTER_NAME);
+	RegCloseKey(hkeyPrinters);
+	return 0;
+    }
+    RegSetValueExA(hkeyPrinter, "Attributes", 0, REG_DWORD,
+		   (LPSTR)&pi->Attributes, sizeof(DWORD));
+    RegSetValueExA(hkeyPrinter, "Default DevMode", 0, REG_BINARY,
+		   (LPSTR)&pi->pDevMode,
+		   pi->pDevMode ? pi->pDevMode->dmSize : 0);
+    RegSetValueExA(hkeyPrinter, "Description", 0, REG_SZ, pi->pComment, 0);
+    RegSetValueExA(hkeyPrinter, "Location", 0, REG_SZ, pi->pLocation, 0);
+    RegSetValueExA(hkeyPrinter, "Name", 0, REG_SZ, pi->pPrinterName, 0);
+    RegSetValueExA(hkeyPrinter, "Parameters", 0, REG_SZ, pi->pParameters, 0);
+    RegSetValueExA(hkeyPrinter, "Port", 0, REG_SZ, pi->pPortName, 0);
+    RegSetValueExA(hkeyPrinter, "Print Processor", 0, REG_SZ,
+		   pi->pPrintProcessor, 0);
+    RegSetValueExA(hkeyPrinter, "Printer Driver", 0, REG_SZ, pi->pDriverName,
+		   0);
+    RegSetValueExA(hkeyPrinter, "Priority", 0, REG_DWORD,
+		   (LPSTR)&pi->Priority, sizeof(DWORD));
+    RegSetValueExA(hkeyPrinter, "Separator File", 0, REG_SZ, pi->pSepFile, 0);
+    RegSetValueExA(hkeyPrinter, "Share Name", 0, REG_SZ, pi->pShareName, 0);
+    RegSetValueExA(hkeyPrinter, "Start Time", 0, REG_DWORD,
+		   (LPSTR)&pi->StartTime, sizeof(DWORD));
+    RegSetValueExA(hkeyPrinter, "Status", 0, REG_DWORD,
+		   (LPSTR)&pi->Status, sizeof(DWORD));
+    RegSetValueExA(hkeyPrinter, "Until Time", 0, REG_DWORD,
+		   (LPSTR)&pi->UntilTime, sizeof(DWORD));
+
+    RegCloseKey(hkeyPrinter);
+    RegCloseKey(hkeyPrinters);
+    if(!OpenPrinterA(pi->pPrinterName, &retval, NULL)) {
+        ERR("OpenPrinter failing\n");
+	return 0;
+    }
+    return retval;
 }
 
 /*****************************************************************************
@@ -1104,11 +1200,27 @@ BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
  *          GetPrinterDriver32A  [WINSPOOL.190]
  */
 BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
-                                 DWORD Level, LPBYTE pDriverInfo,
-                                 DWORD cbBuf, LPDWORD pcbNeeded)
+			      DWORD Level, LPBYTE pDriverInfo,
+			      DWORD cbBuf, LPDWORD pcbNeeded)
 {
+    OPENEDPRINTERA *lpOpenedPrinter;
+    LPSTR lpName;
+
     FIXME("(%d,%s,%ld,%p,%ld,%p): stub\n",hPrinter,pEnvironment,
          Level,pDriverInfo,cbBuf, pcbNeeded);
+
+    lpOpenedPrinter = WINSPOOL_GetOpenedPrinterA(hPrinter);
+    if(!lpOpenedPrinter) {
+        SetLastError(ERROR_INVALID_HANDLE);
+	return FALSE;
+    }
+    lpName = lpOpenedPrinter->lpsPrinterName;
+    if(pEnvironment) {
+        FIXME("pEnvironment = `%s'\n", pEnvironment);
+	SetLastError(ERROR_INVALID_ENVIRONMENT);
+	return FALSE;
+    }
+    
     return FALSE;
 }
 
@@ -1123,14 +1235,150 @@ BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
           Level,pDriverInfo,cbBuf, pcbNeeded);
     return FALSE;
 }
+
+/*****************************************************************************
+ *       GetPrinterDriverDirectoryA  [WINSPOOL.191]
+ */
+BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
+				       DWORD Level, LPBYTE pDriverDirectory,
+				       DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    DWORD needed;
+
+    TRACE("(%s, %s, %ld, %p, %ld, %p)\n", pName, pEnvironment, Level,
+	  pDriverDirectory, cbBuf, pcbNeeded);
+    if(pName != NULL) {
+        FIXME("pName = `%s' - unsupported\n", pName);
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    if(pEnvironment != NULL) {
+        FIXME("pEnvironment = `%s' - unsupported\n", pEnvironment);
+	SetLastError(ERROR_INVALID_ENVIRONMENT);
+	return FALSE;
+    }
+    if(Level != 1)  /* win95 ignores this so we just carry on */
+        WARN("Level = %ld - assuming 1\n", Level);
+    
+    /* FIXME should read from registry */
+    needed = GetSystemDirectoryA(pDriverDirectory, cbBuf);
+    needed++;
+    if(pcbNeeded)
+        *pcbNeeded = needed;
+    if(needed > cbBuf) {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	return FALSE;
+    }
+    return TRUE;
+}
+
+
+/*****************************************************************************
+ *       GetPrinterDriverDirectoryW  [WINSPOOL.192]
+ */
+BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR pName, LPWSTR pEnvironment,
+				       DWORD Level, LPBYTE pDriverDirectory,
+				       DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    LPSTR pNameA = NULL, pEnvironmentA = NULL;
+    BOOL ret;
+
+    if(pName)
+        pNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, pName );
+    if(pEnvironment)
+        pEnvironmentA = HEAP_strdupWtoA( GetProcessHeap(), 0, pEnvironment );
+    ret = GetPrinterDriverDirectoryA( pNameA, pEnvironmentA, Level,
+				      pDriverDirectory, cbBuf, pcbNeeded );
+    if(pNameA)
+        HeapFree( GetProcessHeap(), 0, pNameA );
+    if(pEnvironmentA)
+        HeapFree( GetProcessHeap(), 0, pEnvironment );
+
+    return ret;
+}
+
 /*****************************************************************************
  *          AddPrinterDriver32A  [WINSPOOL.120]
  */
-BOOL WINAPI AddPrinterDriverA(LPSTR printerName,DWORD level, 
-				   LPBYTE pDriverInfo)
+BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 {
-    FIXME("(%s,%ld,%p): stub\n",printerName,level,pDriverInfo);
-    return FALSE;
+    DRIVER_INFO_3A di3;
+    HKEY hkeyDrivers, hkeyName;
+
+    TRACE("(%s,%ld,%p)\n",pName,level,pDriverInfo);
+
+    if(level != 2 && level != 3) {
+        SetLastError(ERROR_INVALID_LEVEL);
+	return FALSE;
+    }
+    if(pName != NULL) {
+        FIXME("pName= `%s' - unsupported\n", pName);
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    if(!pDriverInfo) {
+        WARN("pDriverInfo == NULL");
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    
+    if(level == 3)
+        di3 = *(DRIVER_INFO_3A *)pDriverInfo;
+    else {
+        memset(&di3, 0, sizeof(di3));
+        *(DRIVER_INFO_2A *)&di3 = *(DRIVER_INFO_2A *)pDriverInfo;
+    }
+
+    if(!di3.pName || !di3.pDriverPath || !di3.pConfigFile ||
+       !di3.pDataFile) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    if(!di3.pDefaultDataType) di3.pDefaultDataType = "";
+    if(!di3.pDependentFiles) di3.pDependentFiles = "\0";
+    if(!di3.pHelpFile) di3.pHelpFile = "";
+    if(!di3.pMonitorName) di3.pMonitorName = "";
+
+    if(di3.pEnvironment) {
+        FIXME("pEnvironment = `%s'\n", di3.pEnvironment);
+	SetLastError(ERROR_INVALID_ENVIRONMENT);
+	return FALSE;
+    }
+    if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Drivers, &hkeyDrivers) !=
+       ERROR_SUCCESS) {
+        ERR("Can't create Drivers key\n");
+	return FALSE;
+    }
+
+    if(level == 2) { /* apparently can't overwrite with level2 */
+        if(RegOpenKeyA(hkeyDrivers, di3.pName, &hkeyName) == ERROR_SUCCESS) {
+	    RegCloseKey(hkeyName);
+	    RegCloseKey(hkeyDrivers);
+	    WARN("Trying to create existing printer driver `%s'\n", di3.pName);
+	    SetLastError(ERROR_PRINTER_DRIVER_ALREADY_INSTALLED);
+	    return FALSE;
+	}
+    }
+    if(RegCreateKeyA(hkeyDrivers, di3.pName, &hkeyName) != ERROR_SUCCESS) {
+	RegCloseKey(hkeyDrivers);
+	ERR("Can't create Name key\n");
+	return FALSE;
+    }
+    RegSetValueExA(hkeyName, "Configuration File", 0, REG_SZ, di3.pConfigFile,
+		   0);
+    RegSetValueExA(hkeyName, "Data File", 0, REG_SZ, di3.pDataFile, 0);
+    RegSetValueExA(hkeyName, "Driver", 0, REG_SZ, di3.pDriverPath, 0);
+    RegSetValueExA(hkeyName, "Version", 0, REG_DWORD, (LPSTR)&di3.cVersion, 
+		   sizeof(DWORD));
+    RegSetValueExA(hkeyName, "Datatype", 0, REG_SZ, di3.pDefaultDataType, 0);
+    RegSetValueExA(hkeyName, "Dependent Files", 0, REG_MULTI_SZ,
+		   di3.pDependentFiles, 0);
+    RegSetValueExA(hkeyName, "Help File", 0, REG_SZ, di3.pHelpFile, 0);
+    RegSetValueExA(hkeyName, "Monitor", 0, REG_SZ, di3.pMonitorName, 0);
+    RegCloseKey(hkeyName);
+    RegCloseKey(hkeyDrivers);
+
+    return TRUE;
 }
 /*****************************************************************************
  *          AddPrinterDriver32W  [WINSPOOL.121]

@@ -105,6 +105,36 @@ DECL_WINELIB_TYPE_AW(DRIVER_INFO_2)
 DECL_WINELIB_TYPE_AW(PDRIVER_INFO_2)
 DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_2)
 
+typedef struct _DRIVER_INFO_3A {
+  DWORD cVersion;
+  LPSTR pName;
+  LPSTR pEnvironment;
+  LPSTR pDriverPath;
+  LPSTR pDataFile;
+  LPSTR pConfigFile;
+  LPSTR pHelpFile;
+  LPSTR pDependentFiles;
+  LPSTR pMonitorName;
+  LPSTR pDefaultDataType;
+} DRIVER_INFO_3A, *PDRIVER_INFO_3A, *LPDRIVER_INFO_3A;
+
+typedef struct _DRIVER_INFO_3W {
+  DWORD cVersion;
+  LPWSTR pName;
+  LPWSTR pEnvironment;
+  LPWSTR pDriverPath;
+  LPWSTR pDataFile;
+  LPWSTR pConfigFile;
+  LPWSTR pHelpFile;
+  LPWSTR pDependentFiles;
+  LPWSTR pMonitorName;
+  LPWSTR pDefaultDataType;
+} DRIVER_INFO_3W, *PDRIVER_INFO_3W, *LPDRIVER_INFO_3W;
+
+DECL_WINELIB_TYPE_AW(DRIVER_INFO_3)
+DECL_WINELIB_TYPE_AW(PDRIVER_INFO_3)
+DECL_WINELIB_TYPE_AW(LPDRIVER_INFO_3)
+
 typedef struct _PRINTER_INFO_1A {
   DWORD   Flags;
   LPSTR   pDescription;
@@ -219,19 +249,6 @@ DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_5)
 #endif /* Status */
 
 /* DECLARATIONS */
-DWORD WINAPI DrvGetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
-	  LPDWORD lpType, LPBYTE lpPrinterData, int cbData, LPDWORD lpNeeded);
-DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
-          DWORD lpType, LPBYTE lpPrinterData, DWORD dwSize);
-HANDLE16 WINAPI OpenJob16(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC);
-int WINAPI CloseJob16(HANDLE16 hJob);
-int WINAPI WriteSpool16(HANDLE16 hJob, LPSTR lpData, WORD cch);
-int WINAPI DeleteJob16(HANDLE16 hJob, WORD wNotUsed);
-int WINAPI StartSpoolPage16(HANDLE16 hJob);
-int WINAPI EndSpoolPage16(HANDLE16 hJob);
-DWORD WINAPI GetSpoolJob16(int nOption, LONG param);
-int WINAPI WriteDialog16(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg);
-
 INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort,WORD fwCapability,
 			       LPSTR pOutput, LPDEVMODEA pDevMode);
 INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
@@ -270,6 +287,10 @@ BOOL  WINAPI EnumPrintersW(DWORD dwType, LPWSTR lpszName,
 #define EnumPrinters WINELIB_NAME_AW(EnumPrinters)
 
 BOOL WINAPI PrinterProperties(HWND hWnd, HANDLE hPrinter);
+
+BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR,LPSTR,DWORD,LPBYTE,DWORD,LPDWORD);
+BOOL WINAPI GetPrinterDriverDirectoryW(LPWSTR,LPWSTR,DWORD,LPBYTE,DWORD,LPDWORD);
+#define GetPrinterDriverDirectory WINELIB_NAME_AW(GetPrinterDriverDirectory)
 
 #ifdef __cplusplus
 } /* extern "C" */
