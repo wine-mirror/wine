@@ -1769,6 +1769,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 
 		return S_OK;
 	}
+#else
+	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
+		FIXME("%s: I know about this GUID, but don't support it yet\n",
+		      debugstr_guid( riid ));
+		*ppobj = NULL;
+		return E_FAIL;
+	}
 #endif
 
         if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
