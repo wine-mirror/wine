@@ -160,17 +160,22 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x00A0 */
-    "WM_NCMOUSEMOVE",		/* 0x00A0 */
-    "WM_NCLBUTTONDOWN",		/* 0x00A1 */
-    "WM_NCLBUTTONUP",		/* 0x00A2 */
-    "WM_NCLBUTTONDBLCLK",	/* 0x00A3 */
-    "WM_NCRBUTTONDOWN",		/* 0x00A4 */
-    "WM_NCRBUTTONUP",		/* 0x00A5 */
-    "WM_NCRBUTTONDBLCLK",	/* 0x00A6 */
-    "WM_NCMBUTTONDOWN",		/* 0x00A7 */
-    "WM_NCMBUTTONUP",		/* 0x00A8 */
-    "WM_NCMBUTTONDBLCLK",	/* 0x00A9 */
-    NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_NCMOUSEMOVE",           /* 0x00a0 */
+    "WM_NCLBUTTONDOWN",         /* 0x00a1 */
+    "WM_NCLBUTTONUP",           /* 0x00a2 */
+    "WM_NCLBUTTONDBLCLK",       /* 0x00a3 */
+    "WM_NCRBUTTONDOWN",         /* 0x00a4 */
+    "WM_NCRBUTTONUP",           /* 0x00a5 */
+    "WM_NCRBUTTONDBLCLK",       /* 0x00a6 */
+    "WM_NCMBUTTONDOWN",         /* 0x00a7 */
+    "WM_NCMBUTTONUP",           /* 0x00a8 */
+    "WM_NCMBUTTONDBLCLK",       /* 0x00a9 */
+    NULL,                       /* 0x00aa */
+    "WM_NCXBUTTONDOWN",         /* 0x00ab */
+    "WM_NCXBUTTONUP",           /* 0x00ac */
+    "WM_NCXBUTTONDBLCLK",       /* 0x00ad */
+    NULL,                       /* 0x00ae */
+    NULL,                       /* 0x00af */
 
     /* 0x00B0 - Win32 Edit controls */
     "EM_GETSEL",                /* 0x00b0 */
@@ -422,7 +427,10 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MBUTTONUP",		/* 0x0208 */
     "WM_MBUTTONDBLCLK",		/* 0x0209 */
     "WM_MOUSEWHEEL",            /* 0x020A */
-    NULL, NULL, NULL, NULL, NULL,
+    "WM_XBUTTONDOWN",           /* 0x020B */
+    "WM_XBUTTONUP",             /* 0x020C */
+    "WM_XBUTTONDBLCLK",         /* 0x020D */
+    NULL, NULL,
 
     "WM_PARENTNOTIFY",		/* 0x0210 */
     "WM_ENTERMENULOOP",         /* 0x0211 */
@@ -1047,8 +1055,8 @@ static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
     "VK_RBUTTON",	/* 0x02 */
     "VK_CANCEL",	/* 0x03 */
     "VK_MBUTTON",	/* 0x04 */
-    NULL,		/* 0x05 */
-    NULL,		/* 0x06 */
+    "VK_XBUTTON1",	/* 0x05 */
+    "VK_XBUTTON2",	/* 0x06 */
     NULL,		/* 0x07 */
     "VK_BACK",		/* 0x08 */
     "VK_TAB",		/* 0x09 */

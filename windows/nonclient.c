@@ -1132,7 +1132,7 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	{
 	    WORD msg = HIWORD( lParam );
 	    if ((msg == WM_LBUTTONDOWN) || (msg == WM_MBUTTONDOWN) ||
-		(msg == WM_RBUTTONDOWN))
+		(msg == WM_RBUTTONDOWN) || (msg == WM_XBUTTONDOWN))
 		MessageBeep(0);
 	}
 	break;

@@ -39,7 +39,7 @@
 #include "user.h"
 
 #define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
-#define WM_NCMOUSELAST  WM_NCMBUTTONDBLCLK
+#define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
 
 enum message_kind { SEND_MESSAGE, POST_MESSAGE };
 #define NB_MSG_KINDS (POST_MESSAGE+1)
@@ -1031,6 +1031,13 @@ static void update_input_key_state( struct thread_input *input, const struct mes
         /* fall through */
     case WM_RBUTTONUP:
         set_input_key_state( input, VK_RBUTTON, down );
+        break;
+    case WM_XBUTTONDOWN:
+        down = 1;
+        /* fall through */
+    case WM_XBUTTONUP:
+        if (msg->wparam == XBUTTON1) set_input_key_state( input, VK_XBUTTON1, down );
+        else if (msg->wparam == XBUTTON2) set_input_key_state( input, VK_XBUTTON2, down );
         break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
