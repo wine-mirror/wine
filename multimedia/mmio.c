@@ -931,6 +931,7 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
                           const MMCKINFO * lpckParent, UINT16 uFlags)
 {
 	DWORD	dwfcc, dwOldPos;
+	LPDWORD	tocheck;
 
 	TRACE(mmio, "(%04X, %p, %p, %04X);\n", 
 				hmmio, lpck, lpckParent, uFlags);
@@ -948,18 +949,27 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 		TRACE(mmio, "seek inside parent at %ld !\n", lpckParent->dwDataOffset);
 		dwOldPos = mmioSeek32(hmmio,lpckParent->dwDataOffset,SEEK_SET);
 	}
-/*
 
-   It seems to be that FINDRIFF should not be treated the same as the 
-   other FINDxxx so I treat it as a MMIO_FINDxxx
+	/* The SDK docu says 'ckid' is used for all cases. Real World
+	 * examples disagree -Marcus,990216. 
+	 */
 
-	if ((uFlags & MMIO_FINDCHUNK) || (uFlags & MMIO_FINDRIFF) || 
-		(uFlags & MMIO_FINDLIST)) {
-*/
-	if ((uFlags & MMIO_FINDCHUNK) || (uFlags & MMIO_FINDLIST)) {
+	/* find_chunk looks for 'ckid' */
+	if (uFlags & MMIO_FINDCHUNK) {
+		tocheck = &(lpck->ckid);
+		dwfcc = lpck->ckid;
+	}
+	/* find_riff and find_list look for 'fccType' */
+	if (uFlags & (MMIO_FINDLIST|MMIO_FINDRIFF)) {
+		dwfcc = lpck->fccType;
+		tocheck = &(lpck->fccType);
+	}
+
+	if (uFlags & (MMIO_FINDCHUNK|MMIO_FINDLIST|MMIO_FINDRIFF)) {
 		TRACE(mmio, "MMIO_FINDxxxx dwfcc=%08lX !\n", dwfcc);
 		while (TRUE) {
 		        LONG ix;
+			char fcc[5],ckid[5];
 
 			ix = mmioRead32(hmmio, (LPSTR)lpck, 3 * sizeof(DWORD));
 			TRACE(mmio, "after _lread32 ix = %ld req = %d, errno = %d\n",ix,3 * sizeof(DWORD),errno);
@@ -969,23 +979,28 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 				return MMIOERR_CHUNKNOTFOUND;
 			}
 			lpck->dwDataOffset = dwOldPos + 2 * sizeof(DWORD);
-			if (lpck->ckid == FOURCC_RIFF || lpck->ckid == FOURCC_LIST) 
-				lpck->dwDataOffset += sizeof(DWORD);
 			if (ix < lpck->dwDataOffset - dwOldPos) {
 				mmioSeek32(hmmio, dwOldPos, SEEK_SET);
 				WARN(mmio, "return ChunkNotFound\n");
 				return MMIOERR_CHUNKNOTFOUND;
 			}
-			TRACE(mmio, "dwfcc=%08lX ckid=%08lX cksize=%08lX !\n", 
-									dwfcc, lpck->ckid, lpck->cksize);
-			if (dwfcc == lpck->ckid)
+			memcpy(fcc,&dwfcc,4);fcc[4]='\0';
+			memcpy(ckid,&lpck->ckid,4);ckid[4]='\0';
+			TRACE(mmio, "dwfcc=%s ckid=%s cksize=%08lX !\n", fcc, ckid, lpck->cksize);
+			if (dwfcc == *tocheck)
 				break;
 
 			dwOldPos = lpck->dwDataOffset + lpck->cksize;
 			mmioSeek32(hmmio, dwOldPos, SEEK_SET);
 		}
-	}
-	else {
+		/* If we were looking for RIFF/LIST chunks, the final dataptr
+		 * is after the chunkid. If we were just looking for the chunk
+		 * it is after the cksize. So add 4 in RIFF/LIST case.
+		 */
+		if (uFlags & (MMIO_FINDLIST|MMIO_FINDRIFF))
+			lpck->dwDataOffset+=sizeof(DWORD);
+	} else {
+		/* FIXME: unverified, does it do this? */
 		if (mmioRead32(hmmio, (LPSTR)lpck, sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
 			mmioSeek32(hmmio, dwOldPos, SEEK_SET);
 			WARN(mmio, "return ChunkNotFound 2nd\n");
@@ -996,11 +1011,8 @@ UINT16 WINAPI mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 			lpck->dwDataOffset += sizeof(DWORD);
 	}
 	mmioSeek32(hmmio, lpck->dwDataOffset, SEEK_SET);
-
-	TRACE(mmio, "lpck->ckid=%08lX lpck->cksize=%ld !\n", 
-								lpck->ckid, lpck->cksize);
+	TRACE(mmio, "lpck->ckid=%08lX lpck->cksize=%ld !\n", lpck->ckid, lpck->cksize);
 	TRACE(mmio, "lpck->fccType=%08lX !\n", lpck->fccType);
-
 	return 0;
 }
 

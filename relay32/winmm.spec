@@ -44,11 +44,11 @@ type win32
  41 stdcall mciGetDeviceIDA(str) mciGetDeviceID32A
  42 stdcall mciGetDeviceIDFromElementIDW(long str) mciGetDeviceIDFromElementID32W
  43 stdcall mciGetDeviceIDW(str) mciGetDeviceID32W
- 44 stdcall mciGetDriverData(long long) mciGetDriverData32
+ 44 stdcall mciGetDriverData(long) mciGetDriverData32
  45 stdcall mciGetErrorStringA(long ptr long) mciGetErrorString32A
  46 stdcall mciGetErrorStringW(long ptr long) mciGetErrorString32W
  47 stdcall mciGetYieldProc(long ptr) mciGetYieldProc32
- 48 stdcall mciLoadCommandResource(long str long) mciLoadCommandResource32 
+ 48 stdcall mciLoadCommandResource(long wstr long) mciLoadCommandResource32 
  49 stdcall mciSendCommandA(long long long long) mciSendCommand32A
  50 stdcall mciSendCommandW(long long long long) mciSendCommand32W
  51 stdcall mciSendStringA(str ptr long long) mciSendString32A

@@ -37,6 +37,7 @@
 #include "callback.h"
 #include "module.h"
 #include "selectors.h"
+#include "debugstr.h"
 #include "debug.h"
 
 int	mciInstalledCount;
@@ -1535,9 +1536,9 @@ BOOL32 WINAPI mciFreeCommandResource32(UINT32 uTable)
 /**************************************************************************
  *                    	mciLoadCommandResource  		[WINMM.48]
  */
-UINT32 WINAPI mciLoadCommandResource32(HANDLE32 hinst, LPCSTR resname,UINT32 type)
+UINT32 WINAPI mciLoadCommandResource32(HANDLE32 hinst, LPCWSTR resname,UINT32 type)
 {
-    return mciLoadCommandResource16(hinst, resname, type);
+    FIXME(mmsys,"(%04x,%s,%d): stub!\n", hinst, debugstr_w(resname), type);
 }
 
 const char* MCI_CommandToString(UINT16 wMsg)

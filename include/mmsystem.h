@@ -2939,7 +2939,7 @@ BOOL32 WINAPI mciDriverNotify32(HWND32 hwndCallback, UINT32 uDeviceID,
 UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInstance,
                                      LPCSTR lpResName, UINT16 uType);
 UINT32 WINAPI mciLoadCommandResource32(HINSTANCE32 hInstance,
-				       LPCSTR lpResName, UINT32 uType);
+				       LPCWSTR lpResName, UINT32 uType);
 #define mciLoadCommandResource WINELIB_NAME(mciLoadCommandResource)
 
 BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable);
