@@ -230,39 +230,6 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
 
 
 /***********************************************************************
- *           PROCESS_BuildEnvDB
- *
- * Build the env DB for the initial process
- */
-static BOOL PROCESS_BuildEnvDB( PDB *pdb )
-{
-    /* Allocate the env DB (FIXME: should not be on the system heap) */
-
-    if (!(pdb->env_db = HeapAlloc(SystemHeap,HEAP_ZERO_MEMORY,sizeof(ENVDB))))
-        return FALSE;
-    InitializeCriticalSection( &pdb->env_db->section );
-
-    /* Allocate startup info */
-    if (!(pdb->env_db->startup_info = 
-          HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(STARTUPINFOA) )))
-        return FALSE;
-
-    /* Allocate the standard handles */
-
-    pdb->env_db->hStdin  = FILE_DupUnixHandle( 0, GENERIC_READ );
-    pdb->env_db->hStdout = FILE_DupUnixHandle( 1, GENERIC_WRITE );
-    pdb->env_db->hStderr = FILE_DupUnixHandle( 2, GENERIC_WRITE );
-
-    /* Build the command-line */
-
-    pdb->env_db->cmd_line = HEAP_strdupA( SystemHeap, 0, "kernel32" );
-
-    /* Build the environment strings */
-
-    return ENV_BuildEnvironment( pdb );
-}
-
-/***********************************************************************
  *           PROCESS_CreateEnvDB
  *
  * Create the env DB for a newly started process.
@@ -391,7 +358,7 @@ BOOL PROCESS_Init(void)
     initial_pdb.system_heap = initial_pdb.heap = SystemHeap;
 
     /* Create the environment DB of the first process */
-    if (!PROCESS_BuildEnvDB( &initial_pdb )) return FALSE;
+    if (!PROCESS_CreateEnvDB()) return FALSE;
 
     /* Create the SEGPTR heap */
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;

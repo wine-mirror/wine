@@ -65,7 +65,7 @@ static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
  *
  * Build the environment for the initial process
  */
-BOOL ENV_BuildEnvironment( PDB *pdb )
+static BOOL ENV_BuildEnvironment( PDB *pdb )
 {
     extern char **environ;
     LPSTR p, *e;
@@ -109,7 +109,12 @@ BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env )
     LPSTR dst;
 
     /* FIXME: should lock the parent environment */
-    if (!env) env = pdb->parent->env_db->environ;
+    if (!env)
+    {
+        if (!pdb->parent)  /* initial process */
+            return ENV_BuildEnvironment( pdb );
+        env = pdb->parent->env_db->environ;
+    }
 
     /* Compute the environment size */
 

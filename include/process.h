@@ -147,7 +147,6 @@ extern DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset );
 void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value );
 
 /* scheduler/environ.c */
-extern BOOL ENV_BuildEnvironment( PDB *pdb );
 extern BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env );
 extern void ENV_FreeEnvironment( PDB *pdb );
 
