@@ -102,7 +102,8 @@ BITMAP_DRIVER TTYDRV_BITMAP_Driver =
 PALETTE_DRIVER TTYDRV_PALETTE_Driver = 
 {
   TTYDRV_PALETTE_SetMapping,
-  TTYDRV_PALETTE_UpdateMapping
+  TTYDRV_PALETTE_UpdateMapping,
+  TTYDRV_PALETTE_IsDark
 };
 
 /* FIXME: Adapt to the TTY driver. Copied from the X11 driver */

@@ -39,3 +39,11 @@ int TTYDRV_PALETTE_UpdateMapping(PALETTEOBJ *palPtr)
 {
   return 0;
 }
+
+/***********************************************************************
+ *           TTYDRV_PALETTE_IsDark
+ */
+int TTYDRV_PALETTE_IsDark(int pixel)
+{
+  return 0;
+}
