@@ -874,7 +874,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     {
         /* Main case: load first instance of NE module */
 
-        if ( (hInstance = NE_LoadModule( name, FALSE )) < 32 );
+        if ( (hInstance = NE_LoadModule( name, FALSE )) < 32 )
             return hInstance;
 
         if ( !(pModule = NE_GetPtr( hInstance )) )
