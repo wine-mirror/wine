@@ -139,6 +139,8 @@ AC_SUBST(OPENGLFILES)
 OPENGLFILES=""
 AC_SUBST(GLU32FILES)
 GLU32FILES=""
+AC_SUBST(OPENGL_LIBS)
+OPENGL_LIBS=""
 if test "$have_x" = "yes"
 then
     XLIB="-lXext -lX11"
@@ -280,7 +282,7 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
             then
 		dnl Check for the presence of the library
 		AC_CHECK_LIB(GL,glXCreateContext,
-			     X_PRE_LIBS="$X_PRE_LIBS -lGL"
+			     OPENGL_LIBS="-lGL"
 			     ,,
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
@@ -317,10 +319,10 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 		fi
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,gluLookAt,
-			     [X_PRE_LIBS="$X_PRE_LIBS -lGLU"
+			     [OPENGL_LIBS="$OPENGL_LIBS -lGLU"
 			     GLU32FILES='$(GLU32FILES)']
 			     ,,
-			     $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
+			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
 		)
 	     fi
 	 fi
@@ -845,6 +847,7 @@ then
   WINE_GET_SONAME(Xext,XextCreateExtension,[$X_LIBS -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrender,XRenderQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
+  WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(cups,cupsGetDefault)
 fi
 

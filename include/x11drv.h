@@ -226,6 +226,9 @@ extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UIN
 				      UINT count, const INT *lpDx);
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
+extern void X11DRV_OpenGL_Init(Display *display);
+extern XVisualInfo *X11DRV_setup_opengl_visual(Display *display);
+
 /* exported dib functions for now */
 
 /* Additional info for DIB section objects */
@@ -440,6 +443,5 @@ extern void X11DRV_sync_window_style( Display *display, WND *win );
 extern int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder );
 extern int X11DRV_sync_client_window_position( Display *display, WND *win );
 extern void X11DRV_set_wm_hints( Display *display, WND *win );
-extern XVisualInfo *X11DRV_setup_opengl_visual( Display *display );
 
 #endif  /* __WINE_X11DRV_H */

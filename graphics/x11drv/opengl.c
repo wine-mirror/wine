@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include "ts_xlib.h"
 
@@ -31,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
-#ifdef HAVE_OPENGL
+#if defined(HAVE_GL_GL_H) && defined(HAVE_GL_GLX_H)
 
 #undef APIENTRY
 #undef CALLBACK
@@ -105,6 +106,50 @@ static void dump_PIXELFORMATDESCRIPTOR(PIXELFORMATDESCRIPTOR *ppfd) {
   DPRINTF("\n");
 }
 
+/* No need to load any other libraries as according to the ABI, libGL should be self-sufficient and
+   include all dependencies
+*/
+#ifndef SONAME_LIBGL
+#define SONAME_LIBGL "libGL.so"
+#endif
+
+static void *opengl_handle;
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
+MAKE_FUNCPTR(glXChooseVisual)
+MAKE_FUNCPTR(glXGetConfig)
+MAKE_FUNCPTR(glXSwapBuffers)
+MAKE_FUNCPTR(glXQueryExtension)
+#undef MAKE_FUNCPTR
+
+void X11DRV_OpenGL_Init(Display *display) {
+    int error_base, event_base;
+
+    opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
+    if (opengl_handle == NULL) return;
+
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(opengl_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
+LOAD_FUNCPTR(glXChooseVisual)
+LOAD_FUNCPTR(glXGetConfig)
+LOAD_FUNCPTR(glXSwapBuffers)
+LOAD_FUNCPTR(glXQueryExtension)
+#undef LOAD_FUNCPTR
+
+    wine_tsx11_lock();
+    if (pglXQueryExtension(display, &event_base, &error_base) == True) {
+	TRACE("GLX is up and running error_base = %d\n", error_base);
+    } else {
+        wine_dlclose(opengl_handle, NULL, 0);
+	opengl_handle = NULL;
+    }
+    wine_tsx11_unlock();
+    return;
+
+sym_not_found:
+    wine_dlclose(opengl_handle, NULL, 0);
+    opengl_handle = NULL;
+}
+
 /* X11DRV_ChoosePixelFormat
 
      Equivalent of glXChooseVisual
@@ -121,6 +166,11 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   XVisualInfo *vis;
   int i;
 
+  if (opengl_handle == NULL) {
+    ERR("No libGL on this box - disabling OpenGL support !\n");
+    return 0;
+  }
+  
   if (TRACE_ON(opengl)) {
     TRACE("(%p,%p)\n", physDev, ppfd);
 
@@ -200,6 +250,11 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   int value;
   int rb,gb,bb,ab;
 
+  if (opengl_handle == NULL) {
+    ERR("No libGL on this box - disabling OpenGL support !\n");
+    return 0;
+  }
+  
   TRACE("(%p,%d,%d,%p)\n", physDev, iPixelFormat, nBytes, ppfd);
 
   if (ppfd == NULL) {
@@ -225,7 +280,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 
     /* Create a 'standard' X Visual */
     wine_tsx11_lock();
-    vis = glXChooseVisual(gdi_display, DefaultScreen(gdi_display), dblBuf);
+    vis = pglXChooseVisual(gdi_display, DefaultScreen(gdi_display), dblBuf);
     wine_tsx11_unlock();
 
     WARN("Uninitialized Visual. Creating standard (%p) !\n", vis);
@@ -248,26 +303,26 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_ACCELERATED;
   /* Now the flags extraced from the Visual */
   wine_tsx11_lock();
-  glXGetConfig(gdi_display, vis, GLX_DOUBLEBUFFER, &value); if (value) ppfd->dwFlags |= PFD_DOUBLEBUFFER;
-  glXGetConfig(gdi_display, vis, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
+  pglXGetConfig(gdi_display, vis, GLX_DOUBLEBUFFER, &value); if (value) ppfd->dwFlags |= PFD_DOUBLEBUFFER;
+  pglXGetConfig(gdi_display, vis, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
 
   /* Pixel type */
-  glXGetConfig(gdi_display, vis, GLX_RGBA, &value);
+  pglXGetConfig(gdi_display, vis, GLX_RGBA, &value);
   if (value)
     ppfd->iPixelType = PFD_TYPE_RGBA;
   else
     ppfd->iPixelType = PFD_TYPE_COLORINDEX;
 
   /* Color bits */
-  glXGetConfig(gdi_display, vis, GLX_BUFFER_SIZE, &value);
+  pglXGetConfig(gdi_display, vis, GLX_BUFFER_SIZE, &value);
   ppfd->cColorBits = value;
 
   /* Red, green, blue and alpha bits / shifts */
   if (ppfd->iPixelType == PFD_TYPE_RGBA) {
-    glXGetConfig(gdi_display, vis, GLX_RED_SIZE, &rb);
-    glXGetConfig(gdi_display, vis, GLX_GREEN_SIZE, &gb);
-    glXGetConfig(gdi_display, vis, GLX_BLUE_SIZE, &bb);
-    glXGetConfig(gdi_display, vis, GLX_ALPHA_SIZE, &ab);
+    pglXGetConfig(gdi_display, vis, GLX_RED_SIZE, &rb);
+    pglXGetConfig(gdi_display, vis, GLX_GREEN_SIZE, &gb);
+    pglXGetConfig(gdi_display, vis, GLX_BLUE_SIZE, &bb);
+    pglXGetConfig(gdi_display, vis, GLX_ALPHA_SIZE, &ab);
 
     ppfd->cRedBits = rb;
     ppfd->cRedShift = gb + bb + ab;
@@ -290,11 +345,11 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   /* Accums : to do ... */
 
   /* Depth bits */
-  glXGetConfig(gdi_display, vis, GLX_DEPTH_SIZE, &value);
+  pglXGetConfig(gdi_display, vis, GLX_DEPTH_SIZE, &value);
   ppfd->cDepthBits = value;
 
   /* stencil bits */
-  glXGetConfig( gdi_display, vis, GLX_STENCIL_SIZE, &value );
+  pglXGetConfig( gdi_display, vis, GLX_STENCIL_SIZE, &value );
   ppfd->cStencilBits = value;
 
   wine_tsx11_unlock();
@@ -339,10 +394,15 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
      Swap the buffers of this DC
 */
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
+  if (opengl_handle == NULL) {
+    ERR("No libGL on this box - disabling OpenGL support !\n");
+    return 0;
+  }
+  
   TRACE("(%p)\n", physDev);
 
   wine_tsx11_lock();
-  glXSwapBuffers(gdi_display, physDev->drawable);
+  pglXSwapBuffers(gdi_display, physDev->drawable);
   wine_tsx11_unlock();
 
   return TRUE;
@@ -357,22 +417,19 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
  */
 XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 {
-    int err_base, evt_base;
     XVisualInfo *visual = NULL;
+    int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
 
-    /* In order to support OpenGL or D3D, we require a double-buffered
-     * visual */
+    if (opengl_handle == NULL) return NULL;
+    
+    /* In order to support OpenGL or D3D, we require a double-buffered visual */
     wine_tsx11_lock();
-    if (glXQueryExtension(display, &err_base, &evt_base) == True)
-    {
-        int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
-        visual = glXChooseVisual(display, DefaultScreen(display), dblBuf);
-    }
+    visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf);
     wine_tsx11_unlock();
     return visual;
 }
 
-#else  /* defined(HAVE_OPENGL) */
+#else  /* no OpenGL includes */
 
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 			     const PIXELFORMATDESCRIPTOR *ppfd) {

@@ -68,6 +68,7 @@ int client_side_antialias_with_render = 1;
 unsigned int X11DRV_server_startticks;
 
 static BOOL synchronous;  /* run in synchronous mode? */
+static BOOL desktop_dbl_buf;
 static char *desktop_geometry;
 static XVisualInfo *desktop_vi;
 
@@ -268,6 +269,9 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "ClientSideAntiAliasWithRender", buffer, sizeof(buffer) ))
         client_side_antialias_with_render = IS_OPTION_TRUE( buffer[0] );
 
+    if (!get_config_key( hkey, appkey, "DesktopDoubleBuffered", buffer, sizeof(buffer) ))
+        desktop_dbl_buf = IS_OPTION_TRUE( buffer[0] );
+
     if (appkey) RegCloseKey( appkey );
     RegCloseKey( hkey );
 }
@@ -313,8 +317,11 @@ static void process_attach(void)
     }
     else screen_depth = DefaultDepthOfScreen( screen );
 
+    /* Initialize OpenGL */
+    X11DRV_OpenGL_Init(display);
+
     /* If OpenGL is available, change the default visual, etc as necessary */
-    if ((desktop_vi = X11DRV_setup_opengl_visual( display )))
+    if (desktop_dbl_buf && (desktop_vi = X11DRV_setup_opengl_visual( display )))
     {
         visual       = desktop_vi->visual;
         screen       = ScreenOfDisplay(display, desktop_vi->screen);
@@ -352,10 +359,6 @@ static void process_attach(void)
     /* initialize DGA2 */
     X11DRV_XF86DGA2_Init();
 #endif
-#ifdef HAVE_OPENGL
-    /* initialize GLX */
-    /*X11DRV_GLX_Init();*/
-#endif
 
     /* load display.dll */
     LoadLibrary16( "display" );
@@ -385,10 +388,6 @@ static void thread_detach(void)
  */
 static void process_detach(void)
 {
-#ifdef HAVE_OPENGL
-    /* cleanup GLX */
-    /*X11DRV_GLX_Cleanup();*/
-#endif
 #ifdef HAVE_LIBXXF86DGA2
     /* cleanup DGA2 */
     X11DRV_XF86DGA2_Cleanup();
