@@ -14,6 +14,7 @@
 #include "options.h"
 #include "debugtools.h"
 #include "spy.h"
+#include "commctrl.h"
 
 DEFAULT_DEBUG_CHANNEL(message)
 
@@ -127,8 +128,8 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_NCPAINT",          	/* 0x0085 */
     "WM_NCACTIVATE",       	/* 0x0086 */
     "WM_GETDLGCODE",		/* 0x0087 */
-    "wm_syncpaint", 
-    "wm_synctask", NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_SYNCPAINT", 
+    "WM_SYNCTASK", NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0090 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -249,7 +250,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     /* 0x0130 */
     NULL,
-    "wm_lbtrackpoint",          /* 0x0131 */
+    "WM_LBTRACKPOINT",          /* 0x0131 */
     "WM_CTLCOLORMSGBOX",        /* 0x0132 */
     "WM_CTLCOLOREDIT",          /* 0x0133 */
     "WM_CTLCOLORLISTBOX",       /* 0x0134 */
@@ -389,7 +390,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PARENTNOTIFY",		/* 0x0210 */
     "WM_ENTERMENULOOP",         /* 0x0211 */
     "WM_EXITMENULOOP",          /* 0x0212 */
-    "wm_nextmenu", 		/* 0x0213 */
+    "WM_NEXTMENU", 		/* 0x0213 */
     "WM_SIZING", 
     "WM_CAPTURECHANGED",
     "WM_MOVING", NULL,
@@ -407,12 +408,12 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MDIICONARRANGE",        /* 0x0228 */
     "WM_MDIGETACTIVE",          /* 0x0229 */
 
-    "wm_dropobject", 
-    "wm_querydropobject", 
-    "wm_begindrag",
-    "wm_dragloop",
-    "wn_dragselect",
-    "wm_dragmove",
+    "WM_DROPOBJECT", 
+    "WM_QUERYDROPOBJECT", 
+    "WM_BEGINDRAG",
+    "WM_DRAGLOOP",
+    "WM_DRAGSELECT",
+    "WM_DRAGMOVE",
      
     /* 0x0230*/
     "WM_MDISETMENU",            /* 0x0230 */
@@ -597,6 +598,163 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 };
 
 
+#define SPY_MAX_LVMMSGNUM   139
+static const char * const LVMMessageTypeNames[SPY_MAX_LVMMSGNUM + 1] =
+{
+    "LVM_GETBKCOLOR",		/* 1000 */
+    "LVM_SETBKCOLOR",
+    "LVM_GETIMAGELIST",
+    "LVM_SETIMAGELIST",
+    "LVM_GETITEMCOUNT",
+    "LVM_GETITEMA",
+    "LVM_SETITEMA",
+    "LVM_INSERTITEMA",
+    "LVM_DELETEITEM",
+    "LVM_DELETEALLITEMS",
+    "LVM_GETCALLBACKMASK",
+    "LVM_SETCALLBACKMASK",
+    "LVM_GETNEXTITEM",
+    "LVM_FINDITEMA",
+    "LVM_GETITEMRECT",
+    "LVM_SETITEMPOSITION",
+    "LVM_GETITEMPOSITION",
+    "LVM_GETSTRINGWIDTHA",
+    "LVM_HITTEST",
+    "LVM_ENSUREVISIBLE",
+    "LVM_SCROLL",
+    "LVM_REDRAWITEMS",
+    "LVM_ARRANGE",
+    "LVM_EDITLABELA",
+    "LVM_GETEDITCONTROL",
+    "LVM_GETCOLUMNA",
+    "LVM_SETCOLUMNA",
+    "LVM_INSERTCOLUMNA",
+    "LVM_DELETECOLUMN",
+    "LVM_GETCOLUMNWIDTH",
+    "LVM_SETCOLUMNWIDTH",
+    "LVM_GETHEADER",
+    "LVM_CREATEDRAGIMAGE",
+    "LVM_GETVIEWRECT",
+    "LVM_GETTEXTCOLOR",
+    "LVM_SETTEXTCOLOR",
+    "LVM_GETTEXTBKCOLOR",
+    "LVM_SETTEXTBKCOLOR",
+    "LVM_GETTOPINDEX",
+    "LVM_GETCOUNTPERPAGE",
+    "LVM_GETORIGIN",
+    "LVM_UPDATE",
+    "LVM_SETITEMSTATE",
+    "LVM_GETITEMSTATE",
+    "LVM_GETITEMTEXTA",
+    "LVM_SETITEMTEXTA",
+    "LVM_SETITEMCOUNT",
+    "LVM_SORTITEMS",
+    "LVM_SETITEMPOSITION32",
+    "LVM_GETSELECTEDCOUNT",
+    "LVM_GETITEMSPACING",
+    "LVM_GETISEARCHSTRINGA",
+    "LVM_SETICONSPACING",
+    "LVM_SETEXTENDEDLISTVIEWSTYLE",
+    "LVM_GETEXTENDEDLISTVIEWSTYLE",
+    "LVM_GETSUBITEMRECT",
+    "LVM_SUBITEMHITTEST",
+    "LVM_SETCOLUMNORDERARRAY",
+    "LVM_GETCOLUMNORDERARRAY",
+    "LVM_SETHOTITEM",
+    "LVM_GETHOTITEM",
+    "LVM_SETHOTCURSOR",
+    "LVM_GETHOTCURSOR",
+    "LVM_APPROXIMATEVIEWRECT",
+    "LVM_SETWORKAREAS",
+    "LVM_GETSELECTIONMARK",
+    "LVM_SETSELECTIONMARK",
+    "LVM_SETBKIMAGEA",
+    "LVM_GETBKIMAGEA",
+    "LVM_GETWORKAREAS",
+    "LVM_SETHOVERTIME",
+    "LVM_GETHOVERTIME",
+    "LVM_GETNUMBEROFWORKAREAS",
+    "LVM_SETTOOLTIPS",
+    "LVM_GETITEMW",
+    "LVM_SETITEMW",
+    "LVM_INSERTITEMW",
+    "LVM_GETTOOLTIPS",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "LVM_FINDITEMW",
+    NULL,
+    NULL,
+    NULL,
+    "LVM_GETSTRINGWIDTHW",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "LVM_GETCOLUMNW",
+    "LVM_SETCOLUMNW",
+    "LVM_INSERTCOLUMNW",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "LVM_GETITEMTEXTW",
+    "LVM_SETITEMTEXTW",
+    "LVM_GETISEARCHSTRINGW",
+    "LVM_EDITLABELW",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "LVM_SETBKIMAGEW",
+    "LVM_GETBKIMAGEW"	/* 0x108B */
+};
+
+#define SPY_MAX_CCMMSGNUM   6
+static const char * const CCMMessageTypeNames[SPY_MAX_CCMMSGNUM + 1] =
+{
+    NULL,		/* 0x2000 */
+    "CCM_SETBKCOLOR",
+    "CCM_SETCOLORSCHEME",
+    "CCM_GETCOLORSCHEME",
+    "CCM_GETDROPTARGET",
+    "CCM_SETUNICODEFORMAT",
+    "CCM_GETUNICODEFORMAT"
+};
+
 static BOOL16 SPY_Exclude[SPY_MAX_MSGNUM+1];
 static BOOL16 SPY_ExcludeDWP = 0;
 static int SPY_IndentLevel  = 0;
@@ -616,6 +774,19 @@ const char *SPY_GetMsgName( UINT msg )
         if (!MessageTypeNames[msg]) return "???";
         return MessageTypeNames[msg];
     }
+
+    if (msg >= LVM_FIRST && msg <= LVM_FIRST + SPY_MAX_LVMMSGNUM)
+    {
+        if (!LVMMessageTypeNames[msg-LVM_FIRST]) return "LVM_?";
+        return LVMMessageTypeNames[msg-LVM_FIRST];
+    }
+
+    if (msg >= CCM_FIRST && msg <= CCM_FIRST + SPY_MAX_CCMMSGNUM)
+    {
+        if (!CCMMessageTypeNames[msg-CCM_FIRST]) return "???";
+        return CCMMessageTypeNames[msg-CCM_FIRST];
+    }
+
     sprintf( msg_buffer, "WM_USER+%04x", msg - WM_USER );
     return msg_buffer;
 }
