@@ -24,6 +24,8 @@ C_SRCS = \
 	region.c \
 	text.c
 
+GLUE = dc.c
+
 all: $(MODULE).o
 
 @MAKE_RULES@

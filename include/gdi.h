@@ -137,15 +137,19 @@ typedef struct
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
 } WIN_DC_INFO;
 
+
+typedef BOOL16 (CALLBACK *DCHOOKPROC)(HDC16,WORD,DWORD,LPARAM);
+
 typedef struct tagDC
 {
-    GDIOBJHDR      header;
+    GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
     const struct tagDC_FUNCS *funcs; /* DC function table */
-    void          *physDev;          /* Physical device (driver-specific) */
+    void         *physDev;         /* Physical device (driver-specific) */
     INT          saveLevel;
-    DWORD          dwHookData;
-    FARPROC16      hookProc;
+    DWORD        dwHookData;
+    FARPROC16    hookProc;         /* the original SEGPTR ... */
+    DCHOOKPROC   hookThunk;        /* ... and the thunk to call it */
 
     INT          wndOrgX;          /* Window origin */
     INT          wndOrgY;

@@ -99,6 +99,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     dc->saveLevel  = 0;
     dc->dwHookData = 0L;
     dc->hookProc   = NULL;
+    dc->hookThunk  = NULL;
     dc->wndOrgX    = 0;
     dc->wndOrgY    = 0;
     dc->wndExtX    = 1;
@@ -680,8 +681,8 @@ BOOL WINAPI DeleteDC( HDC hdc )
     TRACE("%04x\n", hdc );
 
     /* Call hook procedure to check whether is it OK to delete this DC */
-    if (    dc->hookProc && !(dc->w.flags & (DC_SAVED | DC_MEMORY))
-         && dc->hookProc( hdc, DCHC_DELETEDC, dc->dwHookData, 0 ) == FALSE )
+    if (    dc->hookThunk && !(dc->w.flags & (DC_SAVED | DC_MEMORY))
+         && dc->hookThunk( hdc, DCHC_DELETEDC, dc->dwHookData, 0 ) == FALSE )
     {
         GDI_HEAP_UNLOCK( hdc );
         return FALSE;
@@ -710,6 +711,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
     if (dc->w.pAbortProc) THUNK_Free( (FARPROC)dc->w.pAbortProc );
+    if (dc->hookThunk) THUNK_Free( (FARPROC)dc->hookThunk );
     PATH_DestroyGdiPath(&dc->w.path);
     
     return GDI_FreeObject( hdc );
@@ -1201,16 +1203,35 @@ BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
 /***********************************************************************
  *           SetDCHook   (GDI.190)
  */
+/* ### start build ### */
+extern WORD CALLBACK GDI_CallTo16_word_wwll(FARPROC16,WORD,WORD,LONG,LONG);
+/* ### stop build ### */
 BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
     DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
-
-    TRACE("hookProc %08x, default is %08x\n",
-                (UINT)hookProc, (UINT)DCHook16 );
-
     if (!dc) return FALSE;
+
+    /*
+     * Note: We store the original SEGPTR 'hookProc' as we need to be
+     *       able to return it verbatim in GetDCHook,
+     *
+     *       On the other hand, we still call THUNK_Alloc and store the
+     *       32-bit thunk into another DC member, because THUNK_Alloc
+     *       recognizes the (typical) case that the 'hookProc' is indeed
+     *       the 16-bit API entry point of a built-in routine (e.g. DCHook16)
+     *
+     *       We could perform that test every time the hook is about to
+     *       be called (or else we could live with the 32->16->32 detour),
+     *       but this way is the most efficient ...
+     */
+
     dc->hookProc = hookProc;
     dc->dwHookData = dwHookData;
+
+    THUNK_Free( (FARPROC)dc->hookThunk );
+    dc->hookThunk = (DCHOOKPROC)
+                    THUNK_Alloc( hookProc, (RELAY)GDI_CallTo16_word_wwll );
+
     GDI_HEAP_UNLOCK( hdc );
     return TRUE;
 }

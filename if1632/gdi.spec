@@ -157,8 +157,8 @@ file	gdi.exe
 180 pascal16 SetDCState(word word) SetDCState16
 181 pascal16 RectInRegionOld(word ptr) RectInRegion16
 188 stub GetTextExtentEx
-190 pascal16 SetDCHook(word segptr long) THUNK_SetDCHook
-191 pascal   GetDCHook(word ptr) THUNK_GetDCHook
+190 pascal16 SetDCHook(word segptr long) SetDCHook
+191 pascal   GetDCHook(word ptr) GetDCHook
 192 pascal16 SetHookFlags(word word) SetHookFlags16
 193 pascal16 SetBoundsRect(word ptr word) SetBoundsRect16
 194 pascal16 GetBoundsRect(word ptr word) GetBoundsRect16

@@ -15,8 +15,8 @@ DECLARE_DEBUG_CHANNEL(region)
 
 #define UPDATE_DIRTY_DC(dc) \
  do { \
-   if ((dc)->hookProc && !((dc)->w.flags & (DC_SAVED | DC_MEMORY))) \
-     (dc)->hookProc( (dc)->hSelf, DCHC_INVALIDVISRGN, (dc)->dwHookData, 0 ); \
+   if ((dc)->hookThunk && !((dc)->w.flags & (DC_SAVED | DC_MEMORY))) \
+     (dc)->hookThunk( (dc)->hSelf, DCHC_INVALIDVISRGN, (dc)->dwHookData, 0 ); \
  } while(0)
 
 

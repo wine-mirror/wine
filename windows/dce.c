@@ -27,7 +27,9 @@
 #include "region.h"
 #include "heap.h"
 #include "local.h"
+#include "module.h"
 #include "debugtools.h"
+#include "wine/winbase16.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(dc)
@@ -71,6 +73,7 @@ static void DCE_DumpCache(void)
  */
 DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 {
+    FARPROC16 hookProc;
     DCE * dce;
     WND* wnd;
     
@@ -85,7 +88,8 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
     
     /* store DCE handle in DC hook data field */
 
-    SetDCHook( dce->hDC, (FARPROC16)DCHook16, (DWORD)dce );
+    hookProc = (FARPROC16)NE_GetEntryPoint( GetModuleHandle16("USER"), 362 );
+    SetDCHook( dce->hDC, hookProc, (DWORD)dce );
 
     dce->hwndCurrent = hWnd;
     dce->hClipRgn    = 0;
