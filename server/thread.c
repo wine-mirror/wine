@@ -841,9 +841,14 @@ DECL_HANDLER(init_thread)
         fatal_protocol_error( current, "bad wait fd\n" );
         goto error;
     }
-    current->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &current->obj );
-    current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj );
-    if (!current->reply_fd || !current->wait_fd) return;
+    if (!(current->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &current->obj )))
+    {
+        reply_fd = -1;
+        fatal_protocol_error( current, "could not allocate reply fd\n" );
+        goto error;
+    }
+    if (!(current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj )))
+        return;
 
     current->unix_pid = req->unix_pid;
     current->unix_tid = req->unix_tid;
