@@ -65,7 +65,6 @@ my $wine = 1;
 
 my $output_prefix_dir = "Output";
 my $no_release = 1;
-my $no_msvc_headers = 1;
 
 my %modules;
 
@@ -139,11 +138,15 @@ sub filter_files {
     return ($rest_of_files, $filtered_files);
 }
 
+my %wine_test_dsp_files;
+
 MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     open(IN, "< $wine_dir/$makefile_in_file");
 
     my $topobjdir;
     my $module;
+    my $testdll;
+    my @imports;
 
     my %vars;
 
@@ -187,11 +190,26 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    }
 	} elsif(/^TOPOBJDIR\s*=\s*(\S+)\s*$/) {
 	    $topobjdir = $1;
+	} elsif (/^TESTDLL\s*=\s*(\S+)\s*$/) {
+	    $testdll = $1;
+	} elsif (/^IMPORTS\s*=\s*/) {
+	    @imports = split /\s+/s, $';
+	    @imports = grep !/^ntdll$/, @imports;
+	} elsif (/^CTESTS\s*=\s*/) {
+	    my @files = split /\s+/s, $';
+
+	    my $dir = $makefile_in_file;
+	    $dir =~ s/\/Makefile\.in$//;
+	    
+	    my $dsp_file = $testdll;
+	    $dsp_file =~ s/\.dll$/_test.dsp/;
+	    $dsp_file = "$dir/$dsp_file";
+
+	    $wine_test_dsp_files{$dsp_file}{files} = [@files, "testlist.c"];
+	    $wine_test_dsp_files{$dsp_file}{imports} = [@imports];
 	} elsif(/^(\w+)\s*=\s*/) {
 	    my $var = $1;
 	    my @files = split /\s+/s, $';
-
-	    # @files = ();
 
 	    @files = map {
 		if(/^\$\((\w+):\%=(.*?)\%(.*?)\)$/) {
@@ -278,6 +296,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $modules{$module}{source_files} = $local_source_files;
 	    $modules{$module}{header_files} = $local_header_files;
 	    $modules{$module}{resource_files} = $local_resource_files;
+	    $modules{$module}{imports} = [];
 	}
     } elsif($module eq "ntdll.dll") {
 	foreach my $dir (@ntdll_dirs) {
@@ -301,6 +320,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $modules{$module}{source_files} = $local_source_files;
 	    $modules{$module}{header_files} = $local_header_files;
 	    $modules{$module}{resource_files} = $local_resource_files;
+	    $modules{$module}{imports} = [];
 	}
     } elsif($module eq "user32.dll") {
 	foreach my $dir (@user32_dirs) {
@@ -327,6 +347,7 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $modules{$module}{source_files} = $local_source_files;
 	    $modules{$module}{header_files} = $local_header_files;
 	    $modules{$module}{resource_files} = $local_resource_files;
+	    $modules{$module}{imports} = [];
 	}
     }
 
@@ -337,21 +358,18 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{source_files} = $source_files;
     $modules{$module}{header_files} = $header_files;
     $modules{$module}{resource_files} = $resource_files;
+    $modules{$module}{imports} = [];
 }
 
-# FIMXE: Parse the Makefile.in's instead.
+$wine_test_dsp_files{"programs/winetest/winetest.dsp"}{files} = ["wtmain.c"];
+$wine_test_dsp_files{"programs/winetest/winetest.dsp"}{imports} = [];
 
-my @wine_test_dsp_files = (
-    "dlls/gdi/tests/gdi32_test.dsp",
-    "dlls/kernel/tests/kernel32_test.dsp",
-    "dlls/ntdll/tests/ntdll_test.dsp",
-    "dlls/user/tests/user32_test.dsp",
-    "programs/winetest/winetest.dsp",
-);
-
-foreach my $dsp_file (@wine_test_dsp_files) {
+foreach my $dsp_file (keys(%wine_test_dsp_files)) {
     my $project = $dsp_file;
     $project =~ s%^.*?/([^/]+)\.dsp$%$1%;
+
+    my @files = @{$wine_test_dsp_files{$dsp_file}{files}};
+    my @imports = @{$wine_test_dsp_files{$dsp_file}{imports}};
 
     my $type;
     my $c_srcs = [];
@@ -359,18 +377,29 @@ foreach my $dsp_file (@wine_test_dsp_files) {
     my $header_files = [];
     my $resource_files = [];
 
+    my @tests = ();
+
     if ($project eq "winetest") {
 	$type = "lib";
-	$c_srcs = ["wtmain.c"];
-	$source_files = ["wtmain.c"];
+	$c_srcs = [@files];
+	$source_files = [@files];
 	$header_files = [];
 	$resource_files = [];
     } else {
 	$type = "exe";
-	$c_srcs = ["generated.c", "testlist.c"];
-	$source_files = ["generated.c", "testlist.c"];
+	$c_srcs = [@files];
+	$source_files = [@files];
 	$header_files = [];
 	$resource_files = [];
+	
+	@tests = map {
+	    if (/^testlist\.c$/) {
+		();
+	    } else {
+		s/\.c$//;
+		$_;
+	    }
+	} @files;
     }
     my $module = "$project.$type";
 
@@ -381,6 +410,9 @@ foreach my $dsp_file (@wine_test_dsp_files) {
     $modules{$module}{source_files} = $source_files;
     $modules{$module}{header_files} = $header_files;
     $modules{$module}{resource_files} = $resource_files;
+    $modules{$module}{imports} = [@imports];
+
+    $modules{$module}{tests} = [@tests];
 }
 
 foreach my $module (sort(keys(%modules))) {
@@ -406,6 +438,7 @@ sub _generate_dsp {
 
     my $dsp_file = $modules{$module}{dsp_file};
     my $project = $modules{$module}{project};
+    my @imports = @{$modules{$module}{imports}};
 
     my $lib = ($modules{$module}{type} eq "lib");
     my $dll = ($modules{$module}{type} eq "dll");
@@ -413,16 +446,17 @@ sub _generate_dsp {
 
     my $console = $exe; # FIXME: Not always correct
 
-    my $wine_include_dir = do {
+    my $msvc_wine_dir = do {
 	my @parts = split(m%/%, $dsp_file);
 	if($#parts == 1) {
-	    "..\\include";
+	    "..";
 	} elsif($#parts == 2) {
-	    "..\\..\\include";
+	    "..\\..";
 	} else {
-	    "..\\..\\..\\include";
+	    "..\\..\\..";
 	}
     };
+    my $wine_include_dir = "$msvc_wine_dir\\include";
 
     $progress_current++;
     $output->progress("$dsp_file (file $progress_current of $progress_max)");
@@ -441,24 +475,27 @@ sub _generate_dsp {
 	@source_files = sort(@source_files);
     }
 
+    my $no_msvc_headers = 1;
+    if ($project =~ /^(?:winetest)$/ || $project =~ /_test$/) {
+	$no_msvc_headers = 0;
+    }
+
     my @cfgs;
     if($no_release && $no_msvc_headers) {
 	push @cfgs, "$project - Win32";
     } elsif($no_release && !$no_msvc_headers) {
-	push @cfgs, "$project - Win32 MS Headers";
+	push @cfgs, "$project - Win32 MSVC Headers";
 	push @cfgs, "$project - Win32 Wine Headers";
     } elsif(!$no_release && $no_msvc_headers) {
 	push @cfgs, "$project - Win32 Release";
 	push @cfgs, "$project - Win32 Debug";
     } else {
-	push @cfgs, "$project - Win32 Release MS Headers";
-	push @cfgs, "$project - Win32 Debug MS Headers";
+	push @cfgs, "$project - Win32 Release MSVC Headers";
+	push @cfgs, "$project - Win32 Debug MSVC Headers";
 	push @cfgs, "$project - Win32 Release Wine Headers";
 	push @cfgs, "$project - Win32 Debug Wine Headers";
     }
     my $default_cfg = $cfgs[$#cfgs];
-
-    my $msvc_include = "d:\\program files\\microsoft visual studio\\vc98\\include";
 
     print OUT "# Microsoft Developer Studio Project File - Name=\"$project\" - Package Owner=<4>\r\n";
     print OUT "# Microsoft Developer Studio Generated Build File, Format Version 6.00\r\n";
@@ -523,7 +560,7 @@ sub _generate_dsp {
 	}
 
 	my $debug = ($cfg !~ /Release/);
-	my $msvc_headers = ($cfg =~ /MS Headers/);
+	my $msvc_headers = ($cfg =~ /MSVC Headers/);
 
 	print OUT "# PROP BASE Use_MFC 0\r\n";
 
@@ -534,8 +571,8 @@ sub _generate_dsp {
 	}
 
 	$output_dir = $cfg;
-	$output_dir =~ s/^$project -//;
-	$output_dir =~ s/ //g;
+	$output_dir =~ s/^$project - //;
+	$output_dir =~ s/ /_/g;
 	if($output_prefix_dir) {
 	    $output_dir = "$output_prefix_dir\\$output_dir";
 	}
@@ -608,12 +645,9 @@ sub _generate_dsp {
 	my @includes = ();
 	if($wine) {
 	    push @defines2, "_\U${project}\E_";
-	    push @defines2, "__WINE__" if $module !~ /^winebuild\.exe$/;
+	    push @defines2, "__WINE__" if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
 	    push @defines2, qw(__i386__ _X86_);
 
-	    if($msvc_headers) {
-		push @includes, $msvc_include;
-	    }
 
 	    if($project =~ /^gdi32_(?:enhmfdrv|mfdrv|win16drv)$/) {
 		push @includes, "..";
@@ -627,12 +661,16 @@ sub _generate_dsp {
 		push @includes, "..";
 	    }
 
-	    push @includes, $wine_include_dir;
+	    if ($project =~ /_test$/) {
+		push @includes, "$msvc_wine_dir\\programs\\winetest\\$output_dir";
+	    } 
+
+	    if (!$msvc_headers || $project =~ /^winetest$/) {
+		push @includes, $wine_include_dir;
+	    }
 	}
 
 	if($wine) {
-	    print OUT " /X" if $msvc_headers;
-
 	    foreach my $include (@includes) {
 		print OUT " /I \"$include\"";
 	    }
@@ -701,6 +739,9 @@ sub _generate_dsp {
 	    print OUT "# ADD LINK32";
 	    print OUT " /nologo";
 	    print OUT " libcmt.lib" if $project =~ /^ntdll$/; # FIXME: Kludge
+	    foreach my $import (@imports) {
+		print OUT " $import.lib";
+	    }
 	    print OUT " /dll" if $dll;
             print OUT " /subsystem:console" if $console;
 	    print OUT " /debug" if $debug;
@@ -724,13 +765,31 @@ sub _generate_dsp {
 	print OUT "\r\n";
     }
 
-    if($project eq "winebuild") {
+    if ($project eq "winebuild") {
 	print OUT "# Begin Special Build Tool\r\n";
 	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
         print OUT "PostBuild_Desc=Copying wine.dll and wine_unicode.dll ...\r\n";
 	print OUT "PostBuild_Cmds=";
 	print OUT "copy ..\\..\\library\\$output_dir\\wine.dll \$(OutDir)\t";
 	print OUT "copy ..\\..\\unicode\\$output_dir\\wine_unicode.dll \$(OutDir)\r\n";
+	print OUT "# End Special Build Tool\r\n";
+    } elsif ($project eq "winetest") {
+	print OUT "# Begin Special Build Tool\r\n";
+	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
+	
+	my @includes = qw(exception.h test.h unicode.h);
+        print OUT "PostBuild_Desc=Copying ";
+	foreach my $include (@includes) {
+	    print OUT "wine\\$include ";
+	}
+	print OUT "...\r\n";
+	print OUT "PostBuild_Cmds=";
+	print OUT "mkdir \$(OutDir)\\wine\t";
+	foreach my $include (@includes) {
+	    print OUT "\t";
+	    print OUT "copy $msvc_wine_dir\\include\\wine\\$include \$(OutDir)\\wine";
+	}
+	print OUT "\r\n";
 	print OUT "# End Special Build Tool\r\n";
     }
     print OUT "# Begin Target\r\n";
@@ -1000,18 +1059,19 @@ do {
 
 	my $project = $modules{$module}{project};
 	my $dsp_file = $modules{$module}{dsp_file};
+	my @tests = @{$modules{$module}{tests}};
 
 	my $testlist_c = $dsp_file;
 	$testlist_c =~ s%[^/]*\.dsp$%testlist.c%;
 
-	replace_file("$wine_dir/$testlist_c", \&_generate_testlist_c);
+	replace_file("$wine_dir/$testlist_c", \&_generate_testlist_c, \@tests);
     }
 };
 
 sub _generate_testlist_c {
     local *OUT = shift;
 
-    my @tests = qw(generated); # FIXME: Not alway correct
+    my @tests = @{(shift)};
 
     print OUT "/* Automatically generated file; DO NOT EDIT!! */\n";
     print OUT "\n";
