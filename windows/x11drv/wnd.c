@@ -53,6 +53,8 @@ Atom dndProtocol = None;
 Atom dndSelection = None;
 Atom wmChangeState = None;
 
+Atom kwmDockWindow = None;
+
 /***********************************************************************
  *		X11DRV_WND_GetXWindow
  *
@@ -166,6 +168,8 @@ BOOL X11DRV_WND_CreateDesktopWindow(WND *wndPtr, CLASS *classPtr, BOOL bUnicode)
 	dndSelection = TSXInternAtom( display, "DndSelection" , False );
     if( wmChangeState == None )
         wmChangeState = TSXInternAtom (display, "WM_CHANGE_STATE", False);
+    if (kwmDockWindow == None)
+        kwmDockWindow = TSXInternAtom( display, "KWM_DOCKWINDOW", False );
 
     ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
       X11DRV_WND_GetXRootWindow( wndPtr );
@@ -192,17 +196,14 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       
       /* Create "managed" windows only if a title bar or resizable */
       /* frame is required. */
-        if (WIN_WindowNeedsWMBorder(cs->style, cs->dwExStyle))
-        {
+        if (WIN_WindowNeedsWMBorder(cs->style, cs->dwExStyle)) {
 	  win_attr.event_mask = ExposureMask | KeyPressMask |
 	    KeyReleaseMask | PointerMotionMask |
 	    ButtonPressMask | ButtonReleaseMask |
 	    FocusChangeMask | StructureNotifyMask;
 	  win_attr.override_redirect = FALSE;
 	  wndPtr->flags |= WIN_MANAGED;
-	}
-      else
-        {
+	} else {
 	  win_attr.event_mask = ExposureMask | KeyPressMask |
 	    KeyReleaseMask | PointerMotionMask |
 	    ButtonPressMask | ButtonReleaseMask |
@@ -232,6 +233,11 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       
       if(!(wGroupLeader = X11DRV_WND_GetXWindow(wndPtr)))
 	return FALSE;
+
+      /* If we are the systray, we need to be managed to be noticed by KWM */
+
+      if (wndPtr->dwExStyle & WS_EX_TRAYWINDOW)
+	X11DRV_WND_DockWindow(wndPtr);
 
       if (wndPtr->flags & WIN_MANAGED) 
       {
@@ -880,4 +886,25 @@ BOOL X11DRV_WND_IsSelfClipping(WND *wndPtr)
   return X11DRV_WND_GetXWindow(wndPtr) != None;
 }
 
+/***********************************************************************
+ *		X11DRV_WND_DockWindow
+ *
+ * Set the X Property of the window that tells the windowmanager we really
+ * want to be in the systray
+ *
+ * KDE: set "KWM_DOCKWINDOW", type "KWM_DOCKWINDOW" to 1 before a window is 
+ * 	mapped.
+ *
+ * all others: to be added ;)
+ */
+void X11DRV_WND_DockWindow(WND *wndPtr)
+{ 
+  int data = 1;
+  Window win = X11DRV_WND_GetXWindow(wndPtr);
+  if (kwmDockWindow == None) 
+	  return; /* no KDE running */
+  TSXChangeProperty(
+    display,win,kwmDockWindow,kwmDockWindow,32,PropModeReplace,(char*)&data,1
+  );
+}
 #endif /* !defined(X_DISPLAY_MISSING) */

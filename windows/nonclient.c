@@ -102,6 +102,8 @@ BOOL WIN_WindowNeedsWMBorder( DWORD style, DWORD exStyle )
         ( ((style & WS_CAPTION) == WS_CAPTION) ||
 	  (style & WS_THICKFRAME)))
         return TRUE;
+    if (exStyle & WS_EX_TRAYWINDOW)
+	return TRUE;
     return FALSE;
 }
 

@@ -657,28 +657,6 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
 }
 
 /*************************************************************************
- * Shell_NotifyIcon			[SHELL32.296]
- *	FIXME
- *	This function is supposed to deal with the systray.
- *	Any ideas on how this is to be implimented?
- */
-BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATAA pnid )
-{   FIXME("Taskbar Notification Area functionality not implemented !\n");
-    return TRUE; /* pretend success */
-}
-
-/*************************************************************************
- * Shell_NotifyIcon			[SHELL32.297]
- *	FIXME
- *	This function is supposed to deal with the systray.
- *	Any ideas on how this is to be implimented?
- */
-BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
-{   FIXME("Taskbar Notification Area functionality not implemented !\n");
-    return TRUE; /* pretend success */
-}
-
-/*************************************************************************
  * FreeIconList
  */
 void WINAPI FreeIconList( DWORD dw )

@@ -33,7 +33,8 @@ C_SRCS = \
 	shlfolder.c \
 	shlview.c \
 	shpolicy.c \
-	shv_bg_cmenu.c
+	shv_bg_cmenu.c \
+	systray.c
 
 RC_SRCS= \
 	shres.rc
