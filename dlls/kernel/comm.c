@@ -768,9 +768,8 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
  */
 INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 {
-	int queue;
+	DWORD queue;
 	struct DosDeviceStruct *ptr;
-	int fd,r;
 
     	TRACE("cid=%d, queue=%d\n", cid, fnQueue);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
@@ -779,11 +778,11 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 	}
 	switch (fnQueue) {
 		case 0:
-		  queue = TCOFLUSH;
+		  queue = PURGE_TXABORT;
 		  ptr->obuf_tail = ptr->obuf_head;
 		  break;
 		case 1:
-		  queue = TCIFLUSH;
+		  queue = PURGE_RXABORT;
 		  ptr->ibuf_head = ptr->ibuf_tail;
 		  break;
 		default:
@@ -792,12 +791,7 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 		  return -1;
 		}
 
-	/* FIXME: replace with a call to PurgeComm */
-	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
-		return -1;
-	r = tcflush(fd, queue);
-	close(fd);
-	if (r) {
+	if (!PurgeComm(ptr->handle,queue)) {
 		ptr->commerror = WinError();
 		return -1;	
 	} else {
