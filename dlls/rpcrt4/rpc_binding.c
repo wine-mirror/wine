@@ -136,7 +136,11 @@ RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,  LPST
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   RPCRT4_strfree(Binding->Endpoint);
-  Binding->Endpoint = RPCRT4_strdupA(Endpoint);
+  if (Binding->Endpoint) {
+    Binding->Endpoint = RPCRT4_strdupA(Endpoint);
+  } else {
+    Binding->Endpoint = RPCRT4_strdupA("");
+  }
 
   return RPC_S_OK;
 }
@@ -150,7 +154,11 @@ RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAddr, LPWS
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupWtoA(NetworkAddr);
   RPCRT4_strfree(Binding->Endpoint);
-  Binding->Endpoint = RPCRT4_strdupWtoA(Endpoint);
+  if (Binding->Endpoint) {
+    Binding->Endpoint = RPCRT4_strdupWtoA(Endpoint);
+  } else {
+    Binding->Endpoint = RPCRT4_strdupA("");
+  }
 
   return RPC_S_OK;
 }

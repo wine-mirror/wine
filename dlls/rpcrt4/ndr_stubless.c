@@ -49,7 +49,7 @@ LONG_PTR /* CLIENT_CALL_RETURN */ RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDes
   RPC_MESSAGE rpcmsg;
   MIDL_STUB_MESSAGE stubmsg;
 
-  TRACE("(pStubDec == ^%p,pFormat = ^%p,...): semi-stub\n", pStubDesc, pFormat);
+  FIXME("(pStubDec == ^%p,pFormat = ^%p,...): semi-stub\n", pStubDesc, pFormat);
   if (rpc_cli_if) /* NULL for objects */ {
     TRACE("  *rpc_cli_if (== ^%p) == (RPC_CLIENT_INTERFACE):\n", pStubDesc);
     TRACE("    Length == %d\n", rpc_cli_if->Length);
