@@ -614,39 +614,51 @@ TOOLBAR_DrawPattern (HDC hdc, LPRECT lpRect)
 }
 
 
-static void
-TOOLBAR_DrawMasked (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
-		    HDC hdc, INT x, INT y)
+static void TOOLBAR_DrawMasked(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
+                               HDC hdc, INT x, INT y)
 {
     HIMAGELIST himl = GETDEFIMAGELIST(infoPtr, 0);
-    INT cx, cy;
-    HBITMAP hbmMask;
-    HDC hdcMask;
 
-    if (!himl)
-	return;
+    if (himl)
+    {
+        INT cx, cy;
+        HBITMAP hbmMask, hbmImage;
+        HDC hdcMask, hdcImage;
 
-    ImageList_GetIconSize(himl, &cx, &cy);
+        ImageList_GetIconSize(himl, &cx, &cy);
 
-    /* create new dc's */
-    hdcMask = CreateCompatibleDC (0);
+        /* Create src image */
+        hdcImage = CreateCompatibleDC(hdc);
+        hbmImage = CreateBitmap(cx, cy, GetDeviceCaps(hdc,PLANES),
+                                GetDeviceCaps(hdc,BITSPIXEL), NULL);
+        SelectObject(hdcImage, hbmImage);
+        ImageList_DrawEx(himl, btnPtr->iBitmap, hdcImage, 0, 0, cx, cy,
+                         RGB(0xff, 0xff, 0xff), RGB(0,0,0), ILD_NORMAL);
 
-    /* create new bitmap */
-    hbmMask = CreateBitmap (cx, cy, 1, 1, NULL);
-    SelectObject (hdcMask, hbmMask);
+        /* Create Mask */
+        hdcMask = CreateCompatibleDC(0);
+        hbmMask = CreateBitmap(cx, cy, 1, 1, NULL);
+        SelectObject(hdcMask, hbmMask);
 
-    /* copy the mask bitmap */
-    ImageList_DrawEx(himl, btnPtr->iBitmap, hdcMask, 0, 0, 0, 0, RGB(255, 255, 255), RGB(0, 0, 0), ILD_MASK);
+        /* Remove the background and all white pixels */
+        SetBkColor(hdcImage, ImageList_GetBkColor(himl));
+        BitBlt(hdcMask, 0, 0, cx, cy, hdcImage, 0, 0, SRCCOPY);
+        SetBkColor(hdcImage, RGB(0xff, 0xff, 0xff));
+        BitBlt(hdcMask, 0, 0, cx, cy, hdcImage, 0, 0, NOTSRCERASE);
 
-    /* draw the new mask */
-    SelectObject (hdc, GetSysColorBrush (COLOR_3DHILIGHT));
-    BitBlt (hdc, x+1, y+1, cx, cy, hdcMask, 0, 0, 0xB8074A);
+        /* draw the new mask 'etched' to hdc */
+        SetBkColor(hdc, RGB(255, 255, 255));
+        SelectObject(hdc, GetSysColorBrush(COLOR_3DHILIGHT));
+        BitBlt(hdc, x + 1, y + 1, cx, cy, hdcMask, 0, 0, 0xE20746);
+        SelectObject(hdc, GetSysColorBrush(COLOR_3DSHADOW));
+        BitBlt(hdc, x, y, cx, cy, hdcMask, 0, 0, 0xE20746);
 
-    SelectObject (hdc, GetSysColorBrush (COLOR_3DSHADOW));
-    BitBlt (hdc, x, y, cx, cy, hdcMask, 0, 0, 0xB8074A);
-
-    DeleteObject (hbmMask);
-    DeleteDC (hdcMask);
+        /* Cleanup */
+        DeleteObject(hbmImage);
+        DeleteDC(hdcImage);
+        DeleteObject (hbmMask);
+        DeleteDC(hdcMask);
+    }
 }
 
 
