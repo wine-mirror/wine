@@ -260,16 +260,8 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
         if (msg->lParam)
-        {
-            /* before calling window proc, verify whether timer is still valid;
-               there's a slim chance that the application kills the timer
-	       between GetMessage and DispatchMessage API calls */
-            if (!TIMER_IsTimerValid(hwnd, (UINT) msg->wParam, (WNDPROC)msg->lParam))
-                return 0; /* invalid winproc */
-
             return CallWindowProc16( (WNDPROC16)msg->lParam, msg->hwnd,
                                      msg->message, msg->wParam, GetTickCount() );
-        }
     }
 
     if (!(wndPtr = WIN_GetPtr( hwnd )))

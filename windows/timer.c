@@ -46,7 +46,6 @@ typedef struct tagTIMER
     UINT           msg;  /* WM_TIMER or WM_SYSTIMER */
     UINT           id;
     UINT           timeout;
-    WNDPROC        proc;
 } TIMER;
 
 #define NB_TIMERS            34
@@ -123,8 +122,7 @@ void TIMER_RemoveThreadTimers(void)
 /***********************************************************************
  *           TIMER_SetTimer
  */
-static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
-                                WNDPROC proc, WINDOWPROCTYPE type, BOOL sys )
+static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc, BOOL sys )
 {
     int i;
     TIMER * pTimer;
@@ -171,7 +169,7 @@ static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
 
     if (!hwnd) id = i + 1;
 
-    if (proc) winproc = WINPROC_AllocProc( proc, type );
+    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, WIN_PROC_32A );
 
     SERVER_START_REQ( set_win_timer )
     {
@@ -191,10 +189,9 @@ static UINT_PTR TIMER_SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;
-    pTimer->proc    = winproc;
 
     TRACE("Timer added: %p, %p, %04x, %04x, %p\n",
-          pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, pTimer->proc );
+          pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, winproc );
 
     LeaveCriticalSection( &csTimer );
 
@@ -248,73 +245,22 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT_PTR id, BOOL sys )
 
 
 /***********************************************************************
- *		SetTimer (USER.10)
- */
-UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
-                          TIMERPROC16 proc )
-{
-    TRACE("%04x %d %d %08lx\n",
-                   hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC)proc,
-                           WIN_PROC_16, FALSE );
-}
-
-
-/***********************************************************************
  *		SetTimer (USER32.@)
  */
-UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout,
-                          TIMERPROC proc )
+UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 {
     TRACE("%p %d %d %p\n", hwnd, id, timeout, proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC)proc, WIN_PROC_32A, FALSE );
-}
-
-
-/***********************************************************************
- *           TIMER_IsTimerValid
- */
-BOOL TIMER_IsTimerValid( HWND hwnd, UINT_PTR id, WNDPROC proc )
-{
-    int i;
-    TIMER *pTimer;
-    BOOL ret = FALSE;
-
-    hwnd = WIN_GetFullHandle( hwnd );
-    EnterCriticalSection( &csTimer );
-
-    for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
-        if ((pTimer->hwnd == hwnd) && (pTimer->id == id) && (pTimer->proc == proc))
-        {
-            ret = TRUE;
-            break;
-        }
-
-   LeaveCriticalSection( &csTimer );
-   return ret;
-}
-
-
-/***********************************************************************
- *		SetSystemTimer (USER.11)
- */
-UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
-                                TIMERPROC16 proc )
-{
-    TRACE("%04x %d %d %08lx\n",
-                   hwnd, id, timeout, (LONG)proc );
-    return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC)proc, WIN_PROC_16, TRUE );
+    return TIMER_SetTimer( hwnd, id, timeout, proc, FALSE );
 }
 
 
 /***********************************************************************
  *		SetSystemTimer (USER32.@)
  */
-UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout,
-                                TIMERPROC proc )
+UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 {
     TRACE("%p %d %d %p\n", hwnd, id, timeout, proc );
-    return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC)proc, WIN_PROC_32A, TRUE );
+    return TIMER_SetTimer( hwnd, id, timeout, proc, TRUE );
 }
 
 

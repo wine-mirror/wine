@@ -27,13 +27,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wine/winbase16.h"
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
-#include "wownt32.h"
 #include "wine/unicode.h"
 #include "win.h"
 #include "user.h"
@@ -515,29 +513,6 @@ void CLASS_AddWindow( CLASS *class, WND *win, WINDOWPROCTYPE type )
 
 
 /***********************************************************************
- *		RegisterClass (USER.57)
- */
-ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
-{
-    WNDCLASSEX16 wcex;
-
-    wcex.cbSize        = sizeof(wcex);
-    wcex.style         = wc->style;
-    wcex.lpfnWndProc   = wc->lpfnWndProc;
-    wcex.cbClsExtra    = wc->cbClsExtra;
-    wcex.cbWndExtra    = wc->cbWndExtra;
-    wcex.hInstance     = wc->hInstance;
-    wcex.hIcon         = wc->hIcon;
-    wcex.hCursor       = wc->hCursor;
-    wcex.hbrBackground = wc->hbrBackground;
-    wcex.lpszMenuName  = wc->lpszMenuName;
-    wcex.lpszClassName = wc->lpszClassName;
-    wcex.hIconSm       = 0;
-    return RegisterClassEx16( &wcex );
-}
-
-
-/***********************************************************************
  *		RegisterClassA (USER32.@)
  * RETURNS
  *	>0: Unique identifier
@@ -583,40 +558,6 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
     wcex.lpszClassName = wc->lpszClassName;
     wcex.hIconSm       = 0;
     return RegisterClassExW( &wcex );
-}
-
-
-/***********************************************************************
- *		RegisterClassEx (USER.397)
- */
-ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
-{
-    ATOM atom;
-    CLASS *classPtr;
-    HINSTANCE hInstance;
-
-    if (!(hInstance = HINSTANCE_32(GetExePtr(wc->hInstance))))
-        hInstance = HINSTANCE_32(GetModuleHandle16(NULL));
-
-    if (!(atom = GlobalAddAtomA( MapSL(wc->lpszClassName) ))) return 0;
-    if (!(classPtr = CLASS_RegisterClass( atom, hInstance, !(wc->style & CS_GLOBALCLASS),
-                                          wc->style, wc->cbClsExtra, wc->cbWndExtra )))
-        return 0;
-
-    TRACE("atom=%04x wndproc=%p hinst=%p bg=%04x style=%08x clsExt=%d winExt=%d class=%p\n",
-          atom, wc->lpfnWndProc, hInstance,
-          wc->hbrBackground, wc->style, wc->cbClsExtra,
-          wc->cbWndExtra, classPtr );
-
-    classPtr->hIcon         = HICON_32(wc->hIcon);
-    classPtr->hIconSm       = HICON_32(wc->hIconSm);
-    classPtr->hCursor       = HCURSOR_32(wc->hCursor);
-    classPtr->hbrBackground = HBRUSH_32(wc->hbrBackground);
-
-    classPtr->winprocA = WINPROC_AllocProc( (WNDPROC)wc->lpfnWndProc, WIN_PROC_16 );
-    CLASS_SetMenuNameA( classPtr, MapSL(wc->lpszMenuName) );
-    release_class_ptr( classPtr );
-    return atom;
 }
 
 
@@ -695,15 +636,6 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
     return atom;
 }
 
-
-/***********************************************************************
- *		UnregisterClass (USER.403)
- */
-BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
-{
-    if (hInstance == GetModuleHandle16("user")) hInstance = 0;
-    return UnregisterClassA( className, HINSTANCE_32(GetExePtr( hInstance )) );
-}
 
 /***********************************************************************
  *		UnregisterClassA (USER32.@)
@@ -1169,31 +1101,6 @@ UINT WINAPI RealGetWindowClassW( HWND hwnd, LPWSTR buffer, UINT count )
 
 
 /***********************************************************************
- *		GetClassInfo (USER.404)
- */
-BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASS16 *wc )
-{
-    WNDCLASSEX16 wcex;
-    UINT16 ret = GetClassInfoEx16( hInst16, name, &wcex );
-
-    if (ret)
-    {
-        wc->style         = wcex.style;
-        wc->lpfnWndProc   = wcex.lpfnWndProc;
-        wc->cbClsExtra    = wcex.cbClsExtra;
-        wc->cbWndExtra    = wcex.cbWndExtra;
-        wc->hInstance     = wcex.hInstance;
-        wc->hIcon         = wcex.hIcon;
-        wc->hCursor       = wcex.hCursor;
-        wc->hbrBackground = wcex.hbrBackground;
-        wc->lpszMenuName  = wcex.lpszMenuName;
-        wc->lpszClassName = wcex.lpszClassName;
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		GetClassInfoA (USER32.@)
  */
 BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name, WNDCLASSA *wc )
@@ -1240,43 +1147,6 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name, WNDCLASSW *wc )
         wc->lpszClassName = wcex.lpszClassName;
     }
     return ret;
-}
-
-
-/***********************************************************************
- *		GetClassInfoEx (USER.398)
- *
- * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
- * same in Win16 as in Win32. --AJ
- */
-BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASSEX16 *wc )
-{
-    ATOM atom = HIWORD(name) ? GlobalFindAtomA( MapSL(name) ) : LOWORD(name);
-    CLASS *classPtr;
-    HINSTANCE hInstance;
-
-    if (hInst16 == GetModuleHandle16("user")) hInstance = user32_module;
-    else hInstance = HINSTANCE_32(GetExePtr( hInst16 ));
-
-    TRACE("%p %s %x %p\n", hInstance, debugstr_a( MapSL(name) ), atom, wc);
-
-    if (!atom || !(classPtr = CLASS_FindClassByAtom( atom, hInstance ))) return FALSE;
-    wc->style         = classPtr->style;
-    wc->lpfnWndProc   = CLASS_GetProc( classPtr, WIN_PROC_16 );
-    wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
-    wc->cbWndExtra    = (INT16)classPtr->cbWndExtra;
-    wc->hInstance     = (classPtr->hInstance == user32_module) ? GetModuleHandle16("user") : HINSTANCE_16(classPtr->hInstance);
-    wc->hIcon         = HICON_16(classPtr->hIcon);
-    wc->hIconSm       = HICON_16(classPtr->hIconSm);
-    wc->hCursor       = HCURSOR_16(classPtr->hCursor);
-    wc->hbrBackground = HBRUSH_16(classPtr->hbrBackground);
-    wc->lpszClassName = (SEGPTR)0;
-    wc->lpszMenuName  = CLASS_GetMenuName16( classPtr );
-    wc->lpszClassName = name;
-    release_class_ptr( classPtr );
-
-    /* We must return the atom of the class here instead of just TRUE. */
-    return atom;
 }
 
 

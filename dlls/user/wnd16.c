@@ -22,6 +22,7 @@
 #include "wownt32.h"
 #include "user.h"
 #include "win.h"
+#include "winproc.h"
 #include "stackframe.h"
 
 /* handle <--> handle16 conversions */
@@ -64,6 +65,26 @@ inline static HWND full_insert_after_hwnd( HWND16 hwnd )
 INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type )
 {
     return MessageBoxA( WIN_Handle32(hwnd), text, title, type );
+}
+
+
+/***********************************************************************
+ *		SetTimer (USER.10)
+ */
+UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 proc )
+{
+    TIMERPROC proc32 = (TIMERPROC)WINPROC_AllocProc( (WNDPROC)proc, WIN_PROC_16 );
+    return SetTimer( WIN_Handle32(hwnd), id, timeout, proc32 );
+}
+
+
+/***********************************************************************
+ *		SetSystemTimer (USER.11)
+ */
+UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 proc )
+{
+    TIMERPROC proc32 = (TIMERPROC)WINPROC_AllocProc( (WNDPROC)proc, WIN_PROC_16 );
+    return SetSystemTimer( WIN_Handle32(hwnd), id, timeout, proc32 );
 }
 
 
@@ -410,6 +431,29 @@ BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lPar
 BOOL16 WINAPI MoveWindow16( HWND16 hwnd, INT16 x, INT16 y, INT16 cx, INT16 cy, BOOL16 repaint )
 {
     return MoveWindow( WIN_Handle32(hwnd), x, y, cx, cy, repaint );
+}
+
+
+/***********************************************************************
+ *		RegisterClass (USER.57)
+ */
+ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
+{
+    WNDCLASSEX16 wcex;
+
+    wcex.cbSize        = sizeof(wcex);
+    wcex.style         = wc->style;
+    wcex.lpfnWndProc   = wc->lpfnWndProc;
+    wcex.cbClsExtra    = wc->cbClsExtra;
+    wcex.cbWndExtra    = wc->cbWndExtra;
+    wcex.hInstance     = wc->hInstance;
+    wcex.hIcon         = wc->hIcon;
+    wcex.hCursor       = wc->hCursor;
+    wcex.hbrBackground = wc->hbrBackground;
+    wcex.lpszMenuName  = wc->lpszMenuName;
+    wcex.lpszClassName = wc->lpszClassName;
+    wcex.hIconSm       = 0;
+    return RegisterClassEx16( &wcex );
 }
 
 
@@ -1270,6 +1314,66 @@ BOOL16 WINAPI SetWindowPlacement16( HWND16 hwnd, const WINDOWPLACEMENT16 *wp16 )
 }
 
 
+/***********************************************************************
+ *		RegisterClassEx (USER.397)
+ */
+ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
+{
+    WNDCLASSEXA wc32;
+
+    wc32.cbSize        = sizeof(wc32);
+    wc32.style         = wc->style;
+    wc32.lpfnWndProc   = WINPROC_AllocProc( (WNDPROC)wc->lpfnWndProc, WIN_PROC_16 );
+    wc32.cbClsExtra    = wc->cbClsExtra;
+    wc32.cbWndExtra    = wc->cbWndExtra;
+    wc32.hInstance     = HINSTANCE_32(GetExePtr(wc->hInstance));
+    if (!wc32.hInstance) wc32.hInstance = HINSTANCE_32(GetModuleHandle16(NULL));
+    wc32.hIcon         = HICON_32(wc->hIcon);
+    wc32.hCursor       = HCURSOR_32(wc->hCursor);
+    wc32.hbrBackground = HBRUSH_32(wc->hbrBackground);
+    wc32.lpszMenuName  = MapSL(wc->lpszMenuName);
+    wc32.lpszClassName = MapSL(wc->lpszClassName);
+    wc32.hIconSm       = HICON_32(wc->hIconSm);
+    return RegisterClassExA( &wc32 );
+}
+
+
+/***********************************************************************
+ *		GetClassInfoEx (USER.398)
+ *
+ * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
+ * same in Win16 as in Win32. --AJ
+ */
+BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASSEX16 *wc )
+{
+    WNDCLASSEXA wc32;
+    HINSTANCE hInstance;
+    BOOL ret;
+
+    if (hInst16 == GetModuleHandle16("user")) hInstance = user32_module;
+    else hInstance = HINSTANCE_32(GetExePtr( hInst16 ));
+
+    ret = GetClassInfoExA( hInstance, MapSL(name), &wc32 );
+
+    if (ret)
+    {
+        WNDPROC proc = WINPROC_AllocProc( wc32.lpfnWndProc, WIN_PROC_32A );
+        wc->lpfnWndProc   = WINPROC_GetProc( proc, WIN_PROC_16 );
+        wc->style         = wc32.style;
+        wc->cbClsExtra    = wc32.cbClsExtra;
+        wc->cbWndExtra    = wc32.cbWndExtra;
+        wc->hInstance     = (wc32.hInstance == user32_module) ? GetModuleHandle16("user") : HINSTANCE_16(wc32.hInstance);
+        wc->hIcon         = HICON_16(wc32.hIcon);
+        wc->hIconSm       = HICON_16(wc32.hIconSm);
+        wc->hCursor       = HCURSOR_16(wc32.hCursor);
+        wc->hbrBackground = HBRUSH_16(wc32.hbrBackground);
+        wc->lpszClassName = 0;
+        wc->lpszMenuName  = MapLS(wc32.lpszMenuName);  /* FIXME: leak */
+    }
+    return ret;
+}
+
+
 /**************************************************************************
  *              ChildWindowFromPointEx   (USER.399)
  */
@@ -1293,6 +1397,41 @@ INT16 WINAPI GetPriorityClipboardFormat16( UINT16 *list, INT16 count )
     for (i = 0; i < count; i++)
         if (IsClipboardFormatAvailable( list[i] )) return list[i];
     return -1;
+}
+
+
+/***********************************************************************
+ *		UnregisterClass (USER.403)
+ */
+BOOL16 WINAPI UnregisterClass16( LPCSTR className, HINSTANCE16 hInstance )
+{
+    if (hInstance == GetModuleHandle16("user")) hInstance = 0;
+    return UnregisterClassA( className, HINSTANCE_32(GetExePtr( hInstance )) );
+}
+
+
+/***********************************************************************
+ *		GetClassInfo (USER.404)
+ */
+BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASS16 *wc )
+{
+    WNDCLASSEX16 wcex;
+    UINT16 ret = GetClassInfoEx16( hInst16, name, &wcex );
+
+    if (ret)
+    {
+        wc->style         = wcex.style;
+        wc->lpfnWndProc   = wcex.lpfnWndProc;
+        wc->cbClsExtra    = wcex.cbClsExtra;
+        wc->cbWndExtra    = wcex.cbWndExtra;
+        wc->hInstance     = wcex.hInstance;
+        wc->hIcon         = wcex.hIcon;
+        wc->hCursor       = wcex.hCursor;
+        wc->hbrBackground = wcex.hbrBackground;
+        wc->lpszMenuName  = wcex.lpszMenuName;
+        wc->lpszClassName = wcex.lpszClassName;
+    }
+    return ret;
 }
 
 
