@@ -97,6 +97,8 @@
 @ stub CM_Get_Device_Interface_List_SizeW
 @ stub CM_Get_Device_Interface_List_Size_ExA
 @ stub CM_Get_Device_Interface_List_Size_ExW
+@ stub CM_Request_Device_EjectA
+@ stub CM_Request_Device_EjectW
 @ stub CM_Get_First_Log_Conf
 @ stub CM_Get_First_Log_Conf_Ex
 @ stub CM_Get_Global_State
@@ -267,7 +269,7 @@
 @ stdcall SetupDiBuildClassInfoListExA(long ptr long ptr str ptr)
 @ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr)
 @ stub SetupDiBuildDriverInfoList
-@ stub SetupDiCallClassInstaller
+@ stdcall SetupDiCallClassInstaller(long ptr ptr)
 @ stub SetupDiCancelDriverInfoSearch
 @ stub SetupDiChangeState
 @ stdcall SetupDiClassGuidsFromNameA(str ptr long ptr)
@@ -319,7 +321,7 @@
 @ stub SetupDiGetDeviceInfoListClass
 @ stdcall SetupDiGetDeviceInfoListDetailA(ptr ptr)
 @ stdcall SetupDiGetDeviceInfoListDetailW(ptr ptr)
-@ stub SetupDiGetDeviceInstallParamsA
+@ stdcall SetupDiGetDeviceInstallParamsA(ptr ptr ptr)
 @ stub SetupDiGetDeviceInstallParamsW
 @ stub SetupDiGetDeviceInstanceIdA
 @ stub SetupDiGetDeviceInstanceIdW
@@ -356,7 +358,7 @@
 @ stdcall SetupDiOpenClassRegKey(ptr long)
 @ stdcall SetupDiOpenClassRegKeyExA(ptr long long str ptr)
 @ stdcall SetupDiOpenClassRegKeyExW(ptr long long wstr ptr)
-@ stub SetupDiOpenDevRegKey
+@ stdcall SetupDiOpenDevRegKey(ptr ptr long long long long)
 @ stub SetupDiOpenDeviceInfoA
 @ stub SetupDiOpenDeviceInfoW
 @ stdcall SetupDiOpenDeviceInterfaceA(ptr str long ptr)
@@ -367,7 +369,7 @@
 @ stub SetupDiRemoveDeviceInterface
 @ stub SetupDiSelectDevice
 @ stub SetupDiSelectOEMDrv
-@ stub SetupDiSetClassInstallParamsA
+@ stdcall SetupDiSetClassInstallParamsA(ptr ptr ptr long)
 @ stub SetupDiSetClassInstallParamsW
 @ stub SetupDiSetDeviceInstallParamsA
 @ stub SetupDiSetDeviceInstallParamsW
