@@ -253,7 +253,7 @@ void mmap_init(void)
 {
     struct reserved_area *area;
     struct list *ptr;
-#ifdef __i386__
+#if defined(__i386__) && !defined(__FreeBSD__)  /* commented out until FreeBSD gets fixed */
     char stack;
     char * const stack_ptr = &stack;
     char *user_space_limit = (char *)0x80000000;
