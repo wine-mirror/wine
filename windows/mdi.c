@@ -557,12 +557,6 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND hWndChild )
     BOOL		 isActiveFrameWnd = 0;	 
     LONG               retvalue;
 
-    if( hWndChild == prevActiveWnd )
-    {
-        retvalue = 0L;
-        goto END;
-    }
-
     if( wndPtr )
     {
         if( wndPtr->dwStyle & WS_DISABLED )
