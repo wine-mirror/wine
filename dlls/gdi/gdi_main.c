@@ -24,9 +24,6 @@ BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
     /* Create the Win16 printer driver */
     if (!WIN16DRV_Init()) return FALSE;
 
-    /* PSDRV initialization */
-    if (!LoadLibraryA( "wineps" )) return FALSE;
-
     return TRUE;
 }
 

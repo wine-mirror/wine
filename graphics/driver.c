@@ -54,15 +54,23 @@ BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
  */
 const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name )
 {
-    GRAPHICS_DRIVER *driver = firstDriver;
+    GRAPHICS_DRIVER *driver;
+    HINSTANCE hDriver;
 
     TRACE(": %s\n", name);
-    while (driver && name)
-    {
+
+    if (!name) return genericDriver ? genericDriver->funcs : NULL;
+
+    for (driver = firstDriver; driver; driver = driver->next)
         if (!strcasecmp( driver->name, name )) return driver->funcs;
-        driver = driver->next;
-    }
-    return genericDriver ? genericDriver->funcs : NULL;
+
+    if (!(hDriver = LoadLibraryA (name))) return NULL;
+
+    for (driver = firstDriver; driver; driver = driver->next)
+        if (!strcasecmp( driver->name, name )) return driver->funcs;
+
+    FreeLibrary (hDriver);
+    return NULL;
 }
 
 
