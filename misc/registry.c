@@ -97,7 +97,6 @@ LPWSTR strcvtA2W(LPCSTR src, int nchars)
    LPWSTR dest = xmalloc (2 * nchars + 2);
 
    lstrcpynAtoW(dest,src,nchars+1);
-   dest[nchars] = 0;
    return dest;
 }
 

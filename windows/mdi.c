@@ -1028,8 +1028,7 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
 	}
 	else
 	{
-            strncpy(lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH );
-	    lpBuffer[MDI_MAXTITLELENGTH]='\0';
+            lstrcpynA(lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH+1 );
 	}
         WIN_ReleaseWndPtr(childWnd);
 

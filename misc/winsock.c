@@ -1142,13 +1142,15 @@ char* WINAPI WINSOCK_inet_ntoa(struct in_addr in)
 	char*	s = inet_ntoa(in);
 	if( s ) 
 	{
-	    if( pwsi->dbuffer == NULL )
-		if((pwsi->dbuffer = (char*) SEGPTR_ALLOC(32)) == NULL )
+            if( pwsi->dbuffer == NULL ) {
+                /* Yes, 16: 4*3 digits + 3 '.' + 1 '\0' */
+		if((pwsi->dbuffer = (char*) SEGPTR_ALLOC(16)) == NULL )
 		{
 		    SetLastError(WSAENOBUFS);
 		    return NULL;
 		}
-	    strncpy(pwsi->dbuffer, s, 32 );
+            }
+	    strcpy(pwsi->dbuffer, s);
 	    return pwsi->dbuffer; 
 	}
 	SetLastError(wsaErrno());

@@ -290,7 +290,7 @@ static HRESULT WINAPI IPersistStream_fnLoad(
 	PLINK_HEADER lpLinkHeader = HeapAlloc(GetProcessHeap(), 0, LINK_HEADER_SIZE);
 	ULONG	dwBytesRead;
 	DWORD	ret = E_FAIL;
-	char	sTemp[512];
+	char	sTemp[MAX_PATH];
 	
 	_ICOM_THIS_From_IPersistStream(IShellLinkImpl, iface);
 

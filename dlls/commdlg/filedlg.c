@@ -129,7 +129,7 @@ static LRESULT WINAPI FileSaveDlgProc(HWND hDlg, UINT msg,
  * Creates a dialog box for the user to select a file to open.
  *
  * RETURNS
- *    TRUE on succes: user selected a valid file
+ *    TRUE on success: user selected a valid file
  *    FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  *
  * BUGS
@@ -786,9 +786,8 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   if (lpofn->nFilterIndex == 0 && lpofn->lpstrCustomFilter == (SEGPTR)NULL)
   	lpofn->nFilterIndex = 1;
   SendDlgItemMessage16(hWnd, cmb1, CB_SETCURSEL16, lpofn->nFilterIndex - 1, 0);    
-  strncpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
-	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1),511);
-  tmpstr[511]=0;
+  lstrcpynA(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
+	     PTR_SEG_TO_LIN(lpofn->lpstrFilter), lpofn->nFilterIndex - 1),512);
   TRACE("nFilterIndex = %ld, SetText of edt1 to '%s'\n", 
   			lpofn->nFilterIndex, tmpstr);
   SetDlgItemTextA( hWnd, edt1, tmpstr );
@@ -798,11 +797,13 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   /* read initial directory */
   if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) 
     {
-      strncpy(tmpstr, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir), 510);
-      tmpstr[510]=0;
-      if (strlen(tmpstr) > 0 && tmpstr[strlen(tmpstr)-1] != '\\' 
-	  && tmpstr[strlen(tmpstr)-1] != ':')
-	strcat(tmpstr,"\\");
+      int len;
+      lstrcpynA(tmpstr, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir), 511);
+      len=strlen(tmpstr);
+      if (len > 0 && tmpstr[len-1] != '\\'  && tmpstr[len-1] != ':') {
+        tmpstr[len]='\\';
+        tmpstr[len+1]='\0';
+      }
     }
   else
     *tmpstr = 0;
@@ -926,7 +927,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	  /* edit control contains wildcards */
 	  if (pstr != NULL)
 	    {
-	      strncpy(tmpstr2, pstr+1, 511); tmpstr2[511]=0;
+	      lstrcpynA(tmpstr2, pstr+1, 512);
 	      *(pstr+1) = 0;
 	    }
 	  else
@@ -973,14 +974,16 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
       ShowWindow16(hWnd, SW_HIDE);   /* this should not be necessary ?! (%%%) */
 #endif
       {
+ 	int lenstr2;
 	int drive = DRIVE_GetCurrentDrive();
 	tmpstr2[0] = 'A'+ drive;
 	tmpstr2[1] = ':';
 	tmpstr2[2] = '\\';
-	strncpy(tmpstr2 + 3, DRIVE_GetDosCwd(drive), 507); tmpstr2[510]=0;
-	if (strlen(tmpstr2) > 3)
-	   strcat(tmpstr2, "\\");
-	strncat(tmpstr2, tmpstr, 511-strlen(tmpstr2)); tmpstr2[511]=0;
+	lstrcpynA(tmpstr2 + 3, DRIVE_GetDosCwd(drive), 507);
+        lenstr2=strlen(tmpstr2);
+	if (lenstr2 > 3)
+ 	   tmpstr2[lenstr2++]='\\';
+	lstrcpynA(tmpstr2+lenstr2, tmpstr, 512-lenstr2);
 	if (lpofn->lpstrFile)
 	  lstrcpynA(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr2,lpofn->nMaxFile);
       }

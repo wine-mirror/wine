@@ -669,7 +669,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver16(LPCSTR lpName, HMODULE16 hModule, DRIVERPR
 	lpDrv->dwFlags         = WINE_DI_TYPE_16;
 	lpDrv->dwDriverID      = 0;
 	lpDrv->hDriver16       = DRIVER_CreateDrvr16();
-	strncpy(lpDrv->szAliasName, lpName, sizeof(lpDrv->szAliasName));
+	lstrcpynA(lpDrv->szAliasName, lpName, sizeof(lpDrv->szAliasName));
 	lpDrv->d.d16.hModule   = hModule;
 	lpDrv->d.d16.lpDrvProc = lpProc;
 	
@@ -697,7 +697,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver32(LPCSTR lpName, HMODULE hModule, DRIVERPROC
 	lpDrv->dwFlags          = WINE_DI_TYPE_32;
 	lpDrv->dwDriverID       = 0;
 	lpDrv->hDriver16        = DRIVER_CreateDrvr16();
-	strncpy(lpDrv->szAliasName, lpName, sizeof(lpDrv->szAliasName));
+	lstrcpynA(lpDrv->szAliasName, lpName, sizeof(lpDrv->szAliasName));
 	lpDrv->d.d32.hModule    = hModule;
 	lpDrv->d.d32.lpDrvProc  = lpProc;
 	
@@ -819,7 +819,7 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
     TRACE("('%s', '%s', %08lX);\n", lpDriverName, lpSectionName, lParam);
     
     if (lpSectionName == NULL) {
-	strncpy(drvName, lpDriverName, sizeof(drvName));
+	lstrcpynA(drvName, lpDriverName, sizeof(drvName));
 	hDriver = DRIVER_TryOpenDriver32(lpDriverName, lParam, TRUE);
 	if (!hDriver) {
 	    hDriver = DRIVER_TryOpenDriver16(lpDriverName, lParam, TRUE);
@@ -979,7 +979,7 @@ BOOL16 WINAPI GetDriverInfo16(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
 	(lpDrv->dwFlags & WINE_DI_TYPE_MASK) == WINE_DI_TYPE_16) {
 	lpDrvInfo->hDriver = lpDrv->hDriver16;
 	lpDrvInfo->hModule = lpDrv->d.d16.hModule;
-	strncpy(lpDrvInfo->szAliasName, lpDrv->szAliasName, sizeof(lpDrvInfo->szAliasName));
+	lstrcpynA(lpDrvInfo->szAliasName, lpDrv->szAliasName, sizeof(lpDrvInfo->szAliasName));
 	ret = TRUE;
     }
     

@@ -276,8 +276,7 @@ DWORD WINAPI VerFindFileA(
 	if(*lpuDestDirLen < destDirSizeReq) {
 	    retval |= VFF_BUFFTOOSMALL;
 	    if (*lpuDestDirLen) {
-	    strncpy(lpszDestDir, destDir, *lpuDestDirLen - 1);
-	    lpszDestDir[*lpuDestDirLen - 1] = '\0';
+	    lstrcpynA(lpszDestDir, destDir, *lpuDestDirLen);
 	}
 	}
 	else
@@ -290,8 +289,7 @@ DWORD WINAPI VerFindFileA(
 	if(*lpuCurDirLen < curDirSizeReq) {
 	    retval |= VFF_BUFFTOOSMALL;
 	    if (*lpuCurDirLen) {
-	    strncpy(lpszCurDir, curDir, *lpuCurDirLen - 1);
-	    lpszCurDir[*lpuCurDirLen - 1] = '\0';
+	    lstrcpynA(lpszCurDir, curDir, *lpuCurDirLen);
 	    }
 	}
 	else

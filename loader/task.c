@@ -1612,8 +1612,7 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
     lpte->wStackBottom  = pInstData->stackbottom;
     lpte->wcEvents      = pTask->nEvents;
     lpte->hQueue        = pTask->hQueue;
-    strncpy( lpte->szModule, pTask->module_name, 8 );
-    lpte->szModule[8]   = '\0';
+    lstrcpynA( lpte->szModule, pTask->module_name, sizeof(lpte->szModule) );
     lpte->wPSPOffset    = 0x100;  /*??*/
     lpte->hNext         = pTask->hNext;
     return TRUE;

@@ -554,8 +554,10 @@ static HRESULT setValue(LPSTR *argv)
       HeapFree(GetProcessHeap(), 0, argv[1]);
       argv[1] = HeapAlloc(GetProcessHeap(), 0, dwSize+1);
 
-      if ( argv[1] != NULL )
+      if ( argv[1] != NULL ) {
         strncpy(argv[1], lpsCurrentValue, dwSize);
+        argv[1][dwSize]='\0';
+    }
     }
 
     return KEY_VALUE_ALREADY_SET;
@@ -707,8 +709,7 @@ static void processQueryValue(LPSTR cmdline)
              (LPBYTE)lpsData,
              &lLen);
 
-    while(hRes==ERROR_MORE_DATA){
-        lLen+=KEY_MAX_LEN;
+    if (hRes==ERROR_MORE_DATA) {
         lpsData=HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpsData,lLen);
         hRes = RegQueryValue(currentKeyHandle,currentKeyName,(LPBYTE)lpsData,&lLen);
     }
@@ -717,6 +718,7 @@ static void processQueryValue(LPSTR cmdline)
     {
       lpsRes = HeapAlloc( GetProcessHeap(), 0, lLen);
       strncpy(lpsRes, lpsData, lLen);
+      lpsRes[lLen-1]='\0';
     }
   }
   else 
@@ -735,8 +737,7 @@ static void processQueryValue(LPSTR cmdline)
              (LPBYTE)lpbData, 
              &dwLen);
 
-    while(hRes==ERROR_MORE_DATA){
-        dwLen+=KEY_MAX_LEN;
+    if (hRes==ERROR_MORE_DATA) {
         lpbData=HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,lpbData,dwLen);
         hRes = RegQueryValueEx(currentKeyHandle,keyValue,NULL,&dwType,(LPBYTE)lpbData,&dwLen);
     }
@@ -753,6 +754,7 @@ static void processQueryValue(LPSTR cmdline)
         {
           lpsRes = HeapAlloc( GetProcessHeap(), 0, dwLen);
           strncpy(lpsRes, lpbData, dwLen);
+          lpsRes[dwLen-1]='\0';
           break;
         }
         case REG_DWORD:

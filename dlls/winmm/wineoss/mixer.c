@@ -184,8 +184,8 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 	lpMl->dwComponentType = MIXERLINE_COMPONENTTYPE_DST_SPEAKERS;
 	lpMl->dwSource = 0xFFFFFFFF;
 	lpMl->dwLineID = SOUND_MIXER_VOLUME;
-	strncpy(lpMl->szShortName, MIX_Labels[SOUND_MIXER_VOLUME], MIXER_SHORT_NAME_CHARS);
-	strncpy(lpMl->szName, MIX_Names[SOUND_MIXER_VOLUME], MIXER_LONG_NAME_CHARS);
+	lstrcpynA(lpMl->szShortName, MIX_Labels[SOUND_MIXER_VOLUME], MIXER_SHORT_NAME_CHARS);
+	lstrcpynA(lpMl->szName, MIX_Names[SOUND_MIXER_VOLUME], MIXER_LONG_NAME_CHARS);
 	
 	/* we have all connections found in the MIX_DevMask */
 	lpMl->cConnections = 0;
@@ -337,8 +337,8 @@ static void MIX_DoGetLineControls(LPMIXERCONTROLA mc, DWORD lineID, DWORD dwType
 	mc->dwControlType = MIXERCONTROL_CONTROLTYPE_VOLUME;
 	mc->fdwControl = 0;
 	mc->cMultipleItems = 0;
-	strncpy(mc->szShortName, "Vol", MIXER_SHORT_NAME_CHARS);
-	strncpy(mc->szName, "Volume", MIXER_LONG_NAME_CHARS);
+	lstrcpynA(mc->szShortName, "Vol", MIXER_SHORT_NAME_CHARS);
+	lstrcpynA(mc->szName, "Volume", MIXER_LONG_NAME_CHARS);
 	memset(&mc->Bounds, 0, sizeof(mc->Bounds));
 	/* CONTROLTYPE_VOLUME uses the MIXER_CONTROLDETAILS_UNSIGNED struct, 
 	 * [0, 100] is the range supported by OSS
@@ -356,8 +356,8 @@ static void MIX_DoGetLineControls(LPMIXERCONTROLA mc, DWORD lineID, DWORD dwType
 	mc->dwControlType = MIXERCONTROL_CONTROLTYPE_MUTE;
 	mc->fdwControl = 0;
 	mc->cMultipleItems = 0;
-	strncpy(mc->szShortName, "Mute", MIXER_SHORT_NAME_CHARS);
-	strncpy(mc->szName, "Mute", MIXER_LONG_NAME_CHARS);
+	lstrcpynA(mc->szShortName, "Mute", MIXER_SHORT_NAME_CHARS);
+	lstrcpynA(mc->szName, "Mute", MIXER_LONG_NAME_CHARS);
 	memset(&mc->Bounds, 0, sizeof(mc->Bounds));
 	memset(&mc->Metrics, 0, sizeof(mc->Metrics));
 	break;

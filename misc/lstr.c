@@ -645,7 +645,7 @@ DWORD WINAPI FormatMessage16(
 	allocstring=PTR_SEG_OFF_TO_LIN(CURRENT_DS,*((HLOCAL16*)lpBuffer));
 	memcpy( allocstring,target,talloced);
     } else
-        strncpy(lpBuffer,target,nSize);
+        lstrcpynA(lpBuffer,target,nSize);
     HeapFree(GetProcessHeap(),0,target);
     if (from) HeapFree(GetProcessHeap(),0,from);
     return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
@@ -822,8 +822,9 @@ DWORD WINAPI FormatMessageA(
 		/* nSize is the MINIMUM size */
 		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced);
 		memcpy(*(LPSTR*)lpBuffer,target,talloced);
-	} else
-		strncpy(lpBuffer,target,nSize);
+    } else {
+		lstrcpynA(lpBuffer,target,nSize);
+    }
 	HeapFree(GetProcessHeap(),0,target);
 	if (from) HeapFree(GetProcessHeap(),0,from);
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 

@@ -225,7 +225,7 @@ static ATOM ATOM_AddAtom(
 	    (!lstrncmpiA( entryPtr->str, str, len )))
 	{
 	    entryPtr->refCount++;
-        TRACE("-- existing 0x%x\n", entry);
+            TRACE("-- existing 0x%x\n", entry);
 	    return HANDLETOATOM( entry );
 	}
 	entry = entryPtr->next;
@@ -240,7 +240,9 @@ static ATOM ATOM_AddAtom(
     entryPtr->next = table->entries[hash];
     entryPtr->refCount = 1;
     entryPtr->length = len;
-    strncpy( entryPtr->str, str, ae_len - sizeof(ATOMENTRY) + 1); /* always use strncpy ('\0's padding) */
+    /* Some applications _need_ the '\0' padding provided by this strncpy */
+    strncpy( entryPtr->str, str, ae_len - sizeof(ATOMENTRY) + 1 );
+    entryPtr->str[ae_len - sizeof(ATOMENTRY)] = '\0';
     table->entries[hash] = entry;
     TRACE("-- new 0x%x\n", entry);
     return HANDLETOATOM( entry );

@@ -288,7 +288,7 @@ static UINT PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
     pTM->tmPitchAndFamily |= TMPF_DEVICE;
     plf->lfPitchAndFamily = 0;
 
-    strncpy( plf->lfFaceName, pafm->FamilyName, LF_FACESIZE );
+    lstrcpynA( plf->lfFaceName, pafm->FamilyName, LF_FACESIZE );
 #undef plf
 
     pTM->tmAscent = pafm->FullAscender * scale;

@@ -113,7 +113,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
    if (dm2->dmPublic.dmFields & DM_COLLATE )
        dm1->dmPublic.dmCollate = dm2->dmPublic.dmCollate;
    if (dm2->dmPublic.dmFields & DM_FORMNAME )
-       strncpy(dm1->dmPublic.dmFormName, dm2->dmPublic.dmFormName, CCHFORMNAME);
+       lstrcpynA(dm1->dmPublic.dmFormName, dm2->dmPublic.dmFormName, CCHFORMNAME);
    if (dm2->dmPublic.dmFields & DM_BITSPERPEL )
        dm1->dmPublic.dmBitsPerPel = dm2->dmPublic.dmBitsPerPel;
    if (dm2->dmPublic.dmFields & DM_PELSWIDTH )
@@ -342,8 +342,7 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
 
       for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++)
 	if(lpszOutput != NULL) {
-	  strncpy(cp, ps->FullName, 64);
-	  *(cp + 63) = '\0';
+	  lstrcpynA(cp, ps->FullName, 64);
 	  cp += 64;
 	}
       return i;
@@ -372,8 +371,7 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
       
       for(slot = pi->ppd->InputSlots; slot; slot = slot->next, i++)
 	if(lpszOutput != NULL) {
-	  strncpy(cp, slot->FullName, 24);
-	  *(cp + 23) = '\0';
+	  lstrcpynA(cp, slot->FullName, 24);
 	  cp += 24;
 	}
       return i;

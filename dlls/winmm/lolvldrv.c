@@ -151,8 +151,7 @@ static	BOOL	MMDRV_GetDescription32(const char* fname, char* buf, int buflen)
 #undef A
 
     if (!VerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\ProductName", &val, &u)) E(("Can't get product name\n"));
-    strncpy(buf, val, buflen - 1);
-    buf[buflen - 1] = '\0';
+    lstrcpynA(buf, val, buflen);
 
 #undef E    
     ret = TRUE;
@@ -1889,7 +1888,7 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
     /* all those function calls are undocumented */
     switch (uMsg) {
     case 0x801: /* DRV_QUERYDRVENTRY */
-	strncpy((LPSTR)dwParam1, lpDrv->name, LOWORD(dwParam2));
+	lstrcpynA((LPSTR)dwParam1, lpDrv->name, LOWORD(dwParam2));
 	break;
     case 0x802: /* DRV_QUERYDEVNODE */
 	*(LPDWORD)dwParam1 = 0L; /* should be DevNode */

@@ -1431,7 +1431,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     HMODULE16	hModule = hFirstModule;
     LPSTR	s;
     BYTE	len, *name_table;
-    char	tmpstr[128];
+    char	tmpstr[MAX_PATH];
     NE_MODULE *pModule;
 
     TRACE("(%s)\n", name);
@@ -1443,8 +1443,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     if (!len)
     	return 0;
 
-    strncpy(tmpstr, name, sizeof(tmpstr));
-    tmpstr[sizeof(tmpstr)-1] = '\0';
+    lstrcpynA(tmpstr, name, sizeof(tmpstr));
 
     /* If 'name' matches exactly the module name of a module:
      * Return its handle.
@@ -1553,11 +1552,10 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
     HMODULE16	hModule;
     LPSTR	s, p;
     BYTE	len, *name_table;
-    char	tmpstr[128];
+    char	tmpstr[MAX_PATH];
     NE_MODULE *pModule;
 
-    strncpy(tmpstr, name, sizeof(tmpstr));
-    tmpstr[sizeof(tmpstr)-1] = '\0';
+    lstrcpynA(tmpstr, name, sizeof(tmpstr));
 
     /* If the base filename of 'name' matches the base filename of the module
      * filename of some module (case-insensitive compare):

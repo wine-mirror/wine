@@ -360,7 +360,7 @@ HMODULE MODULE_CreateDummyModule( LPCSTR filename, WORD version )
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
     char *pStr,*s;
-    int len;
+    unsigned int len;
     const char* basename;
     OFSTRUCT *ofs;
     int of_size, size;
@@ -429,9 +429,9 @@ HMODULE MODULE_CreateDummyModule( LPCSTR filename, WORD version )
     /* Module name */
     pStr = (char *)pSegment;
     pModule->name_table = (int)pStr - (int)pModule;
+    assert(len<256);
     *pStr = len;
-    strncpy( pStr+1, basename, len );
-    pStr[len+1] = 0;
+    lstrcpynA( pStr+1, basename, len+1 );
     pStr += len+2;
 
     /* All tables zero terminated */

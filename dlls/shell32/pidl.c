@@ -792,7 +792,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 	INT nFolder,
 	LPITEMIDLIST * ppidl)
 {
-	CHAR		szPath[256];
+	CHAR		szPath[MAX_PATH];
 	HRESULT		hr = E_INVALIDARG;
 
 	TRACE_(shell)("(%04x,0x%x,%p)\n", hwndOwner,nFolder,ppidl);
@@ -1397,7 +1397,7 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 	{
 	  /* filesystem */
 	  if (szOut)
-	    lstrcpynA(szOut, szSrc, MAX_PATH);
+	    lstrcpynA(szOut, szSrc, uOutSize);
 
 	  dwReturn = strlen(szSrc);
 	}

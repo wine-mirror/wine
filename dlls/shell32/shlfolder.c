@@ -462,7 +462,7 @@ IShellFolder * IShellFolder_Constructor(
 	    }
 
 	    len = strlen(sf->sMyPath);
-	    _ILSimpleGetText(pidl, sf->sMyPath + len, dwSize - len + 1);
+	    _ILSimpleGetText(pidl, sf->sMyPath + len, dwSize+2 - len);
 	  }
 
 	  TRACE("-- (%p)->(my pidl=%p, my path=%s)\n",sf, sf->absPidl,debugstr_a(sf->sMyPath));

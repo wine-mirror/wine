@@ -908,7 +908,7 @@ int PROFILE_LoadWineIni(void)
       /* Open -config specified file */
       PROFILE_WineProfile = PROFILE_Load ( f);
       fclose ( f );
-      strncpy(PROFILE_WineIniUsed,Options.configFileName,MAX_PATHNAME_LEN-1);
+      lstrcpynA(PROFILE_WineIniUsed,Options.configFileName,MAX_PATHNAME_LEN);
       return 1;
     }
 
@@ -916,7 +916,7 @@ int PROFILE_LoadWineIni(void)
     {
 	PROFILE_WineProfile = PROFILE_Load( f );
 	fclose( f );
-	strncpy(PROFILE_WineIniUsed,p,MAX_PATHNAME_LEN-1);
+	lstrcpynA(PROFILE_WineIniUsed,p,MAX_PATHNAME_LEN);
 	return 1;
     }
     if ((p = getenv( "HOME" )) != NULL)
@@ -927,7 +927,7 @@ int PROFILE_LoadWineIni(void)
         {
             PROFILE_WineProfile = PROFILE_Load( f );
             fclose( f );
-	    strncpy(PROFILE_WineIniUsed,buffer,MAX_PATHNAME_LEN-1);
+	    lstrcpynA(PROFILE_WineIniUsed,buffer,MAX_PATHNAME_LEN);
             return 1;
         }
     }
@@ -939,7 +939,7 @@ int PROFILE_LoadWineIni(void)
     {
         PROFILE_WineProfile = PROFILE_Load( f );
         fclose( f );
-	strncpy(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN-1);
+	lstrcpynA(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN);
         return 1;
     }
     MESSAGE( "Can't open configuration file %s or $HOME%s\n",

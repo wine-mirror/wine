@@ -131,8 +131,7 @@ BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env )
 
     /* Copy the environment */
 
-    if (!(pdb->env_db->environ = HeapAlloc( pdb->heap, 0,
-                                            size + EXTRA_ENV_SIZE )))
+    if (!(pdb->env_db->environ = HeapAlloc( pdb->heap, 0, size )))
         return FALSE;
     pdb->env_db->env_sel = SELECTOR_AllocBlock( pdb->env_db->environ,
                                                 0x10000, SEGMENT_DATA,

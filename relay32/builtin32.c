@@ -424,7 +424,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
     HMODULE16      hModule16;
     NE_MODULE     *pModule;
     WINE_MODREF   *wm;
-    char           dllname[256], *p;
+    char           dllname[MAX_PATH], *p;
 
     /* Fix the name in case we have a full path and extension */
     if ((p = strrchr( path, '\\' ))) path = p + 1;

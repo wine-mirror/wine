@@ -1153,7 +1153,7 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
             scanCode, keyc, (int)keys, name);
       if (lpBuffer && nSize && name)
       {
-          strncpy(lpBuffer, name, nSize);
+          lstrcpynA(lpBuffer, name, nSize);
           return 1;
       }
   }
