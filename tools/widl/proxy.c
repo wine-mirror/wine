@@ -377,21 +377,34 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
   print_proxy( "\n");
 }
 
-static void stub_clear_output_vars( var_t *arg )
+static void stub_write_locals( var_t *arg )
 {
+  int n = 0;
   while (arg) {
-    print_proxy("(");
+    int outptr = is_attr(arg->attrs, ATTR_OUT);
+
+    /* create a temporary variable to store the output */
+    if (outptr) {
+      var_t temp;
+      memset( &temp, 0, sizeof temp );
+      temp.ptr_level = arg->ptr_level - 1; /* dereference once */
+      print_proxy("");
+      write_type(proxy, arg->type, &temp, arg->tname);
+      fprintf(proxy, " _M%d;\n",n++);
+    }
+    print_proxy("");
     write_type(proxy, arg->type, arg, arg->tname);
-    fprintf(proxy, ") ");
+    fprintf(proxy, " ");
     write_name(proxy, arg);
-    fprintf(proxy, " = 0;\n");
+    /* if (outptr) fprintf(proxy, " = &_M%d;\n",n++); */
+    fprintf(proxy, ";\n");
     arg = NEXT_LINK(arg);
   }
-  fprintf(proxy, "\n");
 }
 
 static void stub_unmarshall( var_t *arg )
 {
+  int n = 0;
   if (arg) {
     while (NEXT_LINK(arg))
       arg = NEXT_LINK(arg);
@@ -425,6 +438,12 @@ static void stub_unmarshall( var_t *arg )
       default:
         printf("FIXME: arg %s has unknown type %d\n", arg->name, type->type );
       }
+    }
+    else if (is_attr(arg->attrs, ATTR_OUT)) {
+      print_proxy("");
+      write_name(proxy, arg);
+      fprintf(proxy," = &_M%d;\n", n);
+      print_proxy("_M%d = 0;\n", n++);
     }
     arg = PREV_LINK(arg);
   }
@@ -549,7 +568,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   print_proxy( "IRpcStubBuffer* This,\n");
   print_proxy( "IRpcChannelBuffer* pRpcChannelBuffer,\n");
   print_proxy( "PRPC_MESSAGE pRpcMessage,\n");
-  print_proxy( "DWORD* pdwStubPhase)\n");
+  print_proxy( "DWORD* _pdwStubPhase)\n");
   indent--;
   print_proxy( "{\n");
   indent++;
@@ -561,15 +580,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   }
   print_proxy("%s* _This = (%s*)((CStdStubBuffer*)This)->pvServerObject;\n", iface->name, iface->name);
   print_proxy("MIDL_STUB_MESSAGE _StubMsg;\n");
-  arg = cur->args;
-  while (arg) {
-    print_proxy("");
-    write_type(proxy, arg->type, arg, arg->tname);
-    fprintf(proxy, " ");
-    write_name(proxy, arg);
-    fprintf(proxy, ";\n");
-    arg = NEXT_LINK(arg);
-  }
+  stub_write_locals( cur->args );
   fprintf(proxy, "\n");
 
   /* FIXME: trace */
@@ -580,11 +591,12 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   print_proxy("RpcTryFinally\n");
   print_proxy("{\n");
   indent++;
-  stub_clear_output_vars( cur->args );
 
   stub_unmarshall( cur->args );
+  fprintf(proxy, "\n");
 
-  print_proxy("*pdwStubPhase = STUB_CALL_SERVER;\n");
+  print_proxy("*_pdwStubPhase = STUB_CALL_SERVER;\n");
+  fprintf(proxy, "\n");
   print_proxy("");
   if (has_ret) fprintf(proxy, "_Ret = ");
   fprintf(proxy, "%s_", iface->name);
@@ -601,9 +613,12 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
     }
   }
   fprintf(proxy, ");\n");
-  print_proxy("*pdwStubPhase = STUB_MARSHAL;\n");
+  fprintf(proxy, "\n");
+  print_proxy("*_pdwStubPhase = STUB_MARSHAL;\n");
+  fprintf(proxy, "\n");
 
   stub_genmarshall( cur->args );
+  fprintf(proxy, "\n");
 
   if (has_ret) {
     /* 
