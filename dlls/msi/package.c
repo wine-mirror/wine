@@ -60,7 +60,7 @@ void MSI_FreePackage( MSIOBJECTHDR *arg)
     msiobj_release( &package->db->hdr );
 }
 
-static const UINT clone_properties(MSIDATABASE *db)
+static UINT clone_properties(MSIDATABASE *db)
 {
     MSIQUERY * view = NULL;
     UINT rc;
