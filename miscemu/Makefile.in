@@ -7,7 +7,6 @@ MODULE    = miscemu
 
 C_SRCS = \
 	emulate.c \
-	instr.c \
 	main.c
 
 all: $(MODULE).o

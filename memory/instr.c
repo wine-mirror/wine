@@ -17,6 +17,7 @@
 DECLARE_DEBUG_CHANNEL(int)
 DECLARE_DEBUG_CHANNEL(io)
 
+#ifdef __i386__
 
 #define IS_V86(context) (EFL_sig(context)&V86_FLAG)
 #define IS_SEL_32(context,seg) \
@@ -630,14 +631,14 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
                     DS_sig(context) = seg;
                     EIP_sig(context) += prefixlen + len + 1;
                     return TRUE;
-                case 4:
 #ifdef FS_sig
+                case 4:
                     FS_sig(context) = seg;
                     EIP_sig(context) += prefixlen + len + 1;
                     return TRUE;
 #endif
-                case 5:
 #ifdef GS_sig
+                case 5:
                     GS_sig(context) = seg;
                     EIP_sig(context) += prefixlen + len + 1;
                     return TRUE;
@@ -815,8 +816,7 @@ BOOL INSTR_EmulateInstruction( SIGCONTEXT *context )
         EIP_sig(context) = OFFSETOF( gpHandler );
         return TRUE;
     }
-
-    MESSAGE("Unexpected Windows program segfault"
-                    " - opcode = %x\n", *instr);
     return FALSE;  /* Unable to emulate it */
 }
+
+#endif  /* __i386__ */
