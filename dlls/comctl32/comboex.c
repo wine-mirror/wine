@@ -572,6 +572,11 @@ COMBOEX_DrawItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     item = (CBE_ITEMDATA *)SendMessageA (infoPtr->hwndCombo, CB_GETITEMDATA, 
 					 (WPARAM)dis->itemID, 0);
+    if (item == (CBE_ITEMDATA *)CB_ERR)
+    {
+        TRACE("invalid item for id %d \n",dis->itemID);
+        return 0;
+    }
     if (!TRACE_ON(message)) {
 	TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
 	      dis->CtlType, dis->CtlID);
