@@ -45,6 +45,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
 #include <stdlib.h>
+#include <winnt.h> /* DateToTm use */
 
 /* ----------------------------------------------------------------
  *				Section 1:	bool, true, false, TRUE, FALSE
@@ -367,6 +368,5 @@ int DecodeDateTime(char **field, int *ftype,
 
 int DecodeTimeOnly(char **field, int *ftype, int nf,
 			   int *dtype, struct tm * tm, double *fsec);
-
-
+BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm );
 #endif	 /* DT_H */

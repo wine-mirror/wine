@@ -52,6 +52,7 @@
 #include "wine/debug.h"
 #include "winerror.h"
 #include "parsedt.h"
+#include "typelib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -99,21 +100,106 @@ static char pBuffer[BUFFER_MAX];
  * but not of a 100.  Except if it is a multiple of
  * 400 then it is a leap year.
  */
-/* According to postgreSQL date parsing functions there is
- * a leap year when this expression is true.
- * (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
- * So according to this there is 365.2515 days in one year.
- * One + every four years: 1/4 -> 365.25
- * One - every 100 years: 1/100 -> 365.01
- * One + every 400 years: 1/400 -> 365.0025
- */
-/* static const double DAYS_IN_ONE_YEAR = 365.2515;
- *
- *  ^^  Might this be the key to an easy way to factor large prime numbers?
- *  Let's try using arithmetic.  <lawson_whitney@juno.com> 7 Mar 2000
- */
-static const double DAYS_IN_ONE_YEAR = 365.2425;
 
+/* 
+ * Use 365 days/year and a manual calculation for leap year days
+ * to keep arithmetic simple
+ */
+static const double DAYS_IN_ONE_YEAR = 365.0;
+
+/*
+ * Token definitions for Varient Formatting
+ * Worked out by experimentation on a w2k machine. Doesnt appear to be
+ *   documented anywhere obviously so keeping definitions internally
+ *
+ */
+/* Pre defined tokens */
+#define TOK_COPY 0x00
+#define TOK_END  0x02
+#define LARGEST_TOKENID 6
+
+/* Mapping of token name to id put into the tokenized form
+   Note testing on W2K shows aaaa and oooo are not parsed??!! */
+#define TOK_COLON  0x03
+#define TOK_SLASH  0x04
+#define TOK_c      0x05
+#define TOK_d      0x08
+#define TOK_dd     0x09
+#define TOK_ddd    0x0a
+#define TOK_dddd   0x0b
+#define TOK_ddddd  0x0c
+#define TOK_dddddd 0x0d
+#define TOK_w      0x0f
+#define TOK_ww     0x10
+#define TOK_m      0x11
+#define TOK_mm     0x12
+#define TOK_mmm    0x13
+#define TOK_mmmm   0x14
+#define TOK_q      0x06
+#define TOK_y      0x15
+#define TOK_yy     0x16
+#define TOK_yyyy   0x18
+#define TOK_h      0x1e
+#define TOK_Hh     0x1f
+#define TOK_N      0x1a
+#define TOK_Nn     0x1b
+#define TOK_S      0x1c
+#define TOK_Ss     0x1d
+#define TOK_ttttt  0x07
+#define TOK_AMsPM  0x2f
+#define TOK_amspm  0x32
+#define TOK_AsP    0x30
+#define TOK_asp    0x33
+#define TOK_AMPM   0x2e
+
+typedef struct tagFORMATTOKEN {
+    char  *str;                   
+    BYTE   tokenSize;
+    BYTE   tokenId;
+    int    varTypeRequired;
+} FORMATTOKEN;
+
+typedef struct tagFORMATHDR {
+    BYTE   len;
+    BYTE   hex3;
+    BYTE   hex6;
+    BYTE   reserved[8];
+} FORMATHDR;
+
+FORMATTOKEN formatTokens[] = {           /* FIXME: Only date formats so far */
+    {":"     ,   1,  TOK_COLON  , 0},
+    {"/"     ,   1,  TOK_SLASH  , 0},
+    {"c"     ,   1,  TOK_c      , VT_DATE},
+    {"dddddd",   6,  TOK_dddddd , VT_DATE},
+    {"ddddd" ,   5,  TOK_ddddd  , VT_DATE},
+    {"dddd"  ,   4,  TOK_dddd   , VT_DATE},
+    {"ddd"   ,   3,  TOK_ddd    , VT_DATE},
+    {"dd"    ,   2,  TOK_dd     , VT_DATE},
+    {"d"     ,   1,  TOK_d      , VT_DATE},
+    {"ww"    ,   2,  TOK_ww     , VT_DATE},
+    {"w"     ,   1,  TOK_w      , VT_DATE},
+    {"mmmm"  ,   4,  TOK_mmmm   , VT_DATE},
+    {"mmm"   ,   3,  TOK_mmm    , VT_DATE},
+    {"mm"    ,   2,  TOK_mm     , VT_DATE},
+    {"m"     ,   1,  TOK_m      , VT_DATE},
+    {"q"     ,   1,  TOK_q      , VT_DATE},
+    {"yyyy"  ,   4,  TOK_yyyy   , VT_DATE},
+    {"yy"    ,   2,  TOK_yy     , VT_DATE},
+    {"y"     ,   1,  TOK_y      , VT_DATE},
+    {"h"     ,   1,  TOK_h      , VT_DATE},
+    {"Hh"    ,   2,  TOK_Hh     , VT_DATE},
+    {"Nn"    ,   2,  TOK_Nn     , VT_DATE},
+    {"N"     ,   1,  TOK_N      , VT_DATE},
+    {"S"     ,   1,  TOK_S      , VT_DATE},
+    {"Ss"    ,   2,  TOK_Ss     , VT_DATE},
+    {"ttttt" ,   5,  TOK_ttttt  , VT_DATE},
+    {"AM/PM" ,   5,  TOK_AMsPM  , VT_DATE},
+    {"am/pm" ,   5,  TOK_amspm  , VT_DATE},
+    {"A/P"   ,   3,  TOK_AsP    , VT_DATE},
+    {"a/p"   ,   3,  TOK_asp    , VT_DATE},
+    {"AMPM"  ,   4,  TOK_AMPM   , VT_DATE},
+    {0x00    ,   0,  0          , VT_NULL}
+};
 
 /******************************************************************************
  *	   DateTimeStringToTm	[INTERNAL]
@@ -247,7 +333,8 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
 {
     int leapYear = 0;
 
-    if( (pTm->tm_year - 1900) < 0 ) return FALSE;
+    /* Hmmm... An uninitialized Date in VB is December 30 1899 so
+       Start at 0. This is the way DATE is defined. */
 
     /* Start at 1. This is the way DATE is defined.
      * January 1, 1900 at Midnight is 1.00.
@@ -256,75 +343,82 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
      */
     *pDateOut = 1;
 
-    /* Add the number of days corresponding to
-     * tm_year.
-     */
-    *pDateOut += (pTm->tm_year - 1900) * 365;
+    if( (pTm->tm_year - 1900) >= 0 ) {
 
-    /* Add the leap days in the previous years between now and 1900.
-     * Note a leap year is one that is a multiple of 4
-     * but not of a 100.  Except if it is a multiple of
-     * 400 then it is a leap year.
-     */
-    *pDateOut += ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
-    *pDateOut -= ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
-    *pDateOut += ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
+        /* Add the number of days corresponding to
+         * tm_year.
+         */
+        *pDateOut += (pTm->tm_year - 1900) * 365;
 
-    /* Set the leap year flag if the
-     * current year specified by tm_year is a
-     * leap year. This will be used to add a day
-     * to the day count.
-     */
-    if( isleap( pTm->tm_year ) )
-        leapYear = 1;
+        /* Add the leap days in the previous years between now and 1900.
+         * Note a leap year is one that is a multiple of 4
+         * but not of a 100.  Except if it is a multiple of
+         * 400 then it is a leap year.
+         * Copied + reversed functionality into TmToDate 
+         */
+        *pDateOut += ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
+        *pDateOut -= ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
+        *pDateOut += ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
 
-    /* Add the number of days corresponding to
-     * the month.
-     */
-    switch( pTm->tm_mon )
-    {
-    case 2:
-        *pDateOut += 31;
-        break;
-    case 3:
-        *pDateOut += ( 59 + leapYear );
-        break;
-    case 4:
-        *pDateOut += ( 90 + leapYear );
-        break;
-    case 5:
-        *pDateOut += ( 120 + leapYear );
-        break;
-    case 6:
-        *pDateOut += ( 151 + leapYear );
-        break;
-    case 7:
-        *pDateOut += ( 181 + leapYear );
-        break;
-    case 8:
-        *pDateOut += ( 212 + leapYear );
-        break;
-    case 9:
-        *pDateOut += ( 243 + leapYear );
-        break;
-    case 10:
-        *pDateOut += ( 273 + leapYear );
-        break;
-    case 11:
-        *pDateOut += ( 304 + leapYear );
-        break;
-    case 12:
-        *pDateOut += ( 334 + leapYear );
-        break;
+        /* Set the leap year flag if the
+         * current year specified by tm_year is a
+         * leap year. This will be used to add a day
+         * to the day count.
+         */
+        if( isleap( pTm->tm_year ) )
+            leapYear = 1;
+
+        /* Add the number of days corresponding to
+         * the month. (remember tm_mon is 0..11)
+         */
+        switch( pTm->tm_mon )
+        {
+        case 1:
+            *pDateOut += 31;
+            break;
+        case 2:
+            *pDateOut += ( 59 + leapYear );
+            break;
+        case 3:
+            *pDateOut += ( 90 + leapYear );
+            break;
+        case 4:
+            *pDateOut += ( 120 + leapYear );
+            break;
+        case 5:
+            *pDateOut += ( 151 + leapYear );
+            break;
+        case 6:
+            *pDateOut += ( 181 + leapYear );
+            break;
+        case 7:
+            *pDateOut += ( 212 + leapYear );
+            break;
+        case 8:
+            *pDateOut += ( 243 + leapYear );
+            break;
+        case 9:
+            *pDateOut += ( 273 + leapYear );
+            break;
+        case 10:
+            *pDateOut += ( 304 + leapYear );
+            break;
+        case 11:
+            *pDateOut += ( 334 + leapYear );
+            break;
+        }
+        /* Add the number of days in this month.
+         */
+        *pDateOut += pTm->tm_mday;
+
+        /* Add the number of seconds, minutes, and hours
+         * to the DATE. Note these are the fracionnal part
+         * of the DATE so seconds / number of seconds in a day.
+         */
+    } else {
+        *pDateOut = 0;
     }
-    /* Add the number of days in this month.
-     */
-    *pDateOut += pTm->tm_mday;
 
-    /* Add the number of seconds, minutes, and hours
-     * to the DATE. Note these are the fracionnal part
-     * of the DATE so seconds / number of seconds in a day.
-     */
     *pDateOut += pTm->tm_hour / 24.0;
     *pDateOut += pTm->tm_min / 1440.0;
     *pDateOut += pTm->tm_sec / 86400.0;
@@ -345,15 +439,10 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
  *
  * Returns TRUE if successful.
  */
-static BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm )
+BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm )
 {
     double decimalPart = 0.0;
     double wholePart = 0.0;
-
-    /* Do not process dates smaller than January 1, 1900.
-     * Which corresponds to 2.0 in the windows DATE format.
-     */
-    if( dateIn < 2.0 ) return FALSE;
 
     memset(pTm,0,sizeof(*pTm));
 
@@ -364,111 +453,141 @@ static BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm )
      * will correspond to January 1, 1900.
      * This simplifies the processing of the DATE value.
      */
+    decimalPart = fmod( dateIn, 1.0 ); /* Do this before the -1, otherwise 0.xx goes negative */
     dateIn -= 1.0;
-
     wholePart = (double) floor( dateIn );
-    decimalPart = fmod( dateIn, wholePart );
 
     if( !(dwFlags & VAR_TIMEVALUEONLY) )
     {
-        int nDay = 0;
+        unsigned int nDay = 0;
         int leapYear = 0;
         double yearsSince1900 = 0;
-        /* Start at 1900, this is where the DATE time 0.0 starts.
-         */
-        pTm->tm_year = 1900;
-        /* find in what year the day in the "wholePart" falls into.
-         * add the value to the year field.
-         */
-        yearsSince1900 = floor( (wholePart / DAYS_IN_ONE_YEAR) + 0.001 );
-        pTm->tm_year += yearsSince1900;
-        /* determine if this is a leap year.
-         */
-        if( isleap( pTm->tm_year ) )
-        {
-            leapYear = 1;
-            wholePart++;
-        }
 
-        /* find what day of that year the "wholePart" corresponds to.
-         * Note: nDay is in [1-366] format
-         */
-        nDay = (int) ( wholePart - floor( yearsSince1900 * DAYS_IN_ONE_YEAR ) );
-        /* Set the tm_yday value.
-         * Note: The day must be converted from [1-366] to [0-365]
-         */
-        /*pTm->tm_yday = nDay - 1;*/
-        /* find which month this day corresponds to.
-         */
-        if( nDay <= 31 )
-        {
-            pTm->tm_mday = nDay;
-            pTm->tm_mon = 0;
-        }
-        else if( nDay <= ( 59 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - 31;
-            pTm->tm_mon = 1;
-        }
-        else if( nDay <= ( 90 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 59 + leapYear );
-            pTm->tm_mon = 2;
-        }
-        else if( nDay <= ( 120 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 90 + leapYear );
-            pTm->tm_mon = 3;
-        }
-        else if( nDay <= ( 151 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 120 + leapYear );
-            pTm->tm_mon = 4;
-        }
-        else if( nDay <= ( 181 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 151 + leapYear );
-            pTm->tm_mon = 5;
-        }
-        else if( nDay <= ( 212 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 181 + leapYear );
-            pTm->tm_mon = 6;
-        }
-        else if( nDay <= ( 243 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 212 + leapYear );
-            pTm->tm_mon = 7;
-        }
-        else if( nDay <= ( 273 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 243 + leapYear );
-            pTm->tm_mon = 8;
-        }
-        else if( nDay <= ( 304 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 273 + leapYear );
-            pTm->tm_mon = 9;
-        }
-        else if( nDay <= ( 334 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 304 + leapYear );
-            pTm->tm_mon = 10;
-        }
-        else if( nDay <= ( 365 + leapYear ) )
-        {
-            pTm->tm_mday = nDay - ( 334 + leapYear );
-            pTm->tm_mon = 11;
+        /* Hard code dates smaller than January 1, 1900. */
+        if( dateIn < 2.0 ) {
+            pTm->tm_year = 1899;
+            pTm->tm_mon  = 11; /* December as tm_mon is 0..11 */
+            if( dateIn < 1.0 ) {
+                pTm->tm_mday  = 30;
+                dateIn = dateIn * -1.0; /* Ensure +ve for time calculation */
+                decimalPart = decimalPart * -1.0; /* Ensure +ve for time calculation */
+            } else {
+                pTm->tm_mday  = 31;
+            }
+
+        } else {
+
+            /* Start at 1900, this is where the DATE time 0.0 starts.
+             */
+            pTm->tm_year = 1900;
+            /* find in what year the day in the "wholePart" falls into.
+             * add the value to the year field.
+             */
+            yearsSince1900 = floor( (wholePart / DAYS_IN_ONE_YEAR) + 0.001 );
+            pTm->tm_year += yearsSince1900;
+            /* determine if this is a leap year.
+             */
+            if( isleap( pTm->tm_year ) )
+            {
+                leapYear = 1;
+                wholePart++;
+            }
+
+            /* find what day of that year the "wholePart" corresponds to.
+             * Note: nDay is in [1-366] format
+             */
+            nDay = (((unsigned int) wholePart) - ((pTm->tm_year-1900) * DAYS_IN_ONE_YEAR ));
+
+            /* Remove the leap days in the previous years between now and 1900.
+             * Note a leap year is one that is a multiple of 4
+             * but not of a 100.  Except if it is a multiple of
+             * 400 then it is a leap year.
+             * Copied + reversed functionality from TmToDate 
+             */
+            nDay -= ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
+            nDay += ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
+            nDay -= ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
+
+            /* Set the tm_yday value.
+             * Note: The day must be converted from [1-366] to [0-365]
+             */
+            /*pTm->tm_yday = nDay - 1;*/
+            /* find which month this day corresponds to.
+             */
+            if( nDay <= 31 )
+            {
+                pTm->tm_mday = nDay;
+                pTm->tm_mon = 0;
+            }
+            else if( nDay <= ( 59 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - 31;
+                pTm->tm_mon = 1;
+            }
+            else if( nDay <= ( 90 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 59 + leapYear );
+                pTm->tm_mon = 2;
+            }
+            else if( nDay <= ( 120 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 90 + leapYear );
+                pTm->tm_mon = 3;
+            }
+            else if( nDay <= ( 151 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 120 + leapYear );
+                pTm->tm_mon = 4;
+            }
+            else if( nDay <= ( 181 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 151 + leapYear );
+                pTm->tm_mon = 5;
+            }
+            else if( nDay <= ( 212 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 181 + leapYear );
+                pTm->tm_mon = 6;
+            }
+            else if( nDay <= ( 243 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 212 + leapYear );
+                pTm->tm_mon = 7;
+            }
+            else if( nDay <= ( 273 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 243 + leapYear );
+                pTm->tm_mon = 8;
+            }
+            else if( nDay <= ( 304 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 273 + leapYear );
+                pTm->tm_mon = 9;
+            }
+            else if( nDay <= ( 334 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 304 + leapYear );
+                pTm->tm_mon = 10;
+            }
+            else if( nDay <= ( 365 + leapYear ) )
+            {
+                pTm->tm_mday = nDay - ( 334 + leapYear );
+                pTm->tm_mon = 11;
+            }
         }
     }
     if( !(dwFlags & VAR_DATEVALUEONLY) )
     {
         /* find the number of seconds in this day.
          * fractional part times, hours, minutes, seconds.
+         * Note: 0.1 is hack to ensure figures come out in whole numbers
+         *   due to floating point inaccuracies
          */
         pTm->tm_hour = (int) ( decimalPart * 24 );
         pTm->tm_min = (int) ( ( ( decimalPart * 24 ) - pTm->tm_hour ) * 60 );
-        pTm->tm_sec = (int) ( ( ( decimalPart * 24 * 60 ) - ( pTm->tm_hour * 60 ) - pTm->tm_min ) * 60 );
+        /* Note: 0.1 is hack to ensure seconds come out in whole numbers
+             due to floating point inaccuracies */
+        pTm->tm_sec = (int) (( ( ( decimalPart * 24 * 60 ) - ( pTm->tm_hour * 60 ) - pTm->tm_min ) * 60 ) + 0.1);
     }
     return TRUE;
 }
@@ -2009,6 +2128,8 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 	VariantInit( &varg );
 
 	TRACE("(%p, %p, %ld, %u, %u) vt=%d\n", pvargDest, pvargSrc, lcid, wFlags, vt, V_VT(pvargSrc));
+    TRACE("Src Var:\n");
+    dump_Variant(pvargSrc);
 
 	/* validate our source argument.
 	 */
@@ -2069,6 +2190,9 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 	 */
 	if ( res == S_OK )
 		V_VT(pvargDest) = vt;
+
+    TRACE("Dest Var:\n");
+    dump_Variant(pvargDest);
 
 	return res;
 }
@@ -2977,11 +3101,11 @@ HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pd
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pdblOut );
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	TRACE("( %s, %ld, %ld, %p ), stub\n", pNewString, lcid, dwFlags, pdblOut );
 
 	/* Check if we have a valid argument
 	 */
-	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
 	RemoveCharacterFromString( pNewString, "," );
 	if( IsValidRealString( pNewString ) == FALSE )
 	{
@@ -3007,7 +3131,7 @@ HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pd
  */
 HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
    *pdblOut = (double)((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-
+   TRACE("%lu %ld -> %f\n", cyIn.s.Hi, cyIn.s.Lo, *pdblOut);
    return S_OK;
 }
 
@@ -3131,8 +3255,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
     {
         ret = DISP_E_TYPEMISMATCH;
     }
-
-
+    TRACE("Return value %f\n", *pdateOut);
 	return ret;
 }
 
@@ -3273,8 +3396,18 @@ HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstr
  *    VarBstrFromCy   [OLEAUT32.113]
  */
 HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) {
-	FIXME("([cyIn], %08lx, %08lx, %p), stub.\n", lcid, dwFlags, pbstrOut);
-	return E_NOTIMPL;
+    HRESULT rc = S_OK;
+    double curVal = 0.0;
+
+	TRACE("([cyIn], %08lx, %08lx, %p), partial stub (no flags handled).\n", lcid, dwFlags, pbstrOut);
+
+    /* Firstly get the currency in a double, then put it in a buffer */
+    rc = VarR8FromCy(cyIn, &curVal);
+    if (rc == S_OK) {
+        sprintf(pBuffer, "%g", curVal);
+        *pbstrOut = StringDupAtoBstr( pBuffer );
+    }
+	return rc;
 }
 
 
@@ -3312,7 +3445,7 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
     struct tm TM;
     memset( &TM, 0, sizeof(TM) );
 
-    TRACE("( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
+    TRACE("( %20.20f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
 
     if( DateToTm( dateIn, dwFlags, &TM ) == FALSE )
 			{
@@ -3326,8 +3459,8 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
 		else
         strftime( pBuffer, BUFFER_MAX, "%x %X", &TM );
 
+        TRACE("result: %s\n", pBuffer);
 		*pbstrOut = StringDupAtoBstr( pBuffer );
-
 	return S_OK;
 }
 
@@ -4221,10 +4354,56 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
 
 /**********************************************************************
  *              VarCyFromStr [OLEAUT32.104]
+ * FIXME: Never tested with decimal seperator other than '.'
  */
 HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut) {
-	FIXME("(%p, %08lx, %08lx, %p), stub.\n", strIn, lcid, dwFlags, pcyOut);
-	return E_NOTIMPL;
+	
+	LPSTR   pNewString      = NULL;
+    char   *decSep          = NULL;
+    char   *strPtr,*curPtr  = NULL;
+    int size, rc;
+    double currencyVal = 0.0;
+
+
+	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
+	TRACE("( '%s', 0x%08lx, 0x%08lx, %p )\n", pNewString, lcid, dwFlags, pcyOut );
+
+    /* Get locale information - Decimal Seperator (size includes 0x00) */
+    size = GetLocaleInfoA(lcid, LOCALE_SDECIMAL, NULL, 0);
+    decSep = (char *) malloc(size);
+    rc = GetLocaleInfoA(lcid, LOCALE_SDECIMAL, decSep, size);
+    TRACE("Decimal Seperator is '%s'\n", decSep);
+
+    /* Now copy to temporary buffer, skipping any character except 0-9 and 
+       the decimal seperator */
+    curPtr = pBuffer;      /* Current position in string being built       */
+    strPtr = pNewString;   /* Current position in supplied currenct string */
+
+    while (*strPtr) {
+        /* If decimal seperator, skip it and put '.' in string */
+        if (strncmp(strPtr, decSep, (size-1)) == 0) {
+            strPtr = strPtr + (size-1);
+            *curPtr = '.';
+            curPtr++;
+        } else if ((*strPtr == '+' || *strPtr == '-') ||
+                   (*strPtr >= '0' && *strPtr <= '9')) {
+            *curPtr = *strPtr;
+            strPtr++;
+            curPtr++;
+        } else strPtr++;
+    }
+    *curPtr = 0x00;
+
+    /* Try to get currency into a double */
+    currencyVal = atof(pBuffer);
+    TRACE("Converted string '%s' to %f\n", pBuffer, currencyVal);
+
+    /* Free allocated storage */
+    HeapFree( GetProcessHeap(), 0, pNewString );
+    free(decSep);
+
+    /* Convert double -> currency using internal routine */
+	return VarCyFromR8(currencyVal, pcyOut);
 }
 
 
@@ -4308,30 +4487,35 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR * strIn, LCID lcid, ULONG dwFlags,
 {
     int i,lastent=0;
     int cDig;
+    BOOL foundNum=FALSE;
+
     FIXME("(%s,flags=%lx,....), partial stub!\n",debugstr_w(strIn),dwFlags);
     FIXME("numparse: cDig=%d, InFlags=%lx\n",pnumprs->cDig,pnumprs->dwInFlags);
 
     /* The other struct components are to be set by us */
-
     memset(rgbDig,0,pnumprs->cDig);
-
-    cDig = 0;
-    for (i=0; strIn[i] ;i++) {
-	if ((strIn[i]>='0') && (strIn[i]<='9')) {
-	    if (pnumprs->cDig > cDig) {
-		*(rgbDig++)=strIn[i]-'0';
-		cDig++;
-		lastent = i;
-	    }
-	}
-    }
-    pnumprs->cDig	= cDig;
 
     /* FIXME: Just patching some values in */
     pnumprs->nPwr10	= 0;
     pnumprs->nBaseShift	= 0;
     pnumprs->cchUsed	= lastent;
     pnumprs->dwOutFlags	= NUMPRS_DECIMAL;
+
+    cDig = 0;
+    for (i=0; strIn[i] ;i++) {
+	if ((strIn[i]>='0') && (strIn[i]<='9')) {
+            foundNum = TRUE;
+	    if (pnumprs->cDig > cDig) {
+		*(rgbDig++)=strIn[i]-'0';
+		cDig++;
+		lastent = i;
+	    }
+	} else if ((strIn[i]=='-') && (foundNum==FALSE)) {
+            pnumprs->dwOutFlags	|= NUMPRS_NEG;
+        }
+    }
+    pnumprs->cDig	= cDig;
+    TRACE("numparse out: cDig=%d, OutFlags=%lx\n",pnumprs->cDig,pnumprs->dwOutFlags);
     return S_OK;
 }
 
@@ -4344,11 +4528,15 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE * pnumprs, BYTE * rgbDig,
 {
     DWORD xint;
     int i;
-    FIXME("(,dwVtBits=%lx,....), partial stub!\n",dwVtBits);
+    FIXME("(..,dwVtBits=%lx,....), partial stub!\n",dwVtBits);
 
     xint = 0;
     for (i=0;i<pnumprs->cDig;i++)
 	xint = xint*10 + rgbDig[i];
+
+    if (pnumprs->dwOutFlags & NUMPRS_NEG) {
+        xint = xint * -1;
+    }
 
     VariantInit(pvar);
     if (dwVtBits & VTBIT_I4) {
@@ -4360,10 +4548,28 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE * pnumprs, BYTE * rgbDig,
 	V_VT(pvar) = VT_R8;
 	V_UNION(pvar,dblVal) = xint;
 	return S_OK;
-    } else {
-	FIXME("vtbitmask is unsupported %lx\n",dwVtBits);
-	return E_FAIL;
     }
+    if (dwVtBits & VTBIT_R4) {
+	V_VT(pvar) = VT_R4;
+	V_UNION(pvar,fltVal) = xint;
+	return S_OK;
+    }
+    if (dwVtBits & VTBIT_I2) {
+        V_VT(pvar) = VT_I2;
+        V_UNION(pvar,iVal) = xint;
+        return S_OK;
+    }
+    /* FIXME: Currency should be from a double */
+    if (dwVtBits & VTBIT_CY) {
+        V_VT(pvar) = VT_CY;
+        TRACE("Calculated currency is xint=%ld\n", xint);
+        VarCyFromInt( (int) xint, &V_UNION(pvar,cyVal) );
+        TRACE("Calculated cy is %ld,%lu\n", V_UNION(pvar,cyVal).s.Hi, V_UNION(pvar,cyVal).s.Lo);
+        return VarCyFromInt( (int) xint, &V_UNION(pvar,cyVal) );
+    } 
+
+	FIXME("vtbitmask is unsupported %lx, int=%d\n",dwVtBits, (int) xint);
+	return E_FAIL;
 }
 
 
@@ -4399,9 +4605,6 @@ INT WINAPI VariantTimeToDosDateTime(DATE pvtime, USHORT *wDosDate, USHORT *wDosT
  */
 HRESULT WINAPI SystemTimeToVariantTime( LPSYSTEMTIME  lpSystemTime, double *pvtime )
 {
-    static const BYTE Days_Per_Month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    static const BYTE Days_Per_Month_LY[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
     struct tm t;
 
     TRACE(" %d/%d/%d %d:%d:%d\n",
@@ -4416,28 +4619,60 @@ HRESULT WINAPI SystemTimeToVariantTime( LPSYSTEMTIME  lpSystemTime, double *pvti
         t.tm_hour = lpSystemTime->wHour;
 
         t.tm_mday = lpSystemTime->wDay;
-        t.tm_mon = lpSystemTime->wMonth;
+        t.tm_mon = lpSystemTime->wMonth - 1; /* tm_mon is 0..11, wMonth is 1..12 */
         t.tm_year = lpSystemTime->wYear;
 
         return TmToDATE( &t, pvtime );
     }
     else
     {
+        double tmpDate;
+        long firstDayOfNextYear;
+        long thisDay;
+        long leftInYear;
+        long result;
+
+        double decimalPart = 0.0;
+
         t.tm_sec = lpSystemTime->wSecond;
         t.tm_min = lpSystemTime->wMinute;
         t.tm_hour = lpSystemTime->wHour;
 
-        if (isleap(lpSystemTime->wYear) )
-            t.tm_mday = Days_Per_Month_LY[13 - lpSystemTime->wMonth] - lpSystemTime->wDay;
-        else
-            t.tm_mday = Days_Per_Month[13 - lpSystemTime->wMonth] - lpSystemTime->wDay;
-
-        t.tm_mon = 13 - lpSystemTime->wMonth;
+        /* Step year forward the same number of years before 1900 */
         t.tm_year = 1900 + 1899 - lpSystemTime->wYear;
+        t.tm_mon = lpSystemTime->wMonth - 1;
+        t.tm_mday = lpSystemTime->wDay;
 
+        /* Calculate date */
         TmToDATE( &t, pvtime );
 
-        *pvtime *= -1;
+        thisDay = (double) floor( *pvtime );
+        decimalPart = fmod( *pvtime, thisDay );
+
+        /* Now, calculate the same time for the first of Jan that year */
+        t.tm_mon = 0;
+        t.tm_mday = 1;
+        t.tm_sec = 0;
+        t.tm_min = 0;
+        t.tm_hour = 0;
+        t.tm_year = t.tm_year+1;
+        TmToDATE( &t, &tmpDate );
+        firstDayOfNextYear = (long) floor(tmpDate);
+
+        /* Finally since we know the size of the year, subtract the two to get
+           remaining time in the year                                          */
+        leftInYear = firstDayOfNextYear - thisDay;
+
+        /* Now we want full years up to the year in question, and remainder of year
+           of the year in question */
+        if (isleap(lpSystemTime->wYear) ) {
+           TRACE("Extra day due to leap year\n");
+           result = 2.0 - ((firstDayOfNextYear - 366) + leftInYear - 2.0);
+        } else {
+           result = 2.0 - ((firstDayOfNextYear - 365) + leftInYear - 2.0);
+        }
+        *pvtime = (double) result + decimalPart;
+        TRACE("<1899 support: returned %f, 1st day %ld, thisday %ld, left %ld\n", *pvtime, firstDayOfNextYear, thisDay, leftInYear);
 
         return 1;
     }
@@ -4615,10 +4850,8 @@ HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
     i = SystemTimeToVariantTime(&(pudateout->st), &t);
     *datein = t;
 
-    if (i) dwFlags = 0; /*VAR_VALIDDATE*/
-    else dwFlags = 0;
-
-    return i;
+    if (i) return S_OK;
+    else return E_INVALIDARG;
 }
 
 
@@ -4634,10 +4867,15 @@ HRESULT WINAPI VarBstrCmp(BSTR left, BSTR right, LCID lcid, DWORD flags)
 {
     DWORD r;
 
-    FIXME("( %s %s %ld %lx ) partial stub\n", debugstr_w(left), debugstr_w(right), lcid, flags);
+    TRACE("( %s %s %ld %lx ) partial stub\n", debugstr_w(left), debugstr_w(right), lcid, flags);
 
-    if((!left) || (!right))
-        return VARCMP_NULL;
+    /* Contrary to the MSDN, this returns eq for null vs null, null vs L"" and L"" vs NULL */
+    if((!left) || (!right)) {
+
+        if (!left && (!right || *right==0)) return VARCMP_EQ;
+        else if (!right && (!left || *left==0)) return VARCMP_EQ;
+        else return VARCMP_NULL;
+    }
 
     if(flags&NORM_IGNORECASE)
         r = lstrcmpiW(left,right);
@@ -4695,3 +4933,581 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         FIXME ("types not supported\n");
     return S_OK;
 }
+
+/**********************************************************************
+ *              VarCmp [OLEAUT32.442]
+ *
+ * flags can be:
+ *   NORM_IGNORECASE, NORM_IGNORENONSPACE, NORM_IGNORESYMBOLS
+ *   NORM_IGNOREWIDTH, NORM_IGNOREKANATYPE, NORM_IGNOREKASHIDA
+ *
+ */
+HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
+{
+
+
+    BOOL         lOk        = TRUE;
+    BOOL         rOk        = TRUE;
+    LONGLONG     lVal = -1;
+    LONGLONG     rVal = -1;
+
+    TRACE("Left Var:\n");
+    dump_Variant(left);
+    TRACE("Right Var:\n");
+    dump_Variant(right);
+
+    /* If either are null, then return VARCMP_NULL */
+    if ((V_VT(left)&VT_TYPEMASK) == VT_NULL ||
+        (V_VT(right)&VT_TYPEMASK) == VT_NULL)
+        return VARCMP_NULL;
+
+    /* Strings - use VarBstrCmp */
+    if ((V_VT(left)&VT_TYPEMASK) == VT_BSTR &&
+        (V_VT(right)&VT_TYPEMASK) == VT_BSTR) {
+        return VarBstrCmp(V_BSTR(left), V_BSTR(right), lcid, flags);
+    }
+
+    /* Integers - Ideally like to use VarDecCmp, but no Dec support yet 
+           Use LONGLONG to maximize ranges                              */
+    lOk = TRUE;
+    switch (V_VT(left)&VT_TYPEMASK) {
+    case VT_I1   : lVal = V_UNION(left,cVal); break;
+    case VT_I2   : lVal = V_UNION(left,iVal); break;
+    case VT_I4   : lVal = V_UNION(left,lVal); break;
+    case VT_INT  : lVal = V_UNION(left,lVal); break;
+    case VT_UI1  : lVal = V_UNION(left,bVal); break;
+    case VT_UI2  : lVal = V_UNION(left,uiVal); break;
+    case VT_UI4  : lVal = V_UNION(left,ulVal); break;
+    case VT_UINT : lVal = V_UNION(left,ulVal); break;
+    default: lOk = FALSE;
+    }
+
+    rOk = TRUE;
+    switch (V_VT(right)&VT_TYPEMASK) {
+    case VT_I1   : rVal = V_UNION(right,cVal); break;
+    case VT_I2   : rVal = V_UNION(right,iVal); break;
+    case VT_I4   : rVal = V_UNION(right,lVal); break;
+    case VT_INT  : rVal = V_UNION(right,lVal); break;
+    case VT_UI1  : rVal = V_UNION(right,bVal); break;
+    case VT_UI2  : rVal = V_UNION(right,uiVal); break;
+    case VT_UI4  : rVal = V_UNION(right,ulVal); break;
+    case VT_UINT : rVal = V_UNION(right,ulVal); break;
+    default: rOk = FALSE;
+    }
+
+    if (lOk && rOk) {
+        if (lVal < rVal) {
+            return VARCMP_LT;
+        } else if (lVal > rVal) {
+            return VARCMP_GT;
+        } else {
+            return VARCMP_EQ;
+        }
+    }
+
+    /* Strings - use VarBstrCmp */
+    if ((V_VT(left)&VT_TYPEMASK) == VT_DATE &&
+        (V_VT(right)&VT_TYPEMASK) == VT_DATE) {
+
+        if (floor(V_UNION(left,date)) == floor(V_UNION(right,date))) {
+            /* Due to floating point rounding errors, calculate varDate in whole numbers) */
+            double wholePart = 0.0;
+            double leftR;
+            double rightR;
+
+            /* Get the fraction * 24*60*60 to make it into whole seconds */
+            wholePart = (double) floor( V_UNION(left,date) );
+            if (wholePart == 0) wholePart = 1;
+            leftR = floor(fmod( V_UNION(left,date), wholePart ) * (24*60*60));
+
+            wholePart = (double) floor( V_UNION(right,date) );
+            if (wholePart == 0) wholePart = 1;
+            rightR = floor(fmod( V_UNION(right,date), wholePart ) * (24*60*60));
+
+            if (leftR < rightR) {
+                return VARCMP_LT;
+            } else if (leftR > rightR) {
+                return VARCMP_GT;
+            } else {
+                return VARCMP_EQ;
+            }
+
+        } else if (V_UNION(left,date) < V_UNION(right,date)) {
+            return VARCMP_LT;
+        } else if (V_UNION(left,date) > V_UNION(right,date)) {
+            return VARCMP_GT;
+        }
+    }
+
+
+    FIXME("VarCmp partial implementation, doesnt support these pair of variant types");
+    return E_FAIL;
+}
+
+/**********************************************************************
+ *              VarAnd [OLEAUT32.438]
+ *
+ */
+HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    HRESULT rc = E_FAIL;
+
+
+    TRACE("Left Var:\n");
+    dump_Variant(left);
+    TRACE("Right Var:\n");
+    dump_Variant(right);
+
+    if ((V_VT(left)&VT_TYPEMASK) == VT_BOOL &&
+        (V_VT(right)&VT_TYPEMASK) == VT_BOOL) {
+
+        V_VT(result) = VT_BOOL;
+        if (V_BOOL(left) && V_BOOL(right)) {
+            V_BOOL(result) = VARIANT_TRUE;
+        } else {
+            V_BOOL(result) = VARIANT_FALSE;
+        }
+        rc = S_OK;
+
+    } else {
+        FIXME("VarAnd stub\n");
+    }
+
+    TRACE("rc=%d, Result:\n", (int) rc);
+    dump_Variant(result);
+    return rc;
+}
+
+/**********************************************************************
+ *              VarNot [OLEAUT32.482]
+ *
+ */
+HRESULT WINAPI VarNot(LPVARIANT in, LPVARIANT result)
+{
+    HRESULT rc = E_FAIL;
+
+    TRACE("Var In:\n");
+    dump_Variant(in);
+
+    if ((V_VT(in)&VT_TYPEMASK) == VT_BOOL) {
+
+        V_VT(result) = VT_BOOL;
+        if (V_BOOL(in)) {
+            V_BOOL(result) = VARIANT_FALSE;
+        } else {
+            V_BOOL(result) = VARIANT_TRUE;
+        }
+        rc = S_OK;
+
+    } else {
+        FIXME("VarNot stub\n");
+    }
+
+    TRACE("rc=%d, Result:\n", (int) rc);
+    dump_Variant(result);
+    return rc;
+}
+
+/**********************************************************************
+ *              VarTokenizeFormatString [OLEAUT32.490]
+ *
+ * From investigation on W2K, a list is built up which is:
+ *
+ * <0x00> AA BB - Copy from AA for BB chars (Note 1 byte with wrap!)
+ * <token> - Insert appropriate token
+ *
+ */
+HRESULT VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,  
+                     int   cbTok, int iFirstDay, int iFirstWeek,
+                     LCID  lcid, int *pcbActual) {
+
+    FORMATHDR *hdr;
+    int        realLen, formatLeft;
+    BYTE      *pData;
+    LPSTR      pFormatA, pStart;
+    int        checkStr;
+    BOOL       insertCopy = FALSE;
+    LPSTR      copyFrom = NULL;
+
+    TRACE("'%s', %p %d %d %d only date support\n", debugstr_w(format), rgbTok, cbTok,
+                   iFirstDay, iFirstWeek);
+
+    /* Big enough for header? */
+    if (cbTok < sizeof(FORMATHDR)) {
+        return TYPE_E_BUFFERTOOSMALL;
+    }
+
+    /* Insert header */
+    hdr = (FORMATHDR *) rgbTok;
+    memset(hdr, 0x00, sizeof(FORMATHDR));
+    hdr->hex3 = 0x03; /* No idea what these are */
+    hdr->hex6 = 0x06;
+
+    /* Start parsing string */
+    realLen    = sizeof(FORMATHDR);
+    pData      = rgbTok + realLen;
+    pFormatA   = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
+    pStart     = pFormatA;
+    formatLeft = strlen(pFormatA);
+
+    /* Work through the format */
+    while (*pFormatA != 0x00) {
+
+        checkStr = 0;
+        while (checkStr>=0 && (formatTokens[checkStr].tokenSize != 0x00)) {
+            if (formatLeft >= formatTokens[checkStr].tokenSize &&
+                strncmp(formatTokens[checkStr].str, pFormatA, 
+                        formatTokens[checkStr].tokenSize) == 0) {
+                TRACE("match on '%s'\n", formatTokens[checkStr].str);
+
+                /* Found Match! */
+
+                /* If we have skipped chars, insert the copy */
+                if (insertCopy == TRUE) {
+
+                    if ((realLen + 3) > cbTok) {
+                        HeapFree( GetProcessHeap(), 0, pFormatA );
+                        return TYPE_E_BUFFERTOOSMALL;
+                    }
+                    insertCopy = FALSE;
+                    *pData = TOK_COPY;
+                    pData++;
+                    *pData = (BYTE)(copyFrom - pStart);
+                    pData++;
+                    *pData = (BYTE)(pFormatA - copyFrom);
+                    pData++;
+                    realLen = realLen + 3;
+                }
+
+
+                /* Now insert the token itself */
+                if ((realLen + 1) > cbTok) {
+                    HeapFree( GetProcessHeap(), 0, pFormatA );
+                    return TYPE_E_BUFFERTOOSMALL;
+                }
+                *pData = formatTokens[checkStr].tokenId;
+                pData = pData + 1;
+                realLen = realLen + 1;
+
+                pFormatA = pFormatA + formatTokens[checkStr].tokenSize;
+                formatLeft = formatLeft - formatTokens[checkStr].tokenSize;
+                checkStr = -1; /* Flag as found and break out of while loop */
+            } else {
+                checkStr++;
+            }
+        }
+
+        /* Did we ever match a token? */
+        if (checkStr != -1 && insertCopy == FALSE) {
+            TRACE("No match - need to insert copy from %p [%p]\n", pFormatA, pStart);
+            insertCopy = TRUE;
+            copyFrom   = pFormatA;
+        } else if (checkStr != -1) {
+            pFormatA = pFormatA + 1;
+        }
+
+    }
+
+    /* Finally, if we have skipped chars, insert the copy */
+    if (insertCopy == TRUE) {
+
+        TRACE("Chars left over, so still copy %p,%p,%p\n", copyFrom, pStart, pFormatA);
+        if ((realLen + 3) > cbTok) {
+            HeapFree( GetProcessHeap(), 0, pFormatA );
+            return TYPE_E_BUFFERTOOSMALL;
+        }
+        insertCopy = FALSE;
+        *pData = TOK_COPY;
+        pData++;
+        *pData = (BYTE)(copyFrom - pStart);
+        pData++;
+        *pData = (BYTE)(pFormatA - copyFrom);
+        pData++;
+        realLen = realLen + 3;
+    }
+
+    /* Finally insert the terminator */
+    if ((realLen + 1) > cbTok) {
+        HeapFree( GetProcessHeap(), 0, pFormatA );
+        return TYPE_E_BUFFERTOOSMALL;
+    }
+    *pData++ = TOK_END;
+    realLen = realLen + 1;
+
+    /* Finally fill in the length */
+    hdr->len = realLen;
+    *pcbActual = realLen;
+
+#if 0
+    { int i,j;
+      for (i=0; i<realLen; i=i+0x10) {
+          printf(" %4.4x : ", i);
+          for (j=0; j<0x10 && (i+j < realLen); j++) {
+              printf("%2.2x ", rgbTok[i+j]);
+          }
+          printf("\n");
+      }
+    }
+#endif
+    HeapFree( GetProcessHeap(), 0, pFormatA );
+
+    return S_OK;
+}
+ 
+/**********************************************************************
+ *              VarFormatFromTokens [OLEAUT32.472]
+ * FIXME: No account of flags or iFirstDay etc
+ */
+HRESULT VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
+                            LPBYTE pbTokCur, ULONG dwFlags, BSTR *pbstrOut,
+                            LCID  lcid) {
+
+    FORMATHDR   *hdr = (FORMATHDR *)pbTokCur;
+    BYTE        *pData    = pbTokCur + sizeof (FORMATHDR);
+    LPSTR        pFormatA = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
+    char         output[BUFFER_MAX];
+    char        *pNextPos;
+    int          size, whichToken;
+    VARIANTARG   Variant;
+    struct tm    TM;
+    
+
+
+    TRACE("'%s', %p %lx %p only date support\n", pFormatA, pbTokCur, dwFlags, pbstrOut);
+    TRACE("varIn:\n");
+    dump_Variant(varIn);
+
+    memset(output, 0x00, BUFFER_MAX);
+    pNextPos = output;
+
+    while (*pData != TOK_END && ((pData - pbTokCur) <= (hdr->len))) {
+
+        TRACE("Output looks like : '%s'\n", output);
+
+        /* Convert varient to appropriate data type */
+        whichToken = 0;
+        while ((formatTokens[whichToken].tokenSize != 0x00) &&
+               (formatTokens[whichToken].tokenId   != *pData)) {
+            whichToken++;
+        }
+
+        /* Use Variant local from here downwards as always correct type */
+        if (formatTokens[whichToken].tokenSize > 0 &&
+            formatTokens[whichToken].varTypeRequired != 0) {
+			VariantInit( &Variant );
+            if (Coerce( &Variant, lcid, dwFlags, varIn, 
+                        formatTokens[whichToken].varTypeRequired ) != S_OK) {
+                HeapFree( GetProcessHeap(), 0, pFormatA );
+                return DISP_E_TYPEMISMATCH;
+            } else if (formatTokens[whichToken].varTypeRequired == VT_DATE) {
+                if( DateToTm( V_UNION(&Variant,date), dwFlags, &TM ) == FALSE ) {
+                    HeapFree( GetProcessHeap(), 0, pFormatA );
+                    return E_INVALIDARG;
+                }
+            }
+        }
+
+        TRACE("Looking for match on token '%x'\n", *pData);
+        switch (*pData) {
+        case TOK_COPY:
+            TRACE("Copy from %d for %d bytes\n", *(pData+1), *(pData+2));
+            memcpy(pNextPos, &pFormatA[*(pData+1)], *(pData+2));
+            pNextPos = pNextPos + *(pData+2);
+            pData = pData + 3;
+            break;
+
+        case TOK_COLON   :
+            /* Get locale information - Time Seperator */
+            size = GetLocaleInfoA(lcid, LOCALE_STIME, NULL, 0);
+            GetLocaleInfoA(lcid, LOCALE_STIME, pNextPos, size);
+            TRACE("TOK_COLON Time seperator is '%s'\n", pNextPos);
+            pNextPos = pNextPos + size;
+            pData = pData + 1;
+            break;
+
+        case TOK_SLASH   :
+            /* Get locale information - Date Seperator */
+            size = GetLocaleInfoA(lcid, LOCALE_SDATE, NULL, 0);
+            GetLocaleInfoA(lcid, LOCALE_SDATE, pNextPos, size);
+            TRACE("TOK_COLON Time seperator is '%s'\n", pNextPos);
+            pNextPos = pNextPos + size;
+            pData = pData + 1;
+            break;
+
+        case TOK_d       :
+            sprintf(pNextPos, "%d", TM.tm_mday);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_dd      :
+            sprintf(pNextPos, "%2.2d", TM.tm_mday);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_w       :
+            sprintf(pNextPos, "%d", TM.tm_wday+1);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_m       :
+            sprintf(pNextPos, "%d", TM.tm_mon+1);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_mm      :
+            sprintf(pNextPos, "%2.2d", TM.tm_mon+1);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_q       :
+            sprintf(pNextPos, "%d", ((TM.tm_mon+1)/4)+1);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_y       :
+            sprintf(pNextPos, "%2.2d", TM.tm_yday+1);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_yy      :
+            sprintf(pNextPos, "%2.2d", TM.tm_year);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_yyyy    :
+            sprintf(pNextPos, "%4.4d", TM.tm_year);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_h       :
+            sprintf(pNextPos, "%d", TM.tm_hour);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_Hh      :
+            sprintf(pNextPos, "%2.2d", TM.tm_hour);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_N       :
+            sprintf(pNextPos, "%d", TM.tm_min);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_Nn      :
+            sprintf(pNextPos, "%2.2d", TM.tm_min);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_S       :
+            sprintf(pNextPos, "%d", TM.tm_sec);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        case TOK_Ss      :
+            sprintf(pNextPos, "%2.2d", TM.tm_sec);
+            pNextPos = pNextPos + strlen(pNextPos);
+            pData = pData + 1;
+            break;
+
+        /* FIXME: To Do! */
+        case TOK_ttttt   :
+        case TOK_AMsPM   :
+        case TOK_amspm   :
+        case TOK_AsP     :
+        case TOK_asp     :
+        case TOK_AMPM    :
+        case TOK_c       :
+        case TOK_ddd     :
+        case TOK_dddd    :
+        case TOK_ddddd   :
+        case TOK_dddddd  :
+        case TOK_ww      :
+        case TOK_mmm     :
+        case TOK_mmmm    :
+        default:
+            FIXME("Unhandled token for VarFormat %d\n", *pData);
+            HeapFree( GetProcessHeap(), 0, pFormatA );
+            return E_INVALIDARG;
+        }
+
+    }
+
+    *pbstrOut = StringDupAtoBstr( output );
+    HeapFree( GetProcessHeap(), 0, pFormatA );
+    return S_OK;
+}
+
+/**********************************************************************
+ *              VarFormat [OLEAUT32.469]
+ *
+ */
+HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format, 
+                         int firstDay, int firstWeek, ULONG dwFlags,
+                         BSTR *pbstrOut) {
+	
+    LPSTR   pNewString = NULL;
+    HRESULT rc = S_OK;
+
+    TRACE("mostly stub! format='%s' day=%d, wk=%d, flags=%ld\n",
+          debugstr_w(format), firstDay, firstWeek, dwFlags);
+    TRACE("varIn:\n");
+    dump_Variant(varIn);
+ 
+    /* Get format string */ 
+    pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
+ 
+    /* FIXME: Handle some simple pre-definted format strings : */
+    if (((V_VT(varIn)&VT_TYPEMASK) == VT_CY) && (lstrcmpiA(pNewString, "Currency") == 0)) {
+ 
+        /* Can't use VarBstrFromCy as it does not put currency sign on nor decimal places */
+        double curVal;
+        rc = VarR8FromCy(V_UNION(varIn,cyVal), &curVal);
+        if (rc == S_OK) {
+            char tmpStr[BUFFER_MAX];
+            sprintf(tmpStr, "%f", curVal);
+            if (GetCurrencyFormatA(GetUserDefaultLCID(), dwFlags, tmpStr, NULL, pBuffer, BUFFER_MAX) == 0) {
+                return E_FAIL;
+            } else {
+                *pbstrOut = StringDupAtoBstr( pBuffer );
+            }
+        }
+ 
+    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_DATE) {
+ 
+        /* Attempt to do proper formatting! */
+        int firstToken = -1;
+ 
+        rc = VarTokenizeFormatString(format, pBuffer, sizeof(pBuffer), firstDay,
+                                  firstWeek, GetUserDefaultLCID(), &firstToken); 
+        if (rc==S_OK) {
+            rc = VarFormatFromTokens(varIn, format, pBuffer, dwFlags, pbstrOut, GetUserDefaultLCID());
+        }
+ 
+ 
+    } else {
+        FIXME("Unsupported format!\n");
+        *pbstrOut = StringDupAtoBstr( "??" );
+    }
+ 
+    /* Free allocated storage */
+    HeapFree( GetProcessHeap(), 0, pNewString );
+    TRACE("result: '%s'\n", debugstr_w(*pbstrOut));
+    return rc;
+}
+ 
+

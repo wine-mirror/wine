@@ -168,7 +168,7 @@ typedef union tagCY {
     struct {
 #ifdef BIG_ENDIAN
         LONG  Hi;
-        LONG  Lo;
+        ULONG Lo;
 #else /* defined(BIG_ENDIAN) */
         ULONG Lo;
         LONG  Hi;

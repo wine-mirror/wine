@@ -556,7 +556,7 @@ WORD typeofarray
 */
 
 extern DWORD _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args);
-
+extern void dump_Variant(VARIANT * pvar);
 #include "poppack.h"
 
 /*---------------------------END--------------------------------------------*/

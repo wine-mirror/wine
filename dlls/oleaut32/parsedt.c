@@ -79,6 +79,7 @@ int	CTimeZone;
 #define UTIME_MAXMONTH (01)
 #define UTIME_MAXDAY (18)
 
+/* Assumes month in 1..12. Note tm_mon is 0..11 */
 #define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
  || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
   || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
@@ -600,7 +601,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #ifdef DATEDEBUG
 						printf("DecodeDateTime- month field %s value is %d\n", field[i], val);
 #endif
-						tm->tm_mon = val;
+                        /* tm_mon is 0->11, so need to subtract one from value in table */
+						tm->tm_mon = val-1;
 						break;
 
 						/*
@@ -680,9 +682,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	else if ((mer == PM) && (tm->tm_hour != 12))
 		tm->tm_hour += 12;
 
+    /* If parsing a time string into a date, all date parts are unset.
+       Win2k defaults these to 30 dec, 1899 so:                        */
+    if (tm->tm_year == 0 && tm->tm_mon == 0 && tm->tm_mday == 0 && fmask == DTK_TIME_M) {
+        tm->tm_year  = 1899;
+        tm->tm_mon   = 11; /* December, as tm_mon is 0..11 */
+        tm->tm_mday  = 30;
+    }
+       
+       
 #ifdef DATEDEBUG
 	printf("DecodeDateTime- mask %08x (%08x)", fmask, DTK_DATE_M);
-	printf(" set y%04d m%02d d%02d", tm->tm_year, tm->tm_mon, tm->tm_mday);
+	printf(" set y%04d m%02d d%02d", tm->tm_year, (tm->tm_mon+1), tm->tm_mday);
 	printf(" %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 #endif
 
@@ -701,7 +712,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (fmask & DTK_M(DTZMOD))
 			return -1;
 
-		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon+1, tm->tm_mday))
 		{
 			/* FIXME: The code below is not correct */
 #if 0 /* defined(USE_POSIX_TIME) */
@@ -909,7 +920,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 #ifdef DATEDEBUG
 					printf("DecodeDate- month field %s value is %d\n", field[i], val);
 #endif
-					tm->tm_mon = val;
+                    /* tm_mon is 0->11, so need to subtract one from value in table */
+					tm->tm_mon = val-1;
 					break;
 
 				default:
@@ -1075,7 +1087,8 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 		printf("DecodeNumber- match %d (%s) as month\n", val, str);
 #endif
 		*tmask = DTK_M(MONTH);
-		tm->tm_mon = val;
+        /* tm_mon is 0..11 */
+		tm->tm_mon = val-1;
 
 		/* no year and EuroDates enabled? then could be day */
 	}
@@ -1097,7 +1110,8 @@ DecodeNumber(int flen, char *str, int fmask, int *tmask, struct tm * tm, double 
 		printf("DecodeNumber- (2) match %d (%s) as month\n", val, str);
 #endif
 		*tmask = DTK_M(MONTH);
-		tm->tm_mon = val;
+        /* tm_mon is 0..11 */
+		tm->tm_mon = val-1;
 
 	}
 	else if ((!(fmask & DTK_M(DAY)))
@@ -1149,7 +1163,7 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 
 		tm->tm_mday = atoi(str + 6);
 		*(str + 6) = '\0';
-		tm->tm_mon = atoi(str + 4);
+		tm->tm_mon = atoi(str + 4) - 1;  /* tm_mon is 0..11 */
 		*(str + 4) = '\0';
 		tm->tm_year = atoi(str + 0);
 
@@ -1181,7 +1195,7 @@ DecodeNumberField(int len, char *str, int fmask, int *tmask, struct tm * tm, dou
 			*tmask = DTK_DATE_M;
 			tm->tm_mday = atoi(str + 4);
 			*(str + 4) = '\0';
-			tm->tm_mon = atoi(str + 2);
+			tm->tm_mon = atoi(str + 2) - 1; /* tm_mon is 0..11 */
 			*(str + 2) = '\0';
 			tm->tm_year = atoi(str + 0);
 		}

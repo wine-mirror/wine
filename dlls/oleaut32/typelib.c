@@ -71,6 +71,7 @@
 #include "ole2disp.h"
 #include "typelib.h"
 #include "wine/debug.h"
+#include "parsedt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
@@ -1028,7 +1029,7 @@ static void dump_TLBImplType(TLBImplType * impl)
     }
 }
 
-static void dump_Variant(VARIANT * pvar)
+void dump_Variant(VARIANT * pvar)
 {
     char szVarType[32];
     LPVOID ref;
@@ -1061,7 +1062,7 @@ static void dump_Variant(VARIANT * pvar)
       return;
     }
 
-    switch (V_VT(pvar))
+    switch (V_VT(pvar) & VT_TYPEMASK)
     {
         case VT_I2:
             TRACE("%d\n", *(short*)ref);
@@ -1095,6 +1096,26 @@ static void dump_Variant(VARIANT * pvar)
         case VT_VARIANT:
             if (V_VT(pvar) & VT_BYREF) dump_Variant(ref);
             break;
+
+        case VT_DATE:
+        {
+            struct tm TM;
+            memset( &TM, 0, sizeof(TM) );
+
+            if( DateToTm( *(DATE*)ref, 0, &TM ) == FALSE ) {
+                TRACE("invalid date? (?)%ld %f\n", *(long*)ref, *(double *)ref);
+            } else {
+                TRACE("(yyyymmdd) %4.4d-%2.2d-%2.2d (time) %2.2d:%2.2d:%2.2d [%f]\n",
+                       TM.tm_year, TM.tm_mon+1, TM.tm_mday, 
+                      TM.tm_hour, TM.tm_min, TM.tm_sec, *(double *)ref);
+            }
+            break;
+        }
+
+        case VT_CY:
+            TRACE("%ld (hi), %lu (lo)\n", ((CY *)ref)->s.Hi, ((CY *)ref)->s.Lo);
+            break;
+
 
         default:
             TRACE("(?)%ld\n", *(long*)ref);

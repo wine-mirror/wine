@@ -126,6 +126,7 @@ name oleaut32
 136 stdcall VarUI1FromStr(wstr long long ptr) VarUI1FromStr
 137 stub VarUI1FromDisp
 138 stdcall VarUI1FromBool(long ptr) VarUI1FromBool
+140 stdcall VarTokenizeFormatString (ptr ptr long long long long ptr) VarTokenizeFormatString
 146 stub DispCallFunc
 147 stdcall VariantChangeTypeEx(ptr ptr long long long) VariantChangeTypeEx
 148 stdcall SafeArrayPtrOfIndex(ptr ptr ptr) SafeArrayPtrOfIndex
@@ -306,11 +307,11 @@ name oleaut32
 435 stub SafeArraySetRecordInfo
 436 stub VarAbs # stdcall (ptr ptr)
 437 stub VarAdd # stdcall (ptr ptr ptr)
-438 stub VarAnd # stdcall (ptr ptr ptr)
+438 stdcall VarAnd(ptr ptr ptr) VarAnd
 439 stdcall VarBstrCat(ptr ptr ptr) VarBstrCat
 440 stdcall VarBstrCmp(ptr ptr long long) VarBstrCmp
 441 stdcall VarCat(ptr ptr ptr) VarCat
-442 stub VarCmp # stdcall (ptr ptr long long)
+442 stdcall VarCmp(ptr ptr long long) VarCmp
 443 stub VarCyAbs
 444 stub VarCyAdd
 445 stub VarCyCmp
@@ -337,10 +338,10 @@ name oleaut32
 466 stub VarDiv # stdcall (ptr ptr ptr)
 467 stub VarEqv # stdcall (ptr ptr ptr)
 468 stub VarFix # stdcall (ptr ptr)
-469 stub VarFormat # stdcall (ptr ptr long long long ptr)
+469 stdcall VarFormat(ptr ptr long long long ptr) VarFormat
 470 stub VarFormatCurrency # stdcall (ptr long long long long long ptr)
 471 stub VarFormatDateTime # stdcall (ptr long long ptr)
-472 stub VarFormatFromTokens # stdcall (ptr ptr ptr long ptr long)
+472 stdcall VarFormatFromTokens (ptr ptr ptr long ptr long) VarFormatFromTokens
 473 stub VarFormatNumber # stdcall (ptr long long long long long ptr)
 474 stub VarFormatPercent # stdcall (ptr long long long long long ptr)
 475 stub VarIdiv # stdcall (ptr ptr ptr)
@@ -350,7 +351,7 @@ name oleaut32
 479 stub VarMonthName # stdcall (long long long ptr)
 480 stub VarMul # stdcall (ptr ptr ptr)
 481 stub VarNeg # stdcall (ptr ptr)
-482 stub VarNot # stdcall (ptr ptr)
+482 stdcall VarNot(ptr ptr) VarNot
 483 stub VarOr # stdcall (ptr ptr ptr)
 484 stub VarPow # stdcall (ptr ptr ptr)
 485 stub VarR4CmpR8
@@ -358,6 +359,5 @@ name oleaut32
 487 stub VarR8Round # stdcall (double long ptr)
 488 stub VarRound # stdcall (ptr long ptr)
 489 stub VarSub # stdcall (ptr ptr ptr)
-490 stub VarTokenizeFormatString # stdcall (ptr ptr long long long long ptr)
 491 stub VarWeekdayName # stdcall (long long long long ptr)
 492 stub VarXor # stdcall (ptr ptr ptr)
