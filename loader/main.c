@@ -315,3 +315,21 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     return wm->module;
 }
 
+/***********************************************************************
+ *           ExitKernel16 (KERNEL.2)
+ *
+ * Clean-up everything and exit the Wine process.
+ *
+ */
+void WINAPI ExitKernel16( void )
+{
+    /* Do the clean-up stuff */
+
+    WriteOutProfiles16();
+    SHELL_SaveRegistry();
+
+    SERVICE_Exit();
+
+    exit(0);
+}
+

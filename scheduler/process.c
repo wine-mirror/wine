@@ -673,6 +673,14 @@ void WINAPI ExitProcess( DWORD status )
     TerminateProcess( GetCurrentProcess(), status );
 }
 
+/***********************************************************************
+ *           ExitProcess16   (KERNEL.466)
+ */
+void WINAPI ExitProcess16( WORD status )
+{
+    SYSLEVEL_ReleaseWin16Lock();
+    ExitProcess( status );
+}
 
 /******************************************************************************
  *           TerminateProcess   (KERNEL32.684)
@@ -831,6 +839,15 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
     return reply.handle;
 }			      
 
+/*********************************************************************
+ *           MapProcessHandle   (KERNEL.483)
+ */
+DWORD WINAPI MapProcessHandle( HANDLE handle )
+{
+    struct get_process_info_reply reply;
+    if ( !PROCESS_QueryInfo( handle, &reply ) ) return 0;
+    return (DWORD)reply.pid;
+}
 
 /***********************************************************************
  *           GetCurrentProcessId   (KERNEL32.199)

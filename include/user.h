@@ -38,7 +38,6 @@ typedef struct tagUSER_DRIVER {
 
 extern USER_DRIVER *USER_Driver;
 
-void USER_ExitWindows(void);
 WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                             DWORD dwFlags, HMODULE16 hModule );
 

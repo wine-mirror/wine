@@ -182,24 +182,6 @@ static void USER_AppExit( HINSTANCE16 hInstance )
 
 
 /***********************************************************************
- *           USER_ExitWindows
- *
- * Clean-up everything and exit the Wine process.
- * This is the back-end of ExitWindows(), called when all windows
- * have agreed to be terminated.
- */
-void USER_ExitWindows(void)
-{
-    /* Do the clean-up stuff */
-
-    WriteOutProfiles16();
-    SHELL_SaveRegistry();
-
-    exit(0);
-}
-
-
-/***********************************************************************
  *           USER_SignalProc (USER.314)
  */
 void WINAPI USER_SignalProc( HANDLE16 hTaskOrModule, UINT16 uCode,
@@ -329,7 +311,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
     }
     WIN_ReleaseWinArray(list);
 
-    if (result) USER_ExitWindows();
+    if (result) ExitKernel16();
     WIN_ReleaseDesktop();
     return FALSE;
 }

@@ -112,6 +112,7 @@ BOOL16      WINAPI CreateDirectory16(LPCSTR,LPVOID);
 BOOL16      WINAPI DefineHandleTable16(WORD);
 ATOM        WINAPI DeleteAtom16(ATOM);
 BOOL16      WINAPI DeleteFile16(LPCSTR);
+void        WINAPI ExitKernel16(void);
 void        WINAPI FatalAppExit16(UINT16,LPCSTR);
 ATOM        WINAPI FindAtom16(SEGPTR);
 BOOL16      WINAPI FindClose16(HANDLE16);

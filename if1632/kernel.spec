@@ -6,7 +6,7 @@ file	krnl386.exe
 # present in win31, win95 and nt351
 
 1   stub FatalExit
-2   stub ExitKernel
+2   pascal16 ExitKernel() ExitKernel16
 3   pascal GetVersion() GetVersion16
 4   pascal16 LocalInit(word word word) LocalInit16
 5   register LocalAlloc(word word) WIN16_LocalAlloc
@@ -289,7 +289,7 @@ file	krnl386.exe
 348 pascal16 hmemcpy(ptr ptr long) hmemcpy16
 349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite16
-351 stub BUNNY_351
+351 return BUNNY_351 0 0
 352 pascal   lstrcatn(segstr str word) lstrcatn16
 353 pascal   lstrcpyn(segptr str word) lstrcpyn16
 354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
@@ -370,7 +370,7 @@ file	krnl386.exe
 463 pascal SetThreadQueue(long word) SetThreadQueue16
 464 pascal GetThreadQueue(long) GetThreadQueue16
 465 stub NukeProcess
-466 stub ExitProcess
+466 pascal16 ExitProcess(word) ExitProcess16
 467 stub WOACreateConsole
 468 stub WOASpawnConApp
 469 stub WOAGimmeTitle
@@ -387,7 +387,7 @@ file	krnl386.exe
 480 pascal16 _EnterWin16Lock() SYSLEVEL_EnterWin16Lock
 481 pascal16 _LeaveWin16Lock() SYSLEVEL_LeaveWin16Lock
 482 pascal LoadSystemLibrary32(str) LoadLibrary32_16   # FIXME!
-483 stub MapProcessHandle
+483 pascal MapProcessHandle(long) MapProcessHandle
 484 pascal SetProcessDWORD(long s_word long) SetProcessDword
 485 pascal GetProcessDWORD(long s_word) GetProcessDword
 486 pascal FreeLibrary32(long) FreeLibrary

@@ -583,8 +583,7 @@ void TASK_KillTask( HTASK16 hTask )
     if (nTaskCount <= 1)
     {
         TRACE_(task)("this is the last task, exiting\n" );
-        SERVICE_Exit();
-        USER_ExitWindows();
+        ExitKernel16();
     }
 
     /* FIXME: Hack! Send a message to the initial task so that
