@@ -19,7 +19,7 @@
 DEFAULT_DEBUG_CHANNEL(text);
 
 /***********************************************************************
- *           IsLegalDBCSChar for cp932/936/949/950
+ *           IsLegalDBCSChar for cp932/936/949/950/euc
  */
 static inline
 int IsLegalDBCSChar_cp932( BYTE lead, BYTE trail )
@@ -45,13 +45,6 @@ int IsLegalDBCSChar_cp949( BYTE lead, BYTE trail )
 }
 
 static inline
-int IsLegalDBCSChar_euckr( BYTE lead, BYTE trail )
-{
-    return ( ( lead >= (BYTE)0xa1 && lead <= (BYTE)0xfe ) &&
-	     ( trail >= (BYTE)0xa1 && trail <= (BYTE)0xfe ) );
-}
-
-static inline
 int IsLegalDBCSChar_cp950( BYTE lead, BYTE trail )
 {
     return (   ( lead >= (BYTE)0x81 && lead <= (BYTE)0xfe ) &&
@@ -59,8 +52,16 @@ int IsLegalDBCSChar_cp950( BYTE lead, BYTE trail )
 	       ( trail >= (BYTE)0xa1 && trail <= (BYTE)0xfe ) ) );
 }
 
+static inline
+int IsLegalDBCSChar_euc( BYTE lead, BYTE trail )
+{
+    return ( ( lead >= (BYTE)0xa1 && lead <= (BYTE)0xfe ) &&
+             ( trail >= (BYTE)0xa1 && trail <= (BYTE)0xfe ) );
+}
+
+
 /***********************************************************************
- *           DBCSCharToXChar2b for cp932/949
+ *           DBCSCharToXChar2b for cp932/euc
  */
 
 static inline
@@ -93,7 +94,7 @@ void DBCSCharToXChar2b_cp932( XChar2b* pch, BYTE lead, BYTE trail )
 }
 
 static inline
-void DBCSCharToXChar2b_euckr( XChar2b* pch, BYTE lead, BYTE trail )
+void DBCSCharToXChar2b_euc( XChar2b* pch, BYTE lead, BYTE trail )
 {
     pch->byte1 = lead & (BYTE)0x7f;
     pch->byte2 = trail & (BYTE)0x7f;
@@ -120,7 +121,11 @@ static WORD X11DRV_enum_subfont_charset_cp932( UINT index )
 
 static WORD X11DRV_enum_subfont_charset_cp936( UINT index )
 {
-    FIXME( "please implement X11DRV_enum_subfont_charset_cp936!\n" );
+    switch ( index )
+    {
+    case 0: return ANSI_CHARSET;
+    }
+
     return DEFAULT_CHARSET;
 }
 
@@ -235,8 +240,50 @@ static XChar2b* X11DRV_unicode_to_char2b_cp932( fontObject* pfo,
 static XChar2b* X11DRV_unicode_to_char2b_cp936( fontObject* pfo,
                                                 LPCWSTR lpwstr, UINT count )
 {
-    FIXME( "please implement X11DRV_unicode_to_char2b_cp936!\n" );
-    return NULL;
+    XChar2b *str2b;
+    XChar2b *str2b_dst;
+    BYTE *str;
+    BYTE *str_src;
+    UINT i;
+    char ch = pfo->fs->default_char;
+
+    if (!(str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) )))
+	return NULL;
+    if (!(str = HeapAlloc( GetProcessHeap(), 0, count*2 )))
+    {
+	HeapFree( GetProcessHeap(), 0, str2b );
+	return NULL;
+    }
+    WideCharToMultiByte( 936, 0, lpwstr, count, str, count*2, &ch, NULL );
+
+    str_src = str;
+    str2b_dst = str2b;
+    for (i = 0; i < count; i++, str_src++, str2b_dst++)
+    {
+	if ( IsLegalDBCSChar_cp936( *str_src, *(str_src+1) ) )
+	{
+	    if ( IsLegalDBCSChar_euc( *str_src, *(str_src+1) ) )
+	    {
+		DBCSCharToXChar2b_euc( str2b_dst, *str_src, *(str_src+1) );
+	    }
+	    else
+	    {
+		/* FIXME */
+		str2b_dst->byte1 = 0;
+		str2b_dst->byte2 = 0;
+	    }
+	    str_src++;
+	}
+	else
+	{
+	    str2b_dst->byte1 = 0;
+	    str2b_dst->byte2 = *str_src;
+	}
+    }
+
+    HeapFree( GetProcessHeap(), 0, str );
+
+    return str2b;
 }
 
 static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
@@ -264,9 +311,9 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
     {
 	if ( IsLegalDBCSChar_cp949( *str_src, *(str_src+1) ) )
 	{
-	    if ( IsLegalDBCSChar_euckr( *str_src, *(str_src+1) ) )
+	    if ( IsLegalDBCSChar_euc( *str_src, *(str_src+1) ) )
 	    {
-		DBCSCharToXChar2b_euckr( str2b_dst, *str_src, *(str_src+1) );
+		DBCSCharToXChar2b_euc( str2b_dst, *str_src, *(str_src+1) );
 	    }
 	    else
 	    {
@@ -608,10 +655,10 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
     { /* CP936 */
 	X11DRV_enum_subfont_charset_cp936,
 	X11DRV_unicode_to_char2b_cp936,
-	X11DRV_DrawString_normal, /* FIXME */
-	X11DRV_TextWidth_normal, /* FIXME */
-	X11DRV_DrawText_normal, /* FIXME */
-	X11DRV_TextExtents_normal, /* FIXME */
+	X11DRV_DrawString_dbcs,
+	X11DRV_TextWidth_dbcs_2fonts,
+	X11DRV_DrawText_dbcs_2fonts,
+	X11DRV_TextExtents_dbcs_2fonts,
         X11DRV_GetTextMetricsA_normal, /* FIXME */
     },
     { /* CP949 */
