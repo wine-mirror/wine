@@ -156,13 +156,12 @@ done:
     return NULL;
 }
 
-BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath)
+BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR keyName)
 {
     BOOL result = FALSE;
     LONG lRet = ERROR_SUCCESS;
     HKEY retKey;
-    TCHAR keyName[32];
-    TCHAR newKey[COUNT_OF(keyName) - 4];
+    TCHAR newKey[MAX_NEW_KEY_LEN - 4];
     int keyNum;
     HKEY hKey;
          
@@ -338,5 +337,49 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR oldName, LPC
 done:
     HeapFree(GetProcessHeap(), 0, value);
     RegCloseKey(hKey);
+    return result;
+}
+
+
+BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
+{
+    LPTSTR parentPath = 0;
+    LPCTSTR srcSubKey = 0;
+    HKEY parentKey = 0;
+    HKEY destKey = 0;
+    BOOL result = FALSE;
+    LONG lRet;
+
+    if (!keyPath || !newName) return FALSE;
+
+    if (!strrchr(keyPath, '\\')) {
+	parentKey = hRootKey;
+	srcSubKey = keyPath;
+    } else {
+	parentPath = strdup(keyPath);
+	srcSubKey = strrchr(parentPath, '\\') + 1;
+	*((LPTSTR)srcSubKey - 1) = 0;
+	lRet = RegOpenKeyEx(hRootKey, parentPath, 0, KEY_READ | KEY_CREATE_SUB_KEY, &parentKey);
+	if (lRet != ERROR_SUCCESS) goto done;
+    }
+
+    lRet = RegCreateKey(parentKey, newName, &destKey);
+    if (lRet != ERROR_SUCCESS) goto done;
+
+    /* FIXME: SHCopyKey does not copy the security attributes */
+    lRet = SHCopyKey(parentKey, srcSubKey, destKey, 0);
+    if (lRet != ERROR_SUCCESS) goto done;
+
+    lRet = SHDeleteKey(hRootKey, keyPath);
+    if (lRet != ERROR_SUCCESS) goto done;
+
+    result = TRUE;
+
+done:
+    RegCloseKey(destKey);
+    if (parentKey) {
+        RegCloseKey(parentKey); 
+        free(parentPath);
+    }
     return result;
 }

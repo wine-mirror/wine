@@ -35,6 +35,8 @@
 #define PM_MODIFYVALUE  0
 #define PM_NEW          1
 
+#define MAX_NEW_KEY_LEN 128
+
 extern HINSTANCE hInst;
 
 /******************************************************************************/
@@ -89,7 +91,7 @@ extern void UpdateStatusBar(void);
 /* listview.c */
 extern HWND CreateListView(HWND hwndParent, int id);
 extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath);
-extern BOOL StartValueRename(HWND hwndLV);
+extern HWND StartValueRename(HWND hwndLV);
 extern LPCTSTR GetValueName(HWND hwndLV);
 extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
 extern BOOL IsDefaultValue(HWND hwndLV, int i);
@@ -98,13 +100,17 @@ extern BOOL IsDefaultValue(HWND hwndLV, int i);
 extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
 extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
 extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
+extern BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
+extern HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name);
+extern HWND StartKeyRename(HWND hwndTV);
 
 /* edit.c */
-extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
+extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR newKeyName);
 extern BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType);
 extern BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
 extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName);
+extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName);
 
 #endif /* __MAIN_H__ */

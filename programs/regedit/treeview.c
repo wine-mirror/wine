@@ -102,6 +102,13 @@ LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
     return pathBuffer;
 }
 
+BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem)
+{
+    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
+    if (!hItem) return FALSE;
+    return TreeView_DeleteItem(hwndTV, hItem);
+}
+
 static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HKEY hKey, DWORD dwChildren)
 {
     TVITEM tvi;
@@ -120,6 +127,47 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HK
     return TreeView_InsertItem(hwndTV, &tvins);
 }
 
+
+HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPTSTR name)
+{
+    TCHAR buf[MAX_NEW_KEY_LEN];
+    HTREEITEM hNewItem = 0;
+    TVITEMEX item;
+
+    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
+    if (!hItem) return FALSE;
+    if (TreeView_GetItemState(hwndTV, hItem, TVIS_EXPANDEDONCE)) {
+	hNewItem = AddEntryToTree(hwndTV, hItem, name, 0, 0);
+    } else {
+	item.mask = TVIF_CHILDREN | TVIF_HANDLE;
+	item.hItem = hItem;
+	if (!TreeView_GetItem(hwndTV, &item)) return FALSE;
+	item.cChildren = 1;
+	if (!TreeView_SetItem(hwndTV, &item)) return FALSE;
+    }
+    TreeView_Expand(hwndTV, hItem, TVE_EXPAND);
+    if (!hNewItem) {
+	for(hNewItem = TreeView_GetChild(hwndTV, hItem); hNewItem; hNewItem = TreeView_GetNextSibling(hwndTV, hNewItem)) {
+	    item.mask = TVIF_HANDLE | TVIF_TEXT;
+	    item.hItem = hNewItem;
+	    item.pszText = buf;
+	    item.cchTextMax = COUNT_OF(buf);
+	    if (!TreeView_GetItem(hwndTV, &item)) continue;
+	    if (lstrcmp(name, item.pszText) == 0) break;
+	}	
+    }
+    if (hNewItem) TreeView_SelectItem(hwndTV, hNewItem);
+
+    return hNewItem;
+}
+
+HWND StartKeyRename(HWND hwndTV)
+{
+    HTREEITEM hItem;
+
+    if(!(hItem = TreeView_GetSelection(hwndTV))) return 0;
+    return TreeView_EditLabel(hwndTV, hItem);
+}
 
 static BOOL InitTreeViewItems(HWND hwndTV, LPTSTR pHostName)
 {

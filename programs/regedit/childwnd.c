@@ -247,6 +247,20 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	    case NM_SETFOCUS:
 		pChildWnd->nFocusPanel = 1;
 		break;
+	    case TVN_ENDLABELEDIT: {
+		HKEY hRootKey;
+	        LPNMTVDISPINFO dispInfo = (LPNMTVDISPINFO)lParam;
+		LPCTSTR path = GetItemPath(pChildWnd->hTreeWnd, 0, &hRootKey);
+	        BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
+		if (res) {
+		    TVITEMEX item;
+		    item.mask = TVIF_HANDLE | TVIF_TEXT;
+		    item.hItem = TreeView_GetSelection(pChildWnd->hTreeWnd);
+		    item.pszText = dispInfo->item.pszText;
+		    TreeView_SetItem(pChildWnd->hTreeWnd, &item);
+		}
+		return res;
+	    }
             default:
                 goto def;
             }

@@ -251,14 +251,13 @@ static void ListViewPopUpMenu(HWND hWnd, POINT pt)
 {
 }
 
-BOOL StartValueRename(HWND hwndLV)
+HWND StartValueRename(HWND hwndLV)
 {
     int item;
 
     item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED | LVNI_SELECTED);
-    if (item < 0) return FALSE;
-    if (!ListView_EditLabel(hwndLV, item)) return FALSE;
-    return TRUE;
+    if (item < 0) return 0;
+    return ListView_EditLabel(hwndLV, item);
 }
 
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)

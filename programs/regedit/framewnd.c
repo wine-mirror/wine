@@ -438,6 +438,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     HKEY hKeyRoot = 0;
     LPCTSTR keyPath;
     LPCTSTR valueName;
+    TCHAR newKey[MAX_NEW_KEY_LEN];
     DWORD valueType;
 
     keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot);
@@ -458,9 +459,11 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PrintRegistryHive(hWnd, _T(""));
         break;
     case ID_EDIT_DELETE:
-	if (GetFocus() == g_pChildWnd->hTreeWnd) {
+	if (keyPath == 0 || *keyPath == 0) {
+	    MessageBeep(MB_ICONHAND); 
+	} else if (GetFocus() == g_pChildWnd->hTreeWnd) {
 	    if (DeleteKey(hWnd, hKeyRoot, keyPath))
-		;/* FIXME: TreeView should be refreshed */
+		DeleteNode(g_pChildWnd->hTreeWnd, 0);
 	} else if (GetFocus() == g_pChildWnd->hListWnd) {
 	    if (DeleteValue(hWnd, hKeyRoot, keyPath, valueName))
 		RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
@@ -474,8 +477,10 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         CopyKeyName(hWnd, _T(""));
         break;
     case ID_EDIT_NEW_KEY:
-	CreateKey(hWnd, hKeyRoot, keyPath);
-	/* FIXME: TreeView should be refreshed */
+	if (CreateKey(hWnd, hKeyRoot, keyPath, newKey)) {
+	    if (InsertNode(g_pChildWnd->hTreeWnd, 0, newKey))
+	        StartKeyRename(g_pChildWnd->hTreeWnd);
+	}
 	break;
     case ID_EDIT_NEW_STRINGVALUE:
 	valueType = REG_SZ;
@@ -487,10 +492,19 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	valueType = REG_DWORD;
 	/* fall through */
     create_value:
-	if (CreateValue(hWnd, hKeyRoot, keyPath, valueType))
+	if (CreateValue(hWnd, hKeyRoot, keyPath, valueType)) {
 	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+	    /* FIXME: start rename */
+	}
+	break;
     case ID_EDIT_RENAME:
-	StartValueRename(g_pChildWnd->hListWnd);
+	if (keyPath == 0 || *keyPath == 0) {
+	    MessageBeep(MB_ICONHAND); 
+	} else if (GetFocus() == g_pChildWnd->hTreeWnd) {
+	    StartKeyRename(g_pChildWnd->hTreeWnd);
+	} else if (GetFocus() == g_pChildWnd->hListWnd) {
+	    StartValueRename(g_pChildWnd->hListWnd);
+	}
 	break;
     break;
     case ID_REGISTRY_PRINTERSETUP:
