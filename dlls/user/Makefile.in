@@ -37,7 +37,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/syscolor.c \
 	$(TOPOBJDIR)/windows/sysmetrics.c \
 	$(TOPOBJDIR)/windows/sysparams.c \
-	$(TOPOBJDIR)/windows/timer.c \
 	$(TOPOBJDIR)/windows/user.c \
 	$(TOPOBJDIR)/windows/win.c \
 	$(TOPOBJDIR)/windows/winhelp.c \

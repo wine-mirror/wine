@@ -229,7 +229,6 @@ static void thread_detach(void)
 
     WDML_NotifyThreadDetach();
 
-    TIMER_RemoveThreadTimers();
     WIN_DestroyThreadWindows( GetDesktopWindow() );
     QUEUE_DeleteMsgQueue();
 

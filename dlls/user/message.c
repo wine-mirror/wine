@@ -48,6 +48,8 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #define MAX_PACK_COUNT 4
 
+#define SYS_TIMER_RATE  55   /* min. timer rate in ms (actually 54.925)*/
+
 /* description of the data fields that need to be packed along with a sent message */
 struct packed_message
 {
@@ -2420,6 +2422,110 @@ BOOL WINAPI MessageBeep( UINT i )
     SystemParametersInfoA( SPI_GETBEEP, 0, &active, FALSE );
     if (active && USER_Driver.pBeep) USER_Driver.pBeep();
     return TRUE;
+}
+
+
+/***********************************************************************
+ *		SetTimer (USER32.@)
+ */
+UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
+{
+    UINT_PTR ret;
+    WNDPROC winproc = 0;
+
+    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, WIN_PROC_32A );
+
+    SERVER_START_REQ( set_win_timer )
+    {
+        req->win    = hwnd;
+        req->msg    = WM_TIMER;
+        req->id     = id;
+        req->rate   = max( timeout, SYS_TIMER_RATE );
+        req->lparam = (unsigned int)winproc;
+        if (!wine_server_call_err( req ))
+        {
+            ret = reply->id;
+            if (!ret) ret = TRUE;
+        }
+        else ret = 0;
+    }
+    SERVER_END_REQ;
+
+    TRACE("Added %p %x %p timeout %d\n", hwnd, id, winproc, timeout );
+    return ret;
+}
+
+
+/***********************************************************************
+ *		SetSystemTimer (USER32.@)
+ */
+UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
+{
+    UINT_PTR ret;
+    WNDPROC winproc = 0;
+
+    if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, WIN_PROC_32A );
+
+    SERVER_START_REQ( set_win_timer )
+    {
+        req->win    = hwnd;
+        req->msg    = WM_SYSTIMER;
+        req->id     = id;
+        req->rate   = max( timeout, SYS_TIMER_RATE );
+        req->lparam = (unsigned int)winproc;
+        if (!wine_server_call_err( req ))
+        {
+            ret = reply->id;
+            if (!ret) ret = TRUE;
+        }
+        else ret = 0;
+    }
+    SERVER_END_REQ;
+
+    TRACE("Added %p %x %p timeout %d\n", hwnd, id, winproc, timeout );
+    return ret;
+}
+
+
+/***********************************************************************
+ *		KillTimer (USER32.@)
+ */
+BOOL WINAPI KillTimer( HWND hwnd, UINT_PTR id )
+{
+    BOOL ret;
+
+    TRACE("%p %d\n", hwnd, id );
+
+    SERVER_START_REQ( kill_win_timer )
+    {
+        req->win = hwnd;
+        req->msg = WM_TIMER;
+        req->id  = id;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
+ *		KillSystemTimer (USER32.@)
+ */
+BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
+{
+    BOOL ret;
+
+    TRACE("%p %d\n", hwnd, id );
+
+    SERVER_START_REQ( kill_win_timer )
+    {
+        req->win = hwnd;
+        req->msg = WM_SYSTIMER;
+        req->id  = id;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

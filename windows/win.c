@@ -634,8 +634,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 
     /* free resources associated with the window */
 
-    TIMER_RemoveWindowTimers( hwnd );
-
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
 
     if (!(wndPtr->dwStyle & WS_CHILD))

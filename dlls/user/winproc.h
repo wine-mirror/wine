@@ -129,8 +129,4 @@ extern void CLASS_RegisterBuiltinClasses(void);
 extern void CLASS_AddWindow( struct tagCLASS *class, struct tagWND *win, WINDOWPROCTYPE type );
 extern void CLASS_FreeModuleClasses( HMODULE16 hModule );
 
-/* Timer functions */
-extern void TIMER_RemoveWindowTimers( HWND hwnd );
-extern void TIMER_RemoveThreadTimers(void);
-
 #endif  /* __WINE_WINPROC_H */
