@@ -1,3 +1,9 @@
+---------------------------------------------------------------------------
+Version 1.0.4 (10-Dec-1998)
+- Added a global label for elf-dll linking and a long with the resource
+  size and a long with the directory size.
+- Killed an annoying warning since version 1.0.0 in parser.y about a
+  var being used before init.
 
 ---------------------------------------------------------------------------
 Version 1.0.3 (02-Nov-1998)

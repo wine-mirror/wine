@@ -18,6 +18,12 @@
 #include "newstruc.h"
 #include "utils.h"
 
+#ifdef NEED_UNDERSCORE_PREFIX
+char Underscore[] = "_";
+#else
+char Underscore[] = "";
+#endif
+
 char s_file_head_str[] =
 	"#\n"
 	"# This file is generated with wrc version " WRC_FULLVERSION ". Do not edit!\n"
@@ -742,6 +748,10 @@ void write_pe_segment(FILE *fp, resource_t *top)
 		free(typelabel);
 	}
 
+	fprintf(fp, "\t.align\t4\n");
+	fprintf(fp, "%s_ResourceDirectorySize:\n", Underscore);
+	fprintf(fp, "\t.globl\t%s_ResourceDirectorySize\n", Underscore);
+	fprintf(fp, "\t.long\t. - %s%s\n", prefix, _PEResTab);
 }
 
 /*
@@ -969,6 +979,13 @@ void write_s_file(char *outname, resource_t *top)
 			write_s_res(fo, rsc->binres);
 
 			fprintf(fo, "\n");
+		}
+
+		if(create_dir)
+		{
+			/* Add the size of the entire resource section for elf-dlls */
+			fprintf(fo, "%s_ResourceSectionSize:\n", Underscore);
+			fprintf(fo, "\t.long\t. - %s%s\n", prefix, _PEResTab);
 		}
 	}
 

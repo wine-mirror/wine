@@ -1847,7 +1847,7 @@ event_t *add_event(int key, int id, int flags, event_t *prev)
 
 event_t *add_string_event(string_t *key, int id, int flags, event_t *prev)
 {
-	int keycode;
+	int keycode = 0;
 	event_t *ev = new_event();
 
 	if(key->type != str_char)
