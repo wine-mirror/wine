@@ -724,7 +724,18 @@ static BOOL32 PE_MapImage( PDB32 *process,WINE_MODREF *wm, OFSTRUCT *ofs, DWORD 
 	if(nt_header->OptionalHeader.DataDirectory[15].Size)
 		FIXME(win32,"Unknown directory 15 ignored\n");
 
-	if(pem->pe_reloc)	do_relocations(wm);
+        if(wm->module!=nt_header->OptionalHeader.ImageBase) {
+	    if (pem->pe_reloc)
+		do_relocations(wm);
+	    else {
+		/* FIXME: we could return before the second VirtualAlloc ... */
+	    	FIXME(win32,
+		    "Had to relocate %s, but without relocation records (%s), continuing. (But expect crash now).\n",
+		    ofs->szPathName,
+		    (nt_header->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?"stripped during link":"unknown reason"
+		);
+	    }
+	}
 	if(pem->pe_export) {
 		dump_exports(wm->module);
 
