@@ -655,7 +655,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
          return NULL;
     }
 
-    if (pe_export)
+    if (!builtin && pe_export)
         SNOOP_RegisterDLL( hModule, wm->modname, pe_export->Base, pe_export->NumberOfFunctions );
 
     /* Send DLL load event */
