@@ -53,7 +53,7 @@ char* _strtime(char* date)
 /*********************************************************************
  *		clock (MSVCRT.@)
  */
-clock_t MSVCRT_clock(void)
+MSVCRT_clock_t MSVCRT_clock(void)
 {
   struct tms alltimes;
   clock_t res;
