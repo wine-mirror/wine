@@ -23,6 +23,7 @@ C_SRCS = \
 	olefont.c \
 	olepicture.c \
 	parsedt.c \
+	regsvr.c \
 	safearray.c \
 	stubs.c \
 	tmarshal.c \

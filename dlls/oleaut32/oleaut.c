@@ -506,22 +506,6 @@ HRESULT WINAPI OleTranslateColor(
   return S_OK;
 }
 
-/***********************************************************************
- *		DllRegisterServer (OLEAUT32.320)
- */
-HRESULT WINAPI OLEAUT32_DllRegisterServer() {
-    FIXME("stub!\n");
-    return S_OK;
-}
-
-/***********************************************************************
- *		DllUnregisterServer (OLEAUT32.321)
- */
-HRESULT WINAPI OLEAUT32_DllUnregisterServer() {
-    FIXME("stub!\n");
-    return S_OK;
-}
-
 extern HRESULT OLEAUTPS_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
 
 extern void _get_STDFONT_CF(LPVOID);

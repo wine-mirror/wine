@@ -318,6 +318,8 @@
 @ stdcall Control_RunDLLA(ptr ptr str long)
 @ stdcall Control_RunDLLW(ptr ptr wstr long)
 @ stdcall DllInstall(long wstr)SHELL32_DllInstall
+@ stdcall DllRegisterServer() SHELL32_DllRegisterServer
+@ stdcall DllUnregisterServer() SHELL32_DllUnregisterServer
 @ stdcall DoEnvironmentSubstA(str str)
 @ stdcall DoEnvironmentSubstW(wstr wstr)
 @ stub DragQueryFileAorW
