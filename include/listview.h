@@ -7,6 +7,13 @@
 #ifndef __WINE_LISTVIEW_H
 #define __WINE_LISTVIEW_H
 
+typedef struct tagLISTVIEW_SUBITEM
+{
+    LPSTR pszText;
+    INT iImage;
+    INT iSubItem;
+
+} LISTVIEW_SUBITEM;
 
 typedef struct tagLISTVIEW_ITEM
 {
@@ -27,19 +34,23 @@ typedef struct tagLISTVIEW_INFO
     HIMAGELIST himlNormal;
     HIMAGELIST himlSmall;
     HIMAGELIST himlState;
-  BOOL bLButtonDown;
-  BOOL bRButtonDown;
-    INT      nColumnCount;
-  INT nFocusedItem;
-  INT nItemCount;
-  INT nItemHeight;
-  INT nColumnWidth;
-  INT nSelectionMark;
+    BOOL bLButtonDown;
+    BOOL bRButtonDown;
+    INT nCountPerColumn;
+    INT nCountPerRow;
+    INT nFocusedItem;
+    INT nItemHeight;
+    INT nColumnWidth;
+    INT nSelectionMark;
+    SHORT notifyFormat;
+    RECT rcList;
+    SIZE iconSize;
+    SIZE smallIconSpacing;
+    SIZE largeIconSpacing;
+    UINT uCallbackMask;
     HWND     hwndHeader;
     HFONT    hDefaultFont;
     HFONT    hFont;
-  INT nWidth;
-  INT nHeight;
     BOOL     bFocus;
     DWORD      dwExStyle;    /* extended listview style */
     HDPA       hdpaItems;

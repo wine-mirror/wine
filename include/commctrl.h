@@ -2170,6 +2170,7 @@ typedef struct tagNMTVGETINFOTIPW
 #define LVIF_STATE              0x0008
 #define LVIF_INDENT             0x0010
 #define LVIF_NORECOMPUTE        0x0800
+#define LVIF_DI_SETITEM         0x1000
 
 #define LVIR_BOUNDS             0x0000
 #define LVIR_LABEL              0x0002
@@ -2497,6 +2498,30 @@ typedef struct tagTCHITTESTINFO
 
 typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
+#define ListView_Arrange(hwnd,code) \
+    (INT)SendMessageA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
+#define ListView_GetItemPosition(hwnd,i,ppt) \
+    (INT)SendMessageA((hwnd),LVM_GETITEMPOSITION,(WPARAM)(INT)(i),(LPARAM)(LPPOINT)(ppt))
+#define ListView_GetItemRect(hwnd,i,prc) \
+    (INT)SendMessageA((hwnd),LVM_GETITEMRECT,(WPARAM)(INT)(i),(LPARAM)(LPRECT)(prc))
+#define ListView_SetItemA(hwnd,pitem) \
+    (INT)SendMessageA((hwnd),LVM_SETITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
+#define ListView_SetItemState(hwnd,i,pitem) \
+    (BOOL)SendMessageA((hwnd),LVM_SETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(LPLVITEMA)(pitem))
+#define ListView_GetItemState(hwnd,i,mask) \
+    (BOOL)SendMessageA((hwnd),LVM_GETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(UINT)(mask))
+#define ListView_GetCountPerPage(hwnd) \
+    (BOOL)SendMessageW((hwnd),LVM_GETCOUNTPERPAGE,0,0L)
+#define ListView_GetImageList(hwnd,iImageList) \
+    (HIMAGELIST)SendMessageA((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
+#define ListView_GetStringWidthA(hwnd,pstr) \
+    (INT)SendMessageA((hwnd),LVM_GETSTRINGWIDTHA,0,(LPARAM)(LPCSTR)(pstr))
+#define ListView_GetTopIndex(hwnd) \
+    (BOOL)SendMessageA((hwnd),LVM_GETTOPINDEX,0,0L)
+#define ListView_Scroll(hwnd,dx,dy) \
+    (BOOL)SendMessageA((hwnd),LVM_SCROLL,(WPARAM)(INT)(dx),(LPARAM)(INT)(dy))
+#define ListView_EnsureVisible(hwnd,i,fPartialOk) \
+    (BOOL)SendMessageA((hwnd),LVM_ENSUREVISIBLE,(WPARAM)(INT)i,(LPARAM)(BOOL)fPartialOk)
 #define ListView_SetBkColor(hwnd,clrBk) \
     (BOOL)SendMessageA((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_GetImageList(hwnd,iImageList) \
@@ -2511,7 +2536,7 @@ typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
     (BOOL)SendMessageW((hwnd),LVM_GETITEMW,0,(LPARAM)(LVITEMW *)(pitem))
 #define ListView_GetItem WINELIB_NAME_AW(ListView_GetItem)
 #define ListView_HitTest(hwnd,pinfo) \
-    (INT)SendMessageA((hwnd),LVMHITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
+    (INT)SendMessageA((hwnd),LVM_HITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
 #define ListView_InsertItemA(hwnd,pitem) \
     (INT)SendMessageA((hwnd),LVM_INSERTITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
 #define ListView_InsertItemW(hwnd,pitem) \
