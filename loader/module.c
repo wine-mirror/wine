@@ -36,7 +36,9 @@
 #include "heap.h"
 #include "file.h"
 #include "module.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);

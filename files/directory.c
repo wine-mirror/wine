@@ -57,6 +57,15 @@ static DOS_FULL_NAME DIR_System;
 static const WCHAR wineW[] = {'w','i','n','e',0};
 
 /***********************************************************************
+ *           FILE_contains_pathW
+ */
+inline static int FILE_contains_pathW (LPCWSTR name)
+{
+    return ((*name && (name[1] == ':')) ||
+            strchrW (name, '/') || strchrW (name, '\\'));
+}
+
+/***********************************************************************
  *           DIR_GetPath
  *
  * Get a path name from the wine.ini file and make sure it is valid.

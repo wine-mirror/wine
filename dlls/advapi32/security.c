@@ -26,7 +26,9 @@
 #include "heap.h"
 #include "winternl.h"
 #include "ntsecapi.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 

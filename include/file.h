@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include "winbase.h"
 #include "wine/windef16.h"  /* HFILE16 */
-#include "wine/unicode.h"
 
 #define MAX_PATHNAME_LEN   1024
 
@@ -66,12 +65,6 @@ inline static int FILE_contains_path (LPCSTR name)
 {
     return ((*name && (name[1] == ':')) ||
             strchr (name, '/') || strchr (name, '\\'));
-}
-
-inline static int FILE_contains_pathW (LPCWSTR name)
-{
-    return ((*name && (name[1] == ':')) ||
-            strchrW (name, '/') || strchrW (name, '\\'));
 }
 
 /* files/file.c */

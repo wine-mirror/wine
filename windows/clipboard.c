@@ -49,7 +49,9 @@
 #include "user.h"
 #include "win.h"
 #include "clipboard.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 

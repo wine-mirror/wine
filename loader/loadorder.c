@@ -30,7 +30,9 @@
 #include "winternl.h"
 #include "file.h"
 #include "module.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 

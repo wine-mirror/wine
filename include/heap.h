@@ -25,7 +25,6 @@
 
 #include "winbase.h"
 #include "winnls.h"
-#include "wine/unicode.h"
 
 /* strdup macros */
 /* DO NOT USE THEM!!  they will go away soon */
