@@ -661,6 +661,11 @@ INT16 X11DRV_KEYBOARD_ToAscii(
         TRACE(keyboard,"scanCode=0, doing nothing\n");
         return 0;
     }
+    if (scanCode & 0x8000)
+    {
+        TRACE( keyboard, "Key UP, doing nothing\n" );
+        return 0;
+    }
     e.display = display;
     e.keycode = 0;
     e.state = 0;
