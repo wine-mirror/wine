@@ -1879,7 +1879,7 @@ DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
 
     if (!hdpa || i < 0) return -1;
 
-    if (i == 0x7fff)
+    if (i >= 0x7fff)
 	i = hdpa->nItemCount;
 
     if (i >= hdpa->nItemCount)
