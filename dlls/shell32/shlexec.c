@@ -298,7 +298,7 @@ static HRESULT SHELL_ResolveShortCutW(LPWSTR wcmd, LPWSTR wargs, LPWSTR wdir, HW
  *	SHELL_ExecuteW [Internal]
  *
  */
-static UINT SHELL_ExecuteW(const WCHAR *lpCmd, void *env, BOOL shWait,
+static UINT SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
     STARTUPINFOW  startup;
@@ -318,7 +318,7 @@ static UINT SHELL_ExecuteW(const WCHAR *lpCmd, void *env, BOOL shWait,
     startup.cb = sizeof(STARTUPINFOW);
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = psei->nShow;
-    if (CreateProcessW(NULL, (LPWSTR)lpCmd, NULL, NULL, FALSE, 0,
+    if (CreateProcessW(NULL, (LPWSTR)lpCmd, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT,
                        env, *psei->lpDirectory? psei->lpDirectory: NULL, &startup, &info))
     {
         /* Give 30 seconds to the app to come up, if desired. Probably only needed
@@ -416,7 +416,7 @@ static void *SHELL_BuildEnvW( const WCHAR *path )
  * On entry: szName is a filename (probably without path separators).
  * On exit: if szName found in "App Path", place full path in lpResult, and return true
  */
-static BOOL SHELL_TryAppPathW( LPCWSTR szName, LPWSTR lpResult, void**env)
+static BOOL SHELL_TryAppPathW( LPCWSTR szName, LPWSTR lpResult, WCHAR **env)
 {
     static const WCHAR wszKeyAppPaths[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',
 	'\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','A','p','p',' ','P','a','t','h','s','\\',0};
@@ -513,7 +513,7 @@ static UINT SHELL_FindExecutableByOperation(LPCWSTR lpPath, LPCWSTR lpFile, LPCW
  *              on the operation)
  */
 UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
-                                 LPWSTR lpResult, int resultLen, LPWSTR key, void **env, LPITEMIDLIST pidl, LPCWSTR args)
+                                 LPWSTR lpResult, int resultLen, LPWSTR key, WCHAR **env, LPITEMIDLIST pidl, LPCWSTR args)
 {
     static const WCHAR wWindows[] = {'w','i','n','d','o','w','s',0};
     static const WCHAR wPrograms[] = {'p','r','o','g','r','a','m','s',0};
@@ -734,7 +734,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
  *
  */
 static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
-                            const WCHAR* lpFile, void *env,
+                            const WCHAR* lpFile, WCHAR *env,
 			    LPCWSTR szCommandline, LPITEMIDLIST pidl, SHELL_ExecuteW32 execfunc,
 			    LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
@@ -828,7 +828,7 @@ static unsigned dde_connect(WCHAR* key, WCHAR* start, WCHAR* ddeexec,
 /*************************************************************************
  *	execute_from_key [Internal]
  */
-static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, void *env, LPCWSTR szCommandline,
+static UINT execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR szCommandline,
 			     SHELL_ExecuteW32 execfunc,
 			     LPSHELLEXECUTEINFOW psei, LPSHELLEXECUTEINFOW psei_out)
 {
@@ -945,7 +945,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     WCHAR wszApplicationName[MAX_PATH+2], wszParameters[1024], wszDir[MAX_PATH];
     SHELLEXECUTEINFOW sei_tmp;	/* modifiable copy of SHELLEXECUTEINFO struct */
     WCHAR wfileName[MAX_PATH];
-    void *env;
+    WCHAR *env;
     WCHAR lpstrProtocol[256];
     LPCWSTR lpFile;
     UINT retval = 31;
