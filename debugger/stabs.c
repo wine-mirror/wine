@@ -105,7 +105,7 @@ typedef struct {
    int			nrofentries;
 } include_def;
 
-#define MAX_INCLUDES	512
+#define MAX_INCLUDES	5120
 
 static	include_def* 	include_defs = NULL;
 static	int	     	num_include_def = 0;
