@@ -74,7 +74,7 @@
 @ stdcall NtAllocateUuids(ptr ptr ptr)
 @ stdcall NtAllocateVirtualMemory(long ptr ptr ptr long long)
 @ stub NtCallbackReturn
-@ stub NtCancelIoFile
+@ stdcall NtCancelIoFile(long ptr)
 @ stdcall NtCancelTimer(long ptr)
 @ stdcall NtClearEvent(long)
 @ stdcall NtClose(long)
@@ -103,7 +103,7 @@
 @ stub NtCreateToken
 @ stdcall NtCurrentTeb()
 @ stdcall NtDelayExecution(long ptr)
-@ stub NtDeleteFile
+@ stdcall NtDeleteFile(ptr)
 @ stdcall NtDeleteKey(long)
 @ stdcall NtDeleteValueKey(long ptr)
 @ stdcall NtDeviceIoControlFile(long long long long long long long long long long)

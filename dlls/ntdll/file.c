@@ -1623,3 +1623,26 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE FileHandle, ULONG DesiredAccess,
           OutboundQuota, DefaultTimeout);
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/******************************************************************
+ *		NtDeleteFile    (NTDLL.@)
+ *
+ *
+ */
+NTSTATUS WINAPI NtDeleteFile( POBJECT_ATTRIBUTES ObjectAttributes )
+{
+    FIXME("%p\n", ObjectAttributes);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
+ *		NtCancelIoFile    (NTDLL.@)
+ *
+ *
+ */
+NTSTATUS WINAPI NtCancelIoFile( HANDLE FileHandle,
+    PIO_STATUS_BLOCK IoStatusBlock)
+{
+    FIXME("%p %p\n", FileHandle, IoStatusBlock );
+    return STATUS_NOT_IMPLEMENTED;
+}
