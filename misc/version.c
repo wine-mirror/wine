@@ -199,11 +199,11 @@ static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
 version autodetection switches wine to unicode (nt 3.51 or 4.0) */
 static char * special_dlls[] =
 {
-	"COMDLG32",
-	"COMCTL32",
-	"SHELL32",
-	"OLE32",
-	"RPCRT4",
+	"comdlg32.dll",
+	"comctl32.dll",
+	"shell32.dll",
+	"ole32.dll",
+	"rpcrt4.dll",
 	NULL
 };
 
@@ -432,7 +432,7 @@ static DWORD VERSION_GetLinkedDllVersion(void)
 	    for (i = 0; special_dlls[i]; i++)
 	    {
 	      /* test if it is a special dll */
-	      if (!strncasecmp(wm->modname, special_dlls[i], strlen(special_dlls[i]) ))
+	      if (!strcasecmp(wm->modname, special_dlls[i]))
 	      {
 	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm->module);
 	        if (WinVersion == NB_WINDOWS_VERSIONS)
