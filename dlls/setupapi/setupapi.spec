@@ -1,7 +1,15 @@
-@ stub AddMiniIconToList
-@ stub AddTagToGroupOrderListEntry
-@ stub AppendStringToMultiSz
-@ stub AssertFail
+@ stdcall CM_Connect_MachineW(wstr ptr) CM_Connect_MachineW
+@ stdcall CM_Disconnect_Machine(long) CM_Disconnect_Machine
+@ stub CM_Free_Log_Conf_Handle
+@ stub CM_Free_Res_Des_Handle
+@ stub CM_Get_DevNode_Status_Ex
+@ stub CM_Get_Device_ID_ExW
+@ stub CM_Get_First_Log_Conf_Ex
+@ stub CM_Get_Next_Res_Des_Ex
+@ stub CM_Get_Res_Des_Data_Ex
+@ stub CM_Get_Res_Des_Data_Size_Ex
+@ stub CM_Locate_DevNode_ExW
+@ stub CM_Reenumerate_DevNode_Ex
 @ stub CaptureAndConvertAnsiArg
 @ stub CaptureStringArg
 @ stub CenterWindowRelativeToParent
@@ -72,18 +80,22 @@
 @ stub SetupDestroyDiskSpaceList
 @ stub SetupDiAskForOEMDisk
 @ stub SetupDiBuildClassInfoList
+@ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr) SetupDiBuildClassInfoListExW
 @ stub SetupDiBuildDriverInfoList
 @ stub SetupDiCallClassInstaller
 @ stub SetupDiCancelDriverInfoSearch
 @ stub SetupDiChangeState
 @ stub SetupDiClassGuidsFromNameA
+@ stdcall SetupDiClassGuidsFromNameExW(wstr ptr long ptr wstr ptr) SetupDiClassGuidsFromNameExW
 @ stub SetupDiClassGuidsFromNameW
 @ stub SetupDiClassNameFromGuidA
+@ stdcall SetupDiClassNameFromGuidExW(ptr ptr long ptr wstr ptr) SetupDiClassNameFromGuidExW
 @ stub SetupDiClassNameFromGuidW
 @ stub SetupDiCreateDevRegKeyA
 @ stub SetupDiCreateDevRegKeyW
 @ stub SetupDiCreateDeviceInfoA
 @ stub SetupDiCreateDeviceInfoList
+@ stdcall SetupDiCreateDeviceInfoListExW(ptr ptr)  SetupDiCreateDeviceInfoListExW
 @ stub SetupDiCreateDeviceInfoW
 @ stub SetupDiDeleteDevRegKey
 @ stub SetupDiDeleteDeviceInfo
@@ -99,16 +111,19 @@
 @ stub SetupDiGetActualSectionToInstallW
 @ stub SetupDiGetClassBitmapIndex
 @ stub SetupDiGetClassDescriptionA
+@ stdcall SetupDiGetClassDescriptionExW(ptr ptr long ptr wstr ptr) SetupDiGetClassDescriptionExW
 @ stub SetupDiGetClassDescriptionW
 @ stub SetupDiGetClassDevPropertySheetsA
 @ stub SetupDiGetClassDevPropertySheetsW
 @ stdcall SetupDiGetClassDevsA(ptr ptr long long) SetupDiGetClassDevsA
+@ stdcall SetupDiGetClassDevsExW(ptr wstr ptr long ptr wstr ptr) SetupDiGetClassDevsExW
 @ stdcall SetupDiGetClassDevsW(ptr ptr long long) SetupDiGetClassDevsW
 @ stub SetupDiGetClassImageIndex
 @ stub SetupDiGetClassImageList
 @ stub SetupDiGetClassInstallParamsA
 @ stub SetupDiGetClassInstallParamsW
 @ stub SetupDiGetDeviceInfoListClass
+@ stdcall SetupDiGetDeviceInfoListDetailW(ptr ptr) SetupDiGetDeviceInfoListDetailW
 @ stub SetupDiGetDeviceInstallParamsA
 @ stub SetupDiGetDeviceInstallParamsW
 @ stub SetupDiGetDeviceInstanceIdA
@@ -138,6 +153,7 @@
 @ stub SetupDiLoadClassIcon
 @ stub SetupDiMoveDuplicateDevice
 @ stub SetupDiOpenClassRegKey
+@ stdcall SetupDiOpenClassRegKeyExW(ptr long long wstr ptr) SetupDiOpenClassRegKeyExW
 @ stub SetupDiOpenDevRegKey
 @ stub SetupDiOpenDeviceInfoA
 @ stub SetupDiOpenDeviceInfoW
@@ -293,6 +309,9 @@
 @ stub TakeOwnershipOfFile
 @ stub UnicodeToMultiByte
 @ stub UnmapAndCloseFile
+@ stub pSetupAddMiniIconToList
+@ stub pSetupAddTagToGroupOrderListEntry
+@ stub pSetupAppendStringToMultiSz
 @ stub pSetupDirectoryIdToPath
 @ stub pSetupGetField
 @ stub pSetupGetOsLoaderDriveAndPath
