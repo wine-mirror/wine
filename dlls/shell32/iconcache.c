@@ -40,12 +40,12 @@ static HDPA		sic_hdpa = 0;
 static CRITICAL_SECTION SHELL32_SicCS = CRITICAL_SECTION_INIT("SHELL32_SicCS");
 
 /*****************************************************************************
- * SIC_CompareEntrys			[called by comctl32.dll]
+ * SIC_CompareEntries
  *
  * NOTES
  *  Callback for DPA_Search
  */
-INT CALLBACK SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
+static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
 {	TRACE("%p %p\n", p1, p2);
 
 	if (((LPSIC_ENTRY)p1)->dwSourceIndex != ((LPSIC_ENTRY)p2)->dwSourceIndex) /* first the faster one*/
@@ -144,7 +144,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 
 	if (NULL != pDPA_GetPtr (sic_hdpa, 0))
 	{
-	  index = pDPA_Search (sic_hdpa, &sice, -1L, SIC_CompareEntrys, 0, 0);
+	  index = pDPA_Search (sic_hdpa, &sice, -1L, SIC_CompareEntries, 0, 0);
 	}
 
 	if ( INVALID_INDEX == index )
