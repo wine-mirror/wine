@@ -2981,18 +2981,19 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	EDIT_EM_SetSel(es, s, s, FALSE);
 	es->flags |= EF_MODIFIED;
 	if (send_update) es->flags |= EF_UPDATE;
-	EDIT_EM_ScrollCaret(es);
-
-	/* force scroll info update */
-	EDIT_UpdateScrollInfo(es);
-
 	if (hrgn)
 	{
 		EDIT_UpdateTextRegion(es, hrgn, TRUE);
 		DeleteObject(hrgn);
 	}
 	else
-	EDIT_UpdateText(es, NULL, TRUE);
+            EDIT_UpdateText(es, NULL, TRUE);
+
+	EDIT_EM_ScrollCaret(es);
+
+	/* force scroll info update */
+	EDIT_UpdateScrollInfo(es);
+
 
 	if(es->flags & EF_UPDATE)
 	{
