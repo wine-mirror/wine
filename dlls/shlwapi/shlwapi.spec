@@ -13,7 +13,7 @@
 13  stdcall @(ptr ptr) SHLWAPI_13
 14  stdcall @(ptr ptr) SHLWAPI_14
 15  stdcall @(ptr ptr) SHLWAPI_15
-16  stdcall @(ptr ptr long ptr) SHCreateThread
+16  stdcall SHCreateThread(ptr ptr long ptr) SHCreateThread
 17  stdcall @ (ptr ptr) SHLWAPI_17
 18  stdcall @ (ptr ptr) SHLWAPI_18
 19  stdcall @ (ptr) SHLWAPI_19
