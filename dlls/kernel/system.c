@@ -24,6 +24,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "stackframe.h"
 #include "wine/debug.h"
 
@@ -173,7 +174,7 @@ static void call_timer_proc16( WORD timer )
                           + (WORD)&((STACK16FRAME*)0)->bp;
     context.Eax   = timer;
 
-    wine_call_to_16_regs_short( &context, 0 );
+    WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
 }
 
 /**********************************************************************/

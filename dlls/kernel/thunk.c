@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
+#include "wownt32.h"
 #include "wine/winbase16.h"
 
 #include "wine/debug.h"
@@ -349,12 +350,7 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
     if (argsize > 64)
 	argsize = 64; /* 32 WORDs */
 
-    memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
-            (LPBYTE)context->Esp, argsize );
-
-    /* let's hope call_to_16 won't mind getting called with such a
-     * potentially bogus large number of arguments */
-    wine_call_to_16_regs_short( &context16, argsize );
+    WOWCallback16Ex( 0, WCB16_REGS, argsize, (void *)context->Esp, (DWORD *)&context16 );
     context->Eax = context16.Eax;
     context->Edx = context16.Edx;
     context->Ecx = context16.Ecx;
@@ -460,7 +456,8 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 
     CONTEXT86 context16;
     DWORD i, argsize;
-    LPBYTE newstack, oldstack;
+    DWORD newstack[32];
+    LPBYTE oldstack;
 
     memcpy(&context16,context,sizeof(context16));
 
@@ -470,7 +467,7 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize  = context->Ebp-context->Esp-0x40;
-    newstack = (LPBYTE)CURRENT_STACK16 - argsize;
+    if (argsize > sizeof(newstack)) argsize = sizeof(newstack);
     oldstack = (LPBYTE)context->Esp;
 
     memcpy( newstack, oldstack, argsize );
@@ -478,13 +475,13 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
     for (i = 0; i < 32; i++)	/* NOTE: What about > 32 arguments? */
 	if (mapESPrelative & (1 << i))
 	{
-	    SEGPTR *arg = (SEGPTR *)(newstack + 2*i);
+	    SEGPTR *arg = (SEGPTR *)newstack[i];
 	    *arg = MAKESEGPTR(SELECTOROF(NtCurrentTeb()->cur_stack),
                               OFFSETOF(NtCurrentTeb()->cur_stack) - argsize
                               + (*(LPBYTE *)arg - oldstack));
 	}
 
-    wine_call_to_16_regs_short( &context16, argsize );
+    WOWCallback16Ex( 0, WCB16_REGS, argsize, newstack, (DWORD *)&context16 );
     context->Eax = context16.Eax;
     context->Edx = context16.Edx;
     context->Ecx = context16.Ecx;
@@ -688,10 +685,11 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
     if (context->Edx == context->Eip)
         argsize = 6 * 4;
 
-    memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
-            (LPBYTE)context->Esp, argsize );
-
-    wine_call_to_16_regs_long(&context16, argsize + 32);
+    /* Note: the first 32 bytes we copy are just garbage from the 32-bit stack, in order to reserve
+     *       the space. It is safe to do that since the register function prefix has reserved
+     *       a lot more space than that below context->Esp.
+     */
+    WOWCallback16Ex( 0, WCB16_REGS, argsize + 32, (LPBYTE)context->Esp - 32, (DWORD *)&context16 );
     context->Eax = context16.Eax;
 
     /* Clean up caller's stack frame */
@@ -739,10 +737,7 @@ void WINAPI OT_32ThkLSF( CONTEXT86 *context )
 
     argsize = 2 * *(WORD *)context->Esp + 2;
 
-    memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
-            (LPBYTE)context->Esp, argsize );
-
-    wine_call_to_16_regs_short(&context16, argsize);
+    WOWCallback16Ex( 0, WCB16_REGS, argsize, (void *)context->Esp, (DWORD *)&context16 );
     context->Eax = context16.Eax;
     context->Edx = context16.Edx;
 

@@ -1284,7 +1284,7 @@ DWORD NE_StartTask(void)
               SELECTOROF(pTask->teb->cur_stack),
               OFFSETOF(pTask->teb->cur_stack) );
 
-        wine_call_to_16_regs_short( &context, 0 );
+        WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
         ExitThread( LOWORD(context.Eax) );
     }
     return hInstance;  /* error code */

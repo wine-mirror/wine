@@ -38,13 +38,11 @@ typedef struct _STACK32FRAME
     SEGPTR  frame16;        /* 10 16-bit frame from last CallFrom16() */
     DWORD   edi;            /* 14 saved registers */
     DWORD   esi;            /* 18 */
-    DWORD   edx;            /* 1c */
-    DWORD   ecx;            /* 20 */
-    DWORD   ebx;            /* 24 */
-    DWORD   ebp;            /* 28 saved 32-bit frame pointer */
-    DWORD   retaddr;        /* 2c return address */
-    DWORD   target;         /* 30 target address / CONTEXT86 pointer */
-    DWORD   nb_args;        /* 34 number of 16-bit argument bytes */
+    DWORD   ebx;            /* 1c */
+    DWORD   ebp;            /* 20 saved 32-bit frame pointer */
+    DWORD   retaddr;        /* 24 return address */
+    DWORD   target;         /* 28 target address / CONTEXT86 pointer */
+    DWORD   nb_args;        /* 2c number of 16-bit argument bytes */
 } STACK32FRAME;
 
   /* 16-bit stack layout after CallFrom16() */

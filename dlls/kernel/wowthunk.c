@@ -21,11 +21,14 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
+
 #include "wine/winbase16.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wownt32.h"
 #include "winternl.h"
+#include "syslevel.h"
 #include "file.h"
 #include "task.h"
 #include "miscemu.h"
@@ -33,6 +36,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 /*
  * These are the 16-bit side WOW routines.  They reside in wownt16.h
@@ -290,7 +294,10 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
                                 DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode )
 {
-    DWORD ret;
+#ifdef __i386__
+    extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs );
+    extern void WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, DWORD cbArgs );
+    extern void WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, DWORD cbArgs );
 
     /*
      * Arguments must be prepared in the correct order by the caller
@@ -299,17 +306,86 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
      */
     memcpy( (LPBYTE)CURRENT_STACK16 - cbArgs, (LPBYTE)pArgs, cbArgs );
 
-    /*
-     * Actually, we should take care whether the called routine cleans up
-     * its stack or not.  Fortunately, our wine_call_to_16 core doesn't rely on
-     * the callee to do so; after the routine has returned, the 16-bit
-     * stack pointer is always reset to the position it had before.
-     */
+    if (dwFlags & (WCB16_REGS|WCB16_REGS_LONG))
+    {
+        CONTEXT *context = (CONTEXT *)pdwRetCode;
 
-    ret = wine_call_to_16( (FARPROC16)vpfn16, cbArgs );
+        if (TRACE_ON(relay))
+        {
+            WORD *stack16 = (WORD *)CURRENT_STACK16;
+            DWORD count = cbArgs / sizeof(WORD);
 
-    if ( pdwRetCode )
-        *pdwRetCode = ret;
+            DPRINTF("%04lx:CallTo16(func=%04lx:%04x,ds=%04lx",
+                    GetCurrentThreadId(),
+                    context->SegCs, LOWORD(context->Eip), context->SegDs );
+            while (count--) DPRINTF( ",%04x", *--stack16 );
+            DPRINTF(") ss:sp=%04x:%04x",
+                    SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
+            DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x es=%04x fs=%04x\n",
+                    (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
+                    (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
+                    (WORD)context->Ebp, (WORD)context->SegEs, (WORD)context->SegFs );
+            SYSLEVEL_CheckNotLevel( 2 );
+        }
+
+        _EnterWin16Lock();
+        if (dwFlags & WCB16_REGS_LONG)
+            wine_call_to_16_regs_long( context, cbArgs );
+        else
+            wine_call_to_16_regs_short( context, cbArgs );
+        _LeaveWin16Lock();
+
+        if (TRACE_ON(relay))
+        {
+            DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x ",
+                    GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->cur_stack),
+                    OFFSETOF(NtCurrentTeb()->cur_stack));
+            DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x bp=%04x sp=%04x\n",
+                    (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
+                    (WORD)context->Edx, (WORD)context->Ebp, (WORD)context->Esp );
+            SYSLEVEL_CheckNotLevel( 2 );
+        }
+    }
+    else
+    {
+        DWORD ret;
+
+        if (TRACE_ON(relay))
+        {
+            WORD *stack16 = (WORD *)CURRENT_STACK16;
+            DWORD count = cbArgs / sizeof(WORD);
+
+            DPRINTF("%04lx:CallTo16(func=%04x:%04x,ds=%04x",
+                    GetCurrentThreadId(), HIWORD(vpfn16), LOWORD(vpfn16),
+                    SELECTOROF(NtCurrentTeb()->cur_stack) );
+            while (count--) DPRINTF( ",%04x", *--stack16 );
+            DPRINTF(") ss:sp=%04x:%04x\n",
+                    SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
+            SYSLEVEL_CheckNotLevel( 2 );
+        }
+
+        /*
+         * Actually, we should take care whether the called routine cleans up
+         * its stack or not.  Fortunately, our wine_call_to_16 core doesn't rely on
+         * the callee to do so; after the routine has returned, the 16-bit
+         * stack pointer is always reset to the position it had before.
+         */
+        _EnterWin16Lock();
+        ret = wine_call_to_16( (FARPROC16)vpfn16, cbArgs );
+        if (pdwRetCode) *pdwRetCode = ret;
+        _LeaveWin16Lock();
+
+        if (TRACE_ON(relay))
+        {
+            DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x retval=%08lx\n",
+                    GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->cur_stack),
+                    OFFSETOF(NtCurrentTeb()->cur_stack), ret);
+            SYSLEVEL_CheckNotLevel( 2 );
+        }
+    }
+#else
+    assert(0);  /* cannot call to 16-bit on non-Intel architectures */
+#endif  /* __i386__ */
 
     return TRUE;  /* success */
 }

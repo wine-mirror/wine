@@ -682,7 +682,7 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
     TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n",
                  context.SegCs, context.Eip, context.SegDs,
                  LOWORD(context.Edi), LOWORD(context.Ecx) );
-    wine_call_to_16_regs_short( &context, 0 );
+    WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
     return TRUE;
 }
 
@@ -769,8 +769,8 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     }
     else
     {
-        LPBYTE stack = (LPBYTE)CURRENT_STACK16;
         CONTEXT86 context;
+        WORD args[8];
 
         memset( &context, 0, sizeof(context) );
         context.SegDs = ds;
@@ -781,14 +781,15 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
         context.Ebp =  OFFSETOF( NtCurrentTeb()->cur_stack )
                              + (WORD)&((STACK16FRAME*)0)->bp;
 
-        *(DWORD *)(stack -  4) = dwReason;      /* dwReason */
-        *(WORD *) (stack -  6) = hInst;         /* hInst */
-        *(WORD *) (stack -  8) = ds;            /* wDS */
-        *(WORD *) (stack - 10) = heap;          /* wHeapSize */
-        *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
-        *(WORD *) (stack - 16) = 0;             /* wReserved2 */
-
-        wine_call_to_16_regs_short( &context, 16 );
+        args[7] = HIWORD(dwReason);
+        args[6] = LOWORD(dwReason);
+        args[5] = hInst;
+        args[4] = ds;
+        args[3] = heap;
+        args[2] = 0;     /* HIWORD(dwReserved1) */
+        args[1] = 0;     /* LOWORD(dwReserved1) */
+        args[0] = 0;     /* wReserved2 */
+        WOWCallback16Ex( 0, WCB16_REGS, sizeof(args), args, (DWORD *)&context );
     }
 }
 

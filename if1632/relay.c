@@ -80,30 +80,6 @@ BOOL RELAY_Init(void)
  */
 #ifndef __i386__
 /***********************************************************************
- *		wine_call_to_16 (KERNEL32.@)
- */
-LONG WINAPI wine_call_to_16( FARPROC16 target, INT nArgs )
-{
-    assert( FALSE );
-}
-
-/***********************************************************************
- *		wine_call_to_16_regs_short (KERNEL32.@)
- */
-void WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, INT nArgs )
-{
-    assert( FALSE );
-}
-
-/***********************************************************************
- *		wine_call_to_16_regs_long (KERNEL32.@)
- */
-void WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs )
-{
-    assert( FALSE );
-}
-
-/***********************************************************************
  *		__wine_call_from_16_word (KERNEL32.@)
  */
 WORD __wine_call_from_16_word()
@@ -385,84 +361,5 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
         DPRINTF( "retval=%08x ret=%04x:%04x ds=%04x\n",
                  ret_val, frame->cs, frame->ip, frame->ds );
     }
-    SYSLEVEL_CheckNotLevel( 2 );
-}
-
-
-/***********************************************************************
- *           RELAY_DebugCallTo16
- *
- * 'target' contains either the function to call (normal CallTo16)
- * or a pointer to the CONTEXT86 struct (register CallTo16).
- * 'nb_args' is the number of argument bytes on the 16-bit stack;
- * 'reg_func' specifies whether we have a register CallTo16 or not.
- */
-void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
-{
-    WORD *stack16;
-    TEB *teb;
-
-    if (!TRACE_ON(relay)) return;
-    teb = NtCurrentTeb();
-    stack16 = (WORD *)THREAD_STACK16(teb);
-
-    nb_args /= sizeof(WORD);
-
-    if ( reg_func )
-    {
-        CONTEXT86 *context = (CONTEXT86 *)target;
-
-        DPRINTF("%04lx:CallTo16(func=%04lx:%04x,ds=%04lx",
-                GetCurrentThreadId(),
-                context->SegCs, LOWORD(context->Eip), context->SegDs );
-        while (nb_args--) DPRINTF( ",%04x", *--stack16 );
-        DPRINTF(") ss:sp=%04x:%04x", SELECTOROF(teb->cur_stack),
-                OFFSETOF(teb->cur_stack) );
-        DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x es=%04x fs=%04x\n",
-                (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
-                (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
-                (WORD)context->Ebp, (WORD)context->SegEs, (WORD)context->SegFs );
-    }
-    else
-    {
-        DPRINTF("%04lx:CallTo16(func=%04x:%04x,ds=%04x",
-                GetCurrentThreadId(),
-                HIWORD(target), LOWORD(target), SELECTOROF(teb->cur_stack) );
-        while (nb_args--) DPRINTF( ",%04x", *--stack16 );
-        DPRINTF(") ss:sp=%04x:%04x\n", SELECTOROF(teb->cur_stack),
-                OFFSETOF(teb->cur_stack) );
-    }
-
-    SYSLEVEL_CheckNotLevel( 2 );
-}
-
-
-/***********************************************************************
- *           RELAY_DebugCallTo16Ret
- */
-void RELAY_DebugCallTo16Ret( BOOL reg_func, int ret_val )
-{
-    if (!TRACE_ON(relay)) return;
-
-    if (!reg_func)
-    {
-        DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x retval=%08x\n",
-                GetCurrentThreadId(),
-                SELECTOROF(NtCurrentTeb()->cur_stack),
-                OFFSETOF(NtCurrentTeb()->cur_stack), ret_val);
-    }
-    else
-    {
-        CONTEXT86 *context = (CONTEXT86 *)ret_val;
-
-        DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x ",
-                GetCurrentThreadId(),
-                SELECTOROF(NtCurrentTeb()->cur_stack),
-                OFFSETOF(NtCurrentTeb()->cur_stack));
-        DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x bp=%04x sp=%04x\n",
-                (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
-                (WORD)context->Edx, (WORD)context->Ebp, (WORD)context->Esp );
-    }
-
     SYSLEVEL_CheckNotLevel( 2 );
 }

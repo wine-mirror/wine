@@ -244,7 +244,7 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 {
     CONTEXT86 context;
     LRESULT ret;
-    WORD *args;
+    WORD args[5];
     DWORD offset = 0;
     TEB *teb = NtCurrentTeb();
     int iWndsLocks;
@@ -287,15 +287,14 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
 
     iWndsLocks = WIN_SuspendWndsLock();
 
-    args = (WORD *)THREAD_STACK16(teb) - 5;
-    args[0] = LOWORD(lParam);
-    args[1] = HIWORD(lParam);
-    args[2] = wParam;
-    args[3] = msg;
     args[4] = hwnd;
-
-    wine_call_to_16_regs_short( &context, 5 * sizeof(WORD) );
+    args[3] = msg;
+    args[2] = wParam;
+    args[1] = HIWORD(lParam);
+    args[0] = LOWORD(lParam);
+    WOWCallback16Ex( 0, WCB16_REGS, sizeof(args), args, (DWORD *)&context );
     ret = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
+
     if (offset) stack16_pop( offset );
 
     WIN_RestoreWndsLock(iWndsLocks);

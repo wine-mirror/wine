@@ -485,8 +485,6 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
 
     /* Save the 32-bit registers */
     fprintf( outfile, "\tpushl %%ebx\n" );
-    fprintf( outfile, "\tpushl %%ecx\n" );
-    fprintf( outfile, "\tpushl %%edx\n" );
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%edi\n" );
     fprintf( outfile, "\t.byte 0x64\n\tmovl %%gs,(%d)\n", STRUCTOFFSET(TEB,gs_sel) );
@@ -499,28 +497,6 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
         fprintf( outfile, "\tpopl %%ebx\n" );
         fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L%s.getgot1], %%ebx\n", name );
     }
-
-    /* Print debugging info */
-    if (debugging)
-    {
-        /* Push flags, number of arguments, and target */
-        fprintf( outfile, "\tpushl $%d\n", reg_func );
-        fprintf( outfile, "\tpushl 12(%%ebp)\n" );
-        fprintf( outfile, "\tpushl  8(%%ebp)\n" );
-
-        if ( UsePIC )
-            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16@PLT") "\n" );
-        else
-            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16") "\n" );
-
-        fprintf( outfile, "\taddl $12, %%esp\n" );
-    }
-
-    /* Enter Win16 Mutex */
-    if ( UsePIC )
-        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock@PLT") "\n" );
-    else
-        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock") "\n" );
 
     /* Setup exception frame */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
@@ -551,10 +527,10 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
 
     if ( !reg_func )
     {
-        /* Convert and push return value */
+        /* Convert return value */
         fprintf( outfile, "\tshll $16,%%edx\n" );
         fprintf( outfile, "\tmovw %%ax,%%dx\n" );
-        fprintf( outfile, "\tpushl %%edx\n" );
+        fprintf( outfile, "\tmovl %%edx,%%eax\n" );
     }
     else
     {
@@ -578,46 +554,11 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
         fprintf( outfile, "\tmovl %%ebp, %d(%%edi)\n", CONTEXTOFFSET(Ebp) );
         fprintf( outfile, "\tmovl %%esi, %d(%%edi)\n", CONTEXTOFFSET(Esp) );
                  /* The return glue code saved %esp into %esi */
-
-        fprintf( outfile, "\tpushl %%edi\n" );
     }
-
-    if ( UsePIC )
-    {
-        /* Get Global Offset Table into %ebx (might have been overwritten) */
-        fprintf( outfile, "\tcall .L%s.getgot2\n", name );
-        fprintf( outfile, ".L%s.getgot2:\n", name );
-        fprintf( outfile, "\tpopl %%ebx\n" );
-        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L%s.getgot2], %%ebx\n", name );
-    }
-
-    /* Leave Win16 Mutex */
-    if ( UsePIC )
-        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock@PLT") "\n" );
-    else
-        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock") "\n" );
-
-    /* Print debugging info */
-    if (debugging)
-    {
-        fprintf( outfile, "\tpushl $%d\n", reg_func );
-
-        if ( UsePIC )
-            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16Ret@PLT") "\n" );
-        else
-            fprintf( outfile, "\tcall " __ASM_NAME("RELAY_DebugCallTo16Ret") "\n" );
-
-        fprintf( outfile, "\taddl $4, %%esp\n" );
-    }
-
-    /* Get return value */
-    fprintf( outfile, "\tpopl %%eax\n" );
 
     /* Restore the 32-bit registers */
     fprintf( outfile, "\tpopl %%edi\n" );
     fprintf( outfile, "\tpopl %%esi\n" );
-    fprintf( outfile, "\tpopl %%edx\n" );
-    fprintf( outfile, "\tpopl %%ecx\n" );
     fprintf( outfile, "\tpopl %%ebx\n" );
 
     /* Function exit sequence */

@@ -1126,9 +1126,6 @@
 @ varargs __wine_call_from_16_word()
 @ varargs __wine_call_from_16_long()
 @ varargs __wine_call_from_16_regs()
-@ stdcall wine_call_to_16(ptr long)
-@ stdcall wine_call_to_16_regs_short(ptr long)
-@ stdcall wine_call_to_16_regs_long (ptr long)
 
 # Unix files
 @ stdcall wine_get_unix_file_name(str ptr long)

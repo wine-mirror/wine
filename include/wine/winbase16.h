@@ -220,6 +220,7 @@ HGLOBAL16   WINAPI GlobalLRUOldest16(HGLOBAL16);
 VOID        WINAPI GlobalNotify16(FARPROC16);
 WORD        WINAPI GlobalPageLock16(HGLOBAL16);
 WORD        WINAPI GlobalPageUnlock16(HGLOBAL16);
+SEGPTR      WINAPI HasGPHandler16(SEGPTR);
 BOOL16      WINAPI IsSharedSelector16(HANDLE16);
 BOOL16      WINAPI IsTask16(HTASK16);
 HTASK16     WINAPI IsTaskLocked16(void);
@@ -391,11 +392,6 @@ UINT16      WINAPI _lwrite16(HFILE16,LPCSTR,UINT16);
 BOOL16      WINAPI WritePrivateProfileSection16(LPCSTR,LPCSTR,LPCSTR);
 BOOL16      WINAPI WritePrivateProfileStruct16(LPCSTR,LPCSTR,LPVOID,UINT16,LPCSTR);
 BOOL16      WINAPI WriteProfileSection16(LPCSTR,LPCSTR);
-
-/* Wine-specific functions */
-LONG        WINAPI wine_call_to_16( FARPROC16 target, INT nArgs );
-void        WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, INT nArgs );
-void        WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs );
 
 /* Some optimizations */
 extern inline LPVOID WINAPI MapSL( SEGPTR segptr )
