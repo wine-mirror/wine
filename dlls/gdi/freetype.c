@@ -210,6 +210,7 @@ struct tagGdiFont {
     FT_Face ft_face;
     LPWSTR name;
     int charset;
+    int codepage;
     BOOL fake_italic;
     BOOL fake_bold;
     BYTE underline;
@@ -1325,7 +1326,7 @@ static FT_Face OpenFontFile(GdiFont font, char *file, FT_Long face_index, LONG w
 }
 
 
-static int get_nearest_charset(Face *face)
+static int get_nearest_charset(Face *face, int *cp)
 {
   /* Only get here if lfCharSet == DEFAULT_CHARSET or we couldn't find
      a single face with the requested charset.  The idea is to check if
@@ -1336,6 +1337,7 @@ static int get_nearest_charset(Face *face)
     int acp = GetACP(), i;
     DWORD fs0;
 
+    *cp = acp;
     if(TranslateCharsetInfo((DWORD*)acp, &csi, TCI_SRCCODEPAGE))
         if(csi.fs.fsCsb[0] & face->fs.fsCsb[0])
 	    return csi.ciCharset;
@@ -1343,8 +1345,10 @@ static int get_nearest_charset(Face *face)
     for(i = 0; i < 32; i++) {
         fs0 = 1L << i;
         if(face->fs.fsCsb[0] & fs0) {
-	    if(TranslateCharsetInfo(&fs0, &csi, TCI_SRCFONTSIG))
+	    if(TranslateCharsetInfo(&fs0, &csi, TCI_SRCFONTSIG)) {
+                *cp = csi.ciACP;
 	        return csi.ciCharset;
+            }
 	    else
 	        FIXME("TCI failing on %lx\n", fs0);
 	}
@@ -1352,6 +1356,7 @@ static int get_nearest_charset(Face *face)
 
     FIXME("returning DEFAULT_CHARSET face->fs.fsCsb[0] = %08lx file = %s\n",
 	  face->fs.fsCsb[0], face->file);
+    *cp = acp;
     return DEFAULT_CHARSET;
 }
 
@@ -1830,10 +1835,12 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
 
     memcpy(&ret->fs, &face->fs, sizeof(FONTSIGNATURE));
 
-    if(csi.fs.fsCsb[0])
+    if(csi.fs.fsCsb[0]) {
         ret->charset = lf.lfCharSet;
+        ret->codepage = csi.ciACP;
+    }
     else
-        ret->charset = get_nearest_charset(face);
+        ret->charset = get_nearest_charset(face, &ret->codepage);
 
     TRACE("Chosen: %s %s\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName));
@@ -2179,6 +2186,13 @@ static void FTVectorToPOINTFX(FT_Vector *vec, POINTFX *pt)
 
 static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
 {
+    if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
+        WCHAR wc = (WCHAR)glyph;
+        unsigned char buf;
+        WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), 0, 0);
+        return pFT_Get_Char_Index(font->ft_face, buf);
+    }
+
     if(font->charset == SYMBOL_CHARSET && glyph < 0x100)
         glyph = glyph + 0xf000;
     return pFT_Get_Char_Index(font->ft_face, glyph);
