@@ -9,8 +9,48 @@
 #define __WINE_SYS_STAT_H
 #define __WINE_USE_MSVCRT
 
-#include "msvcrt/sys/types.h"
+#include "sys/types.h"
 
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
+
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
+
+#ifndef _MSC_VER
+# ifndef __int64
+#  define __int64 long long
+# endif
+#endif
+
+#ifndef MSVCRT_DEV_T_DEFINED
+typedef unsigned int   _dev_t;
+#define MSVCRT_DEV_T_DEFINED
+#endif
+
+#ifndef MSVCRT_INO_T_DEFINED
+typedef unsigned short _ino_t;
+#define MSVCRT_INO_T_DEFINED
+#endif
+
+#ifndef MSVCRT_TIME_T_DEFINED
+typedef long MSVCRT(time_t);
+#define MSVCRT_TIME_T_DEFINED
+#endif
+
+#ifndef MSVCRT_OFF_T_DEFINED
+typedef int MSVCRT(_off_t);
+#define MSVCRT_OFF_T_DEFINED
+#endif
 
 #define _S_IEXEC  0x0040
 #define _S_IWRITE 0x0080
@@ -25,6 +65,9 @@
 #undef st_atime
 #undef st_ctime
 #undef st_mtime
+
+#ifndef MSVCRT_STAT_DEFINED
+#define MSVCRT_STAT_DEFINED
 
 struct _stat {
   _dev_t         st_dev;
@@ -53,7 +96,7 @@ struct _stati64 {
   MSVCRT(time_t) st_mtime;
   MSVCRT(time_t) st_ctime;
 };
-
+#endif /* MSVCRT_STAT_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,8 +107,11 @@ int MSVCRT(_stat)(const char*,struct _stat*);
 int _fstati64(int,struct _stati64*);
 int _stati64(const char*,struct _stati64*);
 
-int _wstat(const WCHAR*,struct _stat*);
-int _wstati64(const WCHAR*,struct _stati64*);
+#ifndef MSVCRT_WSTAT_DEFINED
+#define MSVCRT_WSTAT_DEFINED
+int _wstat(const MSVCRT(wchar_t)*,struct _stat*);
+int _wstati64(const MSVCRT(wchar_t)*,struct _stati64*);
+#endif /* MSVCRT_WSTAT_DEFINED */
 
 #ifdef __cplusplus
 }

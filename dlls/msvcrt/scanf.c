@@ -28,6 +28,8 @@
 #include "msvcrt.h"
 #include "msvcrt/conio.h"
 #include "msvcrt/io.h"
+#include "msvcrt/stdio.h"
+#include "msvcrt/wctype.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);

@@ -21,10 +21,12 @@
 #define __WINE_SETJMP_H
 #define __WINE_USE_MSVCRT
 
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
 
 

@@ -9,13 +9,39 @@
 #define __WINE_DIRECT_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
-#include "msvcrt/dos.h"            /* For _getdiskfree & co */
-
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
+
+#ifndef MSVCRT_SIZE_T_DEFINED
+typedef unsigned int MSVCRT(size_t);
+#define MSVCRT_SIZE_T_DEFINED
+#endif
+
+#ifndef MSVCRT_DISKFREE_T_DEFINED
+#define MSVCRT_DISKFREE_T_DEFINED
+struct _diskfree_t {
+  unsigned int total_clusters;
+  unsigned int avail_clusters;
+  unsigned int sectors_per_cluster;
+  unsigned int bytes_per_sector;
+};
+#endif /* MSVCRT_DISKFREE_T_DEFINED */
 
 int         _chdir(const char*);
 int         _chdrive(int);
@@ -26,11 +52,14 @@ unsigned long _getdrives(void);
 int         _mkdir(const char*);
 int         _rmdir(const char*);
 
-int         _wchdir(const WCHAR*);
-WCHAR*      _wgetcwd(WCHAR*,int);
-WCHAR*      _wgetdcwd(int,WCHAR*,int);
-int         _wmkdir(const WCHAR*);
-int         _wrmdir(const WCHAR*);
+#ifndef MSVCRT_WDIRECT_DEFINED
+#define MSVCRT_WDIRECT_DEFINED
+int              _wchdir(const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)* _wgetcwd(MSVCRT(wchar_t)*,int);
+MSVCRT(wchar_t)* _wgetdcwd(int,MSVCRT(wchar_t)*,int);
+int              _wmkdir(const MSVCRT(wchar_t)*);
+int              _wrmdir(const MSVCRT(wchar_t)*);
+#endif /* MSVCRT_WDIRECT_DEFINED */
 
 #ifdef __cplusplus
 }

@@ -21,12 +21,13 @@
 #define __WINE_SEARCH_H
 #define __WINE_USE_MSVCRT
 
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
-
 
 #ifndef MSVCRT_SIZE_T_DEFINED
 typedef unsigned int MSVCRT(size_t);
@@ -38,13 +39,14 @@ typedef unsigned int MSVCRT(size_t);
 extern "C" {
 #endif
 
-typedef int (*MSVCRT_compar_fn_t)(const void*,const void*);
-
-void*       _lfind(const void*,const void*,unsigned int*,unsigned int,MSVCRT_compar_fn_t);
-void*       _lsearch(const void*,void*,unsigned int*,unsigned int,MSVCRT_compar_fn_t);
-
-void*       MSVCRT(bsearch)(const void*,const void*,MSVCRT(size_t),MSVCRT(size_t),MSVCRT_compar_fn_t);
-void        MSVCRT(qsort)(void*,MSVCRT(size_t),MSVCRT(size_t),MSVCRT_compar_fn_t);
+void*       _lfind(const void*,const void*,unsigned int*,unsigned int,
+                   int (*)(const void*,const void*));
+void*       _lsearch(const void*,void*,unsigned int*,unsigned int,
+                     int (*)(const void*,const void*));
+void*       MSVCRT(bsearch)(const void*,const void*,MSVCRT(size_t),MSVCRT(size_t),
+                            int (*)(const void*,const void*));
+void        MSVCRT(qsort)(void*,MSVCRT(size_t),MSVCRT(size_t),
+                          int (*)(const void*,const void*));
 
 #ifdef __cplusplus
 }

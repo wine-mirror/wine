@@ -21,18 +21,33 @@
 #define __WINE_SYS_TYPES_H
 #define __WINE_USE_MSVCRT
 
-
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
 
-
+#ifndef MSVCRT_DEV_T_DEFINED
 typedef unsigned int   _dev_t;
+#define MSVCRT_DEV_T_DEFINED
+#endif
+
+#ifndef MSVCRT_INO_T_DEFINED
 typedef unsigned short _ino_t;
-typedef int            MSVCRT(_off_t);
-typedef long           MSVCRT(time_t);
+#define MSVCRT_INO_T_DEFINED
+#endif
+
+#ifndef MSVCRT_OFF_T_DEFINED
+typedef int MSVCRT(_off_t);
+#define MSVCRT_OFF_T_DEFINED
+#endif
+
+#ifndef MSVCRT_TIME_T_DEFINED
+typedef long MSVCRT(time_t);
+#define MSVCRT_TIME_T_DEFINED
+#endif
 
 
 #ifndef USE_MSVCRT_PREFIX

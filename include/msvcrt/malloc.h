@@ -21,12 +21,13 @@
 #define __WINE_MALLOC_H
 #define __WINE_USE_MSVCRT
 
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
-
 
 /* heap function constants */
 #define _HEAPEMPTY    -1
@@ -45,13 +46,15 @@ typedef unsigned int MSVCRT(size_t);
 #define MSVCRT_SIZE_T_DEFINED
 #endif
 
+#ifndef MSVCRT_HEAPINFO_DEFINED
+#define MSVCRT_HEAPINFO_DEFINED
 typedef struct _heapinfo
 {
   int*           _pentry;
   MSVCRT(size_t) _size;
   int            _useflag;
 } _HEAPINFO;
-
+#endif /* MSVCRT_HEAPINFO_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {

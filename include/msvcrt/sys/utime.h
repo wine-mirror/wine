@@ -21,16 +21,34 @@
 #define __WINE_SYS_UTIME_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
-#include "msvcrt/sys/types.h"      /* For time_t */
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
 
+#ifndef MSVCRT_TIME_T_DEFINED
+typedef long MSVCRT(time_t);
+#define MSVCRT_TIME_T_DEFINED
+#endif
+
+#ifndef MSVCRT_UTIMBUF_DEFINED
+#define MSVCRT_UTIMBUF_DEFINED
 struct _utimbuf
 {
     MSVCRT(time_t) actime;
     MSVCRT(time_t) modtime;
 };
-
+#endif /* MSVCRT_UTIMBUF_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,7 +57,7 @@ extern "C" {
 int         _futime(int,struct _utimbuf*);
 int         _utime(const char*,struct _utimbuf*);
 
-int         _wutime(const WCHAR*,struct _utimbuf*);
+int         _wutime(const MSVCRT(wchar_t)*,struct _utimbuf*);
 
 #ifdef __cplusplus
 }

@@ -21,51 +21,48 @@
 #define __WINE_WCTYPE_H
 #define __WINE_USE_MSVCRT
 
-
-/* FIXME: winnt.h includes 'ctype.h' which includes 'wctype.h'. So we get
- * there but WCHAR is not defined.
- */
-/* Some systems might have wchar_t, but we really need 16 bit characters */
-#ifndef WINE_WCHAR_DEFINED
-#ifdef WINE_UNICODE_NATIVE
-typedef wchar_t         WCHAR,      *PWCHAR;
-#else
-typedef unsigned short  WCHAR,      *PWCHAR;
-#endif
-#define WINE_WCHAR_DEFINED
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
 
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
 #endif
-
+#endif
 
 /* ASCII char classification table - binary compatible */
-#define _UPPER        C1_UPPER
-#define _LOWER        C1_LOWER
-#define _DIGIT        C1_DIGIT
-#define _SPACE        C1_SPACE
-#define _PUNCT        C1_PUNCT
-#define _CONTROL      C1_CNTRL
-#define _BLANK        C1_BLANK
-#define _HEX          C1_XDIGIT
+#define _UPPER        0x0001  /* C1_UPPER */
+#define _LOWER        0x0002  /* C1_LOWER */
+#define _DIGIT        0x0004  /* C1_DIGIT */
+#define _SPACE        0x0008  /* C1_SPACE */
+#define _PUNCT        0x0010  /* C1_PUNCT */
+#define _CONTROL      0x0020  /* C1_CNTRL */
+#define _BLANK        0x0040  /* C1_BLANK */
+#define _HEX          0x0080  /* C1_XDIGIT */
 #define _LEADBYTE     0x8000
-#define _ALPHA       (C1_ALPHA|_UPPER|_LOWER)
+#define _ALPHA       (0x0100|_UPPER|_LOWER)  /* (C1_ALPHA|_UPPER|_LOWER) */
 
 #ifndef USE_MSVCRT_PREFIX
 # ifndef WEOF
-#  define WEOF        (WCHAR)(0xFFFF)
+#  define WEOF        (wint_t)(0xFFFF)
 # endif
 #else
 # ifndef MSVCRT_WEOF
-#  define MSVCRT_WEOF (WCHAR)(0xFFFF)
+#  define MSVCRT_WEOF (MSVCRT_wint_t)(0xFFFF)
 # endif
 #endif /* USE_MSVCRT_PREFIX */
 
-typedef WCHAR MSVCRT(wctype_t);
-typedef WCHAR MSVCRT(wint_t);
+#ifndef MSVCRT_WCTYPE_T_DEFINED
+typedef MSVCRT(wchar_t) MSVCRT(wint_t);
+typedef MSVCRT(wchar_t) MSVCRT(wctype_t);
+#define MSVCRT_WCTYPE_T_DEFINED
+#endif
 
 /* FIXME: there's something to do with __p__pctype and __p__pwctype */
 
@@ -74,6 +71,8 @@ typedef WCHAR MSVCRT(wint_t);
 extern "C" {
 #endif
 
+#ifndef MSVCRT_WCTYPE_DEFINED
+#define MSVCRT_WCTYPE_DEFINED
 int MSVCRT(is_wctype)(MSVCRT(wint_t),MSVCRT(wctype_t));
 int MSVCRT(isleadbyte)(int);
 int MSVCRT(iswalnum)(MSVCRT(wint_t));
@@ -89,8 +88,9 @@ int MSVCRT(iswpunct)(MSVCRT(wint_t));
 int MSVCRT(iswspace)(MSVCRT(wint_t));
 int MSVCRT(iswupper)(MSVCRT(wint_t));
 int MSVCRT(iswxdigit)(MSVCRT(wint_t));
-WCHAR MSVCRT(towlower)(WCHAR);
-WCHAR MSVCRT(towupper)(WCHAR);
+MSVCRT(wchar_t) MSVCRT(towlower)(MSVCRT(wchar_t));
+MSVCRT(wchar_t) MSVCRT(towupper)(MSVCRT(wchar_t));
+#endif /* MSVCRT_WCTYPE_DEFINED */
 
 #ifdef __cplusplus
 }

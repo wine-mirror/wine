@@ -37,13 +37,17 @@ int         _ismbbkalnum(unsigned int);
 int         _ismbbkana(unsigned int);
 int         _ismbbkprint(unsigned int);
 int         _ismbbkpunct(unsigned int);
-int         _ismbblead(unsigned int);
 int         _ismbbprint(unsigned int);
 int         _ismbbpunct(unsigned int);
+int         _setmbcp(int);
+
+#ifndef MSVCRT_MBLEADTRAIL_DEFINED
+#define MSVCRT_MBLEADTRAIL_DEFINED
+int         _ismbblead(unsigned int);
 int         _ismbbtrail(unsigned int);
 int         _ismbslead(const unsigned char*,const unsigned char*);
 int         _ismbstrail(const unsigned char*,const unsigned char*);
-int         _setmbcp(int);
+#endif /* MSVCRT_MBLEADTRAIL_DEFINED */
 
 #ifdef __cplusplus
 }

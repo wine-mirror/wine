@@ -9,10 +9,26 @@
 #define __WINE_STDLIB_H
 #define __WINE_USE_MSVCRT
 
-#include "basetsd.h"
-#include "msvcrt/malloc.h"                /* For size_t, malloc & co */
-#include "msvcrt/search.h"                /* For bsearch and qsort */
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
+
+#ifndef _MSC_VER
+# ifndef __int64
+#  define __int64 long long
+# endif
+#endif
 
 #ifndef USE_MSVCRT_PREFIX
 #define EXIT_SUCCESS        0
@@ -41,6 +57,10 @@ typedef struct MSVCRT(_ldiv_t) {
     long rem;
 } MSVCRT(ldiv_t);
 
+#ifndef MSVCRT_SIZE_T_DEFINED
+typedef unsigned int MSVCRT(size_t);
+#define MSVCRT_SIZE_T_DEFINED
+#endif
 
 #define __max(a,b) (((a) > (b)) ? (a) : (b))
 #define __min(a,b) (((a) < (b)) ? (a) : (b))
@@ -71,9 +91,9 @@ extern unsigned int*         __p__winminor();
 
 extern int*                  __p___argc(void);
 extern char***               __p___argv(void);
-extern WCHAR***              __p___wargv(void);
+extern MSVCRT(wchar_t)***    __p___wargv(void);
 extern char***               __p__environ(void);
-extern WCHAR***              __p__wenviron(void);
+extern MSVCRT(wchar_t)***    __p__wenviron(void);
 extern int*                  __p___mb_cur_max(void);
 extern unsigned long*        __doserrno(void);
 extern unsigned int*         __p__fmode(void);
@@ -104,10 +124,10 @@ extern unsigned int*         __p__fmode(void);
 
 extern int*           MSVCRT(_errno)(void);
 #ifndef USE_MSVCRT_PREFIX
-#define errno              (*_errno())
-#elif !defined(__WINE__)
-#define MSVCRT_errno       (*MSVCRT__errno())
-#endif /* USE_MSVCRT_PREFIX, __WINE__ */
+# define errno        (*_errno())
+#else
+# define MSVCRT_errno (*MSVCRT__errno())
+#endif
 
 
 typedef int (*_onexit_t)(void);
@@ -148,6 +168,7 @@ int         MSVCRT(atexit)(void (*)(void));
 double      MSVCRT(atof)(const char*);
 int         MSVCRT(atoi)(const char*);
 long        MSVCRT(atol)(const char*);
+void*       MSVCRT(calloc)(MSVCRT(size_t),MSVCRT(size_t));
 #ifdef __i386__
 long long    MSVCRT(div)(int,int);
 unsigned long long MSVCRT(ldiv)(long,long);
@@ -156,41 +177,47 @@ MSVCRT(div_t) MSVCRT(div)(int,int);
 MSVCRT(ldiv_t) MSVCRT(ldiv)(long,long);
 #endif
 void        MSVCRT(exit)(int);
+void        MSVCRT(free)(void*);
 char*       MSVCRT(getenv)(const char*);
 long        MSVCRT(labs)(long);
+void*       MSVCRT(malloc)(MSVCRT(size_t));
 int         MSVCRT(mblen)(const char*,MSVCRT(size_t));
 void        MSVCRT(perror)(const char*);
 int         MSVCRT(rand)(void);
+void*       MSVCRT(realloc)(void*,MSVCRT(size_t));
 void        MSVCRT(srand)(unsigned int);
 double      MSVCRT(strtod)(const char*,char**);
 long        MSVCRT(strtol)(const char*,char**,int);
 unsigned long MSVCRT(strtoul)(const char*,char**,int);
 int         MSVCRT(system)(const char*);
 
-WCHAR*      _itow(int,WCHAR*,int);
-WCHAR*      _i64tow(__int64,WCHAR*,int);
-WCHAR*      _ltow(long,WCHAR*,int);
-WCHAR*      _ui64tow(unsigned __int64,WCHAR*,int);
-WCHAR*      _ultow(unsigned long,WCHAR*,int);
-WCHAR*      _wfullpath(WCHAR*,const WCHAR*,size_t);
-WCHAR*      _wgetenv(const WCHAR*);
-void        _wmakepath(WCHAR*,const WCHAR*,const WCHAR*,const WCHAR*,const WCHAR*);
-void        _wperror(const WCHAR*);
-int         _wputenv(const WCHAR*);
-void        _wsearchenv(const WCHAR*,const WCHAR*,WCHAR*);
-void        _wsplitpath(const WCHAR*,WCHAR*,WCHAR*,WCHAR*,WCHAR*);
-int         _wsystem(const WCHAR*);
-int         _wtoi(const WCHAR*);
-__int64     _wtoi64(const WCHAR*);
-long        _wtol(const WCHAR*);
+#ifndef MSVCRT_WSTDLIB_DEFINED
+#define MSVCRT_WSTDLIB_DEFINED
+MSVCRT(wchar_t)*_itow(int,MSVCRT(wchar_t)*,int);
+MSVCRT(wchar_t)*_i64tow(__int64,MSVCRT(wchar_t)*,int);
+MSVCRT(wchar_t)*_ltow(long,MSVCRT(wchar_t)*,int);
+MSVCRT(wchar_t)*_ui64tow(unsigned __int64,MSVCRT(wchar_t)*,int);
+MSVCRT(wchar_t)*_ultow(unsigned long,MSVCRT(wchar_t)*,int);
+MSVCRT(wchar_t)*_wfullpath(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,size_t);
+MSVCRT(wchar_t)*_wgetenv(const MSVCRT(wchar_t)*);
+void            _wmakepath(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+void            _wperror(const MSVCRT(wchar_t)*);
+int             _wputenv(const MSVCRT(wchar_t)*);
+void            _wsearchenv(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(wchar_t)*);
+void            _wsplitpath(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)*,MSVCRT(wchar_t)*,MSVCRT(wchar_t)*,MSVCRT(wchar_t)*);
+int             _wsystem(const MSVCRT(wchar_t)*);
+int             _wtoi(const MSVCRT(wchar_t)*);
+__int64         _wtoi64(const MSVCRT(wchar_t)*);
+long            _wtol(const MSVCRT(wchar_t)*);
 
-MSVCRT(size_t) MSVCRT(mbstowcs)(WCHAR*,const char*,MSVCRT(size_t));
-int         MSVCRT(mbtowc)(WCHAR*,const char*,MSVCRT(size_t));
-double      MSVCRT(wcstod)(const WCHAR*,WCHAR**);
-long        MSVCRT(wcstol)(const WCHAR*,WCHAR**,int);
-MSVCRT(size_t) MSVCRT(wcstombs)(char*,const WCHAR*,MSVCRT(size_t));
-unsigned long MSVCRT(wcstoul)(const WCHAR*,WCHAR**,int);
-int         MSVCRT(wctomb)(char*,WCHAR);
+MSVCRT(size_t) MSVCRT(mbstowcs)(MSVCRT(wchar_t)*,const char*,MSVCRT(size_t));
+int            MSVCRT(mbtowc)(MSVCRT(wchar_t)*,const char*,MSVCRT(size_t));
+double         MSVCRT(wcstod)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)**);
+long           MSVCRT(wcstol)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)**,int);
+MSVCRT(size_t) MSVCRT(wcstombs)(char*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
+unsigned long  MSVCRT(wcstoul)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t)**,int);
+int            MSVCRT(wctomb)(char*,MSVCRT(wchar_t));
+#endif /* MSVCRT_WSTDLIB_DEFINED */
 
 #ifdef __cplusplus
 }

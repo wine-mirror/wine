@@ -21,17 +21,46 @@
 #define __WINE_TIME_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
-#include "msvcrt/sys/types.h"      /* For time_t */
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
 
 #ifndef MSVCRT_SIZE_T_DEFINED
 typedef unsigned int MSVCRT(size_t);
 #define MSVCRT_SIZE_T_DEFINED
 #endif
 
-typedef long MSVCRT(clock_t);
+#ifndef MSVCRT_TIME_T_DEFINED
+typedef long MSVCRT(time_t);
+#define MSVCRT_TIME_T_DEFINED
+#endif
 
+#ifndef MSVCRT_CLOCK_T_DEFINED
+typedef long MSVCRT(clock_t);
+#define MSVCRT_CLOCK_T_DEFINED
+#endif
+
+#ifndef NULL
+#ifdef __cplusplus
+#define NULL  0
+#else
+#define NULL  ((void *)0)
+#endif
+#endif
+
+#ifndef MSVCRT_TM_DEFINED
+#define MSVCRT_TM_DEFINED
 struct MSVCRT(tm) {
     int tm_sec;
     int tm_min;
@@ -43,7 +72,7 @@ struct MSVCRT(tm) {
     int tm_yday;
     int tm_isdst;
 };
-
+#endif /* MSVCRT_TM_DEFINED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,11 +97,14 @@ MSVCRT(time_t) MSVCRT(mktime)(struct MSVCRT(tm)*);
 size_t      MSVCRT(strftime)(char*,size_t,const char*,const struct MSVCRT(tm)*);
 MSVCRT(time_t) MSVCRT(time)(MSVCRT(time_t)*);
 
-WCHAR*      _wasctime(const struct MSVCRT(tm)*);
-MSVCRT(size_t) wcsftime(WCHAR*,MSVCRT(size_t),const WCHAR*,const struct MSVCRT(tm)*);
-WCHAR*      _wctime(const MSVCRT(time_t)*);
-WCHAR*      _wstrdate(WCHAR*);
-WCHAR*      _wstrtime(WCHAR*);
+#ifndef MSVCRT_WTIME_DEFINED
+#define MSVCRT_WTIME_DEFINED
+MSVCRT(wchar_t)*_wasctime(const struct MSVCRT(tm)*);
+MSVCRT(size_t)  wcsftime(MSVCRT(wchar_t)*,MSVCRT(size_t),const MSVCRT(wchar_t)*,const struct MSVCRT(tm)*);
+MSVCRT(wchar_t)*_wctime(const MSVCRT(time_t)*);
+MSVCRT(wchar_t)*_wstrdate(MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*_wstrtime(MSVCRT(wchar_t)*);
+#endif /* MSVCRT_WTIME_DEFINED */
 
 #ifdef __cplusplus
 }

@@ -9,14 +9,20 @@
 #define __WINE_PROCESS_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
-
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
 
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
 
 /* Process creation flags */
 #define _P_WAIT    0
@@ -66,23 +72,26 @@ void        MSVCRT(abort)(void);
 void        MSVCRT(exit)(int);
 int         MSVCRT(system)(const char*);
 
-int         _wexecl(const WCHAR*,const WCHAR*,...);
-int         _wexecle(const WCHAR*,const WCHAR*,...);
-int         _wexeclp(const WCHAR*,const WCHAR*,...);
-int         _wexeclpe(const WCHAR*,const WCHAR*,...);
-int         _wexecv(const WCHAR*,const WCHAR* const *);
-int         _wexecve(const WCHAR*,const WCHAR* const *,const WCHAR* const *);
-int         _wexecvp(const WCHAR*,const WCHAR* const *);
-int         _wexecvpe(const WCHAR*,const WCHAR* const *,const WCHAR* const *);
-int         _wspawnl(int,const WCHAR*,const WCHAR*,...);
-int         _wspawnle(int,const WCHAR*,const WCHAR*,...);
-int         _wspawnlp(int,const WCHAR*,const WCHAR*,...);
-int         _wspawnlpe(int,const WCHAR*,const WCHAR*,...);
-int         _wspawnv(int,const WCHAR*,const WCHAR* const *);
-int         _wspawnve(int,const WCHAR*,const WCHAR* const *,const WCHAR* const *);
-int         _wspawnvp(int,const WCHAR*,const WCHAR* const *);
-int         _wspawnvpe(int,const WCHAR*,const WCHAR* const *,const WCHAR* const *);
-int         _wsystem(const WCHAR*);
+#ifndef MSVCRT_WPROCESS_DEFINED
+#define MSVCRT_WPROCESS_DEFINED
+int         _wexecl(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wexecle(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wexeclp(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wexeclpe(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wexecv(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
+int         _wexecve(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
+int         _wexecvp(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
+int         _wexecvpe(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
+int         _wspawnl(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wspawnle(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wspawnlp(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wspawnlpe(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int         _wspawnv(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
+int         _wspawnve(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
+int         _wspawnvp(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *);
+int         _wspawnvpe(int,const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)* const *,const MSVCRT(wchar_t)* const *);
+int         _wsystem(const MSVCRT(wchar_t)*);
+#endif /* MSVCRT_WPROCESS_DEFINED */
 
 #ifdef __cplusplus
 }

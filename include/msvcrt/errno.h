@@ -20,6 +20,14 @@
 #define __WINE_ERRNO_H
 #define __WINE_USE_MSVCRT
 
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
+
 #ifdef USE_MSVCRT_PREFIX
 
 #  define MSVCRT_EPERM   1
@@ -103,5 +111,13 @@
 #  define ENOTEMPTY 41
 
 #endif /* USE_MSVCRT_PREFIX */
+
+extern int* MSVCRT(_errno)(void);
+
+#ifndef USE_MSVCRT_PREFIX
+# define errno        (*_errno())
+#else
+# define MSVCRT_errno (*MSVCRT__errno())
+#endif
 
 #endif  /* __WINE_ERRNO_H */

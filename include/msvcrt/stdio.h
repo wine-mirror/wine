@@ -12,8 +12,14 @@
 #ifndef RC_INVOKED
 #include <stdarg.h>
 #endif
-#include "msvcrt/wctype.h"         /* For wint_t */
 
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
 /* file._flag flags */
 #ifndef USE_MSVCRT_PREFIX
@@ -36,6 +42,13 @@
 #define MSVCRT__IOAPPEND 0x0200
 #endif /* USE_MSVCRT_PREFIX */
 
+#ifndef NULL
+#ifdef  __cplusplus
+#define NULL  0
+#else
+#define NULL  ((void *)0)
+#endif
+#endif
 
 #ifndef USE_MSVCRT_PREFIX
 
@@ -76,6 +89,8 @@
 
 #endif /* USE_MSVCRT_PREFIX */
 
+#ifndef MSVCRT_FILE_DEFINED
+#define MSVCRT_FILE_DEFINED
 typedef struct MSVCRT(_iobuf)
 {
   char* _ptr;
@@ -87,21 +102,40 @@ typedef struct MSVCRT(_iobuf)
   int   _bufsiz;
   char* _tmpfname;
 } MSVCRT(FILE);
+#endif  /* MSVCRT_FILE_DEFINED */
 
+#ifndef MSVCRT_FPOS_T_DEFINED
 typedef long MSVCRT(fpos_t);
+#define MSVCRT_FPOS_T_DEFINED
+#endif
 
 #ifndef MSVCRT_SIZE_T_DEFINED
 typedef unsigned int MSVCRT(size_t);
 #define MSVCRT_SIZE_T_DEFINED
 #endif
 
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
+
+#ifndef MSVCRT_WCTYPE_T_DEFINED
+typedef MSVCRT(wchar_t) MSVCRT(wint_t);
+typedef MSVCRT(wchar_t) MSVCRT(wctype_t);
+#define MSVCRT_WCTYPE_T_DEFINED
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef MSVCRT_STDIO_DEFINED
 MSVCRT(FILE)*        MSVCRT(__p__iob)(void);
 #define _iob               (__p__iob())
+#endif /* MSVCRT_STDIO_DEFINED */
+
 #ifndef USE_MSVCRT_PREFIX
 #define stdin              (_iob+STDIN_FILENO)
 #define stdout             (_iob+STDOUT_FILENO)
@@ -112,7 +146,8 @@ MSVCRT(FILE)*        MSVCRT(__p__iob)(void);
 #define MSVCRT_stderr      (_iob+STDERR_FILENO)
 #endif /* USE_MSVCRT_PREFIX, __WINE__ */
 
-
+#ifndef MSVCRT_STDIO_DEFINED
+#define MSVCRT_STDIO_DEFINED
 int         _fcloseall(void);
 MSVCRT(FILE)* _fdopen(int,const char*);
 int         _fgetchar(void);
@@ -176,43 +211,48 @@ int         MSVCRT(vfprintf)(MSVCRT(FILE)*,const char*,va_list);
 int         MSVCRT(vprintf)(const char*,va_list);
 int         MSVCRT(vsprintf)(char*,const char*,va_list);
 
-MSVCRT(wint_t) _fgetwchar(void);
-MSVCRT(wint_t) _fputwchar(MSVCRT(wint_t));
-WCHAR*      _getws(WCHAR*);
-int         _putws(const WCHAR*);
-int         _snwprintf(WCHAR*,MSVCRT(size_t),const WCHAR*,...);
-int         _vsnwprintf(WCHAR*,MSVCRT(size_t),const WCHAR*,va_list);
-MSVCRT(FILE)* _wfdopen(int,const WCHAR*);
-MSVCRT(FILE)* _wfopen(const WCHAR*,const WCHAR*);
-MSVCRT(FILE)* _wfreopen(const WCHAR*,const WCHAR*,MSVCRT(FILE)*);
-MSVCRT(FILE)* _wfsopen(const WCHAR*,const WCHAR*,int);
-void        _wperror(const WCHAR*);
-MSVCRT(FILE)* _wpopen(const WCHAR*,const WCHAR*);
-int         _wremove(const WCHAR*);
-WCHAR*      _wtempnam(const WCHAR*,const WCHAR*);
-WCHAR*      _wtmpnam(WCHAR*);
+#ifndef MSVCRT_WSTDIO_DEFINED
+#define MSVCRT_WSTDIO_DEFINED
+MSVCRT(wint_t)  _fgetwchar(void);
+MSVCRT(wint_t)  _fputwchar(MSVCRT(wint_t));
+MSVCRT(wchar_t)*_getws(MSVCRT(wchar_t)*);
+int             _putws(const MSVCRT(wchar_t)*);
+int             _snwprintf(MSVCRT(wchar_t)*,MSVCRT(size_t),const MSVCRT(wchar_t)*,...);
+int             _vsnwprintf(MSVCRT(wchar_t)*,MSVCRT(size_t),const MSVCRT(wchar_t)*,va_list);
+MSVCRT(FILE)*   _wfdopen(int,const MSVCRT(wchar_t)*);
+MSVCRT(FILE)*   _wfopen(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(FILE)*   _wfreopen(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(FILE)*);
+MSVCRT(FILE)*   _wfsopen(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,int);
+void            _wperror(const MSVCRT(wchar_t)*);
+MSVCRT(FILE)*   _wpopen(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+int             _wremove(const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*_wtempnam(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*_wtmpnam(MSVCRT(wchar_t)*);
 
-MSVCRT(wint_t) MSVCRT(fgetwc)(MSVCRT(FILE)*);
-WCHAR*      MSVCRT(fgetws)(WCHAR*,int,MSVCRT(FILE)*);
-MSVCRT(wint_t) MSVCRT(fputwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
-int         MSVCRT(fputws)(const WCHAR*,MSVCRT(FILE)*);
-int         MSVCRT(fwprintf)(MSVCRT(FILE)*,const WCHAR*,...);
-int         MSVCRT(fputws)(const WCHAR*,MSVCRT(FILE)*);
-int         MSVCRT(fwscanf)(MSVCRT(FILE)*,const WCHAR*,...);
-MSVCRT(wint_t) MSVCRT(getwc)(MSVCRT(FILE)*);
-MSVCRT(wint_t) MSVCRT(getwchar)(void);
-WCHAR*      MSVCRT(getws)(WCHAR*);
-MSVCRT(wint_t) MSVCRT(putwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
-MSVCRT(wint_t) MSVCRT(putwchar)(MSVCRT(wint_t));
-int         MSVCRT(putws)(const WCHAR*);
-int         MSVCRT(swprintf)(WCHAR*,const WCHAR*,...);
-int         MSVCRT(swscanf)(const WCHAR*,const WCHAR*,...);
-MSVCRT(wint_t) MSVCRT(ungetwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
-int         MSVCRT(vfwprintf)(MSVCRT(FILE)*,const WCHAR*,va_list);
-int         MSVCRT(vswprintf)(WCHAR*,const WCHAR*,va_list);
-int         MSVCRT(vwprintf)(const WCHAR*,va_list);
-int         MSVCRT(wprintf)(const WCHAR*,...);
-int         MSVCRT(wscanf)(const WCHAR*,...);
+MSVCRT(wint_t)  MSVCRT(fgetwc)(MSVCRT(FILE)*);
+MSVCRT(wchar_t)*MSVCRT(fgetws)(MSVCRT(wchar_t)*,int,MSVCRT(FILE)*);
+MSVCRT(wint_t)  MSVCRT(fputwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
+int             MSVCRT(fputws)(const MSVCRT(wchar_t)*,MSVCRT(FILE)*);
+int             MSVCRT(fwprintf)(MSVCRT(FILE)*,const MSVCRT(wchar_t)*,...);
+int             MSVCRT(fputws)(const MSVCRT(wchar_t)*,MSVCRT(FILE)*);
+int             MSVCRT(fwscanf)(MSVCRT(FILE)*,const MSVCRT(wchar_t)*,...);
+MSVCRT(wint_t)  MSVCRT(getwc)(MSVCRT(FILE)*);
+MSVCRT(wint_t)  MSVCRT(getwchar)(void);
+MSVCRT(wchar_t)*MSVCRT(getws)(MSVCRT(wchar_t)*);
+MSVCRT(wint_t)  MSVCRT(putwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
+MSVCRT(wint_t)  MSVCRT(putwchar)(MSVCRT(wint_t));
+int             MSVCRT(putws)(const MSVCRT(wchar_t)*);
+int             MSVCRT(swprintf)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+int             MSVCRT(swscanf)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,...);
+MSVCRT(wint_t)  MSVCRT(ungetwc)(MSVCRT(wint_t),MSVCRT(FILE)*);
+int             MSVCRT(vfwprintf)(MSVCRT(FILE)*,const MSVCRT(wchar_t)*,va_list);
+int             MSVCRT(vswprintf)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,va_list);
+int             MSVCRT(vwprintf)(const MSVCRT(wchar_t)*,va_list);
+int             MSVCRT(wprintf)(const MSVCRT(wchar_t)*,...);
+int             MSVCRT(wscanf)(const MSVCRT(wchar_t)*,...);
+#endif /* MSVCRT_WSTDIO_DEFINED */
+
+#endif /* MSVCRT_STDIO_DEFINED */
 
 #ifdef __cplusplus
 }

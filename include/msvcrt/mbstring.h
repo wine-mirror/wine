@@ -21,12 +21,12 @@
 #define __WINE_MBSTRING_H
 #define __WINE_USE_MSVCRT
 
-#include "msvcrt/mbctype.h"
-
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
 
 #ifndef MSVCRT_SIZE_T_DEFINED
@@ -34,8 +34,10 @@ typedef unsigned int MSVCRT(size_t);
 #define MSVCRT_SIZE_T_DEFINED
 #endif
 
+#ifndef MSVCRT_NLSCMP_DEFINED
 #define _NLSCMPERROR               ((unsigned int)0x7fffffff)
-
+#define MSVCRT_NLSCMP_DEFINED
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,6 +115,14 @@ unsigned char* _mbsspnp(const unsigned char*,const unsigned char*);
 unsigned char* _mbsstr(const unsigned char*,const unsigned char*);
 unsigned char* _mbstok(unsigned char*,const unsigned char*);
 unsigned char* _mbsupr(unsigned char*);
+
+#ifndef MSVCRT_MBLEADTRAIL_DEFINED
+#define MSVCRT_MBLEADTRAIL_DEFINED
+int         _ismbblead(unsigned int);
+int         _ismbbtrail(unsigned int);
+int         _ismbslead(const unsigned char*,const unsigned char*);
+int         _ismbstrail(const unsigned char*,const unsigned char*);
+#endif /* MSVCRT_MBLEADTRAIL_DEFINED */
 
 #ifdef __cplusplus
 }

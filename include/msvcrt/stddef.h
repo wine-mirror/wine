@@ -21,21 +21,38 @@
 #define __WINE_STDDEF_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
 
+#ifndef MSVCRT_PTRDIFF_T_DEFINED
 typedef int ptrdiff_t;
+#define MSVCRT_PTRDIFF_T_DEFINED
+#endif
 
 #ifndef MSVCRT_SIZE_T_DEFINED
 typedef unsigned int MSVCRT(size_t);
 #define MSVCRT_SIZE_T_DEFINED
 #endif
 
-/* Best to leave this one alone: wchar_t */
-#ifdef WINE_DEFINE_WCHAR_T
-typedef unsigned short wchar_t;
+#ifndef NULL
+#ifdef __cplusplus
+#define NULL  0
+#else
+#define NULL  ((void *)0)
 #endif
-
+#endif
 
 #define offsetof(s,m)       (size_t)&(((s*)NULL)->m)
 

@@ -21,12 +21,19 @@
 #define __WINE_LOCALE_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
 #endif
 
 #ifdef USE_MSVCRT_PREFIX
@@ -49,6 +56,8 @@
 #define LC_MAX                 LC_TIME
 #endif /* USE_MSVCRT_PREFIX */
 
+#ifndef MSVCRT_LCONV_DEFINED
+#define MSVCRT_LCONV_DEFINED
 struct MSVCRT(lconv)
 {
     char* decimal_point;
@@ -70,6 +79,7 @@ struct MSVCRT(lconv)
     char p_sign_posn;
     char n_sign_posn;
 };
+#endif /* MSVCRT_LCONV_DEFINED */
 
 
 #ifdef __cplusplus
@@ -79,7 +89,10 @@ extern "C" {
 char*       MSVCRT(setlocale)(int,const char*);
 struct MSVCRT(lconv)* MSVCRT(localeconv)(void);
 
-WCHAR*      _wsetlocale(int,const WCHAR*);
+#ifndef MSVCRT_WLOCALE_DEFINED
+#define MSVCRT_WLOCALE_DEFINED
+MSVCRT(wchar_t)* _wsetlocale(int,const MSVCRT(wchar_t)*);
+#endif /* MSVCRT_WLOCALE_DEFINED */
 
 #ifdef __cplusplus
 }

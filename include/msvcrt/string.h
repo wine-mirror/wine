@@ -9,20 +9,38 @@
 #define __WINE_STRING_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
-
-#ifdef USE_MSVCRT_PREFIX
-#define MSVCRT(x)    MSVCRT_##x
-#else
-#define MSVCRT(x)    x
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
 #endif
 
+#ifndef MSVCRT_WCHAR_T_DEFINED
+#define MSVCRT_WCHAR_T_DEFINED
+#ifndef __cplusplus
+typedef unsigned short MSVCRT(wchar_t);
+#endif
+#endif
 
 #ifndef MSVCRT_SIZE_T_DEFINED
 typedef unsigned int MSVCRT(size_t);
 #define MSVCRT_SIZE_T_DEFINED
 #endif
 
+#ifndef MSVCRT_NLSCMP_DEFINED
+#define _NLSCMPERROR               ((unsigned int)0x7fffffff)
+#define MSVCRT_NLSCMP_DEFINED
+#endif
+
+#ifndef NULL
+#ifdef __cplusplus
+#define NULL  0
+#else
+#define NULL  ((void *)0)
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,32 +83,35 @@ char*       MSVCRT(strstr)(const char*,const char*);
 char*       MSVCRT(strtok)(char*,const char*);
 MSVCRT(size_t) MSVCRT(strxfrm)(char*,const char*,MSVCRT(size_t));
 
-WCHAR*      _wcsdup(const WCHAR*);
-int         _wcsicmp(const WCHAR*,const WCHAR*);
-int         _wcsicoll(const WCHAR*,const WCHAR*);
-WCHAR*      _wcslwr(WCHAR*);
-int         _wcsnicmp(const WCHAR*,const WCHAR*,MSVCRT(size_t));
-WCHAR*      _wcsnset(WCHAR*,WCHAR,MSVCRT(size_t));
-WCHAR*      _wcsrev(WCHAR*);
-WCHAR*      _wcsset(WCHAR*,WCHAR);
-WCHAR*      _wcsupr(WCHAR*);
+#ifndef MSVCRT_WSTRING_DEFINED
+#define MSVCRT_WSTRING_DEFINED
+MSVCRT(wchar_t)*_wcsdup(const MSVCRT(wchar_t)*);
+int             _wcsicmp(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+int             _wcsicoll(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*_wcslwr(MSVCRT(wchar_t)*);
+int             _wcsnicmp(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
+MSVCRT(wchar_t)*_wcsnset(MSVCRT(wchar_t)*,MSVCRT(wchar_t),MSVCRT(size_t));
+MSVCRT(wchar_t)*_wcsrev(MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*_wcsset(MSVCRT(wchar_t)*,MSVCRT(wchar_t));
+MSVCRT(wchar_t)*_wcsupr(MSVCRT(wchar_t)*);
 
-WCHAR*      MSVCRT(wcscat)(WCHAR*,const WCHAR*);
-WCHAR*      MSVCRT(wcschr)(const WCHAR*,WCHAR);
-int         MSVCRT(wcscmp)(const WCHAR*,const WCHAR*);
-int         MSVCRT(wcscoll)(const WCHAR*,const WCHAR*);
-WCHAR*      MSVCRT(wcscpy)(WCHAR*,const WCHAR*);
-MSVCRT(size_t) MSVCRT(wcscspn)(const WCHAR*,const WCHAR*);
-MSVCRT(size_t) MSVCRT(wcslen)(const WCHAR*);
-WCHAR*      MSVCRT(wcsncat)(WCHAR*,const WCHAR*,MSVCRT(size_t));
-int         MSVCRT(wcsncmp)(const WCHAR*,const WCHAR*,MSVCRT(size_t));
-WCHAR*      MSVCRT(wcsncpy)(WCHAR*,const WCHAR*,MSVCRT(size_t));
-WCHAR*      MSVCRT(wcspbrk)(const WCHAR*,const WCHAR*);
-WCHAR*      MSVCRT(wcsrchr)(const WCHAR*,WCHAR wcFor);
-MSVCRT(size_t) MSVCRT(wcsspn)(const WCHAR*,const WCHAR*);
-WCHAR*      MSVCRT(wcsstr)(const WCHAR*,const WCHAR*);
-WCHAR*      MSVCRT(wcstok)(WCHAR*,const WCHAR*);
-MSVCRT(size_t) MSVCRT(wcsxfrm)(WCHAR*,const WCHAR*,MSVCRT(size_t));
+MSVCRT(wchar_t)*MSVCRT(wcscat)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*MSVCRT(wcschr)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t));
+int             MSVCRT(wcscmp)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+int             MSVCRT(wcscoll)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*MSVCRT(wcscpy)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(size_t)  MSVCRT(wcscspn)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(size_t)  MSVCRT(wcslen)(const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*MSVCRT(wcsncat)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
+int             MSVCRT(wcsncmp)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
+MSVCRT(wchar_t)*MSVCRT(wcsncpy)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
+MSVCRT(wchar_t)*MSVCRT(wcspbrk)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*MSVCRT(wcsrchr)(const MSVCRT(wchar_t)*,MSVCRT(wchar_t) wcFor);
+MSVCRT(size_t)  MSVCRT(wcsspn)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*MSVCRT(wcsstr)(const MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(wchar_t)*MSVCRT(wcstok)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*);
+MSVCRT(size_t)  MSVCRT(wcsxfrm)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(size_t));
+#endif /* MSVCRT_WSTRING_DEFINED */
 
 #ifdef __cplusplus
 }

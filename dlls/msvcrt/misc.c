@@ -60,7 +60,7 @@ void _sleep(unsigned long timeout)
  */
 void* _lfind(const void* match, const void* start,
              unsigned int* array_size, unsigned int elem_size,
-             MSVCRT_compar_fn_t cf)
+             int (*cf)(const void*,const void*) )
 {
   unsigned int size = *array_size;
   if (size)
@@ -78,7 +78,7 @@ void* _lfind(const void* match, const void* start,
  */
 void* _lsearch(const void* match, void* start,
                unsigned int* array_size, unsigned int elem_size,
-               MSVCRT_compar_fn_t cf)
+               int (*cf)(const void*,const void*) )
 {
   unsigned int size = *array_size;
   if (size)

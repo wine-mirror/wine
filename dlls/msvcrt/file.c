@@ -46,6 +46,7 @@
 #include "msvcrt/sys/utime.h"
 #include "msvcrt/time.h"
 #include "msvcrt/share.h"
+#include "msvcrt/wctype.h"
 
 #include "wine/debug.h"
 

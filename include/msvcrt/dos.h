@@ -19,12 +19,15 @@
 #define _A_SUBDIR 0x00000010
 #define _A_ARCH   0x00000020
 
+#ifndef MSVCRT_DISKFREE_T_DEFINED
+#define MSVCRT_DISKFREE_T_DEFINED
 struct _diskfree_t {
   unsigned int total_clusters;
   unsigned int avail_clusters;
   unsigned int sectors_per_cluster;
   unsigned int bytes_per_sector;
 };
+#endif /* MSVCRT_DISKFREE_T_DEFINED */
 
 
 #ifdef __cplusplus

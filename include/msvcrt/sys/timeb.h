@@ -21,9 +21,21 @@
 #define __WINE_SYS_TIMEB_H
 #define __WINE_USE_MSVCRT
 
-#include "msvcrt/sys/types.h"      /* For time_t */
+#ifndef MSVCRT
+# ifdef USE_MSVCRT_PREFIX
+#  define MSVCRT(x)    MSVCRT_##x
+# else
+#  define MSVCRT(x)    x
+# endif
+#endif
 
+#ifndef MSVCRT_TIME_T_DEFINED
+typedef long MSVCRT(time_t);
+#define MSVCRT_TIME_T_DEFINED
+#endif
 
+#ifndef MSVCRT_TIMEB_DEFINED
+#define MSVCRT_TIMEB_DEFINED
 struct _timeb
 {
     MSVCRT(time_t) time;
@@ -31,6 +43,7 @@ struct _timeb
     short          timezone;
     short          dstflag;
 };
+#endif /* MSVCRT_TIMEB_DEFINED */
 
 
 #ifdef __cplusplus
