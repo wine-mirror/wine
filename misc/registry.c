@@ -753,114 +753,111 @@ static void SHELL_SaveRegistryBranch(HKEY hkey, int all)
 {
     char   *fn, *home, *tmp;
 
+    /* Find out what to save to, get from config file */
+    BOOL writeToHome = PROFILE_GetWineIniBool("registry","WritetoHomeRegistries",1);
+    BOOL writeToAlt = PROFILE_GetWineIniBool("registry","WritetoAltRegistries",1);
+
     /* FIXME: does this check apply to all keys written below ? */
     if (!(home = getenv( "HOME" )))
-        {
         ERR_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
-        return;
-    }
 
-	/* HKEY_LOCAL_MACHINE contains the HKEY_CLASSES_ROOT branch */
-	if (hkey == HKEY_CLASSES_ROOT)
-		hkey = HKEY_LOCAL_MACHINE;
+    /* HKEY_LOCAL_MACHINE contains the HKEY_CLASSES_ROOT branch */
+    if (hkey == HKEY_CLASSES_ROOT) hkey = HKEY_LOCAL_MACHINE;
 
-	switch (hkey)
+    switch (hkey)
     {
-		case HKEY_CURRENT_USER:
-			{
-				int usedCfgUser = 0;
+    case HKEY_CURRENT_USER:
+        fn = xmalloc( MAX_PATHNAME_LEN ); 
+        if (writeToAlt && PROFILE_GetWineIniString( "registry", "AltCurrentUserFile", "",
+                                                    fn, MAX_PATHNAME_LEN - 1))
+            _savereg(lookup_hkey(HKEY_CURRENT_USER),fn,all);
+        free (fn);
 
-    fn = xmalloc( MAX_PATHNAME_LEN ); 
-				if (PROFILE_GetWineIniString ( "Registry", "UserFileName", "",
-												fn, MAX_PATHNAME_LEN - 1))
-    {
-        _savereg(lookup_hkey(HKEY_CURRENT_USER),fn,all);
-        usedCfgUser = 1;
-    }
-    free (fn);
-
-    if (usedCfgUser != 1)
-    {
-        fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
-                           strlen(SAVE_CURRENT_USER) + 2 );
-        strcpy(fn,home);
-        strcat(fn,WINE_PREFIX);
+        if (home && writeToHome)
+        {
+            fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
+                               strlen(SAVE_CURRENT_USER) + 2 );
+            strcpy(fn,home);
+            strcat(fn,WINE_PREFIX);
   
-        /* create the directory. don't care about errorcodes. */
-        mkdir(fn,0755); /* drwxr-xr-x */
-        strcat(fn,"/"SAVE_CURRENT_USER);
+            /* create the directory. don't care about errorcodes. */
+            mkdir(fn,0755); /* drwxr-xr-x */
+            strcat(fn,"/"SAVE_CURRENT_USER);
 
-        tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
-        strcpy(tmp,fn);
-        strcat(tmp,".tmp");
+            tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
+            strcpy(tmp,fn);
+            strcat(tmp,".tmp");
   
-        if (_savereg(lookup_hkey(HKEY_CURRENT_USER),tmp,all)) {
-            if (-1==rename(tmp,fn)) {
-                perror("rename tmp registry");
-                unlink(tmp);
+            if (_savereg(lookup_hkey(HKEY_CURRENT_USER),tmp,all)) {
+                if (-1==rename(tmp,fn)) {
+                    perror("rename tmp registry");
+                    unlink(tmp);
+                }
             }
+            free(tmp);
+            free(fn);
         }
-        free(tmp);
-        free(fn);
-    }
-			}
-			break;
-		case HKEY_LOCAL_MACHINE:
-			{
-				int usedCfgLM = 0;
-				/* Try first saving according to the defined location in .winerc */
-    fn = xmalloc ( MAX_PATHNAME_LEN);
-				if (PROFILE_GetWineIniString ( "Registry",
-						"LocalMachineFileName",	"", fn, MAX_PATHNAME_LEN - 1))
-    {
-        _savereg(lookup_hkey(HKEY_LOCAL_MACHINE), fn, all);
-        usedCfgLM = 1;
-    }
-    free (fn);
+        break;
+    case HKEY_LOCAL_MACHINE:
+        /* Try first saving according to the defined location in .winerc */
+        fn = xmalloc ( MAX_PATHNAME_LEN);
+        if (writeToAlt && PROFILE_GetWineIniString( "Registry", "AltLocalMachineFile", "", 
+                                                    fn, MAX_PATHNAME_LEN - 1))
+            _savereg(lookup_hkey(HKEY_LOCAL_MACHINE), fn, all);
+        free (fn);
 
-    if ( usedCfgLM != 1)
-    {
-					fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
-									   strlen(SAVE_LOCAL_MACHINE) + 2);
-        strcpy(fn,home);
-        strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
+        if (home && writeToHome)
+        {
+            fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
+                               strlen(SAVE_LOCAL_MACHINE) + 2);
+            strcpy(fn,home);
+            strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
 
-        tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
-        strcpy(tmp,fn);
-        strcat(tmp,".tmp");
+            tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
+            strcpy(tmp,fn);
+            strcat(tmp,".tmp");
 
-        if (_savereg(lookup_hkey(HKEY_LOCAL_MACHINE),tmp,all)) {
-            if (-1==rename(tmp,fn)) {
-                perror("rename tmp registry");
-                unlink(tmp);
+            if (_savereg(lookup_hkey(HKEY_LOCAL_MACHINE),tmp,all)) {
+                if (-1==rename(tmp,fn)) {
+                    perror("rename tmp registry");
+                    unlink(tmp);
+                }
             }
+            free(tmp);
+            free(fn);
         }
-        free(tmp);
-        free(fn);
-    }
-			}
-			break;
-		case HKEY_USERS:
-			fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
-							   strlen(SAVE_LOCAL_USERS_DEFAULT) + 2);
+        break;
+    case HKEY_USERS:
+        fn = xmalloc( MAX_PATHNAME_LEN );
+        if (writeToAlt && PROFILE_GetWineIniString( "Registry", "AltUserFile", "", 
+                                                    fn, MAX_PATHNAME_LEN - 1))
+            _savereg(lookup_hkey(HKEY_LOCAL_MACHINE), fn, all);
+        free (fn);
 
-    strcpy(fn,home);
-    strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_USERS_DEFAULT);
+        if (home && writeToHome)
+        {
+            fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
+                               strlen(SAVE_LOCAL_USERS_DEFAULT) + 2);
+            strcpy(fn,home);
+            strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_USERS_DEFAULT);
 
-    tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
-    strcpy(tmp,fn);strcat(tmp,".tmp");
-    if ( _savereg(lookup_hkey(HKEY_USERS),tmp,FALSE)) {
-        if (-1==rename(tmp,fn)) {
-            perror("rename tmp registry");
-            unlink(tmp);
+            tmp = (char*)xmalloc(strlen(fn)+strlen(".tmp")+1);
+            strcpy(tmp,fn);
+            strcat(tmp,".tmp");
+            if ( _savereg(lookup_hkey(HKEY_USERS),tmp,FALSE)) {
+                if (-1==rename(tmp,fn)) {
+                    perror("rename tmp registry");
+                    unlink(tmp);
+                }
+            }
+            free(tmp);
+            free(fn);
         }
+        break;
+    default:
+        ERR_(reg)("unknown/invalid key handle !\n");
+        break;
     }
-    free(tmp);
-    free(fn);
-			break;
-		default:
-			ERR_(reg)("unknown/invalid key handle !\n");
-		}
 }
 
 
@@ -1958,108 +1955,111 @@ void SHELL_LoadRegistry( void )
   HKU  = lookup_hkey(HKEY_USERS);
   HKLM = lookup_hkey(HKEY_LOCAL_MACHINE);
 
-  /* Load windows 3.1 entries */
-  _w31_loadreg();
-  /* Load windows 95 entries */
-  _w95_loadreg("C:\\system.1st",	HKLM);
-  _w95_loadreg("system.dat",	HKLM);
-  _w95_loadreg("user.dat",	HKU);
+  if (PROFILE_GetWineIniBool ("registry", "LoadWindowsRegistryFiles", 1)) 
+  { 
+      /* Load windows 3.1 entries */
+      _w31_loadreg();
+      /* Load windows 95 entries */
+      _w95_loadreg("C:\\system.1st",	HKLM);
+      _w95_loadreg("system.dat",	HKLM);
+      _w95_loadreg("user.dat",	HKU);
+  }
 
-  /* 
-   * Load the global HKU hive directly from sysconfdir
-   */ 
-  _wine_loadreg( HKU, SAVE_USERS_DEFAULT, 0);
+  if (PROFILE_GetWineIniBool ("registry","LoadGlobalRegistryFiles", 1))
+  {
+      /* 
+       * Load the global HKU hive directly from sysconfdir
+       */ 
+      _wine_loadreg( HKU, SAVE_USERS_DEFAULT, 0);
 
-  /* 
-   * Load the global machine defaults directly form sysconfdir
-   */
-  _wine_loadreg( HKLM, SAVE_LOCAL_MACHINE_DEFAULT, 0);
+      /* 
+       * Load the global machine defaults directly form sysconfdir
+       */
+      _wine_loadreg( HKLM, SAVE_LOCAL_MACHINE_DEFAULT, 0);
+  }
 
   /*
    * Load the user saved registries 
    */
-  if ((home = getenv( "HOME" )))
+  if (!(home = getenv( "HOME" )))
+      WARN_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
+  else if (PROFILE_GetWineIniBool("registry", "LoadHomeRegistryFiles", 0))
   {
-    /* 
-     * Load user's personal versions of global HKU/.Default keys
-     */
-    fn=(char*)xmalloc(
-                strlen(home)+
-                strlen(WINE_PREFIX)+
-                strlen(SAVE_LOCAL_USERS_DEFAULT)+2);
+      /* 
+       * Load user's personal versions of global HKU/.Default keys
+       */
+      fn=(char*)xmalloc( strlen(home)+ strlen(WINE_PREFIX) +
+                         strlen(SAVE_LOCAL_USERS_DEFAULT)+2);
+      strcpy(fn, home);
+      strcat(fn, WINE_PREFIX"/"SAVE_LOCAL_USERS_DEFAULT);
+      _wine_loadreg(HKU, fn, REG_OPTION_TAINTED); 
+      free(fn);
 
-    strcpy(fn, home);
-    strcat(fn, WINE_PREFIX"/"SAVE_LOCAL_USERS_DEFAULT);
-    _wine_loadreg(HKU, fn, REG_OPTION_TAINTED); 
-    free(fn);
+      fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) + strlen(SAVE_CURRENT_USER)+2);
+      strcpy(fn, home);
+      strcat(fn, WINE_PREFIX"/"SAVE_CURRENT_USER);
+      _wine_loadreg(HKCU, fn, REG_OPTION_TAINTED);
+      free(fn);
 
-    /* 
-     * Load HKCU, attempt to get the registry location from the config 
-     * file first, if exist, load and keep going.
-     */      
-    fn = xmalloc( MAX_PATHNAME_LEN ); 
-    if ( PROFILE_GetWineIniString(
-          "Registry", 
-          "UserFileName", 
-          "", 
-          fn, 
-          MAX_PATHNAME_LEN - 1)) 
-    {
-      _wine_loadreg(HKCU,fn,0);
-    }
-  	free (fn);
-
-    fn=(char*)xmalloc(
-                strlen(home)+
-                strlen(WINE_PREFIX)+
-                strlen(SAVE_CURRENT_USER)+2);
-
-    strcpy(fn, home);
-    strcat(fn, WINE_PREFIX"/"SAVE_CURRENT_USER);
-    _wine_loadreg(HKCU, fn, REG_OPTION_TAINTED);
-    free(fn);
-
-    /* 
-     * Load HKLM, attempt to get the registry location from the config 
-     * file first, if exist, load and keep going.
-     */      
-    fn = xmalloc ( MAX_PATHNAME_LEN);
-    if ( PROFILE_GetWineIniString(
-          "Registry", 
-          "LocalMachineFileName", 
-          "", 
-          fn, 
-          MAX_PATHNAME_LEN - 1))
-    {
-        _wine_loadreg(HKLM, fn, 0);
-    }
-    free(fn);
-
-    fn=(char*)xmalloc(
-                strlen(home)+
-                strlen(WINE_PREFIX)+
-                strlen(SAVE_LOCAL_MACHINE)+2);
-
-    strcpy(fn,home);
-    strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
-    _wine_loadreg(HKLM, fn, REG_OPTION_TAINTED);
-    free(fn);
+      /* 
+       * Load HKLM, attempt to get the registry location from the config 
+       * file first, if exist, load and keep going.
+       */
+      fn=(char*)xmalloc( strlen(home)+ strlen(WINE_PREFIX)+ strlen(SAVE_LOCAL_MACHINE)+2);
+      strcpy(fn,home);
+      strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
+      _wine_loadreg(HKLM, fn, REG_OPTION_TAINTED);
+      free(fn);
   }
-  else
+  
+  /* 
+   * Load HKCU, get the registry location from the config 
+   * file, if exist, load and keep going.
+   */      
+  if (PROFILE_GetWineIniBool ( "registry", "LoadAltRegistryFiles", 1))
   {
-    WARN_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
-  }
-
+      fn = xmalloc( MAX_PATHNAME_LEN ); 
+      if ( PROFILE_GetWineIniString( "registry", "AltCurrentUserFile", "", 
+                                     fn, MAX_PATHNAME_LEN - 1)) 
+       {
+         _wine_loadreg(HKCU,fn,REG_OPTION_TAINTED);
+       }
+      free (fn);
+      /*
+       * Load HKU, get the registry location from the config
+       * file, if exist, load and keep going.
+       */
+      fn = xmalloc ( MAX_PATHNAME_LEN );
+      if ( PROFILE_GetWineIniString ( "registry", "AltUserFile", "",
+                                      fn, MAX_PATHNAME_LEN - 1))
+       {
+         _wine_loadreg(HKU,fn,REG_OPTION_TAINTED);
+       }
+      free (fn);
+      /*
+       * Load HKLM, get the registry location from the config
+       * file, if exist, load and keep going.
+       */
+      fn = xmalloc ( MAX_PATHNAME_LEN );
+      if (PROFILE_GetWineIniString ( "registry", "AltLocalMachineFile", "",
+                                     fn, MAX_PATHNAME_LEN - 1))
+       {
+         _wine_loadreg(HKLM,fn,REG_OPTION_TAINTED); 
+       }
+      free (fn);
+    }
+  
   /* 
    * Obtain the handle of the HKU\.Default key.
    * in order to copy HKU\.Default\* onto HKEY_CURRENT_USER 
    */
   RegCreateKey16(HKEY_USERS,".Default",&hkey);
   lpkey = lookup_hkey(hkey);
-  if(!lpkey)
+  if(!lpkey){
      WARN_(reg)("Could not create global user default key\n");
-  else
+  } else {
     _copy_registry(lpkey, HKCU );
+  }
 
   RegCloseKey(hkey);
 
@@ -2074,7 +2074,7 @@ void SHELL_LoadRegistry( void )
   _flush_registry(HKU); 
 
   /* Reload user's local HKU hive */
-  if (home)
+  if (home && PROFILE_GetWineIniBool ("registry","LoadHomeRegistryFiles",1))
   {
       fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX)
                          + strlen(SAVE_LOCAL_USERS_DEFAULT) + 2);
