@@ -26,30 +26,30 @@ Registry Command Line API Tool
 
   1 - Parse the before.reg and after.reg file into regFixer.pl, in order to 
       obtain lines in the form [HKEY\Sub1\Sub2\...\Subn]"Value"="Data"  
-      (where "Data" can be prefixed by the type identifyer : hex:, hex(0000000?) 
+      (where "Data" can be prefixed by the type identifier : hex:, hex(0000000?) 
       or dword:)
 
   2 - Generate the diff between the before.reg.fix and after.reg.fix 
       into app.diff
 
   Now we have a app.reg file that contain what has been done by installing the
-  application.  To this we extract the part's that we are interested in using 
+  application.  To this we extract the parts that we are interested in using 
   grep (and fix it with sed) and put that into app.added by example 
-  ( let say we keep the added values only ).
+  ( let's say we keep the added values only ).
 
   At this point we know which registry entry to add to the wine registry.  It 
   only remains to take the format we have and reset it into a format similar
   to the one we get from regedit.
 
   I say "similar" because there is a tiny difference between Windows regedit 
-  export format and the format actualy required by the tool.
+  export format and the format actually required by the tool.
 
-  The problem with this (and it is not a big one) is that regedit export long 
-  data streams onto many lines, and since I dont have tons of time I setup 
+  The problem with this (and it is not a big one) is that regedit exports long 
+  data streams onto many lines, and since I don't have tons of time I setup 
   another Perl script (regRestorer.pl) that fixes this (this could easily 
-  be done in C obviously) (left as excercise ;-) ).  
+  be done in C obviously) (left as exercise ;-) ).  
     
-  So, once you parsed app.added into regRestorer.pl you get a app.reg ready to 
+  So, once you parsed app.added into regRestorer.pl you get an app.reg ready to 
   process by regapi.
 
   So, this package comes with a few pieces:
@@ -70,7 +70,7 @@ FAQ
   Quick Start Guide
   -----------------
   1 - Get a snapshot of your windows registry in before.reg, (regedit/export)
-  2 - Install you're application,
+  2 - Install your application,
   3 - Get a snapshot of your windows registry in after.reg.
   4 - Invoke ./regSet.sh before.reg after.reg
 

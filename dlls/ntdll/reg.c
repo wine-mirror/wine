@@ -87,6 +87,7 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
         }
     }
     SERVER_END_REQ;
+    TRACE("<- 0x%04x\n", *retkey);
     return ret;
 }
 
@@ -119,6 +120,7 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
         *retkey = req->hkey;
     }
     SERVER_END_REQ;
+    TRACE("<- 0x%04x\n", *retkey);
     return ret;
 }
 
