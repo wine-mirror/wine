@@ -36,6 +36,14 @@
 #include "parser.h"
 #include "header.h"
 
+#define END_OF_LIST(list)       \
+  do {                          \
+    if (list) {                 \
+      while (NEXT_LINK(list))   \
+        list = NEXT_LINK(list); \
+    }                           \
+  } while(0)
+
 static FILE* proxy;
 static int indent = 0;
 
@@ -56,7 +64,7 @@ int print_proxy( char *format, ... )
 
 static type_t *get_base_type( type_t *type )
 {
-  while( type->ref )
+  while( (type->type == 0) && type->ref )
     type = type->ref;
   return type;
 }
@@ -151,10 +159,7 @@ static void init_proxy(void)
 
 static void clear_output_vars( var_t *arg )
 {
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
     if (is_attr(arg->attrs, ATTR_OUT) && !is_attr(arg->attrs, ATTR_IN)) {
       print_proxy( "if(%s)\n", arg->name );
@@ -168,14 +173,34 @@ static void clear_output_vars( var_t *arg )
   }
 }
 
+static int is_pointer(var_t *arg)
+{
+  if (arg->ptr_level)
+    return 1;
+  if (arg->type->type == RPC_FC_FP )
+    return 1;
+  return 0;
+}
+
+static void proxy_check_pointers( var_t *arg )
+{
+  END_OF_LIST(arg);
+  while (arg) {
+    if (is_pointer(arg)) {
+        print_proxy( "if(!%s)\n", arg->name );
+        indent++;
+        print_proxy( "RpcRaiseException(RPC_X_NULL_REF_POINTER);\n");
+        indent--;
+    }
+    arg = PREV_LINK(arg);
+  }
+}
+
 static void proxy_gen_marshall_size( var_t *arg )
 {
   print_proxy( "_StubMsg.BufferLength = 0U;\n" );
 
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
     if (is_attr(arg->attrs, ATTR_IN)) {
       int index = 0;
@@ -188,6 +213,7 @@ static void proxy_gen_marshall_size( var_t *arg )
         print_proxy( "_StubMsg.BufferLength += %d; /* %s */\n", 1, arg->name );
         break;
 
+      case RPC_FC_WCHAR:
       case RPC_FC_SHORT:
       case RPC_FC_USHORT:
       case RPC_FC_ENUM16:
@@ -205,6 +231,11 @@ static void proxy_gen_marshall_size( var_t *arg )
         fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d] );\n", index );
         break;
 
+      case RPC_FC_FP:
+        print_proxy( "NdrConformantArrayBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name );
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
+        break;
+
       case RPC_FC_IP:
         print_proxy( "NdrPointerBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name );
         fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
@@ -220,10 +251,7 @@ static void proxy_gen_marshall_size( var_t *arg )
 
 static void gen_marshall_copydata( var_t *arg )
 {
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
     if (is_attr(arg->attrs, ATTR_IN)) {
       int index = 0;
@@ -233,6 +261,7 @@ static void gen_marshall_copydata( var_t *arg )
       {
       case RPC_FC_BYTE:
       case RPC_FC_CHAR:
+      case RPC_FC_WCHAR:
       case RPC_FC_SHORT:
       case RPC_FC_USHORT:
       case RPC_FC_ENUM16:
@@ -247,6 +276,11 @@ static void gen_marshall_copydata( var_t *arg )
       case RPC_FC_STRUCT:
         /* FIXME: add the format string, and set the index below */
         print_proxy( "NdrSimpleStructMarshall(&_StubMsg, (unsigned char*)%s, ", arg->name );
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
+        break;
+
+      case RPC_FC_FP:
+        print_proxy( "NdrConformantArrayMarshall( &_StubMsg, (unsigned char*)%s, ", arg->name );
         fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
         break;
 
@@ -279,26 +313,53 @@ static void gen_marshall( var_t *arg )
 
 static void gen_unmarshall( var_t *arg )
 {
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
-    if (is_attr(arg->attrs, ATTR_IN)) {
+    if (is_attr(arg->attrs, ATTR_OUT)) {
       int index = 0;
-      print_proxy( "NdrPointerUnmarshall(&_StubMsg, (unsigned char**)&%s, ", arg->name );
-      fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
-    }
+      type_t *type = get_base_type(arg->type);
+
+      switch( type->type )
+      {
+      case RPC_FC_BYTE:
+      case RPC_FC_CHAR:
+      case RPC_FC_WCHAR:
+      case RPC_FC_SHORT:
+      case RPC_FC_USHORT:
+      case RPC_FC_ENUM16:
+      case RPC_FC_LONG:
+      case RPC_FC_ULONG:
+      case RPC_FC_ENUM32:
+        print_proxy( "%s = *((", arg->name );
+        write_type(proxy, arg->type, arg, arg->tname);
+        fprintf(proxy,"*)_StubMsg.Buffer)++;\n");
+        break;
+          
+      case RPC_FC_STRUCT:
+        print_proxy( "NdrSimpleStructUnmarshall(&_StubMsg, (unsigned char**)%s, ", arg->name );
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
+        break;
+
+      case RPC_FC_FP:
+        print_proxy( "NdrSimpleStructUnmarshall(&_StubMsg, (unsigned char**)%s, ", arg->name );
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
+        break;
+
+      case RPC_FC_IP:
+        print_proxy( "NdrPointerUnmarshall(&_StubMsg, (unsigned char**)&%s, ", arg->name );
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
+        break;
+
+      default:
+        printf("FIXME: arg %s has unknown type %d\n", arg->name, type->type );
+      }    }
     arg = PREV_LINK(arg);
   }
 }
 
 static void proxy_free_variables( var_t *arg )
 {
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
     if (is_attr(arg->attrs, ATTR_OUT)) {
       var_t *constraint;
@@ -309,6 +370,7 @@ static void proxy_free_variables( var_t *arg )
       {
       case RPC_FC_BYTE:
       case RPC_FC_CHAR:
+      case RPC_FC_WCHAR:
       case RPC_FC_SHORT:
       case RPC_FC_USHORT:
       case RPC_FC_ENUM16:
@@ -318,6 +380,7 @@ static void proxy_free_variables( var_t *arg )
       case RPC_FC_STRUCT:
         break;
 
+      case RPC_FC_FP:
       case RPC_FC_IP:
         constraint = get_attrp( arg->attrs, ATTR_IIDIS );
         if( constraint )
@@ -342,7 +405,7 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
 
   indent = 0;
   write_type(proxy, def->type, def, def->tname);
-  print_proxy( " CALLBACK %s_", iface->name);
+  print_proxy( " STDMETHODCALLTYPE %s_", iface->name);
   write_name(proxy, def);
   print_proxy( "_Proxy(\n");
   write_args(proxy, cur->args, iface->name, 1, TRUE);
@@ -366,6 +429,7 @@ static void gen_proxy(type_t *iface, func_t *cur, int idx)
   print_proxy( "{\n" );
   indent++;
   print_proxy( "NdrProxyInitialize(This, &_Msg, &_StubMsg, &Object_StubDesc, %d);\n", idx);
+  proxy_check_pointers( cur->args );
 
   print_proxy( "RpcTryFinally\n" );
   print_proxy( "{\n" );
@@ -444,7 +508,6 @@ static void stub_write_locals( var_t *arg )
     write_type(proxy, arg->type, arg, arg->tname);
     fprintf(proxy, " ");
     write_name(proxy, arg);
-    /* if (outptr) fprintf(proxy, " = &_M%d;\n",n++); */
     fprintf(proxy, ";\n");
     arg = NEXT_LINK(arg);
   }
@@ -453,19 +516,17 @@ static void stub_write_locals( var_t *arg )
 static void stub_unmarshall( var_t *arg )
 {
   int n = 0;
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
+    type_t *type = get_base_type(arg->type);
     if (is_attr(arg->attrs, ATTR_IN)) {
       int index = 0;
-      type_t *type = get_base_type(arg->type);
 
       switch( type->type )
       {
       case RPC_FC_BYTE:
       case RPC_FC_CHAR:
+      case RPC_FC_WCHAR:
       case RPC_FC_SHORT:
       case RPC_FC_USHORT:
       case RPC_FC_ENUM16:
@@ -477,10 +538,11 @@ static void stub_unmarshall( var_t *arg )
         fprintf(proxy,"*)_StubMsg.Buffer)++;\n");
         break;
           
+      case RPC_FC_FP:
       case RPC_FC_STRUCT:
         /* FIXME: add the format string, and set the index below */
         print_proxy( "NdrSimpleStructUnmarshall(&_StubMsg, (unsigned char**)&%s, ", arg->name );
-        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d],0);\n", index );
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], 0);\n", index );
         break;
 
       default:
@@ -488,10 +550,22 @@ static void stub_unmarshall( var_t *arg )
       }
     }
     else if (is_attr(arg->attrs, ATTR_OUT)) {
-      print_proxy("");
-      write_name(proxy, arg);
-      fprintf(proxy," = &_M%d;\n", n);
-      print_proxy("_M%d = 0;\n", n++);
+      switch( type->type )
+      {
+      case RPC_FC_STRUCT:
+        print_proxy("MIDL_memset(");
+        write_name(proxy, arg);
+        fprintf(proxy,", 0, sizeof(");
+        write_type(proxy, arg->type, arg, arg->tname);
+        fprintf(proxy,"));\n");
+        break;
+      default:
+        print_proxy("");
+        write_name(proxy, arg);
+        fprintf(proxy," = &_M%d;\n", n);
+        print_proxy("_M%d = 0;\n", n++);
+        break;
+      }
     }
     arg = PREV_LINK(arg);
   }
@@ -501,10 +575,7 @@ static void stub_gen_marshall_size( var_t *arg )
 {
   print_proxy( "_StubMsg.BufferLength = 0U;\n" );
 
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
     if (is_attr(arg->attrs, ATTR_OUT)) {
       int index = 0;
@@ -518,6 +589,7 @@ static void stub_gen_marshall_size( var_t *arg )
         print_proxy( "_StubMsg.BufferLength += %d; /* %s */\n", 1, arg->name );
         break;
 
+      case RPC_FC_WCHAR:
       case RPC_FC_SHORT:
       case RPC_FC_USHORT:
       case RPC_FC_ENUM16:
@@ -530,6 +602,9 @@ static void stub_gen_marshall_size( var_t *arg )
         print_proxy( "_StubMsg.BufferLength += %d; /* %s */\n", 4, arg->name );
         break;
           
+      case RPC_FC_FP:
+        print_proxy( "/*FIXME %s*/\n", arg->name );
+        break;
       case RPC_FC_STRUCT:
         print_proxy( "NdrSimpleStructBufferSize(&_StubMsg, (unsigned char*)%s, ", arg->name );
         fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d] );\n", index );
@@ -553,20 +628,22 @@ static void stub_gen_marshall_size( var_t *arg )
 
 static void stub_gen_marshall_copydata( var_t *arg )
 {
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+  END_OF_LIST(arg);
   while (arg) {
     if (is_attr(arg->attrs, ATTR_OUT)) {
       var_t *constraint;
       int index = 0;
       type_t *type = get_base_type(arg->type);
 
-      switch( type->type )
+      if( arg->array )
+      {
+        fprintf(stderr,"FIXME: param %s is an array\n", arg->name);
+      }
+      else switch( type->type )
       {
       case RPC_FC_BYTE:
       case RPC_FC_CHAR:
+      case RPC_FC_WCHAR:
       case RPC_FC_SHORT:
       case RPC_FC_USHORT:
       case RPC_FC_ENUM16:
@@ -581,6 +658,11 @@ static void stub_gen_marshall_copydata( var_t *arg )
       case RPC_FC_STRUCT:
         /* FIXME: add the format string, and set the index below */
         print_proxy( "NdrSimpleStructMarshall(&_StubMsg, (unsigned char*)%s, ", arg->name );
+        fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
+        break;
+
+      case RPC_FC_FP:
+        print_proxy( "NdrConformantArrayBufferSize( &_StubMsg, (unsigned char*)%s, ", arg->name );
         fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d]);\n", index );
         break;
 
@@ -634,7 +716,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
     write_type(proxy, def->type, def, def->tname);
     fprintf(proxy, " _RetVal;\n");
   }
-  print_proxy("%s* _This = (%s*)((CStdStubBuffer*)This)->pvServerObject;\n", iface->name, iface->name);
+  print_proxy("%s * _This = (%s*)((CStdStubBuffer*)This)->pvServerObject;\n", iface->name, iface->name);
   print_proxy("MIDL_STUB_MESSAGE _StubMsg;\n");
   stub_write_locals( cur->args );
   fprintf(proxy, "\n");
@@ -666,7 +748,7 @@ static void gen_stub(type_t *iface, func_t *cur, char *cas)
   fprintf(proxy, "(_This");
   arg = cur->args;
   if (arg) {
-    while (NEXT_LINK(arg)) arg = NEXT_LINK(arg);
+    END_OF_LIST(arg);
     while (arg) {
       fprintf(proxy, ", ");
       write_name(proxy, arg);
@@ -712,7 +794,8 @@ static int write_proxy_methods(type_t *iface)
 {
   func_t *cur = iface->funcs;
   int i = 0;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+
+  END_OF_LIST(cur);
 
   if (iface->ref) i = write_proxy_methods(iface->ref);
   while (cur) {
@@ -733,7 +816,8 @@ static int write_stub_methods(type_t *iface)
 {
   func_t *cur = iface->funcs;
   int i = 0;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+
+  END_OF_LIST(cur);
 
   if (iface->ref) i = write_stub_methods(iface->ref);
   else return i; /* skip IUnknown */
@@ -757,13 +841,10 @@ static void write_proxy(type_t *iface)
   func_t *cur = iface->funcs;
 
   if (!cur) return;
-  if (!do_everything) return;
 
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+  END_OF_LIST(cur);
 
   /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */
-
-  init_proxy();
 
   fprintf(proxy, "/*****************************************************************************\n");
   fprintf(proxy, " * %s interface\n", iface->name);
@@ -788,8 +869,6 @@ static void write_proxy(type_t *iface)
     }
     cur = PREV_LINK(cur);
   }
-
-  write_stubdesc();
 
   /* proxy vtable */
   print_proxy( "const CINTERFACE_PROXY_VTABLE(%d) %sProxyVtbl =\n", midx, iface->name);
@@ -821,12 +900,6 @@ static void write_proxy(type_t *iface)
   indent--;
   print_proxy( "};\n");
   print_proxy( "\n");
-  print_proxy( "#if !defined(__RPC_WIN32__)\n");
-  print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
-  print_proxy( "#endif\n");
-  print_proxy( "\n");
-  write_formatstring( 1 );
-  write_formatstring( 0 );
 }
 
 void write_proxies(ifref_t *ifaces)
@@ -836,8 +909,11 @@ void write_proxies(ifref_t *ifaces)
   char *file_id = proxy_token;
   int c;
 
+  if (!do_everything) return;
   if (!lcur) return;
-  while (NEXT_LINK(lcur)) lcur = NEXT_LINK(lcur);
+  END_OF_LIST(lcur);
+
+  init_proxy();
 
   cur = lcur;
   while (cur) {
@@ -848,11 +924,21 @@ void write_proxies(ifref_t *ifaces)
 
   if (!proxy) return;
 
+  write_stubdesc();
+
+  print_proxy( "#if !defined(__RPC_WIN32__)\n");
+  print_proxy( "#error Currently only Wine and WIN32 are supported.\n");
+  print_proxy( "#endif\n");
+  print_proxy( "\n");
+  write_formatstring( 1 );
+  write_formatstring( 0 );
+
   fprintf(proxy, "const CInterfaceProxyVtbl* _%s_ProxyVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
   cur = lcur;
   while (cur) {
-    if(cur->iface->ref)
+    if(cur->iface->ref && cur->iface->funcs &&
+       is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
       fprintf(proxy, "    (CInterfaceProxyVtbl*)&%sProxyVtbl,\n", cur->iface->name);
     cur = PREV_LINK(cur);
   }
@@ -864,7 +950,8 @@ void write_proxies(ifref_t *ifaces)
   fprintf(proxy, "{\n");
   cur = lcur;
   while (cur) {
-    if(cur->iface->ref)
+    if(cur->iface->ref && cur->iface->funcs &&
+       is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
       fprintf(proxy, "    (CInterfaceStubVtbl*)&%sStubVtbl,\n", cur->iface->name);
     cur = PREV_LINK(cur);
   }
@@ -876,7 +963,8 @@ void write_proxies(ifref_t *ifaces)
   fprintf(proxy, "{\n");
   cur = lcur;
   while (cur) {
-    if(cur->iface->ref)
+    if(cur->iface->ref && cur->iface->funcs &&
+       is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
       fprintf(proxy, "    \"%s\",\n", cur->iface->name);
     cur = PREV_LINK(cur);
   }

@@ -1063,6 +1063,16 @@ static type_t *reg_type(type_t *type, char *name, int t)
   return type;
 }
 
+/* determine pointer type from attrs */
+static unsigned char get_pointer_type( type_t *type )
+{
+    if( is_attr( type->attrs, ATTR_SIZEIS ) )
+        return RPC_FC_CARRAY;
+    if( type->fields )
+        return RPC_FC_CSTRUCT;
+    return RPC_FC_FP;
+}
+
 static type_t *reg_types(type_t *type, var_t *names, int t)
 {
   type_t *ptr = type;
@@ -1075,7 +1085,8 @@ static type_t *reg_types(type_t *type, var_t *names, int t)
       int cptr = names->ptr_level;
       if (cptr > ptrc) {
         while (cptr > ptrc) {
-          cur = ptr = make_type(RPC_FC_FP, cur); /* FIXME: pointer type from attrs? */
+          int t = get_pointer_type( cur );
+          cur = ptr = make_type(t, cur);
           ptrc++;
         }
       } else {
