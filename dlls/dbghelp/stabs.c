@@ -1086,6 +1086,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
     struct symt_block*          block = NULL;
     struct symt_compiland*      compiland = NULL;
     char                        currpath[PATH_MAX];
+    char                        srcpath[PATH_MAX];
     int                         i, j;
     int                         nstab;
     const char*                 ptr;
@@ -1108,6 +1109,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
     strs = (const char*)(addr + strtaboff);
 
     memset(currpath, 0, sizeof(currpath));
+    memset(srcpath, 0, sizeof(srcpath));
     memset(stabs_basic, 0, sizeof(stabs_basic));
 
     /*
@@ -1385,17 +1387,30 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             }
             else
             {
-                if (*ptr != '/')
-                    strcat(currpath, ptr);
-                else
-                    strcpy(currpath, ptr);
                 stabs_reset_includes();
-                compiland = symt_new_compiland(module, currpath);
-                source_idx = source_new(module, currpath);
+                if (*ptr != '/')
+                {
+                    strcpy(currpath, srcpath);
+                    strcat(currpath, ptr);
+                    compiland = symt_new_compiland(module, currpath);
+                    source_idx = source_new(module, currpath);
+                }
+                else
+                {
+                    strcpy(srcpath, ptr);
+                    compiland = symt_new_compiland(module, srcpath);
+                    source_idx = source_new(module, srcpath);
+                }
             }
             break;
         case N_SOL:
-            strcpy(currpath, ptr);
+            if (*ptr != '/')
+            {
+                strcpy(currpath, srcpath);
+                strcat(currpath, ptr);
+            }
+            else
+                strcpy(currpath, ptr);
             source_idx = source_new(module, currpath);
             break;
         case N_UNDF:
