@@ -627,10 +627,10 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 /***********************************************************************
  *           DIALOG_CreateIndirect
  */
-HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
-                              BOOL win32Template, HWND owner,
-                              DLGPROC16 dlgProc, LPARAM param,
-                              WINDOWPROCTYPE procType )
+static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
+                                   BOOL win32Template, HWND owner,
+                                   DLGPROC16 dlgProc, LPARAM param,
+                                   WINDOWPROCTYPE procType )
 {
     HMENU16 hMenu = 0;
     HFONT16 hFont = 0;
@@ -952,7 +952,7 @@ HWND WINAPI CreateDialogIndirectParamW( HINSTANCE hInst,
 /***********************************************************************
  *           DIALOG_DoDialogBox
  */
-INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
+static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;

@@ -39,10 +39,5 @@ typedef struct
 #define DF_END  0x0001
 
 extern BOOL DIALOG_Init(void);
-extern HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
-                                     BOOL win32Template, HWND owner,
-                                     DLGPROC16 dlgProc, LPARAM param,
-                                     WINDOWPROCTYPE procType );
-extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner );
 
 #endif  /* __WINE_DIALOG_H */

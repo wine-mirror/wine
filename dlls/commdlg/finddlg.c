@@ -1,5 +1,5 @@
 /*
- * COMMDLG - Find & Replace Text Dialogs
+ * COMMDLG - 16 bits Find & Replace Text Dialogs
  *
  * Copyright 1994 Martin Ayotte
  * Copyright 1996 Albrecht Kleine
@@ -10,10 +10,9 @@
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "ldt.h"
+#include "wine/winuser16.h"
 #include "commdlg.h"
-#include "dialog.h"
-#include "dlgs.h"
+#include "ldt.h"
 #include "module.h"
 #include "debugtools.h"
 #include "winproc.h"
@@ -23,53 +22,132 @@ DEFAULT_DEBUG_CHANNEL(commdlg)
 
 #include "cdlg.h"
 
+struct FRPRIVATE 
+{
+    HANDLE16 hDlgTmpl16; /* handle for resource 16 */
+    HANDLE16 hResource16; /* handle for allocated resource 16 */
+    HANDLE16 hGlobal16; /* 16 bits mem block (resources) */
+    LPCVOID template; /* template for 32 bits resource */
+    BOOL find; /* TRUE if find dialog, FALSE if replace dialog */
+    FINDREPLACE16 *fr16;
+};
+
+#define LFRPRIVATE struct FRPRIVATE *
+
 LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                  LPARAM lParam);
 LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 				    LPARAM lParam);
 
 /***********************************************************************
- *           FindTextDlgProc [internal]
+ *           FINDDLG_Get16BitsTemplate                                [internal]
  *
- * FIXME: Convert to real 32-bit message processing
+ * Get a template (FALSE if failure) when 16 bits dialogs are used
+ * by a 16 bits application
+ * FIXME : no test was done for the user-provided template cases
  */
-static LRESULT WINAPI FindTextDlgProc(HWND hDlg, UINT msg,
-                                      WPARAM wParam, LPARAM lParam)
+BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
 {
-    UINT16 msg16;
-    MSGPARAM16 mp16;
+    LPFINDREPLACE16 fr16 = lfr->fr16;
 
-    mp16.lParam = lParam;
-    if (WINPROC_MapMsg32ATo16( hDlg, msg, wParam,
-                               &msg16, &mp16.wParam, &mp16.lParam ) == -1)
-        return 0;
-    mp16.lResult = FindTextDlgProc16( (HWND16)hDlg, msg16, 
-                                      mp16.wParam, mp16.lParam );
-    
-    WINPROC_UnmapMsg32ATo16( hDlg, msg, wParam, lParam, &mp16 );
-    return mp16.lResult;
+    if (fr16->Flags & FR_ENABLETEMPLATEHANDLE)
+    {
+        lfr->template = GlobalLock16(fr16->hInstance);
+        if (!lfr->template)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
+            return FALSE;
+        }
+    }
+    else if (fr16->Flags & FR_ENABLETEMPLATE)
+    {
+	HANDLE16 hResInfo;
+	if (!(hResInfo = FindResource16(fr16->hInstance,
+					fr16->lpTemplateName,
+                                        RT_DIALOG16)))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	    return FALSE;
+	}
+	if (!(lfr->hDlgTmpl16 = LoadResource16( fr16->hInstance, hResInfo )))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	    return FALSE;
+	}
+        lfr->hResource16 = lfr->hDlgTmpl16;
+        lfr->template = LockResource16(lfr->hResource16);
+        if (!lfr->template)
+        {
+            FreeResource16(lfr->hResource16);
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
+            return FALSE;
+        }
+    }
+    else
+    { /* get resource from (32 bits) own Wine resource; convert it to 16 */
+	HANDLE hResInfo, hDlgTmpl32;
+        LPCVOID template32;
+        DWORD size;
+        HGLOBAL16 hGlobal16;
+
+	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, 
+               lfr->find ?
+               MAKEINTRESOURCEA(FINDDLGORD):MAKEINTRESOURCEA(REPLACEDLGORD),
+               RT_DIALOGA)))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+	    return FALSE;
+	}
+	if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
+	    !(template32 = LockResource( hDlgTmpl32 )))
+	{
+	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+	    return FALSE;
+	}
+        size = SizeofResource(GetModuleHandleA("COMDLG32"), hResInfo);
+        hGlobal16 = GlobalAlloc16(0, size);
+        if (!hGlobal16)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+            ERR("alloc failure for %ld bytes\n", size);
+            return FALSE;
+        }
+        lfr->template = GlobalLock16(hGlobal16);
+        if (!lfr->template)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
+            ERR("global lock failure for %x handle\n", hGlobal16);
+            GlobalFree16(hGlobal16);
+            return FALSE;
+        }
+        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)lfr->template);
+        lfr->hDlgTmpl16 = hGlobal16;
+        lfr->hGlobal16 = hGlobal16;
+    }
+    return TRUE;
 }
 
-/***********************************************************************
- *           ReplaceTextDlgProc [internal]
- *
- * FIXME: Convert to real 32-bit message processing
- */
-static LRESULT WINAPI ReplaceTextDlgProc(HWND hDlg, UINT msg,
-                                      WPARAM wParam, LPARAM lParam)
-{
-    UINT16 msg16;
-    MSGPARAM16 mp16;
 
-    mp16.lParam = lParam;
-    if (WINPROC_MapMsg32ATo16( hDlg, msg, wParam,
-                               &msg16, &mp16.wParam, &mp16.lParam ) == -1)
-        return 0;
-    mp16.lResult = ReplaceTextDlgProc16( (HWND16)hDlg, msg16, 
-                                         mp16.wParam, mp16.lParam );
-    
-    WINPROC_UnmapMsg32ATo16( hDlg, msg, wParam, lParam, &mp16 );
-    return mp16.lResult;
+/***********************************************************************
+ *           FINDDLG_FreeResources                                [internal]
+ *
+ * Free resources allocated 
+ */
+void FINDDLG_FreeResources(LFRPRIVATE lfr)
+{
+    /* free resources */
+    if (lfr->fr16->Flags & FR_ENABLETEMPLATEHANDLE)
+        GlobalUnlock16(lfr->fr16->hInstance);
+    if (lfr->hResource16)
+    {
+        GlobalUnlock16(lfr->hResource16);
+        FreeResource16(lfr->hResource16);
+    }
+    if (lfr->hGlobal16)
+    {
+        GlobalUnlock16(lfr->hGlobal16);
+        GlobalFree16(lfr->hGlobal16);
+    }
 }
 
 /***********************************************************************
@@ -78,31 +156,23 @@ static LRESULT WINAPI ReplaceTextDlgProc(HWND hDlg, UINT msg,
 HWND16 WINAPI FindText16( SEGPTR find )
 {
     HANDLE16 hInst;
-    LPCVOID ptr;
-    HANDLE hResInfo, hDlgTmpl;
-    LPFINDREPLACE16 lpFind = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
+    HWND16 ret = 0;
+    FARPROC16 ptr;
+    LFRPRIVATE lfr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct FRPRIVATE));
 
-    /*
-     * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
-     * For now, only the standard dialog works.
-     */
-    if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
-	FR_ENABLEHOOK)) FIXME(": unimplemented flag (ignored)\n");     
-    if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, MAKEINTRESOURCEA(FINDDLGORD), RT_DIALOGA)))
+    if (!lfr) return 0;
+    lfr->fr16 = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
+    lfr->find = TRUE;
+    if (FINDDLG_Get16BitsTemplate(lfr))
     {
-	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-	return FALSE;
+        hInst = GetWindowLongA( lfr->fr16->hwndOwner , GWL_HINSTANCE);
+        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 13);
+        ret = CreateDialogIndirectParam16( hInst, lfr->template,
+                    lfr->fr16->hwndOwner, (DLGPROC16) ptr, find);
+        FINDDLG_FreeResources(lfr);
     }
-    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
-        !(ptr = LockResource( hDlgTmpl )))
-    {
-	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	return FALSE;
-    }
-    hInst = GetWindowLongA( lpFind->hwndOwner , GWL_HINSTANCE);
-    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                                  (DLGPROC16)FindTextDlgProc,
-                                  find, WIN_PROC_32A );
+    HeapFree(GetProcessHeap(), 0, lfr);
+    return ret;
 }
 
 
@@ -112,31 +182,28 @@ HWND16 WINAPI FindText16( SEGPTR find )
 HWND16 WINAPI ReplaceText16( SEGPTR find )
 {
     HANDLE16 hInst;
-    LPCVOID ptr;
-    HANDLE hResInfo, hDlgTmpl;
-    LPFINDREPLACE16 lpFind = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
+    HWND16 ret = 0;
+    FARPROC16 ptr;
+    LFRPRIVATE lfr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct FRPRIVATE));
 
+    if (!lfr) return 0;
     /*
      * FIXME : We should do error checking on the lpFind structure here
      * and make CommDlgExtendedError() return the error condition.
      */
-    if (lpFind->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE | 
-	FR_ENABLEHOOK)) FIXME(": unimplemented flag (ignored)\n");     
-    if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, MAKEINTRESOURCEA(REPLACEDLGORD), RT_DIALOGA)))
+    lfr->fr16 = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
+    lfr->find = FALSE;
+    if (FINDDLG_Get16BitsTemplate(lfr))
     {
-	COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-	return FALSE;
+        hInst = GetWindowLongA( lfr->fr16->hwndOwner , GWL_HINSTANCE);
+        ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 14);
+        ret = CreateDialogIndirectParam16( hInst, lfr->template,
+                    lfr->fr16->hwndOwner, (DLGPROC16) ptr, find);
+
+        FINDDLG_FreeResources(lfr);
     }
-    if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
-        !(ptr = LockResource( hDlgTmpl )))
-    {
-	COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	return FALSE;
-    }
-    hInst = GetWindowLongA( lpFind->hwndOwner , GWL_HINSTANCE);
-    return DIALOG_CreateIndirect( hInst, ptr, TRUE, lpFind->hwndOwner,
-                                  (DLGPROC16)ReplaceTextDlgProc,
-                                  find, WIN_PROC_32A );
+    HeapFree(GetProcessHeap(), 0, lfr);
+    return ret;
 }
 
 
