@@ -2502,10 +2502,10 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
 
         TRACE("dwRet = %s\n", WINMM_ErrorToString(dwRet));
         if (dwRet != WAVERR_BADFORMAT ||
-            (dwFlags & (WAVE_MAPPED|WAVE_FORMAT_DIRECT)) != 0) break;
+            ((dwFlags & (WAVE_MAPPED|WAVE_FORMAT_DIRECT)) != 0) || (uDeviceID == WAVE_MAPPER)) break;
         /* if we ask for a format which isn't supported by the physical driver, 
          * let's try to map it through the wave mapper (except, if we already tried
-         * or user didn't allow us to use acm codecs)
+         * or user didn't allow us to use acm codecs or the device is already the mapper)
          */
         dwFlags |= WAVE_MAPPED;
         /* we shall loop only one */
