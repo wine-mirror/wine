@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "winbase.h"
 #include "winnls.h"
 #include "shlobj.h"
 #include "shellapi.h"

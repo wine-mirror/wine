@@ -21,10 +21,10 @@
 
 #include <assert.h>
 #include <string.h>
-#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "msacm.h"
 #include "mmreg.h"
 #include "../msacmdrv.h"

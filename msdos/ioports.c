@@ -37,6 +37,7 @@
 # include <unistd.h>
 #endif
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
 #include "callback.h"

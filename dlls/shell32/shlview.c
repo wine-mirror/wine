@@ -44,6 +44,7 @@
 
 #include "windef.h"
 #include "winerror.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "servprov.h"
 #include "shlguid.h"

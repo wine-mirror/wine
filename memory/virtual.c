@@ -31,8 +31,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "winnls.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/exception.h"

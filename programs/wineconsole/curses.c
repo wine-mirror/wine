@@ -42,6 +42,7 @@
 #endif
 #undef KEY_EVENT  /* avoid redefinition warning */
 #include <unistd.h>
+#include <winbase.h>
 #include <winnls.h>
 #include "winecon_private.h"
 

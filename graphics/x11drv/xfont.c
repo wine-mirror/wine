@@ -40,6 +40,7 @@
 #include <math.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
 #include "winreg.h"

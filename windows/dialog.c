@@ -29,10 +29,10 @@
 #include <string.h>
 
 #include "windef.h"
-#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "controls.h"

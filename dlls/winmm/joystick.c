@@ -35,9 +35,10 @@
 #endif
 
 #include "mmsystem.h"
-#include "winnls.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 
 #include "winemm.h"
 

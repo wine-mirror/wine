@@ -36,9 +36,9 @@
 
 #include <string.h>
 #include <assert.h>
-#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winnls.h"
 #include "winerror.h"
 #include "gdi.h"
 #include "wine/debug.h"

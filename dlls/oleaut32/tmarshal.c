@@ -29,6 +29,7 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"

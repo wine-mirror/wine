@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
 

@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "wine/debug.h"
 #define NO_SHLWAPI_REG

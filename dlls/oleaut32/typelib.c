@@ -63,8 +63,9 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "winerror.h"
-#include "winnls.h"         /* for PRIMARYLANGID */
-#include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
+#include "winbase.h"
+#include "winnls.h"
+#include "winreg.h"
 #include "winuser.h"
 
 #include "wine/unicode.h"

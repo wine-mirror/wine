@@ -21,8 +21,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "windef.h"
-#include "winnls.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "winerror.h"
 #include "wine/unicode.h"
 #include "wininet.h"

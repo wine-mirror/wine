@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include "wine/debug.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"
 

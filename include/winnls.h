@@ -20,8 +20,6 @@
 #define __WINE_WINNLS_H
 #ifndef NONLS
 
-#include "winbase.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

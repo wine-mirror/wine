@@ -31,10 +31,10 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
-#include "winnls.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"

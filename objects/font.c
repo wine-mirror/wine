@@ -27,6 +27,7 @@
 #include <string.h>
 #include <assert.h>
 #include "winerror.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "wownt32.h"
 #include "gdi.h"
