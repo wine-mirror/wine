@@ -550,7 +550,7 @@ MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
     adfg.fdwSuggest = fdwSuggest;
     adfg.pwfxSrc = pwfxSrc;
     adfg.cbwfxSrc = (pwfxSrc->wFormatTag == WAVE_FORMAT_PCM) ?
-	sizeof(WAVEFORMATEX) : pwfxSrc->cbSize;
+	sizeof(WAVEFORMATEX) : (sizeof(WAVEFORMATEX) + pwfxSrc->cbSize);
     adfg.pwfxDst = pwfxDst;
     adfg.cbwfxDst = cbwfxDst;
 
