@@ -15,7 +15,7 @@
  *           GROUP_GroupWndProc
  */
 
-static LRESULT GROUP_GroupWndProc (HWND hWnd, UINT msg,
+static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
 				   WPARAM wParam, LPARAM lParam)
 {
 #if 0

@@ -148,7 +148,7 @@ VOID MAIN_AutoStart()
  *           MAIN_MainWndProc
  */
 
-static LRESULT MAIN_MainWndProc (HWND hWnd, UINT msg,
+static LRESULT CALLBACK MAIN_MainWndProc(HWND hWnd, UINT msg,
 				 WPARAM wParam, LPARAM lParam)
 {
 #if 0

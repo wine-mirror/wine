@@ -14,7 +14,7 @@
  *           PROGRAM_ProgramWndProc
  */
 
-static LRESULT PROGRAM_ProgramWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
     {

@@ -9,12 +9,12 @@
 #include "progman.h"
 static BOOL    DIALOG_BrowsePrograms(HWND, LPSTR, INT);
 static BOOL    DIALOG_BrowseSymbols(HWND, LPSTR, INT);
-static LRESULT DIALOG_NEW_DlgProc(HWND, UINT, WPARAM, LPARAM);
-static LRESULT DIALOG_COPY_MOVE_DlgProc(HWND, UINT, WPARAM, LPARAM);
-static LRESULT DIALOG_GROUP_DlgProc(HWND, UINT, WPARAM, LPARAM);
-static LRESULT DIALOG_PROGRAM_DlgProc(HWND, UINT, WPARAM, LPARAM);
-static LRESULT DIALOG_SYMBOL_DlgProc(HWND, UINT, WPARAM, LPARAM);
-static LRESULT DIALOG_EXECUTE_DlgProc(HWND, UINT, WPARAM, LPARAM);
+static BOOL CALLBACK DIALOG_NEW_DlgProc(HWND, UINT, WPARAM, LPARAM);
+static BOOL CALLBACK DIALOG_COPY_MOVE_DlgProc(HWND, UINT, WPARAM, LPARAM);
+static BOOL CALLBACK DIALOG_GROUP_DlgProc(HWND, UINT, WPARAM, LPARAM);
+static BOOL CALLBACK DIALOG_PROGRAM_DlgProc(HWND, UINT, WPARAM, LPARAM);
+static BOOL CALLBACK DIALOG_SYMBOL_DlgProc(HWND, UINT, WPARAM, LPARAM);
+static BOOL CALLBACK DIALOG_EXECUTE_DlgProc(HWND, UINT, WPARAM, LPARAM);
 
 /***********************************************************************
  *
@@ -28,13 +28,13 @@ static struct
 
 INT DIALOG_New(INT nDefault)
 {
-  WNDPROC lpfnDlg = MakeProcInstance(DIALOG_NEW_DlgProc, Globals.hInstance);
+  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_NEW_DlgProc, Globals.hInstance);
   INT ret;
 
   New.nDefault = nDefault;
 
   ret = DialogBox(Globals.hInstance,  STRING_NEW_Xx,
-		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
+		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
   return ret;
 }
@@ -44,7 +44,7 @@ INT DIALOG_New(INT nDefault)
  *           DIALOG_NEW_DlgProc
  */
 
-static LRESULT DIALOG_NEW_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DIALOG_NEW_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
     {
@@ -87,7 +87,7 @@ static struct
 HLOCAL DIALOG_CopyMove(LPCSTR lpszProgramName, LPCSTR lpszFromGroupName,
 		     BOOL bMove)
 {
-  WNDPROC lpfnDlg = MakeProcInstance(DIALOG_COPY_MOVE_DlgProc, Globals.hInstance);
+  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_COPY_MOVE_DlgProc, Globals.hInstance);
   INT ret;
 
   CopyMove.lpszProgramName   = lpszProgramName;
@@ -96,7 +96,7 @@ HLOCAL DIALOG_CopyMove(LPCSTR lpszProgramName, LPCSTR lpszFromGroupName,
 
   ret = DialogBox(Globals.hInstance,
 		  bMove ? STRING_MOVE_Xx : STRING_COPY_Xx,
-		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
+		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 
   return((ret == IDOK) ? CopyMove.hToGroup : 0);
@@ -107,7 +107,7 @@ HLOCAL DIALOG_CopyMove(LPCSTR lpszProgramName, LPCSTR lpszFromGroupName,
  *           DIALOG_COPY_MOVE_DlgProc
  */
 
-static LRESULT DIALOG_COPY_MOVE_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DIALOG_COPY_MOVE_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   HLOCAL hGroup;
 
@@ -177,7 +177,7 @@ static struct
 
 BOOL DIALOG_GroupAttributes(LPSTR lpszTitle, LPSTR lpszGrpFile, INT nSize)
 {
-  WNDPROC lpfnDlg = MakeProcInstance(DIALOG_GROUP_DlgProc, Globals.hInstance);
+  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_GROUP_DlgProc, Globals.hInstance);
   INT ret;
 
   GroupAttributes.nSize       = nSize;
@@ -185,7 +185,7 @@ BOOL DIALOG_GroupAttributes(LPSTR lpszTitle, LPSTR lpszGrpFile, INT nSize)
   GroupAttributes.lpszGrpFile = lpszGrpFile;
 
   ret = DialogBox(Globals.hInstance,  STRING_GROUP_Xx,
-		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
+		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
   return(ret == IDOK);
 }
@@ -195,7 +195,7 @@ BOOL DIALOG_GroupAttributes(LPSTR lpszTitle, LPSTR lpszGrpFile, INT nSize)
  *           DIALOG_GROUP_DlgProc
  */
 
-static LRESULT DIALOG_GROUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DIALOG_GROUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
     {
@@ -245,7 +245,7 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
 			      INT *lpnHotKey, INT *lpnCmdShow, INT nSize)
 {
   CHAR szTmpIconFile[MAX_PATHNAME_LEN];
-  WNDPROC lpfnDlg = MakeProcInstance(DIALOG_PROGRAM_DlgProc, Globals.hInstance);
+  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_PROGRAM_DlgProc, Globals.hInstance);
   INT ret;
 
   ProgramAttributes.nSize = nSize;
@@ -268,7 +268,7 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
   lstrcpyn(ProgramAttributes.lpszTmpIconFile, lpszIconFile, MAX_PATHNAME_LEN);
 
   ret = DialogBox(Globals.hInstance,  STRING_PROGRAM_Xx,
-		  Globals.hMainWnd, (DLGPROC)lpfnDlg);
+		  Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 
   return(ret == IDOK);
@@ -279,7 +279,7 @@ BOOL DIALOG_ProgramAttributes(LPSTR lpszTitle, LPSTR lpszCmdLine,
  *           DIALOG_PROGRAM_DlgProc
  */
 
-static LRESULT DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DIALOG_PROGRAM_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   CHAR buffer[MAX_STRING_LEN];
   switch (msg)
@@ -382,7 +382,7 @@ static struct
 VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
 		   INT *lpnIconIndex, INT nSize)
 {
-  WNDPROC lpfnDlg = MakeProcInstance(DIALOG_SYMBOL_DlgProc, Globals.hInstance);
+  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_SYMBOL_DlgProc, Globals.hInstance);
 
   Symbol.nSize = nSize;
   Symbol.lpszIconFile = lpszIconFile;
@@ -390,7 +390,7 @@ VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
   Symbol.lpnIconIndex = lpnIconIndex;
 
   DialogBox(Globals.hInstance, STRING_SYMBOL_Xx,
-	    Globals.hMainWnd, (DLGPROC)lpfnDlg);
+	    Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 }
 
@@ -399,7 +399,7 @@ VOID DIALOG_Symbol(HICON *lphIcon, LPSTR lpszIconFile,
  *           DIALOG_SYMBOL_DlgProc
  */
 
-static LRESULT DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
     {
@@ -473,9 +473,9 @@ static LRESULT DIALOG_SYMBOL_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 
 VOID DIALOG_Execute()
 {
-  WNDPROC lpfnDlg = MakeProcInstance(DIALOG_EXECUTE_DlgProc, Globals.hInstance);
+  DLGPROC lpfnDlg = MakeProcInstance(DIALOG_EXECUTE_DlgProc, Globals.hInstance);
   DialogBox(Globals.hInstance, STRING_EXECUTE_Xx,
-	    Globals.hMainWnd, (DLGPROC)lpfnDlg);
+	    Globals.hMainWnd, lpfnDlg);
   FreeProcInstance(lpfnDlg);
 }
 
@@ -484,7 +484,7 @@ VOID DIALOG_Execute()
  *           DIALOG_EXECUTE_DlgProc
  */
 
-static LRESULT DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
+static BOOL CALLBACK DIALOG_EXECUTE_DlgProc(HWND hDlg, UINT msg,
 				      WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
