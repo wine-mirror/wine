@@ -1,35 +1,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "winerror.h"
-#include "heap.h"
-#include "dlgs.h"
 #include "debugtools.h"
-#include "winreg.h"
-#include "winnls.h"
-#include "commctrl.h"
-
-#include "wine/obj_base.h"
-#include "wine/obj_enumidlist.h"
-#include "wine/obj_shellfolder.h"
 #include "wine/undocshell.h"
-
+#include "shlguid.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shellapi.h"
-#include "shlguid.h"
+#include "shresdef.h"
 
-DEFAULT_DEBUG_CHANNEL(shell);
-
-#define		IDD_TREEVIEW 99
+DEFAULT_DEBUG_CHANNEL(shell)
 
 static HWND		hwndTreeView;
-static LPBROWSEINFOA  lpBrowseInfo;
+static LPBROWSEINFOA	lpBrowseInfo;
 static LPITEMIDLIST	pidlRet;
 
 static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  lpifq, HTREEITEM hParent);
 
-static void InitializeTreeView(HWND hwndParent)
+static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 {
 	HIMAGELIST	hImageList;
 	IShellFolder *	lpsf;
@@ -44,7 +32,22 @@ static void InitializeTreeView(HWND hwndParent)
 	{ TreeView_SetImageList(hwndTreeView, hImageList, 0);
 	}
 
+	/* so far, this method doesn't work (still missing the upper level), keep the old way */
+#if 0
+	if (root == NULL) {
+	   hr = SHGetDesktopFolder(&lpsf);
+	} else {
+	   IShellFolder *	lpsfdesktop;
+
+	   hr = SHGetDesktopFolder(&lpsfdesktop);
+	   if (SUCCEEDED(hr)) {
+	      hr = IShellFolder_BindToObject(lpsfdesktop, root, 0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf);
+	      IShellFolder_Release(lpsfdesktop);
+	   }
+	}
+#else
 	hr = SHGetDesktopFolder(&lpsf);
+#endif
 
 	if (SUCCEEDED(hr) && hwndTreeView)
 	{ TreeView_DeleteAllItems(hwndTreeView);
@@ -54,6 +57,7 @@ static void InitializeTreeView(HWND hwndParent)
 	if (SUCCEEDED(hr))
 	{ IShellFolder_Release(lpsf);
 	}
+	TRACE("done\n");
 }
 
 static int GetIcon(LPITEMIDLIST lpi, UINT uFlags)
@@ -206,10 +210,12 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 	      case TVN_SELCHANGEDA:
 	        lptvid=(LPTV_ITEMDATA)pnmtv->itemNew.lParam;
 		pidlRet = lptvid->lpifq;
+		if (lpBrowseInfo->lpfn)
+		   (lpBrowseInfo->lpfn)(hWnd, BFFM_SELCHANGED, (LPARAM)pidlRet, lpBrowseInfo->lParam);
 	        break;
 
 	      default:
-	        FIXME("unhandled\n");
+	        FIXME("unhandled (%d)\n", pnmtv->hdr.code);
 		break;
 	    }
 	    break;
@@ -227,23 +233,33 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
  */
 static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 				     LPARAM lParam )
-{    TRACE("hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
+{       TRACE("hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
 	switch(msg)
 	{ case WM_INITDIALOG:
 	    pidlRet = NULL;
 	    lpBrowseInfo = (LPBROWSEINFOA) lParam;
-	    if (lpBrowseInfo->lpfn)
-	      FIXME("Callbacks not implemented\n");
-	    if (lpBrowseInfo->ulFlags)
-	      FIXME("flag %x not implemented\n", lpBrowseInfo->ulFlags);
-	    if (lpBrowseInfo->lpszTitle)
-	      FIXME("title %s not displayed\n", lpBrowseInfo->lpszTitle);
+	    if (lpBrowseInfo->ulFlags & ~(BIF_STATUSTEXT))
+	      FIXME("flags %x not implemented\n", lpBrowseInfo->ulFlags & ~(BIF_STATUSTEXT));
+	    if (lpBrowseInfo->lpszTitle) {
+	       SetWindowTextA(GetDlgItem(hWnd, IDD_TITLE), lpBrowseInfo->lpszTitle);
+	    } else {
+	       ShowWindow(GetDlgItem(hWnd, IDD_TITLE), SW_HIDE);
+	    }
+	    if (!(lpBrowseInfo->ulFlags & BIF_STATUSTEXT))
+	       ShowWindow(GetDlgItem(hWnd, IDD_STATUS), SW_HIDE);
+
 	    if ( lpBrowseInfo->pidlRoot )
 	      FIXME("root is desktop\n");
 
-	    InitializeTreeView ( hWnd);
-	    return 1;
+	    InitializeTreeView( hWnd, lpBrowseInfo->pidlRoot );
+
+	    if (lpBrowseInfo->lpfn) {
+	       (lpBrowseInfo->lpfn)(hWnd, BFFM_INITIALIZED, 0, lpBrowseInfo->lParam);
+	       (lpBrowseInfo->lpfn)(hWnd, BFFM_SELCHANGED, 0/*FIXME*/, lpBrowseInfo->lParam);
+	    }
+
+	    return TRUE;
 
 	  case WM_NOTIFY:
 	    MsgNotify( hWnd, (UINT)wParam, (LPNMHDR)lParam);
@@ -260,10 +276,35 @@ static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	      case IDCANCEL:
 	        EndDialog(hWnd, 0);
 	        return TRUE;
+		break;
 	    }
 	    break;
+	case BFFM_SETSTATUSTEXTA:
+	   TRACE("Set status %s\n", debugstr_a((LPSTR)lParam));
+	   SetWindowTextA(GetDlgItem(hWnd, IDD_STATUS), (LPSTR)lParam);
+	   break;
+	case BFFM_SETSTATUSTEXTW:
+	   TRACE("Set status %s\n", debugstr_w((LPWSTR)lParam));
+	   SetWindowTextW(GetDlgItem(hWnd, IDD_STATUS), (LPWSTR)lParam);
+	   break;
+	case BFFM_ENABLEOK:
+	   TRACE("Enable %ld\n", lParam);
+	   EnableWindow(GetDlgItem(hWnd, 1), (lParam)?TRUE:FALSE);
+	   break;
+	case BFFM_SETSELECTIONA:
+	   if (wParam)
+	      TRACE("Set selection %s\n", debugstr_a((LPSTR)lParam));
+	   else
+	      TRACE("Set selection %p\n", (void*)lParam);
+	   break;
+	case BFFM_SETSELECTIONW:
+	   if (wParam)
+	      TRACE("Set selection %s\n", debugstr_w((LPWSTR)lParam));
+	   else
+	      TRACE("Set selection %p\n", (void*)lParam);
+	   break;
 	}
-	return 0;
+	return FALSE;
 }
 
 /*************************************************************************
@@ -272,9 +313,11 @@ static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
  */
 LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 {
-	TRACE("(%p{lpszTitle=%s})\n", lpbi, debugstr_a(lpbi->lpszTitle));
+	TRACE("(%p{lpszTitle=%s,owner=%i})\n", 
+	      lpbi, debugstr_a(lpbi->lpszTitle), lpbi->hwndOwner);
 
 	return (LPITEMIDLIST) DialogBoxParamA( shell32_hInstance,
-			"SHBRSFORFOLDER_MSGBOX",  lpbi->hwndOwner,
-			BrsFolderDlgProc, (INT)lpbi );
+					       "SHBRSFORFOLDER_MSGBOX",  
+					       lpbi->hwndOwner,
+					       BrsFolderDlgProc, (INT)lpbi );
 }

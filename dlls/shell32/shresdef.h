@@ -26,4 +26,10 @@
 #define IDS_CREATEFOLDER_CAPTION 31
 #define IDS_DELETEFOLDER_TEXT	32
 #define IDS_DELETEFOLDER_CAPTION 33
+
+/* browse for folder dialog box */
+#define IDD_STATUS		97
+#define IDD_TITLE		98
+#define IDD_TREEVIEW		99
+
 #endif
