@@ -3093,9 +3093,12 @@ typedef struct tagMINIMIZEDMETRICS {
 #define DFCS_INACTIVE           0x0100
 #define DFCS_PUSHED             0x0200
 #define DFCS_CHECKED            0x0400
+#define DFCS_TRANSPARENT        0x0800
+#define DFCS_HOT                0x1000
 #define DFCS_ADJUSTRECT         0x2000		/* exclude surrounding edge */
 #define DFCS_FLAT               0x4000
 #define DFCS_MONO               0x8000
+
 
 /* Image type */
 #define	DST_COMPLEX	0x0000
