@@ -188,6 +188,7 @@ typedef struct {
 
     /* DirectSound stuff */
     DSDRIVERDESC                ds_desc;
+    DSDRIVERCAPS                ds_caps;
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -234,6 +235,7 @@ typedef struct {
 
     /* DirectSound stuff */
     DSDRIVERDESC                ds_desc;
+    DSCDRIVERCAPS               ds_caps;
 } WINE_WAVEIN;
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
@@ -868,6 +870,38 @@ LONG ALSA_WaveInit(void)
                 wwo->caps.dwSupport |= WAVECAPS_LRVOLUME;
         }
 
+        if (wwo->caps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
+                                   WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
+                                   WAVE_FORMAT_96M08 | WAVE_FORMAT_1M16  |
+                                   WAVE_FORMAT_2M16  | WAVE_FORMAT_4M16  |
+                                   WAVE_FORMAT_48M16 | WAVE_FORMAT_96M16) )
+            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
+
+        if (wwo->caps.dwFormats & (WAVE_FORMAT_1S08  | WAVE_FORMAT_2S08  |
+                                   WAVE_FORMAT_4S08  | WAVE_FORMAT_48S08 |
+                                   WAVE_FORMAT_96S08 | WAVE_FORMAT_1S16  |
+                                   WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
+                                   WAVE_FORMAT_48S16 | WAVE_FORMAT_96S16) )
+            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
+
+        if (wwo->caps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
+                                   WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
+                                   WAVE_FORMAT_96M08 | WAVE_FORMAT_1S08  |
+                                   WAVE_FORMAT_2S08  | WAVE_FORMAT_4S08  |
+                                   WAVE_FORMAT_48S08 | WAVE_FORMAT_96S08) )
+            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARY8BIT;
+
+        if (wwo->caps.dwFormats & (WAVE_FORMAT_1M16  | WAVE_FORMAT_2M16  |
+                                   WAVE_FORMAT_4M16  | WAVE_FORMAT_48M16 |
+                                   WAVE_FORMAT_96M16 | WAVE_FORMAT_1S16  |
+                                   WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
+                                   WAVE_FORMAT_48S16 | WAVE_FORMAT_96S16) )
+            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARY16BIT;
+
+        wwo->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+        wwo->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+        wwo->ds_caps.dwPrimaryBuffers = 1;
+
         ALSA_WodNumDevs++;
     }
 
@@ -984,7 +1018,7 @@ LONG ALSA_WaveInit(void)
 
         ALSA_WidNumDevs++;
     }
-    
+
     return 0;
 }
 
@@ -2064,7 +2098,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 
     if (!wwo->ctl)
         return MMSYSERR_NOTSUPPORTED;
- 
+
     count = snd_ctl_elem_info_get_count(wwo->playback_einfo);
     min = snd_ctl_elem_info_get_min(wwo->playback_einfo);
     max = snd_ctl_elem_info_get_max(wwo->playback_einfo);
@@ -2663,25 +2697,7 @@ static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCap
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     TRACE("(%p,%p)\n",iface,pCaps);
-    memset(pCaps, 0, sizeof(*pCaps));
-
-    pCaps->dwFlags = DSCAPS_PRIMARYMONO;
-    if ( WOutDev[This->wDevID].caps.wChannels == 2 )
-        pCaps->dwFlags |= DSCAPS_PRIMARYSTEREO;
-
-    if ( WOutDev[This->wDevID].caps.dwFormats & (WAVE_FORMAT_1S08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_4S08 ) )
-	pCaps->dwFlags |= DSCAPS_PRIMARY8BIT;
-
-    if ( WOutDev[This->wDevID].caps.dwFormats & (WAVE_FORMAT_1S16 | WAVE_FORMAT_2S16 | WAVE_FORMAT_4S16))
-	pCaps->dwFlags |= DSCAPS_PRIMARY16BIT;
-
-    pCaps->dwPrimaryBuffers = 1;
-    TRACE("caps=0x%X\n",(unsigned int)pCaps->dwFlags);
-    pCaps->dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
-    pCaps->dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-
-    /* the other fields only apply to secondary buffers, which we don't support
-     * (unless we want to mess with wavetable synthesizers and MIDI) */
+    memcpy(pCaps, &(WOutDev[This->wDevID].ds_caps), sizeof(DSDRIVERCAPS));
     return DS_OK;
 }
 
