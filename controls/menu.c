@@ -1665,6 +1665,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
     if (lppop->FocusedItem == wIndex) return;
     if (lppop->wFlags & MF_POPUP) hdc = GetDC( lppop->hWnd );
     else hdc = GetDCEx( lppop->hWnd, 0, DCX_CACHE | DCX_WINDOW);
+    if (!top_popup) top_popup = lppop->hWnd;
 
     SelectObject( hdc, hMenuFont);
 
@@ -2788,9 +2789,9 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
                     /* In win95 winelook, the selected menu item must be changed every time the
                        mouse moves. In Win31 winelook, the mouse button has to be held down */
                      
-                    if ( (TWEAK_WineLook > WIN31_LOOK) ||
+                    if ( hmenu && ((TWEAK_WineLook > WIN31_LOOK) ||
                          ( (msg.wParam & MK_LBUTTON) ||
-                           ((wFlags & TPM_RIGHTBUTTON) && (msg.wParam & MK_RBUTTON))) )
+                           ((wFlags & TPM_RIGHTBUTTON) && (msg.wParam & MK_RBUTTON)))) )
 
 			fEndMenu |= !MENU_MouseMove( &mt, hmenu, wFlags );
 
