@@ -506,7 +506,46 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                         } else if (coordIdx >= numTextures) {
                             VTRACE(("tex: %d - Skip tex coords, as requested higher than supplied\n", textureNo));
                         } else {
-                            switch (numCoords[coordIdx]) {   /* Supply the provided texture coords */
+
+                            int coordsToUse = numCoords[coordIdx];
+
+                            /* If texture transform flags in effect, values passed through to vertex
+                               depend on the D3DTSS_TEXTURETRANSFORMFLAGS */
+                            if (coordsToUse>0 && 
+                                This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) 
+                            {
+                               /* This indicates how many coords to use regardless of the
+                                  texture type. However, d3d/opengl fill in the rest appropriately */
+                               coordsToUse = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
+
+                               /* BUT - Projected is more 'fun' - Move the last coord to the 'q'
+                                  parameter (see comments under D3DTSS_TEXTURETRANSFORMFLAGS */
+                               if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+                                   switch (coordsToUse) {
+                                   case 0:  /* Drop Through */
+                                   case 1:
+                                       FIXME("D3DTTFF_PROJECTED but only zero or one coordinate?\n");
+                                       break;
+                                   case 2:
+                                       q[textureNo] = t[textureNo];
+                                       t[textureNo] = 0.0;
+                                       coordsToUse = 4;
+                                       break;
+                                   case 3:
+                                       q[textureNo] = r[textureNo];
+                                       r[textureNo] = 0.0;
+                                       coordsToUse = 4;
+                                       break;
+                                   case 4:  /* Nop here */
+                                       break;
+                                   default:
+                                       FIXME("Unexpected D3DTSS_TEXTURETRANSFORMFLAGS value of %ld\n", 
+                                          This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
+                                   }
+                               }
+                            }
+
+                            switch (coordsToUse) {   /* Supply the provided texture coords */
                             case D3DFVF_TEXTUREFORMAT1:
                                 VTRACE(("tex:%d, s=%f\n", textureNo, s[coordIdx]));
                                 if (This->isMultiTexture) {
@@ -906,12 +945,31 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                         VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                     } else {
                         int numFloats = 0;
+                        int coordsToUse = numCoords[coordIdx];
 #if defined(GL_VERSION_1_3)
                         glClientActiveTexture(GL_TEXTURE0 + textureNo);
 #else
                         glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
 #endif
-                        switch (numCoords[coordIdx]) {   /* Supply the provided texture coords */
+
+                        /* If texture transform flags in effect, values passed through to vertex
+                           depend on the D3DTSS_TEXTURETRANSFORMFLAGS */
+                        if (coordsToUse > 0 && 
+                            This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) 
+                        {
+                           /* This indicates how many coords to use regardless of the
+                              texture type. However, d3d/opengl fill in the rest appropriately */
+                           coordsToUse = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
+
+                           /* BUT - Projected is more 'fun' - Cant be done for ptr mode.
+                              Probably should scan enabled texture units and drop back to
+                              slow mode if found? */
+                           if (This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+                               FIXME("Cannot handle projected transform state in fast mode\n");
+                           }
+                        }
+
+                        switch (coordsToUse) {   /* Supply the provided texture coords */
                         case D3DFVF_TEXTUREFORMAT1: numFloats = 1; break;
                         case D3DFVF_TEXTUREFORMAT2: numFloats = 2; break;
                         case D3DFVF_TEXTUREFORMAT3: numFloats = 3; break;
@@ -2287,27 +2345,32 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
            /* Reapply texture transforms as based off modelview when applied */
            for (Stage = 0; Stage < This->TextureUnits; Stage++) {
 
-               /* Now apply texture transforms if not applying to the dummy textures */
+               /* Only applicable if the transforms are not disabled */
+               if (This->UpdateStateBlock->texture_state[Stage][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) 
+               {
+                   /* Now apply texture transforms if not applying to the dummy textures */
 #if defined(GL_VERSION_1_3)
-               glActiveTexture(GL_TEXTURE0 + Stage);
+                  glActiveTexture(GL_TEXTURE0 + Stage);
 #else 
-               glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
+                  glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
 #endif
-               checkGLcall("glActiveTexture(GL_TEXTURE0 + Stage);");
+                  checkGLcall("glActiveTexture(GL_TEXTURE0 + Stage);");
 
-               glMatrixMode(GL_TEXTURE);
-               if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
-                  glLoadIdentity();
-               } else {
-                  D3DMATRIX fred;
-                  conv_mat(&This->StateBlock->transforms[D3DTS_TEXTURE0+Stage], &fred);
-                  glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0]);
+                  glMatrixMode(GL_TEXTURE);
+                  if (This->StateBlock->textureDimensions[Stage] == GL_TEXTURE_1D) {
+                     glLoadIdentity();
+                  } else {
+                     D3DMATRIX fred;
+                     conv_mat(&This->StateBlock->transforms[D3DTS_TEXTURE0+Stage], &fred);
+                     glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0]);
+                  }
                }
                checkGLcall("Load matrix for texture");
            }
            glMatrixMode(GL_MODELVIEW);  /* Always leave in model view */
        }
-    } else if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) {
+    } else if ((d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) &&
+              (This->UpdateStateBlock->texture_state[d3dts - D3DTS_TEXTURE0][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE)) {
         /* Now apply texture transforms if not applying to the dummy textures */
         Stage = d3dts - D3DTS_TEXTURE0;
 
@@ -4100,6 +4163,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_TEXCOORDINDEX         :
         {
             /* Values 0-7 are indexes into the FVF tex coords - See comments in DrawPrimitive */
+
+            /* FIXME: From MSDN: The D3DTSS_TCI_* flags are mutually exclusive. If you include 
+                  one flag, you can still specify an index value, which the system uses to 
+                  determine the texture wrapping mode.  
+                  eg. SetTextureStageState( 0, D3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 1 );
+                  means use the vertex position (camera-space) as the input texture coordinates 
+                  for this texture stage, and the wrap mode set in the D3DRS_WRAP1 render 
+                  state. We do not (yet) support the D3DRENDERSTATE_WRAPx values, nor tie them up
+                  to the TEXCOORDINDEX value */
           
             /** 
              * Be careful the value of the mask 0xF0000 come from d3d8types.h infos 
@@ -4145,6 +4217,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
               }
               break;
 
+            /* Unhandled types: */
+            case D3DTSS_TCI_CAMERASPACENORMAL:
+            case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
             default:
                 /* Todo: */
                 /* ? disable GL_TEXTURE_GEN_n ? */
@@ -4157,19 +4232,45 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         /* Unhandled */
     case D3DTSS_BUMPENVMAT00          :
     case D3DTSS_BUMPENVMAT01          :
-      TRACE("BUMPENVMAT0%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT00, Stage, Type, Value);
-      break;
+        TRACE("BUMPENVMAT0%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT00, Stage, Type, Value);
+        break;
     case D3DTSS_BUMPENVMAT10          :
     case D3DTSS_BUMPENVMAT11          :
-      TRACE("BUMPENVMAT1%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT10, Stage, Type, Value);
-      break;
+        TRACE("BUMPENVMAT1%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT10, Stage, Type, Value);
+        break;
+
+    case D3DTSS_TEXTURETRANSFORMFLAGS :
+        {
+           switch (Value & ~D3DTTFF_PROJECTED)
+           {
+           case D3DTTFF_DISABLE: /* Disable transform matrix for this texture by setting up the identity matrix */
+               glMatrixMode(GL_TEXTURE);
+               glLoadIdentity();
+               checkGLcall("Load identity matrix for texture");
+               glMatrixMode(GL_MODELVIEW);  /* Always leave in model view */
+               break;
+
+           default: /* Enable it */
+               IDirect3DDevice8Impl_SetTransform(iface, D3DTS_TEXTURE0+Stage, &This->UpdateStateBlock->transforms[D3DTS_TEXTURE0+Stage]);
+               break;
+           }
+
+           /* From web: <quote source="opengl12.pdf" section="Apendix C, Version 1.1/Other changes"
+                2. Texture coordinates s, t, and r are divided by q during the rasterization
+                of points, pixel rectangles, and bitmaps. This division was documented
+                only for lines and polygons in the 1.0 version. </quote>                            
+              I interpret this as we can implement projected transforms in slow vertex mode
+                by moving the last coord to the 'q' coord and using one less dimension. The only
+                way to do it in TexCoordPtr would be to massage the data stream to insert extra
+                coords                                                                              */
+        }
+        break; 
 
     case D3DTSS_MIPMAPLODBIAS         :
     case D3DTSS_MAXMIPLEVEL           :
     case D3DTSS_MAXANISOTROPY         :
     case D3DTSS_BUMPENVLSCALE         :
     case D3DTSS_BUMPENVLOFFSET        :
-    case D3DTSS_TEXTURETRANSFORMFLAGS :
     case D3DTSS_RESULTARG             :
     default:
         /* Put back later: FIXME("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value); */
