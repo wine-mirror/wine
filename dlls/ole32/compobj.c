@@ -44,11 +44,6 @@
  *   - Implement RPC thread affinity (should fix InstallShield painting
  *     problems)
  *
- *   - Implement IRemUnknown and marshalling for it, then use that for
- *     reffing/unreffing the stub manager from a proxy instead of our
- *     current hack of simply reaching into local process memory to do it,
- *     which obviously doesn't work inter-process.
- *
  *   - Make our custom marshalling use NDR to be wire compatible with
  *     native DCOM
  *     
@@ -2563,4 +2558,119 @@ ULONG WINAPI CoReleaseServerProcess(void)
 {
     FIXME("\n");
     return 1;
+}
+
+/***********************************************************************
+ *           CoQueryProxyBlanket [OLE32.@]
+ *
+ * Retrieves the security settings being used by a proxy.
+ *
+ * PARAMS
+ *  pProxy        [I] Pointer to the proxy object.
+ *  pAuthnSvc     [O] The type of authentication service.
+ *  pAuthzSvc     [O] The type of authorization service.
+ *  ppServerPrincName [O] Optional. The server prinicple name.
+ *  pAuthnLevel   [O] The authentication level.
+ *  pImpLevel     [O] The impersonation level.
+ *  ppAuthInfo    [O] Information specific to the authorization/authentication service.
+ *  pCapabilities [O] Flags affecting the security behaviour.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *  CoCopyProxy, CoSetProxyBlanket.
+ */
+HRESULT WINAPI CoQueryProxyBlanket(IUnknown *pProxy, DWORD *pAuthnSvc,
+    DWORD *pAuthzSvc, OLECHAR **ppServerPrincName, DWORD *pAuthnLevel,
+    DWORD *pImpLevel, void **ppAuthInfo, DWORD *pCapabilities)
+{
+    IClientSecurity *pCliSec;
+    HRESULT hr;
+
+    TRACE("%p\n", pProxy);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (void **)&pCliSec);
+    if (SUCCEEDED(hr))
+        hr = IClientSecurity_QueryBlanket(pCliSec, pProxy, pAuthnSvc,
+                                          pAuthzSvc, ppServerPrincName,
+                                          pAuthnLevel, pImpLevel, ppAuthInfo,
+                                          pCapabilities);
+
+    if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
+    return hr;
+}
+
+/***********************************************************************
+ *           CoSetProxyBlanket [OLE32.@]
+ *
+ * Sets the security settings for a proxy.
+ *
+ * PARAMS
+ *  pProxy       [I] Pointer to the proxy object.
+ *  AuthnSvc     [I] The type of authentication service.
+ *  AuthzSvc     [I] The type of authorization service.
+ *  pServerPrincName [I] The server prinicple name.
+ *  AuthnLevel   [I] The authentication level.
+ *  ImpLevel     [I] The impersonation level.
+ *  pAuthInfo    [I] Information specific to the authorization/authentication service.
+ *  Capabilities [I] Flags affecting the security behaviour.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *  CoQueryProxyBlanket, CoCopyProxy.
+ */
+HRESULT WINAPI CoSetProxyBlanket(IUnknown *pProxy, DWORD AuthnSvc,
+    DWORD AuthzSvc, OLECHAR *pServerPrincName, DWORD AuthnLevel,
+    DWORD ImpLevel, void *pAuthInfo, DWORD Capabilities)
+{
+    IClientSecurity *pCliSec;
+    HRESULT hr;
+
+    TRACE("%p\n", pProxy);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (void **)&pCliSec);
+    if (SUCCEEDED(hr))
+        hr = IClientSecurity_SetBlanket(pCliSec, pProxy, AuthnSvc,
+                                        AuthzSvc, pServerPrincName,
+                                        AuthnLevel, ImpLevel, pAuthInfo,
+                                        Capabilities);
+
+    if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
+    return hr;
+}
+
+/***********************************************************************
+ *           CoCopyProxy [OLE32.@]
+ *
+ * Copies a proxy.
+ *
+ * PARAMS
+ *  pProxy [I] Pointer to the proxy object.
+ *  ppCopy [O] Copy of the proxy.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * SEE ALSO
+ *  CoQueryProxyBlanket, CoSetProxyBlanket.
+ */
+HRESULT WINAPI CoCopyProxy(IUnknown *pProxy, IUnknown **ppCopy)
+{
+    IClientSecurity *pCliSec;
+    HRESULT hr;
+
+    TRACE("%p\n", pProxy);
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IClientSecurity, (void **)&pCliSec);
+    if (SUCCEEDED(hr))
+        hr = IClientSecurity_CopyProxy(pCliSec, pProxy, ppCopy);
+
+    if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
+    return hr;
 }
