@@ -42,7 +42,7 @@ LRESULT WINAPI SHCoCreateInstance(
 	REFIID refiid,
 	LPVOID *ppv)
 {
-	char	xclsid[48], xiid[48], xuout[48];
+	char	xclsid[48], xiid[48];
 	DWORD	hres;
 	IID	iid;
 	CLSID * myclsid = (CLSID*)clsid;
@@ -58,13 +58,11 @@ LRESULT WINAPI SHCoCreateInstance(
 
 	WINE_StringFromCLSID(myclsid,xclsid);
 	WINE_StringFromCLSID(refiid,xiid);
-	if (unknownouter)
-		WINE_StringFromCLSID(unknownouter,xuout);
 	  
-	TRACE("(%p,\n\tCLSID:\t%s\n\tUOUT:\t%s\n\tIID:\t%s,%p)\n",
-		aclsid,xclsid,unknownouter?xuout:"nil",xiid,ppv);
+	TRACE("(%p,\n\tCLSID:\t%s, unk:%p\n\tIID:\t%s,%p)\n",
+		aclsid,xclsid,unknownouter,xiid,ppv);
 
-	hres = CoCreateInstance(myclsid, NULL, CLSCTX_INPROC_SERVER, refiid, ppv);
+	hres = CoCreateInstance(myclsid, unknownouter, CLSCTX_INPROC_SERVER, refiid, ppv);
 
 	if(hres!=S_OK)
 	{

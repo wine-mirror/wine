@@ -1580,11 +1580,13 @@ DWORD _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	DWORD dwSize;
 	
 	switch (pdata->type)
-	{ case PT_VALUE:
+	{
+	  case PT_VALUE:
 	    dwSize = pdata->u.file.dwFileSize;
 	    if (pOut) StrFormatByteSizeA(dwSize, pOut, uOutSize);
 	    return dwSize;
 	}
+	if (pOut) *pOut = 0x00;
 	return 0;
 }
 

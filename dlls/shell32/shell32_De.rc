@@ -12,3 +12,14 @@ FONT 10, "System"
  LTEXT "Wine was brought to you by:", 98, 8, 55, 137, 10
 }
 
+/* Namen der Header für die Shellviews */
+STRINGTABLE LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL 
+BEGIN
+	IDS_SHV_COLUMN1		"Datei"
+	IDS_SHV_COLUMN2		"Größe"
+	IDS_SHV_COLUMN3		"Typ"
+	IDS_SHV_COLUMN4		"Geändert"
+	IDS_SHV_COLUMN5		"Attribute"
+	IDS_SHV_COLUMN6		"Gesammtgröße"
+	IDS_SHV_COLUMN7		"Freier Speicher"
+END

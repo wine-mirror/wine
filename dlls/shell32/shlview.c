@@ -3,21 +3,27 @@
  *
  *	Copyright 1998,1999	<juergen.schmied@debitel.net>
  *
- *  FIXME: when the ShellView_WndProc gets a WM_NCDESTROY should we do a
- *  Release() ??? 
+ * This is the view visualizing the data provied by the shellfolder.
+ * No direct access to data from pidls should be done from here. 
+ * 
+ * FIXME: There is not jet a official interface defined to manipulate
+ * the objects shown in the view (rename, move...). This should be
+ * implemented as additional interface to IShellFolder.
  *
- *  FIXME: There is still a design problem in this implementation. 
- *	This implementation is more or less ok for file system folders
- *	but there are many more kinds of folders.
- *	The shellview is not supposed to know much about the colums
- *	appearing in the view. To fix this it should use the IShellFolder2
- *	interface when possible to get the informations dynamically
- *	this will take a lot of work to implemet and wont likely not
- *	be done in near future
- *	Please considder this when code new features. Mail me if you
- *	are in doubt how to do things. (jsch 25/10/99)
+ * FIXME: The order by part of the background context menu should be
+ * buily according to the columns shown.
  *
- * FIXME: Set the buttons in the filedialog according to the view state
+ * FIXME: Load/Save the view state from/into the stream provied by
+ * the ShellBrowser
+ *
+ * FIXME: CheckToolbar: handle the "new folder" and "folder up" button
+ *
+ * FIXME: ShellView_FillList: consider sort orders
+ *
+ * FIXME: implement the drag and drop in the old (msg-based) way
+ *
+ * FIXME: when the ShellView_WndProc gets a WM_NCDESTROY should we do a
+ * Release() ??? 
  */
 
 #include <stdlib.h>
@@ -59,6 +65,7 @@ typedef struct
 	ICOM_VTABLE(IDropSource)*	lpvtblDropSource;
 	ICOM_VTABLE(IViewObject)*	lpvtblViewObject;
 	IShellFolder*	pSFParent;
+	IShellFolder2*	pSF2Parent;
 	IShellBrowser*	pShellBrowser;
 	ICommDlgBrowser*	pCommDlgBrowser;
 	HWND		hWnd;
@@ -150,11 +157,10 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder)
 	sv->lpvtblDropSource=&dsvt;
 	sv->lpvtblViewObject=&vovt;
 
-	sv->pSFParent	= pFolder;
-
-	if(pFolder)
-	  IShellFolder_AddRef(pFolder);
-
+	sv->pSFParent = pFolder;
+	if(pFolder) IShellFolder_AddRef(pFolder);
+	IShellFolder_QueryInterface(sv->pSFParent, &IID_IShellFolder2, (LPVOID*)&sv->pSF2Parent);
+	
 	TRACE("(%p)->(%p)\n",sv, pFolder);
 	shell32_ObjCount++;
 	return (IShellView *) sv;
@@ -208,6 +214,9 @@ static HRESULT OnStateChange(IShellViewImpl * This, UINT uFlags)
 }
 /**********************************************************
  *	set the toolbar of the filedialog buttons
+ *
+ * - activates the buttons from the shellbrowser according to 
+ *   the view state
  */
 static void CheckToolbar(IShellViewImpl * This)
 {
@@ -248,6 +257,7 @@ static void SetStyle(IShellViewImpl * This, DWORD dwAdd, DWORD dwRemove)
 /**********************************************************
 * ShellView_CreateList()
 *
+* - creates the list view window
 */
 static BOOL ShellView_CreateList (IShellViewImpl * This)
 {	DWORD dwStyle;
@@ -290,43 +300,42 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
         /*  UpdateShellSettings(); */
 	return TRUE;
 }
+
 /**********************************************************
 * ShellView_InitList()
 *
-* NOTES
-*	FIXME: the headers should depend on the kind of shellfolder
-*	thats creating the shellview. this hack implements only the
-*	correct headers for a filesystem folder (jsch 25/10/99)
+* - adds all needed columns to the shellview
 */
 static BOOL ShellView_InitList(IShellViewImpl * This)
 {
-	LVCOLUMNA lvColumn;
-	CHAR        szString[50];
+	LVCOLUMNA	lvColumn;
+	SHELLDETAILS	sd;
+	int	i;
+	char	szTemp[50];
 
 	TRACE("%p\n",This);
 
 	ListView_DeleteAllItems(This->hWndList);
 
-	/*initialize the columns */
-	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;	/*  |  LVCF_SUBITEM;*/
-	lvColumn.fmt = LVCFMT_LEFT;
-	lvColumn.pszText = szString;
+	lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
+	lvColumn.pszText = szTemp;
 
-	lvColumn.cx = 120;
-	LoadStringA(shell32_hInstance, IDS_SHV_COLUMN1, szString, sizeof(szString));
-	ListView_InsertColumnA(This->hWndList, 0, &lvColumn);
-
-	lvColumn.cx = 60;
-	LoadStringA(shell32_hInstance, IDS_SHV_COLUMN2, szString, sizeof(szString));
-	ListView_InsertColumnA(This->hWndList, 1, &lvColumn);
-
-	lvColumn.cx = 120;
-	LoadStringA(shell32_hInstance, IDS_SHV_COLUMN3, szString, sizeof(szString));
-	ListView_InsertColumnA(This->hWndList, 2, &lvColumn);
-
-	lvColumn.cx = 60;
-	LoadStringA(shell32_hInstance, IDS_SHV_COLUMN4, szString, sizeof(szString));
-	ListView_InsertColumnA(This->hWndList, 3, &lvColumn);
+	if (This->pSF2Parent)
+	{
+	  for (i=0; 1; i++)
+	  {
+	    if (!SUCCEEDED(IShellFolder2_GetDetailsOf(This->pSF2Parent, NULL, i, &sd)))
+	      break;
+	    lvColumn.fmt = sd.fmt;
+	    lvColumn.cx = sd.cxChar*8; /* chars->pixel */
+	    StrRetToStrNA( szTemp, 50, &sd.str, NULL);
+	    ListView_InsertColumnA(This->hWndList, i, &lvColumn);
+	  }
+	}
+	else
+	{
+	  FIXME("no SF2\n");
+	}
 
 	ListView_SetImageList(This->hWndList, ShellSmallIconList, LVSIL_SMALL);
 	ListView_SetImageList(This->hWndList, ShellBigIconList, LVSIL_NORMAL);
@@ -455,8 +464,9 @@ static INT CALLBACK ShellView_ListViewCompareItems(LPVOID lParam1, LPVOID lParam
 /**********************************************************
 * ShellView_FillList()
 *
-* NOTES
-*  internal
+* - gets the objectlist from the shellfolder
+* - sorts the list
+* - fills the list into the view
 */   
 
 static HRESULT ShellView_FillList(IShellViewImpl * This)
@@ -496,7 +506,7 @@ static HRESULT ShellView_FillList(IShellViewImpl * This)
 	  } 
 	}
 
-	/*sort the array*/
+	/* sort the array */
 	pDPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)This->pSFParent);
 
 	/*turn the listview's redrawing off*/
@@ -649,6 +659,8 @@ static void ShellView_MergeViewMenu(IShellViewImpl * This, HMENU hSubMenu)
 
 /**********************************************************
 *   ShellView_GetSelections()
+*
+* - fills the this->apidl list with the selected objects
 *
 * RETURNS
 *  number of selected items
@@ -1009,7 +1021,6 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 {	LPNMLISTVIEW lpnmlv = (LPNMLISTVIEW)lpnmh;
 	NMLVDISPINFOA *lpdi = (NMLVDISPINFOA *)lpnmh;
 	LPITEMIDLIST pidl;
-	STRRET   str;  
 
 	TRACE("%p CtlID=%u lpnmh->code=%x\n",This,CtlID,lpnmh->code);
 
@@ -1063,64 +1074,23 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    TRACE("-- LVN_GETDISPINFOA %p\n",This);
 	    pidl = (LPITEMIDLIST)lpdi->item.lParam;
 
-
-	    if(lpdi->item.iSubItem)		  /*is the sub-item information being requested?*/
-	    { if(lpdi->item.mask & LVIF_TEXT)	 /*is the text being requested?*/
-	      { if(_ILIsValue(pidl))	/*is This a value or a folder?*/
-	        { switch (lpdi->item.iSubItem)
-		  { case 1:	/* size */
-		      _ILGetFileSize (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
-		      break;
-		    case 2:	/* extension */
-		      {	char sTemp[64];
-		        if (_ILGetExtension (pidl, sTemp, 64))
-			{ if (!( HCR_MapTypeToValue(sTemp, sTemp, 64, TRUE)
-			         && HCR_MapTypeToValue(sTemp, lpdi->item.pszText, lpdi->item.cchTextMax, FALSE )))
-			  { lstrcpynA (lpdi->item.pszText, sTemp, lpdi->item.cchTextMax);
-			    strncat (lpdi->item.pszText, "-file", lpdi->item.cchTextMax);
-			  }
-			}
-			else	/* no extension found */
-			{ lpdi->item.pszText[0]=0x00;
-			}    
-		      }
-		      break;
-		    case 3:	/* date */
-		      _ILGetFileDate (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
-		      break;
-		  }
-	        }
-	        else  /*its a folder*/
-	        { switch (lpdi->item.iSubItem)
-		  { case 1:
-		      strcpy(lpdi->item.pszText, "");
-		      break;
-	            case 2:
-		      lstrcpynA (lpdi->item.pszText, "Folder", lpdi->item.cchTextMax);
-		      break;
-		    case 3:  
-		      _ILGetFileDate (pidl, lpdi->item.pszText, lpdi->item.cchTextMax);
-		      break;
-		  }
-	        }
+	    if(lpdi->item.mask & LVIF_TEXT)	/* text requested */
+	    {
+	      if (This->pSF2Parent)
+	      {
+	        SHELLDETAILS sd;
+	        IShellFolder2_GetDetailsOf(This->pSF2Parent, pidl, lpdi->item.iSubItem, &sd);
+	        StrRetToStrNA( lpdi->item.pszText, lpdi->item.cchTextMax, &sd.str, NULL);
 	        TRACE("-- text=%s\n",lpdi->item.pszText);		
 	      }
+	      else
+	      {
+	        FIXME("no SF2\n");
+	      }
 	    }
-	    else	   /*the item text is being requested*/
-	    { 
-	      if(lpdi->item.mask & LVIF_TEXT)	   /*is the text being requested?*/
-	      {
-	        if(SUCCEEDED(IShellFolder_GetDisplayNameOf(This->pSFParent,pidl, SHGDN_NORMAL | SHGDN_INFOLDER, &str)))
-	        {
-		  StrRetToStrNA(lpdi->item.pszText, lpdi->item.cchTextMax, &str, pidl); 
-	        }
-	        TRACE("-- text=%s\n",lpdi->item.pszText);
-	      }
-
-	      if(lpdi->item.mask & LVIF_IMAGE) 		/*is the image being requested?*/
-	      {
-	        lpdi->item.iImage = SHMapPIDLToSystemImageListIndex(This->pSFParent, pidl, 0);
-	      }
+	    if(lpdi->item.mask & LVIF_IMAGE)	/* image requested */
+	    {
+	      lpdi->item.iImage = SHMapPIDLToSystemImageListIndex(This->pSFParent, pidl, 0);
 	    }
 	    break;
 
@@ -1301,6 +1271,9 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 
 	  if(This->pSFParent)
 	    IShellFolder_Release(This->pSFParent);
+
+	  if(This->pSF2Parent)
+	    IShellFolder2_Release(This->pSF2Parent);
 
 	  if (This->apidl)
 	    SHFree(This->apidl);

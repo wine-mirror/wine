@@ -91,19 +91,6 @@ FONT 8, "Helv"
 }
 
 /*
-	columns in the shellview
-*/
-STRINGTABLE DISCARDABLE
-{
-	IDS_SHV_COLUMN1		"File"
-	IDS_SHV_COLUMN2		"Size"
-	IDS_SHV_COLUMN3		"Type"
-	IDS_SHV_COLUMN4		"Modified"
-	IDS_SHV_COLUMN5		"Size"		/* drive view */
-	IDS_SHV_COLUMN6		"Size avaiable"	/* drive view */
-}
-
-/*
 	special folders
 */
 STRINGTABLE DISCARDABLE

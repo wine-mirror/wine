@@ -10,6 +10,7 @@
 #define IDS_SHV_COLUMN4		10
 #define IDS_SHV_COLUMN5		11
 #define IDS_SHV_COLUMN6		12
+#define IDS_SHV_COLUMN7		13
 
 #define IDS_DESKTOP		20
 #define IDS_MYCOMPUTER		21
