@@ -1458,6 +1458,8 @@ TMStubImpl_QueryInterface(LPRPCSTUBBUFFER iface, REFIID riid, LPVOID *ppv) {
 static ULONG WINAPI
 TMStubImpl_AddRef(LPRPCSTUBBUFFER iface) {
     ICOM_THIS(TMStubImpl,iface);
+        
+    TRACE("(%p) before %lu\n", This, This->ref);
 
     This->ref++;
     return This->ref;
@@ -1467,9 +1469,14 @@ static ULONG WINAPI
 TMStubImpl_Release(LPRPCSTUBBUFFER iface) {
     ICOM_THIS(TMStubImpl,iface);
 
+    TRACE("(%p) after %lu\n", This, This->ref-1);
+
     This->ref--;
     if (This->ref)
 	return This->ref;
+
+    IRpcStubBuffer_Disconnect(iface);
+
     HeapFree(GetProcessHeap(),0,This);
     return 0;
 }
@@ -1477,6 +1484,8 @@ TMStubImpl_Release(LPRPCSTUBBUFFER iface) {
 static HRESULT WINAPI
 TMStubImpl_Connect(LPRPCSTUBBUFFER iface, LPUNKNOWN pUnkServer) {
     ICOM_THIS(TMStubImpl,iface);
+
+    TRACE("(%p)->(%p)\n", This, pUnkServer);
 
     IUnknown_AddRef(pUnkServer);
     This->pUnk = pUnkServer;
@@ -1486,6 +1495,8 @@ TMStubImpl_Connect(LPRPCSTUBBUFFER iface, LPUNKNOWN pUnkServer) {
 static void WINAPI
 TMStubImpl_Disconnect(LPRPCSTUBBUFFER iface) {
     ICOM_THIS(TMStubImpl,iface);
+
+    TRACE("(%p)->()\n", This);
 
     IUnknown_Release(This->pUnk);
     This->pUnk = NULL;
@@ -1736,6 +1747,7 @@ PSFacBuf_CreateStub(
     memcpy(&(stub->iid),riid,sizeof(*riid));
     hres = IRpcStubBuffer_Connect((LPRPCSTUBBUFFER)stub,pUnkServer);
     *ppStub 		= (LPRPCSTUBBUFFER)stub;
+    TRACE("IRpcStubBuffer: %p\n", stub);
     if (hres)
 	FIXME("Connect to pUnkServer failed?\n");
     return hres;
