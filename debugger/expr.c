@@ -607,7 +607,20 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	  exp->un.unop.result = ~VAL(exp1);
 	  break;
 	case EXP_OP_DEREF:
-	  rtn.cookie = exp1.cookie;
+	  /* FIXME: this is currently buggy.
+	   * there is no way to tell were the deref:ed value is...
+	   * for example:
+	   *	x is a pointer to struct s, x being on the stack
+	   *		=> exp1 is target, result is target
+	   *	x is a pointer to struct s, x being optimized into a reg
+	   *		=> exp1 is host, result is target
+	   *	x is a pointer to internal variable x
+	   *	       	=> exp1 is host, result is host
+	   * so we force DV_TARGET, because dereferencing pointers to 
+	   * internal variables is very unlikely. a correct fix would be
+	   * rather large.
+	   */
+	  rtn.cookie = DV_TARGET; 
 	  rtn.addr.off = (unsigned int) DEBUG_TypeDerefPointer(&exp1, &rtn.type);
 	  if (!rtn.type)
 	    {
