@@ -72,7 +72,7 @@ static ICOM_VTABLE(ICommDlgBrowser) IShellBrowserImpl_ICommDlgBrowser_Vtbl =
 */
 
 HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IShellView *ppshv);
-LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
+//LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
 
 /**************************************************************************
 *   External Prototypes
@@ -658,6 +658,11 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBrowser *
         case CDBOSC_SETFOCUS:
             break;
         case CDBOSC_KILLFOCUS: 
+	    {
+		FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
+		if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
+		    SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
+            }
             break;
         case CDBOSC_SELCHANGE:
             return IShellBrowserImpl_ICommDlgBrowser_OnSelChange(iface,ppshv);
@@ -717,9 +722,10 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
 HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IShellView *ppshv)
 {
     LPITEMIDLIST pidl;
-
+    FileOpenDlgInfos *fodInfos;
     _ICOM_THIS_FromICommDlgBrowser(IShellBrowserImpl,iface);
 
+    fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
     TRACE("(%p)\n", This);
 
     if((pidl = GetSelectedPidl(ppshv)))
@@ -727,20 +733,27 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
         HRESULT hRes = E_FAIL;
         char lpstrFileName[MAX_PATH];
     
-        FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
-
         ULONG  ulAttr = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
         IShellFolder_GetAttributesOf(fodInfos->Shell.FOIShellFolder, 1, &pidl, &ulAttr);
         if (!ulAttr)
         {
             if(SUCCEEDED(hRes = GetName(fodInfos->Shell.FOIShellFolder,pidl,SHGDN_NORMAL,lpstrFileName)))
                 SetWindowTextA(fodInfos->DlgInfos.hwndFileName,lpstrFileName);
+	    if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
+		    SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
         }
+	else
+	    SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Open");
+
+	fodInfos->DlgInfos.dwDlgProp |= FODPROP_USEVIEW;
 
         COMDLG32_SHFree((LPVOID)pidl);
         return hRes;
     }
+    if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
+	SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
 
+    fodInfos->DlgInfos.dwDlgProp &= ~FODPROP_USEVIEW;
     return E_FAIL;
 }
 

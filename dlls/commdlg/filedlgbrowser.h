@@ -17,6 +17,12 @@
  */
 #define _ICOM_THIS_FromICommDlgBrowser(Class,name) Class* This = (Class*) (((char*)name)-sizeof(void *))
 
+/* dialog internal property */
+
+#define FODPROP_SAVEDLG 0x0001  /* File dialog is a Save file dialog */
+#define FODPROP_USEVIEW 0x0002  /* Indicates the user selection must be taken 
+				   from the IShellView */
+
 /***********************************************************************
  * Data structure
  */
@@ -55,6 +61,7 @@ typedef struct
         HWND hwndFileTypeCB;
         HWND hwndLookInCB;
         HWND hwndFileName;
+	DWORD dwDlgProp;
     } DlgInfos;
 
 } FileOpenDlgInfos;
@@ -159,5 +166,8 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
                                                                IShellView * ppshv,
                                                                LPCITEMIDLIST pidl);
 
+
+
+LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
 
 #endif /*SHBROWSER_H*/

@@ -395,12 +395,16 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
     GetCurrentDirectoryA(MAX_PATH,(LPSTR)fodInfos->ofnInfos.lpstrInitialDir);
   }
 
+  /* Initialise the dialog property */
+  fodInfos->DlgInfos.dwDlgProp = 0;
+  
   switch(iDlgType)
   {
   case OPEN_DIALOG :
       ret = GetOpenFileName95(fodInfos);
       break;
   case SAVE_DIALOG :
+      fodInfos->DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
       ret = GetSaveFileName95(fodInfos);
       break;
   default :
@@ -512,31 +516,46 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   if (ofn->nMaxFileTitle)
     fodInfos->ofnInfos.lpstrFileTitle = (LPSTR)MemAlloc(ofn->nMaxFileTitle);
   if (ofn->lpstrInitialDir)
-    fodInfos->ofnInfos.lpstrInitialDir = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrInitialDir));
+  {
+    fodInfos->ofnInfos.lpstrInitialDir = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrInitialDir)+1);
+    lstrcpyWtoA(fodInfos->ofnInfos.lpstrInitialDir,ofn->lpstrInitialDir);
+  }
   if (ofn->lpstrTitle)
-    fodInfos->ofnInfos.lpstrTitle = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrTitle));
+  {
+    fodInfos->ofnInfos.lpstrTitle = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrTitle)+1);
+    lstrcpyWtoA(fodInfos->ofnInfos.lpstrTitle,ofn->lpstrTitle);
+  }
   fodInfos->ofnInfos.Flags = ofn->Flags|OFN_WINE|OFN_UNICODE;
   fodInfos->ofnInfos.nFileOffset = ofn->nFileOffset;
   fodInfos->ofnInfos.nFileExtension = ofn->nFileExtension;
   if (ofn->lpstrDefExt)
-    fodInfos->ofnInfos.lpstrDefExt = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrDefExt));
+  {
+    fodInfos->ofnInfos.lpstrDefExt = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrDefExt)+1);
+    lstrcpyWtoA(fodInfos->ofnInfos.lpstrDefExt,ofn->lpstrDefExt);
+  }
   fodInfos->ofnInfos.lCustData = ofn->lCustData;
   fodInfos->ofnInfos.lpfnHook = (LPOFNHOOKPROC)ofn->lpfnHook;
   if (ofn->lpTemplateName) 
-    fodInfos->ofnInfos.lpTemplateName = (LPSTR)MemAlloc(lstrlenW(ofn->lpTemplateName));
+  { 
+    fodInfos->ofnInfos.lpTemplateName = (LPSTR)MemAlloc(lstrlenW(ofn->lpTemplateName)+1);
+    lstrcpyWtoA(fodInfos->ofnInfos.lpTemplateName,ofn->lpTemplateName);
+  }
+  /* Initialise the dialog property */
+  fodInfos->DlgInfos.dwDlgProp = 0;
+  
   switch(iDlgType)
   {
   case OPEN_DIALOG :
       ret = GetOpenFileName95(fodInfos);
       break;
   case SAVE_DIALOG :
+      fodInfos->DlgInfos.dwDlgProp |= FODPROP_SAVEDLG;
       ret = GetSaveFileName95(fodInfos);
       break;
   default :
       ret = 0;
   }
       
-
   /* Cleaning */
   ofn->nFileOffset = fodInfos->ofnInfos.nFileOffset;
   ofn->nFileExtension = fodInfos->ofnInfos.nFileExtension;
@@ -600,6 +619,7 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
   case WM_DESTROY:
       RemovePropA(hwnd, FileOpenDlgInfosStr);
+
     default :
       return FALSE;
   }
@@ -676,6 +696,7 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   WORD wNotifyCode = HIWORD(wParam); /* notification code */
   WORD wID = LOWORD(wParam);         /* item, control, or accelerator identifier */
+  FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 
   switch(wID)
   {
@@ -717,7 +738,8 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
     break;
 
   }
-
+  /* Do not use the listview selection anymore */
+  fodInfos->DlgInfos.dwDlgProp &= ~FODPROP_USEVIEW;
   return 0; 
 }
 
@@ -819,10 +841,22 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 {
   char lpstrSpecifiedByUser[MAX_PATH] = "";
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
+  LPITEMIDLIST pidlSelection;
 
   TRACE("\n");
 
-  if(GetDlgItemTextA(hwnd,IDC_FILENAME,lpstrSpecifiedByUser,MAX_PATH))
+  /* Check if there is a selected item in the listview */
+  if(fodInfos->DlgInfos.dwDlgProp & FODPROP_USEVIEW)
+  {
+      pidlSelection = GetSelectedPidl(fodInfos->Shell.FOIShellView);
+      GetName(fodInfos->Shell.FOIShellFolder,pidlSelection,SHGDN_NORMAL,lpstrSpecifiedByUser);
+      COMDLG32_SHFree((LPVOID)pidlSelection);
+  }
+  else
+      /* Get the text from the filename edit */
+      GetDlgItemTextA(hwnd,IDC_FILENAME,lpstrSpecifiedByUser,MAX_PATH);
+
+  if(strlen(lpstrSpecifiedByUser))
   {
       LPSHELLFOLDER psfDesktop;
       LPITEMIDLIST browsePidl;
@@ -1148,7 +1182,6 @@ static HRESULT FILEDLG95_SHELL_Init(HWND hwnd)
   /* Construct the IShellBrowser interface */
   fodInfos->Shell.FOIShellBrowser = IShellBrowserImpl_Construct(hwnd);  
     
-  
   return NOERROR;
 }
 

@@ -226,7 +226,7 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 
 	TRACE("%p\n",This);
 
-	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER |
+	dwStyle = WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		  LVS_SHAREIMAGELISTS | LVS_EDITLABELS | LVS_ALIGNLEFT | LVS_AUTOARRANGE;
 
 	switch (This->FolderSettings.ViewMode)
@@ -787,6 +787,9 @@ static LRESULT ShellView_OnSetFocus(IShellViewImpl * This)
 	IShellBrowser_OnViewWindowActive(This->pShellBrowser,(IShellView*) This);
 	ShellView_OnActivate(This, SVUIA_ACTIVATE_FOCUS);
 
+	/* Notify the ICommDlgBrowser interface */
+	OnStateChange(This,CDBOSC_SETFOCUS);
+
 	return 0;
 }
 
@@ -798,6 +801,8 @@ static LRESULT ShellView_OnKillFocus(IShellViewImpl * This)
 	TRACE("(%p) stub\n",This);
 
 	ShellView_OnActivate(This, SVUIA_ACTIVATE_NOFOCUS);
+	/* Notify the ICommDlgBrowser */
+	OnStateChange(This,CDBOSC_KILLFOCUS);
 
 	return 0;
 }
@@ -859,6 +864,8 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	  case NM_KILLFOCUS:
 	    TRACE("-- NM_KILLFOCUS %p\n",This);
 	    ShellView_OnDeactivate(This);
+	    /* Notify the ICommDlgBrowser interface */
+	    OnStateChange(This,CDBOSC_KILLFOCUS);
 	    break;
 
 	  case HDN_ENDTRACKA:
