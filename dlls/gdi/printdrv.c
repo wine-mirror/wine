@@ -193,6 +193,11 @@ INT WINAPI EndPage(HDC hdc)
     else
         ret = Escape(hdc, NEWFRAME, 0, 0, 0);
     GDI_ReleaseObj( hdc );
+    if (!QueryAbort16( hdc, 0 ))
+    {
+        EndDoc( hdc );
+        ret = 0;
+    }
     return ret;
 }
 
@@ -604,6 +609,10 @@ INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
 	  nRet = SP_OUTOFDISK;
 	else
 	  nRet = cch;
+#if 0
+	/* FIXME: We just cannot call 16 bit functions from here, since we
+	 * have acquired several locks (DC). And we do not really need to.
+	 */
 	if (pPrintJob->hDC == 0) {
 	    TRACE("hDC == 0 so no QueryAbort\n");
 	}
@@ -612,6 +621,7 @@ INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
 	    CloseJob16(hJob); /* printing aborted */
 	    nRet = SP_APPABORT;
 	}
+#endif
     }
     return nRet;
 }
