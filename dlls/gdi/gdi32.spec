@@ -118,6 +118,7 @@
 @ stdcall FloodFill(long long long long)
 @ stdcall FrameRgn(long long long long long)
 @ stub FreeImageColorMatcher
+@ stdcall GdiAlphaBlend(long long long long long long long long long long long)
 @ stub GdiAssociateObject
 @ stub GdiCleanCacheDC
 @ stdcall GdiComment(long long ptr)

@@ -3133,6 +3133,9 @@ typedef struct _GRADIENT_RECT
     ULONG LowerRight;
 } GRADIENT_RECT, *PGRADIENT_RECT, *LPGRADIENT_RECT;
 
+#define AC_SRC_OVER  0x00
+#define AC_SRC_ALPHA 0x01
+
 typedef struct _BLENDFUNCTION
 {
     BYTE BlendOp;

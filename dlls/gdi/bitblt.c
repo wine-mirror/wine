@@ -395,6 +395,19 @@ error:
     return ret;
 }
 
+/******************************************************************************
+ *           GdiAlphaBlend [GDI32.@]
+ */
+BOOL WINAPI GdiAlphaBlend(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
+                          HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
+                          BLENDFUNCTION blendFunction)
+{
+    FIXME("partial stub - using StretchBlt\n");
+    return StretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
+                      hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+                      SRCCOPY);
+}
+
 /*********************************************************************
  *      PlgBlt [GDI32.@]
  *

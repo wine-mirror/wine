@@ -27,18 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msimg32);
 
 /******************************************************************************
- *           AlphaBlend   (MSIMG32.@)
- */
-BOOL WINAPI AlphaBlend( HDC hdcDest, int xDest, int yDest, int widthDest, int heightDst,
-                        HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
-                        BLENDFUNCTION func )
-{
-    FIXME("stub: AlphaBlend from %p to %p\n", hdcSrc, hdcDest );
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/******************************************************************************
  *           vSetDdrawflag   (MSIMG32.@)
  */
 void WINAPI vSetDdrawflag(void)
