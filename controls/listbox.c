@@ -348,16 +348,23 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
     descr->height = rect.bottom - rect.top;
     if (!(descr->style & LBS_NOINTEGRALHEIGHT) && !(descr->style & LBS_OWNERDRAWVARIABLE))
     {
-        if ((descr->height > descr->item_height) &&
-            (descr->height % descr->item_height))
+        UINT remaining = descr->height % descr->item_height;
+        if ((descr->height > descr->item_height) && remaining)
         {
+            if (!(wnd->flags & WIN_ISWIN32))
+            { /* give a margin for error to 16 bits programs - if we need
+                 less than the height of the nonclient area, round to the
+                 *next* number of items */ 
+                int ncheight = wnd->rectWindow.bottom - wnd->rectWindow.top - descr->height;
+                if ((descr->item_height - remaining) <= ncheight)
+                    remaining = remaining - descr->item_height;
+            }
             TRACE("[%04x]: changing height %d -> %d\n",
 			 wnd->hwndSelf, descr->height,
-			 descr->height - descr->height%descr->item_height );
+			 descr->height - remaining );
             SetWindowPos( wnd->hwndSelf, 0, 0, 0,
                             wnd->rectWindow.right - wnd->rectWindow.left,
-                            wnd->rectWindow.bottom - wnd->rectWindow.top -
-                                (descr->height % descr->item_height),
+                            wnd->rectWindow.bottom - wnd->rectWindow.top - remaining,
                             SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
             return;
         }
