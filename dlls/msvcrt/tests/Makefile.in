@@ -12,6 +12,7 @@ CTESTS = \
 	file.c \
 	headers.c \
 	heap.c \
+	printf.c \
 	scanf.c \
 	string.c \
 	time.c

@@ -97,60 +97,7 @@ static void test_sscanf( void )
     ok(result == 123, "Wrong number read\n");
 }
 
-static void test_sprintf( void )
-{
-    char buffer[100];
-    const char *I64d = "%I64d";
-    double pnumber=789456123;
-    sprintf(buffer,"%+#23.15e",pnumber);
-    todo_wine
-      {
-	ok(strstr(buffer,"e+008") != 0,"Sprintf different \"%s\"\n",buffer);
-      }
-    sprintf(buffer,I64d,((ULONGLONG)0xffffffff)*0xffffffff);
-    todo_wine
-      {
-	ok(strlen(buffer) == 19,"Problem with long long \"%s\"\n",buffer);
-      }
-}
-
-static void test_snprintf (void)
-{
-    struct snprintf_test {
-        const char *format;
-        int expected;
-        struct {
-            int retval;
-            int render;
-        } todo;
-    };
-    /* Pre-2.1 libc behaviour, not C99 compliant. */
-    const struct snprintf_test tests[] = {{"short", 5, {0, 0}},
-                                          {"justfit", 7, {0, 0}},
-                                          {"justfits", 8, {0, 1}},
-                                          {"muchlonger", -1, {1, 1}}};
-    char buffer[8];
-    const int bufsiz = sizeof buffer;
-    unsigned int i;
-
-    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
-        const char *fmt  = tests[i].format;
-        const int expect = tests[i].expected;
-        const int n      = _snprintf (buffer, bufsiz, fmt);
-        const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
-
-        todo (tests[i].todo.retval ? "wine" : "none")
-            ok (n == expect, "\"%s\": expected %d, returned %d\n",
-                fmt, expect, n);
-        todo (tests[i].todo.render ? "wine" : "none")
-            ok (!memcmp (fmt, buffer, valid),
-                "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
-    };
-}
-
 START_TEST(scanf)
 {
     test_sscanf();
-    test_sprintf();
-    test_snprintf();
 }
