@@ -267,7 +267,7 @@ HRESULT WINAPI IPinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
     HRESULT hr;
     ICOM_THIS(IPinImpl, iface);
 
-    TRACE("(%p)\n", pmt);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
 
     EnterCriticalSection(This->pCritSec);
     {
@@ -291,7 +291,7 @@ HRESULT WINAPI IPinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo)
 {
     ICOM_THIS(IPinImpl, iface);
 
-    TRACE("(%p)\n", pInfo);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pInfo);
 
     Copy_PinInfo(pInfo, &This->pinInfo);
 
@@ -302,7 +302,7 @@ HRESULT WINAPI IPinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir)
 {
     ICOM_THIS(IPinImpl, iface);
 
-    TRACE("(%p)\n", pPinDir);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pPinDir);
 
     *pPinDir = This->pinInfo.dir;
 
@@ -313,7 +313,7 @@ HRESULT WINAPI IPinImpl_QueryId(IPin * iface, LPWSTR * Id)
 {
     ICOM_THIS(IPinImpl, iface);
 
-    TRACE("(%p)\n", Id);
+    TRACE("(%p/%p)->(%p)\n", This, iface, Id);
 
     *Id = CoTaskMemAlloc((strlenW(This->pinInfo.achName) + 1) * sizeof(WCHAR));
     if (!Id)
@@ -328,16 +328,17 @@ HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 {
     ICOM_THIS(IPinImpl, iface);
 
-    TRACE("(%p)\n", pmt);
+    TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
 
     return (This->fnQueryAccept(This->pUserData, pmt) == S_OK ? S_OK : S_FALSE);
 }
 
 HRESULT WINAPI IPinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
+    ICOM_THIS(IPinImpl, iface);
     ENUMMEDIADETAILS emd;
 
-    TRACE("(%p)\n", ppEnum);
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
     /* override this method to allow enumeration of your types */
     emd.cMediaTypes = 0;
@@ -348,7 +349,9 @@ HRESULT WINAPI IPinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 
 HRESULT WINAPI IPinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
 {
-    TRACE("(%p, %p)\n", apPin, cPin);
+    ICOM_THIS(IPinImpl, iface);
+
+    TRACE("(%p/%p)->(%p, %p)\n", This, iface, apPin, cPin);
 
     return E_NOTIMPL; /* to tell caller that all input pins connected to all output pins */
 }
@@ -359,7 +362,7 @@ HRESULT WINAPI InputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
     ICOM_THIS(InputPin, iface);
 
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+    TRACE("(%p)->(%s, %p)\n", iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -530,7 +533,7 @@ HRESULT WINAPI MemInputPin_GetAllocator(IMemInputPin * iface, IMemAllocator ** p
 {
     ICOM_THIS_From_IMemInputPin(InputPin, iface);
 
-    TRACE("MemInputPin_GetAllocator()\n");
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppAllocator);
 
     *ppAllocator = This->pAllocator;
     if (*ppAllocator)
@@ -543,7 +546,7 @@ HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator *
 {
     ICOM_THIS_From_IMemInputPin(InputPin, iface);
 
-    TRACE("()\n");
+    TRACE("(%p/%p)->(%p, %d)\n", This, iface, pAllocator, bReadOnly);
 
     if (This->pAllocator)
         IMemAllocator_Release(This->pAllocator);
@@ -556,7 +559,9 @@ HRESULT WINAPI MemInputPin_NotifyAllocator(IMemInputPin * iface, IMemAllocator *
 
 HRESULT WINAPI MemInputPin_GetAllocatorRequirements(IMemInputPin * iface, ALLOCATOR_PROPERTIES * pProps)
 {
-    TRACE("(%p)\n", pProps);
+    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+
+    TRACE("(%p/%p)->(%p)\n", This, iface, pProps);
 
     /* override this method if you have any specific requirements */
 
@@ -568,7 +573,7 @@ HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
     ICOM_THIS_From_IMemInputPin(InputPin, iface);
 
     /* this trace commented out for performance reasons */
-/*  TRACE("(%p)\n", pSample);*/
+    /*TRACE("(%p/%p)->(%p)\n", This, iface, pSample);*/
 
     return This->fnSampleProc(This->pin.pUserData, pSample);
 }
@@ -576,7 +581,9 @@ HRESULT WINAPI MemInputPin_Receive(IMemInputPin * iface, IMediaSample * pSample)
 HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample ** pSamples, long nSamples, long *nSamplesProcessed)
 {
     HRESULT hr = S_OK;
-    TRACE("(%p, %ld, %p)\n", pSamples, nSamples, nSamplesProcessed);
+    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+
+    TRACE("(%p/%p)->(%p, %ld, %p)\n", This, iface, pSamples, nSamples, nSamplesProcessed);
 
     for (*nSamplesProcessed = 0; *nSamplesProcessed < nSamples; (*nSamplesProcessed)++)
     {
@@ -590,7 +597,9 @@ HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin * iface, IMediaSample **
 
 HRESULT WINAPI MemInputPin_ReceiveCanBlock(IMemInputPin * iface)
 {
-    FIXME("()\n");
+    ICOM_THIS_From_IMemInputPin(InputPin, iface);
+
+    FIXME("(%p/%p)->()\n", This, iface);
 
     /* FIXME: we should check whether any output pins will block */
 
@@ -613,7 +622,9 @@ static const IMemInputPinVtbl MemInputPin_Vtbl =
 
 HRESULT WINAPI OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+    ICOM_THIS(OutputPin, iface);
+
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -637,7 +648,7 @@ ULONG WINAPI OutputPin_Release(IPin * iface)
 {
     ICOM_THIS(OutputPin, iface);
     
-    TRACE("()\n");
+    TRACE("(%p/%p)->()\n", This, iface);
     
     if (!InterlockedDecrement(&This->pin.refCount))
     {
@@ -653,7 +664,7 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
     HRESULT hr;
     ICOM_THIS(OutputPin, iface);
 
-    TRACE("(%p, %p)\n", pReceivePin, pmt);
+    TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
 
     /* If we try to connect to ourself, we will definitely deadlock.
@@ -696,6 +707,8 @@ HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDI
             /* then try receiver filter's media types */
             if (hr != S_OK && SUCCEEDED(hr = IPin_EnumMediaTypes(pReceivePin, &pEnumCandidates))) /* if we haven't already connected successfully */
             {
+                hr = VFW_E_NO_ACCEPTABLE_TYPES; /* Assume the worst, but set to S_OK if connected successfully */
+
                 while (S_OK == IEnumMediaTypes_Next(pEnumCandidates, 1, &pmtCandidate, NULL))
                 {
                     if (( !pmt || CompareMediaTypes(pmt, pmtCandidate, TRUE) ) && 
@@ -763,7 +776,7 @@ HRESULT WINAPI OutputPin_EndOfStream(IPin * iface)
 
 HRESULT WINAPI OutputPin_BeginFlush(IPin * iface)
 {
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     /* not supposed to do anything in an output pin */
 
@@ -772,7 +785,7 @@ HRESULT WINAPI OutputPin_BeginFlush(IPin * iface)
 
 HRESULT WINAPI OutputPin_EndFlush(IPin * iface)
 {
-    TRACE("()\n");
+    TRACE("(%p)->()\n", iface);
 
     /* not supposed to do anything in an output pin */
 
@@ -781,7 +794,7 @@ HRESULT WINAPI OutputPin_EndFlush(IPin * iface)
 
 HRESULT WINAPI OutputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
-    TRACE("(%lx%08lx, %lx%08lx, %e)\n", (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
+    TRACE("(%p)->(%lx%08lx, %lx%08lx, %e)\n", iface, (ULONG)(tStart >> 32), (ULONG)tStart, (ULONG)(tStop >> 32), (ULONG)tStop, dRate);
 
     /* not supposed to do anything in an output pin */
 
@@ -899,7 +912,7 @@ HRESULT OutputPin_CommitAllocator(OutputPin * This)
 {
     HRESULT hr;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -934,7 +947,7 @@ HRESULT OutputPin_DeliverDisconnect(OutputPin * This)
 {
     HRESULT hr;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -1026,7 +1039,7 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
     HRESULT hr = S_OK;
     ICOM_THIS(PullPin, iface);
 
-    TRACE("(%p, %p)\n", pReceivePin, pmt);
+    TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
 
     EnterCriticalSection(This->pin.pCritSec);
@@ -1082,7 +1095,9 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
 
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+    ICOM_THIS(PullPin, iface);
+
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -1106,7 +1121,7 @@ ULONG WINAPI PullPin_Release(IPin * iface)
 {
     ICOM_THIS(PullPin, iface);
 
-    TRACE("()\n");
+    TRACE("(%p/%p)->()\n", This, iface);
 
     if (!InterlockedDecrement(&This->pin.refCount))
     {
@@ -1173,7 +1188,7 @@ static void CALLBACK PullPin_Thread_Process(ULONG_PTR iface)
             ERR("Processing error: %lx\n", hr);
         
         if (pSample)
-            IMemAllocator_ReleaseBuffer(This->pAlloc, pSample);
+            IMediaSample_Release(pSample);
     }
 }
 
@@ -1181,7 +1196,7 @@ static void CALLBACK PullPin_Thread_Stop(ULONG_PTR iface)
 {
     ICOM_THIS(PullPin, iface);
 
-    TRACE("()\n");
+    TRACE("(%p/%p)->()\n", This, (LPVOID)iface);
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -1203,7 +1218,7 @@ HRESULT PullPin_InitProcessing(PullPin * This)
 {
     HRESULT hr = S_OK;
 
-    TRACE("()\n");
+    TRACE("(%p)->()\n", This);
 
     assert(!This->hThread);
 
@@ -1233,6 +1248,7 @@ HRESULT PullPin_InitProcessing(PullPin * This)
 HRESULT PullPin_StartProcessing(PullPin * This)
 {
     /* if we are connected */
+    TRACE("(%p)->()\n", This);
     if(This->pAlloc)
     {
         assert(This->hThread);
@@ -1281,7 +1297,7 @@ HRESULT PullPin_WaitForStateChange(PullPin * This, DWORD dwMilliseconds)
 
 HRESULT PullPin_Seek(PullPin * This, REFERENCE_TIME rtStart, REFERENCE_TIME rtStop)
 {
-    FIXME("(%lx%08lx, %lx%08lx)\n", (LONG)(rtStart >> 32), (LONG)rtStart, (LONG)(rtStop >> 32), (LONG)rtStop);
+    FIXME("(%p)->(%lx%08lx, %lx%08lx)\n", This, (LONG)(rtStart >> 32), (LONG)rtStart, (LONG)(rtStop >> 32), (LONG)rtStop);
 
     PullPin_BeginFlush((IPin *)This);
     /* FIXME: need critical section? */
@@ -1294,25 +1310,25 @@ HRESULT PullPin_Seek(PullPin * This, REFERENCE_TIME rtStart, REFERENCE_TIME rtSt
 
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface)
 {
-    FIXME("()\n");
+    FIXME("(%p)->()\n", iface);
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface)
 {
-    FIXME("()\n");
+    FIXME("(%p)->()\n", iface);
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI PullPin_EndFlush(IPin * iface)
 {
-    FIXME("()\n");
+    FIXME("(%p)->()\n", iface);
     return E_NOTIMPL;
 }
 
 HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
-    FIXME("()\n");
+    FIXME("(%p)->(%s, %s, %g)\n", iface, wine_dbgstr_longlong(tStart), wine_dbgstr_longlong(tStop), dRate);
     return E_NOTIMPL;
 }
 
