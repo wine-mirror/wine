@@ -117,6 +117,23 @@ static const WCHAR szInstaller_Products_fmt[] = {
 'P','r','o','d','u','c','t','s','\\',
 '%','s',0};
 
+static const WCHAR szInstaller_UpgradeCodes[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','p','g','r','a','d','e','C','o','d','e','s',0};
+
+static const WCHAR szInstaller_UpgradeCodes_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'U','p','g','r','a','d','e','C','o','d','e','s','\\',
+'%','s',0};
+
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out)
 {
     DWORD i,n=0;
@@ -380,6 +397,26 @@ UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create)
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
     sprintfW(keypath,szInstaller_Products_fmt,squished_pc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,keypath,key);
+    else
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,keypath,key);
+
+    return rc;
+}
+
+UINT MSIREG_OpenUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n",debugstr_w(szUpgradeCode));
+    squash_guid(szUpgradeCode,squished_pc);
+    TRACE("squished (%s)\n", debugstr_w(squished_pc));
+
+    sprintfW(keypath,szInstaller_UpgradeCodes_fmt,squished_pc);
 
     if (create)
         rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,keypath,key);
@@ -700,15 +737,65 @@ UINT WINAPI MsiEnumComponentQualifiersW( LPWSTR szComponent, DWORD iIndex,
 UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR szUpgradeCode, DWORD dwReserved,
                                     DWORD iProductIndex, LPWSTR lpProductBuf)
 {
-    FIXME("%s %lu %lu %p\n", debugstr_w(szUpgradeCode), dwReserved,
+    UINT rc;
+    HKEY hkey;
+    WCHAR szKeyName[33];
+
+    TRACE("%s %lu %lu %p\n", debugstr_w(szUpgradeCode), dwReserved,
           iProductIndex, lpProductBuf);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (NULL == szUpgradeCode)
+        return ERROR_INVALID_PARAMETER;
+    if (NULL == lpProductBuf)
+        return ERROR_INVALID_PARAMETER;
+    rc = MSIREG_OpenUpgradeCodesKey(szUpgradeCode, &hkey, FALSE);
+    if (rc != ERROR_SUCCESS)
+    {
+        rc = ERROR_NO_MORE_ITEMS;
+        goto end;
+    }
+
+    rc = RegEnumKeyW(hkey, iProductIndex, szKeyName,
+     sizeof(szKeyName) / sizeof(szKeyName[0]));
+
+    unsquash_guid(szKeyName, lpProductBuf);
+    RegCloseKey(hkey);
+
+end:
+    return rc;
 }
 
 UINT WINAPI MsiEnumRelatedProductsA(LPCSTR szUpgradeCode, DWORD dwReserved,
                                     DWORD iProductIndex, LPSTR lpProductBuf)
 {
-    FIXME("%s %lu %lu %p\n", debugstr_a(szUpgradeCode), dwReserved,
+    UINT rc;
+    int len;
+    LPWSTR szUpgradeCodeW = NULL;
+
+    TRACE("%s %lu %lu %p\n", debugstr_a(szUpgradeCode), dwReserved,
           iProductIndex, lpProductBuf);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    if (!szUpgradeCode)
+        return ERROR_INVALID_PARAMETER;
+    len = MultiByteToWideChar(CP_ACP, 0, szUpgradeCode, -1, NULL, 0);
+    szUpgradeCodeW = (LPWSTR)HeapAlloc(GetProcessHeap(), 0,
+     len * sizeof(WCHAR));
+    if (szUpgradeCodeW)
+    {
+        WCHAR productW[39];
+
+        MultiByteToWideChar(CP_ACP, 0, szUpgradeCode, -1, szUpgradeCodeW, len);
+        rc = MsiEnumRelatedProductsW(szUpgradeCodeW, dwReserved,
+         iProductIndex, productW);
+        if (rc == ERROR_SUCCESS)
+        {
+            LPWSTR ptr;
+
+            for (ptr = productW; *ptr; )
+                *lpProductBuf++ = *ptr++;
+        }
+        HeapFree(GetProcessHeap(), 0, szUpgradeCodeW);
+    }
+    else
+        rc = ERROR_OUTOFMEMORY;
+    return rc;
 }
