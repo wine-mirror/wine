@@ -15,13 +15,14 @@ C_SRCS = \
 	format.c \
 	internal.c \
 	msacm32_main.c \
-	msacm_main.c \
 	pcmconverter.c \
 	stream.c
+
+C_SRCS16 = \
+	msacm_main.c
 
 RC_SRCS = msacm.rc
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
