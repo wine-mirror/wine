@@ -2,6 +2,132 @@
     <title>Low-level Implementation</title>
     <para>Details of Wine's Low-level Implementation...</para>
 
+    <sect1 id="undoc-func">
+      <title>Undocumented APIs</title>
+
+	<para>
+	  Some background:  On the i386 class of machines, stack entries are
+	  usually dword (4 bytes) in size, little-endian.  The stack grows
+	  downward in memory.  The stack pointer, maintained in the 
+	  <literal>esp</literal> register, points to the last valid entry; 
+	  thus, the operation of pushing a value onto the stack involves 
+	  decrementing <literal>esp</literal> and then moving the value into 
+	  the memory pointed to by <literal>esp</literal>
+	  (i.e., <literal>push p</literal> in assembly resembles 
+	  <literal>*(--esp) = p;</literal> in C).  Removing (popping)
+	  values off the stack is the reverse (i.e., <literal>pop p</literal> 
+	  corresponds to <literal>p = *(esp++);</literal> in C).
+	</para>
+
+	<para>
+	  In the <literal>stdcall</literal> calling convention, arguments are 
+	  pushed onto the stack right-to-left.  For example, the C call
+	  <function>myfunction(40, 20, 70, 30);</function> is expressed in 
+	  Intel assembly as:
+	  <screen>
+    push 30
+    push 70
+    push 20
+    push 40
+    call myfunction
+	  </screen>
+	  The called function is responsible for removing the arguments 
+	  off the stack.  Thus, before the call to myfunction, the
+	  stack would look like:
+	  <screen>
+             [local variable or temporary]
+             [local variable or temporary]
+              30
+              70
+              20
+    esp ->    40
+	  </screen>
+	  After the call returns, it should look like:
+	  <screen>
+             [local variable or temporary]
+    esp ->   [local variable or temporary]
+	  </screen>
+	</para>
+
+	<para>
+	  To restore the stack to this state, the called function must know how
+	  many arguments to remove (which is the number of arguments it takes).
+	  This is a problem if the function is undocumented.
+	</para>
+
+	<para>
+	  One way to attempt to document the number of arguments each function
+	  takes is to create a wrapper around that function that detects the
+	  stack offset.  Essentially, each wrapper assumes that the function will 
+	  take a large number of arguments.  The wrapper copies each of these 
+	  arguments into its stack, calls the actual function, and then calculates 
+	  the number of arguments by checking esp before and after the call.
+	</para>
+
+	<para>
+	  The main problem with this scheme is that the function must actually
+	  be called from another program.  Many of these functions are seldom
+	  used.  An attempt was made to aggressively query each function in a
+	  given library (<filename>ntdll.dll</filename>) by passing 64 arguments, 
+	  all 0, to each function.  Unfortunately, Windows NT quickly goes to a 
+	  blue screen of death, even if the program is run from a 
+	  non-administrator account.
+	</para>
+
+	<para>
+	  Another method that has been much more successful is to attempt to
+	  figure out how many arguments each function is removing from the
+	  stack.  This instruction, <literal>ret hhll</literal> (where 
+	  <symbol>hhll</symbol> is the number of bytes to remove, i.e. the 
+	  number of arguments times 4), contains the bytes 
+	  <literal>0xc2 ll hh</literal> in memory.  It is a reasonable
+	  assumption that few, if any, functions take more than 16 arguments; 
+	  therefore, simply searching for 
+	  <literal>hh == 0 && ll &lt; 0x40</literal>  starting from the 
+	  address of a function yields the correct number of arguments most 
+	  of the time.
+	</para>
+
+	<para>
+	  Of course, this is not without errors. <literal>ret 00ll</literal> 
+	  is not the only instruction that can have the byte sequence 
+	  <literal>0xc2 ll 0x0</literal>; for example, 
+	  <literal>push 0x000040c2</literal> has the byte sequence
+	  <literal>0x68 0xc2 0x40 0x0 0x0</literal>, which matches 
+	  the above.  Properly, the utility should look for this sequence 
+	  only on an instruction boundary; unfortunately, finding 
+	  instruction boundaries on an i386 requires implementing a full 
+	  disassembler -- quite a daunting task.  Besides, the probability 
+	  of having such a byte sequence that is not the actual return 
+	  instruction is fairly low.
+	</para>
+
+	<para>
+	  Much more troublesome is the non-linear flow of a function.  For
+	  example, consider the following two functions:
+	  <screen>
+    somefunction1:
+        jmp  somefunction1_impl
+
+    somefunction2:
+        ret  0004
+
+    somefunction1_impl:
+        ret  0008
+	  </screen>
+	  In this case, we would incorrectly detect both 
+	  <function>somefunction1</function> and
+	  <function>somefunction2</function> as taking only a single 
+	  argument, whereas <function>somefunction1</function> really 
+	  takes two arguments.
+	</para>
+
+	<para>
+	  With these limitations in mind, it is possible to implement more stubs
+	  in Wine and, eventually, the functions themselves.
+	</para>
+    </sect1>
+
     <sect1 id="accel-impl">
       <title>Accelerators</title>
 
