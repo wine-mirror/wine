@@ -523,8 +523,9 @@ static LRESULT MDIDestroyChild( WND *w_parent, MDICLIENTINFO *ci,
 
                 MDI_ChildActivate(w_parent, 0);
 	    }
-	    MDI_MenuDeleteItem(w_parent, child);
 	}
+        MDI_MenuDeleteItem(w_parent, child);
+
         WIN_ReleaseWndPtr(childPtr);
 	
         ci->nActiveChildren--;
