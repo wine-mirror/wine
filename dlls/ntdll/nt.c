@@ -520,9 +520,12 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
 	OUT PLARGE_INTEGER Frequency)
 {
     LARGE_INTEGER time;
+
+    if (!Counter) return STATUS_ACCESS_VIOLATION;
     NtQuerySystemTime( &time );
     Counter->QuadPart = time.QuadPart;
-    Frequency->QuadPart = 10000000;
+    if (Frequency)
+        Frequency->QuadPart = 10000000;
     return 0;
 }
 
