@@ -603,7 +603,7 @@ static const char main_key_CS[MAIN_LEN][4] =
 /*** Latin American keyboard layout (contributed by Gabriel Orlando Garcia) */
 static const char main_key_LA[MAIN_LEN][4] =
 {
- "|∞¨","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?\\","°ø",
+ "|∞¨","1!","2\"","3#","4$","5%","6&","7/","8(","9)","0=","'?\\","ø°",
  "qQ@","wW","eE","rR","tT","yY","uU","iI","oO","pP","¥®","+*~",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","Ò—","{[^","}]`",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
