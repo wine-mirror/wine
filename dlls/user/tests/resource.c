@@ -35,7 +35,7 @@ static void test_LoadStringA (void)
     struct string_test tests[] = {{sizeof buf, sizeof str - 1},
                                   {sizeof str, sizeof str - 1},
                                   {sizeof str - 1, sizeof str - 2}};
-    int i;
+    unsigned int i;
 
     assert (sizeof str < sizeof buf);
     for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {

@@ -455,7 +455,7 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     BOOL rc;
     UINT old_speed;
     const UINT vals[]={0,20,31};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}KEYBOARDSPEED\n");
     rc=SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &old_speed, 0 );
@@ -530,7 +530,7 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
     BOOL rc;
     UINT old_timeout;
     const UINT vals[]={0,32767};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}SCREENSAVETIMEOUT\n");
     rc=SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &old_timeout, 0 );
@@ -564,7 +564,7 @@ static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
     BOOL rc;
     BOOL old_b;
     const UINT vals[]={TRUE,FALSE};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}SCREENSAVEACTIVE\n");
     rc=SystemParametersInfoA( SPI_GETSCREENSAVEACTIVE, 0, &old_b, 0 );
@@ -601,7 +601,7 @@ static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
     BOOL rc;
     UINT old_delay;
     const UINT vals[]={0,3};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}KEYBOARDDELAY\n");
     rc=SystemParametersInfoA( SPI_GETKEYBOARDDELAY, 0, &old_delay, 0 );
@@ -678,7 +678,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
     BOOL rc;
     BOOL old_b;
     const UINT vals[]={TRUE,FALSE};
-    int i;
+    unsigned int i;
 
     /* These tests hang when XFree86 4.0 for Windows is running (tested on
      * WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
@@ -718,7 +718,7 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
     BOOL rc;
     BOOL old_b;
     const UINT vals[]={TRUE,FALSE};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}MENUDROPALIGNMENT\n");
     rc=SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &old_b, 0 );
@@ -754,7 +754,7 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
     BOOL rc;
     INT old_width;
     const UINT vals[]={0,10000};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}DOUBLECLKWIDTH\n");
     old_width = GetSystemMetrics( SM_CXDOUBLECLK );
@@ -785,7 +785,7 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
     BOOL rc;
     INT old_height;
     const UINT vals[]={0,10000};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}DOUBLECLKHEIGHT\n");
     old_height = GetSystemMetrics( SM_CYDOUBLECLK );
@@ -869,7 +869,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
     BOOL rc;
     BOOL old_b;
     const UINT vals[]={TRUE,FALSE};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEBUTTONSWAP\n");
     old_b = GetSystemMetrics( SM_SWAPBUTTON );
@@ -910,7 +910,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
     BOOL rc;
     BOOL old_b;
     const UINT vals[]={TRUE,FALSE};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}DRAGFULLWINDOWS\n");
     rc=SystemParametersInfoA( SPI_GETDRAGFULLWINDOWS, 0, &old_b, 0 );
@@ -992,7 +992,7 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
     BOOL rc;
     BOOL old_b;
     const UINT vals[]={TRUE,FALSE};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}SHOWSOUNDS\n");
     SetLastError(0);
@@ -1043,7 +1043,7 @@ static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
     BOOL rc;
     UINT old_width;
     const UINT vals[]={0,32767};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEHOVERWIDTH\n");
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERWIDTH, 0, &old_width, 0 );
@@ -1085,7 +1085,7 @@ static void test_SPI_SETMOUSEHOVERHEIGHT( void )      /*     101 */
     BOOL rc;
     UINT old_height;
     const UINT vals[]={0,32767};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEHOVERHEIGHT\n");
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERHEIGHT, 0, &old_height, 0 );
@@ -1127,7 +1127,7 @@ static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
     BOOL rc;
     UINT old_time;
     const UINT vals[]={0,32767};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}MOUSEHOVERTIME\n");
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERTIME, 0, &old_time, 0 );
@@ -1169,7 +1169,7 @@ static void test_SPI_SETWHEELSCROLLLINES( void )      /*     105 */
     BOOL rc;
     UINT old_lines;
     const UINT vals[]={0,32767};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}WHEELSCROLLLINES\n");
     rc=SystemParametersInfoA( SPI_GETWHEELSCROLLLINES, 0, &old_lines, 0 );
@@ -1203,7 +1203,7 @@ static void test_SPI_SETMENUSHOWDELAY( void )      /*     107 */
     BOOL rc;
     UINT old_delay;
     const UINT vals[]={0,32767};
-    int i;
+    unsigned int i;
 
     trace("testing SPI_{GET,SET}MENUSHOWDELAY\n");
     rc=SystemParametersInfoA( SPI_GETMENUSHOWDELAY, 0, &old_delay, 0 );

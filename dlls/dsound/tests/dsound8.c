@@ -614,7 +614,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
     DSBUFFERDESC bufdesc;
     DSCAPS dscaps;
     WAVEFORMATEX wfx;
-    int f,ref;
+    DWORD f;
+    int ref;
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate8(lpGuid,&dso,NULL);

@@ -597,7 +597,7 @@ static BOOL RegisterWindowClasses(void)
 static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_borders)
 {
     RECT rcWindow, rcClient;
-    INT border;
+    UINT border;
     DWORD status;
 
     ok(IsWindow(hwnd), "bad window handle\n");
@@ -610,8 +610,8 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
     MapWindowPoints(hwnd, 0, (LPPOINT)&rcClient, 2);
     ok(EqualRect(&rcClient, &info->rcClient), "wrong rcClient\n");
 
-    ok(info->dwStyle == GetWindowLongA(hwnd, GWL_STYLE), "wrong dwStyle\n");
-    ok(info->dwExStyle == GetWindowLongA(hwnd, GWL_EXSTYLE), "wrong dwExStyle\n");
+    ok(info->dwStyle == (DWORD)GetWindowLongA(hwnd, GWL_STYLE), "wrong dwStyle\n");
+    ok(info->dwExStyle == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE), "wrong dwExStyle\n");
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
     ok(info->dwWindowStatus == status, "wrong dwWindowStatus\n");
 
@@ -620,7 +620,7 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
 	trace("rcWindow: %ld,%ld - %ld,%ld\n", rcWindow.left, rcWindow.top, rcWindow.right, rcWindow.bottom);
 	trace("rcClient: %ld,%ld - %ld,%ld\n", rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
 
-	ok(info->cxWindowBorders == rcClient.left - rcWindow.left,
+	ok(info->cxWindowBorders == (unsigned)(rcClient.left - rcWindow.left),
 	    "wrong cxWindowBorders %d != %ld\n", info->cxWindowBorders, rcClient.left - rcWindow.left);
 	border = min(rcWindow.bottom - rcClient.bottom, rcClient.top - rcWindow.top);
 	ok(info->cyWindowBorders == border,

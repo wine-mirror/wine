@@ -40,7 +40,7 @@
 
 #define MAXHWNDS 1024
 static HWND hwnd [MAXHWNDS];
-static int numwnds=1; /* 0 is reserved for null */
+static unsigned int numwnds=1; /* 0 is reserved for null */
 
 /* Global handles */
 static HINSTANCE g_hinst;                          /* This application's HINSTANCE */
@@ -50,7 +50,7 @@ static HWND g_hwndTestDlg, g_hwndTestDlgBut1, g_hwndTestDlgBut2, g_hwndTestDlgEd
 static int g_terminated;
 
 typedef struct {
-    int id;
+    unsigned int id;
     int parent;
     DWORD style;
     DWORD exstyle;
@@ -248,7 +248,7 @@ typedef struct
 
 static int id (HWND h)
 {
-    int i;
+    unsigned int i;
     for (i = 0; i < numwnds; i++)
         if (hwnd[i] == h)
             return i;

@@ -211,7 +211,7 @@ static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwEx
 
 static void test_UrlEscape(void)
 {
-    int i;
+    unsigned int i;
     for(i=0; i<sizeof(TEST_ESCAPE)/sizeof(TEST_ESCAPE[0]); i++) {
         test_url_escape(TEST_ESCAPE[i].url, TEST_ESCAPE[i].flags,
                               TEST_ESCAPE[i].expectret, TEST_ESCAPE[i].expecturl);
@@ -220,7 +220,7 @@ static void test_UrlEscape(void)
 
 static void test_UrlCanonicalize(void)
 {
-    int i;
+    unsigned int i;
     for(i=0; i<sizeof(TEST_CANONICALIZE)/sizeof(TEST_CANONICALIZE[0]); i++) {
         test_url_canonicalize(TEST_CANONICALIZE[i].url, TEST_CANONICALIZE[i].flags,
                               TEST_CANONICALIZE[i].expectret, TEST_CANONICALIZE[i].expecturl);
@@ -286,7 +286,7 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
 
 static void test_UrlCombine(void)
 {
-    int i;
+    unsigned int i;
     for(i=0; i<sizeof(TEST_COMBINE)/sizeof(TEST_COMBINE[0]); i++) {
         test_url_combine(TEST_COMBINE[i].url1, TEST_COMBINE[i].url2, TEST_COMBINE[i].flags,
                          TEST_COMBINE[i].expectret, TEST_COMBINE[i].expecturl);

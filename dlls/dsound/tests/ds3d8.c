@@ -537,7 +537,7 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
         if (rc==DS_OK && secondary!=NULL) {
             if (!has_3d)
             {
-                DWORD refvol,refpan,vol,pan;
+                LONG refvol,refpan,vol,pan;
 
                 /* Check the initial secondary buffer's volume and pan */
                 rc=IDirectSoundBuffer_GetVolume(secondary,&vol);

@@ -377,7 +377,7 @@ static void test_instances(void)
     cls.style = 3;
     ok( RegisterClassA( &cls ), "Failed to register local class for deadbeef\n" );
     hwnd2 = CreateWindowExA( 0, name, "test_window", 0, 0, 0, 0, 0, 0, 0, NULL, 0 );
-    ok( GetClassLong( hwnd2, GCL_HMODULE ) == 0xdeadbeef,
+    ok( (HINSTANCE)GetClassLong( hwnd2, GCL_HMODULE ) == (HINSTANCE)0xdeadbeef,
         "Didn't get deadbeef class for null instance\n" );
     DestroyWindow( hwnd2 );
     ok( UnregisterClassA( name, (HINSTANCE)0xdeadbeef ), "Unregister failed for deadbeef\n" );

@@ -223,7 +223,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     DSCBUFFERDESC bufdesc;
     WAVEFORMATEX wfx;
     DSCCAPS dsccaps;
-    int f, ref;
+    DWORD f;
+    int ref;
 
     /* Private dsound.dll: Error: Invalid interface buffer */
     trace("Testing %s - %s\n",lpcstrDescription,lpcstrModule);
