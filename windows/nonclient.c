@@ -2222,7 +2222,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
         }
 	else
 	  if (wParam == SC_PUTMARK)
-            TRACE_(shell)("Mark requested by user\n");
+            DPRINTF("Debug mark requested by user\n");
 	break;
 
     case SC_HOTKEY:
