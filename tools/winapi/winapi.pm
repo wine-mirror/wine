@@ -216,6 +216,7 @@ sub parse_spec_file {
     my $function_forward = \%{$self->{FUNCTION_FORWARD}};
     my $function_internal_module = \%{$self->{FUNCTION_INTERNAL_MODULE}};
     my $function_external_module = \%{$self->{FUNCTION_EXTERNAL_MODULE}};
+    my $function_wine_extension = \%{$self->{FUNCTION_WINE_EXTENSION}};
     my $modules = \%{$self->{MODULES}};
     my $module_files = \%{$self->{MODULE_FILES}};
     my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
@@ -225,12 +226,12 @@ sub parse_spec_file {
 
     my %ordinals;
     my $module;
+    my $wine_extension = 0;
 
     $output->lazy_progress("$file");
 
     $module = $file;
     $module =~ s/^.*?([^\/]*)\.spec$/$1/;
-
 
     open(IN, "< $file") || die "$file: $!\n";
     $/ = "\n";
@@ -239,7 +240,12 @@ sub parse_spec_file {
     while($lookahead || defined($_ = <IN>)) {
 	$lookahead = 0;
 	s/^\s*(.*?)\s*$/$1/;
-	s/^(.*?)\s*#.*$/$1/;
+	if(s/^(.*?)\s*\#\s*(.*)\s*$/$1/) {
+	    my $comment = $2;
+	    if ($comment =~ /^Wine/) { # FIXME: Kludge
+		$wine_extension = 1;
+	    }
+	}
 	/^$/ && next;
 
 	if($header)  {
@@ -310,6 +316,7 @@ sub parse_spec_file {
 	    } else {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
+	    $$function_wine_extension{$module}{$external_name} = $wine_extension;
 
 	    if(0 && $options->spec_mismatch) {
 		if($external_name eq "@") {
@@ -877,6 +884,16 @@ sub function_external_module {
     my $name = shift;
 
     return $$function_external_module{$name};
+}
+
+sub function_wine_extension {
+    my $self = shift;
+    my $function_wine_extension = \%{$self->{FUNCTION_WINE_EXTENSION}};
+
+    my $module = shift;
+    my $name = shift;
+
+    return $$function_wine_extension{$module}{$name};
 }
 
 sub is_function_stub {

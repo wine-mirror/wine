@@ -86,7 +86,9 @@ sub check_documentation {
 			my $module2 = $6;
 			my $ordinal2 = $7;
 
-
+			if ($winapi->function_wine_extension(lc($module2), $external_name2)) {
+			    $output->write("documentation: $external_name2 (\U$module2\E.$ordinal2) is a Wine extension \\\n$documentation\n");
+			}
 
 			if(length($1) != 1 || length($2) < 1 ||
 			   length($4) < 1 || $5 ne "(" || $8 ne ")")
@@ -104,8 +106,9 @@ sub check_documentation {
 			}
 		    }
 		}
-		if(($options->documentation_name && !$found_name) ||
-		   ($options->documentation_ordinal && !$found_ordinal))
+		if((($options->documentation_name && !$found_name) ||
+		   ($options->documentation_ordinal && !$found_ordinal)) &&
+		   !$winapi->function_wine_extension($module, $external_name))
 		{
 		    $documentation_error = 1;
 		    $output->write("documentation: expected $external_name (\U$module\E.$ordinal): \\\n$documentation\n");
@@ -143,12 +146,14 @@ sub check_documentation {
 		       $ordinal eq $ordinal2 &&
 		       ($external_name2 eq "@" ||
 			($win16api->is_module($module2) && !$win16api->is_function_stub_in_module($module2, $external_name2)) ||
-			($win32api->is_module($module2) && !$win32api->is_function_stub_in_module($module2, $external_name2))) &&
+			($win32api->is_module($module2) && !$win32api->is_function_stub_in_module($module2, $external_name2))) ||
 			$modules->is_allowed_module_in_file($module2, "$current_dir/$file"))
 		    {
 			$found = 1;
 			last;
 		    }
+
+
 		}
 		if(!$found) {
 		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong\n");
