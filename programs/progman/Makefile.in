@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = progman
 IMPORTS   = shlwapi shell32 comdlg32 ole32 rpcrt4 winspool.drv user32 gdi32 kernel32
-WRCEXTRA  = -s -p progman
 
 LICENSELANG = En
 
@@ -24,12 +23,14 @@ SPEC_SRCS = progman.spec
 
 RC_SRCS = rsrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
 progman: $(OBJS)
 	$(CC) -o progman $(OBJS) $(DLL_LINK) $(LIBS)
+
+$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
 
 install::
 	$(INSTALL_PROGRAM) progman $(bindir)/progman

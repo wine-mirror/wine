@@ -3,4 +3,4 @@
 *.spec.glue.s
 Makefile
 libwinmm.so.1.0
-winmm_res.s
+winmm_res.res

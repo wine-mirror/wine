@@ -1,7 +1,7 @@
 name winmm
 type win32
 init WINMM_LibMain
-rsrc winmm_res
+rsrc winmm_res.res
 
 import user32.dll
 import kernel32.dll

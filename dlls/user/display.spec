@@ -1,7 +1,7 @@
 name	display
 type	win16
 owner	user32
-rsrc	disp
+rsrc	display
 
 1   stub BitBlt
 2   stub ColorInfo

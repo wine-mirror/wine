@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = uninstaller
-WRCEXTRA  = -s -p uninstaller
 IMPORTS   = user32 gdi32 kernel32
 
 LICENSELANG = En
@@ -17,12 +16,14 @@ SPEC_SRCS = uninstaller.spec
 
 RC_SRCS = rsrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
 uninstaller: $(OBJS)
 	$(CC) -o uninstaller $(OBJS) $(DLL_LINK) $(LIBS)
+
+$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
 
 install::
 	$(INSTALL_PROGRAM) uninstaller $(bindir)/uninstaller

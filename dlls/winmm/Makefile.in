@@ -36,6 +36,4 @@ SUBDIRS = \
 
 @MAKE_DLL_RULES@
 
-all: check_wrc
-
 ### Dependencies:

@@ -1,7 +1,7 @@
 name	shell32
 type	win32
 init	Shell32LibMain
-rsrc	shres
+rsrc	shres.res
 
 # fixme: avoid this import
 import ole32.dll

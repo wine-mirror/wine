@@ -1,4 +1,4 @@
 Makefile
-rsrc.s
+rsrc.res
 uninstaller
 uninstaller.spec.c

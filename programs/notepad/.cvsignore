@@ -1,4 +1,4 @@
 Makefile
 notepad
 notepad.spec.c
-rsrc.s
+rsrc.res

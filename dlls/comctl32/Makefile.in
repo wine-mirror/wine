@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comctl32
 SOVERSION = 1.0
-WRCEXTRA  = -s -p$(MODULE)
 IMPORTS   = user32 gdi32 advapi32 kernel32
 
 C_SRCS = \
@@ -39,7 +38,5 @@ RC_SRCS= \
 	rsrc.rc
 
 @MAKE_DLL_RULES@
-
-all: check_wrc
 
 ### Dependencies:

@@ -116,6 +116,28 @@ static inline void fixup_rva_ptrs( void *array, void *base, int count )
 
 
 /***********************************************************************
+ *           fixup_resources
+ */
+static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, char *root, void *base )
+{
+    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    int i;
+
+    entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
+    {
+        void *ptr = root + entry->u2.s.OffsetToDirectory;
+        if (entry->u2.s.DataIsDirectory) fixup_resources( ptr, root, base );
+        else
+        {
+            IMAGE_RESOURCE_DATA_ENTRY *data = ptr;
+            fixup_rva_ptrs( &data->OffsetToData, base, 1 );
+        }
+    }
+}
+
+
+/***********************************************************************
  *           BUILTIN32_DoLoadImage
  *
  * Load a built-in Win32 module. Helper function for BUILTIN32_LoadImage.
@@ -126,7 +148,7 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
-    INT i, size, nb_sections;
+    INT size, nb_sections;
     BYTE *addr, *code_start, *data_start;
     int page_size = VIRTUAL_GetPageSize();
 
@@ -213,13 +235,11 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     /* Build the resource directory */
 
     dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
-    if (dir->VirtualAddress)
+    if (dir->Size)
     {
-        BUILTIN32_RESOURCE *rsrc = (BUILTIN32_RESOURCE *)dir->VirtualAddress;
-        IMAGE_RESOURCE_DATA_ENTRY *rdep = rsrc->entries;
-        dir->VirtualAddress = (BYTE *)rsrc->restab - addr;
-        dir->Size = rsrc->restabsize;
-        for (i = 0; i < rsrc->nresources; i++) rdep[i].OffsetToData += dir->VirtualAddress;
+        void *ptr = (void *)dir->VirtualAddress;
+        fixup_rva_ptrs( &dir->VirtualAddress, addr, 1 );
+        fixup_resources( ptr, ptr, addr );
     }
 
     /* Build the export directory */

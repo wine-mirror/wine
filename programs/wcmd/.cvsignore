@@ -1,4 +1,4 @@
 Makefile
 wcmd
 wcmd.spec.c
-wcmdrc.s
+wcmdrc.res

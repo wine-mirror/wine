@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32
 SOVERSION = 1.0
-WRCEXTRA  = -w16 -m
 ALTNAMES  = user keyboard ddeml display mouse
 IMPORTS   = gdi32 advapi32 kernel32
 
@@ -23,21 +22,24 @@ C_SRCS = \
 	thunk.c \
 	user_main.c
 
-RC_SRCS = \
-	disp.rc \
-	mouserc.rc
+RC16_SRCS = \
+	resources/display.rc16 \
+	resources/mouse.rc16
+
+RC_SRCS = resources/user32.rc
 
 GLUE = thunk.c
 
 EXTRA_OBJS = \
 	$(TOPOBJDIR)/controls/controls.o \
-	$(TOPOBJDIR)/resources/resources.o \
 	$(TOPOBJDIR)/windows/windows.o
 
 SUBDIRS = \
 	$(TOPOBJDIR)/controls \
-	$(TOPOBJDIR)/resources \
 	$(TOPOBJDIR)/windows
+
+EXTRASUBDIRS = \
+	resources
 
 @MAKE_DLL_RULES@
 
@@ -45,4 +47,3 @@ $(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
 ### Dependencies:
-

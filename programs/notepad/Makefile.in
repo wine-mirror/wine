@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = notepad
 IMPORTS   = advapi32 comctl32 shlwapi shell32 ole32 rpcrt4 comdlg32 winspool.drv user32 gdi32 kernel32
-WRCEXTRA  = -s -p notepad
 
 LICENSELANG = En
 
@@ -22,12 +21,14 @@ SPEC_SRCS = notepad.spec
 
 RC_SRCS = rsrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
 notepad: $(OBJS)
 	$(CC) -o notepad $(OBJS) $(DLL_LINK) $(LIBS)
+
+$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
 
 install::
 	$(INSTALL_PROGRAM) notepad $(bindir)/notepad

@@ -2,5 +2,5 @@ name	notepad
 mode	guiexe
 type	win32
 init	WinMain
-rsrc	notepad
+rsrc	rsrc.res
 import	comdlg32.dll

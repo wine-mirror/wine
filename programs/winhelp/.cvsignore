@@ -1,7 +1,7 @@
 Makefile
 hlp2sgml
 lex.yy.c
-rsrc.s
+rsrc.res
 winhelp
 winhelp.spec.c
 y.tab.c

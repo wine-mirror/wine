@@ -1,4 +1,4 @@
 Makefile
 progman
 progman.spec.c
-rsrc.s
+rsrc.res

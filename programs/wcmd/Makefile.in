@@ -6,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = wcmd
 IMPORTS   = user32 gdi32 kernel32
-WRCEXTRA  = -s -p wcmd
 
 C_SRCS = \
 	batch.c \
@@ -20,9 +19,11 @@ SPEC_SRCS = \
 RC_SRCS = \
 	wcmdrc.rc
 
-all: check_wrc $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
+
+$(SPEC_SRCS:.spec=.spec.c): $(RC_SRCS:.rc=.res)
 
 wcmd: $(OBJS)
 	$(CC) -o wcmd $(OBJS) $(DLL_LINK) $(LIBS)

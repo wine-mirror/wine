@@ -1,7 +1,7 @@
 name	mouse
 type	win16
 owner	user32
-rsrc	mouserc
+rsrc	mouse
 
 1 pascal16 Inquire(ptr) MOUSE_Inquire
 2 pascal16 Enable(segptr) WIN16_MOUSE_Enable

@@ -1,5 +1,5 @@
 Makefile
 libwineps.so.1.0
-rsrc.s
+rsrc.res
 wineps.spec.c
 wineps16.spec.c

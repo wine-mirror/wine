@@ -1,7 +1,7 @@
 name	kernel32
 type	win32
 init	MAIN_KernelInit
-rsrc	kernel
+rsrc	kernel.res
 
 import  ntdll.dll
 

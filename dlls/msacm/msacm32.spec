@@ -1,7 +1,7 @@
 name msacm32
 type win32
 init MSACM32_LibMain
-rsrc msacm
+rsrc msacm.res
 
 import winmm.dll
 import user32.dll

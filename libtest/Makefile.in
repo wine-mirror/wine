@@ -21,7 +21,7 @@ SPEC_SRCS = \
 RC_SRCS = \
 	hello3res.rc
 
-all: check_wrc $(PROGRAMS)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
@@ -34,8 +34,10 @@ hello: hello.o hello.spec.o
 hello2: hello2.o hello2.spec.o
 	$(CC) -o hello2 $+ -L$(DLLDIR) -lgdi32 -lkernel32 -luser32 $(DLL_LINK) $(LIBS)
 
-hello3: hello3.o hello3.spec.o hello3res.o
+hello3: hello3.o hello3.spec.o
 	$(CC) -o hello3 $+  -L$(DLLDIR) -ladvapi32 -lcomctl32 -lcomdlg32 -lgdi32 -lkernel32 -lole32 -lrpcrt4 -lshell32 -lshlwapi -luser32 -lwinspool.drv $(DLL_LINK) $(LIBS)
+
+hello3.spec.c: hello3res.res
 
 hello4: hello4.o hello4.spec.o
 	$(CC) -o hello4 $+ -L$(DLLDIR) -lgdi32 -lkernel32 -luser32 $(DLL_LINK) $(LIBS)

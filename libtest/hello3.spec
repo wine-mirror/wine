@@ -2,4 +2,4 @@ name	hello3
 mode	guiexe
 type	win32
 init	WinMain
-rsrc	hello3res
+rsrc	hello3res.res

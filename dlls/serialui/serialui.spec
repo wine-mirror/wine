@@ -1,7 +1,7 @@
 name	serialui
 type	win32
 init	SERIALUI_LibMain
-rsrc	serialui_rc
+rsrc	serialui_rc.res
 
 import	user32.dll
 import	advapi32.dll

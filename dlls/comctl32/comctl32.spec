@@ -1,7 +1,7 @@
 name	comctl32
 type	win32
 init	COMCTL32_LibMain
-rsrc	comctl32
+rsrc	rsrc.res
 
 import	user32.dll
 import	gdi32.dll

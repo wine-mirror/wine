@@ -1,7 +1,7 @@
 name	user32
 type	win32
 init	USER_Init
-rsrc	user32
+rsrc	resources/user32.res
 
 import	gdi32.dll
 import	advapi32.dll

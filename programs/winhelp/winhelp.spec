@@ -2,5 +2,5 @@ name	winhelp
 mode	guiexe
 type	win32
 init	WinMain
-rsrc	winhelp
+rsrc	rsrc.res
 import	comdlg32.dll

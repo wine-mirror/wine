@@ -1,5 +1,5 @@
 *.spec.c
 Makefile
-kernel.s
+kernel.res
 libkernel32.so.1.0
 utthunk.glue.c

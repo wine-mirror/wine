@@ -6,7 +6,6 @@ MODULE    = comdlg32
 SOVERSION = 1.0
 ALTNAMES  = commdlg
 IMPORTS   = shell32 shlwapi comctl32 user32 winspool.drv gdi32 kernel32
-WRCEXTRA  = -s -pcomdlg32
 
 C_SRCS = \
 	cdlg32.c \
@@ -25,7 +24,5 @@ RC_SRCS= \
 	rsrc.rc
 
 @MAKE_DLL_RULES@
-
-all: check_wrc
 
 ### Dependencies:

@@ -1,7 +1,7 @@
 name	comdlg32
 type	win32
 init	COMDLG32_DllEntryPoint
-rsrc	comdlg32
+rsrc	rsrc.res
 
 import shell32.dll
 import shlwapi.dll

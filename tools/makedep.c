@@ -265,27 +265,26 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
     char *ext = strrchr( obj, '.' );
     if (ext)
     {
-        if (!strcmp( ext, ".y" ))  /* yacc file */
+        *ext++ = 0;
+        if (!strcmp( ext, "y" ))  /* yacc file */
         {
-            fprintf( file, "y.tab.o: y.tab.c" );
-            *column += 16;
+            *column += fprintf( file, "y.tab.o: y.tab.c" );
         }
-        else if (!strcmp( ext, ".l" ))  /* lex file */
+        else if (!strcmp( ext, "l" ))  /* lex file */
         {
-            fprintf( file, "lex.yy.o: lex.yy.c" );
-            *column += 18;
+            *column += fprintf( file, "lex.yy.o: lex.yy.c" );
         }
-        else if (!strcmp( ext, ".rc" ))  /* resource file */
+        else if (!strcmp( ext, "rc" ))  /* resource file */
         {
-            strcpy( ext, ".s" );
-            fprintf( file, "%s: %s", obj, pFile->filename );
-            *column += strlen(obj) + strlen(pFile->filename);
+            *column += fprintf( file, "%s.res: %s", obj, pFile->filename );
+        }
+        else if (!strcmp( ext, "rc16" ))  /* Win16 resource file */
+        {
+            *column += fprintf( file, "%s.s: %s", obj, pFile->filename );
         }
         else
         {
-            strcpy( ext, ".o" );
-            fprintf( file, "%s: %s", obj, pFile->filename );
-            *column += strlen(obj) + strlen(pFile->filename) + 2;
+            *column += fprintf( file, "%s.o: %s", obj, pFile->filename );
         }
     }
     free( obj );

@@ -2,4 +2,4 @@
 *.spec.glue.s
 Makefile
 libcomctl32.so.1.0
-rsrc.s
+rsrc.res

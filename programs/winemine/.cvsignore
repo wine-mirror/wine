@@ -1,4 +1,4 @@
 Makefile
-rsrc.s
+rsrc.res
 winemine
 winemine.spec.c
