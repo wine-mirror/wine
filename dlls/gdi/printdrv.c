@@ -530,7 +530,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     }
     else
     {
-        DOS_FULL_NAME fullName;
+	char buffer[MAX_PATH];
 
         TRACE("Just assume it's a file\n");
 
@@ -538,12 +538,12 @@ static int CreateSpoolFile(LPCSTR pszOutput)
          * The file name can be dos based, we have to find its
          * Unix correspondant file name
          */
-        DOSFS_GetFullName(psCmdP, FALSE, &fullName);
+	wine_get_unix_file_name(psCmdP, buffer, sizeof(buffer));
 
-        if ((fd = open(fullName.long_name, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
+        if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
         {
-            ERR("Failed to create spool file %s (%s)\n", 
-                fullName.long_name, strerror(errno));
+            ERR("Failed to create spool file '%s' ('%s'). (error %s)\n", 
+                buffer, psCmdP, strerror(errno));
         }
     }
     return fd;
@@ -584,7 +584,7 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
     {
 	int fd;
 
-	/* Try an create a spool file */
+	/* Try and create a spool file */
 	fd = CreateSpoolFile(lpOutput);
 	if (fd >= 0)
 	{
