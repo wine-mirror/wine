@@ -217,7 +217,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
 	    count = write(wwo->unixdev, lpData + wwo->dwOffCurrHdr, toWrite);
 	    TRACE("write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, toWrite, count);
 	    
-	    if (count > 0) {
+	    if (count > 0 || toWrite == 0) {
 		LPWAVEHDR*	wh;
 		
 		/* move lpWaveHdr to the end of notify list */
