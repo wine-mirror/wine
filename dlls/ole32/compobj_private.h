@@ -4,6 +4,7 @@
  * Copyright 1999 Francis Beaudet
  * Copyright 1999 Sylvain St-Germain
  * Copyright 2002 Marcus Meissner
+ * Copyright 2003 Ove Kåven, TransGaming Technologies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +27,74 @@
 /* All private prototype functions used by OLE will be added to this header file */
 
 #include "wtypes.h"
+#include "dcom.h"
+#include "thread.h"
+
+/* exported interface */
+typedef struct tagXIF {
+  struct tagXIF *next;
+  LPVOID iface;            /* interface pointer */
+  IID iid;                 /* interface ID */
+  IPID ipid;               /* exported interface ID */
+  LPRPCSTUBBUFFER stub;    /* interface stub */
+  DWORD refs;              /* external reference count */
+  HRESULT hres;            /* result of stub creation attempt */
+} XIF;
+
+/* exported object */
+typedef struct tagXOBJECT {
+  ICOM_VTABLE(IRpcStubBuffer) *lpVtbl;
+  struct tagAPARTMENT *parent;
+  struct tagXOBJECT *next;
+  LPUNKNOWN obj;           /* object identity (IUnknown) */
+  OID oid;                 /* object ID */
+  DWORD ifc;               /* interface ID counter */
+  XIF *ifaces;             /* exported interfaces */
+  DWORD refs;              /* external reference count */
+} XOBJECT;
+
+/* imported interface */
+typedef struct tagIIF {
+  struct tagIIF *next;
+  LPVOID iface;            /* interface pointer */
+  IID iid;                 /* interface ID */
+  IPID ipid;               /* imported interface ID */
+  LPRPCPROXYBUFFER proxy;  /* interface proxy */
+  DWORD refs;              /* imported (public) references */
+  HRESULT hres;            /* result of proxy creation attempt */
+} IIF;
+
+/* imported object */
+typedef struct tagIOBJECT {
+  ICOM_VTABLE(IRemUnknown) *lpVtbl;
+  struct tagAPARTMENT *parent;
+  struct tagIOBJECT *next;
+  LPRPCCHANNELBUFFER chan; /* channel to object */
+  OXID oxid;               /* object exported ID */
+  OID oid;                 /* object ID */
+  IPID ipid;               /* first imported interface ID */
+  IIF *ifaces;             /* imported interfaces */
+  DWORD refs;              /* proxy reference count */
+} IOBJECT;
+
+/* apartment */
+typedef struct tagAPARTMENT {
+  struct tagAPARTMENT *next, *prev, *parent;
+  DWORD model;             /* threading model */
+  DWORD inits;             /* CoInitialize count */
+  DWORD tid;               /* thread id */
+  HANDLE thread;           /* thread handle */
+  OXID oxid;               /* object exporter ID */
+  OID oidc;                /* object ID counter */
+  HWND win;                /* message window */
+  CRITICAL_SECTION cs;     /* thread safety */
+  LPMESSAGEFILTER filter;  /* message filter */
+  XOBJECT *objs;           /* exported objects */
+  IOBJECT *proxies;        /* imported objects */
+  LPVOID ErrorInfo;        /* thread error info */
+} APARTMENT;
+
+extern APARTMENT MTA, *apts;
 
 extern void* StdGlobalInterfaceTable_Construct();
 extern void  StdGlobalInterfaceTable_Destroy(void* self);
@@ -120,5 +189,26 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize();
 int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
 HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
+
+/*
+ * Per-thread values are stored in the TEB on offset 0xF80,
+ * see http://www.microsoft.com/msj/1099/bugslayer/bugslayer1099.htm
+ */
+static inline APARTMENT* COM_CurrentInfo(void) WINE_UNUSED;
+static inline APARTMENT* COM_CurrentInfo(void)
+{
+  APARTMENT* apt = NtCurrentTeb()->ErrorInfo;
+  return apt;
+}
+static inline APARTMENT* COM_CurrentApt(void) WINE_UNUSED;
+static inline APARTMENT* COM_CurrentApt(void)
+{
+  APARTMENT* apt = COM_CurrentInfo();
+  if (apt && apt->parent) apt = apt->parent;
+  return apt;
+}
+
+/* compobj.c */
+HWND COM_GetApartmentWin(OXID oxid);
 
 #endif /* __WINE_OLE_COMPOBJ_H */

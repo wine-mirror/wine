@@ -32,7 +32,7 @@
 
 #include "objbase.h"
 #include "wine/unicode.h"
-#include "thread.h"
+#include "compobj_private.h"
 
 #include "wine/debug.h"
 
@@ -483,13 +483,13 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
  */
 HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 {
-	TRACE("(%ld, %p, %p): stub:\n", dwReserved, pperrinfo, NtCurrentTeb()->ErrorInfo);
+	TRACE("(%ld, %p, %p): stub:\n", dwReserved, pperrinfo, COM_CurrentInfo()->ErrorInfo);
 
 	if(! pperrinfo ) return E_INVALIDARG;
-	if(!(*pperrinfo = (IErrorInfo*)(NtCurrentTeb()->ErrorInfo))) return S_FALSE;
+	if(!(*pperrinfo = (IErrorInfo*)(COM_CurrentInfo()->ErrorInfo))) return S_FALSE;
 
 	/* clear thread error state */
-	NtCurrentTeb()->ErrorInfo = NULL;
+	COM_CurrentInfo()->ErrorInfo = NULL;
 	return S_OK;
 }
 
@@ -502,11 +502,11 @@ HRESULT WINAPI SetErrorInfo(ULONG dwReserved, IErrorInfo *perrinfo)
 	TRACE("(%ld, %p): stub:\n", dwReserved, perrinfo);
 
 	/* release old errorinfo */
-	pei = (IErrorInfo*)NtCurrentTeb()->ErrorInfo;
+	pei = (IErrorInfo*)COM_CurrentInfo()->ErrorInfo;
 	if(pei) IErrorInfo_Release(pei);
 
 	/* set to new value */
-	NtCurrentTeb()->ErrorInfo = perrinfo;
+	COM_CurrentInfo()->ErrorInfo = perrinfo;
 	if(perrinfo) IErrorInfo_AddRef(perrinfo);
 	return S_OK;
 }

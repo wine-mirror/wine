@@ -31,7 +31,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "objbase.h"
 #include "ole2.h"
 #include "ole2ver.h"
@@ -41,6 +42,7 @@
 #include "wownt32.h"
 #include "wine/unicode.h"
 #include "objbase.h"
+#include "ole32_main.h"
 #include "compobj_private.h"
 
 #include "wine/debug.h"
@@ -62,45 +64,8 @@ const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 
 
 static void* StdGlobalInterfaceTableInstance;
 
-/*****************************************************************************
- * Apartment management stuff
- *
- * NOTE:
- *  per Thread values are stored in the TEB on offset 0xF80
- *
- *  see www.microsoft.com/msj/1099/bugslayer/bugslayer1099.htm
- *
- */
-
-typedef struct {
-        unsigned char		threadingModell;	/* we use the COINIT flags */
-        unsigned long		threadID;
-	long			ApartmentLockCount;
-} OleApartmentData;
-
-typedef struct {
-	OleApartmentData 	*ApartmentData;
-} OleThreadData;
-
-/* not jet used
-static CRITICAL_SECTION csApartmentData = CRITICAL_SECTION_INIT("csApartmentData");
-*/
-/*
- * the first STA created in a process is the main STA
- */
-
-/* not jet used
-static OleApartmentData * mainSTA;
-*/
-
-/*
- * a Process can only have one MTA
- */
-
-/* not jet used
-static OleApartmentData * processMTA;
-*/
-
+APARTMENT MTA, *apts;
+static CRITICAL_SECTION csApartment = CRITICAL_SECTION_INIT("csApartment");
 
 /*
  * This lock count counts the number of times CoInitialize is called. It is
@@ -150,20 +115,113 @@ typedef struct tagOpenDll {
 static CRITICAL_SECTION csOpenDllList = CRITICAL_SECTION_INIT("csOpenDllList");
 static OpenDll *openDllList = NULL; /* linked list of open dlls */
 
+static const char aptWinClass[] = "WINE_OLE32_APT_CLASS";
+static LRESULT CALLBACK COM_AptWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 static void COMPOBJ_DLLList_Add(HANDLE hLibrary);
 static void COMPOBJ_DllList_FreeUnused(int Timeout);
 
 
 /******************************************************************************
- * Initialize/Uninitialize critical sections.
+ * Initialize/Unitialize threading stuff.
  */
 void COMPOBJ_InitProcess( void )
 {
+    WNDCLASSA wclass;
+
+    memset(&wclass, 0, sizeof(wclass));
+    wclass.lpfnWndProc = &COM_AptWndProc;
+    wclass.hInstance = OLE32_hInstance;
+    wclass.lpszClassName = aptWinClass;
+    RegisterClassA(&wclass);
 }
 
 void COMPOBJ_UninitProcess( void )
 {
+    UnregisterClassA(aptWinClass, OLE32_hInstance);
 }
+
+/******************************************************************************
+ * Manage apartments.
+ */
+static void COM_InitMTA(void)
+{
+    /* FIXME: how does windoze create OXIDs?
+     * this method will only work for local RPC */
+    MTA.oxid = ((OXID)GetCurrentProcessId() << 32);
+    InitializeCriticalSection(&MTA.cs);
+}
+
+static void COM_UninitMTA(void)
+{
+    DeleteCriticalSection(&MTA.cs);
+    MTA.oxid = 0;
+}
+
+static APARTMENT* COM_CreateApartment(DWORD model)
+{
+    APARTMENT *apt;
+
+    apt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(APARTMENT));
+    apt->model = model;
+    apt->tid = GetCurrentThreadId();
+    DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
+                    GetCurrentProcess(), &apt->thread,
+                    THREAD_ALL_ACCESS, FALSE, 0);
+    if (model & COINIT_APARTMENTTHREADED) {
+      /* FIXME: how does windoze create OXIDs? */
+      apt->oxid = MTA.oxid | GetCurrentThreadId();
+      apt->win = CreateWindowA(aptWinClass, NULL, 0,
+			       0, 0, 0, 0,
+			       0, 0, OLE32_hInstance, NULL);
+      InitializeCriticalSection(&apt->cs);
+    }
+    else {
+      apt->parent = &MTA;
+      apt->oxid = MTA.oxid;
+    }
+    EnterCriticalSection(&csApartment);
+    if (apts) apts->prev = apt;
+    apt->next = apts;
+    apts = apt;
+    LeaveCriticalSection(&csApartment);
+    NtCurrentTeb()->ErrorInfo = apt;
+    return apt;
+}
+
+static void COM_DestroyApartment(APARTMENT *apt)
+{
+    EnterCriticalSection(&csApartment);
+    if (apt->prev) apt->prev->next = apt->next;
+    if (apt->next) apt->next->prev = apt->prev;
+    if (apts == apt) apts = apt->next;
+    apt->prev = NULL; apt->next = NULL;
+    LeaveCriticalSection(&csApartment);
+    if (apt->model & COINIT_APARTMENTTHREADED) {
+      if (apt->win) DestroyWindow(apt->win);
+      DeleteCriticalSection(&apt->cs);
+    }
+    CloseHandle(apt->thread);
+    HeapFree(GetProcessHeap(), 0, apt);
+}
+
+HWND COM_GetApartmentWin(OXID oxid)
+{
+    APARTMENT *apt;
+    HWND win = 0;
+
+    EnterCriticalSection(&csApartment);
+    apt = apts;
+    while (apt && apt->oxid != oxid) apt = apt->next;
+    if (apt) win = apt->win;
+    LeaveCriticalSection(&csApartment);
+    return win;
+}
+
+static LRESULT CALLBACK COM_AptWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+  return DefWindowProcA(hWnd, msg, wParam, lParam);
+} 
 
 /*****************************************************************************
  * This section contains OpenDllList implemantation
@@ -282,12 +340,6 @@ HRESULT WINAPI CoInitialize(
  *  S_FALSE            if this function was called already.
  *  RPC_E_CHANGED_MODE if a previous call to CoInitialize specified another
  *                      threading model.
- *
- * BUGS
- * Only the single threaded model is supported. As a result RPC_E_CHANGED_MODE
- * is never returned.
- *
- * See the windows documentation for more details.
  */
 HRESULT WINAPI CoInitializeEx(
 	LPVOID lpReserved,	/* [in] pointer to win32 malloc interface
@@ -295,7 +347,8 @@ HRESULT WINAPI CoInitializeEx(
 	DWORD dwCoInit		/* [in] A value from COINIT specifies the threading model */
 )
 {
-  HRESULT hr;
+  HRESULT hr = S_OK;
+  APARTMENT *apt;
 
   TRACE("(%p, %x)\n", lpReserved, (int)dwCoInit);
 
@@ -304,14 +357,9 @@ HRESULT WINAPI CoInitializeEx(
     ERR("(%p, %x) - Bad parameter passed-in %p, must be an old Windows Application\n", lpReserved, (int)dwCoInit, lpReserved);
   }
 
-  /*
-   * Check for unsupported features.
-   */
-  if (dwCoInit!=COINIT_APARTMENTTHREADED)
-  {
-    FIXME(":(%p,%x): unsupported flag %x\n", lpReserved, (int)dwCoInit, (int)dwCoInit);
-    /* Hope for the best and continue anyway */
-  }
+  apt = NtCurrentTeb()->ErrorInfo;
+  if (apt && dwCoInit != apt->model) return RPC_E_CHANGED_MODE;
+  hr = apt ? S_FALSE : S_OK;
 
   /*
    * Check the lock count. If this is the first time going through the initialize
@@ -326,13 +374,15 @@ HRESULT WINAPI CoInitializeEx(
      */
     TRACE("() - Initializing the COM libraries\n");
 
+    COM_InitMTA();
 
     RunningObjectTableImpl_Initialize();
-
-    hr = S_OK;
   }
-  else
-    hr = S_FALSE;
+
+  if (!apt) apt = COM_CreateApartment(dwCoInit);
+
+  InterlockedIncrement(&apt->inits);
+  if (hr == S_OK) NtCurrentTeb()->ErrorInfo = apt;
 
   return hr;
 }
@@ -347,7 +397,17 @@ HRESULT WINAPI CoInitializeEx(
 void WINAPI CoUninitialize(void)
 {
   LONG lCOMRefCnt;
+  APARTMENT *apt;
+
   TRACE("()\n");
+
+  apt = NtCurrentTeb()->ErrorInfo;
+  if (!apt) return;
+  if (InterlockedDecrement(&apt->inits)==0) {
+    NtCurrentTeb()->ErrorInfo = NULL;
+    COM_DestroyApartment(apt);
+    apt = NULL;
+  }
 
   /*
    * Decrease the reference count.
@@ -378,6 +438,7 @@ void WINAPI CoUninitialize(void)
      */
     COM_ExternalLockFreeList();
 
+    COM_UninitMTA();
   }
   else if (lCOMRefCnt<1) {
     ERR( "CoUninitialize() - not CoInitialized.\n" );
