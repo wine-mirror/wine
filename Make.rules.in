@@ -110,6 +110,7 @@ DLLS = \
 	oleaut32 \
 	olecli32 \
 	oledlg \
+	olepro32 \
 	olesvr32 \
 	psapi \
 	rasapi32 \

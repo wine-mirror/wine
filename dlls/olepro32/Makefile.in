@@ -1,0 +1,22 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+LIBEXT    = @LIBEXT@
+MODULE    = olepro32
+SOVERSION = 1.0
+IMPORTS	  = oleaut32 ole32
+
+SPEC_SRCS = olepro32.spec
+
+C_SRCS = olepro32stubs.c
+
+all: lib$(MODULE).$(LIBEXT)
+
+@MAKE_RULES@
+
+clean::
+	$(RM) lib$(MODULE).$(LIBEXT).$(SOVERSION)
+
+### Dependencies:

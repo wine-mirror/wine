@@ -6162,6 +6162,7 @@ dlls/ole32/Makefile
 dlls/oleaut32/Makefile
 dlls/olecli/Makefile
 dlls/oledlg/Makefile
+dlls/olepro32/Makefile
 dlls/olesvr/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile
@@ -6373,6 +6374,7 @@ dlls/ole32/Makefile
 dlls/oleaut32/Makefile
 dlls/olecli/Makefile
 dlls/oledlg/Makefile
+dlls/olepro32/Makefile
 dlls/olesvr/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile

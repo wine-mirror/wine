@@ -23,6 +23,7 @@ DLLFILES = \
 	oleaut32/liboleaut32.@LIBEXT@ \
 	olecli/libolecli32.@LIBEXT@ \
 	oledlg/liboledlg.@LIBEXT@ \
+	olepro32/libolepro32.@LIBEXT@ \
 	olesvr/libolesvr32.@LIBEXT@ \
 	psapi/libpsapi.@LIBEXT@ \
 	rasapi32/librasapi32.@LIBEXT@ \
@@ -159,6 +160,10 @@ libolecli32.@LIBEXT@: olecli/libolecli32.@LIBEXT@
 liboledlg.@LIBEXT@: oledlg/liboledlg.@LIBEXT@
 	$(RM) $@
 	$(LN_S) oledlg/liboledlg.@LIBEXT@ $@
+
+libolepro32.@LIBEXT@: olepro32/libolepro32.@LIBEXT@
+	$(RM) $@
+	$(LN_S) olepro32/libolepro32.@LIBEXT@ $@
 
 libolesvr32.@LIBEXT@: olesvr/libolesvr32.@LIBEXT@
 	$(RM) $@
