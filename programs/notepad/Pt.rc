@@ -30,6 +30,7 @@ MAIN_MENU MENU
   MENUITEM "A&brir",		CMD_OPEN
   MENUITEM "&Salvar",		CMD_SAVE
   MENUITEM "Salvar &como...",	CMD_SAVE_AS
+  MENUITEM SEPARATOR
   MENUITEM "&Imprimir",		CMD_PRINT
   MENUITEM "C&onfigurar página...",	CMD_PAGE_SETUP
   MENUITEM "Configurar i&mpressora...", CMD_PRINTER_SETUP

@@ -28,4 +28,5 @@
 #include "Es.rc"
 #include "Fr.rc"
 #include "Nl.rc"
+#include "Pt.rc"
 #include "Ru.rc"

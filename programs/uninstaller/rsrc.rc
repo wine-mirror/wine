@@ -76,13 +76,12 @@ UNINSTALLER ICON MOVEABLE uninstaller.ico
 } */
 
 /* English-US Resources */
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 
 STRINGTABLE {
      IDS_APPNAME, "Uninstaller"
 
 }
-
 /* End of English-US Resources */
 
 /* French Resources */
@@ -92,5 +91,13 @@ STRINGTABLE {
      IDS_APPNAME, "Désinstalleur"
 
 }
-
 /* End of French Resources */
+
+/* Portuguese Resources */
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+
+STRINGTABLE {
+     IDS_APPNAME, "Desinstalador"
+
+}
+/* End of Portuguese Resources */

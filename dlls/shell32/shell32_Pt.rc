@@ -1,5 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
+ * Copyright 2003 Marcelo Duarte
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +18,92 @@
  */
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+
+MENU_001 MENU DISCARDABLE
+BEGIN
+	MENUITEM "Ícones &grandes",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "Ícones &pequenos",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Detalhes",		FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP""
+	BEGIN
+	  POPUP "&Exibir"
+	  BEGIN
+	    MENUITEM "Ícones &grandes",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "Ícones &pequenos",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Detalhes",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "O&rganizar ícones"
+	  BEGIN
+	    MENUITEM "Por &nome",	0x30	/* column 0 */
+	    MENUITEM "Por &tipo",	0x32	/* column 2 */
+	    MENUITEM "Por ta&manho",	0x31	/* ... */
+	    MENUITEM "Por &data",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "Auto organi&zar",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Alin&har ícones",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "&Atualizar",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "Co&lar",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Colar a&talho",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "Novo"
+	  BEGIN
+	    MENUITEM "&Pasta",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "&Atalho",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "Propriedades",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+/*
+ shellview item menu
+*/
+MENU_SHV_FILE MENU DISCARDABLE
+BEGIN
+	POPUP""
+	BEGIN
+	  MENUITEM "&Explorar",		FCIDM_SHVIEW_CUT
+	  MENUITEM "A&brir",		FCIDM_SHVIEW_COPY
+	  MENUITEM SEPARATOR
+	  MENUITEM "C&ortar",		FCIDM_SHVIEW_CUT
+	  MENUITEM "&Copiar",		FCIDM_SHVIEW_COPY
+	  MENUITEM SEPARATOR
+	  MENUITEM "Criar a&talho",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "E&xcluir",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "&Renomear",		FCIDM_SHVIEW_RENAME
+	  MENUITEM SEPARATOR
+	  MENUITEM "&Propriedades",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Procurar pasta"
+FONT 8, "Helv"
+{
+ DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Cancelar", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+ 	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
@@ -42,6 +129,40 @@ FONT 8, "Helv"
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Cancelar", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "&Procurar...", 12288, 170, 63, 50, 14, WS_TABSTOP
+}
+
+/*
+	special folders
+*/
+STRINGTABLE DISCARDABLE
+{
+	IDS_DESKTOP		"Área de trabalho"
+	IDS_MYCOMPUTER		"Meu computador"
+}
+
+/*
+	context menus
+*/
+STRINGTABLE DISCARDABLE
+{
+	IDS_VIEW_LARGE		"Ícones &grandes"
+	IDS_VIEW_SMALL		"Ícones &pequenos"
+	IDS_VIEW_LIST		"&Lista"
+	IDS_VIEW_DETAILS	"&Detalhes"
+	IDS_SELECT		"Selecionar"
+	IDS_OPEN		"Abrir"
+}
+
+STRINGTABLE DISCARDABLE
+{
+	IDS_CREATEFOLDER_DENIED "Não pode criar nova pasta: Permissão negada."
+	IDS_CREATEFOLDER_CAPTION "Erro durante a criação da nova pasta"
+	IDS_DELETEITEM_CAPTION "Confirmar exclusão de arquivo"
+	IDS_DELETEFOLDER_CAPTION "Confirmar exclusão de pasta"
+	IDS_DELETEITEM_TEXT "Você tem certeza que deseja excluir '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Você tem certeza que deseja excluir estes %1 itens?"
+	IDS_OVERWRITEFILE_TEXT "Sobreescrever arquivo %1?"
+	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescrever arquivo"
 }
 
 /*	colunas no shellview	*/
