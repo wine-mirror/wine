@@ -1713,7 +1713,7 @@ export PATH=$PATH:/path/to/wine/binary
       </qandaentry>
 
       <qandaentry>
-      <question id="Can-I-bundle-everything-in-one-huge-executable">
+      <question id="Can-I-bundle-everything-in-one-huge-exe">
         <para>
           Is there a way to bind the Wine code, a Windows .exe, associated DLLs,
           and any necessary accompanying files into a single Linux executable which
