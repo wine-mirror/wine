@@ -181,6 +181,16 @@ static const char main_key_ES[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Belgian keyboard layout ***/
+static const char main_key_BE[MAIN_LEN][4] =
+{
+ "","&1|","é2@","\"3#","'4","(5","§6^","è7","!8","ç9{","à0}",")°","-_",
+ "aA","zZ","eE¤","rR","tT","yY","uU","iI","oO","pP","^¨[","$*]",
+ "qQ","sSß","dD","fF","gG","hH","jJ","kK","lL","mM","ù%´","µ£`",
+ "wW","xX","cC","vV","bB","nN",",?",";.",":/","=+~",
+ "<>\\"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -188,16 +198,19 @@ static struct {
 } main_key_tab[]={
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),     1252, 437, &main_key_US},
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK),     1252, 850, &main_key_UK},
- {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),         1252, 850, &main_key_FR},
  {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE},
  {MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN_SWISS),    1252, 850, &main_key_SG},
  {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),      1252, 865, &main_key_NO},
  {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),         1252, 865, &main_key_DA},
+ {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),         1252, 850, &main_key_FR},
  {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN), 1252, 863, &main_key_CF},
+ {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_BELGIAN),  1252, 850, &main_key_BE},
+ {MAKELANGID(LANG_WALON,SUBLANG_DEFAULT),          1252, 850, &main_key_BE},
  {MAKELANGID(LANG_PORTUGUESE,SUBLANG_DEFAULT),     1252, 860, &main_key_PT},
  {MAKELANGID(LANG_FINNISH,SUBLANG_DEFAULT),        1252, 850, &main_key_FI},
  {MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),        1251, 866, &main_key_RU},
  {MAKELANGID(LANG_SPANISH,SUBLANG_DEFAULT),        1252, 850, &main_key_ES},
+ {MAKELANGID(LANG_DUTCH,SUBLANG_DUTCH_BELGIAN),    1252, 850, &main_key_BE},
 
  {0} /* sentinel */
 };

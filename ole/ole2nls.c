@@ -221,6 +221,10 @@ LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE)		/*0x0816*/
 #include "nls/ptg.nls"
 LANG_END
 
+LANG_BEGIN (LANG_RUSSIAN, SUBLANG_DEFAULT)	/*0x419*/
+#include "nls/rus.nls"
+LANG_END
+
 LANG_BEGIN (LANG_SLOVAK, SUBLANG_DEFAULT)	/*0x041b*/
 #include "nls/sky.nls"
 LANG_END
@@ -236,12 +240,12 @@ LANG_BEGIN (LANG_THAI, SUBLANG_DEFAULT)	/*0x41e*/
 #include "nls/tha.nls"
 LANG_END
 
-LANG_BEGIN (LANG_RUSSIAN, SUBLANG_DEFAULT)	/*0x419*/
-#include "nls/rus.nls"
-LANG_END
-
 LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x048f*/
 #include "nls/esperanto.nls"
+LANG_END
+
+LANG_BEGIN (LANG_WALON, SUBLANG_DEFAULT)	/*0x0490*/
+#include "nls/wal.nls"
 LANG_END
 	    };
 
@@ -517,6 +521,7 @@ const struct map_lcid2str {
 	{0x044f,"Sanskrit"},
 	{0x0457,"Konkani"},
 	{0x048f,"Esperanto"}, /* Non official */
+	{0x0490,"Walon"}, /* Non official */
 	{0x0000,"Unknown"}
     }, languages_de[]={
 	{0x0401,"Arabic"},

@@ -18,17 +18,18 @@ extern const wrc_resource32_t * const sysres_No_ResTable[];
 extern const wrc_resource32_t * const sysres_Fr_ResTable[];
 extern const wrc_resource32_t * const sysres_Fi_ResTable[];
 extern const wrc_resource32_t * const sysres_Da_ResTable[];
-extern const wrc_resource32_t * const sysres_Cz_ResTable[];
+extern const wrc_resource32_t * const sysres_Cs_ResTable[];
 extern const wrc_resource32_t * const sysres_Eo_ResTable[];
 extern const wrc_resource32_t * const sysres_It_ResTable[];
 extern const wrc_resource32_t * const sysres_Ko_ResTable[];
 extern const wrc_resource32_t * const sysres_Hu_ResTable[];
 extern const wrc_resource32_t * const sysres_Pl_ResTable[];
-extern const wrc_resource32_t * const sysres_Po_ResTable[];
-extern const wrc_resource32_t * const sysres_Sw_ResTable[];
+extern const wrc_resource32_t * const sysres_Pt_ResTable[];
+extern const wrc_resource32_t * const sysres_Sv_ResTable[];
 extern const wrc_resource32_t * const sysres_Ca_ResTable[];
 extern const wrc_resource32_t * const sysres_Nl_ResTable[];
 extern const wrc_resource32_t * const sysres_Ru_ResTable[];
+extern const wrc_resource32_t * const sysres_Wa_ResTable[];
 
 static const wrc_resource32_t * const * SYSRES_Resources[] =
 {
@@ -39,17 +40,18 @@ static const wrc_resource32_t * const * SYSRES_Resources[] =
     sysres_Fr_ResTable,  /* LANG_Fr */
     sysres_Fi_ResTable,  /* LANG_Fi */
     sysres_Da_ResTable,  /* LANG_Da */
-    sysres_Cz_ResTable,  /* LANG_Cz */
+    sysres_Cs_ResTable,  /* LANG_Cs */
     sysres_Eo_ResTable,  /* LANG_Eo */
     sysres_It_ResTable,  /* LANG_It */
     sysres_Ko_ResTable,  /* LANG_Ko */
     sysres_Hu_ResTable,  /* LANG_Hu */
     sysres_Pl_ResTable,  /* LANG_Pl */
-    sysres_Po_ResTable,  /* LANG_Po */
-    sysres_Sw_ResTable,  /* LANG_Sw */
+    sysres_Pt_ResTable,  /* LANG_Pt */
+    sysres_Sv_ResTable,  /* LANG_Sv */
     sysres_Ca_ResTable,  /* LANG_Ca */
     sysres_Nl_ResTable,  /* LANG_Nl */
-    sysres_Ru_ResTable   /* LANG_Ru */
+    sysres_Ru_ResTable,  /* LANG_Ru */
+    sysres_Wa_ResTable   /* LANG_Wa */
 };
 
 

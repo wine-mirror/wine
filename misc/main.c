@@ -71,6 +71,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Ca",0x0403},	/* LANG_Ca */
     {"Nl",0x0413},	/* LANG_Nl */
     {"Ru",0x0419},	/* LANG_Ru */
+    {"Wa",0x0490},      /* LANG_Wa */
     {NULL,0}
 };
 
@@ -123,7 +124,7 @@ static char szUsage[] =
   "    -help           Show this help message\n"
   "    -iconic         Start as an icon\n"
   "    -language xx    Set the language (one of Ca,Cs,Da,De,En,Eo,Es,Fi,Fr,Hu,It,\n"
-  "                    Ko,Nl,No,Pl,Pt,Sv,Ru)\n"
+  "                    Ko,Nl,No,Pl,Pt,Sv,Ru,Wa)\n"
   "    -managed        Allow the window manager to manage created windows\n"
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n"
   "    -name name      Set the application name\n"
@@ -656,6 +657,8 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 /* 0x58 -> ... */
 	LANG_ENTRY_BEGIN( "eo", ESPERANTO ) /* not official */
 	LANG_ENTRY_END( ESPERANTO )
+	LANG_ENTRY_BEGIN( "wa", WALON )	/* not official */ 
+	LANG_ENTRY_END( WALON )
 
 	ret = LANG_ENGLISH;
 

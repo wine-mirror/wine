@@ -247,6 +247,7 @@
 #define LANG_ZULU			 0x35
 /* non standard; keep the number high enough (but < 0xff) */
 #define LANG_ESPERANTO			 0x8f
+#define LANG_WALON			 0x90
 
 /* Sublanguage definitions */
 #define SUBLANG_NEUTRAL                  0x00    /* language neutral */
