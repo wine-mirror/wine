@@ -72,13 +72,25 @@ static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 	 *	    	PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
 	 *       guess current implementation via SetTimer has to be improved upon.		
 	 */
-	if (lpTimer->isWin32)
-	    lpTimer->lpFunc(lpTimer->wTimerID,0,lpTimer->dwUser,0,0);
-	else
-	    Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
-					lpTimer->wTimerID,0,
-					lpTimer->dwUser,0,0);
-	
+	switch (lpTimer->wFlags & 0x30) {
+	case TIME_CALLBACK_FUNCTION:
+		if (lpTimer->isWin32)
+		    lpTimer->lpFunc(lpTimer->wTimerID,0,lpTimer->dwUser,0,0);
+		else
+		    Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
+						lpTimer->wTimerID,0,
+						lpTimer->dwUser,0,0);
+		break;
+	case TIME_CALLBACK_EVENT_SET:
+		SetEvent((HANDLE32)lpTimer->lpFunc);
+		break;
+	case TIME_CALLBACK_EVENT_PULSE:
+		PulseEvent((HANDLE32)lpTimer->lpFunc);
+		break;
+	default:
+		FIXME(mmtime,"Unknown callback type 0x%04x for mmtime callback (%p),ignored.\n",lpTimer->wFlags,lpTimer->lpFunc);
+		break;
+	}
 	TRACE(mmtime, "after CallBack16 !\n");
 	fflush(stdout);
     }
@@ -327,13 +339,13 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
 DWORD WINAPI timeGetTime()
 {
     DWORD	dwNewTick = GetTickCount();
-    
+
+    StartMMTime();
 #ifdef USE_FAKE_MM_TIMERS
     if (bUseFakeTimers) {
 	if (wInCallBackLoop++) { 
 	    DWORD		dwDelta;
 	    
-	    StartMMTime();
 	    
 	    if (dwNewTick < dwLastCBTick) {
 		ERR(mmtime, "dwNewTick(%lu) < dwLastCBTick(%lu)\n", dwNewTick, dwLastCBTick);
@@ -357,7 +369,5 @@ DWORD WINAPI timeGetTime()
 	wInCallBackLoop--;
     }
 #endif
-    TRACE(mmtime, "Time = %ld\n", dwNewTick);
-    
     return dwNewTick;
 }

@@ -92,8 +92,8 @@ BOOL32 MULTIMEDIA_Init(void)
     }
     
     if (numsynthdevs > MAX_MIDIOUTDRV) {
-	ERR(midi, "MAX_MIDIOUTDRV was enough for the number of devices. "
-	    "Some FM devices will not be available.\n");
+	ERR(midi, "MAX_MIDIOUTDRV (%d) was enough for the number of devices (%d). "
+	    "Some FM devices will not be available.\n",MAX_MIDIOUTDRV,numsynthdevs);
 	numsynthdevs = MAX_MIDIOUTDRV;
     }
     
@@ -167,8 +167,8 @@ BOOL32 MULTIMEDIA_Init(void)
     }
     
     if (nummididevs > MAX_MIDIINDRV) {
-	ERR(midi, "MAX_MIDIINDRV was not enough for the number of devices. "
-	    "Some MIDI devices will not be available.\n");
+	ERR(midi, "MAX_MIDIINDRV (%d) was not enough for the number of devices (%d). "
+	    "Some MIDI devices will not be available.\n",MAX_MIDIINDRV,nummididevs);
 	nummididevs = MAX_MIDIINDRV;
     }
     

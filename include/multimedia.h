@@ -11,7 +11,7 @@
 
 #include "mmsystem.h"
 
-#define MAX_MIDIINDRV 	(1)
+#define MAX_MIDIINDRV 	(16)
 /* For now I'm making 16 the maximum number of midi devices one can
  * have. This should be more than enough for everybody. But as a purist,
  * I intend to make it unbounded in the future, as soon as I figure

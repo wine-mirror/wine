@@ -753,8 +753,11 @@ typedef void (CALLBACK *LPTIMECALLBACK16)(UINT16 uTimerID, UINT16 uMessage, DWOR
 typedef void (CALLBACK *LPTIMECALLBACK32)(UINT32 uTimerID, UINT32 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 DECL_WINELIB_TYPE(LPTIMECALLBACK)
 
-#define TIME_ONESHOT    0   /* program timer for single event */
-#define TIME_PERIODIC   1   /* program for continuous periodic event */
+#define TIME_ONESHOT		0x0000	/* program timer for single event */
+#define TIME_PERIODIC		0x0001	/* program for continuous periodic event */
+#define TIME_CALLBACK_FUNCTION	0x0000	/* callback is function */
+#define TIME_CALLBACK_EVENT_SET	0x0010	/* callback is event - use SetEvent */
+#define TIME_CALLBACK_EVENT_PULSE 0x0020/* callback is event - use PulseEvent */
 
 typedef struct {
     UINT16	wPeriodMin;	/* minimum period supported  */
