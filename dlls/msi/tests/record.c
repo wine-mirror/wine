@@ -239,7 +239,8 @@ void test_msirecord(void)
     ok(r == ERROR_SUCCESS, "failed to add stream to record\n");
     r = MsiRecordReadStream(h, 1, buf, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "should return error\n");
-    ok(DeleteFile(filename), "failed to delete stream temp file\n");
+    /* http://test.winehq.org/data/200503181000/98_jmelgarejo98casa/msi:record.txt */
+    DeleteFile(filename); /* Windows 98 doesn't like this at all, so don't check return. */
     r = MsiRecordReadStream(h, 1, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "should return error\n");
     sz = sizeof buf;
@@ -282,6 +283,7 @@ void test_msirecord(void)
     /* now close the stream record */
     r = MsiCloseHandle(h);
     ok(r == ERROR_SUCCESS, "Failed to close handle\n");
+    DeleteFile(filename); /* Delete it for sure, when everything else is closed. */
 }
 
 START_TEST(record)
