@@ -30,6 +30,7 @@
 #include "ldt.h"
 #include "dosexe.h"
 #include "dosmod.h"
+#include "stackframe.h"
 #include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(int)
@@ -48,6 +49,27 @@ DECLARE_DEBUG_CHANNEL(relay)
 #define IS_PEND(ctx) (EFL_reg(ctx) & VIP_MASK)
 
 #undef TRY_PICRETURN
+
+static void do_exception( int signal, CONTEXT *context )
+{
+    EXCEPTION_RECORD rec;
+    extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec,
+                                                     CONTEXT *context );
+    if ((signal == SIGTRAP) || (signal == SIGHUP))
+    {
+        rec.ExceptionCode  = EXCEPTION_BREAKPOINT;
+        rec.ExceptionFlags = EXCEPTION_CONTINUABLE;
+    }
+    else
+    {
+        rec.ExceptionCode  = EXCEPTION_ILLEGAL_INSTRUCTION;  /* generic error */
+        rec.ExceptionFlags = EH_NONCONTINUABLE;
+    }
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)EIP_reg(context);
+    rec.NumberParameters = 0;
+    REGS_FUNC(RtlRaiseException)( &rec, context );
+}
 
 static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn, int sig,
                         struct vm86plus_struct*VM86 )
@@ -219,8 +241,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
 #define CP(x,y) y##_sig(&sigcontext) = VM86->regs.x
   CV;
 #undef CP
-  if (fnINSTR_EmulateInstruction) ret=fnINSTR_EmulateInstruction(&sigcontext);
-  else ERR_(module)("fnINSTR_EmulateInstruction is not initialized!\n");
+  ret=INSTR_EmulateInstruction(&sigcontext);
 #define CP(x,y) VM86->regs.x = y##_sig(&sigcontext)
   CV;
 #undef CP
@@ -259,12 +280,9 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
        CLR_PEND(&context);
      }
      if (sig==SIGUSR2) lpDosTask->sig_sent--;
-   } else
-   if (sig==SIGHUP) {
-    if (ctx_debug_call) ctx_debug_call(SIGTRAP,&context);
-   } else
-   if ((sig==SIGILL)||(sig==SIGSEGV)) {
-    if (ctx_debug_call) ctx_debug_call(SIGILL,&context);
+   }
+   else if ((sig==SIGHUP) || (sig==SIGILL) || (sig==SIGSEGV)) {
+       do_exception( sig, &context );
    } else {
     DOSVM_Dump(lpDosTask,fn,sig,VM86);
     ret=-1;
@@ -272,7 +290,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
    break;
   case VM86_UNKNOWN: /* unhandled GPF */
    DOSVM_Dump(lpDosTask,fn,sig,VM86);
-   if (ctx_debug_call) ctx_debug_call(SIGSEGV,&context); else ret=-1;
+   do_exception( SIGSEGV, &context );
    break;
   case VM86_INTx:
    if (TRACE_ON(relay))
@@ -287,7 +305,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
     DOSVM_SendQueuedEvents(&context,lpDosTask);
     break;
   case VM86_TRAP:
-   if (ctx_debug_call) ctx_debug_call(SIGTRAP,&context);
+   do_exception( SIGTRAP, &context );
    break;
   default:
    DOSVM_Dump(lpDosTask,fn,sig,VM86);
