@@ -3186,7 +3186,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 	SelectObject(hdcSrc, hbmp);
     }
 
-    if ( ((psInfo->active_page == 0) || (psInfo->active_page == psInfo->nPages - 1)) &&
+    if ( (ppshpage->dwFlags & PSP_HIDEHEADER) &&
 	 (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
 	 (psInfo->ppshheader.dwFlags & PSH_WATERMARK) ) 
     {
