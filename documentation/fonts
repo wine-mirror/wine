@@ -41,7 +41,10 @@ What to do with TrueType fonts? There are several commercial
 font tools that can convert them to the Type1 format but the 
 quality of the resulting fonts is far from stellar. The other
 way to use them is to get a font server capable of rendering 
-TrueType (Caldera has one).
+TrueType (Caldera has one, there also is the free Xfstt in
+Linux/X11/fonts on sunsite and mirrors, if you're on FreeBSD you
+can use the port in /usr/ports/x11-servers/Xfstt.  And there is
+xfsft which uses the freetype library, see documentation/ttfserver).
 
 However, there is a possibility of the native TrueType support 
 via FreeType renderer in the future (hint, hint :-)
