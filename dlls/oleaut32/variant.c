@@ -4275,7 +4275,7 @@ HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut) {
  *              VarCyFromI1 [OLEAUT32.225]
  * Convert signed char to currency
  */
-HRESULT WINAPI VarCyFromI1(CHAR cIn, CY* pcyOut) {
+HRESULT WINAPI VarCyFromI1(signed char cIn, CY* pcyOut) {
    if (cIn < 0) pcyOut->s.Hi = -1;
    else pcyOut->s.Hi = 0;
    pcyOut->s.Lo = (ULONG)cIn * (ULONG)10000;

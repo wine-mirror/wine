@@ -316,7 +316,7 @@ HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut);
 HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut);
-HRESULT WINAPI VarCyFromI1(CHAR cIn, CY*pcyOut);
+HRESULT WINAPI VarCyFromI1(signed char cIn, CY*pcyOut);
 HRESULT WINAPI VarCyFromUI2(USHORT uiIn, CY*pcyOut);
 HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY*pcyOut);
 /*
