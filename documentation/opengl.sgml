@@ -1,14 +1,6 @@
   <chapter id="opengl">
     <title>Wine and OpenGL</title>
 
-    <para>
-      Written by &name-lionel-ulmer; <email>&email-lionel-ulmer;</email>,
-      last modification : 2000/06/13
-    </para>
-    <para>
-      (Extracted from <filename>wine/documentation/opengl</filename>)
-    </para>
-
     <sect1 id="opengl-required">
       <title>What is needed to have OpenGL support in Wine</title>
 
@@ -16,8 +8,8 @@
         Basically, if you have a Linux OpenGL ABI compliant libGL
         (<ulink url="http://oss.sgi.com/projects/ogl-sample/ABI/">
           http://oss.sgi.com/projects/ogl-sample/ABI/</ulink>)
-        installed on your computer, you should everything that is
-        needed.
+        installed on your computer, you should have everything 
+	that is needed.
       </para>
       <para>
         To be more clear, I will detail one step after another what
@@ -367,7 +359,7 @@ DesktopDoubleBuffered = Y
 
         <screen>
 Extension defined in the OpenGL library but NOT in opengl_ext.c...
-Please report (&email-lionel-ulmer;) !
+Please report (lionel.ulmer@free.fr) !
         </screen>
 
         <para>
@@ -405,7 +397,7 @@ Please report (&email-lionel-ulmer;) !
         <para>
           If you have this, run with <parameter>--debugmsg
             +opengl</parameter> and send me
-          <email>&email-lionel-ulmer;</email> the TRACE.
+          <email>lionel.ulmer@free.fr</email> the TRACE.
         </para>
       </sect2>
 
