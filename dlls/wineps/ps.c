@@ -517,10 +517,13 @@ BOOL PSDRV_WriteSetPen(PSDRV_PDEVICE *physDev)
 
     if(physDev->pen.dash) {
         sprintf(buf, pssetdash, physDev->pen.dash, 0);
-	PSDRV_WriteSpool(physDev, buf, strlen(buf));
     }
-
-    return TRUE;
+    else
+        sprintf(buf, pssetdash, "", 0);
+   
+   PSDRV_WriteSpool(physDev, buf, strlen(buf));
+	
+   return TRUE;
 }
 
 BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCSTR g_name)
