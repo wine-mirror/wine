@@ -71,6 +71,9 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       {
           RESET_ZFLAG(context);
       }
+      /* don't miss the opportunity to break some tight timing loop in DOS
+       * programs causing 100% CPU usage (by doing a Sleep here) */
+      Sleep(5);
       break;
 
    case 0x02: /* Get Shift Flags */
