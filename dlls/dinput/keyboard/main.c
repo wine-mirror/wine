@@ -83,7 +83,7 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
       BYTE dik_code;
       BOOL down;
       DWORD timestamp;
-
+      
       {
         KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
         dik_code = hook->scanCode;
@@ -138,17 +138,34 @@ static GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a9644
   {0x8c, 0x73, 0x71, 0xdf, 0x54, 0xa9, 0x64, 0x41}
 };
 
+static void fill_keyboard_dideviceinstancea(LPDIDEVICEINSTANCEA lpddi) {
+    DWORD dwSize;
+    DIDEVICEINSTANCEA ddi;
+    
+    dwSize = lpddi->dwSize;
+
+    TRACE("%ld %p\n", dwSize, lpddi);
+    
+    memset(lpddi, 0, dwSize);
+    memset(&ddi, 0, sizeof(ddi));
+
+    ddi.dwSize = dwSize;
+    ddi.guidInstance = GUID_SysKeyboard;/* DInput's GUID */
+    ddi.guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
+    ddi.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
+    strcpy(ddi.tszInstanceName, "Keyboard");
+    strcpy(ddi.tszProductName, "Wine Keyboard");
+
+    memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
+}
+
 static BOOL keyboarddev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi)
 {
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
     TRACE("Enumerating the Keyboard device\n");
 
-    lpddi->guidInstance = GUID_SysKeyboard;/* DInput's GUID */
-    lpddi->guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
-    lpddi->dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
-    strcpy(lpddi->tszInstanceName, "Keyboard");
-    strcpy(lpddi->tszProductName, "Wine Keyboard");
-
+    fill_keyboard_dideviceinstancea(lpddi);
+    
     return TRUE;
   }
 
@@ -352,7 +369,7 @@ static HRESULT WINAPI SysKeyboardAImpl_EnumObjects(
         ddoi.guidType = GUID_Key;
 	ddoi.dwOfs = i;
 	ddoi.dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_BUTTON;
-	strcpy(ddoi.tszName, "a"); /* This should be better handled :-/ */
+	GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName));
 	_dump_OBJECTINSTANCEA(&ddoi);
 	if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
     }
@@ -461,6 +478,66 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
   return DI_OK;
 }
 
+/******************************************************************************
+  *     GetObjectInfo : get information about a device object such as a button
+  *                     or axis
+  */
+static HRESULT WINAPI
+SysKeyboardAImpl_GetObjectInfo(
+	LPDIRECTINPUTDEVICE8A iface,
+	LPDIDEVICEOBJECTINSTANCEA pdidoi,
+	DWORD dwObj,
+	DWORD dwHow)
+{
+    ICOM_THIS(SysKeyboardAImpl,iface);
+    DIDEVICEOBJECTINSTANCEA ddoi;
+    DWORD dwSize = pdidoi->dwSize;
+    
+    TRACE("(this=%p,%p,%ld,0x%08lx)\n", This, pdidoi, dwObj, dwHow);
+
+    if (dwHow == DIPH_BYID) {
+        WARN(" querying by id not supported yet...\n");
+	return DI_OK;
+    }
+
+    memset(pdidoi, 0, dwSize);
+    memset(&ddoi, 0, sizeof(ddoi));
+
+    ddoi.dwSize = dwSize;
+    ddoi.guidType = GUID_Key;
+    ddoi.dwOfs = dwObj;
+    ddoi.dwType = DIDFT_MAKEINSTANCE(dwObj) | DIDFT_BUTTON;
+    GetKeyNameTextA(((dwObj & 0x7f) << 16) | ((dwObj & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName));
+
+    /* And return our just filled device object instance structure */
+    memcpy(pdidoi, &ddoi, (dwSize < sizeof(ddoi) ? dwSize : sizeof(ddoi)));
+    
+    _dump_OBJECTINSTANCEA(pdidoi);
+
+    return DI_OK;
+}
+
+/******************************************************************************
+  *     GetDeviceInfo : get information about a device's identity
+  */
+static HRESULT WINAPI SysKeyboardAImpl_GetDeviceInfo(
+	LPDIRECTINPUTDEVICE8A iface,
+	LPDIDEVICEINSTANCEA pdidi)
+{
+    ICOM_THIS(SysKeyboardAImpl,iface);
+    TRACE("(this=%p,%p)\n", This, pdidi);
+
+    if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)) {
+        WARN(" dinput3 not supporte yet...\n");
+	return DI_OK;
+    }
+
+    fill_keyboard_dideviceinstancea(pdidi);
+    
+    return DI_OK;
+}
+
+
 static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -478,8 +555,8 @@ static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt =
 	IDirectInputDevice2AImpl_SetDataFormat,
 	SysKeyboardAImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
-	IDirectInputDevice2AImpl_GetObjectInfo,
-	IDirectInputDevice2AImpl_GetDeviceInfo,
+	SysKeyboardAImpl_GetObjectInfo,
+	SysKeyboardAImpl_GetDeviceInfo,
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,
 	IDirectInputDevice2AImpl_CreateEffect,

@@ -156,8 +156,8 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	TRACE("(this=%p,0x%04lx,%p,%p,%04lx)\n", This, dwDevType, lpCallback, pvRef, dwFlags);
 
 	for (i = 0; i < nrof_dinput_devices; i++) {
+	  devInstance.dwSize = sizeof(devInstance);
 	  if (dinput_devices[i]->enum_device(dwDevType, dwFlags, &devInstance)) {
-            devInstance.dwSize = sizeof(devInstance);
 	    if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
 	      return 0;
 	  }
