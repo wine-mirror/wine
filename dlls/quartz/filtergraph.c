@@ -2402,7 +2402,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, long EventCo
 	    PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
     }
 
-    EnterCriticalSection(&This->evqueue.msg_crst);
+    LeaveCriticalSection(&This->evqueue.msg_crst);
     return S_OK;
 }
 
