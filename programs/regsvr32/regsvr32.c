@@ -82,7 +82,7 @@ VOID *LoadProc(char* strDll, char* procName, HMODULE* DllHandle)
 {
     VOID* (*proc)(void);
 
-    *DllHandle = LoadLibrary(strDll);
+    *DllHandle = LoadLibraryEx(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!*DllHandle)
     {
         if(!Silent)
