@@ -269,6 +269,43 @@ static void dump_varargs_debug_event( size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_startup_info( size_t size )
+{
+    const startup_info_t *ptr = cur_data;
+    startup_info_t info;
+
+    if (size < sizeof(info.size))
+    {
+        fprintf( stderr, "{}" );
+        return;
+    }
+    if (size > ptr->size) size = ptr->size;
+    memset( &info, 0, sizeof(info) );
+    memcpy( &info, ptr, min( size, sizeof(info) ));
+
+    fprintf( stderr, "{size=%d", info.size );
+    fprintf( stderr, ",x=%d", info.x );
+    fprintf( stderr, ",y=%d", info.y );
+    fprintf( stderr, ",cx=%d", info.cx );
+    fprintf( stderr, ",cy=%d", info.cy );
+    fprintf( stderr, ",x_chars=%d", info.x_chars );
+    fprintf( stderr, ",y_chars=%d", info.y_chars );
+    fprintf( stderr, ",attr=%d", info.attribute );
+    fprintf( stderr, ",cmd_show=%d", info.cmd_show );
+    fprintf( stderr, ",flags=%x", info.flags );
+    remove_data( size );
+    fprintf( stderr, ",filename=" );
+    /* FIXME: these should be unicode */
+    dump_varargs_string( min(cur_size,info.filename_len) );
+    fprintf( stderr, ",cmdline=" );
+    dump_varargs_string( min(cur_size,info.cmdline_len) );
+    fprintf( stderr, ",desktop=" );
+    dump_varargs_string( min(cur_size,info.desktop_len) );
+    fprintf( stderr, ",title=" );
+    dump_varargs_string( min(cur_size,info.title_len) );
+    fputc( '}', stderr );
+}
+
 static void dump_varargs_input_records( size_t size )
 {
     const INPUT_RECORD *rec = cur_data;
@@ -310,15 +347,14 @@ typedef void (*dump_func)( const void *req );
 static void dump_new_process_request( const struct new_process_request *req )
 {
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
+    fprintf( stderr, " use_handles=%d,", req->use_handles );
     fprintf( stderr, " create_flags=%d,", req->create_flags );
-    fprintf( stderr, " start_flags=%d,", req->start_flags );
     fprintf( stderr, " exe_file=%d,", req->exe_file );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
-    fprintf( stderr, " cmd_show=%d,", req->cmd_show );
-    fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    fprintf( stderr, " info=" );
+    dump_varargs_startup_info( cur_size );
 }
 
 static void dump_new_process_reply( const struct new_process_reply *req )
@@ -369,15 +405,25 @@ static void dump_init_process_request( const struct init_process_request *req )
 static void dump_init_process_reply( const struct init_process_reply *req )
 {
     fprintf( stderr, " create_flags=%d,", req->create_flags );
-    fprintf( stderr, " start_flags=%d,", req->start_flags );
     fprintf( stderr, " server_start=%08x,", req->server_start );
+    fprintf( stderr, " info=%d,", req->info );
+    fprintf( stderr, " info_size=%d,", req->info_size );
     fprintf( stderr, " exe_file=%d,", req->exe_file );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
-    fprintf( stderr, " hstderr=%d,", req->hstderr );
-    fprintf( stderr, " cmd_show=%d,", req->cmd_show );
-    fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    fprintf( stderr, " hstderr=%d", req->hstderr );
+}
+
+static void dump_get_startup_info_request( const struct get_startup_info_request *req )
+{
+    fprintf( stderr, " info=%d,", req->info );
+    fprintf( stderr, " close=%d", req->close );
+}
+
+static void dump_get_startup_info_reply( const struct get_startup_info_reply *req )
+{
+    fprintf( stderr, " info=" );
+    dump_varargs_startup_info( cur_size );
 }
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )
@@ -2112,6 +2158,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_thread_request,
     (dump_func)dump_boot_done_request,
     (dump_func)dump_init_process_request,
+    (dump_func)dump_get_startup_info_request,
     (dump_func)dump_init_process_done_request,
     (dump_func)dump_init_thread_request,
     (dump_func)dump_terminate_process_request,
@@ -2267,6 +2314,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_thread_reply,
     (dump_func)0,
     (dump_func)dump_init_process_reply,
+    (dump_func)dump_get_startup_info_reply,
     (dump_func)dump_init_process_done_reply,
     (dump_func)dump_init_thread_reply,
     (dump_func)dump_terminate_process_reply,
@@ -2422,6 +2470,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_thread",
     "boot_done",
     "init_process",
+    "get_startup_info",
     "init_process_done",
     "init_thread",
     "terminate_process",

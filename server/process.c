@@ -77,17 +77,17 @@ struct startup_info
 {
     struct object       obj;          /* object header */
     int                 inherit_all;  /* inherit all handles from parent */
+    int                 use_handles;  /* use stdio handles */
     int                 create_flags; /* creation flags */
-    int                 start_flags;  /* flags from startup info */
     handle_t            hstdin;       /* handle for stdin */
     handle_t            hstdout;      /* handle for stdout */
     handle_t            hstderr;      /* handle for stderr */
-    int                 cmd_show;     /* main window show mode */
     struct file        *exe_file;     /* file handle for main exe */
-    char               *filename;     /* file name for main exe */
     struct thread      *owner;        /* owner thread (the one that created the new process) */
     struct process     *process;      /* created process */
     struct thread      *thread;       /* created thread */
+    size_t              data_size;    /* size of startup data */
+    startup_info_t     *data;         /* data for startup info */
 };
 
 static void startup_info_dump( struct object *obj, int verbose );
@@ -128,12 +128,11 @@ static int set_process_console( struct process *process, struct thread *parent_t
          * physical console
          */
         inherit_console( parent_thread, process,
-                         (info->inherit_all || (info->start_flags & STARTF_USESTDHANDLES)) ?
-                         info->hstdin : 0 );
+                         (info->inherit_all || info->use_handles) ? info->hstdin : 0 );
     }
     if (parent_thread)
     {
-        if (!info->inherit_all && !(info->start_flags & STARTF_USESTDHANDLES))
+        if (!info->inherit_all && !info->use_handles)
         {
             /* duplicate the handle from the parent into this process */
             reply->hstdin  = duplicate_handle( parent_thread->process, info->hstdin, process,
@@ -234,7 +233,7 @@ struct thread *create_process( int fd )
 }
 
 /* initialize the current process and fill in the request */
-static void init_process( int ppid, struct init_process_reply *reply )
+static struct startup_info *init_process( int ppid, struct init_process_reply *reply )
 {
     struct process *process = current->process;
     struct thread *parent_thread = get_thread_from_pid( ppid );
@@ -248,12 +247,12 @@ static void init_process( int ppid, struct init_process_reply *reply )
         if (!info)
         {
             fatal_protocol_error( current, "init_process: parent but no info\n" );
-            return;
+            return NULL;
         }
         if (info->thread)
         {
             fatal_protocol_error( current, "init_process: called twice?\n" );
-            return;
+            return NULL;
         }
         process->parent = (struct process *)grab_object( parent );
     }
@@ -266,7 +265,7 @@ static void init_process( int ppid, struct init_process_reply *reply )
         process->handles = copy_handle_table( process, parent );
     else
         process->handles = alloc_handle_table( process, 0 );
-    if (!process->handles) return;
+    if (!process->handles) return NULL;
 
     /* retrieve the main exe file */
     reply->exe_file = 0;
@@ -274,11 +273,11 @@ static void init_process( int ppid, struct init_process_reply *reply )
     {
         process->exe.file = (struct file *)grab_object( info->exe_file );
         if (!(reply->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
-            return;
+            return NULL;
     }
 
     /* set the process console */
-    if (!set_process_console( process, parent_thread, info, reply )) return;
+    if (!set_process_console( process, parent_thread, info, reply )) return NULL;
 
     if (parent)
     {
@@ -294,22 +293,14 @@ static void init_process( int ppid, struct init_process_reply *reply )
 
     if (info)
     {
-        size_t size = strlen(info->filename);
-        if (size > get_reply_max_size()) size = get_reply_max_size();
-        reply->start_flags = info->start_flags;
-        reply->cmd_show    = info->cmd_show;
-        set_reply_data( info->filename, size );
+        reply->info_size = info->data_size;
         info->process = (struct process *)grab_object( process );
         info->thread  = (struct thread *)grab_object( current );
         wake_up( &info->obj, 0 );
     }
-    else
-    {
-        reply->start_flags  = STARTF_USESTDHANDLES;
-        reply->cmd_show     = 0;
-    }
     reply->create_flags = process->create_flags;
     reply->server_start = server_start_ticks;
+    return info ? (struct startup_info *)grab_object( info ) : NULL;
 }
 
 /* destroy a process when its refcount is 0 */
@@ -363,7 +354,7 @@ static void startup_info_destroy( struct object *obj )
 {
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
-    if (info->filename) free( info->filename );
+    if (info->data) free( info->data );
     if (info->exe_file) release_object( info->exe_file );
     if (info->process) release_object( info->process );
     if (info->thread) release_object( info->thread );
@@ -379,8 +370,8 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d name='%s'\n",
-             info->start_flags, info->hstdin, info->hstdout, info->hstderr, info->filename );
+    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d\n",
+             info->create_flags, info->hstdin, info->hstdout, info->hstderr );
 }
 
 static int startup_info_signaled( struct object *obj, struct thread *thread )
@@ -770,7 +761,6 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 /* create a new process */
 DECL_HANDLER(new_process)
 {
-    size_t len = get_req_data_size();
     struct startup_info *info;
 
     if (current->info)
@@ -782,26 +772,24 @@ DECL_HANDLER(new_process)
     /* build the startup info for a new process */
     if (!(info = alloc_object( &startup_info_ops, -1 ))) return;
     info->inherit_all  = req->inherit_all;
+    info->use_handles  = req->use_handles;
     info->create_flags = req->create_flags;
-    info->start_flags  = req->start_flags;
     info->hstdin       = req->hstdin;
     info->hstdout      = req->hstdout;
     info->hstderr      = req->hstderr;
-    info->cmd_show     = req->cmd_show;
     info->exe_file     = NULL;
-    info->filename     = NULL;
     info->owner        = (struct thread *)grab_object( current );
     info->process      = NULL;
     info->thread       = NULL;
+    info->data_size    = get_req_data_size();
+    info->data         = NULL;
 
     if (req->exe_file &&
         !(info->exe_file = get_file_obj( current->process, req->exe_file, GENERIC_READ )))
         goto done;
 
-    if (!(info->filename = mem_alloc( len + 1 ))) goto done;
-
-    memcpy( info->filename, get_req_data(), len );
-    info->filename[len] = 0;
+    if (!(info->data = mem_alloc( info->data_size ))) goto done;
+    memcpy( info->data, get_req_data(), info->data_size );
     current->info = info;
     reply->info = alloc_handle( current->process, info, SYNCHRONIZE, FALSE );
 
@@ -839,16 +827,46 @@ DECL_HANDLER(get_new_process_info)
     }
 }
 
+/* Retrieve the new process startup info */
+DECL_HANDLER(get_startup_info)
+{
+    struct startup_info *info;
+
+    if ((info = (struct startup_info *)get_handle_obj( current->process, req->info,
+                                                       0, &startup_info_ops )))
+    {
+        size_t size = info->data_size;
+        if (size > get_reply_max_size()) size = get_reply_max_size();
+        if (req->close)
+        {
+            set_reply_data_ptr( info->data, size );
+            info->data = NULL;
+            close_handle( current->process, req->info, NULL );
+        }
+        else set_reply_data( info->data, size );
+        release_object( info );
+    }
+}
+
+
 /* initialize a new process */
 DECL_HANDLER(init_process)
 {
+    struct startup_info *info;
+
+    reply->info = 0;
+    reply->info_size = 0;
     if (!current->unix_pid)
     {
         fatal_protocol_error( current, "init_process: init_thread not called yet\n" );
         return;
     }
     current->process->ldt_copy  = req->ldt_copy;
-    init_process( req->ppid, reply );
+    if ((info = init_process( req->ppid, reply )))
+    {
+        reply->info = alloc_handle( current->process, info, 0, FALSE );
+        release_object( info );
+    }
 }
 
 /* signal the end of the process initialization */

@@ -34,7 +34,7 @@ struct __server_iovec
     unsigned int size;
 };
 
-#define __SERVER_MAX_DATA 4
+#define __SERVER_MAX_DATA 5
 
 struct __server_request_info
 {

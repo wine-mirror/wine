@@ -145,6 +145,29 @@ struct wake_up_reply
     int   signaled;  /* wait result */
 };
 
+/* structure for process startup info */
+typedef struct
+{
+    size_t       size;         /* size of this structure */
+    size_t       filename_len; /* length of filename */
+    size_t       cmdline_len;  /* length of cmd line */
+    size_t       desktop_len;  /* length of desktop name */
+    size_t       title_len;    /* length of title */
+    int          x;            /* window position */
+    int          y;
+    int          cx;           /* window size */
+    int          cy;
+    int          x_chars;      /* console size */
+    int          y_chars;
+    int          attribute;    /* console attributes */
+    int          cmd_show;     /* main window show mode */
+    unsigned int flags;        /* info flags */
+    /* char filename[...]; */
+    /* char cmdline[...]; */
+    /* char desktop[...]; */
+    /* char title[...]; */
+} startup_info_t;
+
 /* structure returned in the list of window properties */
 typedef struct
 {
@@ -175,14 +198,13 @@ typedef struct
 /* Create a new process from the context of the parent */
 @REQ(new_process)
     int          inherit_all;  /* inherit all handles from parent */
+    int          use_handles;  /* use stdio handles */
     int          create_flags; /* creation flags */
-    int          start_flags;  /* flags from startup info */
     handle_t     exe_file;     /* file handle for main exe */
     handle_t     hstdin;       /* handle for stdin */
     handle_t     hstdout;      /* handle for stdout */
     handle_t     hstderr;      /* handle for stderr */
-    int          cmd_show;     /* main window show mode */
-    VARARG(filename,string);   /* file name of main exe */
+    VARARG(info,startup_info); /* startup information */
 @REPLY
     handle_t     info;         /* new process info handle */
 @END
@@ -225,14 +247,22 @@ typedef struct
     int          ppid;         /* parent Unix pid */
 @REPLY
     int          create_flags; /* creation flags */
-    int          start_flags;  /* flags from startup info */
     unsigned int server_start; /* server start time (GetTickCount) */
+    handle_t     info;         /* handle to startup info */
+    size_t       info_size;    /* total size of startup info */
     handle_t     exe_file;     /* file handle for main exe */
     handle_t     hstdin;       /* handle for stdin */
     handle_t     hstdout;      /* handle for stdout */
     handle_t     hstderr;      /* handle for stderr */
-    int          cmd_show;     /* main window show mode */
-    VARARG(filename,string);   /* file name of main exe */
+@END
+
+
+/* Retrieve the new process startup info */
+@REQ(get_startup_info)
+    handle_t     info;         /* handle to startup info */
+    int          close;        /* should we close the handle at the same time? */
+@REPLY
+    VARARG(info,startup_info); /* startup information */
 @END
 
 

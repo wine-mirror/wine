@@ -116,7 +116,8 @@ static HANDLE main_exe_file;
 unsigned int server_startticks;
 
 /* memory/environ.c */
-extern struct _ENVDB *ENV_BuildEnvironment(void);
+extern struct _ENVDB *ENV_InitStartupInfo( handle_t info_handle, size_t info_size,
+                                           char *main_exe_name, size_t main_exe_size );
 extern BOOL ENV_BuildCommandLine( char **argv );
 extern STARTUPINFOA current_startupinfo;
 
@@ -243,6 +244,8 @@ static BOOL process_init( char *argv[] )
 {
     BOOL ret;
     int create_flags = 0;
+    size_t info_size = 0;
+    handle_t info = 0;
 
     /* store the program name */
     argv0 = argv[0];
@@ -271,9 +274,9 @@ static BOOL process_init( char *argv[] )
             main_exe_name[len] = 0;
             main_exe_file = reply->exe_file;
             create_flags  = reply->create_flags;
-            current_startupinfo.dwFlags     = reply->start_flags;
+            info_size     = reply->info_size;
+            info          = reply->info;
             server_startticks               = reply->server_start;
-            current_startupinfo.wShowWindow = reply->cmd_show;
             current_startupinfo.hStdInput   = reply->hstdin;
             current_startupinfo.hStdOutput  = reply->hstdout;
             current_startupinfo.hStdError   = reply->hstderr;
@@ -308,7 +311,9 @@ static BOOL process_init( char *argv[] )
     PTHREAD_init_done();
 
     /* Copy the parent environment */
-    if (!(current_process.env_db = ENV_BuildEnvironment())) return FALSE;
+    if (!(current_process.env_db = ENV_InitStartupInfo( info, info_size,
+                                                        main_exe_name, sizeof(main_exe_name) )))
+        return FALSE;
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( argv );
@@ -861,6 +866,7 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     DOS_FULL_NAME full_dir, full_name;
     HANDLE load_done_evt = 0;
     HANDLE process_info;
+    startup_info_t startup_info;
 
     info->hThread = info->hProcess = 0;
     info->dwProcessId = info->dwThreadId = 0;
@@ -880,15 +886,33 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
         }
     }
 
+    /* fill the startup info structure */
+
+    startup_info.size        = sizeof(startup_info);
+    /* startup_info.filename_len is set below */
+    startup_info.cmdline_len = cmd_line ? strlen(cmd_line) : 0;
+    startup_info.desktop_len = startup->lpDesktop ? strlen(startup->lpDesktop) : 0;
+    startup_info.title_len   = startup->lpTitle ? strlen(startup->lpTitle) : 0;
+    startup_info.x           = startup->dwX;
+    startup_info.y           = startup->dwY;
+    startup_info.cx          = startup->dwXSize;
+    startup_info.cy          = startup->dwYSize;
+    startup_info.x_chars     = startup->dwXCountChars;
+    startup_info.y_chars     = startup->dwYCountChars;
+    startup_info.attribute   = startup->dwFillAttribute;
+    startup_info.cmd_show    = startup->wShowWindow;
+    startup_info.flags       = startup->dwFlags;
+
     /* create the process on the server side */
 
     SERVER_START_REQ( new_process )
     {
         char buf[MAX_PATH];
+        LPCSTR nameptr;
 
         req->inherit_all  = inherit;
         req->create_flags = flags;
-        req->start_flags  = startup->dwFlags;
+        req->use_handles  = (startup->dwFlags & STARTF_USESTDHANDLES) != 0;
         req->exe_file     = hFile;
         if (startup->dwFlags & STARTF_USESTDHANDLES)
         {
@@ -902,22 +926,28 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
             req->hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
             req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
         }
-        req->cmd_show = startup->wShowWindow;
 
         if (!hFile)  /* unix process */
         {
             unixfilename = filename;
             if (DOSFS_GetFullName( filename, TRUE, &full_name ))
                 unixfilename = full_name.long_name;
-            wine_server_add_data( req, unixfilename, strlen(unixfilename) );
+            nameptr = unixfilename;
         }
         else  /* new wine process */
         {
             if (GetLongPathNameA( filename, buf, MAX_PATH ))
-                wine_server_add_data( req, buf, strlen(buf) );
+                nameptr = buf;
             else
-                wine_server_add_data( req, filename, strlen(filename) );
+                nameptr = filename;
         }
+        startup_info.filename_len = strlen(nameptr);
+        wine_server_add_data( req, &startup_info, sizeof(startup_info) );
+        wine_server_add_data( req, nameptr, startup_info.filename_len );
+        wine_server_add_data( req, cmd_line, startup_info.cmdline_len );
+        wine_server_add_data( req, startup->lpDesktop, startup_info.desktop_len );
+        wine_server_add_data( req, startup->lpTitle, startup_info.title_len );
+
         ret = !wine_server_call_err( req );
         process_info = reply->info;
     }

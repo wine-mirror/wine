@@ -132,6 +132,29 @@ struct wake_up_reply
 
 typedef struct
 {
+    size_t       size;
+    size_t       filename_len;
+    size_t       cmdline_len;
+    size_t       desktop_len;
+    size_t       title_len;
+    int          x;
+    int          y;
+    int          cx;
+    int          cy;
+    int          x_chars;
+    int          y_chars;
+    int          attribute;
+    int          cmd_show;
+    unsigned int flags;
+
+
+
+
+} startup_info_t;
+
+
+typedef struct
+{
     atom_t         atom;
     short          string;
     handle_t       handle;
@@ -161,14 +184,13 @@ struct new_process_request
 {
     struct request_header __header;
     int          inherit_all;
+    int          use_handles;
     int          create_flags;
-    int          start_flags;
     handle_t     exe_file;
     handle_t     hstdin;
     handle_t     hstdout;
     handle_t     hstderr;
-    int          cmd_show;
-    /* VARARG(filename,string); */
+    /* VARARG(info,startup_info); */
 };
 struct new_process_reply
 {
@@ -235,14 +257,27 @@ struct init_process_reply
 {
     struct reply_header __header;
     int          create_flags;
-    int          start_flags;
     unsigned int server_start;
+    handle_t     info;
+    size_t       info_size;
     handle_t     exe_file;
     handle_t     hstdin;
     handle_t     hstdout;
     handle_t     hstderr;
-    int          cmd_show;
-    /* VARARG(filename,string); */
+};
+
+
+
+struct get_startup_info_request
+{
+    struct request_header __header;
+    handle_t     info;
+    int          close;
+};
+struct get_startup_info_reply
+{
+    struct reply_header __header;
+    /* VARARG(info,startup_info); */
 };
 
 
@@ -2663,6 +2698,7 @@ enum request
     REQ_new_thread,
     REQ_boot_done,
     REQ_init_process,
+    REQ_get_startup_info,
     REQ_init_process_done,
     REQ_init_thread,
     REQ_terminate_process,
@@ -2822,6 +2858,7 @@ union generic_request
     struct new_thread_request new_thread_request;
     struct boot_done_request boot_done_request;
     struct init_process_request init_process_request;
+    struct get_startup_info_request get_startup_info_request;
     struct init_process_done_request init_process_done_request;
     struct init_thread_request init_thread_request;
     struct terminate_process_request terminate_process_request;
@@ -2979,6 +3016,7 @@ union generic_reply
     struct new_thread_reply new_thread_reply;
     struct boot_done_reply boot_done_reply;
     struct init_process_reply init_process_reply;
+    struct get_startup_info_reply get_startup_info_reply;
     struct init_process_done_reply init_process_done_reply;
     struct init_thread_reply init_thread_reply;
     struct terminate_process_reply terminate_process_reply;
@@ -3128,6 +3166,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 75
+#define SERVER_PROTOCOL_VERSION 76
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

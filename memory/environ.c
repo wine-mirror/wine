@@ -28,6 +28,7 @@
 #include "winerror.h"
 
 #include "wine/winbase16.h"
+#include "wine/server.h"
 #include "heap.h"
 #include "ntddk.h"
 #include "selectors.h"
@@ -145,11 +146,11 @@ static LPCSTR ENV_FindVariable( LPCSTR env, LPCSTR name, INT len )
 
 
 /***********************************************************************
- *           ENV_BuildEnvironment
+ *           build_environment
  *
  * Build the environment for the initial process
  */
-ENVDB *ENV_BuildEnvironment(void)
+static BOOL build_environment(void)
 {
     extern char **environ;
     LPSTR p, *e;
@@ -162,7 +163,7 @@ ENVDB *ENV_BuildEnvironment(void)
 
     /* Now allocate the environment */
 
-    if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (!(p = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
     current_envdb.environ = p;
     env_sel = SELECTOR_AllocBlock( p, 0x10000, WINE_LDT_FLAGS_DATA );
 
@@ -177,6 +178,102 @@ ENVDB *ENV_BuildEnvironment(void)
     /* Now add the program name */
 
     FILL_EXTRA_ENV( p );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           copy_str
+ *
+ * Small helper for ENV_InitStartupInfo.
+ */
+inline static char *copy_str( char **dst, const char **src, size_t len )
+{
+    char *ret;
+
+    if (!len) return NULL;
+    ret = *dst;
+    memcpy( ret, *src, len );
+    ret[len] = 0;
+    *dst += len + 1;
+    *src += len;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           ENV_InitStartupInfo
+ *
+ * Fill the startup info structure from the server.
+ */
+ENVDB *ENV_InitStartupInfo( handle_t info_handle, size_t info_size,
+                            char *main_exe_name, size_t main_exe_size )
+{
+    startup_info_t info;
+    void *data;
+    char *dst;
+    const char *src;
+    size_t len;
+
+    if (!build_environment()) return NULL;
+    if (!info_size) return &current_envdb;  /* nothing to retrieve */
+
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, info_size ))) return NULL;
+
+    SERVER_START_REQ( get_startup_info )
+    {
+        req->info = info_handle;
+        req->close = TRUE;
+        wine_server_set_reply( req, data, info_size );
+        wine_server_call( req );
+        info_size = wine_server_reply_size( reply );
+    }
+    SERVER_END_REQ;
+    if (info_size < sizeof(info.size)) goto done;
+    len = min( info_size, ((startup_info_t *)data)->size );
+    memset( &info, 0, sizeof(info) );
+    memcpy( &info, data, len );
+    src = (char *)data + len;
+    info_size -= len;
+
+    /* fixup the lengths */
+    if (info.filename_len > info_size) info.filename_len = info_size;
+    info_size -= info.filename_len;
+    if (info.cmdline_len > info_size) info.cmdline_len = info_size;
+    info_size -= info.cmdline_len;
+    if (info.desktop_len > info_size) info.desktop_len = info_size;
+    info_size -= info.desktop_len;
+    if (info.title_len > info_size) info.title_len = info_size;
+
+    /* store the filename */
+    if (info.filename_len)
+    {
+        len = min( info.filename_len, main_exe_size-1 );
+        memcpy( main_exe_name, src, len );
+        main_exe_name[len] = 0;
+        src += info.filename_len;
+    }
+
+    /* copy the other strings */
+    len = info.cmdline_len + info.desktop_len + info.title_len;
+    if (len && (dst = HeapAlloc( GetProcessHeap(), 0, len + 3 )))
+    {
+        current_envdb.cmd_line = copy_str( &dst, &src, info.cmdline_len );
+        current_startupinfo.lpDesktop = copy_str( &dst, &src, info.desktop_len );
+        current_startupinfo.lpTitle = copy_str( &dst, &src, info.title_len );
+    }
+
+    current_startupinfo.dwX             = info.x;
+    current_startupinfo.dwY             = info.y;
+    current_startupinfo.dwXSize         = info.cx;
+    current_startupinfo.dwYSize         = info.cy;
+    current_startupinfo.dwXCountChars   = info.x_chars;
+    current_startupinfo.dwYCountChars   = info.y_chars;
+    current_startupinfo.dwFillAttribute = info.attribute;
+    current_startupinfo.wShowWindow     = info.cmd_show;
+    current_startupinfo.dwFlags         = info.flags;
+ done:
+    HeapFree( GetProcessHeap(), 0, data );
     return &current_envdb;
 }
 
@@ -207,6 +304,8 @@ BOOL ENV_BuildCommandLine( char **argv )
 {
     int len;
     char *p, **arg;
+
+    if (current_envdb.cmd_line) goto done;  /* already got it from the server */
 
     len = 0;
     for (arg = argv; *arg; arg++)
@@ -304,6 +403,7 @@ BOOL ENV_BuildCommandLine( char **argv )
     *p = '\0';
 
     /* now allocate the Unicode version */
+ done:
     len = MultiByteToWideChar( CP_ACP, 0, current_envdb.cmd_line, -1, NULL, 0 );
     if (!(cmdlineW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         return FALSE;
