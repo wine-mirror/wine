@@ -4,6 +4,16 @@
  * Copyright 1998,1999 Eric Kohl
  * Copyright 2000 Eric Kohl for CodeWeavers
  *
+ *  Differences between MSDN and actual native control operation:
+ *   1. MSDN says: "TBSTYLE_LIST: Creates a flat toolbar with button text
+ *                  to the right of the bitmap. Otherwise, this style is
+ *                  identical to TBSTYLE_FLAT."
+ *      As implemented by both v4.71 and v5.80 of the native COMCTL32.DLL
+ *      you can create a TBSTYLE_LIST without TBSTYLE_FLAT and the result
+ *      is non-flat non-transparent buttons. Therefore TBSTYLE_LIST does
+ *      *not* imply TBSTYLE_FLAT as documented.  (GA 8/2001)
+ *
+ *
  * TODO:
  *   - A little bug in TOOLBAR_DrawMasked()
  *   - Button wrapping (under construction).
@@ -171,6 +181,25 @@ TOOLBAR_DumpToolbar(TOOLBAR_INFO *iP, INT line)
 	    TOOLBAR_DumpButton(iP, &iP->buttons[i], i, TRUE);
 	}
     }
+}
+
+
+/***********************************************************************
+* 		TOOLBAR_CheckStyle
+*
+* This function validates that the styles set are implemented and
+* issues FIXME's warning of possible problems. In a perfect world this
+* function should be null.
+*/
+static void
+TOOLBAR_CheckStyle (HWND hwnd, DWORD dwStyle)
+{
+    if (dwStyle & TBSTYLE_ALTDRAG)
+	FIXME("[%04x] TBSTYLE_ALTDRAG not implemented\n", hwnd);
+    if (dwStyle & TBSTYLE_REGISTERDROP)
+	FIXME("[%04x] TBSTYLE_REGISTERDROP not implemented\n", hwnd);
+    if (dwStyle & TBSTYLE_TRANSPARENT)
+	FIXME("[%04x] TBSTYLE_TRANSPARENT not implemented\n", hwnd);
 }
 
 
@@ -400,7 +429,6 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 {
     RECT   rcText = btnPtr->rect;
     HFONT  hOldFont;
-    INT    nOldBkMode;
     COLORREF clrOld;
     LPWSTR lpText = NULL;
     HIMAGELIST himl = infoPtr->himlDef;
@@ -449,7 +477,6 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 	      rcText.left, rcText.top, rcText.right, rcText.bottom);
 
 	hOldFont = SelectObject (hdc, infoPtr->hFont);
-	nOldBkMode = SetBkMode (hdc, TRANSPARENT);
 	if (!(nState & TBSTATE_ENABLED)) {
 	    clrOld = SetTextColor (hdc, GetSysColor (COLOR_3DHILIGHT));
 	    OffsetRect (&rcText, 1, 1);
@@ -469,8 +496,6 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
 	SetTextColor (hdc, clrOld);
 	SelectObject (hdc, hOldFont);
-	if (nOldBkMode != TRANSPARENT)
-	    SetBkMode (hdc, nOldBkMode);
     }
 }
 
@@ -547,7 +572,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     CopyRect (&rcArrow, &rc);
     CopyRect(&rcBitmap, &rc);
 
-    FillRect( hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
+    if (!infoPtr->bTransparent)
+	FillRect( hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
 
     if (hasDropDownArrow)
     {
@@ -619,9 +645,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (btnPtr->fsState & TBSTATE_PRESSED) {
 	if (dwStyle & TBSTYLE_FLAT)
 	{
-	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE | BF_ADJUST);
+	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
             if (hasDropDownArrow)
-	    DrawEdge (hdc, &rcArrow, BDR_SUNKENOUTER, BF_RECT | BF_MIDDLE | BF_ADJUST);
+	    DrawEdge (hdc, &rcArrow, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
 	}
 	else
 	{
@@ -646,7 +672,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	(btnPtr->fsState & TBSTATE_CHECKED)) {
 	if (dwStyle & TBSTYLE_FLAT)
 	    DrawEdge (hdc, &rc, BDR_SUNKENOUTER,
-			BF_RECT | BF_MIDDLE | BF_ADJUST);
+			BF_RECT | BF_ADJUST);
 	else
 	    DrawEdge (hdc, &rc, EDGE_SUNKEN,
 			BF_RECT | BF_MIDDLE | BF_ADJUST);
@@ -677,16 +703,21 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     {
 	if (btnPtr->bHot)
 	{
-	    DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
+	    DrawEdge (hdc, &rc, BDR_RAISEDINNER, BF_RECT);
             if (hasDropDownArrow)
-	    DrawEdge (hdc, &rcArrow, BDR_RAISEDINNER, BF_RECT | BF_MIDDLE);
+	    DrawEdge (hdc, &rcArrow, BDR_RAISEDINNER, BF_RECT);
 	}
-        else
+#if 1
+        else /* The following code needs to be removed after
+	      * "hot item" support has been implemented for the
+	      * case where it is being de-selected.
+	      */
 	{
             FrameRect(hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
             if (hasDropDownArrow)
             FrameRect(hdc, &rcArrow, GetSysColorBrush(COLOR_BTNFACE));
 	}
+#endif
 
         if (hasDropDownArrow)
 	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top, COLOR_WINDOWFRAME);
@@ -732,7 +763,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
-    INT i;
+    INT i, oldBKmode = 0;
     RECT rcTemp;
 
     /* if imagelist belongs to the app, it can be changed
@@ -742,6 +773,9 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
+    if (infoPtr->bTransparent)
+	oldBKmode = SetBkMode (hdc, TRANSPARENT);
+
     /* redraw necessary buttons */
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
@@ -749,6 +783,9 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
         if(IntersectRect(&rcTemp, &(ps->rcPaint), &(btnPtr->rect)))
             TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
     }
+
+    if (infoPtr->bTransparent && (oldBKmode != TRANSPARENT))
+	SetBkMode (hdc, oldBKmode);
 }
 
 /***********************************************************************
@@ -847,7 +884,7 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
 * wrapping should occur based on the width of the toolbar window.  
 * It does *not* calculate button placement itself.  That task 
 * takes place in TOOLBAR_CalcToolbar. If the program wants to manage 
-* the toolbar wrapping on it's own, it can use the TBSTYLE_WRAPPABLE 
+* the toolbar wrapping on its own, it can use the TBSTYLE_WRAPABLE 
 * flag, and set the TBSTATE_WRAP flags manually on the appropriate items.
 */ 
 
@@ -3859,6 +3896,14 @@ TOOLBAR_SetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     btnPtr = &infoPtr->buttons[nIndex];
 
+    /* if hidden state has changed the invalidate entire window and recalc */
+    if ((btnPtr->fsState & TBSTATE_HIDDEN) != (LOWORD(lParam) & TBSTATE_HIDDEN)) {
+	btnPtr->fsState = LOWORD(lParam);
+	TOOLBAR_CalcToolbar (hwnd);
+	InvalidateRect(hwnd, 0, TOOLBAR_HasText(infoPtr, btnPtr));
+	return TRUE;
+    }
+
     /* process state changing if current state doesn't match new state */
     if(btnPtr->fsState != LOWORD(lParam))
     {
@@ -3967,7 +4012,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nOldHit = -1;
     infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
     infoPtr->hwndNotify = GetParent (hwnd);
-    infoPtr->bTransparent = (dwStyle & TBSTYLE_FLAT);
+    infoPtr->bTransparent = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_TRANSPARENT));
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE : DT_CENTER;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
     infoPtr->iVersion = 0;
@@ -3995,6 +4040,8 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			    NM_TOOLTIPSCREATED);
 	}
     }
+
+    TOOLBAR_CheckStyle (hwnd, dwStyle);
 
     TOOLBAR_CalcToolbar(hwnd);
 
@@ -4045,10 +4092,62 @@ static LRESULT
 TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+    NMTBCUSTOMDRAW tbcd;
+    INT ret;
 
-    if (infoPtr->bTransparent)
-	return SendMessageA (GetParent (hwnd), WM_ERASEBKGND, wParam, lParam);
+    if (dwStyle & TBSTYLE_CUSTOMERASE) {
+	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
+	tbcd.nmcd.dwDrawStage = CDDS_PREERASE;
+	tbcd.nmcd.hdc = (HDC)wParam;
+	ret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+	/* FIXME: in general the return flags *can* be or'ed together */
+	switch (ret) 
+	    {
+	    case CDRF_DODEFAULT:
+		break;
+	    case CDRF_SKIPDEFAULT:
+		return TRUE;
+	    default:
+		FIXME("[%04x] response %d not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
+		      hwnd, ret);
+	    }
+    }
 
+    /* If the toolbar is "transparent" then pass the WM_ERASEBKGND up 
+     * to my parent for processing.
+     */
+    if (infoPtr->bTransparent) {
+	POINT pt, ptorig;
+	HDC hdc = (HDC)wParam;
+	HWND parent;
+
+	pt.x = 0;
+	pt.y = 0;
+	parent = GetParent(hwnd);
+	MapWindowPoints(hwnd, parent, &pt, 1);
+	OffsetWindowOrgEx (hdc, pt.x, pt.y, &ptorig);
+	SendMessageA (parent, WM_ERASEBKGND, wParam, lParam);
+	SetWindowOrgEx (hdc, ptorig.x, ptorig.y, 0);
+	return TRUE;
+    }
+
+    if (dwStyle & TBSTYLE_CUSTOMERASE) {
+	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
+	tbcd.nmcd.dwDrawStage = CDDS_POSTERASE;
+	tbcd.nmcd.hdc = (HDC)wParam;
+	ret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+	switch (ret) 
+	    {
+	    case CDRF_DODEFAULT:
+		break;
+	    case CDRF_SKIPDEFAULT:
+		return TRUE;
+	    default:
+		FIXME("[%04x] response %d not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
+		      hwnd, ret);
+	    }
+    }
     return DefWindowProcA (hwnd, WM_ERASEBKGND, wParam, lParam);
 }
 
@@ -4305,6 +4404,7 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *hotBtnPtr, *btnPtr;
+    RECT rc1;
 
     if (infoPtr->nOldHit < 0)
       return TRUE;
@@ -4316,8 +4416,9 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if((infoPtr->nOldHit == infoPtr->nHotItem) && (hotBtnPtr->fsState & TBSTATE_ENABLED))
     {
 	hotBtnPtr->bHot = FALSE;
-
-        InvalidateRect (hwnd, &hotBtnPtr->rect, TOOLBAR_HasText(infoPtr,
+	rc1 = hotBtnPtr->rect;
+	InflateRect (&rc1, 1, 1);
+        InvalidateRect (hwnd, &rc1, TOOLBAR_HasText(infoPtr,
             hotBtnPtr));
     }
 
@@ -4329,7 +4430,9 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
       btnPtr->fsState &= ~TBSTATE_PRESSED;
 
-      InvalidateRect (hwnd, &(btnPtr->rect), TRUE);
+      rc1 = hotBtnPtr->rect;
+      InflateRect (&rc1, 1, 1);
+      InvalidateRect (hwnd, &rc1, TRUE);
     }
 
     infoPtr->nOldHit = -1; /* reset the old hit index as we've left the toolbar */
@@ -4500,6 +4603,23 @@ TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPNMHDR lpnmh = (LPNMHDR)lParam;
 
+    if (lpnmh->code == PGN_CALCSIZE) {
+	LPNMPGCALCSIZE lppgc = (LPNMPGCALCSIZE)lParam;
+
+	if (lppgc->dwFlag == PGF_CALCWIDTH) {
+	    lppgc->iWidth = infoPtr->nWidth;
+	    TRACE("processed PGN_CALCSIZE, returning horz size = %d\n", 
+		  infoPtr->nWidth);
+	}
+	else {
+	    lppgc->iHeight = infoPtr->nHeight;
+	    TRACE("processed PGN_CALCSIZE, returning vert size = %d\n", 
+		  infoPtr->nHeight);
+	}
+	return 0;
+    }
+
+
     TRACE("passing WM_NOTIFY!\n");
 
     if ((infoPtr->hwndToolTip) && (lpnmh->hwndFrom == infoPtr->hwndToolTip)) {
@@ -4647,6 +4767,7 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 	else {
 	    infoPtr->dwDTFlags = DT_CENTER;
 	}
+	TOOLBAR_CheckStyle (hwnd, lpStyle->styleNew);
     }
 
     TOOLBAR_AutoSize (hwnd);
@@ -5027,4 +5148,3 @@ TOOLBAR_Unregister (void)
 {
     UnregisterClassA (TOOLBARCLASSNAMEA, (HINSTANCE)NULL);
 }
-
