@@ -1075,11 +1075,21 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
 
     /* Paint Shop Pro 4.14 calls EndDialog for a CreateDialog* dialog,
      * which isn't "normal". Only DialogBox* dialogs may be EndDialog()ed.
-     * Just hide the window as windows does it...
+     * Just hide the window 
+     * and re-enable the owner as windows does it...
      */
     ShowWindow(hwnd, SW_HIDE);
 
+    if(wndPtr->owner)
+    {
+	HWND hOwner;
+	/* Owner must be a top-level window */
+	hOwner = WIN_GetTopParent( wndPtr->owner->hwndSelf );
+	EnableWindow( hOwner, TRUE );
+    }
+
     WIN_ReleaseWndPtr(wndPtr);
+    
     return TRUE;
 }
 
