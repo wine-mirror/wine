@@ -92,6 +92,9 @@
 
 DEFAULT_DEBUG_CHANNEL(winsock);
 
+/* critical section to protect some non-rentrant net function */
+extern CRITICAL_SECTION csWSgetXXXbyYYY;
+
 #define DEBUG_SOCKADDR 0
 #define dump_sockaddr(a) \
         DPRINTF("sockaddr_in: family %d, address %s, port %d\n", \
@@ -166,7 +169,7 @@ int WSAIOCTL_GetInterfaceCount(void);
 int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
 
 UINT16 wsaErrno(void);
-UINT16 wsaHerrno(void);
+UINT16 wsaHerrno(int errnr);
                                                       
 static HANDLE 	_WSHeap = 0;
 
@@ -2297,20 +2300,46 @@ static char*	NULL_STRING = "NULL";
  */
 static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int dup_flag)
 {
+    WIN_hostent *retval = NULL;
     LPWSINFO      	pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
 	struct hostent*	host;
-	if( (host = gethostbyaddr(addr, len, type)) != NULL )
+#if HAVE_LINUX_GETHOSTBYNAME_R_6
+        char *extrabuf;
+        int ebufsize=1024;
+        struct hostent hostentry;
+        int locerr=ENOBUFS;
+        host = NULL;
+        extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
+        while(extrabuf) { 
+            int res = gethostbyaddr_r(addr, len, type, 
+                    &hostentry, extrabuf, ebufsize, &host, &locerr);
+            if( res != ERANGE) break;
+            ebufsize *=2;
+            extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
+        }
+        if (!host) SetLastError((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
+#else
+        EnterCriticalSection( &csWSgetXXXbyYYY );
+        host = gethostbyaddr(addr, len, type);
+        if (!host) SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
+#endif
+	if( host != NULL )
+        {
 	    if( WS_dup_he(pwsi, host, dup_flag) )
-		return (WIN_hostent*)(pwsi->he);
+		retval = (WIN_hostent*)(pwsi->he);
 	    else 
 		SetLastError(WSAENOBUFS);
-	else 
-	    SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+        }
+#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
+        HeapFree(GetProcessHeap(),0,extrabuf);
+#else
+        LeaveCriticalSection( &csWSgetXXXbyYYY );
+#endif
     }
-    return NULL;
+    return retval;
 }
 
 SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
@@ -2335,18 +2364,44 @@ WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
  */
 static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 {
+    WIN_hostent *retval = NULL;
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
 	struct hostent*     host;
-	if( (host = gethostbyname(name)) != NULL )
+#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
+        char *extrabuf;
+        int ebufsize=1024;
+        struct hostent hostentry;
+        int locerr = ENOBUFS;
+        host = NULL;
+        extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
+        while(extrabuf) { 
+            int res = gethostbyname_r(name, &hostentry, extrabuf, ebufsize, &host, &locerr);
+            if( res != ERANGE) break;
+            ebufsize *=2;
+            extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
+        }
+        if (!host) SetLastError((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
+#else
+        EnterCriticalSection( &csWSgetXXXbyYYY );
+        host = gethostbyname(name);
+        if (!host) SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
+#endif
+	if( host  != NULL )
+        {
 	     if( WS_dup_he(pwsi, host, dup_flag) )
-		 return (WIN_hostent*)(pwsi->he);
+		 retval = (WIN_hostent*)(pwsi->he);
 	     else SetLastError(WSAENOBUFS);
-	else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+        }
+#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
+        HeapFree(GetProcessHeap(),0,extrabuf);
+#else
+        LeaveCriticalSection( &csWSgetXXXbyYYY );
+#endif
     }
-    return NULL;
+    return retval;
 }
 
 SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
@@ -2369,22 +2424,27 @@ WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
  */
 static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 {
+    WIN_protoent* retval = NULL;
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
 	struct protoent*     proto;
+        EnterCriticalSection( &csWSgetXXXbyYYY );
 	if( (proto = getprotobyname(name)) != NULL )
+        {
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
-		return (WIN_protoent*)(pwsi->pe);
+		retval = (WIN_protoent*)(pwsi->pe);
 	    else SetLastError(WSAENOBUFS);
+        }
         else {
             MESSAGE("protocol %s not found; You might want to add "
                     "this to /etc/protocols\n", debugstr_a(name) );
             SetLastError(WSANO_DATA);
         }
+        LeaveCriticalSection( &csWSgetXXXbyYYY );
     } else SetLastError(WSANOTINITIALISED);
-    return NULL;
+    return retval;
 }
 
 SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
@@ -2407,22 +2467,27 @@ WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
  */
 static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 {
+    WIN_protoent* retval = NULL;
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
 	struct protoent*     proto;
+        EnterCriticalSection( &csWSgetXXXbyYYY );
 	if( (proto = getprotobynumber(number)) != NULL )
+        {
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
-		return (WIN_protoent*)(pwsi->pe);
+		retval = (WIN_protoent*)(pwsi->pe);
 	    else SetLastError(WSAENOBUFS);
+        }
         else {
             MESSAGE("protocol number %d not found; You might want to add "
                     "this to /etc/protocols\n", number );
             SetLastError(WSANO_DATA);
         }
+        LeaveCriticalSection( &csWSgetXXXbyYYY );
     } else SetLastError(WSANOTINITIALISED);
-    return NULL;
+    return retval;
 }
 
 SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
@@ -2445,6 +2510,7 @@ WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
  */
 static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int dup_flag)
 {
+    WIN_servent* retval = NULL;
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
@@ -2453,22 +2519,26 @@ static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 	int i = wsi_strtolo( pwsi, name, proto );
 
 	if( i ) {
+            EnterCriticalSection( &csWSgetXXXbyYYY );
 	    serv = getservbyname(pwsi->buffer,
 				 proto ? (pwsi->buffer + i) : NULL);
 	    if( serv != NULL )
+            {
 		if( WS_dup_se(pwsi, serv, dup_flag) )
-		    return (WIN_servent*)(pwsi->se);
+		    retval = (WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
+            }
 	    else {
                 MESSAGE("service %s protocol %s not found; You might want to add "
                         "this to /etc/services\n", debugstr_a(pwsi->buffer),
                         proto ? debugstr_a(pwsi->buffer+i):"*"); 
                 SetLastError(WSANO_DATA);
             }
+            LeaveCriticalSection( &csWSgetXXXbyYYY );
 	}
 	else SetLastError(WSAENOBUFS);
     } else SetLastError(WSANOTINITIALISED);
-    return NULL;
+    return retval;
 }
 
 SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
@@ -2493,15 +2563,17 @@ WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *proto)
  */
 static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
 {
+    WIN_servent* retval = NULL;
     LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
 	struct servent*     serv;
 	if (!proto || wsi_strtolo( pwsi, proto, NULL )) {
+            EnterCriticalSection( &csWSgetXXXbyYYY );
 	    if( (serv = getservbyport(port, (proto) ? pwsi->buffer : NULL)) != NULL ) {
 		if( WS_dup_se(pwsi, serv, dup_flag) )
-		    return (WIN_servent*)(pwsi->se);
+		    retval = (WIN_servent*)(pwsi->se);
 		else SetLastError(WSAENOBUFS);
 	    }
 	    else {
@@ -2510,10 +2582,11 @@ static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag
                         proto ? debugstr_a(pwsi->buffer) : "*"); 
                 SetLastError(WSANO_DATA);
             }
+            LeaveCriticalSection( &csWSgetXXXbyYYY );
 	}
 	else SetLastError(WSAENOBUFS);
     } else SetLastError(WSANOTINITIALISED);
-    return NULL;
+    return retval;
 }
 
 SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
@@ -3231,9 +3304,8 @@ UINT16 wsaErrno(void)
     }
 }
 
-UINT16 wsaHerrno(void)
+UINT16 wsaHerrno(int loc_errno)
 {
-    int		loc_errno = h_errno;
 
     WARN("h_errno %d.\n", loc_errno);
 
@@ -3243,6 +3315,7 @@ UINT16 wsaHerrno(void)
 	case TRY_AGAIN:		return WSATRY_AGAIN;
 	case NO_RECOVERY:	return WSANO_RECOVERY;
 	case NO_DATA:		return WSANO_DATA; 
+	case ENOBUFS:		return WSAENOBUFS;
 
 	case 0:			return 0;
         default:

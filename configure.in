@@ -786,6 +786,33 @@ AC_C_INLINE()
 AC_TYPE_SIZE_T()
 AC_CHECK_SIZEOF(long long,0)
 
+   
+AC_CACHE_CHECK("whether we can use re-entrant gethostbyname_r Linux style",
+   	wine_cv_linux_gethostbyname_r_6,
+	AC_TRY_COMPILE([
+#include <netdb.h>
+	], [
+    char *name=NULL;
+    struct hostent he;
+    struct hostent *result;
+    char *buf=NULL;
+    int bufsize=0;
+    int res,errnr;
+    char *addr=NULL;
+    int addrlen=0;
+    int addrtype=0;
+    res=gethostbyname_r(name,&he,buf,bufsize,&result,&errnr);
+    res=gethostbyaddr_r(addr, addrlen, addrtype,&he,buf,bufsize,&result,&errnr);
+    ],
+	wine_cv_linux_gethostbyname_r_6=yes,
+	wine_cv_linux_gethostbyname_r_6=no
+	)
+   )
+   if test "$wine_cv_linux_gethostbyname_r_6" = "yes"
+   then
+      AC_DEFINE(HAVE_LINUX_GETHOSTBYNAME_R_6)
+   fi
+
 if test "$ac_cv_header_linux_joystick_h" = "yes"
 then
    AC_CACHE_CHECK("whether linux/joystick.h uses the Linux 2.2+ API",

@@ -90,10 +90,14 @@
 
 DEFAULT_DEBUG_CHANNEL(winsock);
 
+
+/* critical section to protect some non-rentrant net function */
+CRITICAL_SECTION csWSgetXXXbyYYY = CRITICAL_SECTION_INIT;
+
 /* protoptypes of some functions in socket.c
  */
 UINT16 wsaErrno(void);
-UINT16 wsaHerrno(void);
+UINT16 wsaHerrno(int errnr);
 
 #define AQ_WIN16	0x00
 #define AQ_WIN32	0x04
@@ -362,24 +366,49 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 	case AQ_GETHOST: {
 			struct hostent *he;
 			char *copy_hostent = targetptr;
-
+#if HAVE_LINUX_GETHOSTBYNAME_R_6
+                        char *extrabuf;
+                        int ebufsize=1024;
+                        struct hostent hostentry;
+                        int locerr = ENOBUFS;
+                        he = NULL;
+                        extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
+                        while(extrabuf) { 
+                            int res = (aq->flags & AQ_NAME) ?
+                                gethostbyname_r(aq->host_name,
+                                                &hostentry, extrabuf, ebufsize, &he, &locerr):
+                                gethostbyaddr_r(aq->host_addr,aq->host_len,aq->host_type,
+                                                &hostentry, extrabuf, ebufsize, &he, &locerr);
+                            if( res != ERANGE) break;
+                            ebufsize *=2;
+                            extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
+                        }
+                        if (!he) fail = ((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
+#else
+                        EnterCriticalSection( &csWSgetXXXbyYYY );
 			he = (aq->flags & AQ_NAME) ?
 				gethostbyname(aq->host_name):
 				gethostbyaddr(aq->host_addr,aq->host_len,aq->host_type);
+                        if (!he) fail = ((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
+#endif
 			if (he) {
 				size = WS_copy_he(copy_hostent,(char*)aq->sbuf,aq->sbuflen,he,aq->flags);
 				if (size < 0) {
 					fail = WSAENOBUFS;
 					size = -size;
 				}
-			} else {
-				fail = ((h_errno < 0) ? wsaErrno() : wsaHerrno());
 			}
+#if HAVE_LINUX_GETHOSTBYNAME_R_6
+                        HeapFree(GetProcessHeap(),0,extrabuf);
+#else
+                        LeaveCriticalSection( &csWSgetXXXbyYYY );
+#endif
 		}
 		break;
 	case AQ_GETPROTO: {
 			struct protoent *pe;
 			char *copy_protoent = targetptr;
+                        EnterCriticalSection( &csWSgetXXXbyYYY );
 			pe = (aq->flags & AQ_NAME)?
 				getprotobyname(aq->proto_name) : 
 				getprotobynumber(aq->proto_number);
@@ -390,19 +419,21 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 					size = -size;
 				}
 			} else {
-                if (aq->flags & AQ_NAME)
-                    MESSAGE("protocol %s not found; You might want to add "
-                            "this to /etc/protocols\n", debugstr_a(aq->proto_name) );
-                else
-                    MESSAGE("protocol number %d not found; You might want to add "
-                            "this to /etc/protocols\n", aq->proto_number );
-                fail = WSANO_DATA;
+                            if (aq->flags & AQ_NAME)
+                                MESSAGE("protocol %s not found; You might want to add "
+                                        "this to /etc/protocols\n", debugstr_a(aq->proto_name) );
+                            else
+                                MESSAGE("protocol number %d not found; You might want to add "
+                                        "this to /etc/protocols\n", aq->proto_number );
+                            fail = WSANO_DATA;
 			}
+                        LeaveCriticalSection( &csWSgetXXXbyYYY );
 		}
 		break;
 	case AQ_GETSERV: {
 			struct servent	*se;
 			char *copy_servent = targetptr;
+                        EnterCriticalSection( &csWSgetXXXbyYYY );
 			se = (aq->flags & AQ_NAME)?
 				getservbyname(aq->serv_name,aq->serv_proto) : 
 				getservbyport(aq->serv_port,aq->serv_proto);
@@ -413,16 +444,17 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 					size = -size;
 				}
 			} else {
-                if (aq->flags & AQ_NAME)
-                    MESSAGE("service %s protocol %s not found; You might want to add "
-                            "this to /etc/services\n", debugstr_a(aq->serv_name) ,
-                            aq->serv_proto ? debugstr_a(aq->serv_proto ):"*"); 
-                else
-                    MESSAGE("service on port %d protocol %s not found; You might want to add "
-                            "this to /etc/services\n", aq->serv_port,
-                            aq->serv_proto ? debugstr_a(aq->serv_proto ):"*"); 
-                fail = WSANO_DATA;
+                            if (aq->flags & AQ_NAME)
+                                MESSAGE("service %s protocol %s not found; You might want to add "
+                                        "this to /etc/services\n", debugstr_a(aq->serv_name) ,
+                                        aq->serv_proto ? debugstr_a(aq->serv_proto ):"*"); 
+                            else
+                                MESSAGE("service on port %d protocol %s not found; You might want to add "
+                                        "this to /etc/services\n", aq->serv_port,
+                                        aq->serv_proto ? debugstr_a(aq->serv_proto ):"*"); 
+                            fail = WSANO_DATA;
 			}
+                        LeaveCriticalSection( &csWSgetXXXbyYYY );
 		}
 		break;
 	}
