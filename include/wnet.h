@@ -5,6 +5,10 @@
 #ifndef __WINE_WNET_H
 #define __WINE_WNET_H
 
+#define WNDN_MKDIR  1
+#define WNDN_RMDIR  2
+#define WNDN_MVDIR  3
+
 #define WN_SUCCESS                              0x0000
 #define WN_NOT_SUPPORTED                        0x0001
 #define WN_NET_ERROR                            0x0002

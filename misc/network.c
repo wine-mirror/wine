@@ -287,6 +287,7 @@ int WINAPI WNetGetConnection16(LPCSTR lpLocalName,
 {
     const char *path;
 
+    TRACE(wnet,"local %s\n",lpLocalName);
     if (lpLocalName[1] == ':')
     {
         int drive = toupper(lpLocalName[0]) - 'A';
@@ -304,6 +305,11 @@ int WINAPI WNetGetConnection16(LPCSTR lpLocalName,
             strcpy( lpRemoteName, path );
             *cbRemoteName = strlen(lpRemoteName) + 1;
             return WN_SUCCESS;
+	case TYPE_FLOPPY:
+	case TYPE_HD:
+	case TYPE_CDROM:
+	  TRACE(wnet,"file is local\n");
+	  return WN_NOT_CONNECTED;
 	default:
 	    return WN_BAD_LOCALNAME;
         }
@@ -390,7 +396,8 @@ int WINAPI WNetGetCaps16(WORD capability)
 		case WNNC_ADMIN:
 		/* returns mask of the supported administration functions */
 		/* not sure if long file names is a good idea */
-		return	WNNC_ADM_GetDirectoryType|WNNC_ADM_DirectoryNotify
+		  return	WNNC_ADM_GetDirectoryType
+		        /*|WNNC_ADM_DirectoryNotify*//*not yet supported*/
 			|WNNC_ADM_LongNames/*|WNNC_ADM_SetDefaultDrive*/;
 
 		case WNNC_ERROR:
@@ -582,10 +589,13 @@ UINT WINAPI WNetGetDirectoryTypeA(LPSTR lpName,void *lpType)
 /**************************************************************************
  *              WNetDirectoryNotify       [USER.531]
  */
-int WINAPI WNetDirectoryNotify16(HWND16 hwndOwner,void *lpDir,WORD wOper)
+int WINAPI WNetDirectoryNotify16(HWND16 hwndOwner,LPSTR lpDir,WORD wOper)
 {
-	FIXME(wnet, "(%04x,%p,%x): stub\n",hwndOwner,lpDir,wOper);
-	return WN_NO_NETWORK;
+	FIXME(wnet, "(%04x,%s,%s): stub\n",hwndOwner,
+	      lpDir,(wOper==WNDN_MKDIR)?
+	      "WNDN_MKDIR":(wOper==WNDN_MVDIR)?"WNDN_MVDIR":
+	      (wOper==WNDN_RMDIR)?"WNDN_RMDIR":"unknown");
+	return WN_NOT_SUPPORTED;
 }
 
 /**************************************************************************
