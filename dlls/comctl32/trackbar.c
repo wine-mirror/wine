@@ -68,8 +68,6 @@ typedef struct
     LPLONG tics;
 } TRACKBAR_INFO;
 
-DEFINE_COMMON_NOTIFICATIONS(TRACKBAR_INFO, hwndSelf);
-
 #define TB_REFRESH_TIMER	1
 #define TB_REFRESH_DELAY	500
 
@@ -122,7 +120,7 @@ static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
                                         (nrTics+1)*sizeof (DWORD));
 	if (!infoPtr->tics) {
 	    infoPtr->uNumTics = 0;
-	    notify_outofmemory(infoPtr);
+	    TRACKBAR_SendNotify(infoPtr, NM_OUTOFMEMORY);
 	    return;
 	}
     	infoPtr->uNumTics = nrTics;
@@ -1152,7 +1150,7 @@ TRACKBAR_SetTic (TRACKBAR_INFO *infoPtr, LONG lPos)
                                     (infoPtr->uNumTics)*sizeof (DWORD));
     if (!infoPtr->tics) {
 	infoPtr->uNumTics = 0;
-	notify_outofmemory(infoPtr);
+	TRACKBAR_SendNotify(infoPtr, NM_OUTOFMEMORY);
 	return FALSE;
     }
     infoPtr->tics[infoPtr->uNumTics-1] = lPos;
@@ -1269,7 +1267,7 @@ TRACKBAR_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
 
     	if (infoPtr->hwndToolTip) {
             TTTOOLINFOW ti;
-	    notify_tooltipscreated(infoPtr);
+	    TRACKBAR_SendNotify(infoPtr, NM_TOOLTIPSCREATED);
 
             ZeroMemory (&ti, sizeof(ti));
             ti.cbSize   = sizeof(ti);
@@ -1340,7 +1338,7 @@ TRACKBAR_LButtonUp (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
         TRACKBAR_SendNotify (infoPtr, TB_ENDTRACK);
         infoPtr->flags &= ~TB_DRAG_MODE;
         ReleaseCapture ();
-	notify_releasedcapture(infoPtr);
+	TRACKBAR_SendNotify(infoPtr, NM_RELEASEDCAPTURE);
         TRACKBAR_ActivateToolTip(infoPtr, FALSE);
 	TRACKBAR_InvalidateThumb(infoPtr, infoPtr->lPos);
     }
@@ -1348,7 +1346,7 @@ TRACKBAR_LButtonUp (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
 	KillTimer (infoPtr->hwndSelf, TB_REFRESH_TIMER);
         infoPtr->flags &= ~TB_AUTO_PAGE;
         ReleaseCapture ();
-	notify_releasedcapture(infoPtr);
+	TRACKBAR_SendNotify(infoPtr, NM_RELEASEDCAPTURE);
     }
 
     return 0;
