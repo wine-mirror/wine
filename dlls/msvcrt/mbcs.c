@@ -588,16 +588,21 @@ unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
  */
 int MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
 {
-  if(n <= 0 || !str)
-    return 0;
-  if(!MultiByteToWideChar(CP_ACP, 0, str, n, dst, 1))
-    return 0;
-  /* return the number of bytes from src that have been used */
-  if(!*str)
-    return 0;
-  if(n >= 2 && MSVCRT_isleadbyte(*str) && str[1])
-    return 2;
-  return 1;
+    /* temp var needed because MultiByteToWideChar wants non NULL destination */
+    MSVCRT_wchar_t tmpdst = '\0';
+
+    if(n <= 0 || !str)
+        return 0;
+    if(!MultiByteToWideChar(CP_ACP, 0, str, n, &tmpdst, 1))
+        return -1;
+    if(dst)
+        *dst = tmpdst;
+    /* return the number of bytes from src that have been used */
+    if(!*str)
+        return 0;
+    if(n >= 2 && MSVCRT_isleadbyte(*str) && str[1])
+        return 2;
+    return 1;
 }
 
 /*********************************************************************
