@@ -41,16 +41,10 @@ BEGIN
     POPUP "&Registry"
     BEGIN
         MENUITEM "&Import Registry File...",    ID_REGISTRY_IMPORTREGISTRYFILE
-
         MENUITEM "&Export Registry File...",    ID_REGISTRY_EXPORTREGISTRYFILE
-
         MENUITEM SEPARATOR
-        MENUITEM "&Connect Network Registry...",
-                                                ID_REGISTRY_CONNECTNETWORKREGISTRY
-        , GRAYED
-        MENUITEM "&Disconnect Network Registry...",
-                                                ID_REGISTRY_DISCONNECTNETWORKREGISTRY
-        , GRAYED
+        MENUITEM "&Connect Network Registry...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Disconnect Network Registry...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Print\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
