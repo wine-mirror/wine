@@ -1033,13 +1033,20 @@ DWORD WINAPI GetModuleFileNameA(
 	LPSTR lpFileName,	/* [out] filenamebuffer */
         DWORD size )		/* [in] size of filenamebuffer */
 {
-    WINE_MODREF *wm;
-
     RtlEnterCriticalSection( &loader_section );
 
     lpFileName[0] = 0;
-    if ((wm = MODULE32_LookupHMODULE( hModule )))
-        lstrcpynA( lpFileName, wm->filename, size );
+    if (!hModule && !(NtCurrentTeb()->tibflags & TEBF_WIN32))
+    {
+        /* 16-bit task - get current NE module name */
+        NE_MODULE *pModule = NE_GetPtr( GetCurrentTask() );
+        if (pModule) GetLongPathNameA(NE_MODULE_NAME(pModule), lpFileName, size);
+    }
+    else
+    {
+        WINE_MODREF *wm = MODULE32_LookupHMODULE( hModule );
+        if (wm) lstrcpynA( lpFileName, wm->filename, size );
+    }
 
     RtlLeaveCriticalSection( &loader_section );
     TRACE("%s\n", lpFileName );
@@ -1694,4 +1701,3 @@ SEGPTR WINAPI HasGPHandler16( SEGPTR address )
 
     return 0;
 }
-
