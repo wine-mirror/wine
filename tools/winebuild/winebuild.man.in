@@ -308,7 +308,10 @@ are valid for Win32 functions.
 .PP
 .I handler
 is the name of the actual C function that will implement that entry
-point in 32-bit mode.
+point in 32-bit mode. The handler can also be specified as
+.IB dllname . function
+to define a forwarded function (one whose implementation is in another
+dll).
 .PP
 This first example defines an entry point for the 16-bit
 CreateWindow() call (the ordinal 100 is just an example):

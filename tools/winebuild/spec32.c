@@ -173,18 +173,22 @@ static int output_exports( FILE *outfile, int nr_exports )
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
-            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n",
-                     (odp->flags & FLAG_REGISTER) ? make_internal_name(odp,"regs") : odp->link_name );
+            if (!(odp->flags & FLAG_FORWARD))
+            {
+                fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n",
+                         (odp->flags & FLAG_REGISTER) ? make_internal_name(odp,"regs") : odp->link_name );
+                break;
+            }
+            /* else fall through */
+        case TYPE_FORWARD:
+            fprintf( outfile, "    \"\\t.long __wine_spec_forwards+%d\\n\"\n", fwd_size );
+            fwd_size += strlen(odp->link_name) + 1;
             break;
         case TYPE_STUB:
             fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "stub" ) );
             break;
         case TYPE_VARIABLE:
             fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", make_internal_name( odp, "var" ) );
-            break;
-        case TYPE_FORWARD:
-            fprintf( outfile, "    \"\\t.long __wine_spec_forwards+%d\\n\"\n", fwd_size );
-            fwd_size += strlen(odp->link_name) + 1;
             break;
         default:
             assert(0);
@@ -237,7 +241,7 @@ static int output_exports( FILE *outfile, int nr_exports )
         for (i = Base; i <= Limit; i++)
         {
             ORDDEF *odp = Ordinals[i];
-            if (odp && odp->type == TYPE_FORWARD)
+            if (odp && (odp->flags & FLAG_FORWARD))
                 fprintf( outfile, "    \"\\t" STRING " \\\"%s\\\"\\n\"\n", odp->link_name );
         }
         fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
@@ -258,8 +262,8 @@ static int output_exports( FILE *outfile, int nr_exports )
             if (!odp) goto ignore;
             /* skip non-functions */
             if ((odp->type != TYPE_STDCALL) && (odp->type != TYPE_CDECL)) goto ignore;
-            /* skip norelay entry points */
-            if (odp->flags & FLAG_NORELAY) goto ignore;
+            /* skip norelay and forward entry points */
+            if (odp->flags & (FLAG_NORELAY|FLAG_FORWARD)) goto ignore;
 
             for (j = 0; odp->u.func.arg_types[j]; j++)
             {
@@ -852,15 +856,18 @@ void BuildDef32File(FILE *outfile)
         case TYPE_VARARGS:
         case TYPE_CDECL:
             /* try to reduce output */
-            if(strcmp(name, odp->link_name))
+            if(strcmp(name, odp->link_name) || (odp->flags & FLAG_FORWARD))
                 fprintf(outfile, "=%s", odp->link_name);
             break;
         case TYPE_STDCALL:
         {
             int at_param = strlen(odp->u.func.arg_types) * sizeof(int);
             if (!kill_at) fprintf(outfile, "@%d", at_param);
-            /* try to reduce output */
-            if(strcmp(name, odp->link_name))
+            if  (odp->flags & FLAG_FORWARD)
+            {
+                fprintf(outfile, "=%s", odp->link_name);
+            }
+            else if (strcmp(name, odp->link_name)) /* try to reduce output */
             {
                 fprintf(outfile, "=%s", odp->link_name);
                 if (!kill_at) fprintf(outfile, "@%d", at_param);

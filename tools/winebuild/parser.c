@@ -244,6 +244,11 @@ static void ParseExportFunction( ORDDEF *odp )
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
     odp->link_name = xstrdup( GetToken(0) );
+    if (strchr( odp->link_name, '.' ))
+    {
+        if (SpecType == SPEC_WIN16) fatal_error( "Forwarded functions not supported for Win16\n" );
+        odp->flags |= FLAG_FORWARD;
+    }
 }
 
 
@@ -299,6 +304,7 @@ static void ParseForward( ORDDEF *odp )
 {
     if (SpecType == SPEC_WIN16) fatal_error( "'forward' not supported for Win16\n" );
     odp->link_name = xstrdup( GetToken(0) );
+    odp->flags |= FLAG_FORWARD;
 }
 
 

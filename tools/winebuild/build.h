@@ -109,6 +109,7 @@ typedef struct
 #define FLAG_I386      0x08  /* function is i386 only */
 #define FLAG_REGISTER  0x10  /* use register calling convention */
 #define FLAG_INTERRUPT 0x20  /* function is an interrupt handler */
+#define FLAG_FORWARD   0x100 /* function is a forwarded name */
 
   /* Offset of a structure field relative to the start of the struct */
 #define STRUCTOFFSET(type,field) ((int)&((type *)0)->field)

@@ -559,7 +559,7 @@ static void warn_unused( const struct import* imp )
     for (i = Base; i <= Limit; i++)
     {
         ORDDEF *odp = Ordinals[i];
-        if (!odp || odp->type != TYPE_FORWARD) continue;
+        if (!odp || !(odp->flags & FLAG_FORWARD)) continue;
         if (!strncasecmp( odp->link_name, imp->dll, len ) &&
             odp->link_name[len] == '.')
             return;  /* found an import, do not warn */

@@ -221,7 +221,7 @@
 @ stub DefineDosDeviceW
 @ stub DelayLoadFailureHook
 @ stdcall DeleteAtom(long) DeleteAtom
-@ forward DeleteCriticalSection ntdll.RtlDeleteCriticalSection
+@ stdcall DeleteCriticalSection(ptr) ntdll.RtlDeleteCriticalSection
 @ stdcall DeleteFileA(str) DeleteFileA
 @ stdcall DeleteFileW(wstr) DeleteFileW
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr) DeviceIoControl
@@ -231,7 +231,7 @@
 @ stdcall DuplicateHandle(long long long ptr long long long) DuplicateHandle
 @ stub EndUpdateResourceA
 @ stub EndUpdateResourceW
-@ forward EnterCriticalSection ntdll.RtlEnterCriticalSection
+@ stdcall EnterCriticalSection(ptr) ntdll.RtlEnterCriticalSection
 @ stdcall EnumCalendarInfoA(ptr long long long) EnumCalendarInfoA
 @ stub EnumCalendarInfoW
 @ stub EnumCalendarInfoExA
@@ -542,15 +542,15 @@
 @ stub Heap32ListFirst
 @ stub Heap32ListNext
 @ stub Heap32Next
-@ forward HeapAlloc ntdll.RtlAllocateHeap
+@ stdcall HeapAlloc(long long long) ntdll.RtlAllocateHeap
 @ stdcall HeapCompact(long long) HeapCompact
 @ stdcall HeapCreate(long long long) HeapCreate
 @ stdcall HeapDestroy(long) HeapDestroy
-@ forward HeapFree ntdll.RtlFreeHeap
+@ stdcall HeapFree(long long long) ntdll.RtlFreeHeap
 @ stdcall HeapLock(long) HeapLock
-@ forward HeapReAlloc ntdll.RtlReAllocateHeap
+@ stdcall HeapReAlloc(long long ptr long) ntdll.RtlReAllocateHeap
 @ stub HeapSetFlags
-@ forward HeapSize ntdll.RtlSizeHeap
+@ stdcall HeapSize(long long ptr) ntdll.RtlSizeHeap
 @ stdcall HeapUnlock(long) HeapUnlock
 @ stdcall HeapValidate(long long ptr) HeapValidate
 @ stdcall HeapWalk(long ptr) HeapWalk
@@ -579,7 +579,7 @@
 @ stdcall -register -i386 K32Thk1632Prolog() K32Thk1632Prolog
 @ stdcall LCMapStringA(long long str long ptr long) LCMapStringA
 @ stdcall LCMapStringW(long long wstr long ptr long) LCMapStringW
-@ forward LeaveCriticalSection ntdll.RtlLeaveCriticalSection
+@ stdcall LeaveCriticalSection(ptr) ntdll.RtlLeaveCriticalSection
 @ stdcall LoadLibraryA(str) LoadLibraryA
 @ stdcall LoadLibraryExA( str long long) LoadLibraryExA
 @ stdcall LoadLibraryExW(wstr long long) LoadLibraryExW
@@ -693,10 +693,10 @@
 @ stdcall ResetEvent(long) ResetEvent
 @ stub ResetWriteWatch
 @ stdcall ResumeThread(long) ResumeThread
-@ forward RtlFillMemory NTDLL.RtlFillMemory
-@ forward RtlMoveMemory NTDLL.RtlMoveMemory
-@ forward RtlUnwind NTDLL.RtlUnwind
-@ forward RtlZeroMemory NTDLL.RtlZeroMemory
+@ stdcall RtlFillMemory(ptr long long) ntdll.RtlFillMemory
+@ stdcall RtlMoveMemory(ptr ptr long) ntdll.RtlMoveMemory
+@ stdcall RtlUnwind(ptr ptr ptr long) ntdll.RtlUnwind
+@ stdcall RtlZeroMemory(ptr long) ntdll.RtlZeroMemory
 @ stdcall -register -i386 SMapLS() SMapLS
 @ stdcall -register -i386 SMapLS_IP_EBP_12() SMapLS_IP_EBP_12
 @ stdcall -register -i386 SMapLS_IP_EBP_16() SMapLS_IP_EBP_16
@@ -1020,7 +1020,7 @@
 @ stub SignalObjectAndWait
 @ stub SwitchToFiber
 @ stdcall SwitchToThread() SwitchToThread
-@ forward TryEnterCriticalSection ntdll.RtlTryEnterCriticalSection
+@ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
 @ stdcall VirtualAllocEx(long ptr long long long) VirtualAllocEx
 @ stdcall VirtualFreeEx(long ptr long long) VirtualFreeEx
 @ stub WriteFileGather
