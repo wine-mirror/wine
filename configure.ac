@@ -49,6 +49,7 @@ case $host in
       test -n "$CC" || CC="gcc -m32"
       test -n "$LD" || LD="ld -m elf_i386"
       test -n "$AS" || AS="as --32"
+      host_cpu="i386"
     fi
     ;;
 esac
