@@ -1010,6 +1010,7 @@ BOOL32 WINAPI EndDialog32( HWND32 hwnd, INT32 retval )
 static BOOL32 DIALOG_IsAccelerator( HWND32 hwnd, HWND32 hwndDlg, WPARAM32 vKey )
 {
     HWND32 hwndControl = hwnd;
+    HWND32 hwndNext;
     WND *wndPtr;
     BOOL32 RetVal = FALSE;
     INT32 dlgCode;
@@ -1075,11 +1076,24 @@ static BOOL32 DIALOG_IsAccelerator( HWND32 hwnd, HWND32 hwndDlg, WPARAM32 vKey )
                     }
                 }
             }
-            hwndControl = GetWindow32( hwndControl, GW_HWNDNEXT );
-            if (!hwndControl)
-            {
-                hwndControl = GetWindow32( hwndDlg, GW_CHILD );
-            }
+	    hwndNext = GetWindow32( hwndControl, GW_CHILD );
+	    if (!hwndNext)
+	    {
+	        hwndNext = GetWindow32( hwndControl, GW_HWNDNEXT );
+	    }
+	    while (!hwndNext)
+	    {
+		hwndControl = GetParent32( hwndControl );
+		if (hwndControl == hwndDlg)
+		{
+		    hwndNext = GetWindow32( hwndDlg, GW_CHILD );
+		}
+		else
+		{
+		    hwndNext = GetWindow32( hwndControl, GW_HWNDNEXT );
+		}
+	    }
+            hwndControl = hwndNext;
         }
         while (hwndControl != hwnd);
     }
