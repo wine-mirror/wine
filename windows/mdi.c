@@ -320,9 +320,10 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
             MDI_RefreshMenu(ci);
         }
         else
+        {
+            ci->hWindowMenu = hmenuWindow;
             ci->add_pos = GetMenuItemCount(hmenuWindow);
-
-        ci->hWindowMenu = hmenuWindow;
+        }
     }
 
     if (hmenuFrame)
@@ -341,8 +342,12 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     }
     else
     {
-	INT nItems = GetMenuItemCount(ci->hFrameMenu) - 1;
-	UINT iId = GetMenuItemID(ci->hFrameMenu, nItems);
+        INT nItems;
+        UINT iId;
+
+        ci->hFrameMenu = GetMenu(hwndFrame);
+        nItems = GetMenuItemCount(ci->hFrameMenu) - 1;
+        iId = GetMenuItemID(ci->hFrameMenu, nItems);
 
 	if( !(iId == SC_RESTORE || iId == SC_CLOSE) )
 	{
@@ -365,7 +370,6 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
  */
 static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
 {
-    HMENU hFrameMenu;
     UINT i, count, visible;
     WCHAR buf[MDI_MAXTITLELENGTH];
 
@@ -373,6 +377,12 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
 
     if (!ci->hWindowMenu)
         return 0;
+
+    if (!IsMenu(ci->hWindowMenu))
+    {
+        WARN("Window menu handle %p is no more valid\n", ci->hWindowMenu);
+        return 0;
+    }
 
     count = GetMenuItemCount(ci->hWindowMenu);
     for (i = ci->add_pos; i < count; i++)
@@ -393,7 +403,8 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
         if (IsWindowVisible(ci->child[i]))
         {
             if (!visible)
-                AppendMenuW(ci->hWindowMenu, MF_SEPARATOR, -1, NULL);
+                /* Visio expects that separator has id 0 */
+                AppendMenuW(ci->hWindowMenu, MF_SEPARATOR, 0, NULL);
 
             visible++;
 
@@ -403,6 +414,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
             buf[1] = '0' + visible;
             buf[2] = ' ';
             InternalGetWindowText(ci->child[i], buf + 3, sizeof(buf)/sizeof(WCHAR) - 3);
+            TRACE("Adding %u %s\n", id, debugstr_w(buf));
             AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
 
             if (ci->child[i] == ci->hwndActiveChild)
@@ -410,9 +422,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
         }
     }
 
-    hFrameMenu = ci->hFrameMenu;
-
-    return (LRESULT)hFrameMenu;
+    return (LRESULT)ci->hFrameMenu;
 }
 
 
@@ -482,6 +492,8 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
 {
     UINT i;
 
+    TRACE("# of managed children %u\n", ci->nActiveChildren);
+
     if( child == ci->hwndActiveChild )
     {
         MDI_SwitchActiveChild(parent, child, TRUE);
@@ -510,12 +522,11 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
                 memcpy(new_child + i, ci->child + i + 1, (ci->nActiveChildren - i - 1) * sizeof(HWND));
             HeapFree(GetProcessHeap(), 0, ci->child);
             ci->child = new_child;
+
+            ci->nActiveChildren--;
+            break;
         }
     }
-
-    ci->nActiveChildren--;
-
-    TRACE("child destroyed - %p\n",child);
 
     if (flagDestroy)
     {
@@ -523,6 +534,7 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
         DestroyWindow(child);
     }
 
+    TRACE("child destroyed - %p\n", child);
     return 0;
 }
 
