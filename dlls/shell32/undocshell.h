@@ -901,6 +901,9 @@ BOOL WINAPI SHGetNewLinkInfoW(
 	UINT uFlags);
 #define SHGetNewLinkInfo WINELIB_NAME_AW(SHGetNewLinkInfo)
 
+DWORD WINAPI CheckEscapesA(LPSTR string, DWORD len);
+DWORD WINAPI CheckEscapesW(LPWSTR string, DWORD len);
+
 /* policy functions */
 BOOL WINAPI SHInitRestricted(LPCVOID unused, LPCVOID inpRegKey);
 DWORD WINAPI SHRestricted (DWORD policy);

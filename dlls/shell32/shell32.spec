@@ -17,12 +17,12 @@
   19 stdcall ILCloneFirst (ptr)
   20 stdcall ILGlobalClone (ptr)
   21 stdcall ILIsEqual (ptr ptr)
-  23 stdcall ILIsParent (long long long)
-  24 stdcall ILFindChild (long long)
+  23 stdcall ILIsParent (ptr ptr long)
+  24 stdcall ILFindChild (ptr ptr)
   25 stdcall ILCombine(ptr ptr)
   26 stdcall ILLoadFromStream (ptr ptr)
   27 stdcall ILSaveToStream(ptr ptr)
-  28 stdcall SHILCreateFromPath (long long long) SHILCreateFromPathAW
+  28 stdcall SHILCreateFromPath(ptr ptr ptr) SHILCreateFromPathAW
   29 stdcall PathIsRoot(ptr) PathIsRootAW
   30 stdcall PathBuildRoot(ptr long) PathBuildRootAW
   31 stdcall PathFindExtension(ptr) PathFindExtensionAW
@@ -190,7 +190,7 @@
  209 stub Int64ToString
  210 stub LargeIntegerToString
  211 stub Printers_GetPidl
- 212 stub Printer_AddPrinterPropPages
+ 212 stub Printers_AddPrinterPropPages
  213 stub Printers_RegisterWindowW
  214 stub Printers_UnregisterWindow
  215 stub SHStartNetConnectionDialog@12
@@ -306,8 +306,8 @@
 # version 4.0 (win95)
 # _WIN32_IE >= 0x0200
 #
-@ stdcall CheckEscapesA(str long long ptr ptr long)
-@ stdcall CheckEscapesW(wstr long long ptr ptr long)
+@ stdcall CheckEscapesA(str long)
+@ stdcall CheckEscapesW(wstr long)
 @ stdcall CommandLineToArgvW(wstr ptr)
 @ stdcall Control_FillCache_RunDLL(long long long long)
 @ stub Control_FillCache_RunDLLA

@@ -29,6 +29,7 @@
 
 #include "shlobj.h"
 #include "shellapi.h"
+#include "shlwapi.h"
 #include "shell32_main.h"
 #include "undocshell.h"
 #include "wine/unicode.h"
@@ -217,40 +218,66 @@ BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn)
 
 
 /*************************************************************************
- * CheckEscapes [SHELL32]
+ * CheckEscapesA             [SHELL32.@]
+ *
+ * Checks a string for special characters which are not allowed in a path
+ * and encloses it in quotes if that is the case.
+ *
+ * PARAMS
+ *  string     [I/O] string to check and on return eventually quoted
+ *  len        [I]   length of string
+ *
+ * RETURNS
+ *  length of actual string
+ *
+ * NOTES
+ *  Not really sure if this function returns actually a value at all. 
  */
 DWORD WINAPI CheckEscapesA(
-    LPSTR    string,         /* [in]    string to check ??*/
-           DWORD    b,              /* [???]   is 0 */
-           DWORD    c,              /* [???]   is 0 */
-           LPDWORD  d,              /* [???]   is address */
-           LPDWORD  e,              /* [???]   is address */
-           DWORD    handle )        /* [in]    looks like handle but not */
+	LPSTR	string,         /* [I/O]   string to check ??*/
+	DWORD	len)            /* [I]      is 0 */
 {
-    FIXME("(%p<%s> %ld %ld %p<%ld> %p<%ld> 0x%08lx) stub\n",
-   string, debugstr_a(string),
-   b,
-   c,
-   d, (d) ? *d : 0xabbacddc,
-   e, (e) ? *e : 0xabbacddd,
-   handle);
-    return 0;
+	LPWSTR wString;
+	DWORD ret = 0;
+
+	TRACE("(%s %ld)\n", debugstr_a(string), len);
+	wString = (LPWSTR)LocalAlloc(LPTR, len * sizeof(WCHAR));
+	if (wString)
+	{
+	  MultiByteToWideChar(CP_ACP, 0, string, len, wString, len);
+	  ret = CheckEscapesW(wString, len);
+	  WideCharToMultiByte(CP_ACP, 0, wString, len, string, len, NULL, NULL);
+	  LocalFree(wString);
+	}
+	return ret;
 }
 
+static const WCHAR strEscapedChars[] = {' ','"',',',';','^',0};
+
+/*************************************************************************
+ * CheckEscapesW             [SHELL32.@]
+ *
+ * see CheckEscapesA
+ */
 DWORD WINAPI CheckEscapesW(
-    LPWSTR   string,         /* [in]    string to check ??*/
-           DWORD    b,              /* [???]   is 0 */
-           DWORD    c,              /* [???]   is 0 */
-           LPDWORD  d,              /* [???]   is address */
-           LPDWORD  e,              /* [???]   is address */
-           DWORD    handle )        /* [in]    looks like handle but not */
+	LPWSTR	string,
+	DWORD	len)
 {
-    FIXME("(%p<%s> %ld %ld %p<%ld> %p<%ld> 0x%08lx) stub\n",
-   string, debugstr_w(string),
-   b,
-   c,
-   d, (d) ? *d : 0xabbacddc,
-   e, (e) ? *e : 0xabbacddd,
-   handle);
-    return 0;
+	DWORD size = lstrlenW(string);
+	LPWSTR s, d;
+
+	TRACE("(%s %ld) stub\n", debugstr_w(string), len);
+
+	if (StrPBrkW(string, strEscapedChars) && size + 2 <= len)
+	{
+	  s = &string[size - 1];
+	  d = &string[size + 2];
+	  *d-- = 0;
+	  *d-- = '"';
+	  for (;d > string;)
+	    *d-- = *s--;
+	  *d = '"';
+	  return size + 2;
+	}
+	return size;
 }
