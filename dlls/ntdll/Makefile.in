@@ -30,7 +30,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/version.c \
 	$(TOPOBJDIR)/msdos/dosmem.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
-	$(TOPOBJDIR)/msdos/int21.c \
 	$(TOPOBJDIR)/relay32/builtin32.c \
 	$(TOPOBJDIR)/relay32/relay386.c \
 	$(TOPOBJDIR)/relay32/snoop.c \

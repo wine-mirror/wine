@@ -20,6 +20,7 @@ SPEC_SRCS16 = \
 	windebug.spec
 
 C_SRCS = \
+	$(TOPOBJDIR)/msdos/int21.c \
 	atom.c \
 	change.c \
 	comm.c \
