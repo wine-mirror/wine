@@ -64,8 +64,8 @@ char h_file_head_str[] =
 	" * Cmdline: %s\n"
 	" * Date   : %s"
 	" */\n\n"
-	"#ifndef __%08x_H\n"	/* This becomes the data of compile */
-	"#define __%08x_H\n\n"
+	"#ifndef __%08lx_H\n"	/* This becomes the date of compile */
+	"#define __%08lx_H\n\n"
 	"#ifndef __WRC_RSC_H\n"
 	"#include <wrc_rsc.h>\n"
 	"#endif\n\n"
@@ -579,7 +579,7 @@ void write_pe_segment(FILE *fp, resource_t *top)
 	/* Flags */
 	fprintf(fp, "\t.long\t0\n");
 	/* Time/Date stamp */
-	fprintf(fp, "\t.long\t0x%08lx\n", now);
+	fprintf(fp, "\t.long\t0x%08lx\n", (long)now);
 	/* Version */
 	fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
 	/* # of id entries, # of name entries */
@@ -628,7 +628,7 @@ void write_pe_segment(FILE *fp, resource_t *top)
 		fprintf(fp, ".L%s:\n", typelabel);
 
 		fprintf(fp, "\t.long\t0\n");		/* Flags */
-		fprintf(fp, "\t.long\t0x%08lx\n", now);	/* TimeDate */
+		fprintf(fp, "\t.long\t0x%08lx\n", (long)now);	/* TimeDate */
 		fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
 		fprintf(fp, "\t.short\t%d, %d\n", rcp->n_name_entries, rcp->n_id_entries);
 		for(j = 0; j < rcp->count32; j++)
@@ -681,7 +681,7 @@ void write_pe_segment(FILE *fp, resource_t *top)
 			fprintf(fp, ".L%s_%s:\n", typelabel, namelabel);
 
 			fprintf(fp, "\t.long\t0\n");		/* Flags */
-			fprintf(fp, "\t.long\t0x%08lx\n", now);	/* TimeDate */
+			fprintf(fp, "\t.long\t0x%08lx\n", (long)now);	/* TimeDate */
 			fprintf(fp, "\t.long\t0\n");	/* FIXME: must version be filled out? */
 			fprintf(fp, "\t.short\t0, %d\n", r32cp->count);
 
@@ -1116,7 +1116,7 @@ void write_h_file(char *outname, resource_t *top)
 
 	time(&now);
 	fprintf(fo, h_file_head_str, input_name ? input_name : "stdin",
-                cmdline, ctime(&now), now, now);
+                cmdline, ctime(&now), (long)now, (long)now);
 
 	/* First write the segment tables reference */
 	if(create_dir)

@@ -1,4 +1,22 @@
 ---------------------------------------------------------------------------
+Version 1.0.10 (18-Feb-1999)
+
+Alexandre Julliard <julliard@lrc.epfl.ch>
+- Fixed the TIME_LONG ugliness.
+
+David Luyer <luyer@ucs.uwa.edu.au>
+- Added string.h include in newstruc.c for compilation on 64bit platforms.
+- Added TIME_LONG to support time_t==int in printf formats on alpha
+  platforms.
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Added some more use of TIME_LONG in implicit format used in header-file
+  generation.
+- Removed the windows.h include and replaced it with wintypes.h in
+  wrctypes.h and added winuser.h in two other sources. This cuts compilation
+  time by a factor of 2 and final executable size with debug by a factor 2.5.
+
+---------------------------------------------------------------------------
 Version 1.0.9 (01-Feb-1999)
 
 Albert den Haan <albertd@corel.ca>:

@@ -99,6 +99,7 @@
 #include "dumpres.h"
 #include "preproc.h"
 #include "parser.h"
+#include "winuser.h"
 
 #ifdef __BORLANDC__
 #pragma warn -sig

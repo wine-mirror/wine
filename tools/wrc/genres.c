@@ -17,6 +17,7 @@
 #include "wrc.h"
 #include "genres.h"
 #include "utils.h"
+#include "winuser.h"
 
 #define SetResSize(res, tag)	*(DWORD *)&((res)->data[(tag)]) = \
 				(res)->size - *(DWORD *)&((res)->data[(tag)])

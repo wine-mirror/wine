@@ -9,8 +9,8 @@
 #define __WRC_WRCTYPES_H
 
 /* First is MS style, second wine style */
-#if !defined(_INC_WINDOWS) && !defined(__WINE_WINDOWS_H)
-#include "windows.h"
+#ifndef __WINE_WINTYPES_H
+#include "wintypes.h"
 #endif
 
 #ifndef MAKELANGID
@@ -152,7 +152,7 @@ enum res_e {
 
 	res_menex = 256 + 4,
 	res_dlgex,
-	res_usr,
+	res_usr
 };
 
 /* Raw bytes in a row... */
