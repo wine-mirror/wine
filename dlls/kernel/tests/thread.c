@@ -18,18 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
+#include "wine/test.h"
 #include <winbase.h>
 #include <winnt.h>
 #include <winerror.h>
 
-#include "wine/test.h"
 /* Specify the number of simultaneous threads to test */
 #define NUM_THREADS 4
 /* Specify whether to test the extended priorities for Win2k/XP */
 #define USE_EXTENDED_PRIORITIES 0
-/* Specify whether the TerminateThread tests should be skipped */
-#define SKIP_TERMINATE 0
 /* Specify whether to test the stack allocation in CreateThread */
 #define CHECK_STACK 0
 
@@ -118,8 +115,11 @@ VOID WINAPI threadFunc3()
    ExitThread(99);
 }
 
-VOID WINAPI threadFunc4()
+VOID WINAPI threadFunc4(HANDLE event)
 {
+   if(event != (HANDLE)NULL) {
+     SetEvent(event);
+   }
    Sleep(99000);
    ExitThread(0);
 }
@@ -264,16 +264,14 @@ VOID test_SuspendThread(DWORD version)
 /* check that access restrictions are obeyed */
   if(WIN2K_PLUS(version)) {
     access_thread=OpenThreadPtr(THREAD_ALL_ACCESS & (~THREAD_SUSPEND_RESUME),
-                             0,threadId);
-    todo_wine {
-      ok(access_thread!=(HANDLE)NULL,"OpenThread returned an invalid handle");
-      if(access_thread!=(HANDLE)NULL) {
-        ok(SuspendThread(access_thread)==-1,
-           "SuspendThread did not obey access restrictions");
-        ok(ResumeThread(access_thread)==-1,
-           "ResumeThread did not obey access restrictions");
-        ok(CloseHandle(access_thread)!=0,"CloseHandle Failed");
-      }
+                           0,threadId);
+    ok(access_thread!=(HANDLE)NULL,"OpenThread returned an invalid handle");
+    if(access_thread!=(HANDLE)NULL) {
+      ok(SuspendThread(access_thread)==-1,
+         "SuspendThread did not obey access restrictions");
+      ok(ResumeThread(access_thread)==-1,
+         "ResumeThread did not obey access restrictions");
+      ok(CloseHandle(access_thread)!=0,"CloseHandle Failed");
     }
   }
 /* Double check that the thread really is suspended */
@@ -290,31 +288,33 @@ VOID test_SuspendThread(DWORD version)
 }
 
 /* Check that TerminateThread works properly
-   NOTE: in my wine version (As of March 30, 2002), this code leaves a wine
-   process after the test completes.  You can use SKIP_TERMINATE to disable
-   the testing, and not leave the wine process around.
 */
 VOID test_TerminateThread(DWORD version)
 {
-  HANDLE thread,access_thread;
+  HANDLE thread,access_thread,event;
   DWORD threadId,exitCode;
   int i,error;
-  char msg[80];
   i=0; error=0;
-  thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc4,NULL,
-                        0,&threadId);
+  event=CreateEventA(NULL,TRUE,FALSE,NULL);
+  thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc4,
+                        (LPVOID)event, 0,&threadId);
   ok(thread!=(HANDLE)NULL,"Create Thread failed.");
+/* Terminate thread has a race condition in Wine.  If the thread is terminated
+   before it starts, it leaves a process behind.  Therefore, we wait for the
+   thread to signal that it has started.  There is no easy way to force the
+   race to occur, so we don't try to find it.
+*/
+  ok(WaitForSingleObject(event,5000)==WAIT_OBJECT_0,
+     "TerminateThread didn't work");
 /* check that access restrictions are obeyed */
   if(WIN2K_PLUS(version)) {
     access_thread=OpenThreadPtr(THREAD_ALL_ACCESS & (~THREAD_TERMINATE),
                              0,threadId);
-    todo_wine {
-      ok(access_thread!=(HANDLE)NULL,"OpenThread returned an invalid handle");
-      if(access_thread!=(HANDLE)NULL) {
-        ok(TerminateThread(access_thread,99)==0,
-           "TerminateThread did not obey access restrictions");
-        ok(CloseHandle(access_thread)!=0,"CloseHandle Failed");
-      }
+    ok(access_thread!=(HANDLE)NULL,"OpenThread returned an invalid handle");
+    if(access_thread!=(HANDLE)NULL) {
+      ok(TerminateThread(access_thread,99)==0,
+         "TerminateThread did not obey access restrictions");
+      ok(CloseHandle(access_thread)!=0,"CloseHandle Failed");
     }
   }
 /* terminate a job and make sure it terminates */
@@ -328,8 +328,7 @@ VOID test_TerminateThread(DWORD version)
         TerminateThread, even though MSDN says it should.  So currently
         there is no check being done for this.
 */
-    sprintf(msg,"TerminateThread returned: 0x%lx instead of 0x%x\n",exitCode,99);
-    trace(msg);
+    trace("TerminateThread returned: 0x%lx instead of 0x%x\n",exitCode,99);
   } else {
     ok(exitCode==99, "TerminateThread returned invalid exit code");
   }
@@ -372,7 +371,6 @@ VOID test_thread_priority(DWORD version)
    DWORD curthreadId,exitCode;
    int min_priority=-2,max_priority=2;
    int i,error;
-   char msg1[80],msg2[80];
 
    curthread=GetCurrentThread();
    curthreadId=GetCurrentThreadId();
@@ -390,31 +388,29 @@ VOID test_thread_priority(DWORD version)
      access_thread=OpenThreadPtr(THREAD_ALL_ACCESS &
                        (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
                        0,curthreadId);
-     todo_wine {
-       ok(access_thread!=(HANDLE)NULL,"OpenThread returned an invalid handle");
-       if(access_thread!=(HANDLE)NULL) {
-         ok(SetThreadPriority(access_thread,1)==0,
-            "SetThreadPriority did not obey access restrictions");
-         ok(GetThreadPriority(access_thread)==THREAD_PRIORITY_ERROR_RETURN,
-            "GetThreadPriority did not obey access restrictions");
-         ok(SetThreadPriorityBoost(access_thread,1)==0,
-            "SetThreadPriorityBoost did not obey access restrictions");
-         ok(GetThreadPriorityBoost(access_thread,&error)==0,
-            "GetThreadPriorityBoost did not obey access restrictions");
-         ok(GetExitCodeThread(access_thread,&exitCode)==0,
-            "GetExitCodeThread did not obey access restrictions");
-         ok(CloseHandle(access_thread),"Error Closing thread handle");
-       }
+     ok(access_thread!=(HANDLE)NULL,"OpenThread returned an invalid handle");
+     if(access_thread!=(HANDLE)NULL) {
+       ok(SetThreadPriority(access_thread,1)==0,
+          "SetThreadPriority did not obey access restrictions");
+       ok(GetThreadPriority(access_thread)==THREAD_PRIORITY_ERROR_RETURN,
+          "GetThreadPriority did not obey access restrictions");
+       ok(SetThreadPriorityBoost(access_thread,1)==0,
+          "SetThreadPriorityBoost did not obey access restrictions");
+       ok(GetThreadPriorityBoost(access_thread,&error)==0,
+          "GetThreadPriorityBoost did not obey access restrictions");
+       ok(GetExitCodeThread(access_thread,&exitCode)==0,
+          "GetExitCodeThread did not obey access restrictions");
+       ok(CloseHandle(access_thread),"Error Closing thread handle");
      }
 #if USE_EXTENDED_PRIORITIES
      min_priority=-7; max_priority=6;
 #endif
    }
    for(i=min_priority;i<=max_priority;i++) {
-     sprintf(msg1,"SetThreadPriority Failed for priority: %d",i);
-     sprintf(msg2,"GetThreadPriority Failed for priority: %d",i);
-     ok(SetThreadPriority(curthread,i)!=0,msg1);
-     ok(GetThreadPriority(curthread)==i,msg2);
+     ok(SetThreadPriority(curthread,i)!=0,
+        "SetThreadPriority Failed for priority: %d",i);
+     ok(GetThreadPriority(curthread)==i,
+        "GetThreadPriority Failed for priority: %d",i);
    }
    ok(SetThreadPriority(curthread,THREAD_PRIORITY_TIME_CRITICAL)!=0,
       "SetThreadPriority Failed");
@@ -458,10 +454,8 @@ VOID test_GetThreadTimes(DWORD version)
      if(WIN2K_PLUS(version)) {
        access_thread=OpenThreadPtr(THREAD_ALL_ACCESS &
                                    (~THREAD_QUERY_INFORMATION), 0,threadId);
-       todo_wine {
-         ok(access_thread!=(HANDLE)NULL,
-            "OpenThread returned an invalid handle");
-       }
+       ok(access_thread!=(HANDLE)NULL,
+          "OpenThread returned an invalid handle");
      }
      ok(ResumeThread(thread)==1,"Resume thread returned an invalid value");
      ok(WaitForSingleObject(thread,5000)==WAIT_OBJECT_0,
@@ -554,9 +548,7 @@ START_TEST(thread)
    test_CreateThread_basic(version);
    test_CreateThread_suspended(version);
    test_SuspendThread(version);
-#if ! SKIP_TERMINATE
    test_TerminateThread(version);
-#endif
    test_CreateThread_stack(version);
    test_thread_priority(version);
    test_GetThreadTimes(version);
