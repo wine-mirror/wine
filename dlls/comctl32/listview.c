@@ -7878,10 +7878,11 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   if (infoPtr->hDefaultFont) DeleteObject(infoPtr->hDefaultFont);
   if (infoPtr->clrBk != CLR_NONE) DeleteObject(infoPtr->hBkBrush);
 
+  SetWindowLongW(infoPtr->hwndSelf, 0, 0);
+
   /* free listview info pointer*/
   COMCTL32_Free(infoPtr);
 
-  SetWindowLongW(infoPtr->hwndSelf, 0, 0);
   return 0;
 }
 
