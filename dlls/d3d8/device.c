@@ -38,6 +38,7 @@
 #undef GL_VERSION_1_4
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
 /* Some #defines for additional diagnostics */
 
@@ -78,6 +79,79 @@ do {                                                                            
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
 
 
+const char* debug_d3dformat(D3DFORMAT fmt) {
+  switch (fmt) {
+#define FMT_TO_STR(fmt) case fmt: return #fmt
+    FMT_TO_STR(D3DFMT_UNKNOWN);
+
+    FMT_TO_STR(D3DFMT_R8G8B8);
+    FMT_TO_STR(D3DFMT_A8R8G8B8);
+    FMT_TO_STR(D3DFMT_X8R8G8B8);
+    FMT_TO_STR(D3DFMT_R5G6B5);
+    FMT_TO_STR(D3DFMT_X1R5G5B5);
+    FMT_TO_STR(D3DFMT_A1R5G5B5);
+    FMT_TO_STR(D3DFMT_A4R4G4B4);
+    FMT_TO_STR(D3DFMT_R3G3B2);
+    FMT_TO_STR(D3DFMT_A8);
+    FMT_TO_STR(D3DFMT_A8R3G3B2);
+    FMT_TO_STR(D3DFMT_X4R4G4B4);
+
+    FMT_TO_STR(D3DFMT_A8P8);
+    FMT_TO_STR(D3DFMT_P8);
+
+    FMT_TO_STR(D3DFMT_L8);
+    FMT_TO_STR(D3DFMT_A8L8);
+    FMT_TO_STR(D3DFMT_A4L4);
+
+    FMT_TO_STR(D3DFMT_V8U8);
+    FMT_TO_STR(D3DFMT_L6V5U5);
+    FMT_TO_STR(D3DFMT_X8L8V8U8);
+    FMT_TO_STR(D3DFMT_Q8W8V8U8);
+    FMT_TO_STR(D3DFMT_V16U16);
+    FMT_TO_STR(D3DFMT_W11V11U10);
+
+    FMT_TO_STR(D3DFMT_UYVY);
+    FMT_TO_STR(D3DFMT_YUY2);
+    FMT_TO_STR(D3DFMT_DXT1);
+    FMT_TO_STR(D3DFMT_DXT2);
+    FMT_TO_STR(D3DFMT_DXT3);
+    FMT_TO_STR(D3DFMT_DXT4);
+    FMT_TO_STR(D3DFMT_DXT5);
+    
+    FMT_TO_STR(D3DFMT_D16_LOCKABLE);
+    FMT_TO_STR(D3DFMT_D32);
+    FMT_TO_STR(D3DFMT_D15S1);
+    FMT_TO_STR(D3DFMT_D24S8);
+    FMT_TO_STR(D3DFMT_D16);
+    FMT_TO_STR(D3DFMT_D24X8);
+    FMT_TO_STR(D3DFMT_D24X4S4);
+
+    FMT_TO_STR(D3DFMT_VERTEXDATA);
+    FMT_TO_STR(D3DFMT_INDEX16);
+    FMT_TO_STR(D3DFMT_INDEX32);
+#undef FMT_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DFORMAT!\n", fmt);
+    return "unrecognized";
+  }
+}
+
+const char* debug_d3dressourcetype(D3DRESOURCETYPE res) {
+  switch (res) {
+#define RES_TO_STR(res) case res: return #res;
+    RES_TO_STR(D3DRTYPE_SURFACE);
+    RES_TO_STR(D3DRTYPE_VOLUME);
+    RES_TO_STR(D3DRTYPE_TEXTURE);
+    RES_TO_STR(D3DRTYPE_VOLUMETEXTURE);
+    RES_TO_STR(D3DRTYPE_CUBETEXTURE);
+    RES_TO_STR(D3DRTYPE_VERTEXBUFFER);
+    RES_TO_STR(D3DRTYPE_INDEXBUFFER);
+#undef  RES_TO_STR
+  default:
+    FIXME("Unrecognized %u D3DRESOURCETYPE!\n", res);
+    return "unrecognized";
+  }
+}
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
@@ -197,38 +271,51 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         }
 
         if (isRHW) {
-            double height, width, minZ, maxZ;
+            double X, Y, height, width, minZ, maxZ;
             /*
              * Already transformed vertex do not need transform
              * matrices. Reset all matrices to identity.
              * Leave the default matrix in world mode.
              */
-            glMatrixMode(GL_PROJECTION);
-            checkGLcall("glMatrixMode");
-            glLoadIdentity();
-            checkGLcall("glLoadIdentity");
             glMatrixMode(GL_MODELVIEW);
             checkGLcall("glMatrixMode");
             glLoadIdentity();
             checkGLcall("glLoadIdentity");
+	    /**
+	     * As seen in d3d7 code:
+	     *  See the OpenGL Red Book for an explanation of the following translation (in the OpenGL
+	     *  Correctness Tips section).
+	     */
+	    glTranslatef(0.375f, 0.375f, 0.0f);
+	    /**
+	     * 
+	     */
+            glMatrixMode(GL_PROJECTION);
+            checkGLcall("glMatrixMode");
+            glLoadIdentity();
+            checkGLcall("glLoadIdentity");
+	    X = This->StateBlock->viewport.X;
+	    Y = This->StateBlock->viewport.Y;
             height = This->StateBlock->viewport.Height;
             width = This->StateBlock->viewport.Width;
             minZ = This->StateBlock->viewport.MinZ;
             maxZ = This->StateBlock->viewport.MaxZ;
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-            glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);
+            /*glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);*/
+	    glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
             checkGLcall("glOrtho");
         } else {
-            glMatrixMode(GL_PROJECTION);
-            checkGLcall("glMatrixMode");
-            glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
-            checkGLcall("glLoadMatrixf");
             glMatrixMode(GL_MODELVIEW);
             checkGLcall("glMatrixMode");
             glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
             glMultMatrixf((float *) &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
             checkGLcall("glMultMatrixf");
+
+            glMatrixMode(GL_PROJECTION);
+            checkGLcall("glMatrixMode");
+            glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_PROJECTION].u.m[0][0]);
+            checkGLcall("glLoadMatrixf");
         }
 
         /* Set OpenGL to the appropriate Primitive Type */
@@ -279,7 +366,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
            vertex arrays, we need to drop down to the slow mechanism for  
            certain functions                                              */
 
-        if (isPtSize || isDiffuse || useVertexShaderFunction==TRUE || (numBlends > 0)) {
+        if (isPtSize || isDiffuse || useVertexShaderFunction == TRUE || (numBlends > 0)) {
             TRACE("Using slow per-vertex code\n");
 
             /* Enable this one to be able to debug what is going on, but it is slower
@@ -524,7 +611,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 		    }
 		    /*diffuseColor = D3DCOLOR_COLORVALUE(vertex_shader->output.oD[0]);*/
 		    glColor4fv((float*) &vertex_shader->output.oD[0]);
-
+		    
 		    /* Requires secondary color extensions to compile... */
 #if defined(GL_VERSION_1_4)
 		    glSecondaryColor3fv((float*) &vertex_shader->output.oD[1]);
@@ -601,12 +688,15 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     }
 
                     if (1.0f == rhw || rhw < 0.01f) {
-                        VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
+                        TRACE_(d3d_shader)("Vertex: glVertex:x,y,z=%f,%f,%f\n", x, y, z);
                         glVertex3f(x, y, z);
                         /*checkGLcall("glVertex3f");*/
                     } else {
-                        VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
-                        glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
+		        GLfloat w = 1.0f / rhw;
+                        TRACE_(d3d_shader)("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw);
+			
+                        /*glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);*/
+			glVertex4f(x * w, y * w, z * w, 1.0f);
                         /*checkGLcall("glVertex4f");*/
                     }
                 } else { 
@@ -891,7 +981,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 }
 
 /*
-    Simple utility routines used for dx -> gl mapping of byte formats
+ * Simple utility routines used for dx -> gl mapping of byte formats
  */
 SHORT bytesPerPixel(D3DFORMAT fmt) {
     SHORT retVal;
@@ -914,15 +1004,16 @@ SHORT bytesPerPixel(D3DFORMAT fmt) {
     case D3DFMT_D24X4S4:          retVal = 4; break;
     /* unknown */				  
     case D3DFMT_UNKNOWN:
-        /* Guess at the highest value of the above */
-        TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %d\n", fmt);
-        retVal = 4;
-        break;
+      /* Guess at the highest value of the above */
+      TRACE("D3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %d\n", fmt);
+      retVal = 4;
+      break;
+
     default:
-        FIXME("Unhandled fmt %d\n", fmt);
-        retVal = 4;
+      FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
+      retVal = 4;
     }
-    TRACE("bytes/Pxl for fmt %d = %d\n", fmt, retVal);
+    TRACE("bytes/Pxl for fmt(%u,%s) = %d\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
 }
 
@@ -937,10 +1028,10 @@ GLint fmt2glintFmt(D3DFORMAT fmt) {
     case D3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
     case D3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
     default:
-        FIXME("Unhandled fmt %d\n", fmt);
+        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
         retVal = 4;
     }
-    TRACE("fmt2glintFmt for fmt %d = %x\n", fmt, retVal);
+    TRACE("fmt2glintFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
 }
 GLenum fmt2glFmt(D3DFORMAT fmt) {
@@ -954,10 +1045,10 @@ GLenum fmt2glFmt(D3DFORMAT fmt) {
     case D3DFMT_R5G6B5:           retVal = GL_RGB; break;
     case D3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
     default:
-        FIXME("Unhandled fmt %d\n", fmt);
+        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
         retVal = 4;
     }
-    TRACE("fmt2glFmt for fmt %d = %x\n", fmt, retVal);
+    TRACE("fmt2glFmt for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
 }
 DWORD fmt2glType(D3DFORMAT fmt) {
@@ -967,14 +1058,14 @@ DWORD fmt2glType(D3DFORMAT fmt) {
     case D3DFMT_A4R4G4B4:         retVal = GL_UNSIGNED_SHORT_4_4_4_4_REV; break;
     case D3DFMT_A8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
     case D3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_BYTE; break;
-    case D3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5_REV; break;
+    case D3DFMT_R5G6B5:           retVal = GL_UNSIGNED_SHORT_5_6_5; break;
     case D3DFMT_R8G8B8:           retVal = GL_UNSIGNED_BYTE; break;
     case D3DFMT_A1R5G5B5:         retVal = GL_UNSIGNED_SHORT_1_5_5_5_REV; break;
     default:
-        FIXME("Unhandled fmt %d\n", fmt);
+        FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
         retVal = 4;
     }
-    TRACE("fmt2glType for fmt %d = %x\n", fmt, retVal);
+    TRACE("fmt2glType for fmt(%u,%s) = %x\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
 }
 
@@ -1117,7 +1208,7 @@ void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum*
 /* Apply the current values to the specified texture stage */
 void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    int i=0;
+    int i = 0;
     float col[4];
 
     /* Make appropriate texture active */
@@ -1133,16 +1224,19 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     }
 
     TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
-    for (i=1; i<HIGHEST_TEXTURE_STATE; i++) {
+    for (i = 1; i < HIGHEST_TEXTURE_STATE; i++) {
         IDirect3DDevice8Impl_SetTextureStageState(iface, Stage, i, This->StateBlock->texture_state[Stage][i]);
     }
 
     /* Note the D3DRS value applies to all textures, but GL has one
        per texture, so apply it now ready to be used!               */
+#if 0
     col[0] = ((This->StateBlock->renderstate[D3DRS_TEXTUREFACTOR]>> 16) & 0xFF) / 255.0;
     col[1] = ((This->StateBlock->renderstate[D3DRS_TEXTUREFACTOR] >> 8 ) & 0xFF) / 255.0;
     col[2] = ((This->StateBlock->renderstate[D3DRS_TEXTUREFACTOR] >> 0 ) & 0xFF) / 255.0;
     col[3] = ((This->StateBlock->renderstate[D3DRS_TEXTUREFACTOR] >> 24 ) & 0xFF) / 255.0;
+#endif
+    D3DCOLORTOGLFLOAT4(This->StateBlock->renderstate[D3DRS_TEXTUREFACTOR], col);
     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
@@ -1487,8 +1581,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
 
     /* Generate all the surfaces */
     tmpW = EdgeLength;
-    for (i = 0; i < object->levels; i++) 
-    {
+    for (i = 0; i < object->levels; i++) {
         /* Create the 6 faces */
         for (j = 0; j < 6; j++) {
            IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpW, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[j][i]);
@@ -1496,6 +1589,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
 	   /*IUnknown_AddRef(object->surfaces[j][i]->Container);*/
            object->surfaces[j][i]->myDesc.Usage = Usage;
            object->surfaces[j][i]->myDesc.Pool = Pool;
+	   /*object->surfaces[j][i]->myDesc.Format = Format;*/
 
            TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], object->surfaces[j][i]->allocatedMemory);
            tmpW = max(1, tmpW / 2);
@@ -1665,8 +1759,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
     IDirect3DBaseTexture8* texture = NULL;
 
 
-    IDirect3DSurface8Impl *src = (IDirect3DSurface8Impl*) pSourceSurface;
-    IDirect3DSurface8Impl *dst = (IDirect3DSurface8Impl*) pDestinationSurface;
+    IDirect3DSurface8Impl* src = (IDirect3DSurface8Impl*) pSourceSurface;
+    IDirect3DSurface8Impl* dst = (IDirect3DSurface8Impl*) pDestinationSurface;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) srcsur=%p, pSourceRects=%p, cRects=%d, pDstSur=%p, pDestPtsArr=%p\n", This,
@@ -1706,65 +1800,90 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect
     }
 
     /* Quick if complete copy ... */
-    if (rc == D3D_OK && (cRects == 0 && pSourceRectsArray==NULL && pDestPointsArray==NULL &&
-                         src->myDesc.Width == dst->myDesc.Width &&
-                         src->myDesc.Height == dst->myDesc.Height)) {
-        D3DLOCKED_RECT lr;
+    if (rc == D3D_OK && cRects == 0 && pSourceRectsArray == NULL && pDestPointsArray == NULL) {
 
-        IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)src, &lr, NULL, D3DLOCK_READONLY);
-        IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)dst, &lr, NULL, D3DLOCK_DISCARD);
+      if (src->myDesc.Width == dst->myDesc.Width && src->myDesc.Height == dst->myDesc.Height) {
+
+        D3DLOCKED_RECT lrSrc;
+        D3DLOCKED_RECT lrDst;
+        IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) src, &lrSrc, NULL, D3DLOCK_READONLY);
+	IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, NULL, 0L);
         TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", dst->myDesc.Width, dst->myDesc.Height);
 
-        memcpy(dst->allocatedMemory, src->allocatedMemory, src->myDesc.Size);
-
-        IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)src);
-        IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)dst);
+	/*memcpy(dst->allocatedMemory, src->allocatedMemory, src->myDesc.Size);*/
+	memcpy(lrDst.pBits, lrSrc.pBits, src->myDesc.Size);
+ 
+        IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
+        IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
         TRACE("Unlocked src and dst\n");
 
-    } else {
-        int i;
-        int bytesPerPixel = ((IDirect3DSurface8Impl *)pSourceSurface)->bytesPerPixel;
-        int pitchFrom     = ((IDirect3DSurface8Impl *)pSourceSurface)->myDesc.Width * bytesPerPixel;
-        int pitchTo       = ((IDirect3DSurface8Impl *)pDestinationSurface)->myDesc.Width * bytesPerPixel;
+      } else {
 
+	FIXME("Wanted to copy all surfaces but size not compatible\n");
+        rc = D3DERR_INVALIDCALL;
+
+      }
+
+    } else {
+
+      if (NULL != pSourceRectsArray && NULL != pDestPointsArray) {
+
+        int bytesPerPixel = ((IDirect3DSurface8Impl *)pSourceSurface)->bytesPerPixel;
+#if 0
+	int pitchFrom     = ((IDirect3DSurface8Impl *)pSourceSurface)->myDesc.Width * bytesPerPixel;
+        int pitchTo       = ((IDirect3DSurface8Impl *)pDestinationSurface)->myDesc.Width * bytesPerPixel;
         char *copyfrom = ((IDirect3DSurface8Impl *)pSourceSurface)->allocatedMemory;
         char *copyto   = ((IDirect3DSurface8Impl *)pDestinationSurface)->allocatedMemory;
-
+        char *from;
+        char *to;
+#endif
+        int i;
         /* Copy rect by rect */
-        for (i=0; i<cRects; i++) {
-            CONST RECT *r = &pSourceRectsArray[i];
-            CONST POINT *p = &pDestPointsArray[i];
-            char *from;
-            char *to;
-            int   copyperline   = (r->right - r->left) * bytesPerPixel;
+        for (i = 0; i < cRects; i++) {
+            CONST RECT*  r = &pSourceRectsArray[i];
+            CONST POINT* p = &pDestPointsArray[i];
+            int copyperline = (r->right - r->left) * bytesPerPixel;
             int j;
-            D3DLOCKED_RECT lr;
-            RECT           dest_rect;
+            D3DLOCKED_RECT lrSrc;
+            D3DLOCKED_RECT lrDst;
+            RECT dest_rect;
+ 
 
-            TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top,
-                  r->right, r->bottom, p->x, p->y);
+            TRACE("Copying rect %d (%ld,%ld),(%ld,%ld) -> (%ld,%ld)\n", i, r->left, r->top, r->right, r->bottom, p->x, p->y);
 
-            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)src, &lr, r, D3DLOCK_READONLY);
-            dest_rect.left = p->x;
-            dest_rect.top = p->y;
+            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) src, &lrSrc, r, D3DLOCK_READONLY);
+            dest_rect.left  = p->x;
+            dest_rect.top   = p->y;
             dest_rect.right = p->x + (r->right - r->left);
-            dest_rect.left = p->y + (r->bottom - r->top);
-            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8)dst, &lr, &dest_rect, 0L);
+            dest_rect.left  = p->y + (r->bottom - r->top);
+            IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, &dest_rect, 0L);
             TRACE("Locked src and dst\n");
 
             /* Find where to start */
+#if 0
             from = copyfrom + (r->top * pitchFrom) + (r->left * bytesPerPixel);
             to   = copyto   + (p->y * pitchTo) + (p->x * bytesPerPixel);
-
             /* Copy line by line */
-            for (j=0; j<(r->bottom - r->top); j++) {
-               memcpy(to + (j*pitchTo), from + (j*pitchFrom), copyperline);
+            for (j = 0; j < (r->bottom - r->top); j++) {
+               memcpy(to + (j * pitchTo), from + (j * pitchFrom), copyperline);
             }
+#endif
 
-            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)src);
-            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8)dst);
+	    for (j = 0; j < (r->bottom - r->top); j++) {
+               memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
+	    }
+
+            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
+            IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
             TRACE("Unlocked src and dst\n");
         }
+      
+      } else {
+      
+	FIXME("Wanted to copy partial surfaces not implemented\n");
+        rc = D3DERR_INVALIDCALL;	
+	
+      }
     }
 
     /* Set dirty */
@@ -1810,23 +1929,42 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDi
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pDestSurface) {
     HRESULT hr;
     D3DLOCKED_RECT lockedRect;
+    RECT wantedRect;
     GLint  prev_store;
     GLenum prev_read;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    FIXME("(%p) : stub\n", This);
+    FIXME("(%p) : see if behavior correct\n", This);
 
     if (D3DFMT_A8R8G8B8 != ((IDirect3DSurface8Impl*) pDestSurface)->myDesc.Format) {
+      ERR("(%p) : surface(%p) have a invalid format\n", This, pDestSurface);
       return D3DERR_INVALIDCALL;
     }
-
-    hr = IDirect3DSurface8Impl_LockRect(pDestSurface, &lockedRect, NULL, 0);
+    
+    wantedRect.left = 0;
+    wantedRect.top = 0;
+    wantedRect.right = This->PresentParms.BackBufferWidth;
+    wantedRect.bottom = This->PresentParms.BackBufferHeight;
+    
+    hr = IDirect3DSurface8Impl_LockRect(pDestSurface, &lockedRect, &wantedRect, 0);
     if (FAILED(hr)) {
+      ERR("(%p) : cannot lock surface\n", This);
       return D3DERR_INVALIDCALL;
     }
 
     ENTER_GL();
+
+    /*
+    {
+      IDirect3DSurface8Impl* tmp = ((IDirect3DSurface8Impl*) pDestSurface);
+      FIXME("dest:%u,%u,bpp:%u\n", tmp->myDesc.Width, tmp->myDesc.Height, tmp->bytesPerPixel);
+      FIXME("dest2:pitch%u\n", lockedRect.Pitch);
+      FIXME("src:%u,%u\n", This->PresentParms.BackBufferWidth, This->PresentParms.BackBufferHeight);
+      tmp = This->frontBuffer;
+      FIXME("src2:%u,%u,bpp:%u\n", tmp->myDesc.Width, tmp->myDesc.Height, tmp->bytesPerPixel);
+    }
+    */
 
     glFlush();
     vcheckGLcall("glFlush");
@@ -1839,13 +1977,25 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, ID
     vcheckGLcall("glReadBuffer");
     glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
     vcheckGLcall("glPixelStorei");
+    /* stupid copy */
+    {
+      long j;
+      for (j = 0; j < This->PresentParms.BackBufferHeight; ++j) {
+	/*memcpy(lockedRect.pBits + (j * lockedRect.Pitch), This->frontBuffer->allocatedMemory + (j * i), i);*/
+	glReadPixels(0, This->PresentParms.BackBufferHeight - j - 1, This->PresentParms.BackBufferWidth, 1,
+		     GL_BGRA, GL_UNSIGNED_BYTE, ((char*) lockedRect.pBits) + (j * lockedRect.Pitch));
+	vcheckGLcall("glReadPixels");
+      }
+    }
+    /*
     glReadPixels(0, 0, This->PresentParms.BackBufferWidth, This->PresentParms.BackBufferHeight,
 		 GL_BGRA, GL_UNSIGNED_BYTE, lockedRect.pBits);
-    vcheckGLcall("glReadPixels");
+    */
     glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
     vcheckGLcall("glPixelStorei");
     glReadBuffer(prev_read);
     vcheckGLcall("glReadBuffer");
+
     LEAVE_GL();
 
     hr = IDirect3DSurface8Impl_UnlockRect(pDestSurface);
@@ -1906,7 +2056,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_EndScene(LPDIRECT3DDEVICE8 iface) {
     LEAVE_GL();
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count,CONST D3DRECT* pRects,DWORD Flags,D3DCOLOR Color,float Z,DWORD Stencil) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count, CONST D3DRECT* pRects, DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* TODO: From MSDN This method fails if you specify the D3DCLEAR_ZBUFFER or D3DCLEAR_STENCIL flags when the
@@ -1917,9 +2067,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
     GLfloat old_z_clear_value;
     GLint   old_stencil_clear_value;
     GLfloat old_color_clear_value[4];
-
     int i;
-    CONST D3DRECT   *curRect;
+    CONST D3DRECT* curRect;
 
     TRACE("(%p) Count (%ld), pRects (%p), Flags (%lx), Z (%f), Stencil (%ld)\n", This,
           Count, pRects, Flags, Z, Stencil);
@@ -2000,7 +2149,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
 
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE d3dts,CONST D3DMATRIX* lpmatrix) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     D3DMATRIX m;
     int k;
@@ -2045,11 +2194,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
        to the other so that if I ever find out that I need to transpose them, I
        will able to do it quickly, only by changing the macro conv_mat. */
 
-    if (d3dts <= 256) { /* WORLDMATRIX(0) == 256! */
+    if (d3dts < 256) { 
       switch (d3dts) {
-      case D3DTS_WORLDMATRIX(0):
+#if 0
+      case D3DTS_WORLDMATRIX(0): /* WORLDMATRIX(0) == 256! so not here */
         conv_mat(lpmatrix, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)]);
         break;
+#endif
 
       case D3DTS_VIEW:
         conv_mat(lpmatrix, &This->StateBlock->transforms[D3DTS_VIEW]);
@@ -2156,10 +2307,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
        }
     } else if (d3dts >= D3DTS_TEXTURE0 && d3dts <= D3DTS_TEXTURE7) {
         /* Now apply texture transforms if not applying to the dummy textures */
-        Stage = d3dts-D3DTS_TEXTURE0;
+        Stage = d3dts - D3DTS_TEXTURE0;
 
-        if (memcmp(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0], sizeof(D3DMATRIX))) {
-           memcpy(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0+Stage].u.m[0][0], sizeof(D3DMATRIX));
+        if (memcmp(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], sizeof(D3DMATRIX))) {
+	   memcpy(&This->lastTexTrans[Stage], &This->StateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], sizeof(D3DMATRIX));
 
 #if defined(GL_VERSION_1_3)
            glActiveTexture(GL_TEXTURE0 + Stage);
@@ -2196,7 +2347,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
           if (viewChanged == TRUE || 
               (memcmp(&This->lastWorld0, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0], sizeof(D3DMATRIX)))) {
                memcpy(&This->lastWorld0, &This->StateBlock->transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0], sizeof(D3DMATRIX));
-              if (viewChanged==FALSE) {
+              if (viewChanged == FALSE) {
                  glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
                  checkGLcall("glLoadMatrixf");
               }
@@ -2230,7 +2381,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
           m.u.s._21 = f; m.u.s._22 = f; m.u.s._23 = f; m.u.s._24 = f;
           m.u.s._31 = f; m.u.s._32 = f; m.u.s._33 = f; m.u.s._34 = f;
           m.u.s._41 = f; m.u.s._42 = f; m.u.s._43 = f; m.u.s._44 = f;
-          if (viewChanged==FALSE) {
+          if (viewChanged == FALSE) {
               glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
               checkGLcall("glLoadMatrixf");
           }
@@ -2367,14 +2518,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetMaterial(LPDIRECT3DDEVICE8 iface, CONST
     TRACE("(%p) : Emissive (%f,%f,%f,%f)\n", This, pMaterial->Emissive.r, pMaterial->Emissive.g, pMaterial->Emissive.b, pMaterial->Emissive.a);
     TRACE("(%p) : Power (%f)\n", This, pMaterial->Power);
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&This->UpdateStateBlock->material.Ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &This->UpdateStateBlock->material.Ambient);
     checkGLcall("glMaterialfv");
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&This->UpdateStateBlock->material.Diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->UpdateStateBlock->material.Diffuse);
     checkGLcall("glMaterialfv");
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&This->UpdateStateBlock->material.Specular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->UpdateStateBlock->material.Specular);
     checkGLcall("glMaterialfv");
-    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&This->UpdateStateBlock->material.Emissive);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->UpdateStateBlock->material.Emissive);
     checkGLcall("glMaterialfv");
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, This->UpdateStateBlock->material.Power);
     checkGLcall("glMaterialf");
@@ -2393,7 +2544,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetMaterial(LPDIRECT3DDEVICE8 iface, D3DMA
     return D3D_OK;
 }
 
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,CONST D3DLIGHT8* pLight) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD Index, CONST D3DLIGHT8* pLight) {
     float colRGBA[] = {0.0, 0.0, 0.0, 0.0};
     float rho;
     float quad_att;
@@ -2570,10 +2721,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
     }
 
     if (Enable) {
-        glEnable(GL_LIGHT0+Index);
+        glEnable(GL_LIGHT0 + Index);
         checkGLcall("glEnable GL_LIGHT0+Index");
     } else {
-        glDisable(GL_LIGHT0+Index);
+        glDisable(GL_LIGHT0 + Index);
         checkGLcall("glDisable GL_LIGHT0+Index");
     }
     return D3D_OK;
@@ -2622,7 +2773,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 
     TRACE("Clipplane [%f,%f,%f,%f]\n", This->UpdateStateBlock->clipplane[Index][0], This->UpdateStateBlock->clipplane[Index][1],
           This->UpdateStateBlock->clipplane[Index][2], This->UpdateStateBlock->clipplane[Index][3]);
-    glClipPlane(GL_CLIP_PLANE0+Index, This->UpdateStateBlock->clipplane[Index]);
+    glClipPlane(GL_CLIP_PLANE0 + Index, This->UpdateStateBlock->clipplane[Index]);
 
     glPopMatrix();
     checkGLcall("glClipPlane");
@@ -2789,13 +2940,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_AMBIENT                   :
         {
-
             float col[4];
+#if 0
             col[0] = ((Value >> 16) & 0xFF) / 255.0;
-            col[1] = ((Value >> 8 ) & 0xFF) / 255.0;
-            col[2] = ((Value >> 0 ) & 0xFF) / 255.0;
-            col[3] = ((Value >> 24 ) & 0xFF) / 255.0;
-            TRACE("Setting ambient to (%f,%f,%f,%f)\n", col[0],col[1],col[2],col[3]);
+            col[1] = ((Value >>  8) & 0xFF) / 255.0;
+            col[2] = ((Value >>  0) & 0xFF) / 255.0;
+            col[3] = ((Value >> 24) & 0xFF) / 255.0;
+#endif
+	    D3DCOLORTOGLFLOAT4(Value, col);
+            TRACE("Setting ambient to (%f,%f,%f,%f)\n", col[0], col[1], col[2], col[3]);
             glLightModelfv(GL_LIGHT_MODEL_AMBIENT, col);
             checkGLcall("glLightModel for MODEL_AMBIENT");
 
@@ -2890,12 +3043,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_ALPHAREF                  :
         {
             int glParm = GL_LESS;
-            float ref = 1.0;
+            float ref = 1.0f;
 
             glGetIntegerv(GL_ALPHA_TEST_FUNC, &glParm);
             checkGLcall("glGetFloatv(GL_ALPHA_TEST_FUNC, &glParm);");
 
-            ref = ((float) Value) / 255.0;
+            ref = ((float) Value) / 255.0f;
             TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
             glAlphaFunc(glParm, ref);
             checkGLcall("glAlphaFunc");
@@ -2965,11 +3118,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             /* Note the texture color applies to all textures whereas 
                GL_TEXTURE_ENV_COLOR applies to active only */
             float col[4];
-            col[0] = ((Value >> 16) & 0xFF) / 255.0;
-            col[1] = ((Value >> 8 ) & 0xFF) / 255.0;
-            col[2] = ((Value >> 0 ) & 0xFF) / 255.0;
-            col[3] = ((Value >> 24 ) & 0xFF) / 255.0;
-
+#if 0
+            col[0] = ((Value >> 16) & 0xFF) / 255.0f;
+            col[1] = ((Value >>  8) & 0xFF) / 255.0f;
+            col[2] = ((Value >>  0) & 0xFF) / 255.0f;
+            col[3] = ((Value >> 24) & 0xFF) / 255.0f;
+#endif
+	    D3DCOLORTOGLFLOAT4(Value, col);
             /* Set the default alpha blend color */
             glBlendColor(col[0], col[1], col[2], col[3]);
             checkGLcall("glBlendColor");
@@ -3157,20 +3312,35 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_FOGCOLOR                  :
         {
             float col[4];
-            col[0] = ((Value >> 16) & 0xFF) / 255.0;
-            col[1] = ((Value >> 8 ) & 0xFF) / 255.0;
-            col[2] = ((Value >> 0 ) & 0xFF) / 255.0;
-            col[3] = ((Value >> 24 ) & 0xFF) / 255.0;
-
+#if 0
+            col[0] = ((Value >> 16) & 0xFF) / 255.0f;
+            col[1] = ((Value >>  8) & 0xFF) / 255.0f;
+            col[2] = ((Value >>  0) & 0xFF) / 255.0f;
+            col[3] = ((Value >> 24) & 0xFF) / 255.0f;
+#endif
+	    D3DCOLORTOGLFLOAT4(Value, col);
             /* Set the default alpha blend color */
             glFogfv(GL_FOG_COLOR, &col[0]);
             checkGLcall("glFog GL_FOG_COLOR");
         }
         break;
 
+    case D3DRS_FOGTABLEMODE              :
+        {
+	  switch (Value) {
+	  case D3DFOG_NONE:    /* I don't know what to do here */ break;
+	  case D3DFOG_EXP:     glFogi(GL_FOG_MODE, GL_EXP); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP"); break; 
+	  case D3DFOG_EXP2:    glFogi(GL_FOG_MODE, GL_EXP2); checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2"); break; 
+	  case D3DFOG_LINEAR:  glFogi(GL_FOG_MODE, GL_LINEAR); checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR"); break; 
+	  default:
+	    FIXME("Unsupported Value(%lu) for D3DRS_FOGTABLEMODE!\n", Value);
+	  }
+        }
+	break;
+
     case D3DRS_FOGSTART                  :
         {
-            float *f = (float *)&Value;
+            float *f = (float*) &Value;
             glFogfv(GL_FOG_START, f);
             checkGLcall("glFogf(GL_FOG_START, (float) Value)");
             TRACE("Fog Start == %f\n", *f);
@@ -3179,7 +3349,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_FOGEND                    :
         {
-            float *f = (float *)&Value;
+            float *f = (float*) &Value;
             glFogfv(GL_FOG_END, f);
             checkGLcall("glFogf(GL_FOG_END, (float) Value)");
             TRACE("Fog End == %f\n", *f);
@@ -3268,7 +3438,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_LINEPATTERN               :
     case D3DRS_LASTPIXEL                 :
     case D3DRS_ZVISIBLE                  :
-    case D3DRS_FOGTABLEMODE              :
     case D3DRS_EDGEANTIALIAS             :
     case D3DRS_ZBIAS                     :
     case D3DRS_RANGEFOGENABLE            :
@@ -3383,7 +3552,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipStatus(LPDIRECT3DDEVICE8 iface, D3D
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage,IDirect3DBaseTexture8** ppTexture) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : returning %p for stage %ld\n", This, This->UpdateStateBlock->textures[Stage], Stage);
-    *ppTexture = (LPDIRECT3DBASETEXTURE8)This->UpdateStateBlock->textures[Stage];
+    *ppTexture = (LPDIRECT3DBASETEXTURE8) This->UpdateStateBlock->textures[Stage];
     IDirect3DBaseTexture8Impl_AddRef(*ppTexture);
     return D3D_OK;
 }
@@ -3438,9 +3607,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         textureType = IDirect3DBaseTexture8Impl_GetType(pTexture);
 
         if (textureType == D3DRTYPE_TEXTURE) {
-          IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl *) pTexture;
+          IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl*) pTexture;
 
-          if ((void *)oldTxt == (void *)pTexture2 && pTexture2->Dirty == FALSE) {
+          if ((void*) oldTxt == (void*) pTexture2 && pTexture2->Dirty == FALSE) {
               TRACE("Skipping setting texture as old == new\n");
               reapplyStates = FALSE;
           } else {
@@ -3450,16 +3619,22 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
             This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_2D;
 
             /* Load up the texture now */
-            IDirect3DTexture8Impl_PreLoad((LPDIRECT3DTEXTURE8)pTexture);
+            IDirect3DTexture8Impl_PreLoad((LPDIRECT3DTEXTURE8) pTexture);
           }
         } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
+#if 0
             IDirect3DVolumeTexture8Impl *pTexture2 = (IDirect3DVolumeTexture8Impl *) pTexture;
             int i;
+#endif
 
             /* Standard 3D (volume) texture */
             TRACE("Standard 3d texture\n");
             This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_3D;
 
+            /* Load up the texture now */
+	    IDirect3DVolumeTexture8Impl_PreLoad((LPDIRECT3DVOLUMETEXTURE8) pTexture);
+
+#if 0
             for (i=0; i<pTexture2->levels; i++) 
             {
 
@@ -3507,9 +3682,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                     pTexture2->Dirty = FALSE;
                 }
             }
+#endif
 
-        } else {
-            FIXME("(%p) : Incorrect type for a texture : %d\n", This, textureType);
+        } else if (textureType == D3DRTYPE_CUBETEXTURE) {
+	  /* Standard Cube texture */
+	  FIXME("Standard Cube texture\n");
+	  /*This->UpdateStateBlock->textureDimensions[Stage] = GL_TEXTURE_4D;*/
+
+	  /* Load up the texture now */
+	  IDirect3DCubeTexture8Impl_PreLoad((LPDIRECT3DCUBETEXTURE8) pTexture);
+	} else {
+            FIXME("(%p) : Incorrect type for a texture : (%d,%s)\n", This, textureType, debug_d3dressourcetype(textureType));
         }
     } else {
         TRACE("Setting to no texture (ie default texture)\n");
@@ -3535,12 +3718,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetTextureStageState(LPDIRECT3DDEVICE8 ifa
     return D3D_OK;
 }
 
-HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage,D3DTEXTURESTAGESTATETYPE Type,DWORD Value) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage, D3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
    
-    TRACE("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value);
+    TRACE("(%p) : stub, Stage=%ld, Type=%d, Value=%ld\n", This, Stage, Type, Value);
 
     /* Reject invalid texture units */
     if (Stage >= This->TextureUnits) {
@@ -3724,44 +3907,48 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
                 case D3DTOP_SELECTARG1                :
 		    {
+                        /*FIXME("see if D3DTOP_SELECTARG1 behavior is correct now!\n");*/
                         glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
 			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
-#if 0 /* don't seem to do anything */			
-		        BOOL  isAlphaOp = (Type == D3DTSS_ALPHAOP);
-		        DWORD dwValue = 0;
-			GLenum source;
-			GLenum operand;			
-			dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
-			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
-			if (isAlphaOp) {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_ALPHA_EXT, source, GL_OPERAND0_ALPHA_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, 'operand')");
-			} else {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_RGB_EXT, source, GL_OPERAND0_RGB_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, 'operand')");
+#if 0 /* don't seem to do anything */
+			{
+			  BOOL  isAlphaOp = (Type == D3DTSS_ALPHAOP);
+			  DWORD dwValue = 0;
+			  GLenum source;
+			  GLenum operand;			
+
+			  dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
+			  GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
+			  if (isAlphaOp) {
+			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_ALPHA_EXT, source, GL_OPERAND0_ALPHA_EXT, operand);
+			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, source);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, 'source')");
+			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, operand);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, 'operand')");
+			  } else {
+			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_RGB_EXT, source, GL_OPERAND0_RGB_EXT, operand);
+			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, source);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, 'source')");
+			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, operand);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, 'operand')");
+			  }
+			  dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
+			  GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
+			  if (isAlphaOp) {
+			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_ALPHA_EXT, source, GL_OPERAND1_ALPHA_EXT, operand);
+			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, source);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, 'source')");
+			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, operand);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, 'operand')");
+			  } else {
+			    TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_RGB_EXT, source, GL_OPERAND1_RGB_EXT, operand);
+			    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, source);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, 'source')");
+			    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, operand);
+			    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, 'operand')");
+			  }
 			}
-			dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
-			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
-			if (isAlphaOp) {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_ALPHA_EXT, source, GL_OPERAND1_ALPHA_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, 'operand')");
-			} else {
-			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_RGB_EXT, source, GL_OPERAND1_RGB_EXT, operand);
-			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, source);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, 'source')");
-			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, operand);
-			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, 'operand')");
-			}
-#endif			
+#endif
 		    }
                     break;
 
@@ -3771,6 +3958,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 		        DWORD dwValue = 0;
 			GLenum source;
 			GLenum operand;
+		        /*FIXME("see if D3DTOP_SELECTARG2 behavior is correct now!\n");*/
                         glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
 			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
 			/* GL_REPLACE, swap args 0 and 1? */
@@ -3926,11 +4114,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_BORDERCOLOR           :
         {
             float col[4];
+#if 0
             col[0] = ((Value >> 16) & 0xFF) / 255.0;
             col[1] = ((Value >>  8) & 0xFF) / 255.0;
             col[2] = ((Value >>  0) & 0xFF) / 255.0;
             col[3] = ((Value >> 24) & 0xFF) / 255.0;
-
+#endif
+	    D3DCOLORTOGLFLOAT4(Value, col);
             TRACE("Setting border color for %x to %lx\n", This->StateBlock->textureDimensions[Stage], Value); 
             glTexParameterfv(This->StateBlock->textureDimensions[Stage], GL_TEXTURE_BORDER_COLOR, &col[0]);
             checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
@@ -4137,7 +4327,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface
     HRESULT res;
     UINT i;
 
-    TRACE("(%p) : VertexShader not fully supported yet : Decl=%p, Func=%p\n", This, pDeclaration, pFunction);    
+    TRACE_(d3d_shader)("(%p) : VertexShader not fully supported yet : Decl=%p, Func=%p\n", This, pDeclaration, pFunction);    
     if (NULL == pDeclaration || NULL == pHandle) { /* pFunction can be NULL see MSDN */
       return D3DERR_INVALIDCALL;
     }
@@ -4168,7 +4358,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, D
     This->UpdateStateBlock->Set.vertexShader = TRUE;
     
     if (Handle > VS_HIGHESTFIXEDFXF) { /* only valid with non FVF shaders */
-      FIXME("(%p) : Created shader, Handle=%lx\n", This, Handle);
+      TRACE_(d3d_shader)("(%p) : Created shader, Handle=%lx\n", This, Handle);
       This->UpdateStateBlock->vertexShaderDecl = VERTEX_SHADER_DECL(Handle);
       This->UpdateStateBlock->Changed.vertexShaderDecl = TRUE;
       This->UpdateStateBlock->Set.vertexShaderDecl = TRUE;
@@ -4190,7 +4380,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, D
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShader(LPDIRECT3DDEVICE8 iface, DWORD* pHandle) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : GetVertexShader returning %ld\n", This, This->StateBlock->VertexShader);
+    TRACE_(d3d_shader)("(%p) : GetVertexShader returning %ld\n", This, This->StateBlock->VertexShader);
     *pHandle = This->StateBlock->VertexShader;
     return D3D_OK;
 }
@@ -4211,7 +4401,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
     if (NULL == object) {
       return D3DERR_INVALIDCALL;
     }
-    FIXME("(%p) : freing VertexShader %p\n", This, object);
+    TRACE_(d3d_shader)("(%p) : freing VertexShader %p\n", This, object);
     /* TODO: check validity of object */
     if (NULL != object->function) HeapFree(GetProcessHeap(), 0, (void *)object->function);
     HeapFree(GetProcessHeap(), 0, (void *)object->data);
@@ -4225,7 +4415,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
     if (NULL == attached_decl) {
       return D3DERR_INVALIDCALL;
     } 
-    FIXME("(%p) : freing VertexShaderDeclaration %p\n", This, attached_decl);
+    TRACE_(d3d_shader)("(%p) : freing VertexShaderDeclaration %p\n", This, attached_decl);
     /* TODO: check validity of object */
     HeapFree(GetProcessHeap(), 0, (void *)attached_decl->pDeclaration8);
     HeapFree(GetProcessHeap(), 0, (void *)attached_decl);
@@ -4238,7 +4428,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   ICOM_THIS(IDirect3DDevice8Impl,iface);
 
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
-    ERR("(%p) : SetVertexShaderConstant C[%lu] invalid\n", This, Register);
+    ERR_(d3d_shader)("(%p) : SetVertexShaderConstant C[%lu] invalid\n", This, Register);
     return D3DERR_INVALIDCALL;
   }
   if (NULL == pConstantData) {
@@ -4247,14 +4437,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   if (ConstantCount > 1) {
     FLOAT* f = (FLOAT*)pConstantData;
     UINT i;
-    TRACE("(%p) : SetVertexShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
+    TRACE_(d3d_shader)("(%p) : SetVertexShaderConstant C[%lu..%lu]=\n", This, Register, Register + ConstantCount - 1);
     for (i = 0; i < ConstantCount; ++i) {
-      TRACE("{%f, %f, %f, %f}\n", f[0], f[1], f[2], f[3]);
+      TRACE_(d3d_shader)("{%f, %f, %f, %f}\n", f[0], f[1], f[2], f[3]);
       f += 4;
     }
   } else { 
-    FLOAT* f = (FLOAT*)pConstantData;
-    TRACE("(%p) : SetVertexShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
+    FLOAT* f = (FLOAT*) pConstantData;
+    TRACE_(d3d_shader)("(%p) : SetVertexShaderConstant, C[%lu]={%f, %f, %f, %f}\n", This, Register, f[0], f[1], f[2], f[3]);
   }
   This->UpdateStateBlock->Changed.vertexShaderConstant = TRUE;
   memcpy(&This->UpdateStateBlock->vertexShaderConstant[Register], pConstantData, ConstantCount * 4 * sizeof(FLOAT));
@@ -4263,7 +4453,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, void* pConstantData, DWORD ConstantCount) {
   ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-  TRACE("(%p) : C[%lu] count=%ld\n", This, Register, ConstantCount);
+  TRACE_(d3d_shader)("(%p) : C[%lu] count=%ld\n", This, Register, ConstantCount);
   if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
     return D3DERR_INVALIDCALL;
   }

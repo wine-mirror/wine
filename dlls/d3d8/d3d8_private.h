@@ -173,7 +173,11 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface);
   (vec).z = D3DCOLOR_B(dw); \
   (vec).w = D3DCOLOR_A(dw);
 
-
+#define D3DCOLORTOGLFLOAT4(dw, vec) \
+  (vec)[0] = D3DCOLOR_R(dw); \
+  (vec)[1] = D3DCOLOR_G(dw); \
+  (vec)[2] = D3DCOLOR_B(dw); \
+  (vec)[3] = D3DCOLOR_A(dw);
 
 /* ===========================================================================
     The interfactes themselves
@@ -1124,5 +1128,11 @@ SHORT bytesPerPixel(D3DFORMAT fmt);
 GLint fmt2glintFmt(D3DFORMAT fmt);
 GLenum fmt2glFmt(D3DFORMAT fmt);
 DWORD fmt2glType(D3DFORMAT fmt);
+
+/**
+ * Internals debug functions
+ */
+const char* debug_d3dformat(D3DFORMAT fmt);
+const char* debug_d3dressourcetype(D3DRESOURCETYPE res);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */
