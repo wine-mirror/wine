@@ -349,7 +349,7 @@ static RPC_STATUS RPC_UuidGetNodeAddress(BYTE *address)
             address[i] = rand() & 0xff;
         }
 
-        address[0] |= 0x80;
+        address[0] |= 0x01;
         status = RPC_S_UUID_LOCAL_ONLY;
     }
 
