@@ -314,6 +314,7 @@ static void file_destroy( struct object *obj )
         while (*pptr && *pptr != file) pptr = &(*pptr)->next;
         assert( *pptr );
         *pptr = (*pptr)->next;
+        if (file->flags & FILE_FLAG_DELETE_ON_CLOSE) unlink( file->name );
         free( file->name );
     }
     close( file->fd );
