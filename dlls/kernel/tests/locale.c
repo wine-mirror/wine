@@ -64,6 +64,7 @@ inline static int isdigitW( WCHAR wc )
 
 /* Some functions are only in later versions of kernel32.dll */
 static HMODULE hKernel32;
+static WORD enumCount;
 
 typedef BOOL (WINAPI *EnumSystemLanguageGroupsAFn)(LANGUAGEGROUP_ENUMPROC,
                                                    DWORD, LONG_PTR);
@@ -71,6 +72,9 @@ static EnumSystemLanguageGroupsAFn pEnumSystemLanguageGroupsA;
 typedef BOOL (WINAPI *EnumLanguageGroupLocalesAFn)(LANGGROUPLOCALE_ENUMPROC,
                                                    LGRPID, DWORD, LONG_PTR);
 static EnumLanguageGroupLocalesAFn pEnumLanguageGroupLocalesA;
+typedef BOOL (WINAPI *EnumUILanguagesAFn)(UILANGUAGE_ENUMPROC,
+                                                   DWORD, LONG_PTR);
+static EnumUILanguagesAFn pEnumUILanguagesA;
 
 typedef INT (WINAPI *FoldStringAFn)(DWORD, LPCSTR, INT, LPSTR, INT);
 static FoldStringAFn pFoldStringA;
@@ -91,6 +95,7 @@ static void InitFunctionPointers(void)
     pFoldStringA = (void*)GetProcAddress(hKernel32, "FoldStringA");
     pFoldStringW = (void*)GetProcAddress(hKernel32, "FoldStringW");
     pIsValidLanguageGroup = (void*)GetProcAddress(hKernel32, "IsValidLanguageGroup");
+    pEnumUILanguagesA = (void*)GetProcAddress(hKernel32, "EnumUILanguagesA");
   }
 }
 
@@ -125,6 +130,8 @@ char GlobalBuffer[BUFFER_SIZE]; /* Buffer used by callback function */
    SetLastError(0); buffer[0] = '\0'
 #define EXPECT_LENW EXPECT_LEN((int)strlenW(Expected)+1)
 #define EXPECT_EQW  ok(strncmpW(buffer, Expected, strlenW(Expected)) == 0, "Bad conversion\n")
+#define EXPECT_FALSE ok(FALSE == ret, "Expected return value FALSE, got TRUE\n")
+#define EXPECT_TRUE  ok(TRUE  == ret, "Expected return value TRUE, got FALSE\n")
 
 #define NUO LOCALE_NOUSEROVERRIDE
 
@@ -2023,6 +2030,51 @@ static void test_SetLocaleInfoA(void)
   EXPECT_FLAGS;
 }
 
+static BOOL CALLBACK luilocale_proc1A(LPSTR value, LONG_PTR lParam) {
+  trace("%s %08lx\n", value, lParam);
+  return(TRUE);
+}
+
+static BOOL CALLBACK luilocale_proc2A(LPSTR value, LONG_PTR lParam) {
+  ok(!enumCount, "callback called again unexpected\n");
+  enumCount++;
+  return(FALSE);
+}
+
+static BOOL CALLBACK luilocale_proc3A(LPSTR value, LONG_PTR lParam) {
+  ok(0,"callback called unexpected\n");
+  return(FALSE);
+}
+
+static void test_EnumUILanguageA(void)
+{ BOOL ret;
+  if (!pEnumUILanguagesA) {
+    trace("EnumUILanguagesA is not available on Win9x\n");
+    return;
+  }
+
+  SetLastError(ERROR_SUCCESS);
+  ret = pEnumUILanguagesA(luilocale_proc1A, 0, 0);
+  EXPECT_TRUE; EXPECT_VALID;
+
+  enumCount = 0;
+  SetLastError(ERROR_SUCCESS);
+  ret = pEnumUILanguagesA(luilocale_proc2A, 0, 0);
+  EXPECT_TRUE; EXPECT_VALID;
+
+  SetLastError(ERROR_SUCCESS);
+  ret = pEnumUILanguagesA(NULL, 0, 0);
+  EXPECT_FALSE; EXPECT_INVALID;
+
+  SetLastError(ERROR_SUCCESS);
+  ret = pEnumUILanguagesA(luilocale_proc3A, 0x5a5a5a5a, 0);
+  EXPECT_FALSE; EXPECT_FLAGS;
+
+  SetLastError(ERROR_SUCCESS);
+  ret = pEnumUILanguagesA(NULL, 0x5a5a5a5a, 0);
+  EXPECT_FALSE; EXPECT_INVALID;
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -2048,4 +2100,5 @@ START_TEST(locale)
 #if 0 /* this requires collation table patch to make it MS compatible */
   test_sorting();
 #endif
+  test_EnumUILanguageA();
 }

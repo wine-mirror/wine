@@ -3170,7 +3170,14 @@ BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwFlags
 {
     static char value[] = "0409";
 
-    if(!pUILangEnumProc) return FALSE;
+    if(!pUILangEnumProc) {
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    if(dwFlags) {
+	SetLastError(ERROR_INVALID_FLAGS);
+	return FALSE;
+    }
 
     FIXME("%p, %lx, %lx calling pUILangEnumProc with %s\n",
           pUILangEnumProc, dwFlags, lParam, debugstr_a(value));
@@ -3186,7 +3193,14 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
 {
     static WCHAR value[] = {'0','4','0','9',0};
 
-    if(!pUILangEnumProc) return FALSE;
+    if(!pUILangEnumProc) {
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+    if(dwFlags) {
+	SetLastError(ERROR_INVALID_FLAGS);
+	return FALSE;
+    }
 
     FIXME("%p, %lx, %lx calling pUILangEnumProc with %s\n",
           pUILangEnumProc, dwFlags, lParam, debugstr_w(value));
