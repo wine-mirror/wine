@@ -12,6 +12,7 @@ C_SRCS = \
 	class.c \
 	clipboard.c \
 	console.c \
+	context_alpha.c \
 	context_i386.c \
 	context_powerpc.c \
 	context_sparc.c \
