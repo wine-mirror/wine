@@ -17,6 +17,7 @@
 #include "hook.h"
 #include "commctrl.h"
 #include "wine/obj_clientserver.h"
+#include "wine/wingdi16.h"
 #include "debug.h"
 #include "ole2ver.h"
 #include "winreg.h"
@@ -2100,3 +2101,46 @@ static void OLEUTL_ReadRegistryDWORDValue(
   }
 }
 
+/******************************************************************************
+ * OleMetaFilePictFromIconAndLabel
+ *
+ * Returns a global memory handle to a metafile which contains the icon and
+ * label given.
+ * I guess the result of that should look somehow like desktop icons.
+ * If no hIcon is given, we load the icon via lpszSourceFile and iIconIndex.
+ * This code might be wrong at some places.
+ */
+HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(HICON hIcon, LPOLESTR lpszLabel, LPOLESTR lpszSourceFile, UINT16 iIconIndex)
+{
+    METAFILEPICT16 *mf;
+	HGLOBAL16 hmf;
+    HDC16 hdc;
+
+	FIXME(ole, "(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n\n\n", hIcon, (LPCSTR)lpszLabel, (LPCSTR)lpszSourceFile, iIconIndex);
+
+    if (!hIcon) {
+        if (lpszSourceFile) {
+			HINSTANCE16 hInstance = LoadLibrary16((LPCSTR)lpszSourceFile);
+
+	    	/* load the icon at index from lpszSourceFile */
+			hIcon = (HICON16)LoadIconA(hInstance, (LPCSTR)(DWORD)iIconIndex);
+
+			FreeLibrary16(hInstance);
+		} else
+			return (HGLOBAL)NULL;
+    }
+
+	hdc = CreateMetaFile16(NULL);
+	DrawIcon(hdc, 0, 0, hIcon); /* FIXME */
+	TextOut16(hdc, 0, 0, (LPCSTR)lpszLabel, 1); /* FIXME */
+
+	hmf = GlobalAlloc16(0, sizeof(METAFILEPICT16));
+	mf = (METAFILEPICT16 *)GlobalLock16(hmf);
+
+	mf->mm = MM_ANISOTROPIC;
+	mf->xExt = 20; /* FIXME: bogus */
+	mf->yExt = 20; /* dito */
+    mf->hMF = CloseMetaFile16(hdc);
+
+    return hmf;
+}
