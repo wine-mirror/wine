@@ -64,7 +64,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) $(DLLDIR)/$(TESTDLL)$(DLLEXT)
 crosstest:: @CROSSTEST@
 
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
-	$(CROSSCC) $(CROSSOBJS) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBS)
+	$(CROSSCC) $(CROSSOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBS)
 
 # Rules for cleaning
 
