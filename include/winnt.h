@@ -2783,6 +2783,11 @@ typedef struct _ACL_SIZE_INFORMATION
 #define SE_SYSTEM_ENVIRONMENT_NAME	TEXT("SeSystemEnvironmentPrivilege")
 #define SE_CHANGE_NOTIFY_NAME		TEXT("SeChangeNotifyPrivilege")
 #define SE_REMOTE_SHUTDOWN_NAME		TEXT("SeRemoteShutdownPrivilege")
+#define SE_UNDOCK_NAME                  TEXT("SeUndockPrivilege")
+#define SE_ENABLE_DELEGATION_NAME       TEXT("SeEnableDelegationPrivilege")
+#define SE_MANAGE_VOLUME_NAME           TEXT("SeManageVolumePrivilege")
+#define SE_IMPERSONATE_NAME             TEXT("SeImpersonatePrivilege")
+#define SE_CREATE_GLOBAL_NAME           TEXT("SeCreateGlobalPrivilege")
 
 #define SE_GROUP_MANDATORY 		0x00000001
 #define SE_GROUP_ENABLED_BY_DEFAULT 	0x00000002
