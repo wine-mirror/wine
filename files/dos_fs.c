@@ -1305,6 +1305,8 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
         DOSFS_ToDosDTAFormat( DRIVE_GetLabel( info->drive ), entry->cFileName );
         strcpy( entry->cAlternateFileName, entry->cFileName ); 
         info->cur_pos++;
+        TRACE("returning %s (%s) as label\n",
+               entry->cFileName, entry->cAlternateFileName);
         return 1;
     }
 

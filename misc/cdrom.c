@@ -780,6 +780,9 @@ DWORD CDROM_GetLabel(int drive, char *label)
 	    p, label);
 	CDROM_Close(&wcda);
     }
+    else
+        res = 0;
+
     return res;
 }
 
