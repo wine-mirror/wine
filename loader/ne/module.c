@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include "wine/port.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "winerror.h"
@@ -264,9 +265,9 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     {
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
-            TRACE("  Found: ordinal=%d\n",
-                            *(WORD *)(cpnt + *cpnt + 1) );
-            return *(WORD *)(cpnt + *cpnt + 1);
+            WORD ordinal = GET_UA_WORD( cpnt + *cpnt + 1 );
+            TRACE("  Found: ordinal=%d\n", ordinal );
+            return ordinal;
         }
         cpnt += *cpnt + 1 + sizeof(WORD);
     }
@@ -282,9 +283,9 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
     {
         if (((BYTE)*cpnt == len) && !memcmp( cpnt+1, buffer, len ))
         {
-            TRACE("  Found: ordinal=%d\n",
-                            *(WORD *)(cpnt + *cpnt + 1) );
-            return *(WORD *)(cpnt + *cpnt + 1);
+            WORD ordinal = GET_UA_WORD( cpnt + *cpnt + 1 );
+            TRACE("  Found: ordinal=%d\n", ordinal );
+            return ordinal;
         }
         cpnt += *cpnt + 1 + sizeof(WORD);
     }
@@ -331,7 +332,7 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
 	entry++;
 
     sel = entry->segnum;
-    offset = entry->offs;
+    offset = GET_UA_WORD( &entry->offs );
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = GlobalHandleToSel16(NE_SEG_TABLE(pModule)[sel-1].hSeg);
@@ -372,7 +373,7 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
     for (i=0; i < (ordinal - bundle->first - 1); i++)
 	entry++;
 
-    entry->offs = offset;
+    PUT_UA_WORD( &entry->offs, offset );
     return TRUE;
 }
 

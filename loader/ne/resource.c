@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "windef.h"
+#include "wine/port.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "global.h"
@@ -259,7 +260,7 @@ BOOL NE_InitResourceHandler( HMODULE16 hModule )
 
     while(pTypeInfo->type_id)
     {
-	pTypeInfo->resloader = DefResourceHandlerProc;
+	PUT_UA_DWORD( &pTypeInfo->resloader, (DWORD)DefResourceHandlerProc );
 	pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return TRUE;
@@ -285,8 +286,8 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId,
     {
         if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, typeId )))
             break;
-        prevHandler = pTypeInfo->resloader;
-        pTypeInfo->resloader = resourceHandler;
+        prevHandler = (FARPROC16)GET_UA_DWORD( &pTypeInfo->resloader );
+        PUT_UA_DWORD( &pTypeInfo->resloader, (DWORD)resourceHandler );
         pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
     }
     return prevHandler;
@@ -483,10 +484,10 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 	}
 	else
 	{
-	    if (    pTypeInfo->resloader 
-                 && pTypeInfo->resloader != DefResourceHandlerProc )
+            FARPROC16 resloader = (FARPROC16)GET_UA_DWORD( &pTypeInfo->resloader );
+	    if ( resloader && resloader != DefResourceHandlerProc )
                 pNameInfo->handle = NE_CallTo16_word_www(
-                    pTypeInfo->resloader, pNameInfo->handle, pModule->self, hRsrc );
+                    resloader, pNameInfo->handle, pModule->self, hRsrc );
 	    else
                 pNameInfo->handle = NE_DefResourceHandler(
                                          pNameInfo->handle, pModule->self, hRsrc );

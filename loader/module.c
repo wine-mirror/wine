@@ -356,7 +356,7 @@ HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
                     + strlen(filename) + 1;
     size = sizeof(NE_MODULE) +
                  /* loaded file info */
-                 of_size +
+                 ((of_size + 3) & ~3) + 
                  /* segment table: DS,CS */
                  2 * sizeof(SEGTABLEENTRY) +
                  /* name table */
@@ -405,7 +405,7 @@ HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
     ofs->cBytes = of_size < 256 ? of_size : 255;   /* FIXME */
     strcpy( ofs->szPathName, filename );
 
-    pSegment = (SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
+    pSegment = (SEGTABLEENTRY*)((char*)(pModule + 1) + ((of_size + 3) & ~3));
     pModule->seg_table = (int)pSegment - (int)pModule;
     /* Data segment */
     pSegment->size    = 0;
