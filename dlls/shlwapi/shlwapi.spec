@@ -212,7 +212,7 @@
 212 stdcall @(ptr ptr long) SHLWAPI_212
 213 stdcall @(ptr) SHLWAPI_213
 214 stdcall @(ptr ptr) SHLWAPI_214
-215 stdcall @(long long long) SHLWAPI_215
+215 stdcall @(str ptr long) SHLWAPI_215
 216 stub @
 217 stdcall @(wstr ptr ptr) SHLWAPI_217
 218 stdcall @(long wstr ptr ptr) SHLWAPI_218
@@ -263,12 +263,12 @@
 263 stub @
 264 stub @
 265 stub @
-266 stdcall @(long long long long) SHLWAPI_266
+266 stdcall @(long wstr ptr ptr) SHLWAPI_266
 267 stdcall @(long long long long) SHLWAPI_267
 268 stdcall @(long long) SHLWAPI_268
 269 stub @
 270 stub @
-271 stub @
+271 stdcall @(wstr wstr wstr) SHLWAPI_271
 272 stub @
 273 stub @
 274 stub @

@@ -46,6 +46,7 @@
 #include "winuser.h"
 #include "wine/debug.h"
 #include "shlwapi.h"
+#include "ordinal.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
@@ -1068,7 +1069,6 @@ HRESULT WINAPI SHLWAPI_168(IUnknown* lpUnkSink, REFIID riid, BOOL bAdviseOnly,
 /*************************************************************************
  *	@	[SHLWAPI.169]
  *
- *
  * Release an interface.
  *
  * PARAMS
@@ -1371,7 +1371,7 @@ DWORD WINAPI SHLWAPI_180(HMENU hMenu)
  *  bEnable [I] Whether to enable (TRUE) or disable (FALSE) the item.
  *
  * RETURNS
- *  The return code from CheckMenuItem.
+ *  The return code from EnableMenuItem.
  */
 UINT WINAPI SHLWAPI_181(HMENU hMenu, UINT wItemID, BOOL bEnable)
 {
@@ -1912,24 +1912,90 @@ DWORD WINAPI SHLWAPI_241 ()
 	return /* 0xabba1243 */ 0;
 }
 
+/* default shell policy registry key */
+static WCHAR strRegistryPolicyW[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o',
+                                      's','o','f','t','\\','W','i','n','d','o','w','s','\\',
+                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n',
+                                      '\\','P','o','l','i','c','i','e','s',0};
+
 /*************************************************************************
- *      @	[SHLWAPI.266]
+ * @                          [SHLWAPI.271]
  *
- * native does at least approximately:
- *     strcpyW(newstr, x);
- *     strcatW(newstr, "\\Restrictions");
- *     if (RegOpenKeyExA(80000001, newstr, 00000000,00000001,40520b78))
- *        return 0;
- *    *unknown*
+ * Retrieve a policy value from the registry.
+ *
+ * PARAMS
+ *  lpSubKey   [I]   registry key name
+ *  lpSubName  [I]   subname of registry key
+ *  lpValue    [I]   value name of registry value
+ *
+ * RETURNS
+ *  the value associated with the registry key or 0 if not found
+ */
+DWORD WINAPI SHLWAPI_271(LPCWSTR lpSubKey, LPCWSTR lpSubName, LPCWSTR lpValue)
+{
+	DWORD retval, datsize = 4;
+	HKEY hKey;
+
+	if (!lpSubKey)
+	  lpSubKey = (LPCWSTR)strRegistryPolicyW;
+	
+	retval = RegOpenKeyW(HKEY_LOCAL_MACHINE, lpSubKey, &hKey);
+    if (retval != ERROR_SUCCESS)
+	  retval = RegOpenKeyW(HKEY_CURRENT_USER, lpSubKey, &hKey);
+	if (retval != ERROR_SUCCESS)
+	  return 0;
+
+	SHGetValueW(hKey, lpSubName, lpValue, NULL, (LPBYTE)&retval, &datsize);
+	RegCloseKey(hKey);
+	return retval;  
+}
+
+/*************************************************************************
+ * @                         [SHLWAPI.266]
+ *
+ * Helper function to retrieve the possibly cached value for a specific policy
+ *
+ * PARAMS
+ *  policy     [I]   The policy to look for
+ *  initial    [I]   Main registry key to open, if NULL use default
+ *  polTable   [I]   Table of known policies, 0 terminated
+ *  polArr     [I]   Cache array of policy values
+ *
+ * RETURNS
+ *  The retrieved policy value or 0 if not successful
+ *
+ * NOTES
+ *  This function is used by the native SHRestricted function to search for the
+ *  policy and cache it once retrieved. The current Wine implementation uses a
+ *  different POLICYDATA structure and implements a similar algorithme adapted to
+ *  that structure.
  */
 DWORD WINAPI SHLWAPI_266 (
-	LPVOID w,
-	LPVOID x,   /* [in] partial registry key */
-	LPVOID y,
-	LPVOID z)
+	DWORD policy,
+	LPCWSTR initial, /* [in] partial registry key */
+	LPPOLICYDATA polTable,
+	LPDWORD polArr)
 {
-	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
-	return /* 0xabba1248 */ 0;
+	TRACE("(0x%08lx %s %p %p)\n", policy, debugstr_w(initial), polTable, polArr);
+
+	if (!polTable || !polArr)
+	  return 0;
+
+	for (;polTable->policy; polTable++, polArr++)
+	{
+	  if (policy == polTable->policy)
+	  {
+	    /* we have a known policy */
+
+	    /* check if this policy has been cached */
+		if (*polArr == SHELL_NO_POLICY)
+	      *polArr = SHLWAPI_271(initial, polTable->appstr, polTable->keystr);
+	    return *polArr;
+	  }
+	}
+	/* we don't know this policy, return 0 */
+	TRACE("unknown policy: (%08lx)\n", policy);
+	return 0;
 }
 
 /*************************************************************************

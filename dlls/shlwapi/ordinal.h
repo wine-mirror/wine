@@ -52,6 +52,17 @@ DWORD WINAPI SHLWAPI_2(LPCWSTR x, UNKNOWN_SHLWAPI_2 *y);
     } \
   } while (0)
 
+/* SHLWAPI_266 definitions and structures */
+#define SHELL_NO_POLICY -1
+
+typedef struct tagPOLICYDATA
+{
+  DWORD policy;        /* flags value passed to SHRestricted */
+  LPCWSTR appstr;      /* application str such as "Explorer" */
+  LPCWSTR keystr;      /* name of the actual registry key / policy */
+} POLICYDATA, *LPPOLICYDATA;
+
+
 extern HMODULE SHLWAPI_hshell32;
 
 /* Shared internal functions */
