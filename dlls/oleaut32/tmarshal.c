@@ -420,6 +420,7 @@ serialize_param(
     case VT_UI4:
     case VT_UINT:
     case VT_I4:
+    case VT_R4:
     case VT_UI2:
     case VT_UI1:
 	hres = S_OK;
@@ -764,7 +765,7 @@ deserialize_param(
 	    }
 	}
         case VT_ERROR:
-	case VT_BOOL: case VT_I4: case VT_UI4: case VT_UINT:
+	case VT_BOOL: case VT_I4: case VT_UI4: case VT_UINT: case VT_R4:
         case VT_UI2:
 	case VT_UI1:
 	    if (readit) {
