@@ -1675,7 +1675,7 @@ HINSTANCE WINAPI CoLoadLibrary(LPOLESTR16 lpszLibName, BOOL bAutoFree)
   
     TRACE("CoLoadLibrary(%p, %d\n", lpszLibName, bAutoFree);
 
-    hLibrary = LoadLibraryA(lpszLibName);
+    hLibrary = LoadLibraryExA(lpszLibName, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 
     if (!bAutoFree)
 	return hLibrary;
