@@ -16773,8 +16773,6 @@ esac
 
           ac_config_commands="$ac_config_commands loader"
 
-          ac_config_commands="$ac_config_commands loader/ne"
-
           ac_config_commands="$ac_config_commands memory"
 
           ac_config_commands="$ac_config_commands misc"
@@ -16788,8 +16786,6 @@ esac
           ac_config_commands="$ac_config_commands programs/regedit/tests"
 
           ac_config_commands="$ac_config_commands scheduler"
-
-          ac_config_commands="$ac_config_commands win32"
 
           ac_config_commands="$ac_config_commands windows"
 
@@ -17553,7 +17549,6 @@ do
   "graphics/x11drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics/x11drv" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
   "loader" ) CONFIG_COMMANDS="$CONFIG_COMMANDS loader" ;;
-  "loader/ne" ) CONFIG_COMMANDS="$CONFIG_COMMANDS loader/ne" ;;
   "memory" ) CONFIG_COMMANDS="$CONFIG_COMMANDS memory" ;;
   "misc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS misc" ;;
   "msdos" ) CONFIG_COMMANDS="$CONFIG_COMMANDS msdos" ;;
@@ -17561,7 +17556,6 @@ do
   "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
   "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
   "scheduler" ) CONFIG_COMMANDS="$CONFIG_COMMANDS scheduler" ;;
-  "win32" ) CONFIG_COMMANDS="$CONFIG_COMMANDS win32" ;;
   "windows" ) CONFIG_COMMANDS="$CONFIG_COMMANDS windows" ;;
   "include/config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -18282,8 +18276,6 @@ echo "$as_me: creating graphics/x11drv" >&6;} && mkdir "graphics/x11drv") ;;
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
     loader ) test -d "loader" || ({ echo "$as_me:$LINENO: creating loader" >&5
 echo "$as_me: creating loader" >&6;} && mkdir "loader") ;;
-    loader/ne ) test -d "loader/ne" || ({ echo "$as_me:$LINENO: creating loader/ne" >&5
-echo "$as_me: creating loader/ne" >&6;} && mkdir "loader/ne") ;;
     memory ) test -d "memory" || ({ echo "$as_me:$LINENO: creating memory" >&5
 echo "$as_me: creating memory" >&6;} && mkdir "memory") ;;
     misc ) test -d "misc" || ({ echo "$as_me:$LINENO: creating misc" >&5
@@ -18298,8 +18290,6 @@ echo "$as_me: creating programs/regapi/tests" >&6;} && mkdir "programs/regapi/te
 echo "$as_me: creating programs/regedit/tests" >&6;} && mkdir "programs/regedit/tests") ;;
     scheduler ) test -d "scheduler" || ({ echo "$as_me:$LINENO: creating scheduler" >&5
 echo "$as_me: creating scheduler" >&6;} && mkdir "scheduler") ;;
-    win32 ) test -d "win32" || ({ echo "$as_me:$LINENO: creating win32" >&5
-echo "$as_me: creating win32" >&6;} && mkdir "win32") ;;
     windows ) test -d "windows" || ({ echo "$as_me:$LINENO: creating windows" >&5
 echo "$as_me: creating windows" >&6;} && mkdir "windows") ;;
   esac
