@@ -401,6 +401,7 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 
 	      
 	    case D3DRENDERSTATE_COLORKEYENABLE:     /* 41 */
+	        /* This needs to be fixed. */
 	        if (dwRenderState)
 		    glEnable(GL_BLEND);
 		else

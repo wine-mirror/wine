@@ -41,7 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 #ifdef TEXTURE_SNOOP
 #include <stdio.h>
 
-static void snoop_texture(IDirectDrawSurfaceImpl *This) {
+static void 
+snoop_texture(IDirectDrawSurfaceImpl *This) {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
     char buf[128];
     FILE *f;
@@ -60,83 +61,6 @@ static void snoop_texture(IDirectDrawSurfaceImpl *This) {
 /*******************************************************************************
  *			   IDirectSurface callback methods
  */
-HRESULT gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey )
-{
-    DDSURFACEDESC *tex_d;
-    GLuint current_texture;
-    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) texture->tex_private;
-    
-    TRACE("(%p) : colorkey callback\n", texture);
-
-    /* Get the texture description */
-    tex_d = (DDSURFACEDESC *)&(texture->surface_desc);
-
-    /* Now, save the current texture */
-    ENTER_GL();
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
-    if (glThis->tex_name == 0) ERR("Unbound GL texture !!!\n");
-    glBindTexture(GL_TEXTURE_2D, glThis->tex_name);
-
-    if (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
-        FIXME("Todo Paletted\n");
-    } else if (tex_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
-        if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
-	    FIXME("Todo 3_3_2_0\n");
-	} else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
-	    if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
-	        /* Now transform the 5_6_5 into a 5_5_5_1 surface to support color keying */
-	        unsigned short *dest = (unsigned short *) HeapAlloc(GetProcessHeap(),
-								    HEAP_ZERO_MEMORY,
-								    tex_d->u1.lPitch * tex_d->dwHeight);
-		unsigned short *src = (unsigned short *) tex_d->lpSurface;
-		int x, y;
-		
-		for (y = 0; y < tex_d->dwHeight; y++) {
-		    for (x = 0; x < tex_d->dwWidth; x++) {
-		        unsigned short cpixel = src[x + y * tex_d->dwWidth];
-			
-			if ((dwFlags & DDCKEY_SRCBLT) &&
-			    (cpixel >= ckey->dwColorSpaceLowValue) &&
-			    (cpixel <= ckey->dwColorSpaceHighValue)) /* No alpha bit => this pixel is transparent */
-			    dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0000;
-			else                                         /* Alpha bit is set => this pixel will be seen */
-			    dest[x + y * tex_d->dwWidth] = (cpixel & ~0x003F) | ((cpixel & 0x001F) << 1) | 0x0001;
-		    }
-		}
-
-		glTexSubImage2D(GL_TEXTURE_2D,
-				texture->mipmap_level,
-				0, 0,
-				tex_d->dwWidth, tex_d->dwHeight,
-				GL_RGBA,
-				GL_UNSIGNED_SHORT_5_5_5_1,
-				dest);
-		
-		/* Frees the temporary surface */
-		HeapFree(GetProcessHeap(),0,dest);
-	    } else if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
-	        FIXME("Todo 5_5_5_1\n");
-	    } else if (tex_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
-	        FIXME("Todo 4_4_4_4\n");
-	    } else {
-	        ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
-	    }
-	} else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
-	    FIXME("Todo 8_8_8_0\n");
-	} else if (tex_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
-	    FIXME("Todo 8_8_8_8\n");
-	} else {
-	    ERR("Unhandled texture format (bad RGB count)\n");
-	}
-    } else {
-        ERR("Unhandled texture format (neither RGB nor INDEX)\n");
-    }
-    glBindTexture(GL_TEXTURE_2D, current_texture);
-    LEAVE_GL();
-
-    return DD_OK;
-}
-
 static HRESULT
 gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
@@ -189,6 +113,9 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		if ((src_d->dwFlags & DDSD_CKSRCBLT) &&
 		    (i >= src_d->ddckCKSrcBlt.dwColorSpaceLowValue) &&
 		    (i <= src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		    /* We should maybe here put a more 'neutral' color than the standard bright purple
+		       one often used by application to prevent the nice purple borders when bi-linear
+		       filtering is on */
 		    table[i][3] = 0x00;
 		else
 		    table[i][3] = 0xFF;
@@ -243,8 +170,14 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	        /* **********************
 		   GL_UNSIGNED_BYTE_3_3_2
 		   ********************** */
-	        format = GL_RGB;
-		pixel_format = GL_UNSIGNED_BYTE_3_3_2;
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    /* This texture format will never be used.. So do not care about color keying
+		       up until the point in time it will be needed :-) */
+		    error = TRUE;
+		} else {
+		    format = GL_RGB;
+		    pixel_format = GL_UNSIGNED_BYTE_3_3_2;
+		}
 	    } else {
 	        error = TRUE;
 	    }
@@ -253,20 +186,81 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
 		(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
 		(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
-	        format = GL_RGB;
-		pixel_format = GL_UNSIGNED_SHORT_5_6_5;
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    /* Converting the 565 format in 5551 packed to emulate color-keying.
+
+		       Note : in all these conversion, it would be best to average the averaging
+		              pixels to get the color of the pixel that will be color-keyed to
+			      prevent 'color bleeding'. This will be done later on if ever it is
+			      too visible.
+
+		       Note2: when using color-keying + alpha, are the alpha bits part of the
+		              color-space or not ?
+		    */
+		    DWORD i;
+		    WORD *src = (WORD *) src_d->lpSurface, *dst;
+		    
+		    surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		    dst = (WORD *) surface;
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        WORD color = *src++;
+			*dst = ((color & 0xFFC0) | ((color & 0x1F) << 1));
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= 0x0001;
+			dst++;
+		    }
+		
+		    format = GL_RGBA;
+		    pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		} else {
+		    format = GL_RGB;
+		    pixel_format = GL_UNSIGNED_SHORT_5_6_5;
+		}
 	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
 		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07C0) &&
 		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x003E) &&
 		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0001)) {
-	        format = GL_RGBA;
-		pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;	        
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
+		    DWORD i;
+		    WORD *src = (WORD *) src_d->lpSurface, *dst;
+		    
+		    surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		    dst = (WORD *) surface;
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        WORD color = *src++;
+			*dst = color & 0xFFFE;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= color & 0x0001;
+			dst++;
+		    }
+		}
 	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF000) &&
 		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0F00) &&
 		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x00F0) &&
 		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000F)) {
 	        format = GL_RGBA;
 		pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;	      
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    /* Change the alpha value of the color-keyed pixels to emulate color-keying. */
+		    DWORD i;
+		    WORD *src = (WORD *) src_d->lpSurface, *dst;
+		    
+		    surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		    dst = (WORD *) surface;
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        WORD color = *src++;
+			*dst = color & 0xFFF0;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= color & 0x000F;
+			dst++;
+		    }
+		}
 	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x0F00) &&
 		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00F0) &&
 		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000F) &&
@@ -279,9 +273,13 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		dst = surface;
 		
 		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-		    *dst++ = (((*src & 0xFFF0) >>  4) |
-			      ((*src & 0x000F) << 12));
-		    src++;
+		    WORD color = *src++;
+		    *dst = (color & 0x0FFF) << 4;
+		    if (((src_d->dwFlags & DDSD_CKSRCBLT) == 0) ||
+			(color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		        *dst |= (color & 0xF000) >> 12;
+		    dst++;
 		}
 
 	        format = GL_RGBA;
@@ -297,9 +295,13 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 		dst = (WORD *) surface;
 		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-		    *dst++ = (((*src & 0x8000) >> 15) |
-			      ((*src & 0x7FFF) <<  1));
-		    src++;
+		    WORD color = *src++;
+		    *dst = (color & 0x7FFF) << 1;
+		    if (((src_d->dwFlags & DDSD_CKSRCBLT) == 0) ||
+			(color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			(color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+		        *dst |= (color & 0x8000) >> 15;
+		    dst++;
 		}
 		
 	        format = GL_RGBA;
@@ -312,8 +314,29 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
 		(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
 		(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
-	        format = GL_BGR;
-		pixel_format = GL_UNSIGNED_BYTE;
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    /* This is a pain :-) */
+		    DWORD i;
+		    BYTE *src = (BYTE *) src_d->lpSurface;
+		    DWORD *dst;
+		    
+		    surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		    dst = (DWORD *) surface;
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        DWORD color = *((DWORD *) src) & 0x00FFFFFF;
+			src += 3;
+		        *dst = *src++ << 8;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= 0xFF;
+			dst++;
+		    }
+		    format = GL_RGBA;
+		    pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		} else {
+		  format = GL_BGR;
+		  pixel_format = GL_UNSIGNED_BYTE;
+		}
 	    } else {
 	        error = TRUE;
 	    }
@@ -322,20 +345,43 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00FF0000) &&
 		(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x0000FF00) &&
 		(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000000FF)) {
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    /* Just use the alpha component to handle color-keying... */
+		    DWORD i;
+		    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+		
+		    surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		    dst = (DWORD *) surface;
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        DWORD color = *src++;
+		        *dst = color & 0xFFFFFF00;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= color & 0x000000FF;
+			dst++;
+		    }
+		}
 	        format = GL_RGBA;
 		pixel_format = GL_UNSIGNED_INT_8_8_8_8;
 	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
 		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
 		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
 		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
-	        /* Just add an alpha component... */
-		DWORD i;
-		DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+	        if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    /* Just add an alpha component and handle color-keying... */
+		    DWORD i;
+		    DWORD *src = (DWORD *) src_d->lpSurface, *dst;
 		
-		surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
-		dst = (DWORD *) surface;
-		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
-		    *dst++ = (*src++ << 8) | 0xFF;
+		    surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		    dst = (DWORD *) surface;
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        DWORD color = *src++;
+		        *dst = color << 8;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= 0xFF;
+			dst++;
+		    }
 		}
 	        format = GL_RGBA;
 		pixel_format = GL_UNSIGNED_INT_8_8_8_8;
@@ -389,6 +435,20 @@ Main_IDirect3DTextureImpl_1_Initialize(LPDIRECT3DTEXTURE iface,
     return DD_OK;
 }
 
+static HRESULT
+gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDCOLORKEY ckey )
+{
+    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
+
+    /* Basically, the only thing we have to do is to re-upload the texture */
+    if (glThis->first_unlock == FALSE) {
+        ENTER_GL();
+	gltex_upload_texture(This, glThis->first_unlock);
+	LEAVE_GL();
+    }
+    return DD_OK;
+}
+
 HRESULT WINAPI
 Main_IDirect3DTextureImpl_2_1T_PaletteChanged(LPDIRECT3DTEXTURE2 iface,
                                               DWORD dwStart,
@@ -433,10 +493,12 @@ static void gltex_set_palette(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteIm
     /* First call the previous set_palette function */
     glThis->set_palette(This, pal);
 
-    /* Then re-upload the texture to OpenGL */
-    ENTER_GL();
-    gltex_upload_texture(This, glThis->first_unlock);
-    LEAVE_GL();
+    /* Then re-upload the texture to OpenGL only if the surface was already 'unlocked' once */
+    if (glThis->first_unlock == FALSE) {
+        ENTER_GL();
+	gltex_upload_texture(This, glThis->first_unlock);
+	LEAVE_GL();
+    }
 }
 
 static void
@@ -591,7 +653,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	    dst_d->ddckCKSrcBlt.dwColorSpaceHighValue = src_d->ddckCKSrcBlt.dwColorSpaceHighValue;
 	}
 
-	/* Copy the main memry texture into the surface that corresponds to the OpenGL
+	/* Copy the main memory texture into the surface that corresponds to the OpenGL
 	   texture object. */
 	memcpy(dst_d->lpSurface, src_d->lpSurface, src_d->u1.lPitch * src_d->dwHeight);
 

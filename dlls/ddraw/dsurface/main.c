@@ -735,6 +735,11 @@ Main_DirectDrawSurface_GetColorKey(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags,
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
     TRACE("(%p)->(%08lx,%p)\n",This,dwFlags,pCKey);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - colorkey flags : ");
+	DDRAW_dump_colorkeyflag(dwFlags);
+    }
+
     switch (dwFlags)
     {
     case DDCKEY_DESTBLT:
@@ -1095,36 +1100,72 @@ Main_DirectDrawSurface_SetColorKey(LPDIRECTDRAWSURFACE7 iface,
 				   DWORD dwFlags, LPDDCOLORKEY pCKey)
 {
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
-
+    
     TRACE("(%p)->(%08lx,%p)\n",This,dwFlags,pCKey);
-    if (pCKey == NULL)
-    {
-	FIXME("supposedly removing color key %lu\n",
-	      dwFlags & ~DDCKEY_COLORSPACE);
-	return DD_OK;
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - colorkey flags : ");
+	DDRAW_dump_colorkeyflag(dwFlags);
     }
 
-    switch (dwFlags & ~DDCKEY_COLORSPACE)
-    {
-    case DDCKEY_DESTBLT:
-	This->surface_desc.ddckCKDestBlt = *pCKey;
-	break;
-
-    case DDCKEY_DESTOVERLAY:
-	This->surface_desc.u3.ddckCKDestOverlay = *pCKey;
-	break;
-
-    case DDCKEY_SRCOVERLAY:
-	This->surface_desc.ddckCKSrcOverlay = *pCKey;
-	break;
-
-    case DDCKEY_SRCBLT:
-	This->surface_desc.ddckCKSrcBlt = *pCKey;
-	break;
-
-    default:
+    if ((dwFlags & DDCKEY_COLORSPACE) != 0) {
+        FIXME(" colorkey value not supported (%08lx) !\n", dwFlags);
 	return DDERR_INVALIDPARAMS;
     }
+    
+    /* TODO: investigate if this function can take multiple bits set at the same
+             time (ie setting multiple colorkey values at the same time with only
+	     one API call).
+    */
+    if (pCKey) {
+        switch (dwFlags & ~DDCKEY_COLORSPACE) {
+	    case DDCKEY_DESTBLT:
+	        This->surface_desc.ddckCKDestBlt = *pCKey;
+		This->surface_desc.dwFlags |= DDSD_CKDESTBLT;
+		break;
+
+	    case DDCKEY_DESTOVERLAY:
+	        This->surface_desc.u3.ddckCKDestOverlay = *pCKey;
+		This->surface_desc.dwFlags |= DDSD_CKDESTOVERLAY;
+		break;
+
+	    case DDCKEY_SRCOVERLAY:
+	        This->surface_desc.ddckCKSrcOverlay = *pCKey;
+		This->surface_desc.dwFlags |= DDSD_CKSRCOVERLAY;
+		break;
+
+	    case DDCKEY_SRCBLT:
+	        This->surface_desc.ddckCKSrcBlt = *pCKey;
+		This->surface_desc.dwFlags |= DDSD_CKSRCBLT;
+		break;
+
+	    default:
+	        return DDERR_INVALIDPARAMS;
+	}
+    } else {
+        switch (dwFlags & ~DDCKEY_COLORSPACE) {
+	    case DDCKEY_DESTBLT:
+		This->surface_desc.dwFlags &= ~DDSD_CKDESTBLT;
+		break;
+
+	    case DDCKEY_DESTOVERLAY:
+		This->surface_desc.dwFlags &= ~DDSD_CKDESTOVERLAY;
+		break;
+
+	    case DDCKEY_SRCOVERLAY:
+		This->surface_desc.dwFlags &= ~DDSD_CKSRCOVERLAY;
+		break;
+
+	    case DDCKEY_SRCBLT:
+		This->surface_desc.dwFlags &= ~DDSD_CKSRCBLT;
+		break;
+
+	    default:
+	        return DDERR_INVALIDPARAMS;
+	}
+    }
+
+    if (This->aux_setcolorkey_cb) This->aux_setcolorkey_cb(This, dwFlags, pCKey);
 
     return DD_OK;
 }
