@@ -2740,7 +2740,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
         di3 = *(DRIVER_INFO_3A *)pDriverInfo;
     else {
         memset(&di3, 0, sizeof(di3));
-        *(DRIVER_INFO_2A *)&di3 = *(DRIVER_INFO_2A *)pDriverInfo;
+	memcpy(&di3, pDriverInfo, sizeof(DRIVER_INFO_2A));
     }
 
     if(!di3.pName || !di3.pDriverPath || !di3.pConfigFile ||
