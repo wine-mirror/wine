@@ -1,4 +1,4 @@
-This is release 20010305 of Wine, a free implementation of Windows on
+This is release 20010326 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
@@ -6,10 +6,9 @@ correctly.
 Patches should be submitted to "wine-patches@winehq.com".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-20010305: (see ChangeLog for details)
-	- Some improvements to the wineserver protocol.
-	- The usual common controls fixes/improvements.
-	- Version information in builtin dlls.
+WHAT'S NEW with Wine-20010326: (see ChangeLog for details)
+	- Serial async I/O improvements.
+	- Support for app-specific dll overrides in config file.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -18,16 +17,16 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20010305.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20010305.tar.gz
-  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20010305.tar.gz
-  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20010305.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20010326.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20010326.tar.gz
+  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20010326.tar.gz
+  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20010326.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 For more download locations, see http://ftpsearch.lycos.com. These
 locations also hold pre-built documentation packages in various
 formats: wine-doc-html.tar.gz, wine-doc-txt.tar.gz, wine-doc.pdf.gz
-and wine-doc.ps.gz
+and wine-doc.ps.gz.
 
 You can also get the current source directly from the CVS tree. Check
 http://www.winehq.com/dev.html for details.
@@ -35,11 +34,9 @@ http://www.winehq.com/dev.html for details.
 If you submitted a patch, please check to make sure it has been
 included in the new release.
 
-If you want to get the new releases faster, you can subscribe to the
-wine-patches mailing list by sending a mail containing 'subscribe
-wine-patches your_address' to majordomo@tiger.informatik.hu-berlin.de.
-You will get a patch against the previous release when a new one is
-released.
+If you want to receive by mail a patch against the previous release
+when a new one is released, you can subscribe to the mailing list at
+http://tiger.informatik.hu-berlin.de/cgi-bin/mailman/listinfo/wine-patches.
 
 Wine is available thanks to the work of many people. See the file
 AUTHORS in the distribution for the complete list.

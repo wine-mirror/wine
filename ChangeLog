@@ -1,4 +1,383 @@
 ----------------------------------------------------------------
+2001-03-26  Alexandre Julliard  <julliard@winehq.com>
+
+	* documentation/samples/config:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Added some additional defaults and samples to [fonts] section.
+
+2001-03-23  Alexandre Julliard  <julliard@winehq.com>
+
+	* misc/options.c, windows/dce.c, windows/win.c,
+	  windows/x11drv/event.c, windows/x11drv/wnd.c,
+	  dlls/x11drv/x11drv_main.c, documentation/samples/config,
+	  documentation/wine.man.in, graphics/x11drv/xfont.c,
+	  include/options.h, include/x11drv.h:
+	Cleanup properly on x11drv unloading.
+	Moved --synchronous option into config file.
+	Removed --desktop, --display and --language command-line options.
+
+	* dlls/winmm/mciwave/mciwave.c:
+	James Hatheway <james@macadamian.com>
+	- MCI_SAVE should overwrite its destination file.
+	- widClose() is sometimes failing... MCI (in WAVE_mciRecordCallback)
+	  shouldn't queue up buffers if it knows we are no longer recording.
+
+	* dlls/user/user_main.c, files/profile.c, memory/local.c,
+	  objects/gdiobj.c, objects/metafile.c, windows/user.c:
+	Small dll separation fixes.
+
+	* dlls/advapi32/registry.c:
+	Use TEB static buffer for Unicode conversion.
+
+	* tools/winemaker:
+	Francois Gouget <fgouget@codeweavers.com>
+	Added handling of .hpp files (another extension for C++ headers).
+	The wrapper code needs to import dlls too.
+	All the generated wrapper files were identical, the 'variable'
+	subsitution was done on the template itself. Oups!
+
+	* dlls/version/info.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	ConvertVersionInfo32To16: the end of the child list may also be marked
+	by a 0-byte child.
+
+2001-03-22  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/kernel/comm.c, files/file.c, include/file.h, include/server.h,
+	  include/thread.h, scheduler/synchro.c, server/async.c,
+	  server/object.h, server/request.h, server/serial.c, server/trace.c:
+	Michael McCormack <mccormac@aals27.alcatel.com.au>
+	Use poll() on the client-side during server waits to implement
+	overlapped I/O.
+
+	* include/server.h, scheduler/process.c, server/console.c,
+	  server/trace.c, win32/console.c:
+	Use the new send_fd mechanism for the set_console_fd server request.
+
+	* dlls/shlwapi/reg.c, dlls/x11drv/x11ddraw.c, dlls/x11drv/xvidmode.c,
+	  dlls/comctl32/comboex.c:
+	Jeff Garzik <jgarzik@mandrakesoft.com>
+	Added needed string.h includes.
+
+2001-03-21  Alexandre Julliard  <julliard@winehq.com>
+
+	* windows/dce.c, windows/dialog.c, windows/nonclient.c, windows/win.c,
+	  windows/winpos.c, windows/x11drv/wnd.c:
+	Cleaned up assumptions about WS_CHILD flag so that we can allow it to
+	be changed in SetWindowLong.
+
+	* dlls/ntdll/debugtools.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Increase debug buffer size up to 1024 bytes.
+
+	* configure, configure.in, programs/Makefile.in,
+	  programs/winetest/.cvsignore, programs/winetest/Makefile.PL,
+	  programs/winetest/Makefile.in, programs/winetest/Makefile.win32,
+	  programs/winetest/test.pl, programs/winetest/wine.pm,
+	  programs/winetest/wine.xs, programs/winetest/winetest.c,
+	  programs/winetest/winetest.spec:
+	Added first version of the Perl regression testing framework.
+
+	* documentation/samples/config, documentation/wine.conf.man.in,
+	  loader/loadorder.c:
+	Added "*" wildcard entry to DllOverrides to replace DllDefaults
+	section; this way it can also be specified on a per-app basis.
+	Removed compiled-in defaults for dlls mentioned in the sample config.
+	Update man page.
+
+	* dlls/ddraw/d3dtexture.c, dlls/winmm/mcicda/mcicda.c,
+	  include/netspi.h, server/main.c, server/trace.c:
+	Jeff Garzik <jgarzik@mandrakesoft.com>
+	Warning fixes.
+
+	* tools/winebuild/spec32.c, tools/wmc/mcl.c, scheduler/pthread.c,
+	  scheduler/synchro.c, server/atom.c:
+	Jeff Garzik <jgarzik@mandrakesoft.com>
+	Added some inclusions of string.h where necessary.
+
+	* loader/pe_image.c:
+	Disable DONT_RESOLVE_DLL_REFERENCES for builtin dlls.
+
+	* loader/module.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Allow loading of built-in dlls with LOAD_LIBRARY_AS_DATAFILE flag set.
+
+	* dlls/winmm/wineoss/audio.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Show an error if small enough fragment sizes couldn't be set.
+	Force a complete close/reopen of the sound device if pause is
+	requested in DirectSound mode (many drivers require this).
+
+	* dlls/ddraw/ddraw/user.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Remove obsolete and misleading FIXME.
+
+	* dlls/gdi/gdi32.spec:
+	Ove Kaaven <ovek@transgaming.com>
+	Implemented Get/SetDeviceGammaRamp.
+
+2001-03-20  Alexandre Julliard  <julliard@winehq.com>
+
+	* documentation/samples/config, documentation/wine.man.in,
+	  include/loadorder.h, include/options.h, loader/loadorder.c,
+	  loader/main.c, loader/module.c, loader/ne/module.c, misc/options.c:
+	- Added support for app-specific dll overrides using
+	  AppDefaults\<appname>\DllOverrides configuration section.
+	- Better support for multiple --dll options.
+	- Added warning message to discourage putting multiple dlls in a
+	  single override entry.
+
+	* win32/except.c:
+	Terminate process on unhandled ^C exception instead of launching the
+	debugger.
+
+	* dlls/ttydrv/dc.c, dlls/wineps/init.c,
+	  graphics/enhmetafiledrv/init.c, graphics/metafiledrv/init.c,
+	  graphics/win16drv/init.c, graphics/x11drv/init.c, include/gdi.h,
+	  include/wingdi.h, objects/dc.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Implemented Get/SetDeviceGammaRamp.
+
+	* dlls/user/user32.spec, windows/win.c:
+	Eric Kohl <ekohl@codeweavers.com>
+	Added stubs for GetWindowsModuleFileName[A/W].
+
+	* controls/combo.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	Native version seems to always re-draw the selected text at the end of
+	a rollup.
+
+	* dlls/x11drv/x11ddraw.c, dlls/x11drv/x11ddraw.h,
+	  dlls/x11drv/xvidmode.c, dlls/x11drv/xvidmode.h, include/x11drv.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Added gamma ramp code to the XVidMode interface.
+
+	* include/ddrawi.h:
+	Ove Kaaven <ovek@transgaming.com>
+	More DirectDraw HAL type declarations.
+
+2001-03-19  Alexandre Julliard  <julliard@winehq.com>
+
+	* configure, configure.in:
+	Satsuki Fujishima <sf@freebsd.org>
+	Fixed FreeBDS xpg4 check.
+
+	* Make.rules.in, tools/Makefile.in, tools/specmaker/Makefile.in:
+	Satsuki Fujishima <sf@freebsd.org>
+	Use INSTALL_SCRIPT instead of INSTALL_PROGRAM for scripts.
+
+	* include/wine/wine_common_ver.rc, dlls/oleaut32/.cvsignore,
+	  dlls/oleaut32/Makefile.in, dlls/oleaut32/oleaut32.spec,
+	  dlls/oleaut32/version.rc:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Add version info for built-in oleaut32.dll.
+
+	* controls/menu.c:
+	Gerard Patel <gerard.patel@asi.fr>
+	Fix system menu crash by ensuring that item->text is not null when
+	MF_TEXT set.
+
+	* include/ddraw.h:
+	Ove Kaaven <ovek@transgaming.com>
+	Added IDirectDrawGammaControl interface declaration.
+
+	* dlls/version/info.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Truncate version data if provided buffer is not large enough.
+
+	* dlls/dsound/dsound_main.c:
+	Ove Kaaven <ovek@transgaming.com>
+	Fixed sound disappearing after on-the-fly sample rate changes and
+	after certain underrun conditions.
+	Compilation fixes for when USE_DSOUND3D is defined.
+
+	* windows/winpos.c: Ove Kaaven <ovek@arcticnet.no>
+	Win2000: If both WS_EX_LAYERED and WS_EX_TRANSPARENT styles are set,
+	mouse clicks should go straight through the window.
+
+	* dlls/shell32/shellpath.c:
+	Eric Kohl <ekohl@codeweavers.com>
+	SHGetSpecialFolderPathA must be able to create a full path if it
+	doesn't exist.
+
+	* dlls/msvcrt/except.c, dlls/msvcrt/file.c, dlls/msvcrt/msvcrt.spec:
+	Eric Kohl <ekohl@codeweavers.com>
+	Added stub for _setjmp3().
+	Implemented _sopen().
+
+2001-03-16  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/comctl32/comctl32.h, dlls/comctl32/commctrl.c,
+	  dlls/comctl32/rsrc.rc:
+	Gerard Patel <gerard.patel@asi.fr>
+	Added version info.
+
+	* graphics/x11drv/xfont.c, include/gdi.h, include/win16drv.h,
+	  include/x11drv.h, objects/font.c, dlls/ttydrv/graphics.c,
+	  dlls/ttydrv/ttydrv.h, dlls/wineps/font.c, dlls/wineps/psdrv.h,
+	  graphics/win16drv/font.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Moved GetTextMetrics to unicode.
+
+	* dlls/version/info.c, include/winver.h:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Fixed prototype of GetFileVersionInfoA/W.
+
+	* dlls/comctl32/comboex.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	- Documented things known to be unimplemented.
+	- Implemented CBN_SELCHANGE, CBN_KILLFOCUS, and CBN_SELENDOK.
+	- Corrected CBEN_ENDEDIT notifies to always have edit control text.
+	- Locked "selected" state of icon to focus state of edit control (if
+	  it exists) just like native.
+
+	* dlls/comctl32/rebar.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	- Correct RBN_CHILDSIZE band rectangle to match native.
+	- Correct flags in DeferWindowPos to SWP_NOZORDER to match native.
+	- Make handling ComboBox and ComboBoxEx the same when moving child
+	  windows.
+
+	* windows/spy.c:
+	Guy L. Albertelli <galberte@neo.lrun.com>
+	Label the width and height correctly in the WINDOWPOS display.
+
+	* include/winuser.h:
+	Ove Kaaven <ovek@arcticnet.no>
+	Added Win2000 WS_EX_LAYERED window style.
+
+	* tools/wineshelllink:
+	Marcus Meissner <Marcus.Meissner@caldera.de>
+	Replaced one .kde with .kde2 in KDE2 menu code.
+
+	* winedefault.reg: Ove Kaaven <ovek@arcticnet.no>
+	Removed path from dplayx registry entry, so that the builtin dplayx
+	can be loaded.
+
+	* tools/winemaker:
+	Francois Gouget <fgouget@codeweavers.com>
+	Set LD_LIBRARY_PATH if necessary before calling wrc & winebuild.
+
+2001-03-14  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/version/info.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Return from GetFileVersionInfo(Size) if specified file found, but
+	VS_VERSION_INFO resource not.
+
+	* server/serial.c:
+	Mike McCormack <mike_mccormack@looksmart.com.au>
+	Removed broken support for EV_TXEMPTY because it causes busy loops.
+
+	* server/async.c:
+	Mike McCormack <mike_mccormack@looksmart.com.au>
+	Add missing release object so server exits cleanly.
+
+	* controls/menu.c:
+	Gerard Patel <gerard.patel@asi.fr>
+	Recalculate menu sizes if WM_INITMENU has recreated/changed something.
+
+2001-03-13  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/kernel/nls/cht.nls:
+	Hann-huei Chiou <koala@mana.ee.ntu.edu.tw>
+	Updated.
+
+	* dlls/kernel/kernel32.spec, include/winbase.h, include/winnt.h,
+	  scheduler/thread.c:
+	James Juran <jamesjuran@alumni.psu.edu>
+	Added stub for SetThreadExecutionState (new function in Win98/2000).
+
+	* windows/winproc.c:
+	Rein Klazes <rklazes@casema.net>
+	Fix Unicode/Ansi message translation for some listbox/combobox
+	messages with a zero valued lparam. Output an error when the
+	translation fails.
+
+	* include/wingdi.h, objects/font.c:
+	Huw D M Davies <hdavies@codeweavers.com>
+	Fix typo in OUTLINETEXTMETRIC definition.
+
+	* controls/edit.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Yet another attempt on fixing notifications in the edit control.
+
+	* documentation/samples/config:
+	Marcus Meissner <marcus@jet.franken.de>
+	Add some specific afmdirs as examples.
+
+	* dlls/wineps/afm.c:
+	Ian Pilcher <pilcher@concentric.net>
+	Don't load AFM files from predefined directories; use [afmdirs]
+	section in Wine config file instead.
+
+2001-03-10  Alexandre Julliard  <julliard@winehq.com>
+
+	* controls/edit.c:
+	Dmitry Timoshkov <dmitry@codeweavers.com>
+	Fixed notifications of the edit control.
+
+	* controls/static.c:
+	Gerard Patel <gerard.patel@asi.fr>
+	Call DefWindowProc for WM_CTLCOLORSTATIC message when the apps does
+	not.
+
+	* controls/combo.c, dlls/winmm/joystick/joystick.c, dlls/winmm/mmio.c,
+	  loader/loadorder.c:
+	Francois Gouget <fgouget@codeweavers.com>
+	Fixed spelling/typos in comments.
+
+	* tools/winemaker:
+	Francois Gouget <fgouget@codeweavers.com>
+	Added missing extension for 'ole32.dll'.
+
+	* include/winbase.h:
+	Francois Gouget <fgouget@codeweavers.com>
+	Added CreateRemoteThread.
+
+	* dlls/shell32/shell32_main.c:
+	James Juran <jamesjuran@alumni.psu.edu>
+	Implement SHGetFileInfoW by calling SHGetFileInfoA.
+
+	* dlls/commdlg/filedlg95.c, dlls/shell32/shlfolder.c:
+	Gerard Patel <gerard.patel@asi.fr>
+	Handle empty strings and invalid values in lpstrInitialDir for 32 bits
+	open file dialogs.
+
+2001-03-08  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/kernel/Makefile.in:
+	Added version16.rc in RC_SRCS list.
+
+	* scheduler/client.c, scheduler/synchro.c, scheduler/thread.c,
+	  server/request.c, server/request.h, server/thread.c, server/trace.c,
+	  include/server.h, include/thread.h:
+	Added support for nested server waits (to allow waiting in signal
+	handlers).
+
+	* README, tools/winecheck:
+	Andreas Mohr <a.mohr@mailto.de>
+	Added a perl script to check many aspects of Wine configuration.
+
+	* dlls/commdlg/finddlg32.c:
+	Gerard Patel <gerard.patel@asi.fr>
+	LPARAM in find dialog wm_initdialog is the find/replace structure, not
+	custdata.
+
+	* dlls/kernel/nls/lvi.nls:
+	Nerijus Baliunas <nerijus@users.sourceforge.net>
+	Updated Latvian date format.
+
+	* tools/wineshelllink:
+	Marcus Meissner <Marcus.Meissner@caldera.de>
+	Added SHELL linking of KDE2 desktop/menu entries.
+
+2001-03-05  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/version.h, ANNOUNCE, ChangeLog:
+	Release 20010305.
+
+----------------------------------------------------------------
 2001-03-05  Alexandre Julliard  <julliard@winehq.com>
 
 	* dlls/comctl32/listview.c:
