@@ -1025,6 +1025,8 @@ AC_CHECK_FUNCS(\
 	clone \
 	finite \
 	fpclass \
+	fstatfs \
+	fstatvfs \
 	ftruncate \
 	ftruncate64 \
 	futimes \

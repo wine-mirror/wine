@@ -222,6 +222,10 @@ struct statvfs
 
 #ifndef NO_LIBWINE_PORT
 
+#ifndef HAVE_FSTATVFS
+int fstatvfs( int fd, struct statvfs *buf );
+#endif
+
 #ifndef HAVE_GETOPT_LONG
 extern char *optarg;
 extern int optind;
@@ -391,6 +395,7 @@ extern long interlocked_xchg_add( long *dest, long incr );
 
 #define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
 
+#define fstatvfs                __WINE_NOT_PORTABLE(fstatvfs)
 #define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
 #define getopt_long_only        __WINE_NOT_PORTABLE(getopt_long_only)
 #define getpagesize             __WINE_NOT_PORTABLE(getpagesize)

@@ -125,6 +125,12 @@
 /* Define to 1 if the system has the type `fsfilcnt_t'. */
 #undef HAVE_FSFILCNT_T
 
+/* Define to 1 if you have the `fstatfs' function. */
+#undef HAVE_FSTATFS
+
+/* Define to 1 if you have the `fstatvfs' function. */
+#undef HAVE_FSTATVFS
+
 /* Define to 1 if you have the <ft2build.h> header file. */
 #undef HAVE_FT2BUILD_H
 
