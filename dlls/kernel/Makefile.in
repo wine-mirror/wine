@@ -25,6 +25,6 @@ MC_SRCS = \
 
 @MAKE_DLL_RULES@
 
-depend: $(MC_SRCS:.mc=.rc)
+depend $(RC_SRCS:.rc=.s): $(MC_SRCS:.mc=.rc)
 
 ### Dependencies:
