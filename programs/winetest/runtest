@@ -115,7 +115,7 @@ if (@modules)
 }
 
 # set environment variables needed for Wine
-if (defined($topobjdir))
+if (defined($topobjdir) && defined($program))
 {
     chop($topobjdir = `cd $topobjdir && pwd`);
     $ENV{LD_LIBRARY_PATH} = $topobjdir . ":" . $ENV{LD_LIBRARY_PATH};
@@ -123,7 +123,6 @@ if (defined($topobjdir))
     $ENV{WINESERVER} = $topobjdir . "/server/wineserver";
     $ENV{WINELOADER} = $topobjdir . "/wine";
     $ENV{WINETEST_PLATFORM} = $platform || "wine";
-    $program ||= "winetest.exe";
     exec $ENV{WINELOADER}, $program, $infile, @ARGV;
 }
 else
@@ -132,7 +131,7 @@ else
 }
 
 # and now exec the program
-$program ||= "winetest.exe";
+$program ||= "perl";
 exec $program, $infile, @ARGV;
 print STDERR "Could not exec $program\n";
 exit 1;

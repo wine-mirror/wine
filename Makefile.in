@@ -128,7 +128,7 @@ checklink::
 	@cd programs && $(MAKE) checklink
 
 test_environment: dummy
-	@cd programs/winetest && $(MAKE) all
+	@cd programs/winetest && $(MAKE) test_environment
 
 $(TESTSUBDIRS:%=%/__test__): test_environment
 

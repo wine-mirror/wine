@@ -82,7 +82,6 @@ LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11
 LIBUNICODE= -L$(TOPOBJDIR)/unicode -lwine_unicode
 LIBUUID   = -L$(TOPOBJDIR)/ole -lwine_uuid
 
-WINETEST     = $(TOPOBJDIR)/programs/winetest/winetest.exe$(DLLEXT)
 RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
 RUNTESTFLAGS = -q -P wine -M $(MODULE) -T $(TOPOBJDIR)
 TESTRESULTS  = $(PLTESTS:.pl=.ok) $(CTESTS:.c=.ok)
@@ -157,7 +156,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(RUNTEST) $(RUNTESTFLAGS) -p $(TESTPROGRAM)$(DLLEXT) $< && touch $@
 
 .pl.ok:
-	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
+	$(RUNTEST) $(RUNTESTFLAGS) $(PLTESTPROGRAM:%=-p %) $< && touch $@
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 
@@ -293,11 +292,8 @@ $(SUBDIRS:%=%/__test__): dummy
 
 .PHONY: check test $(SUBDIRS:%=%/__test__)
 
-$(PLTESTS:.c=.ok): $(WINETEST)
+$(PLTESTS:.pl=.ok): $(PLTESTPROGRAM)
 $(CTESTS:.c=.ok): $(TESTPROGRAM)$(DLLEXT)
-
-$(WINETEST):
-	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) winetest.exe$(DLLEXT)
 
 $(TESTMAIN):
 	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.o

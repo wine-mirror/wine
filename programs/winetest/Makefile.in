@@ -18,17 +18,24 @@ EXTRA_OBJS = wine.o
 
 EXTRASUBDIRS = include tests
 
+PLTESTPROGRAM = $(MODULE)$(DLLEXT)
+
 PLTESTS = \
 	tests/wine.pl
 
+# override all: target so that we don't build the Perl stuff by default
+test_environment: wtmain.o
+
 @MAKE_PROG_RULES@
 
-all: wtmain.o
+all: test_environment
 
 wine.c: wine.xs
 	perl $(XSUBPPDIR)/xsubpp -typemap $(XSUBPPDIR)/typemap $(SRCDIR)/wine.xs >wine.c || $(RM) wine.c
 
 clean::
 	$(RM) wine.c
+
+.PHONY: test_environment
 
 ### Dependencies:
