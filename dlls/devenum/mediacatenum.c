@@ -220,7 +220,8 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
         break;
     case VT_I4:
     case VT_UI4:
-        lpData = (LPVOID)V_UNION(pVar, ulVal);
+        TRACE("writing %lu\n", V_UNION(pVar, ulVal));
+        lpData = (LPVOID)&V_UNION(pVar, ulVal);
         dwType = REG_DWORD;
         cbData = sizeof(DWORD);
         break;
