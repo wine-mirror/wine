@@ -139,6 +139,7 @@ BOOL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR de
 
     if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
+        if (!BITMAP_stock_bitmap) BITMAP_stock_bitmap = GetCurrentObject( hdc, OBJ_BITMAP );
         physDev->drawable  = BITMAP_stock_pixmap;
         physDev->depth     = 1;
     }

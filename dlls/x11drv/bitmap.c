@@ -34,7 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
-Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
+HBITMAP BITMAP_stock_bitmap = 0;   /* default stock bitmap */
+Pixmap BITMAP_stock_pixmap = 0;    /* pixmap for the default stock bitmap */
 
 /***********************************************************************
  *           X11DRV_BITMAP_Init
@@ -76,7 +77,7 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     if(physDev->xrender)
         X11DRV_XRender_UpdateDrawable( physDev );
 
-    if (hbitmap == GetStockObject(DEFAULT_BITMAP))
+    if (hbitmap == BITMAP_stock_bitmap)
         physDev->drawable = BITMAP_stock_pixmap;
     else
         physDev->drawable = (Pixmap)bmp->physBitmap;
@@ -128,7 +129,7 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         GDI_ReleaseObj( hbitmap );
 	return FALSE;
     }
-    if (hbitmap == GetStockObject(DEFAULT_BITMAP))
+    if (hbitmap == BITMAP_stock_bitmap)
     {
         ERR( "called for stock bitmap, please report\n" );
         GDI_ReleaseObj( hbitmap );

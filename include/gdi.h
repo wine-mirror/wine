@@ -65,9 +65,6 @@ typedef struct tagGDIOBJHDR
     struct hdc_list *hdcs;
 } GDIOBJHDR;
 
-/* extra stock object: default 1x1 bitmap for memory DCs */
-#define DEFAULT_BITMAP (STOCK_LAST+1)
-
 /* bitmap object */
 
 typedef struct tagBITMAPOBJ

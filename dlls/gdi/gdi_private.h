@@ -28,6 +28,9 @@
 #define METAFILE_MEMORY 1
 #define METAFILE_DISK   2
 
+/* extra stock object: default 1x1 bitmap for memory DCs */
+#define DEFAULT_BITMAP (STOCK_LAST+1)
+
 struct gdi_obj_funcs
 {
     HGDIOBJ (*pSelectObject)( HGDIOBJ handle, void *obj, HDC hdc );

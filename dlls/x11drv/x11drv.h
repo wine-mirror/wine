@@ -111,6 +111,7 @@ typedef struct
 
   /* GCs used for B&W and color bitmap operations */
 extern GC BITMAP_monoGC, BITMAP_colorGC;
+extern HBITMAP BITMAP_stock_bitmap;  /* default stock bitmap */
 extern Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
 
 #define BITMAP_GC(bmp) \
