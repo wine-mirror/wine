@@ -415,7 +415,7 @@ debug_channels (exec pidl shell shlctrl)
 @ stdcall DllGetVersion(ptr)SHELL32_DllGetVersion
 @ stub SHGetFreeDiskSpace
 @ stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA
-
+@ stdcall SHGetSpecialFolderPathW(long ptr long long) SHGetSpecialFolderPathW
 #
 # version 4.72 (IE4.01)
 # _WIN32_IE >= 0x0401
