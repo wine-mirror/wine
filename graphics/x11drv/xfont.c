@@ -458,7 +458,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
        else
 	   strcat( lpLFD, "-i" );
    else 
-       strcat( lpLFD, (uRelax < 4) ? "-r" : "-*" );
+       strcat( lpLFD, (uRelax < 6) ? "-r" : "-*" );
 
 /* add width style and skip serifs */
    if( fo->fi->fi_flags & FI_NORMAL )
@@ -511,15 +511,18 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
 #define CHRS_CASE1(charset)	case 0: \
 				case 3: \
 		     		case 6: \
-				case 9: sprintf(lpEncoding, charset ); break; 
+				case 9: \
+				case 12: sprintf(lpEncoding, charset ); break; 
 #define CHRS_CASE2(charset)	case 1: \
                                 case 4: \
                                 case 7: \
-                                case 10: sprintf(lpEncoding, charset ); break;
+                                case 10: \
+				case 13: sprintf(lpEncoding, charset ); break;
 #define CHRS_CASE3(charset)	case 2: \
                                 case 5: \
                                 case 8: \
-                                case 11: sprintf(lpEncoding, charset ); break;
+                                case 11: \
+				case 14: sprintf(lpEncoding, charset ); break;
 #define CHRS_DEF(charset)	default: sprintf(lpEncoding, charset ); break;
 
    if( fo->fi->df.dfCharSet == ANSI_CHARSET )
@@ -651,7 +654,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
 	switch (uRelax) {
 	CHRS_CASE1( "*-fontspecific" );
         CHRS_CASE2( "*-symbol" );
-	CHRS_DEF( "*" ); /* whatever */
+	CHRS_DEF( "*-*" ); /* whatever */
 	}
    }
 
@@ -678,30 +681,33 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
        case 3: 
        case 4:
        case 5:
-	    sprintf( lpch, "%s-*-%i-%c-%c-*-%s", h_string, 
-			fo->fi->lfd_resolution, ch, w, lpEncoding );
-	    break;
-
-       case 6:
+       case 6: /* 6-8 will have replaced an 'r' in slant by '*' */
        case 7:
        case 8:
-	    sprintf( lpch, "%s-*-%i-%c-*-*-%s",
-			h_string, fo->fi->lfd_resolution, ch, lpEncoding );
+	    sprintf( lpch, "%s-*-%i-%c-%c-*-%s", h_string, 
+			fo->fi->lfd_resolution, ch, w, lpEncoding );
 	    break;
 
        case 9:
        case 10:
        case 11:
+	    sprintf( lpch, "%s-*-%i-%c-*-*-%s",
+			h_string, fo->fi->lfd_resolution, ch, lpEncoding );
+	    break;
+
+       case 12:
+       case 13:
+       case 14:
 	    sprintf( lpch, "%i-*-%i-%c-*-*-%s", fo->fi->lfd_height,
 			fo->fi->lfd_resolution, ch, lpEncoding );
 	    break;
 
-       case 12:
+       case 15:
 	    sprintf( lpch, "%i-*-*-*-*-*-%s", fo->fi->lfd_height, lpEncoding );
 	    break;
 
        default:
-	    sprintf( lpch, "%i-*-*-*-*-*-*", fo->fi->lfd_height);
+	    sprintf( lpch, "%i-*-*-*-*-*-*-*", fo->fi->lfd_height);
 	    break;
 
        /* to avoid an infinite loop; those will allways match */
@@ -709,7 +715,7 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
             sprintf( lpLFD, "-*-*-*-*-*-*-*-*-*-*-*-*-iso8859-1" );
             break;
        case 201:
-            sprintf( lpLFD, "-*-*-*-*-*-*-*-*-*-*-*-*-*" );
+            sprintf( lpLFD, "-*-*-*-*-*-*-*-*-*-*-*-*-*-*" );
             break;
    }
 
