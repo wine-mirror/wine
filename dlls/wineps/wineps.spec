@@ -17,6 +17,7 @@
 @ cdecl GetTextExtentPoint(ptr ptr long ptr) PSDRV_GetTextExtentPoint
 @ cdecl GetTextMetrics(ptr ptr) PSDRV_GetTextMetrics
 @ cdecl LineTo(ptr long long) PSDRV_LineTo
+@ cdecl PaintRgn(ptr long) PSDRV_PaintRgn
 @ cdecl PatBlt(ptr long long long long long) PSDRV_PatBlt
 @ cdecl Pie(ptr long long long long long long long long) PSDRV_Pie
 @ cdecl PolyPolygon(ptr ptr ptr long) PSDRV_PolyPolygon

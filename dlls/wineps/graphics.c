@@ -98,7 +98,6 @@ BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right, INT 
       return TRUE;
     }
 
-    PSDRV_WriteSpool(physDev, "%Rectangle\n",11); 
     PSDRV_SetPen(physDev);
 
     PSDRV_SetClip(physDev);
@@ -413,4 +412,42 @@ COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
     PSDRV_WriteGRestore(physDev);
     PSDRV_ResetClip(physDev);
     return color;
+}
+
+/***********************************************************************
+ *           PSDRV_PaintRgn
+ */
+BOOL PSDRV_PaintRgn( PSDRV_PDEVICE *physDev, HRGN hrgn )
+{
+    
+    RGNDATA *rgndata = NULL;
+    RECT *pRect;
+    DWORD size, i;
+
+    TRACE("hdc=%p\n", physDev->hdc);
+
+    size = GetRegionData(hrgn, 0, NULL);
+    rgndata = HeapAlloc( GetProcessHeap(), 0, size );
+    if(!rgndata) {
+        ERR("Can't allocate buffer\n");
+        return FALSE;
+    }
+    
+    GetRegionData(hrgn, size, rgndata);
+    if (rgndata->rdh.nCount == 0)
+        goto end;
+
+    LPtoDP(physDev->hdc, (POINT*)rgndata->Buffer, rgndata->rdh.nCount * 2);
+
+    PSDRV_SetClip(physDev);
+    PSDRV_WriteNewPath(physDev);
+    for(i = 0, pRect = (RECT*)rgndata->Buffer; i < rgndata->rdh.nCount; i++, pRect++)
+        PSDRV_WriteRectangle(physDev, pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
+
+    PSDRV_Brush(physDev, 0);
+    PSDRV_ResetClip(physDev);
+
+ end:
+    HeapFree(GetProcessHeap(), 0, rgndata);
+    return TRUE;
 }
