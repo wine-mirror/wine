@@ -25,6 +25,7 @@
 #include "oleauto.h"
 #include "commctrl.h"
 #include "prsht.h"
+#include "shlguid.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -27,6 +27,8 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#define IShellLink WINELIB_NAME_AW(IShellLink)
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
