@@ -559,6 +559,12 @@ SPEC_TYPE ParseTopLevel( FILE *file )
             if (!IsNumberString(token)) fatal_error( "Expected number after heap\n" );
             DLLHeapSize = atoi(token);
 	}
+        else if (strcmp(token, "stack") == 0)
+        {
+            token = GetToken(0);
+            if (!IsNumberString(token)) fatal_error( "Expected number after stack\n" );
+            stack_size = atoi(token);
+        }
         else if (strcmp(token, "init") == 0)
         {
             if (SpecType == SPEC_WIN16)

@@ -27,6 +27,7 @@ int Base = MAX_ORDINALS;
 int Limit = 0;
 int DLLHeapSize = 0;
 int UsePIC = 0;
+int stack_size = 0;
 int nb_entry_points = 0;
 int nb_names = 0;
 int nb_debug_channels = 0;

@@ -161,6 +161,7 @@ extern int Limit;
 extern int DLLHeapSize;
 extern int UsePIC;
 extern int debugging;
+extern int stack_size;
 extern int nb_debug_channels;
 extern int nb_lib_paths;
 

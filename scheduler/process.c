@@ -319,12 +319,6 @@ static void start_process(void)
     LPTHREAD_START_ROUTINE entry;
     WINE_MODREF *wm;
 
-    /* build command line */
-    if (!ENV_BuildCommandLine( main_exe_argv )) goto error;
-
-    /* create 32-bit module for main exe */
-    if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
-
     /* use original argv[0] as name for the main module */
     if (!main_exe_name[0])
     {
@@ -498,7 +492,6 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
     {
         if (PE_HEADER(current_process.module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
             ExitProcess( ERROR_BAD_EXE_FORMAT );
-        stack_size = PE_HEADER(current_process.module)->OptionalHeader.SizeOfStackReserve;
         goto found;
     }
 
@@ -512,6 +505,13 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
     _EnterWin16Lock();
 
  found:
+    /* build command line */
+    if (!ENV_BuildCommandLine( main_exe_argv )) goto error;
+
+    /* create 32-bit module for main exe */
+    if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
+    stack_size = PE_HEADER(current_process.module)->OptionalHeader.SizeOfStackReserve;
+
     /* allocate main thread stack */
     if (!THREAD_InitStack( NtCurrentTeb(), stack_size )) goto error;
 
@@ -520,23 +520,6 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
  error:
     ExitProcess( GetLastError() );
-}
-
-
-/***********************************************************************
- *           PROCESS_InitWinelib
- *
- * Initialisation of a new Winelib process.
- */
-void PROCESS_InitWinelib( int argc, char *argv[] )
-{
-    if (!process_init( argv )) exit(1);
-
-    /* allocate main thread stack */
-    if (!THREAD_InitStack( NtCurrentTeb(), 0 )) ExitProcess( GetLastError() );
-
-    /* switch to the new stack */
-    SYSDEPS_SwitchToThreadStack( start_process );
 }
 
 

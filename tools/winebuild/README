@@ -6,6 +6,7 @@ type    win16|win32
 [file   WINFILENAME]
 [mode	dll|cuiexe|guiexe|cuiexe_unicode|guiexe_unicode]
 [heap   SIZE]
+[stack  SIZE]
 [init	FUNCTION]
 [import [IMP_FLAGS] DLL]
 [rsrc	RESFILE]
@@ -39,6 +40,9 @@ This is only valid for Win32 spec files.
 
 "heap" is the size of the module local heap (only valid for Win16
 modules); default is no local heap.
+
+"stack" is the stack size for Win32 exe modules, in kilobytes; default
+size is 1024 (1Mb stack).
 
 "file" gives the name of the Windows file that is replaced by the
 builtin. <name>.DLL is assumed if none is given. (This is important
