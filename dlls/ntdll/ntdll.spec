@@ -43,7 +43,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stub KiUserCallbackDispatcher
 @ stub KiUserExceptionDispatcher
 @ stub LdrAccessResource
-@ stub LdrDisableThreadCalloutsForDll
+@ stdcall LdrDisableThreadCalloutsForDll(long) LdrDisableThreadCalloutsForDll
 @ stub LdrEnumResources
 @ stub LdrFindEntryForAddress
 @ stub LdrFindResourceDirectory_U
@@ -394,6 +394,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr) RtlGetAce
+@ stub RtlGetVersion
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr) RtlGetControlSecurityDescriptor
@@ -511,6 +512,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stdcall RtlSizeHeap(long long ptr) RtlSizeHeap
 @ stub RtlSplay
 @ stub RtlStartRXact
+@ stub RtlStringFromGUID
 @ stdcall RtlSubAuthorityCountSid(ptr) RtlSubAuthorityCountSid
 @ stdcall RtlSubAuthoritySid(ptr long) RtlSubAuthoritySid
 @ stub RtlSubtreePredecessor

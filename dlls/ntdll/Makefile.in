@@ -14,6 +14,7 @@ C_SRCS = \
 	file.c \
 	heap.c \
 	large_int.c \
+	loader.c \
 	misc.c \
 	nt.c \
 	om.c \
