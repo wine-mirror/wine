@@ -54,7 +54,7 @@
 
 #include "audio.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wave);
+WINE_DEFAULT_DEBUG_CHANNEL(dscapture);
 
 #ifdef HAVE_OSS
 
@@ -104,11 +104,16 @@ struct IDsCaptureDriverBufferImpl
 
     /* IDsCaptureDriverBufferImpl fields */
     IDsCaptureDriverImpl*               drv;
-    DWORD                               buflen;
-    LPBYTE                              buffer;
-    DWORD                               writeptr;
-    LPBYTE                              mapping;
-    DWORD                               maplen;
+    LPBYTE                              buffer;         /* user buffer */
+    DWORD                               buflen;         /* user buffer length */
+    LPBYTE                              mapping;        /* DMA buffer */
+    DWORD                               maplen;         /* DMA buffer length */
+    BOOL                                is_direct_map;  /* DMA == user ? */
+    DWORD                               fragsize;
+    DWORD                               map_writepos;   /* DMA write offset */
+    DWORD                               map_readpos;    /* DMA read offset */
+    DWORD                               writeptr;       /* user write offset */
+    DWORD                               readptr;        /* user read offset */
 
     /* IDsDriverNotifyImpl fields */
     IDsCaptureDriverNotifyImpl*         notify;
@@ -121,6 +126,13 @@ struct IDsCaptureDriverBufferImpl
 
     BOOL                                is_capturing;
     BOOL                                is_looping;
+    WAVEFORMATEX                        wfx;
+    HANDLE                              hThread;
+    DWORD                               dwThreadID;
+    HANDLE                              hStartUpEvent;
+    HANDLE                              hExitEvent;
+    int                                 pipe_fd[2];
+    int                                 fd;
 };
 
 static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Create(
@@ -297,7 +309,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
         return DSERR_INVALIDPARAM;
     }
 
-    if (TRACE_ON(wave)) {
+    if (TRACE_ON(dscapture)) {
         int i;
         for (i=0;i<howmuch;i++)
             TRACE("notify at %ld to 0x%08lx\n",
@@ -343,7 +355,8 @@ static HRESULT DSCDB_MapBuffer(IDsCaptureDriverBufferImpl *dscdb)
                   dscdb, strerror(errno));
             return DSERR_GENERIC;
         }
-        TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dscdb, dscdb->mapping, dscdb->maplen);
+        TRACE("(%p): sound device has been mapped for direct access at %p, "
+              "size=%ld\n", dscdb, dscdb->mapping, dscdb->maplen);
     }
     return DS_OK;
 }
@@ -421,7 +434,31 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
 
     ref = InterlockedDecrement(&(This->ref));
     if (ref == 0) {
+        WINE_WAVEIN*        wwi;
+
+        wwi = &WInDev[This->drv->wDevID];
+
+        if (This->hThread) {
+            int x = 0;
+
+            /* request thread termination */
+            write(This->pipe_fd[1], &x, sizeof(x));
+
+            /* wait for reply */
+            WaitForSingleObject(This->hExitEvent, INFINITE);
+            CloseHandle(This->hExitEvent);
+        }
+
+        close(This->pipe_fd[0]);
+        close(This->pipe_fd[1]);
+
         DSCDB_UnmapBuffer(This);
+
+        OSS_CloseDevice(wwi->ossdev);
+        wwi->state = WINE_WS_CLOSED;
+        wwi->dwFragmentSize = 0;
+        This->drv->capture_buffer = NULL;
+
         if (This->notifies != NULL)
             HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree(GetProcessHeap(),0,This);
@@ -441,8 +478,49 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(
     DWORD dwFlags)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-    FIXME("(%p,%p,%p,%p,%p,%ld,%ld,0x%08lx): stub!\n",This,ppvAudio1,pdwLen1,
+    TRACE("(%p,%p,%p,%p,%p,%ld,%ld,0x%08lx)\n",This,ppvAudio1,pdwLen1,
           ppvAudio2,pdwLen2,dwWritePosition,dwWriteLen,dwFlags);
+
+    if (This->is_direct_map) {
+        if (ppvAudio1)
+            *ppvAudio1 = This->mapping + dwWritePosition;
+
+        if (dwWritePosition + dwWriteLen < This->maplen) {
+            if (pdwLen1)
+                *pdwLen1 = dwWriteLen;
+            if (ppvAudio2)
+                *ppvAudio2 = 0;
+            if (pdwLen2)
+                *pdwLen2 = 0;
+        } else {
+            if (pdwLen1)
+                *pdwLen1 = This->maplen - dwWritePosition;
+            if (ppvAudio2)
+                *ppvAudio2 = 0;
+            if (pdwLen2)
+                *pdwLen2 = dwWriteLen - (This->maplen - dwWritePosition);
+        }
+    } else {
+        if (ppvAudio1)
+            *ppvAudio1 = This->buffer + dwWritePosition;
+
+        if (dwWritePosition + dwWriteLen < This->buflen) {
+            if (pdwLen1)
+                *pdwLen1 = dwWriteLen;
+            if (ppvAudio2)
+                *ppvAudio2 = 0;
+            if (pdwLen2)
+                *pdwLen2 = 0;
+        } else {
+            if (pdwLen1)
+                *pdwLen1 = This->buflen - dwWritePosition;
+            if (ppvAudio2)
+                *ppvAudio2 = 0;
+            if (pdwLen2)
+                *pdwLen2 = dwWriteLen - (This->buflen - dwWritePosition);
+        }
+    }
+
     return DS_OK;
 }
 
@@ -454,7 +532,13 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Unlock(
     DWORD dwLen2)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-    FIXME("(%p,%p,%ld,%p,%ld): stub!\n",This,pvAudio1,dwLen1,pvAudio2,dwLen2);
+    TRACE("(%p,%p,%ld,%p,%ld)\n",This,pvAudio1,dwLen1,pvAudio2,dwLen2);
+
+    if (This->is_direct_map)
+        This->map_readpos = (This->map_readpos + dwLen1 + dwLen2) % This->maplen;
+    else
+        This->readptr = (This->readptr + dwLen1 + dwLen2) % This->buflen;
+
     return DS_OK;
 }
 
@@ -464,8 +548,6 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(
     LPDWORD lpdwRead)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-    count_info info;
-    DWORD ptr;
     TRACE("(%p,%p,%p)\n",This,lpdwCapture,lpdwRead);
 
     if (WInDev[This->drv->wDevID].state == WINE_WS_CLOSED) {
@@ -480,23 +562,21 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_GetPosition(
             *lpdwRead = 0;
     }
 
-    if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_GETIPTR, &info) < 0) {
-        ERR("ioctl(%s, SNDCTL_DSP_GETIPTR) failed (%s)\n",
-            WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
-        return DSERR_GENERIC;
+    if (This->is_direct_map) {
+        if (lpdwCapture)
+            *lpdwCapture = This->map_writepos;
+        if (lpdwRead) {
+            *lpdwRead = This->map_readpos;
+        }
+    } else {
+        if (lpdwCapture)
+            *lpdwCapture = This->writeptr;
+        if (lpdwRead)
+            *lpdwRead = This->readptr;
     }
-    ptr = info.ptr & ~3; /* align the pointer, just in case */
-    if (lpdwCapture) *lpdwCapture = ptr;
-    if (lpdwRead) {
-        /* add some safety margin (not strictly necessary, but...) */
-        if (WInDev[This->drv->wDevID].ossdev->in_caps_support & WAVECAPS_SAMPLEACCURATE)
-            *lpdwRead = ptr + 32;
-        else
-            *lpdwRead = ptr + WInDev[This->drv->wDevID].dwFragmentSize;
-        while (*lpdwRead > This->buflen)
-            *lpdwRead -= This->buflen;
-    }
-    TRACE("capturepos=%ld, readpos=%ld\n", lpdwCapture?*lpdwCapture:0, lpdwRead?*lpdwRead:0);
+
+    TRACE("capturepos=%ld, readpos=%ld\n", lpdwCapture?*lpdwCapture:0,
+          lpdwRead?*lpdwRead:0);
     return DS_OK;
 }
 
@@ -588,11 +668,16 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
     This->is_capturing = FALSE;
     This->is_looping = FALSE;
 
-    /* Most OSS drivers just can't stop capturing without closing the device...
-     * so we need to somehow signal to our DirectSound implementation
-     * that it should completely recreate this HW buffer...
-     * this unexpected error code should do the trick... */
-    return DSERR_BUFFERLOST;
+    if (This->hThread) {
+        int x = 0;
+        write(This->pipe_fd[1], &x, sizeof(x));
+        WaitForSingleObject(This->hExitEvent, INFINITE);
+        CloseHandle(This->hExitEvent);
+        This->hExitEvent = INVALID_HANDLE_VALUE;
+        This->hThread = 0;
+    }
+
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(
@@ -677,7 +762,6 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(
     /* copy version from driver */
     memcpy(pDesc, &(WInDev[This->wDevID].ossdev->ds_desc), sizeof(DSDRIVERDESC));
 
-    pDesc->dwFlags |= DSDDESC_USESYSTEMMEMORY;
     pDesc->dnDevNode            = WInDev[This->wDevID].waveDesc.dnDevNode;
     pDesc->wVxdId               = 0;
     pDesc->wReserved            = 0;
@@ -720,6 +804,167 @@ static HRESULT WINAPI IDsCaptureDriverImpl_GetCaps(
     return DS_OK;
 }
 
+static void DSCDB_CheckEvent(
+    IDsCaptureDriverBufferImpl *dscb,
+    DWORD writepos,
+    DWORD len,
+    DWORD buflen)
+{
+    LPDSBPOSITIONNOTIFY event = dscb->notifies + dscb->notify_index;
+    DWORD offset = event->dwOffset;
+    TRACE("(%p,%ld,%ld,%ld)\n", dscb, writepos, len, buflen);
+
+    TRACE("(%p) buflen = %ld, writeptr = %ld\n",
+        dscb, dscb->buflen, dscb->writeptr);
+    TRACE("checking %d, position %ld, event = %p\n",
+        dscb->notify_index, offset, event->hEventNotify);
+
+    if ((writepos + len) > offset) {
+         TRACE("signalled event %p (%d) %ld\n",
+               event->hEventNotify, dscb->notify_index, offset);
+         SetEvent(event->hEventNotify);
+         dscb->notify_index = (dscb->notify_index + 1) % dscb->nrofnotifies;
+         return;
+    } else if ((writepos + len) > buflen) {
+        writepos = writepos + len - buflen;
+        if ((writepos + len) > offset) {
+             TRACE("signalled event %p (%d) %ld\n",
+                   event->hEventNotify, dscb->notify_index, offset);
+             SetEvent(event->hEventNotify);
+             dscb->notify_index = (dscb->notify_index + 1) % dscb->nrofnotifies;
+             return;
+        }
+    }
+
+    return;
+}
+
+/* FIXME: using memcpy can cause strange crashes so use this fake one */
+static void * my_memcpy(void * dst, const void * src, int length)
+{
+    int i;
+    for (i = 0; i < length; i++)
+        ((char *)dst)[i] = ((char *)src)[i];
+    return dst;
+}
+
+static DWORD CALLBACK DSCDB_Thread(LPVOID lpParameter)
+{
+    IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)lpParameter;
+    struct pollfd poll_list[2];
+    int retval;
+    DWORD offset = 0;
+    DWORD map_offset = 0;
+    TRACE("(%p)\n", lpParameter);
+
+    poll_list[0].fd = This->fd;                /* data available */
+    poll_list[1].fd = This->pipe_fd[0];        /* message from parent process */
+    poll_list[0].events = POLLIN;
+    poll_list[1].events = POLLIN;
+
+    /* let other process know we are running */
+    SetEvent(This->hStartUpEvent);
+
+    while (1) {
+        /* wait for something to happen */
+        retval = poll(poll_list,(unsigned long)2,-1);
+        /* Retval will always be greater than 0 or -1 in this case.
+         * Since we're doing it while blocking
+         */
+        if (retval < 0) {
+            ERR("Error while polling: %s\n",strerror(errno));
+            continue;
+        }
+
+        /* check for exit command */
+        if ((poll_list[1].revents & POLLIN) == POLLIN) {
+            TRACE("(%p) done\n", lpParameter);
+            /* acknowledge command and exit */
+            SetEvent(This->hExitEvent);
+            ExitThread(0);
+            return 0;
+        }
+
+        /* check for data */
+        if ((poll_list[0].revents & POLLIN) == POLLIN) {
+            count_info info;
+            int fragsize, first, second;
+
+            /* get the current DMA position */
+            if (ioctl(This->fd, SNDCTL_DSP_GETIPTR, &info) < 0) {
+                ERR("ioctl(%s, SNDCTL_DSP_GETIPTR) failed (%s)\n",
+                    WInDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
+                return DSERR_GENERIC;
+            }
+
+            if (This->is_direct_map) {
+                offset = This->map_writepos;
+                This->map_writepos = info.ptr;
+
+                if (info.ptr < offset)
+                    fragsize = info.ptr + This->maplen - offset;
+                else
+                    fragsize = info.ptr - offset;
+
+                DSCDB_CheckEvent(This, offset, fragsize, This->maplen);
+            } else {
+                map_offset = This->map_writepos;
+                offset = This->writeptr;
+
+                /* test for mmap buffer wrap */
+                if (info.ptr < map_offset) {
+                    /* mmap buffer wrapped */
+                    fragsize = info.ptr + This->maplen - map_offset;
+
+                    /* check for user buffer wrap */
+                    if ((offset + fragsize) > This->buflen) {
+                        /* both buffers wrapped
+                         * figure out which wrapped first
+                         */
+                        if ((This->maplen - map_offset) > (This->buflen - offset)) {
+                            /* user buffer wrapped first */
+                            first = This->buflen - offset;
+                            second = (This->maplen - map_offset) - first;
+                            my_memcpy(This->buffer + offset, This->mapping + map_offset, first);
+                            my_memcpy(This->buffer, This->mapping + map_offset + first, second);
+                            my_memcpy(This->buffer + second, This->mapping, fragsize - (first + second));
+                        } else {
+                            /* mmap buffer wrapped first */
+                            first = This->maplen - map_offset;
+                            second = (This->buflen - offset) - first;
+                            my_memcpy(This->buffer + offset, This->mapping + map_offset, first);
+                            my_memcpy(This->buffer + offset + first, This->mapping, second);
+                            my_memcpy(This->buffer, This->mapping + second, fragsize - (first + second));
+                        }
+                    } else {
+                        /* only mmap buffer wrapped */
+                        first = This->maplen - map_offset;
+                        my_memcpy(This->buffer + offset, This->mapping + map_offset, first);
+                        my_memcpy(This->buffer + offset + first, This->mapping, fragsize - first);
+                    }
+                } else {
+                    /* mmap buffer didn't wrap */
+                    fragsize = info.ptr - map_offset;
+
+                    /* check for user buffer wrap */
+                    if ((offset + fragsize) > This->buflen) {
+                        first = This->buflen - offset;
+                        my_memcpy(This->buffer + offset, This->mapping + map_offset, first);
+                        my_memcpy(This->buffer, This->mapping + map_offset + first, fragsize - first);
+                    } else
+                        my_memcpy(This->buffer + offset, This->mapping + map_offset, fragsize);
+                }
+
+                This->map_writepos = info.ptr;
+                This->writeptr = (This->writeptr + fragsize) % This->buflen;
+                DSCDB_CheckEvent(This, offset, fragsize, This->buflen);
+            }
+        }
+    }
+
+    return TRUE;
+}
+
 static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     PIDSCDRIVER iface,
     LPWAVEFORMATEX pwfx,
@@ -733,7 +978,9 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     IDsCaptureDriverBufferImpl** ippdscdb = (IDsCaptureDriverBufferImpl**)ppvObj;
     HRESULT err;
     audio_buf_info info;
-    int enable;
+    int audio_fragment, fsize, shift, ret;
+    BOOL bNewBuffer = FALSE;
+    WINE_WAVEIN* wwi;
     TRACE("(%p,%p,%lx,%lx,%p,%p,%p)\n",This,pwfx,dwFlags,dwCardAddress,
           pdwcbBufferSize,ppbBuffer,ppvObj);
 
@@ -742,13 +989,32 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
         return DSERR_ALLOCATED;
     }
 
-    *ippdscdb = (IDsCaptureDriverBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverBufferImpl));
+    /* must be given a buffer size */
+    if (pdwcbBufferSize == NULL || *pdwcbBufferSize == 0) {
+       TRACE("invalid parameter: pdwcbBufferSize\n");
+       return DSERR_INVALIDPARAM;
+    }
+
+    /* must be given a buffer pointer */
+    if (ppbBuffer == NULL) {
+       TRACE("invalid parameter: ppbBuffer\n");
+       return DSERR_INVALIDPARAM;
+    }
+
+    /* may or may not be given a buffer */
+    if (*ppbBuffer == NULL) {
+        TRACE("creating buffer\n");
+        bNewBuffer = TRUE;     /* not given a buffer so create one */
+    } else
+        TRACE("using supplied buffer\n");
+
+    *ippdscdb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDsCaptureDriverBufferImpl));
     if (*ippdscdb == NULL) {
         TRACE("out of memory\n");
         return DSERR_OUTOFMEMORY;
     }
 
-    (*ippdscdb)->lpVtbl = &dscdbvt;
+    (*ippdscdb)->lpVtbl       = &dscdbvt;
     (*ippdscdb)->ref          = 1;
     (*ippdscdb)->drv          = This;
     (*ippdscdb)->notify       = NULL;
@@ -758,54 +1024,191 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     (*ippdscdb)->property_set = NULL;
     (*ippdscdb)->is_capturing = FALSE;
     (*ippdscdb)->is_looping   = FALSE;
+    (*ippdscdb)->wfx          = *pwfx;
+    (*ippdscdb)->buflen       = *pdwcbBufferSize;
 
-    if (WInDev[This->wDevID].state == WINE_WS_CLOSED) {
-        WAVEOPENDESC desc;
-        desc.hWave = 0;
-        desc.lpFormat = pwfx;
-        desc.dwCallback = 0;
-        desc.dwInstance = 0;
-        desc.uMappedDeviceID = 0;
-        desc.dnDevNode = 0;
-        err = widOpen(This->wDevID, &desc, dwFlags | WAVE_DIRECTSOUND);
-        if (err != MMSYSERR_NOERROR) {
-            TRACE("widOpen failed\n");
-            return err;
+    if (bNewBuffer)
+        (*ippdscdb)->buffer = NULL;
+    else
+        (*ippdscdb)->buffer = *ppbBuffer;
+
+    wwi = &WInDev[This->wDevID];
+
+    if (wwi->state == WINE_WS_CLOSED) {
+        unsigned int frag_size;
+
+        if (wwi->ossdev->open_count > 0) {
+            /* opened already so use existing fragment size */
+            audio_fragment = wwi->ossdev->audio_fragment;
+        } else {
+            /* calculate a fragment size */
+            unsigned int mask = 0xffffffff;
+
+            /* calculate largest fragment size less than 10 ms. */
+            fsize = pwfx->nAvgBytesPerSec / 100;        /* 10 ms chunk */
+            shift = 0;
+            while ((1 << shift) <= fsize)
+                shift++;
+            shift--;
+            fsize = 1 << shift;
+            TRACE("shift = %d, fragment size = %d\n", shift, fsize);
+            TRACE("BufferSize=%ld(%08lx)\n", *pdwcbBufferSize, *pdwcbBufferSize);
+
+            /* See if we can directly map the buffer first.
+             * (buffer length is multiple of a power of 2)
+             */
+            mask = (mask >> (32 - shift));
+            TRACE("mask=%08x\n", mask);
+            if (*pdwcbBufferSize & mask) {
+                /* no so try a smaller fragment size greater than 1 ms */
+                int new_shift = shift - 1;
+                int min_shift = 0;
+                int min_fsize = pwfx->nAvgBytesPerSec / 1000;
+                BOOL found_one = FALSE;
+                while ((1 << min_shift) <= min_fsize)
+                    min_shift++;
+                min_shift--;
+                while (new_shift > min_shift) {
+                    if (*pdwcbBufferSize & (-1 >> (32 - new_shift))) {
+                        new_shift--;
+                        continue;
+                    } else {
+                        found_one = TRUE;
+                        break;
+                    }
+                }
+                if (found_one) {
+                    /* found a smaller one that will work */
+                    audio_fragment = ((*pdwcbBufferSize >> new_shift) << 16) | new_shift;
+                    (*ippdscdb)->is_direct_map = TRUE;
+                    TRACE("new shift = %d, fragment size = %d\n",
+                          new_shift, 1 << (audio_fragment & 0xffff));
+                } else {
+                    /* buffer can't be direct mapped */
+                    audio_fragment = 0x00100000 + shift;        /* 16 fragments of 2^shift */
+                    (*ippdscdb)->is_direct_map = FALSE;
+                }
+            } else {
+                /* good fragment size */
+                audio_fragment = ((*pdwcbBufferSize >> shift) << 16) | shift;
+                (*ippdscdb)->is_direct_map = TRUE;
+            }
+        }
+        frag_size = 1 << (audio_fragment & 0xffff);
+        TRACE("is_direct_map = %s\n", (*ippdscdb)->is_direct_map ? "TRUE" : "FALSE");
+        TRACE("requesting %d %d byte fragments (%d bytes) (%ld ms/fragment)\n",
+              audio_fragment >> 16, frag_size, frag_size * (audio_fragment >> 16),
+              (frag_size * 1000) / pwfx->nAvgBytesPerSec);
+
+        ret = OSS_OpenDevice(wwi->ossdev, O_RDWR, &audio_fragment, 1,
+                             pwfx->nSamplesPerSec,
+                             (pwfx->nChannels > 1) ? 1 : 0,
+                             (pwfx->wBitsPerSample == 16)
+                             ? AFMT_S16_LE : AFMT_U8);
+
+        if (ret != 0) {
+            WARN("OSS_OpenDevice failed\n");
+            HeapFree(GetProcessHeap(),0,*ippdscdb);
+            *ippdscdb = NULL;
+            return DSERR_GENERIC;
+        }
+
+        wwi->state = WINE_WS_STOPPED;
+
+        /* find out what fragment and buffer sizes OSS gave us */
+        if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
+             ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
+                 wwi->ossdev->dev_name, strerror(errno));
+             OSS_CloseDevice(wwi->ossdev);
+             wwi->state = WINE_WS_CLOSED;
+             HeapFree(GetProcessHeap(),0,*ippdscdb);
+             *ippdscdb = NULL;
+             return DSERR_GENERIC;
+        }
+
+        TRACE("got %d %d byte fragments (%d bytes) (%ld ms/fragment)\n",
+              info.fragstotal, info.fragsize, info.fragstotal * info.fragsize,
+              info.fragsize * 1000 / pwfx->nAvgBytesPerSec);
+
+        wwi->dwTotalRecorded = 0;
+        memcpy(&wwi->waveFormat, pwfx, sizeof(PCMWAVEFORMAT));
+        wwi->dwFragmentSize = info.fragsize;
+
+        /* make sure we got what we asked for */
+        if ((*ippdscdb)->buflen != info.fragstotal * info.fragsize) {
+            TRACE("Couldn't create requested buffer\n");
+            if ((*ippdscdb)->is_direct_map) {
+                (*ippdscdb)->is_direct_map = FALSE;
+                TRACE("is_direct_map = FALSE\n");
+            }
+        } else if (info.fragsize != frag_size) {
+            TRACE("same buffer length but different fragment size\n");
         }
     }
+    (*ippdscdb)->fd = WInDev[This->wDevID].ossdev->fd;
 
-    /* check how big the DMA buffer is now */
-    if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
-        ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
-            WInDev[This->wDevID].ossdev->dev_name, strerror(errno));
+    if (pipe((*ippdscdb)->pipe_fd) < 0) {
+        TRACE("pipe() failed (%s)\n", strerror(errno));
+        OSS_CloseDevice(wwi->ossdev);
+        wwi->state = WINE_WS_CLOSED;
         HeapFree(GetProcessHeap(),0,*ippdscdb);
         *ippdscdb = NULL;
         return DSERR_GENERIC;
     }
-    (*ippdscdb)->maplen = (*ippdscdb)->buflen = info.fragstotal * info.fragsize;
+
+    /* check how big the DMA buffer is now */
+    if (ioctl(wwi->ossdev->fd, SNDCTL_DSP_GETISPACE, &info) < 0) {
+        ERR("ioctl(%s, SNDCTL_DSP_GETISPACE) failed (%s)\n",
+            wwi->ossdev->dev_name, strerror(errno));
+        OSS_CloseDevice(wwi->ossdev);
+        wwi->state = WINE_WS_CLOSED;
+        close((*ippdscdb)->pipe_fd[0]);
+        close((*ippdscdb)->pipe_fd[1]);
+        HeapFree(GetProcessHeap(),0,*ippdscdb);
+        *ippdscdb = NULL;
+        return DSERR_GENERIC;
+    }
+
+    (*ippdscdb)->maplen = info.fragstotal * info.fragsize;
+    (*ippdscdb)->fragsize = info.fragsize;
+    (*ippdscdb)->map_writepos = 0;
+    (*ippdscdb)->map_readpos = 0;
 
     /* map the DMA buffer */
     err = DSCDB_MapBuffer(*ippdscdb);
     if (err != DS_OK) {
+        OSS_CloseDevice(wwi->ossdev);
+        wwi->state = WINE_WS_CLOSED;
+        close((*ippdscdb)->pipe_fd[0]);
+        close((*ippdscdb)->pipe_fd[1]);
         HeapFree(GetProcessHeap(),0,*ippdscdb);
         *ippdscdb = NULL;
         return err;
     }
 
-    /* capture buffer is ready to go */
-    *pdwcbBufferSize    = (*ippdscdb)->maplen;
-    *ppbBuffer          = (*ippdscdb)->mapping;
+    /* create the buffer if necessary */
+    if (!(*ippdscdb)->buffer)
+        (*ippdscdb)->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,(*ippdscdb)->buflen);
 
-    /* some drivers need some extra nudging after mapping */
-    WInDev[This->wDevID].ossdev->bInputEnabled = FALSE;
-    enable = getEnables(WInDev[This->wDevID].ossdev);
-    if (ioctl(WInDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
-        ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
-            WInDev[This->wDevID].ossdev->dev_name, strerror(errno));
-        return DSERR_GENERIC;
+    if ((*ippdscdb)->buffer == NULL) {
+        OSS_CloseDevice(wwi->ossdev);
+        wwi->state = WINE_WS_CLOSED;
+        close((*ippdscdb)->pipe_fd[0]);
+        close((*ippdscdb)->pipe_fd[1]);
+        HeapFree(GetProcessHeap(),0,*ippdscdb);
+        *ippdscdb = NULL;
+        return DSERR_OUTOFMEMORY;
     }
 
     This->capture_buffer = *ippdscdb;
+
+    (*ippdscdb)->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    (*ippdscdb)->hExitEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    (*ippdscdb)->hThread = CreateThread(NULL, 0,  DSCDB_Thread, (LPVOID)(*ippdscdb), 0, &((*ippdscdb)->dwThreadID));
+    WaitForSingleObject((*ippdscdb)->hStartUpEvent, INFINITE);
+    CloseHandle((*ippdscdb)->hStartUpEvent);
+    (*ippdscdb)->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     return DS_OK;
 }
