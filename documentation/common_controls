@@ -25,6 +25,55 @@
   collected here too.
 
 
+2.1 Structure sizes of different common control versions
+--------------------------------------------------------
+  The common controls have been continously improved in the past. Some of the
+  orignal structures had to be extended and their size changed. Most of the
+  common control structures include their size as the first parameter. If
+  a control gets the wrong size in a message or function a failure is very
+  likely to occur. To avoid this, MS defined new constants that reflect the
+  structure size of older COMCTL32.DLL versions. The following list shows the
+  structure size constants that are currently defined in the original
+  COMCTL32.DLL.
+  NOTE: Some stuctures are NOT defined in wine's COMCTL32 yet.
+
+    HDITEM_V1_SIZE:
+      The size of the HDITEM structure in version 4.00.
+
+    LVCOLUMN_V1_SIZE:
+      The size of the LVCOLUMN structure in version 4.00.
+
+    LVHITTESTINFO_V1_SIZE:
+      The size of the LVHITTESTINFO structure in version 4.00.
+
+    LVITEM_V1_SIZE:
+      The size of the LVITEM structure in version 4.00.
+
+    NMLVCUSTOMDRAW_V3_SIZE:
+      The size of the NMLVCUSTOMDRAW structure in version 4.70.
+
+    NMTTDISPINFO_V1_SIZE:
+      The size of the NMTTDISPINFO structure in version 4.00.
+
+    NMTVCUSTOMDRAW_V3_SIZE:
+      The size of the NMTVCUSTOMDRAW structure in version 4.70.
+
+    PROPSHEETHEADER_V1_SIZE:
+      The size of the PROPSHEETHEADER structure in version 4.00.
+
+    PROPSHEETPAGE_V1_SIZE:
+      The size of the PROPSHEETPAGE structure in version 4.00.
+
+    REBARBANDINFO_V3_SIZE:
+      The size of the REBARBANDINFO structure in version 4.70.
+
+    TTTOOLINFO_V1_SIZE:
+      The size of the TOOLINFO structure in version 4.00.
+
+    TVINSERTSTRUCT_V1_SIZE:
+      The size of the TVINSERTSTRUCT structure in version 4.00.
+
+
 3. Controls
 -----------
   This paragraph describes the development status of the common controls.
