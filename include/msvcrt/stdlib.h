@@ -189,6 +189,10 @@ double      MSVCRT(strtod)(const char*,char**);
 long        MSVCRT(strtol)(const char*,char**,int);
 unsigned long MSVCRT(strtoul)(const char*,char**,int);
 int         MSVCRT(system)(const char*);
+void*       MSVCRT(bsearch)(const void*,const void*,MSVCRT(size_t),MSVCRT(size_t),
+                            int (*)(const void*,const void*));
+void        MSVCRT(qsort)(void*,MSVCRT(size_t),MSVCRT(size_t),
+                          int (*)(const void*,const void*));
 
 #ifndef MSVCRT_WSTDLIB_DEFINED
 #define MSVCRT_WSTDLIB_DEFINED
