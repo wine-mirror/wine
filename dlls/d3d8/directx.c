@@ -272,6 +272,19 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
     ICOM_THIS(IDirect3D8Impl,iface);
     FIXME("(%p)->(Adptr:%d, DevType: %x, AdptFmt: %d, Use: %ld, ResTyp: %x, CheckFmt: %d)\n", This, Adapter, DeviceType,
           AdapterFormat, Usage, RType, CheckFormat);
+    switch(CheckFormat) {
+	case D3DFMT_UYVY:
+	case D3DFMT_YUY2:
+	case D3DFMT_DXT1:
+	case D3DFMT_DXT2:
+	case D3DFMT_DXT3:
+	case D3DFMT_DXT4:
+	case D3DFMT_DXT5:
+	   /* Since we do not support these formats right now, don't pretend to. */
+	   return D3DERR_NOTAVAILABLE;
+	default:
+            break;
+    }
     return D3D_OK;
 }
 
