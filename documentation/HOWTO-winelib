@@ -1,5 +1,5 @@
 WineLib HOWTO
-Version 30-Jul-2000
+Version 28-Dec-2000
 
 AUTHOR: 
 Wilbur Dale
@@ -260,7 +260,7 @@ implemented API functions.
 Once you have implemented an API function, submit the change back to
 the Wine project so the next person to need the same function does not
 need to repeat your work. Remember, someone else wrote all of the
-other API functions that you are using, so you are benefiting from
+other API functions that you are using, so you are benefitting from
 their work. Let other people benefit from your work as well. If you
 work for a company, you may need your company's permission to "give
 away" your work.
@@ -309,17 +309,21 @@ programs have an entry point called WinMain(), while non-windows
 compilers use an entry point of main(). Hence, we need some "glue" to
 glue the main() entry point to the WinMain() in the windows program.
 
-In WineLib, the glue is provided by the spec file. Spec files are used
-in several places in Wine and WineLib to provide glue between windows
-code and code for non-windows compilers. WineLib provides a tool
-called winebuild in the tools/winebuild directory that converts a spec file
-into a C file that can be compiled and linked with the windows source
-files. If you examine hello2.spec, you will see the following:
+In WineLib, some of the glue is provided by the spec file. Spec files
+are used in several places in Wine and WineLib to provide glue between
+windows code and code for non-windows compilers. WineLib provides a
+tool called winebuild in the tools/winebuild directory that converts a
+spec file into a C file that can be compiled and linked with the
+windows source files. If you examine hello2.spec, you will see the
+following:
 
 name	hello2
 mode	guiexe
 type	win32
-init	WinMain
+
+import	user32.dll
+import	kernel32.dll
+import	ntdll.dll
 
 Information on the complete format of the spec file can be found in
 <wine>/tools/winebuild/README. Name is the name of the
@@ -327,17 +331,19 @@ application. Mode is the type of "glue" that winebuild needs to
 create. Possible modes are 'dll' for a library, 'cuiexe' for a console
 application, and 'guiexe' for a regular graphical application. Type is
 the type of API, either win32 or win16. Win16 is supported only in
-Wine, not WineLib, so you should use win32. Init is the function to
-call for initialization: in this case, WinMain.
+Wine, not WineLib, so you should use win32. Import is a dll that must
+be loaded for the program to execute.
 
 During compilation of the hello2 executable, the following command is
 executed. 
 
-../tools/winebuild/winebuild -fPIC -o hello2.spec.c -spec hello2.spec
+LD_LIBRARY_PATH="..:$LD_LIBRARY_PATH" \
+    ../tools/winebuild/winebuild -fPIC -L ../dlls -sym hello2.o \
+    -o hello2.spec.c -spec hello2.spec
 
 The program winebuild will generate the output file hello2.spec.c (option
 -o hello2.spec.c) from the spec file hello2.spec (option -spec
-hello2.spec). The option -pic specifies that winebuild should generate
+hello2.spec). The option -fPIC specifies that winebuild should generate
 position independent code and is only necessary for building shared
 library files (.so files). It is not needed when building the main
 executable spec file, but since there is no assembly code generated
@@ -345,33 +351,40 @@ for the main executable, it doesn't make any difference anyway. [5]
 
 The winebuild program is used in several places in Wine as well as
 WineLib; however, only the -spec option will be used in WineLib. The
-output file hello2.spec.c contains main() and the glue code to
-initialize WineLib and call WinMain().
+output file hello2.spec.c contains the glue code to initialize WineLib
+and call WinMain().
 
-Now the compilation of hello2 can proceed as any other compilation for
-a program.
+In order to run hello2, we will compile the code into a shared library
+(hello2.so) and create a symbolic link (hello2) with the wine
+executable with the following steps.
 
-gcc -c -I. -I. -I../include -I../include -g -O2 -Wall  -D_REENTRANT \
--I/usr/X11R6/include -o hello2.o hello2.c 
+gcc -c -I. -I. -I../include -I../include -g -O2 -Wall -fPIC -DSTRICT \
+    -D_REENTRANT -I/usr/X11R6/include -o hello2.o hello2.c
+
+to compile the windows program itself and 
+
+gcc -c -I. -I. -I../include -I../include -g -O2 -Wall -fPIC -DSTRICT \
+    -D_REENTRANT -I/usr/X11R6/include -o hello2.spec.o hello2.spec.c
+
+to compile the spec file and the glue code. Finally,
+
+gcc -shared  -Wl,-rpath,/usr/local/lib -Wl,-Bsymbolic -o hello2.so \
+    hello2.o hello2.spec.o -L.. -lwine -lncurses -lm  -lutil -ldl
+
+links the compiled files into a shared library.
 
 FIXME: -D_REENTRANT why?
 FIXME: explain compiler options
-
-to compile the window program itself and 
-
-gcc -c -I. -I. -I../include -I../include -g -O2 -Wall -D_REENTRANT \
--I/usr/X11R6/include -o hello2.spec.o hello2.spec.c
-
-to compile the main() and the glue code. Finally,
-
-gcc -o hello2 hello2.o hello2.spec.o -L../dlls  -L.. -lwine -lncurses
--lm  -lutil -ldl                                 
-
 FIXME: explain linker options
 
-will link the files into an executable. All of the steps are automated
-with the makefile, so "make hello2" will execute all of the steps for
-you. 
+All of the steps are automated with the makefile, so "make hello2.so"
+will execute all of the steps for you.  A final step is "make hello2",
+which creates a symbolic link from hello2 to the wine executable. Now,
+when "./hello2" is run, the wine executable sees it was called by the
+name "hello2" and loads the shared library "hello2.so" and executes
+the program.
+
+THE INFO BELOW IS OUT OF DATE (28-Dec-2000)
 
 Thus, you now have the basics of compiling a simple windows
 program. There are two more things to learn for compiling more complex
@@ -1284,5 +1297,7 @@ Damyan.
  LocalWords:  dllExamples WindowsExeWindowsDLL WindowsExeWineDLL WineExeWineDLL
  LocalWords:  WineExeWindowsDLL Borland URL's cd distclean DllMain winemain exe
  LocalWords:  winedll cdecl WINEbirthDay str WINEfullName WINEbirthday libtool
- LocalWords:  proost conf LD libwinedll Gouget docs dumpbin ConstString
- LocalWords:  pWINEfullName LoadLibrary GetProcAddress hiddenWinedll
+ LocalWords:  proost conf LD libwinedll Gouget docs dumpbin ConstString Lumin
+ LocalWords:  pWINEfullName LoadLibrary GetProcAddress hiddenWinedll BV HW dlls
+ LocalWords:  Zandheuvel Oosterhout linkers executables runtime ntdll sym Wl
+ LocalWords:  DSTRICT REENTRANT rpath Bsymbolic makefile multi 
