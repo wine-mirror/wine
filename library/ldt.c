@@ -48,6 +48,7 @@ struct modify_ldt_s
     unsigned int  read_exec_only : 1;
     unsigned int  limit_in_pages : 1;
     unsigned int  seg_not_present : 1;
+    unsigned int  useable:1;
 };
 
 static inline int modify_ldt( int func, struct modify_ldt_s *ptr,
@@ -140,8 +141,9 @@ int wine_ldt_set_entry( unsigned short sel, const LDT_ENTRY *entry )
         ldt_info.read_exec_only  = !(entry->HighWord.Bits.Type & 2);
         ldt_info.limit_in_pages  = entry->HighWord.Bits.Granularity;
         ldt_info.seg_not_present = !entry->HighWord.Bits.Pres;
+        ldt_info.useable         = entry->HighWord.Bits.Sys;
 
-        if ((ret = modify_ldt(1, &ldt_info, sizeof(ldt_info))) < 0)
+        if ((ret = modify_ldt(0x11, &ldt_info, sizeof(ldt_info))) < 0)
             perror( "modify_ldt" );
     }
 #endif  /* linux */

@@ -119,12 +119,12 @@ WORD WINAPI FreeSelector16( WORD sel )
 
 #ifdef __i386__
     /* Check if we are freeing current %fs or %gs selector */
-    if (!((wine_get_fs() ^ sel) & ~7))
+    if (!((wine_get_fs() ^ sel) & ~3))
     {
         WARN("Freeing %%fs selector (%04x), not good.\n", wine_get_fs() );
         wine_set_fs( 0 );
     }
-    if (!((wine_get_gs() ^ sel) & ~7)) wine_set_gs( 0 );
+    if (!((wine_get_gs() ^ sel) & ~3)) wine_set_gs( 0 );
 #endif  /* __i386__ */
 
     wine_ldt_set_entry( sel, &null_entry );
@@ -161,8 +161,7 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, unsigne
     WORD i, count;
 
     wine_ldt_set_base( &entry, base );
-    /* Make sure base and limit are not 0 together if the size is not 0 */
-    wine_ldt_set_limit( &entry, (!base && size == 1) ? 1 : size - 1 );
+    wine_ldt_set_limit( &entry, size - 1 );
     wine_ldt_set_flags( &entry, flags );
     count = (size + 0xffff) / 0x10000;
     for (i = 0; i < count; i++)
