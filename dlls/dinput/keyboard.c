@@ -289,16 +289,13 @@ static HRESULT keyboarddev_create_deviceW(IDirectInputImpl *dinput, REFGUID rgui
   return DIERR_DEVICENOTREG;
 }
 
-static dinput_device keyboarddev = {
-  100,
+const struct dinput_device keyboard_device = {
   "Wine keyboard driver",
   keyboarddev_enum_deviceA,
   keyboarddev_enum_deviceW,
   keyboarddev_create_deviceA,
   keyboarddev_create_deviceW
 };
-
-DECL_GLOBAL_CONSTRUCTOR(keyboarddev_register) { dinput_register_device(&keyboarddev); }
 
 static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {

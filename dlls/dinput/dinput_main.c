@@ -51,10 +51,14 @@ static IDirectInput7WVtbl ddi7wvt;
 static IDirectInput8AVtbl ddi8avt;
 static IDirectInput8WVtbl ddi8wvt;
 
-/* This array will be filled a dinput.so loading */
-#define MAX_WINE_DINPUT_DEVICES 4
-static dinput_device * dinput_devices[MAX_WINE_DINPUT_DEVICES];
-static int nrof_dinput_devices = 0;
+static const struct dinput_device *dinput_devices[] =
+{
+    &mouse_device,
+    &keyboard_device,
+    &joystick_linuxinput_device,
+    &joystick_linux_device
+};
+#define NB_DINPUT_DEVICES (sizeof(dinput_devices)/sizeof(dinput_devices[0]))
 
 HINSTANCE DINPUT_instance = NULL;
 
@@ -72,29 +76,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
     return TRUE;
 }
 
-
-/* register a direct draw driver. We better not use malloc for we are in
- * the ELF startup initialisation at this point.
- */
-void dinput_register_device(dinput_device *device) {
-    int	i;
-
-    /* insert according to priority */
-    for (i=0;i<nrof_dinput_devices;i++) {
-	if (dinput_devices[i]->pref <= device->pref) {
-	    memcpy(dinput_devices+i+1,dinput_devices+i,sizeof(dinput_devices[0])*(nrof_dinput_devices-i));
-	    dinput_devices[i] = device;
-	    break;
-	}
-    }
-    if (i==nrof_dinput_devices)	/* not found, or too low priority */
-	dinput_devices[nrof_dinput_devices] = device;
-
-    nrof_dinput_devices++;
-
-    /* increase MAX_DDRAW_DRIVERS if the line below triggers */
-    assert(nrof_dinput_devices <= MAX_WINE_DINPUT_DEVICES);
-}
 
 /******************************************************************************
  *	DirectInputCreateEx (DINPUT.@)
@@ -247,7 +228,8 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	  lpCallback, pvRef, dwFlags);
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
     
-    for (i = 0; i < nrof_dinput_devices; i++) {
+    for (i = 0; i < NB_DINPUT_DEVICES; i++) {
+        if (!dinput_devices[i]->enum_deviceA) continue;
         for (j = 0, r = -1; r != 0; j++) {
 	    devInstance.dwSize = sizeof(devInstance);
 	    TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
@@ -276,7 +258,8 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 	  lpCallback, pvRef, dwFlags);
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
     
-    for (i = 0; i < nrof_dinput_devices; i++) {
+    for (i = 0; i < NB_DINPUT_DEVICES; i++) {
+        if (!dinput_devices[i]->enum_deviceW) continue;
         for (j = 0, r = -1; r != 0; j++) {
 	    devInstance.dwSize = sizeof(devInstance);
 	    TRACE("  - checking device %d ('%s')\n", i, dinput_devices[i]->name);
@@ -349,8 +332,9 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
 
 	/* Loop on all the devices to see if anyone matches the given GUID */
-	for (i = 0; i < nrof_dinput_devices; i++) {
+	for (i = 0; i < NB_DINPUT_DEVICES; i++) {
 	  HRESULT ret;
+	  if (!dinput_devices[i]->create_deviceA) continue;
 	  if ((ret = dinput_devices[i]->create_deviceA(This, rguid, NULL, pdev)) == DI_OK)
 	    return DI_OK;
 
@@ -370,8 +354,9 @@ static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7A iface,
 	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
 
 	/* Loop on all the devices to see if anyone matches the given GUID */
-	for (i = 0; i < nrof_dinput_devices; i++) {
+	for (i = 0; i < NB_DINPUT_DEVICES; i++) {
 	  HRESULT ret;
+	  if (!dinput_devices[i]->create_deviceW) continue;
 	  if ((ret = dinput_devices[i]->create_deviceW(This, rguid, NULL, pdev)) == DI_OK)
 	    return DI_OK;
 
@@ -430,8 +415,9 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
   TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 
   /* Loop on all the devices to see if anyone matches the given GUID */
-  for (i = 0; i < nrof_dinput_devices; i++) {
+  for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
+    if (!dinput_devices[i]->create_deviceA) continue;
     if ((ret = dinput_devices[i]->create_deviceA(This, rguid, riid, (LPDIRECTINPUTDEVICEA*) pvOut)) == DI_OK)
       return DI_OK;
 
@@ -452,8 +438,9 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
   TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 
   /* Loop on all the devices to see if anyone matches the given GUID */
-  for (i = 0; i < nrof_dinput_devices; i++) {
+  for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
+    if (!dinput_devices[i]->create_deviceW) continue;
     if ((ret = dinput_devices[i]->create_deviceW(This, rguid, riid, (LPDIRECTINPUTDEVICEW*) pvOut)) == DI_OK)
       return DI_OK;
 

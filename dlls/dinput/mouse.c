@@ -305,16 +305,14 @@ static HRESULT mousedev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, 
     
     return DIERR_DEVICENOTREG;
 }
-static dinput_device mousedev = {
-    100,
+
+const struct dinput_device mouse_device = {
     "Wine mouse driver",
     mousedev_enum_deviceA,
     mousedev_enum_deviceW,
     mousedev_create_deviceA,
     mousedev_create_deviceW
 };
-
-DECL_GLOBAL_CONSTRUCTOR(mousedev_register) { dinput_register_device(&mousedev); }
 
 /******************************************************************************
  *	SysMouseA (DInput Mouse support)
