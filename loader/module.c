@@ -1089,7 +1089,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     if ( !MODULE_GetBinaryType( hFile, name, &type ) )
     {
         CloseHandle( hFile );
-        retv = PROCESS_Create( -1, name, tidy_cmdline, lpEnvironment, 
+        retv = PROCESS_Create( 0, name, tidy_cmdline, lpEnvironment, 
                                lpProcessAttributes, lpThreadAttributes,
                                bInheritHandles, dwCreationFlags,
                                lpStartupInfo, lpProcessInfo, lpCurrentDirectory );

@@ -181,7 +181,7 @@ void FILE_SetDosError(void)
  *
  * Duplicate a Unix handle into a task handle.
  */
-HFILE FILE_DupUnixHandle( int fd, DWORD access )
+HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 {
     struct alloc_file_handle_request *req = get_req_buffer();
     req->access  = access;
@@ -219,10 +219,11 @@ int FILE_GetUnixHandle( HANDLE handle, DWORD access )
  * 		FILE_OpenConsole
  *
  * Open a handle to the current process console.
+ * Returns 0 on failure.
  */
 static HANDLE FILE_OpenConsole( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-    int ret = -1;
+    HANDLE ret;
 
     SERVER_START_REQ
     {
@@ -232,7 +233,8 @@ static HANDLE FILE_OpenConsole( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES
         req->access  = access;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         SetLastError(0);
-        if (!server_call( REQ_OPEN_CONSOLE )) ret = req->handle;
+        server_call( REQ_OPEN_CONSOLE );
+        ret = req->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -243,6 +245,7 @@ static HANDLE FILE_OpenConsole( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES
  *           FILE_CreateFile
  *
  * Implementation of CreateFile. Takes a Unix path name.
+ * Returns 0 on failure.
  */
 HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                         LPSECURITY_ATTRIBUTES sa, DWORD creation,
@@ -256,7 +259,7 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     {
         FIXME("filename '%s' too long\n", filename );
         SetLastError( ERROR_INVALID_PARAMETER );
-        return -1;
+        return 0;
     }
 
  restart:
@@ -277,7 +280,7 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 
     /* If write access failed, retry without GENERIC_WRITE */
 
-    if ((ret == -1) && !fail_read_only && (access & GENERIC_WRITE)) 
+    if (!ret && !fail_read_only && (access & GENERIC_WRITE))
     {
 	if ((err == STATUS_MEDIA_WRITE_PROTECTED) || (err == STATUS_ACCESS_DENIED))
         {
@@ -288,7 +291,7 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
         }
     }
 
-    if (ret == -1)
+    if (!ret)
 	WARN("Unable to create file '%s' (GLE %ld)\n", filename,
 	     GetLastError());
 
@@ -300,10 +303,11 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
  *           FILE_CreateDevice
  *
  * Same as FILE_CreateFile but for a device
+ * Returns 0 on failure.
  */
-HFILE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
+HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
-    HFILE ret;
+    HANDLE ret;
     SERVER_START_REQ
     {
         struct create_device_request *req = server_alloc_req( sizeof(*req), 0 );
@@ -353,11 +357,12 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                               DWORD attributes, HANDLE template )
 {
     DOS_FULL_NAME full_name;
+    HANDLE ret;
 
     if (!filename)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
-        return HFILE_ERROR;
+        return INVALID_HANDLE_VALUE;
     }
     TRACE("%s %s%s%s%s%s%s%s\n",filename,
 	  ((access & GENERIC_READ)==GENERIC_READ)?"GENERIC_READ ":"",
@@ -380,13 +385,16 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 	{
             FIXME("UNC name (%s) not supported.\n", filename );
             SetLastError( ERROR_PATH_NOT_FOUND );
-            return HFILE_ERROR;
+            return INVALID_HANDLE_VALUE;
 	}
     }
 
     if (!strncmp(filename, "\\\\.\\", 4)) {
         if (!DOSFS_GetDevice( filename ))
-        	return DEVICE_Open( filename+4, access, sa );
+        {
+            ret = DEVICE_Open( filename+4, access, sa );
+            goto done;
+        }
 	else
         	filename+=4; /* fall into DOSFS_Device case below */
     }
@@ -396,30 +404,36 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     {
         FIXME("UNC name (%s) not supported.\n", filename );
         SetLastError( ERROR_PATH_NOT_FOUND );
-        return HFILE_ERROR;
+        return INVALID_HANDLE_VALUE;
     }
 
     /* If the name contains a DOS wild card (* or ?), do no create a file */
     if(strchr(filename,'*') || strchr(filename,'?'))
-        return HFILE_ERROR;
+        return INVALID_HANDLE_VALUE;
 
     /* Open a console for CONIN$ or CONOUT$ */
-    if (!strcasecmp(filename, "CONIN$")) return FILE_OpenConsole( FALSE, access, sa );
-    if (!strcasecmp(filename, "CONOUT$")) return FILE_OpenConsole( TRUE, access, sa );
+    if (!strcasecmp(filename, "CONIN$"))
+    {
+        ret = FILE_OpenConsole( FALSE, access, sa );
+        goto done;
+    }
+    if (!strcasecmp(filename, "CONOUT$"))
+    {
+        ret = FILE_OpenConsole( TRUE, access, sa );
+        goto done;
+    }
 
     if (DOSFS_GetDevice( filename ))
     {
-    	HFILE	ret;
-
         TRACE("opening device '%s'\n", filename );
 
-	if (HFILE_ERROR!=(ret=DOSFS_OpenDevice( filename, access )))
-		return ret;
-
-	/* Do not silence this please. It is a critical error. -MM */
-        ERR("Couldn't open device '%s'!\n",filename);
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return HFILE_ERROR;
+        if (!(ret = DOSFS_OpenDevice( filename, access )))
+        {
+            /* Do not silence this please. It is a critical error. -MM */
+            ERR("Couldn't open device '%s'!\n",filename);
+            SetLastError( ERROR_FILE_NOT_FOUND );
+        }
+        goto done;
     }
 
     /* check for filename, don't check for last entry if creating */
@@ -429,12 +443,15 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 			    &full_name )) {
 	WARN("Unable to get full filename from '%s' (GLE %ld)\n",
 	     filename, GetLastError());
-        return HFILE_ERROR;
+        return INVALID_HANDLE_VALUE;
     }
 
-    return FILE_CreateFile( full_name.long_name, access, sharing,
-                            sa, creation, attributes, template,
-                            DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY );
+    ret = FILE_CreateFile( full_name.long_name, access, sharing,
+                           sa, creation, attributes, template,
+                           DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY );
+ done:
+    if (!ret) ret = INVALID_HANDLE_VALUE;
+    return ret;
 }
 
 
@@ -877,9 +894,9 @@ found:
     }
 
     hFileRet = FILE_CreateFile( full_name.long_name, access, sharing,
-                                NULL, OPEN_EXISTING, 0, -1,
+                                NULL, OPEN_EXISTING, 0, 0,
                                 DRIVE_GetFlags(full_name.drive) & DRIVE_FAIL_READ_ONLY );
-    if (hFileRet == HFILE_ERROR) goto not_found;
+    if (!hFileRet) goto not_found;
 
     GetFileTime( hFileRet, NULL, NULL, &filetime );
     FileTimeToDosDateTime( &filetime, &filedatetime[0], &filedatetime[1] );

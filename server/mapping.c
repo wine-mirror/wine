@@ -207,7 +207,7 @@ static int get_image_params( struct mapping *mapping )
 
 
 static struct object *create_mapping( int size_high, int size_low, int protect,
-                                      int handle, const WCHAR *name, size_t len )
+                                      handle_t handle, const WCHAR *name, size_t len )
 {
     struct mapping *mapping;
     int access = 0;
@@ -227,7 +227,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
     if (protect & VPROT_READ) access |= GENERIC_READ;
     if (protect & VPROT_WRITE) access |= GENERIC_WRITE;
 
-    if (handle != -1)
+    if (handle)
     {
         if (!(mapping->file = get_file_obj( current->process, handle, access ))) goto error;
         if (protect & VPROT_IMAGE)
@@ -304,7 +304,7 @@ DECL_HANDLER(create_mapping)
 {
     struct object *obj;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((obj = create_mapping( req->size_high, req->size_low,
                                req->protect, req->file_handle,
                                get_req_data(req), get_req_data_size(req) )))
@@ -336,7 +336,7 @@ DECL_HANDLER(get_mapping_info)
         req->protect     = mapping->protect;
         req->header_size = mapping->header_size;
         req->base        = mapping->base;
-        req->shared_file = -1;
+        req->shared_file = 0;
         req->shared_size = mapping->shared_size;
         req->anonymous   = !mapping->file;
         if (mapping->shared_file)

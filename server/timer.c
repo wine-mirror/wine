@@ -174,7 +174,7 @@ DECL_HANDLER(create_timer)
 {
     struct timer *timer;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((timer = create_timer( get_req_data(req), get_req_data_size(req), req->manual )))
     {
         req->handle = alloc_handle( current->process, timer, TIMER_ALL_ACCESS, req->inherit );

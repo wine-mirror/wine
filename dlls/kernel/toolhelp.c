@@ -212,6 +212,7 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
         ret = req->handle;
     }
     SERVER_END_REQ;
+    if (!ret) ret = INVALID_HANDLE_VALUE;
     return ret;
 }
 

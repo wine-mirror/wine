@@ -44,6 +44,7 @@ struct request_max_size
 /* max size of the variable part of a request */
 #define REQUEST_MAX_VAR_SIZE  1024
 
+typedef int handle_t;
 
 /* definitions of the event data depending on the event code */
 struct debug_event_exception
@@ -53,15 +54,15 @@ struct debug_event_exception
 };
 struct debug_event_create_thread
 {
-    int         handle;     /* handle to the new thread */
+    handle_t    handle;     /* handle to the new thread */
     void       *teb;        /* thread teb (in debugged process address space) */
     void       *start;      /* thread startup routine */
 };
 struct debug_event_create_process
 {
-    int         file;       /* handle to the process exe file */
-    int         process;    /* handle to the new process */
-    int         thread;     /* handle to the new thread */
+    handle_t    file;       /* handle to the process exe file */
+    handle_t    process;    /* handle to the new process */
+    handle_t    thread;     /* handle to the new thread */
     void       *base;       /* base of executable image */
     int         dbg_offset; /* offset of debug info in file */
     int         dbg_size;   /* size of debug info */
@@ -76,7 +77,7 @@ struct debug_event_exit
 };
 struct debug_event_load_dll
 {
-    int         handle;     /* file handle for the dll */
+    handle_t    handle;     /* file handle for the dll */
     void       *base;       /* base address of the dll */
     int         dbg_offset; /* offset of debug info in file */
     int         dbg_size;   /* size of debug info */
@@ -125,10 +126,10 @@ struct new_process_request
     IN  int          inherit_all;  /* inherit all handles from parent */
     IN  int          create_flags; /* creation flags */
     IN  int          start_flags;  /* flags from startup info */
-    IN  int          exe_file;     /* file handle for main exe */
-    IN  int          hstdin;       /* handle for stdin */
-    IN  int          hstdout;      /* handle for stdout */
-    IN  int          hstderr;      /* handle for stderr */
+    IN  handle_t     exe_file;     /* file handle for main exe */
+    IN  handle_t     hstdin;       /* handle for stdin */
+    IN  handle_t     hstdout;      /* handle for stdout */
+    IN  handle_t     hstderr;      /* handle for stderr */
     IN  int          cmd_show;     /* main window show mode */
     IN  VARARG(filename,string);   /* file name of main exe */
 };
@@ -143,10 +144,10 @@ struct wait_process_request
     IN  int          timeout;      /* wait timeout */
     IN  int          cancel;       /* cancel the process creation? */
     OUT void*        pid;          /* process id */
-    OUT int          phandle;      /* process handle (in the current process) */
+    OUT handle_t     phandle;      /* process handle (in the current process) */
     OUT void*        tid;          /* thread id */
-    OUT int          thandle;      /* thread handle (in the current process) */
-    OUT int          event;        /* event handle to signal startup */
+    OUT handle_t     thandle;      /* thread handle (in the current process) */
+    OUT handle_t     event;        /* event handle to signal startup */
 };
 
 
@@ -154,10 +155,10 @@ struct wait_process_request
 struct new_thread_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          suspend;      /* new thread should be suspended on creation */ 
+    IN  int          suspend;      /* new thread should be suspended on creation */
     IN  int          inherit;      /* inherit flag */
     OUT void*        tid;          /* thread id */
-    OUT int          handle;       /* thread handle (in the current process) */
+    OUT handle_t     handle;       /* thread handle (in the current process) */
 };
 
 
@@ -177,10 +178,10 @@ struct init_process_request
     IN  int          ppid;         /* parent Unix pid */
     OUT int          start_flags;  /* flags from startup info */
     OUT unsigned int server_start; /* server start time (GetTickCount) */
-    OUT int          exe_file;     /* file handle for main exe */
-    OUT int          hstdin;       /* handle for stdin */
-    OUT int          hstdout;      /* handle for stdout */
-    OUT int          hstderr;      /* handle for stderr */
+    OUT handle_t     exe_file;     /* file handle for main exe */
+    OUT handle_t     hstdin;       /* handle for stdin */
+    OUT handle_t     hstdout;      /* handle for stdout */
+    OUT handle_t     hstderr;      /* handle for stderr */
     OUT int          cmd_show;     /* main window show mode */
     OUT VARARG(filename,string);   /* file name of main exe */
 };
@@ -225,7 +226,7 @@ struct get_thread_buffer_request
 struct terminate_process_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* process handle to terminate */
+    IN  handle_t     handle;       /* process handle to terminate */
     IN  int          exit_code;    /* process exit code */
     OUT int          self;         /* suicide? */
 };
@@ -235,7 +236,7 @@ struct terminate_process_request
 struct terminate_thread_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle to terminate */
+    IN  handle_t     handle;       /* thread handle to terminate */
     IN  int          exit_code;    /* thread exit code */
     OUT int          self;         /* suicide? */
     OUT int          last;         /* last thread in this process? */
@@ -246,7 +247,7 @@ struct terminate_thread_request
 struct get_process_info_request
 {
     REQUEST_HEADER;                    /* request header */
-    IN  int          handle;           /* process handle */
+    IN  handle_t     handle;           /* process handle */
     OUT void*        pid;              /* server process id */
     OUT int          debugged;         /* debugged? */
     OUT int          exit_code;        /* process exit code */
@@ -260,7 +261,7 @@ struct get_process_info_request
 struct set_process_info_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* process handle */
+    IN  handle_t     handle;       /* process handle */
     IN  int          mask;         /* setting mask (see below) */
     IN  int          priority;     /* priority class */
     IN  int          affinity;     /* affinity mask */
@@ -273,7 +274,7 @@ struct set_process_info_request
 struct get_thread_info_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle */
+    IN  handle_t     handle;       /* thread handle */
     IN  void*        tid_in;       /* thread id (optional) */
     OUT void*        tid;          /* server thread id */
     OUT void*        teb;          /* thread teb pointer */
@@ -286,7 +287,7 @@ struct get_thread_info_request
 struct set_thread_info_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle */
+    IN  handle_t     handle;       /* thread handle */
     IN  int          mask;         /* setting mask (see below) */
     IN  int          priority;     /* priority class */
     IN  int          affinity;     /* affinity mask */
@@ -299,7 +300,7 @@ struct set_thread_info_request
 struct suspend_thread_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle */
+    IN  handle_t     handle;       /* thread handle */
     OUT int          count;        /* new suspend count */
 };
 
@@ -308,7 +309,7 @@ struct suspend_thread_request
 struct resume_thread_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle */
+    IN  handle_t     handle;       /* thread handle */
     OUT int          count;        /* new suspend count */
 };
 
@@ -317,7 +318,7 @@ struct resume_thread_request
 struct load_dll_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* file handle */
+    IN  handle_t     handle;       /* file handle */
     IN  void*        base;         /* base address */
     IN  int          dbg_offset;   /* debug info offset */
     IN  int          dbg_size;     /* debug info size */
@@ -337,7 +338,7 @@ struct unload_dll_request
 struct queue_apc_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle */
+    IN  handle_t     handle;       /* thread handle */
     IN  void*        func;         /* function to call */
     IN  void*        param;        /* param for function to call */
 };
@@ -358,7 +359,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC };
 struct close_handle_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* handle to close */
+    IN  handle_t     handle;       /* handle to close */
     OUT int          fd;           /* associated fd to close */
 };
 
@@ -367,7 +368,7 @@ struct close_handle_request
 struct set_handle_info_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* handle we are interested in */
+    IN  handle_t     handle;       /* handle we are interested in */
     IN  int          flags;        /* new handle flags */
     IN  int          mask;         /* mask for flags to set */
     IN  int          fd;           /* file descriptor or -1 */
@@ -380,13 +381,13 @@ struct set_handle_info_request
 struct dup_handle_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          src_process;  /* src process handle */
-    IN  int          src_handle;   /* src handle to duplicate */
-    IN  int          dst_process;  /* dst process handle */
+    IN  handle_t     src_process;  /* src process handle */
+    IN  handle_t     src_handle;   /* src handle to duplicate */
+    IN  handle_t     dst_process;  /* dst process handle */
     IN  unsigned int access;       /* wanted access rights */
     IN  int          inherit;      /* inherit flag */
     IN  int          options;      /* duplicate options (see below) */
-    OUT int          handle;       /* duplicated handle in dst process */
+    OUT handle_t     handle;       /* duplicated handle in dst process */
     OUT int          fd;           /* associated fd to close */
 };
 #define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
@@ -401,7 +402,7 @@ struct open_process_request
     IN  void*        pid;          /* process id to open */
     IN  unsigned int access;       /* wanted access rights */
     IN  int          inherit;      /* inherit flag */
-    OUT int          handle;       /* handle to the process */
+    OUT handle_t     handle;       /* handle to the process */
 };
 
 
@@ -412,7 +413,7 @@ struct select_request
     IN  int          flags;        /* wait flags (see below) */
     IN  int          timeout;      /* timeout in ms */
     OUT int          signaled;     /* signaled handle */
-    IN  VARARG(handles,ints);      /* handles to select on */
+    IN  VARARG(handles,handles);   /* handles to select on */
 };
 #define SELECT_ALL       1
 #define SELECT_ALERTABLE 2
@@ -426,7 +427,7 @@ struct create_event_request
     IN  int          manual_reset;  /* manual reset event */
     IN  int          initial_state; /* initial state of the event */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the event */
+    OUT handle_t     handle;        /* handle to the event */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -434,7 +435,7 @@ struct create_event_request
 struct event_op_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int           handle;       /* handle to event */
+    IN  handle_t      handle;       /* handle to event */
     IN  int           op;           /* event operation (see below) */
 };
 enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
@@ -446,7 +447,7 @@ struct open_event_request
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the event */
+    OUT handle_t     handle;        /* handle to the event */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -457,7 +458,7 @@ struct create_mutex_request
     REQUEST_HEADER;                 /* request header */
     IN  int          owned;         /* initially owned? */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the mutex */
+    OUT handle_t     handle;        /* handle to the mutex */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -466,7 +467,7 @@ struct create_mutex_request
 struct release_mutex_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the mutex */
+    IN  handle_t     handle;        /* handle to the mutex */
 };
 
 
@@ -476,7 +477,7 @@ struct open_mutex_request
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the mutex */
+    OUT handle_t     handle;        /* handle to the mutex */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -488,7 +489,7 @@ struct create_semaphore_request
     IN  unsigned int initial;       /* initial count */
     IN  unsigned int max;           /* maximum count */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the semaphore */
+    OUT handle_t     handle;        /* handle to the semaphore */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -497,7 +498,7 @@ struct create_semaphore_request
 struct release_semaphore_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the semaphore */
+    IN  handle_t     handle;        /* handle to the semaphore */
     IN  unsigned int count;         /* count to add to semaphore */
     OUT unsigned int prev_count;    /* previous semaphore count */
 };
@@ -509,7 +510,7 @@ struct open_semaphore_request
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the semaphore */
+    OUT handle_t     handle;        /* handle to the semaphore */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -523,7 +524,7 @@ struct create_file_request
     IN  unsigned int sharing;       /* sharing flags */
     IN  int          create;        /* file create action */
     IN  unsigned int attrs;         /* file attributes for creation */
-    OUT int          handle;        /* handle to the file */
+    OUT handle_t     handle;        /* handle to the file */
     IN  VARARG(filename,string);    /* file name */
 };
 
@@ -533,7 +534,7 @@ struct alloc_file_handle_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
-    OUT int          handle;        /* handle to the file */
+    OUT handle_t     handle;        /* handle to the file */
 };
 
 
@@ -541,7 +542,7 @@ struct alloc_file_handle_request
 struct get_handle_fd_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
     IN  unsigned int access;        /* wanted access rights */
     OUT int          fd;            /* file descriptor */
 };
@@ -551,7 +552,7 @@ struct get_handle_fd_request
 struct set_file_pointer_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
     IN  int          low;           /* position low word */
     IN  int          high;          /* position high word */
     IN  int          whence;        /* whence to seek */
@@ -564,7 +565,7 @@ struct set_file_pointer_request
 struct truncate_file_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
 };
 
 
@@ -572,7 +573,7 @@ struct truncate_file_request
 struct set_file_time_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
     IN  time_t       access_time;   /* last access time */
     IN  time_t       write_time;    /* last write time */
 };
@@ -582,7 +583,7 @@ struct set_file_time_request
 struct flush_file_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
 };
 
 
@@ -590,7 +591,7 @@ struct flush_file_request
 struct get_file_info_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
     OUT int          type;          /* file type */
     OUT int          attr;          /* file attributes */
     OUT time_t       access_time;   /* last access time */
@@ -608,7 +609,7 @@ struct get_file_info_request
 struct lock_file_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
     IN  unsigned int offset_low;    /* offset of start of lock */
     IN  unsigned int offset_high;   /* offset of start of lock */
     IN  unsigned int count_low;     /* count of bytes to lock */
@@ -620,7 +621,7 @@ struct lock_file_request
 struct unlock_file_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the file */
+    IN  handle_t     handle;        /* handle to the file */
     IN  unsigned int offset_low;    /* offset of start of unlock */
     IN  unsigned int offset_high;   /* offset of start of unlock */
     IN  unsigned int count_low;     /* count of bytes to unlock */
@@ -633,8 +634,8 @@ struct create_pipe_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle_read;   /* handle to the read-side of the pipe */
-    OUT int          handle_write;  /* handle to the write-side of the pipe */
+    OUT handle_t     handle_read;   /* handle to the read-side of the pipe */
+    OUT handle_t     handle_write;  /* handle to the write-side of the pipe */
 };
 
 
@@ -647,7 +648,7 @@ struct create_socket_request
     IN  int          family;        /* family, see socket manpage */
     IN  int          type;          /* type, see socket manpage */
     IN  int          protocol;      /* protocol, see socket manpage */
-    OUT int          handle;        /* handle to the new socket */
+    OUT handle_t     handle;        /* handle to the new socket */
 };
 
 
@@ -655,10 +656,10 @@ struct create_socket_request
 struct accept_socket_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          lhandle;       /* handle to the listening socket */
+    IN  handle_t     lhandle;       /* handle to the listening socket */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the new socket */
+    OUT handle_t     handle;        /* handle to the new socket */
 };
 
 
@@ -666,9 +667,9 @@ struct accept_socket_request
 struct set_socket_event_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the socket */
+    IN  handle_t     handle;        /* handle to the socket */
     IN  unsigned int mask;          /* event mask */
-    IN  int          event;         /* event object */
+    IN  handle_t     event;         /* event object */
 };
 
 
@@ -676,10 +677,10 @@ struct set_socket_event_request
 struct get_socket_event_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the socket */
+    IN  handle_t     handle;        /* handle to the socket */
     IN  int          service;       /* clear pending? */
-    IN  int          s_event;       /* "expected" event object */
-    IN  int          c_event;       /* event to clear */
+    IN  handle_t     s_event;       /* "expected" event object */
+    IN  handle_t     c_event;       /* event to clear */
     OUT unsigned int mask;          /* event mask */
     OUT unsigned int pmask;         /* pending events */
     OUT unsigned int state;         /* status bits */
@@ -691,7 +692,7 @@ struct get_socket_event_request
 struct enable_socket_event_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the socket */
+    IN  handle_t     handle;        /* handle to the socket */
     IN  unsigned int mask;          /* events to re-enable */
     IN  unsigned int sstate;        /* status bits to set */
     IN  unsigned int cstate;        /* status bits to clear */
@@ -704,8 +705,8 @@ struct alloc_console_request
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle_in;     /* handle to console input */
-    OUT int          handle_out;    /* handle to console output */
+    OUT handle_t     handle_in;     /* handle to console input */
+    OUT handle_t     handle_out;    /* handle to console output */
 };
 
 
@@ -723,7 +724,7 @@ struct open_console_request
     IN  int          output;        /* input or output? */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the console */
+    OUT handle_t     handle;        /* handle to the console */
 };
 
 
@@ -731,8 +732,8 @@ struct open_console_request
 struct set_console_fd_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the console */
-    IN  int          file_handle;   /* handle of file to use as file descriptor */
+    IN  handle_t     handle;        /* handle to the console */
+    IN  handle_t     file_handle;   /* handle of file to use as file descriptor */
     IN  int          pid;           /* pid of xterm (hack) */
 };
 
@@ -741,7 +742,7 @@ struct set_console_fd_request
 struct get_console_mode_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the console */
+    IN  handle_t     handle;        /* handle to the console */
     OUT int          mode;          /* console mode */
 };
 
@@ -750,7 +751,7 @@ struct get_console_mode_request
 struct set_console_mode_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the console */
+    IN  handle_t     handle;        /* handle to the console */
     IN  int          mode;          /* console mode */
 };
 
@@ -759,7 +760,7 @@ struct set_console_mode_request
 struct set_console_info_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the console */
+    IN  handle_t     handle;        /* handle to the console */
     IN  int          mask;          /* setting mask (see below) */
     IN  int          cursor_size;   /* size of cursor (percentage filled) */
     IN  int          cursor_visible;/* cursor visibility flag */
@@ -772,7 +773,7 @@ struct set_console_info_request
 struct get_console_info_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the console */
+    IN  handle_t     handle;        /* handle to the console */
     OUT int          cursor_size;   /* size of cursor (percentage filled) */
     OUT int          cursor_visible;/* cursor visibility flag */
     OUT int          pid;           /* pid of xterm (hack) */
@@ -784,7 +785,7 @@ struct get_console_info_request
 struct write_console_input_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the console input */
+    IN  handle_t     handle;        /* handle to the console input */
     OUT int          written;       /* number of records written */
     IN  VARARG(rec,input_records);  /* input records */
 };
@@ -793,7 +794,7 @@ struct write_console_input_request
 struct read_console_input_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the console input */
+    IN  handle_t     handle;        /* handle to the console input */
     IN  int          flush;         /* flush the retrieved records from the queue? */
     OUT int          read;          /* number of records read */
     OUT VARARG(rec,input_records);  /* input records */
@@ -806,7 +807,7 @@ struct create_change_notification_request
     REQUEST_HEADER;                 /* request header */
     IN  int          subtree;       /* watch all the subtree */
     IN  int          filter;        /* notification filter */
-    OUT int          handle;        /* handle to the change notification */
+    OUT handle_t     handle;        /* handle to the change notification */
 };
 
 
@@ -818,8 +819,8 @@ struct create_mapping_request
     IN  int          size_low;      /* mapping size */
     IN  int          protect;       /* protection flags (see below) */
     IN  int          inherit;       /* inherit flag */
-    IN  int          file_handle;   /* file handle */
-    OUT int          handle;        /* handle to the mapping */
+    IN  handle_t     file_handle;   /* file handle */
+    OUT handle_t     handle;        /* handle to the mapping */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 /* protection flags */
@@ -839,7 +840,7 @@ struct open_mapping_request
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the mapping */
+    OUT handle_t     handle;        /* handle to the mapping */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -848,13 +849,13 @@ struct open_mapping_request
 struct get_mapping_info_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the mapping */
+    IN  handle_t     handle;        /* handle to the mapping */
     OUT int          size_high;     /* mapping size */
     OUT int          size_low;      /* mapping size */
     OUT int          protect;       /* protection flags */
     OUT int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     OUT void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
-    OUT int          shared_file;   /* shared mapping file handle */
+    OUT handle_t     shared_file;   /* shared mapping file handle */
     OUT int          shared_size;   /* shared mapping size */
     OUT int          anonymous;     /* anonymous mapping? */
 };
@@ -867,7 +868,7 @@ struct create_device_request
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     IN  int          id;            /* client private id */
-    OUT int          handle;        /* handle to the device */
+    OUT handle_t     handle;        /* handle to the device */
 };
 
 
@@ -878,7 +879,7 @@ struct create_snapshot_request
     IN  int          inherit;       /* inherit flag */
     IN  int          flags;         /* snapshot flags (TH32CS_*) */
     IN  void*        pid;           /* process id */
-    OUT int          handle;        /* handle to the snapshot */
+    OUT handle_t     handle;        /* handle to the snapshot */
 };
 
 
@@ -886,7 +887,7 @@ struct create_snapshot_request
 struct next_process_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the snapshot */
+    IN  handle_t     handle;        /* handle to the snapshot */
     IN  int          reset;         /* reset snapshot position? */
     OUT int          count;         /* process usage count */
     OUT void*        pid;           /* process id */
@@ -899,7 +900,7 @@ struct next_process_request
 struct next_thread_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the snapshot */
+    IN  handle_t     handle;        /* handle to the snapshot */
     IN  int          reset;         /* reset snapshot position? */
     OUT int          count;         /* thread usage count */
     OUT void*        pid;           /* process id */
@@ -913,7 +914,7 @@ struct next_thread_request
 struct next_module_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the snapshot */
+    IN  handle_t     handle;        /* handle to the snapshot */
     IN  int          reset;         /* reset snapshot position? */
     OUT void*        pid;           /* process id */
     OUT void*        base;          /* module base address */
@@ -974,7 +975,7 @@ struct debug_process_request
 struct read_process_memory_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* process handle */
+    IN  handle_t     handle;       /* process handle */
     IN  void*        addr;         /* addr to read from (must be int-aligned) */
     IN  int          len;          /* number of ints to read */
     OUT VARARG(data,bytes);        /* result data */
@@ -985,7 +986,7 @@ struct read_process_memory_request
 struct write_process_memory_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* process handle */
+    IN  handle_t     handle;       /* process handle */
     IN  void*        addr;         /* addr to write to (must be int-aligned) */
     IN  int          len;          /* number of ints to write */
     IN  unsigned int first_mask;   /* mask for first word */
@@ -998,11 +999,11 @@ struct write_process_memory_request
 struct create_key_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          parent;       /* handle to the parent key */
+    IN  handle_t     parent;       /* handle to the parent key */
     IN  unsigned int access;       /* desired access rights */
     IN  unsigned int options;      /* creation options */
     IN  time_t       modif;        /* last modification time */
-    OUT int          hkey;         /* handle to the created key */
+    OUT handle_t     hkey;         /* handle to the created key */
     OUT int          created;      /* has it been newly created? */
     IN  VARARG(name,unicode_len_str);  /* key name */
     IN  VARARG(class,unicode_str);     /* class name */
@@ -1012,9 +1013,9 @@ struct create_key_request
 struct open_key_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          parent;       /* handle to the parent key */
+    IN  handle_t     parent;       /* handle to the parent key */
     IN  unsigned int access;       /* desired access rights */
-    OUT int          hkey;         /* handle to the open key */
+    OUT handle_t     hkey;         /* handle to the open key */
     IN  VARARG(name,unicode_str);  /* key name */
 };
 
@@ -1023,7 +1024,7 @@ struct open_key_request
 struct delete_key_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to the key */
+    IN  handle_t     hkey;         /* handle to the key */
 };
 
 
@@ -1031,7 +1032,7 @@ struct delete_key_request
 struct enum_key_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to registry key */
+    IN  handle_t     hkey;         /* handle to registry key */
     IN  int          index;        /* index of subkey (or -1 for current key) */
     IN  int          full;         /* return the full info? */
     OUT int          subkeys;      /* number of subkeys */
@@ -1050,7 +1051,7 @@ struct enum_key_request
 struct set_key_value_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to registry key */
+    IN  handle_t     hkey;         /* handle to registry key */
     IN  int          type;         /* value type */
     IN  unsigned int total;        /* total value len */
     IN  unsigned int offset;       /* offset for setting data */
@@ -1063,7 +1064,7 @@ struct set_key_value_request
 struct get_key_value_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to registry key */
+    IN  handle_t     hkey;         /* handle to registry key */
     IN  unsigned int offset;       /* offset for getting data */
     OUT int          type;         /* value type */
     OUT int          len;          /* value data len */
@@ -1076,7 +1077,7 @@ struct get_key_value_request
 struct enum_key_value_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to registry key */
+    IN  handle_t     hkey;         /* handle to registry key */
     IN  int          index;        /* value index */
     IN  unsigned int offset;       /* offset for getting data */
     OUT int          type;         /* value type */
@@ -1090,7 +1091,7 @@ struct enum_key_value_request
 struct delete_key_value_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* handle to registry key */
+    IN  handle_t     hkey;         /* handle to registry key */
     IN  VARARG(name,unicode_str);  /* value name */
 };
 
@@ -1099,8 +1100,8 @@ struct delete_key_value_request
 struct load_registry_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* root key to load to */
-    IN  int          file;         /* file to load from */
+    IN  handle_t     hkey;         /* root key to load to */
+    IN  handle_t     file;         /* file to load from */
     IN  VARARG(name,unicode_str);  /* subkey name */
 };
 
@@ -1109,8 +1110,8 @@ struct load_registry_request
 struct save_registry_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* key to save */
-    IN  int          file;         /* file to save to */
+    IN  handle_t     hkey;         /* key to save */
+    IN  handle_t     file;         /* file to save to */
 };
 
 
@@ -1118,7 +1119,7 @@ struct save_registry_request
 struct save_registry_atexit_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          hkey;         /* key to save */
+    IN  handle_t     hkey;         /* key to save */
     IN  VARARG(file,string);       /* file to save to */
 };
 
@@ -1139,7 +1140,7 @@ struct create_timer_request
     REQUEST_HEADER;                 /* request header */
     IN  int          inherit;       /* inherit flag */
     IN  int          manual;        /* manual reset */
-    OUT int          handle;        /* handle to the timer */
+    OUT handle_t     handle;        /* handle to the timer */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -1150,7 +1151,7 @@ struct open_timer_request
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
-    OUT int          handle;        /* handle to the timer */
+    OUT handle_t     handle;        /* handle to the timer */
     IN  VARARG(name,unicode_str);   /* object name */
 };
 
@@ -1158,7 +1159,7 @@ struct open_timer_request
 struct set_timer_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the timer */
+    IN  handle_t     handle;        /* handle to the timer */
     IN  int          sec;           /* next expiration absolute time */
     IN  int          usec;          /* next expiration absolute time */
     IN  int          period;        /* timer period in ms */
@@ -1170,7 +1171,7 @@ struct set_timer_request
 struct cancel_timer_request
 {
     REQUEST_HEADER;                 /* request header */
-    IN  int          handle;        /* handle to the timer */
+    IN  handle_t     handle;        /* handle to the timer */
 };
 
 
@@ -1178,7 +1179,7 @@ struct cancel_timer_request
 struct get_thread_context_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle */
+    IN  handle_t     handle;       /* thread handle */
     IN  unsigned int flags;        /* context flags */
     OUT VARARG(context,context);   /* thread context */
 };
@@ -1188,7 +1189,7 @@ struct get_thread_context_request
 struct set_thread_context_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* thread handle */
+    IN  handle_t     handle;       /* thread handle */
     IN  unsigned int flags;        /* context flags */
     IN  VARARG(context,context);   /* thread context */
 };
@@ -1198,7 +1199,7 @@ struct set_thread_context_request
 struct get_selector_entry_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int           handle;      /* thread handle */
+    IN  handle_t      handle;      /* thread handle */
     IN  int           entry;       /* LDT entry */
     OUT unsigned int  base;        /* selector base */
     OUT unsigned int  limit;       /* selector limit */
@@ -1258,14 +1259,14 @@ struct init_atom_table_request
 struct get_msg_queue_request
 {
     REQUEST_HEADER;                /* request header */
-    OUT int          handle;       /* handle to the queue */
+    OUT handle_t     handle;       /* handle to the queue */
 };
 
 /* Wake up a message queue */
 struct wake_queue_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* handle to the queue */
+    IN  handle_t     handle;       /* handle to the queue */
     IN  unsigned int bits;         /* wake bits */
 };
 
@@ -1273,9 +1274,9 @@ struct wake_queue_request
 struct wait_input_idle_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* process handle */
+    IN  handle_t     handle;       /* process handle */
     IN  int          timeout;      /* timeout */
-    OUT int          event;        /* handle to idle event */
+    OUT handle_t     event;        /* handle to idle event */
 };
 
 struct create_serial_request
@@ -1284,14 +1285,14 @@ struct create_serial_request
     IN  unsigned int access;       /* wanted access rights */
     IN  int          inherit;      /* inherit flag */
     IN  unsigned int sharing;      /* sharing flags */
-    OUT int          handle;       /* handle to the port */
+    OUT handle_t     handle;       /* handle to the port */
     IN  VARARG(name,string);       /* file name */
 };
 
 struct get_serial_info_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* handle to comm port */
+    IN  handle_t     handle;       /* handle to comm port */
     OUT unsigned int readinterval;
     OUT unsigned int readconst;
     OUT unsigned int readmult;
@@ -1304,7 +1305,7 @@ struct get_serial_info_request
 struct set_serial_info_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          handle;       /* handle to comm port */
+    IN  handle_t     handle;       /* handle to comm port */
     IN  int          flags;        /* bitmask to set values (see below) */
     IN  unsigned int readinterval;
     IN  unsigned int readconst;
@@ -1321,13 +1322,13 @@ struct set_serial_info_request
 struct create_async_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          file_handle;  /* handle to comm port */
+    IN  handle_t     file_handle;  /* handle to comm port */
     IN  void*        overlapped;
     IN  void*        buffer;
     IN  int          count;
     IN  void*        func;
     IN  int          type;
-    OUT int          ov_handle;
+    OUT handle_t     ov_handle;
 };
 #define ASYNC_TYPE_READ  0x01
 #define ASYNC_TYPE_WRITE 0x02
@@ -1340,7 +1341,7 @@ struct create_async_request
 struct async_result_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  int          ov_handle;
+    IN  handle_t     ov_handle;
     IN  int          result;       /* NT status code */
 };
 
@@ -1574,7 +1575,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 31
+#define SERVER_PROTOCOL_VERSION 32
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

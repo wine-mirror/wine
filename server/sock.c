@@ -304,7 +304,7 @@ static struct object *create_socket( int family, int type, int protocol )
 }
 
 /* accept a socket (creates a new fd) */
-static struct object *accept_socket( int handle )
+static struct object *accept_socket( handle_t handle )
 {
     struct sock *acceptsock;
     struct sock *sock;
@@ -429,28 +429,26 @@ static void sock_set_error(void)
 DECL_HANDLER(create_socket)
 {
     struct object *obj;
-    int s = -1;
 
+    req->handle = 0;
     if ((obj = create_socket( req->family, req->type, req->protocol )) != NULL)
     {
-        s = alloc_handle( current->process, obj, req->access, req->inherit );
+        req->handle = alloc_handle( current->process, obj, req->access, req->inherit );
         release_object( obj );
     }
-    req->handle = s;
 }
 
 /* accept a socket */
 DECL_HANDLER(accept_socket)
 {
     struct object *obj;
-    int s = -1;
 
+    req->handle = 0;
     if ((obj = accept_socket( req->lhandle )) != NULL)
     {
-        s = alloc_handle( current->process, obj, req->access, req->inherit );
+        req->handle = alloc_handle( current->process, obj, req->access, req->inherit );
         release_object( obj );
     }
-    req->handle = s;
 }
 
 /* set socket event parameters */

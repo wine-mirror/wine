@@ -59,7 +59,7 @@ struct event *create_event( const WCHAR *name, size_t len,
     return event;
 }
 
-struct event *get_event_obj( struct process *process, int handle, unsigned int access )
+struct event *get_event_obj( struct process *process, handle_t handle, unsigned int access )
 {
     return (struct event *)get_handle_obj( process, handle, access, &event_ops );
 }
@@ -115,7 +115,7 @@ DECL_HANDLER(create_event)
 {
     struct event *event;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((event = create_event( get_req_data(req), get_req_data_size(req),
                                req->manual_reset, req->initial_state )))
     {

@@ -602,15 +602,15 @@ int CLIENT_InitThread(void)
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
     signal( SIGPIPE, SIG_IGN );
 
-    teb->request_fd = wine_server_recv_fd( -1, 0 );
+    teb->request_fd = wine_server_recv_fd( 0, 0 );
     if (teb->request_fd == -1) server_protocol_error( "no request fd passed on first request\n" );
     fcntl( teb->request_fd, F_SETFD, 1 ); /* set close on exec flag */
 
-    teb->reply_fd = wine_server_recv_fd( -1, 0 );
+    teb->reply_fd = wine_server_recv_fd( 0, 0 );
     if (teb->reply_fd == -1) server_protocol_error( "no reply fd passed on first request\n" );
     fcntl( teb->reply_fd, F_SETFD, 1 ); /* set close on exec flag */
 
-    fd = wine_server_recv_fd( -1, 0 );
+    fd = wine_server_recv_fd( 0, 0 );
     if (fd == -1) server_protocol_error( "no fd received for thread buffer\n" );
 
     if ((size = lseek( fd, 0, SEEK_END )) == -1) server_perror( "lseek" );

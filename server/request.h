@@ -33,7 +33,7 @@ extern void fatal_perror( const char *err, ... ) WINE_NORETURN;
 extern const char *get_config_dir(void);
 extern void read_request( struct thread *thread );
 extern int write_request( struct thread *thread );
-extern int send_client_fd( struct thread *thread, int fd, int handle );
+extern int send_client_fd( struct thread *thread, int fd, handle_t handle );
 extern void send_reply( struct thread *thread );
 extern void open_master_socket(void);
 extern void close_master_socket(void);

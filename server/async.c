@@ -99,7 +99,7 @@ static void async_destroy( struct object *obj )
     ov->timeout = NULL;
 }
 
-struct async *get_async_obj( struct process *process, int handle, unsigned int access )
+struct async *get_async_obj( struct process *process, handle_t handle, unsigned int access )
 {
     return (struct async *)get_handle_obj( process, handle, access, &async_ops );
 }
@@ -162,7 +162,7 @@ DECL_HANDLER(create_async)
     struct async *ov = NULL;
     int fd;
 
-    req->ov_handle = -1;
+    req->ov_handle = 0;
     if (!(obj = get_handle_obj( current->process, req->file_handle, 0, NULL)) )
         return;
 

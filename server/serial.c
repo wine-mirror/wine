@@ -135,7 +135,7 @@ static void serial_dump( struct object *obj, int verbose )
     fprintf( stderr, "Port fd=%d mask=%x\n", serial->obj.fd, serial->eventmask );
 }
 
-struct serial *get_serial_obj( struct process *process, int handle, unsigned int access )
+struct serial *get_serial_obj( struct process *process, handle_t handle, unsigned int access )
 {
     return (struct serial *)get_handle_obj( process, handle, access, &serial_ops );
 }
@@ -249,7 +249,7 @@ DECL_HANDLER(create_serial)
 {
     struct serial *serial;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((serial = create_serial( get_req_data(req), get_req_data_size(req), req->access )))
     {
         req->handle = alloc_handle( current->process, serial, req->access, req->inherit );

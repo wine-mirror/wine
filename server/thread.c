@@ -113,8 +113,8 @@ static int alloc_client_buffer( struct thread *thread )
     /* add it here since send_client_fd may call kill_thread */
     add_process_thread( thread->process, thread );
 
-    send_client_fd( thread, fd_pipe[0], -1 );
-    send_client_fd( thread, fd, -1 );
+    send_client_fd( thread, fd_pipe[0], 0 );
+    send_client_fd( thread, fd, 0 );
     send_reply( thread );
     close( fd_pipe[0] );
     close( fd );
@@ -246,7 +246,7 @@ struct thread *get_thread_from_id( void *id )
 }
 
 /* get a thread from a handle (and increment the refcount) */
-struct thread *get_thread_from_handle( int handle, unsigned int access )
+struct thread *get_thread_from_handle( handle_t handle, unsigned int access )
 {
     return (struct thread *)get_handle_obj( current->process, handle,
                                             access, &thread_ops );
@@ -488,7 +488,7 @@ int sleep_on( int count, struct object *objects[], int flags, int timeout, sleep
 }
 
 /* select on a list of handles */
-static int select_on( int count, int *handles, int flags, int timeout )
+static int select_on( int count, handle_t *handles, int flags, int timeout )
 {
     int ret = 0;
     int i;
@@ -697,7 +697,7 @@ DECL_HANDLER(new_thread)
             if (req->suspend) thread->suspend++;
             req->tid = thread;
             if ((req->handle = alloc_handle( current->process, thread,
-                                             THREAD_ALL_ACCESS, req->inherit )) != -1)
+                                             THREAD_ALL_ACCESS, req->inherit )))
             {
                 send_client_fd( current, sock[1], req->handle );
                 close( sock[1] );
@@ -756,9 +756,9 @@ DECL_HANDLER(terminate_thread)
 DECL_HANDLER(get_thread_info)
 {
     struct thread *thread;
-    int handle = req->handle;
+    handle_t handle = req->handle;
 
-    if (handle == -1) thread = get_thread_from_id( req->tid_in );
+    if (!handle) thread = get_thread_from_id( req->tid_in );
     else thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION );
 
     if (thread)

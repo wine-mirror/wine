@@ -255,7 +255,7 @@ int write_request( struct thread *thread )
 }
 
 /* send an fd to a client */
-int send_client_fd( struct thread *thread, int fd, int handle )
+int send_client_fd( struct thread *thread, int fd, handle_t handle )
 {
     int ret;
 
@@ -382,7 +382,7 @@ struct object *create_request_socket( struct thread *thread )
         return NULL;
     }
     sock->thread = thread;
-    send_client_fd( thread, fd[1], -1 );
+    send_client_fd( thread, fd[1], 0 );
     close( fd[1] );
     set_select_events( &sock->obj, POLLIN );
     return &sock->obj;

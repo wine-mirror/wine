@@ -110,7 +110,7 @@ DECL_HANDLER(get_msg_queue)
 {
     struct msg_queue *queue = current->queue;
 
-    req->handle = -1;
+    req->handle = 0;
     if (!queue) queue = create_msg_queue( current );
     if (queue) req->handle = alloc_handle( current->process, queue, SYNCHRONIZE, 0 );
 }

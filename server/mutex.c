@@ -140,7 +140,7 @@ DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((mutex = create_mutex( get_req_data(req), get_req_data_size(req), req->owned )))
     {
         req->handle = alloc_handle( current->process, mutex, MUTEX_ALL_ACCESS, req->inherit );

@@ -95,7 +95,7 @@ PDB current_process;
 
 static char **main_exe_argv;
 static char main_exe_name[MAX_PATH];
-static HANDLE main_exe_file = INVALID_HANDLE_VALUE;
+static HANDLE main_exe_file;
 
 unsigned int server_startticks;
 
@@ -460,7 +460,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
         }
     }
 
-    if (main_exe_file == INVALID_HANDLE_VALUE)
+    if (!main_exe_file)
     {
         if ((main_exe_file = CreateFileA( main_exe_name, GENERIC_READ, FILE_SHARE_READ,
                                           NULL, OPEN_EXISTING, 0, -1 )) == INVALID_HANDLE_VALUE)
@@ -484,7 +484,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
     current_process.flags |= PDB32_WIN16_PROC;
     main_exe_name[0] = 0;
     CloseHandle( main_exe_file );
-    main_exe_file = INVALID_HANDLE_VALUE;
+    main_exe_file = 0;
     _EnterWin16Lock();
 
  found:
@@ -731,7 +731,7 @@ static int fork_and_exec( const char *filename, char *cmdline,
  * file, and we exec a new copy of wine to load it; otherwise we
  * simply exec the specified filename as a Unix process.
  */
-BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env, 
+BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                      BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                      LPPROCESS_INFORMATION info, LPCSTR lpCurrentDirectory )
@@ -741,9 +741,9 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     const char *unixfilename = NULL;
     const char *unixdir = NULL;
     DOS_FULL_NAME full_dir, full_name;
-    HANDLE load_done_evt = (HANDLE)-1;
+    HANDLE load_done_evt = 0;
 
-    info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
+    info->hThread = info->hProcess = 0;
 
     if (lpCurrentDirectory)
     {
@@ -783,7 +783,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
         }
         req->cmd_show = startup->wShowWindow;
 
-        if (hFile == -1)  /* unix process */
+        if (!hFile)  /* unix process */
         {
             unixfilename = filename;
             if (DOSFS_GetFullName( filename, TRUE, &full_name ))
@@ -824,7 +824,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     if (!ret || (pid == -1)) goto error;
 
     /* Wait until process is initialized (or initialization failed) */
-    if (load_done_evt != (HANDLE)-1)
+    if (load_done_evt)
     {
         DWORD res;
         HANDLE handles[2];
@@ -845,9 +845,9 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     return TRUE;
 
 error:
-    if (load_done_evt != (HANDLE)-1) CloseHandle( load_done_evt );
-    if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
-    if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
+    if (load_done_evt) CloseHandle( load_done_evt );
+    if (info->hThread) CloseHandle( info->hThread );
+    if (info->hProcess) CloseHandle( info->hProcess );
     return FALSE;
 }
 

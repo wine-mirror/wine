@@ -62,9 +62,9 @@ struct startup_info
     int                 inherit_all;  /* inherit all handles from parent */
     int                 create_flags; /* creation flags */
     int                 start_flags;  /* flags from startup info */
-    int                 hstdin;       /* handle for stdin */
-    int                 hstdout;      /* handle for stdout */
-    int                 hstderr;      /* handle for stderr */
+    handle_t            hstdin;       /* handle for stdin */
+    handle_t            hstdout;      /* handle for stdout */
+    handle_t            hstderr;      /* handle for stderr */
     int                 cmd_show;     /* main window show mode */
     struct file        *exe_file;     /* file handle for main exe */
     char               *filename;     /* file name for main exe */
@@ -230,11 +230,11 @@ static void init_process( int ppid, struct init_process_request *req )
     if (!process->handles) goto error;
 
     /* retrieve the main exe file */
-    req->exe_file = -1;
+    req->exe_file = 0;
     if (parent && info->exe_file)
     {
         process->exe.file = (struct file *)grab_object( info->exe_file );
-        if ((req->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )) == -1)
+        if (!(req->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
             goto error;
     }
 
@@ -356,7 +356,7 @@ static void build_wait_process_reply( struct thread *thread, struct object *obj,
             req->event = alloc_handle( thread->process, info->process->init_event,
                                        EVENT_ALL_ACCESS, 0 );
         else
-            req->event = -1;
+            req->event = 0;
 
         /* FIXME: set_error */
     }
@@ -375,7 +375,7 @@ struct process *get_process_from_id( void *id )
 }
 
 /* get a process from a handle (and increment the refcount) */
-struct process *get_process_from_handle( int handle, unsigned int access )
+struct process *get_process_from_handle( handle_t handle, unsigned int access )
 {
     return (struct process *)get_handle_obj( current->process, handle,
                                              access, &process_ops );
@@ -734,7 +734,7 @@ DECL_HANDLER(new_process)
     info->process      = NULL;
     info->thread       = NULL;
 
-    if ((req->exe_file != -1) &&
+    if (req->exe_file &&
         !(info->exe_file = get_file_obj( current->process, req->exe_file, GENERIC_READ )))
     {
         release_object( info );
@@ -761,9 +761,9 @@ DECL_HANDLER(wait_process)
     }
     req->pid     = 0;
     req->tid     = 0;
-    req->phandle = -1;
-    req->thandle = -1;
-    req->event   = -1;
+    req->phandle = 0;
+    req->thandle = 0;
+    req->event   = 0;
     if (req->cancel)
     {
         release_object( current->info );
@@ -812,7 +812,7 @@ DECL_HANDLER(init_process_done)
 DECL_HANDLER(open_process)
 {
     struct process *process = get_process_from_id( req->pid );
-    req->handle = -1;
+    req->handle = 0;
     if (process)
     {
         req->handle = alloc_handle( current->process, process, req->access, req->inherit );
@@ -890,9 +890,9 @@ DECL_HANDLER(load_dll)
     struct process_dll *dll;
     struct file *file = NULL;
 
-    if ((req->handle != -1) &&
+    if (req->handle &&
         !(file = get_file_obj( current->process, req->handle, GENERIC_READ ))) return;
-    
+
     if ((dll = process_load_dll( current->process, file, req->base )))
     {
         dll->dbg_offset = req->dbg_offset;
@@ -917,7 +917,7 @@ DECL_HANDLER(wait_input_idle)
 {
     struct process *process;
 
-    req->event = -1;
+    req->event = 0;
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
         if (process->idle_event && process != current->process && process->queue != current->queue)

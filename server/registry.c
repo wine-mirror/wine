@@ -71,7 +71,9 @@ struct key_value
 #define HKEY_SPECIAL_ROOT_FIRST   HKEY_CLASSES_ROOT
 #define HKEY_SPECIAL_ROOT_LAST    HKEY_DYN_DATA
 #define NB_SPECIAL_ROOT_KEYS      (HKEY_SPECIAL_ROOT_LAST - HKEY_SPECIAL_ROOT_FIRST + 1)
-#define IS_SPECIAL_ROOT_HKEY(h)   (((h) >= HKEY_SPECIAL_ROOT_FIRST) && ((h) <= HKEY_SPECIAL_ROOT_LAST))
+#define IS_SPECIAL_ROOT_HKEY(h)   (((unsigned int)(h) >= HKEY_SPECIAL_ROOT_FIRST) && \
+                                   ((unsigned int)(h) <= HKEY_SPECIAL_ROOT_LAST))
+
 static struct key *special_root_keys[NB_SPECIAL_ROOT_KEYS];
 
 /* the real root key */
@@ -896,18 +898,18 @@ static void delete_value( struct key *key, const WCHAR *name )
     }
 }
 
-static struct key *create_root_key( int hkey )
+static struct key *create_root_key( handle_t hkey )
 {
     WCHAR keyname[80];
     int i, dummy;
     struct key *key;
     const char *p;
 
-    p = special_root_names[hkey - HKEY_SPECIAL_ROOT_FIRST];
+    p = special_root_names[(unsigned int)hkey - HKEY_SPECIAL_ROOT_FIRST];
     i = 0;
     while (*p) keyname[i++] = *p++;
 
-    if (hkey == HKEY_CURRENT_USER)  /* this one is special */
+    if (hkey == (handle_t)HKEY_CURRENT_USER)  /* this one is special */
     {
         /* get the current user name */
         char buffer[10];
@@ -925,21 +927,21 @@ static struct key *create_root_key( int hkey )
 
     if ((key = create_key( root_key, keyname, NULL, 0, time(NULL), &dummy )))
     {
-        special_root_keys[hkey - HKEY_SPECIAL_ROOT_FIRST] = key;
+        special_root_keys[(unsigned int)hkey - HKEY_SPECIAL_ROOT_FIRST] = key;
         key->flags |= KEY_ROOT;
     }
     return key;
 }
 
 /* get the registry key corresponding to an hkey handle */
-static struct key *get_hkey_obj( int hkey, unsigned int access )
+static struct key *get_hkey_obj( handle_t hkey, unsigned int access )
 {
     struct key *key;
 
     if (!hkey) return (struct key *)grab_object( root_key );
     if (IS_SPECIAL_ROOT_HKEY(hkey))
     {
-        if (!(key = special_root_keys[hkey - HKEY_SPECIAL_ROOT_FIRST]))
+        if (!(key = special_root_keys[(unsigned int)hkey - HKEY_SPECIAL_ROOT_FIRST]))
             key = create_root_key( hkey );
         else
             grab_object( key );
@@ -1334,7 +1336,7 @@ static void load_keys( struct key *key, FILE *f )
 }
 
 /* load a part of the registry from a file */
-static void load_registry( struct key *key, int handle )
+static void load_registry( struct key *key, handle_t handle )
 {
     struct object *obj;
     int fd;
@@ -1424,7 +1426,7 @@ static void save_all_subkeys( struct key *key, FILE *f )
 }
 
 /* save a registry branch to a file handle */
-static void save_registry( struct key *key, int handle )
+static void save_registry( struct key *key, handle_t handle )
 {
     struct object *obj;
     int fd;
@@ -1583,7 +1585,7 @@ DECL_HANDLER(create_key)
     size_t len;
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
-    req->hkey = -1;
+    req->hkey = 0;
     if (!(name = copy_req_path( req, &len ))) return;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
@@ -1618,7 +1620,7 @@ DECL_HANDLER(open_key)
     unsigned int access = req->access;
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
-    req->hkey = -1;
+    req->hkey = 0;
     if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
     {
         WCHAR *name = copy_path( get_req_data(req), get_req_data_size(req) );

@@ -198,7 +198,7 @@ DECL_HANDLER(create_snapshot)
 {
     struct snapshot *snapshot;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((snapshot = create_snapshot( req->pid, req->flags )))
     {
         req->handle = alloc_handle( current->process, snapshot, 0, req->inherit );

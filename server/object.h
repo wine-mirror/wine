@@ -135,7 +135,7 @@ struct event;
 
 extern struct event *create_event( const WCHAR *name, size_t len,
                                    int manual_reset, int initial_state );
-extern struct event *get_event_obj( struct process *process, int handle, unsigned int access );
+extern struct event *get_event_obj( struct process *process, handle_t handle, unsigned int access );
 extern void pulse_event( struct event *event );
 extern void set_event( struct event *event );
 extern void reset_event( struct event *event );
@@ -146,7 +146,7 @@ extern void abandon_mutexes( struct thread *thread );
 
 /* file functions */
 
-extern struct file *get_file_obj( struct process *process, int handle,
+extern struct file *get_file_obj( struct process *process, handle_t handle,
                                   unsigned int access );
 extern int grow_file( struct file *file, int size_high, int size_low );
 extern int create_anonymous_file(void);

@@ -167,7 +167,7 @@ int free_console( struct process *process )
     return 1;
 }
 
-static int set_console_fd( int handle, int fd_in, int fd_out, int pid )
+static int set_console_fd( handle_t handle, int fd_in, int fd_out, int pid )
 {
     struct console_input *input;
     struct screen_buffer *output;
@@ -206,7 +206,7 @@ static int set_console_fd( int handle, int fd_in, int fd_out, int pid )
     return 1;
 }
 
-static int get_console_mode( int handle )
+static int get_console_mode( handle_t handle )
 {
     struct object *obj;
     int ret = 0;
@@ -224,7 +224,7 @@ static int get_console_mode( int handle )
     return ret;
 }
 
-static int set_console_mode( int handle, int mode )
+static int set_console_mode( handle_t handle, int mode )
 {
     struct object *obj;
     int ret = 0;
@@ -247,7 +247,7 @@ static int set_console_mode( int handle, int mode )
 }
 
 /* set misc console information (output handle only) */
-static int set_console_info( int handle, struct set_console_info_request *req,
+static int set_console_info( handle_t handle, struct set_console_info_request *req,
                              const char *title, size_t len )
 {
     struct screen_buffer *console;
@@ -275,7 +275,7 @@ static int set_console_info( int handle, struct set_console_info_request *req,
 }
 
 /* add input events to a console input queue */
-static int write_console_input( int handle, int count, INPUT_RECORD *records )
+static int write_console_input( handle_t handle, int count, INPUT_RECORD *records )
 {
     INPUT_RECORD *new_rec;
     struct console_input *console;
@@ -298,7 +298,7 @@ static int write_console_input( int handle, int count, INPUT_RECORD *records )
 }
 
 /* retrieve a pointer to the console input records */
-static int read_console_input( int handle, int count, INPUT_RECORD *rec, int flush )
+static int read_console_input( handle_t handle, int count, INPUT_RECORD *rec, int flush )
 {
     struct console_input *console;
 
@@ -409,18 +409,18 @@ static void screen_buffer_destroy( struct object *obj )
 /* allocate a console for the current process */
 DECL_HANDLER(alloc_console)
 {
-    int in = -1, out = -1;
+    handle_t in = 0, out = 0;
 
     if (!alloc_console( current->process )) goto done;
 
     if ((in = alloc_handle( current->process, current->process->console_in,
-                            req->access, req->inherit )) != -1)
+                            req->access, req->inherit )))
     {
         if ((out = alloc_handle( current->process, current->process->console_out,
-                                 req->access, req->inherit )) != -1)
+                                 req->access, req->inherit )))
             goto done;  /* everything is fine */
         close_handle( current->process, in, NULL );
-        in = -1;
+        in = 0;
     }
     free_console( current->process );
 
@@ -440,6 +440,7 @@ DECL_HANDLER(open_console)
 {
     struct object *obj= req->output ? current->process->console_out : current->process->console_in;
 
+    req->handle = 0;
     if (obj) req->handle = alloc_handle( current->process, obj, req->access, req->inherit );
     else set_error( STATUS_ACCESS_DENIED );
 }

@@ -219,7 +219,7 @@ extern HGLOBAL PE_LoadResource(HMODULE,HRSRC);
 extern WINE_MODREF *PE_LoadLibraryExA(LPCSTR, DWORD);
 extern HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags );
 extern WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename,
-                                     DWORD flags, HFILE hFile, BOOL builtin );
+                                     DWORD flags, HANDLE hFile, BOOL builtin );
 extern void PE_InitTls(void);
 extern BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved );
 
@@ -255,7 +255,7 @@ extern int BUILTIN32_dlclose( void *handle );
 
 /* scheduler/process.c */
 extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
-extern BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
+extern BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info,

@@ -320,12 +320,12 @@ void file_set_error(void)
     }
 }
 
-struct file *get_file_obj( struct process *process, int handle, unsigned int access )
+struct file *get_file_obj( struct process *process, handle_t handle, unsigned int access )
 {
     return (struct file *)get_handle_obj( process, handle, access, &file_ops );
 }
 
-static int set_file_pointer( int handle, int *low, int *high, int whence )
+static int set_file_pointer( handle_t handle, int *low, int *high, int whence )
 {
     struct file *file;
     int result;
@@ -354,7 +354,7 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
     return 1;
 }
 
-static int truncate_file( int handle )
+static int truncate_file( handle_t handle )
 {
     struct file *file;
     int result;
@@ -370,7 +370,6 @@ static int truncate_file( int handle )
     }
     release_object( file );
     return 1;
-    
 }
 
 /* try to grow the file to the specified size */
@@ -394,7 +393,7 @@ int grow_file( struct file *file, int size_high, int size_low )
     return 0;
 }
 
-static int set_file_time( int handle, time_t access_time, time_t write_time )
+static int set_file_time( handle_t handle, time_t access_time, time_t write_time )
 {
     struct file *file;
     struct utimbuf utimbuf;
@@ -438,7 +437,7 @@ DECL_HANDLER(create_file)
 {
     struct file *file;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((file = create_file( get_req_data(req), get_req_data_size(req), req->access,
                              req->sharing, req->create, req->attrs )))
     {
@@ -452,7 +451,7 @@ DECL_HANDLER(alloc_file_handle)
 {
     struct file *file;
 
-    req->handle = -1;
+    req->handle = 0;
     if (current->pass_fd != -1)
     {
         if ((file = create_file_for_fd( current->pass_fd, req->access,

@@ -111,7 +111,7 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
 HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
 {
     HANDLE ret = INVALID_HANDLE_VALUE;
-    DuplicateHandle( GetCurrentProcess(), hSrc, (HANDLE)-1, &ret, 0, FALSE,
+    DuplicateHandle( GetCurrentProcess(), hSrc, GetCurrentProcess(), &ret, 0, FALSE,
                      DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE );
     return ret;
 }

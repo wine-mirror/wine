@@ -14,7 +14,7 @@
     "unsigned int"  => "%08x",
     "void*"         => "%p",
     "time_t"        => "%ld",
-    "path_t"        => "&dump_path_t",
+    "handle_t"      => "%d",
 );
 
 my @requests = ();

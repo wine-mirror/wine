@@ -44,7 +44,6 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -84,7 +83,6 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -121,7 +119,6 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -149,7 +146,6 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -271,7 +267,6 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -300,7 +295,6 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -333,7 +327,6 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -361,7 +354,6 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -423,7 +415,6 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -464,7 +455,6 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -492,7 +482,6 @@ HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -519,7 +508,6 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 

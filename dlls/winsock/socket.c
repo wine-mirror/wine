@@ -818,10 +818,10 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
             req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
             req->inherit = TRUE;
             sock_server_call( REQ_ACCEPT_SOCKET );
-            as = req->handle;
+            as = (SOCKET)req->handle;
         }
         SERVER_END_REQ;
-	if( ((int)as) >= 0 )
+	if (as)
 	{
 	    unsigned omask = _get_sock_mask( s );
 	    int fd = _get_sock_fd( as );
@@ -2223,10 +2223,10 @@ SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
         req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
         req->inherit  = TRUE;
         sock_server_call( REQ_CREATE_SOCKET );
-        ret = req->handle;
+        ret = (SOCKET)req->handle;
     }
     SERVER_END_REQ;
-    if ( ((int) ret) >= 0)
+    if (ret)
     {
         TRACE("\tcreated %04x\n", ret );
         return ret;

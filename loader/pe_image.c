@@ -533,7 +533,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
  * Note: Assumes that the process critical section is held
  */
 WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
-                              HFILE hFile, BOOL builtin )
+                              HANDLE hFile, BOOL builtin )
 {
     DWORD load_addr = (DWORD)hModule;  /* for RVA */
     IMAGE_NT_HEADERS *nt = PE_HEADER(hModule);

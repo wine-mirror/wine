@@ -1184,7 +1184,7 @@ static void load_wine_registry(HKEY hkey,LPCSTR fn)
         case WINE_REG_VER_2: {
             HANDLE file;
             if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-                                              FILE_ATTRIBUTE_NORMAL, -1, TRUE )) != INVALID_HANDLE_VALUE)
+                                              FILE_ATTRIBUTE_NORMAL, 0, TRUE )))
             {
                 SERVER_START_REQ
                 {

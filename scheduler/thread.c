@@ -58,7 +58,7 @@ TEB *THREAD_IdToTEB( DWORD id )
     SERVER_START_REQ
     {
         struct get_thread_info_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->handle = -1;
+        req->handle = 0;
         req->tid_in = (void *)id;
         if (!server_call_noerr( REQ_GET_THREAD_INFO )) ret = req->teb;
     }
@@ -284,7 +284,8 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
                             DWORD flags, LPDWORD id )
 {
-    int socket = -1, handle = -1;
+    int socket = -1;
+    HANDLE handle = 0;
     TEB *teb;
     void *tid = 0;
 
@@ -302,7 +303,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
         }
     }
     SERVER_END_REQ;
-    if (handle == -1) return 0;
+    if (!handle) return 0;
 
     if (!(teb = THREAD_Create( socket, stack, TRUE )))
     {

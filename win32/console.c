@@ -611,7 +611,7 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
         pty_handle = FILE_DupUnixHandle( slave, GENERIC_READ | GENERIC_WRITE );
         close( master );
         close( slave );
-        if (pty_handle == -1) return FALSE;
+        if (!pty_handle) return FALSE;
 
 	/* most xterms like to print their window ID when used with -S;
 	 * read it and continue before the user has a chance...

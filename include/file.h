@@ -46,15 +46,14 @@ inline static char FILE_toupper( char c )
 extern int FILE_strcasecmp( const char *str1, const char *str2 );
 extern int FILE_strncasecmp( const char *str1, const char *str2, int len );
 extern void FILE_SetDosError(void);
-extern HFILE FILE_DupUnixHandle( int fd, DWORD access );
+extern HANDLE FILE_DupUnixHandle( int fd, DWORD access );
 extern int FILE_GetUnixHandle( HANDLE handle, DWORD access );
 extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
 extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                LPSECURITY_ATTRIBUTES sa, DWORD creation,
                                DWORD attributes, HANDLE template, BOOL fail_read_only );
-extern HFILE FILE_CreateDevice( int client_id, DWORD access,
-                                  LPSECURITY_ATTRIBUTES sa );
+extern HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 extern LONG WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 
@@ -72,7 +71,7 @@ extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
 extern BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer );
 extern const DOS_DEVICE *DOSFS_GetDevice( const char *name );
 extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile );
-extern HFILE DOSFS_OpenDevice( const char *name, DWORD access );
+extern HANDLE DOSFS_OpenDevice( const char *name, DWORD access );
 extern BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
                                   INT long_len, LPSTR short_buf,
                                   BOOL ignore_case );

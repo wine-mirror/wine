@@ -1019,7 +1019,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     TDB *pTask;
     LPSTR cmdline;
     WORD cmdShow;
-    HANDLE hThread = -1;
+    HANDLE hThread = 0;
     int socket = -1;
 
     /* Load module */
@@ -1074,7 +1074,7 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
         }
     }
     SERVER_END_REQ;
-    if (hThread == -1) return 0;
+    if (!hThread) return 0;
 
     if (!(teb = THREAD_Create( socket, 0, FALSE ))) goto error;
     teb->tibflags &= ~TEBF_WIN32;

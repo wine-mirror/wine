@@ -37,7 +37,6 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == INVALID_HANDLE_VALUE) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -66,7 +65,6 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == INVALID_HANDLE_VALUE) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -94,7 +92,6 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == INVALID_HANDLE_VALUE) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -122,7 +119,6 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == INVALID_HANDLE_VALUE) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 

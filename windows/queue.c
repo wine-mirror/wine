@@ -438,7 +438,7 @@ void QUEUE_SetExitingQueue( HQUEUE16 hQueue )
 static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 {
     HQUEUE16 hQueue;
-    HANDLE handle = -1;
+    HANDLE handle;
     MESSAGEQUEUE * msgQueue;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
@@ -455,10 +455,11 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     SERVER_START_REQ
     {
         struct get_msg_queue_request *req = server_alloc_req( sizeof(*req), 0 );
-        if (!server_call( REQ_GET_MSG_QUEUE )) handle = req->handle;
+        server_call( REQ_GET_MSG_QUEUE );
+        handle = req->handle;
     }
     SERVER_END_REQ;
-    if (handle == -1)
+    if (!handle)
     {
         ERR_(msg)("Cannot get thread queue");
         GlobalFree16( hQueue );
@@ -1518,7 +1519,7 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
     }
     SERVER_END_REQ;
     if (ret) return 0xffffffff;  /* error */
-    if (idle_event == -1) return 0;  /* no event to wait on */
+    if (!idle_event) return 0;  /* no event to wait on */
 
   cur_time = GetTickCount();
 

@@ -89,6 +89,21 @@ static size_t dump_varargs_ints( const void *req )
     return get_size(req);
 }
 
+static size_t dump_varargs_handles( const void *req )
+{
+    const handle_t *data = get_data(req);
+    size_t len = get_size(req) / sizeof(*data);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "%d", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    return get_size(req);
+}
+
 static size_t dump_varargs_ptrs( const void *req )
 {
     void * const *data = get_data(req);
@@ -523,7 +538,7 @@ static void dump_select_request( const struct select_request *req )
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " timeout=%d,", req->timeout );
     fprintf( stderr, " handles=" );
-    cur_pos += dump_varargs_ints( req );
+    cur_pos += dump_varargs_handles( req );
 }
 
 static void dump_select_reply( const struct select_request *req )

@@ -331,7 +331,7 @@ HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
 
     FIXME( "Unknown VxD %s. Try --winver nt40 !\n", filename);
     SetLastError( ERROR_FILE_NOT_FOUND );
-    return HFILE_ERROR;
+    return 0;
 }
 
 static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )

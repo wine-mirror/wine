@@ -64,7 +64,7 @@ static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
     return sem;
 }
 
-static unsigned int release_semaphore( int handle, unsigned int count )
+static unsigned int release_semaphore( handle_t handle, unsigned int count )
 {
     struct semaphore *sem;
     unsigned int prev = 0;
@@ -123,7 +123,7 @@ DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((sem = create_semaphore( get_req_data(req), get_req_data_size(req),
                                  req->initial, req->max )))
     {

@@ -92,11 +92,10 @@ static int fill_create_thread_event( struct debug_event *event, void *arg )
 {
     struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
-    int handle;
-    
+    handle_t handle;
+
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
-    if ((handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE )) == -1)
-        return 0;
+    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE ))) return 0;
     event->data.info.create_thread.handle = handle;
     event->data.info.create_thread.teb    = thread->teb;
     event->data.info.create_thread.start  = arg;
@@ -108,25 +107,24 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
     struct process *process = thread->process;
-    int handle;
+    handle_t handle;
 
     /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
-    if ((handle = alloc_handle( debugger, process, PROCESS_ALL_ACCESS, FALSE )) == -1)
-        return 0;
+    if (!(handle = alloc_handle( debugger, process, PROCESS_ALL_ACCESS, FALSE ))) return 0;
     event->data.info.create_process.process = handle;
 
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
-    if ((handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE )) == -1)
+    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, FALSE )))
     {
         close_handle( debugger, event->data.info.create_process.process, NULL );
         return 0;
     }
     event->data.info.create_process.thread = handle;
 
-    handle = -1;
+    handle = 0;
     if (process->exe.file &&
         /* the doc says write access too, but this doesn't seem a good idea */
-        ((handle = alloc_handle( debugger, process->exe.file, GENERIC_READ, FALSE )) == -1))
+        !(handle = alloc_handle( debugger, process->exe.file, GENERIC_READ, FALSE )))
     {
         close_handle( debugger, event->data.info.create_process.process, NULL );
         close_handle( debugger, event->data.info.create_process.thread, NULL );
@@ -161,9 +159,9 @@ static int fill_load_dll_event( struct debug_event *event, void *arg )
 {
     struct process *debugger = event->debugger->process;
     struct process_dll *dll = arg;
-    int handle = -1;
+    handle_t handle = 0;
 
-    if (dll->file && (handle = alloc_handle( debugger, dll->file, GENERIC_READ, FALSE )) == -1)
+    if (dll->file && !(handle = alloc_handle( debugger, dll->file, GENERIC_READ, FALSE )))
         return 0;
     event->data.info.load_dll.handle     = handle;
     event->data.info.load_dll.base       = dll->base;
@@ -319,13 +317,13 @@ static void debug_event_destroy( struct object *obj )
             close_handle( debugger, event->data.info.create_thread.handle, NULL );
             break;
         case CREATE_PROCESS_DEBUG_EVENT:
-            if (event->data.info.create_process.file != -1)
+            if (event->data.info.create_process.file)
                 close_handle( debugger, event->data.info.create_process.file, NULL );
             close_handle( debugger, event->data.info.create_process.thread, NULL );
             close_handle( debugger, event->data.info.create_process.process, NULL );
             break;
         case LOAD_DLL_DEBUG_EVENT:
-            if (event->data.info.load_dll.handle != -1)
+            if (event->data.info.load_dll.handle)
                 close_handle( debugger, event->data.info.load_dll.handle, NULL );
             break;
         }

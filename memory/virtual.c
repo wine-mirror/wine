@@ -494,7 +494,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
     {
         if ((shared_fd = FILE_GetUnixHandle( shared_file, GENERIC_READ )) == -1) goto error;
         CloseHandle( shared_file );  /* we no longer need it */
-        shared_file = INVALID_HANDLE_VALUE; 
+        shared_file = 0;
     }
 
     /* map all the sections */
@@ -571,7 +571,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
     if (view) VIRTUAL_DeleteView( view );
     close( fd );
     if (shared_fd != -1) close( shared_fd );
-    if (shared_file != INVALID_HANDLE_VALUE) CloseHandle( shared_file );
+    if (shared_file) CloseHandle( shared_file );
     return NULL;
 }
 
@@ -1295,6 +1295,7 @@ HANDLE WINAPI CreateFileMappingA(
 
     /* Create the server object */
 
+    if (hFile == INVALID_HANDLE_VALUE) hFile = 0;
     SERVER_START_REQ
     {
         struct create_mapping_request *req = server_alloc_req( sizeof(*req),
@@ -1310,7 +1311,6 @@ HANDLE WINAPI CreateFileMappingA(
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -1353,6 +1353,7 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
 
     /* Create the server object */
 
+    if (hFile == INVALID_HANDLE_VALUE) hFile = 0;
     SERVER_START_REQ
     {
         struct create_mapping_request *req = server_alloc_req( sizeof(*req),
@@ -1368,7 +1369,6 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -1404,7 +1404,6 @@ HANDLE WINAPI OpenFileMappingA(
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 
@@ -1433,7 +1432,6 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
         ret = req->handle;
     }
     SERVER_END_REQ;
-    if (ret == -1) ret = 0; /* must return 0 on failure, not -1 */
     return ret;
 }
 

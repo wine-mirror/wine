@@ -152,20 +152,19 @@ static void pipe_destroy( struct object *obj )
 DECL_HANDLER(create_pipe)
 {
     struct object *obj[2];
-    int hread = -1, hwrite = -1;
+    handle_t hread = 0, hwrite = 0;
 
     if (create_pipe( obj ))
     {
         hread = alloc_handle( current->process, obj[0],
                               STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_READ,
                               req->inherit );
-        if (hread != -1)
+        if (hread)
         {
             hwrite = alloc_handle( current->process, obj[1],
                                    STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|GENERIC_WRITE,
                                    req->inherit );
-            if (hwrite == -1)
-                close_handle( current->process, hread, NULL );
+            if (!hwrite) close_handle( current->process, hread, NULL );
         }
         release_object( obj[0] );
         release_object( obj[1] );

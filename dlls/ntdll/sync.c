@@ -36,8 +36,6 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     if ((MaximumCount <= 0) || (InitialCount < 0) || (InitialCount > MaximumCount))
         return STATUS_INVALID_PARAMETER;
 
-    *SemaphoreHandle = 0;
-
     SERVER_START_REQ
     {
         struct create_semaphore_request *req = server_alloc_req( sizeof(*req), len );
@@ -45,8 +43,8 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
         req->max     = MaximumCount;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        if (!(ret = server_call_noerr( REQ_CREATE_SEMAPHORE )))
-            *SemaphoreHandle = req->handle;
+        ret = server_call_noerr( REQ_CREATE_SEMAPHORE );
+        *SemaphoreHandle = req->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -62,16 +60,14 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    *SemaphoreHandle = 0;
-
     SERVER_START_REQ
     {
         struct open_semaphore_request *req = server_alloc_req( sizeof(*req), len );
         req->access  = access;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        if (!(ret = server_call_noerr( REQ_OPEN_SEMAPHORE )))
-            *SemaphoreHandle = req->handle;
+        ret = server_call_noerr( REQ_OPEN_SEMAPHORE );
+        *SemaphoreHandle = req->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -129,8 +125,6 @@ NTSTATUS WINAPI NtCreateEvent(
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    *EventHandle = 0;
-
     SERVER_START_REQ
     {
         struct create_event_request *req = server_alloc_req( sizeof(*req), len );
@@ -138,7 +132,8 @@ NTSTATUS WINAPI NtCreateEvent(
         req->initial_state = InitialState;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        if (!(ret = server_call_noerr( REQ_CREATE_EVENT ))) *EventHandle = req->handle;
+        ret = server_call_noerr( REQ_CREATE_EVENT );
+        *EventHandle = req->handle;
     }
     SERVER_END_REQ;
     return ret;
@@ -155,8 +150,6 @@ NTSTATUS WINAPI NtOpenEvent(
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    *EventHandle = 0;
-
     SERVER_START_REQ
     {
         struct open_event_request *req = server_alloc_req( sizeof(*req), len );
@@ -164,7 +157,8 @@ NTSTATUS WINAPI NtOpenEvent(
         req->access  = DesiredAccess;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        if (!(ret = server_call_noerr( REQ_OPEN_EVENT ))) *EventHandle = req->handle;
+        ret = server_call_noerr( REQ_OPEN_EVENT );
+        *EventHandle = req->handle;
     }
     SERVER_END_REQ;
     return ret;

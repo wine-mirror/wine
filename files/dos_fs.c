@@ -697,7 +697,7 @@ const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
  */
 static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
 {
-    HANDLE ret = INVALID_HANDLE_VALUE;
+    HANDLE ret;
     char devname[40];
 
     TRACE("%s %lx\n", name, access);
@@ -718,7 +718,8 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
         req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
         memcpy( server_data_ptr(req), devname, len );
         SetLastError(0);
-        if (!(server_call( REQ_CREATE_SERIAL ))) ret = req->handle;
+        server_call( REQ_CREATE_SERIAL );
+        ret = req->handle;
     }
     SERVER_END_REQ;
 
@@ -730,14 +731,14 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
  *           DOSFS_OpenDevice
  *
  * Open a DOS device. This might not map 1:1 into the UNIX device concept.
+ * Returns 0 on failure.
  */
-HFILE DOSFS_OpenDevice( const char *name, DWORD access )
+HANDLE DOSFS_OpenDevice( const char *name, DWORD access )
 {
     int i;
     const char *p;
-    HFILE handle;
+    HANDLE handle;
 
-    if (!name) return (HFILE)NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     if ((p = strrchr( name, '\\' ))) name = p + 1;
@@ -752,9 +753,9 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
 		if (!strcmp(DOSFS_Devices[i].name,"NUL"))
                     return FILE_CreateFile( "/dev/null", access,
                                             FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                                            OPEN_EXISTING, 0, -1, TRUE );
+                                            OPEN_EXISTING, 0, 0, TRUE );
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
-			HFILE to_dup;
+			HANDLE to_dup;
 			switch (access & (GENERIC_READ|GENERIC_WRITE)) {
 			case GENERIC_READ:
 				to_dup = GetStdHandle( STD_INPUT_HANDLE );
@@ -764,12 +765,11 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
 				break;
 			default:
 				FIXME("can't open CON read/write\n");
-				return HFILE_ERROR;
-				break;
+				return 0;
 			}
 			if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
 					      &handle, 0, FALSE, DUPLICATE_SAME_ACCESS ))
-			    handle = HFILE_ERROR;
+			    handle = 0;
 			return handle;
 		}
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$") ||
@@ -782,11 +782,11 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
                     return handle;
 
 		FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
-    		return HFILE_ERROR;
+    		return 0;
 	    }
         }
     }
-    return HFILE_ERROR;
+    return 0;
 }
 
 

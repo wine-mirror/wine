@@ -107,7 +107,6 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
 
     if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
     if (!retkey) return STATUS_INVALID_PARAMETER;
-    *retkey = 0;
 
     SERVER_START_REQ
     {
@@ -115,7 +114,8 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
         req->parent = attr->RootDirectory;
         req->access = access;
         memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        if (!(ret = server_call_noerr( REQ_OPEN_KEY ))) *retkey = req->hkey;
+        ret = server_call_noerr( REQ_OPEN_KEY );
+        *retkey = req->hkey;
     }
     SERVER_END_REQ;
     return ret;

@@ -88,7 +88,7 @@ static void load_library( void *base, const char *filename )
         MESSAGE( "Warning: loading builtin %s, but native version already present. Expect trouble.\n", filename );
 
     /* Create 32-bit MODREF */
-    if (!(wm = PE_CreateModule( module, filename, 0, -1, TRUE )))
+    if (!(wm = PE_CreateModule( module, filename, 0, 0, TRUE )))
     {
         ERR( "can't load %s\n", filename );
         SetLastError( ERROR_OUTOFMEMORY );

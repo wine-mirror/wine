@@ -86,7 +86,7 @@ DECL_HANDLER(create_device)
 {
     struct device *dev;
 
-    req->handle = -1;
+    req->handle = 0;
     if ((dev = create_device( req->id )))
     {
         req->handle = alloc_handle( current->process, dev, req->access, req->inherit );
