@@ -11,7 +11,9 @@
 #ifdef HAVE_LIBXXPM
 
 #include <X11/xpm.h>
+
 #include "debugtools.h"
+#include "ts_xpm.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(x11)

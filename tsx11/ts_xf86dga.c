@@ -12,7 +12,9 @@
 
 #include <X11/Xlib.h>
 #include <X11/extensions/xf86dga.h>
+
 #include "debugtools.h"
+#include "ts_xf86dga.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(x11)

@@ -107,7 +107,9 @@ END
 
 $pre_file
 $x11_incl#include <X11/$extensions_dir$name.h>
+
 #include "debugtools.h"
+#include "ts_$lcname.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(x11)
@@ -266,7 +268,11 @@ END
 		"a0,a1,a2,a3"
 	);	
     } else {
-	open(IN, "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | gcc -L$X11_include_dir -E - | grep -v '^[ \t]*\$'|") || die "open";
+	open(IN, 
+	     "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | " . 
+	     "gcc -L$X11_include_dir -DNeedFunctionPrototypes -E - | " .
+	     "grep -v '^[ \t]*\$)' |"
+	     ) || die "open";
 
       PROTO: while(<IN>) {
 	  if(m'extern\s+([^()]*)\b([a-zA-Z0-9_]+)\s*\(') {

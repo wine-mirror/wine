@@ -12,7 +12,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
+
 #include "debugtools.h"
+#include "ts_xutil.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(x11)
