@@ -2104,6 +2104,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
 {
     HDC     hdcImageList, hdcImage;
     INT     nIndex;
+    HICON   hBestFitIcon;
     HBITMAP hbmOldSrc, hbmOldDst;
     ICONINFO  ii;
     BITMAP  bmp;
@@ -2115,7 +2116,12 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
     if ((i >= himl->cCurImage) || (i < -1))
 	return -1;
 
-    GetIconInfo (hIcon, &ii);
+    hBestFitIcon = CopyImage(
+        hIcon, IMAGE_ICON, 
+        himl->cx, himl->cy, 
+        LR_COPYFROMRESOURCE);
+
+    GetIconInfo (hBestFitIcon, &ii);
     if (ii.hbmMask == 0)
 	ERR("no mask!\n");
     if (ii.hbmColor == 0)
@@ -2159,6 +2165,8 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
     SelectObject (hdcImage, hbmOldSrc);
     SelectObject (hdcImageList, hbmOldDst);
 
+    if(hBestFitIcon)
+	DestroyIcon(hBestFitIcon);
     if (hdcImageList)
 	DeleteDC (hdcImageList);
     if (hdcImage)

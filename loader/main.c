@@ -238,6 +238,9 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
     /* Initialize window procedures */
     if (!WINPROC_Init()) return FALSE;
 
+    /* Initialize cursor/icons */
+    CURSORICON_Init();
+
     /* Initialize built-in window classes */
     if (!WIDGETS_Init()) return FALSE;
 
@@ -246,9 +249,6 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 
     /* Initialize menus */
     if (!MENU_Init()) return FALSE;
-
-    /* Initialize cursor/icons */
-    CURSORICON_Init();
 
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;

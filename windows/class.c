@@ -412,6 +412,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
+    int iSmIconWidth, iSmIconHeight;
     HINSTANCE16 hInstance=GetExePtr(wc->hInstance);
 
     if (!(atom = GlobalAddAtom16( wc->lpszClassName ))) return 0;
@@ -431,8 +432,13 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 		   HIWORD(wc->lpszClassName) ?
                        (char *)PTR_SEG_TO_LIN(wc->lpszClassName) : "" );
 
+    iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
+    iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
+
     classPtr->hIcon         = wc->hIcon;
-    classPtr->hIconSm       = 0;
+    classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
+					iSmIconWidth, iSmIconHeight,
+					LR_COPYFROMRESOURCE);
     classPtr->hCursor       = wc->hCursor;
     classPtr->hbrBackground = wc->hbrBackground;
 
@@ -455,6 +461,7 @@ ATOM WINAPI RegisterClassA(
 	    const WNDCLASSA* wc /* Address of structure with class data */
 ) {
     ATOM atom;
+    int iSmIconWidth, iSmIconHeight;
     CLASS *classPtr;
 
     if (!(atom = GlobalAddAtomA( wc->lpszClassName ))) 
@@ -477,8 +484,13 @@ ATOM WINAPI RegisterClassA(
                    wc->cbWndExtra, classPtr,
                    HIWORD(wc->lpszClassName) ? wc->lpszClassName : "" );
     
-    classPtr->hIcon         = (HICON16)wc->hIcon;
-    classPtr->hIconSm       = 0;
+    iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
+    iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
+    
+    classPtr->hIcon         = wc->hIcon;
+    classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
+					iSmIconWidth, iSmIconHeight,
+					LR_COPYFROMRESOURCE);
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
     
@@ -494,6 +506,7 @@ ATOM WINAPI RegisterClassA(
 ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
 {
     ATOM atom;
+    int iSmIconWidth, iSmIconHeight;
     CLASS *classPtr;
 
     if (!(atom = GlobalAddAtomW( wc->lpszClassName )))
@@ -516,8 +529,13 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
     
-    classPtr->hIcon         = (HICON16)wc->hIcon;
-    classPtr->hIconSm       = 0;
+    iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
+    iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
+
+    classPtr->hIcon         = wc->hIcon;
+    classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
+					iSmIconWidth, iSmIconHeight,
+					LR_COPYFROMRESOURCE);
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
     classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
     

@@ -71,6 +71,7 @@ typedef struct tagICONCACHE
 
     HMODULE              hModule;
     HRSRC                hRsrc;
+    HRSRC                hGroupRsrc;
     HANDLE               handle;
 
     INT                  count;
@@ -112,10 +113,46 @@ static HANDLE CURSORICON_FindSharedIcon( HMODULE hModule, HRSRC hRsrc )
     return handle;
 }
 
+/*************************************************************************
+ * CURSORICON_FindCache 
+ *
+ * Given a handle, find the coresponding cache element
+ *
+ * PARAMS
+ *      Handle     [I] handle to an Image 
+ *
+ * RETURNS
+ *     Success: The cache entry
+ *     Failure: NULL
+ *
+ */
+static ICONCACHE* CURSORICON_FindCache(HANDLE handle)
+{
+    ICONCACHE *ptr;
+    ICONCACHE *pRet=NULL;
+    BOOL IsFound = FALSE;
+    int count;
+
+    EnterCriticalSection( &IconCrst );
+
+    for (count = 0, ptr = IconAnchor; ptr != NULL && !IsFound; ptr = ptr->next, count++ )
+    {
+        if ( handle == ptr->handle )
+        {
+            IsFound = TRUE;
+            pRet = ptr;
+        }
+    }
+
+    LeaveCriticalSection( &IconCrst );
+
+    return pRet;
+}
+
 /**********************************************************************
  *	    CURSORICON_AddSharedIcon
  */
-static void CURSORICON_AddSharedIcon( HMODULE hModule, HRSRC hRsrc, HANDLE handle )
+static void CURSORICON_AddSharedIcon( HMODULE hModule, HRSRC hRsrc, HRSRC hGroupRsrc, HANDLE handle )
 {
     ICONCACHE *ptr = HeapAlloc( SystemHeap, 0, sizeof(ICONCACHE) );
     if ( !ptr ) return;
@@ -123,6 +160,7 @@ static void CURSORICON_AddSharedIcon( HMODULE hModule, HRSRC hRsrc, HANDLE handl
     ptr->hModule = hModule;
     ptr->hRsrc   = hRsrc;
     ptr->handle  = handle;
+    ptr->hGroupRsrc = hGroupRsrc;
     ptr->count   = 1;
 
     EnterCriticalSection( &IconCrst );
@@ -193,8 +231,10 @@ void CURSORICON_FreeModuleIcons( HMODULE hModule )
 static CURSORICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int width,
                                               int height, int colors )
 {
-    int i, maxcolors, maxwidth, maxheight;
+    int i; 
     CURSORICONDIRENTRY *entry, *bestEntry = NULL;
+    UINT iTotalDiff, iXDiff=0, iYDiff=0, iColorDiff;
+    UINT iTempXDiff, iTempYDiff, iTempColorDiff;
 
     if (dir->idCount < 1)
     {
@@ -203,88 +243,36 @@ static CURSORICONDIRENTRY *CURSORICON_FindBestIcon( CURSORICONDIR *dir, int widt
     }
     if (dir->idCount == 1) return &dir->idEntries[0];  /* No choice... */
 
-    /* First find the exact size with less colors */
-
-    maxcolors = 0;
+    /* Find Best Fit */
+    iTotalDiff = 0xFFFFFFFF;
+    iColorDiff = 0xFFFFFFFF;
     for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        if ((entry->ResInfo.icon.bWidth == width) && (entry->ResInfo.icon.bHeight == height) &&
-            (entry->ResInfo.icon.bColorCount <= colors) && (entry->ResInfo.icon.bColorCount > maxcolors))
+        {
+	iTempXDiff = abs(width - entry->ResInfo.icon.bWidth);
+	iTempYDiff = abs(height - entry->ResInfo.icon.bHeight);
+
+        if(iTotalDiff > (iTempXDiff + iTempYDiff))
+        {
+            iXDiff = iTempXDiff;
+            iYDiff = iTempYDiff;
+	    iTotalDiff = iXDiff + iYDiff;
+        }
+        }
+
+    /* Find Best Colors for Best Fit */
+    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
+        {
+        if(abs(width - entry->ResInfo.icon.bWidth) == iXDiff &&
+            abs(height - entry->ResInfo.icon.bHeight) == iYDiff)
+        {
+            iTempColorDiff = abs(colors - entry->ResInfo.icon.bColorCount);
+            if(iColorDiff > iTempColorDiff)
         {
             bestEntry = entry;
-            maxcolors = entry->ResInfo.icon.bColorCount;
+                iColorDiff = iTempColorDiff;
         }
-    if (bestEntry) return bestEntry;
-
-    /* First find the exact size with more colors */
-
-    maxcolors = 255;
-    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        if ((entry->ResInfo.icon.bWidth == width) && (entry->ResInfo.icon.bHeight == height) &&
-            (entry->ResInfo.icon.bColorCount > colors) && (entry->ResInfo.icon.bColorCount <= maxcolors))
-        {
-            bestEntry = entry;
-            maxcolors = entry->ResInfo.icon.bColorCount;
         }
-    if (bestEntry) return bestEntry;
-
-    /* Now find a smaller one with less colors */
-
-    maxcolors = maxwidth = maxheight = 0;
-    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        if ((entry->ResInfo.icon.bWidth <= width) && (entry->ResInfo.icon.bHeight <= height) &&
-            (entry->ResInfo.icon.bWidth >= maxwidth) && (entry->ResInfo.icon.bHeight >= maxheight) &&
-            (entry->ResInfo.icon.bColorCount <= colors) && (entry->ResInfo.icon.bColorCount > maxcolors))
-        {
-            bestEntry = entry;
-            maxwidth  = entry->ResInfo.icon.bWidth;
-            maxheight = entry->ResInfo.icon.bHeight;
-            maxcolors = entry->ResInfo.icon.bColorCount;
-        }
-    if (bestEntry) return bestEntry;
-
-    /* Now find a smaller one with more colors */
-
-    maxcolors = 255;
-    maxwidth = maxheight = 0;
-    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        if ((entry->ResInfo.icon.bWidth <= width) && (entry->ResInfo.icon.bHeight <= height) &&
-            (entry->ResInfo.icon.bWidth >= maxwidth) && (entry->ResInfo.icon.bHeight >= maxheight) &&
-            (entry->ResInfo.icon.bColorCount > colors) && (entry->ResInfo.icon.bColorCount <= maxcolors))
-        {
-            bestEntry = entry;
-            maxwidth  = entry->ResInfo.icon.bWidth;
-            maxheight = entry->ResInfo.icon.bHeight;
-            maxcolors = entry->ResInfo.icon.bColorCount;
-        }
-    if (bestEntry) return bestEntry;
-
-    /* Now find a larger one with less colors */
-
-    maxcolors = 0;
-    maxwidth = maxheight = 255;
-    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        if ((entry->ResInfo.icon.bWidth <= maxwidth) && (entry->ResInfo.icon.bHeight <= maxheight) &&
-            (entry->ResInfo.icon.bColorCount <= colors) && (entry->ResInfo.icon.bColorCount > maxcolors))
-        {
-            bestEntry = entry;
-            maxwidth  = entry->ResInfo.icon.bWidth;
-            maxheight = entry->ResInfo.icon.bHeight;
-            maxcolors = entry->ResInfo.icon.bColorCount;
-        }
-    if (bestEntry) return bestEntry;
-
-    /* Now find a larger one with more colors */
-
-    maxcolors = maxwidth = maxheight = 255;
-    for (i = 0, entry = &dir->idEntries[0]; i < dir->idCount; i++,entry++)
-        if ((entry->ResInfo.icon.bWidth <= maxwidth) && (entry->ResInfo.icon.bHeight <= maxheight) &&
-            (entry->ResInfo.icon.bColorCount > colors) && (entry->ResInfo.icon.bColorCount <= maxcolors))
-        {
-            bestEntry = entry;
-            maxwidth  = entry->ResInfo.icon.bWidth;
-            maxheight = entry->ResInfo.icon.bHeight;
-            maxcolors = entry->ResInfo.icon.bColorCount;
-        }
+    }
 
     return bestEntry;
 }
@@ -512,7 +500,16 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	    /* Create the XOR bitmap */
 
 	    if (DoStretch) {
-              if ((hXorBits = CreateBitmap(width, height, 1, 1, NULL))) {
+                if(bIcon)
+                {
+                    hXorBits = CreateCompatibleBitmap(hdc, width, height);
+                }
+                else
+                {
+                    hXorBits = CreateBitmap(width, height, 1, 1, NULL);
+                }
+                if(hXorBits)
+                {
 		HBITMAP hOld;
 		HDC hMem = CreateCompatibleDC(hdc);
 		BOOL res;
@@ -728,6 +725,7 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
 
     else  /* Load from resource */
     {
+        HANDLE hGroupRsrc;
         WORD wResId;
         DWORD dwBytesInRes;
 
@@ -743,7 +741,7 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
         if (!(hRsrc = FindResourceW( hInstance, name,
                           fCursor ? RT_GROUP_CURSORW : RT_GROUP_ICONW )))
             return 0;
-
+	hGroupRsrc = hRsrc;
         /* If shared icon, check whether it was already loaded */
 
         if (    (loadflags & LR_SHARED) 
@@ -778,7 +776,7 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
         /* If shared icon, add to icon cache */
 
         if ( h && (loadflags & LR_SHARED) )
-            CURSORICON_AddSharedIcon( hInstance, hRsrc, h );
+            CURSORICON_AddSharedIcon( hInstance, hRsrc, hGroupRsrc, h );
     }
 
     return h;
@@ -804,6 +802,149 @@ static HGLOBAL16 CURSORICON_Copy( HINSTANCE16 hInstance, HGLOBAL16 handle )
     memcpy( ptrNew, ptrOld, size );
     GlobalUnlock16( handle );
     GlobalUnlock16( hNew );
+    return hNew;
+}
+
+/*************************************************************************
+ * CURSORICON_ExtCopy 
+ *
+ * Copies an Image from the Cache if LR_COPYFROMRESOURCE is specified
+ *
+ * PARAMS
+ *      Handle     [I] handle to an Image 
+ *      nType      [I] Type of Handle (IMAGE_CURSOR | IMAGE_ICON)
+ *      iDesiredCX [I] The Desired width of the Image
+ *      iDesiredCY [I] The desired height of the Image
+ *      nFlags     [I] The flags from CopyImage
+ *
+ * RETURNS
+ *     Success: The new handle of the Image
+ *
+ * NOTES
+ *     LR_COPYDELETEORG and LR_MONOCHROME are currently not implemented.
+ *     LR_MONOCHROME should be implemented by CURSORICON_CreateFromResource.
+ *     LR_COPYFROMRESOURCE will only work if the Image is in the Cache.
+ *
+ *     
+ */
+
+HGLOBAL CURSORICON_ExtCopy(HGLOBAL Handle, UINT nType, 
+			   INT iDesiredCX, INT iDesiredCY, 
+			   UINT nFlags)
+{
+    HGLOBAL16 hNew=0;
+
+    TRACE_(icon)("Handle %u, uType %u, iDesiredCX %i, iDesiredCY %i, nFlags %u\n", 
+        Handle, nType, iDesiredCX, iDesiredCY, nFlags);
+
+    if(Handle == 0)
+    {
+	return 0;
+    }
+
+    /* Best Fit or Monochrome */
+    if( (nFlags & LR_COPYFROMRESOURCE
+        && (iDesiredCX > 0 || iDesiredCY > 0))
+        || nFlags & LR_MONOCHROME) 
+    {
+        ICONCACHE* pIconCache = CURSORICON_FindCache(Handle);
+
+        /* Not Found in Cache, then do a strait copy
+        */
+        if(pIconCache == NULL)
+        {
+            TDB* pTask = (TDB *) GlobalLock16 (GetCurrentTask ());
+            hNew = CURSORICON_Copy(pTask->hInstance, Handle);
+            if(nFlags & LR_COPYFROMRESOURCE)
+            {
+                TRACE_(icon)("LR_COPYFROMRESOURCE: Failed to load from cache\n");
+            }
+        }
+        else
+        {
+            int iTargetCX, iTargetCY;
+            LPBYTE pBits;
+            HANDLE hMem;
+            HRSRC hRsrc;
+            DWORD dwBytesInRes;
+            WORD wResId;
+            CURSORICONDIR *pDir;
+            CURSORICONDIRENTRY *pDirEntry;
+            BOOL bIsIcon = (nType == IMAGE_ICON);
+
+            /* Completing iDesiredCX CY for Monochrome Bitmaps if needed
+            */
+            if(((nFlags & LR_MONOCHROME) && !(nFlags & LR_COPYFROMRESOURCE))
+                || (iDesiredCX == 0 && iDesiredCY == 0))
+            {
+                iDesiredCY = GetSystemMetrics(bIsIcon ? 
+                    SM_CYICON : SM_CYCURSOR);
+                iDesiredCX = GetSystemMetrics(bIsIcon ? 
+                    SM_CXICON : SM_CXCURSOR);
+            }
+
+            /* Retreive the CURSORICONDIRENTRY 
+            */
+            if (!(hMem = LoadResource( pIconCache->hModule , 
+                            pIconCache->hGroupRsrc))) 
+            {
+                return 0;
+            }
+            if (!(pDir = (CURSORICONDIR*)LockResource( hMem ))) 
+            {
+                return 0;
+            }
+
+            /* Find Best Fit 
+            */
+            if(bIsIcon)
+            {
+                pDirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestIcon(
+                                pDir, iDesiredCX, iDesiredCY, 256);
+            }
+            else
+            {
+                pDirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestCursor( 
+                                pDir, iDesiredCX, iDesiredCY, 1);
+            }
+
+            wResId = pDirEntry->wResId;
+            dwBytesInRes = pDirEntry->dwBytesInRes;
+            FreeResource(hMem);
+
+            TRACE_(icon)("ResID %u, BytesInRes %lu, Width %d, Height %d DX %d, DY %d\n", 
+                wResId, dwBytesInRes,  pDirEntry->ResInfo.icon.bWidth, 
+                pDirEntry->ResInfo.icon.bHeight, iDesiredCX, iDesiredCY);
+
+            /* Get the Best Fit
+            */
+            if (!(hRsrc = FindResourceW(pIconCache->hModule ,
+                MAKEINTRESOURCEW(wResId), bIsIcon ? RT_ICONW : RT_CURSORW))) 
+            {
+                return 0;
+            }
+            if (!(hMem = LoadResource( pIconCache->hModule , hRsrc ))) 
+            {
+                return 0;
+            }
+
+            pBits = (LPBYTE)LockResource( hMem );
+         
+            iTargetCY = GetSystemMetrics(SM_CYICON);
+            iTargetCX = GetSystemMetrics(SM_CXICON);
+
+            /* Create a New Icon with the proper dimension
+            */
+            hNew = CURSORICON_CreateFromResource( 0, 0, pBits, dwBytesInRes, 
+                       bIsIcon, 0x00030000, iTargetCX, iTargetCY, nFlags);
+            FreeResource(hMem);
+        }
+    }
+    else
+    {
+        TDB* pTask = (TDB *) GlobalLock16 (GetCurrentTask ());
+        hNew = CURSORICON_Copy(pTask->hInstance, Handle);
+    }
     return hNew;
 }
 

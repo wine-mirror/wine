@@ -527,8 +527,11 @@ HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
 	case IMAGE_BITMAP:
 		return BITMAP_CopyBitmap(hnd);
 	case IMAGE_ICON:
-		return CopyIcon(hnd);
+		return CURSORICON_ExtCopy(hnd,type, desiredx, desiredy, flags);
 	case IMAGE_CURSOR:
+		/* Should call CURSORICON_ExtCopy but more testing
+		 * needs to be done before we change this
+		 */
 		return CopyCursor(hnd);
     }
     return 0;
