@@ -166,7 +166,7 @@ static void
 TOOLBAR_DumpButton(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *bP, INT btn_num, BOOL internal)
 {
     if (TRACE_ON(toolbar)){
-	TRACE("button %d id %d, bitmap=%d, state=%02x, style=%02x, data=%08lx, stringid=%x\n",
+	TRACE("button %d id %d, bitmap=%d, state=%02x, style=%02x, data=%08lx, stringid=0x%08x\n",
 	      btn_num, bP->idCommand,
 	      bP->iBitmap, bP->fsState, bP->fsStyle, bP->dwData, bP->iString);
 	TRACE("string %s\n", debugstr_w(TOOLBAR_GetText(infoPtr,bP)));
@@ -2077,6 +2077,8 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_CalcToolbar (hwnd);
 
+    TOOLBAR_DumpToolbar (infoPtr, __LINE__);
+
     InvalidateRect(hwnd, NULL, FALSE);
 
     return TRUE;
@@ -2138,6 +2140,8 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     TOOLBAR_CalcToolbar (hwnd);
+
+    TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
     InvalidateRect(hwnd, NULL, FALSE);
 
@@ -2698,7 +2702,7 @@ TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nIndex == -1)
 	return -1;
 
-    btnPtr = &infoPtr->buttons[nIndex];
+    if (!(btnPtr = &infoPtr->buttons[nIndex])) return -1;
 
     if (lpTbInfo->dwMask & TBIF_COMMAND)
 	lpTbInfo->idCommand = btnPtr->idCommand;
@@ -3123,6 +3127,22 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     } else if (nIndex < 0)
        return FALSE;
 
+    /* If the string passed is not an index, assume address of string
+       and do our own AddString */
+    if ((HIWORD(lpTbb->iString) != 0) && (lpTbb->iString != -1)) {
+        LPSTR ptr;
+	INT len;
+
+        TRACE("string %s passed instead of index, adding string\n",
+              debugstr_a((LPSTR)lpTbb->iString));
+        len = strlen((LPSTR)lpTbb->iString) + 2;
+        ptr = COMCTL32_Alloc(len);
+        strcpy(ptr, (LPSTR)lpTbb->iString);
+        ptr[len - 1] = 0; /* ended by two '\0' */
+        lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
+        COMCTL32_Free(ptr);
+    }
+
     TRACE("inserting button index=%d\n", nIndex);
     if (nIndex > infoPtr->nNumButtons) {
 	nIndex = infoPtr->nNumButtons;
@@ -3191,6 +3211,9 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (lpTbb == NULL)
 	return FALSE;
+
+    TOOLBAR_DumpButton(infoPtr, (TBUTTON_INFO *)lpTbb, nIndex, FALSE);
+
     if (nIndex < 0)
 	return FALSE;
 
@@ -3209,6 +3232,22 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		nIndex * sizeof(TBUTTON_INFO));
     }
 
+
+    /* If the string passed is not an index, assume address of string 
+       and do our own AddString */
+    if ((HIWORD(lpTbb->iString) != 0) && (lpTbb->iString != -1)) {
+	LPWSTR ptr;
+        INT len;
+
+	TRACE("string %s passed instead of index, adding string\n",
+	      debugstr_w((LPWSTR)lpTbb->iString));
+	len = strlenW((LPWSTR)lpTbb->iString) + 2;
+	ptr = COMCTL32_Alloc(len*sizeof(WCHAR));
+	strcpyW(ptr, (LPWSTR)lpTbb->iString);
+	ptr[len - 1] = 0; /* ended by two '\0' */
+	lpTbb->iString = TOOLBAR_AddStringW(hwnd, 0, (LPARAM)ptr);
+	COMCTL32_Free(ptr);
+    }
 
     /* insert new button */
     infoPtr->buttons[nIndex].iBitmap   = lpTbb->iBitmap;
@@ -3651,6 +3690,11 @@ TOOLBAR_SetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HIMAGELIST himlTemp;
 
 
+    if (wParam != 0) {
+	FIXME("no support for multiple image lists\n");
+	return 0;
+    }
+
     himlTemp = infoPtr->himlDis;
     infoPtr->himlDis = (HIMAGELIST)lParam;
 
@@ -3692,6 +3736,11 @@ TOOLBAR_SetHotImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     HIMAGELIST himlTemp;
+
+    if (wParam != 0) {
+	FIXME("no support for multiple image lists\n");
+	return 0;
+    }
 
     himlTemp = infoPtr->himlHot;
     infoPtr->himlHot = (HIMAGELIST)lParam;
@@ -3744,6 +3793,11 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     HIMAGELIST himlTemp;
+
+    if (wParam != 0) {
+	FIXME("no support for multiple image lists\n");
+	return 0;
+    }
 
     himlTemp = infoPtr->himlDef;
     infoPtr->himlDef = (HIMAGELIST)lParam;
@@ -4082,7 +4136,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     NMTBCUSTOMDRAW tbcd;
-    INT ret, ntfret;
+    INT ret = FALSE, ntfret;
 
     if (dwStyle & TBSTYLE_CUSTOMERASE) {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
@@ -4115,11 +4169,11 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	parent = GetParent(hwnd);
 	MapWindowPoints(hwnd, parent, &pt, 1);
 	OffsetWindowOrgEx (hdc, pt.x, pt.y, &ptorig);
-	SendMessageA (parent, WM_ERASEBKGND, wParam, lParam);
+	ret = SendMessageA (parent, WM_ERASEBKGND, wParam, lParam);
 	SetWindowOrgEx (hdc, ptorig.x, ptorig.y, 0);
-	return TRUE;
     }
-    ret = DefWindowProcA (hwnd, WM_ERASEBKGND, wParam, lParam);
+    if (!ret)
+	ret = DefWindowProcA (hwnd, WM_ERASEBKGND, wParam, lParam);
 
     if (dwStyle & TBSTYLE_CUSTOMERASE) {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
