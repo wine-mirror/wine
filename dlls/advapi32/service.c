@@ -40,6 +40,10 @@ static LPWSTR *start_lpServiceArgVectors;
 static const WCHAR _ServiceStartDataW[]  = {'A','D','V','A','P','I','_','S',
                                             'e','r','v','i','c','e','S','t',
                                             'a','r','t','D','a','t','a',0};
+static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
+      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+      'S','e','r','v','i','c','e','s','\\',0 };
+
 
 /******************************************************************************
  * EnumServicesStatusA [ADVAPI32.@]
@@ -273,9 +277,6 @@ SC_HANDLE WINAPI
 OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
 {
-    const WCHAR szKey[] = { 'S','y','s','t','e','m','\\',
-      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-      'S','e','r','v','i','c','e','s','\\',0 };
     HKEY hReg, hKey = NULL;
     LONG r;
 
@@ -291,7 +292,7 @@ OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     r = RegConnectRegistryW(lpMachineName,HKEY_LOCAL_MACHINE,&hReg);
     if (r==ERROR_SUCCESS)
     {
-        r = RegOpenKeyExW(hReg, szKey, 0, dwDesiredAccess, &hKey );
+        r = RegOpenKeyExW(hReg, szServiceManagerKey,0, dwDesiredAccess, &hKey );
         RegCloseKey( hReg );
     }
 
@@ -436,9 +437,10 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
 
     r = RegCreateKeyExW(hSCManager, lpServiceName, 0, NULL,
-                       REG_OPTION_NON_VOLATILE, dwDesiredAccess, NULL, &hKey, &dp);
+                       REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
         return 0;
+
     if (dp != REG_CREATED_NEW_KEY)
         return 0;
 
@@ -601,7 +603,64 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 BOOL WINAPI
 DeleteService( SC_HANDLE hService )
 {
+    WCHAR valname[MAX_PATH+1];
+    INT index = 0;
+    LONG rc;
+    DWORD value = 0x1;
+    DWORD size;
+    HKEY hKey;
+
+    static const WCHAR szDeleted[] = {'D','e','l','e','t','e','d',0};
+
     FIXME("(%p): stub\n",hService);
+   
+    size = MAX_PATH+1; 
+    /* Clean out the values */
+    rc = RegEnumValueW(hService, index, valname,&size,0,0,0,0);
+    while (rc == ERROR_SUCCESS)
+    {
+        RegDeleteValueW(hService,valname);
+        index++;
+        size = MAX_PATH+1; 
+        rc = RegEnumValueW(hService, index, valname, &size,0,0,0,0);
+    }
+
+    /* tag for deletion */
+    RegSetValueExW(hService, szDeleted, 0, REG_DWORD, (LPVOID)&value, 
+                    sizeof (DWORD) );
+
+    RegCloseKey(hService);
+
+    /* find and delete the key */
+    rc = RegOpenKeyExW(HKEY_LOCAL_MACHINE, szServiceManagerKey,0,
+                        KEY_ALL_ACCESS, &hKey );
+    index = 0;
+    size = MAX_PATH+1; 
+    rc = RegEnumKeyExW(hKey,0, valname, &size, 0, 0, 0, 0);
+    while (rc == ERROR_SUCCESS)
+    {
+        HKEY checking;
+        rc = RegOpenKeyExW(hKey,valname,0,KEY_ALL_ACCESS,&checking);
+        if (rc == ERROR_SUCCESS)
+        {
+            DWORD deleted = 0;
+            DWORD size = sizeof(DWORD);
+            rc = RegQueryValueExW(checking, szDeleted , NULL, NULL,
+                                  (LPVOID)&deleted, &size);
+            if (deleted)
+            {
+                RegDeleteValueW(checking,szDeleted);
+                RegDeleteKeyW(hKey,valname);
+            }
+            else
+                index ++;
+            RegCloseKey(checking);
+        }
+        size = MAX_PATH+1; 
+        rc = RegEnumKeyExW(hKey, index, valname, &size, 0, 0, 0, 0);
+    }
+    RegCloseKey(hKey);
+
     return TRUE;
 }
 
@@ -976,5 +1035,41 @@ BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
           debugstr_a(lpBinaryPathName), debugstr_a(lpLoadOrderGroup),
           lpdwTagId, lpDependencies, debugstr_a(lpServiceStartName),
           debugstr_a(lpPassword), debugstr_a(lpDisplayName) );
+    return TRUE;
+}
+
+/******************************************************************************
+ * ChangeServiceConfig2A  [ADVAPI32.@]
+ */
+BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel, 
+    LPVOID lpInfo)
+{
+    FIXME("STUB: %p %ld %p\n",hService, dwInfoLevel, lpInfo);
+    return TRUE;
+}
+
+/******************************************************************************
+ * ChangeServiceConfig2W  [ADVAPI32.@]
+ */
+BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel, 
+    LPVOID lpInfo)
+{
+    if (dwInfoLevel == SERVICE_CONFIG_DESCRIPTION)
+    {
+        static const WCHAR szDescription[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+        LPSERVICE_DESCRIPTIONW sd = (LPSERVICE_DESCRIPTIONW)lpInfo;
+        if (sd->lpDescription)
+        {
+            TRACE("Setting Description to %s\n",debugstr_w(sd->lpDescription));
+            if (sd->lpDescription[0] == 0)
+                RegDeleteValueW(hService,szDescription);
+            else
+                RegSetValueExW(hService, szDescription, 0, REG_SZ,
+                                        (LPVOID)sd->lpDescription,
+                                 sizeof(WCHAR)*(strlenW(sd->lpDescription)+1));
+        }
+    }
+    else   
+        FIXME("STUB: %p %ld %p\n",hService, dwInfoLevel, lpInfo);
     return TRUE;
 }
