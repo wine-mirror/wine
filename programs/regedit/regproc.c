@@ -260,10 +260,10 @@ DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
   while (strPos < strLen)
   {
     char xbuf[3];
-    char wc;
+    UINT wc;
 
-    memcpy(xbuf,s,2); xbuf[3]='\0';
-    sscanf(xbuf,"%02x",(UINT*)&wc);
+    memcpy(xbuf,s,2); xbuf[2]='\0';
+    sscanf(xbuf,"%02x",&wc);
     if (byteCount < bufLen)
       *b++ =(unsigned char)wc;
 
