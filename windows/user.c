@@ -326,20 +326,43 @@ LONG WINAPI ChangeDisplaySettings32A( LPDEVMODE32A devmode, DWORD flags )
     if (devmode->dmFields & DM_PELSHEIGHT)
       FIXME(system,"   height=%ld\n",devmode->dmPelsHeight);
     FIXME(system," (Putting X in this mode beforehand might help)\n"); 
+    /* we don't, but the program ... does not need to know */
+    return DISP_CHANGE_SUCCESSFUL; 
   }
   return DISP_CHANGE_SUCCESSFUL;
 }
 
-
 /***********************************************************************
  *           EnumDisplaySettingsA   (USER32.592)
+ * FIXME: Currently uses static list of modes.
+ *
+ * RETURNS
+ *	TRUE if nth setting exists found (described in the LPDEVMODE32A struct)
+ *	FALSE if we do not have the nth setting
  */
-BOOL32 WINAPI EnumDisplaySettings32A(LPCSTR name,DWORD n,LPDEVMODE32A devmode) {
+BOOL32 WINAPI EnumDisplaySettings32A(
+	LPCSTR name,		/* [in] huh? */
+	DWORD n,		/* [in] nth entry in display settings list*/
+	LPDEVMODE32A devmode	/* [out] devmode for that setting */
+) {
+#define NRMODES 5
+#define NRDEPTHS 4
+	struct {
+		int w,h;
+	} modes[NRMODES]={{512,384},{640,400},{640,480},{800,600},{1024,768}};
+	int depths[4] = {8,16,24,32};
+
 	TRACE(system,"(%s,%ld,%p)\n",name,n,devmode);
 	if (n==0) {
 		devmode->dmBitsPerPel = DefaultDepthOfScreen(screen);
 		devmode->dmPelsHeight = screenHeight;
 		devmode->dmPelsWidth = screenWidth;
+		return TRUE;
+	}
+	if ((n-1)<NRMODES*NRDEPTHS) {
+		devmode->dmBitsPerPel	= depths[(n-1)/NRMODES];
+		devmode->dmPelsHeight	= modes[(n-1)%NRMODES].h;
+		devmode->dmPelsWidth	= modes[(n-1)%NRMODES].w;
 		return TRUE;
 	}
 	return FALSE;
@@ -349,14 +372,18 @@ BOOL32 WINAPI EnumDisplaySettings32A(LPCSTR name,DWORD n,LPDEVMODE32A devmode) {
  *           EnumDisplaySettingsW   (USER32.593)
  */
 BOOL32 WINAPI EnumDisplaySettings32W(LPCWSTR name,DWORD n,LPDEVMODE32W devmode) {
-	TRACE(system,"(%s,%ld,%p)\n",debugstr_w(name),n,devmode);
-	if (n==0) {
-		devmode->dmBitsPerPel = DefaultDepthOfScreen(screen);
-		devmode->dmPelsHeight = screenHeight;
-		devmode->dmPelsWidth = screenWidth;
-		return TRUE;
+	LPSTR nameA = HEAP_strdupWtoA(GetProcessHeap(),0,name);
+	DEVMODE32A	devmodeA; 
+	BOOL32 ret = EnumDisplaySettings32A(nameA,n,&devmodeA); 
+
+	if (ret) {
+		devmode->dmBitsPerPel	= devmodeA.dmBitsPerPel;
+		devmode->dmPelsHeight	= devmodeA.dmPelsHeight;
+		devmode->dmPelsWidth	= devmodeA.dmPelsWidth;
+		/* FIXME: convert rest too, if they are ever returned */
 	}
-	return FALSE;
+	HeapFree(GetProcessHeap(),0,nameA);
+	return ret;
 }
 
 /***********************************************************************
