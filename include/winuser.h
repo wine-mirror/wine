@@ -1506,20 +1506,21 @@ typedef struct
 #define SC_ZOOM   SC_MAXIMIZE
 
 
-#define CS_VREDRAW          0x0001
-#define CS_HREDRAW          0x0002
-#define CS_KEYCVTWINDOW     0x0004
-#define CS_DBLCLKS          0x0008
-#define CS_OWNDC            0x0020
-#define CS_CLASSDC          0x0040
-#define CS_PARENTDC         0x0080
-#define CS_NOKEYCVT         0x0100
-#define CS_NOCLOSE          0x0200
-#define CS_SAVEBITS         0x0800
-#define CS_BYTEALIGNCLIENT  0x1000
-#define CS_BYTEALIGNWINDOW  0x2000
-#define CS_GLOBALCLASS      0x4000
+#define CS_VREDRAW          0x00000001
+#define CS_HREDRAW          0x00000002
+#define CS_KEYCVTWINDOW     0x00000004
+#define CS_DBLCLKS          0x00000008
+#define CS_OWNDC            0x00000020
+#define CS_CLASSDC          0x00000040
+#define CS_PARENTDC         0x00000080
+#define CS_NOKEYCVT         0x00000100
+#define CS_NOCLOSE          0x00000200
+#define CS_SAVEBITS         0x00000800
+#define CS_BYTEALIGNCLIENT  0x00001000
+#define CS_BYTEALIGNWINDOW  0x00002000
+#define CS_GLOBALCLASS      0x00004000
 #define CS_IME              0x00010000
+#define CS_DROPSHADOW       0x00020000
 
 #define PRF_CHECKVISIBLE    0x00000001L
 #define PRF_NONCLIENT       0x00000002L
