@@ -302,34 +302,38 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
 
     if (lpszVerb)
     {
-        len = lstrlenW(lpszVerb)+1;
-        if (!(szVerb = (CHAR *) HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR))))
+        len = WideCharToMultiByte(CP_ACP, 0, lpszVerb, -1, NULL, 0, NULL, NULL);
+        szVerb = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR) );
+        if ( !szVerb )
             goto end;
-        WideCharToMultiByte(CP_ACP, -1, lpszVerb, -1, szVerb, len, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, lpszVerb, -1, szVerb, len, NULL, NULL);
     }
 
     if (lpszObjectName)
     {
-        len = lstrlenW(lpszObjectName)+1;
-        if (!(szObjectName = (CHAR *) HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR))))
+        len = WideCharToMultiByte(CP_ACP, 0, lpszObjectName, -1, NULL, 0, NULL, NULL);
+        szObjectName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR) );
+        if ( !szObjectName )
             goto end;
-        WideCharToMultiByte(CP_ACP, -1, lpszObjectName, -1, szObjectName, len, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, lpszObjectName, -1, szObjectName, len, NULL, NULL);
     }
 
     if (lpszVersion)
     {
-        len = lstrlenW(lpszVersion)+1;
-        if (!(szVersion = (CHAR *) HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR))))
+        len = WideCharToMultiByte(CP_ACP, 0, lpszVersion, -1, NULL, 0, NULL, NULL);
+        szVersion = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR));
+        if ( !szVersion )
             goto end;
-        WideCharToMultiByte(CP_ACP, -1, lpszVersion, -1, szVersion, len, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, lpszVersion, -1, szVersion, len, NULL, NULL);
     }
 
     if (lpszReferrer)
     {
-        len = lstrlenW(lpszReferrer)+1;
-        if (!(szReferrer = (CHAR *) HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR))))
+        len = WideCharToMultiByte(CP_ACP, 0, lpszReferrer, -1, NULL, 0, NULL, NULL);
+        szReferrer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR));
+        if ( !szReferrer )
             goto end;
-        WideCharToMultiByte(CP_ACP, -1, lpszReferrer, -1, szReferrer, len, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, lpszReferrer, -1, szReferrer, len, NULL, NULL);
     }
 
     acceptTypesCount = 0;
@@ -340,11 +344,12 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
         acceptTypesCount = 0;
         while (lpszAcceptTypes[acceptTypesCount])
         {
-            len = lstrlenW(lpszAcceptTypes[acceptTypesCount])+1;
-            if (!(szAcceptTypes[acceptTypesCount] = (CHAR *) HeapAlloc(GetProcessHeap(),
-                                                                       0, len * sizeof(CHAR))))
+            len = WideCharToMultiByte(CP_ACP, 0, lpszAcceptTypes[acceptTypesCount],
+                                -1, NULL, 0, NULL, NULL);
+            szAcceptTypes[acceptTypesCount] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(CHAR));
+            if (!szAcceptTypes[acceptTypesCount] )
                 goto end;
-            WideCharToMultiByte(CP_ACP, -1, lpszAcceptTypes[acceptTypesCount],
+            WideCharToMultiByte(CP_ACP, 0, lpszAcceptTypes[acceptTypesCount],
                                 -1, szAcceptTypes[acceptTypesCount], len, NULL, NULL);
             acceptTypesCount++;
         }
@@ -1009,14 +1014,13 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     DWORD nLen=dwHeaderLength;
     if(lpszHeaders!=NULL)
     {
-        if(nLen==-1)
-            nLen=strlenW(lpszHeaders);
-        szHeaders=(char*)malloc(nLen+1);
-        WideCharToMultiByte(CP_ACP,0,lpszHeaders,nLen,szHeaders,nLen,NULL,NULL);
+        nLen=WideCharToMultiByte(CP_ACP,0,lpszHeaders,dwHeaderLength,NULL,0,NULL,NULL);
+        szHeaders=HeapAlloc(GetProcessHeap(),0,nLen);
+        WideCharToMultiByte(CP_ACP,0,lpszHeaders,dwHeaderLength,szHeaders,nLen,NULL,NULL);
     }
-    result=HttpSendRequestA(hHttpRequest, szHeaders, dwHeaderLength, lpOptional, dwOptionalLength);
+    result=HttpSendRequestA(hHttpRequest, szHeaders, nLen, lpOptional, dwOptionalLength);
     if(szHeaders!=NULL)
-        free(szHeaders);
+        HeapFree(GetProcessHeap(),0,szHeaders);
     return result;
 }
 
