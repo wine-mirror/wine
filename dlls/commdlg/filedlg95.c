@@ -835,6 +835,8 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
          SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
       	 FILEDLG95_FillControls(hwnd, wParam, lParam);
          SendCustomDlgNotificationMessage(hwnd,CDN_SELCHANGE);
+         SetWindowPos(fodInfos->DlgInfos.hwndCustomDlg, HWND_BOTTOM,
+                      0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
          return 0;
        }
     case WM_COMMAND:
