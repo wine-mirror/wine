@@ -106,6 +106,7 @@ inline static HANDLE HEAP_CreateSystemHeap(void)
     {
         /* wait for the heap to be initialized */
         WaitForSingleObject( event, INFINITE );
+        systemHeap = (HANDLE)base;
     }
     CloseHandle( map );
     return systemHeap;
