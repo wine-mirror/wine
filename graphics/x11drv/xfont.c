@@ -2618,7 +2618,30 @@ static void XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm)
 	  pfm->plf->lfWeight, (pfm->plf->lfItalic) ? "Italic" : "" );
 
     pfm->pfi = NULL;
-    if( fm.plf->lfFaceName[0] ) 
+
+    if( !fm.plf->lfFaceName[0] )
+    {
+        switch(fm.plf->lfPitchAndFamily & 0xf0)
+	{
+	case FF_MODERN:
+ 	    strcpy(fm.plf->lfFaceName, "Courier New");
+	    break;
+	case FF_ROMAN:
+	    strcpy(fm.plf->lfFaceName, "Times New Roman");
+	    break;
+	case FF_SWISS:
+	    strcpy(fm.plf->lfFaceName, "Arial");
+	    break;
+	default:
+	    if((fm.plf->lfPitchAndFamily & 0x0f) == FIXED_PITCH)
+	        strcpy(fm.plf->lfFaceName, "Courier New");
+	    else
+	        strcpy(fm.plf->lfFaceName, "Arial");
+	    break;
+	}
+    }
+
+    if( fm.plf->lfFaceName[0] )
     {
         fm.pfr = XFONT_FindFIList( start, fm.plf->lfFaceName);
 	if( fm.pfr ) /* match family */
