@@ -288,7 +288,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     if (!MAIN_MainInit()) return 0;
 
     /* Initialize KERNEL */
-    if (!MAIN_KernelInit(0, 0, NULL)) return 0;
+    if (!LoadLibraryA( "KERNEL32" )) return 0;
 
     /* Create and switch to initial task */
     if (!(wm = ELF_CreateDummyModule( argv[0], argv[0] )))
@@ -305,8 +305,8 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     TASK_StartTask( PROCESS_Current()->task );
 
     /* Initialize GDI and USER */
-    if (!MAIN_GdiInit(0, 0, NULL)) return 0;
-    if (!MAIN_UserInit(0, 0, NULL)) return 0;
+    if (!LoadLibraryA( "GDI32.DLL" )) return 0;
+    if (!LoadLibraryA( "USER32.DLL" )) return 0;
 
     return wm->module;
 }
