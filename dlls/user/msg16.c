@@ -16,6 +16,7 @@
 
 DEFAULT_DEBUG_CHANNEL(msg);
 
+DWORD USER16_AlertableWait = 0;
 
 /***********************************************************************
  *		SendMessage  (USER.111)
@@ -147,6 +148,8 @@ BOOL16 WINAPI PeekMessage32_16( MSG32_16 *msg16, HWND16 hwnd16,
     MSG msg;
     HWND hwnd = WIN_Handle32( hwnd16 );
 
+    if(USER16_AlertableWait)
+        MsgWaitForMultipleObjectsEx( 0, NULL, 1, 0, MWMO_ALERTABLE );
     if (!PeekMessageW( &msg, hwnd, first, last, flags )) return FALSE;
 
     msg16->msg.hwnd    = WIN_Handle16( msg.hwnd );
@@ -183,6 +186,8 @@ BOOL16 WINAPI GetMessage32_16( MSG32_16 *msg16, HWND16 hwnd16, UINT16 first,
 
     do
     {
+        if(USER16_AlertableWait)
+            MsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, 0, MWMO_ALERTABLE );
         GetMessageW( &msg, hwnd, first, last );
         msg16->msg.hwnd    = WIN_Handle16( msg.hwnd );
         msg16->msg.lParam  = msg.lParam;

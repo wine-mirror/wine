@@ -568,6 +568,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			COM[port].write_ov.hEvent = CreateEventA(NULL,0,0,NULL);
 
                         comm_waitread( &COM[port] );
+			USER16_AlertableWait++;
 
 			return port;
 		}
@@ -612,6 +613,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
                 UnMapLS( COM[cid].seg_unknown );
 		CloseHandle(COM[cid].read_ov.hEvent);
 		CloseHandle(COM[cid].write_ov.hEvent);
+		USER16_AlertableWait--;
 
 		/* free buffers */
 		free(ptr->outbuf);

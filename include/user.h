@@ -120,4 +120,6 @@ extern WINE_LOOK TWEAK_WineLook;
 /* gray brush cache */
 extern HBRUSH CACHE_GetPattern55AABrush(void);
 
+extern DWORD USER16_AlertableWait;
+
 #endif  /* __WINE_USER_H */
