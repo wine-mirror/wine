@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -w
 #
 # Generate AUTHORS
 #
@@ -18,7 +18,9 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+use strict;
 
+my @authors;
 open(AUTHORS,"<AUTHORS") or die "Can't open AUTHORS";
 open(NEWAUTHORS,">AUTHORS.new");
 while(<AUTHORS>)
@@ -33,10 +35,11 @@ while(<AUTHORS>)
   }
 
 # Sort them
-sub cmpnames
+sub cmpnames()
   {
-    @anames = split(" ",$a);
-    @bnames = split(" ",$b);
+    my @anames = split(" ",$a);
+    my @bnames = split(" ",$b);
+    my $ret;
     $ret = $anames[-1] cmp $bnames[-1];
     $ret = $anames[0] cmp $bnames[0] unless $ret;
     return $ret;
