@@ -202,6 +202,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pFillRgn)(PHYSDEV,HRGN,HBRUSH);
     BOOL     (*pFlattenPath)(PHYSDEV);
     BOOL     (*pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
+    BOOL     (*pGdiComment)(PHYSDEV,UINT,CONST BYTE*);
     LONG     (*pGetBitmapBits)(HBITMAP,void*,LONG);
     BOOL     (*pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
     BOOL     (*pGetDCOrgEx)(PHYSDEV,LPPOINT);

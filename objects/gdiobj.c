@@ -1370,9 +1370,17 @@ BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
  */
 BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
 {
-        FIXME("GdiComment, stub\n");
-        return 0;
+    DC *dc = DC_GetDCPtr(hdc);
+    BOOL ret = FALSE;
+    if(dc)
+    {
+        if (dc->funcs->pGdiComment)
+            ret = dc->funcs->pGdiComment( dc->physDev, cbSize, lpData );
+    }
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
+
 /*******************************************************************
  *      SetColorAdjustment [GDI32.@]
  *

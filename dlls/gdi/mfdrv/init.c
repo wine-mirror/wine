@@ -63,6 +63,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_FillRgn,                   /* pFillRgn */
     MFDRV_FlattenPath,               /* pFlattenPath */
     MFDRV_FrameRgn,                  /* pFrameRgn */
+    NULL,                            /* pGdiComment */
     NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */

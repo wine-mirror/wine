@@ -62,6 +62,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_FillRgn,                  /* pFillRgn */
     EMFDRV_FlattenPath,              /* pFlattenPath */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
+    EMFDRV_GdiComment,               /* pGdiComment */
     NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */

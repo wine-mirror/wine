@@ -77,6 +77,7 @@ extern BOOL     EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush );
 extern BOOL     EMFDRV_FlattenPath( PHYSDEV dev );
 extern BOOL     EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width,
                                  INT height );
+extern BOOL     EMFDRV_GdiComment( PHYSDEV dev, UINT bytes, CONST BYTE *buffer );
 extern INT      EMFDRV_GetDeviceCaps( PHYSDEV dev, INT cap );
 extern INT      EMFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right,
                                           INT bottom );

@@ -94,6 +94,7 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(FillRgn);
     GET_FUNC(FlattenPath);
     GET_FUNC(FrameRgn);
+    GET_FUNC(GdiComment);
     GET_FUNC(GetBitmapBits);
     GET_FUNC(GetCharWidth);
     GET_FUNC(GetDCOrgEx);

@@ -264,3 +264,30 @@ HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
     emr.ihObject = index;
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? hPen : 0;
 }
+
+
+/******************************************************************
+ *         EMFDRV_GdiComment
+ */
+BOOL EMFDRV_GdiComment(PHYSDEV dev, UINT bytes, CONST BYTE *buffer)
+{
+    EMRGDICOMMENT *emr;
+    UINT total, rounded_size;
+    BOOL ret;
+
+    rounded_size = (bytes+3) & ~3;
+    total = offsetof(EMRGDICOMMENT,Data) + rounded_size;
+
+    emr = HeapAlloc(GetProcessHeap(), 0, total);
+    emr->emr.iType = EMR_GDICOMMENT;
+    emr->emr.nSize = total;
+    emr->cbData = bytes;
+    memset(&emr->Data[bytes], 0, rounded_size - bytes);
+    memcpy(&emr->Data[0], buffer, bytes);
+
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+
+    HeapFree(GetProcessHeap(), 0, emr);
+
+    return ret;
+}
