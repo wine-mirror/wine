@@ -67,6 +67,7 @@ typedef struct _mid2stub {
     wine_marshal_id	mid;
     IRpcStubBuffer	*stub;
     LPUNKNOWN		pUnkServer;
+    BOOL               valid;
 } mid2stub;
 
 static mid2stub *stubs = NULL;
@@ -80,6 +81,8 @@ MARSHAL_Find_Stub_Server(wine_marshal_id *mid,LPUNKNOWN *punk) {
     int i;
 
     for (i=0;i<nrofstubs;i++) {
+       if (!stubs[i].valid) continue;
+
 	if (MARSHAL_Compare_Mids_NoInterface(mid,&(stubs[i].mid))) {
 	    *punk = stubs[i].pUnkServer;
 	    IUnknown_AddRef((*punk));
@@ -94,6 +97,8 @@ MARSHAL_Find_Stub_Buffer(wine_marshal_id *mid,IRpcStubBuffer **stub) {
     int i;
 
     for (i=0;i<nrofstubs;i++) {
+       if (!stubs[i].valid) continue;
+
 	if (MARSHAL_Compare_Mids(mid,&(stubs[i].mid))) {
 	    *stub = stubs[i].stub;
 	    IUnknown_AddRef((*stub));
@@ -108,6 +113,8 @@ MARSHAL_Find_Stub(wine_marshal_id *mid,LPUNKNOWN *pUnk) {
     int i;
 
     for (i=0;i<nrofstubs;i++) {
+       if (!stubs[i].valid) continue;
+
 	if (MARSHAL_Compare_Mids(mid,&(stubs[i].mid))) {
 	    *pUnk = stubs[i].pUnkServer;
 	    IUnknown_AddRef((*pUnk));
@@ -132,6 +139,7 @@ MARSHAL_Register_Stub(wine_marshal_id *mid,LPUNKNOWN pUnk,IRpcStubBuffer *stub) 
     stubs[nrofstubs].stub = stub;
     stubs[nrofstubs].pUnkServer = pUnk;
     memcpy(&(stubs[nrofstubs].mid),mid,sizeof(*mid));
+    stubs[nrofstubs].valid = TRUE; /* set to false when released by ReleaseMarshalData */
     nrofstubs++;
     return S_OK;
 }
@@ -274,6 +282,7 @@ StdMarshalImpl_MarshalInterface(
   }
   hres = get_facbuf_for_iid(riid,&psfacbuf);
   if (hres) return hres;
+
   hres = IPSFactoryBuffer_CreateStub(psfacbuf,riid,pv,&stub);
   IPSFactoryBuffer_Release(psfacbuf);
   if (hres) {
@@ -334,7 +343,36 @@ StdMarshalImpl_UnmarshalInterface(
 
 HRESULT WINAPI
 StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
-  FIXME("(), stub!\n");
+  wine_marshal_id       mid;
+  ULONG                 res;
+  HRESULT               hres;
+  IRpcStubBuffer       *stub = NULL;
+  int                   i;
+
+  hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
+  if (hres) return hres;
+
+  for (i=0; i < nrofstubs; i++)
+  {
+       if (!stubs[i].valid) continue;
+
+       if (MARSHAL_Compare_Mids(&mid, &(stubs[i].mid)))
+       {
+           stub = stubs[i].stub;
+           break;
+       }
+  }
+
+  if (!stub)
+  {
+      FIXME("Could not map MID to stub??\n");
+      return E_FAIL;
+  }
+
+  res = IRpcStubBuffer_Release(stub);
+  stubs[i].valid = FALSE;
+  TRACE("stub refcount of %p is %ld\n", stub, res);
+
   return S_OK;
 }
 
