@@ -266,16 +266,13 @@ unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char 
     ERR("RPC Message not present in stub message.  No action taken.\n");
     return NULL;
   }
-  if (stubmsg->RpcMsg->Buffer != buffer) {
-    ERR("Ambiguous buffer doesn't match rpc message buffer.  No action taken.\n");
-    return NULL;
-  }
 
-  /* not sure where MS does this; for now I'll stick it here */
+  /* FIXME: Seems wrong.  Where should this really come from, and when? */
   stubmsg->RpcMsg->DataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
 
   if (I_RpcSendReceive(stubmsg->RpcMsg) != RPC_S_OK) {
     WARN("I_RpcSendReceive did not return success.\n");
+    /* FIXME: raise exception? */
   }
 
   /* FIXME: is this the right return value? */
