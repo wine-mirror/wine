@@ -51,10 +51,7 @@ static void SetPrimaryDIB(HBITMAP hBmp)
 {
   X11DRV_DD_PrimaryDIB = hBmp;
   if (hBmp) {
-    BITMAPOBJ *bmp;
-    bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
-    X11DRV_DD_PrimaryDrawable = (Pixmap)bmp->physBitmap;
-    GDI_ReleaseObj( hBmp );
+    X11DRV_DD_PrimaryDrawable = X11DRV_get_pixmap( hBmp );
   } else {
     X11DRV_DD_PrimaryDrawable = 0;
   }

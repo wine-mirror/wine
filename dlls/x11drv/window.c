@@ -336,8 +336,8 @@ static void set_icon_hints( Display *display, struct x11drv_win_data *data,
         data->hWMIconBitmap = ii.hbmColor;
         data->hWMIconMask = ii.hbmMask;
 
-        hints->icon_pixmap = X11DRV_BITMAP_Pixmap(data->hWMIconBitmap);
-        hints->icon_mask = X11DRV_BITMAP_Pixmap(data->hWMIconMask);
+        hints->icon_pixmap = X11DRV_get_pixmap(data->hWMIconBitmap);
+        hints->icon_mask = X11DRV_get_pixmap(data->hWMIconMask);
         destroy_icon_window( display, data );
         hints->flags = (hints->flags & ~IconWindowHint) | IconPixmapHint | IconMaskHint;
     }

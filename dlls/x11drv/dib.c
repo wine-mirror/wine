@@ -3881,7 +3881,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   descr.palentry  = NULL;
   descr.lines     = tmpheight >= 0 ? lines : -lines;
   descr.depth     = bmp->bitmap.bmBitsPixel;
-  descr.drawable  = (Pixmap)bmp->physBitmap;
+  descr.drawable  = X11DRV_get_pixmap( hbitmap );
   descr.gc        = BITMAP_GC(bmp);
   descr.xSrc      = 0;
   descr.ySrc      = 0;
@@ -4002,7 +4002,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.image     = NULL;
   descr.lines     = lines;
   descr.depth     = bmp->bitmap.bmBitsPixel;
-  descr.drawable  = (Pixmap)bmp->physBitmap;
+  descr.drawable  = X11DRV_get_pixmap( hbitmap );
   descr.gc        = BITMAP_GC(bmp);
   descr.width     = bmp->bitmap.bmWidth;
   descr.height    = bmp->bitmap.bmHeight;
@@ -5080,7 +5080,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
     if (!bDeletePixmap)
     {
         /* Clear the physBitmap to prevent the Pixmap from being deleted by DeleteObject */
-        pBmp->physBitmap = NULL;
+        X11DRV_set_pixmap( hBmp, 0 );
         pBmp->funcs = NULL;
     }
     GDI_ReleaseObj( hBmp );
@@ -5131,9 +5131,8 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
 
     pBmp = (BITMAPOBJ *) GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
 
-    pixmap = (Pixmap)pBmp->physBitmap;
     /* clear the physBitmap so that we can steal its pixmap */
-    pBmp->physBitmap = NULL;
+    pixmap = X11DRV_set_pixmap( hBmp, 0 );
     pBmp->funcs = NULL;
 
     /* Delete the DDB we created earlier now that we have stolen its pixmap */

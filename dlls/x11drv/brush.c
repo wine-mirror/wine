@@ -176,10 +176,11 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     BOOL ret = FALSE;
+    Pixmap pixmap;
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
 
-    if(!bmp->physBitmap) goto done;
+    if (!(pixmap = X11DRV_get_pixmap( hbitmap ))) goto done;
 
     wine_tsx11_lock();
     if ((physDev->depth == 1) && (bmp->bitmap.bmBitsPixel != 1))
@@ -188,7 +189,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
                                                bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 1);
         /* FIXME: should probably convert to monochrome instead */
-        XCopyPlane( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
+        XCopyPlane( gdi_display, pixmap, physDev->brush.pixmap,
                     BITMAP_monoGC, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0, 1 );
     }
     else
@@ -196,7 +197,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
                                                bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
                                                bmp->bitmap.bmBitsPixel );
-        XCopyArea( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
+        XCopyArea( gdi_display, pixmap, physDev->brush.pixmap,
                    BITMAP_GC(bmp), 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
     }
     wine_tsx11_unlock();

@@ -208,7 +208,8 @@ extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(HDC hdc, Pixmap pixmap
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
-extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
+extern Pixmap X11DRV_set_pixmap( HBITMAP hbitmap, Pixmap pixmap );
+extern Pixmap X11DRV_get_pixmap( HBITMAP hbitmap );
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
 
