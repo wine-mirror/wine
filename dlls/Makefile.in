@@ -9,6 +9,7 @@ SUBDIRS = \
 	ntdll \
 	psapi \
 	shell32 \
+	tapi32 \
 	ver \
 	version \
 	winaspi \

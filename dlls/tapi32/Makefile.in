@@ -1,0 +1,18 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = tapi32
+
+C_SRCS = \
+	assisted.c \
+	line.c \
+	phone.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

@@ -29,7 +29,6 @@ C_SRCS = \
 	stress.c \
 	string.c \
 	system.c \
-	tapi32.c \
 	toolhelp.c \
 	tweak.c \
 	version.c \

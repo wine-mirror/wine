@@ -39,6 +39,7 @@ LIBSUBDIRS = \
 	dlls/psapi \
 	dlls/rasapi32 \
 	dlls/shell32 \
+	dlls/tapi32 \
 	dlls/ver \
 	dlls/version \
 	dlls/winaspi \
@@ -112,6 +113,7 @@ LIBOBJS = \
 	dlls/psapi/psapi.o \
 	dlls/rasapi32/rasapi32.o \
 	dlls/shell32/shell32.o \
+	dlls/tapi32/tapi32.o \
 	dlls/ver/ver.o \
 	dlls/version/version.o \
 	dlls/winaspi/winaspi.o \

@@ -4607,6 +4607,7 @@ dlls/ntdll/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile
 dlls/shell32/Makefile
+dlls/tapi32/Makefile
 dlls/ver/Makefile
 dlls/version/Makefile
 dlls/winaspi/Makefile
@@ -4769,6 +4770,7 @@ dlls/ntdll/Makefile
 dlls/psapi/Makefile
 dlls/rasapi32/Makefile
 dlls/shell32/Makefile
+dlls/tapi32/Makefile
 dlls/ver/Makefile
 dlls/version/Makefile
 dlls/winaspi/Makefile
