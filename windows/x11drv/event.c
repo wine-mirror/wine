@@ -34,6 +34,7 @@
 #include "winpos.h"
 #include "drive.h"
 #include "shell.h"
+#include "callback.h"
 #include "keyboard.h"
 #include "mouse.h"
 #include "debug.h"
@@ -108,10 +109,6 @@ static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 
 static void EVENT_GetGeometry( Window win, int *px, int *py,
                                unsigned int *pwidth, unsigned int *pheight );
-
-
-static BOOL32 (WINAPI *EVENT_RedrawWindow)( HWND32 hwnd, const RECT32 *rectUpdate,
-                                            HRGN32 hrgnUpdate, UINT32 flags ) = NULL;
 
 
 /***********************************************************************
@@ -615,15 +612,9 @@ static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
  
-  if ( !EVENT_RedrawWindow )
-  {
-    HMODULE32 hModule = GetModuleHandle32A( "USER32" );
-    EVENT_RedrawWindow = GetProcAddress32( hModule, "RedrawWindow" );
-  }
- 
-  EVENT_RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
-		      RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
-		      (event->count ? 0 : RDW_ERASENOW) );
+  Callout.RedrawWindow32( pWnd? pWnd->hwndSelf : 0, &rect, 0,
+                          RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
+                          (event->count ? 0 : RDW_ERASENOW) );
 }
 
 
@@ -643,15 +634,9 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
   
-  if ( !EVENT_RedrawWindow )
-  {
-    HMODULE32 hModule = GetModuleHandle32A( "USER32" );
-    EVENT_RedrawWindow = GetProcAddress32( hModule, "RedrawWindow" );
-  }
-
-  EVENT_RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
-		      RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
-		      (event->count ? 0 : RDW_ERASENOW) );
+  Callout.RedrawWindow32( pWnd? pWnd->hwndSelf : 0, &rect, 0,
+                          RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
+                          (event->count ? 0 : RDW_ERASENOW) );
 }
 
 
