@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 
 #include "winbase.h"
 #include "winerror.h"
@@ -543,15 +546,34 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
     int avail=0,fd;
 
     fd = FILE_GetUnixHandle(hPipe, GENERIC_READ);
-    if (fd == -1)
-	return FALSE;
-    /* On linux fstat on pipes doesn't work */
+    if (fd == -1) return FALSE;
+
     if (ioctl(fd,FIONREAD, &avail ) != 0)
-      {
-	TRACE("FIONREAD failed reason: %s\n",strerror(errno));
+    {
+        TRACE("FIONREAD failed reason: %s\n",strerror(errno));
         close(fd);
-	return FALSE;
-      }
+        return FALSE;
+    }
+    if (!avail)  /* check for closed pipe */
+    {
+        struct pollfd pollfd;
+        pollfd.fd = fd;
+        pollfd.events = POLLIN;
+        pollfd.revents = 0;
+        switch (poll( &pollfd, 1, 0 ))
+        {
+        case 0:
+            break;
+        case 1:  /* got something */
+            if (!(pollfd.revents & (POLLHUP | POLLERR))) break;
+            TRACE("POLLHUP | POLLERR\n");
+            /* fall through */
+        case -1:
+            close(fd);
+            SetLastError(ERROR_BROKEN_PIPE);
+            return FALSE;
+        }
+    }
     close(fd);
     TRACE(" 0x%08x bytes available\n", avail );
     if (!lpvBuffer && lpcbAvail)
