@@ -536,6 +536,10 @@ static void wave_out_test_deviceOut(int device, double duration,
            dev_name(device),wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
 
+        rc=waveOutSetVolume(wout,volume);
+        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",
+           dev_name(device),wave_out_error(rc));
+
         start=GetTickCount();
         rc=waveOutWrite(wout, &frag, sizeof(frag));
         ok(rc==MMSYSERR_NOERROR,"waveOutWrite(%s): rc=%s\n",
@@ -549,10 +553,6 @@ static void wave_out_test_deviceOut(int device, double duration,
         ok(fabs(1000*duration-end+start)<=100*duration,
            "The sound played for %ld ms instead of %g ms\n",
            end-start,1000*duration);
-
-        rc=waveOutSetVolume(wout,volume);
-        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",
-           dev_name(device),wave_out_error(rc));
 
         check_position(device, wout, frag.dwBufferLength, pwfx);
     }
