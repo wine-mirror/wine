@@ -259,9 +259,16 @@ static VOID WINAPI COMM16_ReadComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
 	}
 	ptr = &COM[cid];
 
+	/* we get cancelled when CloseComm is called */
+	if (status==STATUS_CANCELLED)
+	{
+		TRACE("Cancelled\n");
+		return;
+	}
+
 	/* read data from comm port */
 	if (status != STATUS_SUCCESS) {
-		ERR("async read failed\n");
+		ERR("async read failed %08lx\n",status);
 		COM[cid].commerror = CE_RXOVER;
 		return;
 	}
@@ -303,6 +310,29 @@ static VOID WINAPI COMM16_ReadComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
 	comm_waitread(ptr);
 }
 
+/* this is meant to work like write() */
+static INT COMM16_WriteFile(HANDLE hComm, LPCVOID buffer, DWORD len)
+{
+	OVERLAPPED ov;
+	DWORD count= -1;
+
+	ZeroMemory(&ov,sizeof ov);
+	ov.hEvent = CreateEventA(NULL,0,0,NULL);
+	if(ov.hEvent==INVALID_HANDLE_VALUE)
+		return -1;
+
+	if(!WriteFile(hComm,buffer,len,&count,&ov))
+	{
+		if(GetLastError()==ERROR_IO_PENDING)
+		{
+			GetOverlappedResult(hComm,&ov,&count,TRUE);
+		}
+	}
+	CloseHandle(ov.hEvent);
+
+	return count;
+}
+
 static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov)
 {
 	int prev, bleft;
@@ -332,8 +362,7 @@ static VOID WINAPI COMM16_WriteComplete(DWORD status, DWORD len, LPOVERLAPPED ov
 
 	/* write any TransmitCommChar character */
 	if (ptr->xmit>=0) {
-		if(!WriteFile(ptr->handle, &(ptr->xmit), 1, &len, NULL))
-			len = -1;
+		len = COMM16_WriteFile(ptr->handle, &(ptr->xmit), 1);
 		if (len > 0) ptr->xmit = -1;
 	}
 
@@ -564,8 +593,6 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 
 			ZeroMemory(&COM[port].read_ov,sizeof (OVERLAPPED));
 			ZeroMemory(&COM[port].write_ov,sizeof (OVERLAPPED));
-			COM[port].read_ov.hEvent = CreateEventA(NULL,0,0,NULL);
-			COM[port].write_ov.hEvent = CreateEventA(NULL,0,0,NULL);
 
                         comm_waitread( &COM[port] );
 			USER16_AlertableWait++;
@@ -611,9 +638,8 @@ INT16 WINAPI CloseComm16(INT16 cid)
 	if (!(cid&FLAG_LPT)) {
 		/* COM port */
                 UnMapLS( COM[cid].seg_unknown );
-		CloseHandle(COM[cid].read_ov.hEvent);
-		CloseHandle(COM[cid].write_ov.hEvent);
 		USER16_AlertableWait--;
+		CancelIo(ptr->handle);
 
 		/* free buffers */
 		free(ptr->outbuf);
@@ -793,14 +819,9 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 	COMM_MSRUpdate( ptr->handle, stol );
 
 	if (lpStat) {
-		HANDLE rw_events[2];
-
 		lpStat->status = 0;
 
-		rw_events[0] = COM[cid].read_ov.hEvent;
-		rw_events[1] = COM[cid].write_ov.hEvent;
-
-		WaitForMultipleObjectsEx(2,&rw_events[0],FALSE,1,TRUE);
+		WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
 
 		lpStat->cbOutQue = comm_outbuf(ptr);
 		lpStat->cbInQue = comm_inbuf(ptr);
@@ -1002,8 +1023,8 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 
 	if (ptr->obuf_head == ptr->obuf_tail) {
 	  /* transmit queue empty, try to transmit directly */
-	  DWORD len;
-	  if(!WriteFile(ptr->handle, &chTransmit, 1, &len, NULL)) {
+	  if(1!=COMM16_WriteFile(ptr->handle, &chTransmit, 1))
+	  {
 	    /* didn't work, queue it */
 	    ptr->xmit = chTransmit;
 	    comm_waitwrite(ptr);
@@ -1070,7 +1091,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 	}	
 
 	if(0==comm_inbuf(ptr))
-		WaitForSingleObjectEx( COM[cid].read_ov.hEvent, 1, TRUE);
+		WaitForMultipleObjectsEx(0,NULL,FALSE,1,TRUE);
 
 	/* read unget character */
 	if (ptr->unget>=0) {
@@ -1128,8 +1149,7 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 	while (length < cbWrite) {
 	  if ((ptr->obuf_head == ptr->obuf_tail) && (ptr->xmit < 0)) {
 	    /* no data queued, try to write directly */
-	    if(!WriteFile(ptr->handle, lpvBuf, cbWrite - length, (LPDWORD)&status, NULL))
-	      status = -1;
+	    status = COMM16_WriteFile(ptr->handle, lpvBuf, cbWrite - length);
 	    if (status > 0) {
 	      lpvBuf += status;
 	      length += status;
