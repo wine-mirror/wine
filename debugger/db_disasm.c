@@ -128,6 +128,8 @@ static BOOL db_display = FALSE;
 #define	STI	32			/* FP stack */
 #define	X	33			/* extended FP op */
 #define	XA	34			/* for 'fstcw %ax' */
+#define	MX	35			/* special register (mmx) */
+#define	EMX	36			/* special register (mmx) */
 
 struct inst {
 	const char *i_name;		/* name */
@@ -180,6 +182,39 @@ static const char * const db_Grp8[] = {
 	"bts",
 	"btr",
 	"btc"
+};
+
+static const char * const db_Grp10[] = {
+	"(bad)",
+	"(bad)",
+	"psrlw",
+	"(bad)",
+	"psraw",
+	"(bad)",
+	"psllw",
+	"(bad)"
+};
+
+static const char * const db_Grp11[] = {
+	"(bad)",
+	"(bad)",
+	"psrld",
+	"(bad)",
+	"psrad",
+	"(bad)",
+	"pslld",
+	"(bad)"
+};
+
+static const char * const db_Grp12[] = {
+	"(bad)",
+	"(bad)",
+	"psrlq",
+	"(bad)",
+	"psraq",
+	"(bad)",
+	"psllq",
+	"(bad)"
 };
 
 static const struct inst db_inst_0f0x[] = {
@@ -240,6 +275,46 @@ static const struct inst db_inst_0f4x[] = {
 /*4d*/	{ "cmovge", TRUE, NONE,  op2(E, R), 0 }, 
 /*4e*/	{ "cmovle", TRUE, NONE,  op2(E, R), 0 }, 
 /*4f*/	{ "cmovnle",TRUE, NONE,  op2(E, R), 0 }, 
+};
+
+static const struct inst db_inst_0f6x[] = {
+/*60*/	{ "punpcklbw", TRUE, NONE,  op2(E, MX), 0 }, 
+/*61*/	{ "punpcklwd", TRUE, NONE,  op2(E, MX),	0 }, 
+/*62*/	{ "punpckldq", TRUE, NONE,  op2(E, MX), 0 }, 
+/*63*/	{ "packsswb",  TRUE, NONE,  op2(E, MX),	0 }, 
+/*64*/	{ "pcmpgtb",   TRUE, NONE,  op2(E, MX), 0 }, 
+/*65*/	{ "pcmpgtw",   TRUE, NONE,  op2(E, MX), 0 }, 
+/*66*/	{ "pcmpgtd",   TRUE, NONE,  op2(E, MX), 0 }, 
+/*67*/	{ "packuswb",  TRUE, NONE,  op2(E, MX), 0 }, 
+
+/*68*/	{ "punpckhbw", TRUE, NONE,  op2(E, MX), 0 }, 
+/*69*/	{ "punpckhwd", TRUE, NONE,  op2(E, MX), 0 }, 
+/*6a*/	{ "punpckhdq", TRUE, NONE,  op2(E, MX), 0 }, 
+/*6b*/	{ "packssdw",  TRUE, NONE,  op2(E, MX), 0 }, 
+/*6c*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*6d*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*6e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 }, 
+/*6f*/	{ "movq",      TRUE, NONE,  op2(E, MX), 0 }, 
+};
+
+static const struct inst db_inst_0f7x[] = {
+/*70*/	{ "pshufw",    TRUE, NONE,  op2(MX, EMX), 0 }, 
+/*71*/	{ "(grp10)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp10 },
+/*72*/	{ "(grp11)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp11 }, 
+/*73*/	{ "(grp12)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp12 }, 
+/*74*/	{ "pcmpeqb",   TRUE, NONE,  op2(E, MX), 0 }, 
+/*75*/	{ "pcmpeqw",   TRUE, NONE,  op2(E, MX), 0 }, 
+/*76*/	{ "pcmpeqd",   TRUE, NONE,  op2(E, MX), 0 }, 
+/*77*/	{ "emms",      FALSE,NONE,  0, 0 }, 
+
+/*78*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*79*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*7a*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*7b*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*7c*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*7d*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
+/*7e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 }, 
+/*7f*/	{ "movq",      TRUE, NONE,  op2(EMX, MX), 0 }, 
 };
 
 static const struct inst db_inst_0f8x[] = {
@@ -342,22 +417,41 @@ static const struct inst db_inst_0fcx[] = {
 };
 
 static const struct inst db_inst_0fdx[] = {
-/*c0*/	{ "cmpxchg",TRUE, BYTE,	 op2(R, E),   0 },
-/*c1*/	{ "cmpxchg",TRUE, LONG,	 op2(R, E),   0 },
-/*c2*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c3*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c4*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c5*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c6*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c7*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c8*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*c9*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*ca*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cb*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cc*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cd*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*ce*/	{ "",	   FALSE, NONE,	 0,	      0 },
-/*cf*/	{ "",	   FALSE, NONE,	 0,	      0 },
+/*d0*/	{ "(bad)",   FALSE, NONE,0,   0 },
+/*d1*/	{ "psrlw",   TRUE,  NONE,op2(MX,EMX), 0 },
+/*d2*/	{ "psrld",   TRUE,  NONE,op2(MX,EMX), 0 },
+/*d3*/	{ "psrld",   TRUE,  NONE,op2(MX,EMX), 0 },
+/*d4*/	{ "(bad)",   FALSE, NONE,0,	      0 },
+/*d5*/	{ "pmulww",  TRUE,  NONE,op2(MX,EMX), 0 },
+/*d6*/	{ "(bad)",   FALSE, NONE,0,	      0 },
+/*d7*/	{ "pmovmskb",FALSE, NONE,op2(MX,EMX),0 },
+/*d8*/	{ "psubusb", TRUE,  NONE,op2(MX,EMX), 0 },
+/*d9*/	{ "psubusw", TRUE,  NONE,op2(MX,EMX), 0 },
+/*da*/	{ "pminub",  TRUE,  NONE,op2(MX,EMX), 0 },
+/*db*/	{ "pand",    TRUE,  NONE,op2(MX,EMX), 0 },
+/*dc*/	{ "paddusb", TRUE,  NONE,op2(MX,EMX), 0 },
+/*dd*/	{ "paddusw", TRUE,  NONE,op2(MX,EMX), 0 },
+/*de*/	{ "pmaxub",  TRUE,  NONE,op2(MX,EMX), 0 },
+/*df*/	{ "pandn",   TRUE,  NONE,op2(MX,EMX), 0 },
+};
+
+static const struct inst db_inst_0fex[] = {
+/*e0*/	{ "pavgb",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e1*/	{ "psraw",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e2*/	{ "psrad",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e3*/	{ "pavgw",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e4*/	{ "pmulhuw",TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e5*/	{ "pmulhw", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e6*/	{ "(bad)",  FALSE,NONE,	 0,	       0 },
+/*e7*/	{ "movntq", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e8*/	{ "psubsb", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*e9*/	{ "psubsw", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*ea*/	{ "pminsw", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*eb*/	{ "por",    TRUE, NONE,	 op2(MX, EMX),   0 },
+/*ec*/	{ "paddsb", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*ed*/	{ "paddsw", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*ee*/	{ "pmaxsw", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*ef*/	{ "pxor",   TRUE, NONE,	 op2(MX, EMX),   0 },
 };
 
 static const struct inst * const db_inst_0f[] = {
@@ -367,15 +461,15 @@ static const struct inst * const db_inst_0f[] = {
 	0,
 	db_inst_0f4x,
 	0,
-	0,
-	0,
+	db_inst_0f6x,
+	db_inst_0f7x,
 	db_inst_0f8x,
 	db_inst_0f9x,
 	db_inst_0fax,
 	db_inst_0fbx,
 	db_inst_0fcx,
 	db_inst_0fdx,
-	0,
+	db_inst_0fex,
 	0
 };
 
@@ -1295,7 +1389,10 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	    ip->i_extra == (char *)db_Grp2 ||
 	    ip->i_extra == (char *)db_Grp6 ||
 	    ip->i_extra == (char *)db_Grp7 ||
-	    ip->i_extra == (char *)db_Grp8) {
+	    ip->i_extra == (char *)db_Grp8 ||
+	    ip->i_extra == (char *)db_Grp10 ||
+	    ip->i_extra == (char *)db_Grp11 ||
+	    ip->i_extra == (char *)db_Grp12) {
 	    i_name = ((char **)ip->i_extra)[f_reg(regmodrm)];
 	}
 	else if (ip->i_extra == (char *)db_Grp3) {
@@ -1406,6 +1503,19 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][f_reg(regmodrm)]);
 		    }
 		    break;
+		case MX:
+		  if( db_display )
+		    {
+		      DEBUG_Printf(DBG_CHN_MESG,"%%mm%d", f_reg(regmodrm));
+		    }
+		    break;
+		case EMX:
+		  if( db_display )
+		    {
+		      DEBUG_Printf(DBG_CHN_MESG,"%%mm%d", f_rm(regmodrm));
+		    }
+		    break;
+
 
 		case Rw:
 		  if( db_display )
