@@ -3157,13 +3157,8 @@ static LRESULT EDIT_WM_EraseBkGnd(WND *wnd, EDITSTATE *es, HDC dc)
  */
 static INT EDIT_WM_GetText(WND *wnd, EDITSTATE *es, INT count, LPSTR text)
 {
-	INT len = lstrlenA(es->text);
-
-	if (count > len) {
-		lstrcpyA(text, es->text);
-		return len;
-	} else
-		return -1;
+	lstrcpynA(text, es->text, count);
+	return strlen(text);
 }
 
 
