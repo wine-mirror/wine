@@ -1187,12 +1187,6 @@ static const DWORD VWIN32_DriveTypeInfo[7]={
     0x4f24  /* 2.88 M */
 };
 
-static BYTE floppy_params[2][13] =
-{
-    { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 },
-    { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 }
-};
-
 /**********************************************************************
  *	    VWIN32_ReadFloppyParams
  *
@@ -1201,6 +1195,12 @@ static BYTE floppy_params[2][13] =
 static VOID VWIN32_ReadFloppyParams(DIOC_REGISTERS *regs)
 {
 #ifdef linux
+    static BYTE floppy_params[2][13] =
+    {
+        { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 },
+        { 0xaf, 0x02, 0x25, 0x02, 0x12, 0x1b, 0xff, 0x6c, 0xf6, 0x0f, 0x08 }
+    };
+
     unsigned int i, nr_of_drives = 0;
     BYTE drive_nr = DIOC_DL(regs);
     int floppy_fd,r;
@@ -1542,7 +1542,7 @@ static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
  */
 HANDLE	WINAPI	OpenVxDHandle(HANDLE hHandleRing3)
 {
-	FIXME( "(0x%08lx), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
+	FIXME( "(0x%08x), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
 	return hHandleRing3;
 }
 
