@@ -540,10 +540,20 @@ RTFFont	*fp;
 			info->csStack[info->csTop++] = info->curCharSet;
 			break;
 		case rtfEndGroup:
+			/*
+			 * If stack top is 1 at this point, we are ending the
+			 * group started by the initial {, which ends the
+			 * RTF stream
+			 */
 			if (info->csTop <= 0)
 				RTFPanic (info,"_RTFGetToken: stack underflow");
-			info->curCharSet = info->csStack[--info->csTop];
-			RTFSetCharSet (info, info->curCharSet);
+			else if (info->csTop == 1)
+				info->rtfClass = rtfEOF;
+			else
+			{
+				info->curCharSet = info->csStack[--info->csTop];
+				RTFSetCharSet (info, info->curCharSet);
+			}
 			break;
 		}
 	}
