@@ -93,6 +93,7 @@ int X11DRV_PALETTE_mapEGAPixel[16];
 /**********************************************************************/
 
 #define NB_COLORCUBE_START_INDEX	63
+#define NB_PALETTE_EMPTY_VALUE          -1
 
 /* Maps entry in the system palette to X pixel value */
 int *X11DRV_PALETTE_PaletteToXPixel = NULL;
@@ -566,11 +567,13 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
    if (screen_depth <= 8)
    {
-       X11DRV_PALETTE_XPixelToPalette = (int*)calloc(256, sizeof(int));
+       X11DRV_PALETTE_XPixelToPalette = HeapAlloc( GetProcessHeap(), 0, 256 * sizeof(int) );
        if(X11DRV_PALETTE_XPixelToPalette == NULL) {
            ERR("Out of memory: XPixelToPalette!\n");
            return FALSE;
        }
+       for( i = 0; i < 256; i++ )
+           X11DRV_PALETTE_XPixelToPalette[i] = NB_PALETTE_EMPTY_VALUE;
    }
 
    /* for hicolor visuals PaletteToPixel mapping is used to skip
@@ -587,7 +590,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
    {
       if( i >= COLOR_gapStart && i <= COLOR_gapEnd ) 
       {
-         X11DRV_PALETTE_PaletteToXPixel[i] = 0;
+         X11DRV_PALETTE_PaletteToXPixel[i] = NB_PALETTE_EMPTY_VALUE;
          COLOR_sysPal[i].peFlags = 0;	/* mark as unused */
          continue;
       }
@@ -691,7 +694,7 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
 
     max = COLOR_max - (256 - (COLOR_gapEnd - COLOR_gapStart));
     for ( i = 0, idx = COLOR_gapStart; i < 256 && idx <= COLOR_gapEnd; i++ )
-      if( X11DRV_PALETTE_XPixelToPalette[i] == 0 )
+      if( X11DRV_PALETTE_XPixelToPalette[i] == NB_PALETTE_EMPTY_VALUE )
 	{
 	  xc.pixel = i;
 
