@@ -8,10 +8,15 @@
  */
 
 /* FIXME:
- * - completely lacks SCREENBUFFER interface
- * - No abstraction for something other than xterm
- * - Key input needs proper scancodes/virtualkeycodes
- * - win32 syncs deadlock for infinite waits
+ * - Completely lacks SCREENBUFFER interface.
+ * - No abstraction for something other than xterm.
+ * - Key input translation shouldn't use VkKeyScan and MapVirtualKey, since
+ *   they are window (USER) driver dependend.
+ * - Output sometimes is buffered (We switched off buffering by ~ICANON ?)
+ */
+/* Reference applications:
+ * -  IDA (interactive disassembler) full version 3.75. Works.
+ * -  LYNX/W32. Works mostly, some keys crash it.
  */
 
 #include <stdlib.h>
@@ -178,25 +183,36 @@ CONSOLE_string_to_IR(CONSOLE *console,unsigned char *buf,int len) {
 	if (inchar!=27) { /* no escape -> 'normal' keyboard event */
 	    ir.EventType = 1; /* Key_event */
 
-	    ir.Event.KeyEvent.bKeyDown = 1;
-	    ir.Event.KeyEvent.wRepeatCount = 0;
+	    ir.Event.KeyEvent.bKeyDown		= 1;
+	    ir.Event.KeyEvent.wRepeatCount	= 0;
 
-	    ir.Event.KeyEvent.wVirtualKeyCode = 0xdead;	/* FIXME */
-	    ir.Event.KeyEvent.wVirtualScanCode = 0xf0ad;	/* FIXME */
-	    ir.Event.KeyEvent.dwControlKeyState = 0;
+	    ir.Event.KeyEvent.dwControlKeyState	= 0;
 	    if (inchar & 0x80) {
 		ir.Event.KeyEvent.dwControlKeyState|=LEFT_ALT_PRESSED;
 		inchar &= ~0x80;
 	    }
-	    if (inchar>='A' && inchar <='Z') {
+	    ir.Event.KeyEvent.wVirtualKeyCode = VkKeyScan16(inchar);
+	    if (ir.Event.KeyEvent.wVirtualKeyCode & 0x0100)
 		ir.Event.KeyEvent.dwControlKeyState|=SHIFT_PRESSED;
-		inchar = inchar-'A'+'a';
-	    }
+	    if (ir.Event.KeyEvent.wVirtualKeyCode & 0x0200)
+		ir.Event.KeyEvent.dwControlKeyState|=LEFT_CTRL_PRESSED;
+	    if (ir.Event.KeyEvent.wVirtualKeyCode & 0x0400)
+		ir.Event.KeyEvent.dwControlKeyState|=LEFT_ALT_PRESSED;
+	    ir.Event.KeyEvent.wVirtualScanCode = MapVirtualKey16(
+	    	ir.Event.KeyEvent.wVirtualKeyCode & 0x00ff,
+		0 /* VirtualKeyCodes to ScanCode */
+	    );
 	    if (inchar=='\n') {
-		ir.Event.KeyEvent.wVirtualScanCode= 0x1c;
-		ir.Event.KeyEvent.uChar.AsciiChar = '\r';
+		ir.Event.KeyEvent.uChar.AsciiChar	= '\r';
+	    	ir.Event.KeyEvent.wVirtualKeyCode	= 0x0d;
+	    	ir.Event.KeyEvent.wVirtualScanCode	= 0x1c;
 	    } else {
 		ir.Event.KeyEvent.uChar.AsciiChar = inchar;
+		if (inchar<' ') {
+		    /* FIXME: find good values for ^X */
+		    ir.Event.KeyEvent.wVirtualKeyCode = 0xdead;
+		    ir.Event.KeyEvent.wVirtualScanCode = 0xbeef;
+		} 
 	    }
 
 	    CONSOLE_add_input_record(console,&ir);
@@ -207,12 +223,14 @@ CONSOLE_string_to_IR(CONSOLE *console,unsigned char *buf,int len) {
 	/* inchar is ESC */
 	if ((j==len-1) || (buf[j+1]!='[')) {/* add ESCape on its own */
 	    ir.EventType = 1; /* Key_event */
-	    ir.Event.KeyEvent.bKeyDown = 1;
-	    ir.Event.KeyEvent.wRepeatCount = 0;
+	    ir.Event.KeyEvent.bKeyDown		= 1;
+	    ir.Event.KeyEvent.wRepeatCount	= 0;
 
-	    ir.Event.KeyEvent.wVirtualKeyCode	= 0xdead;	/* FIXME */
+	    ir.Event.KeyEvent.wVirtualKeyCode	= VkKeyScan16(27);
+	    ir.Event.KeyEvent.wVirtualScanCode	= MapVirtualKey16(
+	    	ir.Event.KeyEvent.wVirtualKeyCode,0
+	    );
 	    ir.Event.KeyEvent.dwControlKeyState = 0;
-	    ir.Event.KeyEvent.wVirtualScanCode	= 0x01;
 	    ir.Event.KeyEvent.uChar.AsciiChar	= 27;
 	    CONSOLE_add_input_record(console,&ir);
 	    ir.Event.KeyEvent.bKeyDown = 0;
@@ -234,8 +252,8 @@ CONSOLE_string_to_IR(CONSOLE *console,unsigned char *buf,int len) {
 	    ir.Event.KeyEvent.wRepeatCount	= 0;
 	    ir.Event.KeyEvent.dwControlKeyState	= 0;
 
-	    ir.Event.KeyEvent.wVirtualKeyCode	= 0xdead;
-	    ir.Event.KeyEvent.wVirtualScanCode	= 0xbeef;
+	    ir.Event.KeyEvent.wVirtualKeyCode	= 0xad; /* FIXME */
+	    ir.Event.KeyEvent.wVirtualScanCode	= 0xad; /* FIXME */
 	    ir.Event.KeyEvent.uChar.AsciiChar	= 0;
 
 	    switch (buf[k]) {
@@ -291,6 +309,7 @@ CONSOLE_string_to_IR(CONSOLE *console,unsigned char *buf,int len) {
 	    }
 	    if (scancode) {
 		ir.Event.KeyEvent.wVirtualScanCode = scancode;
+		ir.Event.KeyEvent.wVirtualKeyCode = MapVirtualKey16(scancode,1);
 		CONSOLE_add_input_record(console,&ir);
 		ir.Event.KeyEvent.bKeyDown		= 0;
 		CONSOLE_add_input_record(console,&ir);
@@ -932,6 +951,12 @@ BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
 }
 
 
+#define CADD(c) 							\
+	if (bufused==curbufsize-1)					\
+	    buffer = HeapReAlloc(GetProcessHeap(),0,buffer,(curbufsize+=100));\
+	buffer[bufused++]=c;
+#define SADD(s) { char *x=s;while (*x) {CADD(*x);x++;}}
+
 /***********************************************************************
  *            WriteConsoleOutputA   (KERNEL32.732)
  */
@@ -942,7 +967,8 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
                                      LPSMALL_RECT lpWriteRegion)
 {
     int i,j,off=0,lastattr=-1;
-    char	buffer[20];
+    char	sbuf[20],*buffer=NULL;
+    int		bufused=0,curbufsize = 100;
     DWORD	res;
     const int colormap[8] = {
     	0,4,2,6,
@@ -955,6 +981,8 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
 	return FALSE;
     }
     CONSOLE_make_complex(console);
+    buffer = HeapAlloc(GetProcessHeap(),0,100);;
+    curbufsize = 100;
 
     TRACE(console,"wr: top = %d, bottom=%d, left=%d,right=%d\n",
     	lpWriteRegion->Top,
@@ -964,24 +992,27 @@ BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
     );
 
     for (i=lpWriteRegion->Top;i<=lpWriteRegion->Bottom;i++) {
-    	sprintf(buffer,"%c[%d;%dH",27,i+1,lpWriteRegion->Left+1);
-	WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
-	if (lastattr != lpBuffer[off].Attributes) {
+    	sprintf(sbuf,"%c[%d;%dH",27,i+1,lpWriteRegion->Left+1);
+	SADD(sbuf);
+	for (j=lpWriteRegion->Left;j<=lpWriteRegion->Right;j++) {
+	    if (lastattr!=lpBuffer[off].Attributes) {
 		lastattr = lpBuffer[off].Attributes;
-		sprintf(buffer,"%c[0;%s3%d;4%dm",
+		sprintf(sbuf,"%c[0;%s3%d;4%dm",
 			27,
 			(lastattr & FOREGROUND_INTENSITY)?"1;":"",
 			colormap[lastattr&7],
 			colormap[(lastattr&0x70)>>4]
 		);
 		/* FIXME: BACKGROUND_INTENSITY */
-		WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
+		SADD(sbuf);
+	    }
+	    CADD(lpBuffer[off].Char.AsciiChar);
+	    off++;
 	}
-	for (j=lpWriteRegion->Left;j<=lpWriteRegion->Right;j++)
-		WriteFile(hConsoleOutput,&(lpBuffer[off++].Char.AsciiChar),1,&res,NULL);
     }
-    sprintf(buffer,"%c[0m",27);
-    WriteFile(hConsoleOutput,buffer,strlen(buffer),&res,NULL);
+    sprintf(sbuf,"%c[0m",27);SADD(sbuf);
+    WriteFile(hConsoleOutput,buffer,bufused,&res,NULL);
+    HeapFree(GetProcessHeap(),0,buffer);
     K32OBJ_DecCount(&console->header);
     return TRUE;
 }
@@ -1041,7 +1072,7 @@ BOOL32 WINAPI ReadConsole32A( HANDLE32 hConsoleInput,
     	if (!console->irs[i].Event.KeyEvent.bKeyDown)
 		continue;
 	*xbuf++ = console->irs[i].Event.KeyEvent.uChar.AsciiChar; 
-	nNumberOfCharsToRead--;
+	charsread++;
     }
     CONSOLE_drain_input(console,i);
     if (lpNumberOfCharsRead)
@@ -1399,6 +1430,7 @@ BOOL32 WINAPI SetConsoleTextAttribute32(HANDLE32 hConsoleOutput,WORD wAttr)
     DWORD xlen;
     char buffer[20];
 
+    TRACE(console,"(%d,%d)\n",hConsoleOutput,wAttr);
     sprintf(buffer,"%c[0;%s3%d;4%dm",
 	27,
 	(wAttr & FOREGROUND_INTENSITY)?"1;":"",
