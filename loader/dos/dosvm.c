@@ -590,5 +590,6 @@ void DOSVM_SetTimer( unsigned ticks ) {}
 unsigned DOSVM_GetTimer( void ) { return 0; }
 void DOSVM_SetSystemData( int id, void *data ) { free(data); }
 void* DOSVM_GetSystemData( int id ) { return NULL; }
+void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,void*), void *data) { /* EMPTY */ }
 
 #endif
