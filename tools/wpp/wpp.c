@@ -20,6 +20,7 @@
  */
 
 #include <time.h>
+#include <stdlib.h>
 
 #include "wpp_private.h"
 #include "wpp.h"
