@@ -90,8 +90,6 @@ typedef struct tagWINE_MM_DRIVER {
     WINE_MM_DRIVER_PART		parts[MMDRV_MAX];/* Information for all known types */
 } WINE_MM_DRIVER, *LPWINE_MM_DRIVER;
 
-typedef	WINMM_MapType	(*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-
 typedef struct tagWINE_MLD {
 /* EPP struct tagWINE_MLD*	lpNext; */		/* not used so far */
        UINT			uDeviceID;
@@ -226,12 +224,15 @@ typedef struct tagWINE_MM_IDATA {
 
 typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
 typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
+typedef	WINMM_MapType	        (*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
 
 LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr);
 BOOL		DRIVER_GetLibName(LPCSTR keyName, LPCSTR sectName, LPSTR buf, int sz);
 LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2);
+void            DRIVER_UnloadAll(void);
 
 BOOL		MMDRV_Init(void);
+void            MMDRV_Exit(void);
 UINT		MMDRV_GetNum(UINT);
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
                             DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32);

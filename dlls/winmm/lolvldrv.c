@@ -733,3 +733,70 @@ BOOL	MMDRV_Init(void)
     /* FIXME: MMDRV_InitFromRegistry shall be MMDRV_Init in a near future */
     return MMDRV_InitFromRegistry() || MMDRV_InitHardcoded();
 }
+
+/******************************************************************
+ *		ExitPerType
+ *
+ *
+ */
+static  BOOL	MMDRV_ExitPerType(LPWINE_MM_DRIVER lpDrv, UINT type)
+{
+    WINE_MM_DRIVER_PART*	part = &lpDrv->parts[type];
+    DWORD			ret;
+
+    if (lpDrv->bIs32 && part->u.fnMessage32) {
+#if 0
+	ret = part->u.fnMessage32(0, DRVM_DISABLE, 0L, 0L, 0L);
+	TRACE("DRVM_DISABLE => %08lx\n", ret);
+#endif
+	ret = part->u.fnMessage32(0, DRVM_EXIT, 0L, 0L, 0L);
+	TRACE("DRVM_EXIT => %08lx\n", ret);
+    } else if (!lpDrv->bIs32 && part->u.fnMessage16 && pFnCallMMDrvFunc16) {
+#if 0
+	ret = pFnCallMMDrvFunc16((FARPROC16)part->u.fnMessage16,
+                                 0, DRVM_DISABLE, 0L, 0L, 0L);
+	TRACE("DRVM_DISABLE => %08lx\n", ret);
+#endif
+        ret = pFnCallMMDrvFunc16((FARPROC16)part->u.fnMessage16,
+                                 0, DRVM_EXIT, 0L, 0L, 0L);
+	TRACE("DRVM_EXIT => %08lx\n", ret);
+    } else {
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+/******************************************************************
+ *		Exit
+ *
+ *
+ */
+void    MMDRV_Exit(void)
+{
+    int i;
+
+    for (i = 0; i < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]); i++)
+    {
+        if (MM_MLDrvs[i] != NULL)
+        {
+            FIXME("Closing while ll-driver open\n");
+#if 0
+            /* FIXME: should generate a message depending on type */
+            MMDRV_Free((HANDLE)(i | 0x8000), MM_MLDrvs[i]);
+#endif
+        }
+    }
+
+    /* unload driver, in reverse order of loading */
+    for (i = sizeof(MMDrvs) / sizeof(MMDrvs[0]) - 1; i >= 0; i--)
+    {
+        MMDRV_ExitPerType(&MMDrvs[i], MMDRV_AUX);
+        MMDRV_ExitPerType(&MMDrvs[i], MMDRV_MIXER);
+        MMDRV_ExitPerType(&MMDrvs[i], MMDRV_MIDIIN);
+        MMDRV_ExitPerType(&MMDrvs[i], MMDRV_MIDIOUT);
+        MMDRV_ExitPerType(&MMDrvs[i], MMDRV_WAVEIN);
+        MMDRV_ExitPerType(&MMDrvs[i], MMDRV_WAVEOUT);
+        CloseDriver(MMDrvs[i].hDriver, 0, 0);
+    }
+}

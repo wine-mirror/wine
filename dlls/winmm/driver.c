@@ -507,3 +507,23 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
     TRACE("Done\n");
     return TRUE;
 }
+
+/******************************************************************
+ *		DRIVER_UnloadAll
+ *
+ *
+ */
+void    DRIVER_UnloadAll(void)
+{
+    LPWINE_DRIVER 	lpDrv;
+    LPWINE_DRIVER 	lpNextDrv = NULL;
+    unsigned            count = 0;
+
+    for (lpDrv = lpDrvItemList; lpDrv != NULL; lpDrv = lpNextDrv)
+    {
+        lpNextDrv = lpDrv->lpNextItem;
+        CloseDriver((HDRVR)lpDrv, 0, 0);
+        count++;
+    }
+    TRACE("Unloaded %u drivers\n", count);
+}
