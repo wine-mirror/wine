@@ -84,8 +84,6 @@ static HICON hFloppy = 0;
 static HICON hHDisk = 0;
 static HICON hCDRom = 0;
 static HICON hNet = 0;
-static char defaultopen[]="Open File";
-static char defaultsave[]="Save as";
 
 /***********************************************************************
  * 				FileDlg_Init			[internal]
@@ -971,8 +969,8 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
         str = ofnA->lpstrTitle;
     else
         /* Allocates default title (FIXME : get it from resource) */
-        str = open ? defaultopen:defaultsave;
-    RtlCreateUnicodeStringFromAsciiz (&usBuffer,ofnA->lpstrTitle);
+        str = open ? "Open File" : "Save as";
+    RtlCreateUnicodeStringFromAsciiz (&usBuffer,str);
     ofnW->lpstrTitle = usBuffer.Buffer;
     ofnW->Flags = ofnA->Flags;
     ofnW->nFileOffset = ofnA->nFileOffset;
