@@ -167,6 +167,7 @@ LIB_TARGET  = @LIB_TARGET@
 ALT_LINK    = @ALT_LINK@
 
 all: Makefile Make.rules $(MAIN_TARGET)
+	@echo "Wine build complete."
 
 LIBLINTS = $(LIBOBJS:.o=.ln) 
 X11LINTS = $(X11OBJS:.o=.ln)
@@ -189,10 +190,9 @@ emu: wine
 
 lib: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET)
 
-wine wine.sym: $(LIB_TARGET) $(EMUOBJS) $(X11OBJS) $(LIBOBJS) dummy
+wine wine.sym: $(LIB_TARGET) $(EMUOBJS) $(X11OBJS) $(LIBOBJS)
 	$(CC) -o wine $(EMUOBJS) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
-	@echo "Wine build complete."
 
 libwine.a: $(LIBOBJS) $(X11OBJS)
 	$(RM) $@
