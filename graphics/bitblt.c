@@ -7,9 +7,7 @@
 #include "dc.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(bitblt)
-DECLARE_DEBUG_CHANNEL(bitmap)
-DECLARE_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(bitblt);
 
 
 /***********************************************************************
@@ -18,11 +16,7 @@ DECLARE_DEBUG_CHANNEL(gdi)
 BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
                         INT16 width, INT16 height, DWORD rop)
 {
-    DC * dc = DC_GetDCPtr( hdc );
-    if (!dc || !dc->funcs->pPatBlt) return FALSE;
-
-    TRACE("%04x %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
-    return dc->funcs->pPatBlt( dc, left, top, width, height, rop );
+    return PatBlt( hdc, left, top, width, height, rop );
 }
 
 
@@ -33,10 +27,17 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
                         INT width, INT height, DWORD rop)
 {
     DC * dc = DC_GetDCPtr( hdc );
-    if (!dc || !dc->funcs->pPatBlt) return FALSE;
+    BOOL bRet = FALSE;
 
-    TRACE("%04x %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
-    return dc->funcs->pPatBlt( dc, left, top, width, height, rop );
+    if (!dc) return FALSE;
+
+    if (dc->funcs->pPatBlt)
+    {
+        TRACE("%04x %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
+        bRet = dc->funcs->pPatBlt( dc, left, top, width, height, rop );
+    }
+    GDI_ReleaseObj( hdc );
+    return bRet;
 }
 
 
@@ -47,17 +48,7 @@ BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
                         INT16 height, HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
                         DWORD rop )
 {
-    DC *dcDst, *dcSrc;
-
-    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
-    if (!dcDst->funcs->pBitBlt) return FALSE;
-    dcSrc = DC_GetDCPtr( hdcSrc );
-
-    TRACE("hdcSrc=%04x %d,%d %d bpp->hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
-          hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
-          hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
-    return dcDst->funcs->pBitBlt( dcDst, xDst, yDst, width, height,
-                                  dcSrc, xSrc, ySrc, rop );
+    return BitBlt( hdcDst, xDst, yDst, width, height, hdcSrc, xSrc, ySrc, rop );
 }
 
 
@@ -65,20 +56,26 @@ BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
  *           BitBlt    (GDI32.10)
  */
 BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
-                        INT height, HDC hdcSrc, INT xSrc, INT ySrc,
-                        DWORD rop )
+                    INT height, HDC hdcSrc, INT xSrc, INT ySrc, DWORD rop )
 {
+    BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 
-    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
-    if (!dcDst->funcs->pBitBlt) return FALSE;
-    dcSrc = DC_GetDCPtr( hdcSrc );
-
-    TRACE("hdcSrc=%04x %d,%d %d bpp->hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
-          hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
-          hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
-    return dcDst->funcs->pBitBlt( dcDst, xDst, yDst, width, height,
-                                  dcSrc, xSrc, ySrc, rop );
+    if ((dcSrc = DC_GetDCUpdate( hdcSrc ))) GDI_ReleaseObj( hdcSrc );
+    /* FIXME: there is a race condition here */
+    if ((dcDst = DC_GetDCUpdate( hdcDst )))
+    {
+        dcSrc = DC_GetDCPtr( hdcSrc );
+        TRACE("hdcSrc=%04x %d,%d %d bpp->hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
+              hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
+              hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
+        if (dcDst->funcs->pBitBlt)
+            ret = dcDst->funcs->pBitBlt( dcDst, xDst, yDst, width, height,
+                                         dcSrc, xSrc, ySrc, rop );
+        if (dcSrc) GDI_ReleaseObj( hdcSrc );
+        GDI_ReleaseObj( hdcDst );
+    }
+    return ret;
 }
 
 
@@ -90,19 +87,8 @@ BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
                             HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
                             INT16 widthSrc, INT16 heightSrc, DWORD rop )
 {
-    DC *dcDst, *dcSrc;
-
-    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
-    if (!dcDst->funcs->pStretchBlt) return FALSE;
-    dcSrc = DC_GetDCPtr( hdcSrc );
-
-    TRACE("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
-          hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-          dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
-          widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
-    return dcDst->funcs->pStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
-                                      dcSrc, xSrc, ySrc, widthSrc, heightSrc,
-                                      rop );
+    return StretchBlt( hdcDst, xDst, yDst, widthDst, heightDst,
+                       hdcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
 }
 
 
@@ -112,21 +98,32 @@ BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
 BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
                             INT widthDst, INT heightDst,
                             HDC hdcSrc, INT xSrc, INT ySrc,
-                            INT widthSrc, INT heightSrc, DWORD rop )
+                            INT widthSrc, INT heightSrc, 
+			DWORD rop )
 {
+    BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 
-    if (!(dcDst = DC_GetDCPtr( hdcDst ))) return FALSE;
-    if (!dcDst->funcs->pStretchBlt) return FALSE;
-    dcSrc = DC_GetDCPtr( hdcSrc );
+    if ((dcSrc = DC_GetDCUpdate( hdcSrc ))) GDI_ReleaseObj( hdcSrc );
+    /* FIXME: there is a race condition here */
+    if ((dcDst = DC_GetDCUpdate( hdcDst )))
+    {
+        dcSrc = DC_GetDCPtr( hdcSrc );
 
-    TRACE("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
-          hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-          dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
-          widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
-    return dcDst->funcs->pStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
-                                      dcSrc, xSrc, ySrc, widthSrc, heightSrc,
-                                      rop );
+        TRACE("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
+              hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
+              dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
+              widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
+
+	if (dcSrc) {
+	    if (dcDst->funcs->pStretchBlt)
+		ret = dcDst->funcs->pStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
+						 dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
+	    GDI_ReleaseObj( hdcSrc );
+	}
+        GDI_ReleaseObj( hdcDst );
+    }
+    return ret;
 }
 
 
@@ -147,7 +144,10 @@ BOOL16 WINAPI FastWindowFrame16( HDC16 hdc, const RECT16 *rect,
               rect->bottom - rect->top - height, rop );
     SelectObject( hdc, hbrush );
     return TRUE;
+
 }
+
+
 /***********************************************************************
  *           MaskBlt [GDI32.252]
  */
@@ -156,7 +156,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 			INT nXSrc, INT nYSrc, HBITMAP hbmMask,
 			INT xMask, INT yMask, DWORD dwRop)
 {
-    FIXME_(bitmap)("(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld): stub\n",
+    FIXME("(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%ld): stub\n",
              hdcDest,nXDest,nYDest,nWidth,nHeight,hdcSource,nXSrc,nYSrc,
              hbmMask,xMask,yMask,dwRop);
     return 1;
@@ -170,7 +170,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
                         HDC hdcSrc, INT nXDest, INT nYDest, INT nWidth,
                         INT nHeight, HBITMAP hbmMask, INT xMask, INT yMask)
 {
-        FIXME_(gdi)("PlgBlt, stub\n");
+    FIXME("PlgBlt, stub\n");
         return 1;
 }
  

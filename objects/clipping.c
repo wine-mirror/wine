@@ -12,15 +12,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(clipping)
-DECLARE_DEBUG_CHANNEL(region)
-
-#define UPDATE_DIRTY_DC(dc) \
- do { \
-   if ((dc)->hookThunk && !((dc)->w.flags & (DC_SAVED | DC_MEMORY))) \
-     (dc)->hookThunk( (dc)->hSelf, DCHC_INVALIDVISRGN, (dc)->dwHookData, 0 ); \
- } while(0)
-
+DEFAULT_DEBUG_CHANNEL(clipping);
 
 
 /***********************************************************************
@@ -34,15 +26,11 @@ void CLIPPING_UpdateGCRegion( DC * dc )
 
     if (!dc->w.hVisRgn)
     {
-        ERR_(region)("hVisRgn is zero. Please report this.\n" );
+        ERR("hVisRgn is zero. Please report this.\n" );
         exit(1);
     }
 
-    if (dc->w.flags & DC_DIRTY)
-    {
-        UPDATE_DIRTY_DC(dc);
-        dc->w.flags &= ~DC_DIRTY;
-    }
+    if (dc->w.flags & DC_DIRTY) ERR( "DC is dirty. Please report this.\n" );
 
     if (!dc->w.hClipRgn)
         CombineRgn( dc->w.hGCClipRgn, dc->w.hVisRgn, 0, RGN_COPY );
@@ -83,7 +71,7 @@ INT16 WINAPI ExtSelectClipRgn16( HDC16 hdc, HRGN16 hrgn, INT16 fnMode )
 INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 {
     INT retval;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
     TRACE("%04x %04x %d\n", hdc, hrgn, fnMode );
@@ -99,6 +87,7 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
         else
         {
             FIXME("Unimplemented: hrgn NULL in mode: %d\n", fnMode); 
+            GDI_ReleaseObj( hdc );
             return ERROR;
         }
     }
@@ -119,9 +108,8 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
         OffsetRgn( dc->w.hClipRgn, dc->w.DCOrgX, dc->w.DCOrgY );
     }
 
-
     CLIPPING_UpdateGCRegion( dc );
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return retval;
 }
 
@@ -131,8 +119,10 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
 {
     int retval;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc || !hrgn) return ERROR;
+    DC * dc;
+
+    if (!hrgn) return ERROR;
+    if (!(dc = DC_GetDCPtr( hdc ))) return ERROR;
 
     TRACE("%04x %04x\n", hdc, hrgn );
 
@@ -140,7 +130,7 @@ INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
 
     retval = CombineRgn16( dc->w.hVisRgn, hrgn, 0, RGN_COPY );
     CLIPPING_UpdateGCRegion( dc );
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return retval;
 }
 
@@ -160,7 +150,7 @@ INT16 WINAPI OffsetClipRgn16( HDC16 hdc, INT16 x, INT16 y )
 INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 {
     INT ret = SIMPLEREGION;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
     TRACE("%04x %d,%d\n", hdc, x, y );
@@ -171,7 +161,7 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
         ret = OffsetRgn( dc->w.hClipRgn, XLSTODS(dc,x), YLSTODS(dc,y));
 	CLIPPING_UpdateGCRegion( dc );
     }
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -182,12 +172,12 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 INT16 WINAPI OffsetVisRgn16( HDC16 hdc, INT16 x, INT16 y )
 {
     INT16 retval;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;    
     TRACE("%04x %d,%d\n", hdc, x, y );
     retval = OffsetRgn( dc->w.hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return retval;
 }
 
@@ -257,7 +247,7 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
                                 INT right, INT bottom )
 {
     INT ret;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
@@ -272,7 +262,7 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
 
 	ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_EXCLUDE );
     }
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -294,7 +284,7 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
                                   INT right, INT bottom )
 {
     INT ret;
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;
 
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
@@ -309,7 +299,7 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
 
 	ret = CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_INTERSECT );
     }
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -346,12 +336,19 @@ INT CLIPPING_IntersectVisRect( DC * dc, INT left, INT top,
     if (ret != ERROR)
     {
         RGNOBJ *newObj  = (RGNOBJ*)GDI_GetObjPtr( newRgn, REGION_MAGIC);
-        RGNOBJ *prevObj = (RGNOBJ*)GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC);
-        if (newObj && prevObj) newObj->header.hNext = prevObj->header.hNext;
+        if (newObj)
+        {
+            RGNOBJ *prevObj = (RGNOBJ*)GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC);
+            if (prevObj)
+            {
+                newObj->header.hNext = prevObj->header.hNext;
+                GDI_ReleaseObj( dc->w.hVisRgn );
+            }
+            GDI_ReleaseObj( newRgn );
+        }
         DeleteObject( dc->w.hVisRgn );
         dc->w.hVisRgn = newRgn;    
         CLIPPING_UpdateGCRegion( dc );
-	GDI_HEAP_UNLOCK( newRgn );
     }
     else DeleteObject( newRgn );
     return ret;
@@ -364,7 +361,8 @@ INT CLIPPING_IntersectVisRect( DC * dc, INT left, INT top,
 INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
                              INT16 right, INT16 bottom )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    INT16 ret;
+    DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return ERROR;    
 
     left   = XLPTODP( dc, left );
@@ -374,7 +372,9 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
 
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
-    return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, TRUE );
+    ret = CLIPPING_IntersectVisRect( dc, left, top, right, bottom, TRUE );
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -384,6 +384,7 @@ INT16 WINAPI ExcludeVisRect16( HDC16 hdc, INT16 left, INT16 top,
 INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
                                INT16 right, INT16 bottom )
 {
+    INT16 ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return ERROR;    
 
@@ -394,7 +395,9 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc, INT16 left, INT16 top,
 
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
-    return CLIPPING_IntersectVisRect( dc, left, top, right, bottom, FALSE );
+    ret = CLIPPING_IntersectVisRect( dc, left, top, right, bottom, FALSE );
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -412,17 +415,18 @@ BOOL16 WINAPI PtVisible16( HDC16 hdc, INT16 x, INT16 y )
  */
 BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return ERROR;    
+    BOOL ret = FALSE;
+    DC *dc = DC_GetDCUpdate( hdc );
 
     TRACE("%04x %d,%d\n", hdc, x, y );
-    if (!dc->w.hGCClipRgn) return FALSE;
-
-    if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
-    dc->w.flags &= ~DC_DIRTY;
-
-    return PtInRegion( dc->w.hGCClipRgn, XLPTODP(dc,x) + dc->w.DCOrgX, 
+    if (!dc) return FALSE;
+    if (dc->w.hGCClipRgn)
+    {
+        ret = PtInRegion( dc->w.hGCClipRgn, XLPTODP(dc,x) + dc->w.DCOrgX, 
                                            YLPTODP(dc,y) + dc->w.DCOrgY );
+}
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -431,20 +435,25 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
  */
 BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect )
 {
+    BOOL ret = FALSE;
     RECT16 tmpRect;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
     TRACE("%04x %d,%dx%d,%d\n",
           hdc, rect->left, rect->top, rect->right, rect->bottom );
-    if (!dc->w.hGCClipRgn) return FALSE;
-    /* copy rectangle to avoid overwriting by LPtoDP */
-    tmpRect = *rect;
-    LPtoDP16( hdc, (LPPOINT16)&tmpRect, 2 );
-    tmpRect.left   += dc->w.DCOrgX;
-    tmpRect.right  += dc->w.DCOrgX;
-    tmpRect.top    += dc->w.DCOrgY;
-    tmpRect.bottom += dc->w.DCOrgY;
-    return RectInRegion16( dc->w.hGCClipRgn, &tmpRect );
+    if (dc->w.hGCClipRgn)
+    {
+        /* copy rectangle to avoid overwriting by LPtoDP */
+        tmpRect = *rect;
+        LPtoDP16( hdc, (LPPOINT16)&tmpRect, 2 );
+        tmpRect.left   += dc->w.DCOrgX;
+        tmpRect.right  += dc->w.DCOrgX;
+        tmpRect.top    += dc->w.DCOrgY;
+        tmpRect.bottom += dc->w.DCOrgY;
+        ret = RectInRegion16( dc->w.hGCClipRgn, &tmpRect );
+    }
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -474,6 +483,7 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
     rect->bottom -= dc->w.DCOrgY;
     DPtoLP16( hdc, (LPPOINT16)rect, 2 );
     TRACE("%d,%d-%d,%d\n", rect->left,rect->top,rect->right,rect->bottom );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -492,6 +502,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     rect->top    -= dc->w.DCOrgY;
     rect->bottom -= dc->w.DCOrgY;
     DPtoLP( hdc, (LPPOINT)rect, 2 );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -501,8 +512,9 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
  */
 INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if( dc && hRgn )
+    INT ret = -1;
+    DC * dc;
+    if (hRgn && (dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC )))
     {
       if( dc->w.hClipRgn )
       { 
@@ -512,12 +524,13 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
 	if( CombineRgn(hRgn, dc->w.hClipRgn, 0, RGN_COPY) != ERROR )
         {
             OffsetRgn( hRgn, -dc->w.DCOrgX, -dc->w.DCOrgY );
-	    return 1;
+            ret = 1;
         }
       }
-      else return 0;
+      else ret = 0;
+      GDI_ReleaseObj( hdc );
     }
-    return -1;
+    return ret;
 }
 
 /***********************************************************************
@@ -527,40 +540,35 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc )
 {
     HRGN copy;
     RGNOBJ *obj, *copyObj;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCUpdate( hdc );
+
     if (!dc) return 0;
     TRACE("%04x\n", hdc );
-    if (!dc->w.hVisRgn)
-    {
-        ERR_(region)("hVisRgn is zero. Please report this.\n" );
-        exit(1);
-    }
-    if( dc->w.flags & DC_DIRTY ) UPDATE_DIRTY_DC(dc);
-    dc->w.flags &= ~DC_DIRTY;
 
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC )))
     {
-        GDI_HEAP_UNLOCK( hdc );
+        GDI_ReleaseObj( hdc );
 	return 0;
     }
     if (!(copy = CreateRectRgn( 0, 0, 0, 0 )))
     {
-        GDI_HEAP_UNLOCK( dc->w.hVisRgn );
-        GDI_HEAP_UNLOCK( hdc );
+        GDI_ReleaseObj( dc->w.hVisRgn );
+        GDI_ReleaseObj( hdc );
         return 0;
     }  
     CombineRgn( copy, dc->w.hVisRgn, 0, RGN_COPY );
     if (!(copyObj = (RGNOBJ *) GDI_GetObjPtr( copy, REGION_MAGIC )))
     {
-        GDI_HEAP_UNLOCK( dc->w.hVisRgn );
-        GDI_HEAP_UNLOCK( hdc );
+        DeleteObject( copy );
+        GDI_ReleaseObj( dc->w.hVisRgn );
+        GDI_ReleaseObj( hdc );
 	return 0;
     }
     copyObj->header.hNext = obj->header.hNext;
     obj->header.hNext = copy;
-    GDI_HEAP_UNLOCK( dc->w.hVisRgn );
-    GDI_HEAP_UNLOCK( hdc );
-    GDI_HEAP_UNLOCK( copy );
+    GDI_ReleaseObj( copy );
+    GDI_ReleaseObj( dc->w.hVisRgn );
+    GDI_ReleaseObj( hdc );
     return copy;
 }
 
@@ -573,37 +581,24 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc )
     HRGN saved;
     RGNOBJ *obj, *savedObj;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    INT16 ret;
+    INT16 ret = ERROR;
 
     if (!dc) return ERROR;    
-    if (!dc->w.hVisRgn)
-    {
-        GDI_HEAP_UNLOCK( hdc );
-        return ERROR;    
-    }
+    if (!dc->w.hVisRgn) goto done;
     TRACE("%04x\n", hdc );
-    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC )))
-    {
-        GDI_HEAP_UNLOCK( hdc );
-	return ERROR;
-    }
-    if (!(saved = obj->header.hNext)) 
-    {
-        GDI_HEAP_UNLOCK( dc->w.hVisRgn );
-        GDI_HEAP_UNLOCK( hdc );
-        return ERROR;
-    }
-    if (!(savedObj = (RGNOBJ *) GDI_GetObjPtr( saved, REGION_MAGIC )))
-    {
-        GDI_HEAP_UNLOCK( dc->w.hVisRgn );
-        GDI_HEAP_UNLOCK( hdc );
-        return ERROR;
-    }
+    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( dc->w.hVisRgn, REGION_MAGIC ))) goto done;
+
+    saved = obj->header.hNext;
+    GDI_ReleaseObj( dc->w.hVisRgn );
+    if (!saved || !(savedObj = (RGNOBJ *) GDI_GetObjPtr( saved, REGION_MAGIC ))) goto done;
+
     DeleteObject( dc->w.hVisRgn );
     dc->w.hVisRgn = saved;
+    dc->w.flags &= ~DC_DIRTY;
     CLIPPING_UpdateGCRegion( dc );
-    GDI_HEAP_UNLOCK( hdc );
     ret = savedObj->rgn->type; /* FIXME */
-    GDI_HEAP_UNLOCK( saved );
+    GDI_ReleaseObj( saved );
+ done:
+    GDI_ReleaseObj( hdc );
     return ret;
 }

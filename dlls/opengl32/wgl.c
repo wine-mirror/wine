@@ -94,6 +94,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
   if (vis == NULL) {
     ERR("NULL visual !!!\n");
     /* Need to set errors here */
+    GDI_ReleaseObj( hdc );
     return NULL;
   }
 
@@ -106,6 +107,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
 
   TRACE(" creating context %p (GL context creation delayed)\n", ret);
   
+  GDI_ReleaseObj( hdc );
   return (HGLRC) ret;
 }
 
@@ -342,6 +344,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
 			   physDev->drawable,
 			   ctx->ctx);
       LEAVE_GL();
+      GDI_ReleaseObj( hdc );
     }
   }
   TRACE(" returning %s\n", (ret ? "True" : "False"));
@@ -431,7 +434,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
   /* I assume that the glyphs are at the same position for X and for Windows */
   glXUseXFont(fid, first, count, listBase);
   LEAVE_GL();
-  
+  GDI_ReleaseObj( hdc );
   return TRUE;
 }
  

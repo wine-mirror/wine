@@ -122,13 +122,10 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     if (width < 0) width = -width;
 
       /* Create the BITMAPOBJ */
-    hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
-    if (!hbitmap) return 0;
+    if (!(bmp = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC, &hbitmap ))) return 0;
 
     TRACE("%dx%d, %d colors returning %08x\n", width, height,
 	  1 << (planes*bpp), hbitmap);
-
-    bmp = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
 
     bmp->size.cx = 0;
     bmp->size.cy = 0;
@@ -147,7 +144,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     if (bits) /* Set bitmap bits */
 	SetBitmapBits( hbitmap, height * bmp->bitmap.bmWidthBytes,
                          bits );
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return hbitmap;
 }
 
@@ -193,7 +190,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 	    dc->funcs->pCreateBitmap( hbmpRet );
     }
     TRACE("\t\t%04x\n", hbmpRet);
-    GDI_HEAP_UNLOCK(hdc);
+    GDI_ReleaseObj(hdc);
     return hbmpRet;
 }
 
@@ -251,7 +248,10 @@ LONG WINAPI GetBitmapBits(
     
     /* If the bits vector is null, the function should return the read size */
     if(bits == NULL)
-	return bmp->bitmap.bmWidthBytes * bmp->bitmap.bmHeight;
+    {
+        ret = bmp->bitmap.bmWidthBytes * bmp->bitmap.bmHeight;
+        goto done;
+    }
 
     if (count < 0) {
 	WARN("(%ld): Negative number of bytes passed???\n", count );
@@ -265,8 +265,8 @@ LONG WINAPI GetBitmapBits(
     if (count == 0)
       {
 	WARN("Less then one entire line requested\n");
-	GDI_HEAP_UNLOCK( hbitmap );
-	return 0;
+        ret = 0;
+        goto done;
       }
 
 
@@ -295,8 +295,8 @@ LONG WINAPI GetBitmapBits(
 	}
 
     }
-
-    GDI_HEAP_UNLOCK( hbitmap );
+ done:
+    GDI_ReleaseObj( hbitmap );
     return ret;
 }
 
@@ -365,7 +365,7 @@ LONG WINAPI SetBitmapBits(
 	}
     }
 
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return ret;
 }
 
@@ -393,7 +393,7 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 	HeapFree( GetProcessHeap(), 0, buf );
     }
 
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return res;
 }
 
@@ -410,7 +410,7 @@ BOOL BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
 
     DIB_DeleteDIBSection( bmp );
 
-    return GDI_FreeObject( hbitmap );
+    return GDI_FreeObject( hbitmap, bmp );
 }
 
 	
@@ -523,7 +523,7 @@ BOOL16 WINAPI GetBitmapDimensionEx16( HBITMAP16 hbitmap, LPSIZE16 size )
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
     CONV_SIZE32TO16( &bmp->size, size );
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
 
@@ -542,7 +542,7 @@ BOOL WINAPI GetBitmapDimensionEx(
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
     *size = bmp->size;
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
 
@@ -569,7 +569,7 @@ BOOL16 WINAPI SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
     if (prevSize) CONV_SIZE32TO16( &bmp->size, prevSize );
     bmp->size.cx = x;
     bmp->size.cy = y;
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
 
@@ -592,7 +592,7 @@ BOOL WINAPI SetBitmapDimensionEx(
     if (prevSize) *prevSize = bmp->size;
     bmp->size.cx = x;
     bmp->size.cy = y;
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
 

@@ -110,7 +110,6 @@ typedef struct
 #define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
-WORD GDI_HeapSel = 0;   /* GDI heap selector */
 
   /* All local heap allocations are aligned on 4-byte boundaries */
 #define LALIGN(word)          (((word) + 3) & ~3)
@@ -842,6 +841,29 @@ static HLOCAL16 LOCAL_FindFreeBlock( HANDLE16 ds, WORD size )
     return 0;
 }
 
+
+/***********************************************************************
+ *           get_heap_name
+ */
+static const char *get_heap_name( WORD ds )
+{
+    HINSTANCE16 inst = LoadLibrary16( "GDI" );
+    if (ds == GlobalHandleToSel16( inst ))
+    {
+        FreeLibrary16( inst );
+        return "GDI";
+    }
+    FreeLibrary16( inst );
+    inst = LoadLibrary16( "USER" );
+    if (ds == GlobalHandleToSel16( inst ))
+    {
+        FreeLibrary16( inst );
+        return "USER";
+    }
+    FreeLibrary16( inst );
+    return "local";
+}
+
 /***********************************************************************
  *           LOCAL_GetBlock
  * The segment may get moved around in this function, so all callers
@@ -890,16 +912,8 @@ notify_done:
 	arena = LOCAL_FindFreeBlock( ds, size );
     }
     if (arena == 0) {
-        if (ds == GDI_HeapSel) { 
-	    ERR("not enough space in GDI local heap "
-			 "(%04x) for %d bytes\n", ds, size );
-	} else if (ds == USER_HeapSel) {
-	    ERR("not enough space in USER local heap "
-			 "(%04x) for %d bytes\n", ds, size );
-	} else {
-	    ERR("not enough space in local heap "
-			 "%04x for %d bytes\n", ds, size );
-	}
+        ERR( "not enough space in %s heap %04x for %d bytes\n",
+             get_heap_name(ds), ds, size );
 #if 0
         if ((pInfo->notify) &&
         /* FIXME: "size" correct ? (should indicate bytes needed) */

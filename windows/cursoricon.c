@@ -613,8 +613,8 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	GlobalUnlock16( hObj );
     }
 
-    DeleteObject( hXorBits );
     DeleteObject( hAndBits );
+    DeleteObject( hXorBits );
     return hObj;
 }
 
@@ -1897,7 +1897,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 {
     CURSORICONINFO *ptr = (CURSORICONINFO *)GlobalLock16 (hIcon);
     HDC hDC_off = 0, hMemDC = CreateCompatibleDC (hdc);
-    BOOL result = FALSE, DoOffscreen = FALSE;
+    BOOL result = FALSE, DoOffscreen;
     HBITMAP hB_off = 0, hOld = 0;
 
     if (!ptr) return FALSE;
@@ -1923,17 +1923,8 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 	cyWidth = ptr->nHeight;
     }
 
-    if (!(DoOffscreen = (hbr >= STOCK_WHITE_BRUSH) && (hbr <= 
-      STOCK_HOLLOW_BRUSH)))
-    {
-	GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LOCK(hbr);
-	if (object)
-	{
-	    UINT16 magic = object->wMagic;
-	    GDI_HEAP_UNLOCK(hbr);
-	    DoOffscreen = magic == BRUSH_MAGIC;
-	}
-    }
+    DoOffscreen = (GetObjectType( hbr ) == OBJ_BRUSH);
+
     if (DoOffscreen) {
       RECT r;
 
@@ -1948,7 +1939,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 	hOld = SelectObject(hDC_off, hB_off);
 	FillRect(hDC_off, &r, hbr);
       }
-    };
+    }
 
     if (hMemDC && (!DoOffscreen || (hDC_off && hB_off)))
     {

@@ -57,6 +57,6 @@ HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ERR("Unknown object magic %04x\n", ptr->wMagic);
 	  break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return ret;
 }

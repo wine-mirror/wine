@@ -89,9 +89,9 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
         break;
     default:
         FIXME("Unknown style %x\n", brushObj->logbrush.lbStyle);
-	return FALSE;
+	break;
     }
-    GDI_HEAP_UNLOCK( hBrush );
+    GDI_ReleaseObj( hBrush );
     return index;
 }
 
@@ -170,7 +170,7 @@ static BOOL EMFDRV_CreateFontIndirect(DC *dc, HFONT hFont )
 
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
         index = 0;
-    GDI_HEAP_UNLOCK( hFont );
+    GDI_ReleaseObj( hFont );
     return index;
 }
 
@@ -233,7 +233,7 @@ static HPEN EMFDRV_CreatePenIndirect(DC *dc, HPEN hPen )
 
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
         index = 0;
-    GDI_HEAP_UNLOCK( hPen );
+    GDI_ReleaseObj( hPen );
     return index;
 }
 
@@ -303,7 +303,7 @@ HGDIOBJ EMFDRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ret = EMFDRV_BITMAP_SelectObject( dc, handle );
 	  break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return ret;
 }
 

@@ -457,14 +457,12 @@ static HRGN REGION_CreateRegion( INT n )
     HRGN hrgn;
     RGNOBJ *obj;
 
-    if(!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC )))
-        return 0;
-    obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
+    if(!(obj = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC, &hrgn ))) return 0;
     if(!(obj->rgn = REGION_AllocWineRegion(n))) {
-        GDI_FreeObject( hrgn );
+        GDI_FreeObject( hrgn, obj );
         return 0;
     }
-    GDI_HEAP_UNLOCK( hrgn );
+    GDI_ReleaseObj( hrgn );
     return hrgn;
 }
 
@@ -487,7 +485,7 @@ BOOL REGION_DeleteObject( HRGN hrgn, RGNOBJ * obj )
     TRACE(" %04x\n", hrgn );
 
     REGION_DestroyWineRegion( obj->rgn );
-    return GDI_FreeObject( hrgn );
+    return GDI_FreeObject( hrgn, obj );
 }
 
 /***********************************************************************
@@ -530,7 +528,7 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 	}
     }
     ret = obj->rgn->type;
-    GDI_HEAP_UNLOCK( hrgn );
+    GDI_ReleaseObj( hrgn );
     return ret;
 }
 
@@ -561,7 +559,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 	rect->right = obj->rgn->extents.right;
 	rect->bottom = obj->rgn->extents.bottom;
 	ret = obj->rgn->type;
-	GDI_HEAP_UNLOCK(hrgn);
+	GDI_ReleaseObj(hrgn);
 	return ret;
     }
     return ERROR;
@@ -664,7 +662,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
     else
 	EMPTY_REGION(obj->rgn);
 
-    GDI_HEAP_UNLOCK( hrgn );
+    GDI_ReleaseObj( hrgn );
     return TRUE;
 }
 
@@ -717,7 +715,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 
     d = (ellipse_height < 128) ? ((3 * ellipse_height) >> 2) : 64;
     if (!(hrgn = REGION_CreateRegion(d))) return 0;
-    obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
+    if (!(obj = GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return 0;
     TRACE("(%d,%d-%d,%d %dx%d): ret=%04x\n",
 	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
 
@@ -792,7 +790,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 	REGION_UnionRectWithRegion( &rect, obj->rgn );
     }
     obj->rgn->type = SIMPLEREGION; /* FIXME? */
-    GDI_HEAP_UNLOCK( hrgn );
+    GDI_ReleaseObj( hrgn );
     return hrgn;
 }
 
@@ -857,7 +855,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     size = obj->rgn->numRects * sizeof(RECT);
     if(count < (size + sizeof(RGNDATAHEADER)) || rgndata == NULL)
     {
-        GDI_HEAP_UNLOCK( hrgn );
+        GDI_ReleaseObj( hrgn );
         return size + sizeof(RGNDATAHEADER);
     }
 
@@ -872,7 +870,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 
     memcpy( rgndata->Buffer, obj->rgn->rects, size );
 
-    GDI_HEAP_UNLOCK( hrgn );
+    GDI_ReleaseObj( hrgn );
     return 1;
 }
 
@@ -912,13 +910,16 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 	RECT *pCurRect, *pEndRect;
 	RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
 
-	pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
-	for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
-	    REGION_UnionRectWithRegion( pCurRect, obj->rgn );
-	GDI_HEAP_UNLOCK( hrgn );
+	if (obj) {
+            pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
+            for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
+                REGION_UnionRectWithRegion( pCurRect, obj->rgn );
+	    GDI_ReleaseObj( hrgn );
 
-	TRACE("%04x\n", hrgn );
-	return hrgn;
+            TRACE("%04x\n", hrgn );
+            return hrgn;
+        }
+	else ERR("Could not get pointer to newborn Region!");
     }
 fail:
     WARN("Failed\n");
@@ -940,20 +941,22 @@ BOOL16 WINAPI PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
 BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 {
     RGNOBJ * obj;
+    BOOL ret = FALSE;
     
     if ((obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC )))
     {
-	BOOL ret = FALSE;
 	int i;
 
 	if (obj->rgn->numRects > 0 && INRECT(obj->rgn->extents, x, y))
 	    for (i = 0; i < obj->rgn->numRects; i++)
 		if (INRECT (obj->rgn->rects[i], x, y))
+                {
 		    ret = TRUE;
-	GDI_HEAP_UNLOCK( hrgn );
-	return ret;
+                    break;
+                }
+	GDI_ReleaseObj( hrgn );
     }
-    return FALSE;
+    return ret;
 }
 
 
@@ -977,11 +980,11 @@ BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 {
     RGNOBJ * obj;
+    BOOL ret = FALSE;
     
     if ((obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC )))
     {
 	RECT *pCurRect, *pRectEnd;
-	BOOL ret = FALSE;
     
     /* this is (just) a useful optimization */
 	if ((obj->rgn->numRects > 0) && EXTENTCHECK(&obj->rgn->extents,
@@ -993,10 +996,8 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 	        if (pCurRect->bottom <= rect->top)
 		    continue;             /* not far enough down yet */
 
-		if (pCurRect->top >= rect->bottom) {
-		    ret = FALSE;          /* too far down */
-		    break;
-		}
+		if (pCurRect->top >= rect->bottom)
+		    break;                /* too far down */
 
 		if (pCurRect->right <= rect->left)
 		    continue;              /* not far enough over yet */
@@ -1009,10 +1010,9 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 		break;
 	    }
 	}
-	GDI_HEAP_UNLOCK(hrgn);
-	return ret;
+	GDI_ReleaseObj(hrgn);
     }
-    return FALSE;
+    return ret;
 }
 
 /***********************************************************************
@@ -1058,9 +1058,9 @@ BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
 	    }
             ret = TRUE;
         done:
-	    GDI_HEAP_UNLOCK(hrgn2);
+	    GDI_ReleaseObj(hrgn2);
 	}
-	GDI_HEAP_UNLOCK(hrgn1);
+	GDI_ReleaseObj(hrgn1);
     }
     return ret;
 }
@@ -1093,7 +1093,7 @@ BOOL REGION_UnionRectWithRgn( HRGN hrgn, const RECT *lpRect )
 
     if(!obj) return FALSE;
     REGION_UnionRectWithRegion( lpRect, obj->rgn );
-    GDI_HEAP_UNLOCK(hrgn);
+    GDI_ReleaseObj(hrgn);
     return TRUE;
 }
 
@@ -1108,6 +1108,7 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
     BOOL bRet;
     RGNOBJ *srcObj = (RGNOBJ*) GDI_GetObjPtr( hSrc, REGION_MAGIC );
 
+    if (!srcObj) return FALSE;
     if (srcObj->rgn->numRects != 0) 
     {
 	RGNOBJ* destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
@@ -1126,12 +1127,12 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 	    REGION_UnionRectWithRegion( &tempRect, destObj->rgn );
 	}
 	REGION_SubtractRegion( destObj->rgn, destObj->rgn, srcObj->rgn );
-	GDI_HEAP_UNLOCK ( hDest );
+	GDI_ReleaseObj ( hDest );
 	bRet = TRUE;
     }
     else
 	bRet = FALSE;
-    GDI_HEAP_UNLOCK( hSrc );
+    GDI_ReleaseObj( hSrc );
     return bRet;
 }
 
@@ -1146,24 +1147,27 @@ BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
     RGNOBJ *srcObj, *destObj;
     DC * dc = DC_GetDCPtr( hdc );
     RECT tmpRect;
+    BOOL ret = FALSE;
 
     TRACE(" hdc=%04x dest=%04x src=%04x\n",
 	  hdc, hDest, hSrc) ;
+    if (!dc) return ret;
     
     if (dc->w.MapMode == MM_TEXT) /* Requires only a translation */
     {
-        if( CombineRgn( hDest, hSrc, 0, RGN_COPY ) == ERROR ) return FALSE;
+        if( CombineRgn( hDest, hSrc, 0, RGN_COPY ) == ERROR ) goto done;
 	OffsetRgn( hDest, dc->vportOrgX - dc->wndOrgX, 
 		     dc->vportOrgY - dc->wndOrgY );
-	return TRUE;
+	ret = TRUE;
+        goto done;
     }
 
     if(!( srcObj = (RGNOBJ *) GDI_GetObjPtr( hSrc, REGION_MAGIC) ))
-        return FALSE;
+        goto done;
     if(!( destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC) ))
     {
-        GDI_HEAP_UNLOCK( hSrc );
-        return FALSE;
+        GDI_ReleaseObj( hSrc );
+        goto done;
     }
     EMPTY_REGION( destObj->rgn );
 
@@ -1178,9 +1182,11 @@ BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
 	REGION_UnionRectWithRegion( &tmpRect, destObj->rgn );
     }
     
-    GDI_HEAP_UNLOCK( hDest );
-    GDI_HEAP_UNLOCK( hSrc );
-    return TRUE;
+    GDI_ReleaseObj( hDest );
+    GDI_ReleaseObj( hSrc );
+ done:
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
     
 /***********************************************************************
@@ -1243,16 +1249,16 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 			break;
 		    }
 		    result = destObj->rgn->type;
-		    GDI_HEAP_UNLOCK( hSrc2 );
+		    GDI_ReleaseObj( hSrc2 );
 		}
 	    }
-	    GDI_HEAP_UNLOCK( hSrc1 );
+	    GDI_ReleaseObj( hSrc1 );
 	}
 	TRACE("dump:\n");
 	if(TRACE_ON(region)) 
 	  REGION_DumpRegion(destObj->rgn);
 
-	GDI_HEAP_UNLOCK( hDest );
+	GDI_ReleaseObj( hDest );
     } else {
        ERR("Invalid rgn=%04x\n", hDest);
     }
@@ -2714,7 +2720,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     {
         SetRectRgn( hrgn, min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y), 
 		            max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
-	GDI_HEAP_UNLOCK( hrgn );
+	GDI_ReleaseObj( hrgn );
 	return hrgn;
     }
     
@@ -2811,6 +2817,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 					       sizeof(POINTBLOCK) );
 			if(!tmpPtBlock) {
 			    WARN("Can't alloc tPB\n");
+			    REGION_DeleteObject( hrgn, obj );
 			    return 0;
 			}
                         curPtBlock->next = tmpPtBlock;
@@ -2845,7 +2852,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 	curPtBlock = tmpPtBlock;
     }
     HeapFree( GetProcessHeap(), 0, pETEs );
-    GDI_HEAP_UNLOCK( hrgn );
+    GDI_ReleaseObj( hrgn );
     return hrgn;
 }
 
@@ -2910,6 +2917,8 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 	    DC *dc = DC_GetDCPtr (hDC);
 	    OSVERSIONINFOA vi;
 	    POINT org;
+
+	    if (!dc) return -1;
 	    CombineRgn (hRgn, dc->w.hVisRgn, 0, RGN_COPY);
 	    /*
 	     *     On Windows NT/2000,
@@ -2925,7 +2934,7 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 	    org.x -= dc->w.DCOrgX;
 	    org.y -= dc->w.DCOrgY;
 	    OffsetRgn (hRgn, org.x, org.y);
-		
+            GDI_ReleaseObj( hDC );
 	    return 1;
 	}
 /*	case 1:
@@ -3167,7 +3176,7 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 	    {
 		if( hDst ) /* existing rgn */
 		{
-		    GDI_HEAP_UNLOCK(hDst);
+		    GDI_ReleaseObj(hDst);
 		    hDst = 0;
 		    goto done;
 		}
@@ -3175,7 +3184,7 @@ HRGN REGION_CropRgn( HRGN hDst, HRGN hSrc, const RECT *lpRect, const POINT *lpPt
 	    }
 	    else if( hDst == 0 )
 	    {
-		if(!(hDst = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC )))
+		if (!(objDst = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC, &hDst )))
 		{
 fail:
 		    if( rgnDst->rects )
@@ -3183,16 +3192,14 @@ fail:
 		    HeapFree( GetProcessHeap(), 0, rgnDst );
 		    goto done;
 		}
-
-		objDst = (RGNOBJ *) GDI_HEAP_LOCK( hDst );
 		objDst->rgn = rgnDst;
 	    }
 
-	    GDI_HEAP_UNLOCK(hDst);
+	    GDI_ReleaseObj(hDst);
 	}
 	else hDst = 0;
 done:
-	GDI_HEAP_UNLOCK(hSrc);
+	GDI_ReleaseObj(hSrc);
 	return hDst;
     }
     return 0;

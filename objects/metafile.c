@@ -73,10 +73,13 @@ static int MF_AddHandle(HANDLETABLE16 *ht, WORD htlen, HGDIOBJ16 hobj)
  */
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
-    HMETAFILE hmf = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC );
-    METAFILEOBJ *metaObj = (METAFILEOBJ *)GDI_HEAP_LOCK( hmf );
+    HMETAFILE hmf = 0;
+    METAFILEOBJ *metaObj = GDI_AllocObject( sizeof(METAFILEOBJ), METAFILE_MAGIC, &hmf );
+    if (metaObj)
+    {
     metaObj->mh = mh;
-    GDI_HEAP_UNLOCK( hmf );
+        GDI_ReleaseObj( hmf );
+    }
     return hmf;
 }
 
@@ -130,9 +133,9 @@ static METAHEADER *MF_GetMetaHeader16( HMETAFILE16 hmf )
  *
  * Releases METAHEADER associated with HMETAFILE
  */
-static BOOL MF_ReleaseMetaHeader( HMETAFILE hmf )
+static void MF_ReleaseMetaHeader( HMETAFILE hmf )
 {
-    return GDI_HEAP_UNLOCK( hmf );
+    GDI_ReleaseObj( hmf );
 }
 
 /******************************************************************
@@ -162,11 +165,10 @@ BOOL16 WINAPI DeleteMetaFile16(  HMETAFILE16 hmf )
 
 BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
 {
-    METAHEADER *mh = MF_GetMetaHeader( hmf );
-
-    if(!mh) return FALSE;
-    HeapFree( GetProcessHeap(), 0, mh );
-    GDI_FreeObject( hmf );
+    METAFILEOBJ * metaObj = (METAFILEOBJ *)GDI_GetObjPtr( hmf, METAFILE_MAGIC );
+    if (!metaObj) return FALSE;
+    HeapFree( GetProcessHeap(), 0, metaObj->mh );
+    GDI_FreeObject( hmf, metaObj );
     return TRUE;
 }
 
@@ -475,7 +477,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     BOOL loaded = FALSE;
 
     if (!mh) return FALSE;
-    if(mh->mtType == METAFILE_DISK) { /* Create a memoery-based copy */
+    if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
         mh = MF_LoadDiskBasedMetaFile(mh);
 	if(!mh) return FALSE;
 	loaded = TRUE;
@@ -580,7 +582,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 
 
     if(!mh) return FALSE;
-    if(mh->mtType == METAFILE_DISK) { /* Create a memoery-based copy */
+    if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
         mh = MF_LoadDiskBasedMetaFile(mh);
 	if(!mh) return FALSE;
 	loaded = TRUE;
@@ -668,7 +670,7 @@ BOOL WINAPI EnumMetaFile(
     TRACE("(%08x,%08x,%p,%p)\n",
 		     hdc, hmf, lpEnumFunc, (void*)lpData);
     if (!mh) return 0;
-    if(mh->mtType == METAFILE_DISK) { /* Create a memoery-based copy */
+    if(mh->mtType == METAFILE_DISK) { /* Create a memory-based copy */
         mh = MF_LoadDiskBasedMetaFile(mh);
 	if(!mh) return 0;
 	loaded = TRUE;

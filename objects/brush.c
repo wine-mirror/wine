@@ -105,19 +105,19 @@ HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
 {
     BOOL success;
     BRUSHOBJ * brushPtr;
-    HBRUSH16 hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
-    if (!hbrush) return 0;
-    brushPtr = (BRUSHOBJ *) GDI_HEAP_LOCK( hbrush );
+    HBRUSH hbrush;
+
+    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush ))) return 0;
     brushPtr->logbrush.lbStyle = brush->lbStyle;
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
     success = create_brush_indirect(brushPtr, TRUE);
-    GDI_HEAP_UNLOCK( hbrush );
     if(!success)
     {
-       GDI_FreeObject(hbrush);
+       GDI_FreeObject( hbrush, brushPtr );
        hbrush = 0;
     }
+    else GDI_ReleaseObj( hbrush );
     TRACE("%04x\n", hbrush);
     return hbrush;
 }
@@ -136,19 +136,18 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 {
     BOOL success;
     BRUSHOBJ * brushPtr;
-    HBRUSH hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
-    if (!hbrush) return 0;
-    brushPtr = (BRUSHOBJ *) GDI_HEAP_LOCK( hbrush );
+    HBRUSH hbrush;
+    if (!(brushPtr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC, &hbrush ))) return 0;
     brushPtr->logbrush.lbStyle = brush->lbStyle;
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
     success = create_brush_indirect(brushPtr, FALSE);
-    GDI_HEAP_UNLOCK( hbrush );
     if(!success)
     {
-       GDI_FreeObject(hbrush);
+       GDI_FreeObject( hbrush, brushPtr );
        hbrush = 0;
     }
+    else GDI_ReleaseObj( hbrush );
     TRACE("%08x\n", hbrush);
     return hbrush;
 }
@@ -319,6 +318,7 @@ DWORD WINAPI SetBrushOrg16( HDC16 hdc, INT16 x, INT16 y )
     retval = dc->w.brushOrgX | (dc->w.brushOrgY << 16);
     dc->w.brushOrgX = x;
     dc->w.brushOrgY = y;
+    GDI_ReleaseObj( hdc );
     return retval;
 }
 
@@ -338,6 +338,7 @@ BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
     }
     dc->w.brushOrgX = x;
     dc->w.brushOrgY = y;
+    GDI_ReleaseObj( hdc );
     return TRUE;
 }
 
@@ -365,7 +366,7 @@ BOOL BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush )
 	  GlobalFree16( (HGLOBAL16)brush->logbrush.lbHatch );
 	  break;
     }
-    return GDI_FreeObject( hbrush );
+    return GDI_FreeObject( hbrush, brush );
 }
 
 

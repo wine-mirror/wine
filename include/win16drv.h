@@ -225,7 +225,7 @@ extern HGDIOBJ WIN16DRV_SelectObject( DC *dc, HGDIOBJ handle );
 extern BOOL WIN16DRV_PatBlt( struct tagDC *dc, INT left, INT top,
                                INT width, INT height, DWORD rop );
 extern BOOL WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom);
-extern BOOL WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+extern BOOL WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp );
 
 extern INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd,

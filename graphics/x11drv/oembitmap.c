@@ -341,15 +341,12 @@ static BOOL OBM_InitColorSymbols()
 static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
                                  WORD bpp, Pixmap pixmap )
 {
-    HBITMAP16 hbitmap;
+    HBITMAP hbitmap;
     BITMAPOBJ * bmpObjPtr;
 
     if (!pixmap) return 0;
 
-    hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
-    if (!hbitmap) return 0;
-
-    bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
+    if (!(bmpObjPtr = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC, &hbitmap ))) return 0;
     bmpObjPtr->size.cx = width;
     bmpObjPtr->size.cy = height;
     bmpObjPtr->bitmap.bmType       = 0;
@@ -364,7 +361,7 @@ static HBITMAP16 OBM_MakeBitmap( WORD width, WORD height,
     bmpObjPtr->funcs = &X11DRV_DC_Funcs;
     bmpObjPtr->physBitmap = (void *)pixmap;
 
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return hbitmap;
 }
 #endif /* defined(HAVE_LIBXXPM) */
@@ -412,8 +409,8 @@ static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     {
         if (pixmap) XFreePixmap( display, pixmap );
         if (pixmask) XFreePixmap( display, pixmask );
-        if (descr->bitmap) GDI_FreeObject( descr->bitmap );
-        if (descr->need_mask && descr->mask) GDI_FreeObject( descr->mask );
+        if (descr->bitmap) DeleteObject( descr->bitmap );
+        if (descr->need_mask && descr->mask) DeleteObject( descr->mask );
         return FALSE;
     }
     else return TRUE;
@@ -512,11 +509,7 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
 
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE,
                                   sizeof(CURSORICONINFO) + sizeXor + sizeAnd)))
-    {
-        DeleteObject( descr.bitmap );
-        DeleteObject( descr.mask );
-        return 0;
-    }
+        goto done;
 
     pInfo = (CURSORICONINFO *)GlobalLock16( handle );
     pInfo->ptHotSpot.x   = descr.hotspot.x;
@@ -554,11 +547,12 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
     if (descr.mask) GetBitmapBits( descr.mask, sizeAnd, (char *)(pInfo + 1));
     else memset( (char *)(pInfo + 1), 0xff, sizeAnd );
     GetBitmapBits( descr.bitmap, sizeXor, (char *)(pInfo + 1) + sizeAnd );
-
+    if (fCursor) OBM_Cursors[id] = handle;
+ done:
+    GDI_ReleaseObj( descr.mask );
+    GDI_ReleaseObj( descr.bitmap );
     DeleteObject( descr.bitmap );
     DeleteObject( descr.mask );
-
-    if (fCursor) OBM_Cursors[id] = handle;
     return handle;
 }
 

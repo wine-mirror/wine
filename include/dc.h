@@ -16,6 +16,7 @@
 
 extern DC * DC_AllocDC( const DC_FUNCTIONS *funcs );
 extern DC * DC_GetDCPtr( HDC hdc );
+extern DC * DC_GetDCUpdate( HDC hdc );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
 

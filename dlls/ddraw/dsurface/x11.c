@@ -401,7 +401,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_SetPalette(
 	    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(This->s.DIBsection, BITMAP_MAGIC);
 	    X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
 	    dib->colorMap = This->s.palette ? This->s.palette->screen_palents : NULL;
-	    GDI_HEAP_UNLOCK(This->s.DIBsection);
+	    GDI_ReleaseObj(This->s.DIBsection);
 	}
     }
     return DD_OK;
@@ -453,7 +453,7 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
 	BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(This->s.DIBsection, BITMAP_MAGIC);
 	X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
 	dib->colorMap = dspriv->oldDIBmap;
-	GDI_HEAP_UNLOCK(This->s.DIBsection);
+	GDI_ReleaseObj(This->s.DIBsection);
 
 	SelectObject(This->s.hdc, This->s.holdbitmap);
 	DeleteDC(This->s.hdc);
@@ -479,7 +479,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC
 	X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
 	dspriv->oldDIBmap = dib->colorMap;
 	dib->colorMap = This->s.palette ? This->s.palette->screen_palents : NULL;
-	GDI_HEAP_UNLOCK(This->s.DIBsection);
+	GDI_ReleaseObj(This->s.DIBsection);
     }
     return result;
 }

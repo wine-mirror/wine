@@ -11,6 +11,7 @@
 #include "module.h"
 #include "font.h"
 #include "heap.h"
+#include "dc.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv)
@@ -179,14 +180,20 @@ BOOL WIN16DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
  *           WIN16DRV_EnumDeviceFonts
  */
 
-BOOL	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+BOOL	WIN16DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp )
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev;
     WORD wRet;
     WEPFC wepfc;
+    DC *dc;
     /* EnumDFontCallback is GDI.158 */
     FARPROC16 pfnCallback = NE_GetEntryPoint( GetModuleHandle16("GDI"), 158 );
+
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    /* FIXME!! */
+    GDI_ReleaseObj( hdc );
 
     wepfc.proc = (int (*)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM))proc;
     wepfc.lp = lp;

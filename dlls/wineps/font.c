@@ -8,6 +8,8 @@
 #include "winspool.h"
 #include "psdrv.h"
 #include "debugtools.h"
+#include "dc.h"
+#include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
@@ -265,11 +267,15 @@ BOOL PSDRV_SetFont( DC *dc )
 /***********************************************************************
  *           PSDRV_GetFontMetric
  */
-static UINT PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM, 
+static UINT PSDRV_GetFontMetric(HDC hdc, AFM *pafm, NEWTEXTMETRIC16 *pTM, 
               ENUMLOGFONTEX16 *pLF, INT16 size)
 
 {
+    DC *dc = DC_GetDCPtr( hdc );
     float scale = size / (pafm->FullAscender - pafm->Descender);
+
+    if (!dc) return FALSE;
+
     memset( pLF, 0, sizeof(*pLF) );
     memset( pTM, 0, sizeof(*pTM) );
 
@@ -300,8 +306,8 @@ static UINT PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
 
     *(INT*)&pTM->tmFirstChar = 32;
 
+    GDI_ReleaseObj( hdc );
     /* return font type */
-
     return DEVICE_FONTTYPE;
 
 }
@@ -309,7 +315,7 @@ static UINT PSDRV_GetFontMetric(DC *dc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
 /***********************************************************************
  *           PSDRV_EnumDeviceFonts
  */
-BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     ENUMLOGFONTEX16	lf;
@@ -317,7 +323,14 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     BOOL	  	b, bRet = 0;
     AFMLISTENTRY	*afmle;
     FONTFAMILY		*family;
-    PSDRV_PDEVICE	*physDev = (PSDRV_PDEVICE *)dc->physDev;
+    PSDRV_PDEVICE	*physDev;
+
+    DC *dc = DC_GetDCPtr( hdc );
+    if (!dc) return FALSE;
+
+    physDev = (PSDRV_PDEVICE *)dc->physDev;
+    /* FIXME!! should reevaluate dc->physDev after every callback */
+    GDI_ReleaseObj( hdc );
 
     if( plf->lfFaceName[0] ) {
         TRACE("lfFaceName = '%s'\n", plf->lfFaceName);
@@ -330,7 +343,7 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
 		if( (b = (*proc)( &lf, &tm, 
-			PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ),
+			PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf, 200 ),
 				  lp )) )
 		     bRet = b;
 		else break;
@@ -343,7 +356,7 @@ BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
 	    if( (b = (*proc)( &lf, &tm, 
-		   PSDRV_GetFontMetric( dc, afmle->afm, &tm, &lf, 200 ), 
+		   PSDRV_GetFontMetric( hdc, afmle->afm, &tm, &lf, 200 ), 
 			      lp )) )
 	        bRet = b;
 	    else break;

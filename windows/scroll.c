@@ -81,7 +81,7 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
 {
     RECT rect, rClip, rSrc;
     POINT src, dest;
-    DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
+    DC *dc = DC_GetDCUpdate( hdc );
 
     TRACE("%04x %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d)\n",
                    (HDC16)hdc, dx, dy, hrgnUpdate, rcUpdate, 
@@ -126,7 +126,7 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
                            rSrc.right - rSrc.left, rSrc.bottom - rSrc.top,
                            hdc, src.x, src.y, SRCCOPY))
             {
-                GDI_HEAP_UNLOCK( hdc );
+                GDI_ReleaseObj( hdc );
                 return FALSE;
             }
         }
@@ -171,7 +171,7 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
        if (rcUpdate) SetRectEmpty(rcUpdate);
     }
 
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return TRUE;
 }
 
@@ -254,7 +254,6 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
 
     if (!IsRectEmpty(&cliprc) && (dx || dy))
     {
-	DC*	dc;
 	HDC	hDC;
 	BOOL  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
 	HRGN  hrgnClip = CreateRectRgnIndirect(&cliprc);
@@ -276,13 +275,15 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 	hDC = GetDCEx( hwnd, hrgnClip, DCX_CACHE | DCX_USESTYLE |
                          DCX_KEEPCLIPRGN | DCX_INTERSECTRGN |
 		       ((flags & SW_SCROLLCHILDREN) ? DCX_NOCLIPCHILDREN : 0) );
-	if( (dc = (DC *)GDI_GetObjPtr(hDC, DC_MAGIC)) )
+	if (hDC)
 	{
-            if (dc->w.hVisRgn) {
                 wnd->pDriver->pSurfaceCopy(wnd,hDC,dx,dy,&rc,bUpdate);
-
                 if( bUpdate )
                     {
+                DC*	dc;
+
+                if( (dc = DC_GetDCPtr(hDC)) )
+                {
                         OffsetRgn( hrgnTemp, dc->w.DCOrgX, dc->w.DCOrgY );
                         CombineRgn( hrgnTemp, hrgnTemp, dc->w.hVisRgn,
                                       RGN_AND );
@@ -295,10 +296,10 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
                                           RGN_DIFF );
 
                         if( rcUpdate ) GetRgnBox( hrgnUpdate, rcUpdate );
+                        GDI_ReleaseObj( hDC );
                     }
             }
             ReleaseDC(hwnd, hDC);
-            GDI_HEAP_UNLOCK( hDC );
         }
 
 	if( wnd->hrgnUpdate > 1 )

@@ -98,7 +98,7 @@ HGDIOBJ TTYDRV_DC_SelectObject(DC *dc, HGDIOBJ handle)
       ERR("handle (0x%04x) has unknown magic (0x%04x)\n", handle, ptr->wMagic);
   }
 
-  GDI_HEAP_UNLOCK(handle);
+  GDI_ReleaseObj(handle);
     
   return result;
 }
@@ -129,7 +129,7 @@ BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle)
       result = FALSE;
   }
 
-  GDI_HEAP_UNLOCK(handle);
+  GDI_ReleaseObj(handle);
 
   return result;
 }

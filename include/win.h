@@ -54,7 +54,6 @@ typedef enum
 
 struct tagCLASS;
 struct tagDCE;
-struct tagDC;
 struct tagMESSAGEQUEUE;
 struct tagWND_DRIVER;
 

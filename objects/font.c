@@ -309,15 +309,13 @@ void FONT_TextMetric32Ato32W(const LPTEXTMETRICA ptm32A, LPTEXTMETRICW ptm32W )
  */
 HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
 {
-    HFONT16 hFont = 0;
+    HFONT hFont = 0;
 
     if (font)
     {
-	hFont = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC );
-	if( hFont )
-	{
 	    FONTOBJ* fontPtr;
-	    fontPtr = (FONTOBJ *) GDI_HEAP_LOCK( hFont );
+	if ((fontPtr = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC, &hFont )))
+	{
 	    memcpy( &fontPtr->logfont, font, sizeof(LOGFONT16) );
 
 	    TRACE("(%i %i %i %i) '%s' %s %s => %04x\n",
@@ -334,7 +332,7 @@ HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
                    "escapement angle %f for new font %04x\n", 
                    font->lfOrientation/10., font->lfEscapement/10., hFont);
 	    }
-	    GDI_HEAP_UNLOCK( hFont );
+	    GDI_ReleaseObj( hFont );
 	}
     }
     else WARN("(NULL) => NULL\n");
@@ -535,10 +533,15 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
                                    FONTENUMPROCEX16 efproc, LPARAM lParam,
                                    DWORD dwFlags)
 {
+    BOOL (*enum_func)(HDC,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
     INT16	retVal = 0;
-    DC* 	dc = (DC*) GDI_GetObjPtr( hDC, DC_MAGIC );
+    DC* 	dc = DC_GetDCPtr( hDC );
 
-    if( dc && dc->funcs->pEnumDeviceFonts )
+    if (!dc) return 0;
+    enum_func = dc->funcs->pEnumDeviceFonts;
+    GDI_ReleaseObj( hDC );
+
+    if (enum_func)
     {
 	LPNEWTEXTMETRICEX16	lptm16 = SEGPTR_ALLOC( sizeof(NEWTEXTMETRICEX16) );
 	if( lptm16 )
@@ -557,8 +560,7 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 		fe16.segTextMetric = SEGPTR_GET(lptm16);
 		fe16.segLogFont = SEGPTR_GET(lplf16);
 
-		retVal = dc->funcs->pEnumDeviceFonts( dc, plf, FONT_EnumInstance16, (LPARAM)&fe16 );
-
+		retVal = enum_func( hDC, plf, FONT_EnumInstance16, (LPARAM)&fe16 );
 		SEGPTR_FREE(lplf16);
 	    }
 	    SEGPTR_FREE(lptm16);
@@ -573,9 +575,15 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
 static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCEXW efproc, 
 					           LPARAM lParam, DWORD dwUnicode)
 {
-    DC*		dc = (DC*) GDI_GetObjPtr( hDC, DC_MAGIC );
+    BOOL (*enum_func)(HDC,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
+    INT ret = 0;
+    DC *dc = DC_GetDCPtr( hDC );
 
-    if( dc && dc->funcs->pEnumDeviceFonts )
+    if (!dc) return 0;
+    enum_func = dc->funcs->pEnumDeviceFonts;
+    GDI_ReleaseObj( hDC );
+
+    if (enum_func)
     {
 	LOGFONT16		lf16;
 	NEWTEXTMETRICEXW 	tm32w;
@@ -602,9 +610,9 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCEXW efp
 	else lf16.lfFaceName[0] = '\0';
 	lf16.lfCharSet = plf->lfCharSet;
 
-	return dc->funcs->pEnumDeviceFonts( dc, &lf16, FONT_EnumInstance, (LPARAM)&fe32 );
+	ret = enum_func( hDC, &lf16, FONT_EnumInstance, (LPARAM)&fe32 );
     }
-    return 0;
+    return ret;
 }
 
 /***********************************************************************
@@ -708,10 +716,7 @@ INT WINAPI EnumFontsW( HDC hDC, LPCWSTR lpName, FONTENUMPROCW efproc,
  */
 INT16 WINAPI GetTextCharacterExtra16( HDC16 hdc )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
-    return abs( (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2)
-                 / dc->vportExtX );
+    return (INT16)GetTextCharacterExtra( hdc );
 }
 
 
@@ -720,10 +725,13 @@ INT16 WINAPI GetTextCharacterExtra16( HDC16 hdc )
  */
 INT WINAPI GetTextCharacterExtra( HDC hdc )
 {
+    INT ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
-    return abs( (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2)
+    ret = abs( (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2)
                  / dc->vportExtX );
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -745,11 +753,15 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
     if (dc->funcs->pSetTextCharacterExtra)
-        return dc->funcs->pSetTextCharacterExtra( dc, extra );
-    extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;
-    prev = dc->w.charExtra;
-    dc->w.charExtra = abs(extra);
-    return (prev * dc->wndExtX + dc->vportExtX / 2) / dc->vportExtX;
+        prev = dc->funcs->pSetTextCharacterExtra( dc, extra );
+    else
+    {
+        extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;
+        prev = (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2) / dc->vportExtX;
+        dc->w.charExtra = abs(extra);
+    }
+    GDI_ReleaseObj( hdc );
+    return prev;
 }
 
 
@@ -767,26 +779,30 @@ INT16 WINAPI SetTextJustification16( HDC16 hdc, INT16 extra, INT16 breaks )
  */
 BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
 {
+    BOOL ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
-    if (!dc) return 0;
+    if (!dc) return FALSE;
     if (dc->funcs->pSetTextJustification)
-        return dc->funcs->pSetTextJustification( dc, extra, breaks );
-
-    extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
-    if (!extra) breaks = 0;
-    dc->w.breakTotalExtra = extra;
-    dc->w.breakCount = breaks;
-    if (breaks)
-    {
-        dc->w.breakExtra = extra / breaks;
-        dc->w.breakRem   = extra - (dc->w.breakCount * dc->w.breakExtra);
-    }
+        ret = dc->funcs->pSetTextJustification( dc, extra, breaks );
     else
     {
-        dc->w.breakExtra = 0;
-        dc->w.breakRem   = 0;
+        extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
+        if (!extra) breaks = 0;
+        dc->w.breakTotalExtra = extra;
+        dc->w.breakCount = breaks;
+        if (breaks)
+        {
+            dc->w.breakExtra = extra / breaks;
+            dc->w.breakRem   = extra - (dc->w.breakCount * dc->w.breakExtra);
+        }
+        else
+        {
+            dc->w.breakExtra = 0;
+            dc->w.breakRem   = 0;
+        }
     }
-    return 1;
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -804,18 +820,23 @@ INT16 WINAPI GetTextFace16( HDC16 hdc, INT16 count, LPSTR name )
 INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
 {
     FONTOBJ *font;
+    INT     ret = 0;
 
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = (DC *) DC_GetDCPtr( hdc );
     if (!dc) return 0;
-    if (!(font = (FONTOBJ *) GDI_GetObjPtr( dc->w.hFont, FONT_MAGIC )))
-        return 0;
-    if (name) 
-        lstrcpynA( name, font->logfont.lfFaceName, count );
-    GDI_HEAP_UNLOCK( dc->w.hFont );
-    if (name)
-        return strlen(name);
-    else
-        return strlen(font->logfont.lfFaceName) + 1;
+
+    if ((font = (FONTOBJ *) GDI_GetObjPtr( dc->w.hFont, FONT_MAGIC )))
+    {
+        if (name)
+        {
+            lstrcpynA( name, font->logfont.lfFaceName, count );
+            ret = strlen(name);
+        }
+        else ret = strlen(font->logfont.lfFaceName) + 1;
+        GDI_ReleaseObj( dc->w.hFont );
+    }
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /***********************************************************************
@@ -825,7 +846,7 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
 {
     LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, count );
     INT res = GetTextFaceA(hdc,count,nameA);
-    lstrcpyAtoW( name, nameA );
+    if (name) lstrcpyAtoW( name, nameA );
     HeapFree( GetProcessHeap(), 0, nameA );
     return res;
 }
@@ -903,14 +924,17 @@ BOOL WINAPI GetTextExtentPoint32W(
     INT count,   /* [in]  Number of characters in string */
     LPSIZE size) /* [out] Address of structure for string size */
 {
+    BOOL ret = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
-    if (!dc || !dc->funcs->pGetTextExtentPoint ||
-        !dc->funcs->pGetTextExtentPoint( dc, str, count, size ))
-        return FALSE;
-
+    if (dc)
+    {
+	if(dc->funcs->pGetTextExtentPoint)
+	    ret = dc->funcs->pGetTextExtentPoint( dc, str, count, size );
+        GDI_ReleaseObj( hdc );
+    }
     TRACE("(%08x %s %d %p): returning %d,%d\n",
           hdc, debugstr_wn (str, count), count, size, size->cx, size->cy );
-    return TRUE;
+    return ret;
 }
 
 
@@ -966,14 +990,16 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 {
     int index, nFit, extent;
     SIZE tSize;
+    BOOL ret = FALSE;
     DC * dc = DC_GetDCPtr( hdc );
+    if (!dc) return FALSE;
 
-    if (!dc || !dc->funcs->pGetTextExtentPoint) return FALSE;
+    if (!dc->funcs->pGetTextExtentPoint) goto done;
 
     size->cx = size->cy = nFit = extent = 0;
     for(index = 0; index < count; index++)
     {
- 	if(!dc->funcs->pGetTextExtentPoint( dc, str, 1, &tSize )) return FALSE;
+ 	if(!dc->funcs->pGetTextExtentPoint( dc, str, 1, &tSize )) goto done;
 	if( extent+tSize.cx < maxExt )
         {
 	    extent+=tSize.cx;
@@ -986,10 +1012,13 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     }
     size->cx = extent;
     *lpnFit = nFit;
+    ret = TRUE;
 
     TRACE("(%08x %s %d) returning %d %d %d\n",
           hdc,debugstr_wn(str,count),maxExt,nFit, size->cx,size->cy);
-    return TRUE;
+done:
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /***********************************************************************
@@ -1009,18 +1038,13 @@ BOOL16 WINAPI GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
  *           GetTextMetricsA    (GDI32.236)
  */
 BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
-{
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc)
     {
-        if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
-            return FALSE;
-    }
+    BOOL ret = FALSE;
+    DC * dc = DC_GetDCPtr( hdc );
+    if (!dc) return FALSE;
 
-    if (!dc->funcs->pGetTextMetrics ||
-        !dc->funcs->pGetTextMetrics( dc, metrics ))
-        return FALSE;
-
+    if (dc->funcs->pGetTextMetrics && dc->funcs->pGetTextMetrics( dc, metrics ))
+    {
     /* device layer returns values in device units
      * therefore we have to convert them to logical */
 
@@ -1039,6 +1063,7 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
     metrics->tmAveCharWidth     = WDPTOLP(metrics->tmAveCharWidth);
     metrics->tmMaxCharWidth     = WDPTOLP(metrics->tmMaxCharWidth);
     metrics->tmOverhang         = WDPTOLP(metrics->tmOverhang);
+        ret = TRUE;
 
     TRACE("text metrics:\n"
           "    Weight = %03li\t FirstChar = %03i\t AveCharWidth = %li\n"
@@ -1060,7 +1085,9 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
           metrics->tmAscent,
           metrics->tmDescent,
           metrics->tmHeight );
-    return TRUE;
+    }
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -1221,24 +1248,21 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
                                LPINT buffer )
 {
     UINT i, extra;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc)
+    BOOL ret = FALSE;
+    DC * dc = DC_GetDCPtr( hdc );
+    if (!dc) return FALSE;
+
+    if (dc->funcs->pGetCharWidth && dc->funcs->pGetCharWidth( dc, firstChar, lastChar, buffer))
     {
-        if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
-            return FALSE;
+        /* convert device units to logical */
+
+        extra = dc->vportExtX >> 1;
+        for( i = firstChar; i <= lastChar; i++, buffer++ )
+            *buffer = (*buffer * dc->wndExtX + extra) / dc->vportExtX;
+        ret = TRUE;
     }
-
-    if (!dc->funcs->pGetCharWidth ||
-        !dc->funcs->pGetCharWidth( dc, firstChar, lastChar, buffer))
-        return FALSE;
-
-    /* convert device units to logical */
-
-    extra = dc->vportExtX >> 1;
-    for( i = firstChar; i <= lastChar; i++, buffer++ )
-         *buffer = (*buffer * dc->wndExtX + extra) / dc->vportExtX;
-
-    return TRUE;
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -1276,7 +1300,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
         ret = dc->funcs->pSetMapperFlags( dc, dwFlag );
     else
         FIXME("(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
-    GDI_HEAP_UNLOCK( hDC );
+    GDI_ReleaseObj( hDC );
     return ret;
 }
 

@@ -21,10 +21,18 @@ DEFAULT_DEBUG_CHANNEL(driver);
 INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
                        SEGPTR lpszInData, SEGPTR lpvOutData )
 {
+    INT16 ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
-    if (!dc || !dc->funcs->pEscape) return 0;
-    if(nEscape == SETABORTPROC) SetAbortProc16(hdc, lpszInData);
-    return dc->funcs->pEscape( dc, nEscape, cbInput, lpszInData, lpvOutData );
+    if (dc)
+    {
+        if (dc->funcs->pEscape)
+        {
+            if(nEscape == SETABORTPROC) SetAbortProc16(hdc, lpszInData);
+            ret = dc->funcs->pEscape( dc, nEscape, cbInput, lpszInData, lpvOutData );
+        }
+        GDI_ReleaseObj( hdc );
+    }
+    return ret;
 }
 
 /************************************************************************
@@ -34,9 +42,10 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 		   LPCSTR lpszInData, LPVOID lpvOutData )
 {
     SEGPTR	segin,segout;
-    INT	ret;
+    INT	ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
-    if (!dc || !dc->funcs->pEscape) return 0;
+    if (!dc) return 0;
+    if (!dc->funcs->pEscape) goto done;
 
     segin	= (SEGPTR)lpszInData;
     segout	= (SEGPTR)lpvOutData;
@@ -227,6 +236,8 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     default:
     	break;
     }
+ done:
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 

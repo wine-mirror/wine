@@ -58,7 +58,7 @@ HGDIOBJ X11DRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
 	  break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return ret;
 }
 
@@ -83,7 +83,7 @@ BOOL X11DRV_DeleteObject( HGDIOBJ handle )
 	ret = FALSE;
 	break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return ret;
 }
 

@@ -133,7 +133,7 @@ static DC *MFDRV_AllocMetaFile(void)
     physDev = (METAFILEDRV_PDEVICE *)HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
     {
-        GDI_HEAP_FREE( dc->hSelf );
+        GDI_FreeObject( dc->hSelf, dc );
         return NULL;
     }
     dc->physDev = physDev;
@@ -141,7 +141,7 @@ static DC *MFDRV_AllocMetaFile(void)
     if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
     {
         HeapFree( GetProcessHeap(), 0, physDev );
-        GDI_HEAP_FREE( dc->hSelf );
+        GDI_FreeObject( dc->hSelf, dc );
         return NULL;
     }
 
@@ -169,7 +169,7 @@ static BOOL MFDRV_DeleteDC( DC *dc )
     if (physDev->mh) HeapFree( GetProcessHeap(), 0, physDev->mh );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
-    GDI_FreeObject(dc->hSelf);
+    GDI_FreeObject( dc->hSelf, dc );
     return TRUE;
 }
 
@@ -186,6 +186,7 @@ HDC16 WINAPI CreateMetaFile16(
 			      LPCSTR filename /* Filename of disk metafile */
 )
 {
+    HDC ret;
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
     HFILE hFile;
@@ -217,7 +218,9 @@ HDC16 WINAPI CreateMetaFile16(
 	physDev->mh->mtType = METAFILE_MEMORY;
 	
     TRACE("returning %04x\n", dc->hSelf);
-    return dc->hSelf;
+    ret = dc->hSelf;
+    GDI_ReleaseObj( dc->hSelf );
+    return ret;
 }
 
 /**********************************************************************

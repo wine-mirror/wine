@@ -91,6 +91,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 hdc, BITMAPINFO *bmpi,
 SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
   BITMAPOBJ*	bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
+    SEGPTR res = 0;
 
     TRACE("(%d,%p)\n", hWinGBitmap, bmpi);
     if (!bmp) return (SEGPTR)NULL;
@@ -99,10 +100,11 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 	FIXME(": Todo - implement setting BITMAPINFO\n");
 
 #ifndef X_DISPLAY_MISSING
-    return PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0);
-#else /* !defined(X_DISPLAY_MISSING) */
-    return NULL;
+    res = PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0);
 #endif /* !defined(X_DISPLAY_MISSING) */
+    
+    GDI_ReleaseObj( hWinGBitmap );
+    return res;
 }
 
 /***********************************************************************

@@ -890,10 +890,10 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, HDC hdc, INT dx, INT dy,
                  dst.x, dst.y );
     if (bUpdate)
 	TSXSetGraphicsExposures( display, physDev->gc, False );
+    GDI_ReleaseObj( hdc );
 
     if (bUpdate) /* Make sure exposure events have been processed */
 	EVENT_Synchronize();
-    GDI_HEAP_UNLOCK( hdc );
 }
 
 /***********************************************************************
@@ -975,7 +975,7 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigi
 	    TSXSetClipOrigin( display, physDev->gc, dc->w.DCOrgX, dc->w.DCOrgY );
 #endif
     }
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
 }
 
 /***********************************************************************

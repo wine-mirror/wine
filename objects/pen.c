@@ -54,16 +54,14 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 HPEN16 WINAPI CreatePenIndirect16( const LOGPEN16 * pen )
 {
     PENOBJ * penPtr;
-    HPEN16 hpen;
+    HPEN hpen;
 
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
-    hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
-    if (!hpen) return 0;
-    penPtr = (PENOBJ *)GDI_HEAP_LOCK( hpen );
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnColor = pen->lopnColor;
     CONV_POINT16TO32( &pen->lopnWidth, &penPtr->logpen.lopnWidth );
-    GDI_HEAP_UNLOCK( hpen );
+    GDI_ReleaseObj( hpen );
     return hpen;
 }
 
@@ -77,13 +75,11 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
     HPEN hpen;
 
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
-    hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
-    if (!hpen) return 0;
-    penPtr = (PENOBJ *)GDI_HEAP_LOCK( hpen );
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnWidth = pen->lopnWidth;
     penPtr->logpen.lopnColor = pen->lopnColor;
-    GDI_HEAP_UNLOCK( hpen );
+    GDI_ReleaseObj( hpen );
     return hpen;
 }
 
@@ -106,9 +102,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 	if (brush->lbHatch)
 	    FIXME("Hatches not implemented\n");
 
-    hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
-    if (!hpen) return 0;
-    penPtr = (PENOBJ *)GDI_HEAP_LOCK( hpen );
+    if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen ))) return 0;
     penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK; 
     
     /* PS_USERSTYLE and PS_ALTERNATE workaround */   
@@ -119,7 +113,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     penPtr->logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1; 
     penPtr->logpen.lopnWidth.y = 0;
     penPtr->logpen.lopnColor = brush->lbColor;
-    GDI_HEAP_UNLOCK( hpen );
+    GDI_ReleaseObj( hpen );
 
     return hpen;
 }

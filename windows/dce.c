@@ -603,7 +603,7 @@ static void DCE_OffsetVisRgn( HDC hDC, HRGN hVisRgn )
 
     OffsetRgn( hVisRgn, dc->w.DCOrgX, dc->w.DCOrgY );
 
-    GDI_HEAP_UNLOCK( hDC );
+    GDI_ReleaseObj( hDC );
 }
 
 /***********************************************************************
@@ -807,6 +807,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     /* recompute visible region */
     wndPtr->pDriver->pSetDrawable( wndPtr, hdc, flags, bUpdateClipOrigin );
+    dc->w.flags &= ~DC_DIRTY;
+    GDI_ReleaseObj( hdc );
 
     if( bUpdateVisRgn )
     {
@@ -846,7 +848,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
                 DCE_OffsetVisRgn( hdc, hrgnVisible );
             }
 
-	dc->w.flags &= ~DC_DIRTY;
 	dce->DCXflags &= ~DCX_DCEDIRTY;
 	SelectVisRgn16( hdc, hrgnVisible );
     }
@@ -999,7 +1000,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
                /* Update stale DC in DCX */
                wndPtr = WIN_FindWndPtr( dce->hwndCurrent);
-	       if (wndPtr) wndPtr->pDriver->pSetDrawable( wndPtr, hDC, dce->DCXflags, TRUE);
+	       if (wndPtr) wndPtr->pDriver->pSetDrawable( wndPtr, dce->hDC, dce->DCXflags, TRUE);
 
 	       SetHookFlags16(hDC, DCHF_VALIDATEVISRGN);
 	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags, 0, 0);

@@ -2991,7 +2991,7 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
  *
  *           X11DRV_EnumDeviceFonts
  */
-BOOL	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
 				        DEVICEFONTENUMPROC proc, LPARAM lp )
 {
     ENUMLOGFONTEX16	lf;

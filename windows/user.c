@@ -12,7 +12,6 @@
 #include "winuser.h"
 #include "heap.h"
 #include "user.h"
-#include "gdi.h"
 #include "task.h"
 #include "queue.h"
 #include "class.h"
@@ -43,7 +42,12 @@ DECLARE_DEBUG_CHANNEL(win32);
  */
 WORD WINAPI GetFreeSystemResources16( WORD resType )
 {
+    HINSTANCE16 gdi_inst;
+    WORD gdi_heap;
     int userPercent, gdiPercent;
+
+    if ((gdi_inst = LoadLibrary16( "GDI" )) < 32) return 0;
+    gdi_heap = GlobalHandleToSel16( gdi_inst );
 
     switch(resType)
     {
@@ -54,21 +58,23 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
         break;
 
     case GFSR_GDIRESOURCES:
-        gdiPercent  = (int)LOCAL_CountFree( GDI_HeapSel ) * 100 /
-                               LOCAL_HeapSize( GDI_HeapSel );
+        gdiPercent  = (int)LOCAL_CountFree( gdi_inst ) * 100 /
+                               LOCAL_HeapSize( gdi_inst );
         userPercent = 100;
         break;
 
     case GFSR_SYSTEMRESOURCES:
         userPercent = (int)LOCAL_CountFree( USER_HeapSel ) * 100 /
                                LOCAL_HeapSize( USER_HeapSel );
-        gdiPercent  = (int)LOCAL_CountFree( GDI_HeapSel ) * 100 /
-                               LOCAL_HeapSize( GDI_HeapSel );
+        gdiPercent  = (int)LOCAL_CountFree( gdi_inst ) * 100 /
+                               LOCAL_HeapSize( gdi_inst );
         break;
 
     default:
-        return 0;
+        userPercent = gdiPercent = 0;
+        break;
     }
+    FreeLibrary16( gdi_inst );
     return (WORD)min( userPercent, gdiPercent );
 }
 

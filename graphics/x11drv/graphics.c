@@ -99,8 +99,6 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
         val.background = X11DRV_PALETTE_XPixelToPalette[val.background];
     }
 
-    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
-
     val.function = X11DRV_XROPfunction[dc->w.ROPmode-1];
     /*
     ** Let's replace GXinvert by GXxor with (black xor white)
@@ -187,8 +185,6 @@ BOOL X11DRV_SetupGCForPen( DC * dc )
 
     if (physDev->pen.style == PS_NULL) return FALSE;
 
-    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc); 
-
     switch (dc->w.ROPmode)
     {
     case R2_BLACK :
@@ -274,8 +270,6 @@ BOOL X11DRV_SetupGCForText( DC * dc )
     if( xfs )
     {
 	XGCValues val;
-
-	if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
 
 	val.function   = GXcopy;  /* Text is always GXcopy */
 	val.foreground = physDev->textPixel;

@@ -55,7 +55,7 @@ LONG TTYDRV_DC_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags)
     result = 0;
   }
   
-  GDI_HEAP_UNLOCK(hbitmap);
+  GDI_ReleaseObj(hbitmap);
   return result;
 }
 
@@ -73,7 +73,7 @@ BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap)
     return FALSE;
   
   if(!(physBitmap = TTYDRV_DC_AllocBitmap(bitmap))) {
-    GDI_HEAP_UNLOCK(hbitmap);
+    GDI_ReleaseObj(hbitmap);
     return FALSE;
   }
  
@@ -84,7 +84,7 @@ BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap)
 			 DDB_SET );
   }
 
-  GDI_HEAP_UNLOCK(hbitmap);
+  GDI_ReleaseObj(hbitmap);
   
   return TRUE;
 }

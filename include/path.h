@@ -42,22 +42,24 @@ extern void   PATH_DestroyGdiPath(GdiPath *pPath);
 extern BOOL PATH_AssignGdiPath(GdiPath *pPathDest,
    const GdiPath *pPathSrc);
 
-extern BOOL PATH_MoveTo(HDC hdc);
-extern BOOL PATH_LineTo(HDC hdc, INT x, INT y);
-extern BOOL PATH_Rectangle(HDC hdc, INT x1, INT y1,
+struct tagDC;
+
+extern BOOL PATH_MoveTo(struct tagDC *dc);
+extern BOOL PATH_LineTo(struct tagDC *dc, INT x, INT y);
+extern BOOL PATH_Rectangle(struct tagDC *dc, INT x1, INT y1,
    INT x2, INT y2);
-extern BOOL PATH_Ellipse(HDC hdc, INT x1, INT y1,
+extern BOOL PATH_Ellipse(struct tagDC *dc, INT x1, INT y1,
    INT x2, INT y2);
-extern BOOL PATH_Arc(HDC hdc, INT x1, INT y1, INT x2, INT y2,
+extern BOOL PATH_Arc(struct tagDC *dc, INT x1, INT y1, INT x2, INT y2,
    INT xStart, INT yStart, INT xEnd, INT yEnd);
-extern BOOL PATH_PolyBezierTo(HDC hdc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_PolyBezier(HDC hdc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_PolylineTo(HDC hdc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_Polyline(HDC hdc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_Polygon(HDC hdc, const POINT *pt, DWORD cbCount);
-extern BOOL PATH_PolyPolyline(HDC hdc, const POINT *pt, const DWORD *counts,
+extern BOOL PATH_PolyBezierTo(struct tagDC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolyBezier(struct tagDC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolylineTo(struct tagDC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_Polyline(struct tagDC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_Polygon(struct tagDC *dc, const POINT *pt, DWORD cbCount);
+extern BOOL PATH_PolyPolyline(struct tagDC *dc, const POINT *pt, const DWORD *counts,
 			      DWORD polylines);
-extern BOOL PATH_PolyPolygon(HDC hdc, const POINT *pt, const INT *counts,
+extern BOOL PATH_PolyPolygon(struct tagDC *dc, const POINT *pt, const INT *counts,
 			     UINT polygons);
 #endif /* __WINE_PATH_H */
 

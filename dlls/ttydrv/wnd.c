@@ -230,20 +230,20 @@ void TTYDRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigi
     if (!dc) return;
     TRACE("(%p, %p, %d, %d)\n", wndPtr, dc, flags, bSetClipOrigin);
 
-  /* FIXME: Should be done in the common code instead */
-  if(!wndPtr)  {
-    dc->w.DCOrgX = 0;
-    dc->w.DCOrgY = 0;
-  } else {
-    if(flags & DCX_WINDOW) {
-      dc->w.DCOrgX = wndPtr->rectWindow.left;
-      dc->w.DCOrgY = wndPtr->rectWindow.top;
+    /* FIXME: Should be done in the common code instead */
+    if(!wndPtr)  {
+        dc->w.DCOrgX = 0;
+        dc->w.DCOrgY = 0;
     } else {
-      dc->w.DCOrgX = wndPtr->rectClient.left;
-      dc->w.DCOrgY = wndPtr->rectClient.top;
+        if(flags & DCX_WINDOW) {
+            dc->w.DCOrgX = wndPtr->rectWindow.left;
+            dc->w.DCOrgY = wndPtr->rectWindow.top;
+        } else {
+            dc->w.DCOrgX = wndPtr->rectClient.left;
+            dc->w.DCOrgY = wndPtr->rectClient.top;
+        }
     }
-  }
-  GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
 }
 
 /***********************************************************************

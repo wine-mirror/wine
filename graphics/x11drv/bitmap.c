@@ -84,23 +84,19 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 	return 0;
     }
 
+    hrgn = CreateRectRgn(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
+    if (!hrgn) return 0;
+
     dc->w.totalExtent.left   = 0;
     dc->w.totalExtent.top    = 0;
     dc->w.totalExtent.right  = bmp->bitmap.bmWidth;
     dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
 
-    if (dc->w.hVisRgn)
-       SetRectRgn( dc->w.hVisRgn, 0, 0,
-                     bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
-    else
-    { 
-       hrgn = CreateRectRgn(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
-       if (!hrgn) return 0;
-       dc->w.hVisRgn    = hrgn;
-    }
-
     physDev->drawable = (Pixmap)bmp->physBitmap;
     dc->w.hBitmap     = hbitmap;
+
+    SelectVisRgn16( dc->hSelf, hrgn );
+    DeleteObject( hrgn );
 
       /* Change GC depth if needed */
 
@@ -112,7 +108,6 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );
     }
-    else CLIPPING_UpdateGCRegion( dc );  /* Just update GC clip region */
     return prevHandle;
 }
 
@@ -158,13 +153,17 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
     }
 
       /* Check parameters */
-    if (bmp->bitmap.bmPlanes != 1) return 0;
+    if (bmp->bitmap.bmPlanes != 1)
+    {
+        GDI_ReleaseObj( hbitmap );
+        return 0;
+    }
     if ((bmp->bitmap.bmBitsPixel != 1) && 
 	(bmp->bitmap.bmBitsPixel != X11DRV_GetDepth()))
     {
         ERR("Trying to make bitmap with planes=%d, bpp=%d\n",
 	    bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel);
-        GDI_HEAP_UNLOCK( hbitmap );
+        GDI_ReleaseObj( hbitmap );
 	return FALSE;
     }
 
@@ -177,7 +176,7 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
                                                     bmp->bitmap.bmBitsPixel)))
     {
         WARN("Can't create Pixmap\n");
-	GDI_HEAP_UNLOCK( hbitmap );
+	GDI_ReleaseObj( hbitmap );
 	return FALSE;
     }
     bmp->funcs = &X11DRV_DC_Funcs;
@@ -187,7 +186,7 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
 			   bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes,
 			   DDB_SET );
 
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
 
@@ -476,8 +475,7 @@ LONG X11DRV_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags)
         ERR("Unknown flags value %d\n", flags);
 	ret = 0;
     }
-    
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
     return ret;
 }
 
@@ -526,6 +524,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
     
     pBmp->funcs = &X11DRV_DC_Funcs;
     pBmp->physBitmap = (void *)pixmap;
+    GDI_ReleaseObj( hBmp );
 
 END:
     TRACE("\tReturning HBITMAP %x\n", hBmp);
@@ -612,7 +611,10 @@ Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc )
  */
 Pixmap X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
 {
+    Pixmap pixmap;
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    return (Pixmap)bmp->physBitmap;
+    pixmap = (Pixmap)bmp->physBitmap;
+    GDI_ReleaseObj( hbitmap );
+    return pixmap;
 }
 

@@ -232,7 +232,7 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
     dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
     
-    GDI_HEAP_UNLOCK( dc->w.hBitmap );
+    GDI_ReleaseObj( dc->w.hBitmap );
   } else {
     physDev->window = TTYDRV_GetRootWindow();
     physDev->cellWidth = cell_width;

@@ -92,9 +92,15 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCWSTR str, UINT count,
                              const INT *lpDx )
 {
-    DC * dc = DC_GetDCPtr( hdc );
-    return dc && dc->funcs->pExtTextOut && 
-        dc->funcs->pExtTextOut(dc,x,y,flags,lprect,str,count,lpDx);
+    BOOL ret = FALSE;
+    DC * dc = DC_GetDCUpdate( hdc );
+    if (dc)
+    {
+	if(dc->funcs->pExtTextOut)
+	    ret = dc->funcs->pExtTextOut(dc,x,y,flags,lprect,str,count,lpDx);
+	GDI_ReleaseObj( hdc );
+    }
+    return ret;
 }
 
 

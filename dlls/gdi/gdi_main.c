@@ -15,15 +15,9 @@
 /***********************************************************************
  *           GDI initialisation routine
  */
-BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
 {
-    HINSTANCE16 instance;
-
-    if ( GDI_HeapSel ) return TRUE;
-
-    /* Create GDI heap */
-    if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;
-    GDI_HeapSel = GlobalHandleToSel16( instance );
+    if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     if (!TWEAK_Init()) return FALSE;
 

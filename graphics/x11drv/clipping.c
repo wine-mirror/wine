@@ -49,7 +49,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
 	if(!pXrect)
 	{
 	    WARN("Can't alloc buffer\n");
-	    GDI_HEAP_UNLOCK( dc->w.hGCClipRgn );
+	    GDI_ReleaseObj( dc->w.hGCClipRgn );
 	    return;
 	}
 
@@ -70,6 +70,6 @@ void X11DRV_SetDeviceClipping( DC * dc )
     if(pXrect)
         HeapFree( GetProcessHeap(), 0, pXrect );
 
-    GDI_HEAP_UNLOCK( dc->w.hGCClipRgn );
+    GDI_ReleaseObj( dc->w.hGCClipRgn );
 }
 

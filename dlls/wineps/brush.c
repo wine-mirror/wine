@@ -60,6 +60,7 @@ HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
  */
 static BOOL PSDRV_SetBrush(DC *dc)
 {
+    BOOL ret = TRUE;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
 
@@ -78,11 +79,12 @@ static BOOL PSDRV_SetBrush(DC *dc)
         break;
 
     default:
-        return FALSE;
+        ret = FALSE;
         break;
 
     }
     physDev->brush.set = TRUE;
+    GDI_ReleaseObj( dc->w.hBrush );
     return TRUE;
 }
 
@@ -121,6 +123,7 @@ static BOOL PSDRV_Clip(DC *dc, BOOL EO)
  */
 BOOL PSDRV_Brush(DC *dc, BOOL EO)
 {
+    BOOL ret = TRUE;
     BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
     PSDRV_PDEVICE *physDev = dc->physDev;
 
@@ -135,7 +138,6 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 	PSDRV_WriteGSave(dc);
         PSDRV_Fill(dc, EO);
 	PSDRV_WriteGRestore(dc);
-	return TRUE;
 	break;
 
     case BS_HATCHED:
@@ -185,13 +187,12 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 
 	default:
 	    ERR("Unknown hatch style\n");
-	    return FALSE;
+	    ret = FALSE;
+            break;
 	}
-	return TRUE;
 	break;
 
     case BS_NULL:
-        return TRUE;
 	break;
 
     case BS_PATTERN:
@@ -212,18 +213,19 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 		PSDRV_WriteGRestore(dc);
 	    } else {
 	        FIXME("Trying to set a pattern brush on a level 1 printer\n");
+		ret = FALSE;
 	    }
 	    HeapFree(PSDRV_Heap, 0, bits);	
-	    return TRUE;
 	}
 	break;
 
-
-
     default:
-        return FALSE;
+        ret = FALSE;
 	break;
     }
+
+    GDI_ReleaseObj( dc->w.hBrush );
+    return ret;
 }
 
 

@@ -133,11 +133,11 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
                        INT heightSrc, const void *bits,
                        const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
-    DC *dc = DC_GetDCPtr( hdc );
+    DC *dc = DC_GetDCUpdate( hdc );
     if(!dc) return FALSE;
 
     if(dc->funcs->pStretchDIBits)
-    	   return dc->funcs->pStretchDIBits(dc, xDst, yDst, widthDst, 
+    	   heightSrc = dc->funcs->pStretchDIBits(dc, xDst, yDst, widthDst, 
 					    heightDst, xSrc, ySrc, widthSrc,
 					    heightSrc, bits, info, wUsage,
 					    dwRop);
@@ -157,8 +157,9 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 	SelectObject( hdcMem, hOldBitmap );
 	DeleteDC( hdcMem );
 	DeleteObject( hBitmap );
-	return heightSrc;
     }
+    GDI_ReleaseObj( hdc );
+    return heightSrc;
 }
 
 
@@ -198,16 +199,11 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     INT result;
 
     /* Check parameters */
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-    }
+    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
     if (!(bitmap = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
-        GDI_HEAP_UNLOCK( hdc );
+        GDI_ReleaseObj( hdc );
         return 0;
     }
 
@@ -215,8 +211,8 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 				       lines, bits, info, 
 				       coloruse, hbitmap);
 
-    GDI_HEAP_UNLOCK( hdc );
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hbitmap );
+    GDI_ReleaseObj( hdc );
 
     return result;
 }
@@ -246,7 +242,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
     INT ret;
     DC *dc;
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
     if(dc->funcs->pSetDIBitsToDevice)
         ret = dc->funcs->pSetDIBitsToDevice( dc, xDest, yDest, cx, cy, xSrc,
@@ -257,7 +253,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
 	ret = 0;
     }
 
-    GDI_HEAP_UNLOCK( hdc );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -281,15 +277,11 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     PALETTEOBJ * palette;
     RGBQUAD *end;
 
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-    }
+    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
     if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
     {
+        GDI_ReleaseObj( hdc );
         return 0;
     }
 
@@ -312,7 +304,8 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     } else {
 	entries = 0;
     }
-    GDI_HEAP_UNLOCK( dc->w.hPalette );
+    GDI_ReleaseObj( dc->w.hPalette );
+    GDI_ReleaseObj( hdc );
     return entries;
 }
 
@@ -336,15 +329,11 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     PALETTEOBJ * palette;
     RGBQUAD *end;
 
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-    }
+    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
     if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
     {
+        GDI_ReleaseObj( hdc );
         return 0;
     }
 
@@ -365,7 +354,8 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     } else {
 	entries = 0;
     }
-    GDI_HEAP_UNLOCK( dc->w.hPalette );
+    GDI_ReleaseObj( dc->w.hPalette );
+    GDI_ReleaseObj( hdc );
     return entries;
 }
 
@@ -456,21 +446,16 @@ INT WINAPI GetDIBits(
     int i;
 
     if (!info) return 0;
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-    }
+    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
-        GDI_HEAP_UNLOCK( hdc );
+        GDI_ReleaseObj( hdc );
 	return 0;
     }
     if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
     {
-        GDI_HEAP_UNLOCK( hdc );
-        GDI_HEAP_UNLOCK( hbitmap );
+        GDI_ReleaseObj( hdc );
+        GDI_ReleaseObj( hbitmap );
         return 0;
     }
 
@@ -530,7 +515,7 @@ INT WINAPI GetDIBits(
 	}
     }
 
-    GDI_HEAP_UNLOCK( dc->w.hPalette );
+    GDI_ReleaseObj( dc->w.hPalette );
 
     if (bits && lines)
     {
@@ -728,10 +713,10 @@ INT WINAPI GetDIBits(
         /* Otherwise, get bits from the XImage */
         else if(!BITMAP_Driver->pGetDIBits(bmp, dc, startscan, lines, bits, info, coloruse, hbitmap))
         {
-	    GDI_HEAP_UNLOCK( hdc );
-	    GDI_HEAP_UNLOCK( hbitmap );
+	    GDI_ReleaseObj( hdc );
+	    GDI_ReleaseObj( hbitmap );
 
-	    return FALSE;
+	    return 0;
 	}
     }
     else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) ) 
@@ -763,8 +748,8 @@ INT WINAPI GetDIBits(
 	  info->bmiHeader.biSizeImage, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight);
 
-    GDI_HEAP_UNLOCK( hdc );
-    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_ReleaseObj( hdc );
+    GDI_ReleaseObj( hbitmap );
 
     return lines;
 }
@@ -870,7 +855,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 				     SEGPTR *bits, HANDLE section,
 				     DWORD offset)
 {
-    HBITMAP16 hbitmap;
+    HBITMAP16 hbitmap = 0;
     DC *dc;
     BOOL bDesktopDC = FALSE;
 
@@ -881,13 +866,11 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
         bDesktopDC = TRUE;
     }
 
-    dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
-    if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-    if(!dc) return (HBITMAP16) NULL;
-
-    hbitmap = dc->funcs->pCreateDIBSection16(dc, bmi, usage, bits, section, offset, 0);
-
-    GDI_HEAP_UNLOCK(hdc);
+    if ((dc = DC_GetDCPtr( hdc )))
+    {
+        hbitmap = dc->funcs->pCreateDIBSection16(dc, bmi, usage, bits, section, offset, 0);
+        GDI_ReleaseObj(hdc);
+    }
 
     if (bDesktopDC)
       DeleteDC(hdc);
@@ -902,7 +885,7 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 			     LPVOID *bits, HANDLE section,
 			     DWORD offset, DWORD ovr_pitch)
 {
-    HBITMAP hbitmap;
+    HBITMAP hbitmap = 0;
     DC *dc;
     BOOL bDesktopDC = FALSE;
 
@@ -913,13 +896,11 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
         bDesktopDC = TRUE;
     }
 
-    dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
-    if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-    if(!dc) return (HBITMAP) NULL;
-
-    hbitmap = dc->funcs->pCreateDIBSection(dc, bmi, usage, bits, section, offset, ovr_pitch);
-
-    GDI_HEAP_UNLOCK(hdc);
+    if ((dc = DC_GetDCPtr( hdc )))
+    {
+        hbitmap = dc->funcs->pCreateDIBSection(dc, bmi, usage, bits, section, offset, ovr_pitch);
+        GDI_ReleaseObj(hdc);
+    }
 
     if (bDesktopDC)
       DeleteDC(hdc);
@@ -976,6 +957,7 @@ HGLOBAL DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp)
 
     /* Get a pointer to the BITMAPOBJ structure */
     pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
+    if (!pBmp) return hPackedDIB;
 
     /* Get the bitmap dimensions */
     width = pBmp->bitmap.bmWidth;
@@ -1042,5 +1024,6 @@ HGLOBAL DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp)
     }
 
 END:
+    GDI_ReleaseObj( hBmp );
     return hPackedDIB;
 }

@@ -69,6 +69,7 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
  */
 INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 {
+    INT ret;
     DC *dc = DC_GetDCPtr( hdc );
 
     TRACE("DocName = '%s' Output = '%s' Datatype = '%s'\n",
@@ -77,10 +78,12 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
     if(!dc) return SP_ERROR;
 
     if(dc->funcs->pStartDoc)
-        return dc->funcs->pStartDoc( dc, doc );
+        ret = dc->funcs->pStartDoc( dc, doc );
     else
-        return Escape(hdc, STARTDOC, strlen(doc->lpszDocName),
+        ret = Escape(hdc, STARTDOC, strlen(doc->lpszDocName),
 		      doc->lpszDocName, (LPVOID)doc);
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /*************************************************************************
@@ -128,13 +131,16 @@ INT16 WINAPI EndDoc16(HDC16 hdc)
  */
 INT WINAPI EndDoc(HDC hdc)
 {
+    INT ret;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
     if(dc->funcs->pEndDoc)
-        return dc->funcs->pEndDoc( dc );
+        ret = dc->funcs->pEndDoc( dc );
     else
-        return Escape(hdc, ENDDOC, 0, 0, 0);
+        ret = Escape(hdc, ENDDOC, 0, 0, 0);
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /******************************************************************
@@ -152,14 +158,16 @@ INT16 WINAPI StartPage16(HDC16 hdc)
  */
 INT WINAPI StartPage(HDC hdc)
 {
+    INT ret = 1;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
     if(dc->funcs->pStartPage)
-        return dc->funcs->pStartPage( dc );
-
-    FIXME("stub\n");
-    return 1;
+        ret = dc->funcs->pStartPage( dc );
+    else
+        FIXME("stub\n");
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /******************************************************************
@@ -177,13 +185,16 @@ INT16 WINAPI EndPage16( HDC16 hdc )
  */
 INT WINAPI EndPage(HDC hdc)
 {
+    INT ret;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
     if(dc->funcs->pEndPage)
-        return dc->funcs->pEndPage( dc );
+        ret = dc->funcs->pEndPage( dc );
     else
-        return Escape(hdc, NEWFRAME, 0, 0, 0);
+        ret = Escape(hdc, NEWFRAME, 0, 0, 0);
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /******************************************************************************
@@ -199,13 +210,16 @@ INT16 WINAPI AbortDoc16(HDC16 hdc)
  */
 INT WINAPI AbortDoc(HDC hdc)
 {
+    INT ret;
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
     if(dc->funcs->pAbortDoc)
-        return dc->funcs->pAbortDoc( dc );
+        ret = dc->funcs->pAbortDoc( dc );
     else
-        return Escape(hdc, ABORTDOC, 0, 0, 0);
+        ret = Escape(hdc, ABORTDOC, 0, 0, 0);
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /**********************************************************************
@@ -219,6 +233,7 @@ INT WINAPI AbortDoc(HDC hdc)
  */
 BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 {
+    BOOL ret = TRUE;
     DC *dc = DC_GetDCPtr( hdc );
 
     if(!dc) {
@@ -226,9 +241,9 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 	return FALSE;
     }
 
-    if(!dc->w.pAbortProc)
-        return TRUE;
-    return dc->w.pAbortProc(hdc, 0);
+    if (dc->w.pAbortProc) ret = dc->w.pAbortProc(hdc, 0);
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /* ### start build ### */
@@ -256,6 +271,7 @@ INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 
     if(dc->w.pAbortProc) THUNK_Free((FARPROC)dc->w.pAbortProc);
     dc->w.pAbortProc = abrtprc;
+    GDI_ReleaseObj( hdc );
     return TRUE;
 }
 

@@ -35,13 +35,16 @@ DEFAULT_DEBUG_CHANNEL(enhmetafile)
 HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, HFILE hFile, HANDLE
 				     hMapping )
 {
-    HENHMETAFILE hmf = GDI_AllocObject( sizeof(ENHMETAFILEOBJ),
-					ENHMETAFILE_MAGIC );
-    ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_HEAP_LOCK( hmf );
+    HENHMETAFILE hmf = 0;
+    ENHMETAFILEOBJ *metaObj = GDI_AllocObject( sizeof(ENHMETAFILEOBJ),
+                                               ENHMETAFILE_MAGIC, &hmf );
+    if (metaObj)
+    {
     metaObj->emh = emh;
     metaObj->hFile = hFile;
     metaObj->hMapping = hMapping;
-    GDI_HEAP_UNLOCK( hmf );
+        GDI_ReleaseObj( hmf );
+    }
     return hmf;
 }
 
@@ -59,7 +62,7 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
 	CloseHandle( metaObj->hFile );
     } else
         HeapFree( GetProcessHeap(), 0, metaObj->emh );
-    return GDI_FreeObject( hmf );
+    return GDI_FreeObject( hmf, metaObj );
 }
 
 /******************************************************************
@@ -81,9 +84,9 @@ static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
  *
  * Releases ENHMETAHEADER associated with HENHMETAFILE
  */
-static BOOL EMF_ReleaseEnhMetaHeader( HENHMETAFILE hmf )
+static void EMF_ReleaseEnhMetaHeader( HENHMETAFILE hmf )
 {
-    return GDI_HEAP_UNLOCK( hmf );
+    GDI_ReleaseObj( hmf );
 }
 
 /*****************************************************************************

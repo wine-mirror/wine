@@ -193,7 +193,7 @@ typedef struct tagDC_FUNCS
     INT      (*pEndDoc)(DC*);
     INT      (*pEndPage)(DC*);
     BOOL     (*pEndPath)(DC*);
-    BOOL     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
+    BOOL     (*pEnumDeviceFonts)(HDC,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
     INT      (*pEscape)(DC*,INT,INT,SEGPTR,SEGPTR);
     INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
     INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,
@@ -444,30 +444,12 @@ static inline void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
 
   /* GDI local heap */
 
-extern WORD GDI_HeapSel;
-
-#define GDI_HEAP_ALLOC(size) \
-            LOCAL_Alloc( GDI_HeapSel, LMEM_FIXED, (size) )
-#define GDI_HEAP_ALLOC_MOVEABLE(size) \
-            LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, (size) )
-#define GDI_HEAP_REALLOC(handle,size) \
-            LOCAL_ReAlloc( GDI_HeapSel, (handle), (size), LMEM_FIXED )
-#define GDI_HEAP_FREE(handle) \
-            LOCAL_Free( GDI_HeapSel, (handle) )
-
-#define GDI_HEAP_LOCK(handle) \
-            LOCAL_Lock( GDI_HeapSel, (handle) )
-#define GDI_HEAP_LOCK_SEGPTR(handle) \
-            LOCAL_LockSegptr( GDI_HeapSel, (handle) )
-#define GDI_HEAP_UNLOCK(handle) \
-    ((((HGDIOBJ16)(handle) >= FIRST_STOCK_HANDLE) && \
-      ((HGDIOBJ16)(handle)<=LAST_STOCK_HANDLE)) ? \
-      0 : LOCAL_Unlock( GDI_HeapSel, (handle) ))
-
 extern BOOL GDI_Init(void);
-extern HGDIOBJ GDI_AllocObject( WORD, WORD );
-extern BOOL GDI_FreeObject( HGDIOBJ );
-extern GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ, WORD );
+extern void *GDI_AllocObject( WORD, WORD, HGDIOBJ * );
+extern void *GDI_ReallocObject( WORD, HGDIOBJ, void *obj );
+extern BOOL GDI_FreeObject( HGDIOBJ, void *obj );
+extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
+extern void GDI_ReleaseObj( HGDIOBJ );
 
 extern BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
 extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );

@@ -54,6 +54,6 @@ HGDIOBJ WIN16DRV_SelectObject( DC *dc, HGDIOBJ handle )
 	ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
 	break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return ret;
 }

@@ -19,8 +19,6 @@ extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner,
                                BOOL16 isCode, BOOL16 is32Bit,
                                BOOL16 isReadOnly );
 
-extern WORD WINAPI GlobalHandleToSel16( HGLOBAL16 handle );
-
 /* memory/virtual.c */
 extern DWORD VIRTUAL_GetPageSize(void);
 extern DWORD VIRTUAL_GetGranularity(void);

@@ -6,8 +6,14 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "windef.h"
+#include "wingdi.h"
+#include "winerror.h"
+#include "wine/winbase16.h"
 
 #include "bitmap.h"
 #include "brush.h"
@@ -21,8 +27,7 @@
 #include "debugtools.h"
 #include "gdi.h"
 #include "tweak.h"
-#include "windef.h"
-#include "wingdi.h"
+#include "syslevel.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
@@ -177,6 +182,10 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
 
 HBITMAP hPseudoStockBitmap; /* 1x1 bitmap for memory DCs */
 
+static SYSLEVEL GDI_level;
+static WORD GDI_HeapSel;
+
+
 /******************************************************************************
  *
  *   void  ReadFontInformation(
@@ -308,7 +317,8 @@ static inline void FixStockFontSizeA(
  */
 #define FixStockFontSizeW FixStockFontSizeA
 
-
+#define TRACE_SEC(handle,text) \
+   TRACE("(%04x): " text " %ld\n", (handle), GDI_level.crst.RecursionCount)
 
 /***********************************************************************
  *           GDI_Init
@@ -318,6 +328,14 @@ static inline void FixStockFontSizeA(
 BOOL GDI_Init(void)
 {
     BOOL systemIsBold = (TWEAK_WineLook == WIN31_LOOK);
+    HPALETTE16 hpalette;
+    HINSTANCE16 instance;
+
+    _CreateSysLevel( &GDI_level, 3 );
+
+    /* create GDI heap */
+    if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;
+    GDI_HeapSel = GlobalHandleToSel16( instance );
 
     /* Kill some warnings.  */
     (void)align_OEMFixedFont;
@@ -340,12 +358,9 @@ BOOL GDI_Init(void)
     /* Create default palette */
 
     /* DR well *this* palette can't be moveable (?) */
-    {
-    HPALETTE16 hpalette = PALETTE_Init();
-    if( !hpalette )
-        return FALSE;
-    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LOCK( hpalette );
-    }
+    hpalette = PALETTE_Init();
+    if( !hpalette ) return FALSE;
+    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, hpalette );
 
     hPseudoStockBitmap = CreateBitmap( 1, 1, 1, 1, NULL ); 
     return TRUE;
@@ -355,71 +370,117 @@ BOOL GDI_Init(void)
 /***********************************************************************
  *           GDI_AllocObject
  */
-HGDIOBJ GDI_AllocObject( WORD size, WORD magic )
+void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
 {
     static DWORD count = 0;
-    GDIOBJHDR * obj;
-    HGDIOBJ16 handle;
-    if ( magic == DC_MAGIC || magic == METAFILE_DC_MAGIC )
-      handle = GDI_HEAP_ALLOC( size );
-    else 
-      handle = GDI_HEAP_ALLOC_MOVEABLE( size );
-    if (!handle) return 0;
-    obj = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
+    GDIOBJHDR *obj;
+
+    _EnterSysLevel( &GDI_level );
+    if (!(*handle = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size )))
+    {
+        _LeaveSysLevel( &GDI_level );
+        return NULL;
+    }
+    obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, *handle );
     obj->hNext   = 0;
     obj->wMagic  = magic;
     obj->dwCount = ++count;
-    GDI_HEAP_UNLOCK( handle );
-    return handle;
+
+    TRACE_SEC( *handle, "enter" );
+    return obj;
 }
 
 
 /***********************************************************************
+ *           GDI_ReallocObject
+ *
+ * The object ptr must have been obtained with GDI_GetObjPtr.
+ * The new pointer must be released with GDI_ReleaseObj.
+ */
+void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
+{
+    HGDIOBJ new_handle;
+
+    LOCAL_Unlock( GDI_HeapSel, handle );
+    if (!(new_handle = LOCAL_ReAlloc( GDI_HeapSel, handle, size, LMEM_MOVEABLE )))
+    {
+        TRACE_SEC( handle, "leave" );
+        _LeaveSysLevel( &GDI_level );
+        return NULL;
+    }
+    assert( new_handle == handle );  /* moveable handle cannot change */
+    return LOCAL_Lock( GDI_HeapSel, handle );
+}
+ 
+
+/***********************************************************************
  *           GDI_FreeObject
  */
-BOOL GDI_FreeObject( HGDIOBJ handle )
+BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
 {
-    GDIOBJHDR * object;
+    GDIOBJHDR *object = ptr;
 
-      /* Can't free stock objects */
-    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
-        return TRUE;
-    
-    object = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-    if (!object) return FALSE;
-    object->wMagic = 0;  /* Mark it as invalid */
- 
-      /* Free object */
-    
-    GDI_HEAP_FREE( handle );
+    /* can't free stock objects */
+    if (handle < FIRST_STOCK_HANDLE)
+    {
+        object->wMagic = 0;  /* Mark it as invalid */
+        LOCAL_Unlock( GDI_HeapSel, handle );
+        LOCAL_Free( GDI_HeapSel, handle );
+    }
+    TRACE_SEC( handle, "leave" );
+    _LeaveSysLevel( &GDI_level );
     return TRUE;
 }
+
 
 /***********************************************************************
  *           GDI_GetObjPtr
  *
  * Return a pointer to the GDI object associated to the handle.
  * Return NULL if the object has the wrong magic number.
- * Movable GDI objects are locked in memory: it is up to the caller to unlock
- * it after the caller is done with the pointer.
+ * The object must be released with GDI_ReleaseObj.
  */
-GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
+void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
 {
-    GDIOBJHDR * ptr = NULL;
+    GDIOBJHDR *ptr = NULL;
+
+    _EnterSysLevel( &GDI_level );
 
     if (handle >= FIRST_STOCK_HANDLE)
     {
         if (handle <= LAST_STOCK_HANDLE) ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
+        if (ptr && (magic != MAGIC_DONTCARE) && (ptr->wMagic != magic)) ptr = NULL;
     }
-    else 
-      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-    if (!ptr) return NULL;
-    if ((magic != MAGIC_DONTCARE) && (ptr->wMagic != magic)) 
+    else
     {
-      GDI_HEAP_UNLOCK( handle );
-      return NULL;
+        ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, handle );
+        if (ptr && (magic != MAGIC_DONTCARE) && (ptr->wMagic != magic))
+        {
+            LOCAL_Unlock( GDI_HeapSel, handle );
+            ptr = NULL;
+        }
     }
+
+    if (!ptr)
+    {
+        _LeaveSysLevel( &GDI_level );
+        SetLastError( ERROR_INVALID_HANDLE );
+    }
+    else TRACE_SEC( handle, "enter" );
+
     return ptr;
+}
+
+
+/***********************************************************************
+ *           GDI_ReleaseObj
+ *
+ */
+void GDI_ReleaseObj( HGDIOBJ handle )
+{
+    if (handle < FIRST_STOCK_HANDLE) LOCAL_Unlock( GDI_HeapSel, handle );
+    TRACE_SEC( handle, "leave" );
+    _LeaveSysLevel( &GDI_level );
 }
 
 
@@ -441,10 +502,12 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     GDIOBJHDR * header;
     if (HIWORD(obj)) return FALSE;
-    if ((obj >= FIRST_STOCK_HANDLE) && (obj <= LAST_STOCK_HANDLE))
+    if ((obj >= FIRST_STOCK_HANDLE) && (obj <= LAST_STOCK_HANDLE)) {
+	TRACE("Preserving Stock object %04x\n", obj );
+	/* NOTE: No GDI_Release is necessary */
         return TRUE;
-    if (obj == hPseudoStockBitmap) return TRUE;
-    if (!(header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj ))) return FALSE;
+    }
+    if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
 
     TRACE("%04x\n", obj );
 
@@ -452,19 +515,22 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     switch(header->wMagic)
     {
-      case PEN_MAGIC:     return GDI_FreeObject( obj );
+      case PEN_MAGIC:     return GDI_FreeObject( obj, header );
       case BRUSH_MAGIC:   return BRUSH_DeleteObject( obj, (BRUSHOBJ*)header );
-      case FONT_MAGIC:    return GDI_FreeObject( obj );
+      case FONT_MAGIC:    return GDI_FreeObject( obj, header );
       case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
       case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
       case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
-      case DC_MAGIC:      return DeleteDC(obj);
+      case DC_MAGIC:
+          GDI_ReleaseObj( obj );
+          return DeleteDC(obj);
       case 0 :
         WARN("Already deleted\n");
         break;
       default:
         WARN("Unknown magic number (%d)\n",header->wMagic);
     }
+    GDI_ReleaseObj( obj );
     return FALSE;
 }
 
@@ -482,11 +548,12 @@ HGDIOBJ16 WINAPI GetStockObject16( INT16 obj )
  */
 HGDIOBJ WINAPI GetStockObject( INT obj )
 {
+    HGDIOBJ ret;
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
-    TRACE("returning %d\n",
-                FIRST_STOCK_HANDLE + obj );
-    return (HGDIOBJ16)(FIRST_STOCK_HANDLE + obj);
+    ret = (HGDIOBJ16)(FIRST_STOCK_HANDLE + obj);
+    TRACE("returning %4x\n", ret );
+    return ret;
 }
 
 
@@ -527,7 +594,7 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 	result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
 	break;
       }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return result;
 }
 
@@ -585,7 +652,7 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
           ERR("Invalid GDI Magic %04x\n", ptr->wMagic);
 	  return 0;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return result;
 }
 
@@ -630,7 +697,7 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
                    ptr->wMagic );
           break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return result;
 }
 
@@ -688,7 +755,7 @@ DWORD WINAPI GetObjectType( HANDLE handle )
 			   ptr->wMagic );
 	  break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return result;
 }
 
@@ -697,21 +764,25 @@ DWORD WINAPI GetObjectType( HANDLE handle )
  */
 HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
 {
+    HANDLE ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
 
-    if (!dc) 
-    	return 0;
+    if (dc) 
+    {
     switch (type) {
-    case OBJ_PEN:	return dc->w.hPen;
-    case OBJ_BRUSH:	return dc->w.hBrush;
-    case OBJ_PAL:	return dc->w.hPalette;
-    case OBJ_FONT:	return dc->w.hFont;
-    case OBJ_BITMAP:	return dc->w.hBitmap;
+	case OBJ_PEN:	 ret = dc->w.hPen; break;
+	case OBJ_BRUSH:	 ret = dc->w.hBrush; break;
+	case OBJ_PAL:	 ret = dc->w.hPalette; break;
+	case OBJ_FONT:	 ret = dc->w.hFont; break;
+	case OBJ_BITMAP: ret = dc->w.hBitmap; break;
     default:
     	/* the SDK only mentions those above */
     	WARN("(%08x,%d): unknown type.\n",hdc,type);
-	return 0;
+	    break;
+        }
+        GDI_ReleaseObj( hdc );
     }
+    return ret;
 }
 
 
@@ -729,10 +800,14 @@ HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
  */
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 {
-    DC * dc = DC_GetDCPtr( hdc );
-    if (!dc || !dc->funcs->pSelectObject) return 0;
+    HGDIOBJ ret = 0;
+    DC * dc = DC_GetDCUpdate( hdc );
+    if (!dc) return 0;
     TRACE("hdc=%04x %04x\n", hdc, handle );
-    return dc->funcs->pSelectObject( dc, handle );
+    if (dc->funcs->pSelectObject)
+        ret = dc->funcs->pSelectObject( dc, handle );
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 
@@ -753,7 +828,7 @@ BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
     BOOL result = TRUE;
   /* Check if object is valid */
 
-    GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj );
+    GDIOBJHDR * header = GDI_GetObjPtr( obj, MAGIC_DONTCARE );
     if (!header) return FALSE;
 
     TRACE("%04x\n", obj );
@@ -770,7 +845,7 @@ BOOL WINAPI UnrealizeObject( HGDIOBJ obj )
         /* Windows resets the brush origin. We don't need to. */
         break;
     }
-    GDI_HEAP_UNLOCK( obj );
+    GDI_ReleaseObj( obj );
     return result;
 }
 
@@ -939,54 +1014,13 @@ BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle )
 {
     UINT16 magic = 0;
 
-    if (handle >= FIRST_STOCK_HANDLE ) 
+    GDIOBJHDR *object = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    if (object)
     {
-        switch (handle)
-        {
-        case STOCK_WHITE_BRUSH:
-        case STOCK_LTGRAY_BRUSH:
-        case STOCK_GRAY_BRUSH:
-        case STOCK_DKGRAY_BRUSH:
-        case STOCK_BLACK_BRUSH:
-        case STOCK_HOLLOW_BRUSH:
-            magic = BRUSH_MAGIC;
-            break;
-
-        case STOCK_WHITE_PEN:
-        case STOCK_BLACK_PEN:
-        case STOCK_NULL_PEN :
-            magic = PEN_MAGIC;
-            break;
-
-        case STOCK_OEM_FIXED_FONT:
-        case STOCK_ANSI_FIXED_FONT:
-        case STOCK_ANSI_VAR_FONT:
-        case STOCK_SYSTEM_FONT:
-        case STOCK_DEVICE_DEFAULT_FONT:
-        case STOCK_SYSTEM_FIXED_FONT:
-        case STOCK_DEFAULT_GUI_FONT:
-            magic = FONT_MAGIC;
-            break;
-
-        case STOCK_DEFAULT_PALETTE:
-            magic = PALETTE_MAGIC;
-            break;
-        }
+        magic = object->wMagic - PEN_MAGIC + 1;
+        GDI_ReleaseObj( handle );
     }
-    else
-    {
-	GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-	if (object)
-	{
-	    magic = object->wMagic;
-	    GDI_HEAP_UNLOCK( handle );
-	}
-    }
-
-    if (magic >= PEN_MAGIC && magic <= METAFILE_DC_MAGIC)
-        return magic - PEN_MAGIC + 1;
-    else
-        return FALSE;
+    return magic;
 }
 
 

@@ -2595,9 +2595,6 @@ int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     int lines = descr->lines >= 0 ? descr->lines : -descr->lines;
     XImage *bmpImage;
 
-    if ( descr->dc && descr->dc->w.flags & DC_DIRTY ) 
-        CLIPPING_UpdateGCRegion( descr->dc );
-
     if (descr->image)
         bmpImage = descr->image;
     else {
@@ -2984,11 +2981,18 @@ INT X11DRV_DIB_GetDIBits(
    */
   if( info->bmiHeader.biHeight < 0 && lines > 0) lines = -lines;
 
-  if( startscan >= bmp->bitmap.bmHeight ) return FALSE;
+  if( startscan >= bmp->bitmap.bmHeight )
+  {
+      lines = 0;
+      goto done;
+  }
   
   if (DIB_GetBitmapInfo( &info->bmiHeader, &descr.infoWidth, &descr.lines,
                         &descr.infoBpp, &descr.compression ) == -1)
-      return FALSE;
+  {
+      lines = 0;
+      goto done;
+  }
 
   switch (descr.infoBpp)
   {
@@ -3060,7 +3064,8 @@ INT X11DRV_DIB_GetDIBits(
 
   info->bmiHeader.biCompression = 0;
 
-  GDI_HEAP_UNLOCK( dc->w.hPalette );
+done:
+  GDI_ReleaseObj( dc->w.hPalette );
  
   return lines;
 }
@@ -3193,7 +3198,7 @@ static BOOL X11DRV_DIB_FaultHandler( LPVOID res, LPCVOID addr )
 	break;
       }
   
-  GDI_HEAP_UNLOCK( (HBITMAP)res );
+  GDI_ReleaseObj( (HBITMAP)res );
   return handled;
 }
 
@@ -3276,7 +3281,7 @@ void X11DRV_DIB_UpdateDIBSection2(HBITMAP hbmp, BOOL toDIB)
 
   X11DRV_DIB_CmnUpdateDIBSection(bmp, toDIB);
 
-  GDI_HEAP_UNLOCK(hbmp);
+  GDI_ReleaseObj(hbmp);
 }
 
 /***********************************************************************
@@ -3325,11 +3330,10 @@ HBITMAP16 X11DRV_DIB_CreateDIBSection16(
 	  TRACE("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
 			 dib->dsBm.bmBits, size, ((X11DRV_DIBSECTION *) bmp->dib)->selector,
 			 PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0));
-	}
-      GDI_HEAP_UNLOCK( res );
-      
       if ( bits ) 
 	*bits = PTR_SEG_OFF_TO_SEGPTR( ((X11DRV_DIBSECTION *) bmp->dib)->selector, 0 );
+    }
+      if (bmp) GDI_ReleaseObj( res );
     }
 
     return res;
@@ -3545,6 +3549,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
       if (colorMap) { HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL; }
       if (dib) { HeapFree(GetProcessHeap(), 0, dib); dib = NULL; }
+      if (bmp) { GDI_ReleaseObj(res); bmp = NULL; }
       if (res) { DeleteObject(res); res = 0; }
     }
   
@@ -3567,7 +3572,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
     }
 
   /* Return BITMAP handle and storage location */
-  if (res) GDI_HEAP_UNLOCK(res);
+  if (bmp) GDI_ReleaseObj(res);
   if (bm.bmBits && bits) *bits = bm.bmBits;
   return res;
 }
@@ -3642,6 +3647,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
         pBmp->physBitmap = NULL;
         pBmp->funcs = NULL;
     }
+    GDI_ReleaseObj( hBmp );
     DeleteObject(hBmp);  
     
 END:
@@ -3695,6 +3701,7 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
     pBmp->funcs = NULL;
 
     /* Delete the DDB we created earlier now that we have stolen its pixmap */
+    GDI_ReleaseObj( hBmp );
     DeleteObject(hBmp);
     
     TRACE("\tReturning Pixmap %ld\n", pixmap);

@@ -324,7 +324,7 @@ extern BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right,
 			     INT bottom );
 extern INT PSDRV_EndDoc( DC *dc );
 extern INT PSDRV_EndPage( DC *dc );
-extern BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+extern BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONT16 plf, 
 				     DEVICEFONTENUMPROC proc, LPARAM lp );
 extern INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
 			   SEGPTR lpInData, SEGPTR lpOutData );

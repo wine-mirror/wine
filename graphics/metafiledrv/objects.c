@@ -35,7 +35,7 @@ static HBITMAP16 MFDRV_BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
 
 INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 {
-    INT16 index;
+    INT16 index = -1;
     DWORD size;
     METARECORD *mr;
     BRUSHOBJ *brushObj = (BRUSHOBJ *)GDI_GetObjPtr( hBrush, BRUSH_MAGIC );
@@ -68,7 +68,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	    GetObjectA(brushObj->logbrush.lbHatch, sizeof(bm), &bm);
 	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
 	        FIXME("Trying to store a colour pattern brush\n");
-		return FALSE;
+		goto done;
 	    }
 
 	    bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, 1);
@@ -77,7 +77,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	      sizeof(RGBQUAD) + bmSize;
 
 	    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	    if(!mr) return FALSE;
+	    if(!mr) goto done;
 	    mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	    mr->rdSize = size / 2;
 	    mr->rdParm[0] = BS_PATTERN;
@@ -114,7 +114,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 					  LOWORD(brushObj->logbrush.lbColor)); 
 	      size = sizeof(METARECORD) + biSize + bmSize + 2;
 	      mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-	      if(!mr) return FALSE;
+	      if(!mr) goto done;
 	      mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	      mr->rdSize = size / 2;
 	      *(mr->rdParm) = brushObj->logbrush.lbStyle;
@@ -130,7 +130,8 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
     if(!MFDRV_WriteRecord( dc, mr, mr->rdSize * 2))
         index = -1;
     HeapFree(GetProcessHeap(), 0, mr);
-    GDI_HEAP_UNLOCK( hBrush );
+done:
+    GDI_ReleaseObj( hBrush );
     return index;
 }
 
@@ -260,7 +261,7 @@ HGDIOBJ MFDRV_SelectObject( DC *dc, HGDIOBJ handle )
 	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
 	  break;
     }
-    GDI_HEAP_UNLOCK( handle );
+    GDI_ReleaseObj( handle );
     return ret;
 }
 

@@ -692,14 +692,15 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
             if( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
             {
                 WARN("RGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
-		GDI_HEAP_UNLOCK( hPal );
+		GDI_ReleaseObj( hPal );
                 return 0;
             }
 
             if( palPtr->mapping ) 
 	    {
-		GDI_HEAP_UNLOCK( hPal );
-		return palPtr->mapping[idx];
+                int ret = palPtr->mapping[idx];
+		GDI_ReleaseObj( hPal );
+		return ret;
 	    }
 	    color = *(COLORREF*)(palPtr->logpalette.palPalEntry + idx);
 	    break;
@@ -711,7 +712,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 	  case 0: /* RGB */
 	    if( dc && (dc->w.bitsPerPixel == 1) )
 	    {
-		GDI_HEAP_UNLOCK( hPal );
+		GDI_ReleaseObj( hPal );
 		return (((color >> 16) & 0xff) +
 			((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
 	    }
@@ -723,7 +724,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 	if (X11DRV_PALETTE_Graymax)
         {
 	    /* grayscale only; return scaled value */
-	    GDI_HEAP_UNLOCK( hPal );
+	    GDI_ReleaseObj( hPal );
             return ( (red * 30 + green * 69 + blue * 11) * X11DRV_PALETTE_Graymax) / 25500;
 	}
 	else
@@ -736,7 +737,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 	    if (X11DRV_PALETTE_Bluemax != 255)
 		blue = MulDiv(blue, X11DRV_PALETTE_Bluemax, 255);
 
-	    GDI_HEAP_UNLOCK( hPal );
+	    GDI_ReleaseObj( hPal );
 	    return (red << X11DRV_PALETTE_Redshift) | (green << X11DRV_PALETTE_Greenshift) | (blue << X11DRV_PALETTE_Blueshift);
         }
     }
@@ -755,7 +756,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
        	    case 0:  /* RGB */
 		if( dc && (dc->w.bitsPerPixel == 1) )
 		{
-		    GDI_HEAP_UNLOCK( hPal );
+		    GDI_ReleaseObj( hPal );
 		    return (((color >> 16) & 0xff) +
 			    ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
 		}
@@ -786,7 +787,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 	}
     }
 
-    GDI_HEAP_UNLOCK( hPal );
+    GDI_ReleaseObj( hPal );
     return index;
 }
 

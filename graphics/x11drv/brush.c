@@ -172,17 +172,18 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
  */
 static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 {
+    BOOL ret = FALSE;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
 
    if(!bmp->physBitmap)
         if(!X11DRV_CreateBitmap(hbitmap))
-	    return 0;
+	    goto done;
 
     if(bmp->funcs != dc->funcs) {
         WARN("Trying to select non-X11 DDB into an X11 dc\n");
-	return 0;
+	goto done;
     }
 
     if ((dc->w.bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
@@ -211,8 +212,10 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 	physDev->brush.fillStyle = FillOpaqueStippled;
 	physDev->brush.pixel = -1;  /* Special case (see DC_SetupGCForBrush) */
     }
-    GDI_HEAP_UNLOCK( hbitmap );
-    return TRUE;
+    ret = TRUE;
+ done:
+    GDI_ReleaseObj( hbitmap );
+    return ret;
 }
 
 

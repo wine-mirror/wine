@@ -240,9 +240,13 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     dc->w.devCaps      = &X11DRV_DevCaps;
     if (dc->w.flags & DC_MEMORY)
     {
-        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap,
-                                                      BITMAP_MAGIC );
-	if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->w.hBitmap );
+        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
+	if (!bmp) 
+	{
+	    HeapFree( GetProcessHeap(), 0, physDev );
+	    return FALSE;
+        }
+        if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->w.hBitmap );
         physDev->drawable  = (Pixmap)bmp->physBitmap;
         physDev->gc        = TSXCreateGC(display, physDev->drawable, 0, NULL);
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
@@ -253,7 +257,7 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
         dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
 
-	GDI_HEAP_UNLOCK( dc->w.hBitmap );
+        GDI_ReleaseObj( dc->w.hBitmap );
     }
     else
     {
@@ -274,6 +278,7 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     if (!dc->w.hVisRgn)
     {
         TSXFreeGC( display, physDev->gc );
+	HeapFree( GetProcessHeap(), 0, physDev );
         return FALSE;
     }
 
