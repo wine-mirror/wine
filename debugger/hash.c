@@ -879,49 +879,115 @@ static void DEBUG_LoadEntryPoints32( HMODULE hModule, const char *name )
 #undef RVA
 }
 
+typedef struct tag_lmr{
+   char*		module_name;
+   BOOL			is16;
+   struct tag_lmr*	next;
+} DBG_LoadedModuleRef;
+
+typedef struct {
+   int			rowcount;
+   int			first;
+   const char* 		pfx;
+} DBG_LEPData;
+
+static	BOOL	DEBUG_LEPHelper(const char* mod_name, BOOL is16, DBG_LEPData* lep)
+{
+static	DBG_LoadedModuleRef* 	lmr = NULL;
+    DBG_LoadedModuleRef*	p;
+    DBG_LoadedModuleRef**	pp1;
+    DBG_LoadedModuleRef*	p2;
+    int				len = strlen(mod_name);
+    int				cmp;
+
+    for (p = lmr; p; p = p->next) {
+        cmp = strcmp(p->module_name, mod_name);
+	if (cmp < 0)
+	   continue;
+	if (cmp == 0) {
+	   if (p->is16 == is16)
+	      return FALSE;
+	   continue;
+	}
+	break;
+    }
+
+    if (!lep->first) {
+        if (lep->pfx) fprintf( stderr, lep->pfx );
+	fprintf( stderr, "   " );
+	lep->first++;
+	lep->rowcount = 3;
+    }
+
+    if ((lep->rowcount + len) > 76)
+    {
+        fprintf( stderr, "\n   ");
+	lep->rowcount = 3;
+    }
+    fprintf( stderr, " %s", mod_name );
+    lep->rowcount += len + 1;
+
+    p = DBG_alloc(sizeof(*lmr));
+    p->module_name = DBG_strdup(mod_name);
+    p->is16 = is16;
+    
+    p2 = NULL;
+    for (pp1 = &lmr; *pp1; pp1 = &(*pp1)->next) {
+        if (strcmp((*pp1)->module_name, mod_name) > 0)
+	    break;
+       p2 = *pp1;
+    }
+    if (p2 == NULL) 
+    {
+        p->next = lmr;
+	lmr = p;
+    } 
+    else if (*pp1 == NULL) 
+    {
+        p->next = NULL;
+	*pp1 = p;
+    } 
+    else 
+    {
+       p->next = *pp1;
+       p2->next = p;
+    }
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           DEBUG_LoadEntryPoints
  *
  * Load the entry points of all the modules into the hash table.
  */
-void DEBUG_LoadEntryPoints(void)
+int DEBUG_LoadEntryPoints(const char* pfx)
 {
-    MODULEENTRY entry;
-    NE_MODULE *pModule;
-    BOOL ok;
-    WINE_MODREF	*wm;
-    int rowcount = 3;
+    MODULEENTRY	entry;
+    NE_MODULE*	pModule;
+    BOOL 	ok;
+    WINE_MODREF*wm;
+    DBG_LEPData	lep;
+    
+    lep.first = 0;
+    lep.pfx = pfx;
 
-    fprintf( stderr, "   " );
+    /* FIXME: we assume that a module is never removed from memory */
+    
     for (ok = ModuleFirst16(&entry); ok; ok = ModuleNext16(&entry))
     {
         if (!(pModule = NE_GetPtr( entry.hModule ))) continue;
-        if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
-	  {
-	if ((rowcount + strlen(entry.szModule)) > 76)
-        {
-	    fprintf( stderr,"\n   ");
-	    rowcount = 3;
-        }
-        fprintf( stderr, " %s", entry.szModule );
-        rowcount += strlen(entry.szModule) + 1;
-
-            DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
-	  }
+        if (!(pModule->flags & NE_FFLAGS_WIN32) &&  /* NE module */
+	    DEBUG_LEPHelper( entry.szModule, TRUE, &lep ))
+	    DEBUG_LoadEntryPoints16( entry.hModule, pModule, entry.szModule );
     }
     for (wm=PROCESS_Current()->modref_list;wm;wm=wm->next)
     {
-        if ((rowcount + strlen(wm->modname)) > 76)
-        {
-            fprintf( stderr,"\n   ");
-            rowcount = 3;
-        }
-        fprintf( stderr, " %s", wm->modname );
-        rowcount += strlen(wm->modname) + 1;
-	DEBUG_LoadEntryPoints32( wm->module, wm->modname );
+        if (DEBUG_LEPHelper( wm->modname, FALSE, &lep ))
+	    DEBUG_LoadEntryPoints32( wm->module, wm->modname );
     }
-    fprintf( stderr, "\n" );
+    if (lep.first) fprintf( stderr, "\n" );
+    return lep.first;
 }
 
 

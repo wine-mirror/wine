@@ -553,8 +553,12 @@ struct deferred_debug_info
         PIMAGE_SECTION_HEADER	          sectp;
 	int				  nsect;
 	short int			  dbg_index;			
-	char				  loaded;
+	char				  status;
 };
+
+#define DF_STATUS_NEW		0
+#define DF_STATUS_LOADED	1
+#define DF_STATUS_ERROR		2
 
 struct deferred_debug_info * dbglist = NULL;
 
@@ -1025,7 +1029,7 @@ DEBUG_RegisterDebugInfo( HMODULE hModule, const char *module_name)
                 deefer->dbg_size = dbgptr->SizeOfData;
                 deefer->dbgdir = dbgptr;
                 deefer->next = dbglist;
-                deefer->loaded = FALSE;
+                deefer->status = DF_STATUS_NEW;
                 deefer->dbg_index = DEBUG_next_index;
                 deefer->module_name = DBG_strdup(module_name);
 
@@ -1094,7 +1098,7 @@ DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name)
   deefer->load_addr = (char *) load_addr;
   deefer->dbgdir = NULL;
   deefer->next = dbglist;
-  deefer->loaded = TRUE;
+  deefer->status = DF_STATUS_LOADED;
   deefer->dbg_index = DEBUG_next_index;
   deefer->module_name = DBG_strdup(name);
   dbglist = deefer;
@@ -2387,12 +2391,11 @@ DEBUG_ProcessDeferredDebug()
   char			     * filename;
   int			       last_proc = -1;
   int                          need_print =0;
-
-  DEBUG_InitCVDataTypes();
+  int			       sts;
 
   for(deefer = dbglist; deefer; deefer = deefer->next)
     {
-      if( deefer->loaded )
+      if( deefer->status != DF_STATUS_NEW )
 	{
 	  continue;
 	}
@@ -2418,7 +2421,7 @@ DEBUG_ProcessDeferredDebug()
 #if 0
 	  fprintf(stderr, "Processing COFF symbols...\n");
 #endif
-	  DEBUG_ProcessCoff(deefer);
+	  sts = DEBUG_ProcessCoff(deefer);
 	  break;
 	case IMAGE_DEBUG_TYPE_CODEVIEW:
 	  /*
@@ -2432,9 +2435,10 @@ DEBUG_ProcessDeferredDebug()
 	       * Whatever this is, we don't know how to deal with
 	       * it yet.
 	       */
+	      sts = FALSE;
 	      break;
 	    }
-	  DEBUG_ProcessPDBFile(deefer, cvd->cv_name);
+	  sts = DEBUG_ProcessPDBFile(deefer, cvd->cv_name);
 #if 0
 	  fprintf(stderr, "Processing PDB file %s\n", cvd->cv_name);
 #endif
@@ -2456,7 +2460,8 @@ DEBUG_ProcessDeferredDebug()
 	      || (    (strcmp(filename, ".dbg") != 0)
 	           && (strcmp(filename, ".DBG") != 0)) )
 	    {
-	      break;
+	       sts = FALSE;
+	       break;
 	    }
 
 	  filename = (char *) &misc->Data;
@@ -2464,18 +2469,21 @@ DEBUG_ProcessDeferredDebug()
 	  /*
 	   * Do the dirty deed...
 	   */
-	  DEBUG_ProcessDBGFile(deefer, filename);
+	  sts = DEBUG_ProcessDBGFile(deefer, filename);
       
 	  break;
 	default:
 	  /*
 	   * We should never get here...
 	   */
+	   sts = FALSE;
 	  break;
 	}
+      deefer->status = (sts) ? DF_STATUS_LOADED : DF_STATUS_ERROR;
+
     }
-      if(need_print)
-       fprintf(stderr, "\n");
+  if(need_print)
+     fprintf(stderr, "\n");
   return TRUE;
 
 }

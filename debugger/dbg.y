@@ -519,6 +519,7 @@ static void DEBUG_Main( BOOL is_debug )
 	 * Initialize the type handling stuff.
 	 */
 	DEBUG_InitTypes();
+	DEBUG_InitCVDataTypes();
 
 	/*
 	 * In some cases we can read the stabs information directly
@@ -541,9 +542,13 @@ static void DEBUG_Main( BOOL is_debug )
                                      SymbolTableFile, sizeof(SymbolTableFile));
 	    DEBUG_ReadSymbolTable( SymbolTableFile );
         }
-
-        DEBUG_LoadEntryPoints();
+	DEBUG_LoadEntryPoints(NULL);
 	DEBUG_ProcessDeferredDebug();
+    }
+    else 
+    {
+        if (DEBUG_LoadEntryPoints("Loading new modules symbols:\n"))
+	    DEBUG_ProcessDeferredDebug();
     }
 
 #if 0
