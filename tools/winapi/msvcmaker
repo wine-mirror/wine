@@ -9,7 +9,9 @@ BEGIN {
     require "$1/winapi/setup.pm";
 }
 
-use config qw(&file_directory &get_spec_files &get_makefile_in_files $current_dir $wine_dir);
+use setup qw($current_dir $wine_dir);
+use lib $setup::winapi_dir;
+use config qw(&get_spec_files &get_makefile_in_files);
 use output qw($output);
 use util qw(replace_file);
 
