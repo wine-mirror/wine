@@ -39,13 +39,13 @@ static HRESULT WINAPI BandCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPV
 
 static ULONG WINAPI BandCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI BandCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI BandCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
@@ -84,13 +84,13 @@ static HRESULT WINAPI BandTrackCF_QueryInterface(LPCLASSFACTORY iface,REFIID rii
 
 static ULONG WINAPI BandTrackCF_AddRef(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI BandTrackCF_Release(LPCLASSFACTORY iface) {
 	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
-	return --(This->ref);
+	return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI BandTrackCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
