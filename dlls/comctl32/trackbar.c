@@ -351,7 +351,7 @@ TRACKBAR_Refresh (HWND hwnd, HDC hdc)
     TRACKBAR_INFO *infoPtr = TRACKBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     RECT rcClient, rcChannel, rcSelection;
-    HBRUSH hBrush = CreateSolidBrush (infoPtr->clrBk);
+    HBRUSH hBrush;
     int i;
 
     GetClientRect (hwnd, &rcClient);
@@ -420,7 +420,7 @@ TRACKBAR_Refresh (HWND hwnd, HDC hdc)
 
     if (!(dwStyle & TBS_NOTHUMB)) {
 		
-        HBRUSH hbr = CreateSolidBrush (COLOR_BACKGROUND);
+        HBRUSH hbr = CreateSolidBrush (COLOR_BTNFACE);
         RECT thumb = infoPtr->rcThumb;
 
         SelectObject (hdc, hbr);
@@ -1081,7 +1081,7 @@ TRACKBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->uNumTics  = 0;    /* start and end tic are not included in count*/
     infoPtr->uTicFreq  = 1;
     infoPtr->tics	   = NULL;
-    infoPtr->clrBk	   = GetSysColor (COLOR_BACKGROUND);
+    infoPtr->clrBk	   = GetSysColor (COLOR_BTNFACE);
     infoPtr->hwndNotify = GetParent (hwnd);
 
     TRACKBAR_InitializeThumb (hwnd);
