@@ -124,6 +124,7 @@ static void*	DEBUG_MapDebugInfoFile(const char* name, DWORD offset, DWORD size,
     
     if ((ret = MapViewOfFile(*hMap, FILE_MAP_READ, 0, g_offset, g_size)) != NULL)
        ret += offset - g_offset;
+
     return ret;
 }
 
@@ -2856,25 +2857,30 @@ static enum DbgInfoLoad DEBUG_ProcessDebugDirectory( DBG_MODULE *module,
 
     /* First, watch out for OMAP data */
     for ( i = 0; i < nDbg; i++ )
+    {
         if ( dbg[i].Type == IMAGE_DEBUG_TYPE_OMAP_FROM_SRC )
         {
             module->msc_info->nomap = dbg[i].SizeOfData / sizeof(OMAP_DATA);
             module->msc_info->omapp = (OMAP_DATA *)(file_map + dbg[i].PointerToRawData);
             break;
         }
-
+    }
 
     /* Now, try to parse CodeView debug info */
     for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
+    {
         if ( dbg[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW )
+        {
             dil = DEBUG_ProcessCodeView( module, file_map + dbg[i].PointerToRawData );
-
+        }
+    }
 
     /* If not found, try to parse COFF debug info */
     for ( i = 0; dil != DIL_LOADED && i < nDbg; i++ )
+    {
         if ( dbg[i].Type == IMAGE_DEBUG_TYPE_COFF )
             dil = DEBUG_ProcessCoff( module, file_map + dbg[i].PointerToRawData );
-
+    }
 #if 0
 	 /* FIXME: this should be supported... this is the debug information for
 	  * functions compiled without a frame pointer (FPO = frame pointer omission)
@@ -3032,8 +3038,30 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
     else
     {
         /* Debug info is embedded into PE module */
+        /* FIXME: the nDBG information we're manipulating comes from the debuggee
+         * address space. However, the following code will be made against the
+         * version mapped in the debugger address space. There are cases (for example
+         * when the PE sections are compressed in the file and become decompressed
+         * in the debuggee address space) where the two don't match.
+         * Therefore, redo the DBG information lookup with the mapped data
+         */
+        PIMAGE_NT_HEADERS      mpd_nth = (PIMAGE_NT_HEADERS)(file_map + nth_ofs);
+        PIMAGE_DATA_DIRECTORY  mpd_dir;
+        PIMAGE_DEBUG_DIRECTORY mpd_dbg = NULL;
+            
+        /* sanity checks */
+        if ( mpd_nth->Signature != IMAGE_NT_SIGNATURE || 
+             mpd_nth->FileHeader.NumberOfSections != nth->FileHeader.NumberOfSections ||
+             !(mpd_nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED ))
+            goto leave;
+        mpd_dir = mpd_nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
+        
+        if ((mpd_dir->Size / sizeof(IMAGE_DEBUG_DIRECTORY)) != nDbg)
+            goto leave;
 
-        dil = DEBUG_ProcessDebugDirectory( module, file_map, dbg, nDbg );
+        mpd_dbg = (PIMAGE_DEBUG_DIRECTORY)(file_map + mpd_dir->VirtualAddress);
+
+        dil = DEBUG_ProcessDebugDirectory( module, file_map, mpd_dbg, nDbg );
     }
 
 
