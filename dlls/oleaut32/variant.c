@@ -3113,11 +3113,6 @@ HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE* pdateOut)
 {
 	TRACE("( %d, %p ), stub\n", uiIn, pdateOut );
 
-	if( uiIn > DATE_MAX )
-	{
-		return DISP_E_OVERFLOW;
-	}
-
 	*pdateOut = (DATE) uiIn;
 
 	return S_OK;
