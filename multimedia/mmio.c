@@ -257,6 +257,15 @@ static HMMIO16 MMIO_Open(LPSTR szFileName, MMIOINFO16 * lpmmioinfo,
 
 	TRACE(mmio, "('%s', %p, %08lX);\n", szFileName, lpmmioinfo, dwOpenFlags);
 
+	if (dwOpenFlags & MMIO_PARSE) {
+		char	buffer[MAX_PATH];
+
+		if (GetFullPathNameA(szFileName, sizeof(buffer), buffer, NULL) >= sizeof(buffer))
+			return (HMMIO16)FALSE;
+		strcpy(szFileName, buffer);
+		return (HMMIO16)TRUE;
+	}
+
 	hmmio = GlobalAlloc16(GHND, sizeof(MMIOINFO16));
 	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
 	if (lpmminfo == NULL)
