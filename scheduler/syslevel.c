@@ -123,8 +123,10 @@ VOID WINAPI _ConfirmSysLevel(CRITICAL_SECTION *lock)
  */
 DWORD WINAPI _ConfirmWin16Lock(void)
 {
-    FIXME(win32, "()\n");
-    return 1;
+    if ( Win16Mutex.OwningThread == GetCurrentThreadId() )
+        return Win16Mutex.RecursionCount;
+    else
+        return 0L;
 }
 
 /************************************************************************

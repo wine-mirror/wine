@@ -24,6 +24,7 @@ SEGPTR WINAPI GetpWin16Lock16(void);
 
 VOID WINAPI _EnterSysLevel(CRITICAL_SECTION *lock);
 VOID WINAPI _LeaveSysLevel(CRITICAL_SECTION *lock);
+DWORD WINAPI _ConfirmWin16Lock(void);
 
 VOID WINAPI ReleaseThunkLock(DWORD *mutex_count);
 VOID WINAPI RestoreThunkLock(DWORD mutex_count);
