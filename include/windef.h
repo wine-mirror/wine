@@ -151,12 +151,16 @@ typedef INT     CALLBACK (*PROC)();
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 #endif
 
-#define _MAX_PATH  260
-#define MAX_PATH   260
-#define _MAX_DRIVE 3
-#define _MAX_DIR   256
-#define _MAX_FNAME 255
-#define _MAX_EXT   256
+#ifndef _MAX_PATH
+/* FIXME: These are supposed to be in stdlib.h only */
+#define _MAX_DRIVE          3
+#define _MAX_FNAME          256
+#define _MAX_DIR            _MAX_FNAME
+#define _MAX_EXT            _MAX_FNAME
+#define _MAX_PATH           260
+#endif
+#define MAX_PATH            _MAX_PATH
+
 
 #define HFILE_ERROR     ((HFILE)-1)
 

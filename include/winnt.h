@@ -12,6 +12,7 @@
 #ifndef RC_INVOKED
 #include <ctype.h>
 #include <stddef.h>
+#include <string.h>
 #endif
 
 
@@ -250,10 +251,13 @@ typedef short           SHORT,      *PSHORT;
 typedef long            LONG,       *PLONG,    *LPLONG;
 
 /* Some systems might have wchar_t, but we really need 16 bit characters */
+#ifndef WINE_WCHAR_DEFINED
 #ifdef WINE_UNICODE_NATIVE
 typedef wchar_t         WCHAR,      *PWCHAR;
 #else
 typedef unsigned short  WCHAR,      *PWCHAR;
+#endif
+#define WINE_WCHAR_DEFINED
 #endif
 
 /* 'Extended/Wide' numerical types */

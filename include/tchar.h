@@ -7,68 +7,6 @@
 extern "C" {
 #endif
 
-/* FIXME: this should be in direct.h but since it's a standard C library include (on some systems)... */
-#define _chdir chdir
-#define _rmdir rmdir
-
-/* FIXME: this should be in io.h but I believe it's a standard include on some systems... */
-/* would need unistd.h */
-#define _access access
-/* would need sys/stat.h */
-#define _chmod chmod
-/* would need fcntl.h */
-#define _creat creat
-#define _open open
-/* FIXME: we need _S_IWRITE, _O_CREAT ... */
-/* FIXME: _fsopen is not implemented */
-#define sopen _sopen
-/* FIXME: _sopen is not implemented */
-
-/* FIXME: this should be in stdio.h but since it's a standard C library include... */
-#define fgetchar getchar
-#define fputchar putchar
-#define _popen popen
-#define _tempnam tempnam
-#define _vsnprintf vsnprintf
-
-/* FIXME: this should be in stdlib.h but since it's a standard C library include... */
-/* FIXME: itoa and ltoa are missing */
-/* FIXME: _makepath is not implemented */
-/* FIXME: _searchenv is not implemented */
-/* FIXME: _splitpath is not implemented */
-
-/* FIXME: this should be in string.h but since it's a standard C library include... */
-#define _stricmp strcasecmp
-#define _strcmpi strcasecmp
-#define strcmpi strcasecmp
-#define _strnicmp strncasecmp
-#define strnicmp strncasecmp
-#define _strdup strdup
-/* FIXME: stricoll is not implemented but strcasecmp is probably close enough in most cases */
-#define _stricoll strcasecmp
-#define stricoll _stricoll
-#define strlwr _strlwr
-#define strnset _strnset
-/* FIXME: _strnset is not implemented */
-#define strrev CRTDLL__strrev
-char *CRTDLL__strrev(char *string);
-#define strset _strset
-/* FIXME: _strset is not implemented */
-#define strupr _strupr
-#define ultoa _ultoa
-/* FIXME: _ultoa is not implemented */
-
-/* FIXME: this should be in sys/stat.h but since it's a standard C library include... */
-#define _stat stat
-
-/* FIXME: this should be in time.h but since it's a standard C library include... */
-/* FIXME: _strdate is not implemented */
-/* FIXME: _strtime is not implemented */
-
-/* FIXME: this should be in utime.h but since it's a standard C library include... */
-#define _utime utime
-
-
 /*****************************************************************************
  * tchar routines
  */
