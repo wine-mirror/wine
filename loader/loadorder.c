@@ -67,7 +67,7 @@ static module_loadorder_t default_order_list[] =
     { "mouse",        { LOADORDER_BI, 0, 0 } },
     { "ntdll",        { LOADORDER_BI, 0, 0 } },
     { "odbc32",       { LOADORDER_BI, 0, 0 } },
-    { "system",       { LOADORDER_BI, 0, 0 } },
+    { "system.drv",   { LOADORDER_BI, 0, 0 } },
     { "toolhelp",     { LOADORDER_BI, 0, 0 } },
     { "ttydrv",       { LOADORDER_BI, 0, 0 } },
     { "user.exe",     { LOADORDER_BI, 0, 0 } },

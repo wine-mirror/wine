@@ -157,10 +157,10 @@ static BOOL process_attach(void)
         NE_SetEntryPoint( hModule, 193, DOSMEM_BiosDataSeg ); /* KERNEL.193: __0040H */
         NE_SetEntryPoint( hModule, 194, DOSMEM_BiosSysSeg );  /* KERNEL.194: __F000H */
 #undef SET_ENTRY_POINT
-    }
 
-    /* Force loading of some dlls */
-    LoadLibrary16( "system" );
+        /* Force loading of some dlls */
+        LoadLibrary16( "system.drv" );
+    }
 
     /* Create 16-bit task */
     TASK_CreateMainTask();

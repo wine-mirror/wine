@@ -178,7 +178,7 @@ WIN16_FILES = \
 	sound.dll$(DLLEXT) \
 	storage.dll$(DLLEXT) \
 	stress.dll$(DLLEXT) \
-	system.dll$(DLLEXT) \
+	system.drv$(DLLEXT) \
 	toolhelp.dll$(DLLEXT) \
 	typelib.dll$(DLLEXT) \
 	user.exe$(DLLEXT) \
@@ -438,7 +438,7 @@ joystick.drv$(DLLEXT): winmm/joystick/joystick.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv$(DLLEXT) $@
 
 kernel32.dll$(DLLEXT) comm.dll$(DLLEXT) krnl386.exe$(DLLEXT) \
-  stress.dll$(DLLEXT) system.dll$(DLLEXT) toolhelp.dll$(DLLEXT) \
+  stress.dll$(DLLEXT) system.drv$(DLLEXT) toolhelp.dll$(DLLEXT) \
   win87em.dll$(DLLEXT) windebug.dll$(DLLEXT): kernel/kernel32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) kernel/kernel32.dll$(DLLEXT) $@
 

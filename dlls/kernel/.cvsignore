@@ -6,7 +6,7 @@ kernel32.spec.c
 kernel32.spec.def
 krnl386.exe.spec.c
 stress.spec.c
-system.spec.c
+system.drv.spec.c
 toolhelp.spec.c
 version16.res
 win87em.spec.c
