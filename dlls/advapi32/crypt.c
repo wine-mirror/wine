@@ -1451,6 +1451,7 @@ BOOL WINAPI CryptGetUserKey (HCRYPTPROV hProv, DWORD dwKeySpec, HCRYPTKEY *phUse
 
 	/* CSP Error */
 	CRYPT_Free(key);
+	*phUserKey = 0;
 	return FALSE;
 }
 
