@@ -744,6 +744,27 @@ NTSTATUS WINAPI NtAllocateLocallyUniqueId(PLUID Luid)
 ULONGLONG WINAPI VerSetConditionMask( ULONGLONG dwlConditionMask, DWORD dwTypeBitMask,
                                       BYTE dwConditionMask)
 {
-    FIXME("%llx %lu %u\n", dwlConditionMask, dwTypeBitMask, dwConditionMask);
+    if(dwTypeBitMask == 0)
+	return dwlConditionMask;
+    dwConditionMask &= 0x07;
+    if(dwConditionMask == 0)
+	return dwlConditionMask;
+
+    if(dwTypeBitMask & VER_PRODUCT_TYPE)
+	dwlConditionMask |= dwConditionMask << 7*3;
+    else if (dwTypeBitMask & VER_SUITENAME)
+	dwlConditionMask |= dwConditionMask << 6*3;
+    else if (dwTypeBitMask & VER_SERVICEPACKMAJOR)
+	dwlConditionMask |= dwConditionMask << 5*3;
+    else if (dwTypeBitMask & VER_SERVICEPACKMINOR)
+	dwlConditionMask |= dwConditionMask << 4*3;
+    else if (dwTypeBitMask & VER_PLATFORMID)
+	dwlConditionMask |= dwConditionMask << 3*3;
+    else if (dwTypeBitMask & VER_BUILDNUMBER)
+	dwlConditionMask |= dwConditionMask << 2*3;
+    else if (dwTypeBitMask & VER_MAJORVERSION)
+	dwlConditionMask |= dwConditionMask << 1*3;
+    else if (dwTypeBitMask & VER_MINORVERSION)
+	dwlConditionMask |= dwConditionMask << 0*3;
     return dwlConditionMask;
 }
