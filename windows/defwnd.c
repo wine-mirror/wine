@@ -22,6 +22,7 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
+#include "imm.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
 
@@ -212,6 +213,72 @@ static void DEFWND_Print(
   if ( uFlags & PRF_CLIENT)
     SendMessageA(wndPtr->hwndSelf, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT);
 }
+
+
+/*
+ * helpers for calling IMM32
+ *
+ * WM_IME_* messages are generated only by IMM32,
+ * so I assume imm32 is already LoadLibrary-ed.
+ */
+static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
+{
+    HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
+    HWND (WINAPI* pFunc)(HWND);
+    HWND hwndRet = NULL;
+
+    if (!hInstIMM)
+    {
+        ERR( "cannot get IMM32 handle\n" );
+        return NULL;
+    }
+
+    pFunc = (void*)GetProcAddress(hInstIMM,"ImmGetDefaultIMEWnd");
+    if ( pFunc != NULL )
+	hwndRet = (*pFunc)( hwnd );
+
+    return hwndRet;
+}
+
+static BOOL DEFWND_ImmIsUIMessageA( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
+    BOOL (WINAPI* pFunc)(HWND,UINT,WPARAM,LPARAM);
+    BOOL fRet = FALSE;
+
+    if (!hInstIMM)
+    {
+        ERR( "cannot get IMM32 handle\n" );
+        return FALSE;
+    }
+
+    pFunc = (void*)GetProcAddress(hInstIMM,"ImmIsUIMessageA");
+    if ( pFunc != NULL )
+	fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
+
+    return fRet;
+}
+
+static BOOL DEFWND_ImmIsUIMessageW( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
+    BOOL (WINAPI* pFunc)(HWND,UINT,WPARAM,LPARAM);
+    BOOL fRet = FALSE;
+
+    if (!hInstIMM)
+    {
+        ERR( "cannot get IMM32 handle\n" );
+        return FALSE;
+    }
+
+    pFunc = (void*)GetProcAddress(hInstIMM,"ImmIsUIMessageW");
+    if ( pFunc != NULL )
+	fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
+
+    return fRet;
+}
+
+
 
 /***********************************************************************
  *           DEFWND_DefWinProc
@@ -710,6 +777,46 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 	result = 1; /* success. FIXME: check text length */
         break;
 
+    /* for far east users (IMM32) - <hidenori@a2.ctktv.ne.jp> */
+    case WM_IME_CHAR:
+	{
+	    CHAR    chChar1 = (CHAR)( (wParam>>8) & 0xff );
+	    CHAR    chChar2 = (CHAR)( wParam & 0xff );
+
+	    SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar1, lParam );
+	    if ( IsDBCSLeadByte( chChar1 ) )
+		SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar2, lParam );
+	}
+	break;
+    case WM_IME_KEYDOWN:
+	result = SendMessageA( hwnd, WM_KEYDOWN, wParam, lParam );
+	break;
+    case WM_IME_KEYUP:
+	result = SendMessageA( hwnd, WM_KEYUP, wParam, lParam );
+	break;
+
+    case WM_IME_STARTCOMPOSITION:
+    case WM_IME_COMPOSITION:
+    case WM_IME_ENDCOMPOSITION:
+    case WM_IME_SELECT:
+	{
+	    HWND hwndIME;
+
+	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+	    if ( hwndIME != NULL )
+		result = SendMessageA( hwndIME, msg, wParam, lParam );
+	}
+	break;
+    case WM_IME_SETCONTEXT:
+	{
+	    HWND hwndIME;
+
+	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+	    if ( hwndIME != NULL )
+		result = DEFWND_ImmIsUIMessageA( hwndIME, msg, wParam, lParam );
+	}
+	break;
+
     default:
         result = DEFWND_DefWinProc( wndPtr, msg, wParam, lParam );
         break;
@@ -766,6 +873,20 @@ LRESULT WINAPI DefWindowProcW(
 	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
 	result = 1; /* success. FIXME: check text length */
         break;
+
+    /* for far east users (IMM32) - <hidenori@a2.ctktv.ne.jp> */
+    case WM_IME_CHAR:
+	SendMessageW( hwnd, WM_CHAR, wParam, lParam );
+	break;
+    case WM_IME_SETCONTEXT:
+	{
+	    HWND hwndIME;
+
+	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+	    if ( hwndIME != NULL )
+		result = DEFWND_ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
+	}
+	break;
 
     default:
         result = DefWindowProcA( hwnd, msg, wParam, lParam );
