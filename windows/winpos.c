@@ -1331,6 +1331,15 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
             /* fall through */
 	case SW_SHOW:
 	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+
+	    /*
+	     * ShowWindow has a little peculiar behavior that if the
+	     * window is already the topmost window, it will not
+	     * activate it.
+	     */
+	    if (GetTopWindow((HWND)0)==hwnd)
+	      swp |= SWP_NOACTIVATE;
+
 	    break;
 
 	case SW_SHOWNOACTIVATE:
