@@ -874,8 +874,10 @@ HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
     /* Load file */
     if ((hModule32 = PE_LoadImage( name, &ofs, &modName )) < 32)
         return hModule32;
+#if 0
     if (PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL)
         return 20;  /* FIXME: not the right error code */
+#endif
 
     /* Create 16-bit dummy module */
     if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32) return hModule16;

@@ -934,6 +934,37 @@ BOOL16 WINAPI PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
 }
 
 /***********************************************************************
+ *         WIN16_PeekMessage32   (USER.819)
+ */
+BOOL16 WINAPI WIN16_PeekMessage32( LPMSG16_32 lpmsg16_32, HWND16 hwnd,
+               UINT16 first, UINT16 last, UINT16 flags, BOOL16 wHaveParamHigh )
+{
+    if (wHaveParamHigh == FALSE)
+    {
+        lpmsg16_32->wParamHigh = 0;
+        return PeekMessage16(&(lpmsg16_32->msg), hwnd, first, last, flags);
+    }
+    else
+    {
+        MSG32 msg32;
+        BOOL16 ret;
+
+        ret = (BOOL16)PeekMessage32A(&msg32, (HWND32)hwnd,
+                                   (UINT32)first, (UINT32)last, (UINT32)flags);
+        lpmsg16_32->msg.hwnd    = msg32.hwnd;
+        lpmsg16_32->msg.message = msg32.message;
+        lpmsg16_32->msg.wParam  = LOWORD(msg32.wParam);
+        lpmsg16_32->msg.lParam  = msg32.lParam;
+        lpmsg16_32->msg.time    = msg32.time;
+        lpmsg16_32->msg.pt.x    = (INT16)msg32.pt.x;
+        lpmsg16_32->msg.pt.y    = (INT16)msg32.pt.y;
+        lpmsg16_32->wParamHigh  = HIWORD(msg32.wParam);
+        return ret;
+    }
+}
+
+
+/***********************************************************************
  *         PeekMessageA
  */
 BOOL32 WINAPI PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
@@ -998,6 +1029,39 @@ BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 		     				                 hwnd, first, last );
     HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
     return (lpmsg->message != WM_QUIT);
+}
+
+/***********************************************************************
+ *          WIN16_GetMessage32   (USER.820)
+ */
+BOOL16 WIN16_GetMessage32( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
+                     UINT16 last, BOOL16 wHaveParamHigh )
+{
+    MSG16_32 *lpmsg16_32 = (MSG16_32 *)PTR_SEG_TO_LIN(msg16_32);
+
+    if (wHaveParamHigh == FALSE) /* normal GetMessage16 call */
+    {
+
+        lpmsg16_32->wParamHigh = 0; /* you never know... */
+        /* WARNING: msg16_32->msg has to be the first variable in the struct */ 
+        return GetMessage16(msg16_32, hWnd, first, last);
+    }
+    else
+    {
+        MSG32 msg32;
+        BOOL16 ret;
+
+        ret = (BOOL16)GetMessage32A(&msg32, hWnd, first, last);
+        lpmsg16_32->msg.hwnd	= msg32.hwnd;
+        lpmsg16_32->msg.message	= msg32.message;
+        lpmsg16_32->msg.wParam	= LOWORD(msg32.wParam);
+        lpmsg16_32->msg.lParam	= msg32.lParam;
+        lpmsg16_32->msg.time	= msg32.time;
+        lpmsg16_32->msg.pt.x	= (INT16)msg32.pt.x;
+        lpmsg16_32->msg.pt.y	= (INT16)msg32.pt.y;
+        lpmsg16_32->wParamHigh	= HIWORD(msg32.wParam);
+        return ret;
+    }
 }
 
 /***********************************************************************
@@ -1704,6 +1768,22 @@ BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 
 
 /***********************************************************************
+ *           WIN16_TranslateMessage32   (USER.821)
+ */
+BOOL16 WINAPI WIN16_TranslateMessage32( const MSG16_32 *msg, BOOL16 wHaveParamHigh )
+{
+    WPARAM32 wParam;
+
+    if (wHaveParamHigh)
+        wParam = MAKELONG(msg->msg.wParam, msg->wParamHigh);
+    else
+        wParam = (WPARAM32)msg->msg.wParam;
+
+    return MSG_DoTranslateMessage( msg->msg.message, msg->msg.hwnd,
+                                   wParam, msg->msg.lParam );
+}
+
+/***********************************************************************
  *           TranslateMessage32   (USER32.556)
  */
 BOOL32 WINAPI TranslateMessage32( const MSG32 *msg )
@@ -1757,6 +1837,28 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     return retval;
 }
 
+
+/***********************************************************************
+ *           WIN16_DispatchMessage32   (USER.822)
+ */
+LONG WINAPI WIN16_DispatchMessage32( const MSG16_32* lpmsg16_32, BOOL16 wHaveParamHigh )
+{
+    if (wHaveParamHigh == FALSE)
+        return DispatchMessage16(&(lpmsg16_32->msg));
+    else
+    {
+        MSG32 msg;
+
+        msg.hwnd = lpmsg16_32->msg.hwnd;
+        msg.message = lpmsg16_32->msg.message;
+        msg.wParam = MAKELONG(lpmsg16_32->msg.wParam, lpmsg16_32->wParamHigh);
+        msg.lParam = lpmsg16_32->msg.lParam;
+        msg.time = lpmsg16_32->msg.time;
+        msg.pt.x = (INT32)lpmsg16_32->msg.pt.x;
+        msg.pt.y = (INT32)lpmsg16_32->msg.pt.y;
+        return DispatchMessage32A(&msg);
+    }
+}
 
 /***********************************************************************
  *           DispatchMessage32A   (USER32.141)

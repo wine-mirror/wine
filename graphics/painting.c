@@ -872,6 +872,29 @@ BOOL32 WINAPI FloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 
 
 /**********************************************************************
+ *          DrawAnimatedRects16  (USER.448)
+ */
+BOOL16 WINAPI DrawAnimatedRects16( HWND16 hwnd, INT16 idAni,
+                                   const RECT16* lprcFrom,
+                                   const RECT16* lprcTo )
+{
+    RECT32 rcFrom32, rcTo32;
+
+    rcFrom32.left	= (INT32)lprcFrom->left;
+    rcFrom32.top	= (INT32)lprcFrom->top;
+    rcFrom32.right	= (INT32)lprcFrom->right;
+    rcFrom32.bottom	= (INT32)lprcFrom->bottom;
+
+    rcTo32.left		= (INT32)lprcTo->left;
+    rcTo32.top		= (INT32)lprcTo->top;
+    rcTo32.right	= (INT32)lprcTo->right;
+    rcTo32.bottom	= (INT32)lprcTo->bottom;
+
+    return DrawAnimatedRects32((HWND32)hwnd, (INT32)idAni, &rcFrom32, &rcTo32);
+}
+
+
+/**********************************************************************
  *          DrawAnimatedRects32  (USER32.153)
  */
 BOOL32 WINAPI DrawAnimatedRects32( HWND32 hwnd, int idAni,

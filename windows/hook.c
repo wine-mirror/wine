@@ -1347,6 +1347,49 @@ BOOL16 WINAPI CallMsgFilter16( SEGPTR msg, INT16 code )
 
 
 /***********************************************************************
+ *           WIN16_CallMsgFilter32   (USER.823)
+ */
+BOOL16 WINAPI WIN16_CallMsgFilter32( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParamHigh )
+{
+    MSG16_32 *lpmsg16_32 = (MSG16_32 *)PTR_SEG_TO_LIN(msg16_32);
+
+    if (wHaveParamHigh == FALSE)
+    {
+        lpmsg16_32->wParamHigh = 0;
+        /* WARNING: msg16_32->msg has to be the first variable in the struct */ 
+        return CallMsgFilter16(msg16_32, code);
+    }
+    else
+    {
+        MSG32 msg32;
+        BOOL16 ret;
+
+        msg32.hwnd		= lpmsg16_32->msg.hwnd;
+        msg32.message	= lpmsg16_32->msg.message;
+        msg32.wParam	=
+                     MAKELONG(lpmsg16_32->msg.wParam, lpmsg16_32->wParamHigh);
+        msg32.lParam	= lpmsg16_32->msg.lParam;
+        msg32.time		= lpmsg16_32->msg.time;
+        msg32.pt.x		= (INT32)lpmsg16_32->msg.pt.x;
+        msg32.pt.y      = (INT32)lpmsg16_32->msg.pt.y;
+        
+        ret = (BOOL16)CallMsgFilter32A(&msg32, (INT32)code);
+
+        lpmsg16_32->msg.hwnd    = msg32.hwnd;
+        lpmsg16_32->msg.message = msg32.message;
+        lpmsg16_32->msg.wParam  = LOWORD(msg32.wParam);
+        lpmsg16_32->msg.lParam  = msg32.lParam;
+        lpmsg16_32->msg.time    = msg32.time;
+        lpmsg16_32->msg.pt.x    = (INT16)msg32.pt.x;
+        lpmsg16_32->msg.pt.y    = (INT16)msg32.pt.y;
+        lpmsg16_32->wParamHigh  = HIWORD(msg32.wParam);
+
+        return ret;
+    }
+}
+
+
+/***********************************************************************
  *           CallMsgFilter32A   (USER32.15)
  */
 /*

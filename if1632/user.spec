@@ -406,7 +406,7 @@ file	user.exe
 445 pascal   DefFrameProc(word word word word long) DefFrameProc16
 446 stub SetMenuItemInfo
 447 pascal   DefMDIChildProc(word word word long) DefMDIChildProc16
-448 stub DrawAnimatedRects
+448 pascal16 DrawAnimatedRects(word word ptr ptr) DrawAnimatedRects16
 449 stub DrawState
 450 pascal16 CreateIconFromResourceEx(ptr long word long word word word) CreateIconFromResourceEx16
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel16
@@ -485,7 +485,7 @@ file	user.exe
 602 stub SetCheckCursorTimer
 604 stub BroadcastSystemMessage
 605 stub HackTaskMonitor
-606 stub FormatMessage
+606 pascal FormatMessage(long ptr word word ptr word ptr) FormatMessage16
 608 pascal16 GetForegroundWindow() GetForegroundWindow16
 609 pascal16 SetForegroundWindow(word) SetForegroundWindow16
 610 stub DestroyIcon32
@@ -516,12 +516,12 @@ file	user.exe
 802 stub OPENFILENAME_CALLBACK16
 803 stub PRINTDLG_CALLBACK16
 804 stub CHOOSECOLOR_CALLBACK16
-819 stub PeekMessage32
-820 stub GetMessage32
-821 stub TranslateMessage32	
+819 pascal16 PeekMessage32(ptr word word word word word) WIN16_PeekMessage32
+820 pascal GetMessage32(segptr word word word word) WIN16_GetMessage32
+821 pascal16 TranslateMessage32(ptr word) WIN16_TranslateMessage32 
 #821 stub IsDialogMessage32		# FIXME: two ordinal 821???
-822 stub DispatchMessage32
-823 stub CallMsgFilter32
+822 pascal DispatchMessage32(ptr word) WIN16_DispatchMessage32
+823 pascal16 CallMsgFilter32(segptr word word) WIN16_CallMsgFilter32
 825 stub PostMessage32
 826 stub PostThreadMessage32
 827 pascal16 MessageBoxIndirect(ptr) MessageBoxIndirect16

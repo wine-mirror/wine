@@ -513,6 +513,21 @@ BOOL32 WINAPI IsCharUpper32W(WCHAR x)
 }
 
 /***********************************************************************
+ *           FormatMessage16   (USER.606)
+ */
+DWORD WINAPI FormatMessage16(
+    DWORD   dwFlags,
+    LPCVOID lpSource,
+    WORD   dwMessageId,
+    WORD   dwLanguageId,
+    LPSTR   lpBuffer,
+    WORD   nSize,
+    LPDWORD args /* va_list *args */
+) {
+    return FormatMessage32A(dwFlags, lpSource, (DWORD)dwMessageId, (DWORD)dwLanguageId, lpBuffer, (DWORD)nSize, args);
+}
+
+/***********************************************************************
  *           FormatMessage32A   (KERNEL32.138)
  * FIXME: missing wrap,FROM_SYSTEM message-loading,
  */
