@@ -1197,6 +1197,7 @@ char	*fn = "ReadFontTbl";
 					/* ignore token but announce it */
 					RTFMsg ("%s: unknown token \"%s\"\n",
 							fn, rtfTextBuf);
+                                        break;
 				case rtfFontFamily:
 					fp->rtfFFamily = rtfMinor;
 					break;
@@ -1239,9 +1240,8 @@ char	*fn = "ReadFontTbl";
 			else if (rtfClass == rtfText)	/* font name */
 			{
 				bp = buf;
-				while (rtfClass != rtfEOF
-					&& !RTFCheckCM (rtfText, ';')
-					&& !RTFCheckCM (rtfGroup, rtfEndGroup))
+                                while (rtfClass == rtfText
+                                        && !RTFCheckCM (rtfText, ';'))
 				{
 					*bp++ = rtfMajor;
 					(void) RTFGetToken ();
