@@ -1,5 +1,6 @@
 /* Direct3D ExecuteBuffer
- * Copyright (c) 1998 Lionel ULMER
+ * Copyright (c) 1998-2004 Lionel ULMER
+ * Copyright (c) 2002-2004 Christian Costa
  *
  * This file contains the implementation of Direct3DExecuteBuffer.
  *
@@ -53,7 +54,11 @@ static void _dump_executedata(LPD3DEXECUTEDATA lpData) {
 }
 
 static void _dump_D3DEXECUTEBUFFERDESC(LPD3DEXECUTEBUFFERDESC lpDesc) {
-
+    DPRINTF("dwSize       : %ld\n", lpDesc->dwSize);
+    DPRINTF("dwFlags      : %lx\n", lpDesc->dwFlags);
+    DPRINTF("dwCaps       : %lx\n", lpDesc->dwCaps);
+    DPRINTF("dwBufferSize : %ld\n", lpDesc->dwBufferSize);
+    DPRINTF("lpData       : %p\n", lpDesc->lpData);
 }
 
 static void execute(IDirect3DExecuteBufferImpl *This,
@@ -241,8 +246,8 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 	                                		rs,ci->u2.dwArg[0]);
 		   }
 
+		   instr += size;
 		}
-		instr += size;
 	    } break;
 
 	    case D3DOP_STATERENDER: {
@@ -709,8 +714,8 @@ HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirectDrawImp
     object->nb_indices = 0;
 
     *obj = object;
-    
+
     TRACE(" creating implementation at %p.\n", *obj);
-    
+
     return DD_OK;
 }
