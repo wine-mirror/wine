@@ -30,10 +30,13 @@
 
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                                    LPCSTR src, DWORD srclen );
+static NTSTATUS (WINAPI *pRtlUnicodeToMultiByteN)(LPSTR,DWORD,LPDWORD,LPCWSTR,DWORD);
 static UINT (WINAPI *pRtlDetermineDosPathNameType_U)( PCWSTR path );
 static ULONG (WINAPI *pRtlIsDosDeviceName_U)( PCWSTR dos_name );
 static NTSTATUS (WINAPI *pRtlOemStringToUnicodeString)(UNICODE_STRING *, const STRING *, BOOLEAN );
 static BOOLEAN (WINAPI *pRtlIsNameLegalDOS8Dot3)(const UNICODE_STRING*,POEM_STRING,PBOOLEAN);
+static DWORD (WINAPI *pRtlGetFullPathName_U)(const WCHAR*,ULONG,WCHAR*,WCHAR**);
+
 
 static void test_RtlDetermineDosPathNameType(void)
 {
@@ -224,20 +227,77 @@ static void test_RtlIsNameLegalDOS8Dot3(void)
         }
     }
 }
+static void test_RtlGetFullPathName_U()
+{
+    struct test
+    {
+        const char *path;
+        const char *rname;
+        const char *rfile;
+    };
 
+    static const struct test tests[] =
+        {
+            { "c:/test",                     "c:\\test",         "test"},
+            { "c:/TEST",                     "c:\\test",         "test"},
+            { "c:/test/file",                "c:\\test\\file",   "file"},
+            { "c:/test/././file",            "c:\\test\\file",   "file"},
+            { "c:/test\\.\\.\\file",         "c:\\test\\file",   "file"},
+            { "c:/test/\\.\\.\\file",        "c:\\test\\file",   "file"},
+            { "c:/test\\\\.\\.\\file",       "c:\\test\\file",   "file"},
+            { "c:/test\\test1\\..\\.\\file", "c:\\test\\file",   "file"},
+            { "c:///test\\.\\.\\file//",     "c:\\test\\file\\", NULL},
+            { "c:///test\\..\\file\\..\\//", "c:\\",             NULL},
+            { NULL, NULL, NULL}
+        };
+
+    const struct test *test;
+    WCHAR pathbufW[2*MAX_PATH], rbufferW[MAX_PATH];
+    CHAR  rbufferA[MAX_PATH], rfileA[MAX_PATH];
+    ULONG ret;
+    WCHAR *file_part;
+    DWORD reslen;
+    int len;
+
+    for (test = tests; test->path; test++)
+    {
+        len= strlen(test->rname) * sizeof(WCHAR);
+        pRtlMultiByteToUnicodeN(pathbufW , sizeof(pathbufW), NULL, test->path, strlen(test->path)+1 );
+        ret = pRtlGetFullPathName_U( pathbufW,MAX_PATH, rbufferW, &file_part);
+        ok( ret == len, "Wrong result %ld/%d for %s\n", ret, len, test->path );
+        ok(pRtlUnicodeToMultiByteN(rbufferA,MAX_PATH,&reslen,rbufferW,MAX_PATH) == STATUS_SUCCESS,
+           "RtlUnicodeToMultiByteN failed\n");
+        ok(strcasecmp(rbufferA,test->rname) == 0, "Got \"%s\" expected \"%s\"\n",rbufferA,test->rname);
+        if (file_part)
+        {
+            ok(pRtlUnicodeToMultiByteN(rfileA,MAX_PATH,&reslen,file_part,MAX_PATH) == STATUS_SUCCESS,
+               "RtlUnicodeToMultiByteN failed\n");
+            ok(test->rfile && !strcasecmp(rfileA,test->rfile), "Got \"%s\" expected \"%s\"\n",rfileA,test->rfile);
+        }
+        else
+        {
+            ok( !test->rfile, "Got NULL expected \"%s\"\n", test->rfile );
+        }
+    }
+
+}
 
 START_TEST(path)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(mod,"RtlMultiByteToUnicodeN");
+    pRtlUnicodeToMultiByteN = (void *)GetProcAddress(mod,"RtlUnicodeToMultiByteN");
     pRtlDetermineDosPathNameType_U = (void *)GetProcAddress(mod,"RtlDetermineDosPathNameType_U");
     pRtlIsDosDeviceName_U = (void *)GetProcAddress(mod,"RtlIsDosDeviceName_U");
     pRtlOemStringToUnicodeString = (void *)GetProcAddress(mod,"RtlOemStringToUnicodeString");
     pRtlIsNameLegalDOS8Dot3 = (void *)GetProcAddress(mod,"RtlIsNameLegalDOS8Dot3");
+    pRtlGetFullPathName_U = (void *)GetProcAddress(mod,"RtlGetFullPathName_U");
     if (pRtlDetermineDosPathNameType_U)
         test_RtlDetermineDosPathNameType();
     if (pRtlIsDosDeviceName_U)
         test_RtlIsDosDeviceName();
     if (pRtlIsNameLegalDOS8Dot3)
         test_RtlIsNameLegalDOS8Dot3();
+    if (pRtlGetFullPathName_U && pRtlMultiByteToUnicodeN)
+        test_RtlGetFullPathName_U();
 }
