@@ -106,7 +106,4 @@ inline static void WIN_ReleasePtr( WND *ptr )
 
 extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
 
-/* internal GetDC flag (FIXME) */
-#define DCX_WINDOWPAINT 0x00020000
-
 #endif  /* __WINE_WIN_H */

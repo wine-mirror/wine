@@ -17,14 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *
- * Note: Visible regions of CS_OWNDC/CS_CLASSDC window DCs
- * have to be updated dynamically.
- *
- * Internal DCX flags:
- *
- * DCX_WINDOWPAINT - BeginPaint() is in effect
  */
 
 #include "config.h"
@@ -151,11 +143,12 @@ static HWND get_top_clipping_window( HWND hwnd )
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.
  */
-static void set_drawable( struct dce *dce, DWORD flags, BOOL update_visrgn )
+static void set_drawable( struct dce *dce, BOOL update_visrgn )
 {
     HWND top = get_top_clipping_window( dce->hwnd );
     struct x11drv_escape_set_drawable escape;
     struct x11drv_win_data *data;
+    DWORD flags = dce->flags;
 
     escape.mode = IncludeInferiors;
     /* don't clip siblings if using parent clip region */
@@ -222,13 +215,14 @@ static void set_drawable( struct dce *dce, DWORD flags, BOOL update_visrgn )
     escape.code = X11DRV_SET_DRAWABLE;
     ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
-    if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) || update_visrgn)
+    if (update_visrgn)
     {
         /* need to recompute the visible region */
         HRGN visRgn = get_server_visible_region( dce->hwnd, flags );
 
-        if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
-            CombineRgn( visRgn, visRgn, dce->clip_rgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
+        if (dce->clip_rgn)
+            CombineRgn( visRgn, visRgn, dce->clip_rgn,
+                        (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
         SelectVisRgn16( HDC_16(dce->hdc), HRGN_16(visRgn) );
         DeleteObject( visRgn );
@@ -266,7 +260,7 @@ static void delete_clip_rgn( struct dce *dce )
 {
     if (!dce->clip_rgn) return;  /* nothing to do */
 
-    dce->flags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN | DCX_WINDOWPAINT);
+    dce->flags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN);
     DeleteObject( dce->clip_rgn );
     dce->clip_rgn = 0;
 
@@ -499,9 +493,10 @@ void invalidate_dce( HWND hwnd, const RECT *rect )
  */
 HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
+    static const DWORD clip_flags = DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW;
+
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
     struct dce *dce;
-    HDC hdc = 0;
     BOOL bUpdateVisRgn = TRUE;
     HWND parent;
     LONG window_style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -565,9 +560,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
                 dceUnused = dce;
 
                 if (!dce->hwnd) dceEmpty = dce;
-                else if ((dce->hwnd == hwnd) &&
-                         (!((dce->flags ^ flags) & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
-                                                    DCX_WINDOW | DCX_PARENTCLIP))))
+                else if ((dce->hwnd == hwnd) && !((dce->flags ^ flags) & clip_flags))
                 {
                     TRACE("\tfound valid %p dce [%p], flags %08lx\n",
                           dce, hwnd, dce->flags );
@@ -597,44 +590,48 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
             TRACE("\tskipping hVisRgn update\n");
             bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
         }
+        else
+        {
+            /* we should free dce->clip_rgn here, but Windows apparently doesn't */
+            dce->flags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN);
+            dce->clip_rgn = 0;
+        }
     }
 
-    if (!(flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))) hrgnClip = 0;
-    else if (!hrgnClip) hrgnClip = CreateRectRgn( 0, 0, 0, 0 );
-
-    if (((flags ^ dce->flags) & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)) &&
-        (dce->clip_rgn != hrgnClip))
+    if (flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN))
     {
         /* if the extra clip region has changed, get rid of the old one */
-        delete_clip_rgn( dce );
+        if (dce->clip_rgn != hrgnClip || ((flags ^ dce->flags) & (DCX_INTERSECTRGN | DCX_EXCLUDERGN)))
+            delete_clip_rgn( dce );
+        dce->clip_rgn = hrgnClip;
+        if (!dce->clip_rgn) dce->clip_rgn = CreateRectRgn( 0, 0, 0, 0 );
+        dce->flags |= flags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN);
+        bUpdateVisRgn = TRUE;
     }
 
     dce->hwnd = hwnd;
-    dce->clip_rgn = hrgnClip;
-    dce->flags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
-                          DCX_CACHE | DCX_WINDOW | DCX_WINDOWPAINT |
-                          DCX_INTERSECTRGN | DCX_EXCLUDERGN);
-    hdc = dce->hdc;
+    dce->flags = (dce->flags & ~clip_flags) | (flags & clip_flags);
 
-    if (SetHookFlags16( HDC_16(hdc), DCHF_VALIDATEVISRGN )) bUpdateVisRgn = TRUE;  /* DC was dirty */
+    if (SetHookFlags16( HDC_16(dce->hdc), DCHF_VALIDATEVISRGN ))
+        bUpdateVisRgn = TRUE;  /* DC was dirty */
 
-    set_drawable( dce, flags, bUpdateVisRgn );
+    set_drawable( dce, bUpdateVisRgn );
 
     if (!(flags & DCX_NORESETATTRS))
     {
-        RestoreDC( hdc, 1 );  /* initial save level is always 1 */
-        SaveDC( hdc );  /* save the state again for next time */
+        RestoreDC( dce->hdc, 1 );  /* initial save level is always 1 */
+        SaveDC( dce->hdc );  /* save the state again for next time */
     }
 
-    TRACE("(%p,%p,0x%lx): returning %p\n", hwnd, hrgnClip, flags, hdc);
-    return hdc;
+    TRACE("(%p,%p,0x%lx): returning %p\n", hwnd, hrgnClip, flags, dce->hdc);
+    return dce->hdc;
 }
 
 
 /***********************************************************************
  *		X11DRV_ReleaseDC  (X11DRV.@)
  */
-BOOL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
+BOOL X11DRV_ReleaseDC( HWND hwnd, HDC hdc, BOOL end_paint )
 {
     enum x11drv_escape_codes escape = X11DRV_GET_DCE;
     struct dce *dce;
@@ -647,7 +644,7 @@ BOOL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
                     sizeof(dce), (LPSTR)&dce )) dce = NULL;
     if (dce && dce->count)
     {
-        if ((dce->flags & (DCX_CACHE | DCX_WINDOWPAINT))) delete_clip_rgn( dce );
+        if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
         if (dce->flags & DCX_CACHE) dce->count = 0;
         ret = TRUE;
     }
@@ -677,7 +674,7 @@ static BOOL16 CALLBACK dc_hook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam 
          * DC is dirty (usually after SetHookFlags()). This
          * means that we have to recompute the visible region.
          */
-        if (dce->count) set_drawable( dce, dce->flags, TRUE );
+        if (dce->count) set_drawable( dce, TRUE );
         else /* non-fatal but shouldn't happen */
             WARN("DC is not in use!\n");
         break;

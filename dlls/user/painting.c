@@ -250,7 +250,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
 
     if (hdc_ret || (flags & UPDATE_ERASE))
     {
-        UINT dcx_flags = DCX_INTERSECTRGN | DCX_WINDOWPAINT | DCX_USESTYLE;
+        UINT dcx_flags = DCX_INTERSECTRGN | DCX_USESTYLE;
         if (IsIconic(hwnd)) dcx_flags |= DCX_WINDOW;
 
         if ((hdc = GetDCEx( hwnd, client_rgn, dcx_flags )))
@@ -409,8 +409,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 {
     if (!lps) return FALSE;
-
-    ReleaseDC( hwnd, lps->hdc );
+    if (USER_Driver.pReleaseDC) USER_Driver.pReleaseDC( hwnd, lps->hdc, TRUE );
     ShowCaret( hwnd );
     return TRUE;
 }
@@ -465,7 +464,7 @@ HDC WINAPI GetWindowDC( HWND hwnd )
  */
 INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
 {
-    if (USER_Driver.pReleaseDC) return USER_Driver.pReleaseDC( hwnd, hdc );
+    if (USER_Driver.pReleaseDC) return USER_Driver.pReleaseDC( hwnd, hdc, FALSE );
     return 0;
 }
 
