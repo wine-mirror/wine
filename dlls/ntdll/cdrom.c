@@ -181,11 +181,10 @@ static DWORD CDROM_SetTray(int dev, BOOL doEject)
  */
 static DWORD CDROM_ControlEjection(int dev, const PREVENT_MEDIA_REMOVAL* rmv)
 {
-    int val = rmv->PreventMediaRemoval;
 #if defined(linux)
-    return CDROM_GetStatusCode(ioctl(dev, CDROM_LOCKDOOR, val));
+    return CDROM_GetStatusCode(ioctl(dev, CDROM_LOCKDOOR, rmv->PreventMediaRemoval));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(dev, (val) ? CDIOCPREVENT : CDIOCALLOW, NULL));
+    return CDROM_GetStatusCode(ioctl(dev, (rmv->PreventMediaRemoval) ? CDIOCPREVENT : CDIOCALLOW, NULL));
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -324,11 +323,10 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
                                 SUB_Q_CHANNEL_DATA* data)
 {
     DWORD               ret = STATUS_NOT_SUPPORTED;
+#ifdef linux
     unsigned            size;
     SUB_Q_HEADER*       hdr = (SUB_Q_HEADER*)data;
     int                 io;
-
-#ifdef linux
     struct cdrom_subchnl	sc;
     sc.cdsc_format = CDROM_MSF;
 
@@ -410,6 +408,9 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
  end:
     ret = CDROM_GetStatusCode(io);
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
+    unsigned            size;
+    SUB_Q_HEADER*       hdr = (SUB_Q_HEADER*)data;
+    int                 io;
     struct ioc_read_subchannel	read_sc;
     struct cd_sub_channel_info	sc;
 

@@ -127,6 +127,7 @@ static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
   return strcmpW(p1->lf.lfFaceName, p2->lf.lfFaceName);
 }
 
+#if 0
 static void walk_cache(void)
 {
   int i;
@@ -134,6 +135,7 @@ static void walk_cache(void)
   for(i=mru; i >= 0; i = glyphsetCache[i].next)
     TRACE("item %d\n", i);
 }
+#endif
 
 static gsCacheEntry *LookupEntry(LFANDSIZE *plfsz)
 {

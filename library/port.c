@@ -585,7 +585,7 @@ void *wine_dlopen( const char *filename, int flag, char *error, int errorsize )
 {
 #ifdef HAVE_DLOPEN
     void *ret;
-    char *s;
+    const char *s;
     dlerror(); dlerror();
     ret = dlopen( filename, flag );
     s = dlerror();
@@ -613,7 +613,7 @@ void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize )
 {
 #ifdef HAVE_DLOPEN
     void *ret;
-    char *s;
+    const char *s;
     dlerror(); dlerror();
     ret = dlsym( handle, symbol );
     s = dlerror();
@@ -641,7 +641,7 @@ int wine_dlclose( void *handle, char *error, int errorsize )
 {
 #ifdef HAVE_DLOPEN
     int ret;
-    char *s;
+    const char *s;
     dlerror(); dlerror();
     ret = dlclose( handle );
     s = dlerror();

@@ -203,7 +203,7 @@ static void send_reply( union generic_reply *reply )
     {
         struct iovec vec[2];
 
-        vec[0].iov_base = reply;
+        vec[0].iov_base = (void *)reply;
         vec[0].iov_len  = sizeof(*reply);
         vec[1].iov_base = current->reply_data;
         vec[1].iov_len  = current->reply_size;
@@ -321,7 +321,7 @@ int receive_fd( struct process *process )
     cmsg.fd = -1;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    myiovec.iov_base = &data;
+    myiovec.iov_base = (void *)&data;
     myiovec.iov_len  = sizeof(data);
 
     ret = recvmsg( process->obj.fd, &msghdr, 0 );
