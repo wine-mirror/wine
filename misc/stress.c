@@ -88,7 +88,7 @@ int GetFreeFileHandles(void)
 #endif
 
 #ifndef OPEN_MAX
-	return _POSIX_OPEN_MAX
+	return _POSIX_OPEN_MAX;
 #else
 	return OPEN_MAX;
 #endif

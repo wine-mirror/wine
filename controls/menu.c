@@ -37,6 +37,8 @@ void MenuButtonUp(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
 void MenuMouseMove(HWND hWnd, LPPOPUPMENU lppop, WORD wParam, int x, int y);
 void StdDrawPopupMenu(HWND hwnd);
 void ResetHiliteFlags(LPPOPUPMENU lppop);
+void SelectPrevItem(LPPOPUPMENU lppop);
+void SelectNextItem(LPPOPUPMENU lppop);
 BOOL ExecFocusedMenuItem(HWND hWnd, LPPOPUPMENU lppop);
 void MenuItemSelect(HWND hWnd, LPPOPUPMENU lppop, WORD wIndex);
 LPMENUITEM MenuFindItem(LPPOPUPMENU lppop, int x, int y, WORD *lpRet);
@@ -60,6 +62,8 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam);
 
 /***********************************************************************
  *           PopupMenuWndProc
+				SetWindow
+				SetWindow
  */
 LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {    
@@ -90,6 +94,7 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 #ifdef DEBUG_MENU
 		printf("PopupMenu End of WM_CREATE !\n");
 #endif
+		ResetHiliteFlags(lppop);
 		return 0;
 	case WM_DESTROY:
 		lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
@@ -132,6 +137,7 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
 		if (lppop == NULL) break;
 		if (wParam == 0 && lParam == 0L) {
+			ResetHiliteFlags(lppop);
 			HideAllSubPopupMenu(lppop);
 #ifdef DEBUG_MENU
 			printf("PopupMenuWndProc hWnd=%04X WM_SHOWWINDOW -> HIDE!\n", hwnd);
@@ -144,7 +150,7 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		lppop->FocusedItem = (WORD)-1;
 		if (!lppop->BarFlag) {
 			PopupMenuCalcSize(hwnd);
-			ResetHiliteFlags(lppop);
+/*			ResetHiliteFlags(lppop); */
 #ifdef DEBUG_MENU
 			printf("PopupMenuWndProc hWnd=%04X WM_SHOWWINDOW Width=%d Height=%d !\n", 
 									hwnd, lppop->Width, lppop->Height);
@@ -195,17 +201,11 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				break;
 			case VK_UP:
 				if (lppop->BarFlag) break;
-				if (lppop->FocusedItem < 1) break;
-				MenuItemSelect(hwnd, lppop, lppop->FocusedItem - 1);
+				SelectPrevItem(lppop);
 				break;
 			case VK_DOWN:
 				if (lppop->BarFlag) goto ProceedSPACE;
-				if (lppop->FocusedItem == (WORD)-1) {
-					MenuItemSelect(hwnd, lppop, lppop->FocusedItem + 1);
-					break;
-					}
-				if (lppop->FocusedItem >= lppop->nItems - 1) break;
-				MenuItemSelect(hwnd, lppop, lppop->FocusedItem + 1);
+				SelectNextItem(lppop);
 				break;
 			case VK_LEFT:
 				if (lppop->SysFlag != 0) {
@@ -561,6 +561,53 @@ void MenuMouseMove(HWND hWnd, LPPOPUPMENU lppop, WORD wParam, int x, int y)
 	    ReleaseDC(hWnd, hDC);
 	}
     }
+}
+
+
+void SelectPrevItem(LPPOPUPMENU lppop)
+{
+	int		nIndex;
+	LPMENUITEM lpitem;
+	if (lppop == NULL) return;
+	nIndex = lppop->FocusedItem;
+	if (nIndex < 1) {
+		if (nIndex == -1)
+			nIndex = 0;
+		else
+			nIndex = lppop->nItems - 1;
+		lpitem = GetMenuItemPtr(lppop, nIndex);
+		}
+	else {
+		nIndex--;
+		lpitem = GetMenuItemPtr(lppop, nIndex);
+		}
+	while (lpitem != NULL && lpitem->item_flags & MF_HILITE) {
+		nIndex--;
+		lpitem = GetMenuItemPtr(lppop, nIndex);
+		}
+	MenuItemSelect(lppop->hWnd, lppop, nIndex);
+}
+
+
+void SelectNextItem(LPPOPUPMENU lppop)
+{
+	int		nIndex;
+	LPMENUITEM lpitem;
+	if (lppop == NULL) return;
+	nIndex = lppop->FocusedItem;
+	if ((nIndex == -1) || (nIndex >= lppop->nItems - 1)) {
+		nIndex = 0;
+		lpitem = GetMenuItemPtr(lppop, nIndex);
+		}
+	else {
+		nIndex++;
+		lpitem = GetMenuItemPtr(lppop, nIndex);
+		}
+	while (lpitem != NULL && (lpitem->item_flags & MF_SEPARATOR)) {
+		nIndex++;
+		lpitem = GetMenuItemPtr(lppop, nIndex);
+		}
+	MenuItemSelect(lppop->hWnd, lppop, nIndex);
 }
 
 
@@ -2162,7 +2209,8 @@ BOOL SetMenu(HWND hWnd, HMENU hMenu)
 	if (GetCapture() == hWnd) ReleaseCapture();
 	if (wndPtr->window != 0) {
 		flags = SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED;
-		if (!IsWindowVisible(hWnd)) flags |= SWP_NOREDRAW;
+/*		if (!IsWindowVisible(hWnd)) flags |= SWP_NOREDRAW; */
+		flags |= SWP_NOREDRAW;
 		if (hMenu == 0) {
 			wndPtr->wIDmenu = hMenu;
 			printf("SetMenu(%04X, %04X) // Menu removed, need NC recalc!\n", hWnd, hMenu);
@@ -2241,7 +2289,7 @@ void DrawMenuBar(HWND hWnd)
 			int oldHeight;
 			oldHeight = lppop->Height;
 			hDC = GetWindowDC(hWnd);
-			StdDrawMenuBar(hDC, &lppop->rect, lppop, FALSE);
+			StdDrawMenuBar(hDC, &lppop->rect, lppop, TRUE);
 			ReleaseDC(hWnd, hDC);
 			if (oldHeight != lppop->Height) {
 				printf("DrawMenuBar // menubar changed oldHeight=%d != lppop->Height=%d\n",
@@ -2251,6 +2299,8 @@ void DrawMenuBar(HWND hWnd)
 				wndPtr->rectClient.top += lppop->Height;
 				SendMessage(hWnd, WM_NCPAINT, 1, 0L);
 				}
+			else
+				StdDrawMenuBar(hDC, &lppop->rect, lppop, FALSE);
 			}
 		else
 			SendMessage(hWnd, WM_NCPAINT, 1, 0L);

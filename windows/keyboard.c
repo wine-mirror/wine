@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Bob Amstadt, 1993";
 extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
 extern BYTE KeyStateTable[256];
+extern BYTE AsyncKeyStateTable[256];
 
 /**********************************************************************
  *		GetKeyState			[USER.106]
@@ -26,7 +27,7 @@ int GetKeyState(int keycode)
 		case VK_RBUTTON:
 		    return MouseButtonsStates[2];
 		default:
-		    return 0;
+		    return KeyStateTable[keycode];
 		}
 }
 
@@ -35,25 +36,26 @@ int GetKeyState(int keycode)
  */
 void GetKeyboardState(BYTE FAR *lpKeyState)
 {
-	if (lpKeyState != NULL) {
-		memcpy(lpKeyState, KeyStateTable, 256);
-		}
+    if (lpKeyState != NULL) {
+	KeyStateTable[VK_LBUTTON] = MouseButtonsStates[0];
+	KeyStateTable[VK_MBUTTON] = MouseButtonsStates[1];
+	KeyStateTable[VK_RBUTTON] = MouseButtonsStates[2];
+	memcpy(lpKeyState, KeyStateTable, 256);
+    }
 }
 
 /**********************************************************************
- *
  *            GetAsyncKeyState        (USER.249)
  *
  *	Determine if a key is or was pressed.  retval has high-order 
  * byte set to 1 if currently pressed, low-order byte 1 if key has
  * been pressed.
  *
- *	This uses the variable AsyncMouseButtonsStates (set in event.c)
- * which have the mouse button number set to true if the mouse had been
- * depressed since the last call to GetAsyncKeyState.
- *
- *   	There should also be some keyboard stuff here... it isn't here
- * yet.
+ *	This uses the variable AsyncMouseButtonsStates and
+ * AsyncKeyStateTable (set in event.c) which have the mouse button
+ * number or key number (whichever is applicable) set to true if the
+ * mouse or key had been depressed since the last call to 
+ * GetAsyncKeyState.
  */
 int GetAsyncKeyState(int nKey)
 {
@@ -71,14 +73,16 @@ int GetAsyncKeyState(int nKey)
 		break;
            case VK_RBUTTON:
                 retval = AsyncMouseButtonsStates[2] |
-                              MouseButtonsStates[2] << 8;
+                              (MouseButtonsStates[2] << 8);
 		break;
            default:
-                retval = 0;
+                retval = AsyncKeyStateTable[nKey] | 
+		              (KeyStateTable[nKey] << 8);
 		break;
         }
 
 	bzero(AsyncMouseButtonsStates, 3);	/* all states to false */
+	bzero(AsyncKeyStateTable, 256);
 
 	return retval;
 }

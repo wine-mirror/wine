@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "prototypes.h"
 #include "windows.h"
 #include "shell.h"
 
@@ -396,8 +397,23 @@ INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
  */
 HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
 {
-	fprintf(stderr, "ExtractIcon : Empty Stub !!!\n");
-
+	int		count;
+	HICON	hIcon = 0;
+	HINSTANCE hInst2 = hInst;
+	fprintf(stderr, "ExtractIcon(%04X, '%s', %d\n", 
+			hInst, lpszExeFileName, nIconIndex);
+	if (lpszExeFileName != NULL) {
+		hInst2 = LoadLibrary(lpszExeFileName);
+		}
+	if (hInst2 != 0 && nIconIndex == (UINT)-1) {
+		count = GetRsrcCount(hInst2, NE_RSCTYPE_GROUP_ICON);
+		printf("ExtractIcon // '%s' has %d icons !\n", lpszExeFileName, count);
+		return (HICON)count;
+		}
+	if (hInst2 != hInst && hInst2 != 0) {
+		FreeLibrary(hInst2);
+		}
+	return hIcon;
 }
 
 

@@ -20,6 +20,15 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 extern int COLOR_ToPhysical( DC *dc, COLORREF color );
 
+static inline swap_int(int *a, int *b)
+{
+	int c;
+	
+	c = *a;
+	*a = *b;
+	*b = c;
+}
+
 /***********************************************************************
  *           LineTo    (GDI.19)
  */
@@ -220,6 +229,12 @@ BOOL Ellipse( HDC hdc, int left, int top, int right, int bottom )
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
     if ((left == right) || (top == bottom)) return FALSE;
+
+    if (right < left)
+    	swap_int(&right, &left);
+
+    if (bottom < top)
+    	swap_int(&bottom, &top);
     
     if (DC_SetupGCForBrush( dc ))
 	XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
@@ -246,16 +261,31 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
 	MF_MetaParam4(dc, META_RECTANGLE, left, top, right, bottom);
 	return TRUE;
     }
-
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
     right  = XLPTODP( dc, right );
     bottom = YLPTODP( dc, bottom );
+
+    if (right < left)
+    	swap_int(&right, &left);
+
+    if (bottom < top)
+    	swap_int(&bottom, &top);
+
+    if ((left == right) || (top == bottom)) {
+	if (DC_SetupGCForPen( dc ))
+	    XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
+		  dc->w.DCOrgX + left,
+		  dc->w.DCOrgY + top,
+		  dc->w.DCOrgX + right,
+		  dc->w.DCOrgY + bottom);
+	return TRUE;
+    }
     
     if (DC_SetupGCForBrush( dc ))
 	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
-		        right-left-1, bottom-top-1 );
+		        right-left, bottom-top );
     if (DC_SetupGCForPen( dc ))
 	XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,

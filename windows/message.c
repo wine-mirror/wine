@@ -387,6 +387,12 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
       /* Determine the hwnd for this message */
       /* Maybe this should be done in GetMessage() */
 
+    if (msg.hwnd = ICON_findIconFromPoint(msg.pt)) {
+       SendMessage( msg.hwnd, WM_SYSCOMMAND, SC_RESTORE, *(LONG*)&msg.pt );
+       return;
+    }
+
+
     if ((message >= WM_MOUSEFIRST) && (message <= WM_MOUSELAST))
     {
 	  /* Mouse event */

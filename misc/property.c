@@ -3,7 +3,9 @@
  */
 static char Copyright[] = "Copyright Martin Ayotte, 1994";
 
+/*
 #define DEBUG_PROP
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,12 +15,12 @@ static char Copyright[] = "Copyright Martin Ayotte, 1994";
 #include "heap.h"
 #include "win.h"
 
-typedef struct {
+typedef struct tagPROPENTRY {
 	LPSTR		PropName;
 	WORD		Atom;
 	HANDLE		hData;
-	void		*lpPrevProp;
-	void		*lpNextProp;
+	struct tagPROPENTRY	*lpPrevProp;
+	struct tagPROPENTRY	*lpNextProp;
 } PROPENTRY;
 typedef PROPENTRY *LPPROPENTRY;
 
@@ -44,7 +46,9 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
 	if (lpProp == NULL) {
+#ifdef DEBUG_PROP
 		printf("Property List Empty !\n");
+#endif
 		return 0;
 		}
 	while (TRUE) {
@@ -53,14 +57,14 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
 			(((DWORD)lpStr & 0xFFFF0000) != 0L && 
 			lpProp->PropName != NULL &&
 			strcmp(lpProp->PropName, lpStr) == 0)) {
+#ifdef DEBUG_PROP
 		   	printf("RemoveProp // Property found ! hData=%04X\n", lpProp->hData);
+#endif
 			hOldData = lpProp->hData;
 			if (lpProp->lpPrevProp != NULL) 
-				((LPPROPENTRY)lpProp->lpPrevProp)->lpNextProp = 
-											lpProp->lpNextProp;
+				lpProp->lpPrevProp->lpNextProp = lpProp->lpNextProp;
 			if (lpProp->lpNextProp != NULL) 
-				((LPPROPENTRY)lpProp->lpNextProp)->lpPrevProp = 
-											lpProp->lpPrevProp;
+				lpProp->lpNextProp->lpPrevProp = lpProp->lpPrevProp;
 			if (lpProp->PropName != NULL) free(lpProp->PropName);
 			GlobalFree(lpProp);
 			GlobalUnlock(wndPtr->hProp);
@@ -70,7 +74,9 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
 		lpProp = lpProp->lpNextProp;
 		}
 	GlobalUnlock(wndPtr->hProp);
+#ifdef DEBUG_PROP
    	printf("RemoveProp // Property not found !\n");
+#endif
 	return 0;
 }
 
@@ -95,7 +101,9 @@ HANDLE GetProp(HWND hWnd, LPSTR lpStr)
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
 	if (lpProp == NULL) {
+#ifdef DEBUG_PROP
 		printf("Property List Empty !\n");
+#endif
 		return 0;
 		}
 	while (TRUE) {
@@ -104,14 +112,18 @@ HANDLE GetProp(HWND hWnd, LPSTR lpStr)
 			(((DWORD)lpStr & 0xFFFF0000) != 0L && 
 			lpProp->PropName != NULL &&
 			strcmp(lpProp->PropName, lpStr) == 0)) {
+#ifdef DEBUG_PROP
 		   	printf("GetProp // Property found ! hData=%04X\n", lpProp->hData);
+#endif
 			GlobalUnlock(wndPtr->hProp);
 			return lpProp->hData;
 			}
 		if (lpProp->lpNextProp == NULL) break;
 		lpProp = lpProp->lpNextProp;
 		}
+#ifdef DEBUG_PROP
    	printf("GetProp // Property not found !\n");
+#endif
 	GlobalUnlock(wndPtr->hProp);
 	return 0;
 }

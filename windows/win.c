@@ -17,6 +17,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "dce.h"
 #include "sysmetrics.h"
 #include "scroll.h"
+#include "icon.h"
 
 extern Colormap COLOR_WinColormap;
 
@@ -244,7 +245,8 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     CREATESTRUCT *createStruct;
     HANDLE hcreateStruct;
     int wmcreate;
-    XSetWindowAttributes win_attr;
+    XSetWindowAttributes win_attr, icon_attr;
+    int iconWidth, iconHeight;
 
 #ifdef DEBUG_WIN
     printf( "CreateWindowEx: %04X '%s' '%s' %04X %d,%d %dx%d %04X %04X %04X %08X\n",
@@ -368,6 +370,12 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
        win_attr.save_under = FALSE;
     else
        win_attr.save_under = TRUE;        
+
+
+    /* set the background of all windows to be white, just like
+     * MS-Windows does (hopefully!)
+     */   
+    win_attr.background_pixel = WhitePixelOfScreen(screen);
     
     wndPtr->window = XCreateWindow( display, parentPtr->window,
 		   x + parentPtr->rectClient.left - parentPtr->rectWindow.left,
@@ -375,8 +383,45 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 		   width, height, 0,
 		   CopyFromParent, InputOutput, CopyFromParent,
 		   CWEventMask | CWOverrideRedirect | CWColormap |
-		   CWSaveUnder | CWBackingStore, &win_attr );
+		   CWSaveUnder | CWBackingStore | CWBackPixel, &win_attr );
     XStoreName( display, wndPtr->window, windowName );
+
+
+    /* create icon window */
+
+    icon_attr.override_redirect = rootWindow==DefaultRootWindow(display);
+    icon_attr.background_pixel = WhitePixelOfScreen(screen);
+    icon_attr.event_mask = ExposureMask | KeyPressMask |
+                            ButtonPressMask | ButtonReleaseMask;
+
+    wndPtr->hIcon = classPtr->wc.hIcon;
+    if (wndPtr->hIcon != (HICON)NULL) {
+      ICONALLOC   *lpico;
+      lpico = (ICONALLOC *)GlobalLock(wndPtr->hIcon);
+      printf("icon is %d x %d\n", 
+              (int)lpico->descriptor.Width,
+              (int)lpico->descriptor.Height);
+      iconWidth = (int)lpico->descriptor.Width;
+      iconHeight = (int)lpico->descriptor.Height;
+    } else {
+      printf("icon was NULL\n");
+      iconWidth = 64;
+      iconHeight = 64;
+    }
+
+    wndPtr->icon = XCreateWindow(display, parentPtr->window,
+                    10, 10, 100, iconHeight+20, 
+                    0, CopyFromParent,
+                    InputOutput, CopyFromParent,
+                    CWBorderPixel | CWEventMask | CWOverrideRedirect, 
+                    &icon_attr);
+   
+    if (style & WS_MINIMIZE) 
+    {
+      style &= ~WS_MINIMIZE;
+    }
+ 
+
 
 #ifdef DEBUG_MENU
     printf("CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
@@ -455,6 +500,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     else CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_ARROW ));
 
     EVENT_RegisterWindow( wndPtr->window, hwnd );
+    EVENT_RegisterWindow( wndPtr->icon, hwnd );
 
     WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
     

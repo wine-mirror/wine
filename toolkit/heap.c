@@ -12,7 +12,7 @@
 #include "windows.h"
 
 /* Controls the blocks per handle table */
-#define MAXBLOCKS 512
+#define MAXBLOCKS 1024
 
 static char Copyright [] = "Copyright (C) 1994 Miguel de Icaza";
 
@@ -184,6 +184,16 @@ HANDLE GlobalReAlloc(HANDLE hMem, DWORD new_size, WORD flags)
 {
     if (!(flags & GMEM_MODIFY))
 	return LocalReAlloc (hMem, new_size, flags);
+}
+
+char *GlobalLinearLock (HANDLE hMem)
+{
+    return GlobalLock (hMem);
+}
+
+HANDLE GlobalLinearUnlock (HANDLE hMem)
+{
+    return GlobalUnlock (hMem);
 }
 
 #ifdef UNIMPLEMENTED

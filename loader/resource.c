@@ -344,7 +344,7 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
 		    }
 #ifdef DEBUG_RESOURCE
 		printf("FindResource: search type=%X id=%X // type=%X id=%X\n",
-			type_id, resource_id, typeinfo.type_id, type_id2);
+			type_id, resource_id, typeinfo.type_id, nameinfo.id);
 #endif
 		if (nameinfo.id == resource_id) {
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
@@ -475,6 +475,60 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 	    }
     }
     return -1;
+}
+
+
+/**********************************************************************
+ *					GetRsrcCount		[internal]
+ */
+int GetRsrcCount(HINSTANCE hInst, int type_id)
+{
+    struct resource_typeinfo_s typeinfo;
+    struct resource_nameinfo_s nameinfo;
+    unsigned short size_shift;
+/*    off_t old_pos, new_pos;
+    unsigned char nbytes; 
+    char name[256]; */
+    int i;
+    off_t rtoff;
+    if (hInst == 0) return 0;
+#ifdef DEBUG_RESOURCE
+    printf("GetRsrcCount hInst=%04X typename=%08X\n", hInst, type_name);
+#endif
+    if (OpenResourceFile(hInst) < 0)	return 0;
+
+    /*
+     * Move to beginning of resource table.
+     */
+    rtoff = (ResourceFileInfo->mz_header->ne_offset +
+	     ResourceFileInfo->ne_header->resource_tab_offset);
+    lseek(ResourceFd, rtoff, SEEK_SET);
+    /*
+     * Read block size.
+     */
+    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != sizeof(size_shift)) {
+		printf("GetRsrcCount // bad block size !\n");
+		return -1;
+		}
+    size_shift = CONV_SHORT (size_shift);
+    for (;;) {
+		if (!load_typeinfo (ResourceFd, &typeinfo))	{
+			printf("GetRsrcCount // bad typeinfo size !\n");
+			return 0;
+			}
+#ifdef DEBUG_RESOURCE
+		printf("GetRsrcCount // typeinfo.type_id=%X count=%d type_id=%X\n",
+				typeinfo.type_id, typeinfo.count, type_id);
+#endif
+		if (typeinfo.type_id == 0) break;
+		if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff)) {
+			return typeinfo.count;
+			}
+		else {
+			lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
+			}
+		}
+    return 0;
 }
 
 
@@ -685,12 +739,26 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 #endif
     lpAccelTbl = (LPACCELHEADER)GlobalLock(hAccel);
     for (i = 0; i < lpAccelTbl->wCount; i++) {
-/*	if (lpAccelTbl->tbl[i].type & SHIFT_ACCEL) { */
-/*	if (lpAccelTbl->tbl[i].type & CONTROL_ACCEL) { */
 	if (lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) {
 	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
 		msg->message == WM_KEYDOWN) {
+		if ((lpAccelTbl->tbl[i].type & SHIFT_ACCEL) &&
+		    !(GetKeyState(VK_SHIFT) & 0xf)) {
+		    GlobalUnlock(hAccel);
+		    return 0;
+		}
+		if ((lpAccelTbl->tbl[i].type & CONTROL_ACCEL) &&
+		    !(GetKeyState(VK_CONTROL) & 0xf)) {
+		    GlobalUnlock(hAccel);
+		    return 0;
+		}
+		if ((lpAccelTbl->tbl[i].type & ALT_ACCEL) &&
+		    !(GetKeyState(VK_MENU) & 0xf)) {
+		    GlobalUnlock(hAccel);
+		    return 0;
+		}
 		SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
+		GlobalUnlock(hAccel);
 		return 1;
 		}
 	    if (msg->message == WM_KEYUP) return 1;
@@ -699,6 +767,7 @@ int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
 	    if (msg->wParam == lpAccelTbl->tbl[i].wEvent &&
 		msg->message == WM_CHAR) {
 		SendMessage(hWnd, WM_COMMAND, lpAccelTbl->tbl[i].wIDval, 0x00010000L);
+		GlobalUnlock(hAccel);
 		return 1;
 		}
 	    }
@@ -773,11 +842,43 @@ HANDLE FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name)
     
     if (r->size_shift == -1)
     {
+        printf("FindResource hInst=%04X typename=%08X resname=%08X not found!\n", 
+		instance, type_name, resource_name);
 	GlobalFree(rh);
 	return 0;
     }
 
     return rh;
+}
+
+/**********************************************************************
+ *			AllocResource	[KERNEL.66]
+ */
+HANDLE AllocResource(HANDLE instance, HANDLE hResInfo, DWORD dwSize)
+{
+    RESOURCE *r;
+    int image_size;
+
+    if (instance == 0)
+	return 0;
+    
+    if (OpenResourceFile(instance) < 0)
+	return 0;
+
+    r = (RESOURCE *)GlobalLock(hResInfo);
+    if (r == NULL)
+	return 0;
+    
+    image_size = r->nameinfo.length << r->size_shift;
+
+    if (dwSize == 0)
+	r->rsc_mem = GlobalAlloc(GMEM_MOVEABLE, image_size);
+    else
+	r->rsc_mem = GlobalAlloc(GMEM_MOVEABLE, dwSize);
+
+    GlobalUnlock(hResInfo);
+
+    return r->rsc_mem;
 }
 
 /**********************************************************************
@@ -851,24 +952,62 @@ HANDLE FreeResource(HANDLE hResData)
     
     return hResData;
 }
-
+
 /**********************************************************************
  *				AccessResource	[KERNEL.64]
  */
 int AccessResource(HANDLE instance, HANDLE hResInfo)
 {
-    int	resfile;
-#ifdef DEBUG_RESOURCE
+    int	resfile, image_size;
+    RESOURCE *r;
+
+/* #ifdef DEBUG_RESOURCE */
     printf("AccessResource(%04X, %04X);\n", instance, hResInfo);
-#endif
-/*
-    resfile = OpenResourceFile(instance);
+/* #endif */
+
+    if (instance == 0)
+	return -1;
+    
+    if ((resfile = OpenResourceFile(instance)) < 0)
+	return -1;
+
+    if ((r = (RESOURCE *)GlobalLock(hResInfo)) == NULL)
+	return -1;
+
+    lseek(resfile, ((int) r->nameinfo.offset << r->size_shift), SEEK_SET);
+    GlobalUnlock(hResInfo);
+
     return resfile;
-*/
-    return - 1;
 }
+
+/**********************************************************************
+ *				SizeofResource	[KERNEL.65]
+ */
+WORD SizeofResource(HANDLE instance, HANDLE hResInfo)
+{
+    int	image_size;
+    RESOURCE *r;
 
+/* #ifdef DEBUG_RESOURCE */
+    printf("SizeofResource(%04X, %04X);\n", instance, hResInfo);
+/* #endif */
 
+    if (instance == 0)
+	return 0;
+    
+    if ((r = (RESOURCE *)GlobalLock(hResInfo)) == NULL)
+	return 0;
+    
+    image_size = r->nameinfo.length << r->size_shift;
+
+    GlobalUnlock(hResInfo);
+
+/* #ifdef DEBUG_RESOURCE */
+    printf("SizeofResource return %d\n", image_size);
+/* #endif */
+
+    return image_size;
+}
 
 /**********************************************************************
  *					RSC_LoadResource

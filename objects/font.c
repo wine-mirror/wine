@@ -195,6 +195,9 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 	font = (FONTOBJ *) GDI_HEAP_ADDR( hnewfont );
     }
 
+    if (dc->header.wMagic == METAFILE_DC_MAGIC)
+	return MF_CreateFontIndirect(dc, hfont, &(font->logfont));
+
     if ((hfont >= FIRST_STOCK_FONT) && (hfont <= LAST_STOCK_FONT))
 	stockPtr = &stockFonts[hfont - FIRST_STOCK_FONT];
     else 

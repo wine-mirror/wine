@@ -22,7 +22,16 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
-LPSTR	lpEnvList;
+typedef struct tagENVENTRY {
+	LPSTR				Name;
+	LPSTR				Value;
+	WORD				wSize;
+	struct tagENVENTRY	*Prev;
+	struct tagENVENTRY	*Next;
+	} ENVENTRY;
+typedef ENVENTRY *LPENVENTRY;
+
+LPENVENTRY	lpEnvList = NULL;
 
 Display * XT_display;  /* To be removed */
 
@@ -400,9 +409,10 @@ int main( int argc, char *argv[] )
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();
+#ifndef WINELIB
     INT21_Init();
-    
-#ifndef sunos
+#endif
+#ifndef sparc
     atexit(called_at_exit);
 #else
     on_exit (called_at_exit, 0);
@@ -442,9 +452,66 @@ LONG GetWinFlags(void)
  */
 int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
 {
-	printf("EMPTY STUB ! // SetEnvironnement('%s', '%s', %d) !\n",
-								lpPortName, lpEnviron, nCount);
-	return 0;
+	LPENVENTRY	lpNewEnv;
+	LPENVENTRY	lpEnv = lpEnvList;
+	printf("SetEnvironnement('%s', '%s', %d) !\n", 
+				lpPortName, lpEnviron, nCount);
+	if (lpPortName == NULL) return -1;
+	while (lpEnv != NULL) {
+		if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
+			if (nCount == 0 || lpEnviron == NULL) {
+				if (lpEnv->Prev != NULL) lpEnv->Prev->Next = lpEnv->Next;
+				if (lpEnv->Next != NULL) lpEnv->Next->Prev = lpEnv->Prev;
+				free(lpEnv->Value);
+				free(lpEnv->Name);
+				free(lpEnv);
+				printf("SetEnvironnement() // entry deleted !\n");
+				return -1;
+				}
+			free(lpEnv->Value);
+			lpEnv->Value = malloc(nCount);
+			if (lpNewEnv->Value == NULL) {
+				printf("SetEnvironment() // Error allocating entry value !\n");
+				return 0;
+			}
+			memcpy(lpEnv->Value, lpEnviron, nCount);
+			lpEnv->wSize = nCount;
+			printf("SetEnvironnement() // entry modified !\n");
+			return nCount;
+			}
+		if (lpEnv->Next == NULL) break;
+		lpEnv = lpEnv->Next;
+		}
+	if (nCount == 0 || lpEnviron == NULL) return -1;
+	printf("SetEnvironnement() // new entry !\n");
+	lpNewEnv = malloc(sizeof(ENVENTRY));
+	if (lpNewEnv == NULL) {
+		printf("SetEnvironment() // Error allocating new entry !\n");
+		return 0;
+		}
+	if (lpEnvList == NULL) {
+		lpEnvList = lpNewEnv;
+		lpNewEnv->Prev = NULL;
+		}
+	else {
+		lpEnv->Next = lpNewEnv;
+		lpNewEnv->Prev = lpEnv;
+		}
+	lpNewEnv->Next = NULL;
+	lpNewEnv->Name = malloc(strlen(lpPortName) + 1);
+	if (lpNewEnv->Name == NULL) {
+		printf("SetEnvironment() // Error allocating entry name !\n");
+		return 0;
+		}
+	strcpy(lpNewEnv->Name, lpPortName);
+	lpNewEnv->Value = malloc(nCount);
+	if (lpNewEnv->Value == NULL) {
+		printf("SetEnvironment() // Error allocating entry value !\n");
+		return 0;
+		}
+	memcpy(lpNewEnv->Value, lpEnviron, nCount);
+	lpNewEnv->wSize = nCount;
+	return nCount;
 }
 
 /***********************************************************************
@@ -452,8 +519,20 @@ int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
  */
 int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
 {
-	printf("EMPTY STUB ! // GetEnvironnement('%s', '%s', %d) !\n",
-								lpPortName, lpEnviron, nMaxSiz);
+	WORD		nCount;
+	LPENVENTRY	lpEnv = lpEnvList;
+	printf("GetEnvironnement('%s', '%s', %d) !\n",
+					lpPortName, lpEnviron, nMaxSiz);
+	while (lpEnv != NULL) {
+		if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
+			nCount = min(nMaxSiz, lpEnv->wSize);
+			memcpy(lpEnviron, lpEnv->Value, nCount);
+			printf("GetEnvironnement() // found '%s' !\n", lpEnviron);
+			return nCount;
+			}
+		lpEnv = lpEnv->Next;
+		}
+	printf("GetEnvironnement() // not found !\n");
 	return 0;
 }
 

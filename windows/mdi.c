@@ -296,6 +296,8 @@ LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
     WND    *w      = WIN_FindWndPtr(child);
     LPRECT  lprect = &ci->rectRestore;
 
+    printf("restoring mdi child\n");
+
     child = ci->hwndActiveChild;
     
     w->dwStyle &= ~WS_MAXIMIZE;
@@ -749,6 +751,8 @@ DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	    return SendMessage(GetParent(hwnd), WM_MDIMAXIMIZE, hwnd, 0);
 
 	  case SC_RESTORE:
+	    if (IsIconic(hwnd))
+	        ICON_Deiconify(hwnd);
 	    return SendMessage(GetParent(hwnd), WM_MDIRESTORE, hwnd, 0);
 	}
 	break;

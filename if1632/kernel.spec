@@ -44,7 +44,7 @@ length	415
 #41 ENABLEDOS
 #42 DISABLEDOS
 45  pascal LoadModule(ptr ptr) LoadModule(1 2)
-#46 FREEMODULE
+46  pascal FreeModule(word) FreeLibrary(1)
 47  pascal GetModuleHandle(ptr) GetModuleHandle(1)
 48  pascal GetModuleUsage(word) GetModuleUsage(1)
 49  pascal GetModuleFileName(word ptr s_word) GetModuleFileName(1 2 3)
@@ -63,8 +63,8 @@ length	415
 62  pascal LockResource(word) LockResource(1)
 63  pascal FreeResource(word) FreeResource(1)
 64  pascal AccessResource(word word) AccessResource(1 2)
-#65 SIZEOFRESOURCE
-#66 ALLOCRESOURCE
+65  pascal SizeofResource(word word) SizeofResource(1 2)
+66  pascal AllocResource(word word long) AllocResource(1 2 3)
 #67 SETRESOURCEHANDLER
 68  pascal InitAtomTable(word) InitAtomTable(1)
 69  pascal FindAtom(ptr) FindAtom(1)

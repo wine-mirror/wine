@@ -6,8 +6,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 /*
 #define DEBUG_MODULE
 */
-
-#ifndef WINELIB
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,9 +13,9 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "wine.h"
 #include "prototypes.h"
 #include "windows.h"
-#include "wine.h"
 #include "dlls.h"
 #include "task.h"
 #include "toolhelp.h"
@@ -316,8 +314,6 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
     return (FARPROC) ret;
 }
 
-#endif /* ifndef WINELIB */
-
 /* internal dlls */
 static void 
 FillModStructBuiltIn(MODULEENTRY *lpModule, struct dll_name_table_entry_s *dll)
@@ -412,3 +408,4 @@ HMODULE ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName)
 {
 	return (ModuleFindHandle(lpModule, GetModuleHandle((char*)lpstrName)));
 }
+

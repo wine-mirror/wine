@@ -78,9 +78,9 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				0, 0, width - bm.bmHeight, bm.bmHeight, 
 				hwnd, 1, wndPtr->hInstance, 0L);
 		lphc->hWndLBox = CreateWindow("LISTBOX", "", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
-			wndPtr->rectClient.left, wndPtr->rectClient.top + bm.bmHeight, 
-			width, height, wndPtr->hwndParent, 1, 
+			WS_POPUP | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
+			rect.left, rect.top + bm.bmHeight, 
+			width, height, wndPtr->hwndParent, 0, 
 			wndPtr->hInstance, (LPSTR)MAKELONG(0, hwnd));
 		ShowWindow(lphc->hWndLBox, SW_HIDE);
 #ifdef DEBUG_COMBO

@@ -92,6 +92,7 @@ GetFileInfo(unsigned short instance)
     return w;
 }
 
+#ifndef WINELIB
 /**********************************************************************
  *
  * Load MZ Header
@@ -104,6 +105,7 @@ void load_mz_header(int fd, struct mz_header_s *mz_header)
 	myerror("Unable to read MZ header from file");
     }
 }
+#endif
 
 int IsDLLLoaded(char *name)
 {
@@ -233,7 +235,6 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     return 14;
 }
 
-
 #ifndef WINELIB
 /**********************************************************************
  *					main
@@ -395,4 +396,4 @@ void InitializeLoadedDLLs(struct w_files *wpnt)
     for( ; wpnt != final_wpnt; wpnt = wpnt->next)
 	InitDLL(wpnt);
 }
-#endif
+#endif /* #ifndef WINELIB */

@@ -195,13 +195,14 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
 	    m_free->next->prev = m_free->prev;
 	
 	m->length += sizeof(MDESC) + m_free->length;
+
 #ifdef DEBUG_HEAP
 	printf("HEAP_ReAlloc before GLOBAL_FLAGS_ZEROINIT !\n");
 #endif
 	if (flags & GLOBAL_FLAGS_ZEROINIT)
 	    memset(m_free, '\0', sizeof(MDESC) + m_free->length);
     }
-    
+
     /*
      * Check for shrink block.
      */
@@ -397,6 +398,22 @@ HEAP_LocalInit(unsigned short owner, void *start, int length)
     lh->delta       = 0x20;
     HEAP_Init(&lh->free_list, start, length);
     LocalHeaps = lh;
+}
+
+/**********************************************************************
+ *					HEAP_LocalSize
+ */
+unsigned int
+HEAP_LocalSize(MDESC **free_list, unsigned int handle)
+{
+    MDESC *m;
+    
+    m = (MDESC *) (((int) *free_list & 0xffff0000) | 
+		   (handle & 0xffff)) - 1;
+    if (m->next != m || m->prev != m)
+	return 0;
+
+    return m->length;
 }
 
 /**********************************************************************

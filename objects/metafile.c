@@ -431,6 +431,11 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 		     CreatePenIndirect((LOGPEN *)(&(mr->rdParam))));
 	break;
 
+    case META_CREATEFONTINDIRECT:
+	MF_AddHandle(ht, nHandles, 
+		     CreateFontIndirect((LOGFONT *)(&(mr->rdParam))));
+	break;
+
     case META_CREATEBRUSHINDIRECT:
 	MF_AddHandle(ht, nHandles, 
 		     CreateBrushIndirect((LOGBRUSH *)(&(mr->rdParam))));
@@ -799,6 +804,41 @@ BOOL MF_CreatePenIndirect(DC *dc, HPEN hPen, LOGPEN *logpen)
 
 
 /******************************************************************
+ *         MF_CreateFontIndirect
+ */
+BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT *logfont)
+{
+    int index;
+    BOOL rc;
+    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT)];
+    METARECORD *mr = (METARECORD *)&buffer;
+    METAFILE *mf;
+    METAHEADER *mh;
+
+    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGFONT) - 2) / 2;
+    mr->rdFunction = META_CREATEFONTINDIRECT;
+    memcpy(&(mr->rdParam), logfont, sizeof(LOGFONT));
+    if (!MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2))
+	return FALSE;
+
+    mr->rdSize = sizeof(METARECORD) / 2;
+    mr->rdFunction = META_SELECTOBJECT;
+    if ((index = MF_AddHandleInternal(hFont)) == -1)
+	return FALSE;
+
+    mf = (METAFILE *)GlobalLock(dc->w.hMetaFile);
+    mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+    *(mr->rdParam) = index;
+    if (index >= mh->mtNoObjects)
+	mh->mtNoObjects++;
+    rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
+    GlobalUnlock(mf->hMetaHdr);
+    GlobalUnlock(dc->w.hMetaFile);
+    return rc;
+}
+
+
+/******************************************************************
  *         MF_TextOut
  */
 BOOL MF_TextOut(DC *dc, short x, short y, LPSTR str, short count)
@@ -849,4 +889,25 @@ BOOL MF_MetaPoly(DC *dc, short func, LPPOINT pt, short count)
     rc = MF_WriteRecord(dc->w.hMetaFile, mr, mr->rdSize * 2);
     GlobalFree(hmr);
     return rc;
+}
+
+
+/******************************************************************
+ *         MF_BitBlt
+ */
+BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
+	       short height, HDC hdcSrc, short xSrc, short ySrc, DWORD rop)
+{
+    printf("MF_BitBlt: not implemented yet\n");
+}
+
+
+/******************************************************************
+ *         MF_StretchBlt
+ */
+BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
+		   short heightDest, HDC hdcSrc, short xSrc, short ySrc, 
+		   short widthSrc, short heightSrc, DWORD rop)
+{
+    printf("MF_StretchBlt: not implemented yet\n");
 }

@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "win.h"
 #include "message.h"
+#include "gdi.h"
 
   /* Last CTLCOLOR id */
 #define CTLCOLOR_MAX   CTLCOLOR_STATIC
@@ -43,6 +44,13 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 
     if (!(wndPtr->flags & WIN_ERASE_UPDATERGN)) lps->fErase = TRUE;
     else lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
+
+    /*
+     * a BeginPaint should return with these objects set by default
+     */
+    SelectObject(lps->hdc, STOCK_BLACK_PEN);
+    SelectObject(lps->hdc, STOCK_WHITE_BRUSH);
+    SelectObject(lps->hdc, STOCK_SYSTEM_FONT);
     
     return lps->hdc;
 }

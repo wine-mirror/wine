@@ -115,6 +115,13 @@ HBITMAP CreateBitmapIndirect( BITMAP * bmp )
     if (bmp->bmPlanes != 1) return 0;
     if ((bmp->bmBitsPixel != 1) && (bmp->bmBitsPixel != screenDepth)) return 0;
 
+    if (bmp->bmHeight < 0)
+	bmp->bmHeight = -bmp->bmHeight;
+    
+    if (bmp->bmWidth < 0)
+	bmp->bmWidth = -bmp->bmWidth;
+    
+
       /* Create the BITMAPOBJ */
     hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
     if (!hbitmap) return 0;

@@ -66,6 +66,7 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
 {
     int xs1, xs2, ys1, ys2;
     int xd1, xd2, yd1, yd2;
+    DWORD saverop = rop;
     DC *dcDest, *dcSrc;
 
 #ifdef DEBUG_GDI    
@@ -83,10 +84,17 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
 	return FALSE;
     }
     
-    dcDest = (DC *) GDI_GetObjPtr( hdcDest, DC_MAGIC );
-    if (!dcDest) return FALSE;
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
     if (!dcSrc) return FALSE;
+    dcDest = (DC *) GDI_GetObjPtr( hdcDest, DC_MAGIC );
+    if (!dcDest) 
+    {
+	dcDest = (DC *)GDI_GetObjPtr(hdcDest, METAFILE_DC_MAGIC);
+	if (!dcDest) return FALSE;
+	MF_BitBlt(dcDest, xDest, yDest, width, height,
+		  hdcSrc, xSrc, ySrc, saverop);
+	return TRUE;
+    }
 
     xs1 = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc );
     xs2 = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc + width );
@@ -319,6 +327,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     int xd1, xd2, yd1, yd2;
     DC *dcDest, *dcSrc;
     XImage *sxi, *dxi;
+    DWORD saverop = rop;
     WORD stretchmode;
 	BOOL	flg;
 
@@ -351,10 +360,17 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
         return FALSE;
     }
 
-    dcDest = (DC *) GDI_GetObjPtr( hdcDest, DC_MAGIC );
-    if (!dcDest) return FALSE;
     dcSrc = (DC *) GDI_GetObjPtr( hdcSrc, DC_MAGIC );
     if (!dcSrc) return FALSE;
+    dcDest = (DC *) GDI_GetObjPtr( hdcDest, DC_MAGIC );
+    if (!dcDest) 
+    {
+	dcDest = (DC *)GDI_GetObjPtr(hdcDest, METAFILE_DC_MAGIC);
+	if (!dcDest) return FALSE;
+	MF_StretchBlt(dcDest, xDest, yDest, widthDest, heightDest,
+		  hdcSrc, xSrc, ySrc, widthSrc, heightSrc, saverop);
+	return TRUE;
+    }
 
     xs1 = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc );
     xs2 = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc + widthSrc );

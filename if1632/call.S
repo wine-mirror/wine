@@ -105,7 +105,7 @@ _CallToInit16:
 	movw	$UDATASEL,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs
-/*	movw	%ds,%ax */
+	movw	%ds,%ax
 
 	/*
 	 * Call entry point

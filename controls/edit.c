@@ -3,7 +3,7 @@
  *
  * Copyright  David W. Metcalfe, 1994
  *
- * Release 1, April 1994
+ * Release 2, June 1994
  */
 
 static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
@@ -11,11 +11,13 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
+#include <heap.h>
 #include "win.h"
 #include "class.h"
 #include "user.h"
+#include "scroll.h"
 
-#define DEBUG_EDIT /* */
+/* #define DEBUG_EDIT /* */
 
 #define NOTIFY_PARENT(hWndCntrl, wNotifyCode) \
 	SendMessage(GetParent(hWndCntrl), WM_COMMAND, \
@@ -44,6 +46,7 @@ typedef struct
     int textwidth;           /* width of longest line in pixels */
     RECT fmtrc;              /* rectangle in which to format text */
     int txtht;               /* height of text line in pixels */
+    MDESC **localheap;       /* pointer to application's local heap */
     HANDLE hText;            /* handle to text buffer */
     HANDLE hCharWidths;      /* widths of chars in font */
     HANDLE hTextPtrs;        /* list of line offsets */
@@ -59,6 +62,11 @@ typedef struct
     int SelBegCol;           /* beginning column of selection */
     int SelEndLine;          /* ending line of selection */
     int SelEndCol;           /* ending column of selection */
+    HFONT hFont;             /* handle of current font (if not default) */
+    HANDLE hDeletedText;     /* handle to deleted txet buffer for undo */
+    int DeletedLength;       /* length of deleted text */
+    int DeletedCurrLine;     /* starting line from which text was deleted */
+    int DeletedCurrCol;      /* starting col from which text was deleted */
 } EDITSTATE;
 
 
@@ -69,8 +77,8 @@ typedef struct
 #define EditBufLen(wndPtr) (wndPtr->dwStyle & ES_MULTILINE \
 			    ? EDITLEN : ENTRYLEN)
 #define CurrChar (EDIT_TextLine(hwnd, es->CurrLine) + es->CurrCol)
-#define SelMarked(es) (es->SelBegLine != -1 && es->SelBegCol != -1 && \
-		       es->SelEndLine != -1 && es->SelEndCol != -1)
+#define SelMarked(es) (es->SelBegLine != 0 || es->SelBegCol != 0 || \
+		       es->SelEndLine != 0 || es->SelEndCol != 0)
 
 /* macros to access window styles */
 #define IsAutoVScroll() (wndPtr->dwStyle & ES_AUTOVSCROLL)
@@ -88,6 +96,7 @@ static BOOL Print = FALSE;
 
 
 LONG EditWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam);
+long EDIT_NCCreateMsg(HWND hwnd, LONG lParam);
 long EDIT_CreateMsg(HWND hwnd, LONG lParam);
 void EDIT_ClearTextPointers(HWND hwnd);
 void EDIT_BuildTextPointers(HWND hwnd);
@@ -135,11 +144,24 @@ void EDIT_ClearSel(HWND hwnd);
 int EDIT_TextLineNumber(HWND hwnd, char *lp);
 void EDIT_SetAnchor(HWND hwnd, int row, int col);
 void EDIT_ExtendSel(HWND hwnd, int x, int y);
+void EDIT_WriteSel(HWND hwnd, int y, int start, int end);
 void EDIT_StopMarking(HWND hwnd);
 LONG EDIT_GetLineMsg(HWND hwnd, WORD wParam, LONG lParam);
 LONG EDIT_GetSelMsg(HWND hwnd);
+void EDIT_ReplaceSel(HWND hwnd, LONG lParam);
+void EDIT_InsertText(HWND hwnd, char *str, int len);
 LONG EDIT_LineFromCharMsg(HWND hwnd, WORD wParam);
 LONG EDIT_LineIndexMsg(HWND hwnd, WORD wParam);
+LONG EDIT_LineLengthMsg(HWND hwnd, WORD wParam);
+void EDIT_SetFont(HWND hwnd, WORD wParam, LONG lParam);
+void EDIT_SaveDeletedText(HWND hwnd, char *deltext, int len, int line, 
+			  int col);
+void EDIT_ClearDeletedText(HWND hwnd);
+LONG EDIT_UndoMsg(HWND hwnd);
+unsigned int EDIT_TextAlloc(EDITSTATE *es, int bytes);
+void *EDIT_TextAddr(EDITSTATE *es, unsigned int handle);
+unsigned int EDIT_TextReAlloc(EDITSTATE *es, unsigned int handle, int bytes);
+void EDIT_SetHandleMsg(HWND hwnd, WORD wParam);
 void swap(int *a, int *b);
 
 
@@ -154,13 +176,19 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 
     switch (uMsg) {
     case EM_CANUNDO:
-	/* cannot process undo message */
-	lResult = 0L;
+	lResult = es->hDeletedText;
 	break;
 	
+    case EM_EMPTYUNDOBUFFER:
+	EDIT_ClearDeletedText(hwnd);
+	break;
+
     case EM_FMTLINES:
-	printf("edit: cannot process EM_FMTLINES message\n");
-	lResult = 0L;
+	printf("edit: EM_FMTLINES message received\n");
+	if (!wParam)
+	    lResult = 1L;
+	else
+	    lResult = 0L;
 	break;
 
     case EM_GETFIRSTVISIBLELINE:
@@ -168,7 +196,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_GETHANDLE:
-	printf("edit: cannot process EM_GETHANDLE message\n");
+	lResult = es->hText;
 	break;
 
     case EM_GETLINE:
@@ -206,7 +234,10 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_LIMITTEXT:
-	es->MaxTextLen = wParam;
+	if (wParam)
+	    es->MaxTextLen = wParam;
+	else
+	    es->MaxTextLen = 65000;
 	break;
 
     case EM_LINEFROMCHAR:
@@ -221,7 +252,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_LINELENGTH:
-	printf("edit: cannot process EM_LINELENGTH message\n");
+	lResult = EDIT_LineLengthMsg(hwnd, wParam);
 	break;
 
     case EM_LINESCROLL:
@@ -229,11 +260,14 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_REPLACESEL:
-	printf("edit: cannot process EM_REPLACESEL message\n");
+	HideCaret(hwnd);
+	EDIT_ReplaceSel(hwnd, lParam);
+	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
+	ShowCaret(hwnd);
 	break;
 
     case EM_SETHANDLE:
-	printf("edit: cannot process EM_SETHANDLE message\n");
+	EDIT_SetHandleMsg(hwnd, wParam);
 	break;
 
     case EM_SETMODIFY:
@@ -268,6 +302,13 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	printf("edit: cannot process EM_SETWORDBREAKPROC message\n");
 	break;
 
+    case EM_UNDO:
+	HideCaret(hwnd);
+	lResult = EDIT_UndoMsg(hwnd);
+	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
+	ShowCaret(hwnd);
+	break;
+
     case WM_CHAR:
 	EDIT_CharMsg(hwnd, wParam);
 	break;
@@ -287,7 +328,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case WM_GETTEXT:
-	textPtr = (LPSTR)EDIT_HEAP_ADDR(es->hText);
+	textPtr = EDIT_TextAddr(es, es->hText);
 	if ((int)wParam > (len = strlen(textPtr)))
 	{
 	    strcpy((char *)lParam, textPtr);
@@ -298,7 +339,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case WM_GETTEXTLENGTH:
-	textPtr = (LPSTR)EDIT_HEAP_ADDR(es->hText);
+	textPtr = EDIT_TextAddr(es, es->hText);
 	lResult = (DWORD)strlen(textPtr);
 	break;
 
@@ -340,6 +381,10 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	lResult = 0;
 	break;
 
+    case WM_NCCREATE:
+	lResult = EDIT_NCCreateMsg(hwnd, lParam);
+	break;
+	
     case WM_PAINT:
 	EDIT_PaintMsg(hwnd);
 	break;
@@ -353,6 +398,10 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case WM_SETFONT:
+	HideCaret(hwnd);
+	EDIT_SetFont(hwnd, wParam, lParam);
+	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
+	ShowCaret(hwnd);
 	break;
 
     case WM_SETTEXT:
@@ -379,19 +428,17 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 
 
 /*********************************************************************
- *  WM_CREATE message function
+ *  WM_NCCREATE message function
  */
 
-long EDIT_CreateMsg(HWND hwnd, LONG lParam)
+long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
 {
-    HDC hdc;
+    CREATESTRUCT *createStruct = (CREATESTRUCT *)lParam;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es;
-    CLASS *classPtr;
-    short *charWidths;
-    TEXTMETRIC tm;
-    char *text;
     unsigned int *textPtrs;
+    char *text;
+    int len;
 
     /* allocate space for state variable structure */
     (HANDLE)(*(wndPtr->wExtra)) = 
@@ -401,30 +448,67 @@ long EDIT_CreateMsg(HWND hwnd, LONG lParam)
     textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
     es->hCharWidths = EDIT_HEAP_ALLOC(256 * sizeof(short));
 
+    /* --- text buffer */
+    es->localheap = &HEAP_LocalFindHeap(createStruct->hInstance)->free_list;
+    es->MaxTextLen = MAXTEXTLEN + 1;
+    if (!(es->hText))
+    {
+	es->textlen = EditBufLen(wndPtr) + 1;
+	es->hText = EDIT_TextAlloc(es, EditBufLen(wndPtr) + 2);
+	text = EDIT_TextAddr(es, es->hText);
+	memset(text, 0, es->textlen + 2);
+	EDIT_ClearTextPointers(hwnd);
+    }
+    else
+    {
+	if (strlen(createStruct->lpszName) < EditBufLen(wndPtr))
+	{
+	    es->hText = EDIT_TextAlloc(es, EditBufLen(wndPtr) + 2);
+	    es->textlen = EditBufLen(wndPtr) + 1;
+	    *(text + es->textlen) = '\0';
+	}
+	else
+	{
+	    es->hText = EDIT_TextAlloc(es, strlen(createStruct->lpszName) + 2);
+	    es->textlen = strlen(createStruct->lpszName) + 1;
+	}
+	text = EDIT_TextAddr(es, es->hText);
+	*(text + es->textlen + 1) = '\0';
+	EDIT_BuildTextPointers(hwnd);
+    }
+
+    if ((createStruct->style & WS_VSCROLL) || 
+	(createStruct->style & WS_HSCROLL)) NC_CreateScrollBars(hwnd);
+
+    /* remove the WS_CAPTION style if it has been set - this is really a  */
+    /* pseudo option made from a combination of WS_BORDER and WS_DLGFRAME */
+    if (wndPtr->dwStyle & WS_BORDER && wndPtr->dwStyle & WS_DLGFRAME)
+	wndPtr->dwStyle ^= WS_DLGFRAME;
+
+    return 1;
+}
+
+
+/*********************************************************************
+ *  WM_CREATE message function
+ */
+
+long EDIT_CreateMsg(HWND hwnd, LONG lParam)
+{
+    HDC hdc;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+    CLASS *classPtr;
+    short *charWidths;
+    TEXTMETRIC tm;
+    char *text;
+
     /* initialize state variable structure */
     /* --- char width array */
     hdc = GetDC(hwnd);
     charWidths = (short *)EDIT_HEAP_ADDR(es->hCharWidths);
     memset(charWidths, 0, 256 * sizeof(short));
     GetCharWidth(hdc, 0, 255, charWidths);
-
-    /* --- text buffer */
-    es->MaxTextLen = MAXTEXTLEN + 1;
-    if (!(wndPtr->hText))
-    {
-	es->textlen = EditBufLen(wndPtr);
-	es->hText = EDIT_HEAP_ALLOC(EditBufLen(wndPtr) + 2);
-	text = (LPSTR)EDIT_HEAP_ADDR(es->hText);
-	memset(text, 0, es->textlen + 2);
-	EDIT_ClearTextPointers(hwnd);
-    }
-    else
-    {
-	es->hText = wndPtr->hText;
-	wndPtr->hText = 0;
-	es->textlen = GetWindowTextLength(hwnd) + 1;
-	EDIT_BuildTextPointers(hwnd);
-    }
 
     /* --- other structure variables */
     GetTextMetrics(hdc, &tm);
@@ -435,8 +519,11 @@ long EDIT_CreateMsg(HWND hwnd, LONG lParam)
     es->WndCol = es->WndRow = 0;
     es->TextChanged = FALSE;
     es->textwidth = 0;
-    es->SelBegLine = es->SelBegCol = -1;
-    es->SelEndLine = es->SelEndCol = -1;
+    es->SelBegLine = es->SelBegCol = 0;
+    es->SelEndLine = es->SelEndCol = 0;
+    es->hFont = 0;
+    es->hDeletedText = 0;
+    es->DeletedLength = 0;
 
     /* allocate space for a line full of blanks to speed up */
     /* line filling */
@@ -494,7 +581,7 @@ void EDIT_BuildTextPointers(HWND hwnd)
     short *charWidths;
 
     es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    text = (char *)EDIT_HEAP_ADDR(es->hText);
+    text = EDIT_TextAddr(es, es->hText);
     textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
     charWidths = (short *)EDIT_HEAP_ADDR(es->hCharWidths);
 
@@ -627,7 +714,7 @@ char *EDIT_TextLine(HWND hwnd, int sel)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
     unsigned int *textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
 
     return (text + *(textPtrs + sel));
@@ -847,6 +934,7 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     int diff, num_spaces;
     HRGN hrgnClip;
     COLORREF oldTextColor, oldBkgdColor;
+    HFONT oldfont;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
     short *charWidths = (short *)EDIT_HEAP_ADDR(es->hCharWidths);
@@ -860,6 +948,9 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     str = (char *)EDIT_HEAP_ADDR(hStr);
     hrgnClip = CreateRectRgnIndirect(rc);
     SelectClipRgn(hdc, hrgnClip);
+
+    if (es->hFont)
+	oldfont = (HFONT)SelectObject(hdc, (HANDLE)es->hFont);
 
     SendMessage(GetParent(hwnd), WM_CTLCOLOR, (WORD)hdc,
 		MAKELPARAM(hwnd, CTLCOLOR_EDIT));
@@ -890,6 +981,9 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 	    TextOut(hdc, col + len, row * es->txtht, blanks, num_spaces);
 	}
     }
+
+    if (es->hFont)
+	SelectObject(hdc, (HANDLE)oldfont);
 
     EDIT_HEAP_FREE(hStr);
     ReleaseDC(hwnd, hdc);
@@ -988,7 +1082,7 @@ void EDIT_KeyTyped(HWND hwnd, short ch)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
     char *currchar = CurrChar;
     RECT rc;
     BOOL FullPaint = FALSE;
@@ -1032,10 +1126,10 @@ void EDIT_KeyTyped(HWND hwnd, short ch)
 	/* but not above maximum size */
 	if (es->textlen > es->MaxTextLen)
 	    es->textlen = es->MaxTextLen;
-	es->hText = EDIT_HEAP_REALLOC(es->hText, es->textlen + 2);
+	es->hText = EDIT_TextReAlloc(es, es->hText, es->textlen + 2);
 	if (!es->hText)
 	    NOTIFY_PARENT(hwnd, EN_ERRSPACE);
-	text = (char *)EDIT_HEAP_ADDR(es->hText);
+	text = EDIT_TextAddr(es, es->hText);
 	text[es->textlen - 1] = '\0';
 	currchar = CurrChar;
     }
@@ -1122,7 +1216,7 @@ void EDIT_Forward(HWND hwnd)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
     char *cc = CurrChar + 1;
 
     if (*cc == '\0')
@@ -1210,7 +1304,7 @@ void EDIT_Backward(HWND hwnd)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
 
     if (es->CurrCol)
     {
@@ -1238,7 +1332,7 @@ void EDIT_End(HWND hwnd)
     RECT rc;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
 
     while (*CurrChar && *CurrChar != '\n')
     {
@@ -1988,8 +2082,8 @@ LONG EDIT_SetTextMsg(HWND hwnd, LONG lParam)
 	len = strlen((char *)lParam);
 	EDIT_ClearText(hwnd);
 	es->textlen = len;
-	es->hText = EDIT_HEAP_REALLOC(es->hText, len + 3);
-	text = EDIT_HEAP_ADDR(es->hText);
+	es->hText = EDIT_TextReAlloc(es, es->hText, len + 3);
+	text = EDIT_TextAddr(es, es->hText);
 	strcpy(text, (char *)lParam);
 /*	text[len] = '\n'; */ /* Removed by Bob Amstadt */
 	text[len + 1] = '\0';
@@ -2018,8 +2112,8 @@ void EDIT_ClearText(HWND hwnd)
     unsigned int blen = EditBufLen(wndPtr) + 2;
     char *text;
 
-    es->hText = EDIT_HEAP_REALLOC(es->hText, blen);
-    text = EDIT_HEAP_ADDR(es->hText);
+    es->hText = EDIT_TextReAlloc(es, es->hText, blen);
+    text = EDIT_TextAddr(es, es->hText);
     memset(text, 0, blen);
     es->textlen = 0;
     es->wlines = 0;
@@ -2050,17 +2144,19 @@ void EDIT_SetSelMsg(HWND hwnd, LONG lParam)
     EDIT_GetLineCol(hwnd, so, &(es->SelBegLine), &(es->SelBegCol));
     EDIT_GetLineCol(hwnd, eo, &(es->SelEndLine), &(es->SelEndCol));
 
-    es->CurrLine = es->SelEndLine;
-    es->CurrCol = es->SelEndCol;
-    es->WndRow = es->SelEndLine - es->wtop;
-    if (es->WndRow < 0)
+    if (SelMarked(es))
     {
-	es->wtop = es->SelEndLine;
-	es->WndRow = 0;
+	es->CurrLine = es->SelEndLine;
+	es->CurrCol = es->SelEndCol;
+	es->WndRow = es->SelEndLine - es->wtop;
+	if (es->WndRow < 0)
+	{
+	    es->wtop = es->SelEndLine;
+	    es->WndRow = 0;
+	}
+	es->WndCol = EDIT_LineLength(es, EDIT_TextLine(hwnd, es->SelEndLine), 
+				     es->SelEndCol) - es->wleft;
     }
-    es->WndCol = EDIT_LineLength(es, EDIT_TextLine(hwnd, es->SelEndLine), 
-				 es->SelEndCol) - es->wleft;
-
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
 }
@@ -2078,8 +2174,16 @@ void EDIT_GetLineCol(HWND hwnd, int off, int *line, int *col)
     char *cp, *cp1;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
     unsigned int *textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
+
+    /* check for (0,0) */
+    if (!off)
+    {
+	*line = 0;
+	*col = 0;
+	return;
+    }
 
     if (off > strlen(text)) off = strlen(text);
     cp1 = text;
@@ -2115,13 +2219,14 @@ void EDIT_DeleteSel(HWND hwnd)
     int len;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
 
     if (SelMarked(es))
     {
 	bbl = EDIT_TextLine(hwnd, es->SelBegLine) + es->SelBegCol;
 	bel = EDIT_TextLine(hwnd, es->SelEndLine) + es->SelEndCol;
 	len = (int)(bel - bbl);
+	EDIT_SaveDeletedText(hwnd, bbl, len, es->SelBegLine, es->SelBegCol);
 	es->TextChanged = TRUE;
 	strcpy(bbl, bel);
 
@@ -2154,8 +2259,8 @@ void EDIT_ClearSel(HWND hwnd)
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
 
-    es->SelBegLine = es->SelBegCol = -1;
-    es->SelEndLine = es->SelEndCol = -1;
+    es->SelBegLine = es->SelBegCol = 0;
+    es->SelEndLine = es->SelEndCol = 0;
 
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
@@ -2175,7 +2280,7 @@ int EDIT_TextLineNumber(HWND hwnd, char *lp)
     char *cp;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
-    char *text = (char *)EDIT_HEAP_ADDR(es->hText);
+    char *text = EDIT_TextAddr(es, es->hText);
     unsigned int *textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
 
     for (lineno = 0; lineno < es->wlines; lineno++)
@@ -2198,14 +2303,20 @@ int EDIT_TextLineNumber(HWND hwnd, char *lp)
 
 void EDIT_SetAnchor(HWND hwnd, int row, int col)
 {
+    BOOL sel = FALSE;
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
 
+    if (SelMarked(es))
+	sel = TRUE;
     EDIT_ClearSel(hwnd);
     es->SelBegLine = es->SelEndLine = row;
     es->SelBegCol = es->SelEndCol = col;
-    InvalidateRect(hwnd, NULL, FALSE);
-    UpdateWindow(hwnd);
+    if (sel)
+    {
+	InvalidateRect(hwnd, NULL, FALSE);
+	UpdateWindow(hwnd);
+    }
 }
 
 
@@ -2217,8 +2328,7 @@ void EDIT_SetAnchor(HWND hwnd, int row, int col)
 
 void EDIT_ExtendSel(HWND hwnd, int x, int y)
 {
-    int bbl, bel;
-    int ptop, pbot;
+    int bbl, bel, bbc, bec;
     char *cp, *cp1;
     int len;
     BOOL end = FALSE;
@@ -2229,8 +2339,8 @@ void EDIT_ExtendSel(HWND hwnd, int x, int y)
     printf("EDIT_ExtendSel: x=%d, y=%d\n", x, y);
 #endif
 
-    ptop = min(es->SelBegLine, es->SelEndLine);
-    pbot = max(es->SelBegLine, es->SelEndLine);
+    bbl = es->SelEndLine;
+    bbc = es->SelEndCol;
     cp = EDIT_TextLine(hwnd, es->wtop + y / es->txtht);
     cp1 = strchr(cp, '\n');
     len = cp1 ? (int)(cp1 - cp) : 0;
@@ -2251,22 +2361,90 @@ void EDIT_ExtendSel(HWND hwnd, int x, int y)
     if (es->WndCol > EDIT_LineLength(es, cp, len) - es->wleft || end)
 	es->WndCol = EDIT_LineLength(es, cp, len) - es->wleft;
     es->CurrCol = EDIT_PixelToChar(hwnd, es->CurrLine, &(es->WndCol));
-    es->SelEndCol = es->CurrCol;
+    es->SelEndCol = es->CurrCol - 1;
 
-    bbl = min(es->SelBegLine, es->SelEndLine);
-    bel = max(es->SelBegLine, es->SelEndLine);
-    while (ptop < bbl)
+    bel = es->SelEndLine;
+    bec = es->SelEndCol;
+
+    /* return if no new characters to mark */
+    if (bbl == bel && bbc == bec)
+	return;
+
+    /* put lowest marker first */
+    if (bbl > bel)
     {
-	EDIT_WriteTextLine(hwnd, NULL, ptop);
-	ptop++;
+	swap(&bbl, &bel);
+	swap(&bbc, &bec);
     }
+    if (bbl == bel && bbc > bec)
+	swap(&bbc, &bec);
+
     for (y = bbl; y <= bel; y++)
-	EDIT_WriteTextLine(hwnd, NULL, y);
-    while (pbot > bel)
     {
-	EDIT_WriteTextLine(hwnd, NULL, pbot);
-	--pbot;
+	if (y == bbl && y == bel)
+	    EDIT_WriteSel(hwnd, y, bbc, bec);
+	else if (y == bbl)
+	    EDIT_WriteSel(hwnd, y, bbc, -1);
+	else if (y == bel)
+	    EDIT_WriteSel(hwnd, y, 0, bec);
+	else
+	    EDIT_WriteSel(hwnd, y, 0, -1);
     }
+}
+
+
+/*********************************************************************
+ *  EDIT_WriteSel
+ *
+ *  Display selection by reversing pixels in selected text.
+ *  If end == -1, selection applies to end of line.
+ */
+
+void EDIT_WriteSel(HWND hwnd, int y, int start, int end)
+{
+    RECT rc;
+    int scol, ecol;
+    char *cp, *cp1;
+    HDC hdc;
+    HBRUSH hbrush, holdbrush;
+    int olddm;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+
+#ifdef DEBUG_EDIT
+    printf("EDIT_WriteSel: y=%d start=%d end=%d\n", y, start, end);
+#endif
+    GetClientRect(hwnd, &rc);
+
+    /* make sure y is within the window */
+    if (y < es->wtop || y > (es->wtop + ClientHeight(wndPtr, es)))
+	return;
+
+    /* get pointer to text */
+    cp = EDIT_TextLine(hwnd, y);
+
+    /* get length of line if end == -1 */
+    if (end == -1)
+    {
+	cp1 = strchr(cp, '\n');
+	end = cp1 ? (int)(cp1 - cp) : 0;
+    }
+
+    scol = EDIT_LineLength(es, cp, start);
+    if (scol > rc.right) return;
+    if (scol < rc.left) scol = rc.left;
+    ecol = EDIT_LineLength(es, cp, end);
+    if (ecol < rc.left) return;
+    if (ecol > rc.right) ecol = rc.right;
+
+    hdc = GetDC(hwnd);
+    hbrush = GetStockObject(BLACK_BRUSH);
+    holdbrush = (HBRUSH)SelectObject(hdc, (HANDLE)hbrush);
+    olddm = SetROP2(hdc, R2_XORPEN);
+    Rectangle(hdc, scol, y * es->txtht, ecol, (y + 1) * es->txtht);
+    SetROP2(hdc, olddm);
+    SelectObject(hdc, (HANDLE)holdbrush);
+    ReleaseDC(hwnd, hdc);
 }
 
 
@@ -2332,6 +2510,53 @@ LONG EDIT_GetSelMsg(HWND hwnd)
 
 
 /*********************************************************************
+ *  EM_REPLACESEL message function
+ */
+
+void EDIT_ReplaceSel(HWND hwnd, LONG lParam)
+{
+    EDIT_DeleteSel(hwnd);
+    EDIT_InsertText(hwnd, (char *)lParam, strlen((char *)lParam));
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+}
+
+
+/*********************************************************************
+ *  EDIT_InsertText
+ *
+ *  Insert text at current line and column.
+ */
+
+void EDIT_InsertText(HWND hwnd, char *str, int len)
+{
+    int plen;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+    char *text = EDIT_TextAddr(es, es->hText);
+    
+    plen = strlen(text) + len;
+    if (plen + 1 > es->textlen)
+    {
+	es->hText = EDIT_TextReAlloc(es, es->hText, es->textlen + len);
+	es->textlen = plen + 1;
+    }
+    memmove(CurrChar + len, CurrChar, strlen(CurrChar) + 1);
+    memcpy(CurrChar, str, len);
+
+    EDIT_BuildTextPointers(hwnd);
+    es->PaintBkgd = TRUE;
+    es->TextChanged = TRUE;
+
+    EDIT_GetLineCol(hwnd, (int)((CurrChar + len) - text), &(es->CurrLine),
+		                                    &(es->CurrCol));
+    es->WndRow = es->CurrLine - es->wtop;
+    es->WndCol = EDIT_LineLength(es, EDIT_TextLine(hwnd, es->CurrLine),
+				 es->CurrCol) - es->wleft;
+}
+
+
+/*********************************************************************
  *  EM_LINEFROMCHAR message function
  */
 
@@ -2364,6 +2589,239 @@ LONG EDIT_LineIndexMsg(HWND hwnd, WORD wParam)
 	wParam = es->CurrLine;
 
     return (LONG)(*(textPtrs + wParam));
+}
+
+
+/*********************************************************************
+ *  EM_LINELENGTH message function
+ */
+
+LONG EDIT_LineLengthMsg(HWND hwnd, WORD wParam)
+{
+    int row, col, len;
+    int sbl, sbc, sel, sec;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+    unsigned int *textPtrs = (unsigned int *)EDIT_HEAP_ADDR(es->hTextPtrs);
+
+    if (wParam == (WORD)-1)
+    {
+	if (SelMarked(es))
+	{
+	    sbl = es->SelBegLine;
+	    sbc = es->SelBegCol;
+	    sel = es->SelEndLine;
+	    sec = es->SelEndCol;
+
+	    if (sbl > sel)
+	    {
+		swap(&sbl, &sel);
+		swap(&sbc, &sec);
+	    }
+	    if (sbl == sel && sbc > sec)
+		swap(&sbc, &sec);
+
+	    if (sbc == sel)
+	    {
+		len = *(textPtrs + sbl + 1) - *(textPtrs + sbl) - 1;
+		return len - sec - sbc;
+	    }
+
+	    len = *(textPtrs + sel + 1) - *(textPtrs + sel) - sec - 1;
+	    return len + sbc;
+	}
+	else    /* no selection marked */
+	{
+	    len = *(textPtrs + es->CurrLine + 1) - 
+		  *(textPtrs + es->CurrLine) - 1;
+	    return len;
+	}
+    }
+    else    /* line number specified */
+    {
+	EDIT_GetLineCol(hwnd, wParam, &row, &col);
+	len = *(textPtrs + row + 1) - *(textPtrs + row);
+	return len;
+    }
+}
+
+
+/*********************************************************************
+ *  WM_SETFONT message function
+ */
+
+void EDIT_SetFont(HWND hwnd, WORD wParam, LONG lParam)
+{
+    HDC hdc;
+    TEXTMETRIC tm;
+    HFONT oldfont;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+    short *charWidths = (short *)EDIT_HEAP_ADDR(es->hCharWidths);
+
+    es->hFont = wParam;
+    hdc = GetDC(hwnd);
+    oldfont = (HFONT)SelectObject(hdc, (HANDLE)es->hFont);
+    GetCharWidth(hdc, 0, 255, charWidths);
+    GetTextMetrics(hdc, &tm);
+    es->txtht = tm.tmHeight + tm.tmExternalLeading;
+    SelectObject(hdc, (HANDLE)oldfont);
+    ReleaseDC(hwnd, hdc);
+
+    es->WndRow = (es->CurrLine - es->wtop) / es->txtht;
+    es->WndCol = EDIT_LineLength(es, EDIT_TextLine(hwnd, es->CurrLine),
+				 es->CurrCol) - es->wleft;
+
+    InvalidateRect(hwnd, NULL, TRUE);
+    es->PaintBkgd = TRUE;
+    if (lParam) UpdateWindow(hwnd);
+}
+
+
+/*********************************************************************
+ *  EDIT_SaveDeletedText
+ *
+ *  Save deleted text in deleted text buffer.
+ */
+
+void EDIT_SaveDeletedText(HWND hwnd, char *deltext, int len,
+			                  int line, int col)
+{
+    char *text;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+
+    es->hDeletedText = EDIT_HEAP_REALLOC(es->hDeletedText, len);
+    if (!es->hDeletedText) return;
+    text = (char *)EDIT_HEAP_ADDR(es->hDeletedText);
+    memcpy(text, deltext, len);
+    es->DeletedLength = len;
+    es->DeletedCurrLine = line;
+    es->DeletedCurrCol = col;
+}
+
+
+/*********************************************************************
+ *  EDIT_ClearDeletedText
+ *
+ *  Clear deleted text buffer.
+ */
+
+void EDIT_ClearDeletedText(HWND hwnd)
+{
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+
+    EDIT_HEAP_FREE(es->hDeletedText);
+    es->hDeletedText = 0;
+    es->DeletedLength = 0;
+}
+
+
+/*********************************************************************
+ *  EM_UNDO message function
+ */
+
+LONG EDIT_UndoMsg(HWND hwnd)
+{
+    char *text;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+    
+    if (es->hDeletedText)
+    {
+	text = (char *)EDIT_HEAP_ADDR(es->hDeletedText);
+	es->CurrLine = es->DeletedCurrLine;
+	es->CurrCol = es->DeletedCurrCol;
+	EDIT_InsertText(hwnd, text, es->DeletedLength);
+	EDIT_ClearDeletedText(hwnd);
+
+	es->SelBegLine = es->CurrLine;
+	es->SelBegCol = es->CurrCol;
+	EDIT_GetLineCol(hwnd, (int)((CurrChar + es->DeletedLength) - text), 
+			&(es->CurrLine), &(es->CurrCol));
+	es->WndRow = es->CurrLine - es->wtop;
+	es->WndCol = EDIT_LineLength(es, EDIT_TextLine(hwnd, es->CurrLine),
+				     es->CurrCol) - es->wleft;
+	es->SelEndLine = es->CurrLine;
+	es->SelEndCol = es->CurrCol;
+
+	InvalidateRect(hwnd, NULL, TRUE);
+	UpdateWindow(hwnd);
+	return 1;
+    }
+    else
+	return 0;
+}
+
+
+/*********************************************************************
+ *  EDIT_TextAlloc
+ *
+ *  Allocate the text buffer.
+ */
+
+unsigned int EDIT_TextAlloc(EDITSTATE *es, int bytes)
+{
+    return ((unsigned int)HEAP_Alloc(es->localheap, GMEM_MOVEABLE,
+				     bytes) & 0xffff);
+}
+
+
+/*********************************************************************
+ *  EDIT_TextAddr
+ *
+ *  Return the address of the text buffer.
+ */
+
+void *EDIT_TextAddr(EDITSTATE *es, unsigned int handle)
+{
+    return ((void *)((handle) ? ((handle) | ((unsigned int)(*(es->localheap))
+					    & 0xffff0000)) : 0));
+}
+
+
+/*********************************************************************
+ *  EDIT_TextReAlloc
+ *
+ *  Reallocate the text buffer.
+ */
+
+unsigned int EDIT_TextReAlloc(EDITSTATE *es, unsigned int handle, int bytes)
+{
+    return ((unsigned int)HEAP_ReAlloc(es->localheap, 
+				       EDIT_TextAddr(es, handle),
+				       bytes, GMEM_MOVEABLE) & 0xffff);
+}
+
+
+/*********************************************************************
+ *  EM_SETHANDLE message function
+ */
+
+void EDIT_SetHandleMsg(HWND hwnd, WORD wParam)
+{
+    MDESC *m;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    EDITSTATE *es = (EDITSTATE *)EDIT_HEAP_ADDR((HANDLE)(*(wndPtr->wExtra)));
+
+    if (IsMultiLine())
+    {
+	es->hText = wParam;
+	es->MaxTextLen = HEAP_LocalSize(es->localheap, es->hText);
+	es->wlines = 0;
+	es->wtop = es->wleft = 0;
+	es->CurrLine = es->CurrCol = 0;
+	es->WndRow = es->WndCol = 0;
+	es->TextChanged = FALSE;
+	es->textwidth = 0;
+	es->SelBegLine = es->SelBegCol = 0;
+	es->SelEndLine = es->SelEndCol = 0;
+
+	es->PaintBkgd = TRUE;
+	InvalidateRect(hwnd, NULL, TRUE);
+	UpdateWindow(hwnd);
+    }
 }
 
 

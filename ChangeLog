@@ -1,4 +1,137 @@
 ----------------------------------------------------------------------
+Mon Jun 20 14:26:41 1994  Bob Amstadt  (bob@pooh)
+
+	* [objects/bitmap.c]
+	Allow negative bitmap sizes.
+
+Sun Jun 19 12:00:04 1994  David Metcalfe <david@prism.demon.co.uk>
+
+        * [controls/edit.c]
+        Improved selection display.  Added processing for WM_SETFONT,
+        EM_REPLACESEL, EM_LINELENGTH, EM_UNDO, EM_EMPTYUNDOBUFFER,
+        EM_GETHANDLE, EM_SETHANDLE messages.  Text buffer now stored on 
+        application's local heap.
+
+        * [windows/graphics.c]
+        Corrected bug in Rectangle().  XFillRectangle has the same
+        width as Rectangle, but XDrawRectangle is one pixel wider
+        for the same co-ordinates.
+
+        * [memory/heap.c] [include/heap.h]
+        Added HEAP_LocalSize function.
+
+        * [windows/event.c] [windows/keyboard.c]
+        Improvements to KeyStateTable and addition of AsyncKeyStateTable.
+        Added supporting code to GetKeyState and GetAsyncKeyState and
+        merged mouse button states into GetKeyboardState.
+
+        * [loader/resource.c] [include/accel.h]
+        Added recognition of SHIFT, CONTROL and ALT keys to
+        TranslateAccelerator.
+
+        * [objects/metafile.c] [objects/font.c] [objects/bitblt.c]
+        A bit more metafile support.
+
+Sun Jun 19 17:29:00 MET DST 1994  Erik Bos (erik@hacktic.nl)
+
+        * [loader/resource.c]
+        SizeofResource() and AllocResource() added, AccessResource() updated.
+
+        * [if1632/kernel.spec]
+        FreeLibrary() used for FreeModule().
+
+        * [windows/graphics.c]
+        Rectangle(): swap left & right corners when right < left,
+        swap top & bottom when botton < top.
+
+Jun 19, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/combo.c]
+	Fix bug in window style of the associated listbox.
+
+	* [controls/menu.c]
+	Skip separators in keyboard navigation by using new internal 
+		functions SelectPrevItem() & SelectNextItem(),
+
+	* [misc/profile.c]
+	Bug fix in GetPrivateProfileInt(), was limited to 4 digit,
+		IntBuf must be alloc to (5+1)=6. char instead of 5.
+
+	* [misc/main.c]
+	Put code in functions SetEnvironment() & GetEnvironment().
+
+	* [misc/shell.c]
+	Start putting some code in ExtractIcon() function.
+
+	* [misc/mmsystem.c]
+	Some code for MMTimer functions & timers list.
+
+	* [miscemu/int31.c]
+	Few stubs for DPMI interrupt calls. Nothing work yet.
+
+Mon Jun 20 07:37:43 EDT 1994	John Richardson (jrichard@cs.uml.edu)
+
+	* include/win.h (tagWND):
+	Added icon fields icon, hIcon and rectClientSave to 
+	the tagWND struct.
+
+	* windows/Imakefile
+	Added icon.c to the list of files to compile
+
+	* windows/dce.c (GetDCEx):
+	Added some checks for iconic mode and pass icon window as drawable,
+	not the real window.
+
+	* windows/defwnd.c (DefWindowProc)
+	Added PAINTICON default windows procedure.
+
+	* windows/event.c (EVENT_Expose)
+	Added check for iconic window expose. If iconic window is exposed
+	send a WM_PAINTICON message
+
+	* windows/icon.c 
+	New file.  ICON_Iconify, ICON_findIconFromPoint, ICON_Deiconify.
+
+	* windows/mdi.c (DefMDIChildProc)
+	Test for IsIconic during a SC_RESTORE, this doesn't work yet.
+
+	* windows/message.c (hardware_event)
+	Looks for icon as well as window now.
+
+	* windows/nonclient.c (NC_HandleSysCommand, NC_DoNCPaintIcon)
+	Added iconify/deiconify in NC_HandleSysCommand, new function
+	NC_DoNCPaintIcon which paints an icon.
+
+	* windows/painting.c (BeginPaint)
+	Made a BeginPaint select the STOCK_BLACK_PEN, STOCK_WHITE_BRUSH,
+	and STOCK_SYSTEM_FONT objects since this is (hopefully) default
+	windows behavior.
+
+	* windows/win.h (CreateWindowEx)
+	Set the default background color of a window to be white.
+	Create icon window, turn off MINIMIZE if it is on, since
+	I don't know what to do with it as of yet... register
+	the icon with the hwnd of its window so we can identify where
+	icon messages are coming from.
+
+Mon Jun 20 10:15:59 1994  Miguel de Icaza  (miguel@sphinx)
+
+	* windows/event.c: Added a hack to define XPointer when using
+	X11R4. 
+
+	* toolkit/hello.c: Test application for WineLib. To compile you'll
+	need: gcc -Iinclude -DWINELIB -g hello.c -c, and to link you'll
+	need: gcc hello.o libwine.a -lX11 -L/usr/openwin/lib -lm 
+
+	* toolkit/heap.c: Extended the size of the block size per chunk.
+
+	* misc/stress.c (GetFreeFileHandles): Fixed typo.
+
+	* misc/main.c (main): Changes to allow compilation under SunOS. 
+
+	* loader/library.c: Changed some ifdefs to compile WineLib.
+
+----------------------------------------------------------------------
 Tue Jun 14 08:09:14 1994  Bob Amstadt  (bob@pooh)
 
 	* loader/selector.c (GetCurrentPDB): 
@@ -16,7 +149,7 @@ Fri Jun 10 07:56:49 1994  Bob Amstadt  (bob@pooh)
 	* windows/event.c (SetCapture): 
 	Set winHasCursor if mouse capture succeeds.
 
-Jun 6, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+Jun 13, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 
 	* [controls/listbox.c]
 	Fix bug in listbox : InsertString should call AddString if -1.

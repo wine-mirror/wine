@@ -23,6 +23,11 @@ typedef char *XPointer;
 #endif
 #endif
 
+#ifdef sparc
+/* Dirty hack to compile with Sun's OpenWindows */
+typedef char *XPointer;
+#endif
+
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
 
 extern int desktopX, desktopY;   /* misc/main.c */
@@ -36,6 +41,7 @@ static XContext winContext = 0;
 BOOL MouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
 BOOL AsyncMouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
 BYTE KeyStateTable[256];
+BYTE AsyncKeyStateTable[256];
 static WORD ALTKeyState;
 static HWND captureWnd = 0;
 Window winHasCursor = 0;
@@ -245,6 +251,13 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return;
 
+    if (IsIconic(hwnd) && wndPtr->hIcon)
+    {
+        SendMessage(hwnd, WM_PAINTICON, 0, 0);
+       return;
+    }  
+
+
       /* Make position relative to client area instead of window */
     rect.left = event->x - (wndPtr->rectClient.left - wndPtr->rectWindow.left);
     rect.top  = event->y - (wndPtr->rectClient.top - wndPtr->rectWindow.top);
@@ -321,7 +334,9 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
     if (event->type == KeyPress)
     {
 	if (vkey == VK_MENU) ALTKeyState = TRUE;
-	KeyStateTable[vkey] = 1;
+	if (!(KeyStateTable[vkey] & 0x0f))
+	    KeyStateTable[vkey] ^= 0x80;
+	KeyStateTable[vkey] |= 0x01;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode);
 	keylp.lp1.extended = (extended ? 1 : 0);
@@ -330,6 +345,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 	keylp.lp1.transition = 0;
 #ifdef DEBUG_KEY
 	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
+	printf("            KeyState=%X\n", KeyStateTable[vkey]);
 #endif
 	hardware_event( ALTKeyState ? WM_SYSKEYDOWN : WM_KEYDOWN, 
 		        vkey, keylp.lp2,
@@ -353,7 +369,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
     else
     {
 	if (vkey == VK_MENU) ALTKeyState = FALSE;
-	KeyStateTable[vkey] = 1;
+	KeyStateTable[vkey] &= 0xf0;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode);
 	keylp.lp1.extended = (extended ? 1 : 0);
@@ -362,6 +378,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 	keylp.lp1.transition = 1;
 #ifdef DEBUG_KEY
 	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
+	printf("            KeyState=%X\n", KeyStateTable[vkey]);
 #endif
 	hardware_event( ((ALTKeyState || vkey == VK_MENU) ? 
 			 WM_SYSKEYUP : WM_KEYUP), 

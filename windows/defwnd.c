@@ -38,11 +38,9 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (wndPtr->hText) USER_HEAP_FREE( wndPtr->hText );
-    wndPtr->hText = USER_HEAP_ALLOC( LMEM_MOVEABLE, strlen(text) + 2 );
+    wndPtr->hText = USER_HEAP_ALLOC( LMEM_MOVEABLE, strlen(text) + 1 );
     textPtr = (LPSTR) USER_HEAP_ADDR( wndPtr->hText );
     strcpy( textPtr, text );
-        /* for use by edit control */
-    *(textPtr + strlen(text) + 1) = '\0';
 }
 
 
@@ -78,6 +76,11 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
     case WM_NCPAINT:
 	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
+
+    case WM_PAINTICON:
+        printf("going to call NC_HandleNCPaintIcon\n");
+        return NC_HandleNCPaintIcon( hwnd );
+
 
     case WM_NCHITTEST:
 	return NC_HandleNCHitTest( hwnd, MAKEPOINT(lParam) );

@@ -647,6 +647,47 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 }
 
 
+NC_DoNCPaintIcon(HWND hwnd)
+{
+      WND *wndPtr = WIN_FindWndPtr(hwnd);
+      PAINTSTRUCT ps;
+      HDC hdc;
+      int ret;
+      DC *dc;
+      GC testgc;
+      int s;
+      char buffer[256];
+
+      printf("painting icon\n");
+      if (wndPtr == NULL) {
+              printf("argh, can't find an icon to draw\n");
+              return;
+      }
+      hdc = BeginPaint(hwnd, &ps);
+
+      ret = DrawIcon(hdc, 100/2 - 16, 0, wndPtr->hIcon);
+      printf("ret is %d\n", ret);
+
+      if (s=GetWindowText(hwnd, buffer, 256))
+      {
+          /*SetBkColor(hdc, TRANSPARENT); */
+          TextOut(hdc, 0, 32, buffer, s);
+      }
+      EndPaint(hwnd, &ps);
+
+      printf("done painting icon\n");
+      
+}
+
+
+LONG NC_HandleNCPaintIcon( HWND hwnd )
+{
+    NC_DoNCPaintIcon(hwnd);
+    return 0;
+}
+
+
+
 /***********************************************************************
  *           NC_HandleNCPaint
  *
@@ -1183,7 +1224,8 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	break;
 
     case SC_MINIMIZE:
-	ShowWindow( hwnd, SW_MINIMIZE );
+	ICON_Iconify( hwnd );
+	/*ShowWindow( hwnd, SW_MINIMIZE );*/
 	break;
 
     case SC_MAXIMIZE:
@@ -1191,6 +1233,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 	break;
 
     case SC_RESTORE:
+	ICON_Deiconify(hwnd);
 	ShowWindow( hwnd, SW_RESTORE );
 	break;
 
