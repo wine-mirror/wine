@@ -52,6 +52,15 @@ gimme1 (int n)
 
 /* ---------------------------------------------------------------------- */
 
+/* release extra space that we requested in gimme1() */
+static inline void release( void *ptr )
+{
+    struct debug_info *info = NtCurrentTeb()->debug_info;
+    info->str_pos = ptr;
+}
+
+/* ---------------------------------------------------------------------- */
+
 LPCSTR debugstr_an (LPCSTR src, int n)
 {
   LPSTR dst, res;
@@ -89,7 +98,8 @@ LPCSTR debugstr_an (LPCSTR src, int n)
       *dst++ = '.';
       *dst++ = '.';
     }
-  *dst = '\0';
+  *dst++ = '\0';
+  release( dst );
   return res;
 }
 
@@ -132,7 +142,8 @@ LPCSTR debugstr_wn (LPCWSTR src, int n)
       *dst++ = '.';
       *dst++ = '.';
     }
-  *dst = '\0';
+  *dst++ = '\0';
+  release( dst );
   return res;
 }
 
