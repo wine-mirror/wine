@@ -100,8 +100,8 @@ LPSTR AnsiUpper(LPSTR strOrChar)
 		}
 		return strOrChar;
 	} else
-		if (IsCharLower((char) strOrChar))
-			return (LPSTR) ToUpper(strOrChar);
+		if (IsCharLower((int)strOrChar))
+			return (LPSTR) ToUpper((int)strOrChar);
 		else 
 			return (LPSTR) strOrChar;
 }
@@ -133,8 +133,8 @@ LPSTR AnsiLower(LPSTR strOrChar)
 		}
 		return strOrChar;
 	} else
-		if (IsCharUpper((char) strOrChar))
-			return (LPSTR) ToLower(strOrChar);
+		if (IsCharUpper((int)strOrChar))
+			return (LPSTR) ToLower((int)strOrChar);
 		else 
 			return (LPSTR) strOrChar;
 }

@@ -3,9 +3,6 @@
  */
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
-/*
-#define DEBUG_TASK
-*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +12,12 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "windows.h"
 #include "wine.h"
 #include "task.h"
+#include "debug.h"
+
+
+/* #define DEBUG_TASK /* */
+/* #undef DEBUG_TASK /* */
+
 
 static LPWINETASKENTRY lpTaskList = NULL;
 static int nTaskCount = 0;
@@ -27,7 +30,7 @@ HTASK GetCurrentTask()
 	LPWINETASKENTRY lpTask = lpTaskList;
 	int pid = getpid();
 #ifdef DEBUG_TASK
-	printf("GetCurrentTask() // unix_pid=%08X !\n", pid);
+	fprintf(stddeb,"GetCurrentTask() // unix_pid=%08X !\n", pid);
 #endif
 	if (lpTask == NULL) return 0;
 	while (TRUE) {
@@ -36,7 +39,7 @@ HTASK GetCurrentTask()
 		lpTask = lpTask->lpNextTask;
 		}
 #ifdef DEBUG_TASK
-	printf("GetCurrentTask() returned hTask=%04X !\n", lpTask->te.hTask);
+	fprintf(stddeb,"GetCurrentTask() returned hTask=%04X !\n", lpTask->te.hTask);
 #endif
 	return lpTask->te.hTask;
 }
@@ -47,7 +50,9 @@ HTASK GetCurrentTask()
  */
 WORD GetNumTasks()
 {
-	printf("GetNumTasks() returned %d !\n", nTaskCount);
+#ifdef DEBUG_TASK
+	fprintf(stddeb,"GetNumTasks() returned %d !\n", nTaskCount);
+#endif
 	return nTaskCount;
 }
 
@@ -60,17 +65,23 @@ HTASK GetWindowTask(HWND hWnd)
 	HWND 	*wptr;
 	int		count;
 	LPWINETASKENTRY lpTask = lpTaskList;
-	printf("GetWindowTask(%04X) !\n", hWnd);
+#ifdef DEBUG_TASK
+	fprintf(stddeb,"GetWindowTask(%04X) !\n", hWnd);
+#endif
 	while (lpTask != NULL) {
 		wptr = lpTask->lpWndList;
 		if (wptr != NULL) {
 			count = 0;
 			while (++count < MAXWIN_PER_TASK) {
-				printf("GetWindowTask // searching %04X %04X !\n",
+#ifdef DEBUG_TASK
+				fprintf(stddeb,"GetWindowTask // searching %04X %04X !\n",
 										lpTask->te.hTask, *(wptr));
+#endif
 				if (*(wptr) == hWnd) {
-					printf("GetWindowTask(%04X) found hTask=%04X !\n", 
+#ifdef DEBUG_TASK
+					fprintf(stddeb,"GetWindowTask(%04X) found hTask=%04X !\n", 
 												hWnd, lpTask->te.hTask);
+#endif
 					return lpTask->te.hTask;
 					}
 				wptr++;
@@ -91,22 +102,30 @@ BOOL EnumTaskWindows(HANDLE hTask, FARPROC lpEnumFunc, LONG lParam)
 	BOOL	bRet;
 	int		count = 0;
 	LPWINETASKENTRY lpTask = lpTaskList;
-	printf("EnumTaskWindows(%04X, %08X, %08X) !\n", hTask, lpEnumFunc, lParam);
+#ifdef DEBUG_TASK
+	fprintf(stddeb,"EnumTaskWindows(%04X, %08X, %08X) !\n", hTask, lpEnumFunc, lParam);
+#endif
 	while (TRUE) {
 		if (lpTask->te.hTask == hTask) break;
 		if (lpTask == NULL) {
-			printf("EnumTaskWindows // hTask=%04X not found !\n", hTask);
+#ifdef DEBUG_TASK
+			fprintf(stddeb,"EnumTaskWindows // hTask=%04X not found !\n", hTask);
+#endif
 			return FALSE;
 			}
 		lpTask = lpTask->lpNextTask;
 		}
-	printf("EnumTaskWindows // found hTask=%04X !\n", hTask);
+#ifdef DEBUG_TASK
+	fprintf(stddeb,"EnumTaskWindows // found hTask=%04X !\n", hTask);
+#endif
 	wptr = lpTask->lpWndList;
 	if (wptr == NULL) return FALSE;
 	if (lpEnumFunc == NULL)	return FALSE;
 	while ((hWnd = *(wptr++)) != 0) {
 		if (++count >= MAXWIN_PER_TASK) return FALSE;
-		printf("EnumTaskWindows // hWnd=%04X count=%d !\n", hWnd, count);
+#ifdef DEBUG_TASK
+		fprintf(stddeb,"EnumTaskWindows // hWnd=%04X count=%d !\n", hWnd, count);
+#endif
 #ifdef WINELIB
 		bRet = (*lpEnumFunc)(hWnd, lParam); 
 #else
@@ -140,7 +159,7 @@ HANDLE CreateNewTask(HINSTANCE hInst, HTASK hTaskParent)
 	hTask = GlobalAlloc(GMEM_MOVEABLE, sizeof(WINETASKENTRY));
 	lpNewTask = (LPWINETASKENTRY) GlobalLock(hTask);
 #ifdef DEBUG_TASK
-    printf("CreateNewTask entry allocated %08X\n", lpNewTask);
+    fprintf(stddeb,"CreateNewTask entry allocated %08X\n", lpNewTask);
 #endif
 	if (lpNewTask == NULL) return 0;
 	if (lpTaskList == NULL) {
@@ -173,7 +192,7 @@ HANDLE CreateNewTask(HINSTANCE hInst, HTASK hTaskParent)
 	if (lpNewTask->lpWndList != NULL) 
 		memset((LPSTR)lpNewTask->lpWndList, 0, MAXWIN_PER_TASK * sizeof(HWND));
 #ifdef DEBUG_TASK
-    printf("CreateNewTask // unix_pid=%08X return hTask=%04X\n", 
+    fprintf(stddeb,"CreateNewTask // unix_pid=%08X return hTask=%04X\n", 
 									lpNewTask->unix_pid, hTask);
 #endif
 	GlobalUnlock(hTask);	
@@ -191,12 +210,12 @@ BOOL AddWindowToTask(HTASK hTask, HWND hWnd)
 	int		count = 0;
 	LPWINETASKENTRY lpTask = lpTaskList;
 #ifdef DEBUG_TASK
-	printf("AddWindowToTask(%04X, %04X); !\n", hTask, hWnd);
+	fprintf(stddeb,"AddWindowToTask(%04X, %04X); !\n", hTask, hWnd);
 #endif
 	while (TRUE) {
 		if (lpTask->te.hTask == hTask) break;
 		if (lpTask == NULL) {
-			printf("AddWindowToTask // hTask=%04X not found !\n", hTask);
+			fprintf(stderr,"AddWindowToTask // hTask=%04X not found !\n", hTask);
 			return FALSE;
 			}
 		lpTask = lpTask->lpNextTask;
@@ -209,7 +228,7 @@ BOOL AddWindowToTask(HTASK hTask, HWND hWnd)
 		}
 	*wptr = hWnd;
 #ifdef DEBUG_TASK
-	printf("AddWindowToTask // window added, count=%d !\n", count);
+	fprintf(stddeb,"AddWindowToTask // window added, count=%d !\n", count);
 #endif
 	return TRUE;
 }
@@ -224,12 +243,12 @@ BOOL RemoveWindowFromTask(HTASK hTask, HWND hWnd)
 	int		count = 0;
 	LPWINETASKENTRY lpTask = lpTaskList;
 #ifdef DEBUG_TASK
-	printf("RemoveWindowToTask(%04X, %04X); !\n", hTask, hWnd);
+	fprintf(stddeb,"RemoveWindowToTask(%04X, %04X); !\n", hTask, hWnd);
 #endif
 	while (TRUE) {
 		if (lpTask->te.hTask == hTask) break;
 		if (lpTask == NULL) {
-			printf("RemoveWindowFromTask // hTask=%04X not found !\n", hTask);
+			fprintf(stderr,"RemoveWindowFromTask // hTask=%04X not found !\n", hTask);
 			return FALSE;
 			}
 		lpTask = lpTask->lpNextTask;
@@ -246,15 +265,16 @@ BOOL RemoveWindowFromTask(HTASK hTask, HWND hWnd)
 		wptr++;
 		}
 #ifdef DEBUG_TASK
-	printf("RemoveWindowFromTask // window removed, count=%d !\n", --count);
+	fprintf(stddeb,"RemoveWindowFromTask // window removed, count=%d !\n", --count);
 #endif
 	return TRUE;
 }
 
 BOOL TaskFirst(LPTASKENTRY lpTask)
 {
-	printf("TaskFirst(%8x)\n", (int) lpTask);
-
+#ifdef DEBUG_TASK
+	fprintf(stddeb,"TaskFirst(%8x)\n", (int) lpTask);
+#endif
 	if (lpTaskList) {
 		memcpy(lpTask, &lpTaskList->te, lpTask->dwSize);
 		return TRUE;
@@ -265,9 +285,9 @@ BOOL TaskFirst(LPTASKENTRY lpTask)
 BOOL TaskNext(LPTASKENTRY lpTask)
 {
 	LPWINETASKENTRY list;
-	
-	printf("TaskNext(%8x)\n", (int) lpTask);
-
+#ifdef DEBUG_TASK	
+	fprintf(stddeb,"TaskNext(%8x)\n", (int) lpTask);
+#endif
 	list = lpTaskList;
 	while (list) {
 		if (list->te.hTask == lpTask->hTask) {
@@ -286,9 +306,9 @@ BOOL TaskNext(LPTASKENTRY lpTask)
 BOOL TaskFindHandle(LPTASKENTRY lpTask, HTASK hTask)
 {
 	static LPWINETASKENTRY list;
-	
-	printf("TaskFindHandle(%8x,%4x)\n", (int) lpTask, hTask);
-
+#ifdef DEBUG_TASK	
+	fprintf(stddeb,"TaskFindHandle(%8x,%4x)\n", (int) lpTask, hTask);
+#endif
 	list = lpTaskList;
 	while (list) {
 		if (list->te.hTask == hTask) {

@@ -17,21 +17,36 @@ typedef struct resource_name_table
     char id[MAX_NAME_LENGTH];
 } RESNAMTAB;
 
+struct ne_data {
+    struct ne_header_s *ne_header;
+    struct ne_segment_table_entry_s *seg_table;
+    struct segment_descriptor_s *selector_table;
+    char *lookup_table;
+    char *nrname_table;
+    char *rname_table;
+    RESNAMTAB *resnamtab;
+};
+
+struct pe_data {
+	struct pe_header_s *pe_header;
+	struct pe_segment_table *pe_seg;
+	struct PE_Import_Directory *pe_import;
+	struct PE_Export_Directory *pe_export;
+	struct PE_Resource_Directory *pe_resource;
+	int resource_offset; /* offset to resource typedirectory in file */
+};
+
 struct w_files
 {
     struct w_files  * next;
     char * name;   /* Name, as it appears in the windows binaries */
     char * filename; /* Actual name of the unix file that satisfies this */
     int fd;
-    struct mz_header_s *mz_header;
-    struct ne_header_s *ne_header;
-    struct ne_segment_table_entry_s *seg_table;
-    struct segment_descriptor_s *selector_table;
-    char * lookup_table;
-    char * nrname_table;
-    char * rname_table;
     unsigned short hinstance;
-    RESNAMTAB *resnamtab;
+    int initialised;
+    struct mz_header_s *mz_header;
+    struct ne_data *ne;
+    struct pe_data *pe;
 };
 
 extern struct  w_files *wine_files;

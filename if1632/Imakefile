@@ -62,15 +62,16 @@ MakeDllFromSpec(winsock,$(TOP)/$(MODULE))
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()
-CleanTarget()
 
 pop.h: $(TOP)/tools/build
 	$(TOP)/tools/build -p
 
+call.s: call.S pop.h
+
 includes::
+	touch pop.h
 
 install::
 
 clean::
 	$(RM) dll* dtb* pop.h call.s
-	touch pop.h

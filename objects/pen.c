@@ -8,6 +8,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 #include "metafile.h"
+#include "stddebug.h"
+/* #define DEBUG_GDI /* */
+/* #undef  DEBUG_GDI /* */
+#include "debug.h"
 
 extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );
 
@@ -17,9 +21,7 @@ extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );
 HPEN CreatePen( short style, short width, COLORREF color )
 {
     LOGPEN logpen = { style, { width, 0 }, color };
-#ifdef DEBUG_GDI
-    printf( "CreatePen: %d %d %06x\n", style, width, color );
-#endif
+    dprintf_gdi(stddeb, "CreatePen: %d %d %06x\n", style, width, color );
     return CreatePenIndirect( &logpen );
 }
 

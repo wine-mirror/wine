@@ -12,8 +12,11 @@
 #include "mdi.h"
 #include "user.h"
 #include "sysmetrics.h"
+#include "stddebug.h"
+/* #define DEBUG_MDI /* */
+/* #undef  DEBUG_MDI /* */
+#include "debug.h"
 
-#define DEBUG_MDI /* */
 
 extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
 			      HWND hwnd, BOOL suppress_draw );  /* menu.c */
@@ -28,19 +31,15 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
     char buffer[128];
     int id, n, index;
 
-#ifdef DEBUG_MDI
-    fprintf(stderr, "MDIRecreateMenuList: hWindowMenu %04.4x\n", 
+    dprintf_mdi(stddeb, "MDIRecreateMenuList: hWindowMenu %04.4x\n", 
 	    ci->hWindowMenu);
-#endif
     
     id = ci->idFirstChild; 
     while (DeleteMenu(ci->hWindowMenu, id, MF_BYCOMMAND))
 	id++;
 
-#ifdef DEBUG_MDI
-    fprintf(stderr, "MDIRecreateMenuList: id %04.4x, idFirstChild %04.4x\n", 
+    dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04.4x, idFirstChild %04.4x\n", 
 	    id, ci->idFirstChild);
-#endif
 
     if (!ci->flagMenuAltered)
     {
@@ -55,10 +54,8 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
 	n = sprintf(buffer, "%d ", index++);
 	GetWindowText(chi->hwnd, buffer + n, sizeof(buffer) - n - 1);
 
-#ifdef DEBUG_MDI
-	fprintf(stderr, "MDIRecreateMenuList: id %04.4x, '%s'\n", 
+	dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04.4x, '%s'\n", 
 		id, buffer);
-#endif
 
 	AppendMenu(ci->hWindowMenu, MF_STRING, id++, buffer);
     }
@@ -160,9 +157,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
     w  = WIN_FindWndPtr(parent);
     ci = (MDICLIENTINFO *) w->wExtra;
     
-#ifdef DEBUG_MDI
-    fprintf(stderr, "MDIBringToTop: id %04.4x, by_id %d\n", id, by_id);
-#endif
+    dprintf_mdi(stddeb, "MDIBringToTop: id %04.4x, by_id %d\n", id, by_id);
 
     if (by_id)
 	id -= ci->idFirstChild;
@@ -184,9 +179,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	if (!chi)
 	    return;
 
-#ifdef DEBUG_MDI
-	fprintf(stderr, "MDIBringToTop: child %04.4x\n", chi->hwnd);
-#endif
+	dprintf_mdi(stddeb, "MDIBringToTop: child %04.4x\n", chi->hwnd);
 	if (chi != ci->infoActiveChildren)
 	{
 	    if (ci->flagChildMaximized)
@@ -248,10 +241,8 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	    SendMessage(parent, WM_CHILDACTIVATE, 0, 0);
 	}
 	
-#ifdef DEBUG_MDI
-	fprintf(stderr, "MDIBringToTop: pos %04.4x, hwnd %04.4x\n", 
+	dprintf_mdi(stddeb, "MDIBringToTop: pos %04.4x, hwnd %04.4x\n", 
 		id, chi->hwnd);
-#endif
     }
 }
 
@@ -298,7 +289,7 @@ LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
     WND    *w      = WIN_FindWndPtr(child);
     LPRECT  lprect = &ci->rectRestore;
 
-    printf("restoring mdi child\n");
+    dprintf_mdi(stddeb,"restoring mdi child\n");
 
     child = ci->hwndActiveChild;
     
@@ -327,9 +318,7 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
     HWND          act_hwnd;
     LONG          lParam;
 
-#ifdef DEBUG_MDI
-    fprintf(stderr, "MDIChildActivate: top %04.4x\n", w->hwndChild);
-#endif
+    dprintf_mdi(stddeb, "MDIChildActivate: top %04.4x\n", w->hwndChild);
 
     chi = ci->infoActiveChildren;
     if (chi)
@@ -338,10 +327,8 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
 	act_hwnd   = chi->hwnd;
 	lParam     = ((LONG) deact_hwnd << 16) | act_hwnd;
 
-#ifdef DEBUG_MDI
-	fprintf(stderr, "MDIChildActivate: deact %04.4x, act %04.4x\n",
+	dprintf_mdi(stddeb, "MDIChildActivate: deact %04.4x, act %04.4x\n",
 	       deact_hwnd, act_hwnd);
-#endif
 
 	ci->hwndActiveChild = act_hwnd;
 
@@ -383,26 +370,20 @@ LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
     ysize   = rect.bottom - 8 * spacing;
     xsize   = rect.right  - 8 * spacing;
     
-#ifdef DEBUG_MDI
-    fprintf(stderr, 
+    dprintf_mdi(stddeb, 
 	    "MDICascade: Client wnd at (%d,%d) - (%d,%d), spacing %d\n", 
 	    rect.left, rect.top, rect.right, rect.bottom, spacing);
-    fprintf(stderr, "MDICascade: searching for last child\n");
-#endif
+    dprintf_mdi(stddeb, "MDICascade: searching for last child\n");
     for (chi = ci->infoActiveChildren; chi->next != NULL; chi = chi->next)
 	;
     
-#ifdef DEBUG_MDI
-    fprintf(stderr, "MDICascade: last child is %04.4x\n", chi->hwnd);
-#endif
+    dprintf_mdi(stddeb, "MDICascade: last child is %04.4x\n", chi->hwnd);
     x = 0;
     y = 0;
     for ( ; chi != NULL; chi = chi->prev)
     {
-#ifdef DEBUG_MDI
-	fprintf(stderr, "MDICascade: move %04.4x to (%d,%d) size [%d,%d]\n", 
+	dprintf_mdi(stddeb, "MDICascade: move %04.4x to (%d,%d) size [%d,%d]\n", 
 		chi->hwnd, x, y, xsize, ysize);
-#endif
 	SetWindowPos(chi->hwnd, 0, x, y, xsize, ysize, 
 		     SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
 
@@ -517,13 +498,11 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
     w  = WIN_FindWndPtr(hwndClient);
     ci = (MDICLIENTINFO *) w->wExtra;
 
-#ifdef DEBUG_MDI
-	fprintf(stderr, 
+    dprintf_mdi(stddeb, 
 		"MDIPaintMaximized: frame %04x,  client %04x"
 		",  max flag %d,  menu %04x\n", 
 		hwndFrame, hwndClient, 
 		ci->flagChildMaximized, wndPtr ? wndPtr->wIDmenu : 0);
-#endif
 
     if (ci->flagChildMaximized && wndPtr && wndPtr->wIDmenu != 0)
     {
@@ -541,12 +520,10 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 	    hbitmapMaximized = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
 	}
 
-#ifdef DEBUG_MDI
-	fprintf(stderr, 
+	dprintf_mdi(stddeb, 
 		"MDIPaintMaximized: hdcMem %04x, close bitmap %04x, "
 		"maximized bitmap %04x\n",
 		hdcMem, hbitmapClose, hbitmapMaximized);
-#endif
 
 	NC_GetInsideRect(hwndFrame, &rect);
 	rect.top   += ((wndPtr->dwStyle & WS_CAPTION) ? 

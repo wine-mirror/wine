@@ -2,9 +2,13 @@
 #include <stdlib.h>
 #include "registers.h"
 #include "wine.h"
+#include "stddebug.h"
+/* #define DEBUG_INT */
+/* #undef  DEBUG_INT */
+#include "debug.h"
 
+void IntBarf(int i, struct sigcontext_struct *context);
 int do_int2f_16(struct sigcontext_struct *context);
-
 
 int do_int2f(struct sigcontext_struct *context)
 {
@@ -33,16 +37,16 @@ int do_int2f_16(struct sigcontext_struct *context)
 	switch(context->sc_eax & 0xff) {
 		case 0x00: 
 			/* return 'major/minor' for MSWin 3.1 */
-			printf("do_int2f_16 // return 'major/minor' for MSWin 3.1 !\n");
+			dprintf_int(stddeb,"do_int2f_16 // return 'major/minor' for MSWin 3.1 !\n");
 			context->sc_eax = 0x0310;
 			return 1;
-		case 0x86: 
+		case 0x86:
 			/* operating in protected mode under DPMI */
-			printf("do_int2f_16 // operating in protected mode under DPMI !\n");
+			dprintf_int(stddeb,"do_int2f_16 // operating in protected mode under DPMI !\n");
 			context->sc_eax = 0x0000;
 			return 1;
-		case 0x87: 
-			printf("do_int2f_16 // return DPMI flags !\n");
+		case 0x87:
+			dprintf_int(stddeb,"do_int2f_16 // return DPMI flags !\n");
 			context->sc_eax = 0x0000;		/* DPMI Installed */
 			context->sc_ebx = 0x0001;		/* 32bits available */
 			context->sc_ecx = 0x04;			/* processor 486 */

@@ -10,7 +10,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "bitmap.h"
 #include "prototypes.h"
 #include "metafile.h"
-
+#include "stddebug.h"
+/* #define DEBUG_GDI /* */
+/* #undef  DEBUG_GDI /* */
+#include "debug.h"
 
 #define NB_HATCH_STYLES  6
 
@@ -47,9 +50,7 @@ HBRUSH CreateBrushIndirect( LOGBRUSH * brush )
 HBRUSH CreateHatchBrush( short style, COLORREF color )
 {
     LOGBRUSH logbrush = { BS_HATCHED, color, style };
-#ifdef DEBUG_GDI
-    printf( "CreateHatchBrush: %d %06x\n", style, color );
-#endif
+    dprintf_gdi(stddeb, "CreateHatchBrush: %d %06x\n", style, color );
     if ((style < 0) || (style >= NB_HATCH_STYLES)) return 0;
     return CreateBrushIndirect( &logbrush );
 }
@@ -63,9 +64,7 @@ HBRUSH CreatePatternBrush( HBITMAP hbitmap )
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
     BITMAPOBJ *bmp, *newbmp;
 
-#ifdef DEBUG_GDI
-    printf( "CreatePatternBrush: %d\n", hbitmap );
-#endif
+    dprintf_gdi(stddeb, "CreatePatternBrush: %d\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
@@ -89,9 +88,7 @@ HBRUSH CreateDIBPatternBrush( HANDLE hbitmap, WORD coloruse )
     BITMAPINFO *info, *newInfo;
     int size;
     
-#ifdef DEBUG_GDI
-    printf( "CreateDIBPatternBrush: %d\n", hbitmap );
-#endif
+    dprintf_gdi(stddeb, "CreateDIBPatternBrush: %d\n", hbitmap );
 
       /* Make a copy of the bitmap */
 
@@ -122,9 +119,7 @@ HBRUSH CreateDIBPatternBrush( HANDLE hbitmap, WORD coloruse )
 HBRUSH CreateSolidBrush( COLORREF color )
 {
     LOGBRUSH logbrush = { BS_SOLID, color, 0 };
-#ifdef DEBUG_GDI
-    printf( "CreateSolidBrush: %06x\n", color );
-#endif
+    dprintf_gdi(stddeb, "CreateSolidBrush: %06x\n", color );
     return CreateBrushIndirect( &logbrush );
 }
 

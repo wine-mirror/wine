@@ -10,6 +10,7 @@ struct dosdirent {
 	char filename[256];
 	char filemask[12];
 	char attribute;
+	char search_attribute;
 	long filesize;
 	long filetime;
 };

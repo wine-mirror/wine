@@ -50,6 +50,7 @@ DECLARE_HANDLE(HBITMAP);
 DECLARE_HANDLE(HBRUSH);
 DECLARE_HANDLE(LOCALHANDLE);
 DECLARE_HANDLE(HMETAFILE);
+DECLARE_HANDLE(HDWP);
 
 #define TRUE 1
 #define FALSE 0
@@ -81,41 +82,6 @@ DECLARE_HANDLE(HMETAFILE);
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-/*
-typedef long LONG;
-typedef WORD HANDLE;
-typedef HANDLE HWND;
-typedef HANDLE HDC;
-typedef HANDLE HCLASS;
-typedef HANDLE HCURSOR;
-typedef HANDLE HFONT;
-typedef HANDLE HPEN;
-typedef HANDLE HRGN;
-typedef HANDLE HPALETTE;
-typedef HANDLE HICON;
-typedef HANDLE HINSTANCE;
-typedef HANDLE HMENU;
-typedef HANDLE HBITMAP;
-typedef HANDLE HBRUSH;
-typedef HANDLE LOCALHANDLE;
-typedef char *LPSTR;
-typedef char *NPSTR;
-typedef short *LPINT;
-typedef void *LPVOID;
-typedef long (*FARPROC)();
-typedef int CATCHBUF[9];
-typedef int *LPCATCHBUF;
-
-#define TRUE 1
-#define FALSE 0
-#define CW_USEDEFAULT ((short)0x8000)
-#define FAR
-#define NEAR
-#define PASCAL
-#ifndef NULL
-#define NULL (void *)0
-#endif
-*/
 
 typedef struct { INT x, y; } POINT;
 typedef POINT *PPOINT;
@@ -158,19 +124,11 @@ typedef PAINTSTRUCT *LPPAINTSTRUCT;
 
   /* Window classes */
 
-#ifdef WINELIB
 typedef LONG (*WNDPROC)(HWND, UINT, WPARAM, LPARAM);
-#else
-typedef LONG	(* WNDPROC)();
-#endif
 
 typedef struct {
 	WORD	style;
-#ifdef WINELIB
-	WNDPROC lpfnWndProc;
-#else
-	LONG	(*lpfnWndProc)() WINE_PACKED;
-#endif
+	WNDPROC	lpfnWndProc WINE_PACKED;
 	INT	cbClsExtra, cbWndExtra;
 	HANDLE	hInstance;
 	HICON	hIcon;
@@ -763,18 +721,18 @@ typedef struct tagTEXTMETRIC
     INT     tmAveCharWidth;
     INT     tmMaxCharWidth;
     INT     tmWeight;
-    BYTE      tmItalic;
-    BYTE      tmUnderlined;
-    BYTE      tmStruckOut;
-    BYTE      tmFirstChar;
-    BYTE      tmLastChar;
-    BYTE      tmDefaultChar;
-    BYTE      tmBreakChar;
-    BYTE      tmPitchAndFamily;
-    BYTE      tmCharSet;
-    INT     tmOverhang;
-    INT     tmDigitizedAspectX;
-    INT     tmDigitizedAspectY;
+    BYTE    tmItalic;
+    BYTE    tmUnderlined;
+    BYTE    tmStruckOut;
+    BYTE    tmFirstChar;
+    BYTE    tmLastChar;
+    BYTE    tmDefaultChar;
+    BYTE    tmBreakChar;
+    BYTE    tmPitchAndFamily;
+    BYTE    tmCharSet;
+    INT     tmOverhang WINE_PACKED;
+    INT     tmDigitizedAspectX WINE_PACKED;
+    INT     tmDigitizedAspectY WINE_PACKED;
 } TEXTMETRIC, *PTEXTMETRIC, *NPTEXTMETRIC, *LPTEXTMETRIC;
 
   /* tmPitchAndFamily values */
@@ -793,6 +751,10 @@ typedef struct tagTEXTMETRIC
 #define TA_BOTTOM           0x08
 #define TA_BASELINE         0x18
 
+  /* ExtTextOut() parameters */
+#define ETO_GRAYED          0x01
+#define ETO_OPAQUE          0x02
+#define ETO_CLIPPED         0x04
 
 typedef struct tagPALETTEENTRY
 {
@@ -871,6 +833,10 @@ typedef struct tagLOGPEN
   /* Coordinate modes */
 #define ABSOLUTE          1
 #define RELATIVE          2
+
+  /* Flood fill modes */
+#define FLOODFILLBORDER   0
+#define FLOODFILLSURFACE  1
 
   /* Device parameters for GetDeviceCaps() */
 #define DRIVERVERSION     0
@@ -1567,14 +1533,7 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define SW_PARENTOPENING    3
 #define SW_OTHERRESTORED    4
 
-/*
-enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED,
-	SW_SHOWMAXIMIZED, SW_MAXIMIZE, SW_SHOWNOACTIVATE, SW_SHOW,
-	SW_MINIMIZE, SW_SHOWMINNOACTIVE, SW_SHOWNA, SW_RESTORE,
-	SW_INTERNAL_HIDE, SW_INTERNAL_RESTORE };
-*/
-
-
+  /* ShowWindow() codes */
 #define SW_HIDE             0
 #define SW_SHOWNORMAL       1
 #define SW_NORMAL           1
@@ -1713,30 +1672,29 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED,
 #define DT_INTERNAL 4096
 
 /* Window Styles */
-#define WS_OVERLAPPED 0x00000000L
-#define WS_POPUP 0x80000000L
-#define WS_CHILD 0x40000000L
-#define WS_MINIMIZE 0x20000000L
-#define WS_VISIBLE 0x10000000L
-#define WS_DISABLED 0x08000000L
-#define WS_CLIPSIBLINGS 0x04000000L
-#define WS_CLIPCHILDREN 0x02000000L
-#define WS_MAXIMIZE 0x01000000L
-#define WS_CAPTION 0x00C00000L
-#define WS_BORDER 0x00800000L
-#define WS_DLGFRAME 0x00400000L
-#define WS_VSCROLL 0x00200000L
-#define WS_HSCROLL 0x00100000L
-#define WS_SYSMENU 0x00080000L
-#define WS_THICKFRAME 0x00040000L
-#define WS_GROUP 0x00020000L
-#define WS_TABSTOP 0x00010000L
-#define WS_MINIMIZEBOX 0x00020000L
-#define WS_MINIMIZEBOX 0x00020000L
-#define WS_MAXIMIZEBOX 0x00010000L
-#define WS_TILED WS_OVERLAPPED
-#define WS_ICONIC WS_MINIMIZE
-#define WS_SIZEBOX WS_THICKFRAME
+#define WS_OVERLAPPED    0x00000000L
+#define WS_POPUP         0x80000000L
+#define WS_CHILD         0x40000000L
+#define WS_MINIMIZE      0x20000000L
+#define WS_VISIBLE       0x10000000L
+#define WS_DISABLED      0x08000000L
+#define WS_CLIPSIBLINGS  0x04000000L
+#define WS_CLIPCHILDREN  0x02000000L
+#define WS_MAXIMIZE      0x01000000L
+#define WS_CAPTION       0x00C00000L
+#define WS_BORDER        0x00800000L
+#define WS_DLGFRAME      0x00400000L
+#define WS_VSCROLL       0x00200000L
+#define WS_HSCROLL       0x00100000L
+#define WS_SYSMENU       0x00080000L
+#define WS_THICKFRAME    0x00040000L
+#define WS_GROUP         0x00020000L
+#define WS_TABSTOP       0x00010000L
+#define WS_MINIMIZEBOX   0x00020000L
+#define WS_MAXIMIZEBOX   0x00010000L
+#define WS_TILED         WS_OVERLAPPED
+#define WS_ICONIC        WS_MINIMIZE
+#define WS_SIZEBOX       WS_THICKFRAME
 #define WS_OVERLAPPEDWINDOW (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME| WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
 #define WS_POPUPWINDOW (WS_POPUP | WS_BORDER | WS_SYSMENU)
 #define WS_CHILDWINDOW (WS_CHILD)
@@ -2069,8 +2027,8 @@ typedef struct tagDRAWITEMSTRUCT
     UINT        itemState;
     HWND        hwndItem;
     HDC         hDC;
-    RECT        rcItem;
-    DWORD       itemData;
+    RECT        rcItem WINE_PACKED;
+    DWORD       itemData WINE_PACKED;
 } DRAWITEMSTRUCT;
 typedef DRAWITEMSTRUCT NEAR* PDRAWITEMSTRUCT;
 typedef DRAWITEMSTRUCT FAR* LPDRAWITEMSTRUCT;
@@ -2084,7 +2042,7 @@ typedef struct tagMEASUREITEMSTRUCT
     UINT        itemID;
     UINT        itemWidth;
     UINT        itemHeight;
-    DWORD       itemData;
+    DWORD       itemData WINE_PACKED;
 } MEASUREITEMSTRUCT;
 typedef MEASUREITEMSTRUCT NEAR* PMEASUREITEMSTRUCT;
 typedef MEASUREITEMSTRUCT FAR* LPMEASUREITEMSTRUCT;
@@ -2112,7 +2070,7 @@ typedef struct tagCOMPAREITEMSTRUCT
     UINT        itemID1;
     DWORD       itemData1;
     UINT        itemID2;
-    DWORD       itemData2;
+    DWORD       itemData2 WINE_PACKED;
 } COMPAREITEMSTRUCT;
 typedef COMPAREITEMSTRUCT NEAR* PCOMPAREITEMSTRUCT;
 typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
@@ -2269,9 +2227,9 @@ typedef struct tagMETAHEADER
     WORD       mtType;
     WORD       mtHeaderSize;
     WORD       mtVersion;
-    DWORD      mtSize __attribute__ ((packed));
+    DWORD      mtSize WINE_PACKED;
     WORD       mtNoObjects;
-    DWORD      mtMaxRecord __attribute__ ((packed));
+    DWORD      mtMaxRecord WINE_PACKED;
     WORD       mtNoParameters;
 } METAHEADER;
 
@@ -2296,9 +2254,9 @@ typedef HANDLETABLE *LPHANDLETABLE;
 /* Clipboard metafile picture structure */
 typedef struct tagMETAFILEPICT
 {
-    int        mm;
-    int        xExt;
-    int        yExt;
+    INT        mm;
+    INT        xExt;
+    INT        yExt;
     HMETAFILE  hMF;
 } METAFILEPICT;
 typedef METAFILEPICT *LPMETAFILEPICT;
@@ -2488,6 +2446,7 @@ Fa(BOOL,DestroyIcon,HICON,a)
 Fa(BOOL,DestroyMenu,HMENU,a)
 Fa(BOOL,DestroyWindow,HWND,a)
 Fa(BOOL,EnableHardwareInput,BOOL,a)
+Fa(BOOL,EndDeferWindowPos,HDWP,hWinPosInfo)
 Fa(BOOL,FreeModule,HANDLE,a)
 Fa(BOOL,FreeResource,HANDLE,a)
 #ifndef GLOBAL_SOURCE
@@ -2534,7 +2493,7 @@ Fa(DWORD,GlobalSize,HANDLE,a)
 #endif
 Fa(DWORD,OemKeyScan,WORD,a)
 Fa(FARPROC,LocalNotify,FARPROC,a)
-Fa(HANDLE,BeginDeferWindowPos,int,nNumWindows)
+Fa(HDWP,BeginDeferWindowPos,INT,nNumWindows)
 Fa(HMETAFILE,CloseMetaFile,HANDLE,a)
 Fa(HANDLE,CreateMetaFile,LPSTR,a)
 Fa(HANDLE,GetAtomHandle,ATOM,a)
@@ -2653,7 +2612,6 @@ Fa(short,GetTextCharacterExtra,HDC,a)
 Fa(void,ClipCursor,LPRECT,a)
 Fa(void,CloseWindow,HWND,a)
 Fa(void,DrawMenuBar,HWND,a)
-Fa(void,EndDeferWindowPos,HANDLE,hWinPosInfo)
 Fa(void,FatalExit,int,a)
 Fa(void,FreeLibrary,HANDLE,a)
 Fa(void,FreeProcInstance,FARPROC,a)
@@ -2876,6 +2834,7 @@ Fc(HPEN,CreatePen,short,a,short,b,COLORREF,c)
 Fc(HRGN,CreatePolygonRgn,LPPOINT,a,short,b,short,c)
 Fc(HWND,GetNextDlgGroupItem,HWND,a,HWND,b,BOOL,c)
 Fc(HWND,GetNextDlgTabItem,HWND,a,HWND,b,BOOL,c)
+Fc(INT,GetTextFace,HDC,a,INT,b,LPSTR,c)
 Fc(LONG,GetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetClassLong,HWND,a,short,b,LONG,c)
@@ -2894,7 +2853,6 @@ Fc(int,GetInstanceData,HANDLE,a,NPSTR,b,int,c)
 Fc(int,GetKeyNameText,LONG,a,LPSTR,b,int,c)
 Fc(int,GetModuleFileName,HANDLE,a,LPSTR,b,short,c)
 Fc(int,GetObject,HANDLE,a,int,b,LPSTR,c)
-Fc(int,GetTextFace,HDC,a,int,b,LPSTR,c)
 Fc(int,GetUpdateRgn,HWND,a,HRGN,b,BOOL,c)
 Fc(int,GetWindowText,HWND,a,LPSTR,b,int,c)
 Fc(int,MulDiv,int,a,int,b,int,c)
@@ -2929,7 +2887,7 @@ Fd(BOOL,GetMessage,LPMSG,msg,HWND,b,WORD,c,WORD,d)
 Fd(BOOL,GetTextExtentPoint,HDC,a,LPSTR,b,short,c,LPSIZE,d)
 Fd(BOOL,DrawIcon,HDC,a,short,b,short,c,HICON,d)
 Fd(BOOL,EnumMetaFile,HDC,a,LOCALHANDLE,b,FARPROC,c,BYTE FAR*,d)
-Fd(BOOL,FloodFill,HDC,a,short,b,short,c,DWORD,d)
+Fd(BOOL,FloodFill,HDC,a,INT,b,INT,c,COLORREF,d)
 Fd(BOOL,GetCharWidth,HDC,a,WORD,b,WORD,c,LPINT,d)
 Fd(BOOL,HiliteMenuItem,HWND,a,HMENU,b,WORD,c,WORD,d)
 Fd(BOOL,MoveToEx,HDC,a,short,b,short,c,LPPOINT,d)
@@ -2948,8 +2906,8 @@ Fd(HHOOK,SetWindowsHookEx,short,a,HOOKPROC,b,HINSTANCE,c,HTASK,d)
 Fd(HRGN,CreateEllipticRgn,short,a,short,b,short,c,short,d)
 Fd(HRGN,CreatePolyPolygonRgn,LPPOINT,a,LPINT,b,short,c,short,d)
 Fd(HRGN,CreateRectRgn,short,a,short,b,short,c,short,d)
-Fd(HWND,CreateDialog,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d)
-Fd(HWND,CreateDialogIndirect,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d)
+Fd(HWND,CreateDialog,HANDLE,a,LPCSTR,b,HWND,c,WNDPROC,d)
+Fd(HWND,CreateDialogIndirect,HANDLE,a,LPCSTR,b,HWND,c,WNDPROC,d)
 Fd(LONG,DefDlgProc,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,DefMDIChildProc,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,DefWindowProc,HWND,a,WORD,b,WORD,c,LONG,d)
@@ -2966,8 +2924,8 @@ Fd(BOOL,SetWindowOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
 Fd(BOOL,OffsetViewportOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
 Fd(BOOL,OffsetWindowOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
 Fd(int,CombineRgn,HRGN,a,HRGN,b,HRGN,c,short,d)
-Fd(int,DialogBox,HINSTANCE,a,LPCSTR,b,HWND,c,FARPROC,d)
-Fd(int,DialogBoxIndirect,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d)
+Fd(int,DialogBox,HINSTANCE,a,LPCSTR,b,HWND,c,WNDPROC,d)
+Fd(int,DialogBoxIndirect,HANDLE,a,HANDLE,b,HWND,c,WNDPROC,d)
 Fd(int,EnumFonts,HDC,a,LPSTR,b,FARPROC,c,LPSTR,d)
 Fd(int,EnumObjects,HDC,a,int,b,FARPROC,c,LPSTR,d)
 Fd(int,GetDlgItemText,HWND,a,WORD,b,LPSTR,c,WORD,d)
@@ -2989,10 +2947,10 @@ Fd(void,SetDlgItemInt,HWND,a,WORD,b,WORD,c,BOOL,d)
 Fe(BOOL,Rectangle,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom)
 Fe(int,DrawText,HDC,a,LPSTR,str,int,c,LPRECT,d,WORD,flag)
 Fe(BOOL,PeekMessage,LPMSG,a,HWND,b,WORD,c,WORD,d,WORD,e)
-Fe(LONG,CallWindowProc,FARPROC,a,HWND,b,WORD,c,WORD,d,LONG,e)
+Fe(LONG,CallWindowProc,WNDPROC,a,HWND,b,WORD,c,WORD,d,LONG,e)
 Fe(BOOL,ChangeMenu,HMENU,a,WORD,b,LPSTR,c,WORD,d,WORD,e)
 Fe(BOOL,Ellipse,HDC,a,int,b,int,c,int,d,int,e)
-Fe(BOOL,ExtFloodFill,HDC,a,int,b,int,c,DWORD,d,WORD,e)
+Fe(BOOL,ExtFloodFill,HDC,a,INT,b,INT,c,COLORREF,d,WORD,e)
 Fe(BOOL,FrameRgn,HDC,a,HRGN,b,HBRUSH,e,int,c,int,d)
 Fe(BOOL,InsertMenu,HMENU,a,WORD,b,WORD,c,WORD,d,LPSTR,e)
 Fe(BOOL,ModifyMenu,HMENU,a,WORD,b,WORD,c,WORD,d,LPSTR,e)
@@ -3002,12 +2960,12 @@ Fe(DWORD,GetTabbedTextExtent,HDC,a,LPSTR,b,int,c,int,d,LPINT,e)
 Fe(DWORD,ScaleViewportExt,HDC,a,short,b,short,c,short,d,short,e)
 Fe(DWORD,ScaleWindowExt,HDC,a,short,b,short,c,short,d,short,e)
 Fe(HBITMAP,CreateBitmap,short,a,short,b,BYTE,c,BYTE,d,LPSTR,e)
-Fe(HWND,CreateDialogIndirectParam,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d,LPARAM,e)
-Fe(HWND,CreateDialogParam,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d,LPARAM,e)
+Fe(HWND,CreateDialogIndirectParam,HANDLE,a,LPCSTR,b,HWND,c,WNDPROC,d,LPARAM,e)
+Fe(HWND,CreateDialogParam,HANDLE,a,LPCSTR,b,HWND,c,WNDPROC,d,LPARAM,e)
 Fe(LONG,DefFrameProc,HWND,a,HWND,b,WORD,c,WORD,d,LONG,e)
 Fe(LONG,SendDlgItemMessage,HWND,a,WORD,b,WORD,c,WORD,d,LONG,e)
-Fe(int,DialogBoxIndirectParam,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d,LONG,e)
-Fe(int,DialogBoxParam,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d,LONG,e)
+Fe(int,DialogBoxIndirectParam,HANDLE,a,HANDLE,b,HWND,c,WNDPROC,d,LONG,e)
+Fe(int,DialogBoxParam,HANDLE,a,LPCSTR,b,HWND,c,WNDPROC,d,LONG,e)
 Fe(int,DlgDirList,HWND,a,LPSTR,b,int,c,int,d,WORD,e)
 Fe(int,DlgDirListComboBox,HWND,a,LPSTR,b,int,c,int,d,WORD,e)
 Fe(int,Escape,HDC,a,int,b,int,c,LPSTR,d,LPSTR,e)
@@ -3041,7 +2999,7 @@ Fg(int,GetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
 Fg(int,SetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
 Fg(BOOL,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
 Fh(BOOL,ExtTextOut,HDC,a,short,b,short,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
-Fh(HANDLE,DeferWindowPos,HANDLE,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,int,x,int,y,int,cx,int,cy,WORD,wFlags)
+Fh(HDWP,DeferWindowPos,HDWP,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,INT,x,INT,y,INT,cx,INT,cy,WORD,wFlags)
 Fh(LONG,TabbedTextOut,HDC,a,short,b,short,c,LPSTR,d,short,e,short,f,LPINT,g,short,h)
 Fh(int,ScrollWindowEx,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g,WORD,h)
 Fi(BOOL,Arc,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)

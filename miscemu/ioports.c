@@ -3,6 +3,10 @@
 #include <time.h>
 #include "registers.h"
 #include "wine.h"
+#include "stddebug.h"
+/* #define DEBUG_INT */
+/* #undef  DEBUG_INT */
+#include "debug.h"
 
 static BYTE cmosaddress;
 
@@ -18,7 +22,7 @@ static BYTE cmosimage[64] = {
 
 void inportb(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: inb (%x)\n", DX);
+	dprintf_int(stddeb, "IO: inb (%x)\n", DX);
 
 	switch(DX) {
 		case 0x70:
@@ -33,14 +37,14 @@ void inportb(struct sigcontext_struct *context)
 
 void inport(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: in (%x)\n", DX);
+	dprintf_int(stdnimp, "IO: in (%x)\n", DX);
 
 	AX = 0xffff;
 }
 
 void outportb(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: outb (%x), %x\n", DX, AX);
+	dprintf_int(stdnimp, "IO: outb (%x), %x\n", DX, AX);
 
 	switch (EDX & 0xffff)
 	{
@@ -56,5 +60,5 @@ void outportb(struct sigcontext_struct *context)
 
 void outport(struct sigcontext_struct *context)
 {
-	fprintf(stderr, "IO: out (%x), %x\n", DX, AX);
+	dprintf_int(stdnimp, "IO: out (%x), %x\n", DX, AX);
 }

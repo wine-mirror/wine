@@ -110,12 +110,12 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	unsigned short *stack_p;
 	
 	ret_addr = (unsigned int *) ((char *) seg_off + 0x14);
-	printf("Calling %s (%s.%d), 16-bit stack at %04x:%04x, ",
+	printf("Call %s (%s.%d), stack=%04x:%04x, ",
 	       dll_p->export_name,
 	       dll_builtin_table[dll_id].dll_name, ordinal,
 	       seg_off >> 16, seg_off & 0xffff);
-	printf("return to %08x\n", *ret_addr);
-	printf("  ESP %08x, EBP %08x, SS %04x\n", 
+	printf("ret=%08x", *ret_addr);
+	printf("  ESP=%08x, EBP=%08x, SS=%04x\n", 
 	       IF1632_Saved16_esp, IF1632_Saved16_ebp,
 	       IF1632_Saved16_ss);
 

@@ -40,16 +40,6 @@ int set_ldt_entry(int entry, unsigned long base, unsigned int limit,
 extern int OpenResourceFile(HANDLE instance);
 extern HBITMAP ConvertCoreBitmap( HDC hdc, BITMAPCOREHEADER * image );
 extern HBITMAP ConvertInfoBitmap( HDC hdc, BITMAPINFO * image );
-extern int FindResourceByNumber(struct resource_nameinfo_s *result_p, 
-				int type_id, int resource_id);
-extern int FindResourceByName(struct resource_nameinfo_s *result_p,
-		     int type_id, char *resource_name);
-extern HICON LoadIcon(HANDLE instance, LPSTR icon_name);
-extern HANDLE RSC_LoadResource(int instance, char *rsc_name, int type,
-				int *image_size_ret);
-extern int LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen);
-extern HANDLE RSC_LoadMenu(HANDLE instance, LPSTR menu_name);
-extern HBITMAP LoadBitmap(HANDLE instance, LPSTR bmp_name);
 
 /* loader/selector.c */
 

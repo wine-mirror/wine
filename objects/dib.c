@@ -13,6 +13,12 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "bitmap.h"
 #include "icon.h"
+#include "stddebug.h"
+/* #define DEBUG_ICON /* */
+/* #undef  DEBUG_ICON /* */
+#include "debug.h"
+
+extern const int DC_XROPfunction[];
 
 extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );  /* color.c */
 
@@ -424,7 +430,8 @@ int SetDIBitsToDevice( HDC hdc, short xDest, short yDest, WORD cx, WORD cy,
     if (xSrc+cx >= info->bmiHeader.biWidth) cx = info->bmiHeader.biWidth-xSrc;
     if (!cx || !cy) return 0;
 
-    DC_SetupGCForText( dc );  /* To have the correct ROP */
+    DC_SetupGCForText( dc );  /* To have the correct colors */
+    XSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
     return DIB_SetImageBits( dc, lines, dc->w.bitsPerPixel,
 			     bits, info, coloruse,
 			     dc->u.x.drawable, dc->u.x.gc,
@@ -521,33 +528,36 @@ BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
     HBITMAP	hBitTemp;
     HDC		hMemDC;
     HDC		hMemDC2;
-#ifdef DEBUG_ICON
-    printf("DrawIcon(%04X, %d, %d, %04X) \n", hDC, x, y, hIcon);
-#endif
+    dprintf_icon(stddeb,"DrawIcon(%04X, %d, %d, %04X) \n", hDC, x, y, hIcon);
     if (hIcon == (HICON)NULL) return FALSE;
     lpico = (ICONALLOC *)GlobalLock(hIcon);
     GetObject(lpico->hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-#ifdef DEBUG_ICON
-    printf("DrawIcon / x=%d y=%d\n", x, y);
-    printf("DrawIcon / icon Width=%d\n", (int)lpico->descriptor.Width);
-    printf("DrawIcon / icon Height=%d\n", (int)lpico->descriptor.Height);
-    printf("DrawIcon / icon ColorCount=%d\n", (int)lpico->descriptor.ColorCount);
-    printf("DrawIcon / icon icoDIBSize=%lX\n", (DWORD)lpico->descriptor.icoDIBSize);
-    printf("DrawIcon / icon icoDIBOffset=%lX\n", (DWORD)lpico->descriptor.icoDIBOffset);
-    printf("DrawIcon / bitmap bmWidth=%d bmHeight=%d\n", bm.bmWidth, bm.bmHeight);
-#endif
+    dprintf_icon(stddeb,"DrawIcon / x=%d y=%d\n", x, y);
+    dprintf_icon(stddeb,"DrawIcon / icon Width=%d\n", 
+		 (int)lpico->descriptor.Width);
+    dprintf_icon(stddeb,"DrawIcon / icon Height=%d\n", 
+		 (int)lpico->descriptor.Height);
+    dprintf_icon(stddeb,"DrawIcon / icon ColorCount=%d\n", 
+		 (int)lpico->descriptor.ColorCount);
+    dprintf_icon(stddeb,"DrawIcon / icon icoDIBSize=%lX\n", 
+		 (DWORD)lpico->descriptor.icoDIBSize);
+    dprintf_icon(stddeb,"DrawIcon / icon icoDIBOffset=%lX\n", 
+		 (DWORD)lpico->descriptor.icoDIBOffset);
+    dprintf_icon(stddeb,"DrawIcon / bitmap bmWidth=%d bmHeight=%d\n", 
+		 bm.bmWidth, bm.bmHeight);
     hMemDC = CreateCompatibleDC(hDC);
 #ifdef DEBUG_ICON
-    SelectObject(hMemDC, lpico->hBitmap);
+    hBitTemp = SelectObject(hMemDC, lpico->hBitmap);
     BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
     SelectObject(hMemDC, lpico->hBitMask);
     BitBlt(hDC, x, y + bm.bmHeight, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
 #else
-    SelectObject(hMemDC, lpico->hBitMask);
+    hBitTemp = SelectObject(hMemDC, lpico->hBitMask);
     BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
     SelectObject(hMemDC, lpico->hBitmap);
     BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCPAINT);
 #endif
+    SelectObject( hMemDC, hBitTemp );
     DeleteDC(hMemDC);
     return TRUE;
 }

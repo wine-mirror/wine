@@ -15,7 +15,7 @@ typedef struct
 {
     HHOOK    next;   /* Next hook in chain */
     HOOKPROC proc;   /* Hook procedure */
-    short    id;     /* Hook id (WH_???) */
+    short    id;     /* Hook id (WH_xxx) */
     HTASK    htask;  /* Task owning this hook */
 } HOOKDATA;
 

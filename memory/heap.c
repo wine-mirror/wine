@@ -8,8 +8,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "segmem.h"
 #include "heap.h"
 #include "regfunc.h"
-
+#include "stddebug.h"
 /* #define DEBUG_HEAP /* */
+/* #undef  DEBUG_HEAP /* */
+#include "debug.h"
+
 
 LHEAP *LocalHeaps = NULL;
 
@@ -46,9 +49,9 @@ HEAP_Alloc(MDESC **free_list, int flags, int bytes)
 {
     MDESC *m, *m_new;
     
-#ifdef DEBUG_HEAP
-    printf("HeapAlloc: free_list %08x, flags %x, bytes %d\n", 
+    dprintf_heap(stddeb,"HeapAlloc: free_list %08x, flags %x, bytes %d\n", 
 	   free_list, flags, bytes);
+#ifdef DEBUG_HEAP
     HEAP_CheckHeap(free_list);
 #endif
 
@@ -83,8 +86,8 @@ HEAP_Alloc(MDESC **free_list, int flags, int bytes)
 	    m->flags = 0;
 	    if (flags & GLOBAL_FLAGS_ZEROINIT)
 		memset(m + 1, 0, bytes);
+	    dprintf_heap(stddeb,"HeapAlloc: returning %08x\n", (m + 1));
 #ifdef DEBUG_HEAP
-	    printf("HeapAlloc: returning %08x\n", (m + 1));
 	    HEAP_CheckHeap(free_list);
 #endif
 	    return (void *) (m + 1);
@@ -107,15 +110,15 @@ HEAP_Alloc(MDESC **free_list, int flags, int bytes)
 	m->flags = 0;
 	if (flags & GLOBAL_FLAGS_ZEROINIT)
 	    memset(m + 1, 0, bytes);
+	dprintf_heap(stddeb,"HeapAlloc: returning %08x\n", (m + 1));
 #ifdef DEBUG_HEAP
-	printf("HeapAlloc: returning %08x\n", (m + 1));
 	HEAP_CheckHeap(free_list);
 #endif
 	return (void *) (m + 1);
     }
 
+    dprintf_heap(stddeb,"HeapAlloc: returning %08x\n", 0);
 #ifdef DEBUG_HEAP
-    printf("HeapAlloc: returning %08x\n", 0);
     HEAP_CheckHeap(free_list);
 #endif
     return 0;
@@ -140,40 +143,36 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
      */
     m = (MDESC *) old_block - 1;
 
+    dprintf_heap(stddeb,"HEAP_ReAlloc new_size=%d !\n", new_size);
+    dprintf_heap(stddeb,"HEAP_ReAlloc old_block=%08X !\n", old_block);
+    dprintf_heap(stddeb,"HEAP_ReAlloc m=%08X free_list=%08X !\n", m,free_list);
+    dprintf_heap(stddeb,"HEAP_ReAlloc m->prev=%08X !\n", m->prev);
+    dprintf_heap(stddeb,"HEAP_ReAlloc m->next=%08X !\n", m->next);
+    dprintf_heap(stddeb,"HEAP_ReAlloc *free_list=%08X !\n", *free_list);
 #ifdef DEBUG_HEAP
-    printf("HEAP_ReAlloc new_size=%d !\n", new_size);
-    printf("HEAP_ReAlloc old_block=%08X !\n", old_block);
-    printf("HEAP_ReAlloc m=%08X free_list=%08X !\n", m, free_list);
-    printf("HEAP_ReAlloc m->prev=%08X !\n", m->prev);
-    printf("HEAP_ReAlloc m->next=%08X !\n", m->next);
-    printf("HEAP_ReAlloc *free_list=%08X !\n", *free_list);
     HEAP_CheckHeap(free_list);
 #endif
 
     if (m->prev != m || m->next != m || 
 	((int) m & 0xffff0000) != ((int) *free_list & 0xffff0000))
     {
-#ifdef DEBUG_HEAP
-	printf("Attempt to resize bad pointer, m = %08x, *free_list = %08x\n",
+	fprintf(stderr,"Attempt to resize bad pointer, m = %08x, *free_list = %08x\n",
 	       m, free_list);
 	HEAP_CheckHeap(free_list);
-#endif
 	return NULL;
     }
     
     /*
      * Check for grow block
      */
-#ifdef DEBUG_HEAP
-    printf("HEAP_ReAlloc Check for grow block !\n");
-#endif
 
+    dprintf_heap(stddeb,"HEAP_ReAlloc Check for grow block !\n");
     if (new_size > m->length)
     {
 	m_free = m + 1 + m->length / sizeof(MDESC);
 	if (m_free->next == m_free || 
 	    m_free->prev == m_free ||
-	    m_free->length + sizeof(MDESC) < new_size)
+	    m_free->length + 2*sizeof(MDESC) < new_size - m->length)
 	{
 	    void *new_p = HEAP_Alloc(free_list, flags, new_size);
 	    if (new_p ==NULL)
@@ -196,9 +195,7 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
 	
 	m->length += sizeof(MDESC) + m_free->length;
 
-#ifdef DEBUG_HEAP
-	printf("HEAP_ReAlloc before GLOBAL_FLAGS_ZEROINIT !\n");
-#endif
+	dprintf_heap(stddeb,"HEAP_ReAlloc before GLOBAL_FLAGS_ZEROINIT !\n");
 	if (flags & GLOBAL_FLAGS_ZEROINIT)
 	    memset(m_free, '\0', sizeof(MDESC) + m_free->length);
     }
@@ -206,15 +203,13 @@ HEAP_ReAlloc(MDESC **free_list, void *old_block,
     /*
      * Check for shrink block.
      */
-#ifdef DEBUG_HEAP
-	printf("HEAP_ReAlloc Check for shrink block !\n");
-#endif
-    if (new_size < m->length - 4 * sizeof(MDESC))
+    dprintf_heap(stddeb,"HEAP_ReAlloc Check for shrink block !\n");
+    if (new_size + 4*sizeof(MDESC) < m->length)
     {
 	m_free = m + new_size / sizeof(MDESC) + 2;
 	m_free->next = m_free;
 	m_free->prev = m_free;
-	m_free->length = m->length - (int) m_free - (int) m;
+	m_free->length = m->length - ((int) m_free - (int) m);
 	m->length = (int) m_free - (int) (m + 1);
 	HEAP_Free(free_list, m_free + 1);
     }
@@ -236,9 +231,9 @@ HEAP_Free(MDESC **free_list, void *block)
     MDESC *m;
     MDESC *m_prev;
 
-#ifdef DEBUG_HEAP
-    printf("HeapFree: free_list %08x, block %08x\n", 
+    dprintf_heap(stddeb,"HeapFree: free_list %08x, block %08x\n", 
 	   free_list, block);
+#ifdef DEBUG_HEAP
     HEAP_CheckHeap(free_list);
 #endif
 
@@ -248,11 +243,9 @@ HEAP_Free(MDESC **free_list, void *block)
     m_free = (MDESC *) block - 1;
     if (m_free->prev != m_free || m_free->next != m_free)
     {
-#ifdef DEBUG_HEAP
-	printf("Attempt to free bad pointer,"
+	fprintf(stderr,"Attempt to free bad pointer,"
 	       "m_free = %08x, *free_list = %08x\n",
 	       m_free, free_list);
-#endif
 	return -1;
     }
 
@@ -265,11 +258,9 @@ HEAP_Free(MDESC **free_list, void *block)
     }
     else if (((int) m_free & 0xffff0000) != ((int) *free_list & 0xffff0000))
     {
-#ifdef DEBUG_HEAP
-	printf("Attempt to free bad pointer,"
+	fprintf(stderr,"Attempt to free bad pointer,"
 	       "m_free = %08x, *free_list = %08x\n",
 	       m_free, free_list);
-#endif
 	return -1;
     }
 
@@ -282,22 +273,18 @@ HEAP_Free(MDESC **free_list, void *block)
     
     if (m_prev != NULL && (int) m_prev + m_prev->length > (int) m_free)
     {
-#ifdef DEBUG_HEAP
-	printf("Attempt to free bad pointer,"
+	fprintf(stderr,"Attempt to free bad pointer,"
 	       "m_free = %08x, m_prev = %08x (length %x)\n",
 	       m_free, m_prev, m_prev->length);
-#endif
 	return -1;
     }
 	
     if ((m != NULL && (int) m_free + m_free->length > (int) m) ||
 	(int) m_free + m_free->length > ((int) m_free | 0xffff))
     {
-#ifdef DEBUG_HEAP
-	printf("Attempt to free bad pointer,"
+	fprintf(stderr,"Attempt to free bad pointer,"
 	       "m_free = %08x (length %x), m = %08x\n",
 	       m_free, m_free->length, m);
-#endif
 	return -1;
     }
 
@@ -359,9 +346,7 @@ HEAP_LocalFindHeap(unsigned short owner)
 {
     LHEAP *lh;
     
-#ifdef DEBUG_HEAP
-    printf("HEAP_LocalFindHeap: owner %04x\n", owner);
-#endif
+    dprintf_heap(stddeb,"HEAP_LocalFindHeap: owner %04x\n", owner);
     
     for (lh = LocalHeaps; lh != NULL; lh = lh->next)
     {
@@ -380,10 +365,8 @@ HEAP_LocalInit(unsigned short owner, void *start, int length)
 {
     LHEAP *lh;
 
-#ifdef DEBUG_HEAP
-    printf("HEAP_LocalInit: owner %04x, start %08x, length %04x\n",
-	   owner, start, length);
-#endif
+    dprintf_heap(stddeb,"HEAP_LocalInit: owner %04x, start %08x, length %04x\n"
+	   ,owner, start, length);
 
     if (length < 2 * sizeof(MDESC))
 	return;
@@ -424,16 +407,12 @@ WIN16_LocalAlloc(int flags, int bytes)
 {
     void *m;
     
-#ifdef DEBUG_HEAP
-    printf("WIN16_LocalAlloc: flags %x, bytes %d\n", flags, bytes);
-    printf("    called from segment %04x\n", Stack16Frame[11]);
-#endif
+    dprintf_heap(stddeb,"WIN16_LocalAlloc: flags %x, bytes %d\n", flags,bytes);
+    dprintf_heap(stddeb,"    called from segment %04x\n", Stack16Frame[11]);
 
     m = HEAP_Alloc(LOCALHEAP(), flags, bytes);
 	
-#ifdef DEBUG_HEAP
-	printf("WIN16_LocalAlloc: returning %x\n", (int) m);
-#endif
+    dprintf_heap(stddeb,"WIN16_LocalAlloc: returning %x\n", (int) m);
     return m;
 }
 
@@ -461,7 +440,7 @@ unsigned int
 WIN16_LocalFlags(unsigned int handle)
 {
     MDESC *m;
-    
+
     m = (MDESC *) (((int) *LOCALHEAP() & 0xffff0000) | 
 		   (handle & 0xffff)) - 1;
     if (m->next != m || m->prev != m)
@@ -510,7 +489,7 @@ WIN16_LocalInit(unsigned int segment, unsigned int start, unsigned int end)
 	HEAP_Init(&lh->free_list,
 		  (void *) ((segment << 16) | start), end - start + 1);
     }
-	printf("WIN16_LocalInit // return segment=%04X !\n", segment);
+    dprintf_heap(stddeb,"WIN16_LocalInit // return segment=%04X !\n", segment);
     return segment;
 }
 
@@ -521,7 +500,7 @@ void *
 WIN16_LocalLock(unsigned int handle)
 {
     MDESC *m;
-    
+
     m = (MDESC *) (((int) *LOCALHEAP() & 0xffff0000) | 
 		   (handle & 0xffff)) - 1;
     if (m->next != m || m->prev != m)
@@ -538,11 +517,12 @@ void *
 WIN16_LocalReAlloc(unsigned int handle, int bytes, int flags)
 {
     void *m;
-#ifdef DEBUG_HEAP
-	printf("WIN16_LocalReAlloc(%04X, %d, %04X); !\n",	handle, bytes, flags);
-	printf("WIN16_LocalReAlloc // LOCALHEAP()=%08X !\n", LOCALHEAP());
-	printf("WIN16_LocalReAlloc // *LOCALHEAP()=%08X !\n", *LOCALHEAP());
-#endif
+    dprintf_heap(stddeb,"WIN16_LocalReAlloc(%04X, %d, %04X); !\n",	
+		 handle, bytes, flags);
+    dprintf_heap(stddeb,"WIN16_LocalReAlloc // LOCALHEAP()=%08X !\n", 
+		 LOCALHEAP());
+    dprintf_heap(stddeb,"WIN16_LocalReAlloc // *LOCALHEAP()=%08X !\n", 
+		 *LOCALHEAP());
     m = HEAP_ReAlloc(LOCALHEAP(), (void *)
 		     (((int) *LOCALHEAP() & 0xffff0000) | (handle & 0xffff)),
 		     bytes, flags);
@@ -557,7 +537,7 @@ unsigned int
 WIN16_LocalSize(unsigned int handle)
 {
     MDESC *m;
-    
+
     m = (MDESC *) (((int) *LOCALHEAP() & 0xffff0000) | 
 		   (handle & 0xffff)) - 1;
     if (m->next != m || m->prev != m)
@@ -619,9 +599,7 @@ WORD GetFreeSystemResources(WORD SystemResourceType)
   unsigned int UserFree=0,UserResult=0;
   unsigned int result=0;
   MDESC *m;
-
-  printf("GetFreeSystemResources(%u)\n",SystemResourceType);
-
+  dprintf_heap(stddeb,"GetFreeSystemResources(%u)\n",SystemResourceType);
   switch(SystemResourceType) {
     case(USERRESOURCES):
       for (m = USER_Heap; m != NULL; m = m->next) /* add up free area in heap */

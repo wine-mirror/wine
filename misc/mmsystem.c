@@ -7,7 +7,9 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 
 #ifndef WINELIB
 
-#include "stdio.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "win.h"

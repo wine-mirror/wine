@@ -9,10 +9,15 @@
 static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
 static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
 
+#include <stdio.h>
 #include <stdlib.h>
-
 #include "windows.h"
 #include "syscolor.h"
+#include "stddebug.h"
+/* #define DEBUG_SYSCOLOR /* */
+/* #undef  DEBUG_SYSCOLOR /* */
+#include "debug.h"
+
 
 struct SysColorObjects sysColorObjects = { 0, };
 
@@ -150,9 +155,8 @@ void SYSCOLOR_Init()
 
 COLORREF GetSysColor(short nIndex)
 {
-#ifdef DEBUG_SYSCOLOR
-    printf("System Color %d = %6x\n", nIndex, SysColors[nIndex]);
-#endif
+    dprintf_syscolor(stddeb,"System Color %d = %6x\n", 
+		    nIndex, SysColors[nIndex]);
     return SysColors[nIndex];
 }
 

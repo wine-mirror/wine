@@ -13,10 +13,14 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "windows.h"
+#include "stddebug.h"
+/* #define DEBUG_UTILITY /* */
+/* #undef  DEBUG_UTILITY /* */
+#include "debug.h"
+
 
 static char Copyright[] = "Copyright Andrew C. Bulhak, 1993";
 
-/*#define debug_utility*/
 
 /*	MulDiv is a simple function that may as well have been
  *	implemented as a macro; however Microsoft, in their infinite
@@ -77,9 +81,8 @@ void OutputDebugString(LPSTR foo)
 
 static void UTILITY_qualify(const char *source, char *dest)
 {
-#ifdef debug_utility
-	fprintf(stderr, "UTILITY_qualify(\"%s\", \"%s\");\n", source, dest);
-#endif
+	dprintf_utility(stddeb, "UTILITY_qualify(\"%s\", \"%s\");\n", 
+			source, dest);
 	if(!source) return;	/* Dumbass attack! */
 	while(*source) {
 		/* Find next format code. */
@@ -129,49 +132,35 @@ size_t UTILITY_argsize(const char *format, BOOL windows)
 		while((*format) && (*format != '%')) format++;	/* skip ahead */
 		if(*format) {
 			char modifier = ' ';
-#ifdef debug_utility
-			fprintf(stderr, "found:\t\"%%");
-#endif
+			dprintf_utility(stddeb, "found:\t\"%%");
 			format++;		/* skip past '%' */
 			/* First skip the flags, field width, etc. */
 			/* First the flags */
 			if ((*format == '#') || (*format == '-') || (*format == '+')
 				|| (*format == ' ')) {
-#ifdef debug_utility
-				fprintf(stderr, "%c", *format);
-#endif
+				dprintf_utility(stddeb, "%c", *format);
 				format++;
 			}
 			/* Now the field width, etc. */
 			while(isdigit(*format)) {
-#ifdef debug_utility
-				fprintf(stderr, "%c", *format);
-#endif
+				dprintf_utility(stddeb, "%c", *format);
 				format++;
 			}
 			if(*format == '.') {
-#ifdef debug_utility
-				fprintf(stderr, "%c", *format);
-#endif
+				dprintf_utility(stddeb, "%c", *format);
 				format++;
 			}
 			while(isdigit(*format)) {
-#ifdef debug_utility
-				fprintf(stderr, "%c", *format);
-#endif
+				dprintf_utility(stddeb, "%c", *format);
 				format++;
 			}
 			/* Now we handle the rest */
 			if((*format == 'h') || (*format == 'l') || (*format == 'L')) {
-#ifdef debug_utility
-				fprintf(stderr, "%c", modifier);
-#endif
+				dprintf_utility(stddeb, "%c", modifier);
 				modifier = *(format++);
 			}
 			/* Handle the actual type. */
-#ifdef debug_utility
-				fprintf(stderr, "%c\"\n", *format);
-#endif
+				dprintf_utility(stddeb, "%c\"\n", *format);
 			switch(*format) {
 				case 'd':
 				case 'i':
@@ -199,9 +188,7 @@ size_t UTILITY_argsize(const char *format, BOOL windows)
 		};
 	};
 #undef INT_SIZE
-#ifdef debug_utility
-	fprintf(stderr, "UTILITY_argsize: returning %i\n", size);
-#endif
+	dprintf_utility(stddeb, "UTILITY_argsize: returning %i\n", size);
 	return size;
 };
 
@@ -227,9 +214,7 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 		while((*format) && (*format != '%')) format++;	/* skip ahead */
 		if(*format) {
 			char modifier = ' ';
-#ifdef debug_utility
-			fprintf(stderr, "found:\t\"%%");
-#endif
+			dprintf_utility(stddeb, "found:\t\"%%");
 			format++;		/* skip past '%' */
 			/* First skip the flags, field width, etc. */
 			/* First the flags */
@@ -243,9 +228,7 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 			if((*format == 'h') || (*format == 'l') || (*format == 'L'))
 				modifier = *(format++);
 			/* Handle the actual type. */
-#ifdef debug_utility
-				fprintf(stderr, "%c\"\n", *format);
-#endif
+			dprintf_utility(stddeb, "%c\"\n", *format);
 			switch(*format) {
 				case 'd':
 				case 'i':

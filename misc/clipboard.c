@@ -6,10 +6,6 @@
 
 static char Copyright[] = "Copyright Martin Ayotte, 1994";
 
-/*
-#define DEBUG_CLIPBOARD
-*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <windows.h>
@@ -20,6 +16,10 @@ static char Copyright[] = "Copyright Martin Ayotte, 1994";
 #include "prototypes.h"
 #include "heap.h"
 #include "win.h"
+#include "stddebug.h"
+/* #define DEBUG_CLIPBOARD /* */
+/* #undef  DEBUG_CLIPBOARD /* */
+#include "debug.h"
 
 typedef struct tagCLIPFORMAT {
     WORD	wFormatID;
@@ -58,9 +58,7 @@ BOOL OpenClipboard(HWND hWnd)
 {
     if (hWndClipboardOwner != 0) return FALSE;
     hWndClipboardOwner = hWnd;
-#ifdef DEBUG_CLIPBOARD
-    printf("OpenClipboard(%04X); !\n", hWnd);
-#endif
+    dprintf_clipboard(stddeb,"OpenClipboard(%04X); !\n", hWnd);
     return TRUE;
 }
 
@@ -72,9 +70,7 @@ BOOL CloseClipboard()
 {
     if (hWndClipboardOwner == 0) return FALSE;
     hWndClipboardOwner = 0;
-#ifdef DEBUG_CLIPBOARD
-    printf("CloseClipboard(); !\n");
-#endif
+    dprintf_clipboard(stddeb,"CloseClipboard(); !\n");
     return TRUE;
 }
 
@@ -86,9 +82,7 @@ BOOL EmptyClipboard()
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     if (hWndClipboardOwner == 0) return FALSE;
-#ifdef DEBUG_CLIPBOARD
-    printf("EmptyClipboard(); !\n");
-#endif
+    dprintf_clipboard(stddeb,"EmptyClipboard(); !\n");
     while(TRUE) {
 	if (lpFormat == NULL) break;
 	if (lpFormat->hData != 0) {
@@ -106,9 +100,8 @@ BOOL EmptyClipboard()
  */
 HWND GetClipboardOwner()
 {
-#ifdef DEBUG_CLIPBOARD
-    printf("GetClipboardOwner() = %04X !\n", hWndClipboardOwner);
-#endif
+    dprintf_clipboard(stddeb,
+		"GetClipboardOwner() = %04X !\n", hWndClipboardOwner);
     return hWndClipboardOwner;
 }
 
@@ -119,9 +112,8 @@ HWND GetClipboardOwner()
 HANDLE SetClipboardData(WORD wFormat, HANDLE hData)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
-#ifdef DEBUG_CLIPBOARD
-    printf("SetClipboardDate(%04X, %04X) !\n", wFormat, hData);
-#endif
+    dprintf_clipboard(stddeb,
+		"SetClipboardDate(%04X, %04X) !\n", wFormat, hData);
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
 	if (lpFormat->wFormatID == wFormat) break;
@@ -139,9 +131,7 @@ HANDLE SetClipboardData(WORD wFormat, HANDLE hData)
 HANDLE GetClipboardData(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
-#ifdef DEBUG_CLIPBOARD
-    printf("GetClipboardData(%04X) !\n", wFormat);
-#endif
+    dprintf_clipboard(stddeb,"GetClipboardData(%04X) !\n", wFormat);
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
 	if (lpFormat->wFormatID == wFormat) break;
@@ -161,17 +151,14 @@ int CountClipboardFormats()
     while(TRUE) {
 	if (lpFormat == NULL) break;
 	if (lpFormat->hData != 0) {
-#ifdef DEBUG_CLIPBOARD
-	    printf("CountClipboardFormats // Find Not Empty (%04X) !\n", 
+        dprintf_clipboard(stddeb,
+		"CountClipboardFormats // Find Not Empty (%04X) !\n",
 					lpFormat->hData);
-#endif
 	    FormatCount++;
 	    }
 	lpFormat = lpFormat->NextFormat;
 	}
-#ifdef DEBUG_CLIPBOARD
-    printf("CountClipboardFormats() = %d !\n", FormatCount);
-#endif
+    dprintf_clipboard(stddeb,"CountClipboardFormats() = %d !\n", FormatCount);
     return FormatCount;
 }
 
@@ -182,9 +169,7 @@ int CountClipboardFormats()
 WORD EnumClipboardFormats(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
-#ifdef DEBUG_CLIPBOARD
-    printf("EnumClipboardFormats(%04X) !\n", wFormat);
-#endif
+    dprintf_clipboard(stddeb,"EnumClipboardFormats(%04X) !\n", wFormat);
     if (wFormat == 0) {
 	if (lpFormat->hData != 0) 
 	    return lpFormat->wFormatID;
@@ -196,20 +181,17 @@ WORD EnumClipboardFormats(WORD wFormat)
 	if (lpFormat->wFormatID == wFormat) break;
 	lpFormat = lpFormat->NextFormat;
 	}
-#ifdef DEBUG_CLIPBOARD
-    printf("EnumClipboardFormats // Find Last (%04X) !\n", 
+    dprintf_clipboard(stddeb,"EnumClipboardFormats // Find Last (%04X) !\n",
 				lpFormat->wFormatID);
-#endif
     lpFormat = lpFormat->NextFormat;
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
 	if (lpFormat->hData != 0) break;
 	lpFormat = lpFormat->NextFormat;
 	}
-#ifdef DEBUG_CLIPBOARD
-    printf("EnumClipboardFormats // Find Not Empty Id=%04X hData=%04X !\n",
+    dprintf_clipboard(stddeb,
+		"EnumClipboardFormats // Find Not Empty Id=%04X hData=%04X !\n",
 				lpFormat->wFormatID, lpFormat->hData);
-#endif
     return lpFormat->wFormatID;
 }
 
@@ -229,9 +211,7 @@ WORD RegisterClipboardFormat(LPCSTR FormatName)
     lpNewFormat = (LPCLIPFORMAT)malloc(sizeof(CLIPFORMAT));
     if (lpNewFormat == NULL) return 0;
     lpFormat->NextFormat = lpNewFormat;
-#ifdef DEBUG_CLIPBOARD
-    printf("RegisterClipboardFormat('%s') !\n", FormatName);
-#endif
+    dprintf_clipboard(stddeb,"RegisterClipboardFormat('%s') !\n", FormatName);
     lpNewFormat->wFormatID = LastRegFormat;
     lpNewFormat->wRefCount = 1;
     lpNewFormat->Name = (LPSTR)malloc(strlen(FormatName) + 1);
@@ -254,20 +234,18 @@ WORD RegisterClipboardFormat(LPCSTR FormatName)
 int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
-#ifdef DEBUG_CLIPBOARD
-    printf("GetClipboardFormat(%04X, %08X, %d) !\n", wFormat, retStr, maxlen);
-#endif
+    dprintf_clipboard(stddeb,
+	"GetClipboardFormat(%04X, %08X, %d) !\n", wFormat, retStr, maxlen);
     while(TRUE) {
 	if (lpFormat == NULL) return 0;
 	if (lpFormat->wFormatID == wFormat) break;
 	lpFormat = lpFormat->NextFormat;
 	}
     if (lpFormat->Name == NULL) return 0;
-#ifdef DEBUG_CLIPBOARD
-    printf("GetClipboardFormat // Name='%s' !\n", lpFormat->Name);
-#endif
+    dprintf_clipboard(stddeb,
+		"GetClipboardFormat // Name='%s' !\n", lpFormat->Name);
     maxlen = min(maxlen - 1, strlen(lpFormat->Name));
-    printf("GetClipboardFormat // maxlen=%d !\n", maxlen);
+    dprintf_clipboard(stddeb,"GetClipboardFormat // maxlen=%d !\n", maxlen);
     memcpy(retStr, lpFormat->Name, maxlen);
     retStr[maxlen] = 0;
     return maxlen;
@@ -279,9 +257,7 @@ int GetClipboardFormatName(WORD wFormat, LPSTR retStr, short maxlen)
  */
 HWND SetClipboardViewer(HWND hWnd)
 {
-#ifdef DEBUG_CLIPBOARD
-    printf("SetClipboardFormat(%04X) !\n", hWnd);
-#endif
+    dprintf_clipboard(stddeb,"SetClipboardFormat(%04X) !\n", hWnd);
     hWndViewer = hWnd;
 }
 
@@ -291,9 +267,8 @@ HWND SetClipboardViewer(HWND hWnd)
  */
 HWND GetClipboardViewer()
 {
-#ifdef DEBUG_CLIPBOARD
-    printf("GetClipboardFormat() = %04X !\n", hWndViewer);
-#endif
+    dprintf_clipboard(stddeb,"GetClipboardFormat() = %04X !\n", hWndViewer);
+    return hWndViewer;
 }
 
 
@@ -302,9 +277,8 @@ HWND GetClipboardViewer()
  */
 BOOL ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 {
-#ifdef DEBUG_CLIPBOARD
-    printf("ChangeClipboardChain(%04X, %04X) !\n", hWnd, hWndNext);
-#endif
+    dprintf_clipboard(stdnimp,
+		"ChangeClipboardChain(%04X, %04X) !\n", hWnd, hWndNext);
 }
 
 
@@ -314,9 +288,7 @@ BOOL ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 BOOL IsClipboardFormatAvailable(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
-#ifdef DEBUG_CLIPBOARD
-    printf("IsClipboardFormatAvailable(%04X) !\n", wFormat);
-#endif
+    dprintf_clipboard(stddeb,"IsClipboardFormatAvailable(%04X) !\n", wFormat);
     while(TRUE) {
 	if (lpFormat == NULL) return FALSE;
 	if (lpFormat->wFormatID == wFormat) break;
@@ -331,9 +303,8 @@ BOOL IsClipboardFormatAvailable(WORD wFormat)
  */
 HWND GetOpenClipboardWindow()
 {
-#ifdef DEBUG_CLIPBOARD
-    printf("GetOpenClipboardWindow() = %04X !\n", hWndClipboardOwner);
-#endif
+    dprintf_clipboard(stddeb,
+		"GetOpenClipboardWindow() = %04X !\n", hWndClipboardOwner);
     return hWndClipboardOwner;
 }
 
@@ -343,9 +314,8 @@ HWND GetOpenClipboardWindow()
  */
 int GetPriorityClipboardFormat(WORD FAR *lpPriorityList, short nCount)
 {
-#ifdef DEBUG_CLIPBOARD
-    printf("GetPriorityClipboardFormat(%08X, %d) !\n", lpPriorityList, nCount);
-#endif
+    dprintf_clipboard(stdnimp,
+	"GetPriorityClipboardFormat(%08X, %d) !\n", lpPriorityList, nCount);
 }
 
 

@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <errno.h>
 
 #ifdef __linux__
+#include <sys/mman.h>
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/mman.h>
@@ -28,8 +29,10 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "wine.h"
 #include "windows.h"
 #include "prototypes.h"
+#include "debug.h"
 
 /* #define DEBUG_SELECTORS /* */
+/* #undef DEBUG_SELECTORS /* */
 
 #ifdef linux
 #define DEV_ZERO
@@ -60,7 +63,6 @@ SEGDESC Segments[MAX_SELECTORS];
 
 extern void KERNEL_Ordinal_102();
 extern void UNIXLIB_Ordinal_0();
-extern char *WIN_ProgramName;
 extern char WindowsPath[256];
 
 extern char **Argv;
@@ -505,8 +507,7 @@ CreateNewSegments(int code_flag, int read_only, int length, int n_segments)
     i = FindUnusedSelectors(n_segments);
 
 #ifdef DEBUG_SELECTORS    
-    fprintf(stderr, 
-	    "Using %d segments starting at index %d.\n", n_segments, i);
+    fprintf(stddeb, "Using %d segments starting at index %d.\n", n_segments, i);
 #endif
 
     /*
@@ -609,10 +610,10 @@ unsigned int GetEntryDLLName(char * dll_name, char * function, int * sel,
 	/* Not a builtin symbol, look to see what the file has for us */
 	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
 		if(strcasecmp(wpnt->name, dll_name)) continue;
-		cpnt  = wpnt->nrname_table;
+		cpnt  = wpnt->ne->nrname_table;
 		while(1==1){
-			if( ((int) cpnt)  - ((int)wpnt->nrname_table) >  
-			   wpnt->ne_header->nrname_tab_length)  return 1;
+			if( ((int) cpnt)  - ((int)wpnt->ne->nrname_table) >  
+			   wpnt->ne->ne_header->nrname_tab_length)  return 1;
 			len = *cpnt++;
 			if(strncmp(cpnt, function, len) ==  0) break;
 			cpnt += len + 2;
@@ -662,9 +663,8 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 {
    int fd =  wpnt->fd;
    struct mz_header_s *mz_header = wpnt->mz_header;   
-   struct ne_header_s *ne_header = wpnt->ne_header;   
+   struct ne_header_s *ne_header = wpnt->ne->ne_header;   
 
-   
     union lookup entry_tab_pointer;
     struct entry_tab_header_s *eth;
     struct entry_tab_movable_s *etm;
@@ -672,8 +672,7 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
     int current_ordinal;
     int i;
     
-
-   entry_tab_pointer.cpnt = wpnt->lookup_table;
+   entry_tab_pointer.cpnt = wpnt->ne->lookup_table;
     /*
      * Let's walk through the table until we get to our entry.
      */
@@ -707,7 +706,7 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 		if (current_ordinal == ordinal)
 		{
 		    return ((unsigned int) 
-			    (wpnt->selector_table[etm->seg_number - 1].base_addr + 
+			    (wpnt->ne->selector_table[etm->seg_number - 1].base_addr + 
 			     etm->offset));
 		}
 	    }
@@ -718,7 +717,7 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 		if (current_ordinal == ordinal)
 		{
 		    return ((unsigned int) 
-			    (wpnt->selector_table[eth->seg_number - 1].base_addr + 
+			    (wpnt->ne->selector_table[eth->seg_number - 1].base_addr + 
 			     (int) etf->offset[0] + 
 			     ((int) etf->offset[1] << 8)));
 		}
@@ -726,73 +725,6 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 	}
     }
 }
-
-/**********************************************************************
- */
-void
-FixupFunctionPrologs(struct w_files * wpnt)
-{
-    struct mz_header_s *mz_header = wpnt->mz_header;   
-    struct ne_header_s *ne_header = wpnt->ne_header;   
-    union lookup entry_tab_pointer;
-    struct entry_tab_header_s *eth;
-    struct entry_tab_movable_s *etm;
-    struct entry_tab_fixed_s *etf;
-    unsigned char *fixup_ptr;
-    int i;
-
-    if (!(ne_header->format_flags & 0x0001))
-	return;
-
-    entry_tab_pointer.cpnt = wpnt->lookup_table;
-    /*
-     * Let's walk through the table and fixup prologs as we go.
-     */
-    while (1)
-    {
-	/* Get bundle header */
-	eth = entry_tab_pointer.eth++;
-
-	/* Check for end of table */
-	if (eth->n_entries == 0)
-	    return;
-
-	/* Check for empty bundle */
-	if (eth->seg_number == 0)
-	    continue;
-
-	/* Examine each bundle */
-	for (i = 0; i < eth->n_entries; i++)
-	{
-	    /* Moveable segment */
-	    if (eth->seg_number >= 0xfe)
-	    {
-		etm = entry_tab_pointer.etm++;
-		fixup_ptr = (wpnt->selector_table[etm->seg_number-1].base_addr
-			     + etm->offset);
-	    }
-	    else
-	    {
-		etf = entry_tab_pointer.etf++;
-		fixup_ptr = (wpnt->selector_table[eth->seg_number-1].base_addr
-			     + (int) etf->offset[0] 
-			     + ((int) etf->offset[1] << 8));
-
-	    }
-
-	    /* Verify the signature */
-	    if (((fixup_ptr[0] == 0x1e && fixup_ptr[1] == 0x58)
-		 || (fixup_ptr[0] == 0x8c && fixup_ptr[1] == 0xd8))
-		&& fixup_ptr[2] == 0x90)
-	    {
-		fixup_ptr[0] = 0xb8;	/* MOV AX, */
-		fixup_ptr[1] = wpnt->hinstance;
-		fixup_ptr[2] = (wpnt->hinstance >> 8);
-	    }
-	}
-    }
-}
-
 
 /**********************************************************************
  *					GetDOSEnvironment
@@ -810,7 +742,6 @@ CreateEnvironment(void)
 {
     char **e;
     char *p;
-    unsigned short *w;
     SEGDESC * s;
 
     s = CreateNewSegments(0, 0, PAGE_SIZE, 1);
@@ -836,18 +767,15 @@ CreateEnvironment(void)
     }
 
     *p++ = '\0';
-    w = (unsigned short *) p;
-    *w = strlen(WIN_ProgramName);
-    strcpy(p + 2, WIN_ProgramName);
 
     /*
      * Display environment
      */
-    fprintf(stderr, "Environment at %08.8x\n", s->base_addr);
+#ifdef DEBUG_SELECTORS
+    fprintf(stddeb, "Environment at %08.8x\n", s->base_addr);
     for (p = s->base_addr; *p; p += strlen(p) + 1)
-	fprintf(stderr, "    %s\n", p);
-    p += 3;
-    fprintf(stderr, "    Program: %s\n", p);
+	fprintf(stddeb, "    %s\n", p);
+#endif
 
     return  s;
 }
@@ -918,8 +846,8 @@ SEGDESC *
 CreateSelectors(struct  w_files * wpnt)
 {
     int fd = wpnt->fd;
-    struct ne_segment_table_entry_s *seg_table = wpnt->seg_table;
-    struct ne_header_s *ne_header = wpnt->ne_header;
+    struct ne_segment_table_entry_s *seg_table = wpnt->ne->seg_table;
+    struct ne_header_s *ne_header = wpnt->ne->ne_header;
     SEGDESC *selectors, *s, *stmp;
     unsigned short auto_data_sel;
     int contents, read_only;
@@ -1059,13 +987,78 @@ CreateSelectors(struct  w_files * wpnt)
 
     return selectors;
 }
+/**********************************************************************
+ */
+void
+FixupFunctionPrologs(struct w_files * wpnt)
+{
+    struct mz_header_s *mz_header = wpnt->mz_header;   
+    struct ne_header_s *ne_header = wpnt->ne->ne_header;   
+    union lookup entry_tab_pointer;
+    struct entry_tab_header_s *eth;
+    struct entry_tab_movable_s *etm;
+    struct entry_tab_fixed_s *etf;
+    unsigned char *fixup_ptr;
+    int i;
+
+    if (!(ne_header->format_flags & 0x0001))
+	return;
+
+    entry_tab_pointer.cpnt = wpnt->ne->lookup_table;
+    /*
+     * Let's walk through the table and fixup prologs as we go.
+     */
+    while (1)
+    {
+	/* Get bundle header */
+	eth = entry_tab_pointer.eth++;
+
+	/* Check for end of table */
+	if (eth->n_entries == 0)
+	    return;
+
+	/* Check for empty bundle */
+	if (eth->seg_number == 0)
+	    continue;
+
+	/* Examine each bundle */
+	for (i = 0; i < eth->n_entries; i++)
+	{
+	    /* Moveable segment */
+	    if (eth->seg_number >= 0xfe)
+	    {
+		etm = entry_tab_pointer.etm++;
+		fixup_ptr = (wpnt->ne->selector_table[etm->seg_number-1].base_addr
+			     + etm->offset);
+	    }
+	    else
+	    {
+		etf = entry_tab_pointer.etf++;
+		fixup_ptr = (wpnt->ne->selector_table[eth->seg_number-1].base_addr
+			     + (int) etf->offset[0] 
+			     + ((int) etf->offset[1] << 8));
+
+	    }
+
+	    /* Verify the signature */
+	    if (((fixup_ptr[0] == 0x1e && fixup_ptr[1] == 0x58)
+		 || (fixup_ptr[0] == 0x8c && fixup_ptr[1] == 0xd8))
+		&& fixup_ptr[2] == 0x90)
+	    {
+		fixup_ptr[0] = 0xb8;	/* MOV AX, */
+		fixup_ptr[1] = wpnt->hinstance;
+		fixup_ptr[2] = (wpnt->hinstance >> 8);
+	    }
+	}
+    }
+}
 
 /***********************************************************************
  *	GetSelectorBase (KERNEL.186)
  */
 DWORD GetSelectorBase(WORD wSelector)
 {
-	fprintf(stderr, "GetSelectorBase(selector %4X) stub!\n", wSelector);
+	fprintf(stdnimp, "GetSelectorBase(selector %4X) stub!\n", wSelector);
 }
 
 /***********************************************************************
@@ -1073,7 +1066,7 @@ DWORD GetSelectorBase(WORD wSelector)
  */
 void SetSelectorBase(WORD wSelector, DWORD dwBase)
 {
-	fprintf(stderr, "SetSelectorBase(selector %4X, base %8X) stub!\n",
+	fprintf(stdnimp, "SetSelectorBase(selector %4X, base %8X) stub!\n",
 			wSelector, dwBase);
 }
 
@@ -1082,7 +1075,7 @@ void SetSelectorBase(WORD wSelector, DWORD dwBase)
  */
 DWORD GetSelectorLimit(WORD wSelector)
 {
-	fprintf(stderr, "GetSelectorLimit(selector %4X) stub!\n", wSelector);
+	fprintf(stdnimp, "GetSelectorLimit(selector %4X) stub!\n", wSelector);
 
 	return 0xffff;
 }
@@ -1092,7 +1085,7 @@ DWORD GetSelectorLimit(WORD wSelector)
  */
 void SetSelectorLimit(WORD wSelector, DWORD dwLimit)
 {
-	fprintf(stderr, "SetSelectorLimit(selector %4X, base %8X) stub!\n", 
+	fprintf(stdnimp, "SetSelectorLimit(selector %4X, base %8X) stub!\n", 
 			wSelector, dwLimit);
 }
 

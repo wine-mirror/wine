@@ -8,7 +8,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
 #include <X11/Xlib.h>
-
+#include <stdio.h>
 #include "windows.h"
 #include "options.h"
 #include "gdi.h"
@@ -128,7 +128,7 @@ static HPALETTE COLOR_InitPalette()
 	}
 	else if (!XAllocColor( display, COLOR_WinColormap, &color ))
 	{
-	    printf( "Warning: Not enough free colors. Try using the -privatemap option.\n" );
+	    fprintf(stderr, "Warning: Not enough free colors. Try using the -privatemap option.\n" );
 	    color.pixel = color.red = color.green = color.blue = 0;
 	}
 	colorTranslation[i] = color.pixel;

@@ -12,6 +12,10 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "user.h"
 #include "dlls.h"
 #include "driver.h"
+#include "stddebug.h"
+/* #define DEBUG_DRIVER /* */
+/* #undef  DEBUG_DRIVER /* */
+#include "debug.h"
 
 LPDRIVERITEM lpDrvItemList = NULL;
 
@@ -23,16 +27,19 @@ void LoadStartupDrivers()
 	LPSTR	file = "SYSTEM.INI";
 	if (GetPrivateProfileString("drivers", NULL, 
 		"", str, sizeof(str), file) < 2) {
-		printf("LoadStartupDrivers // can't find drivers section in '%s'\n", file);
+        	fprintf(stderr,
+		"LoadStartupDrivers // can't find drivers section in '%s'\n", 
+		file);
 		return;
 		}
 	while(strlen(ptr) != 0) {
-		printf("LoadStartupDrivers // str='%s'\n", ptr);
+        	dprintf_driver(stddeb,"LoadStartupDrivers // str='%s'\n", ptr);
 		hDrv = OpenDriver(ptr, "drivers", 0L);
-		printf("LoadStartupDrivers // hDrv=%04X\n", hDrv);
+        	dprintf_driver(stddeb,
+			"LoadStartupDrivers // hDrv=%04X\n", hDrv);
 		ptr += strlen(ptr) + 1;
 		}
-	printf("LoadStartupDrivers // end of list !\n");
+    	dprintf_driver(stddeb,"LoadStartupDrivers // end of list !\n");
 }
 
 /**************************************************************************
@@ -40,12 +47,12 @@ void LoadStartupDrivers()
  */
 LRESULT WINAPI SendDriverMessage(HDRVR hDriver, WORD msg, LPARAM lParam1, LPARAM lParam2)
 {
-	printf("SendDriverMessage(%04X, %04X, %08X, %08X);\n",
+	dprintf_driver(stdnimp,"SendDriverMessage(%04X, %04X, %08X, %08X);\n",
 						hDriver, msg, lParam1, lParam2);
 }
 
 /**************************************************************************
- *				OpenDriver				[USER.252]
+ *				OpenDriver		        [USER.252]
  */
 HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 {
@@ -53,12 +60,12 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 	LPDRIVERITEM	lpnewdrv;
 	LPDRIVERITEM	lpdrv = lpDrvItemList;
 	char			DrvName[128];
-	printf("OpenDriver('%s', '%s', %08X);\n",
+    	dprintf_driver(stddeb,"OpenDriver('%s', '%s', %08X);\n",
 		lpDriverName, lpSectionName, lParam);
 	if (lpSectionName == NULL) lpSectionName = "drivers";
 	GetPrivateProfileString(lpSectionName, lpDriverName,
 		"", DrvName, sizeof(DrvName), "SYSTEM.INI");
-	printf("OpenDriver // DrvName='%s'\n", DrvName);
+    	dprintf_driver(stddeb,"OpenDriver // DrvName='%s'\n", DrvName);
 	if (strlen(DrvName) < 1) return 0;
 	while (lpdrv != NULL) {
 		if (lpdrv->lpNextItem == NULL) break;
@@ -88,7 +95,7 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 		lpnewdrv->lpPrevItem = lpdrv;
 		}
 	lpnewdrv->lpDrvProc = NULL;
-	printf("OpenDriver // hDrvr=%04X loaded !\n", hDrvr);
+    	dprintf_driver(stddeb,"OpenDriver // hDrvr=%04X loaded !\n", hDrvr);
 	return hDrvr;
 }
 
@@ -98,7 +105,8 @@ HDRVR OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 LRESULT CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
 	LPDRIVERITEM	lpdrv;
-	printf("CloseDriver(%04X, %08X, %08X);\n", hDrvr, lParam1, lParam2);
+    	dprintf_driver(stddeb,
+		"CloseDriver(%04X, %08X, %08X);\n", hDrvr, lParam1, lParam2);
 	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpdrv != NULL && lpdrv->dis.hDriver == hDrvr) {
 		if (lpdrv->lpPrevItem)
@@ -107,7 +115,7 @@ LRESULT CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 			((LPDRIVERITEM)lpdrv->lpNextItem)->lpPrevItem = lpdrv->lpPrevItem;
 		GlobalUnlock(hDrvr);
 		GlobalFree(hDrvr);
-		printf("CloseDriver // hDrvr=%04X closed !\n", hDrvr);
+        dprintf_driver(stddeb,"CloseDriver // hDrvr=%04X closed !\n", hDrvr);
 		return TRUE;
 		}
 	return FALSE;
@@ -120,7 +128,7 @@ HANDLE GetDriverModuleHandle(HDRVR hDrvr)
 {
 	LPDRIVERITEM	lpdrv;
 	HANDLE			hModule = 0;
-	printf("GetDriverModuleHandle(%04X);\n", hDrvr);
+    	dprintf_driver(stddeb,"GetDriverModuleHandle(%04X);\n", hDrvr);
 	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpdrv != NULL) {
 		hModule = lpdrv->dis.hModule;
@@ -169,7 +177,7 @@ LRESULT DefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 BOOL GetDriverInfo(HDRVR hDrvr, LPDRIVERINFOSTRUCT lpDrvInfo)
 {
 	LPDRIVERITEM	lpdrv;
-	printf("GetDriverInfo(%04X, %08X);\n", hDrvr, lpDrvInfo);
+    	dprintf_driver(stddeb,"GetDriverInfo(%04X, %08X);\n", hDrvr, lpDrvInfo);
 	if (lpDrvInfo == NULL) return FALSE;
 	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
 	if (lpdrv == NULL) return FALSE;
@@ -185,15 +193,16 @@ HDRVR GetNextDriver(HDRVR hDrvr, DWORD dwFlags)
 {
 	LPDRIVERITEM	lpdrv;
 	HDRVR			hRetDrv = 0;
-	printf("GetNextDriver(%04X, %08X);\n", hDrvr, dwFlags);
+    	dprintf_driver(stddeb,"GetNextDriver(%04X, %08X);\n", hDrvr, dwFlags);
 	if (hDrvr == 0) {
 		if (lpDrvItemList == NULL) {
-			printf("GetNextDriver // drivers list empty !\n");
+            		dprintf_driver(stddeb,
+				"GetNextDriver // drivers list empty !\n");
 			LoadStartupDrivers();
 			if (lpDrvItemList == NULL) return 0;
 			}
-		printf("GetNextDriver // return first %04X !\n", 
-							lpDrvItemList->dis.hDriver);
+        	dprintf_driver(stddeb,"GetNextDriver // return first %04X !\n",
+					lpDrvItemList->dis.hDriver);
 		return lpDrvItemList->dis.hDriver;
 		}
 	lpdrv = (LPDRIVERITEM) GlobalLock(hDrvr);
@@ -208,7 +217,7 @@ HDRVR GetNextDriver(HDRVR hDrvr, DWORD dwFlags)
 			}
 		GlobalUnlock(hDrvr);
 		}
-	printf("GetNextDriver // return %04X !\n", hRetDrv);
+    	dprintf_driver(stddeb,"GetNextDriver // return %04X !\n", hRetDrv);
 	return hRetDrv;
 }
 

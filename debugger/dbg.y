@@ -178,14 +178,16 @@ wine_debug(int signal, int * regs)
 
 	/* This is intended to read the entry points from the Windows image, and
 	   insert them in the hash table.  It does not work yet, so it is commented out. */
-#if 0
 	if(!loaded_symbols){
 		loaded_symbols++;
+		read_symboltable("wine.sym");
+#if 0
 		load_entrypoints();
-	}
 #endif
+	}
 
 	/* Remove the breakpoints from memory... */
+	fprintf(stderr,"Removing BPs\n");
 	insert_break(0);
 
 	/* If we stopped on a breakpoint, report this fact */

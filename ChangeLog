@@ -1,3 +1,194 @@
+Sun Oct 16 13:29:07 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/button.c]
+	Implemented WM_GETDLGCODE, WM_SETFONT, BM_SETSTYLE, BM_SETCHECK,
+	BM_SETSTATE.
+	Implemented default button painting.
+	Optimised redrawing.
+	Fixed owner-draw buttons.
+
+	* [controls/static.c]
+	Implemented WM_SETFONT.
+	A few optimisations in painting code.
+	Bug fix for SS_SIMPLE controls.
+
+	* [if1632/callback.c]
+	Preliminary GetCodeHandle().
+
+	* [if1632/gdi.spec]
+	Changed 'pascal' to 'pascal16' everywhere it's needed.
+
+	* [include/windows.h]
+	Fixed a few data structures.
+
+	* [memory/heap.c]
+	Bug fix in HEAP_ReAlloc().
+
+	* [misc/cursor.c]
+	Fixed SetCursor().
+
+	* [objects/bitblt.c]
+	Fixed PatBlt() when using BLACKNESS or WHITENESS codes.
+
+	* [objects/font.c]
+	Better font mapping code.
+	Implemented GetTextFace().
+
+	* [objects/region.c]
+	Bug fix in REGION_MakePixmap().
+	Faster region copying.
+
+	* [objects/text.c]
+	Implemented ExtTextOut().
+	Implemented DT_NOCLIP style for DrawText().
+
+	* [windows/dc.c]
+	Free the bitmap when deleting a memory DC.
+
+	* [windows/dce.c]
+	Added support for windows that have no associated X window.
+	Implemented DCX_CLIPSIBLINGS and DCX_PARENTCLIP in GetDCEx().
+
+	* [windows/defdlg.c]
+	Implemented default push button handling and DM_SETDEFID.
+	Implemented WM_NEXTDLGCTL.
+
+	* [windows/dialog.c]
+	Implemented default push button handling.
+	Beginning of a keyboard interface in dialogs
+	(does not really work yet).
+	Fixed dialogs that use a special font.
+
+	* [windows/event.c] [windows/focus.c]
+	Added support for non-X windows.
+
+	* [windows/graphics.c]
+	Rewritten FloodFill() and implemented ExtFloodFill().
+
+	* [windows/message.c]
+	Cleaner hardware messages and X events handling.
+
+	* [windows/defwnd.c] [windows/painting.c]
+	Implemented WM_SETREDRAW.
+
+	* [windows/win.c]
+	Only create an X window for top-level windows, or for the desktop.
+	Child windows now use their parent's drawable.
+
+	* [windows/winpos.c]
+	Beginning of support for non-X windows (still somewhat broken).
+	Implemented *DeferWindowPos().
+
+	* [*/Imakefile]
+	Cleaned up some Imakefiles.
+	Moved dc.c from windows/ to objects/.
+	Moved cursor.c from misc/ to windows/.
+
+Sun Oct 16 12:21:52 1994  Michael Patra <micky@marie.physik.tu-berlin.d400.de>
+
+	* [include/debug.h]
+	  [include/stddebug.h]
+	  [*/*.c]
+        Rewritten all the calls to printf for displaying debug-information
+        (messages like "LoadImage: loading SOL (SOL.EXE)" etc.) 
+        Added option "-debugmsg" to Wine. Example: "-debugmsg +all" will turn
+        all these messages on, "-debugmsg -dll" will turn all messages 
+	concerning DLLs off.
+
+	* [controls/combo.c]
+	Added some handling for combo controls with ownerdraw-styles
+        (just creating and passing the necessary messages to the 
+	corresponding listbox control; the edit-control needs to be
+	replaced with something else).
+
+	* [controls/edit.c]
+	  [windows/dialog.c]
+	Added support for use of global heap memory in dialogs with 
+	edit controls.
+
+	* [controls/listbox.c]
+	Added support for item data.
+	ListBoxInsertString(): Fixed bug for elements which are not inserted
+	after the currently last element.
+	
+	* [misc/dos_fs.c]
+	  [miscemu/int21.c]
+	DOS_ValidDirectory(): Checks whether a given string is in fact the
+	valid name of a directory.
+
+Sat Oct 15 17:35:00 PDT 1994		<martin@cs.csufresno.edu>
+
+	* [Imakefile]
+	generate wine.sym after creating wine
+
+	* [debugger/dbg.y]
+	load "wine.sym" when entering debugger
+
+	* [debugger/info.c]
+	symbolic backtrace for 32-bit stack. Breaks 16-bit bt.
+
+Sun Sep 18 11:04:45 MET DST 1994          Dag Asheim (dash@ifi.uio.no)
+
+	* [misc/spy.c]
+	Exclude and Include no longer requires a terminating ';' to
+	register the last component.
+
+Thu Sep 15 23:10:09 MET DST 1994          Dag Asheim (dash@ifi.uio.no)
+
+	* [Configure]
+	Rewrote much of it.  Added capability to generate a wine.ini
+	file.  Commented out the processor emulator options until that
+	becomes interesting.  Gives a warning if it sees any *.rej
+	files.  I hope I haven't assumed to much about the shell/OS so
+	that it breaks under *BSD.
+
+	* [misc/dos_fs.c]
+	Removed/changed calls to ToUnix() (which calls tolower()) so
+	that the part of the pathname which correspond with the drive
+	letter on DOS no longer will be mapped to lowercase.  This
+	means that it should be possible to have uppercase letters in
+	the [drives] section of wine.ini.
+
+	* [LICENSE]
+	Cosmetic changes so that it displays better in the window you
+	get from pressing "Credit_License" in the "About WINE" window.
+
+Sun Aug 21 21:12:06 MET DST 1994	<erik@xs4all.nl>
+
+	* [controls/menu.c]
+	LoadMenu() moved to loader/resource.c.
+
+	* [misc/main.c]
+	Added stub for FileCDR().
+
+	* [include/peexe.h]
+	Added, from Eric's pe-test.
+
+	* [include/resource.h]
+	Added.
+
+	* [loader/resources.c]
+	Removed duplicated code in *Resource() functions.
+	Moved NE-program specific functions into ne_image.c.
+	Moved NE-fileformat functions to ne_resource.c.
+
+	* [pe_image.c] [pe_resource.c]
+	Added. Nothing implemented to run PE-executables, resource
+	loading only.
+
+	* [misc/file.c]
+	Changed OpenFile() to use macros.
+
+	* [misc/shell.c]
+	Added NULL-ptr checks to ShellAbout().
+
+	* [miscemu/int21.c]
+	Fixed a few typos.
+
+	* [miscemu/kernel.c]
+	Added _DI = _DS, to put the caller's instance in DI. Doesn't
+	work properly if caller changed DS :-(
+
 ----------------------------------------------------------------------
 Thu Aug 25 15:24:36 EDT 1994            <jrichard@cs.uml.edu>
 

@@ -11,6 +11,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "gdi.h"
 #include "prototypes.h"
+#include "stddebug.h"
+/* #define DEBUG_GDI /* */
+/* #undef  DEBUG_GDI /* */
+#include "debug.h"
 
 MDESC *GDI_Heap = NULL;
 
@@ -196,17 +200,13 @@ BOOL GDI_AppendToPenBrushList(HANDLE hNewObj)
 	if (lpPenBrushList == NULL) {
 		lpPenBrushList = malloc(MAX_OBJ * sizeof(HANDLE));
 		lpPenBrushList[0] = 0;
-#ifdef DEBUG_GDI
-		printf("GDI_AppendToPenBrushList() lpPenBrushList allocated !\n");
-#endif
+		dprintf_gdi(stddeb,"GDI_AppendToPenBrushList() lpPenBrushList allocated !\n");
 		}
 	for (lphObj = lpPenBrushList; i < MAX_OBJ; i++) {
 		if (*lphObj == 0) {
 			*lphObj = hNewObj;
 			*(lphObj + 1) = 0;
-#ifdef DEBUG_GDI
-			printf("GDI_AppendToPenBrushList(%04X) appended (count=%d)\n", hNewObj, i);
-#endif
+			dprintf_gdi(stddeb,"GDI_AppendToPenBrushList(%04X) appended (count=%d)\n", hNewObj, i);
 			return TRUE;
 			}
 		lphObj++;
@@ -244,7 +244,7 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
     if (!handle) return 0;
     obj = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
     if (obj == NULL) {
-    	printf("GDI_AllocObject // Error trying to get GDI_HEAD_ADDR !\n");
+    	fprintf(stderr,"GDI_AllocObject // Error trying to get GDI_HEAD_ADDR !\n");
     	return 0;
     	}
     obj->hNext   = 0;
@@ -265,10 +265,11 @@ BOOL GDI_FreeObject( HANDLE handle )
     GDIOBJHDR * object;
 
       /* Can't free stock objects */
-    if (handle >= FIRST_STOCK_HANDLE) return FALSE;
+    if (handle >= FIRST_STOCK_HANDLE) return TRUE;
     
     object = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
     if (!object) return FALSE;
+    object->wMagic = 0;  /* Mark it as invalid */
 
       /* Free object */
     
@@ -308,9 +309,7 @@ BOOL DeleteObject( HANDLE obj )
     GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_ADDR( obj );
     if (!header) return FALSE;
 
-#ifdef DEBUG_GDI
-    printf( "DeleteObject: %d\n", obj );
-#endif
+    dprintf_gdi(stddeb, "DeleteObject: %d\n", obj );
 
       /* Delete object */
 
@@ -334,9 +333,8 @@ HANDLE GetStockObject( int obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
-#ifdef DEBUG_GDI
-    printf( "GetStockObject: returning %04x\n", FIRST_STOCK_HANDLE + obj );
-#endif
+    dprintf_gdi(stddeb, "GetStockObject: returning %04x\n", 
+		FIRST_STOCK_HANDLE + obj );
     return FIRST_STOCK_HANDLE + obj;
 }
 
@@ -347,9 +345,7 @@ HANDLE GetStockObject( int obj )
 int GetObject( HANDLE handle, int count, LPSTR buffer )
 {
     GDIOBJHDR * ptr = NULL;
-#ifdef DEBUG_GDI
-    printf( "GetObject: %04x %d %08x\n", handle, count, buffer );
-#endif
+    dprintf_gdi(stddeb, "GetObject: %04x %d %08x\n", handle, count, buffer );
     if (!count) return 0;
 
     if (handle >= FIRST_STOCK_HANDLE)
@@ -385,9 +381,7 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
     GDIOBJHDR * ptr = NULL;
     DC * dc;
     
-#ifdef DEBUG_GDI
-    printf( "SelectObject: %d %04x\n", hdc, handle );
-#endif
+    dprintf_gdi(stddeb, "SelectObject: %d %04x\n", hdc, handle );
     if (handle >= FIRST_STOCK_HANDLE)
     {
 	if (handle < FIRST_STOCK_HANDLE + NB_STOCK_OBJECTS)
@@ -425,9 +419,7 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
  */
 BOOL UnrealizeObject( HANDLE handle )
 {
-#ifdef DEBUG_GDI
-    printf( "UnrealizeObject: %04x\n", handle );
-#endif
+    dprintf_gdi(stdnimp, "UnrealizeObject: %04x\n", handle );
     return TRUE;
 }
 
@@ -446,53 +438,53 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 	HANDLE 		hLog;
 	int			i, nRet;
 	if (lpEnumFunc == NULL) {
-		printf("EnumObjects // Bad EnumProc callback address !\n");
+		fprintf(stderr,"EnumObjects // Bad EnumProc callback address !\n");
 		return 0;
 		}
 	switch (nObjType) {
 		case OBJ_PEN:
 			wMagic = PEN_MAGIC;
-			printf("EnumObjects(%04X, OBJ_PEN, %08X, %08X);\n", 
+			dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_PEN, %08X, %08X);\n", 
 									hDC, lpEnumFunc, lpData);
 			hLog = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGPEN));
 			lpLog = (LPSTR) USER_HEAP_ADDR(hLog);
 			if (lpLog == NULL) {
-				printf("EnumObjects // Unable to alloc LOGPEN struct !\n");
+				fprintf(stderr,"EnumObjects // Unable to alloc LOGPEN struct !\n");
 				return 0;
 				}
 			break;
 		case OBJ_BRUSH:
 			wMagic = BRUSH_MAGIC;
-			printf("EnumObjects(%04X, OBJ_BRUSH, %08X, %08X);\n", 
+			dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_BRUSH, %08X, %08X);\n", 
 									hDC, lpEnumFunc, lpData);
 			hLog = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGBRUSH));
 			lpLog = (LPSTR) USER_HEAP_ADDR(hLog);
 			if (lpLog == NULL) {
-				printf("EnumObjects // Unable to alloc LOGBRUSH struct !\n");
+				fprintf(stderr,"EnumObjects // Unable to alloc LOGBRUSH struct !\n");
 				return 0;
 				}
 			break;
 		default:
-			printf("EnumObjects(%04X, %04X, %08X, %08X); // Unknown OBJ type !\n", 
+			fprintf(stderr,"EnumObjects(%04X, %04X, %08X, %08X); // Unknown OBJ type !\n", 
 						hDC, nObjType, lpEnumFunc, lpData);
 			return 0;
 		}
-	printf("EnumObjects // Stock Objects first !\n");
+	dprintf_gdi(stddeb,"EnumObjects // Stock Objects first !\n");
 	for (i = 0; i < NB_STOCK_OBJECTS; i++) {
 		header = StockObjects[i];
 		if (header->wMagic == wMagic) {
 			PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), (LPLOGPEN)lpLog);
 			BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH), (LPLOGBRUSH)lpLog);
-			printf("EnumObjects // StockObj lpLog=%08X lpData=%08X\n", lpLog, lpData);
+			dprintf_gdi(stddeb,"EnumObjects // StockObj lpLog=%08X lpData=%08X\n", lpLog, lpData);
 			if (header->wMagic == BRUSH_MAGIC) {
-				printf("EnumObjects // StockBrush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
-				printf("EnumObjects // StockBrush lbColor=%08X\n", ((LPLOGBRUSH)lpLog)->lbColor);
-				printf("EnumObjects // StockBrush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
+				dprintf_gdi(stddeb,"EnumObjects // StockBrush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
+				dprintf_gdi(stddeb,"EnumObjects // StockBrush lbColor=%08X\n", ((LPLOGBRUSH)lpLog)->lbColor);
+				dprintf_gdi(stddeb,"EnumObjects // StockBrush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
 				}
 			if (header->wMagic == PEN_MAGIC) {
-				printf("EnumObjects // StockPen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
-				printf("EnumObjects // StockPen lopnWidth=%08X\n", ((LPLOGPEN)lpLog)->lopnWidth);
-				printf("EnumObjects // StockPen lopnColor=%08X\n", ((LPLOGPEN)lpLog)->lopnColor);
+				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
+				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnWidth=%08X\n", ((LPLOGPEN)lpLog)->lopnWidth);
+				dprintf_gdi(stddeb,"EnumObjects // StockPen lopnColor=%08X\n", ((LPLOGPEN)lpLog)->lopnColor);
 				}
 			nRet = 1;
 /*
@@ -502,36 +494,32 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 			nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLog,	2, (int)lpData);
 #endif
 */
-			printf("EnumObjects // after CallBack16 !\n");
+			dprintf_gdi(stddeb,"EnumObjects // after CallBack16 !\n");
 			if (nRet == 0) {
 				USER_HEAP_FREE(hLog);
-				printf("EnumObjects // EnumEnd requested by application !\n");
+				dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");
 				return 0;
 				}
 			}
 		}
 	if (lpPenBrushList == NULL) return 0;
-	printf("EnumObjects // Now DC owned objects %08X !\n", header);
+	dprintf_gdi(stddeb,"EnumObjects // Now DC owned objects %08X !\n", header);
 	for (lphObj = lpPenBrushList; *lphObj != 0; ) {
-#ifdef DEBUG_GDI
-		printf("EnumObjects // *lphObj=%04X\n", *lphObj);
-#endif
+		dprintf_gdi(stddeb,"EnumObjects // *lphObj=%04X\n", *lphObj);
 		header = (GDIOBJHDR *) GDI_HEAP_ADDR(*lphObj++);
 		if (header->wMagic == wMagic) {
-#ifdef DEBUG_GDI
-			printf("EnumObjects // DC_Obj lpLog=%08X lpData=%08X\n", lpLog, lpData);
-#endif
+			dprintf_gdi(stddeb,"EnumObjects // DC_Obj lpLog=%08X lpData=%08X\n", lpLog, lpData);
 			if (header->wMagic == BRUSH_MAGIC) {
 				BRUSH_GetObject( (BRUSHOBJ *)header, sizeof(LOGBRUSH), (LPLOGBRUSH)lpLog);
-				printf("EnumObjects // DC_Brush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
-				printf("EnumObjects // DC_Brush lbColor=%08X\n", ((LPLOGBRUSH)lpLog)->lbColor);
-				printf("EnumObjects // DC_Brush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
+				dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbStyle=%04X\n", ((LPLOGBRUSH)lpLog)->lbStyle);
+				dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbColor=%08X\n", ((LPLOGBRUSH)lpLog)->lbColor);
+				dprintf_gdi(stddeb,"EnumObjects // DC_Brush lbHatch=%04X\n", ((LPLOGBRUSH)lpLog)->lbHatch);
 				}
 			if (header->wMagic == PEN_MAGIC) {
 				PEN_GetObject( (PENOBJ *)header, sizeof(LOGPEN), (LPLOGPEN)lpLog);
-				printf("EnumObjects // DC_Pen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
-				printf("EnumObjects // DC_Pen lopnWidth=%08X\n", ((LPLOGPEN)lpLog)->lopnWidth);
-				printf("EnumObjects // DC_Pen lopnColor=%08X\n", ((LPLOGPEN)lpLog)->lopnColor);
+				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnStyle=%04X\n", ((LPLOGPEN)lpLog)->lopnStyle);
+				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnWidth=%08X\n", ((LPLOGPEN)lpLog)->lopnWidth);
+				dprintf_gdi(stddeb,"EnumObjects // DC_Pen lopnColor=%08X\n", ((LPLOGPEN)lpLog)->lopnColor);
 				}
 /*
 #ifdef WINELIB
@@ -541,16 +529,16 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 #endif
 */
 			nRet = 1;
-			printf("EnumObjects // after CallBack16 !\n");
+			dprintf_gdi(stddeb,"EnumObjects // after CallBack16 !\n");
 			if (nRet == 0) {
 				USER_HEAP_FREE(hLog);
-				printf("EnumObjects // EnumEnd requested by application !\n");
+				dprintf_gdi(stddeb,"EnumObjects // EnumEnd requested by application !\n");
 				return 0;
 				}
 			}
 		}
 	USER_HEAP_FREE(hLog);
-	printf("EnumObjects // End of enumeration !\n");
+	dprintf_gdi(stddeb,"EnumObjects // End of enumeration !\n");
 	return 0;
 }
 

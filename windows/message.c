@@ -1,7 +1,7 @@
 /*
  * Message queues related functions
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994 Alexandre Julliard
  */
 
 /*
@@ -9,7 +9,7 @@
  * one message queue).
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 #include <stdlib.h>
 #include <sys/time.h>
@@ -20,6 +20,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "wineopts.h"
 #include "sysmetrics.h"
 #include "hook.h"
+#include "stddebug.h"
+/* #define DEBUG_MSG /* */
+/* #undef  DEBUG_MSG /* */
+#include "debug.h"
+
 
 #define HWND_BROADCAST  ((HWND)0xffff)
 
@@ -118,7 +123,7 @@ static int MSG_AddMsg( MESSAGEQUEUE * msgQueue, MSG * msg, DWORD extraInfo )
 
       /* Check if queue is full */
     if ((pos == msgQueue->nextMessage) && (msgQueue->msgCount > 0)) {
-		printf("MSG_AddMsg // queue is full !\n");
+		fprintf(stderr,"MSG_AddMsg // queue is full !\n");
 		return FALSE;
 		}
 
@@ -290,8 +295,8 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	{
 	    /* Check whether window wants the double click message. */
 	    WND * wndPtr = WIN_FindWndPtr( msg->hwnd );
-	    if (!wndPtr || !(wndPtr->flags & WIN_DOUBLE_CLICKS))
-		dbl_click = FALSE;
+            if (!wndPtr || !(WIN_CLASS_STYLE(wndPtr) & CS_DBLCLKS))
+                dbl_click = FALSE;
 	}
 
 	if (dbl_click) switch(msg->message)
@@ -346,6 +351,44 @@ static BOOL MSG_TranslateKeyboardMsg( MSG *msg )
 	msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
     }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           MSG_PeekHardwareMsg
+ *
+ * Peek for a hardware message matching the hwnd and message filters.
+ */
+static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
+                                 BOOL remove )
+{
+    int i, pos = sysMsgQueue->nextMessage;
+
+    for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
+    {
+	*msg = sysMsgQueue->messages[pos].msg;
+
+          /* Translate message */
+
+        if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
+        {
+            if (!MSG_TranslateMouseMsg( msg, remove )) continue;
+        }
+        else if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
+        {
+            if (!MSG_TranslateKeyboardMsg( msg )) continue;
+        }
+        else continue;  /* Should never happen */
+
+          /* Check message against filters */
+
+        if (hwnd && (msg->hwnd != hwnd)) continue;
+        if ((first || last) && 
+            ((msg->message < first) || (msg->message > last))) continue;
+        if (remove) MSG_RemoveMsg( sysMsgQueue, pos );
+        return TRUE;
+    }
+    return FALSE;
 }
 
 
@@ -425,30 +468,49 @@ void MSG_DecTimerCount( HANDLE hQueue )
 void hardware_event( WORD message, WORD wParam, LONG lParam,
 		     int xPos, int yPos, DWORD time, DWORD extraInfo )
 {
-    MSG msg;
-
-    msg.hwnd    = 0;
-    msg.message = message;
-    msg.wParam  = wParam;
-    msg.lParam  = lParam;
-    msg.time    = time;
-    msg.pt.x    = xPos & 0xffff;
-    msg.pt.y    = yPos & 0xffff;
+    MSG *msg;
+    int pos;
+  
+    if (!sysMsgQueue) return;
+    pos = sysMsgQueue->nextFreeMessage;
 
       /* Merge with previous event if possible */
 
-    if (sysMsgQueue->msgCount && (message == WM_MOUSEMOVE))
+    if ((message == WM_MOUSEMOVE) && sysMsgQueue->msgCount)
     {
-	MSG *prevMsg = &sysMsgQueue->messages[sysMsgQueue->nextMessage].msg;
-	if ((prevMsg->message == message) && (prevMsg->wParam == wParam))
-	{
-	    *prevMsg = msg;  /* Overwrite previous message */
-	    return;
-	}
+        if (pos > 0) pos--;
+        else pos = sysMsgQueue->queueSize - 1;
+	msg = &sysMsgQueue->messages[pos].msg;
+	if ((msg->message == message) && (msg->wParam == wParam))
+            sysMsgQueue->msgCount--;  /* Merge events */
+        else
+            pos = sysMsgQueue->nextFreeMessage;  /* Don't merge */
     }
 
-    if (!MSG_AddMsg( sysMsgQueue, &msg, extraInfo ))
-	printf( "hardware_event: Queue is full\n" );
+      /* Check if queue is full */
+
+    if ((pos == sysMsgQueue->nextMessage) && sysMsgQueue->msgCount)
+    {
+        /* Queue is full, beep (but not on every mouse motion...) */
+        if (message != WM_MOUSEMOVE) MessageBeep(0);
+        return;
+    }
+
+      /* Store message */
+
+    msg = &sysMsgQueue->messages[pos].msg;
+    msg->hwnd    = 0;
+    msg->message = message;
+    msg->wParam  = wParam;
+    msg->lParam  = lParam;
+    msg->time    = time;
+    msg->pt.x    = xPos & 0xffff;
+    msg->pt.y    = yPos & 0xffff;
+    sysMsgQueue->messages[pos].extraInfo = extraInfo;
+    if (pos < sysMsgQueue->queueSize - 1) pos++;
+    else pos = 0;
+    sysMsgQueue->nextFreeMessage = pos;
+    sysMsgQueue->msgCount++;
 }
 
 		    
@@ -573,6 +635,41 @@ void MSG_Synchronize()
 
 
 /***********************************************************************
+ *           MSG_WaitXEvent
+ *
+ * Wait for an X event, but at most maxWait milliseconds (-1 for no timeout).
+ * Return TRUE if an event is pending, FALSE on timeout or error
+ * (for instance lost connection with the server).
+ */
+static BOOL MSG_WaitXEvent( LONG maxWait )
+{
+    fd_set read_set;
+    struct timeval timeout;
+    XEvent event;
+    int fd = ConnectionNumber(display);
+
+    if (!XPending(display) && (maxWait != -1))
+    {
+        FD_ZERO( &read_set );
+        FD_SET( fd, &read_set );
+        timeout.tv_sec = maxWait / 1000;
+        timeout.tv_usec = (maxWait % 1000) * 1000;
+        if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
+            return FALSE;  /* Timeout or error */
+    }
+
+    /* Process the event (and possibly others that occurred in the meantime) */
+    do
+    {
+        XNextEvent( display, &event );
+        EVENT_ProcessEvent( &event );
+    }
+    while (XPending( display ));
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           MSG_PeekMessage
  */
 static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
@@ -580,10 +677,6 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 {
     int pos, mask;
     LONG nextExp;  /* Next timer expiration time */
-    XEvent event;
-    fd_set read_set;
-    struct timeval timeout;
-    int fd = ConnectionNumber(display);
 
     if (first || last)
     {
@@ -631,32 +724,14 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	}
 
 	  /* Now find a hardware event */
-	pos = MSG_FindMsg( sysMsgQueue, 0, first, last );
-	if (pos != -1)
-	{
-	    QMSG *qmsg = &sysMsgQueue->messages[pos];
-	    *msg = qmsg->msg;
+        if (MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
+        {
+            /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;
 	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
-	    msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
-
-	    if ((msg->message >= WM_MOUSEFIRST) &&
-		(msg->message <= WM_MOUSELAST))
-		if (!MSG_TranslateMouseMsg( msg, flags & PM_REMOVE )) 
-		{
-		    MSG_RemoveMsg( sysMsgQueue, pos );
-		    continue;
-		}
-	    else if ((msg->message >= WM_KEYFIRST) &&
-		     (msg->message <= WM_KEYLAST))
-		if (!MSG_TranslateKeyboardMsg( msg )) 
-		{
-		    MSG_RemoveMsg( sysMsgQueue, pos );
-		    continue;
-		}
-	    if (flags & PM_REMOVE) MSG_RemoveMsg( sysMsgQueue, pos );
-	    break;
-	}
+	    msgQueue->GetMessageExtraInfoVal = 0;  /* Always 0 for now */
+            break;
+        }
 
 	  /* Now handle a WM_QUIT message */
 	if (msgQueue->wPostQMsg)
@@ -687,27 +762,12 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	else nextExp = -1;  /* No timeout needed */
 
 	  /* Wait until something happens */
-	FD_ZERO( &read_set );
-	FD_SET( fd, &read_set );
-	if (peek)
-	{
-	    timeout.tv_sec = 0;
-	    timeout.tv_usec = 0;
-	    if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
-		return FALSE;  /* No data waiting to be read */
-	}
-	else if (!XPending( display ) && (nextExp != -1))
-	{
-	    timeout.tv_sec = nextExp / 1000;
-	    timeout.tv_usec = (nextExp % 1000) * 1000;
-	    if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
-		continue;  /* On timeout or error, restart from the start */
-	}
-	while (XPending( display ))
-	{
-	    XNextEvent( display, &event );
-	    EVENT_ProcessEvent( &event );
-	}
+        if (peek)
+        {
+            if (!MSG_WaitXEvent( 0 )) return FALSE;  /* No pending event */
+        }
+        else  /* Wait for an event, then restart the loop */
+            MSG_WaitXEvent( nextExp );
     }
 
       /* We got a message */
@@ -782,17 +842,13 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     WND 	*wndPtr;
 
 	if (hwnd == HWND_BROADCAST) {
-#ifdef DEBUG_MSG
-		printf("PostMessage // HWND_BROADCAST !\n");
-#endif
+	    dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
 	    hwnd = GetTopWindow(GetDesktopWindow());
 	    while (hwnd) {
 	        if (!(wndPtr = WIN_FindWndPtr(hwnd))) break;
 			if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION) {
-#ifdef DEBUG_MSG
-				printf("BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08X !\n", 
+				dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04X m=%04X w=%04X l=%08X !\n", 
 							hwnd, message, wParam, lParam);
-#endif
 				PostMessage(hwnd, message, wParam, lParam);
 				}
 /*				{
@@ -802,9 +858,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				}*/
 			hwnd = wndPtr->hwndNext;
 			}
-#ifdef DEBUG_MSG
-		printf("PostMessage // End of HWND_BROADCAST !\n");
-#endif
+		dprintf_msg(stddeb,"PostMessage // End of HWND_BROADCAST !\n");
 		return TRUE;
 		}
 
@@ -841,41 +895,16 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 void WaitMessage( void )
 {
     MSG msg;
-    LONG nextExp;  /* Next timer expiration time */
-    XEvent event;
+    LONG nextExp = -1;  /* Next timer expiration time */
 
-    while (XPending( display ))
-    {
-        XNextEvent( display, &event );
-        EVENT_ProcessEvent( &event );
-    }    
-
-    while(1)
-    {
-        if ((appMsgQueue->wPostQMsg) || 
-            (appMsgQueue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
-            (appMsgQueue->msgCount) || (sysMsgQueue->msgCount) )
-            break;
-	nextExp = -1;
-        if ((appMsgQueue->status & QS_TIMER) && 
-            TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
-            break;
-
-        if (!XPending( display ) && (nextExp != -1))
-        {
-            fd_set read_set;
-            struct timeval timeout;
-            int fd = ConnectionNumber(display);
-            FD_ZERO( &read_set );
-            FD_SET( fd, &read_set );
-            timeout.tv_sec = nextExp / 1000;
-            timeout.tv_usec = (nextExp % 1000) * 1000;
-            if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
-                continue;  /* On timeout or error, restart from the start */
-        }
-        XNextEvent( display, &event );
-        EVENT_ProcessEvent( &event );
-    }
+    if ((appMsgQueue->wPostQMsg) || 
+        (appMsgQueue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
+        (appMsgQueue->msgCount) || (sysMsgQueue->msgCount) )
+        return;
+    if ((appMsgQueue->status & QS_TIMER) && 
+        TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
+        return;
+    MSG_WaitXEvent( nextExp );
 }
 
 
@@ -889,9 +918,7 @@ BOOL TranslateMessage( LPMSG msg )
     if ((message == WM_KEYDOWN) || (message == WM_KEYUP) ||
 	(message == WM_SYSKEYDOWN) || (message == WM_SYSKEYUP))
     {
-#ifdef DEBUG_MSG
-	printf( "Translating key message\n" );
-#endif
+	dprintf_msg(stddeb, "Translating key message\n" );
 	return TRUE;
     }
     return FALSE;
@@ -907,17 +934,15 @@ LONG DispatchMessage( LPMSG msg )
     LONG retval;
     int painting;
     
-#ifdef DEBUG_MSG
-    printf( "Dispatch message hwnd=%08x msg=0x%x w=%d l=%d time=%u pt=%d,%d\n",
+    dprintf_msg(stddeb, "Dispatch message hwnd=%08x msg=0x%x w=%d l=%d time=%u pt=%d,%d\n",
 	    msg->hwnd, msg->message, msg->wParam, msg->lParam, 
 	    msg->time, msg->pt.x, msg->pt.y );
-#endif
 
       /* Process timer messages */
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
 	if (msg->lParam)
-	    return CallWindowProc( (FARPROC)msg->lParam, msg->hwnd,
+	    return CallWindowProc( (WNDPROC)msg->lParam, msg->hwnd,
 				   msg->message, msg->wParam, GetTickCount() );
     }
 
@@ -928,11 +953,11 @@ LONG DispatchMessage( LPMSG msg )
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
     retval = CallWindowProc( wndPtr->lpfnWndProc, msg->hwnd, msg->message,
 			     msg->wParam, msg->lParam );
-    if (painting && (wndPtr->flags & WIN_NEEDS_BEGINPAINT))
+    if (painting && IsWindow(msg->hwnd) &&
+        (wndPtr->flags & WIN_NEEDS_BEGINPAINT))
     {
-#ifdef DEBUG_WIN
-	printf( "BeginPaint not called on WM_PAINT for hwnd %d!\n", msg->hwnd);
-#endif
+	fprintf(stderr, "BeginPaint not called on WM_PAINT for hwnd %d!\n", 
+		msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
     }
     return retval;
@@ -972,9 +997,7 @@ LONG GetMessageExtraInfo(void)
 WORD RegisterWindowMessage( LPCSTR str )
 {
 	WORD	wRet;
-#ifdef DEBUG_MSG
-    printf( "RegisterWindowMessage: '%s'\n", str );
-#endif
+    dprintf_msg(stddeb, "RegisterWindowMessage: '%s'\n", str );
 	wRet = GlobalAddAtom( str );
     return wRet;
 }

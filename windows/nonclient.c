@@ -13,6 +13,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "user.h"
 #include "scroll.h"
 #include "syscolor.h"
+#include "stddebug.h"
+/* #define DEBUG_NONCLIENT /* */
+/* #undef  DEBUG_NONCLIENT /* */
+#include "debug.h"
+
 
 static HBITMAP hbitmapClose = 0;
 static HBITMAP hbitmapMDIClose = 0;
@@ -29,7 +34,6 @@ extern BOOL AboutWine_Proc( HWND hDlg, WORD msg, WORD wParam, LONG lParam );
 
 extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
-extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
 extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
 			      int xsrc, int ysrc, int width, int height,
 			      int rop );                     /* graphics.c */
@@ -108,10 +112,8 @@ void AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 	style |= WS_CAPTION;
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-#ifdef DEBUG_NONCLIENT
-    printf( "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08x %d %08x\n",
+    dprintf_nonclient(stddeb, "AdjustWindowRectEx: (%d,%d)-(%d,%d) %08x %d %08x\n",
       rect->left, rect->top, rect->right, rect->bottom, style, menu, exStyle );
-#endif
 
     NC_AdjustRect( rect, style, menu, exStyle );
 }
@@ -193,9 +195,8 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return HTERROR;
 
-#ifdef DEBUG_NONCLIENT
-    printf( "NC_HandleNCHitTest: hwnd=%x pt=%d,%d\n", hwnd, pt.x, pt.y );
-#endif
+    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd=%x pt=%d,%d\n", 
+		      hwnd, pt.x, pt.y );
 
     GetWindowRect( hwnd, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -372,9 +373,9 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
  *           NC_DrawFrame
  *
  * Draw a window frame inside the given rectangle, and update the rectangle.
- * The correct pen and brush must be selected in the DC.
+ * The correct pen for the frame must be selected in the DC.
  */
-static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame )
+static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame, BOOL active )
 {
     short width, height, tmp;
 
@@ -382,11 +383,15 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame )
     {
 	width = SYSMETRICS_CXDLGFRAME - 1;
 	height = SYSMETRICS_CYDLGFRAME - 1;
+        SelectObject( hdc, active ? sysColorObjects.hbrushActiveCaption :
+                                    sysColorObjects.hbrushInactiveCaption );
     }
     else
     {
 	width = SYSMETRICS_CXFRAME - 1;
 	height = SYSMETRICS_CYFRAME - 1;
+        SelectObject( hdc, active ? sysColorObjects.hbrushActiveBorder :
+                                    sysColorObjects.hbrushInactiveBorder );
     }
 
       /* Draw frame */
@@ -552,22 +557,20 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-#ifdef DEBUG_NONCLIENT
-    printf( "NC_DoNCPaint: %d %d\n", hwnd, hrgn );
-#endif
+    dprintf_nonclient(stddeb, "NC_DoNCPaint: %d %d\n", hwnd, hrgn );
     if (!wndPtr || !hrgn) return;
     if ((!(wndPtr->dwStyle & (WS_BORDER | WS_DLGFRAME | WS_THICKFRAME))) ||
 	(!(wndPtr->dwStyle & WS_VISIBLE)))
 	return;  /* Nothing to do! */
 
-    if (hrgn == 1) hdc = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
+    if (hrgn == 1) hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
     else
     {
 	  /* Make region relative to window area */
 	int xoffset = wndPtr->rectWindow.left - wndPtr->rectClient.left;
 	int yoffset = wndPtr->rectWindow.top - wndPtr->rectClient.top;
 	OffsetRgn( hrgn, -xoffset, -yoffset );
-	hdc = GetDCEx( hwnd, hrgn, DCX_CACHE | DCX_WINDOW | DCX_INTERSECTRGN);
+	hdc = GetDCEx( hwnd, hrgn, DCX_USESTYLE|DCX_WINDOW|DCX_INTERSECTRGN );
 	OffsetRgn( hrgn, xoffset, yoffset );  /* Restore region */
     }
     if (!hdc) return;
@@ -580,16 +583,16 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
      */
     if (IsIconic(hwnd))
     {
-        if (wndPtr->hIcon)  
+        HICON hIcon = WIN_CLASS_INFO(wndPtr).hIcon;
+        if (hIcon)  
         {
             SendMessage(hwnd, WM_ICONERASEBKGND, hdc, 0);
             Rectangle(hdc, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
                      wndPtr->rectWindow.right, wndPtr->rectWindow.bottom);
-            DrawIcon(hdc, 0, 0, wndPtr->hIcon);
+            DrawIcon(hdc, 0, 0, hIcon);
         }
-      ReleaseDC(hwnd, hdc);
-	
-      return;
+        ReleaseDC(hwnd, hdc);
+        return;
     }
 
     if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
@@ -607,8 +610,6 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
     SelectObject( hdc, sysColorObjects.hpenWindowFrame );
-    SelectObject( hdc, active ? sysColorObjects.hbrushActiveBorder :
-		                sysColorObjects.hbrushInactiveBorder );
 
     if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME))
     {
@@ -621,9 +622,9 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
     }
 
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
-	NC_DrawFrame( hdc, &rect, TRUE );
+	NC_DrawFrame( hdc, &rect, TRUE, active );
     else if (wndPtr->dwStyle & WS_THICKFRAME)
-	NC_DrawFrame(hdc, &rect, FALSE);
+	NC_DrawFrame(hdc, &rect, FALSE, active );
 
     if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
     {
@@ -726,7 +727,7 @@ LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
 	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) break;
 	    if (classPtr->wc.hCursor)
 	    {
-		CURSOR_SetWinCursor( hwnd, classPtr->wc.hCursor );
+		SetCursor( classPtr->wc.hCursor );
 		return TRUE;
 	    }
 	    else return FALSE;
@@ -734,28 +735,23 @@ LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZEWE ) );
-	return TRUE;
+	return SetCursor( LoadCursor( 0, IDC_SIZEWE ) );
 
     case HTTOP:
     case HTBOTTOM:
-	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZENS ) );
-	return TRUE;
+	return SetCursor( LoadCursor( 0, IDC_SIZENS ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:	
-	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZENWSE ) );
-	return TRUE;
+	return SetCursor( LoadCursor( 0, IDC_SIZENWSE ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_SIZENESW ) );
-	return TRUE;
+	return SetCursor( LoadCursor( 0, IDC_SIZENESW ) );
     }
 
     /* Default cursor: arrow */
-    CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_ARROW ) );
-    return TRUE;
+    return SetCursor( LoadCursor( 0, IDC_ARROW ) );
 }
 
 
@@ -1211,9 +1207,8 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-#ifdef DEBUG_NONCLIENT
-    printf( "Handling WM_SYSCOMMAND %x %d,%d\n", wParam, pt.x, pt.y );
-#endif
+    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
+		      wParam, pt.x, pt.y );
 
     if (wndPtr->dwStyle & WS_CHILD) ScreenToClient( wndPtr->hwndParent, &pt );
 

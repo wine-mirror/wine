@@ -282,16 +282,18 @@ void dbg_bt(){
   }
 
   fprintf(stderr,"Backtrace:\n");
-  fprintf(stderr,"%d %4.4x:%4.4x\n", frameno++, SC_CS, SC_EIP(dbg_mask));
+  fprintf(stderr,"%d ",frameno);
+  print_address(frame->u.win32.saved_ip,stderr);
   cs = SC_CS;
 
   frame = (struct frame *) ((SC_EBP(dbg_mask) & ~1) | (SC_SS << 16));
   while((cs & 3) == 3) {
     /* See if in 32 bit mode or not.  Assume GDT means 32 bit. */
     if ((cs & 7) != 7) {
-      cs = frame->u.win32.saved_cs;
-      fprintf(stderr,"%d %4.4x:%4.4x\n", frameno++, cs, 
-	      frame->u.win32.saved_ip);
+      void CallTo32();
+      fprintf(stderr,"\n%d ",frameno++);
+      print_address(frame->u.win32.saved_ip,stderr);
+      if(frame->u.win32.saved_ip<((char*)CallTo32+1000))break;
       frame = (struct frame *) frame->u.win32.saved_bp;
     } else {
       cs = frame->u.win16.saved_cs;
@@ -301,5 +303,6 @@ void dbg_bt(){
 				(SC_SS << 16));
     }
   }
+  putchar('\n');
 }
 

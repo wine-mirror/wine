@@ -3,16 +3,21 @@ static char Copyright[] = "Copyright  Scott A. Laird, Erik Bos  1993, 1994";
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "prototypes.h"
 #include "windows.h"
 #include "keyboard.h"
+#include "stddebug.h"
+/* #define DEBUG_KEYBOARD /* */
+/* #undef  DEBUG_KEYBOARD /* */
+#include "debug.h"
 
 int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState, 
 	LPVOID lpChar, WORD wFlags) 
 {
 	int i;
 
-	printf("ToAscii (%d,%d)\n",wVirtKey, wScanCode);
+    	dprintf_keyboard(stddeb,"ToAscii (%d,%d)\n",wVirtKey, wScanCode);
 
 	/* FIXME: this is not sufficient but better than returing -1 */
 
@@ -29,7 +34,7 @@ int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState,
 
 DWORD OemKeyScan(WORD wOemChar)
 {
-	printf("*OemKeyScan (%d)\n",wOemChar);
+    dprintf_keyboard(stddeb,"*OemKeyScan (%d)\n",wOemChar);
 
 	return wOemChar;
 }
@@ -41,7 +46,7 @@ WORD VkKeyScan(WORD cChar)
 {
 	int i;
 	
-	printf("VkKeyScan (%d)\n",cChar);
+    	dprintf_keyboard(stddeb,"VkKeyScan (%d)\n",cChar);
 	
 	for (i = 0 ; i != KeyTableSize ; i++) 
 		if (KeyTable[i].ASCII == cChar)
@@ -52,7 +57,7 @@ WORD VkKeyScan(WORD cChar)
 
 int GetKeyboardType(int nTypeFlag)
 {
-  printf("GetKeyboardType(%d)\n",nTypeFlag);
+  dprintf_keyboard(stddeb,"GetKeyboardType(%d)\n",nTypeFlag);
   switch(nTypeFlag)
     {
     case 0:      /* Keyboard type */
@@ -104,7 +109,7 @@ WORD MapVirtualKey(WORD wCode, WORD wMapType)
 
 int GetKbCodePage(void)
 {
-	printf("GetKbCodePage()\n");
+    	dprintf_keyboard(stddeb,"GetKbCodePage()\n");
 	return 850;
 }
 
@@ -112,7 +117,7 @@ int GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
 {
 	int i;
 	
-	printf("GetKeyNameText(%d,<ptr>, %d)\n",lParam,nSize);
+    	dprintf_keyboard(stddeb,"GetKeyNameText(%d,<ptr>, %d)\n",lParam,nSize);
 
 	lParam >>= 16;
 	lParam &= 0xff;

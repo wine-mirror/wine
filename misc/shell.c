@@ -359,10 +359,17 @@ INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam);
  */
 INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 {
-	fprintf(stderr, "ShellAbout ! (%s, %s)\n", szApp, szOtherStuff);
+/*	fprintf(stderr, "ShellAbout ! (%s, %s)\n", szApp, szOtherStuff);*/
 
-	strcpy(AppName, szApp);
-	strcpy(AppMisc, szOtherStuff);
+	if (szApp)
+		strcpy(AppName, szApp);
+	else
+		*AppName = 0;
+
+	if (szOtherStuff)
+		strcpy(AppMisc, szOtherStuff);
+	else
+		*AppMisc = 0;
 
 	return DialogBox(hSysRes, "SHELL_ABOUT_MSGBOX", hWnd, (FARPROC)AboutDlgProc);
 }

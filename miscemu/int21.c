@@ -22,6 +22,10 @@
 #include "msdos.h"
 #include "registers.h"
 #include "options.h"
+#include "stddebug.h"
+/* #define DEBUG_INT */
+/* #undef  DEBUG_INT */
+#include "debug.h"
 
 WORD ExtendedError, CodePage = 437;
 BYTE ErrorClass, Action, ErrorLocus;
@@ -38,6 +42,7 @@ WORD sharing_retries = 3;      /* number of retries at sharing violation */
 WORD sharing_pause = 1;        /* pause between retries */
 
 extern char TempDirectory[];
+void IntBarf(int i, struct sigcontext_struct *context);
 
 static int Error(int e, int class, int el)
 {
@@ -89,6 +94,7 @@ void errno_to_doserr(void)
 	}
 }
 
+/*
 static void Barf(struct sigcontext_struct *context)
 {
 	fprintf(stderr, "int21: unknown/not implemented parameters:\n");
@@ -96,6 +102,7 @@ static void Barf(struct sigcontext_struct *context)
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
 	       AX, BX, CX, DX, SI, DI, DS, ES);
 }
+*/
 
 void ChopOffWhiteSpace(char *string)
 {
@@ -265,9 +272,9 @@ static void WriteFile(struct sigcontext_struct *context)
 
 	if (BX < 3) {
 		for (x = 0;x != CX;x++) {
-			fprintf(stderr, "%c", *ptr++);
+			dprintf_int(stddeb, "%c", *ptr++);
 		}
-		fflush(stderr);
+		fflush(stddeb);
 
 		Error (0,0,0);
 		AL = CX;
@@ -356,6 +363,12 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 	else
 		drive = BL - 1;
 
+	if (!DOS_ValidDrive(drive)) {
+		AX = 0x02;				
+		SetCflag;
+		return;
+	}
+
 	if (CH != 0x08) {
 		IntBarf(0x21, context);
 		return;
@@ -363,6 +376,7 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 	switch (CL) {
 		case 0x60: /* get device parameters */
 			   /* used by w4wgrp's winfile */
+			memset(dataptr, 0, 0x26);
 			dataptr[0] = 0x04;
 			dataptr[6] = 0; /* media type */
 			if (drive > 1) 
@@ -378,7 +392,6 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 				setword(&dataptr[4], 80); /* # of cylinders */
 			}
 			CreateBPB(drive, &dataptr[7]);			
-			AL = 0;
 			ResetCflag;
 			return;
 		default:
@@ -450,7 +463,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	  case 1:
 	    mode = O_WRONLY;
 	    break;
-	    
+
 	  default:
 	    mode = O_RDWR;
 	    break;
@@ -471,7 +484,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	    break;
 
 	  case 0x30:    /* DENYREAD */
-	    fprintf(stderr,
+	    dprintf_int(stdnimp,
 	      "OpenExistingFile (%s): DENYREAD changed to DENYALL\n",
 	      pointer(DS,DX));
 	  case 0x10:    /* DENYALL */  
@@ -536,7 +549,7 @@ static void RenameFile(struct sigcontext_struct *context)
 {
 	char *newname, *oldname;
 
-	fprintf(stderr,"int21: renaming %s to %s\n", 
+	dprintf_int(stddeb,"int21: renaming %s to %s\n",
 			pointer(DS,DX), pointer(ES,DI) );
 	
 	oldname = GetUnixFileName( pointer(DS,DX) );
@@ -551,7 +564,7 @@ static void MakeDir(struct sigcontext_struct *context)
 {
 	char *dirname;
 
-	fprintf(stderr,"int21: makedir %s\n", pointer(DS,DX) );
+	dprintf_int(stddeb,"int21: makedir %s\n", pointer(DS,DX) );
 	
 	if ((dirname = GetUnixFileName( pointer(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
@@ -572,19 +585,23 @@ static void ChangeDir(struct sigcontext_struct *context)
 	int drive;
 	char *dirname = pointer(DS,DX);
 	drive = DOS_GetDefaultDrive();
-	fprintf(stderr,"int21: changedir %s\n", dirname);
+	dprintf_int(stddeb,"int21: changedir %s\n", dirname);
 	if (dirname != NULL && dirname[1] == ':') {
 		drive = toupper(dirname[0]) - 'A';
 		dirname += 2;
 		}
-	DOS_ChangeDir(drive, dirname);
+	if (!DOS_ChangeDir(drive, dirname))
+	{
+		SetCflag;
+		AX=0x03;
+	}
 }
 
 static void RemoveDir(struct sigcontext_struct *context)
 {
 	char *dirname;
 
-	fprintf(stderr,"int21: removedir %s\n", pointer(DS,DX) );
+	dprintf_int(stddeb,"int21: removedir %s\n", pointer(DS,DX) );
 
 	if ((dirname = GetUnixFileName( pointer(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
@@ -623,14 +640,16 @@ static void FindNext(struct sigcontext_struct *context)
 			SetCflag;
 			return;
 		}
-	} while (*(dta + 0x0c) != dp->attribute);
+	} /* while (*(dta + 0x0c) != dp->attribute);*/
+       while ( ( dp->search_attribute & dp->attribute) != dp->attribute);
 	
+  	*(dta + 0x15) = dp->attribute;
 	setword(&dta[0x16], 0x1234); /* time */
 	setword(&dta[0x18], 0x1234); /* date */
 	setdword(&dta[0x1a], dp->filesize);
 	strncpy(dta + 0x1e, dp->filename, 13);
 
-	AL;
+	AL = 0;
 	ResetCflag;
 	return;
 }
@@ -640,7 +659,7 @@ static void FindFirst(struct sigcontext_struct *context)
 	BYTE drive, *path = pointer(DS, DX);
 	struct dosdirent *dp;
 
-	if (path[1] == ':') {
+	if ((*path)&&(path[1] == ':')) {
 		drive = (islower(*path) ? toupper(*path) : *path) - 'A';
 
 		if (!DOS_ValidDrive(drive)) {
@@ -674,6 +693,7 @@ static void FindFirst(struct sigcontext_struct *context)
 		return;
 	}
 
+	dp->search_attribute = ECX & (FA_LABEL | FA_DIREC);
 	memcpy(dta + 0x0d, &dp, sizeof(dp));
 	FindNext(context);
 }
@@ -720,7 +740,7 @@ static void CreateTempFile(struct sigcontext_struct *context)
 	
 	sprintf(temp,"%s\\win%d.tmp",TempDirectory,(int) getpid());
 
-	fprintf(stderr,"CreateTempFile %s\n",temp);
+	dprintf_int(stddeb,"CreateTempFile %s\n",temp);
 
 	handle = open(GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR);
 
@@ -793,7 +813,7 @@ static void GetDiskSerialNumber(struct sigcontext_struct *context)
 	strncpy(dataptr + 6, DOS_GetVolumeLabel(drive), 8);
 	strncpy(dataptr + 0x11, "FAT16   ", 8);
 	
-	AL;
+	AL = 0;
 	ResetCflag;
 }
 
@@ -830,8 +850,8 @@ static void DumpFCB(BYTE *fcb)
 
 	for (y = 0; y !=2 ; y++) {
 		for (x = 0; x!=15;x++)
-			fprintf(stderr, "%02x ", *fcb++);
-		fprintf(stderr,"\n");
+			dprintf_int(stddeb, "%02x ", *fcb++);
+		dprintf_int(stddeb,"\n");
 	}
 }
 
@@ -850,14 +870,14 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 	
 	if ((*fcb) == 0xff)
 	  {
-	    standard_fcb = fcb + 7;
-	    output_fcb = dta + 7;
+	    standard_fcb = (struct fcb *)(fcb + 7);
+	    output_fcb = (struct fcb *)(dta + 7);
 	    *dta = 0xff;
 	  }
 	else
 	  {
-	    standard_fcb = fcb;
-	    output_fcb = dta;
+	    standard_fcb = (struct fcb *)fcb;
+	    output_fcb = (struct fcb *)dta;
 	  }
 
 	if (standard_fcb->drive)
@@ -875,7 +895,7 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 
 	output_fcb->drive = drive;
 
-	if (*(fcb) == 0xff) 
+	if (*(fcb) == 0xff)
 	  {
 	    if (*(fcb+6) & FA_LABEL)      /* return volume label */
 	      {
@@ -883,14 +903,14 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 		memset(&output_fcb->name, ' ', 11);
 		if (DOS_GetVolumeLabel(drive) != NULL) 
 		  {
-		    strncpy(&output_fcb->name, DOS_GetVolumeLabel(drive), 11);
+		    strncpy(output_fcb->name, DOS_GetVolumeLabel(drive), 11);
 		    AL = 0x00;
 		    return;
 		  }
 	      }
 	  }
 
-	strncpy(&(output_fcb->name),&(standard_fcb->name),11);
+	strncpy(output_fcb->name, standard_fcb->name, 11);
 	if (*fcb == 0xff)
 	  *(dta+6) = ( *(fcb+6) & (!FA_DIREC));
 
@@ -940,11 +960,11 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 	while (DOS_readdir(dp) != NULL)
 	{
 		strcpy(ptr, dp->filename);
-		fprintf(stderr, "int21: delete file %s\n", temp);
+		dprintf_int(stddeb, "int21: delete file %s\n", temp);
 		/* unlink(GetUnixFileName(temp)); */
 	}
 	DOS_closedir(dp);
-	AL;
+	AL = 0;
 }
 
 static void RenameFileFCB(struct sigcontext_struct *context)
@@ -986,10 +1006,11 @@ static void RenameFileFCB(struct sigcontext_struct *context)
 	{
 		strcpy(oldnameptr, dp->filename);
 		strcpy(newnameptr, fcb + 1);
-		fprintf(stderr, "int21: renamefile %s -> %s\n", oldname, newname);
+		dprintf_int(stddeb, "int21: renamefile %s -> %s\n",
+			oldname, newname);
 	}
 	DOS_closedir(dp);
-	AL;
+	AL = 0;
 }
 
 
@@ -1080,7 +1101,7 @@ int do_int21(struct sigcontext_struct * context)
 {
     if (Options.relay_debug)
     {
-	printf("int21: AX %04x, BX %04x, CX %04x, DX %04x, "
+	fprintf(stddeb,"int21: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
 	       AX, BX, CX, DX, SI, DI, DS, ES);
     }
@@ -1178,7 +1199,7 @@ int do_int21(struct sigcontext_struct * context)
 		AL = DOS_GetDefaultDrive();
 		Error (0,0,0);
 	    break;
-	    
+
 	  case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
             dta = pointer(DS, DX);
             break;
@@ -1197,7 +1218,9 @@ int do_int21(struct sigcontext_struct * context)
 		
 	  case 0x25: /* SET INTERRUPT VECTOR */
 	    /* Ignore any attempt to set a segment vector */
- 		fprintf(stderr, "int21: set interrupt vector %2x (%04x:%04x)\n", AL, DS, DX);
+ 		dprintf_int(stdnimp,
+			"int21: set interrupt vector %2x (%04x:%04x)\n",
+			AL, DS, DX);
             break;
 
 	  case 0x2a: /* GET SYSTEM DATE */
@@ -1265,7 +1288,8 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x35: /* GET INTERRUPT VECTOR */
 	    /* Return a NULL segment selector - this will bomb, 
 	    		if anyone ever tries to use it */
-	    fprintf(stderr, "int21: get interrupt vector %2x\n", AX & 0xff);
+	    dprintf_int(stdnimp, "int21: get interrupt vector %2x\n",
+		AX & 0xff);
 	    ES = 0;
 	    BX = 0;
 	    break;
@@ -1379,7 +1403,7 @@ int do_int21(struct sigcontext_struct * context)
 		ResetCflag;
 	    break;
 
-	  case 0x47: /* "CWD" - GET CURRENT DIRECTORY */	
+	  case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
 	    GetCurrentDirectory(context);
 	    AX = 0x0100; 
 	    /* intlist: many Microsoft products for Windows rely on this */
@@ -1398,7 +1422,7 @@ int do_int21(struct sigcontext_struct * context)
 	  case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
 	    exit(AL);
 	    break;
-		
+
 	  case 0x4d: /* GET RETURN CODE */
 	    AL = NoError; /* normal exit */
 	    break;
@@ -1474,7 +1498,7 @@ int do_int21(struct sigcontext_struct * context)
 		    AL = InvalidDrive;
 		    SetCflag;
 		    break;
-		} 
+		}
 		else 
 		{
 		    ResetCflag;

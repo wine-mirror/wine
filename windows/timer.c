@@ -8,6 +8,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "windows.h"
 #include "message.h"
+#include "stddebug.h"
+/* #define DEBUG_TIMER /* */
+/* #undef  DEBUG_TIMER /* */
+#include "debug.h"
 
 
 typedef struct tagTIMER
@@ -133,25 +137,22 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
     TIMER * pTimer;
 
     if (!timeout) return 0;
-    if (!hwnd && !proc) return 0;
+/*    if (!hwnd && !proc) return 0; */
 
       /* Check if there's already a timer with the same hwnd and id */
 
-    if (hwnd)
-    {
-	for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
-	    if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
-		(pTimer->timeout != 0))
-	    {
-		  /* Got one: set new values and return */
-		pTimer->timeout = timeout;
-		pTimer->expires = GetTickCount() + timeout;
-		pTimer->proc    = proc;
-		TIMER_RemoveTimer( pTimer );
-		TIMER_InsertTimer( pTimer );
-		return id;
-	    }
-    }
+    for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
+        if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
+            (pTimer->timeout != 0))
+        {
+              /* Got one: set new values and return */
+            pTimer->timeout = timeout;
+            pTimer->expires = GetTickCount() + timeout;
+            pTimer->proc    = proc;
+            TIMER_RemoveTimer( pTimer );
+            TIMER_InsertTimer( pTimer );
+            return id;
+        }
 
       /* Find a free timer */
     
@@ -215,9 +216,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, WORD id, BOOL sys )
  */
 WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
-#ifdef DEBUG_TIMER    
-    printf( "SetTimer: %d %d %d %p\n", hwnd, id, timeout, proc );
-#endif
+    dprintf_timer(stddeb, "SetTimer: %d %d %d %p\n", hwnd, id, timeout, proc );
     return TIMER_SetTimer( hwnd, id, timeout, proc, FALSE );
 }
 
@@ -227,9 +226,8 @@ WORD SetTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
  */
 WORD SetSystemTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
 {
-#ifdef DEBUG_TIMER    
-    printf( "SetSystemTimer: %d %d %d %p\n", hwnd, id, timeout, proc );
-#endif
+    dprintf_timer(stddeb, "SetSystemTimer: %d %d %d %p\n", 
+		  hwnd, id, timeout, proc );
     return TIMER_SetTimer( hwnd, id, timeout, proc, TRUE );
 }
 
@@ -239,9 +237,7 @@ WORD SetSystemTimer( HWND hwnd, WORD id, WORD timeout, FARPROC proc )
  */
 BOOL KillTimer( HWND hwnd, WORD id )
 {
-#ifdef DEBUG_TIMER
-    printf( "KillTimer: %d %d\n", hwnd, id );
-#endif
+    dprintf_timer(stddeb, "KillTimer: %d %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
@@ -251,8 +247,6 @@ BOOL KillTimer( HWND hwnd, WORD id )
  */
 BOOL KillSystemTimer( HWND hwnd, WORD id )
 {
-#ifdef DEBUG_TIMER
-    printf( "KillSystemTimer: %d %d\n", hwnd, id );
-#endif
+    dprintf_timer(stddeb, "KillSystemTimer: %d %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }

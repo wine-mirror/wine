@@ -241,8 +241,8 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_EXITSIZEMOVE"		/* 0x0232 */
 };
 
-char SpyFilters[256];
-char SpyIncludes[256];
+char SpyFilters[256+1];
+char SpyIncludes[256+1];
 
 #endif /* NOSPY */
 
@@ -303,7 +303,14 @@ void SpyInit(void)
     }
     
     GetPrivateProfileString("spy", "exclude", "", SpyFilters, 
-			    sizeof(SpyFilters), WINE_INI);
+			    sizeof(SpyFilters)-1, WINE_INI);
     GetPrivateProfileString("spy", "include", "", SpyIncludes, 
-			    sizeof(SpyIncludes), WINE_INI);
+			    sizeof(SpyIncludes)-1, WINE_INI);
+
+    if (*SpyIncludes != 0) {
+      strcat(SpyIncludes, ";");
+    }
+    if (*SpyFilters != 0) {
+      strcat(SpyFilters, ";");
+    }
 }

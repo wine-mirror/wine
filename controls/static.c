@@ -11,85 +11,83 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
 #include <windows.h>
 #include "win.h"
 #include "user.h"
+#include "static.h"
+#include "icon.h"
 
 extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 
-static LONG PaintTextfn(HWND hwnd);
-static LONG PaintRectfn(HWND hwnd);
-static LONG PaintFramefn(HWND hwnd);
-static LONG PaintIconfn(HWND hwnd);
+static void PaintTextfn( HWND hwnd, HDC hdc );
+static void PaintRectfn( HWND hwnd, HDC hdc );
+static void PaintFramefn( HWND hwnd, HDC hdc );
+static void PaintIconfn( HWND hwnd, HDC hdc );
 
 
-static COLORREF color_windowframe, color_background, color_window,
-                                                     color_windowtext;
+static COLORREF color_windowframe, color_background, color_window;
 
-#define NOTIFY_PARENT(hWndCntrl, wNotifyCode) \
-	SendMessage(GetParent(hWndCntrl), WM_COMMAND, \
-		    GetDlgCtrlID(hWndCntrl), MAKELPARAM(hWndCntrl, wNotifyCode));
-#define DIM(array)	((sizeof array)/(sizeof array[0]))
 
-typedef struct
+typedef void (*pfPaint)(HWND, HDC);
+
+#define LAST_STATIC_TYPE  SS_LEFTNOWORDWRAP
+
+static pfPaint staticPaintFunc[LAST_STATIC_TYPE+1] =
 {
-    LONG (*paintfn)();
-} STATICFN;
-
-#define MAX_STATIC_TYPE  12
-
-static STATICFN staticfn[MAX_STATIC_TYPE] =
-{
-    { (LONG(*)())PaintTextfn },                    /* SS_LEFT */
-    { (LONG(*)())PaintTextfn },                    /* SS_CENTER */
-    { (LONG(*)())PaintTextfn },                    /* SS_RIGHT */
-    { (LONG(*)())PaintIconfn },                    /* SS_ICON */
-    { (LONG(*)())PaintRectfn },                    /* SS_BLACKRECT */
-    { (LONG(*)())PaintRectfn },                    /* SS_GRAYRECT */
-    { (LONG(*)())PaintRectfn },                    /* SS_WHITERECT */
-    { (LONG(*)())PaintFramefn },                   /* SS_BLACKFRAME */
-    { (LONG(*)())PaintFramefn },                   /* SS_GRAYFRAME */
-    { (LONG(*)())PaintFramefn },                   /* SS_WHITEFRAME */
-    { (LONG(*)())PaintTextfn },                    /* SS_SIMPLE */
-    { (LONG(*)())PaintTextfn }                     /* SS_LEFTNOWORDWRAP */
+    PaintTextfn,             /* SS_LEFT */
+    PaintTextfn,             /* SS_CENTER */
+    PaintTextfn,             /* SS_RIGHT */
+    PaintIconfn,             /* SS_ICON */
+    PaintRectfn,             /* SS_BLACKRECT */
+    PaintRectfn,             /* SS_GRAYRECT */
+    PaintRectfn,             /* SS_WHITERECT */
+    PaintFramefn,            /* SS_BLACKFRAME */
+    PaintFramefn,            /* SS_GRAYFRAME */
+    PaintFramefn,            /* SS_WHITEFRAME */
+    NULL,                    /* Not defined */
+    PaintTextfn,             /* SS_SIMPLE */
+    PaintTextfn              /* SS_LEFTNOWORDWRAP */
 };
 
 
+/***********************************************************************
+ *           STATIC_SetIcon
+ *
+ * Set the icon for an SS_ICON control.
+ */
+static void STATIC_SetIcon( HWND hwnd, HICON hicon )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+
+    if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return;
+    if (infoPtr->hIcon) DestroyIcon( infoPtr->hIcon );
+    infoPtr->hIcon = hicon;
+    if (hicon)
+    {
+        ICONALLOC *icon = (ICONALLOC *) GlobalLock( hicon );
+        SetWindowPos( hwnd, 0, 0, 0,
+                     icon->descriptor.Width, icon->descriptor.Height,
+                     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+        GlobalUnlock( hicon );
+    }
+}
+
+
+/***********************************************************************
+ *           StaticWndProc
+ */
 LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 {
 	LONG lResult = 0;
-	HDC hDC;
-	RECT rc;
-	LPSTR textPtr;
-
 	WND *wndPtr = WIN_FindWndPtr(hWnd);
 	LONG style = wndPtr->dwStyle & 0x0000000F;
+        STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
 	switch (uMsg) {
 	case WM_ENABLE:
 	    InvalidateRect(hWnd, NULL, FALSE);
 	    break;
 
-	case WM_NCCREATE:
-	    if (style == SS_ICON)
-	    {
-		  /* Note: we use wndPtr->hText to store the icon handle */
-		CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
-		if (createStruct->lpszName)
-		    wndPtr->hText = LoadIcon( createStruct->hInstance,
-					      createStruct->lpszName );
-		return 1;
-	    }
-	    else return DefWindowProc(hWnd, uMsg, wParam, lParam);
-
-	case WM_NCDESTROY:
-	    if (style == SS_ICON)
-	    {
-		if (wndPtr->hText) DestroyIcon( wndPtr->hText );
-		wndPtr->hText = 0;
-		return 0;
-	    }
-	    else return DefWindowProc(hWnd, uMsg, wParam, lParam);
-
 	case WM_CREATE:
-	    if (style < 0L || style >= (LONG)DIM(staticfn)) {
+	    if (style < 0L || style > LAST_STATIC_TYPE) {
 		lResult = -1L;
 		break;
 		}
@@ -97,49 +95,68 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
 	    color_background   = GetSysColor(COLOR_BACKGROUND);
 	    color_window       = GetSysColor(COLOR_WINDOW);
-	    color_windowtext   = GetSysColor(COLOR_WINDOWTEXT);
-	    lResult = 0L;
-	    if (style == SS_ICON) {
-/*
-		SetWindowPos(hWnd, (HWND)NULL, 0, 0, 32, 32,
-				SWP_NOZORDER | SWP_NOMOVE);
-*/
-		}
+	    if (style == SS_ICON)
+            {
+		CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
+		if (createStruct->lpszName)
+                    STATIC_SetIcon( hWnd, LoadIcon( createStruct->hInstance,
+                                                    createStruct->lpszName ));
+            }
 	    break;
 
+        case WM_DESTROY:
+            STATIC_SetIcon( hWnd, 0 );  /* Destroy the current icon */
+            break;
+
 	case WM_PAINT:
-	    if (staticfn[style].paintfn)
-		(staticfn[style].paintfn)(hWnd);
+	    if (staticPaintFunc[style])
+            {
+                PAINTSTRUCT ps;
+                BeginPaint( hWnd, &ps );
+		(staticPaintFunc[style])( hWnd, ps.hdc );
+                EndPaint( hWnd, &ps );
+            }
 	    break;
 
 	case WM_SYSCOLORCHANGE:
 	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
 	    color_background   = GetSysColor(COLOR_BACKGROUND);
 	    color_window       = GetSysColor(COLOR_WINDOW);
-	    color_windowtext   = GetSysColor(COLOR_WINDOWTEXT);
 	    InvalidateRect(hWnd, NULL, TRUE);
 	    break;
 
 	case WM_SETTEXT:
-	    if (style == SS_ICON) break;
 	    DEFWND_SetText( hWnd, (LPSTR)lParam );
 	    InvalidateRect( hWnd, NULL, FALSE );
 	    UpdateWindow( hWnd );
 	    break;
 
+        case WM_SETFONT:
+            if (style == SS_ICON) return 0;
+            infoPtr->hFont = wParam;
+            if (LOWORD(lParam))
+            {
+                InvalidateRect( hWnd, NULL, FALSE );
+                UpdateWindow( hWnd );
+            }
+            break;
+
+        case WM_GETFONT:
+            return infoPtr->hFont;
+
 	case WM_NCHITTEST:
 	    return HTTRANSPARENT;
 
+        case WM_GETDLGCODE:
+            return DLGC_STATIC;
+
 	case STM_GETICON:
-	    if (style != SS_ICON) return 0;
-	    return (HICON)wndPtr->hText;
+	    return infoPtr->hIcon;
 
 	case STM_SETICON:
-	    if (style != SS_ICON) return 0;
-	    if (wndPtr->hText) DestroyIcon( wndPtr->hText );
-	    wndPtr->hText = wParam;
-	    InvalidateRect( hWnd, NULL, TRUE );
-	    UpdateWindow( hWnd );
+            STATIC_SetIcon( hWnd, wParam );
+            InvalidateRect( hWnd, NULL, FALSE );
+            UpdateWindow( hWnd );
 	    return 0;
 
 	default:
@@ -151,27 +168,19 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 }
 
 
-static LONG PaintTextfn(HWND hwnd)
+static void PaintTextfn( HWND hwnd, HDC hdc )
 {
-    PAINTSTRUCT ps;
     RECT rc;
-    HDC hdc;
     HBRUSH hBrush;
-    HANDLE hText;
     char *text;
-    int textlen;
     WORD wFormat;
 
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     LONG style = wndPtr->dwStyle;
+    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
-    hdc = BeginPaint(hwnd, &ps);
     GetClientRect(hwnd, &rc);
-
-    textlen = GetWindowTextLength(hwnd);
-    hText = USER_HEAP_ALLOC(0, textlen+1);
-    text = USER_HEAP_ADDR(hText);
-    GetWindowText(hwnd, text, textlen+1);
+    text = USER_HEAP_ADDR( wndPtr->hText );
 
     switch (style & 0x0000000F)
     {
@@ -199,70 +208,48 @@ static LONG PaintTextfn(HWND hwnd)
     if (style & SS_NOPREFIX)
 	wFormat |= DT_NOPREFIX;
 
-    hBrush = SendMessage(GetParent(hwnd), WM_CTLCOLOR, (WORD)hdc,
-		    MAKELONG(hwnd, CTLCOLOR_STATIC));
+    if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
+    hBrush = SendMessage( wndPtr->hwndParent, WM_CTLCOLOR, (WORD)hdc,
+                          MAKELONG(hwnd, CTLCOLOR_STATIC));
     if (hBrush == (HBRUSH)NULL) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect(hdc, &rc, hBrush);
-    DrawText(hdc, text, textlen, &rc, wFormat);
-
-    USER_HEAP_FREE(hText);
-    EndPaint(hwnd, &ps);
+    DrawText(hdc, text, -1, &rc, wFormat);
 }
 
-static LONG PaintRectfn(HWND hwnd)
+static void PaintRectfn( HWND hwnd, HDC hdc )
 {
-    PAINTSTRUCT ps;
     RECT rc;
-    HDC hdc;
-    HPEN hOldPen, hPen;
-    HBRUSH hOldBrush, hBrush;
+    HBRUSH hBrush;
 
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
-    hdc = BeginPaint(hwnd, &ps);
     GetClientRect(hwnd, &rc);
     
     switch (wndPtr->dwStyle & 0x0000000F)
     {
     case SS_BLACKRECT:
-	hPen = CreatePen(PS_SOLID, 1, color_windowframe);
 	hBrush = CreateSolidBrush(color_windowframe);
 	break;
 
     case SS_GRAYRECT:
-	hPen = CreatePen(PS_SOLID, 1, color_background);
 	hBrush = CreateSolidBrush(color_background);
 	break;
 
     case SS_WHITERECT:
-	hPen = CreatePen(PS_SOLID, 1, color_window);
 	hBrush = CreateSolidBrush(color_window);
 	break;
     }
-
-    hOldPen = (HPEN)SelectObject(hdc, (HANDLE)hPen);
-    hOldBrush = (HBRUSH)SelectObject(hdc, (HANDLE)hBrush);
-    Rectangle(hdc, rc.left, rc.top, rc.right, rc.bottom);
-
-    SelectObject(hdc, (HANDLE)hOldPen);
-    SelectObject(hdc, (HANDLE)hOldBrush);
-    DeleteObject((HANDLE)hPen);
-    DeleteObject((HANDLE)hBrush);
-
-    EndPaint(hwnd, &ps);
+    FillRect( hdc, &rc, hBrush );
 }
 
-static LONG PaintFramefn(HWND hwnd)
+static void PaintFramefn( HWND hwnd, HDC hdc )
 {
-    PAINTSTRUCT ps;
     RECT rc;
-    HDC hdc;
     HPEN hOldPen, hPen;
     HBRUSH hOldBrush, hBrush;
 
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
-    hdc = BeginPaint(hwnd, &ps);
     GetClientRect(hwnd, &rc);
     
     switch (wndPtr->dwStyle & 0x0000000F)
@@ -289,22 +276,19 @@ static LONG PaintFramefn(HWND hwnd)
     SelectObject(hdc, (HANDLE)hOldBrush);
     DeleteObject((HANDLE)hPen);
     DeleteObject((HANDLE)hBrush);
-
-    EndPaint(hwnd, &ps);
 }
 
 
-static LONG PaintIconfn(HWND hwnd)
+static void PaintIconfn( HWND hwnd, HDC hdc )
 {
-    WND 	*wndPtr;
-    PAINTSTRUCT ps;
     RECT 	rc;
-    HDC 	hdc;
+    HBRUSH      hbrush;
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
-    wndPtr = WIN_FindWndPtr(hwnd);
-    hdc = BeginPaint(hwnd, &ps);
     GetClientRect(hwnd, &rc);
-    FillRect(hdc, &rc, GetStockObject(WHITE_BRUSH));
-    if (wndPtr->hText) DrawIcon(hdc, rc.left, rc.top, wndPtr->hText );
-    EndPaint(hwnd, &ps);
+    hbrush = SendMessage( wndPtr->hwndParent, WM_CTLCOLOR, hdc,
+                          MAKELONG(hwnd, CTLCOLOR_STATIC));
+    FillRect( hdc, &rc, hbrush );
+    if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );
 }

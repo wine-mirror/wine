@@ -1,10 +1,10 @@
 /*
  * Window related functions
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,11 +18,17 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "sysmetrics.h"
 #include "scroll.h"
 #include "icon.h"
+#include "cursor.h"
+#include "stddebug.h"
+/* #define DEBUG_WIN  /* */ 
+/* #undef  DEBUG_WIN  /* */
+/* #define DEBUG_MENU /* */
+/* #undef  DEBUG_MENU /* */
+#include "debug.h"
 
 extern Colormap COLOR_WinColormap;
 
 extern void EVENT_RegisterWindow( Window w, HWND hwnd );  /* event.c */
-extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );  /* cursor.c */
 extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
 extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 				   RECT *newWindowRect, RECT *oldWindowRect,
@@ -50,6 +56,22 @@ WND * WIN_FindWndPtr( HWND hwnd )
     ptr = (WND *) USER_HEAP_ADDR( hwnd );
     if (ptr->dwMagic != WND_MAGIC) return NULL;
     return ptr;
+}
+
+
+/***********************************************************************
+ *           WIN_GetXWindow
+ *
+ * Return the X window associated to a window.
+ */
+Window WIN_GetXWindow( HWND hwnd )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    while (wndPtr && !wndPtr->window)
+    {
+        wndPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+    }
+    return wndPtr ? wndPtr->window : 0;
 }
 
 
@@ -129,6 +151,8 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     for ( ; hwnd != 0; hwnd = wndPtr->hwndNext )
     {
 	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+        if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+            continue;
 	if (wndPtr->hrgnUpdate || (wndPtr->flags & WIN_INTERNAL_PAINT))
 	    return hwnd;
 	if (wndPtr->hwndChild)
@@ -159,6 +183,35 @@ void WIN_SendParentNotify( HWND hwnd, WORD event, LONG lParam )
 	SendMessage( current, WM_PARENTNOTIFY, event, lParam );
 	current = GetParent( current );
     }
+}
+
+
+/***********************************************************************
+ *           WIN_DestroyWindow
+ *
+ * Destroy storage associated to a window
+ */
+static void WIN_DestroyWindow( HWND hwnd )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    CLASS *classPtr = CLASS_FindClassPtr( wndPtr->hClass );
+
+    if (!wndPtr || !classPtr) return;
+    wndPtr->dwMagic = 0;  /* Mark it as invalid */
+    if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
+    {
+        if (wndPtr->hrgnUpdate) DeleteObject( wndPtr->hrgnUpdate );
+        MSG_DecPaintCount( wndPtr->hmemTaskQ );
+    }
+    if (!(wndPtr->dwStyle & WS_CHILD))
+    {
+        if (wndPtr->wIDmenu) DestroyMenu( wndPtr->wIDmenu );
+    }
+    if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
+    if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
+    if (classPtr->wc.style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
+    classPtr->cWindows--;
+    USER_HEAP_FREE( hwnd );
 }
 
 
@@ -246,18 +299,16 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 {
     HANDLE class, hwnd;
     CLASS *classPtr;
-    WND *wndPtr, *parentPtr = NULL;
+    WND *wndPtr;
     POINT maxSize, maxPos, minTrack, maxTrack;
     CREATESTRUCT *createStruct;
     HANDLE hcreateStruct;
     int wmcreate;
     XSetWindowAttributes win_attr;
 
-#ifdef DEBUG_WIN
-    printf( "CreateWindowEx: %04X '%s' '%s' %04X %d,%d %dx%d %04X %04X %04X %08X\n",
+    dprintf_win(stddeb, "CreateWindowEx: %04X '%s' '%s' %04X %d,%d %dx%d %04X %04X %04X %08X\n",
 				exStyle, className, windowName, style, x, y, width, height, 
 				parent, menu, instance, data);
-#endif
 	/* 'soundrec.exe' has negative position ! 
 	Why ? For now, here a patch : */
         if (!strcmp(className, "SoundRec"))
@@ -278,13 +329,13 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     if (parent)
     {
-	  /* Check if parent is valid */
-	if (!(parentPtr = WIN_FindWndPtr( parent ))) return 0;
+	  /* Make sure parent is valid */
+        if (!IsWindow( parent )) return 0;
     }
     else if (style & WS_CHILD) return 0;  /* WS_CHILD needs a parent */
 
     if (!(class = CLASS_FindClassByName( className, &classPtr ))) {
-	printf("CreateWindow BAD CLASSNAME '%s' !\n", className);
+	fprintf(stderr,"CreateWindow BAD CLASSNAME '%s' !\n", className);
 	return 0;
 	}    
 
@@ -304,7 +355,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr = (WND *) USER_HEAP_ADDR( hwnd );
     wndPtr->hwndNext   = 0;
     wndPtr->hwndChild  = 0;
-	wndPtr->window 	   = 0;
+    wndPtr->window     = 0;
     wndPtr->dwMagic    = WND_MAGIC;
     wndPtr->hwndParent = (style & WS_CHILD) ? parent : hwndDesktop;
     wndPtr->hwndOwner  = (style & WS_CHILD) ? 0 : parent;
@@ -339,41 +390,27 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
-    if (classPtr->wc.style & CS_DBLCLKS) wndPtr->flags |= WIN_DOUBLE_CLICKS;
     classPtr->cWindows++;
 
+      /* Make sure owner is a top-level window */
+
+    while (wndPtr->hwndOwner && GetParent(wndPtr->hwndOwner))
+        wndPtr->hwndOwner = GetParent(wndPtr->hwndOwner);
+
       /* Get class or window DC if needed */
+
     if (classPtr->wc.style & CS_OWNDC)
-    {
-	wndPtr->flags |= WIN_OWN_DC;
-	wndPtr->hdce = DCE_AllocDCE( DCE_WINDOW_DC );
-    }
+        wndPtr->hdce = DCE_AllocDCE( DCE_WINDOW_DC );
     else if (classPtr->wc.style & CS_CLASSDC)
-    {
-	wndPtr->flags |= WIN_CLASS_DC;
-	wndPtr->hdce = classPtr->hdce;
-    }
-    else wndPtr->hdce = 0;
+        wndPtr->hdce = classPtr->hdce;
+    else
+        wndPtr->hdce = 0;
 
       /* Insert the window in the linked list */
 
     WIN_LinkWindow( hwnd, HWND_TOP );
 
-      /* Create the X window */
-
-    win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
-	                 PointerMotionMask | ButtonPressMask |
-			 ButtonReleaseMask | EnterWindowMask;
-    win_attr.override_redirect = (rootWindow == DefaultRootWindow(display));
-    win_attr.colormap          = COLOR_WinColormap;
-    if (!(style & WS_CHILD))
-    {
-	parentPtr = WIN_FindWndPtr( hwndDesktop );
-	  /* Only select focus events on top-level override-redirect windows */
-	if (win_attr.override_redirect) win_attr.event_mask |= FocusChangeMask;
-    }
-    win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
-    win_attr.save_under = ((classPtr->wc.style & CS_SAVEBITS) != 0);
+      /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
     WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
 
@@ -388,36 +425,38 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	wndPtr->rectWindow.bottom = y + height;
       }
 
-    wndPtr->window = XCreateWindow( display, parentPtr->window,
-		   x + parentPtr->rectClient.left - parentPtr->rectWindow.left,
-		   y + parentPtr->rectClient.top - parentPtr->rectWindow.top,
-		   width, height, 0,
-		   CopyFromParent, InputOutput, CopyFromParent,
-		   CWEventMask | CWOverrideRedirect | CWColormap |
-		   CWSaveUnder | CWBackingStore, &win_attr );
-    XStoreName( display, wndPtr->window, windowName );
+      /* Create the X window (only for top-level windows, and then only */
+      /* when there's no desktop window) */
 
+    if (!(style & WS_CHILD) && (rootWindow == DefaultRootWindow(display)))
+    {
+        CURSORALLOC *cursor;
+        HCURSOR hCursor = classPtr->wc.hCursor;
+        if (!hCursor) hCursor = LoadCursor( 0, IDC_ARROW );
+        cursor = (CURSORALLOC *) GlobalLock(hCursor);
 
-    /* 
-     * store icon handle, icon handle is kept in class.  If we
-     * have an icon, make the icon size the size of the icon,
-     * if we don't have an icon, just give it 64x64
-     */
-    wndPtr->hIcon = classPtr->wc.hIcon;
-    if (wndPtr->hIcon != (HICON)NULL) {
-      ICONALLOC   *lpico;
-      lpico = (ICONALLOC *)GlobalLock(wndPtr->hIcon);
-      wndPtr->iconWidth = (int)lpico->descriptor.Width;
-      wndPtr->iconHeight = (int)lpico->descriptor.Height;
-    } else {
-      wndPtr->iconWidth = 64;
-      wndPtr->iconHeight = 64;
+        win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
+                              PointerMotionMask | ButtonPressMask |
+                              ButtonReleaseMask | FocusChangeMask;
+        win_attr.override_redirect = TRUE;
+        win_attr.colormap      = COLOR_WinColormap;
+        win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
+        win_attr.save_under    = ((classPtr->wc.style & CS_SAVEBITS) != 0);
+        win_attr.cursor        = cursor ? cursor->xcursor : None;
+        wndPtr->window = XCreateWindow( display, rootWindow, x, y,
+                                        width, height, 0, CopyFromParent,
+                                        InputOutput, CopyFromParent,
+                                        CWEventMask | CWOverrideRedirect |
+                                        CWColormap | CWCursor | CWSaveUnder |
+                                        CWBackingStore, &win_attr );
+        XStoreName( display, wndPtr->window, windowName );
+        EVENT_RegisterWindow( wndPtr->window, hwnd );
+        GlobalUnlock( hCursor );
     }
+    
+    dprintf_menu(stddeb,"CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
+    	menu, instance, classPtr->wc.lpszMenuName);
 
-#ifdef DEBUG_MENU
-    printf("CreateWindowEx // menu=%04X instance=%04X classmenu=%08X !\n", 
-    	menu, instance, classPtr->wc.lpszMenuName); 
-#endif
 	if ((style & WS_CAPTION) && (style & WS_CHILD) == 0) {
 		if (menu != 0)
 			SetMenu(hwnd, menu);
@@ -460,35 +499,22 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     if (wmcreate == -1)
     {
 	  /* Abort window creation */
-
-	WIN_UnlinkWindow( hwnd );
-	XDestroyWindow( display, wndPtr->window );
-	if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
-	classPtr->cWindows--;
-	USER_HEAP_FREE( hwnd );
+        WIN_DestroyWindow( hwnd );
 	return 0;
     }
 
       /* Create a copy of SysMenu */
     if (style & WS_SYSMENU) wndPtr->hSysMenu = CopySysMenu();
 
-	/* Register window in current task windows list */
-	AddWindowToTask(GetCurrentTask(), hwnd);
-
-      /* Set window cursor */
-    if (classPtr->wc.hCursor) CURSOR_SetWinCursor( hwnd, classPtr->wc.hCursor);
-    else CURSOR_SetWinCursor( hwnd, LoadCursor( 0, IDC_ARROW ));
-
-    EVENT_RegisterWindow( wndPtr->window, hwnd );
+      /* Register window in current task windows list */
+    AddWindowToTask(GetCurrentTask(), hwnd);
 
     WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
     
     if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 /*    if (style & WS_MINIMIZE) ShowWindow( hwnd, SW_MINIMIZE ); */
 
-#ifdef DEBUG_WIN
-    printf( "CreateWindowEx: return %04X \n", hwnd);
-#endif
+    dprintf_win(stddeb, "CreateWindowEx: return %04X \n", hwnd);
     return hwnd;
 }
 
@@ -531,11 +557,7 @@ BOOL DestroyWindow( HWND hwnd )
 
       /* Destroy the window */
 
-    wndPtr->dwMagic = 0;  /* Mark it as invalid */
-    XDestroyWindow( display, wndPtr->window );
-    if (wndPtr->flags & WIN_OWN_DC) DCE_FreeDCE( wndPtr->hdce );
-    classPtr->cWindows--;
-    USER_HEAP_FREE( hwnd );
+    WIN_DestroyWindow( hwnd );
     return TRUE;
 }
 
@@ -933,9 +955,7 @@ BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
     WND *wndPtr;
     int result;
 
-#ifdef DEBUG_ENUM
-    printf("EnumWindows\n");
-#endif 
+    dprintf_enum(stddeb,"EnumWindows\n");
 
     while (hwnd) {
       char *ptr;
@@ -943,12 +963,6 @@ BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
         if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
               return 0;
       }
-#ifdef DEBUG_ENUM
-      if (XFetchName(display, wndPtr->window, &ptr) && ptr)
-              printf("found a window (%s)\n", ptr);
-      else 
-              printf("found nameless parent window\n");
-#endif
 #ifdef WINELIB
       (*wndenumprc)(hwnd, lParam);
 #else
@@ -984,19 +998,8 @@ static BOOL WIN_EnumChildWin(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
       if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
             return 0;
         }
-#ifdef DEBUG_ENUM
-      if (XFetchName(display, wndPtr->window, &ptr) && ptr)
-              printf("EnumChild: found a child window (%s)\n", ptr);
-      else 
-              printf("EnumChild: nameless child\n");
-      
-        if (!(wndPtr->dwStyle & WS_CHILD)) {
-           printf("this is not a child window!  What is it doing here?\n");
-           return 0;
-      }
-#endif
 #ifdef WINELIB
-        if (!(*wndenumprc, 2, lParam, (int) hwnd)) {
+        if (!(*wndenumprc)( 2, lParam, (int) hwnd)) {
 #else
         if (!CallBack16(wndenumprc, 2, lParam, (int) hwnd)) {
 #endif
@@ -1021,9 +1024,7 @@ BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
 {
     WND *wndPtr;
 
-#ifdef DEBUG_ENUM
-    printf("EnumChildWindows\n");
-#endif
+    dprintf_enum(stddeb,"EnumChildWindows\n");
 
     if (hwnd == 0) return 0;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -1036,7 +1037,7 @@ BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
  */
 BOOL AnyPopup()
 {
-	printf("EMPTY STUB !! AnyPopup !\n");
+	dprintf_win(stdnimp,"EMPTY STUB !! AnyPopup !\n");
 	return FALSE;
 }
 
@@ -1045,7 +1046,7 @@ BOOL AnyPopup()
  */
 BOOL FlashWindow(HWND hWnd, BOOL bInvert)
 {
-	printf("EMPTY STUB !! FlashWindow !\n");
+	dprintf_win(stdnimp,"EMPTY STUB !! FlashWindow !\n");
 	return FALSE;
 }
 
@@ -1057,7 +1058,7 @@ HWND SetSysModalWindow(HWND hWnd)
 {
 	HWND hWndOldModal = hWndSysModal;
 	hWndSysModal = hWnd;
-	printf("EMPTY STUB !! SetSysModalWindow(%04X) !\n", hWnd);
+	dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow(%04X) !\n", hWnd);
 	return hWndOldModal;
 }
 

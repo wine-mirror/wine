@@ -9,7 +9,7 @@
 
 #include <X11/Xlib.h>
 
-#include "windows.h"
+#include "class.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
@@ -38,7 +38,7 @@ typedef struct tagWND
     HRGN         hrgnUpdate;     /* Update region */
     HWND         hwndPrevActive; /* Previous active top-level window */
     HWND         hwndLastActive; /* Last active popup hwnd */
-    FARPROC      lpfnWndProc;    /* Window procedure */
+    WNDPROC      lpfnWndProc;    /* Window procedure */
     DWORD        dwStyle;        /* Window style (from CreateWindow) */
     DWORD        dwExStyle;      /* Extended style (from CreateWindowEx) */
     HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
@@ -48,10 +48,7 @@ typedef struct tagWND
     WORD         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags (see below) */
-    Window       window;         /* X window */
-    HICON        hIcon;          /* icon's MS-windows handle */
-    WORD	 iconWidth;	 /* width of icon */
-    WORD	 iconHeight;     /* height of icon */
+    Window       window;         /* X window (only for top-level windows) */
     RECT         rectClientSave; /* where client rect is saved when icon*/
     HMENU        hSysMenu;	 /* window's copy of System Menu */
     HANDLE       hProp;          /* Handle of Properties List */
@@ -63,14 +60,16 @@ typedef struct tagWND
 #define WIN_ERASE_UPDATERGN     0x01  /* Update region needs erasing */
 #define WIN_NEEDS_BEGINPAINT    0x02  /* WM_PAINT sent to window */
 #define WIN_GOT_SIZEMSG         0x04  /* WM_SIZE has been sent to the window */
-#define WIN_OWN_DC              0x08  /* Win class has style CS_OWNDC */
-#define WIN_CLASS_DC            0x10  /* Win class has style CS_CLASSDC */
-#define WIN_DOUBLE_CLICKS       0x20  /* Win class has style CS_DBLCLKS */
-#define WIN_RESTORE_MAX         0x40  /* Maximize when restoring */
-#define WIN_INTERNAL_PAINT      0x80  /* Internal WM_PAINT message pending */
+#define WIN_RESTORE_MAX         0x08  /* Maximize when restoring */
+#define WIN_INTERNAL_PAINT      0x10  /* Internal WM_PAINT message pending */
+#define WIN_NO_REDRAW           0x20  /* WM_SETREDRAW called for this window */
+
+#define WIN_CLASS_INFO(wndPtr)   (CLASS_FindClassPtr((wndPtr)->hClass)->wc)
+#define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)
 
   /* Window functions */
 WND *WIN_FindWndPtr( HWND hwnd );
+Window WIN_GetXWindow( HWND hwnd );
 BOOL WIN_UnlinkWindow( HWND hwnd );
 BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
 HWND WIN_FindWinToRepaint( HWND hwnd );

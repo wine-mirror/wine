@@ -7,6 +7,7 @@ typedef struct tagLISTSTRUCT {
     DRAWITEMSTRUCT 	dis;
     HANDLE		hMem;
     HANDLE		hData;
+    char                *itemText;
     void		*lpNext;
 } LISTSTRUCT;
 typedef LISTSTRUCT FAR* LPLISTSTRUCT;
@@ -26,7 +27,7 @@ typedef struct tagHEADLIST {
     void	*lpFirst; 
     DWORD	dwStyle;
     HWND	hWndLogicParent;
-	HFONT	hFont;
+    HFONT	hFont;
 } HEADLIST;
 typedef HEADLIST FAR* LPHEADLIST;
 

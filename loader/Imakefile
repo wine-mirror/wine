@@ -8,6 +8,9 @@ SRCS = \
 	ldtlib.c \
 	main.c \
 	ne_image.c \
+	ne_resource.c \
+	pe_image.c \
+	pe_resource.c \
 	selector.c \
 	signal.c \
 	library.c \
@@ -18,7 +21,6 @@ OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()
-CleanTarget()
 
 includes::
 

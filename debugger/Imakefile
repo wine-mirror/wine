@@ -16,12 +16,7 @@ SRCS = \
 	lex.yy.c \
 	info.c
 
-OBJS = \
-	dbg.tab.o \
-	break.o \
-	hash.o \
-	lex.yy.o \
-	info.o
+OBJS = $(SRCS:.c=.o)
 
 /*
  * All the SUBDIR stuff

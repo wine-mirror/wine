@@ -97,6 +97,8 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+        return TRUE;  /* No redraw needed */
 
     /* 
      *	I can't help but feel that this belongs somewhere upstream...
@@ -104,7 +106,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
      *  Don't redraw the window if it is iconified and we have an
      *  icon to draw for it
      */
-    if (IsIconic(hwnd) && wndPtr->hIcon) return FALSE;
+/*    if (IsIconic(hwnd) && wndPtr->hIcon) return FALSE; */
 
     GetClientRect( hwnd, &rectClient );
     rectWindow = wndPtr->rectWindow;
@@ -247,7 +249,7 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
       /* Recursively process children */
 
     if (!(flags & RDW_NOCHILDREN) &&
-	((flags && RDW_ALLCHILDREN) || (wndPtr->dwStyle & WS_CLIPCHILDREN)))
+	((flags && RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)))
     {
 	if (hrgnUpdate)
 	{

@@ -11,6 +11,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "bitmap.h"
 #include "metafile.h"
+#include "stddebug.h"
+/* #define DEBUG_DC /* */
+/* #undef  DEBUG_DC /* */
+#include "debug.h"
+
 
 static DeviceCaps * displayDevCaps = NULL;
 
@@ -94,7 +99,7 @@ void DC_FillDevCaps( DeviceCaps * caps )
  *
  * Setup device-specific DC values for a newly created DC.
  */
-static void DC_InitDC( HDC hdc )
+void DC_InitDC( HDC hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     RealizeDefaultPalette( hdc );
@@ -103,7 +108,8 @@ static void DC_InitDC( HDC hdc )
     SelectObject( hdc, dc->w.hPen );
     SelectObject( hdc, dc->w.hBrush );
     SelectObject( hdc, dc->w.hFont );
-    XSetGraphicsExposures( XT_display, dc->u.x.gc, False );
+    XSetGraphicsExposures( display, dc->u.x.gc, False );
+    XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
     CLIPPING_SetDeviceClipping( dc );
 }
 
@@ -192,7 +198,7 @@ int DC_SetupGCForPen( DC * dc )
 
 
 /***********************************************************************
- *           DC_SetupDCForText
+ *           DC_SetupGCForText
  *
  * Setup dc->u.x.gc for text drawing operations.
  * Return 0 if the font is null, 1 otherwise.
@@ -205,7 +211,7 @@ int DC_SetupGCForText( DC * dc )
     {
 	FONT_SelectObject(dc, STOCK_SYSTEM_FONT, NULL);
     }
-    val.function   = DC_XROPfunction[dc->w.ROPmode-1];
+    val.function   = GXcopy;  /* Text is always GXcopy */
     val.foreground = dc->w.textPixel;
     val.background = dc->w.backgroundPixel;
     val.fill_style = FillSolid;
@@ -229,9 +235,7 @@ HDC GetDCState( HDC hdc )
     if (!(handle = GDI_AllocObject( sizeof(DC), DC_MAGIC ))) return 0;
     newdc = (DC *) GDI_HEAP_ADDR( handle );
 
-#ifdef DEBUG_DC
-    printf( "GetDCState(%d): returning %d\n", hdc, handle );
-#endif
+    dprintf_dc(stddeb, "GetDCState(%d): returning %d\n", hdc, handle );
 
     memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
     memcpy( &newdc->u.x.pen, &dc->u.x.pen, sizeof(dc->u.x.pen) );
@@ -264,9 +268,7 @@ void SetDCState( HDC hdc, HDC hdcs )
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
     if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return;
     if (!dcs->w.flags & DC_SAVED) return;
-#ifdef DEBUG_DC
-    printf( "SetDCState: %d %d\n", hdc, hdcs );
-#endif
+    dprintf_dc(stddeb, "SetDCState: %d %d\n", hdc, hdcs );
     if (dc->w.hClipRgn)	DeleteObject( dc->w.hClipRgn );
     if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
@@ -305,9 +307,7 @@ int SaveDC( HDC hdc )
     dcs = (DC *) GDI_HEAP_ADDR( hdcs );
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
-#ifdef DEBUG_DC
-    printf( "SaveDC(%d): returning %d\n", hdc, dc->saveLevel+1 );
-#endif    
+    dprintf_dc(stddeb, "SaveDC(%d): returning %d\n", hdc, dc->saveLevel+1 );
     return ++dc->saveLevel;
 }
 
@@ -319,9 +319,7 @@ BOOL RestoreDC( HDC hdc, short level )
 {
     DC * dc, * dcs;
 
-#ifdef DEBUG_DC
-    printf( "RestoreDC: %d %d\n", hdc, level );
-#endif    
+    dprintf_dc(stddeb, "RestoreDC: %d %d\n", hdc, level );
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -358,9 +356,8 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
     if (!handle) return 0;
     dc = (DC *) GDI_HEAP_ADDR( handle );
 
-#ifdef DEBUG_DC
-    printf( "CreateDC(%s %s %s): returning %d\n", driver, device, output, handle );
-#endif
+    dprintf_dc(stddeb, "CreateDC(%s %s %s): returning %d\n", 
+	    driver, device, output, handle );
 
     if (!displayDevCaps)
     {
@@ -403,28 +400,36 @@ HDC CreateCompatibleDC( HDC hdc )
 {
     DC * dc;
     HANDLE handle;
-    
+    HBITMAP hbitmap;
+    BITMAPOBJ *bmp;
+
     handle = GDI_AllocObject( sizeof(DC), DC_MAGIC );
     if (!handle) return 0;
     dc = (DC *) GDI_HEAP_ADDR( handle );
 
-#ifdef DEBUG_DC
-    printf( "CreateCompatibleDC(%d): returning %d\n", hdc, handle );
-#endif
+    dprintf_dc(stddeb, "CreateCompatibleDC(%d): returning %d\n", hdc, handle );
 
+      /* Create default bitmap */
+    if (!(hbitmap = CreateBitmap( 1, 1, 1, 1, NULL )))
+    {
+	GDI_HEAP_FREE( handle );
+	return 0;
+    }
+    bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    
     dc->saveLevel = 0;
     memcpy( &dc->w, &DCVAL_defaultValues, sizeof(DCVAL_defaultValues) );
     memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
-    dc->u.x.drawable   = XCreatePixmap( display, rootWindow, 1, 1, 1 );
+    dc->u.x.drawable   = bmp->pixmap;
     dc->u.x.gc         = XCreateGC( display, dc->u.x.drawable, 0, NULL );
     dc->w.flags        = DC_MEMORY;
     dc->w.bitsPerPixel = 1;
     dc->w.devCaps      = displayDevCaps;
     dc->w.DCSizeX      = 1;
     dc->w.DCSizeY      = 1;
+    dc->w.hBitmap      = hbitmap;
 
-    SelectObject( handle, BITMAP_hbitmapMemDC );
     DC_InitDC( handle );
 
     return handle;
@@ -439,9 +444,7 @@ BOOL DeleteDC( HDC hdc )
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
-#ifdef DEBUG_DC
-    printf( "DeleteDC: %d\n", hdc );
-#endif
+    dprintf_dc(stddeb, "DeleteDC: %d\n", hdc );
 
     while (dc->saveLevel)
     {
@@ -460,7 +463,9 @@ BOOL DeleteDC( HDC hdc )
 	SelectObject( hdc, STOCK_SYSTEM_FONT );
 	XFreeGC( display, dc->u.x.gc );
     }
-    
+
+    if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hBitmap );
+
     if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
     if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
@@ -479,10 +484,8 @@ int GetDeviceCaps( HDC hdc, WORD cap )
 
     if (cap > sizeof(DeviceCaps)-sizeof(WORD)) return 0;
     
-#ifdef DEBUG_DC
-    printf( "GetDeviceCaps(%d,%d): returning %d\n",
+    dprintf_dc(stddeb, "GetDeviceCaps(%d,%d): returning %d\n",
 	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );
-#endif
     return *(WORD *)(((char *)dc->w.devCaps) + cap);
 }
 

@@ -10,11 +10,13 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "win.h"
 #include "message.h"
-#include <assert.h>
+#include "winpos.h"
+#include "stddebug.h"
+/* #define DEBUG_WIN /* */
+/* #undef  DEBUG_WIN /* */
+#include "debug.h"
 
 static HWND hwndActive = 0;  /* Currently active window */
-
-/* #define DEBUG_WIN /**/
 
 
 /***********************************************************************
@@ -216,13 +218,13 @@ BOOL MoveWindow( HWND hwnd, short x, short y, short cx, short cy, BOOL repaint)
 {    
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-#ifdef DEBUG_WIN    
-    printf( "MoveWindow: %d %d,%d %dx%d %d\n", hwnd, x, y, cx, cy, repaint );
-#endif
+    dprintf_win(stddeb, "MoveWindow: %d %d,%d %dx%d %d\n", 
+	    hwnd, x, y, cx, cy, repaint );
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
 
 
+#if 0
 /*
  * hwnd is the handle to the first child window to hide
  */
@@ -261,6 +263,7 @@ static void WINPOS_ChildrenComeOutToPlay(HWND hwnd)
 	hwnd = wndPtr->hwndNext;
     }
 }
+#endif
 
 /***********************************************************************
  *           ShowWindow   (USER.42)
@@ -274,9 +277,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 
     if (!wndPtr) return FALSE;
 
-#ifdef DEBUG_WIN
-    printf("ShowWindow: hwnd=%04X, cmd=%d\n", hwnd, cmd);
-#endif
+    dprintf_win(stddeb,"ShowWindow: hwnd=%04X, cmd=%d\n", hwnd, cmd);
 
     /*
      *  wasVisible is true if user has not made window invisible 
@@ -304,10 +305,12 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	    swpflags |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
 		        SWP_NOACTIVATE | SWP_NOZORDER;
 
+#if 0
 	    /*
 	     *	tell children that they are getting hidden
 	     */
 	    WINPOS_hideChildren(wndPtr->hwndChild);
+#endif
 
 	    /* store the size and position of the window, so we can
 	     *	deiconify it to the same size and position	
@@ -319,7 +322,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	     * tell it that it is going to have to be painted
 	     */
             MoveWindow(hwnd, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
-                        wndPtr->iconWidth, wndPtr->iconHeight, FALSE);
+                       SYSMETRICS_CXICON, SYSMETRICS_CYICON, FALSE);
             SendMessage(hwnd, WM_PAINTICON, 0, 0);
 	    break;
 
@@ -350,7 +353,9 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 			   wndPtr->rectNormal.bottom - wndPtr->rectNormal.top, 
 			   FALSE);
 	    }
+#if 0
 	    WINPOS_ChildrenComeOutToPlay(wndPtr->hwndChild);
+#endif
 	    break;
     }
 
@@ -575,6 +580,81 @@ LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos )
 
 
 /***********************************************************************
+ *           WINPOS_MoveWindowZOrder
+ *
+ * Move a window in Z order, invalidating everything that needs it.
+ * Only necessary for windows without associated X window.
+ */
+static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter, BOOL erase )
+{
+    BOOL movingUp;
+    HWND hwndCur;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    /* We have two possible cases:
+     * - The window is moving up: we have to invalidate all areas
+     *   of the window that were covered by other windows
+     * - The window is moving down: we have to invalidate areas
+     *   of other windows covered by this one.
+     */
+
+    if (hwndAfter == HWND_TOP)
+    {
+        movingUp = TRUE;
+    }
+    else if (hwndAfter == HWND_BOTTOM)
+    {
+        if (!wndPtr->hwndNext) return;  /* Already at the bottom */
+        movingUp = FALSE;
+    }
+    else
+    {
+        if (wndPtr->hwndNext == hwndAfter) return;  /* Already placed right */
+
+          /* Determine which window we encounter first in Z-order */
+        hwndCur = GetWindow( wndPtr->hwndParent, GW_CHILD );
+        while ((hwndCur != hwnd) && (hwndCur != hwndAfter))
+            hwndCur = GetWindow( hwndCur, GW_HWNDNEXT );
+        movingUp = (hwndCur == hwndAfter);
+    }
+
+    if (movingUp)
+    {
+        HWND hwndPrevAfter = wndPtr->hwndNext;
+        WIN_UnlinkWindow( hwnd );
+        WIN_LinkWindow( hwnd, hwndAfter );
+        hwndCur = wndPtr->hwndNext;
+        while (hwndCur != hwndPrevAfter)
+        {
+            WND *curPtr = WIN_FindWndPtr( hwndCur );
+            RECT rect = curPtr->rectWindow;
+            OffsetRect( &rect, -wndPtr->rectClient.left,
+                        -wndPtr->rectClient.top );
+            RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
+                          RDW_FRAME | (erase ? RDW_ERASENOW : RDW_ERASE) );
+            hwndCur = curPtr->hwndNext;
+        }
+    }
+    else  /* Moving down */
+    {
+        hwndCur = wndPtr->hwndNext;
+        WIN_UnlinkWindow( hwnd );
+        WIN_LinkWindow( hwnd, hwndAfter );
+        while (hwndCur != hwnd)
+        {
+            WND *curPtr = WIN_FindWndPtr( hwndCur );
+            RECT rect = wndPtr->rectWindow;
+            OffsetRect( &rect, -curPtr->rectClient.left,
+                        -curPtr->rectClient.top );
+            RedrawWindow( hwndCur, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
+                          RDW_FRAME | (erase ? RDW_ERASENOW : RDW_ERASE) );
+            hwndCur = curPtr->hwndNext;
+        }
+    }
+}
+
+
+/***********************************************************************
  *           WINPOS_InternalSetWindowPos
  *
  * Helper function for SetWindowPos.
@@ -606,8 +686,6 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
       /* Check flags */
 
     flags = winpos->flags;
-    if (flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW))
-	flags |= SWP_NOMOVE | SWP_NOSIZE;
     if (winpos->hwnd == hwndActive) flags |= SWP_NOACTIVATE; /*Already active*/
 
       /* Check hwndAfter */
@@ -666,17 +744,22 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
 
     if (!(flags & SWP_NOZORDER))
     {
-	WIN_UnlinkWindow( winpos->hwnd );
-	WIN_LinkWindow( winpos->hwnd, hwndAfter );
-	if (hwndAfter == HWND_TOP) winChanges.stack_mode = Above;
-	else winChanges.stack_mode = Below;
-	if ((hwndAfter != HWND_TOP) && (hwndAfter != HWND_BOTTOM))
-	{
-	    WND * insertPtr = WIN_FindWndPtr( hwndAfter );
-	    winChanges.sibling = insertPtr->window;
-	    changeMask |= CWSibling;
-	}
-	changeMask |= CWStackMode;
+        if (wndPtr->window)
+        {
+            WIN_UnlinkWindow( winpos->hwnd );
+            WIN_LinkWindow( winpos->hwnd, hwndAfter );
+            if (hwndAfter == HWND_TOP) winChanges.stack_mode = Above;
+            else winChanges.stack_mode = Below;
+            if ((hwndAfter != HWND_TOP) && (hwndAfter != HWND_BOTTOM))
+            {
+                WND * insertPtr = WIN_FindWndPtr( hwndAfter );
+                winChanges.sibling = insertPtr->window;
+                changeMask |= CWSibling;
+            }
+            changeMask |= CWStackMode;
+        }
+        else WINPOS_MoveWindowZOrder( winpos->hwnd, hwndAfter,
+                                      !(flags & SWP_DEFERERASE) );
     }
 
       /* Send WM_NCCALCSIZE message to get new client area */
@@ -688,25 +771,66 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
 
       /* Perform the moving and resizing */
 
-    if (changeMask) XConfigureWindow( display, wndPtr->window,
-				      changeMask, &winChanges );
-    wndPtr->rectWindow = newWindowRect;
-    wndPtr->rectClient = newClientRect;
+    if (wndPtr->window)
+    {
+        if (changeMask) XConfigureWindow( display, wndPtr->window,
+                                          changeMask, &winChanges );
+        wndPtr->rectWindow = newWindowRect;
+        wndPtr->rectClient = newClientRect;
+    }
+    else
+    {
+        RECT oldWindowRect = wndPtr->rectWindow;
+
+        wndPtr->rectWindow = newWindowRect;
+        wndPtr->rectClient = newClientRect;
+
+        if (changeMask)
+        {
+            HRGN hrgn1 = CreateRectRgnIndirect( &oldWindowRect );
+            HRGN hrgn2 = CreateRectRgnIndirect( &wndPtr->rectWindow );
+            HRGN hrgn3 = CreateRectRgn( 0, 0, 0, 0 );
+            CombineRgn( hrgn3, hrgn1, hrgn2, RGN_DIFF );
+            RedrawWindow( wndPtr->hwndParent, NULL, hrgn3,
+                          RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASENOW );
+            if ((oldWindowRect.left != wndPtr->rectWindow.left) ||
+                (oldWindowRect.top != wndPtr->rectWindow.top))
+            {
+                RedrawWindow( winpos->hwnd, NULL, 0, RDW_INVALIDATE |
+                              RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASENOW );
+            }
+            DeleteObject( hrgn1 );
+            DeleteObject( hrgn2 );
+            DeleteObject( hrgn3 );
+        }
+    }
 
     if (flags & SWP_SHOWWINDOW)
     {
 	wndPtr->dwStyle |= WS_VISIBLE;
-	XMapWindow( display, wndPtr->window );
-	MSG_Synchronize();
-	if (flags & SWP_NOREDRAW)  /* Validate the whole window */
-	    RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE );
+        if (wndPtr->window)
+        {
+            XMapWindow( display, wndPtr->window );
+            MSG_Synchronize();
+            if (flags & SWP_NOREDRAW)  /* Validate the whole window */
+                RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE );
+        }
     }
     else if (flags & SWP_HIDEWINDOW)
     {
 	wndPtr->dwStyle &= ~WS_VISIBLE;
-	XUnmapWindow( display, wndPtr->window );
-	if ((winpos->hwnd == GetFocus()) || IsChild(winpos->hwnd, GetFocus()))
-	    SetFocus( GetParent(winpos->hwnd) );  /* Revert focus to parent */
+        if (wndPtr->window)
+        {
+            XUnmapWindow( display, wndPtr->window );
+        }
+        else
+        {
+            RedrawWindow( wndPtr->hwndParent, &wndPtr->rectWindow, 0,
+                          RDW_INVALIDATE | RDW_FRAME |
+                          RDW_ALLCHILDREN | RDW_ERASENOW );
+        }
+        if ((winpos->hwnd == GetFocus()) || IsChild(winpos->hwnd, GetFocus()))
+            SetFocus( GetParent(winpos->hwnd) );  /* Revert focus to parent */
 	if (winpos->hwnd == hwndActive)
 	{
 	      /* Activate previously active window if possible */
@@ -754,37 +878,120 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
 
 					
 /***********************************************************************
+ *           BeginDeferWindowPos   (USER.259)
+ */
+HDWP BeginDeferWindowPos( INT count )
+{
+    HDWP handle;
+    DWP *pDWP;
+
+    if (count <= 0) return 0;
+    handle = USER_HEAP_ALLOC( GMEM_MOVEABLE,
+                              sizeof(DWP) + (count-1)*sizeof(WINDOWPOS) );
+    if (!handle) return 0;
+    pDWP = (DWP *) USER_HEAP_ADDR( handle );
+    pDWP->actualCount    = 0;
+    pDWP->suggestedCount = count;
+    pDWP->valid          = TRUE;
+    pDWP->wMagic         = DWP_MAGIC;
+    return handle;
+}
+
+
+/***********************************************************************
+ *           DeferWindowPos   (USER.260)
+ */
+HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
+                     INT cx, INT cy, WORD flags )
+{
+    DWP *pDWP;
+    int i;
+    HDWP newhdwp = hdwp;
+
+    pDWP = (DWP *) USER_HEAP_ADDR( hdwp );
+    if (!pDWP) return 0;
+    for (i = 0; i < pDWP->actualCount; i++)
+    {
+        if (pDWP->winPos[i].hwnd == hwnd)
+        {
+              /* Merge with the other changes */
+            if (!(flags & SWP_NOZORDER))
+            {
+                pDWP->winPos[i].hwndInsertAfter = hwndAfter;
+            }
+            if (!(flags & SWP_NOMOVE))
+            {
+                pDWP->winPos[i].x = x;
+                pDWP->winPos[i].y = y;
+            }                
+            if (!(flags & SWP_NOSIZE))
+            {
+                pDWP->winPos[i].cx = cx;
+                pDWP->winPos[i].cy = cy;
+            }
+            pDWP->winPos[i].flags &= flags & (SWP_NOSIZE | SWP_NOMOVE |
+                                              SWP_NOZORDER | SWP_NOREDRAW |
+                                              SWP_NOACTIVATE | SWP_NOCOPYBITS |
+                                              SWP_NOOWNERZORDER);
+            pDWP->winPos[i].flags |= flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW |
+                                              SWP_FRAMECHANGED);
+            return hdwp;
+        }
+    }
+    if (pDWP->actualCount >= pDWP->suggestedCount)
+    {
+        newhdwp = USER_HEAP_REALLOC( hdwp,
+                      sizeof(DWP) + pDWP->suggestedCount*sizeof(WINDOWPOS), 0);
+        if (!newhdwp) return 0;
+        pDWP = (DWP *) USER_HEAP_ADDR( newhdwp );
+        pDWP->suggestedCount++;
+    }
+    pDWP->winPos[pDWP->actualCount].hwnd = hwnd;
+    pDWP->winPos[pDWP->actualCount].hwndInsertAfter = hwndAfter;
+    pDWP->winPos[pDWP->actualCount].x = x;
+    pDWP->winPos[pDWP->actualCount].y = y;
+    pDWP->winPos[pDWP->actualCount].cx = cx;
+    pDWP->winPos[pDWP->actualCount].cy = cy;
+    pDWP->winPos[pDWP->actualCount].flags = flags;
+    pDWP->actualCount++;
+    return newhdwp;
+}
+
+
+/***********************************************************************
+ *           EndDeferWindowPos   (USER.261)
+ */
+BOOL EndDeferWindowPos( HDWP hdwp )
+{
+    DWP *pDWP;
+    BOOL res = TRUE;
+    int i;
+
+    pDWP = (DWP *) USER_HEAP_ADDR( hdwp );
+    if (!pDWP) return FALSE;
+    for (i = 0; i < pDWP->actualCount; i++)
+    {
+        if (!(res = WINPOS_InternalSetWindowPos( &pDWP->winPos[i] ))) break;
+    }
+    USER_HEAP_FREE( hdwp );
+    return res;
+}
+
+
+/***********************************************************************
  *           SetWindowPos   (USER.232)
  */
-/* Note: all this code should be in the DeferWindowPos() routines,
- * and SetWindowPos() should simply call them.  This will be implemented
- * some day...
- */
-BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
-		   short cx, short cy, WORD flags )
+BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
+		   INT cx, INT cy, WORD flags )
 {
-    WINDOWPOS *winPos;
-    HANDLE hmem = 0;
-    BOOL res;
+    HDWP hdwp;
 
 #ifdef DEBUG_WIN
     printf( "SetWindowPos: %04X %d %d,%d %dx%d 0x%x\n",
-	    hwnd, hwndInsertAfter, x, y, cx, cy, flags );
+            hwnd, hwndInsertAfter, x, y, cx, cy, flags );
 #endif
-
-    if (!(hmem = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(WINDOWPOS) )))
-	return FALSE;
-    winPos = (WINDOWPOS *)USER_HEAP_ADDR( hmem );
-    winPos->hwnd = hwnd;
-    winPos->hwndInsertAfter = hwndInsertAfter;
-    winPos->x = x;
-    winPos->y = y;
-    winPos->cx = cx;
-    winPos->cy = cy;
-    winPos->flags = flags;
-
-    res = WINPOS_InternalSetWindowPos( winPos );
-
-    USER_HEAP_FREE( hmem );
-    return res;
+    if (!(hdwp = BeginDeferWindowPos( 1 ))) return FALSE;
+    if (!(hdwp = DeferWindowPos( hdwp, hwnd, hwndInsertAfter,
+                                 x, y, cx, cy, flags ))) return FALSE;
+    return EndDeferWindowPos( hdwp );
 }

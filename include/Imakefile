@@ -33,6 +33,4 @@ AllTarget()
 
 depend::
 
-CleanTarget()
-
 includes::

@@ -14,6 +14,7 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include <windows.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "prototypes.h"
@@ -93,8 +94,16 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	lpmb->Title = (LPSTR) malloc(strlen(title) + 1);
 	strcpy(lpmb->Title, title);
 /*	lpmb->Str = str;*/
-	lpmb->Str = (LPSTR) malloc(strlen(str) + 1);
-	strcpy(lpmb->Str, str);
+	if (str && *str)
+	{
+		lpmb->Str = (LPSTR) malloc(strlen(str) + 1);
+		strcpy(lpmb->Str, str);
+	}
+	else
+	{
+		lpmb->Str = (LPSTR) malloc(8);
+		strcpy(lpmb->Str, "Message");
+	}
 	lpmb->wType = type;
 	lpmb->ActiveFlg = TRUE;
 	wndClass.style           = CS_HREDRAW | CS_VREDRAW ;

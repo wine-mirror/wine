@@ -3,10 +3,6 @@
 */
 static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 
-/*
-#define DEBUG_CURSOR
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,13 +18,18 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include "gdi.h"
 #include "wine.h"
 #include "cursor.h"
+#include "stddebug.h"
+/* #define DEBUG_CURSOR   /* */
+/* #undef  DEBUG_CURSOR   /* */
+/* #define DEBUG_RESOURCE /* */
+/* #undef  DEBUG_RESOURCE /* */
+#include "debug.h"
 
 static int ShowCursCount = 0;
 static HCURSOR hActiveCursor;
 static HCURSOR hEmptyCursor = 0;
 RECT	ClipCursorRect;
 extern HINSTANCE hSysRes;
-extern Window winHasCursor;
 extern int desktopX, desktopY;   /* misc/main.c */
 
 static struct { LPSTR name; HCURSOR cursor; } system_cursor[] =
@@ -61,16 +62,11 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     WORD 	*lp;
     CURSORDESCRIP *lpcurdesc;
     CURSORALLOC	  *lpcur;
-    BITMAP 	BitMap;
-    HBITMAP 	hBitMap;
-    HDC 	hMemDC;
     HDC 	hdc;
     int i, j, image_size;
-#ifdef DEBUG_RESOURCE
-    printf("LoadCursor: instance = %04x, name = %08x\n",
-	   instance, cursor_name);
-#endif    
 
+    dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %08x\n",
+	   instance, cursor_name);
     if (!instance)
     {
 	for (i = 0; i < NB_SYS_CURSORS; i++)
@@ -86,41 +82,39 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     if (hCursor == (HCURSOR)NULL) return 0;
     if (!instance) system_cursor[i].cursor = hCursor;
 
-#ifdef DEBUG_CURSOR
-    printf("LoadCursor Alloc hCursor=%X\n", hCursor);
-#endif    
+    dprintf_cursor(stddeb,"LoadCursor Alloc hCursor=%X\n", hCursor);
     lpcur = (CURSORALLOC *)GlobalLock(hCursor);
     memset(lpcur, 0, sizeof(CURSORALLOC));
     if (instance == (HANDLE)NULL) {
 	instance = hSysRes;
 	switch((LONG)cursor_name) {
 	    case IDC_ARROW:
-		lpcur->xcursor = XCreateFontCursor(XT_display, XC_top_left_arrow);
+		lpcur->xcursor = XCreateFontCursor(display, XC_top_left_arrow);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
 	    case IDC_CROSS:
-		lpcur->xcursor = XCreateFontCursor(XT_display, XC_crosshair);
+		lpcur->xcursor = XCreateFontCursor(display, XC_crosshair);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
 	    case IDC_IBEAM:
-		lpcur->xcursor = XCreateFontCursor(XT_display, XC_xterm);
+		lpcur->xcursor = XCreateFontCursor(display, XC_xterm);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
 	    case IDC_WAIT:
-		lpcur->xcursor = XCreateFontCursor(XT_display, XC_watch);
+		lpcur->xcursor = XCreateFontCursor(display, XC_watch);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
 	    case IDC_SIZENS:
-		lpcur->xcursor = XCreateFontCursor(XT_display, XC_sb_v_double_arrow);
+		lpcur->xcursor = XCreateFontCursor(display, XC_sb_v_double_arrow);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
 	    case IDC_SIZEWE:
-		lpcur->xcursor = XCreateFontCursor(XT_display, XC_sb_h_double_arrow);
+		lpcur->xcursor = XCreateFontCursor(display, XC_sb_h_double_arrow);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
             case IDC_SIZENWSE:
             case IDC_SIZENESW:
-                lpcur->xcursor = XCreateFontCursor(XT_display, XC_fleur);
+                lpcur->xcursor = XCreateFontCursor(display, XC_fleur);
                 GlobalUnlock(hCursor);
                 return hCursor;
 	    default:
@@ -129,7 +123,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 	}
 
 #if 1
-    lpcur->xcursor = XCreateFontCursor(XT_display, XC_top_left_arrow);
+    lpcur->xcursor = XCreateFontCursor(display, XC_top_left_arrow);
     GlobalUnlock(hCursor);
     return hCursor;
 #endif
@@ -138,7 +132,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     rsc_mem = RSC_LoadResource(instance, cursor_name, NE_RSCTYPE_GROUP_CURSOR, 
 			       &image_size);
     if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadCursor / Cursor %08X not Found !\n", cursor_name);
+    fprintf(stderr,"LoadCursor / Cursor %08X not Found !\n", cursor_name);
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
@@ -149,18 +143,22 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 	return 0;
 	}
     lpcurdesc = (CURSORDESCRIP *)(lp + 3);
-#ifdef DEBUG_CURSOR
-    printf("LoadCursor / image_size=%d\n", image_size);
-    printf("LoadCursor / curReserved=%X\n", *lp);
-    printf("LoadCursor / curResourceType=%X\n", *(lp + 1));
-    printf("LoadCursor / curResourceCount=%X\n", *(lp + 2));
-    printf("LoadCursor / cursor Width=%d\n", (int)lpcurdesc->Width);
-    printf("LoadCursor / cursor Height=%d\n", (int)lpcurdesc->Height);
-    printf("LoadCursor / cursor curXHotspot=%d\n", (int)lpcurdesc->curXHotspot);
-    printf("LoadCursor / cursor curYHotspot=%d\n", (int)lpcurdesc->curYHotspot);
-    printf("LoadCursor / cursor curDIBSize=%lX\n", (DWORD)lpcurdesc->curDIBSize);
-    printf("LoadCursor / cursor curDIBOffset=%lX\n", (DWORD)lpcurdesc->curDIBOffset);
-#endif
+    dprintf_cursor(stddeb,"LoadCursor / image_size=%d\n", image_size);
+    dprintf_cursor(stddeb,"LoadCursor / curReserved=%X\n", *lp);
+    dprintf_cursor(stddeb,"LoadCursor / curResourceType=%X\n", *(lp + 1));
+    dprintf_cursor(stddeb,"LoadCursor / curResourceCount=%X\n", *(lp + 2));
+    dprintf_cursor(stddeb,"LoadCursor / cursor Width=%d\n", 
+		(int)lpcurdesc->Width);
+    dprintf_cursor(stddeb,"LoadCursor / cursor Height=%d\n", 
+		(int)lpcurdesc->Height);
+    dprintf_cursor(stddeb,"LoadCursor / cursor curXHotspot=%d\n", 
+		(int)lpcurdesc->curXHotspot);
+    dprintf_cursor(stddeb,"LoadCursor / cursor curYHotspot=%d\n", 
+		(int)lpcurdesc->curYHotspot);
+    dprintf_cursor(stddeb,"LoadCursor / cursor curDIBSize=%lX\n", 
+		(DWORD)lpcurdesc->curDIBSize);
+    dprintf_cursor(stddeb,"LoadCursor / cursor curDIBOffset=%lX\n", 
+		(DWORD)lpcurdesc->curDIBOffset);
     lpcur->descriptor = *lpcurdesc;
     GlobalUnlock(rsc_mem);
     GlobalFree(rsc_mem);
@@ -168,7 +166,8 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     	MAKEINTRESOURCE(lpcurdesc->curDIBOffset), 
     	NE_RSCTYPE_CURSOR, &image_size);
     if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadCursor / Cursor %08X Bitmap not Found !\n", cursor_name);
+    	fprintf(stderr,
+		"LoadCursor / Cursor %08X Bitmap not Found !\n", cursor_name);
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
@@ -180,7 +179,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
  	}
 	lp++;
     for (j = 0; j < 16; j++)
-    	printf("%04X ", *(lp + j));
+        dprintf_cursor(stddeb,"%04X ", *(lp + j));
 /*
     if (*lp == sizeof(BITMAPINFOHEADER))
 	lpcur->hBitmap = ConvertInfoBitmap(hdc, (BITMAPINFO *)lp);
@@ -194,24 +193,24 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 	*((char *)lp + 324 - i) = temp;
 	}
     lpcur->pixshape = XCreatePixmapFromBitmapData(
-    	XT_display, DefaultRootWindow(XT_display), 
+    	display, DefaultRootWindow(display), 
         ((char *)lp + 211), 32, 32,
 /*
         lpcurdesc->Width / 2, lpcurdesc->Height / 4, 
 */
-        WhitePixel(XT_display, DefaultScreen(XT_display)), 
-        BlackPixel(XT_display, DefaultScreen(XT_display)), 1);
+        WhitePixel(display, DefaultScreen(display)), 
+        BlackPixel(display, DefaultScreen(display)), 1);
     lpcur->pixmask = XCreatePixmapFromBitmapData(
-    	XT_display, DefaultRootWindow(XT_display), 
+    	display, DefaultRootWindow(display), 
         ((char *)lp + 211), 32, 32,
-        WhitePixel(XT_display, DefaultScreen(XT_display)), 
-        BlackPixel(XT_display, DefaultScreen(XT_display)), 1);
+        WhitePixel(display, DefaultScreen(display)), 
+        BlackPixel(display, DefaultScreen(display)), 1);
     memset(&bkcolor, 0, sizeof(XColor));
     memset(&fgcolor, 0, sizeof(XColor));
-    bkcolor.pixel = WhitePixel(XT_display, DefaultScreen(XT_display)); 
-    fgcolor.pixel = BlackPixel(XT_display, DefaultScreen(XT_display));
-printf("LoadCursor / before XCreatePixmapCursor !\n");
-    lpcur->xcursor = XCreatePixmapCursor(XT_display,
+    bkcolor.pixel = WhitePixel(display, DefaultScreen(display)); 
+    fgcolor.pixel = BlackPixel(display, DefaultScreen(display));
+    dprintf_cursor(stddeb,"LoadCursor / before XCreatePixmapCursor !\n");
+    lpcur->xcursor = XCreatePixmapCursor(display,
  	lpcur->pixshape, lpcur->pixmask, 
  	&fgcolor, &bkcolor, lpcur->descriptor.curXHotspot, 
  	lpcur->descriptor.curYHotspot);
@@ -222,8 +221,8 @@ printf("LoadCursor / before XCreatePixmapCursor !\n");
  	lpcur->descriptor.curYHotspot, 32, 32,
 	(LPSTR)lp + 211, , (LPSTR)lp + 211);
 */
-    XFreePixmap(XT_display, lpcur->pixshape);
-    XFreePixmap(XT_display, lpcur->pixmask);
+    XFreePixmap(display, lpcur->pixshape);
+    XFreePixmap(display, lpcur->pixmask);
     ReleaseDC(GetDesktopWindow(), hdc); 
     GlobalUnlock(hCursor);
     return hCursor;
@@ -245,44 +244,43 @@ HCURSOR CreateCursor(HANDLE instance, short nXhotspot, short nYhotspot,
     HBITMAP 	hBitMap;
     HDC 	hMemDC;
     HDC 	hdc;
-    int i, j;
-#ifdef DEBUG_RESOURCE
-    printf("CreateCursor: inst=%04x nXhotspot=%d  nYhotspot=%d nWidth=%d nHeight=%d\n",  
+
+    dprintf_resource(stddeb,"CreateCursor: inst=%04x nXhotspot=%d  nYhotspot=%d nWidth=%d nHeight=%d\n",  
        instance, nXhotspot, nYhotspot, nWidth, nHeight);
-    printf("CreateCursor: inst=%04x lpANDbitPlane=%08X lpXORbitPlane=%08X\n",
+    dprintf_resource(stddeb,"CreateCursor: inst=%04x lpANDbitPlane=%08X lpXORbitPlane=%08X\n",
 	instance, lpANDbitPlane, lpXORbitPlane);
-#endif    
+
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
     hCursor = GlobalAlloc(GMEM_MOVEABLE, sizeof(CURSORALLOC) + 1024L); 
     if (hCursor == (HCURSOR)NULL) {
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
-    printf("CreateCursor Alloc hCursor=%X\n", hCursor);
+    dprintf_cursor(stddeb,"CreateCursor Alloc hCursor=%X\n", hCursor);
     lpcur = (CURSORALLOC *)GlobalLock(hCursor);
     memset(lpcur, 0, sizeof(CURSORALLOC));
     lpcur->descriptor.curXHotspot = nXhotspot;
     lpcur->descriptor.curYHotspot = nYhotspot;
     lpcur->pixshape = XCreatePixmapFromBitmapData(
-    	XT_display, DefaultRootWindow(XT_display), 
+    	display, DefaultRootWindow(display), 
         lpXORbitPlane, nWidth, nHeight,
-        WhitePixel(XT_display, DefaultScreen(XT_display)), 
-        BlackPixel(XT_display, DefaultScreen(XT_display)), 1);
+        WhitePixel(display, DefaultScreen(display)), 
+        BlackPixel(display, DefaultScreen(display)), 1);
     lpcur->pixmask = XCreatePixmapFromBitmapData(
-    	XT_display, DefaultRootWindow(XT_display), 
+    	display, DefaultRootWindow(display), 
         lpANDbitPlane, nWidth, nHeight,
-        WhitePixel(XT_display, DefaultScreen(XT_display)), 
-        BlackPixel(XT_display, DefaultScreen(XT_display)), 1);
+        WhitePixel(display, DefaultScreen(display)), 
+        BlackPixel(display, DefaultScreen(display)), 1);
     memset(&bkcolor, 0, sizeof(XColor));
     memset(&fgcolor, 0, sizeof(XColor));
-    bkcolor.pixel = WhitePixel(XT_display, DefaultScreen(XT_display)); 
-    fgcolor.pixel = BlackPixel(XT_display, DefaultScreen(XT_display));
-    lpcur->xcursor = XCreatePixmapCursor(XT_display,
+    bkcolor.pixel = WhitePixel(display, DefaultScreen(display)); 
+    fgcolor.pixel = BlackPixel(display, DefaultScreen(display));
+    lpcur->xcursor = XCreatePixmapCursor(display,
  	lpcur->pixshape, lpcur->pixmask, 
  	&fgcolor, &bkcolor, lpcur->descriptor.curXHotspot, 
  	lpcur->descriptor.curYHotspot);
-    XFreePixmap(XT_display, lpcur->pixshape);
-    XFreePixmap(XT_display, lpcur->pixmask);
+    XFreePixmap(display, lpcur->pixshape);
+    XFreePixmap(display, lpcur->pixmask);
     ReleaseDC(GetDesktopWindow(), hdc); 
     GlobalUnlock(hCursor);
     return hCursor;
@@ -306,82 +304,66 @@ BOOL DestroyCursor(HCURSOR hCursor)
 
 
 /**********************************************************************
- *			CURSOR_SetWinCursor
+ *         CURSOR_SetCursor
  *
- * Set the cursor for a given window. To be used instead of SetCursor()
- * wherever possible.
+ * Internal helper function for SetCursor() and ShowCursor().
  */
-HCURSOR CURSOR_SetWinCursor( HWND hwnd, HCURSOR hCursor )
+static BOOL CURSOR_SetCursor( HCURSOR hCursor )
 {
     CURSORALLOC	*lpcur;
-    HCURSOR	hOldCursor;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (!wndPtr || !hCursor) return 0;
-    lpcur = (CURSORALLOC *)GlobalLock(hCursor);
-    hOldCursor = hActiveCursor;
-    if (hActiveCursor != hCursor) ShowCursCount = 0;
-    if (ShowCursCount >= 0)
-	XDefineCursor( display, wndPtr->window, lpcur->xcursor );
-    GlobalUnlock(hCursor);
-    hActiveCursor = hCursor;
-    return hOldCursor;
+    if (!(lpcur = (CURSORALLOC *)GlobalLock(hCursor))) return FALSE;
+    if (rootWindow != DefaultRootWindow(display))
+    {
+        XDefineCursor( display, rootWindow, lpcur->xcursor );
+    }
+    else
+    {
+        HWND hwnd = GetWindow( GetDesktopWindow(), GW_CHILD );
+        while(hwnd)
+        {
+            Window win = WIN_GetXWindow( hwnd );
+            if (win) XDefineCursor( display, win, lpcur->xcursor );
+            hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+        }
+    }
+    GlobalUnlock( hCursor );
 }
-
 
 /**********************************************************************
  *			SetCursor [USER.69]
  */
 HCURSOR SetCursor(HCURSOR hCursor)
 {
-    HDC		hDC;
-    HDC		hMemDC;
-    BITMAP	bm;
-    CURSORALLOC	*lpcur;
-    HCURSOR	hOldCursor;
-    Window 	root, child;
-    int		rootX, rootY;
-    int		childX, childY;
-    unsigned int mousebut;
-#ifdef DEBUG_CURSOR
-    printf("SetCursor / hCursor=%04X !\n", hCursor);
-#endif
-    if (hCursor == (HCURSOR)NULL) return FALSE;
-    lpcur = (CURSORALLOC *)GlobalLock(hCursor);
+    HCURSOR hOldCursor;
+
+    dprintf_cursor(stddeb,"SetCursor / hCursor=%04X !\n", hCursor);
     hOldCursor = hActiveCursor;
-#ifdef DEBUG_CURSOR
-    printf("SetCursor / lpcur->xcursor=%08X !\n", &lpcur->xcursor);
-    XQueryPointer(XT_display, DefaultRootWindow(XT_display),
-	&root, &child, &rootX, &rootY, &childX, &childY, &mousebut);
-    printf("SetCursor / winHasCursor=%08X !\n", winHasCursor);
-    printf("SetCursor / child=%08X !\n", child);
-#endif
-    if (hActiveCursor != hCursor) ShowCursCount = 0;
-    if ((ShowCursCount >= 0) & (winHasCursor != 0)) {
-/*	XUndefineCursor(XT_display, winHasCursor); */
-	XDefineCursor(XT_display, winHasCursor, lpcur->xcursor);
-	}
-    GlobalUnlock(hCursor);
     hActiveCursor = hCursor;
+    if ((hCursor != hOldCursor) || (ShowCursCount < 0))
+    {
+        CURSOR_SetCursor( hCursor );
+    }
+    ShowCursCount = 0;
     return hOldCursor;
 }
+
 
 /**********************************************************************
  *			GetCursor [USER.247]
  */
 HCURSOR GetCursor(void)
 {
-	return hActiveCursor;
+    return hActiveCursor;
 }
+
 
 /**********************************************************************
  *                        SetCursorPos [USER.70]
  */
 void SetCursorPos(short x, short y)
 {
-#ifdef DEBUG_CURSOR
-    printf("SetCursorPos // x=%d y=%d\n", x, y);
-#endif
+    dprintf_cursor(stddeb,"SetCursorPos // x=%d y=%d\n", x, y);
     XWarpPointer( display, None, rootWindow, 0, 0, 0, 0, x, y );
 }
 
@@ -405,9 +387,8 @@ void GetCursorPos(LPPOINT lpRetPoint)
 	lpRetPoint->x = rootX + desktopX;
 	lpRetPoint->y = rootY + desktopY;
     }
-#ifdef DEBUG_CURSOR
-	printf("GetCursorPos // x=%d y=%d\n", lpRetPoint->x, lpRetPoint->y);
-#endif
+    dprintf_cursor(stddeb,
+		"GetCursorPos // x=%d y=%d\n", lpRetPoint->x, lpRetPoint->y);
 }
 
 
@@ -417,26 +398,24 @@ void GetCursorPos(LPPOINT lpRetPoint)
 int ShowCursor(BOOL bShow)
 {
     HCURSOR	hCursor;
-#ifdef DEBUG_CURSOR
-	printf("ShowCursor bShow=%d ShowCount=%d !\n", bShow, ShowCursCount);
-#endif
+
+    dprintf_cursor(stddeb, "ShowCursor(%d), count=%d\n", bShow, ShowCursCount);
+
     if (bShow)
-	ShowCursCount++;
-    else
-	ShowCursCount--;
-    if (ShowCursCount >= 0) {
-/*    	if (hCursor == (HCURSOR)NULL) */
-    	    hCursor = LoadCursor((HINSTANCE)NULL, IDC_ARROW);
-	SetCursor(hCursor);
-	}
-    else {
-/*	XUndefineCursor(XT_display, winHasCursor); */
-	if (hEmptyCursor == (HCURSOR)NULL)
-	    hEmptyCursor = CreateCursor((HINSTANCE)NULL, 1, 1, 1, 1, 
-	    				"\xFF\xFF", "\xFF\xFF");
-	hCursor = SetCursor(hEmptyCursor);
-	hActiveCursor = hCursor;
-	}
+    {
+        if (++ShowCursCount == 0)  /* Time to show it */
+            CURSOR_SetCursor( hActiveCursor );
+    }
+    else  /* Hide it */
+    {
+        if (--ShowCursCount == -1)  /* Time to hide it */
+        {
+            if (!hEmptyCursor)
+                hEmptyCursor = CreateCursor( 0, 1, 1, 1, 1,
+                                             "\xFF\xFF", "\xFF\xFF" );
+            CURSOR_SetCursor( hEmptyCursor );
+        }
+    }
     return 0;
 }
 

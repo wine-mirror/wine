@@ -16,6 +16,13 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "class.h"
 #include "message.h"
+#include "stddebug.h"
+/* #define DEBUG_EVENT /* */
+/* #undef  DEBUG_EVENT /* */
+/* #define DEBUG_KEY   /* */
+/* #undef  DEBUG_KEY   /* */
+#include "debug.h"
+
 
 #ifdef ndef
 #ifndef FamilyAmoeba
@@ -45,7 +52,6 @@ BYTE AsyncKeyStateTable[256];
 static WORD ALTKeyState;
 static HWND captureWnd = 0;
 static BOOL	InputEnabled = TRUE;
-Window winHasCursor = 0;
 
 /* Keyboard translation tables */
 static int special_key[] =
@@ -114,7 +120,6 @@ typedef union
 static BOOL KeyDown = FALSE;
 
 
-#ifdef DEBUG_EVENT
 static char *event_names[] =
 {
     "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
@@ -126,14 +131,12 @@ static char *event_names[] =
     "SelectionClear", "SelectionRequest", "SelectionNotify", "ColormapNotify",
     "ClientMessage", "MappingNotify"
 };
-#endif
 
   /* Event handlers */
-static void EVENT_key( HWND hwnd, XKeyEvent *event );
+static void EVENT_key( XKeyEvent *event );
 static void EVENT_ButtonPress( XButtonEvent *event );
 static void EVENT_ButtonRelease( XButtonEvent *event );
 static void EVENT_MotionNotify( XMotionEvent *event );
-static void EVENT_EnterNotify( XCrossingEvent *event );
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
 static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
@@ -152,15 +155,14 @@ void EVENT_ProcessEvent( XEvent *event )
     XFindContext( display, ((XAnyEvent *)event)->window, winContext, &ptr );
     hwnd = (HWND) (int)ptr;
 
-#ifdef DEBUG_EVENT
-    printf( "Got event %s for hwnd %d\n", event_names[event->type], hwnd );
-#endif
+    dprintf_event(stddeb, "Got event %s for hwnd %d\n", 
+		  event_names[event->type], hwnd );
 
     switch(event->type)
     {
     case KeyPress:
     case KeyRelease:
-	EVENT_key( hwnd, (XKeyEvent*)event );
+	EVENT_key( (XKeyEvent*)event );
 	break;
 	
     case ButtonPress:
@@ -185,10 +187,6 @@ void EVENT_ProcessEvent( XEvent *event )
 	EVENT_MotionNotify( (XMotionEvent*)event );
 	break;
 
-    case EnterNotify:
-	EVENT_EnterNotify( (XCrossingEvent*)event );
-	break;
-
     case FocusOut:
 	EVENT_FocusOut( hwnd, (XFocusChangeEvent*)event );
 	break;
@@ -201,12 +199,10 @@ void EVENT_ProcessEvent( XEvent *event )
 	EVENT_ConfigureNotify( hwnd, (XConfigureEvent*)event );
 	break;
 
-#ifdef DEBUG_EVENT
     default:    
-	printf( "Unprocessed event %s for hwnd %d\n",
+	dprintf_event(stddeb, "Unprocessed event %s for hwnd %d\n",
 	        event_names[event->type], hwnd );
 	break;
-#endif	
     }
 }
 
@@ -257,11 +253,10 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
     rect.top  = event->y - (wndPtr->rectClient.top - wndPtr->rectWindow.top);
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
-    winHasCursor = event->window;
 
-    flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME;
+    flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN;
       /* Erase desktop background synchronously */
-    if (event->window == rootWindow) flags |= RDW_ERASENOW | RDW_NOCHILDREN;
+/*     if (event->window == rootWindow) flags |= RDW_ERASENOW | RDW_NOCHILDREN; */
     RedrawWindow( hwnd, &rect, 0, flags );
 }
 
@@ -271,7 +266,7 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
  *
  * Handle a X key event
  */
-static void EVENT_key( HWND hwnd, XKeyEvent *event )
+static void EVENT_key( XKeyEvent *event )
 {
     char Str[24]; 
     XComposeStatus cs; 
@@ -282,17 +277,13 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 
     int count = XLookupString(event, Str, 1, &keysym, &cs);
     Str[count] = '\0';
-#ifdef DEBUG_KEY
-    printf("WM_KEY??? : keysym=%lX, count=%u / %X / '%s'\n", 
+    dprintf_key(stddeb,"WM_KEY??? : keysym=%lX, count=%u / %X / '%s'\n", 
 	   keysym, count, Str[0], Str);
-#endif
 
     xkey = LOWORD(keysym);
     key_type = HIBYTE(xkey);
     key = LOBYTE(xkey);
-#ifdef DEBUG_KEY
-    printf("            key_type=%X, key=%X\n", key_type, key);
-#endif
+    dprintf_key(stddeb,"            key_type=%X, key=%X\n", key_type, key);
 
     if (key_type == 0xFF)                          /* non-character key */
     {
@@ -337,10 +328,9 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = (KeyDown ? 0 : 1);
 	keylp.lp1.transition = 0;
-#ifdef DEBUG_KEY
-	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
-	printf("            KeyState=%X\n", KeyStateTable[vkey]);
-#endif
+	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
+		    vkey, keylp.lp2 );
+	dprintf_key(stddeb,"            KeyState=%X\n", KeyStateTable[vkey]);
 	hardware_event( ALTKeyState ? WM_SYSKEYDOWN : WM_KEYDOWN, 
 		        vkey, keylp.lp2,
 		        event->x_root - desktopX, event->y_root - desktopY,
@@ -354,9 +344,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 	 */
 	if (count == 1)                /* key has an ASCII representation */
 	{
-#ifdef DEBUG_KEY
-	    printf("WM_CHAR :   wParam=%X\n", (WORD)Str[0] );
-#endif
+	    dprintf_key(stddeb,"WM_CHAR :   wParam=%X\n", (WORD)Str[0] );
 	    PostMessage( GetFocus(), WM_CHAR, (WORD)Str[0], keylp.lp2 );
 	}
     }
@@ -370,10 +358,9 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 	keylp.lp1.context = (event->state & Mod1Mask ? 1 : 0);
 	keylp.lp1.previous = 1;
 	keylp.lp1.transition = 1;
-#ifdef DEBUG_KEY
-	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
-	printf("            KeyState=%X\n", KeyStateTable[vkey]);
-#endif
+	dprintf_key(stddeb,"            wParam=%X, lParam=%lX\n", 
+		    vkey, keylp.lp2 );
+	dprintf_key(stddeb,"            KeyState=%X\n", KeyStateTable[vkey]);
 	hardware_event( ((ALTKeyState || vkey == VK_MENU) ? 
 			 WM_SYSKEYUP : WM_KEYUP), 
 		        vkey, keylp.lp2,
@@ -407,7 +394,6 @@ static void EVENT_ButtonPress( XButtonEvent *event )
     if (buttonNum >= NB_BUTTONS) return;
     MouseButtonsStates[buttonNum] = TRUE;
     AsyncMouseButtonsStates[buttonNum] = TRUE;
-    winHasCursor = event->window;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
@@ -426,7 +412,6 @@ static void EVENT_ButtonRelease( XButtonEvent *event )
 
     if (buttonNum >= NB_BUTTONS) return;    
     MouseButtonsStates[buttonNum] = FALSE;
-    winHasCursor = event->window;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
 		    event->x_root - desktopX, event->y_root - desktopY,
@@ -448,16 +433,6 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 
 
 /**********************************************************************
- *              EVENT_EnterNotify
- */
-static void EVENT_EnterNotify( XCrossingEvent *event )
-{
-    if (captureWnd != 0) return;
-    winHasCursor = event->window;
-}
-
-
-/**********************************************************************
  *              EVENT_ConfigureNotify
  *
  * The ConfigureNotify event is only selected on the desktop window.
@@ -472,27 +447,23 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 /**********************************************************************
  *		SetCapture 	(USER.18)
  */
-HWND SetCapture(HWND wnd)
+HWND SetCapture( HWND hwnd )
 {
-    int rv;
+    Window win;
     HWND old_capture_wnd = captureWnd;
-    WND *wnd_p = WIN_FindWndPtr(wnd);
-    if (wnd_p == NULL)
-	return 0;
-    
-    rv = XGrabPointer(display, wnd_p->window, False, 
-		      ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
-		      GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
 
-    if (rv == GrabSuccess)
+    if (!(win = WIN_GetXWindow( hwnd ))) return 0;
+    if (XGrabPointer(display, win, False, 
+                     ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                     GrabModeAsync, GrabModeAsync,
+                     None, None, CurrentTime ) == GrabSuccess)
     {
-	winHasCursor = wnd_p->window;
-	captureWnd = wnd;
+	captureWnd   = hwnd;
 	return old_capture_wnd;
     }
-    else
-	return 0;
+    else return 0;
 }
+
 
 /**********************************************************************
  *		ReleaseCapture	(USER.19)
@@ -518,9 +489,9 @@ HWND GetCapture()
  */
 BOOL EnableHardwareInput(BOOL bEnable)
 {
-	BOOL bOldState = InputEnabled;
-	printf("EMPTY STUB !!! EnableHardwareInput(%d);\n", bEnable);
-	InputEnabled = bEnable;
-    return (bOldState && !bEnable);
+  BOOL bOldState = InputEnabled;
+  dprintf_event(stdnimp,"EMPTY STUB !!! EnableHardwareInput(%d);\n", bEnable);
+  InputEnabled = bEnable;
+  return (bOldState && !bEnable);
 }
 

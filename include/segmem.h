@@ -77,12 +77,6 @@ extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);
 
 #define FIRST_SELECTOR	8
 
-static __inline__ int Is16bitAddress(void *address)
-{
-    return ((unsigned int) address 
-	    >= (((FIRST_SELECTOR << 3) | 0x0007) << 16));
-}
-
 extern SEGDESC Segments[];
 
 #endif /* SEGMEM_H */

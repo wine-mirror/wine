@@ -6,6 +6,10 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdlib.h>
 #include <errno.h>
 #include "autoconf.h"
+#include "stddebug.h"
+/* #define DEBUG_LDT /* */
+/* #undef DEBUG_LDT  /* */
+#include "debug.h"
 
 #ifdef linux
 #include <linux/unistd.h>
@@ -76,12 +80,11 @@ set_ldt_entry(int entry, unsigned long base, unsigned int limit,
     struct segment_descriptor *sd;
     int ret;
     
-#ifdef DEBUG_LDT
-    printf("set_ldt_entry: entry=%x base=%x limit=%x%s %s-bit contents=%d %s\n",
-           entry, base, limit, limit_in_pages_flag?"-pages":"",
-           seg_32bit_flag?"32":"16",
-           contents, read_only_flag?"read-only":"");
-#endif
+    dprintf_ldt(stddeb,
+	  "set_ldt_entry: entry=%x base=%x limit=%x%s %s-bit contents=%d %s\n",
+          entry, base, limit, limit_in_pages_flag?"-pages":"",
+          seg_32bit_flag?"32":"16",
+          contents, read_only_flag?"read-only":"");
 
     sd = make_sd(base, limit, contents, read_only_flag, seg_32bit_flag, limit_in_pages_flag);
     ret = i386_set_ldt(entry, (union descriptor *)sd, 1);

@@ -22,8 +22,8 @@ static HWND hWndFocus = 0;
  */
 static void FOCUS_SetXFocus( HWND hwnd )
 {
-    WND *wndPtr;
     XWindowAttributes win_attr;
+    Window win;
 
       /* Only mess with the X focus if there's no desktop window */
     if (rootWindow != DefaultRootWindow(display)) return;
@@ -35,20 +35,13 @@ static void FOCUS_SetXFocus( HWND hwnd )
 	return;
     }
 
-      /* Set X focus on the top-level ancestor. */
-	
-      /* Find ancestor */
-    wndPtr = WIN_FindWndPtr( hWndFocus );
-    while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
-	wndPtr = WIN_FindWndPtr( wndPtr->hwndParent );
-    if (!wndPtr) return;
-
-      /* Make sure window is viewable */
-    if (!XGetWindowAttributes( display, wndPtr->window, &win_attr ) ||
-	(win_attr.map_state != IsViewable)) return;
-
       /* Set X focus and install colormap */
-    XSetInputFocus( display, wndPtr->window, RevertToParent, CurrentTime );
+
+    if (!(win = WIN_GetXWindow( hwnd ))) return;
+    if (!XGetWindowAttributes( display, win, &win_attr ) ||
+        (win_attr.map_state != IsViewable))
+        return;  /* If window is not viewable, don't change anything */
+    XSetInputFocus( display, win, RevertToParent, CurrentTime );
     if (COLOR_WinColormap != DefaultColormapOfScreen(screen))
 	XInstallColormap( display, COLOR_WinColormap );
 }

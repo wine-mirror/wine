@@ -11,7 +11,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "gdi.h"
 #include "user.h"
-#include "icon.h"
+#include "sysmetrics.h"
+#include "stddebug.h"
+/* #define DEBUG_DC /* */
+/* #undef  DEBUG_DC /* */
+#include "debug.h"
 
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
@@ -90,10 +94,11 @@ void DCE_Init()
 /***********************************************************************
  *           DCE_GetVisRect
  *
- * Return the visible rectangle of a window, i.e. the client or
+ * Calc the visible rectangle of a window, i.e. the client or
  * window area clipped by the client area of all ancestors.
+ * Return FALSE if the visible region is empty.
  */
-static void DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
+static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 {
     int xoffset, yoffset;
 
@@ -101,9 +106,22 @@ static void DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
     xoffset = lprect->left;
     yoffset = lprect->top;
 
-    while (wndPtr->dwStyle & WS_CHILD)
+    if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+    {
+        SetRectEmpty( lprect );  /* Clip everything */
+        return FALSE;
+    }
+
+    while (wndPtr->hwndParent)
     {
 	WND *parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+        if (!(parentPtr->dwStyle & WS_VISIBLE) ||
+            (parentPtr->flags & WIN_NO_REDRAW) ||
+            (parentPtr->dwStyle & WS_ICONIC))
+        {
+            SetRectEmpty( lprect );  /* Clip everything */
+            return FALSE;
+        }
 	xoffset += parentPtr->rectClient.left;
 	yoffset += parentPtr->rectClient.top;
 	OffsetRect( lprect, parentPtr->rectClient.left,
@@ -111,27 +129,188 @@ static void DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 
 	  /* Warning!! we assume that IntersectRect() handles the case */
 	  /* where the destination is the same as one of the sources.  */
-	IntersectRect( lprect, lprect, &parentPtr->rectClient );
+	if (!IntersectRect( lprect, lprect, &parentPtr->rectClient ))
+            return FALSE;  /* Visible rectangle is empty */
 	wndPtr = parentPtr;
     }
     OffsetRect( lprect, -xoffset, -yoffset );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           DCE_ClipWindows
+ *
+ * Go through the linked list of windows from hwndStart to hwndEnd,
+ * removing from the given region the rectangle of each window offset
+ * by a given amount.  The new region is returned, and the original one
+ * is destroyed.  Used to implement DCX_CLIPSIBLINGS and
+ * DCX_CLIPCHILDREN styles.
+ */
+static HRGN DCE_ClipWindows( HWND hwndStart, HWND hwndEnd,
+                             HRGN hrgn, int xoffset, int yoffset )
+{
+    HRGN hrgnTmp, hrgnNew;
+    WND *wndPtr;
+
+    if (!hwndStart) return hrgn;
+    for (; hwndStart != hwndEnd; hwndStart = wndPtr->hwndNext)
+    {
+        hrgnTmp = hrgnNew = 0;
+        wndPtr = WIN_FindWndPtr( hwndStart );
+        if (!(wndPtr->dwStyle & WS_VISIBLE)) continue;
+        if (!(hrgnTmp = CreateRectRgn( 0, 0, 0, 0 ))) break;
+        if (!(hrgnNew = CreateRectRgn( wndPtr->rectWindow.left + xoffset,
+                                       wndPtr->rectWindow.top + yoffset,
+                                       wndPtr->rectWindow.right + xoffset,
+                                       wndPtr->rectWindow.bottom + yoffset )))
+            break;
+        if (!CombineRgn( hrgnTmp, hrgn, hrgnNew, RGN_DIFF )) break;
+        DeleteObject( hrgn );
+        DeleteObject( hrgnNew );
+        hrgn = hrgnTmp;
+    }
+    if (hwndStart != hwndEnd)  /* something went wrong */
+    {
+        if (hrgnTmp) DeleteObject( hrgnTmp );
+        if (hrgnNew) DeleteObject( hrgnNew );
+        if (hrgn) DeleteObject( hrgn );
+        return 0;
+    }
+    return hrgn;
+}
+
+
+/***********************************************************************
+ *           DCE_GetVisRgn
+ *
+ * Return the visible region of a window, i.e. the client or window area
+ * clipped by the client area of all ancestors, and then optionally
+ * by siblings and children.
+ */
+static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
+{
+    RECT rect;
+    HRGN hrgn;
+    int xoffset, yoffset;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+      /* Get visible rectangle and create a region with it */
+
+    if (!DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &rect ))
+    {
+        return CreateRectRgn( 0, 0, 0, 0 );  /* Visible region is empty */
+    }
+    if (!(hrgn = CreateRectRgnIndirect( &rect ))) return 0;
+
+      /* Clip all children from the visible region */
+
+    if (flags & DCX_CLIPCHILDREN)
+    {
+        if (flags & DCX_WINDOW)
+        {
+            xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
+            yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
+        }
+        else xoffset = yoffset = 0;
+        hrgn = DCE_ClipWindows( wndPtr->hwndChild, 0, hrgn, xoffset, yoffset );
+        if (!hrgn) return 0;
+    }
+
+      /* Clip siblings placed above this window */
+
+    if (flags & DCX_WINDOW)
+    {
+        xoffset = -wndPtr->rectWindow.left;
+        yoffset = -wndPtr->rectWindow.top;
+    }
+    else
+    {
+        xoffset = -wndPtr->rectClient.left;
+        yoffset = -wndPtr->rectClient.top;
+    }
+    if (flags & DCX_CLIPSIBLINGS)
+    {
+        hrgn = DCE_ClipWindows( GetWindow( wndPtr->hwndParent, GW_CHILD ),
+                                hwnd, hrgn, xoffset, yoffset );
+        if (!hrgn) return 0;
+    }
+
+      /* Clip siblings of all ancestors that have the WS_CLIPSIBLINGS style */
+
+    while (wndPtr->dwStyle & WS_CHILD)
+    {
+        hwnd = wndPtr->hwndParent;
+        wndPtr = WIN_FindWndPtr( hwnd );
+        xoffset -= wndPtr->rectClient.left;
+        yoffset -= wndPtr->rectClient.top;
+        hrgn = DCE_ClipWindows( GetWindow( wndPtr->hwndParent, GW_CHILD ),
+                                hwnd, hrgn, xoffset, yoffset );
+        if (!hrgn) return 0;
+    }
+    return hrgn;
+}
+
+
+/***********************************************************************
+ *           DCE_SetDrawable
+ *
+ * Set the drawable, origin and dimensions for the DC associated to
+ * a given window.
+ */
+static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
+{
+    if (!wndPtr)  /* Get a DC for the whole screen */
+    {
+        dc->w.DCOrgX = 0;
+        dc->w.DCOrgY = 0;
+        dc->w.DCSizeX = SYSMETRICS_CXSCREEN;
+        dc->w.DCSizeY = SYSMETRICS_CYSCREEN;
+        dc->u.x.drawable = rootWindow;
+        XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
+    }
+    else
+    {
+        if (flags & DCX_WINDOW)
+        {
+            dc->w.DCOrgX  = wndPtr->rectWindow.left;
+            dc->w.DCOrgY  = wndPtr->rectWindow.top;
+            dc->w.DCSizeX = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
+            dc->w.DCSizeY = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+        }
+        else
+        {
+            dc->w.DCOrgX  = wndPtr->rectClient.left;
+            dc->w.DCOrgY  = wndPtr->rectClient.top;
+            dc->w.DCSizeX = wndPtr->rectClient.right - wndPtr->rectClient.left;
+            dc->w.DCSizeY = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+        }
+        while (!wndPtr->window)
+        {
+            wndPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+            dc->w.DCOrgX += wndPtr->rectClient.left;
+            dc->w.DCOrgY += wndPtr->rectClient.top;
+        }
+        dc->w.DCOrgX -= wndPtr->rectWindow.left;
+        dc->w.DCOrgY -= wndPtr->rectWindow.top;
+        dc->u.x.drawable = wndPtr->window;
+    }
 }
 
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
  */
-/* Unimplemented flags: DCX_CLIPSIBLINGS, DCX_LOCKWINDOWUPDATE, DCX_PARENTCLIP
+/* Unimplemented flags: DCX_LOCKWINDOWUPDATE
  */
 HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
     HANDLE hdce;
-    RECT clipRect;
+    HRGN hrgnVisible;
     HDC hdc = 0;
     DCE * dce;
     DC * dc;
     WND * wndPtr;
-    ICONALLOC   *lpico;
     
     if (hwnd)
     {
@@ -141,17 +320,26 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (flags & DCX_USESTYLE)
     {
+        /* Set the flags according to the window style. */
 	/* Not sure if this is the real meaning of the DCX_USESTYLE flag... */
-	flags &= ~(DCX_CACHE | DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS);
+	flags &= ~(DCX_CACHE | DCX_CLIPCHILDREN |
+                   DCX_CLIPSIBLINGS | DCX_PARENTCLIP);
 	if (wndPtr)
 	{
-	    if (!(wndPtr->flags & (WIN_CLASS_DC | WIN_OWN_DC)))
+            if (!(WIN_CLASS_STYLE(wndPtr) & (CS_OWNDC | CS_CLASSDC)))
 		flags |= DCX_CACHE;
+            if (WIN_CLASS_STYLE(wndPtr) & CS_PARENTDC) flags |= DCX_PARENTCLIP;
 	    if (wndPtr->dwStyle & WS_CLIPCHILDREN) flags |= DCX_CLIPCHILDREN;
 	    if (wndPtr->dwStyle & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
 	}
 	else flags |= DCX_CACHE;
     }
+
+      /* Can only use PARENTCLIP on child windows */
+    if (!wndPtr || !(wndPtr->dwStyle & WS_CHILD)) flags &= ~DCX_PARENTCLIP;
+
+      /* Whole window DC implies children are not clipped */
+    if (flags & DCX_WINDOW) flags &= ~DCX_CLIPCHILDREN;
 
     if (flags & DCX_CACHE)
     {
@@ -173,50 +361,49 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
 
-    if (wndPtr)
+    DCE_SetDrawable( wndPtr, dc, flags );
+    if (hwnd)
     {
-	dc->u.x.drawable = wndPtr->window;
-	if (flags & DCX_WINDOW)
-	{
-	    dc->w.DCOrgX  = 0;
-	    dc->w.DCOrgY  = 0;
-	    dc->w.DCSizeX = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-	    dc->w.DCSizeY = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
-	}
-	else
-	{
-	    dc->w.DCOrgX  = wndPtr->rectClient.left - wndPtr->rectWindow.left;
-	    dc->w.DCOrgY  = wndPtr->rectClient.top - wndPtr->rectWindow.top;
-	    dc->w.DCSizeX = wndPtr->rectClient.right - wndPtr->rectClient.left;
-	    dc->w.DCSizeY = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-	}	
-
-	DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &clipRect );
-	IntersectVisRect( hdc, clipRect.left, clipRect.top,
-			  clipRect.right, clipRect.bottom );
+        if (flags & DCX_PARENTCLIP)  /* Get a VisRgn for the parent */
+        {
+            WND *parentPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+            DWORD newflags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
+                                       DCX_WINDOW);
+            if (parentPtr->dwStyle & WS_CLIPSIBLINGS)
+                newflags |= DCX_CLIPSIBLINGS;
+            hrgnVisible = DCE_GetVisRgn( wndPtr->hwndParent, newflags );
+            if (flags & DCX_WINDOW)
+                OffsetRgn( hrgnVisible, -wndPtr->rectWindow.left,
+                                        -wndPtr->rectWindow.top );
+            else OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
+                                         -wndPtr->rectClient.top );
+        }
+        else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
     }
-    else dc->u.x.drawable = rootWindow;
+    else  /* Get a VisRgn for the whole screen */
+    {
+        hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
+                                     SYSMETRICS_CYSCREEN);
+    }
 
-    if (flags & DCX_CLIPCHILDREN)
-	XSetSubwindowMode( display, dc->u.x.gc, ClipByChildren );
-    else XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors);
+      /* Intersect VisRgn with the given region */
 
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
     {
 	HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
 	if (hrgn)
 	{
-	    if (CombineRgn( hrgn, InquireVisRgn(hdc), hrgnClip,
-			    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF )) {
-		SelectVisRgn( hdc, hrgn );
-	    }
-	    DeleteObject( hrgn );
+            CombineRgn( hrgn, hrgnVisible, hrgnClip,
+                       (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
+	    DeleteObject( hrgnVisible );
+            hrgnVisible = hrgn;
 	}
     }
+    SelectVisRgn( hdc, hrgnVisible );
+    DeleteObject( hrgnVisible );
 
-#ifdef DEBUG_DC
-    printf( "GetDCEx(%d,%d,0x%x): returning %d\n", hwnd, hrgnClip, flags, hdc);
-#endif
+    dprintf_dc(stddeb, "GetDCEx(%d,%d,0x%x): returning %d\n", 
+	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
 
@@ -240,7 +427,7 @@ HDC GetWindowDC( HWND hwnd )
     {
 	WND * wndPtr;
 	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-	if (wndPtr->dwStyle & WS_CLIPCHILDREN) flags |= DCX_CLIPCHILDREN;
+/*	if (wndPtr->dwStyle & WS_CLIPCHILDREN) flags |= DCX_CLIPCHILDREN; */
 	if (wndPtr->dwStyle & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
     }
     return GetDCEx( hwnd, 0, flags );
@@ -255,9 +442,7 @@ int ReleaseDC( HWND hwnd, HDC hdc )
     HANDLE hdce;
     DCE * dce = NULL;
     
-#ifdef DEBUG_DC
-    printf( "ReleaseDC: %d %d\n", hwnd, hdc );
-#endif
+    dprintf_dc(stddeb, "ReleaseDC: %d %d\n", hwnd, hdc );
         
     for (hdce = firstDCE; (hdce); hdce = dce->hNext)
     {

@@ -6,6 +6,4 @@ AllTarget()
 
 depend::
 
-CleanTarget()
-
 includes::

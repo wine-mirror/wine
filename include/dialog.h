@@ -16,15 +16,15 @@
    */
 typedef struct
 {
-    LONG      msgResult;
-    FARPROC   dlgProc;
-    LONG      userInfo;
-    HWND      hwndFocus;
-    HFONT     hUserFont;
-    HMENU     hMenu;
-    WORD      xBaseUnit;
+    LONG      msgResult;   /* Result of EndDialog() / Default button id */
+    WNDPROC   dlgProc;     /* Dialog procedure */
+    LONG      userInfo;    /* User information (for DWL_USER) */
+    HWND      hwndFocus;   /* Current control with focus */
+    HFONT     hUserFont;   /* Dialog font */
+    HMENU     hMenu;       /* Dialog menu */
+    WORD      xBaseUnit;   /* Dialog units (depends on the font) */
     WORD      yBaseUnit;
-    WORD      fEnd;
+    WORD      fEnd;        /* EndDialog() called for this dialog */
     HANDLE    hDialogHeap;
 } DIALOGINFO;
 

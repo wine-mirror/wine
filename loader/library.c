@@ -1,11 +1,8 @@
 /*
- *        Modules & Libraries functions
+ *        Module & Library functions
  */
-static char Copyright[] = "Copyright  Martin Ayotte, 1994";
+static char Copyright[] = "Copyright 1993, 1994 Martin Ayotte, Robert J. Amstadt, Erik Bos";
 
-/*
-#define DEBUG_MODULE
-*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,18 +10,31 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "neexe.h"
+#include "segmem.h"
+#include "dlls.h"
 #include "wine.h"
+#include "wineopts.h"
+#include "arch.h"
+#include "options.h"
 #include "prototypes.h"
 #include "windows.h"
-#include "dlls.h"
 #include "task.h"
 #include "toolhelp.h"
+#include "stddebug.h"
+/* #define DEBUG_MODULE /* */
+/* #undef DEBUG_MODULE  /* */
+#include "debug.h"
 
-extern struct  w_files *wine_files;
+extern char WindowsPath[256];
 extern struct dll_name_table_entry_s dll_builtin_table[];
+extern char *GetDosFileName(char *);
 
-struct w_files *GetFileInfo(HANDLE);
-char *GetDosFileName(char *);
+extern HANDLE hSysRes;
+
+struct w_files *wine_files = NULL;
+static char *DLL_Extensions[] = { "dll", NULL };
+static char *EXE_Extensions[] = { "exe", NULL };
 
 #define IS_BUILTIN_DLL(handle) ((handle >> 8) == 0xff) 
 
@@ -46,6 +56,196 @@ void ExtractDLLName(char *libname, char *temp)
 		temp[i] = 0;
 		break;
 	}
+}
+
+struct w_files *
+GetFileInfo(unsigned short instance)
+{
+    register struct w_files *w = wine_files;
+
+    while (w && w->hinstance != instance)
+	w = w->next;
+    
+    return w;
+}
+
+int IsDLLLoaded(char *name)
+{
+	struct w_files *wpnt;
+
+	if(FindDLLTable(name))
+		return 1;
+
+	for(wpnt = wine_files; wpnt; wpnt = wpnt->next)
+		if(strcmp(wpnt->name, name) == 0)
+			return 1;
+
+	return 0;
+}
+
+void InitDLL(struct w_files *wpnt)
+{
+	if (wpnt->ne) 
+		InitNEDLL(wpnt);
+	else
+		InitPEDLL(wpnt);
+}
+
+void InitializeLoadedDLLs(struct w_files *wpnt)
+{
+    static flagReadyToRun = 0;
+    struct w_files *final_wpnt;
+
+    printf("InitializeLoadedDLLs %08X\n", wpnt);
+
+    if (wpnt == NULL)
+    {
+	flagReadyToRun = 1;
+	fprintf(stderr, "Initializing DLLs\n");
+    }
+    
+    if (!flagReadyToRun)
+	return;
+
+#if 1
+    if (wpnt != NULL)
+	fprintf(stderr, "Initializing %s\n", wpnt->name);
+#endif
+
+    /*
+     * Initialize libraries
+     */
+    if (!wpnt)
+    {
+	wpnt = wine_files;
+	final_wpnt = NULL;
+    }
+    else
+    {
+	final_wpnt = wpnt->next;
+    }
+    
+    for( ; wpnt != final_wpnt; wpnt = wpnt->next)
+	InitDLL(wpnt);
+}
+
+/**********************************************************************
+ *			LoadImage
+ * Load one executable into memory
+ */
+HINSTANCE LoadImage(char *module, int filetype, int change_dir)
+{
+    HINSTANCE handle;
+    struct w_files *wpnt, *wpnt1;
+    char buffer[256], header[2], modulename[64], *fullname;
+
+    ExtractDLLName(module, modulename);
+    printf("LoadImage [%s]\n", module);
+    /* built-in one ? */
+    if (FindDLLTable(modulename)) {
+	return GetModuleHandle(modulename);
+    }
+    
+    /* already loaded ? */
+    for (wpnt = wine_files ; wpnt ; wpnt = wpnt->next)
+    	if (strcasecmp(wpnt->name, modulename) == 0)
+    		return wpnt->hinstance;
+
+    /*
+     * search file
+     */
+    fullname = FindFile(buffer, sizeof(buffer), module, 
+			(filetype == EXE ? EXE_Extensions : DLL_Extensions), 
+			WindowsPath);
+    if (fullname == NULL)
+    {
+    	fprintf(stderr, "LoadImage: I can't find %s.dll | %s.exe !\n",
+		module, module);
+	return 2;
+    }
+
+    fullname = GetDosFileName(fullname);
+    
+    fprintf(stderr,"LoadImage: loading %s (%s)\n           [%s]\n", 
+	    module, buffer, fullname);
+
+    if (change_dir && fullname)
+    {
+	char dirname[256];
+	char *p;
+
+	strcpy(dirname, fullname);
+	p = strrchr(dirname, '\\');
+	*p = '\0';
+
+	DOS_SetDefaultDrive(dirname[0] - 'A');
+	DOS_ChangeDir(dirname[0] - 'A', dirname + 2);
+    }
+
+    /* First allocate a spot to store the info we collect, and add it to
+     * our linked list if we could load the file.
+     */
+
+    wpnt = (struct w_files *) malloc(sizeof(struct w_files));
+
+    /*
+     * Open file for reading.
+     */
+    wpnt->fd = open(buffer, O_RDONLY);
+    if (wpnt->fd < 0)
+	return 2;
+
+    /* 
+     * Establish header pointers.
+     */
+    wpnt->filename = strdup(buffer);
+    wpnt->name = strdup(modulename);
+
+    /* read mz header */
+    wpnt->mz_header = (struct mz_header_s *) malloc(sizeof(struct mz_header_s));;
+    lseek(wpnt->fd, 0, SEEK_SET);
+    if (read(wpnt->fd, wpnt->mz_header, sizeof(struct mz_header_s)) !=
+	sizeof(struct mz_header_s))
+    {
+	myerror("Unable to read MZ header from file");
+    }
+    if (wpnt->mz_header->must_be_0x40 != 0x40)
+	myerror("This is not a Windows program");
+
+    /* read first two bytes to determine filetype */
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
+    read(wpnt->fd, &header, sizeof(header));
+
+    handle = 0;
+    if (header[0] == 'N' && header[1] == 'E')
+    	handle = LoadNEImage(wpnt);
+    if (header[0] == 'P' && header[1] == 'E')
+	handle = LoadPEImage(wpnt);
+    wpnt->hinstance = handle;
+
+    if (handle > 32) {
+	/* ok, loaded, add to the end of the list */
+	if(wine_files == NULL)
+		wine_files = wpnt;
+	else {
+		wpnt1 = wine_files;
+		while(wpnt1->next)
+			wpnt1 =  wpnt1->next;
+		wpnt1->next  = wpnt;
+	}
+	wpnt->next = NULL;
+
+	return handle;
+    } else {
+	fprintf(stderr, "wine: (%s) unknown fileformat !\n", wpnt->filename);
+
+	close(wpnt->fd);
+	free(wpnt->filename);
+	free(wpnt->name);
+	free(wpnt);
+
+	return 14;
+    }
 }
 
 /**********************************************************************
@@ -174,22 +374,27 @@ HANDLE LoadLibrary(LPSTR libname)
 	return h;
 }
 
-
 /**********************************************************************
  *				FreeLibrary	[KERNEL.96]
  */
 void FreeLibrary(HANDLE hLib)
 {
-    printf("FreeLibrary(%04X);\n", hLib);
+	struct w_files *wpnt;
+	printf("FreeLibrary(%04X);\n", hLib);
 
 	/* built-in dll ? */
-	if (IS_BUILTIN_DLL(hLib)) 
+	if (IS_BUILTIN_DLL(hLib) || hLib == 0 || hLib == hSysRes) 
 	    	return;
 
 /*
 	while (lpMod != NULL) {
 		if (lpMod->hInst == hLib) {
 			if (lpMod->Count == 1) {
+				wpnt = GetFileInfo(hLib);
+				if (wpnt->ne)
+					NEunloadImage(wpnt);
+				else
+					PEunloadImage(wpnt);
 				if (hLib != (HANDLE)NULL) GlobalFree(hLib);
 				if (lpMod->ModuleName != NULL) free(lpMod->ModuleName);
 				if (lpMod->FileName != NULL) free(lpMod->FileName);
@@ -215,7 +420,7 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 #ifdef WINELIB
     WINELIB_UNIMP ("GetProcAddress");
 #else
-    int		i, sel, addr, ret;
+    int		sel, addr, ret;
     register struct w_files *w = wine_files;
     int 	ordinal, len;
     char 	* cpnt;
@@ -275,11 +480,11 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
     {
 	AnsiUpper(proc_name);
 	printf("GetProcAddress: %04X, '%s'\n", hModule, proc_name);
-	cpnt = w->nrname_table;
+	cpnt = w->ne->nrname_table;
 	while(TRUE) 
 	{
-	    if (((int) cpnt)  - ((int)w->nrname_table) >  
-		w->ne_header->nrname_tab_length)  return NULL;
+	    if (((int) cpnt)  - ((int)w->ne->nrname_table) >  
+		w->ne->ne_header->nrname_tab_length)  return NULL;
 	    len = *cpnt++;
 	    strncpy(C, cpnt, len);
 	    C[len] = '\0';
@@ -343,24 +548,24 @@ FillModStructLoaded(MODULEENTRY *lpModule, struct w_files *dll)
 }
 
 /**********************************************************************
- *		ModuleFirst [TOOHELP.59]
+ *		ModuleFirst [TOOLHELP.59]
  */
 BOOL ModuleFirst(MODULEENTRY *lpModule)
 {
-	printf("ModuleFirst(%08X)\n", lpModule);
+	printf("ModuleFirst(%08X)\n", (int) lpModule);
 	
 	FillModStructBuiltIn(lpModule, &dll_builtin_table[0]);
 	return TRUE;
 }
 
 /**********************************************************************
- *		ModuleNext [TOOHELP.60]
+ *		ModuleNext [TOOLHELP.60]
  */
 BOOL ModuleNext(MODULEENTRY *lpModule)
 {
 	struct w_files *w;
 
-	printf("ModuleNext(%08X)\n", lpModule);
+	printf("ModuleNext(%08X)\n", (int) lpModule);
 
 	if (IS_BUILTIN_DLL(lpModule->hModule)) {
 		/* last built-in ? */
@@ -383,13 +588,13 @@ BOOL ModuleNext(MODULEENTRY *lpModule)
 }
 
 /**********************************************************************
- *		ModuleFindHandle [TOOHELP.62]
+ *		ModuleFindHandle [TOOLHELP.62]
  */
 HMODULE ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule)
 {
 	struct w_files *w;
 
-	printf("ModuleFindHandle(%08X, %04X)\n", lpModule, hModule);
+	printf("ModuleFindHandle(%08X, %04X)\n", (int) lpModule, (int)hModule);
 
 	/* built-in dll ? */
 	if (IS_BUILTIN_DLL(hModule)) {
@@ -406,7 +611,7 @@ HMODULE ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule)
 }
 
 /**********************************************************************
- *		ModuleFindName [TOOHELP.61]
+ *		ModuleFindName [TOOLHELP.61]
  */
 HMODULE ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName)
 {

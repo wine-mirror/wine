@@ -26,6 +26,12 @@ struct thunk_s
     unsigned char thunk[10];
 };
 
+static __inline__ int Is16bitAddress(void *address)
+{
+    return ((unsigned int) address 
+	    >= (((FIRST_SELECTOR << 3) | 0x0007) << 16));
+}
+
 /**********************************************************************
  *					PushOn16
  */
@@ -140,9 +146,24 @@ void FreeProcInstance(FARPROC func)
 }
 
 /**********************************************************************
+ *	    GetCodeHandle    (KERNEL.93)
+ */
+HANDLE GetCodeHandle( FARPROC proc )
+{
+    struct thunk_s *tp = (struct thunk_s *)proc;
+
+    /* Return the code segment containing 'proc'. */
+    /* Not sure if this is really correct (shouldn't matter that much). */
+    printf( "STUB: GetCodeHandle(%p) returning %x\n",
+            tp->thunk[8] + (tp->thunk[9] << 8) );
+    return tp->thunk[8] + (tp->thunk[9] << 8);
+}
+
+
+/**********************************************************************
  *					CallWindowProc    (USER.122)
  */
-LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
+LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam )
 {
     SpyMessage(hwnd, message, wParam, lParam);

@@ -6,12 +6,15 @@
 
 static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 
+#include <string.h>
 #include "windows.h"
 #include "gdi.h"
 #include "metafile.h"
 #include "prototypes.h"
-
-#define DEBUG_METAFILE
+#include "stddebug.h"
+/* #define DEBUG_METAFILE /* */
+/* #undef  DEBUG_METAFILE /* */
+#include "debug.h"
 
 #define HTINCR  10      /* handle table allocation size increment */
 
@@ -29,9 +32,7 @@ HANDLE CreateMetaFile(LPSTR lpFilename)
     METAHEADER *mh;
     HANDLETABLE *ht;
 
-#ifdef DEBUG_METAFILE
-    printf("CreateMetaFile: %s\n", lpFilename);
-#endif
+    dprintf_metafile(stddeb,"CreateMetaFile: %s\n", lpFilename);
 
     handle = GDI_AllocObject(sizeof(DC), METAFILE_DC_MAGIC);
     if (!handle) return 0;
@@ -94,9 +95,7 @@ HMETAFILE CloseMetaFile(HDC hdc)
     char buffer[15];
     METARECORD *mr = (METARECORD *)&buffer;
 
-#ifdef DEBUG_METAFILE
-    printf("CloseMetaFile\n");
-#endif
+    dprintf_metafile(stddeb,"CloseMetaFile\n");
 
     dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
     if (!dc) return 0;
@@ -442,7 +441,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 	break;
 
     default:
-	printf("PlayMetaFileRecord: Unknown record type %x\n",
+	fprintf(stderr,"PlayMetaFileRecord: Unknown record type %x\n",
 	                                      mr->rdFunction);
     }
 }
@@ -898,7 +897,7 @@ BOOL MF_MetaPoly(DC *dc, short func, LPPOINT pt, short count)
 BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,
 	       short height, HDC hdcSrc, short xSrc, short ySrc, DWORD rop)
 {
-    printf("MF_BitBlt: not implemented yet\n");
+    dprintf_metafile(stdnimp,"MF_BitBlt: not implemented yet\n");
 }
 
 
@@ -909,5 +908,5 @@ BOOL MF_StretchBlt(DC *dcDest, short xDest, short yDest, short widthDest,
 		   short heightDest, HDC hdcSrc, short xSrc, short ySrc, 
 		   short widthSrc, short heightSrc, DWORD rop)
 {
-    printf("MF_StretchBlt: not implemented yet\n");
+    dprintf_metafile(stdnimp,"MF_StretchBlt: not implemented yet\n");
 }

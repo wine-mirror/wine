@@ -13,8 +13,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "win.h"
 #include "dce.h"
-
+#include "stddebug.h"
 /* #define DEBUG_CLASS /* */
+/* #undef  DEBUG_CLASS /* */
+#include "debug.h"
 
 
 static HCLASS firstClass = 0;
@@ -93,11 +95,9 @@ ATOM RegisterClass( LPWNDCLASS class )
     HCLASS handle, prevClass;
     int classExtra;
 
-#ifdef DEBUG_CLASS
-    printf( "RegisterClass: wndproc=%08x hinst=%d name='%s' background %x\n", 
+    dprintf_class(stddeb, "RegisterClass: wndproc=%08x hinst=%d name='%s' background %x\n", 
 	    class->lpfnWndProc, class->hInstance, class->lpszClassName,
 	    class->hbrBackground );
-#endif
 
       /* Check if a class with this name already exists */
 
@@ -177,7 +177,7 @@ BOOL UnregisterClass( LPSTR className, HANDLE instance )
 	}
 	if (!prevClass)
 	{
-	    printf( "ERROR: Class list corrupted\n" );
+	    fprintf(stderr, "ERROR: Class list corrupted\n" );
 	    return FALSE;
 	}
 	prevClassPtr->hNext = classPtr->hNext;

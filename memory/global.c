@@ -1,7 +1,6 @@
 static char RCSId[] = "$Id: global.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
-/* #define DEBUG_HEAP /* */
 #define GLOBAL_SOURCE
 
 #include <stdio.h>
@@ -11,6 +10,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "toolhelp.h"
 #include "heap.h"
 #include "segmem.h"
+#include "stddebug.h"
+/* #define DEBUG_HEAP /* */
+/* #undef  DEBUG_HEAP /* */
+#include "debug.h"
+
 
 GDESC *GlobalList = NULL;
 static unsigned short next_unused_handle = 1;
@@ -99,7 +103,7 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	s = CreateNewSegments(0, 0, 0x10000, n_segments);
 	if (s == NULL) 
 	{
-	    printf("GlobalGetFreeSegments // bad CreateNewSegments !\n");
+	    fprintf(stderr,"GlobalGetFreeSegments // bad CreateNewSegments !\n");
 	    return NULL;
 	}
 	for (count = 0; count < n_segments; count++, s++)
@@ -107,7 +111,7 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 	    g = (GDESC *) malloc(sizeof(*g));
 	    if (g == NULL) 
 	    {
-		printf("GlobalGetFreeSegments // bad GDESC malloc !\n");
+		fprintf(stderr,"GlobalGetFreeSegments // bad GDESC malloc !\n");
 		return NULL;
 	    }
 	    g->prev         = g_prev;
@@ -145,7 +149,7 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
     {
 	if (g == NULL) 
 	{
-	    printf("GlobalGetFreeSegments // bad Segments chain !\n");
+	    fprintf(stderr,"GlobalGetFreeSegments // bad Segments chain !\n");
 	    return NULL;
 	}
 	g->sequence     = i + 1;
@@ -178,9 +182,9 @@ GlobalAlloc(unsigned int flags, unsigned long size)
     GDESC *g_prev;
     void *m;
 
-#ifdef DEBUG_HEAP
-	printf("GlobalAlloc flags %4X, size %d\n", flags, size);
-#endif
+    dprintf_heap(stddeb,"GlobalAlloc flags %4X, size %d\n", flags, size);
+
+    if (size == 0) size = 1;
 
     /*
      * If this block is fixed or very big we need to allocate entire
@@ -243,9 +247,7 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 	 * We have a new block.  Let's create a GDESC entry for it.
 	 */
 	g = malloc(sizeof(*g));
-#ifdef DEBUG_HEAP
-	printf("New GDESC %08x\n", g);
-#endif
+	dprintf_heap(stddeb,"New GDESC %08x\n", g);
 	if (g == NULL)
 	    return 0;
 
@@ -268,9 +270,7 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 	if ((next_unused_handle & 7) == 7)
 	    next_unused_handle++;
 	
-#ifdef DEBUG_HEAP
-	printf("GlobalAlloc: returning %04x\n", g->handle);
-#endif
+	dprintf_heap(stddeb,"GlobalAlloc: returning %04x\n", g->handle);
 	return g->handle;
     }
 }
@@ -344,9 +344,7 @@ GlobalLock(unsigned int block)
 
     g->lock_count++;
 
-#ifdef DEBUG_HEAP
-    printf("GlobalLock: returning %08x\n", g->addr);
-#endif
+    dprintf_heap(stddeb,"GlobalLock: returning %08x\n", g->addr);
     return g->addr;
 }
 
@@ -804,8 +802,8 @@ DWORD GetFreeSpace(UINT wFlags)
     for (i = 0; i < 512; i++)
 	if (free_map[i] == 1)
 	    total_free++;
-    
-    printf("GetFreeSpace // return %ld !\n", total_free << 16);
+
+    dprintf_heap(stddeb,"GetFreeSpace // return %ld !\n", total_free << 16);
     return total_free << 16;
 }
 
@@ -815,4 +813,13 @@ DWORD GetFreeSpace(UINT wFlags)
 BOOL MemManInfo(LPMEMMANINFO lpmmi)
 {
 	return 1;
+}
+
+/***********************************************************************
+ *           SetSwapAreaSize   (KERNEL.106)
+ */
+LONG SetSwapAreaSize( WORD size )
+{
+    printf( "STUB: SetSwapAreaSize(%d)\n", size );
+    return MAKELONG( size, 0xffff );
 }

@@ -1,21 +1,28 @@
 /*
  * text functions
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
+#include <stdlib.h>
 #include <X11/Xatom.h>
 #include "windows.h"
 #include "gdi.h"
 #include "metafile.h"
+#include "stddebug.h"
+/* #define DEBUG_TEXT /* */
+/* #undef  DEBUG_TEXT /* */
+#include "debug.h"
 
 #define TAB     9
 #define LF     10
 #define CR     13
 #define SPACE  32
 #define PREFIX 38
+
+#define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
 
 static int tabstop = 8;
 static int tabwidth;
@@ -182,10 +189,8 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;
 
-#ifdef DEBUG_TEXT
-    printf( "DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str, count,
+    dprintf_text(stddeb,"DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str, count,
 	   rect->left, rect->top, rect->right, rect->bottom);
-#endif
 
     if (count == -1) count = strlen(str);
     strPtr = str;
@@ -232,7 +237,9 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
 	}
 	if (!(flags & DT_CALCRECT))
-	    if (!TextOut(hdc, x, y, line, len)) return 0;
+	    if (!ExtTextOut( hdc, x, y, (flags & DT_NOCLIP) ? 0 : ETO_CLIPPED,
+                             rect, line, len, NULL )) return 0;
+
 	if (prefix_offset != -1)
 	{
 	    HPEN hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
@@ -260,41 +267,67 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 
 
 /***********************************************************************
- *           TextOut    (GDI.33)
+ *           ExtTextOut    (GDI.351)
  */
-BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
+BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
+                 LPSTR str, WORD count, LPINT lpDx )
 {
     int dir, ascent, descent, i;
     XCharStruct info;
     XFontStruct *font;
+    RECT rect;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC );
 	if (!dc) return FALSE;
-	MF_TextOut(dc, x, y, str, count);
+	MF_TextOut( dc, x, y, str, count );
 	return TRUE;
     }
 
     if (!DC_SetupGCForText( dc )) return TRUE;
     font = dc->u.x.font.fstruct;
 
+    dprintf_text(stddeb,"ExtTextOut: %d,%d '%s', %d  flags=%d rect=%d,%d,%d,%d\n",
+            x, y, str, count, flags,
+            lprect->left, lprect->top, lprect->right, lprect->bottom );
+
+      /* Setup coordinates */
+
     if (dc->w.textAlign & TA_UPDATECP)
     {
 	x = dc->w.CursPosX;
 	y = dc->w.CursPosY;
     }
-#ifdef DEBUG_TEXT
-    printf( "TextOut: %d,%d '%s', %d\n", x, y, str, count );
-#endif
     x = XLPTODP( dc, x );
     y = YLPTODP( dc, y );
+    if (flags & (ETO_OPAQUE | ETO_CLIPPED))  /* There's a rectangle */
+    {
+        rect.left   = XLPTODP( dc, lprect->left );
+        rect.right  = XLPTODP( dc, lprect->right );
+        rect.top    = YLPTODP( dc, lprect->top );
+        rect.bottom = YLPTODP( dc, lprect->bottom );
+        if (rect.right < rect.left) SWAP_INT( rect.left, rect.right );
+        if (rect.bottom < rect.top) SWAP_INT( rect.top, rect.bottom );
+    }
+
+      /* Draw the rectangle */
+
+    if (flags & ETO_OPAQUE)
+    {
+        XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+        XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                        dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
+                        rect.right-rect.left, rect.bottom-rect.top );
+    }
+    if (!count) return TRUE;  /* Nothing more to do */
+
+      /* Compute text starting position */
 
     XTextExtents( font, str, count, &dir, &ascent, &descent, &info );
     info.width += count*dc->w.charExtra + dc->w.breakExtra*dc->w.breakCount;
-
-      /* Compute starting position */
+    if (lpDx) for (i = 0; i < count; i++) info.width += lpDx[i];
 
     switch( dc->w.textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
     {
@@ -322,52 +355,75 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
 	  break;
     }
 
-      /* Draw text */
+      /* Set the clip region */
 
-    if (!dc->w.charExtra && !dc->w.breakExtra)
+    if (flags & ETO_CLIPPED)
     {
-	if (dc->w.backgroundMode == TRANSPARENT)
-	    XDrawString( XT_display, dc->u.x.drawable, dc->u.x.gc, 
-			 dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
-	else
-	    XDrawImageString( XT_display, dc->u.x.drawable, dc->u.x.gc,
-			      dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
+        SaveVisRgn( hdc );
+        IntersectVisRect( hdc, rect.left, rect.top, rect.right, rect.bottom );
     }
-    else
+
+      /* Draw the text background if necessary */
+
+    if (dc->w.backgroundMode != TRANSPARENT)
     {
-	char * p = str;
-	int xchar = x;
-	for (i = 0; i < count; i++, p++)
-	{
-	    XCharStruct * charStr;
-	    unsigned char ch = *p;
-	    int extraWidth;
-	    
-	    if ((ch < font->min_char_or_byte2)||(ch > font->max_char_or_byte2))
-		ch = font->default_char;
-	    if (!font->per_char) charStr = &font->min_bounds;
-	    else charStr = font->per_char + ch - font->min_char_or_byte2;
+          /* If rectangle is opaque and clipped, do nothing */
+        if (!(flags & ETO_CLIPPED) || !(flags & ETO_OPAQUE))
+        {
+              /* Only draw if rectangle is not opaque or if some */
+              /* text is outside the rectangle */
+            if (!(flags & ETO_OPAQUE) ||
+                (x < rect.left) ||
+                (x + info.width >= rect.right) ||
+                (y-font->ascent < rect.top) ||
+                (y+font->descent >= rect.bottom))
+            {
+                XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+                XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                                dc->w.DCOrgX + x,
+                                dc->w.DCOrgY + y - font->ascent,
+                                info.width,
+                                font->ascent + font->descent );
+            }
+        }
+    }
+    
+      /* Draw the text */
 
-	    extraWidth = dc->w.charExtra;
-	    if (ch == dc->u.x.font.metrics.tmBreakChar)
-		extraWidth += dc->w.breakExtra;
+    XSetForeground( display, dc->u.x.gc, dc->w.textPixel );
+    if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
+    {
+        XDrawString( display, dc->u.x.drawable, dc->u.x.gc, 
+                     dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
+    }
+    else  /* Now the fun begins... */
+    {
+        XTextItem *items, *pitem;
 
-	    if (dc->w.backgroundMode == TRANSPARENT)
-		XDrawString( XT_display, dc->u.x.drawable, dc->u.x.gc,
-			     dc->w.DCOrgX + xchar, dc->w.DCOrgY + y, p, 1 );
-	    else
-	    {
-		XDrawImageString( XT_display, dc->u.x.drawable, dc->u.x.gc,
-				  dc->w.DCOrgX + xchar, dc->w.DCOrgY + y, p, 1 );
-		XSetForeground( XT_display, dc->u.x.gc, dc->w.backgroundPixel);
-		XFillRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-			        dc->w.DCOrgX + xchar + charStr->width,
-			        dc->w.DCOrgY + y - font->ascent,
-			        extraWidth, font->ascent + font->descent );
-		XSetForeground( XT_display, dc->u.x.gc, dc->w.textPixel );
-	    }
-	    xchar += charStr->width + extraWidth;
-	}
+        items = malloc( count * sizeof(XTextItem) );
+        for (i = 0, pitem = items; i < count; i++, pitem++)
+        {
+            pitem->chars  = str + i;
+            pitem->nchars = 1;
+            pitem->font   = None;
+            if (i == 0)
+            {
+                pitem->delta = 0;
+                continue;  /* First iteration -> no delta */
+            }
+            pitem->delta = dc->w.charExtra;
+            if (str[i] == dc->u.x.font.metrics.tmBreakChar)
+                pitem->delta += dc->w.breakExtra;
+            if (lpDx)
+            {
+                INT width;
+                GetCharWidth( hdc, str[i], str[i], &width );
+                pitem->delta += lpDx[i-1] - width;
+            }
+        }
+        XDrawText( display, dc->u.x.drawable, dc->u.x.gc,
+                   dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, count );
+        free( items );
     }
 
       /* Draw underline and strike-out if needed */
@@ -380,9 +436,9 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
 	if (!XGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
 	    lineWidth = 0;
 	else if (lineWidth == 1) lineWidth = 0;
-	XSetLineAttributes( XT_display, dc->u.x.gc, lineWidth,
+	XSetLineAttributes( display, dc->u.x.gc, lineWidth,
 			    LineSolid, CapRound, JoinBevel ); 
-	XDrawLine( XT_display, dc->u.x.drawable, dc->u.x.gc,
+        XDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y + linePos );
     }
@@ -393,15 +449,25 @@ BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
 	    lineAscent = font->ascent / 3;
 	if (!XGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
 	    lineDescent = -lineAscent;
-	XSetLineAttributes( XT_display, dc->u.x.gc, lineAscent + lineDescent,
+	XSetLineAttributes( display, dc->u.x.gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel ); 
-	XDrawLine( XT_display, dc->u.x.drawable, dc->u.x.gc,
+	XDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y - lineAscent,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y - lineAscent );
     }
-    
+    if (flags & ETO_CLIPPED) RestoreVisRgn( hdc );
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           TextOut    (GDI.33)
+ */
+BOOL TextOut( HDC hdc, short x, short y, LPSTR str, short count )
+{
+    return ExtTextOut( hdc, x, y, 0, NULL, str, count, NULL );
+}
+
 
 /***********************************************************************
  *		GrayString (USER.185)
@@ -425,6 +491,7 @@ BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam,
 	}
 }
 
+
 /***********************************************************************
  *			TabbedTextOut		[USER.196]
  */
@@ -432,7 +499,7 @@ LONG TabbedTextOut(HDC hDC, short x, short y, LPSTR lpStr, short nCount,
 		short nTabCount, LPINT lpTabPos, short nTabOrg)
 {
 	WORD 	width, height;
-	printf("EMPTY STUB !!! TabbedTextOut(); ! call TextOut() for now !\n");
+	dprintf_text(stdnimp,"EMPTY STUB !!! TabbedTextOut(); ! call TextOut() for now !\n");
 	height = HIWORD(GetTextExtent(hDC, lpStr, nCount));
 	width = LOWORD(GetTextExtent(hDC, lpStr, nCount));
 	TextOut(hDC, x, y, lpStr, nCount);
@@ -441,23 +508,12 @@ LONG TabbedTextOut(HDC hDC, short x, short y, LPSTR lpStr, short nCount,
 
 
 /***********************************************************************
- *			ExtTextOut			[GDI.351]
- */
-BOOL ExtTextOut(HDC hDC, short x, short y, WORD wOptions, LPRECT lprect,
-			LPSTR str, WORD count, LPINT lpDx)
-{
-	printf("EMPTY STUB !!! ExtTextOut(); ! call TextOut() for now !\n");
-	TextOut(hDC, x, y, str, count);
-	return FALSE;
-}
-
-/***********************************************************************
  *			GetTabbedTextExtent		[USER.197]
  */
 DWORD GetTabbedTextExtent(HDC hDC, LPSTR lpString, int nCount, 
 	int nTabPositions, LPINT lpnTabStopPositions)
 {
-	printf("EMPTY STUB !!! GetTabbedTextExtent(); !\n");
+	dprintf_text(stdnimp,"EMPTY STUB !!! GetTabbedTextExtent(); !\n");
 
 	return (18 << 16) | (nCount * 18);
 }

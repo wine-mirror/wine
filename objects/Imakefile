@@ -3,44 +3,28 @@
 MODULE = objects
 
 SRCS = \
+	bitblt.c \
 	bitmap.c \
 	brush.c \
+	clipping.c \
+	color.c \
+	dc.c \
+	dcvalues.c \
+	dib.c \
+	dither.c \
 	font.c \
 	gdiobj.c \
+	linedda.c \
+	metafile.c \
 	palette.c \
 	pen.c \
-	dib.c \
 	region.c \
-	text.c \
-	dcvalues.c \
-	clipping.c \
-	bitblt.c \
-	linedda.c \
-	color.c \
-	dither.c \
-	metafile.c
+	text.c
 
-OBJS = \
-	bitmap.o \
-	brush.o \
-	font.o \
-	gdiobj.o \
-	palette.o \
-	pen.o \
-	dib.o \
-	region.o \
-	text.o \
-	dcvalues.o \
-	clipping.o \
-	bitblt.o \
-	linedda.o \
-	color.o \
-	dither.o \
-	metafile.o
+OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()
-CleanTarget()
 
 includes::
 

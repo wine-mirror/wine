@@ -157,10 +157,10 @@ load_entrypoints(){
 
 	struct w_files * wpnt;
 	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
-		cpnt  = wpnt->nrname_table;
+		cpnt  = wpnt->ne->nrname_table;
 		while(1==1){
-			if( ((int) cpnt)  - ((int)wpnt->nrname_table) >  
-			   wpnt->ne_header->nrname_tab_length)  break;
+			if( ((int) cpnt)  - ((int)wpnt->ne->nrname_table) >  
+			   wpnt->ne->ne_header->nrname_tab_length)  break;
 			len = *cpnt++;
 			strncpy(buffer, cpnt, len);
 			buffer[len] = 0;
@@ -168,7 +168,7 @@ load_entrypoints(){
 			j = GetEntryPointFromOrdinal(wpnt, ordinal);		
 			address  = j & 0xffff;
 			j = j >> 16;
-			address |= (wpnt->selector_table[j].selector) << 16;
+			address |= (wpnt->ne->selector_table[j].selector) << 16;
 			fprintf(stderr,"%s -> %x\n", buffer, address);
 			add_hash(buffer, (unsigned int *) address);
 			cpnt += len + 2;

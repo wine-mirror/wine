@@ -22,8 +22,8 @@
 #include <limits.h>
 #include <unistd.h>
 #include <time.h>
-#include <windows.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "prototypes.h"
 #include "regfunc.h"
 #include "windows.h"
@@ -31,10 +31,12 @@
 #include "msdos.h"
 #include "registers.h"
 #include "options.h"
+#include "stddebug.h"
+/* #define DEBUG_FILE /* */
+/* #undef  DEBUG_FILE /* */
+#include "debug.h"
 
 #define MAX_PATH 255
-
-/* #define DEBUG_FILE /* */
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
 extern char WindowsPath[256];
@@ -55,18 +57,13 @@ INT _lopen (LPSTR lpPathName, INT iReadWrite)
   int  handle;
   char *UnixFileName;
 
-#ifdef DEBUG_FILE
-  fprintf (stderr, "_lopen: open('%s', %X);\n", lpPathName, iReadWrite);
-#endif
-
+  dprintf_file(stddeb, "_lopen: open('%s', %X);\n", lpPathName, iReadWrite);
   if ((UnixFileName = GetUnixFileName(lpPathName)) == NULL)
   	return HFILE_ERROR;
   iReadWrite &= 0x000F;
   handle =  open (UnixFileName, iReadWrite);
 
-#ifdef DEBUG_FILE
-  fprintf (stderr, "_lopen: open: %s (handle %d)\n", UnixFileName, handle);
-#endif
+  dprintf_file(stddeb, "_lopen: open: %s (handle %d)\n", UnixFileName, handle);
 
   if (handle == -1)
   	return HFILE_ERROR;
@@ -81,10 +78,8 @@ INT _lread (INT hFile, LPSTR lpBuffer, WORD wBytes)
 {
   int result;
 
-#ifdef DEBUG_FILE
-  fprintf(stderr, "_lread: handle %d, buffer = %ld, length = %d\n",
+  dprintf_file(stddeb, "_lread: handle %d, buffer = %ld, length = %d\n",
 	  		hFile, (int) lpBuffer, wBytes);
-#endif
   
   result = read (hFile, lpBuffer, wBytes);
 
@@ -101,13 +96,10 @@ INT _lwrite (INT hFile, LPSTR lpBuffer, WORD wBytes)
 {
 	int result;
 
-#if 0
-#ifdef DEBUG_FILE
-  fprintf(stderr, "_lwrite: handle %d, buffer = %ld, length = %d\n",
+  dprintf_file(stddeb, "_lwrite: handle %d, buffer = %ld, length = %d\n",
 	  		hFile, (int) lpBuffer, wBytes);
-#endif
-#endif
-	result = write (hFile, lpBuffer, wBytes);
+
+    result = write (hFile, lpBuffer, wBytes);
 
 	if (result == -1)
   		return HFILE_ERROR;
@@ -120,9 +112,7 @@ INT _lwrite (INT hFile, LPSTR lpBuffer, WORD wBytes)
  ***************************************************************************/
 INT _lclose (INT hFile)
 {
-#ifdef DEBUG_FILE
-	fprintf(stderr, "_lclose: handle %d\n", hFile);
-#endif
+    	dprintf_file(stddeb, "_lclose: handle %d\n", hFile);
 	if (close (hFile))
   		return HFILE_ERROR;
   	else
@@ -135,9 +125,11 @@ INT _lclose (INT hFile)
 INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
     int		              handle;
+#ifndef PROCEMU
     struct sigcontext_struct  ccontext;
                               /* To make macros like EAX happy */
     struct sigcontext_struct *context=&ccontext; 
+#endif
     char                      filename[MAX_PATH+1];
     int                       action;
     struct stat               s;
@@ -145,9 +137,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     int                       res;
     int                       verify_time;
   
-  #ifdef DEBUG_FILE
-      fprintf(stderr,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
-  #endif
+    dprintf_file(stddeb,"Openfile(%s,<struct>,%d) ",lpFileName,wStyle);
   
     action = wStyle & 0xff00;
   
@@ -196,14 +186,12 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
 	  GetWindowsDirectory (filename,MAX_PATH);
-	  if (filename[1] != ':')
-	    strcat(filename,'\\');
+	  if (filename[1] != ':') strcat(filename,"\\");
 	  strcat (filename, lpFileName);
 	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
 	  GetSystemDirectory (filename,MAX_PATH);
-	  if (filename[1] != ':')
-	    strcat(filename,'\\');
+	  if (filename[1] != ':') strcat(filename,"\\");
 	  strcat (filename, lpFileName);
 	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
@@ -263,17 +251,17 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
    /* Now we are actually going to open the file. According to Microsoft's
        Knowledge Basis, this is done by calling int 21h, ax=3dh. */    
 
-    EAX = 0x00003d00;
-    EAX = (EAX & 0xffffff0f) | (wStyle & 0x0070); /* Handle OF_SHARE_xxx etc. */
-    EAX = (EAX & 0xfffffff0) | (wStyle & 0x0003); /* Handle OF_READ etc. */
+    AX = 0x3d00;
+    AL = (AL & 0x0f) | (wStyle & 0x70); /* Handle OF_SHARE_xxx etc. */
+    AL = (AL & 0xf0) | (wStyle & 0x03); /* Handle OF_READ etc. */
     DS = segment (ofs->szPathName);
-    EDX = (EDX & 0xffff0000) | offset (ofs->szPathName);
+    DX = offset (ofs->szPathName);
   
     OpenExistingFile (context);
 
     if (EFL & 0x00000001)     /* Cflag */
     {
-      ofs->nErrCode = (AX & 0x00ff);
+      ofs->nErrCode = AL;
       return -1;
       }
 
@@ -293,7 +281,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 #endif
 WORD SetHandleCount (WORD wNumber)
 {
-  printf("SetHandleCount(%d)\n",wNumber);
+  dprintf_file(stddeb,"SetHandleCount(%d)\n",wNumber);
   return((wNumber<OPEN_MAX) ? wNumber : OPEN_MAX);
 }
 
@@ -304,9 +292,8 @@ LONG _llseek (INT hFile, LONG lOffset, INT nOrigin)
 {
 	int origin;
 	
-#ifdef DEBUG_FILE
-  fprintf(stderr, "_llseek: handle %d, offset %ld, origin %d\n", hFile, lOffset, nOrigin);
-#endif
+  	dprintf_file(stddeb, "_llseek: handle %d, offset %ld, origin %d\n", 
+		hFile, lOffset, nOrigin);
 
 	switch (nOrigin) {
 		case 1: origin = SEEK_CUR;
@@ -328,10 +315,8 @@ INT _lcreat (LPSTR lpszFilename, INT fnAttribute)
 	int handle;
 	char *UnixFileName;
 
-#ifdef DEBUG_FILE
-	fprintf(stderr, "_lcreat: filename %s, attributes %d\n",lpszFilename, 
-  			fnAttribute);
-#endif
+    	dprintf_file(stddeb, "_lcreat: filename %s, attributes %d\n",
+		lpszFilename, fnAttribute);
 	if ((UnixFileName = GetUnixFileName(lpszFilename)) == NULL)
   		return HFILE_ERROR;
 	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_WRONLY, 426);
@@ -348,9 +333,7 @@ INT _lcreat (LPSTR lpszFilename, INT fnAttribute)
 UINT GetDriveType(INT drive)
 {
 
-#ifdef DEBUG_FILE
-	fprintf(stderr,"GetDriveType %c:\n",'A'+drive);
-#endif
+    	dprintf_file(stddeb,"GetDriveType %c:\n",'A'+drive);
 
 	if (!DOS_ValidDrive(drive))
 		return DRIVE_DOESNOTEXIST;
@@ -366,9 +349,7 @@ UINT GetDriveType(INT drive)
  ***************************************************************************/
 BYTE GetTempDrive(BYTE chDriveLetter)
 {
-#ifdef DEBUG_FILE
-	fprintf(stderr,"GetTempDrive (%d)\n",chDriveLetter);
-#endif
+    dprintf_file(stddeb,"GetTempDrive (%d)\n",chDriveLetter);
 	return('C');
 }
 
@@ -382,9 +363,7 @@ UINT GetWindowsDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 	else
 		strcpy(lpszSysPath, WindowsDirectory);
 	
-#ifdef DEBUG_FILE
-	fprintf(stderr,"GetWindowsDirectory (%s)\n",lpszSysPath);
-#endif
+    	dprintf_file(stddeb,"GetWindowsDirectory (%s)\n",lpszSysPath);
 
 	ChopOffSlash(lpszSysPath);
 	return(strlen(lpszSysPath));
@@ -399,9 +378,7 @@ UINT GetSystemDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 	else
 		strcpy(lpszSysPath, SystemDirectory);
 
-#ifdef DEBUG_FILE
-	fprintf(stderr,"GetSystemDirectory (%s)\n",lpszSysPath);
-#endif
+    	dprintf_file(stddeb,"GetSystemDirectory (%s)\n",lpszSysPath);
 
 	ChopOffSlash(lpszSysPath);
 	return(strlen(lpszSysPath));
@@ -428,10 +405,8 @@ INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 
 	ToDos(lpszTempFileName);
 
-#ifdef DEBUG_FILE
-	fprintf(stderr,"GetTempFilename: %c %s %d => %s\n",bDriveLetter,
+    	dprintf_file(stddeb,"GetTempFilename: %c %s %d => %s\n",bDriveLetter,
 		lpszPrefixString,uUnique,lpszTempFileName);
-#endif
 	if ((handle = _lcreat (lpszTempFileName, 0x0000)) == -1) {
 		fprintf(stderr,"GetTempFilename: can't create temp file '%s' !\n", lpszTempFileName);
 		}
@@ -446,7 +421,7 @@ INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
  ***************************************************************************/
 WORD SetErrorMode(WORD x)
 {
-	fprintf(stderr,"wine: SetErrorMode %4x (ignored)\n",x);
+    dprintf_file(stdnimp,"wine: SetErrorMode %4x (ignored)\n",x);
 }
 
 /***************************************************************************

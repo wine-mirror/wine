@@ -5,7 +5,7 @@ MODULE = windows
 SRCS = \
 	caret.c \
 	class.c \
-	dc.c \
+	cursor.c \
 	dce.c \
 	defdlg.c \
 	defwnd.c \
@@ -33,7 +33,6 @@ OBJS = $(SRCS:.c=.o)
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()
-CleanTarget()
 
 includes::
 

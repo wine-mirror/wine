@@ -1,12 +1,11 @@
 /*
  * Dialog functions
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994 Alexandre Julliard
  */
 
-/* #define DEBUG_DIALOG /* */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,6 +16,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "user.h"
 #include "message.h"
 #include "heap.h"
+#include "stddebug.h"
+/* #define DEBUG_DIALOG /* */
+/* #undef  DEBUG_DIALOG /* */
+#include "debug.h"
 
 
   /* Dialog base units */
@@ -40,10 +43,28 @@ BOOL DIALOG_Init()
     ReleaseDC( 0, hdc );
     xBaseUnit = tm.tmAveCharWidth;
     yBaseUnit = tm.tmHeight;
-#ifdef DEBUG_DIALOG
-    printf( "DIALOG_Init: base units = %d,%d\n", xBaseUnit, yBaseUnit );
-#endif    
+    dprintf_dialog(stddeb, "DIALOG_Init: base units = %d,%d\n", xBaseUnit, yBaseUnit );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           DIALOG_GetFirstTabItem
+ *
+ * Return the first item of the dialog that has the WS_TABSTOP style.
+ */
+HWND DIALOG_GetFirstTabItem( HWND hwndDlg )
+{
+    HWND hwnd;
+    WND *wndPtr = WIN_FindWndPtr( hwndDlg );
+    hwnd = wndPtr->hwndChild;
+    while(hwnd)
+    {
+        wndPtr = WIN_FindWndPtr( hwnd );
+        if (wndPtr->dwStyle & WS_TABSTOP) break;
+        hwnd = wndPtr->hwndNext;
+    }
+    return hwnd;
 }
 
 
@@ -56,7 +77,6 @@ BOOL DIALOG_Init()
 static DLGCONTROLHEADER * DIALOG_GetControl( DLGCONTROLHEADER * ptr,
 					     char ** class, char ** text )
 {
-    int i;
     unsigned char * p = (unsigned char *)ptr;
     p += 14;  /* size of control header */
 
@@ -134,16 +154,17 @@ static DLGCONTROLHEADER * DIALOG_ParseTemplate( LPCSTR template,
 #ifdef DEBUG_DIALOG
 static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
 {
-    printf( "DIALOG %d, %d, %d, %d\n", result->header->x, result->header->y,
+    dprintf_dialog(stddeb, "DIALOG %d, %d, %d, %d\n", result->header->x, result->header->y,
 	    result->header->cx, result->header->cy );
-    printf( " STYLE %08x\n", result->header->style );
-    printf( " CAPTION '%s'\n", result->caption );
-    printf( " CLASS '%s'\n", result->className );
+    dprintf_dialog(stddeb, " STYLE %08x\n", result->header->style );
+    dprintf_dialog(stddeb, " CAPTION '%s'\n", result->caption );
+    dprintf_dialog(stddeb, " CLASS '%s'\n", result->className );
     if (result->menuName[0] == 0xff)
-	printf( " MENU %d\n", result->menuName[1] + 256*result->menuName[2] );
-    else printf( " MENU '%s'\n", result->menuName );
+	dprintf_dialog(stddeb, " MENU %d\n", result->menuName[1] + 256*result->menuName[2] );
+    else 
+        dprintf_dialog(stddeb, " MENU '%s'\n", result->menuName );
     if (result->header->style & DS_SETFONT)
-	printf( " FONT %d,'%s'\n", result->pointSize, result->faceName );
+	dprintf_dialog(stddeb, " FONT %d,'%s'\n", result->pointSize, result->faceName );
 }
 #endif  /* DEBUG_DIALOG */
 
@@ -152,7 +173,7 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
  *           CreateDialog   (USER.89)
  */
 HWND CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
-		   HWND owner, FARPROC dlgProc )
+		   HWND owner, WNDPROC dlgProc )
 {
     return CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -162,16 +183,14 @@ HWND CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
  *           CreateDialogParam   (USER.241)
  */
 HWND CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
-		        HWND owner, FARPROC dlgProc, LPARAM param )
+		        HWND owner, WNDPROC dlgProc, LPARAM param )
 {
     HWND hwnd = 0;
     HANDLE hres, hmem;
     LPCSTR data;
 
-#ifdef DEBUG_DIALOG
-    printf( "CreateDialogParam: %d,'%x',%d,%p,%d\n",
+    dprintf_dialog(stddeb, "CreateDialogParam: %d,'%x',%d,%p,%d\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
-#endif
      
       /* FIXME: MAKEINTRESOURCE should be replaced by RT_DIALOG */
     if (!(hres = FindResource( hInst, dlgTemplate, MAKEINTRESOURCE(0x8005) )))
@@ -188,7 +207,7 @@ HWND CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
  *           CreateDialogIndirect   (USER.219)
  */
 HWND CreateDialogIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
-			   HWND owner, FARPROC dlgProc )
+			   HWND owner, WNDPROC dlgProc )
 {
     return CreateDialogIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -198,11 +217,11 @@ HWND CreateDialogIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
  *           CreateDialogIndirectParam   (USER.242)
  */
 HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
-			        HWND owner, FARPROC dlgProc, LPARAM param )
+			        HWND owner, WNDPROC dlgProc, LPARAM param )
 {
     HMENU hMenu;
     HFONT hFont = 0;
-    HWND hwnd;
+    HWND hwnd, hwndCtrl;
     RECT rect;
     WND * wndPtr;
     int i;
@@ -288,61 +307,72 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 
       /* Create control windows */
 
-#ifdef DEBUG_DIALOG
-    printf( " BEGIN\n" );
-#endif	
+    dprintf_dialog(stddeb, " BEGIN\n" );
 
     wndPtr = WIN_FindWndPtr( hwnd );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    dlgInfo->msgResult = 0;  /* This is used to store the default button id */
     dlgInfo->hDialogHeap = 0;
 
     for (i = 0; i < template.header->nbItems; i++)
     {
 	DLGCONTROLHEADER * next_header;
 	LPSTR class, text;
+        HWND hwndDefButton = 0;
 	next_header = DIALOG_GetControl( header, &class, &text );
 
-#ifdef DEBUG_DIALOG
-	printf( "   %s ", class);
-	if ((int)text & 0xffff0000) printf("'%s'", text);
-	else printf("%4X", (int)text & 0xffff);
-	printf(" %d, %d, %d, %d, %d, %08x\n", header->id, header->x, header->y, 
+	dprintf_dialog(stddeb, "   %s ", class);
+	if ((int)text & 0xffff0000) 
+	  dprintf_dialog(stddeb,"'%s'", text);
+	else 
+	  dprintf_dialog(stddeb,"%4X", (int)text & 0xffff);
+	dprintf_dialog(stddeb," %d, %d, %d, %d, %d, %08x\n", 
+		header->id, header->x, header->y, 
 		header->cx, header->cy, header->style );
-#endif
 
 	if ((strcmp(class, "EDIT") == 0) &&
 	            ((header->style & DS_LOCALEDIT) != DS_LOCALEDIT)) {
 	    if (!dlgInfo->hDialogHeap) {
 		dlgInfo->hDialogHeap = GlobalAlloc(GMEM_FIXED, 0x10000);
 		if (!dlgInfo->hDialogHeap) {
-		    printf("CreateDialogIndirectParam: Insufficient memory ",
+		    fprintf(stderr,"CreateDialogIndirectParam: Insufficient memory ",
 			   "to create heap for edit control\n");
 		    continue;
 		}
 		dlgHeapBase = GlobalLock(dlgInfo->hDialogHeap);
-		HEAP_Init(&dlgHeap, dlgHeapBase, 0x10000);
+		HEAP_Init(dlgHeapBase,dlgHeapBase+sizeof(char*), 0x10000-sizeof(char*));
 	    }
 	    header->style |= WS_CHILD;
-	    CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
-			   class, text, header->style,
-			   header->x * xUnit / 4, header->y * yUnit / 8,
-			   header->cx * xUnit / 4, header->cy * yUnit / 8,
-			   hwnd, header->id, HIWORD((LONG)dlgHeapBase), NULL );
+	    hwndCtrl = CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
+                           class, text, header->style,
+                           header->x * xUnit / 4, header->y * yUnit / 8,
+                           header->cx * xUnit / 4, header->cy * yUnit / 8,
+                           hwnd, header->id, dlgInfo->hDialogHeap, NULL );
 	}
-	else {
+	else
+        {
 	    header->style |= WS_CHILD;
-	    CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
-			   class, text, header->style,
-			   header->x * xUnit / 4, header->y * yUnit / 8,
-			   header->cx * xUnit / 4, header->cy * yUnit / 8,
-			   hwnd, header->id, hInst, NULL );
+	    hwndCtrl = CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
+                                class, text, header->style,
+                                header->x * xUnit / 4, header->y * yUnit / 8,
+                                header->cx * xUnit / 4, header->cy * yUnit / 8,
+                                hwnd, header->id, hInst, NULL );
 	}
+            /* Send initialisation messages to the control */
+        if (hFont) SendMessage( hwndCtrl, WM_SETFONT, hFont, 0 );
+        if (SendMessage( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
+        {
+              /* If there's already a default push-button, set it back */
+              /* to normal and use this one instead. */
+            if (hwndDefButton)
+                SendMessage( hwndDefButton, BM_SETSTYLE, BS_PUSHBUTTON, FALSE);
+            hwndDefButton = hwndCtrl;
+            dlgInfo->msgResult = header->id;
+        }
 	header = next_header;
     }    
 
-#ifdef DEBUG_DIALOG
-    printf( " END\n" );
-#endif	
+    dprintf_dialog(stddeb, " END\n" );
     
       /* Initialise dialog extra data */
 
@@ -351,8 +381,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     dlgInfo->hMenu     = hMenu;
     dlgInfo->xBaseUnit = xUnit;
     dlgInfo->yBaseUnit = yUnit;
-    dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd,
-			    GetWindow(wndPtr->hwndChild, GW_HWNDLAST), FALSE );
+    dlgInfo->hwndFocus = DIALOG_GetFirstTabItem( hwnd );
 
       /* Send initialisation messages and set focus */
 
@@ -376,14 +405,18 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     MSG* lpmsg;
     int retval;
 
+      /* Owner must be a top-level window */
+    while (owner && GetParent(owner)) owner = GetParent(owner);
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
     if (!(msgHandle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(MSG)))) return -1;
     lpmsg = (MSG *) USER_HEAP_ADDR( msgHandle );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    EnableWindow( owner, FALSE );
     ShowWindow( hwnd, SW_SHOW );
 
-    while (MSG_InternalGetMessage( lpmsg, hwnd, owner, MSGF_DIALOGBOX,
-				   PM_REMOVE, TRUE ))
+    while (MSG_InternalGetMessage( lpmsg, hwnd, owner,
+                                   MSGF_DIALOGBOX, PM_REMOVE,
+                                   !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
     {
 	if (!IsDialogMessage( hwnd, lpmsg))
 	{
@@ -395,6 +428,7 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     retval = dlgInfo->msgResult;
     DestroyWindow( hwnd );
     USER_HEAP_FREE( msgHandle );
+    EnableWindow( owner, TRUE );
     return retval;
 }
 
@@ -403,7 +437,7 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
  *           DialogBox   (USER.87)
  */
 int DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
-	       HWND owner, FARPROC dlgProc )
+	       HWND owner, WNDPROC dlgProc )
 {
     return DialogBoxParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -413,14 +447,12 @@ int DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
  *           DialogBoxParam   (USER.239)
  */
 int DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
-		    HWND owner, FARPROC dlgProc, LPARAM param )
+		    HWND owner, WNDPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
     
-#ifdef DEBUG_DIALOG
-    printf( "DialogBoxParam: %d,'%x',%d,%p,%d\n",
+    dprintf_dialog(stddeb, "DialogBoxParam: %d,'%x',%d,%p,%d\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
-#endif
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
     return -1;
@@ -431,7 +463,7 @@ int DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
  *           DialogBoxIndirect   (USER.218)
  */
 int DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
-		       HWND owner, FARPROC dlgProc )
+		       HWND owner, WNDPROC dlgProc )
 {
     return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -441,7 +473,7 @@ int DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
  *           DialogBoxIndirectParam   (USER.240)
  */
 int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
-			    HWND owner, FARPROC dlgProc, LPARAM param )
+			    HWND owner, WNDPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
     LPCSTR ptr;
@@ -463,9 +495,7 @@ void EndDialog( HWND hwnd, short retval )
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     dlgInfo->msgResult = retval;
     dlgInfo->fEnd = TRUE;
-#ifdef DEBUG_DIALOG
-    printf( "EndDialog: %d %d\n", hwnd, retval );
-#endif    
+    dprintf_dialog(stddeb, "EndDialog: %d %d\n", hwnd, retval );
 }
 
 
@@ -475,21 +505,90 @@ void EndDialog( HWND hwnd, short retval )
 BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
 {
     WND * wndPtr;
-    
+    int dlgCode;
+
     if (!(wndPtr = WIN_FindWndPtr( hwndDlg ))) return FALSE;
     if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd )) return FALSE;
 
-    if (msg->message != WM_KEYDOWN)
+      /* Only the key messages get special processing */
+    if ((msg->message == WM_KEYDOWN) ||
+        (msg->message == WM_SYSCHAR) ||
+	(msg->message == WM_CHAR))
     {
-	SendMessage( msg->hwnd, msg->message, msg->wParam, msg->lParam );
+	dlgCode = SendMessage( msg->hwnd, WM_GETDLGCODE, 0, 0 );
+        if (dlgCode & DLGC_WANTMESSAGE)
+        {
+            DispatchMessage( msg );
+            return TRUE;
+        }
     }
-    else
+
+    switch(msg->message)
     {
-	int dlgCode = SendMessage( msg->hwnd, WM_GETDLGCODE, 0, 0 );
-	/* Process key message */
-	/* .... */
-	SendMessage( msg->hwnd, msg->message, msg->wParam, msg->lParam );
+    case WM_KEYDOWN:
+        if (dlgCode & DLGC_WANTALLKEYS) break;
+        switch(msg->wParam)
+        {
+        case VK_TAB:
+            if (!(dlgCode & DLGC_WANTTAB))
+            {
+                SendMessage( hwndDlg, WM_NEXTDLGCTL,
+                             !(GetKeyState(VK_SHIFT) & 0x80), 0 );
+                return TRUE;
+            }
+            break;
+            
+        case VK_RIGHT:
+        case VK_DOWN:
+            if (!(dlgCode & DLGC_WANTARROWS))
+            {
+                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),TRUE));
+                return TRUE;
+            }
+            break;
+
+        case VK_LEFT:
+        case VK_UP:
+            if (!(dlgCode & DLGC_WANTARROWS))
+            {
+                SetFocus(GetNextDlgGroupItem(hwndDlg,GetFocus(),FALSE));
+                return TRUE;
+            }
+            break;
+
+        case VK_ESCAPE:
+            SendMessage( hwndDlg, WM_COMMAND, IDCANCEL,
+                         MAKELPARAM( GetDlgItem(hwndDlg,IDCANCEL), 0 ));
+            break;
+
+        case VK_RETURN:
+            {
+                DWORD dw = SendMessage( hwndDlg, DM_GETDEFID, 0, 0 );
+                if (HIWORD(dw) == DC_HASDEFID)
+                    SendMessage( hwndDlg, WM_COMMAND, LOWORD(dw),
+                                 MAKELPARAM( GetDlgItem( hwndDlg, LOWORD(dw) ),
+                                             BN_CLICKED ));
+                else
+                    SendMessage( hwndDlg, WM_COMMAND, IDOK,
+                                 MAKELPARAM( GetDlgItem(hwndDlg,IDOK), 0 ));
+            }
+            break;
+        }
+        break;  /* case WM_KEYDOWN */
+
+        
+    case WM_CHAR:
+        if (dlgCode & (DLGC_WANTALLKEYS | DLGC_WANTCHARS)) break;
+        break;
+
+    case WM_SYSCHAR:
+        if (dlgCode & DLGC_WANTALLKEYS) break;
+        break;
     }
+
+      /* If we get here, the message has not been treated specially */
+      /* and can be sent to its destination window. */
+    DispatchMessage( msg );
     return TRUE;
 }
 
@@ -674,29 +773,57 @@ void MapDialogRect( HWND hwnd, LPRECT rect )
  */
 HWND GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
 {
-    HWND hwnd, hwndLast;
+    HWND hwnd, hwndStart;
     WND * dlgPtr, * ctrlPtr, * wndPtr;
 
     if (!(dlgPtr = WIN_FindWndPtr( hwndDlg ))) return 0;
     if (!(ctrlPtr = WIN_FindWndPtr( hwndCtrl ))) return 0;
     if (ctrlPtr->hwndParent != hwndDlg) return 0;
 
-    hwndLast = hwndCtrl;
-    hwnd = ctrlPtr->hwndNext;
-    while (1)
+    if (!fPrevious && ctrlPtr->hwndNext)  /*Check if next control is in group*/
     {
-	if (!hwnd) hwnd = dlgPtr->hwndChild;
-	if (hwnd == hwndCtrl) break;
+	wndPtr = WIN_FindWndPtr( ctrlPtr->hwndNext );
+        if (!(wndPtr->dwStyle & WS_GROUP)) return ctrlPtr->hwndNext;
+    }
+
+    if (ctrlPtr->dwStyle & WS_GROUP)  /* Control is the first of the group */
+    {
+        if (!fPrevious) return hwndCtrl;  /* Control is alone in his group */
+        hwnd = ctrlPtr->hwndNext;
+        while(hwnd)  /* Find last control of the group */
+        {
+            wndPtr = WIN_FindWndPtr( hwnd );
+            if (wndPtr->dwStyle & WS_GROUP) break;
+            hwndCtrl = hwnd;
+            hwnd = wndPtr->hwndNext;
+        }
+        return hwndCtrl;
+    }
+    
+      /* Now we will have to find the start of the group */
+
+    hwndStart = 0;
+    hwnd = dlgPtr->hwndChild;
+    while (hwnd)
+    {
 	wndPtr = WIN_FindWndPtr( hwnd );
-	if (wndPtr->dwStyle & WS_TABSTOP)
-	{
-	    hwndLast = hwnd;
-	    if (!fPrevious) break;
-	}
+        if (wndPtr->dwStyle & WS_GROUP) hwndStart = hwnd;  /*Start of a group*/
+        if (hwnd == hwndCtrl)
+        {
+            /* We found the control -> hwndStart is the first of the group */
+            if (!fPrevious) return hwndStart;
+
+            while(hwndStart)  /* Find the control placed before hwndCtrl */
+            {
+                wndPtr = WIN_FindWndPtr( hwndStart );
+                if (wndPtr->hwndNext == hwndCtrl) return hwndStart;
+                hwndStart = wndPtr->hwndNext;
+            }
+            break;
+        }
 	hwnd = wndPtr->hwndNext;
     }
-    return hwndLast;
-    return 0;
+    return hwndCtrl;  /* Not found -> return original control */
 }
 
 

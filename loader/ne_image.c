@@ -7,8 +7,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 #ifdef linux
-#include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
 #include <linux/segment.h>
@@ -24,20 +24,23 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "wineopts.h"
 #include "arch.h"
 #include "options.h"
-
+#include "stddebug.h"
 /* #define DEBUG_FIXUP /* */
+/* #undef DEBUG_FIXUP  /* */
+#include "debug.h"
 
 extern HANDLE CreateNewTask(HINSTANCE hInst);
+extern void InitializeLoadedDLLs(struct w_files *wpnt);
 extern int CallToInit16(unsigned long csip, unsigned long sssp, 
 			unsigned short ds);
-extern void InitializeLoadedDLLs(struct w_files *wpnt);
-extern void FixupFunctionPrologs(struct w_files * wpnt);
-
-char * GetModuleName(struct w_files * wpnt, int index, char *buffer);
+extern void CallTo32();
 extern char WindowsPath[256];
-char *WIN_ProgramName;
+extern unsigned short WIN_StackSize;
+extern unsigned short WIN_HeapSize;
 
-HINSTANCE hSysRes;
+int FixupSegment(struct w_files *, int);
+void FixupFunctionPrologs(struct w_files *);
+char *GetModuleName(struct w_files * wpnt, int index, char *buffer);
 
 #ifndef WINELIB
 
@@ -61,71 +64,61 @@ HINSTANCE LoadNEImage(struct w_files *wpnt)
 {
     unsigned int read_size, status, segment;
     int i;
-    char buffer[256];
-    char *fullname;
-    HANDLE t;
 
-    wpnt->ne_header = (struct ne_header_s *) malloc(sizeof(struct ne_header_s));
-    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
-    load_ne_header (wpnt->fd, wpnt->ne_header);
+    wpnt->ne = malloc(sizeof(struct ne_data));
+    wpnt->ne->resnamtab = NULL;
+    wpnt->ne->ne_header = malloc(sizeof(struct ne_header_s));
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
+    load_ne_header(wpnt->fd, wpnt->ne->ne_header);
 
 #ifndef WINELIB
     /*
      * Create segment selectors.
      */
     status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
-		   wpnt->ne_header->segment_tab_offset,
+		   wpnt->ne->ne_header->segment_tab_offset,
 		   SEEK_SET);
-    read_size  = wpnt->ne_header->n_segment_tab *
+    read_size  = wpnt->ne->ne_header->n_segment_tab *
 	sizeof(struct ne_segment_table_entry_s);
-    wpnt->seg_table = (struct ne_segment_table_entry_s *) malloc(read_size);
-    if (read(wpnt->fd, wpnt->seg_table, read_size) != read_size)
+    wpnt->ne->seg_table = (struct ne_segment_table_entry_s *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->ne->seg_table, read_size) != read_size)
 	myerror("Unable to read segment table header from file");
-    wpnt->selector_table = CreateSelectors(wpnt);
-    wpnt->hinstance = (wpnt->
-		       selector_table[wpnt->ne_header->auto_data_seg-1].
+    wpnt->ne->selector_table = CreateSelectors(wpnt);
+    wpnt->hinstance = (wpnt->ne->
+		       selector_table[wpnt->ne->ne_header->auto_data_seg-1].
 		       selector);
 #endif
     /* Get the lookup  table.  This is used for looking up the addresses
        of functions that are exported */
 
-    read_size  = wpnt->ne_header->entry_tab_length;
-    wpnt->lookup_table = (char *) malloc(read_size);
+    read_size  = wpnt->ne->ne_header->entry_tab_length;
+    wpnt->ne->lookup_table = (char *) malloc(read_size);
     lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
-	  wpnt->ne_header->entry_tab_offset, SEEK_SET);
-    if (read(wpnt->fd, wpnt->lookup_table, read_size) != read_size)
+	  wpnt->ne->ne_header->entry_tab_offset, SEEK_SET);
+    if (read(wpnt->fd, wpnt->ne->lookup_table, read_size) != read_size)
 	myerror("Unable to read lookup table header from file");
 
     /* Get the iname table.  This is used for looking up the names
        of functions that are exported */
 
-    status = lseek(wpnt->fd, wpnt->ne_header->nrname_tab_offset,  SEEK_SET);
-    read_size  = wpnt->ne_header->nrname_tab_length;
-    wpnt->nrname_table = (char *) malloc(read_size);
-    if (read(wpnt->fd, wpnt->nrname_table, read_size) != read_size)
+    status = lseek(wpnt->fd, wpnt->ne->ne_header->nrname_tab_offset,  SEEK_SET);
+    read_size  = wpnt->ne->ne_header->nrname_tab_length;
+    wpnt->ne->nrname_table = (char *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->ne->nrname_table, read_size) != read_size)
 	myerror("Unable to read nrname table header from file");
 
     status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
-		   wpnt->ne_header->rname_tab_offset,  SEEK_SET);
-    read_size  = wpnt->ne_header->moduleref_tab_offset - 
-	    wpnt->ne_header->rname_tab_offset;
-    wpnt->rname_table = (char *) malloc(read_size);
-    if (read(wpnt->fd, wpnt->rname_table, read_size) != read_size)
+		   wpnt->ne->ne_header->rname_tab_offset,  SEEK_SET);
+    read_size  = wpnt->ne->ne_header->moduleref_tab_offset - 
+	    wpnt->ne->ne_header->rname_tab_offset;
+    wpnt->ne->rname_table = (char *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->ne->rname_table, read_size) != read_size)
 	myerror("Unable to read rname table header from file");
 
-    /* Now get the module name, if the current one is a filename */
-/* nope, name by which dll is loaded is used ! 
-
-    if (strchr(wpnt->name, '\\') || strchr(wpnt->name, '/') ) {
-	wpnt->name  = (char*) malloc(*wpnt->rname_table + 1);
-	memcpy(wpnt->name, wpnt->rname_table+1, *wpnt->rname_table);
-    }
-    wpnt->name[*wpnt->rname_table] =  0;
-*/
     /*
      * Now load any DLLs that  this module refers to.
      */
-    for(i=0; i<wpnt->ne_header->n_mod_ref_tab; i++)
+    for(i=0; i<wpnt->ne->ne_header->n_mod_ref_tab; i++)
     {
       char buff[14];
       GetModuleName(wpnt, i + 1, buff);
@@ -136,7 +129,7 @@ HINSTANCE LoadNEImage(struct w_files *wpnt)
 #ifndef WINELIB
     /* fixup references */
 
-    for (segment = 0; segment < wpnt->ne_header->n_segment_tab; segment++)
+    for (segment = 0; segment < wpnt->ne->ne_header->n_segment_tab; segment++)
 	if (FixupSegment(wpnt, segment) < 0)
 		myerror("fixup failed.");
 
@@ -174,7 +167,7 @@ GetModuleName(struct w_files * wpnt, int index, char *buffer)
 {
     int fd = wpnt->fd;
     struct mz_header_s *mz_header = wpnt->mz_header; 
-    struct ne_header_s *ne_header = wpnt->ne_header;
+    struct ne_header_s *ne_header = wpnt->ne->ne_header;
     int length;
     WORD name_offset, status;
     int i;
@@ -194,7 +187,8 @@ GetModuleName(struct w_files * wpnt, int index, char *buffer)
 
     /* Module names  are always upper case */
     for(i=0; i<length; i++)
-	    if(buffer[i] >= 'a' && buffer[i] <= 'z')  buffer[i] &= ~0x20;
+    	if (islower(buffer[i]))
+    		buffer[i] = toupper(buffer[i]);
 
     return buffer;
 }
@@ -208,14 +202,13 @@ int
 FixupSegment(struct w_files * wpnt, int segment_num)
 {
     int fd =  wpnt->fd;
-    struct mz_header_s * mz_header = wpnt->mz_header;
-    struct ne_header_s *ne_header =  wpnt->ne_header;
-    struct ne_segment_table_entry_s *seg_table = wpnt->seg_table;
-    struct segment_descriptor_s *selector_table = wpnt->selector_table;
+    struct mz_header_s *mz_header = wpnt->mz_header;
+    struct ne_header_s *ne_header =  wpnt->ne->ne_header;
+    struct ne_segment_table_entry_s *seg_table = wpnt->ne->seg_table;
+    struct segment_descriptor_s *selector_table = wpnt->ne->selector_table;
     struct relocation_entry_s *rep, *rep1;
     struct ne_segment_table_entry_s *seg;
     struct segment_descriptor_s *sel;
-    struct dll_table_entry_s *dll_table;
     int status;
     unsigned short *sp;
     unsigned int selector, address;
@@ -229,10 +222,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
     seg = &seg_table[segment_num];
     sel = &selector_table[segment_num];
 
-#ifdef DEBUG_FIXUP
-    printf("Segment fixups for %s, segment %d, selector %x\n", 
-	   wpnt->name, segment_num, (int) sel->base_addr >> 16);
-#endif
+    dprintf_fixup(stddeb, "Segment fixups for %s, segment %d, selector %x\n", 
+                  wpnt->name, segment_num, (int) sel->base_addr >> 16);
 
     if ((seg->seg_data_offset == 0) ||
 	!(seg->seg_flags & NE_SEGFLAGS_RELOC_DATA))
@@ -293,10 +284,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		return -1;
 	    }
 
-#ifdef DEBUG_FIXUP
-	    printf("%d: %s.%d: %04.4x:%04.4x\n", i + 1, dll_name, ordinal,
-		   selector, address);
-#endif
+	    dprintf_fixup(stddeb,"%d: %s.%d: %04.4x:%04.4x\n", i + 1, 
+		   dll_name, ordinal, selector, address);
 	    break;
 	    
 	  case NE_RELTYPE_NAMEADD:
@@ -328,10 +317,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		return -1;
 	    }
 
-#ifdef DEBUG_FIXUP
-	    printf("%d: %s %s.%d: %04.4x:%04.4x\n", i + 1, func_name,
-		   dll_name, ordinal, selector, address);
-#endif
+	    dprintf_fixup(stddeb,"%d: %s %s.%d: %04.4x:%04.4x\n", i + 1, 
+                   func_name, dll_name, ordinal, selector, address);
 	    break;
 	    
 	  case NE_RELTYPE_INTERNAL:
@@ -348,9 +335,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		address  = rep->target2;
 	    }
 	    
-#ifdef DEBUG_FIXUP
-	    printf("%d: %04.4x:%04.4x\n", i + 1, selector, address);
-#endif
+	    dprintf_fixup(stddeb,"%d: %04.4x:%04.4x\n", 
+			  i + 1, selector, address);
 	    break;
 
 	  case 7:
@@ -362,19 +348,20 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	     * successfully emulate the coprocessor if it doesn't
 	     * exist.
 	     */
-#ifdef DEBUG_FIXUP
-	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+	    dprintf_fixup(stddeb,
+                   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
-#endif
+	    dprintf_fixup(stddeb,"TARGET %04.4x %04.4x\n", 
+		   rep->target1, rep->target2);
 	    continue;
 	    
 	  default:
-	    fprintf(stderr,"%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+	    dprintf_fixup(stddeb,
+		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    fprintf(stderr,"TARGET %04.4x %04.4x\n", 
+	    dprintf_fixup(stddeb,"TARGET %04.4x %04.4x\n", 
 		    rep->target1, rep->target2);
 	    free(rep1);
 	    return -1;
@@ -388,23 +375,21 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	{
 	    if (FindDLLTable(dll_name) == NULL)
 		additive = 2;
-
-	    fprintf(stderr,"%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+	    dprintf_fixup(stddeb,
+		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    fprintf(stderr,"TARGET %04.4x %04.4x\n", 
+	    dprintf_fixup(stddeb,"TARGET %04.4x %04.4x\n", 
 		    rep->target1, rep->target2);
-	    fprintf(stderr, "    Additive = %d\n", additive);
+	    dprintf_fixup(stddeb, "    Additive = %d\n", additive);
 	}
 	
 	switch (rep->address_type)
 	{
 	  case NE_RADDR_OFFSET16:
 	    do {
-#ifdef DEBUG_FIXUP
-		printf("    %04.4x:%04.4x:%04.4x OFFSET16\n",
+		dprintf_fixup(stddeb,"    %04.4x:%04.4x:%04.4x OFFSET16\n",
 		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
-#endif
 		next_addr = *sp;
 		*sp = (unsigned short) address;
 		if (additive == 2)
@@ -417,10 +402,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  case NE_RADDR_POINTER32:
 	    do {
-#ifdef DEBUG_FIXUP
-		printf("    %04.4x:%04.4x:%04.4x POINTER32\n",
+		dprintf_fixup(stddeb,"    %04.4x:%04.4x:%04.4x POINTER32\n",
 		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
-#endif
 		next_addr = *sp;
 		*sp     = (unsigned short) address;
 		if (additive == 2)
@@ -434,10 +417,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    
 	  case NE_RADDR_SELECTOR:
 	    do {
-#ifdef DEBUG_FIXUP
-		printf("    %04.4x:%04.4x:%04.4x SELECTOR\n",
+		dprintf_fixup(stddeb,"    %04.4x:%04.4x:%04.4x SELECTOR\n",
 		       (unsigned long) sp >> 16, (int) sp & 0xFFFF, *sp);
-#endif
 		next_addr = *sp;
 		*sp     = (unsigned short) selector;
 		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
@@ -449,10 +430,12 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    break;
 	    
 	  default:
-	    printf("%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
+	    dprintf_fixup(stddeb,
+		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04.4x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
-	    printf("TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
+	    dprintf_fixup(stddeb,
+		   "TARGET %04.4x %04.4x\n", rep->target1, rep->target2);
 	    free(rep1);
 	    return -1;
 	}
@@ -460,6 +443,62 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 
     free(rep1);
     return 0;
+}
+
+int NEunloadImage(struct w_files *wpnt)
+{
+	printf("NEunloadImage() called!\n");
+	/* free resources, image */
+	return 1;
+}
+
+int StartNEprogram(struct w_files *wpnt)
+{
+    int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
+    /*
+     * Fixup stack and jump to start. 
+     */
+    WIN_StackSize = wpnt->ne->ne_header->stack_length;
+    WIN_HeapSize = wpnt->ne->ne_header->local_heap_length;
+
+    ds_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1].selector;
+    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
+    ip_reg = wpnt->ne->ne_header->ip;
+    ss_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1].selector;
+    sp_reg = wpnt->ne->ne_header->sp;
+
+    return CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
+}
+
+void InitNEDLL(struct w_files *wpnt)
+{
+	int cs_reg, ds_reg, ip_reg, rv;
+	/* 
+	 * Is this a library? 
+	 */
+	if (wpnt->ne->ne_header->format_flags & 0x8000)
+	{
+	    if (!(wpnt->ne->ne_header->format_flags & 0x0001))
+	    {
+		/* Not SINGLEDATA */
+		fprintf(stderr, "Library is not marked SINGLEDATA\n");
+		exit(1);
+	    }
+
+	    ds_reg = wpnt->ne->selector_table[wpnt->ne->
+					  ne_header->auto_data_seg-1].selector;
+	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
+	    ip_reg = wpnt->ne->ne_header->ip;
+
+	    if (cs_reg) {
+		fprintf(stderr, "Initializing %s, cs:ip %04x:%04x, ds %04x\n", 
+		    wpnt->name, cs_reg, ip_reg, ds_reg);
+	    	    
+		rv = CallTo16(cs_reg << 16 | ip_reg, ds_reg);
+		printf ("rv = %x\n", rv);
+	    } else
+		printf("%s skipped\n", wpnt->name);
+	}
 }
 
 #endif /* !WINELIB */

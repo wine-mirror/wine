@@ -11,9 +11,7 @@ SRCS = \
 	dis-buf.c \
 	i386-dis.c
 
-OBJS = \
-	dis-buf.o \
-	i386-dis.o
+OBJS = $(SRCS:.c=.o)
 
 #ifdef xi386
 #define i386 1
@@ -22,7 +20,6 @@ OBJS = \
 
 WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
 DependTarget()
-CleanTarget()
 
 includes::
 

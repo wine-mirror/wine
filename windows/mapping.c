@@ -8,6 +8,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 #include "metafile.h"
+#include "stddebug.h"
+/* #define DEBUG_GDI /* */
+/* #undef  DEBUG_GDI /* */
+#include "debug.h"
 
 
 /***********************************************************************
@@ -84,9 +88,7 @@ WORD SetMapMode( HDC hdc, WORD mode )
 	return 1;
     }
 
-#ifdef DEBUG_GDI
-    printf( "SetMapMode: %d %d\n", hdc, mode );
-#endif
+    dprintf_gdi(stddeb, "SetMapMode: %d %d\n", hdc, mode );
     
     prevMode = dc->w.MapMode;
     switch(mode)

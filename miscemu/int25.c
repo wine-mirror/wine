@@ -3,6 +3,10 @@
 #include "registers.h"
 #include "msdos.h"
 #include "wine.h"
+#include "stddebug.h"
+/* #define DEBUG_INT */
+/* #undef  DEBUG_INT */
+#include "debug.h"
 
 int do_int25(struct sigcontext_struct *context)
 {
@@ -18,7 +22,7 @@ int do_int25(struct sigcontext_struct *context)
 		begin = DX;
 		length = CX;
 	}
-	fprintf(stderr, "int25: abs diskread, drive %d, sector %d, "
+	dprintf_int(stdnimp, "int25: abs diskread, drive %d, sector %d, "
 	"count %d, buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
 
 	memset(dataptr, 0, length * 512);

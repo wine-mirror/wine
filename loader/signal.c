@@ -12,14 +12,26 @@
 #include <syscall.h>
 #endif
 #ifdef linux
+#define inline __inline__  /* So we can compile with -ansi */
 #include <linux/sched.h>
 #include <asm/system.h>
+#undef inline
 #endif
 
 #include "wine.h"
 #include "segmem.h"
 #include "prototypes.h"
 #include "win.h"
+
+extern int do_int10(struct sigcontext_struct *);
+extern int do_int13(struct sigcontext_struct *);
+extern int do_int15(struct sigcontext_struct *);
+extern int do_int16(struct sigcontext_struct *);
+extern int do_int25(struct sigcontext_struct *);
+extern int do_int26(struct sigcontext_struct *);
+extern int do_int2a(struct sigcontext_struct *);
+extern int do_int2f(struct sigcontext_struct *);
+extern int do_int31(struct sigcontext_struct *);
  
 #if !defined(BSD4_4) || defined(linux)
 char * cstack[4096];
@@ -90,8 +102,6 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 {
 #endif
     unsigned char * instr;
-    unsigned int * dump;
-    int i;
 
 	/* First take care of a few preliminaries */
 #ifdef linux

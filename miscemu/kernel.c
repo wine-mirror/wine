@@ -6,6 +6,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "prototypes.h"
 #include "regfunc.h"
 #include "options.h"
+#include "stddebug.h"
+#include "debug.h"
 
 extern unsigned short WIN_StackSize;
 
@@ -18,9 +20,8 @@ KERNEL_LockSegment(int segment)
     if (segment == -1)
 	segment = *(Stack16Frame + 6);
 
-#ifdef RELAY_DEBUG
-    printf("LockSegment: segment %x\n", segment);
-#endif
+    if (Options.relay_debug)
+	fprintf(stddeb,"LockSegment: segment %x\n", segment);
 
     return segment;
 }
@@ -34,9 +35,8 @@ KERNEL_UnlockSegment(int segment)
     if (segment == -1)
 	segment = *(Stack16Frame + 6);
 
-#ifdef RELAY_DEBUG
-    printf("UnlockSegment: segment %x\n", segment);
-#endif
+    if (Options.relay_debug)
+    	fprintf(stddeb,"UnlockSegment: segment %x\n", segment);
 
     return segment;
 }
@@ -50,6 +50,11 @@ KERNEL_InitTask()
     _AX = 1;
     _CX = WIN_StackSize;
     _DX = Options.cmdShow;
+    _DI = _DS;
+
+/* FIXME: DI should contain the instance handle of the caller, _DS doesn't
+          always work as the caller might have changed it. */
+
     _SI = 0;
     ReturnFromRegisterFunc();
     /* Function does not return */
@@ -61,8 +66,7 @@ KERNEL_InitTask()
 int
 KERNEL_WaitEvent(int task)
 {
-#ifdef RELAY_DEBUG
-    printf("WaitEvent: task %d\n", task);
-#endif
+    if (Options.relay_debug)
+    	fprintf(stddeb,"WaitEvent: task %d\n", task);
     return 0;
 }

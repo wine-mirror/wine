@@ -9,6 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <locale.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -19,6 +20,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "options.h"
 #include "prototypes.h"
 #include "texts.h"
+#define DEBUG_DEFINE_VARIABLES
+#include "stddebug.h"
+#include "debug.h"
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
@@ -33,8 +37,6 @@ typedef ENVENTRY *LPENVENTRY;
 
 LPENVENTRY	lpEnvList = NULL;
 
-Display * XT_display;  /* To be removed */
-
 Display *display;
 Screen *screen;
 Window rootWindow;
@@ -42,7 +44,6 @@ int screenWidth = 0, screenHeight = 0;  /* Desktop window dimensions */
 int screenDepth = 0;  /* Screen depth to use */
 int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
 
-char *ProgramName;		/* Used by resource.c with WINELIB */
 extern ButtonTexts ButtonText;
 
 struct options Options =
@@ -70,7 +71,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
     { "-spy",           ".spy",             XrmoptionSepArg, (caddr_t)NULL },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
-    { "-relaydbg",      ".relaydbg",        XrmoptionNoArg,  (caddr_t)"on" }
+    { "-relaydbg",      ".relaydbg",        XrmoptionNoArg,  (caddr_t)"on" },
+    { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL }
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -89,7 +91,8 @@ static XrmOptionDescRec optionsTable[] =
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -backingstore   Turn on backing store\n" \
   "    -spy file       Turn on message spying to the specified file\n" \
-  "    -relaydbg       Display call relay information\n"
+  "    -relaydbg       Display call relay information\n" \
+  "    -debugmsg name  Turn debugging-messages on or off\n"
 
 
 /***********************************************************************
@@ -232,9 +235,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	exit(1);
     }
 
-      /* Use app-defaults */
-    display->db = db;
-
       /* Get all options */
     if (MAIN_GetResource( db, ".iconic", &value ))
 	Options.cmdShow = SW_SHOWMINIMIZED;
@@ -254,6 +254,49 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	screenDepth = atoi( value.addr );
     if (MAIN_GetResource( db, ".desktop", &value))
 	Options.desktopGeometry = value.addr;
+    if (MAIN_GetResource( db, ".debugmsg", &value))
+      {
+#ifndef DEBUG_RUNTIME
+	fprintf(stderr,"%s: Option \"-debugmsg\" not implemented.\n" \
+          "    Recompile with DEBUG_RUNTIME in include/stddebug.h defined.\n",
+	  argv[0]);
+	exit(1);
+#else
+	char *p=(char*)value.addr;
+	if (strlen(p)<3)
+	  goto msgerror;
+	if ((*p!='+')&&(*p!='-'))
+	  goto msgerror;
+	if (!strcasecmp(p+1,"all"))
+	  {
+	    int i;
+	    for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
+	      debug_msg_enabled[i]=(*p=='+');
+	  }
+	else
+	  {
+	    int i;
+	    for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
+	      if (debug_msg_name && (!strcasecmp(p+1,debug_msg_name[i])))
+		{
+		  debug_msg_enabled[i]=(*p=='+');
+		  break;
+		}
+	    if (i==sizeof(debug_msg_enabled)/sizeof(short))
+	      {
+	      msgerror:
+		fprintf(stderr,"%s: Syntax: -debugmsg +xxx  or -debugmsg -xxx  with xxx one of\n",argv[0]);
+		fprintf(stderr,"%-9s ","all");
+		for(i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
+		  if(debug_msg_name[i])
+		      fprintf(stderr,"%-9s%c",debug_msg_name[i],
+			(((i+2)%8==0)?'\n':' '));
+		fprintf(stderr,"\n\n");
+		exit(1);
+	      }
+	  }
+#endif
+      }
 
 /*    MAIN_GetAllButtonTexts(db); */
  
@@ -371,7 +414,6 @@ int main( int argc, char *argv[] )
     screen       = DefaultScreenOfDisplay( display );
     screenWidth  = WidthOfScreen( screen );
     screenHeight = HeightOfScreen( screen );
-    XT_display   = display;
     if (screenDepth)  /* -depth option specified */
     {
 	depth_list = XListDepths(display,DefaultScreen(display),&depth_count);
@@ -390,7 +432,6 @@ int main( int argc, char *argv[] )
     if (Options.desktopGeometry) MAIN_CreateDesktop( argc, argv );
     else rootWindow = DefaultRootWindow( display );
 
-    ProgramName = argv [0];
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();
@@ -689,4 +730,12 @@ BOOL IsRomModule(HANDLE x)
 	   if the dll is located in rom */
 	   
 	return FALSE;
+}
+
+/***********************************************************************
+*	FileCDR (KERNEL.130)
+*/
+void FileCDR(FARPROC x)
+{
+	printf("FileCDR(%8x)\n", (int) x);
 }

@@ -13,6 +13,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "class.h"
 #include "user.h"
 #include "syscolor.h"
+#include "stddebug.h"
+/* #define DEBUG_MESSAGE /* */
+/* #undef  DEBUG_MESSAGE /* */
+#include "debug.h"
+
 
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
@@ -57,9 +62,8 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	int len;
 	WND * wndPtr = WIN_FindWndPtr( hwnd );
     
-#ifdef DEBUG_MESSAGE
-    printf( "DefWindowProc: %d %d %d %08x\n", hwnd, msg, wParam, lParam );
-#endif
+    dprintf_message(stddeb, "DefWindowProc: %d %d %d %08x\n", 
+		    hwnd, msg, wParam, lParam );
 
     switch(msg)
     {
@@ -108,6 +112,15 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	    EndPaint( hwnd, &paintstruct );
 	    return 0;
 	}
+
+    case WM_SETREDRAW:
+        if (wParam)
+        {
+            ValidateRect( hwnd, NULL );
+            wndPtr->flags |= WIN_NO_REDRAW;
+        }
+        else wndPtr->flags &= ~WIN_NO_REDRAW;
+        return 0;
 
     case WM_CLOSE:
 	DestroyWindow( hwnd );

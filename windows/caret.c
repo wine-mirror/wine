@@ -7,6 +7,11 @@
 static char Copyright[] = "Copyright  David Metcalfe, 1993";
 
 #include "windows.h"
+#include "stddebug.h"
+/* #define DEBUG_CARET /* */
+/* #undef  DEBUG_CARET /* */
+#include "debug.h"
+
 
 typedef struct
 {
@@ -40,10 +45,8 @@ static WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
     HBRUSH hBrush;
     HRGN rgn;
 
-#ifdef DEBUG_CARET
-    printf("CARET_Callback: id=%d: LockCaret=%d, hidden=%d, on=%d\n",
+    dprintf_caret(stddeb,"CARET_Callback: id=%d: LockCaret=%d, hidden=%d, on=%d\n",
 	   timerid, LockCaret, Caret.hidden, Caret.on);
-#endif
     if (!LockCaret && (!Caret.hidden || Caret.on))
     {
 	Caret.on = (Caret.on ? FALSE : TRUE);
@@ -134,9 +137,8 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
 
     Caret.timerid = SetSystemTimer(NULL, 0, Caret.timeout, CARET_Callback);
 
-#ifdef DEBUG_CARET
-    printf("CreateCaret: hwnd=%d, timerid=%d\n", hwnd, Caret.timerid);
-#endif
+    dprintf_caret(stddeb,"CreateCaret: hwnd=%d, timerid=%d\n", 
+		  hwnd, Caret.timerid);
 }
    
 
@@ -148,9 +150,7 @@ void DestroyCaret()
 {
 /*    if (!Caret.hwnd) return;
 */
-#ifdef DEBUG_CARET
-    printf("DestroyCaret: timerid=%d\n", Caret.timerid);
-#endif
+    dprintf_caret(stddeb,"DestroyCaret: timerid=%d\n", Caret.timerid);
 
     KillSystemTimer(NULL, Caret.timerid);
 
@@ -173,9 +173,7 @@ void SetCaretPos(short x, short y)
 
     if (!Caret.hwnd) return;
 
-#ifdef DEBUG_CARET
-    printf("SetCaretPos: x=%d, y=%d\n", x, y);
-#endif
+    dprintf_caret(stddeb,"SetCaretPos: x=%d, y=%d\n", x, y);
 
     LockCaret = TRUE;
     if (Caret.on)
@@ -213,9 +211,7 @@ void ShowCaret(HWND hwnd)
     if (!Caret.hwnd) return;
     if (hwnd && (Caret.hwnd != hwnd)) return;
 
-#ifdef DEBUG_CARET
-    printf("ShowCaret: hidden=%d\n", Caret.hidden);
-#endif
+    dprintf_caret(stddeb,"ShowCaret: hidden=%d\n", Caret.hidden);
     if (Caret.hidden)
 	--Caret.hidden;
 }

@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "win.h"
 #include "desktop.h"
 #include "prototypes.h"
@@ -213,7 +214,7 @@ BOOL DESKTOP_SetPattern(char *pattern )
 	int i;
 
 	for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
-	hbitmap = CreateBitmap( 8, 8, 1, 1, pattern );
+	hbitmap = CreateBitmap( 8, 8, 1, 1, (LPSTR)pattern );
 	infoPtr->hbrushPattern = CreatePatternBrush( hbitmap );
 	DeleteObject( hbitmap );
     }

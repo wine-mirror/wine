@@ -6,23 +6,28 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "gdi.h"
 #include "bitmap.h"
+#include "stddebug.h"
+/* #define DEBUG_GDI    /* */
+/* #undef  DEBUG_GDI    /* */
+/* #define DEBUG_BITMAP /* */
+/* #define DEBUG_BITMAP /* */
+#include "debug.h"
 
   /* Include OEM bitmaps */
 #include "bitmaps/check_boxes"
 #include "bitmaps/check_mark"
 #include "bitmaps/menu_arrow"
 
-  /* Handle of the bitmap selected by default in a memory DC */
-HBITMAP BITMAP_hbitmapMemDC = 0;
-
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
+extern void DC_InitDC( HDC hdc );  /* dc.c */
 
 /***********************************************************************
  *           BITMAP_Init
@@ -49,9 +54,7 @@ BOOL BITMAP_Init()
 	    XFreePixmap( display, tmpPixmap );
 	}
     }
-
-    BITMAP_hbitmapMemDC = CreateBitmap( 1, 1, 1, 1, NULL );
-    return (BITMAP_hbitmapMemDC != 0);
+    return TRUE;
 }
 
 
@@ -143,10 +146,8 @@ HBITMAP CreateBitmap( short width, short height,
 		      BYTE planes, BYTE bpp, LPSTR bits )
 {
     BITMAP bitmap = { 0, width, height, 0, planes, bpp, bits };
-#ifdef DEBUG_GDI
-    printf( "CreateBitmap: %dx%d, %d colors\n", 
+    dprintf_gdi(stddeb, "CreateBitmap: %dx%d, %d colors\n", 
 	     width, height, 1 << (planes*bpp) );
-#endif
     return CreateBitmapIndirect( &bitmap );
 }
 
@@ -157,9 +158,8 @@ HBITMAP CreateBitmap( short width, short height,
 HBITMAP CreateCompatibleBitmap( HDC hdc, short width, short height )
 {
     DC * dc;
-#ifdef DEBUG_GDI
-    printf( "CreateCompatibleBitmap: %d %dx%d\n", hdc, width, height );
-#endif
+    dprintf_gdi(stddeb, "CreateCompatibleBitmap: %d %dx%d\n", 
+		hdc, width, height );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     return CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
 }
@@ -222,11 +222,9 @@ LONG GetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return 0;
 
-#ifdef DEBUG_BITMAP
-    printf( "GetBitmapBits: %dx%d %d colors %p\n",
+    dprintf_bitmap(stddeb, "GetBitmapBits: %dx%d %d colors %p\n",
 	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 	    1 << bmp->bitmap.bmBitsPixel, buffer );
-#endif
       /* Only get entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
@@ -253,11 +251,10 @@ LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return 0;
 
-#ifdef DEBUG_BITMAP
-    printf( "SetBitmapBits: %dx%d %d colors %p\n",
+    dprintf_bitmap(stddeb, "SetBitmapBits: %dx%d %d colors %p\n",
 	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
 	    1 << bmp->bitmap.bmBitsPixel, buffer );
-#endif
+
       /* Only set entire lines */
     height = count / bmp->bitmap.bmWidthBytes;
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
@@ -314,9 +311,7 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
 	XFreeGC( display, dc->u.x.gc );
 	dc->u.x.gc = XCreateGC( display, dc->u.x.drawable, 0, NULL );
 	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
-	  /* Re-select objects with changed depth */
-	SelectObject( hdc, dc->w.hPen );
-	SelectObject( hdc, dc->w.hBrush );
+        DC_InitDC( hdc );
     }
     return prevHandle;
 }
@@ -326,7 +321,7 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
  */
 HBITMAP CreateDiscardableBitmap(HDC hdc, short width, short height)
 {
-    printf("CreateDiscardableBitmap(%04X, %d, %d); "
+    dprintf_bitmap(stddeb,"CreateDiscardableBitmap(%04X, %d, %d); "
 	   "// call CreateCompatibleBitmap() for now!\n",
 	   hdc, width, height);
     return CreateCompatibleBitmap(hdc, width, height);

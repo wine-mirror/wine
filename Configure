@@ -1,30 +1,57 @@
 #! /bin/sh
+#
+# Configure script for wine
+
+: ${EDITOR:=vi}
+: ${PAGER:=more}
 
 ALLDEFINES=''
 
-echo
+# Ask question 'str' and sets 'var' reply (defaulting to 'def' on CR)
+prompt ()
+{
+	str="$1"
+	var="$2"
+	def="$3"
+
+	eval $var='$def'
+	echo
+	echo -n "$str [$def]? "
+	input=`head -1`  #  When using read, user must double all backslashes
+	if [ -n "$input" ]
+	then
+		eval $var='$input'
+	fi
+}
+
 echo -n 'Build Wine as emulator or library (E/L) [E]? '
 read input
 if [ "$input" = 'l' -o "$input" = 'L' ]
 then
-    WINELIB='#define WINELIB -DWINELIB'
-    ALLDEFINES="$ALLDEFINES -DWINELIB"
+	WINELIB='#define WINELIB -DWINELIB'
+	ALLDEFINES="$ALLDEFINES -DWINELIB"
 else
-    WINELIB=''
-    echo -n 'Use processor emulator (*DOES*NOT*WORK*YET*) (Y/N) [N]? '
-    read input
-    if [ "$input" = 'y' -o "$input" = 'Y' ]
-    then
-	PROCEMU='#define PROCEMU'
-	echo -n 'bochs directory [/usr/src/bochs]? '
-	read input
-	if [ "$input" = '' ]
-	then
-		ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR=/usr/src/bochs"
-	else
-		ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR="$input
-	fi
-    fi
+	WINELIB=''
+
+#	Commented out until the processor emulator starts to work.
+#
+#	echo
+#	echo -n 'Use processor emulator (*DOES*NOT*WORK*YET*) (Y/N) [N]? '
+#	read input
+#	if [ "$input" = 'y' -o "$input" = 'Y' ]
+#	then
+#		PROCEMU='#define PROCEMU'
+#		echo
+#		echo -n 'bochs directory [/usr/src/bochs]? '
+#		read input
+#		if [ "$input" = '' ]
+#		then
+#			ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR=/usr/src/bochs"
+#		else
+#			ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR="$input
+#		fi
+#	fi
+
 fi
 
 echo
@@ -32,54 +59,154 @@ echo -n 'Short filenames (Y/N) [N]? '
 read input
 if [ "$input" = 'y' -o "$input" = 'Y' ]
 then
-    SHORTNAMES='#define ShortNames -DSHORTNAMES'
-    ALLDEFINES="$ALLDEFINES -DSHORTNAMES"
+	SHORTNAMES='#define ShortNames -DSHORTNAMES'
+	ALLDEFINES="$ALLDEFINES -DSHORTNAMES"
 else
-    SHORTNAMES=''
+	SHORTNAMES=''
 fi
 
-echo -n 'Global configfile name [/usr/local/etc/wine.conf]? '
+prompt "Global configfile name" WINE_CONFIGFILE /usr/local/etc/wine.conf
+
+WINE_INI_GLOBAL='#define WINE_INI_GLOBAL "'$WINE_CONFIGFILE'"'
+
+if [ -r $WINE_CONFIGFILE ]
+then
+	DEFAULT_ANS=N
+else
+	DEFAULT_ANS=Y
+fi
+
+echo
+echo -n "Do you want to make a config file now (Y/N) [$DEFAULT_ANS]? "
 read input
 if [ "$input" = '' ]
 then
-    WINE_INI_GLOBAL='#define WINE_INI_GLOBAL "/usr/local/etc/wine.conf"'
+	input="$DEFAULT_ANS"
+fi
+if [ "$input" = 'y' -o "$input" = 'Y' ]
+then
+	if [ -r $WINE_CONFIGFILE ]
+	then
+		echo "Backing up the old file to ${WINE_CONFIGFILE}.old."
+		if cp $WINE_CONFIGFILE ${WINE_CONFIGFILE}.old
+		then	:
+		else
+			echo "Error while creating backup file.  Fix it and run Configure again"
+			exit 1
+		fi
+	fi
+
+	case `awk 'BEGIN {s=0} {if ($3=="msdos") s++} END {print s}' /etc/fstab` in
+	0)	CF_C=/c;;
+	1)	CF_C=`awk '{if ($3=="msdos") print $2}' /etc/fstab`;;
+	*)	CF_C=`awk '{if ($3=="msdos") {print $2;exit}}' /etc/fstab`;;
+	esac
+
+	prompt "Which directory do you want to use as A:" CF_A /a
+	prompt "Which directory do you want to use as C:" CF_C $CF_C
+	prompt "Where is the Windows directory" CF_Windows 'c:\windows'
+	prompt "Where is the System directory" CF_System 'c:\windows\system'
+	prompt "Where should Windows apps store temp files" CF_Temp 'c:\temp'
+	prompt "Which path should be used to find executables and DLL's" CF_Path 'c:\windows;c:\windows\system'
+	prompt "Where is sysres.dll" CF_SystemResources `pwd`/sysres.dll
+	prompt "Where is COM1" CF_Com1 '/dev/cua0'
+	prompt "Where is COM2" CF_Com2 '/dev/cua1'
+	prompt "Where is LPT1" CF_Lpt1 '/dev/lp0'
+	prompt "Log messages to which file (CON = stdout)" CF_File 'CON'
+
+	echo
+	sed -n -e 's/^ *\"\(WM_[A-Z0-9]*\)\".*/\1/p' < misc/spy.c | \
+		sort | pr -ta4w83 | sed '1 i\
+Here is the list of messages:\
+\
+' | $PAGER
+
+	prompt "Exclude which messages from the log" CF_Exclude 'WM_SIZE;WM_TIMER'
+
+	echo
+	echo "The config file $WINE_CONFIGFILE now looks like this:"
+	tee $WINE_CONFIGFILE << EOF
+[drives]
+A=$CF_A
+C=$CF_C
+
+[wine]
+Windows=$CF_Windows
+System=$CF_System
+Temp=$CF_Temp
+Path=$CF_Path
+SystemResources=$CF_SystemResources
+
+[serialports]
+Com1=$CF_Com1
+Com2=$CF_Com2
+
+[parallelports]
+Lpt1=$CF_Lpt1
+
+[spy]
+File=$CF_File
+Exclude=$CF_Exclude
+EOF
+
+	echo
+	echo -n "Do you want to edit it using $EDITOR (Y/N) [N]? "
+	read input
+	if [ "$input" = 'y' -o "$input" = 'Y' ]
+	then
+		$EDITOR $WINE_CONFIGFILE
+	fi
 else
-    WINE_INI_GLOBAL='#define WINE_INI_GLOBAL "'$input'"'
+	if [ ! -r $WINE_CONFIGFILE ]
+	then
+		echo 'Ok, remember to make it yourself later.'
+	fi
 fi
 
+NEWBUILD=''
 if [ "`(domainname)`" = 'amscons.com' ]
 then
+    echo
     echo -n 'New build program (Y/N) [N]? '
     read input
     if [ "$input" = 'y' -o "$input" = 'Y' ]
     then
 	NEWBUILD='#define NewBuild -DNEWBUILD'
 	ALLDEFINES="$ALLDEFINES -DNEWBUILD"
-    else
-	NEWBUILD=''
     fi
-else
-    NEWBUILD=''
 fi
 
 NEWLINUXLDT=''
-if [ -f /usr/include/linux/ldt.h ]
+if grep -s seg_not_present /usr/include/linux/ldt.h 2> /dev/null
 then
-	if grep seg_not_present /usr/include/linux/ldt.h
-	then
-		NEWLINUXLDT='#define NEW_LDT_STRUCT'
-	fi
+	NEWLINUXLDT='#define NEW_LDT_STRUCT'
 fi
 
-echo '/* autoconf.h generated automatically.  Run Configure. */' > autoconf.h
-echo $WINELIB >> autoconf.h
-echo $SHORTNAMES >> autoconf.h
-echo $NEWBUILD >> autoconf.h
-echo $WINE_INI_GLOBAL >> autoconf.h
-echo $NEWLINUXLDT >> autoconf.h
-echo $ENDIAN >> autoconf.h
-echo $PROCEMU >> autoconf.h
-echo $PROCEMUDIR >> autoconf.h
-echo "#define AutoDefines  $ALLDEFINES" >> autoconf.h
+cat > autoconf.h << EOF
+/* autoconf.h generated automatically.  Run Configure. */
+$WINELIB
+$SHORTNAMES
+$NEWBUILD
+$WINE_INI_GLOBAL
+$NEWLINUXLDT
+$ENDIAN
+$PROCEMUDIR
+#define AutoDefines $ALLDEFINES
+EOF
 
 xmkmf -a
+
+if [ 0 -lt `find . -name "*.rej" -print | wc -l` ]
+then
+	cat << EOF
+
+WARNING:  You have some files named "*.rej".  Rejected patch files?
+Maybe you tried to upgrade Wine by diff-files, and that patch failed.
+If something doesn't work, this might be the reason.  See "man patch".
+
+List of "*.rej" files:
+
+EOF
+	find . -name "*.rej" -print
+	echo
+fi

@@ -19,8 +19,10 @@
 #include "wine.h"
 #include "windows.h"
 #include "comm.h"
-
+#include "stddebug.h"
 /* #define DEBUG_COMM /* */
+/* #undef  DEBUG_COMM /* */
+#include "debug.h"
 
 int commerror = 0, eventmask = 0;
 
@@ -141,9 +143,8 @@ int BuildCommDCB(LPSTR device, DCB FAR *lpdcb)
 	int port;
 	char *ptr, temp[256];
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"BuildCommDCB: (%s), ptr %d\n", device, (long) lpdcb);
-#endif
+	dprintf_comm(stddeb,
+		"BuildCommDCB: (%s), ptr %d\n", device, (long) lpdcb);
 	commerror = 0;
 
 	if (!strncasecmp(device,"COM",3)) {
@@ -174,14 +175,14 @@ fprintf(stderr,"BuildCommDCB: (%s), ptr %d\n", device, (long) lpdcb);
 		strcpy(temp,device+5);
 		ptr = strtok(temp, ","); 
 
-		fprintf(stderr,"BuildCommDCB: baudrate (%s)\n", ptr);
+        	dprintf_comm(stddeb,"BuildCommDCB: baudrate (%s)\n", ptr);
 		lpdcb->BaudRate = atoi(ptr);
 
 		ptr = strtok(NULL, ",");
 		if (islower(*ptr))
 			*ptr = toupper(*ptr);
 
-		fprintf(stderr,"BuildCommDCB: parity (%c)\n", *ptr);
+        	dprintf_comm(stddeb,"BuildCommDCB: parity (%c)\n", *ptr);
 		switch (*ptr) {
 			case 'N':
 				lpdcb->Parity = NOPARITY;
@@ -205,11 +206,11 @@ fprintf(stderr,"BuildCommDCB: (%s), ptr %d\n", device, (long) lpdcb);
 		}
 
 		ptr = strtok(NULL, ","); 
-		fprintf(stderr, "BuildCommDCB: charsize (%c)\n", *ptr);
+         	dprintf_comm(stddeb, "BuildCommDCB: charsize (%c)\n", *ptr);
 		lpdcb->ByteSize = *ptr - '0';
 
 		ptr = strtok(NULL, ",");
-		fprintf(stderr, "BuildCommDCB: stopbits (%c)\n", *ptr);
+        	dprintf_comm(stddeb, "BuildCommDCB: stopbits (%c)\n", *ptr);
 		switch (*ptr) {
 			case '1':
 				lpdcb->StopBits = ONESTOPBIT;
@@ -230,10 +231,8 @@ int OpenComm(LPSTR device, UINT cbInQueue, UINT cbOutQueue)
 {
 	int port, fd;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
-#endif	
-	
+    	dprintf_comm(stddeb,
+		"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 	commerror = 0;
 
 	if (!strncasecmp(device,"COM",3)) {
@@ -288,10 +287,7 @@ fprintf(stderr,"OpenComm: %s, %d, %d\n", device, cbInQueue, cbOutQueue);
 
 int CloseComm(int fd)
 {
-#ifdef DEBUG_COMM
-fprintf(stderr,"CloseComm: fd %d\n", fd);
-#endif	
-
+    	dprintf_comm(stddeb,"CloseComm: fd %d\n", fd);
 	if (close(fd) == -1) {
 		commerror = WinError();
 		return -1;
@@ -305,10 +301,7 @@ int SetCommBreak(int fd)
 {
 	struct DosDeviceStruct *ptr;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"SetCommBreak: fd: %d\n", fd);
-#endif	
-
+	dprintf_comm(stddeb,"SetCommBreak: fd: %d\n", fd);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -323,10 +316,7 @@ int ClearCommBreak(int fd)
 {
 	struct DosDeviceStruct *ptr;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"ClearCommBreak: fd: %d\n", fd);
-#endif	
-
+    	dprintf_comm(stddeb,"ClearCommBreak: fd: %d\n", fd);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -342,10 +332,8 @@ LONG EscapeCommFunction(int fd, int nFunction)
 	int max;
 	struct termios port;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"EscapeCommFunction fd: %d, function: %d\n", fd, nFunction);
-#endif
-
+    	dprintf_comm(stddeb,
+		"EscapeCommFunction fd: %d, function: %d\n", fd, nFunction);
 	if (tcgetattr(fd, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -392,7 +380,9 @@ fprintf(stderr,"EscapeCommFunction fd: %d, function: %d\n", fd, nFunction);
 			break;
 
 		default:
-			fprintf(stderr,"EscapeCommFunction fd: %d, unknown function: %d\n", fd, nFunction);
+			fprintf(stderr,
+			"EscapeCommFunction fd: %d, unknown function: %d\n", 
+			fd, nFunction);
 			break;				
 	}
 	
@@ -409,10 +399,7 @@ int FlushComm(int fd, int fnQueue)
 {
 	int queue;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"FlushComm fd: %d, queue: %d\n", fd, fnQueue);
-#endif	
-
+    	dprintf_comm(stddeb,"FlushComm fd: %d, queue: %d\n", fd, fnQueue);
 	switch (fnQueue) {
 		case 0:
 			queue = TCOFLUSH;
@@ -421,7 +408,9 @@ fprintf(stderr,"FlushComm fd: %d, queue: %d\n", fd, fnQueue);
 			queue = TCIFLUSH;
 			break;
 		default:
-			fprintf(stderr,"FlushComm fd: %d, UNKNOWN queue: %d\n", fd, fnQueue);
+			fprintf(stderr,
+				"FlushComm fd: %d, UNKNOWN queue: %d\n", 
+				fd, fnQueue);
 			return -1;
 		}
 	
@@ -436,28 +425,23 @@ fprintf(stderr,"FlushComm fd: %d, queue: %d\n", fd, fnQueue);
 
 int GetCommError(int fd, COMSTAT FAR *lpStat)
 {
-#ifdef DEBUG_COMM
-fprintf(stderr,"GetCommError: fd %d (current error %d)\n", fd, commerror);
-#endif	
-
+    	dprintf_comm(stddeb,
+		"GetCommError: fd %d (current error %d)\n", fd, commerror);
 	return(commerror);
 }
 
 UINT FAR* SetCommEventMask(int fd, UINT fuEvtMask)
 {
-#ifdef DEBUG_COMM
-fprintf(stderr,"SetCommEventMask: fd %d, mask %d\n", fd, fuEvtMask);
-#endif	
-	
+    	dprintf_comm(stddeb,
+		"SetCommEventMask: fd %d, mask %d\n", fd, fuEvtMask);
 	eventmask |= fuEvtMask;
 	return (UINT *)&eventmask;
 }
 
 UINT GetCommEventMask(int fd, int fnEvtClear)
 {
-#ifdef DEBUG_COMM
-fprintf(stderr,"GetCommEventMask: fd %d, mask %d\n", fd, fnEvtClear);
-#endif	
+    	dprintf_comm(stddeb,
+		"GetCommEventMask: fd %d, mask %d\n", fd, fnEvtClear);
 	eventmask &= ~fnEvtClear;
 	return eventmask;
 }
@@ -466,10 +450,8 @@ int SetCommState(DCB FAR *lpdcb)
 {
 	struct termios port;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
-#endif	
-
+    	dprintf_comm(stddeb,
+		"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
 	if (tcgetattr(lpdcb->Id, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -489,7 +471,7 @@ fprintf(stderr,"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
 	port.c_lflag &= ~(ICANON|ECHO|ISIG);
 	port.c_lflag |= NOFLSH;
 
-	fprintf(stderr,"SetCommState: baudrate %d\n",lpdcb->BaudRate);
+    	dprintf_comm(stddeb,"SetCommState: baudrate %d\n",lpdcb->BaudRate);
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
 	switch (lpdcb->BaudRate) {
@@ -577,7 +559,7 @@ fprintf(stderr,"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
         }
         port.c_ispeed = port.c_ospeed;
 #endif
-	fprintf(stderr,"SetCommState: bytesize %d\n",lpdcb->ByteSize);
+    	dprintf_comm(stddeb,"SetCommState: bytesize %d\n",lpdcb->ByteSize);
 	port.c_cflag &= ~CSIZE;
 	switch (lpdcb->ByteSize) {
 		case 5:
@@ -597,7 +579,7 @@ fprintf(stderr,"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
 			return -1;
 	}
 
-	fprintf(stderr,"SetCommState: parity %d\n",lpdcb->Parity);
+    	dprintf_comm(stddeb,"SetCommState: parity %d\n",lpdcb->Parity);
 	port.c_cflag &= ~(PARENB | PARODD);
 	if (lpdcb->fParity)
 		switch (lpdcb->Parity) {
@@ -618,7 +600,7 @@ fprintf(stderr,"SetCommState: fd %d, ptr %d\n", lpdcb->Id, (long) lpdcb);
 		}
 	
 
-	fprintf(stderr,"SetCommState: stopbits %d\n",lpdcb->StopBits);
+    	dprintf_comm(stddeb,"SetCommState: stopbits %d\n",lpdcb->StopBits);
 	switch (lpdcb->StopBits) {
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
@@ -655,10 +637,7 @@ int GetCommState(int fd, DCB FAR *lpdcb)
 {
 	struct termios port;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"GetCommState: fd %d, ptr %d\n", fd, (long) lpdcb);
-#endif
-
+    	dprintf_comm(stddeb,"GetCommState: fd %d, ptr %d\n", fd, (long) lpdcb);
 	if (tcgetattr(fd, &port) == -1) {
 		commerror = WinError();	
 		return -1;
@@ -772,10 +751,8 @@ int TransmitCommChar(int fd, char chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"TransmitCommChar: fd %d, data %d \n", fd, chTransmit);
-#endif	
-
+    	dprintf_comm(stddeb,
+		"TransmitCommChar: fd %d, data %d \n", fd, chTransmit);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -799,10 +776,7 @@ int UngetCommChar(int fd, char chUnget)
 {
 	struct DosDeviceStruct *ptr;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"UngetCommChar: fd %d (char %d)\n", fd, chUnget);
-#endif	
-
+    	dprintf_comm(stddeb,"UngetCommChar: fd %d (char %d)\n", fd, chUnget);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -825,10 +799,8 @@ int ReadComm(int fd, LPSTR lpvBuf, int cbRead)
 	int status, length;
 	struct DosDeviceStruct *ptr;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"ReadComm: fd %d, ptr %d, length %d\n", fd, (long) lpvBuf, cbRead);
-#endif	
-
+    	dprintf_comm(stddeb,
+	    "ReadComm: fd %d, ptr %d, length %d\n", fd, (long) lpvBuf, cbRead);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -864,10 +836,8 @@ int WriteComm(int fd, LPSTR lpvBuf, int cbWrite)
 	int x, length;
 	struct DosDeviceStruct *ptr;
 
-#ifdef DEBUG_COMM
-fprintf(stderr,"WriteComm: fd %d, ptr %d, length %d\n", fd, (long) lpvBuf, cbWrite);
-#endif
-	
+    	dprintf_comm(stddeb,"WriteComm: fd %d, ptr %d, length %d\n", 
+		fd, (long) lpvBuf, cbWrite);
 	if ((ptr = GetDeviceStruct(fd)) == NULL) {
 		commerror = IE_BADID;
 		return -1;
@@ -878,10 +848,8 @@ fprintf(stderr,"WriteComm: fd %d, ptr %d, length %d\n", fd, (long) lpvBuf, cbWri
 		return -1;
 	}	
 	
-#ifdef DEBUG_COMM
 	for (x=0; x != cbWrite ; x++)
-		fprintf(stderr,"%c", *(lpvBuf + x) );
-#endif
+        dprintf_comm(stddeb,"%c", *(lpvBuf + x) );
 
 	length = write(fd, (void *) lpvBuf, cbWrite);
 	

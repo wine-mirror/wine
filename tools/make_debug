@@ -1,0 +1,120 @@
+#!/bin/sh
+#
+# This script scans the whole source code for symbols of the form dprintf_xxx,
+# generates the necessary macro definitions and puts them into the files
+# include/stddebug.h and include/debug.h . This script must be started with 
+# cwd = rootdir of the Wine-distribution.
+#
+# Michael Patra  <micky@marie.physik.tu-berlin.de>
+#
+makedepend -s"# /* Do not remove this line or change anything below this line */" -finclude/debug.h
+echo " " >> include/debug.h
+grep -h dprintf_ */*.c | tr -d '[:blank:]' | cut -d"(" -f1 | sort | uniq | \
+	cut -d"_" -f2 > temp.$$
+echo " " >> include/debug.h
+echo "#ifdef DEBUG_NONE_EXT" >> include/debug.h
+cat temp.$$ |
+{
+while read x
+do
+	y=`echo $x | tr a-z A-Z`
+	echo "#undef DEBUG_$y" >> include/debug.h
+done
+}
+echo "#endif" >> include/debug.h
+echo " " >> include/debug.h
+echo " " >> include/debug.h
+echo "#ifdef DEBUG_ALL_EXT" >> include/debug.h
+cat temp.$$ |
+{
+while read x
+do
+	y=`echo $x | tr a-z A-Z`
+	echo "#define DEBUG_$y" >> include/debug.h
+done
+}
+echo "#endif" >> include/debug.h
+echo " " >> include/debug.h
+echo " " >> include/debug.h
+echo "#ifdef DEBUG_RUNTIME" >> include/debug.h
+echo "#ifdef DEBUG_DEFINE_VARIABLES" >> include/debug.h
+echo "short debug_msg_enabled[]={" >> include/debug.h
+i=0;
+cat temp.$$ |
+{
+while read x
+do
+	y=`echo $x | tr a-z A-Z`
+	echo "#ifdef DEBUG_$y" >> include/debug.h
+	echo "1," >> include/debug.h
+	echo "#else" >> include/debug.h
+	echo "0," >> include/debug.h
+	echo "#endif" >> include/debug.h
+done
+}
+echo "0};" >> include/debug.h
+echo "#else" >> include/debug.h 
+echo "extern short debug_msg_enabled[];" >> include/debug.h
+echo "#endif" >> include/debug.h
+echo "#endif" >> include/debug.h
+echo " " >> include/debug.h
+echo " " >> include/debug.h
+i=0
+cat temp.$$ |
+{
+while read x 
+do
+	y=`echo $x | tr a-z A-Z`
+	echo "#ifdef DEBUG_RUNTIME" >> include/debug.h
+	echo "#define dprintf_$x if(debug_msg_enabled[$i]) fprintf" >> include/debug.h
+	echo "#else" >> include/debug.h
+	echo "#ifdef DEBUG_$y" >> include/debug.h
+	echo "#define dprintf_$x fprintf" >> include/debug.h
+	echo "#else" >> include/debug.h
+	echo "#define dprintf_$x" >> include/debug.h
+	echo "#endif" >> include/debug.h
+	echo "#endif" >> include/debug.h
+	echo " " >> include/debug.h
+	let i=$i+1
+done
+}
+makedepend -s"# /* Do not remove this line or change anything below this line */" -finclude/stddebug.h
+echo " " >> include/stddebug.h
+echo "#ifdef DEBUG_NONE" >> include/stddebug.h
+cat temp.$$ |
+{
+while read x
+do
+	y=`echo $x | tr a-z A-Z`
+	echo "#undef DEBUG_$y" >> include/stddebug.h
+done
+}
+echo "#endif" >> include/stddebug.h
+echo " " >> include/stddebug.h
+echo " " >> include/stddebug.h
+echo "#ifdef DEBUG_ALL" >> include/stddebug.h
+cat temp.$$ |
+{
+while read x
+do
+	y=`echo $x | tr a-z A-Z`
+	echo "#define DEBUG_$y" >> include/stddebug.h
+done
+}
+echo "#endif" >> include/stddebug.h
+echo " " >> include/debug.h
+echo " " >> include/debug.h
+echo "#ifdef DEBUG_RUNTIME" >> include/debug.h
+echo "#ifdef DEBUG_DEFINE_VARIABLES" >> include/debug.h
+echo "static char *debug_msg_name[] = {" >> include/debug.h
+cat temp.$$ |
+{
+while read x
+do
+	echo "\"$x\"," >> include/debug.h
+done
+} 
+echo "\"\"};" >> include/debug.h
+echo "#endif" >> include/debug.h
+echo "#endif" >> include/debug.h
+rm temp.$$

@@ -3,6 +3,8 @@
  * NOV 1993 Erik Bos (erik@(trashcan.)hacktic.nl)
  *
  * FindFile by Bob, hacked for dos & unixpaths by Erik.
+ *
+ * Bugfix by dash@ifi.uio.no: ToUnix() was called to often
  */
 
 #include <ctype.h>
@@ -28,8 +30,10 @@
 #include "prototypes.h"
 #include "autoconf.h"
 #include "comm.h"
-
-/* #define DEBUG /* */
+#include "stddebug.h"
+/* #define DEBUG_DOSFS /* */
+/* #undef  DEBIG_DOSFS /* */
+#include "debug.h"
 
 #define WINE_INI_USER "~/.winerc"
 #define MAX_OPEN_DIRS 16
@@ -141,8 +145,7 @@ void DOS_InitFS(void)
 
 	for (x=0; x!=MAX_DOS_DRIVES; x++) {
 		if (DosDrives[x].rootdir != NULL) {
-#ifdef DEBUG
-			fprintf(stderr, "DOSFS: %c: => %-40s %s %s %X %d\n",
+            dprintf_dosfs(stddeb, "DOSFS: %c: => %-40s %s %s %X %d\n",
 			'A'+x,
 			DosDrives[x].rootdir,
 			DosDrives[x].cwd,
@@ -150,21 +153,18 @@ void DOS_InitFS(void)
 			DosDrives[x].serialnumber,
 			DosDrives[x].disabled
 			);	
-#endif
 		}
 	}
 
 	for (x=0; x!=MAX_OPEN_DIRS ; x++)
 		DosDirs[x].inuse = 0;
 
-#ifdef DEBUG
-	fprintf(stderr,"wine.ini = %s\n",WINE_INI);
-	fprintf(stderr,"win.ini = %s\n",WIN_INI);
-	fprintf(stderr,"windir = %s\n",WindowsDirectory);
-	fprintf(stderr,"sysdir = %s\n",SystemDirectory);
-	fprintf(stderr,"tempdir = %s\n",TempDirectory);
-	fprintf(stderr,"path = %s\n",WindowsPath);
-#endif
+    dprintf_dosfs(stddeb,"wine.ini = %s\n",WINE_INI);
+    dprintf_dosfs(stddeb,"win.ini = %s\n",WIN_INI);
+    dprintf_dosfs(stddeb,"windir = %s\n",WindowsDirectory);
+    dprintf_dosfs(stddeb,"sysdir = %s\n",SystemDirectory);
+    dprintf_dosfs(stddeb,"tempdir = %s\n",TempDirectory);
+    dprintf_dosfs(stddeb,"path = %s\n",WindowsPath);
 }
 
 WORD DOS_GetEquipment(void)
@@ -224,23 +224,17 @@ WORD DOS_GetEquipment(void)
 	equipment = (diskdrives << 6) | (serialports << 9) | 
 		    (parallelports << 14) | 0x02;
 
-#ifdef DEBUG
-	fprintf(stderr, "DOS_GetEquipment : diskdrives = %d serialports = %d "
+    dprintf_dosfs(stddeb, "DOS_GetEquipment : diskdrives = %d serialports = %d "
 			"parallelports = %d\n"
 			"DOS_GetEquipment : equipment = %d\n",
 			diskdrives, serialports, parallelports, equipment);
-#endif
 
 	return (equipment);
 }
 
 int DOS_ValidDrive(int drive)
 {
-/*
-#ifdef DEBUG
-	fprintf(stderr,"ValidDrive %c (%d)\n",'A'+drive,drive);
-#endif
-*/
+    dprintf_dosfs(stddeb,"ValidDrive %c (%d)\n",'A'+drive,drive);
 	if (drive >= MAX_DOS_DRIVES)
 		return 0;
 	if (DosDrives[drive].rootdir == NULL)
@@ -251,21 +245,31 @@ int DOS_ValidDrive(int drive)
 	return 1;
 }
 
+
+int DOS_ValidDirectory(char *name)
+{
+	char *dirname;
+	struct stat s;
+	if ((dirname = GetUnixFileName(name)) == NULL)
+		return 0;
+	if (stat(dirname,&s))
+		return 0;
+	if (!S_ISDIR(s.st_mode))
+		return 0;
+	return 1;
+}
+
+
+
 int DOS_GetDefaultDrive(void)
 {
-#ifdef DEBUG
-	fprintf(stderr,"GetDefaultDrive (%c)\n",'A'+CurrentDrive);
-#endif
-
+    dprintf_dosfs(stddeb,"GetDefaultDrive (%c)\n",'A'+CurrentDrive);
 	return( CurrentDrive);
 }
 
 void DOS_SetDefaultDrive(int drive)
 {
-#ifdef DEBUG
-	fprintf(stderr,"SetDefaultDrive to %c:\n",'A'+drive);
-#endif
-
+    dprintf_dosfs(stddeb,"SetDefaultDrive to %c:\n",'A'+drive);
 	if (DOS_ValidDrive(drive))
 		CurrentDrive = drive;
 }
@@ -336,11 +340,9 @@ static void GetUnixDirName(char *rootdir, char *name)
 	
 	cwdptr = rootdir + strlen(rootdir);
 	nameptr = name;
-/*
-#ifdef DEBUG
-	fprintf(stderr,"GetUnixDirName: %s <=> %s => ",rootdir, name);
-#endif
-*/	
+
+	dprintf_dosfs(stddeb,"GetUnixDirName: %s <=> %s => ",rootdir, name);
+
 	while (*nameptr) {
 		if (*nameptr == '.' & !filename) {
 			nameptr++;
@@ -379,11 +381,11 @@ static void GetUnixDirName(char *rootdir, char *name)
 	*cwdptr = '\0';
 
 	ToUnix(rootdir);
-/*
+
 #ifdef DEBUG
 	fprintf(stderr,"%s\n", rootdir);
 #endif
-*/
+
 }
 
 char *GetUnixFileName(char *dosfilename)
@@ -408,12 +410,7 @@ char *GetUnixFileName(char *dosfilename)
 	strcat(temp, DosDrives[drive].cwd);
 	GetUnixDirName(temp + strlen(DosDrives[drive].rootdir), dosfilename);
 
-	ToUnix(temp);
-
-#ifdef DEBUG
-	fprintf(stderr,"GetUnixFileName: %s => %s\n", dosfilename, temp);
-#endif
-
+	dprintf_dosfs(stddeb,"GetUnixFileName: %s => %s\n", dosfilename, temp);
 	return(temp);
 }
 
@@ -427,7 +424,6 @@ char *GetDosFileName(char *unixfilename)
 		if (DosDrives[i].rootdir != NULL) {
  			strcpy(rootdir, DosDrives[i].rootdir);
  			strcat(rootdir, "/");
-                	ToUnix(rootdir);
  			if (strncmp(rootdir, unixfilename, strlen(rootdir)) == 0) {
  				sprintf(temp, "%c:\\%s", 'A' + i, unixfilename + strlen(rootdir));
 				ToDos(temp);
@@ -451,30 +447,34 @@ char *DOS_GetCurrentDir(int drive)
 	
 	strcpy(temp, DosDrives[drive].cwd);
 	ToDos(temp);
-	fprintf(stderr, "2 %s\n", temp);
 	ChopOffSlash(temp);
 
-#ifdef DEBUG
-	fprintf(stderr,"DOS_GetCWD: %c: %s\n",'A'+drive, temp + 1);
-#endif
+    	dprintf_dosfs(stddeb,"DOS_GetCWD: %c: %s\n",'A'+drive, temp + 1);
 	return (temp + 1);
 }
 
 int DOS_ChangeDir(int drive, char *dirname)
 {
-	char temp[256];
+	char temp[256],old[256];
 
 	if (!DOS_ValidDrive(drive)) 
 		return 0;
 
 	strcpy(temp, dirname);
 	ToUnix(temp);
+	strcpy(old, DosDrives[drive].cwd);
 	
 	GetUnixDirName(DosDrives[drive].cwd, temp);
 	strcat(DosDrives[drive].cwd,"/");
-#ifdef DEBUG
-	fprintf(stderr,"DOS_SetCWD: %c: %s\n",'A'+drive, DosDrives[drive].cwd);
-#endif
+
+	dprintf_dosfs(stddeb,"DOS_SetCWD: %c: %s\n",'A'+drive,
+                      DosDrives[drive].cwd);
+
+	if (!DOS_ValidDirectory(DosDrives[drive].cwd))
+	{
+		strcpy(DosDrives[drive].cwd, old);
+		return 0;
+	}
 	return 1;
 }
 
@@ -489,12 +489,11 @@ int DOS_MakeDir(int drive, char *dirname)
 	GetUnixDirName(temp, dirname);
 	strcat(DosDrives[drive].cwd,"/");
 
-	ToUnix(temp);
+	ToUnix(temp + strlen(DosDrives[drive].cwd));
 	mkdir(temp,0);	
 
-#ifdef DEBUG
-	fprintf(stderr,"DOS_MakeDir: %c:\%s => %s",'A'+drive, dirname, temp);
-#endif
+    	dprintf_dosfs(stddeb,
+		"DOS_MakeDir: %c:\%s => %s",'A'+drive, dirname, temp);
 	return 1;
 }
 
@@ -541,7 +540,8 @@ int DOS_GetFreeSpace(int drive, long *size, long *available)
 		return 0;
 
 	if (statfs(DosDrives[drive].rootdir, &info) < 0) {
-		fprintf(stderr,"dosfs: cannot do statfs(%s)\n",DosDrives[drive].rootdir);
+		fprintf(stderr,"dosfs: cannot do statfs(%s)\n",
+			DosDrives[drive].rootdir);
 		return 0;
 	}
 
@@ -563,7 +563,6 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
     if (strchr(filename, '\\') != NULL)
     {
 	strncpy(buffer, GetUnixFileName(filename), buflen);
-	ToUnix(buffer);
 	stat( buffer, &filestat);
 	if (S_ISREG(filestat.st_mode))
 	    return buffer;
@@ -577,10 +576,7 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
 	return buffer;
     }
 
-#ifdef DEBUG
-fprintf(stderr,"FindFile: looking for %s\n", filename);
-#endif
-
+    dprintf_dosfs(stddeb,"FindFile: looking for %s\n", filename);
     rootnamelen = strlen(filename);
     if ((rootname = malloc(rootnamelen + 1)) == NULL)
     	return NULL;
@@ -600,10 +596,7 @@ fprintf(stderr,"FindFile: looking for %s\n", filename);
 	else
 		d = opendir( dirname );
 
-#ifdef DEBUG
-	fprintf(stderr,"in %s\n",dirname);
-#endif
-	
+    	dprintf_dosfs(stddeb,"in %s\n",dirname);
 	if (d != NULL)
 	{
 	    while ((f = readdir(d)) != NULL)
@@ -637,7 +630,6 @@ fprintf(stderr,"FindFile: looking for %s\n", filename);
 			if (S_ISREG(filestat.st_mode)) {
 				closedir(d);
 				free(rootname);
-				ToUnix(buffer);
 				return buffer;
 		    	} else 
 		    		found = 0; 
@@ -693,7 +685,6 @@ char *WinIniFileName(void)
 	strcpy(name, GetUnixFileName(WindowsDirectory));
 	strcat(name, "/");
 	strcat(name, "win.ini");
-	ToUnix(name);
 
 	name = realloc(name, strlen(name) + 1);
 	
@@ -704,10 +695,7 @@ static int match(char *filename, char *filemask)
 {
 	int x, masklength = strlen(filemask);
 
-#ifdef DEBUG
-	fprintf(stderr, "match: %s, %s\n", filename, filemask);
-#endif
-
+    	dprintf_dosfs(stddeb, "match: %s, %s\n", filename, filemask);
 	for (x = 0; x != masklength ; x++) {
 /*		printf("(%c%c) ", *filename, filemask[x]); 
 */
@@ -763,9 +751,7 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 		}
 	}
 
-#ifdef DEBUG
-	fprintf(stderr,"DOS_opendir: %s -> %s\n", unixdirname, temp);
-#endif
+    	dprintf_dosfs(stddeb,"DOS_opendir: %s -> %s\n", unixdirname, temp);
 
 	DosDirs[x].inuse = 1;
 	strcpy(DosDirs[x].unixpath, temp);
@@ -800,7 +786,7 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	strcpy(temp,de->unixpath);
 	strcat(temp,"/");
 	strcat(temp,de->filename);
-	ToUnix(temp);
+	ToUnix(temp + strlen(de->unixpath));
 
 	stat (temp, &st);
 	de->attribute = 0x0;

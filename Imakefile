@@ -87,7 +87,7 @@ SYSLIBS = -lm -lg
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
-AllTarget(wine)
+AllTarget(wine.sym)
 
 #ifndef WINELIB
 NormalProgramTarget(wine,$(EMUOBJS) $(COMMONOBJS),$(DEPXLIB),$(XLIB),$(SYSLIBS))
@@ -95,9 +95,17 @@ NormalProgramTarget(wine,$(EMUOBJS) $(COMMONOBJS),$(DEPXLIB),$(XLIB),$(SYSLIBS))
 NormalLibraryTarget(wine,$(LIBOBJS) $(COMMONOBJS))
 #endif
 
+wine.sym: wine
+	nm wine|sort >wine.sym
+
+clean::
+	$(RM) wine.sym
+
 depend::
 
 install::
 
 etags::
 	etags `find . -name '*.[chS]'`
+
+

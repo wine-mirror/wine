@@ -8,6 +8,7 @@
 
 static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
@@ -16,8 +17,11 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include "class.h"
 #include "user.h"
 #include "scroll.h"
-
+#include "stddebug.h"
 /* #define DEBUG_EDIT /* */
+/* #undef  DEBUG_EDIT /* */
+#include "debug.h"
+
 
 #define NOTIFY_PARENT(hWndCntrl, wNotifyCode) \
 	SendMessage(GetParent(hWndCntrl), WM_COMMAND, \
@@ -190,7 +194,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_FMTLINES:
-	printf("edit: EM_FMTLINES message received\n");
+	fprintf(stdnimp,"edit: EM_FMTLINES message received\n");
 	if (!wParam)
 	    lResult = 1L;
 	else
@@ -224,7 +228,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_GETPASSWORDCHAR:
-	printf("edit: cannot process EM_GETPASSWORDCHAR message\n");
+	fprintf(stdnimp,"edit: cannot process EM_GETPASSWORDCHAR message\n");
 	break;
 
     case EM_GETRECT:
@@ -236,7 +240,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_GETWORDBREAKPROC:
-	printf("edit: cannot process EM_GETWORDBREAKPROC message\n");
+	fprintf(stdnimp,"edit: cannot process EM_GETWORDBREAKPROC message\n");
 	break;
 
     case EM_LIMITTEXT:
@@ -264,7 +268,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_LINESCROLL:
-	printf("edit: cannot process EM_LINESCROLL message\n");
+	fprintf(stdnimp,"edit: cannot process EM_LINESCROLL message\n");
 	break;
 
     case EM_REPLACESEL:
@@ -283,16 +287,16 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_SETPASSWORDCHAR:
-	printf("edit: cannot process EM_SETPASSWORDCHAR message\n");
+	fprintf(stdnimp,"edit: cannot process EM_SETPASSWORDCHAR message\n");
 	break;
 
     case EM_SETREADONLY:
-	printf("edit: cannot process EM_SETREADONLY message\n");
+	fprintf(stdnimp,"edit: cannot process EM_SETREADONLY message\n");
 	break;
 
     case EM_SETRECT:
     case EM_SETRECTNP:
-	printf("edit: cannot process EM_SETRECT(NP) message\n");
+	fprintf(stdnimp,"edit: cannot process EM_SETRECT(NP) message\n");
 	break;
 
     case EM_SETSEL:
@@ -307,7 +311,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_SETWORDBREAKPROC:
-	printf("edit: cannot process EM_SETWORDBREAKPROC message\n");
+	fprintf(stdnimp,"edit: cannot process EM_SETWORDBREAKPROC message\n");
 	break;
 
     case EM_UNDO:
@@ -316,6 +320,9 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
 	ShowCaret(hwnd);
 	break;
+
+    case WM_GETDLGCODE:
+        return DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
 
     case WM_CHAR:
 	EDIT_CharMsg(hwnd, wParam);
@@ -351,7 +358,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	if ((int)wParam > (len = strlen(textPtr)))
 	{
 	    strcpy((char *)lParam, textPtr);
-	    lResult = (DWORD)len;
+	    lResult = (DWORD)len ;
 	}
 	else
 	    lResult = 0L;
@@ -461,11 +468,17 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
     char *text;
     int len;
 
-    /* store pointer to local heap in window structure so that */
+    /* store pointer to local or global heap in window structure so that */
     /* EDITSTATE structure itself can be stored on local heap  */
-    (MDESC **)*(LONG *)(wndPtr->wExtra + 2) = 
+    if (HEAP_LocalFindHeap(createStruct->hInstance)!=NULL)
+      (MDESC **)*(LONG *)(wndPtr->wExtra + 2) = 
 	&HEAP_LocalFindHeap(createStruct->hInstance)->free_list;
-
+    else
+      {
+	(MDESC **)*(LONG *)(wndPtr->wExtra + 2) =
+	  GlobalLock(createStruct->hInstance);
+	/* GlobalUnlock(createStruct->hInstance); */
+      }
     /* allocate space for state variable structure */
     (HANDLE)(*(wndPtr->wExtra)) = EDIT_HeapAlloc(hwnd, sizeof(EDITSTATE));
     es = (EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
@@ -647,7 +660,7 @@ void EDIT_BuildTextPointers(HWND hwnd)
 	/* advance through current line */
 	while (*cp && *cp != '\n')
 	{
-	    len += EDIT_CharWidth(hwnd, *cp, len);
+	    len += EDIT_CharWidth(hwnd, (BYTE)*cp, len);
 	                                     /* width of line in pixels */
 	    cp++;
 	}
@@ -697,10 +710,8 @@ void EDIT_PaintMsg(HWND hwnd)
     hdc = BeginPaint(hwnd, &ps);
     rc = ps.rcPaint;
 
-#ifdef DEBUG_EDIT
-    printf("WM_PAINT: rc=(%d,%d), (%d,%d)\n", rc.left, rc.top, 
+    dprintf_edit(stddeb,"WM_PAINT: rc=(%d,%d), (%d,%d)\n", rc.left, rc.top, 
 	   rc.right, rc.bottom);
-#endif
 
     if (es->PaintBkgd)
 	FillWindow(GetParent(hwnd), hwnd, hdc, CTLCOLOR_EDIT);
@@ -728,9 +739,7 @@ HANDLE EDIT_GetTextLine(HWND hwnd, int selection)
     int len = 0;
     char *cp, *cp1;
 
-#ifdef DEBUG_EDIT
-    printf("GetTextLine %d\n", selection);
-#endif
+    dprintf_edit(stddeb,"GetTextLine %d\n", selection);
     cp = cp1 = EDIT_TextLine(hwnd, selection);
     /* advance through line */
     while (*cp && *cp != '\n')
@@ -783,11 +792,9 @@ int EDIT_StrLength(HWND hwnd, char *str, int len, int pcol)
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
     for (i = 0; i < len; i++)
-	plen += EDIT_CharWidth(hwnd, *(str + i), pcol + plen);
+	plen += EDIT_CharWidth(hwnd, (BYTE)(*(str + i)), pcol + plen);
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_StrLength: returning %d\n", plen);
-#endif
+    dprintf_edit(stddeb,"EDIT_StrLength: returning %d\n", plen);
     return plen;
 }
 
@@ -838,42 +845,32 @@ void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
     else
 	GetClientRect(hwnd, &rc);
 
-#ifdef DEBUG_EDIT
-    printf("WriteTextLine %d\n", y);
-#endif
+    dprintf_edit(stddeb,"WriteTextLine %d\n", y);
 
     /* make sure y is inside the window */
     if (y < es->wtop || y > (es->wtop + ClientHeight(wndPtr, es)))
     {
-#ifdef DEBUG_EDIT
-	printf("EDIT_WriteTextLine: y (%d) is not a displayed line\n", y);
-#endif
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: y (%d) is not a displayed line\n", y);
 	return;
     }
 
     /* make sure rectangle is within window */
     if (rc.left >= ClientWidth(wndPtr) - 1)
     {
-#ifdef DEBUG_EDIT
-	printf("EDIT_WriteTextLine: rc.left (%d) is greater than right edge\n",
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.left (%d) is greater than right edge\n",
 	       rc.left);
-#endif
 	return;
     }
     if (rc.right <= 0)
     {
-#ifdef DEBUG_EDIT
-	printf("EDIT_WriteTextLine: rc.right (%d) is less than left edge\n",
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: rc.right (%d) is less than left edge\n",
 	       rc.right);
-#endif
 	return;
     }
     if (y - es->wtop < (rc.top / es->txtht) || 
 	y - es->wtop > (rc.bottom / es->txtht))
     {
-#ifdef DEBUG_EDIT
-	printf("EDIT_WriteTextLine: y (%d) is outside window\n", y);
-#endif
+	dprintf_edit(stddeb,"EDIT_WriteTextLine: y (%d) is outside window\n", y);
 	return;
     }
 
@@ -1010,9 +1007,7 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     short *charWidths = (short *)EDIT_HeapAddr(hwnd, es->hCharWidths);
     char *blanks = (char *)EDIT_HeapAddr(hwnd, es->hBlankLine);
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_WriteText lp=%s, off=%d, len=%d, row=%d, col=%d, reverse=%d\n", lp, off, len, row, col, reverse);
-#endif
+    dprintf_edit(stddeb,"EDIT_WriteText lp=%s, off=%d, len=%d, row=%d, col=%d, reverse=%d\n", lp, off, len, row, col, reverse);
 
     hdc = GetDC(hwnd);
     hStr = EDIT_GetStr(hwnd, lp, off, len, &diff);
@@ -1111,14 +1106,12 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_GetStr %s %d %d\n", lp, off, len);
-#endif
+    dprintf_edit(stddeb,"EDIT_GetStr %s %d %d\n", lp, off, len);
 
     while (i < off)
     {
 	s_i = i;
-	i += EDIT_CharWidth(hwnd, *(lp + ch), i);
+	i += EDIT_CharWidth(hwnd, (BYTE)(*(lp + ch)), i);
 	ch++;
     }
 
@@ -1133,7 +1126,7 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
 
     while (i < len + off)
     {
-	i += EDIT_CharWidth(hwnd, *(lp + ch), i);
+	i += EDIT_CharWidth(hwnd, (BYTE)(*(lp + ch)), i);
 	ch++;
     }
     
@@ -1142,9 +1135,7 @@ HANDLE EDIT_GetStr(HWND hwnd, char *lp, int off, int len, int *diff)
     for (i = ch1, j = 0; i < ch; i++, j++)
 	str[j] = lp[i];
     str[++j] = '\0';
-#ifdef DEBUG_EDIT
-    printf("EDIT_GetStr: returning %s\n", str);
-#endif
+    dprintf_edit(stddeb,"EDIT_GetStr: returning %s\n", str);
     return hStr;
 }
 
@@ -1159,9 +1150,7 @@ void EDIT_CharMsg(HWND hwnd, WORD wParam)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_CharMsg: wParam=%c\n", (char)wParam);
-#endif
+    dprintf_edit(stddeb,"EDIT_CharMsg: wParam=%c\n", (char)wParam);
 
     switch (wParam)
     {
@@ -1203,9 +1192,7 @@ void EDIT_KeyTyped(HWND hwnd, short ch)
     RECT rc;
     BOOL FullPaint = FALSE;
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_KeyTyped: ch=%c\n", (char)ch);
-#endif
+    dprintf_edit(stddeb,"EDIT_KeyTyped: ch=%c\n", (char)ch);
 
     /* delete selected text (if any) */
     if (SelMarked(es))
@@ -1294,14 +1281,14 @@ void EDIT_KeyTyped(HWND hwnd, short ch)
 
     /* test end of window */
     if (es->WndCol >= ClientWidth(wndPtr) - 
-	                    EDIT_CharWidth(hwnd, ch, es->WndCol + es->wleft))
+	                    EDIT_CharWidth(hwnd, (BYTE)ch, es->WndCol + es->wleft))
     {
 	/* TODO:- Word wrap to be handled here */
 
 /*	if (!(currchar == text + es->MaxTextLen - 2)) */
 	    EDIT_KeyHScroll(hwnd, SB_LINEDOWN);
     }
-    es->WndCol += EDIT_CharWidth(hwnd, ch, es->WndCol + es->wleft);
+    es->WndCol += EDIT_CharWidth(hwnd, (BYTE)ch, es->WndCol + es->wleft);
     es->CurrCol++;
     SetCaretPos(es->WndCol, es->WndRow * es->txtht);
     ShowCaret(hwnd);
@@ -1385,7 +1372,7 @@ void EDIT_Forward(HWND hwnd)
     }
     else
     {
-	es->WndCol += EDIT_CharWidth(hwnd, *CurrChar, es->WndCol + es->wleft);
+	es->WndCol += EDIT_CharWidth(hwnd, (BYTE)(*CurrChar), es->WndCol + es->wleft);
 	es->CurrCol++;
 	if (es->WndCol >= ClientWidth(wndPtr))
 	    EDIT_KeyHScroll(hwnd, SB_LINEDOWN);
@@ -1406,9 +1393,8 @@ void EDIT_Downward(HWND hwnd)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_Downward: WndRow=%d, wtop=%d, wlines=%d\n", es->WndRow, es->wtop, es->wlines);
-#endif
+    dprintf_edit(stddeb,"EDIT_Downward: WndRow=%d, wtop=%d, wlines=%d\n", 
+	     es->WndRow, es->wtop, es->wlines);
 
     if (IsMultiLine() && (es->WndRow + es->wtop + 1 < es->wlines))
     {
@@ -1469,12 +1455,12 @@ void EDIT_Backward(HWND hwnd)
     {
 	--es->CurrCol;
 	if (*CurrChar == VK_TAB)
-	    es->WndCol -= EDIT_CharWidth(hwnd, *CurrChar, 
+	    es->WndCol -= EDIT_CharWidth(hwnd, (BYTE)(*CurrChar), 
 					 EDIT_StrLength(hwnd, 
 					 EDIT_TextLine(hwnd, es->CurrLine), 
 					 es->CurrCol, 0));
 	else
-	    es->WndCol -= EDIT_CharWidth(hwnd, *CurrChar, 0);
+	    es->WndCol -= EDIT_CharWidth(hwnd, (BYTE)(*CurrChar), 0);
 	if (es->WndCol < 0)
 	    EDIT_KeyHScroll(hwnd, SB_LINEUP);
     }
@@ -1502,7 +1488,7 @@ void EDIT_End(HWND hwnd)
 
     while (*CurrChar && *CurrChar != '\n')
     {
-	es->WndCol += EDIT_CharWidth(hwnd, *CurrChar, es->WndCol + es->wleft);
+	es->WndCol += EDIT_CharWidth(hwnd, (BYTE)(*CurrChar), es->WndCol + es->wleft);
 	es->CurrCol++;
     }
 
@@ -1583,9 +1569,7 @@ void EDIT_KeyDownMsg(HWND hwnd, WORD wParam)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_KeyDownMsg: key=%x\n", wParam);
-#endif
+    dprintf_edit(stddeb,"EDIT_KeyDownMsg: key=%x\n", wParam);
 
     HideCaret(hwnd);
     switch (wParam)
@@ -2014,9 +1998,7 @@ void EDIT_VScrollLine(HWND hwnd, WORD opt)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_VScrollLine: direction=%d\n", opt);
-#endif
+    dprintf_edit(stddeb,"EDIT_VScrollLine: direction=%d\n", opt);
 
     if (opt == SB_LINEDOWN)
     {
@@ -2222,15 +2204,13 @@ int EDIT_PixelToChar(HWND hwnd, int row, int *pixel)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_PixelToChar: row=%d, pixel=%d\n", row, *pixel);
-#endif
+    dprintf_edit(stddeb,"EDIT_PixelToChar: row=%d, pixel=%d\n", row, *pixel);
 
     text = EDIT_TextLine(hwnd, row);
     while (i < *pixel)
     {
 	s_i = i;
-	i += EDIT_CharWidth(hwnd, *(text + ch), i);
+	i += EDIT_CharWidth(hwnd, (BYTE)(*(text + ch)), i);
 	ch++;
     }
 
@@ -2581,9 +2561,7 @@ void EDIT_ExtendSel(HWND hwnd, int x, int y)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_ExtendSel: x=%d, y=%d\n", x, y);
-#endif
+    dprintf_edit(stddeb,"EDIT_ExtendSel: x=%d, y=%d\n", x, y);
 
     bbl = es->SelEndLine;
     bbc = es->SelEndCol;
@@ -2657,9 +2635,7 @@ void EDIT_WriteSel(HWND hwnd, int y, int start, int end)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-#ifdef DEBUG_EDIT
-    printf("EDIT_WriteSel: y=%d start=%d end=%d\n", y, start, end);
-#endif
+    dprintf_edit(stddeb,"EDIT_WriteSel: y=%d start=%d end=%d\n", y, start,end);
     GetClientRect(hwnd, &rc);
 
     /* make sure y is within the window */
@@ -3023,10 +2999,13 @@ LONG EDIT_UndoMsg(HWND hwnd)
 unsigned int EDIT_HeapAlloc(HWND hwnd, int bytes)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-
-    return ((unsigned int)HEAP_Alloc((MDESC **)
+    unsigned int ret;
+    ret = ((unsigned int)HEAP_Alloc((MDESC **)
 				     *(LONG *)(wndPtr->wExtra + 2), 
 				     GMEM_MOVEABLE, bytes) & 0xffff);
+    if (ret == 0)
+      printf("EDIT_HeapAlloc: Out of heap-memory\n");
+    return ret;
 }
 
 

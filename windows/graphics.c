@@ -1,10 +1,10 @@
 /*
  * GDI graphics operations
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 #include <math.h>
 #include <stdlib.h>
@@ -17,12 +17,17 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 #include "syscolor.h"
+#include "stddebug.h"
+/* #define DEBUG_GRAPHICS /* */
+/* #undef  DEBUG_GRAPHICS /* */
+#include "debug.h"
+
 
 extern const int DC_XROPfunction[];
 
 extern int COLOR_ToPhysical( DC *dc, COLORREF color );
 
-static inline swap_int(int *a, int *b)
+static __inline__ void swap_int(int *a, int *b)
 {
 	int c;
 	
@@ -641,9 +646,9 @@ BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
 
 
 /**********************************************************************
- *          DrawReliefRect  (Not a MSWin Call)
+ *          GRAPH_DrawReliefRect  (Not a MSWin Call)
  */
-void DrawReliefRect( HDC hdc, RECT rect, int thickness, BOOL pressed )
+void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int thickness, BOOL pressed )
 {
     HBRUSH hbrushOld;
     int i;
@@ -652,20 +657,20 @@ void DrawReliefRect( HDC hdc, RECT rect, int thickness, BOOL pressed )
 			                  sysColorObjects.hbrushBtnHighlight );
     for (i = 0; i < thickness; i++)
     {
-	PatBlt( hdc, rect.left + i, rect.top,
-	        1, rect.bottom - rect.top - i, PATCOPY );
-	PatBlt( hdc, rect.left, rect.top + i,
-	        rect.right - rect.left - i, 1, PATCOPY );
+	PatBlt( hdc, rect->left + i, rect->top,
+	        1, rect->bottom - rect->top - i, PATCOPY );
+	PatBlt( hdc, rect->left, rect->top + i,
+	        rect->right - rect->left - i, 1, PATCOPY );
     }
 
     SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnHighlight :
 		                 sysColorObjects.hbrushBtnShadow );
     for (i = 0; i < thickness; i++)
     {
-	PatBlt( hdc, rect.right - i - 1, rect.top + i,
-	        1, rect.bottom - rect.top - i, PATCOPY );
-	PatBlt( hdc, rect.left + i, rect.bottom - i - 1,
-	        rect.right - rect.left - i, 1, PATCOPY );
+	PatBlt( hdc, rect->right - i - 1, rect->top + i,
+	        1, rect->bottom - rect->top - i, PATCOPY );
+	PatBlt( hdc, rect->left + i, rect->bottom - i - 1,
+	        rect->right - rect->left - i, 1, PATCOPY );
     }
 
     SelectObject( hdc, hbrushOld );
@@ -748,7 +753,6 @@ BOOL Polygon (HDC hdc, LPPOINT pt, int count)
  */
 BOOL PolyPolygon( HDC hdc, LPPOINT pt, LPINT counts, WORD polygons )
 {
-    int i;
     HRGN hrgn;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
 
@@ -796,106 +800,127 @@ BOOL PolyPolygon( HDC hdc, LPPOINT pt, LPINT counts, WORD polygons )
 
 
 /**********************************************************************
- *          FloodFill_rec -- FloodFill helper function
+ *          GRAPH_InternalFloodFill
  *
- * Just does a recursive flood fill:
- * this is /not/ efficent -- a better way would be to draw
- * an entire line at a time, but this will do for now.
+ * Internal helper function for flood fill.
+ * (xorg,yorg) is the origin of the X image relative to the drawable.
+ * (x,y) is relative to the origin of the X image.
  */
-static BOOL FloodFill_rec(XImage *image, int x, int y, 
-		int orgx, int orgy, int endx, int endy, 
-		Pixel borderp, Pixel fillp)
+static void GRAPH_InternalFloodFill( XImage *image, DC *dc,
+                                     int x, int y,
+                                     int xOrg, int yOrg,
+                                     Pixel pixel, WORD fillType )
 {
-	Pixel testp;
+    int left, right;
 
-	if (x > endx || x < orgx || y > endy || y < orgy)
-		return FALSE;
-	XPutPixel(image, x, y, fillp);
-	
-	if ((x+1 <= endx) && (y+1 <= endy)) {
-	  testp = XGetPixel(image, x+1, y+1);
-	  if (testp != borderp && testp != fillp)
-	    FloodFill_rec(image, x+1, y+1, orgx, orgy, 
-			  endx, endy, borderp, fillp);
-	}
-	if ((x+1 <= endx) && (y-1 >= orgy)) {
-	  testp = XGetPixel(image, x+1, y-1);
-	  if (testp != borderp && testp != fillp)
-		FloodFill_rec(image, x+1, y-1, orgx, orgy, 
-				endx, endy, borderp, fillp);
-	}
-	if ((x-1 >= orgx) && (y+1 <= endy)) {
-	  testp = XGetPixel(image, x-1, y+1); 
-	  if (testp != borderp && testp != fillp)
-	    FloodFill_rec(image, x-1, y+1, orgx, orgy,
-			  endx, endy, borderp, fillp);
-	}
-	if ((x-1 >= orgx) && (y-1 >= orgy)) {
-	  testp = XGetPixel(image, x-1, y-1);
-	  if (testp != borderp && testp != fillp) 
-	    FloodFill_rec(image, x-1, y-1, orgx, orgy, 
-			  endx, endy, borderp, fillp);
-	}
-	return TRUE;
+#define TO_FLOOD(x,y)  ((fillType == FLOODFILLBORDER) ? \
+                        (XGetPixel(image,x,y) != pixel) : \
+                        (XGetPixel(image,x,y) == pixel))
+
+    if (!TO_FLOOD(x,y)) return;
+
+      /* Find left and right boundaries */
+
+    left = right = x;
+    while ((left > 0) && TO_FLOOD( left-1, y )) left--;
+    while ((right < image->width) && TO_FLOOD( right, y )) right++;
+    XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                    xOrg + left, yOrg + y, right-left, 1 );
+
+      /* Set the pixels of this line so we don't fill it again */
+
+    for (x = left; x < right; x++)
+    {
+        if (fillType == FLOODFILLBORDER) XPutPixel( image, x, y, pixel );
+        else XPutPixel( image, x, y, ~pixel );
+    }
+
+      /* Fill the line above */
+
+    if (--y >= 0)
+    {
+        x = left;
+        while (x < right)
+        {
+            while ((x < right) && !TO_FLOOD(x,y)) x++;
+            if (x >= right) break;
+            while ((x < right) && TO_FLOOD(x,y)) x++;
+            GRAPH_InternalFloodFill( image, dc, x-1, y,
+                                     xOrg, yOrg, pixel, fillType );
+        }
+    }
+
+      /* Fill the line below */
+
+    if ((y += 2) < image->height)
+    {
+        x = left;
+        while (x < right)
+        {
+            while ((x < right) && !TO_FLOOD(x,y)) x++;
+            if (x >= right) break;
+            while ((x < right) && TO_FLOOD(x,y)) x++;
+            GRAPH_InternalFloodFill( image, dc, x-1, y,
+                                     xOrg, yOrg, pixel, fillType );
+        }
+    }
+#undef TO_FLOOD    
 }
 
- 
+
 /**********************************************************************
- *          FloodFill (GDI.25)
+ *          ExtFloodFill  (GDI.372)
  */
-BOOL FloodFill(HDC hdc, short x, short y, DWORD crColor)
+BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
 {
-    Pixel boundrypixel;
-    int imagex, imagey;
+    RECT rect;
+    Pixel pixel;
     XImage *image;
     DC *dc;
 
-#ifdef DEBUG_GRAPHICS
-    printf("FloodFill %x %d,%d %x\n", hdc, x, y, crColor);
-#endif
+    dprintf_graphics( stddeb, "ExtFloodFill %x %d,%d %06x %d\n",
+                      hdc, x, y, color, fillType );
     dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
     if (!dc) 
     {
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return FALSE;
-	MF_MetaParam4(dc, META_FLOODFILL, x, y, HIWORD(crColor), 
-		      LOWORD(crColor)); 
+	MF_MetaParam4(dc, META_FLOODFILL, x, y, HIWORD(color), 
+		      LOWORD(color)); 
 	return TRUE;
     }
 
-    x = dc->w.DCOrgX + XLPTODP(dc, x);
-    y = dc->w.DCOrgY + YLPTODP(dc, y);
+    if (!PtVisible( hdc, x, y )) return FALSE;
+    if (GetClipBox( hdc, &rect ) == ERROR) return FALSE;
+    pixel = COLOR_ToPhysical( dc, color );
 
-    if (x < dc->w.DCOrgX || x > dc->w.DCOrgX + dc->w.DCSizeX ||
-	y < dc->w.DCOrgY || y > dc->w.DCOrgY + dc->w.DCSizeY)
-	return FALSE;
+    if (!(image = XGetImage( display, dc->u.x.drawable,
+                             dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
+                             rect.right - rect.left, rect.bottom - rect.top,
+                             AllPlanes, ZPixmap ))) return FALSE;
 
-    if (!DC_SetupGCForBrush(dc)) 
-	return FALSE;
-
-    boundrypixel = GetNearestPaletteIndex( dc->w.hPalette, crColor );	
-
-    image = XGetImage(display, dc->u.x.drawable,  
-		      dc->w.DCOrgX, dc->w.DCOrgY,
-		      dc->w.DCSizeX, dc->w.DCSizeY, AllPlanes, ZPixmap);
-    if (XGetPixel(image, x, y) == boundrypixel) 
-	return FALSE;
-    if (!FloodFill_rec(image, x, y, 
-		       0, 0, 
-		       dc->w.DCSizeX-1, 
-		       dc->w.DCSizeY-1, 
-		       boundrypixel, dc->u.x.brush.pixel)) {
-	XDestroyImage(image);
-	return FALSE;
+    if (DC_SetupGCForBrush( dc ))
+    {
+          /* ROP mode is always GXcopy for flood-fill */
+        XSetFunction( display, dc->u.x.gc, GXcopy );
+          /* We can pass anything except 0 as a region */
+        GRAPH_InternalFloodFill( image, dc,
+                                 XLPTODP(dc,x) - rect.left,
+                                 YLPTODP(dc,y) - rect.top,
+                                 dc->w.DCOrgX + rect.left,
+                                 dc->w.DCOrgY + rect.top,
+                                 pixel, fillType );
     }
 
-    XPutImage(display, dc->u.x.drawable, dc->u.x.gc, image,
-	      0, 0,
-	      dc->w.DCOrgX, dc->w.DCOrgY,
-	      dc->w.DCSizeX, dc->w.DCSizeY);
-    XDestroyImage(image);
-
+    XDestroyImage( image );
     return TRUE;
 }
 
 
+/**********************************************************************
+ *          FloodFill  (GDI.25)
+ */
+BOOL FloodFill( HDC hdc, INT x, INT y, COLORREF color )
+{
+    return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
+}

@@ -22,6 +22,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 
 #include <X11/Xlib.h>
 #include "gdi.h"
+#include "stddebug.h"
+/* #define DEBUG_PALETTE /* */
+/* #undef  DEBUG_PALETTE /* */
+#include "debug.h"
 
 extern void COLOR_SetMapping( DC *dc, HANDLE map, WORD size );  /* color.c */
 
@@ -156,10 +160,8 @@ WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
 	}
 	entry++;
     }
-#ifdef DEBUG_GDI
-    printf( "GetNearestPaletteIndex(%x,%06x) : returning %d\n", 
+    dprintf_palette(stddeb,"GetNearestPaletteIndex(%x,%06x) : returning %d\n", 
 	     hpalette, color, index );
-#endif
     return index;
 }
 
@@ -183,9 +185,7 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
     HPALETTE prev;
     DC *dc;
 
-#ifdef DEBUG_PALETTE
-    printf( "GDISelectPalette: %d %d\n", hdc, hpal );
-#endif
+    dprintf_palette(stddeb, "GDISelectPalette: %d %d\n", hdc, hpal );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     prev = dc->w.hPalette;
     dc->w.hPalette = hpal;
@@ -200,9 +200,7 @@ HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
  */
 UINT GDIRealizePalette( HDC hdc )
 {
-#ifdef DEBUG_PALETTE
-    printf( "GDIRealizePalette: %d\n", hdc );
-#endif
+    dprintf_palette(stdnimp, "GDIRealizePalette: %d\n", hdc );
     return 0;
 }
 

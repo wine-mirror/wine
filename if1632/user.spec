@@ -270,9 +270,10 @@ length	540
 256 pascal GetDriverInfo(word ptr) GetDriverInfo(1 2)
 257 pascal GetNextDriver(word long) GetNextDriver(1 2)
 258 pascal MapWindowPoints(word word ptr word) MapWindowPoints(1 2 3 4)
-#259 BEGINDEFERWINDOWPOS
-#260 DEFERWINDOWPOS
-#261 ENDDEFERWINDOWPOS
+259 pascal16 BeginDeferWindowPos(s_word) BeginDeferWindowPos(1)
+260 pascal16 DeferWindowPos(word word word s_word s_word s_word s_word word)
+             DeferWindowPos(1 2 3 4 5 6 7 8)
+261 pascal16 EndDeferWindowPos(word) EndDeferWindowPos(1)
 262 pascal GetWindow(word word) GetWindow(1 2)
 263 pascal GetMenuItemCount(word) GetMenuItemCount(1)
 264 pascal GetMenuItemID(word word) GetMenuItemID(1 2)

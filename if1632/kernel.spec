@@ -93,7 +93,7 @@ length	415
 		      word word word word word) 
 	     KERNEL_InitTask()
 92  pascal16 GetTempDrive(byte) GetTempDrive(1)
-#93 pascal16 GETCODEHANDLE
+93 pascal16 GetCodeHandle(ptr) GetCodeHandle(1)
 #94 DEFINEHANDLETABLE
 95  pascal16 LoadLibrary(ptr) LoadLibrary(1)
 96  pascal16 FreeLibrary(word) FreeLibrary(1)
@@ -108,7 +108,7 @@ length	415
 #103 NETBIOSCALL
 #104 GETCODEINFO
 #105 GETEXEVERSION
-#106 SETSWAPAREASIZE
+106 pascal SetSwapAreaSize(word) SetSwapAreaSize(1)
 107 pascal SetErrorMode(word) SetErrorMode(1)
 #108 SWITCHSTACKTO
 #109 SWITCHSTACKBACK
@@ -135,7 +135,7 @@ length	415
 	     GetPrivateProfileString(1 2 3 4 5 6)
 129 pascal16 WritePrivateProfileString(ptr ptr ptr ptr)
 	     WritePrivateProfileString(1 2 3 4)
-#130 FILECBR
+130 pascal FileCDR(ptr) FileCDR(1)
 131 pascal GetDOSEnvironment() GetDOSEnvironment()
 132 pascal GetWinFlags() GetWinFlags()
 #133 GETEXEPTR

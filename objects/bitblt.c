@@ -13,6 +13,11 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 #include "metafile.h"
+#include "options.h"
+#include "stddebug.h"
+/* #define DEBUG_GDI /* */
+/* #undef  DEBUG_GDI /* */
+#include "debug.h"
 
 extern const int DC_XROPfunction[];
 
@@ -26,8 +31,6 @@ extern const int DC_XROPfunction[];
 BOOL PatBlt( HDC hdc, short left, short top,
 	     short width, short height, DWORD rop)
 {
-    int x1, x2, y1, y2;
-    
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
     {
@@ -38,22 +41,42 @@ BOOL PatBlt( HDC hdc, short left, short top,
 	return TRUE;
     }
 
-#ifdef DEBUG_GDI
-    printf( "PatBlt: %d %d,%d %dx%d %06x\n",
+    dprintf_gdi(stddeb, "PatBlt: %d %d,%d %dx%d %06x\n",
 	    hdc, left, top, width, height, rop );
-#endif
 
+      /* Convert ROP3 code to ROP2 code */
     rop >>= 16;
     if (!DC_SetupGCForBrush( dc )) rop &= 0x0f;
     else rop = (rop & 0x03) | ((rop >> 4) & 0x0c);
-    XSetFunction( XT_display, dc->u.x.gc, DC_XROPfunction[rop] );
 
-    x1 = dc->w.DCOrgX + XLPTODP( dc, left );
-    x2 = dc->w.DCOrgX + XLPTODP( dc, left + width );
-    y1 = dc->w.DCOrgY + YLPTODP( dc, top );
-    y2 = dc->w.DCOrgY + YLPTODP( dc, top + height );
-    XFillRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
-		   MIN(x1,x2), MIN(y1,y2), abs(x2-x1), abs(y2-y1) );
+      /* Special case for BLACKNESS and WHITENESS */
+    if (!Options.usePrivateMap && ((rop == R2_BLACK-1) || (rop == R2_WHITE-1)))
+    {
+        XSetForeground( display, dc->u.x.gc, (rop == R2_BLACK-1) ?
+                      BlackPixelOfScreen(screen) : WhitePixelOfScreen(screen));
+        XSetFillStyle( display, dc->u.x.gc, FillSolid );
+        rop = R2_COPYPEN;
+    }
+
+    XSetFunction( display, dc->u.x.gc, DC_XROPfunction[rop] );
+
+    left = dc->w.DCOrgX + XLPTODP( dc, left );
+    top  = dc->w.DCOrgY + YLPTODP( dc, top );
+
+      /* Convert dimensions to device coords */
+    if ((width = (width * dc->w.VportExtX) / dc->w.WndExtX) < 0)
+    {
+        width = -width;
+        left -= width;
+    }
+    if ((height = (height * dc->w.VportExtY) / dc->w.WndExtY) < 0)
+    {
+        height = -height;
+        top -= height;
+    }
+
+    XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                    left, top, width, height );
     return TRUE;
 }
 
@@ -69,18 +92,17 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
     DWORD saverop = rop;
     DC *dcDest, *dcSrc;
 
-#ifdef DEBUG_GDI    
-    printf( "BitBlt: %d %d,%d %dx%d %d %d,%d %08x\n",
-	   hdcDest, xDest, yDest, width, height, hdcSrc, xSrc, ySrc, rop );
-#endif
-	if (width == 0 || height == 0) return FALSE;
+    dprintf_gdi(stddeb, "BitBlt: %04x %d,%d %dx%d %04x %d,%d %08x\n",
+                hdcDest, xDest, yDest, width, height, hdcSrc, xSrc, ySrc, rop);
+
+    if (width == 0 || height == 0) return FALSE;
     if ((rop & 0xcc0000) == ((rop & 0x330000) << 2))
 	return PatBlt( hdcDest, xDest, yDest, width, height, rop );
 
     rop >>= 16;
     if ((rop & 0x0f) != (rop >> 4))
     {
-	printf( "BitBlt: Unimplemented ROP %02x\n", rop );
+	dprintf_gdi(stdnimp, "BitBlt: Unimplemented ROP %02x\n", rop );
 	return FALSE;
     }
     
@@ -109,21 +131,21 @@ BOOL BitBlt( HDC hdcDest, short xDest, short yDest, short width, short height,
 	return FALSE;  /* Should call StretchBlt here */
     
     DC_SetupGCForText( dcDest );
-    XSetFunction( XT_display, dcDest->u.x.gc, DC_XROPfunction[rop & 0x0f] );
+    XSetFunction( display, dcDest->u.x.gc, DC_XROPfunction[rop & 0x0f] );
     if (dcSrc->w.bitsPerPixel == dcDest->w.bitsPerPixel)
     {
-	XCopyArea( XT_display, dcSrc->u.x.drawable,
+	XCopyArea( display, dcSrc->u.x.drawable,
 		   dcDest->u.x.drawable, dcDest->u.x.gc,
-		   MIN(xs1,xs2), MIN(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
-		   MIN(xd1,xd2), MIN(yd1,yd2) );
+		   min(xs1,xs2), min(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
+		   min(xd1,xd2), min(yd1,yd2) );
     }
     else
     {
 	if (dcSrc->w.bitsPerPixel != 1) return FALSE;
-	XCopyPlane( XT_display, dcSrc->u.x.drawable,
+	XCopyPlane( display, dcSrc->u.x.drawable,
 		    dcDest->u.x.drawable, dcDest->u.x.gc,
-		    MIN(xs1,xs2), MIN(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
-		    MIN(xd1,xd2), MIN(yd1,yd2), 1 );
+		    min(xs1,xs2), min(ys1,ys2), abs(xs2-xs1), abs(ys2-ys1),
+		    min(xd1,xd2), min(yd1,yd2), 1 );
     }
     return TRUE;
 }
@@ -248,7 +270,7 @@ static void wonb_stretch(XImage *sxi, XImage *dxi,
 /* scaling without having to worry about overflows. */
 
 /* ##### muldiv64() borrowed from svgalib 1.03 ##### */
-static inline int muldiv64( int m1, int m2, int d ) 
+static __inline__ int muldiv64( int m1, int m2, int d ) 
 {
 	/* int32 * int32 -> int64 / int32 -> int32 */
 #ifdef i386	
@@ -331,13 +353,11 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     WORD stretchmode;
 	BOOL	flg;
 
-#ifdef DEBUG_GDI     
-    fprintf(stderr, "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
+    dprintf_gdi(stddeb, "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
            hdcDest, xDest, yDest, widthDest, heightDest, hdcSrc, xSrc, 
            ySrc, widthSrc, heightSrc, rop );
-    printf("StretchMode is %x\n", 
+    dprintf_gdi(stddeb, "StretchMode is %x\n", 
            ((DC *)GDI_GetObjPtr(hdcDest, DC_MAGIC))->w.stretchBltMode);	
-#endif 
 
 	if (widthDest == 0 || heightDest == 0) return FALSE;
 	if (widthSrc == 0 || heightSrc == 0) return FALSE;
@@ -356,7 +376,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     rop >>= 16;
     if ((rop & 0x0f) != (rop >> 4))
     {
-        printf( "StretchBlt: Unimplemented ROP %02x\n", rop );
+        dprintf_gdi(stdnimp, "StretchBlt: Unimplemented ROP %02x\n", rop );
         return FALSE;
     }
 
@@ -427,7 +447,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     DC_SetupGCForText(dcDest);
     XSetFunction(display, dcDest->u.x.gc, DC_XROPfunction[rop & 0x0f]);
     XPutImage(display, dcDest->u.x.drawable, dcDest->u.x.gc,
-	 	dxi, 0, 0, MIN(xd1,xd2), MIN(yd1,yd2), 
+	 	dxi, 0, 0, min(xd1,xd2), min(yd1,yd2), 
 		widthDest, heightDest);
 
     /* now free the images we created */

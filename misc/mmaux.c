@@ -11,14 +11,16 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 
 #ifdef BUILTIN_MMSYSTEM
 
-#include "stdio.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include "win.h"
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
 
-#include <fcntl.h>
-#include <sys/ioctl.h>
 #ifdef linux
 #include <linux/soundcard.h>
 #endif

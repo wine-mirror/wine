@@ -4,13 +4,21 @@
 #include "registers.h"
 #include "wine.h"
 #include "options.h"
+#include "stddebug.h"
+/* #define DEBUG_INT */
+/* #undef  DEBUG_INT */
+#include "debug.h"
 
 #ifdef linux
+#define inline __inline__  /* So we can compile with -ansi */
 #include <linux/sched.h> /* needed for HZ */
+#undef inline
 #endif
 
 #define	BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
 #define BIN_TO_BCD(x) ((x%10) + ((x/10)<<4))
+
+void IntBarf(int i, struct sigcontext_struct *context);
 
 int do_int1A(struct sigcontext_struct * context){
 	time_t ltime;
@@ -18,7 +26,7 @@ int do_int1A(struct sigcontext_struct * context){
 	int ticks;
 
     if (Options.relay_debug) {
-	printf("int1A: AX %04x, BX %04x, CX %04x, DX %04x, "
+	fprintf(stddeb,"int1A: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
 	       AX, BX, CX, DX, SI, DI, DS, ES);
     }
@@ -30,7 +38,8 @@ int do_int1A(struct sigcontext_struct * context){
 		CX = ticks >> 16;
 		DX = ticks & 0x0000FFFF;
 		AX = 0;  /* No midnight rollover */
-		printf("int1a_00 // ltime=%ld ticks=%ld\n", ltime, ticks);
+		dprintf_int(stddeb,"int1a_00 // ltime=%ld ticks=%ld\n",
+			ltime, ticks);
 		break;
 		
 	case 2: 

@@ -10,6 +10,11 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
 #include <stdlib.h>
 #include "windows.h"
 #include "gdi.h"
+#include "stddebug.h"
+/* #define DEBUG_SCROLL /* */
+/* #undef  DEBUG_SCROLL /* */
+#include "debug.h"
+
 
 static int RgnType;
 
@@ -24,10 +29,8 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
     HRGN hrgnUpdate;
     RECT rc, cliprc;
 
-#ifdef DEBUG_SCROLL
-    printf("ScrollWindow: dx=%d, dy=%d, rect=%d,%d,%d,%d\n", dx, dy,
-	   rect->left, rect->top, rect->right, rect->bottom);
-#endif
+    dprintf_scroll(stddeb,"ScrollWindow: dx=%d, dy=%d, rect=%d,%d,%d,%d\n", 
+	   dx, dy, rect->left, rect->top, rect->right, rect->bottom);
 
     hdc = GetDC(hwnd);
 
@@ -59,10 +62,8 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
     short width, height;
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
-#ifdef DEBUG_SCROLL
-    printf("ScrollDC: dx=%d, dy=%d, rc=%d,%d,%d,%d\n", dx, dy,
+    dprintf_scroll(stddeb, "ScrollDC: dx=%d, dy=%d, rc=%d,%d,%d,%d\n", dx, dy,
 	   rc->left, rc->top, rc->right, rc->bottom);
-#endif
 
     if (rc == NULL)
 	return;
@@ -122,11 +123,7 @@ BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT rc, LPRECT cliprc,
 	RgnType = CombineRgn(hrgnUpdate, hrgn1, hrgn2, RGN_OR);
     }
 
-    if (rcUpdate)
-    {
-	SelectClipRgn(hdc, hrgnUpdate);
-	GetClipBox(hdc, rcUpdate);
-    }
+    if (rcUpdate) GetRgnBox( hrgnUpdate, rcUpdate );
 }
 
 
@@ -140,10 +137,8 @@ int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect,
     HDC hdc;
     RECT rc, cliprc;
 
-#ifdef DEBUG_SCROLL
-    printf("ScrollWindowEx: dx=%d, dy=%d, rect=%d,%d,%d,%d\n", dx, dy,
-	   rect->left, rect->top, rect->right, rect->bottom);
-#endif
+    dprintf_scroll(stddeb,"ScrollWindowEx: dx=%d, dy=%d, rect=%d,%d,%d,%d\n", 
+	   dx, dy, rect->left, rect->top, rect->right, rect->bottom);
 
     hdc = GetDC(hwnd);
 
