@@ -33,7 +33,7 @@
 #else /* RC_INVOKED && !NOWINRES */
 
 /* All the basic includes */
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

@@ -31,7 +31,7 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 #include "wine/library.h"
 
 DBG_PROCESS*	DEBUG_CurrProcess = NULL;

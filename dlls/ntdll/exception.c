@@ -33,7 +33,7 @@
 #include "miscemu.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 

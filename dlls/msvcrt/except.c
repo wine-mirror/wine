@@ -34,7 +34,7 @@
 #include "msvcrt.h"
 
 #include "msvcrt/setjmp.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 
 #include "wine/debug.h"

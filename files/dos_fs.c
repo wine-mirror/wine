@@ -52,7 +52,7 @@
 #include "msdos.h"
 #include "winternl.h"
 #include "wine/server.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 #include "smb.h"
 

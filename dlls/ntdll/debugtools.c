@@ -41,7 +41,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(tid);
 

@@ -42,7 +42,7 @@
 #include "wine/debug.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 

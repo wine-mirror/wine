@@ -43,6 +43,7 @@ WINDOWS_INCLUDES = \
 	dsdriver.h \
 	dshow.h \
 	dsound.h \
+	excpt.h \
 	fci.h \
 	fdi.h \
 	guiddef.h \
@@ -170,7 +171,6 @@ MSVCRT_INCLUDES = \
 	msvcrt/dos.h \
 	msvcrt/eh.h \
 	msvcrt/errno.h \
-	msvcrt/excpt.h \
 	msvcrt/fcntl.h \
 	msvcrt/io.h \
 	msvcrt/locale.h \

@@ -46,7 +46,7 @@
 #include "wine/exception.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 #include "console_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);

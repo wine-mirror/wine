@@ -59,7 +59,7 @@
 #include "user.h"
 #include "message.h"
 #include "winerror.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);

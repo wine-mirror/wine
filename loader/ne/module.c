@@ -42,7 +42,7 @@
 #include "snoop.h"
 #include "builtin16.h"
 #include "stackframe.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 

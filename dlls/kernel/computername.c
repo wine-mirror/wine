@@ -38,7 +38,7 @@
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/exception.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 #include "wine/debug.h"
 #include "file.h"
 

@@ -34,7 +34,7 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/exception.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);

@@ -52,7 +52,7 @@
 #include "dosvm.h"
 #include "stackframe.h"
 #include "wine/debug.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(module);

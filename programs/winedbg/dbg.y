@@ -32,7 +32,7 @@
 #include "wine/exception.h"
 #include "debugger.h"
 #include "expr.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 static void mode_command(int);
 int yylex(void);

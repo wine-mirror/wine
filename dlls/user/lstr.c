@@ -36,7 +36,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 #include "wine/debug.h"
 

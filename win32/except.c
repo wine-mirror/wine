@@ -48,7 +48,7 @@
 #include "wine/library.h"
 #include "thread.h"
 #include "stackframe.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

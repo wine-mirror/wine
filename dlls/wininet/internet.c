@@ -54,7 +54,7 @@
 #include "shlwapi.h"
 
 #include "wine/exception.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 #include "internet.h"
 

@@ -42,7 +42,7 @@
 #include "winternl.h"
 #include "winreg.h"
 #include "ntdll_misc.h"
-#include "msvcrt/excpt.h"
+#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
