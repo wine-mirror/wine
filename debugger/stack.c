@@ -79,7 +79,7 @@ void DEBUG_InfoStack(void)
 }
 
 #ifdef __i386__
-static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int bits, int noisy)
+static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int bits, int noisy, const char *caveat)
 {
     int theframe = nframe++;
     frames = (struct bt_info *)DBG_realloc(frames,
@@ -99,16 +99,16 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
     frames[theframe].ss = stack->seg;
     frames[theframe].ebp = stack->off;
     if (noisy) {
-      DEBUG_Printf( DBG_CHN_MESG, (bits == 16) ? " (bp=%04lx)\n" : " (ebp=%08lx)\n", stack->off );
+      DEBUG_Printf( DBG_CHN_MESG, (bits == 16) ? " (bp=%04lx%s)\n" : " (ebp=%08lx%s)\n", stack->off, caveat?caveat:"" );
     }
 }
 
 static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noisy)
 {
-    unsigned int	ss = addr->seg, possible_cs = 0;
+    unsigned int	possible_cs = 0;
     FRAME16 		frame;
-    int 		theframe = nframe;
     void*		p = (void*)DEBUG_ToLinear(addr);
+    DBG_ADDR		code;
     
     if (!p) return FALSE;
     
@@ -117,12 +117,7 @@ static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
 	return FALSE;
     }
     if (!frame.bp) return FALSE;
-    nframe++;
-    frames = (struct bt_info *)DBG_realloc(frames,
-					   nframe*sizeof(struct bt_info));
-    if (noisy)
-        DEBUG_Printf(DBG_CHN_MESG,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
-		     frameno);
+
     if (frame.bp & 1) *cs = frame.cs;
     else {
         /* not explicitly marked as far call,
@@ -138,33 +133,19 @@ static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
 	    }
 	}
     }
-    frames[theframe].cs = addr->seg = *cs;
-    frames[theframe].eip = addr->off = frame.ip;
-    if (noisy)
-        frames[theframe].frame = DEBUG_PrintAddressAndArgs( addr, 16, 
-							    frame.bp, TRUE );
-    else
-        DEBUG_FindNearestSymbol( addr, TRUE, 
-				 &frames[theframe].frame.sym, frame.bp, 
-				 &frames[theframe].frame.list);
-    frames[theframe].ss = addr->seg = ss;
-    frames[theframe].ebp = addr->off = frame.bp & ~1;
-    if (noisy) {
-        DEBUG_Printf( DBG_CHN_MESG, " (bp=%04lx", addr->off );
-        if (possible_cs) {
-	    DEBUG_Printf( DBG_CHN_MESG, ", far call assumed" );
-	}
-	DEBUG_Printf( DBG_CHN_MESG, ")\n" );
-    }
+    code.seg = *cs;
+    code.off = frame.ip;
+    addr->off = frame.bp & ~1;
+    DEBUG_ForceFrame(addr, &code, frameno, 16, noisy, possible_cs ? ", far call assumed" : NULL );
     return TRUE;
 }
 
 static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noisy)
 {
-    unsigned int 	ss = addr->seg;
     FRAME32 		frame;
-    int 		theframe = nframe;
     void*		p = (void*)DEBUG_ToLinear(addr);
+    DBG_ADDR		code;
+    DWORD		old_bp = addr->off;
     
     if (!p) return FALSE;
     
@@ -173,27 +154,12 @@ static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
        return FALSE;
     }
     if (!frame.ip) return FALSE;
-    
-    nframe++;
-    frames = (struct bt_info *)DBG_realloc(frames,
-					   nframe*sizeof(struct bt_info));
-    if (noisy)
-       DEBUG_Printf(DBG_CHN_MESG,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
-		    frameno);
-    frames[theframe].cs = addr->seg = *cs;
-    frames[theframe].eip = addr->off = frame.ip;
-    if (noisy)
-        frames[theframe].frame = DEBUG_PrintAddressAndArgs( addr, 32, 
-							    frame.bp, TRUE );
-    else
-        DEBUG_FindNearestSymbol( addr, TRUE, 
-				 &frames[theframe].frame.sym, frame.bp, 
-				 &frames[theframe].frame.list);
-    if (noisy) DEBUG_Printf( DBG_CHN_MESG, " (ebp=%08lx)\n", frame.bp );
-    frames[theframe].ss = addr->seg = ss;
-    frames[theframe].ebp = frame.bp;
-    if (addr->off == frame.bp) return FALSE;
+
+    code.seg = *cs;
+    code.off = frame.ip;
     addr->off = frame.bp;
+    DEBUG_ForceFrame(addr, &code, frameno, 32, noisy, NULL);
+    if (addr->off == old_bp) return FALSE;
     return TRUE;
 }
 #endif
@@ -218,11 +184,10 @@ void DEBUG_BackTrace(BOOL noisy)
 
     if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Backtrace:\n" );
 
-    nframe = 1;
+    nframe = 0;
     if (frames) DBG_free( frames );
-    frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) );
-    if (noisy)
-        DEBUG_Printf(DBG_CHN_MESG,"%s%d ",(curr_frame == 0 ? "=>" : "  "), frameno);
+    /* frames = (struct bt_info *) DBG_alloc( sizeof(struct bt_info) ); */
+    frames = NULL;
 
     if (DEBUG_IsSelectorSystem(ss)) ss = 0;
     if (DEBUG_IsSelectorSystem(cs)) cs = 0;
@@ -231,29 +196,29 @@ void DEBUG_BackTrace(BOOL noisy)
     switch (DEBUG_GetSelectorType(ss))
     {
     case 32:
-        frames[0].cs = addr.seg = cs;
-        frames[0].eip = addr.off = DEBUG_context.Eip;
-        if (noisy)
-            frames[0].frame = DEBUG_PrintAddress( &addr, 32, TRUE );
-        else
-	    DEBUG_FindNearestSymbol( &addr, TRUE, &frames[0].frame.sym, 0, 
-				     &frames[0].frame.list);
-        frames[0].ss = addr.seg = ss;
-	frames[0].ebp = addr.off = DEBUG_context.Ebp;
-        if (noisy) DEBUG_Printf( DBG_CHN_MESG, " (ebp=%08x)\n", frames[0].ebp );
+        code.seg = cs;
+        code.off = DEBUG_context.Eip;
+        addr.seg = ss;
+	addr.off = DEBUG_context.Ebp;
+        DEBUG_ForceFrame( &addr, &code, frameno, 32, noisy, NULL );
+        if (!(code.seg || code.off)) {
+            /* trying to execute a null pointer... yuck...
+             * if it was a call to null, the return EIP should be
+             * available at SS:ESP, so let's try to retrieve it */
+            tmp.seg = ss;
+            tmp.off = DEBUG_context.Esp;
+            if (DEBUG_READ_MEM(DEBUG_ToLinear(&tmp), &code.off, sizeof(code.off))) {
+                DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy, ", null call assumed" );
+            }
+        }
         is16 = FALSE;
 	break;
     case 16:
-        frames[0].cs = addr.seg = cs;
-        frames[0].eip = addr.off = LOWORD(DEBUG_context.Eip);
-        if (noisy)
-	    frames[0].frame = DEBUG_PrintAddress( &addr, 16, TRUE );
-        else
-	    DEBUG_FindNearestSymbol( &addr, TRUE, &frames[0].frame.sym, 0, 
-				     &frames[0].frame.list);
-        frames[0].ss = addr.seg = ss;
-	frames[0].ebp = addr.off = LOWORD(DEBUG_context.Ebp);
-        if (noisy) DEBUG_Printf( DBG_CHN_MESG, " (bp=%04x)\n", frames[0].ebp );
+        code.seg = cs;
+        code.off = LOWORD(DEBUG_context.Eip);
+        addr.seg = ss;
+	addr.off = LOWORD(DEBUG_context.Ebp);
+        DEBUG_ForceFrame( &addr, &code, frameno, 16, noisy, NULL );
         is16 = TRUE;
 	break;
     default:
@@ -317,7 +282,7 @@ void DEBUG_BackTrace(BOOL noisy)
 	       cs = 0;
 	       addr.seg = 0;
 	       addr.off = frame32.ebp;
-	       DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy );
+	       DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy, NULL );
 	       
 	       next_switch = cur_switch;
 	       tmp.seg = SELECTOROF(next_switch);
@@ -351,7 +316,7 @@ void DEBUG_BackTrace(BOOL noisy)
 	      cs = frame16.cs;
 	      addr.seg = SELECTOROF(next_switch);
 	      addr.off = frame16.bp;
-	      DEBUG_ForceFrame( &addr, &code, ++frameno, 16, noisy );
+	      DEBUG_ForceFrame( &addr, &code, ++frameno, 16, noisy, NULL );
 	      
 	      next_switch = cur_switch;
 	      if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
