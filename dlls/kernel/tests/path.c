@@ -514,6 +514,14 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     ok(rc==strlen(tmpstr)+1,
        "GetLongPathNameA: wrong return code, %ld instead of %d",
        rc, strlen(curdir)+1);
+
+    todo_wine {
+        sprintf(dir,"%c:",curDrive);
+        rc=(*pGetLongPathNameA)(dir,tmpstr,sizeof(tmpstr));
+        ok(strcmp(dir,tmpstr)==0,
+           "GetLongPathNameA: returned '%s' instead of '%s' (rc=%ld)",
+           tmpstr,dir,rc);
+    }
   }
 
 /* Check the cases where both file and directory exist first */
@@ -684,30 +692,39 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   }
 /* Test GetFullPathNameA with drive letters */
   if( curDrive != NOT_A_VALID_DRIVE) {
+    sprintf(tmpstr,"%c:",curdir[0]);
+    ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr2,&strptr),
+       "GetFullPathNameA(%c:) failed", curdir[0]);
+    GetCurrentDirectoryA(MAX_PATH,tmpstr);
+    sprintf(tmpstr1,"%s\\",tmpstr);
+    ok(lstrcmpiA(tmpstr,tmpstr2)==0 || lstrcmpiA(tmpstr1,tmpstr2)==0,
+       "GetFullPathNameA(%c:) returned '%s' instead of '%s' or '%s'",
+       curdir[0],tmpstr2,tmpstr,tmpstr1);
+
     sprintf(tmpstr,"%c:\\%s\\%s",curDrive,SHORTDIR,SHORTFILE);
     ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
     ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+       "GetFullPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
     ok(lstrcmpiA(SHORTFILE,strptr)==0,
-       "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+       "GetFullPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
   }
 /* Without a leading slash, insert the current directory if on the current drive */
   sprintf(tmpstr,"%c:%s\\%s",curdir[0],SHORTDIR,SHORTFILE);
   ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
   sprintf(tmpstr,"%s\\%s\\%s",curdir,SHORTDIR,SHORTFILE);
   ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+      "GetFullPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
   ok(lstrcmpiA(SHORTFILE,strptr)==0,
-      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+      "GetFullPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
 /* Otherwise insert the missing leading slash */
   if( otherDrive != NOT_A_VALID_DRIVE) {
     sprintf(tmpstr,"%c:%s\\%s",otherDrive,SHORTDIR,SHORTFILE);
     ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed for %s", tmpstr);
     sprintf(tmpstr,"%c:\\%s\\%s",otherDrive,SHORTDIR,SHORTFILE);
     ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+       "GetFullPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
     ok(lstrcmpiA(SHORTFILE,strptr)==0,
-       "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+       "GetFullPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
   }
 /* Xilinx tools like to mix Unix and DOS formats, which Windows handles fine.
    So test for them. */
@@ -716,18 +733,18 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
     sprintf(tmpstr,"%c:\\%s\\%s",curDrive,SHORTDIR,SHORTFILE);
     ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-       "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+       "GetFullPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
     ok(lstrcmpiA(SHORTFILE,strptr)==0,
-       "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+       "GetFullPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
   }
 /**/
   sprintf(tmpstr,"%c:%s/%s",curdir[0],SHORTDIR,SHORTFILE);
   ok(GetFullPathNameA(tmpstr,MAX_PATH,tmpstr1,&strptr),"GetFullPathNameA failed");
   sprintf(tmpstr,"%s\\%s\\%s",curdir,SHORTDIR,SHORTFILE);
   ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-      "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+      "GetFullPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
   ok(lstrcmpiA(SHORTFILE,strptr)==0,
-      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+      "GetFullPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
 /* Windows will insert a drive letter in front of an absolute UNIX path, but
     Wine probably shouldn't. */
   sprintf(tmpstr,"/%s/%s",SHORTDIR,SHORTFILE);
@@ -736,12 +753,12 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     if( curDrive != NOT_A_VALID_DRIVE) {
       sprintf(tmpstr,"C:\\%s\\%s",SHORTDIR,SHORTFILE);
       ok(lstrcmpiA(tmpstr,tmpstr1)==0,
-	 "GetLongPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
+         "GetFullPathNameA returned '%s' instead of '%s'",tmpstr1,tmpstr);
     }
   }
 /* This passes in Wine because it still contains the pointer from the previous test */
   ok(lstrcmpiA(SHORTFILE,strptr)==0,
-      "GetLongPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
+      "GetFullPathNameA returned part '%s' instead of '%s'",strptr,SHORTFILE);
 
 /* Now try some relative paths */
   ok(GetShortPathNameA(LONGDIR,tmpstr,MAX_PATH),"GetShortPathNameA failed");
