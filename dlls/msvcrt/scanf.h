@@ -90,6 +90,8 @@ int _FUNCTION_ {
 #endif /* CONSOLE */
 #endif /* WIDE_SCANF */
     nch = _GETC_(file);
+    if (nch == _EOF_) return _EOF_;
+    
     va_start(ap, format);
     while (*format) {
 	/* a whitespace character in the format string causes scanf to read,

@@ -26,8 +26,14 @@ static void test_sscanf( void )
 {
     char buffer[100];
     char format[20];
-    int result;
+    int result, ret;
 
+    /* check EOF */
+    strcpy(buffer,"");
+    ret = sscanf(buffer, "%d", &result);
+    ok( ret == EOF,"sscanf returns %x instead of %x", ret, EOF );
+		
+    /* check %x */
     strcpy(buffer,"0x519");
     ok( sscanf(buffer, "%x", &result) == 1, "sscanf failed"  );
     ok( result == 0x519,"sscanf reads %x instead of %x", result, 0x519 );
