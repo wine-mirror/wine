@@ -1163,6 +1163,7 @@ ImageList_DragMove (INT x, INT y)
 
 	DeleteDC(hdcBg);
 	DeleteDC(hdcOffScreen);
+	DeleteObject(hbmOffScreen);
 	ReleaseDC(InternalDrag.hwnd, hdcDrag);
     }
 
@@ -1477,9 +1478,6 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
 BOOL WINAPI
 ImageList_EndDrag (void)
 {
-    /* hide the drag image */
-    ImageList_DragShowNolock(FALSE);
-
     /* cleanup the InternalDrag struct */
     InternalDrag.hwnd = 0;
     ImageList_Destroy (InternalDrag.himl);
