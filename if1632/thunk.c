@@ -20,29 +20,15 @@ DEFAULT_DEBUG_CHANNEL(thunk);
 /* by the build program to generate the file if1632/callto16.S */
 
 /* ### start build ### */
-extern WORD CALLBACK THUNK_CallTo16_word_     (FARPROC16);
-extern WORD CALLBACK THUNK_CallTo16_word_l    (FARPROC16,LONG);
-extern LONG CALLBACK THUNK_CallTo16_long_l    (FARPROC16,LONG);
 extern WORD CALLBACK THUNK_CallTo16_word_lllw (FARPROC16,LONG,LONG,LONG,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_lwww (FARPROC16,LONG,WORD,WORD,WORD);
-extern LONG CALLBACK THUNK_CallTo16_long_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
-extern WORD CALLBACK THUNK_CallTo16_word_lwwww(FARPROC16,LONG,WORD,WORD,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_w    (FARPROC16,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_wlww (FARPROC16,WORD,LONG,WORD,WORD);
 extern WORD CALLBACK THUNK_CallTo16_word_ww   (FARPROC16,WORD,WORD);
-extern WORD CALLBACK THUNK_CallTo16_word_wwwl (FARPROC16,WORD,WORD,WORD,LONG);
 /* ### stop build ### */
 
 static THUNK *firstThunk = NULL;
 
 CALLOUT_TABLE Callout = {
-    /* PostMessageA */ NULL,
     /* UserSignalProc */ NULL,
-    /* FinalUserInit16 */ NULL,
-    /* InitThreadInput16 */ NULL,
-    /* UserYield16) */ NULL,
-    /* DestroyIcon32 */ NULL,
-    /* WaitForInputIdle */ NULL
+    /* DestroyIcon32 */ NULL
 };
 
 /***********************************************************************
@@ -151,31 +137,13 @@ static FARPROC THUNK_GetCalloutThunk( NE_MODULE *pModule, LPSTR name, RELAY rela
  */
 void THUNK_InitCallout(void)
 {
-    HMODULE hModule;
-    NE_MODULE *pModule;
-
-    hModule = GetModuleHandleA( "user32.dll" );
-    if ( hModule )
-    {
-#define GETADDR( name )  \
-        *(FARPROC *)&Callout.name = GetProcAddress( hModule, #name )
-
-        GETADDR( PostMessageA );
-        GETADDR( WaitForInputIdle );
-#undef GETADDR
-    }
-    else WARN("no 32-bit USER\n");
-
-    pModule = NE_GetPtr( GetModuleHandle16( "USER.EXE" ) );
+    NE_MODULE *pModule = NE_GetPtr( GetModuleHandle16( "USER.EXE" ) );
     if ( pModule )
     {
 #define GETADDR( var, name, thk )  \
         *(FARPROC *)&Callout.var = THUNK_GetCalloutThunk( pModule, name, \
                                                (RELAY)THUNK_CallTo16_##thk )
 
-        GETADDR( FinalUserInit16, "FinalUserInit", word_ );
-        GETADDR( InitThreadInput16, "InitThreadInput", word_ww );
-        GETADDR( UserYield16, "UserYield", word_ );
         GETADDR( DestroyIcon32, "DestroyIcon32", word_ww );
         GETADDR( UserSignalProc, "SignalProc32", word_lllw );
 #undef GETADDR

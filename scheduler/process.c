@@ -363,9 +363,6 @@ static void start_process(void)
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
 
-    /* Call FinalUserInit routine */
-    if (Callout.FinalUserInit16) Callout.FinalUserInit16();
-
     /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
      *       context of the parent process.  Actually, the USER signal proc
      *       doesn't really care about that, but it *does* require that the

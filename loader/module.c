@@ -17,7 +17,6 @@
 #include "file.h"
 #include "module.h"
 #include "debugtools.h"
-#include "callback.h"
 #include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
@@ -29,6 +28,25 @@ WINE_MODREF *MODULE_modref_list = NULL;
 static WINE_MODREF *exe_modref;
 static int free_lib_count;   /* recursion depth of FreeLibrary calls */
 static int process_detaching;  /* set on process detach to avoid deadlocks with thread detach */
+
+/***********************************************************************
+ *           wait_input_idle
+ *
+ * Wrapper to call WaitForInputIdle USER function
+ */
+typedef DWORD (WINAPI *WaitForInputIdle_ptr)( HANDLE hProcess, DWORD dwTimeOut );
+
+static DWORD wait_input_idle( HANDLE process, DWORD timeout )
+{
+    HMODULE mod = GetModuleHandleA( "user32.dll" );
+    if (mod)
+    {
+        WaitForInputIdle_ptr ptr = (WaitForInputIdle_ptr)GetProcAddress( mod, "WaitForInputIdle" );
+        if (ptr) return ptr( process, timeout );
+    }
+    return 0;
+}
+
 
 /*************************************************************************
  *		MODULE32_LookupHMODULE
@@ -852,8 +870,7 @@ HINSTANCE WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
                         0, NULL, NULL, &startup, &info ))
     {
         /* Give 30 seconds to the app to come up */
-        if (Callout.WaitForInputIdle &&
-            Callout.WaitForInputIdle( info.hProcess, 30000 ) == 0xFFFFFFFF)
+        if (wait_input_idle( info.hProcess, 30000 ) == 0xFFFFFFFF)
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
         hInstance = (HINSTANCE)33;
         /* Close off the handles */
@@ -910,8 +927,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
                         params->lpEnvAddress, NULL, &startup, &info ))
     {
         /* Give 30 seconds to the app to come up */
-        if (Callout.WaitForInputIdle &&
-            Callout.WaitForInputIdle( info.hProcess, 30000 ) ==  0xFFFFFFFF )
+        if (wait_input_idle( info.hProcess, 30000 ) ==  0xFFFFFFFF )
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
         hInstance = (HINSTANCE)33;
         /* Close off the handles */

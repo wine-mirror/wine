@@ -19,7 +19,6 @@
 #include "winsock.h"
 
 #include "wine/winbase16.h"
-#include "callback.h"
 #include "drive.h"
 #include "file.h"
 #include "global.h"
@@ -727,8 +726,20 @@ void WINAPI Yield16(void)
     TDB *pCurTask = TASK_GetCurrent();
 
     if (pCurTask) pCurTask->hYieldTo = 0;
-    if (pCurTask && pCurTask->hQueue && Callout.UserYield16) Callout.UserYield16();
-    else OldYield16();
+    if (pCurTask && pCurTask->hQueue)
+    {
+        HMODULE mod = GetModuleHandleA( "user32.dll" );
+        if (mod)
+        {
+            FARPROC proc = GetProcAddress( mod, "UserYield16" );
+            if (proc)
+            {
+                proc();
+                return;
+            }
+        }
+    }
+    OldYield16();
 }
 
 /***********************************************************************
@@ -1034,27 +1045,10 @@ VOID WINAPI SetFastQueue16( DWORD thread, HANDLE hQueue )
  */
 HANDLE WINAPI GetFastQueue16( void )
 {
-    TEB *teb = NtCurrentTeb();
-    if (!teb) return 0;
+    HANDLE ret = (HANDLE)NtCurrentTeb()->queue;
 
-    if (!teb->queue)
-    {
-        if (!Callout.InitThreadInput16)
-        {
-            THUNK_InitCallout();
-            if (!Callout.InitThreadInput16)
-            {
-                FIXME("InitThreadInput16 callout not found, trouble ahead\n");
-                return 0;
-            }
-        }
-        Callout.InitThreadInput16( 0, (teb->tibflags & TEBF_WIN32) ? 5 : 4 );
-
-        if (!teb->queue)
-            FIXME("(): should initialize thread-local queue, expect failure!\n" );
-    }
-
-    return (HANDLE)teb->queue;
+    if (!ret) FIXME("(): should initialize thread-local queue, expect failure!\n" );
+    return ret;
 }
 
 /***********************************************************************

@@ -23,13 +23,8 @@ extern void THUNK_InitCallout(void);
 
 typedef struct
 {
-    BOOL WINAPI     (*PostMessageA)( HWND, UINT, WPARAM, LPARAM );
     WORD WINAPI     (*UserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
-    void WINAPI     (*FinalUserInit16)( void );
-    HQUEUE16 WINAPI (*InitThreadInput16)( WORD, WORD );
-    void WINAPI     (*UserYield16)( void );
     WORD WINAPI     (*DestroyIcon32)( HGLOBAL16, UINT16 );
-    DWORD WINAPI    (*WaitForInputIdle)( HANDLE, DWORD );
 }  CALLOUT_TABLE;
 
 extern CALLOUT_TABLE Callout;

@@ -265,13 +265,10 @@ static void thread_detach(void)
     if (hQueue)
     {
         TIMER_RemoveQueueTimers( hQueue );
-
-        HOOK_FreeQueueHooks( hQueue );
-
+        HOOK_FreeQueueHooks();
         QUEUE_SetExitingQueue( hQueue );
         WIN_DestroyThreadWindows( GetDesktopWindow() );
-        QUEUE_DeleteMsgQueue( hQueue );
-        SetThreadQueue16( 0, 0 );
+        QUEUE_DeleteMsgQueue();
     }
 
     if (!(NtCurrentTeb()->tibflags & TEBF_WIN32))

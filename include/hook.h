@@ -26,7 +26,6 @@ extern LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
 extern LRESULT HOOK_CallHooksW( INT id, INT code, WPARAM wParam,
 				  LPARAM lParam );
 extern void HOOK_FreeModuleHooks( HMODULE16 hModule );
-extern void HOOK_FreeQueueHooks( HQUEUE16 hQueue );
-extern void HOOK_ResetQueueHooks( HQUEUE16 hQueue );
+extern void HOOK_FreeQueueHooks(void);
 
 #endif  /* __WINE_HOOK_H */
