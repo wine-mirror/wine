@@ -3,6 +3,7 @@
  * Copyright 1998 Marcus Meissner
  * Copyright 1998,1999 Lionel Ulmer
  * Copyright 2000-2001 TransGaming Technologies Inc.
+ * Copyright 2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +38,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
+#define WINE_DINPUT_KEYBOARD_MAX_KEYS 256
+
 static IDirectInputDevice8AVtbl SysKeyboardAvt;
 static IDirectInputDevice8WVtbl SysKeyboardWvt;
 
@@ -65,14 +68,15 @@ struct SysKeyboardImpl
         CRITICAL_SECTION                crit;
 };
 
-SysKeyboardImpl *current; /* Today's acquired device
-FIXME: currently this can be only one.
-Maybe this should be a linked list or st.
-I don't know what the rules are for multiple acquired keyboards,
-but 'DI_LOSTFOCUS' and 'DI_UNACQUIRED' exist for a reason.
+static SysKeyboardImpl* current_lock = NULL; 
+/* Today's acquired device
+ * FIXME: currently this can be only one.
+ * Maybe this should be a linked list or st.
+ * I don't know what the rules are for multiple acquired keyboards,
+ * but 'DI_LOSTFOCUS' and 'DI_UNACQUIRED' exist for a reason.
 */
 
-static BYTE DInputKeyState[256]; /* array for 'GetDeviceState' */
+static BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS]; /* array for 'GetDeviceState' */
 
 static CRITICAL_SECTION keyboard_crit;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -83,64 +87,63 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION keyboard_crit = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static DWORD keyboard_users;
-static HHOOK keyboard_hook;
+static DWORD keyboard_users = 0;
+static HHOOK keyboard_hook = NULL;
 
 LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
 {
+  BYTE dik_code;
+  BOOL down;
+  DWORD timestamp;
+  KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
+  BYTE new_diks;
+
   TRACE("(%d,%d,%ld)\n", code, wparam, lparam);
 
-  if (code == HC_ACTION)
-    {
-      BYTE dik_code;
-      BOOL down;
-      DWORD timestamp;
+  /** returns now if not HC_ACTION */
+  if (code != HC_ACTION) return CallNextHookEx(keyboard_hook, code, wparam, lparam);
+  
+  {
+    dik_code = hook->scanCode;
+    if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
+    down = !(hook->flags & LLKHF_UP);
+    timestamp = hook->time;
+  }
+
+  /** returns now if key event already known */
+  new_diks = (down ? 0x80 : 0);
+  /*if (new_diks != DInputKeyState[dik_code]) return CallNextHookEx(keyboard_hook, code, wparam, lparam); TO BE FIXED */
+
+  DInputKeyState[dik_code] = new_diks;
+  TRACE(" setting %02X to %02X\n", dik_code, DInputKeyState[dik_code]);
       
-      {
-        KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
-        dik_code = hook->scanCode;
-        if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
-        down = !(hook->flags & LLKHF_UP);
-        timestamp = hook->time;
-      }
-
-      DInputKeyState[dik_code] = (down ? 0x80 : 0);
-      TRACE(" setting %02X to %02X\n", dik_code, DInputKeyState[dik_code]);
+  if (current_lock != NULL) {
+    if (current_lock->hEvent) SetEvent(current_lock->hEvent);
+    
+    if (current_lock->buffer != NULL) {
+      int n;
       
-      if (current != NULL)
-        {
-          if (current->hEvent)
-            SetEvent(current->hEvent);
-
-          if (current->buffer != NULL)
-            {
-              int n;
-
-              EnterCriticalSection(&(current->crit));
-
-              n = (current->start + current->count) % current->buffersize;
-
-              current->buffer[n].dwOfs = dik_code;
-              current->buffer[n].dwData = down ? 0x80 : 0;
-              current->buffer[n].dwTimeStamp = timestamp;
-              current->buffer[n].dwSequence = current->dinput->evsequence++;
-
-	      TRACE("Adding event at offset %d : %ld - %ld - %ld - %ld\n", n,
-		    current->buffer[n].dwOfs, current->buffer[n].dwData, current->buffer[n].dwTimeStamp, current->buffer[n].dwSequence);
-
-              if (current->count == current->buffersize)
-                {
-                  current->start = ++current->start % current->buffersize;
-                  current->overflow = TRUE;
-                }
-              else
-                current->count++;
-
-              LeaveCriticalSection(&(current->crit));
-            }
-        }
+      EnterCriticalSection(&(current_lock->crit));
+      
+      n = (current_lock->start + current_lock->count) % current_lock->buffersize;
+      
+      current_lock->buffer[n].dwOfs = dik_code;
+      current_lock->buffer[n].dwData = down ? 0x80 : 0;
+      current_lock->buffer[n].dwTimeStamp = timestamp;
+      current_lock->buffer[n].dwSequence = current_lock->dinput->evsequence++;
+      
+      TRACE("Adding event at offset %d : %ld - %ld - %ld - %ld\n", n,
+	    current_lock->buffer[n].dwOfs, current_lock->buffer[n].dwData, current_lock->buffer[n].dwTimeStamp, current_lock->buffer[n].dwSequence);
+      
+      if (current_lock->count == current_lock->buffersize) {
+	current_lock->start = ++current_lock->start % current_lock->buffersize;
+	current_lock->overflow = TRUE;
+      } else
+	current_lock->count++;
+      
+      LeaveCriticalSection(&(current_lock->crit));
     }
-
+  }
   return CallNextHookEx(keyboard_hook, code, wparam, lparam);
 }
 
@@ -238,15 +241,20 @@ static BOOL keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
 static SysKeyboardImpl *alloc_device(REFGUID rguid, LPVOID kvt, IDirectInputImpl *dinput)
 {
     SysKeyboardImpl* newDevice;
+    DWORD kbd_users;
+
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardImpl));
     newDevice->lpVtbl = kvt;
     newDevice->ref = 1;
     memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
     newDevice->dinput = dinput;
+    InitializeCriticalSection(&(newDevice->crit));
 
     EnterCriticalSection(&keyboard_crit);
-    if (!keyboard_users++)
-        keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, DINPUT_instance, 0 );
+    kbd_users = InterlockedIncrement(&keyboard_users);
+    if (1 == kbd_users) {
+      keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, DINPUT_instance, 0 );
+    }
     LeaveCriticalSection(&keyboard_crit);
 
     return newDevice;
@@ -301,13 +309,15 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
 	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
 	ULONG ref;
+	DWORD kbd_users;
 
 	ref = InterlockedDecrement(&(This->ref));
 	if (ref)
 		return ref;
 
-	EnterCriticalSection(&keyboard_crit);
-	if (!--keyboard_users) {
+	EnterCriticalSection(&keyboard_crit);	
+	kbd_users = InterlockedDecrement(&keyboard_users);
+	if (0 == kbd_users) {
 	    UnhookWindowsHookEx( keyboard_hook );
 	    keyboard_hook = 0;
 	}
@@ -388,24 +398,29 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 )
 {
-    TRACE("(%p)->(%ld,%p)\n", iface, len, ptr);
+    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    TRACE("(%p)->(%ld,%p)\n", This, len, ptr);
 
     /* Note: device does not need to be acquired */
-    if (len != 256)
+    if (len != WINE_DINPUT_KEYBOARD_MAX_KEYS)
       return DIERR_INVALIDPARAM;
 
     MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
 
+    EnterCriticalSection(&(This->crit));
+
     if (TRACE_ON(dinput)) {
 	int i;
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < WINE_DINPUT_KEYBOARD_MAX_KEYS; i++) {
 	    if (DInputKeyState[i] != 0x00) {
 		TRACE(" - %02X: %02x\n", i, DInputKeyState[i]);
 	    }
 	}
     }
     
-    memcpy(ptr, DInputKeyState, 256);
+    memcpy(ptr, DInputKeyState, WINE_DINPUT_KEYBOARD_MAX_KEYS);
+    LeaveCriticalSection(&(This->crit));
+
     return DI_OK;
 }
 
@@ -490,7 +505,7 @@ static HRESULT WINAPI SysKeyboardAImpl_EnumObjects(
     memset(&ddoi, 0, sizeof(ddoi));
     ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
 
-    for (i = 0; i < 256; i++) {
+    for (i = 0; i < WINE_DINPUT_KEYBOARD_MAX_KEYS; i++) {
         /* Report 255 keys :-) */
         ddoi.guidType = GUID_Key;
 	ddoi.dwOfs = i;
@@ -531,25 +546,24 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
         This->acquired = 1;
 
-        if (current != NULL)
-          {
-            FIXME("Not more than one keyboard can be acquired at the same time.\n");
-            SysKeyboardAImpl_Unacquire(iface);
-          }
+        if (current_lock != NULL) {
+	  FIXME("Not more than one keyboard can be acquired at the same time.\n");
+	  SysKeyboardAImpl_Unacquire(iface);
+	}
+	
+        current_lock = This;
 
-        current = This;
-
-        if (This->buffersize > 0)
-          {
-            This->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                     This->buffersize * sizeof(*(This->buffer)));
-            This->start = 0;
-            This->count = 0;
-            This->overflow = FALSE;
-            InitializeCriticalSection(&(This->crit));
-          }
-        else
+        if (This->buffersize > 0) {
+	  This->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+				   This->buffersize * sizeof(*(This->buffer)));
+	  This->start = 0;
+	  This->count = 0;
+	  This->overflow = FALSE;
+	} else {
           This->buffer = NULL;
+	}
+
+	/*keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, DINPUT_instance, 0 );*/
 
 	return DI_OK;
 }
@@ -562,19 +576,19 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
         if (This->acquired == 0)
           return DI_NOEFFECT;
 
-        if (current == This)
-          current = NULL;
+	/* No more locks */
+        if (current_lock == This)
+          current_lock = NULL;
         else
-          ERR("this != current\n");
+          ERR("this != current_lock\n");
 
+	/* Unacquire device */
         This->acquired = 0;
 
-        if (This->buffersize >= 0)
-          {
-            HeapFree(GetProcessHeap(), 0, This->buffer);
-            This->buffer = NULL;
-            DeleteCriticalSection(&(This->crit));
-          }
+        if (This->buffersize >= 0) {
+	  HeapFree(GetProcessHeap(), 0, This->buffer);
+	  This->buffer = NULL;
+	}
 
 	return DI_OK;
 }
@@ -613,7 +627,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
     else
 	devcaps.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
     devcaps.dwAxes = 0;
-    devcaps.dwButtons = 256;
+    devcaps.dwButtons = WINE_DINPUT_KEYBOARD_MAX_KEYS;
     devcaps.dwPOVs = 0;
     devcaps.dwFFSamplePeriod = 0;
     devcaps.dwFFMinTimeResolution = 0;
@@ -709,7 +723,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceInfo(
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)) {
-        WARN(" dinput3 not supporte yet...\n");
+        WARN(" dinput3 not supported yet...\n");
 	return DI_OK;
     }
 
@@ -724,7 +738,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
     TRACE("(this=%p,%p)\n", This, pdidi);
 
     if (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW)) {
-        WARN(" dinput3 not supporte yet...\n");
+        WARN(" dinput3 not supported yet...\n");
 	return DI_OK;
     }
 

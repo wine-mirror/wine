@@ -578,61 +578,61 @@ static void dinput_window_check(SysMouseImpl* This) {
 static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     SysMouseImpl *This = (SysMouseImpl *)iface;
-    RECT	rect;
+    RECT  rect;
+    POINT point;
     
     TRACE("(this=%p)\n",This);
     
-    if (This->acquired == 0) {
-	POINT point;
-	
-	/* Store (in a global variable) the current lock */
-	current_lock = (IDirectInputDevice8A*)This;
-	
-	/* Init the mouse state */
-	GetCursorPos( &point );
-	if (This->absolute) {
-	    This->m_state.lX = point.x;
-	    This->m_state.lY = point.y;
-	    This->prevX = point.x;
-	    This->prevY = point.y;
-	} else {
-	    This->m_state.lX = 0;
-	    This->m_state.lY = 0;
-	    This->org_coords = point;
-	}
-	This->m_state.lZ = 0;
-	This->m_state.rgbButtons[0] = ((GetKeyState(VK_LBUTTON) & 0x80) ? 0xFF : 0x00);
-	This->m_state.rgbButtons[1] = ((GetKeyState(VK_RBUTTON) & 0x80) ? 0xFF : 0x00);
-	This->m_state.rgbButtons[2] = ((GetKeyState(VK_MBUTTON) & 0x80) ? 0xFF : 0x00);
-	
-	/* Install our mouse hook */
-	if (This->dwCoopLevel & DISCL_EXCLUSIVE)
-	    ShowCursor(FALSE); /* hide cursor */
-	This->hook = SetWindowsHookExA( WH_MOUSE_LL, dinput_mouse_hook, DINPUT_instance, 0 );
-	
-	/* Get the window dimension and find the center */
-	GetWindowRect(This->win, &rect);
-	This->win_centerX = (rect.right  - rect.left) / 2;
-	This->win_centerY = (rect.bottom - rect.top ) / 2;
-	
-	/* Warp the mouse to the center of the window */
-	if (This->absolute == 0) {
-	    This->mapped_center.x = This->win_centerX;
-	    This->mapped_center.y = This->win_centerY;
-	    MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
-	    TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
-	    SetCursorPos( This->mapped_center.x, This->mapped_center.y );
-#ifdef MOUSE_HACK
-	    This->need_warp = WARP_DONE;
-#else
-	    This->need_warp = WARP_STARTED;
-#endif
-	}
-	
-	This->acquired = 1;
-	return DI_OK;
+    if (This->acquired)
+      return S_FALSE;
+    
+    This->acquired = 1;
+
+    /* Store (in a global variable) the current lock */
+    current_lock = (IDirectInputDevice8A*)This;
+    
+    /* Init the mouse state */
+    GetCursorPos( &point );
+    if (This->absolute) {
+      This->m_state.lX = point.x;
+      This->m_state.lY = point.y;
+      This->prevX = point.x;
+      This->prevY = point.y;
+    } else {
+      This->m_state.lX = 0;
+      This->m_state.lY = 0;
+      This->org_coords = point;
     }
-    return S_FALSE;
+    This->m_state.lZ = 0;
+    This->m_state.rgbButtons[0] = ((GetKeyState(VK_LBUTTON) & 0x80) ? 0xFF : 0x00);
+    This->m_state.rgbButtons[1] = ((GetKeyState(VK_RBUTTON) & 0x80) ? 0xFF : 0x00);
+    This->m_state.rgbButtons[2] = ((GetKeyState(VK_MBUTTON) & 0x80) ? 0xFF : 0x00);
+    
+    /* Install our mouse hook */
+    if (This->dwCoopLevel & DISCL_EXCLUSIVE)
+      ShowCursor(FALSE); /* hide cursor */
+    This->hook = SetWindowsHookExA( WH_MOUSE_LL, dinput_mouse_hook, DINPUT_instance, 0 );
+    
+    /* Get the window dimension and find the center */
+    GetWindowRect(This->win, &rect);
+    This->win_centerX = (rect.right  - rect.left) / 2;
+    This->win_centerY = (rect.bottom - rect.top ) / 2;
+    
+    /* Warp the mouse to the center of the window */
+    if (This->absolute == 0) {
+      This->mapped_center.x = This->win_centerX;
+      This->mapped_center.y = This->win_centerY;
+      MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
+      TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
+      SetCursorPos( This->mapped_center.x, This->mapped_center.y );
+#ifdef MOUSE_HACK
+      This->need_warp = WARP_DONE;
+#else
+      This->need_warp = WARP_STARTED;
+#endif
+    }
+	
+    return DI_OK;
 }
 
 /******************************************************************************
@@ -644,29 +644,32 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     
     TRACE("(this=%p)\n",This);
     
-    if (This->acquired) {
-	/* Reinstall previous mouse event handler */
-	if (This->hook) {
-	    UnhookWindowsHookEx( This->hook );
-	    This->hook = 0;
-
-	    if (This->dwCoopLevel & DISCL_EXCLUSIVE)
-		ShowCursor(TRUE); /* show cursor */
-        }
-	
-        /* No more locks */
-        current_lock = NULL;
-	
-        /* Unacquire device */
-        This->acquired = 0;
-
-	/* And put the mouse cursor back where it was at acquire time */
-	if (This->absolute == 0) {
-	    TRACE(" warping mouse back to (%ld , %ld)\n", This->org_coords.x, This->org_coords.y);
-	    SetCursorPos(This->org_coords.x, This->org_coords.y);
-	}
-    } else {
+    if (0 == This->acquired) {
 	return DI_NOEFFECT;
+    }
+	
+    /* Reinstall previous mouse event handler */
+    if (This->hook) {
+      UnhookWindowsHookEx( This->hook );
+      This->hook = 0;
+      
+      if (This->dwCoopLevel & DISCL_EXCLUSIVE)
+	ShowCursor(TRUE); /* show cursor */
+    }
+	
+    /* No more locks */
+    if (current_lock == (IDirectInputDevice8A*) This)
+      current_lock = NULL;
+    else
+      ERR("this(%p) != current_lock(%p)\n", This, current_lock);
+
+    /* Unacquire device */
+    This->acquired = 0;
+    
+    /* And put the mouse cursor back where it was at acquire time */
+    if (This->absolute == 0) {
+      TRACE(" warping mouse back to (%ld , %ld)\n", This->org_coords.x, This->org_coords.y);
+      SetCursorPos(This->org_coords.x, This->org_coords.y);
     }
 	
     return DI_OK;
