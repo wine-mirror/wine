@@ -135,7 +135,7 @@
 213  pascal -ret16 vcpUICallbackProc(ptr word word long long) vcpUICallbackProc16
 214  stub     VcpAddMRUPath #(str)
 300  pascal -ret16 DiBuildCompatDrvList (ptr) DiBuildCompatDrvList16
-301  stub     DiBuildClassDrvList #(ptr)
+301  pascal -ret16 DiBuildClassDrvList (ptr) DiBuildClassDrvList16
 302  stub     DiDestroyDriverNodeList #(ptr)
 303  pascal -ret16 DiCreateDeviceInfo (ptr str long long str str word) DiCreateDeviceInfo16
 304  pascal -ret16 DiGetClassDevs(ptr str word word) DiGetClassDevs16
