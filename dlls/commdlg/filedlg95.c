@@ -829,6 +829,9 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
     ShowWindow(GetDlgItem(hwnd,IDC_OPENREADONLY),SW_HIDE);
   }
 
+  /* List View is selected by default */
+  SendDlgItemMessageA(hwnd, IDC_LIST, BM_SETCHECK,(WPARAM) BST_CHECKED,0);
+
   return 0;
 }
 
