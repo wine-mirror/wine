@@ -125,3 +125,14 @@ HRESULT WINAPI RevokeDragDrop32(
 	FIXME(ole,"(0x%04x),stub!\n",hwnd);
 	return S_OK;
 }
+
+/***********************************************************************
+ * CreateBindCtx32 [OLE32.52]
+ */
+HRESULT WINAPI CreateBindCtx32 (DWORD reserved,	LPVOID *ppbc)
+{
+    FIXME(ole,"(0x%08x %p): stub!\n", reserved, ppbc);
+    *ppbc = 0;
+//    return S_OK;
+    return E_OUTOFMEMORY;
+}

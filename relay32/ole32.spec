@@ -16,7 +16,7 @@ type	win32
  13 stdcall CoFreeLibrary(long) CoFreeLibrary
  14 stdcall CoFreeUnusedLibraries() CoFreeUnusedLibraries
  15 stub CoGetCallerTID
- 16 stub CoGetClassObject
+ 16 stdcall CoGetClassObject(ptr long ptr ptr ptr) CoGetClassObject
  17 stub CoGetCurrentLogicalThreadId
  18 stdcall CoGetCurrentProcess() CoGetCurrentProcess
  19 stub CoGetInterfaceAndReleaseStream
@@ -52,7 +52,7 @@ type	win32
  49 stub CoUnmarshalHresult
  50 stub CoUnmarshalInterface
  51 stub CreateAntiMoniker
- 52 stub CreateBindCtx
+ 52 stdcall CreateBindCtx(long ptr) CreateBindCtx32
  53 stub CreateDataAdviseHolder
  54 stub CreateDataCache
  55 stdcall CreateFileMoniker(ptr ptr) CreateFileMoniker32
