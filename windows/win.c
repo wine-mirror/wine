@@ -292,19 +292,19 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     if( wndPtr->hmemTaskQ )
     {
-        int           pos;
 	BOOL32	      bPostQuit = FALSE;
 	WPARAM32      wQuitParam = 0;
         MESSAGEQUEUE* msgQ = (MESSAGEQUEUE*) GlobalLock16(wndPtr->hmemTaskQ);
+        QMSG *qmsg;
 
-	while( (pos = QUEUE_FindMsg(msgQ, hwnd, 0, 0)) != -1 )
+	while( (qmsg = QUEUE_FindMsg(msgQ, hwnd, 0, 0)) != 0 )
 	{
-	    if( msgQ->messages[pos].msg.message == WM_QUIT ) 
+	    if( qmsg->msg.message == WM_QUIT )
 	    {
 		bPostQuit = TRUE;
-		wQuitParam = msgQ->messages[pos].msg.wParam;
+		wQuitParam = qmsg->msg.wParam;
 	    }
-	    QUEUE_RemoveMsg(msgQ, pos);
+	    QUEUE_RemoveMsg(msgQ, qmsg);
 	}
 	/* repost WM_QUIT to make sure this app exits its message loop */
 	if( bPostQuit ) PostQuitMessage32(wQuitParam);

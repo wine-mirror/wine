@@ -39,28 +39,27 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
     MESSAGEQUEUE *pq; 
 
     if (!(pq = (MESSAGEQUEUE*) GlobalLock16( hQueue )) ||
-        GlobalSize16(hQueue) < sizeof(MESSAGEQUEUE)+pq->queueSize*sizeof(QMSG))
+        GlobalSize16(hQueue) != sizeof(MESSAGEQUEUE))
     {
         WARN(msg, "%04x is not a queue handle\n", hQueue );
         return;
     }
 
     DUMP(    "next: %12.4x  Intertask SendMessage:\n"
-             "hTask: %11.4x  ----------------------\n"
-             "msgSize: %9.4x  hWnd: %10.4x\n"
-             "msgCount: %8.4x  msg: %11.4x\n"
-             "msgNext: %9.4x  wParam: %8.4x\n"
-             "msgFree: %9.4x  lParam: %8.8x\n"
-             "qSize: %11.4x  lRet: %10.8x\n"
+             "thread: %10p  ----------------------\n"
+             "hWnd: %12.8x\n"
+             "firstMsg: %8p  lastMsg: %8p"
+             "msgCount: %8.4x msg: %11.8x\n"
+             "wParam: %10.8x   lParam: %8.8x\n"
+             "lRet: %12.8x\n"
              "wWinVer: %9.4x  ISMH: %10.4x\n"
              "paints: %10.4x  hSendTask: %5.4x\n"
              "timers: %10.4x  hPrevSend: %5.4x\n"
              "wakeBits: %8.4x\n"
              "wakeMask: %8.4x\n"
              "hCurHook: %8.4x\n",
-             pq->next, pq->hTask, pq->msgSize, pq->hWnd, 
-             pq->msgCount, pq->msg, pq->nextMessage, pq->wParam,
-             pq->nextFreeMessage, (unsigned)pq->lParam, pq->queueSize,
+             pq->next, pq->thdb, pq->hWnd32, pq->firstMsg, pq->lastMsg,
+             pq->msgCount, pq->msg32, pq->wParam32,(unsigned)pq->lParam,
              (unsigned)pq->SendMessageReturn, pq->wWinVersion, pq->InSendMessageHandle,
              pq->wPaintCount, pq->hSendingTask, pq->wTimerCount,
              pq->hPrevSendingTask, pq->wakeBits, pq->wakeMask, pq->hCurHook);
@@ -75,7 +74,7 @@ void QUEUE_WalkQueues(void)
     char module[10];
     HQUEUE16 hQueue = hFirstQueue;
 
-    DUMP( "Queue Size Msgs Task\n" );
+    DUMP( "Queue Msgs Thread   Task Module\n" );
     while (hQueue)
     {
         MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
@@ -84,10 +83,10 @@ void QUEUE_WalkQueues(void)
             WARN( msg, "Bad queue handle %04x\n", hQueue );
             return;
         }
-        if (!GetModuleName( queue->hTask, module, sizeof(module )))
+        if (!GetModuleName( queue->thdb->process->task, module, sizeof(module )))
             strcpy( module, "???" );
-        DUMP( "%04x %5d %4d %04x %s\n", hQueue, queue->msgSize,
-                 queue->msgCount, queue->hTask, module );
+        DUMP( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
+              queue->thdb, queue->thdb->process->task, module );
         hQueue = queue->next;
     }
     DUMP( "\n" );
@@ -117,25 +116,25 @@ void QUEUE_SetExitingQueue( HQUEUE16 hQueue )
  *
  * Creates a message queue. Doesn't link it into queue list!
  */
-static HQUEUE16 QUEUE_CreateMsgQueue( int size )
+static HQUEUE16 QUEUE_CreateMsgQueue( )
 {
     HQUEUE16 hQueue;
     MESSAGEQUEUE * msgQueue;
-    int queueSize;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
     TRACE(msg,"Creating message queue...\n");
 
-    queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
-    if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
+    if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT,
+                                  sizeof(MESSAGEQUEUE) )))
+    {
         return 0;
+    }
+
     msgQueue = (MESSAGEQUEUE *) GlobalLock16( hQueue );
+    InitializeCriticalSection( &msgQueue->cSection );
     msgQueue->self        = hQueue;
-    msgQueue->msgSize     = sizeof(QMSG);
-    msgQueue->queueSize   = size;
     msgQueue->wakeBits    = msgQueue->changeBits = QS_SMPARAMSFREE;
     msgQueue->wWinVersion = pTask ? pTask->version : 0;
-    GlobalUnlock16( hQueue );
     return hQueue;
 }
 
@@ -201,9 +200,7 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
  */
 BOOL32 QUEUE_CreateSysMsgQueue( int size )
 {
-    if (size > MAX_QUEUE_SIZE) size = MAX_QUEUE_SIZE;
-    else if (size <= 0) size = 1;
-    if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( size ))) return FALSE;
+    if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( ))) return FALSE;
     sysMsgQueue = (MESSAGEQUEUE *) GlobalLock16( hmemSysMsgQueue );
     return TRUE;
 }
@@ -220,18 +217,12 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
 /***********************************************************************
  *           QUEUE_Signal
  */
-void QUEUE_Signal( HTASK16 hTask )
+void QUEUE_Signal( THDB *thdb  )
 {
-    PDB32 *pdb;
-    THREAD_ENTRY *entry;
-
-    TDB *pTask = (TDB *)GlobalLock16( hTask );
-    if ( !pTask ) return;
-
     /* Wake up thread waiting for message */
-    SetEvent( pTask->thdb->event );
+    SetEvent( thdb->event );
 
-    PostEvent( hTask );
+    PostEvent( thdb->process->task );
 }
 
 /***********************************************************************
@@ -250,7 +241,7 @@ static void QUEUE_Wait( DWORD wait_mask )
 
 
 /***********************************************************************
- *           QUEUE_SetWakeBit
+ *           QUEUE_SetWakeBit               `
  *
  * See "Windows Internals", p.449
  */
@@ -266,7 +257,7 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
     if (queue->wakeMask & bit)
     {
         queue->wakeMask = 0;
-        QUEUE_Signal( queue->hTask );
+        QUEUE_Signal( queue->thdb );
     }
 }
 
@@ -354,33 +345,34 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 				(unsigned)queue->smResultCurrent, (unsigned)prevCtrlPtr );
     QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
 
-    TRACE(msg, "\trcm: calling wndproc - %04x %04x %04x%04x %08x\n",
-                senderQ->hWnd, senderQ->msg, senderQ->wParamHigh,
-                senderQ->wParam, (unsigned)senderQ->lParam );
+    TRACE(msg, "\trcm: calling wndproc - %08x %08x %08x %08x\n",
+                senderQ->hWnd32, senderQ->msg32,
+                senderQ->wParam32, (unsigned)senderQ->lParam );
 
-    if (IsWindow32( senderQ->hWnd ))
+    if (IsWindow32( senderQ->hWnd32 ))
     {
-        WND *wndPtr = WIN_FindWndPtr( senderQ->hWnd );
+        WND *wndPtr = WIN_FindWndPtr( senderQ->hWnd32 );
         DWORD extraInfo = queue->GetMessageExtraInfoVal;
         queue->GetMessageExtraInfoVal = senderQ->GetMessageExtraInfoVal;
 
         if (senderQ->flags & QUEUE_SM_WIN32)
         {
-            WPARAM32 wParam = MAKELONG( senderQ->wParam, senderQ->wParamHigh );
             TRACE(msg, "\trcm: msg is Win32\n" );
             if (senderQ->flags & QUEUE_SM_UNICODE)
                 result = CallWindowProc32W( wndPtr->winproc,
-                                            senderQ->hWnd, senderQ->msg,
-                                            wParam, senderQ->lParam );
+                                            senderQ->hWnd32, senderQ->msg32,
+                                            senderQ->wParam32, senderQ->lParam );
             else
                 result = CallWindowProc32A( wndPtr->winproc,
-                                            senderQ->hWnd, senderQ->msg,
-                                            wParam, senderQ->lParam );
+                                            senderQ->hWnd32, senderQ->msg32,
+                                            senderQ->wParam32, senderQ->lParam );
         }
         else  /* Win16 message */
             result = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
-                                       senderQ->hWnd, senderQ->msg,
-                                       senderQ->wParam, senderQ->lParam );
+                                       (HWND16) senderQ->hWnd32,
+                                       (UINT16) senderQ->msg32,
+                                       LOWORD (senderQ->wParam32),
+                                       senderQ->lParam );
 
         queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
 	TRACE(msg,"\trcm: result =  %08x\n", (unsigned)result );
@@ -443,37 +435,44 @@ void QUEUE_FlushMessages( HQUEUE16 hQueue )
  *
  * Add a message to the queue. Return FALSE if queue is full.
  */
-BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG16 * msg, DWORD extraInfo )
+BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG32 *msg, DWORD extraInfo )
 {
-    int pos;
     MESSAGEQUEUE *msgQueue;
+    QMSG         *qmsg;
 
-    SIGNAL_MaskAsyncEvents( TRUE );
 
     if (!(msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue ))) return FALSE;
-    pos = msgQueue->nextFreeMessage;
 
-      /* Check if queue is full */
-    if ((pos == msgQueue->nextMessage) && (msgQueue->msgCount > 0))
-    {
-	SIGNAL_MaskAsyncEvents( FALSE );
-        WARN( msg,"Queue is full!\n" );
-        return FALSE;
-    }
+    /* allocate new message in global heap for now */
+    if (!(qmsg = (QMSG *) HeapAlloc( SystemHeap, 0, sizeof(QMSG) ) ))
+        return 0;
+
+    EnterCriticalSection( &msgQueue->cSection );
 
       /* Store message */
-    msgQueue->messages[pos].msg = *msg;
-    msgQueue->messages[pos].extraInfo = extraInfo;
-    if (pos < msgQueue->queueSize-1) pos++;
-    else pos = 0;
-    msgQueue->nextFreeMessage = pos;
+    qmsg->msg = *msg;
+    qmsg->extraInfo = extraInfo;
+
+    /* insert the message in the link list */
+    qmsg->nextMsg = 0;
+    qmsg->prevMsg = msgQueue->lastMsg;
+
+    if (msgQueue->lastMsg)
+        msgQueue->lastMsg->nextMsg = qmsg;
+
+    /* update first and last anchor in message queue */
+    msgQueue->lastMsg = qmsg;
+    if (!msgQueue->firstMsg)
+        msgQueue->firstMsg = qmsg;
+    
     msgQueue->msgCount++;
 
-    SIGNAL_MaskAsyncEvents( FALSE );
+    LeaveCriticalSection( &msgQueue->cSection );
 
     QUEUE_SetWakeBit( msgQueue, QS_POSTMESSAGE );
     return TRUE;
 }
+
 
 
 /***********************************************************************
@@ -481,29 +480,39 @@ BOOL32 QUEUE_AddMsg( HQUEUE16 hQueue, MSG16 * msg, DWORD extraInfo )
  *
  * Find a message matching the given parameters. Return -1 if none available.
  */
-int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
+QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
 {
-    int i, pos = msgQueue->nextMessage;
+    QMSG* qmsg;
 
-    TRACE(msg,"hwnd=%04x pos=%d\n", hwnd, pos );
+    EnterCriticalSection( &msgQueue->cSection );
 
-    if (!msgQueue->msgCount) return -1;
-    if (!hwnd && !first && !last) return pos;
-        
-    for (i = 0; i < msgQueue->msgCount; i++)
+    if (!msgQueue->msgCount)
+        qmsg = 0;
+    else if (!hwnd && !first && !last)
+        qmsg = msgQueue->firstMsg;
+    else
     {
-	MSG16 * msg = &msgQueue->messages[pos].msg;
+        /* look in linked list for message matching first and last criteria */
+        for (qmsg = msgQueue->firstMsg; qmsg; qmsg = qmsg->nextMsg)
+    {
+            MSG32 *msg = &(qmsg->msg);
 
 	if (!hwnd || (msg->hwnd == hwnd))
 	{
-	    if (!first && !last) return pos;
-	    if ((msg->message >= first) && (msg->message <= last)) return pos;
+                if (!first && !last)
+                    break;   /* found it */
+                
+                if ((msg->message >= first) && (msg->message <= last))
+                    break;   /* found it */
+            }
 	}
-	if (pos < msgQueue->queueSize-1) pos++;
-	else pos = 0;
     }
-    return -1;
+    
+    LeaveCriticalSection( &msgQueue->cSection );
+
+    return qmsg;
 }
+
 
 
 /***********************************************************************
@@ -511,29 +520,30 @@ int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd, int first, int last )
  *
  * Remove a message from the queue (pos must be a valid position).
  */
-void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
+void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg )
 {
-    SIGNAL_MaskAsyncEvents( TRUE );
+    EnterCriticalSection( &msgQueue->cSection );
 
-    if (pos >= msgQueue->nextMessage)
-    {
-	for ( ; pos > msgQueue->nextMessage; pos--)
-	    msgQueue->messages[pos] = msgQueue->messages[pos-1];
-	msgQueue->nextMessage++;
-	if (msgQueue->nextMessage >= msgQueue->queueSize)
-	    msgQueue->nextMessage = 0;
-    }
-    else
-    {
-	for ( ; pos < msgQueue->nextFreeMessage; pos++)
-	    msgQueue->messages[pos] = msgQueue->messages[pos+1];
-	if (msgQueue->nextFreeMessage) msgQueue->nextFreeMessage--;
-	else msgQueue->nextFreeMessage = msgQueue->queueSize-1;
-    }
+    /* set the linked list */
+    if (qmsg->prevMsg)
+        qmsg->prevMsg->nextMsg = qmsg->nextMsg;
+
+    if (qmsg->nextMsg)
+        qmsg->nextMsg->prevMsg = qmsg->prevMsg;
+
+    if (msgQueue->firstMsg == qmsg)
+        msgQueue->firstMsg = qmsg->nextMsg;
+
+    if (msgQueue->lastMsg == qmsg)
+        msgQueue->lastMsg = qmsg->prevMsg;
+
+    /* deallocate the memory for the message */
+    HeapFree( SystemHeap, 0, qmsg );
+    
     msgQueue->msgCount--;
     if (!msgQueue->msgCount) msgQueue->wakeBits &= ~QS_POSTMESSAGE;
 
-    SIGNAL_MaskAsyncEvents( FALSE );
+    LeaveCriticalSection( &msgQueue->cSection );
 }
 
 
@@ -594,49 +604,62 @@ static void QUEUE_WakeSomeone( UINT32 message )
 void hardware_event( WORD message, WORD wParam, LONG lParam,
 		     int xPos, int yPos, DWORD time, DWORD extraInfo )
 {
-    MSG16 *msg;
-    int pos;
+    MSG32 *msg;
+    QMSG  *qmsg = sysMsgQueue->lastMsg;
+    int  mergeMsg = 0;
 
     if (!sysMsgQueue) return;
-    pos = sysMsgQueue->nextFreeMessage;
 
       /* Merge with previous event if possible */
 
-    if ((message == WM_MOUSEMOVE) && sysMsgQueue->msgCount)
+    if ((message == WM_MOUSEMOVE) && sysMsgQueue->lastMsg)
     {
-        if (pos > 0) pos--;
-        else pos = sysMsgQueue->queueSize - 1;
-	msg = &sysMsgQueue->messages[pos].msg;
+        msg = &(sysMsgQueue->lastMsg->msg);
+        
 	if ((msg->message == message) && (msg->wParam == wParam))
-            sysMsgQueue->msgCount--;  /* Merge events */
-        else
-            pos = sysMsgQueue->nextFreeMessage;  /* Don't merge */
+        {
+            /* Merge events */
+            qmsg = sysMsgQueue->lastMsg;
+            mergeMsg = 1;
+    }
     }
 
-      /* Check if queue is full */
-
-    if ((pos == sysMsgQueue->nextMessage) && sysMsgQueue->msgCount)
+    if (!mergeMsg)
     {
-        /* Queue is full, beep (but not on every mouse motion...) */
-        if (message != WM_MOUSEMOVE) MessageBeep32(0);
+        /* Should I limit the number of message in
+          the system message queue??? */
+
+        /* Don't merge allocate a new msg in the global heap */
+        
+        if (!(qmsg = (QMSG *) HeapAlloc( SystemHeap, 0, sizeof(QMSG) ) ))
         return;
+        
+        /* put message at the end of the linked list */
+        qmsg->nextMsg = 0;
+        qmsg->prevMsg = sysMsgQueue->lastMsg;
+
+        if (sysMsgQueue->lastMsg)
+            sysMsgQueue->lastMsg->nextMsg = qmsg;
+
+        /* set last and first anchor index in system message queue */
+        sysMsgQueue->lastMsg = qmsg;
+        if (!sysMsgQueue->firstMsg)
+            sysMsgQueue->firstMsg = qmsg;
+        
+        sysMsgQueue->msgCount++;
     }
 
       /* Store message */
-
-    msg = &sysMsgQueue->messages[pos].msg;
+    msg = &(qmsg->msg);
     msg->hwnd    = 0;
     msg->message = message;
     msg->wParam  = wParam;
     msg->lParam  = lParam;
     msg->time    = time;
-    msg->pt.x    = xPos & 0xffff;
-    msg->pt.y    = yPos & 0xffff;
-    sysMsgQueue->messages[pos].extraInfo = extraInfo;
-    if (pos < sysMsgQueue->queueSize - 1) pos++;
-    else pos = 0;
-    sysMsgQueue->nextFreeMessage = pos;
-    sysMsgQueue->msgCount++;
+    msg->pt.x    = xPos;
+    msg->pt.y    = yPos;
+    qmsg->extraInfo = extraInfo;
+
     QUEUE_WakeSomeone( message );
 }
 
@@ -647,7 +670,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
 HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue = GlobalLock16( hQueue );
-    return (queue) ? queue->hTask : 0 ;
+    return (queue) ? queue->thdb->process->task : 0 ;
 }
 
 
@@ -780,45 +803,12 @@ BOOL16 WINAPI SetMessageQueue16( INT16 size )
  */
 BOOL32 WINAPI SetMessageQueue32( INT32 size )
 {
-    HQUEUE16 hQueue, hNewQueue;
-    MESSAGEQUEUE *queuePtr;
+    /* now obsolete the message queue will be expanded dynamically
+     as necessary */
 
-    TRACE(msg,"task %04x size %i\n", GetCurrentTask(), size); 
+    /* access the queue to create it if it's not existing */
+    GetFastQueue();
 
-    if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return FALSE;
-
-    if( !(hNewQueue = QUEUE_CreateMsgQueue( size ))) 
-    {
-	WARN(msg, "failed!\n");
-	return FALSE;
-    }
-    queuePtr = (MESSAGEQUEUE *)GlobalLock16( hNewQueue );
-
-    SIGNAL_MaskAsyncEvents( TRUE );
-
-    /* Copy data and free the old message queue */
-    if ((hQueue = GetThreadQueue(0)) != 0) 
-    {
-       MESSAGEQUEUE *oldQ = (MESSAGEQUEUE *)GlobalLock16( hQueue );
-       memcpy( &queuePtr->wParamHigh, &oldQ->wParamHigh,
-			(int)oldQ->messages - (int)(&oldQ->wParamHigh) );
-       HOOK_ResetQueueHooks( hNewQueue );
-       if( WIN_GetDesktop()->hmemTaskQ == hQueue )
-	   WIN_GetDesktop()->hmemTaskQ = hNewQueue;
-       WIN_ResetQueueWindows( WIN_GetDesktop(), hQueue, hNewQueue );
-       CLIPBOARD_ResetLock( hQueue, hNewQueue );
-       QUEUE_DeleteMsgQueue( hQueue );
-    }
-
-    /* Link new queue into list */
-    queuePtr->hTask = GetCurrentTask();
-    queuePtr->next  = hFirstQueue;
-    hFirstQueue = hNewQueue;
-    
-    if( !queuePtr->next ) pCursorQueue = queuePtr;
-    SetThreadQueue( 0, hNewQueue );
-    
-    SIGNAL_MaskAsyncEvents( FALSE );
     return TRUE;
 }
 
@@ -827,19 +817,38 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
  */
 HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags )
 {
-    HQUEUE16 hQueue = GetTaskQueue( 0 );
+    HQUEUE16 hQueue;
+    MESSAGEQUEUE *queuePtr;
+
+    THDB *thdb = THREAD_Current();
+
+    if (!thdb)
+        return 0;
+
+    hQueue = thdb->teb.queue;
+    
     if ( !hQueue )
     {
-        /* Create task message queue */
-        int queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
-        SetMessageQueue32( queueSize );
-        return GetTaskQueue( 0 );
+        /* Create thread message queue */
+        if( !(hQueue = QUEUE_CreateMsgQueue( 0 )))
+        {
+            WARN(msg, "failed!\n");
+            return FALSE;
+    }
+        
+        /* Link new queue into list */
+        queuePtr = (MESSAGEQUEUE *)GlobalLock16( hQueue );
+        queuePtr->thdb = THREAD_Current();
+
+        SIGNAL_MaskAsyncEvents( TRUE );
+        SetThreadQueue( 0, hQueue );
+        thdb->teb.queue = hQueue;
+            
+        queuePtr->next  = hFirstQueue;
+        hFirstQueue = hQueue;
+        SIGNAL_MaskAsyncEvents( FALSE );
     }
 
-    FIXME( msg, "(%04X,%04X): should create thread-local message queue!\n",
-                unknown, flags );
-
-    SetFastQueue( 0, hQueue );    
     return hQueue;
 }
 

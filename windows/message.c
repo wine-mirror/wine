@@ -441,9 +441,12 @@ static int MSG_JournalPlayBackMsg(void)
 static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
                                    BOOL32 remove )
 {
+    /* FIXME: should deal with MSG32 instead of MSG16 */
+    
     DWORD status = SYSQ_MSG_ACCEPT;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
-    int i, kbd_msg, pos = sysMsgQueue->nextMessage;
+    int kbd_msg;
+    QMSG *nextqmsg, *qmsg = sysMsgQueue->firstMsg;
 
     /* FIXME: there has to be a better way to do this */
     joySendMessages();
@@ -453,16 +456,20 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
                                && EVENT_Pending())
         EVENT_WaitNetEvent( FALSE, FALSE );
 
-    for (i = kbd_msg = 0; i < sysMsgQueue->msgCount; i++, pos++)
+    for ( kbd_msg = 0; qmsg; qmsg = nextqmsg)
     {
-        if (pos >= sysMsgQueue->queueSize) pos = 0;
-	*msg = sysMsgQueue->messages[pos].msg;
+
+        /* FIXME: this line will be reenabled when msg will be a MSG32 */
+        /* *msg = qmsg->msg; */
+        STRUCT32_MSG32to16(&qmsg->msg, msg);
+
+        nextqmsg = qmsg->nextMsg;
 
           /* Translate message */
 
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
-	    HWND32 hWndScope = (HWND32)sysMsgQueue->messages[pos].extraInfo;
+            HWND32 hWndScope = (HWND32)qmsg->extraInfo;
 
 	    status = MSG_TranslateMouseMsg(hwnd, filter, msg, remove, 
 					  (Options.managed && IsWindow32(hWndScope) ) 
@@ -490,7 +497,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
                 SEGPTR_FREE(hook);
                 if (ret) 
 		{
-		    QUEUE_RemoveMsg( sysMsgQueue, pos );
+                    QUEUE_RemoveMsg( sysMsgQueue, qmsg );
 		    continue;
 		}
 		status = SYSQ_MSG_ACCEPT; 
@@ -525,7 +532,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
                 }
 
 		if (remove)
-		    QUEUE_RemoveMsg( sysMsgQueue, pos );
+		    QUEUE_RemoveMsg( sysMsgQueue, qmsg );
 		/* continue */
 
 	   case SYSQ_MSG_CONTINUE:
@@ -538,12 +545,13 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
         if (remove)
         {
             if (HOOK_IsHooked( WH_JOURNALRECORD )) MSG_JournalRecordMsg( msg );
-            QUEUE_RemoveMsg( sysMsgQueue, pos );
+            QUEUE_RemoveMsg( sysMsgQueue, qmsg );
         }
         return TRUE;
     }
     return FALSE;
 }
+
 
 
 /**********************************************************************
@@ -611,11 +619,9 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     }
 
     /* resume sending */ 
-
-    queue->hWnd       = hwnd;
-    queue->msg        = msg;
-    queue->wParam     = LOWORD(wParam);
-    queue->wParamHigh = HIWORD(wParam);
+    queue->hWnd32     = hwnd;
+    queue->msg32      = msg;
+    queue->wParam32   = wParam;
     queue->lParam     = lParam;
     queue->hPrevSendingTask = destQ->hSendingTask;
     destQ->hSendingTask = GetFastQueue();
@@ -635,7 +641,8 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     {
       if (!(queue->wakeBits & QS_SMRESULT))
       {
-        if (THREAD_IsWin16( THREAD_Current() )) DirectedYield( destQ->hTask );
+        if (THREAD_IsWin16( THREAD_Current() ))
+            DirectedYield( destQ->thdb->teb.htask16 );
         QUEUE_WaitBits( QS_SMRESULT );
 	TRACE(sendmsg,"\tsm: have result!\n");
       }
@@ -675,8 +682,8 @@ void WINAPI ReplyMessage16( LRESULT result )
 
     while( (senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->InSendMessageHandle)))
     {
-      TRACE(msg,"\trpm: replying to %04x (%04x -> %04x)\n",
-                          queue->msg, queue->self, senderQ->self);
+      TRACE(msg,"\trpm: replying to %08x (%04x -> %04x)\n",
+            queue->msg32, queue->self, senderQ->self);
 
       if( queue->wakeBits & QS_SENDMESSAGE )
       {
@@ -697,7 +704,8 @@ void WINAPI ReplyMessage16( LRESULT result )
     queue->InSendMessageHandle = 0;
 
     QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
-    if (THREAD_IsWin16(THREAD_Current())) DirectedYield( senderQ->hTask );
+    if (THREAD_IsWin16( THREAD_Current() ))
+        DirectedYield( senderQ->thdb->teb.htask16 );
 }
 
 
@@ -707,7 +715,7 @@ void WINAPI ReplyMessage16( LRESULT result )
 static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
                                WORD flags, BOOL32 peek )
 {
-    int pos, mask;
+    int mask;
     MESSAGEQUEUE *msgQueue;
     HQUEUE16 hQueue;
 
@@ -735,6 +743,8 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
 
     while(1)
     {    
+        QMSG *qmsg;
+        
 	hQueue   = GetFastQueue();
         msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
         if (!msgQueue) return FALSE;
@@ -762,15 +772,17 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
         /* Now find a normal message */
 
         if (((msgQueue->wakeBits & mask) & QS_POSTMESSAGE) &&
-            ((pos = QUEUE_FindMsg( msgQueue, hwnd, first, last )) != -1))
+            ((qmsg = QUEUE_FindMsg( msgQueue, hwnd, first, last )) != 0))
         {
-            QMSG *qmsg = &msgQueue->messages[pos];
-            *msg = qmsg->msg;
+            /* FIXME: this line will be reenabled when msg will be a MSG32 */
+            /* *msg = qmsg->msg; */
+            STRUCT32_MSG32to16(&qmsg->msg, msg);
+            
             msgQueue->GetMessageTimeVal      = msg->time;
             msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
             msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
-            if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, pos );
+            if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, qmsg );
             break;
         }
 
@@ -1129,7 +1141,7 @@ BOOL32 WINAPI GetMessage32W(
 BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
                              LPARAM lParam )
 {
-    MSG16 	msg;
+    MSG32       msg;
     WND 	*wndPtr;
 
     msg.hwnd    = hwnd;
@@ -1204,7 +1216,7 @@ BOOL32 WINAPI PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message, WPARAM16 wParam,
                                 LPARAM lParam )
 {
-    MSG16 msg;
+    MSG32 msg;
 
     if (GetTaskQueue(hTask) == 0) return FALSE;
     msg.hwnd    = 0;
