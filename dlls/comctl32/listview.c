@@ -275,7 +275,7 @@ static BOOL LISTVIEW_GetItemBox(LISTVIEW_INFO *, INT, LPRECT);
 static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
 static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *, INT);
-static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *);
+static INT LISTVIEW_CalculateMaxHeight(LISTVIEW_INFO *);
 static BOOL LISTVIEW_GetItemListOrigin(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *, INT, LPPOINT);
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *, INT, LPRECT);
@@ -1440,7 +1440,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	{
      	    State.left = Box.left - infoPtr->iconStateSize.cx - 2;
 	    if (infoPtr->himlNormal) 
-		State.left += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2 + ICON_LR_HALF;
+		State.left += (infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2;
 	    State.top  = Box.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
 	}
 	else
@@ -1471,7 +1471,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	{
 	    Icon.left   = Box.left;
 	    if (infoPtr->himlNormal) 
-		Icon.left += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
+		Icon.left += (infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2;
 	    Icon.top    = Box.top + ICON_TOP_PADDING;
 	    Icon.right  = Icon.left;
 	    Icon.bottom = Icon.top;
@@ -1542,7 +1542,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 calc_label:
 	if (uView == LVS_ICON)
 	{
-	    Label.left = Box.left + (infoPtr->iconSpacing.cx - labelSize.cx) / 2;
+	    Label.left = Box.left + (infoPtr->nItemWidth - labelSize.cx) / 2;
 	    Label.top  = Box.top + ICON_TOP_PADDING_HITABLE +
 		         infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
 	    Label.right = Label.left + labelSize.cx;
@@ -1951,7 +1951,7 @@ static void LISTVIEW_SaveTextMetrics(LISTVIEW_INFO *infoPtr)
  * RETURN:
  * Returns item height.
  */
-static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *infoPtr)
+static INT LISTVIEW_CalculateMaxHeight(LISTVIEW_INFO *infoPtr)
 {
     INT nItemHeight;
 
@@ -4832,7 +4832,7 @@ static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT 
 
     if (uView == LVS_ICON)
     {
-        lpptPosition->x += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
+        lpptPosition->x += (infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2;
         lpptPosition->y += ICON_TOP_PADDING;
     }
     lpptPosition->x += Origin.x;
@@ -6120,26 +6120,21 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
     LVITEMW lvItem;
     WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
 
-    if (!infoPtr->hwndHeader) /* make sure we have a header */
-      return (FALSE);
-
-    /* set column width only if in report or list mode */
-    if ((uView != LVS_REPORT) && (uView != LVS_LIST))
-      return (FALSE);
-
     TRACE("(iCol=%d, cx=%d\n", iCol, cx);
 
+    /* set column width only if in report or list mode */
+    if (uView != LVS_REPORT && uView != LVS_LIST) return FALSE;
+
     /* take care of invalid cx values */
-    if((uView == LVS_REPORT) && (cx < -2))
-      cx = LVSCW_AUTOSIZE;
-    else if (uView == LVS_LIST && (cx < 1))
-      return FALSE;
+    if(uView == LVS_REPORT && cx < -2) cx = LVSCW_AUTOSIZE;
+    else if (uView == LVS_LIST && cx < 1) return FALSE;
 
     /* resize all columns if in LVS_LIST mode */
-    if(uView == LVS_LIST) {
-      infoPtr->nItemWidth = cx;
-      LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
-      return TRUE;
+    if(uView == LVS_LIST) 
+    {
+	infoPtr->nItemWidth = cx;
+	LISTVIEW_InvalidateList(infoPtr);
+	return TRUE;
     }
 
     /* autosize based on listview items width */
@@ -6386,7 +6381,7 @@ static LRESULT LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
 
     /* these depend on the iconSpacing */
     infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-    infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+    infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
 
     return oldspacing;
 }
@@ -6450,7 +6445,7 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
 	return NULL;
     }
 
-    infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+    infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
     if (infoPtr->nItemHeight != oldHeight)
         LISTVIEW_UpdateScroll(infoPtr);
 
@@ -6545,7 +6540,7 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt
 	LISTVIEW_GetOrigin(infoPtr, &pt);
     else if (uView == LVS_ICON)
     {
-	pt.x -= (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
+	pt.x -= (infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2;
 	pt.y -= ICON_TOP_PADDING;
     }
 
@@ -6954,7 +6949,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
 
   /* initialize size of items */
   infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-  infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+  infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
 
   /* initialize the hover time to -1(indicating the default system hover time) */
   infoPtr->dwHoverTime = -1;
@@ -8122,7 +8117,7 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 
       /* Now update the full item width and height */
       infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
       if (lpss->styleNew & LVS_ALIGNLEFT)
         LISTVIEW_AlignLeft(infoPtr);
       else
@@ -8144,21 +8139,21 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
       infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
       infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
       infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
     }
     else if (uNewView == LVS_LIST)
     {
       infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
       infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
       infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
     }
     else
     {
       infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
       infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
       infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_GetItemHeight(infoPtr);
+      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
       if (lpss->styleNew & LVS_ALIGNLEFT)
         LISTVIEW_AlignLeft(infoPtr);
       else
