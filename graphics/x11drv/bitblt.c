@@ -1608,13 +1608,15 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
     }
 
     X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod, FALSE );
-    X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod, FALSE );
+    if (physDevDst != physDevSrc)
+      X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod, FALSE );
 
     result = BITBLT_InternalStretchBlt( physDevDst, xDst, yDst, width, height,
                                         physDevSrc, xSrc, ySrc, width, height, rop );
 
 END:
-    X11DRV_UnlockDIBSection( physDevSrc, FALSE );
+    if (physDevDst != physDevSrc)
+      X11DRV_UnlockDIBSection( physDevSrc, FALSE );
     X11DRV_UnlockDIBSection( physDevDst, TRUE );
 
     return result;
@@ -1632,12 +1634,14 @@ BOOL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
     BOOL result;
 
     X11DRV_LockDIBSection( physDevDst, DIB_Status_GdiMod, FALSE );
-    X11DRV_LockDIBSection( physDevSrc, DIB_Status_GdiMod, FALSE );
+    if (physDevDst != physDevSrc)
+      X11DRV_LockDIBSection( physDevSrc, DIB_Status_GdiMod, FALSE );
 
     result = BITBLT_InternalStretchBlt( physDevDst, xDst, yDst, widthDst, heightDst,
                                         physDevSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
 
-    X11DRV_UnlockDIBSection( physDevSrc, FALSE );
+    if (physDevDst != physDevSrc)
+      X11DRV_UnlockDIBSection( physDevSrc, FALSE );
     X11DRV_UnlockDIBSection( physDevDst, TRUE );
     return result;
 }
