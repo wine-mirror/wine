@@ -1924,19 +1924,6 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
 
 
 /***********************************************************************
- *           GetGlyphOutline    (GDI.309)
- */
-DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
-                                LPGLYPHMETRICS16 lpgm, DWORD cbBuffer,
-                                LPVOID lpBuffer, const MAT2 *lpmat2 )
-{
-    FIXME("(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
-	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
-    return ~0UL; /* failure */
-}
-
-
-/***********************************************************************
  *           GetGlyphOutlineA    (GDI32.@)
  */
 DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,

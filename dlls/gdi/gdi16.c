@@ -1719,6 +1719,27 @@ BOOL16 WINAPI GetCharABCWidths16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar, 
 
 
 /***********************************************************************
+ *           GetGlyphOutline    (GDI.309)
+ */
+DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
+                                LPGLYPHMETRICS16 lpgm, DWORD cbBuffer,
+                                LPVOID lpBuffer, const MAT2 *lpmat2 )
+{
+    DWORD ret;
+    GLYPHMETRICS gm32;
+
+    ret = GetGlyphOutlineA( HDC_32(hdc), uChar, fuFormat, &gm32, cbBuffer, lpBuffer, lpmat2);
+    lpgm->gmBlackBoxX = gm32.gmBlackBoxX;
+    lpgm->gmBlackBoxY = gm32.gmBlackBoxY;
+    lpgm->gmptGlyphOrigin.x = gm32.gmptGlyphOrigin.x;
+    lpgm->gmptGlyphOrigin.y = gm32.gmptGlyphOrigin.y;
+    lpgm->gmCellIncX = gm32.gmCellIncX;
+    lpgm->gmCellIncY = gm32.gmCellIncY;
+    return ret;
+}
+
+
+/***********************************************************************
  *           CreateScalableFontResource   (GDI.310)
  */
 BOOL16 WINAPI CreateScalableFontResource16( UINT16 fHidden, LPCSTR lpszResourceFile,
