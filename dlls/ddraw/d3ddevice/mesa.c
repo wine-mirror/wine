@@ -2684,6 +2684,83 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
         LEAVE_GL();
         
         return DD_OK;
+    } else if ((dwFlags & (~(DDBLT_WAIT|DDBLT_ASYNC))) == 0) {
+	/* Normal blit without any special case... */
+	if (src != NULL) {
+	    /* And which has a SRC surface */
+	    IDirectDrawSurfaceImpl *src_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src);
+	    if ((src_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE) &&
+		(src_impl->d3ddevice == This->d3ddevice)) {
+		/* Both are 3D devices and using the same GL device */
+		D3DRECT src_rect;
+		int width, height;
+		GLenum prev_draw;
+		WINE_GL_BUFFER_TYPE src_buffer_type;
+		IDirect3DDeviceGLImpl *gl_d3d_dev = (IDirect3DDeviceGLImpl *) This->d3ddevice;
+		
+		if (rsrc) {
+		    src_rect.u1.x1 = rsrc->left;
+		    src_rect.u2.y1 = rsrc->top;
+		    src_rect.u3.x2 = rsrc->right;
+		    src_rect.u4.y2 = rsrc->bottom;
+		} else {
+		    src_rect.u1.x1 = 0;
+		    src_rect.u2.y1 = 0;
+		    src_rect.u3.x2 = src_impl->surface_desc.dwWidth;
+		    src_rect.u4.y2 = src_impl->surface_desc.dwHeight;
+		}
+
+		width = src_rect.u3.x2 - src_rect.u1.x1;
+		height = src_rect.u4.y2 - src_rect.u2.y1;
+
+		if ((width != (src_rect.u3.x2 - src_rect.u1.x1)) ||
+		    (height != (src_rect.u4.y2 - src_rect.u2.y1))) {
+		    TRACE(" buffer to buffer copy not supported with stretching yet !\n");
+		    return DDERR_INVALIDPARAMS;
+		}
+
+		/* First check if we BLT from the backbuffer... */
+		if ((src_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER)) != 0) {
+		    src_buffer_type = WINE_GL_BUFFER_BACK;
+		} else if ((src_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
+		    src_buffer_type = WINE_GL_BUFFER_FRONT;
+		} else {
+		    ERR("Unexpected case in direct buffer to buffer copy !\n");
+		    return DDERR_INVALIDPARAMS;
+		}
+		
+		TRACE(" using direct buffer to buffer copy.\n");
+
+		ENTER_GL();
+		
+		glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
+		if (buffer_type == WINE_GL_BUFFER_FRONT)
+		    glDrawBuffer(GL_FRONT);
+		else
+		    glDrawBuffer(GL_BACK);
+
+		if (src_buffer_type == WINE_GL_BUFFER_FRONT)
+		    glReadBuffer(GL_FRONT);
+		else
+		    glReadBuffer(GL_BACK);
+		
+		/* Set orthographic projection to prevent bad things happening with the glRasterPos call */
+		if (gl_d3d_dev->transform_state != GL_TRANSFORM_ORTHO) {
+		    gl_d3d_dev->transform_state = GL_TRANSFORM_ORTHO;
+		    d3ddevice_set_ortho(This->d3ddevice);
+		}
+
+		glRasterPos3d(rect.u1.x1, rect.u2.y1, 0.5);
+		glCopyPixels(src_rect.u1.x1, src_impl->surface_desc.dwHeight - rect.u4.y2,
+			     width, height, GL_COLOR);
+		
+		if (((buffer_type == WINE_GL_BUFFER_FRONT) && (prev_draw == GL_BACK)) ||
+		    ((buffer_type == WINE_GL_BUFFER_BACK)  && (prev_draw == GL_FRONT)))
+		    glDrawBuffer(prev_draw);
+		
+		LEAVE_GL();
+	    }
+	}
     }
     return DDERR_INVALIDPARAMS;
 }

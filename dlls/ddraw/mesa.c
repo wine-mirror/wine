@@ -147,15 +147,21 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		   updated either.. No idea about what happens in D3D.
 		   
 		   Maybe replacing the Z function by ALWAYS would be a better idea. */
-	        if ((dwRenderState == D3DZB_TRUE) && (glThis->depth_test == FALSE)) {
-		    glEnable(GL_DEPTH_TEST);
-		    glThis->depth_test = TRUE;
-		} else if ((dwRenderState == D3DZB_FALSE) && (glThis->depth_test == TRUE)) {
-		    glDisable(GL_DEPTH_TEST);
-		    glThis->depth_test = FALSE;
-		} else if (glThis->depth_test == FALSE) {
-		    glEnable(GL_DEPTH_TEST);
-		    glThis->depth_test = TRUE;
+	        if (dwRenderState == D3DZB_TRUE) {
+		    if (glThis->depth_test == FALSE) {
+			glEnable(GL_DEPTH_TEST);
+			glThis->depth_test = TRUE;
+		    }
+		} else if (dwRenderState == D3DZB_FALSE) {
+		    if (glThis->depth_test == TRUE) {
+			glDisable(GL_DEPTH_TEST);
+			glThis->depth_test = FALSE;
+		    }
+		} else {
+		    if (glThis->depth_test == FALSE) {
+			glEnable(GL_DEPTH_TEST);
+			glThis->depth_test = TRUE;
+		    }
 		    WARN(" w-buffering not supported.\n");
 		}
 	        break;

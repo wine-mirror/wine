@@ -794,7 +794,7 @@ Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC)
      * Strange: Lock lists DDERR_SURFACEBUSY as an error, meaning that another
      * thread has it locked, but GetDC does not. */
     ddsd.dwSize = sizeof(ddsd);
-    hr = IDirectDrawSurface7_Lock(iface, NULL, &ddsd, DDLOCK_READONLY, 0);
+    hr = IDirectDrawSurface7_Lock(iface, NULL, &ddsd, 0, 0);
     if (FAILED(hr))
     {
 	UNLOCK_OBJECT(This);
