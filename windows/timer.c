@@ -8,6 +8,7 @@
 #include "queue.h"
 #include "task.h"
 #include "winproc.h"
+#include "services.h"
 #include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(timer)
@@ -189,47 +190,22 @@ static void TIMER_RestartTimer( TIMER * pTimer, DWORD curTime )
     TIMER_InsertTimer( pTimer );
 }
 
-			       
 /***********************************************************************
- *           TIMER_GetNextExpiration
- *
- * Return next timer expiration time, or -1 if none.
- */
-LONG TIMER_GetNextExpiration(void)
-{
-    TIMER *pTimer;
-    LONG retValue;
-    
-    EnterCriticalSection( &csTimer );
-
-    pTimer = pNextTimer;
-
-    while (pTimer && !pTimer->expires)  /* Skip already expired timers */
-        pTimer = pTimer->next;
-
-    if (pTimer)
-    {
-        DWORD now = GetTickCount();
-        retValue = (pTimer->expires <= now) ? 0 : (pTimer->expires - now);
-    }
-    else retValue = -1;
-
-    LeaveCriticalSection( &csTimer );
-    return retValue;
-}
-
-
-/***********************************************************************
- *           TIMER_ExpireTimers
+ *           TIMER_CheckTimers
  *
  * Mark expired timers and wake the appropriate queues.
  */
-void TIMER_ExpireTimers(void)
+static void CALLBACK TIMER_CheckTimers( ULONG_PTR forceTimer )
 {
+    static HANDLE ServiceHandle  = INVALID_HANDLE_VALUE;
+    static LONG   ServiceTimeout = 0;
+
     TIMER *pTimer;
     DWORD curTime = GetTickCount();
 
     EnterCriticalSection( &csTimer );
+
+    TRACE(timer, "Called at %ld (%s)\n", curTime, forceTimer? "manual" : "auto" );
     
     pTimer = pNextTimer;
     
@@ -240,6 +216,37 @@ void TIMER_ExpireTimers(void)
         pTimer->expires = 0;
         QUEUE_IncTimerCount( pTimer->hq );
         pTimer = pTimer->next;
+    }
+
+    /* Install service callback with appropriate timeout, so that
+       we get called again once the next timer has expired */
+
+    if (pTimer)
+    {
+        LONG timeout = pTimer->expires - curTime;
+
+        if ( forceTimer || timeout != ServiceTimeout )
+        {
+            if ( ServiceHandle != INVALID_HANDLE_VALUE ) 
+              SERVICE_Delete( ServiceHandle );
+
+            ServiceHandle = SERVICE_AddTimer( timeout * 1000L, 
+                                              TIMER_CheckTimers, FALSE );
+            ServiceTimeout = timeout;
+
+            TRACE(timer, "Installed service callback with timeout %ld\n", timeout );
+        }
+    }
+    else
+    {
+        if ( ServiceHandle != INVALID_HANDLE_VALUE )
+        {
+            SERVICE_Delete( ServiceHandle );
+            ServiceHandle = INVALID_HANDLE_VALUE;
+            ServiceTimeout = 0;
+
+            TRACE(timer, "Deleted service callback\n" );
+        }
     }
     
     LeaveCriticalSection( &csTimer );
@@ -272,10 +279,14 @@ BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
         return FALSE; /* No timer */
     }
     
-    if (remove)	TIMER_RestartTimer( pTimer, curTime );  /* Restart it */
-
     TRACE(timer, "Timer expired: %04x, %04x, %04x, %08lx\n", 
 		   pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
+
+    if (remove)	
+    {
+        TIMER_RestartTimer( pTimer, curTime );  /* Restart it */
+        TIMER_CheckTimers( TRUE );
+    }
 
       /* Build the message */
     msg->hwnd    = pTimer->hwnd;
@@ -318,6 +329,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
                                        type, WIN_PROC_TIMER );
             pTimer->expires = GetTickCount() + timeout;
             TIMER_InsertTimer( pTimer );
+            TIMER_CheckTimers( TRUE );
             LeaveCriticalSection( &csTimer );
             return id;
         }
@@ -351,6 +363,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );
     TIMER_InsertTimer( pTimer );
+    TIMER_CheckTimers( TRUE );
     
     LeaveCriticalSection( &csTimer );
     

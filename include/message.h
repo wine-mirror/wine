@@ -22,8 +22,6 @@ extern BOOL TIMER_Init( void );
 extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
 extern void TIMER_SwitchQueue( HQUEUE16 hOldQueue, HQUEUE16 hNewQueue );
-extern LONG TIMER_GetNextExpiration(void);
-extern void TIMER_ExpireTimers(void);
 extern BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
                                  HQUEUE16 hQueue, BOOL remove );
 

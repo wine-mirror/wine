@@ -205,25 +205,14 @@ void EVENT_ReadWakeUpPipe(void)
 BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
 {
   XEvent event;
-  LONG maxWait = sleep ? TIMER_GetNextExpiration() : 0;
   int pending = TSXPending(display);
   
-  /* Wait for an event or a timeout. If maxWait is -1, we have no timeout;
-   * in this case, we fall through directly to the XNextEvent loop.
-   */
-  
-  if (!pending)
+  if (!pending && sleep)
     {
       int num_pending;
-      struct timeval timeout;
       fd_set io_set[3];
       
       memcpy( io_set, __event_io_set, sizeof(io_set) );
-      
-      if(maxWait != -1) {
-	timeout.tv_usec = (maxWait % 1000) * 1000;
-	timeout.tv_sec = maxWait / 1000;
-      }
       
 #ifdef CONFIG_IPC
       sigsetjmp(env_wait_x, 1);
@@ -238,37 +227,24 @@ BOOL X11DRV_EVENT_WaitNetEvent( BOOL sleep, BOOL peek )
       /* The code up to the next "stop_wait_op = CONT" must be reentrant */
       num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ], 
 			    &io_set[EVENT_IO_WRITE], 
-			    &io_set[EVENT_IO_EXCEPT], (maxWait == -1) ? 0 : &timeout );
+			    &io_set[EVENT_IO_EXCEPT], NULL );
       if ( num_pending == -1 )
 	{
 	  /* Error - signal, invalid arguments, out of memory */
 	  stop_wait_op = CONT;
 	  return FALSE;
 	}
-      if ( num_pending == 0 )
-        {
-	  /* Timeout */
-	  stop_wait_op = CONT;
-	  TIMER_ExpireTimers(); /* FIXME: should this be done even if sleep == 0? */
-	  return FALSE;
-	}
-      else stop_wait_op = CONT;
+      stop_wait_op = CONT;
 #else  /* CONFIG_IPC */
       num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ],
 			    &io_set[EVENT_IO_WRITE],
-			    &io_set[EVENT_IO_EXCEPT], (maxWait == -1) ? 0 : &timeout );
+			    &io_set[EVENT_IO_EXCEPT], NULL );
       
       if ( num_pending == -1 )
 	{
 	  /* Error - signal, invalid arguments, out of memory */
 	  return FALSE;
 	}
-      if ( num_pending == 0 )
-        {
-	  /* Timeout */
-	  TIMER_ExpireTimers(); /* FIXME: should this be done even if sleep == 0? */
-	  return FALSE;
-        }
 #endif  /* CONFIG_IPC */
       
       /* Flush the wake-up pipe, it's just dummy data for waking-up this
