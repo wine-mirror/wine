@@ -3147,7 +3147,7 @@ GetTimeFormatA(LCID locale,        /* in  */
   }
   
   if (xtime == NULL) /* NULL means use the current local time*/
-  { GetSystemTime(&t);
+  { GetLocalTime(&t);
     thistime = &t;
   } 
   else
