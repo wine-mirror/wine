@@ -85,8 +85,9 @@ inline static HANDLE HEAP_CreateSystemHeap(void)
     int created;
     void *base;
     HANDLE map, event;
-    UNICODE_STRING event_name;
-    OBJECT_ATTRIBUTES event_attr;
+
+    /* create the system heap event first */
+    event = CreateEventA( NULL, TRUE, FALSE, "__SystemHeapEvent" );
 
     if (!(map = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE,
                                     0, SYSTEM_HEAP_SIZE, "__SystemHeap" ))) return 0;
@@ -99,21 +100,11 @@ inline static HANDLE HEAP_CreateSystemHeap(void)
         return 0;
     }
 
-    /* create the system heap event */
-    RtlCreateUnicodeStringFromAsciiz( &event_name, "__SystemHeapEvent" );
-    event_attr.Length = sizeof(event_attr);
-    event_attr.RootDirectory = 0;
-    event_attr.ObjectName = &event_name;
-    event_attr.Attributes = 0;
-    event_attr.SecurityDescriptor = NULL;
-    event_attr.SecurityQualityOfService = NULL;
-    NtCreateEvent( &event, EVENT_ALL_ACCESS, &event_attr, TRUE, FALSE );
-
     if (created)  /* newly created heap */
     {
         systemHeap = RtlCreateHeap( HEAP_SHARED, base, SYSTEM_HEAP_SIZE,
                                     SYSTEM_HEAP_SIZE, NULL, NULL );
-        NtSetEvent( event, NULL );
+        SetEvent( event );
     }
     else
     {
