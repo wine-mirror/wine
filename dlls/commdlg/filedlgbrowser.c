@@ -503,11 +503,21 @@ HRESULT WINAPI IShellBrowserImpl_SendControlMsg(IShellBrowser *iface,
                                               
 {
     ICOM_THIS(IShellBrowserImpl, iface);
+    LRESULT lres;
+    
+    TRACE("(%p)->(0x%08x 0x%08x 0x%08x 0x%08lx %p)\n", This, id, uMsg, wParam, lParam, pret);
 
-    TRACE("(%p)\n", This);
-
-    /* Feature not implemented */
-    return E_NOTIMPL;
+    switch (id)
+    {
+      case FCW_TOOLBAR:
+        lres = SendDlgItemMessageA( This->hwndOwner, IDC_TOOLBAR, uMsg, wParam, lParam);
+	break;
+      default:
+        FIXME("ctrl id: %x\n", id);
+        return E_NOTIMPL;
+    }
+    if (pret) *pret = lres;
+    return S_OK;
 }
 /**************************************************************************
 *  IShellBrowserImpl_SetMenuSB

@@ -69,6 +69,40 @@ typedef struct
 } FileOpenDlgInfos;
 
 /***********************************************************************
+ * Control ID's
+ */
+#define IDS_ABOUTBOX                    101
+#define IDS_DOCUMENTFOLDERS             102
+#define IDS_PERSONAL                    103
+#define IDS_FAVORITES                   104
+#define IDS_PATH                        105
+#define IDS_DESKTOP                     106
+
+#define IDS_FONTS                       108
+#define IDS_MYCOMPUTER                  110
+#define IDS_SYSTEMFOLDERS               112
+#define IDS_LOCALHARDRIVES              113
+#define IDS_FILENOTFOUND                114
+#define IDS_VERIFYFILE                  115
+#define IDS_CREATEFILE                  116
+
+#define IDC_OPENREADONLY                chx1
+
+#define IDC_TOOLBARSTATIC		stc1
+#define IDC_FILETYPESTATIC              stc2
+#define IDC_FILENAMESTATIC              stc3
+#define IDC_LOOKINSTATIC                stc4
+
+#define IDC_SHELLSTATIC                 lst1
+
+#define IDC_FILETYPE                    cmb1
+#define IDC_LOOKIN                      cmb2
+
+#define IDC_FILENAME                    edt1
+
+#define IDC_TOOLBAR			ctl1
+
+/***********************************************************************
  * Prototypes for the methods of the IShellBrowserImpl class
  */
 /* Constructor */

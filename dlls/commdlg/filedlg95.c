@@ -921,21 +921,23 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
   case IDC_LOOKIN:
     FILEDLG95_LOOKIN_OnCommand(hwnd,wNotifyCode);
     break;
+
+  /* --- toolbar --- */
     /* Up folder button */
-  case IDC_UPFOLDER:
+  case FCIDM_TB_UPFOLDER:
     FILEDLG95_SHELL_UpFolder(hwnd);
     break;
+    /* New folder button */
+  case FCIDM_TB_NEWFOLDER:
+    FILEDLG95_SHELL_NewFolder(hwnd);
+    break;
     /* List option button */
-  case IDC_LIST:
+  case FCIDM_TB_SMALLICON:
     FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWLIST);
     break;
     /* Details option button */
-  case IDC_DETAILS:
+  case FCIDM_TB_REPORTVIEW:
     FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWDETAILS);
-    break;
-    /* New folder button */
-  case IDC_NEWFOLDER:
-    FILEDLG95_SHELL_NewFolder(hwnd);
     break;
 
   case IDC_FILENAME:
@@ -972,12 +974,12 @@ static LRESULT FILEDLG95_OnWMGetIShellBrowser(HWND hwnd)
 static LRESULT FILEDLG95_InitUI(HWND hwnd)
 {
   TBBUTTON tbb[] =
-  {{VIEW_PARENTFOLDER, IDC_UPFOLDER, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
-   {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
-   {VIEW_NEWFOLDER, IDC_NEWFOLDER, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
-   {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
-   {VIEW_LIST, IDC_LIST, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
-   {VIEW_DETAILS, IDC_DETAILS, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+  {{VIEW_PARENTFOLDER, FCIDM_TB_UPFOLDER,   TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
+   {VIEW_NEWFOLDER,    FCIDM_TB_NEWFOLDER,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
+   {VIEW_LIST,         FCIDM_TB_SMALLICON,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {VIEW_DETAILS,      FCIDM_TB_REPORTVIEW, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
   };
   RECT rectTB;
   

@@ -207,11 +207,7 @@ static HRESULT OnStateChange(IShellViewImpl * This, UINT uFlags)
 	return ret;
 }
 /**********************************************************
- *
- * ##### helperfunctions for initializing the view #####
- */
-/**********************************************************
- *	set the toolbar buttons
+ *	set the toolbar of the filedialog buttons
  */
 static void CheckToolbar(IShellViewImpl * This)
 {
@@ -219,16 +215,23 @@ static void CheckToolbar(IShellViewImpl * This)
 
 	TRACE("\n");
 	
-	IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
+	if (IsInCommDlg(This))
+	{
+	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
 		FCIDM_TB_SMALLICON, (This->FolderSettings.ViewMode==FVM_LIST)? TRUE : FALSE, &result);
-	IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
+	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_CHECKBUTTON,
 		FCIDM_TB_REPORTVIEW, (This->FolderSettings.ViewMode==FVM_DETAILS)? TRUE : FALSE, &result);
-	IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
+	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
 		FCIDM_TB_SMALLICON, TRUE, &result);
-	IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
+	  IShellBrowser_SendControlMsg(This->pShellBrowser, FCW_TOOLBAR, TB_ENABLEBUTTON,
 		FCIDM_TB_REPORTVIEW, TRUE, &result);
+	}
 }
 
+/**********************************************************
+ *
+ * ##### helperfunctions for initializing the view #####
+ */
 /**********************************************************
  *	change the style of the listview control
  */
@@ -960,21 +963,25 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	  case FCIDM_SHVIEW_SMALLICON:
 	    This->FolderSettings.ViewMode = FVM_SMALLICON;
 	    SetStyle (This, LVS_SMALLICON, LVS_TYPEMASK);
+	    CheckToolbar(This);
 	    break;
 
 	  case FCIDM_SHVIEW_BIGICON:
 	    This->FolderSettings.ViewMode = FVM_ICON;
 	    SetStyle (This, LVS_ICON, LVS_TYPEMASK);
+	    CheckToolbar(This);
 	    break;
 
 	  case FCIDM_SHVIEW_LISTVIEW:
 	    This->FolderSettings.ViewMode = FVM_LIST;
 	    SetStyle (This, LVS_LIST, LVS_TYPEMASK);
+	    CheckToolbar(This);
 	    break;
 
 	  case FCIDM_SHVIEW_REPORTVIEW:
 	    This->FolderSettings.ViewMode = FVM_DETAILS;
 	    SetStyle (This, LVS_REPORT, LVS_TYPEMASK);
+	    CheckToolbar(This);
 	    break;
 
 	  /* the menu-ID's for sorting are 0x30... see shrec.rc */
@@ -986,7 +993,6 @@ static LRESULT ShellView_OnCommand(IShellViewImpl * This,DWORD dwCmdID, DWORD dw
 	    This->ListViewSortInfo.bIsAscending = TRUE;
 	    This->ListViewSortInfo.nLastHeaderID = This->ListViewSortInfo.nHeaderID;
 	    ListView_SortItems(This->hWndList, ShellView_ListViewCompareItems, (LPARAM) (&(This->ListViewSortInfo)));
-	    CheckToolbar(This);
 	    break;
 	    
 	  default:

@@ -72,6 +72,8 @@ typedef struct IShellView IShellView, *LPSHELLVIEW;
 #define FCIDM_SHVIEWLAST	0x7fff
 #define FCIDM_BROWSERFIRST	0xA000
 /* undocumented toolbar items from stddlg's*/
+#define FCIDM_TB_UPFOLDER	0xA001
+#define FCIDM_TB_NEWFOLDER	0xA002
 #define FCIDM_TB_SMALLICON	0xA003
 #define FCIDM_TB_REPORTVIEW	0xA004
 
