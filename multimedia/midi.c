@@ -28,7 +28,7 @@
 #include "xmalloc.h"
 #include "debug.h"
 #include "heap.h"
-
+#include "ldt.h"
 
 typedef struct {
 #ifndef HAVE_OSS
@@ -38,7 +38,7 @@ typedef struct {
     DWORD		bufsize;
     LPMIDIOPENDESC	midiDesc;
     WORD		wFlags;
-    LPMIDIHDR16 		lpQueueHdr;
+    LPMIDIHDR16 	lpQueueHdr;
     DWORD		dwTotalPlayed;
 #ifdef HAVE_OSS
     unsigned char	incoming[3];
@@ -56,7 +56,7 @@ typedef struct {
     DWORD		bufsize;
     LPMIDIOPENDESC	midiDesc;
     WORD		wFlags;
-    LPMIDIHDR16 		lpQueueHdr;
+    LPMIDIHDR16 	lpQueueHdr;
     DWORD		dwTotalPlayed;
 #ifdef HAVE_OSS
     void*		lpExtra;	 	/* according to port type (MIDI, FM...), extra data when needed */
@@ -230,14 +230,17 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	TRACE(midi, "input not started, thrown away\n");
 	return;
     }
-    
+
     if (MidiInDev[wDevID].state & 2) { /* system exclusive */
-	LPMIDIHDR16	ptr = MidiInDev[wDevID].lpQueueHdr;
-	WORD 			sbfb = FALSE;
+	LPMIDIHDR16	lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+	WORD 		sbfb = FALSE;
+
+	if (lpMidiHdr) {
+	    LPBYTE	lpData = ((DWORD)lpMidiHdr == lpMidiHdr->reserved) ?
+		(LPBYTE)lpMidiHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpMidiHdr->lpData);
 	
-	if (ptr) {
-	    ((LPSTR)(ptr->reserved))[ptr->dwBytesRecorded++] = value;
-	    if (ptr->dwBytesRecorded == ptr->dwBufferLength) {
+	    lpData[lpMidiHdr->dwBytesRecorded++] = value;
+	    if (lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) {
 		sbfb = TRUE;
 	    } 
 	}
@@ -245,12 +248,12 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	    MidiInDev[wDevID].state &= ~2;
 	    sbfb = TRUE;
 	}
-	if (sbfb && ptr != NULL) {
-	    ptr = MidiInDev[wDevID].lpQueueHdr;
-	    ptr->dwFlags &= ~MHDR_INQUEUE;
-	    ptr->dwFlags |= MHDR_DONE;
-	    MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR16)ptr->lpNext;
-	    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)ptr, dwTime) != MMSYSERR_NOERROR) {
+	if (sbfb && lpMidiHdr != NULL) {
+	    lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
+	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+	    lpMidiHdr->dwFlags |= MHDR_DONE;
+	    MidiInDev[wDevID].lpQueueHdr = (LPMIDIHDR16)lpMidiHdr->lpNext;
+	    if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr->reserved, dwTime) != MMSYSERR_NOERROR) {
 		WARN(midi, "Couldn't notify client\n");
 	    }
 	}
@@ -452,20 +455,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 #endif /* HAVE_OSS */
     
     MidiInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    switch (MidiInDev[wDevID].wFlags) {
-    case DCB_NULL:
-	TRACE(midi,"CALLBACK_NULL !\n");
-	break;
-    case DCB_WINDOW:
-	TRACE(midi, "CALLBACK_WINDOW !\n");
-	break;
-    case DCB_TASK:
-	TRACE(midi, "CALLBACK_TASK !\n");
-	break;
-    case DCB_FUNCTION:
-	TRACE(midi, "CALLBACK_FUNCTION (%08lX)!\n", lpDesc->dwCallback);
-	break;
-    }
+
     MidiInDev[wDevID].lpQueueHdr = NULL;
     MidiInDev[wDevID].dwTotalPlayed = 0;
     MidiInDev[wDevID].bufsize = 0x3FFF;
@@ -541,7 +531,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
     TRACE(midi, "(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
     
     if (lpMidiHdr == NULL)	return MMSYSERR_INVALPARAM;
-    if (sizeof(MIDIHDR16) != dwSize) return MMSYSERR_INVALPARAM;
+    if (sizeof(MIDIHDR16) > dwSize) return MMSYSERR_INVALPARAM;
     if (lpMidiHdr->dwBufferLength == 0) return MMSYSERR_INVALPARAM;
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
@@ -566,7 +556,7 @@ static DWORD midPrepare(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
 {
     TRACE(midi, "(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
     
-    if (dwSize != sizeof(MIDIHDR16) || lpMidiHdr == 0 || 
+    if (dwSize < sizeof(MIDIHDR16) || lpMidiHdr == 0 || 
 	lpMidiHdr->lpData == 0 || lpMidiHdr->dwFlags != 0 || 
 	lpMidiHdr->dwBufferLength >= 0x10000ul)
 	return MMSYSERR_INVALPARAM;
@@ -585,7 +575,7 @@ static DWORD midUnprepare(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
 {
     TRACE(midi, "(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
     
-    if (dwSize != sizeof(MIDIHDR16) || lpMidiHdr == 0 || 
+    if (dwSize < sizeof(MIDIHDR16) || lpMidiHdr == 0 || 
 	lpMidiHdr->lpData == 0 || lpMidiHdr->dwBufferLength >= 0x10000ul)
 	return MMSYSERR_INVALPARAM;
     
@@ -609,6 +599,7 @@ static DWORD midReset(WORD wDevID)
     while (MidiInDev[wDevID].lpQueueHdr) {
 	MidiInDev[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
 	MidiInDev[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
+	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
 	if (MIDI_NotifyClient(wDevID, MIM_LONGDATA, 
 			      (DWORD)MidiInDev[wDevID].lpQueueHdr, dwTime) != MMSYSERR_NOERROR) {
 	    WARN(midi, "Couldn't notify client\n");
@@ -894,20 +885,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 #endif /* HAVE_OSS */	
     
     MidiOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-    switch (MidiOutDev[wDevID].wFlags) {
-    case DCB_NULL:
-	TRACE(midi,"CALLBACK_NULL !\n");
-	break;
-    case DCB_WINDOW:
-	TRACE(midi, "CALLBACK_WINDOW !\n");
-	break;
-    case DCB_TASK:
-	TRACE(midi, "CALLBACK_TASK !\n");
-	break;
-    case DCB_FUNCTION:
-	TRACE(midi, "CALLBACK_FUNCTION !\n");
-	break;
-    }
+
     MidiOutDev[wDevID].lpQueueHdr = NULL;
     MidiOutDev[wDevID].dwTotalPlayed = 0;
     MidiOutDev[wDevID].bufsize = 0x3FFF;
@@ -1285,7 +1263,8 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 static DWORD modLongData(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
 {
     int		count;
-    
+    LPBYTE	lpData;
+
     TRACE(midi, "(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
     
 #ifdef HAVE_OSS
@@ -1300,7 +1279,10 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
     }
 #endif /* HAVE_OSS */
     
-    if (lpMidiHdr->lpData == NULL) 
+    lpData = ((DWORD)lpMidiHdr == lpMidiHdr->reserved) ?
+	(LPBYTE)lpMidiHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpMidiHdr->lpData);
+
+    if (lpData == NULL) 
 	return MIDIERR_UNPREPARED;
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) 
 	return MIDIERR_UNPREPARED;
@@ -1309,33 +1291,39 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
     lpMidiHdr->dwFlags &= ~MHDR_DONE;
     lpMidiHdr->dwFlags |= MHDR_INQUEUE;
 
+    /* FIXME: MS doc is not 100% clear. Will lpData only contain system exclusive
+     * data, or can it also contain raw MIDI data, to be split up and sent to 
+     * modShortData() ?
+     * If the latest is true, then the following WARNing will fire up
+     */
+    if (lpData[0] != 0xF0 || lpData[lpMidiHdr->dwBytesRecorded - 1] != 0xF7) {
+	WARN(midi, "Alledged system exclusive buffer is not correct\nPlease report with MIDI file\n");
+    }
+
     TRACE(midi, "dwBytesRecorded %lu !\n", lpMidiHdr->dwBytesRecorded);
     TRACE(midi, "                 %02X %02X %02X %02X\n",
-	  ((LPBYTE)(lpMidiHdr->reserved))[0],
-	  ((LPBYTE)(lpMidiHdr->reserved))[1],
-	  ((LPBYTE)(lpMidiHdr->reserved))[2],
-	  ((LPBYTE)(lpMidiHdr->reserved))[3]);
+	  lpData[0], lpData[1], lpData[2], lpData[3]);
+
 #ifdef HAVE_OSS
     switch (midiOutDevices[wDevID]->wTechnology) {
     case MOD_FMSYNTH:
 	/* FIXME: I don't think there is much to do here */
 	break;
     case MOD_MIDIPORT:
-	if (((LPBYTE)lpMidiHdr->reserved)[0] != 0xF0) {
+	if (lpData[0] != 0xF0) {
 	    /* Send end of System Exclusive */
 	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, 0xF0);
-	    TRACE(midi, "Adding missing 0xF0 marker at the begining of "
-		  "system exclusive byte stream\n");
+	    WARN(midi, "Adding missing 0xF0 marker at the begining of "
+		 "system exclusive byte stream\n");
 	}
 	for (count = 0; count < lpMidiHdr->dwBytesRecorded; count++) {
-	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, 
-			((LPBYTE)lpMidiHdr->reserved)[count]);	
+	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, lpData[count]);	
 	}
-	if (((LPBYTE)lpMidiHdr->reserved)[count - 1] != 0xF7) {
+	if (lpData[count - 1] != 0xF7) {
 	    /* Send end of System Exclusive */
 	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, 0xF7);
-	    TRACE(midi, "Adding missing 0xF7 marker at the end of "
-		  "system exclusive byte stream\n");
+	    WARN(midi, "Adding missing 0xF7 marker at the end of "
+		 "system exclusive byte stream\n");
 	}
 	SEQ_DUMPBUF();
 	break;
@@ -1346,14 +1334,13 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
     }
 #else /* HAVE_OSS */
     {
-	LPWORD	ptr = (LPWORD)lpMidiHdr->reserved;
-	int		en;
+	int	en;
 	
 	for (count = 0; count < lpMidiHdr->dwBytesRecorded; count++) {
 	    if (write(MidiOutDev[wDevID].unixdev, 
-		      ptr, sizeof(WORD)) != sizeof(WORD)) 
+		      lpData, sizeof(WORD)) != sizeof(WORD)) 
 		break;
-	    ptr++;
+	    ptr += 2;
 	}
 	
 	en = errno;
@@ -1370,7 +1357,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
     
     lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
     lpMidiHdr->dwFlags |= MHDR_DONE;
-    if (MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD)lpMidiHdr, 0L) != MMSYSERR_NOERROR) {
+    if (MIDI_NotifyClient(wDevID, MOM_DONE, lpMidiHdr->reserved, 0L) != MMSYSERR_NOERROR) {
 	WARN(midi,"can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
@@ -1395,10 +1382,13 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
 	return MMSYSERR_NOTENABLED;
     }
 #endif /* HAVE_OSS */
-    if (dwSize != sizeof(MIDIHDR16) || lpMidiHdr == 0 || 
+    if (dwSize < sizeof(MIDIHDR16) || lpMidiHdr == 0 || 
 	lpMidiHdr->lpData == 0 || lpMidiHdr->dwFlags != 0 || 
-	lpMidiHdr->dwBufferLength >= 0x10000ul)
+	lpMidiHdr->dwBufferLength >= 0x10000ul) {
+	WARN(midi, "%p %p %08lx %d/%ld\n", lpMidiHdr, lpMidiHdr->lpData, 
+	           lpMidiHdr->dwFlags, sizeof(MIDIHDR16), dwSize);
 	return MMSYSERR_INVALPARAM;
+    }
     
     lpMidiHdr->lpNext = 0;
     lpMidiHdr->dwFlags |= MHDR_PREPARED;
@@ -1424,7 +1414,7 @@ static DWORD modUnprepare(WORD wDevID, LPMIDIHDR16 lpMidiHdr, DWORD dwSize)
 	return MMSYSERR_NOTENABLED;
     }
 #endif /* HAVE_OSS */
-    if (dwSize != sizeof(MIDIHDR16) || lpMidiHdr == 0)
+    if (dwSize < sizeof(MIDIHDR16) || lpMidiHdr == 0)
 	return MMSYSERR_INVALPARAM;
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
 	return MIDIERR_STILLPLAYING;
@@ -1511,7 +1501,7 @@ DWORD WINAPI modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case MODM_UNPREPARE:
 	return modUnprepare(wDevID, (LPMIDIHDR16)dwParam1, dwParam2);
     case MODM_GETDEVCAPS:
-	return modGetDevCaps(wDevID,(LPMIDIOUTCAPS16)dwParam1,dwParam2);
+	return modGetDevCaps(wDevID, (LPMIDIOUTCAPS16)dwParam1, dwParam2);
     case MODM_GETNUMDEVS:
 	return MODM_NUMDEVS;
     case MODM_GETVOLUME:
@@ -1531,7 +1521,7 @@ DWORD WINAPI modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
  * 				MIDI_DriverProc32	[sample driver]
  */
 LONG MIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-		       DWORD dwParam1, DWORD dwParam2)
+		     DWORD dwParam1, DWORD dwParam2)
 {
     switch (wMsg) {
     case DRV_LOAD:		return 1;
