@@ -48,6 +48,7 @@ LN_S      = @LN_S@
 TOOLSDIR  = @TOOLSDIR@
 DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
 ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(DEFS) $(OPTIONS)
+AS        = @AS@
 LD        = @LD@
 LDFLAGS   = @LDFLAGS@
 LDCOMBINE = $(LD) -r

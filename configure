@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS OPTIONS WIN16_FILES WIN16_INSTALL build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN C2MAN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS JPEGLIB EGREP XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP CROSSTEST CROSSCC LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS OPTIONS WIN16_FILES WIN16_INSTALL build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN C2MAN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS JPEGLIB EGREP XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP CROSSTEST CROSSCC LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -4170,6 +4170,86 @@ then
   { { echo "$as_me:$LINENO: error: no suitable lex found. Please install the 'flex' package." >&5
 echo "$as_me: error: no suitable lex found. Please install the 'flex' package." >&2;}
    { (exit 1); exit 1; }; }
+fi
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}as", so it can be a program name with args.
+set dummy ${ac_tool_prefix}as; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_AS+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$AS"; then
+  ac_cv_prog_AS="$AS" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AS="${ac_tool_prefix}as"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+AS=$ac_cv_prog_AS
+if test -n "$AS"; then
+  echo "$as_me:$LINENO: result: $AS" >&5
+echo "${ECHO_T}$AS" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_AS"; then
+  ac_ct_AS=$AS
+  # Extract the first word of "as", so it can be a program name with args.
+set dummy as; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_AS+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_AS"; then
+  ac_cv_prog_ac_ct_AS="$ac_ct_AS" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_AS="as"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_ac_ct_AS" && ac_cv_prog_ac_ct_AS="as"
+fi
+fi
+ac_ct_AS=$ac_cv_prog_ac_ct_AS
+if test -n "$ac_ct_AS"; then
+  echo "$as_me:$LINENO: result: $ac_ct_AS" >&5
+echo "${ECHO_T}$ac_ct_AS" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  AS=$ac_ct_AS
+else
+  AS="$ac_cv_prog_AS"
 fi
 
 if test -n "$ac_tool_prefix"; then
@@ -16128,6 +16208,8 @@ s,@LEXLIB@,$LEXLIB,;t t
 s,@LEX_OUTPUT_ROOT@,$LEX_OUTPUT_ROOT,;t t
 s,@XYACC@,$XYACC,;t t
 s,@XLEX@,$XLEX,;t t
+s,@AS@,$AS,;t t
+s,@ac_ct_AS@,$ac_ct_AS,;t t
 s,@LD@,$LD,;t t
 s,@ac_ct_LD@,$ac_ct_LD,;t t
 s,@AR@,$AR,;t t
