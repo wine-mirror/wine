@@ -89,7 +89,7 @@ static LONG MSRLE32_DecompressRLE8(
 				delta_y = (LONG)*pSrc++;
 				x += delta_x;
 				y += delta_y;
-				pDst += delta_y * pitch + delta_x;
+				pDst += delta_y * pitch;
 				break;
 			default: /* RAW */
 				len = data;
