@@ -12,8 +12,8 @@ type win32
    9  stdcall DirectDrawEnumerateExA(ptr ptr long) DirectDrawEnumerateExA
   10  stdcall DirectDrawEnumerateExW(ptr ptr long) DirectDrawEnumerateExW
   11  stdcall DirectDrawEnumerateW(ptr ptr) DirectDrawEnumerateW
-  12  stub DllCanUnloadNow
-  13  stub DllGetClassObject
+  12  stdcall DllCanUnloadNow() DDRAW_DllCanUnloadNow
+  13  stdcall DllGetClassObject(ptr ptr ptr) DDRAW_DllGetClassObject
   14  stub GetNextMipMap
   15  stub GetSurfaceFromDC
   16  stub HeapVidMemAllocAligned

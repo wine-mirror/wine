@@ -4404,7 +4404,10 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 
 	TRACE(ddraw,"(%s,%p,%p)\n",xclsid,ilplpDD,pUnkOuter);
 
-	if (!lpGUID) {
+	if ((!lpGUID) ||
+	    (!memcmp(lpGUID,&IID_IDirectDraw ,sizeof(IID_IDirectDraw ))) ||
+	    (!memcmp(lpGUID,&IID_IDirectDraw2,sizeof(IID_IDirectDraw2))) ||
+	    (!memcmp(lpGUID,&IID_IDirectDraw4,sizeof(IID_IDirectDraw4)))) {
 		/* if they didn't request a particular interface, use the best
 		 * supported one */
 		if (DDRAW_DGA_Available())
@@ -4509,3 +4512,128 @@ HRESULT WINAPI DirectDrawEnumerateW(
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */
+
+
+/*******************************************************************************
+ * DirectDraw ClassFactory
+ *
+ *  Heavily inspired (well, can you say completely copied :-) ) from DirectSound
+ *
+ */
+typedef struct
+{
+    /* IUnknown fields */
+    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    DWORD                       ref;
+} IClassFactoryImpl;
+
+static HRESULT WINAPI 
+DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	char buf[80];
+
+	if (HIWORD(riid))
+	    WINE_StringFromCLSID(riid,buf);
+	else
+	    sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
+	FIXME(ddraw,"(%p)->(%s,%p),stub!\n",This,buf,ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI
+DDCF_AddRef(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI DDCF_Release(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI DDCF_CreateInstance(
+	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
+) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	char buf[80];
+
+	WINE_StringFromCLSID(riid,buf);
+	TRACE(ddraw,"(%p)->(%p,%s,%p)\n",This,pOuter,buf,ppobj);
+	if ((!memcmp(riid,&IID_IDirectDraw ,sizeof(IID_IDirectDraw ))) ||
+	    (!memcmp(riid,&IID_IDirectDraw2,sizeof(IID_IDirectDraw2))) ||
+	    (!memcmp(riid,&IID_IDirectDraw4,sizeof(IID_IDirectDraw4)))) {
+		/* FIXME: reuse already created DirectDraw if present? */
+		return DirectDrawCreate((LPGUID) riid,(LPDIRECTDRAW*)ppobj,pOuter);
+	}
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME(ddraw,"(%p)->(%d),stub!\n",This,dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) DDCF_Vtbl = {
+	DDCF_QueryInterface,
+	DDCF_AddRef,
+	DDCF_Release,
+	DDCF_CreateInstance,
+	DDCF_LockServer
+};
+static IClassFactoryImpl DDRAW_CF = {&DDCF_Vtbl, 1 };
+
+/*******************************************************************************
+ * DllGetClassObject [DDRAW.13]
+ * Retrieves class object from a DLL object
+ *
+ * NOTES
+ *    Docs say returns STDAPI
+ *
+ * PARAMS
+ *    rclsid [I] CLSID for the class object
+ *    riid   [I] Reference to identifier of interface for class object
+ *    ppv    [O] Address of variable to receive interface pointer for riid
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
+ *             E_UNEXPECTED
+ */
+DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
+{
+    char buf[80],xbuf[80];
+
+    if (HIWORD(rclsid))
+    	WINE_StringFromCLSID(rclsid,xbuf);
+    else
+    	sprintf(xbuf,"<guid-0x%04x>",LOWORD(rclsid));
+    if (HIWORD(riid))
+    	WINE_StringFromCLSID(riid,buf);
+    else
+    	sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
+    WINE_StringFromCLSID(riid,xbuf);
+    TRACE(ddraw, "(%p,%p,%p)\n", xbuf, buf, ppv);
+    if (!memcmp(riid,&IID_IClassFactory,sizeof(IID_IClassFactory))) {
+    	*ppv = (LPVOID)&DDRAW_CF;
+	IClassFactory_AddRef((IClassFactory*)*ppv);
+    return S_OK;
+    }
+    FIXME(ddraw, "(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);
+    return E_NOINTERFACE;
+}
+
+
+/*******************************************************************************
+ * DllCanUnloadNow [DDRAW.12]  Determines whether the DLL is in use.
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: S_FALSE
+ */
+DWORD WINAPI DDRAW_DllCanUnloadNow(void)
+{
+    FIXME(ddraw, "(void): stub\n");
+    return S_FALSE;
+}
