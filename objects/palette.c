@@ -618,6 +618,9 @@ COLORREF WINAPI GetNearestColor(
     DC 		*dc;
     PALETTEOBJ  *palObj;
 
+    if(!(GetDeviceCaps(hdc, RASTERCAPS) & RC_PALETTE)) {
+        return color;
+    }
     if ( (dc = DC_GetDCPtr( hdc )) )
     {
         HPALETTE hpal = (dc->hPalette)? dc->hPalette : GetStockObject( DEFAULT_PALETTE );
