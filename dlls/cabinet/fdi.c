@@ -313,7 +313,7 @@ BOOL FDI_read_entries(
   num_folders = EndGetI16(buf+cfhead_NumFolders);
   if (num_folders == 0) {
     /* PONDERME: is this really invalid? */
-    WARN("wierd cabinet detect failure: no folders in cabinet\n");
+    WARN("weird cabinet detect failure: no folders in cabinet\n");
     PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
     PFDI_INT(hfdi)->perf->erfType = 0;
     PFDI_INT(hfdi)->perf->fError = TRUE;
@@ -324,7 +324,7 @@ BOOL FDI_read_entries(
   num_files = EndGetI16(buf+cfhead_NumFiles);
   if (num_files == 0) {
     /* PONDERME: is this really invalid? */
-    WARN("wierd cabinet detect failure: no files in cabinet\n");
+    WARN("weird cabinet detect failure: no files in cabinet\n");
     PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
     PFDI_INT(hfdi)->perf->erfType = 0;
     PFDI_INT(hfdi)->perf->fError = TRUE;

@@ -2009,7 +2009,7 @@ struct cabinet *find_cabs_in_file(LPCSTR name, cab_UBYTE search_buf[])
 	  case 17: foffset |= *p++ << 8;  state++; break;
 	  case 18: foffset |= *p++ << 16; state++; break;
 	  case 19: foffset |= *p++ << 24;
-	    /* now we have recieved 20 bytes of potential cab header. */
+	    /* now we have received 20 bytes of potential cab header. */
 	    /* work out the offset in the file of this potential cabinet */
 	    caboff = offset + (p-pstart) - 20;
 

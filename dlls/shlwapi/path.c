@@ -1426,7 +1426,7 @@ BOOL WINAPI PathCompactPathExW(LPWSTR lpszDest, LPCWSTR lpszPath,
     return TRUE;
   }
   /* We have a root in the path */
-  lpszFile--; /* Start compacted filename with the path seperator */
+  lpszFile--; /* Start compacted filename with the path separator */
   dwFileLen++;
 
   if (dwFileLen + 3 > cchMax)
@@ -1776,7 +1776,7 @@ static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
  *  FALSE Otherwise
  *
  * NOTES
- *  Multiple search masks may be given if they are seperated by ";". The
+ *  Multiple search masks may be given if they are separated by ";". The
  *  pattern "*.*" is treated specially in that it matches all paths (for
  *  backwards compatibility with DOS).
  */

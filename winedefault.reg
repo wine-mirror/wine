@@ -369,7 +369,7 @@
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B28D-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
 @="{B196B286-BAB4-101A-B69C-00AA00341D07}"
 
-#IPropertyPage2 - an extention of IPropertyPage to support initial selection on a property page
+#IPropertyPage2 - an extension of IPropertyPage to support initial selection on a property page
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{01E44665-24AC-101B-84ED-08002B2EC713}]
 @="IPropertyPage2"
 
@@ -449,7 +449,7 @@
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{376BD3AA-3845-101B-84ED-08002B2EC713}\ProxyStubClsid32]
 @="{B196B286-BAB4-101A-B69C-00AA00341D07}"
 
-#IAdviseSinkEx - an extention of IAdviseSink which provides notifications about object status changes
+#IAdviseSinkEx - an extension of IAdviseSink which provides notifications about object status changes
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{3AF24290-0C96-11CE-A0CF-00AA00600AB8}]
 @="IAdviseSinkEx"
 
@@ -589,7 +589,7 @@
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{B196B283-BAB4-101A-B69C-00AA00341D07}\ProxyStubClsid32]
 @="{B196B286-BAB4-101A-B69C-00AA00341D07}"
 
-#IProvideClassInfo2 - extention of class IProvideClassInfo
+#IProvideClassInfo2 - extension of class IProvideClassInfo
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}]
 @="IProvideClassInfo2"
 
@@ -599,7 +599,7 @@
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A6BC3AC0-DBAA-11CE-9DE3-00AA004BB851}\ProxyStubClsid32]
 @="{B196B286-BAB4-101A-B69C-00AA00341D07}"
 
-#IProvideMultipleClassInfo - an extention of IProvideClassInfo2 which can provide information about
+#IProvideMultipleClassInfo - an extension of IProvideClassInfo2 which can provide information about
 #a few implemented classes
 [HKEY_LOCAL_MACHINE\Software\Classes\Interface\{A7ABA9C1-8983-11CF-8F20-00805F2CD064}]
 @="IProvideMultipleClassInfo"

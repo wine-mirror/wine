@@ -505,7 +505,7 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
  *
  * PARAMS
  *   time [I] Time to convert.
- *   res [O] Pointer to a LONG to recieve the seconds since 1970.
+ *   res [O] Pointer to a LONG to receive the seconds since 1970.
  *
  * RETURNS
  *   TRUE: Successfull.
@@ -528,7 +528,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *time, PULONG res 
  *
  * PARAMS
  *   time [I] Time to convert.
- *   res [O] Pointer to a integer to recieve the time since 1980.
+ *   res [O] Pointer to a integer to receive the time since 1980.
  *
  * RETURNS
  *   TRUE: Successfull

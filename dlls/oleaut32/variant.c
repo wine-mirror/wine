@@ -4489,7 +4489,7 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
 
 /**********************************************************************
  *              VarCyFromStr [OLEAUT32.104]
- * FIXME: Never tested with decimal seperator other than '.'
+ * FIXME: Never tested with decimal separator other than '.'
  */
 HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut) {
 
@@ -4503,19 +4503,19 @@ HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut
 	pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
 	TRACE("( '%s', 0x%08lx, 0x%08lx, %p )\n", pNewString, lcid, dwFlags, pcyOut );
 
-    /* Get locale information - Decimal Seperator (size includes 0x00) */
+    /* Get locale information - Decimal Separator (size includes 0x00) */
     size = GetLocaleInfoA(lcid, LOCALE_SDECIMAL, NULL, 0);
     decSep = (char *) malloc(size);
     rc = GetLocaleInfoA(lcid, LOCALE_SDECIMAL, decSep, size);
-    TRACE("Decimal Seperator is '%s'\n", decSep);
+    TRACE("Decimal Separator is '%s'\n", decSep);
 
     /* Now copy to temporary buffer, skipping any character except 0-9 and
-       the decimal seperator */
+       the decimal separator */
     curPtr = pBuffer;      /* Current position in string being built       */
     strPtr = pNewString;   /* Current position in supplied currenct string */
 
     while (*strPtr) {
-        /* If decimal seperator, skip it and put '.' in string */
+        /* If decimal separator, skip it and put '.' in string */
         if (strncmp(strPtr, decSep, (size-1)) == 0) {
             strPtr = strPtr + (size-1);
             *curPtr = '.';
@@ -5961,19 +5961,19 @@ HRESULT WINAPI VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
             break;
 
         case TOK_COLON   :
-            /* Get locale information - Time Seperator */
+            /* Get locale information - Time Separator */
             size = GetLocaleInfoA(lcid, LOCALE_STIME, NULL, 0);
             GetLocaleInfoA(lcid, LOCALE_STIME, pNextPos, size);
-            TRACE("TOK_COLON Time seperator is '%s'\n", pNextPos);
+            TRACE("TOK_COLON Time separator is '%s'\n", pNextPos);
             pNextPos = pNextPos + size;
             pData = pData + 1;
             break;
 
         case TOK_SLASH   :
-            /* Get locale information - Date Seperator */
+            /* Get locale information - Date Separator */
             size = GetLocaleInfoA(lcid, LOCALE_SDATE, NULL, 0);
             GetLocaleInfoA(lcid, LOCALE_SDATE, pNextPos, size);
-            TRACE("TOK_COLON Time seperator is '%s'\n", pNextPos);
+            TRACE("TOK_COLON Time separator is '%s'\n", pNextPos);
             pNextPos = pNextPos + size;
             pData = pData + 1;
             break;

@@ -49,7 +49,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL (shell);
 
 /***************************************************************************
- * debughelper: print out the return adress
+ * debughelper: print out the return address
  *  helps especially to track down unbalanced AddRef/Release
  */
 #define MEM_DEBUG 0

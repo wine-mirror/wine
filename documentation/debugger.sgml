@@ -1505,7 +1505,7 @@ g =&gt; GUID
       <sect2>
           <title>Debug channels</title>
 	      <para>
-               It is possible to turn on and off debug messages as you are debuging using
+               It is possible to turn on and off debug messages as you are debugging using
                the set command.
               </para>
             <screen>

@@ -227,7 +227,7 @@ void HandleCommandLine(LPSTR cmdline)
         }
         else
         {
-            /* try to find file with ".txt" extention */
+            /* try to find file with ".txt" extension */
             if (!strcmp(".txt", cmdline + strlen(cmdline) - strlen(".txt")))
             {
                 file_exists = FALSE;

@@ -85,7 +85,7 @@
  * classical comment / *...* / (note: no comments within comments,
  * therefore spaces) is considered to be a line-continuation
  * (according to gcc and egcs AFAIK, ANSI is a bit vague).
- * Comments have not been added to the above grammer for simplicity
+ * Comments have not been added to the above grammar for simplicity
  * reasons. However, it is allowed to enter comment anywhere within
  * the directives as long as they do not interfere with the context.
  * All comments are considered to be deletable whitespace (both
@@ -1068,7 +1068,7 @@ static void expand_macro(macexpstackentry_t *mep)
 
 	/*
 	 * We must add *one* whitespace to make sure that there
-	 * is a token-seperation after the expansion.
+	 * is a token-separation after the expansion.
 	 */
 	*(++cptr) = ' ';
 	*(++cptr) = '\0';

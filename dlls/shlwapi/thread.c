@@ -104,7 +104,7 @@ WINAPI _CreateAllAccessSecurityAttributes(
  * Get an interface to the shell explorer.
  *
  * PARAMS
- *  lppUnknown [O] pointer to recieve IUnknown interface.
+ *  lppUnknown [O] pointer to receive IUnknown interface.
  *
  * RETURNS
  *  Success: S_OK. lppUnknown contains the explorer interface.

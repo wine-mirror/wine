@@ -422,11 +422,11 @@ static BOOL PRINTDLG_CreateDevNames16(HGLOBAL16 *hmem, char* DeviceDriverName,
  *             PRINTDLG_UpdatePrintDlg          [internal]
  *
  *
- *   updates the PrintDlg structure for returnvalues.
+ *   updates the PrintDlg structure for return values.
  *
  * RETURNS
  *   FALSE if user is not allowed to close (i.e. wrong nTo or nFrom values)
- *   TRUE  if succesful.
+ *   TRUE  if successful.
  */
 static BOOL PRINTDLG_UpdatePrintDlgA(HWND hDlg,
 				    PRINT_PTRA* PrintStructures)

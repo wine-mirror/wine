@@ -1281,7 +1281,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 
     TRACE("%s, %p\n", debugstr_w(filePathName), pclsid);
 
-    /* if the file contain a storage object the return the CLSID writen by IStorage_SetClass method*/
+    /* if the file contain a storage object the return the CLSID written by IStorage_SetClass method*/
     if((StgIsStorageFile(filePathName))==S_OK){
 
         res=StgOpenStorage(filePathName,NULL,STGM_READ | STGM_SHARE_DENY_WRITE,NULL,0,&pstg);

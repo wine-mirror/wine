@@ -257,7 +257,7 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 /*****************************************************************************
  * Name       : WinMain
  * Description: Main windows entry point
- * Paramaters : hInstance
+ * Parameters : hInstance
  *              hPrev
  *              szCmdLine
  *              nShow

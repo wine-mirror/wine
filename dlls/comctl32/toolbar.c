@@ -1117,7 +1117,7 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
 /***********************************************************************
 * 		TOOLBAR_WrapToolbar
 *
-* This function walks through the buttons and seperators in the
+* This function walks through the buttons and separators in the
 * toolbar, and sets the TBSTATE_WRAP flag only on those items where
 * wrapping should occur based on the width of the toolbar window.
 * It does *not* calculate button placement itself.  That task

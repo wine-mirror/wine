@@ -17,10 +17,10 @@ The missing parts are:
   - many build-in icons are missing
 
 - shell notifications
-  - not aware of seperated addressspaces
+  - not aware of separated address spaces
 
 - iconcache
-  - not aware of seperated addressspaces
+  - not aware of separated address spaces
   - shell extensions
 
 - BrowseForFolder
@@ -99,4 +99,3 @@ needed Registry keys:
 @="shell32.dll"
 "ThreadingModel"="Apartment"
 ----------------------------
-

@@ -317,7 +317,7 @@ static BOOL UPDOWN_SetBuddyInt (UPDOWN_INFO *infoPtr)
     len = wsprintfW(txt, fmt, infoPtr->CurVal);
 
 
-    /* Do thousands seperation if necessary */
+    /* Do thousands separation if necessary */
     if (!(GetWindowLongW (infoPtr->Self, GWL_STYLE) & UDS_NOTHOUSANDS) && (len > 3)) {
         WCHAR tmp[COUNT_OF(txt)], *src = tmp, *dst = txt;
         WCHAR sep = UPDOWN_GetThousandSep();

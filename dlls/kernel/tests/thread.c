@@ -537,10 +537,10 @@ VOID test_thread_processor()
      if (GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
        error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
        ok(error==-1,
-          "SetThreadIdealProccesor succeeded with an illegal processor #");
+          "SetThreadIdealProcessor succeeded with an illegal processor #");
        todo_wine {
          error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS);
-         ok(error==0, "SetThreadIdealProccesor returned an incorrect value");
+         ok(error==0, "SetThreadIdealProcessor returned an incorrect value");
        }
      }
    }

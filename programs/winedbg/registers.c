@@ -59,9 +59,9 @@ static char *DEBUG_Flags( DWORD flag, char *buf )
     if ( buf >= pt-- ) return( buf );
     if ( flag & 0x00000800 ) *pt = 'O'; /* Overflow Flag */
     if ( buf >= pt-- ) return( buf );
-    if ( flag & 0x00001000 ) *pt = '1'; /* I/O Privilage Level */
+    if ( flag & 0x00001000 ) *pt = '1'; /* I/O Privilege Level */
     if ( buf >= pt-- ) return( buf );
-    if ( flag & 0x00002000 ) *pt = '1'; /* I/O Privilage Level */
+    if ( flag & 0x00002000 ) *pt = '1'; /* I/O Privilege Level */
     if ( buf >= pt-- ) return( buf );
     if ( flag & 0x00004000 ) *pt = 'N'; /* Nested Task Flag */
     if ( buf >= pt-- ) return( buf );

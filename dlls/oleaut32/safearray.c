@@ -367,7 +367,7 @@ HRESULT WINAPI SafeArrayPutElement(
 {
   ULONG stepCountInSAData     = 0;    /* Number of array item to skip to get to
                                          the desired one... */
-  PVOID elementStorageAddress = NULL; /* Adress to store the data */
+  PVOID elementStorageAddress = NULL; /* Address to store the data */
 
   /* Validate the index given */
   if(! validCoordinate(rgIndices, psa))
@@ -415,7 +415,7 @@ HRESULT WINAPI SafeArrayPutElement(
     return E_UNEXPECTED; /* UNDOC error condition */
   }
 
-  TRACE("SafeArray: item put at adress %p.\n",elementStorageAddress);
+  TRACE("SafeArray: item put at address %p.\n",elementStorageAddress);
   return SafeArrayUnlock(psa);
 }
 
@@ -431,7 +431,7 @@ HRESULT WINAPI SafeArrayGetElement(
 {
   ULONG stepCountInSAData     = 0;    /* Number of array item to skip to get to
                                          the desired one... */
-  PVOID elementStorageAddress = NULL; /* Adress to store the data */
+  PVOID elementStorageAddress = NULL; /* Address to store the data */
 
   if(! validArg(psa))
     return E_INVALIDARG;

@@ -71,9 +71,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,17,62,91,10
     CONTROL         "Favor correctness over speed",IDC_PERFECTGRAPH,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,17,76,117,10
-    CONTROL         "Use XFree DGA extention",IDC_XDGA,"Button",
+    CONTROL         "Use XFree DGA extension",IDC_XDGA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,141,62,97,10
-    CONTROL         "Use XFree Shm extention",IDC_XSHM,"Button",
+    CONTROL         "Use XFree Shm extension",IDC_XSHM,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,141,76,96,10
     CONTROL         "Enable Wine desktop",IDC_MANAGED,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,17,143,84,10

@@ -183,7 +183,7 @@ static void test_SplitShortPathA(CHAR *path,CHAR *dir,CHAR *eight,CHAR *three) {
   int len,i;
   len=lstrlenA(path);
   ext=len; fil=len; done=0; error=0;
-/* walk backwards over path looking for '.' or '\\' seperators */
+/* walk backwards over path looking for '.' or '\\' separators */
   for(i=len-1;(i>=0) && (!done);i--) {
     if(path[i]=='.')
       if(ext!=len) error=1; else ext=i;

@@ -264,7 +264,7 @@ HRESULT WINAPI AntiMonikerImpl_Save(IMoniker* iface,IStream* pStm,BOOL fClearDir
     DWORD constant=1;
     HRESULT res;
 
-    /* data writen by this function is only a DWORD constant seted to 1 ! */
+    /* data written by this function is only a DWORD constant set to 1 ! */
     res=IStream_Write(pStm,&constant,sizeof(constant),NULL);
 
     return res;

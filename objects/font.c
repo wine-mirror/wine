@@ -1945,7 +1945,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
  *
  * RETURNS
  *
- *   The width and height of the string if succesful, 0 if failed.
+ *   The width and height of the string if successful, 0 if failed.
  *
  * BUGS
  *

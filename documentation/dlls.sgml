@@ -50,7 +50,7 @@
           <title>2.1 Structure sizes of different common control versions</title>
 
           <para>
-            The common controls have been continously improved in the
+            The common controls have been continuously improved in the
             past. Some of the orignal structures had to be extended
             and their size changed. Most of the common control
             structures include their size as the first parameter. If a

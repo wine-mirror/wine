@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(exec);
  *	%2 printer
  *	%3 driver
  *	%4 port
- * %I adress of a global item ID (explorer switch /idlist)
+ * %I address of a global item ID (explorer switch /idlist)
  * %L seems to be %1 as long filename followed by the 8+3 variation
  * %S ???
  * %* all following parameters (see batfile)

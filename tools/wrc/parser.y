@@ -84,7 +84,7 @@
  *			- Parser now emits a warning when compiling win32
  *			  extensions in win16 mode.
  *
- * 16-Apr-1998 BS	- Raw data elements are now *optionally* seperated
+ * 16-Apr-1998 BS	- Raw data elements are now *optionally* separated
  *			  by commas. Read the comments in file sq2dq.l.
  *			- FIXME: there are instances in the source that rely
  *			  on the fact that int==32bit and pointers are int size.

@@ -145,10 +145,10 @@ code
         <title>Inline attachments with Outlook Express</title>
         <para>
           Outlook Express is notorious for mangleing attachements. Giving the
-          patch a <filename>.txt</filename> extention and attaching will solve
+          patch a <filename>.txt</filename> extension and attaching will solve
           the problem for most mailers including Outlook. Also, there is a way
           to enable Outlook Express send <filename>.diff</filename>
-          attachmnets.
+          attachments.
         </para>
         <para>
           You need following two things to make it work.

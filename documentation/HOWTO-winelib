@@ -422,7 +422,7 @@ typedef !!!struct!!! _TEB* P_TEB;
 extern inline P_TEB WINAPI NtCurrentTeb(void);
 <<
 
-Those conversions are semanticaly the same as above but g++ compile
+Those conversions are semantically the same as above but g++ compile
 them and generate proper code to invoke __stdcall kind of functions
 
 in some of Wine/obj_XXX.h files: Wine/obj_base.h - there are a lot of

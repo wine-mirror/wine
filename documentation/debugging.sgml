@@ -11,7 +11,7 @@
       <note>
         <para>
           It is possible to turn on and of debugging output from
-          within the debuger using the set command. Please see the
+          within the debugger using the set command. Please see the
           WineDbg Command Reference section for how to do this.
         </para>
       </note>

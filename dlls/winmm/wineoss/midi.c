@@ -453,7 +453,7 @@ void seqbuf_dump(void)
 }
 
 /**************************************************************************
- * 			midRecieveChar				[internal]
+ * 			midReceiveChar				[internal]
  */
 static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 {

@@ -693,7 +693,7 @@ static HMENU ShellView_BuildFileMenu(IShellViewImpl * This)
 	    mii.cbSize = sizeof(mii);
 	    mii.fMask = MIIM_TYPE | MIIM_ID | MIIM_STATE;
 
-	    if(TBSTYLE_SEP != Tools[i].bStyle) /* no seperator*/
+	    if(TBSTYLE_SEP != Tools[i].bStyle) /* no separator*/
 	    {
 	      mii.fType = MFT_STRING;
 	      mii.fState = MFS_ENABLED;

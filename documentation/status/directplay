@@ -87,7 +87,7 @@ TODO:
   - (done) Header files for DP4 and DPL3 
   - (done) Add stub functions for all DP4 and DPL3 interfaces
   - (done) Correct naming of the parameters for DP3 and DPL2
-  - (done) Seperate out DP and DPL into multiple .c files
+  - (done) Separate out DP and DPL into multiple .c files
   - (done) Allow CoCreateInstance to create the new interfaces
   - (started)Implement mutual exclusion on object data for existing functions
   - (done) Create and move to correct dll directories (dplay and dplayx)
@@ -123,7 +123,7 @@ TODO:
   - Need to implement lobby session spawning.
 
 ENHANCEMENTS:
-  - Improve footprint and realtime blocking by setting up a seperate data share
+  - Improve footprint and realtime blocking by setting up a separate data share
     between lobby application and client since there can be multiple apps per 
     client. Also get rid of offset dependency by making data offset independent 
     somehow.

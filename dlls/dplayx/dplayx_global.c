@@ -848,7 +848,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
 {
   LPDPLAYX_LOBBYDATA lpDplData;
 
-  /* Paramater check */
+  /* Parameter check */
   if( dwFlags || !lpConn )
   {
     ERR("invalid parameters.\n");
@@ -912,7 +912,7 @@ HRESULT DPLAYX_SetConnectionSettingsW
 {
   LPDPLAYX_LOBBYDATA lpDplData;
 
-  /* Paramater check */
+  /* Parameter check */
   if( dwFlags || !lpConn )
   {
     ERR("invalid parameters.\n");

@@ -317,7 +317,7 @@ HRESULT WINAPI CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 
     /* this function call OleLoadFromStream function for each moniker within this object */
 
-    /* read the a constant writen by CompositeMonikerImpl_Save (see CompositeMonikerImpl_Save for more details)*/
+    /* read the a constant written by CompositeMonikerImpl_Save (see CompositeMonikerImpl_Save for more details)*/
     res=IStream_Read(pStm,&constant,sizeof(DWORD),NULL);
 
     if (SUCCEEDED(res)&& constant!=3)

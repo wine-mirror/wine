@@ -141,7 +141,7 @@ HRESULT WINAPI SHLWAPI_17(IStream* lpStream, LPSHLWAPI_CLIST lpList)
  *
  * PARAMS
  *  lpStream  [I] Stream to read the list from
- *  lppList   [0] Pointer to recieve the new List
+ *  lppList   [0] Pointer to receive the new List
  *
  * RETURNS
  *  Success: S_OK
