@@ -194,210 +194,252 @@
       <title>How To Report A Bug</title>
 
       <para>
-        Written by (???)
-      </para>
-      <para>
-        (Originally extracted from <filename>wine/documentation/bugreports</filename>)
-      </para>
-
-      <para>
-        There are two ways for you to make a bug report. One uses a
-        simple perl script, and is recommended if you don't want to
-        spend a lot of time producing the report. It is designed for
-        use by just about anyone, from the newest of newbies to
-        advanced developers. You can also make a bug report the hard
-        way -- advanced developers will probably prefer this.
-      </para>
-      <para>
-        When using either approach please report the problem you found
-        along with any relevant information to
+        Please report all bugs along any relevant information to
 	<ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+        Please, search the Bugzilla database to check whether your problem
+        is already reported. If it is already reported please add
+        any relevant information to the original bug report.
       </para>
 
       <sect2>
-        <title>The Easy Way</title>
-        <orderedlist>
-          <listitem>
-            <para>
-              Your computer <emphasis>must</emphasis> have perl on it
-	      for this method to work. To find out if you have perl,
-	      run <command>which perl</command>. If it returns something like
-              <filename>/usr/bin/perl</filename>, you're in business.
-              Otherwise, skip on down to "The Hard Way". If you aren't
-              sure, just keep on going. When you try to run the
-              script, it will become <emphasis>very</emphasis> apparent
-	      if you don't have perl.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Change directory to <filename>&lt;dirs to
-                wine>/tools</filename>
-            </para>
-          </listitem>
-          <listitem>
-              <para>
-                Type in <command>./bug_report.pl</command> and follow
-                the directions.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Post the bug to
-	      <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
-	      Please, search Bugzilla database to check whether your problem is
-	      already found before posting a bug report.
-	      Include your own detailed description of the problem with
-	      relevant information. Attach the "Nice Formatted Report"
-	      to the submitted bug. Do not cut and paste the report
-	      in the bug description - it is pretty big.
-              Keep the full debug output in case it will be needed by
-	      Wine developers.
-            </para>
-          </listitem>
-        </orderedlist>
-      </sect2>
-
-      <sect2>
-        <title>The Hard Way</title>
+        <title>All Bug Reports</title>
         <para>
           Some simple advice on making your bug report more useful
           (and thus more likely to get answered and fixed):
         </para>
         <orderedlist>
           <listitem>
-            <para>Post as much information as possible.</para>
+          <para>Post as much relevant information as possible.</para>
+          <para>
+            This means we need more information than a simple "MS
+            Word crashes whenever I run it.  Do you know why?"
+            Include at least the following information:
+          </para>
+          <itemizedlist spacing="compact">
+            <listitem>
             <para>
-              This means we need more information than a simple "MS
-              Word crashes whenever I run it.  Do you know why?"
-              Include at least the following information:
+              Which version of Wine you're using (run <command>wine -v</command>)
             </para>
-            <itemizedlist spacing="compact">
-              <listitem>
-                <para>Version of Wine you're using (run <command>wine
-                    -v</command>)</para>
-              </listitem>
-              <listitem>
-                <para>
-                  Operating system you're using, what distribution (if
-                  any), and what version
-                </para>
-              </listitem>
-              <listitem>
-                <para>Compiler and version (run <command>gcc -v</command>)</para>
-              </listitem>
-              <listitem>
-                <para>Windows version, if used with Wine.
-		Mention if you don't use Windows</para>
-              </listitem>
-              <listitem>
-                <para>
-                  Program you're trying to run, its version number,
-                  and a URL for  where the program can be obtained (if
-                  available)
-                </para>
-              </listitem>
-              <listitem>
-                <para>Command line you used to start wine</para>
-              </listitem>
-              <listitem>
-                <para>
-                  Any other information you think may be relevant or
-                  helpful, such as X server version in case of X
-                  problems, libc version etc.
-                </para>
-              </listitem>
-            </itemizedlist>
+            </listitem>
+            <listitem>
+            <para>
+              The name of the Operating system you're using, what distribution (if
+              any), and what version. (i.e., Linux RedHat 7.2)
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+              Which compiler and version, (run <command>gcc -v</command>).
+              If you didn't compile wine then the name of the package and
+              where you got it from.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+              Windows version, if used with Wine.
+              Mention if you don't use Windows.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+              The name of the program you're trying to run, its version number,
+              and a URL for where the program can be obtained (if
+              available).
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+              The exact command line you used to start wine. 
+              (i.e., <command>wine "C:\Program Files\Test\program.exe"</command>).
+             </para>
+            </listitem>
+            <listitem>
+            <para>
+              The exact steps required to reproduce the bug.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+              Any other information you think may be relevant or
+              helpful, such as X server version in case of X
+              problems, libc version etc.
+            </para>
+            </listitem>
+          </itemizedlist>
           </listitem>
           <listitem>
-            <para>
-              Re-run the program with the <parameter>--debugmsg
-                +relay</parameter> option (i.e., <command>wine
-                --debugmsg +relay sol.exe</command>).
-            </para>
-            <para>
-              If Wine crashes while running your program, it is
-              important that we have this information to have a chance
-              at figuring out what is causing the crash.  This can put
-              out quite a lot (several MB) of information, though, so
-              it's best to output it to a file.  When the <prompt>Wine-dbg></prompt>
-              prompt appears, type <userinput>quit</userinput>.
-            </para>
-            <para>
-              You might want to try
-              <parameter>+relay,+snoop</parameter> instead of
-              <parameter>+relay</parameter>, but please note that
-              <parameter>+snoop</parameter> is pretty unstable and
-              often will crash earlier than a simple
-              <parameter>+relay</parameter>! If this is the case, then
-              please use <emphasis>only</emphasis> <parameter>+relay</parameter>!! A bug
-              report with a crash in <parameter>+snoop</parameter>
-              code is useless in most cases!
-	      You can also turn on other parameters, depending on the nature
-	      of the problem you are researching. See wine man page for full list
-	      of the parameters.
-            </para>
-            <para>
-              To get the trace output, use the following commands:
-            </para>
-
-            <variablelist>
-              <varlistentry>
-                <term>all shells:</term>
-                <listitem>
-                  <screen>
-<prompt>$ </prompt>echo quit | wine -debugmsg +relay [other_options] program_name >& filename.out;
-<prompt>$ </prompt>tail -n 100 filename.out > report_file
-                  </screen>
-                  <para>
-                    (This will print wine's debug messages only to the file and then
-                    auto-quit. It's probably a good idea to use this command, since wine
-                    prints out so many debug msgs that they flood the terminal, eating CPU.)
-                  </para>
-                </listitem>
-              </varlistentry>
-              <varlistentry>
-                <term>tcsh and other csh-like shells:</term>
-                <listitem>
-                  <screen>
-<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name |& tee filename.out;
-<prompt>$ </prompt>tail -100 filename.out > report_file
-                  </screen>
-                </listitem>
-              </varlistentry>
-              <varlistentry>
-                <term>bash and other sh-like shells:</term>
-                <listitem>
-                  <screen>
-<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out;
-<prompt>$ </prompt>tail -100 filename.out > report_file
-                  </screen>
-                </listitem>
-              </varlistentry>
-            </variablelist>
-            <para>
-              <filename>report_file</filename> will now contain the
-              last hundred lines of the debugging output, including
-              the register dump and backtrace, which are the most
-              important pieces of information.  Please do not delete
-              this part, even if you don't understand what it means.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Post the bug to <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
-              Please, search the Bugzilla database to check whether your problem
-              is already reported. If it is already reported attach the bug report
-              and add any other relevant information to the original bug report.
-            </para>
-            <para>
-              In your post, include all of the information from part
-              1), and attach to the bug the output file in part 2).
-              If you do this, your chances of receiving some sort of
-              helpful response should be very good.
-            </para>
+          <para>
+            Re-run the program with the <parameter>--debugmsg
+            +relay</parameter> option (i.e., <command>wine
+            --debugmsg +relay sol.exe</command>).
+          </para>
+          <para>
+            This will output additional information at the console 
+            that may be helpfull in in debugging the program. It also
+            slows the execution of program. There are some cases where 
+            the bug seems to dissappear when <parameter> +relay 
+            </parameter> is used. Please mention that in the bug report.
+          </para>
           </listitem>
         </orderedlist>
+      </sect2>
+      <sect2>
+        <title>Crashes</title>
+        <para>
+           If Wine crashes while running your program, it is
+           important that we have this information to have a chance
+           at figuring out what is causing the crash.  This can put
+           out quite a lot (several MB) of information, though, so
+           it's best to output it to a file.  When the <prompt>Wine-dbg></prompt>
+           prompt appears, type <userinput>quit</userinput>.
+        </para>
+        <para>
+           You might want to try
+           <parameter>+relay,+snoop</parameter> instead of
+           <parameter>+relay</parameter>, but please note that
+           <parameter>+snoop</parameter> is pretty unstable and
+           often will crash earlier than a simple
+           <parameter>+relay</parameter>! If this is the case, then
+           please use <emphasis>only</emphasis> <parameter>+relay</parameter>!!
+           A bug report with a crash in <parameter>+snoop</parameter>
+           code is useless in most cases!
+           You can also turn on other parameters, depending on the nature
+           of the problem you are researching. See wine man page for full list
+           of the parameters.
+         </para>
+         <para>
+           To get the trace output, use one of the following methods:
+         </para>
+         <sect3>
+           <title>The Easy Way</title>
+           <orderedlist>
+             <listitem>
+             <para>
+               This method is meant to allow even a total novice to
+               submit a relevent trace log in the event of a crash.
+             </para>
+             <para>
+               Your computer <emphasis>must</emphasis> have perl on it
+               for this method to work. To find out if you have perl,
+               run <command>which perl</command>. If it returns something like
+               <filename>/usr/bin/perl</filename>, you're in business.
+               Otherwise, skip on down to "The Hard Way". If you aren't
+               sure, just keep on going. When you try to run the
+               script, it will become <emphasis>very</emphasis> apparent
+	       if you don't have perl.
+             </para>
+             </listitem>
+             <listitem>
+             <para>
+               Change directory to <filename>&lt;dirs to wine>/tools</filename>
+             </para>
+             </listitem>
+             <listitem>
+             <para>
+               Type in <command>./bug_report.pl</command> and follow
+               the directions.
+             </para>
+             </listitem>
+             <listitem>
+             <para>
+               Post the bug to
+               <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+               Please, search Bugzilla database to check whether your problem is
+               already found before posting a bug report.
+               Include your own detailed description of the problem with
+               relevant information. Attach the "Nice Formatted Report"
+               to the submitted bug. Do not cut and paste the report
+               in the bug description - it is pretty big.
+               Keep the full debug output in case it will be needed by
+               Wine developers.
+             </para>
+             </listitem>
+           </orderedlist>
+         </sect3>
+         <sect3>
+           <title>The Hard Way</title>
+           <para>
+             It is likely that only the last 100 or so lines of the
+             trace are nessesary to find out where the program crashes. 
+             In order to get those last 100 lines we need to do the following
+           </para>
+           <orderedlist>
+             <listitem>
+             <para>
+               Redirect all the output of <parameter> -debugmsg </parameter>
+               to a file.
+             </para>
+             </listitem>
+             <listitem>
+             <para>
+               Separate the last 100 lines to another file using
+               <command> tail </command>.
+             </para>
+             </listitem>
+           </orderedlist>
+           <para>
+             This can be done using one of the following methods.
+           </para>
+           <variablelist>
+             <varlistentry>
+             <term>all shells:</term>
+             <listitem>
+             <screen>
+<prompt>$ </prompt>echo quit | wine -debugmsg +relay [other_options] program_name >& filename.out;
+<prompt>$ </prompt>tail -n 100 filename.out > report_file
+             </screen>
+             <para>
+               (This will print wine's debug messages only to the file 
+               and then auto-quit. It's probably a good idea to use this 
+               command, since wine prints out so many debug msgs that 
+               they flood the terminal, eating CPU cycles.)
+             </para>
+             </listitem>
+             </varlistentry>
+             <varlistentry>
+             <term>tcsh and other csh-like shells:</term>
+             <listitem>
+             <screen>
+<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name |& tee filename.out;
+<prompt>$ </prompt>tail -100 filename.out > report_file
+             </screen>
+             </listitem>
+             </varlistentry>
+             <varlistentry>
+             <term>bash and other sh-like shells:</term>
+             <listitem>
+             <screen>
+<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out;
+<prompt>$ </prompt>tail -100 filename.out > report_file
+             </screen>
+             </listitem>
+             </varlistentry>
+          </variablelist>
+          <para>
+            <filename>report_file</filename> will now contain the
+            last hundred lines of the debugging output, including
+            the register dump and backtrace, which are the most
+            important pieces of information.  Please do not delete
+            this part, even if you don't understand what it means.
+          </para>
+          <para>
+            Post the bug to 
+            <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+            You need to attach the output file <filename>report_file</filename>
+            from part 2). Along with the the relevant information 
+            used to create it. Do not cut and paste the report
+            in the bug description - it is pretty big and it will
+            make a mess of the bug report.
+            If you do this, your chances of receiving some sort of
+            helpful response should be very good.
+          </para>
+          <para>
+            Please, search the Bugzilla database to check whether your problem
+            is already reported. If it is already reported attach the
+            output file <filename>report_file</filename> to the original
+            bug report and add any other relevant information.
+          </para>
+        </sect3>
       </sect2>
     </sect1>
  </chapter>
