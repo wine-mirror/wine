@@ -788,8 +788,8 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 	{
 	  /* If the dlgproc has returned FALSE (indicating handling of keyboard focus)
 	     but the focus has not changed, set the focus where we expect it. */
-	  if ( GetFocus() == hwndPreInitFocus )
-	    SetFocus( dlgInfo->hwndFocus );
+            if ( (wndPtr->dwStyle & WS_VISIBLE) && ( GetFocus() == hwndPreInitFocus ) )
+                SetFocus( dlgInfo->hwndFocus );
 	}
 
 	if (template.style & WS_VISIBLE && !(wndPtr->dwStyle & WS_VISIBLE)) 
