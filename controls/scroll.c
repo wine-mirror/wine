@@ -81,12 +81,6 @@ static HBITMAP hRgArrowI;
   /* Scroll timer id */
 #define SCROLL_TIMER   0
 
-/* Determine if the info is valid */
-#define SCROLL_INFO_INVALID(info) \
-    ((info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) || \
-    ((info->cbSize != sizeof(*info)) && \
-    (info->cbSize != sizeof(*info) - sizeof(info->nTrackPos))))
-
   /* Scroll-bar hit testing */
 enum SCROLL_HITTEST
 {
@@ -142,6 +136,19 @@ const struct builtin_class_descr SCROLL_builtin_class =
     IDC_ARROWA,             /* cursor */
     0                       /* brush */
 };
+    
+/***********************************************************************
+ *           SCROLL_ScrollInfoValid
+ *
+ *  Determine if the supplied SCROLLINFO struct is valid.
+ */
+inline static BOOL SCROLL_ScrollInfoValid(
+LPSCROLLINFO info /* [in] The SCROLLINFO struct to be tested */)
+{
+    return !(info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)
+        || (info->cbSize != sizeof(*info)
+            && info->cbSize != sizeof(*info) - sizeof(info->nTrackPos)));
+}
 
 
 /***********************************************************************
@@ -889,25 +896,32 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, INT nBar,
 /***********************************************************************
  *           SCROLL_HandleKbdEvent
  *
- * Handle a keyboard event (only for SB_CTL scrollbars).
+ * Handle a keyboard event (only for SB_CTL scrollbars with focus).
  */
-static void SCROLL_HandleKbdEvent( HWND hwnd, WPARAM wParam )
+static void SCROLL_HandleKbdEvent(
+HWND hwnd /* [in] Handle of window with scrollbar(s) */,
+WPARAM wParam /* [in] Variable input including enable state */,
+LPARAM lParam /* [in] Variable input including input point */)
 {
-    WPARAM msg;
+    TRACE("hwnd=%p wParam=%d lParam=%ld\n", hwnd, wParam, lParam);
+
+    /* hide caret on first KEYDOWN to prevent flicker */
+    if ((lParam & PFD_DOUBLEBUFFER_DONTCARE) == 0)
+        HideCaret(hwnd);
 
     switch(wParam)
     {
-    case VK_PRIOR: msg = SB_PAGEUP; break;
-    case VK_NEXT:  msg = SB_PAGEDOWN; break;
-    case VK_HOME:  msg = SB_TOP; break;
-    case VK_END:   msg = SB_BOTTOM; break;
-    case VK_UP:    msg = SB_LINEUP; break;
-    case VK_DOWN:  msg = SB_LINEDOWN; break;
+    case VK_PRIOR: wParam = SB_PAGEUP; break;
+    case VK_NEXT:  wParam = SB_PAGEDOWN; break;
+    case VK_HOME:  wParam = SB_TOP; break;
+    case VK_END:   wParam = SB_BOTTOM; break;
+    case VK_UP:    wParam = SB_LINEUP; break;
+    case VK_DOWN:  wParam = SB_LINEDOWN; break;
     default: return;
     }
-    SendMessageW( GetParent(hwnd),
-                  (GetWindowLongA( hwnd, GWL_STYLE ) & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
-                  msg, (LPARAM)hwnd );
+    SendMessageW(GetParent(hwnd),
+        ((GetWindowLongA( hwnd, GWL_STYLE ) & SBS_VERT) ?
+            WM_VSCROLL : WM_HSCROLL), wParam, (LPARAM)hwnd);
 }
 
 
@@ -1198,6 +1212,47 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
 }
 
 
+/***********************************************************************
+ *           SCROLL_CreateScrollBar
+ *
+ *  Create a scroll bar
+ */
+static void SCROLL_CreateScrollBar(
+HWND hwnd /* [in] Handle of window with scrollbar(s) */,
+LPCREATESTRUCTW lpCreate /* [in] The style and place of the scroll bar */)
+{
+    POINT pos, size;
+    LPSCROLLBAR_INFO info = SCROLL_GetScrollBarInfo(hwnd, SB_CTL);
+    if (!info) return;
+
+    TRACE("hwnd=%p lpCreate=%p\n", hwnd, lpCreate);
+
+    if (lpCreate->style & WS_DISABLED)
+    {
+        info->flags = ESB_DISABLE_BOTH;
+        TRACE("Created WS_DISABLED scrollbar\n");
+    }
+
+    /* copy the desired positions and size */
+    pos.x = lpCreate->x; pos.y = lpCreate->y;
+    size.x = lpCreate->cx; size.y = lpCreate->cy;
+
+    /* move position based on style */
+    if (lpCreate->style & SBS_RIGHTALIGN)
+        pos.x += size.x - GetSystemMetrics(SM_CXVSCROLL) - 1;
+    else if (lpCreate->style & SBS_BOTTOMALIGN)
+        pos.y += size.y - GetSystemMetrics(SM_CYHSCROLL) - 1;
+
+    /* change size based on style */
+    if (lpCreate->style & SBS_VERT)
+        size.x = GetSystemMetrics(SM_CXVSCROLL) + 1;
+    else
+        size.y = GetSystemMetrics(SM_CYHSCROLL) + 1;
+
+    MoveWindow(hwnd, pos.x, pos.y, size.x, size.y, FALSE);
+}
+
+
 /*************************************************************************
  *           SCROLL_GetScrollInfo
  *
@@ -1211,8 +1266,8 @@ LPSCROLLINFO info /* [in/out] (fMask specifies which values to retrieve) */)
     LPSCROLLBAR_INFO infoPtr;
 
     /* handle invalid data structure */
-    if (SCROLL_INFO_INVALID(info)
-        || (!(infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar))))
+    if (!SCROLL_ScrollInfoValid(info)
+        || !(infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar)))
             return FALSE;
 
     /* fill in the desired scroll info structure */
@@ -1277,43 +1332,9 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     switch(message)
     {
     case WM_CREATE:
-        {
-	    SCROLLBAR_INFO *infoPtr;
-            CREATESTRUCTW *lpCreat = (CREATESTRUCTW *)lParam;
-
-	    if (!(infoPtr = SCROLL_GetScrollBarInfo( hwnd, SB_CTL ))) return -1;
-	    if (lpCreat->style & WS_DISABLED)
-	    {
-		TRACE("Created WS_DISABLED scrollbar\n");
-		infoPtr->flags = ESB_DISABLE_BOTH;
-	    }
-
-	    if (lpCreat->style & SBS_VERT)
-            {
-                if (lpCreat->style & SBS_LEFTALIGN)
-                    MoveWindow( hwnd, lpCreat->x, lpCreat->y,
-                                  GetSystemMetrics(SM_CXVSCROLL)+1, lpCreat->cy, FALSE );
-                else if (lpCreat->style & SBS_RIGHTALIGN)
-                    MoveWindow( hwnd,
-                                  lpCreat->x+lpCreat->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
-                                  lpCreat->y,
-                                  GetSystemMetrics(SM_CXVSCROLL)+1, lpCreat->cy, FALSE );
-            }
-            else  /* SBS_HORZ */
-            {
-                if (lpCreat->style & SBS_TOPALIGN)
-                    MoveWindow( hwnd, lpCreat->x, lpCreat->y,
-                                  lpCreat->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
-                else if (lpCreat->style & SBS_BOTTOMALIGN)
-                    MoveWindow( hwnd,
-                                  lpCreat->x,
-                                  lpCreat->y+lpCreat->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
-                                  lpCreat->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
-            }
-        }
+        SCROLL_CreateScrollBar(hwnd, (LPCREATESTRUCTW)lParam);
         if (!hUpArrow) SCROLL_LoadBitmaps();
-        TRACE("ScrollBar creation, hwnd=%p\n", hwnd );
-        return 0;
+        break;
 
     case WM_ENABLE:
         {
@@ -1345,12 +1366,8 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         }
         break;
 
-    /* if key event is received, the scrollbar has the focus */
     case WM_KEYDOWN:
-        /* hide caret on first KEYDOWN to prevent flicker */
-        if ((lParam & 0x40000000)==0)
-            HideCaret(hwnd);
-        SCROLL_HandleKbdEvent( hwnd, wParam );
+        SCROLL_HandleKbdEvent(hwnd, wParam, lParam);
         break;
 
     case WM_KEYUP:
