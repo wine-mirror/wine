@@ -880,7 +880,7 @@ X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
     XSetForeground( gdi_display, physDev->gc, pixel );
     XSetFunction( gdi_display, physDev->gc, GXcopy );
     XDrawPoint( gdi_display, physDev->drawable, physDev->gc,
-                physDev->org.x + pt.x, physDev->org.y + y );
+                physDev->org.x + pt.x, physDev->org.y + pt.y );
     wine_tsx11_unlock();
 
     /* Update the DIBSection from the pixmap */
