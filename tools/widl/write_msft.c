@@ -1179,7 +1179,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     unsigned int funckind = 1 /* FUNC_PUREVIRTUAL */, invokekind = 1 /* INVOKE_FUNC */;
     int help_context = 0, help_string_context = 0, help_string_offset = -1;
 
-    id = ((0x6000 | typeinfo->typeinfo->cImplTypes) << 16) | index;
+    id = ((0x6000 | (typeinfo->typeinfo->datatype2 & 0xffff)) << 16) | index;
 
     chat("add_func_desc(%p,%d)\n", typeinfo, index);
 
@@ -1580,12 +1580,19 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
     return msft_typeinfo;
 }
 
-
 static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 {
     int idx = 0;
-    func_t *cur = interface->funcs;
+    func_t *func;
+    type_t *ref;
     msft_typeinfo_t *msft_typeinfo;
+    int num_parents = 0, num_funcs = 0;
+
+    /* midl adds the parent interface first, unless the parent itself
+       has no parent (i.e. it stops before IUnknown). */
+
+    if(interface->ref && interface->ref->ref && interface->ref->typelib_idx == -1)
+        add_interface_typeinfo(typelib, interface->ref);
 
     interface->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_INTERFACE, interface->name, interface->attrs,
@@ -1596,11 +1603,27 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     if(interface->ref)
         add_impl_type(msft_typeinfo, interface->ref);
 
-    while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while(cur) {
-        if(add_func_desc(msft_typeinfo, cur, idx) == S_OK)
+    /* count the number of inherited interfaces and non-local functions */
+    for(ref = interface->ref; ref; ref = ref->ref) {
+        num_parents++;
+        for(func = ref->funcs; func; func = NEXT_LINK(func)) {
+            attr_t *attr;
+            for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr))
+                if(attr->type == ATTR_LOCAL)
+                    break;
+            if(!attr)
+                num_funcs++;
+        }
+    }
+    msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
+    msft_typeinfo->typeinfo->cbSizeVft = num_funcs * 4;
+
+    func = interface->funcs;
+    while(NEXT_LINK(func)) func = NEXT_LINK(func);
+    while(func) {
+        if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
             idx++;
-        cur = PREV_LINK(cur);
+        func = PREV_LINK(func);
     }
 }
 
@@ -1985,7 +2008,7 @@ int create_msft_typelib(typelib_t *typelib)
     set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
 
-    for(entry = typelib->entry; NEXT_LINK(entry); entry = NEXT_LINK(entry))
+    for(entry = typelib->entry; entry && NEXT_LINK(entry); entry = NEXT_LINK(entry))
         ;
 
     for( ; entry; entry = PREV_LINK(entry))
