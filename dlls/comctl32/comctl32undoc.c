@@ -227,7 +227,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	   hdpa1->nItemCount, hdpa2->nItemCount);
 
 
-    /* preliminary hack - simply append the pointer list hdpa2 to hdpa1*/
+    /* preliminary hack - simply append the pointer list hdpa2 to hdpa1 */
     for (nCount = 0; nCount < hdpa2->nItemCount; nCount++)
 	DPA_InsertPtr (hdpa1, hdpa1->nItemCount + 1, hdpa2->ptrs[nCount]);
 
@@ -822,7 +822,7 @@ Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
 
 /**************************************************************************
  * The DSA-API is a set of functions to create and manipulate arrays of
- * fix sized memory blocks. These arrays can store any kind of data
+ * fixed-size memory blocks. These arrays can store any kind of data
  * (strings, icons...).
  */
 
@@ -834,7 +834,7 @@ Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
  *     nGrow [I] number of elements by which the array grows when it is filled
  *
  * RETURNS
- *     Success: pointer to a array control structure. use this like a handle.
+ *     Success: pointer to an array control structure. Use this like a handle.
  *     Failure: NULL
  */
 
@@ -947,7 +947,7 @@ DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
     
     TRACE("-- ret=%p\n", pSrc);
 
-    return  pSrc;
+    return pSrc;
 }
 
 
@@ -1042,7 +1042,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	    TRACE("-- %d=%p [%s]\n", i, p, debugstr_a((char*)p));
     }
    
-    /* when nIndex > nItemCount then append */
+    /* when nIndex >= nItemCount then append */
     if (nIndex >= hdsa->nItemCount)
  	nIndex = hdsa->nItemCount;
 
@@ -1076,7 +1076,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	   lpDest, pSrc, hdsa->nItemSize);
     memmove (lpDest, pSrc, hdsa->nItemSize);
 
-    return hdsa->nItemCount;
+    return nIndex;
 }
 
 
