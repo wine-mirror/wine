@@ -304,7 +304,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
               lpTime->u.smpte.sec, lpTime->u.smpte.frame);
         break;
     default:
-        FIXME("Format %d not supported ! use TIME_BYTES !\n", lpTime->wType);
+        WARN("Format %d not supported, using TIME_BYTES !\n", lpTime->wType);
         lpTime->wType = TIME_BYTES;
         /* fall through */
     case TIME_BYTES:
