@@ -1,6 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 dnl                         <patra@itp1.physik.tu-berlin.de>
+dnl Ported to autoconf 2.5x by bero@redhat.com
 AC_REVISION([configure.in 1.00])
 AC_INIT(controls/edit.c)		
 AC_CONFIG_HEADER(include/config.h)
@@ -107,18 +108,18 @@ dnl Check for -lmmap for OS/2
 AC_CHECK_LIB(mmap,mmap)
 dnl Check for openpty
 AC_CHECK_FUNCS(openpty,,
-	AC_CHECK_LIB(util,openpty,
-		AC_DEFINE(HAVE_OPENPTY)
-		LIBS="$LIBS -lutil"
-	))
+	[AC_CHECK_LIB(util,openpty,
+		[AC_DEFINE(HAVE_OPENPTY)
+		LIBS="$LIBS -lutil"]
+	)])
 
 AC_CHECK_HEADERS(dlfcn.h,
-    AC_CHECK_FUNCS(dlopen,,
-        AC_CHECK_LIB(dl,dlopen,
-                     AC_DEFINE(HAVE_DLOPEN)
-                     LIBS="$LIBS -ldl",
-                     LIBEXT="a")
- 	),
+    [AC_CHECK_FUNCS(dlopen,,
+        [AC_CHECK_LIB(dl,dlopen,
+                     [AC_DEFINE(HAVE_DLOPEN,1,[Define if you have dlopen])
+                     LIBS="$LIBS -ldl"],
+                     LIBEXT="a")]
+ 	)],
  	LIBEXT="a"
     )
 
@@ -158,7 +159,8 @@ then
         dnl NOTE: autoconf does not allow commas inside the third 
         dnl       parameter to AC_CHECK_HEADERS, due to some quoting
         dnl       magic it does.
-	echo "Redhat		:	xpm xpm-devel"
+	echo "Red Hat < 7.1	:	xpm xpm-devel"
+	echo "Red Hat >= 7.1	:	XFree86-devel"
 	echo "Caldera OpenLinux	:	xpm xpm-devel xpm-devel-static"
 	echo "SuSE		:	xpm"
 	echo "Debian/Corel Linux: 	xpm4g xpm4g-dev"
@@ -278,7 +280,7 @@ then
 	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
 	then
 	    dnl Check for some problems due to old Mesa versions
-	    AC_CACHE_CHECK("for up-to-date OpenGL version", wine_cv_opengl_version_OK,
+	    AC_CACHE_CHECK([for up-to-date OpenGL version], wine_cv_opengl_version_OK,
 	      AC_TRY_COMPILE(
 		[#include <GL/gl.h>],
 		[GLenum test = GL_UNSIGNED_SHORT_5_6_5;],
@@ -288,7 +290,7 @@ then
             )
 
 	    dnl Check for the thread-safety of the OpenGL library
-	    AC_CACHE_CHECK("for thread-safe OpenGL version", 
+	    AC_CACHE_CHECK([for thread-safe OpenGL version], 
 			   wine_cv_opengl_version_threadsafe,
               [saved_libs=$LIBS
 	       LIBS="$X_LIBS -lGL"
@@ -319,8 +321,8 @@ then
 
 			if test $ac_cv_lib_GL_glXGetProcAddressARB = "yes"
 			then
-			       AC_CACHE_CHECK("for OpenGL extension functions prototypes", wine_cv_extension_prototypes,
-			          AC_TRY_COMPILE([#include <GL/gl.h>
+			       AC_CACHE_CHECK([for OpenGL extension functions prototypes], wine_cv_extension_prototypes,
+			          [AC_TRY_COMPILE([#include <GL/gl.h>
 				  		  #ifdef HAVE_GL_GLEXT_H
 						  # include <GL/glext.h>
 						  #endif
@@ -328,7 +330,7 @@ then
 						 [PFNGLCOLORTABLEEXTPROC test_proc;],
 						 [wine_cv_extension_prototypes="yes"],
 						 [wine_cv_extension_prototypes="no"]
-				  )
+				  )]
 				)
 				if test $wine_cv_extension_prototypes = "yes"
 				then
@@ -340,8 +342,8 @@ then
 		fi
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,gluLookAt,
-			     X_PRE_LIBS="$X_PRE_LIBS -lGLU"
-			     GLU32FILES='$(GLU32FILES)'
+			     [X_PRE_LIBS="$X_PRE_LIBS -lGLU"
+			     GLU32FILES='$(GLU32FILES)']
 			     ,,
 			     $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
 		)
@@ -362,7 +364,7 @@ if test "$CURSES" = "yes"
 then
     AC_CHECK_HEADERS(ncurses.h,
         AC_CHECK_LIB(ncurses,waddch),
-        AC_CHECK_HEADERS(curses.h,AC_CHECK_LIB(curses,waddch)))
+        [AC_CHECK_HEADERS(curses.h,[AC_CHECK_LIB(curses,waddch)])])
     AC_CHECK_FUNCS(getbkgd resizeterm)
 fi
 
@@ -370,10 +372,10 @@ CUPSLIBS=""
 dnl **** Check for CUPS ****
 wine_cv_warn_cups_h=no
 AC_CHECK_LIB(cups,cupsGetPPD,
-	AC_CHECK_HEADER(cups/cups.h,
-	    AC_DEFINE(HAVE_CUPS, 1, [Define if we have CUPS])
-	    CUPSLIBS="-lcups",
-            wine_cv_warn_cups_h=yes)
+	[AC_CHECK_HEADER(cups/cups.h,
+	    [AC_DEFINE(HAVE_CUPS, 1, [Define if we have CUPS])
+	    CUPSLIBS="-lcups"],
+            wine_cv_warn_cups_h=yes)]
 )
 AC_SUBST(CUPSLIBS)
 
@@ -420,7 +422,7 @@ AC_SUBST(FREETYPELIBS)
 AC_SUBST(FREETYPEINCL)
 
 dnl **** Check for parport (currently Linux only) ****
-AC_CACHE_CHECK("for parport header/ppdev.h", ac_cv_c_ppdev,
+AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
  AC_TRY_COMPILE(
    [#include <linux/ppdev.h>],
    [ioctl (1,PPCLAIM,0)],
@@ -433,7 +435,7 @@ then
 fi
 
 dnl **** Check for IPX (currently Linux only) ****
-AC_CACHE_CHECK("for GNU style IPX support", ac_cv_c_ipx_gnu,
+AC_CACHE_CHECK([for GNU style IPX support], ac_cv_c_ipx_gnu,
  AC_TRY_COMPILE(
    [#include <sys/socket.h>
     #include <netipx/ipx.h>],
@@ -448,7 +450,7 @@ fi
 
 if test "$ac_cv_c_ipx_gnu" = "no"
 then
- AC_CACHE_CHECK("for linux style IPX support", ac_cv_c_ipx_linux,
+ AC_CACHE_CHECK([for linux style IPX support], ac_cv_c_ipx_linux,
   AC_TRY_COMPILE(
     [#include <sys/socket.h>
      #include <asm/types.h>
@@ -466,7 +468,7 @@ fi
 dnl **** Check for Open Sound System ****
 AC_CHECK_HEADERS(sys/soundcard.h machine/soundcard.h soundcard.h, break)
 
-AC_CACHE_CHECK("for Open Sound System",
+AC_CACHE_CHECK([for Open Sound System],
 	ac_cv_c_opensoundsystem,
 	AC_TRY_COMPILE([
 	#if defined(HAVE_SYS_SOUNDCARD_H)
@@ -489,7 +491,7 @@ then
     AC_DEFINE(HAVE_OSS, 1, [Define if you have the Open Sound system])
 fi
 
-AC_CACHE_CHECK("for Open Sound System/MIDI interface",
+AC_CACHE_CHECK([for Open Sound System/MIDI interface],
 	ac_cv_c_opensoundsystem_midi,
 	AC_TRY_COMPILE([
 	#if defined(HAVE_SYS_SOUNDCARD_H)
@@ -517,7 +519,7 @@ if test "$ac_cv_prog_LN_S" = "ln -s"; then : ; else LN_S=cp ; fi
 
 dnl **** Check for broken glibc mmap64 ****
 
-AC_CACHE_CHECK( "whether mmap64 works defined as mmap", ac_cv_mmap64_works,
+AC_CACHE_CHECK( [whether mmap64 works defined as mmap], ac_cv_mmap64_works,
 	AC_TRY_RUN([
 		#define _FILE_OFFSET_BITS 64
 		#include <stdio.h>
@@ -559,7 +561,7 @@ dnl **** Check for gcc strength-reduce bug ****
 if test "x${GCC}" = "xyes"
 then
   CFLAGS="$CFLAGS -Wall"
-  AC_CACHE_CHECK( "for gcc strength-reduce bug", ac_cv_c_gcc_strength_bug,
+  AC_CACHE_CHECK( [for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
                   AC_TRY_RUN([
 int	L[[4]] = {0,1,2,3};
 int main(void) {
@@ -581,7 +583,7 @@ int main(void) {
   fi
 
   dnl Check for -mpreferred-stack-boundary
-  AC_CACHE_CHECK("for gcc -mpreferred-stack-boundary=2 support",
+  AC_CACHE_CHECK([for gcc -mpreferred-stack-boundary=2 support],
                  ac_cv_c_gcc_stack_boundary,
   [saved_cflags=$CFLAGS
   CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
@@ -596,7 +598,7 @@ fi
 
 dnl **** Check if we need to place .type inside a .def directive ****
 
-AC_CACHE_CHECK("whether .type must sit inside a .def directive",
+AC_CACHE_CHECK([whether .type must sit inside a .def directive],
 	       ac_cv_c_type_in_def,
 [saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
@@ -615,7 +617,7 @@ fi
  
 dnl **** Check for underscore on external symbols ****
 
-AC_CACHE_CHECK("whether external symbols need an underscore prefix",
+AC_CACHE_CHECK([whether external symbols need an underscore prefix],
                ac_cv_c_extern_prefix,
 [saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
@@ -635,7 +637,7 @@ fi
 
 dnl **** Check for .string in assembler ****
 
-AC_CACHE_CHECK("whether assembler accepts .string",
+AC_CACHE_CHECK([whether assembler accepts .string],
                ac_cv_c_asm_string,
 [saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
@@ -655,7 +657,7 @@ LDSHARED=""
 LDDLLFLAGS=""
 if test "$LIBEXT" = "so"
 then
-  AC_CACHE_CHECK("whether we can build a GNU style ELF dll",
+  AC_CACHE_CHECK([whether we can build a GNU style ELF dll],
                  ac_cv_c_dll_gnuelf,
   [saved_cflags=$CFLAGS
   CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
@@ -723,7 +725,7 @@ dnl
 dnl For cross-compiling we blindly assume that libc is reentrant. This is
 dnl ok since non-reentrant libc is quite rare (mostly old libc5 versions).
 
-AC_DEFUN(WINE_CHECK_ERRNO,
+AC_DEFUN([WINE_CHECK_ERRNO],
 [
   AC_CACHE_CHECK(for reentrant libc: $1, wine_cv_libc_r_$1,
   [AC_TRY_RUN([int myerrno = 0;
@@ -765,7 +767,7 @@ dnl is possible with the --without-reentrant-x option.
 
 if test "$have_x" = "yes" -a "$wine_cv_libc_reentrant" != "no"
 then
-AC_CACHE_CHECK( "for reentrant X libraries", wine_cv_x_reentrant,
+AC_CACHE_CHECK( [for reentrant X libraries], wine_cv_x_reentrant,
   [ if test "x$with_reentrant_x" = "xno" 
     then
         wine_cv_x_reentrant=no
@@ -908,7 +910,7 @@ AC_C_INLINE()
 AC_TYPE_SIZE_T()
 AC_CHECK_SIZEOF(long long,0)
 
-AC_CACHE_CHECK("whether linux/input.h is for real",
+AC_CACHE_CHECK([whether linux/input.h is for real],
 	wine_cv_linux_input_h,
 	AC_TRY_COMPILE([
 	    #include <linux/input.h>
@@ -929,7 +931,7 @@ AC_CACHE_CHECK("whether linux/input.h is for real",
     fi
 
    
-AC_CACHE_CHECK("whether we can use re-entrant gethostbyname_r Linux style",
+AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
    	wine_cv_linux_gethostbyname_r_6,
 	AC_TRY_COMPILE([
 #include <netdb.h>
@@ -958,7 +960,7 @@ AC_CACHE_CHECK("whether we can use re-entrant gethostbyname_r Linux style",
 
 if test "$ac_cv_header_linux_joystick_h" = "yes"
 then
-   AC_CACHE_CHECK("whether linux/joystick.h uses the Linux 2.2+ API",
+   AC_CACHE_CHECK([whether linux/joystick.h uses the Linux 2.2+ API],
    	wine_cv_linux_joystick_22_api,
 	AC_TRY_COMPILE([
 	#include <sys/ioctl.h>
@@ -985,7 +987,7 @@ dnl **** statfs checks ****
 
 if test "$ac_cv_header_sys_vfs_h" = "yes"
 then
-    AC_CACHE_CHECK( "whether sys/vfs.h defines statfs",
+    AC_CACHE_CHECK( [whether sys/vfs.h defines statfs],
 		    wine_cv_sys_vfs_has_statfs,
 	AC_TRY_COMPILE([
 	#include <sys/types.h>
@@ -1009,7 +1011,7 @@ fi
 
 if test "$ac_cv_header_sys_statfs_h" = "yes"
 then
-    AC_CACHE_CHECK( "whether sys/statfs.h defines statfs",
+    AC_CACHE_CHECK( [whether sys/statfs.h defines statfs],
 		    wine_cv_sys_statfs_has_statfs,
 	AC_TRY_COMPILE([
 	#include <sys/types.h>
@@ -1031,7 +1033,7 @@ fi
 
 if test "$ac_cv_header_sys_mount_h" = "yes"
 then
-    AC_CACHE_CHECK( "whether sys/mount.h defines statfs",
+    AC_CACHE_CHECK( [whether sys/mount.h defines statfs],
 		    wine_cv_sys_mount_has_statfs,
 	AC_TRY_COMPILE([
 	#include <sys/types.h>
@@ -1053,7 +1055,7 @@ fi
 
 dnl **** FIXME: what about mixed cases, where we need two of them? ***
 
-AC_CACHE_CHECK( "for statfs.f_bfree", wine_cv_statfs_bfree,
+AC_CACHE_CHECK( [for statfs.f_bfree], wine_cv_statfs_bfree,
   [ if test "x$statfs_bfree" = "xno"
     then
         wine_cv_statfs_bfree=no
@@ -1086,7 +1088,7 @@ then
   AC_DEFINE(STATFS_HAS_BFREE, 1, [Define if the struct statfs has the member bfree])
 fi
 
-AC_CACHE_CHECK( "for statfs.f_bavail", wine_cv_statfs_bavail,
+AC_CACHE_CHECK( [for statfs.f_bavail], wine_cv_statfs_bavail,
   [ if test "x$statfs_bavail" = "xno"
     then
         wine_cv_statfs_bavail=no
@@ -1121,7 +1123,7 @@ fi
 
 dnl *** check for file descriptor passing with msg_accrights
 
-AC_CACHE_CHECK("for msg_accrights in struct msghdr", ac_cv_c_msg_accrights,
+AC_CACHE_CHECK([for msg_accrights in struct msghdr], ac_cv_c_msg_accrights,
  AC_TRY_COMPILE([#include <sys/types.h>
 #include <sys/socket.h>],[struct msghdr hdr; hdr.msg_accrights=0],
                 ac_cv_c_msg_accrights="yes", ac_cv_c_msg_accrights="no"))
@@ -1132,7 +1134,7 @@ fi
 
 dnl *** Check for the sa_len member in struct sockaddr
 
-AC_CACHE_CHECK("for sa_len in struct sockaddr", ac_cv_c_sockaddr_sa_len,
+AC_CACHE_CHECK([for sa_len in struct sockaddr], ac_cv_c_sockaddr_sa_len,
  AC_TRY_COMPILE([#include <sys/types.h>
 #include <sys/socket.h>
 ], [static struct sockaddr addr; addr.sa_len = 1],
@@ -1144,7 +1146,7 @@ fi
 
 dnl *** Check for the sun_len member in struct sockaddr_un
 
-AC_CACHE_CHECK("for sun_len in struct sockaddr_un", ac_cv_c_sockaddr_sun_len,
+AC_CACHE_CHECK([for sun_len in struct sockaddr_un], ac_cv_c_sockaddr_sun_len,
  AC_TRY_COMPILE([#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>], [static struct sockaddr_un addr; addr.sun_len = 1],
@@ -1156,7 +1158,7 @@ fi
 
 dnl *** check for the need to define __i386__
 
-AC_CACHE_CHECK("whether we need to define __i386__",ac_cv_cpp_def_i386,
+AC_CACHE_CHECK([whether we need to define __i386__],ac_cv_cpp_def_i386,
  AC_EGREP_CPP(yes,[#if (defined(i386) || defined(__i386)) && !defined(__i386__)
 yes
 #endif],
