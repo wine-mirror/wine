@@ -136,6 +136,7 @@ typedef struct
     DWORD    dwItemCustDraw;  /* CDRF_ response (w/o TBCDRF_) from ITEMPREP */
     DWORD    dwItemCDFlag;    /* TBCDRF_ flags from last ITEMPREPAINT    */
     SIZE     szPadding;       /* padding values around button */
+    INT      iListGap;        /* default gap between text and image for toolbar with list style */
     HFONT    hDefaultFont;
     HFONT    hFont;           /* text font */
     HIMAGELIST himlInt;         /* image list created internally */
@@ -197,16 +198,20 @@ typedef enum
 #define DDARROW_WIDTH      11
 #define ARROW_HEIGHT       3
 
-/* gap between edge of button and image with TBSTYLE_LIST */
-#define LIST_IMAGE_OFFSET  3
-/* gap between bitmap and text (always present) */
-#define LIST_TEXT_OFFSET   2
+/* gap between border of button and text/image */
+#define OFFSET_X 1
+#define OFFSET_Y 1
 /* how wide to treat the bitmap if it isn't present */
 #define LIST_IMAGE_ABSENT_WIDTH 2
 
 #define TOOLBAR_GetInfoPtr(hwnd) ((TOOLBAR_INFO *)GetWindowLongA(hwnd,0))
 #define TOOLBAR_HasText(x, y) (TOOLBAR_GetText(x, y) ? TRUE : FALSE)
 #define TOOLBAR_HasDropDownArrows(exStyle) ((exStyle & TBSTYLE_EX_DRAWDDARROWS) ? TRUE : FALSE)
+
+static inline int TOOLBAR_GetListTextOffset(TOOLBAR_INFO *infoPtr, INT iListGap)
+{
+    return GetSystemMetrics(SM_CXEDGE) + iListGap - infoPtr->szPadding.cx/2;
+}
 
 /* Used to find undocumented extended styles */
 #define TBSTYLE_EX_ALL (TBSTYLE_EX_DRAWDDARROWS | \
@@ -846,12 +851,12 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
     /* Center the bitmap horizontally and vertically */
     if (dwStyle & TBSTYLE_LIST)
-        rcBitmap.left += LIST_IMAGE_OFFSET;
+        rcBitmap.left += GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
     else
         rcBitmap.left+=(infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2;
 
     if(lpText)
-        rcBitmap.top+=2; /* this looks to be the correct value from vmware comparison - cmm */
+        rcBitmap.top+= GetSystemMetrics(SM_CYEDGE) + OFFSET_Y;
     else
         rcBitmap.top+=(infoPtr->nButtonHeight - infoPtr->nBitmapHeight) / 2;
 
@@ -863,20 +868,19 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
     /* draw text */
     if (lpText) {
-
-	InflateRect (&rcText, -3, -3);
-
+        rcText.left += GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
+        rcText.right -= GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
         if (GETDEFIMAGELIST(infoPtr, GETHIMLID(infoPtr,btnPtr->iBitmap)) &&
                 TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
         {
             if (dwStyle & TBSTYLE_LIST)
-                rcText.left += (infoPtr->nBitmapWidth + LIST_TEXT_OFFSET);
+                rcText.left += infoPtr->nBitmapWidth + TOOLBAR_GetListTextOffset(infoPtr, infoPtr->iListGap);
             else
-    		    rcText.top += infoPtr->nBitmapHeight + 1;
+                rcText.top += GetSystemMetrics(SM_CYEDGE) + OFFSET_Y + infoPtr->nBitmapHeight + infoPtr->szPadding.cy/2;
         }
         else
             if (dwStyle & TBSTYLE_LIST)
-                rcText.left += LIST_IMAGE_ABSENT_WIDTH + LIST_TEXT_OFFSET;
+                rcText.left += LIST_IMAGE_ABSENT_WIDTH + TOOLBAR_GetListTextOffset(infoPtr, infoPtr->iListGap);
 
         if (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
             OffsetRect (&rcText, 1, 1);
@@ -1379,6 +1383,8 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
     TOOLBAR_CalcStrings (hwnd, &sizeString);
 
+    TOOLBAR_DumpToolbar (infoPtr, __LINE__);
+
     for (i = 0; i < infoPtr->nNumButtons && !usesBitmaps; i++)
     {
 	if (TOOLBAR_IsValidBitmapIndex(infoPtr,infoPtr->buttons[i].iBitmap))
@@ -1389,29 +1395,30 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	infoPtr->nButtonHeight = max((usesBitmaps) ? infoPtr->nBitmapHeight :
 				     0, sizeString.cy) + infoPtr->szPadding.cy;
 	infoPtr->nButtonWidth = ((usesBitmaps) ? infoPtr->nBitmapWidth :
-				 0) + sizeString.cx + 6;
+				 LIST_IMAGE_ABSENT_WIDTH) + sizeString.cx + infoPtr->szPadding.cx;
+        if (sizeString.cx > 0)
+            infoPtr->nButtonWidth += TOOLBAR_GetListTextOffset(infoPtr, infoPtr->iListGap) + infoPtr->szPadding.cx/2;
 	TRACE("LIST style, But w=%d h=%d, useBitmaps=%d, Bit w=%d h=%d\n",
 	      infoPtr->nButtonWidth, infoPtr->nButtonHeight, usesBitmaps,
 	      infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
-	TOOLBAR_DumpToolbar (infoPtr, __LINE__);
     }
     else {
         if (sizeString.cy > 0)
         {
             if (usesBitmaps)
 		infoPtr->nButtonHeight = sizeString.cy +
-		    2 + /* this is the space to separate text from bitmap */
-                  infoPtr->nBitmapHeight + 6;
+		    infoPtr->szPadding.cy/2 + /* this is the space to separate text from bitmap */
+                  infoPtr->nBitmapHeight + infoPtr->szPadding.cy;
             else
-                infoPtr->nButtonHeight = sizeString.cy + 6;
+                infoPtr->nButtonHeight = sizeString.cy + infoPtr->szPadding.cy;
         }
         else
-	    infoPtr->nButtonHeight = infoPtr->nBitmapHeight + 6;
+	    infoPtr->nButtonHeight = infoPtr->nBitmapHeight + infoPtr->szPadding.cy;
 
         if (sizeString.cx > infoPtr->nBitmapWidth)
-	    infoPtr->nButtonWidth = sizeString.cx + 6;
+	    infoPtr->nButtonWidth = sizeString.cx + infoPtr->szPadding.cx;
         else
-            infoPtr->nButtonWidth = infoPtr->nBitmapWidth + 6;
+            infoPtr->nButtonWidth = infoPtr->nBitmapWidth + infoPtr->szPadding.cx;
     }
 
     if ( infoPtr->cxMin >= 0 && infoPtr->nButtonWidth < infoPtr->cxMin )
@@ -1423,17 +1430,6 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
     x  = infoPtr->nIndent;
     y  = 0;
-
-   /*
-    * We will set the height below, and we set the width on entry
-    * so we do not reset them here..
-    */
-#if 0
-    GetClientRect( hwnd, &rc );
-    /* get initial values for toolbar */
-    infoPtr->nWidth  = rc.right - rc.left;
-    infoPtr->nHeight = rc.bottom - rc.top;
-#endif
 
     /* from above, minimum is a button, and possible text */
     cx = infoPtr->nButtonWidth;
@@ -1452,12 +1448,6 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     infoPtr->rcBound.right = x;
 
     btnPtr = infoPtr->buttons;
-
-    /* do not base height/width on parent, if the parent is a */
-    /* rebar control it could have multiple rows of toolbars  */
-/*    GetClientRect( GetParent(hwnd), &rc ); */
-/*    cx = rc.right - rc.left; */
-/*    cy = rc.bottom - rc.top; */
 
     TRACE("cy=%d\n", cy);
 
@@ -1502,15 +1492,19 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	      SelectObject (hdc, hOldFont);
 	      ReleaseDC (hwnd, hdc);
 
-              if (sz.cx > 0)
-                  sz.cx += 2*LIST_TEXT_OFFSET;
-              cx = sz.cx + 2*LIST_IMAGE_OFFSET;
+              /* add space on for button frame, etc */
+              cx = sz.cx + infoPtr->szPadding.cx;
+              
+              /* add list padding */
+              if ((dwStyle & TBSTYLE_LIST) && sz.cx > 0)
+                  cx += TOOLBAR_GetListTextOffset(infoPtr, infoPtr->iListGap) + infoPtr->szPadding.cx/2;
+
               if (TOOLBAR_TestImageExist (infoPtr, btnPtr, GETDEFIMAGELIST(infoPtr,0)))
               {
                 if (dwStyle & TBSTYLE_LIST)
                   cx += infoPtr->nBitmapWidth;
-                else if (cx < (infoPtr->nBitmapWidth+7))
-                  cx = infoPtr->nBitmapWidth+7;
+                else if (cx < (infoPtr->nBitmapWidth+infoPtr->szPadding.cx))
+                  cx = infoPtr->nBitmapWidth+infoPtr->szPadding.cx;
               }
               else if (dwStyle & TBSTYLE_LIST)
                   cx += LIST_IMAGE_ABSENT_WIDTH;
@@ -4472,6 +4466,16 @@ TOOLBAR_SetMaxTextRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
+/* MSDN gives slightly wrong info on padding.
+ * 1. It is not only used on buttons with the BTNS_AUTOSIZE style
+ * 2. It is not used to create a blank area between the edge of the button
+ *    and the text or image if TBSTYLE_LIST is set. It is used to control
+ *    the gap between the image and text. 
+ * 3. It is not applied to both sides. If TBSTYLE_LIST is set it is used 
+ *    to control the bottom and right borders [with the border being
+ *    szPadding.cx - (GetSystemMetrics(SM_CXEDGE)+1)], otherwise the padding
+ *    is shared evenly on both sides of the button.
+ */
 static LRESULT
 TOOLBAR_SetPadding (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -4481,7 +4485,7 @@ TOOLBAR_SetPadding (HWND hwnd, WPARAM wParam, LPARAM lParam)
     oldPad = MAKELONG(infoPtr->szPadding.cx, infoPtr->szPadding.cy);
     infoPtr->szPadding.cx = LOWORD((DWORD)lParam);
     infoPtr->szPadding.cy = HIWORD((DWORD)lParam);
-    FIXME("stub - nothing done with values, cx=%ld, cy=%ld\n",
+    TRACE("cx=%ld, cy=%ld\n",
 	  infoPtr->szPadding.cx, infoPtr->szPadding.cy);
     return (LRESULT) oldPad;
 }
@@ -4881,8 +4885,11 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->bDoRedraw = TRUE;
     infoPtr->clrBtnHighlight = CLR_DEFAULT;
     infoPtr->clrBtnShadow = CLR_DEFAULT;
-    infoPtr->szPadding.cx = 7;
-    infoPtr->szPadding.cy = 6;
+    /* not sure where the +1 comes from, but this comes to the same value
+     * as native so this is probably correct */
+    infoPtr->szPadding.cx = 2*(GetSystemMetrics(SM_CXEDGE)+OFFSET_X) + 1;
+    infoPtr->szPadding.cy = 2*(GetSystemMetrics(SM_CYEDGE)+OFFSET_Y);
+    infoPtr->iListGap = infoPtr->szPadding.cx / 2;
     GetClientRect(hwnd, &infoPtr->client_rect);
     TOOLBAR_NotifyFormat(infoPtr, (WPARAM)hwnd, (LPARAM)NF_REQUERY);
 
