@@ -38,19 +38,27 @@
 #define STACK32_SIZE 0x10000
 
 extern void USER_AppExit(HTASK, HINSTANCE, HQUEUE );
-/* ------ Internal variables ------ */
 
-static HTASK hFirstTask = 0;
-static HTASK hCurrentTask = 0;
-static HTASK hTaskToKill = 0;
-static HTASK hLockedTask = 0;
+  /* Saved 16-bit stack for current process (Win16 only) */
+WORD IF1632_Saved16_ss = 0;
+WORD IF1632_Saved16_sp = 0;
+
+  /* Saved 32-bit stack for current process (Win16 only) */
+DWORD IF1632_Saved32_esp = 0;
+SEGPTR IF1632_Stack32_base = 0;
+
+  /* Original Unix stack */
+DWORD IF1632_Original32_esp;
+
+static HTASK16 hFirstTask = 0;
+static HTASK16 hCurrentTask = 0;
+static HTASK16 hTaskToKill = 0;
+static HTASK16 hLockedTask = 0;
 static WORD nTaskCount = 0;
 static HANDLE hDOSEnvironment = 0;
 
-/* ------ Internal declarations ------ */
-
   /* TASK_Reschedule() 16-bit entry point */
-static FARPROC TASK_RescheduleProc;
+static FARPROC16 TASK_RescheduleProc;
 
 #ifdef WINELIB
 #define TASK_SCHEDULE()  TASK_Reschedule();
@@ -63,7 +71,7 @@ static HANDLE TASK_CreateDOSEnvironment(void);
 /***********************************************************************
  *           TASK_Init
  */
-BOOL TASK_Init(void)
+BOOL32 TASK_Init(void)
 {
     TASK_RescheduleProc = MODULE_GetWndProcEntry16( "TASK_Reschedule" );
     if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
@@ -196,9 +204,9 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 /***********************************************************************
  *           TASK_LinkTask
  */
-static void TASK_LinkTask( HTASK hTask )
+static void TASK_LinkTask( HTASK16 hTask )
 {
-    HTASK *prevTask;
+    HTASK16 *prevTask;
     TDB *pTask;
 
     if (!(pTask = (TDB *)GlobalLock16( hTask ))) return;
@@ -218,9 +226,9 @@ static void TASK_LinkTask( HTASK hTask )
 /***********************************************************************
  *           TASK_UnlinkTask
  */
-static void TASK_UnlinkTask( HTASK hTask )
+static void TASK_UnlinkTask( HTASK16 hTask )
 {
-    HTASK *prevTask;
+    HTASK16 *prevTask;
     TDB *pTask;
 
     prevTask = &hFirstTask;
@@ -369,7 +377,7 @@ static void TASK_CallToStart(void)
                  cs_reg, ip_reg, ds_reg,
                  IF1632_Saved16_ss, IF1632_Saved16_sp);
 
-    CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
+    CallTo16_regs_( (FARPROC16)(cs_reg << 16 | ip_reg), ds_reg,
                    pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
                    pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
                    0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
@@ -384,8 +392,9 @@ static void TASK_CallToStart(void)
 /***********************************************************************
  *           TASK_CreateTask
  */
-HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
-                       HANDLE hEnvironment, char *cmdLine, WORD cmdShow )
+HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
+                         HINSTANCE16 hPrevInstance, HANDLE16 hEnvironment,
+                         LPCSTR cmdLine, UINT16 cmdShow )
 {
     HTASK hTask;
     TDB *pTask;
@@ -394,10 +403,10 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     SEGTABLEENTRY *pSegTable;
     LPSTR name;
     char filename[256];
-#ifndef WINELIB32
     char *stack16Top, *stack32Top;
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
+#ifndef WINELIB32
     extern DWORD CALLTO16_RetAddr_word;
 #endif
     
@@ -466,17 +475,16 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
       /* Fill the PDB */
 
     pTask->pdb.int20 = 0x20cd;
-#ifndef WINELIB
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
+#ifndef WINELIB
     *(FARPROC16 *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
-    pTask->pdb.fileHandlesPtr = (SEGPTR)MAKELONG( 0x18,
-                                              GlobalHandleToSel(pTask->hPDB) );
-#else
-    pTask->pdb.fileHandlesPtr = pTask->pdb.fileHandles;
 #endif
+    pTask->pdb.fileHandlesPtr =
+        PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(pTask->hPDB),
+                               (int)&((PDB *)0)->fileHandles );
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
     pTask->pdb.environment    = hEnvironment;
     pTask->pdb.nbFiles        = 20;
@@ -504,7 +512,6 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
       /* Allocate the 32-bit stack */
 
-#ifndef WINELIB
     pTask->hStack32 = GLOBAL_Alloc( GMEM_FIXED, STACK32_SIZE, pTask->hPDB,
                                     FALSE, FALSE, FALSE );
 
@@ -520,8 +527,10 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     frame32->ecx = 0;
     frame32->ebx = 0;
     frame32->ebp = 0;
+#ifndef WINELIB
     frame32->retaddr = (DWORD)TASK_CallToStart;
     frame32->codeselector = WINE_CODE_SELECTOR;
+#endif
     pTask->esp = (DWORD)frame32;
 
       /* Create the 16-bit stack frame */
@@ -531,15 +540,17 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
                  pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1;
     stack16Top = (char *)PTR_SEG_OFF_TO_LIN( pTask->ss, pTask->sp );
     frame16 = (STACK16FRAME *)stack16Top - 1;
-    frame16->saved_ss = 0; /*pTask->ss;*/
-    frame16->saved_sp = 0; /*pTask->sp;*/
+    frame16->saved_ss = 0;
+    frame16->saved_sp = 0;
     frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
     frame16->entry_ip = OFFSETOF(TASK_RescheduleProc) + 14;
     frame16->entry_cs = SELECTOROF(TASK_RescheduleProc);
     frame16->bp = 0;
+#ifndef WINELIB
     frame16->ip = LOWORD( CALLTO16_RetAddr_word );
     frame16->cs = HIWORD( CALLTO16_RetAddr_word );
+#endif  /* WINELIB */
     pTask->sp -= sizeof(STACK16FRAME);
 
       /* If there's no 16-bit stack yet, use a part of the new task stack */
@@ -554,6 +565,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 
       /* Add a breakpoint at the start of the task */
 
+#ifndef WINELIB
     if (Options.debug)
     {
         if (pModule->flags & NE_FFLAGS_WIN32)
@@ -570,7 +582,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
             DEBUG_AddBreakpoint( &addr );
         }
     }
-#endif
+#endif  /* WINELIB */
 
       /* Add the task to the linked list */
 
@@ -626,7 +638,7 @@ static void TASK_DeleteTask( HTASK hTask )
  * be killed when either TASK_Reschedule or this function is called again 
  * in the context of another task.
  */
-void TASK_KillCurrentTask( int exitCode )
+void TASK_KillCurrentTask( INT16 exitCode )
 {
     extern void EXEC_ExitWindows( int retCode );
 
@@ -731,7 +743,6 @@ void TASK_Reschedule(void)
 
       /* Save the stacks of the previous task (if any) */
 
-#ifndef WINELIB /* FIXME: JBP: IF1632 not allowed in libwine.a */
     if (pOldTask)
     {
         pOldTask->ss  = IF1632_Saved16_ss;
@@ -739,7 +750,6 @@ void TASK_Reschedule(void)
         pOldTask->esp = IF1632_Saved32_esp;
     }
     else IF1632_Original32_esp = IF1632_Saved32_esp;
-#endif
 
      /* Make the task the last in the linked list (round-robin scheduling) */
 
@@ -751,12 +761,10 @@ void TASK_Reschedule(void)
       /* Switch to the new stack */
 
     hCurrentTask = hTask;
-#ifndef WINELIB /* FIXME: JBP: IF1632 not allowed in libwine.a */
     IF1632_Saved16_ss   = pNewTask->ss;
     IF1632_Saved16_sp   = pNewTask->sp;
     IF1632_Saved32_esp  = pNewTask->esp;
     IF1632_Stack32_base = WIN16_GlobalLock16( pNewTask->hStack32 );
-#endif
 }
 
 
@@ -965,7 +973,7 @@ FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     SEGPTR thunkaddr;
     
     thunkaddr = TASK_AllocThunk( hCurrentTask );
-    if (!thunkaddr) return (FARPROC)0;
+    if (!thunkaddr) return (FARPROC16)0;
     thunk = PTR_SEG_TO_LIN( thunkaddr );
 
     dprintf_task( stddeb, "MakeProcInstance(%08lx,%04x): got thunk %08lx\n",
@@ -976,7 +984,7 @@ FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     *thunk++ = (BYTE)(hInstance >> 8);
     *thunk++ = 0xea;    /* ljmp func */
     *(DWORD *)thunk = (DWORD)func;
-    return (FARPROC)thunkaddr;
+    return (FARPROC16)thunkaddr;
 #endif
 }
 
@@ -996,7 +1004,7 @@ void FreeProcInstance16( FARPROC16 func )
 /**********************************************************************
  *	    GetCodeHandle    (KERNEL.93)
  */
-HANDLE GetCodeHandle( FARPROC proc )
+HANDLE GetCodeHandle( FARPROC16 proc )
 {
 #ifndef WINELIB32
     HANDLE handle;
@@ -1109,7 +1117,7 @@ int GetInstanceData( HANDLE instance, WORD buffer, int len )
     char *ptr = (char *)GlobalLock16( instance );
     if (!ptr || !len) return 0;
     if ((int)buffer + len >= 0x10000) len = 0x10000 - buffer;
-    memcpy( ptr + buffer, (char *)GlobalLock16( CURRENT_DS ) + buffer, len );
+    memcpy( (char *)GlobalLock16(CURRENT_DS) + buffer, ptr + buffer, len );
     return len;
 }
 
@@ -1178,11 +1186,11 @@ BOOL IsTask( HTASK hTask )
 /***********************************************************************
  *           GetExePtr   (KERNEL.133)
  */
-HMODULE GetExePtr( HANDLE handle )
+HMODULE16 GetExePtr( HANDLE16 handle )
 {
     char *ptr;
-    HTASK hTask;
-    HANDLE owner;
+    HTASK16 hTask;
+    HANDLE16 owner;
 
       /* Check for module handle */
 

@@ -205,7 +205,7 @@ expr:
 
 void 
 issue_prompt(){
-#ifndef USE_READLINE
+#ifdef DONT_USE_READLINE
 	fprintf(stderr,"Wine-dbg>");
 #endif
 }

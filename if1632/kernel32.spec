@@ -524,7 +524,7 @@ base	1
 0519 stub SetVolumeLabelW
 0520 stub SetupComm
 0521 stub ShowConsoleCursor
-0522 stdcall SizeofResource(long long) SizeofResource
+0522 stdcall SizeofResource(long long) SizeofResource32
 0523 	stdcall Sleep(long) Sleep
 0524 stub SleepEx
 0525 stub SuspendThread

@@ -1661,9 +1661,9 @@ static void BuildCallFrom16Func( char *profile )
  * (ebp)    previous ebp
  *
  * Prototypes for the CallTo16 functions:
- *   extern WORD CallTo16_word_xxx( FARPROC func, WORD ds, args... );
- *   extern LONG CallTo16_long_xxx( FARPROC func, WORD ds, args... );
- *   extern void CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp,
+ *   extern WORD CallTo16_word_xxx( FARPROC16 func, WORD ds, args... );
+ *   extern LONG CallTo16_long_xxx( FARPROC16 func, WORD ds, args... );
+ *   extern void CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp,
  *                               WORD ax, WORD bx, WORD cx, WORD dx,
  *                               WORD si, WORD di );
  */
@@ -1981,7 +1981,7 @@ static void BuildCallFrom32Func( const char *profile )
  * (ebp)    previous ebp
  *
  * Prototype for the CallTo32 functions:
- *   extern LONG CallTo32_nn( FARPROC func, args... );
+ *   extern LONG CallTo32_nn( FARPROC32 func, args... );
  */
 static void BuildCallTo32Func( int args )
 {

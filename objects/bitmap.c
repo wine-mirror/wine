@@ -12,6 +12,8 @@
 #include "callback.h"
 #include "dc.h"
 #include "bitmap.h"
+#include "heap.h"
+#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -227,24 +229,24 @@ LONG SetBitmapBits( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
 
 
 /**********************************************************************
- *	    LoadBitmap    (USER.175)
+ *	    LoadBitmap16    (USER.175)
  */
-HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
+HBITMAP16 LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
 {
-    HBITMAP hbitmap = 0;
+    HBITMAP16 hbitmap = 0;
     HDC hdc;
-    HRSRC hRsrc;
-    HGLOBAL handle;
+    HRSRC16 hRsrc;
+    HGLOBAL16 handle;
     BITMAPINFO *info;
 
     if (HIWORD(name))
     {
         char *str = (char *)PTR_SEG_TO_LIN( name );
-        dprintf_bitmap( stddeb, "LoadBitmap(%04x,'%s')\n", instance, str );
+        dprintf_bitmap( stddeb, "LoadBitmap16(%04x,'%s')\n", instance, str );
         if (str[0] == '#') name = (SEGPTR)(DWORD)(WORD)atoi( str + 1 );
     }
     else
-        dprintf_bitmap( stddeb, "LoadBitmap(%04x,%04x)\n",
+        dprintf_bitmap( stddeb, "LoadBitmap16(%04x,%04x)\n",
                         instance, LOWORD(name) );
 
     if (!instance)  /* OEM bitmap */
@@ -253,10 +255,10 @@ HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
         return OBM_LoadBitmap( LOWORD((int)name) );
     }
 
-    if (!(hRsrc = FindResource( instance, name, RT_BITMAP ))) return 0;
-    if (!(handle = LoadResource( instance, hRsrc ))) return 0;
+    if (!(hRsrc = FindResource16( instance, name, RT_BITMAP ))) return 0;
+    if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
 
-    info = (BITMAPINFO *)LockResource( handle );
+    info = (BITMAPINFO *)LockResource16( handle );
     if ((hdc = GetDC(0)) != 0)
     {
         char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
@@ -264,8 +266,57 @@ HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
                                   bits, info, DIB_RGB_COLORS );
         ReleaseDC( 0, hdc );
     }
-    FreeResource( handle );
+    FreeResource16( handle );
     return hbitmap;
+}
+
+/**********************************************************************
+ *	    LoadBitmap32W   (USER32.357)
+ */
+HBITMAP32 LoadBitmap32W( HINSTANCE32 instance, LPCWSTR name )
+{
+    HBITMAP32 hbitmap = 0;
+    HDC hdc;
+    HRSRC32 hRsrc;
+    HGLOBAL32 handle;
+    BITMAPINFO *info;
+
+    if (!instance)  /* OEM bitmap */
+    {
+        if (HIWORD((int)name)) return 0;
+        return OBM_LoadBitmap( LOWORD((int)name) );
+    }
+
+    if (!(hRsrc = FindResource32W( instance, name,
+		(LPWSTR)RT_BITMAP ))) return 0;
+    if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
+
+    info = (BITMAPINFO *)LockResource32( handle );
+    if ((hdc = GetDC(0)) != 0)
+    {
+        char *bits = (char *)info + DIB_BitmapInfoSize( info, DIB_RGB_COLORS );
+        hbitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
+                                  bits, info, DIB_RGB_COLORS );
+        ReleaseDC( 0, hdc );
+    }
+    return hbitmap;
+}
+
+
+/**********************************************************************
+ *	    LoadBitmap32A   (USER32.356)
+ */
+HBITMAP32 LoadBitmap32A( HINSTANCE32 instance, LPCSTR name )
+{
+    HBITMAP32 res;
+    if (!HIWORD(name)) res = LoadBitmap32W(instance,(LPWSTR)name);
+    else
+    {
+        LPWSTR uni = STRING32_DupAnsiToUni(name);
+        res = LoadBitmap32W(instance,uni);
+        free(uni);
+    }
+    return res;
 }
 
 

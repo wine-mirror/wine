@@ -56,12 +56,12 @@ extern SEGPTR IF1632_Stack32_base;
   /* Original Unix stack */
 extern DWORD IF1632_Original32_esp;
 
-#ifndef WINELIB
 #define CURRENT_STACK16 \
     ((STACK16FRAME *)PTR_SEG_OFF_TO_LIN(IF1632_Saved16_ss,IF1632_Saved16_sp))
 
 #define CURRENT_DS   (CURRENT_STACK16->ds)
 
+#ifndef WINELIB
   /* Make a segmented pointer from a pointer to a variable located */
   /* on the 32-bit stack for the current task. */
 #if 0
@@ -71,8 +71,6 @@ extern DWORD IF1632_Original32_esp;
 #endif
 SEGPTR MAKE_SEGPTR(void *ptr);
 #else
-#define CURRENT_STACK16	   error.error
-#define CURRENT_DS         ((WORD)GetTaskDS())
 #define MAKE_SEGPTR(ptr)   ((SEGPTR)ptr)
 #endif
 

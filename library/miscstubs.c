@@ -41,7 +41,7 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
   }
 }
 
-WORD CallTo16_word_ ( FARPROC func, WORD arg ) { return func(arg); }
+WORD CallTo16_word_ ( FARPROC16 func, WORD arg ) { return func(arg); }
 
 extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ColorDlgProc(HWND,UINT,WPARAM,LPARAM);
@@ -60,22 +60,16 @@ extern LRESULT ReplaceTextDlgProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT ScrollBarWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT StaticWndProc(HWND,UINT,WPARAM,LPARAM);
 extern LRESULT SystemMessageBoxProc(HWND,UINT,WPARAM,LPARAM);
-extern LRESULT TASK_Reschedule(HWND,UINT,WPARAM,LPARAM);
-
-LRESULT ErrorProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
-{
-  fprintf(stderr,"ERROR: ErrorProc() called!\n");
-  return 0;
-}
+extern LRESULT TASK_Reschedule(void);
 
 /***********************************************************************
  *           MODULE_GetWndProcEntry16 (not a Windows API function)
  *
  * Return an entry point from the WPROCS dll.
  */
-WNDPROC MODULE_GetWndProcEntry16( char *name )
+FARPROC16 MODULE_GetWndProcEntry16( char *name )
 {
-#define MAP_STR_TO_PROC(str,proc) if(!strcmp(name,str))return proc
+#define MAP_STR_TO_PROC(str,proc) if(!strcmp(name,str))return (FARPROC16)proc
   MAP_STR_TO_PROC("AboutDlgProc",AboutDlgProc);
   MAP_STR_TO_PROC("ColorDlgProc",ColorDlgProc);
   MAP_STR_TO_PROC("ComboBoxWndProc",ComboBoxWndProc);
@@ -96,7 +90,7 @@ WNDPROC MODULE_GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("SystemMessageBoxProc",SystemMessageBoxProc);
   MAP_STR_TO_PROC("TASK_Reschedule",TASK_Reschedule);
   fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
-  return ErrorProc;
+  return NULL;
 }
 
 void DEBUG_EnterDebugger(void)

@@ -2,6 +2,7 @@
  * GDI palette objects
  *
  * Copyright 1993,1994 Alexandre Julliard
+ * Copyright 1996 Alex Korobka
  *
  */
 #include <stdlib.h>
@@ -14,13 +15,20 @@
 /* #define DEBUG_PALETTE */
 #include "debug.h"
 
+extern HWND 		DCE_hDC2hWnd( HDC );			/* get associated window by 
+								 * walking DCE list */
+
 static WORD SystemPaletteUse = SYSPAL_STATIC;	/* currently not considered */
+
+static HPALETTE16 hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
+static HPALETTE16 hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
 
 
 /***********************************************************************
  *           PALETTE_GetNearestIndexAndColor
  */
-static WORD PALETTE_GetNearestIndexAndColor(HPALETTE16 hpalette, COLORREF *color)
+static WORD PALETTE_GetNearestIndexAndColor( HPALETTE16 hpalette,
+                                             COLORREF *color)
 {
     int i, minDist, dist;
     WORD index = 0;
@@ -31,14 +39,13 @@ static WORD PALETTE_GetNearestIndexAndColor(HPALETTE16 hpalette, COLORREF *color
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
 
-    if ((COLOR_WinColormap != DefaultColormapOfScreen(screen)) &&
-	(hpalette == STOCK_DEFAULT_PALETTE))
+    if ( hpalette == STOCK_DEFAULT_PALETTE )
     {
 	if ((*color & 0xffffff) == 0) return 0;  /* Entry 0 is black */
 	if ((*color & 0xffffff) == 0xffffff)     /* Max entry is white */
 	    return palPtr->logpalette.palNumEntries - 1;
     }
-    
+
     r = GetRValue(*color);
     g = GetGValue(*color);
     b = GetBValue(*color);
@@ -60,9 +67,21 @@ static WORD PALETTE_GetNearestIndexAndColor(HPALETTE16 hpalette, COLORREF *color
 	}
 	entry++;
     }
+
     entry = &palPtr->logpalette.palPalEntry[index];
     *color = RGB( entry->peRed, entry->peGreen, entry->peBlue );
     return index;
+}
+
+
+/***********************************************************************
+ *           PALETTE_ValidateFlags
+ */
+void PALETTE_ValidateFlags(PALETTEENTRY* lpPalE, int size)
+{
+    int i = 0;
+    for( ; i<size ; i++ )
+        lpPalE[i].peFlags = PC_SYS_USED | (lpPalE[i].peFlags & 0x07);
 }
 
 
@@ -73,13 +92,22 @@ HPALETTE16 CreatePalette( const LOGPALETTE* palette )
 {
     PALETTEOBJ * palettePtr;
     HPALETTE16 hpalette;
-    int size;
+    int size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
-    size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
-    hpalette = GDI_AllocObject( sizeof(GDIOBJHDR) + size, PALETTE_MAGIC );
+    dprintf_palette(stddeb,"CreatePalette: ");
+
+    dprintf_palette(stddeb,"%i entries, ", palette->palNumEntries);
+
+    hpalette = GDI_AllocObject( size + sizeof(int*) +sizeof(GDIOBJHDR) , PALETTE_MAGIC );
     if (!hpalette) return 0;
+
     palettePtr = (PALETTEOBJ *) GDI_HEAP_LIN_ADDR( hpalette );
     memcpy( &palettePtr->logpalette, palette, size );
+    PALETTE_ValidateFlags(palettePtr->logpalette.palPalEntry, 
+			  palettePtr->logpalette.palNumEntries);
+    palettePtr->mapping = NULL;
+
+    dprintf_palette(stddeb,"returning %04x\n", hpalette);
     return hpalette;
 }
 
@@ -92,14 +120,19 @@ WORD GetPaletteEntries( HPALETTE16 hpalette, WORD start, WORD count,
 {
     PALETTEOBJ * palPtr;
     int numEntries;
+
+    dprintf_palette(stddeb,"GetPaletteEntries: hpal = %04x, %i entries\n", hpalette, count);
         
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
+
     numEntries = palPtr->logpalette.palNumEntries;
     if (start >= numEntries) return 0;
     if (start+count > numEntries) count = numEntries - start;
     memcpy( entries, &palPtr->logpalette.palPalEntry[start],
 	    count * sizeof(PALETTEENTRY) );
+    for( numEntries = 0; numEntries < count ; numEntries++ )
+         if( entries[numEntries].peFlags & 0xF0 ) entries[numEntries].peFlags = 0;
     return count;
 }
 
@@ -112,14 +145,19 @@ WORD SetPaletteEntries( HPALETTE16 hpalette, WORD start, WORD count,
 {
     PALETTEOBJ * palPtr;
     int numEntries;
-        
+
+    dprintf_palette(stddeb,"SetPaletteEntries: hpal = %04x, %i entries\n", hpalette, count);
+
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
+
     numEntries = palPtr->logpalette.palNumEntries;
     if (start >= numEntries) return 0;
     if (start+count > numEntries) count = numEntries - start;
     memcpy( &palPtr->logpalette.palPalEntry[start], entries,
 	    count * sizeof(PALETTEENTRY) );
+    PALETTE_ValidateFlags(palPtr->logpalette.palPalEntry, 
+			  palPtr->logpalette.palNumEntries);
     return count;
 }
 
@@ -128,6 +166,10 @@ WORD SetPaletteEntries( HPALETTE16 hpalette, WORD start, WORD count,
  */
 BOOL ResizePalette(HPALETTE16 hPal, UINT cEntries)
 {
+
+    /* should simply realloc memory and zero out
+     * added entries, if any */
+
     fprintf(stdnimp,"ResizePalette: empty stub! \n");
     return FALSE;
 }
@@ -144,14 +186,11 @@ BOOL AnimatePalette(HPALETTE16 hPal, UINT StartIndex, UINT NumEntries,
 
 /***********************************************************************
  *           SetSystemPaletteUse    (GDI.373)
- *	Should this be per DC rather than system wide?
- *  Currently, it does not matter as the use is only set and returned,
- *  but not taken into account
  */
 WORD SetSystemPaletteUse( HDC hdc, WORD use)
 {
 	 WORD old=SystemPaletteUse;
-	 printf("SetSystemPaletteUse(%04x,%04x) // empty stub !!!\n", hdc, use);
+	 fprintf(stdnimp,"SetSystemPaletteUse(%04x,%04x) // empty stub !!!\n", hdc, use);
 	 SystemPaletteUse=use;
 	 return old;
 }
@@ -161,7 +200,7 @@ WORD SetSystemPaletteUse( HDC hdc, WORD use)
  */
 WORD GetSystemPaletteUse( HDC hdc )
 {
-	printf("GetSystemPaletteUse(%04x) // empty stub !!!\n", hdc);
+	fprintf(stdnimp,"GetSystemPaletteUse(%04x) // empty stub !!!\n", hdc);
 	return SystemPaletteUse;
 }
 
@@ -182,8 +221,10 @@ WORD GetSystemPaletteEntries( HDC hdc, WORD start, WORD count,
 	count = dc->w.devCaps->sizePalette - start;
     for (i = 0; i < count; i++)
     {
-	color.pixel = start + i;
-	XQueryColor( display, COLOR_WinColormap, &color );
+	color.pixel = (COLOR_PaletteToPixel)
+		      ? COLOR_PaletteToPixel[start + i]
+		      : start + i;
+	XQueryColor( display, COLOR_GetColormap(), &color );
 	entries[i].peRed   = color.red >> 8;
 	entries[i].peGreen = color.green >> 8;
 	entries[i].peBlue  = color.blue >> 8;
@@ -233,9 +274,34 @@ int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
 
 
 /***********************************************************************
+ *           PALETTE_UnrealizeObject
+ */
+BOOL PALETTE_UnrealizeObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+{
+    if (palette->mapping)
+    {
+        free( palette->mapping );
+        palette->mapping = NULL;
+    }
+    if (hLastRealizedPalette == hpalette) hLastRealizedPalette = 0;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           PALETTE_DeleteObject
+ */
+BOOL PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
+{
+    free( palette->mapping );
+    return GDI_FreeObject( hpalette );
+}
+
+
+/***********************************************************************
  *           GDISelectPalette    (GDI.361)
  */
-HPALETTE16 GDISelectPalette( HDC hdc, HPALETTE16 hpal )
+HPALETTE16 GDISelectPalette( HDC hdc, HPALETTE16 hpal, WORD wBkg)
 {
     HPALETTE16 prev;
     DC *dc;
@@ -244,88 +310,127 @@ HPALETTE16 GDISelectPalette( HDC hdc, HPALETTE16 hpal )
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     prev = dc->w.hPalette;
     dc->w.hPalette = hpal;
-    if (hpal != STOCK_DEFAULT_PALETTE) COLOR_SetMapping( dc, 0, 0, 0 );
-    else RealizeDefaultPalette( hdc );  /* Always realize default palette */
+    if (!wBkg) hPrimaryPalette = hpal; 
     return prev;
 }
 
 
 /***********************************************************************
  *           GDIRealizePalette    (GDI.362)
+ *
  */
 UINT GDIRealizePalette( HDC hdc )
 {
-    UINT        realized = 0;
-    COLORREF    color;
     DC*         dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ) ;
     PALETTEOBJ* palPtr;
+    int		realized = 0;
 
-    dprintf_palette(stdnimp, "GDIRealizePalette: %04x...", hdc );
-
-    if( dc )
-      {
+    dprintf_palette(stddeb, "GDIRealizePalette: %04x...", hdc );
+    
+    if( dc &&  dc->w.hPalette != hLastRealizedPalette )
+    {
         palPtr = (PALETTEOBJ *) GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC );
-
-        if( palPtr )
-          {
-            WORD        index, i;
-            HANDLE      hMap;
-            WORD*       pMap;
-
-            hMap = GDI_HEAP_ALLOC(sizeof(WORD)*palPtr->logpalette.palNumEntries);
-            pMap = (WORD*)GDI_HEAP_LIN_ADDR( hMap );
-
-            if( pMap )
-            {
-              for (i = 0; i < palPtr->logpalette.palNumEntries ; i++)
-              {
-                color = *(COLORREF*)(palPtr->logpalette.palPalEntry + i);
-                index = PALETTE_GetNearestIndexAndColor( STOCK_DEFAULT_PALETTE, &color);
-                if( index != i ) realized++;
-                pMap[i] = index;
-              }
-              COLOR_SetMapping(dc, hMap, 0, i);
-              GDI_HEAP_FREE(hMap);
-            }
-          }
-      }
+        
+	realized = COLOR_SetMapping(palPtr, dc->w.hPalette != hPrimaryPalette 
+                                  || dc->w.hPalette == STOCK_DEFAULT_PALETTE );
+	hLastRealizedPalette = dc->w.hPalette;
+    }
+    else dprintf_palette(stddeb, " skipping ");
+    
     dprintf_palette(stdnimp, " realized %i colors\n", realized );
-    return realized;
+    return (UINT)realized;
 }
 
+
+/***********************************************************************
+ *           RealizeDefaultPalette    (GDI.365)
+ */
+WORD RealizeDefaultPalette( HDC hdc )
+{
+    DC *dc;
+
+    dprintf_palette(stddeb,"RealizeDefaultPalette: %04x\n", hdc );
+
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    if ( dc->w.flags & DC_MEMORY ) return 0;
+
+    hPrimaryPalette = STOCK_DEFAULT_PALETTE;
+    hLastRealizedPalette = STOCK_DEFAULT_PALETTE;
+    return COLOR_SetMapping( (PALETTEOBJ*)GDI_GetObjPtr(STOCK_DEFAULT_PALETTE, PALETTE_MAGIC ), TRUE);
+}
+
+
+/***********************************************************************
+ *           IsDCCurrentPalette   (GDI.412)
+ */
+BOOL IsDCCurrentPalette(HDC hDC)
+{
+    DC* dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
+    return (dc->w.hPalette == hPrimaryPalette);
+}
 
 /***********************************************************************
  *           SelectPalette    (USER.282)
  */
-HPALETTE16 SelectPalette(HDC hDC, HPALETTE16 hPal, BOOL bForceBackground)
+HPALETTE16 SelectPalette( HDC hDC, HPALETTE16 hPal, BOOL bForceBackground )
 {
-    return GDISelectPalette( hDC, hPal );
+    WORD	wBkgPalette = 1;
+    PALETTEOBJ* lpt = (PALETTEOBJ*) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
+
+    dprintf_palette(stddeb,"SelectPalette: dc %04x pal %04x, force=%i ", 
+			    hDC, hPal, bForceBackground);
+    if( !lpt ) return 0;
+
+    dprintf_palette(stddeb," entries = %d\n", 
+			    lpt->logpalette.palNumEntries);
+
+    if( hPal != STOCK_DEFAULT_PALETTE )
+    {
+	HWND hWnd = DCE_hDC2hWnd( hDC );
+	HWND hActive = GetActiveWindow();
+	
+	/* set primary palette if it's related to current active */
+
+	if( hWnd && (hActive == hWnd || IsChild(hActive,hWnd)) &&
+            !bForceBackground )
+	    wBkgPalette = 0;
+    }
+    return GDISelectPalette( hDC, hPal, wBkgPalette);
 }
 
 
 /***********************************************************************
- *           SelectPalette32    (GDI32.300)
+ *           RealizePalette    (USER.283) (GDI32.280)
  */
-HPALETTE16 SelectPalette32(HDC hDC, HPALETTE16 hPal, BOOL bForceBackground)
+UINT16 RealizePalette( HDC32 hDC )
 {
-    return GDISelectPalette( hDC, hPal );
+    UINT16 realized = GDIRealizePalette( hDC );
+
+    /* do not send anything if no colors were changed */
+
+    if( IsDCCurrentPalette( hDC ) && realized )
+    {
+	/* Send palette change notification */
+
+	HWND hWnd;
+ 	if( (hWnd = DCE_hDC2hWnd( hDC )) )
+            SendMessage16( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
+    }
+    return realized;
 }
 
 
-/***********************************************************************
- *           RealizePalette    (USER.283)
+/**********************************************************************
+ *	    UpdateColors	(GDI.366)
+ *
  */
-UINT RealizePalette(HDC hDC)
+int UpdateColors( HDC hDC )
 {
-    return GDIRealizePalette( hDC );
+    HWND hWnd = DCE_hDC2hWnd( hDC );
+
+    /* Docs say that we have to remap current drawable pixel by pixel
+     * but it would take forever given the speed of XGet/PutPixel.
+     */
+    if (hWnd) InvalidateRect16( hWnd, NULL, FALSE );
+    return 0x666;
 }
-
-
-/***********************************************************************
- *           RealizePalette32    (GDI32.280)
- */
-UINT RealizePalette32(HDC hDC)
-{
-    return GDIRealizePalette( hDC );
-}
-

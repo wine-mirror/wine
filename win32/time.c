@@ -134,7 +134,7 @@ BOOL32 SetTimeZoneInformation(const TIME_ZONE_INFORMATION *tzinfo)
  */
 VOID Sleep(DWORD cMilliseconds)
 {
-    if(cMilliseconds == INFINITE)
+    if(cMilliseconds == INFINITE32)
         while(1) sleep(1000); /* Spin forever */
     usleep(cMilliseconds*1000);
 }

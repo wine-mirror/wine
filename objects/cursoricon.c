@@ -198,20 +198,20 @@ static CURSORDIRENTRY *CURSORICON_FindBestCursor( CURSORICONDIR *dir,
  * Load the icon/cursor directory for a given resource name and find the
  * best matching entry.
  */
-static BOOL CURSORICON_LoadDirEntry(HANDLE hInstance, SEGPTR name,
+static BOOL CURSORICON_LoadDirEntry(HINSTANCE32 hInstance, SEGPTR name,
                                     int width, int height, int colors,
                                     BOOL fCursor, CURSORICONDIRENTRY *dirEntry)
 {
-    HRSRC hRsrc;
-    HANDLE hMem;
+    HRSRC16 hRsrc;
+    HGLOBAL16 hMem;
     CURSORICONDIR *dir;
     CURSORICONDIRENTRY *entry = NULL;
 
-    if (!(hRsrc = FindResource( hInstance, name,
+    if (!(hRsrc = FindResource16( hInstance, name,
                                 fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON )))
         return FALSE;
-    if (!(hMem = LoadResource( hInstance, hRsrc ))) return FALSE;
-    if ((dir = (CURSORICONDIR *)LockResource( hMem )))
+    if (!(hMem = LoadResource16( hInstance, hRsrc ))) return FALSE;
+    if ((dir = (CURSORICONDIR *)LockResource16( hMem )))
     {
         if (fCursor)
             entry = (CURSORICONDIRENTRY *)CURSORICON_FindBestCursor( dir,
@@ -221,7 +221,7 @@ static BOOL CURSORICON_LoadDirEntry(HANDLE hInstance, SEGPTR name,
                                                        width, height, colors );
         if (entry) *dirEntry = *entry;
     }
-    FreeResource( hMem );
+    FreeResource16( hMem );
     return (entry != NULL);
 }
 
@@ -245,11 +245,11 @@ HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
 
     if (fCursor)  /* If cursor, get the hotspot */
     {
-        POINT16 *pt = (POINT16 *)LockResource( handle );
+        POINT16 *pt = (POINT16 *)LockResource16( handle );
         hotspot = *pt;
         bmi = (BITMAPINFO *)(pt + 1);
     }
-    else bmi = (BITMAPINFO *)LockResource( handle );
+    else bmi = (BITMAPINFO *)LockResource16( handle );
 
     /* Create a copy of the bitmap header */
 
@@ -391,13 +391,13 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
 
     /* Load the resource */
 
-    if (!(hRsrc = FindResource( hInstance,
+    if (!(hRsrc = FindResource16( hInstance,
                                 MAKEINTRESOURCE( dirEntry.icon.wResId ),
                                 fCursor ? RT_CURSOR : RT_ICON ))) return 0;
-    if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
+    if (!(handle = LoadResource16( hInstance, hRsrc ))) return 0;
 
     hRet = CURSORICON_LoadHandler( handle, hInstance, fCursor );
-    FreeResource(handle);
+    FreeResource16(handle);
     return hRet;
 }
 
@@ -463,13 +463,13 @@ HCURSOR CURSORICON_IconToCursor(HICON hIcon)
 /***********************************************************************
  *           LoadCursor    (USER.173)
  */
-HCURSOR LoadCursor( HANDLE hInstance, SEGPTR name )
+HCURSOR16 LoadCursor16( HINSTANCE16 hInstance, SEGPTR name )
 {
     if (HIWORD(name))
-        dprintf_cursor( stddeb, "LoadCursor: %04x '%s'\n",
+        dprintf_cursor( stddeb, "LoadCursor16: %04x '%s'\n",
                         hInstance, (char *)PTR_SEG_TO_LIN( name ) );
     else
-        dprintf_cursor( stddeb, "LoadCursor: %04x %04x\n",
+        dprintf_cursor( stddeb, "LoadCursor16: %04x %04x\n",
                         hInstance, LOWORD(name) );
 
     return CURSORICON_Load( hInstance, name,
@@ -480,7 +480,7 @@ HCURSOR LoadCursor( HANDLE hInstance, SEGPTR name )
 /***********************************************************************
  *           LoadIcon    (USER.174)
  */
-HICON LoadIcon( HANDLE hInstance, SEGPTR name )
+HICON16 LoadIcon16(HINSTANCE16 hInstance,SEGPTR name)
 {
     if (HIWORD(name))
         dprintf_icon( stddeb, "LoadIcon: %04x '%s'\n",
@@ -935,7 +935,7 @@ void GetClipCursor32( RECT32 *rect )
  */
 WORD GetIconID( HANDLE hResource, DWORD resType )
 {
-    CURSORICONDIR *lpDir = LockResource(hResource);
+    CURSORICONDIR *lpDir = LockResource16(hResource);
 
     if (!lpDir || lpDir->idReserved ||
         ((lpDir->idType != 1) && (lpDir->idType != 2)))

@@ -24,7 +24,7 @@ BOOL WIN32_WinHelpA(HWND hWnd,LPCSTR lpszHelp,UINT uCommand, DWORD dwData)
 	return WinHelp(hWnd,lpszHelp,uCommand,dwData);
 }
 
-HHOOK SetWindowsHookEx32A(int HookId, HOOKPROC hookfn, HINSTANCE hModule,
+HHOOK SetWindowsHookEx32A(int HookId, HOOKPROC32 hookfn, HINSTANCE hModule,
 				DWORD ThreadId)
 
 {

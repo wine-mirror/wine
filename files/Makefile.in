@@ -1,5 +1,8 @@
-TOPSRC = @top_srcdir@
-MODULE = files
+prefix     = @prefix@
+sysconfdir = @sysconfdir@
+DEFS       = -D__WINE__  -DETCDIR=\"$(sysconfdir)\"
+TOPSRC     = @top_srcdir@
+MODULE     = files
 
 C_SRCS = \
 	directory.c \

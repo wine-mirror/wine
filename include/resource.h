@@ -43,13 +43,13 @@ extern void LIBRES_RegisterResources(const struct resource* const * Res);
 #define WINE_CONSTRUCTOR
 #endif
 
-extern int NE_AccessResource( HMODULE hModule, HRSRC hRsrc );
-extern BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle );
-extern HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId );
-extern DWORD NE_SizeofResource( HMODULE hModule, HRSRC hRsrc );
-extern SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle );
-extern HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size );
-extern HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc );
+extern int NE_AccessResource( HMODULE16 hModule, HRSRC hRsrc );
+extern BOOL NE_FreeResource( HMODULE16 hModule, HGLOBAL handle );
+extern HRSRC NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId );
+extern DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC hRsrc );
+extern SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL handle );
+extern HGLOBAL NE_AllocResource( HMODULE16 hModule, HRSRC hRsrc, DWORD size );
+extern HGLOBAL NE_LoadResource( HMODULE16 hModule,  HRSRC hRsrc );
 
 extern HANDLE SYSRES_LoadResource( SYSTEM_RESOURCE id );
 extern void SYSRES_FreeResource( HANDLE handle );

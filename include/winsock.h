@@ -196,7 +196,7 @@ void WSASetLastError(INT iError);
 INT WSAGetLastError(void);
 BOOL WSAIsBlocking(void);
 INT WSAUnhookBlockingHook(void);
-FARPROC WSASetBlockingHook(FARPROC lpBlockFunc);
+FARPROC16 WSASetBlockingHook(FARPROC16 lpBlockFunc);
 INT WSACancelBlockingCall(void);
 HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg,
                              LPCSTR name, LPCSTR proto,

@@ -848,7 +848,7 @@ HFILE _lcreat( LPCSTR path, INT32 attr )
 /***********************************************************************
  *           _lcreat_uniq   (Not a Windows API)
  */
-HFILE _lcreat_uniq( LPCSTR path, INT attr )
+HFILE _lcreat_uniq( LPCSTR path, INT32 attr )
 {
     DOS_FILE *file;
     HFILE handle;

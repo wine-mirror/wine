@@ -152,14 +152,6 @@ typedef struct
     TEXTMETRIC16  metrics;
 } X_PHYSFONT;
 
-  /* X physical palette information */
-typedef struct
-{
-    HANDLE16  hMapping;     /* Color mapping table (or 0 for identity) */
-    HANDLE16  hRevMapping;  /* Reverse color mapping table */
-    WORD      mappingSize;
-} X_PHYSPALETTE;
-
   /* X-specific DC information */
 typedef struct
 {
@@ -168,7 +160,6 @@ typedef struct
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
-    X_PHYSPALETTE pal;
 } X_DC_INFO;
 
 

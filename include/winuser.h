@@ -40,6 +40,8 @@ typedef struct
     LPCWSTR     lpszClassName;
 } WNDCLASS32W, *LPWNDCLASS32W;
 
+#pragma pack(1)
+
 typedef struct
 {
     UINT16      style;
@@ -53,6 +55,8 @@ typedef struct
     SEGPTR      lpszMenuName WINE_PACKED;
     SEGPTR      lpszClassName WINE_PACKED;
 } WNDCLASS16, *LPWNDCLASS16;
+
+#pragma pack(4)
 
 typedef struct
 {

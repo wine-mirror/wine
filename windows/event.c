@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -872,7 +873,7 @@ HWND GetCapture()
 /***********************************************************************
  *           GetMouseEventProc   (USER.337)
  */
-FARPROC GetMouseEventProc(void)
+FARPROC16 GetMouseEventProc(void)
 {
     HMODULE16 hmodule = GetModuleHandle("USER");
     return MODULE_GetEntryPoint( hmodule,

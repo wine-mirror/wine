@@ -3,6 +3,7 @@ dnl Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 dnl                         <patra@itp1.physik.tu-berlin.de>
 AC_REVISION([configure.in 1.00])
 AC_INIT(controls/edit.c)		
+AC_CONFIG_HEADER(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
 # We want these before the checks, so the checks can modify their values.
@@ -14,21 +15,19 @@ dnl **** Command-line arguments ****
 
 AC_ARG_WITH(library,
 [  --with-library          build Wine as a library instead of an emulator],
-[AC_DEFINE(WINELIB) MAIN_TARGET="libwine.a"],[MAIN_TARGET="wine"])
+[OPTIONS="-DWINELIB" MAIN_TARGET="libwine.a"],
+[OPTIONS="" MAIN_TARGET="wine"])
 
 AC_ARG_WITH(dll,
 [  --with-dll              build Wine as a DLL instead of an emulator],
-[AC_DEFINE(WINELIB) AC_DEFINE(WINELIBDLL)
- MAIN_TARGET="libwine.so.1.0" CFLAGS="$CFLAGS -fPIC"])
-AC_SUBST(MAIN_TARGET)
+[OPTIONS="-DWINELIB -DWINELIBDLL" MAIN_TARGET="libwine.so.1.0" CFLAGS="$CFLAGS -fPIC"])
 
 AC_ARG_WITH(ipc,
 [  --with-ipc              use inter-process communication for DDE],
-[AC_DEFINE(CONFIG_IPC)])
+[OPTIONS="$OPTIONS -DCONFIG_IPC"])
 
-AC_ARG_WITH(malloc-debug,
-[  --with-malloc-debug     enable malloc() debugging],
-[AC_DEFINE(MALLOC_DEBUGGING)])
+AC_SUBST(MAIN_TARGET)
+AC_SUBST(OPTIONS)
 
 dnl **** Check for some programs and libraries ****
 
@@ -69,8 +68,7 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(tcgetattr usleep)
-AC_CHECK_HEADERS(stdlib.h)
+AC_CHECK_FUNCS(memmove tcgetattr usleep)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()
@@ -85,7 +83,6 @@ Make.rules
 Makefile
 controls/Makefile
 debugger/Makefile
-debugger/readline/Makefile
 files/Makefile
 if1632/Makefile
 ipc/Makefile

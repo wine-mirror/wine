@@ -6,9 +6,9 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <string.h>
 #include "windows.h"
+#include "heap.h"
 #include "ldt.h"
 #include "module.h"
 #include "miscemu.h"
@@ -67,6 +67,19 @@ void INT_Int31Handler( SIGCONTEXT *context )
         {
             AX_reg(context) = 0x8022;  /* invalid selector */
             SET_CFLAG(context);
+        }
+        else
+        {
+            /* If a segment register contains the selector being freed, */
+            /* set it to zero. */
+            if (!((DS_reg(context)^BX_reg(context)) & ~3)) DS_reg(context) = 0;
+            if (!((ES_reg(context)^BX_reg(context)) & ~3)) ES_reg(context) = 0;
+#ifdef FS_reg
+            if (!((FS_reg(context)^BX_reg(context)) & ~3)) FS_reg(context) = 0;
+#endif
+#ifdef GS_reg
+            if (!((GS_reg(context)^BX_reg(context)) & ~3)) GS_reg(context) = 0;
+#endif
         }
         break;
 
@@ -135,6 +148,7 @@ void INT_Int31Handler( SIGCONTEXT *context )
 
     case 0x0009:  /* Set selector access rights */
         SelectorAccessRights( BX_reg(context), 1, CX_reg(context) );
+        break;
 
     case 0x000a:  /* Allocate selector alias */
         if (!(AX_reg(context) = AllocCStoDSAlias( BX_reg(context) )))
@@ -199,8 +213,9 @@ void INT_Int31Handler( SIGCONTEXT *context )
             if ((BL_reg(context) == 0x2f) && ((p->eax & 0xFF00) == 0x1500))
             {
                 do_mscdex( context );
+		break;
             }
-            else SET_CFLAG(context);
+            SET_CFLAG(context);
         }
         break;
 
@@ -242,8 +257,8 @@ void INT_Int31Handler( SIGCONTEXT *context )
         break;
 
     case 0x0501:  /* Allocate memory block */
-        if (!(ptr = (BYTE *)malloc( MAKELONG( CX_reg(context),
-                                              BX_reg(context) ) )))
+        if (!(ptr = (BYTE *)HeapAlloc( SystemHeap, 0,MAKELONG( CX_reg(context),
+                                                           BX_reg(context) ))))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
@@ -256,12 +271,14 @@ void INT_Int31Handler( SIGCONTEXT *context )
         break;
 
     case 0x0502:  /* Free memory block */
-        free( (void *)MAKELONG( DI_reg(context), SI_reg(context) ) );
+        HeapFree( SystemHeap, 0,
+                  (void *)MAKELONG( DI_reg(context), SI_reg(context) ) );
         break;
 
     case 0x0503:  /* Resize memory block */
-        if (!(ptr = (BYTE *)realloc( (void *)MAKELONG(DI_reg(context),SI_reg(context)),
-                                     MAKELONG(CX_reg(context),BX_reg(context)))))
+        if (!(ptr = (BYTE *)HeapReAlloc( SystemHeap, 0,
+                           (void *)MAKELONG(DI_reg(context),SI_reg(context)),
+                                   MAKELONG(CX_reg(context),BX_reg(context)))))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);

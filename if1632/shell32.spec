@@ -10,7 +10,7 @@ base	1
 0005 stub DllGetClassObject
 0006 stub DoEnvironmentSubstA
 0007 stub DoEnvironmentSubstW
-0008 stub DragAcceptFiles
+0008 stdcall DragAcceptFiles(long long) DragAcceptFiles
 0009 stub DragFinish
 0010 stub DragQueryFile
 0011 stub DragQueryFileA

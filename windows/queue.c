@@ -14,11 +14,11 @@
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
-static HQUEUE hFirstQueue = 0;
-static HQUEUE hmemSysMsgQueue = 0;
+static HQUEUE16 hFirstQueue = 0;
+static HQUEUE16 hmemSysMsgQueue = 0;
 static MESSAGEQUEUE *pMouseQueue = NULL;  /* Queue for last mouse message */
 static MESSAGEQUEUE *pKbdQueue = NULL;    /* Queue for last kbd message */
-static HQUEUE hDoomedQueue = 0;
+static HQUEUE16 hDoomedQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
 
 /***********************************************************************
@@ -130,7 +130,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
 BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock16(hQueue);
-    HQUEUE *pPrev;
+    HQUEUE16 *pPrev;
 
     dprintf_msg(stddeb,"Deleting message queue %04x\n", hQueue);
 
@@ -401,7 +401,7 @@ static void QUEUE_WakeSomeone( UINT message )
     if ((message >= WM_KEYFIRST) && (message <= WM_KEYLAST)) wakeBit = QS_KEY;
     else wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
 
-    if (!(hwnd = GetSysModalWindow()))
+    if (!(hwnd = GetSysModalWindow16()))
     {
         if (wakeBit == QS_KEY)
         {

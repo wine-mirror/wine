@@ -23,7 +23,7 @@
 static struct notify
 {
     HTASK    htask;
-    FARPROC  lpfnCallback;
+    FARPROC16 lpfnCallback;
     WORD     wFlags;
 } *notifys = NULL;
 

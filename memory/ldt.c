@@ -95,6 +95,7 @@ int LDT_GetEntry( int entry, ldt_entry *content )
     content->seg_32bit      = (ldt_flags_copy[entry] & LDT_FLAGS_32BIT) != 0;
     content->read_only      = (ldt_flags_copy[entry] & LDT_FLAGS_READONLY) !=0;
     content->limit_in_pages = (ldt_flags_copy[entry] & LDT_FLAGS_BIG) !=0;
+    if (content->limit_in_pages) content->limit >>= 12;
     return ret;
 }
 
@@ -134,7 +135,34 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
         ldt_info.contents       = content->type;
         ldt_info.read_exec_only = content->read_only != 0;
         ldt_info.limit_in_pages = content->limit_in_pages != 0;
-        ret = modify_ldt(1, &ldt_info, sizeof(ldt_info));
+        /* Make sure the info will be accepted by the kernel */
+        /* This is ugly, but what can I do? */
+        if (content->type == SEGMENT_STACK)
+        {
+            /* FIXME */
+        }
+        else
+        {
+            if (ldt_info.base_addr >= 0xc0000000)
+            {
+                fprintf( stderr, "LDT_SetEntry: invalid base addr %08lx\n",
+                         ldt_info.base_addr );
+                return -1;
+            }
+            if (content->limit_in_pages)
+            {
+                if ((ldt_info.limit << 12) + 0xfff >
+                                               0xc0000000 - ldt_info.base_addr)
+                    ldt_info.limit = (0xc0000000 - 0xfff - ldt_info.base_addr) >> 12;
+            }
+            else
+            {
+                if (ldt_info.limit > 0xc0000000 - ldt_info.base_addr)
+                    ldt_info.limit = 0xc0000000 - ldt_info.base_addr;
+            }
+        }
+        if ((ret = modify_ldt(1, &ldt_info, sizeof(ldt_info))) < 0)
+            perror( "modify_ldt" );
     }
 #endif  /* linux */
 
@@ -223,10 +251,9 @@ void LDT_Print( int start, int length )
             flags[1] = (ldt_flags_copy[i] & LDT_FLAGS_READONLY) ? '-' : 'w';
             flags[2] = '-';
         }
-        printf("%04x: sel=%04x base=%08lx limit=%05lx %s %d-bit %c%c%c\n",
+        printf("%04x: sel=%04x base=%08lx limit=%08lx %d-bit %c%c%c\n",
                 i, ENTRY_TO_SELECTOR(i),
                 ldt_copy[i].base, ldt_copy[i].limit,
-                ldt_flags_copy[i] & LDT_FLAGS_BIG ? "(pages)" : "(bytes)",
                 ldt_flags_copy[i] & LDT_FLAGS_32BIT ? 32 : 16,
                 flags[0], flags[1], flags[2] );
     }

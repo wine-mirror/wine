@@ -53,6 +53,7 @@ static const char PROFILE_WineIniName[] = "/.winerc";
 /* Check for comments in profile */
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
+#define WINE_INI_GLOBAL ETCDIR "/wine.conf"
 
 /***********************************************************************
  *           PROFILE_CopyEntry
@@ -558,6 +559,26 @@ int PROFILE_GetWineIniString( const char *section, const char *key_name,
         return strlen( buffer );
     }
     return PROFILE_GetSection( WineProfile, section, buffer, len, TRUE );
+}
+
+
+/***********************************************************************
+ *           PROFILE_GetWineIniInt
+ *
+ * Get a config integer from the wine.ini file.
+ */
+int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def )
+{
+    char buffer[20];
+    char *p;
+    long result;
+
+    PROFILEKEY *key = PROFILE_Find( &WineProfile, section, key_name, FALSE );
+    if (!key || !key->value) return def;
+    PROFILE_CopyEntry( buffer, key->value, sizeof(buffer), TRUE );
+    result = strtol( buffer, &p, 0 );
+    if (p == buffer) return 0;  /* No digits at all */
+    return (int)result;
 }
 
 

@@ -1,3 +1,4 @@
+DEFS   = -D__WINE__
 TOPSRC = @top_srcdir@
 MODULE = ipc
 

@@ -15,7 +15,6 @@
  * DCX_WINDOWPAINT - BeginPaint specific flag
  */
 
-#include "options.h"
 #include "dce.h"
 #include "class.h"
 #include "win.h"
@@ -116,6 +115,22 @@ HANDLE DCE_FindDCE(HDC hDC)
     hdce = dce->hNext;
   }
  return hdce;
+}
+
+/**********************************************************************
+ *	    DCE_hDC2hWnd
+ */
+HWND DCE_hDC2hWnd(HDC hDC)
+{
+ HANDLE hdce = DCE_FindDCE(hDC); 
+
+ if( hdce )
+   {
+     DCE* dce = (DCE *) USER_HEAP_LIN_ADDR(hdce);
+     return dce->hwndCurrent;
+   }
+
+ return 0;
 }
 
 /***********************************************************************
@@ -505,7 +520,8 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         }
            /* optimize away GetVisRgn for desktop if it isn't there */
 
-      else if( hwnd==GetDesktopWindow() && !Options.desktopGeometry ) 
+      else if ((hwnd == GetDesktopWindow()) &&
+               (rootWindow == DefaultRootWindow(display)))
 	       hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
                                                   SYSMETRICS_CYSCREEN);
       else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
@@ -602,6 +618,7 @@ int ReleaseDC( HWND hwnd, HDC hdc )
     {
 	SetDCState( dce->hDC, defaultDCstate );
 	dce->DCXflags = DCX_CACHE;
+	dce->hwndCurrent = 0;
     }
     return 1;
 }

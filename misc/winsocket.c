@@ -37,7 +37,7 @@
 static WORD wsa_errno;
 static int wsa_initted;
 static key_t wine_key = 0;
-static FARPROC BlockFunction;
+static FARPROC16 BlockFunction;
 static fd_set fd_in_use;
 
 extern int h_errno;
@@ -1423,7 +1423,7 @@ BOOL WSAIsBlocking(void)
 	return 0;
 }
 
-FARPROC WSASetBlockingHook(FARPROC lpBlockFunc)
+FARPROC16 WSASetBlockingHook(FARPROC16 lpBlockFunc)
 {
 	dprintf_winsock(stddeb, "WSA_SetBlockHook %8lx, STUB!\n", (unsigned long) lpBlockFunc);
 
@@ -1434,7 +1434,7 @@ FARPROC WSASetBlockingHook(FARPROC lpBlockFunc)
 
 	BlockFunction = lpBlockFunc;
 
-	return (FARPROC) lpBlockFunc;
+	return (FARPROC16) lpBlockFunc;
 }
 
 INT WSAUnhookBlockingHook(void)

@@ -64,7 +64,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn
 55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
 56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word
-                        word word word word word ptr) CreateFont
+                        word word word word word ptr) CreateFont16
 57  pascal16 CreateFontIndirect(ptr) CreateFontIndirect16
 58  pascal16 CreateHatchBrush(word long) CreateHatchBrush
 60  pascal16 CreatePatternBrush(word) CreatePatternBrush
@@ -241,12 +241,12 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 354 stub ShrinkGDIHeap
 355 stub FTrapping0
 360 pascal16 CreatePalette(ptr) CreatePalette
-361 pascal16 GDISelectPalette(word word) GDISelectPalette
+361 pascal16 GDISelectPalette(word word word) GDISelectPalette
 362 pascal16 GDIRealizePalette(word) GDIRealizePalette
 363 pascal16 GetPaletteEntries(word word word ptr) GetPaletteEntries
 364 pascal16 SetPaletteEntries(word word word ptr) SetPaletteEntries
 365 pascal16 RealizeDefaultPalette(word) RealizeDefaultPalette
-366 stub UpdateColors
+366 pascal16 UpdateColors(word) UpdateColors
 367 pascal16 AnimatePalette(word word word ptr) AnimatePalette
 368 pascal16 ResizePalette(word word) ResizePalette
 370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex
@@ -271,7 +271,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 409 stub CREATEUSERDISCARDABLEBITMAP
 410 stub ISVALIDMETAFILE
 411 pascal16 GetCurLogFont(word) GetCurLogFont
-412 stub IsDCCurrentPalette
+412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette
 439 pascal16 StretchDIBits (word s_word s_word word word word word
                                word word ptr ptr word long) StretchDIBits
 440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits

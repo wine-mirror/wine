@@ -56,13 +56,13 @@ type	win16
 57  pascal16 GetProfileInt(ptr ptr s_word) GetProfileInt
 58  pascal16 GetProfileString(ptr ptr ptr ptr word) GetProfileString
 59  pascal16 WriteProfileString(ptr ptr ptr) WriteProfileString
-60  pascal16 FindResource(word segptr segptr) FindResource
-61  pascal16 LoadResource(word word) LoadResource
-62  pascal LockResource(word) WIN16_LockResource
-63  pascal16 FreeResource(word) FreeResource
-64  pascal16 AccessResource(word word) AccessResource
-65  pascal SizeofResource(word word) SizeofResource
-66  pascal16 AllocResource(word word long) AllocResource
+60  pascal16 FindResource(word segptr segptr) FindResource16
+61  pascal16 LoadResource(word word) LoadResource16
+62  pascal LockResource(word) WIN16_LockResource16
+63  pascal16 FreeResource(word) FreeResource16
+64  pascal16 AccessResource(word word) AccessResource16
+65  pascal SizeofResource(word word) SizeofResource16
+66  pascal16 AllocResource(word word long) AllocResource16
 67  stub SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable
 69  pascal16 FindAtom(segptr) FindAtom

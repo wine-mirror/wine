@@ -1,8 +1,7 @@
-/* Lexical scanner for command line parsing in the Wine debugger
+/*
+ * Lexical scanner for command line parsing
  *
- * Version 1.0
- * Eric Youngdale
- * 9/93
+ * Copyright 1993 Eric Youngdale
  */
 
 %{
@@ -13,18 +12,20 @@
 #include "xmalloc.h"
 #include "y.tab.h"
 
-#ifdef USE_READLINE
+#ifndef DONT_USE_READLINE
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
 	if ( (result = dbg_read((char *) buf, max_size )) < 0 ) \
 	    YY_FATAL_ERROR( "read() in flex scanner failed" );
-#endif
 
 extern char * readline(char *);
 extern void add_history(char *);
 static int dbg_read(char * buf, int size);
 static char * make_symbol(char *);
 void flush_symbols();
+
+#endif  /* DONT_USE_READLINE */
+
 static int syntax_error;
 %}
 
@@ -136,7 +137,8 @@ mode				{ return tMODE; }
 int yywrap(void) { return 1; }
 #endif
 
-#ifdef USE_READLINE
+#ifndef DONT_USE_READLINE
+
 #ifndef whitespace
 #define whitespace(c) (((c) == ' ') || ((c) == '\t'))
 #endif
@@ -216,10 +218,10 @@ char * make_symbol(char * symbol){
         return local_symbols[next_symbol++] = xstrdup(symbol);
 }
 
-void
-flush_symbols(){
+void flush_symbols()
+{
 	while(--next_symbol>= 0) free(local_symbols[next_symbol]);
 	next_symbol = 0;
 }
 
-#endif
+#endif  /* DONT_USE_READLINE */

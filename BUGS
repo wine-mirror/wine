@@ -1,26 +1,19 @@
-1. 32-bit/16-bit call translation:
-
-- EBP and ESP are sometimes corrupted while running 16-bit code.
-
-2. Messaging:
+1. Messaging:
 
 - Message flow is not correct for multiple tasks
 - Dialog Boxes created by WM_CREATE handler aren't visible
 - MDI does not send WM_GETMINMAX message.
 - resizing of MDI child windows sometimes leaves them unrepainted
 
-3. Controls:
+2. Controls:
 
 - Some features are missing (like VK_SHIFT aided multiple selection in listboxes)
 
-4. Miscellaneous:
+3. Miscellaneous:
 
-- InitializeLoadedDLLs() can't init LZEXPAND.DLL. (cs:ip => 0:0)
-- LoadCursor does not correctly handle bitmap cursors
 - AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple times.
-- Dialogs don't support resources which are referred to as integers.
 
-5. Where to look in source files:
+4. Where to look in source files:
 
 - grep for FIXME in the source files.
 

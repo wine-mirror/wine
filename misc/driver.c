@@ -195,7 +195,7 @@ LRESULT CloseDriver(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 HMODULE16 GetDriverModuleHandle(HDRVR16 hDrvr)
 {
     LPDRIVERITEM lpdrv;
-    HMODULE hModule = 0;
+    HMODULE16 hModule = 0;
 
     dprintf_driver( stddeb, "GetDriverModuleHandle(%04x);\n", hDrvr);
 

@@ -1106,15 +1106,25 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
 
+    case DSTINVERT:  /* 0x55 */
+        if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel ||
+            !Options.perfectGraphics)
+        {
+            XSetFunction( display, dcDst->u.x.gc, GXinvert );
+            XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+                            visRectDst.left, visRectDst.top, width, height ); 
+            return TRUE;
+        }
+        break;
+
     case PATINVERT:  /* 0x5a */
-          /* FIXME: This is not really correct, but for now PATINVERT is */
-          /* used to draw the window moving frame, so it has to be fast. */
+	if (Options.perfectGraphics) break;
         if (!DC_SetupGCForBrush( dcDst )) return TRUE;
         XSetFunction( display, dcDst->u.x.gc, GXxor );
         XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
-        
+
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
         {
@@ -1155,8 +1165,8 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
         else
         {
             XSetFunction( display, dcDst->u.x.gc, GXcopy );
-            XSetForeground( display, dcDst->u.x.gc,
-                            COLOR_PaletteToPixel[COLOR_ColormapSize-1] );
+            XSetForeground( display, dcDst->u.x.gc, 
+                            COLOR_PaletteToPixel[COLOR_GetSystemPaletteSize() - 1]);
             XSetFillStyle( display, dcDst->u.x.gc, FillSolid );
         }
         XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,

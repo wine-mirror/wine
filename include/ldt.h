@@ -19,7 +19,7 @@ enum seg_type
 typedef struct
 {
     unsigned long base;            /* base address */
-    unsigned long limit;           /* segment limit */
+    unsigned long limit;           /* segment limit (in pages or bytes) */
     int           seg_32bit;       /* is segment 32-bit? */
     int           read_only;       /* is segment read-only? */
     int           limit_in_pages;  /* is the limit in pages or bytes? */

@@ -38,11 +38,11 @@ static BOOL FileDlg_Init()
     static BOOL initialized = 0;
     
     if (!initialized) {
-	if (!hFolder) hFolder = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER));
-	if (!hFolder2) hFolder2 = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER2));
-	if (!hFloppy) hFloppy = LoadBitmap(0, MAKEINTRESOURCE(OBM_FLOPPY));
-	if (!hHDisk) hHDisk = LoadBitmap(0, MAKEINTRESOURCE(OBM_HDISK));
-	if (!hCDRom) hCDRom = LoadBitmap(0, MAKEINTRESOURCE(OBM_CDROM));
+	if (!hFolder) hFolder = LoadBitmap16(0, MAKEINTRESOURCE(OBM_FOLDER));
+	if (!hFolder2) hFolder2 = LoadBitmap16(0, MAKEINTRESOURCE(OBM_FOLDER2));
+	if (!hFloppy) hFloppy = LoadBitmap16(0, MAKEINTRESOURCE(OBM_FLOPPY));
+	if (!hHDisk) hHDisk = LoadBitmap16(0, MAKEINTRESOURCE(OBM_HDISK));
+	if (!hCDRom) hCDRom = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CDROM));
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
 	    hHDisk == 0 || hCDRom == 0)
 	{	
@@ -68,13 +68,13 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
     if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) hDlgTmpl = lpofn->hInstance;
     else if (lpofn->Flags & OFN_ENABLETEMPLATE)
     {
-        if (!(hResInfo = FindResource( lpofn->hInstance,
-                                       lpofn->lpTemplateName, RT_DIALOG)))
+        if (!(hResInfo = FindResource16(lpofn->hInstance,
+                                        lpofn->lpTemplateName, RT_DIALOG)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource( lpofn->hInstance, hResInfo );
+        hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo );
     }
     else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_OPEN_FILE );
     if (!hDlgTmpl)
@@ -90,7 +90,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
     {
-        if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource( hDlgTmpl );
+        if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
         else SYSRES_FreeResource( hDlgTmpl );
     }
 
@@ -115,13 +115,13 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
     else if (lpofn->Flags & OFN_ENABLETEMPLATE)
     {
         hInst = lpofn->hInstance;
-        if (!(hResInfo = FindResource( lpofn->hInstance,
-                                       lpofn->lpTemplateName, RT_DIALOG )))
+        if (!(hResInfo = FindResource16(lpofn->hInstance,
+                                        lpofn->lpTemplateName, RT_DIALOG )))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource( lpofn->hInstance, hResInfo );
+        hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo );
     }
     else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_SAVE_FILE );
 
@@ -131,7 +131,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
                         (DWORD)lpofn); 
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
     {
-        if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource( hDlgTmpl );
+        if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
         else SYSRES_FreeResource( hDlgTmpl );
     }
 
@@ -375,7 +375,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   SetDlgItemText32A( hWnd, edt1, tmpstr );
   /* get drive list */
   *tmpstr = 0;
-  DlgDirListComboBox16(hWnd, tmpstr, cmb2, 0, 0xC000);
+  DlgDirListComboBox16(hWnd, (LPSTR)MAKE_SEGPTR(tmpstr), cmb2, 0, 0xC000);
   /* read initial directory */
   if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) 
     {
@@ -1101,13 +1101,13 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
     if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE) hDlgTmpl = lpChCol->hInstance;
     else if (lpChCol->Flags & CC_ENABLETEMPLATE)
     {
-        if (!(hResInfo = FindResource( lpChCol->hInstance,
-                                       lpChCol->lpTemplateName, RT_DIALOG)))
+        if (!(hResInfo = FindResource16(lpChCol->hInstance,
+                                        lpChCol->lpTemplateName, RT_DIALOG)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource( lpChCol->hInstance, hResInfo );
+        hDlgTmpl = LoadResource16( lpChCol->hInstance, hResInfo );
     }
     else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_COLOR );
     if (!hDlgTmpl)
@@ -1121,7 +1121,7 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
                            (DWORD)lpChCol );
     if (!(lpChCol->Flags & CC_ENABLETEMPLATEHANDLE))
     {
-        if (lpChCol->Flags & CC_ENABLETEMPLATE) FreeResource( hDlgTmpl );
+        if (lpChCol->Flags & CC_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
         else SYSRES_FreeResource( hDlgTmpl );
     }
     return bRet;
@@ -1576,7 +1576,7 @@ static void CC_PrepareColorGraph(HWND hDlg)
  HBRUSH hbrush;
  HDC hdc ;
  RECT16 rect,client;
- HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
+ HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
 
  GetClientRect16(hwnd,&client);
  hdc=GetDC(hwnd);
@@ -2182,13 +2182,13 @@ BOOL ChooseFont(LPCHOOSEFONT lpChFont)
     if (lpChFont->Flags & CF_ENABLETEMPLATEHANDLE) hDlgTmpl = lpChFont->hInstance;
     else if (lpChFont->Flags & CF_ENABLETEMPLATE)
     {
-        if (!(hResInfo = FindResource( lpChFont->hInstance,
-                                       lpChFont->lpTemplateName, RT_DIALOG)))
+        if (!(hResInfo = FindResource16(lpChFont->hInstance,
+                                        lpChFont->lpTemplateName, RT_DIALOG)))
         {
             CommDlgLastError = CDERR_FINDRESFAILURE;
             return FALSE;
         }
-        hDlgTmpl = LoadResource( lpChFont->hInstance, hResInfo );
+        hDlgTmpl = LoadResource16( lpChFont->hInstance, hResInfo );
     }
     else hDlgTmpl = SYSRES_LoadResource( SYSRES_DIALOG_CHOOSE_FONT );
     if (!hDlgTmpl)
@@ -2202,7 +2202,7 @@ BOOL ChooseFont(LPCHOOSEFONT lpChFont)
                       (DWORD)lpChFont );
     if (!(lpChFont->Flags & CF_ENABLETEMPLATEHANDLE))
     {
-        if (lpChFont->Flags & CF_ENABLETEMPLATE) FreeResource( hDlgTmpl );
+        if (lpChFont->Flags & CF_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
         else SYSRES_FreeResource( hDlgTmpl );
     }
     return bRet;
@@ -2381,9 +2381,9 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
   HDC hdc;
   int i,j,res,init=0;
   long l;
-  FARPROC enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
+  FARPROC16 enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
   LPLOGFONT16 lpxx;
-  HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
+  HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
   LPCHOOSEFONT lpcf;
 
   SetWindowLong32A(hDlg, DWL_USER, lParam); 
@@ -2398,7 +2398,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
     return FALSE;
   }
   if (!hBitmapTT)
-    hBitmapTT = LoadBitmap(0, MAKEINTRESOURCE(OBM_TRTYPE));
+    hBitmapTT = LoadBitmap16(0, MAKEINTRESOURCE(OBM_TRTYPE));
 			 
   if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
     ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
@@ -2495,7 +2495,7 @@ LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
   BITMAP16 bm;
   LPMEASUREITEMSTRUCT16 lpmi=PTR_SEG_TO_LIN((LPMEASUREITEMSTRUCT16)lParam);
   if (!hBitmapTT)
-    hBitmapTT = LoadBitmap(0, MAKEINTRESOURCE(OBM_TRTYPE));
+    hBitmapTT = LoadBitmap16(0, MAKEINTRESOURCE(OBM_TRTYPE));
   GetObject16( hBitmapTT, sizeof(bm), &bm );
   lpmi->itemHeight=bm.bmHeight;
   /* FIXME: use MAX of bm.bmHeight and tm.tmHeight .*/
@@ -2615,7 +2615,7 @@ LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM wParam, LPARAM lParam)
 LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
   char buffer[200];
-  FARPROC enumCallback;
+  FARPROC16 enumCallback;
   HFONT hFont/*,hFontOld*/;
   int i,j;
   long l;
@@ -2636,7 +2636,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		      i=SendDlgItemMessage16(hDlg,cmb1,CB_GETCURSEL,0,0);
 		      if (i!=CB_ERR)
 		      {
-		        HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
+		        HCURSOR hcursor=SetCursor(LoadCursor16(0,IDC_WAIT));
                         SendDlgItemMessage16(hDlg,cmb1,CB_GETLBTEXT,i,(LPARAM)MAKE_SEGPTR(buffer));
 	                dprintf_commdlg(stddeb,"WM_COMMAND/cmb1 =>%s\n",buffer);
 		        enumCallback = MODULE_GetWndProcEntry16("FontStyleEnumProc");

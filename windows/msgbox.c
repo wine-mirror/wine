@@ -65,20 +65,20 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
     switch(lpmb->type & MB_ICONMASK) {
      case MB_ICONEXCLAMATION:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
-                           (WPARAM)LoadIcon(0, IDI_EXCLAMATION), 0);
+                           (WPARAM)LoadIcon16(0, IDI_EXCLAMATION), 0);
       break;
      case MB_ICONQUESTION:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
-                           (WPARAM)LoadIcon(0, IDI_QUESTION), 0);
+                           (WPARAM)LoadIcon16(0, IDI_QUESTION), 0);
       break;
      case MB_ICONASTERISK:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
-                           (WPARAM)LoadIcon(0, IDI_ASTERISK), 0);
+                           (WPARAM)LoadIcon16(0, IDI_ASTERISK), 0);
       break;
      case MB_ICONHAND:
      default:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON, 
-                           (WPARAM)LoadIcon(0, IDI_HAND), 0);
+                           (WPARAM)LoadIcon16(0, IDI_HAND), 0);
       break;
     }
     

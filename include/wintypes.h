@@ -7,6 +7,15 @@
 #ifndef __WINE_WINTYPES_H
 #define __WINE_WINTYPES_H
 
+#ifdef __WINE__
+#include "config.h"
+#endif
+
+#if !defined(__WINE__) && !defined(WINELIB)
+/* If we are not compiling Wine, then we are using Winelib */
+#define WINELIB
+#endif
+
 #ifdef WINELIB
 # ifdef WINELIB16
 #  undef WINELIB32
@@ -28,7 +37,10 @@
 /* Macros to map Winelib names to the correct implementation name */
 /* depending on WINELIB16, WINELIB32 and UNICODE macros.          */
 
-#ifdef WINELIB
+#ifdef __WINE__
+# define WINELIB_NAME(func)      this is a syntax error
+# define WINELIB_NAME_AW(func)   this is a syntax error
+#else  /* __WINE__ */
 # ifdef WINELIB32
 #  define WINELIB_NAME(func)     func##32
 #  ifdef UNICODE
@@ -40,18 +52,15 @@
 #  define WINELIB_NAME(func)     func##16
 #  define WINELIB_NAME_AW(func)  func##16
 # endif  /* WINELIB32 */
-#else   /* WINELIB */
-# define WINELIB_NAME(func)      this is a syntax error
-# define WINELIB_NAME_AW(func)   this is a syntax error
-#endif  /* WINELIB */
+#endif  /* __WINE__ */
 
-#ifdef WINELIB
-# define DECL_WINELIB_TYPE(type)     typedef WINELIB_NAME(type) type
-# define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type
-#else   /* WINELIB */
+#ifdef __WINE__
 # define DECL_WINELIB_TYPE(type)     /* nothing */
 # define DECL_WINELIB_TYPE_AW(type)  /* nothing */
-#endif  /* WINELIB */
+#else   /* __WINE__ */
+# define DECL_WINELIB_TYPE(type)     typedef WINELIB_NAME(type) type
+# define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type
+#endif  /* __WINE__ */
 
 /* Standard data types. These are the same for emulator and library. */
 
@@ -86,6 +95,7 @@ typedef ACCESS_MASK     REGSAM;
 typedef INT16           HFILE;
 typedef HANDLE32        HHOOK;
 typedef HANDLE32        HKEY;
+typedef HANDLE32        HMIXEROBJ;
 
 /* Pointers types. These are the same for emulator and library. */
 
@@ -104,6 +114,7 @@ typedef UINT16         *LPUINT16;
 typedef INT32          *LPINT32;
 typedef UINT32         *LPUINT32;
 typedef HKEY           *LPHKEY;
+typedef HMIXEROBJ      *LPHMIXEROBJ;
 
 /* Special case: a segmented pointer is just a pointer in the library. */
 
@@ -153,6 +164,7 @@ DECLARE_HANDLE(HWND);
 
 typedef LRESULT (*DLGPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef LRESULT (*FARPROC16)();
+typedef LRESULT (*HOOKPROC16)(INT16,WPARAM16,LPARAM);
 typedef VOID (*TIMERPROC16)(HWND16,UINT16,UINT16,DWORD);
 typedef LRESULT (*WNDENUMPROC16)(HWND16,LPARAM);
 typedef LRESULT (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
@@ -161,6 +173,7 @@ typedef LRESULT (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 
 typedef LRESULT (*DLGPROC32)(HWND32,UINT32,WPARAM32,LPARAM);
 typedef LRESULT (*FARPROC32)();
+typedef LRESULT (*HOOKPROC32)(INT32,WPARAM32,LPARAM);
 typedef VOID (*TIMERPROC32)(HWND32,UINT32,UINT32,DWORD);
 typedef LRESULT (*WNDENUMPROC32)(HWND32,LPARAM);
 typedef LRESULT (*WNDPROC32)(HWND32,UINT32,WPARAM32,LPARAM);
@@ -169,7 +182,7 @@ typedef LRESULT (*WNDPROC32)(HWND32,UINT32,WPARAM32,LPARAM);
 /* These types are _not_ defined for the emulator, because they */
 /* depend on the UNICODE macro that only exists in user's code. */
 
-#ifdef WINELIB
+#ifndef __WINE__
 # if defined(WINELIB32) && defined(UNICODE)
 typedef WCHAR TCHAR;
 typedef LPWSTR LPTSTR;
@@ -179,7 +192,7 @@ typedef CHAR TCHAR;
 typedef LPSTR LPTSTR;
 typedef LPCSTR LPCTSTR;
 # endif /* WINELIB32 && UNICODE */
-#endif   /* WINELIB */
+#endif   /* __WINE__ */
 
 /* Data types specific to the library. These do _not_ exist in the emulator. */
 
@@ -247,7 +260,7 @@ DECL_WINELIB_TYPE(WNDPROC);
 
 /* Define some empty macros for compatibility with Windows code. */
 
-#ifdef WINELIB
+#ifndef __WINE__
 #define CALLBACK
 #define NEAR
 #define FAR
@@ -257,15 +270,15 @@ DECL_WINELIB_TYPE(WNDPROC);
 #define _near
 #define _pascal
 #define __export
-#endif  /* WINELIB */
+#endif  /* __WINE__ */
 
 /* Macro for structure packing. */
 
-#ifdef WINELIB
-#define WINE_PACKED
-#else
+#ifdef __GNUC__
 #define WINE_PACKED __attribute__ ((packed))
-#endif  /* WINELIB */
+#else
+#define WINE_PACKED  /* nothing */
+#endif
 
 /* Macros to split words and longs. */
 
@@ -289,7 +302,7 @@ DECL_WINELIB_TYPE(WNDPROC);
 
 /* Macros to access unaligned or wrong-endian WORDs and DWORDs. */
 
-#if !defined(WINELIB) || defined(__i386__)
+#ifdef __i386__
 #define PUT_WORD(ptr,w)   (*(WORD *)(ptr) = (w))
 #define GET_WORD(ptr)     (*(WORD *)(ptr))
 #define PUT_DWORD(ptr,dw) (*(DWORD *)(ptr) = (dw))
@@ -303,7 +316,7 @@ DECL_WINELIB_TYPE(WNDPROC);
                            PUT_WORD((WORD *)(ptr)+1,HIWORD(dw)))
 #define GET_DWORD(ptr)    ((DWORD)(GET_WORD(ptr) | \
                                    ((DWORD)GET_WORD((WORD *)(ptr)+1) << 16)))
-#endif  /* !WINELIB || __i386__ */
+#endif  /* __i386__ */
 
 /* MIN and MAX macros */
 

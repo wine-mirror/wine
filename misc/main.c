@@ -111,7 +111,8 @@ struct options Options =
 #else
     LANG_En,
 #endif
-    FALSE	    /* Managed windows */
+    FALSE,          /* Managed windows */
+    FALSE           /* Perfect graphics */
 };
 
 
@@ -125,6 +126,7 @@ static XrmOptionDescRec optionsTable[] =
     { "-ipc",           ".ipc",             XrmoptionNoArg,  (caddr_t)"off"},
     { "-language",      ".language",        XrmoptionSepArg, (caddr_t)"En" },
     { "-name",          ".name",            XrmoptionSepArg, (caddr_t)NULL },
+    { "-perfect",       ".perfect",         XrmoptionNoArg,  (caddr_t)"on" },
     { "-privatemap",    ".privatemap",      XrmoptionNoArg,  (caddr_t)"on" },
     { "-fixedmap",      ".fixedmap",        XrmoptionNoArg,  (caddr_t)"on" },
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
@@ -158,6 +160,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
+  "    -perfect        Favor correctness over speed for graphical operations\n" \
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -winver         Version to imitate (one of win31,win95,nt351)\n"
@@ -407,6 +410,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
         Options.allowReadOnly = TRUE;
     if (MAIN_GetResource( db, ".ipc", &value ))
         Options.ipc = TRUE;
+    if (MAIN_GetResource( db, ".perfect", &value ))
+	Options.perfectGraphics = TRUE;
     if (MAIN_GetResource( db, ".depth", &value))
 	screenDepth = atoi( value.addr );
     if (MAIN_GetResource( db, ".desktop", &value))
@@ -614,6 +619,13 @@ int main( int argc, char *argv[] )
     XrmInitialize();
     
     MAIN_ParseOptions( &argc, argv );
+
+    if (Options.desktopGeometry && Options.managed)
+    {
+        fprintf( stderr, "%s: -managed and -desktop options cannot be used together\n",
+                 Options.programName );
+        exit(1);
+    }
 
     screen       = DefaultScreenOfDisplay( display );
     screenWidth  = WidthOfScreen( screen );
@@ -1175,7 +1187,7 @@ BOOL SwapMouseButton(BOOL fSwap)
 /***********************************************************************
 *	FileCDR (KERNEL.130)
 */
-void FileCDR(FARPROC x)
+void FileCDR(FARPROC16 x)
 {
 	printf("FileCDR(%8x)\n", (int) x);
 }

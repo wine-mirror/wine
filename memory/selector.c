@@ -82,7 +82,6 @@ WORD FreeSelector( WORD sel )
     }
 
     /* Clear the saved 16-bit selector */
-#ifndef WINELIB
     frame = CURRENT_STACK16;
     while (frame)
     {
@@ -90,7 +89,6 @@ WORD FreeSelector( WORD sel )
         if ((frame->es >= sel) && (frame->es < nextsel)) frame->es = 0;
 	frame = PTR_SEG_OFF_TO_LIN(frame->saved_ss, frame->saved_sp);
     }
-#endif
     return 0;
 }
 
@@ -297,7 +295,9 @@ WORD SetSelectorLimit( WORD sel, DWORD limit )
 {
     ldt_entry entry;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
-    entry.limit = limit;
+    entry.limit_in_pages = (limit >= 0x100000);
+    if (entry.limit_in_pages) entry.limit = limit >> 12;
+    else entry.limit = limit;
     LDT_SetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     return sel;
 }

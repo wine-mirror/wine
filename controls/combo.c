@@ -51,7 +51,7 @@ static int COMBO_Init()
   BITMAP16 bm;
   
   dprintf_combo(stddeb, "COMBO_Init\n");
-  hComboBit = LoadBitmap(0, MAKEINTRESOURCE(OBM_COMBO));
+  hComboBit = LoadBitmap16(0, MAKEINTRESOURCE(OBM_COMBO));
   GetObject16( hComboBit, sizeof(bm), &bm );
   CBitHeight = bm.bmHeight;
   CBitWidth = bm.bmWidth;

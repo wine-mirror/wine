@@ -46,6 +46,8 @@ typedef struct
 static GLOBALARENA *pGlobalArena = NULL;
 static int globalArenaSize = 0;
 
+static DWORD globalDOSfree = 655350;
+
 #define GLOBAL_MAX_ALLOC_SIZE 0x00ff0000  /* Largest allocation is 16M - 64K */
 
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
@@ -550,11 +552,21 @@ BOOL16 GlobalUnWire( HGLOBAL16 handle )
 
 /***********************************************************************
  *           GlobalDOSAlloc   (KERNEL.184)
+ *
+ * Some programs rely on failure to allocate > 640K total with this function
  */
 DWORD GlobalDOSAlloc( DWORD size )
 {
-    WORD sel = GlobalAlloc16( GMEM_FIXED, size );
+    WORD sel;
+
+    if (size > globalDOSfree) return 0;
+    sel = GlobalAlloc16( GMEM_FIXED, size );
+
+    dprintf_global( stddeb, "GlobalDOSAlloc: %08lx -> returning %04x\n",
+                    size, sel );
     if (!sel) return 0;
+
+    globalDOSfree -= size;
     return MAKELONG( sel, sel /* this one ought to be a real-mode segment */ );
 }
 
@@ -564,7 +576,12 @@ DWORD GlobalDOSAlloc( DWORD size )
  */
 WORD GlobalDOSFree( WORD sel )
 {
-    return GlobalFree16( GlobalHandle16(sel) ) ? sel : 0;
+    GLOBALARENA *pArena = GET_ARENA_PTR(sel);
+
+    if (!pArena) return sel;
+    globalDOSfree += pArena->size;
+    GlobalFree16( pArena->handle );
+    return 0;
 }
 
 
@@ -652,7 +669,7 @@ void GlobalUnfix( HGLOBAL16 handle )
 /***********************************************************************
  *           FarSetOwner   (KERNEL.403)
  */
-void FarSetOwner( HANDLE16 handle, HANDLE16 hOwner )
+void FarSetOwner( HGLOBAL16 handle, HANDLE16 hOwner )
 {
     GET_ARENA_PTR(handle)->hOwner = hOwner;
 }
@@ -661,7 +678,7 @@ void FarSetOwner( HANDLE16 handle, HANDLE16 hOwner )
 /***********************************************************************
  *           FarGetOwner   (KERNEL.404)
  */
-HANDLE16 FarGetOwner( HANDLE16 handle )
+HANDLE16 FarGetOwner( HGLOBAL16 handle )
 {
     return GET_ARENA_PTR(handle)->hOwner;
 }

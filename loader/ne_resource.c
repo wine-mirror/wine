@@ -30,7 +30,7 @@
  * Find the type and resource id from their names.
  * Return value is MAKELONG( typeId, resId ), or 0 if not found.
  */
-static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
+static DWORD NE_FindNameTableId( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
 {
     NE_MODULE *pModule;
     NE_TYPEINFO *pTypeInfo;
@@ -52,9 +52,9 @@ static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
         {
             dprintf_resource( stddeb, "NameTable entry: type=%04x id=%04x\n",
                               pTypeInfo->type_id, pNameInfo->id );
-            handle = LoadResource( hModule, 
+            handle = LoadResource16( hModule, 
 				   (HANDLE)((int)pNameInfo - (int)pModule) );
-            for(p = (WORD*)LockResource(handle); p && *p; p = (WORD *)((char*)p+*p))
+            for(p = (WORD*)LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
             {
                 dprintf_resource( stddeb,"  type=%04x '%s' id=%04x '%s'\n",
                                   p[1], (char *)(p+3), p[2],
@@ -88,7 +88,7 @@ static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
                 ret = MAKELONG( p[1], p[2] );
                 break;
             }
-            FreeResource( handle );
+            FreeResource16( handle );
             if (ret) return ret;
         }
     }
@@ -134,7 +134,7 @@ static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
 /***********************************************************************
  *           NE_FindResource
  */
-HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
+HRSRC NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
 {
     NE_TYPEINFO *pTypeInfo;
     HRSRC hRsrc;
@@ -211,7 +211,7 @@ HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
 /***********************************************************************
  *           NE_AllocResource
  */
-HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
+HGLOBAL NE_AllocResource( HMODULE16 hModule, HRSRC hRsrc, DWORD size )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -231,7 +231,7 @@ HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
 /***********************************************************************
  *           NE_AccessResource
  */
-int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
+int NE_AccessResource( HMODULE16 hModule, HRSRC hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     int fd;
@@ -254,7 +254,7 @@ int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
 /***********************************************************************
  *           NE_SizeofResource
  */
-DWORD NE_SizeofResource( HMODULE hModule, HRSRC hRsrc )
+DWORD NE_SizeofResource( HMODULE16 hModule, HRSRC hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -272,7 +272,7 @@ DWORD NE_SizeofResource( HMODULE hModule, HRSRC hRsrc )
 /***********************************************************************
  *           NE_LoadResource
  */
-HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc )
+HGLOBAL NE_LoadResource( HMODULE16 hModule,  HRSRC hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -307,7 +307,7 @@ HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc )
 /***********************************************************************
  *           NE_LockResource
  */
-SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle )
+SEGPTR NE_LockResource( HMODULE16 hModule, HGLOBAL handle )
 {
     /* May need to reload the resource if discarded */
 
@@ -318,7 +318,7 @@ SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle )
 /***********************************************************************
  *           NE_FreeResource
  */
-BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
+BOOL NE_FreeResource( HMODULE16 hModule, HGLOBAL handle )
 {
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;
@@ -346,7 +346,7 @@ BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
         }
         pTypeInfo = (NE_TYPEINFO *)pNameInfo;
     }
-    fprintf( stderr, "FreeResource: %04x %04x not found!\n", hModule, handle );
+    fprintf( stderr, "NE_FreeResource: %04x %04x not found!\n", hModule, handle );
     return handle;
 }
 #endif /* WINELIB */

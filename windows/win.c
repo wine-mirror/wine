@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <X11/Xatom.h>
 
 #include "options.h"
 #include "class.h"
@@ -601,7 +602,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	                          FocusChangeMask;
             win_attr.override_redirect = TRUE;
 	}
-        win_attr.colormap      = COLOR_WinColormap;
+        win_attr.colormap      = COLOR_GetColormap();
         win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
         win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
         win_attr.cursor        = CURSORICON_XCursor;
@@ -614,6 +615,23 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	XA_WM_DELETE_WINDOW = XInternAtom( display, "WM_DELETE_WINDOW",
 					   False );
 	XSetWMProtocols( display, wndPtr->window, &XA_WM_DELETE_WINDOW, 1 );
+
+        if ((wndPtr->flags & WIN_MANAGED) &&
+            (cs->dwExStyle & WS_EX_DLGMODALFRAME))
+        {
+            XSizeHints* size_hints = XAllocSizeHints();
+
+            if (size_hints)
+            {
+                size_hints->min_width = size_hints->max_width = cs->cx;
+                size_hints->min_height = size_hints->max_height = cs->cy;
+                size_hints->flags = (PSize | PMinSize | PMaxSize);
+                XSetWMSizeHints( display, wndPtr->window, size_hints,
+                                 XA_WM_NORMAL_HINTS );
+                XFree(size_hints);
+            }
+        }
+
 	if (cs->hwndParent)  /* Get window owner */
 	{
             Window win = WIN_GetXWindow( cs->hwndParent );
@@ -636,7 +654,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
                        LoadMenu(cs->hInstance,(SEGPTR)classPtr->menuNameA);
 #else
             SEGPTR menuName = (SEGPTR)GetClassLong16( hwnd, GCL_MENUNAME );
-            if (menuName) cs->hMenu = LoadMenu( cs->hInstance, menuName );
+            if (menuName) cs->hMenu = LoadMenu16( cs->hInstance, menuName );
 #endif
         }
         if (cs->hMenu) SetMenu( hwnd, cs->hMenu );
@@ -1892,9 +1910,9 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
 
 
 /*******************************************************************
- *			SetSysModalWindow		[USER.188]
+ *           SetSysModalWindow16   (USER.188)
  */
-HWND SetSysModalWindow(HWND hWnd)
+HWND16 SetSysModalWindow16( HWND16 hWnd )
 {
     HWND hWndOldModal = hwndSysModal;
     hwndSysModal = hWnd;
@@ -1904,12 +1922,13 @@ HWND SetSysModalWindow(HWND hWnd)
 
 
 /*******************************************************************
- *			GetSysModalWindow		[USER.189]
+ *           GetSysModalWindow16   (USER.52)
  */
-HWND GetSysModalWindow(void)
+HWND16 GetSysModalWindow16(void)
 {
     return hwndSysModal;
 }
+
 
 /*******************************************************************
  *			DRAG_QueryUpdate
@@ -2046,7 +2065,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
 
  if( !lpDragInfo || !spDragInfo ) return 0L;
 
- hBummer = LoadCursor(0,IDC_BUMMER);
+ hBummer = LoadCursor16(0,IDC_BUMMER);
 
  if( !hBummer || !wndPtr )
    {

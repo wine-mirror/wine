@@ -13,7 +13,7 @@
  *		LineDDA		(GDI.100)
  */
 void LineDDA(short nXStart, short nYStart, short nXEnd, short nYEnd,
-	     FARPROC callback, long lParam)
+	     FARPROC16 callback, long lParam)
 {
     int xadd = 1, yadd = 1;
     int err,erradd;

@@ -10,10 +10,10 @@
  * Warning!
  * A HHOOK is a 32-bit handle for compatibility with Windows 3.0 where it was
  * a pointer to the next function. Now it is in fact composed of a USER heap
- * handle in the low 16 bits and of a HOOK_MAGIC value in the high 16 bits
- * (except for WINELIB32 where it is a 32-bit handle).  -- AJ
+ * handle in the low 16 bits and of a HOOK_MAGIC value in the high 16 bits.
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include "hook.h"
 #include "queue.h"
 #include "user.h"
@@ -29,7 +29,7 @@ static HANDLE16 HOOK_systemHooks[WH_NB_HOOKS] = { 0, };
  *
  * Get the next hook of a given hook.
  */
-static HANDLE HOOK_GetNextHook( HANDLE hook )
+static HANDLE16 HOOK_GetNextHook( HANDLE16 hook )
 {
     HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hook );
     if (!data || !hook) return 0;
@@ -45,10 +45,10 @@ static HANDLE HOOK_GetNextHook( HANDLE hook )
  *
  * Get the first hook for a given type.
  */
-HANDLE HOOK_GetHook( short id , HQUEUE hQueue )
+HANDLE16 HOOK_GetHook( INT16 id , HQUEUE16 hQueue )
 {
     MESSAGEQUEUE *queue;
-    HANDLE hook = 0;
+    HANDLE16 hook = 0;
 
     if ((queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(hQueue) )) != NULL)
         hook = queue->hooks[id - WH_FIRST_HOOK];
@@ -62,17 +62,18 @@ HANDLE HOOK_GetHook( short id , HQUEUE hQueue )
  *
  * Install a given hook.
  */
-HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
+static HANDLE16 HOOK_SetHook( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
+                              HTASK16 hTask )
 {
     HOOKDATA *data;
-    HANDLE handle;
-    HQUEUE hQueue = 0;
+    HANDLE16 handle;
+    HQUEUE16 hQueue = 0;
 
     if ((id < WH_FIRST_HOOK) || (id > WH_LAST_HOOK)) return 0;
     if (!(hInst = GetExePtr( hInst ))) return 0;
 
-    dprintf_hook( stddeb, "Setting hook %d: %08lx %04x %04x\n",
-                  id, (DWORD)proc, hInst, hTask );
+    dprintf_hook( stddeb, "Setting hook %d: %08x %04x %04x\n",
+                  id, (UINT32)proc, hInst, hTask );
 
     if (hTask)  /* Task-specific hook */
     {
@@ -90,7 +91,7 @@ HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
 
     /* Create the hook structure */
 
-    if (!(handle = (HANDLE)USER_HEAP_ALLOC( sizeof(HOOKDATA) ))) return 0;
+    if (!(handle = USER_HEAP_ALLOC( sizeof(HOOKDATA) ))) return 0;
     data = (HOOKDATA *) USER_HEAP_LIN_ADDR( handle );
     data->proc        = proc;
     data->id          = id;
@@ -121,7 +122,7 @@ HANDLE HOOK_SetHook( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
  *
  * Remove a hook from the list.
  */
-static BOOL HOOK_RemoveHook( HANDLE hook )
+static BOOL32 HOOK_RemoveHook( HANDLE16 hook )
 {
     HOOKDATA *data;
     HANDLE16 *prevHook;
@@ -133,7 +134,7 @@ static BOOL HOOK_RemoveHook( HANDLE hook )
     {
         /* Mark it for deletion later on */
         dprintf_hook( stddeb, "Hook still running, deletion delayed\n" );
-        data->proc = (FARPROC)0;
+        data->proc = (HOOKPROC16)0;
         return TRUE;
     }
 
@@ -162,13 +163,13 @@ static BOOL HOOK_RemoveHook( HANDLE hook )
  *
  * Call a hook procedure.
  */
-static DWORD HOOK_CallHook( HANDLE hook, short code,
-                            WPARAM wParam, LPARAM lParam )
+static LRESULT HOOK_CallHook( HANDLE16 hook, INT16 code,
+                              WPARAM16 wParam, LPARAM lParam )
 {
     HOOKDATA *data;
     MESSAGEQUEUE *queue;
-    HANDLE prevHook;
-    DWORD ret;
+    HANDLE16 prevHook;
+    LRESULT ret;
 
     /* Find the first hook with a valid proc */
 
@@ -204,9 +205,9 @@ static DWORD HOOK_CallHook( HANDLE hook, short code,
  *
  * Call a hook chain.
  */
-DWORD HOOK_CallHooks( short id, short code, WPARAM wParam, LPARAM lParam )
+LRESULT HOOK_CallHooks( INT16 id, INT16 code, WPARAM16 wParam, LPARAM lParam )
 {
-    HANDLE hook = HOOK_GetHook( id , 0 );
+    HANDLE16 hook = HOOK_GetHook( id , 0 );
     if (!hook) return 0;
     return HOOK_CallHook( hook, code, wParam, lParam );
 }
@@ -273,35 +274,31 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 /***********************************************************************
  *           SetWindowsHook   (USER.121)
  */
-FARPROC SetWindowsHook( short id, HOOKPROC proc )
+FARPROC16 SetWindowsHook( INT16 id, HOOKPROC16 proc )
 {
 #ifdef WINELIB
-    HINSTANCE hInst = 0;
+    HINSTANCE16 hInst = 0;
 #else
-    HINSTANCE hInst = FarGetOwner( HIWORD(proc) );
+    HINSTANCE16 hInst = FarGetOwner( HIWORD(proc) );
 #endif
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
-    HTASK hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
+    HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 
-    HANDLE handle = HOOK_SetHook( id, proc, hInst, hTask );
-    if (!handle) return (FARPROC)-1;
+    HANDLE16 handle = HOOK_SetHook( id, proc, hInst, hTask );
+    if (!handle) return (FARPROC16)-1;
     if (!((HOOKDATA *)USER_HEAP_LIN_ADDR( handle ))->next) return 0;
     /* Not sure if the return value is correct; should not matter much
      * since it's never used (see DefHookProc). -- AJ */
-#ifdef WINELIB32
-    return (FARPROC)handle;
-#else
-    return (FARPROC)MAKELONG( handle, HOOK_MAGIC );
-#endif
+    return (FARPROC16)MAKELONG( handle, HOOK_MAGIC );
 }
 
 
 /***********************************************************************
  *           UnhookWindowsHook   (USER.234)
  */
-BOOL UnhookWindowsHook( short id, HOOKPROC proc )
+BOOL16 UnhookWindowsHook( INT16 id, HOOKPROC16 proc )
 {
-    HANDLE hook = HOOK_GetHook( id , 0 );
+    HANDLE16 hook = HOOK_GetHook( id , 0 );
 
     dprintf_hook( stddeb, "UnhookWindowsHook: %d %08lx\n", id, (DWORD)proc );
 
@@ -319,12 +316,12 @@ BOOL UnhookWindowsHook( short id, HOOKPROC proc )
 /***********************************************************************
  *           DefHookProc   (USER.235)
  */
-DWORD DefHookProc( short code, WORD wParam, DWORD lParam, HHOOK *hhook )
+LRESULT DefHookProc( INT16 code, WPARAM16 wParam, LPARAM lParam, HHOOK *hhook )
 {
     /* Note: the *hhook parameter is never used, since we rely on the
      * current hook value from the task queue to find the next hook. */
     MESSAGEQUEUE *queue;
-    HANDLE next;
+    HANDLE16 next;
 
     if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
     if (!(next = HOOK_GetNextHook( queue->hCurHook ))) return 0;
@@ -335,9 +332,9 @@ DWORD DefHookProc( short code, WORD wParam, DWORD lParam, HHOOK *hhook )
 /***********************************************************************
  *           CallMsgFilter   (USER.123)
  */
-BOOL CallMsgFilter( SEGPTR msg, INT code )
+BOOL16 CallMsgFilter( SEGPTR msg, INT16 code )
 {
-    if (GetSysModalWindow()) return FALSE;
+    if (GetSysModalWindow16()) return FALSE;
     if (HOOK_CallHooks( WH_SYSMSGFILTER, code, 0, (LPARAM)msg )) return TRUE;
     return HOOK_CallHooks( WH_MSGFILTER, code, 0, (LPARAM)msg );
 }
@@ -346,42 +343,31 @@ BOOL CallMsgFilter( SEGPTR msg, INT code )
 /***********************************************************************
  *           SetWindowsHookEx   (USER.291)
  */
-HHOOK SetWindowsHookEx( short id, HOOKPROC proc, HINSTANCE hInst, HTASK hTask )
+HHOOK SetWindowsHookEx( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
+                        HTASK16 hTask )
 {
-    HANDLE handle = HOOK_SetHook( id, proc, hInst, hTask );
-#ifdef WINELIB32
-    return (HHOOK)handle;
-#else
+    HANDLE16 handle = HOOK_SetHook( id, proc, hInst, hTask );
     return MAKELONG( handle, HOOK_MAGIC );
-#endif
 }
 
 
 /***********************************************************************
  *           UnhookWindowHookEx   (USER.292)
  */
-BOOL UnhookWindowsHookEx( HHOOK hhook )
+BOOL16 UnhookWindowsHookEx( HHOOK hhook )
 {
-#ifdef WINELIB32
-    return HOOK_RemoveHook( (HANDLE)hhook );
-#else
     if (HIWORD(hhook) != HOOK_MAGIC) return FALSE;  /* Not a new format hook */
     return HOOK_RemoveHook( LOWORD(hhook) );
-#endif
 }
 
 
 /***********************************************************************
  *           CallNextHookEx   (USER.293)
  */
-LRESULT CallNextHookEx( HHOOK hhook, INT code, WPARAM wParam, LPARAM lParam )
+LRESULT CallNextHookEx(HHOOK hhook, INT16 code, WPARAM16 wParam, LPARAM lParam)
 {
-    HANDLE next;
-#ifdef WINELIB32
-    if (!(next = HOOK_GetNextHook( (HANDLE)hhook ))) return 0;
-#else
+    HANDLE16 next;
     if (HIWORD(hhook) != HOOK_MAGIC) return 0;  /* Not a new format hook */
     if (!(next = HOOK_GetNextHook( LOWORD(hhook) ))) return 0;
-#endif
     return HOOK_CallHook( next, code, wParam, lParam );
 }

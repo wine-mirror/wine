@@ -430,19 +430,53 @@ HFONT32 CreateFontIndirect32W( const LOGFONT32W *font )
 
 
 /***********************************************************************
- *           CreateFont    (GDI.56)
+ *           CreateFont16    (GDI.56)
  */
-HFONT CreateFont( INT height, INT width, INT esc, INT orient, INT weight,
-		  BYTE italic, BYTE underline, BYTE strikeout, BYTE charset,
-		  BYTE outpres, BYTE clippres, BYTE quality, BYTE pitch,
-		  LPCSTR name )
+HFONT16 CreateFont16( INT16 height, INT16 width, INT16 esc, INT16 orient,
+                      INT16 weight, BYTE italic, BYTE underline,
+                      BYTE strikeout, BYTE charset, BYTE outpres,
+                      BYTE clippres, BYTE quality, BYTE pitch, LPCSTR name )
 {
     LOGFONT16 logfont = {height, width, esc, orient, weight, italic, underline,
                       strikeout, charset, outpres, clippres, quality, pitch, };
-    dprintf_font(stddeb,"CreateFont(%d,%d)\n", height, width);
+    dprintf_font(stddeb,"CreateFont16(%d,%d)\n", height, width);
     if (name) lstrcpyn32A(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
     else logfont.lfFaceName[0] = '\0';
     return CreateFontIndirect16( &logfont );
+}
+
+
+
+/*************************************************************************
+ *           CreateFont32A    (GDI32.43)
+ */
+HFONT32 CreateFont32A( INT32 height, INT32 width, INT32 esc, INT32 orient,
+                       INT32 weight, DWORD italic, DWORD underline,
+                       DWORD strikeout, DWORD charset, DWORD outpres,
+                       DWORD clippres, DWORD quality, DWORD pitch, LPCSTR name)
+{
+    return (HFONT32)CreateFont16( height, width, esc, orient, weight, italic,
+                                  underline, strikeout, charset, outpres,
+                                  clippres, quality, pitch, name );
+}
+
+
+/*************************************************************************
+ *           CreateFont32W    (GDI32.46)
+ */
+HFONT32 CreateFont32W( INT32 height, INT32 width, INT32 esc, INT32 orient,
+                       INT32 weight, DWORD italic, DWORD underline,
+                       DWORD strikeout, DWORD charset, DWORD outpres,
+                       DWORD clippres, DWORD quality, DWORD pitch,
+                       LPCWSTR name )
+{
+    LPSTR namea = name ? STRING32_DupUniToAnsi(name) : NULL;
+    HFONT32 ret = (HFONT32)CreateFont16( height, width, esc, orient, weight,
+                                         italic, underline, strikeout, charset,
+                                         outpres, clippres, quality, pitch,
+                                         namea );
+    free(namea);
+    return ret;
 }
 
 
@@ -483,7 +517,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
     {
 	HFONT hnewfont;
 
-	hnewfont = CreateFont(10, 7, 0, 0, FW_DONTCARE,
+	hnewfont = CreateFont16(10, 7, 0, 0, FW_DONTCARE,
 			      FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			      DEFAULT_QUALITY, FF_DONTCARE, "*" );
 	font = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hnewfont );

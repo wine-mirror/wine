@@ -25,14 +25,14 @@ LPSTR GetCommandLineA(void)
     char *cp;
     PDB *pdb = (PDB *)GlobalLock16( GetCurrentPDB() );
 
-#ifndef WINELIB
-    strcpy(buffer, MODULE_GetModuleName( GetExePtr(GetCurrentTask()) ) );
-    cp = buffer+strlen(buffer);
-    *cp++ = ' ';
-#else
-    cp = buffer;
-#endif;
-    memcpy( cp, &pdb->cmdLine[1], pdb->cmdLine[0] );
+    lstrcpyn32A( buffer, MODULE_GetModuleName( GetExePtr(GetCurrentTask()) ),
+                 sizeof(buffer) - 1 );
+    cp = buffer + strlen(buffer);
+    if (pdb->cmdLine[0])
+    {
+        *cp++ = ' ';
+        memcpy( cp, &pdb->cmdLine[1], pdb->cmdLine[0] );
+    }
     dprintf_win32(stddeb,"CommandLine = %s\n", buffer );
     return buffer;
 }

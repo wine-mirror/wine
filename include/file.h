@@ -21,6 +21,6 @@ extern int FILE_Fstat( HFILE hFile, BYTE *pattr, DWORD *psize,
 extern HFILE FILE_Dup( HFILE hFile );
 extern HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 );
 extern INT32 FILE_Read( HFILE hFile, LPVOID buffer, UINT32 count );
-extern INT _lcreat_uniq( LPCSTR path, INT attr );
+extern HFILE _lcreat_uniq( LPCSTR path, INT32 attr );
 
 #endif  /* __WINE_FILE_H */

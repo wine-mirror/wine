@@ -1,5 +1,5 @@
+DEFS   = -D__WINE__
 TOPSRC = @top_srcdir@
-
 MODULE = resources
 
 LANGUAGES = En Es De No Fr Fi Da Cz Eo It Ko

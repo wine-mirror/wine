@@ -589,14 +589,14 @@ static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
 
     if (!hbitmapClose)
     {
-	if (!(hbitmapClose = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
+	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
 	    return;
-	hbitmapMinimize  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmap( 0, MAKEINTRESOURCE(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmap( 0, MAKEINTRESOURCE(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_RESTORED) );
+	hbitmapMinimize  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_REDUCE) );
+	hbitmapMinimizeD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_REDUCED) );
+	hbitmapMaximize  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_ZOOM) );
+	hbitmapMaximizeD = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_ZOOMD) );
+	hbitmapRestore   = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RESTORE) );
+	hbitmapRestoreD  = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RESTORED) );
     }
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
@@ -822,23 +822,23 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZEWE ) );
+	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZEWE ) );
 
     case HTTOP:
     case HTBOTTOM:
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENS ) );
+	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZENS ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:	
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENWSE ) );
+	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZENWSE ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENESW ) );
+	return (LONG)SetCursor( LoadCursor16( 0, IDC_SIZENESW ) );
     }
 
     /* Default cursor: arrow */
-    return (LONG)SetCursor( LoadCursor( 0, IDC_ARROW ) );
+    return (LONG)SetCursor( LoadCursor16( 0, IDC_ARROW ) );
 }
 
 

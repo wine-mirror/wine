@@ -359,7 +359,7 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
     else *AppMisc = 0;
     AppMisc[sizeof(AppMisc)-1]=0;
 
-    if (!hIcon) hIcon = LoadIcon(0,MAKEINTRESOURCE(OIC_WINEICON));
+    if (!hIcon) hIcon = LoadIcon16(0,MAKEINTRESOURCE(OIC_WINEICON));
     handle = SYSRES_LoadResource( SYSRES_DIALOG_SHELL_ABOUT_MSGBOX );
     if (!handle) return FALSE;
     bRet = DialogBoxIndirectParam16( WIN_GetWindowInstance( hWnd ),
@@ -552,9 +552,9 @@ HICON ExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
-HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
+HICON16 ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,LPWORD lpiIcon)
 {
-    HICON hIcon = ExtractIcon(hInst, lpIconPath, *lpiIcon);
+    HICON16 hIcon = ExtractIcon(hInst, lpIconPath, *lpiIcon);
 
     if( hIcon < 2 )
       {
@@ -580,7 +580,7 @@ HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
 	  *lpiIcon = 6;   /* generic icon - found nothing */
 
         GetModuleFileName(hInst, lpIconPath, 0x80);
-	hIcon = LoadIcon( hInst, MAKEINTRESOURCE(*lpiIcon));
+	hIcon = LoadIcon16( hInst, MAKEINTRESOURCE(*lpiIcon));
       }
 
     return hIcon;

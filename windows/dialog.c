@@ -12,7 +12,6 @@
 #include "heap.h"
 #include "win.h"
 #include "ldt.h"
-#include "resource32.h"
 #include "stackframe.h"
 #include "string32.h"
 #include "user.h"
@@ -498,7 +497,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     if (template.menuName)
     {
         LPSTR str = SEGPTR_STRDUP( template.menuName );  /* FIXME: win32 */
-        hMenu = LoadMenu( hInst, SEGPTR_GET(str) );
+        hMenu = LoadMenu16( hInst, SEGPTR_GET(str) );
         SEGPTR_FREE( str );
     }
 
@@ -508,7 +507,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     {
           /* The font height must be negative as it is a point size */
           /* (see CreateFont() documentation in the Windows SDK).   */
-	hFont = CreateFont( -template.pointSize, 0, 0, 0, FW_DONTCARE,
+	hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
 			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			    DEFAULT_QUALITY, FF_DONTCARE,
                             template.faceName );  /* FIXME: win32 */
@@ -631,12 +630,12 @@ HWND16 CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
     dprintf_dialog(stddeb, "CreateDialogParam16: %04x,%08lx,%04x,%08lx,%ld\n",
                    hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
 
-    if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
-    if (!(hmem = LoadResource( hInst, hRsrc ))) return 0;
-    if (!(data = LockResource( hmem ))) hwnd = 0;
+    if (!(hRsrc = FindResource16( hInst, dlgTemplate, RT_DIALOG ))) return 0;
+    if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;
+    if (!(data = LockResource16( hmem ))) hwnd = 0;
     else hwnd = CreateDialogIndirectParam16( hInst, data, owner,
                                              dlgProc, param );
-    FreeResource( hmem );
+    FreeResource16( hmem );
     return hwnd;
 }
 
@@ -666,7 +665,8 @@ HWND32 CreateDialogParam32W( HINSTANCE32 hInst, LPCWSTR name,
 {
     HANDLE32 hrsrc = FindResource32W( hInst, name, (LPWSTR)RT_DIALOG );
     if (!hrsrc) return 0;
-    return CreateDialogIndirectParam32W( hInst, LoadResource32( hInst, hrsrc ),
+    return CreateDialogIndirectParam32W( hInst,
+                                         (LPVOID)LoadResource32(hInst, hrsrc),
                                          owner, dlgProc, param );
 }
 

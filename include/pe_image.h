@@ -14,7 +14,6 @@ struct pe_data {
 	int base_addr;
 	int load_addr;
 	int vma_size;
-	int resource_offset; /* offset to resource typedirectory in file */
 };
 
 typedef struct pe_data PE_MODULE;

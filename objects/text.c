@@ -618,7 +618,7 @@ BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
 /***********************************************************************
  *		GrayString (USER.185)
  */
-BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam, 
+BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC16 gsprc, LPARAM lParam, 
 		INT cch, INT x, INT y, INT cx, INT cy)
 {
     BOOL ret;

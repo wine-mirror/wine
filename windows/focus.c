@@ -19,6 +19,7 @@ static HWND hwndFocus = 0;
  *               FOCUS_SetXFocus
  *
  * Set the X focus.
+ * Explicit colormap management seems to work only with OLVWM.
  */
 static void FOCUS_SetXFocus( HWND hwnd )
 {
@@ -31,8 +32,8 @@ static void FOCUS_SetXFocus( HWND hwnd )
 
     if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
     {
-	if (COLOR_WinColormap != DefaultColormapOfScreen(screen))
-	    XUninstallColormap( display, COLOR_WinColormap );
+	if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
+	    XUninstallColormap( display, COLOR_GetColormap() );
 	return;
     }
 
@@ -42,9 +43,10 @@ static void FOCUS_SetXFocus( HWND hwnd )
     if (!XGetWindowAttributes( display, win, &win_attr ) ||
         (win_attr.map_state != IsViewable))
         return;  /* If window is not viewable, don't change anything */
+
     XSetInputFocus( display, win, RevertToParent, CurrentTime );
-    if (COLOR_WinColormap != DefaultColormapOfScreen(screen))
-	XInstallColormap( display, COLOR_WinColormap );
+    if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
+        XInstallColormap( display, COLOR_GetColormap() );
 }
 
 /*****************************************************************

@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
 .TH WINE 1 "September 1, 1995" "Version 9/1/95" "Windows Emulation"
 .SH NAME
-wine \- run Windows 3.x programs under Linux
+wine \- run Windows programs under Unix
 .SH SYNOPSIS
 .B wine
 [
@@ -13,7 +13,7 @@ wine \- run Windows 3.x programs under Linux
 ]
 .SH DESCRIPTION
 .B wine
-invokes the Linux Windows emulator.
+invokes the Windows emulator.
 .PP
 .B wine 
 currently runs a number of games and small applications (approximately

@@ -87,9 +87,9 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
 		if (cs->lpszName)
                 {
-                    HICON hicon = LoadIcon( cs->hInstance, cs->lpszName );
+                    HICON16 hicon = LoadIcon16( cs->hInstance, cs->lpszName );
                     if (!hicon)  /* Try OEM icon (FIXME: is this right?) */
-                        hicon = LoadIcon( 0, cs->lpszName );
+                        hicon = LoadIcon16( 0, cs->lpszName );
                     STATIC_SetIcon( wndPtr, hicon );
                 }
                 return 1;
@@ -136,7 +136,7 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SETTEXT:
 	    if (style == SS_ICON)
 	        /* FIXME : should we also return the previous hIcon here ??? */
-                STATIC_SetIcon( wndPtr, LoadIcon( wndPtr->hInstance,
+                STATIC_SetIcon( wndPtr, LoadIcon16( wndPtr->hInstance,
                                                   (SEGPTR)lParam ));
             else
                 DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );

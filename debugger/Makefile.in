@@ -1,11 +1,11 @@
-TOPSRC     = @top_srcdir@
-EXTRA_DEFS = -DUSE_READLINE
-
+DEFS   = -D__WINE__
+TOPSRC = @top_srcdir@
 MODULE = debugger
 
 C_SRCS = \
 	break.c \
 	db_disasm.c \
+	editline.c \
 	hash.c \
 	info.c \
 	memory.c \

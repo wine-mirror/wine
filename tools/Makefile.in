@@ -1,4 +1,5 @@
-TOPSRC  = @top_srcdir@
+DEFS   = -D__WINE__
+TOPSRC = @top_srcdir@
 
 PROGRAM = build
 MODULE  = none

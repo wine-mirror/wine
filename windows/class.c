@@ -215,13 +215,15 @@ CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE16 hinstance )
 {
     CLASS * class;
 
+    if (hinstance != 0xffff) hinstance = GetExePtr(hinstance);
+
       /* First search task-specific classes */
 
     for (class = firstClass; (class); class = class->next)
     {
         if (class->style & CS_GLOBALCLASS) continue;
         if ((class->atomName == atom) && 
-            ((hinstance==(HINSTANCE16)0xffff) ||
+            ((hinstance == 0xffff) ||
              (hinstance == class->hInstance))) return class;
     }
     

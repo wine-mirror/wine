@@ -33,7 +33,6 @@
 #include "win.h"
 #include "struct32.h"
 #include "string32.h"
-#include "resource32.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -456,22 +455,25 @@ static HANDLE CURSORICON32_Load( HANDLE hInstance, LPCWSTR name, int width,
 
 
 /***********************************************************************
- *           LoadCursor
+ *           LoadCursorW		(USER32.361)
  */
-HCURSOR WIN32_LoadCursorW( HANDLE hInstance, LPCWSTR name )
+HCURSOR32 LoadCursor32W(HINSTANCE32 hInstance,LPCWSTR name)
 {
     return CURSORICON32_Load( hInstance, name,
                             SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE);
 }
 
-HCURSOR WIN32_LoadCursorA(HANDLE hInstance, LPCSTR name)
+/***********************************************************************
+ *           LoadCursorA		(USER32.358)
+ */
+HCURSOR32 LoadCursor32A(HINSTANCE32 hInstance,LPCSTR name)
 {
-	HCURSOR res=0;
+	HCURSOR32 res=0;
 	if(!HIWORD(name))
-		return WIN32_LoadCursorW(hInstance, name);
+		return LoadCursor32W(hInstance,(LPCWSTR)name);
 	else {
 		LPWSTR uni = STRING32_DupAnsiToUni(name);
-		res = WIN32_LoadCursorW(hInstance, uni);
+		res = LoadCursor32W(hInstance, uni);
 		free(uni);
 	}
 	return res;
@@ -479,25 +481,28 @@ HCURSOR WIN32_LoadCursorA(HANDLE hInstance, LPCSTR name)
 
 
 /***********************************************************************
- *           LoadIcon
+ *           LoadIconW		(USER32.363)
  */
-HICON WIN32_LoadIconW( HANDLE hInstance, LPCWSTR name )
+HICON32 LoadIcon32W(HINSTANCE32 hInstance,LPCWSTR name)
 {
     return CURSORICON32_Load( hInstance, name,
                             SYSMETRICS_CXICON, SYSMETRICS_CYICON,
                             MIN( 16, 1 << screenDepth ), FALSE );
 }
 
-HICON WIN32_LoadIconA( HANDLE hInstance, LPCSTR name)
+/***********************************************************************
+ *           LoadIconA		(USER32.362)
+ */
+HICON32 LoadIcon32A(HINSTANCE32 hInstance,LPCSTR name)
 {
-	HICON res=0;
+	HICON32 res=0;
 	if(!HIWORD(name))
-		return WIN32_LoadIconW(hInstance, name);
+		return LoadIcon32W(hInstance, (LPCWSTR)name);
 	else {
 		LPWSTR uni = STRING32_DupAnsiToUni(name);
-		res = WIN32_LoadIconW(hInstance, uni);
+		res = LoadIcon32W(hInstance, uni);
 		free(uni);
 	}
 	return res;
 }
-	
+

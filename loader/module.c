@@ -194,7 +194,7 @@ void MODULE_DumpModule( HMODULE16 hmodule )
  */
 void MODULE_WalkModules(void)
 {
-    HMODULE hModule = hFirstModule;
+    HMODULE16 hModule = hFirstModule;
     fprintf( stderr, "Module Flags Name\n" );
     while (hModule)
     {
@@ -365,6 +365,84 @@ HINSTANCE16 MODULE_CreateInstance( HMODULE16 hModule, LOADPARAMS *params )
     if (!hNewInstance) return 0;
     pSegment->selector = hNewInstance;
     return hNewInstance;
+}
+
+
+/***********************************************************************
+ *           MODULE_CreateDummyModule
+ *
+ * Create a dummy NE module for Win32 or Winelib.
+ */
+HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
+{
+    HMODULE16 hModule;
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegment;
+    char *pStr;
+
+    INT32 of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
+                    + strlen(ofs->szPathName) + 1;
+    INT32 size = sizeof(NE_MODULE) +
+                 /* loaded file info */
+                 of_size +
+                 /* segment table: DS,CS */
+                 2 * sizeof(SEGTABLEENTRY) +
+                 /* name table */
+                 9 +
+                 /* several empty tables */
+                 8;
+
+    hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
+    if (!hModule) return (HMODULE16)11;  /* invalid exe */
+
+    FarSetOwner( hModule, hModule );
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
+
+    /* Set all used entries */
+    pModule->magic            = NE_SIGNATURE;
+    pModule->count            = 1;
+    pModule->next             = 0;
+    pModule->flags            = 0;
+    pModule->dgroup           = 1;
+    pModule->ss               = 1;
+    pModule->cs               = 2;
+    pModule->heap_size        = 0xe000;
+    pModule->stack_size       = 0x1000;
+    pModule->seg_count        = 2;
+    pModule->modref_count     = 0;
+    pModule->nrname_size      = 0;
+    pModule->fileinfo         = sizeof(NE_MODULE);
+    pModule->os_flags         = NE_OSFLAGS_WINDOWS;
+    pModule->expected_version = 0x030a;
+    pModule->self             = hModule;
+
+    /* Set loaded file information */
+    memcpy( pModule + 1, ofs, of_size );
+    ((OFSTRUCT *)(pModule+1))->cBytes = of_size - 1;
+
+    pSegment = (SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
+    pModule->seg_table = pModule->dgroup_entry = (int)pSegment - (int)pModule;
+    /* Data segment */
+    pSegment->size    = 0;
+    pSegment->flags   = NE_SEGFLAGS_DATA;
+    pSegment->minsize = 0x1000;
+    pSegment++;
+    /* Code segment */
+    pSegment->flags   = 0;
+    pSegment++;
+
+    /* Module name */
+    pStr = (char *)pSegment;
+    pModule->name_table = (int)pStr - (int)pModule;
+    strcpy( pStr, "\x08W32SXXXX" );
+    pStr += 9;
+
+    /* All tables zero terminated */
+    pModule->res_table = pModule->import_table = pModule->entry_table =
+		(int)pStr - (int)pModule;
+
+    MODULE_RegisterModule( pModule );
+    return hModule;
 }
 
 
@@ -932,6 +1010,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
     HANDLE hInstance, hPrevInstance;
     NE_MODULE *pModule;
     LOADPARAMS *params = (LOADPARAMS *)paramBlock;
+    OFSTRUCT ofs;
 #ifndef WINELIB
     WORD *pModRef, *pDLLs;
     HFILE hFile;
@@ -941,8 +1020,6 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
     if (!hModule)  /* We have to load the module */
     {
-        OFSTRUCT ofs;
-
         /* Try to load the built-in first if not disabled */
         if ((hModule = BUILTIN_LoadModule( name, FALSE ))) return hModule;
 
@@ -1134,13 +1211,11 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
         pModule->count++;
     }
 #else
-    hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(NE_MODULE));
+    lstrcpyn32A( ofs.szPathName, name, sizeof(ofs.szPathName) );
+    if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return hModule;
     pModule = (NE_MODULE *)GlobalLock16( hModule );
-    pModule->count = 1;
-    pModule->magic = NE_SIGNATURE;
-    pModule->self = hModule;
     hPrevInstance = 0;
-    hInstance = MODULE_CreateInstance( hModule, (LOADPARAMS*)paramBlock );
+    hInstance = MODULE_CreateInstance( hModule, params );
 #endif /* WINELIB */
 
       /* Create a task for this instance */

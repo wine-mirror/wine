@@ -49,6 +49,7 @@ struct options
     int    ipc;             /* Use IPC mechanisms */
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
+    int    perfectGraphics; /* Favor correctness over speed for graphics */
 };
 
 extern struct options Options;
@@ -58,5 +59,7 @@ extern struct options Options;
 extern int PROFILE_LoadWineIni(void);
 extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
                                      const char *def, char *buffer, int len );
+extern int PROFILE_GetWineIniInt( const char *section, const char *key_name,
+                                  int def );
 
 #endif

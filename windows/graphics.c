@@ -18,6 +18,7 @@
 #include "metafile.h"
 #include "syscolor.h"
 #include "stddebug.h"
+#include "palette.h"
 #include "color.h"
 #include "region.h"
 #include "debug.h"
@@ -551,7 +552,6 @@ INT32 FrameRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
 {
     Pixel pixel;
-    PALETTEENTRY entry;
     
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -570,12 +570,9 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
     XSetFunction( display, dc->u.x.gc, GXcopy );
     XDrawPoint( display, dc->u.x.drawable, dc->u.x.gc, x, y );
 
-    if (screenDepth <= 8)
-    {
-        GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
-        return RGB( entry.peRed, entry.peGreen, entry.peBlue );
-    }
-    else return (COLORREF)pixel;
+    /* inefficient but simple... */
+
+    return COLOR_ToLogical(pixel);
 }
 
 
@@ -584,9 +581,7 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
  */
 COLORREF GetPixel( HDC hdc, short x, short y )
 {
-    PALETTEENTRY entry;
     XImage * image;
-    WORD * mapping;
     int pixel;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -605,11 +600,7 @@ COLORREF GetPixel( HDC hdc, short x, short y )
     pixel = XGetPixel( image, 0, 0 );
     XDestroyImage( image );
     
-    if (screenDepth > 8) return pixel;
-    mapping = (WORD *) GDI_HEAP_LIN_ADDR( dc->u.x.pal.hRevMapping );
-    if (mapping) pixel = mapping[pixel];
-    GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
-    return RGB( entry.peRed, entry.peGreen, entry.peBlue );
+    return COLOR_ToLogical(pixel);
 }
 
 

@@ -1,4 +1,116 @@
 ----------------------------------------------------------------------
+Wed Jul 17 16:10:16 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [configure.in]
+	Generate include/config.h instead of putting everything on the
+	command-line.
+	Removed -with-malloc-debug option (not useful for end users
+	anyway).
+	Added check for memmove().
+
+	* [include/wintypes.h] [*/Makefile.in]
+	Added definition of __WINE__ symbol when compiling Wine code
+	(emulator or library) as opposed to user programs.
+
+	* [debugger/editline.c] [debugger/readline/*]
+	Moved all the readline code into debugger/editline.c. Removed the
+	readline subdirectory.
+
+	* [files/profile.c]
+	Added PROFILE_GetWineIniInt().
+
+	* [include/stackframe.h] [loader/task.c]
+	The 16-bit stackframe now also exists for Winelib (even though it
+	only ever contains one frame).
+
+	* [loader/module.c]
+	Added function MODULE_CreateDummyModule() to create a dummy Win16
+	module for Winelib and Win32.
+
+	* [memory/ldt.c]
+	Make sure the ldt entry contents will be acceptable for the Linux
+	kernel.
+
+	* [memory/selector.c]
+	Fixed SetSelectorLimit() when the limit is in pages.
+
+	* [misc/port.c]
+	Added memmove().
+
+	* [miscemu/dpmi.c]
+	Clear the segment registers that contain the selector being freed
+	in int31/ax=0001.
+	Added missing break after SelectorAccessRights call.
+
+	* [win32/struct32.c]
+	Added conversions for MDICREATESTRUCT.
+
+	* [windows/winproc.c]
+	Added message conversions for WM_MDICREATE.
+
+Tue Jul 16 19:46:24 1996  Pavel Kankovsky <KAN@frode.dcit.cz>
+
+	* [windows/class.c]
+	Added GetExePtr() call in CLASS_FindClassByAtom().
+
+Mon Jul 15 17:49:38 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/*.spec]
+	Some more trivial specs added.
+
+	* [if1632/gdi32.spec] [objects/font.c][windows/dialog.c]
+	CreateFont32* added, changed to new naming std.
+
+	* [include/windows.h] [include/mmsystem.h] [include/wintypes.h]
+	Some defines/types added.
+
+	* [win32/thread.c]
+	TlsSetValue() returns boolean.
+
+	* [win32/resource.c] [loader/pe_resource.c] [loader/resource.c]
+ 	  [controls/menu.c] [objects/bitmap.c]
+	Cleanup of the resource functions, mostly changes to new naming
+ 	standard and fixing of argument types so that they agree with the
+ 	win16/win32 API.
+
+Thu Jul 11 15:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [windows/winpos.c]
+	ShowWindow() fixes.
+
+	* [windows/mdi.c]
+	Fix reversed LPARAM in WM_MDIACTIVATE.
+
+	* [wine.ini]
+	New option AllocSystemColors tells Wine how many colors to grab
+	from the system colormap.
+
+	* [objects/bitblt.c] [objects/dc.c]
+	Fixed pink garbage over Word buttons in PseudoColor. Added
+	optional DSTINVERT shortcut for faster text selection.
+
+	* [misc/wsprintf.c]
+	Skip bogus segmented pointers in wsvnprintf16(). 
+
+	* [objects/gdiobj.c]
+	Added palette handling to UnrealizeObject(). 
+
+	* [objects/color.c] [objects/palette.c] [windows/dce.c]
+	Wine gets palette manager with support for more than 20 colors. 
+	Only PseudoColor and TrueColor visuals tested so far.
+
+	* [windows/winpos.c] [windows/win.c] 
+	Set X size hints for WS_EX_DLGMODALFRAME windows (no resize) and
+	use XReconfigureWMWindows() instead of XConfigureWindow() in
+	managed mode.
+
+	* [memory/global.c]
+	Do not allocate more than 640K of DOS memory.
+
+	* [misc/main.c]
+	Do not allow -desktop and -managed together.
+
+----------------------------------------------------------------------
 Fri Jul 12 17:43:05 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/scroll.c]

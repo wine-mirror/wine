@@ -149,7 +149,7 @@ heap	65520
 147 pascal16 SetClipboardViewer(word) SetClipboardViewer
 148 pascal16 GetClipboardViewer() GetClipboardViewer
 149 pascal16 ChangeClipboardChain(word ptr) ChangeClipboardChain
-150 pascal16 LoadMenu(word segptr) LoadMenu
+150 pascal16 LoadMenu(word segptr) LoadMenu16
 151 pascal16 CreateMenu() CreateMenu
 152 pascal16 DestroyMenu(word) DestroyMenu
 153 pascal16 ChangeMenu(word word segptr word word) ChangeMenu16
@@ -172,11 +172,11 @@ heap	65520
 170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows
 171 pascal16 WinHelp(word ptr word long) WinHelp
 172 stub SwitchToThisWindow
-173 pascal16 LoadCursor(word segptr) LoadCursor
-174 pascal16 LoadIcon(word segptr) LoadIcon
-175 pascal16 LoadBitmap(word segptr) LoadBitmap
-176 pascal16 LoadString(word word ptr s_word) LoadString
-177 pascal16 LoadAccelerators(word segptr) LoadAccelerators
+173 pascal16 LoadCursor(word segptr) LoadCursor16
+174 pascal16 LoadIcon(word segptr) LoadIcon16
+175 pascal16 LoadBitmap(word segptr) LoadBitmap16
+176 pascal16 LoadString(word word ptr s_word) LoadString16
+177 pascal16 LoadAccelerators(word segptr) LoadAccelerators16
 178 pascal16 TranslateAccelerator(word word ptr) TranslateAccelerator
 179 pascal16 GetSystemMetrics(word) GetSystemMetrics
 180 pascal   GetSysColor(word) GetSysColor
@@ -187,8 +187,8 @@ heap	65520
 185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) GrayString
 186 pascal16 SwapMouseButton(word) SwapMouseButton
 187 pascal16 EndMenu() EndMenu
-188 pascal16 SetSysModalWindow(word) SetSysModalWindow
-189 pascal16 GetSysModalWindow() GetSysModalWindow
+188 pascal16 SetSysModalWindow(word) SetSysModalWindow16
+189 pascal16 GetSysModalWindow() GetSysModalWindow16
 190 pascal16 GetUpdateRect(word ptr word) GetUpdateRect16
 191 pascal16 ChildWindowFromPoint(word long) ChildWindowFromPoint16
 192 pascal16 InSendMessage() InSendMessage

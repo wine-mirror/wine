@@ -1,5 +1,5 @@
+DEFS   = -D__WINE__ -DNO_TRANSITION_TYPES
 TOPSRC = @top_srcdir@
-
 MODULE = if1632
 
 DLLS	= \

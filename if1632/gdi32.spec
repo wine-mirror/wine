@@ -45,17 +45,19 @@ base	1
 0040 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
 0041 stub CreateEnhMetaFileA
 0042 stub CreateEnhMetaFileW
-0043 stub CreateFontA
+0043 stdcall CreateFontA(long long long long long long long long
+                        long long long long long ptr) CreateFont32A
 0044 stdcall CreateFontIndirectA(ptr) CreateFontIndirect32A
 0045 stdcall CreateFontIndirectW(ptr) CreateFontIndirect32W
-0046 stub CreateFontW
+0046 stdcall CreateFontW(long long long long long long long long
+                        long long long long long ptr) CreateFont32W
 0047 stub CreateHalftonePalette
 0048 stub CreateHatchBrush
 0049 stdcall CreateICA(ptr ptr ptr ptr) CreateIC
 0050 stub CreateICW
 0051 stub CreateMetaFileA
 0052 stub CreateMetaFileW
-0053 stub CreatePalette
+0053 stdcall CreatePalette(ptr) CreatePalette
 0054 stub CreatePatternBrush
 0055 stdcall CreatePen(long long long) CreatePen
 0056 stub CreatePenIndirect
@@ -282,7 +284,7 @@ base	1
 0277 stub PolylineTo
 0278 stdcall PtInRegion(long long long) PtInRegion
 0279 stub PtVisible
-0280 stdcall RealizePalette(long) RealizePalette32
+0280 stdcall RealizePalette(long) RealizePalette
 0281 stdcall RectInRegion(long ptr) RectInRegion32
 0282 stdcall RectVisible(long ptr) RectVisible32
 0283 stdcall Rectangle(long long long long long) Rectangle
@@ -302,7 +304,7 @@ base	1
 0297 stub SelectClipRgn
 0298 stub SelectFontLocal
 0299 stdcall SelectObject(long long) SelectObject
-0300 stdcall SelectPalette(long long long) SelectPalette32
+0300 stdcall SelectPalette(long long long) SelectPalette
 0301 stub SetAbortProc
 0302 stub SetArcDirection
 0303 stdcall SetBitmapBits(long long ptr) SetBitmapBits
@@ -334,7 +336,7 @@ base	1
 0328 stub SetPixelFormat
 0329 stub SetPixelV
 0330 stub SetPolyFillMode
-0331 stub SetROP2
+0331 stdcall SetROP2(long long) SetROP2
 0332 stdcall SetRectRgn(long long long long long) SetRectRgn
 0333 stub SetRelAbs
 0334 stub SetStretchBltMode

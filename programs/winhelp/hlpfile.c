@@ -183,7 +183,7 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
 
   hlpfile->lpszPath   = GlobalLock(hHlpFile);
   hlpfile->lpszPath  += sizeof(HLPFILE);
-  lstrcpy(hlpfile->lpszPath, (SEGPTR) lpszPath);
+  strcpy(hlpfile->lpszPath, lpszPath);
 
   phrases.hBuffer = topic.hBuffer = hFileBuffer = 0;
 

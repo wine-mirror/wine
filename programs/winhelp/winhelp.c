@@ -322,11 +322,11 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
   /* Create main Window */
   if (!page) LoadString(Globals.hInstance, IDS_WINE_HELP, szCaption, sizeof(szCaption));
   hWnd = CreateWindow (bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
-		       page ? (SEGPTR) page->file->lpszTitle : (SEGPTR) szCaption,
+		       page ? page->file->lpszTitle : szCaption,
 		       bPopup ? WS_POPUPWINDOW | WS_BORDER : WS_OVERLAPPEDWINDOW,
 		       origin.x, origin.y, size.cx, size.cy,
 		       0, bPrimary ? LoadMenu(Globals.hInstance, STRING_MENU_Xx) : 0,
-		       Globals.hInstance, (SEGPTR) win);
+		       Globals.hInstance, win);
 
   ShowWindow (hWnd, nCmdShow);
   UpdateWindow (hWnd);
@@ -359,10 +359,10 @@ static LRESULT WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
       /* Create button box and text Window */
       CreateWindow(BUTTON_BOX_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-		   0, 0, 0, 0, hWnd, 0, Globals.hInstance, (SEGPTR) win);
+		   0, 0, 0, 0, hWnd, 0, Globals.hInstance, win);
 
       CreateWindow(TEXT_WIN_CLASS_NAME, "", WS_CHILD | WS_VISIBLE,
-		   0, 0, 0, 0, hWnd, 0, Globals.hInstance, (SEGPTR) win);
+		   0, 0, 0, 0, hWnd, 0, Globals.hInstance, win);
 
       /* Fall through */
     case WM_USER:

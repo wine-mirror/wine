@@ -10,16 +10,6 @@
 
 #include <stddef.h>
 
-HANDLE32 FindResource32A( HINSTANCE hModule, LPCSTR name, LPCSTR type );
-HANDLE32 FindResource32W( HINSTANCE hModule, LPCWSTR name, LPCWSTR type );
-HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc );
-LPVOID LockResource32( HANDLE32 handle );
-BOOL FreeResource32( HANDLE32 handle );
-INT AccessResource32( HINSTANCE hModule, HRSRC hRsrc );
-DWORD SizeofResource32( HINSTANCE hModule, HRSRC hRsrc );
-int WIN32_LoadStringW(HINSTANCE instance, DWORD resource_id, LPWSTR buffer, int buflen);
-int WIN32_LoadStringA(HINSTANCE instance, DWORD resource_id, LPSTR buffer, int buflen);
-
 typedef struct _IMAGE_RESOURCE_DIRECTORY {
 	DWORD Characteristics;
 	DWORD TimeDateStamp;
@@ -45,10 +35,5 @@ typedef struct _IMAGE_RESOURCE_DIR_STRING_U {
 	WORD Length;
 	WCHAR NameString[1];
 } IMAGE_RESOURCE_DIR_STRING_U, *PIMAGE_RESOURCE_DIR_STRING_U;
-
-HMENU WIN32_LoadMenuIndirectW(void *menu);
-HMENU WIN32_LoadMenuW(HANDLE instance, LPCWSTR name);
-HMENU WIN32_LoadMenuIndirectA(void *menu);
-HMENU WIN32_LoadMenuA(HANDLE instance,LPCSTR name);
 
 #endif  /* __WINE_RESOURCE32_H */

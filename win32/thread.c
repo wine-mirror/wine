@@ -70,6 +70,7 @@ void DeleteCriticalSection(CRITICAL_SECTION* lpCrit)
 
 /***********************************************************************
  *           Tls is available only for the single thread
+ * (BTW: TLS means Thread Local Storage)
  */
 static LPVOID* Tls=0;
 static int TlsCount=0;
@@ -104,14 +105,15 @@ LPVOID TlsGetValue(DWORD index)
 	return Tls[index];
 }
 
-void TlsSetValue(DWORD index,LPVOID value)
+BOOL32 TlsSetValue(DWORD index,LPVOID value)
 {
 	if(index>=TlsCount)
 	{
 		/* FIXME: Set last error*/
-		return;
+		return FALSE;
 	}
 	Tls[index]=value;
+	return TRUE;
 }
 
 /* FIXME: This is required to work cross-addres space as well */

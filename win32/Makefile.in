@@ -1,3 +1,4 @@
+DEFS   = -D__WINE__
 TOPSRC = @top_srcdir@
 MODULE = win32
 
@@ -15,7 +16,6 @@ C_SRCS = \
 	newfns.c \
 	object_mgt.c \
 	process.c \
-	resource.c \
 	string32.c \
 	struct32.c \
 	thread.c \

@@ -137,7 +137,7 @@ base	1
 0130 stdcall DestroyCaret() DestroyCaret
 0131 stub DestroyCursor
 0132 stub DestroyIcon
-0133 stub DestroyMenu
+0133 stdcall DestroyMenu(long) DestroyMenu
 0134 stdcall DestroyWindow(long) DestroyWindow
 0135 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParam32A
 0136 stub DialogBoxIndirectParamAorW
@@ -358,28 +358,28 @@ base	1
 0351 stub IsZoomed
 0352 stdcall KillSystemTimer(long long) KillSystemTimer32
 0353 stdcall KillTimer(long long) KillTimer32
-0354 	stdcall LoadAcceleratorsA(long ptr) WIN32_LoadAcceleratorsA
-0355 stdcall LoadAcceleratorsW(long ptr)	WIN32_LoadAcceleratorsW
-0356 	stdcall LoadBitmapA(long ptr) WIN32_LoadBitmapA
-0357 	stdcall LoadBitmapW(long ptr) WIN32_LoadBitmapW
-0358 	stdcall LoadCursorA(long ptr) WIN32_LoadCursorA
+0354 stdcall LoadAcceleratorsA(long ptr) LoadAccelerators32A
+0355 stdcall LoadAcceleratorsW(long ptr) LoadAccelerators32W
+0356 stdcall LoadBitmapA(long ptr) LoadBitmap32A
+0357 stdcall LoadBitmapW(long ptr) LoadBitmap32W
+0358 stdcall LoadCursorA(long ptr) LoadCursor32A
 0359 stub LoadCursorFromFileA
 0360 stub LoadCursorFromFileW
-0361	stdcall LoadCursorW(long ptr) WIN32_LoadCursorW
-0362	stdcall LoadIconA(long ptr) WIN32_LoadIconA
-0363 	stdcall LoadIconW(long ptr) WIN32_LoadIconW
+0361 stdcall LoadCursorW(long ptr) LoadCursor32W
+0362 stdcall LoadIconA(long ptr) LoadIcon32A
+0363 stdcall LoadIconW(long ptr) LoadIcon32W
 0364 stub LoadImageA
 0365 stub LoadImageW
 0366 stub LoadKeyboardLayoutA
 0367 stub LoadKeyboardLayoutW
 0368 stub LoadLocalFonts
-0369 stdcall LoadMenuA(long ptr) WIN32_LoadMenuA
+0369 stdcall LoadMenuA(long ptr) LoadMenu32A
 0370 stdcall LoadMenuIndirectA(ptr) LoadMenuIndirect32A
 0371 stdcall LoadMenuIndirectW(ptr) LoadMenuIndirect32W
-0372 stdcall LoadMenuW(long ptr) WIN32_LoadMenuW
+0372 stdcall LoadMenuW(long ptr) LoadMenu32W
 0373 stub LoadRemoteFonts
-0374 	stdcall LoadStringA(long long ptr long) WIN32_LoadStringA
-0375 	stdcall LoadStringW(long long ptr long) WIN32_LoadStringW
+0374 stdcall LoadStringA(long long ptr long) LoadString32A
+0375 stdcall LoadStringW(long long ptr long) LoadString32W
 0376 stub LockWindowStation
 0377 stub LockWindowUpdate
 0378 stub LookupIconIdFromDirectory
@@ -434,7 +434,7 @@ base	1
 0427 stdcall RegisterClassExA(ptr) RegisterClassEx32A
 0428 stdcall RegisterClassExW(ptr) RegisterClassEx32W
 0429 stdcall RegisterClassW(ptr) RegisterClass32W
-0430 stub RegisterClipboardFormatA
+0430 stdcall RegisterClipboardFormatA(ptr) RegisterClipboardFormat
 0431 stub RegisterClipboardFormatW
 0432 stub RegisterHotKey
 0433 stub RegisterLogonProcess

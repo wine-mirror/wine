@@ -322,7 +322,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
             HICON hI = 0;
             UINT16 len = 1;
             while(len < 64)
-		if( (hI = LoadIcon(wndPtr->hInstance,MAKEINTRESOURCE(len))) )
+		if( (hI = LoadIcon16(wndPtr->hInstance,MAKEINTRESOURCE(len))) )
                     return (LRESULT)hI;
         }
         break;

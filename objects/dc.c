@@ -334,8 +334,8 @@ BOOL DC_SetupGCForText( DC * dc )
  */
 BOOL DC_CallHookProc(DC* dc, WORD code, LPARAM lParam)
 {
-  BOOL   bRet = 0;
-  FARPROC ptr = GDI_GetDefDCHook();
+  BOOL bRet = FALSE;
+  FARPROC16 ptr = GDI_GetDefDCHook();
 
   dprintf_dc(stddeb,"CallDCHook: code %04x\n", code);
 
@@ -379,8 +379,6 @@ HDC GetDCState( HDC hdc )
 	newdc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
 	CombineRgn( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
     }
-    COLOR_SetMapping( newdc, dc->u.x.pal.hMapping,
-                      dc->u.x.pal.hRevMapping, dc->u.x.pal.mappingSize );
     return handle;
 }
 
@@ -421,8 +419,6 @@ void SetDCState( HDC hdc, HDC hdcs )
 
     SelectObject( hdc, dcs->w.hBrush );
     SelectObject( hdc, dcs->w.hFont );
-    COLOR_SetMapping( dc, dcs->u.x.pal.hMapping,
-                      dcs->u.x.pal.hRevMapping, dcs->u.x.pal.mappingSize );
 }
 
 

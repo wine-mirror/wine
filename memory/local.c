@@ -26,10 +26,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-#ifndef WINELIB
-#pragma pack(1)
-#endif
-
 typedef struct
 {
 /* Arena header */
@@ -61,6 +57,8 @@ typedef struct
     BYTE lock;                /* Lock count */
 } LOCALHANDLEENTRY;
 
+#pragma pack(1)
+
 typedef struct
 {
     WORD check;                 /* 00 Heap checking flag */
@@ -85,9 +83,7 @@ typedef struct
     WORD magic;                 /* 28 Magic number */
 } LOCALHEAPINFO;
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
 #define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
 

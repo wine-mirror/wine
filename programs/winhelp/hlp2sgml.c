@@ -314,10 +314,11 @@ INT lstrlen(LPCSTR str)
   return strlen(str);
 }
 
-SEGPTR lstrcpy( SEGPTR target, SEGPTR source )
+LPSTR lstrcpy32A( LPSTR dst, LPCSTR src )
 {
-  strcpy( (char *)target, (char *)source );
-  return target;
+    if (!src || !dst) return NULL;
+    strcpy( dst, src );
+    return dst;
 }
 
 void hmemcpy(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)

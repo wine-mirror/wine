@@ -136,12 +136,12 @@ BOOL MENU_Init()
 
       /* Load bitmaps */
 
-    if (!(hStdCheck = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CHECK) )))
+    if (!(hStdCheck = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_CHECK) )))
 	return FALSE;
     GetObject16( hStdCheck, sizeof(bm), &bm );
     check_bitmap_width = bm.bmWidth;
     check_bitmap_height = bm.bmHeight;
-    if (!(hStdMnArrow = LoadBitmap( 0, MAKEINTRESOURCE(OBM_MNARROW) )))
+    if (!(hStdMnArrow = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_MNARROW) )))
 	return FALSE;
     GetObject16( hStdMnArrow, sizeof(bm), &bm );
     arrow_bitmap_width = bm.bmWidth;
@@ -2514,11 +2514,11 @@ HMENU LookupMenuHandle( HMENU hmenu, INT id )
 /**********************************************************************
  *	    LoadMenu    (USER.150)
  */
-HMENU LoadMenu( HINSTANCE instance, SEGPTR name )
+HMENU16 LoadMenu16( HINSTANCE16 instance, SEGPTR name )
 {
-    HRSRC hRsrc;
-    HGLOBAL handle;
-    HMENU hMenu;
+    HRSRC16 hRsrc;
+    HGLOBAL16 handle;
+    HMENU16 hMenu;
 
     if (HIWORD(name))
     {
@@ -2534,13 +2534,35 @@ HMENU LoadMenu( HINSTANCE instance, SEGPTR name )
     /* check for Win32 module */
     instance = GetExePtr( instance );
     if (MODULE_GetPtr(instance)->flags & NE_FFLAGS_WIN32)
-        return WIN32_LoadMenuA(instance,PTR_SEG_TO_LIN(name));
+        return LoadMenu32A(instance,PTR_SEG_TO_LIN(name));
 
-    if (!(hRsrc = FindResource( instance, name, RT_MENU ))) return 0;
-    if (!(handle = LoadResource( instance, hRsrc ))) return 0;
-    hMenu = LoadMenuIndirect16( LockResource(handle) );
-    FreeResource( handle );
+    if (!(hRsrc = FindResource16( instance, name, RT_MENU ))) return 0;
+    if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
+    hMenu = LoadMenuIndirect16(LockResource16(handle));
+    FreeResource16( handle );
     return hMenu;
+}
+
+
+/*****************************************************************
+ *        LoadMenu32A   (USER32.370)
+ */
+HMENU32 LoadMenu32A( HINSTANCE32 instance, LPCSTR name )
+{
+    HRSRC32 hrsrc = FindResource32A( instance, name, (LPSTR)RT_MENU );
+    if (!hrsrc) return 0;
+    return LoadMenuIndirect32A( (LPCVOID)LoadResource32( instance, hrsrc ));
+}
+
+
+/*****************************************************************
+ *        LoadMenu32W   (USER32.372)
+ */
+HMENU32 LoadMenu32W( HINSTANCE32 instance, LPCWSTR name )
+{
+    HRSRC32 hrsrc = FindResource32W( instance, name, (LPWSTR)RT_MENU );
+    if (!hrsrc) return 0;
+    return LoadMenuIndirect32W( (LPCVOID)LoadResource32( instance, hrsrc ));
 }
 
 

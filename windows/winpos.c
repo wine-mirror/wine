@@ -5,6 +5,9 @@
  *                       1995,1996 Alex Korobka
  */
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
 #include "sysmetrics.h"
 #include "heap.h"
 #include "module.h"
@@ -14,6 +17,7 @@
 #include "message.h"
 #include "queue.h"
 #include "stackframe.h"
+#include "options.h"
 #include "winpos.h"
 #include "dce.h"
 #include "nonclient.h"
@@ -21,7 +25,12 @@
 /* #define DEBUG_WIN */
 #include "debug.h"
 
-#define  SWP_NOPOSCHANGE	(SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE)
+#define  SWP_AGG_NOGEOMETRYCHANGE \
+    (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE)
+#define  SWP_AGG_NOPOSCHANGE \
+    (SWP_AGG_NOGEOMETRYCHANGE | SWP_NOZORDER)
+#define  SWP_AGG_STATUSFLAGS \
+    (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
 
 /* ----- external functions ----- */
 
@@ -520,7 +529,7 @@ BOOL MoveWindow( HWND hwnd, short x, short y, short cx, short cy, BOOL repaint)
 BOOL ShowWindow( HWND hwnd, int cmd ) 
 {    
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL wasVisible;
+    BOOL32 wasVisible, showFlag;
     POINT16 maxSize;
     int swpflags = 0;
     short x = 0, y = 0, cx = 0, cy = 0;
@@ -585,7 +594,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 		if( wndPtr->dwStyle & WS_MINIMIZE )
 		    if( !SendMessage16( hwnd, WM_QUERYOPEN, 0, 0L ) )
 			{
-		         swpflags |= SWP_NOSIZE;
+		         swpflags |= SWP_NOSIZE | SWP_NOMOVE;
 			 break;
 			}
 
@@ -617,7 +626,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             {
                 if( !SendMessage16( hwnd, WM_QUERYOPEN, 0, 0L) )
                   {
-                    swpflags |= SWP_NOSIZE;
+                    swpflags |= SWP_NOSIZE | SWP_NOMOVE;
                     break;
                   }
                 wndPtr->ptIconPos.x = wndPtr->rectWindow.left;
@@ -656,13 +665,21 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 	    break;
     }
 
+    showFlag = (cmd != SW_HIDE);
+    if (showFlag != wasVisible)
+    {
+        SendMessage16( hwnd, WM_SHOWWINDOW, showFlag, 0 );
+        if (!IsWindow( hwnd )) return wasVisible;
+    }
+
     /* We can't activate a child window */
     if (wndPtr->dwStyle & WS_CHILD) swpflags |= SWP_NOACTIVATE | SWP_NOZORDER;
-    SendMessage16( hwnd, WM_SHOWWINDOW, (cmd != SW_HIDE), 0 );
     SetWindowPos( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
+    if (!IsWindow( hwnd )) return wasVisible;
 
     if (wndPtr->flags & WIN_NEED_SIZE)
     {
+        /* should happen only in CreateWindowEx() */
 	int wParam = SIZE_RESTORED;
 
 	wndPtr->flags &= ~WIN_NEED_SIZE;
@@ -873,7 +890,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     {
         if (!SendMessage16( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 ))
         {
-	    if (GetSysModalWindow() != hWnd) return 0;
+	    if (GetSysModalWindow16() != hWnd) return 0;
 	    /* disregard refusal if hWnd is sysmodal */
         }
 
@@ -1364,6 +1381,46 @@ static void WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
  DeleteObject(newVisRgn);
 }
 
+
+/***********************************************************************
+ *           WINPOS_ForceXWindowRaise
+ */
+void WINPOS_ForceXWindowRaise( WND* pWnd )
+{
+    XWindowChanges winChanges;
+    WND *wndStop, *wndLast;
+
+    if (!pWnd->window) return;
+        
+    wndLast = wndStop = pWnd;
+    winChanges.stack_mode = Above;
+    XReconfigureWMWindow( display, pWnd->window, 0, CWStackMode, &winChanges );
+
+    /* Recursively raise owned popups according to their z-order 
+     * (it would be easier with sibling-related Below but it doesn't
+     * work very well with SGI mwm for instance)
+     */
+    while (wndLast)
+    {
+        WND *wnd = WIN_GetDesktop()->child;
+        wndLast = NULL;
+        while (wnd != wndStop)
+        {
+            if (wnd->owner == pWnd &&
+                (wnd->dwStyle & WS_POPUP) &&
+                (wnd->dwStyle & WS_VISIBLE))
+                wndLast = wnd;
+            wnd = wnd->next;
+        }
+        if (wndLast)
+        {
+            WINPOS_ForceXWindowRaise( wndLast );
+            wndStop = wndLast;
+        }
+    }
+}
+
+
 /***********************************************************************
  *           WINPOS_SetXWindowPos
  *
@@ -1380,6 +1437,27 @@ static void WINPOS_SetXWindowPos( WINDOWPOS16 *winpos )
         winChanges.width     = winpos->cx;
         winChanges.height    = winpos->cy;
         changeMask |= CWWidth | CWHeight;
+
+        /* Tweak dialog window size hints */
+
+        if ((wndPtr->flags & WIN_MANAGED) &&
+            (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
+        {
+            XSizeHints *size_hints = XAllocSizeHints();
+
+            if (size_hints)
+            {
+                long supplied_return;
+
+                XGetWMSizeHints( display, wndPtr->window, size_hints,
+                                 &supplied_return, XA_WM_NORMAL_HINTS);
+                size_hints->min_width = size_hints->max_width = winpos->cx;
+                size_hints->min_height = size_hints->max_height = winpos->cy;
+                XSetWMSizeHints( display, wndPtr->window, size_hints,
+                                 XA_WM_NORMAL_HINTS );
+                XFree(size_hints);
+            }
+        }
     }
     if (!(winpos->flags & SWP_NOMOVE))
     {
@@ -1400,8 +1478,11 @@ static void WINPOS_SetXWindowPos( WINDOWPOS16 *winpos )
         }
         changeMask |= CWStackMode;
     }
-    if (changeMask)
-        XConfigureWindow( display, wndPtr->window, changeMask, &winChanges );
+    if (!changeMask) return;
+    if (wndPtr->flags & WIN_MANAGED)
+        XReconfigureWMWindow( display, wndPtr->window, 0,
+                              changeMask, &winChanges );
+    else XConfigureWindow( display, wndPtr->window, changeMask, &winChanges );
 }
 
 
@@ -1417,17 +1498,24 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
     HRGN	visRgn = 0;
     int 	result = 0;
 
-    dprintf_win(stddeb,"SetWindowPos: hwnd %04x, flags %08x\n", hwnd, flags);  
-
+    dprintf_win(stddeb,"SetWindowPos: hwnd %04x, (%i,%i)-(%i,%i) flags %08x\n", 
+						 hwnd, x, y, x+cx, y+cy, flags);  
       /* Check window handle */
 
     if (hwnd == GetDesktopWindow()) return FALSE;
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
-    /* Check for windows that may not be resized 
-       FIXME: this should be done only for Windows 3.0 programs */
-    if (flags ==(SWP_SHOWWINDOW) || flags ==(SWP_HIDEWINDOW ) )
-       flags |= SWP_NOSIZE | SWP_NOMOVE;
+    if (wndPtr->dwStyle & WS_VISIBLE) flags &= ~SWP_SHOWWINDOW;
+    else
+    {
+	flags &= ~SWP_HIDEWINDOW;
+	if (!(flags & SWP_SHOWWINDOW)) flags |= SWP_NOREDRAW;
+    }
+
+/*     Check for windows that may not be resized 
+       FIXME: this should be done only for Windows 3.0 programs 
+ */    if (flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW ) )
+           flags |= SWP_NOSIZE | SWP_NOMOVE;
 
       /* Check dimensions */
 
@@ -1631,7 +1719,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 	    BOOL bNoCopy = (flags & SWP_NOCOPYBITS) || 
 			   (result >= WVR_HREDRAW && result < WVR_VALIDRECTS);
 
-	    if( (winpos.flags & SWP_NOPOSCHANGE) != SWP_NOPOSCHANGE )
+	    if( (winpos.flags & SWP_AGG_NOGEOMETRYCHANGE) != SWP_AGG_NOGEOMETRYCHANGE )
 	        /* optimize cleanup by BitBlt'ing where possible */
 
 	        WINPOS_SizeMoveClean(wndPtr, visRgn, &oldWindowRect, &oldClientRect, bNoCopy);
@@ -1706,7 +1794,10 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
-    if (!(winpos.flags & SWP_NOSENDCHANGING))
+    dprintf_win(stddeb,"\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
+
+    if ( ((winpos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
+	!(winpos.flags & SWP_NOSENDCHANGING))
         SendMessage16( winpos.hwnd, WM_WINDOWPOSCHANGED,
                        0, (LPARAM)MAKE_SEGPTR(&winpos) );
 

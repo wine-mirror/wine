@@ -98,7 +98,7 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
         if (!hbitmapCheckBoxes)
         {
             BITMAP16 bmp;
-            hbitmapCheckBoxes = LoadBitmap(0, MAKEINTRESOURCE(OBM_CHECKBOXES));
+            hbitmapCheckBoxes = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CHECKBOXES));
             GetObject16( hbitmapCheckBoxes, sizeof(bmp), &bmp );
             checkBoxWidth  = bmp.bmWidth / 4;
             checkBoxHeight = bmp.bmHeight / 3;

@@ -154,7 +154,7 @@ LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
 	ExitWindows( 0, 0 ); 
 
     case WM_SETCURSOR:
-        return (LRESULT)SetCursor( LoadCursor( 0, IDC_ARROW ) );
+        return (LRESULT)SetCursor( LoadCursor16( 0, IDC_ARROW ) );
     }
     
     return 0;

@@ -122,7 +122,7 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 			if(strcmp(ename,funcName)==0)
 				return (FARPROC32)(load_addr + *function);
 		}else{
-			if(funcName == (int)*ordinal + exports->Base)
+			if((int)funcName == (int)*ordinal + exports->Base)
 				return (FARPROC32)(load_addr + *function);
 		}
 		function++;
@@ -132,14 +132,14 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 	return NULL;
 }
 
-void fixup_imports(struct pe_data *pe, HMODULE hModule)
+void fixup_imports(struct pe_data *pe, HMODULE16 hModule)
 { 
   struct PE_Import_Directory * pe_imp;
   int fixup_failed=0;
   unsigned int load_addr = pe->load_addr;
   int i;
   NE_MODULE *ne_mod;
-  HMODULE *mod_ptr;
+  HMODULE16 *mod_ptr;
 
  /* OK, now dump the import list */
   dprintf_win32(stddeb, "\nDumping imports list\n");
@@ -151,7 +151,7 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
 
   /* Now, allocate memory for dlls_to_init */
   ne_mod = GlobalLock16(hModule);
-  ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,(i+1) * sizeof(HMODULE),
+  ne_mod->dlls_to_init = GLOBAL_Alloc(GMEM_ZEROINIT,(i+1) * sizeof(HMODULE16),
                                       hModule, FALSE, FALSE, FALSE );
   mod_ptr = GlobalLock16(ne_mod->dlls_to_init);
   /* load the modules and put their handles into the list */
@@ -159,7 +159,7 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
   {
   	char *name = (char*)load_addr+pe_imp->ModuleName;
 	mod_ptr[i] = LoadModule(name,(LPVOID)-1);
-	if(mod_ptr[i]<=(HMODULE)32)
+	if(mod_ptr[i]<=(HMODULE16)32)
         {
             char *p, buffer[256];
 
@@ -169,7 +169,7 @@ void fixup_imports(struct pe_data *pe, HMODULE hModule)
             strcpy( p + 1, name );
             mod_ptr[i] = LoadModule( buffer, (LPVOID)-1 );
         }
-	if(mod_ptr[i]<=(HMODULE)32)
+	if(mod_ptr[i]<=(HMODULE16)32)
 	{
 		fprintf(stderr,"Module %s not found\n",name);
 		exit(0);
@@ -349,7 +349,7 @@ static void do_relocations(struct pe_data *pe)
  *			PE_LoadImage
  * Load one PE format executable into memory
  */
-static struct pe_data *PE_LoadImage( int fd, HMODULE hModule, WORD offset )
+static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 {
     struct pe_data *pe;
     int i, result;
@@ -433,16 +433,9 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE hModule, WORD offset )
 	if(strcmp(pe->pe_seg[i].Name, ".edata") == 0)
 		pe->pe_export = (struct PE_Export_Directory *) result;
 
-	if(strcmp(pe->pe_seg[i].Name, ".rsrc") == 0) {
+	if(strcmp(pe->pe_seg[i].Name, ".rsrc") == 0)
 	    pe->pe_resource = (struct PE_Resource_Directory *) result;
-#if 0
-/* FIXME pe->resource_offset should be deleted from structure if this
- ifdef doesn't break anything */
-	    /* save offset for PE_FindResource */
-	    pe->resource_offset = pe->pe_seg[i].Virtual_Address - 
-					pe->pe_seg[i].PointerToRawData;
-#endif	
-	    }
+
 	if(strcmp(pe->pe_seg[i].Name, ".reloc") == 0)
 		pe->pe_reloc = (struct PE_Reloc_Block *) result;
 
@@ -522,113 +515,45 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE hModule, WORD offset )
         return pe;
 }
 
-HINSTANCE MODULE_CreateInstance(HMODULE hModule,LOADPARAMS *params);
+HINSTANCE MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
 void InitTask( SIGCONTEXT *context );
 
 HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 {
-        PE_MODULE *pe;
-	int size, of_size;
-	NE_MODULE *pModule;
-	SEGTABLEENTRY *pSegment;
-	char *pStr;
-	DWORD cts;
-	HMODULE hModule;
-	HINSTANCE hInstance;
-        struct mz_header_s mz_header;
+    HMODULE16 hModule;
+    HINSTANCE16 hInstance;
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegment;
+    FARPROC16 startup;
+    struct mz_header_s mz_header;
 
-	lseek(fd,0,SEEK_SET);
-	read( fd, &mz_header, sizeof(mz_header) );
+    if ((hModule = MODULE_CreateDummyModule( ofs )) < 32) return hModule;
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
+    pModule->flags = NE_FFLAGS_WIN32;
 
-        of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
-                  + strlen(ofs->szPathName) + 1;
-	size = sizeof(NE_MODULE) +
-               /* loaded file info */
-               of_size +
-               /* segment table: DS,CS */
-               2 * sizeof(SEGTABLEENTRY) +
-               /* name table */
-               9 +
-               /* several empty tables */
-               8;
+    lseek( fd, 0, SEEK_SET );
+    read( fd, &mz_header, sizeof(mz_header) );
 
-	hModule = GlobalAlloc16( GMEM_MOVEABLE | GMEM_ZEROINIT, size );
-	if (!hModule) return (HINSTANCE)11;  /* invalid exe */
+    /* Set the startup address */
 
-	FarSetOwner( hModule, hModule );
-	
-	pModule = (NE_MODULE*)GlobalLock16(hModule);
+    startup = MODULE_GetWndProcEntry16("Win32CallToStart");
+    pSegment = NE_SEG_TABLE(pModule) + pModule->cs - 1;
+    pSegment->selector = SELECTOROF(startup); /* FIXME */
+    pModule->ip = OFFSETOF(startup);
 
-	/* Set all used entries */
-	pModule->magic=NE_SIGNATURE;
-	pModule->count=1;
-	pModule->next=0;
-	pModule->flags=NE_FFLAGS_WIN32;
-	pModule->dgroup=1;
-	pModule->ss=1;
-	pModule->cs=2;
-	/* Who wants to LocalAlloc for a PE Module? */
-	pModule->heap_size=0x1000;
-	pModule->stack_size=0xF000;
-	pModule->seg_count=1;
-	pModule->modref_count=0;
-	pModule->nrname_size=0;
-	pModule->fileinfo=sizeof(NE_MODULE);
-	pModule->os_flags=NE_OSFLAGS_WINDOWS;
-	pModule->expected_version=0x30A;
-        pModule->self = hModule;
+    pModule->pe_module = PE_LoadImage( fd, hModule, mz_header.ne_offset );
 
-        /* Set loaded file information */
-        memcpy( pModule + 1, ofs, of_size );
-        ((OFSTRUCT *)(pModule+1))->cBytes = of_size - 1;
+    hInstance = MODULE_CreateInstance( hModule, params );
 
-	pSegment=(SEGTABLEENTRY*)((char*)(pModule + 1) + of_size);
-	pModule->seg_table=pModule->dgroup_entry=(int)pSegment-(int)pModule;
-	pSegment->size=0;
-	pSegment->flags=NE_SEGFLAGS_DATA;
-	pSegment->minsize=0x1000;
-	pSegment++;
-
-	cts=(DWORD)MODULE_GetWndProcEntry16("Win32CallToStart");
-#ifdef WINELIB32
-	pSegment->selector=(void*)cts;
-	pModule->ip=0;
-#else
-	pSegment->selector=cts>>16;  /* FIXME!! */
-	pModule->ip=cts & 0xFFFF;
-#endif
-	pSegment++;
-
-	pStr=(char*)pSegment;
-	pModule->name_table=(int)pStr-(int)pModule;
-	strcpy(pStr,"\x08W32SXXXX");
-	pStr+=9;
-
-	/* All tables zero terminated */
-	pModule->res_table=pModule->import_table=pModule->entry_table=
-		(int)pStr-(int)pModule;
-
-        MODULE_RegisterModule( pModule );
-
-	pe = PE_LoadImage( fd, hModule, mz_header.ne_offset );
-
-        pModule->pe_module = pe;
-	pModule->heap_size=0x1000;
-	pModule->stack_size=0xE000;
-
-	/* CreateInstance allocates now 64KB */
-	hInstance=MODULE_CreateInstance(hModule,NULL /* FIX: NULL? really? */);
-
-        /* FIXME: Is this really the correct place to initialise the DLL? */
-	if ((pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)) {
-/*            PE_InitDLL(hModule); */
-        } else {
-            TASK_CreateTask(hModule,hInstance,0,
-		params->hEnvironment,(LPSTR)PTR_SEG_TO_LIN(params->cmdLine),
-		*((WORD*)PTR_SEG_TO_LIN(params->showCmd)+1));
-            PE_InitializeDLLs(hModule);
-	}
-	return hInstance;
+    if (!(pModule->pe_module->pe_header->coff.Characteristics & IMAGE_FILE_DLL))
+    {
+        TASK_CreateTask( hModule, hInstance, 0,
+                         params->hEnvironment,
+                         (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
+                         *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
+        PE_InitializeDLLs( hModule );
+    }
+    return hInstance;
 }
 
 int USER_InitApp(HINSTANCE hInstance);
@@ -637,29 +562,29 @@ void PE_InitTEB(int hTEB);
 void PE_Win32CallToStart( SIGCONTEXT *context )
 {
     int fs;
-    HMODULE hModule;
+    HMODULE16 hModule;
     NE_MODULE *pModule;
 
     dprintf_win32(stddeb,"Going to start Win32 program\n");	
-    InitTask( &context );
+    InitTask( context );
     hModule = GetExePtr( GetCurrentTask() );
     pModule = MODULE_GetPtr( hModule );
     USER_InitApp( hModule );
     fs=(int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
     PE_InitTEB(fs);
     __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
-    CallTaskStart32( (FARPROC)(pModule->pe_module->load_addr + 
+    CallTaskStart32( (FARPROC32)(pModule->pe_module->load_addr + 
                                pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
 }
 
-int PE_UnloadImage( HMODULE hModule )
+int PE_UnloadImage( HMODULE16 hModule )
 {
 	printf("PEunloadImage() called!\n");
 	/* free resources, image, unmap */
 	return 1;
 }
 
-static void PE_InitDLL(HMODULE hModule)
+static void PE_InitDLL(HMODULE16 hModule)
 {
     NE_MODULE *pModule;
     PE_MODULE *pe;
@@ -675,7 +600,7 @@ static void PE_InitDLL(HMODULE hModule)
     if (pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)
     {
         printf("InitPEDLL() called!\n");
-        CallDLLEntryProc32( (FARPROC)(pe->load_addr + 
+        CallDLLEntryProc32( (FARPROC32)(pe->load_addr + 
                                   pe->pe_header->opt_coff.AddressOfEntryPoint),
                             hModule, 0, 0 );
     }
@@ -708,16 +633,16 @@ void PE_InitTEB(int hTEB)
     pTEB->taskid = getpid();
 }
 
-void PE_InitializeDLLs(HMODULE hModule)
+void PE_InitializeDLLs(HMODULE16 hModule)
 {
 	NE_MODULE *pModule;
-	HMODULE *pDLL;
+	HMODULE16 *pDLL;
 	pModule = MODULE_GetPtr( GetExePtr(hModule) );
 	if (pModule->dlls_to_init)
 	{
 		HANDLE to_init = pModule->dlls_to_init;
 		pModule->dlls_to_init = 0;
-		for (pDLL = (HMODULE *)GlobalLock16( to_init ); *pDLL; pDLL++)
+		for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
 		{
 			PE_InitializeDLLs( *pDLL );
 			PE_InitDLL( *pDLL );

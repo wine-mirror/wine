@@ -63,7 +63,7 @@ BOOL CloseHandle(KERNEL_OBJECT *handle)
 /***********************************************************************
  *              GetModuleFileNameA      (KERNEL32.235)
  */
-DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
+DWORD GetModuleFileNameA(HMODULE32 hModule, LPSTR lpFilename, DWORD nSize)
 {
     strcpy(lpFilename, "c:\\dummy");
     return 8;
@@ -72,9 +72,9 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */
-HMODULE WIN32_GetModuleHandle(char *module)
+HMODULE32 WIN32_GetModuleHandle(char *module)
 {
-    HMODULE hModule;
+    HMODULE32 hModule;
 
     dprintf_win32(stddeb, "GetModuleHandle: %s\n", module ? module : "NULL");
 /* Freecell uses the result of GetModuleHandleA(0) as the hInstance in

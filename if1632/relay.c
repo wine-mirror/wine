@@ -19,22 +19,11 @@
 dprintf_relay
 #endif
 
-  /* Saved 16-bit stack for current process (Win16 only) */
-WORD IF1632_Saved16_ss = 0;
-WORD IF1632_Saved16_sp = 0;
-
-  /* Saved 32-bit stack for current process (Win16 only) */
-DWORD IF1632_Saved32_esp = 0;
-SEGPTR IF1632_Stack32_base = 0;
-
-  /* Original Unix stack */
-DWORD IF1632_Original32_esp;
-
 
 /***********************************************************************
  *           RELAY_Init
  */
-BOOL RELAY_Init(void)
+BOOL32 RELAY_Init(void)
 {
     WORD codesel;
 
@@ -127,7 +116,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
 /***********************************************************************
  *           RELAY_DebugCallFrom16Ret
  */
-void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
+void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, SIGCONTEXT *context)
 {
     STACK16FRAME *frame;
     WORD ordinal;
@@ -156,13 +145,10 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, int args32 )
     case 2: /* regs */
         printf( "retval=none ret=%04x:%04x ds=%04x\n",
                 frame->cs, frame->ip, frame->ds );
-        {
-            SIGCONTEXT *context = (SIGCONTEXT *)&args32;
-            printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
-                    AX_reg(context), BX_reg(context), CX_reg(context),
-                    DX_reg(context), SI_reg(context), DI_reg(context),
-                    ES_reg(context), EFL_reg(context) );
-        }
+        printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
+                AX_reg(context), BX_reg(context), CX_reg(context),
+                DX_reg(context), SI_reg(context), DI_reg(context),
+                ES_reg(context), EFL_reg(context) );
         break;
     }
 }
@@ -274,7 +260,7 @@ void RELAY_DebugCallTo32( unsigned int func, int nbargs, unsigned int arg1  )
 /**********************************************************************
  *	     Catch    (KERNEL.55)
  */
-INT Catch( LPCATCHBUF lpbuf )
+INT16 Catch( LPCATCHBUF lpbuf )
 {
     STACK16FRAME *pFrame = CURRENT_STACK16;
 
@@ -298,7 +284,7 @@ INT Catch( LPCATCHBUF lpbuf )
 /**********************************************************************
  *	     Throw    (KERNEL.56)
  */
-int Throw( LPCATCHBUF lpbuf, int retval )
+INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
 {
     STACK16FRAME *pFrame;
 

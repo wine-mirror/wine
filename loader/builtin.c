@@ -199,7 +199,7 @@ BOOL16 BUILTIN_Init(void)
  */
 HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL16 force )
 {
-    HMODULE hModule;
+    HMODULE16 hModule;
     NE_MODULE *pModule;
     BUILTIN_DLL *table;
     char dllname[16], *p;

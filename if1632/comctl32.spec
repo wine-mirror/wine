@@ -17,7 +17,7 @@ base	2
 12 stub LBItemFromPt
 13 stub DrawInsert
 14 stub CreateUpDownControl
-15 stub InitCommonControls
+15 return InitCommonControls 4 0
 16 stub CreateStatusWindowW
 17 stub CreateToolbarEx
 18 stub DestroyPropertySheetPage

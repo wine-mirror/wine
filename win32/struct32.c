@@ -160,3 +160,29 @@ void STRUCT32_CREATESTRUCT16to32A( const CREATESTRUCT16* from,
     to->style          = from->style;
     to->dwExStyle      = from->dwExStyle;
 }
+
+/* The strings are not copied */
+void STRUCT32_MDICREATESTRUCT32Ato16( const MDICREATESTRUCT32A* from,
+                                      MDICREATESTRUCT16* to )
+{
+    to->hOwner = (HINSTANCE16)from->hOwner;
+    to->x      = (INT16)from->x;     
+    to->y      = (INT16)from->y;     
+    to->cx     = (INT16)from->cx;    
+    to->cy     = (INT16)from->cy;    
+    to->style  = from->style; 
+    to->lParam = from->lParam;
+}
+
+void STRUCT32_MDICREATESTRUCT16to32A( const MDICREATESTRUCT16* from,
+                                      MDICREATESTRUCT32A *to )
+{
+    to->hOwner = (HINSTANCE32)from->hOwner;
+    to->x      = (INT32)from->x;     
+    to->y      = (INT32)from->y;     
+    to->cx     = (INT32)from->cx;    
+    to->cy     = (INT32)from->cy;    
+    to->style  = from->style; 
+    to->lParam = from->lParam;
+}
+

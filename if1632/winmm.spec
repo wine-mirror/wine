@@ -49,7 +49,7 @@ type win32
 0048 stub mciLoadCommandResource
 0049 stub mciSendCommandA
 0050 stub mciSendCommandW
-0051 stub mciSendStringA
+0051 stdcall mciSendStringA(ptr ptr long long) mciSendString
 0052 stub mciSendStringW
 0053 stub mciSetDriverData
 0054 stub mciSetYieldProc

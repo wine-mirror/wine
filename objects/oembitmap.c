@@ -339,7 +339,7 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color, HBITMAP *hBitmap,
 
     attrs = (XpmAttributes *)xmalloc( XpmAttributesSize() );
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
-    attrs->colormap     = COLOR_WinColormap;
+    attrs->colormap     = COLOR_GetColormap();
     attrs->depth        = color ? screenDepth : 1;
     attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;

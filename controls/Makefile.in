@@ -1,6 +1,6 @@
-TOPSRC  = @top_srcdir@
-
-MODULE 	= controls
+DEFS   = -D__WINE__
+TOPSRC = @top_srcdir@
+MODULE = controls
 
 C_SRCS = \
 	button.c \

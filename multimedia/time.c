@@ -27,7 +27,7 @@ static MMTIME mmSysTimeSMPTE;
 typedef struct tagTIMERENTRY {
     WORD wDelay;
     WORD wResol;
-    FARPROC lpFunc;
+    FARPROC16 lpFunc;
     HINSTANCE hInstance;
     DWORD dwUser;
     WORD wFlags;
@@ -52,7 +52,7 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
 	lpTimer->wCurTime--;
 	if (lpTimer->wCurTime == 0) {
 	    lpTimer->wCurTime = lpTimer->wDelay;
-	    if (lpTimer->lpFunc != (FARPROC) NULL) {
+	    if (lpTimer->lpFunc != (FARPROC16) NULL) {
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // before CallBack16 !\n");
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
 			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
@@ -151,7 +151,7 @@ WORD timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
     lpNewTimer->wCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
     lpNewTimer->wResol = wResol;
-    lpNewTimer->lpFunc = (FARPROC) lpFunc;
+    lpNewTimer->lpFunc = (FARPROC16) lpFunc;
     lpNewTimer->hInstance = GetTaskDS();
 	dprintf_mmtime(stddeb, "timeSetEvent // hInstance=%04X !\n", lpNewTimer->hInstance);
 	dprintf_mmtime(stddeb, "timeSetEvent // PTR_SEG_TO_LIN(lpFunc)=%p !\n", 

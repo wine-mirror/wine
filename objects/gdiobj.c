@@ -27,10 +27,6 @@ WORD GDI_HeapSel = 0;
 #define OBJ_PEN             1
 #define OBJ_BRUSH           2
 
-#define MAX_OBJ 			1024
-HANDLE *lpPenBrushList = NULL;
-
-
 /***********************************************************************
  *          GDI stock objects 
  */
@@ -277,7 +273,7 @@ BOOL DeleteObject( HGDIOBJ16 obj )
       case PEN_MAGIC:     return GDI_FreeObject( obj );
       case BRUSH_MAGIC:   return BRUSH_DeleteObject( obj, (BRUSHOBJ*)header );
       case FONT_MAGIC:    return GDI_FreeObject( obj );
-      case PALETTE_MAGIC: return GDI_FreeObject( obj );
+      case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
       case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
       case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
     }
@@ -412,9 +408,26 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
 /***********************************************************************
  *           UnrealizeObject    (GDI.150)
  */
-BOOL UnrealizeObject( HANDLE handle )
+BOOL UnrealizeObject( HANDLE obj )
 {
-    dprintf_gdi(stdnimp, "UnrealizeObject: %04x\n", handle );
+      /* Check if object is valid */
+
+    GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( obj );
+    if (!header) return FALSE;
+
+    dprintf_gdi( stddeb, "UnrealizeObject: %04x\n", obj );
+
+      /* Unrealize object */
+
+    switch(header->wMagic)
+    {
+    case PALETTE_MAGIC: 
+        return PALETTE_UnrealizeObject( obj, (PALETTEOBJ *)header );
+
+    case BRUSH_MAGIC:
+        /* Windows resets the brush origin. We don't need to. */
+        break;
+    }
     return TRUE;
 }
 

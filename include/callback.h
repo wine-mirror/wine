@@ -123,7 +123,7 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
 #define CallEnumObjectsProc( func, lpobj, lParam ) \
     (*func)( lpobj, lParam )
 #define CallEnumPropProc( func, hwnd, lpstr, data ) \
-    (*func)( hwnd, (LPCTSTR)(lpstr), data )
+    (*func)( hwnd, lpstr, data )
 #define CallEnumTaskWndProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 #define CallEnumWindowsProc16( func, hwnd, lParam ) \

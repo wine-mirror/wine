@@ -32,7 +32,7 @@ void LIBRES_RegisterResources(const struct resource* const * Res)
 /**********************************************************************
  *	    LIBRES_FindResource    
  */
-HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
+HRSRC32 LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
 {
   int nameid=0,typeid;
   ResListE* ResBlock;
@@ -68,12 +68,12 @@ HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
     for(Res=ResBlock->Resources; *Res; Res++)
       if(name)
       {
-	if((*Res)->type==typeid && !lstrcmpi((*Res)->name,name))
-	  return (HRSRC)*Res;
+	if((*Res)->type==typeid && !lstrcmpi32A((*Res)->name,name))
+	  return (HRSRC32)*Res;
       }
       else
 	if((*Res)->type==typeid && (*Res)->id==nameid)
-	  return (HRSRC)*Res;
+	  return (HRSRC32)*Res;
   return 0;
 }
 
@@ -81,16 +81,16 @@ HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
 /**********************************************************************
  *	    LIBRES_LoadResource    
  */
-HGLOBAL LIBRES_LoadResource( HINSTANCE hModule, HRSRC hRsrc )
+HGLOBAL32 LIBRES_LoadResource( HINSTANCE hModule, HRSRC32 hRsrc )
 {
-  return (HGLOBAL)(((struct resource*)hRsrc)->bytes);
+  return (HGLOBAL32)(((struct resource*)hRsrc)->bytes);
 }
 
 
 /**********************************************************************
  *	    LIBRES_LockResource    
  */
-LPVOID LIBRES_LockResource( HGLOBAL handle )
+LPVOID LIBRES_LockResource( HGLOBAL32 handle )
 {
   return (LPVOID)handle;
 }
@@ -118,7 +118,7 @@ INT LIBRES_AccessResource( HINSTANCE hModule, HRSRC hRsrc )
 /**********************************************************************
  *	    LIBRES_SizeofResource    
  */
-DWORD LIBRES_SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
+DWORD LIBRES_SizeofResource( HINSTANCE hModule, HRSRC32 hRsrc )
 {
   return (DWORD)(((struct resource*)hRsrc)->size);
 }

@@ -354,16 +354,31 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
                   WS_CLIPCHILDREN | WS_DISABLED | WS_VSCROLL | WS_HSCROLL );
         style |= (WS_VISIBLE | WS_OVERLAPPEDWINDOW);
       }
- 
+
     hwnd = CreateWindow16( (LPCSTR)PTR_SEG_TO_LIN(cs->szClass),
                            (LPCSTR)PTR_SEG_TO_LIN(cs->szTitle), style, 
 			  cs->x, cs->y, cs->cx, cs->cy, parent, 
                          (HMENU)(DWORD)(WORD)wIDmenu, w->hInstance, 
 			 (LPVOID)lParam);
 
+    /* MDI windows are WS_CHILD so they won't be activated by CreateWindow */
+
     if (hwnd)
     {
+	WND* wnd = WIN_FindWndPtr( hwnd );
+
 	MDI_MenuModifyItem(w ,hwnd); 
+	if( wnd->dwStyle & WS_MINIMIZE && ci->hwndActiveChild )
+	    ShowWindow( hwnd, SW_SHOWMINNOACTIVE );
+	else
+	  {
+	    SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE );
+	    if( wnd->dwStyle & WS_MAXIMIZE )
+	      {
+                MDI_AugmentFrameMenu( ci, w->parent, hwnd );
+                MDI_UpdateFrameText( w->parent, ci->self, MDI_REPAINTFRAME, NULL ); 
+	      }
+	  }
         dprintf_mdi(stddeb, "MDICreateChild: created child - %04x\n",hwnd);
     }
     else
@@ -517,13 +532,15 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
     if( wndPrev )
     {
 	SendMessage16( prevActiveWnd, WM_NCACTIVATE, FALSE, 0L );
+
 #ifdef WINELIB32
         SendMessage32A( prevActiveWnd, WM_MDIACTIVATE, (WPARAM)prevActiveWnd, 
                         (LPARAM)hWndChild);
-#else
+#else 
+
         SendMessage16( prevActiveWnd, WM_MDIACTIVATE, FALSE,
                        MAKELONG(hWndChild,prevActiveWnd));
-#endif
+#endif 
         /* uncheck menu item */
        	if( clientInfo->hWindowMenu )
        	        CheckMenuItem( clientInfo->hWindowMenu,
@@ -575,7 +592,7 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
                     (LPARAM)prevActiveWnd );
 #else
     SendMessage16( hWndChild, WM_MDIACTIVATE, TRUE,
-                   MAKELONG(prevActiveWnd,hWndChild) );
+                   MAKELONG(hWndChild,prevActiveWnd));
 #endif
 
     return 1;
@@ -641,8 +658,8 @@ HBITMAP CreateMDIMenuBitmap(void)
 {
  HDC 		hDCSrc  = CreateCompatibleDC(0);
  HDC		hDCDest	= CreateCompatibleDC(hDCSrc);
- HBITMAP	hbClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE) );
- HBITMAP	hbCopy,hb_src,hb_dest;
+ HBITMAP16	hbClose = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CLOSE) );
+ HBITMAP16	hbCopy,hb_src,hb_dest;
 
  hb_src = SelectObject(hDCSrc,hbClose);
  hbCopy = CreateCompatibleBitmap(hDCSrc,SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE);
@@ -984,7 +1001,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	if (!hBmpClose)
         {
             hBmpClose = CreateMDIMenuBitmap();
-            hBmpRestore = LoadBitmap( 0, MAKEINTRESOURCE(OBM_RESTORE) );
+            hBmpRestore = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_RESTORE) );
         }
 	MDI_UpdateFrameText(frameWnd, hwnd, MDI_NOFRAMEREPAINT,frameWnd->text);
 
@@ -1370,6 +1387,8 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 
 	       SendMessage16( hMaxChild, WM_SETREDRAW, TRUE, 0L );
 	      }
+
+	    dprintf_mdi(stddeb,"\tMDI: maximizing child %04x\n", hwnd );
 
 	    ci->hwndChildMaximized = hwnd; /* !!! */
 

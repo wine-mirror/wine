@@ -617,7 +617,7 @@ static INT EDIT_CallWordBreakProc(WND *wndPtr, char *s, INT index, INT count, IN
 	EDITWORDBREAKPROC wbp = (EDITWORDBREAKPROC)EDIT_EM_GetWordBreakProc(wndPtr, 0, 0L);
 
 	if (wbp) {
-		return CallWordBreakProc((FARPROC)wbp,
+		return CallWordBreakProc((FARPROC16)wbp,
 				(LONG)MAKE_SEGPTR(s), index, count, action);
 	} else
 		return EDIT_WordBreakProc(s, index, count, action);
@@ -2107,7 +2107,7 @@ static LRESULT EDIT_EM_Undo(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT EDIT_WM_Char(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	char str[2];
-	char c = (char)wParam;
+	unsigned char c = (unsigned char)wParam;
 
 	switch (c) {
 	case '\r':
@@ -2739,7 +2739,7 @@ static LRESULT EDIT_WM_Paste(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT EDIT_WM_SetCursor(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
 	if (LOWORD(lParam) == HTCLIENT) {
-		SetCursor(LoadCursor(0, IDC_IBEAM));
+		SetCursor(LoadCursor16(0, IDC_IBEAM));
 		return -1L;
 	} else
 		return 0L;

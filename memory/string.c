@@ -357,25 +357,7 @@ VOID RtlFillMemory( LPVOID ptr, UINT32 len, UINT32 fill )
  */
 VOID RtlMoveMemory( LPVOID dst, LPCVOID src, UINT32 len )
 {
-    /* memcpy does not support overlapped copies, */
-    /* and memmove is not portable. */
-    if (((BYTE *)dst + len <= (BYTE *)src) ||
-        ((BYTE *)src + len <= (BYTE *)dst))
-    {
-        memcpy( dst, src, len );
-        return;
-    }
-    /* do it the hard way (FIXME: could do better than this) */
-    if (dst < src)
-    {
-        while (len--) *((BYTE *)dst)++ = *((BYTE *)src)++;
-    }
-    else
-    {
-        dst = (BYTE *)dst + len - 1;
-        src = (BYTE *)src + len - 1;
-        while (len--) *((BYTE *)dst)-- = *((BYTE *)src)--;
-    }
+    memmove( dst, src, len );
 }
 
 

@@ -254,7 +254,8 @@ INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
             break;
         case WPR_WSTRING:  /* No Unicode in Win16 */
         case WPR_STRING:
-            cur_arg = (DWORD)PTR_SEG_TO_LIN( *(SEGPTR *)args );
+            if (IsBadReadPtr( *(SEGPTR *)args, 1 )) cur_arg = (DWORD)"";
+            else cur_arg = (DWORD)PTR_SEG_TO_LIN( *(SEGPTR *)args );
             args = (SEGPTR *)args + 1;
             break;
         case WPR_HEXA:
@@ -498,16 +499,14 @@ INT16 wsprintf16( LPSTR buffer, LPCSTR spec, ... )
 }
 
 /* Emulator version */
-#ifndef WINELIB
 INT16 WIN16_wsprintf16(void)
 {
-    SEGPTR *win_stack = (DWORD *)CURRENT_STACK16->args;
+    SEGPTR *win_stack = (SEGPTR *)CURRENT_STACK16->args;
     LPSTR buffer = (LPSTR)PTR_SEG_TO_LIN(win_stack[0]);
     LPCSTR spec  = (LPCSTR)PTR_SEG_TO_LIN(win_stack[1]);
     return wvsprintf16( buffer, spec, &win_stack[2] );
 
 }
-#endif  /* WINELIB */
 
 
 /***********************************************************************

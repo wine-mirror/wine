@@ -135,7 +135,7 @@ BOOL FreeLibrary32(HINSTANCE hLibModule)
 BOOL GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
   LPDWORD lpSystemAffinityMask)
 {
-	dprintf_task(stddeb,"GetProcessAffinityMask(%x,%x,%x)\n",
+	dprintf_task(stddeb,"GetProcessAffinityMask(%x,%lx,%lx)\n",
 		hProcess,(lpProcessAffinityMask?*lpProcessAffinityMask:0),
 		(lpSystemAffinityMask?*lpSystemAffinityMask:0));
 	/* It is definitely important for a process to know on what processor
@@ -152,7 +152,7 @@ BOOL GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
  */
 BOOL SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
 {
-	dprintf_task(stddeb,"SetThreadAffinityMask(%x,%x)\n",hThread,
+	dprintf_task(stddeb,"SetThreadAffinityMask(%x,%lx)\n",hThread,
 		dwThreadAffinityMask);
 	/* FIXME: We let it fail */
 	return 1;

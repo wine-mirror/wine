@@ -30,13 +30,13 @@
 /***********************************************************************
  *           NE_LoadSegment
  */
-BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
+BOOL NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 {
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable, *pSeg;
     WORD *pModuleTable;
     WORD count, i, offset;
-    HMODULE module;
+    HMODULE16 module;
     FARPROC16 address;
     int fd;
     struct relocation_entry_s *rep, *reloc_entries;
@@ -449,7 +449,7 @@ void NE_FixupPrologs( NE_MODULE *pModule )
  *
  * Call the DLL initialization code
  */
-static BOOL NE_InitDLL( HMODULE hModule )
+static BOOL NE_InitDLL( HMODULE16 hModule )
 {
 #ifndef WINELIB
     int cs_reg, ds_reg, ip_reg, cx_reg, di_reg, bp_reg;
@@ -498,7 +498,7 @@ static BOOL NE_InitDLL( HMODULE hModule )
     pModule->cs = 0;  /* Don't initialize it twice */
     dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04x:%04x ds=%04x di=%04x cx=%04x\n", 
                  cs_reg, ip_reg, ds_reg, di_reg, cx_reg );
-    return CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
+    return CallTo16_regs_( (FARPROC16)(cs_reg << 16 | ip_reg), ds_reg,
                            0 /*es*/, 0 /*bp*/, 0 /*ax*/, 0 /*bx*/,
                            cx_reg, 0 /*dx*/, 0 /*si*/, di_reg );
 #else
@@ -513,10 +513,10 @@ static BOOL NE_InitDLL( HMODULE hModule )
  *
  * Initialize the loaded DLLs.
  */
-void NE_InitializeDLLs( HMODULE hModule )
+void NE_InitializeDLLs( HMODULE16 hModule )
 {
     NE_MODULE *pModule;
-    HMODULE *pDLL;
+    HMODULE16 *pDLL;
 
     if (!(pModule = MODULE_GetPtr( hModule ))) return;
     if (pModule->flags & NE_FFLAGS_WIN32)
@@ -528,7 +528,7 @@ void NE_InitializeDLLs( HMODULE hModule )
     {
 	HANDLE to_init = pModule->dlls_to_init;
 	pModule->dlls_to_init = 0;
-        for (pDLL = (HMODULE *)GlobalLock16( to_init ); *pDLL; pDLL++)
+        for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
         {
             NE_InitializeDLLs( *pDLL );
             NE_InitDLL( *pDLL );
