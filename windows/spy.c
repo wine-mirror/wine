@@ -811,27 +811,22 @@ const char *SPY_GetWndName( HWND hwnd )
     {
 	INT n = sizeof(wnd_buffer) - 6;
 	LPSTR p = wnd_buffer;
-	LPSTR src;
-	
         char  postfix;
 	
 	if( pWnd->text && pWnd->text[0] != '\0' )
 	{
-	    src = pWnd->text;
+	    LPWSTR src = pWnd->text;
 	    *(p++) = postfix = '\"';
 	    while ((n-- > 1) && *src) *p++ = *src++;
+            if( *src ) for( n = 0; n < 3; n++ ) *(p++)='.';
 	}
 	else /* get class name */
 	{
-	    INT len;
-
 	    *(p++)='{';
 	    GlobalGetAtomNameA((ATOM) GetClassWord(pWnd->hwndSelf, GCW_ATOM), p, n + 1);
-	    src = p += (len = lstrlenA(p));
-	    if( len >= n ) src = wnd_buffer;	/* something nonzero */
+	    p += strlen(p);
 	    postfix = '}';
 	}
-	if( *src ) for( n = 0; n < 3; n++ ) *(p++)='.';
 	*(p++) = postfix;
 	*(p++) = '\0';
         WIN_ReleaseWndPtr(pWnd);

@@ -271,7 +271,7 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         else if (style == SS_BITMAP) 
             STATIC_SetBitmap(wndPtr,STATIC_LoadBitmap(wndPtr,(LPCSTR)lParam ));
 	else
-            DEFWND_SetText( wndPtr, (LPCSTR)lParam );
+            DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
         InvalidateRect( hWnd, NULL, FALSE );
         break;
 
@@ -417,7 +417,7 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
     if (!IsWindowEnabled(wndPtr->hwndSelf))
    	SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 
-    if (wndPtr->text) DrawTextA( hdc, wndPtr->text, -1, &rc, wFormat );
+    if (wndPtr->text) DrawTextW( hdc, wndPtr->text, -1, &rc, wFormat );
 }
 
 static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )

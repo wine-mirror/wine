@@ -422,7 +422,7 @@ extern BOOL X11DRV_WND_DestroyWindow(struct tagWND *pWnd);
 extern struct tagWND *X11DRV_WND_SetParent(struct tagWND *wndPtr, struct tagWND *pWndParent);
 extern void X11DRV_WND_ForceWindowRaise(struct tagWND *pWnd);
 extern void X11DRV_WND_SetWindowPos(struct tagWND *wndPtr, const struct tagWINDOWPOS *winpos, BOOL bSMC_SETXPOS);
-extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCSTR text);
+extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
 extern void X11DRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void X11DRV_WND_PostSizeMove(struct tagWND *wndPtr);

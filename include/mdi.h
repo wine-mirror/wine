@@ -36,7 +36,7 @@ typedef struct
     HWND      hwndActiveChild;
     HMENU     hWindowMenu;
     UINT      idFirstChild;
-    LPSTR       frameTitle;
+    LPWSTR    frameTitle;
     UINT      nTotalCreated;
     UINT      mdiFlags;
     UINT      sbRecalc;   /* SB_xxx flags for scrollbar fixup */

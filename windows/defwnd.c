@@ -20,9 +20,11 @@
 #include "cache.h"
 #include "windef.h"
 #include "wingdi.h"
+#include "winnls.h"
+#include "wine/unicode.h"
 #include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(win)
+DEFAULT_DEBUG_CHANNEL(win);
 
   /* bits in the dwKeyData */
 #define KEYDATA_ALT 		0x2000
@@ -56,15 +58,45 @@ static void DEFWND_HandleWindowPosChanged( WND *wndPtr, UINT flags )
 
 
 /***********************************************************************
- *           DEFWND_SetText
+ *           DEFWND_SetTextA
  *
  * Set the window text.
  */
-void DEFWND_SetText( WND *wndPtr, LPCSTR text )
+void DEFWND_SetTextA( WND *wndPtr, LPCSTR text )
 {
+    int count;
+
     if (!text) text = "";
-    if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
-    wndPtr->text = HEAP_strdupA( SystemHeap, 0, text );    
+    count = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
+
+    if (wndPtr->text) HeapFree(SystemHeap, 0, wndPtr->text);
+    if ((wndPtr->text = HeapAlloc(SystemHeap, 0, count * sizeof(WCHAR))))
+        MultiByteToWideChar( CP_ACP, 0, text, -1, wndPtr->text, count );
+    else
+        ERR("Not enough memory for window text");
+
+    wndPtr->pDriver->pSetText(wndPtr, wndPtr->text);
+}
+
+/***********************************************************************
+ *           DEFWND_SetTextW
+ *
+ * Set the window text.
+ */
+void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text )
+{
+    static const WCHAR empty_string[] = {0};
+    int count;
+
+    if (!text) text = empty_string;
+    count = strlenW(text) + 1;
+
+    if (wndPtr->text) HeapFree(SystemHeap, 0, wndPtr->text);
+    if ((wndPtr->text = HeapAlloc(SystemHeap, 0, count * sizeof(WCHAR))))
+	lstrcpyW( wndPtr->text, text );
+    else
+        ERR("Not enough memory for window text");
+
     wndPtr->pDriver->pSetText(wndPtr, wndPtr->text);
 }
 
@@ -336,7 +368,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	return (LRESULT)DEFWND_ControlColor( (HDC)wParam, HIWORD(lParam) );
 	
     case WM_GETTEXTLENGTH:
-        if (wndPtr->text) return (LRESULT)strlen(wndPtr->text);
+        if (wndPtr->text) return (LRESULT)strlenW(wndPtr->text);
         return 0;
 
     case WM_SETCURSOR:
@@ -512,7 +544,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 	{
 	    CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
 	    if (cs->lpszName)
-		DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(cs->lpszName) );
+		DEFWND_SetTextA( wndPtr, (LPCSTR)PTR_SEG_TO_LIN(cs->lpszName) );
 	    result = 1;
 	}
         break;
@@ -541,13 +573,13 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
-            lstrcpynA( (LPSTR)PTR_SEG_TO_LIN(lParam), wndPtr->text, wParam );
+            lstrcpynWtoA( (LPSTR)PTR_SEG_TO_LIN(lParam), wndPtr->text, wParam );
             result = (LRESULT)strlen( (LPSTR)PTR_SEG_TO_LIN(lParam) );
         }
         break;
 
     case WM_SETTEXT:
-	DEFWND_SetText( wndPtr, (LPSTR)PTR_SEG_TO_LIN(lParam) );
+	DEFWND_SetTextA( wndPtr, (LPCSTR)PTR_SEG_TO_LIN(lParam) );
 	if( wndPtr->dwStyle & WS_CAPTION ) NC_HandleNCPaint( hwnd , (HRGN)1 );
         break;
 
@@ -580,7 +612,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
     case WM_NCCREATE:
 	{
 	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
-	    if (cs->lpszName) DEFWND_SetText( wndPtr, cs->lpszName );
+	    if (cs->lpszName) DEFWND_SetTextA( wndPtr, cs->lpszName );
 	    result = 1;
 	}
         break;
@@ -604,13 +636,13 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
-            lstrcpynA( (LPSTR)lParam, wndPtr->text, wParam );
+            lstrcpynWtoA( (LPSTR)lParam, wndPtr->text, wParam );
             result = (LRESULT)strlen( (LPSTR)lParam );
         }
         break;
 
     case WM_SETTEXT:
-	DEFWND_SetText( wndPtr, (LPSTR)lParam );
+	DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
 	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;
 
@@ -640,45 +672,37 @@ LRESULT WINAPI DefWindowProcW(
     WPARAM wParam,  /* [in] first message parameter */
     LPARAM lParam )   /* [in] second message parameter */
 {
-    LRESULT result;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    LRESULT result = 0;
 
+    if (!wndPtr) return 0;
     switch(msg)
     {
     case WM_NCCREATE:
 	{
 	    CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
-	    if (cs->lpszName)
-            {
-                WND *wndPtr = WIN_FindWndPtr( hwnd );
-                LPSTR str = HEAP_strdupWtoA(GetProcessHeap(), 0, cs->lpszName);
-                DEFWND_SetText( wndPtr, str );
-                HeapFree( GetProcessHeap(), 0, str );
-                WIN_ReleaseWndPtr(wndPtr);
-            }
+	    if (cs->lpszName) DEFWND_SetTextW( wndPtr, cs->lpszName );
 	    result = 1;
 	}
         break;
 
     case WM_GETTEXT:
+        if (wParam && wndPtr->text)
         {
-            LPSTR str = HeapAlloc( GetProcessHeap(), 0, wParam );
-            result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)str );
-            lstrcpynAtoW( (LPWSTR)lParam, str, wParam );
-            HeapFree( GetProcessHeap(), 0, str );
+            lstrcpynW( (LPWSTR)lParam, wndPtr->text, wParam );
+            result = strlenW( (LPWSTR)lParam );
         }
         break;
 
     case WM_SETTEXT:
-        {
-            LPSTR str = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPWSTR)lParam );
-            result = DefWindowProcA( hwnd, msg, wParam, (LPARAM)str );
-            HeapFree( GetProcessHeap(), 0, str );
-        }
+        DEFWND_SetTextW( wndPtr, (LPCWSTR)lParam );
+	NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;
 
     default:
         result = DefWindowProcA( hwnd, msg, wParam, lParam );
         break;
     }
+    WIN_ReleaseWndPtr(wndPtr);
     return result;
 }

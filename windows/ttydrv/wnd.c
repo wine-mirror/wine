@@ -160,9 +160,9 @@ void TTYDRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SET
 /*****************************************************************
  *		TTYDRV_WND_SetText
  */
-void TTYDRV_WND_SetText(WND *wndPtr, LPCSTR text)
+void TTYDRV_WND_SetText(WND *wndPtr, LPCWSTR text)
 {
-  FIXME("(%p, %s): stub\n", wndPtr, debugstr_a(text));
+  FIXME("(%p, %s): stub\n", wndPtr, debugstr_w(text));
 }
 
 /*****************************************************************

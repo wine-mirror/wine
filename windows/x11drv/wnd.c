@@ -28,6 +28,7 @@
 #include "class.h"
 #include "x11drv.h"
 #include "wingdi.h"
+#include "winnls.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
@@ -656,13 +657,33 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 /*****************************************************************
  *		X11DRV_WND_SetText
  */
-void X11DRV_WND_SetText(WND *wndPtr, LPCSTR text)
+void X11DRV_WND_SetText(WND *wndPtr, LPCWSTR text)
 {   
-  if (!X11DRV_WND_GetXWindow(wndPtr))
-    return;
+    UINT count;
+    char *buffer;
+    static UINT text_cp = (UINT)-1;
+    Window win;
 
-  TSXStoreName( display, X11DRV_WND_GetXWindow(wndPtr), text );
-  TSXSetIconName( display, X11DRV_WND_GetXWindow(wndPtr), text );
+    if (!(win = X11DRV_WND_GetXWindow(wndPtr))) return;
+
+    if(text_cp == (UINT)-1)
+    {
+	text_cp = PROFILE_GetWineIniInt("x11drv", "TextCP", CP_ACP);
+	TRACE("text_cp = %u\n", text_cp);
+    }
+
+    /* allocate new buffer for window text */
+    count = WideCharToMultiByte(text_cp, 0, text, -1, NULL, 0, NULL, NULL);
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count * sizeof(WCHAR) )))
+    {
+	ERR("Not enough memory for window text\n");
+	return;
+    }
+    WideCharToMultiByte(text_cp, 0, text, -1, buffer, count, NULL, NULL);
+
+    TSXStoreName( display, win, buffer );
+    TSXSetIconName( display, win, buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
 }
 
 /*****************************************************************

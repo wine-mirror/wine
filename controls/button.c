@@ -15,7 +15,7 @@
 #include "tweak.h"
 
 static void PaintGrayOnGray( HDC hDC,HFONT hFont,RECT *rc,
-			     char *text, UINT format );
+			     LPCWSTR text, UINT format );
 
 static void PB_Paint( WND *wndPtr, HDC hDC, WORD action );
 static void CB_Paint( WND *wndPtr, HDC hDC, WORD action );
@@ -222,7 +222,7 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         return DefWindowProcA( hWnd, uMsg, wParam, lParam );
 
     case WM_SETTEXT:
-        DEFWND_SetText( wndPtr, (LPCSTR)lParam );
+        DEFWND_SetTextA( wndPtr, (LPCSTR)lParam );
 	if( wndPtr->dwStyle & WS_VISIBLE )
             PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
         return 0;
@@ -489,7 +489,7 @@ static void BUTTON_DrawPushButton(
             SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
                                  GetSysColor(COLOR_GRAYTEXT) :
                                  GetSysColor(COLOR_BTNTEXT) );
-            DrawTextA( hDC, wndPtr->text, -1, &rc,
+            DrawTextW( hDC, wndPtr->text, -1, &rc,
                          DT_SINGLELINE | DT_CENTER | DT_VCENTER );
             /* do we have the focus?
 	     * Win9x draws focus last with a size prop. to the button
@@ -500,7 +500,7 @@ static void BUTTON_DrawPushButton(
                 RECT r = { 0, 0, 0, 0 };
                 INT xdelta, ydelta;
 
-                DrawTextA( hDC, wndPtr->text, -1, &r,
+                DrawTextW( hDC, wndPtr->text, -1, &r,
                              DT_SINGLELINE | DT_CALCRECT );
                 xdelta = ((rc.right - rc.left) - (r.right - r.left) - 1) / 2;
                 ydelta = ((rc.bottom - rc.top) - (r.bottom - r.top) - 1) / 2;
@@ -619,7 +619,7 @@ static void BUTTON_DrawPushButton(
  *   function ignores the CACHE_GetPattern funcs.
  */
 
-void PaintGrayOnGray(HDC hDC,HFONT hFont,RECT *rc,char *text,
+void PaintGrayOnGray(HDC hDC, HFONT hFont, RECT *rc, LPCWSTR text,
 			UINT format)
 {
 /*  This is the standard gray on gray pattern:
@@ -636,7 +636,7 @@ void PaintGrayOnGray(HDC hDC,HFONT hFont,RECT *rc,char *text,
     RECT rect,rc2;
 
     rect=*rc;
-    DrawTextA( hDC, text, -1, &rect, DT_SINGLELINE | DT_CALCRECT);
+    DrawTextW( hDC, text, -1, &rect, DT_SINGLELINE | DT_CALCRECT);
     /* now text width and height are in rect.right and rect.bottom */
     rc2=rect;
     rect.left = rect.top = 0; /* drawing pos in hdcMem */
@@ -647,7 +647,7 @@ void PaintGrayOnGray(HDC hDC,HFONT hFont,RECT *rc,char *text,
     PatBlt( hdcMem,0,0,rect.right,rect.bottom,WHITENESS);
       /* will be overwritten by DrawText, but just in case */
     if (hFont) SelectObject( hdcMem, hFont);
-    DrawTextA( hdcMem, text, -1, &rc2, DT_SINGLELINE);  
+    DrawTextW( hdcMem, text, -1, &rc2, DT_SINGLELINE);
       /* After draw: foreground = 0 bits, background = 1 bits */
     hBr = SelectObject( hdcMem, CreatePatternBrush(hbm) );
     DeleteObject( hbm );
@@ -717,7 +717,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
       /* Draw the check-box bitmap */
 
-    if (wndPtr->text) textlen = strlen( wndPtr->text );
+    if (wndPtr->text) textlen = lstrlenW( wndPtr->text );
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
     { 
         if( TWEAK_WineLook == WIN31_LOOK )
@@ -792,7 +792,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 	  } else {
             if (wndPtr->dwStyle & WS_DISABLED)
                 SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
-            DrawTextA( hDC, wndPtr->text, textlen, &rtext,
+            DrawTextW( hDC, wndPtr->text, textlen, &rtext,
 			 DT_SINGLELINE | DT_VCENTER );
 	  }
         }
@@ -805,7 +805,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
 
         SetRectEmpty(&rbox);
         if( textlen )
-            DrawTextA( hDC, wndPtr->text, textlen, &rbox,
+            DrawTextW( hDC, wndPtr->text, textlen, &rbox,
 			 DT_SINGLELINE | DT_CALCRECT );
         textlen = rbox.bottom - rbox.top;
         delta = ((rtext.bottom - rtext.top) - textlen)/2;
@@ -884,7 +884,7 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
         if (wndPtr->dwStyle & WS_DISABLED)
             SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
         rc.left += 10;
-        DrawTextA( hDC, wndPtr->text, -1, &rc, DT_SINGLELINE | DT_NOCLIP );
+        DrawTextW( hDC, wndPtr->text, -1, &rc, DT_SINGLELINE | DT_NOCLIP );
     }
 }
 

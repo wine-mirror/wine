@@ -16,6 +16,7 @@
 #include "windowsx.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "wine/unicode.h"
 #include "dialog.h"
 #include "drive.h"
 #include "heap.h"
@@ -1182,15 +1183,16 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                      (wndPtr->text!=NULL))
                 {
                     /* find the accelerator key */
-                    LPSTR p = wndPtr->text - 2;
+                    LPWSTR p = wndPtr->text - 2;
                     do
                     {
-                        p = strchr( p + 2, '&' );
+                        p = strchrW( p + 2, '&' );
                     }
                     while (p != NULL && p[1] == '&');
 
                     /* and check if it's the one we're looking for */
-                    if (p != NULL && toupper( p[1] ) == toupper( vKey ) )
+		    /* FIXME: convert vKey to unicode */
+                    if (p != NULL && toupperW( p[1] ) == (WCHAR)toupper( vKey ) )
                     {
                         if ((dlgCode & DLGC_STATIC) || 
                             (wndPtr->dwStyle & 0x0f) == BS_GROUPBOX )

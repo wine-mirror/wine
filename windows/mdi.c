@@ -93,7 +93,7 @@ static HBITMAP16 hBmpClose   = 0;
 static HBITMAP16 hBmpRestore = 0;
 
 /* ----------------- declarations ----------------- */
-static void MDI_UpdateFrameText(WND *, HWND, BOOL, LPCSTR);
+static void MDI_UpdateFrameText(WND *, HWND, BOOL, LPCWSTR);
 static BOOL MDI_AugmentFrameMenu(MDICLIENTINFO*, WND *, HWND);
 static BOOL MDI_RestoreFrameMenu(WND *, HWND);
 
@@ -128,11 +128,12 @@ static void MDI_PostUpdate(HWND hwnd, MDICLIENTINFO* ci, WORD recalc)
  */
 static BOOL MDI_MenuModifyItem(WND* clientWnd, HWND hWndChild )
 {
-    char            buffer[128];
+    WCHAR           buffer[128];
+    static const WCHAR format[] = {'%','d',' ',0};
     MDICLIENTINFO  *clientInfo = (MDICLIENTINFO*)clientWnd->wExtra;
     WND            *wndPtr     = WIN_FindWndPtr(hWndChild);
-    UINT	    n          = sprintf(buffer, "%d ",
-				 wndPtr->wIDmenu - clientInfo->idFirstChild + 1);
+    UINT	    n          = wsprintfW(buffer, format,
+                                           wndPtr->wIDmenu - clientInfo->idFirstChild + 1);
     BOOL	    bRet	    = 0;
 
     if( !clientInfo->hWindowMenu )
@@ -141,10 +142,10 @@ static BOOL MDI_MenuModifyItem(WND* clientWnd, HWND hWndChild )
         goto END;
     }
 
-    if (wndPtr->text) lstrcpynA(buffer + n, wndPtr->text, sizeof(buffer) - n );
+    if (wndPtr->text) lstrcpynW(buffer + n, wndPtr->text, sizeof(buffer)/sizeof(WCHAR) - n );
 
     n    = GetMenuState(clientInfo->hWindowMenu,wndPtr->wIDmenu ,MF_BYCOMMAND); 
-    bRet = ModifyMenuA(clientInfo->hWindowMenu , wndPtr->wIDmenu, 
+    bRet = ModifyMenuW(clientInfo->hWindowMenu , wndPtr->wIDmenu, 
                       MF_BYCOMMAND | MF_STRING, wndPtr->wIDmenu, buffer );
     CheckMenuItem(clientInfo->hWindowMenu ,wndPtr->wIDmenu , n & MF_CHECKED);
 END:
@@ -157,7 +158,8 @@ END:
  */
 static BOOL MDI_MenuDeleteItem(WND* clientWnd, HWND hWndChild )
 {
-    char    	 buffer[128];
+    WCHAR    	 buffer[128];
+    static const WCHAR format[] = {'&','%','d',' ',0};
     MDICLIENTINFO *clientInfo = (MDICLIENTINFO*)clientWnd->wExtra;
     WND    	*wndPtr     = WIN_FindWndPtr(hWndChild);
     UINT	 index      = 0,id,n;
@@ -190,15 +192,15 @@ static BOOL MDI_MenuDeleteItem(WND* clientWnd, HWND hWndChild )
 	/* set correct id */
 	tmpWnd->wIDmenu--;
 
-	n = sprintf(buffer, "&%d ",index - clientInfo->idFirstChild);
+	n = wsprintfW(buffer, format ,index - clientInfo->idFirstChild);
 	if (tmpWnd->text)
-            lstrcpynA(buffer + n, tmpWnd->text, sizeof(buffer) - n );	
+            lstrcpynW(buffer + n, tmpWnd->text, sizeof(buffer)/sizeof(WCHAR) - n );	
 
 	/*  change menu if the current child is to be shown in the 
          *  "Windows" menu
          */
         if (index <= clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT) 
-	ModifyMenuA(clientInfo->hWindowMenu ,index ,MF_BYCOMMAND | MF_STRING,
+	ModifyMenuW(clientInfo->hWindowMenu ,index ,MF_BYCOMMAND | MF_STRING,
                       index - 1 , buffer ); 
         WIN_ReleaseWndPtr(tmpWnd);
     }
@@ -1105,13 +1107,13 @@ static BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild )
  * Note: lpTitle can be NULL
  */
 static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
-                                 BOOL repaint, LPCSTR lpTitle )
+                                 BOOL repaint, LPCWSTR lpTitle )
 {
-    char   lpBuffer[MDI_MAXTITLELENGTH+1];
+    WCHAR   lpBuffer[MDI_MAXTITLELENGTH+1];
     WND*   clientWnd = WIN_FindWndPtr(hClient);
     MDICLIENTINFO *ci = (MDICLIENTINFO *) clientWnd->wExtra;
 
-    TRACE("repaint %i, frameText %s\n", repaint, (lpTitle)?lpTitle:"NULL");
+    TRACE("repaint %i, frameText %s\n", repaint, (lpTitle)?debugstr_w(lpTitle):"NULL");
 
     if (!clientWnd)
            return;
@@ -1126,7 +1128,7 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
     if (lpTitle) 
     {
 	if (ci->frameTitle) HeapFree( SystemHeap, 0, ci->frameTitle );
-	ci->frameTitle = HEAP_strdupA( SystemHeap, 0, lpTitle );
+	ci->frameTitle = HEAP_strdupW( SystemHeap, 0, lpTitle );
     }
 
     if (ci->frameTitle)
@@ -1137,32 +1139,33 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
 	{
 	    /* combine frame title and child title if possible */
 
-	    LPCSTR lpBracket  = " - [";
-	    int	i_frame_text_length = strlen(ci->frameTitle);
-	    int	i_child_text_length = strlen(childWnd->text);
+	    static const WCHAR lpBracket[]  = {' ','-',' ','[',0};
+	    static const WCHAR lpBracket2[]  = {']',0};
+	    int	i_frame_text_length = lstrlenW(ci->frameTitle);
+	    int	i_child_text_length = lstrlenW(childWnd->text);
 
-	    lstrcpynA( lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH);
+	    lstrcpynW( lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH);
 
 	    if( i_frame_text_length + 6 < MDI_MAXTITLELENGTH )
             {
-		strcat( lpBuffer, lpBracket );
+		lstrcatW( lpBuffer, lpBracket );
 
 		if( i_frame_text_length + i_child_text_length + 6 < MDI_MAXTITLELENGTH )
 		{
-		    strcat( lpBuffer, childWnd->text );
-		    strcat( lpBuffer, "]" );
+		    lstrcatW( lpBuffer, childWnd->text );
+		    lstrcatW( lpBuffer, lpBracket2 );
 		}
 		else
 		{
-		    lstrcpynA( lpBuffer + i_frame_text_length + 4, 
+		    lstrcpynW( lpBuffer + i_frame_text_length + 4, 
 				 childWnd->text, MDI_MAXTITLELENGTH - i_frame_text_length - 5 );
-		    strcat( lpBuffer, "]" );
+		    lstrcatW( lpBuffer, lpBracket2 );
 		}
 	    }
 	}
 	else
 	{
-            lstrcpynA(lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH+1 );
+            lstrcpynW(lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH+1 );
 	}
         WIN_ReleaseWndPtr(childWnd);
 
@@ -1170,7 +1173,7 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
     else
 	lpBuffer[0] = '\0';
 
-    DEFWND_SetText( frameWnd, lpBuffer );
+    DEFWND_SetTextW( frameWnd, lpBuffer );
     if( repaint == MDI_REPAINTFRAME)
 	SetWindowPos( frameWnd->hwndSelf, 0,0,0,0,0, SWP_FRAMECHANGED |
 			SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
@@ -1486,11 +1489,15 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 	    break;
 
 	  case WM_SETTEXT:
-            wndPtr = WIN_FindWndPtr(hwnd);
-            MDI_UpdateFrameText(wndPtr, hwndMDIClient,
-				      MDI_REPAINTFRAME, 
-			             (LPCSTR)PTR_SEG_TO_LIN(lParam));
-            WIN_ReleaseWndPtr(wndPtr);
+            {
+                LPWSTR text = HEAP_strdupAtoW( GetProcessHeap(), 0, 
+                                               (LPCSTR)PTR_SEG_TO_LIN(lParam) );
+                wndPtr = WIN_FindWndPtr(hwnd);
+                MDI_UpdateFrameText(wndPtr, hwndMDIClient,
+                                    MDI_REPAINTFRAME, text );
+                WIN_ReleaseWndPtr(wndPtr);
+                HeapFree( GetProcessHeap(), 0, text );
+            }
 	    return 0;
 	
 	  case WM_SETFOCUS:
@@ -2329,9 +2336,9 @@ static BOOL WINAPI MDI_MoreWindowsDlgProc (HWND hDlg, UINT iMsg, WPARAM wParam, 
                    if (pWnd->wIDmenu == ci->idFirstChild + i)
                        break;
 
-               SendMessageA(hListBox, LB_ADDSTRING, 0, (LPARAM) pWnd->text);
+               SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM) pWnd->text);
                SendMessageA(hListBox, LB_SETITEMDATA, i, (LPARAM) pWnd);
-               length = strlen(pWnd->text);
+               length = lstrlenW(pWnd->text);
                WIN_ReleaseWndPtr(pWnd);
 
                if (length > widest)

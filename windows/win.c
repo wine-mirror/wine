@@ -238,7 +238,7 @@ void WIN_DumpWindow( HWND hwnd )
              ptr->class, className, ptr->hInstance, ptr->hmemTaskQ,
              ptr->hrgnUpdate, ptr->hwndLastActive, ptr->dce, ptr->wIDmenu,
              ptr->dwStyle, ptr->dwExStyle, (UINT)ptr->winproc,
-             ptr->text ? ptr->text : "",
+             ptr->text ? debugstr_w(ptr->text) : "",
              ptr->rectClient.left, ptr->rectClient.top, ptr->rectClient.right,
              ptr->rectClient.bottom, ptr->rectWindow.left, ptr->rectWindow.top,
              ptr->rectWindow.right, ptr->rectWindow.bottom, ptr->hSysMenu,
@@ -288,7 +288,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
         DPRINTF( "%08lx %-6.4x %-17.17s %08x %08x %.14s\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
                  (UINT)ptr->dwStyle, (UINT)ptr->winproc,
-                 ptr->text?ptr->text:"<null>");
+                 ptr->text ? debugstr_w(ptr->text) : "<null>");
         
         if (ptr->child) WIN_WalkWindows( ptr->child->hwndSelf, indent+1 );
         WIN_UpdateWndPtr(&ptr,ptr->next);
@@ -1506,7 +1506,7 @@ BOOL WINAPI OpenIcon( HWND hwnd )
  * Implementation of FindWindow() and FindWindowEx().
  */
 static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
-                              LPCSTR title )
+                              LPCWSTR title )
 {
     WND *pWnd;
     HWND retvalue;
@@ -1556,7 +1556,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
             retvalue = pWnd->hwndSelf;
             goto end;
         }
-        if (pWnd->text && !strcmp( pWnd->text, title ))
+        if (pWnd->text && !lstrcmpW( pWnd->text, title ))
         {
             retvalue = pWnd->hwndSelf;
             goto end;
@@ -1606,6 +1606,8 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child,
                                LPCSTR className, LPCSTR title )
 {
     ATOM atom = 0;
+    LPWSTR buffer;
+    HWND hwnd;
 
     if (className)
     {
@@ -1617,7 +1619,11 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child,
             return 0;
         }
     }
-    return WIN_FindWindow( parent, child, atom, title );
+
+    buffer = HEAP_strdupAtoW( GetProcessHeap(), 0, title );
+    hwnd = WIN_FindWindow( parent, child, atom, buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return hwnd;
 }
 
 
@@ -1628,8 +1634,6 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child,
                                LPCWSTR className, LPCWSTR title )
 {
     ATOM atom = 0;
-    char *buffer;
-    HWND hwnd;
 
     if (className)
     {
@@ -1641,10 +1645,7 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child,
             return 0;
         }
     }
-    buffer = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
-    hwnd = WIN_FindWindow( parent, child, atom, buffer );
-    HeapFree( GetProcessHeap(), 0, buffer );
-    return hwnd;
+    return WIN_FindWindow( parent, child, atom, title );
 }
 
 

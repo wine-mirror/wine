@@ -71,7 +71,7 @@ typedef struct tagWND
     HINSTANCE    hInstance;     /* Window hInstance (from CreateWindow) */
     RECT         rectClient;    /* Client area rel. to parent client area */
     RECT         rectWindow;    /* Whole window rel. to parent client area */
-    LPSTR          text;          /* Window text */
+    LPWSTR        text;           /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
     void          *pProp;         /* Pointer to properties list */
@@ -123,7 +123,7 @@ typedef struct tagWND_DRIVER
     WND*   (*pSetParent)(WND *, WND *);
     void   (*pForceWindowRaise)(WND *);
     void   (*pSetWindowPos)(WND *, const WINDOWPOS *, BOOL);
-    void   (*pSetText)(WND *, LPCSTR);
+    void   (*pSetText)(WND *, LPCWSTR);
     void   (*pSetFocus)(WND *);
     void   (*pPreSizeMove)(WND *);
     void   (*pPostSizeMove)(WND *);
@@ -202,7 +202,8 @@ extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 
 extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL );
-extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );
+extern void DEFWND_SetTextA( WND *wndPtr, LPCSTR text );
+extern void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text );
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT16 ctlType );     /* windows/defwnd.c */
 
 extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */

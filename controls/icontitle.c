@@ -15,8 +15,6 @@
 #include "desktop.h"
 #include "heap.h"
 
-static  LPCSTR	emptyTitleText = "<...>";
-
 	BOOL	bMultiLineTitle;
 	HFONT	hIconTitleFont;
 
@@ -66,13 +64,14 @@ HWND ICONTITLE_Create( WND* wnd )
  */
 static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
 {
-    LPSTR str;
-    int length = lstrlenA( wnd->owner->text );
+    static WCHAR emptyTitleText[] = {'<','.','.','.','>',0};
+    LPWSTR str;
+    int length = lstrlenW( wnd->owner->text );
 
     if( length )
     {
 	str = HeapAlloc( GetProcessHeap(), 0, length + 1 );
-	lstrcpyA( str, wnd->owner->text );
+	lstrcpyW( str, wnd->owner->text );
 	while( str[length - 1] == ' ' ) /* remove trailing spaces */
 	{ 
 	    str[--length] = '\0';
@@ -85,8 +84,8 @@ static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
     }
     if( !length ) 
     {
-	str = (LPSTR)emptyTitleText;
-	length = lstrlenA( str );
+	str = emptyTitleText;
+	length = lstrlenW( str );
     }
 
     if( str )
@@ -100,7 +99,7 @@ static BOOL ICONTITLE_GetTitlePos( WND* wnd, LPRECT lpRect )
 		       GetSystemMetrics(SM_CXBORDER) * 2,
 		       GetSystemMetrics(SM_CYBORDER) * 2 );
 
-	    DrawTextA( hDC, str, length, lpRect, DT_CALCRECT |
+	    DrawTextW( hDC, str, length, lpRect, DT_CALCRECT |
 			 DT_CENTER | DT_NOPREFIX | DT_WORDBREAK |
 			 (( bMultiLineTitle ) ? 0 : DT_SINGLELINE) );
 
