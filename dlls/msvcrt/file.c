@@ -620,8 +620,6 @@ MSVCRT_FILE* _fdopen(int fd, const char *mode)
   MSVCRT_FILE* file = msvcrt_alloc_fp(fd);
 
   TRACE(":fd (%d) mode (%s) FILE* (%p)\n",fd,mode,file);
-  if (file)
-    MSVCRT_rewind(file);
 
   return file;
 }
