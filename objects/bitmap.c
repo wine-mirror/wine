@@ -178,12 +178,6 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 	   hbmpRet = CreateBitmap( 1, 1, 1, 1, NULL );
 	else
 	   hbmpRet = CreateBitmap( width, height, 1, dc->bitsPerPixel, NULL );
-
-        if (!BITMAP_SetOwnerDC( hbmpRet, dc ))
-        {
-            DeleteObject( hbmpRet );
-            hbmpRet = 0;
-        }
     }
     TRACE("\t\t%p\n", hbmpRet);
     GDI_ReleaseObj(hdc);
