@@ -884,6 +884,7 @@ IDirectSoundCaptureBufferImpl_Start(
         err = mmErr(waveInClose(ipDSC->hwi));
         if (err != DS_OK) {
             TRACE("waveInClose failed\n");
+            LeaveCriticalSection(&(This->lock));
             return DSERR_GENERIC;
         }
 
@@ -893,6 +894,7 @@ IDirectSoundCaptureBufferImpl_Start(
             CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
         if (err != DS_OK) {
             TRACE("waveInOpen failed\n");
+            LeaveCriticalSection(&(This->lock));
             return DSERR_GENERIC;
         }
 
