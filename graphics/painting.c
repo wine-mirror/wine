@@ -1157,3 +1157,17 @@ FIXME(gdi,"stub\n");
 SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
 return 0; /* failure*/
 }
+
+INT32       WINAPI StartPage32(HDC32 hdc)
+{
+FIXME(gdi,"stub\n");
+SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+return 0; /* failure*/
+}
+
+INT32       WINAPI EndPage32(HDC32 hdc)
+{
+FIXME(gdi,"stub\n");
+SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+return 0; /* failure*/
+}

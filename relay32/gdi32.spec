@@ -79,7 +79,7 @@ init	MAIN_GdiInit
  74 stub DrawEscape
  75 stdcall Ellipse(long long long long long) Ellipse32
  76 stdcall EndDoc(long) EndDoc32
- 77 stub EndPage
+ 77 stdcall EndPage(long) EndPage32
  78 stdcall EndPath(long) EndPath32
  79 stdcall EnumEnhMetaFile(long long ptr ptr ptr) EnumEnhMetaFile32
  80 stdcall EnumFontFamiliesA(long str ptr long) EnumFontFamilies32A
@@ -351,7 +351,7 @@ init	MAIN_GdiInit
 346 stdcall SetWorldTransform(long ptr) SetWorldTransform
 347 stdcall StartDocA(long ptr) StartDoc32A
 348 stub StartDocW
-349 stub StartPage
+349 stdcall StartPage(long) StartPage32 
 350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt32
 351 stdcall StretchDIBits(long long long long long long long long long ptr ptr long long) StretchDIBits32
 352 stub StrokeAndFillPath
