@@ -139,6 +139,16 @@ static const char main_key_PT[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Finnish keyboard layout */
+static const char main_key_FI[MAIN_LEN][4] =
+{
+ "","1!","2\"@","3#","4$","5%","6&","7/{","8([","9)]","0=}","+?\\","\'`",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","","\"^~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","","","'*",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>|"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -152,6 +162,7 @@ static struct {
  {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),     1252, 865, &main_key_DA},
  {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN),1252,863,&main_key_CF},
  {MAKELANGID(LANG_PORTUGUESE,SUBLANG_DEFAULT), 1252, 860, &main_key_PT},
+ {MAKELANGID(LANG_FINNISH,SUBLANG_DEFAULT),    1252, 850, &main_key_FI},
 
  {0} /* sentinel */
 };
