@@ -48,7 +48,7 @@ static	DWORD	ANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
     wma->wDevID = modp->wDeviceID;
     mciSetDriverData(wma->wDevID, (DWORD)wma);
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
-    modp->wType = MCI_DEVTYPE_SEQUENCER;
+    modp->wType = MCI_DEVTYPE_DIGITAL_VIDEO;
     return modp->wDeviceID;
 }
 
