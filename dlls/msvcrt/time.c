@@ -124,7 +124,7 @@ struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
  
   tzid = GetTimeZoneInformation(&tzinfo);
 
-  if (tzid == TIME_ZONE_ID_UNKNOWN) {
+  if (tzid == TIME_ZONE_ID_UNKNOWN || tzid == TIME_ZONE_ID_INVALID) {
     tm.tm_isdst = -1;
   } else {
     tm.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
@@ -234,7 +234,9 @@ void _ftime(struct MSVCRT__timeb *buf)
 
   buf->time = time / TICKSPERSEC - SECS_1601_TO_1970;
   buf->millitm = (time % TICKSPERSEC) / TICKSPERMSEC;
-  buf->timezone = tzinfo.Bias;
+  buf->timezone = tzinfo.Bias +
+      ( tzid == TIME_ZONE_ID_STANDARD ? tzinfo.StandardBias :
+      ( tzid == TIME_ZONE_ID_DAYLIGHT ? tzinfo.DaylightBias : 0 ));
   buf->dstflag = (tzid == TIME_ZONE_ID_DAYLIGHT?1:0);
 }
 
