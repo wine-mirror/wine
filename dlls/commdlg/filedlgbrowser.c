@@ -722,6 +722,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDlgBrowse
 	if (ulAttr & (SFGAO_FOLDER | SFGAO_HASSUBFOLDER) )
 	{
           hRes = IShellBrowser_BrowseObject((IShellBrowser *)This,pidl,SBSP_RELATIVE);
+          SendCustomDlgNotificationMessage(This->hwndOwner, CDN_FOLDERCHANGE);
 	}
         else
 	{
