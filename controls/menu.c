@@ -780,6 +780,13 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
     if (lpitem->fType & MF_OWNERDRAW)
     {
+        /*
+        ** Experimentation under Windows reveals that an owner-drawn
+        ** menu is expected to return the size of the content part of
+        ** the menu item, not including the checkmark nor the submenu
+        ** arrow.  Windows adds those values itself and returns the
+        ** enlarged rectangle on subsequent WM_DRAWITEM messages.
+        */
         MEASUREITEMSTRUCT mis;
         mis.CtlType    = ODT_MENU;
         mis.CtlID      = 0;
@@ -792,7 +799,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         lpitem->rect.right  += mis.itemWidth;
         TRACE("id=%04x size=%dx%d\n",
                      lpitem->wID, mis.itemWidth, mis.itemHeight);
-        return;
+        /* Fall through to get check/arrow width calculation. */
     } 
 
     if (lpitem->fType & MF_SEPARATOR)
@@ -807,6 +814,9 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	if (lpitem->fType & MF_POPUP)
 	    lpitem->rect.right += arrow_bitmap_width;
     }
+
+    if (lpitem->fType & MF_OWNERDRAW)
+        return;
 
     if (IS_BITMAP_ITEM(lpitem->fType))
     {
@@ -1044,6 +1054,15 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
     if (lpitem->fType & MF_OWNERDRAW)
     {
+        /*
+        ** Experimentation under Windows reveals that an owner-drawn
+        ** menu is given the rectangle which includes the space it requested
+        ** in its response to WM_MEASUREITEM _plus_ width for a checkmark
+        ** and a popup-menu arrow.  This is the value of lpitem->rect.
+        ** Windows will leave all drawing to the application except for
+        ** the popup-menu arrow.  Windows always draws that itself, after
+        ** the menu owner has finished drawing.
+        */
         DRAWITEMSTRUCT dis;
 
         dis.CtlType   = ODT_MENU;
@@ -1064,7 +1083,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	      dis.hDC, dis.rcItem.left, dis.rcItem.top, dis.rcItem.right,
 	      dis.rcItem.bottom);
         SendMessageA( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&dis );
-        return;
+        /* Fall through to draw popup-menu arrow */
     }
 
     TRACE("rect={%d,%d,%d,%d}\n", lpitem->rect.left, lpitem->rect.top,
@@ -1074,52 +1093,58 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
     rect = lpitem->rect;
 
-    if ((lpitem->fState & MF_HILITE) && !(IS_BITMAP_ITEM(lpitem->fType)))
-        if ((menuBar) &&  (TWEAK_WineLook==WIN98_LOOK))
-	    DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
-	else
-	    FillRect( hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT) );
-    else
-	FillRect( hdc, &rect, GetSysColorBrush(COLOR_MENU) );
+    if (!(lpitem->fType & MF_OWNERDRAW))
+    {
+        if ((lpitem->fState & MF_HILITE) && !(IS_BITMAP_ITEM(lpitem->fType)))
+            if ((menuBar) &&  (TWEAK_WineLook==WIN98_LOOK))
+	        DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
+	    else
+	        FillRect( hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT) );
+        else
+	    FillRect( hdc, &rect, GetSysColorBrush(COLOR_MENU) );
+    }
 
     SetBkMode( hdc, TRANSPARENT );
 
-    /* vertical separator */
-    if (!menuBar && (lpitem->fType & MF_MENUBARBREAK))
+    if (!(lpitem->fType & MF_OWNERDRAW))
     {
-	if (TWEAK_WineLook > WIN31_LOOK) 
-	{
-	    RECT rc = rect;
-	    rc.top = 3;
-	    rc.bottom = height - 3;
-	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
-	}
-	else 
-	{
-	    SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
-	    MoveTo16( hdc, rect.left, 0 );
-	    LineTo( hdc, rect.left, height );
-	}
-    }
+        /* vertical separator */
+        if (!menuBar && (lpitem->fType & MF_MENUBARBREAK))
+        {
+	    if (TWEAK_WineLook > WIN31_LOOK) 
+	    {
+	        RECT rc = rect;
+	        rc.top = 3;
+	        rc.bottom = height - 3;
+	        DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
+	    }
+	    else 
+	    {
+	        SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
+	        MoveTo16( hdc, rect.left, 0 );
+	        LineTo( hdc, rect.left, height );
+	    }
+        }
 
-    /* horizontal separator */
-    if (lpitem->fType & MF_SEPARATOR)
-    {
-	if (TWEAK_WineLook > WIN31_LOOK) 
-	{
-	    RECT rc = rect;
-	    rc.left++;
-	    rc.right--;
-	    rc.top += SEPARATOR_HEIGHT / 2;
-	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
-	}
-	else 
-	{
-	    SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
-	    MoveTo16( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
-	    LineTo( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
-	}
-	return;
+        /* horizontal separator */
+        if (lpitem->fType & MF_SEPARATOR)
+        {
+	    if (TWEAK_WineLook > WIN31_LOOK) 
+	    {
+	        RECT rc = rect;
+	        rc.left++;
+	        rc.right--;
+	        rc.top += SEPARATOR_HEIGHT / 2;
+	        DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
+	    }
+	    else 
+	    {
+	        SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
+	        MoveTo16( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
+	        LineTo( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
+	    }
+	    return;
+        }
     }
 
       /* Setup colors */
@@ -1152,51 +1177,60 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     {
 	INT	y = rect.top + rect.bottom;
 
-	  /* Draw the check mark
-	   *
-	   * FIXME:
-	   * Custom checkmark bitmaps are monochrome but not always 1bpp. 
-	   */
+        if (!(lpitem->fType & MF_OWNERDRAW))
+        {
+	      /* Draw the check mark
+	       *
+	       * FIXME:
+	       * Custom checkmark bitmaps are monochrome but not always 1bpp. 
+	       */
 
-	if (lpitem->fState & MF_CHECKED)
-	{
-	    HBITMAP bm = lpitem->hCheckBit ? lpitem->hCheckBit :
-			((lpitem->fType & MFT_RADIOCHECK) ? hStdRadioCheck : hStdCheck);
-	    HDC hdcMem = CreateCompatibleDC( hdc );
+	    if (lpitem->fState & MF_CHECKED)
+	    {
+	        HBITMAP bm = lpitem->hCheckBit ? lpitem->hCheckBit :
+			    ((lpitem->fType & MFT_RADIOCHECK) ? hStdRadioCheck : hStdCheck);
+	        HDC hdcMem = CreateCompatibleDC( hdc );
 
-	    SelectObject( hdcMem, bm );
-	    BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
-		      check_bitmap_width, check_bitmap_height,
-		      hdcMem, 0, 0, SRCCOPY );
-	    DeleteDC( hdcMem );
-	} 
-	else if (lpitem->hUnCheckBit) 
-	{
-	    HDC hdcMem = CreateCompatibleDC( hdc );
+	        SelectObject( hdcMem, bm );
+	        BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
+		          check_bitmap_width, check_bitmap_height,
+		          hdcMem, 0, 0, SRCCOPY );
+	        DeleteDC( hdcMem );
+	    } 
+	    else if (lpitem->hUnCheckBit) 
+	    {
+	        HDC hdcMem = CreateCompatibleDC( hdc );
 
-	    SelectObject( hdcMem, lpitem->hUnCheckBit );
-	    BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
-		      check_bitmap_width, check_bitmap_height,
-		      hdcMem, 0, 0, SRCCOPY );
-	    DeleteDC( hdcMem );
-	}
+	        SelectObject( hdcMem, lpitem->hUnCheckBit );
+	        BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
+		          check_bitmap_width, check_bitmap_height,
+		          hdcMem, 0, 0, SRCCOPY );
+	        DeleteDC( hdcMem );
+	    }
+        }
 	
 	  /* Draw the popup-menu arrow */
 	if (lpitem->fType & MF_POPUP)
 	{
 	    HDC hdcMem = CreateCompatibleDC( hdc );
+	    HBITMAP hOrigBitmap;
 
-	    SelectObject( hdcMem, hStdMnArrow );
+	    hOrigBitmap = SelectObject( hdcMem, hStdMnArrow );
 	    BitBlt( hdc, rect.right - arrow_bitmap_width - 1,
 		      (y - arrow_bitmap_height) / 2,
 		      arrow_bitmap_width, arrow_bitmap_height,
 		      hdcMem, 0, 0, SRCCOPY );
+            SelectObject( hdcMem, hOrigBitmap );
 	    DeleteDC( hdcMem );
 	}
 
 	rect.left += check_bitmap_width;
 	rect.right -= arrow_bitmap_width;
     }
+
+    /* Done for owner-drawn */
+    if (lpitem->fType & MF_OWNERDRAW)
+        return;
 
     /* Draw the item text or bitmap */
     if (IS_BITMAP_ITEM(lpitem->fType))
@@ -2119,9 +2153,9 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
     {
 	if (menu->wFlags & MF_POPUP)
 	{
-	    rect.left = wndPtr->rectWindow.left + item->rect.right-arrow_bitmap_width;
+	    rect.left = wndPtr->rectWindow.left + item->rect.right - GetSystemMetrics(SM_CXBORDER);
 	    rect.top = wndPtr->rectWindow.top + item->rect.top;
-	    rect.right = item->rect.left - item->rect.right + 2*arrow_bitmap_width;
+	    rect.right = item->rect.left - item->rect.right + GetSystemMetrics(SM_CXBORDER);
 	    rect.bottom = item->rect.top - item->rect.bottom;
 	}
 	else
