@@ -4000,7 +4000,26 @@ static DWORD LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCount
     dwViewRect = MAKELONG(wWidth, wHeight);
   }
   else if (uView == LVS_REPORT)
-    FIXME("uView == LVS_REPORT: not implemented\n");
+  {
+    RECT rcBox;
+
+    if (infoPtr->nItemCount > 0)
+    {
+      LISTVIEW_GetItemBox(infoPtr, 0, &rcBox);
+      wWidth = rcBox.right - rcBox.left;
+      wHeight = (rcBox.bottom - rcBox.top) * nItemCount;
+    }
+    else
+    {
+      /* use current height and width */
+      if (wHeight == 0xffff)
+          wHeight = infoPtr->rcList.bottom - infoPtr->rcList.top;
+      if (wWidth == 0xffff)
+          wWidth = infoPtr->rcList.right - infoPtr->rcList.left;
+    }
+
+    dwViewRect = MAKELONG(wWidth, wHeight);
+  }
   else if (uView == LVS_SMALLICON)
     FIXME("uView == LVS_SMALLICON: not implemented\n");
   else if (uView == LVS_ICON)
