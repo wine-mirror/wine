@@ -391,7 +391,10 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 
     	TRACE("%s, %d, %d\n", device, cbInQueue, cbOutQueue);
 
-		port = device[3] - '0';
+	if (strlen(device) < 4)
+	   return IE_BADID;
+
+	port = device[3] - '0';
 
 	if (port-- == 0)
 		ERR("BUG ! COM0 or LPT0 don't exist !\n");
@@ -1648,14 +1651,12 @@ BOOL WINAPI ClearCommError(INT handle,LPDWORD errors,LPCOMSTAT lpStat)
 
 	if(ioctl(fd, TIOCINQ, &lpStat->cbInQue))
 	    WARN("ioctl returned error\n");
+
+	TRACE("handle %d cbInQue = %ld cbOutQue = %ld\n",
+	      handle, lpStat->cbInQue, lpStat->cbOutQue);
     }
 
     close(fd);
-
-    TRACE("handle %d cbInQue = %ld cbOutQue = %ld\n",
-                handle,
-                lpStat->cbInQue,
-                lpStat->cbOutQue);
 
     if(errors)
         *errors = 0;
