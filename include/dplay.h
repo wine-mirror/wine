@@ -1,8 +1,10 @@
 #ifndef __WINE_DPLAY_H
 #define __WINE_DPLAY_H
 
-/* FIXME: GCC doesn't yet support annon structures so some of the structures defined here don't match the sdk exactly.
- * I've tried to come up with suitably terse names, but this file won't cut it for inclusion into a WineLib app.
+/* FIXME: GCC doesn't yet support annon structures so some of the structures 
+ * defined here don't match the sdk exactly. I've tried to come up with 
+ * suitably terse names, but this file won't cut it for inclusion into a 
+ * Winelib app.
  */
 
 #include "wine/obj_base.h"

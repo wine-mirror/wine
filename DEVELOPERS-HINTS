@@ -437,7 +437,7 @@ NAMING CONVENTIONS FOR NON-API FUNCTIONS AND TYPES
 ==================================================
 
 Functions and data which are internal to your code (or at least shouldn't be
-visible to any WineLib or Windows program) should be preceded by
+visible to any Winelib or Windows program) should be preceded by
 an identifier to the module:
 
 Examples:

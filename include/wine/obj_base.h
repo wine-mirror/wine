@@ -17,12 +17,12 @@
  * define the ICOM_USE_COM_INTERFACE_ATTRIBUTE macro below. This may also
  * require the addition of the -vtable-thunks option for g++.
  *
- * If you aren't interested in WineLib C++ compatability at all, leave both
+ * If you aren't interested in Winelib C++ compatibility at all, leave both
  * options off.
  *
  * The preferable method for using ICOM_USE_COM_INTERFACE_ATTRIBUTE macro
- * would be to define it only for your WineLib application. This allows you
- * to have both binary and WineLib compatibility for C and C++ at the same 
+ * would be to define it only for your Winelib application. This allows you
+ * to have both binary and Winelib compatibility for C and C++ at the same 
  * time :)
  */
 /* #define ICOM_MSVTABLE_COMPAT 1 */

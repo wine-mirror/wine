@@ -185,7 +185,7 @@ extern "C" {
 /* internal flags for GetDateFormat system */
 #define DATE_DATEVARSONLY      0x00000100  /* only date stuff: yMdg */
 #define TIME_TIMEVARSONLY      0x00000200  /* only time stuff: hHmst */
-/* use this in a WineLib program if you really want all types */
+/* use this in a Winelib program if you really want all types */
 #define LOCALE_TIMEDATEBOTH    0x00000300  /* full set */
 
 /* Tests that we currently implement */

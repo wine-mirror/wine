@@ -178,7 +178,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW);
 BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage);
 
 /*
- * Property sheet support (UNICODE-WineLib)
+ * Property sheet support (UNICODE-Winelib)
  */
 
 DECL_WINELIB_TYPE_AW(PROPSHEETPAGE) 
