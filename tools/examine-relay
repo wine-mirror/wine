@@ -23,10 +23,13 @@ open (IN, "<$srcfile") || die "Cannot open $srcfile for reading: $!\n";
 LINE:
 while (<IN>) {
 
-    if (/^([0-9a-f]+):Call ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\((.*\)) .*/) {
+
+    if (/^([0-9a-f]+):Call ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\((.*\)) .*/  ||
+        /^([0-9a-f]+):CALL ([A-Za-z0-9]+\.[A-Za-z0-9_]+: [A-Za-z0-9]+)\((.*\)) .*/) {
 	my $tid = $1;
 	my $func = $2;
 
+#	print "have call func=$func <$_>\n";
 	if (/ ret=(........)$/ ||
 	    / ret=(....:....) (ds=....)$/) {
 	    my $retaddr = $1;
@@ -49,13 +52,15 @@ while (<IN>) {
     }
 
     if (/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(........)$/ ||
-	/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(....:....) (ds=....)$/) {
+	/^([0-9a-f]+):Ret  ([A-Za-z0-9]+\.[A-Za-z0-9_]+)\(.*\) .* ret=(....:....) (ds=....)$/ ||
+        /^([0-9a-f]+):RET  ([A-Za-z0-9]+\.[A-Za-z0-9_]+: [A-Za-z0-9]+)\(.*\) .* ret=(........)$/) {
 	my $tid = $1;
 	my $func = $2;
 	my $retaddr = $3;
 	my $segreg = $4;
 	my ($topfunc,$topaddr,$topseg);
 
+#	print "have ret func=$func <$_>\n";
 	if (!defined($tid_callstack{$tid}))
 	{
 	    print "Err[$tid]: unknown tid\n";
