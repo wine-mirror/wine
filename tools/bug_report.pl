@@ -346,14 +346,13 @@ if ($debuglevel > 1) {
 }
 if ($debuglevel > 1) { 
 	$var15 = qq{
-	Enter any extra options you want to pass to WINE. Strongly recommended you
-	include -managed:
+	Enter any extra options you want to pass to WINE.
 	};
 	print do_var($var15);
 	$extraops=<STDIN>;
 	chomp $extraops;
 } elsif ($debuglevel =~ 1) {
-	$extraops="-managed";
+	$extraops=" ";
 }
 
 print "\nEnter the name of your distribution (Example: Redhat 6.1): ";
