@@ -70,14 +70,6 @@ WORD DOSVM_retval = 0;
 # include <sys/mman.h>
 #endif
 
-#define IF_CLR(ctx)     ((ctx)->EFlags &= ~VIF_MASK)
-#define IF_SET(ctx)     ((ctx)->EFlags |= VIF_MASK)
-#define IF_ENABLED(ctx) ((ctx)->EFlags & VIF_MASK)
-#define SET_PEND(ctx)   ((ctx)->EFlags |= VIP_MASK)
-#define CLR_PEND(ctx)   ((ctx)->EFlags &= ~VIP_MASK)
-#define IS_PEND(ctx)    ((ctx)->EFlags & VIP_MASK)
-
-#undef TRY_PICRETURN
 
 typedef struct _DOSEVENT {
   int irq,priority;
@@ -88,7 +80,6 @@ typedef struct _DOSEVENT {
 
 static CRITICAL_SECTION qcrit = CRITICAL_SECTION_INIT("DOSVM");
 static struct _DOSEVENT *pending_event, *current_event;
-static int sig_sent;
 static HANDLE event_notifier;
 
 
@@ -113,43 +104,114 @@ static BOOL DOSVM_HasPendingEvents( void )
 }
 
 
-static void DOSVM_SendQueuedEvent(CONTEXT86 *context)
+/***********************************************************************
+ *              DOSVM_SendOneEvent
+ *
+ * Process single pending event.
+ *
+ * This function should be called with queue critical section locked. 
+ * The function temporarily releases the critical section if it is 
+ * possible that internal interrupt handler or user procedure will 
+ * be called. This is because we may otherwise get a deadlock if
+ * another thread is waiting for the same critical section.
+ */
+static void DOSVM_SendOneEvent( CONTEXT86 *context )
 {
-  LPDOSEVENT event = pending_event;
+    LPDOSEVENT event = pending_event;
 
-  if (DOSVM_HasPendingEvents()) {
-    /* remove from "pending" list */
+    /* Remove from pending events list. */
     pending_event = event->next;
-    /* process event */
-    if (event->irq>=0) {
-      /* it's an IRQ, move it to "current" list */
-      event->next = current_event;
-      current_event = event;
-      TRACE("dispatching IRQ %d\n",event->irq);
-      /* note that if DOSVM_SimulateInt calls an internal interrupt directly,
-       * current_event might be cleared (and event freed) in this very call! */
-      DOSVM_HardwareInterruptRM( context, (event->irq < 8) ? 
-                                 (event->irq + 8) : (event->irq - 8 + 0x70) );
-    } else {
-      /* callback event */
-      TRACE("dispatching callback event\n");
-      (*event->relay)(context,event->data);
-      free(event);
+
+    /* Process active event. */
+    if (event->irq >= 0) 
+    {
+        BYTE intnum = (event->irq < 8) ?
+            (event->irq + 8) : (event->irq - 8 + 0x70);
+            
+        /* Event is an IRQ, move it to current events list. */
+        event->next = current_event;
+        current_event = event;
+
+        TRACE( "Dispatching IRQ %d.\n", event->irq );
+
+        if (ISV86(context))
+        {
+            /* 
+             * Note that if DOSVM_HardwareInterruptRM calls an internal 
+             * interrupt directly, current_event might be cleared 
+             * (and event freed) in this call.
+             */
+            LeaveCriticalSection(&qcrit);
+            DOSVM_HardwareInterruptRM( context, intnum );
+            EnterCriticalSection(&qcrit);
+        }
+        else
+        {
+            /*
+             * This routine only modifies current context so it is
+             * not necessary to release critical section.
+             */
+            DOSVM_HardwareInterruptPM( context, intnum );
+        }
+    } 
+    else 
+    {
+        /* Callback event. */
+        TRACE( "Dispatching callback event.\n" );
+
+        LeaveCriticalSection(&qcrit);
+        (*event->relay)( context, event->data );
+        EnterCriticalSection(&qcrit);
+
+        free(event);
     }
-  }
-  if (!DOSVM_HasPendingEvents()) {
-    TRACE("clearing Pending flag\n");
-    CLR_PEND(context);
-  }
 }
 
-static void DOSVM_SendQueuedEvents(CONTEXT86 *context)
+
+/***********************************************************************
+ *              DOSVM_SendQueuedEvents
+ *
+ * As long as interrupts are enabled, process all pending events 
+ * that are not blocked by currently active event.
+ */
+static void DOSVM_SendQueuedEvents( CONTEXT86 *context )
 {
-  /* we will send all queued events as long as interrupts are enabled,
-   * but IRQ events will disable interrupts again */
-  while (IS_PEND(context) && IF_ENABLED(context))
-    DOSVM_SendQueuedEvent(context);
+    EnterCriticalSection(&qcrit);
+
+    TRACE( "Called in %s mode %s events pending (time=%ld)\n",
+           ISV86(context) ? "real" : "protected",
+           DOSVM_HasPendingEvents() ? "with" : "without",
+           GetTickCount() );
+    TRACE( "cs:ip=%04lx:%08lx, ss:sp=%04lx:%08lx\n", 
+           context->SegCs, context->Eip, context->SegSs, context->Esp);
+
+    while (DOSVM_HasPendingEvents() && 
+           (ISV86(context) ? 
+            (context->EFlags & VIF_MASK) : NtCurrentTeb()->dpmi_vif))
+    {
+        DOSVM_SendOneEvent(context);
+
+        /*
+         * Event handling may have turned pending events flag on.
+         * We disable it here because this prevents some
+         * unnecessary calls to this function.
+         */
+        NtCurrentTeb()->vm86_pending = 0;
+    }
+
+    if (DOSVM_HasPendingEvents())
+    {
+        /*
+         * Interrupts disabled, but there are still
+         * pending events, make sure that pending flag is turned on.
+         */
+        TRACE( "Another event is pending, setting VIP flag.\n" );
+        NtCurrentTeb()->vm86_pending |= VIP_MASK;
+    }
+
+    LeaveCriticalSection(&qcrit);
 }
+
 
 /***********************************************************************
  *		QueueEvent (WINEDOS.@)
@@ -157,6 +219,7 @@ static void DOSVM_SendQueuedEvents(CONTEXT86 *context)
 void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   LPDOSEVENT event, cur, prev;
+  BOOL       old_pending;
 
   if (MZ_Current()) {
     event = malloc(sizeof(DOSEVENT));
@@ -168,6 +231,8 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     event->relay = relay; event->data = data;
 
     EnterCriticalSection(&qcrit);
+    old_pending = DOSVM_HasPendingEvents();
+
     /* insert event into linked list, in order *after*
      * all earlier events of higher or equal priority */
     cur = pending_event; prev = NULL;
@@ -179,17 +244,17 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     if (prev) prev->next = event;
     else pending_event = event;
 
-    /* alert the vm86 about the new event */
-    if (!sig_sent) {
+    if (!old_pending && DOSVM_HasPendingEvents()) {
       TRACE("new event queued, signalling (time=%ld)\n", GetTickCount());
+      
+      /* Alert VM86 thread about the new event. */
       kill(dosvm_pid,SIGUSR2);
-      sig_sent++;
+
+      /* Wake up DOSVM_Wait so that it can serve pending events. */
+      SetEvent(event_notifier);
     } else {
       TRACE("new event queued (time=%ld)\n", GetTickCount());
     }
-
-    /* Wake up DOSVM_Wait so that it can serve pending events. */
-    SetEvent(event_notifier);
 
     LeaveCriticalSection(&qcrit);
   } else {
@@ -289,9 +354,6 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
 {
     if (DOSVM_HasPendingEvents())
     {
-        /*
-         * FIXME: Critical section locking is broken.
-         */
         CONTEXT86 context = *waitctx;
         
         /*
@@ -312,8 +374,7 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
             context.Esp = 0;
         }
 
-        IF_SET(&context);
-        SET_PEND(&context);
+        context.EFlags |= VIF_MASK;
         context.SegCs = 0;
         context.Eip = 0;
 
@@ -459,18 +520,12 @@ static WINE_EXCEPTION_FILTER(exception_handler)
 
   case EXCEPTION_VM86_STI:
   /* case EXCEPTION_VM86_PICRETURN: */
-    IF_SET(context);
-    EnterCriticalSection(&qcrit);
-    sig_sent++;
-    TRACE_(int)("context=%p\n", context);
-    TRACE_(int)("cs:ip=%04lx:%04lx, ss:sp=%04lx:%04lx\n", context->SegCs, context->Eip, context->SegSs, context->Esp);
-    if (!ISV86(context)) {
-      ERR_(int)("@#&*%%, winedos signal handling is *still* messed up\n");
-    }
-    TRACE_(int)("DOS task enabled interrupts %s events pending, sending events (time=%ld)\n", IS_PEND(context)?"with":"without", GetTickCount());
+    if (!ISV86(context))
+      ERR( "Protected mode STI caught by real mode handler!\n" );
+
+    context->EFlags |= VIF_MASK;
+    context->EFlags &= ~VIP_MASK;
     DOSVM_SendQueuedEvents(context);
-    sig_sent=0;
-    LeaveCriticalSection(&qcrit);
     return EXCEPTION_CONTINUE_EXECUTION;
   }
   return EXCEPTION_CONTINUE_SEARCH;

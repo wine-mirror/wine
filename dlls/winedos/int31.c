@@ -1062,7 +1062,6 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
         break;
 
     case 0x0300:  /* Simulate real mode interrupt */
-
         TRACE( "Simulate real mode interrupt %d.\n", BL_reg(context));
         DOSVM_CallRMInt( context );
         break;
@@ -1250,6 +1249,26 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     case 0x0800:  /* Physical address mapping */
         FIXME( "physical address mapping (0x%08lx) - unimplemented\n", 
                MAKELONG(CX_reg(context),BX_reg(context)) );
+        break;
+
+    case 0x0900:  /* Get and Disable Virtual Interrupt State */
+        TRACE( "Get and Disable Virtual Interrupt State: %ld\n", 
+               NtCurrentTeb()->dpmi_vif );
+        SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
+        NtCurrentTeb()->dpmi_vif = 0;
+        break;
+
+    case 0x0901:  /* Get and Enable Virtual Interrupt State */
+        TRACE( "Get and Enable Virtual Interrupt State: %ld\n", 
+               NtCurrentTeb()->dpmi_vif );
+        SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
+        NtCurrentTeb()->dpmi_vif = 1;
+        break;
+
+    case 0x0902:  /* Get Virtual Interrupt State */
+        TRACE( "Get Virtual Interrupt State: %ld\n", 
+               NtCurrentTeb()->dpmi_vif );
+        SET_AL( context, NtCurrentTeb()->dpmi_vif ? 1 : 0 );
         break;
 
     case 0x0e00:  /* Get Coprocessor Status (1.0) */
