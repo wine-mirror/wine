@@ -455,7 +455,7 @@ STATUSBAR_GetTextLength (STATUS_INFO *infoPtr, INT nPart)
     else
 	part = &infoPtr->parts[nPart];
 
-    if (part->text)
+    if ((~part->style & SBT_OWNERDRAW) && part->text)
 	result = strlenW(part->text);
     else
 	result = 0;
