@@ -4,10 +4,13 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mscms.dll
 IMPORTS   = kernel32
-EXTRALIBS = @LCMSLIBS@
 
 C_SRCS = \
-	mscms_main.c
+	handle.c \
+	mscms_main.c \
+	profile.c
+
+SUBDIRS = tests
 
 @MAKE_DLL_RULES@
 

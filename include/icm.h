@@ -98,13 +98,29 @@ typedef struct tagPROFILE {
     DWORD cbDataSize;
 } PROFILE, *PPROFILE, *LPPROFILE;
 
+BOOL       WINAPI GetColorDirectoryA(PCSTR,PSTR,PDWORD);
+BOOL       WINAPI GetColorDirectoryW(PCWSTR,PWSTR,PDWORD);
+#define    GetColorDirectory WINELIB_NAME_AW(GetColorDirectory)
+
+BOOL       WINAPI InstallColorProfileA(PCSTR,PCSTR);
+BOOL       WINAPI InstallColorProfileW(PCWSTR,PCWSTR);
+#define    InstallColorProfile WINELIB_NAME_AW(InstallColorProfile)
+
+BOOL       WINAPI UninstallColorProfileA(PCSTR,PCSTR,BOOL);
+BOOL       WINAPI UninstallColorProfileW(PCWSTR,PCWSTR,BOOL);
+#define    UninstallColorProfile WINELIB_NAME_AW(UninstallColorProfile)
+
 HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
 HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);
 #define    OpenColorProfile WINELIB_NAME_AW(OpenColorProfile)
+
 BOOL       WINAPI CloseColorProfile(HPROFILE);
 
 #define PROFILE_FILENAME    1
 #define PROFILE_MEMBUFFER   2
+
+#define PROFILE_READ        1
+#define PROFILE_READWRITE   2
 
 #ifdef __cplusplus
 }

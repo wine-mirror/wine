@@ -18,8 +18,8 @@
 @ stub EnumColorProfilesW
 @ stub GenerateCopyFilePaths
 @ stub GetCMMInfo
-@ stub GetColorDirectoryA
-@ stub GetColorDirectoryW
+@ stdcall GetColorDirectoryA(ptr ptr long)
+@ stdcall GetColorDirectoryW(ptr ptr long)
 @ stub GetColorProfileElement
 @ stub GetColorProfileElementTag
 @ stub GetColorProfileFromHandle
@@ -31,8 +31,8 @@
 @ stub GetPS2ColorSpaceArray
 @ stub GetStandardColorSpaceProfileA
 @ stub GetStandardColorSpaceProfileW
-@ stub InstallColorProfileA
-@ stub InstallColorProfileW
+@ stdcall InstallColorProfileA(ptr ptr)
+@ stdcall InstallColorProfileW(ptr ptr)
 @ stub InternalGetDeviceConfig
 @ stub InternalGetPS2CSAFromLCS
 @ stub InternalGetPS2ColorRenderingDictionary
@@ -55,7 +55,7 @@
 @ stub SpoolerCopyFileEvent
 @ stub TranslateBitmapBits
 @ stub TranslateColors
-@ stub UninstallColorProfileA
-@ stub UninstallColorProfileW
+@ stdcall UninstallColorProfileA(ptr ptr long)
+@ stdcall UninstallColorProfileW(ptr ptr long)
 @ stub UnregisterCMMA
 @ stub UnregisterCMMW

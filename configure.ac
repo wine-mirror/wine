@@ -631,15 +631,6 @@ AC_CHECK_HEADERS(libaudioio.h,
                   [AUDIOIOLIBS="-laudioio"
                    AC_DEFINE(HAVE_LIBAUDIOIO, 1, [Define if you have libaudioIO])])])
 
-dnl **** Check for lcms ****
-
-AC_CHECK_HEADERS(lcms.h,
-    [AC_CHECK_LIB(lcms,cmsOpenProfileFromFile,
-        [AC_DEFINE(HAVE_LCMS,1,[Define if you have lcms libs and headers])
-         AC_SUBST(LCMSLIBS,"-llcms")
-    ])
-])
-
 dnl **** Check for capi4linux ****
 
 AC_CHECK_HEADERS(capi20.h,[
@@ -1047,6 +1038,7 @@ then
   WINE_GET_SONAME(jpeg,jpeg_start_decompress)
   WINE_GET_SONAME(ungif,DGifOpen)
   WINE_GET_SONAME(gif,DGifOpen)
+  WINE_GET_SONAME(lcms,cmsOpenProfileFromFile)
 fi
 
 
@@ -1131,6 +1123,7 @@ AC_CHECK_HEADERS(\
 	io.h \
 	jack/jack.h \
 	jpeglib.h \
+	lcms.h \
 	libio.h \
 	libutil.h \
 	link.h \
@@ -1619,6 +1612,7 @@ dlls/msacm/msg711/Makefile
 dlls/msacm/winemp3/Makefile
 dlls/msacm/tests/Makefile
 dlls/mscms/Makefile
+dlls/mscms/tests/Makefile
 dlls/msdmo/Makefile
 dlls/mshtml/Makefile
 dlls/msi/Makefile

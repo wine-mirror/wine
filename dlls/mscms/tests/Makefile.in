@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = mscms.dll
+IMPORTS   = mscms kernel32
+
+CTESTS = \
+	profile.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
