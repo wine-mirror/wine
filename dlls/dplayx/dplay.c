@@ -2055,16 +2055,6 @@ HRESULT WINAPI DirectPlayCreate
     return CLASS_E_NOAGGREGATION;
   }
 
-  /* One possibility is that they want an exact dplay interface */  
-  if( IsEqualGUID( &IID_IDirectPlay2A, lpGUID ) )
-  {
-    return directPlay_QueryInterface( lpGUID, (LPVOID*)lplpDP );
-  }
-  else if( IsEqualGUID( &IID_IDirectPlay2, lpGUID ) )
-  {
-    return directPlay_QueryInterface( lpGUID, (LPVOID*)lplpDP );
-  }
-
 
   /* Create an IDirectPlay object. We don't support that so we'll cheat and
      give them an IDirectPlay2A object and hope that doesn't cause problems */
@@ -2073,22 +2063,28 @@ HRESULT WINAPI DirectPlayCreate
     return DPERR_UNAVAILABLE;
   } 
 
+  if( IsEqualGUID( &GUID_NULL, lpGUID ) )
+  {
+    /* The GUID_NULL means don't bind a service provider. Just return the
+       interface */ 
+    return DP_OK;
+  }
+
 
   /* Bind the desired service provider */
-  if( IsEqualGUID( lpGUID, &DPSPGUID_MODEM ) )
+  if( ( IsEqualGUID( lpGUID, &DPSPGUID_MODEM ) ) ||
+      ( IsEqualGUID( lpGUID, &DPSPGUID_SERIAL ) ) ||
+      ( IsEqualGUID( lpGUID, &DPSPGUID_TCPIP ) ) ||
+      ( IsEqualGUID( lpGUID, &DPSPGUID_IPX ) ) 
+    )
   {
-     FIXME( "Modem binding not supported yet\n" );
+     FIXME( "Service provider binding not supported yet\n" );
      IDirectPlayX_Release( *lplpDP );
      *lplpDP = NULL;
      return DPERR_INVALIDPARAMS; 
   }
 
-  /* The GUID_NULL means don't bind a service provider. Just return the
-     interface. However, if it isn't we were given a bogus GUID, return an ERROR */
-  if( !IsEqualGUID( lpGUID, &GUID_NULL ) )
-  {
-    WARN( "unknown GUID %s\n", &lpGUIDString[0] );
-  }
+  ERR( "unknown Service Provider %s\n", &lpGUIDString[0] );
 
   IDirectPlayX_Release( *lplpDP );
   *lplpDP = NULL;
