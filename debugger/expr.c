@@ -9,15 +9,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
-#include <sys/types.h>
-#include <neexe.h>
+#include <assert.h>
 #include "wine/winbase16.h"
-#include "module.h"
 #include "task.h"
-#include "selectors.h"
 #include "debugger.h"
-
 #include "expr.h"
 
 #include <stdarg.h>
@@ -131,6 +126,8 @@ DEBUG_GetFreeExpr()
   rtn =  (struct expr *) &expr_list[next_expr_free];
 
   next_expr_free += sizeof(struct expr);
+  assert(next_expr_free < sizeof(expr_list));
+
   return rtn;
 }
 
@@ -388,7 +385,7 @@ DEBUG_EvalExpr(struct expr * exp)
 	{
 	  fprintf(stderr, "Failed to find symbol\n");
 	  break;
-	};
+	}
 
       fptr = (int (*)()) rtn.off;
       switch(exp->un.call.nargs)
@@ -606,7 +603,7 @@ DEBUG_EvalExpr(struct expr * exp)
 	{
 	  rtn.type = DEBUG_TypeInt;
 	}
-      switch(exp->un.binop.binop_type)
+      switch(exp->un.unop.unop_type)
 	{
 	case EXP_OP_NEG:
 	  rtn.seg = 0;
@@ -775,7 +772,7 @@ DEBUG_DisplayExpr(struct expr * exp)
       fprintf(stderr, " )");
       break;
     case EXPR_TYPE_UNOP:
-      switch(exp->un.binop.binop_type)
+      switch(exp->un.unop.unop_type)
 	{
 	case EXP_OP_NEG:
  	  fprintf(stderr, "-");
