@@ -80,7 +80,6 @@ static const int fldrWidth = 20;
 
 #define OFN_PROP "FILEDLG_OFN"
 
-static const char defaultfilter[]=" \0\0";
 static char defaultopen[]="Open File";
 static char defaultsave[]="Save as";
 
@@ -594,6 +593,10 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   *tmpstr = 0;
   DlgDirListComboBoxW(hWnd, tmpstr, cmb2, 0, DDL_DRIVES | DDL_EXCLUSIVE);
   /* read initial directory */
+  /* FIXME: Note that this is now very version-specific (See MSDN description of
+   * the OPENFILENAME structure).  For example under 2000/XP any path in the
+   * lpstrFile overrides the lpstrInitialDir, but not under 95/98/ME
+   */
   if (ofn->lpstrInitialDir != NULL) 
     {
       int len;
@@ -619,7 +622,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
       for(i = 0, n = -1; i < 26; i++)
       {
           str[0] = 'a' + i;
-          if (GetDriveTypeA(str) <= DRIVE_NO_ROOT_DIR) n++;
+          if (GetDriveTypeA(str) > DRIVE_NO_ROOT_DIR) n++;
           if (toupper(str[0]) == toupper(dir[0])) break;
       }
   }
@@ -1052,7 +1055,7 @@ void FILEDLG_MapDrawItemStruct(LPDRAWITEMSTRUCT16 lpdis16, LPDRAWITEMSTRUCT lpdi
  *                              FILEDLG_MapStringPairsToW       [internal]
  *      map string pairs to Unicode
  */
-LPWSTR FILEDLG_MapStringPairsToW(LPCSTR strA, UINT size)
+static LPWSTR FILEDLG_MapStringPairsToW(LPCSTR strA, UINT size)
 {
     LPCSTR s;
     LPWSTR x;
@@ -1062,7 +1065,7 @@ LPWSTR FILEDLG_MapStringPairsToW(LPCSTR strA, UINT size)
     while (*s)
         s = s+strlen(s)+1;
     s++;
-    n = s - strA;
+    n = s + 1 - strA; /* Don't forget the other \0 */
     if (n < size) n = size;
 
     len = MultiByteToWideChar( CP_ACP, 0, strA, n, NULL, 0 );
@@ -1101,8 +1104,6 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
     ofnW->hInstance = ofnA->hInstance;
     if (ofnA->lpstrFilter)
         ofnW->lpstrFilter = FILEDLG_MapStringPairsToW(ofnA->lpstrFilter, 0);
-    else
-        ofnW->lpstrFilter = FILEDLG_MapStringPairsToW(defaultfilter, 0);
 
     if ((ofnA->lpstrCustomFilter) && (*(ofnA->lpstrCustomFilter)))
         ofnW->lpstrCustomFilter = FILEDLG_MapStringPairsToW(ofnA->lpstrCustomFilter, ofnA->nMaxCustFilter);
