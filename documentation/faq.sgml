@@ -1411,24 +1411,15 @@ export PATH=$PATH:/path/to/wine/binary
       </question>
       <answer>
         <para>
-          All you have to do is to type:
+          It depends on how you installed. If you used an RPM, the right command is this:
+         <command>rpm -e wine (as root)</command>
         </para>
-        <screen>
-rm -fR \[/path/\]Wine*
-        </screen>
-        <para>
-          Make sure that you specify the exact path when using the powerful
-          <command>rm -fR</command> command. If you are afraid that you might
-          delete something important, or might otherwise delete other files 
-          within your file system, <command>cd</command> into each Wine 
-          sub directory singly and delete the files found there manually, 
-          one file or directory at a time.
-        </para>
-        <para>
-        Neither the Wine developers and programmers, nor the Wine FAQ 
-        author/maintainer, can be held responsible for your deleting any
-        files in your own file system.
-        </para>
+       <para>
+         If you installed from source (the .tar.gz file), the right
+         way to do it is to change to the root of the source tree (the directory with the configure script,
+         readme etc) then run as root:
+         <command>make uninstall</command>
+       </para>
       </answer>
       </qandaentry>
     </qandadiv>
