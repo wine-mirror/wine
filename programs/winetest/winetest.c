@@ -152,7 +152,7 @@ unsigned long perl_call_wine
 
 
 /* perl extension initialisation */
-static void xs_init(void)
+static void xs_init(pTHX)
 {
     extern void boot_wine(CV *cv);
     newXS("wine::bootstrap", boot_wine,__FILE__);
