@@ -507,9 +507,6 @@ static BOOL process_init( char *argv[] )
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");
 
-    /* store the program name */
-    argv0 = argv[0];
-
     /* Fill the initial process structure */
     current_process.threads           = 1;
     current_process.running_threads   = 1;
@@ -967,14 +964,14 @@ static void exec_wine_binary( char **argv, char **envp )
     execve( argv[0], argv, envp );
 
     /* now try the path of argv0 of the current binary */
-    if (!(argv[0] = malloc( strlen(full_argv0) + 6 ))) return;
-    if ((ptr = strrchr( full_argv0, '/' )))
+    if ((path = wine_get_argv0_path()))
     {
-        memcpy( argv[0], full_argv0, ptr - full_argv0 );
-        strcpy( argv[0] + (ptr - full_argv0), "/wine" );
+        if (!(argv[0] = malloc( strlen(path) + sizeof("wine") ))) return;
+        strcpy( argv[0], path );
+        strcat( argv[0], "wine" );
         execve( argv[0], argv, envp );
+        free( argv[0] );
     }
-    free( argv[0] );
 
     /* now search in the Unix path */
     if ((path = getenv( "PATH" )))

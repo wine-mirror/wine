@@ -23,9 +23,6 @@
 
 #include <windef.h>
 
-extern const char *argv0;
-extern const char *full_argv0;
-
 extern void DECLSPEC_NORETURN OPTIONS_Usage(void);
 extern void OPTIONS_ParseOptions( char *argv[] );
 

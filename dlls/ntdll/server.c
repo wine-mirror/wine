@@ -55,7 +55,6 @@
 #include "wine/library.h"
 #include "wine/server.h"
 #include "winerror.h"
-#include "options.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS
@@ -450,6 +449,7 @@ static void start_server( const char *oldcwd )
 {
     static int started;  /* we only try once */
     char *path, *p;
+    const char *argv0_path;
     if (!started)
     {
         int status;
@@ -476,15 +476,13 @@ static void start_server( const char *oldcwd )
             execl( BINDIR "/wineserver", "wineserver", NULL );
 
             /* now try the dir we were launched from */
-            if (full_argv0)
+            if ((argv0_path = wine_get_argv0_path()))
             {
-                if (!(path = malloc( strlen(full_argv0) + 20 )))
+                if (!(path = malloc( strlen(argv0_path) + sizeof("wineserver") )))
                     fatal_error( "out of memory\n" );
-                if ((p = strrchr( strcpy( path, full_argv0 ), '/' )))
-                {
-                    strcpy( p, "/wineserver" );
-                    execl( path, path, NULL );
-                }
+                strcpy( path, argv0_path );
+                strcat( path, "wineserver" );
+                execl( path, path, NULL );
                 free(path);
             }
 
@@ -620,20 +618,6 @@ static void server_init(void)
         if (errno == ERANGE) continue;
         oldcwd = NULL;
         break;
-    }
-
-    /* if argv[0] is a relative path, make it absolute */
-    full_argv0 = argv0;
-    if (oldcwd && argv0[0] != '/' && strchr( argv0, '/' ))
-    {
-        char *new_argv0 = malloc( strlen(oldcwd) + strlen(argv0) + 2 );
-        if (new_argv0)
-        {
-            strcpy( new_argv0, oldcwd );
-            strcat( new_argv0, "/" );
-            strcat( new_argv0, argv0 );
-            full_argv0 = new_argv0;
-        }
     }
 
     /* connect to the server */

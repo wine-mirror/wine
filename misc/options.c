@@ -43,9 +43,6 @@ struct option_descr
     const char *usage;
 };
 
-const char *argv0;       /* the original argv[0] */
-const char *full_argv0;  /* the full path of argv[0] (if known) */
-
 static char *inherit_str;  /* options to pass to child processes */
 
 static void DECLSPEC_NORETURN out_of_memory(void);
@@ -89,7 +86,7 @@ static void do_debugmsg( const char *arg )
 {
     if (wine_dbg_parse_options( arg ))
     {
-        MESSAGE("%s: Syntax: --debugmsg [class]+xxx,...  or -debugmsg [class]-xxx,...\n", argv0);
+        MESSAGE("wine: Syntax: --debugmsg [class]+xxx,...  or -debugmsg [class]-xxx,...\n");
         MESSAGE("Example: --debugmsg +all,warn-heap\n"
                 "  turn on all messages except warning heap messages\n");
         MESSAGE("Available message classes: err, warn, fixme, trace\n\n");
@@ -216,7 +213,7 @@ void OPTIONS_Usage(void)
 {
     const struct option_descr *opt;
     MESSAGE( "%s\n\n", PACKAGE_STRING );
-    MESSAGE( "Usage: %s [options] [--] program_name [arguments]\n", argv0 );
+    MESSAGE( "Usage: wine [options] [--] program_name [arguments]\n" );
     MESSAGE("The -- has to be used if you specify arguments (of the program)\n\n");
     MESSAGE( "Options:\n" );
     for (opt = option_table; opt->longname; opt++) MESSAGE( "   %s\n", opt->usage );
