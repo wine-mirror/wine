@@ -305,7 +305,8 @@ extern  WINMM_MapType   (*pFnMciUnMapMsg32ATo16)(WORD,WORD,DWORD,DWORD);
 extern  LRESULT         (*pFnCallMMDrvFunc16)(DWORD /* in fact FARPROC16 */,WORD,WORD,LONG,LONG,LONG);
 extern  unsigned        (*pFnLoadMMDrvFunc16)(LPCSTR,LPWINE_DRIVER, LPWINE_MM_DRIVER);
 extern  LRESULT         (*pFnMmioCallback16)(DWORD,LPMMIOINFO,UINT,LPARAM,LPARAM);
-extern  void            (*pFnYield16)(void);
+extern  void            (WINAPI *pFnReleaseThunkLock)(DWORD*);
+extern  void            (WINAPI *pFnRestoreThunkLock)(DWORD);
 /* GetDriverFlags() returned bits is not documented (nor the call itself)
  * Here are Wine only definitions of the bits
  */

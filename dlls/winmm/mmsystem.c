@@ -53,13 +53,6 @@ static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
 static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
 static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
-static void MMSYSTEM_Yield(void)
-{
-    DWORD count;
-    ReleaseThunkLock(&count);
-    RestoreThunkLock(count);
-}
-
 /* ###################################################
  * #                  LIBRARY                        #
  * ###################################################
@@ -88,21 +81,24 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 	}
 	WINMM_IData->hWinMM16Instance = hinstDLL;
         /* hook in our 16 bit function pointers */
-        pFnGetMMThread16  = WINMM_GetmmThread;
-        pFnOpenDriver16   = DRIVER_OpenDriver16;
-        pFnCloseDriver16  = DRIVER_CloseDriver16;
-        pFnSendMessage16  = DRIVER_SendMessage16;
-        pFnMmioCallback16 = MMIO_Callback16;
-        pFnYield16        = MMSYSTEM_Yield;
+        pFnGetMMThread16    = WINMM_GetmmThread;
+        pFnOpenDriver16     = DRIVER_OpenDriver16;
+        pFnCloseDriver16    = DRIVER_CloseDriver16;
+        pFnSendMessage16    = DRIVER_SendMessage16;
+        pFnMmioCallback16   = MMIO_Callback16;
+        pFnReleaseThunkLock = ReleaseThunkLock;
+        pFnRestoreThunkLock = RestoreThunkLock;
         MMDRV_Init16();
 	break;
     case DLL_PROCESS_DETACH:
 	WINMM_IData->hWinMM16Instance = 0;
-        pFnGetMMThread16  = NULL;
-        pFnOpenDriver16   = NULL;
-        pFnCloseDriver16  = NULL;
-        pFnSendMessage16  = NULL;
-        pFnMmioCallback16 = NULL;
+        pFnGetMMThread16    = NULL;
+        pFnOpenDriver16     = NULL;
+        pFnCloseDriver16    = NULL;
+        pFnSendMessage16    = NULL;
+        pFnMmioCallback16   = NULL;
+        pFnReleaseThunkLock = NULL;
+        pFnRestoreThunkLock = NULL;
         /* FIXME: add equivalent for MMDRV_Init16() */
 	break;
     case DLL_THREAD_ATTACH:

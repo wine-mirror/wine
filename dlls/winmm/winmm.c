@@ -62,6 +62,9 @@ static void MyUserYield(void)
     }
 }
 
+void    (WINAPI *pFnReleaseThunkLock)(DWORD*);
+void    (WINAPI *pFnRestoreThunkLock)(DWORD);
+
 /* ========================================================================
  *                   G L O B A L   S E T T I N G S
  * ========================================================================*/
@@ -1895,9 +1898,9 @@ static	BOOL MMSYSTEM_MidiStream_PostMessage(WINE_MIDIStream* lpMidiStrm, WORD ms
     if (PostThreadMessageA(lpMidiStrm->dwThreadID, msg, pmt1, pmt2)) {
 	DWORD	count;
 
-	ReleaseThunkLock(&count);
+	if (pFnReleaseThunkLock) pFnReleaseThunkLock(&count);
 	WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-	RestoreThunkLock(count);
+	if (pFnRestoreThunkLock) pFnRestoreThunkLock(count);
     } else {
 	WARN("bad PostThreadMessageA\n");
 	return FALSE;
@@ -1982,9 +1985,9 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
 	 * (meaning the Win16Lock is set), so that it's released and the 32 bit thread running
 	 * MMSYSTEM_MidiStreamPlayer can acquire Win16Lock to create its queue.
 	 */
-	ReleaseThunkLock(&count);
+	if (pFnReleaseThunkLock) pFnReleaseThunkLock(&count);
 	WaitForSingleObject(lpMidiStrm->hEvent, INFINITE);
-	RestoreThunkLock(count);
+	if (pFnRestoreThunkLock) pFnRestoreThunkLock(count);
     }
 
     TRACE("=> (%u/%d) hMidi=%p ret=%d lpMidiStrm=%p\n",

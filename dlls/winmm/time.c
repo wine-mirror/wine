@@ -348,18 +348,18 @@ MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
     return 0;
 }
 
-void (*pFnYield16)(void) /* = NULL */;
-
 /**************************************************************************
  * 				timeGetTime    [MMSYSTEM.607]
  * 				timeGetTime    [WINMM.@]
  */
 DWORD WINAPI timeGetTime(void)
 {
+    DWORD       count;
     /* FIXME: releasing the win16 lock here is a temporary hack (I hope)
      * that lets mciavi.drv run correctly
      */
-    if (pFnYield16) pFnYield16();
+    if (pFnReleaseThunkLock) pFnReleaseThunkLock(&count);
     TIME_MMTimeStart();
+    if (pFnRestoreThunkLock) pFnRestoreThunkLock(count);
     return WINMM_IData->mmSysTimeMS;
 }
