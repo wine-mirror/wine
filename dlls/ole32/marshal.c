@@ -49,6 +49,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 extern const CLSID CLSID_DfMarshal;
 
+/* number of refs given out for normal marshaling */
+#define NORMALEXTREFS 1 /* FIXME: this should be 5, but we have to wait for IRemUnknown support first */
+
 /* Marshalling just passes a unique identifier to the remote client,
  * that makes it possible to find the passed interface again.
  *
@@ -103,23 +106,41 @@ IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
     return ret;
 }
 
-/* creates a new stub manager and sets mid->oid when mid->oid == 0 */
-static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj, IRpcStubBuffer *stub, MSHLFLAGS mshlflags)
+/* creates a new stub manager and sets stdobjref->oid when stdobjref->oid == 0 */
+static HRESULT register_ifstub(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags)
 {
     struct stub_manager *manager = NULL;
     struct ifstub       *ifstub;
-    APARTMENT           *apt;
     BOOL                 tablemarshal;
+    IRpcStubBuffer      *stub;
+    IPSFactoryBuffer    *psfb;
+    HRESULT              hr;
 
-    if (!(apt = COM_ApartmentFromOXID(mid->oxid, TRUE)))
+    hr = get_facbuf_for_iid(riid, &psfb);
+    if (hr != S_OK)
     {
-        ERR("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(mid->oxid));
-        return E_UNEXPECTED;
+        ERR("couldn't get IPSFactory buffer for interface %s\n", debugstr_guid(riid));
+        return hr;
     }
+
+    hr = IPSFactoryBuffer_CreateStub(psfb, riid, obj, &stub);
+    IPSFactoryBuffer_Release(psfb);
+    if (hr != S_OK)
+    {
+        ERR("Failed to create an IRpcStubBuffer from IPSFactory for %s\n", debugstr_guid(riid));
+        return hr;
+    }
+
+    if (mshlflags & MSHLFLAGS_NOPING)
+        stdobjref->flags = SORF_NOPING;
+    else
+        stdobjref->flags = SORF_NULL;
+
+    stdobjref->oxid = apt->oxid;
 
     /* mid->oid of zero means create a new stub manager */
 
-    if (mid->oid && (manager = get_stub_manager(apt, mid->oid)))
+    if (stdobjref->oid && (manager = get_stub_manager(apt, stdobjref->oid)))
     {
         TRACE("registering new ifstub on pre-existing manager\n");
     }
@@ -129,12 +150,9 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
 
         manager = new_stub_manager(apt, obj);
         if (!manager)
-        {
-            COM_ApartmentRelease(apt);
             return E_OUTOFMEMORY;
-        }
 
-        mid->oid = manager->oid;
+        stdobjref->oid = manager->oid;
     }
 
     tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
@@ -142,22 +160,28 @@ static HRESULT register_ifstub(wine_marshal_id *mid, REFIID riid, IUnknown *obj,
     ifstub = stub_manager_new_ifstub(manager, stub, obj, riid, tablemarshal);
     if (!ifstub)
     {
+        IRpcStubBuffer_Release(stub);
         stub_manager_int_release(manager);
         /* FIXME: should we do another release to completely destroy the
          * stub manager? */
-        COM_ApartmentRelease(apt);
         return E_OUTOFMEMORY;
     }
 
     if (!tablemarshal)
-        stub_manager_ext_addref(manager, 1);
-    else if (mshlflags & MSHLFLAGS_TABLESTRONG)
-        stub_manager_ext_addref(manager, 1);
+    {
+        stdobjref->cPublicRefs = NORMALEXTREFS;
+        stub_manager_ext_addref(manager, stdobjref->cPublicRefs);
+    }
+    else
+    {
+        stdobjref->cPublicRefs = 0;
+        if (mshlflags & MSHLFLAGS_TABLESTRONG)
+            stub_manager_ext_addref(manager, 1);
+    }
 
-    mid->ipid = ifstub->ipid;
+    stdobjref->ipid = ifstub->ipid;
 
     stub_manager_int_release(manager);
-    COM_ApartmentRelease(apt);
     return S_OK;
 }
 
@@ -557,10 +581,10 @@ StdMarshalImpl_GetUnmarshalClass(
 static HRESULT WINAPI
 StdMarshalImpl_GetMarshalSizeMax(
   LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
-  void* pvDestContext, DWORD mshlflags, DWORD* pSize
-) {
-  *pSize = sizeof(wine_marshal_id);
-  return S_OK;
+  void* pvDestContext, DWORD mshlflags, DWORD* pSize)
+{
+    *pSize = sizeof(STDOBJREF);
+    return S_OK;
 }
 
 static HRESULT WINAPI
@@ -568,12 +592,10 @@ StdMarshalImpl_MarshalInterface(
   LPMARSHAL iface, IStream *pStm,REFIID riid, void* pv, DWORD dwDestContext,
   void* pvDestContext, DWORD mshlflags
 ) {
-  wine_marshal_id       mid;
+  STDOBJREF             stdobjref;
   IUnknown             *pUnk;  
   ULONG                 res;
   HRESULT               hres;
-  IRpcStubBuffer       *stubbuffer;
-  IPSFactoryBuffer     *psfacbuf;
   struct stub_manager  *manager;
   APARTMENT            *apt = COM_CurrentApt();
     
@@ -587,32 +609,19 @@ StdMarshalImpl_MarshalInterface(
 
   start_apartment_listener_thread(); /* just to be sure we have one running. */
 
-  hres = get_facbuf_for_iid(riid,&psfacbuf);
-  if (hres) return hres;
-
-  hres = IPSFactoryBuffer_CreateStub(psfacbuf,riid,pv,&stubbuffer);
-  IPSFactoryBuffer_Release(psfacbuf);
-  if (hres) {
-    FIXME("Failed to create an RpcStubBuffer from PSFactory for %s\n",debugstr_guid(riid));
-    return hres;
-  }
-
-  /* now fill out the MID */
-  mid.oxid = apt->oxid;
- 
   IUnknown_QueryInterface((LPUNKNOWN)pv, riid, (LPVOID*)&pUnk);
- 
+
   if ((manager = get_stub_manager_from_object(apt, pUnk)))
   {
-      mid.oid = manager->oid;
+      stdobjref.oid = manager->oid;
       stub_manager_int_release(manager);
   }
   else
   {
-      mid.oid = 0;              /* will be set by register_ifstub */
+      stdobjref.oid = 0;              /* will be set by register_ifstub */
   }
- 
-  hres = register_ifstub(&mid, riid, pUnk, stubbuffer, mshlflags);
+
+  hres = register_ifstub(apt, &stdobjref, riid, pUnk, mshlflags);
   
   IUnknown_Release(pUnk);
   
@@ -622,7 +631,7 @@ StdMarshalImpl_MarshalInterface(
     return hres;
   }
 
-  hres = IStream_Write(pStm,&mid,sizeof(mid),&res);
+  hres = IStream_Write(pStm, &stdobjref, sizeof(stdobjref), &res);
   if (hres) return hres;
 
   return S_OK;
@@ -632,13 +641,12 @@ static HRESULT WINAPI
 StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv)
 {
   struct stub_manager  *stubmgr;
-  wine_marshal_id       mid;
+  STDOBJREF stdobjref;
   ULONG			res;
   HRESULT		hres;
   struct proxy_manager *proxy_manager = NULL;
   APARTMENT *apt = COM_CurrentApt();
   APARTMENT *stub_apt;
-  ULONG cPublicRefs = 1;
 
   TRACE("(...,%s,....)\n",debugstr_guid(riid));
 
@@ -648,18 +656,19 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
       return CO_E_NOTINITIALIZED;
   }
 
-  hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
+  hres = IStream_Read(pStm, &stdobjref, sizeof(stdobjref), &res);
   if (hres) return hres;
   
   /* check if we're marshalling back to ourselves */
-  if ((apt->oxid == mid.oxid) && (stubmgr = get_stub_manager(apt, mid.oid)))
+  if ((apt->oxid == stdobjref.oxid) && (stubmgr = get_stub_manager(apt, stdobjref.oid)))
   {
-      TRACE("Unmarshalling object marshalled in same apartment for iid %s, returning original object %p\n", debugstr_guid(riid), stubmgr->object);
+      TRACE("Unmarshalling object marshalled in same apartment for iid %s, "
+            "returning original object %p\n", debugstr_guid(riid), stubmgr->object);
     
       hres = IUnknown_QueryInterface(stubmgr->object, riid, ppv);
       
       /* unref the ifstub. FIXME: only do this on success? */
-      if (!stub_manager_is_table_marshaled(stubmgr, &mid.ipid))
+      if (!stub_manager_is_table_marshaled(stubmgr, &stdobjref.ipid))
           stub_manager_ext_release(stubmgr, 1);
 
       stub_manager_int_release(stubmgr);
@@ -671,40 +680,44 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
    * ignore table marshaling and normal marshaling rules regarding number of
    * unmarshals, etc, but if you abuse these rules then your proxy could end
    * up returning RPC_E_DISCONNECTED. */
-  if ((stub_apt = COM_ApartmentFromOXID(mid.oxid, TRUE)))
+  if ((stub_apt = COM_ApartmentFromOXID(stdobjref.oxid, TRUE)))
   {
-      if ((stubmgr = get_stub_manager(stub_apt, mid.oid)))
+      if ((stubmgr = get_stub_manager(stub_apt, stdobjref.oid)))
       {
-          if (!stub_manager_notify_unmarshal(stubmgr, &mid.ipid))
+          if (!stub_manager_notify_unmarshal(stubmgr, &stdobjref.ipid))
               hres = CO_E_OBJNOTCONNECTED;
-
-          /* FIXME: hack around not using STDOBJREF yet */
-          if (stub_manager_is_table_marshaled(stubmgr, &mid.ipid))
-              cPublicRefs = 0;
 
           stub_manager_int_release(stubmgr);
       }
       else
       {
           WARN("Couldn't find object for OXID %s, OID %s, assuming disconnected\n",
-              wine_dbgstr_longlong(mid.oxid),
-              wine_dbgstr_longlong(mid.oid));
+              wine_dbgstr_longlong(stdobjref.oxid),
+              wine_dbgstr_longlong(stdobjref.oid));
           hres = CO_E_OBJNOTCONNECTED;
       }
 
       COM_ApartmentRelease(stub_apt);
   }
   else
-      TRACE("Treating unmarshal from OXID %s as inter-process\n", wine_dbgstr_longlong(mid.oxid));
+      TRACE("Treating unmarshal from OXID %s as inter-process\n",
+            wine_dbgstr_longlong(stdobjref.oxid));
 
   if (hres) return hres;
 
-  if (!find_proxy_manager(apt, mid.oxid, mid.oid, &proxy_manager))
+  if (!find_proxy_manager(apt, stdobjref.oxid, stdobjref.oid, &proxy_manager))
   {
     IRpcChannelBuffer *chanbuf;
+    wine_marshal_id mid;
+
+    mid.oxid = stdobjref.oxid;
+    mid.oid = stdobjref.oid;
+    mid.ipid = stdobjref.ipid;
+
     hres = PIPE_GetNewPipeBuf(&mid,&chanbuf);
     if (hres == S_OK)
-      hres = proxy_manager_construct(apt, mid.oxid, mid.oid, chanbuf, &proxy_manager);
+      hres = proxy_manager_construct(apt, stdobjref.oxid, stdobjref.oid,
+                                     chanbuf, &proxy_manager);
   }
 
     if (hres == S_OK)
@@ -722,8 +735,9 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
             struct ifproxy * ifproxy;
             hres = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
             if (hres == E_NOINTERFACE)
-                hres = proxy_manager_create_ifproxy(proxy_manager, mid.ipid, 
-                                                    riid, cPublicRefs, &ifproxy);
+                hres = proxy_manager_create_ifproxy(proxy_manager, stdobjref.ipid,
+                                                    riid, stdobjref.cPublicRefs,
+                                                    &ifproxy);
 
             if (hres == S_OK)
             {
@@ -744,7 +758,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
 
 static HRESULT WINAPI
 StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
-    wine_marshal_id      mid;
+    STDOBJREF            stdobjref;
     ULONG                res;
     HRESULT              hres;
     struct stub_manager *stubmgr;
@@ -752,22 +766,25 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
 
     TRACE("iface=%p, pStm=%p\n", iface, pStm);
     
-    hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
+    hres = IStream_Read(pStm, &stdobjref, sizeof(stdobjref), &res);
     if (hres) return hres;
 
-    if (!(apt = COM_ApartmentFromOXID(mid.oxid, TRUE)))
+    if (!(apt = COM_ApartmentFromOXID(stdobjref.oxid, TRUE)))
     {
-        WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(mid.oxid));
+        WARN("Could not map OXID %s to apartment object\n",
+            wine_dbgstr_longlong(stdobjref.oxid));
         return RPC_E_INVALID_OBJREF;
     }
 
-    if (!(stubmgr = get_stub_manager(apt, mid.oid)))
+    if (!(stubmgr = get_stub_manager(apt, stdobjref.oid)))
     {
         ERR("could not map MID to stub manager, oxid=%s, oid=%s\n",
-            wine_dbgstr_longlong(mid.oxid), wine_dbgstr_longlong(mid.oid));
+            wine_dbgstr_longlong(stdobjref.oxid), wine_dbgstr_longlong(stdobjref.oid));
         return RPC_E_INVALID_OBJREF;
     }
-    
+
+    /* FIXME: don't release if table-weak and already unmarshaled an object */
+    /* FIXME: this should also depend on stdobjref.cPublicRefs */
     stub_manager_ext_release(stubmgr, 1);
 
     stub_manager_int_release(stubmgr);

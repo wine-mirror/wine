@@ -28,8 +28,6 @@
  *
  * TODO list:           (items bunched together depend on each other)
  *
- *   - Once that's done, replace wine_marshal_id with STDOBJREF
- *
  *   - Rewrite the CoLockObjectExternal code, it does totally the wrong
  *     thing currently (should be controlling the stub manager)
  *
