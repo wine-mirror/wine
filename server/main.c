@@ -46,7 +46,7 @@ static void parse_args( int argc, char *argv[] )
         }
         else
         {
-            fprintf( stderr, "Unknown argument '%s'\n", argv[i] );
+            fprintf( stderr, "Unknown argument '%s'. Your version of wine may be too old.\n", argv[i] );
             exit(1);
         }
     }
