@@ -11,9 +11,12 @@ CTESTS = \
 	input.c \
 	listbox.c \
 	msg.c \
+	resource.c \
 	sysparams.c \
 	win.c \
 	wsprintf.c
+
+RC_SRCS = resource.rc
 
 @MAKE_TEST_RULES@
 

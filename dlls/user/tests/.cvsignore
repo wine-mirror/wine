@@ -4,6 +4,8 @@ generated.ok
 input.ok
 listbox.ok
 msg.ok
+resource.ok
+resource.res
 sysparams.ok
 testlist.c
 user32_test.exe.spec.c
