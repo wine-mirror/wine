@@ -341,7 +341,7 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2)
 
     if ((hModule = LoadLibraryA(fn)) == 0) {cause = "Not a 32 bit lib"; goto exit;}
 
-    lpDrv->d.d32.lpDrvProc = GetProcAddress(hModule, "DriverProc");
+    lpDrv->d.d32.lpDrvProc = (DRIVERPROC)GetProcAddress(hModule, "DriverProc");
     if (lpDrv->d.d32.lpDrvProc == NULL) {cause = "no DriverProc"; goto exit;}
 
     lpDrv->dwFlags          = 0;
