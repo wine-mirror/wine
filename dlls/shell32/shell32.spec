@@ -101,7 +101,7 @@ init	Shell32LibMain
   93 stub Win32CreateDirectory
   94 stub Win32RemoveDirectory
   95 stdcall SHLogILFromFSIL (ptr) SHLogILFromFSIL
-  96 stdcall StrRetToStrN (long long long long) StrRetToStrN
+  96 stdcall StrRetToStrN (long long long long) StrRetToStrNAW
   97 stdcall SHWaitForFileToOpen (long long long) SHWaitForFileToOpen
   98 stdcall SHGetRealIDL (long long long) SHGetRealIDL
   99 stdcall SetAppStartingCursor (long long) SetAppStartingCursor

@@ -909,30 +909,57 @@ HRESULT WINAPI IsUserAdmin(void)
  * NOTES
  *  the pidl is for STRRET OFFSET
  */
-HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
-{	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+{
+	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
 
 	switch (src->uType)
-	{ case STRRET_WSTR:
+	{
+	  case STRRET_WSTR:
 	    WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, (LPSTR)dest, len, NULL, NULL);
 	    SHFree(src->u.pOleStr);
 	    break;
 
 	  case STRRET_CSTRA:
-	    if (VERSION_OsIsUnicode())
-	      lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
-	    else
-	      lstrcpynA((LPSTR)dest, src->u.cStr, len);
+	    lstrcpynA((LPSTR)dest, src->u.cStr, len);
+	    break;
+
+	  case STRRET_OFFSETA:
+	    lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+	    break;
+
+	  default:
+	    FIXME("unknown type!\n");
+	    if (len)
+	    {
+	      *(LPSTR)dest = '\0';
+	    }
+	    return(FALSE);
+	}
+	return S_OK;
+}
+
+HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+{
+	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+
+	switch (src->uType)
+	{
+	  case STRRET_WSTR:
+	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
+	    SHFree(src->u.pOleStr);
+	    break;
+
+	  case STRRET_CSTRA:
+	    lstrcpynAtoW((LPWSTR)dest, src->u.cStr, len);
 	    break;
 
 	  case STRRET_OFFSETA:
 	    if (pidl)
-	    { if(VERSION_OsIsUnicode())
-	        lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
-	      else
-	        lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
-	      break;
+	    {
+	      lstrcpynAtoW((LPWSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
 	    }
+	    break;
 
 	  default:
 	    FIXME("unknown type!\n");
@@ -941,7 +968,13 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 	    }
 	    return(FALSE);
 	}
-	return(TRUE);
+	return S_OK;
+}
+HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+{
+	if(VERSION_OsIsUnicode())
+	  return StrRetToStrNW (dest, len, src, pidl);
+	return StrRetToStrNA (dest, len, src, pidl);
 }
 
 /*************************************************************************
