@@ -27,6 +27,10 @@ DEFAULT_DEBUG_CHANNEL(aspi)
  */
 
 #ifdef linux
+
+static FARPROC16 ASPIChainFunc = NULL;
+static WORD HA_Count = 1; /* host adapter count; FIXME: detect it */
+
 static int
 ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
 {
@@ -383,13 +387,10 @@ WORD WINAPI GetASPISupportInfo16()
 {
 #ifdef linux
     TRACE(aspi, "GETASPISupportInfo16\n");
-    /* high byte SS_COMP - low byte number of host adapters.
-     * FIXME!!! The number of host adapters is incorrect.
-     * I'm not sure how to determine this under linux etc.
-     */
-    return ((SS_COMP << 8) | 1);
+    /* high byte SS_COMP - low byte number of host adapters */
+    return ((SS_COMP << 8) | HA_Count);
 #else
-    return ((SS_COMP << 8) | 0);
+    return ((SS_NO_ASPI << 8) | 0);
 #endif
 }
 
@@ -407,6 +408,16 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 	break;
       case ASPI_WIN16:
 	lpSRB = PTR_SEG_TO_LIN(ptrSRB);
+	if (ASPIChainFunc)
+	{
+	    /* This is not the post proc, it's the chain proc this time */
+	    DWORD ret = Callbacks->CallASPIPostProc(ASPIChainFunc, ptrSRB);
+	    if (ret)
+	    {
+		lpSRB->inquiry.SRB_Status = SS_INVALID_SRB;
+		return ret;
+	    }
+	}
 	break;
   }
 
@@ -417,7 +428,7 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 	TRACE(aspi, "Extended request detected (Adaptec's ASPIxDOS).\nWe don't support it at the moment.\n");
     }
     lpSRB->inquiry.SRB_ExtBufferSize = 0x2000; /* bogus value */
-    lpSRB->inquiry.HA_Count = 1;               /* not always */
+    lpSRB->inquiry.HA_Count = HA_Count;
     lpSRB->inquiry.HA_SCSI_ID = 7;             /* not always ID 7 */
     strcat(lpSRB->inquiry.HA_ManagerId, "Wine ASPI16"); /* max 15 chars */
     strcat(lpSRB->inquiry.HA_Identifier, "Wine host"); /* FIXME: return host
@@ -436,12 +447,10 @@ adapter name */
     FIXME(aspi, "Not implemented SC_RESET_DEV\n");
     break;
   default:
-    WARN(aspi, "Unknown command %d\n", lpSRB->common.SRB_Cmd);
+    FIXME(aspi, "Unknown command %d\n", lpSRB->common.SRB_Cmd);
   }
-  return SS_INVALID_SRB;
-#else
-  return SS_INVALID_SRB;
 #endif
+  return SS_INVALID_SRB;
 }
 
 
@@ -459,15 +468,43 @@ WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 
 
 /***********************************************************************
+ *             InsertInASPIChain16   (WINASPI.3)
+ */
+WORD WINAPI InsertInASPIChain16(BOOL16 remove, FARPROC16 pASPIChainFunc)
+{
+#ifdef linux
+    if (remove == TRUE) /* Remove */
+    {
+	if (ASPIChainFunc == pASPIChainFunc)
+	{
+	    ASPIChainFunc = NULL;
+	    return SS_COMP;
+	}
+    }
+    else
+    if (remove == FALSE) /* Insert */
+    {
+	if (ASPIChainFunc == NULL)
+	{
+	    ASPIChainFunc = pASPIChainFunc;
+	    return SS_COMP;
+	}
+    }
+#endif
+    return SS_ERR;
+}
+
+
+/***********************************************************************
  *             GetASPIDLLVersion16   (WINASPI.4)
  */
 
 DWORD WINAPI GetASPIDLLVersion16()
 {
 #ifdef linux
-	return (DWORD)2;
+	return 2;
 #else
-	return (DWORD)0;
+	return 0;
 #endif
 }
 
@@ -498,8 +535,6 @@ void ASPI_DOS_HandleInt(CONTEXT *context)
 	    AX_reg(context) = CX_reg(context);
 	}
 	else
-	SET_CFLAG(context);
-#else
-       SET_CFLAG(context);
 #endif
+	SET_CFLAG(context);
 }

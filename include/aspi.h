@@ -9,12 +9,12 @@
 #define SS_COMP         0x01
 #define SS_ABORTED      0x02
 #define SS_ERR          0x04
+#define SS_INVALID_HA   0x81
+#define SS_INVALID_SRB  0xe0
 #define SS_OLD_MANAGE   0xe1
 #define SS_ILLEGAL_MODE 0xe2
 #define SS_NO_ASPI      0xe3
 #define SS_FAILED_INIT  0xe4
-#define SS_INVALID_HA   0x81
-#define SS_INVALID_SRB  0xe0
 #define SS_ASPI_IS_BUSY 0xe5
 #define SS_BUFFER_TO_BIG        0xe6
 
