@@ -723,7 +723,7 @@ DECL_HANDLER(send_message)
     if ((msg = mem_alloc( sizeof(*msg) )))
     {
         msg->type      = req->type;
-        msg->win       = req->win;
+        msg->win       = get_user_full_handle( req->win );
         msg->msg       = req->msg;
         msg->wparam    = req->wparam;
         msg->lparam    = req->lparam;
@@ -848,6 +848,7 @@ DECL_HANDLER(get_message)
     struct timer *timer;
     struct message *msg;
     struct msg_queue *queue = get_current_queue();
+    user_handle_t get_win = get_user_full_handle( req->get_win );
 
     if (!queue)
     {
@@ -874,7 +875,7 @@ DECL_HANDLER(get_message)
     queue->changed_bits = 0;
 
     /* then check for posted messages */
-    if ((msg = find_matching_message( &queue->msg_list[POST_MESSAGE], req->get_win,
+    if ((msg = find_matching_message( &queue->msg_list[POST_MESSAGE], get_win,
                                       req->get_first, req->get_last )))
     {
         return_message_to_app( queue, req, msg, POST_MESSAGE );
@@ -882,7 +883,7 @@ DECL_HANDLER(get_message)
     }
 
     /* then check for cooked hardware messages */
-    if ((msg = find_matching_message( &queue->msg_list[COOKED_HW_MESSAGE], req->get_win,
+    if ((msg = find_matching_message( &queue->msg_list[COOKED_HW_MESSAGE], get_win,
                                       req->get_first, req->get_last )))
     {
         return_message_to_app( queue, req, msg, COOKED_HW_MESSAGE );
@@ -913,7 +914,7 @@ DECL_HANDLER(get_message)
     }
 
     /* now check for timer */
-    if ((timer = find_expired_timer( queue, req->get_win, req->get_first,
+    if ((timer = find_expired_timer( queue, get_win, req->get_first,
                                      req->get_last, (req->flags & GET_MSG_REMOVE) )))
     {
         req->type   = MSG_POSTED;
@@ -987,7 +988,7 @@ DECL_HANDLER(get_message_reply)
 /* cleanup a queue when a window is deleted */
 DECL_HANDLER(cleanup_window_queue)
 {
-    queue_cleanup_window( current, req->win );
+    queue_cleanup_window( current, get_user_full_handle(req->win) );
 }
 
 
@@ -996,15 +997,16 @@ DECL_HANDLER(set_win_timer)
 {
     struct timer *timer;
     struct msg_queue *queue = get_current_queue();
+    user_handle_t win = get_user_full_handle( req->win );
 
     if (!queue) return;
 
     /* remove it if it existed already */
-    if (req->win) kill_timer( queue, req->win, req->msg, req->id );
+    if (win) kill_timer( queue, win, req->msg, req->id );
 
     if ((timer = set_timer( queue, req->rate )))
     {
-        timer->win    = req->win;
+        timer->win    = win;
         timer->msg    = req->msg;
         timer->id     = req->id;
         timer->lparam = req->lparam;
@@ -1016,6 +1018,6 @@ DECL_HANDLER(kill_win_timer)
 {
     struct msg_queue *queue = current->queue;
 
-    if (!queue || !kill_timer( queue, req->win, req->msg, req->id ))
+    if (!queue || !kill_timer( queue, get_user_full_handle(req->win), req->msg, req->id ))
         set_error( STATUS_INVALID_PARAMETER );
 }

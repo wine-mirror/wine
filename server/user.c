@@ -20,7 +20,8 @@ static int nb_handles;
 static int allocated_handles;
 
 #define FIRST_HANDLE 32  /* handle value for first table entry */
-#define MAX_HANDLES  (65536-FIRST_HANDLE)
+#define LAST_HANDLE  (65536 - 16)
+#define MAX_HANDLES  (LAST_HANDLE - FIRST_HANDLE)
 
 static struct user_handle *handle_to_entry( user_handle_t handle )
 {
@@ -96,6 +97,16 @@ void *get_user_object( user_handle_t handle, enum user_object type )
         return NULL;
     }
     return entry->ptr;
+}
+
+/* get the full handle for a possibly truncated handle */
+user_handle_t get_user_full_handle( user_handle_t handle )
+{
+    struct user_handle *entry;
+
+    if (handle >> 16) return handle;
+    if (!(entry = handle_to_entry( handle ))) return handle;
+    return entry_to_handle( entry );
 }
 
 /* same as get_user_object plus set the handle to the full 32-bit value */

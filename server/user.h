@@ -22,6 +22,7 @@ enum user_object
 extern user_handle_t alloc_user_handle( void *ptr, enum user_object type );
 extern void *get_user_object( user_handle_t handle, enum user_object type );
 extern void *get_user_object_handle( user_handle_t *handle, enum user_object type );
+extern user_handle_t get_user_full_handle( user_handle_t handle );
 extern void *free_user_handle( user_handle_t handle );
 extern void *next_user_handle( user_handle_t *handle, enum user_object type );
 
