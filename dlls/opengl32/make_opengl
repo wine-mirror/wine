@@ -8,6 +8,8 @@
 #       spec files are located. These files are part of the OpenGL
 #       sample implementation CVS tree and are located in
 #       CVS_ROOT/projects/ogl-sample/main/doc/registry/specs.
+#       You can find them on the web at the following URL :
+#         http://oss.sgi.com/cgi-bin/cvsweb.cgi/projects/ogl-sample/main/doc/registry/specs/
 #
 #     - opengl_version is the OpenGL version emulated by the library
 #       (can be 1.0 to 1.2).
@@ -34,56 +36,63 @@
 #
 
 #
-# This functions generates the thunk for a given function.
+# Files to generate
 #
-sub GenerateThunk {
-    my ($func_ref, $comment, $prefix, $thread_safe) = @_;
-    my ($ret) = ("");
-    my ($call_arg) = ("");
+$spec_file = "opengl32.spec";
+$norm_file = "opengl_norm.c";
+$ext_file  = "opengl_ext.c";
 
-    # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
-    if ($comment eq 1) {
-	$ret = $ret . "/***********************************************************************\n";
-	$ret = $ret . " *              " . $func_ref->[0] . "\n";
-	$ret = $ret . " */\n";
-    }
-    $ret = $ret . $func_ref->[1] . " WINAPI wine_" . $func_ref->[0] . "( ";
-    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
-	$type = $func_ref->[2]->[$i]->[0];
-	$name = $func_ref->[2]->[$i]->[1];
-	$ret = $ret . "$type $name";
-	$call_arg = $call_arg . "$name";
-	if ($i != $#{@{$func_ref->[2]}}) {
-	    $ret = $ret . ", ";
-	    $call_arg = $call_arg . ", ";
-	} else {
-	    $ret = $ret . " ";
-	    $call_arg = $call_arg . " ";
-	}
-    }
-    $ret = $ret . ") {\n";
-    if ($func_ref->[1] ne "void") {
-	$ret = $ret . "  " . $func_ref->[1] . " ret_value;\n";
-    }
-    if ($thread_safe) {
-	$ret = $ret . "  ENTER_GL();\n";
-    }
-    $ret = $ret . "  ";
-    if ($func_ref->[1] ne "void") {
-	$ret = $ret . "ret_value = ";
-    }
-    $ret = $ret . $prefix . $func_ref->[0] . "( " . $call_arg . ");\n";
-    if ($thread_safe) {
-	$ret = $ret . "  LEAVE_GL();\n";
-    }
-    if ($func_ref->[1] ne "void") {
-	$ret = $ret . "  return ret_value;\n"
-    }
-    $ret = $ret . "}\n";
+# Set to 0 for removing the ENTER / LEAVE GL calls
+$gen_thread_safe = 1;
+# Prefix used for the local variables
+$ext_prefix = "func_";
+# If set to 1, generate TRACEs for each OpenGL function
+$gen_traces = 1;
 
-    # Return this string....
-    $ret;
-}
+#
+# List of categories to put in the 'opengl_norm.c' file
+#
+%cat_1_0 = ( "display-list" => 1, 
+	     "drawing" => 1, 
+	     "drawing-control" => 1, 
+	     "feedback" => 1, 
+	     "framebuf" => 1, 
+	     "misc" => 1, 
+	     "modeling" => 1, 
+	     "pixel-op" => 1, 
+	     "pixel-rw" => 1, 
+	     "state-req" => 1, 
+	     "xform" => 1 );
+%cat_1_1 = ( %cat_1_0, 
+	     "1_1" => 1 );
+%cat_1_2 = ( %cat_1_1, 
+	     "VERSION_1_2" => 1, 
+	     "ARB_multitexture" => 1 );
+
+%norm_categories = ();
+
+#
+# This hash table gives the conversion between OpenGL types and what
+# is used by the TRACE printfs
+#
+%debug_conv = 
+    ("GLbitfield" => "%d",
+     "GLboolean" => "%d",
+     "GLbyte" => "%d",
+     "GLclampd" => "%f",
+     "GLclampf" => "%f",
+     "GLdouble" => "%f",
+     "GLenum" => "%d",
+     "GLfloat" => "%f",
+     "GLint" => "%d",
+     "GLshort" => "%d",
+     "GLsizei" => "%d",
+     "GLstring" => "%s",
+     "GLubyte" => "%d",
+     "GLuint" => "%d",
+     "GLushort" => "%d",
+     "GLvoid" => "(void)",
+     "_GLfuncptr" => "%p");
 
 #
 # This hash table gives the conversion between OpenGL types and what
@@ -109,38 +118,70 @@ sub GenerateThunk {
      "_GLfuncptr" => [ "ptr", 4 ]);
 
 #
-# Files to generate
+# This functions generates the thunk for a given function.
 #
-$spec_file = "opengl32.spec";
-$norm_file = "opengl_norm.c";
-$ext_file  = "opengl_ext.c";
+sub GenerateThunk {
+    my ($func_ref, $comment, $prefix, $thread_safe) = @_;
+    my ($ret) = ("");
+    my ($call_arg) = ("");
+    my ($trace_arg) = ("");
 
-# Set to 0 for removing the ENTER / LEAVE GL calls
-$gen_thread_safe = 1;
-# Prefix used for the local variables
-$ext_prefix = "func_";
+    # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
+    if ($comment eq 1) {
+	$ret = $ret . "/***********************************************************************\n";
+	$ret = $ret . " *              " . $func_ref->[0] . "\n";
+	$ret = $ret . " */\n";
+    }
+    $ret = $ret . $func_ref->[1] . " WINAPI wine_" . $func_ref->[0] . "( ";
+    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+	$type = $func_ref->[2]->[$i]->[0];
+	$name = $func_ref->[2]->[$i]->[1];
+	$ret = $ret . "$type $name";
+	$call_arg = $call_arg . "$name";
+	if ($type =~ /\*/) {
+	    $trace_arg = $trace_arg . "%p";
+	} else {
+	    $trace_arg = $trace_arg . $debug_conv{$type};
+	}
+	if ($i != $#{@{$func_ref->[2]}}) {
+	    $ret = $ret . ", ";
+	    $call_arg = $call_arg . ", ";
+	    $trace_arg = $trace_arg . ", ";
+	} else {
+	    $ret = $ret . " ";
+	    $call_arg = $call_arg . " ";
+	}
+    }
+    $ret = $ret . ") {\n";
+    if ($func_ref->[1] ne "void") {
+	$ret = $ret . "  " . $func_ref->[1] . " ret_value;\n";
+    }
+    if ($gen_traces) {
+	$ret = $ret . "  TRACE(\"(" . $trace_arg . ")\\n\"";
+	if ($trace_arg ne "") {
+	    $ret = $ret . ", " . $call_arg;
+	}
+	$ret = $ret . ");\n";
+    }
+    if ($thread_safe) {
+	$ret = $ret . "  ENTER_GL();\n";
+    }
+    $ret = $ret . "  ";
+    if ($func_ref->[1] ne "void") {
+	$ret = $ret . "ret_value = ";
+    }
+    $ret = $ret . $prefix . $func_ref->[0] . "( " . $call_arg . ");\n";
+    if ($thread_safe) {
+	$ret = $ret . "  LEAVE_GL();\n";
+    }
+    if ($func_ref->[1] ne "void") {
+	$ret = $ret . "  return ret_value;\n"
+    }
+    $ret = $ret . "}\n";
 
-#
-# List of categories to put in the 'opengl_norm.c' file
-#
-%cat_1_0 = ( "display-list" => 1, 
-	     "drawing" => 1, 
-	     "drawing-control" => 1, 
-	     "feedback" => 1, 
-	     "framebuf" => 1, 
-	     "misc" => 1, 
-	     "modeling" => 1, 
-	     "pixel-op" => 1, 
-	     "pixel-rw" => 1, 
-	     "state-req" => 1, 
-	     "xform" => 1 );
-%cat_1_1 = ( %cat_1_0, 
-	     "1_1" => 1 );
-%cat_1_2 = ( %cat_1_1, 
-	     "VERSION_1_2" => 1, 
-	     "ARB_multitexture" => 1 );
-
-%norm_categories = ();
+    # Return this string....
+    $ret;
+}
 
 #
 # Extract and checks the number of arguments
@@ -177,6 +218,11 @@ while ($line = <TYPES>) {
 }
 # This is to override the 'void' -> '*' bogus conversion
 $pseudo_to_opengl{"void"} = "void";
+# This is a bug in the spec file...
+$pseudo_to_opengl{"FfdTargetSGIX"} = "GLint";
+$pseudo_to_opengl{"FfdMaskSGIX"} = "GLint";
+$pseudo_to_opengl{"IglooFunctionSelectSGIX"} = "GLint";
+$pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
 
 #
 # Then, create the list of all OpenGL functions using the 'gl.spec'
@@ -322,8 +368,12 @@ open(SPEC, ">" . $spec_file);
 print SPEC "
 name opengl32
 type win32
+
 init OpenGL32_Init
 import x11drv
+import kernel32
+
+debug_channels (opengl)
 
 @  stdcall wglCreateContext(long) wglCreateContext
 @  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
@@ -378,8 +428,11 @@ print NORM "
 
 #include \"config.h\"
 #include \"wine_gl.h\"
+#include \"debugtools.h\"
 
 typedef const GLubyte * GLstring;
+
+DEFAULT_DEBUG_CHANNEL(opengl);
 
 ";
 foreach (sort keys %norm_functions) {
@@ -398,10 +451,13 @@ print EXT "
 
 #include \"config.h\"
 #include \"wine_gl.h\"
+#include \"debugtools.h\"
 
 typedef const GLubyte * GLstring;
 
 #include \"opengl_ext.h\"
+
+DEFAULT_DEBUG_CHANNEL(opengl);
 
 ";
 
