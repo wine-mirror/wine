@@ -131,12 +131,13 @@ static char* msvcrt_argvtos(const char* const* arg, char delim)
   while (*a)
   {
     int len = strlen(*a);
-    memcpy(ret+size,*a,len);
+    memcpy(p,*a,len);
     p += len;
     *p++ = delim;
     a++;
   }
-  *p='\0';
+  if (delim && p > ret) p[-1] = 0;
+  else *p = 0;
   return ret;
 }
 
@@ -189,7 +190,8 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
       *p++ = delim;
       arg = va_arg(alist2, char*);
   } while (arg != NULL);
-  *p = '\0';
+  if (delim && p > ret) p[-1] = 0;
+  else *p = 0;
   return ret;
 }
 
