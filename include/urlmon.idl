@@ -22,6 +22,7 @@ import "oleidl.idl";
 import "servprov.idl";
 /*import "msxml.idl";*/
 
+interface IInternetProtocolSink;
 
 /*****************************************************************************
  * IBinding interface
@@ -439,6 +440,165 @@ interface IPersistMoniker : IUnknown
         [out] IMoniker **ppimkName);
 }
 
+/*****************************************************************************
+ * IInternetBindInfo interface
+ */
+[
+        local,
+        object,
+        uuid(79EAC9E1-BAF9-11CE-8C82-00AA004BA90B),
+        pointer_default(unique)
+]
+interface IInternetBindInfo : IUnknown
+{
+    typedef [unique] IInternetBindInfo *LPIINTERNETBINDINFO;
+
+    typedef enum tagBINDSTRING
+    {
+        BINDSTRING_HEADERS = 1,
+        BINDSTRING_ACCEPT_MIMES,
+        BINDSTRING_EXTRA_URL,
+        BINDSTRING_LANGUAGE,
+        BINDSTRING_USERNAME,
+        BINDSTRING_PASSWORD,
+        BINDSTRING_UA_PIXELS,
+        BINDSTRING_UA_COLOR,
+        BINDSTRING_OS,
+        BINDSTRING_USER_AGENT,
+        BINDSTRING_ACCEPT_ENCODINGS,
+        BINDSTRING_POST_COOKIE,
+        BINDSTRING_POST_DATA_MIME,
+        BINDSTRING_URL
+    } BINDSTRING;
+
+    HRESULT GetBindInfo(
+        [out] DWORD *grfBINDF,
+        [in, out, unique] BINDINFO *pbindinfo);
+
+    HRESULT GetBindString(
+        [in]      ULONG ulStringType,
+        [in, out] LPOLESTR *ppwzStr,
+        [in]      ULONG cEl,
+        [in, out] ULONG *pcElFetched);
+}
+
+/*****************************************************************************
+ * IInternetProtocolRoot interface
+ */
+[
+    local,
+    object,
+    uuid(79EAC9E3-BAF9-11CE-8C82-00AA004BA90B),
+    pointer_default(unique)
+]
+interface IInternetProtocolRoot : IUnknown
+{
+    typedef [unique] IInternetProtocolRoot *LPIINTERNETPROTOCOLROOT;
+
+    typedef enum _tagPI_FLAGS
+    {
+        PI_PARSE_URL         = 0x00000001,
+        PI_FILTER_MODE       = 0x00000002,
+        PI_FORCE_ASYNC       = 0x00000004,
+        PI_USE_WORKERTHREAD  = 0x00000008,
+        PI_MIMEVERIFICATION  = 0x00000010,
+        PI_CLSIDLOOKUP       = 0x00000020,
+        PI_DATAPROGRESS      = 0x00000040,
+        PI_SYNCHRONOUS       = 0x00000080,
+        PI_APARTMENTTHREADED = 0x00000100,
+        PI_CLASSINSTALL      = 0x00000200,
+        PD_FORCE_SWITCH      = 0x00010000
+    } PI_FLAGS;
+
+    typedef struct _tagPROTOCOLDATA
+    {
+        DWORD grfFlags;
+        DWORD dwState;
+        LPVOID pData;
+        ULONG cbData;
+    } PROTOCOLDATA;
+
+    HRESULT Start(
+        [in] LPCWSTR szUrl,
+        [in] IInternetProtocolSink *pOIProtSink,
+        [in] IInternetBindInfo *pOIBindInfo,
+        [in] DWORD grfPI,
+        [in] DWORD dwReserved);
+
+    HRESULT Continue(
+        [in] PROTOCOLDATA *pProtocolData);
+
+    HRESULT Abort(
+        [in] HRESULT hrReason,
+        [in] DWORD dwOptions);
+
+    HRESULT Terminate(
+        [in] DWORD dwOptions);
+
+    HRESULT Suspend();
+
+    HRESULT Resume();
+}
+
+/*****************************************************************************
+ * IInternetProtocolSink interface
+ */
+[
+    local,
+    object,
+    uuid(79EAC9E5-BAF9-11CE-8C82-00AA004BA90B),
+    pointer_default(unique)
+]
+interface IInternetProtocolSink : IUnknown
+{
+    typedef [unique] IInternetProtocolSink *LPIINTERNETPROTOCOLSINK;
+
+    HRESULT Switch(
+        [in] PROTOCOLDATA *pProtocolData);
+
+    HRESULT ReportProgress(
+        [in] ULONG ulStatusCode,
+        [in] LPCWSTR szStatusText);
+
+    HRESULT ReportData(
+        [in] DWORD grfBSCF,
+        [in] ULONG ulProgress,
+        [in] ULONG ulProgressMax);
+
+    HRESULT ReportResult(
+        [in] HRESULT hrResult,
+        [in] DWORD dwError,
+        [in] LPCWSTR szResult);
+}
+
+/*****************************************************************************
+ * IInternetProtocol interface
+ */
+[
+    local,
+    object,
+    uuid(79EAC9E4-BAF9-11CE-8C82-00AA004BA90B),
+    pointer_default(unique)
+]
+interface IInternetProtocol : IInternetProtocolRoot
+{
+    typedef [unique] IInternetProtocol *LPIINTERNETPROTOCOL;
+
+    HRESULT Read(
+        [in,out, size_is(cb), length_is(*pcbRead)] void *pv,
+        [in]  ULONG cb,
+        [out] ULONG *pcbRead);
+
+    HRESULT Seek(
+        [in]  LARGE_INTEGER dlibMove,
+        [in]  DWORD dwOrigin,
+        [out] ULARGE_INTEGER *plibNewPosition);
+
+    HRESULT LockRequest(
+        [in] DWORD dwOptions);
+
+    HRESULT UnlockRequest();
+}
 
 /*****************************************************************************
  * IInternetProtocolInfo interface
