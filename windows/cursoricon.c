@@ -273,6 +273,54 @@ static BOOL is_dib_monochrome( const BITMAPINFO* info )
     }
 }
 
+/***********************************************************************
+ *           DIB_GetBitmapInfo
+ *
+ * Get the info from a bitmap header.
+ * Return 1 for INFOHEADER, 0 for COREHEADER,
+ * 4 for V4HEADER, 5 for V5HEADER, -1 for error.
+ */
+static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
+                              LONG *height, WORD *bpp, DWORD *compr )
+{
+    if (header->biSize == sizeof(BITMAPINFOHEADER))
+    {
+        *width  = header->biWidth;
+        *height = header->biHeight;
+        *bpp    = header->biBitCount;
+        *compr  = header->biCompression;
+        return 1;
+    }
+    if (header->biSize == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
+        *width  = core->bcWidth;
+        *height = core->bcHeight;
+        *bpp    = core->bcBitCount;
+        *compr  = 0;
+        return 0;
+    }
+    if (header->biSize == sizeof(BITMAPV4HEADER))
+    {
+        BITMAPV4HEADER *v4hdr = (BITMAPV4HEADER *)header;
+        *width  = v4hdr->bV4Width;
+        *height = v4hdr->bV4Height;
+        *bpp    = v4hdr->bV4BitCount;
+        *compr  = v4hdr->bV4V4Compression;
+        return 4;
+    }
+    if (header->biSize == sizeof(BITMAPV5HEADER))
+    {
+        BITMAPV5HEADER *v5hdr = (BITMAPV5HEADER *)header;
+        *width  = v5hdr->bV5Width;
+        *height = v5hdr->bV5Height;
+        *bpp    = v5hdr->bV5BitCount;
+        *compr  = v5hdr->bV5Compression;
+        return 5;
+    }
+    ERR("(%ld): unknown/wrong size for header\n", header->biSize );
+    return -1;
+}
 
 /**********************************************************************
  *	    CURSORICON_FindSharedIcon
@@ -659,7 +707,7 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
           return 0;
     }
 
-    if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
     if (screen_dc)
     {
 	BITMAPINFO* pInfo;
@@ -2059,7 +2107,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
       memcpy(fix_info, info, size);
       pix = *((LPBYTE)info + size);
       DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
-      if (!screen_dc) screen_dc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+      if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
 
       if (screen_dc)
       {
@@ -2075,18 +2123,31 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
         else {
             /* If it's possible, create a monochrome bitmap */
 
-            LONG height = fix_info->bmiHeader.biHeight;
-            if (height < 0) height = -height;
+            LONG width;
+            LONG height;
+            WORD bpp;
+            DWORD compr;
 
-            if (is_dib_monochrome(fix_info))
-              hbitmap = CreateBitmap(fix_info->bmiHeader.biWidth, height, 1, 1, NULL);
-            else
-              hbitmap = CreateBitmap(fix_info->bmiHeader.biWidth, height,
-                          GetDeviceCaps(screen_dc, PLANES),
-                          GetDeviceCaps(screen_dc, BITSPIXEL), NULL);
+            if (DIB_GetBitmapInfo( &fix_info->bmiHeader, &width, &height, &bpp, &compr ) != -1)
+            {
+                if (width < 0)
+                    TRACE("Bitmap has a negative width\n");
+                else
+                {
+                    /* Top-down DIBs have a negative height */
+                    if (height < 0) height = -height;
 
-            SetDIBits(screen_dc, hbitmap, 0, height, bits, info, DIB_RGB_COLORS);
-	}
+                    TRACE("width=%ld, height=%ld, bpp=%u, compr=%lu\n", width, height, bpp, compr);
+
+                    if (is_dib_monochrome(fix_info))
+                        hbitmap = CreateBitmap(width, height, 1, 1, NULL);
+                    else
+                        hbitmap = CreateCompatibleBitmap(screen_dc, width, height);
+
+                    SetDIBits(screen_dc, hbitmap, 0, height, bits, info, DIB_RGB_COLORS);
+                }
+            }
+         }
       }
 
       GlobalUnlock(hFix);

@@ -104,8 +104,8 @@ int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
  * Return 1 for INFOHEADER, 0 for COREHEADER,
  * 4 for V4HEADER, 5 for V5HEADER, -1 for error.
  */
-static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
-                              int *height, WORD *bpp, WORD *compr )
+static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
+                              LONG *height, WORD *bpp, DWORD *compr )
 {
     if (header->biSize == sizeof(BITMAPINFOHEADER))
     {
@@ -782,15 +782,26 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
                             UINT coloruse )
 {
     HBITMAP handle;
-    DWORD width;
-    int height;
+    LONG width;
+    LONG height;
     WORD bpp;
-    WORD compr;
+    DWORD compr;
     DC *dc;
 
     if (DIB_GetBitmapInfo( header, &width, &height, &bpp, &compr ) == -1) return 0;
+    
+    if (width < 0)
+    {
+        TRACE("Bitmap has a negative width\n");
+        return 0;
+    }
+    
+    /* Top-down DIBs have a negative height */
     if (height < 0) height = -height;
 
+    TRACE("hdc=%p, header=%p, init=%lu, bits=%p, data=%p, coloruse=%u (bitmap: width=%ld, height=%ld, bpp=%u, compr=%lu)\n",
+           hdc, header, init, bits, data, coloruse, width, height, bpp, compr);
+    
     if (hdc == NULL)
         handle = CreateBitmap( width, height, 1, 1, NULL );
     else
