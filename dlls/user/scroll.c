@@ -1447,6 +1447,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
 /*************************************************************************
  *           SetScrollInfo   (USER32.@)
+ *
  * SetScrollInfo can be used to set the position, upper bound,
  * lower bound, and page size of a scrollbar control.
  *
@@ -1653,6 +1654,8 @@ BOOL WINAPI GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
 /*************************************************************************
  *           SetScrollPos   (USER32.@)
  *
+ * Sets the current position of the scroll thumb.
+ *
  * PARAMS
  *    hwnd    [I]  Handle of window with scrollbar(s)
  *    nBar    [I]  One of SB_HORZ, SB_VERT, or SB_CTL
@@ -1686,6 +1689,8 @@ INT WINAPI SetScrollPos( HWND hwnd, INT nBar, INT nPos, BOOL bRedraw)
 /*************************************************************************
  *           GetScrollPos   (USER32.@)
  *
+ * Gets the current position of the scroll thumb.
+ *
  * PARAMS
  *    hwnd    [I]  Handle of window with scrollbar(s)
  *    nBar    [I]  One of SB_HORZ, SB_VERT, or SB_CTL
@@ -1712,6 +1717,8 @@ INT WINAPI GetScrollPos(HWND hwnd, INT nBar)
 
 /*************************************************************************
  *           SetScrollRange   (USER32.@)
+ *
+ * Sets the range of the scroll bar.
  *
  * PARAMS
  *    hwnd    [I]  Handle of window with scrollbar(s)
@@ -1765,6 +1772,8 @@ INT SCROLL_SetNCSbState(HWND hwnd, int vMin, int vMax, int vPos,
 
 /*************************************************************************
  *           GetScrollRange   (USER32.@)
+ *
+ * Gets the range of the scroll bar.
  *
  * PARAMS
  *    hwnd    [I]  Handle of window with scrollbar(s)
@@ -1835,6 +1844,8 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, BOOL fShowH, BOOL fShowV 
 /*************************************************************************
  *           ShowScrollBar   (USER32.@)
  *
+ * Shows or hides the scroll bar.
+ *
  * PARAMS
  *    hwnd    [I]  Handle of window with scrollbar(s)
  *    nBar    [I]  One of SB_HORZ, SB_VERT, or SB_CTL
@@ -1852,6 +1863,8 @@ BOOL WINAPI ShowScrollBar(HWND hwnd, INT nBar, BOOL fShow)
 
 /*************************************************************************
  *           EnableScrollBar   (USER32.@)
+ *
+ * Enables or disables the scroll bars.
  */
 BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
 {
