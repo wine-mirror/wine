@@ -758,7 +758,8 @@ static void CBPaintText(
 	} else return;
    }
    else
-       return;
+       if( !CB_OWNERDRAWN(lphc) )
+	   return;
 
    if( lphc->wState & CBF_EDIT )
    {
@@ -1284,6 +1285,7 @@ static void COMBO_SetFocus( LPHEADCOMBO lphc )
 	 InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
 
        CB_NOTIFY( lphc, CBN_SETFOCUS );
+       lphc->wState |= CBF_FOCUSED;
    }
 }
 
@@ -1355,9 +1357,6 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		* checks a flag that is set in these occasions and ignores the 
 		* notification.
 	        */
-	        if (!(lphc->wState & CBF_NOEDITNOTIFY))
-		  CB_NOTIFY( lphc, CBN_EDITCHANGE );
-
 		if (lphc->wState & CBF_NOLBSELECT)
 		{
 		  lphc->wState &= ~CBF_NOLBSELECT;
@@ -1366,6 +1365,9 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		{
 		  CBUpdateLBox( lphc, lphc->wState & CBF_DROPPED );
 		}
+
+	        if (!(lphc->wState & CBF_NOEDITNOTIFY))
+		  CB_NOTIFY( lphc, CBN_EDITCHANGE );
 		break;
 
 	   case (EN_UPDATE >> 8):
