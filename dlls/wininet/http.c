@@ -1506,10 +1506,11 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     INTERNET_SetLastError(0);
 
 
-    /* We must have a verb */
+    /* if the verb is NULL default to GET */
     if (NULL == lpwhr->lpszVerb)
     {
-	    goto lend;
+	static const WCHAR szGET[] = { 'G','E','T', 0 };
+	lpwhr->lpszVerb = WININET_strdupW(szGET);
     }
 
     /* if we are using optional stuff, we must add the fixed header of that option length */
