@@ -342,7 +342,7 @@ BOOL MODULE_InitLoadOrder(void)
 			 */
 			char *tmp = HEAP_strdupA(SystemHeap, 0, buffer);
 			sprintf(buffer, "%s:%s", ld_lib_path, tmp);
-			free(tmp);
+			HeapFree( SystemHeap, 0, tmp );
 		}
 
 		TRACE(module, "Setting new LD_LIBRARY_PATH=%s\n", buffer);
