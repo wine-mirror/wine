@@ -491,7 +491,7 @@ debug_channels (msvcrt)
 @ stub _unlock
 @ cdecl _utime(str ptr) _utime
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
-@ cdecl _vsnwprintf(wstr long wstr long) _vsnwprintf
+@ cdecl _vsnwprintf(ptr long wstr long) _vsnwprintf
 @ cdecl _waccess(wstr long) _waccess
 @ stub _wasctime #(ptr)
 @ cdecl _wchdir(wstr) _wchdir
@@ -699,7 +699,7 @@ debug_channels (msvcrt)
 @ cdecl signal(long long) MSVCRT_signal
 @ cdecl sin(double) sin
 @ cdecl sinh(double) sinh
-@ varargs sprintf(str str) sprintf
+@ varargs sprintf(ptr str) sprintf
 @ forward -noimport sqrt ntdll.sqrt
 @ cdecl srand(long) srand
 @ varargs sscanf(str str) sscanf
@@ -742,7 +742,7 @@ debug_channels (msvcrt)
 @ cdecl vfwprintf(ptr wstr long) MSVCRT_vfwprintf
 @ cdecl vprintf(str long) MSVCRT_vprintf
 @ cdecl vsprintf(ptr str ptr) vsprintf
-@ cdecl vswprintf(wstr wstr long) MSVCRT_vswprintf
+@ cdecl vswprintf(ptr wstr long) MSVCRT_vswprintf
 @ cdecl vwprintf(wstr long) MSVCRT_vwprintf
 @ forward -noimport wcscat ntdll.wcscat
 @ forward -noimport wcschr ntdll.wcschr
