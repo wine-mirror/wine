@@ -134,8 +134,8 @@ static void fixup_resources( IMAGE_RESOURCE_DIRECTORY *dir, char *root, void *ba
     entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
     for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
     {
-        void *ptr = root + entry->u2.s2.OffsetToDirectory;
-        if (entry->u2.s2.DataIsDirectory) fixup_resources( ptr, root, base );
+        void *ptr = root + entry->u2.s3.OffsetToDirectory;
+        if (entry->u2.s3.DataIsDirectory) fixup_resources( ptr, root, base );
         else
         {
             IMAGE_RESOURCE_DATA_ENTRY *data = ptr;

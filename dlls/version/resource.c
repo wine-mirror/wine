@@ -42,7 +42,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
     {
         pos = (min + max) / 2;
         if (entry[pos].u1.s2.Id == id)
-            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s2.OffsetToDirectory);
+            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
         if (entry[pos].u1.s2.Id > id) max = pos - 1;
         else min = pos + 1;
     }
@@ -62,7 +62,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
 
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s2.OffsetToDirectory);
+    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s3.OffsetToDirectory);
 }
 
 
@@ -104,7 +104,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
             res = strncmpiW( nameW, str->NameString, str->Length );
             if (!res && namelen == str->Length)
             {
-                ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s2.OffsetToDirectory);
+                ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s3.OffsetToDirectory);
                 break;
             }
             if (res < 0) max = pos - 1;
