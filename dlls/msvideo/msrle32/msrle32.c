@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 Michael Günnewig
+ * Copyright 2002-2003 Michael Günnewig
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,8 +17,7 @@
  */
 
 /* TODO:
- *   - compression of RLE4 is buggy -- see FIXME's
- *   - many improvements possible
+ *   - some improvements possible
  *   - implement DecompressSetPalette? -- does we need it for anything?
  */
 
@@ -297,10 +296,13 @@ static INT countDiffRLE4(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist
     if (ColorCmp(clr1, clr3) <= lDist &&
 	ColorCmp(clr2, clr4) <= lDist) {
       /* diff at end? -- look-ahead for atleast ?? more encodable pixel */
-
-      /* FIXME */
-
-      return count;
+      if (pos + 2 < width && ColorCmp(clr1,lpB[pos+1]) <= lDist &&
+	  ColorCmp(clr2,lpB[pos+2]) <= lDist) {
+	if (pos + 4 < width && ColorCmp(lpB[pos+1],lpB[pos+3]) <= lDist &&
+	    ColorCmp(lpB[pos+2],lpB[pos+4]) <= lDist)
+	  return count - 3; /* followed by atleast 4 encodable pixels */
+	return count - 2;
+      }
     } else if (lpP != NULL && ColorCmp(lpP[pos], lpB[pos]) <= lDist) {
       /* 'compare' with previous frame for end of diff */
       INT count2 = 0;
@@ -331,9 +333,11 @@ static INT countDiffRLE8(LPWORD lpP, LPWORD lpA, LPWORD lpB, INT pos, LONG lDist
 
   for (count = 0; pos < width; pos++, count++) {
     if (ColorCmp(lpA[pos], lpB[pos]) <= lDist) {
-      /* diff at end? -- look-ahead for atleast one more encodable pixel */
-      if (pos + 1 < width && ColorCmp(lpA[pos], lpB[pos+1]) <= lDist)
-	return count;
+      /* diff at end? -- look-ahead for some more encodable pixel */
+      if (pos + 1 < width && ColorCmp(lpB[pos], lpB[pos+1]) <= lDist)
+	return count - 1;
+      if (pos + 2 < width && ColorCmp(lpB[pos+1], lpB[pos+2]) <= lDist)
+	return count - 1;
     } else if (lpP != NULL && ColorCmp(lpP[pos], lpB[pos]) <= lDist) {
       /* 'compare' with previous frame for end of diff */
       INT count2 = 0;
@@ -382,6 +386,8 @@ static INT MSRLE32_CompressRLE4Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
     /* add some pixel for absoluting if possible */
     count += countDiffRLE4(lpP, lpC - 1, lpC, pos-1, lDist, lpbi->biWidth);
 
+    assert(count > 0);
+
     /* check for near end of line */
     if (x + count > lpbi->biWidth)
       count = lpbi->biWidth - x;
@@ -390,9 +396,11 @@ static INT MSRLE32_CompressRLE4Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
     while (count > 2) {
       INT  i;
       INT  size       = min(count, 254);
-      BOOL extra_byte = (size / 2) % 2 || (size % 2);
+      int  bytes      = ((size + 1) & (~1)) / 2;
+      BOOL extra_byte = bytes & 0x01;
 
-      *lpSizeImage += 2 + size/2 + (size % 2) + extra_byte;
+      *lpSizeImage += 2 + bytes + extra_byte;
+      assert(((*lpSizeImage) % 2) == 0);
       count -= size;
       *lpOut++ = 0;
       *lpOut++ = size;
@@ -467,6 +475,8 @@ static INT MSRLE32_CompressRLE8Line(CodecInfo *pi, LPWORD lpP, LPWORD lpC, LPCBI
   if (count < 2) {
     /* add some more pixels for absoluting if possible */
     count += countDiffRLE8(lpP, lpC - 1, lpC, pos-1, lDist, lpbi->biWidth);
+
+    assert(count > 0);
 
     /* check for over end of line */
     if (x + count > lpbi->biWidth)
@@ -663,6 +673,10 @@ LRESULT MSRLE32_CompressRLE4(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
 	assert(lpOut == lpOutStart + lpbiOut->biSizeImage);
       }
     }
+
+    /* add EOL -- will be changed to EOI */
+    lpbiOut->biSizeImage += 2;
+    *((LPWORD)lpOut)++ = 0;
   }
 
   /* change EOL to EOI -- end of image */
@@ -789,11 +803,14 @@ LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
       if (jumpy == 0) {
 	/* add EOL -- end of line */
 	lpbiOut->biSizeImage += 2;
-	*lpOut++ = 0;
-	*lpOut++ = 0;
+	*((LPDWORD)lpOut)++ = 0;
 	assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
       }
     }
+
+    /* add EOL -- will be changed to EOI */
+    lpbiOut->biSizeImage += 2;
+    *((LPDWORD)lpOut)++ = 0;
   }
 
   /* change EOL to EOI -- end of image */
@@ -847,7 +864,7 @@ static LRESULT MSRLE32_DecompressRLE4(CodecInfo *pi, LPCBITMAPINFOHEADER lpbi,
 	}
 	break;
       default: /* absolute mode */
-	extra_byte = (code1 / 2) & 0x01 || (code1 % 2);
+	extra_byte = (((code1 + 1) & (~1)) / 2) & 0x01;
 
 	if (pixel_ptr/bytes_per_pixel + code1 > lpbi->biWidth)
 	  return ICERR_ERROR;
@@ -1468,9 +1485,7 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
 
     if (lpic->lpbiOutput->biBitCount == 4)
       MSRLE32_CompressRLE4(pi, lpic->lpbiInput, (LPBYTE)lpic->lpInput,
-		   lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, TRUE);
-    /*MSRLE32_CompressRLE4(pi, lpic->lpbiInput, (LPBYTE)lpic->lpInput,
-		   lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);*/
+		   lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
     else
       MSRLE32_CompressRLE8(pi, lpic->lpbiInput, (LPBYTE)lpic->lpInput,
 		   lpic->lpbiOutput, (LPBYTE)lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
