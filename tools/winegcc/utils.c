@@ -198,8 +198,8 @@ void create_file(const char* name, int mode, const char* fmt, ...)
 	error ("Can not create %s.", name);
     vfprintf(file, fmt, ap);
     va_end(ap);
-    fchmod(fileno(file), mode);
     fclose(file);
+    chmod(name, mode);
 }
 
 file_type get_file_type(const char* filename)
