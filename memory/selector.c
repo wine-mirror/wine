@@ -761,9 +761,9 @@ LPVOID WINAPI WOWGetVDMPointer(DWORD vp,DWORD nrofbytes,BOOL32 protected)
 /**********************************************************************
  *           GetVDMPointer32W   (KERNEL.516)
  */
-LPVOID WINAPI GetVDMPointer32W(DWORD vp,DWORD mode)
+LPVOID WINAPI GetVDMPointer32W(DWORD vp,WORD mode)
 {
-    return WOWGetVDMPointer(vp,0,mode);
+    return WOWGetVDMPointer(vp,0,(DWORD)mode);
 }
 
 /**********************************************************************

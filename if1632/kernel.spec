@@ -420,7 +420,7 @@ file	krnl386.exe
 513 pascal   LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16 # Both NT/95
 514 pascal16 FreeLibrary32W(long) FreeLibrary32                 # Both NT/95
 515 pascal   GetProcAddress32W(long str) GetProcAddress32       # Both NT/95
-516 pascal   GetVDMPointer32W(segptr long) GetVDMPointer32W     # Both NT/95
+516 pascal   GetVDMPointer32W(segptr word) GetVDMPointer32W     # Both NT/95
 517 pascal   CallProc32W() WIN16_CallProc32W                    # Both NT/95
 518 pascal   CallProcEx32W() WIN16_CallProcEx32W                # Both NT/95
 519 stub EXITKERNELTHUNK
