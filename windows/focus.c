@@ -101,8 +101,8 @@ HWND32 SetFocus32( HWND32 hwnd )
 	if( hwnd == hwndFocus ) return hwnd;
 
 	/* call hooks */
-	if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, (WPARAM16)hwnd,
-                            (LPARAM)hwndFocus) )
+	if( HOOK_CallHooks16( WH_CBT, HCBT_SETFOCUS, (WPARAM16)hwnd,
+			      (LPARAM)hwndFocus) )
 	    return 0;
 
         /* activate hwndTop if needed. */
@@ -113,7 +113,7 @@ HWND32 SetFocus32( HWND32 hwnd )
 	    if (!IsWindow( hwnd )) return 0;  /* Abort if window destroyed */
 	}
     }
-    else if( HOOK_CallHooks( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)hwndFocus ) )
+    else if( HOOK_CallHooks16( WH_CBT, HCBT_SETFOCUS, 0, (LPARAM)hwndFocus ) )
              return 0;
 
       /* Change focus and send messages */

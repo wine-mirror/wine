@@ -293,7 +293,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
                 SendMessage32A( hwndDefButton, BM_SETSTYLE32,
                                 BS_PUSHBUTTON,FALSE );
             hwndDefButton = hwndCtrl;
-            dlgInfo->msgResult = GetWindowWord( hwndCtrl, GWW_ID );
+            dlgInfo->idResult = GetWindowWord( hwndCtrl, GWW_ID );
         }
     }    
     dprintf_dialog(stddeb, " END\n" );
@@ -583,7 +583,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     dlgInfo->hMenu     = hMenu;
     dlgInfo->xBaseUnit = xUnit;
     dlgInfo->yBaseUnit = yUnit;
-    dlgInfo->msgResult = 0;  /* This is used to store the default button id */
+    dlgInfo->msgResult = 0; 
+    dlgInfo->idResult  = 0;
     dlgInfo->hDialogHeap = 0;
 
     if (dlgInfo->hUserFont)
@@ -747,7 +748,7 @@ static INT32 DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 	}
 	if (dlgInfo->fEnd) break;
     }
-    retval = dlgInfo->msgResult;
+    retval = dlgInfo->idResult;
     EnableWindow( owner, TRUE );
     DestroyWindow( hwnd );
     return retval;
@@ -860,7 +861,7 @@ BOOL16 EndDialog( HWND32 hwnd, INT32 retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    dlgInfo->msgResult = retval;
+    dlgInfo->idResult = retval;
     dlgInfo->fEnd = TRUE;
     dprintf_dialog(stddeb, "EndDialog: %04x %d\n", hwnd, retval );
     return TRUE;

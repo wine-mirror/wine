@@ -6,9 +6,9 @@ VPATH     = @srcdir@
 MODULE    = graphics
 
 C_SRCS = \
-	wing.c \
 	bitblt.c \
-	driver.c
+	driver.c \
+	wing.c
 
 all: $(MODULE).o
 

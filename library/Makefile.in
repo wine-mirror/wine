@@ -3,16 +3,26 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = library
+MODULE    = none
+LIBMODULE = library
 
-C_SRCS = \
+LIB_SRCS = \
 	arch.c \
 	libres.c \
 	miscstubs.c \
-	sup.c \
-	winmain.c
+	sup.c
 
-all: $(MODULE).o
+STUB_SRCS = winestub.c
+
+LIB_OBJS  = $(LIB_SRCS:.c=.o)
+STUB_OBJS = $(STUB_SRCS:.c=.o)
+
+C_SRCS = $(LIB_SRCS) $(STUB_SRCS)
+
+all: $(LIBMODULE).o $(STUB_OBJS)
+
+$(LIBMODULE).o: $(LIB_OBJS)
+	$(LDCOMBINE) $(LIB_OBJS) -o $(LIBMODULE).o
 
 @MAKE_RULES@
 

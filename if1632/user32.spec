@@ -16,9 +16,9 @@ base	1
 0011 stub BroadcastSystemMessage
 0012 stub CalcChildScroll
 0013 stub CallMsgFilter
-0014 stub CallMsgFilterA
-0015 stub CallMsgFilterW
-0016 stub CallNextHookEx
+0014 stdcall CallMsgFilterA(ptr long) CallMsgFilter32A
+0015 stdcall CallMsgFilterW(ptr long) CallMsgFilter32W
+0016 stdcall CallNextHookEx(long long long long) CallNextHookEx32
 0017 stdcall CallWindowProcA(ptr long long long long) CallWindowProc32A
 0018 stdcall CallWindowProcW(ptr long long long long) CallWindowProc32W
 0019 stub CascadeChildWindows
@@ -530,8 +530,8 @@ base	1
 0523 stdcall SetWindowWord(long long long) SetWindowWord
 0524 stdcall SetWindowsHookA(long ptr) SetWindowsHook32A
 0525 stdcall SetWindowsHookExA(long long long long) SetWindowsHookEx32A
-0526 stub SetWindowsHookExW
-0527 stub SetWindowsHookW
+0526 stdcall SetWindowsHookExW(long long long long) SetWindowsHookEx32W
+0527 stdcall SetWindowsHookW(long long long long) SetWindowsHook32W
 0528 stdcall ShowCaret(long) ShowCaret
 0529 stdcall ShowCursor(long) ShowCursor
 0530 stub ShowOwnedPopups
@@ -560,7 +560,7 @@ base	1
 0553 stub TranslateCharsetInfo
 0554 stub TranslateMDISysAccel
 0555 stdcall TranslateMessage(ptr) USER32_TranslateMessage
-0556 stub UnhookWindowsHook
+0556 stdcall UnhookWindowsHook(long ptr) UnhookWindowsHook32
 0557 stdcall UnhookWindowsHookEx(long) UnhookWindowsHookEx32
 0558 stdcall UnionRect(ptr ptr ptr) UnionRect32
 0559 stub UnloadKeyboardLayout

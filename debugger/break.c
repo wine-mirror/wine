@@ -137,7 +137,9 @@ void DEBUG_SetBreakpoints( BOOL32 set )
     {
         if (breakpoints[i].in_use && breakpoints[i].enabled)
         {
-            if (DEBUG_IsBadWritePtr( &breakpoints[i].addr, 1 ))
+            /* Note: we check for read here, because if reading is allowed */
+            /*       writing permission will be forced in DEBUG_SetOpcode. */
+            if (DEBUG_IsBadReadPtr( &breakpoints[i].addr, 1 ))
             {
                 fprintf( stderr, "Invalid address for breakpoint %d, disabling it\n", i );
                 breakpoints[i].enabled = FALSE;

@@ -427,11 +427,15 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     {
 	/* again, this is what CTL3D expects */
 
-        DWORD tm = (textlen) ? GetTextExtent( hDC, wndPtr->text, textlen) : 0x00020002;
-        delta = (rtext.bottom - rtext.top - HIWORD(tm) - 1)/2;
-
-        rbox.bottom = (rbox.top = rtext.top + delta - 1) + HIWORD(tm) + 2;
-        rbox.right = (rbox.left = --rtext.left) + LOWORD(tm) + 2;
+        SetRectEmpty16(&rbox);
+        if( textlen )
+            DrawText16( hDC, wndPtr->text, textlen, &rbox,
+                        DT_SINGLELINE | DT_CALCRECT );
+        textlen = rbox.bottom - rbox.top;
+        delta = ((rtext.bottom - rtext.top) - textlen)/2;
+        rbox.bottom = (rbox.top = rtext.top + delta - 1) + textlen + 2;
+        textlen = rbox.right - rbox.left;
+        rbox.right = (rbox.left += --rtext.left) + textlen + 2;
         IntersectRect16(&rbox, &rbox, &rtext);
         DrawFocusRect16( hDC, &rbox );
     }

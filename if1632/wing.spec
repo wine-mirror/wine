@@ -1,17 +1,16 @@
 name    wing
 type    win16
 
-1001 pascal16 WinGCreateDC() WinGCreateDC16
-1002 pascal16 WinGRecommendDIBFormat(ptr) WinGRecommendDIBFormat16
-1003 pascal16 WinGCreateBitmap(word ptr ptr) WinGCreateBitmap16
-1004 stub WINGGETDIBPOINTER
-1005 stub WINGGETDIBCOLORTABLE
-1006 stub WINGSETDIBCOLORTABLE
-1007 pascal16 WinGCreateHalfTonePalette() WinGCreateHalfTonePalette16
-1008 pascal16 WinGCreateHalfToneBrush(word long word) WinGCreateHalfToneBrush16
-1009 stub WINGSTRETCHBLT
-# Probably much like BitBlt16... but, without the last field (what value?)
-1010 stub WINGBITBLT
+1001 pascal16 WINGCREATEDC() WinGCreateDC16
+1002 pascal16 WINGRECOMMENDDIBFORMAT(ptr) WinGRecommendDIBFormat16
+1003 pascal16 WINGCREATEBITMAP(word ptr ptr) WinGCreateBitmap16
+1004 pascal WINGGETDIBPOINTER(word ptr) WinGGetDIBPointer16
+1005 pascal16 WINGGETDIBCOLORTABLE(word word word ptr) WinGGetDIBColorTable16
+1006 pascal16 WINGSETDIBCOLORTABLE(word word word ptr) WinGSetDIBColorTable16
+1007 pascal16 WINGCREATEHALFTONEPALETTE() WinGCreateHalfTonePalette16
+1008 pascal16 WINGCREATEHALFTONEBRUSH(word word word) WinGCreateHalfToneBrush16
+1009 pascal16 WINGSTRETCHBLT(word word word word word word word word word word) WinGStretchBlt16
+1010 pascal16 WINGBITBLT(word word word word word word word word) WinGBitBlt16
 
 # Seem that 1299 is the limit... weird...
 #1500 stub WINGINITIALIZETHUNK16

@@ -23,32 +23,6 @@ BOOL WIN32_WinHelpA(HWND hWnd,LPCSTR lpszHelp,UINT uCommand, DWORD dwData)
 	return WinHelp(hWnd,lpszHelp,uCommand,dwData);
 }
 
-HHOOK SetWindowsHookEx32A(INT32 id, HOOKPROC32 hookfn, HINSTANCE32 hModule,
-				DWORD ThreadId)
-
-{
-	/* Stub for now */
-	fprintf(stdnimp, "SetWindowsHookEx32A Stub called! (hook Id %d)\n",id);
-	
-	return (HHOOK) NULL;
-}
-
-HHOOK SetWindowsHook32A(INT32 HookId, HOOKPROC32 hookfn)
-{
-	/* Stub for now */
-	fprintf(stdnimp, "SetWindowsHook32A Stub called! (hook Id %d)\n", HookId);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return (HHOOK) NULL;
-}
-
-BOOL32 UnhookWindowsHookEx32(HHOOK hHook)
-
-{
-	/* Stub for now */
-	fprintf(stdnimp, "UnhookWindowsHookEx32 Stub called!\n");
-	return FALSE;
-}
-
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.415)
  */

@@ -619,26 +619,40 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
 
 
 /***********************************************************************
- *           StretchDIBits    	(GDI.439)
+ *           StretchDIBits16   (GDI.439)
  */
-int StretchDIBits( HDC16 hdc, 
-                   WORD xDest, WORD yDest, WORD wDestWidth, WORD wDestHeight,
-                   WORD xSrc, WORD ySrc, WORD wSrcWidth, WORD wSrcHeight,
-                   LPSTR bits, LPBITMAPINFO info, WORD wUsage, DWORD dwRop )
+INT16 StretchDIBits16( HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
+                       INT16 heightDst, INT16 xSrc, INT16 ySrc, INT16 widthSrc,
+                       INT16 heightSrc, const VOID *bits,
+                       const BITMAPINFO *info, UINT16 wUsage, DWORD dwRop )
 {
-    HBITMAP16 hBitmap, hOldBitmap;
-    HDC16 hdcMem;
+    return (INT16)StretchDIBits32( hdc, xDst, yDst, widthDst, heightDst,
+                                   xSrc, ySrc, widthSrc, heightSrc, bits,
+                                   info, wUsage, dwRop );
+}
+
+
+/***********************************************************************
+ *           StretchDIBits32   (GDI32.351)
+ */
+INT32 StretchDIBits32( HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
+                       INT32 heightDst, INT32 xSrc, INT32 ySrc, INT32 widthSrc,
+                       INT32 heightSrc, const void *bits,
+                       const BITMAPINFO *info, UINT32 wUsage, DWORD dwRop )
+{
+    HBITMAP32 hBitmap, hOldBitmap;
+    HDC32 hdcMem;
 
     hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
                               bits, info, wUsage );
     hdcMem = CreateCompatibleDC( hdc );
     hOldBitmap = SelectObject32( hdcMem, hBitmap );
-    StretchBlt32( hdc, xDest, yDest, wDestWidth, wDestHeight,
-                  hdcMem, xSrc, ySrc, wSrcWidth, wSrcHeight, dwRop );
+    StretchBlt32( hdc, xDst, yDst, widthDst, heightDst,
+                  hdcMem, xSrc, ySrc, widthSrc, heightSrc, dwRop );
     SelectObject32( hdcMem, hOldBitmap );
     DeleteDC( hdcMem );
     DeleteObject32( hBitmap );
-    return wSrcHeight;
+    return heightSrc;
 }
 
 

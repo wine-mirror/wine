@@ -506,22 +506,21 @@ static INT32 PROFILE_GetString( LPCSTR section, LPCSTR key_name,
 static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
                                  LPCSTR value )
 {
-    BOOL32 ret;
-
     if (!key_name)  /* Delete a whole section */
     {
         dprintf_profile(stddeb, "PROFILE_DeleteSection('%s')\n", section_name);
-        ret = PROFILE_DeleteSection( &CurProfile.section, section_name );
-        CurProfile.changed |= ret;
-        return ret;
+        CurProfile.changed |= PROFILE_DeleteSection( &CurProfile.section,
+                                                     section_name );
+        return TRUE;         /* Even if PROFILE_DeleteSection() has failed,
+                                this is not an error on application's level.*/
     }
     else if (!value)  /* Delete a key */
     {
         dprintf_profile( stddeb, "PROFILE_DeleteKey('%s','%s')\n",
                          section_name, key_name );
-        ret = PROFILE_DeleteKey( &CurProfile.section, section_name, key_name );
-        CurProfile.changed |= ret;
-        return ret;
+        CurProfile.changed |= PROFILE_DeleteKey( &CurProfile.section,
+                                                 section_name, key_name );
+        return TRUE;          /* same error handling as above */
     }
     else  /* Set the key value */
     {
@@ -542,8 +541,8 @@ static BOOL32 PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
         else dprintf_profile( stddeb, "creating key\n" );
         key->value = xstrdup( value );
         CurProfile.changed = TRUE;
-        return TRUE;
     }
+    return TRUE;
 }
 
 

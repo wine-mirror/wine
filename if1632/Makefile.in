@@ -11,7 +11,7 @@ DLLS = \
 	comdlg32.spec \
 	commdlg.spec \
 	compobj.spec \
-	crtdll.spec	\
+	crtdll.spec \
 	ddeml.spec \
 	gdi.spec \
 	gdi32.spec \
@@ -23,7 +23,7 @@ DLLS = \
 	mmsystem.spec \
 	mouse.spec \
 	mpr.spec \
-	ntdll.spec	\
+	ntdll.spec \
 	ole2.spec \
 	ole2conv.spec \
 	ole2disp.spec \
@@ -52,7 +52,7 @@ DLLS = \
 	wprocs.spec \
 	wsock32.spec
 
-SPEC_FILES = $(DLLS:.spec=.S)
+SPEC_FILES = $(DLLS:.spec=.s)
 
 C_SRCS = \
 	dummy.c \
@@ -60,17 +60,19 @@ C_SRCS = \
 	thunk.c
 
 ASM_SRCS = \
-	$(SPEC_FILES) \
-	callfrom16.S \
-	callfrom32.S \
-	callto16.S \
-	callto32.S \
 	except.S
+
+GEN_ASM_SRCS = \
+	$(SPEC_FILES) \
+	callfrom16.s \
+	callfrom32.s \
+	callto16.s \
+	callto32.s \
 
 .SUFFIXES: .spec
 
-.spec.S:
-	$(BUILD) -spec $< > $*.S
+.spec.s:
+	$(BUILD) -o $@ -spec $<
 
 all: checkbuild $(MODULE).o
 
@@ -81,22 +83,19 @@ $(SPEC_FILES): $(BUILD)
 $(BUILD) checkbuild:
 	cd $(TOPOBJDIR)/tools; $(SUBMAKE) build
 
-callfrom16.S: $(SPEC_FILES)
-	$(BUILD) -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq` > callfrom16.S
+callfrom16.s: $(SPEC_FILES)
+	$(BUILD) -o $@ -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq`
 
-callfrom32.S: $(SPEC_FILES)
-	$(BUILD) -callfrom32 `cat $(SPEC_FILES) | grep CallFrom32_ | sed 's/.*CallFrom32_\(.*\)/\1/' | sort | uniq` > callfrom32.S
+callfrom32.s: $(SPEC_FILES)
+	$(BUILD) -o $@ -callfrom32 `cat $(SPEC_FILES) | grep CallFrom32_ | sed 's/.*CallFrom32_\(.*\)/\1/' | sort | uniq`
 
-callto16.S: $(TOPSRCDIR)/include/callback.h $(BUILD)
-	$(BUILD) -callto16 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq` > callto16.S
+callto16.s: $(TOPSRCDIR)/include/callback.h $(BUILD)
+	$(BUILD) -o $@ -callto16 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq`
 
-callto32.S: $(TOPSRCDIR)/include/callback.h $(BUILD)
-	$(BUILD) -callto32 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo32_" | sed 's/.*CallTo32_\(.*\)(.*/\1/' | sort | uniq` > callto32.S
+callto32.s: $(TOPSRCDIR)/include/callback.h $(BUILD)
+	$(BUILD) -o $@ -callto32 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo32_" | sed 's/.*CallTo32_\(.*\)(.*/\1/' | sort | uniq`
 
 except.o: except.S $(TOPOBJDIR)/include/config.h
 	$(CC) -c $(DIVINCL) -o $*.o $(SRCDIR)/except.S
-
-clean::
-	$(RM) $(SPEC_FILES) callfrom16.S callfrom32.S callto16.S callto32.S
 
 ### Dependencies:

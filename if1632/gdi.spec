@@ -272,8 +272,8 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 410 pascal16 IsValidMetaFile (word) IsValidMetaFile
 411 pascal16 GetCurLogFont(word) GetCurLogFont
 412 pascal16 IsDCCurrentPalette(word) IsDCCurrentPalette
-439 pascal16 StretchDIBits (word s_word s_word word word word word
-                               word word ptr ptr word long) StretchDIBits
+439 pascal16 StretchDIBits (word s_word s_word s_word s_word s_word s_word
+                            s_word s_word ptr ptr word long) StretchDIBits16
 440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits
 441 pascal16 GetDIBits(word word word word ptr ptr word) GetDIBits
 442 pascal16 CreateDIBitmap(word ptr long ptr ptr word) CreateDIBitmap

@@ -122,7 +122,7 @@ heap	65520
 120 pascal   GetMessageTime() GetMessageTime
 121 pascal   SetWindowsHook(s_word segptr) THUNK_SetWindowsHook16
 122 pascal   CallWindowProc(segptr word word word long) CallWindowProc16
-123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter
+123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter16
 124 pascal16 UpdateWindow(word) UpdateWindow
 125 pascal16 InvalidateRect(word ptr word) InvalidateRect16
 126 pascal16 InvalidateRgn(word word word) InvalidateRgn
@@ -235,7 +235,7 @@ heap	65520
 232 pascal16 SetWindowPos(word word word word word word word) SetWindowPos
 233 pascal16 SetParent(word word) SetParent
 234 pascal16 UnhookWindowsHook(s_word segptr) THUNK_UnhookWindowsHook16
-235 pascal   DefHookProc(s_word word long ptr) DefHookProc
+235 pascal   DefHookProc(s_word word long ptr) DefHookProc16
 236 pascal16 GetCapture() GetCapture16
 237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn
 238 pascal16 ExcludeUpdateRgn(word word) ExcludeUpdateRgn
@@ -296,7 +296,7 @@ heap	65520
 290 pascal16 RedrawWindow(word ptr word word) RedrawWindow16
 291 pascal   SetWindowsHookEx(s_word segptr word word) THUNK_SetWindowsHookEx16
 292 pascal16 UnhookWindowsHookEx(segptr) THUNK_UnhookWindowsHookEx16
-293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx
+293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx16
 294 stub LockWindowUpdate
 299 register Mouse_Event() Mouse_Event
 300 stub UnloadInstalledDrivers

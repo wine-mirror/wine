@@ -1130,8 +1130,6 @@ static LRESULT LISTBOX_SelectItemRange( WND *wnd, LB_DESCR *descr, INT32 first,
             LISTBOX_RepaintItem( wnd, descr, i, ODA_SELECT );
         }
     }
-    if (descr->style & LBS_NOTIFY)
-        SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
     return LB_OKAY;
 }
 
@@ -1180,7 +1178,6 @@ static LRESULT LISTBOX_SetSelection( WND *wnd, LB_DESCR *descr, INT32 index,
         if (oldsel != -1) descr->items[oldsel].selected = FALSE;
         if (index != -1) descr->items[index].selected = TRUE;
         descr->selected_item = index;
-/* FIXME    if (index != -1) LISTBOX_MakeItemVisible( wnd, descr, index );*/
         if (oldsel != -1) LISTBOX_RepaintItem( wnd, descr, oldsel, ODA_SELECT);
         if (index != -1) LISTBOX_RepaintItem( wnd, descr, index, ODA_SELECT );
         if (send_notify) SEND_NOTIFICATION( wnd, descr,
@@ -1214,8 +1211,7 @@ static void LISTBOX_MoveCaret( WND *wnd, LB_DESCR *descr, INT32 index,
     else if (!(descr->style & LBS_MULTIPLESEL) && (descr->selected_item != -1))
     {
         /* Set selection to new caret item */
-        LISTBOX_SetSelection( wnd, descr, index, TRUE,
-                              (descr->style & LBS_NOTIFY) != 0 );
+        LISTBOX_SetSelection( wnd, descr, index, TRUE, FALSE );
     }
 }
 
@@ -1683,8 +1679,7 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
             {
                 LISTBOX_SetCaretIndex( wnd, descr, index, FALSE );
                 LISTBOX_SetSelection( wnd, descr, index,
-                                      !descr->items[index].selected,
-                                      (descr->style & LBS_NOTIFY) != 0 );
+                                      !descr->items[index].selected, FALSE );
             }
             else LISTBOX_MoveCaret( wnd, descr, index, FALSE );
         }
@@ -1693,8 +1688,7 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
             LISTBOX_MoveCaret( wnd, descr, index, FALSE );
             LISTBOX_SetSelection( wnd, descr, index,
                                   (!(descr->style & LBS_MULTIPLESEL) || 
-                                   !descr->items[index].selected),
-                                  (descr->style & LBS_NOTIFY) != 0 );
+                                   !descr->items[index].selected), FALSE );
         }
     }
     SetFocus32( wnd->hwndSelf );
@@ -1711,6 +1705,21 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
                 SendMessage32A( descr->owner, WM_BEGINDRAG, 0, 0 );
         }
     }
+    return 0;
+}
+
+
+/***********************************************************************
+ *           LISTBOX_HandleLButtonUp
+ */
+static LRESULT LISTBOX_HandleLButtonUp( WND *wnd, LB_DESCR *descr )
+{
+    if (LISTBOX_Timer != LB_TIMER_NONE)
+        KillSystemTimer32( wnd->hwndSelf, LB_TIMER_ID );
+    LISTBOX_Timer = LB_TIMER_NONE;
+    if (GetCapture32() == wnd->hwndSelf) ReleaseCapture();
+    if (descr->style & LBS_NOTIFY)
+        SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
     return 0;
 }
 
@@ -1883,16 +1892,13 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr,
         caret = descr->nb_items - 1;
         break;
     case VK_SPACE:
-        if (descr->style & LBS_EXTENDEDSEL)
-        {
-            if (!(GetKeyState(VK_SHIFT) & 0x8000))
-                descr->anchor_item = descr->focus_item;
-            LISTBOX_MoveCaret( wnd, descr, descr->focus_item, TRUE );
-        }
+        if (descr->style & LBS_EXTENDEDSEL) caret = descr->focus_item;
         else if (descr->style & LBS_MULTIPLESEL)
+        {
             LISTBOX_SetSelection( wnd, descr, descr->focus_item,
                                   !descr->items[descr->focus_item].selected,
                                   (descr->style & LBS_NOTIFY) != 0 );
+        }
         break;
     }
     if (caret >= 0)
@@ -1901,6 +1907,8 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr,
             !(GetKeyState( VK_SHIFT ) & 0x8000))
             descr->anchor_item = caret;
         LISTBOX_MoveCaret( wnd, descr, caret, TRUE );
+        if (descr->style & LBS_NOTIFY)
+            SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
     }
     return 0;
 }
@@ -1912,11 +1920,24 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr,
 static LRESULT LISTBOX_HandleChar( WND *wnd, LB_DESCR *descr,
                                    WPARAM32 wParam )
 {
-    INT32 index;
+    INT32 caret = -1;
     char str[2] = { wParam & 0xff, '\0' };
 
-    index = LISTBOX_FindString( wnd, descr, descr->focus_item, str, FALSE );
-    if (index != LB_ERR) LISTBOX_MoveCaret( wnd, descr, index, TRUE );
+    if (descr->style & LBS_WANTKEYBOARDINPUT)
+    {
+        caret = SendMessage32A( descr->owner, WM_CHARTOITEM,
+                                MAKEWPARAM(LOWORD(wParam), descr->focus_item),
+                                wnd->hwndSelf );
+        if (caret == -2) return 0;
+    }
+    if (caret == -1)
+        caret = LISTBOX_FindString( wnd, descr, descr->focus_item, str, FALSE);
+    if (caret != -1)
+    {
+        LISTBOX_MoveCaret( wnd, descr, caret, TRUE );
+        if (descr->style & LBS_NOTIFY)
+            SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
+    }
     return 0;
 }
 
@@ -2159,8 +2180,7 @@ LRESULT ListBoxWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
             INT32 index = LISTBOX_FindString( wnd, descr, wParam,
                                               (LPCSTR)lParam, FALSE );
             if (index == LB_ERR) return LB_ERR;
-            LISTBOX_SetSelection( wnd, descr, index, TRUE,
-                                  (descr->style & LBS_NOTIFY) != 0 );
+            LISTBOX_SetSelection( wnd, descr, index, TRUE, FALSE );
             return index;
         }
 
@@ -2176,13 +2196,13 @@ LRESULT ListBoxWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         lParam = (INT32)(INT16)lParam;
         /* fall through */
     case LB_SETSEL32:
-        return LISTBOX_SetSelection( wnd, descr, lParam, wParam,
-                                     (descr->style & LBS_NOTIFY) != 0 );
+        return LISTBOX_SetSelection( wnd, descr, lParam, wParam, FALSE );
 
     case LB_SETCURSEL16:
         wParam = (INT32)(INT16)wParam;
         /* fall through */
     case LB_SETCURSEL32:
+        if (wParam != -1) LISTBOX_MakeItemVisible( wnd, descr, wParam, TRUE );
         return LISTBOX_SetSelection( wnd, descr, wParam, TRUE, FALSE );
 
     case LB_GETSELCOUNT16:
@@ -2344,11 +2364,7 @@ LRESULT ListBoxWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         return 0;
 
     case WM_LBUTTONUP:
-        if (LISTBOX_Timer != LB_TIMER_NONE)
-            KillSystemTimer32( hwnd, LB_TIMER_ID );
-        LISTBOX_Timer = LB_TIMER_NONE;
-        if (GetCapture32() == hwnd) ReleaseCapture();
-        return 0;
+        return LISTBOX_HandleLButtonUp( wnd, descr );
 
     case WM_KEYDOWN:
         return LISTBOX_HandleKeyDown( wnd, descr, wParam );

@@ -5,17 +5,12 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of Nov 8 1996 -
+As of Dec 1 1996 -
 
 General:
 
  * Combobox code is very inadequate (no notification messages,
    dropdown listboxes often stay visible, etc... ).
-
- * Multicolumn and/or LBS_EXTENDEDSEL style listboxes are still 
-   screwed up. [julliard@lrc.epfl.ch]
-
- * Winsock asynchronous functions do not work.
 
  * Font mapping is too generic. No soft font loading, no rotated 
    text support. [alex@amadeus.pharm.sunysb.edu]
@@ -31,12 +26,16 @@ General:
 
 Miscellaneous:
 
+ * Simple OLE actions were working in October release, got
+   broken in November (in Winword "Insert Object" now results in 
+   segfault right after the call to LoadModule()).
+ * Write and other applications have problems with displaying partially
+   obscured bitmaps. 
+ * Asynchronous Winsock services sometimes produce zombie processes.
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.
  * ScrollWindowEx() is outdated.
  * HCBT_CLICKSKIPPED/HCBT_KEYSKIPPED hook actions are not implemented.
- * Write sometimes segfaults in StretchDIBits() (when inside BITBLT_GetRow)
-   when only lower part of the resulting image is visible.
 
 Where to look in source files:
 

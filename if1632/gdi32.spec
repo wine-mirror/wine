@@ -236,9 +236,9 @@ base	1
 0228 stub GetTextExtentExPointA
 0229 stub GetTextExtentExPointW
 0230 stdcall GetTextExtentPoint32A(long ptr long ptr) GetTextExtentPoint32A
-0231 stub GetTextExtentPoint32W
-0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32A
-0233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32W
+0231 stdcall GetTextExtentPoint32W(long ptr long ptr) GetTextExtentPoint32W
+0232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32ABuggy
+0233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32WBuggy
 0234 stdcall GetTextFaceA(long long ptr) GetTextFace
 0235 stub GetTextFaceW
 0236 stdcall GetTextMetricsA(long ptr) GetTextMetrics32A
@@ -358,8 +358,8 @@ base	1
 0349 stub StartPage
 0350 stdcall StretchBlt(long long long long long long long long long long long)
              StretchBlt32
-0351 stdcall StretchDIBits(long long long long long long long
-                               long long long long long long) StretchDIBits
+0351 stdcall StretchDIBits(long long long long long long long long long
+                           ptr ptr long long) StretchDIBits32
 0352 stub StrokeAndFillPath
 0353 stub StrokePath
 0354 stub SwapBuffers

@@ -17,7 +17,7 @@
 /***********************************************************************
  *           GetACP               (KERNEL32.148)
  */
-UINT GetACP(void)
+UINT32 GetACP(void)
 {
     return 1252;    /* Windows 3.1 ISO Latin */
 }
@@ -36,7 +36,7 @@ BOOL GetCPInfo(UINT codepage, LPCPINFO cpinfo)
 /***********************************************************************
  *              GetOEMCP                (KERNEL32.248)
  */
-UINT GetOEMCP(void)
+UINT32 GetOEMCP(void)
 {
     return 437;    /* MS-DOS United States */
 }

@@ -677,10 +677,10 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
        LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParam[11]);
        LPSTR bits = MF_GetDIBitsPointer(info);
        if (bits)
-        StretchDIBits(hdc,mr->rdParam[10],mr->rdParam[9],mr->rdParam[8],
-		    mr->rdParam[7],mr->rdParam[6],mr->rdParam[5],
-		    mr->rdParam[4],mr->rdParam[3],bits,info,
-		    mr->rdParam[2],MAKELONG(mr->rdParam[0],mr->rdParam[1]));
+        StretchDIBits16(hdc,mr->rdParam[10],mr->rdParam[9],mr->rdParam[8],
+                       mr->rdParam[7],mr->rdParam[6],mr->rdParam[5],
+                       mr->rdParam[4],mr->rdParam[3],bits,info,
+                       mr->rdParam[2],MAKELONG(mr->rdParam[0],mr->rdParam[1]));
       }
       break;
 
@@ -689,10 +689,10 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
        LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParam[10]); 
        LPSTR bits = MF_GetDIBitsPointer(info);
        if (bits)
-         StretchDIBits(hdc,mr->rdParam[9],mr->rdParam[8],mr->rdParam[7],
-		    mr->rdParam[6],mr->rdParam[5],mr->rdParam[4],
-		    mr->rdParam[3],mr->rdParam[2],bits,info,
-		    DIB_RGB_COLORS,MAKELONG(mr->rdParam[0],mr->rdParam[1]));
+         StretchDIBits16(hdc,mr->rdParam[9],mr->rdParam[8],mr->rdParam[7],
+                       mr->rdParam[6],mr->rdParam[5],mr->rdParam[4],
+                       mr->rdParam[3],mr->rdParam[2],bits,info,
+                       DIB_RGB_COLORS,MAKELONG(mr->rdParam[0],mr->rdParam[1]));
       }
       break;		  
 
@@ -705,7 +705,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
                                       mr->rdParam[14], /*BitsPixel*/
                                       (LPSTR)&mr->rdParam[15]);  /*bits*/
        SelectObject32(hdcSrc,hbitmap);
-       StretchBlt32(hdc,mr->rdParam[9],mr->rdParam[8],
+       StretchBlt16(hdc,mr->rdParam[9],mr->rdParam[8],
                     mr->rdParam[7],mr->rdParam[6],
 		    hdcSrc,mr->rdParam[5],mr->rdParam[4],
 		    mr->rdParam[3],mr->rdParam[2],

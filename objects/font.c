@@ -320,7 +320,9 @@ void FONT_GetMetrics( LOGFONT16 * logfont, XFontStruct * xfont,
     metrics->tmDigitizedAspectX = 1;
     metrics->tmDigitizedAspectY = 1;
     metrics->tmPitchAndFamily   = (logfont->lfPitchAndFamily&0xf0)|TMPF_DEVICE;
-    if (logfont->lfPitchAndFamily & FIXED_PITCH) 
+
+    /* TMPF_FIXED_PITCH bit means variable pitch...Don't you love Microsoft? */
+    if (xfont->min_bounds.width != xfont->max_bounds.width)
         metrics->tmPitchAndFamily |= TMPF_FIXED_PITCH;
 
     if (!xfont->per_char) average = metrics->tmMaxCharWidth;
@@ -827,6 +829,10 @@ DWORD GetTextExtent( HDC16 hdc, LPCSTR str, short count )
 
 /***********************************************************************
  *           GetTextExtentPoint16    (GDI.471)
+ *
+ * FIXME: Should this have a bug for compatibility?
+ * Original Windows versions of GetTextExtentPoint{A,W} have documented
+ * bugs.
  */
 BOOL16 GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count, LPSIZE16 size)
 {
@@ -838,7 +844,7 @@ BOOL16 GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count, LPSIZE16 size)
 
 
 /***********************************************************************
- *           GetTextExtentPoint32A    (GDI32.232)
+ *           GetTextExtentPoint32A    (GDI32.230)
  */
 BOOL32 GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
                               LPSIZE32 size )
@@ -861,7 +867,7 @@ BOOL32 GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
 
 
 /***********************************************************************
- *           GetTextExtentPoint32W    (GDI32.233)
+ *           GetTextExtentPoint32W    (GDI32.231)
  */
 BOOL32 GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
                               LPSIZE32 size )
@@ -870,6 +876,26 @@ BOOL32 GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
     BOOL32 ret = GetTextExtentPoint32A( hdc, p, count, size );
     free( p );
     return ret;
+}
+
+/***********************************************************************
+ *           GetTextExtentPoint32ABuggy    (GDI32.232)
+ */
+BOOL32 GetTextExtentPoint32ABuggy( HDC32 hdc, LPCSTR str, INT32 count,
+				   LPSIZE32 size )
+{
+    fprintf( stderr, "GetTextExtentPoint32ABuggy: not bug compatible.\n" );
+    return GetTextExtentPoint32A( hdc, str, count, size );
+}
+
+/***********************************************************************
+ *           GetTextExtentPoint32WBuggy    (GDI32.233)
+ */
+BOOL32 GetTextExtentPoint32WBuggy( HDC32 hdc, LPCWSTR str, INT32 count,
+				   LPSIZE32 size )
+{
+    fprintf( stderr, "GetTextExtentPoint32WBuggy: not bug compatible.\n" );
+    return GetTextExtentPoint32W( hdc, str, count, size );
 }
 
 

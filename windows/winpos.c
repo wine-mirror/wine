@@ -595,7 +595,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             swpflags |= SWP_FRAMECHANGED;
             if (!(wndPtr->dwStyle & WS_MINIMIZE))
             {
-		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		if( HOOK_CallHooks16( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
 		    return 0;
 
                 if (wndPtr->dwStyle & WS_MAXIMIZE)
@@ -623,7 +623,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             swpflags |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             if (!(wndPtr->dwStyle & WS_MAXIMIZE))
             {
-		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		if( HOOK_CallHooks16( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
 		    return 0;
 
                   /* Store the current position and find the maximized size */
@@ -669,7 +669,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 
             if (wndPtr->dwStyle & WS_MINIMIZE)
             {
-		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		if( HOOK_CallHooks16( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
 		    return 0;
 
                 if( !SendMessage16( hwnd, WM_QUERYOPEN, 0, 0L) )
@@ -702,7 +702,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
             }
             else if (wndPtr->dwStyle & WS_MAXIMIZE)
             {
-		if( HOOK_CallHooks( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
+		if( HOOK_CallHooks16( WH_CBT, HCBT_MINMAX, hwnd, cmd) )
 		    return 0;
 
                 wndPtr->ptMaxPos.x = wndPtr->rectWindow.left;
@@ -962,8 +962,8 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
         LRESULT wRet;
         cbtStruct->fMouse     = fMouse;
         cbtStruct->hWndActive = hwndActive;
-        wRet = HOOK_CallHooks( WH_CBT, HCBT_ACTIVATE, (WPARAM16)hWnd,
-                               (LPARAM)SEGPTR_GET(cbtStruct) );
+        wRet = HOOK_CallHooks16( WH_CBT, HCBT_ACTIVATE, (WPARAM16)hWnd,
+                                 (LPARAM)SEGPTR_GET(cbtStruct) );
         SEGPTR_FREE(cbtStruct);
         if (wRet) return wRet;
     }

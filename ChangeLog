@@ -1,4 +1,77 @@
 ----------------------------------------------------------------------
+Sun Dec  8 14:51:57 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [configure.in]
+	Added check to see if the compiler supports building a DLL when
+	the --with-dll option is used.
+
+	* [controls/listbox.c]
+	Don't send LBN_SELCHANGE too often.
+	Added WM_CHARTOITEM support.
+
+	* [Make.rules.in] [library/Makefile.in]
+	Build winestub.o and link it with Winelib programs.
+
+	* [objects/text.c]
+	Added support for '&&' in DrawText().
+
+	* [tools/build.c]
+	Added -o option.
+
+Sat Dec 7 12:07:07 1996  Andrew Lewycky <plewycky@oise.utoronto.ca>
+
+	* [win32/thread.c]
+	GetCurrentThread(): return -2 (current thread pseudo-handle).
+	GetCurrentThreadId(): return GetCurrentTask().
+
+	* [objects/font.c] [if1632/gdi32.spec]
+	GetTextExtentPoint32{A,W}Buggy(): for future bug-compatibility.
+
+	* [win32/findfile.c]
+	FindClose(): ignore INVALID_HANDLE_VALUE (like Win95).
+
+	* [windows/hook.c] [include/hook.h] [if1632/user.spec]
+	  [if1632/user32.spec] [windows/focus.c] [windows/message.c]
+	  [windows/nonclient.c] [windows/win.c] [windows/winpos.c]
+	Hooks rewritten to support Win32.
+
+	* [misc/winsock.c]
+	WINSOCK_select(): need to put sockets with errors into exceptfds.
+	WINSOCK_socket(): fix error return.
+
+	* [windows/win.c]
+	SetWindowWord(): call SetParent on GWW_HWNDPARENT.
+
+Wed Dec  4 22:03:05 1996  Andrew Taylor <andrew@riscan.com>
+
+	* [files/dos_fs.c]
+	Check if buf is NULL before copying string in GetFullPathName32A().
+
+Wed Dec  4 21:40:59 1996  Robert Pouliot <krynos@clic.net>
+
+        * [graphics/wing.c] [if1632/wing.spec]
+	Implemented many WinG functions, but some don't seem to
+	work correctly (probably due to the one not done).
+	
+Wed Dec  4 03:38:25 1996  Lee Jaekil <juria@puma.kaitech.re.kr>
+
+	* [misc/main.c]
+	Implemented a few more of the SystemParametersInfo() cases.
+
+Sun Dec  1 22:30:00 1996  Alex Korobka <alex@trantor.pharm.sunysb.edu> 
+
+	* [controls/button.c]
+	Improved focus rectangle painting.
+
+	* [windows/dialog.c] [windows/defdlg.c]
+	Fixed IE3.0 problems with DWL_MSGRESULT.
+
+Sun Dec  1 20:49:32 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [files/profile.c]
+	Changed error handling in PROFILE_SetString().
+
+----------------------------------------------------------------------
 Sat Nov 30 19:21:17 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [configure]

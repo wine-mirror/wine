@@ -86,19 +86,20 @@ static const char *TEXT_NextLine( HDC16 hdc, const char *str, int *count,
 	case PREFIX:
 	    if (!(format & DT_NOPREFIX))
 	    {
-		prefix_offset = j;
-		i++;
+                if (str[++i] != PREFIX)
+                {
+                    prefix_offset = j;
+                    break;
+                }
 	    }
-	    else
-	    {
-		dest[j++] = str[i++];
-		if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
-		{
-		    if (!GetTextExtentPoint16(hdc, &dest[j-1], 1, &size))
-			return NULL;
-		    plen += size.cx;
-		}
-	    }
+            dest[j++] = str[i++];
+            if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX) ||
+                (format & DT_WORDBREAK))
+            {
+                if (!GetTextExtentPoint16(hdc, &dest[j-1], 1, &size))
+                    return NULL;
+                plen += size.cx;
+            }
 	    break;
 	    
 	case TAB:

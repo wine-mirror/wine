@@ -16,9 +16,7 @@
 #include <sys/socket.h>
 #include "windows.h"
 
-#ifndef WINELIB
-#pragma pack(1)                 /* tight alignment for the emulator */
-#endif
+#pragma pack(1)
 
 /* Win16 socket-related types */
 
@@ -135,9 +133,7 @@ typedef struct WSAData {
         SEGPTR			lpVendorInfo;
 } WSADATA, *LPWSADATA;
 
-#ifndef WINELIB
 #pragma pack(4)
-#endif
 
 /* ----------------------------------- no Win16 structure defs beyond this line! */
 

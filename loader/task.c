@@ -772,7 +772,7 @@ void TASK_Reschedule(void)
 
     /* extract hardware events only! */
 
-    EVENT_WaitXEvent( FALSE, TRUE );
+    if (!hTask) EVENT_WaitXEvent( FALSE, TRUE );
 
     while (!hTask)
     {

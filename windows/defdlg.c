@@ -89,18 +89,18 @@ static BOOL32 DEFDLG_SetDefButton( HWND32 hwndDlg, DIALOGINFO *dlgInfo,
         !(SendMessage16(hwndNew, WM_GETDLGCODE, 0, 0 ) & DLGC_UNDEFPUSHBUTTON))
         return FALSE;  /* Destination is not a push button */
     
-    if (dlgInfo->msgResult)  /* There's already a default pushbutton */
+    if (dlgInfo->idResult)  /* There's already a default pushbutton */
     {
-        HWND32 hwndOld = GetDlgItem( hwndDlg, dlgInfo->msgResult );
+        HWND32 hwndOld = GetDlgItem( hwndDlg, dlgInfo->idResult );
         if (SendMessage32A( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
             SendMessage32A( hwndOld, BM_SETSTYLE32, BS_PUSHBUTTON, TRUE );
     }
     if (hwndNew)
     {
         SendMessage32A( hwndNew, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
-        dlgInfo->msgResult = GetDlgCtrlID( hwndNew );
+        dlgInfo->idResult = GetDlgCtrlID( hwndNew );
     }
-    else dlgInfo->msgResult = 0;
+    else dlgInfo->idResult = 0;
     return TRUE;
 }
 
@@ -177,8 +177,8 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
         case DM_GETDEFID:
             if (dlgInfo->fEnd) return 0;
-	    if (dlgInfo->msgResult)
-	      return MAKELONG( dlgInfo->msgResult, DC_HASDEFID );
+	    if (dlgInfo->idResult)
+	      return MAKELONG( dlgInfo->idResult, DC_HASDEFID );
 	    hwndDefId = DEFDLG_FindDefButton( hwnd );
 	    if (hwndDefId)
 	      return MAKELONG( GetDlgCtrlID( hwndDefId ), DC_HASDEFID);
@@ -223,7 +223,9 @@ LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
                                            hwnd, msg, wParam, lParam );
 
         /* Check if window was destroyed by dialog procedure */
-        if (result || !IsWindow( hwnd )) return result;
+
+	if (!IsWindow( hwnd )) return result;
+	else if( result ) return dlgInfo->msgResult;
     }
     
     switch(msg)
@@ -267,7 +269,9 @@ LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
                                             hwnd, msg, wParam, lParam );
 
         /* Check if window was destroyed by dialog procedure */
-        if (result || !IsWindow( hwnd )) return result;
+
+        if (!IsWindow( hwnd )) return result;
+        else if( result ) return dlgInfo->msgResult;
     }
     
     switch(msg)
@@ -310,7 +314,9 @@ LRESULT DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
                                             hwnd, msg, wParam, lParam );
 
         /* Check if window was destroyed by dialog procedure */
-        if (result || !IsWindow( hwnd )) return result;
+
+        if (!IsWindow( hwnd )) return result;
+        else if( result ) return dlgInfo->msgResult;
     }
     
     switch(msg)

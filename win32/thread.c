@@ -15,12 +15,13 @@
 #include "xmalloc.h"
 
 /***********************************************************************
- *           GetCurrentThreadId   (KERNEL32.200)
+ *           GetCurrentThreadId   (KERNEL32.201)
  */
 
-int GetCurrentThreadId(void)
+DWORD GetCurrentThreadId(void)
 {
-        return getpid();
+        /* Windows 95 returns the address of the thread database (sorta) */
+        return MAKELONG(GetCurrentTask(), 0);
 }
 
 /***********************************************************************
@@ -35,7 +36,7 @@ BOOL GetThreadContext(HANDLE32 hThread, void *lpContext)
  */
 HANDLE32 GetCurrentThread(void)
 {
-	return 0;
+        return 0xFFFFFFFE;	/* that's -2 */
 }
 
 /**********************************************************************

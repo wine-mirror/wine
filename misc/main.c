@@ -606,15 +606,12 @@ static void called_at_exit(void)
 }
 
 /***********************************************************************
- *           main
+ *           MAIN_WineInit
+ *
+ * Wine initialisation and command-line parsing
  */
-#if defined(WINELIB) && defined(WINELIBDLL)
-int _wine_main (int argc, char *argv[])
-#else
-int main( int argc, char *argv[] )
-#endif
+BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 {    
-    int ret_val;
     int depth_count, i;
     int *depth_list;
     struct timeval tv;
@@ -645,7 +642,7 @@ int main( int argc, char *argv[] )
 
     XrmInitialize();
     
-    MAIN_ParseOptions( &argc, argv );
+    MAIN_ParseOptions( argc, argv );
 
     if (Options.desktopGeometry && Options.managed)
     {
@@ -672,15 +669,12 @@ int main( int argc, char *argv[] )
     }
     else screenDepth  = DefaultDepthOfScreen( screen );
     if (Options.synchronous) XSynchronize( display, True );
-    if (Options.desktopGeometry) MAIN_CreateDesktop( argc, argv );
+    if (Options.desktopGeometry) MAIN_CreateDesktop( *argc, argv );
     else rootWindow = DefaultRootWindow( display );
 
     MAIN_SaveSetup();
     atexit(called_at_exit);
-
-    ret_val = _WinMain( argc, argv );
-
-    return ret_val;
+    return TRUE;
 }
 
 
@@ -1063,7 +1057,8 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 	XKeyboardControl	keyboard_value;
 
 
-	switch (uAction) {
+	switch (uAction)
+        {
 		case SPI_GETBEEP:
 			XGetKeyboardControl(display, &keyboard_state);
 			if (keyboard_state.bell_percent == 0)
@@ -1089,20 +1084,22 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
                                                           1 );
                     break;
 
-		case SPI_GETICONTITLEWRAP:
-			*(BOOL *) lpvParam = FALSE;
-			/* FIXME GetProfileInt32A( "desktop", "?", True ) */
-			break;
+                case SPI_GETICONTITLEWRAP:
+                    *(BOOL *) lpvParam = GetProfileInt32A( "desktop",
+                                                           "IconTitleWrap",
+                                                           TRUE );
+                    break;
 
-		case SPI_GETKEYBOARDDELAY:
-			*(INT *) lpvParam = 1;
-			/* FIXME */
-			break;
+                case SPI_GETKEYBOARDDELAY:
+                    *(INT *) lpvParam = GetProfileInt32A( "keyboard",
+                                                          "KeyboardDelay", 1 );
+                    break;
 
-		case SPI_GETKEYBOARDSPEED:
-			*(WORD *) lpvParam = 30;
-			/* FIXME */
-			break;
+                case SPI_GETKEYBOARDSPEED:
+                    *(WORD *) lpvParam = GetProfileInt32A( "keyboard",
+                                                           "KeyboardSpeed",
+                                                           30 );
+                    break;
 
 		case SPI_GETMENUDROPALIGNMENT:
 			*(BOOL *) lpvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT ); /* XXX check this */
@@ -1174,19 +1171,21 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 
 	        case SPI_GETICONTITLELOGFONT: 
 	        {
-			  /* FIXME GetProfileString32A( "?", "?", "?" ) */
-			  LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
-			  lpLogFont->lfHeight = 10;
-			  lpLogFont->lfWidth = 0;
-			  lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
-			  lpLogFont->lfWeight = FW_NORMAL;
-			  lpLogFont->lfItalic = lpLogFont->lfStrikeOut = lpLogFont->lfUnderline = FALSE;
-			  lpLogFont->lfCharSet = ANSI_CHARSET;
-			  lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
-			  lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-			  lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
-			  break;
-			}
+                    /* FIXME GetProfileString32A( "?", "?", "?" ) */
+                    LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
+                    lpLogFont->lfHeight = 10;
+                    lpLogFont->lfWidth = 0;
+                    lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
+                    lpLogFont->lfWeight = FW_NORMAL;
+                    lpLogFont->lfItalic = FALSE;
+                    lpLogFont->lfStrikeOut = FALSE;
+                    lpLogFont->lfUnderline = FALSE;
+                    lpLogFont->lfCharSet = ANSI_CHARSET;
+                    lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+                    lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+                    lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+                    break;
+                }
 
 		case SPI_LANGDRIVER:
 		case SPI_SETBORDER:

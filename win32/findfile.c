@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include "xmalloc.h"
 #include "windows.h"
+#include "winerror.h"
 #include "dos_fs.h"
 #include "heap.h"
 #include "string32.h"
@@ -188,8 +189,12 @@ BOOL32 FindClose32(HANDLE32 handle)
 {
     FindFileContext32 *context;
 
-	if (handle==(INVALID_HANDLE_VALUE))
-		return TRUE;
+    /* Windows95 ignores an invalid handle. */
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+	SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
     context = (FindFileContext32 *) handle;
     if (context->dir)
 	closedir(context->dir);

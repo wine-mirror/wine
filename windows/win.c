@@ -579,36 +579,20 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     hwndLinkAfter = (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
-    if (HOOK_GetHook( WH_CBT, GetTaskQueue(0) ))
+    if (HOOK_IsHooked( WH_CBT ))
     {
-        CBT_CREATEWND16* cbtc;
+	CBT_CREATEWND32A cbtc;
 
-        if ((cbtc = SEGPTR_NEW(CBT_CREATEWND16)))
-        {
-            /* Dummy message params to use WINPROC_MapMsg functions */
-            UINT16 msg;
-            WPARAM16 wparam;
-            LPARAM lparam;
-
-            /* Map the CREATESTRUCT to 16-bit format */
-            lparam = (LPARAM)cs;
-            if (unicode)
-                WINPROC_MapMsg32WTo16( WM_CREATE, 0, &msg, &wparam, &lparam );
-            else
-                WINPROC_MapMsg32ATo16( WM_CREATE, 0, &msg, &wparam, &lparam );
-            cbtc->lpcs = (CREATESTRUCT16 *)lparam;
-            cbtc->hwndInsertAfter = hwndLinkAfter;
-            wmcreate = !HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, hwnd,
-                                        (LPARAM)SEGPTR_GET(cbtc) );
-            WINPROC_UnmapMsg32ATo16( WM_CREATE, 0, lparam );
-            SEGPTR_FREE(cbtc);
-            if (!wmcreate)
-            {
-                dprintf_win(stddeb,"CreateWindowEx: CBT-hook returned 0\n" );
-                USER_HEAP_FREE( hwnd );
-                return 0;
-            }
-        }
+	cbtc.lpcs = cs;
+	cbtc.hwndInsertAfter = hwndLinkAfter;
+	wmcreate = !HOOK_CallHooks32A( WH_CBT, HCBT_CREATEWND, hwnd,
+				       (LPARAM)&cbtc );
+	if (!wmcreate)
+	{
+	    dprintf_win(stddeb, "CreateWindowEx: CBT-hook returned 0\n");
+	    USER_HEAP_FREE( hwnd );
+	    return 0;
+	}
     }
 
     /* Set the window procedure */
@@ -817,7 +801,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     /* Call WH_SHELL hook */
 
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
-        HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
+        HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWCREATED, hwnd, 0 );
 
     dprintf_win(stddeb, "CreateWindowEx: returning %04x\n", hwnd);
     return hwnd;
@@ -1019,12 +1003,12 @@ BOOL DestroyWindow( HWND hwnd )
 
       /* Call hooks */
 
-    if( HOOK_CallHooks( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) )
+    if( HOOK_CallHooks16( WH_CBT, HCBT_DESTROYWND, hwnd, 0L) )
         return FALSE;
 
     if (!(wndPtr->dwStyle & WS_CHILD) && !wndPtr->owner)
     {
-        HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWDESTROYED, hwnd, 0L );
+        HOOK_CallHooks16( WH_SHELL, HSHELL_WINDOWDESTROYED, hwnd, 0L );
         /* FIXME: clean up palette - see "Internals" p.352 */
     }
 
@@ -1406,6 +1390,7 @@ WORD SetWindowWord( HWND32 hwnd, INT32 offset, WORD newval )
     {
 	case GWW_ID:        ptr = (WORD *)&wndPtr->wIDmenu; break;
 	case GWW_HINSTANCE: ptr = (WORD *)&wndPtr->hInstance; break;
+	case GWW_HWNDPARENT: return SetParent( hwnd, newval );
 	default:
             fprintf( stderr, "SetWindowWord: invalid offset %d\n", offset );
             return 0;

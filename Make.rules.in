@@ -1,14 +1,15 @@
 # Global rules shared by all makefiles     -*-Makefile-*-
 #
 # Each individual makefile should define the following variables:
-# TOPSRCDIR  : top-level source directory
-# TOPOBJDIR  : top-level object directory
-# SRCDIR     : source directory for this module
-# MODULE     : name of the module being built
-# C_SRCS     : C sources for the module
-# GEN_C_SRCS : generated C sources (optional)
-# ASM_SRCS   : assembly sources (optional)
-# EXTRA_OBJS : extra object files (optional)
+# TOPSRCDIR    : top-level source directory
+# TOPOBJDIR    : top-level object directory
+# SRCDIR       : source directory for this module
+# MODULE       : name of the module being built
+# C_SRCS       : C sources for the module
+# GEN_C_SRCS   : generated C sources (optional)
+# ASM_SRCS     : assembly sources (optional)
+# GEN_ASM_SRCS : generated assembly sources (optional)
+# EXTRA_OBJS   : extra object files (optional)
 
 # First some useful definitions
 
@@ -21,7 +22,7 @@ X_CFLAGS  = @X_CFLAGS@
 X_LIBS    = @X_LIBS@
 XPM_LIB   = -lXpm
 XLIB      = @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
-WINELIB   = -L$(TOPOBJDIR) -lwine
+WINELIB   = $(WINESTUB) $(TOPOBJDIR)/@MAIN_TARGET@
 LDLIBS    = @LDLIBS@
 YACC      = @YACC@
 LEX       = @LEX@
@@ -33,10 +34,12 @@ RM        = rm -f
 BUILD     = $(TOPOBJDIR)/tools/build
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
 WINERC    = $(TOPOBJDIR)/rc/winerc
+WINESTUB  = $(TOPOBJDIR)/library/winestub.o
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@
 
-OBJS = $(GEN_C_SRCS:.c=.o) $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
+OBJS = $(GEN_C_SRCS:.c=.o) $(C_SRCS:.c=.o) \
+       $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
 
 # Implicit rules
 
@@ -44,6 +47,9 @@ OBJS = $(GEN_C_SRCS:.c=.o) $(C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $*.o $<
+
+.s.o:
+	$(CC) -c -o $*.o $<  
 
 .S.o:
 	$(CC) -c -o $*.o $<  
@@ -85,7 +91,7 @@ depend:: $(MAKEDEP) $(C_SRCS) $(GEN_C_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C. $(GEN_C_SRCS) -C$(SRCDIR) $(C_SRCS)
 
 clean::
-	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc winerctmp.c $(GEN_C_SRCS) $(GEN_C_SRCS:.c=.h) $(PROGRAMS)
+	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc winerctmp.c $(GEN_C_SRCS) $(GEN_C_SRCS:.c=.h) $(GEN_ASM_SRCS) $(PROGRAMS)
 
 dummy:
 

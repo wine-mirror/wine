@@ -583,15 +583,16 @@ typedef struct
 {
     BOOL16    fMouse;
     HWND16    hWndActive;
-} CBTACTIVATESTRUCT16;
+} CBTACTIVATESTRUCT16, *LPCBTACTIVATESTRUCT16;
 
 typedef struct
 {
     BOOL32    fMouse;
     HWND32    hWndActive;
-} CBTACTIVATESTRUCT32;
+} CBTACTIVATESTRUCT32, *LPCBTACTIVATESTRUCT32;
 
 DECL_WINELIB_TYPE(CBTACTIVATESTRUCT);
+DECL_WINELIB_TYPE(LPCBTACTIVATESTRUCT);
 
   /* Shell hook values */
 #define HSHELL_WINDOWCREATED       1
@@ -977,6 +978,8 @@ typedef struct
 #define DEFAULT_CHARSET       1
 #define SYMBOL_CHARSET	      2
 #define SHIFTJIS_CHARSET      128
+#define HANGEUL_CHARSET       129
+#define CHINESEBIG5_CHARSET   136
 #define OEM_CHARSET	      255
 
   /* lfOutPrecision values */
@@ -4063,16 +4066,20 @@ HRSRC32    FindResourceEx32A(HINSTANCE32,LPCSTR,LPCSTR,WORD);
 HRSRC32    FindResourceEx32W(HINSTANCE32,LPCWSTR,LPCWSTR,WORD);
 #define    FindResourceEx WINELIB_NAME_AW(FindResourceEx)
 BOOL32     FlushFileBuffers(HFILE);
+UINT32     GetACP(void);
 LPCSTR     GetCommandLine32A();
 LPCWSTR    GetCommandLine32W();
 #define    GetCommandLine WINELIB_NAME_AW(GetCommandLine)
 BOOL32     GetCommTimeouts(INT32,LPCOMMTIMEOUTS);
+DWORD      GetCurrentThreadId(void);
+HANDLE32   GetCurrentThread(void);
 BOOL32     GetDCOrgEx(HDC32,LPPOINT32);
 DWORD      GetFileInformationByHandle(HFILE,BY_HANDLE_FILE_INFORMATION*);
 DWORD      GetFileSize(HFILE,LPDWORD);
 DWORD      GetFileType(HFILE);
 VOID       GetLocalTime(LPSYSTEMTIME);
 DWORD      GetLogicalDrives(void);
+UINT32     GetOEMCP(void);
 HANDLE32   GetProcessHeap(void);
 DWORD      GetShortPathName32A(LPCSTR,LPSTR,DWORD);
 DWORD      GetShortPathName32W(LPCWSTR,LPWSTR,DWORD);
@@ -4228,6 +4235,9 @@ BOOL32     BuildCommDCB32W(LPCWSTR,LPDCB32);
 BOOL32     BuildCommDCBAndTimeouts32A(LPCSTR,LPDCB32,LPCOMMTIMEOUTS);
 BOOL32     BuildCommDCBAndTimeouts32W(LPCWSTR,LPDCB32,LPCOMMTIMEOUTS);
 #define    BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
+LRESULT    CallNextHookEx16(HHOOK,INT16,WPARAM16,LPARAM);
+LRESULT    CallNextHookEx32(HHOOK,INT32,WPARAM32,LPARAM);
+#define    CallNextHookEx WINELIB_NAME(CallNextHookEx)
 LRESULT    CallWindowProc16(WNDPROC16,HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT    CallWindowProc32A(WNDPROC32,HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT    CallWindowProc32W(WNDPROC32,HWND32,UINT32,WPARAM32,LPARAM);
@@ -4403,6 +4413,10 @@ LRESULT    DefFrameProc16(HWND16,HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT    DefFrameProc32A(HWND32,HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT    DefFrameProc32W(HWND32,HWND32,UINT32,WPARAM32,LPARAM);
 #define    DefFrameProc WINELIB_NAME_AW(DefFrameProc)
+LRESULT    DefHookProc16(INT16,WPARAM16,LPARAM,HHOOK*);
+#define    DefHookProc32(code,wparam,lparam,phhook) \
+           CallNextHookEx32(*(phhook),code,wparam,lparam)
+#define    DefHookProc WINELIB_NAME(DefHookProc)
 LRESULT    DefMDIChildProc16(HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT    DefMDIChildProc32A(HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT    DefMDIChildProc32W(HWND32,UINT32,WPARAM32,LPARAM);
@@ -5294,6 +5308,9 @@ BOOL16     StretchBlt16(HDC16,INT16,INT16,INT16,INT16,HDC16,INT16,INT16,
 BOOL32     StretchBlt32(HDC32,INT32,INT32,INT32,INT32,HDC32,INT32,INT32,
                         INT32,INT32,DWORD);
 #define    StretchBlt WINELIB_NAME(StretchBlt)
+INT16      StretchDIBits16(HDC16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,INT16,const VOID*,const BITMAPINFO*,UINT16,DWORD);
+INT32      StretchDIBits32(HDC32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,INT32,const VOID*,const BITMAPINFO*,UINT32,DWORD);
+#define    StretchDIBits WINELIB_NAME(StretchDIBits)
 BOOL16     SubtractRect16(LPRECT16,const RECT16*,const RECT16*);
 BOOL32     SubtractRect32(LPRECT32,const RECT32*,const RECT32*);
 #define    SubtractRect WINELIB_NAME(SubtractRect)
@@ -5468,7 +5485,6 @@ HDWP16     BeginDeferWindowPos(INT);
 BOOL       BringWindowToTop(HWND);
 void       CalcChildScroll(HWND,WORD);
 BOOL       CallMsgFilter(SEGPTR,INT);
-LRESULT    CallNextHookEx(HHOOK,INT,WPARAM16,LPARAM);
 BOOL       ChangeClipboardChain(HWND,HWND);
 INT        CheckMenuItem(HMENU16,UINT,UINT);
 BOOL       CloseClipboard(void);
@@ -5488,7 +5504,6 @@ HICON16    CreateIcon(HINSTANCE16,INT,INT,BYTE,BYTE,const BYTE*,const BYTE*);
 HMENU16    CreateMenu(void);
 HPALETTE16 CreatePalette(const LOGPALETTE*);
 HMENU16    CreatePopupMenu(void);
-DWORD      DefHookProc(short,WORD,DWORD,HHOOK*);
 HDWP16     DeferWindowPos(HDWP16,HWND,HWND,INT,INT,INT,INT,UINT);
 ATOM       DeleteAtom(ATOM);
 BOOL       DeleteDC(HDC16);
@@ -5716,7 +5731,6 @@ BOOL       ShowWindow(HWND,int);
 DWORD      SizeofResource(HMODULE16,HRSRC16);
 int        StartSound(void);
 int        StopSound(void);
-int        StretchDIBits(HDC16,WORD,WORD,WORD,WORD,WORD,WORD,WORD,WORD,LPSTR,LPBITMAPINFO,WORD,DWORD);
 BOOL       SwapMouseButton(BOOL);
 void       SwapRecording(WORD);
 int        SyncAllVoices(void);

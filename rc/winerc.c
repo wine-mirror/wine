@@ -53,7 +53,6 @@ int main(int argc,char *argv[])
 {  
 	extern int yydebug;
 	extern char* optarg;
-	char* tmpc;
 	int optc,lose,ret,binary;
 	lose=binary=0;
 	while((optc=getopt(argc,argv,"bcdp:vo:w:"))!=EOF)
@@ -66,12 +65,7 @@ int main(int argc,char *argv[])
 					 setbuf(stdout,0);
 					 setbuf(stderr,0);
 					break;
-			case 'p':prefix=strdup(optarg);
-					 if(!isalpha(*prefix))*prefix='_';
-					 for(tmpc=prefix;*tmpc;tmpc++)
-					  if( !isalnum(*tmpc) && *tmpc!='_')
-					   *tmpc='_';
-					break;
+			case 'p':prefix=strdup(optarg); break;
 			case 'c':constant=1;break;
 			case 'v':verbose=1;
 					 setbuf(stderr,0);

@@ -91,15 +91,15 @@ static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 	msg->lParam = MAKELONG( pt.x, pt.y );
         /* No need to further process the message */
 
-        if (!HOOK_GetHook( WH_MOUSE, GetTaskQueue(0)) ||
+        if (!HOOK_IsHooked( WH_MOUSE ) ||
             !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
             return SYSQ_MSG_ACCEPT;
         hook->pt           = msg->pt;
         hook->hwnd         = msg->hwnd;
         hook->wHitTestCode = HTCLIENT;
         hook->dwExtraInfo  = 0;
-        ret = !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                               msg->message, (LPARAM)SEGPTR_GET(hook));
+        ret = !HOOK_CallHooks16( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                                 msg->message, (LPARAM)SEGPTR_GET(hook));
         SEGPTR_FREE(hook);
         return ret ? SYSQ_MSG_ACCEPT : SYSQ_MSG_SKIP ;
     }
@@ -195,7 +195,7 @@ static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
     /* Call the WH_MOUSE hook */
 
-    if (!HOOK_GetHook( WH_MOUSE, GetTaskQueue(0)) ||
+    if (!HOOK_IsHooked( WH_MOUSE ) ||
         !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
         return SYSQ_MSG_ACCEPT;
 
@@ -203,8 +203,8 @@ static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
     hook->hwnd         = msg->hwnd;
     hook->wHitTestCode = hittest;
     hook->dwExtraInfo  = 0;
-    ret = !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                           msg->message, (LPARAM)SEGPTR_GET(hook) );
+    ret = !HOOK_CallHooks16( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                             msg->message, (LPARAM)SEGPTR_GET(hook) );
     SEGPTR_FREE(hook);
     return ret ? SYSQ_MSG_ACCEPT : SYSQ_MSG_SKIP;
 }
@@ -245,9 +245,9 @@ static SYSQ_STATUS MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
         if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
         return SYSQ_MSG_ABANDON;
     }
-    return (HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
-                            msg->wParam, msg->lParam ))
-            ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT;
+    return (HOOK_CallHooks16( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
+			      msg->wParam, msg->lParam )
+            ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT);
 }
 
 
@@ -268,16 +268,16 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
         event->paramH = msg->lParam & 0x7FFF;  
         if (HIWORD(msg->lParam) & 0x0100)
             event->paramH |= 0x8000;               /* special_key - bit */
-        HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0,
-                        (LPARAM)SEGPTR_GET(event) );
+        HOOK_CallHooks16( WH_JOURNALRECORD, HC_ACTION, 0,
+                          (LPARAM)SEGPTR_GET(event) );
     }
     else if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
     {
         event->paramL = LOWORD(msg->lParam);       /* X pos */
         event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
         ClientToScreen16( msg->hwnd, (LPPOINT16)&event->paramL );
-        HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0,
-                        (LPARAM)SEGPTR_GET(event) );
+        HOOK_CallHooks16( WH_JOURNALRECORD, HC_ACTION, 0,
+                          (LPARAM)SEGPTR_GET(event) );
     }
     else if ((msg->message >= WM_NCMOUSEFIRST) &&
              (msg->message <= WM_NCMOUSELAST))
@@ -285,8 +285,8 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
         event->paramL = LOWORD(msg->lParam);       /* X pos */
         event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
         event->message += WM_MOUSEMOVE-WM_NCMOUSEMOVE;/* give no info about NC area */
-        HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0,
-                        (LPARAM)SEGPTR_GET(event) );
+        HOOK_CallHooks16( WH_JOURNALRECORD, HC_ACTION, 0,
+                          (LPARAM)SEGPTR_GET(event) );
     }
     SEGPTR_FREE(event);
 }
@@ -302,10 +302,11 @@ static int MSG_JournalPlayBackMsg(void)
  long wtime,lParam;
  WORD keyDown,i,wParam,result=0;
 
- if ( HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+ if ( HOOK_IsHooked( WH_JOURNALPLAYBACK ) )
  {
   tmpMsg = SEGPTR_NEW(EVENTMSG16);
-  wtime=HOOK_CallHooks( WH_JOURNALPLAYBACK, HC_GETNEXT, 0, (LPARAM)SEGPTR_GET(tmpMsg));
+  wtime=HOOK_CallHooks16( WH_JOURNALPLAYBACK, HC_GETNEXT, 0,
+			  (LPARAM)SEGPTR_GET(tmpMsg));
   /*  dprintf_msg(stddeb,"Playback wait time =%ld\n",wtime); */
   if (wtime<=0)
   {
@@ -360,7 +361,8 @@ static int MSG_JournalPlayBackMsg(void)
                      tmpMsg->paramL, tmpMsg->paramH, tmpMsg->time, 0 );
     }
    }
-   HOOK_CallHooks( WH_JOURNALPLAYBACK, HC_SKIP, 0, (LPARAM)SEGPTR_GET(tmpMsg));
+   HOOK_CallHooks16( WH_JOURNALPLAYBACK, HC_SKIP, 0,
+		     (LPARAM)SEGPTR_GET(tmpMsg));
   }
   else
     result= QS_MOUSE | QS_KEY;
@@ -412,9 +414,9 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
                 hook->wMessage = msg->message;
                 hook->wParam   = msg->wParam;
                 hook->lParam   = msg->lParam;
-                ret = HOOK_CallHooks( WH_HARDWARE,
-                                      remove ? HC_ACTION : HC_NOREMOVE,
-                                      0, (LPARAM)SEGPTR_GET(hook) );
+                ret = HOOK_CallHooks16( WH_HARDWARE,
+                                        remove ? HC_ACTION : HC_NOREMOVE,
+                                        0, (LPARAM)SEGPTR_GET(hook) );
                 SEGPTR_FREE(hook);
                 status = ret ? SYSQ_MSG_SKIP : SYSQ_MSG_ACCEPT;
             }
@@ -434,7 +436,7 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
             ((msg->message < first) || (msg->message > last))) continue;
         if (remove)
         {
-            if (HOOK_GetHook( WH_JOURNALRECORD, GetTaskQueue(0) ))
+            if (HOOK_IsHooked( WH_JOURNALRECORD ))
                 MSG_JournalRecordMsg( msg );
             QUEUE_RemoveMsg( sysMsgQueue, pos );
         }
@@ -776,18 +778,17 @@ BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
 
         /* Call message filters */
 
-        if (HOOK_GetHook( WH_SYSMSGFILTER, GetTaskQueue(0) ) ||
-            HOOK_GetHook( WH_MSGFILTER, GetTaskQueue(0) ))
+        if (HOOK_IsHooked( WH_SYSMSGFILTER ) || HOOK_IsHooked( WH_MSGFILTER ))
         {
             MSG16 *pmsg = SEGPTR_NEW(MSG16);
             if (pmsg)
             {
                 BOOL32 ret;
                 *pmsg = *msg;
-                ret = ((BOOL16)HOOK_CallHooks( WH_SYSMSGFILTER, code, 0,
-                                               (LPARAM)SEGPTR_GET(pmsg) ) ||
-                       (BOOL16)HOOK_CallHooks( WH_MSGFILTER, code, 0,
-                                               (LPARAM)SEGPTR_GET(pmsg) ));
+                ret = ((BOOL16)HOOK_CallHooks16( WH_SYSMSGFILTER, code, 0,
+                                                 (LPARAM)SEGPTR_GET(pmsg) ) ||
+                       (BOOL16)HOOK_CallHooks16( WH_MSGFILTER, code, 0,
+                                                 (LPARAM)SEGPTR_GET(pmsg) ));
                 SEGPTR_FREE(pmsg);
                 if (ret)
                 {
@@ -826,7 +827,7 @@ BOOL GetMessage( SEGPTR msg, HWND hwnd, UINT first, UINT last )
 
     dprintf_msg(stddeb,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
 		     				                 hwnd, first, last );
-    HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
+    HOOK_CallHooks16( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
     return (lpmsg->message != WM_QUIT);
 }
 
@@ -924,30 +925,30 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         return TRUE;
     }
 
-    if (HOOK_GetHook( WH_CALLWNDPROC, GetTaskQueue(0) ))
-    { 
-        struct msgstruct
-        {
-            LPARAM   lParam;
-            WPARAM16 wParam;
-            UINT16   wMsg;
-            HWND16   hWnd;
-        } *pmsg;
-        
-        if ((pmsg = SEGPTR_NEW(struct msgstruct)))
-        {
-            pmsg->hWnd   = hwnd;
-            pmsg->wMsg   = msg;
-            pmsg->wParam = wParam;
-            pmsg->lParam = lParam;
-            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1,
-                            (LPARAM)SEGPTR_GET(pmsg) );
-            hwnd   = pmsg->hWnd;
-            msg    = pmsg->wMsg;
-            wParam = pmsg->wParam;
-            lParam = pmsg->lParam;
-            SEGPTR_FREE( pmsg );
-        }
+    if (HOOK_IsHooked( WH_CALLWNDPROC ))
+    {
+	struct msgstruct
+	{
+	    LPARAM   lParam;
+	    WPARAM16 wParam;
+	    UINT16   wMsg;
+	    HWND16   hWnd;
+	} *pmsg;
+
+	if ((pmsg = SEGPTR_NEW(struct msgstruct)))
+	{
+	    pmsg->hWnd   = hwnd;
+	    pmsg->wMsg   = msg;
+	    pmsg->wParam = wParam;
+	    pmsg->lParam = lParam;
+	    HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 1,
+			      (LPARAM)SEGPTR_GET(pmsg) );
+	    hwnd   = pmsg->hWnd;
+	    msg    = pmsg->wMsg;
+	    wParam = pmsg->wParam;
+	    lParam = pmsg->lParam;
+	    SEGPTR_FREE( pmsg );
+	}
     }
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd )))
@@ -1134,7 +1135,7 @@ LONG DispatchMessage( const MSG16* msg )
     {
 	if (msg->lParam)
         {
-/*            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
+/*            HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 	    return CallWindowProc16( (WNDPROC16)msg->lParam, msg->hwnd,
                                    msg->message, msg->wParam, GetTickCount() );
         }
@@ -1145,7 +1146,7 @@ LONG DispatchMessage( const MSG16* msg )
     if (!wndPtr->winproc) return 0;
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
-/*    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
+/*    HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );

@@ -1149,14 +1149,14 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
     }
 
-    if (HOOK_GetHook( WH_CBT, GetTaskQueue(0) ))
+    if (HOOK_IsHooked( WH_CBT ))
     {
        RECT16* pr = SEGPTR_NEW(RECT16);
        if( pr )
        {
 	 *pr = sizingRect;
-	  if( HOOK_CallHooks( WH_CBT, HCBT_MOVESIZE, hwnd,
-			             (LPARAM)SEGPTR_GET(pr)) )
+	  if( HOOK_CallHooks16( WH_CBT, HCBT_MOVESIZE, hwnd,
+			        (LPARAM)SEGPTR_GET(pr)) )
 	      sizingRect = wndPtr->rectWindow;
 	  else
 	      sizingRect = *pr;

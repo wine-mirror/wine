@@ -4,10 +4,10 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAMS = build makedep
+PROGRAMS = build makedep fnt2bdf
 MODULE   = none
 
-C_SRCS = build.c makedep.c
+C_SRCS = build.c makedep.c fnt2bdf.c
 
 all: $(PROGRAMS)
 
@@ -18,5 +18,8 @@ build: build.o
 
 makedep: makedep.o
 	$(CC) $(CFLAGS) -o makedep makedep.o
+
+fnt2bdf: fnt2bdf.o
+	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o
 
 ### Dependencies:

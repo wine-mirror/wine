@@ -18,7 +18,7 @@ AC_ARG_WITH(library,
 
 AC_ARG_WITH(dll,
 [  --with-dll              build Wine as a DLL instead of an emulator],
-[OPTIONS="-DWINELIB -DWINELIBDLL" MAIN_TARGET="libwine.so.1.0" CFLAGS="$CFLAGS -fPIC"])
+[OPTIONS="-DWINELIB" MAIN_TARGET="libwine.so.1.0"])
 
 AC_ARG_WITH(ipc,
 [  --with-ipc              use inter-process communication for DDE],
@@ -45,7 +45,6 @@ dnl **** Check for gcc strength-reduce bug ****
 if test "x${GCC}" = "xyes"
 then
   CFLAGS="$CFLAGS -Wall"
-  AC_C_CROSS
   AC_CACHE_CHECK( "for gcc strength-reduce bug", ac_cv_c_gcc_strength_bug,
                   AC_TRY_RUN([
 int main(void) {
@@ -81,6 +80,25 @@ LIBS=$saved_libs])
 if test "$ac_cv_c_extern_prefix" = "yes"
 then
   AC_DEFINE(NEED_UNDERSCORE_PREFIX)
+fi
+
+dnl **** Check for working dll ****
+
+if test "$MAIN_TARGET" = "libwine.so.1.0"
+then
+  AC_CACHE_CHECK("whether we can build a dll",
+                 ac_cv_c_dll,
+  [saved_cflags=$CFLAGS
+  CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0"
+  AC_TRY_LINK(,[return 1],ac_cv_c_dll="yes",ac_cv_c_dll="no")
+  CFLAGS=$saved_cflags
+  ])
+  if test "$ac_cv_c_dll" = "yes"
+  then
+    CFLAGS="$CFLAGS -fPIC"
+  else
+    MAIN_TARGET="libwine.a"
+  fi
 fi
 
 dnl **** Check for functions and header files ****

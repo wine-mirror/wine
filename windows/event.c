@@ -307,6 +307,8 @@ void EVENT_RegisterWindow( WND *pWnd )
     if( dndSelection == None )
 	dndSelection = XInternAtom( display, "DndSelection" , False );
 
+    XSetWMProtocols( display, pWnd->window, &wmDeleteWindow, 1 );
+
     if (!winContext) winContext = XUniqueContext();
     XSaveContext( display, pWnd->window, winContext, (char *)pWnd );
 }

@@ -163,12 +163,15 @@ int MAIN_Init(void)
 /**********************************************************************
  *					main
  */
-int _WinMain(int argc, char **argv)
+int main(int argc, char *argv[] )
 {
+    extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
+
     int i;
     HINSTANCE16 handle;
 
-    if (!MAIN_Init()) return 0;
+    if (!MAIN_WineInit( &argc, argv )) return 1;
+    if (!MAIN_Init()) return 1;
 
     for (i = 1; i < argc; i++)
     {
@@ -182,7 +185,7 @@ int _WinMain(int argc, char **argv)
             case 21: fprintf( stderr, "win32 executable\n" ); break;
             default: fprintf( stderr, "error=%d\n", handle ); break;
             }
-            exit(1);
+            return 1;
         }
     }
 

@@ -174,24 +174,68 @@ static void fd_set_normalize(fd_set* fds, LPWSINFO pwsi, ws_fd_set* ws, int* hig
   }
 }
 
-static void fd_set_update(LPWSINFO pwsi, fd_set* fds, ws_fd_set* ws)
+/*
+ * Note weirdness here: sockets with errors belong in exceptfds, but
+ * are given to us in readfds or writefds, so move them to exceptfds if
+ * there is an error. Note that this means that exceptfds may have mysterious
+ * sockets set in it that the program never asked for.
+ */
+
+static int inline sock_error_p(int s)
 {
-  if( ws )
-  {
-    int	        i, j, count = ws->fd_count;
-    ws_socket*  pws;
-    for( i = 0, j = 0; i < count; i++ )
+    unsigned int optval, optlen;
+
+    optlen = sizeof(optval);
+    getsockopt(s, SOL_SOCKET, SO_ERROR, &optval, &optlen);
+    if (optval) dprintf_winsock(stddeb, "error: %d\n", optval);
+    return optval != 0;
+}
+
+static void fd_set_update(LPWSINFO pwsi, fd_set* fds, ws_fd_set* ws,
+			  fd_set *errorfds)
+{
+    if( ws )
     {
-      pws = (ws_socket*)WS_HANDLE2PTR(ws->fd_array[i]);
-      if( _check_ws(pwsi, pws) ) 
-        if( FD_ISSET(pws->fd, fds) )
-        { 
-	  ws->fd_array[j++] = ws->fd_array[i];
-          continue; 
-        }
-      ws->fd_count--;
+	int i, j, count = ws->fd_count;
+
+	for( i = 0, j = 0; i < count; i++ )
+	{
+	    ws_socket *pws = (ws_socket*)WS_HANDLE2PTR(ws->fd_array[i]);
+	    int fd = pws->fd;
+
+	    if( _check_ws(pwsi, pws) && FD_ISSET(fd, fds) ) 
+	    { 
+		/* if error, move to errorfds */
+		if (errorfds && (FD_ISSET(fd, errorfds) || sock_error_p(fd)))
+		    FD_SET(fd, errorfds);
+		else
+		    ws->fd_array[j++] = ws->fd_array[i];
+	    }
+	}
+	ws->fd_count = j;
+	dprintf_winsock(stddeb, "\n");
     }
-  }
+    return;
+}
+
+static void fd_set_update_except(LPWSINFO pwsi, fd_set *fds, ws_fd_set *ws,
+				 fd_set *errorfds)
+{
+    if (ws)
+    {
+	int i, j, count = ws->fd_count;
+
+	for (i=j=0; i < count; i++)
+	{
+	    ws_socket *pws = (ws_socket *)WS_HANDLE2PTR(ws->fd_array[i]);
+
+	    if (_check_ws(pwsi, pws) && (FD_ISSET(pws->fd, fds)
+					 || FD_ISSET(pws->fd, errorfds)))
+	      ws->fd_array[j++] = ws->fd_array[i];
+	}
+	ws->fd_count = j;
+    }
+    return;
 }
 
 /* ----------------------------------- API ----- 
@@ -512,7 +556,7 @@ INT16 WINSOCK_getsockopt(SOCKET16 s, INT16 level,
   ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
   LPWSINFO      pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WSA_GETSOCKOPT(%08x): socket: %04x, opt %d, ptr %8x, ptr %8x\n", 
+  dprintf_winsock(stddeb, "WS_GETSOCKOPT(%08x): socket: %04x, opt %d, ptr %8x, ptr %8x\n", 
 			   (unsigned)pwsi, s, level, (int) optval, (int) *optlen);
 
   if( _check_ws(pwsi, pws) )
@@ -662,19 +706,20 @@ INT16 WINSOCK_select(INT16 nfds, ws_fd_set *ws_readfds,
   if( pwsi )
   {
      int         highfd = 0;
-     fd_set      readfds, writefds, exceptfds;
+     fd_set      readfds, writefds, exceptfds, errorfds;
 
      fd_set_normalize(&readfds, pwsi, ws_readfds, &highfd);
      fd_set_normalize(&writefds, pwsi, ws_writefds, &highfd);
      fd_set_normalize(&exceptfds, pwsi, ws_exceptfds, &highfd);
+     FD_ZERO(&errorfds);
 
      if( (highfd = select(highfd + 1, &readfds, &writefds, &exceptfds, timeout)) >= 0 )
      {
 	  if( highfd )
 	  {
-	    fd_set_update(pwsi, &readfds, ws_readfds);
-	    fd_set_update(pwsi, &writefds, ws_writefds);
- 	    fd_set_update(pwsi, &exceptfds, ws_exceptfds);
+	    fd_set_update(pwsi, &readfds, ws_readfds, &errorfds);
+	    fd_set_update(pwsi, &writefds, ws_writefds, &errorfds);
+ 	    fd_set_update_except(pwsi, &exceptfds, ws_exceptfds, &errorfds);
 	  }
 	  return highfd; 
      }
@@ -820,14 +865,19 @@ SOCKET16 WINSOCK_socket(INT16 af, INT16 type, INT16 protocol)
 /*	printf("created %04x (%i)\n", sock, (UINT16)WS_PTR2HANDLE(pnew));
  */
         if( pnew ) return (SOCKET16)WS_PTR2HANDLE(pnew);
-        else pwsi->errno = WSAENOBUFS;
+        else
+	{
+	    close(sock);
+	    pwsi->errno = WSAENOBUFS;
+	    return INVALID_SOCKET;
+	}
     }
 
     if (errno == EPERM) /* raw socket denied */
     {
         fprintf(stderr, "WS_SOCKET: not enough privileges\n");
         pwsi->errno = WSAESOCKTNOSUPPORT;
-    } pwsi->errno = wsaErrno();
+    } else pwsi->errno = wsaErrno();
   }
  
   dprintf_winsock(stddeb, "\t\tfailed!\n");
