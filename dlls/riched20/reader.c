@@ -3685,7 +3685,7 @@ ControlClass (RTF_Info *info)
 
 
 /*
- * This function notices destinations that should be ignored
+ * This function notices destinations that aren't explicitly handled
  * and skips to their ends.  This keeps, for instance, picture
  * data from being considered as plain text.
  */
@@ -3694,26 +3694,8 @@ static void
 Destination (RTF_Info *info)
 {
 	TRACE("\n");
-
-	switch (info->rtfMinor)
-	{
-	case rtfGenerator:
-	case rtfPict:
-	case rtfFNContSep:
-	case rtfFNContNotice:
-	case rtfInfo:
-	case rtfIndexRange:
-	case rtfITitle:
-	case rtfISubject:
-	case rtfIAuthor:
-	case rtfIOperator:
-	case rtfIKeywords:
-	case rtfIComment:
-	case rtfIVersion:
-	case rtfIDoccomm:
-		RTFSkipGroup (info);
-		break;
-	}
+	if (!RTFGetDestinationCallback(info, info->rtfMinor))
+		RTFSkipGroup (info);    
 }
 
 
@@ -3730,6 +3712,15 @@ void SpecialChar (RTF_Info *info)
 
 	switch (info->rtfMinor)
 	{
+	case rtfOptDest:
+		/* the next token determines destination, if it's unknown, skip the group */
+		/* this way we filter out the garbage coming from unknown destinations */ 
+		RTFGetToken(info); 
+		if (info->rtfClass != rtfDestination)
+			RTFSkipGroup(info);
+		else
+			RTFRouteToken(info); /* "\*" is ignored with known destinations */
+		break;
 	case rtfPage:
 	case rtfSect:
 	case rtfRow:

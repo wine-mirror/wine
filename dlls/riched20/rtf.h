@@ -1390,6 +1390,9 @@ struct RTFStyleElt
 
 # define        maxCSStack              10
 
+/* character format stack size */
+
+# define        maxCharFormatStack      32
 
 struct _RTF_Info;
 typedef struct _RTF_Info RTF_Info;
@@ -1499,6 +1502,9 @@ struct _RTF_Info {
 
     DWORD    dwOutputCount;
     char     OutputBuffer[0x1000];
+
+    CHARFORMAT2W     formatStack[maxCharFormatStack];
+    int              formatStackTop;
 };
 
 

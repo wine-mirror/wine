@@ -284,9 +284,11 @@ void ME_RTFCharAttrHook(RTF_Info *info)
   switch(info->rtfMinor)
   {
     case rtfPlain:
-      FIXME("rtfPlain: how plain should it be ?\n");
-      fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_COLOR | CFM_BACKCOLOR;
+      /* FIXME add more flags once they're implemented */
+      fmt.dwMask = CFM_BOLD | CFM_ITALIC | CFM_UNDERLINE | CFM_STRIKEOUT | CFM_COLOR | CFM_BACKCOLOR | CFM_SIZE | CFM_WEIGHT;
       fmt.dwEffects = CFE_AUTOCOLOR | CFE_AUTOBACKCOLOR;
+      fmt.yHeight = 12*20; /* 12pt */
+      fmt.wWeight = 400;
       break;
     case rtfBold:
       fmt.dwMask = CFM_BOLD;
@@ -385,6 +387,25 @@ void ME_RTFParAttrHook(RTF_Info *info)
 void ME_RTFReadHook(RTF_Info *info) {
   switch(info->rtfClass)
   {
+    case rtfGroup:
+      switch(info->rtfMajor)
+      {
+        case rtfBeginGroup:
+          if (info->formatStackTop < maxCharFormatStack) {
+            info->formatStack[info->formatStackTop].cbSize = sizeof(info->formatStack[0]);
+            SendMessageW(info->hwndEdit, EM_GETCHARFORMAT, 1, (LPARAM)&info->formatStack[info->formatStackTop]);
+          }
+          info->formatStackTop++;
+          break;
+        case rtfEndGroup:
+          RTFFlushOutputBuffer(info);
+          info->formatStackTop--;
+          if (info->formatStackTop < maxCharFormatStack) {
+            SendMessageW(info->hwndEdit, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&info->formatStack[info->formatStackTop]);
+          }
+          break;
+      }
+      break;
     case rtfControl:
       switch(info->rtfMajor)
       {
