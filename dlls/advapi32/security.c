@@ -8,7 +8,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "heap.h"
-#include "ntdll.h"
 #include "ntddk.h"
 #include "debug.h"
 
@@ -54,9 +53,23 @@ BOOL WINAPI
 OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess, 
                   HANDLE *TokenHandle )
 {
-	FIXME(advapi,"(%08x,%08lx,%p): stub\n",ProcessHandle,DesiredAccess, TokenHandle);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
+	CallWin32ToNt(NtOpenProcessToken( ProcessHandle, DesiredAccess, TokenHandle ));
+}
+
+/******************************************************************************
+ * OpenThreadToken [ADVAPI32.114]
+ *
+ * PARAMS
+ *   thread        []
+ *   desiredaccess []
+ *   openasself    []
+ *   thandle       []
+ */
+BOOL WINAPI
+OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess, 
+		 BOOL OpenAsSelf, HANDLE *TokenHandle)
+{
+	CallWin32ToNt (NtOpenThreadToken(ThreadHandle, DesiredAccess, OpenAsSelf, TokenHandle));
 }
 
 /******************************************************************************
@@ -74,28 +87,8 @@ BOOL WINAPI
 AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
                        LPVOID NewState, DWORD BufferLength, 
                        LPVOID PreviousState, LPDWORD ReturnLength )
-{	FIXME(advapi, "stub\n"); 
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
-}
-
-/******************************************************************************
- * OpenThreadToken [ADVAPI32.114]
- *
- * PARAMS
- *   thread        []
- *   desiredaccess []
- *   openasself    []
- *   thandle       []
- */
-BOOL WINAPI
-OpenThreadToken( HANDLE thread, DWORD desiredaccess, BOOL openasself,
-                 HANDLE *thandle )
 {
-	FIXME(advapi,"(%08x,%08lx,%d,%p): stub!\n",
-	      thread,desiredaccess,openasself,thandle);
-	*thandle = 0; /* FIXME ... well, store something in there ;) */
-	return TRUE;
+	CallWin32ToNt(NtAdjustPrivilegesToken(TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength));
 }
 
 /******************************************************************************
@@ -108,16 +101,12 @@ OpenThreadToken( HANDLE thread, DWORD desiredaccess, BOOL openasself,
  *   tokeninfolength []
  *   retlen          []
  *
- * FIXME
- *   tokeninfoclas should be TOKEN_INFORMATION_CLASS
  */
 BOOL WINAPI
-GetTokenInformation( HANDLE token, DWORD tokeninfoclass, LPVOID tokeninfo,
-                     DWORD tokeninfolength, LPDWORD retlen )
+GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass, 
+		     LPVOID tokeninfo, DWORD tokeninfolength, LPDWORD retlen )
 {
-	FIXME(advapi,"(%08x,%ld,%p,%ld,%p): stub\n",
-	      token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
-	return FALSE;
+	CallWin32ToNt (NtQueryInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength, retlen));
 }
 
 /*	##############################
@@ -452,21 +441,37 @@ BOOL WINAPI GetSecurityDescriptorDacl(
  *  SetSecurityDescriptorDacl			[ADVAPI.224]
  */
 BOOL WINAPI 
-SetSecurityDescriptorDacl ( PSECURITY_DESCRIPTOR lpsd, BOOL daclpresent,
-			    PACL dacl, BOOL dacldefaulted )
+SetSecurityDescriptorDacl (
+	PSECURITY_DESCRIPTOR lpsd,
+	BOOL daclpresent,
+	PACL dacl,
+	BOOL dacldefaulted )
 {
 	CallWin32ToNt (RtlSetDaclSecurityDescriptor (lpsd, daclpresent, dacl, dacldefaulted ));
+}
+/******************************************************************************
+ *  GetSecurityDescriptorSacl			[ADVAPI.]
+ */
+BOOL WINAPI GetSecurityDescriptorSacl(
+	IN PSECURITY_DESCRIPTOR lpsd,
+	OUT LPBOOL lpbSaclPresent,
+	OUT PACL *pSacl,
+	OUT LPBOOL lpbSaclDefaulted)
+{
+	CallWin32ToNt (RtlGetSaclSecurityDescriptor(lpsd, (PBOOLEAN)lpbSaclPresent,
+					       pSacl, (PBOOLEAN)lpbSaclDefaulted));
 }	
+
 /**************************************************************************
  * SetSecurityDescriptorSacl			[NTDLL.488]
  */
 BOOL  WINAPI SetSecurityDescriptorSacl (
 	PSECURITY_DESCRIPTOR lpsd,
 	BOOL saclpresent,
-	PACL sacl,
+	PACL lpsacl,
 	BOOL sacldefaulted)
 {
-	CallWin32ToNt (RtlSetSaclSecurityDescriptor(lpsd, saclpresent, sacl, sacldefaulted));
+	CallWin32ToNt (RtlSetSaclSecurityDescriptor(lpsd, saclpresent, lpsacl, sacldefaulted));
 }
 /******************************************************************************
  * MakeSelfRelativeSD [ADVAPI32.95]
