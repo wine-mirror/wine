@@ -589,7 +589,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, WORD uDevID, BOOL reset)
     /* flush all possible output */
 /*
  *FIXME In the original code I think this aborted IO. With Libaudioio you have to wait
- * The following function just blocks untill I/O is complete
+ * The following function just blocks until I/O is complete
  * There is possibly a way to abort the blocks buffered in streams
  * but this approach seems to work OK
  */
@@ -2297,7 +2297,7 @@ DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 /*======================================================================*
  *                  Low level DSOUND capture implementation		*
  *======================================================================*/
-static DWORD widDsCreate(UINT wDevID, PIDSDRIVER* drv)
+static DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv)
 {
     /* we can't perform memory mapping as we don't have a file stream
 	interface with arts like we do with oss */
@@ -2314,7 +2314,7 @@ static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     return MMSYSERR_NOERROR;
 }
 
-static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid)
+static DWORD widDsGuid(UINT wDevID, LPGUID pGuid)
 {
     memcpy(pGuid, &DSDEVID_DefaultCapture, sizeof(GUID));
     return MMSYSERR_NOERROR;
