@@ -645,16 +645,22 @@
       </question>
       <answer>
         <para>
-          Wine is being developed specifically to run on the <emphasis>Intel x86</emphasis> class of CPUs under certain UNIXes that run on the x86 platform.
-	  Winelib however is capable of porting Windows program <emphasis>source code</emphasis> to other platforms also, not only x86.
+          Wine is being developed specifically to run on the <emphasis>Intel
+          x86</emphasis> class of CPUs under certain UNIXes that run on this
+          platform. Winelib however is capable of porting the Windows
+          applications <emphasis>source code</emphasis> to other platforms
+          also, not only x86.
         </para>
         <para>
-          Thus running Windows programs via Wine on other platforms (e.g. MacOS X) is <emphasis>not</emphasis> possible; the only way to run Windows code
-	  on MacOS X would be to take Windows program source code and recompile it for e.g. MacOS X using Winelib.
+          Thus running Windows binaries on other platforms (e.g. Mac OS X on
+          PowerPC) using just Wine is <emphasis>not</emphasis> possible. You
+          would have to either run Wine in an emulated x86 environment or
+          take the Windows application source code and recompile it using
+          Winelib.
 	</para>
 	<para>
-	  The following will list the x86 operating systems supported by
-	  Wine; Winelib support for other platforms keeps evolving,
+	  These are the platforms supported by Wine.
+	  Winelib support for other platforms keeps evolving,
 	  so it's not specifically listed here.
 	</para>
         <para>
@@ -667,13 +673,23 @@
           commercial UNIX and UNIX clone vendors as well.
         </para>
         <para>
-          BeOS: porting efforts used to be pretty strong, but BeOS has severe
-          limitations in Unix call support, so a port will probably never
-          happen.
+          BeOS: porting efforts (BeWine) used to be pretty strong, but BeOS
+          has severe limitations in Unix call support. The demise of Be
+          further hampered the project though it might come back one day on
+          one of the open BeOS projects. In any case a functional port seems
+          unlikely to ever happen at this stage.
         </para>
         <para>
-          FreeBSD: Should work, with limitations in specific areas (mainly 
-          missing device/hardware support).
+          Mac OS X / Darwin: The <ulink
+          url="http://darwine.sourceforge.net/project.html">Darwine</> is
+          currently working on porting Wine to the Darwin/x86 platform. Their
+          goal is to eventually make it possible to run x86 Windows
+          applications on Darwin/PPC and then Mac OS X by using Bochs.
+        </para>
+        <para>
+          FreeBSD: This port is well maintained and should work with
+          limitations in specific areas (mainly missing device/hardware
+          support).
         </para>
         <para>
           Linux/x86: Works, and as the most popular platform for both
