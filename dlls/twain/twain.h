@@ -52,18 +52,13 @@
 #ifndef TWAIN
 #define TWAIN
 
-/*  SDH - 02/08/95 - TWUNK */
-/*  Force 32-bit twain to use same packing of twain structures as existing */
-/*  16-bit twain.  This allows 16/32-bit thunking.                         */
-#ifdef  WIN32
-    #ifdef __BORLANDC__ //(Mentor June 13, 1996) if using a Borland compiler
-        #pragma option -a2  //(Mentor June 13, 1996) switch to word alignment
-    #else   //(Mentor June 13, 1996) if we're using some other compiler
-        #pragma pack (push, before_twain)
-        #pragma pack (2)
-    #endif  //(Mentor June 13, 1996)
-#else   /* WIN32 */
-#endif  /* WIN32 */
+#include "winnt.h"
+
+#define FAR
+#define huge
+#define WIN32
+#define _WIN32
+#define __declspec(spec)
 
 /****************************************************************************
  * TWAIN Version                                                            *
@@ -77,8 +72,8 @@
 
 /* Define one of the following, depending on the platform */
 /* #define _MAC_   */
-#define _UNIX_
-/*#define _MSWIN_  */
+/* #define _UNIX_  */
+#define _MSWIN_
 
 #ifdef  _MSWIN_
     typedef HANDLE         TW_HANDLE;
@@ -1860,17 +1855,5 @@ typedef TW_UINT16 (*DSENTRYPROC)(pTW_IDENTITY,
 #ifdef  __cplusplus
 }
 #endif  /* cplusplus */
-
-/*  SDH - 02/08/95 - TWUNK */
-/*  Force 32-bit twain to use same packing of twain structures as existing */
-/*  16-bit twain.  This allows 16/32-bit thunking. */
-#ifdef  WIN32
-    #ifdef __BORLANDC__ //(Mentor June 13, 1996) if we're using a Borland compiler
-        #pragma option -a.  //(Mentor October 30, 1996) switch back to original alignment
-    #else   //(Mentor June 13, 1996) if NOT using a Borland compiler
-        #pragma pack (pop, before_twain)
-    #endif  //(Mentor June 13, 1996)
-#else   /* WIN32 */
-#endif  /* WIN32 */
 
 #endif  /* TWAIN */

@@ -97,10 +97,12 @@ int yyerror(char *);
 
 input: line
     | input line
+    ;
 
 line: command 
     | tEOL
     | error tEOL               	{ yyerrok; }
+    ;
 
 command:
       tQUIT tEOL		{ DEBUG_ExitMode = EXIT_QUIT; return 1; }
@@ -169,19 +171,21 @@ command:
     | walk_command
     | run_command
     | noprocess_state
+    ;
 
-set_command:
-      tSET lval_addr '=' expr_value tEOL   { DEBUG_WriteMemory( &$2, $4 );
- 					     DEBUG_FreeExprMem(); }
+set_command: tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2,$4); DEBUG_FreeExprMem(); }
+    ;
 
 pathname:
       tIDENTIFIER              { $$ = $1; }
     | tPATH		       { $$ = $1; }
+    ;
 
 disassemble_command:
       tDISASSEMBLE tEOL              { DEBUG_Disassemble( NULL, NULL, 10 ); }
     | tDISASSEMBLE expr_addr tEOL    { DEBUG_Disassemble( & $2, NULL, 10 ); }
     | tDISASSEMBLE expr_addr ',' expr_addr tEOL { DEBUG_Disassemble( & $2, & $4, 0 ); }
+    ;
 
 list_command:
       tLIST tEOL               { DEBUG_List( NULL, NULL, 10 ); }
@@ -189,6 +193,7 @@ list_command:
     | tLIST list_arg tEOL      { DEBUG_List( & $2, NULL, 10 ); }
     | tLIST ',' list_arg tEOL  { DEBUG_List( NULL, & $3, -10 ); }
     | tLIST list_arg ',' list_arg tEOL { DEBUG_List( & $2, & $4, 0 ); }
+    ;
 
 list_arg:
       tNUM		       { $$.sourcefile = NULL; $$.line = $1; }
@@ -197,16 +202,19 @@ list_arg:
     | pathname ':' tIDENTIFIER { DEBUG_GetFuncInfo( & $$, $1, $3); }
     | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 0, & $$ ); 
                                  DEBUG_FreeExprMem(); }
+    ;
 
 x_command:
       tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); DEBUG_FreeExprMem(); }
     | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); 
  				      DEBUG_FreeExprMem(); }
+    ;
 
 print_command:
       tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); DEBUG_FreeExprMem(); }
     | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 ); 
  				      DEBUG_FreeExprMem(); }
+    ;
 
 break_command:
       tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpoint( &$3, NULL ); DEBUG_FreeExprMem(); }
@@ -214,10 +222,12 @@ break_command:
     | tBREAK identifier ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
     | tBREAK tNUM tEOL	       { DEBUG_AddBreakpointFromLineno($2); }
     | tBREAK tEOL              { DEBUG_AddBreakpointFromLineno(-1); }
+    ;
 
 watch_command:
       tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); DEBUG_FreeExprMem(); }
     | tWATCH identifier tEOL    { DEBUG_AddWatchpointFromId($2); }
+    ;
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
@@ -233,6 +243,7 @@ info_command:
     | tINFO tWND expr_value tEOL{ DEBUG_InfoWindow( (HWND)$3 ); DEBUG_FreeExprMem(); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
     | tINFO tDISPLAY tEOL       { DEBUG_InfoDisplay(); }
+    ;
 
 walk_command:
       tWALK tCLASS tEOL         { DEBUG_WalkClasses(); }
@@ -243,17 +254,20 @@ walk_command:
     | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
     | tWALK tTHREAD tEOL        { DEBUG_WalkThreads(); }
     | tWALK tMODREF expr_value tEOL   { DEBUG_WalkModref( $3 ); DEBUG_FreeExprMem(); }
+    ;
 
 run_command:
       tRUN tEOL                 { DEBUG_Run(NULL); }
     | tRUN tSTRING tEOL         { DEBUG_Run($2); }
+    ;
 
 noprocess_state:
       tNOPROCESS tEOL		{} /* <CR> shall not barf anything */
     | tNOPROCESS tSTRING tEOL	{ DEBUG_Printf(DBG_CHN_MESG, "No process loaded, cannot execute '%s'\n", $2); }
+    ;
 
-type_cast: 
-      '(' type_expr ')'		{ $$ = $2; }
+type_cast: '(' type_expr ')'    { $$ = $2; }
+    ;
 
 type_expr:
       type_expr '*'		{ $$ = DEBUG_FindOrMakePointerType($1); }
@@ -274,14 +288,15 @@ type_expr:
     | tSTRUCT tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
     | tUNION tIDENTIFIER	{ $$ = DEBUG_TypeCast(DT_STRUCT, $2); }
     | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(DT_ENUM, $2); }
+    ;
 
-expr_addr:
-      expr			{ $$ = DEBUG_EvalExpr($1); }
+expr_addr: expr                 { $$ = DEBUG_EvalExpr($1); }
+    ;
 
-expr_value:
-      expr        		{ DBG_VALUE	value = DEBUG_EvalExpr($1); 
+expr_value: expr                { DBG_VALUE value = DEBUG_EvalExpr($1);
                                   /* expr_value is typed as an integer */
                                   $$ = DEBUG_ReadMemory(&value); }
+    ;
 
 /*
  * The expr rule builds an expression tree.  When we are done, we call
@@ -330,34 +345,35 @@ expr:
     | '*' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_DEREF, $2); }
     | '&' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_ADDR, $2); }
     | type_cast expr %prec OP_DEREF { $$ = DEBUG_TypeCastExpr($1, $2); } 
-	
+    ;
+
 /*
  * The lvalue rule builds an expression tree.  This is a limited form
  * of expression that is suitable to be used as an lvalue.
  */
-lval_addr:
-    lval			 { $$ = DEBUG_EvalExpr($1); }
+lval_addr: lval                  { $$ = DEBUG_EvalExpr($1); }
+    ;
 
-lval:
-      lvalue                     { $$ = $1; }
+lval: lvalue                     { $$ = $1; }
     | '*' expr			 { $$ = DEBUG_UnopExpr(EXP_OP_FORCE_DEREF, $2); }
-	
-lvalue:
-      tNUM                       { $$ = DEBUG_ConstExpr($1); }
+    ;
+
+lvalue: tNUM                     { $$ = DEBUG_ConstExpr($1); }
     | tINTVAR                    { $$ = DEBUG_IntVarExpr($1); }
     | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
     | lvalue OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); } 
     | lvalue '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
     | lvalue '[' expr ']'	 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); } 
-	
-identifier:
-      tIDENTIFIER 		 { $$ = $1; }
+    ;
+
+identifier: tIDENTIFIER          { $$ = $1; }
     | identifier '.' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 1 + strlen($3)+ 1);
                                    sprintf(ptr, "%s.%s", $1, $3); $$ = DEBUG_MakeSymbol(ptr);
                                    DBG_free(ptr); } 
     | identifier ':' ':' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 2 + strlen($4) + 1);
                                    sprintf(ptr, "%s::%s", $1, $4); $$ = DEBUG_MakeSymbol(ptr);
                                    DBG_free(ptr); } 
+    ;
 
 %%
 

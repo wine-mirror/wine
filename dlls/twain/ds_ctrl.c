@@ -575,7 +575,6 @@ TW_UINT16 TWAIN_DisableDSUserInterface (pTW_IDENTITY pOrigin,
                                         pTW_IDENTITY pDest, TW_MEMREF pData)
 {
     TW_UINT16 twRC = TWRC_SUCCESS;
-    pTW_USERINTERFACE pUserInterface = (pTW_USERINTERFACE) pData;
     activeDS *pSource = TWAIN_LookupSource (pDest);
 
     TRACE ("DG_CONTROL/DAT_USERINTERFACE/MSG_DISABLEDS\n");
@@ -650,7 +649,6 @@ TW_UINT16 TWAIN_EnableDSUIOnly (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
                                 TW_MEMREF pData)
 {
     TW_UINT16 twRC = TWRC_SUCCESS;
-    pTW_USERINTERFACE pUserInterface = (pTW_USERINTERFACE) pData;
     activeDS *pSource = TWAIN_LookupSource (pDest);
 
     TRACE("DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDSUIONLY\n");

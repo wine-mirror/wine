@@ -262,7 +262,7 @@ static BOOL IPADDRESS_SetRange (IPADDRESS_INFO *infoPtr, int index, WORD range)
 
 static void IPADDRESS_ClearAddress (IPADDRESS_INFO *infoPtr)
 {
-    WCHAR nil[0] = { 0 };
+    WCHAR nil[1] = { 0 };
     int i;
 
     TRACE("\n");

@@ -144,7 +144,7 @@ int IJGDEC_Decode( char* pdst, int dstpitch, int dstwidth, int dstheight, int ds
 	}
 
 	jpeg_create_decompress(&jdec);
-	jdec.src = &jsrc;
+	jdec.src = &jsrc.pub;
 
 	ret = jpeg_read_header(&jdec,TRUE);
 	if ( ret != JPEG_HEADER_OK ) goto err;
