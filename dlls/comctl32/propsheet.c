@@ -360,7 +360,7 @@ static INT PROPSHEET_DoDialogBox( HWND hwnd, HWND owner)
    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
    dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
 
-   if (!dlgInfo->flags & DF_END) /* was EndDialog called in WM_INITDIALOG ? */
+   if (!(dlgInfo->flags & DF_END)) /* was EndDialog called in WM_INITDIALOG ? */
    {
        EnableWindow( owner, FALSE );
        ShowWindow( hwnd, SW_SHOW );

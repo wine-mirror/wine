@@ -37,6 +37,7 @@ typedef struct
 #include "poppack.h"
 
 #define DF_END  0x0001
+#define DF_OWNERENABLED 0x0002
 
 extern BOOL DIALOG_Init(void);
 
