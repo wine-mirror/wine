@@ -403,16 +403,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
-    TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_5_5_5_1 (16)\n");
-    pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-    pformat->u1.dwRGBBitCount = 16;
-    pformat->u2.dwRBitMask =        0x0000F800;
-    pformat->u3.dwGBitMask =        0x000007C0;
-    pformat->u4.dwBBitMask =        0x0000003E;
-    pformat->u5.dwRGBAlphaBitMask = 0x00000001;
-    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
-    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
-
+    /* Note : even if this is an 'emulated' texture format, it needs to be first
+              as some dumb applications seem to rely on that. */
     TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_1_5_5_5 (ARGB) (16)\n");
     pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
     pformat->u1.dwRGBBitCount = 16;
@@ -423,13 +415,13 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
-    TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_4_4_4_4 (16)\n");
+    TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_5_5_5_1 (16)\n");
     pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
     pformat->u1.dwRGBBitCount = 16;
-    pformat->u2.dwRBitMask =        0x0000F000;
-    pformat->u3.dwGBitMask =        0x00000F00;
-    pformat->u4.dwBBitMask =        0x000000F0;
-    pformat->u5.dwRGBAlphaBitMask = 0x0000000F;
+    pformat->u2.dwRBitMask =        0x0000F800;
+    pformat->u3.dwGBitMask =        0x000007C0;
+    pformat->u4.dwBBitMask =        0x0000003E;
+    pformat->u5.dwRGBAlphaBitMask = 0x00000001;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
@@ -440,6 +432,16 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     pformat->u3.dwGBitMask =        0x000000F0;
     pformat->u4.dwBBitMask =        0x0000000F;
     pformat->u5.dwRGBAlphaBitMask = 0x0000F000;
+    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+
+    TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_4_4_4_4 (16)\n");
+    pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    pformat->u1.dwRGBBitCount = 16;
+    pformat->u2.dwRBitMask =        0x0000F000;
+    pformat->u3.dwGBitMask =        0x00000F00;
+    pformat->u4.dwBBitMask =        0x000000F0;
+    pformat->u5.dwRGBAlphaBitMask = 0x0000000F;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
