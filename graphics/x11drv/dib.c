@@ -18,7 +18,7 @@
 #include "dc.h"
 #include "color.h"
 #include "callback.h"
-#include "xmalloc.h" /* for XCREATEIMAGE macro */
+#include "xmalloc.h"
 
 static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
 static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
@@ -166,13 +166,18 @@ int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys )
 static void X11DRV_DIB_SetImageBits_1_Line(DWORD dstwidth, int left, int *colors,
 				    XImage *bmpImage, int h, const BYTE *bits)
 {
-    BYTE pix;
+    BYTE pix, extra;
     DWORD i, x;
 
-    dstwidth += left; bits += left >> 3;
+    if((extra = (left & 7)) != 0) {
+        left &= ~7;
+	dstwidth += extra;
+    }
+
+    bits += left >> 3;
 
     /* FIXME: should avoid putting x<left pixels (minor speed issue) */
-    for (i = dstwidth/8, x = left&~7; (i > 0); i--)
+    for (i = dstwidth/8, x = left; i > 0; i--)
     {
 	pix = *bits++;
 	XPutPixel( bmpImage, x++, h, colors[pix >> 7] );
@@ -244,12 +249,14 @@ static void X11DRV_DIB_SetImageBits_4( int lines, const BYTE *srcbits,
     /* 32 bit aligned */
     DWORD linebytes = ((srcwidth+7)&~7)/2;
 
-    dstwidth += left;
+    if(left & 1) {
+        left--;
+	dstwidth++;
+    }
 
-    /* FIXME: should avoid putting x<left pixels (minor speed issue) */
     if (lines > 0) {
 	for (h = lines-1; h >= 0; h--) {
-	    for (i = dstwidth/2, x = left&~1; i > 0; i--) {
+	    for (i = dstwidth/2, x = left; i > 0; i--) {
 		BYTE pix = *bits++;
 		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
 		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
@@ -261,7 +268,7 @@ static void X11DRV_DIB_SetImageBits_4( int lines, const BYTE *srcbits,
     } else {
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
-	    for (i = dstwidth/2, x = left&~1; i > 0; i--) {
+	    for (i = dstwidth/2, x = left; i > 0; i--) {
 		BYTE pix = *bits++;
 		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
 		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
@@ -291,12 +298,15 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *srcbits,
     /* 32 bit aligned */
     DWORD linebytes = ((srcwidth+7)&~7)/2;
 
-    dstwidth += left;
+    if(left & 1) {
+        left--;
+	dstwidth++;
+    }
 
     /* FIXME: should avoid putting x<left pixels (minor speed issue) */
     if (lines > 0) {
        for (h = lines-1; h >= 0; h--) {
-           for (i = dstwidth/2, x = left&~1; i > 0; i--) {
+           for (i = dstwidth/2, x = left; i > 0; i--) {
                *bits++ = (X11DRV_DIB_MapColor( colors, nColors, 
 					XGetPixel( bmpImage, x++, h )) << 4)
 		       | (X11DRV_DIB_MapColor( colors, nColors,
@@ -311,7 +321,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *srcbits,
     } else {
        lines = -lines;
        for (h = 0; h < lines; h++) {
-           for (i = dstwidth/2, x = left&~1; i > 0; i--) {
+           for (i = dstwidth/2, x = left; i > 0; i--) {
                *bits++ = (X11DRV_DIB_MapColor( colors, nColors,
 					XGetPixel( bmpImage, x++, h ))
 			  << 4)
@@ -327,75 +337,87 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *srcbits,
     }
 }
 
-#define check_xy(x,y) \
-	if (x > width) { \
-		x = 0; \
-		if (lines) \
-			lines--; \
-	}
-
 /***********************************************************************
  *           X11DRV_DIB_SetImageBits_RLE4
  *
  * SetDIBits for a 4-bit deep compressed DIB.
  */
-static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits, DWORD width,
-                                DWORD dstwidth, int left, int *colors, XImage *bmpImage )
+static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
+					  DWORD width, DWORD dstwidth,
+					  int left, int *colors,
+					  XImage *bmpImage )
 {
-	int x = 0, c, length;
-	const BYTE *begin = bits;
+    int x = 0, c, length;
+    const BYTE *begin = bits;
 
-        dstwidth += left; /* FIXME: avoid putting x<left pixels */
+    lines--;
 
-        lines--;
-	while ((int)lines >= 0)
-        {
-		length = *bits++;
-		if (length) {	/* encoded */
-			c = *bits++;
-			while (length--) {
-				XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
-				check_xy(x, y);
-				if (length) {
-					length--;
-					XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
-					check_xy(x, y);
-				}
-			}
-		} else {
-			length = *bits++;
-			switch (length) {
-				case 0: /* eol */
-					x = 0;
-					lines--;
-					continue;
-
-				case 1: /* eopicture */
-					return;
-
-				case 2:	/* delta */
-					x += *bits++;
-					lines -= *bits++;
-					continue;
-
-				default: /* absolute */
-					while (length--) {
-						c = *bits++;
-						XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
-						check_xy(x, y);
-						if (length) {
-							length--;
-							XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
-							check_xy(x, y);
-						}
-					}
-					if ((bits - begin) & 1)
-						bits++;
-			}
+    while ((int)lines >= 0) {
+        length = *bits++;
+	if (length) {	/* encoded */
+	    c = *bits++;
+	    while (length--) {
+	        XPutPixel(bmpImage, x++, lines, colors[c >>4]);
+		if(x >= width) {
+		    x = 0;
+		    if(--lines < 0)
+		        return;
 		}
-	}
-}
+		if (length) {
+		    length--;
+		    XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
+		    if(x >= width) {
+		        x = 0;
+			if(--lines < 0)
+			    return;
+		    }
+		}
+	    }
+	} else {
+	    length = *bits++;
+	    switch (length) {
+	    case 0: /* eol */
+	        x = 0;
+		lines--;
+		continue;
 
+	    case 1: /* eopicture */
+	        return;
+
+	    case 2: /* delta */
+	        x += *bits++;
+		if(x >= width) {
+		   FIXME(x11drv, "x-delta is too large?\n");
+		   return;
+		}
+		lines -= *bits++;
+		continue;
+
+	    default: /* absolute */
+	        while (length--) {
+		    c = *bits++;
+		    XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
+		    if(x >= width) {
+		        x = 0;
+			if(--lines < 0)
+			    return;
+		    }
+		    if (length) {
+		        length--;
+			XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
+			if(x >= width) {
+			    x = 0;
+			    if(--lines < 0)
+			        return;
+			}
+		    }
+		}
+		if ((bits - begin) & 1)
+		    bits++;
+	    }
+	}
+    }
+}
 
 
 
@@ -415,7 +437,7 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
     /* align to 32 bit */
     DWORD linebytes = (srcwidth + 3) & ~3;
 
-    dstwidth+=left;
+    dstwidth += left;
 
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
@@ -451,7 +473,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *srcbits,
     /* align to 32 bit */
     DWORD linebytes = (srcwidth + 3) & ~3;
 
-    dstwidth+=left;
+    dstwidth += left;
 
     if (lines > 0) {
        for (h = lines - 1; h >= 0; h--) {
@@ -522,8 +544,6 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
     if (lines == 0)		/* Let's hope this doesn't happen. */
       return;
     
-    dstwidth += left; /* FIXME: avoid putting x<left pixels */
-
     /*
      * Note that the bitmap data is stored by Windows starting at the
      * bottom line of the bitmap and going upwards.  Within each line,
@@ -951,8 +971,13 @@ int X11DRV_DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
 
     if (descr->image)
         bmpImage = descr->image;
-    else
-        XCREATEIMAGE( bmpImage, descr->infoWidth, lines, descr->depth );
+    else {
+        bmpImage = XCreateImage( display,
+				 DefaultVisualOfScreen(X11DRV_GetXScreen()),
+				 descr->depth, ZPixmap, 0, NULL,
+				 descr->infoWidth, lines, 32, 0 );
+	bmpImage->data = xcalloc( bmpImage->bytes_per_line * lines );
+    }
 
       /* Transfer the pixels */
     switch(descr->infoBpp)
@@ -1028,8 +1053,13 @@ int X11DRV_DIB_GetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
 
     if (descr->image)
         bmpImage = descr->image;
-    else
-        XCREATEIMAGE( bmpImage, descr->infoWidth, lines, descr->depth );
+    else {
+        bmpImage = XCreateImage( display,
+				 DefaultVisualOfScreen(X11DRV_GetXScreen()),
+				 descr->depth, ZPixmap, 0, NULL,
+				 descr->infoWidth, lines, 32, 0 );
+	bmpImage->data = xcalloc( bmpImage->bytes_per_line * lines );
+    }
 
     XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
                   descr->width, descr->height, AllPlanes, ZPixmap,
