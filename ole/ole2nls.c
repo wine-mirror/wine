@@ -639,6 +639,10 @@ INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
  *
  * NOTES 
  *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
+ *
+ *  MS online documentation states that the string returned is NULL terminated
+ *  except for LOCALE_FONTSIGNATURE  which "will return a non-NULL
+ *  terminated string".
  */
 INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 {
@@ -713,16 +717,24 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;			
 	}
-	/* if len=0 return only the length, don't touch the buffer*/
-	if (len)
-		lstrcpyn32A(buf,retString,len);
-
-	return strlen(retString)+1;
+    /* a FONTSIGNATURE is not a string, just 6 DWORDs  */
+    if (LCType == LOCALE_FONTSIGNATURE) {
+        if (len)
+            memcpy(buf, retString, (len<=sizeof(FONTSIGNATURE))?len:sizeof(FONTSIGNATURE));
+        return sizeof(FONTSIGNATURE);
+    }
+    /* if len=0 return only the length, don't touch the buffer*/
+    if (len) lstrcpyn32A(buf,retString,len);
+    return strlen(retString)+1;
 }
 
 /******************************************************************************
  *		GetLocaleInfo32W	[KERNEL32.343]
  *
+ * NOTES
+ *  MS documentation states that len "specifies the size, in bytes (ANSI version)
+ *  or characters (Unicode version), of" wbuf. Thus the number returned is
+ *  the same between GetLocaleInfo32W and GetLocaleInfo32A.
  */
 INT32 WINAPI GetLocaleInfo32W(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT32 len)
 {	WORD wlen;
@@ -734,10 +746,10 @@ INT32 WINAPI GetLocaleInfo32W(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT32 len)
 	}
 
 	abuf = (LPSTR)HeapAlloc(GetProcessHeap(),0,len);
-	wlen = 2 * GetLocaleInfo32A(lcid, LCType, abuf, len);
+	wlen = GetLocaleInfo32A(lcid, LCType, abuf, len);
 
 	if (wlen && len)	/* if len=0 return only the length*/
-	  lstrcpynAtoW(wbuf,abuf,len/2);
+	  lstrcpynAtoW(wbuf,abuf,len);
 
 	HeapFree(GetProcessHeap(),0,abuf);
 	return wlen;
@@ -2990,7 +3002,7 @@ BOOL32 WINAPI EnumTimeFormats32A(
 BOOL32 WINAPI EnumTimeFormats32W(
   TIMEFMT_ENUMPROC32W lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
-  FIXME(ole, "(%p,%ld,%ld): stub", lpTimeFmtEnumProc, Locale, dwFlags);
+  FIXME(ole, "(%p,%ld,%ld): stub\n", lpTimeFmtEnumProc, Locale, dwFlags);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
