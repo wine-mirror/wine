@@ -426,6 +426,89 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath, DWORD shortlen
 
 
 /***********************************************************************
+ *           GetTempPathA   (KERNEL32.@)
+ */
+UINT WINAPI GetTempPathA( UINT count, LPSTR path )
+{
+    WCHAR pathW[MAX_PATH];
+    UINT ret;
+
+    ret = GetTempPathW(MAX_PATH, pathW);
+
+    if (!ret)
+        return 0;
+
+    if (ret > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        return 0;
+    }
+
+    ret = WideCharToMultiByte(CP_ACP, 0, pathW, -1, NULL, 0, NULL, NULL);
+    if (ret <= count)
+    {
+        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, count, NULL, NULL);
+        ret--; /* length without 0 */
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetTempPathW   (KERNEL32.@)
+ */
+UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
+{
+    static const WCHAR tmp[]  = { 'T', 'M', 'P', 0 };
+    static const WCHAR temp[] = { 'T', 'E', 'M', 'P', 0 };
+    WCHAR tmp_path[MAX_PATH];
+    UINT ret;
+
+    TRACE("%u,%p\n", count, path);
+
+    if (!(ret = GetEnvironmentVariableW( tmp, tmp_path, MAX_PATH )))
+        if (!(ret = GetEnvironmentVariableW( temp, tmp_path, MAX_PATH )))
+            if (!(ret = GetCurrentDirectoryW( MAX_PATH, tmp_path )))
+                return 0;
+
+    if (ret > MAX_PATH)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        return 0;
+    }
+
+    ret = GetFullPathNameW(tmp_path, MAX_PATH, tmp_path, NULL);
+    if (!ret) return 0;
+
+    if (ret > MAX_PATH - 2)
+    {
+        SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        return 0;
+    }
+
+    if (tmp_path[ret-1] != '\\')
+    {
+        tmp_path[ret++] = '\\';
+        tmp_path[ret]   = '\0';
+    }
+
+    ret++; /* add space for terminating 0 */
+
+    if (count)
+    {
+        lstrcpynW(path, tmp_path, count);
+        if (count >= ret)
+            ret--; /* return length without 0 */
+        else if (count < 4)
+            path[0] = 0; /* avoid returning ambiguous "X:" */
+    }
+
+    TRACE("returning %u, %s\n", ret, debugstr_w(path));
+    return ret;
+}
+
+
+/***********************************************************************
  *           contains_pathW
  *
  * Check if the file name contains a path; helper for SearchPathW.

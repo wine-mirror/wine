@@ -51,43 +51,49 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dosfs);
 WINE_DECLARE_DEBUG_CHANNEL(file);
 
-static DOS_FULL_NAME DIR_Windows;
-static DOS_FULL_NAME DIR_System;
+static WCHAR *DIR_Windows;
+static WCHAR *DIR_System;
 
 /***********************************************************************
  *           DIR_GetPath
  *
  * Get a path name from the wine.ini file and make sure it is valid.
  */
-static int DIR_GetPath( HKEY hkey, LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAME *full_name,
-                        LPWSTR longname, INT longname_len, BOOL warn )
+static WCHAR *DIR_GetPath( HKEY hkey, LPCWSTR keyname, LPCWSTR defval, BOOL warn )
 {
     UNICODE_STRING nameW;
     DWORD dummy;
     WCHAR tmp[MAX_PATHNAME_LEN];
-    BY_HANDLE_FILE_INFORMATION info;
-    const WCHAR *path = defval;
-    const char *mess = "does not exist";
+    const WCHAR *path;
+    const char *mess;
+    WCHAR *ret;
+    DWORD attr;
 
     RtlInitUnicodeString( &nameW, keyname );
     if (hkey && !NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
         path = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+    else
+        path = defval;
 
-    if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
-        (!FILE_Stat( full_name->long_name, &info, NULL ) && (mess=strerror(errno)))||
-        (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")) ||
-        (!(GetLongPathNameW(full_name->short_name, longname, longname_len))) )
+    attr = GetFileAttributesW( path );
+    if (attr == INVALID_FILE_ATTRIBUTES) mess = "does not exist";
+    else if (!(attr & FILE_ATTRIBUTE_DIRECTORY)) mess = "not a directory";
+    else
     {
-        if (warn)
-        {
-            MESSAGE("Invalid path %s for %s directory: %s.\n",
-                    debugstr_w(path), debugstr_w(keyname), mess);
-            MESSAGE("Perhaps you have not properly edited your Wine configuration file (%s/config)\n",
-                    wine_get_config_dir());
-        }
-        return 0;
+        DWORD len = GetFullPathNameW( path, 0, NULL, NULL );
+        ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if (ret) GetFullPathNameW( path, len, ret, NULL );
+        return ret;
     }
-    return 1;
+
+    if (warn)
+    {
+        MESSAGE("Invalid path %s for %s directory: %s.\n",
+                debugstr_w(path), debugstr_w(keyname), mess);
+        MESSAGE("Perhaps you have not properly edited your Wine configuration file (%s/config)\n",
+                wine_get_config_dir());
+    }
+    return NULL;
 }
 
 
@@ -101,7 +107,7 @@ int DIR_Init(void)
     HKEY hkey;
     char path[MAX_PATHNAME_LEN];
     WCHAR longpath[MAX_PATHNAME_LEN];
-    DOS_FULL_NAME tmp_dir, profile_dir;
+    WCHAR *tmp_dir, *profile_dir;
     int drive;
     const char *cwd;
     static const WCHAR wineW[] = {'M','a','c','h','i','n','e','\\',
@@ -114,6 +120,7 @@ int DIR_Init(void)
     static const WCHAR profileW[] = {'p','r','o','f','i','l','e',0};
     static const WCHAR windows_dirW[] = {'c',':','\\','w','i','n','d','o','w','s',0};
     static const WCHAR system_dirW[] = {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m',0};
+    static const WCHAR temp_dirW[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','m','p',0};
     static const WCHAR pathW[] = {'p','a','t','h',0};
     static const WCHAR path_dirW[] = {'c',':','\\','w','i','n','d','o','w','s',';',
                                       'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m',0};
@@ -142,11 +149,11 @@ int DIR_Init(void)
     }
     else
     {
-        WCHAR szdrive[3]={drive+'A',':',0};
-        MultiByteToWideChar(CP_UNIXCP, 0, cwd, -1, longpath, MAX_PATHNAME_LEN);
-        DRIVE_SetCurrentDrive( drive );
-        DRIVE_Chdir( drive, longpath );
-	if(GetDriveTypeW(szdrive)==DRIVE_CDROM)
+        longpath[0] = 'a' + drive;
+        longpath[1] = ':';
+        MultiByteToWideChar(CP_UNIXCP, 0, cwd, -1, longpath + 2, MAX_PATHNAME_LEN);
+        SetCurrentDirectoryW( longpath );
+        if(GetDriveTypeW(longpath)==DRIVE_CDROM)
             chdir("/"); /* change to root directory so as not to lock cdroms */
     }
 
@@ -160,39 +167,22 @@ int DIR_Init(void)
     RtlInitUnicodeString( &nameW, wineW );
     if (NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) hkey = 0;
 
-    if (!(DIR_GetPath( hkey, windowsW, windows_dirW, &DIR_Windows, longpath, MAX_PATHNAME_LEN, TRUE )) ||
-        !(DIR_GetPath( hkey, systemW, system_dirW, &DIR_System, longpath, MAX_PATHNAME_LEN, TRUE )) ||
-        !(DIR_GetPath( hkey, tempW, windows_dirW, &tmp_dir, longpath, MAX_PATHNAME_LEN, TRUE )))
+    if (!(DIR_Windows = DIR_GetPath( hkey, windowsW, windows_dirW, TRUE )) ||
+        !(DIR_System = DIR_GetPath( hkey, systemW, system_dirW, TRUE )) ||
+        !(tmp_dir = DIR_GetPath( hkey, tempW, temp_dirW, TRUE )))
     {
         if (hkey) NtClose( hkey );
         return 0;
     }
-    if (-1 == access( tmp_dir.long_name, W_OK ))
-    {
-    	if (errno==EACCES)
-	{
-		MESSAGE("Warning: the temporary directory '%s' specified in your\n"
-                        "configuration file (%s) is not writeable.\n",
-                        tmp_dir.long_name, wine_get_config_dir() );
-	}
-	else
-		MESSAGE("Warning: access to temporary directory '%s' failed (%s).\n",
-		    tmp_dir.long_name, strerror(errno));
-    }
 
-    if (drive == -1)
-    {
-        drive = DIR_Windows.drive;
-        DRIVE_SetCurrentDrive( drive );
-        DRIVE_Chdir( drive, DIR_Windows.short_name + 2 );
-    }
+    if (drive == -1) SetCurrentDirectoryW( DIR_Windows );
 
     /* Set the environment variables */
 
     /* set COMSPEC only if it doesn't exist already */
     if (!GetEnvironmentVariableW( comspecW, NULL, 0 ))
     {
-        strcpyW( longpath, DIR_System.short_name );
+        strcpyW( longpath, DIR_System );
         strcatW( longpath, wcmdW );
         SetEnvironmentVariableW( comspecW, longpath );
     }
@@ -221,144 +211,33 @@ int DIR_Init(void)
     }
 
     if (!GetEnvironmentVariableW( temp_capsW, NULL, 0 ))
-        SetEnvironmentVariableW( temp_capsW, tmp_dir.short_name );
+        SetEnvironmentVariableW( temp_capsW, tmp_dir );
     if (!GetEnvironmentVariableW( tmp_capsW, NULL, 0 ))
-        SetEnvironmentVariableW( tmp_capsW, tmp_dir.short_name );
-    SetEnvironmentVariableW( windirW, DIR_Windows.short_name );
-    SetEnvironmentVariableW( winsysdirW, DIR_System.short_name );
+        SetEnvironmentVariableW( tmp_capsW, tmp_dir );
 
-    TRACE("WindowsDir = %s (%s)\n",
-          debugstr_w(DIR_Windows.short_name), DIR_Windows.long_name );
-    TRACE("SystemDir  = %s (%s)\n",
-          debugstr_w(DIR_System.short_name), DIR_System.long_name );
-    TRACE("TempDir    = %s (%s)\n",
-          debugstr_w(tmp_dir.short_name), tmp_dir.long_name );
+    SetEnvironmentVariableW( windirW, DIR_Windows );
+    SetEnvironmentVariableW( systemrootW, DIR_Windows );
+    SetEnvironmentVariableW( winsysdirW, DIR_System );
+
+    TRACE("WindowsDir = %s\n", debugstr_w(DIR_Windows) );
+    TRACE("SystemDir  = %s\n", debugstr_w(DIR_System) );
+    TRACE("TempDir    = %s\n", debugstr_w(tmp_dir) );
+    TRACE("SYSTEMROOT = %s\n", debugstr_w(DIR_Windows) );
     TRACE("Cwd        = %c:\\%s\n",
           'A' + drive, debugstr_w(DRIVE_GetDosCwd(drive)) );
 
-    if (DIR_GetPath( hkey, profileW, empty_strW, &profile_dir, longpath, MAX_PATHNAME_LEN, FALSE ))
+    HeapFree( GetProcessHeap(), 0, tmp_dir );
+
+    if ((profile_dir = DIR_GetPath( hkey, profileW, empty_strW, FALSE )))
     {
-        TRACE("USERPROFILE= %s\n", debugstr_w(longpath) );
-        SetEnvironmentVariableW( userprofileW, longpath );
+        TRACE("USERPROFILE= %s\n", debugstr_w(profile_dir) );
+        SetEnvironmentVariableW( userprofileW, profile_dir );
+        HeapFree( GetProcessHeap(), 0, profile_dir );
     }
 
-    TRACE("SYSTEMROOT = %s\n", debugstr_w(DIR_Windows.short_name) );
-    SetEnvironmentVariableW( systemrootW, DIR_Windows.short_name );
     if (hkey) NtClose( hkey );
 
     return 1;
-}
-
-
-/***********************************************************************
- *           GetTempPathA   (KERNEL32.@)
- */
-UINT WINAPI GetTempPathA( UINT count, LPSTR path )
-{
-    WCHAR pathW[MAX_PATH];
-    UINT ret;
-
-    ret = GetTempPathW(MAX_PATH, pathW);
-
-    if (!ret)
-        return 0;
-
-    if (ret > MAX_PATH)
-    {
-        SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        return 0;
-    }
-
-    ret = WideCharToMultiByte(CP_ACP, 0, pathW, -1, NULL, 0, NULL, NULL);
-    if (ret <= count)
-    {
-        WideCharToMultiByte(CP_ACP, 0, pathW, -1, path, count, NULL, NULL);
-        ret--; /* length without 0 */
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetTempPathW   (KERNEL32.@)
- */
-UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
-{
-    static const WCHAR tmp[]  = { 'T', 'M', 'P', 0 };
-    static const WCHAR temp[] = { 'T', 'E', 'M', 'P', 0 };
-    WCHAR tmp_path[MAX_PATH];
-    UINT ret;
-
-    TRACE("%u,%p\n", count, path);
-
-    if (!(ret = GetEnvironmentVariableW( tmp, tmp_path, MAX_PATH )))
-        if (!(ret = GetEnvironmentVariableW( temp, tmp_path, MAX_PATH )))
-            if (!(ret = GetCurrentDirectoryW( MAX_PATH, tmp_path )))
-                return 0;
-
-    if (ret > MAX_PATH)
-    {
-        SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        return 0;
-    }
-
-    ret = GetFullPathNameW(tmp_path, MAX_PATH, tmp_path, NULL);
-    if (!ret) return 0;
-
-    if (ret > MAX_PATH - 2)
-    {
-        SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        return 0;
-    }
-
-    if (tmp_path[ret-1] != '\\')
-    {
-        tmp_path[ret++] = '\\';
-        tmp_path[ret]   = '\0';
-    }
-
-    ret++; /* add space for terminating 0 */
-
-    if (count)
-    {
-        lstrcpynW(path, tmp_path, count);
-        if (count >= ret)
-            ret--; /* return length without 0 */
-        else if (count < 4)
-            path[0] = 0; /* avoid returning ambiguous "X:" */
-    }
-
-    TRACE("returning %u, %s\n", ret, debugstr_w(path));
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetTempDrive   (KERNEL.92)
- * A closer look at krnl386.exe shows what the SDK doesn't mention:
- *
- * returns:
- *   AL: driveletter
- *   AH: ':'		- yes, some kernel code even does stosw with
- *                            the returned AX.
- *   DX: 1 for success
- */
-UINT WINAPI GetTempDrive( BYTE ignored )
-{
-    char *buffer;
-    BYTE ret;
-    UINT len = GetTempPathA( 0, NULL );
-
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len + 1 )) )
-        ret = DRIVE_GetCurrentDrive() + 'A';
-    else
-    {
-        /* FIXME: apparently Windows does something with the ignored byte */
-        if (!GetTempPathA( len, buffer )) buffer[0] = 'C';
-        ret = toupper(buffer[0]);
-        HeapFree( GetProcessHeap(), 0, buffer );
-    }
-    return MAKELONG( ret | (':' << 8), 1 );
 }
 
 
@@ -369,10 +248,10 @@ UINT WINAPI GetTempDrive( BYTE ignored )
  */
 UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = strlenW( DIR_Windows.short_name ) + 1;
+    UINT len = strlenW( DIR_Windows ) + 1;
     if (path && count >= len)
     {
-        strcpyW( path, DIR_Windows.short_name );
+        strcpyW( path, DIR_Windows );
         len--;
     }
     return len;
@@ -390,10 +269,10 @@ UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
  */
 UINT WINAPI GetWindowsDirectoryA( LPSTR path, UINT count )
 {
-    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_Windows.short_name, -1, NULL, 0, NULL, NULL );
+    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_Windows, -1, NULL, 0, NULL, NULL );
     if (path && count >= len)
     {
-        WideCharToMultiByte( CP_ACP, 0, DIR_Windows.short_name, -1, path, count, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, DIR_Windows, -1, path, count, NULL, NULL );
         len--;
     }
     return len;
@@ -425,10 +304,10 @@ UINT WINAPI GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
  */
 UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = strlenW( DIR_System.short_name ) + 1;
+    UINT len = strlenW( DIR_System ) + 1;
     if (path && count >= len)
     {
-        strcpyW( path, DIR_System.short_name );
+        strcpyW( path, DIR_System );
         len--;
     }
     return len;
@@ -442,10 +321,10 @@ UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
  */
 UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 {
-    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_System.short_name, -1, NULL, 0, NULL, NULL );
+    UINT len = WideCharToMultiByte( CP_ACP, 0, DIR_System, -1, NULL, 0, NULL, NULL );
     if (path && count >= len)
     {
-        WideCharToMultiByte( CP_ACP, 0, DIR_System.short_name, -1, path, count, NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, DIR_System, -1, path, count, NULL, NULL );
         len--;
     }
     return len;

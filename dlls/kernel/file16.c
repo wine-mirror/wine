@@ -348,6 +348,27 @@ UINT16 WINAPI WIN16_lread( HFILE16 hFile, SEGPTR buffer, UINT16 count )
 
 
 /***********************************************************************
+ *           GetTempDrive   (KERNEL.92)
+ * A closer look at krnl386.exe shows what the SDK doesn't mention:
+ *
+ * returns:
+ *   AL: driveletter
+ *   AH: ':'		- yes, some kernel code even does stosw with
+ *                            the returned AX.
+ *   DX: 1 for success
+ */
+UINT WINAPI GetTempDrive( BYTE ignored )
+{
+    WCHAR buffer[8];
+    BYTE ret;
+
+    if (GetTempPathW( 8, buffer )) ret = (BYTE)toupperW(buffer[0]);
+    else ret = 'C';
+    return MAKELONG( ret | (':' << 8), 1 );
+}
+
+
+/***********************************************************************
  *           GetTempFileName   (KERNEL.97)
  */
 UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
