@@ -186,11 +186,9 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
 		GlobalFree16(hic);
 		return 0;
 	}
-	if (MSVIDEO_SendMessage(hic,DRV_ENABLE,0L,0L,bFrom32) != DRV_SUCCESS) {
-		WARN("DRV_ENABLE failed for hic 0x%08lx\n",(DWORD)hic);
-		GlobalFree16(hic);
-		return 0;
-	}
+	/* return value is not checked */
+	MSVIDEO_SendMessage(hic,DRV_ENABLE,0L,0L,bFrom32);
+
 	whic->hdrv = MSVIDEO_SendMessage(hic,DRV_OPEN,0,(LPARAM)(SEGPTR_GET(icopen)),FALSE);
 	if (whic->hdrv == 0) {
 		WARN("DRV_OPEN failed for hic 0x%08lx\n",(DWORD)hic);
