@@ -189,7 +189,7 @@ static VOID
 TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 {
     TTTOOL_INFO *toolPtr;
-    RECT rect;
+    RECT rect, wndrect;
     SIZE size;
     HDC  hdc;
     NMHDR  hdr;
@@ -241,12 +241,30 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 	rect.top += 20;
     }
 
-    /* FIXME: check position */
-
     TRACE("pos %d - %d\n", rect.left, rect.top);
 
     rect.right = rect.left + size.cx;
     rect.bottom = rect.top + size.cy;
+
+    /* check position */
+    wndrect.right = GetSystemMetrics( SM_CXSCREEN );
+    if( rect.right > wndrect.right ) {
+	   rect.left -= rect.right - wndrect.right + 2;
+	   rect.right = wndrect.right - 2;
+    }
+    wndrect.bottom = GetSystemMetrics( SM_CYSCREEN );
+    if( rect.bottom > wndrect.bottom ) {
+        RECT rc;
+
+	if (toolPtr->uFlags & TTF_IDISHWND)
+	    GetWindowRect ((HWND)toolPtr->uId, &rc);
+	else {
+	    rc = toolPtr->rect;
+	    MapWindowPoints (toolPtr->hwnd, (HWND)0, (LPPOINT)&rc, 2);
+	}   
+	rect.bottom = rc.top - 2;
+    	rect.top = rect.bottom - size.cy;
+    }
 
     AdjustWindowRectEx (&rect, GetWindowLongA (hwnd, GWL_STYLE),
 			FALSE, GetWindowLongA (hwnd, GWL_EXSTYLE));
