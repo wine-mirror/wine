@@ -270,8 +270,8 @@ error:
         WARN("ret = WAVERR_BADFORMAT\n");
         return WAVERR_BADFORMAT;
     }
-    WARN("ret = MMSYSERR_ERROR\n");
-    return MMSYSERR_ERROR;
+    WARN("ret = 0x%08lx\n", res);
+    return res;
 }
 
 static	DWORD	wodClose(WAVEMAPDATA* wom)
@@ -781,8 +781,8 @@ error:
         WARN("ret = WAVERR_BADFORMAT\n");
         return WAVERR_BADFORMAT;
     }
-    WARN("ret = MMSYSERR_ERROR\n");
-    return MMSYSERR_ERROR;
+    WARN("ret = 0x%08lx\n", res);
+    return res;
 }
 
 static	DWORD	widClose(WAVEMAPDATA* wim)
