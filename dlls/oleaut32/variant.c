@@ -85,7 +85,7 @@ static char pBuffer[BUFFER_MAX];
  * but not of a 100.  Except if it is a multiple of
  * 400 then it is a leap year.
  */
-/* According to postgeSQL date parsing functions there is
+/* According to postgreSQL date parsing functions there is
  * a leap year when this expression is true.
  * (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
  * So according to this there is 365.2515 days in one year.
@@ -99,6 +99,7 @@ static char pBuffer[BUFFER_MAX];
  *  Let's try using arithmetic.  <lawson_whitney@juno.com> 7 Mar 2000
  */
 static const double DAYS_IN_ONE_YEAR = 365.2425;
+
 
 /******************************************************************************
  *	   DateTimeStringToTm	[INTERNAL]
@@ -230,92 +231,90 @@ static BOOL DateTimeStringToTm( OLECHAR* strIn, DWORD dwFlags, struct tm* pTm )
  */
 static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
 {
-	if( (pTm->tm_year - 1900) >= 0 )
-	{
-		int leapYear = 0;
-		
-		/* Start at 1. This is the way DATE is defined.
-		 * January 1, 1900 at Midnight is 1.00.
-		 * January 1, 1900 at 6AM is 1.25.
-		 * and so on.
-		 */
-		*pDateOut = 1;
+    int leapYear = 0;
 
-		/* Add the number of days corresponding to
-		 * tm_year.
-		 */
-		*pDateOut += (pTm->tm_year - 1900) * 365;
+    if( (pTm->tm_year - 1900) < 0 ) return FALSE;
 
-		/* Add the leap days in the previous years between now and 1900.
-		 * Note a leap year is one that is a multiple of 4
-		 * but not of a 100.  Except if it is a multiple of
-		 * 400 then it is a leap year.
-		 */
-		*pDateOut += ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
-		*pDateOut -= ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
-		*pDateOut += ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
+    /* Start at 1. This is the way DATE is defined.
+     * January 1, 1900 at Midnight is 1.00.
+     * January 1, 1900 at 6AM is 1.25.
+     * and so on.
+     */
+    *pDateOut = 1;
 
-		/* Set the leap year flag if the
-		 * current year specified by tm_year is a
-		 * leap year. This will be used to add a day
-		 * to the day count.
-		 */
-		if( isleap( pTm->tm_year ) )
-			leapYear = 1;
-		
-		/* Add the number of days corresponding to
-		 * the month.
-		 */
-		switch( pTm->tm_mon )
-		{
-		case 2:
-			*pDateOut += 31;
-			break;
-		case 3:
-			*pDateOut += ( 59 + leapYear );
-			break;
-		case 4:
-			*pDateOut += ( 90 + leapYear );
-			break;
-		case 5:
-			*pDateOut += ( 120 + leapYear );
-			break;
-		case 6:
-			*pDateOut += ( 151 + leapYear );
-			break;
-		case 7:
-			*pDateOut += ( 181 + leapYear );
-			break;
-		case 8:
-			*pDateOut += ( 212 + leapYear );
-			break;
-		case 9:
-			*pDateOut += ( 243 + leapYear );
-			break;
-		case 10:
-			*pDateOut += ( 273 + leapYear );
-			break;
-		case 11:
-			*pDateOut += ( 304 + leapYear );
-			break;
-		case 12:
-			*pDateOut += ( 334 + leapYear );
-			break;
-		}
-		/* Add the number of days in this month.
-		 */
-		*pDateOut += pTm->tm_mday;
-	
-		/* Add the number of seconds, minutes, and hours
-		 * to the DATE. Note these are the fracionnal part
-		 * of the DATE so seconds / number of seconds in a day.
-		 */
-		*pDateOut += pTm->tm_hour / 24.0;
-		*pDateOut += pTm->tm_min / 1440.0;
-		*pDateOut += pTm->tm_sec / 86400.0;
-		return TRUE;
-	}
-	return FALSE;
+    /* Add the number of days corresponding to
+     * tm_year.
+     */
+    *pDateOut += (pTm->tm_year - 1900) * 365;
+
+    /* Add the leap days in the previous years between now and 1900.
+     * Note a leap year is one that is a multiple of 4
+     * but not of a 100.  Except if it is a multiple of
+     * 400 then it is a leap year.
+     */
+    *pDateOut += ( (pTm->tm_year - 1) / 4 ) - ( 1900 / 4 );
+    *pDateOut -= ( (pTm->tm_year - 1) / 100 ) - ( 1900 / 100 );
+    *pDateOut += ( (pTm->tm_year - 1) / 400 ) - ( 1900 / 400 );
+
+    /* Set the leap year flag if the
+     * current year specified by tm_year is a
+     * leap year. This will be used to add a day
+     * to the day count.
+     */
+    if( isleap( pTm->tm_year ) )
+        leapYear = 1;
+
+    /* Add the number of days corresponding to
+     * the month.
+     */
+    switch( pTm->tm_mon )
+    {
+    case 2:
+        *pDateOut += 31;
+        break;
+    case 3:
+        *pDateOut += ( 59 + leapYear );
+        break;
+    case 4:
+        *pDateOut += ( 90 + leapYear );
+        break;
+    case 5:
+        *pDateOut += ( 120 + leapYear );
+        break;
+    case 6:
+        *pDateOut += ( 151 + leapYear );
+        break;
+    case 7:
+        *pDateOut += ( 181 + leapYear );
+        break;
+    case 8:
+        *pDateOut += ( 212 + leapYear );
+        break;
+    case 9:
+        *pDateOut += ( 243 + leapYear );
+        break;
+    case 10:
+        *pDateOut += ( 273 + leapYear );
+        break;
+    case 11:
+        *pDateOut += ( 304 + leapYear );
+        break;
+    case 12:
+        *pDateOut += ( 334 + leapYear );
+        break;
+    }
+    /* Add the number of days in this month.
+     */
+    *pDateOut += pTm->tm_mday;
+
+    /* Add the number of seconds, minutes, and hours
+     * to the DATE. Note these are the fracionnal part
+     * of the DATE so seconds / number of seconds in a day.
+     */
+    *pDateOut += pTm->tm_hour / 24.0;
+    *pDateOut += pTm->tm_min / 1440.0;
+    *pDateOut += pTm->tm_sec / 86400.0;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -334,132 +333,130 @@ static BOOL TmToDATE( struct tm* pTm, DATE *pDateOut )
  */
 static BOOL DateToTm( DATE dateIn, DWORD dwFlags, struct tm* pTm )
 {
-	/* Do not process dates smaller than January 1, 1900.
-	 * Which corresponds to 2.0 in the windows DATE format.
-	 */
-	if( dateIn >= 2.0 )
-	{
-		double decimalPart = 0.0;
-		double wholePart = 0.0;
+    double decimalPart = 0.0;
+    double wholePart = 0.0;
 
-		memset(pTm,0,sizeof(*pTm));
-	
-		/* Because of the nature of DATE format which
-		 * associates 2.0 to January 1, 1900. We will
-		 * remove 1.0 from the whole part of the DATE
-		 * so that in the following code 1.0
-		 * will correspond to January 1, 1900.
-		 * This simplifies the processing of the DATE value.
-		 */
-		dateIn -= 1.0;
+    /* Do not process dates smaller than January 1, 1900.
+     * Which corresponds to 2.0 in the windows DATE format.
+     */
+    if( dateIn < 2.0 ) return FALSE;
 
-		wholePart = (double) floor( dateIn );
-		decimalPart = fmod( dateIn, wholePart );
+    memset(pTm,0,sizeof(*pTm));
 
-		if( !(dwFlags & VAR_TIMEVALUEONLY) )
-		{
-			int nDay = 0;
-			int leapYear = 0;
-			double yearsSince1900 = 0;
-			/* Start at 1900, this is where the DATE time 0.0 starts.
-			 */
-			pTm->tm_year = 1900;
-			/* find in what year the day in the "wholePart" falls into.
-			 * add the value to the year field.
-			 */
-			yearsSince1900 = floor( (wholePart / DAYS_IN_ONE_YEAR) + 0.001 );
-			pTm->tm_year += yearsSince1900;
-			/* determine if this is a leap year.
-			 */
-			if( isleap( pTm->tm_year ) )
-			{
-				leapYear = 1;
-				wholePart++;
-			}
+    /* Because of the nature of DATE format which
+     * associates 2.0 to January 1, 1900. We will
+     * remove 1.0 from the whole part of the DATE
+     * so that in the following code 1.0
+     * will correspond to January 1, 1900.
+     * This simplifies the processing of the DATE value.
+     */
+    dateIn -= 1.0;
 
-			/* find what day of that year the "wholePart" corresponds to.
-			 * Note: nDay is in [1-366] format
-			 */
-			nDay = (int) ( wholePart - floor( yearsSince1900 * DAYS_IN_ONE_YEAR ) );
-			/* Set the tm_yday value.
-			 * Note: The day must be converted from [1-366] to [0-365]
-			 */
-			/*pTm->tm_yday = nDay - 1;*/
-			/* find which month this day corresponds to.
-			 */
-			if( nDay <= 31 )
-			{
-				pTm->tm_mday = nDay;
-				pTm->tm_mon = 0;
-			}
-			else if( nDay <= ( 59 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - 31;
-				pTm->tm_mon = 1;
-			}
-			else if( nDay <= ( 90 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 59 + leapYear );
-				pTm->tm_mon = 2;
-			}
-			else if( nDay <= ( 120 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 90 + leapYear );
-				pTm->tm_mon = 3;
-			}
-			else if( nDay <= ( 151 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 120 + leapYear );
-				pTm->tm_mon = 4;
-			}
-			else if( nDay <= ( 181 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 151 + leapYear );
-				pTm->tm_mon = 5;
-			}
-			else if( nDay <= ( 212 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 181 + leapYear );
-				pTm->tm_mon = 6;
-			}
-			else if( nDay <= ( 243 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 212 + leapYear );
-				pTm->tm_mon = 7;
-			}
-			else if( nDay <= ( 273 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 243 + leapYear );
-				pTm->tm_mon = 8;
-			}
-			else if( nDay <= ( 304 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 273 + leapYear );
-				pTm->tm_mon = 9;
-			}
-			else if( nDay <= ( 334 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 304 + leapYear );
-				pTm->tm_mon = 10;
-			}
-			else if( nDay <= ( 365 + leapYear ) )
-			{
-				pTm->tm_mday = nDay - ( 334 + leapYear );
-				pTm->tm_mon = 11;
-			}
-		}
-		if( !(dwFlags & VAR_DATEVALUEONLY) )
-		{
-			/* find the number of seconds in this day.
-			 * fractional part times, hours, minutes, seconds.
-			 */
-			pTm->tm_hour = (int) ( decimalPart * 24 );
-			pTm->tm_min = (int) ( ( ( decimalPart * 24 ) - pTm->tm_hour ) * 60 );
-			pTm->tm_sec = (int) ( ( ( decimalPart * 24 * 60 ) - ( pTm->tm_hour * 60 ) - pTm->tm_min ) * 60 );
-		}
-		return TRUE;
-	}
-	return FALSE;
+    wholePart = (double) floor( dateIn );
+    decimalPart = fmod( dateIn, wholePart );
+
+    if( !(dwFlags & VAR_TIMEVALUEONLY) )
+    {
+        int nDay = 0;
+        int leapYear = 0;
+        double yearsSince1900 = 0;
+        /* Start at 1900, this is where the DATE time 0.0 starts.
+         */
+        pTm->tm_year = 1900;
+        /* find in what year the day in the "wholePart" falls into.
+         * add the value to the year field.
+         */
+        yearsSince1900 = floor( (wholePart / DAYS_IN_ONE_YEAR) + 0.001 );
+        pTm->tm_year += yearsSince1900;
+        /* determine if this is a leap year.
+         */
+        if( isleap( pTm->tm_year ) )
+        {
+            leapYear = 1;
+            wholePart++;
+        }
+
+        /* find what day of that year the "wholePart" corresponds to.
+         * Note: nDay is in [1-366] format
+         */
+        nDay = (int) ( wholePart - floor( yearsSince1900 * DAYS_IN_ONE_YEAR ) );
+        /* Set the tm_yday value.
+         * Note: The day must be converted from [1-366] to [0-365]
+         */
+        /*pTm->tm_yday = nDay - 1;*/
+        /* find which month this day corresponds to.
+         */
+        if( nDay <= 31 )
+        {
+            pTm->tm_mday = nDay;
+            pTm->tm_mon = 0;
+        }
+        else if( nDay <= ( 59 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - 31;
+            pTm->tm_mon = 1;
+        }
+        else if( nDay <= ( 90 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 59 + leapYear );
+            pTm->tm_mon = 2;
+        }
+        else if( nDay <= ( 120 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 90 + leapYear );
+            pTm->tm_mon = 3;
+        }
+        else if( nDay <= ( 151 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 120 + leapYear );
+            pTm->tm_mon = 4;
+        }
+        else if( nDay <= ( 181 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 151 + leapYear );
+            pTm->tm_mon = 5;
+        }
+        else if( nDay <= ( 212 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 181 + leapYear );
+            pTm->tm_mon = 6;
+        }
+        else if( nDay <= ( 243 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 212 + leapYear );
+            pTm->tm_mon = 7;
+        }
+        else if( nDay <= ( 273 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 243 + leapYear );
+            pTm->tm_mon = 8;
+        }
+        else if( nDay <= ( 304 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 273 + leapYear );
+            pTm->tm_mon = 9;
+        }
+        else if( nDay <= ( 334 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 304 + leapYear );
+            pTm->tm_mon = 10;
+        }
+        else if( nDay <= ( 365 + leapYear ) )
+        {
+            pTm->tm_mday = nDay - ( 334 + leapYear );
+            pTm->tm_mon = 11;
+        }
+    }
+    if( !(dwFlags & VAR_DATEVALUEONLY) )
+    {
+        /* find the number of seconds in this day.
+         * fractional part times, hours, minutes, seconds.
+         */
+        pTm->tm_hour = (int) ( decimalPart * 24 );
+        pTm->tm_min = (int) ( ( ( decimalPart * 24 ) - pTm->tm_hour ) * 60 );
+        pTm->tm_sec = (int) ( ( ( decimalPart * 24 * 60 ) - ( pTm->tm_hour * 60 ) - pTm->tm_min ) * 60 );
+    }
+    return TRUE;
 }
 
 
@@ -610,7 +607,6 @@ static void RemoveCharacterFromString( LPSTR str, LPSTR strOfCharToRemove )
 {
 	LPSTR pNewString = NULL;
 	LPSTR strToken = NULL;
-
 
 	/* Check if we have a valid argument
 	 */
@@ -1672,8 +1668,8 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
 /******************************************************************************
  *		VariantInit	[OLEAUT32.8]
  *
- * Initializes the Variant.  Unlike VariantClear it does not interpret the current
- * contents of the Variant.
+ * Initializes the Variant.  Unlike VariantClear it does not interpret
+ * the current contents of the Variant.
  */
 void WINAPI VariantInit(VARIANTARG* pvarg)
 {
@@ -1789,9 +1785,9 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 	else
 	{
 	  /* In the case of by value we need to
-	   * copy the actuall value. In the case of
+	   * copy the actual value. In the case of
 	   * VT_BSTR a copy of the string is made,
-	   * if VT_DISPATCH or VT_IUNKNOWN AddReff is
+	   * if VT_DISPATCH or VT_IUNKNOWN AddRef is
 	   * called to increment the object's reference count.
 	   */
 	  switch( V_VT(pvargSrc) & VT_TYPEMASK )
@@ -3243,7 +3239,7 @@ HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstr
  *    VarBstrFromCy   [OLEAUT32.113]
  */
 HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) {
-				/* FIXME */
+	FIXME("([cyIn], %08lx, %08lx, %p), stub.\n", lcid, dwFlags, pbstrOut);
 	return E_NOTIMPL;
 }
 
@@ -3308,14 +3304,7 @@ HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BS
 {
 	TRACE("( %d, %ld, %ld, %p ), stub\n", boolIn, lcid, dwFlags, pbstrOut );
 
-	if( boolIn == VARIANT_FALSE )
-	{
-		sprintf( pBuffer, "False" );
-	}
-	else
-	{
-		sprintf( pBuffer, "True" );
-	}
+	sprintf( pBuffer, (boolIn == VARIANT_FALSE) ? "False" : "True" );
 
 	*pbstrOut = StringDupAtoBstr( pBuffer );
 
@@ -3384,14 +3373,7 @@ HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %d, %p ), stub\n", sIn, pboolOut );
 
-	if( sIn == 0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (sIn) ? VARIANT_TRUE : VARIANT_FALSE;
 
 	return S_OK;
 }
@@ -3403,14 +3385,7 @@ HRESULT WINAPI VarBoolFromI4(LONG lIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %ld, %p ), stub\n", lIn, pboolOut );
 
-	if( lIn == 0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (lIn) ? VARIANT_TRUE : VARIANT_FALSE;
 
 	return S_OK;
 }
@@ -3422,14 +3397,7 @@ HRESULT WINAPI VarBoolFromR4(FLOAT fltIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %f, %p ), stub\n", fltIn, pboolOut );
 
-	if( fltIn == 0.0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (fltIn == 0.0) ? VARIANT_FALSE : VARIANT_TRUE;
 
 	return S_OK;
 }
@@ -3441,14 +3409,7 @@ HRESULT WINAPI VarBoolFromR8(double dblIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %f, %p ), stub\n", dblIn, pboolOut );
 
-	if( dblIn == 0.0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (dblIn == 0.0) ? VARIANT_FALSE : VARIANT_TRUE;
 
 	return S_OK;
 }
@@ -3460,14 +3421,7 @@ HRESULT WINAPI VarBoolFromDate(DATE dateIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %f, %p ), stub\n", dateIn, pboolOut );
 
-	if( dateIn == 0.0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (dateIn == 0.0) ? VARIANT_FALSE : VARIANT_TRUE;
 
 	return S_OK;
 }
@@ -3509,14 +3463,9 @@ HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_
 			{
 				ret = DISP_E_TYPEMISMATCH;
 			}
-			else if( dValue == 0.0 )
-			{
-				*pboolOut = VARIANT_FALSE;
-			}
 			else
-			{
-				*pboolOut = VARIANT_TRUE;
-			}
+				*pboolOut = (dValue == 0.0) ?
+						VARIANT_FALSE : VARIANT_TRUE;
 		}
 	}
 
@@ -3532,14 +3481,7 @@ HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %c, %p ), stub\n", cIn, pboolOut );
 
-	if( cIn == 0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (cIn == 0) ? VARIANT_FALSE : VARIANT_TRUE;
 
 	return S_OK;
 }
@@ -3551,14 +3493,7 @@ HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %d, %p ), stub\n", uiIn, pboolOut );
 
-	if( uiIn == 0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (uiIn == 0) ? VARIANT_FALSE : VARIANT_TRUE;
 
 	return S_OK;
 }
@@ -3570,14 +3505,7 @@ HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL* pboolOut)
 {
 	TRACE("( %ld, %p ), stub\n", ulIn, pboolOut );
 
-	if( ulIn == 0 )
-	{
-		*pboolOut = VARIANT_FALSE;
-	}
-	else
-	{
-		*pboolOut = VARIANT_TRUE;
-	}
+	*pboolOut = (ulIn == 0) ? VARIANT_FALSE : VARIANT_TRUE;
 
 	return S_OK;
 }
@@ -4103,11 +4031,11 @@ HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG* pulOut)
 {
 	TRACE("( %f, %p ), stub\n", dblIn, pulOut );
 
-    dblIn = round( dblIn );
+	dblIn = round( dblIn );
 	if( dblIn < UI4_MIN || dblIn > UI4_MAX )
 	{
 		return DISP_E_OVERFLOW;
-    }
+	}
 
 	*pulOut = (ULONG) dblIn;
 
@@ -4121,8 +4049,8 @@ HRESULT WINAPI VarUI4FromDate(DATE dateIn, ULONG* pulOut)
 {
 	TRACE("( %f, %p ), stub\n", dateIn, pulOut );
 
-    dateIn = round( dateIn );
-    if( dateIn < UI4_MIN || dateIn > UI4_MAX )
+	dateIn = round( dateIn );
+	if( dateIn < UI4_MIN || dateIn > UI4_MAX )
 	{
 		return DISP_E_OVERFLOW;
 	}
@@ -4187,10 +4115,10 @@ HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG* pulOut) {
  * Convert unsigned char to currency
  */
 HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut) {
-   pcyOut->s.Hi = 0;
-   pcyOut->s.Lo = ((ULONG)bIn) * 10000;
-   
-   return S_OK;
+    pcyOut->s.Hi = 0;
+    pcyOut->s.Lo = ((ULONG)bIn) * 10000;
+
+    return S_OK;
 }
 
 /**********************************************************************
@@ -4198,11 +4126,11 @@ HRESULT WINAPI VarCyFromUI1(BYTE bIn, CY* pcyOut) {
  * Convert signed short to currency
  */
 HRESULT WINAPI VarCyFromI2(short sIn, CY* pcyOut) {
-   if (sIn < 0) pcyOut->s.Hi = -1;
-   else pcyOut->s.Hi = 0;
-   pcyOut->s.Lo = ((ULONG)sIn) * 10000;
-   
-   return S_OK;
+    if (sIn < 0) pcyOut->s.Hi = -1;
+    else pcyOut->s.Hi = 0;
+    pcyOut->s.Lo = ((ULONG)sIn) * 10000;
+
+    return S_OK;
 }
 
 /**********************************************************************
@@ -4261,8 +4189,8 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
  *              VarCyFromStr [OLEAUT32.104]
  */
 HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut) {
-				/* FIXME */
-		return E_NOTIMPL;
+	FIXME("(%p, %08lx, %08lx, %p), stub.\n", strIn, lcid, dwFlags, pcyOut);
+	return E_NOTIMPL;
 }
 
  
