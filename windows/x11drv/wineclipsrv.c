@@ -189,7 +189,7 @@ void TextOut(Window win, GC gc, char *pStr);
 void getGC(Window win, GC *gc);
 
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     XEvent event;
 

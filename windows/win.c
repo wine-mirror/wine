@@ -1689,6 +1689,7 @@ HWND WINAPI GetDesktopWindow(void)
     if (pWndDesktop) return pWndDesktop->hwndSelf;
     ERR_(win)( "You need the -desktop option when running with native USER\n" );
     ExitProcess(1);
+    return 0;
 }
 
 
