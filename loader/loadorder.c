@@ -271,7 +271,7 @@ static BOOL AddLoadOrderSet(char *key, char *order, BOOL override)
  *	ParseCommandlineOverrides	(internal, static)
  *
  * The commandline is in the form:
- * name[,name,...]=native[,b,...][:...]
+ * name[,name,...]=native[,b,...][+...]
  */
 static BOOL ParseCommandlineOverrides(void)
 {
@@ -289,7 +289,7 @@ static BOOL ParseCommandlineOverrides(void)
 	next = key;
 	for(; next; key = next)
 	{
-		next = strchr(key, ':');
+		next = strchr(key, '+');
 		if(next)
 		{
 			*next = '\0';
@@ -425,14 +425,14 @@ BOOL MODULE_InitLoadOrder(void)
 	/* Add the commandline overrides to the pool */
 	if(!ParseCommandlineOverrides())
 	{
-		MESSAGE(	"Syntax: -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]\n"
+		MESSAGE(	"Syntax: -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][+...]\n"
 			"    - 'name' is the name of any dll without extension\n"
 			"    - the order of loading (native, elfdll, so and builtin) can be abbreviated\n"
 			"      with the first letter\n"
 			"    - different loadorders for different dlls can be specified by seperating the\n"
-			"      commandline entries with a ':'\n"
+			"      commandline entries with a '+'\n"
 			"    Example:\n"
-			"    -dll comdlg32,commdlg=n:shell,shell32=b\n"
+			"    -dll comdlg32,commdlg=n+shell,shell32=b\n"
 		   );
 		return FALSE;
 	}
@@ -445,8 +445,8 @@ BOOL MODULE_InitLoadOrder(void)
         while (dllpair->dll1)
         {
             module_loadorder_t *plo1, *plo2;
-            plo1 = MODULE_GetLoadOrder(dllpair->dll1);
-            plo2 = MODULE_GetLoadOrder(dllpair->dll2);
+            plo1 = MODULE_GetLoadOrder(dllpair->dll1, FALSE);
+            plo2 = MODULE_GetLoadOrder(dllpair->dll2, FALSE);
             assert(plo1 && plo2);
             if(memcmp(plo1->loadorder, plo2->loadorder, sizeof(plo1->loadorder)))
                 MESSAGE("Warning: Modules '%s' and '%s' have different loadorder which may cause trouble\n", dllpair->dll1, dllpair->dll2);
@@ -479,10 +479,11 @@ BOOL MODULE_InitLoadOrder(void)
  * '.dll' and '.exe'. A lookup in the table can yield an override for
  * the specific dll. Otherwise the default load order is returned.
  */
-module_loadorder_t *MODULE_GetLoadOrder(const char *path)
+module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32 )
 {
 	module_loadorder_t lo, *tmp;
 	char fname[256];
+	char sysdir[MAX_PATH+1];
 	char *cptr;
 	char *name;
 	int len;
@@ -491,26 +492,36 @@ module_loadorder_t *MODULE_GetLoadOrder(const char *path)
 	
 	assert(path != NULL);
 
-	/* Strip path information */
-	cptr = strrchr(path, '\\');
-	if(!cptr)
-		name = strrchr(path, '/');
-	else
-		name = strrchr(cptr, '/');
+	if ( ! GetSystemDirectoryA ( sysdir, MAX_PATH ) ) 
+	  return &default_loadorder; /* Hmmm ... */
 
-	if(!name)
-		name = cptr ? cptr+1 : (char *)path;
-	else
-		name++;
-
-	if((cptr = strchr(name, ':')) != NULL)	/* Also strip drive if in format 'C:MODULE.DLL' */
-		name = cptr+1;
-
+	/* Strip path information for 16 bit modules or if the module 
+	   resides in the system directory */
+	if ( !win32 || !strncasecmp ( sysdir, path, strlen (sysdir) ) )
+	{
+	
+	    cptr = strrchr(path, '\\');
+	    if(!cptr)
+	        name = strrchr(path, '/');
+	    else
+	        name = strrchr(cptr, '/');
+	    
+	    if(!name)
+	        name = cptr ? cptr+1 : (char *)path;
+	    else
+	        name++;
+	    
+	    if((cptr = strchr(name, ':')) != NULL)	/* Also strip drive if in format 'C:MODULE.DLL' */
+	        name = cptr+1;
+	}
+	else 
+	  name = (char *)path;
+    
 	len = strlen(name);
 	if(len >= sizeof(fname) || len <= 0)
 	{
-		ERR("Path '%s' -> '%s' reduces to zilch or just too large...\n", path, name);
-		return &default_loadorder;
+	     ERR("Path '%s' -> '%s' reduces to zilch or just too large...\n", path, name);
+	     return &default_loadorder;
 	}
 
 	strcpy(fname, name);

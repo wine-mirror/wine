@@ -130,13 +130,16 @@ static void do_dll( const char *arg )
 {
     if (Options.dllFlags)
     {
-        /* don't overwrite previous value. Should we
-         * automatically add the ',' between multiple DLLs ?
-         */
-        MESSAGE("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
-        ExitProcess(1);
+        Options.dllFlags = (char *) realloc ( Options.dllFlags, 
+					    strlen ( Options.dllFlags ) + strlen ( arg ) + 2 );
+	if ( !Options.dllFlags ) out_of_memory(); 
+	strcat ( Options.dllFlags, "+" );
+	strcat ( Options.dllFlags, arg );
     }
-    Options.dllFlags = xstrdup( arg );
+    else 
+    {
+        Options.dllFlags = xstrdup( arg );
+    }
 }
 
 static void do_language( const char *arg )

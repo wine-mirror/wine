@@ -912,7 +912,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 	int i;
 	module_loadorder_t *plo;
 
-	plo = MODULE_GetLoadOrder(libname);
+	plo = MODULE_GetLoadOrder(libname, FALSE);
 
 	for(i = 0; i < MODULE_LOADORDER_NTYPES; i++)
 	{

@@ -22,7 +22,7 @@ typedef struct module_loadorder {
 } module_loadorder_t;
 
 BOOL MODULE_InitLoadOrder(void);
-module_loadorder_t *MODULE_GetLoadOrder(const char *path);
+module_loadorder_t *MODULE_GetLoadOrder(const char *path, BOOL win32);
 
 #endif
 

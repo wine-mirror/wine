@@ -702,19 +702,14 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 {
 	HMODULE		hModule32;
 	WINE_MODREF	*wm;
-	char        	filename[256];
 	HANDLE		hFile;
-
-	/* Search for and open PE file */
-	if ( SearchPathA( NULL, name, ".DLL", 
-	                  sizeof(filename), filename, NULL ) == 0 ) return NULL;
        
-	hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
+	hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
                              NULL, OPEN_EXISTING, 0, -1 );
 	if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
 	
 	/* Load PE module */
-	hModule32 = PE_LoadImage( hFile, filename, flags );
+	hModule32 = PE_LoadImage( hFile, name, flags );
 	if (!hModule32)
 	{
                 CloseHandle( hFile );
@@ -722,9 +717,9 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	}
 
 	/* Create 32-bit MODREF */
-	if ( !(wm = PE_CreateModule( hModule32, filename, flags, -1, FALSE )) )
+	if ( !(wm = PE_CreateModule( hModule32, name, flags, -1, FALSE )) )
 	{
-		ERR( "can't load %s\n", filename );
+		ERR( "can't load %s\n", name );
                 CloseHandle( hFile );
 		SetLastError( ERROR_OUTOFMEMORY );
 		return NULL;

@@ -158,7 +158,7 @@ WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags)
 
 	SNOOP_RegisterDLL(hmod,libname,STUBSIZE/sizeof(ELF_STDCALL_STUB));
 
-        wm = PE_CreateModule( hmod, modname, 0, -1, FALSE );
+        wm = PE_CreateModule( hmod, libname, 0, -1, FALSE );
         wm->find_export = ELF_FindExportedFunction;
 	wm->dlhandle = dlhandle;
 	return wm;

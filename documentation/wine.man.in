@@ -170,7 +170,7 @@ Use a desktop window of the given geometry, e.g. "640x480"
 .I --display name
 Use the specified X display
 .TP
-.I --dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]
+.I --dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][+...]
 Selects the override type and load order of dll used in the loading process
 for any dll. The default is set in @sysconfdir@/wine.conf or ~/.winerc. There
 are currently four types of libraries that can be loaded into a process' address
@@ -191,8 +191,10 @@ internal dlls (
 Each dll may have its own specific load order. The load order determines
 which verion of the dll is attempted to be loaded into the address space. If
 the first fails, then the next is tried and so on. Different load orders can
-be specified by separating the entries with a colon. Multiple libraries
-with the same load order can be separated with commas.
+be specified by separating the entries with a plus sign. Multiple libraries
+with the same load order can be separated with commas. It is also possible to 
+use the --dll option several times, to specify different loadorders for different
+libraries
 .br
 Examples:
 .br
@@ -201,7 +203,12 @@ Examples:
 Try to load comdlg32 and commdlg as native windows dll first and try
 the builtin version if the native load fails.
 .br
-.I --dll comdlg32,commdlg=e,n:shell,shell32=b:comctl32,commctrl=n
+.I --dll shell,shell32=n --dll c:\\foo\\bar\\baz=b
+.br
+Try to load the libraries shell and shell32 as native windows dlls. Furthermore, if 
+an application request to load c:\\foo\\bar\\baz.dll load the builtin library baz. 
+.br
+.I --dll comdlg32,commdlg=e,n:shell,shell32=b+comctl32,commctrl=n
 .br
 Try to load comdlg32 and commdlg as elfdll first and try the native version
 if the elfdll load fails; load shell32/shell always as builtin and

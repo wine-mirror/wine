@@ -415,7 +415,7 @@ HMODULE MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
 
 
 /**********************************************************************
- *	    MODULE_FindModule32
+ *	    MODULE_FindModule
  *
  * Find a (loaded) win32 module depending on path
  *
@@ -1258,11 +1258,48 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	WINE_MODREF *pwm;
 	int i;
 	module_loadorder_t *plo;
+	LPSTR filename, p;
+
+	if ( !libname ) return NULL;
+
+	filename = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
+	if ( !filename ) return NULL;
+
+	/* build the modules filename */
+	if (!SearchPathA( NULL, libname, ".dll", MAX_PATH, filename, NULL ))
+	{
+	    if ( ! GetSystemDirectoryA ( filename, MAX_PATH ) ) 
+  	        goto error;
+
+	    /* if the library name contains a path and can not be found, return an error. 
+	       exception: if the path is the system directory, proceed, so that modules, 
+	       which are not PE-modules can be loaded
+
+	       if the library name does not contain a path and can not be found, assume the 
+	       system directory is meant */
+	    
+	    if ( ! strncasecmp ( filename, libname, strlen ( filename ) ))
+	        strcpy ( filename, libname );
+	    else
+	    {
+	        if ( strchr ( libname, '\\' ) || strchr ( libname, ':') || strchr ( libname, '/' ) ) 
+		    goto error;
+		else 
+		{
+  		    strcat ( filename, "\\" );
+		    strcat ( filename, libname );
+		}
+	    }
+      
+	    /* if the filename doesn't have an extension append .DLL */
+	    if (!(p = strrchr( filename, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+            strcat( filename, ".DLL" );
+	}
 
 	EnterCriticalSection(&PROCESS_Current()->crit_section);
 
 	/* Check for already loaded module */
-	if((pwm = MODULE_FindModule(libname))) 
+	if((pwm = MODULE_FindModule(filename))) 
 	{
 		if(!(pwm->flags & WINE_MODREF_MARKER))
 			pwm->refCount++;
@@ -1274,12 +1311,13 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                     pwm->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
                     fixup_imports( pwm );
 		}
-		TRACE("Already loaded module '%s' at 0x%08x, count=%d, \n", libname, pwm->module, pwm->refCount);
+		TRACE("Already loaded module '%s' at 0x%08x, count=%d, \n", filename, pwm->module, pwm->refCount);
 		LeaveCriticalSection(&PROCESS_Current()->crit_section);
+		HeapFree ( GetProcessHeap(), 0, filename );
 		return pwm;
 	}
 
-	plo = MODULE_GetLoadOrder(libname);
+	plo = MODULE_GetLoadOrder(filename, TRUE);
 
 	for(i = 0; i < MODULE_LOADORDER_NTYPES; i++)
 	{
@@ -1287,25 +1325,25 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		switch(plo->loadorder[i])
 		{
 		case MODULE_LOADORDER_DLL:
-			TRACE("Trying native dll '%s'\n", libname);
-			pwm = PE_LoadLibraryExA(libname, flags);
+			TRACE("Trying native dll '%s'\n", filename);
+			pwm = PE_LoadLibraryExA(filename, flags);
 			break;
 
 		case MODULE_LOADORDER_ELFDLL:
-			TRACE("Trying elfdll '%s'\n", libname);
-			if (!(pwm = BUILTIN32_LoadLibraryExA(libname, flags)))
-                            pwm = ELFDLL_LoadLibraryExA(libname, flags);
+			TRACE("Trying elfdll '%s'\n", filename);
+			if (!(pwm = BUILTIN32_LoadLibraryExA(filename, flags)))
+                            pwm = ELFDLL_LoadLibraryExA(filename, flags);
 			break;
 
 		case MODULE_LOADORDER_SO:
-			TRACE("Trying so-library '%s'\n", libname);
-			if (!(pwm = BUILTIN32_LoadLibraryExA(libname, flags)))
-                            pwm = ELF_LoadLibraryExA(libname, flags);
+			TRACE("Trying so-library '%s'\n", filename);
+			if (!(pwm = BUILTIN32_LoadLibraryExA(filename, flags)))
+                            pwm = ELF_LoadLibraryExA(filename, flags);
 			break;
 
 		case MODULE_LOADORDER_BI:
-			TRACE("Trying built-in '%s'\n", libname);
-			pwm = BUILTIN32_LoadLibraryExA(libname, flags);
+			TRACE("Trying built-in '%s'\n", filename);
+			pwm = BUILTIN32_LoadLibraryExA(filename, flags);
 			break;
 
 		default:
@@ -1320,7 +1358,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		if(pwm)
 		{
 			/* Initialize DLL just loaded */
-			TRACE("Loaded module '%s' at 0x%08x, \n", libname, pwm->module);
+			TRACE("Loaded module '%s' at 0x%08x, \n", filename, pwm->module);
 
 			/* Set the refCount here so that an attach failure will */
 			/* decrement the dependencies through the MODULE_FreeLibrary call. */
@@ -1328,6 +1366,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 
 			LeaveCriticalSection(&PROCESS_Current()->crit_section);
                         SetLastError( err );  /* restore last error */
+			HeapFree ( GetProcessHeap(), 0, filename );
 			return pwm;
 		}
 
@@ -1335,8 +1374,10 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			break;
 	}
 
-	WARN("Failed to load module '%s'; error=0x%08lx, \n", libname, GetLastError());
 	LeaveCriticalSection(&PROCESS_Current()->crit_section);
+ error:
+	WARN("Failed to load module '%s'; error=0x%08lx, \n", filename, GetLastError());
+	HeapFree ( GetProcessHeap(), 0, filename );
 	return NULL;
 }
 

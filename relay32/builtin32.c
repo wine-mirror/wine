@@ -269,8 +269,9 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     int i;
 
     /* Fix the name in case we have a full path and extension */
-    if ((p = strrchr( path, '\\' ))) path = p + 1;
-    lstrcpynA( dllname, path, sizeof(dllname) );
+    if ((p = strrchr( path, '\\' ))) p++;
+    else p = (char *)path; 
+    lstrcpynA( dllname, p, sizeof(dllname) );
 
     p = strrchr( dllname, '.' );
     if (!p) strcat( dllname, ".dll" );
@@ -295,7 +296,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
     if (!(module = BUILTIN32_DoLoadImage( builtin_dlls[i] ))) return NULL;
 
     /* Create 32-bit MODREF */
-    if ( !(wm = PE_CreateModule( module, dllname, flags, -1, TRUE )) )
+    if ( !(wm = PE_CreateModule( module, path, flags, -1, TRUE )) )
     {
         ERR( "can't load %s\n", path );
         SetLastError( ERROR_OUTOFMEMORY );
