@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = ctl3d32.dll
+IMPORTS   = user32 kernel32
+ALTNAMES  = ctl3d.dll ctl3dv2.dll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = ctl3d32.c
+
+C_SRCS16 = ctl3d.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

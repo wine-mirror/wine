@@ -666,6 +666,7 @@
 @ stdcall CloseDriver16(long long long) CloseDriver16
 @ stdcall CreateDialogIndirectParam16(long ptr long long long) CreateDialogIndirectParam16
 @ stdcall DefDriverProc16(long long long long long) DefDriverProc16
+@ stdcall DefWindowProc16(long long long long) DefWindowProc16
 @ stdcall DestroyIcon32(long long) DestroyIcon32
 @ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
 @ stdcall GetDriverModuleHandle16(long) GetDriverModuleHandle16

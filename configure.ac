@@ -1370,6 +1370,7 @@ dlls/comctl32/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/crypt32/Makefile
+dlls/ctl3d/Makefile
 dlls/d3d8/Makefile
 dlls/d3dx8/Makefile
 dlls/dciman32/Makefile

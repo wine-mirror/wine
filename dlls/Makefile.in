@@ -24,6 +24,7 @@ BASEDIRS = \
 	commdlg \
 	crtdll \
 	crypt32 \
+	ctl3d \
 	dciman32 \
 	devenum \
 	dinput \
@@ -132,6 +133,8 @@ WIN16_FILES = \
 	comm.dll$(DLLEXT) \
 	commdlg.dll$(DLLEXT) \
 	compobj.dll$(DLLEXT) \
+	ctl3d.dll$(DLLEXT) \
+	ctl3dv2.dll$(DLLEXT) \
 	ddeml.dll$(DLLEXT) \
 	dispdib.dll$(DLLEXT) \
 	display.dll$(DLLEXT) \
@@ -187,6 +190,7 @@ all: \
 	comdlg32.dll$(DLLEXT) \
 	crtdll.dll$(DLLEXT) \
 	crypt32.dll$(DLLEXT) \
+	ctl3d32.dll$(DLLEXT) \
 	dciman32.dll$(DLLEXT) \
 	devenum.dll$(DLLEXT) \
 	dinput.dll$(DLLEXT) \
@@ -301,6 +305,9 @@ crtdll.dll$(DLLEXT): crtdll/crtdll.dll$(DLLEXT)
 
 crypt32.dll$(DLLEXT): crypt32/crypt32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) crypt32/crypt32.dll$(DLLEXT) $@
+
+ctl3d32.dll$(DLLEXT) ctl3d.dll$(DLLEXT) ctl3dv2.dll$(DLLEXT): ctl3d/ctl3d32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) ctl3d/ctl3d32.dll$(DLLEXT) $@
 
 d3d8.dll$(DLLEXT): d3d8/d3d8.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) d3d8/d3d8.dll$(DLLEXT) $@
@@ -594,6 +601,7 @@ IMPORT_LIBS = \
 	libcomdlg32 \
 	libcrtdll \
 	libcrypt32 \
+	libctl3d32 \
 	libd3d8 \
 	libd3dx8 \
 	libdciman32 \
@@ -711,6 +719,11 @@ libcrypt32.def: crypt32/crypt32.spec.def
 	$(RM) $@ && $(LN_S) crypt32/crypt32.spec.def $@
 libcrypt32.a: crypt32/crypt32.spec.def
 	$(DLLTOOL) -k -l $@ -d crypt32/crypt32.spec.def
+
+libctl3d32.def: ctl3d/ctl3d32.spec.def
+	$(RM) $@ && $(LN_S) ctl3d/ctl3d32.spec.def $@
+libctl3d32.a: ctl3d/ctl3d32.spec.def
+	$(DLLTOOL) -k -l $@ -d ctl3d/ctl3d32.spec.def
 
 libd3d8.def: d3d8/d3d8.spec.def
 	$(RM) $@ && $(LN_S) d3d8/d3d8.spec.def $@
@@ -1081,6 +1094,7 @@ comctl32/comctl32.spec.def: $(WINEBUILD)
 commdlg/comdlg32.spec.def: $(WINEBUILD)
 crtdll/crtdll.spec.def: $(WINEBUILD)
 crypt32/crypt32.spec.def: $(WINEBUILD)
+ctl3d/ctl3d32.spec.def: $(WINEBUILD)
 d3d8/d3d8.spec.def: $(WINEBUILD)
 d3dx8/d3dx8.spec.def: $(WINEBUILD)
 dciman32/dciman32.spec.def: $(WINEBUILD)
@@ -1168,6 +1182,7 @@ comctl32/comctl32.dll$(DLLEXT): comctl32
 commdlg/comdlg32.dll$(DLLEXT): commdlg
 crtdll/crtdll.dll$(DLLEXT): crtdll
 crypt32/crypt32.dll$(DLLEXT): crypt32
+ctl3d/ctl3d32.dll$(DLLEXT): ctl3d
 d3d8/d3d8.dll$(DLLEXT): d3d8
 d3dx8/d3dx8.dll$(DLLEXT): d3dx8
 dciman32/dciman32.dll$(DLLEXT): dciman32
@@ -1271,6 +1286,7 @@ comctl32/__install__: comctl32.dll$(DLLEXT)
 commdlg/__install__: comdlg32.dll$(DLLEXT)
 crtdll/__install__: crtdll.dll$(DLLEXT)
 crypt32/__install__: crypt32.dll$(DLLEXT)
+ctl3d/__install__: ctl3d32.dll$(DLLEXT)
 d3d8/__install__: d3d8.dll$(DLLEXT)
 d3dx8/__install__: d3dx8.dll$(DLLEXT)
 dciman32/__install__: dciman32.dll$(DLLEXT)
