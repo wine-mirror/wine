@@ -833,10 +833,10 @@ INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 			   DWORD dwMode)
 {
     LOADED_PRINTER_DRIVER *pLPD = LoadPrinterDriver(lpszDriver);
-    LPVOID lpSegOut = NULL, lpSegIn = NULL;
+    LPDEVMODEA lpSegOut = NULL, lpSegIn = NULL;
     LPSTR lpSegDevice, lpSegPort, lpSegProfile;
     INT16 wRet;
-    WORD wOutSize = 0;
+    WORD wOutSize = 0, wInSize = 0;
 
     if(!pLPD) return -1;
 
@@ -850,19 +850,17 @@ INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     if(lpdmOutput) {
       /* We don't know how big this will be so we call the driver's
 	 ExtDeviceMode to find out */
-
-	wOutSize = PRTDRV_CallTo16_word_wwlllllw(
-	    pLPD->fn[FUNC_EXTDEVICEMODE], hwnd, pLPD->hInst, 0,
-	    SEGPTR_GET(lpSegDevice), SEGPTR_GET(lpSegPort), 0,
-	    SEGPTR_GET(lpSegProfile), 0 );
+        wOutSize = PRTDRV_CallTo16_word_wwlllllw(
+		   pLPD->fn[FUNC_EXTDEVICEMODE], hwnd, pLPD->hInst, 0,
+		   SEGPTR_GET(lpSegDevice), SEGPTR_GET(lpSegPort), 0,
+		   SEGPTR_GET(lpSegProfile), 0 );
 	lpSegOut = SEGPTR_ALLOC(wOutSize);
-	memcpy(lpSegOut, lpdmOutput, wOutSize); /* probably unnecessary */
     }
     if(lpdmInput) {
       /* This time we get the information from the fields */
-        lpSegIn = SEGPTR_ALLOC(lpdmInput->dmSize + lpdmInput->dmDriverExtra);
-	memcpy(lpSegIn, lpdmInput, lpdmInput->dmSize +
-	       lpdmInput->dmDriverExtra);
+        wInSize = lpdmInput->dmSize + lpdmInput->dmDriverExtra;
+        lpSegIn = SEGPTR_ALLOC(wInSize);
+	memcpy(lpSegIn, lpdmInput, wInSize);
     }
     wRet = PRTDRV_CallTo16_word_wwlllllw( pLPD->fn[FUNC_EXTDEVICEMODE],
 					  hwnd, pLPD->hInst,
@@ -877,8 +875,6 @@ INT WIN16DRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 	SEGPTR_FREE(lpSegOut);
     }
     if(lpSegIn) {
-        memcpy(lpdmInput, lpSegIn, lpdmInput->dmSize +
-	       lpdmInput->dmDriverExtra);
 	SEGPTR_FREE(lpSegIn);
     }
     SEGPTR_FREE(lpSegDevice);
