@@ -603,6 +603,11 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
         load_addr = (DWORD)VirtualAlloc( NULL, vma_size,
 					 MEM_RESERVE | MEM_COMMIT,
 					 PAGE_EXECUTE_READWRITE );
+	if (!load_addr) {
+            FIXME_(win32)(
+                   "FATAL: Couldn't load module %s (out of memory, %d needed)!\n", filename, vma_size);
+            goto error;
+	}
     }
 
     TRACE_(win32)("Load addr is %lx (base %lx), range %x\n",
