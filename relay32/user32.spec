@@ -388,7 +388,7 @@ init	MAIN_UserInit
 384 stdcall MapVirtualKeyExA(long long long) MapVirtualKeyEx32A
 385 stdcall MapVirtualKeyW(long long) MapVirtualKeyA
 386 stdcall MapWindowPoints(long long ptr long) MapWindowPoints
-387 stub MenuItemFromPoint
+387 stdcall MenuItemFromPoint() MenuItemFromPoint
 388 stub MenuWindowProcA
 389 stub MenuWindowProcW
 390 stdcall MessageBeep(long) MessageBeep

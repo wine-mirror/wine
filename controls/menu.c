@@ -4737,3 +4737,13 @@ DWORD WINAPI GetMenuContextHelpId( HMENU hMenu )
     }
     return 0;
 }
+
+/**********************************************************************
+ *         MenuItemFromPoint    (USER32.387)
+ */
+UINT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
+{
+    FIXME("(0x%04x,0x%04x,(%ld,%ld)):stub\n", 
+	  hWnd, hMenu, ptScreen.x, ptScreen.y);
+    return 0;
+}
