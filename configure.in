@@ -322,17 +322,6 @@ then
 				OPENGL32_DLL=opengl32
 			fi
 
-                        AC_CHECK_HEADERS(GL/osmesa.h,
-                            [ dnl *** If GL/osmesa.h exists...
-                                AC_CHECK_LIB(GL, OSMesaCreateContext,
-                                  X_PRE_LIBS="$X_PRE_LIBS -lGL",
-                                  AC_CHECK_LIB(OSMesa, OSMesaCreateContext,
-                                               X_PRE_LIBS="$X_PRE_LIBS -lOSMesa",,
-                                               -lGL $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS),
-                                  $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
-                                )
-                            ]
-                        )
 		fi
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,glBegin,

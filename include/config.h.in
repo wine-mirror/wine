@@ -178,9 +178,6 @@
 /* Define if you have the <GL/glx.h> header file.  */
 #undef HAVE_GL_GLX_H
 
-/* Define if you have the <GL/osmesa.h> header file.  */
-#undef HAVE_GL_OSMESA_H
-
 /* Define if you have the <X11/XKBlib.h> header file.  */
 #undef HAVE_X11_XKBLIB_H
 

@@ -12,8 +12,6 @@
 #include "wine_gl.h"
 #include "x11drv.h"
 
-#undef USE_OSMESA
-
 /*****************************************************************************
  * IDirect3DLight MESA private structure
  */
@@ -81,12 +79,7 @@ typedef struct render_state {
 } RenderState;
 
 typedef struct mesa_d3dd_private {
-#ifdef USE_OSMESA
-    OSMesaContext ctx;
-    unsigned char *buffer;
-#else
     GLXContext ctx;
-#endif
 
     /* The current render state */
     RenderState rs;

@@ -50,16 +50,10 @@ static void set_context(IDirect3DDevice2Impl* This) {
 #if COMPILABLE
     D3DDPRIVATE(This);
 
-#ifdef USE_OSMESA
-    OSMesaMakeCurrent(d3ddpriv->ctx, odev->buffer, GL_UNSIGNED_BYTE,
-		    This->surface->s.surface_desc.dwWidth,
-		    This->surface->s.surface_desc.dwHeight);
-#else
     if (glXMakeCurrent(gdi_display,ddpriv->drawable, odev->ctx) == False) {
 	ERR("Error in setting current context (context %p drawable %ld)!\n",
 	    odev->ctx, ddpriv->drawable);
     }
-#endif
 #endif
 }
 
@@ -178,11 +172,6 @@ is_OpenGL(
     
     TRACE("Creating OpenGL device for surface %p\n", surface);
     /* Create the OpenGL context */
-#ifdef USE_OSMESA
-    odev->ctx = OSMesaCreateContext(OSMESA_RGBA, NULL);
-    odev->buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
-#else
     /* First get the correct visual */
     ENTER_GL();
     /* Create the context */
@@ -215,7 +204,6 @@ is_OpenGL(
     }
 #endif
 
-#endif
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
     odev->rs.mag = GL_NEAREST;
@@ -259,13 +247,9 @@ static ULONG WINAPI MESA_IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
   
   if (!--(This->ref)) {
-#ifdef USE_OSMESA
-    OSMesaDestroyContext(odev->ctx);
-#else
     ENTER_GL();
     glXDestroyContext(gdi_display, odev->ctx);
     LEAVE_GL();
-#endif
     This->private = NULL;
     HeapFree(GetProcessHeap(),0,This);
     return 0;
@@ -410,52 +394,10 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_BeginScene(
 
 HRESULT WINAPI MESA_IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface) {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
-#ifdef USE_OSMESA
-  D3DPRIVATE(This);
 
-  LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) This->surface;
-  DDSURFACEDESC sdesc;
-  int x,y;
-  unsigned char *src;
-  unsigned short *dest;
-#endif
-  
   FIXME("(%p)->(): stub\n", This);
 
-#ifdef USE_OSMESA
-  /* Here we copy back the OpenGL scene to the the DDraw surface */
-  /* First, lock the surface */
-  IDirectDrawSurface3_Lock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
-
-  /* The copy the OpenGL buffer to this surface */
-  
-  /* NOTE : this is only for debugging purpose. I KNOW it is really unoptimal.
-     I am currently working on a set of patches for Mesa to have OSMesa support
-     16 bpp surfaces => we will able to render directly onto the surface, no
-     need to do a bpp conversion */
-  dest = (unsigned short *) sdesc.u2.lpSurface;
-  src = ((unsigned char *) odev->buffer) + 4 * (sdesc.dwWidth * (sdesc.dwHeight - 1));
-  for (y = 0; y < sdesc.dwHeight; y++) {
-    unsigned char *lsrc = src;
-    
-    for (x = 0; x < sdesc.dwWidth ; x++) {
-      unsigned char r =  *lsrc++;
-      unsigned char g =  *lsrc++;
-      unsigned char b =  *lsrc++;
-      lsrc++; /* Alpha */
-      *dest = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
-      
-      dest++;
-    }
-
-    src -= 4 * sdesc.dwWidth;
-  }
-
-  /* Unlock the surface */
-  IDirectDrawSurface3_Unlock(surf,sdesc.u2.lpSurface);
-#else
   /* No need to do anything here... */
-#endif
   
   return DD_OK;
 }
@@ -870,10 +812,8 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 {
   if (!memcmp(&IID_D3DDEVICE_OpenGL,rguid,sizeof(IID_D3DDEVICE_OpenGL))) {
     mesa_d3dd_private *odev;
-#ifndef USE_OSMESA
     int attributeList[]={ GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
     XVisualInfo *xvis;
-#endif
        
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DDeviceImpl));
     (*device)->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dd_private));
@@ -891,11 +831,6 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     TRACE("OpenGL device created \n");
     
     /* Create the OpenGL context */
-#ifdef USE_OSMESA
-    odev->ctx = OSMesaCreateContext(OSMESA_RGBA, NULL);
-    odev->buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-			     surface->s.surface_desc.dwWidth * surface->s.surface_desc.dwHeight * 4);
-#else
     /* First get the correct visual */
     /* if (surface->s.backbuffer == NULL)
        attributeList[3] = None; */
@@ -924,7 +859,6 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 	  if (chain->surfaces[i]->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_FLIP)
 	      chain->surfaces[i]->s.d3d_device = (void *) odev;
     }
-#endif
 #endif
     odev->rs.src = GL_ONE;
     odev->rs.dst = GL_ZERO;
@@ -956,13 +890,9 @@ static ULONG WINAPI MESA_IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
   
   if (!--(This->ref)) {
     D3DDPRIVATE(This);
-#ifdef USE_OSMESA
-    OSMesaDestroyContext(odev->ctx);
-#else
     ENTER_GL();
     glXDestroyContext(gdi_display, odev->ctx);
     LEAVE_GL();
-#endif    
     This->private = NULL;
     HeapFree(GetProcessHeap(),0,This);
     return 0;
@@ -1000,52 +930,10 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_BeginScene(LPDIRECT3DDEVICE iface
 static HRESULT WINAPI MESA_IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
-#ifdef USE_OSMESA
-  D3DDPRIVATE(This);
-  LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) This->surface;
-  DDSURFACEDESC sdesc;
-  int x,y;
-  unsigned char *src;
-  unsigned short *dest;
-#endif
   
   FIXME("(%p)->(): stub\n", This);
 
-#ifdef USE_OSMESA
-  /* Here we copy back the OpenGL scene to the the DDraw surface */
-  /* First, lock the surface */
-  IDirectDrawSurface3_Lock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
-
-  /* The copy the OpenGL buffer to this surface */
-  
-  /* NOTE : this is only for debugging purpose. I KNOW it is really unoptimal.
-     I am currently working on a set of patches for Mesa to have OSMesa support
-     16 bpp surfaces => we will able to render directly onto the surface, no
-     need to do a bpp conversion */
-  dest = (unsigned short *) sdesc.u2.lpSurface;
-  src = ((unsigned char *) odev->buffer) + 4 * (sdesc.dwWidth * (sdesc.dwHeight - 1));
-  for (y = 0; y < sdesc.dwHeight; y++) {
-    unsigned char *lsrc = src;
-    
-    for (x = 0; x < sdesc.dwWidth ; x++) {
-      unsigned char r =  *lsrc++;
-      unsigned char g =  *lsrc++;
-      unsigned char b =  *lsrc++;
-      lsrc++; /* Alpha */
-
-      *dest = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
-      
-      dest++;
-    }
-
-    src -= 4 * sdesc.dwWidth;
-  }
-
-  /* Unlock the surface */
-  IDirectDrawSurface3_Unlock(surf,sdesc.u2.lpSurface);
-#else
   /* No need to do anything here... */
-#endif
   
   return DD_OK;  
 }
