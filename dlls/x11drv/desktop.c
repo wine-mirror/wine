@@ -91,7 +91,8 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
  */
 void X11DRV_create_desktop_thread(void)
 {
-    HANDLE handle = CreateThread( NULL, 0, desktop_thread, NtCurrentTeb()->driver_data, 0, NULL );
+    HANDLE handle = CreateThread( NULL, 0, desktop_thread, NtCurrentTeb()->driver_data,
+                                  0, &desktop_tid );
     if (!handle)
     {
         MESSAGE( "Could not create desktop thread\n" );
