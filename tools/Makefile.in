@@ -25,9 +25,7 @@ SUBDIRS = \
 
 INSTALLSUBDIRS = $(SUBDIRS)
 
-EXTRASUBDIRS = \
-	winapi_check \
-	wineconf.libs
+EXTRASUBDIRS = winapi_check
 
 all: $(PROGRAMS) $(SUBDIRS)
 
