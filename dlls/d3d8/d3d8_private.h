@@ -518,6 +518,10 @@ struct IDirect3DVolume8Impl
     D3DRESOURCETYPE         ResourceType;
 
     void                   *Container;
+    D3DVOLUME_DESC          myDesc;
+    BYTE                   *allocatedMemory;
+    UINT                    textureName;
+    UINT                    bytesPerPixel;
 
 };
 
@@ -797,6 +801,17 @@ struct IDirect3DVolumeTexture8Impl
     /* IDirect3DVolumeTexture8 fields */
     IDirect3DDevice8Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
+    UINT                    width;
+    UINT                    height;
+    UINT                    depth;
+    UINT                    levels;
+    DWORD                   usage;
+    D3DFORMAT               format;
+
+    IDirect3DDevice8Impl *device;
+    IDirect3DVolume8Impl *volumes[MAX_LEVELS];
+    BOOL Dirty;
+
 };
 
 /* IUnknown: */

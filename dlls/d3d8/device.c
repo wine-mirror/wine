@@ -30,7 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* CreateVertexShader can return > 0xFFFF */
-#define VS_HIGHESTFIXEDFXF 0xFFFF
+#define VS_HIGHESTFIXEDFXF 0xF0000000
 
 /* Used for CreateStateBlock */
 #define NUM_SAVEDPIXELSTATES_R     38
@@ -293,6 +293,18 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
                     glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
                     break;
+
+                case D3DRTYPE_VOLUMETEXTURE:
+                    s = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    t = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    r = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
+                    glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
+                    break;
+
                 default:
                     r=0;q=0; /* Avoid compiler warnings, need these vars later for other textures */
                     FIXME("Unhandled texture type\n");
@@ -676,15 +688,83 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,UINT Depth,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DVolumeTexture8** ppVolumeTexture) {
 
     IDirect3DVolumeTexture8Impl *object;
+    int i;
+    UINT tmpW;
+    UINT tmpH;
+    UINT tmpD;
+
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* Allocate the storage for it */
+    TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%d), Pool(%d)\n", This, Width, Height, Depth, Levels, Usage, Format, Pool);
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolumeTexture8Impl));
     object->lpVtbl = &Direct3DVolumeTexture8_Vtbl;
-    object->ref = 1;
-    object->Device = This;
     object->ResourceType = D3DRTYPE_VOLUMETEXTURE;
-    TRACE("(%p) : Iface@%p\n", This, object);
+    object->ref = 1;
+
+
+    object->width = Width;
+    object->height = Height;
+    object->depth = Depth;
+    object->levels = Levels;
+    object->usage = Usage;
+    object->format = Format;
+    object->device = This;
+
+    /* Calculate levels for mip mapping */
+    if (Levels == 0) {
+        object->levels++;
+        tmpW = Width;
+        tmpH = Height;
+        tmpD = Depth;
+        while (tmpW > 1 && tmpH > 1 && tmpD > 1) {
+            tmpW = max(1,tmpW / 2);
+            tmpH = max(1, tmpH / 2);
+            tmpD = max(1, tmpD / 2);
+            object->levels++;
+        }
+        TRACE("Calculated levels = %d\n", object->levels);
+    }
+
+    /* Generate all the surfaces */
+    tmpW = Width;
+    tmpH = Height;
+    tmpD = Depth;
+
+    /*for (i=0; i<object->levels; i++) { */
+    i=0;
+    {
+        IDirect3DVolume8Impl *volume;
+
+        /* Create the volume - No entry point for this seperately?? */
+        volume  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolume8Impl));
+        object->volumes[i] = (IDirect3DVolume8Impl *) volume;
+
+        volume->lpVtbl = &Direct3DVolume8_Vtbl;
+        volume->Device = This;
+        volume->ResourceType = D3DRTYPE_VOLUME;
+        volume->Container = object;
+        volume->ref = 1;
+
+        volume->myDesc.Width = Width;
+        volume->myDesc.Height= Height;
+        volume->myDesc.Depth = Depth;
+        volume->myDesc.Format= Format;
+        volume->myDesc.Type  = D3DRTYPE_VOLUME;
+        volume->myDesc.Pool  = Pool;
+        volume->myDesc.Usage = Usage;
+        volume->bytesPerPixel   = bytesPerPixel(Format);
+        volume->myDesc.Size     = (Width * volume->bytesPerPixel) * Height * Depth;
+        volume->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->myDesc.Size);
+
+        TRACE("(%p) : Volume at w(%d) h(%d) d(%d) fmt(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Depth, Format, 
+                  volume, volume->allocatedMemory, volume->myDesc.Size);
+
+        tmpW = max(1,tmpW / 2);
+        tmpH = max(1, tmpH / 2);
+        tmpD = max(1, tmpD / 2);
+    }
+
     *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE8)object;
     return D3D_OK;
 }
@@ -2292,8 +2372,80 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                 checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
             }
+
+        } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
+            IDirect3DVolumeTexture8Impl *pTexture2 = (IDirect3DVolumeTexture8Impl *) pTexture;
+            int i;
+            float col[4];
+
+            /* Standard 3D (volume) texture */
+            TRACE("Standard 3d texture\n");
+/*            for (i=0; i<pTexture2->levels; i++) { */
+            i=0;
+            {
+
+                if (pTexture2->volumes[i]->textureName != 0 && pTexture2->Dirty == FALSE) {
+                    glBindTexture(GL_TEXTURE_3D, pTexture2->volumes[i]->textureName);
+                    checkGLcall("glBindTexture");
+                    TRACE("Texture %p given name %d\n", pTexture2->volumes[i], pTexture2->volumes[i]->textureName);
+                } else {
+
+                    if (pTexture2->volumes[i]->textureName == 0) {
+                        glGenTextures(1, &pTexture2->volumes[i]->textureName);
+                        checkGLcall("glGenTextures");
+                        TRACE("Texture %p given name %d\n", pTexture2->volumes[i], pTexture2->volumes[i]->textureName);
+                    }
+
+                    glBindTexture(GL_TEXTURE_3D, pTexture2->volumes[i]->textureName);
+                    checkGLcall("glBindTexture");
+
+                    TRACE("Calling glTexImage3D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
+                          GL_TEXTURE_3D, i, fmt2glintFmt(pTexture2->format), pTexture2->volumes[i]->myDesc.Width,
+                          pTexture2->volumes[i]->myDesc.Height, pTexture2->volumes[i]->myDesc.Depth,
+                          0, fmt2glFmt(pTexture2->format),fmt2glType(pTexture2->format),
+                          pTexture2->volumes[i]->allocatedMemory);
+                    glTexImage3D(GL_TEXTURE_3D, i,
+                                 fmt2glintFmt(pTexture2->format),
+                                 pTexture2->volumes[i]->myDesc.Width,
+                                 pTexture2->volumes[i]->myDesc.Height,
+                                 pTexture2->volumes[i]->myDesc.Depth,
+                                 0,
+                                 fmt2glFmt(pTexture2->format),
+                                 fmt2glType(pTexture2->format),
+                                 pTexture2->volumes[i]->allocatedMemory
+                                );
+                    checkGLcall("glTexImage3D");
+
+                    /*
+                     * The following enable things to work but I dont think
+                     * they all go here - FIXME! @@@
+                     */
+                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT );
+                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+                    glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+
+
+                    glEnable(GL_TEXTURE_3D);
+                    checkGLcall("glEnable");
+
+                    pTexture2->Dirty = FALSE;
+                }
+
+                /* Note the D3DRS value applies to all textures, but GL has one
+                   per texture, so apply it now ready to be used!               */
+                col[0] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR]>> 16) & 0xFF) / 255.0;
+                col[1] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 8 ) & 0xFF) / 255.0;
+                col[2] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 0 ) & 0xFF) / 255.0;
+                col[3] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 24 ) & 0xFF) / 255.0;
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+                checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+
+            }
+
         } else {
-            FIXME("(%p) : stub\n", This);
+            FIXME("(%p) : Incorrect type for a texture : %d\n", This, textureType);
         }
     }
     return D3D_OK;
@@ -2309,6 +2461,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetTextureStageState(LPDIRECT3DDEVICE8 ifa
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 iface, DWORD Stage,D3DTEXTURESTAGESTATETYPE Type,DWORD Value) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
+    /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
+   
     TRACE("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value);
 
     This->UpdateStateBlock->Changed.texture_state[Stage][Type] = TRUE;
@@ -2329,7 +2483,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     switch (Type) {
 
     case D3DTSS_MINFILTER             :
-        if (Value == D3DTEXF_POINT) {
+        if (Value == D3DTEXF_POINT) {  
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             checkGLcall("glTexParameter GL_TEXTURE_MINFILTER, GL_NEAREST");
         } else if (Value == D3DTEXF_LINEAR) {
