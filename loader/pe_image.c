@@ -854,6 +854,18 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     if ( pe_export )
         dump_exports( hModule );
 
+    /* The exe_modref must be in place, before implicit linked DLLs are loaded 
+       by fixup_imports, otherwhise GetModuleFileName will not work and modules 
+       in the executables directory can not be found */
+
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+    {
+      if ( PROCESS_Current()->exe_modref )
+	FIXME( "Trying to load second .EXE file: %s\n", filename );
+      else  
+	PROCESS_Current()->exe_modref = wm;
+    }
+
     /* Fixup Imports */
 
     if (!(wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) && fixup_imports( wm ))
@@ -882,6 +894,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         SNOOP_RegisterDLL( hModule, wm->modname, pe_export->NumberOfFunctions );
 
     /* Send DLL load event */
+    /* we don't need to send a dll event for the main exe */
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
     {
@@ -892,13 +905,6 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
         req->name       = &wm->filename;
         server_call_noerr( REQ_LOAD_DLL );
-    }
-    else  /* we don't need to send a dll event for the main exe */
-    {
-        if ( PROCESS_Current()->exe_modref )
-            FIXME( "Trying to load second .EXE file: %s\n", filename );
-        else
-            PROCESS_Current()->exe_modref = wm;
     }
 
     return wm;
