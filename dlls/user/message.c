@@ -2413,6 +2413,18 @@ BOOL WINAPI SetMessageQueue( INT size )
 }
 
 
+/***********************************************************************
+ *		MessageBeep (USER32.@)
+ */
+BOOL WINAPI MessageBeep( UINT i )
+{
+    BOOL active = TRUE;
+    SystemParametersInfoA( SPI_GETBEEP, 0, &active, FALSE );
+    if (active) USER_Driver.pBeep();
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		AttachThreadInput (USER32.@)
  *

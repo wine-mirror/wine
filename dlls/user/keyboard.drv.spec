@@ -16,7 +16,7 @@
 100	pascal	ScreenSwitchEnable(word) ScreenSwitchEnable16
 #126	pascal	GetTableSeg
 #127	pascal	NewTable
-128 pascal   OemKeyScan(word) OemKeyScan
+128 pascal OemKeyScan(word) OemKeyScan16
 129 pascal -ret16 VkKeyScan(word) VkKeyScan16
 130 pascal -ret16 GetKeyboardType(word) GetKeyboardType16
 131 pascal -ret16 MapVirtualKey(word word) MapVirtualKey16

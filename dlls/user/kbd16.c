@@ -31,11 +31,9 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "win.h"
-#include "user.h"
-#include "message.h"
-#include "wine/debug.h"
 #include "winerror.h"
+#include "wine/winuser16.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 
@@ -107,13 +105,10 @@ VOID WINAPI ScreenSwitchEnable16(WORD unused)
 
 /**********************************************************************
  *		OemKeyScan (KEYBOARD.128)
- *		OemKeyScan (USER32.@)
  */
-DWORD WINAPI OemKeyScan(WORD wOemChar)
+DWORD WINAPI OemKeyScan16(WORD wOemChar)
 {
-  TRACE("(%d)\n", wOemChar);
-
-  return wOemChar;
+    return OemKeyScan( wOemChar );
 }
 
 /**********************************************************************
@@ -188,15 +183,4 @@ INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
 void WINAPI MessageBeep16( UINT16 i )
 {
     MessageBeep( i );
-}
-
-/***********************************************************************
- *		MessageBeep (USER32.@)
- */
-BOOL WINAPI MessageBeep( UINT i )
-{
-    BOOL active = TRUE;
-    SystemParametersInfoA( SPI_GETBEEP, 0, &active, FALSE );
-    if (active) USER_Driver.pBeep();
-    return TRUE;
 }

@@ -24,7 +24,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/dialog.c \
 	$(TOPOBJDIR)/windows/driver.c \
 	$(TOPOBJDIR)/windows/input.c \
-	$(TOPOBJDIR)/windows/keyboard.c \
 	$(TOPOBJDIR)/windows/mdi.c \
 	$(TOPOBJDIR)/windows/message.c \
 	$(TOPOBJDIR)/windows/msgbox.c \
@@ -53,7 +52,6 @@ C_SRCS = \
 	dde/server.c \
 	desktop.c \
 	dialog16.c \
-	display.c \
 	edit.c \
 	exticon.c \
 	focus.c \
@@ -64,7 +62,6 @@ C_SRCS = \
 	menu.c \
 	message.c \
 	misc.c \
-	mouse.c \
 	msg16.c \
 	painting.c \
 	property.c \
@@ -79,7 +76,10 @@ C_SRCS = \
 C_SRCS16 = \
 	bidi16.c \
 	comm16.c \
+	display.c \
 	hook16.c \
+	kbd16.c \
+	mouse16.c \
 	network.c \
 	user16.c \
 	wnd16.c

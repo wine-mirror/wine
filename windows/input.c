@@ -689,6 +689,15 @@ WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
     return -1;
 }
 
+/**********************************************************************
+ *		OemKeyScan (USER32.@)
+ */
+DWORD WINAPI OemKeyScan(WORD wOemChar)
+{
+    TRACE("(%d)\n", wOemChar);
+    return wOemChar;
+}
+
 /******************************************************************************
  *		GetKeyboardType (USER32.@)
  */
