@@ -10,6 +10,7 @@
 #include "task.h"
 #include "hook.h"
 #include "callback.h"
+#include "builtin16.h"
 #include "user.h"
 #include "heap.h"
 #include "neexe.h"
@@ -846,17 +847,35 @@ WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
 }
 
 /***********************************************************************
+ *           THUNK_GetCalloutThunk
+ *
+ * Retrieve API entry point with given name from given module.
+ * If module is builtin, return the 32-bit entry point, otherwise
+ * create a 32->16 thunk to the 16-bit entry point, using the 
+ * given relay code.
+ *
+ */
+static FARPROC THUNK_GetCalloutThunk( NE_MODULE *pModule, LPSTR name, RELAY relay )
+{
+    FARPROC16 proc = WIN32_GetProcAddress16( pModule->self, name );
+    if ( !proc ) return 0;
+
+    if ( pModule->flags & NE_FFLAGS_BUILTIN )
+        return (FARPROC)((ENTRYPOINT16 *)PTR_SEG_TO_LIN( proc ))->target;
+    else
+        return (FARPROC)THUNK_Alloc( proc, relay );
+}
+
+/***********************************************************************
  *           THUNK_InitCallout
  */
 void THUNK_InitCallout(void)
 {
     HMODULE hModule;
-    WINE_MODREF *wm;
     NE_MODULE *pModule;
 
     hModule = GetModuleHandleA( "USER32" );
-    wm = MODULE32_LookupHMODULE( hModule );
-    if ( wm && !(wm->flags & WINE_MODREF_INTERNAL) )
+    if ( hModule )
     {
 #define GETADDR( var, name )  \
         *(FARPROC *)&Callout.##var = GetProcAddress( hModule, name )
@@ -880,14 +899,12 @@ void THUNK_InitCallout(void)
 #undef GETADDR
     }
 
-    hModule = GetModuleHandle16( "USER" );
-    pModule = NE_GetPtr( hModule );
-    if ( pModule && !(pModule->flags & NE_FFLAGS_BUILTIN) )
+    pModule = NE_GetPtr( GetModuleHandle16( "USER" ) );
+    if ( pModule )
     {
 #define GETADDR( var, name, thk )  \
-        *(FARPROC *)&Callout.##var = (FARPROC) \
-              THUNK_Alloc( WIN32_GetProcAddress16( hModule, name ), \
-                           (RELAY)THUNK_CallTo16_##thk )
+        *(FARPROC *)&Callout.##var = THUNK_GetCalloutThunk( pModule, name, \
+                                                 (RELAY)THUNK_CallTo16_##thk )
 
         GETADDR( PeekMessage16, "PeekMessage", word_lwwww );
         GETADDR( GetMessage16, "GetMessage", word_lwww );
