@@ -1126,13 +1126,38 @@ BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
 
 /***********************************************************************
  *           LoadLibrary16   (KERNEL.95)
+ *
+ * In Win95 LoadLibrary16("c:/junkname/user.foo") returns the HINSTANCE 
+ * to user.exe. As GetModuleHandle as of 990425 explicitly asks _not_ 
+ * to change its handling of extensions, we have to try a stripped down
+ * libname here too (bon 990425)   
  */
 HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
 {
-    TRACE( module, "(%p) %s\n", libname, libname );
+    char strippedname[256];
+    char *dirsep1,*dirsep2;
+    HINSTANCE16 ret;
+
+    dirsep1=strrchr(libname,'\\');
+    dirsep2=strrchr(libname,'/');
+    dirsep1=MAX(dirsep1,dirsep2);
+    if (!dirsep1)
+      dirsep1 =(LPSTR)libname;
+    else
+      dirsep1++;
+    lstrcpynA(strippedname,dirsep1,256);
+    dirsep1=strchr(strippedname,'.');
+    if (dirsep1)
+      *dirsep1=0;
+
+    TRACE( module, "looking for (%p) %s and %s \n", 
+	   libname, libname,strippedname );
 
     /* Load library module */
-    return LoadModule16( libname, (LPVOID)-1 );
+    ret= LoadModule16( strippedname, (LPVOID)-1 );
+    if (ret > HINSTANCE_ERROR)
+      return ret;
+    return LoadModule16(libname, (LPVOID)-1 );
 }
 
 
