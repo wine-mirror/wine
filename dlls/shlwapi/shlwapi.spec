@@ -2,6 +2,10 @@ name shlwapi
 type win32
 init SHLWAPI_LibMain
 
+import advapi32
+import user32
+import kernel32
+
 1   stdcall @(ptr ptr) SHLWAPI_1
 2   stub @
 3   stub @
@@ -555,8 +559,8 @@ init SHLWAPI_LibMain
 @ stdcall SHCreateShellPalette(long)SHCreateShellPalette
 @ stub    SHDeleteEmptyKeyA
 @ stub    SHDeleteEmptyKeyW
-@ stdcall SHDeleteKeyA(long str)SHRegDeleteKeyA
-@ stdcall SHDeleteKeyW(long wstr)SHRegDeleteKeyW
+@ stdcall SHDeleteKeyA(long str) SHDeleteKeyA
+@ stdcall SHDeleteKeyW(long wstr) SHDeleteKeyW
 @ stub    SHDeleteOrphanKeyA
 @ stub    SHDeleteOrphanKeyW
 @ stub    SHDeleteValueA
@@ -575,8 +579,8 @@ init SHLWAPI_LibMain
 @ stdcall SHOpenRegStream2W(long wstr str long)SHOpenRegStreamW
 @ stub    SHQueryInfoKeyA
 @ stub    SHQueryInfoKeyW
-@ stdcall SHQueryValueExA(long str ptr ptr ptr ptr)SHRegQueryValueExA
-@ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr)SHRegQueryValueExW
+@ stdcall SHQueryValueExA(long str ptr ptr ptr ptr) SHQueryValueExA
+@ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr) SHQueryValueExW
 @ stub    SHRegCloseUSKey
 @ stub    SHRegCreateUSKeyA
 @ stub    SHRegCreateUSKeyW

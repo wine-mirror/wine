@@ -83,8 +83,13 @@ DWORD WINAPI SHLWAPI_24 (
 	LPWSTR str,	/* [out] buffer */
 	INT cmax)	/* [in]  size of buffer */
 {
-	TRACE("(%s %p 0x%08x)stub\n", debugstr_guid(guid), str, cmax);
-	return StringFromGUID2(guid, str, cmax);
+    char xguid[40];
+
+    sprintf( xguid, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+             guid->Data1, guid->Data2, guid->Data3,
+             guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+    return MultiByteToWideChar( CP_ACP, 0, xguid, -1, str, cmax );
 }
 
 /*************************************************************************
@@ -388,3 +393,49 @@ DWORD WINAPI SHLWAPI_437 (DWORD x)
 	return 0xabba1247;
 }
 
+/*************************************************************************
+ *      UrlEscapeA	[SHLWAPI]
+ */
+HRESULT WINAPI UrlEscapeA(
+	LPCSTR pszUrl,
+	LPSTR pszEscaped,
+	LPDWORD pcchEscaped,
+	DWORD dwFlags)
+{
+	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_a(pszUrl),
+	  pszEscaped, pcchEscaped, dwFlags);
+	return 0;
+}	
+
+/*************************************************************************
+ *      UrlEscapeW	[SHLWAPI]
+ */
+HRESULT WINAPI UrlEscapeW(
+	LPCWSTR pszUrl,
+	LPWSTR pszEscaped,
+	LPDWORD pcchEscaped,
+	DWORD dwFlags)
+{
+	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_w(pszUrl),
+	  pszEscaped, pcchEscaped, dwFlags);
+	return 0;
+}	
+
+
+/*************************************************************************
+ *      SHCreateShellPalette	[SHLWAPI.@]
+ */
+HPALETTE WINAPI SHCreateShellPalette(HDC hdc)
+{
+	FIXME("stub\n");
+	return CreateHalftonePalette(hdc);
+}
+
+/*************************************************************************
+ *      SHIsLowMemoryMachine	[SHLWAPI.@]
+ */
+DWORD WINAPI SHIsLowMemoryMachine (DWORD x)
+{
+	FIXME("0x%08lx\n", x);
+	return 0;
+}

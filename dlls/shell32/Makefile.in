@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = shell32
 SOVERSION = 1.0
 ALTNAMES  = shell
-IMPORTS   = ole32
+IMPORTS   = ole32 shlwapi
 
 C_SRCS = \
 	brsfolder.c \
@@ -19,7 +19,6 @@ C_SRCS = \
 	iconcache.c \
 	memorystream.c \
 	pidl.c \
-	regstream.c \
 	shell32_main.c \
 	shell.c \
 	shellguid.c \

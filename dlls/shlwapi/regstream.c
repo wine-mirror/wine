@@ -3,16 +3,14 @@
  */
 #include <string.h>
 
-#include "wine/obj_storage.h"
-
-#include "debugtools.h"
-#include "heap.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wine/obj_storage.h"
 
-#include "shell32_main.h"
+#include "heap.h"
+#include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct 
 {	ICOM_VFIELD(IStream);
@@ -28,7 +26,7 @@ static struct ICOM_VTABLE(IStream) rstvt;
 /**************************************************************************
 *   IStream_ConstructorA	[internal]
 */
-IStream *IStream_ConstructorA(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWORD grfMode)
+static IStream *IStream_ConstructorA(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWORD grfMode)
 {
 	ISHRegStream*	rstr;
 	DWORD		dwType;
@@ -49,7 +47,6 @@ IStream *IStream_ConstructorA(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWOR
 	      {
 	        if (dwType == REG_BINARY )
 	        {
-	          shell32_ObjCount++;
 	          TRACE ("%p\n", rstr);
 	          return (IStream*)rstr;
 	        }
@@ -66,7 +63,7 @@ IStream *IStream_ConstructorA(HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue, DWOR
 /**************************************************************************
 *   IStream_ConstructorW	[internal]
 */
-IStream *IStream_ConstructorW(HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue, DWORD grfMode)
+static IStream *IStream_ConstructorW(HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue, DWORD grfMode)
 {
 	ISHRegStream*	rstr;
 	DWORD		dwType;
@@ -87,7 +84,6 @@ IStream *IStream_ConstructorW(HKEY hKey, LPCWSTR pszSubKey, LPCWSTR pszValue, DW
 	      {
 	        if (dwType == REG_BINARY )
 	        {
-	          shell32_ObjCount++;
 	          TRACE ("%p\n", rstr);
 	          return (IStream*)rstr;
 	        }
@@ -138,7 +134,6 @@ static ULONG WINAPI IStream_fnAddRef(IStream *iface)
 
 	TRACE("(%p)->(count=%lu)\n",This, This->ref);
 
-	shell32_ObjCount++;
 	return ++(This->ref);
 }
 
@@ -150,8 +145,6 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 	ICOM_THIS(ISHRegStream, iface);
 
 	TRACE("(%p)->()\n",This);
-
-	shell32_ObjCount--;
 
 	if (!--(This->ref)) 
 	{ TRACE(" destroying SHReg IStream (%p)\n",This);
@@ -168,7 +161,7 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 	return This->ref;
 }
 
-HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG* pcbRead)
+static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG* pcbRead)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -195,7 +188,7 @@ HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG* pcbRe
 
 	return S_OK;
 }
-HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG* pcbWritten)
+static HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG* pcbWritten)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -203,7 +196,7 @@ HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition)
+static HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -211,7 +204,7 @@ HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, DWORD dw
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnSetSize (IStream * iface, ULARGE_INTEGER libNewSize)
+static HRESULT WINAPI IStream_fnSetSize (IStream * iface, ULARGE_INTEGER libNewSize)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -219,7 +212,7 @@ HRESULT WINAPI IStream_fnSetSize (IStream * iface, ULARGE_INTEGER libNewSize)
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnCopyTo (IStream * iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten)
+static HRESULT WINAPI IStream_fnCopyTo (IStream * iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -227,7 +220,7 @@ HRESULT WINAPI IStream_fnCopyTo (IStream * iface, IStream* pstm, ULARGE_INTEGER 
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnCommit (IStream * iface, DWORD grfCommitFlags)
+static HRESULT WINAPI IStream_fnCommit (IStream * iface, DWORD grfCommitFlags)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -235,7 +228,7 @@ HRESULT WINAPI IStream_fnCommit (IStream * iface, DWORD grfCommitFlags)
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnRevert (IStream * iface)
+static HRESULT WINAPI IStream_fnRevert (IStream * iface)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -243,7 +236,7 @@ HRESULT WINAPI IStream_fnRevert (IStream * iface)
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnLockRegion (IStream * iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+static HRESULT WINAPI IStream_fnLockRegion (IStream * iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -251,7 +244,7 @@ HRESULT WINAPI IStream_fnLockRegion (IStream * iface, ULARGE_INTEGER libOffset, 
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnUnlockRegion (IStream * iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+static HRESULT WINAPI IStream_fnUnlockRegion (IStream * iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -259,7 +252,7 @@ HRESULT WINAPI IStream_fnUnlockRegion (IStream * iface, ULARGE_INTEGER libOffset
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfStatFlag)
+static HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfStatFlag)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -267,7 +260,7 @@ HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfSt
 
 	return E_NOTIMPL;
 }
-HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm)
+static HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm)
 {
 	ICOM_THIS(ISHRegStream, iface);
 
@@ -297,7 +290,7 @@ static struct ICOM_VTABLE(IStream) rstvt =
 };
 
 /*************************************************************************
- * SHOpenRegStreamA				[SHLWAPI.@][SHELL32.85]
+ * SHOpenRegStreamA				[SHLWAPI.@]
  */
 IStream * WINAPI SHOpenRegStreamA(
 	HKEY hkey,

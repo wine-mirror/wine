@@ -4,11 +4,14 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shlwapi
 SOVERSION = 1.0
-IMPORTS   = shell32
 
 C_SRCS = \
 	ordinal.c \
-	shlwapi_main.c
+	path.c \
+	reg.c \
+	regstream.c \
+	shlwapi_main.c \
+	string.c
 
 @MAKE_DLL_RULES@
 

@@ -393,9 +393,8 @@ oleaut32/liboleaut32.so: libole32.so libcomctl32.so
 olecli/libolecli32.so: libolesvr32.so libole32.so
 olepro32/libolepro32.so: liboleaut32.so libole32.so
 opengl32/libopengl32.so: libx11drv.so libgdi32.so
-shell32/libshell32.so: libole32.so
+shell32/libshell32.so: libole32.so libshlwapi.so
 shfolder/libshfolder.so: libshell32.so
-shlwapi/libshlwapi.so: libshell32.so
 urlmon/liburlmon.so: libole32.so
 version/libversion.so: liblz32.so
 win32s/libw32skrnl.so: libkernel32.so

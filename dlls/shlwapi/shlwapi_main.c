@@ -6,6 +6,7 @@
  */
 
 #include "winbase.h"
+#include "winerror.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
@@ -28,4 +29,40 @@ BOOL WINAPI SHLWAPI_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad
 	    break;
 	}
 	return TRUE;
+}
+
+/***********************************************************************
+ * DllGetVersion [SHLWAPI]
+ *
+ * Retrieves version information of the 'SHLWAPI.DLL'
+ *
+ * PARAMS
+ *     pdvi [O] pointer to version information structure.
+ *
+ * RETURNS
+ *     Success: S_OK
+ *     Failure: E_INVALIDARG
+ *
+ * NOTES
+ *     Returns version of a SHLWAPI.dll from IE5.01.
+ */
+
+HRESULT WINAPI SHLWAPI_DllGetVersion (DLLVERSIONINFO *pdvi)
+{
+	if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) 
+	{
+	  WARN("wrong DLLVERSIONINFO size from app");
+	  return E_INVALIDARG;
+	}
+
+	pdvi->dwMajorVersion = 5;
+	pdvi->dwMinorVersion = 0;
+	pdvi->dwBuildNumber = 2314;
+	pdvi->dwPlatformID = 1000;
+
+	TRACE("%lu.%lu.%lu.%lu\n",
+	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
+	   pdvi->dwBuildNumber, pdvi->dwPlatformID);
+
+	return S_OK;
 }

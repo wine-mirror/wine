@@ -961,69 +961,6 @@ BOOL WINAPI shell32_243(DWORD a, DWORD b)
 }
 
 /*************************************************************************
- *      SHCreateShellPalette
- */
-HPALETTE WINAPI SHCreateShellPalette(HDC hdc)
-{
-	FIXME("stub\n");
-	return CreateHalftonePalette(hdc);
-}
-/*************************************************************************
- *      wnsprintfA	[SHLWAPI]
- */
-int WINAPIV wnsprintfA(LPSTR lpOut, int cchLimitIn, LPCSTR lpFmt, ...)
-{
-    va_list valist;
-    INT res;
-
-    va_start( valist, lpFmt );
-    res = wvsnprintfA( lpOut, cchLimitIn, lpFmt, valist );
-    va_end( valist );
-    return res;
-}
-
-/*************************************************************************
- *      wnsprintfW	[SHLWAPI]
- */
-int WINAPIV wnsprintfW(LPWSTR lpOut, int cchLimitIn, LPCWSTR lpFmt, ...)
-{
-    va_list valist;
-    INT res;
-
-    va_start( valist, lpFmt );
-    res = wvsnprintfW( lpOut, cchLimitIn, lpFmt, valist );
-    va_end( valist );
-    return res;
-}
-/*************************************************************************
- *      UrlEscapeA	[SHLWAPI]
- */
-HRESULT WINAPI UrlEscapeA(
-	LPCSTR pszUrl,
-	LPSTR pszEscaped,
-	LPDWORD pcchEscaped,
-	DWORD dwFlags)
-{
-	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_a(pszUrl),
-	  pszEscaped, pcchEscaped, dwFlags);
-	return 0;
-}	
-
-/*************************************************************************
- *      UrlEscapeW	[SHLWAPI]
- */
-HRESULT WINAPI UrlEscapeW(
-	LPCWSTR pszUrl,
-	LPWSTR pszEscaped,
-	LPDWORD pcchEscaped,
-	DWORD dwFlags)
-{
-	FIXME("(%s %p %p 0x%08lx)stub\n",debugstr_w(pszUrl),
-	  pszEscaped, pcchEscaped, dwFlags);
-	return 0;
-}	
-
-/*************************************************************************
  *      SHELL32_714	[SHELL32]
  */
 DWORD WINAPI SHELL32_714(LPVOID x)
@@ -1031,13 +968,3 @@ DWORD WINAPI SHELL32_714(LPVOID x)
  	FIXME("(%s)stub\n", debugstr_w(x));
 	return 0;
 }
-
-/*************************************************************************
- *      SHIsLowMemoryMachine	[SHLWAPI.@]
- */
-DWORD WINAPI SHIsLowMemoryMachine (DWORD x)
-{
-	FIXME("0x%08lx\n", x);
-	return 0;
-}
-

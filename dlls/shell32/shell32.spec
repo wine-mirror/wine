@@ -3,6 +3,7 @@ type	win32
 init	Shell32LibMain
 rsrc	shres
 
+import	shlwapi.dll
 import	user32.dll
 import	comctl32.dll
 
@@ -91,7 +92,7 @@ import	ole32.dll
   82 stdcall DragQueryFileA(long long ptr long) DragQueryFileA
   83 stub CIDLData_CreateFromIDArray
   84 stub SHIsBadInterfacePtr
-  85 stdcall OpenRegStream(long str str long) SHOpenRegStreamA
+  85 forward OpenRegStream shlwapi.SHOpenRegStreamA
   86 stdcall SHRegisterDragDrop(long ptr) SHRegisterDragDrop
   87 stdcall SHRevokeDragDrop(long) SHRevokeDragDrop
   88 stdcall SHDoDragDrop(long long long long long) SHDoDragDrop
