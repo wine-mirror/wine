@@ -373,14 +373,3 @@ WCHAR* _ltow(long value,WCHAR* out,int base)
   return out;
 }
 
-/*********************************************************************
- *		_ultow (MSVCRT.@)
- */
-WCHAR* _ultow(unsigned long value,WCHAR* out,int base)
-{
-  char buf[128];
-  _ultoa(value, buf, base);
-  MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, buf, -1, out, 128);
-  return out;
-}
-
