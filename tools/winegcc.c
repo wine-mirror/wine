@@ -218,6 +218,8 @@ int main(int argc, char **argv)
     i = 0;
     if (linking)
     {
+	int has_output_name = 0;
+
 	gcc_argv[i++] = BINDIR "/winewrap";
 	if (gui_app) gcc_argv[i++] = "-mgui";
 
@@ -237,6 +239,7 @@ int main(int argc, char **argv)
 			gcc_argv[i++] = argv[++j];
 			argv[j] = 0;
 		    }
+		    has_output_name = 1;
 		    break;
 		case 'l':
 		    gcc_argv[i++] = strcmp(argv[j], "-luuid") ? argv[j] : "-lwine_uuid"; 
@@ -250,6 +253,13 @@ int main(int argc, char **argv)
 	    {
 		gcc_argv[i++] = get_obj_file(argv, j);
 		argv[j] = 0;
+	    }
+
+	    /* Support the a.out default name, to appease configure */
+	    if (!has_output_name)
+	    {
+		gcc_argv[i++] = "-o";
+		gcc_argv[i++] = "a.out";
 	    }
 	}
 	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
