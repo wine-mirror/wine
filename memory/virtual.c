@@ -30,6 +30,7 @@
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(virtual);
+DECLARE_DEBUG_CHANNEL(module);
 
 #ifndef MS_SYNC
 #define MS_SYNC 0
@@ -199,9 +200,8 @@ static FILE_VIEW *VIRTUAL_FindView(
  *
  * Create a new view and add it in the linked list.
  */
-static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT offset,
-                                      UINT flags, BYTE vprot,
-                                      HANDLE mapping )
+static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT flags,
+                                      BYTE vprot, HANDLE mapping )
 {
     FILE_VIEW *view, *prev;
 
@@ -389,6 +389,171 @@ static BOOL VIRTUAL_SetProt(
             vprot, size >> page_shift );
     VIRTUAL_DEBUG_DUMP_VIEW( view );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           map_image
+ *
+ * Map an executable (PE format) image into memory.
+ */
+static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
+                         DWORD header_size, HANDLE shared_file, DWORD shared_size )
+{
+    IMAGE_DOS_HEADER *dos;
+    IMAGE_NT_HEADERS *nt;
+    IMAGE_SECTION_HEADER *sec;
+    int i, pos;
+    DWORD err = GetLastError();
+    FILE_VIEW *view = NULL;
+    char *ptr;
+    int shared_fd = -1;
+
+    SetLastError( ERROR_BAD_EXE_FORMAT );  /* generic error */
+
+    /* zero-map the whole range */
+
+    if ((ptr = FILE_dommap( -1, base, 0, total_size, 0, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
+                            MAP_PRIVATE )) == (char *)-1)
+    {
+        ptr = FILE_dommap( -1, NULL, 0, total_size, 0, 0,
+                           PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE );
+        if (ptr == (char *)-1)
+        {
+            ERR_(module)("Not enough memory for module (%ld bytes)\n", total_size);
+            goto error;
+        }
+    }
+    TRACE_(module)( "mapped PE file at %p-%p\n", ptr, ptr + total_size );
+
+    if (!(view = VIRTUAL_CreateView( (UINT)ptr, total_size, 0,
+                                     VPROT_COMMITTED|VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY,
+                                     hmapping )))
+    {
+        FILE_munmap( ptr, 0, total_size );
+        SetLastError( ERROR_OUTOFMEMORY );
+        goto error;
+    }
+
+    /* map the header */
+
+    if (FILE_dommap( fd, ptr, 0, header_size, 0, 0,
+                     PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED ) == (char *)-1) goto error;
+    dos = (IMAGE_DOS_HEADER *)ptr;
+    nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
+    if ((char *)(nt + 1) > ptr + header_size) goto error;
+
+    sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
+    if ((char *)(sec + nt->FileHeader.NumberOfSections) > ptr + header_size) goto error;
+
+    /* check the architecture */
+
+    if (nt->FileHeader.Machine != IMAGE_FILE_MACHINE_I386)
+    {
+        MESSAGE("Trying to load PE image for unsupported architecture (");
+        switch (nt->FileHeader.Machine)
+        {
+        case IMAGE_FILE_MACHINE_UNKNOWN: MESSAGE("Unknown"); break;
+        case IMAGE_FILE_MACHINE_I860:    MESSAGE("I860"); break;
+        case IMAGE_FILE_MACHINE_R3000:   MESSAGE("R3000"); break;
+        case IMAGE_FILE_MACHINE_R4000:   MESSAGE("R4000"); break;
+        case IMAGE_FILE_MACHINE_R10000:  MESSAGE("R10000"); break;
+        case IMAGE_FILE_MACHINE_ALPHA:   MESSAGE("Alpha"); break;
+        case IMAGE_FILE_MACHINE_POWERPC: MESSAGE("PowerPC"); break;
+        default: MESSAGE("Unknown-%04x", nt->FileHeader.Machine); break;
+        }
+        MESSAGE(")\n");
+        goto error;
+    }
+    
+    /* retrieve the shared sections file */
+
+    if (shared_size)
+    {
+        struct get_read_fd_request *req = get_req_buffer();
+        req->handle = shared_file;
+        server_call_fd( REQ_GET_READ_FD, -1, &shared_fd );
+        if (shared_fd == -1) goto error;
+        CloseHandle( shared_file );  /* we no longer need it */
+        shared_file = INVALID_HANDLE_VALUE; 
+    }
+
+    /* map all the sections */
+
+    for (i = pos = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
+    {
+        DWORD size;
+
+        /* a few sanity checks */
+        size = sec->VirtualAddress + ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
+        if (sec->VirtualAddress > total_size || size > total_size || size < sec->VirtualAddress)
+        {
+            ERR_(module)( "Section %.8s too large (%lx+%lx/%lx)\n",
+                          sec->Name, sec->VirtualAddress, sec->Misc.VirtualSize, total_size );
+            goto error;
+        }
+
+        if ((sec->Characteristics & IMAGE_SCN_MEM_SHARED) &&
+            (sec->Characteristics & IMAGE_SCN_MEM_WRITE))
+        {
+            size = ROUND_SIZE( 0, sec->Misc.VirtualSize );
+            TRACE_(module)( "mapping shared section %.8s at %p off %lx (%x) size %lx (%lx) flags %lx\n",
+                          sec->Name, (char *)ptr + sec->VirtualAddress,
+                          sec->PointerToRawData, pos, sec->SizeOfRawData,
+                          size, sec->Characteristics );
+            if (FILE_dommap( shared_fd, (char *)ptr + sec->VirtualAddress, 0, size,
+                             0, pos, PROT_READ|PROT_WRITE|PROT_EXEC,
+                             MAP_SHARED|MAP_FIXED ) == (void *)-1)
+            {
+                ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
+                goto error;
+            }
+            pos += size;
+            continue;
+        }
+
+    	if (sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) continue;
+        if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
+
+        TRACE_(module)( "mapping section %.8s at %p off %lx size %lx flags %lx\n",
+                        sec->Name, (char *)ptr + sec->VirtualAddress,
+                        sec->PointerToRawData, sec->SizeOfRawData,
+                        sec->Characteristics );
+
+        /* Note: if the section is not aligned properly FILE_dommap will magically
+         *       fall back to read(), so we don't need to check anything here.
+         */
+        if (FILE_dommap( fd, (char *)ptr + sec->VirtualAddress, 0, sec->SizeOfRawData,
+                         0, sec->PointerToRawData, PROT_READ|PROT_WRITE|PROT_EXEC,
+                         MAP_PRIVATE | MAP_FIXED ) == (void *)-1)
+        {
+            ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
+            goto error;
+        }
+
+        if ((sec->SizeOfRawData < sec->Misc.VirtualSize) && (sec->SizeOfRawData & page_mask))
+        {
+            DWORD end = ROUND_SIZE( 0, sec->SizeOfRawData );
+            if (end > sec->Misc.VirtualSize) end = sec->Misc.VirtualSize;
+            TRACE_(module)("clearing %p - %p\n",
+                           (char *)ptr + sec->VirtualAddress + sec->SizeOfRawData,
+                           (char *)ptr + sec->VirtualAddress + end );
+            memset( (char *)ptr + sec->VirtualAddress + sec->SizeOfRawData, 0,
+                    end - sec->SizeOfRawData );
+        }
+    }
+
+    SetLastError( err );  /* restore last error */
+    close( fd );
+    if (shared_fd != -1) close( shared_fd );
+    return ptr;
+
+ error:
+    if (view) VIRTUAL_DeleteView( view );
+    close( fd );
+    if (shared_fd != -1) close( shared_fd );
+    if (shared_file != INVALID_HANDLE_VALUE) CloseHandle( shared_file );
+    return NULL;
 }
 
 
@@ -586,7 +751,7 @@ LPVOID WINAPI VirtualAlloc(
 	    SetLastError( ERROR_INVALID_ADDRESS );
 	    return NULL;
         }
-        if (!(view = VIRTUAL_CreateView( ptr, size, 0, (type & MEM_SYSTEM) ?
+        if (!(view = VIRTUAL_CreateView( ptr, size, (type & MEM_SYSTEM) ?
                                          VFLAG_SYSTEM : 0, vprot, -1 )))
         {
             FILE_munmap( (void *)ptr, 0, size );
@@ -1049,6 +1214,7 @@ HANDLE WINAPI CreateFileMappingA(
     }
     else vprot |= VPROT_COMMITTED;
     if (protect & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
+    if (protect & SEC_IMAGE) vprot |= VPROT_IMAGE;
 
     /* Create the server object */
 
@@ -1092,6 +1258,7 @@ HANDLE WINAPI CreateFileMappingW( HFILE hFile, LPSECURITY_ATTRIBUTES sa,
     }
     else vprot |= VPROT_COMMITTED;
     if (protect & SEC_NOCACHE) vprot |= VPROT_NOCACHE;
+    if (protect & SEC_IMAGE) vprot |= VPROT_IMAGE;
 
     /* Create the server object */
 
@@ -1203,6 +1370,11 @@ LPVOID WINAPI MapViewOfFileEx(
 
     req->handle = handle;
     if (server_call_fd( REQ_GET_MAPPING_INFO, -1, &unix_handle )) goto error;
+    prot = req->protect;
+
+    if (prot & VPROT_IMAGE)
+        return map_image( handle, unix_handle, req->base, req->size_low, req->header_size,
+                          req->shared_file, req->shared_size );
 
     if (req->size_high || offset_high)
         ERR("Offsets larger than 4Gb not supported\n");
@@ -1215,7 +1387,6 @@ LPVOID WINAPI MapViewOfFileEx(
     }
     if (count) size = ROUND_SIZE( offset_low, count );
     else size = req->size_low - offset_low;
-    prot = req->protect;
 
     switch(access)
     {
@@ -1267,7 +1438,7 @@ LPVOID WINAPI MapViewOfFileEx(
         goto error;
     }
 
-    if (!(view = VIRTUAL_CreateView( ptr, size, offset_low, 0, prot, handle )))
+    if (!(view = VIRTUAL_CreateView( ptr, size, 0, prot, handle )))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         goto error;

@@ -919,7 +919,11 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_request *
 {
     fprintf( stderr, " size_high=%d,", req->size_high );
     fprintf( stderr, " size_low=%d,", req->size_low );
-    fprintf( stderr, " protect=%d", req->protect );
+    fprintf( stderr, " protect=%d,", req->protect );
+    fprintf( stderr, " header_size=%d,", req->header_size );
+    fprintf( stderr, " base=%p,", req->base );
+    fprintf( stderr, " shared_file=%d,", req->shared_file );
+    fprintf( stderr, " shared_size=%d", req->shared_size );
 }
 
 static void dump_create_device_request( const struct create_device_request *req )

@@ -762,6 +762,7 @@ struct create_mapping_request
 #define VPROT_GUARD      0x10
 #define VPROT_NOCACHE    0x20
 #define VPROT_COMMITTED  0x40
+#define VPROT_IMAGE      0x80
 
 
 /* Open a mapping */
@@ -781,6 +782,10 @@ struct get_mapping_info_request
     OUT int          size_high;     /* mapping size */
     OUT int          size_low;      /* mapping size */
     OUT int          protect;       /* protection flags */
+    OUT int          header_size;   /* header size (for VPROT_IMAGE mapping) */
+    OUT void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
+    OUT int          shared_file;   /* shared mapping file handle */
+    OUT int          shared_size;   /* shared mapping size */
 };
 
 
@@ -1298,7 +1303,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 15
+#define SERVER_PROTOCOL_VERSION 16
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
