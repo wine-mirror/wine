@@ -256,7 +256,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         HANDLE the_file;
         CHAR buffer[1024];
 
-        if (track_tempfile(package, source, tmp_file)!=0)
+        if (track_tempfile(package, tmp_file, tmp_file)!=0)
             FIXME("File Name in temp tracking collision\n");
 
         the_file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
