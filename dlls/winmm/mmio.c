@@ -43,7 +43,7 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 {
     LRESULT	ret = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %X, %ld, %ld);\n", lpmmioinfo, uMessage, lParam1, lParam2);
+    TRACE("(%p, %X, 0x%lx, 0x%lx);\n", lpmmioinfo, uMessage, lParam1, lParam2);
     
     switch (uMessage) {
     case MMIOM_OPEN: 
@@ -54,9 +54,9 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	     * Returns: zero on success, error code on error
 	     * NOTE: lDiskOffset automatically set to zero
 	     */
-	    OFSTRUCT ofs;
-	    LPCSTR szFileName = (LPCSTR)lParam1;
-	    
+	    OFSTRUCT    ofs;
+	    LPCSTR      szFileName = (LPCSTR)lParam1;
+
 	    if (lpmmioinfo->dwFlags & MMIO_GETTEMP) {
 		FIXME("MMIO_GETTEMP not implemented\n");
 		return MMIOERR_CANNOTOPEN;
@@ -68,9 +68,7 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 		    lpmmioinfo->adwInfo[0] = DosFileHandleToWin32Handle(lpmmioinfo->adwInfo[0]);
 		break;
 	    }
-	    
-	    lpmmioinfo->adwInfo[0] = (DWORD)OpenFile(szFileName, &ofs, 
-						     lpmmioinfo->dwFlags);
+	    lpmmioinfo->adwInfo[0] = (DWORD)OpenFile(szFileName, &ofs, lpmmioinfo->dwFlags & 0xFFFF);
 	    if (lpmmioinfo->adwInfo[0] == (DWORD)HFILE_ERROR)
 		ret = MMIOERR_CANNOTOPEN;
 	}
@@ -163,6 +161,7 @@ static LRESULT CALLBACK mmioMemIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	/* FIXME: io proc shouldn't change it */
 	if (!(lpmmioinfo->dwFlags & MMIO_CREATE))
 	    lpmmioinfo->pchEndRead = lpmmioinfo->pchEndWrite;
+        lpmmioinfo->adwInfo[0] = HFILE_ERROR;
 	return 0;
 	
     case MMIOM_CLOSE: 
@@ -769,8 +768,8 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
     wm->ioProc->count++;
 
     if (dwOpenFlags & MMIO_ALLOCBUF) {
-	if ((refmminfo->wErrorRet = mmioSetBuffer(wm->info.hmmio, NULL, 
-						  MMIO_DEFAULTBUFFER, 0)))
+	if ((refmminfo->wErrorRet = MMIO_SetBuffer(wm, NULL, MMIO_DEFAULTBUFFER, 0, 
+                                                   type != MMIO_PROC_16)))
 	    goto error1;
     } else if (wm->info.fccIOProc == FOURCC_MEM) {
 	refmminfo->wErrorRet = MMIO_SetBuffer(wm, refmminfo->pchBuffer, 
@@ -787,7 +786,10 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
     
     /* call IO proc to actually open file */
     refmminfo->wErrorRet = MMIO_SendMessage(wm, MMIOM_OPEN, (LPARAM)szFileName, 
-					type == MMIO_PROC_16, MMIO_PROC_32A);
+                                            type == MMIO_PROC_16, MMIO_PROC_32A);
+
+    /* grab file size, when possible */
+    wm->dwFileSize = GetFileSize(wm->info.adwInfo[0], NULL);
 
     if (refmminfo->wErrorRet == 0)
 	return wm->info.hmmio;
@@ -904,7 +906,7 @@ MMRESULT WINAPI mmioClose(HMMIO hmmio, UINT uFlags)
     
     result = MMIO_SendMessage(wm, MMIOM_CLOSE, uFlags, 0, MMIO_PROC_32A);
     
-    mmioSetBuffer(hmmio, NULL, 0, 0);
+    MMIO_SetBuffer(wm, NULL, 0, 0, TRUE);
     
     wm->ioProc->count--;
 
@@ -1069,25 +1071,28 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
 	offset = wm->info.lBufOffset + (wm->info.pchNext - wm->info.pchBuffer) + lOffset;
 	break;
     case SEEK_END: 
-	if (wm->info.fccIOProc == FOURCC_MEM) {
-	    offset = wm->info.cchBuffer;
-	} else {
-	    assert(MMIO_SendMessage(wm, MMIOM_SEEK, 0, SEEK_CUR, MMIO_PROC_32A) == wm->info.lDiskOffset);
-	    offset = MMIO_SendMessage(wm, MMIOM_SEEK, 0, SEEK_END, MMIO_PROC_32A);
-	    MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lDiskOffset, SEEK_SET, MMIO_PROC_32A);
-	}
-	offset -= lOffset;
+	offset = ((wm->info.fccIOProc == FOURCC_MEM)? wm->info.cchBuffer : wm->dwFileSize) - lOffset;
 	break;
     default:
 	return -1;
     }
 
-    /* stay in same buffer ? */
-    /* some memory mapped buffers are defined with -1 as a size */
-    if ((wm->info.cchBuffer > 0) &&
+    if (offset && offset >= wm->dwFileSize && wm->info.fccIOProc != FOURCC_MEM) {
+        /* should check that write mode exists */
+        if (MMIO_Flush(wm, 0) != MMSYSERR_NOERROR)
+            return -1;
+        wm->info.lBufOffset = offset;
+        wm->info.pchEndRead = wm->info.pchBuffer;
+        wm->info.pchEndWrite = wm->info.pchBuffer + wm->info.cchBuffer;
+        if ((wm->info.dwFlags & MMIO_RWMODE) == MMIO_READ) {
+            wm->info.lDiskOffset = wm->dwFileSize;
+        }
+    } else if ((wm->info.cchBuffer > 0) &&
 	((offset < wm->info.lBufOffset) ||
 	 (offset >= wm->info.lBufOffset + wm->info.cchBuffer) ||
 	 !wm->bBufferLoaded)) {
+        /* stay in same buffer ? */
+        /* some memory mapped buffers are defined with -1 as a size */
 
 	/* condition to change buffer */
 	if ((wm->info.fccIOProc == FOURCC_MEM) || 
@@ -1305,7 +1310,6 @@ MMRESULT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 
     if (uFlags == MMIO_WRITE && (lpmmioinfo->dwFlags & MMIO_DIRTY))
     {
-        FIXME("writing data to disk\n");
         MMIO_SendMessage(wm, MMIOM_SEEK, lpmmioinfo->lBufOffset, SEEK_SET, MMIO_PROC_32A);
         MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)lpmmioinfo->pchBuffer,
                          lpmmioinfo->pchNext - lpmmioinfo->pchBuffer, MMIO_PROC_32A);
@@ -1313,6 +1317,7 @@ MMRESULT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
     }
     if (MMIO_Flush(wm, 0) != MMSYSERR_NOERROR)
 	return MMIOERR_CANNOTWRITE;
+    wm->dwFileSize = max(wm->dwFileSize, lpmmioinfo->lBufOffset + (lpmmioinfo->pchNext - lpmmioinfo->pchBuffer));
 
     MMIO_GrabNextBuffer(wm, uFlags == MMIO_READ);
 

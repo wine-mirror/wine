@@ -140,6 +140,7 @@ typedef struct tagWINE_MMIO {
     SEGPTR			buffer16;
     struct tagWINE_MMIO*	lpNext;
     BOOL			bBufferLoaded;
+    DWORD                       dwFileSize;
 } WINE_MMIO, *LPWINE_MMIO;
 
 typedef struct tagWINE_MM_IDATA {
