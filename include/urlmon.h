@@ -1359,6 +1359,224 @@ void __RPC_STUB IInternetProtocolInfo_QueryInfo_Stub(
 
 #endif  /* __IInternetProtocolInfo_INTERFACE_DEFINED__ */
 
+#ifndef __IInternetSession_FWD_DEFINED__
+#define __IInternetSession_FWD_DEFINED__
+typedef struct IInternetSession IInternetSession;
+#endif
+
+typedef IInternetSession *LPIINTERNETSESSION;
+
+typedef enum _tagOIBDG_FLAGS {
+    OIBDG_APARTMENTTHREADED = 0x100,
+    OIBDG_DATAONLY = 0x1000
+} OIBDG_FLAGS;
+
+/*****************************************************************************
+ * IInternetSession interface
+ */
+#ifndef __IInternetSession_INTERFACE_DEFINED__
+#define __IInternetSession_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IInternetSession, 0x79eac9e7, 0xbaf9, 0x11ce, 0x8c,0x82, 0x00,0xaa,0x00,0x4b,0xa9,0x0b);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IInternetSession : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE RegisterNameSpace(
+        IClassFactory* pCF,
+        REFCLSID rclsid,
+        LPCWSTR pwzProtocol,
+        ULONG cPatterns,
+        const LPCWSTR* ppwzPatterns,
+        DWORD dwReserved) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE UnregisterNameSpace(
+        IClassFactory* pCF,
+        LPCWSTR pszProtocol) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE RegisterMimeFilter(
+        IClassFactory* pCF,
+        REFCLSID rclsid,
+        LPCWSTR pwzType) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE UnregisterMimeFilter(
+        IClassFactory* pCF,
+        LPCWSTR pwzType) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE CreateBinding(
+        LPBC pBC,
+        LPCWSTR szUrl,
+        IUnknown* pUnkOuter,
+        IUnknown** ppUnk,
+        void** ppOInetProt,
+        DWORD dwOption) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE SetSessionOption(
+        DWORD dwOption,
+        LPVOID pBuffer,
+        DWORD dwBufferLength,
+        DWORD dwReserved) = 0;
+
+};
+#else
+typedef struct IInternetSessionVtbl IInternetSessionVtbl;
+struct IInternetSession {
+    const IInternetSessionVtbl* lpVtbl;
+};
+struct IInternetSessionVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IInternetSession* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IInternetSession* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IInternetSession* This);
+
+    /*** IInternetSession methods ***/
+    HRESULT (STDMETHODCALLTYPE *RegisterNameSpace)(
+        IInternetSession* This,
+        IClassFactory* pCF,
+        REFCLSID rclsid,
+        LPCWSTR pwzProtocol,
+        ULONG cPatterns,
+        const LPCWSTR* ppwzPatterns,
+        DWORD dwReserved);
+
+    HRESULT (STDMETHODCALLTYPE *UnregisterNameSpace)(
+        IInternetSession* This,
+        IClassFactory* pCF,
+        LPCWSTR pszProtocol);
+
+    HRESULT (STDMETHODCALLTYPE *RegisterMimeFilter)(
+        IInternetSession* This,
+        IClassFactory* pCF,
+        REFCLSID rclsid,
+        LPCWSTR pwzType);
+
+    HRESULT (STDMETHODCALLTYPE *UnregisterMimeFilter)(
+        IInternetSession* This,
+        IClassFactory* pCF,
+        LPCWSTR pwzType);
+
+    HRESULT (STDMETHODCALLTYPE *CreateBinding)(
+        IInternetSession* This,
+        LPBC pBC,
+        LPCWSTR szUrl,
+        IUnknown* pUnkOuter,
+        IUnknown** ppUnk,
+        void** ppOInetProt,
+        DWORD dwOption);
+
+    HRESULT (STDMETHODCALLTYPE *SetSessionOption)(
+        IInternetSession* This,
+        DWORD dwOption,
+        LPVOID pBuffer,
+        DWORD dwBufferLength,
+        DWORD dwReserved);
+
+};
+
+/*** IUnknown methods ***/
+#define IInternetSession_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IInternetSession_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IInternetSession_Release(p) (p)->lpVtbl->Release(p)
+/*** IInternetSession methods ***/
+#define IInternetSession_RegisterNameSpace(p,a,b,c,d,e,f) (p)->lpVtbl->RegisterNameSpace(p,a,b,c,d,e,f)
+#define IInternetSession_UnregisterNameSpace(p,a,b) (p)->lpVtbl->UnregisterNameSpace(p,a,b)
+#define IInternetSession_RegisterMimeFilter(p,a,b,c) (p)->lpVtbl->RegisterMimeFilter(p,a,b,c)
+#define IInternetSession_UnregisterMimeFilter(p,a,b) (p)->lpVtbl->UnregisterMimeFilter(p,a,b)
+#define IInternetSession_CreateBinding(p,a,b,c,d,e,f) (p)->lpVtbl->CreateBinding(p,a,b,c,d,e,f)
+#define IInternetSession_SetSessionOption(p,a,b,c,d) (p)->lpVtbl->SetSessionOption(p,a,b,c,d)
+
+#endif
+
+#define IInternetSession_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IInternetSession methods ***/ \
+    STDMETHOD_(HRESULT,RegisterNameSpace)(THIS_ IClassFactory* pCF, REFCLSID rclsid, LPCWSTR pwzProtocol, ULONG cPatterns, const LPCWSTR* ppwzPatterns, DWORD dwReserved) PURE; \
+    STDMETHOD_(HRESULT,UnregisterNameSpace)(THIS_ IClassFactory* pCF, LPCWSTR pszProtocol) PURE; \
+    STDMETHOD_(HRESULT,RegisterMimeFilter)(THIS_ IClassFactory* pCF, REFCLSID rclsid, LPCWSTR pwzType) PURE; \
+    STDMETHOD_(HRESULT,UnregisterMimeFilter)(THIS_ IClassFactory* pCF, LPCWSTR pwzType) PURE; \
+    STDMETHOD_(HRESULT,CreateBinding)(THIS_ LPBC pBC, LPCWSTR szUrl, IUnknown* pUnkOuter, IUnknown** ppUnk, void** ppOInetProt, DWORD dwOption) PURE; \
+    STDMETHOD_(HRESULT,SetSessionOption)(THIS_ DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength, DWORD dwReserved) PURE;
+
+HRESULT CALLBACK IInternetSession_RegisterNameSpace_Proxy(
+    IInternetSession* This,
+    IClassFactory* pCF,
+    REFCLSID rclsid,
+    LPCWSTR pwzProtocol,
+    ULONG cPatterns,
+    const LPCWSTR* ppwzPatterns,
+    DWORD dwReserved);
+void __RPC_STUB IInternetSession_RegisterNameSpace_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IInternetSession_UnregisterNameSpace_Proxy(
+    IInternetSession* This,
+    IClassFactory* pCF,
+    LPCWSTR pszProtocol);
+void __RPC_STUB IInternetSession_UnregisterNameSpace_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IInternetSession_RegisterMimeFilter_Proxy(
+    IInternetSession* This,
+    IClassFactory* pCF,
+    REFCLSID rclsid,
+    LPCWSTR pwzType);
+void __RPC_STUB IInternetSession_RegisterMimeFilter_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IInternetSession_UnregisterMimeFilter_Proxy(
+    IInternetSession* This,
+    IClassFactory* pCF,
+    LPCWSTR pwzType);
+void __RPC_STUB IInternetSession_UnregisterMimeFilter_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IInternetSession_CreateBinding_Proxy(
+    IInternetSession* This,
+    LPBC pBC,
+    LPCWSTR szUrl,
+    IUnknown* pUnkOuter,
+    IUnknown** ppUnk,
+    void** ppOInetProt,
+    DWORD dwOption);
+void __RPC_STUB IInternetSession_CreateBinding_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IInternetSession_SetSessionOption_Proxy(
+    IInternetSession* This,
+    DWORD dwOption,
+    LPVOID pBuffer,
+    DWORD dwBufferLength,
+    DWORD dwReserved);
+void __RPC_STUB IInternetSession_SetSessionOption_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IInternetSession_INTERFACE_DEFINED__ */
+
 DEFINE_GUID(IID_IAsyncMoniker, 0x79EAC9D3, 0xBAF9, 0x11CE, 0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);
 DEFINE_GUID(CLSID_StdURLMoniker, 0x79EAC9E0, 0xBAF9, 0x11CE, 0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);
 #define MK_S_ASYNCHRONOUS                0x000401E8
@@ -1389,7 +1607,7 @@ HRESULT WINAPI RegisterBindStatusCallback(IBindCtx *pbc, IBindStatusCallback *pb
 HRESULT WINAPI CompareSecurityIds(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL,  LPCSTR  szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);
 HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFileName, DWORD dwReserved, LPBINDSTATUSCALLBACK lpfnCB);
-HRESULT WINAPI CoInternetGetSession(DWORD,/*IInternetSession*/void**,DWORD);
+HRESULT WINAPI CoInternetGetSession(DWORD,IInternetSession**,DWORD);
 HRESULT WINAPI MkParseDisplayNameEx(IBindCtx*,LPCWSTR,ULONG*,IMoniker**);
 HRESULT WINAPI IsAsyncMoniker(IMoniker* pmk);
 HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumFORMATETC*, IBindCtx**);

@@ -1030,7 +1030,7 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
  *    Failure: E_INVALIDARG, if any argument is invalid, or
  *             E_OUTOFMEMORY if memory allocation fails.
  */
-HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, /*IInternetSession*/void **ppIInternetSession, DWORD dwReserved)
+HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, IInternetSession **ppIInternetSession, DWORD dwReserved)
 {
     FIXME("(%ld, %p, %ld): stub\n", dwSessionMode, ppIInternetSession, dwReserved);
 
