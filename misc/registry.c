@@ -948,6 +948,7 @@ static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
     DWORD *vl;
     LPSTR new_key_name = NULL;
 
+    TRACE("%s\n", key_name);
 
     if (nk->SubBlockId != NT_REG_KEY_BLOCK_ID) {
         ERR("unknown node id 0x%04x, please report!\n", nk->SubBlockId);
@@ -1333,25 +1334,26 @@ error1:
 /* convert winnt native registry file to wine format [Internal] */
 static LPSTR _convert_winnt_registry_to_wine_format(LPCSTR fn,int level)
 {
-    int fd;
     FILE *f;
-    DOS_FULL_NAME full_name;
     void *base;
     LPSTR ret = NULL;
-    struct stat st;
+    HANDLE hFile;
+    HANDLE hMapping;
 
     nt_regf *regf;
     nt_hbin *hbin;
     nt_hbin_sub *hbin_sub;
     nt_nk *nk;
 
-    if (!DOSFS_GetFullName( fn, 0, &full_name )) return NULL;
+    TRACE("%s\n", fn);
 
-    /* map the registry into the memory */
-    if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return NULL;
-    if ((fstat(fd, &st) == -1)) goto error1;
-    if (!st.st_size) goto error1;
-    if ((base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error1;
+    hFile = CreateFileA( fn, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
+    hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY|SEC_COMMIT, 0, 0, NULL );
+    if (!hMapping) goto error1;
+    base = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
+    CloseHandle( hMapping );
+    if (!base) goto error1;
 
     /* control signature */
     if (*(LPDWORD)base != NT_REG_HEADER_BLOCK_ID) {
@@ -1389,9 +1391,9 @@ static LPSTR _convert_winnt_registry_to_wine_format(LPCSTR fn,int level)
     fclose(f);
 
 error:
-    munmap(base,st.st_size);
+    UnmapViewOfFile( base );
 error1:
-    close(fd);
+    CloseHandle(hFile);
     return ret;
 }
 
