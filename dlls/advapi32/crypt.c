@@ -1884,12 +1884,18 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 /******************************************************************************
  * SystemFunction040   (ADVAPI32.@)
  *
- * PARAMS:
- *   memory : pointer to memory to encrypt
- *   length : length of region to encrypt, in bytes. must be multiple of RTL_ENCRYPT_MEMORY_SIZE
- *   flags  : RTL_ENCRYPT_OPTION_SAME_PROCESS | RTL_ENCRYPT_OPTION_CROSS_PROCESS, | RTL_ENCRYPT_OPTION_SAME_LOGON
- *            control whether other processes are able to decrypt the memory. The same value must be given
- *            when decrypting the memory.
+ * PARAMS
+ *  memory [I/O] Pointer to memory to encrypt.
+ *  length [I] Length of region to encrypt in bytes.
+ *  flags  [I] Control whether other processes are able to decrypt the memory.
+ *    RTL_ENCRYPT_OPTION_SAME_PROCESS 
+ *    RTL_ENCRYPT_OPTION_CROSS_PROCESS 
+ *    RTL_ENCRYPT_OPTION_SAME_LOGON
+ *    
+ * NOTES
+ *  length must be a multiple of RTL_ENCRYPT_MEMORY_SIZE.
+ *  If flags are specified when encrypting, the same flag value must be given
+ *  when decrypting the memory.
  */
 NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)  /* RtlEncryptMemory */
 {
@@ -1900,12 +1906,18 @@ NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)  /* R
 /******************************************************************************
  * SystemFunction041  (ADVAPI32.@)
  *
- * PARAMS:
- *   memory : pointer to memory to decrypt
- *   length : length of region to decrypt, in bytes. must be multiple of RTL_ENCRYPT_MEMORY_SIZE
- *   flags  : RTL_ENCRYPT_OPTION_SAME_PROCESS | RTL_ENCRYPT_OPTION_CROSS_PROCESS, | RTL_ENCRYPT_OPTION_SAME_LOGON
- *            control whether other processes are able to decrypt the memory. The same value must be given
- *            when encrypting the memory.
+ * PARAMS
+ *  memory [I/O] Pointer to memory to decrypt.
+ *  length [I] Length of region to decrypt in bytes.
+ *  flags  [I] Control whether other processes are able to decrypt the memory.
+ *    RTL_ENCRYPT_OPTION_SAME_PROCESS
+ *    RTL_ENCRYPT_OPTION_CROSS_PROCESS
+ *    RTL_ENCRYPT_OPTION_SAME_LOGON
+ *
+ * NOTES
+ *  length must be a multiple of RTL_ENCRYPT_MEMORY_SIZE.
+ *  If flags are specified when encrypting, the same flag value must be given
+ *  when decrypting the memory.
  */
 NTSTATUS WINAPI SystemFunction041(PVOID memory, ULONG length, ULONG flags)  /* RtlDecryptMemory */
 {
