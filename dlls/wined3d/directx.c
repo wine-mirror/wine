@@ -850,8 +850,12 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface,
     }
 
     if (pQualityLevels != NULL) {
+      static int s_single_shot = 0;
+      if (!s_single_shot) {
         FIXME("Quality levels unsupported at present\n");
-        *pQualityLevels = 1; /* Guess at a value! */
+	s_single_shot = 1;
+      }
+      *pQualityLevels = 1; /* Guess at a value! */
     }
 
     if (D3DMULTISAMPLE_NONE == MultiSampleType)

@@ -3546,6 +3546,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface,
     IWineD3DVertexDeclarationImpl* object = NULL;
     HRESULT hr = D3D_OK;
 
+    TRACE("(%p) : iDeclVersion=%u, pFunction=%p, ppDecl=%p\n", This, iDeclVersion, pDeclaration, ppDecl);
+
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVertexDeclarationImpl));
     
     object->lpVtbl = &IWineD3DVertexDeclaration_Vtbl;
@@ -3582,7 +3585,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IW
 HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppDecl) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    TRACE("(%p) : pDecl=%p\n", This, ppDecl);
+    TRACE("(%p) : ppDecl=%p\n", This, ppDecl);
     
     *ppDecl = This->updateStateBlock->vertexDecl;
     if (NULL != *ppDecl) IWineD3DVertexDeclaration_AddRef(*ppDecl);

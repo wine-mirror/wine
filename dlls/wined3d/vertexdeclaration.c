@@ -485,6 +485,24 @@ static CONST char* VertexDecl9_DeclTypes[] = {
   NULL
 };
 
+DWORD IWineD3DVertexDeclarationImpl_ParseToken9(const D3DVERTEXELEMENT9* pToken) {
+  DWORD tokenlen = 1;
+
+  if (0xFF != pToken->Stream) {
+    TRACE(" D3DDECL(%u, %u, %s, %s, %s, %u)\n",
+	  pToken->Stream,
+	  pToken->Offset,
+	  VertexDecl9_DeclTypes[pToken->Type],
+	  VertexDecl9_DeclMethods[pToken->Method],
+	  VertexDecl9_DeclUsages[pToken->Usage],
+	  pToken->UsageIndex
+	  );
+  } else {
+    TRACE(" D3DDECL_END()\n" );
+  }
+  return tokenlen;
+}
+
 HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This, const D3DVERTEXELEMENT9* pDecl, IWineD3DVertexDeclarationImpl* object) { 
   const D3DVERTEXELEMENT9* pToken = pDecl;
   DWORD fvf = 0;
@@ -499,6 +517,8 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This
     DWORD type = pToken->Type;
     DWORD oldStream = stream;
     stream = pToken->Stream;
+
+    IWineD3DVertexDeclarationImpl_ParseToken9(pToken);
 
     if (D3DDECLMETHOD_DEFAULT != pToken->Method) {
       WARN(
@@ -530,7 +550,9 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This
     case D3DDECLUSAGE_POSITION:
       if (0 < pToken->UsageIndex) {
 	invalid_fvf = TRUE;
-	TRACE("Mismatched UsageIndex (%u) in VertexDeclaration for D3DDECLUSAGE_POSITION register: unsupported type %s\n", pToken->UsageIndex, VertexDecl9_DeclTypes[type]);
+	TRACE("Mismatched UsageIndex (%u) in VertexDeclaration for D3DDECLUSAGE_POSITION register: unsupported type %s\n", 
+	      pToken->UsageIndex, VertexDecl9_DeclTypes[type]);
+	break;
       }
       switch (type) {
       case D3DDECLTYPE_FLOAT3: fvf |= D3DFVF_XYZ; break;
@@ -568,7 +590,9 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This
     case D3DDECLUSAGE_NORMAL:
       if (0 < pToken->UsageIndex) {
 	invalid_fvf = TRUE;
-	TRACE("Mismatched UsageIndex (%u) in VertexDeclaration for D3DDECLUSAGE_NORMAL register: unsupported type %s\n", pToken->UsageIndex, VertexDecl9_DeclTypes[type]);
+	TRACE("Mismatched UsageIndex (%u) in VertexDeclaration for D3DDECLUSAGE_NORMAL register: unsupported type %s\n", 
+	      pToken->UsageIndex, VertexDecl9_DeclTypes[type]);
+	break;
       }
       switch (type) {
       case D3DDECLTYPE_FLOAT3: fvf |= D3DFVF_NORMAL; break;
@@ -619,6 +643,7 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This
 	    invalid_fvf = TRUE;
 	    TRACE("Mismatched use in VertexDeclaration of D3DDECLUSAGE_COLOR[%lu] unsupported COLOR register\n", colorNo);
 	  }
+	  break;
 	default: 
 	  /** Mismatched use of a register, invalid for fixed function fvf computing (ok for VS) */
 	  invalid_fvf = TRUE;
@@ -658,9 +683,12 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This
   /* compute size */
   object->declaration9NumElements = len;
   /* copy the declaration */
-  object->pDeclaration8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(D3DVERTEXELEMENT9));
+  object->pDeclaration9 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(D3DVERTEXELEMENT9));
   memcpy(object->pDeclaration9, pDecl, len * sizeof(D3DVERTEXELEMENT9));
   /* returns */
+  
+  TRACE("Returns allFVF = %lx\n", object->allFVF);
+
   return D3D_OK;
 }
 

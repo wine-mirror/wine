@@ -343,6 +343,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_DrawIndexedPrimitive(p,a,b,c,d,e,f)      (p)->lpVtbl->DrawIndexedPrimitive(p,a,b,c,d,e,f)
 #define IWineD3DDevice_DrawPrimitiveUP(p,a,b,c,d)               (p)->lpVtbl->DrawPrimitiveUP(p,a,b,c,d)
 #define IWineD3DDevice_DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h)
+#define IWineD3DDevice_CreateVertexDeclaration(p,a,b,c)         (p)->lpVtbl->CreateVertexDeclaration(p,a,b,c)
+#define IWineD3DDevice_SetVertexDeclaration(p,a)                (p)->lpVtbl->SetVertexDeclaration(p,a)
+#define IWineD3DDevice_GetVertexDeclaration(p,a)                (p)->lpVtbl->GetVertexDeclaration(p,a)
 #define IWineD3DDevice_SetupTextureStates(p,a,b)                (p)->lpVtbl->SetupTextureStates(p,a,b)
 #endif
 
@@ -887,7 +890,7 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
 #define IWineD3DVertexDeclaration_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IWineD3DVertexDeclaration methods ***/
 #define IWineD3DVertexDeclaration_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
-#define IWineD3DVertexDeclaration_GetDeclaration(p,a,b,c)    (p)->lpVtbl->GetDeclaration8(p,a,b,c)
+#define IWineD3DVertexDeclaration_GetDeclaration(p,a,b,c)    (p)->lpVtbl->GetDeclaration(p,a,b,c)
 #endif
 
 /*****************************************************************************
