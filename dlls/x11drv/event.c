@@ -66,64 +66,171 @@ extern BOOL ximInComposeMode;
 
 #define DndURL          128   /* KDE drag&drop */
 
-static const char * const event_names[] =
+  /* Event handlers */
+static void EVENT_FocusIn( HWND hwnd, XEvent *event );
+static void EVENT_FocusOut( HWND hwnd, XEvent *event );
+static void EVENT_PropertyNotify( HWND hwnd, XEvent *event );
+static void EVENT_ClientMessage( HWND hwnd, XEvent *event );
+
+struct event_handler
 {
-  "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
-  "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn", "FocusOut",
-  "KeymapNotify", "Expose", "GraphicsExpose", "NoExpose", "VisibilityNotify",
-  "CreateNotify", "DestroyNotify", "UnmapNotify", "MapNotify", "MapRequest",
-  "ReparentNotify", "ConfigureNotify", "ConfigureRequest", "GravityNotify",
-  "ResizeRequest", "CirculateNotify", "CirculateRequest", "PropertyNotify",
-  "SelectionClear", "SelectionRequest", "SelectionNotify", "ColormapNotify",
-  "ClientMessage", "MappingNotify"
+    int                  type;    /* event type */
+    x11drv_event_handler handler; /* corresponding handler function */
 };
 
+#define MAX_EVENT_HANDLERS 64
 
-static void EVENT_ProcessEvent( XEvent *event );
+static struct event_handler handlers[MAX_EVENT_HANDLERS] =
+{
+    /* list must be sorted by event type */
+    { KeyPress,         X11DRV_KeyEvent },
+    { KeyRelease,       X11DRV_KeyEvent },
+    { ButtonPress,      X11DRV_ButtonPress },
+    { ButtonRelease,    X11DRV_ButtonRelease },
+    { MotionNotify,     X11DRV_MotionNotify },
+    { EnterNotify,      X11DRV_EnterNotify },
+    /* LeaveNotify */
+    { FocusIn,          EVENT_FocusIn },
+    { FocusOut,         EVENT_FocusOut },
+    { KeymapNotify,     X11DRV_KeymapNotify },
+    { Expose,           X11DRV_Expose },
+    /* GraphicsExpose */
+    /* NoExpose */
+    /* VisibilityNotify */
+    /* CreateNotify */
+    /* DestroyNotify */
+    { UnmapNotify,      X11DRV_UnmapNotify },
+    { MapNotify,        X11DRV_MapNotify },
+    /* MapRequest */
+    /* ReparentNotify */
+    { ConfigureNotify,  X11DRV_ConfigureNotify },
+    /* ConfigureRequest */
+    /* GravityNotify */
+    /* ResizeRequest */
+    /* CirculateNotify */
+    /* CirculateRequest */
+    { PropertyNotify,   EVENT_PropertyNotify },
+    { SelectionClear,   X11DRV_SelectionClear },
+    { SelectionRequest, X11DRV_SelectionRequest },
+    /* SelectionNotify */
+    /* ColormapNotify */
+    { ClientMessage,    EVENT_ClientMessage },
+    { MappingNotify,    X11DRV_MappingNotify },
+};
 
-  /* Event handlers */
-static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event );
-static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event );
-static void EVENT_PropertyNotify( XPropertyEvent *event );
-static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
+static int nb_event_handlers = 18;  /* change this if you add handlers above */
 
-#ifdef HAVE_LIBXXF86DGA2
-static int DGAMotionEventType;
-static int DGAButtonPressEventType;
-static int DGAButtonReleaseEventType;
-static int DGAKeyPressEventType;
-static int DGAKeyReleaseEventType;
 
-static BOOL DGAUsed = FALSE;
-static HWND DGAhwnd = 0;
-#endif
+/* return the name of an X event */
+static const char *dbgstr_event( int type )
+{
+    static const char * const event_names[] =
+    {
+        "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
+        "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn", "FocusOut",
+        "KeymapNotify", "Expose", "GraphicsExpose", "NoExpose", "VisibilityNotify",
+        "CreateNotify", "DestroyNotify", "UnmapNotify", "MapNotify", "MapRequest",
+        "ReparentNotify", "ConfigureNotify", "ConfigureRequest", "GravityNotify",
+        "ResizeRequest", "CirculateNotify", "CirculateRequest", "PropertyNotify",
+        "SelectionClear", "SelectionRequest", "SelectionNotify", "ColormapNotify",
+        "ClientMessage", "MappingNotify"
+    };
 
-/* Static used for the current input method */
-static INPUT_TYPE current_input_type = X11DRV_INPUT_ABSOLUTE;
-static BOOL in_transition = FALSE; /* This is not used as for today */
+    if (type >= KeyPress && type <= MappingNotify) return event_names[type - KeyPress];
+    return wine_dbg_sprintf( "Extension event %d", type );
+}
+
+
+/***********************************************************************
+ *           find_handler
+ *
+ * Find the handler for a given event type. Caller must hold the x11 lock.
+ */
+static inline x11drv_event_handler find_handler( int type )
+{
+    int min = 0, max = nb_event_handlers - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (handlers[pos].type == type) return handlers[pos].handler;
+        if (handlers[pos].type > type) max = pos - 1;
+        else min = pos + 1;
+    }
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           X11DRV_register_event_handler
+ *
+ * Register a handler for a given event type.
+ * If already registered, overwrite the previous handler.
+ */
+void X11DRV_register_event_handler( int type, x11drv_event_handler handler )
+{
+    int min, max;
+
+    wine_tsx11_lock();
+    min = 0;
+    max = nb_event_handlers - 1;
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (handlers[pos].type == type)
+        {
+            handlers[pos].handler = handler;
+            goto done;
+        }
+        if (handlers[pos].type > type) max = pos - 1;
+        else min = pos + 1;
+    }
+    /* insert it between max and min */
+    memmove( &handlers[min+1], &handlers[min], (nb_event_handlers - min) * sizeof(handlers[0]) );
+    handlers[min].type = type;
+    handlers[min].handler = handler;
+    nb_event_handlers++;
+    assert( nb_event_handlers <= MAX_EVENT_HANDLERS );
+done:
+    wine_tsx11_unlock();
+    TRACE("registered handler %p for event %d count %d\n", handler, type, nb_event_handlers );
+}
 
 
 /***********************************************************************
  *           process_events
  */
-static int process_events( struct x11drv_thread_data *data )
+static int process_events( Display *display )
 {
     XEvent event;
-    int count = 0;
+    HWND hwnd;
+    int count;
+    x11drv_event_handler handler;
 
     wine_tsx11_lock();
-    while ( XPending( data->display ) )
+    for (count = 0; XPending(display); count++)
     {
-        Bool ignore;
+        XNextEvent( display, &event );
+        if (XFilterEvent( &event, None )) continue;  /* filtered, ignore it */
 
-        XNextEvent( data->display, &event );
-        ignore = XFilterEvent( &event, None );
+        if (!(handler = find_handler( event.type )))
+        {
+            TRACE( "%s, ignoring\n", dbgstr_event( event.type ));
+            continue;  /* no handler, ignore it */
+        }
+
+        if (XFindContext( display, event.xany.window, winContext, (char **)&hwnd ) != 0)
+            hwnd = 0;  /* not for a registered window */
+        if (!hwnd && event.xany.window == root_window) hwnd = GetDesktopWindow();
+
         wine_tsx11_unlock();
-        if (!ignore) EVENT_ProcessEvent( &event );
-        count++;
+        TRACE( "%s for hwnd/window %p/%lx\n",
+               dbgstr_event( event.type ), hwnd, event.xany.window );
+        handler( hwnd, &event );
         wine_tsx11_lock();
     }
     wine_tsx11_unlock();
+    if (count) TRACE( "processed %d events\n", count );
     return count;
 }
 
@@ -154,12 +261,12 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     wine_tsx11_unlock();
 
     data->process_event_count++;
-    if (process_events( data )) ret = count;
+    if (process_events( data->display )) ret = count;
     else
     {
         ret = WaitForMultipleObjectsEx( count+1, new_handles, flags & MWMO_WAITALL,
                                         timeout, flags & MWMO_ALERTABLE );
-        if (ret == count) process_events( data );
+        if (ret == count) process_events( data->display );
     }
     data->process_event_count--;
     return ret;
@@ -199,193 +306,6 @@ DWORD EVENT_x11_time_to_win32_time(Time time)
   return ret;
 
 }
-
-/***********************************************************************
- *           EVENT_ProcessEvent
- *
- * Process an X event.
- */
-static void EVENT_ProcessEvent( XEvent *event )
-{
-  HWND hWnd;
-  Display *display = event->xany.display;
-
-  TRACE( "called.\n" );
-
-  switch (event->type)
-  {
-    case SelectionNotify: /* all of these should be caught by XCheckTypedWindowEvent() */
-	 FIXME("Got SelectionNotify - must not happen!\n");
-	 /* fall through */
-
-      /* We get all these because of StructureNotifyMask.
-         This check is placed here to avoid getting error messages below,
-         as X might send some of these even for windows that have already
-         been deleted ... */
-    case CirculateNotify:
-    case CreateNotify:
-    case DestroyNotify:
-    case GravityNotify:
-    case ReparentNotify:
-      return;
-  }
-
-#ifdef HAVE_LIBXXF86DGA2
-  if (DGAUsed) {
-    if (event->type == DGAMotionEventType) {
-      TRACE("DGAMotionEvent received.\n");
-      X11DRV_DGAMotionEvent( DGAhwnd, (XDGAMotionEvent *)event );
-      return;
-    }
-    if (event->type == DGAButtonPressEventType) {
-      TRACE("DGAButtonPressEvent received.\n");
-      X11DRV_DGAButtonPressEvent( DGAhwnd, (XDGAButtonEvent *)event );
-      return;
-    }
-    if (event->type == DGAButtonReleaseEventType) {
-      TRACE("DGAButtonReleaseEvent received.\n");
-      X11DRV_DGAButtonReleaseEvent( DGAhwnd, (XDGAButtonEvent *)event );
-      return;
-    }
-    if ((event->type == DGAKeyPressEventType) ||
-	(event->type == DGAKeyReleaseEventType)) {
-      /* Fill a XKeyEvent to send to EVENT_Key */
-      XKeyEvent ke;
-      XDGAKeyEvent *evt = (XDGAKeyEvent *) event;
-
-      TRACE("DGAKeyPress/ReleaseEvent received.\n");
-
-      if (evt->type == DGAKeyReleaseEventType)
-	ke.type = KeyRelease;
-      else
-	ke.type = KeyPress;
-      ke.serial = evt->serial;
-      ke.send_event = FALSE;
-      ke.display = evt->display;
-      ke.window = 0;
-      ke.root = 0;
-      ke.subwindow = 0;
-      ke.time = evt->time;
-      ke.x = -1;
-      ke.y = -1;
-      ke.x_root = -1;
-      ke.y_root = -1;
-      ke.state = evt->state;
-      ke.keycode = evt->keycode;
-      ke.same_screen = TRUE;
-      X11DRV_KeyEvent( 0, &ke );
-      return;
-    }
-  }
-#endif
-
-  wine_tsx11_lock();
-  if (XFindContext( display, event->xany.window, winContext, (char **)&hWnd ) != 0)
-      hWnd = 0;  /* Not for a registered window */
-  wine_tsx11_unlock();
-  if (!hWnd && event->xany.window == root_window) hWnd = GetDesktopWindow();
-
-  if (!hWnd && event->type != PropertyNotify &&
-      event->type != MappingNotify && event->type != KeymapNotify)
-      WARN( "Got event %s for unknown Window %08lx\n",
-            event_names[event->type], event->xany.window );
-  else if (event->type <= MappingNotify)
-      TRACE("Got event %s for hwnd/window %p/%lx, GetFocus()=%p\n",
-            event_names[event->type], hWnd, event->xany.window, GetFocus() );
-  else
-      TRACE("Got extension event for hwnd/window %p/%lx, GetFocus()=%p\n",
-            hWnd, event->xany.window, GetFocus() );
-
-  if (X11DRV_ProcessTabletEvent(hWnd, event))
-  {
-        TRACE("Return: filtered by tablet\n");
-        return;
-  }
-
-  switch(event->type)
-    {
-    case KeyPress:
-    case KeyRelease:
-      /* FIXME: should generate a motion event if event point is different from current pos */
-      X11DRV_KeyEvent( hWnd, (XKeyEvent*)event );
-      break;
-
-    case ButtonPress:
-      X11DRV_ButtonPress( hWnd, (XButtonEvent*)event );
-      break;
-
-    case ButtonRelease:
-      X11DRV_ButtonRelease( hWnd, (XButtonEvent*)event );
-      break;
-
-    case MotionNotify:
-      X11DRV_MotionNotify( hWnd, (XMotionEvent*)event );
-      break;
-
-    case EnterNotify:
-      X11DRV_EnterNotify( hWnd, (XCrossingEvent*)event );
-      break;
-
-    case FocusIn:
-      EVENT_FocusIn( hWnd, (XFocusChangeEvent*)event );
-      break;
-
-    case FocusOut:
-      EVENT_FocusOut( hWnd, (XFocusChangeEvent*)event );
-      break;
-
-    case Expose:
-      X11DRV_Expose( hWnd, &event->xexpose );
-      break;
-
-    case ConfigureNotify:
-      if (!hWnd) return;
-      X11DRV_ConfigureNotify( hWnd, &event->xconfigure );
-      break;
-
-    case SelectionRequest:
-      X11DRV_SelectionRequest( hWnd, (XSelectionRequestEvent *)event );
-      break;
-
-    case SelectionClear:
-      X11DRV_SelectionClear( hWnd, (XSelectionClearEvent*) event );
-      break;
-
-    case PropertyNotify:
-      EVENT_PropertyNotify( (XPropertyEvent *)event );
-      break;
-
-    case ClientMessage:
-      if (!hWnd) return;
-      EVENT_ClientMessage( hWnd, (XClientMessageEvent *) event );
-      break;
-
-    case NoExpose:
-      break;
-
-    case MapNotify:
-      X11DRV_MapNotify( hWnd, (XMapEvent *)event );
-      break;
-
-    case UnmapNotify:
-      X11DRV_UnmapNotify( hWnd, (XUnmapEvent *)event );
-      break;
-
-    case KeymapNotify:
-      X11DRV_KeymapNotify( hWnd, (XKeymapEvent *)event );
-      break;
-
-    case MappingNotify:
-      X11DRV_MappingNotify( (XMappingEvent *) event );
-      break;
-
-    default:
-      WARN("Unprocessed event %s for hwnd %p\n", event_names[event->type], hWnd );
-      break;
-    }
-    TRACE( "returns.\n" );
-}
-
 
 /*******************************************************************
  *         can_activate_window
@@ -500,8 +420,9 @@ static const char * const focus_details[] =
 /**********************************************************************
  *              EVENT_FocusIn
  */
-static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
+static void EVENT_FocusIn( HWND hwnd, XEvent *xev )
 {
+    XFocusChangeEvent *event = &xev->xfocus;
     XIC xic;
 
     if (!hwnd) return;
@@ -535,8 +456,9 @@ static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
  *
  * Note: only top-level windows get FocusOut events.
  */
-static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
+static void EVENT_FocusOut( HWND hwnd, XEvent *xev )
 {
+    XFocusChangeEvent *event = &xev->xfocus;
     HWND hwnd_tmp;
     Window focus_win;
     int revert;
@@ -591,8 +513,9 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
  *   We use this to release resources like Pixmaps when a selection
  *   client no longer needs them.
  */
-static void EVENT_PropertyNotify( XPropertyEvent *event )
+static void EVENT_PropertyNotify( HWND hwnd, XEvent *xev )
 {
+  XPropertyEvent *event = &xev->xproperty;
   /* Check if we have any resources to free */
   TRACE("Received PropertyNotify event: \n");
 
@@ -916,8 +839,12 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 /**********************************************************************
  *           EVENT_ClientMessage
  */
-static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
+static void EVENT_ClientMessage( HWND hWnd, XEvent *xev )
 {
+    XClientMessageEvent *event = &xev->xclient;
+
+    if (!hWnd) return;
+
   if (event->message_type != None && event->format == 32) {
     if (event->message_type == x11drv_atom(WM_PROTOCOLS))
         handle_wm_protocols_message( hWnd, event );
@@ -964,39 +891,3 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
     }
   }
 }
-
-
-/**********************************************************************
- *              X11DRV_EVENT_SetInputMethod
- */
-INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type)
-{
-  INPUT_TYPE prev = current_input_type;
-
-  /* Flag not used yet */
-  in_transition = FALSE;
-  current_input_type = type;
-
-  return prev;
-}
-
-#ifdef HAVE_LIBXXF86DGA2
-/**********************************************************************
- *              X11DRV_EVENT_SetDGAStatus
- */
-void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base)
-{
-  if (event_base < 0) {
-    DGAUsed = FALSE;
-    DGAhwnd = 0;
-  } else {
-    DGAUsed = TRUE;
-    DGAhwnd = hwnd;
-    DGAMotionEventType = event_base + MotionNotify;
-    DGAButtonPressEventType = event_base + ButtonPress;
-    DGAButtonReleaseEventType = event_base + ButtonRelease;
-    DGAKeyPressEventType = event_base + KeyPress;
-    DGAKeyReleaseEventType = event_base + KeyRelease;
-  }
-}
-#endif

@@ -138,8 +138,9 @@ static HWND get_top_clipping_window( HWND hwnd )
 /***********************************************************************
  *           X11DRV_Expose
  */
-void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
+void X11DRV_Expose( HWND hwnd, XEvent *xev )
 {
+    XExposeEvent *event = &xev->xexpose;
     RECT rect;
     struct x11drv_win_data *data;
     int flags = RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN;
@@ -1196,7 +1197,7 @@ END:
 /**********************************************************************
  *		X11DRV_MapNotify
  */
-void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
+void X11DRV_MapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
     HWND hwndFocus = GetFocus();
@@ -1216,9 +1217,9 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
 
         /* FIXME: hack */
         wine_tsx11_lock();
-        XGetGeometry( event->display, data->whole_window, &root, &x, &y, &width, &height,
+        XGetGeometry( event->xmap.display, data->whole_window, &root, &x, &y, &width, &height,
                         &border, &depth );
-        XTranslateCoordinates( event->display, data->whole_window, root, 0, 0, &x, &y, &top );
+        XTranslateCoordinates( event->xmap.display, data->whole_window, root, 0, 0, &x, &y, &top );
         wine_tsx11_unlock();
         rect.left   = x;
         rect.top    = y;
@@ -1244,7 +1245,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
 /**********************************************************************
  *              X11DRV_UnmapNotify
  */
-void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
+void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
     WND *win;
@@ -1416,14 +1417,16 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
 /***********************************************************************
  *		X11DRV_ConfigureNotify
  */
-void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
+void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 {
+    XConfigureEvent *event = &xev->xconfigure;
     HWND oldInsertAfter;
     struct x11drv_win_data *data;
     RECT rect;
     WINDOWPOS winpos;
     int x = event->x, y = event->y;
 
+    if (!hwnd) return;
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     /* Get geometry */

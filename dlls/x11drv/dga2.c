@@ -42,8 +42,8 @@ extern int usedga;
 
 LPDDHALMODEINFO xf86dga2_modes;
 unsigned xf86dga2_mode_count;
+HWND DGAhwnd = 0;
 static XDGAMode* modes;
-static int dga_event, dga_error;
 
 static void convert_mode(XDGAMode *mode, LPDDHALMODEINFO info)
 {
@@ -66,9 +66,58 @@ static int DGA2ErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
+static void X11DRV_DGAKeyPressEvent( HWND hwnd, XEvent *xev )
+{
+    /* Fill a XKeyEvent to send to EVENT_Key */
+    XDGAKeyEvent *event = (XDGAKeyEvent *)xev;
+    XEvent ke;
+
+    ke.xkey.type = KeyPress;
+    ke.xkey.serial = event->serial;
+    ke.xkey.send_event = FALSE;
+    ke.xkey.display = event->display;
+    ke.xkey.window = 0;
+    ke.xkey.root = 0;
+    ke.xkey.subwindow = 0;
+    ke.xkey.time = event->time;
+    ke.xkey.x = -1;
+    ke.xkey.y = -1;
+    ke.xkey.x_root = -1;
+    ke.xkey.y_root = -1;
+    ke.xkey.state = event->state;
+    ke.xkey.keycode = event->keycode;
+    ke.xkey.same_screen = TRUE;
+    X11DRV_KeyEvent( 0, &ke );
+}
+
+static void X11DRV_DGAKeyReleaseEvent( HWND hwnd, XEvent *xev )
+{
+    /* Fill a XKeyEvent to send to EVENT_Key */
+    XDGAKeyEvent *event = (XDGAKeyEvent *)xev;
+    XEvent ke;
+
+    ke.xkey.type = KeyRelease;
+    ke.xkey.serial = event->serial;
+    ke.xkey.send_event = FALSE;
+    ke.xkey.display = event->display;
+    ke.xkey.window = 0;
+    ke.xkey.root = 0;
+    ke.xkey.subwindow = 0;
+    ke.xkey.time = event->time;
+    ke.xkey.x = -1;
+    ke.xkey.y = -1;
+    ke.xkey.x_root = -1;
+    ke.xkey.y_root = -1;
+    ke.xkey.state = event->state;
+    ke.xkey.keycode = event->keycode;
+    ke.xkey.same_screen = TRUE;
+    X11DRV_KeyEvent( 0, &ke );
+}
+
+
 void X11DRV_XF86DGA2_Init(void)
 {
-  int nmodes, major, minor, i;
+  int nmodes, major, minor, i, event_base, error_base;
   Bool ok;
 
   TRACE("\n");
@@ -81,7 +130,7 @@ void X11DRV_XF86DGA2_Init(void)
   if (!usedga) return;
 
   wine_tsx11_lock();
-  ok = XDGAQueryExtension(gdi_display, &dga_event, &dga_error);
+  ok = XDGAQueryExtension(gdi_display, &event_base, &error_base);
   if (ok)
   {
       X11DRV_expect_error(gdi_display, DGA2ErrorHandler, NULL);
@@ -120,6 +169,13 @@ void X11DRV_XF86DGA2_Init(void)
   /* convert modes to DDHALMODEINFO format */
   for (i=0; i<nmodes; i++)
     convert_mode(&modes[i], &xf86dga2_modes[i+1]);
+
+  /* register event handlers */
+  X11DRV_register_event_handler( event_base + MotionNotify, X11DRV_DGAMotionEvent );
+  X11DRV_register_event_handler( event_base + ButtonPress, X11DRV_DGAButtonPressEvent );
+  X11DRV_register_event_handler( event_base + ButtonRelease, X11DRV_DGAButtonReleaseEvent );
+  X11DRV_register_event_handler( event_base + KeyPress, X11DRV_DGAKeyPressEvent );
+  X11DRV_register_event_handler( event_base + KeyRelease, X11DRV_DGAKeyReleaseEvent );
 
   TRACE("Enabling XF86DGA2 mode\n");
 }
@@ -160,8 +216,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
 			  KeyPressMask|KeyReleaseMask|
 			  ButtonPressMask|ButtonReleaseMask|
 			  PointerMotionMask);
-	X11DRV_EVENT_SetDGAStatus((HWND)ddlocal->hWnd, dga_event);
-	X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_RELATIVE);
+        DGAhwnd = (HWND)ddlocal->hWnd;
       }
       dga_dev = new_dev;
       vram = dga_dev->mode.bytesPerScanline * dga_dev->mode.imageHeight;
@@ -184,8 +239,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
     X11DRV_DDHAL_SwitchMode(0, NULL, NULL);
     XDGASetMode(display, DefaultScreen(display), 0);
     VirtualFree(dga_dev->data, 0, MEM_RELEASE);
-    X11DRV_EVENT_SetInputMethod(X11DRV_INPUT_ABSOLUTE);
-    X11DRV_EVENT_SetDGAStatus(0, -1);
+    DGAhwnd = 0;
     XFree(dga_dev);
     XDGACloseFramebuffer(display, DefaultScreen(display));
     dga_dev = NULL;

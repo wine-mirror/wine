@@ -1097,7 +1097,7 @@ inline static void KEYBOARD_UpdateOneState ( int vkey, int state, DWORD time )
  * from wine to another application and back.
  * Toggle keys are handled in HandleEvent.
  */
-void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event )
+void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
 {
     int i, j, alt, control, shift;
     DWORD time = GetCurrentTime();
@@ -1105,10 +1105,10 @@ void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event )
     alt = control = shift = 0;
     for (i = 0; i < 32; i++)
     {
-        if (!event->key_vector[i]) continue;
+        if (!event->xkeymap.key_vector[i]) continue;
         for (j = 0; j < 8; j++)
         {
-            if (!(event->key_vector[i] & (1<<j))) continue;
+            if (!(event->xkeymap.key_vector[i] & (1<<j))) continue;
             switch(keyc2vkey[(i * 8) + j] & 0xff)
             {
             case VK_MENU:    alt = 1; break;
@@ -1127,8 +1127,9 @@ void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event )
  *
  * Handle a X key event
  */
-void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
+void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 {
+    XKeyEvent *event = &xev->xkey;
     char Str[24];
     KeySym keysym = 0;
     WORD vkey = 0, bScan;
@@ -1705,12 +1706,12 @@ HKL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 /***********************************************************************
  *           X11DRV_MappingNotify
  */
-void X11DRV_MappingNotify( XMappingEvent *event )
+void X11DRV_MappingNotify( HWND dummy, XEvent *event )
 {
     HWND hwnd;
 
     wine_tsx11_lock();
-    XRefreshKeyboardMapping(event);
+    XRefreshKeyboardMapping(&event->xmapping);
     wine_tsx11_unlock();
     X11DRV_InitKeyboard( pKeyStateTable );
 

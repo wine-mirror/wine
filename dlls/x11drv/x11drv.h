@@ -456,36 +456,28 @@ extern Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
 
 /* X11 event driver */
 
-typedef enum {
-  X11DRV_INPUT_RELATIVE,
-  X11DRV_INPUT_ABSOLUTE
-} INPUT_TYPE;
-extern INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type);
+typedef void (*x11drv_event_handler)( HWND hwnd, XEvent *event );
 
-extern void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event );
-extern void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event );
-extern void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event );
-extern void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event );
-extern void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event );
-extern void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event );
-extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
-extern void X11DRV_MapNotify( HWND hwnd, XMapEvent *event );
-extern void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event );
-extern void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
-extern void X11DRV_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event );
-extern void X11DRV_SelectionClear( HWND hWnd, XSelectionClearEvent *event );
-extern void X11DRV_MappingNotify( XMappingEvent *event );
+extern void X11DRV_register_event_handler( int type, x11drv_event_handler handler );
 
-#ifdef HAVE_LIBXXF86DGA2
-void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
-
-extern void X11DRV_DGAMotionEvent( HWND hwnd, XDGAMotionEvent *event );
-extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XDGAButtonEvent *event );
-extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XDGAButtonEvent *event );
-#endif
+extern void X11DRV_ButtonPress( HWND hwnd, XEvent *event );
+extern void X11DRV_ButtonRelease( HWND hwnd, XEvent *event );
+extern void X11DRV_MotionNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_EnterNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_KeyEvent( HWND hwnd, XEvent *event );
+extern void X11DRV_KeymapNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_Expose( HWND hwnd, XEvent *event );
+extern void X11DRV_MapNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_UnmapNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
+extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event );
+extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event );
+extern void X11DRV_MappingNotify( HWND hWnd, XEvent *event );
+extern void X11DRV_DGAMotionEvent( HWND hwnd, XEvent *event );
+extern void X11DRV_DGAButtonPressEvent( HWND hwnd, XEvent *event );
+extern void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XEvent *event );
 
 extern DWORD EVENT_x11_time_to_win32_time(Time time);
-extern int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event);
 
 /* x11drv private window data */
 struct x11drv_win_data

@@ -536,8 +536,9 @@ void X11DRV_InitMouse( BYTE *key_state_table )
 /***********************************************************************
  *           X11DRV_ButtonPress
  */
-void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event )
+void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
 {
+    XButtonEvent *event = &xev->xbutton;
     int buttonNum = event->button - 1;
     WORD wData = 0;
     POINT pt;
@@ -566,8 +567,9 @@ void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event )
 /***********************************************************************
  *           X11DRV_ButtonRelease
  */
-void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event )
+void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
 {
+    XButtonEvent *event = &xev->xbutton;
     int buttonNum = event->button - 1;
     POINT pt;
 
@@ -585,8 +587,9 @@ void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event )
 /***********************************************************************
  *           X11DRV_MotionNotify
  */
-void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event )
+void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
 {
+    XMotionEvent *event = &xev->xmotion;
     POINT pt;
 
     TRACE("hwnd %p, event->is_hint %d\n", hwnd, event->is_hint);
@@ -604,8 +607,9 @@ void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event )
 /***********************************************************************
  *           X11DRV_EnterNotify
  */
-void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event )
+void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
 {
+    XCrossingEvent *event = &xev->xcrossing;
     POINT pt;
 
     TRACE("hwnd %p, event->detail %d\n", hwnd, event->detail);
@@ -623,36 +627,43 @@ void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event )
 
 
 #ifdef HAVE_LIBXXF86DGA2
+
+extern HWND DGAhwnd;
+
 /**********************************************************************
  *              X11DRV_DGAMotionEvent
  */
-void X11DRV_DGAMotionEvent( HWND hwnd, XDGAMotionEvent *event )
+void X11DRV_DGAMotionEvent( HWND hwnd, XEvent *xev )
 {
+    XDGAMotionEvent *event = (XDGAMotionEvent *)xev;
     update_key_state( event->state );
-    send_mouse_event( hwnd, MOUSEEVENTF_MOVE, event->dx, event->dy, 0, event->time );
+    send_mouse_event( DGAhwnd, MOUSEEVENTF_MOVE, event->dx, event->dy, 0, event->time );
 }
 
 /**********************************************************************
  *              X11DRV_DGAButtonPressEvent
  */
-void X11DRV_DGAButtonPressEvent( HWND hwnd, XDGAButtonEvent *event )
+void X11DRV_DGAButtonPressEvent( HWND hwnd, XEvent *xev )
 {
+    XDGAButtonEvent *event = (XDGAButtonEvent *)xev;
     int buttonNum = event->button - 1;
 
     if (buttonNum >= NB_BUTTONS) return;
     update_key_state( event->state );
-    send_mouse_event( hwnd, button_down_flags[buttonNum], 0, 0, 0, event->time );
+    send_mouse_event( DGAhwnd, button_down_flags[buttonNum], 0, 0, 0, event->time );
 }
 
 /**********************************************************************
  *              X11DRV_DGAButtonReleaseEvent
  */
-void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XDGAButtonEvent *event )
+void X11DRV_DGAButtonReleaseEvent( HWND hwnd, XEvent *xev )
 {
+    XDGAButtonEvent *event = (XDGAButtonEvent *)xev;
     int buttonNum = event->button - 1;
 
     if (buttonNum >= NB_BUTTONS) return;
     update_key_state( event->state );
-    send_mouse_event( hwnd, button_up_flags[buttonNum], 0, 0, 0, event->time );
+    send_mouse_event( DGAhwnd, button_up_flags[buttonNum], 0, 0, 0, event->time );
 }
+
 #endif /* HAVE_LIBXXF86DGA2 */
