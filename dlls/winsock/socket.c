@@ -2835,7 +2835,7 @@ int WINAPI WS_shutdown(SOCKET s, int how)
     case 2: /* drop all */
         clear_flags |= FD_READ|FD_WRITE;
     default:
-        clear_flags |= FD_WINE_CONNECTED|FD_WINE_LISTENING;
+        clear_flags |= FD_WINE_LISTENING;
     }
 
     if ( flags & FD_FLAG_OVERLAPPED ) {

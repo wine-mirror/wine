@@ -398,7 +398,7 @@ static void sock_poll_event( struct object *obj, int event )
         {
             sock->errors[FD_CLOSE_BIT] = sock_error( sock->obj.fd );
             if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
-                sock->state &= ~(FD_WINE_CONNECTED|FD_WRITE);
+                sock->state &= ~FD_WRITE;
             sock->pmask |= FD_CLOSE;
             sock->hmask |= FD_CLOSE;
             if (debug_level)
@@ -494,8 +494,11 @@ static int sock_get_info( struct object *obj, struct get_file_info_reply *reply,
     }
     *flags = 0;
     if (sock->flags & WSA_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
-    if ( !(sock->state & FD_READ ) )  *flags |= FD_FLAG_RECV_SHUTDOWN;
-    if ( !(sock->state & FD_WRITE ) ) *flags |= FD_FLAG_SEND_SHUTDOWN;
+    if ( sock->type != SOCK_STREAM || sock->state & FD_WINE_CONNECTED )
+    {
+        if ( !(sock->state & FD_READ  ) ) *flags |= FD_FLAG_RECV_SHUTDOWN;
+        if ( !(sock->state & FD_WRITE ) ) *flags |= FD_FLAG_SEND_SHUTDOWN;
+    }
     return FD_TYPE_SOCKET;
 }
 
