@@ -69,7 +69,8 @@ int XREAD(int fd,void*buf,int size) {
    perror("dosmod read");
    return -1;
   }
-  fprintf(stderr,"dosmod read only %d of %d bytes.\n",res,size);
+  if (res) /* don't print the EOF condition */
+   fprintf(stderr,"dosmod read only %d of %d bytes.\n",res,size);
   return res;
  }
 }
@@ -108,7 +109,7 @@ void get_timer(struct timeval*tim)
  *tim=cur.it_value;
 }
 
-volatile int sig_pend,sig_fatal=0,sig_alrm=0;
+volatile int sig_pend,sig_fatal=0,sig_alrm=0,sig_cb=0;
 void*img;
 struct vm86plus_struct VM86;
 
@@ -121,8 +122,10 @@ void sig_handler(int sig)
 
 void bad_handler(int sig)
 {
- fprintf(stderr,"DOSMOD caught fatal signal %d\n",sig);
- fprintf(stderr,"(Last known VM86 CS:IP was %04x:%04lx)\n",VM86.regs.cs,VM86.regs.eip);
+ if (sig!=SIGTERM) {
+  fprintf(stderr,"DOSMOD caught fatal signal %d\n",sig);
+  fprintf(stderr,"(Last known VM86 CS:IP was %04x:%04lx)\n",VM86.regs.cs,VM86.regs.eip);
+ }
  sig_pend=sig; sig_fatal++;
  signal(sig,bad_handler);
 }
@@ -131,6 +134,12 @@ void alarm_handler(int sig)
 {
  sig_alrm++;
  signal(sig,alarm_handler);
+}
+
+void cb_handler(int sig)
+{
+ sig_cb++;
+ signal(sig,cb_handler);
 }
 
 int main(int argc,char**argv)
@@ -169,7 +178,7 @@ int main(int argc,char**argv)
  signal(SIGHUP,sig_handler);
  signal(SIGINT,sig_handler);
  signal(SIGUSR1,sig_handler);
- signal(SIGUSR2,sig_handler);
+ signal(SIGUSR2,cb_handler);
  signal(SIGALRM,alarm_handler);
 
  signal(SIGQUIT,bad_handler);
@@ -183,7 +192,7 @@ int main(int argc,char**argv)
  set_timer(&tim);
 #endif
 /* report back to the main program that we're ready */
- ret=1; /* dosmod protocol revision 1 */
+ ret=2; /* dosmod protocol revision */
  XWRITE(1,&ret,sizeof(ret));
 /* context exchange loop */
  do {
@@ -202,14 +211,20 @@ int main(int argc,char**argv)
    case DOSMOD_ENTER:
    default:
     if (XREAD(0,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
-    if (sig_pend||sig_alrm) ret=DOSMOD_SIGNAL; else
+    if (sig_pend||sig_alrm||sig_cb) ret=DOSMOD_SIGNAL; else
      ret=vm86plus(func,&VM86);
     if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
     if (XWRITE(1,&VM86,sizeof(VM86))!=sizeof(VM86)) return 1;
     switch (ret&0xff) {
      case DOSMOD_SIGNAL:
       ret=sig_pend; sig_pend=0;
-      if (!ret) { ret=SIGALRM; sig_alrm--; }
+      if (!ret) {
+       if (sig_alrm) {
+        ret=SIGALRM; sig_alrm--;
+       } else {
+        ret=SIGUSR2; sig_cb--;
+       }
+      }
       if (XWRITE(1,&ret,sizeof(ret))!=sizeof(ret)) return 1;
       if (sig_fatal) return 1;
       break;
