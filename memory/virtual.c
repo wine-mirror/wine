@@ -104,7 +104,7 @@ static UINT page_size;
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
 
 static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size, DWORD offset_low,
-                            DWORD offset_high, int prot, int flags );
+                            DWORD offset_high, int prot, int flags, BOOL *removable );
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -480,14 +480,15 @@ static void *anon_mmap_aligned( void *base, unsigned int size, int prot, int fla
  * Map an executable (PE format) image into memory.
  */
 static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
-                         DWORD header_size, HANDLE shared_file, DWORD shared_size )
+                         DWORD header_size, HANDLE shared_file, DWORD shared_size,
+                         BOOL removable )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
     int i, pos;
     DWORD err = GetLastError();
-    FILE_VIEW *view = NULL;
+    FILE_VIEW *view;
     char *ptr;
     int shared_fd = -1;
 
@@ -508,19 +509,10 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
     }
     TRACE_(module)( "mapped PE file at %p-%p\n", ptr, ptr + total_size );
 
-    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0,
-                                     VPROT_COMMITTED|VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY,
-                                     hmapping )))
-    {
-        munmap( ptr, total_size );
-        SetLastError( ERROR_OUTOFMEMORY );
-        goto error;
-    }
-
     /* map the header */
 
     if (VIRTUAL_mmap( fd, ptr, header_size, 0, 0, PROT_READ | PROT_WRITE,
-                      MAP_PRIVATE | MAP_FIXED ) == (char *)-1) goto error;
+                      MAP_PRIVATE | MAP_FIXED, &removable ) == (char *)-1) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     if ((char *)(nt + 1) > ptr + header_size) goto error;
@@ -582,7 +574,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
                           size, sec->Characteristics );
             if (VIRTUAL_mmap( shared_fd, ptr + sec->VirtualAddress, size,
                               pos, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
-                              MAP_SHARED|MAP_FIXED ) == (void *)-1)
+                              MAP_SHARED|MAP_FIXED, NULL ) == (void *)-1)
             {
                 ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
                 goto error;
@@ -604,7 +596,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
          */
         if (VIRTUAL_mmap( fd, ptr + sec->VirtualAddress, sec->SizeOfRawData,
                           sec->PointerToRawData, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
-                          MAP_PRIVATE | MAP_FIXED ) == (void *)-1)
+                          MAP_PRIVATE | MAP_FIXED, &removable ) == (void *)-1)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
             goto error;
@@ -622,13 +614,22 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
         }
     }
 
+    if (removable) hmapping = 0;  /* don't keep handle open on removable media */
+    if (!(view = VIRTUAL_CreateView( ptr, total_size, 0,
+                                     VPROT_COMMITTED|VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY,
+                                     hmapping )))
+    {
+        SetLastError( ERROR_OUTOFMEMORY );
+        goto error;
+    }
+
     SetLastError( err );  /* restore last error */
     close( fd );
     if (shared_fd != -1) close( shared_fd );
     return ptr;
 
  error:
-    if (view) VIRTUAL_DeleteView( view );
+    if (ptr != (char *)-1) munmap( ptr, total_size );
     close( fd );
     if (shared_fd != -1) close( shared_fd );
     if (shared_file) CloseHandle( shared_file );
@@ -745,13 +746,32 @@ static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
  * and falls back to read if mmap of a file fails.
  */
 static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
-                            DWORD offset_low, DWORD offset_high, int prot, int flags )
+                            DWORD offset_low, DWORD offset_high,
+                            int prot, int flags, BOOL *removable )
 {
     int pos;
     LPVOID ret;
     off_t offset;
+    BOOL is_shared_write = FALSE;
 
     if (fd == -1) return wine_anon_mmap( start, size, prot, flags );
+
+    if (prot & PROT_WRITE)
+    {
+#ifdef MAP_SHARED
+        if (flags & MAP_SHARED) is_shared_write = TRUE;
+#endif
+#ifdef MAP_PRIVATE
+        if (!(flags & MAP_PRIVATE)) is_shared_write = TRUE;
+#endif
+    }
+
+    if (removable && *removable)
+    {
+        /* if on removable media, try using read instead of mmap */
+        if (!is_shared_write) goto fake_mmap;
+        *removable = FALSE;
+    }
 
     if ((ret = unaligned_mmap( start, size, prot, flags, fd,
                                offset_low, offset_high )) != (LPVOID)-1) return ret;
@@ -761,17 +781,9 @@ static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
     /* does not support mmap() (ENOEXEC,ENODEV), we do it by hand. */
 
     if ((errno != ENOEXEC) && (errno != EINVAL) && (errno != ENODEV)) return ret;
-    if (prot & PROT_WRITE)
-    {
-        /* We cannot fake shared write mappings */
-#ifdef MAP_SHARED
-        if (flags & MAP_SHARED) return ret;
-#endif
-#ifdef MAP_PRIVATE
-        if (!(flags & MAP_PRIVATE)) return ret;
-#endif
-    }
+    if (is_shared_write) return ret;  /* we cannot fake shared write mappings */
 
+ fake_mmap:
     /* Reserve the memory with an anonymous mmap */
     ret = wine_anon_mmap( start, size, PROT_READ | PROT_WRITE, flags );
     if (ret == (LPVOID)-1) return ret;
@@ -1553,6 +1565,7 @@ LPVOID WINAPI MapViewOfFileEx(
     void *base, *ptr = (void *)-1, *ret;
     DWORD size_low, size_high, header_size, shared_size;
     HANDLE shared_file;
+    BOOL removable;
 
     /* Check parameters */
 
@@ -1574,6 +1587,8 @@ LPVOID WINAPI MapViewOfFileEx(
         header_size = req->header_size;
         shared_file = req->shared_file;
         shared_size = req->shared_size;
+        removable   = (req->drive_type == DRIVE_REMOVABLE ||
+                       req->drive_type == DRIVE_CDROM);
     }
     SERVER_END_REQ;
     if (res) goto error;
@@ -1582,7 +1597,7 @@ LPVOID WINAPI MapViewOfFileEx(
 
     if (prot & VPROT_IMAGE)
         return map_image( handle, unix_handle, base, size_low, header_size,
-                          shared_file, shared_size );
+                          shared_file, shared_size, removable );
 
 
     if (size_high)
@@ -1636,12 +1651,13 @@ LPVOID WINAPI MapViewOfFileEx(
     TRACE("handle=%x size=%x offset=%lx\n", handle, size, offset_low );
 
     ret = VIRTUAL_mmap( unix_handle, ptr, size, offset_low, offset_high,
-                        VIRTUAL_GetUnixProt( prot ), flags | MAP_FIXED );
+                        VIRTUAL_GetUnixProt( prot ), flags | MAP_FIXED, &removable );
     if (ret != ptr)
     {
         ERR( "VIRTUAL_mmap %p %x %lx%08lx failed\n", ptr, size, offset_high, offset_low );
         goto error;
     }
+    if (removable) handle = 0;  /* don't keep handle open on removable media */
 
     if (!(view = VIRTUAL_CreateView( ptr, size, 0, prot, handle )))
     {
