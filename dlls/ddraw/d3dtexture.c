@@ -249,7 +249,7 @@ ULONG WINAPI
 Main_IDirect3DTextureImpl_2_1T_AddRef(LPDIRECT3DTEXTURE2 iface)
 {
     ICOM_THIS_FROM(IDirect3DTextureImpl, IDirect3DTexture2, iface);
-    FIXME("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
+    TRACE("(%p/%p)->() incrementing from %lu.\n", This, iface, This->ref);
     return ++(This->ref);
 }
 
@@ -337,8 +337,8 @@ GL_IDirect3DTextureImpl_2_1T_Release(LPDIRECT3DTEXTURE2 iface)
 
 	/* And if this texture was the current one, remove it at the device level */
 	if (This->d3ddevice != NULL)
-	    if (This->d3ddevice->current_texture == This)
-	        This->d3ddevice->current_texture = NULL;
+	    if (This->d3ddevice->current_texture[0] == This)
+	        This->d3ddevice->current_texture[0] = NULL;
 
 	if (This->loaded) {
 	    mem_used = This->surface->surface_desc.dwHeight *
@@ -378,10 +378,10 @@ GL_IDirect3DTextureImpl_2_1T_GetHandle(LPDIRECT3DTEXTURE2 iface,
 
     /* Associate the texture with the device and perform the appropriate AddRef/Release */
     /* FIXME: Is there only one or several textures associated with the device ? */
-    if (lpDeviceImpl->current_texture != NULL)
-        IDirect3DTexture2_Release(ICOM_INTERFACE(lpDeviceImpl->current_texture, IDirect3DTexture2));           
+    if (lpDeviceImpl->current_texture[0] != NULL)
+        IDirect3DTexture2_Release(ICOM_INTERFACE(lpDeviceImpl->current_texture[0], IDirect3DTexture2));           
     IDirect3DTexture2_AddRef(ICOM_INTERFACE(This, IDirect3DTexture2));
-    lpDeviceImpl->current_texture = This;
+    lpDeviceImpl->current_texture[0] = This;
 
     TRACE("OpenGL texture handle is : %d\n", glThis->tex_name);
 

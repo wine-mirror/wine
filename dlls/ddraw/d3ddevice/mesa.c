@@ -317,8 +317,8 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
     TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     if (!--(This->ref)) {
 	/* Release texture associated with the device */ 
-	if (This->current_texture != NULL)
-	    IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture, IDirect3DTexture2));
+	if (This->current_texture[0] != NULL)
+	    IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[0], IDirect3DTexture2));
 	    	  
 	ENTER_GL();
 	glXDestroyContext(glThis->display, glThis->gl_context);
@@ -1059,6 +1059,135 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
+						 DWORD dwStage,
+						 D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,
+						 DWORD dwState)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+    GLenum gl_state;
+    
+    TRACE("(%p/%p)->(%08lx,%08x,%08lx)\n", This, iface, dwStage, d3dTexStageStateType, dwState);
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" Stage type is : ");
+	switch (d3dTexStageStateType) {
+#define GEN_CASE(a) case a: DPRINTF(#a " "); break
+	    GEN_CASE(D3DTSS_COLOROP);
+	    GEN_CASE(D3DTSS_COLORARG1);
+	    GEN_CASE(D3DTSS_COLORARG2);
+	    GEN_CASE(D3DTSS_ALPHAOP);
+	    GEN_CASE(D3DTSS_ALPHAARG1);
+	    GEN_CASE(D3DTSS_ALPHAARG2);
+	    GEN_CASE(D3DTSS_BUMPENVMAT00);
+	    GEN_CASE(D3DTSS_BUMPENVMAT01);
+	    GEN_CASE(D3DTSS_BUMPENVMAT10);
+	    GEN_CASE(D3DTSS_BUMPENVMAT11);
+	    GEN_CASE(D3DTSS_TEXCOORDINDEX);
+	    GEN_CASE(D3DTSS_ADDRESS);
+	    GEN_CASE(D3DTSS_ADDRESSU);
+	    GEN_CASE(D3DTSS_ADDRESSV);
+	    GEN_CASE(D3DTSS_BORDERCOLOR);
+	    GEN_CASE(D3DTSS_MAGFILTER);
+	    GEN_CASE(D3DTSS_MINFILTER);
+	    GEN_CASE(D3DTSS_MIPFILTER);
+	    GEN_CASE(D3DTSS_MIPMAPLODBIAS);
+	    GEN_CASE(D3DTSS_MAXMIPLEVEL);
+	    GEN_CASE(D3DTSS_MAXANISOTROPY);
+	    GEN_CASE(D3DTSS_BUMPENVLSCALE);
+	    GEN_CASE(D3DTSS_BUMPENVLOFFSET);
+	    GEN_CASE(D3DTSS_TEXTURETRANSFORMFLAGS);
+#undef GEN_CASE
+	    default: DPRINTF("UNKNOWN !!!");
+	}
+	DPRINTF(" => ");
+    }
+
+    switch (d3dTexStageStateType) {
+        case D3DTSS_MINFILTER:
+            switch ((D3DTEXTUREMINFILTER) dwState) {
+	        case D3DTFN_POINT:
+	            if (TRACE_ON(ddraw)) DPRINTF("D3DTFN_POINT\n");
+		    gl_state = GL_NEAREST;
+		    break;
+		case D3DTFN_LINEAR:
+	            if (TRACE_ON(ddraw)) DPRINTF("D3DTFN_LINEAR\n");
+		    gl_state = GL_LINEAR;
+		    break;
+		default:
+		    if (TRACE_ON(ddraw)) DPRINTF(" state unhandled.\n");
+		    gl_state = GL_LINEAR;
+		    break;
+	    }
+	    glThis->render_state.min = gl_state;
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_state);
+            break;
+	    
+        case D3DTSS_MAGFILTER:
+            switch ((D3DTEXTUREMAGFILTER) dwState) {
+	        case D3DTFG_POINT:
+	            if (TRACE_ON(ddraw)) DPRINTF("D3DTFG_POINT\n");
+		    gl_state = GL_NEAREST;
+		    break;
+		case D3DTFG_LINEAR:
+	            if (TRACE_ON(ddraw)) DPRINTF("D3DTFG_LINEAR\n");
+		    gl_state = GL_LINEAR;
+		    break;
+		default:
+		    if (TRACE_ON(ddraw)) DPRINTF(" state unhandled.\n");
+		    gl_state = GL_LINEAR;
+		    break;
+	    }
+	    glThis->render_state.mag = gl_state;
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_state);
+            break;
+	    
+	default:
+	    if (TRACE_ON(ddraw)) DPRINTF(" unhandled.\n");
+    }
+    
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_3_SetTexture(LPDIRECT3DDEVICE3 iface,
+				    DWORD dwStage,
+				    LPDIRECT3DTEXTURE2 lpTexture2)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
+    
+    TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwStage, lpTexture2);
+    
+    if (This->current_texture[dwStage] != NULL) {
+        /* Seems that this is not right... Need to test in real Windows
+	   IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[dwStage], IDirect3DTexture2)); */
+    }
+    
+    ENTER_GL();
+    if (lpTexture2 == NULL) {
+        TRACE(" disabling 2D texturing.\n");
+	glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+    } else {
+        IDirect3DTextureImpl *tex_impl = ICOM_OBJECT(IDirect3DTextureImpl, IDirect3DTexture2, lpTexture2);
+	IDirect3DTextureGLImpl *tex_glimpl = (IDirect3DTextureGLImpl *) tex_impl;
+	
+	This->current_texture[dwStage] = tex_impl;
+	IDirect3DTexture2_AddRef(lpTexture2);
+
+	TRACE(" activating OpenGL texture %d.\n", tex_glimpl->tex_name);
+	
+        glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, tex_glimpl->tex_name);
+    }
+    LEAVE_GL();
+    
+    return DD_OK;
+}
+
+
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)     (typeof(VTABLE_IDirect3DDevice7.fun))
 #else
@@ -1105,7 +1234,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(GetTexture) Main_IDirect3DDeviceImpl_7_GetTexture,
     XCAST(SetTexture) Main_IDirect3DDeviceImpl_7_SetTexture,
     XCAST(GetTextureStageState) Main_IDirect3DDeviceImpl_7_3T_GetTextureStageState,
-    XCAST(SetTextureStageState) Main_IDirect3DDeviceImpl_7_3T_SetTextureStageState,
+    XCAST(SetTextureStageState) GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState,
     XCAST(ValidateDevice) Main_IDirect3DDeviceImpl_7_3T_ValidateDevice,
     XCAST(ApplyStateBlock) Main_IDirect3DDeviceImpl_7_ApplyStateBlock,
     XCAST(CaptureStateBlock) Main_IDirect3DDeviceImpl_7_CaptureStateBlock,
@@ -1171,7 +1300,7 @@ ICOM_VTABLE(IDirect3DDevice3) VTABLE_IDirect3DDevice3 =
     XCAST(DrawIndexedPrimitiveVB) Main_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Thunk_IDirect3DDeviceImpl_3_ComputeSphereVisibility,
     XCAST(GetTexture) Main_IDirect3DDeviceImpl_3_GetTexture,
-    XCAST(SetTexture) Main_IDirect3DDeviceImpl_3_SetTexture,
+    XCAST(SetTexture) GL_IDirect3DDeviceImpl_3_SetTexture,
     XCAST(GetTextureStageState) Thunk_IDirect3DDeviceImpl_3_GetTextureStageState,
     XCAST(SetTextureStageState) Thunk_IDirect3DDeviceImpl_3_SetTextureStageState,
     XCAST(ValidateDevice) Thunk_IDirect3DDeviceImpl_3_ValidateDevice,
@@ -1382,9 +1511,6 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->ref = 1;
     object->d3d = d3d;
     object->surface = surface;
-    object->viewport_list = NULL;
-    object->current_viewport = NULL;
-    object->current_texture = NULL;
     object->set_context = set_context;
 
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);

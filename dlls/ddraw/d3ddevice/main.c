@@ -92,9 +92,12 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     if (!--(This->ref)) {
-	/* Release texture associated with the device */ 
-	if (This->current_texture != NULL)
-	    IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture, IDirect3DTexture2));
+        int i;
+	/* Release texture associated with the device */
+	for (i = 0; i < MAX_TEXTURES; i++) {
+	    if (This->current_texture[i] != NULL)
+	        IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[i], IDirect3DTexture2));
+	}
 	    	  
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;

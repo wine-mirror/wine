@@ -167,6 +167,9 @@ struct IDirect3DExecuteBufferImpl
 /*****************************************************************************
  * IDirect3DDevice implementation structure
  */
+
+#define MAX_TEXTURES 8
+
 struct IDirect3DDeviceImpl
 {
     ICOM_VFIELD_MULTI(IDirect3DDevice7);
@@ -180,7 +183,7 @@ struct IDirect3DDeviceImpl
 
     IDirect3DViewportImpl *viewport_list;
     IDirect3DViewportImpl *current_viewport;
-    IDirect3DTextureImpl *current_texture;
+    IDirect3DTextureImpl *current_texture[MAX_TEXTURES];
 
     void (*set_context)(IDirect3DDeviceImpl*);
 };
