@@ -21,7 +21,7 @@
 TMPDIR=/tmp/fconv.$$;
 TFILE=`tempfile`;
 
-# Where the fnt2bdf utility resides 
+# Where the fnt2bdf utility resides
 FC=$HOME""/wine/tools/fnt2bdf;
 # which OEM_CHARSET to use
 CHARSET="winsys";
@@ -29,16 +29,16 @@ TARGET=/usr/X11R6/lib/X11/fonts/misc;
 BDFTOPCF=/usr/X11R6/bin/bdftopcf;
 PAT="*.fon";
 Q="";
-OLDPWD=`pwd`; 
+OLDPWD=`pwd`;
 
 usage () {
     echo "usage: "`basename $0`" [-q] [-c charset] [-t fontdir] [-b bdftopcf] [-f fnt2bdf]"
     echo "       [-p pattern] windir"
-    echo 
+    echo
     echo "this utility scans a directory and its subdirectories for bitmap-fonts"
     echo "in Windows format, converts them to PCF-fons and installs them. If X"
     echo "is running, the X fontpath is re-adjusted."
-    echo 
+    echo
     echo "options:"
     echo " -q          quit operation."
     echo " -c charset  charset name for OEM_CHARSET fonts, default: $CHARSET"
@@ -65,7 +65,7 @@ while [ "$1" ]; do
 	-p ) shift; if [ "$1" ]; then PAT=$1; shift; else usage; fi; ;;
         -q ) shift; Q=":"; ;;
 	-* ) usage; ;;
-	* ) if [ "$WIND" ]; then usage; else WIND=$1; shift; fi; ;;  
+	* ) if [ "$WIND" ]; then usage; else WIND=$1; shift; fi; ;;
     esac;
 done;
 
@@ -77,7 +77,7 @@ type -p $FC 1>/dev/null || { $Q echo "Can't execute $FC"; exit 1; }
 
 $Q echo -n "looking for bitmap fonts... "
 FONTS=`find "$WIND" -iname $PAT 1>$TFILE 2>/dev/null`;
-if [ $? -ne 0 ]; then 
+if [ $? -ne 0 ]; then
     $Q echo "$PAT is a invalid sarch expression"; exit 1;
 fi;
 i=0;
@@ -85,15 +85,15 @@ i=0;
 rm $TFILE;
 $Q echo "done."
 
-if [ -z "$FONTS" ]; then $Q echo "Can't find any fonts in $WIND"; exit 1; fi; 
+if [ -z "$FONTS" ]; then $Q echo "Can't find any fonts in $WIND"; exit 1; fi;
 
 mkdir "$TMPDIR"
 cd "$TMPDIR"
 
-for i in "${FONTS[@]}"; do 
+for i in "${FONTS[@]}"; do
     FNT=`basename "$i"`; FNT=${FNT%.???};
     $Q echo "converting $i";
-    if [ "$Q" ]; then 
+    if [ "$Q" ]; then
 	$FC -c $CHARSET -f $FNT "$i" 2>/dev/null;
     else
 	$FC -c $CHARSET -f $FNT "$i";
@@ -101,17 +101,17 @@ for i in "${FONTS[@]}"; do
 done;
 
 for i in *.bdf; do
-    if [ "$i" == "*.bdf" ]; then echo "No fonts extracted"; exit 0; fi; 
+    if [ "$i" == "*.bdf" ]; then echo "No fonts extracted"; exit 0; fi;
     bdftopcf -o "${i%.???}.pcf" "$i";
     $Q echo "installing ${i%.???}.pcf";
     mv "${i%.???}.pcf" $TARGET 2>/dev/null
-    if [ $? -ne 0 ]; then 
+    if [ $? -ne 0 ]; then
 	$Q echo "Can't install fonts to $TARGET. Are your root?"; cd "$OLDPWD"; rm -rf "$TMPDIR"; exit 1; fi;
     rm "$i";
 done;
 
 cd $TARGET;
-$Q echo "running mkfontdir"; 
+$Q echo "running mkfontdir";
 if [ "$Q" ]; then
     mkfontdir 1>/dev/null 2>/dev/null;
 else
@@ -120,4 +120,3 @@ fi;
 rmdir "$TMPDIR"
 
 if [ "$DISPLAY" ]; then $Q echo "adjusting X font database"; xset fp rehash; fi;
-

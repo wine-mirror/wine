@@ -8,11 +8,8 @@ IMPORTS   = kernel32
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
-C_SRCS = icmp_main.c 
+C_SRCS = icmp_main.c
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
-
-

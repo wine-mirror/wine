@@ -61,7 +61,7 @@ POPUP "&Aide" {
    MENUITEM "Å &dfait di Wine", 0x137
   }
  }
-} 
+}
 
 /* Dialog `Page setup' */
 
@@ -123,4 +123,3 @@ STRING_OUT_OF_MEMORY,			"Li memwere est plinne. \n\
 Cloyoz on programe ou pus po monter li memwere libe."
 
 }
-

@@ -46,7 +46,7 @@ if($options->progress) {
 my $command = $options->make . " " . join(" ", $options->arguments);
 open(IN, "($command) 2>&1 |");
 
-while(<IN>) {    
+while(<IN>) {
     chomp;
 
     if(!&make_parser::line($_)) {

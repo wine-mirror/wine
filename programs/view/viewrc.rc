@@ -59,7 +59,7 @@ END
 // Accelerator
 //
 
-VIEW ACCELERATORS 
+VIEW ACCELERATORS
 BEGIN
     "Q",            IDM_EXIT,                CONTROL
 END
@@ -76,6 +76,3 @@ BEGIN
     IDS_APPNAME             "View"
     IDS_DESCRIPTION         "Regular Metafile Viewer"
 END
-
-
-

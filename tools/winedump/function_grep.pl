@@ -59,7 +59,7 @@ foreach my $file (@files) {
 	}
 
 	# remove C comments
-	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) { 
+	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) {
 	    $again = 1;
 	    next;
 	} elsif(/^(.*?)\/\*/s) {
@@ -85,10 +85,10 @@ foreach my $file (@files) {
 	}
 
 	# Remove extern "C"
-	if(s/^\s*extern\s+"C"\s+\{//m) { 
+	if(s/^\s*extern\s+"C"\s+\{//m) {
 	    $extern_c = 1;
 	    $again = 1;
-	    next; 
+	    next;
 	}
 
 	if($level > 0)
@@ -176,7 +176,7 @@ foreach my $file (@files) {
             my $calling_convention = $7;
             my $name = $8;
             my $arguments = $10;
-	    
+
             if(!defined($linkage)) {
                 $linkage = "";
             }
@@ -281,5 +281,5 @@ foreach my $file (@files) {
             $lookahead = 1;
         }
     }
-    close(IN);	
+    close(IN);
 }

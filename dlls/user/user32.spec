@@ -57,7 +57,7 @@ init	UserClientDllInitialize
 @ stdcall CloseClipboard() CloseClipboard
 @ stdcall CloseDesktop(long) CloseDesktop
 @ stdcall CloseWindow(long) CloseWindow
-@ stdcall CloseWindowStation(long) CloseWindowStation			
+@ stdcall CloseWindowStation(long) CloseWindowStation
 @ stdcall CopyAcceleratorTableA(long ptr long) CopyAcceleratorTableA
 @ stdcall CopyAcceleratorTableW(long ptr long) CopyAcceleratorTableW
 @ stdcall CopyIcon(long) CopyIcon

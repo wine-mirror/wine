@@ -36,7 +36,7 @@ sub file {
     local $_ = shift;
 
     if(defined($_)) { $$file = $_; }
-    
+
     return $$file;
 }
 
@@ -47,7 +47,7 @@ sub debug_channels {
     local $_ = shift;
 
     if(defined($_)) { $$debug_channels = $_; }
-    
+
     return $$debug_channels;
 }
 
@@ -58,7 +58,7 @@ sub documentation_line {
     local $_ = shift;
 
     if(defined($_)) { $$documentation_line = $_; }
-    
+
     return $$documentation_line;
 }
 
@@ -69,7 +69,7 @@ sub documentation {
     local $_ = shift;
 
     if(defined($_)) { $$documentation = $_; }
-    
+
     return $$documentation;
 }
 
@@ -80,7 +80,7 @@ sub function_line {
     local $_ = shift;
 
     if(defined($_)) { $$function_line = $_; }
-    
+
     return $$function_line;
 }
 
@@ -91,7 +91,7 @@ sub linkage {
     local $_ = shift;
 
     if(defined($_)) { $$linkage = $_; }
-    
+
     return $$linkage;
 }
 
@@ -102,7 +102,7 @@ sub return_type {
     local $_ = shift;
 
     if(defined($_)) { $$return_type = $_; }
-    
+
     return $$return_type;
 }
 
@@ -113,7 +113,7 @@ sub calling_convention {
     local $_ = shift;
 
     if(defined($_)) { $$calling_convention = $_; }
-    
+
     return $$calling_convention;
 }
 
@@ -124,7 +124,7 @@ sub internal_name {
     local $_ = shift;
 
     if(defined($_)) { $$internal_name = $_; }
-    
+
     return $$internal_name;
 }
 
@@ -135,7 +135,7 @@ sub argument_types {
     local $_ = shift;
 
     if(defined($_)) { $$argument_types = $_; }
-    
+
     return $$argument_types;
 }
 
@@ -146,7 +146,7 @@ sub argument_names {
     local $_ = shift;
 
     if(defined($_)) { $$argument_names = $_; }
-    
+
     return $$argument_names;
 }
 
@@ -157,7 +157,7 @@ sub argument_documentations {
     local $_ = shift;
 
     if(defined($_)) { $$argument_documentations = $_; }
-    
+
     return $$argument_documentations;
 }
 
@@ -168,7 +168,7 @@ sub statements_line {
     local $_ = shift;
 
     if(defined($_)) { $$statements_line = $_; }
-    
+
     return $$statements_line;
 }
 
@@ -179,7 +179,7 @@ sub statements {
     local $_ = shift;
 
     if(defined($_)) { $$statements = $_; }
-    
+
     return $$statements;
 }
 

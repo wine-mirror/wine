@@ -36,7 +36,7 @@ sub file {
     local $_ = shift;
 
     if(defined($_)) { $$file = $_; }
-    
+
     return $$file;
 }
 
@@ -47,7 +47,7 @@ sub begin_line {
     local $_ = shift;
 
     if(defined($_)) { $$begin_line = $_; }
-    
+
     return $$begin_line;
 }
 
@@ -58,7 +58,7 @@ sub begin_column {
     local $_ = shift;
 
     if(defined($_)) { $$begin_column = $_; }
-    
+
     return $$begin_column;
 }
 
@@ -69,7 +69,7 @@ sub end_line {
     local $_ = shift;
 
     if(defined($_)) { $$end_line = $_; }
-    
+
     return $$end_line;
 }
 
@@ -80,7 +80,7 @@ sub end_column {
     local $_ = shift;
 
     if(defined($_)) { $$end_column = $_; }
-    
+
     return $$end_column;
 }
 
@@ -91,7 +91,7 @@ sub linkage {
     local $_ = shift;
 
     if(defined($_)) { $$linkage = $_; }
-    
+
     return $$linkage;
 }
 
@@ -102,7 +102,7 @@ sub return_type {
     local $_ = shift;
 
     if(defined($_)) { $$return_type = $_; }
-    
+
     return $$return_type;
 }
 
@@ -113,7 +113,7 @@ sub calling_convention {
     local $_ = shift;
 
     if(defined($_)) { $$calling_convention = $_; }
-    
+
     return $$calling_convention;
 }
 
@@ -124,7 +124,7 @@ sub name {
     local $_ = shift;
 
     if(defined($_)) { $$name = $_; }
-    
+
     return $$name;
 }
 
@@ -135,7 +135,7 @@ sub argument_types {
     local $_ = shift;
 
     if(defined($_)) { $$argument_types = $_; }
-    
+
     return $$argument_types;
 }
 
@@ -146,7 +146,7 @@ sub argument_names {
     local $_ = shift;
 
     if(defined($_)) { $$argument_names = $_; }
-    
+
     return $$argument_names;
 }
 
@@ -157,7 +157,7 @@ sub statements_line {
     local $_ = shift;
 
     if(defined($_)) { $$statements_line = $_; }
-    
+
     return $$statements_line;
 }
 
@@ -168,7 +168,7 @@ sub statements_column {
     local $_ = shift;
 
     if(defined($_)) { $$statements_column = $_; }
-    
+
     return $$statements_column;
 }
 
@@ -179,7 +179,7 @@ sub statements {
     local $_ = shift;
 
     if(defined($_)) { $$statements = $_; }
-    
+
     return $$statements;
 }
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# This script is the receipe to generate the key that have to be created like 
-# if an applicaiton was installed by its installer.  It processes using a 
-# registry based on the picture of the registry before the application is 
+# This script is the receipe to generate the key that have to be created like
+# if an applicaiton was installed by its installer.  It processes using a
+# registry based on the picture of the registry before the application is
 # installed and the picture of the registry after the application is installed.
 #
 # Copyright 1999 Sylvain St-Germain
@@ -27,7 +27,7 @@ if [ $# -ne 2 ]; then
   echo "  You must provide 2 arguments."
   echo "  1 - Registry output before the application's installation."
   echo "  2 - Registry output after the application's installation."
-  echo 
+  echo
   exit 1
 fi
 
@@ -45,7 +45,7 @@ DIFF_FILE=`mktemp -q /tmp/file2_diff.XXXXXXXXX`
 FILE_TOADD_CLEAN=`mktemp -q /tmp/file_toAdd_clean.XXXXXXXXX`
 FILE_TOADD=`mktemp -q /tmp/file_toAdd.XXXXXXXXX`
 
-if [ $1 != "/dev/null" ]; then  
+if [ $1 != "/dev/null" ]; then
   cat $1 | ./regFixer.pl > $FIX1_FILE
 fi
 
@@ -56,7 +56,7 @@ cat $2 | ./regFixer.pl > $FIX2_FILE
 # diff accordingly depending on /dev/null
 #
 echo "Diffing..."
-if [ $1 != "/dev/null" ]; then  
+if [ $1 != "/dev/null" ]; then
   diff $FIX1_FILE $FIX2_FILE > $DIFF_FILE
 else
   diff /dev/null  $FIX2_FILE > $DIFF_FILE
@@ -64,11 +64,11 @@ fi
 
 #
 # Keep only added lines
-# 
+#
 echo "Grepping keys to add and generating cleaned fixed registry file."
 cat $DIFF_FILE | grep '^> ' | sed -e 's/^> //' > $FILE_TOADD_CLEAN
 
-# 
+#
 # Restore the file format to the regedit export 'like' format
 #
 echo "Restoring key's in the regedit export format..."

@@ -1,8 +1,8 @@
 name	kernel32
 init	MAIN_KernelInit
 
-# Functions exported by the Win95 kernel32.dll 
-# (these need to have these exact ordinals, for some win95 dlls 
+# Functions exported by the Win95 kernel32.dll
+# (these need to have these exact ordinals, for some win95 dlls
 #  import kernel32.dll by ordinal)
 
 # names of undocumented ordinal only calls are taken from:
@@ -55,7 +55,7 @@ init	MAIN_KernelInit
  42 stdcall -register -i386 LogApiThkLSF(str) LogApiThkLSF
  43 stdcall ThunkInitLS(long str long str str) ThunkInitLS
  44 stdcall -register -i386 LogApiThkSL(str) LogApiThkSL
- 45 stdcall -register -i386 Common32ThkLS() Common32ThkLS 
+ 45 stdcall -register -i386 Common32ThkLS() Common32ThkLS
  46 stdcall ThunkInitSL(long str long str str) ThunkInitSL
  47 stdcall -register -i386 LogCBThkSL(str) LogCBThkSL
  48 stdcall ReleaseThunkLock(ptr) ReleaseThunkLock
@@ -611,7 +611,7 @@ init	MAIN_KernelInit
 @ stdcall RaiseException(long long long ptr) RaiseException
 @ stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsoleA
 @ stdcall ReadConsoleInputA(long ptr long ptr) ReadConsoleInputA
-@ stdcall ReadConsoleInputW(long ptr long ptr) ReadConsoleInputW 
+@ stdcall ReadConsoleInputW(long ptr long ptr) ReadConsoleInputW
 @ stdcall ReadConsoleOutputA(long ptr long long ptr) ReadConsoleOutputA
 @ stdcall ReadConsoleOutputAttribute(long ptr long long ptr) ReadConsoleOutputAttribute
 @ stdcall ReadConsoleOutputCharacterA(long ptr long long ptr) ReadConsoleOutputCharacterA
@@ -822,9 +822,9 @@ init	MAIN_KernelInit
 @ stdcall lstrlen(str) lstrlenA
 @ stdcall lstrlenA(str) lstrlenA
 @ stdcall lstrlenW(wstr) lstrlenW
-# 
+#
 # Functions exported by kernel32.dll in NT 3.51
-# 
+#
 @ stub AddConsoleAliasA
 @ stub AddConsoleAliasW
 @ stub BaseAttachCompleteThunk
@@ -918,7 +918,7 @@ init	MAIN_KernelInit
 @ stdcall GetFileAttributesExA(str long ptr) GetFileAttributesExA
 @ stdcall GetFileAttributesExW(wstr long ptr) GetFileAttributesExW
 @ stub GetProcessPriorityBoost
-@ stdcall GetThreadPriorityBoost(long ptr) GetThreadPriorityBoost 
+@ stdcall GetThreadPriorityBoost(long ptr) GetThreadPriorityBoost
 @ stdcall InterlockedCompareExchange (ptr long long) InterlockedCompareExchange
 @ stdcall InterlockedExchangeAdd (ptr long ) InterlockedExchangeAdd
 @ stdcall IsProcessorFeaturePresent(long) IsProcessorFeaturePresent

@@ -50,7 +50,7 @@ my %options_long = (
     "spec-mismatch" => { default => 0, description => "spec file mismatch checking" },
 
     "local" =>  { default => 1, description => "local checking" },
-    "module" => { 
+    "module" => {
 	default => { active => 1, filter => 0, hash => {} },
 	parent => "local",
 	parser => \&parser_comma_list,
@@ -77,11 +77,11 @@ my %options_long = (
     "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
     "statements"  => { default => 0, parent => "local", description => "check for statements inconsistances" },
     "cross-call" => { default => 0, parent => "statements",  description => "check for cross calling functions" },
-    "cross-call-win32-win16" => { 
+    "cross-call-win32-win16" => {
 	default => 0, parent => "cross-call", description => "check for cross calls between win32 and win16"
      },
-    "cross-call-unicode-ascii" => { 
-	default => 0, parent => "cross-call", description => "check for cross calls between Unicode and ASCII" 
+    "cross-call-unicode-ascii" => {
+	default => 0, parent => "cross-call", description => "check for cross calls between Unicode and ASCII"
     },
     "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistances" },
 
@@ -98,12 +98,12 @@ my %options_long = (
 
     "documentation" => {
 	default => 1,
-	parent => "local", 
+	parent => "local",
 	description => "check for documentation inconsistances"
 	},
-    "documentation-pedantic" => { 
-	default => 0, 
-	parent => "documentation", 
+    "documentation-pedantic" => {
+	default => 0,
+	parent => "documentation",
 	description => "be pendantic when checking for documentation inconsistances"
 	},
 
@@ -113,11 +113,11 @@ my %options_long = (
 	description => "check for arguments documentation inconsistances\n"
 	},
     "documentation-comment-indent" => {
-	default => 0, 
+	default => 0,
 	parent => "documentation", description => "check for documentation comment indent inconsistances"
 	},
     "documentation-comment-width" => {
-	default => 0, 
+	default => 0,
 	parent => "documentation", description => "check for documentation comment width inconsistances"
 	},
     "documentation-name" => {
@@ -168,23 +168,23 @@ use strict;
 sub report_module {
     my $self = shift;
     my $refvalue = $self->{MODULE};
-    
+
     my $name = shift;
 
     if(defined($name)) {
-	return $$refvalue->{active} && (!$$refvalue->{filter} || $$refvalue->{hash}->{$name}); 
+	return $$refvalue->{active} && (!$$refvalue->{filter} || $$refvalue->{hash}->{$name});
     } else {
 	return 0;
-    } 
+    }
 }
 
 sub report_argument_forbidden {
-    my $self = shift;   
+    my $self = shift;
     my $refargument_forbidden = $self->{ARGUMENT_FORBIDDEN};
 
     my $type = shift;
 
-    return $$refargument_forbidden->{active} && (!$$refargument_forbidden->{filter} || $$refargument_forbidden->{hash}->{$type}); 
+    return $$refargument_forbidden->{active} && (!$$refargument_forbidden->{filter} || $$refargument_forbidden->{hash}->{$type});
 }
 
 sub report_argument_kind {
@@ -193,7 +193,7 @@ sub report_argument_kind {
 
     my $kind = shift;
 
-    return $$refargument_kind->{active} && (!$$refargument_kind->{filter} || $$refargument_kind->{hash}->{$kind}); 
+    return $$refargument_kind->{active} && (!$$refargument_kind->{filter} || $$refargument_kind->{hash}->{$kind});
 
 }
 

@@ -51,7 +51,7 @@ init WINMM_LibMain
 @ stdcall mciGetErrorStringA(long ptr long) mciGetErrorStringA
 @ stdcall mciGetErrorStringW(long ptr long) mciGetErrorStringW
 @ stdcall mciGetYieldProc(long ptr) mciGetYieldProc
-@ stdcall mciLoadCommandResource(long wstr long) mciLoadCommandResource 
+@ stdcall mciLoadCommandResource(long wstr long) mciLoadCommandResource
 @ stdcall mciSendCommandA(long long long long) mciSendCommandA
 @ stdcall mciSendCommandW(long long long long) mciSendCommandW
 @ stdcall mciSendStringA(str ptr long long) mciSendStringA

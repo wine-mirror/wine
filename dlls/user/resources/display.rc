@@ -19,7 +19,7 @@
  */
 
 1 OEMBIN
-{ 
+{
 	0x11,			/* vertical thumb height (in pixels)  */
 	0x11,			/* horizontal thumb width (in pixels) */
 	0x02,			/* icon width (in pixels)             */
@@ -58,5 +58,3 @@ DUMMY1 1
 {
 	0x0
 }
-
-

@@ -131,7 +131,7 @@ FONT 8, "Helv"
     PUSHBUTTON      "A&juda" , 1038,218,57,40,14,WS_GROUP
     GROUPBOX        "Efeitos",1072,6,72,84,34,WS_GROUP
     CHECKBOX	    "&Riscado", 1040, 10,82,50,10, BS_AUTOCHECKBOX | WS_TABSTOP
-    CHECKBOX 	    "&Sublinhado", 1041, 10,94,50,10, BS_AUTOCHECKBOX 
+    CHECKBOX 	    "&Sublinhado", 1041, 10,94,50,10, BS_AUTOCHECKBOX
     LTEXT           "&Cor:", 1091 ,6,110,30,9
     COMBOBOX        1139,6,120,84,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
@@ -222,7 +222,7 @@ FONT 8, "Helv"
     DEFPUSHBUTTON   "OK",	IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
     PUSHBUTTON	    "Cancelar",	IDCANCEL, 232,164, 48,14, WS_GROUP
     PUSHBUTTON      "&Ajuda",   pshHelp,  50, 161, 48,14, WS_GROUP
-    
+
     GROUPBOX        "Impressora",		grp4,   8,  4, 272,84, WS_GROUP
     CONTROL         "Imprimir em arqui&vo",	chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
     PUSHBUTTON      "Propri&edades",		psh2, 212, 17,  60,14, WS_GROUP
@@ -236,13 +236,13 @@ FONT 8, "Helv"
     LTEXT           "Dummy Location",		stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Comentário:",		stc9,  16, 72,  36,10, SS_NOPREFIX
     LTEXT           "Dummy Remark",		stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    
+
     GROUPBOX        "Cópias",			grp2, 160, 92, 120,64, WS_GROUP
     LTEXT           "Número de &cópias:",	stc5, 168,108,  68, 8
     ICON            "",				ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
     CONTROL         "&Agrupar",			chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
     EDITTEXT					edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
-    
+
     GROUPBOX        "Faixa de impressão",	grp1,   8,92,  144,64, WS_GROUP
     CONTROL         "&Todos",			rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
     CONTROL         "Pá&ginas",			rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
@@ -295,18 +295,18 @@ FONT 8, "helv"
 {
     LTEXT	"Olhar &em",IDC_LOOKINSTATIC,7,6,27,8, SS_NOTIFY
     COMBOBOX	IDC_LOOKIN,36,3,138,300,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    
+
     LTEXT	"" , IDC_TOOLBARSTATIC, 172, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
     LISTBOX	IDC_SHELLSTATIC,4,20,272,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
-    
+
     LTEXT	"Nome do &arquivo:",IDC_FILENAMESTATIC,5,112,48,8, SS_NOTIFY
     EDITTEXT	IDC_FILENAME,54,111,155,12,ES_AUTOHSCROLL
-    
+
     LTEXT	"Arquivos do &tipo",IDC_FILETYPESTATIC,5,131,48,8, SS_NOTIFY
     COMBOBOX	IDC_FILETYPE,54,129,155,100,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    
+
     CONTROL	"Abrir como &somente-leitura",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,148,74,10
-    
+
     DEFPUSHBUTTON	"&Abrir",		IDOK,222,110,50,13
     PUSHBUTTON		"Cancel",		IDCANCEL,222,128,50,14
     PUSHBUTTON		"&Help",		pshHelp,222,145,50,14
@@ -337,7 +337,7 @@ STRINGTABLE DISCARDABLE
 STRINGTABLE DISCARDABLE
 {
     PD32_PRINT_TITLE				"Print"
-    
+
     PD32_VALUE_UREADABLE			"Entrada Ilegível"
     PD32_INVALID_PAGE_RANGE			"Este valor não se encaixa na faixa de páginas\n\
 Por favor entre um valor entre %d e %d"
@@ -353,14 +353,14 @@ pela sua impressora.\nPor favor entre um valor entre 1 e %d"
     PD32_OUT_OF_MEMORY				"Memória insulficiente"
     PD32_GENERIC_ERROR				"Ocorreu algum erro"
     PD32_DRIVER_UNKNOWN				"Driver de impressora desconhecido"
-    
+
     PD32_DEFAULT_PRINTER			"Impressora Padrão; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE		"Existem %d documentos na fila"
     PD32_PRINT_ALL_X_PAGES			"&Todas %d páginas"
     PD32_MARGINS_IN_INCHES			"Margens [polegadas]"
     PD32_MARGINS_IN_MILIMETERS			"Margens [mm]"
     PD32_MILIMETERS				"mm"
-    
+
     PD32_PRINTER_STATUS_READY			"Pronto"
     PD32_PRINTER_STATUS_PAUSED			"Pausado; "
     PD32_PRINTER_STATUS_ERROR			"Erro; "

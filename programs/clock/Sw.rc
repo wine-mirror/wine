@@ -2,7 +2,7 @@
  * Clock (Swedish resources)
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
- * Translated into Swedish by Karl Backström <karl_b@geocities.com> 
+ * Translated into Swedish by Karl Backström <karl_b@geocities.com>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ MAIN_MENU MENU LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
   MENUITEM "&INGEN GARANTI", 0x10A
   MENUITEM "&Om Klockan...", 0x10B
  }
-} 
+}
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 {

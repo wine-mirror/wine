@@ -140,7 +140,7 @@ $DEF_CHAR = ord '?';
     "Sm" => $ctype{"punct"},    # Symbol, Math
     "Sc" => $ctype{"punct"},    # Symbol, Currency
     "Sk" => $ctype{"punct"},    # Symbol, Modifier
-    "So" => $ctype{"punct"}     # Symbol, Other 
+    "So" => $ctype{"punct"}     # Symbol, Other
 );
 
 # a few characters need additional categories that cannot be determined automatically
@@ -237,8 +237,8 @@ sub READ_DEFAULTS
     while (<UNICODEDATA>)
     {
 	# Decode the fields ...
-	($code, $name, $cat, $comb, $bidi, 
-	 $decomp, $dec, $dig, $num, $mirror, 
+	($code, $name, $cat, $comb, $bidi,
+	 $decomp, $dec, $dig, $num, $mirror,
 	 $oldname, $comment, $upper, $lower, $title) = split /;/;
 
         my $src = hex $code;
@@ -276,7 +276,7 @@ sub READ_DEFAULTS
                 $start++;
             }
         }
-        
+
         next if $decomp eq "";  # no decomposition, skip it
 
         if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)

@@ -1,6 +1,6 @@
 /*
  * Uninstaller (rsrc.rc)
- * 
+ *
  * Copyright 2000 Andreas Mohr <andi@lisas.de>
  *
  * This library is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ UNINSTALLER ICON MOVEABLE
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 STRINGTABLE {
-     IDS_APPNAME, "Uninstaller" 
+     IDS_APPNAME, "Uninstaller"
 
 }
 

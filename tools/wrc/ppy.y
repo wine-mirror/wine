@@ -274,13 +274,13 @@ preprocessor
 		}
 	| tLINE tSINT tDQSTRING	tNL	{ fprintf(ppout, "# %d %s\n", $2 , $3); free($3); }
 	| tGCCLINE tSINT tDQSTRING tNL	{ fprintf(ppout, "# %d %s\n", $2 , $3); free($3); }
-	| tGCCLINE tSINT tDQSTRING tSINT tNL	
+	| tGCCLINE tSINT tDQSTRING tSINT tNL
 		{ fprintf(ppout, "# %d %s %d\n", $2, $3, $4); free($3); }
-	| tGCCLINE tSINT tDQSTRING tSINT tSINT tNL	
+	| tGCCLINE tSINT tDQSTRING tSINT tSINT tNL
 		{ fprintf(ppout, "# %d %s %d %d\n", $2 ,$3, $4, $5); free($3); }
-	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT  tNL	
+	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT  tNL
 		{ fprintf(ppout, "# %d %s %d %d %d\n", $2 ,$3 ,$4 ,$5, $6); free($3); }
-	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT tSINT tNL	
+	| tGCCLINE tSINT tDQSTRING tSINT tSINT tSINT tSINT tNL
 		{ fprintf(ppout, "# %d %s %d %d %d %d\n", $2 ,$3 ,$4 ,$5, $6, $7); free($3); }
 	| tGCCLINE tNL		/* The null-token */
 	| tERROR opt_text tNL	{ pperror("#error directive: '%s'", $2); if($2) free($2); }
@@ -566,7 +566,7 @@ static int marg_index(char *id)
 static mtext_t *new_mtext(char *str, int idx, def_exp_t type)
 {
 	mtext_t *mt = (mtext_t *)xmalloc(sizeof(mtext_t));
-	if(str == NULL) 
+	if(str == NULL)
 		mt->subst.argidx = idx;
 	else
 		mt->subst.text = str;
@@ -655,4 +655,3 @@ static char *merge_text(char *s1, char *s2)
 	free(s2);
 	return s1;
 }
-

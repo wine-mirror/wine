@@ -66,7 +66,7 @@ sub _external_name {
 
     my @external_names = split(/\s*&\s*/, $external_name);
     my @modules = split(/\s*&\s*/, $module);
-    
+
     my @external_names2;
     while(defined(my $external_name = shift @external_names) &&
 	  defined(my $module = shift @modules))
@@ -84,7 +84,7 @@ sub _external_names {
     my $winapi = shift;
 
     my $external_name = $self->_external_name($winapi);
-    
+
     if(defined($external_name)) {
 	return split(/\s*&\s*/, $external_name);
     } else {
@@ -92,7 +92,7 @@ sub _external_names {
     }
 }
 
-sub external_name { 
+sub external_name {
     my $self = shift;
 
     foreach my $winapi (@winapis) {
@@ -145,7 +145,7 @@ sub _modules {
     my $winapi = shift;
 
     my $module = $self->_module($winapi);
-    
+
     if(defined($module)) {
 	return split(/\s*&\s*/, $module);
     } else {
@@ -183,7 +183,7 @@ sub _ordinal {
 
     my @ordinals = split(/\s*&\s*/, $ordinal);
     my @modules = split(/\s*&\s*/, $module);
-    
+
     my @ordinals2;
     while(defined(my $ordinal = shift @ordinals) &&
 	  defined(my $module = shift @modules))
@@ -201,7 +201,7 @@ sub _ordinals {
     my $winapi = shift;
 
     my $ordinal = $self->_ordinal($winapi);
-    
+
     if(defined($ordinal)) {
 	return split(/\s*&\s*/, $ordinal);
     } else {
@@ -359,7 +359,7 @@ sub return_kind32 {
     my $self = shift; return $self->_return_kind($win32api, @_);
 }
 
-sub _argument_kinds {   
+sub _argument_kinds {
     my $self = shift;
     my $winapi = shift;
     my $refargument_types = $self->argument_types;
@@ -394,7 +394,7 @@ sub argument_kinds32 {
 # Accounting
 #
 
-sub function_called {    
+sub function_called {
     my $self = shift;
     my $called_function_names = \%{$self->{CALLED_FUNCTION_NAMES}};
 
@@ -403,7 +403,7 @@ sub function_called {
     $$called_function_names{$name}++;
 }
 
-sub function_called_by { 
+sub function_called_by {
    my $self = shift;
    my $called_by_function_names = \%{$self->{CALLED_BY_FUNCTION_NAMES}};
 
@@ -412,14 +412,14 @@ sub function_called_by {
    $$called_by_function_names{$name}++;
 }
 
-sub called_function_names {    
+sub called_function_names {
     my $self = shift;
     my $called_function_names = \%{$self->{CALLED_FUNCTION_NAMES}};
 
     return sort(keys(%$called_function_names));
 }
 
-sub called_by_function_names {    
+sub called_by_function_names {
     my $self = shift;
     my $called_by_function_names = \%{$self->{CALLED_BY_FUNCTION_NAMES}};
 

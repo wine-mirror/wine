@@ -72,16 +72,16 @@
 #  prevent the user from running wineinstall as root
 #  add script commands so we su root for 'make install' and other commands
 #    that require root access
-#  add text to tell the user we need to run stuff as root so they don't 
+#  add text to tell the user we need to run stuff as root so they don't
 #    think we are trying to pull something funny
 # Apr 14 2002 - Dustin Navea
-#  Fix sed command when finding real-windows registry so it actually 
+#  Fix sed command when finding real-windows registry so it actually
 #   accesses a file (~/.wine/config) instead of null ($CONF?!)
 #  Added search for clean-install (not upgrade) Win2k registry
 #  (next day, after some sleep)
-#  Fix sed string when finding real-windows registry to actually find 
+#  Fix sed string when finding real-windows registry to actually find
 #   windows partition name in [Drive C] section
-#  it should now almost always find the windows partition and real-windows 
+#  it should now almost always find the windows partition and real-windows
 #  registry (if not, let me know)
 
 #--- defaults (change these if you are a packager)
@@ -524,7 +524,7 @@ then {
   fi
 }
 elif [ "$DOWINE" = 'auto' ]
-then 
+then
   DOWINE=no
 fi
 
@@ -576,13 +576,13 @@ then {
     }
     done
     echo "Configuring Wine for a no-windows install in $CROOT..."
-  
+
     create_windows_directories
     configure_wine_applications
   }
   fi
 
-  # create $LCONF using the default config file $WINEINI  
+  # create $LCONF using the default config file $WINEINI
   if [ "$DOLOCALCONF" = 'yes' ] && [ "$CONVCONF" = 'no' ]
   then {
     sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"${CROOT}\"|" $WINEINI > $TMPCONF
@@ -615,7 +615,7 @@ then
   fi
 else
   DOREG=no
-fi      
+fi
 
 #install the global config file $GCONF
 if [ "$DOGLOBALCONF" = 'yes' ]
@@ -639,7 +639,7 @@ then {
   elif [ -f "$CROOT/windows/system32/config/system" ]
   then DOREG=no
   elif [ -f "$CROOT/WINNT/system32/config/system" ]
-  then DOREG=no 
+  then DOREG=no
   else DOREG=yes
   fi
   if [ "$DOREG" = 'yes' ]

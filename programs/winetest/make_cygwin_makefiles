@@ -209,7 +209,7 @@ foreach $dir (@gooddirs) {
 # define how to make to .ok files
 foreach $file (@ok_list) {
   my($dir,$test) = ($file =~ /^(.*[\\\/]+tests)[\\\/]+(.*)\.ok$/);
-  
+
   print MAKE_FH "$file: \$(TEST_EXE_". fix_dir($file) . ")\n";
   print MAKE_FH "	\$< $test && \$(TOUCH) \$@\n";
 }

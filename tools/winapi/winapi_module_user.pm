@@ -110,9 +110,9 @@ $message = {
 	id => 0x0301, result => "void", wparam => "void", lparam => "void" },
     WM_COPYDATA => {
         id => 0x004a, result => "", wparam => "", lparam => "" },
-    WM_COMPACTING => { 
+    WM_COMPACTING => {
 	id => 0x0041, result => "void", wparam => "UINT", lparam => "void" },
-    WM_COMPAREITEM => { 
+    WM_COMPAREITEM => {
 	id => 0x0039, result => "int", wparam => "UINT", lparam => "const COMPAREITEMSTRUCT *" },
     WM_CREATE => {
 	id => 0x0001, result => "BOOL", wparam => "void", lparam => "LPCREATESTRUCT" },
@@ -143,7 +143,7 @@ $message = {
 	id => 0x0103, result => "void", wparam => "TCHAR", lparam => ["", ""] },
     WM_DEVICECHANGE => {
         id => 0x0219, result => "BOOL", wparam => "UINT", lparam => "DWORD" },
-    WM_DELETEITEM => { 
+    WM_DELETEITEM => {
 	id => 0x002d, result => "void", wparam => "UINT", lparam => "const DELETEITEMSTRUCT *" },
     WM_DEVMODECHANGE => {
 	id => 0x001b, result => "void", wparam => "void", lparam => "LPCTSTR" },
@@ -551,7 +551,7 @@ $message = {
 	id => 0x0046, result => "BOOL", wparam => "void", lparam => "LPWINDOWPOS" },
     WM_WINDOWPOSCHANGED => {
 	id => 0x0047, result => "void", wparam => "void", lparam => "const LPWINDOWPOS" },
-    WM_WININICHANGE => { 
+    WM_WININICHANGE => {
 	id => 0x001a, result => "void", wparam => "void", lparam => "LPCTSTR" }
 };
 
@@ -699,7 +699,7 @@ sub _parse_windowsx_h {
 	if(!s/^\#\s*define\s*// || !/^FORWARD_WM_/) {
 	    return 1;
 	}
-	
+
 	my $name;
 	if(s/^FORWARD_(\w+)\([^\)]*\)\s*(.*?)\s*$/$2/s) {
 	    $name = $1;
@@ -749,7 +749,7 @@ sub _parse_windowsx_h {
 		    die "$name: '$_'";
 		}
 	    }
-	    # $output->write("$1: $_\n");    
+	    # $output->write("$1: $_\n");
 	} else {
 	    die "$name: '$_'";
 	}
@@ -763,7 +763,7 @@ sub _parse_windowsx_h {
 		    return "";
 		}
 	    }
-	    
+
 	};
 
 	my @entries = (
@@ -813,7 +813,7 @@ sub _parse_windowsx_h {
 	    } else {
 		die "$name: '$_'";
             }
-        } 
+        }
 
 	# $output->write("$result: '@names', '$wparam', '$lparam'\n");
 
@@ -878,7 +878,7 @@ sub _parse_winuser_h {
 	if(/^\#\s*define\s+(WM_\w+)\s+(0x[0-9a-fA-F]+)\s*$/) {
 	    my $name = $1;
 	    my $id = lc($2);
-	    	
+
 	    if(exists($$message{$name})) {
 		my $id2 = sprintf("0x%04x", $$message{$name}{id});
 		if($id ne $id2) {

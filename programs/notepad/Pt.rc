@@ -60,7 +60,7 @@ POPUP "&Ajuda" {
    MENUITEM "&Sobre Wine", 0x137
   }
  }
-} 
+}
 
 /* Dialog `Page setup' */
 
@@ -123,4 +123,3 @@ tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória \
 livre."
 
 }
-

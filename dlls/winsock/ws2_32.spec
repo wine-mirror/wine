@@ -122,5 +122,5 @@ init WS_LibMain
 151 stdcall  __WSAFDIsSet(long ptr) __WSAFDIsSet
 
 #  152 ~ 499  UNKNOWN
- 
+
 500 stub     WEP

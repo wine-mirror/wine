@@ -188,7 +188,7 @@ The verify flag has no function in Wine.\n"
 
   WCMD_VOL,    "Help about VOL\n"
 
-  WCMD_EXIT,   
+  WCMD_EXIT,
 "EXIT terminates the current command session and returns\
 to the operating system or shell from which you invoked wcmd.\n"
 
@@ -222,7 +222,7 @@ Enter HELP <command> for further information on any of the above commands\n"
 LANGUAGE LANG_NEUTRAL,SUBLANG_NEUTRAL
 
 
-IDI_ICON1 ICON 
+IDI_ICON1 ICON
 {
  '00 00 01 00 01 00 20 20 00 01 00 00 00 00 A8 08'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
@@ -365,5 +365,3 @@ IDI_ICON1 ICON
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00'
 }
-
-

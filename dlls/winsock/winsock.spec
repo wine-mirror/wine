@@ -1,8 +1,3 @@
-#  
-#         File: winsock.def 
-#       System: MS-Windows 3.x 
-#      Summary: Module definition file for Windows Sockets DLL.  
-#  
 name	winsock
 type	win16
 owner	ws2_32

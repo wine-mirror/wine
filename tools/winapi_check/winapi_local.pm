@@ -44,15 +44,15 @@ sub check_function {
     }
 
     if($options->win16 && $options->report_module($module16)) {
-	_check_function($return_type, 
-			$calling_convention, $external_name16, 
+	_check_function($return_type,
+			$calling_convention, $external_name16,
 			$internal_name, $refargument_types,
 			$win16api);
     }
 
     if($options->win32 && $options->report_module($module32)) {
-	_check_function($return_type, 
-			$calling_convention, $external_name32, 
+	_check_function($return_type,
+			$calling_convention, $external_name32,
 			$internal_name, $refargument_types,
 			$win32api);
     }
@@ -68,7 +68,7 @@ sub _check_function {
     my $winapi = shift;
 
     my $module = $winapi->function_internal_module($internal_name);
-       
+
     if($winapi->name eq "win16") {
 	if($winapi->is_function_stub_in_module($module, $internal_name)) {
 	    if($options->implemented) {
@@ -97,7 +97,7 @@ sub _check_function {
 	    $output->write("no translation defined: " . $return_type . "\n");
 	}
     } elsif(!$winapi->is_allowed_kind($implemented_return_kind) ||
-	    !$winapi->is_allowed_type_in_module($return_type, $module)) 
+	    !$winapi->is_allowed_type_in_module($return_type, $module))
     {
 	$forbidden_return_type = 1;
 	$winapi->allow_kind($implemented_return_kind);
@@ -106,7 +106,7 @@ sub _check_function {
 	    $output->write("return type is forbidden: $return_type ($implemented_return_kind)\n");
 	}
     }
-    
+
     my $segmented = 0;
     if(defined($implemented_return_kind) && $implemented_return_kind =~ /^segptr|segstr$/) {
 	$segmented = 1;
@@ -183,7 +183,7 @@ sub _check_function {
     {
 	$#argument_types--;
     }
-    
+
     if($internal_name =~ /^NTDLL__ftol|NTDLL__CIpow$/) { # FIXME: Kludge
 	# ignore
     } else {
@@ -198,7 +198,7 @@ sub _check_function {
 		$winapi->declare_argument($type, "unknown");
 		$output->write("no translation defined: " . $type . "\n");
 	    } elsif(!$winapi->is_allowed_kind($kind) ||
-		    !$winapi->is_allowed_type_in_module($type, $module)) 
+		    !$winapi->is_allowed_type_in_module($type, $module))
 	    {
 		$winapi->allow_kind($kind);
 		$winapi->allow_type_in_module($type, $module);
@@ -234,7 +234,7 @@ sub _check_function {
 	    if($argument_kinds[$n] eq "context86") {
 		# Nothing
 	    } elsif(!$winapi->is_allowed_kind($argument_kinds[$n]) ||
-	       !$winapi->is_allowed_type_in_module($argument_types[$n], $module)) 
+	       !$winapi->is_allowed_type_in_module($argument_types[$n], $module))
 	    {
 		$winapi->allow_kind($argument_kinds[$n]);
 		$winapi->allow_type_in_module($argument_types[$n],, $module);
@@ -247,7 +247,7 @@ sub _check_function {
 		   $options->report_argument_kind($declared_argument_kinds[$n]))
 		{
 		    $output->write("argument " . ($n + 1) . " type mismatch: " .
-			     $argument_types[$n] . " ($argument_kinds[$n]) != " . 
+			     $argument_types[$n] . " ($argument_kinds[$n]) != " .
 			     $declared_argument_kinds[$n] . "\n");
 		}
 	    }
@@ -257,8 +257,8 @@ sub _check_function {
 	   $implemented_calling_convention ne "asm")
 	{
 	    if($options->argument_count) {
-		$output->write("argument count differs: " . 
-		    ($#argument_types + 1) . " != " . 
+		$output->write("argument count differs: " .
+		    ($#argument_types + 1) . " != " .
 		    ($#declared_argument_kinds + 1) . "\n");
 	    }
 	}
@@ -310,7 +310,7 @@ sub _check_statements {
 			my $formating = $1;
 			my $extra = $2;
 			my $arguments = $3;
-			
+
 			my $format;
 			my $argument;
 			my $n = 0;
@@ -323,7 +323,7 @@ sub _check_statements {
 			    $n++;
 
 			    if(!defined($type)) { last; }
-			    
+
 			    $format =~ s/^\w+\s*[:=]?\s*//;
 			    $format =~ s/\s*\{[^\{\}]*\}$//;
 			    $format =~ s/\s*\[[^\[\]]*\]$//;
@@ -340,7 +340,7 @@ sub _check_statements {
 			}
 
 			if($options->debug_messages) {
-			    my $count = $#{$function->argument_types} + 1; 
+			    my $count = $#{$function->argument_types} + 1;
 			    if($n != $count) {
 				$output->write("$called_name: argument count mismatch ($n != $count)\n");
 			    }
@@ -375,13 +375,13 @@ sub check_file {
 		my $module16 = $$functions{$name}->module16;
 		my $module32 = $$functions{$name}->module32;
 
-		if($#called_names >= 0 && (defined($module16) || defined($module32)) ) {	
+		if($#called_names >= 0 && (defined($module16) || defined($module32)) ) {
 		    for my $called_name (@called_names) {
 			my $called_module16 = $$functions{$called_name}->module16;
 			my $called_module32 = $$functions{$called_name}->module32;
 			if(defined($module32) &&
 			   defined($called_module16) && !defined($called_module32) &&
-			   $name ne $called_name) 
+			   $name ne $called_name)
 			{
 			    $output->write("$file: $module: $name: illegal call to $called_name (Win32 -> Win16)\n");
 			}
@@ -403,4 +403,3 @@ sub check_file {
 }
 
 1;
-

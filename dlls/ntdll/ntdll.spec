@@ -1,6 +1,6 @@
 name	ntdll
 
-#note that the Zw... functions are alternate names for the 
+#note that the Zw... functions are alternate names for the
 #Nt... functions.  (see www.sysinternals.com for details)
 #if you change a Nt.. function DON'T FORGET to change the
 #Zw one too.
@@ -191,7 +191,7 @@ name	ntdll
 @ stub NtReleaseProcessMutant
 @ stdcall NtReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stub NtRemoveIoCompletion
-@ stdcall NtReplaceKey(ptr long ptr) NtReplaceKey 
+@ stdcall NtReplaceKey(ptr long ptr) NtReplaceKey
 @ stub NtReplyPort
 @ stdcall NtReplyWaitReceivePort(long long long long) NtReplyWaitReceivePort
 @ stub NtReplyWaitReceivePortEx

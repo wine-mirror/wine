@@ -221,7 +221,7 @@ sub _parse_c_error {
 	$output->write("\n");
 	$output->prefix("");
     }
-    
+
     if($current) {
 	$output->write("$$file:$line." . ($column + 1) . ": $context: $message: \\\n$current");
     } else {
@@ -493,7 +493,7 @@ sub parse_c_declaration {
     if(!&$$found_declaration($begin_line, $begin_column, $end_line, $end_column, $_)) {
 	return 1;
     }
-    
+
     # Function
     my $function = shift;
 
@@ -543,7 +543,7 @@ sub parse_c_declaration {
     } else {
 	$self->_parse_c_error($_, $line, $column, "declaration");
     }
-    
+
     $$refcurrent = $_;
     $$refline = $line;
     $$refcolumn = $column;
@@ -588,7 +588,7 @@ sub parse_c_expression {
 
 	    my $begin_line = $line;
 	    my $begin_column = $column + 1;
-	    
+
 	    my $name;
 	    my @arguments;
 	    my @argument_lines;
@@ -596,7 +596,7 @@ sub parse_c_expression {
 	    if(!$self->parse_c_function_call(\$_, \$line, \$column, \$name, \@arguments, \@argument_lines, \@argument_columns)) {
 		return 0;
 	    }
-	    
+
 	    if(&$$found_function_call($begin_line, $begin_column, $line, $column, $name, \@arguments))
 	    {
 		while(defined(my $argument = shift @arguments) &&
@@ -632,7 +632,7 @@ sub parse_c_file {
     my $refcurrent = shift;
     my $refline = shift;
     my $refcolumn = shift;
-    
+
     local $_ = $$refcurrent;
     my $line = $$refline;
     my $column = $$refcolumn;
@@ -652,7 +652,7 @@ sub parse_c_file {
     while($plevel > 0 || $blevel > 0) {
 	my $match;
 	$self->_parse_c_until_one_of("#/\\(\\)\\[\\]\\{\\};", \$_, \$line, \$column, \$match);
-	
+
 	if($line != $previous_line) {
 	    &$$found_line($line);
 	} elsif($column == $previous_column) {
@@ -737,7 +737,7 @@ sub parse_c_file {
 		&$$found_comment($line, $column + 1, $&);
 	        local $_ = $&;
 		while(s/^.*?\n//) {
-		    $blank_lines++; 
+		    $blank_lines++;
 		}
 		if($_) {
 		    $column += length($_);
@@ -815,11 +815,11 @@ sub parse_c_file {
 	    }
 	} elsif(s/^;//) {
 	    $declaration .= $&;
-	    if($blevel == 1 && 
-	       $declaration !~ /^typedef/ && 
+	    if($blevel == 1 &&
+	       $declaration !~ /^typedef/ &&
 	       $declaration !~ /^(?:const\s+|extern\s+|static\s+)(?:struct|union)(?:\s+\w+)?\s*\{/s &&
-	       $declaration =~ /^(?:\w+\s*)*(?:(?:\*\s*)+|\s+)(\w+)\s*\(\s*(?:(?:\w+\s*,\s*)*\w+\s*)?\)(.*?);/s && 
-	       $1 ne "ICOM_VTABLE" && $2) # K&R 
+	       $declaration =~ /^(?:\w+\s*)*(?:(?:\*\s*)+|\s+)(\w+)\s*\(\s*(?:(?:\w+\s*,\s*)*\w+\s*)?\)(.*?);/s &&
+	       $1 ne "ICOM_VTABLE" && $2) # K&R
 	    {
 		$self->_parse_c_warning($line, $column, "function $1: warning: function has K&R format");
 	    } elsif($plevel == 1 && $blevel == 1) {
@@ -861,7 +861,7 @@ sub parse_c_function {
     my $refcolumn = shift;
 
     my $reffunction = shift;
-    
+
     local $_ = $$refcurrent;
     my $line = $$refline;
     my $column = $$refcolumn;
@@ -883,10 +883,10 @@ sub parse_c_function {
     my $begin_column = $column + 1;
 
     my $match;
-    while($self->_parse_c('const|inline|extern|static|volatile|' . 
+    while($self->_parse_c('const|inline|extern|static|volatile|' .
 			  'signed(?=\\s+char|s+int|\s+long(?:\s+long)?|\s+short)|' .
 			  'unsigned(?=\s+char|\s+int|\s+long(?:\s+long)?|\s+short)',
-			  \$_, \$line, \$column, \$match)) 
+			  \$_, \$line, \$column, \$match))
     {
 	if($match =~ /^extern|static$/) {
 	    if(!$linkage) {
@@ -907,15 +907,15 @@ sub parse_c_function {
 	    return 0;
 	}
 
-	$self->_parse_c("__cdecl|__stdcall|inline|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK|WINE_UNUSED|PASCAL", 
+	$self->_parse_c("__cdecl|__stdcall|inline|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK|WINE_UNUSED|PASCAL",
 			\$_, \$line, \$column, \$calling_convention);
-	
-	if(!$self->_parse_c('\w+', \$_, \$line, \$column, \$name)) { 
-	    return 0; 
+
+	if(!$self->_parse_c('\w+', \$_, \$line, \$column, \$name)) {
+	    return 0;
 	}
 
 	if(!$self->parse_c_tuple(\$_, \$line, \$column, \@arguments, \@argument_lines, \@argument_columns)) {
-	    return 0; 
+	    return 0;
 	}
     }
 
@@ -933,7 +933,7 @@ sub parse_c_function {
 
     my $end_line = $line;
     my $end_column = $column;
-    
+
     $$refcurrent = $_;
     $$refline = $line;
     $$refcolumn = $column;
@@ -946,7 +946,7 @@ sub parse_c_function {
     $function->end_line($end_line);
     $function->end_column($end_column);
     $function->linkage($linkage);
-    $function->return_type($return_type); 
+    $function->return_type($return_type);
     $function->calling_convention($calling_convention);
     $function->name($name);
     # if(defined($argument_types)) {
@@ -1036,7 +1036,7 @@ sub parse_c_preprocessor {
     if(!&$$found_preprocessor($begin_line, $begin_column, "$_")) {
 	return 1;
     }
-    
+
     if(0) {
 	# Nothing
     } elsif(/^\#\s*define\s*(.*?)$/s) {
@@ -1424,10 +1424,10 @@ sub parse_c_variable {
     my $name = "";
 
     my $match;
-    while($self->_parse_c('const|inline|extern|static|volatile|' . 
+    while($self->_parse_c('const|inline|extern|static|volatile|' .
 			  'signed(?=\\s+char|s+int|\s+long(?:\s+long)?|\s+short)|' .
 			  'unsigned(?=\s+char|\s+int|\s+long(?:\s+long)?|\s+short)',
-			  \$_, \$line, \$column, \$match)) 
+			  \$_, \$line, \$column, \$match))
     {
 	if($match =~ /^extern|static$/) {
 	    if(!$linkage) {
@@ -1448,7 +1448,7 @@ sub parse_c_variable {
 	$finished = 1;
     } elsif($self->_parse_c('DEFINE_REGS_ENTRYPOINT_\w+|DPQ_DECL_\w+|HANDLER_DEF|IX86_ONLY', # Wine specific
 			    \$_, \$line, \$column, \$match))
-    { 
+    {
 	$type = $match;
 	$finished = 1;
     } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(\w+\)', \$_, \$line, \$column, \$match)) {
@@ -1509,7 +1509,7 @@ sub parse_c_variable {
     } else {
 	return 0;
     }
- 
+
     # $output->write("$type: $name: '$_'\n");
 
     if(1) {

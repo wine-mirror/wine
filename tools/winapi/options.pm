@@ -102,13 +102,13 @@ sub new {
             } else {
 		$name = $1;
 	    }
-	    
+
 	    if($name =~ /^([^-].*)$/) {
 		$name = $$options_short{$1};
 	    } else {
 		$name =~ s/^-(.*)$/$1/;
 	    }
-	    	   
+
 	    my $prefix;
 	    if(defined($name) && $name =~ /^no-(.*)$/) {
 		$name = $1;
@@ -130,7 +130,7 @@ sub new {
 		my $parser = $$option{parser};
 		my $refvalue = \${$self->{$key}};
 		my @parents = ();
-		
+
 		if(defined($$option{parent})) {
 		    if(ref($$option{parent}) eq "ARRAY") {
 			@parents = @{$$option{parent}};
@@ -139,7 +139,7 @@ sub new {
 		    }
 		}
 
-		if(defined($parser)) { 
+		if(defined($parser)) {
 		    if(!defined($value)) {
 			$value = shift @ARGV;
 		    }
@@ -161,7 +161,7 @@ sub new {
 			foreach my $parent (@old_parents) {
 			    my $parentkey = $$options_long{$parent}{key};
 			    my $refparentvalue = \${$self->{$parentkey}};
-			    
+
 			    $$refparentvalue = 1;
 
 			    if(defined($$options_long{$parent}{parent})) {
@@ -177,9 +177,9 @@ sub new {
 		next;
 	    }
 	}
-	
+
 	if(!$end_of_options && /^-(.*)$/) {
-	    $output->write("unknown option: $_\n"); 
+	    $output->write("unknown option: $_\n");
 	    $output->write($$options_usage);
 	    exit 1;
 	} else {
@@ -335,7 +335,7 @@ sub show_help {
 	my $current = ${$self->{$$option{key}}};
 
 	my $value = $current;
-	
+
 	my $command;
 	if(ref($value) ne "HASH") {
 	    if($value) {
@@ -358,7 +358,7 @@ sub show_help {
 		$output->write("Disable ");
 	    } else {
 		$output->write("Enable ");
-	    }    
+	    }
 	} else {
 	    if($value->{active}) {
 		$output->write("(Disable) ");
@@ -370,7 +370,7 @@ sub show_help {
 	    $output->write("$description (default)\n");
 	} else {
 	    $output->write("$description\n");
-	}    
+	}
     }
 }
 
@@ -382,7 +382,7 @@ sub AUTOLOAD {
 
     my $refvalue = $self->{$name};
     if(!defined($refvalue)) {
-	die "<internal>: options.pm: member $name does not exists\n"; 
+	die "<internal>: options.pm: member $name does not exists\n";
     }
 
     if(ref($$refvalue) ne "HASH") {
@@ -392,16 +392,16 @@ sub AUTOLOAD {
     }
 }
 
-sub arguments { 
+sub arguments {
     my $self = shift;
 
     my $arguments = \@{$self->{_ARGUMENTS}};
 
-    return @$arguments; 
+    return @$arguments;
 }
 
 sub c_files {
-    my $self = shift; 
+    my $self = shift;
 
     my $c_files = \@{$self->{_C_FILES}};
 
@@ -412,8 +412,8 @@ sub c_files {
     return @$c_files;
 }
 
-sub h_files { 
-    my $self = shift; 
+sub h_files {
+    my $self = shift;
 
     my $h_files = \@{$self->{_H_FILES}};
 
@@ -425,7 +425,7 @@ sub h_files {
 }
 
 sub directories {
-    my $self = shift; 
+    my $self = shift;
 
     my $directories = \@{$self->{_DIRECTORIES}};
 

@@ -37,11 +37,11 @@
  *			  except for the # command (line numbers).
  *
  * 06-Nov-1999 JS	- see CHANGES
- * 
+ *
  * 29-Dec-1998 AdH	- Grammar and function extensions.
- *			     grammar: TOOLBAR resources, Named ICONs in 
+ *			     grammar: TOOLBAR resources, Named ICONs in
  *				DIALOGS
- *			     functions: semantic actions for the grammar 
+ *			     functions: semantic actions for the grammar
  *				changes, resource files can now be anywhere
  *				on the include path instead of just in the
  *				current directory
@@ -158,7 +158,7 @@
 	/* #define YYEMPTY -2 */
 	/* #define YYLEX   yylex() */
 
-#else	
+#else
 	/* No yacc we know yet */
 # if !defined(YYEMPTY) || !defined(YYLEX)
 #  error Yacc version/type unknown. This version needs to be verified for settings of YYEMPTY and YYLEX.
@@ -349,7 +349,7 @@ static int rsrcid_to_token(int lookahead);
 %type <tlbar>	toolbar
 %type <tlbarItems>	toolbar_items
 %type <dginit>  dlginit
-%type <styles>  optional_style_pair 
+%type <styles>  optional_style_pair
 %type <num>	any_num
 %type <style>   optional_style
 %type <style>   style
@@ -728,7 +728,7 @@ rcdata	: tRCDATA loadmemopts file_raw	{ $$ = new_rcdata($3, $2); }
 
 /* ------------------------------ DLGINIT ------------------------------ */
 dlginit	: tDLGINIT loadmemopts file_raw	{ $$ = new_dlginit($3, $2); }
-	;	  
+	;
 
 /* ------------------------------ UserType ------------------------------ */
 userres	: usertype loadmemopts file_raw		{
@@ -994,7 +994,7 @@ style
 	| '(' style ')'		{ $$ = $2; }
         | any_num       	{ $$ = new_style($1, 0); }
         | tNOT any_num		{ $$ = new_style(0, $2); }
-        ;   
+        ;
 
 ctlclass
 	: expr	{
@@ -1202,7 +1202,7 @@ opt_exfont
 	;
 
 /*
- * FIXME: This odd expression is here to nullify an extra token found 
+ * FIXME: This odd expression is here to nullify an extra token found
  * in some appstudio produced resources which appear to do nothing.
  */
 opt_expr: /* Empty */	{ $$ = NULL; }
@@ -1645,7 +1645,7 @@ toolbar: tTOOLBAR loadmemopts expr ',' expr opt_lvc tBEGIN toolbar_items tEND {
 		if($2)
 		{
 			$$->memopt = *($2);
-			free($2); 
+			free($2);
 		}
 		else
 		{
@@ -1665,15 +1665,15 @@ toolbar: tTOOLBAR loadmemopts expr ',' expr opt_lvc tBEGIN toolbar_items tEND {
 
 toolbar_items
 	:  /* Empty */			{ $$ = NULL; }
-	| toolbar_items tBUTTON expr	{         
+	| toolbar_items tBUTTON expr	{
 		toolbar_item_t *idrec = new_toolbar_item();
 		idrec->id = $3;
-		$$ = ins_tlbr_button($1, idrec); 
+		$$ = ins_tlbr_button($1, idrec);
 		}
-	| toolbar_items tSEPARATOR	{         
+	| toolbar_items tSEPARATOR	{
 		toolbar_item_t *idrec = new_toolbar_item();
 		idrec->id = 0;
-		$$ = ins_tlbr_button($1, idrec); 
+		$$ = ins_tlbr_button($1, idrec);
 	}
 	;
 
@@ -2282,7 +2282,7 @@ static raw_data_t *load_file(string_t *name)
 	raw_data_t *rd;
 	if(name->type != str_char)
 		yyerror("Filename must be ASCII string");
-		
+
 	fp = open_include(name->str.cstr, 1, NULL);
 	if(!fp)
 		yyerror("Cannot open file %s", name->str.cstr);
@@ -2654,7 +2654,7 @@ static toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems)
 	{
 		*nitems = 0;
 		return NULL;
-	} 
+	}
 
 	*nitems = 1;
 
@@ -2997,4 +2997,3 @@ static int rsrcid_to_token(int lookahead)
 		yywarning("Usertype uses reserved type ID %d, which is used by %s", yylval.num, type);
 	return lookahead;
 }
-

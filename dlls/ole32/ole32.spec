@@ -22,7 +22,7 @@ init	OLE32_DllEntryPoint
  19 stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) CoGetInterfaceAndReleaseStream
  20 stdcall CoGetMalloc(long ptr) CoGetMalloc
  21 stdcall CoGetMarshalSizeMax(ptr ptr ptr long ptr long) CoGetMarshalSizeMax
- 22 stdcall CoGetPSClsid(ptr ptr) CoGetPSClsid 
+ 22 stdcall CoGetPSClsid(ptr ptr) CoGetPSClsid
  23 stdcall CoGetStandardMarshal(ptr ptr long ptr long ptr) CoGetStandardMarshal
  24 stub CoGetState
  25 stub CoGetTreatAsClass          # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
@@ -74,7 +74,7 @@ init	OLE32_DllEntryPoint
  71 stdcall GetHGlobalFromStream(ptr ptr) GetHGlobalFromStream
  72 stub GetHookInterface
  73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable
- 74 stdcall IIDFromString(wstr ptr) CLSIDFromString 
+ 74 stdcall IIDFromString(wstr ptr) CLSIDFromString
  75 stdcall IsAccelerator(long long ptr long) IsAccelerator
  76 stdcall IsEqualGUID(ptr ptr) IsEqualGUID
  77 stub IsValidIid

@@ -61,7 +61,7 @@ rsrc	version16.res
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
 54  pascal16 GetInstanceData(word word word) GetInstanceData16
-55  pascal -register Catch(ptr) Catch16 
+55  pascal -register Catch(ptr) Catch16
 56  pascal -register Throw(ptr word) Throw16
 57  pascal16 GetProfileInt(str str s_word) GetProfileInt16
 58  pascal16 GetProfileString(str str str ptr word) GetProfileString16
@@ -304,7 +304,7 @@ rsrc	version16.res
 
 
 # 357-365 are present in Win95 only
-# Note that from here on most of the Win95-only functions are exported 
+# Note that from here on most of the Win95-only functions are exported
 # ordinal-only; the names given here are mostly guesses :-)
 
 357 pascal MapSL(segptr) MapSL
@@ -340,7 +340,7 @@ rsrc	version16.res
 419 pascal16 GetProfileSection(str ptr word) GetProfileSection16
 420 pascal   GetFileAttributes(ptr) GetFileAttributes16
 421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
-422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
+422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16
 423 pascal16 LogApiThk(str) LogApiThk
 431 pascal16 IsPeFormat(str word) IsPeFormat16
 432 stub FileTimeToLocalFileTime
@@ -521,7 +521,7 @@ rsrc	version16.res
 666 pascal UTGlue16(ptr long ptr long) UTGlue16
 667 pascal EntryAddrProc(word word) EntryAddrProc16
 668 pascal MyAlloc(word word word) MyAlloc16
- 
+
 
 # 700-704 are Win95 only
 
@@ -535,4 +535,3 @@ rsrc	version16.res
 # Win95 krnl386.exe also exports ordinals 802-864,
 # however, those seem to be only callback stubs that are
 # never called directly by other modules ...
-

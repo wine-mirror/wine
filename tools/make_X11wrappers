@@ -147,7 +147,7 @@ END
 	output_fn("XShmQueryExtension", "Bool",
 		  "Display *", "Display *a0", "a0");
 	output_fn("XShmQueryVersion", "Bool",
-		  "Display *, int *, int *, Bool *", 
+		  "Display *, int *, int *, Bool *",
 		  "Display *a0, int *a1, int *a2, Bool *a3", "a0, a1, a2, a3");
 	output_fn("XShmPixmapFormat", "int",
 		  "Display *", "Display *a0", "a0");
@@ -162,7 +162,7 @@ END
 		  "Display *a0, Drawable a1, GC a2, XImage *a3, int a4, int a5, int a6, int a7, unsigned int a8, unsigned int a9, Bool a10", "a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10");
 	output_fn("XShmGetImage", Status,
 		  "Display *, Drawable, XImage *, int, int, unsigned long",
-		  "Display *a0, Drawable a1, XImage *a2, int a3, int a4, unsigned long a5", 
+		  "Display *a0, Drawable a1, XImage *a2, int a3, int a4, unsigned long a5",
 		  "a0, a1, a2, a3, a4, a5");
 	output_fn("XShmCreateImage", "XImage *",
 		  "Display *, Visual *, unsigned int, int, char *, XShmSegmentInfo *, unsigned int, unsigned int",
@@ -331,11 +331,11 @@ output_fn_short("XvImage *", "XvShmCreateImage", "Display*", "XvPortID", "int", 
 		"Display*,int,int,int",
 		"Display*a0,int a1,int a2,int a3",
 		"a0,a1,a2,a3"
-	);	
-	
+	);
+
     } else {
-	open(IN, 
-	     "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | " . 
+	open(IN,
+	     "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | " .
 	     "gcc -L$X11_include_dir -DNeedFunctionPrototypes -E - | " .
 	     "grep -v '^[ \t]*\$)' |"
 	     ) || die "open";
@@ -453,8 +453,8 @@ sub output_fn_short {
     # output_fn_sort("Bool", "XDGAQueryExtension", "Display *", "int *", "int *");
     #
     my ($result_type, $fn_name, @args) = @_;
-    
-    my ($i, $proto, $formals, $actuals) = (0, 
+
+    my ($i, $proto, $formals, $actuals) = (0,
 					   "$result_type TS$fn_name(",
 					   "$result_type TS$fn_name(",
 					   "");

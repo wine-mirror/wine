@@ -67,7 +67,7 @@ sub _parse_makelong {
     my $line = 1;
     my $column = 0;
     if($parser->parse_c_function_call(\$_, \$line, \$column, \$name, \@arguments, \@argument_lines, \@argument_columns) &&
-       $name =~ /^MAKE(?:LONG|LPARAM|LRESULT|WPARAM)$/) 
+       $name =~ /^MAKE(?:LONG|LPARAM|LRESULT|WPARAM)$/)
     {
 	$low = $arguments[0];
 	$high = $arguments[1];
@@ -95,7 +95,7 @@ sub fixup_user_message_2_windowsx {
     if($msg !~ /^WM_/) {
 	return undef;
     } elsif($msg =~ /^(?:WM_BEGINDRAG|WM_ENTERMENULOOP|WM_EXITMENULOOP|WM_HELP|
-		       WM_ISACTIVEICON|WM_LBTRACKPOINT|WM_NEXTMENU)$/x) 
+		       WM_ISACTIVEICON|WM_LBTRACKPOINT|WM_NEXTMENU)$/x)
     {
 	return undef;
     } elsif($msg =~ /^WM_(?:GET|SET)TEXT$/) {
@@ -284,13 +284,13 @@ sub fixup_statements {
     my $statements_line = $function->statements_line;
     my $statements_column = $function->statements_column;
     my $statements = $function->statements;
-   
+
     if(!defined($statements)) {
 	return;
     }
 
     my $parser = new c_parser($file);
-    
+
     my $found_function_call = sub {
 	my $begin_line = shift;
 	my $begin_column = shift;
@@ -298,7 +298,7 @@ sub fixup_statements {
 	my $end_column = shift;
 	my $name = shift;
 	my $arguments = shift;
-	
+
 	foreach my $argument (@$arguments) {
 	    $argument =~ s/^\s*(.*?)\s*$/$1/;
 	}
@@ -311,7 +311,7 @@ sub fixup_statements {
 	    } else {
 		$fixup_function_call = \&_fixup_user_message;
 	    }
-	} 
+	}
 
 	if(defined($fixup_function_call)) {
 	    my $replace = &$fixup_function_call($name, $arguments);
@@ -326,11 +326,11 @@ sub fixup_statements {
 
 	return 0;
     };
-    
+
     $parser->set_found_function_call_callback($found_function_call);
-    
+
     my $line = $statements_line;
-    my $column = 0;	
+    my $column = 0;
     if(!$parser->parse_c_statements(\$statements, \$line, \$column)) {
 	$output->write("error: can't parse statements\n");
     }

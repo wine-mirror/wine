@@ -30,15 +30,15 @@ MAIN_MENU MENU LANGUAGE LANG_, SUBLANG_NEUTRAL
 {
  POPUP "&Datoteca" {
   MENUITEM "&Rivir", 0x101
-  MENUITEM SEPARATOR   
+  MENUITEM SEPARATOR
   MENUITEM "&Stampar tema", 0x104
   MENUITEM "&Installaziun dal stampader...", 0x106
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
   MENUITEM "&Finir", 0x108
  }
  POPUP "&Lavurar" {
    MENUITEM "Capchar", 0x10A
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Annotaziun...", 0x10C
  }
  POPUP "&Marca" {
@@ -47,7 +47,7 @@ MAIN_MENU MENU LANGUAGE LANG_, SUBLANG_NEUTRAL
  POPUP "&Agüd" {
    MENUITEM "&Douvrar l'agüd", 0x110
    MENUITEM "Adüna da&vant", 0x111
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "I&nfuormaziuns", 0x113
 #ifdef WINELIB
    MENUITEM "Davart &WINE", 0x114

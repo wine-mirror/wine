@@ -20,7 +20,7 @@
 # Note that winapi_check are using heuristics quite heavily.
 # So always remember that:
 #
-# "Heuristics are bug ridden by definition. 
+# "Heuristics are bug ridden by definition.
 #  If they didn't have bugs, then they'd be algorithms."
 #
 # In other words, reported bugs are only potential bugs not
@@ -64,11 +64,11 @@ use winapi_parser;
 my %declared_functions;
 
 my %include2info;
-{   
+{
     my @files = get_h_files("winelib");
 
     my $progress_current = 0;
-    my $progress_max = scalar(@files);   
+    my $progress_max = scalar(@files);
 
     foreach my $file (@files) {
 	$progress_current++;
@@ -107,7 +107,7 @@ my %include2info;
                   "storage.h", "ver.h");
     foreach my $file2 (@files2) {
 	$include2info{"include/$file2"}{used}++;
-    }    
+    }
 }
 
 my @c_files = $options->c_files;
@@ -122,7 +122,7 @@ my $all_modules = 0;
 my %complete_module;
 if($options->global) {
     my @complete_modules = $modules->complete_modules(\@c_files);
-    
+
     foreach my $module (@complete_modules) {
 	$complete_module{$module}++;
     }
@@ -146,7 +146,7 @@ if($options->headers) {
 
     foreach my $file (@h_files) {
 	my %functions;
-	
+
 	$progress_current++;
 	$output->progress("$file: file $progress_current of $progress_max");
 
@@ -163,11 +163,11 @@ if($options->headers) {
 		}
 	    }
 	};
-	
+
 	my $found_cplusplus_comment = sub {
 	    my $line = shift;
 	    my $comment = shift;
-	    
+
 	    if($options->comments_cplusplus) {
 		$output->write("$file:$line: C++ comments not allowed: $comment\n");
 	    }
@@ -199,7 +199,7 @@ if($options->headers) {
 	    }
 
 	    if(defined($external_name) && !defined($statements) &&
-	       ($linkage eq "" || $linkage eq "extern")) 
+	       ($linkage eq "" || $linkage eq "extern"))
 	    {
 		my $previous_function = $declared_functions{$internal_name};
 		if(!defined($previous_function)) {
@@ -231,10 +231,10 @@ if($options->headers) {
 	&winapi_parser::parse_c_file($file, {
 	    c_comment_found => $found_c_comment,
 	    cplusplus_comment_found => $found_cplusplus_comment,
-	    function_create => $create_function, 
-	    function_found => $found_function, 
-	    type_create => $create_type, 
-	    type_found => $found_type, 
+	    function_create => $create_function,
+	    function_found => $found_function,
+	    type_create => $create_type,
+	    type_found => $found_type,
 	    preprocessor_found => $found_preprocessor
 	});
     }
@@ -273,12 +273,12 @@ foreach my $file (@c_files) {
 	    }
 	}
     };
-    
+
     my $found_cplusplus_comment = sub {
 	my $line = shift;
 	my $comment = shift;
 
-	if($options->comments_cplusplus) {	
+	if($options->comments_cplusplus) {
 	    $output->write("$file:$line: C++ comments not allowed: $comment\n");
 	}
     };
@@ -286,7 +286,7 @@ foreach my $file (@c_files) {
     my $create_function = sub {
 	return 'winapi_function'->new;
     };
-   
+
     my $found_function = sub {
 	my $function = shift;
 
@@ -312,8 +312,8 @@ foreach my $file (@c_files) {
 	my $external_name16 = $function->external_name16;
 	my $external_name32 = $function->external_name32;
 
-	if(defined($external_name) && !defined($statements) && 
-	   ($linkage eq "" || $linkage eq "extern")) 
+	if(defined($external_name) && !defined($statements) &&
+	   ($linkage eq "" || $linkage eq "extern"))
 	{
 	    my $previous_function = $declared_functions{$internal_name};
 	    if(!defined($previous_function)) {
@@ -350,15 +350,15 @@ foreach my $file (@c_files) {
 	}
 
 	if($options->shared) {
-	    if($win16api->is_shared_internal_function($internal_name) || 
-	       $win32api->is_shared_internal_function($internal_name)) 
+	    if($win16api->is_shared_internal_function($internal_name) ||
+	       $win32api->is_shared_internal_function($internal_name))
 	    {
 		$output->write("is shared between Win16 and Win32\n");
 	    }
 	}
 
-	if($options->headers && $options->headers_needed && 
-	   defined($declared_function) && defined($external_name) && 
+	if($options->headers && $options->headers_needed &&
+	   defined($declared_function) && defined($external_name) &&
 	   defined($statements))
 	{
 	    my $needed_include = $declared_function->file;
@@ -375,11 +375,11 @@ foreach my $file (@c_files) {
 	if($options->local && $options->argument && defined($statements)) {
 	    &winapi_local::check_function($function);
 	}
-	
+
 	if($options->local && $options->statements && defined($statements)) {
 	    &winapi_local::check_statements(\%functions, $function);
 	}
-	
+
 	if($options->local && $options->documentation &&
 	   (defined($module16) || defined($module32)) &&
 	   $linkage eq "" && defined($statements))
@@ -392,14 +392,14 @@ foreach my $file (@c_files) {
 	    if(defined($external_name16)) {
 		$external_name16 = (split(/\s*&\s*/, $external_name16))[0];
 	    }
-	    
+
 	    # FIXME: Not correct
 	    if(defined($external_name32)) {
 		$external_name32 = (split(/\s*&\s*/, $external_name32))[0];
 	    }
 
 	    if($options->local && $options->misplaced &&
-	       $linkage ne "extern" && defined($statements)) 
+	       $linkage ne "extern" && defined($statements))
 	    {
 		if($options->win16 && $options->report_module($module16))
 		{
@@ -432,7 +432,7 @@ foreach my $file (@c_files) {
 
 	    if($options->local && $options->headers && $options->prototype) {
 		if($options->win16 && $options->report_module($module16)) {
-		    if(!$nativeapi->is_function($internal_name) && 
+		    if(!$nativeapi->is_function($internal_name) &&
 		       !defined($declared_functions{$internal_name}))
 		    {
 			$output->write("no prototype\n");
@@ -444,7 +444,7 @@ foreach my $file (@c_files) {
 		    {
 			if(!defined($external_name32) || ($external_name32 !~ /^Dll(?:
 			   Install|CanUnloadNow|GetClassObject|GetVersion|
-			   RegisterServer|RegisterServerEx|UnregisterServer)|DriverProc$/x && 
+			   RegisterServer|RegisterServerEx|UnregisterServer)|DriverProc$/x &&
 			   $internal_name !~ /^COMCTL32_Str/ &&
 			   $internal_name !~ /^(?:\Q$module32\E|wine)_(?:\Q$external_name32\E|\d+)$/))
 			{
@@ -489,7 +489,7 @@ foreach my $file (@c_files) {
     my $create_type = sub {
 	return 'type'->new;
     };
-    
+
     my $found_type = sub {
 	my $type = shift;
     };
@@ -558,17 +558,17 @@ foreach my $file (@c_files) {
 		    my $macro = uc($header);
 		    $macro =~ y/\.\//__/;
 		    $macro = "HAVE_" . $macro;
-		    
-		    if($nativeapi->is_conditional_header($header)) { 
+
+		    if($nativeapi->is_conditional_header($header)) {
 			if(!$preprocessor->is_def($macro)) {
 			    if($macro =~ /^HAVE_X11/) {
 				# Do nothing X Windows is handled differently
 			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
 				my $name = $1;
-				if($header !~ /^alloca\.h|sys\/time\.h|unistd\.h$/ && 
-				   !$preprocessor->is_def("STATFS_DEFINED_BY_$name")) 
+				if($header !~ /^alloca\.h|sys\/time\.h|unistd\.h$/ &&
+				   !$preprocessor->is_def("STATFS_DEFINED_BY_$name"))
 				{
-				    $output->write("$file: #$directive $argument: is a conditional include, " . 
+				    $output->write("$file: #$directive $argument: is a conditional include, " .
 						   "but is not protected\n");
 				}
 			    }
@@ -625,10 +625,10 @@ foreach my $file (@c_files) {
     &winapi_parser::parse_c_file($file, {
 	c_comment_found => $found_c_comment,
 	cplusplus_comment_found => $found_cplusplus_comment,
-	function_create => $create_function, 
-	function_found => $found_function, 
-	type_create => $create_type, 
-	type_found => $found_type, 
+	function_create => $create_function,
+	function_found => $found_function,
+	type_create => $create_type,
+	type_found => $found_type,
 	preprocessor_found => $found_preprocessor
     });
 
@@ -678,7 +678,7 @@ if($options->global) {
 
     if($all_modules) {
 	&winapi_documentation::report_documentation;
-	
+
 	if($options->headers_unused) {
 	    foreach my $name (sort(keys(%include2info))) {
 		if(!$include2info{$name}{used}) {
@@ -688,11 +688,10 @@ if($options->global) {
 		}
 	    }
 	}
-	
+
 	&winapi_global::check(\%type_found);
 
 	$modules->global_report;
 	$nativeapi->global_report;
     }
 }
-

@@ -75,7 +75,7 @@ BEGIN
 END
 
 
-STRINGTABLE DISCARDABLE 
-{ 
+STRINGTABLE DISCARDABLE
+{
     MDI_IDS_MOREWINDOWS  "&More Windows..." /* defined in mdi.h */
 }

@@ -27,7 +27,7 @@ BEGIN {
 use config qw(
     &file_type &files_filter
     &file_skip &files_skip
-    &file_normalize 
+    &file_normalize
     &get_spec_files
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
 );
@@ -68,9 +68,9 @@ foreach my $file (@c_files) {
 	$_ = <IN>;
 	close(IN);
     }
-   
+
     my $max_line = 0;
-    { 
+    {
       local $_ = $_;
       while(s/^.*?\n//) { $max_line++; }
       if($_) { $max_line++; }
@@ -115,7 +115,7 @@ foreach my $file (@c_files) {
 	return 1;
     };
 
-    $parser->set_found_preprocessor_callback($found_preprocessor);  
+    $parser->set_found_preprocessor_callback($found_preprocessor);
 
     my $found_comment = sub {
 	my $begin_line = shift;
@@ -127,7 +127,7 @@ foreach my $file (@c_files) {
 	return 1;
     };
 
-    $parser->set_found_comment_callback($found_comment);  
+    $parser->set_found_comment_callback($found_comment);
 
     my $found_line = sub {
 	$line = shift;
@@ -152,7 +152,7 @@ foreach my $file (@c_files) {
 	return 1;
     };
 
-    $parser->set_found_declaration_callback($found_declaration);  
+    $parser->set_found_declaration_callback($found_declaration);
 
     my $found_function = sub {
 	$function = shift;
@@ -168,11 +168,11 @@ foreach my $file (@c_files) {
 	if($options->documentation) {
 	    # fixup_documentation($function, $editor);
 	}
-	
+
 	if($options->statements) {
 	    fixup_statements($function, $editor);
 	}
-	
+
 	my $statements = $function->statements;
 	if(!defined($statements)) {
 	    $function = undef;
@@ -183,7 +183,7 @@ foreach my $file (@c_files) {
 
 	return 0;
     };
-    
+
     $parser->set_found_function_callback($found_function);
 
     my $found_variable = sub {
@@ -194,11 +194,11 @@ foreach my $file (@c_files) {
 	my $name = shift;
 
 	# $output->write("$begin_line.$begin_column: $linkage $type $name = /* ... */\n");
-	
+
 	return 1;
     };
 
-    $parser->set_found_variable_callback($found_variable);        
+    $parser->set_found_variable_callback($found_variable);
 
     my $found_function_call = sub {
 	my $begin_line = shift;
@@ -227,4 +227,3 @@ foreach my $file (@c_files) {
 
     $editor->flush;
 }
-

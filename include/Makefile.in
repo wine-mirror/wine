@@ -211,7 +211,7 @@ install::
 	$(MKINSTALLDIRS) $(includedir) $(includedir)/wine $(includedir)/msvcrt $(includedir)/msvcrt/sys
 	for f in $(INSTALLED_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
 
-# Don't just do a rm -rf on $(includedir) -- don't want to wipe out 
+# Don't just do a rm -rf on $(includedir) -- don't want to wipe out
 # anything extra the user may have put there.
 uninstall::
 	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(INSTALLED_INCLUDES) || true

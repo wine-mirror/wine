@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # the next line restarts using wish \
-exec wish $0 ${1+"$@"} 
+exec wish $0 ${1+"$@"}
 proc load_libs {} {
 	global TKW
 	set libLIST [glob $TKW/wineconf.libs/*.tcl]

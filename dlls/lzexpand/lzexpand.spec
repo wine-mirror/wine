@@ -13,4 +13,4 @@ owner	lz32
 9  pascal16 LZDone() LZDone
 10 pascal16 GetExpandedName(str ptr) GetExpandedName16
 #11 WEP
-#12 ___EXPORTEDSTUB 
+#12 ___EXPORTEDSTUB

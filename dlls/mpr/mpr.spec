@@ -101,7 +101,7 @@ name mpr
 @ stdcall WNetRestoreConnectionW(long wstr) WNetRestoreConnectionW
 @ stdcall WNetSetConnectionA(str long ptr) WNetSetConnectionA
 @ stdcall WNetSetConnectionW(wstr long ptr) WNetSetConnectionW
-@ stdcall WNetUseConnectionA(long ptr str str long str ptr ptr) WNetUseConnectionA 
+@ stdcall WNetUseConnectionA(long ptr str str long str ptr ptr) WNetUseConnectionA
 @ stdcall WNetUseConnectionW(long ptr wstr wstr long wstr ptr ptr) WNetUseConnectionW
 @ stdcall WNetVerifyPasswordA(str ptr) WNetVerifyPasswordA
 @ stdcall WNetVerifyPasswordW(wstr ptr) WNetVerifyPasswordW

@@ -10,4 +10,4 @@ name olepro32
 255 stdcall DllCanUnloadNow() OLEPRO32_DllCanUnloadNow
 256 stdcall DllGetClassObject( ptr ptr ptr )  OLEPRO32_DllGetClassObject
 257 stdcall DllRegisterServer() OLEPRO32_DllRegisterServer
-258 stdcall DllUnregisterServer() OLEPRO32_DllUnregisterServer  
+258 stdcall DllUnregisterServer() OLEPRO32_DllUnregisterServer

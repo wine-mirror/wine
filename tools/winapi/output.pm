@@ -126,7 +126,7 @@ sub update_progress {
     my $progress_enabled = \${$self->{PROGRESS_ENABLED}};
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
-    
+
     if($$progress_enabled) {
 	my $prefix = "";
 	my $suffix = "";
@@ -134,7 +134,7 @@ sub update_progress {
 	    for (1..length($$last_progress)) {
 		$prefix .= "";
 	    }
-	    
+
 	    my $diff = length($$last_progress)-length($$progress);
 	    if($diff > 0) {
 		for (1..$diff) {

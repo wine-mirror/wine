@@ -129,7 +129,7 @@ FONT 8, "Helv"
     PUSHBUTTON      "&Hjälp" , 1038,218,57,40,14,WS_GROUP
     GROUPBOX        "Effekter",1072,6,72,84,34,WS_GROUP
     CHECKBOX	    "&Genomstruken", 1040, 10,82,50,10, BS_AUTOCHECKBOX | WS_TABSTOP
-    CHECKBOX 	    "&Understruken", 1041, 10,94,50,10, BS_AUTOCHECKBOX 
+    CHECKBOX 	    "&Understruken", 1041, 10,94,50,10, BS_AUTOCHECKBOX
     LTEXT           "&Färg:", 1091 ,6,110,30,9
     COMBOBOX        1139,6,120,84,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
@@ -217,7 +217,7 @@ FONT 8, "Helv"
  DEFPUSHBUTTON   "Ok",     IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
  PUSHBUTTON      "Avbryt", IDCANCEL, 232,164, 48,14, WS_GROUP
  PUSHBUTTON      "&Hjälp",  pshHelp,  50, 161, 48,14, WS_GROUP
-	
+
  GROUPBOX        "Skrivare",       grp4,   8,  4, 272,84, WS_GROUP
  CONTROL         "Skr&iv till fil",chx1,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
  PUSHBUTTON      "&Egenskaper",    psh2, 212, 17,  60,14, WS_GROUP
@@ -246,9 +246,9 @@ FONT 8, "Helv"
  EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP |ES_NUMBER
  RTEXT           "&från:",         stc2,  52,124,  20,8
  RTEXT           "&till:",         stc3, 100,124,  16,8
- 
+
 }
-	
+
 PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
@@ -257,7 +257,7 @@ FONT 8, "Helv"
 BEGIN
  DEFPUSHBUTTON   "Ok",IDOK,180,156,48,14,WS_GROUP
  PUSHBUTTON      "Avbryt",IDCANCEL,232,156,48,14
-	      
+
  GROUPBOX        "Skrivare",   grp4,   8,  4, 272,84, WS_GROUP
  PUSHBUTTON      "&Egenskaper",    psh2, 212, 17, 60,14, WS_GROUP
  LTEXT           "&Namn:",         stc6,  16, 20,  36,8
@@ -268,7 +268,7 @@ BEGIN
  LTEXT           "Dum typ",        stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
  LTEXT           "Plats:",         stc10, 16, 60,  36,10, SS_NOPREFIX
  LTEXT           "Dum plats",      stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
- LTEXT           "Kommentar:",     stc9,  16, 72,  36,10, SS_NOPREFIX 
+ LTEXT           "Kommentar:",     stc9,  16, 72,  36,10, SS_NOPREFIX
  LTEXT           "Dum kommnetar",  stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
  GROUPBOX        "Papper",         grp2,   8, 92, 164,56, WS_GROUP
  LTEXT           "St&orlek:",      stc2,  16,108,  36, 8
@@ -321,10 +321,10 @@ FONT 8, "helv"
 
  LTEXT       "" , IDC_TOOLBARSTATIC, 181, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
  LISTBOX     IDC_SHELLSTATIC,4,20,272,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
-    
+
  LTEXT       "Fil&namn:",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
  EDITTEXT    IDC_FILENAME,54,110,155,12,ES_AUTOHSCROLL
-	
+
  LTEXT       "&Filformat",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
  COMBOBOX    IDC_FILETYPE,54,126,155,53,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
@@ -346,7 +346,7 @@ STRINGTABLE DISCARDABLE
  IDS_FONTS               "Typsnitt"
  IDS_MYCOMPUTER          "Den här datorn"
 }
-				
+
 STRINGTABLE DISCARDABLE
 {
  IDS_SYSTEMFOLDERS       "Systemmappar"
@@ -360,7 +360,7 @@ STRINGTABLE DISCARDABLE
  IDS_PATHNOTEXISTING     "Sökvägen finns inte"
  IDS_FILENOTEXISTING     "Filen finns inte"
 }
-    
+
 STRINGTABLE DISCARDABLE
 {
  IDS_UPFOLDER         "Upp en nivå"
@@ -373,7 +373,7 @@ STRINGTABLE DISCARDABLE
 STRINGTABLE DISCARDABLE
 {
  PD32_PRINT_TITLE       "Skriv ut"
-    
+
  PD32_VALUE_UREADABLE                  "Oläsbart fält"
  PD32_INVALID_PAGE_RANGE "Detta värdet ligger inte inom sidourvalet.\n\
 Var god skriv in ett värde mellan %d och %d."
@@ -395,7 +395,7 @@ pappersgränserna.\nVar god skriv in marginallerna igen."
  PD32_MARGINS_IN_INCHES                "Marginaler [inches]"
  PD32_MARGINS_IN_MILIMETERS            "Marginaler [millimeter]"
  PD32_MILIMETERS                       "millimeter"
-		
+
  PD32_PRINTER_STATUS_READY             "Redo"
  PD32_PRINTER_STATUS_PAUSED            "Stannad; "
  PD32_PRINTER_STATUS_ERROR             "Fel; "
@@ -423,5 +423,3 @@ pappersgränserna.\nVar god skriv in marginallerna igen."
  PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Skrivarserver okänd; "
  PD32_PRINTER_STATUS_POWER_SAVE        "Felsäkert läge; "
 }
-	
-		    

@@ -61,7 +61,7 @@ POPUP "&Aide" {
    MENUITEM "&A propos de Wine", 0x137
   }
  }
-} 
+}
 
 /* Dialog `Page setup' */
 
@@ -124,4 +124,3 @@ task. \n Fermez une ou plusier applications pour libérer\n\
 de la mémoire."
 
 }
-

@@ -105,7 +105,7 @@ sub replace_file {
     }
 
     return $result;
-}		   
+}
 
 ########################################################################
 # normalize_set
@@ -116,7 +116,7 @@ sub normalize_set {
     if(!defined($_)) {
 	return undef;
     }
-    
+
     my %hash = ();
     foreach my $key (split(/\s*&\s*/)) {
 	$hash{$key}++;

@@ -18,7 +18,7 @@
 
 LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 
-/* 
+/*
  * Si vos voloz aider avou li ratoûrnaedje des libes programes è walon,
  * vos poloz scrîre a l' adresse emile <linux-wa@chanae.alphanet.ch>
  */
@@ -68,4 +68,3 @@ BEGIN
         PUSHBUTTON "&Oyi", 6, 256, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "&Neni", 7, 304, 56, 40, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
-

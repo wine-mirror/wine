@@ -32,7 +32,7 @@ use vars qw($modules);
 use config qw(
     &file_type &files_skip
     &file_directory
-    &get_c_files &get_spec_files 
+    &get_c_files &get_spec_files
     $current_dir $wine_dir
     $winapi_check_dir
 );
@@ -106,7 +106,7 @@ sub new {
 
 	    if(!-f "$wine_dir/$spec_file") {
 		$output->write("modules.dat: $spec_file: file ($spec_file) doesn't exist or is no file\n");
-	    } 
+	    }
 
 	    $spec_file_found{$spec_file}++;
 	    $$spec_file2dir{$spec_file} = {};
@@ -119,7 +119,7 @@ sub new {
 
 	if(!-d "$wine_dir/$allowed_dir") {
 	    $output->write("modules.dat: $spec_file: directory ($allowed_dir) doesn't exist or is no directory\n");
-	} 
+	}
     }
     close(IN);
 
@@ -202,7 +202,7 @@ sub complete_modules {
 	my $index = -1;
 	my @dirs = $self->allowed_dirs_for_module($module);
 	foreach my $dir (@dirs) {
-	    if(exists($dirs{$dir}) && $dirs{$dir} == 0) { 
+	    if(exists($dirs{$dir}) && $dirs{$dir} == 0) {
 		$index++;
 	    }
 	}
@@ -277,7 +277,7 @@ sub allowed_dirs_for_module {
    my $self = shift;
 
    my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
-   my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};   
+   my $spec_file2dir = \%{$self->{SPEC_FILE2DIR}};
 
    my $module = shift;
 

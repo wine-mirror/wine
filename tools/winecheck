@@ -105,7 +105,7 @@ sub Do_Check {
   my ($text) = @_;
   my $test_no;
   my $indent_str = "";
-  
+
   $count_tests++;
   $test_no = sprintf("%03d", $count_tests);
   for (my $i = 0; $i < $indent; $i++)
@@ -225,7 +225,7 @@ sub Check_BaseFiles {
     $advice = "Make sure the \"wine\" command is in your PATH (echo \$PATH; export PATH=xxx)";
   }
   Do_PrintResult($level, $reason, $advice);
-  
+
   # check for config mess
   $level = $is_ok;
   my @output = ();
@@ -305,7 +305,7 @@ sub Do_Config_Drive {
   $indent++;
 
   my $serious = ($drive =~ /^C$/i) || ($type =~ /^cdrom$/i);
-  
+
   ##### check Path #####
   Do_Check("Path option");
   $level = $is_ok;

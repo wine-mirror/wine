@@ -24,7 +24,7 @@
  *			  preprocessor in here anymore.
  * 02-Jan-2000 BS	- Removed the preprocessor code
  * 23-Dec-1999 BS	- Removed the copyright for Martin von Loewis.
- *			  There is really nothing left of his code in 
+ *			  There is really nothing left of his code in
  *			  this parser.
  * 20-Jun-1998 BS	- Changed the filename conversion. Filenames are
  *			  case-sensitive inder *nix, but not under dos.

@@ -25,15 +25,15 @@ MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
  POPUP "&Fichier" {
   MENUITEM "&Ouvrir", 0x101
-  MENUITEM SEPARATOR   
+  MENUITEM SEPARATOR
   MENUITEM "Im&primer", 0x104
   MENUITEM "&Configuration de l'imprimante...", 0x106
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
   MENUITEM "&Quitter", 0x108
  }
  POPUP "&Edition" {
    MENUITEM "&Copier...", 0x10A
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Annotation...", 0x10C
  }
  POPUP "&Signet" {
@@ -42,7 +42,7 @@ MAIN_MENU MENU LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
  POPUP "&?" {
    MENUITEM "&Utiliser l'aide", 0x110
    MENUITEM "&Toujours visible", 0x111
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Info...", 0x113
 #ifdef WINELIB
    MENUITEM "&A propos de WINE", 0x114

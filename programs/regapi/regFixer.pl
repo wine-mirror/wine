@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-# This script takes as STDIN an output from the Registry 
-# (export from regedit.exe) and prefixes every subkey-value 
+# This script takes as STDIN an output from the Registry
+# (export from regedit.exe) and prefixes every subkey-value
 # pair by their hkey,key data member
 #
 # Copyright 1999 Sylvain St-Germain
@@ -37,8 +37,5 @@ LINE: while(<>) {
     next LINE;
   }
 
-  print "${prefix}$_\n";  
+  print "${prefix}$_\n";
 }
-
-
-

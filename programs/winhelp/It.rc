@@ -25,15 +25,15 @@ MAIN_MENU MENU LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 {
  POPUP "&File" {
   MENUITEM "&Apri...", 0x101
-  MENUITEM SEPARATOR   
+  MENUITEM SEPARATOR
   MENUITEM "s&tampa", 0x104
   MENUITEM "&Setup stampante...", 0x106
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
   MENUITEM "&Esci", 0x108
  }
  POPUP "&Modifica" {
    MENUITEM "&Copia...", 0x10A
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Annota...", 0x10C
  }
  POPUP "&Segnalibro" {
@@ -42,7 +42,7 @@ MAIN_MENU MENU LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
  POPUP "&?" {
    MENUITEM "&Aiuto sulla guida", 0x110
    MENUITEM "Sempre in primo &piano", 0x111
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Informazioni su...", 0x113
 #ifdef WINELIB
    MENUITEM "&Informazion su WINE", 0x114

@@ -64,7 +64,7 @@ sub replace {
     my $replace = shift;
 
     my $file = \${$self->{FILE}};
-    
+
     my $line = $begin_line;
     my $action = {};
 
@@ -225,7 +225,7 @@ sub flush_old {
 
 	    my $search = $substitute_line{$.}{search};
 	    my $replace = $substitute_line{$.}{replace};
-	    
+
 	    if(defined($search) && defined($replace)) {
 		my $modified2 = 0;
 		if(s/$search/$replace/) {
@@ -239,14 +239,14 @@ sub flush_old {
 		    my $search2;
 		    my $replace2;
 		    if(!$modified2) {
-			$search2 = "unmatched search"; 
-			$replace2 = "unmatched replace"; 
+			$search2 = "unmatched search";
+			$replace2 = "unmatched replace";
 		    } else {
-			$search2 = "search"; 
+			$search2 = "search";
 			$replace2 = "replace";
 		    }
 		    $output->write("$file: $.: $search2 : '$search'\n");
-		    
+
 		    my @replace2 = split(/\n/, $replace);
 		    if($#replace2 > 0) {
 			$output->write("$file: $.: $replace2: \\\n");
@@ -288,7 +288,7 @@ sub flush_old {
     }
 
     foreach my $module (sort(keys(%spec_file))) {
-	my $file; 
+	my $file;
 	foreach my $winapi (@winapis) {
 	    $file = ($winapi->module_file($module) || $file);
 	}
@@ -302,7 +302,7 @@ sub flush_old {
 	my $editor = sub {
 	    local *IN = shift;
 	    local *OUT = shift;
-	    
+
 	    my $modified = 0;
 	    while(<IN>) {
 		chomp;
@@ -328,7 +328,7 @@ sub flush_old {
 
 		print OUT "$_\n";
 	    }
-	    
+
 	    return $modified;
 	};
 
@@ -362,7 +362,7 @@ sub delete_line {
 
     my $line = shift;
     my $pattern = shift;
-    
+
     $delete_line{$line} = $pattern;
 }
 
@@ -371,7 +371,7 @@ sub insert_line {
 
     my $line = shift;
     my $insert = shift;
-    
+
     $insert_line{$line} = $insert;
 }
 
@@ -381,7 +381,7 @@ sub substitute_line {
     my $line = shift;
     my $search = shift;
     my $replace = shift;
-    
+
     $substitute_line{$line}{search} = $search;
     $substitute_line{$line}{replace} = $replace;
 }
@@ -392,15 +392,15 @@ sub replace_spec_file {
     my $module = shift;
     my $search = shift;
     my $replace = shift;
-    
+
     my $substitute = {};
     $substitute->{search} = $search;
     $substitute->{replace} = $replace;
-    
+
     if(!defined($spec_file{$module})) {
 	$spec_file{$module} = [];
     }
-    
+
     push @{$spec_file{$module}}, $substitute;
 }
 

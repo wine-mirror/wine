@@ -25,15 +25,15 @@ MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 {
  POPUP "&File" {
   MENUITEM "&Megnyitás...", 0x101
-  MENUITEM SEPARATOR   
+  MENUITEM SEPARATOR
   MENUITEM "&Nyomtatás", 0x104
   MENUITEM "Nyomtató &beállítás...", 0x106
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
   MENUITEM "&Kilépés", 0x108
  }
  POPUP "&Szerkesztés" {
    MENUITEM "&Másolás...", 0x10A
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Annotate...", 0x10C
  }
  POPUP "&Könyvjelzõ" {
@@ -42,7 +42,7 @@ MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
  POPUP "&Segítség" {
    MENUITEM "Segítség &a segítségrõl", 0x110
    MENUITEM "Mindig &legfelül", 0x111
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Információ...", 0x113
 #ifdef WINELIB
    MENUITEM "&&A WINE-ról", 0x114

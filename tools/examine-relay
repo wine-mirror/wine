@@ -59,7 +59,7 @@ while (<IN>) {
 	    if (!$newlineerror) {
 		print "Err[$tid] string probably cut by newline at line $. .\n";
 		$newlineerror = 1;
-	    }	    
+	    }
 	    # print "[$_]";
 	    redo;
 	}
@@ -110,7 +110,7 @@ while (<IN>) {
 		if !$addrok;
 	    print "Err[$tid]: Return from $func with segreg $segreg, not $topseg.\n"
 		if !$segok;
-	}    
+	}
     }
 }
 

@@ -30,7 +30,7 @@ BEGIN {
 
     use vars qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
 
-    my $tool = $0; 
+    my $tool = $0;
     $tool =~ s%^(?:.*?/)?([^/]+)$%$1%;
 
     if(defined($current_dir) && defined($wine_dir) &&
@@ -45,8 +45,8 @@ BEGIN {
 	    $wine_dir = $1;
 	} else {
 	    $wine_dir = ".";
-	    
-	} 
+
+	}
 
 	require Cwd;
 	my $cwd = Cwd::cwd();

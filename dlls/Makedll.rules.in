@@ -54,7 +54,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 Makedll.rules: $(TOPSRCDIR)/Makedll.rules.in $(TOPSRCDIR)/configure
 	@echo $? is newer than 'Makedll.rules', please rerun ./configure!
-	@exit 1  
+	@exit 1
 
 # Rules for installation
 

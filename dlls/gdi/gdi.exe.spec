@@ -55,7 +55,7 @@ rsrc	version16.res
 43  pascal16 PaintRgn(word word) PaintRgn16
 44  pascal16 SelectClipRgn(word word) SelectClipRgn16
 45  pascal16 SelectObject(word word) SelectObject16
-46  stub BITMAPBITS # W1.1, W2.0 
+46  stub BITMAPBITS # W1.1, W2.0
 47  pascal16 CombineRgn(word word word s_word) CombineRgn16
 48  pascal16 CreateBitmap(word word word word ptr) CreateBitmap16
 49  pascal16 CreateBitmapIndirect(ptr) CreateBitmapIndirect16

@@ -8,9 +8,8 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	proxyodbc.c 
+	proxyodbc.c
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

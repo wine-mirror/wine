@@ -104,7 +104,7 @@ sub ReadFSTAB {
 		   ($device eq '/dev/cdrom' && $type eq 'auto') ) {
 		push(@::CdromDrives, [$device, $mntpoint, 'win95']);
 	    }
-	    elsif ( ($mntpoint eq '/mnt/cdrom' || $mntpoint eq '/cdrom') 
+	    elsif ( ($mntpoint eq '/mnt/cdrom' || $mntpoint eq '/cdrom')
 		  && $type eq 'supermount') {
 		push(@::CdromDrives, [ '/dev/cdrom', $mntpoint, 'win95']);
 	    }
@@ -131,7 +131,7 @@ sub ReadFSTAB {
 	print "\n";
 	&RegisterDrive($MagicDrive, $FatDrive);
 	if(!&IsMounted($FatDrive->[0])) {
-	    warn "WARNING: DOS Drive $MagicDrive (" . $FatDrive->[0] . 
+	    warn "WARNING: DOS Drive $MagicDrive (" . $FatDrive->[0] .
 		") is not mounted\n";
 	}
 	$MagicDrive++;
@@ -190,7 +190,7 @@ sub FindWindowsDir {
 	    chomp $winini;
 	}
 	my ($winini_cnt) = $#wininis+1;
-	if ($::opt_debug) { 
+	if ($::opt_debug) {
 	    print STDERR "DEBUG: Num wininis found: $winini_cnt\n";}
 	if ($winini_cnt > 1) {
 	    warn "$winini_cnt win.ini files found:\n";
@@ -227,11 +227,11 @@ sub IsMounted {
     my($Device) = @_;
     if (-d "/proc") {
 	if (-e "/proc/mounts") {
-	    open(MOUNTS, "/proc/mounts") || 
+	    open(MOUNTS, "/proc/mounts") ||
 		(warn "Cannot open /proc/mounts, although it exists\n" &&
 		 return -1);
 	    while(<MOUNTS>) {
-		if (/^$Device/) { 
+		if (/^$Device/) {
 		    return 1; # Tested 1.4
 		}
 	    }
@@ -255,11 +255,11 @@ sub ReadAutoexecBat {
     my($DriveC) = $::DOS2MntPoint{"C"};
     $DriveC =~ s%/$%%;
     my($path);
-    if ($::opt_debug) { 
+    if ($::opt_debug) {
 	print STDERR "DEBUG: Looking for $DriveC/autoexec.bat\n"; }
     if (-e "$DriveC/autoexec.bat") {
 	# Tested 1.4
-        open(AUTOEXEC, "$DriveC/autoexec.bat") || 
+        open(AUTOEXEC, "$DriveC/autoexec.bat") ||
             die "Cannot read autoexec.bat\n";
         while(<AUTOEXEC>) {
 	    s/\015//;
@@ -282,7 +282,7 @@ sub ReadAutoexecBat {
 			$varvalue =~ s/\%$matchname\%/$::DOSenv{$subname}/;
 		    }
 		    else {
-			warn "DOS environment variable $subname not\n"; 
+			warn "DOS environment variable $subname not\n";
 			warn "defined in autoexec.bat. (Reading config.sys\n";
 			warn "is not implemented.)  Using null value\n";
 			$varvalue =~ s/%$matchname%//;
@@ -335,11 +335,11 @@ sub ReadAutoexecBat {
 	warn "path from that\n";
 	my $shellcmd = 'find ' . &ToUnix($::windir) . " -iregex '" .
 	    '.*\.\(exe\|bat\|com\|dll\)' . "' -print";
-	if ($::opt_debug) { 
+	if ($::opt_debug) {
 	    print STDERR "DEBUG: autoexec.bat search command:\n $shellcmd\n";
 	}
 	push(@::DOScommand, `$shellcmd`);
-	if ($::opt_debug && $::opt_debug =~ /autoexec/i) { 
+	if ($::opt_debug && $::opt_debug =~ /autoexec/i) {
 	    print STDERR "DEBUG: autoexec.bat search results:\n\@DOS::command\n";
 	}
 	foreach my $command (@::DOScommand) {
@@ -347,8 +347,8 @@ sub ReadAutoexecBat {
 	    $::DOSexecdir{&ToDos($command)}++;
 	}
 	print "\"path\" = " .
-	    &marshall (join(";", 
-			    grep(s%\\$%%, 
+	    &marshall (join(";",
+			    grep(s%\\$%%,
 				 sort {$::DOSexecdir{$b} <=> $::DOSexecdir{$a}}
 				 (keys %::DOSexecdir)))) . "\n";
     }

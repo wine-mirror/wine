@@ -675,4 +675,3 @@ static cp_xlat_t *find_cpxlat(int lan)
 	t.lan = lan;
 	return (cp_xlat_t *)bsearch(&t, cpxlattab, ncpxlattab, sizeof(*cpxlattab), sc_xlat);
 }
-

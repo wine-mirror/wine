@@ -6,7 +6,7 @@ m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[
 
 AC_PREREQ(2.53)
 AC_INIT([Wine],WINE_VERSION)
-AC_CONFIG_SRCDIR(server/atom.c)		
+AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_AUX_DIR(tools)
 
@@ -169,10 +169,10 @@ then
 	    ],
 	    AC_MSG_WARN([[XShape extension not found, Wine will be built without it]]),
             [#include <X11/Xlib.h>])
-        
+
         dnl *** Check for XFree86 DGA / DGA 2.0 extension
         AC_CHECK_HEADERS(X11/extensions/xf86dga.h,
-            [ dnl *** If X11/extensions/xf86dga.h exists, check 
+            [ dnl *** If X11/extensions/xf86dga.h exists, check
               dnl *** for XDGAQueryExtension()...
               AC_CHECK_LIB(Xxf86dga, XDGAQueryExtension,
                 [ dnl *** If found...
@@ -251,7 +251,7 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
             )
 
 	    dnl Check for the thread-safety of the OpenGL library
-	    AC_CACHE_CHECK([for thread-safe OpenGL version], 
+	    AC_CACHE_CHECK([for thread-safe OpenGL version],
 			   wine_cv_opengl_version_threadsafe,
               [saved_libs=$LIBS
 	       LIBS="$X_LIBS -lGL"
@@ -605,7 +605,7 @@ int main(void) {
   for(i=0; i<B; i++) Array[[i]] = i - 3;
   for(i=0; i<4 - 1; i++) L[[i]] = L[[i + 1]];
   L[[i]] = 4;
-  
+
   exit( Array[[1]] != -2 || L[[2]] != 3);
 }],
     ac_cv_c_gcc_strength_bug="no",
@@ -639,7 +639,7 @@ if test "$ac_cv_c_type_in_def" = "yes"
 then
   AC_DEFINE(NEED_TYPE_IN_DEF, 1, [Define if .type asm directive must be inside a .def directive])
 fi
- 
+
 dnl **** Check for underscore on external symbols ****
 
 AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
@@ -777,7 +777,7 @@ fi
 
 dnl **** Check for reentrant libc ****
 
-wine_cv_libc_reentrant=no 
+wine_cv_libc_reentrant=no
 dnl Linux style errno location
 WINE_CHECK_ERRNO([__errno_location], [wine_cv_libc_reentrant=__errno_location],
   dnl FreeBSD style errno location
@@ -790,7 +790,7 @@ WINE_CHECK_ERRNO([__errno_location], [wine_cv_libc_reentrant=__errno_location],
         WINE_CHECK_ERRNO([__errno], [wine_cv_libc_reentrant=__errno])
 ))))
 
-if test "$wine_cv_libc_reentrant" != "no" 
+if test "$wine_cv_libc_reentrant" != "no"
 then
   AC_DEFINE_UNQUOTED(ERRNO_LOCATION,$wine_cv_libc_reentrant,
 	             [Define to the name of the function returning errno for reentrant libc])
@@ -978,7 +978,7 @@ AC_CACHE_CHECK([whether linux/input.h is for real],
                   [Define if we have linux/input.h AND it contains the INPUT event API])
     fi
 
-   
+
 AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
    	wine_cv_linux_gethostbyname_r_6,
 	AC_TRY_COMPILE([
@@ -1380,7 +1380,7 @@ then
   echo "*** terminal resize support. Consider upgrading ncurses."
 fi
 
-if test "$wine_cv_libc_reentrant" = "no" 
+if test "$wine_cv_libc_reentrant" = "no"
 then
   echo
   echo "*** Warning: non-reentrant libc detected. Wine will be built without"

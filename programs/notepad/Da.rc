@@ -60,7 +60,7 @@ POPUP "&Hjælp" {
    MENUITEM "&Om WINE", 0x137
   }
  }
-} 
+}
 
 /* Dialog `Page setup' */
 
@@ -123,4 +123,3 @@ denne operation. \nAfslut et eller flere aktive programmer for at frigøre \
 hukommelse, og prøv så igen."
 
 }
-

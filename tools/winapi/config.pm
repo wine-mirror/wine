@@ -159,7 +159,7 @@ sub _get_files {
 	my @entries= readdir(DIR);
 	closedir(DIR);
 	foreach (@entries) {
-	    $_ = "$dir/$_";    
+	    $_ = "$dir/$_";
 	    if(/\.\.?$/) {
 		# Nothing
 	    } elsif(-d $_) {
@@ -174,8 +174,8 @@ sub _get_files {
     return @files;
 }
 
-sub get_api_files { 
-    my $name = shift; 
+sub get_api_files {
+    my $name = shift;
     return _get_files("api", undef, "$winapi_check_dir/$name");
 }
 sub get_c_files { return _get_files("c", @_); }

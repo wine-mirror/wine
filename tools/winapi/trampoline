@@ -21,7 +21,7 @@ use strict;
 
 require Cwd;
 
-my $tool = $0; 
+my $tool = $0;
 $tool =~ s%^(?:.*?/)?([^/]+)$%$1%;
 
 $_ = Cwd::cwd();

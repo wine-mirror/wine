@@ -4,7 +4,7 @@
 #       This shell script attempts to intelligently manage the process
 #   of launching a program with Wine.  It adds some level of
 #   visual feedback to an end user.
-#  
+#
 #   Usage:
 #       winelauncher [options]  "<windows program> [program arguments]"
 #
@@ -45,7 +45,7 @@ WINEDLLPATH=@dlldir@
 COLOR=' -xrm *.Command.background:darkgrey
 -xrm *.Command.foreground:black
 -xrm *.Text.background:black
--xrm *.Text.foreground:green 
+-xrm *.Text.foreground:green
 -xrm *.Form.background:grey
 -xrm *.Form.foreground:green
 -xrm *.foreground:green
@@ -163,13 +163,13 @@ info_flag=~/.wine/.no_prelaunch_window_flag
 debug_flag=~/.wine/.no_debug_window_flag
 debug_options="-debugmsg warn+all"
 
-if [ -f $info_flag ] ; then 
+if [ -f $info_flag ] ; then
     use_info_message=0
 else
     use_info_message=1
 fi
 
-if [ -f $debug_flag ] ; then 
+if [ -f $debug_flag ] ; then
     use_debug_message=0
 else
     use_debug_message=1
@@ -226,7 +226,7 @@ if [ $no_args -eq 1 ] ; then
         If you would like to see the command line arguments
         for Wine, select the second option, below.
 
-        " 
+        "
     welcome_rc=$?
     if [ $welcome_rc -eq 0 ] ; then
         exit
@@ -283,7 +283,7 @@ while [ $conf -eq 0 ] ; do
         If this is the case, select the 'Configure Wine'
         option, below, to create a configuration file.
 
-        " 
+        "
     init_rc=$?
     if [ $init_rc -eq 0 ] ; then
         exit
@@ -321,7 +321,7 @@ if [ $use_info_message -ne 0 ] ; then
         that Wine is attempting to launch your application.
 
         Since Wine is still very much in a development stage, many
-        applications will fail silently.  This dialog box is your indication 
+        applications will fail silently.  This dialog box is your indication
         that we're *trying* to run your application.
 
         This dialog box will automatically disappear after 30 seconds,
@@ -439,7 +439,7 @@ else
 Wine has exited with a failure status of $wine_return.
 
 Wine is still development software, so there can be many
-explanations for this problem.  
+explanations for this problem.
 
 You can choose to run Wine again with a higher level
 of debug messages (the debug option, below).
@@ -503,7 +503,7 @@ You may view this file by selecting View Log, below."
         #  Process a view instruction
         #------------------------------------------------------------------------------
         if [ $debug_return -eq 1 ] ; then
-            $XMESSAGE -title "View Wine Log" -file "$log_name" -buttons "  Okay  ":0,"Delete $log_name":1  
+            $XMESSAGE -title "View Wine Log" -file "$log_name" -buttons "  Okay  ":0,"Delete $log_name":1
             if [ $? -eq 1 ] ; then
                 echo "Deleting $log_name"
                 rm -f "$log_name"
@@ -537,7 +537,7 @@ You may view this file by selecting View Log, below."
             echo "Rerunning $0 $debug_options $@"
             exec $0 $debug_options "$@"
         fi
-    done 
+    done
 fi
 
 

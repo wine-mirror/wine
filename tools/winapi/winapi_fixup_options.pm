@@ -52,7 +52,7 @@ my %options_long = (
 
     "global" => { default => 1, description => "global fixup" },
 
-    "modify" => { default => 0, description => "actually perform the fixups" },	    
+    "modify" => { default => 0, description => "actually perform the fixups" },
 );
 
 my %options_short = (

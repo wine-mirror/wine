@@ -37,7 +37,7 @@ MMSYSERR_INVALPARAM, 	"Een systeemfunctie kreeg een ongeldige parameter te eten.
 WAVERR_BADFORMAT, 		"Het aangegeven formaat wordt niet ondersteund of geconverteerd. Gebruik de 'Capabilities' functie om de ondersteunde formaten te vinden"
 WAVERR_STILLPLAYING, 	"Kan deze opdracht niet uitvoeren zolang afgespeeld wordt. Herstart het apparaat of wacht totdat het apparaat klaar is met spelen."
 WAVERR_UNPREPARED, 		"De Wave Header was niet aanwezig. Gebruik de 'Prepare' functie om de Header te genereren en probeer het dan opnieuw."
-WAVERR_SYNC, 			"Kan het apparaat niet openen zonder de WAVE_ALLOWSYNC vlag. Zet de vlag en probeer opnieuw."  
+WAVERR_SYNC, 			"Kan het apparaat niet openen zonder de WAVE_ALLOWSYNC vlag. Zet de vlag en probeer opnieuw."
 
 /* MIDI errors */
 MIDIERR_UNPREPARED, 	"De MIDI Header was niet aanwezig. Gebruik de 'Prepare' functie om de Header te genereren en probeer het dan opnieuw."

@@ -387,7 +387,7 @@ init    MAIN_GdiInit
 @ stdcall SetWorldTransform(long ptr) SetWorldTransform
 @ stdcall StartDocA(long ptr) StartDocA
 @ stdcall StartDocW(long ptr) StartDocW
-@ stdcall StartPage(long) StartPage 
+@ stdcall StartPage(long) StartPage
 @ stdcall StretchBlt(long long long long long long long long long long long) StretchBlt
 @ stdcall StretchDIBits(long long long long long long long long long ptr ptr long long) StretchDIBits
 @ stdcall StrokeAndFillPath(long) StrokeAndFillPath

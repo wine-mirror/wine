@@ -1,8 +1,8 @@
 name	shell32
 init	Shell32LibMain
 
-# Functions exported by the Win95 shell32.dll 
-# (these need to have these exact ordinals, for some 
+# Functions exported by the Win95 shell32.dll
+# (these need to have these exact ordinals, for some
 #  win95 and winNT dlls import shell32.dll by ordinal)
 # This list was updated to dll version 4.72
 
@@ -67,7 +67,7 @@ init	Shell32LibMain
   70 stdcall SHCreateDefClassObject(long long long long long)SHCreateDefClassObject
   71 stdcall Shell_GetImageList(ptr ptr) Shell_GetImageList
   72 stdcall Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
-  73 stdcall SHShellFolderView_Message(long long long) SHShellFolderView_Message 
+  73 stdcall SHShellFolderView_Message(long long long) SHShellFolderView_Message
   74 stub SHCreateStdEnumFmtEtc
   75 stdcall PathYetAnotherMakeUniqueName(ptr ptr ptr ptr) PathYetAnotherMakeUniqueNameA
   76 stub DragQueryInfo
@@ -233,11 +233,11 @@ init	Shell32LibMain
  298 stdcall Shell_NotifyIconW(long ptr) Shell_NotifyIconW
  299 stub Shl1632_ThunkData32
  300 stub Shl3216_ThunkData32
- 301 forward StrChrA shlwapi.StrChrA   
+ 301 forward StrChrA shlwapi.StrChrA
  302 forward StrChrIA shlwapi.StrChrIA
  303 forward StrChrIW shlwapi.StrChrIW
  304 forward StrChrW shlwapi.StrChrW
- 305 forward StrCmpNA shlwapi.StrCmpNA 
+ 305 forward StrCmpNA shlwapi.StrCmpNA
  306 forward StrCmpNIA shlwapi.StrCmpNIA
  307 forward StrCmpNIW shlwapi.StrCmpNIW
  308 forward StrCmpNW shlwapi.StrCmpNW
@@ -272,7 +272,7 @@ init	Shell32LibMain
  512 stdcall SHRegDeleteKeyW (long wstr) SHRegDeleteKeyW
 
  520 stdcall SHAllocShared (long long long) SHAllocShared
- 521 stdcall SHLockShared (long long) SHLockShared 
+ 521 stdcall SHLockShared (long long) SHLockShared
  522 stdcall SHUnlockShared (long) SHUnlockShared
  523 stdcall SHFreeShared (long long) SHFreeShared
  524 stub RealDriveType@8
@@ -323,22 +323,22 @@ init	Shell32LibMain
 @ stdcall DoEnvironmentSubstW(wstr wstr)DoEnvironmentSubstW
 @ stub DragQueryFileAorW
 @ stdcall DuplicateIcon(long long) DuplicateIcon
-@ stdcall ExtractAssociatedIconA(long ptr long)ExtractAssociatedIconA 
-@ stdcall ExtractAssociatedIconExA(long long long long)ExtractAssociatedIconExA 
-@ stdcall ExtractAssociatedIconExW(long long long long)ExtractAssociatedIconExW 
-@ stub ExtractAssociatedIconW 
-@ stdcall ExtractIconA(long str long)ExtractIconA 
+@ stdcall ExtractAssociatedIconA(long ptr long)ExtractAssociatedIconA
+@ stdcall ExtractAssociatedIconExA(long long long long)ExtractAssociatedIconExA
+@ stdcall ExtractAssociatedIconExW(long long long long)ExtractAssociatedIconExW
+@ stub ExtractAssociatedIconW
+@ stdcall ExtractIconA(long str long)ExtractIconA
 @ stdcall ExtractIconEx(ptr long ptr ptr long)ExtractIconExAW
 @ stdcall ExtractIconExA(str long ptr ptr long)ExtractIconExA
 @ stdcall ExtractIconExW(wstr long ptr ptr long)ExtractIconExW
-@ stdcall ExtractIconW(long wstr long)ExtractIconW 
-@ stub ExtractIconResInfoA 
-@ stub ExtractIconResInfoW 
-@ stub ExtractVersionResource16W 
-@ stub FindExeDlgProc 
-@ stdcall FindExecutableA(ptr ptr ptr) FindExecutableA 
-@ stdcall FindExecutableW(wstr wstr wstr) FindExecutableW 
-@ stdcall FreeIconList(long) FreeIconList 
+@ stdcall ExtractIconW(long wstr long)ExtractIconW
+@ stub ExtractIconResInfoA
+@ stub ExtractIconResInfoW
+@ stub ExtractVersionResource16W
+@ stub FindExeDlgProc
+@ stdcall FindExecutableA(ptr ptr ptr) FindExecutableA
+@ stdcall FindExecutableW(wstr wstr wstr) FindExecutableW
+@ stdcall FreeIconList(long) FreeIconList
 @ stub InternalExtractIconListA
 @ stub InternalExtractIconListW
 @ stub OpenAs_RunDLL
@@ -347,25 +347,25 @@ init	Shell32LibMain
 @ stub PrintersGetCommand_RunDLL
 @ stub PrintersGetCommand_RunDLLA
 @ stub PrintersGetCommand_RunDLLW
-@ stub RealShellExecuteA 
-@ stub RealShellExecuteExA 
-@ stub RealShellExecuteExW 
-@ stub RealShellExecuteW 
-@ stub RegenerateUserEnvironment 
-@ stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs 
-@ stdcall SHAppBarMessage(long ptr) SHAppBarMessage 
-@ stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA 
-@ stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA 
-@ stub SHBrowseForFolderW@4 
-@ stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW 
+@ stub RealShellExecuteA
+@ stub RealShellExecuteExA
+@ stub RealShellExecuteExW
+@ stub RealShellExecuteW
+@ stub RegenerateUserEnvironment
+@ stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs
+@ stdcall SHAppBarMessage(long ptr) SHAppBarMessage
+@ stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA
+@ stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA
+@ stub SHBrowseForFolderW@4
+@ stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW
 @ stub ShellHookProc
-@ stub SHEmptyRecycleBinA@12 
-@ stub SHEmptyRecycleBinW@12 
+@ stub SHEmptyRecycleBinA@12
+@ stub SHEmptyRecycleBinW@12
 @ stdcall SHFileOperation(ptr)SHFileOperationAW
 @ stdcall SHFileOperationA(ptr)SHFileOperationA
 @ stdcall SHFileOperationW(ptr)SHFileOperationW
-@ stub SHFormatDrive@16 
-@ stub SHFreeNameMappings@4 
+@ stub SHFormatDrive@16
+@ stub SHFreeNameMappings@4
 @ stdcall SHGetDesktopFolder(ptr)SHGetDesktopFolder
 @ stdcall SHGetFileInfo(ptr long ptr long long)SHGetFileInfoAW
 @ stdcall SHGetFileInfoA(ptr long ptr long long)SHGetFileInfoA
@@ -377,14 +377,14 @@ init	Shell32LibMain
 @ stdcall SHGetPathFromIDListA(long long)SHGetPathFromIDListA
 @ stdcall SHGetPathFromIDListW(long long)SHGetPathFromIDListW
 @ stdcall SHGetSettings(ptr long) SHGetSettings
-@ stdcall SHGetSpecialFolderLocation(long long ptr)SHGetSpecialFolderLocation 
-@ stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL 
-@ stub SHHelpShortcuts_RunDLLA@16 
-@ stub SHHelpShortcuts_RunDLLW@16 
-@ stdcall SHLoadInProc(long) SHLoadInProc 
-@ stub SHQueryRecycleBinA@8 
-@ stub SHQueryRecycleBinW@8 
-@ stub SHUpdateRecycleBinIcon@0 
+@ stdcall SHGetSpecialFolderLocation(long long ptr)SHGetSpecialFolderLocation
+@ stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL
+@ stub SHHelpShortcuts_RunDLLA@16
+@ stub SHHelpShortcuts_RunDLLW@16
+@ stdcall SHLoadInProc(long) SHLoadInProc
+@ stub SHQueryRecycleBinA@8
+@ stub SHQueryRecycleBinW@8
+@ stub SHUpdateRecycleBinIcon@0
 @ stub WOWShellExecute@28
 
 #

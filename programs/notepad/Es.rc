@@ -62,7 +62,7 @@ POPUP "&Ayuda" {
    MENUITEM "&Acerca de Wine", 0x137
   }
  }
-} 
+}
 
 /* Dialog `Page setup' */
 
@@ -126,4 +126,3 @@ memoria libre."
 
 
 }
-

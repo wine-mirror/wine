@@ -21,7 +21,7 @@
 ## License along with this library; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
-##Changelog: 
+##Changelog:
 ##August 29, 1999 - Work around for debugger exit (or lack thereof)
 ##                - Should now put debugging output in correct place
 ##April 19, 1999 - Much nicer way to select wine's location
@@ -47,11 +47,11 @@ sub do_var {
 	$var =~ s/\t//g;
 	return $var;
 }
-open STDERR, ">&SAVEERR"; open STDERR, ">&STDOUT"; 
+open STDERR, ">&SAVEERR"; open STDERR, ">&STDOUT";
 $ENV{'SHELL'}="/bin/bash";
 $var0 = qq{
 	What is your level of WINE expertise? 1-newbie 2-intermediate 3-advanced
-	
+
 	1 - Makes a debug report as defined in the WINE documentation. Best
 	    for new WINE users. If you're not sure what -debugmsg is, then
 	    use this mode.
@@ -66,7 +66,7 @@ until ($debuglevel >= 1 and $debuglevel <= 3) {
 	print "Enter your level of WINE expertise (1-3): ";
 	$debuglevel=<STDIN>;
 	chomp $debuglevel;
-} 
+}
 
 if ($debuglevel < 3) {
 	$var1 = qq{
@@ -220,28 +220,28 @@ print "\nWhat version of windows are you using with wine?\n\n".
 do
 	{
 	print "Enter the number that corresponds to your windows version: ";
-	$winver=<STDIN>; 
-	chomp $winver; 
+	$winver=<STDIN>;
+	chomp $winver;
 	}
-until ($winver >= 0 and $winver <= 7); 
-if ($winver =~ 0) { 
-	$winver="None Installed"; 
-} elsif ($winver =~ 1) { 
-	$winver="Windows 3.x"; 
-} elsif ($winver =~ 2) { 
-	$winver="Windows 95"; 
-} elsif ($winver =~ 3) { 
-	$winver="Windows 98"; 
-} elsif ($winver =~ 4) { 
-	$winver="Windows NT 3.5x"; 
-} elsif ($winver =~ 5) { 
-	$winver="Windows NT 4.x"; 
-} elsif ($winver =~ 6) { 
-	$winver="Windows NT 5.x"; 
-} elsif ($winver =~ 7) { 
+until ($winver >= 0 and $winver <= 7);
+if ($winver =~ 0) {
+	$winver="None Installed";
+} elsif ($winver =~ 1) {
+	$winver="Windows 3.x";
+} elsif ($winver =~ 2) {
+	$winver="Windows 95";
+} elsif ($winver =~ 3) {
+	$winver="Windows 98";
+} elsif ($winver =~ 4) {
+	$winver="Windows NT 3.5x";
+} elsif ($winver =~ 5) {
+	$winver="Windows NT 4.x";
+} elsif ($winver =~ 6) {
+	$winver="Windows NT 5.x";
+} elsif ($winver =~ 7) {
 	print "What version of Windows are you using? ";
-	$winver=<STDIN>; 
-	chomp $winver; 
+	$winver=<STDIN>;
+	chomp $winver;
 }
 if ($debuglevel < 3) {
 	$var7 = qq{
@@ -254,11 +254,11 @@ if ($debuglevel < 3) {
 }
 if ($debuglevel =~ 3) {
 	$var8 = qq{
-	Enter the full path to the program you want to run (Example: 
-	/dos/windows/sol.exe, NOT sol.exe): 
+	Enter the full path to the program you want to run (Example:
+	/dos/windows/sol.exe, NOT sol.exe):
 	};
 	print do_var($var8);
-} 
+}
 $program=<STDIN>;
 chomp $program;
 while ($program =~ /^(\s)*$/) {
@@ -284,15 +284,15 @@ chomp $progbits;
 until ($progbits == 0 or $progbits == 1 or $progbits == 2) {
 	print "You must enter 0, 1 or 2!\n";
 	$progbits=<STDIN>;
-	chomp $progbits 
+	chomp $progbits
 }
-if ($progbits =~ 0) { 
+if ($progbits =~ 0) {
 	$progbits=Win16
-} elsif ($progbits =~ 1) { 
-	$progbits=Win32 
-} else { 
-	$progbits = "Unsure" 
-} 
+} elsif ($progbits =~ 1) {
+	$progbits=Win32
+} else {
+	$progbits = "Unsure"
+}
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
 		$var11 = qq{
@@ -312,14 +312,14 @@ if ($debuglevel > 1) {
 	$debugopts=<STDIN>;
 	chomp $debugopts;
 	if ($debugopts =~ /-debugmsg /) {
-		($crap, $debugopts) = split / /,$debugopts; 
+		($crap, $debugopts) = split / /,$debugopts;
 	}
-	if ($debugopts =~ /^\s*$/) { 
-		$debugopts="+relay"; 
-	} 
+	if ($debugopts =~ /^\s*$/) {
+		$debugopts="+relay";
+	}
 } elsif ($debuglevel =~ 1) {
-	$debugopts = "+relay"; 
-} 
+	$debugopts = "+relay";
+}
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
 		$var13 = qq{
@@ -338,13 +338,13 @@ if ($debuglevel > 1) {
 	}
 	$lastnlines=<STDIN>;
 	chomp $lastnlines;
-	if ($lastnlines =~ /^\s*$/) { 
-	$lastnlines=200; 
-	} 
+	if ($lastnlines =~ /^\s*$/) {
+	$lastnlines=200;
+	}
 } elsif ($debuglevel =~ 1) {
-	$lastnlines=200; 
+	$lastnlines=200;
 }
-if ($debuglevel > 1) { 
+if ($debuglevel > 1) {
 	$var15 = qq{
 	Enter any extra options you want to pass to WINE.
 	};
@@ -376,11 +376,11 @@ if ($debuglevel > 1) {
 	}
 	$configopts=<STDIN>;
 	chomp $configopts;
-	if ($configopts =~ /^\s*$/) { 
-	$configopts="None"; 
-	} 
+	if ($configopts =~ /^\s*$/) {
+	$configopts="None";
+	}
 } elsif ($debuglevel =~ 1) {
-	$configopts="None"; 
+	$configopts="None";
 }
 if ($debuglevel > 1) {
 	if ($debuglevel =~ 2) {
@@ -388,7 +388,7 @@ if ($debuglevel > 1) {
 		Is your wine version CVS or from a .tar.gz file? As in... did you download it
 		off a website/ftpsite or did you/have you run cvs on it to update it?
 		For CVS: YYMMDD, where YY is the year (99), MM is the month (01), and DD
-		is the day (14), that you last updated it (Example: 990114). 
+		is the day (14), that you last updated it (Example: 990114).
 		For tar.gz: Just hit enter and I'll figure out the version for you:
 		};
 		print do_var($var18);
@@ -401,13 +401,13 @@ if ($debuglevel > 1) {
 	}
 	$winever=<STDIN>;
 	chomp $winever;
-	if ($winever =~ /[0-9]+/) {  
+	if ($winever =~ /[0-9]+/) {
 		$winever .= " CVS";
 	}
 	else {
 		$winever = `$wineloc -v 2>&1`;
 		chomp $winever;
-	} 
+	}
 } elsif ($debuglevel =~ 1) {
 	$winever=`$wineloc -v 2>&1`;
 	chomp $winever;
@@ -427,10 +427,10 @@ if ($debuglevel < 3) {
 	OK, now I'm going to run WINE. I will close it for you once the wine
 	debugger comes up. NOTE: You won't see ANY debug messages. Don't
 	worry, they are being output to a file. Since there are so many, it's
-	not a good idea to have them all output to a terminal (Speed slowdown 
+	not a good idea to have them all output to a terminal (Speed slowdown
 	mainly).
 	WINE will still run much slower than normal, because there will be so
-	many debug messages being output to file. 
+	many debug messages being output to file.
 	};
 	print do_var($var20);
 } elsif ($debuglevel =~ 3) {
@@ -544,7 +544,7 @@ Program Type:                $progbits
 Debug Options:               -debugmsg $debugopts
 Other Extra Commands Passed: $extraops
 Extra ./configure Commands:  $configopts
-Wine Dependencies: 
+Wine Dependencies:
 $wineneeds
 Last $lastnlines lines of debug output follows:
 $lastlines
@@ -553,7 +553,7 @@ Thank you!
 EOM
 }
 $var22 = qq{
-Great! We're finished making the debug report. Do whatever with it. 
+Great! We're finished making the debug report. Do whatever with it.
 };
 $var28 = qq{
 The filename for the formatted report is:
@@ -573,4 +573,3 @@ print do_var($var22);
 print do_var($var28) if $outfile ne "no file";
 print do_var($var29) if $dbgoutfile ne "no file";
 print do_var($var30);
-

@@ -83,8 +83,8 @@ sub new {
 	if($modules->is_allowed_module($module)) {
 	    $self->parse_api_file($file,$module);
 	}
-    }   
-	
+    }
+
     foreach my $forward_name (sort(keys(%$function_forward))) {
 	$$function_forward{$forward_name} =~ /^(\S*):(\S*)\.(\S*)$/;
 	(my $from_module, my $to_module, my $external_name) = ($1, $2, $3);
@@ -197,7 +197,7 @@ sub parse_api_file {
 	    } else {
 		$$translate_argument{$type} = $kind;
 	    }
-		
+
 	    $$type_format{$module}{$type} = $format;
 	} else {
 	    $output->write("$file: file must begin with %<type> statement\n");
@@ -251,7 +251,7 @@ sub parse_spec_file {
 	    if(/^type\s*(\w+)/) { $type = $1; }
 	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
 	    next;
-	} 
+	}
 
 	my $ordinal;
 	if(/^(\d+|@)\s+
@@ -405,7 +405,7 @@ sub parse_spec_file {
 		$lookahead = 1;
 	    }
 	}
-	
+
 	if(defined($ordinal)) {
 	    if($ordinal ne "@" && $ordinals{$ordinal}) {
 		$output->write("$file: ordinal redefined: $_\n");
@@ -580,11 +580,11 @@ sub is_allowed_type_format {
     if(defined($module) && defined($type)) {
 	local $_;
 	foreach (split(/ & /, $module)) {
-	    if(defined($formats)) { 
-		$formats .= "|"; 
+	    if(defined($formats)) {
+		$formats .= "|";
 	    } else {
 		$formats = "";
-	    }	    
+	    }
 	    if(defined($$type_format{$_}{$type})) {
 		$formats .= $$type_format{$_}{$type};
 	    }
@@ -885,7 +885,7 @@ sub _get_all_module_internal_ordinal {
     my $ordinal;
     while(defined($name = shift @name) &&
 	  defined($module = shift @module) &&
-	  defined($ordinal = shift @ordinal)) 
+	  defined($ordinal = shift @ordinal))
     {
 	push @entries, [$name, $module, $ordinal];
     }
@@ -936,17 +936,17 @@ sub _get_all_module_external_ordinal {
 	    @ordinal = split(/ & /, $ordinal);
 	}
     }
-    
+
     my $name;
     my $module;
     my $ordinal;
     while(defined($name = shift @name) &&
 	  defined($module = shift @module) &&
-	  defined($ordinal = shift @ordinal)) 
+	  defined($ordinal = shift @ordinal))
     {
 	push @entries, [$name, $module, $ordinal];
     }
- 
+
     return @entries;
 }
 

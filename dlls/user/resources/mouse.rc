@@ -20,7 +20,7 @@
 
 /* this ought to be VERSION_INFO */
 DUMMY1 1
-{ 
+{
 	0x1,
 	0x2,
 	0x3,

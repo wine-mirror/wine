@@ -41,7 +41,7 @@ $wineoptions='';
 # Path to WINE ChangeLog. Used as timestamp for new releases...
 #
 $changelog = '/home/marcus/wine/ChangeLog';
-# 
+#
 # How long before automatically killing all subprocesses
 # 30 is good for automatic testing, 300 or more for interactive testing.
 #
@@ -62,7 +62,7 @@ $<||die "Running this script under UID 0 is a great security risk (and risk for 
 
 if (! -d "runs") { die "no subdirectory runs/ found in $cwd. Please create one first!\n";}
 
-# look for the exact path to wine executeable in case we need it for a 
+# look for the exact path to wine executeable in case we need it for a
 # replacement changelog.
 if (! ($wine =~ /\//)) { # no path specified. Look it up.
 	@paths = split(/:/,$ENV{'PATH'});
@@ -118,7 +118,7 @@ sub kill_subprocesses {
 	open(PSAUX,"ps aulc|");
 	# lookup all processes, remember their parents and cmdlines.
 	%parentof=();
-	$xline = <PSAUX>; # fmtline 
+	$xline = <PSAUX>; # fmtline
 	@psformat = split(/\s\s*/,$xline);
 
 	psline: while (<PSAUX>) {
@@ -231,7 +231,7 @@ while ($exe=<FIND>) {
 	# FIXME: doesn't handle missing libwine.so during compile...
 	(-x $wine)  || die "no $wine executable found!\n";
 
-	# Skip all mssetup, acmsetup , installshield whatever exes. 
+	# Skip all mssetup, acmsetup , installshield whatever exes.
 	# they seem to work, mostly and starting them is just annoying.
 	next if ($exe =~ /acmsetup|unwise|testexit|_msset|isun|st4u|st5u|_mstest|_isdel|ms-setup|~ms|unin/io);
 
@@ -243,8 +243,8 @@ while ($exe=<FIND>) {
 	#
 	# Check if changelog is newer, if not, continue
 	#
-	if (	-e "runs/${runfile}.out" && 
-		(-M $changelog > -M "runs/${runfile}.out") && 
+	if (	-e "runs/${runfile}.out" &&
+		(-M $changelog > -M "runs/${runfile}.out") &&
 		(-M $exe > -M "runs/${runfile}.out")
 	) {
 		#print "skipping $exe, already done.\n";

@@ -49,9 +49,9 @@ sub check_documentation {
 
     my $documentation_error = 0;
     my $documentation_warning = 0;
-    if($options->documentation_name || 
+    if($options->documentation_name ||
        $options->documentation_ordinal ||
-       $options->documentation_pedantic) 
+       $options->documentation_pedantic)
     {
 	my @winapis = ($win16api, $win32api);
 	my @modules = ($module16, $module32);
@@ -70,9 +70,9 @@ sub check_documentation {
 	    my @ordinals = split(/\s*\&\s*/, $ordinal);
 
 	    my $pedantic_failed = 0;
-	    while(defined(my $external_name = shift @external_name) && 
-		  defined(my $module = shift @modules) && 
-		  defined(my $ordinal = shift @ordinals)) 
+	    while(defined(my $external_name = shift @external_name) &&
+		  defined(my $module = shift @modules) &&
+		  defined(my $ordinal = shift @ordinals))
 	    {
 		my $found_name = 0;
 		my $found_ordinal = 0;
@@ -82,7 +82,7 @@ sub check_documentation {
 			my $module2 = $6;
 			my $ordinal2 = $7;
 
-			if(length($1) != 1 || length($2) < 1 || 
+			if(length($1) != 1 || length($2) < 1 ||
 			   length($4) < 1 || $5 ne "(" || $8 ne ")")
 			{
 			    $pedantic_failed = 1;
@@ -98,13 +98,13 @@ sub check_documentation {
 			}
 		    }
 		}
-		if(($options->documentation_name && !$found_name) || 
+		if(($options->documentation_name && !$found_name) ||
 		   ($options->documentation_ordinal && !$found_ordinal))
 		{
 		    $documentation_error = 1;
 		    $output->write("documentation: expected $external_name (\U$module\E.$ordinal): \\\n$documentation\n");
 		}
-		
+
 	    }
 	    if($options->documentation_pedantic && $pedantic_failed) {
 		$documentation_warning = 1;
@@ -147,13 +147,13 @@ sub check_documentation {
 	    if(/^\s*\*(\s*)\S+(\s*)[\(\[]\s*\w+\s*\.\s*[^\s\)\]]*\s*[\)\]].*?$/) {
 		my $indent = $1;
 		my $spacing = $2;
-		
+
 		$indent =~ s/\t/        /g;
 		$indent = length($indent);
-		
+
 		$spacing =~ s/\t/        /g;
 		$spacing = length($spacing);
-		
+
 		$comment_indent{$indent}++;
 		if($indent >= 20) {
 		    $output->write("documentation: comment indent is $indent\n");

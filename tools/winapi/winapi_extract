@@ -79,7 +79,7 @@ if($options->spec_files || $options->winetest) {
 		    $module2type{$module} = $type;
 		} elsif(/^\d+|@/) {
 		    $header = 0;
-		    $lookahead = 1; 
+		    $lookahead = 1;
 		}
 		next;
 	    }
@@ -152,7 +152,7 @@ sub documentation_specifications {
 		    $output->write("$external_name ($module.$ordinal) already exists\n");
 		}
 	    }
-	    
+
 	    if($options->debug) {
 		$output->write("$external_name ($module.$ordinal)\n");
 	    }
@@ -208,7 +208,7 @@ foreach my $file (@c_files) {
 
 	my $internal_name = $function->internal_name;
 	$functions{$internal_name} = $function;
-	
+
 	$output->progress("$file (file $progress_current of $progress_max): $internal_name");
 	$output->prefix_callback(sub { return $function->prefix; });
 
@@ -286,14 +286,14 @@ if($options->spec_files) {
     foreach my $module (keys(%specifications)) {
 	my $spec_file = $module2spec_file{$module};
 	my $type = $module2type{$module};
-	
+
 	if(!defined($spec_file) || !defined($type)) {
 	    $output->write("$module: doesn't exist\n");
 	    next;
 	}
-	
+
 	$spec_file .= "2";
-	
+
 	$output->progress("$spec_file");
 	open(OUT, "> $wine_dir/$spec_file");
 
@@ -304,7 +304,7 @@ if($options->spec_files) {
 	    print OUT "init " . $function->internal_name . "\n";
 	}
 	print OUT "\n";
-	
+
 	my %debug_channels;
 	if(exists($specifications{$module}{init})) {
 	    my $function = $specifications{$module}{init}{function};
@@ -319,7 +319,7 @@ if($options->spec_files) {
 	    }
 	}
 	foreach my $name (sort(keys(%{$specifications{$module}{unfixed}}))) {
-	    my $function = $specifications{$module}{unfixed}{$name}{function}; 
+	    my $function = $specifications{$module}{unfixed}{$name}{function};
 	    foreach my $debug_channel (@{$function->debug_channels}) {
 		$debug_channels{$debug_channel}++;
 	    }
@@ -332,11 +332,11 @@ if($options->spec_files) {
 	}
 
 	my @debug_channels = sort(keys(%debug_channels));
-	if($#debug_channels >= 0) { 
+	if($#debug_channels >= 0) {
 	    print OUT "debug_channels (" .  join(" ", @debug_channels) . ")\n";
 	    print OUT "\n";
 	}
-	
+
 	my $empty = 1;
 
 	if(!$empty) {
@@ -345,8 +345,8 @@ if($options->spec_files) {
 	}
 	foreach my $external_name (sort(keys(%{$specifications{$module}{unknown}}))) {
 	    my $entry = $specifications{$module}{unknown}{$external_name};
-	    my $ordinal = $entry->{ordinal}; 
-	    my $function = $entry->{function}; 
+	    my $ordinal = $entry->{ordinal};
+	    my $function = $entry->{function};
 	    print OUT "# ";
 	    output_function(\*OUT, $type, $ordinal, $external_name, $function);
 	    $empty = 0;
@@ -358,8 +358,8 @@ if($options->spec_files) {
 	}
 	foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {
 	    my $entry = $specifications{$module}{fixed}{$ordinal};
-	    my $external_name = $entry->{external_name}; 
-	    my $function = $entry->{function}; 
+	    my $external_name = $entry->{external_name};
+	    my $function = $entry->{function};
 	    output_function(\*OUT, $type, $ordinal, $external_name, $function);
 	    $empty = 0;
 	}
@@ -387,7 +387,7 @@ if($options->stub_statistics) {
 
 	my %module_stub_count;
 	my %module_total_count;
-	
+
 	foreach my $internal_name ($winapi->all_internal_functions,$winapi->all_functions_stub) {
 	    foreach my $module (split(/ \& /, $winapi->function_internal_module($internal_name))) {
 		if($winapi->is_function_stub_in_module($module, $internal_name)) {
@@ -413,11 +413,11 @@ if($options->stub_statistics) {
 	    if(!defined($total)) { $total = 0;}
 
 	    my $stubs = $real_stubs + $pseudo_stubs;
-    
+
 	    $output->write("*.c: $module: ");
 	    $output->write("$stubs of $total functions are stubs ($real_stubs real, $pseudo_stubs pseudo)\n");
 	}
-    } 
+    }
 }
 
 if($options->winetest) {
@@ -448,9 +448,9 @@ if($options->winetest) {
 
 	my $n = 0;
 	foreach my $entry (@entries) {
-	    my $external_name = $entry->{external_name}; 
-	    my $ordinal = $entry->{ordinal}; 
-	    my $function = $entry->{function}; 
+	    my $external_name = $entry->{external_name};
+	    my $ordinal = $entry->{ordinal};
+	    my $function = $entry->{function};
 
 	    my $return_kind;
 	    my $calling_convention;

@@ -63,7 +63,7 @@ int yyerror(char *);
 %token <integer> tNUM tFORMAT
 %token tSYMBOLFILE tRUN tATTACH tDETACH tNOPROCESS
 
-%token tCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED 
+%token tCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED
 %token tSTRUCT tUNION tENUM
 
 /* %left ',' */
@@ -85,7 +85,7 @@ int yyerror(char *);
 %left '.' '[' OP_DRF
 %nonassoc ':'
 
-%type <expression> expr lval lvalue 
+%type <expression> expr lval lvalue
 %type <type> type_expr
 %type <value> expr_addr lval_addr
 %type <integer> expr_value
@@ -99,7 +99,7 @@ input: line
     | input line
     ;
 
-line: command 
+line: command
     | tEOL
     | error tEOL               	{ yyerrok; }
     ;
@@ -108,26 +108,26 @@ command:
       tQUIT tEOL		{ DEBUG_ExitMode = EXIT_QUIT; return 1; }
     | tHELP tEOL                { DEBUG_Help(); }
     | tHELP tINFO tEOL          { DEBUG_HelpInfo(); }
-    | tCONT tEOL                { DEBUG_CurrThread->exec_count = 1; 
+    | tCONT tEOL                { DEBUG_CurrThread->exec_count = 1;
 				  DEBUG_CurrThread->exec_mode = EXEC_CONT; return 1; }
     | tPASS tEOL                { DEBUG_ExitMode = EXIT_PASS; return 1; }
-    | tCONT tNUM tEOL         	{ DEBUG_CurrThread->exec_count = $2; 
+    | tCONT tNUM tEOL         	{ DEBUG_CurrThread->exec_count = $2;
 				  DEBUG_CurrThread->exec_mode = EXEC_CONT; return 1; }
-    | tSTEP tEOL               	{ DEBUG_CurrThread->exec_count = 1; 
+    | tSTEP tEOL               	{ DEBUG_CurrThread->exec_count = 1;
 				  DEBUG_CurrThread->exec_mode = EXEC_STEP_INSTR; return 1; }
-    | tNEXT tEOL                { DEBUG_CurrThread->exec_count = 1; 
+    | tNEXT tEOL                { DEBUG_CurrThread->exec_count = 1;
 				  DEBUG_CurrThread->exec_mode = EXEC_STEP_OVER; return 1; }
-    | tSTEP tNUM tEOL           { DEBUG_CurrThread->exec_count = $2; 
+    | tSTEP tNUM tEOL           { DEBUG_CurrThread->exec_count = $2;
 				  DEBUG_CurrThread->exec_mode = EXEC_STEP_INSTR; return 1; }
-    | tNEXT tNUM tEOL           { DEBUG_CurrThread->exec_count = $2; 
+    | tNEXT tNUM tEOL           { DEBUG_CurrThread->exec_count = $2;
 				  DEBUG_CurrThread->exec_mode = EXEC_STEP_OVER; return 1; }
-    | tSTEPI tEOL               { DEBUG_CurrThread->exec_count = 1; 
+    | tSTEPI tEOL               { DEBUG_CurrThread->exec_count = 1;
 				  DEBUG_CurrThread->exec_mode = EXEC_STEPI_INSTR; return 1; }
-    | tNEXTI tEOL               { DEBUG_CurrThread->exec_count = 1; 
+    | tNEXTI tEOL               { DEBUG_CurrThread->exec_count = 1;
 				  DEBUG_CurrThread->exec_mode = EXEC_STEPI_OVER; return 1; }
-    | tSTEPI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2; 
+    | tSTEPI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2;
 			 	  DEBUG_CurrThread->exec_mode = EXEC_STEPI_INSTR; return 1; }
-    | tNEXTI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2; 
+    | tNEXTI tNUM tEOL          { DEBUG_CurrThread->exec_count = $2;
                                   DEBUG_CurrThread->exec_mode = EXEC_STEPI_OVER; return 1; }
     | tABORT tEOL              	{ kill(getpid(), SIGABRT); }
     | tMODE tNUM tEOL          	{ mode_command($2); }
@@ -200,19 +200,19 @@ list_arg:
     | pathname ':' tNUM	       { $$.sourcefile = $1; $$.line = $3; }
     | tIDENTIFIER	       { DEBUG_GetFuncInfo( & $$, NULL, $1); }
     | pathname ':' tIDENTIFIER { DEBUG_GetFuncInfo( & $$, $1, $3); }
-    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 0, & $$ ); 
+    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 0, & $$ );
                                  DEBUG_FreeExprMem(); }
     ;
 
 x_command:
       tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); DEBUG_FreeExprMem(); }
-    | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); 
+    | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff );
  				      DEBUG_FreeExprMem(); }
     ;
 
 print_command:
       tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); DEBUG_FreeExprMem(); }
-    | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 ); 
+    | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 );
  				      DEBUG_FreeExprMem(); }
     ;
 
@@ -306,16 +306,16 @@ expr:
     | tSTRING			 { $$ = DEBUG_StringExpr($1); }
     | tINTVAR                    { $$ = DEBUG_IntVarExpr($1); }
     | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
-    | expr OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); } 
-    | expr '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
-    | tIDENTIFIER '(' ')'	 { $$ = DEBUG_CallExpr($1, 0); } 
-    | tIDENTIFIER '(' expr ')'	 { $$ = DEBUG_CallExpr($1, 1, $3); } 
-    | tIDENTIFIER '(' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 2, $3, $5); } 
-    | tIDENTIFIER '(' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7); } 
-    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 4, $3, $5, $7, $9); } 
-    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 5, $3, $5, $7, $9, $11); } 
-    | expr '[' expr ']'		 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); } 
-    | expr ':' expr		 { $$ = DEBUG_BinopExpr(EXP_OP_SEG, $1, $3); } 
+    | expr OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); }
+    | expr '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); }
+    | tIDENTIFIER '(' ')'	 { $$ = DEBUG_CallExpr($1, 0); }
+    | tIDENTIFIER '(' expr ')'	 { $$ = DEBUG_CallExpr($1, 1, $3); }
+    | tIDENTIFIER '(' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 2, $3, $5); }
+    | tIDENTIFIER '(' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7); }
+    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 4, $3, $5, $7, $9); }
+    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 5, $3, $5, $7, $9, $11); }
+    | expr '[' expr ']'		 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); }
+    | expr ':' expr		 { $$ = DEBUG_BinopExpr(EXP_OP_SEG, $1, $3); }
     | expr OP_LOR expr           { $$ = DEBUG_BinopExpr(EXP_OP_LOR, $1, $3); }
     | expr OP_LAND expr          { $$ = DEBUG_BinopExpr(EXP_OP_LAND, $1, $3); }
     | expr '|' expr              { $$ = DEBUG_BinopExpr(EXP_OP_OR, $1, $3); }
@@ -341,7 +341,7 @@ expr:
     | '(' expr ')'               { $$ = $2; }
     | '*' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_DEREF, $2); }
     | '&' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_ADDR, $2); }
-    | '(' type_expr ')' expr %prec OP_DEREF { $$ = DEBUG_TypeCastExpr($2, $4); } 
+    | '(' type_expr ')' expr %prec OP_DEREF { $$ = DEBUG_TypeCastExpr($2, $4); }
     ;
 
 /*
@@ -358,18 +358,18 @@ lval: lvalue                     { $$ = $1; }
 lvalue: tNUM                     { $$ = DEBUG_ConstExpr($1); }
     | tINTVAR                    { $$ = DEBUG_IntVarExpr($1); }
     | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
-    | lvalue OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); } 
-    | lvalue '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
-    | lvalue '[' expr ']'	 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); } 
+    | lvalue OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); }
+    | lvalue '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); }
+    | lvalue '[' expr ']'	 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); }
     ;
 
 identifier: tIDENTIFIER          { $$ = $1; }
     | identifier '.' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 1 + strlen($3)+ 1);
                                    sprintf(ptr, "%s.%s", $1, $3); $$ = DEBUG_MakeSymbol(ptr);
-                                   DBG_free(ptr); } 
+                                   DBG_free(ptr); }
     | identifier ':' ':' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 2 + strlen($4) + 1);
                                    sprintf(ptr, "%s::%s", $1, $4); $$ = DEBUG_MakeSymbol(ptr);
-                                   DBG_free(ptr); } 
+                                   DBG_free(ptr); }
     ;
 
 %%

@@ -43,7 +43,7 @@ init    WININET_LibMain
 @ stub FtpGetFileW
 @ stdcall FtpOpenFileA(ptr str long long long) FtpOpenFileA
 @ stub FtpOpenFileW
-@ stdcall FtpPutFileA(ptr str str long long) FtpPutFileA 
+@ stdcall FtpPutFileA(ptr str str long long) FtpPutFileA
 @ stub FtpPutFileW
 @ stdcall FtpRemoveDirectoryA(ptr str) FtpRemoveDirectoryA
 @ stub FtpRemoveDirectoryW
@@ -102,7 +102,7 @@ init    WININET_LibMain
 @ stub InternetDebugGetLocalTime
 @ stub InternetDial
 @ stub InternetErrorDlg
-@ stdcall InternetFindNextFileA(ptr ptr) InternetFindNextFileA 
+@ stdcall InternetFindNextFileA(ptr ptr) InternetFindNextFileA
 @ stub InternetFindNextFileW
 @ stub InternetGetCertByURL
 @ stdcall InternetGetConnectedState(ptr long) InternetGetConnectedState
@@ -121,7 +121,7 @@ init    WININET_LibMain
 @ stub InternetQueryDataAvailable
 @ stdcall InternetQueryOptionA(ptr long ptr ptr) InternetQueryOptionA
 @ stub InternetQueryOptionW
-@ stdcall InternetReadFile(ptr ptr long ptr) InternetReadFile  
+@ stdcall InternetReadFile(ptr ptr long ptr) InternetReadFile
 @ stub InternetReadFileExA
 @ stub InternetReadFileExW
 @ stub InternetServerPushParse

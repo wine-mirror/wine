@@ -1013,7 +1013,7 @@ static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
 				break;
 		}
 		if(cptr != &curdef_text[tag])
-		{	
+		{
 			memmove(&curdef_text[tag], cptr, n);
 			curdef_idx -= (curdef_idx - tag) - n;
 		}
@@ -1289,7 +1289,7 @@ static bufferstackentry_t *pop_buffer(void)
 		if(yy_current_state() == pp_macexp)
 			macro_add_expansion();
 		else
-			internal_error(__FILE__, __LINE__, "Pop buffer and state without macro expansion state"); 
+			internal_error(__FILE__, __LINE__, "Pop buffer and state without macro expansion state");
 		yy_pop_state();
 	}
 
@@ -1427,7 +1427,7 @@ static void put_buffer(char *s, int len)
 		add_text_to_macro(s, len);
 	else {
            if(pass_data)
-           fwrite(s, 1, len, ppout);           
+           fwrite(s, 1, len, ppout);
         }
 }
 
@@ -1437,8 +1437,8 @@ static void put_buffer(char *s, int len)
  * Include management
  *-------------------------------------------------------------------------
  */
-int is_c_h_include(char *fname)  
-{        
+int is_c_h_include(char *fname)
+{
 	int sl=strlen(fname);
 	if (sl < 2) return 0;
 	if ((toupper(fname[sl-1])!='H') && (toupper(fname[sl-1])!='C')) return 0;
@@ -1488,7 +1488,7 @@ void do_include(char *fname, int type)
 		fprintf(stderr, "do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d ,pass_data=%d\n", input_name, line_number, include_state, include_ppp, include_ifdepth,pass_data);
 	pp_switch_to_buffer(pp_create_buffer(ppin, YY_BUF_SIZE));
 
-	fprintf(ppout, "# 1 \"%s\" 1%s\n", newpath, type ? "" : " 3"); 
+	fprintf(ppout, "# 1 \"%s\" 1%s\n", newpath, type ? "" : " 3");
 }
 
 /*
@@ -1506,5 +1506,3 @@ void pop_ignore_state(void)
 {
 	yy_pop_state();
 }
-
-

@@ -165,7 +165,7 @@ init    MSVCRT_Init
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl
 @ stub _atoi64 #(str)
-@ stub _atoldbl 
+@ stub _atoldbl
 @ cdecl _beep(long long) _beep
 @ cdecl _beginthread (ptr long ptr) _beginthread
 @ cdecl _beginthreadex (ptr long ptr ptr long ptr) _beginthreadex

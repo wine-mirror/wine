@@ -12,7 +12,7 @@ name    psapi
 @ stdcall GetMappedFileNameW(long ptr wstr long) GetMappedFileNameW
 @ stdcall GetModuleBaseNameA(long long str long) GetModuleBaseNameA
 @ stdcall GetModuleBaseNameW(long long wstr long) GetModuleBaseNameW
-@ stdcall GetModuleFileNameExA(long long str long) GetModuleFileNameExA 
+@ stdcall GetModuleFileNameExA(long long str long) GetModuleFileNameExA
 @ stdcall GetModuleFileNameExW(long long wstr long) GetModuleFileNameExW
 @ stdcall GetModuleInformation(long long ptr long) GetModuleInformation
 @ stdcall GetProcessMemoryInfo(long ptr long) GetProcessMemoryInfo

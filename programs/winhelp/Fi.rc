@@ -26,15 +26,15 @@ MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 {
  POPUP "&Tiedosto" {
   MENUITEM "&Avaa...", 0x101
-  MENUITEM SEPARATOR   
+  MENUITEM SEPARATOR
   MENUITEM "&Tulosta", 0x104
   MENUITEM "&Kirjoittimen asetukset...", 0x106
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
   MENUITEM "&Lopeta", 0x108
  }
  POPUP "&Muokkaa" {
    MENUITEM "&Kopioi...", 0x10A
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Huomautus...", 0x10C
  }
  POPUP "&Kirjanmerkki" {
@@ -43,7 +43,7 @@ MAIN_MENU MENU LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
  POPUP "&Ohje" {
    MENUITEM "&Ohjeen käyttö", 0x110
    MENUITEM "&Aina päällimmäisenä", 0x111
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "T&ietoja...", 0x113
 #ifdef WINELIB
    MENUITEM "&Tietoja WINEstä", 0x114

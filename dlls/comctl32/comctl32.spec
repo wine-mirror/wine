@@ -1,8 +1,8 @@
 name	comctl32
 init	COMCTL32_LibMain
 
-# Functions exported by the Win95 comctl32.dll 
-# (these need to have these exact ordinals, because some win95 dlls 
+# Functions exported by the Win95 comctl32.dll
+# (these need to have these exact ordinals, because some win95 dlls
 #  import comctl32.dll by ordinal)
 #   This list was created from a comctl32.dll v5.81 (IE5.01).
 
@@ -100,7 +100,7 @@ init	COMCTL32_LibMain
 151 stdcall CreateMRUListA(ptr) CreateMRUListA
 152 stdcall FreeMRUList(long) FreeMRUList
 153 stdcall AddMRUStringA(long str) AddMRUStringA
-154 stdcall EnumMRUListA(long long ptr long) EnumMRUListA 
+154 stdcall EnumMRUListA(long long ptr long) EnumMRUListA
 155 stdcall FindMRUStringA(long str ptr) FindMRUStringA
 156 stdcall DelMRUString(long long) DelMRUString
 157 stdcall CreateMRUListLazyA(ptr long long long) CreateMRUListLazyA

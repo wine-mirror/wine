@@ -23,7 +23,7 @@
 #include <windows.h>
 #include "cmdlgtst.h"
 
-CmdlgtstMenu MENU 
+CmdlgtstMenu MENU
 {
  POPUP "&File"
  {
@@ -184,7 +184,7 @@ FONT 8, "MS Sans Serif"
  CHECKBOX "PD_USEDEVMODECOPIES", I_PD_USEDEVMODECOPIES, 12, 264, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 }
 
-AboutIcon ICON 
+AboutIcon ICON
 {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
  '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'

@@ -540,7 +540,7 @@ rsrc	resources/version16.res
 804 stub CHOOSECOLOR_CALLBACK16
 819 pascal16 PeekMessage32(ptr word word word word word) PeekMessage32_16
 820 pascal   GetMessage32(ptr word word word word) GetMessage32_16
-821 pascal16 TranslateMessage32(ptr word) TranslateMessage32_16 
+821 pascal16 TranslateMessage32(ptr word) TranslateMessage32_16
 #821 stub IsDialogMessage32		# FIXME: two ordinal 821???
 822 pascal   DispatchMessage32(ptr word) DispatchMessage32_16
 823 pascal16 CallMsgFilter32(segptr word word) CallMsgFilter32_16

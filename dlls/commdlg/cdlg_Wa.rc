@@ -18,7 +18,7 @@
 
 LANGUAGE LANG_WALON, SUBLANG_DEFAULT
 
-/* 
+/*
  * Si vos voloz aider avou li ratoûrnaedje des libes programes è walon,
  * vos poloz scrîre a l' adresse emile <linux-wa@chanae.alphanet.ch>
  */
@@ -173,7 +173,7 @@ FONT 8, "Helv"
  DEFPUSHBUTTON "I Va",  IDOK,  4, 166, 44, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Rinoncî", IDCANCEL, 52, 166, 44, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Aide", 1038,100,166, 44, 14
- PUSHBUTTON "Rad&jouter des coleur da vosse", 712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP 
+ PUSHBUTTON "Rad&jouter des coleur da vosse", 712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Defini les coleurs da vosse >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON  "&u",713,300,200,4,14   /* just a dummy:  'i' is  like  &i in "sol&id" */
 }
@@ -216,5 +216,3 @@ FONT 8, "Helv"
  PUSHBUTTON "Rinoncî",IDCANCEL   , 174, 55, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Aide", pshHelp     , 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
 }
-
-

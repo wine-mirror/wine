@@ -40,7 +40,7 @@ use options qw($options);
 # global
 ########################################################################
 
-my $current; 
+my $current;
 my $function;
 
 ########################################################################
@@ -98,7 +98,7 @@ sub line {
 	my $progress = "";
 	if($directory && $directory ne ".") {
 	    $progress .= "$directory: ";
-	} 
+	}
 	if($tool) {
 	    $progress .= "$tool: ";
 	}
@@ -122,16 +122,16 @@ sub line {
 	    if($#$write_files >= 0) {
 		if($#$read_files >= 0) {
 		    $progress .= ", ";
-		}	       
+		}
 		$progress .= "write[" . join(" ", @{$write_files}) . "]";
 	    }
 	    if($#$remove_files >= 0) {
 		if($#$read_files >= 0 || $#$write_files >= 0) {
 		    $progress .= ", ";
-		}	       
+		}
 		$progress .= "remove[" . join(" ", @{$remove_files}) . "]";
 	    }
-	    
+
 	    $output->progress($progress);
 	}
 
@@ -209,7 +209,7 @@ sub make_output {
 	# Nothing
     } elsif(/^\*\*\* Error code (\d+)$/) {
 	# Nothing
-    } elsif(/^\*\*\* Warning:\s+/) { # 
+    } elsif(/^\*\*\* Warning:\s+/) { #
 	if(/^File \`(.+?)\' has modification time in the future \((.+?) > \(.+?\)\)$/) {
 	    # Nothing
 	} else {
@@ -493,7 +493,7 @@ sub gcc_output {
 		   HMENU|HMIDISTRM|HMIDIIN|HMIDIOUT|HMIXER|HMIXEROBJ|HMMIO|HMODULE|
 		   HLINE|HPEN|HPHONE|HPHONEAPP|
 		   HRASCONN|HRGN|HRSRC|HWAVEIN|HWAVEOUT|HWINSTA|HWND|
-		   SC_HANDLE|WSAEVENT|handle_t|pointer)$/x) 
+		   SC_HANDLE|WSAEVENT|handle_t|pointer)$/x)
 		{
 		    $supress = 1;
 		} else {

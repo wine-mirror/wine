@@ -1,6 +1,6 @@
 /*
  * WineMine (rsrc.rc)
- * 
+ *
  * Copyright 2000 Joshua Thielen <jt85296@ltu.edu>
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ WINEMINE ICON MOVEABLE
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00'
 }
 
-FACES BITMAP MOVEABLE 
+FACES BITMAP MOVEABLE
 {
  '42 4D 16 06 00 00 00 00 00 00 76 00 00 00 28 00'
  '00 00 18 00 00 00 78 00 00 00 01 00 04 00 00 00'
@@ -175,7 +175,7 @@ FACES BITMAP MOVEABLE
  '77 77 77 77 77 77'
 }
 
-LEDS BITMAP MOVEABLE 
+LEDS BITMAP MOVEABLE
 {
  '42 4D 16 09 00 00 00 00 00 00 76 00 00 00 28 00'
  '00 00 0D 00 00 00 14 01 00 00 01 00 04 00 00 00'
@@ -325,7 +325,7 @@ LEDS BITMAP MOVEABLE
  '00 00 00 00 00 00'
 }
 
-MINES BITMAP MOVEABLE 
+MINES BITMAP MOVEABLE
 {
  '42 4D 76 08 00 00 00 00 00 00 76 00 00 00 28 00'
  '00 00 10 00 00 00 00 01 00 00 01 00 04 00 00 00'
@@ -469,7 +469,7 @@ MINES BITMAP MOVEABLE
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 STRINGTABLE {
-     IDS_APPNAME, "WineMine" 
+     IDS_APPNAME, "WineMine"
 
 }
 
@@ -496,9 +496,9 @@ MENU_WINEMINE MENU DISCARDABLE
 DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Fastest Times" 
+CAPTION "Fastest Times"
 {
-    GROUPBOX        "Fastest Times", IDIGNORE,  10,  10, 140,  45 
+    GROUPBOX        "Fastest Times", IDIGNORE,  10,  10, 140,  45
     LTEXT           "Beginner",      IDIGNORE,  20,  20,  40,   8
     LTEXT           "Advanced",      IDIGNORE,  20,  30,  40,   8
     LTEXT           "Expert",        IDIGNORE,  20,  40,  40,   8
@@ -511,12 +511,12 @@ CAPTION "Fastest Times"
     DEFPUSHBUTTON   "OK",                IDOK,  55,  60,  50,  15
 }
 
-DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60 
+DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Congratulations!" 
+CAPTION "Congratulations!"
 {
-    LTEXT           "Please enter your name", IDIGNORE,  10,  10, 150,  10 
+    LTEXT           "Please enter your name", IDIGNORE,  10,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
     DEFPUSHBUTTON   "Ok",                         IDOK,  60,  40,  40,  15
 }
@@ -524,7 +524,7 @@ CAPTION "Congratulations!"
 DLG_CUSTOM DIALOG DISCARDABLE  0, 0, 100, 100
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Custom Game" 
+CAPTION "Custom Game"
 {
     LTEXT           "Rows",   IDIGNORE,   5,   5,  30,  10
     LTEXT           "Cols",   IDIGNORE,   5,  35,  30,  10
@@ -536,10 +536,10 @@ CAPTION "Custom Game"
     PUSHBUTTON      "Cancel", IDCANCEL,  40,  50,  50,  15
 }
 
-DLG_ABOUT DIALOG DISCARDABLE  0, 0, 145, 80 
+DLG_ABOUT DIALOG DISCARDABLE  0, 0, 145, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "About" 
+CAPTION "About"
 {
     LTEXT                               "Winemine", IDIGNORE,  10,  10,  35,  10
     LTEXT         "Copyright 2000, Joshua Thielen", IDIGNORE,  35,  25, 100,  10
@@ -549,4 +549,3 @@ CAPTION "About"
 }
 
 /* End of English-US Resources */
-

@@ -61,7 +61,7 @@ sub new {
     while(<IN>) {
 	s/^\s*(.*?)\s*$/$1/; # remove whitespace at begin and end of line
 	s/^(.*?)\s*#.*$/$1/; # remove comments
-	/^$/ && next;        # skip empty lines   
+	/^$/ && next;        # skip empty lines
 
 	$$functions{$_}++;
     }
@@ -70,7 +70,7 @@ sub new {
     $output->progress("$configure_ac_file");
 
     my $again = 0;
-    open(IN, "< $configure_ac_file");   
+    open(IN, "< $configure_ac_file");
     local $/ = "\n";
     while($again || (defined($_ = <IN>))) {
 	$again = 0;

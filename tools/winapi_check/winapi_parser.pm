@@ -56,7 +56,7 @@ sub parse_c_file {
 	my $argument_documentations;
 	my $statements_line;
 	my $statements;
-	
+
 	$function_begin = sub {
 	    $documentation_line = shift;
 	    $documentation = shift;
@@ -68,7 +68,7 @@ sub parse_c_file {
 	    $argument_types = shift;
 	    $argument_names = shift;
 	    $argument_documentations = shift;
-	    
+
 	    if(defined($argument_names) && defined($argument_types) &&
 	       $#$argument_names == -1)
 	    {
@@ -76,7 +76,7 @@ sub parse_c_file {
 		    push @$argument_names, "";
 		}
 	    }
-	    
+
 	    if(defined($argument_documentations) &&
 	       $#$argument_documentations == -1)
 	    {
@@ -84,7 +84,7 @@ sub parse_c_file {
 		    push @$argument_documentations, "";
 		}
 	    }
-	    
+
 	    $in_function = 1;
 	};
 
@@ -93,18 +93,18 @@ sub parse_c_file {
 	    $statements = shift;
 
 	    my $function = &$function_create_callback();
-	    
+
 	    if(!defined($documentation_line)) {
 		$documentation_line = 0;
 	    }
-	    
+
 	    $function->file($file);
 	    $function->debug_channels([@$debug_channels]);
 	    $function->documentation_line($documentation_line);
 	    $function->documentation($documentation);
 	    $function->function_line($function_line);
 	    $function->linkage($linkage);
-	    $function->return_type($return_type); 
+	    $function->return_type($return_type);
 	    $function->calling_convention($calling_convention);
 	    $function->internal_name($internal_name);
 	    if(defined($argument_types)) {
@@ -118,7 +118,7 @@ sub parse_c_file {
 	    }
 	    $function->statements_line($statements_line);
 	    $function->statements($statements);
-	    
+
 	    &$function_found_callback($function);
 
 	    $in_function = 0;
@@ -189,13 +189,13 @@ sub parse_c_file {
 	    $output->write("$file: merge conflicts in file\n");
 	    last;
 	}
-      
+
 	# remove C comments
 	if(s/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)(?=\/\*)//s) {
 	    my $prefix = $1;
 	    if(s/^(\/\*.*?\*\/)//s) {
 		my @lines = split(/\n/, $1);
-		push @comment_lines, $.; 
+		push @comment_lines, $.;
 		push @comments, $1;
 		&$c_comment_found_callback($. - $#lines, $., $1);
 		if($#lines <= 0) {
@@ -203,7 +203,7 @@ sub parse_c_file {
 		} else {
 		    $_ = $prefix . ("\n" x $#lines) . $_;
 		}
-		$again = 1; 
+		$again = 1;
 	    } else {
 		$_ = "$prefix$_";
 		$lookahead = 1;
@@ -214,7 +214,7 @@ sub parse_c_file {
 	# remove C++ comments
 	while(s/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)(\/\/.*?)$/$1/s) {
 	    &$cplusplus_comment_found_callback($., $2);
-	    $again = 1; 
+	    $again = 1;
 	}
 	if($again) { next; }
 
@@ -239,10 +239,10 @@ sub parse_c_file {
 	}
 
 	# Remove extern "C"
-	if(s/^\s*extern\s+"C"\s+\{//m) { 
+	if(s/^\s*extern\s+"C"\s+\{//m) {
 	    $extern_c = 1;
 	    $again = 1;
-	    next; 
+	    next;
 	}
 
 	my $documentation_line;
@@ -251,7 +251,7 @@ sub parse_c_file {
 	{
 	    my $n = $#comments;
 	    while($n >= 0 && ($comments[$n] !~ /^\/\*\*/ ||
-			      $comments[$n] =~ /^\/\*\*+\/$/)) 
+			      $comments[$n] =~ /^\/\*\*+\/$/))
 	    {
 		$n--;
 	    }
@@ -328,7 +328,7 @@ sub parse_c_file {
 	    } elsif(s/^\}//) {
 		$_ = $'; $again = 1;
 		$line .= "}" if $level > 1;
-		print "-1: \}$_\n" if $options->debug >= 2; 
+		print "-1: \}$_\n" if $options->debug >= 2;
 		$level--;
 		if($level == -1 && $extern_c) {
 		    $extern_c = 0;
@@ -390,7 +390,7 @@ sub parse_c_file {
 
 	    if($regs_entrypoints{$name}) {
 		$name = $regs_entrypoints{$name};
-	    } 
+	    }
 
 	    $arguments =~ y/\t\n/  /;
 	    $arguments =~ s/^\s*(.*?)\s*$/$1/;
@@ -435,7 +435,7 @@ sub parse_c_file {
 	    }
 	    if($#argument_types == 0 && $argument_types[0] =~ /^void$/i) {
 		$#argument_types = -1;
-		$#argument_names = -1;  
+		$#argument_names = -1;
 	    }
 
 	    if($options->debug) {
@@ -484,7 +484,7 @@ sub parse_c_file {
 			     $function_line, "", "UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
 	    &$function_end($., "");
 	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "UINT", "WINAPI", "waveOut" . $1, \@arguments32);	    
+			     $function_line, "", "UINT", "WINAPI", "waveOut" . $1, \@arguments32);
 	    &$function_end($., "");
 	} elsif(/WAVEOUT_SHORTCUT_(1|2)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    my @lines = split(/\n/, $&);
@@ -507,7 +507,7 @@ sub parse_c_file {
 		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT16", "WINAPI", "waveOut". $2 . "16", \@arguments16);
 		&$function_end($., "");
-		&$function_begin($documentation_line, $documentation, 
+		&$function_begin($documentation_line, $documentation,
 				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
 		&$function_end($., "");
 	    }
@@ -534,7 +534,7 @@ sub parse_c_file {
 		(?:\s+const)?
 		((?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?
 		(?:\s*,\s*(?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?)*)
-		\s*;/sx) 
+		\s*;/sx)
 	{
 	    $_ = $'; $again = 1;
 
@@ -561,9 +561,9 @@ sub parse_c_file {
 		(\w+(?:\s*\*+\s*)?)\s+
 		(?:(\w+)\s*)?
 		\((?:(\w+)\s+)?\s*\*\s*(\w+)\s*\)\s*
-		(?:\(([^\)]*)\)|\[([^\]]*)\])\s*;/sx) 
+		(?:\(([^\)]*)\)|\[([^\]]*)\])\s*;/sx)
 	{
-	    $_ = $'; $again = 1;	   
+	    $_ = $'; $again = 1;
 	    my $type;
 	    if(defined($2) || defined($3)) {
 		my $cc = $2 || $3;

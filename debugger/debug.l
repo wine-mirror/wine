@@ -61,7 +61,7 @@ STRING     \"[^\n"]+\"
                                         /* set to special state when no process is loaded. */
                                         if (!DEBUG_CurrProcess && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
 
-<*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; } 
+<*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; }
                                         /* Indicates end of command. Reset state. */
 
 "||"					{ return OP_LOR; }
@@ -149,7 +149,7 @@ STRING     \"[^\n"]+\"
 <HELP_CMD>info|inf|in                   { return tINFO; }
 <MODE_CMD>vm86                          { return tVM86; }
 
-<INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir { 
+<INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir {
 			                  BEGIN(PATH_EXPECTED); return tDIR; }
 
 char					{ return tCHAR; }
@@ -169,11 +169,11 @@ enum					{ return tENUM; }
 
 <PATH_EXPECTED>{PATHNAME}		{ yylval.string = DEBUG_MakeSymbol(yytext); return tPATH; }
 
-<*>[ \t]+                               /* Eat up whitespace */	
+<*>[ \t]+                               /* Eat up whitespace */
 
 <NOPROCESS>.                            { BEGIN(ASTRING_EXPECTED); yyless(0); return tNOPROCESS;}
 <*>.                                    { if (syntax_error == 0) {
-                                             syntax_error++; 
+                                             syntax_error++;
 					     DEBUG_Printf(DBG_CHN_MESG, "Syntax Error (%s)\n", yytext); }
 		                        }
 %%
@@ -235,11 +235,11 @@ int DEBUG_ReadLine(const char* pfx, char * buf, int size, int flush_sym, int kee
 	    static char last_line[256] = "";
 	    /* If there is anything left, add it to the history list
 	       and execute it. Otherwise, re-execute last command. */
-	
+
 	    if (*buf_line)
 	    {
 		strncpy( last_line, buf_line, sizeof(last_line) - 1 );
-		last_line[sizeof(last_line) - 1] = '\0'; 
+		last_line[sizeof(last_line) - 1] = '\0';
 	    }
 	    ptr = last_line;
 	}

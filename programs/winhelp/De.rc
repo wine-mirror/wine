@@ -25,15 +25,15 @@ MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
  POPUP "&Datei" {
   MENUITEM "Ö&ffnen...", 0x101
-  MENUITEM SEPARATOR   
+  MENUITEM SEPARATOR
   MENUITEM "Thema &drucken", 0x104
   MENUITEM "Drucker&einrichtung...", 0x106
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
   MENUITEM "&Beenden", 0x108
  }
  POPUP "&Bearbeiten" {
    MENUITEM "&Kopieren...", 0x10A
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Anmerken...", 0x10C
  }
  POPUP "&Lesezeichen" {
@@ -42,7 +42,7 @@ MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
  POPUP "&Hilfe" {
    MENUITEM "&Hilfe benutzen", 0x110
    MENUITEM "Immer im &Vordergrund", 0x111
-   MENUITEM SEPARATOR   
+   MENUITEM SEPARATOR
    MENUITEM "&Info...", 0x113
 #ifdef WINELIB
    MENUITEM "&Über WINE", 0x114

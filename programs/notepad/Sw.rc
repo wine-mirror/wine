@@ -61,7 +61,7 @@ POPUP "&Hjälp" {
    MENUITEM "&Om Wine", 0x137
   }
  }
-} 
+}
 
 /* Dialog `Page setup' */
 
@@ -124,4 +124,3 @@ den här uppgiften. \nAvsluta ett eller flera program för att öka mängden \nfritt
 minne."
 
 }
-

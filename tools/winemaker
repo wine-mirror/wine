@@ -89,16 +89,16 @@ my $opt_no_source_fix;
 # Options for the 'Source' method
 
 ##
-# Specifies that we have only one target so that all sources relate 
-# to this target. By default this variable is left undefined which 
-# means winemaker should try to find out by itself what the targets 
-# are. If not undefined then this contains the name of the default 
+# Specifies that we have only one target so that all sources relate
+# to this target. By default this variable is left undefined which
+# means winemaker should try to find out by itself what the targets
+# are. If not undefined then this contains the name of the default
 # target (without the extension).
 my $opt_single_target;
 
 ##
-# If '$opt_single_target' has been specified then this is the type of 
-# that target. Otherwise it specifies whether the default target type 
+# If '$opt_single_target' has been specified then this is the type of
+# that target. Otherwise it specifies whether the default target type
 # is guiexe or cuiexe.
 my $opt_target_type;
 
@@ -107,14 +107,14 @@ my $opt_target_type;
 my $opt_flags;
 
 ##
-# If true then winemaker should ask questions to the user as it goes 
+# If true then winemaker should ask questions to the user as it goes
 # along.
 my $opt_is_interactive;
 my $opt_ask_project_options;
 my $opt_ask_target_options;
 
 ##
-# If false then winemaker should not generate any file, i.e. 
+# If false then winemaker should not generate any file, i.e.
 # no makefiles, but also no .spec files, no configure.in, etc.
 my $opt_no_generated_files;
 
@@ -135,7 +135,7 @@ my $opt_no_banner;
 #
 #####
 
-# The description of a target is stored in an array. The constants 
+# The description of a target is stored in an array. The constants
 # below identify what is stored at each index of the array.
 
 ##
@@ -153,12 +153,12 @@ my $T_TYPE=1;
 my $T_INIT=2;
 
 ##
-# This is a bitfield containing flags refining the way the target 
+# This is a bitfield containing flags refining the way the target
 # should be handled. See the TF_xxx constants below
 my $T_FLAGS=3;
 
 ##
-# This is a reference to an array containing the list of the 
+# This is a reference to an array containing the list of the
 # resp. C, C++, RC, other (.h, .hxx, etc.) source files.
 my $T_SOURCES_C=4;
 my $T_SOURCES_CXX=5;
@@ -166,12 +166,12 @@ my $T_SOURCES_RC=6;
 my $T_SOURCES_MISC=7;
 
 ##
-# This is a reference to an array containing the list of macro 
+# This is a reference to an array containing the list of macro
 # definitions
 my $T_DEFINES=8;
 
 ##
-# This is a reference to an array containing the list of directory 
+# This is a reference to an array containing the list of directory
 # names that constitute the include path
 my $T_INCLUDE_PATH=9;
 
@@ -199,9 +199,9 @@ my $T_DEPENDS=14;
 # The following constants define the recognized types of target
 
 ##
-# This is not a real target. This type of target is used to collect 
+# This is not a real target. This type of target is used to collect
 # the sources that don't seem to belong to any other target. Thus no
-# real target is generated for them, we just put the sources of the 
+# real target is generated for them, we just put the sources of the
 # fake target in the global source list.
 my $TT_SETTINGS=0;
 
@@ -234,8 +234,8 @@ my $TF_MFC=4;
 
 ##
 # Initialize a target:
-# - set the target type to TT_SETTINGS, i.e. no real target will 
-#   be generated. 
+# - set the target type to TT_SETTINGS, i.e. no real target will
+#   be generated.
 sub target_init
 {
   my $target=$_[0];
@@ -276,25 +276,25 @@ sub get_default_init
 #
 #####
 
-# First we have the notion of project. A project is described by an 
-# array (since we don't have structs in perl). The constants below 
+# First we have the notion of project. A project is described by an
+# array (since we don't have structs in perl). The constants below
 # identify what is stored at each index of the array.
 
 ##
-# This is the path in which this project is located. In other 
+# This is the path in which this project is located. In other
 # words, this is the path to  the Makefile.
 my $P_PATH=0;
 
 ##
-# This index contains a reference to an array containing the project-wide 
-# settings. The structure of that arrray is actually identical to that of 
+# This index contains a reference to an array containing the project-wide
+# settings. The structure of that arrray is actually identical to that of
 # a regular target since it can also contain extra sources.
 my $P_SETTINGS=1;
 
 ##
-# This index contains a reference to an array of targets for this 
-# project. Each target describes how an executable or library is to 
-# be built. For each target this description takes the same form as 
+# This index contains a reference to an array of targets for this
+# project. Each target describes how an executable or library is to
+# be built. For each target this description takes the same form as
 # that of the project: an array. So this entry is an array of arrays.
 my $P_TARGETS=2;
 
@@ -329,26 +329,26 @@ my %warnings;
 my %templates;
 
 ##
-# Contains the list of all projects. This list tells us what are 
-# the subprojects of the main Makefile and where we have to generate 
+# Contains the list of all projects. This list tells us what are
+# the subprojects of the main Makefile and where we have to generate
 # Makefiles.
 my @projects=();
 
 ##
-# This is the main project, i.e. the one in the "." directory. 
-# It may well be empty in which case the main Makefile will only 
+# This is the main project, i.e. the one in the "." directory.
+# It may well be empty in which case the main Makefile will only
 # call out subprojects.
 my @main_project;
 
 ##
 # Contains the defaults for the include path, etc.
-# We store the defaults as if this were a target except that we only 
+# We store the defaults as if this were a target except that we only
 # exploit the defines, include path, library path, library list and misc
 # sources fields.
 my @global_settings;
 
 ##
-# If one of the projects requires the MFc then we set this global variable 
+# If one of the projects requires the MFc then we set this global variable
 # to true so that configure asks the user to provide a path tothe MFC
 my $needs_mfc=0;
 
@@ -361,7 +361,7 @@ my $needs_mfc=0;
 #####
 
 ##
-# Cleans up a name to make it an acceptable Makefile 
+# Cleans up a name to make it an acceptable Makefile
 # variable name.
 sub canonize
 {
@@ -373,7 +373,7 @@ sub canonize
 
 ##
 # Returns true is the specified pathname is absolute.
-# Note: pathnames that start with a variable '$' or 
+# Note: pathnames that start with a variable '$' or
 # '~' are considered absolute.
 sub is_absolute
 {
@@ -457,7 +457,7 @@ sub source_set_options
 
 ##
 # Scans the specified directory to:
-# - see if we should create a Makefile in this directory. We normally do 
+# - see if we should create a Makefile in this directory. We normally do
 #   so if we find a project file and sources
 # - get a list of targets for this directory
 # - get the list of source files
@@ -465,13 +465,13 @@ sub source_scan_directory
 {
   # a reference to the parent's project
   my $parent_project=$_[0];
-  # the full relative path to the current directory, including a 
+  # the full relative path to the current directory, including a
   # trailing '/', or an empty string if this is the top level directory
   my $path=$_[1];
   # the name of this directory, including a trailing '/', or an empty
   # string if this is the top level directory
   my $dirname=$_[2];
-  # if set then no targets will be looked for and the sources will all 
+  # if set then no targets will be looked for and the sources will all
   # end up in the parent_project's 'misc' bucket
   my $no_target=$_[3];
 
@@ -486,15 +486,15 @@ sub source_scan_directory
   my @sources_misc=();
   # true if this directory contains a Windows project
   my $has_win_project=0;
-  # If we don't find any executable/library then we might make up targets 
-  # from the list of .dsp/.mak files we find since they usually have the 
+  # If we don't find any executable/library then we might make up targets
+  # from the list of .dsp/.mak files we find since they usually have the
   # same name as their target.
   my @dsp_files=();
   my @mak_files=();
 
   if (defined $opt_single_target or $dirname eq "") {
-    # Either there is a single target and thus a single project, 
-    # or we are in the top level directory for which a project 
+    # Either there is a single target and thus a single project,
+    # or we are in the top level directory for which a project
     # already exists
     $project=$parent_project;
   } else {
@@ -513,7 +513,7 @@ sub source_scan_directory
     my $fullentry="$path$dentry";
     if (-d "$fullentry") {
       if ($dentry =~ /^(Release|Debug)/i) {
-	# These directories are often used to store the object files and the 
+	# These directories are often used to store the object files and the
 	# resulting executable/library. They should not contain anything else.
 	my @candidates=grep /\.(exe|dll)$/i, @{get_directory_contents("$fullentry")};
 	foreach $candidate (@candidates) {
@@ -528,8 +528,8 @@ sub source_scan_directory
         push @{@$project_settings[$T_INCLUDE_PATH]},"-I$dentry";
         source_scan_directory($project,"$fullentry/","$dentry/",1);
       } else {
-	# Recursively scan this directory. Any source file that cannot be 
-	# attributed to a project in one of the subdirectories will be 
+	# Recursively scan this directory. Any source file that cannot be
+	# attributed to a project in one of the subdirectories will be
 	# attributed to this project.
 	source_scan_directory($project,"$fullentry/","$dentry/",$no_target);
       }
@@ -567,7 +567,7 @@ sub source_scan_directory
   }
   closedir(DIRECTORY);
 
-  # If we have a single target then all we have to do is assign 
+  # If we have a single target then all we have to do is assign
   # all the sources to it and we're done
   # FIXME: does this play well with the --interactive mode?
   if ($opt_single_target) {
@@ -608,7 +608,7 @@ sub source_scan_directory
 
   my $target_count;
   if (($has_win_project != 0) or ($dirname eq "")) {
-    # Deal with cases where we could not find any executable/library, and 
+    # Deal with cases where we could not find any executable/library, and
     # thus have no target, although we did find some sort of windows project.
     $target_count=keys %targets;
     if ($target_count == 0) {
@@ -635,7 +635,7 @@ sub source_scan_directory
 	  $name=(split /\//, cwd)[-1];
 	} else {
 	  $name=$dirname;
-	  # Remove the trailing '/'. Also eliminate whatever is after the last 
+	  # Remove the trailing '/'. Also eliminate whatever is after the last
 	  # '.' as it is likely to be meaningless (.orig, .new, ...)
 	  $name =~ s+(/|\.[^.]*)$++;
 	  if ($name eq "src") {
@@ -691,7 +691,7 @@ sub source_scan_directory
     }
   }
 
-  # If we have no project at this level, then transfer all 
+  # If we have no project at this level, then transfer all
   # the sources to the parent project
   $target_count=keys %targets;
   if ($target_count == 0) {
@@ -706,7 +706,7 @@ sub source_scan_directory
     return;
   }
 
-  # Otherwise add this project to the project list, except for 
+  # Otherwise add this project to the project list, except for
   # the main project which is already in the list.
   if ($dirname ne "") {
     push @projects,$project;
@@ -748,7 +748,7 @@ sub source_scan_directory
 
   # - Create the targets
   # - Check if we have both libraries and programs
-  # - Match each target with source files (sort in reverse 
+  # - Match each target with source files (sort in reverse
   #   alphabetical order to get the longest matches first)
   my @local_dlls=();
   my @local_depends=();
@@ -773,8 +773,8 @@ sub source_scan_directory
       $basename=$target_name;
       push @exe_list,$target;
     }
-    # This is the default link list of Visual Studio, except odbccp32 
-    # which we don't have in Wine. Also I add ntdll which seems 
+    # This is the default link list of Visual Studio, except odbccp32
+    # which we don't have in Wine. Also I add ntdll which seems
     # necessary for Winelib.
     my @std_dlls=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32.dll oleaut32.dll shell32.dll user32.dll winspool.drv);
     @$target[$T_DLLS]=\@std_dlls;
@@ -815,7 +815,7 @@ sub source_scan_directory
       @$project_settings[$T_FLAGS]|=$TF_MFC;
       push @{@$target[$T_DLL_PATH]},"\$(MFC_LIBRARY_PATH)";
       push @{@$target[$T_DLLS]},"mfc.dll";
-      # FIXME: Link with the MFC in the Unix sense, until we 
+      # FIXME: Link with the MFC in the Unix sense, until we
       # start exporting the functions properly.
       push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
       push @{@$target[$T_LIBRARIES]},"mfc";
@@ -877,7 +877,7 @@ sub source_scan_directory
   if (@$project_settings[$T_FLAGS] & $TF_MFC) {
     push @{@$project_settings[$T_INCLUDE_PATH]},"\$(MFC_INCLUDE_PATH)";
   }
-  # The sources that did not match, if any, go to the extra 
+  # The sources that did not match, if any, go to the extra
   # source list of the project settings
   foreach $source (@sources_c) {
     if ($source ne "") {
@@ -904,14 +904,14 @@ sub source_scan_directory
   }
   @$project_settings[$T_SOURCES_MISC]=[sort @{@$project_settings[$T_SOURCES_MISC]}];
 
-  # Finally if we are building both libraries and programs in 
-  # this directory, then the programs should be linked with all 
+  # Finally if we are building both libraries and programs in
+  # this directory, then the programs should be linked with all
   # the libraries
   if (@local_dlls > 0 and @exe_list > 0) {
     foreach $target (@exe_list) {
       push @{@$target[$T_DLL_PATH]},"-L.";
       push @{@$target[$T_DLLS]},map { "$_.dll" } @local_dlls;
-      # Also link in the Unix sense since none of the functions 
+      # Also link in the Unix sense since none of the functions
       # will be exported.
       push @{@$target[$T_LIBRARY_PATH]},"-L.";
       push @{@$target[$T_LIBRARIES]},@local_dlls;
@@ -960,7 +960,7 @@ sub source_scan
 
 #sub analyze_vc_dsp
 #{
-#  
+#
 #}
 
 
@@ -1031,7 +1031,7 @@ sub fix_file_and_directory_names
       my $new_name=$dentry;
       $new_name =~ s/[ \$]/_/g;
 
-      # Only all lowercase extensions are supported (because of the 
+      # Only all lowercase extensions are supported (because of the
       # transformations ':.c=.o') .
       if (-f "$dirname/$new_name") {
 	if ($new_name =~ /\.C$/) {
@@ -1053,7 +1053,7 @@ sub fix_file_and_directory_names
       }
 
       # Adjust the case to the user's preferences
-      if (($opt_lower == $OPT_LOWER_ALL and $dentry =~ /[A-Z]/) or 
+      if (($opt_lower == $OPT_LOWER_ALL and $dentry =~ /[A-Z]/) or
           ($opt_lower == $OPT_LOWER_UPPERCASE and $dentry !~ /[a-z]/)
          ) {
 	$new_name=lc $new_name;
@@ -1087,14 +1087,14 @@ sub fix_file_and_directory_names
 #####
 
 ##
-# This maps a directory name to a reference to an array listing 
+# This maps a directory name to a reference to an array listing
 # its contents (files and directories)
 my %directories;
 
 ##
 # Retrieves the contents of the specified directory.
-# We either get it from the directories hashtable which acts as a 
-# cache, or use opendir, readdir, closedir and store the result 
+# We either get it from the directories hashtable which acts as a
+# cache, or use opendir, readdir, closedir and store the result
 # in the hashtable.
 sub get_directory_contents
 {
@@ -1113,7 +1113,7 @@ sub get_directory_contents
     #print "->@$directory\n";
     return $directory;
   }
-  
+
   # Read this directory
   if (opendir(DIRECTORY, "$dirname")) {
     my @files=readdir DIRECTORY;
@@ -1131,8 +1131,8 @@ sub get_directory_contents
 }
 
 ##
-# Try to find a file for the specified filename. The attempt is 
-# case-insensitive which is why it's not trivial. If a match is 
+# Try to find a file for the specified filename. The attempt is
+# case-insensitive which is why it's not trivial. If a match is
 # found then we return the pathname with the correct case.
 sub search_from
 {
@@ -1159,7 +1159,7 @@ sub search_from
       $dirname=dirname($dirname) . "/";
       $real_path.="../";
     } else {
-      # The file/directory may have been renamed before. Also try to 
+      # The file/directory may have been renamed before. Also try to
       # match the renamed file.
       my $renamed=$component;
       $renamed =~ s/[ \$]/_/g;
@@ -1192,7 +1192,7 @@ sub search_from
 }
 
 ##
-# Performs a case-insensitive search for the specified file in the 
+# Performs a case-insensitive search for the specified file in the
 # include path.
 # $line is the line number that should be referenced when an error occurs
 # $filename is the file we are looking for
@@ -1220,7 +1220,7 @@ sub get_real_include_name
     # - split the filename we look for into its components
     # - then for each directory in the include path
     #   - trace the directory components starting from that directory
-    #   - if we fail to find a match at any point then continue with 
+    #   - if we fail to find a match at any point then continue with
     #     the next directory in the include path
     #   - otherwise, rejoice, our quest is over.
     my @file_components=split /[\/\\]+/, $filename;
@@ -1288,13 +1288,13 @@ sub print_pack
 }
 
 ##
-# 'Parses' a source file and fixes constructs that would not work with 
-# Winelib. The parsing is rather simple and not all non-portable features 
-# are corrected. The most important feature that is corrected is the case 
-# and path separator of '#include' directives. This requires that each 
-# source file be associated to a project & target so that the proper 
+# 'Parses' a source file and fixes constructs that would not work with
+# Winelib. The parsing is rather simple and not all non-portable features
+# are corrected. The most important feature that is corrected is the case
+# and path separator of '#include' directives. This requires that each
+# source file be associated to a project & target so that the proper
 # include path is used.
-# Also note that the include path is relative to the directory in which the 
+# Also note that the include path is relative to the directory in which the
 # compiler is run, i.e. that of the project, not to that of the file.
 sub fix_file
 {
@@ -1314,7 +1314,7 @@ sub fix_file
   }
 
   print "  $filename\n";
-  #FIXME:assuming that because there is a .bak file, this is what we want is 
+  #FIXME:assuming that because there is a .bak file, this is what we want is
   #probably flawed. Or is it???
   if (! -e "$filename.bak") {
     if (!copy("$filename","$filename.bak")) {
@@ -1351,9 +1351,9 @@ sub fix_file
       $_ .= "\n";
     }
     if ($is_rc and !$is_mfc and /^(\s*)(\#\s*include\s*)\"afxres\.h\"/) {
-      # VC6 automatically includes 'afxres.h', an MFC specific header, in 
-      # the RC files it generates (even in non-MFC projects). So we replace 
-      # it with 'winres.h' its very close standard cousin so that non MFC 
+      # VC6 automatically includes 'afxres.h', an MFC specific header, in
+      # the RC files it generates (even in non-MFC projects). So we replace
+      # it with 'winres.h' its very close standard cousin so that non MFC
       # projects can compile in Wine without the MFC sources.
       my $warning="mfc:afxres.h";
       if (!defined $warnings{$warning}) {
@@ -1375,8 +1375,8 @@ sub fix_file
     } elsif (s/^(\s*)(\#\s*pragma\s+pack\s*\(\s*)//) {
       # Pragma pack handling
       #
-      # pack_stack is an array of references describing the stack of 
-      # pack directives currently in effect. Each directive if described 
+      # pack_stack is an array of references describing the stack of
+      # pack directives currently in effect. Each directive if described
       # by a reference to an array containing:
       # - "push" for pack(push,...) directives, "" otherwise
       # - the directive's identifier at index 1
@@ -1483,7 +1483,7 @@ sub fix_file
       } elsif (/^(push\s*,\s*(\w+)\s*(,\s*(\d+)\s*)?\))/) {
         # pragma pack(push,label[,n])
         # Pushes a new label on the stack. It is possible to push the same
-        # label multiple times. If 'n' is omitted then the alignment is 
+        # label multiple times. If 'n' is omitted then the alignment is
         # unchanged. Otherwise it becomes 'n'.
         print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
         my $size;
@@ -1560,7 +1560,7 @@ sub fix_file
 }
 
 ##
-# Analyzes each source file in turn to find and correct issues 
+# Analyzes each source file in turn to find and correct issues
 # that would cause it not to compile.
 sub fix_source
 {
@@ -1657,7 +1657,7 @@ sub generate_spec_file
     }
   }
 
-  # Don't forget to export the 'Main' function for wrapped executables, 
+  # Don't forget to export the 'Main' function for wrapped executables,
   # except for MFC ones!
   if (@$target[$T_FLAGS] == $TF_WRAP) {
     if (@$target[$T_TYPE] == $TT_GUIEXE) {
@@ -1705,7 +1705,7 @@ sub generate_wrapper_file
 }
 
 ##
-# A convenience function to generate all the lists (defines, 
+# A convenience function to generate all the lists (defines,
 # C sources, C++ source, etc.) in the Makefile
 sub generate_list
 {
@@ -1778,9 +1778,9 @@ sub generate_project_files
   generate_list("VPATH",1,[ "\@srcdir\@" ]);
   print FILEO "\n";
   if (@$project[$P_PATH] eq "") {
-    # This is the main project. It is also responsible for recursively 
+    # This is the main project. It is also responsible for recursively
     # calling the other projects
-    generate_list("SUBDIRS",1,\@projects,sub 
+    generate_list("SUBDIRS",1,\@projects,sub
 		  {
 		    if ($_[0] != \@main_project) {
 		      my $subdir=@{$_[0]}[$P_PATH];
@@ -1921,7 +1921,7 @@ sub generate_project_files
   print FILEO "\n";
   print FILEO "install::\n";
   if (@$project[$P_PATH] eq "") {
-    # This is the main project. It is also responsible for recursively 
+    # This is the main project. It is also responsible for recursively
     # calling the other projects
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
   }
@@ -1932,7 +1932,7 @@ sub generate_project_files
   print FILEO "\n";
   print FILEO "uninstall::\n";
   if (@$project[$P_PATH] eq "") {
-    # This is the main project. It is also responsible for recursively 
+    # This is the main project. It is also responsible for recursively
     # calling the other projects
     print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
   }
@@ -2082,7 +2082,7 @@ sub generate_global_files
 }
 
 ##
-# 
+#
 sub generate_read_templates
 {
   my $file;
@@ -2104,7 +2104,7 @@ sub generate_read_templates
 }
 
 ##
-# This is where we finally generate files. In fact this method does not 
+# This is where we finally generate files. In fact this method does not
 # do anything itself but calls the methods that do the actual work.
 sub generate
 {
@@ -2534,7 +2534,7 @@ AC_SUBST($1)
 ])
 
 dnl AC_PATH_HEADER(variable,header,action-if-not-found,default-locations)
-dnl Note that the above may set variable to an empty value if the header is 
+dnl Note that the above may set variable to an empty value if the header is
 dnl already in the include path
 AC_DEFUN(AC_PATH_HEADER,[
 AC_MSG_CHECKING([for $2 header])
@@ -3012,7 +3012,7 @@ prog_manext     = 1
 conf_manext     = 5
 
 OBJS            = $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o) \
-                  $(SPEC_SRCS:.spec=.spec.o) 
+                  $(SPEC_SRCS:.spec=.spec.o)
 CLEAN_FILES     = *.spec.c y.tab.c y.tab.h lex.yy.c \
                   core *.orig *.rej \
                   \\\#*\\\# *~ *% .\\\#*
@@ -3097,26 +3097,26 @@ dummy:
 #define      APP_TYPE      ##WINEMAKER_APP_TYPE##
 
 /**
- * This is the application library's base name, i.e. 'hello' if the 
+ * This is the application library's base name, i.e. 'hello' if the
  * library is called 'libhello.so'.
  */
 static char* appName     = ##WINEMAKER_APP_NAME##;
 
 /**
- * This is the name of the application's Windows module. If left NULL 
+ * This is the name of the application's Windows module. If left NULL
  * then appName is used.
  */
 static char* appModule   = NULL;
 
 /**
- * This is the application's entry point. This is usually "WinMain" for a 
+ * This is the application's entry point. This is usually "WinMain" for a
  * GUIEXE and 'main' for a CUIEXE application.
  */
 static char* appInit     = ##WINEMAKER_APP_INIT##;
 
 /**
- * This is either non-NULL for MFC-based applications and is the name of the 
- * MFC's module. This is the module in which we will take the 'WinMain' 
+ * This is either non-NULL for MFC-based applications and is the name of the
+ * MFC's module. This is the module in which we will take the 'WinMain'
  * function.
  */
 static char* mfcModule   = ##WINEMAKER_APP_MFC##;
@@ -3149,8 +3149,8 @@ int WINAPI Main(int argc, char** argv, char** envp)
 
     /* Load the application's library */
     libName=(char*)malloc(strlen(appName)+5+3+1);
-    /* FIXME: we should get the wrapper's path and use that as the base for 
-     * the library 
+    /* FIXME: we should get the wrapper's path and use that as the base for
+     * the library
      */
     sprintf(libName,"./lib%s.so",appName);
     appLibrary=dlopen(libName,RTLD_NOW);
@@ -3185,7 +3185,7 @@ int WINAPI Main(int argc, char** argv, char** envp)
             free(msg);
             return 1;
         }
-        /* MFC is a special case: the WinMain is in the MFC library, 
+        /* MFC is a special case: the WinMain is in the MFC library,
          * instead of the application's library.
          */
         hMain=hMFC;

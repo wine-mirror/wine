@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #####################################################################################
-# 
+#
 # c2man.pl v0.1  Copyright (C) 2000 Mike McCormack
 #
 # Generates Documents from C source code.
@@ -35,7 +35,7 @@
 #
 #####################################################################################
 # Input from C source file:
-# 
+#
 # /******************************************************************
 #  *         CopyMetaFile32A   (GDI32.23)
 #  *
@@ -58,43 +58,43 @@
 #
 #####################################################################################
 # Output after processing with nroff -man
-# 
+#
 # CopyMetaFileA(3w)                               CopyMetaFileA(3w)
-# 
-# 
+#
+#
 # NAME
 #        CopyMetaFileA - CopyMetaFile32A   (GDI32.23)
-#  
+#
 # SYNOPSIS
 #        HMETAFILE32 CopyMetaFileA
 #        (
 #             HMETAFILE32 hSrcMetaFile,
 #             LPCSTR lpFilename
 #        );
-#  
+#
 # PARAMETERS
 #        HMETAFILE32 hSrcMetaFile
 #               Handle of metafile to copy.
-#  
+#
 #        LPCSTR lpFilename
 #               Filename if copying to a file.
-#  
+#
 # DESCRIPTION
 #        Copies  the  metafile  corresponding  to  hSrcMetaFile  to
 #        either a disk file, if a filename is given, or  to  a  new
 #        memory based metafile, if lpFileName is NULL.
-#  
+#
 # RETURNS
 #        Handle to metafile copy on success, NULL on failure.
-#  
+#
 # BUGS
 #        Copying to disk returns NULL even if successful.
-#  
+#
 # SEE ALSO
 #        GetMetaFileA(3w),   GetMetaFileW(3w),   CopyMetaFileW(3w),
 #        PlayMetaFile(3w),  SetMetaFileBitsEx(3w),  GetMetaFileBit-
 #        sEx(3w)
-# 
+#
 #####################################################################################
 
 sub output_manpage
@@ -159,7 +159,7 @@ sub output_manpage
     print MAN ".PP\n";
     print MAN "$name_type\n";
     print MAN " (\n";
-    for($i=0; $i<@params; $i++) { 
+    for($i=0; $i<@params; $i++) {
         $x = ($i == (@params-1)) ? "" : ",";
         $c = $params[$i];
         $c =~ s/-.*//;
@@ -168,7 +168,7 @@ sub output_manpage
     print MAN " );\n";
     print MAN ".SH PARAMETERS\n";
     print MAN ".PP\n";
-    for($i=0; $i<@params; $i++) { 
+    for($i=0; $i<@params; $i++) {
         print MAN "    $params[$i]\n";
     }
     print MAN ".SH DESCRIPTION\n";
@@ -272,7 +272,7 @@ sub parse_spec
             s/\(.*\)//; #remove all the args
             ($ord,$type,$name,$func) = split( /\s+/ );
             if(( $type eq "stub" ) || ($type eq "forward")) {next;}
-            if( $func eq "" ) { next; } 
+            if( $func eq "" ) { next; }
             @funclist = ( @funclist , $func );
             $funcdb{$func."ORD"} = $ord;
             $funcdb{$func."TYPE"} = $type;
@@ -335,4 +335,3 @@ while(@ARGV) {
     parse_source($ARGV[0]);
     shift @ARGV;
 }
-

@@ -32,7 +32,7 @@ MMSYSERR_NOTSUPPORTED, 		"Fonction non prise en charge. Utilisez la fonction Cap
 MMSYSERR_BADERRNUM, 		"Un numéro d'erreur non défini dans le système a été spécifié."
 MMSYSERR_INVALFLAG, 		"Un indicateur non valide a été transmis à une fonction système."
 MMSYSERR_INVALPARAM,		"Un paramètre non valide a été passé à une fonction système."
-  
+
 /* WAVE errors */
 WAVERR_BADFORMAT, 		"Le format choisi ne peut être traduit ou utilisé. Utilisez Capacités pour voir les formats pris en charge."
 WAVERR_STILLPLAYING, 		"Le Lecteur multimédia continue à lire des données. Réinitialisez-le ou attendez que toutes les données aient été lues."

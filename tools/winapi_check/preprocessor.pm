@@ -30,7 +30,7 @@ sub new {
     my $stack = \@{$self->{STACK}};
     my $include_found = \${$self->{INCLUDE_FOUND}};
     my $conditional_found = \${$self->{CONDITIONAL_FOUND}};
-  
+
     $$include_found = shift;
     $$conditional_found = shift;
 
@@ -162,7 +162,7 @@ sub is_def {
     my $state = \%{$self->{STATE}};
 
     my $name = shift;
-    
+
     my $status = $$state{$name};
 
     return defined($status) && $status eq "def";
@@ -173,7 +173,7 @@ sub is_undef {
     my $state = \%{$self->{STATE}};
 
     my $name = shift;
-    
+
     my $status = $$state{$name};
 
     return defined($status) && $status eq "undef";
@@ -184,7 +184,7 @@ sub is_unknown {
     my $state = \%{$self->{STATE}};
 
     my $name = shift;
-    
+
     my $status = $$state{$name};
 
     return !defined($status);

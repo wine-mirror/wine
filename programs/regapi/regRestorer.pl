@@ -25,8 +25,8 @@
 use strict;
 use diagnostics;
 
-# I do not validate the integrity of the file, I am assuming that 
-# the input file comes from the output of regFixer.pl, therefore things 
+# I do not validate the integrity of the file, I am assuming that
+# the input file comes from the output of regFixer.pl, therefore things
 # should be ok, if they are not, submit a bug
 
 my $curr_key = "";
