@@ -103,8 +103,8 @@ static BOOL FindCharMap(AFM *afm)
     }
     else
     {
-    	afm->EncodingScheme = HeapAlloc(PSDRV_Heap, 0,
-	    	sizeof("WindowsUnknown") + 1 + charmap->encoding_id / 10);
+    	afm->EncodingScheme = HeapAlloc(PSDRV_Heap, 0,	    /* encoding_id   */
+	    	sizeof("WindowsUnknown65535"));     	    /*   is a UShort */
 	if (afm->EncodingScheme == NULL)
 	    return FALSE;
 	    
